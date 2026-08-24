@@ -103,29 +103,22 @@ export class PreviewOrchestrator {
     if (!['ios', 'android'].includes(platform)) throw new Error("Canonical recovery platform is invalid.");
     if (await this.github.latestDevSha() !== sourceSha) throw new Error("Canonical recovery is restricted to the exact current dev SHA.");
     const release = await this.ledger.releaseBySha(sourceSha);
-    let plannedFingerprint = release?.evidence?.fingerprints?.[platform];
+    const plannedFingerprint = release?.evidence?.fingerprints?.[platform];
     if (!plannedFingerprint) throw new Error(`Release ${sourceSha} has no durable ${platform} fingerprint.`);
-    const rejected = await this.ledger.rejectedNativeOwnershipIncidents({ platform, sourceSha });
-    if (!rejected.length) throw new Error(`Canonical ${platform} replacement requires a rejected ownership incident.`);
 
     const checkout = await this.checkoutFactory({ repository: this.config.repository, token: this.config.githubReadToken, sha: sourceSha });
     try {
       await this.prepareCheckoutFactory(checkout.directory, { allowRootScriptDrift: true });
       assertPreviewIdentity(await this.identityFactory(checkout.directory));
       const currentFingerprints = await this.fingerprintsFactory(checkout.directory);
-      if (currentFingerprints[platform] !== plannedFingerprint) {
-        await this.ledger.correctPlannedNativeFingerprint({ platform, sourceSha, expectedFingerprint: plannedFingerprint, canonicalFingerprint: currentFingerprints[platform] });
-        console.warn(JSON.stringify({ event: "canonical-native-fingerprint-corrected", platform, sourceSha, previousFingerprint: plannedFingerprint, canonicalFingerprint: currentFingerprints[platform], cause: "planning-did-not-load-eas-preview-environment" }));
-        plannedFingerprint = currentFingerprints[platform];
-      }
+      if (currentFingerprints[platform] !== plannedFingerprint) throw new Error(`Canonical ${platform} recovery fingerprint no longer matches the exact current dev release plan.`);
 
-      const identityKey = nativeBuildIdentityKey(platform, plannedFingerprint);
-      const reservation = await this.ledger.reserveNativeBuild({ sourceSha, platform, identityKey });
+      const reservation = await this.ledger.reserveNativeBuildRecovery({ sourceSha, platform, fingerprint: plannedFingerprint });
       let action = reservation.action;
       const eas = this.easFactory(join(checkout.directory, "apps/mobile"));
       if (!action.remote_id) {
         const created = platform === "ios" ? await eas.createIosBuild() : await eas.createAndroidBuild();
-        action = await this.ledger.recordAction({ sourceSha, kind: platform === "ios" ? "IOS_BUILD" : "ANDROID_BUILD", identityKey, remoteId: created.id, state: "CREATED", evidence: { ...created, nativeFingerprint: plannedFingerprint, nativeArtifactSourceSha: sourceSha, latestCompatibleSourceSha: sourceSha, ownershipSource: "CANONICAL_INCIDENT_REPLACEMENT", rejectedIncidentBuildIds: rejected.map(({ build_id }) => build_id) } });
+        action = await this.ledger.recordAction({ sourceSha, kind: platform === "ios" ? "IOS_BUILD" : "ANDROID_BUILD", identityKey: action.identity_key, remoteId: created.id, state: "CREATED", evidence: { ...created, nativeFingerprint: plannedFingerprint, nativeArtifactSourceSha: sourceSha, latestCompatibleSourceSha: sourceSha, ownershipSource: "OWNER_AUTHORIZED_TERMINAL_REPLACEMENT", recoveryAttempt: action.evidence?.recoveryAttempt } });
         console.log(JSON.stringify({ event: "canonical-native-replacement-created", platform, sourceSha, fingerprint: plannedFingerprint, buildId: created.id }));
       }
       const lease = { checkpoint: async () => {} };
@@ -165,6 +158,12 @@ export class PreviewOrchestrator {
       ? await this.ledger.releaseBySha(currentDevSha)
       : previous?.source_sha === currentDevSha ? previous : null;
     const currentFingerprints = currentRecord?.evidence?.fingerprints ?? null;
+    const nativeBuildRecovery = {};
+    if (currentFingerprints && typeof this.ledger.nativeRecoveryState === "function") {
+      for (const platform of ["ios", "android"]) {
+        if (currentFingerprints[platform]) nativeBuildRecovery[platform] = await this.ledger.nativeRecoveryState({ platform, fingerprint: currentFingerprints[platform] });
+      }
+    }
     const deliveredChangeTargets = previous?.source_sha === currentDevSha
       ? await this.nativeChangeTargets(currentDevSha, deliveredNative)
       : [];
@@ -199,6 +198,7 @@ export class PreviewOrchestrator {
         androidBuildNumber: deliveredNative.android?.buildNumber ?? null,
         androidFingerprint: deliveredNative.android?.fingerprint ?? null,
         currentFingerprints,
+        nativeBuildRecovery,
         sourceRangeNativeTargets: deliveredChangeTargets,
         fingerprintNativeTargets: nativeDriftTargets(currentFingerprints, deliveredNative),
         requiredNativeTargets: pendingNative,
@@ -246,7 +246,7 @@ export class PreviewOrchestrator {
       if (classification.classification.includes("OTA")) deliveries.ota = () => this.deliverOta(sha, checkout.directory, lease, ["ios", "android"], fingerprints);
       if (classification.classification.includes("IOS_NATIVE")) deliveries.ios = () => this.deliverIos(sha, checkout.directory, lease, fingerprints.ios);
       if (classification.classification.includes("ANDROID_NATIVE")) deliveries.android = () => this.deliverAndroid(sha, checkout.directory, lease, fingerprints.android);
-      const deliveryResults = await runDeliveries(deliveries);
+      const { results: deliveryResults, failures: deliveryFailures } = await settleDeliveries(deliveries);
       Object.assign(evidence, deliveryResults);
       const coalescedPlatforms = ["ios", "android"].filter((platform) => {
         const result = deliveryResults[platform];
@@ -290,6 +290,14 @@ export class PreviewOrchestrator {
         }
         if (coalescedNoDeliveryPlatforms.length) evidence.coalescedNoDeliveryPlatforms = coalescedNoDeliveryPlatforms;
         evidence.coalescedOverlayEvidence = coalescedOverlayEvidence;
+      }
+      if (deliveryFailures.length) {
+        evidence.platformFailures = Object.fromEntries(deliveryFailures.map(({ target, error }) => [target, {
+          state: "RECOVERY_REQUIRED",
+          reason: redact(error instanceof Error ? error.message : String(error)),
+        }]));
+        if (typeof this.ledger.recordDeliveryEvidence === "function") await this.ledger.recordDeliveryEvidence({ sourceSha: sha, workerId: this.config.workerId, evidence });
+        throwDeliveryFailures(deliveryFailures);
       }
       const complete = await this.ledger.transition(sha, this.config.workerId, ["DELIVERING"], "COMPLETE", { evidence });
       await this.github.report(sha, "success", `Preview delivery complete: ${classification.classification}`);
@@ -458,6 +466,10 @@ export class PreviewOrchestrator {
       ? await this.ledger.reserveNativeBuild({ sourceSha: sha, platform: "ios", identityKey: buildIdentityKey })
       : null;
     let recordedBuildAction = reservation?.action ?? await this.ledger.getAction("IOS_BUILD", buildIdentityKey);
+    if (recordedBuildAction && isTerminalNativeAction(recordedBuildAction) && typeof this.ledger.latestNativeBuildRecovery === "function") {
+      const recovery = await this.ledger.latestNativeBuildRecovery({ platform: "ios", fingerprint });
+      if (recovery) recordedBuildAction = recovery;
+    }
     const artifactSourceSha = recordedBuildAction?.source_sha ?? sha;
     console.log(JSON.stringify({ event: reservation?.created ? "native-build-created" : recordedBuildAction ? "native-build-coalesced" : "native-build-reconciled", platform: "ios", sourceSha: sha, nativeArtifactSourceSha: artifactSourceSha, fingerprint, buildId: recordedBuildAction?.remote_id ?? null }));
     if (recordedBuildAction && !recordedBuildAction.remote_id && artifactSourceSha !== sha) {
@@ -472,20 +484,14 @@ export class PreviewOrchestrator {
     if (recordedBuildAction?.remote_id) {
       decision = reconcileBuilds([await eas.viewBuild(recordedBuildAction.remote_id)], artifactSourceSha, "ios", fingerprint ?? PREVIEW_IDENTITY.runtime);
       if (!["ACTIVE_MATCH", "FINISHED_MATCH"].includes(decision.decision)) {
-        throw new Error(`Persisted iOS build ${recordedBuildAction.remote_id} failed identity reconciliation: ${decision.decision}.`);
+        if (["FAILED_MATCH", "CANCELED_MATCH"].includes(decision.decision)) throw new Error(`Persisted iOS build requires explicit owner-authorized recovery: ${decision.decision}.`);
+        throw new Error(`Persisted iOS build failed identity reconciliation: ${decision.decision}.`);
       }
     } else {
       decision = reconcileBuilds(await eas.listIosBuilds(artifactSourceSha), artifactSourceSha, "ios", fingerprint ?? PREVIEW_IDENTITY.runtime);
     }
     if (["CONFLICT", "MALFORMED_RESPONSE"].includes(decision.decision)) throw new Error(`EAS iOS reconciliation failed closed: ${decision.decision}.`);
-    if (["FAILED_MATCH", "CANCELED_MATCH"].includes(decision.decision)) {
-      await lease.checkpoint();
-      const replacement = await eas.createIosBuild();
-      if (recordedBuildAction?.remote_id && typeof this.ledger.replaceTerminalAction === "function") {
-        await this.ledger.replaceTerminalAction({ sourceSha: artifactSourceSha, kind: "IOS_BUILD", identityKey: buildIdentityKey, expectedRemoteId: recordedBuildAction.remote_id, remoteId: replacement.id, state: "CREATED", evidence: replacement });
-      }
-      decision = { decision: "CREATED", build: replacement };
-    }
+    if (["FAILED_MATCH", "CANCELED_MATCH"].includes(decision.decision)) throw new Error(`iOS native delivery requires explicit owner-authorized recovery: ${decision.decision}.`);
     let build = decision.build;
     if (decision.decision === "NONE") {
       await lease.checkpoint();
@@ -557,6 +563,10 @@ export class PreviewOrchestrator {
       ? await this.ledger.reserveNativeBuild({ sourceSha: sha, platform: "android", identityKey })
       : null;
     let recordedBuildAction = reservation?.action ?? await this.ledger.getAction("ANDROID_BUILD", identityKey);
+    if (recordedBuildAction && isTerminalNativeAction(recordedBuildAction) && typeof this.ledger.latestNativeBuildRecovery === "function") {
+      const recovery = await this.ledger.latestNativeBuildRecovery({ platform: "android", fingerprint });
+      if (recovery) recordedBuildAction = recovery;
+    }
     const artifactSourceSha = recordedBuildAction?.source_sha ?? sha;
     console.log(JSON.stringify({ event: reservation?.created ? "native-build-created" : recordedBuildAction ? "native-build-coalesced" : "native-build-reconciled", platform: "android", sourceSha: sha, nativeArtifactSourceSha: artifactSourceSha, fingerprint, buildId: recordedBuildAction?.remote_id ?? null }));
     if (recordedBuildAction && !recordedBuildAction.remote_id && artifactSourceSha !== sha) {
@@ -571,14 +581,7 @@ export class PreviewOrchestrator {
       ? reconcileBuilds([await eas.viewBuild(recordedBuildAction.remote_id)], artifactSourceSha, "android", fingerprint ?? PREVIEW_IDENTITY.runtime)
       : reconcileBuilds(await eas.listAndroidBuilds(artifactSourceSha), artifactSourceSha, "android", fingerprint ?? PREVIEW_IDENTITY.runtime);
     if (["CONFLICT", "MALFORMED_RESPONSE"].includes(decision.decision)) throw new Error(`EAS Android reconciliation failed closed: ${decision.decision}.`);
-    if (["FAILED_MATCH", "CANCELED_MATCH"].includes(decision.decision)) {
-      await lease.checkpoint();
-      const replacement = await eas.createAndroidBuild();
-      if (recordedBuildAction?.remote_id && typeof this.ledger.replaceTerminalAction === "function") {
-        await this.ledger.replaceTerminalAction({ sourceSha: artifactSourceSha, kind: "ANDROID_BUILD", identityKey, expectedRemoteId: recordedBuildAction.remote_id, remoteId: replacement.id, state: "CREATED", evidence: replacement });
-      }
-      decision = { decision: "CREATED", build: replacement };
-    }
+    if (["FAILED_MATCH", "CANCELED_MATCH"].includes(decision.decision)) throw new Error(`Android native delivery requires explicit owner-authorized recovery: ${decision.decision}.`);
     let build = decision.build;
     if (decision.decision === "NONE") {
       await lease.checkpoint();
@@ -626,8 +629,14 @@ async function resolvedIdentity(root) {
 }
 
 export async function runDeliveries(deliveries) {
+  const { results, failures } = await settleDeliveries(deliveries);
+  if (failures.length) throwDeliveryFailures(failures);
+  return results;
+}
+
+export async function settleDeliveries(deliveries) {
   const entries = Object.entries(deliveries);
-  if (!entries.length) return {};
+  if (!entries.length) return { results: {}, failures: [] };
   const settled = await Promise.allSettled(entries.map(([, deliver]) => Promise.resolve().then(deliver)));
   const results = {};
   const failures = [];
@@ -637,12 +646,17 @@ export async function runDeliveries(deliveries) {
     if (outcome.status === "fulfilled") results[target] = outcome.value;
     else failures.push({ target, error: outcome.reason });
   }
+  return { results, failures };
+}
+
+function throwDeliveryFailures(failures) {
   if (failures.length === 1) throw failures[0].error;
-  if (failures.length > 1) {
-    const details = failures.map(({ target, error }) => `${target}: ${error instanceof Error ? error.message : String(error)}`).join("; ");
-    throw new AggregateError(failures.map(({ error }) => error), `Parallel delivery failed for ${failures.map(({ target }) => target).join(", ")}: ${details}`);
-  }
-  return results;
+  const details = failures.map(({ target, error }) => `${target}: ${error instanceof Error ? error.message : String(error)}`).join("; ");
+  throw new AggregateError(failures.map(({ error }) => error), `Parallel delivery failed for ${failures.map(({ target }) => target).join(", ")}: ${details}`);
+}
+
+function isTerminalNativeAction(action) {
+  return ["ERRORED", "FAILED", "CANCELED", "CANCELLED"].includes(String(action?.state ?? "").toUpperCase());
 }
 
 export const runNativeDeliveries = runDeliveries;

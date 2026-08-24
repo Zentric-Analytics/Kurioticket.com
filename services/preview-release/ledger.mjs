@@ -524,6 +524,105 @@ export class PreviewLedger {
     } finally { client.release(); }
   }
 
+  async recordDeliveryEvidence({ sourceSha, workerId, evidence }) {
+    assertExactSha(sourceSha);
+    const result = await this.pool.query(
+      `UPDATE preview_release SET evidence=$3::jsonb, updated_at=now()
+       WHERE source_sha=$1 AND lock_owner=$2 AND state='DELIVERING' RETURNING *`,
+      [sourceSha, workerId, JSON.stringify(evidence)],
+    );
+    if (result.rowCount !== 1) throw new Error("Partial Preview platform delivery evidence was rejected.");
+    return result.rows[0];
+  }
+
+  async latestNativeBuildRecovery({ platform, fingerprint }) {
+    const kind = platform === "ios" ? "IOS_BUILD" : platform === "android" ? "ANDROID_BUILD" : null;
+    if (!kind || !/^[a-z0-9._-]{3,128}$/i.test(String(fingerprint ?? ""))) throw new Error("Native recovery identity is invalid.");
+    const prefix = `native-build-recovery:${platform}:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}:`;
+    const result = await this.pool.query(
+      `SELECT * FROM preview_release_action
+       WHERE kind=$1 AND left(identity_key,length($2))=$2
+       ORDER BY created_at DESC, id DESC LIMIT 1`,
+      [kind, prefix],
+    );
+    return result.rows[0] ?? null;
+  }
+
+  async nativeRecoveryState({ platform, fingerprint }) {
+    const kind = platform === "ios" ? "IOS_BUILD" : platform === "android" ? "ANDROID_BUILD" : null;
+    if (!kind || !/^[a-z0-9._-]{3,128}$/i.test(String(fingerprint ?? ""))) throw new Error("Native recovery identity is invalid.");
+    const canonicalIdentity = `native-build:${platform}:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}`;
+    const recoveryPrefix = `native-build-recovery:${platform}:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}:`;
+    const result = await this.pool.query(
+      `SELECT source_sha,state,identity_key FROM preview_release_action
+       WHERE kind=$1 AND (identity_key=$2 OR left(identity_key,length($3))=$3)
+       ORDER BY created_at DESC,id DESC`,
+      [kind, canonicalIdentity, recoveryPrefix],
+    );
+    const latestRecovery = result.rows.find(({ identity_key }) => identity_key.startsWith(recoveryPrefix)) ?? null;
+    const terminal = result.rows.find(({ state }) => ["ERRORED", "FAILED", "CANCELED", "CANCELLED"].includes(state)) ?? null;
+    return {
+      required: Boolean(terminal) && !result.rows.some(({ state }) => state === "FINISHED"),
+      previousAttemptState: terminal?.state ?? null,
+      recoveryAttemptState: latestRecovery?.state ?? null,
+      recoverySourceSha: latestRecovery?.source_sha ?? null,
+    };
+  }
+
+  async reserveNativeBuildRecovery({ sourceSha, platform, fingerprint }) {
+    assertExactSha(sourceSha);
+    const kind = platform === "ios" ? "IOS_BUILD" : platform === "android" ? "ANDROID_BUILD" : null;
+    if (!kind || !/^[a-z0-9._-]{3,128}$/i.test(String(fingerprint ?? ""))) throw new Error("Native recovery identity is invalid.");
+    const canonicalIdentity = `native-build:${platform}:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}`;
+    const recoveryPrefix = `native-build-recovery:${platform}:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}:`;
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))", [kind, canonicalIdentity]);
+      const delivered = await client.query(
+        "SELECT 1 FROM preview_delivered_native_state WHERE platform=$1 AND fingerprint=$2 LIMIT 1",
+        [platform, fingerprint],
+      );
+      if (delivered.rowCount) throw new Error(`A compatible delivered ${platform} native baseline already exists; replacement is forbidden.`);
+      const failed = await client.query(
+        `SELECT id,remote_id,state FROM preview_release_action
+         WHERE kind=$1 AND (identity_key=$2 OR left(identity_key,length($3))=$3)
+           AND state IN ('ERRORED','FAILED','CANCELED','CANCELLED')
+         ORDER BY created_at DESC,id DESC LIMIT 1`,
+        [kind, canonicalIdentity, recoveryPrefix],
+      );
+      if (!failed.rowCount) throw new Error(`Owner-authorized ${platform} recovery requires a durable terminal failed native action.`);
+      const active = await client.query(
+        `SELECT * FROM preview_release_action
+         WHERE kind=$1 AND left(identity_key,length($2))=$2
+           AND state NOT IN ('ERRORED','FAILED','CANCELED','CANCELLED')
+         ORDER BY created_at DESC,id DESC LIMIT 2`,
+        [kind, recoveryPrefix],
+      );
+      if (active.rowCount > 1) throw new Error(`Multiple active ${platform} native recovery attempts exist.`);
+      if (active.rowCount === 1) {
+        await client.query("COMMIT");
+        return { action: active.rows[0], created: false };
+      }
+      const attempts = await client.query(
+        "SELECT count(*)::int AS count FROM preview_release_action WHERE kind=$1 AND left(identity_key,length($2))=$2",
+        [kind, recoveryPrefix],
+      );
+      const recoveryAttempt = Number(attempts.rows[0]?.count ?? 0) + 1;
+      const identityKey = `${recoveryPrefix}${recoveryAttempt}`;
+      const inserted = await client.query(
+        `INSERT INTO preview_release_action (source_sha,kind,identity_key,state,evidence)
+         VALUES ($1,$2,$3,'RESERVED',$4::jsonb) RETURNING *`,
+        [sourceSha, kind, identityKey, JSON.stringify({ nativeFingerprint: fingerprint, nativeArtifactSourceSha: sourceSha, latestCompatibleSourceSha: sourceSha, ownershipSource: "OWNER_AUTHORIZED_TERMINAL_REPLACEMENT", recoveryAttempt, replacesTerminalActionId: failed.rows[0].id })],
+      );
+      await client.query("COMMIT");
+      return { action: inserted.rows[0], created: true };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally { client.release(); }
+  }
+
   async getFinishedIosDistributionForBuild(buildId) {
     const result = await this.pool.query(
       `SELECT * FROM preview_release_action
