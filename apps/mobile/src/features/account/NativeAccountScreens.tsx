@@ -11,13 +11,14 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { FlowIcon } from "../flow/FlowIcon";
 import { addAirline, beginLoad, beginSave, canSubmitSupport, editDraft, failLoad, failSave, faqAccessibility, filterFaqs, filterOptions, finishLoad, finishSave, initialAsyncDraft, invalidateRequests, isDirty, supportCategories, supportDraft, toggleExpanded, type AsyncDraft } from "./nativeAccountModels";
+import { signInHref } from "../auth/signInIntent";
 
 function Header({ title }: { title: string }) { const { theme } = useAppTheme(); const { t } = useMobileLocalization(); return <View style={s.header}><Pressable accessibilityRole="button" accessibilityLabel={t("back")} onPress={() => { Keyboard.dismiss(); router.back(); }} style={s.hit}><FlowIcon name="back" color={theme.icon} /></Pressable><Text accessibilityRole="header" style={[s.title, { color: theme.text }]}>{title}</Text><View style={s.hit} /></View>; }
 function Shell({ title, children }: { title: string; children: React.ReactNode }) { const { theme } = useAppTheme(); return <SafeAreaView style={[s.safe, { backgroundColor: theme.background }]} edges={["top", "bottom"]}><Header title={title}/>{children}</SafeAreaView>; }
 function Field({ label, ...props }: { label: string } & React.ComponentProps<typeof TextInput>) { const { theme } = useAppTheme(); return <View style={s.field}><Text style={[s.label, { color: theme.text }]}>{label}</Text><TextInput accessibilityLabel={label} placeholderTextColor={theme.muted} style={[s.input, props.multiline && s.multiline, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]} {...props}/></View>; }
 function Button({ label, onPress, disabled = false }: { label: string; onPress: () => void; disabled?: boolean }) { return <Pressable accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled} onPress={onPress} style={[s.button, disabled && s.disabled]}><Text style={s.buttonText}>{label}</Text></Pressable>; }
 function ErrorNotice({ text, retry }: { text: string; retry?: () => void }) { const { t } = useMobileLocalization(); return <View><Text accessibilityRole="alert" style={s.error}>{text}</Text>{retry ? <Pressable accessibilityRole="button" onPress={retry} style={s.linkHit}><Text style={s.link}>{t("retry")}</Text></Pressable> : null}</View>; }
-async function requireAccount(returnTo: "/email-preferences" | "/travel-preferences") { if (await readSession().catch(() => null)) return true; router.replace({ pathname: "/(tabs)/profile/sign-in", params: { returnTo } }); return false; }
+async function requireAccount(returnTo: "/email-preferences" | "/travel-preferences") { if (await readSession().catch(() => null)) return true; router.replace(signInHref(returnTo)); return false; }
 
 function useAsyncDraftModel<T>(initial: T) {
   const [state, setState] = useState(() => initialAsyncDraft(initial));

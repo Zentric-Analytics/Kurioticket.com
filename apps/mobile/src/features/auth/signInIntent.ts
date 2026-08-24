@@ -9,4 +9,4 @@ export function validateSignInIntent(value: unknown): ProtectedRoute {
   if (decoded !== value && /\.\.|\/\//.test(decoded)) return defaultProtectedRoute;
   return allowed.has(value) ? value as ProtectedRoute : defaultProtectedRoute;
 }
-export function signInHref(returnTo: ProtectedRoute) { return { pathname: "/(tabs)/profile/sign-in" as const, params: { returnTo } }; }
+export function signInHref(returnTo: ProtectedRoute) { return { pathname: "/email-auth" as const, params: { returnTo } }; }

@@ -57,6 +57,7 @@ import {
   type PersonalDetailsSelectorOption,
 } from "./personalDetailsModel";
 import { personalDetailsCopy } from "./translations";
+import { signInHref } from "../auth/signInIntent";
 
 type DateDraft = {
   year: string;
@@ -771,10 +772,7 @@ export function PersonalDetailsScreen() {
         (e instanceof TravelApiError && e.status === 401) ||
         !(await readSession().catch(() => null));
       if (expired) {
-        router.replace({
-          pathname: "/(tabs)/profile/sign-in",
-          params: { returnTo: "/personal-information" },
-        });
+        router.replace(signInHref("/personal-information"));
         return;
       }
       if (mounted.current) setError(c.loadFailure);

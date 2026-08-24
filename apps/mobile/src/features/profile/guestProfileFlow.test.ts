@@ -20,7 +20,8 @@ test("guest Profile has one sign-in choice and no fake account identity", () => 
   const guest = source("src/features/profile/GuestProfileScreen.tsx");
   assert.match(guest, /t\("guestHeroTitle"\)/);
   assert.match(guest, /t\("guestHeroBody"\)/);
-  assert.match(guest, /profile\/sign-in/);
+  assert.match(guest, /router\.push\(signInHref\("\/\(tabs\)\/profile"\)\)/);
+  assert.doesNotMatch(guest, /\/\(tabs\)\/profile\/sign-in/);
   for (const forbidden of ["Guest traveler", "Member since", "personalDetails", "securitySettings", "emailPreferences", "travelPreferences", "myTrips", "priceAlerts", "Continue with Email", "Continue with Google", "Continue as Guest"]) assert.doesNotMatch(guest, new RegExp(forbidden));
 });
 

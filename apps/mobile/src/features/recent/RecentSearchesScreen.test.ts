@@ -8,7 +8,7 @@ test("Recent route renders an independent Recent searches screen", () => {
   assert.match(source("app/recent.tsx"), /RecentSearchesScreen/);
   assert.match(screen, />Recent searches<\/Text>/);
   assert.doesNotMatch(screen, /useCanonicalSaved|canonicalSavedCards|destinationMedia|regionBrowseCardLayout|SavedCard|accessibilityRole="tab"/);
-  assert.match(screen, /returnTo: "\/recent"/);
+  assert.match(screen, /signInHref\("\/recent"\)/);
   assert.match(screen, /Sign in to view recent searches/);
 });
 

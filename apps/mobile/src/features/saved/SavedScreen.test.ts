@@ -23,7 +23,7 @@ test("Saved UI has one canonical visible source and keeps guest protection", () 
   assert.doesNotMatch(screen, /savedIds|savedFlights|savedSections|savedCategoryOrder/);
   assert.doesNotMatch(screen, /useSavedFlights|popularDestinationStays/);
   assert.match(screen, /!isAuthenticated/);
-  assert.match(screen, /pathname: "\/\(tabs\)\/profile\/sign-in"/);
+  assert.match(screen, /signInHref\("\/saved"\)/);
 });
 
 test("flight, hotel, and search become the same stable card model", () => {
@@ -200,5 +200,5 @@ test("Saved route renders the independent Saved screen", () => {
   const screen = source("src/features/saved/SavedScreen.tsx");
   assert.doesNotMatch(screen, /recentSearches|deleteRecentSearch|clearRecentSearches|recentSearchNavigation|accessibilityRole="tab"/);
   assert.match(screen, />Saved<\/Text>/);
-  assert.match(screen, /returnTo: "\/saved"/);
+  assert.match(screen, /signInHref\("\/saved"\)/);
 });

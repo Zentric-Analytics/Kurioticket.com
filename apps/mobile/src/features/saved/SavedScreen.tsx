@@ -14,6 +14,7 @@ import { regionBrowseCardLayout } from "../explore/regionBrowseCardLayout";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { hasValidSearchPlan, legacyFlightSearchParams, legacyHotelSearchParams, sanitizeSearchParams } from "../flow/savedSearchContext";
+import { signInHref } from "../auth/signInIntent";
 
 type SavedCardModel = {
   item: MobileSavedItem;
@@ -113,7 +114,7 @@ export function SavedScreen() {
   ]);
   return <SafeAreaView edges={["top", "bottom"]} style={[styles.safe, { backgroundColor: theme.background }]}>
     <View style={styles.header}><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.back}><FlowIcon name="back" color={theme.icon} size={27} /></Pressable><Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>Saved</Text></View>
-    {!authResolved ? null : !isAuthenticated ? <View style={styles.center}><FlowIcon name="heart" color={flowColors.blue} size={42} /><Text style={[styles.emptyTitle, { color: theme.text }]}>Sign in to view saved favorites</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Your saved travel is private to your account.</Text><Pressable accessibilityRole="button" accessibilityLabel="Sign in" onPress={() => router.push({ pathname: "/(tabs)/profile/sign-in", params: { returnTo: "/saved" } })} style={styles.primary}><Text style={styles.primaryText}>Sign in</Text></Pressable></View> : <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={styles.content} overScrollMode="never">
+    {!authResolved ? null : !isAuthenticated ? <View style={styles.center}><FlowIcon name="heart" color={flowColors.blue} size={42} /><Text style={[styles.emptyTitle, { color: theme.text }]}>Sign in to view saved favorites</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Your saved travel is private to your account.</Text><Pressable accessibilityRole="button" accessibilityLabel="Sign in" onPress={() => router.push(signInHref("/saved"))} style={styles.primary}><Text style={styles.primaryText}>Sign in</Text></Pressable></View> : <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={styles.content} overScrollMode="never">
       {canonical.error ? <Text accessibilityRole="alert" style={styles.syncError}>{canonical.error}</Text> : null}
       <Text style={[styles.explanation, { color: theme.muted }]}>Saved items are things you chose to keep.</Text>
       {cards.length ? cards.map((model) => <SavedCard key={`${model.item.type}:${model.item.id}`} model={model} remove={(item) => confirmRemove(item, model.title)} />) : !canonical.loading ? <View style={styles.center}><FlowIcon name="heart" color={flowColors.blue} size={42} /><Text style={[styles.emptyTitle, { color: theme.text }]}>No saved travel yet</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Use Save on a flight, hotel, or search to keep it here.</Text></View> : null}

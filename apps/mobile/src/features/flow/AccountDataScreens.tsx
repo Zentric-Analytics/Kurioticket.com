@@ -8,6 +8,7 @@ import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { FLIGHT_TRIP_TYPE_LABELS } from "./flightTripTypeLabels";
+import { signInHref } from "../auth/signInIntent";
 
 function Shell({ title, children }: { title: string; children: React.ReactNode }) {
   return <SafeAreaView style={flowStyles.safe} edges={["top"]}><View style={styles.header}><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={flowStyles.iconButton}><FlowIcon name="back" /></Pressable><Text accessibilityRole="header" style={flowStyles.title}>{title}</Text></View>{children}</SafeAreaView>;
@@ -22,7 +23,7 @@ export function PriceAlertsScreen() {
   const [alerts, setAlerts] = useState<MobilePriceAlert[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState(""); const [pending, setPending] = useState<Record<string, boolean>>({});
   const revision = useRef(0); const mounted = useRef(true);
   useEffect(() => () => { mounted.current = false; }, []);
-  const load = useCallback(async () => { const started = revision.current; setLoading((value) => alerts.length ? value : true); setError(""); try { const incoming = (await travelApi.priceAlerts()).alerts; if (mounted.current && started === revision.current) setAlerts([...new Map(incoming.map((alert) => [alert.id, alert])).values()]); } catch (e) { if (e instanceof TravelApiError && e.status === 401 || !await readSession().catch(() => null)) { router.replace({ pathname: "/(tabs)/profile/sign-in", params: { returnTo: "/price-alerts" } }); return; } if (mounted.current) setError(e instanceof TravelApiError ? e.message : "Unable to load alerts."); } finally { if (mounted.current) setLoading(false); } }, [alerts.length]);
+  const load = useCallback(async () => { const started = revision.current; setLoading((value) => alerts.length ? value : true); setError(""); try { const incoming = (await travelApi.priceAlerts()).alerts; if (mounted.current && started === revision.current) setAlerts([...new Map(incoming.map((alert) => [alert.id, alert])).values()]); } catch (e) { if (e instanceof TravelApiError && e.status === 401 || !await readSession().catch(() => null)) { router.replace(signInHref("/price-alerts")); return; } if (mounted.current) setError(e instanceof TravelApiError ? e.message : "Unable to load alerts."); } finally { if (mounted.current) setLoading(false); } }, [alerts.length]);
   useFocusEffect(useCallback(() => { void load(); }, [load]));
   const mutateStatus = async (alert: MobilePriceAlert, status: "ACTIVE" | "PAUSED") => {
     if (pending[alert.id]) return; revision.current += 1; setPending((value) => ({ ...value, [alert.id]: true })); setAlerts((value) => value.map((item) => item.id === alert.id ? { ...item, status } : item));
