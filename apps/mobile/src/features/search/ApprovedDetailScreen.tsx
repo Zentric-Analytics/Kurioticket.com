@@ -18,7 +18,7 @@ import {
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { travelApi, type FlightResult, type HotelResult } from "../../api/travelApi";
 import { FlowIcon } from "../flow/FlowIcon";
-import { Armchair, ArrowLeft, FilePenLine, Luggage, Repeat2, ShieldX } from "lucide-react-native";
+import { Armchair, ArrowLeft, FilePenLine, Heart, Luggage, Repeat2, ShieldX } from "lucide-react-native";
 import { Badge, Button, TopBar, clock, money, shortDate, ui } from "./SearchUi";
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { useAppTheme } from "../../theme/AppTheme";
@@ -38,6 +38,9 @@ import { flightShareMessage, shareFlightForAuthenticatedSession } from "./flight
 import { flightEditSearchParams } from "../flow/flightSearchModel";
 import { flightDetailHeaderModel } from "./flightDetailHeaderModel";
 import { flightTripDetails, type FlightTripDetail, type FlightTripDetailIcon } from "./flightTripDetails";
+import { useSavedFlights } from "../../storage/useSavedFlights";
+import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
+import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -85,6 +88,8 @@ export function ApprovedDetailScreen({
 function FlightDetail({ result, params }: { result: FlightResult; params: Record<string, string | string[]> }) {
   const inset = useSafeAreaInsets();
   const { theme } = useAppTheme();
+  const { savedFlights, toggle: toggleSavedFlight } = useSavedFlights();
+  const saved = savedFlights.has(result.id);
   const header = flightDetailHeaderModel(result, params);
   const passedFare = parse<DisplayPrice>(params.displayFare);
   const parsedDisplayCurrencyContext = parse<DisplayCurrencyResolution>(params.displayCurrencyContext);
@@ -206,6 +211,20 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
           </Pressable>
           <Text accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[d.headerRoute, { color: theme.textPrimary }]}>{header.route}</Text>
           <View accessibilityLabel="Flight details actions" style={d.headerActions}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={saved ? `Remove ${result.airlineName} flight from saved` : `Save ${result.airlineName} flight`}
+              accessibilityState={{ selected: saved }}
+              onPress={() => toggleSavedFlight(result)}
+              style={({ pressed }) => [d.headerAction, pressed && d.headerActionPressed]}
+            >
+              <Heart
+                size={22}
+                strokeWidth={2}
+                fill={saved ? androidFavoriteColors.active : "transparent"}
+                color={saved ? androidFavoriteColors.active : theme.icon}
+              />
+            </Pressable>
             <Pressable accessibilityRole="button" accessibilityLabel="Edit search" onPress={() => router.push({ pathname: "/edit-flight-search", params: flightEditSearchParams(params) })} style={({ pressed }) => [d.headerAction, pressed && d.headerActionPressed]}>
               <FilePenLine size={22} strokeWidth={2} color={theme.icon} />
             </Pressable>
@@ -329,6 +348,8 @@ function HotelDetail({
   params: Record<string, string | string[]>;
 }) {
   const inset = useSafeAreaInsets();
+  const canonical = useCanonicalSaved();
+  const saved = canonical.items.some(item => item.type === "hotel" && ((item.payload as Record<string, unknown> | undefined)?.result as { id?: string } | undefined)?.id === result.id);
   const compact = useWindowDimensions().width < 430;
   const images = result.imageUrls?.length
     ? result.imageUrls
@@ -380,9 +401,15 @@ function HotelDetail({
           >
             <FlowIcon name="back" />
           </Pressable>
-          <View style={[d.floating, { right: 64 }]}>
-            <FlowIcon name="heart" />
-          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={saved ? `Remove ${result.name} hotel from saved` : `Save ${result.name} hotel`}
+            accessibilityState={{ selected: saved }}
+            onPress={() => void canonical.toggleHotel(result, params)}
+            style={({ pressed }) => [d.floating, { right: 64 }, pressed && d.headerActionPressed]}
+          >
+            <FlowIcon name="heart" fill={saved ? ui.blue : "white"} />
+          </Pressable>
           <View style={[d.floating, { right: 14 }]}>
             <FlowIcon name="share" />
           </View>
