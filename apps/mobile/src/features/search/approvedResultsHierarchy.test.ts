@@ -10,22 +10,22 @@ const resultsBody = source.slice(
 );
 
 test("ready flight results place the hierarchy controls before the alert and cards", () => {
-  const flightAlert = source.indexOf('status === "ready" && product === "flight" && plan.plan');
+  const state = source.indexOf('product === "flight" && flightState');
+  const flightAlert = source.indexOf('status === "ready" && product === "flight" && !flightState && plan.plan');
   const summary = source.indexOf("flightResultCountLabel(sorted.length)");
   const controls = source.indexOf("{filterRail}", summary);
   const cards = source.indexOf('sorted.map((x, i)', flightAlert);
-  const filteredEmpty = source.indexOf('title="No flights match these filters"', cards);
-  const hotelAlert = source.indexOf('product === "hotel" && availability.priceAlerts', filteredEmpty);
+  const hotelAlert = source.indexOf('product === "hotel" && availability.priceAlerts', cards);
   const bottomNavigation = source.indexOf("<BottomNav flightResults={flightResults} />", hotelAlert);
 
   assert.ok(flightAlert >= 0, "the flight price-alert eligibility guard should exist");
+  assert.ok(state < flightAlert, "dedicated result states should be resolved before normal result content");
   assert.ok(summary < controls, "the results count should precede controls");
   assert.ok(flightAlert < cards, "the flight price alert should precede flight cards");
-  assert.ok(cards < filteredEmpty, "flight cards should precede the filtered-empty state");
-  assert.ok(filteredEmpty < hotelAlert, "the separately placed hotel price alert should remain after results");
+  assert.ok(cards < hotelAlert, "the separately placed hotel price alert should remain after results");
   assert.ok(hotelAlert < bottomNavigation, "all result content should precede bottom navigation");
   assert.equal(
-    source.match(/product === "flight" && plan\.plan/g)?.length,
+    source.match(/product === "flight" && !flightState && plan\.plan/g)?.length,
     1,
     "the flight price alert should render only once",
   );
@@ -93,7 +93,7 @@ test("the flight alert uses semantic light and dark theme values", () => {
 });
 
 test("flight price-alert eligibility is route-level while the count stays filter-aware", () => {
-  assert.match(source, /product === "flight" && plan\.plan/);
+  assert.match(source, /product === "flight" && !flightState && plan\.plan/);
   assert.doesNotMatch(source, /sorted\.length > 0 && availability\.priceAlerts/);
   assert.match(source, /flightResultCountLabel\(sorted\.length\)/);
 });
@@ -105,5 +105,5 @@ test("feature-disabled flight results pass availability into the switch while re
 
 test("loading and error states cannot expose the flight price alert", () => {
   assert.doesNotMatch(source, /status === "(?:loading|error)"[^\n]*<PriceAlert/);
-  assert.match(source, /status === "ready" && product === "flight" && plan\.plan/);
+  assert.match(source, /status === "ready" && product === "flight" && !flightState && plan\.plan/);
 });

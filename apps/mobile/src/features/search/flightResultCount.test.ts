@@ -19,8 +19,8 @@ test("flight count is derived from the collection rendered as FlightCards", () =
 
 test("flight summary copy is removed while the hotel summary stays intact", () => {
   const flightSummary = source.slice(
-    source.indexOf('status === "ready" ? ('),
-    source.indexOf('{filterRail}', source.indexOf('status === "ready" ? (')),
+    source.indexOf('status === "ready" && !flightState ? ('),
+    source.indexOf('filterRail : null', source.indexOf('status === "ready" && !flightState ? (')),
   );
   assert.match(flightSummary, /accessibilityRole="header"/);
   assert.doesNotMatch(flightSummary, /s0\.found|Prices include taxes|Price may change|Book soon/);
@@ -29,7 +29,7 @@ test("flight summary copy is removed while the hotel summary stays intact", () =
 });
 
 test("count and controls precede the price alert while FlightCard rendering remains in place", () => {
-  const alert = source.indexOf('product === "flight" && plan.plan');
+  const alert = source.indexOf('product === "flight" && !flightState && plan.plan');
   const count = source.indexOf("flightResultCountLabel(sorted.length)");
   const controls = source.indexOf("{filterRail}", count);
   const card = source.indexOf("<FlightCard", alert);
