@@ -102,6 +102,8 @@ import {
   parseTargetPrice,
 } from "../flow/flightPriceAlertModel";
 import type { SearchPlan } from "../flow/travelSearchModel";
+import { FlightResultsState } from "./FlightResultsState";
+import { resolveFlightResultsState } from "./flightResultsStateModel";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -120,6 +122,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [retry, setRetry] = useState(0);
   const searchSequence = useRef(0);
   const activeSearch = useRef<AbortController | null>(null);
+  const requestInFlight = useRef(false);
+  const resultsRef = useRef<(FlightResult | HotelResult)[]>([]);
   const [sort, setSort] = useState<FlightSort>("best");
   const [sortOpen, setSortOpen] = useState(false);
   const [filters, setFilters] = useState<FlightFilters>(emptyFlightFilters);
@@ -162,15 +166,19 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     const isLatest = () => sequence === searchSequence.current;
     const isCurrent = () => !controller.signal.aborted && isLatest();
     if (!plan.plan) {
+      requestInFlight.current = false;
       setStatus("error");
       setMessage(plan.error || "Invalid search");
       return;
     }
+    requestInFlight.current = true;
     setStatus("loading");
     setMessage("");
     if (visualTest) {
       setResults(product === "flight" ? visualFlights : visualHotels);
+      resultsRef.current = product === "flight" ? visualFlights : visualHotels;
       setStatus("ready");
+      requestInFlight.current = false;
       return;
     }
     const stopEventLoopMonitor = __DEV__ && product === "flight"
@@ -197,6 +205,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           : (response.results as HotelResult[]).filter(validBookableHotel);
       const clientValidationMs = performance.now() - validationStartedAt;
       setResults(valid);
+      resultsRef.current = valid;
       setStatus(valid.length ? "ready" : "empty");
       setMessage(response.warnings?.[0] || "");
       void recordRecentSearchBestEffort(buildRecentSearch(product, plan.plan.payload));
@@ -212,15 +221,17 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     } catch (e) {
       if (!isLatest()) return;
       if (!deadlineExpired && (controller.signal.aborted || (e instanceof TravelApiError && e.code === "cancelled"))) return;
-      setStatus("error");
-      setMessage(
+      const failureMessage =
         deadlineExpired ||
         (e instanceof TravelApiError && e.code === "timeout") ||
         (e instanceof Error && e.message === "flight_loading_deadline")
           ? "Flight search took too long. Please try again."
-          : e instanceof Error ? e.message : "Search failed",
-      );
+          : e instanceof Error ? e.message : "Search failed";
+      // A refresh failure must not discard a still-usable result collection.
+      setStatus(resultsRef.current.length ? "ready" : "error");
+      setMessage(failureMessage);
     } finally {
+      if (isLatest()) requestInFlight.current = false;
       if (stopEventLoopMonitor) {
         // Let an overdue interval run before clearing it so a blocking parse or
         // validation phase at request completion is included in max drift.
@@ -277,6 +288,16 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   }, [results, filters, sort, product, normalizeFlightPrice]);
   const flightOptions = useMemo(() => flightFilterOptions(results as FlightResult[], normalizeFlightPrice), [results, normalizeFlightPrice]);
   const activeFilterCount = activeFlightFilterCount(filters, flightOptions);
+  const flightState = product === "flight" ? resolveFlightResultsState({
+    status,
+    rawResultCount: results.length,
+    displayedResultCount: sorted.length,
+  }) : null;
+  const retrySearch = useCallback(() => {
+    if (requestInFlight.current) return;
+    requestInFlight.current = true;
+    setRetry((x) => x + 1);
+  }, []);
   const openFlightFilters = (section: FlightFilterSectionName) => {
     setFilterSection(section);
     setFilterOpen(true);
@@ -380,22 +401,22 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   );
   const resultContent = (
     <>
-      {status === "loading" ? <Loading product={product} /> : null}
-              {message ? (
+      {product === "hotel" && status === "loading" ? <Loading product={product} /> : null}
+              {message && (!flightResults || status === "ready") ? (
                 <Text accessibilityRole="alert" style={[s0.notice, flightResults && { backgroundColor: theme.surface, color: theme.textPrimary, borderColor: theme.border, borderWidth: 1 }]}>
                   {message}
                 </Text>
               ) : null}
-              {status === "empty" ? (
+              {product === "hotel" && status === "empty" ? (
                 <Empty
-                  title={`No ${product === "flight" ? "flights" : "properties"} found`}
+                  title="No properties found"
                   body="Try changing your dates or removing filters."
                   retry={() => setRetry((x) => x + 1)}
                   edit={edit}
                   flightResults={flightResults}
                 />
               ) : null}
-              {status === "error" ? (
+              {product === "hotel" && status === "error" ? (
                 <Empty
                   title="Search could not be completed"
                   body={message || "Check your connection and try again."}
@@ -404,7 +425,16 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   flightResults={flightResults}
                 />
               ) : null}
-              {status === "ready" && product === "flight" && plan.plan ? (
+              {product === "flight" && flightState ? (
+                <FlightResultsState
+                  state={flightState}
+                  onRetry={retrySearch}
+                  onEditSearch={edit}
+                  onClearFilters={() => setFilters(emptyFlightFilters())}
+                  onAdjustFilters={() => openFlightFilters("all")}
+                />
+              ) : null}
+              {status === "ready" && product === "flight" && !flightState && plan.plan ? (
                 <PriceAlert product={product} plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} />
               ) : null}
               {status === "ready" && product === "hotel" ? (
@@ -429,7 +459,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   />
                 </View>
               ) : null}
-              {sorted.map((x, i) =>
+              {!flightState && sorted.map((x, i) =>
                 product === "flight" ? (
                   <FlightCard key={x.id} result={x as FlightResult} displayPrice={flightDisplayPrices.get(x.id)} displayCurrencyContext={currencyState?.resolution} rank={i} params={params} />
                 ) : (
@@ -441,16 +471,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   />
                 ),
               )}
-              {status === "ready" && product === "flight" && results.length > 0 && sorted.length === 0 ? (
-                <Empty
-                  title="No flights match these filters"
-                  body="Clear the selected filters to see all loaded flights."
-                  retry={() => setFilters(emptyFlightFilters())}
-                  retryLabel="Clear filters"
-                  edit={edit}
-                  flightResults
-                />
-              ) : null}
               {status === "ready" && product === "hotel" && availability.priceAlerts ? <PriceAlert product={product} /> : null}
     </>
   );
@@ -494,7 +514,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         >
           <View>{dateStrip}</View>
           <View style={[s0.stickyFilterSurface, { backgroundColor: theme.background }]}>
-            {status === "ready" ? (
+            {status === "ready" && !flightState ? (
               <Text
                 accessibilityRole="header"
                 style={[s0.flightResultCount, { color: theme.textPrimary }]}
@@ -502,7 +522,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 {flightResultCountLabel(sorted.length)}
               </Text>
             ) : null}
-            {filterRail}
+            {status === "ready" && results.length > 0 ? filterRail : null}
           </View>
           <View style={[s0.body, s0.flightResultsBody]}>{resultContent}</View>
         </ScrollView>
