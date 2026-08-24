@@ -777,7 +777,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
           ) : null}
         </View>
         <View style={[s0.actionColumn, s0.rightColumnContract]}>
-          <Text style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+          <Text accessibilityLabel={fare?.accessibilityLabel ?? "Price unavailable"} style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
             {fare?.formatted ?? "—"}
           </Text>
           <Pressable

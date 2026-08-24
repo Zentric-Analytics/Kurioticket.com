@@ -72,6 +72,7 @@ export type DisplayPrice = {
   amount: number;
   currency: string;
   formatted: string;
+  accessibilityLabel: string;
   providerAmount: number;
   providerCurrency: string;
   converted: boolean;
@@ -107,10 +108,40 @@ export function convertAmount(
 }
 
 export function formatCurrency(amount: number, currency: string) {
+  const normalizedCurrency = currency.toUpperCase();
+  const formatter = new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: normalizedCurrency,
+    currencyDisplay: "narrowSymbol",
+    maximumFractionDigits: 0,
+  });
+  const parts = formatter.formatToParts(amount);
+  const narrowSymbol = parts.find(({ type }) => type === "currency")?.value;
+
+  // A bare dollar sign loses the fare currency. CLDR's English symbol form
+  // supplies compact disambiguators such as US$, CA$, and A$ without a
+  // currency-specific symbol table.
+  if (narrowSymbol === "$") {
+    const unambiguousSymbol = new Intl.NumberFormat("en-GB", {
+      style: "currency",
+      currency: normalizedCurrency,
+      currencyDisplay: "symbol",
+      maximumFractionDigits: 0,
+    }).formatToParts(amount).find(({ type }) => type === "currency")?.value;
+    const dollarLabel = unambiguousSymbol && unambiguousSymbol !== narrowSymbol
+      ? unambiguousSymbol
+      : `${normalizedCurrency.slice(0, 2)}$`;
+    return parts.map((part) => part.type === "currency" ? dollarLabel : part.value).join("");
+  }
+
+  return parts.map(({ value }) => value).join("");
+}
+
+export function currencyAccessibilityLabel(amount: number, currency: string) {
   return new Intl.NumberFormat(undefined, {
     style: "currency",
     currency: currency.toUpperCase(),
-    currencyDisplay: "narrowSymbol",
+    currencyDisplay: "name",
     maximumFractionDigits: 0,
   }).format(amount);
 }
@@ -130,6 +161,7 @@ export function displayPrice(
     amount: displayedAmount,
     currency,
     formatted: formatCurrency(displayedAmount, currency),
+    accessibilityLabel: currencyAccessibilityLabel(displayedAmount, currency),
     providerAmount: amount,
     providerCurrency: provider,
     converted,

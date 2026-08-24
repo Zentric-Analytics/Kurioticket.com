@@ -33,6 +33,13 @@ test("flight card preserves display pricing and provider data during details nav
   assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
 });
 
+test("flight card gives the compact visual fare one semantic spoken label", () => {
+  assert.match(card, /accessibilityLabel=\{fare\?\.accessibilityLabel \?\? "Price unavailable"\}/);
+  assert.equal(card.match(/fare\?\.accessibilityLabel/g)?.length, 1);
+  assert.doesNotMatch(card, /Taxes (?:and fees )?included/);
+  assert.doesNotMatch(card, /Total for \d|Per traveler|Round trip|One way/);
+});
+
 test("every flight card uses the same primary details CTA regardless of rank or theme", () => {
   assert.match(card, /style=\{s0\.detailsButton\}/);
   assert.match(card, /<Text style=\{s0\.detailsButtonText\} numberOfLines=\{1\}>View details<\/Text>/);
@@ -114,7 +121,7 @@ test("flight card keeps long prices single-line in the stable footer action colu
   assert.match(source, /actionColumn: \{ width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 3 \}/);
   assert.doesNotMatch(source, /priceBox:/);
 
-  for (const formattedPrice of ["NGN 89,482", "NGN 837,706", "NGN 1,245,800", "$597", "£1,250", "€1,099"]) {
+  for (const formattedPrice of ["₦89,482", "₦837,706", "₦12,450,000", "US$1,850", "CA$2,310", "A$2,310", "£1,250", "€1,099"]) {
     assert.ok(formattedPrice.length > 0, `${formattedPrice} remains a single Text value`);
   }
 });

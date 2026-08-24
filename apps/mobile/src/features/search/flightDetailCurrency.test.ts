@@ -12,6 +12,7 @@ const passedNgnFare: DisplayPrice = {
   amount: 92_720,
   currency: "NGN",
   formatted: "NGN 92,720",
+  accessibilityLabel: "92,720 Nigerian nairas",
   providerAmount: 67,
   providerCurrency: "USD",
   converted: true,
@@ -63,7 +64,8 @@ test("a new explicit USD preference replaces the passed NGN fare", () => {
   assert.deepEqual(createFlightDetailFare(67, "USD", "USD", {}), {
     amount: 67,
     currency: "USD",
-    formatted: "$67",
+    formatted: "US$67",
+    accessibilityLabel: "67 US dollars",
     providerAmount: 67,
     providerCurrency: "USD",
     converted: false,

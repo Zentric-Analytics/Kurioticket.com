@@ -1,6 +1,21 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { currencyForCountry, displayPrice, isDisplayPriceCurrent, resolveDisplayCurrency, resolveDisplayCurrencyContext } from "./displayCurrency";
+import { currencyForCountry, displayPrice, formatCurrency, isDisplayPriceCurrent, resolveDisplayCurrency, resolveDisplayCurrencyContext } from "./displayCurrency";
+
+test("fare formatting uses compact symbols while keeping dollar currencies unambiguous", () => {
+  assert.equal(formatCurrency(158811, "NGN"), "₦158,811");
+  assert.equal(formatCurrency(420, "USD"), "US$420");
+  assert.equal(formatCurrency(420, "CAD"), "CA$420");
+  assert.equal(formatCurrency(420, "AUD"), "A$420");
+  assert.equal(formatCurrency(1240, "GBP"), "£1,240");
+  assert.equal(formatCurrency(980, "EUR"), "€980");
+});
+
+test("display fares include a spoken currency name without duplicating visual copy", () => {
+  const fare = displayPrice(158811, "NGN", "NGN", { NGN: 1 });
+  assert.equal(fare.formatted, "₦158,811");
+  assert.match(fare.accessibilityLabel, /158,811 Nigerian nairas?/);
+});
 
 test("country regions resolve to their ISO display currencies", () => {
   assert.equal(currencyForCountry("NG"), "NGN");
@@ -77,6 +92,6 @@ test("a missing rate falls back accurately to the provider currency", () => {
   const fare = displayPrice(604, "USD", "NGN", { USD: 1 });
   assert.equal(fare.amount, 604);
   assert.equal(fare.currency, "USD");
-  assert.equal(fare.formatted, "$604");
+  assert.equal(fare.formatted, "US$604");
   assert.equal(fare.converted, false);
 });
