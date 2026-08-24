@@ -23,12 +23,10 @@ import {
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import {
   ArrowLeft,
-  Award,
   Bell,
   Luggage,
   PlaneTakeoff,
   ShieldCheck,
-  Tag,
 } from "lucide-react-native";
 import { FLIGHT_TRIP_TYPE_LABELS } from "../flow/flightTripTypeLabels";
 import { Heart } from "lucide-react-native";
@@ -94,6 +92,7 @@ import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recen
 import { buildPriceByDate, calendarIsoFromTimestamp } from "./dateStripModel";
 import { flightResultCountLabel } from "./flightResultCount";
 import { flightCardLegs, type FlightCardLeg } from "./flightCardLegs";
+import { deriveFlightResultHighlights, type FlightResultHighlight } from "./flightResultHighlights";
 import { readSession } from "../../storage/sessionStorage";
 import {
   buildFlightPriceAlertPayload,
@@ -297,6 +296,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           : (b as HotelResult).valueScore - (a as HotelResult).valueScore,
       );
   }, [results, filters, sort, product, normalizeFlightPrice]);
+  const flightHighlights = useMemo(() => product === "flight"
+    ? deriveFlightResultHighlights(sorted as FlightResult[], normalizeFlightPrice)
+    : new Map<string, FlightResultHighlight>(), [normalizeFlightPrice, product, sorted]);
   const flightOptions = useMemo(() => flightFilterOptions(results as FlightResult[], normalizeFlightPrice), [results, normalizeFlightPrice]);
   const activeFilterCount = activeFlightFilterCount(filters, flightOptions);
   const flightState = product === "flight" ? resolveFlightResultsState({
@@ -472,7 +474,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               ) : null}
               {!flightState && sorted.map((x, i) =>
                 product === "flight" ? (
-                  <FlightCard key={x.id} result={x as FlightResult} displayPrice={flightDisplayPrices.get(x.id)} displayCurrencyContext={currencyState?.resolution} rank={i} params={params} />
+                  <FlightCard key={x.id} result={x as FlightResult} displayPrice={flightDisplayPrices.get(x.id)} displayCurrencyContext={currencyState?.resolution} highlight={flightHighlights.get(x.id)} params={params} />
                 ) : (
                   <HotelCard
                     key={x.id}
@@ -690,7 +692,7 @@ function FlightSortModal({
   );
 }
 
-function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, params }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; rank: number; params: Record<string, string | string[]> }) {
+function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highlight, params }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; highlight?: FlightResultHighlight; params: Record<string, string | string[]> }) {
   const { theme } = useAppTheme();
   const { savedFlights, toggle } = useSavedFlights();
   const saved = savedFlights.has(result.id);
@@ -701,26 +703,17 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, 
   return (
     <View style={[s0.card, { backgroundColor: theme.surface, shadowColor: theme.dark ? "#000000" : "#18305B" }]}>
       <View style={s0.cardTop}>
-        {rank === 0 ? (
-          <View style={s0.badgeRow}>
-            <View style={[s0.resultBadge, theme.dark && { backgroundColor: "#173568" }]}>
-              <Award size={12} strokeWidth={2} color={theme.dark ? "#8FB5FF" : ui.blue} />
-              <Text style={[s0.resultBadgeText, theme.dark && { color: "#8FB5FF" }]}>Best overall</Text>
+        <View style={s0.badgeRow}>
+          {highlight ? (
+            <View
+              accessible
+              accessibilityLabel={`${highlight} flight result`}
+              style={[s0.resultBadge, theme.dark && { backgroundColor: "#173568" }]}
+            >
+              <Text style={[s0.resultBadgeText, theme.dark && { color: "#8FB5FF" }]}>{highlight}</Text>
             </View>
-            <View style={[s0.resultBadge, s0.resultBadgeGreen, theme.dark && { backgroundColor: "#153B2B" }]}>
-              <Tag size={12} strokeWidth={2} color={theme.dark ? "#72D69A" : ui.green} />
-              <Text style={[s0.resultBadgeText, s0.resultBadgeTextGreen, theme.dark && { color: "#72D69A" }]}>Great price</Text>
-            </View>
-          </View>
-        ) : rank === 1 ? (
-          <Badge green flightResults>2nd best</Badge>
-        ) : (
-          <Badge flightResults>
-            {result.stops
-              ? `${result.stops} stop${result.stops > 1 ? "s" : ""}`
-              : "Nonstop"}
-          </Badge>
-        )}
+          ) : null}
+        </View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={saved ? `Remove ${result.airlineName} flight from saved` : `Save ${result.airlineName} flight`}
@@ -746,7 +739,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, 
             />
           </View>
           <View style={s0.flightDetails}>
-            <Text style={[s0.airlineName, { color: theme.textPrimary }]}>
+            <Text accessibilityLabel={`Airline ${result.airlineName}`} style={[s0.airlineName, { color: theme.textPrimary }]} numberOfLines={2} ellipsizeMode="tail">
               {result.airlineName}
             </Text>
             <View style={s0.journeyList}>
@@ -761,13 +754,13 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, 
           {baggageBenefit ? (
             <View style={s0.benefitItem}>
               <Luggage size={15} strokeWidth={1.9} color={theme.icon} />
-              <Text style={[s0.benefit, { color: theme.textSecondary }]} numberOfLines={2}>{baggageBenefit}</Text>
+              <Text style={[s0.benefit, { color: theme.textSecondary }]} numberOfLines={1}>{baggageBenefit}</Text>
             </View>
           ) : null}
           {fareBenefit ? (
             <View style={s0.benefitItem}>
               <ShieldCheck size={15} strokeWidth={1.9} color={theme.icon} />
-              <Text style={[s0.benefit, { color: theme.textSecondary }]} numberOfLines={2}>{fareBenefit}</Text>
+              <Text style={[s0.benefit, { color: theme.textSecondary }]} numberOfLines={1}>{fareBenefit}</Text>
             </View>
           ) : null}
         </View>
@@ -799,7 +792,11 @@ function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: F
     ? `${leg.stops} stop${leg.stops === 1 ? "" : "s"}`
     : "Nonstop";
   return (
-    <View style={s0.journeyBlock}>
+    <View
+      style={s0.journeyBlock}
+      accessible
+      accessibilityLabel={`${label.toLowerCase()}: ${clock(leg.departureTime)} ${leg.originAirport} to ${clock(leg.arrivalTime)} ${leg.destinationAirport}, ${leg.duration}, ${stopLabel}`}
+    >
       <Text style={[s0.journeyLabel, { color: theme.textSecondary }]}>{label}</Text>
       <View style={s0.journeyRow}>
         <View style={s0.durationRow}>
@@ -1317,7 +1314,7 @@ const s0 = StyleSheet.create({
   noChoices: { color: ui.muted, fontSize: 13, lineHeight: 19 },
   sheetActions: { gap: 9 },
   body: { paddingHorizontal: 18, paddingBottom: 92, gap: 14 },
-  flightResultsBody: { paddingHorizontal: 14 },
+  flightResultsBody: { paddingHorizontal: 14, gap: 10 },
   notice: {
     backgroundColor: "#F2F6FF",
     color: ui.navy,
@@ -1342,8 +1339,8 @@ const s0 = StyleSheet.create({
   card: {
     width: "100%",
     borderRadius: 14,
-    padding: 13,
-    gap: 10,
+    padding: 12,
+    gap: 7,
     backgroundColor: "white",
     shadowColor: "#18305B",
     shadowOffset: { width: 0, height: 4 },
@@ -1351,11 +1348,10 @@ const s0 = StyleSheet.create({
     shadowRadius: 10,
     elevation: 3,
   },
-  cardTop: { minHeight: 23, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  cardTop: { minHeight: 20, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   favoritePressed: { opacity: 0.7, transform: [{ scale: 0.94 }] },
-  badgeRow: { flex: 1, minWidth: 0, flexDirection: "row", gap: 6 },
-  resultBadge: { height: 23, flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, borderRadius: 12, backgroundColor: "#EEF4FF" },
-  resultBadgeGreen: { backgroundColor: "#EAF8ED" },
+  badgeRow: { flex: 1, minWidth: 0, flexDirection: "row" },
+  resultBadge: { height: 20, flexDirection: "row", alignItems: "center", paddingHorizontal: 7, borderRadius: 10, backgroundColor: "#EEF4FF" },
   resultBadgeText: { fontSize: 10, fontWeight: "800", color: ui.blue },
   resultBadgeTextGreen: { color: ui.green },
   flightMain: { width: "100%", alignItems: "stretch" },
@@ -1363,8 +1359,8 @@ const s0 = StyleSheet.create({
   airlineLogoColumn: { width: 32, flexShrink: 0, alignItems: "center" },
   flightDetails: { flex: 1, minWidth: 0 },
   airlineName: { minWidth: 0, fontSize: 14, lineHeight: 18, color: ui.navy, fontWeight: "800" },
-  journeyList: { marginTop: 8, gap: 9 },
-  journeyBlock: { width: "100%", gap: 2 },
+  journeyList: { marginTop: 5, gap: 6 },
+  journeyBlock: { width: "100%", gap: 1 },
   journeyLabel: { fontSize: 9, lineHeight: 11, fontWeight: "800", letterSpacing: 0.7 },
   journeyRow: { width: "100%" },
   durationRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
@@ -1384,13 +1380,13 @@ const s0 = StyleSheet.create({
   nonstop: { fontSize: 11, color: ui.blue },
   bigPrice: { fontSize: 20, fontWeight: "900", color: ui.navy, textAlign: "right" },
   benefits: {
-    paddingTop: 8,
+    paddingTop: 4,
     flexDirection: "row",
     alignItems: "flex-end",
     gap: 6,
   },
-  benefitList: { flex: 1, minWidth: 0, flexDirection: "column", gap: 6, alignSelf: "center" },
-  actionColumn: { width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 8 },
+  benefitList: { flex: 1, minWidth: 0, flexDirection: "row", flexWrap: "wrap", gap: 5, alignSelf: "center" },
+  actionColumn: { width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 5 },
   benefitItem: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 5 },
   benefit: { minWidth: 0, fontSize: 10.5, color: ui.muted, flex: 1 },
   detailsButton: { width: "100%", minHeight: 44, paddingHorizontal: 10, borderRadius: 9, backgroundColor: ui.blue, alignItems: "center", justifyContent: "center" },
