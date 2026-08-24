@@ -209,6 +209,10 @@ test("Recent loading, mutations, and navigation use the race-safe server-backed 
   assert.match(screen, /await travelApi\.clearRecentSearches\(\);[\s\S]*setRecent\(\[\]\)/);
   assert.match(screen, /recentLoadSequence\.current \+= 1/);
   assert.match(screen, /sequence !== recentLoadSequence\.current \|\| recentMutationCount\.current/);
+  assert.match(screen, /activeRecentLoadSequence\.current !== null/);
+  assert.match(screen, /reloadRecentAfterMutations\.current = true/);
+  assert.match(screen, /!recentMutationCount\.current && reloadRecentAfterMutations\.current/);
+  assert.match(screen, /reloadRecentAfterMutations\.current = false;[\s\S]*void loadServer\(\)/);
   assert.match(screen, /Unable to remove that recent search\./);
   assert.match(screen, /Unable to clear recent searches\./);
   assert.match(screen, /event\.stopPropagation\(\); void removeRecent\(item\)/);
