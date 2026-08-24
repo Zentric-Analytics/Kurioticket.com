@@ -131,6 +131,17 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [filterSection, setFilterSection] = useState<FlightFilterSectionName>("all");
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
+  const previousFlightSearchKey = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!flightResults || !plan.plan?.key) return;
+    if (previousFlightSearchKey.current && previousFlightSearchKey.current !== plan.plan.key) {
+      setSort("best");
+      setFilters(emptyFlightFilters());
+      setSortOpen(false);
+      setFilterOpen(false);
+    }
+    previousFlightSearchKey.current = plan.plan.key;
+  }, [flightResults, plan.plan?.key]);
   useFocusEffect(useCallback(() => {
     let active = true;
     const ratesRequest = currencyRatesRef.current

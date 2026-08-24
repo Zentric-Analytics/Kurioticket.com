@@ -11,6 +11,12 @@ test("mobile filter sheet is extracted, scrollable, safe-area aware, and has a f
   assert.match(sheet, /label="Show flights"[\s\S]*?onChange\(draft\); onClose\(\)/);
 });
 
+test("filter sheet remains usable while the airline keyboard is open", () => {
+  assert.match(sheet, /KeyboardAvoidingView/);
+  assert.match(sheet, /keyboardDismissMode=\{Platform\.OS === "ios" \? "interactive" : "on-drag"\}/);
+  assert.match(sheet, /keyboardShouldPersistTaps="handled"/);
+});
+
 test("full sheet exposes required supported groups and conditionally hides optional groups", () => {
   for (const title of ["Price", "Times", "Duration", "Stops", "Airlines", "Airports", "Amenities"]) assert.match(sheet, new RegExp(`title="${title}"`));
   assert.match(sheet, /options\.showAirports \?/);

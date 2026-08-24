@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppTheme } from "../../theme/AppTheme";
 import { Button, ui } from "./SearchUi";
@@ -43,9 +43,9 @@ export function FlightFilterSheet({ visible, section, filters, options, currency
   };
   const full = section === "all";
   return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} accessibilityViewIsModal>
-    <View style={styles.backdrop}><View accessibilityLabel="Flight filters" style={[styles.sheet, { backgroundColor: theme.surface, paddingBottom: Math.max(inset.bottom, 12) }]}>
-      <View style={styles.header}><Text accessibilityRole="header" style={[styles.title, { color: theme.textPrimary }]}>Filters</Text><View style={styles.headerActions}><Pressable accessibilityRole="button" onPress={() => setDraft(emptyFlightFilters())}><Text style={styles.clear}>Clear all</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Close filters" onPress={onClose} style={styles.close}><FlowIcon name="close" color={theme.icon} /></Pressable></View></View>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+    <KeyboardAvoidingView style={styles.backdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View accessibilityLabel="Flight filters" style={[styles.sheet, { backgroundColor: theme.surface, paddingBottom: Math.max(inset.bottom, 12) }]}>
+      <View style={styles.header}><Text accessibilityRole="header" style={[styles.title, { color: theme.textPrimary }]}>Filters</Text><View style={styles.headerActions}><Pressable accessibilityRole="button" accessibilityLabel="Clear all flight filters" hitSlop={10} onPress={() => setDraft(emptyFlightFilters())}><Text style={styles.clear}>Clear all</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Close filters" onPress={onClose} style={styles.close}><FlowIcon name="close" color={theme.icon} /></Pressable></View></View>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         {full && options.price ? <FlightFilterSection title="Price">{range("price", options.price, (value) => new Intl.NumberFormat(undefined, { style: "currency", currency, maximumFractionDigits: 0 }).format(value))}</FlightFilterSection> : null}
         {full && (options.takeoffTimes.length || options.landingTimes.length) ? <FlightFilterSection title="Times"><View style={[styles.segment, { borderColor: theme.border }]}>{(["takeoff", "landing"] as const).map((field) => <Pressable key={field} onPress={() => setDraft((current) => ({ ...current, timeField: field, times: [] }))} style={[styles.segmentChoice, draft.timeField === field && styles.segmentSelected]}><Text style={{ color: draft.timeField === field ? "white" : theme.textPrimary, fontWeight: "700" }}>{field === "takeoff" ? "Takeoff" : "Landing"}</Text></Pressable>)}</View>{chips("times", draft.timeField === "takeoff" ? options.takeoffTimes : options.landingTimes, timeLabels)}</FlightFilterSection> : null}
         {full && options.duration ? <FlightFilterSection title="Duration">{range("duration", options.duration, minutes)}</FlightFilterSection> : null}
@@ -55,7 +55,7 @@ export function FlightFilterSheet({ visible, section, filters, options, currency
         {full && (options.baggage || options.refundable) ? <FlightFilterSection title="Amenities">{options.baggage ? <Toggle label="Baggage included" selected={draft.baggageIncluded} onPress={() => setDraft((x) => ({ ...x, baggageIncluded: !x.baggageIncluded }))} /> : null}{options.refundable ? <Toggle label="Flexible / refundable" selected={draft.refundable} onPress={() => setDraft((x) => ({ ...x, refundable: !x.refundable }))} /> : null}</FlightFilterSection> : null}
       </ScrollView>
       <View style={[styles.footer, { borderColor: theme.border, backgroundColor: theme.surface }]}><Button label="Show flights" flightResults onPress={() => { onChange(draft); onClose(); }} /></View>
-    </View></View>
+    </View></KeyboardAvoidingView>
   </Modal>;
 }
 
