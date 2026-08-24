@@ -30,6 +30,14 @@ test("filtered empty clears only filters while preserving sort and canonical sea
   assert.match(stateUi, /filtered \? "Clear flight filters"/);
 });
 
+test("a new canonical flight search clears stale local sort, filters, and open sheets", () => {
+  assert.match(screen, /previousFlightSearchKey\.current !== plan\.plan\.key/);
+  assert.match(screen, /setSort\("best"\)/);
+  assert.match(screen, /setFilters\(emptyFlightFilters\(\)\)/);
+  assert.match(screen, /setSortOpen\(false\)/);
+  assert.match(screen, /setFilterOpen\(false\)/);
+});
+
 test("no-results and error recovery use edit and the guarded existing retry flow", () => {
   assert.match(stateUi, /No flights found/);
   assert.match(stateUi, /Couldn't load flights/);
