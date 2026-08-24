@@ -5,7 +5,7 @@ import test from "node:test";
 const panel = readFileSync("src/features/flow/HotelSearchPanel.tsx", "utf8");
 
 test("Hotels uses one strict Travel dates range sheet", () => {
-  assert.equal(panel.match(/<Field label="Travel dates"/g)?.length, 1);
+  assert.equal(panel.match(/<CompactSearchField label="Travel dates"/g)?.length, 1);
   assert.match(panel, /<DateRangeSheet visible=\{datesOpen\} title="Travel dates" startLabel="Check-in date" endLabel="Check-out date"/);
   assert.match(panel, /startDate=\{form\.checkIn\} endDate=\{form\.checkOut\}[^\n]+endMustBeAfterStart/);
 });
