@@ -1,6 +1,12 @@
 import type { NumericRange } from "./flightFilters";
 
 const finite = (value: number) => Number.isFinite(value);
+export const THUMB_HIT_SIZE = 44;
+export const THUMB_CENTER_INSET = THUMB_HIT_SIZE / 2;
+
+export function usableRangeTrackWidth(componentWidth: number): number {
+  return finite(componentWidth) ? Math.max(0, componentWidth - THUMB_HIT_SIZE) : 0;
+}
 
 /** Returns a finite, ordered selection inside the available range. Invalid edges fall back to the matching extent edge. */
 export function clampNumericRange(selected: NumericRange | null | undefined, available: NumericRange): NumericRange {
@@ -40,22 +46,32 @@ export function snapRangeValue(value: number, available: NumericRange, step: num
 
 export function positionForRangeValue(value: number, available: NumericRange, width: number): number {
   const span = available.max - available.min;
-  if (!finite(width) || width <= 0 || !finite(span) || span <= 0) return 0;
-  return Math.min(width, Math.max(0, ((value - available.min) / span) * width));
+  const trackWidth = usableRangeTrackWidth(width);
+  if (trackWidth <= 0 || !finite(span) || span <= 0) return THUMB_CENTER_INSET;
+  return THUMB_CENTER_INSET + Math.min(trackWidth, Math.max(0, ((value - available.min) / span) * trackWidth));
 }
 
 export function rangeValueForPosition(position: number, available: NumericRange, width: number, step: number): number {
   const span = available.max - available.min;
-  if (!finite(position) || !finite(width) || width <= 0 || !finite(span) || span <= 0) return available.min;
+  const trackWidth = usableRangeTrackWidth(width);
+  if (!finite(position) || trackWidth <= 0 || !finite(span) || span <= 0) return available.min;
   // Physical endpoints must restore the exact extent even when the span is not divisible by the step.
-  if (position <= 0) return available.min;
-  if (position >= width) return available.max;
-  return snapRangeValue(available.min + (position / width) * span, available, step);
+  if (position <= THUMB_CENTER_INSET) return available.min;
+  if (position >= THUMB_CENTER_INSET + trackWidth) return available.max;
+  return snapRangeValue(available.min + ((position - THUMB_CENTER_INSET) / trackWidth) * span, available, step);
 }
 
 /** At an overlap, drag direction determines which edge can move away from the shared value. */
 export function rangeEdgeForDrag(selected: NumericRange, requested: "min" | "max", deltaX: number): "min" | "max" {
   if (selected.min !== selected.max || deltaX === 0 || !finite(deltaX)) return requested;
+  return deltaX < 0 ? "min" : "max";
+}
+
+/** Resolves an overlapping gesture once; a non-null locked edge is never reconsidered. */
+export function lockedRangeEdgeForDrag(locked: "min" | "max" | null, overlappedAtGrant: boolean, requested: "min" | "max", deltaX: number) {
+  if (locked) return locked;
+  if (!overlappedAtGrant) return requested;
+  if (!finite(deltaX) || deltaX === 0) return null;
   return deltaX < 0 ? "min" : "max";
 }
 

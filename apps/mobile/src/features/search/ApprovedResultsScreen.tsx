@@ -66,6 +66,7 @@ import {
   flightSortOptions,
   flightSortQuickLabel,
   flightFilterOptions,
+  resolveFlightPriceComparisonContext,
   type FlightSort,
   type FlightFilters,
 } from "./flightFilters";
@@ -282,12 +283,16 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const normalizeFlightPrice = useCallback((result: FlightResult) => currencyState
     ? convertAmount(result.price, result.currency, currencyState.resolution.resolvedCurrency, currencyState.rates)
     : result.price, [currencyState]);
+  const flightPriceContext = useMemo(() => product === "flight" && currencyState
+    ? resolveFlightPriceComparisonContext(results as FlightResult[], currencyState.resolution.resolvedCurrency, normalizeFlightPrice)
+    : null, [currencyState, normalizeFlightPrice, product, results]);
   const sorted = useMemo(() => {
     if (product === "flight") {
       return filterAndSortFlights(
         results as FlightResult[],
         filters,
         sort,
+        flightPriceContext?.valueForResult,
         normalizeFlightPrice,
       );
     }
@@ -296,22 +301,18 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           ? (a as HotelResult).totalPrice! - (b as HotelResult).totalPrice!
           : (b as HotelResult).valueScore - (a as HotelResult).valueScore,
       );
-  }, [results, filters, sort, product, normalizeFlightPrice]);
+  }, [results, filters, sort, product, flightPriceContext, normalizeFlightPrice]);
   const flightHighlights = useMemo(() => product === "flight"
     ? deriveFlightResultHighlights(sorted as FlightResult[], normalizeFlightPrice)
     : new Map<string, FlightResultHighlight>(), [normalizeFlightPrice, product, sorted]);
-  const flightOptions = useMemo(() => flightFilterOptions(
-    results as FlightResult[],
-    currencyState ? normalizeFlightPrice : undefined,
-    currencyState?.resolution.resolvedCurrency,
-  ), [currencyState, results, normalizeFlightPrice]);
+  const flightOptions = useMemo(() => flightFilterOptions(results as FlightResult[], flightPriceContext), [flightPriceContext, results]);
   useEffect(() => {
-    const nextCurrency = currencyState?.resolution.resolvedCurrency ?? null;
+    const nextCurrency = currencyState ? flightPriceContext?.identity ?? "unavailable" : null;
     if (nextCurrency && previousComparisonCurrency.current && previousComparisonCurrency.current !== nextCurrency) {
       setFilters((current) => current.price ? { ...current, price: null } : current);
     }
     if (nextCurrency) previousComparisonCurrency.current = nextCurrency;
-  }, [currencyState?.resolution.resolvedCurrency]);
+  }, [currencyState, flightPriceContext?.identity]);
   const activeFilterCount = activeFlightFilterCount(filters, flightOptions);
   const flightState = product === "flight" ? resolveFlightResultsState({
     status,
@@ -567,9 +568,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             filters={filters}
             options={flightOptions}
             results={results as FlightResult[]}
-            normalizePrice={normalizeFlightPrice}
-            currency={currencyState?.resolution.resolvedCurrency ?? (results[0] as FlightResult | undefined)?.currency ?? "USD"}
-            priceFilteringReady={currencyState != null}
+            priceValue={flightPriceContext?.valueForResult}
+            currency={flightPriceContext?.currency ?? currencyState?.resolution.resolvedCurrency ?? "USD"}
+            priceFilteringReady={flightPriceContext != null}
             onChange={setFilters}
             onClose={() => setFilterOpen(false)}
           />

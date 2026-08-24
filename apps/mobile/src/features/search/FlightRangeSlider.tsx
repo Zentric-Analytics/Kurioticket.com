@@ -3,7 +3,7 @@ import { PanResponder, Pressable, StyleSheet, View } from "react-native";
 import { useAppTheme } from "../../theme/AppTheme";
 import { ui } from "./SearchUi";
 import type { NumericRange } from "./flightFilters";
-import { moveRangeEdge, positionForRangeValue, rangeEdgeForDrag, rangeValueForPosition } from "./flightRange";
+import { lockedRangeEdgeForDrag, moveRangeEdge, positionForRangeValue, rangeValueForPosition, THUMB_CENTER_INSET, THUMB_HIT_SIZE } from "./flightRange";
 
 type Props = {
   available: NumericRange;
@@ -12,13 +12,15 @@ type Props = {
   singleMaximum?: boolean;
   formatValue: (value: number) => string;
   onChange: (range: NumericRange) => void;
+  onDragStateChange?: (dragging: boolean) => void;
 };
 
-export function FlightRangeSlider({ available, selected, step, singleMaximum = false, formatValue, onChange }: Props) {
+export function FlightRangeSlider({ available, selected, step, singleMaximum = false, formatValue, onChange, onDragStateChange }: Props) {
   const { theme } = useAppTheme();
   const [width, setWidth] = useState(0);
   const [activeEdge, setActiveEdge] = useState<"min" | "max" | null>(null);
-  const activeEdgeRef = useRef<"min" | "max" | null>(null);
+  const draggingEdgeRef = useRef<"min" | "max" | null>(null);
+  const overlapAtGrantRef = useRef(false);
   const selectedRef = useRef(selected);
   const dragStartRef = useRef({ min: 0, max: 0 });
   selectedRef.current = selected;
@@ -28,19 +30,31 @@ export function FlightRangeSlider({ available, selected, step, singleMaximum = f
     onStartShouldSetPanResponder: () => true,
     onMoveShouldSetPanResponder: () => true,
     onPanResponderGrant: () => {
-      activeEdgeRef.current = edge;
+      overlapAtGrantRef.current = !singleMaximum && selectedRef.current.min === selectedRef.current.max;
+      draggingEdgeRef.current = overlapAtGrantRef.current ? null : edge;
       setActiveEdge(edge);
       dragStartRef.current[edge] = positionForRangeValue(selectedRef.current[edge], available, width);
+      onDragStateChange?.(true);
     },
     onPanResponderMove: (_event, gesture) => {
-      const movingEdge = rangeEdgeForDrag(selectedRef.current, edge, gesture.dx);
-      if (movingEdge !== activeEdgeRef.current) {
-        activeEdgeRef.current = movingEdge;
+      const movingEdge = lockedRangeEdgeForDrag(draggingEdgeRef.current, overlapAtGrantRef.current, edge, gesture.dx);
+      if (!movingEdge) return;
+      if (movingEdge !== draggingEdgeRef.current) {
+        draggingEdgeRef.current = movingEdge;
         setActiveEdge(movingEdge);
       }
       updateEdge(movingEdge, dragStartRef.current[edge] + gesture.dx);
     },
+    onPanResponderTerminationRequest: () => false,
+    onPanResponderRelease: finishDrag,
+    onPanResponderTerminate: finishDrag,
   });
+  const finishDrag = () => {
+    draggingEdgeRef.current = null;
+    overlapAtGrantRef.current = false;
+    setActiveEdge(null);
+    onDragStateChange?.(false);
+  };
   // Responders stay stable while dragging; refs provide the latest selection.
   const minResponder = useMemo(() => responder("min"), [available.min, available.max, step, width]);
   const maxResponder = useMemo(() => responder("max"), [available.min, available.max, step, width]);
@@ -54,7 +68,7 @@ export function FlightRangeSlider({ available, selected, step, singleMaximum = f
     accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
     onAccessibilityAction={(event) => action(edge, event.nativeEvent.actionName === "increment" ? 1 : -1)}
     {...handlers}
-    style={({ pressed }) => [styles.hitTarget, { left: x - 22, zIndex: activeEdge === edge ? 2 : 1, elevation: activeEdge === edge ? 2 : 0 }, pressed && styles.pressed]}
+    style={({ pressed }) => [styles.hitTarget, { left: x - THUMB_CENTER_INSET, zIndex: activeEdge === edge ? 2 : 1, elevation: activeEdge === edge ? 2 : 0 }, pressed && styles.pressed]}
   ><View style={[styles.thumb, { backgroundColor: ui.blue, borderColor: theme.surface }]} /></Pressable>;
   return <View style={styles.container} onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
     <View pointerEvents="none" style={[styles.track, { backgroundColor: theme.border }]} />
@@ -68,7 +82,7 @@ const styles = StyleSheet.create({
   container: { height: 44, justifyContent: "center", marginHorizontal: 4 },
   track: { position: "absolute", left: 0, right: 0, height: 4, borderRadius: 2 },
   active: { position: "absolute", height: 4, borderRadius: 2 },
-  hitTarget: { position: "absolute", top: 0, width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  hitTarget: { position: "absolute", top: 0, width: THUMB_HIT_SIZE, height: THUMB_HIT_SIZE, alignItems: "center", justifyContent: "center" },
   thumb: { width: 18, height: 18, borderRadius: 9, borderWidth: 3 },
   pressed: { opacity: 0.72 },
 });
