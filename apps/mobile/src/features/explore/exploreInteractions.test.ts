@@ -665,8 +665,13 @@ test("details handoffs preserve genuine shared airport data", () => {
     airportCodes: destination.airportCodes,
   });
   const details = readFileSync("src/features/explore/DestinationDetailsScreen.tsx", "utf8");
-  assert.match(details, /destinationId: destination\.id, destination: destination\.name, to: handoff\.primaryAirportCode, airportCodes: handoff\.airportCodes\.join/);
-  assert.match(details, /destinationId: destination\.id, destination: destination\.name/);
+  const flightHandoff = readFileSync("src/features/explore/exploreSearchHandoff.ts", "utf8");
+  assert.match(details, /id: destination\.id/);
+  assert.match(details, /name: destination\.name/);
+  assert.match(details, /primaryAirportCode: handoff\.primaryAirportCode/);
+  assert.match(details, /airportCodes: handoff\.airportCodes/);
+  assert.match(flightHandoff, /destinationId: destination\.id/);
+  assert.match(flightHandoff, /destination: destination\.name/);
   assert.match(details, /Destination not found/);
   assert.match(details, /useSavedDestinations\(\)/);
 });

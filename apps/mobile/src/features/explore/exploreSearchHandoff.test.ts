@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import {
+  exploreFlightDestinationNavigation,
   exploreFlightResultsNavigation,
   exploreHotelResultsNavigation,
 } from "./exploreSearchHandoff";
@@ -33,6 +34,35 @@ test("Explore flight handoff rejects malformed and same-airport routes", () => {
   assert.equal(exploreFlightResultsNavigation("LAGOS", "LHR"), null);
 });
 
+const abidjan = {
+  id: "ci-abidjan",
+  name: "Abidjan",
+  primaryAirportCode: "ABJ",
+  airportCodes: ["ABJ"],
+};
+
+test("destination handoff uses the homepage origin to open flight results", async () => {
+  const route = await exploreFlightDestinationNavigation(abidjan, async () => ({
+    code: "LOS",
+    city: "Lagos",
+    country: "Nigeria",
+    airport: "Murtala Muhammed International Airport",
+  }));
+  assert.ok(typeof route === "object");
+  assert.equal(route.pathname, "/flight-results");
+  assert.equal(route.params.origin, "LOS");
+  assert.equal(route.params.destination, "ABJ");
+});
+
+test("destination handoff prefills Flights when the homepage origin is unavailable or fails", async () => {
+  const fallback = {
+    pathname: "/flights",
+    params: { destinationId: "ci-abidjan", destination: "Abidjan", to: "ABJ", airportCodes: "ABJ" },
+  };
+  assert.deepEqual(await exploreFlightDestinationNavigation(abidjan, async () => null), fallback);
+  assert.deepEqual(await exploreFlightDestinationNavigation(abidjan, async () => { throw new Error("offline"); }), fallback);
+});
+
 test("Explore hotel handoff goes directly to results with the selected destination", () => {
   assert.deepEqual(exploreHotelResultsNavigation("  Paris  "), {
     pathname: "/hotel-results",
@@ -43,12 +73,13 @@ test("Explore hotel handoff goes directly to results with the selected destinati
 
 test("destination details resolves the same geo default origin used by Home before opening flight results", () => {
   const source = detailsSource();
-  assert.match(source, /fetchHomepageDefaultOrigin\(\)/);
-  assert.match(source, /exploreFlightResultsNavigation\(origin\.code, handoff\.primaryAirportCode\)/);
+  assert.match(source, /exploreFlightDestinationNavigation\(\{/);
+  assert.match(source, /primaryAirportCode: handoff\.primaryAirportCode/);
   assert.match(source, /currentDestinationId\.current !== requestedDestinationId/);
   assert.match(source, /flightSearchPending\.current/);
-  assert.match(source, /pathname: "\/flights"/);
-  assert.match(source, /destinationId: destination\.id, destination: destination\.name, to: handoff\.primaryAirportCode, airportCodes: handoff\.airportCodes\.join/);
+  const handoffSource = readFileSync("src/features/explore/exploreSearchHandoff.ts", "utf8");
+  assert.match(handoffSource, /fetchHomepageDefaultOrigin/);
+  assert.match(handoffSource, /exploreFlightResultsNavigation\(origin\.code, destination\.primaryAirportCode\)/);
   assert.match(source, /exploreHotelResultsNavigation\(destination\.name\)/);
   assert.doesNotMatch(source, /origin:\s*["']LOS["']|currency:\s*["']USD["']|market:\s*["']NG["']/);
 });

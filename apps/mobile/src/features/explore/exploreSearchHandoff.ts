@@ -1,5 +1,13 @@
 import type { Href } from "expo-router";
 import { getDefaultHomepageRouteCardDepartureDate } from "../home/homepageCardNavigation";
+import { fetchHomepageDefaultOrigin, type HomepageDefaultAirport } from "../home/homepageDefaultOrigin";
+
+export type ExploreFlightDestinationHandoff = {
+  id: string;
+  name: string;
+  primaryAirportCode: string;
+  airportCodes: readonly string[];
+};
 
 const normalizeAirportCode = (value: string) => {
   const normalized = value.trim().toUpperCase();
@@ -27,6 +35,31 @@ export function exploreFlightResultsNavigation(
       children: "0",
       infants: "0",
       cabinClass: "economy",
+    },
+  };
+}
+
+export async function exploreFlightDestinationNavigation(
+  destination: ExploreFlightDestinationHandoff,
+  resolveDefaultOrigin: () => Promise<HomepageDefaultAirport | null> = fetchHomepageDefaultOrigin,
+): Promise<Href> {
+  let origin: HomepageDefaultAirport | null = null;
+  try {
+    origin = await resolveDefaultOrigin();
+  } catch {
+    // A destination remains searchable even when homepage-origin resolution fails.
+  }
+
+  const resultsRoute = origin
+    ? exploreFlightResultsNavigation(origin.code, destination.primaryAirportCode)
+    : null;
+  return resultsRoute ?? {
+    pathname: "/flights",
+    params: {
+      destinationId: destination.id,
+      destination: destination.name,
+      to: destination.primaryAirportCode,
+      airportCodes: destination.airportCodes.join(","),
     },
   };
 }
