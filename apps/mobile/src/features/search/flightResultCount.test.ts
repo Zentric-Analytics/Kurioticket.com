@@ -14,7 +14,9 @@ test("flight result count uses correct singular and plural grammar", () => {
 
 test("flight count is derived from the collection rendered as FlightCards", () => {
   assert.match(source, /flightResultCountLabel\(sorted\.length\)/);
-  assert.match(source, /sorted\.map\(\(x, i\) =>[\s\S]*?product === "flight" \? \([\s\S]*?<FlightCard/);
+  assert.match(source, /sections=\{\[\{ data: !flightState \? sorted as FlightResult\[\] : \[\] \}\]\}/);
+  assert.match(source, /renderItem=\{\(\{ item \}\) => \([\s\S]*?<FlightCard/);
+  assert.doesNotMatch(source, /sorted\.map\(\(x, i\) =>\s*product === "flight"/);
 });
 
 test("flight summary copy is removed while the hotel summary stays intact", () => {

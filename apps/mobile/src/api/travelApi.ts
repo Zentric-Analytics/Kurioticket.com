@@ -5,7 +5,6 @@ import type { NormalizedCarResult } from "../../../../src/lib/cars/types";
 import type { PublicFlightResult, PublicHotelResult } from "../../../../src/lib/types";
 import type { ContractResult, TravelSearchResponse } from "../../../../src/lib/travel/searchContract";
 import { parseMobileExploreCatalogue, type MobileExploreCatalogue } from "./exploreCatalogueContract";
-import { responseByteLength } from "../features/search/flightSearchDiagnostics";
 
 export class TravelApiError extends Error {
   constructor(message: string, public status = 0, public code: "cancelled" | "timeout" | "configuration" | "validation" | "rate-limit" | "unavailable" | "server" | "network" | "invalid-response" = "network", public details?: Record<string, unknown>) { super(message); }
@@ -82,13 +81,18 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
         ...init.headers,
       },
     });
-    const textStartedAt = performance.now();
-    const raw = await response.text();
-    const textDecodeMs = performance.now() - textStartedAt;
-    let data: Record<string, unknown>;
-    const parseStartedAt = performance.now();
-    try { data = raw ? JSON.parse(raw) as Record<string, unknown> : {}; } catch { throw new TravelApiError("The search provider returned an invalid response.", response.status, "invalid-response"); }
-    const jsonParseMs = performance.now() - parseStartedAt;
+    const jsonStartedAt = performance.now();
+    let parsed: unknown;
+    try {
+      parsed = await response.json();
+    } catch {
+      throw new TravelApiError("The search provider returned an invalid response.", response.status, "invalid-response");
+    }
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new TravelApiError("The search provider returned an invalid response.", response.status, "invalid-response");
+    }
+    const data = parsed as Record<string, unknown>;
+    const responseJsonMs = performance.now() - jsonStartedAt;
     if (!response.ok) {
       const code = response.status === 400 ? "validation" : response.status === 429 ? "rate-limit" : response.status === 503 ? "unavailable" : response.status >= 500 ? "server" : "network";
       throw new TravelApiError(apiErrorMessage(data), response.status, code, data);
@@ -99,9 +103,9 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
       console.info("[flight-search:mobile-performance]", {
         requestId: options.requestId,
         mobileRoundTripMs,
-        responseBytes: responseByteLength(raw),
-        textDecodeMs,
-        jsonParseMs,
+        responseBytes: response.headers.get("content-length"),
+        responseJsonMs,
+        resultCount: Array.isArray(data.results) ? data.results.length : undefined,
         server: data.performance,
       });
     }

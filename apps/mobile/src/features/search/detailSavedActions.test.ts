@@ -30,7 +30,8 @@ test("hotel detail replaces the passive heart with a canonical saved button", ()
 });
 
 test("result cards and detail actions share the same repositories", () => {
-  assert.match(resultsSource, /function FlightCard[\s\S]*?useSavedFlights\(\)/);
+  assert.equal((resultsSource.match(/useSavedFlights\(\)/g) || []).length, 1);
+  assert.doesNotMatch(resultsSource.slice(resultsSource.indexOf("function FlightCard"), resultsSource.indexOf("function FlightJourneyRow")), /useSavedFlights\(\)/);
   assert.match(flightDetail, /useSavedFlights\(\)/);
   assert.match(resultsSource, /function HotelCard[\s\S]*?useCanonicalSaved\(\)/);
   assert.match(hotelDetail, /useCanonicalSaved\(\)/);
@@ -44,6 +45,6 @@ test("guest hotel detail taps use the existing favorite sign-in flow", () => {
 });
 
 test("flight result and detail saves pass their current search context", () => {
-  assert.match(resultsSource, /toggle\(result, params\)/);
+  assert.match(resultsSource, /toggleSavedFlight\(item, params\)/);
   assert.match(flightDetail, /toggleSavedFlight\(result, params\)/);
 });

@@ -8,11 +8,13 @@ type Props = {
   airlineName: string;
   logoUrl?: string | null;
   fallbackCharacters?: number;
+  /** Diagnostic seam: false keeps layout identical without mounting remote SVG native views. */
+  allowRemoteSvg?: boolean;
 };
 
 const isSvgUrl = (url: string) => /\.svg(?:[?#]|$)/i.test(url);
 
-export function AirlineLogo({ airlineName, logoUrl, fallbackCharacters = 2 }: Props) {
+export function AirlineLogo({ airlineName, logoUrl, fallbackCharacters = 2, allowRemoteSvg = true }: Props) {
   const { theme } = useAppTheme();
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const visibleUrl = resolveTravelProviderLogo(logoUrl);
@@ -22,7 +24,7 @@ export function AirlineLogo({ airlineName, logoUrl, fallbackCharacters = 2 }: Pr
     setFailedUrl(null);
   }, [visibleUrl]);
 
-  if (!visibleUrl || failed) {
+  if (!visibleUrl || failed || (isSvgUrl(visibleUrl) && !allowRemoteSvg)) {
     return (
       <View
         style={[

@@ -7,14 +7,14 @@ const screen = readFileSync(
   resolve("src/features/search/ApprovedResultsScreen.tsx"),
   "utf8",
 );
-const layoutStart = screen.indexOf('<ScrollView\n          style={[s0.resultsScroll');
+const layoutStart = screen.indexOf('<SectionList\n          style={[s0.resultsScroll');
 const flightLayout = screen.slice(layoutStart, screen.indexOf(') : (\n        <>', layoutStart));
 
 test("flight results naturally scroll the date strip into a sticky filter rail", () => {
-  assert.match(flightLayout, /stickyHeaderIndices=\{\[1\]\}/);
+  assert.match(flightLayout, /stickySectionHeadersEnabled/);
   assert.match(
     flightLayout,
-    /<View>\{dateStrip\}<\/View>[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?filterRail : null[\s\S]*?<View style=\{\[s0\.body, s0\.flightResultsBody\]\}>\{resultContent\}<\/View>/,
+    /ListHeaderComponent=\{<View>\{dateStrip\}<\/View>\}[\s\S]*?renderSectionHeader[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?filterRail : null/,
   );
   assert.doesNotMatch(flightLayout, /onScroll=|scrollEventThrottle=/);
   assert.doesNotMatch(screen, /dateHeaderCollapsed|dateHeaderProgress|Animated\.timing\(dateHeaderProgress/);
@@ -55,7 +55,7 @@ test("hotel results retain their non-sticky header and separate result scroll", 
   assert.match(hotelLayout, /\{dateStrip\}/);
   assert.match(hotelLayout, /\{filterRail\}/);
   assert.match(hotelLayout, /<ScrollView[^>]*contentContainerStyle=\{s0\.body\}[^>]*>\{resultContent\}<\/ScrollView>/);
-  assert.doesNotMatch(hotelLayout, /stickyHeaderIndices/);
+  assert.doesNotMatch(hotelLayout, /stickyHeaderIndices|stickySectionHeadersEnabled/);
 });
 
 test("Flight Results removes bell work without changing the shared notification implementation", () => {
