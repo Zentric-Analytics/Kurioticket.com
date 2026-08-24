@@ -3,6 +3,7 @@ import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView,
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { FlightResult } from "../../api/travelApi";
 import { useAppTheme } from "../../theme/AppTheme";
+import { formatCurrency } from "../currency/displayCurrency";
 import { FlowIcon } from "../flow/FlowIcon";
 import { AirlineLogo } from "./AirlineLogo";
 import { FlightRangeSlider } from "./FlightRangeSlider";
@@ -54,7 +55,6 @@ export function FlightFilterSheet({ visible, section, filters, options, results,
     setDraft((current) => ({ ...current, [key]: current[key].includes(value as never) ? current[key].filter((item) => item !== value) : [...current[key], value] } as FlightFilters));
   const full = section === "all";
   const priceCurrency = options.priceCurrency ?? currency;
-  const currencyFormatter = useMemo(() => new Intl.NumberFormat(undefined, { style: "currency", currency: priceCurrency, currencyDisplay: "narrowSymbol", maximumFractionDigits: 0 }), [priceCurrency]);
 
   const optionRows = (key: "stops" | "fromAirports" | "toAirports", values: readonly string[], labels?: Record<string, string>) =>
     values.map((value) => <FilterOptionRow key={value} label={labels?.[value] ?? value} selected={draft[key].includes(value as never)} count={facetCounts[key][value] ?? 0} onPress={() => toggle(key, value as never)} />);
@@ -70,7 +70,7 @@ export function FlightFilterSheet({ visible, section, filters, options, results,
       <View accessibilityLabel="Flight filters" style={[styles.sheet, { backgroundColor: theme.surface, paddingBottom: Math.max(inset.bottom, 12) }]}>
         <View style={[styles.header, { borderBottomColor: theme.border }]}><Text accessibilityRole="header" style={[styles.title, { color: theme.textPrimary }]}>Filters</Text><View style={styles.headerActions}><Pressable accessibilityRole="button" accessibilityLabel="Clear all flight filters" accessibilityState={{ disabled: !hasDraftFilters }} disabled={!hasDraftFilters} hitSlop={10} onPress={() => setDraft(emptyFlightFilters())}><Text style={[styles.clear, !hasDraftFilters && { color: theme.textSecondary, opacity: 0.55 }]}>Clear all</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Close filters" onPress={() => { Keyboard.dismiss(); onClose(); }} style={styles.close}><FlowIcon name="close" color={theme.icon} /></Pressable></View></View>
         <ScrollView style={styles.scroll} scrollEnabled={!sliderDragging} contentContainerStyle={styles.content} keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          {full && isPriceFilteringAvailable(options, priceFilteringReady) ? <FlightFilterSection title="Price">{range("price", options.price!, (value) => currencyFormatter.format(value))}</FlightFilterSection> : null}
+          {full && isPriceFilteringAvailable(options, priceFilteringReady) ? <FlightFilterSection title="Price">{range("price", options.price!, (value) => formatCurrency(value, priceCurrency))}</FlightFilterSection> : null}
           {full && (options.takeoffTimes.length || options.landingTimes.length) ? <FlightFilterSection title="Times"><Text style={[styles.timeScope, { color: theme.textSecondary }]}>Outbound journey</Text><View accessibilityRole="tablist" style={[styles.segment, { backgroundColor: theme.background }]}>{(["takeoff", "landing"] as const).map((field) => { const selected = draft.timeField === field; return <Pressable key={field} accessibilityRole="tab" accessibilityState={{ selected }} onPress={() => setDraft((current) => ({ ...current, timeField: field, times: [] }))} style={[styles.segmentChoice, selected && { backgroundColor: theme.surface }]}><Text style={[styles.segmentText, { color: selected ? theme.textPrimary : theme.textSecondary }]}>{field === "takeoff" ? "Departure" : "Arrival"}</Text></Pressable>; })}</View><View>{(draft.timeField === "takeoff" ? options.takeoffTimes : options.landingTimes).map((value) => <FilterOptionRow key={value} label={timeLabels[value][0]} detail={timeLabels[value][1]} selected={draft.times.includes(value)} onPress={() => toggle("times", value)} />)}</View></FlightFilterSection> : null}
           {full && options.duration ? <FlightFilterSection title="Duration">{range("duration", options.duration, formatFlightDuration, true)}</FlightFilterSection> : null}
           {(full || section === "stops") && options.stops.length ? <FlightFilterSection title="Stops"><View>{optionRows("stops", options.stops, stopLabels)}</View></FlightFilterSection> : null}
