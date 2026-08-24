@@ -23,6 +23,15 @@ test("the cabin picker retains selection, accessibility, and close behavior", ()
   assert.match(cabinSheet, /onRequestClose=\{onCancel\}/);
 });
 
+test("all cabin rows share checkmark-free selected-row rendering", () => {
+  assert.equal(cabinSheet.match(/NATIVE_FLIGHT_CABIN_OPTIONS\.map/g)?.length, 1);
+  assert.match(cabinSheet, /NATIVE_FLIGHT_CABIN_OPTIONS\.map\(\(cabin\)=>/);
+  assert.match(cabinSheet, /cabin===draft\.cabin&&\[styles\.selected,\{backgroundColor:ft\.colors\.selected,borderLeftColor:ft\.colors\.selectedBorder\}\]/);
+  assert.match(cabinSheet, /cabin===draft\.cabin&&\{color:ft\.colors\.selectedPrimaryText\}/);
+  assert.match(cabinSheet, />\{cabin\}<\/Text>/);
+  assert.doesNotMatch(cabinSheet, / ✓|✔/);
+});
+
 test("legacy Premium Economy remains canonical but is not freshly selectable", () => {
   assert.deepEqual(FLIGHT_CABINS, ["Economy", "Premium Economy", "Business", "First"]);
   assert.equal(FLIGHT_CABINS.includes("Premium Economy"), true);
