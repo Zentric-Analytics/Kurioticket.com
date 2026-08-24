@@ -62,7 +62,12 @@ test("an empty committed form gets one draft adult without mutating on open", ()
   assert.doesNotMatch(field, /setForm/);
 });
 
-test("the selected cabin indication remains alongside the iconless Done action", () => {
-  assert.match(sheet, /\{cabin===draft\.cabin\?" ✓":""\}/);
+test("selected cabin uses row styling and accessibility without a visible checkmark", () => {
+  assert.match(sheet, /accessibilityRole="radio" accessibilityState=\{\{selected:cabin===draft\.cabin\}\}/);
+  assert.match(sheet, /accessibilityLabel=\{`\$\{cabin\}\$\{cabin===draft\.cabin\?", selected":""\}`\}/);
+  assert.match(sheet, /cabin===draft\.cabin&&\[styles\.selected,\{backgroundColor:ft\.colors\.selected,borderLeftColor:ft\.colors\.selectedBorder\}\]/);
+  assert.match(sheet, /cabin===draft\.cabin&&\{color:ft\.colors\.selectedPrimaryText\}/);
+  assert.match(sheet, />\{cabin\}<\/Text>/);
+  assert.doesNotMatch(sheet, / ✓|✔/);
   assert.match(sheet, /<PrimaryButton label="Done" icon=\{null\}/);
 });
