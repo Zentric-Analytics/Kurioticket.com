@@ -221,9 +221,12 @@ test("flight card uses Lucide icons for route, benefits, and saved state", () =>
 });
 
 test("flight favorite uses persistent shared state for initial, save, and remove behavior", () => {
-  assert.match(card, /const \{ savedFlights, toggle \} = useSavedFlights\(\)/);
-  assert.match(card, /const saved = savedFlights\.has\(result\.id\)/);
-  assert.match(card, /toggle\(result, params\)/);
+  assert.doesNotMatch(card, /useSavedFlights\(\)/);
+  assert.match(card, /saved: boolean; onToggleSaved: \(\) => void/);
+  assert.match(card, /onToggleSaved\(\)/);
+  assert.equal((source.match(/useSavedFlights\(\)/g) || []).length, 1);
+  assert.match(source, /saved=\{savedFlights\.has\(item\.id\)\}/);
+  assert.match(source, /toggleSavedFlight\(item, params\)/);
   assert.doesNotMatch(card, /useState\(false\)/);
   const hook = readFileSync(resolve("src/storage/useSavedFlights.ts"), "utf8");
   assert.match(hook, /SAVED_FLIGHTS_KEY/);
@@ -237,10 +240,10 @@ test("flight favorite is accessible, isolated, and does not enlarge the top row"
   assert.match(card, /accessibilityRole="button"/);
   assert.match(card, /accessibilityState=\{\{ selected: saved \}\}/);
   assert.match(card, /hitSlop=\{\{ top: 12, bottom: 12, left: 12, right: 12 \}\}/);
-  assert.match(card, /event\.stopPropagation\(\); toggle\(result, params\)/);
+  assert.match(card, /event\.stopPropagation\(\); onToggleSaved\(\)/);
   assert.match(source, /airlineHeader: \{ minHeight: 20/);
   assert.match(source, /favoriteButton: \{ width: 20, height: 20/);
-  assert.doesNotMatch(card, /onPress=.*View details[\s\S]*toggle\(result, params\)/);
+  assert.doesNotMatch(card, /onPress=.*View details[\s\S]*toggleSavedFlight/);
 });
 
 test("compact density keeps identity controls in one band and preserves practical touch targets", () => {

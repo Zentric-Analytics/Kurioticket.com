@@ -50,10 +50,35 @@ test("loading decoration cannot intercept controls and route changes cannot loop
   assert.match(screen, /activeSearch\.current\?\.abort\("screen-blur"\)/);
 });
 
-test("slow flight diagnostics measure parsing, processing, and event-loop responsiveness", () => {
-  assert.match(api, /responseBytes: responseByteLength\(raw\)/);
-  assert.match(api, /textDecodeMs/);
-  assert.match(api, /jsonParseMs/);
+test("production parsing uses one native JSON path and safe response metadata", () => {
+  assert.match(api, /parsed = await response\.json\(\)/);
+  assert.doesNotMatch(api, /response\.text\(\)/);
+  assert.doesNotMatch(api, /JSON\.parse\(raw\)/);
+  assert.match(api, /response\.headers\.get\("content-length"\)/);
+  assert.match(api, /TravelApiError\("The search provider returned an invalid response\.", response\.status, "invalid-response"\)/);
+  assert.doesNotMatch(api, /error\.message.*JSON|JSON.*error\.message/);
+});
+
+test("slow flight diagnostics measure processing and event-loop responsiveness", () => {
+  assert.match(api, /responseJsonMs/);
   assert.match(screen, /clientValidationMs/);
   assert.match(screen, /\[flight-search:event-loop\]/);
+});
+
+test("flight results virtualize cards and own exactly one saved-flight subscription", () => {
+  const card = screen.slice(screen.indexOf("function FlightCard"), screen.indexOf("function FlightJourneyRow"));
+  assert.match(screen, /<SectionList/);
+  assert.match(screen, /stickySectionHeadersEnabled/);
+  assert.match(screen, /initialNumToRender=\{6\}/);
+  assert.doesNotMatch(screen, /sorted\.map\(\(x, i\) =>\s*product === "flight"/);
+  assert.equal((screen.match(/useSavedFlights\(\)/g) || []).length, 1);
+  assert.doesNotMatch(card, /useSavedFlights|savedRepository|readSession|SecureStore/);
+  assert.match(card, /saved: boolean; onToggleSaved: \(\) => void/);
+});
+
+test("airline SVG isolation deterministically preserves the initials fallback", () => {
+  const logo = readFileSync("src/features/search/AirlineLogo.tsx", "utf8");
+  assert.match(logo, /allowRemoteSvg\?: boolean/);
+  assert.match(logo, /isSvgUrl\(visibleUrl\) && !allowRemoteSvg/);
+  assert.match(screen, /EXPO_PUBLIC_DISABLE_REMOTE_AIRLINE_SVG/);
 });

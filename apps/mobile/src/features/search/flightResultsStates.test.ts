@@ -51,5 +51,6 @@ test("no-results and error recovery use edit and the guarded existing retry flow
 test("dedicated states avoid zero-count duplication and refresh errors retain usable results", () => {
   assert.match(screen, /status === "ready" && !flightState/);
   assert.match(screen, /setStatus\(resultsRef\.current\.length \? "ready" : "error"\)/);
-  assert.match(screen, /!flightState && sorted\.map/);
+  assert.match(screen, /sections=\{\[\{ data: !flightState \? sorted as FlightResult\[\] : \[\] \}\]\}/);
+  assert.doesNotMatch(screen, /!flightState && sorted\.map/);
 });

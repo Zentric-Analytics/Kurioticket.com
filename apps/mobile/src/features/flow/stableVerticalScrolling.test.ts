@@ -37,9 +37,11 @@ test("major vertical screens disable iOS bounce and Android overscroll", () => {
 
 test("flight results keep fixed chrome, sticky filters, and stable outer scrolling", () => {
   const source = read("src/features/search/ApprovedResultsScreen.tsx");
-  assertStableOwner(source, /<ScrollView[\s\S]*?style=\{\[s0\.resultsScroll[\s\S]*?>/);
-  assert.match(source, /stickyHeaderIndices=\{\[1\]\}/);
-  assert.match(source, /<\/ScrollView>[\s\S]*?<BottomNav flightResults=\{flightResults\} \/>/);
+  const listStart = source.indexOf("<SectionList");
+  const owner = source.slice(listStart, source.indexOf("/>", source.indexOf("windowSize", listStart)) + 2);
+  for (const prop of stableProps) assert.match(owner, prop);
+  assert.match(source, /stickySectionHeadersEnabled/);
+  assert.match(source, /<SectionList[\s\S]*?\/>[\s\S]*?<BottomNav flightResults=\{flightResults\} \/>/);
   assert.match(source, /const filterRail = \([\s\S]*?<ScrollView\s+horizontal/);
 });
 

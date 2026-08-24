@@ -8,6 +8,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  SectionList,
   ScrollView,
   StyleSheet,
   Switch,
@@ -134,6 +135,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
   const previousComparisonCurrency = useRef<string | null>(null);
   const previousFlightSearchKey = useRef<string | undefined>(undefined);
+  const { savedFlights, toggle: toggleSavedFlight } = useSavedFlights();
   useEffect(() => {
     if (!flightResults || !plan.plan?.key) return;
     if (previousFlightSearchKey.current && previousFlightSearchKey.current !== plan.plan.key) {
@@ -486,10 +488,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   />
                 </View>
               ) : null}
-              {!flightState && sorted.map((x, i) =>
-                product === "flight" ? (
-                  <FlightCard key={x.id} result={x as FlightResult} displayPrice={flightDisplayPrices.get(x.id)} displayCurrencyContext={currencyState?.resolution} highlight={flightHighlights.get(x.id)} params={params} />
-                ) : (
+              {!flightState && product === "hotel" && sorted.map((x, i) =>
+                (
                   <HotelCard
                     key={x.id}
                     result={x as HotelResult}
@@ -531,28 +531,46 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         </>
       )}
       {product === "flight" ? (
-        <ScrollView
+        <SectionList
           style={[s0.resultsScroll, { backgroundColor: theme.background }]}
+          sections={[{ data: !flightState ? sorted as FlightResult[] : [] }]}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={s0.flightCardItem}>
+              <FlightCard
+                result={item}
+                displayPrice={flightDisplayPrices.get(item.id)}
+                displayCurrencyContext={currencyState?.resolution}
+                highlight={flightHighlights.get(item.id)}
+                params={params}
+                saved={savedFlights.has(item.id)}
+                onToggleSaved={() => toggleSavedFlight(item, params)}
+              />
+            </View>
+          )}
+          ListHeaderComponent={<View>{dateStrip}</View>}
+          renderSectionHeader={() => (
+            <View style={[s0.stickyFilterSurface, { backgroundColor: theme.background }]}>
+              {status === "ready" && !flightState ? (
+                <Text accessibilityRole="header" style={[s0.flightResultCount, { color: theme.textPrimary }]}>
+                  {flightResultCountLabel(sorted.length)}
+                </Text>
+              ) : null}
+              {status === "ready" && results.length > 0 ? filterRail : null}
+            </View>
+          )}
+          ListEmptyComponent={<View style={[s0.body, s0.flightResultsBody]}>{resultContent}</View>}
+          ListFooterComponent={!flightState && sorted.length ? <View style={[s0.body, s0.flightResultsBody]}>{resultContent}</View> : null}
+          stickySectionHeadersEnabled
           alwaysBounceVertical={false}
           bounces={false}
           overScrollMode="never"
-          stickyHeaderIndices={[1]}
           contentContainerStyle={s0.flightResultsContent}
-        >
-          <View>{dateStrip}</View>
-          <View style={[s0.stickyFilterSurface, { backgroundColor: theme.background }]}>
-            {status === "ready" && !flightState ? (
-              <Text
-                accessibilityRole="header"
-                style={[s0.flightResultCount, { color: theme.textPrimary }]}
-              >
-                {flightResultCountLabel(sorted.length)}
-              </Text>
-            ) : null}
-            {status === "ready" && results.length > 0 ? filterRail : null}
-          </View>
-          <View style={[s0.body, s0.flightResultsBody]}>{resultContent}</View>
-        </ScrollView>
+          initialNumToRender={6}
+          maxToRenderPerBatch={5}
+          updateCellsBatchingPeriod={50}
+          windowSize={7}
+        />
       ) : (
         <>
           {dateStrip}
@@ -707,10 +725,8 @@ function FlightSortModal({
   );
 }
 
-function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highlight, params }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; highlight?: FlightResultHighlight; params: Record<string, string | string[]> }) {
+function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highlight, params, saved, onToggleSaved }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; highlight?: FlightResultHighlight; params: Record<string, string | string[]>; saved: boolean; onToggleSaved: () => void }) {
   const { theme } = useAppTheme();
-  const { savedFlights, toggle } = useSavedFlights();
-  const saved = savedFlights.has(result.id);
   const roundTrip = one(params.tripType) === "round-trip";
   const { outbound, returnLeg } = flightCardLegs(result, roundTrip);
   const baggageBenefit = summarizeBaggage(result.baggageInfo);
@@ -723,6 +739,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
             <AirlineLogo
               airlineName={result.airlineName}
               logoUrl={result.airlineLogo}
+              allowRemoteSvg={process.env.EXPO_PUBLIC_DISABLE_REMOTE_AIRLINE_SVG !== "1"}
             />
           </View>
           <View style={s0.flightDetails}>
@@ -744,7 +761,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
                 accessibilityLabel={saved ? `Remove ${result.airlineName} flight from saved` : `Save ${result.airlineName} flight`}
                 accessibilityState={{ selected: saved }}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                onPress={(event) => { event.stopPropagation(); toggle(result, params); }}
+                onPress={(event) => { event.stopPropagation(); onToggleSaved(); }}
                 style={({ pressed }) => [s0.favoriteButton, pressed && s0.favoritePressed]}
               >
                 <Heart
@@ -1321,6 +1338,7 @@ const s0 = StyleSheet.create({
   sheetActions: { gap: 9 },
   body: { paddingHorizontal: 18, paddingBottom: 92, gap: 14 },
   flightResultsBody: { paddingHorizontal: 14, gap: 8 },
+  flightCardItem: { paddingHorizontal: 14, paddingBottom: 8 },
   notice: {
     backgroundColor: "#F2F6FF",
     color: ui.navy,

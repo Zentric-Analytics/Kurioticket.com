@@ -123,11 +123,32 @@ export async function POST(request: Request) {
     ]).catch((error) => console.error("[flight-search:logging]", error));
   });
 
-  return NextResponse.json({
+  const responseBody = {
     ...classifyFlights(publicResults, parsed.data, aggregate.warnings, requestId),
     resultsCacheValidForMs: aggregate.resultsCacheValidForMs,
     resultsCacheValidUntil: aggregate.resultsCacheValidUntil,
     latencyMs: aggregate.latencyMs,
     performance: { ...performanceMetrics, beforeProviderMs, routeDurationMs },
-  }, { headers: { "Server-Timing": serverTiming } });
+  };
+  // This is the response's required serialization, not a diagnostics-only copy.
+  // Supplying its byte length lets native clients diagnose pressure without
+  // retaining a second complete JSON string after parsing.
+  const serializedResponse = JSON.stringify(responseBody);
+  const responseBytes = Buffer.byteLength(serializedResponse);
+  const legCount = publicResults.reduce((count, result) => count + (result.legs?.length ?? 0), 0);
+  const segmentCount = publicResults.reduce((count, result) => count + (result.legs?.reduce((sum, leg) => sum + leg.segments.length, 0) ?? 0), 0);
+  console.info("[flight-search:response-pressure]", {
+    requestId,
+    resultCount: publicResults.length,
+    responseBytes,
+    legCount,
+    segmentCount,
+  });
+  return new Response(serializedResponse, {
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Content-Length": String(responseBytes),
+      "Server-Timing": serverTiming,
+    },
+  });
 }
