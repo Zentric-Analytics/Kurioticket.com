@@ -4,8 +4,13 @@ import { readFileSync } from "node:fs";
 import type { MobileSavedItem } from "../../api/travelApi";
 import { canonicalItemsNewestFirst } from "../../storage/savedRepositoryCore";
 import { destinationById } from "../explore/destinationCatalogue";
+import { destinationMedia, FALLBACK_SOURCE } from "../explore/destinationMedia";
 import { formatFlightAccess } from "../explore/exploreModels";
-import { popularStayCardLayout, POPULAR_STAY_LAYOUT } from "../home/popularStayCardLayout";
+import {
+  regionBrowseCardLayout,
+  REGION_BROWSE_IMAGE_ASPECT_RATIO,
+  REGION_BROWSE_IMAGE_HEIGHT_RATIO,
+} from "../explore/regionBrowseCardLayout";
 
 const source = (path: string) => readFileSync(path, "utf8");
 const item = (value: Record<string, unknown>) => value as MobileSavedItem;
@@ -32,27 +37,26 @@ test("flight, hotel, and search become the same stable card model", () => {
   assert.match(screen, /const searchType = text\(item\.searchType\)/);
   assert.match(screen, /origin && destination \? `\$\{origin\} → \$\{destination\}`/);
   assert.equal((screen.match(/testID="saved-card"/g) ?? []).length, 2);
-  assert.match(screen, /popularStayCardLayout\(windowWidth, windowWidth - 36\)/);
+  assert.match(screen, /regionBrowseCardLayout\(windowWidth\)/);
+  assert.doesNotMatch(screen, /popularStayCardLayout|POPULAR_STAY_LAYOUT/);
   assert.doesNotMatch(screen, /regionPreviewCardLayout/);
   assert.doesNotMatch(screen, /(?:height|width): 104/);
-  assert.match(screen, /source=\{FALLBACK_SOURCE\}/);
+  assert.match(screen, /source=\{source\}/);
 });
 
-test("Saved and Home Popular stays derive responsive geometry from one layout helper", () => {
+test("Saved and Explore region browse cards derive geometry from one layout helper", () => {
   const saved = source("src/features/saved/SavedRecentScreen.tsx");
-  const home = source("src/features/home/PopularDestinationStays.tsx");
-  assert.match(saved, /from "\.\.\/home\/popularStayCardLayout"/);
-  assert.match(home, /from "\.\/popularStayCardLayout"/);
-  assert.match(saved, /popularStayCardLayout\(windowWidth, windowWidth - 36\)/);
-  assert.match(home, /popularStayCardLayout\(width\)/);
-  assert.deepEqual(popularStayCardLayout(390), {
-    width: 291,
-    imageHeight: 303.6521739130435,
-    footerHeight: 72,
-    height: 375.6521739130435,
-  });
-  assert.equal(popularStayCardLayout(280, 244).width, 244);
-  assert.equal(POPULAR_STAY_LAYOUT.radius, 16);
+  const explore = source("src/features/explore/ExploreRegionScreen.tsx");
+  assert.match(saved, /from "\.\.\/explore\/regionBrowseCardLayout"/);
+  assert.match(explore, /from "\.\/regionBrowseCardLayout"/);
+  assert.match(saved, /regionBrowseCardLayout\(windowWidth\)/);
+  assert.match(explore, /regionBrowseCardLayout\(windowWidth\)/);
+  assert.doesNotMatch(saved, /popularStayCardLayout|POPULAR_STAY_LAYOUT|footerHeight|height: 72/);
+  const layout = regionBrowseCardLayout(390);
+  assert.equal(layout.width, 374);
+  assert.equal(layout.imageHeight, layout.width / REGION_BROWSE_IMAGE_ASPECT_RATIO);
+  assert.equal(layout.imageHeight / layout.height, REGION_BROWSE_IMAGE_HEIGHT_RATIO);
+  assert.equal(layout.informationHeight / layout.height, 0.4);
 });
 
 test("Saved cards have a full-width image, footer below it, and floating remove control", () => {
@@ -64,8 +68,34 @@ test("Saved cards have a full-width image, footer below it, and floating remove 
   assert.match(screen, /imageFrame: \{ width: "100%", position: "relative"/);
   assert.match(screen, /removeTouchTarget: \{ position: "absolute"/);
   assert.match(screen, /card: \{ alignSelf: "center"/);
-  assert.match(screen, /source=\{FALLBACK_SOURCE\}/);
-  assert.doesNotMatch(screen, /destinationMediaFor|popularDestinationStays.*image/);
+  assert.match(screen, /source=\{source\}/);
+  assert.match(screen, /imageFailed \? FALLBACK_SOURCE : \(model\.media\?\.source \?\? FALLBACK_SOURCE\)/);
+  assert.match(screen, /onError=\{\(\) => setImageFailed\(true\)\}/);
+  assert.doesNotMatch(screen, /popularDestinationStays.*image/);
+});
+
+test("canonical Abidjan saves retain metadata and resolve the same media as Explore", () => {
+  const abidjan = destinationById.get("ci-abidjan");
+  assert.ok(abidjan);
+  assert.equal(abidjan.name, "Abidjan");
+  assert.equal(abidjan.country, "Côte d’Ivoire");
+  assert.equal(formatFlightAccess(abidjan.primaryAirportCode, abidjan.airportCodes), "Flights via ABJ");
+  const media = destinationMedia(abidjan.imageDestinationId) ?? destinationMedia(abidjan.id);
+  assert.ok(media);
+  assert.notEqual(media.source, undefined);
+  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  assert.match(screen, /destinationMedia\(canonicalDestination\.imageDestinationId\) \?\? destinationMedia\(canonicalDestination\.id\)/);
+});
+
+test("only canonical destination searches receive destination media", () => {
+  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  const flight = screen.slice(screen.indexOf('if (item.type === "flight")'), screen.indexOf('if (item.type === "hotel")'));
+  const hotel = screen.slice(screen.indexOf('if (item.type === "hotel")'), screen.indexOf("const destinationId"));
+  assert.doesNotMatch(flight, /destinationMedia/);
+  assert.doesNotMatch(hotel, /destinationMedia/);
+  assert.match(screen, /canonicalDestination\s*\? destinationMedia/);
+  assert.match(screen, /model\.media\?\.source \?\? FALLBACK_SOURCE/);
+  assert.ok(FALLBACK_SOURCE);
 });
 
 test("canonical destination saves use catalogue country and flight access instead of duplicate copy", () => {
