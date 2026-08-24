@@ -325,7 +325,7 @@ export function easCommandFailureMessage(command, error, secrets = []) {
 
 export function easCommandEnvironment({ baseEnvironment = process.env, directory, expoToken, isUpdatePublish, isBuildCreate = false, platform = null }) {
   if (!directory) throw new Error("EAS command temporary directory is required.");
-  if (isBuildCreate && !["ios", "android"].includes(platform)) throw new Error("EAS build platform is required for app-config parity.");
+  if ((isBuildCreate || isUpdatePublish) && !["ios", "android"].includes(platform)) throw new Error("EAS platform is required for app-config parity.");
   const { EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: _inheritedGoogleIosClientId, ...sanitizedBaseEnvironment } = baseEnvironment;
   return {
     ...sanitizedBaseEnvironment,
@@ -334,7 +334,12 @@ export function easCommandEnvironment({ baseEnvironment = process.env, directory
     APP_BUILD_MODE: "release",
     EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY.apiOrigin,
     ...(platform === "ios" ? { EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: PREVIEW_IDENTITY.googleIosClientId } : {}),
-    ...(isBuildCreate ? { EAS_BUILD: "true", EAS_BUILD_PLATFORM: platform } : {}),
+    // Fingerprint runtime policy must resolve app.config.ts under the same
+    // platform-specific native configuration for builds and OTA exports. In
+    // particular, the iOS Google Sign-In plugin is intentionally conditional
+    // on this context; omitting it during update export produces a different
+    // runtime from the already-delivered native binary.
+    ...((isBuildCreate || isUpdatePublish) ? { EAS_BUILD: "true", EAS_BUILD_PLATFORM: platform } : {}),
     CI: "1",
     // Expo, Metro, and the EAS CLI create temporary artifacts outside their
     // output directory. Scope every platform-specific temp variable to the
