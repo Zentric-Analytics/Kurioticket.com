@@ -22,7 +22,7 @@ test("Cars closed selectors share the compact field contract without custom chev
   for (const [label, icon] of fields) {
     assert.match(closedForm, new RegExp(`<CompactSearchField label="${label.replace("/", "\\/")}"[^\\n]*icon="${icon}"`));
   }
-  for (const copy of ["Enter city or airport", "Select pick-up date", "Select return date", "Select driver age", "Search cars"]) {
+  for (const copy of ["Enter city or airport", "Pickup date", "Return date", "Select driver age", "Search cars"]) {
     assert.match(closedForm, new RegExp(copy));
   }
   assert.doesNotMatch(closedForm, /<Field |LocationLauncher|trailing=|name="chevron"/);
@@ -69,8 +69,10 @@ test("Cars does not finitely cap paired date or time summaries", () => {
 });
 
 test("Cars summaries cover empty, partial, and complete values with Return terminology", () => {
-  assert.match(panel, /pickupDate \? displayDate\(pickupDate\) : "Select pick-up date"/);
-  assert.match(panel, /returnDate \? displayDate\(returnDate\) : "Select return date"/);
+  const dateSummary = panel.match(/export const rentalDatesSummary[\s\S]*?;/)?.[0] ?? "";
+  assert.match(dateSummary, /pickupDate \? displayDate\(pickupDate\) : "Pickup date"/);
+  assert.match(dateSummary, /returnDate \? displayDate\(returnDate\) : "Return date"/);
+  assert.doesNotMatch(dateSummary, /Select (?:pick-up|return) date/);
   assert.equal(rentalTimesSummary("",""), "Select pick-up time — Select return time");
   assert.equal(rentalTimesSummary("10:00",""), `${formatTime("10:00")} — Select return time`);
   assert.doesNotMatch(rentalTimesSummary("10:00","10:30"), /Select/);
