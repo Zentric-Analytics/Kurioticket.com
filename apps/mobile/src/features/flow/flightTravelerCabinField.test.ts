@@ -7,7 +7,7 @@ const presentation = readFileSync("src/features/flow/flightSearchPresentation.ts
 const fieldStart = panel.indexOf('<CompactSearchField label="Travelers & Cabin Class"');
 const field = panel.slice(fieldStart, panel.indexOf("\n", fieldStart));
 const sheetStart = panel.indexOf("function TravelerCabinSheet");
-const sheet = panel.slice(sheetStart, panel.indexOf("function Counter", sheetStart));
+const sheet = panel.slice(sheetStart, panel.indexOf("function Cancel", sheetStart));
 
 test("Flights renders one full-width combined Travelers and Cabin Class field", () => {
   assert.equal(panel.match(/<CompactSearchField label="Travelers & Cabin Class"/g)?.length, 1);
@@ -43,7 +43,7 @@ test("the disclosure chevron uses the decorative native SVG icon without changin
 test("traveler and cabin validation intents open the same combined sheet", () => {
   assert.match(panel, /visible=\{picker === "travelers" \|\| picker === "cabin"\}/);
   assert.match(sheet, /<PickerSheetHeader title="Travelers & Cabin" onClose=\{onCancel\}\/>/);
-  assert.match(sheet, /\["adults","children","infants"\]/);
+  assert.match(panel, /const TRAVELER_ROWS = \[[\s\S]*kind: "adults"[\s\S]*kind: "children"[\s\S]*kind: "infants"/);
   assert.match(sheet, /NATIVE_FLIGHT_CABIN_OPTIONS\.map/);
 });
 
@@ -62,12 +62,38 @@ test("an empty committed form gets one draft adult without mutating on open", ()
   assert.doesNotMatch(field, /setForm/);
 });
 
-test("selected cabin uses row styling and accessibility without a visible checkmark", () => {
-  assert.match(sheet, /accessibilityRole="radio" accessibilityState=\{\{selected:cabin===draft\.cabin\}\}/);
-  assert.match(sheet, /accessibilityLabel=\{`\$\{cabin\}\$\{cabin===draft\.cabin\?", selected":""\}`\}/);
-  assert.match(sheet, /cabin===draft\.cabin&&\[styles\.selected,\{backgroundColor:ft\.colors\.selected,borderLeftColor:ft\.colors\.selectedBorder\}\]/);
-  assert.match(sheet, /cabin===draft\.cabin&&\{color:ft\.colors\.selectedPrimaryText\}/);
-  assert.match(sheet, />\{cabin\}<\/Text>/);
-  assert.doesNotMatch(sheet, / ✓|✔/);
+test("selected cabin uses radio semantics, themed styling, and a decorative visible checkmark", () => {
+  assert.match(sheet, /accessibilityRole="radio" accessibilityState=\{\{selected\}\}/);
+  assert.match(sheet, /accessibilityLabel=\{`\$\{cabin\}\$\{selected\?", selected":""\}`\}/);
+  assert.match(sheet, /selected&&\{backgroundColor:ft\.colors\.selected,borderColor:ft\.colors\.selectedBorder\}/);
+  assert.match(sheet, /<DecorativeIcon icon=\{Armchair\}/);
+  assert.match(sheet, /<DecorativeIcon icon=\{Check\}/);
   assert.match(sheet, /<PrimaryButton label="Done" icon=\{null\}/);
+});
+
+test("the traveler content matches web wording, grouping, icons, and accessible vector counters", () => {
+  assert.match(sheet, />TRAVELERS<\/Text>/);
+  assert.match(sheet, /styles\.travelerCard/);
+  assert.match(panel, /kind: "adults", label: "Adults", description: "18 years and above", icon: UserRound/);
+  assert.match(panel, /kind: "children", label: "Children", description: "2 to 17 years", icon: PersonStanding/);
+  assert.match(panel, /kind: "infants", label: "Infants", description: "Under 2 years", icon: Baby/);
+  assert.match(sheet, /index<TRAVELER_ROWS\.length-1\?<View testID="traveler-divider"/);
+  assert.match(sheet, /icon=\{Minus\}/);
+  assert.match(sheet, /icon=\{Plus\}/);
+  assert.match(sheet, /accessibilityRole="button" accessibilityLabel=\{label\} accessibilityState=\{\{disabled\}\}/);
+  assert.match(sheet, /changeTraveler\(draftForm,kind,delta\)/);
+});
+
+test("Flight traveler counters keep 40px visuals and at least 48px effective targets", () => {
+  const counter = sheet.slice(sheet.indexOf("function Counter"), sheet.indexOf("function CabinOption"));
+  assert.match(counter, /hitSlop=\{4\}/);
+  assert.match(panel, /counterButton:\{width:40,height:40/);
+});
+
+test("the uncapped baggage tip uses one decorative lightbulb and flexible wrapping copy", () => {
+  const tip = sheet.slice(sheet.indexOf("function TipCard"));
+  assert.match(tip, /icon=\{Lightbulb\}/);
+  assert.match(tip, /<Text style=\{styles\.tipStrong\}>Tip:<\/Text> Baggage allowance may vary by airline\. Check details on the provider page\./);
+  assert.doesNotMatch(tip, /numberOfLines/);
+  assert.match(panel, /tipCopy:\{flex:1,minWidth:0/);
 });
