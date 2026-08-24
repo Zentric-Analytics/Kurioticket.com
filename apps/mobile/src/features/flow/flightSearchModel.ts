@@ -43,7 +43,7 @@ export function flightEditSearchParams(params: Record<string, RouteValue>) {
 }
 
 export function defaultFlightForm(): FlightForm {
-  return { tripType: "round-trip", departureDate: "", returnDate: "", adults: 0, children: 0, infants: 0 };
+  return { tripType: "round-trip", departureDate: "", returnDate: "", adults: 1, children: 0, infants: 0, cabin: "Economy" };
 }
 
 export function initializeFlightForm(params: Record<string, RouteValue>, today = new Date(), initializeHomepageDates = false): { form: FlightForm; notice?: string } {
@@ -67,10 +67,13 @@ export function initializeFlightForm(params: Record<string, RouteValue>, today =
   const returnValid = Boolean(returnText && localDateFromIso(returnText) && departureValid && returnText > departureText);
   if ((departureText && !departureValid) || (returnText && !returnValid)) notices.push("Some incoming dates were invalid. Please select the dates again.");
   const separatePresent = ["adults", "children", "infants"].some((key) => firstFlightParam(params[key]) !== "");
-  const adultsValue = count(firstFlightParam(params.adults)); const childrenValue = count(firstFlightParam(params.children)); const infantsValue = count(firstFlightParam(params.infants)); const legacy = count(firstFlightParam(params.travelers));
-  let adults = separatePresent ? adultsValue ?? 0 : legacy ?? 0; let children = separatePresent ? childrenValue ?? 0 : 0; let infants = separatePresent ? infantsValue ?? 0 : 0;
-  if (!Number.isInteger(adults) || adults < 1 || !Number.isInteger(children) || children < 0 || !Number.isInteger(infants) || infants < 0 || adults + children + infants > 9) { adults = 0; children = 0; infants = 0; if (separatePresent || legacy !== undefined) notices.push("Some traveler counts were invalid. Please select travelers again."); }
-  const cabinText = firstFlightParam(params.cabin); const cabin = normalizeCabin(cabinText); if (cabinText && !cabin) notices.push("Choose a supported cabin class.");
+  const legacyTravelerText = firstFlightParam(params.travelers); const legacyTravelerPresent = legacyTravelerText !== "";
+  const adultsValue = count(firstFlightParam(params.adults)); const childrenValue = count(firstFlightParam(params.children)); const infantsValue = count(firstFlightParam(params.infants)); const legacy = count(legacyTravelerText);
+  let adults = defaults.adults; let children = defaults.children; let infants = defaults.infants;
+  if (separatePresent) { adults = adultsValue ?? 0; children = childrenValue ?? 0; infants = infantsValue ?? 0; }
+  else if (legacyTravelerPresent) { adults = legacy ?? 0; children = 0; infants = 0; }
+  if (!Number.isInteger(adults) || adults < 1 || !Number.isInteger(children) || children < 0 || !Number.isInteger(infants) || infants < 0 || adults + children + infants > 9) { adults = 0; children = 0; infants = 0; if (separatePresent || legacyTravelerPresent) notices.push("Some traveler counts were invalid. Please select travelers again."); }
+  const cabinText = firstFlightParam(params.cabin); const cabin = cabinText ? normalizeCabin(cabinText) : defaults.cabin; if (cabinText && !cabin) notices.push("Choose a supported cabin class.");
   const isFreshHomepageForm = initializeHomepageDates && !Object.values(params).some((value) => firstFlightParam(value));
   const homepageDeparture = isFreshHomepageForm ? todayIso : "";
   const homepageReturn = isFreshHomepageForm && tripType === "round-trip" ? addCalendarDays(todayIso, 7) : "";

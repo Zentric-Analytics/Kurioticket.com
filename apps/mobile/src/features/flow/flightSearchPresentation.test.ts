@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { formatTravelerCabinSummary } from "./flightSearchPresentation";
-import type { FlightForm } from "./flightSearchModel";
+import { initializeFlightForm, type FlightForm } from "./flightSearchModel";
 
 const summary = (values: Partial<Pick<FlightForm, "adults" | "children" | "infants" | "cabin">>) => formatTravelerCabinSummary({
   adults: 0,
@@ -15,6 +15,10 @@ test("traveler and cabin summary presents empty and partial committed states", (
   assert.equal(summary({}), "Select travelers, Select cabin");
   assert.equal(summary({ adults: 1 }), "1 adult, Select cabin");
   assert.equal(summary({ cabin: "Economy" }), "Select travelers, Economy");
+});
+
+test("fresh Flight initialization naturally presents the real defaults", () => {
+  assert.equal(formatTravelerCabinSummary(initializeFlightForm({}, new Date(2026, 7, 1, 12)).form), "1 adult, Economy");
 });
 
 test("traveler and cabin summary uses composition with correct grammar", () => {
