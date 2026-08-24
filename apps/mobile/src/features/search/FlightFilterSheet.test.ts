@@ -23,6 +23,19 @@ test("full sheet exposes required supported groups and conditionally hides optio
   assert.match(sheet, /options\.baggage \|\| options\.refundable/);
 });
 
+test("price waits for stable currency context without withholding other sections", () => {
+  assert.match(screen, /priceFilteringReady=\{currencyState != null\}/);
+  assert.match(sheet, /isPriceFilteringAvailable\(options, priceFilteringReady\)/);
+  assert.match(sheet, /isPriceFilteringAvailable\(options, priceFilteringReady\)[\s\S]*?title="Price"/);
+  for (const title of ["Times", "Duration", "Stops", "Airlines", "Airports", "Amenities"]) {
+    assert.match(sheet, new RegExp(`title="${title}"`));
+  }
+});
+
+test("a comparison-currency identity change clears only the local price filter", () => {
+  assert.match(screen, /previousComparisonCurrency\.current !== nextCurrency[\s\S]*?current\.price \? \{ \.\.\.current, price: null \} : current/);
+});
+
 test("quick Airlines and Stops controls share the full-sheet filter state", () => {
   assert.match(screen, /x === "Stops" \? filters\.stops\.length/);
   assert.match(screen, /x === "Airlines" \? filters\.airlines\.length/);
@@ -55,5 +68,7 @@ test("price and duration use real accessible gesture sliders instead of numeric 
   assert.match(slider, /Minimum price/);
   assert.match(slider, /Maximum price/);
   assert.match(slider, /Maximum flight duration/);
+  assert.match(slider, /rangeEdgeForDrag/);
+  assert.match(slider, /zIndex: activeEdge === edge \? 2 : 1/);
   assert.doesNotMatch(sheet, /accessibilityLabel=\{`\$\{key\} \$\{edge\}`\}/);
 });
