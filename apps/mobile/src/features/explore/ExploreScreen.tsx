@@ -20,6 +20,7 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { destinationDetailsRoute } from "./exploreInteractionModels";
 import { destinationMedia, FALLBACK_SOURCE } from "./destinationMedia";
 import { useExploreCatalogue } from "./exploreCatalogueStore";
+import { regionPreviewCardLayout } from "./regionPreviewLayout";
 import {
   allLiveExploreDestinations,
   exactLiveExploreResult,
@@ -30,13 +31,6 @@ import {
 
 const BLUE = "#0754F7";
 const SEARCH_RESULTS_BOTTOM_SPACING = 18;
-export const REGION_PREVIEW_CARD_WIDTH_RATIO = 0.928;
-export const REGION_PREVIEW_NEXT_CARD_PEEK_EXPANSION_RATIO = 0.058;
-export const REGION_PREVIEW_INSET_RATIO = 0.024;
-export const REGION_PREVIEW_GAP_RATIO = 0.024;
-export const REGION_PREVIEW_ASPECT_RATIO = 2.13;
-export const REGION_PREVIEW_IMAGE_ASPECT_RATIO = 3.21;
-export const REGION_PREVIEW_IMAGE_HEIGHT_SCALE = 1.12;
 const shadow = { shadowColor: "#18305B", shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 };
 
 export function DestinationThumbnail({ destination }: { destination: LiveExploreDestination }) {
@@ -122,13 +116,7 @@ function ExploreDiscoveryContent({ REGION_DISCOVERY, select }: { REGION_DISCOVER
   const { theme } = useAppTheme();
   const { savedIds, toggle } = useSavedDestinations();
   const { width: windowWidth } = useWindowDimensions();
-  const previewCardWidth = windowWidth * (REGION_PREVIEW_CARD_WIDTH_RATIO - REGION_PREVIEW_NEXT_CARD_PEEK_EXPANSION_RATIO);
-  const previousCardHeight = previewCardWidth / REGION_PREVIEW_ASPECT_RATIO;
-  const previousImageHeight = previewCardWidth / REGION_PREVIEW_IMAGE_ASPECT_RATIO;
-  const previewImageHeight = previousImageHeight * REGION_PREVIEW_IMAGE_HEIGHT_SCALE;
-  const previewCardHeight = previousCardHeight + (previewImageHeight - previousImageHeight);
-  const previewInset = windowWidth * REGION_PREVIEW_INSET_RATIO;
-  const previewGap = windowWidth * REGION_PREVIEW_GAP_RATIO;
+  const { cardWidth: previewCardWidth, cardHeight: previewCardHeight, imageHeight: previewImageHeight, inset: previewInset, gap: previewGap } = regionPreviewCardLayout(windowWidth);
   const openRegion = (regionSlug: string) => router.push({ pathname: "/explore/region/[region]", params: { region: regionSlug } });
   return <FlatList alwaysBounceVertical={false} bounces={false} overScrollMode="never" data={REGION_DISCOVERY} keyExtractor={({ regionId }) => regionId} contentContainerStyle={s.discoveryContent} renderItem={({ item, index }) => <View style={[s.regionSection, index === REGION_DISCOVERY.length - 1 && s.finalRegionSection]}>
     <View style={[s.regionHeader, { paddingHorizontal: previewInset }]}><View><Text accessibilityRole="header" style={[s.regionTitle, { color: theme.textPrimary }]}>{item.region}</Text><Text style={[s.regionCount, { color: theme.textSecondary }]}>{item.destinations.length} destinations</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`See all destinations in ${item.region}`} onPress={() => openRegion(item.regionSlug)} style={s.seeAll}><Text style={s.seeAllText}>See all</Text><FlowIcon name="chevron" color={BLUE} size={16} /></Pressable></View>
