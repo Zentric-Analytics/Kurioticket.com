@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
 import { router } from "expo-router";
 import { CompactSearchField, PrimaryButton } from "./FlowPrimitives";
@@ -9,6 +9,7 @@ import { CarRentalDatesSheet } from "./CarSearchPickers";
 import { rentalTimesSummary } from "./carSearchModel";
 import { CarTimeRangeSheet } from "./CarSearchPickers";
 import { applyPackageDates, applyPackageDestination, createPackageSearch, includedProducts, packageModes, transitionPackageMode, updatePackageParty, type PackageMode, type PackageSearch } from "./packageSearchModel";
+import { fetchHomepageDefaultOrigin } from "../home/homepageDefaultOrigin";
 
 const dateText = (value: string) => value ? new Date(`${value}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "Select";
 
@@ -21,9 +22,27 @@ export function PackageSearchForm({ presentation }: { presentation: "home" | "st
   const [datesOpen, setDatesOpen] = useState(false);
   const [partyOpen, setPartyOpen] = useState(false);
   const [timesOpen, setTimesOpen] = useState(false);
+  const userControlsOrigin = useRef(false);
   const included = includedProducts(search.mode);
+  useEffect(() => {
+    if (!included.flight || search.origin.trim() || search.originCode.trim() || userControlsOrigin.current) return;
+
+    let active = true;
+    void fetchHomepageDefaultOrigin().then(airport => {
+      if (!active || !airport || userControlsOrigin.current) return;
+
+      const origin = `${airport.city} (${airport.code})`;
+      setSearch(current => {
+        if (current.origin.trim() || current.originCode.trim() || userControlsOrigin.current) return current;
+        return { ...current, origin, originCode: airport.code };
+      });
+    }).catch(() => undefined);
+
+    return () => { active = false; };
+  }, [included.flight, search.origin, search.originCode]);
   const chooseAirport = (airport: Airport) => {
     const text = `${airport.city} (${airport.code})`;
+    if (airportField === "origin") userControlsOrigin.current = true;
     setSearch(current => airportField === "origin" ? { ...current, origin: text, originCode: airport.code } : applyPackageDestination(current, text, airport.code));
     setAirportField(undefined);
   };
@@ -39,8 +58,8 @@ export function PackageSearchForm({ presentation }: { presentation: "home" | "st
       </ScrollView>
     </View>
     <View style={[styles.fields, { borderColor: ft.colors.border, backgroundColor: ft.colors.input }]}>
-      {included.flight ? <CompactSearchField label="Origin" value={search.origin || "City or airport"} muted={!search.origin} icon="location" onPress={() => setAirportField("origin")}/> : null}
-      <CompactSearchField label="Destination" value={search.destination || "Select destination"} muted={!search.destination} icon="location" onPress={() => included.flight ? setAirportField("destination") : setHotelDestinationOpen(true)}/>
+      {included.flight ? <CompactSearchField label="Origin" value={search.origin || "City or airport"} muted={!search.origin} icon="location" onPress={() => { userControlsOrigin.current = true; setAirportField("origin"); }}/> : null}
+      <CompactSearchField label="Destination" value={search.destination || "Where to?"} muted={!search.destination} icon="location" onPress={() => included.flight ? setAirportField("destination") : setHotelDestinationOpen(true)}/>
       <CompactSearchField label="Travel dates" value={search.startDate ? `${dateText(search.startDate)} — ${dateText(search.endDate)}` : "Choose dates"} muted={!search.startDate} icon="calendar" onPress={() => setDatesOpen(true)}/>
       <CompactSearchField label={included.hotel ? "Travelers & Rooms" : "Travelers"} value={`${travelerCount} ${travelerCount === 1 ? "traveler" : "travelers"}${included.hotel ? ` · ${search.rooms} ${search.rooms === 1 ? "room" : "rooms"}` : ""}`} icon="person" onPress={() => setPartyOpen(true)}/>
       {included.car ? <CompactSearchField label="Pick-up / Return time" value={rentalTimesSummary(search.carPickupTime, search.carReturnTime)} icon="clock" onPress={() => setTimesOpen(true)}/> : null}

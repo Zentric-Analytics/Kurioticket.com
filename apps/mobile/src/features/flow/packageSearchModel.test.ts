@@ -15,6 +15,8 @@ test("fresh package searches start with one traveler and one room", () => {
   const search = createPackageSearch();
 
   assert.equal(search.mode, "hotel-flight");
+  assert.equal(search.origin, "");
+  assert.equal(search.originCode, "");
   assert.equal(search.adults, 1);
   assert.equal(search.children, 0);
   assert.equal(search.infants, 0);
