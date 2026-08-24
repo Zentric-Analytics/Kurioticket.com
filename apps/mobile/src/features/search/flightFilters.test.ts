@@ -7,6 +7,8 @@ import {
   filterAndSortFlights,
   flightSortQuickLabel,
   flightFilterOptions,
+  flightFacetCounts,
+  matchingFlightCount,
   timeBucket,
   type FlightFilters,
 } from "./flightFilters";
@@ -195,6 +197,23 @@ test("meaningful count counts each selection, each changed range once, and not d
   const options = flightFilterOptions(detailed);
   assert.equal(activeFlightFilterCount({ ...emptyFlightFilters(), price: options.price, duration: options.duration }, options), 0);
   assert.equal(activeFlightFilterCount({ ...emptyFlightFilters(), price: { min: 150, max: 300 }, stops: ["nonstop"], airlines: ["American", "British Airways"], baggageIncluded: true }, options), 5);
+});
+test("preview and facet counts use draft filters without mutating loaded results", () => {
+  const before = detailed.slice();
+  const draft = { ...emptyFlightFilters(), airlines: ["American"] };
+  assert.equal(matchingFlightCount(detailed, draft), 2);
+  const counts = flightFacetCounts(detailed, draft);
+  assert.deepEqual(counts.stops, { nonstop: 1, one: 0, twoPlus: 1 });
+  assert.deepEqual(counts.airlines, { American: 2, "British Airways": 1 });
+  assert.deepEqual(counts.fromAirports, { EWR: 0, JFK: 2 });
+  assert.deepEqual(counts.toAirports, { LGW: 1, LHR: 1 });
+  assert.deepEqual(detailed, before);
+});
+test("facet counts retain other draft categories but replace their own category", () => {
+  const draft: FlightFilters = { ...emptyFlightFilters(), stops: ["nonstop"], airlines: ["American"] };
+  const counts = flightFacetCounts(detailed, draft);
+  assert.deepEqual(counts.stops, { nonstop: 1, one: 0, twoPlus: 1 });
+  assert.deepEqual(counts.airlines, { American: 1, "British Airways": 0 });
 });
 test("filters compose before the selected sort and missing optional data is safe", () => {
   assert.deepEqual(ids({ ...emptyFlightFilters(), toAirports: ["LGW"] }, "price"), ["one-british", "two-american"]);

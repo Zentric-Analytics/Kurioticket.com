@@ -8,7 +8,7 @@ const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "ut
 test("mobile filter sheet is extracted, scrollable, safe-area aware, and has a fixed confirmation CTA", () => {
   assert.match(screen, /<FlightFilterSheet[\s\S]*?filters=\{filters\}[\s\S]*?onChange=\{setFilters\}/);
   assert.match(sheet, /useSafeAreaInsets\(\)[\s\S]*?<ScrollView[\s\S]*?<View style=\{\[styles\.footer/);
-  assert.match(sheet, /label="Show flights"[\s\S]*?onChange\(draft\); onClose\(\)/);
+  assert.match(sheet, /const cta = `Show \$\{previewCount\}[\s\S]*?label=\{cta\}[\s\S]*?onChange\(draft\); onClose\(\)/);
 });
 
 test("filter sheet remains usable while the airline keyboard is open", () => {
@@ -33,4 +33,16 @@ test("quick Airlines and Stops controls share the full-sheet filter state", () =
 test("dynamic count uses the dedicated helper and requested middle-dot label", () => {
   assert.match(screen, /activeFlightFilterCount\(filters, flightOptions\)/);
   assert.match(screen, /`Filter · \$\{activeFilterCount\}`/);
+});
+
+test("decision rows expose local counts, airline logos, and accessible dynamic labels", () => {
+  assert.match(sheet, /flightFacetCounts\(results, draft, normalizePrice\)/);
+  assert.match(sheet, /matchingFlightCount\(results, draft, normalizePrice\)/);
+  assert.match(sheet, /<AirlineLogo airlineName=\{name\} logoUrl=\{logoByAirline\.get\(name\)\}/);
+  assert.match(sheet, /accessibilityLabel=\{count == null \? label : `\$\{label\}, \$\{count\} flights`\}/);
+});
+
+test("clear all is subdued when draft filters are empty and the CTA remains available at zero", () => {
+  assert.match(sheet, /accessibilityState=\{\{ disabled: !hasDraftFilters \}\}[\s\S]*?disabled=\{!hasDraftFilters\}/);
+  assert.doesNotMatch(sheet, /<Button label=\{cta\}[^>]*disabled=/);
 });

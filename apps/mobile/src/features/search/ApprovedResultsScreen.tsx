@@ -552,6 +552,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             section={filterSection}
             filters={filters}
             options={flightOptions}
+            results={results as FlightResult[]}
+            normalizePrice={normalizeFlightPrice}
             currency={currencyState?.resolution.resolvedCurrency ?? (results[0] as FlightResult | undefined)?.currency ?? "USD"}
             onChange={setFilters}
             onClose={() => setFilterOpen(false)}
