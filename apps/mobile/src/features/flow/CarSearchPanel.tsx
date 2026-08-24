@@ -13,7 +13,7 @@ import { searchCarLocationSuggestions, type CarLocationSuggestion } from "@/lib/
 
 type Props = { params: Record<string, RouteValue>; embedded?: boolean; showSubmit?: boolean; submitLabel?: string; requireManualDetails?: boolean; startWithEmptyRentalDates?: boolean };
 const displayDate = (iso: string) => localDateFromIso(iso)?.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }) ?? iso;
-export const rentalDatesSummary = (pickupDate: string, returnDate: string) => `${pickupDate ? displayDate(pickupDate) : "Select pick-up date"} — ${returnDate ? displayDate(returnDate) : "Select return date"}`;
+export const rentalDatesSummary = (pickupDate: string, returnDate: string) => `${pickupDate ? displayDate(pickupDate) : "Pickup date"} — ${returnDate ? displayDate(returnDate) : "Return date"}`;
 type CarLocationPickerMode = "pickup" | "return" | undefined;
 
 export function CarSearchPanel({ params, embedded = false, showSubmit = true, submitLabel = "Search cars", requireManualDetails = false, startWithEmptyRentalDates = false }: Props) {
