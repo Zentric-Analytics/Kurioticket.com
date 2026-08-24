@@ -22,7 +22,7 @@ test("shared security modals apply explicit safe-area insets", () => {
 });
 
 test("all native security drill-downs retain the shared modal shell", () => {
-  for (const state of ["passwordOpen", "devicesOpen", "activityOpen", "twoFactorOpen", "deletionOpen"])
+  for (const state of ["passkeysOpen", "passwordOpen", "devicesOpen", "activityOpen", "twoFactorOpen", "deletionOpen"])
     assert.match(security, new RegExp(`<ScreenModal\\s+visible=\\{${state}\\}`));
 });
 
@@ -50,15 +50,15 @@ test("password fields exist only in a full-screen password flow", () => {
   assert.match(security, /travelApi\.requestAccountPasswordReset\(\)/);
 });
 
-test("only passkeys retain the secure web handoff", () => {
-  assert.doesNotMatch(security, /<SecurityBlock label=\{c\.twoFactor\}[^>]+onPress=\{web\}/);
+test("passkeys use the native security drill-down instead of the web handoff", () => {
   assert.match(security, /<SecurityBlock label=\{c\.twoFactor\}[^>]+onPress=\{openTwoFactor\}/);
   assert.match(security, /<ScreenModal visible=\{twoFactorOpen\}/);
-  assert.match(security, /<SecurityBlock label=\{c\.passkeys\}[^>]+onPress=\{web\}/);
-  assert.doesNotMatch(security, /accessibilityLabel=\{c\.deleteAccount\} onPress=\{web\}/);
+  assert.match(security, /<SecurityBlock label=\{c\.passkeys\}[^>]+onPress=\{openPasskeys\}/);
+  assert.match(security, /<ScreenModal visible=\{passkeysOpen\}/);
+  assert.match(security, /travelApi\.passkeys\(\)/);
+  assert.doesNotMatch(security, /Linking\.canOpenURL|const WEB =|onPress=\{web\}/);
   assert.match(security, /accessibilityLabel=\{c\.deleteAccount\} onPress=\{\(\) => void openDeletion\(\)\}/);
   assert.match(security, /<ScreenModal visible=\{deletionOpen\}/);
-  assert.match(security, /Linking\.canOpenURL\(WEB\)/);
 });
 
 test("devices remain off the landing page and preserve revocation behavior", () => {
@@ -116,12 +116,13 @@ test("successful deletion reactivation discards the revoked session and requires
 
 test("visual feedback is owned by the landing and individual security flows", () => {
   assert.doesNotMatch(security, /const \[error, setError\]|const \[message, setMessage\]/);
-  for (const state of ["landingError", "landingMessage", "passwordError", "passwordMessage", "devicesError", "twoFactorError", "deletionError"])
+  for (const state of ["landingError", "landingMessage", "passwordError", "passwordMessage", "devicesError", "twoFactorError", "deletionError", "passkeysError", "passkeysMessage"])
     assert.match(security, new RegExp(`const \\[${state}, set${state[0].toUpperCase()}${state.slice(1)}\\]`));
 
-  const landing = security.slice(security.indexOf("return <SafeAreaView"), security.indexOf("<ScreenModal visible={passwordOpen}"));
+  const landing = security.slice(security.indexOf("return <SafeAreaView"), security.indexOf("<ScreenModal visible={passkeysOpen}"));
   assert.match(landing, /<Feedback error=\{landingError\} message=\{landingMessage\}/);
-  assert.doesNotMatch(landing, /passwordError|passwordMessage|devicesError|twoFactorError|deletionError/);
+  assert.doesNotMatch(landing, /passwordError|passwordMessage|devicesError|twoFactorError|deletionError|passkeysError|passkeysMessage/);
+  assert.match(security, /<Feedback error=\{passkeysError\} message=\{passkeysMessage\}/);
   assert.match(security, /<Feedback error=\{passwordError\} message=\{passwordMessage\}/);
   assert.match(security, /<Feedback error=\{devicesError\} message=""/);
   assert.match(security, /<Feedback error=\{twoFactorError\} message=""/);
@@ -137,6 +138,8 @@ test("drill-down feedback is cleared on both open and close", () => {
   }
   assert.match(security, /openDeletion[^\n]+setDeletionError\(""\)[^\n]+setDeletionOpen\(true\)/);
   assert.match(security, /closeDeletion[^\n]+setDeletionOpen\(false\)[^\n]+setDeletionError\(""\)/);
+  assert.match(security, /openPasskeys[^\n]+setPasskeysError\(""\)[^\n]+setPasskeysMessage\(""\)[^\n]+setPasskeysOpen\(true\)/);
+  assert.match(security, /closePasskeys[^\n]+setPasskeysOpen\(false\)[^\n]+setPasskeysError\(""\)[^\n]+setPasskeysMessage\(""\)/);
 });
 
 test("operation failures and messages target only their owning feedback scope", () => {
@@ -144,7 +147,7 @@ test("operation failures and messages target only their owning feedback scope", 
     ["startTwoFactor", "setTwoFactorError"], ["confirmTwoFactor", "setTwoFactorError"], ["disableTwoFactor", "setTwoFactorError"],
     ["change", "setPasswordError"], ["reset", "setPasswordMessage"], ["remove", "setDevicesError"],
     ["openDeletion", "setDeletionError"], ["requestDeletion", "setDeletionError"], ["reactivate", "setDeletionError"],
-    ["web", "setLandingError"], ["toggle", "setLandingMessage"], ["all", "setLandingError"],
+    ["toggle", "setLandingMessage"], ["all", "setLandingError"],
   ];
   for (let index = 0; index < expectations.length; index += 1) {
     const [operation, setter] = expectations[index];
@@ -153,19 +156,21 @@ test("operation failures and messages target only their owning feedback scope", 
     assert.ok(start >= 0, `missing ${operation}`);
     assert.match(security.slice(start, next > start ? next : undefined), new RegExp(`${setter}\\(`), `${operation} should use ${setter}`);
   }
+  assert.match(security, /const loadPasskeys = async[^\n]+setPasskeysError\(/);
   assert.match(security, /setLandingError\(c\.loadError\)/);
   assert.match(security, /setLandingError\(c\.saveFailed\)/);
-  assert.match(security, /setLandingError\(c\.openFailed\)/);
+  assert.doesNotMatch(security, /setLandingError\(c\.openFailed\)/);
   assert.match(security, /setLandingError\(c\.signOutFailed\)/);
 });
 
 test("late modal requests cannot repopulate feedback after close or reopen", () => {
-  for (const flow of ["password", "devices", "twoFactor", "deletion"])
+  for (const flow of ["password", "devices", "twoFactor", "deletion", "passkeys"])
     assert.match(security, new RegExp(`${flow}Request\\.current`));
   assert.match(security, /request === twoFactorRequest\.current/);
   assert.match(security, /request === passwordRequest\.current/);
   assert.match(security, /request === devicesRequest\.current/);
   assert.match(security, /request===deletionRequest\.current/);
+  assert.match(security, /request===passkeysRequest\.current/);
 });
 
 test("internal modal refreshes do not overwrite landing feedback", () => {

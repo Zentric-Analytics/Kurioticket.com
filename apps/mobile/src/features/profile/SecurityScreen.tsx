@@ -4,7 +4,6 @@ import {
   Animated,
   Alert,
   KeyboardAvoidingView,
-  Linking,
   Modal,
   Platform,
   Pressable,
@@ -17,14 +16,13 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { travelApi, TravelApiError, type AccountDeletionRequest, type SecurityEvent, type SecurityOverview, type SecuritySession, type TwoFactorSetup } from "../../api/travelApi";
+import { travelApi, TravelApiError, type AccountDeletionRequest, type SecurityEvent, type SecurityOverview, type SecuritySession, type TwoFactorSetup, type MobilePasskey } from "../../api/travelApi";
 import { clearSession, readSession } from "../../storage/sessionStorage";
 import { useAppTheme } from "../../theme/AppTheme";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 
-const WEB = "https://kurioticket.com/dashboard/security";
 const copy = {
   "en-us": { title: "Security", intro: "Manage sign-in and account security for your Kurioticket account.", loading: "Loading security settings…", loadError: "Unable to load security settings.", retry: "Try again", back: "Go back", close: "Close", password: "Password", passwordHelp: "Change the password used to sign in to your account.", configured: "Configured", notConfigured: "Not configured", current: "Current password", next: "New password", confirm: "Confirm new password", show: "Show password", hide: "Hide password", change: "Change password", changing: "Changing…", passwordRules: "Use at least 8 characters and choose a different password.", passwordInvalid: "Check that passwords match, contain at least 8 characters, and differ from the current password.", passwordSuccess: "Password changed. Other devices were signed out.", oauth: "This account does not have a password. Use password reset to create one.", reset: "Email password reset link", resetSent: "If the account can receive reset email, instructions were sent.", twoFactor: "Two-factor authentication", twoFactorHelp: "Add extra protection with an authenticator app.", passkeys: "Passkeys", passkeysHelp: "Use your device screen lock, Face ID, fingerprint, password manager, or security key to sign in faster and more securely.", activeSessions: "Active sessions", activeSessionsHelp: "Review devices signed in to your account.", yourDevices: "Your devices", devicesHelp: "Review devices that have recently accessed your account.", currentDevice: "Current device", lastActive: "Last active", remove: "Remove device", removeTitle: "Remove this device?", removeBody: "This device will need to sign in again.", cancel: "Cancel", removeFailed: "Unable to remove this device.", signOutAll: "Sign out everywhere", signOutAllHelp: "End every web and mobile session connected to your account.", signOutTitle: "Sign out everywhere?", signOutBody: "Every web and mobile session, including this device, will be ended.", signOutFailed: "Unable to sign out every device. Try again.", notifications: "Security notifications", alertsHelp: "Receive important email about account security.", saving: "Saving…", saved: "Saved", saveFailed: "Unable to save. Your previous setting is unchanged.", activity: "Security activity", activityHelp: "Review recent sign-ins and security changes.", empty: "No recent security activity.", deleteAccount: "Delete account", openFailed: "Unable to open the secure web experience.", unknown: "Security update", enabled: "Enabled", disabled: "Disabled", twoFactorSetupHelp: "Protect your account with a code from an authenticator app.", setupTwoFactor: "Set up two-factor authentication", setupInstructions: "Add this account to your authenticator app using the setup key or URI, then enter its six-digit code.", authenticatorCode: "Authenticator code", confirmSetup: "Confirm setup", codeInvalid: "Enter exactly 6 digits.", twoFactorError: "Unable to update two-factor authentication.", recoveryTitle: "Recovery codes", recoveryHelp: "Save these codes somewhere secure. They will not be shown again.", disable: "Disable two-factor authentication", disableTitle: "Disable two-factor authentication?", disableBody: "Verify this security change, then disable two-factor authentication.", disableHelp: "Enter an authenticator or recovery code, or your password, to verify this change.", verification: "Authenticator code, recovery code, or password", deletionHelp: "Account deletion becomes permanent after the 7-day grace period. You may reactivate your account during the supported grace period.", requestDeletion: "Request account deletion", deletionConfirmTitle: "Request account deletion?", deletionConfirmBody: "Your account is scheduled for permanent deletion in 7 days. This action is destructive.", pendingDeletion: "Pending deletion", scheduledDate: "Scheduled deletion date", keepAccount: "Keep my account / Cancel deletion", reactivated: "Account deletion cancelled.", deletionError: "Unable to update account deletion." },
   "es-es": { title: "Seguridad", intro: "Gestiona el acceso y la seguridad de tu cuenta de Kurioticket.", loading: "Cargando configuración de seguridad…", loadError: "No se pudo cargar la configuración de seguridad.", retry: "Intentar de nuevo", back: "Volver", close: "Cerrar", password: "Contraseña", passwordHelp: "Cambia la contraseña que usas para acceder a tu cuenta.", configured: "Configurada", notConfigured: "No configurada", current: "Contraseña actual", next: "Nueva contraseña", confirm: "Confirmar nueva contraseña", show: "Mostrar contraseña", hide: "Ocultar contraseña", change: "Cambiar contraseña", changing: "Cambiando…", passwordRules: "Usa al menos 8 caracteres y elige una contraseña diferente.", passwordInvalid: "Comprueba que coincidan, tengan al menos 8 caracteres y sean diferentes de la actual.", passwordSuccess: "Contraseña cambiada. Se cerraron las otras sesiones.", oauth: "Esta cuenta no tiene contraseña. Usa el restablecimiento para crear una.", reset: "Enviar enlace de restablecimiento", resetSent: "Si la cuenta puede recibir el correo, se enviaron instrucciones.", twoFactor: "Autenticación en dos pasos", twoFactorHelp: "Añade protección adicional con una aplicación de autenticación.", passkeys: "Llaves de acceso", passkeysHelp: "Usa el bloqueo de pantalla, Face ID, huella digital, gestor de contraseñas o llave de seguridad para acceder de forma más rápida y segura.", activeSessions: "Sesiones activas", activeSessionsHelp: "Revisa los dispositivos con sesiones abiertas en tu cuenta.", yourDevices: "Tus dispositivos", devicesHelp: "Revisa los dispositivos que han accedido recientemente a tu cuenta.", currentDevice: "Dispositivo actual", lastActive: "Última actividad", remove: "Eliminar dispositivo", removeTitle: "¿Eliminar este dispositivo?", removeBody: "Este dispositivo tendrá que iniciar sesión de nuevo.", cancel: "Cancelar", removeFailed: "No se pudo eliminar el dispositivo.", signOutAll: "Cerrar sesión en todas partes", signOutAllHelp: "Finaliza todas las sesiones web y móviles conectadas a tu cuenta.", signOutTitle: "¿Cerrar sesión en todas partes?", signOutBody: "Finalizarán todas las sesiones web y móviles, incluida esta.", signOutFailed: "No se pudo cerrar sesión en todos los dispositivos. Inténtalo de nuevo.", notifications: "Notificaciones de seguridad", alertsHelp: "Recibe correos importantes sobre la seguridad de la cuenta.", saving: "Guardando…", saved: "Guardado", saveFailed: "No se pudo guardar. Se mantiene la opción anterior.", activity: "Actividad de seguridad", activityHelp: "Revisa los inicios de sesión y cambios de seguridad recientes.", empty: "No hay actividad de seguridad reciente.", deleteAccount: "Eliminar cuenta", openFailed: "No se pudo abrir la experiencia web segura.", unknown: "Actualización de seguridad", enabled: "Activada", disabled: "Desactivada", twoFactorSetupHelp: "Protege tu cuenta con un código de una aplicación de autenticación.", setupTwoFactor: "Configurar la autenticación en dos pasos", setupInstructions: "Añade esta cuenta a tu aplicación con la clave o URI y escribe el código de seis dígitos.", authenticatorCode: "Código del autenticador", confirmSetup: "Confirmar configuración", codeInvalid: "Introduce exactamente 6 dígitos.", twoFactorError: "No se pudo actualizar la autenticación en dos pasos.", recoveryTitle: "Códigos de recuperación", recoveryHelp: "Guarda estos códigos en un lugar seguro. No volverán a mostrarse.", disable: "Desactivar la autenticación en dos pasos", disableTitle: "¿Desactivar la autenticación en dos pasos?", disableBody: "Verifica este cambio de seguridad y desactiva la autenticación en dos pasos.", disableHelp: "Introduce un código de autenticador o recuperación, o tu contraseña.", verification: "Código de autenticador, recuperación o contraseña", deletionHelp: "La eliminación será permanente tras el período de gracia de 7 días. Puedes reactivar tu cuenta durante ese período.", requestDeletion: "Solicitar la eliminación de la cuenta", deletionConfirmTitle: "¿Solicitar la eliminación de la cuenta?", deletionConfirmBody: "Tu cuenta se eliminará permanentemente en 7 días. Esta acción es destructiva.", pendingDeletion: "Eliminación pendiente", scheduledDate: "Fecha de eliminación programada", keepAccount: "Conservar mi cuenta / Cancelar eliminación", reactivated: "Se canceló la eliminación de la cuenta.", deletionError: "No se pudo actualizar la eliminación de la cuenta." },
@@ -46,11 +44,15 @@ export function SecurityScreen() {
   const [devicesError, setDevicesError] = useState("");
   const [twoFactorError, setTwoFactorError] = useState("");
   const [deletionError, setDeletionError] = useState("");
+  const [passkeysError, setPasskeysError] = useState("");
+  const [passkeysMessage, setPasskeysMessage] = useState("");
+  const [passkeys, setPasskeys] = useState<MobilePasskey[]>([]);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [devicesOpen, setDevicesOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
   const [twoFactorOpen, setTwoFactorOpen] = useState(false);
   const [deletionOpen, setDeletionOpen] = useState(false);
+  const [passkeysOpen, setPasskeysOpen] = useState(false);
   const [setup, setSetup] = useState<TwoFactorSetup | null>(null);
   const [authenticatorCode, setAuthenticatorCode] = useState("");
   const [verification, setVerification] = useState("");
@@ -65,6 +67,7 @@ export function SecurityScreen() {
   const devicesRequest = useRef(0);
   const twoFactorRequest = useRef(0);
   const deletionRequest = useRef(0);
+  const passkeysRequest = useRef(0);
 
   const unauth = useCallback(async (e: unknown) => {
     if (e instanceof TravelApiError && e.status === 401) {
@@ -92,8 +95,10 @@ export function SecurityScreen() {
   const openTwoFactor = () => { twoFactorRequest.current += 1; setTwoFactorError(""); setTwoFactorOpen(true); };
   const closeTwoFactor = () => { twoFactorRequest.current += 1; setTwoFactorOpen(false); setTwoFactorError(""); };
   const closeDeletion = () => { deletionRequest.current += 1; setDeletionOpen(false); setDeletionError(""); };
+  const loadPasskeys = async (request = passkeysRequest.current) => { try { const result=await travelApi.passkeys(); if(request===passkeysRequest.current)setPasskeys(result.passkeys); } catch(e) { if(!await unauth(e)&&request===passkeysRequest.current)setPasskeysError(e instanceof TravelApiError?e.message:"Unable to load passkeys."); } };
+  const openPasskeys = () => { const request=++passkeysRequest.current;setPasskeysError("");setPasskeysMessage("");setPasskeysOpen(true);void loadPasskeys(request); };
+  const closePasskeys = () => { passkeysRequest.current+=1;setPasskeysOpen(false);setPasskeysError("");setPasskeysMessage(""); };
 
-  const web = () => void Linking.canOpenURL(WEB).then((ok) => ok ? Linking.openURL(WEB) : Promise.reject()).catch(() => setLandingError(c.openFailed));
   const change = async () => {
     if (submitting) return;
     if (passwords.newPassword.length < 8 || passwords.newPassword !== passwords.confirmPassword || passwords.currentPassword === passwords.newPassword) { setPasswordError(c.passwordInvalid); return; }
@@ -143,7 +148,7 @@ export function SecurityScreen() {
         <View style={styles.landingBlocks}>
           <SecurityBlock label={c.password} description={c.passwordHelp} accessibilityValue={overview.hasPassword ? c.configured : c.notConfigured} onPress={openPassword} />
           <SecurityBlock label={c.twoFactor} description={c.twoFactorHelp} accessibilityValue={overview.twoFactorEnabled ? c.enabled : c.disabled} onPress={openTwoFactor} />
-          <SecurityBlock label={c.passkeys} description={c.passkeysHelp} onPress={web} />
+          <SecurityBlock label={c.passkeys} description={c.passkeysHelp} onPress={openPasskeys} />
           <SecurityBlock label={c.activeSessions} description={c.activeSessionsHelp} onPress={openDevices} />
           <View style={[styles.notificationRow, { borderBottomColor: theme.border }]}><View style={styles.rowCopy}><Text style={[styles.rowLabel, { color: theme.text }]}>{c.notifications}</Text><Text style={[styles.rowDetail, { color: theme.muted }]}>{c.alertsHelp}</Text>{saving ? <Text style={[styles.saving, { color: theme.muted }]}>{c.saving}</Text> : null}</View><Switch accessibilityLabel={`${c.notifications}. ${c.alertsHelp}`} accessibilityRole="switch" accessibilityState={{ checked: overview.securityEmailAlerts, busy: saving }} value={overview.securityEmailAlerts} onValueChange={(value) => void toggle(value)} /></View>
           <SecurityBlock label={c.activity} description={c.activityHelp} onPress={() => setActivityOpen(true)} />
@@ -153,6 +158,12 @@ export function SecurityScreen() {
       </> : null}
     </ScrollView>
 
+    <ScreenModal visible={passkeysOpen} title={c.passkeys} closeLabel={c.close} onClose={closePasskeys}>
+      <Text style={[styles.intro,{color:theme.muted}]}>{c.passkeysHelp}</Text><Feedback error={passkeysError} message={passkeysMessage}/>
+      <Button label="Add passkey" disabled onPress={()=>{}} />
+      <Text style={{color:theme.muted}}>A new Preview app binary with native Passkey support is required to add credentials.</Text>
+      {passkeys.map(item=><View key={item.id} style={[styles.device,{borderBottomColor:theme.border}]}><Text style={[styles.rowLabel,{color:theme.text}]}>{item.name}</Text><Text style={{color:theme.muted}}>{item.label}</Text><Text style={{color:theme.muted}}>Created {date(item.createdAt)}</Text></View>)}
+    </ScreenModal>
     <ScreenModal visible={passwordOpen} title={c.change} closeLabel={c.close} onClose={closePassword}>
       <Feedback error={passwordError} message={passwordMessage} />
       {overview?.hasPassword ? <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}><View style={styles.form}>{field("currentPassword", c.current)}{field("newPassword", c.next)}{field("confirmPassword", c.confirm)}<Pressable accessibilityRole="button" accessibilityLabel={visible ? c.hide : c.show} onPress={() => setVisible((v) => !v)} style={styles.textAction}><Text style={styles.link}>{visible ? c.hide : c.show}</Text></Pressable><Text style={{ color: theme.muted }}>{c.passwordRules}</Text><Button label={submitting ? c.changing : c.change} disabled={submitting} onPress={() => void change()} /></View></KeyboardAvoidingView> : <View style={styles.form}><Text style={{ color: theme.muted }}>{c.oauth}</Text><Button label={c.reset} onPress={() => void reset()} /></View>}

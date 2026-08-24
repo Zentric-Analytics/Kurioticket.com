@@ -134,6 +134,7 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
       bundleIdentifier: environment.bundleIdentifier,
       icon: "./assets/kurioticket-icon-ios.png",
       infoPlist: { ITSAppUsesNonExemptEncryption: false },
+      associatedDomains: [`webcredentials:${new URL(environment.apiBaseUrl).hostname}`],
     },
     android: {
       package: environment.androidPackage,
