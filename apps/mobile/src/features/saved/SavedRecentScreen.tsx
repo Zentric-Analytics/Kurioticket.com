@@ -10,6 +10,7 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { destinationById } from "../explore/destinationCatalogue";
 import { destinationMedia, FALLBACK_SOURCE, type DestinationMedia } from "../explore/destinationMedia";
 import { formatFlightAccess } from "../explore/exploreModels";
+import { exploreFlightDestinationNavigation } from "../explore/exploreSearchHandoff";
 import { regionBrowseCardLayout } from "../explore/regionBrowseCardLayout";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
@@ -67,11 +68,26 @@ export function canonicalSavedCards(items: readonly MobileSavedItem[]): SavedCar
     const media = canonicalDestination
       ? destinationMedia(canonicalDestination.imageDestinationId) ?? destinationMedia(canonicalDestination.id)
       : undefined;
+    let exploreNavigationPending = false;
+    const canonicalDestinationOpen = canonicalDestination
+      ? () => {
+          if (exploreNavigationPending) return;
+          exploreNavigationPending = true;
+          void exploreFlightDestinationNavigation({
+            id: canonicalDestination.id,
+            name: canonicalDestination.name,
+            primaryAirportCode: canonicalDestination.primaryAirportCode,
+            airportCodes: canonicalDestination.airportCodes,
+          }).then((route) => router.push(route)).finally(() => {
+            exploreNavigationPending = false;
+          });
+        }
+      : undefined;
     const params = searchType === "hotel" ? sanitizeSearchParams("hotel", query) : sanitizeSearchParams("flight", query);
     const hasFlightRoute = searchType === "flight" && (text(query?.to) || text(query?.destination));
     const hasHotelRoute = searchType === "hotel" && text(query?.destination);
     const resultsReady = (searchType === "flight" || searchType === "hotel") && hasValidSearchPlan(searchType, params);
-    const open = hasFlightRoute ? () => router.push({ pathname: resultsReady ? "/flight-results" : "/flights", params }) : hasHotelRoute ? () => router.push({ pathname: resultsReady ? "/hotel-results" : "/hotels", params }) : undefined;
+    const open = canonicalDestinationOpen ?? (hasFlightRoute ? () => router.push({ pathname: resultsReady ? "/flight-results" : "/flights", params }) : hasHotelRoute ? () => router.push({ pathname: resultsReady ? "/hotel-results" : "/hotels", params }) : undefined);
     return { item, title, secondary, supporting, summary: canonicalDestination?.summary, media, open };
   });
 }

@@ -112,6 +112,27 @@ test("canonical destination saves use catalogue country and flight access instea
   assert.match(screen, /formatFlightAccess\(canonicalDestination\.primaryAirportCode, canonicalDestination\.airportCodes\)/);
 });
 
+test("canonical destination saves use the shared Explore flight handoff with a per-card duplicate-tap guard", () => {
+  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  assert.match(screen, /const canonicalDestinationOpen = canonicalDestination/);
+  assert.match(screen, /exploreFlightDestinationNavigation\(\{/);
+  assert.match(screen, /primaryAirportCode: canonicalDestination\.primaryAirportCode/);
+  assert.match(screen, /airportCodes: canonicalDestination\.airportCodes/);
+  assert.match(screen, /if \(exploreNavigationPending\) return/);
+  assert.match(screen, /canonicalDestinationOpen \?\?/);
+});
+
+test("non-Explore searches, actual flights, and hotels keep their existing navigation", () => {
+  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  const flight = screen.slice(screen.indexOf('if (item.type === "flight")'), screen.indexOf('if (item.type === "hotel")'));
+  const hotel = screen.slice(screen.indexOf('if (item.type === "hotel")'), screen.indexOf("const destinationId"));
+  assert.match(flight, /resultsReady \? "\/flight-results" : "\/flights"/);
+  assert.match(hotel, /resultsReady \? "\/hotel-results" : "\/hotels"/);
+  assert.doesNotMatch(flight, /exploreFlightDestinationNavigation/);
+  assert.doesNotMatch(hotel, /exploreFlightDestinationNavigation/);
+  assert.match(screen, /hasFlightRoute \? \(\) => router\.push\(\{ pathname: resultsReady \? "\/flight-results" : "\/flights", params \}\)/);
+});
+
 test("flight and hotel cards retain useful canonical presentation", () => {
   const screen = source("src/features/saved/SavedRecentScreen.tsx");
   assert.match(screen, /text\(item\.airlineName\)/);
