@@ -1857,22 +1857,18 @@ test("current Android provider failure does not suppress eligible iOS notificati
   assert.equal(iosNotifications, 1);
 });
 
-test("canonical incident replacement corrects planning once, reserves before creation, and is idempotent", async () => {
+test("owner-authorized terminal replacement preserves history, reserves before creation, and is idempotent", async () => {
   const canonical = "c".repeat(40);
-  const old = "d".repeat(40);
   const buildId = "11111111-1111-4111-8111-111111111111";
-  let action = { source_sha: sha, identity_key: `native-build:android:${PREVIEW_IDENTITY.easProjectId}:${canonical}`, remote_id: null };
+  const failed = { source_sha: "2".repeat(40), identity_key: `native-build:android:${PREVIEW_IDENTITY.easProjectId}:${canonical}`, remote_id: "failed-build", state: "ERRORED" };
+  let action = { source_sha: sha, identity_key: `native-build-recovery:android:${PREVIEW_IDENTITY.easProjectId}:${canonical}:1`, remote_id: null, evidence: { recoveryAttempt: 1 } };
   const order = [];
   let creates = 0;
-  let corrections = 0;
-  let durableFingerprint = old;
   const finished = { id: buildId, platform: "ANDROID", status: "FINISHED", buildProfile: "preview", applicationIdentifier: PREVIEW_IDENTITY.bundleIdentifier, gitCommitHash: sha, fingerprint: { hash: canonical }, appVersion: "0.3.0", appBuildVersion: "30", project: { id: PREVIEW_IDENTITY.easProjectId }, artifacts: { buildUrl: "https://expo.dev/artifacts/eas/replacement.apk" } };
   const ledger = {
-    releaseBySha: async () => ({ evidence: { fingerprints: { android: durableFingerprint } } }),
-    rejectedNativeOwnershipIncidents: async () => [{ build_id: "incident-build" }],
-    correctPlannedNativeFingerprint: async () => { corrections += 1; durableFingerprint = canonical; order.push("correct"); },
-    reserveNativeBuild: async () => { order.push("reserve"); return { action, created: !action.remote_id }; },
-    recordAction: async (input) => { order.push("record"); action = { source_sha: sha, identity_key: input.identityKey, remote_id: input.remoteId }; return action; },
+    releaseBySha: async () => ({ evidence: { fingerprints: { android: canonical } } }),
+    reserveNativeBuildRecovery: async () => { order.push("reserve"); return { action, created: !action.remote_id }; },
+    recordAction: async (input) => { order.push("record"); action = { source_sha: sha, identity_key: input.identityKey, remote_id: input.remoteId, evidence: input.evidence }; return action; },
   };
   const orchestrator = new PreviewOrchestrator({
     config: { repository: PREVIEW_IDENTITY.repository, githubReadToken: "x" }, ledger,
@@ -1890,8 +1886,142 @@ test("canonical incident replacement corrects planning once, reserves before cre
   await orchestrator.recoverCanonicalNativeBuild({ sourceSha: sha, platform: "android" });
   await orchestrator.recoverCanonicalNativeBuild({ sourceSha: sha, platform: "android" });
   assert.equal(creates, 1);
-  assert.equal(corrections, 1);
   assert.ok(order.indexOf("reserve") < order.indexOf("create"));
   assert.ok(order.indexOf("create") < order.indexOf("record"));
+  assert.equal(failed.state, "ERRORED");
+  assert.equal(failed.remote_id, "failed-build");
+});
+
+test("terminal iOS native failure requires explicit recovery and never auto-retries", async () => {
+  const fingerprint = "f".repeat(40);
+  const failedAction = { source_sha: sha, identity_key: `native-build:ios:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}`, remote_id: "failed-ios", state: "ERRORED" };
+  let creates = 0;
+  const orchestrator = new PreviewOrchestrator({
+    config: {}, github: {}, render: {},
+    ledger: {
+      reserveNativeBuild: async () => ({ action: failedAction, created: false }),
+      latestNativeBuildRecovery: async () => null,
+      getAction: async () => failedAction,
+    },
+    easFactory: () => ({
+      viewBuild: async () => build({ id: "failed-ios", status: "ERRORED", runtimeVersion: fingerprint }),
+      createIosBuild: async () => { creates += 1; return { id: "unexpected" }; },
+    }),
+  });
+  const lease = { checkpoint: async () => {} };
+  await assert.rejects(orchestrator.deliverIos(sha, repositoryRoot, lease, fingerprint), /owner-authorized recovery/);
+  await assert.rejects(orchestrator.deliverIos(sha, repositoryRoot, lease, fingerprint), /owner-authorized recovery/);
+  assert.equal(creates, 0);
+  assert.equal(failedAction.state, "ERRORED");
+});
+
+test("successful authorized iOS replacement advances the canonical baseline after distribution", async () => {
+  const fingerprint = "f".repeat(40);
+  const canonicalFailed = { source_sha: "2".repeat(40), identity_key: `native-build:ios:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}`, remote_id: "ios-failed", state: "ERRORED" };
+  const recovery = { source_sha: sha, identity_key: `native-build-recovery:ios:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}:1`, remote_id: "ios-replacement", state: "FINISHED" };
+  const advances = [];
+  const ledger = {
+    reserveNativeBuild: async () => ({ action: canonicalFailed, created: false }),
+    latestNativeBuildRecovery: async () => recovery,
+    getAction: async (_kind, identity) => identity === recovery.identity_key ? recovery : canonicalFailed,
+    recordAction: async (action) => action,
+    advanceDeliveredNative: async (value) => { advances.push(value); },
+  };
+  const orchestrator = new PreviewOrchestrator({
+    config: {}, ledger, github: {}, render: {},
+    easFactory: () => ({
+      viewBuild: async () => build({ id: "ios-replacement", status: "FINISHED", runtimeVersion: fingerprint, appVersion: "0.3.0", appBuildVersion: "40" }),
+      listIosSubmissions: async () => [{ id: "submission-replacement", status: "FINISHED", platform: "IOS", app: { id: PREVIEW_IDENTITY.easProjectId }, submittedBuild: { id: "ios-replacement" } }],
+    }),
+  });
+  orchestrator.distributeIosToInternalGroup = async () => ({ appleBuildId: "apple-replacement", betaGroupId: "preview-testers", state: "FINISHED", associated: true });
+  const result = await orchestrator.deliverIos(sha, repositoryRoot, { checkpoint: async () => {} }, fingerprint);
+  assert.equal(result.buildId, "ios-replacement");
+  assert.equal(result.buildNumber, "40");
+  assert.equal(advances.length, 1);
+  assert.equal(advances[0].buildId, "ios-replacement");
+  assert.equal(advances[0].fingerprint, fingerprint);
+  assert.equal(canonicalFailed.state, "ERRORED");
+});
+
+test("failed iOS replacement remains durable and does not enter an automatic retry loop", async () => {
+  const fingerprint = "f".repeat(40);
+  const canonicalFailed = { source_sha: "2".repeat(40), identity_key: `native-build:ios:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}`, remote_id: "ios-failed", state: "ERRORED" };
+  const replacementFailed = { source_sha: sha, identity_key: `native-build-recovery:ios:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}:1`, remote_id: "ios-replacement-failed", state: "ERRORED" };
+  let creates = 0;
+  const orchestrator = new PreviewOrchestrator({
+    config: {}, github: {}, render: {},
+    ledger: {
+      reserveNativeBuild: async () => ({ action: canonicalFailed, created: false }),
+      latestNativeBuildRecovery: async () => replacementFailed,
+      getAction: async () => replacementFailed,
+    },
+    easFactory: () => ({
+      viewBuild: async () => build({ id: "ios-replacement-failed", status: "ERRORED", runtimeVersion: fingerprint }),
+      createIosBuild: async () => { creates += 1; return { id: "unexpected" }; },
+    }),
+  });
+  const lease = { checkpoint: async () => {} };
+  await assert.rejects(orchestrator.deliverIos(sha, repositoryRoot, lease, fingerprint), /owner-authorized recovery/);
+  await assert.rejects(orchestrator.deliverIos(sha, repositoryRoot, lease, fingerprint), /owner-authorized recovery/);
+  assert.equal(creates, 0);
+  assert.equal(replacementFailed.state, "ERRORED");
+  assert.equal(canonicalFailed.state, "ERRORED");
+});
+
+test("failed iOS recovery does not starve a compatible coalesced Android OTA", async () => {
+  const targetSha = "f".repeat(40);
+  const previousSha = "3".repeat(40);
+  const androidArtifactSha = "2".repeat(40);
+  const fingerprints = { ios: "a".repeat(40), android: "e".repeat(40) };
+  const transitions = [];
+  const persistedEvidence = [];
+  const published = [];
+  let otaPublished = false;
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", workerId: "test", repository: PREVIEW_IDENTITY.repository, githubReadToken: "token" },
+    ledger: {
+      transition: async (sourceSha, _workerId, _from, state, patch = {}) => {
+        const value = { source_sha: sourceSha, state, ...patch };
+        transitions.push(value);
+        return value;
+      },
+      recordDeliveryEvidence: async ({ evidence }) => { persistedEvidence.push(evidence); },
+    },
+    github: { report: async () => {} }, render: {},
+    checkoutFactory: async () => ({ directory: repositoryRoot, cleanup: async () => {} }),
+    changeSetFactory: async ({ previousSha: base }) => base === androidArtifactSha
+      ? ["apps/mobile/src/features/home/HomepageAdventureDiscovery.tsx"]
+      : ["package.json", "apps/mobile/src/features/home/HomepageAdventureDiscovery.tsx"],
+    prepareCheckoutFactory: async () => {},
+    identityFactory: async () => ({ appName: PREVIEW_IDENTITY.appName, bundleIdentifier: PREVIEW_IDENTITY.bundleIdentifier, scheme: PREVIEW_IDENTITY.scheme, projectId: PREVIEW_IDENTITY.easProjectId, profile: PREVIEW_IDENTITY.buildProfile, channel: PREVIEW_IDENTITY.channel, runtimePolicy: PREVIEW_IDENTITY.runtimePolicy, apiOrigin: PREVIEW_IDENTITY.apiOrigin }),
+    fingerprintsFactory: async () => fingerprints,
+  });
+  orchestrator.deliverWeb = async () => ({ deployId: "staging", deployedSha: targetSha, status: "live" });
+  orchestrator.deliverIos = async () => { throw new Error("Persisted iOS build requires explicit owner-authorized recovery: FAILED_MATCH."); };
+  orchestrator.deliverAndroid = async () => ({ buildId: "android-39", buildNumber: "39", nativeArtifactSourceSha: androidArtifactSha, nativeFingerprint: fingerprints.android });
+  orchestrator.deliverOta = async (_sha, _cwd, _lease, platforms) => {
+    if (!otaPublished) published.push(...platforms);
+    otaPublished = true;
+    return { updateIds: ["android-update"], channel: "preview" };
+  };
+
+  const reconcile = () => orchestrator.process(
+      { source_sha: targetSha, state: "DETECTED" },
+      { source_sha: previousSha, evidence: { fingerprints } },
+      { checkpoint: async () => {} },
+      {
+        ios: { sourceSha: previousSha, buildId: "ios-38", fingerprint: "b".repeat(40) },
+        android: { sourceSha: androidArtifactSha, buildId: "android-39", buildNumber: "39", fingerprint: fingerprints.android },
+      },
+    );
+  await assert.rejects(reconcile(), /owner-authorized recovery/);
+  await assert.rejects(reconcile(), /owner-authorized recovery/);
+
+  assert.deepEqual(published, ["android"]);
+  assert.deepEqual(transitions.map(({ state }) => state), ["VALIDATING", "PLANNED", "DELIVERING", "VALIDATING", "PLANNED", "DELIVERING"]);
+  assert.equal(persistedEvidence.length, 2);
+  assert.equal(persistedEvidence[0].platformFailures.ios.state, "RECOVERY_REQUIRED");
+  assert.deepEqual(persistedEvidence[0].coalescedOtaPlatforms, ["android"]);
 });
 
