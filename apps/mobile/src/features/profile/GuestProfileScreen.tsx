@@ -13,7 +13,10 @@ const BLUE = "#0754F7";
 export function GuestProfileScreen() {
   const { theme } = useAppTheme(); const { t } = useMobileLocalization();
   const sections: ProfileSection[] = [
-    { title: "travelActivity", items: [{ label: "savedRecent", icon: "bookmark", destination: { kind: "native", href: "/saved" } }] },
+    { title: "travelActivity", items: [
+      { label: "saved", icon: "bookmark", destination: { kind: "native", href: "/saved" } },
+      { label: "recentSearches", icon: "clock", destination: { kind: "native", href: "/recent" } },
+    ] },
     { title: "preferences", items: [{ label: "customizationPreferences", icon: "palette", destination: { kind: "native", href: "/settings" } }] },
     { title: "helpSupport", items: [
       { label: "contactSupport", icon: "headset", destination: { kind: "native", href: "/support" } },

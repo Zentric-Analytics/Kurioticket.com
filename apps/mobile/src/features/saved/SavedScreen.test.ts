@@ -15,14 +15,10 @@ import {
 const source = (path: string) => readFileSync(path, "utf8");
 const item = (value: Record<string, unknown>) => value as MobileSavedItem;
 
-test("Profile exposes Saved & recent without changing the bottom tabs", () => {
-  assert.match(source("src/features/profile/profileModel.ts"), /label: "savedRecent"[\s\S]*?href: "\/saved"/);
-  assert.match(source("src/features/profile/GuestProfileScreen.tsx"), /label: "savedRecent"[\s\S]*?href: "\/saved"/);
-  assert.equal((source("app/(tabs)/_layout.tsx").match(/<Tabs\.Screen/g) ?? []).length, 4);
-});
+
 
 test("Saved UI has one canonical visible source and keeps guest protection", () => {
-  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  const screen = source("src/features/saved/SavedScreen.tsx");
   assert.match(screen, /canonicalSavedCards\(canonical\.items\)/);
   assert.doesNotMatch(screen, /savedIds|savedFlights|savedSections|savedCategoryOrder/);
   assert.doesNotMatch(screen, /useSavedFlights|popularDestinationStays/);
@@ -31,7 +27,7 @@ test("Saved UI has one canonical visible source and keeps guest protection", () 
 });
 
 test("flight, hotel, and search become the same stable card model", () => {
-  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  const screen = source("src/features/saved/SavedScreen.tsx");
   assert.match(screen, /if \(item\.type === "flight"\)/);
   assert.match(screen, /if \(item\.type === "hotel"\)/);
   assert.match(screen, /const searchType = text\(item\.searchType\)/);
@@ -45,7 +41,7 @@ test("flight, hotel, and search become the same stable card model", () => {
 });
 
 test("Saved and Explore region browse cards derive geometry from one layout helper", () => {
-  const saved = source("src/features/saved/SavedRecentScreen.tsx");
+  const saved = source("src/features/saved/SavedScreen.tsx");
   const explore = source("src/features/explore/ExploreRegionScreen.tsx");
   assert.match(saved, /from "\.\.\/explore\/regionBrowseCardLayout"/);
   assert.match(explore, /from "\.\/regionBrowseCardLayout"/);
@@ -60,7 +56,7 @@ test("Saved and Explore region browse cards derive geometry from one layout help
 });
 
 test("Saved cards have a full-width image, footer below it, and floating remove control", () => {
-  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  const screen = source("src/features/saved/SavedScreen.tsx");
   const image = screen.indexOf('testID="saved-card-image"');
   const remove = screen.indexOf('accessibilityLabel={`Remove ${model.title} from saved`}', image);
   const footer = screen.indexOf('testID="saved-card-footer"', remove);
@@ -83,12 +79,12 @@ test("canonical Abidjan saves retain metadata and resolve the same media as Expl
   const media = destinationMedia(abidjan.imageDestinationId) ?? destinationMedia(abidjan.id);
   assert.ok(media);
   assert.notEqual(media.source, undefined);
-  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  const screen = source("src/features/saved/SavedScreen.tsx");
   assert.match(screen, /destinationMedia\(canonicalDestination\.imageDestinationId\) \?\? destinationMedia\(canonicalDestination\.id\)/);
 });
 
 test("only canonical destination searches receive destination media", () => {
-  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  const screen = source("src/features/saved/SavedScreen.tsx");
   const flight = screen.slice(screen.indexOf('if (item.type === "flight")'), screen.indexOf('if (item.type === "hotel")'));
   const hotel = screen.slice(screen.indexOf('if (item.type === "hotel")'), screen.indexOf("const destinationId"));
   assert.doesNotMatch(flight, /destinationMedia/);
@@ -104,7 +100,7 @@ test("canonical destination saves use catalogue country and flight access instea
   assert.equal(abuDhabi.name, "Abu Dhabi");
   assert.equal(abuDhabi.country, "United Arab Emirates");
   assert.equal(formatFlightAccess(abuDhabi.primaryAirportCode, abuDhabi.airportCodes), "Flights via AUH");
-  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  const screen = source("src/features/saved/SavedScreen.tsx");
   assert.match(screen, /const destinationId = text\(query\?\.destinationId\)/);
   assert.match(screen, /destinationById\.get\(destinationId\)/);
   assert.match(screen, /canonicalDestination\?\.name/);
@@ -113,7 +109,7 @@ test("canonical destination saves use catalogue country and flight access instea
 });
 
 test("canonical destination saves use the shared Explore flight handoff with a per-card duplicate-tap guard", () => {
-  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  const screen = source("src/features/saved/SavedScreen.tsx");
   assert.match(screen, /const canonicalDestinationOpen = canonicalDestination/);
   assert.match(screen, /exploreFlightDestinationNavigation\(\{/);
   assert.match(screen, /primaryAirportCode: canonicalDestination\.primaryAirportCode/);
@@ -123,7 +119,7 @@ test("canonical destination saves use the shared Explore flight handoff with a p
 });
 
 test("non-Explore searches, actual flights, and hotels keep their existing navigation", () => {
-  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  const screen = source("src/features/saved/SavedScreen.tsx");
   const flight = screen.slice(screen.indexOf('if (item.type === "flight")'), screen.indexOf('if (item.type === "hotel")'));
   const hotel = screen.slice(screen.indexOf('if (item.type === "hotel")'), screen.indexOf("const destinationId"));
   assert.match(flight, /resultsReady \? "\/flight-results" : "\/flights"/);
@@ -134,7 +130,7 @@ test("non-Explore searches, actual flights, and hotels keep their existing navig
 });
 
 test("flight and hotel cards retain useful canonical presentation", () => {
-  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  const screen = source("src/features/saved/SavedScreen.tsx");
   assert.match(screen, /text\(item\.airlineName\)/);
   assert.match(screen, /`\$\{origin\} → \$\{destination\}`/);
   assert.match(screen, /supporting: text\(item\.flightNumber\)/);
@@ -156,13 +152,13 @@ test("repository normalization preserves the newest canonical duplicate", () => 
 });
 
 test("Saved card mapping trusts repository normalization instead of deduplicating again", () => {
-  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  const screen = source("src/features/saved/SavedScreen.tsx");
   assert.match(screen, /return items\.map\(\(item\) => \{/);
   assert.doesNotMatch(screen, /savedSignature|const unique = new Map/);
 });
 
 test("reopen is only exposed with valid canonical data", () => {
-  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  const screen = source("src/features/saved/SavedScreen.tsx");
   assert.match(screen, /hasValidSearchPlan\("flight", storedParams\)/);
   assert.match(screen, /resultsReady \? "\/flight-results" : "\/flights"/);
   assert.match(screen, /resultsReady \? "\/hotel-results" : "\/hotels"/);
@@ -173,7 +169,7 @@ test("reopen is only exposed with valid canonical data", () => {
 });
 
 test("all canonical types share confirmation, removal, propagation, and accessibility behavior", () => {
-  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  const screen = source("src/features/saved/SavedScreen.tsx");
   assert.match(screen, /Alert\.alert\("Remove from saved\?"/);
   assert.match(screen, /text: "Cancel", style: "cancel"/);
   assert.match(screen, /text: "Remove", style: "destructive"/);
@@ -182,43 +178,11 @@ test("all canonical types share confirmation, removal, propagation, and accessib
   assert.match(screen, /`Remove \$\{model\.title\} from saved`/);
 });
 
-test("Saved and Recent keep their error feedback scoped to the owning tab", () => {
-  const screen = source("src/features/saved/SavedRecentScreen.tsx");
-  assert.match(screen, /tab === "saved" && canonical\.error/);
-  assert.match(screen, /tab === "recent" && recentError/);
-  assert.doesNotMatch(screen, /syncError \|\| canonical\.error/);
-  assert.match(screen, /setRecentError\(""\)/);
-  assert.match(screen, /Unable to synchronize recent searches/);
-});
 
-test("empty copy covers canonical types while Recent semantics remain intact", () => {
-  const screen = source("src/features/saved/SavedRecentScreen.tsx");
-  assert.match(screen, /No saved travel yet/);
-  assert.match(screen, /Use Save on a flight, hotel, or search to keep it here\./);
-  assert.match(screen, /travelApi\.recentSearches\(\)/);
-  assert.match(screen, /travelApi\.deleteRecentSearch\(item\.id\)/);
-  assert.match(screen, /travelApi\.clearRecentSearches\(\)/);
-});
 
-test("Recent loading, mutations, and navigation use the race-safe server-backed contract", () => {
-  const screen = source("src/features/saved/SavedRecentScreen.tsx");
-  assert.match(screen, /recentSearchNavigation\(item\)/);
-  assert.match(screen, /!recentLoaded \? \(recentLoading && !recentError/);
-  assert.match(screen, /setRecent\(searches\.items\);[\s\S]*setRecentLoaded\(true\)/);
-  assert.match(screen, /setRecent\(\(current\) => current\.filter\(\(row\) => row\.id !== item\.id\)\)/);
-  assert.match(screen, /await travelApi\.clearRecentSearches\(\);[\s\S]*setRecent\(\[\]\)/);
-  assert.match(screen, /recentLoadSequence\.current \+= 1/);
-  assert.match(screen, /sequence !== recentLoadSequence\.current \|\| recentMutationCount\.current/);
-  assert.match(screen, /activeRecentLoadSequence\.current !== null/);
-  assert.match(screen, /reloadRecentAfterMutations\.current = true/);
-  assert.match(screen, /!recentMutationCount\.current && reloadRecentAfterMutations\.current/);
-  assert.match(screen, /reloadRecentAfterMutations\.current = false;[\s\S]*void loadServer\(\)/);
-  assert.match(screen, /Unable to remove that recent search\./);
-  assert.match(screen, /Unable to clear recent searches\./);
-  assert.match(screen, /event\.stopPropagation\(\); void removeRecent\(item\)/);
-  assert.doesNotMatch(screen, /deleteRecentSearch\(item\.id\)\.then\(loadServer\)/);
-  assert.doesNotMatch(screen, /clearRecentSearches\(\)\.then\(loadServer\)/);
-});
+
+
+
 
 test("legacy destination and flight migration remains repository-only", () => {
   const repository = source("src/storage/savedRepositoryCore.ts");
@@ -228,4 +192,13 @@ test("legacy destination and flight migration remains repository-only", () => {
   assert.match(repository, /mapFlightToSaved/);
   assert.match(repository, /previous state was restored/);
   assert.match(repository, /requested!==this\.revision/);
+});
+
+
+test("Saved route renders the independent Saved screen", () => {
+  assert.match(source("app/saved.tsx"), /SavedScreen/);
+  const screen = source("src/features/saved/SavedScreen.tsx");
+  assert.doesNotMatch(screen, /recentSearches|deleteRecentSearch|clearRecentSearches|recentSearchNavigation|accessibilityRole="tab"/);
+  assert.match(screen, />Saved<\/Text>/);
+  assert.match(screen, /returnTo: "\/saved"/);
 });

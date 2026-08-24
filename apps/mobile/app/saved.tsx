@@ -1,3 +1,3 @@
-import { SavedRecentScreen } from "../src/features/saved/SavedRecentScreen";
+import { SavedScreen } from "../src/features/saved/SavedScreen";
 
-export default SavedRecentScreen;
+export default SavedScreen;

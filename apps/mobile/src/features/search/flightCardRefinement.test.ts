@@ -236,7 +236,7 @@ test("flight favorite is accessible, isolated, and does not enlarge the top row"
 });
 
 test("saved flights remain visible through the canonical Saved source", () => {
-  const savedScreen = readFileSync(resolve("src/features/saved/SavedRecentScreen.tsx"), "utf8");
+  const savedScreen = readFileSync(resolve("src/features/saved/SavedScreen.tsx"), "utf8");
   assert.match(savedScreen, /canonicalSavedCards\(canonical\.items\)/);
   assert.match(savedScreen, /item\.type === "flight"/);
   assert.match(savedScreen, /pathname: resultsReady \? "\/flight-results" : "\/flights"/);
