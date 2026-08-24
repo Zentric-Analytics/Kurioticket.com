@@ -33,6 +33,6 @@ test("edit flight search uses the unified responsive editor hierarchy", () => {
   assert.match(panel, /label: FLIGHT_TRIP_TYPE_LABELS\["multi-city"\], disabled: true/);
   assert.match(panel, /accessibilityLabel="Swap origin and destination"/);
   assert.match(panel, /editCard:\{borderWidth:0,borderRadius:22/);
-  assert.match(panel, /form\.tripType === "round-trip" \? `\$\{departureValue\} — \$\{returnValue\}` : departureValue/);
+  assert.match(panel, /form\.departureDate && form\.returnDate \? `\$\{displayDate\(form\.departureDate\)\} — \$\{displayDate\(form\.returnDate\)\}` : "Travel dates"/);
   assert.match(panel, /formatTravelerCabinSummary\(form\)/);
 });
