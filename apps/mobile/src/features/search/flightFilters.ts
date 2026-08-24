@@ -49,6 +49,38 @@ const extent = (values: (number | null)[]): NumericRange | null => {
 const hasPositiveTerm = (result: FlightResult, category: "baggage" | "refund") =>
   result.fareTerms?.some((term) => term.category === category && term.semantic === "positive") === true;
 
+export function flightMatchesFilters(result: FlightResult, filters: FlightFilters, normalizePrice?: (result: FlightResult) => number | null) {
+  const selectedTime = timeBucket(filters.timeField === "landing" ? result.arrivalTime : result.departureTime);
+  const price = finite(normalizePrice ? normalizePrice(result) : result.price);
+  const duration = finite(result.durationMinutes);
+  return (!filters.stops.length || filters.stops.includes(stopBucket(result.stops))) &&
+    (!filters.airlines.length || filters.airlines.includes(result.airlineName)) &&
+    (!filters.times.length || Boolean(selectedTime && filters.times.includes(selectedTime))) &&
+    (!filters.price || (price != null && price >= filters.price.min && price <= filters.price.max)) &&
+    (!filters.duration || (duration != null && duration >= filters.duration.min && duration <= filters.duration.max)) &&
+    (!filters.fromAirports.length || filters.fromAirports.includes(result.originAirport)) &&
+    (!filters.toAirports.length || filters.toAirports.includes(result.destinationAirport)) &&
+    (!filters.baggageIncluded || hasPositiveTerm(result, "baggage")) &&
+    (!filters.refundable || hasPositiveTerm(result, "refund"));
+}
+
+export function matchingFlightCount(results: readonly FlightResult[], filters: FlightFilters, normalizePrice?: (result: FlightResult) => number | null) {
+  return results.reduce((count, result) => count + Number(flightMatchesFilters(result, filters, normalizePrice)), 0);
+}
+
+/** Facet counts replace the current selection in that facet, while retaining every other draft category. */
+export function flightFacetCounts(results: readonly FlightResult[], filters: FlightFilters, normalizePrice?: (result: FlightResult) => number | null) {
+  const counts = <K extends "stops" | "airlines" | "fromAirports" | "toAirports">(key: K, values: readonly FlightFilters[K][number][]) =>
+    Object.fromEntries(values.map((value) => [value, matchingFlightCount(results, { ...filters, [key]: [value] }, normalizePrice)])) as Record<string, number>;
+  const options = flightFilterOptions(results, normalizePrice);
+  return {
+    stops: counts("stops", options.stops),
+    airlines: counts("airlines", options.airlines),
+    fromAirports: counts("fromAirports", options.fromAirports),
+    toAirports: counts("toAirports", options.toAirports),
+  };
+}
+
 export function flightFilterOptions(results: readonly FlightResult[], normalizePrice?: (result: FlightResult) => number | null) {
   const fromAirports = [...new Set(results.map((result) => result.originAirport).filter(Boolean))].sort();
   const toAirports = [...new Set(results.map((result) => result.destinationAirport).filter(Boolean))].sort();
@@ -75,20 +107,8 @@ export function activeFlightFilterCount(filters: FlightFilters, options?: Flight
 }
 
 export function filterAndSortFlights(results: readonly FlightResult[], filters: FlightFilters, sort: FlightSort, normalizePrice?: (result: FlightResult) => number | null) {
-  return results.map((result, originalIndex) => ({ result, originalIndex })).filter(({ result }) => {
-    const selectedTime = timeBucket(filters.timeField === "landing" ? result.arrivalTime : result.departureTime);
-    const price = finite(normalizePrice ? normalizePrice(result) : result.price);
-    const duration = finite(result.durationMinutes);
-    return (!filters.stops.length || filters.stops.includes(stopBucket(result.stops))) &&
-      (!filters.airlines.length || filters.airlines.includes(result.airlineName)) &&
-      (!filters.times.length || Boolean(selectedTime && filters.times.includes(selectedTime))) &&
-      (!filters.price || (price != null && price >= filters.price.min && price <= filters.price.max)) &&
-      (!filters.duration || (duration != null && duration >= filters.duration.min && duration <= filters.duration.max)) &&
-      (!filters.fromAirports.length || filters.fromAirports.includes(result.originAirport)) &&
-      (!filters.toAirports.length || filters.toAirports.includes(result.destinationAirport)) &&
-      (!filters.baggageIncluded || hasPositiveTerm(result, "baggage")) &&
-      (!filters.refundable || hasPositiveTerm(result, "refund"));
-  }).sort((a, b) => {
+  return results.map((result, originalIndex) => ({ result, originalIndex })).filter(({ result }) =>
+    flightMatchesFilters(result, filters, normalizePrice)).sort((a, b) => {
     const optional = (left: number | null, right: number | null, direction = 1) => left == null ? (right == null ? 0 : 1) : right == null ? -1 : (left - right) * direction;
     let difference = 0;
     if (sort === "best") difference = optional(finite(a.result.valueScore), finite(b.result.valueScore), -1);
