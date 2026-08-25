@@ -76,12 +76,15 @@ test("populated Recent uses balanced section spacing without resizing its cards"
   assert.match(screen, /const hasPopulatedRecent = authResolved && isAuthenticated && recent\.length > 0/);
   assert.match(screen, /style=\{\[styles\.header, hasPopulatedRecent && styles\.populatedHeader\]\}/);
   assert.match(screen, /recentRow: \{ minHeight: 80,[^}]*marginBottom: 10,/);
+  assert.match(screen, /iconTile: \{ width: 40, height: 40,/);
   assert.match(screen, /clearTouchTarget: \{ minHeight: 44,/);
   assert.match(screen, /removeTouchTarget: \{ width: 44, height: 44,/);
 });
 
-test("populated Recent retains icon, copy, chevron, remove, and navigation structure", () => {
-  assert.match(screen, /style=\{\[styles\.iconTile,[\s\S]*style=\{styles\.rowCopy\}[\s\S]*style=\{styles\.rowActions\}><FlowIcon name="chevron"[\s\S]*styles\.removeTouchTarget/);
+test("populated Recent retains icon, copy, remove, and navigation without a chevron", () => {
+  assert.match(screen, /style=\{\[styles\.iconTile,[\s\S]*style=\{styles\.rowCopy\}[\s\S]*style=\{styles\.rowActions\}><Pressable[\s\S]*styles\.removeTouchTarget/);
+  assert.doesNotMatch(screen, /FlowIcon name="chevron"/);
+  assert.match(screen, /FlowIcon name="close" color=\{theme\.icon\} size=\{15\}/);
   assert.match(screen, /onPress=\{\(\) => router\.push\(recentSearchNavigation\(item\)\)\}/);
   assert.match(screen, /event\.stopPropagation\(\); void removeRecent\(item\)/);
   assert.match(screen, /onPress=\{\(\) => void clearRecent\(\)\}/);
