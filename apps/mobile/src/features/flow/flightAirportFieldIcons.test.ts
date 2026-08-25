@@ -4,6 +4,7 @@ import test from "node:test";
 
 const read = (file: string) => readFileSync(`src/features/flow/${file}`, "utf8");
 const panel = read("FlightSearchPanel.tsx");
+const packages = read("PackageSearchForm.tsx");
 const field = (label: string) => {
   const start = panel.indexOf(`<CompactSearchField label="${label}"`);
   return start < 0 ? undefined : panel.slice(start, panel.indexOf("/>", start) + 2);
@@ -49,9 +50,29 @@ test("the location glyph stays decorative and precedes the compact field text", 
   assert.match(primitives, /accessibilityLabel=\{\[label, value, meta\]\.filter\(Boolean\)\.join\(", "\)\}/);
 });
 
-test("the accessible swap control and icon remain in place", () => {
-  assert.match(panel, /accessibilityLabel="Swap origin and destination"[\s\S]*?onPress=\{swapAirports\} style=\{\[styles\.swap,[\s\S]*?<FlowIcon name="swap"/);
+test("the accessible Flight swap control matches the Packages presentation", () => {
+  assert.match(panel, /accessibilityRole="button" accessibilityLabel="Swap origin and destination" accessibilityState=\{\{ disabled: !form\.from \|\| !form\.to \}\} disabled=\{!form\.from \|\| !form\.to\} onPress=\{swapAirports\}/);
+  assert.match(panel, /style=\{\(\{ pressed \}\) => \[styles\.swapTarget, pressed && ft\.styles\.pressed\]\}/);
+  assert.match(panel, /<View style=\{\[styles\.swapCircle, \{ backgroundColor: ft\.colors\.surface, borderColor: ft\.colors\.border, shadowColor: ft\.colors\.shadow \}\]\}>/);
+  assert.match(panel, /<ArrowRightLeft accessible=\{false\} size=\{17\} color=\{ft\.colors\.blue\}\/>/);
+  assert.doesNotMatch(panel, /<FlowIcon name="swap"/);
   assert.match(panel, /routeFields:\{position:"relative"\}/);
-  assert.match(panel, /swap:\{position:"absolute",right:16,top:"50%",transform:\[\{translateY:-22\}\],width:44,height:44/);
-  assert.doesNotMatch(panel, /swap:\{[^}]*top:58/);
+  assert.match(panel, /swapTarget:\{position:"absolute",right:12,top:"50%",transform:\[\{translateY:-22\}\],width:44,height:44/);
+  assert.match(panel, /swapCircle:\{width:36,height:36,borderRadius:18,borderWidth:1[^}]*shadowOpacity:0\.12,shadowRadius:4,shadowOffset:\{width:0,height:2\},elevation:3\}/);
+
+  for (const source of [panel, packages]) {
+    assert.match(source, /swapTarget:\{[\s\S]*?width:44,height:44/);
+    assert.match(source, /swapCircle:\{width:36,height:36,borderRadius:18/);
+    assert.match(source, /<ArrowRightLeft accessible=\{false\} size=\{17\}/);
+  }
+});
+
+test("Flight swapping retains its disabled rule and route behavior", () => {
+  const handler = panel.match(/const swapAirports = \(\) => \{[^\n]+\};/)?.[0] ?? "";
+
+  assert.match(handler, /userControlsOrigin\.current = true/);
+  assert.match(handler, /current\.from && current\.to \? \{ \.\.\.current, from: current\.to, to: current\.from \} : current/);
+  assert.match(handler, /clear\("from", "to"\)/);
+  assert.match(panel, /accessibilityState=\{\{ disabled: !form\.from \|\| !form\.to \}\}/);
+  assert.match(panel, /disabled=\{!form\.from \|\| !form\.to\}/);
 });
