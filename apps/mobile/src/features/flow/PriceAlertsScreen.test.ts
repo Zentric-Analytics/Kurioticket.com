@@ -4,6 +4,8 @@ import test from "node:test";
 
 const screen = readFileSync("src/features/flow/AccountDataScreens.tsx", "utf8");
 const illustration = readFileSync("src/features/flow/PriceAlertIllustration.tsx", "utf8");
+const mutateStatus = screen.slice(screen.indexOf("const mutateStatus"), screen.indexOf("const deleteAlert"));
+const deleteAlert = screen.slice(screen.indexOf("const deleteAlert"), screen.indexOf("const confirmDelete"));
 
 test("available zero-alert landing uses price-tracking artwork and exact onboarding copy", () => {
   assert.match(screen, /testID="price-alert-illustration"/);
@@ -51,6 +53,23 @@ test("populated alert cards and mutation behavior remain present", () => {
   assert.match(screen, /setAlerts\(\(value\) => value\.filter/);
   assert.match(screen, /revision\.current \+= 1/);
   assert.match(screen, /statusLabel\(alert\.status\)/);
+});
+
+test("alert mutations clear stale errors before their optimistic updates", () => {
+  assert.match(mutateStatus, /if \(pending\[alert\.id\]\) return; setError\(""\);[\s\S]*?setAlerts\(\(value\) => value\.map/);
+  assert.match(deleteAlert, /if \(pending\[alert\.id\]\) return; setError\(""\);[\s\S]*?setAlerts\(\(value\) => value\.filter/);
+});
+
+test("alert mutation failures restore state and report the new error", () => {
+  assert.match(mutateStatus, /catch \(e\) \{ if \(mounted\.current\) \{ setAlerts\(\(value\) => value\.map\(\(item\) => item\.id === alert\.id \? alert : item\)\); setError\(e instanceof TravelApiError \? e\.message : "Unable to update alert\."\);/);
+  assert.match(deleteAlert, /catch \(e\) \{ if \(mounted\.current\) \{ setAlerts\(\(value\) => value\.some\(\(\{ id \}\) => id === alert\.id\) \? value : \[alert, \.\.\.value\]\); setError\(e instanceof TravelApiError \? e\.message : "Unable to delete alert\."\);/);
+});
+
+test("successful final deletion can reveal the zero-alert landing without a stale error", () => {
+  assert.ok(deleteAlert.indexOf('setError("")') < deleteAlert.indexOf("value.filter"));
+  assert.doesNotMatch(deleteAlert, /try \{ await travelApi\.deletePriceAlert\(alert\.id\); setError/);
+  assert.match(screen, /const initialError = Boolean\(error && !alerts\.length\)/);
+  assert.match(screen, /alerts\.length \? alerts\.map[\s\S]*?Track prices for your trip/);
 });
 
 test("loading, authentication, and retry contracts remain present", () => {

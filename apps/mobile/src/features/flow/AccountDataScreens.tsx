@@ -30,13 +30,13 @@ export function PriceAlertsScreen() {
   const load = useCallback(async () => { const started = revision.current; setLoading((value) => alerts.length ? value : true); setError(""); try { const incoming = (await travelApi.priceAlerts()).alerts; if (mounted.current && started === revision.current) setAlerts([...new Map(incoming.map((alert) => [alert.id, alert])).values()]); } catch (e) { if (e instanceof TravelApiError && e.status === 401 || !await readSession().catch(() => null)) { router.replace(signInHref("/price-alerts")); return; } if (mounted.current) setError(e instanceof TravelApiError ? e.message : "Unable to load alerts."); } finally { if (mounted.current) setLoading(false); } }, [alerts.length]);
   useFocusEffect(useCallback(() => { void load(); }, [load]));
   const mutateStatus = async (alert: MobilePriceAlert, status: "ACTIVE" | "PAUSED") => {
-    if (pending[alert.id]) return; revision.current += 1; setPending((value) => ({ ...value, [alert.id]: true })); setAlerts((value) => value.map((item) => item.id === alert.id ? { ...item, status } : item));
+    if (pending[alert.id]) return; setError(""); revision.current += 1; setPending((value) => ({ ...value, [alert.id]: true })); setAlerts((value) => value.map((item) => item.id === alert.id ? { ...item, status } : item));
     try { const updated = (await travelApi.updatePriceAlertStatus(alert.id, status)).alert; if (mounted.current) setAlerts((value) => value.map((item) => item.id === alert.id ? updated : item)); }
     catch (e) { if (mounted.current) { setAlerts((value) => value.map((item) => item.id === alert.id ? alert : item)); setError(e instanceof TravelApiError ? e.message : "Unable to update alert."); } }
     finally { if (mounted.current) setPending((value) => ({ ...value, [alert.id]: false })); }
   };
   const deleteAlert = async (alert: MobilePriceAlert) => {
-    if (pending[alert.id]) return; revision.current += 1; setPending((value) => ({ ...value, [alert.id]: true })); setAlerts((value) => value.filter(({ id }) => id !== alert.id));
+    if (pending[alert.id]) return; setError(""); revision.current += 1; setPending((value) => ({ ...value, [alert.id]: true })); setAlerts((value) => value.filter(({ id }) => id !== alert.id));
     try { await travelApi.deletePriceAlert(alert.id); }
     catch (e) { if (mounted.current) { setAlerts((value) => value.some(({ id }) => id === alert.id) ? value : [alert, ...value]); setError(e instanceof TravelApiError ? e.message : "Unable to delete alert."); } }
     finally { if (mounted.current) setPending((value) => ({ ...value, [alert.id]: false })); }
