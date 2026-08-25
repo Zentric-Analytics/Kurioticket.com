@@ -464,9 +464,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   onAdjustFilters={() => openFlightFilters("all")}
                 />
               ) : null}
-              {status === "ready" && product === "flight" && !flightState && plan.plan ? (
-                <PriceAlert product={product} plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} />
-              ) : null}
               {status === "ready" && product === "hotel" ? (
                 <View style={s0.found}>
                   <View style={s0.foundCopy}>
@@ -536,18 +533,25 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           style={[s0.resultsScroll, { backgroundColor: theme.background }]}
           sections={[{ data: !flightState ? sorted as FlightResult[] : [] }]}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={s0.flightCardItem}>
-              <FlightCard
-                result={item}
-                displayPrice={flightDisplayPrices.get(item.id)}
-                displayCurrencyContext={currencyState?.resolution}
-                highlight={flightHighlights.get(item.id)}
-                params={params}
-                saved={savedFlights.has(item.id)}
-                onToggleSaved={() => toggleSavedFlight(item, params)}
-              />
-            </View>
+          renderItem={({ item, index }) => (
+            <>
+              {index === 0 && status === "ready" && !flightState && plan.plan ? (
+                <View style={s0.flightPriceAlertItem}>
+                  <PriceAlert product={product} plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} />
+                </View>
+              ) : null}
+              <View style={s0.flightCardItem}>
+                <FlightCard
+                  result={item}
+                  displayPrice={flightDisplayPrices.get(item.id)}
+                  displayCurrencyContext={currencyState?.resolution}
+                  highlight={flightHighlights.get(item.id)}
+                  params={params}
+                  saved={savedFlights.has(item.id)}
+                  onToggleSaved={() => toggleSavedFlight(item, params)}
+                />
+              </View>
+            </>
           )}
           ListHeaderComponent={<View>{dateStrip}</View>}
           renderSectionHeader={() => (
@@ -1160,19 +1164,9 @@ function PriceAlert({ product, plan, results, available = true }: { product: Pro
           { backgroundColor: theme.priceAlertSurface },
         ]}
       >
-        <View style={[s0.flightAlertIcon, { backgroundColor: theme.surface, borderColor: theme.priceAlertBorder }]}>
-          <Bell
-            accessibilityElementsHidden
-            accessible={false}
-            color={theme.priceAlertAccent}
-            size={20}
-            strokeWidth={2.25}
-            testID="flight-price-alert-bell"
-          />
-        </View>
         <View style={s0.flightAlertCopy}>
-          <Text style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track prices for this route</Text>
-          <Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Get notified when prices drop.</Text>
+          <Text style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track this flight price</Text>
+          <Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Get notified when fares change</Text>
         </View>
         <View style={s0.flightAlertSwitchTarget}>
           <Switch
@@ -1344,6 +1338,7 @@ const s0 = StyleSheet.create({
   sheetActions: { gap: 9 },
   body: { paddingHorizontal: 18, paddingBottom: 92, gap: 14 },
   flightResultsBody: { paddingHorizontal: 14, gap: 8 },
+  flightPriceAlertItem: { paddingHorizontal: 14, paddingBottom: 8 },
   flightCardItem: { paddingHorizontal: 14, paddingBottom: 8 },
   notice: {
     backgroundColor: "#F2F6FF",
@@ -1556,21 +1551,13 @@ const s0 = StyleSheet.create({
   },
   alertCopy: { gap: 4 },
   flightAlert: {
-    borderRadius: 14,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     flexDirection: "row",
     alignItems: "center",
-    gap: 9,
+    gap: 8,
     overflow: "hidden",
-  },
-  flightAlertIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
   },
   flightAlertCopy: { flex: 1, minWidth: 0, gap: 2 },
   flightAlertTitle: { fontSize: 15, lineHeight: 19, fontWeight: "900" },
