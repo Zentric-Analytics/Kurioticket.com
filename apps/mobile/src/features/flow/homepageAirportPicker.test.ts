@@ -31,7 +31,8 @@ test("the actual AirportSheet calls the metro-aware search on the homepage", () 
 test("origin and destination use the same metro-aware homepage AirportSheet", () => {
   assert.match(panel, /kind=\{picker === "from" \|\| picker === "to" \? picker : undefined\}/);
   assert.match(panel, /kind === "from" \? "Choose origin" : "Choose destination"/);
-  assert.equal(panel.match(/<AirportSheet /g)?.length, 1);
+  assert.equal(panel.match(/<AirportSheet /g)?.length, 2);
+  assert.match(panel, /legAirportPicker\?\.field/);
 });
 
 test("non-homepage flight search does not enable homepage airport logic", () => {
