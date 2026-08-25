@@ -4,30 +4,38 @@ import test from "node:test";
 
 const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
 const presentation = readFileSync("src/features/flow/flightSearchPresentation.ts", "utf8");
-const fieldStart = panel.indexOf('<CompactSearchField label="Travelers & Cabin Class"');
-const field = panel.slice(fieldStart, panel.indexOf("\n", fieldStart));
+const multiFieldStart = panel.indexOf('<MultiCityField label="Travelers & Cabin Class"');
+const multiField = panel.slice(multiFieldStart, panel.indexOf("/>", multiFieldStart) + 2);
+const compactFieldStart = panel.indexOf('<CompactSearchField label="Travelers & Cabin Class"');
+const compactField = panel.slice(compactFieldStart, panel.indexOf("\n", compactFieldStart));
+const fields = `${multiField}\n${compactField}`;
 const sheetStart = panel.indexOf("function TravelerCabinSheet");
 const sheet = panel.slice(sheetStart, panel.indexOf("function Cancel", sheetStart));
 
-test("Flights renders one full-width combined Travelers and Cabin Class field", () => {
+test("Flights render one combined Travelers and Cabin Class control per trip-type branch", () => {
+  assert.equal(panel.match(/<MultiCityField label="Travelers & Cabin Class"/g)?.length, 1);
   assert.equal(panel.match(/<CompactSearchField label="Travelers & Cabin Class"/g)?.length, 1);
   assert.doesNotMatch(panel, /<CompactSearchField label="Cabin"/);
-  assert.match(field, /value=\{travelerCabinSummary\}/);
-  assert.doesNotMatch(field, /meta=/);
-  assert.match(field, /icon="person"/);
-  assert.match(field, /trailing=\{<FlowIcon name="chevronDown" size=\{16\} color=\{ft\.colors\.icon\}\/>\}/);
+  for (const field of [multiField, compactField]) {
+    assert.match(field, /value=\{travelerCabinSummary\}/);
+    assert.doesNotMatch(field, /meta=/);
+    assert.match(field, /icon="person"/);
+    assert.match(field, /onPress=\{\(\) => setPicker\("travelers"\)\}/);
+  }
+  assert.match(multiField, /trailingChevron/);
+  assert.match(compactField, /trailing=\{<FlowIcon name="chevronDown" size=\{16\} color=\{ft\.colors\.icon\}\/>\}/);
   assert.match(readFileSync("src/features/flow/FlowPrimitives.tsx", "utf8"), /trailing \?\? <FlowIcon name="chevron"/);
-  assert.doesNotMatch(field, /styles\.(?:row|half)/);
+  assert.doesNotMatch(fields, /styles\.(?:row|half)/);
 });
 
-test("the single-line summary composes traveler categories and partial placeholders", () => {
+test("the shared summary composes traveler categories and partial placeholders", () => {
   assert.match(panel, /const travelerCabinSummary = formatTravelerCabinSummary\(form\)/);
   assert.match(presentation, /export function formatTravelerCabinSummary/);
   assert.match(presentation, /form\.adults \? plural\(form\.adults, "adult"\) : undefined/);
   assert.match(presentation, /form\.children \? plural\(form\.children, "child", "children"\) : undefined/);
   assert.match(presentation, /form\.infants \? plural\(form\.infants, "infant"\) : undefined/);
   assert.match(presentation, /return `\$\{travelers \|\| "Select travelers"\}, \$\{form\.cabin \?\? "Select cabin"\}`/);
-  assert.doesNotMatch(field, /No travelers selected|travelerBreakdown| · /);
+  assert.doesNotMatch(fields, /No travelers selected|travelerBreakdown| · /);
 });
 
 test("the disclosure chevron uses the decorative native SVG icon without changing the default chevron", () => {
@@ -58,8 +66,9 @@ test("the combined picker uses a cancellable draft and Done owns commit", () => 
 
 test("an empty committed form gets one draft adult without mutating on open", () => {
   assert.match(panel, /adults: totalTravelers\(form\) \? form\.adults : 1/);
-  assert.match(field, /onPress=\{\(\) => setPicker\("travelers"\)\}/);
-  assert.doesNotMatch(field, /setForm/);
+  assert.match(multiField, /onPress=\{\(\) => setPicker\("travelers"\)\}/);
+  assert.match(compactField, /onPress=\{\(\) => setPicker\("travelers"\)\}/);
+  assert.doesNotMatch(fields, /setForm/);
 });
 
 test("selected cabin uses radio semantics, themed styling, and a decorative visible checkmark", () => {
