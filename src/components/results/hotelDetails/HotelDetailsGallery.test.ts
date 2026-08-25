@@ -7,16 +7,18 @@ const gallerySource = readFileSync(
   "utf8",
 );
 
-test("removes the overlaid main-image arrow controls", () => {
-  for (const removedContract of [
+test("mobile hero restores compact accessible arrow controls without changing the desktop mosaic", () => {
+  for (const contract of [
     "ChevronLeft",
     "ChevronRight",
-    "<IconButton",
-    "left-2 top-1/2",
-    "right-2 top-1/2",
-    "-translate-y-1/2 shadow-md",
-  ])
-    assert.ok(!gallerySource.includes(removedContract), removedContract);
+    "aria-label={previousPhotoLabel}",
+    "aria-label={nextPhotoLabel}",
+    "onClick={onPrevious}",
+    "onClick={onNext}",
+    "lg:hidden",
+    "data-hotel-gallery-mosaic",
+  ]) assert.ok(gallerySource.includes(contract), contract);
+  assert.ok(!gallerySource.includes("<IconButton"));
 });
 
 test("preserves pointer swipe and keyboard gallery navigation", () => {
@@ -62,7 +64,7 @@ test("preserves counter, viewer, thumbnails, and image behavior", () => {
     "<Image",
     "object-cover",
     "onError",
-    "priority",
+    "preload",
     "cursor-zoom-in",
     "openPhotoViewerLabel",
   ])

@@ -366,6 +366,8 @@ export function HotelDetailsClient({
     return (
       <HotelDetailsLoadingState
         embedded={mode === "guided"}
+        resultsHref={resultsHref}
+        backToResultsText={backToResultsText}
         statusRef={loadingRef}
         loadingText={
           t("hotelDetails.loading") || enTranslations["hotelDetails.loading"]
@@ -515,6 +517,12 @@ export function HotelDetailsClient({
   const reviewScore =
     reviewBand && reviewScale
       ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(normalizedReviewScore ?? 0)} / ${reviewScale}`
+      : "";
+  const compactReviewScore =
+    reviewBand && reviewScale
+      ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(
+          normalizedReviewScore ?? 0,
+        )}${reviewScale === 5 ? ` / ${reviewScale}` : ""}`
       : "";
   const reviewCountText =
     reviewCount !== null
@@ -820,8 +828,14 @@ export function HotelDetailsClient({
                 hotelName={hotel.name}
                 starRating={starRating}
                 starRatingAriaLabel={starRating ? t("hotelResults.starHotelAria").replace("{{rating}}", formatHotelDetailsRating(starRating, locale)) : ""}
-                locationParts={locationParts}
+                locationParts={propertyDetails ? [
+                  [propertyDetails.city, propertyDetails.country].filter(Boolean).join(", "),
+                  propertyDetails.neighbourhood,
+                ].filter(Boolean) : locationParts}
                 propertyDetails={propertyDetails}
+                reviewScore={compactReviewScore}
+                reviewLabel={reviewLabel}
+                reviewCountText={reviewCountText}
                 relatedHotels={relatedHotels}
                 relatedSearchContext={{
                   destination: propertyDetails?.city || searchContext?.destination,
@@ -895,6 +909,10 @@ export function HotelDetailsClient({
                   imageAlt: t("hotelResults.hotelImageAlt") || "{{name}} stay option{{location}}",
                   nearLocation: t("hotelResults.nearLocation") || "near {{location}}",
                   starHotelAria: t("hotelResults.starHotelAria") || "{{rating}}-star hotel",
+                  guestReviews: t("hotelDetails.guestReviews") || "What guests are saying",
+                  reviewUnavailable: t("hotelDetails.reviewUnavailable") || "Guest review data is not available for this property yet.",
+                  planningRate: t("hotelDetails.planningRate") || "Available rates",
+                  planningEstimate: t("hotelDetails.planningEstimate") || "Kurioticket planning estimate",
                 }}
               />
             </div>
