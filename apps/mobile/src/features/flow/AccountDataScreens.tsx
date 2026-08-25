@@ -51,7 +51,7 @@ export function PriceAlertsScreen() {
   const difference = priceDifferencePresentation(alert.currency, alert.targetPrice, alert.lastSeenPrice);
   const lastChecked = formatLastChecked(alert.lastCheckedAt);
   const status = statusLabel(alert.status);
-  return <View key={alert.id} accessible accessibilityRole="summary" accessibilityLabel={`${route}, ${status}`} style={[styles.card, flowStyles.shadow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+  return <View key={alert.id} style={[styles.card, flowStyles.shadow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
     <View style={styles.cardTopRow}>
       <View style={[styles.alertIconTile, { backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}><FlowIcon name={alert.type === "FLIGHT" ? "flight" : "hotel"} size={21} color={theme.priceAlertAccent} /></View>
       <View style={styles.alertHeading}>
