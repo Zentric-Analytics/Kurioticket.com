@@ -18,18 +18,17 @@ test("native Flights exposes the exact three trip selector labels in order", () 
   assert.match(labels, /"one-way": "One-way"/);
   assert.match(labels, /"multi-city": "Multi-city"/);
   assert.doesNotMatch(labels, /"Round trip"|"One way"|"One way-trip"|"Multi-city trip"/);
-  assert.match(panel, /value: "multi-city", label: FLIGHT_TRIP_TYPE_LABELS\["multi-city"\], disabled: true, accessibilityHint: "Multi-city search is coming soon"/);
+  assert.match(panel, /value: "multi-city", label: FLIGHT_TRIP_TYPE_LABELS\["multi-city"\] }/);
+  assert.doesNotMatch(panel, /Multi-city search is coming soon/);
 });
 
-test("multi-city is display-only and defensively cannot change the Flight form", () => {
+test("multi-city is a real selectable Flight trip type", () => {
   const panel = read("FlightSearchPanel.tsx");
   const model = read("flightSearchModel.ts");
 
-  assert.match(panel, /type FlightTripSelectorValue = FlightForm\["tripType"\] \| "multi-city"/);
-  assert.match(panel, /if \(tripType === "multi-city"\) return;/);
-  assert.match(model, /export type FlightTripType = "round-trip" \| "one-way";/);
-  assert.match(model, /FLIGHT_TRIP_TYPES: FlightTripType\[\] = \["round-trip", "one-way"\]/);
-  assert.doesNotMatch(model, /"multi-city"/);
+  assert.doesNotMatch(panel, /if \(tripType === "multi-city"\) return/);
+  assert.match(model, /export type FlightTripType = "round-trip" \| "one-way" \| "multi-city"/);
+  assert.match(model, /FLIGHT_TRIP_TYPES: FlightTripType\[\] = \["round-trip", "one-way", "multi-city"\]/);
 });
 
 test("Segments keeps one horizontal row and disables options accessibly without changing enabled defaults", () => {

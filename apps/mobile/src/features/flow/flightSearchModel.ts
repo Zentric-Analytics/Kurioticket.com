@@ -3,114 +3,53 @@ import { findAirportByDestination } from "./airportMatching";
 import { addCalendarDays, localDateFromIso, localIsoDate } from "./localDateModel";
 
 export type RouteValue = string | string[] | undefined;
-export type FlightTripType = "round-trip" | "one-way";
-export const FLIGHT_TRIP_TYPES: FlightTripType[] = ["round-trip", "one-way"];
+export type FlightTripType = "round-trip" | "one-way" | "multi-city";
+export const FLIGHT_TRIP_TYPES: FlightTripType[] = ["round-trip", "one-way", "multi-city"];
 export const FLIGHT_CABINS = ["Economy", "Premium Economy", "Business", "First"] as const;
+export const MULTI_CITY_MIN_LEGS = 2;
+export const MULTI_CITY_MAX_LEGS = 5;
 export type FlightCabin = typeof FLIGHT_CABINS[number];
-export type FlightForm = { tripType: FlightTripType; from?: Airport; to?: Airport; departureDate: string; returnDate: string; adults: number; children: number; infants: number; cabin?: FlightCabin };
-export type FlightFormErrors = Partial<Record<"tripType" | "from" | "to" | "departureDate" | "returnDate" | "travelers" | "cabin", string>>;
+export type FlightSearchLeg = { from?: Airport; to?: Airport; departureDate: string };
+export type FlightForm = { tripType: FlightTripType; from?: Airport; to?: Airport; departureDate: string; returnDate: string; multiCityLegs: FlightSearchLeg[]; adults: number; children: number; infants: number; cabin?: FlightCabin };
+export type FlightLegErrors = Partial<Record<"from" | "to" | "departureDate", string>>;
+export type FlightFormErrors = Partial<Record<"tripType" | "from" | "to" | "departureDate" | "returnDate" | "travelers" | "cabin", string>> & { multiCityLegs?: FlightLegErrors[] };
 
 export const firstFlightParam = (value: RouteValue) => (Array.isArray(value) ? value[0] : value)?.trim() ?? "";
 export const airportByCode = (value: string) => airports.find((airport) => airport.code === value.trim().toUpperCase());
 export const totalTravelers = (form: Pick<FlightForm, "adults" | "children" | "infants">) => form.adults + form.children + form.infants;
 const count = (value: string) => /^\d+$/.test(value) ? Number(value) : undefined;
 export const normalizeCabin = (value: string): FlightCabin | undefined => FLIGHT_CABINS.find((cabin) => cabin.toLowerCase().replace(/\s+/g, "-") === value.trim().toLowerCase().replace(/\s+/g, "-"));
+export const createDefaultMultiCityLegs = (from?: Airport): FlightSearchLeg[] => [{ from, departureDate: "" }, { departureDate: "" }];
+export function addMultiCityLeg(legs: FlightSearchLeg[]) { if (legs.length >= MULTI_CITY_MAX_LEGS) return legs; const previous = legs.at(-1); return [...legs, { from: previous?.to, departureDate: previous?.departureDate ?? "" }]; }
+export function removeMultiCityLeg(legs: FlightSearchLeg[], index: number) { return legs.length <= MULTI_CITY_MIN_LEGS || index < 0 || index >= legs.length ? legs : legs.filter((_, current) => current !== index); }
+export function updateMultiCityLegAirport(legs: FlightSearchLeg[], index: number, field: "from" | "to", airport: Airport) { return legs.map((leg, current) => current === index ? { ...leg, [field]: airport } : leg); }
+export function updateMultiCityLegDate(legs: FlightSearchLeg[], index: number, departureDate: string) { return legs.map((leg, current) => current === index ? { ...leg, departureDate } : current > index && leg.departureDate && leg.departureDate < departureDate ? { ...leg, departureDate: "" } : leg); }
 
-/** Canonical route parameters understood by the existing flight search form. */
 export function flightEditSearchParams(params: Record<string, RouteValue>) {
-  const tripType = firstFlightParam(params.tripType);
-  const from = firstFlightParam(params.from) || firstFlightParam(params.origin);
-  const to = firstFlightParam(params.to) || firstFlightParam(params.destination);
-  const departureDate = firstFlightParam(params.departureDate);
-  const returnDate = firstFlightParam(params.returnDate);
-  const adults = firstFlightParam(params.adults);
-  const children = firstFlightParam(params.children);
-  const infants = firstFlightParam(params.infants);
-  const travelers = firstFlightParam(params.travelers);
-  const cabin = firstFlightParam(params.cabin) || firstFlightParam(params.cabinClass);
-  return Object.fromEntries(Object.entries({
-    tripType,
-    from,
-    to,
-    departureDate,
-    ...(tripType !== "one-way" ? { returnDate } : {}),
-    adults,
-    children,
-    infants,
-    travelers,
-    cabin,
-  }).filter(([, value]) => value !== ""));
+  const tripType = firstFlightParam(params.tripType); const from = firstFlightParam(params.from) || firstFlightParam(params.origin); const to = firstFlightParam(params.to) || firstFlightParam(params.destination);
+  const common = { tripType, from, to, departureDate: firstFlightParam(params.departureDate), adults: firstFlightParam(params.adults), children: firstFlightParam(params.children), infants: firstFlightParam(params.infants), travelers: firstFlightParam(params.travelers), cabin: firstFlightParam(params.cabin) || firstFlightParam(params.cabinClass) };
+  const indexed: Record<string, string> = {}; if (tripType === "multi-city") { indexed.legCount = firstFlightParam(params.legCount); for (let i=1;i<=MULTI_CITY_MAX_LEGS;i++) for (const key of ["origin","destination","departureDate"] as const) indexed[`${key}${i}`] = firstFlightParam(params[`${key}${i}`]); }
+  return Object.fromEntries(Object.entries({ ...common, ...(tripType === "round-trip" ? { returnDate: firstFlightParam(params.returnDate) } : {}), ...indexed }).filter(([, value]) => value !== ""));
 }
 
-export function defaultFlightForm(): FlightForm {
-  return { tripType: "round-trip", departureDate: "", returnDate: "", adults: 1, children: 0, infants: 0, cabin: "Economy" };
+export function defaultFlightForm(): FlightForm { return { tripType: "round-trip", departureDate: "", returnDate: "", multiCityLegs: createDefaultMultiCityLegs(), adults: 1, children: 0, infants: 0, cabin: "Economy" }; }
+
+export function initializeFlightForm(raw: Record<string, RouteValue>, today = new Date(), initializeHomepageDates = false): { form: FlightForm; notice?: string } {
+  const params: Record<string, RouteValue> = { ...raw, from: firstFlightParam(raw.from) || firstFlightParam(raw.origin), cabin: firstFlightParam(raw.cabin) || firstFlightParam(raw.cabinClass) }; const defaults=defaultFlightForm(); const notices:string[]=[]; const todayIso=localIsoDate(today);
+  const tripText=firstFlightParam(params.tripType); const tripType=FLIGHT_TRIP_TYPES.includes(tripText as FlightTripType)?tripText as FlightTripType:defaults.tripType; if(tripText&&tripType!==tripText) notices.push("Choose a supported trip type.");
+  const fromText=firstFlightParam(params.from); const from=airportByCode(fromText); if(fromText&&!from) notices.push("Choose an origin airport; the incoming origin could not be matched.");
+  const explicitToText=firstFlightParam(params.to); const destinationText=firstFlightParam(params.destination); const explicitTo=airportByCode(explicitToText); const explored=destinationText?findAirportByDestination(destinationText):undefined; let to=explicitTo??explored; if((explicitToText&&!explicitTo)||(destinationText&&!explored&&!explicitTo)){to=undefined;notices.push("Choose a destination airport; the incoming destination could not be matched.");}
+  const departureText=firstFlightParam(params.departureDate); const returnText=firstFlightParam(params.returnDate); const departureValid=Boolean(departureText&&localDateFromIso(departureText)&&departureText>=todayIso); const returnValid=Boolean(returnText&&localDateFromIso(returnText)&&departureValid&&returnText>departureText); if((departureText&&!departureValid)||(returnText&&!returnValid)) notices.push("Some incoming dates were invalid. Please select the dates again.");
+  let multiCityLegs=createDefaultMultiCityLegs(from); if(tripType==="multi-city") { const legCount=count(firstFlightParam(params.legCount)); if(!legCount||legCount<MULTI_CITY_MIN_LEGS||legCount>MULTI_CITY_MAX_LEGS) notices.push("Add between two and five flights for Multi-city."); else { let previous=""; let invalid=false; multiCityLegs=Array.from({length:legCount},(_,i)=>{ const n=i+1; const originText=firstFlightParam(params[`origin${n}`]); const destinationText=firstFlightParam(params[`destination${n}`]); const legFrom=airportByCode(originText); const legTo=airportByCode(destinationText); const date=firstFlightParam(params[`departureDate${n}`]); const validDate=Boolean(localDateFromIso(date)&&date>=todayIso&&(!previous||date>=previous)); if(!legFrom||!legTo||!validDate) invalid=true; if(validDate) previous=date; return {from:legFrom,to:legTo,departureDate:validDate?date:""};}); if(invalid) notices.push("Some incoming Multi-city airports or dates need to be selected again."); } }
+  const adultsText=firstFlightParam(params.adults),childrenText=firstFlightParam(params.children),infantsText=firstFlightParam(params.infants); const separate=[adultsText,childrenText,infantsText].some(Boolean); const legacyText=firstFlightParam(params.travelers); const malformed=separate&&[[adultsText,count(adultsText)],[childrenText,count(childrenText)],[infantsText,count(infantsText)]].some(([value,parsed])=>Boolean(value)&&parsed===undefined)||Boolean(legacyText&&count(legacyText)===undefined); let adults=separate?(adultsText?count(adultsText)??0:1):(legacyText?count(legacyText)??0:1); let children=separate?(childrenText?count(childrenText)??0:0):0; let infants=separate?(infantsText?count(infantsText)??0:0):0; if(malformed||!Number.isInteger(adults)||adults<1||children<0||infants<0||adults+children+infants>9){adults=children=infants=0;if(separate||legacyText)notices.push("Some traveler counts were invalid. Please select travelers again.");}
+  const cabinText=firstFlightParam(params.cabin); const cabin=cabinText?normalizeCabin(cabinText):defaults.cabin; if(cabinText&&!cabin)notices.push("Choose a supported cabin class."); const fresh=initializeHomepageDates&&!Object.values(raw).some((value)=>firstFlightParam(value)); const homepageDeparture=fresh?todayIso:"";
+  return {form:{...defaults,tripType,from,to,departureDate:departureValid?departureText:homepageDeparture,returnDate:returnValid?returnText:fresh?addCalendarDays(todayIso,7):"",multiCityLegs,adults,children,infants,cabin},notice:notices[0]};
 }
 
-export function initializeFlightForm(params: Record<string, RouteValue>, today = new Date(), initializeHomepageDates = false): { form: FlightForm; notice?: string } {
-  params = {
-    ...params,
-    from: firstFlightParam(params.from) || firstFlightParam(params.origin),
-    cabin: firstFlightParam(params.cabin) || firstFlightParam(params.cabinClass),
-  };
-  const defaults = defaultFlightForm(); const notices: string[] = [];
-  const explicitToText = firstFlightParam(params.to); const destinationText = firstFlightParam(params.destination);
-  const explicitTo = airportByCode(explicitToText); const explored = destinationText ? findAirportByDestination(destinationText) : undefined;
-  let to = explicitTo ?? explored;
-  if ((explicitToText && !explicitTo) || (destinationText && !explored && !explicitTo)) { to = undefined; notices.push("Choose a destination airport; the incoming destination could not be matched."); }
-  const fromText = firstFlightParam(params.from); const explicitFrom = airportByCode(fromText);
-  if (fromText && !explicitFrom) notices.push("Choose an origin airport; the incoming origin could not be matched.");
-  const from = explicitFrom;
-  const tripText = firstFlightParam(params.tripType); const tripType = FLIGHT_TRIP_TYPES.includes(tripText as FlightTripType) ? tripText as FlightTripType : defaults.tripType;
-  if (tripText && tripType !== tripText) notices.push("Choose a supported trip type.");
-  const todayIso = localIsoDate(today); const departureText = firstFlightParam(params.departureDate); const returnText = firstFlightParam(params.returnDate);
-  const departureValid = Boolean(departureText && localDateFromIso(departureText) && departureText >= todayIso);
-  const returnValid = Boolean(returnText && localDateFromIso(returnText) && departureValid && returnText > departureText);
-  if ((departureText && !departureValid) || (returnText && !returnValid)) notices.push("Some incoming dates were invalid. Please select the dates again.");
-  const adultsText = firstFlightParam(params.adults); const childrenText = firstFlightParam(params.children); const infantsText = firstFlightParam(params.infants);
-  const adultsPresent = adultsText !== ""; const childrenPresent = childrenText !== ""; const infantsPresent = infantsText !== "";
-  const separatePresent = adultsPresent || childrenPresent || infantsPresent;
-  const legacyTravelerText = firstFlightParam(params.travelers); const legacyTravelerPresent = legacyTravelerText !== "";
-  const adultsValue = count(adultsText); const childrenValue = count(childrenText); const infantsValue = count(infantsText); const legacy = count(legacyTravelerText);
-  const invalidExplicitTravelerValue = separatePresent
-    ? (adultsPresent && adultsValue === undefined) || (childrenPresent && childrenValue === undefined) || (infantsPresent && infantsValue === undefined)
-    : legacyTravelerPresent && legacy === undefined;
-  let adults = defaults.adults; let children = defaults.children; let infants = defaults.infants;
-  if (separatePresent) { adults = adultsPresent ? adultsValue ?? 0 : defaults.adults; children = childrenPresent ? childrenValue ?? 0 : defaults.children; infants = infantsPresent ? infantsValue ?? 0 : defaults.infants; }
-  else if (legacyTravelerPresent) { adults = legacy ?? 0; children = 0; infants = 0; }
-  if (invalidExplicitTravelerValue || !Number.isInteger(adults) || adults < 1 || !Number.isInteger(children) || children < 0 || !Number.isInteger(infants) || infants < 0 || adults + children + infants > 9) { adults = 0; children = 0; infants = 0; if (separatePresent || legacyTravelerPresent) notices.push("Some traveler counts were invalid. Please select travelers again."); }
-  const cabinText = firstFlightParam(params.cabin); const cabin = cabinText ? normalizeCabin(cabinText) : defaults.cabin; if (cabinText && !cabin) notices.push("Choose a supported cabin class.");
-  const isFreshHomepageForm = initializeHomepageDates && !Object.values(params).some((value) => firstFlightParam(value));
-  const homepageDeparture = isFreshHomepageForm ? todayIso : "";
-  const homepageReturn = isFreshHomepageForm && tripType === "round-trip" ? addCalendarDays(todayIso, 7) : "";
-  return { form: { ...defaults, tripType, from, to, departureDate: departureValid ? departureText : homepageDeparture, returnDate: returnValid ? returnText : homepageReturn, adults, children, infants, cabin }, notice: notices[0] };
-}
+export function validateFlightForm(form: FlightForm, today=new Date()): FlightFormErrors { const errors:FlightFormErrors={}; const todayIso=localIsoDate(today); if(!FLIGHT_TRIP_TYPES.includes(form.tripType))errors.tripType="Choose a supported trip type."; if(form.tripType==="multi-city"){ if(form.multiCityLegs.length<MULTI_CITY_MIN_LEGS||form.multiCityLegs.length>MULTI_CITY_MAX_LEGS)errors.tripType="Add at least two flights for Multi-city."; let previous=""; errors.multiCityLegs=form.multiCityLegs.map((leg)=>{const e:FlightLegErrors={};if(!leg.from||!airportByCode(leg.from.code))e.from="Choose an origin airport.";if(!leg.to||!airportByCode(leg.to.code))e.to="Choose a destination airport.";if(leg.from&&leg.to&&leg.from.code===leg.to.code)e.to="Origin and destination must be different.";if(!localDateFromIso(leg.departureDate)||leg.departureDate<todayIso)e.departureDate="Choose a current or future departure date.";else if(previous&&leg.departureDate<previous)e.departureDate="Choose a departure date on or after the previous flight.";if(localDateFromIso(leg.departureDate))previous=leg.departureDate;return e;});if(errors.multiCityLegs.every(e=>!Object.keys(e).length))delete errors.multiCityLegs;}else{if(!form.from||!airportByCode(form.from.code))errors.from="Choose an origin airport.";if(!form.to||!airportByCode(form.to.code))errors.to="Choose a destination airport.";if(form.from&&form.to&&form.from.code===form.to.code)errors.to="Origin and destination must be different.";if(!localDateFromIso(form.departureDate)||form.departureDate<todayIso)errors.departureDate="Choose a current or future departure date.";if(form.tripType==="round-trip"&&(!localDateFromIso(form.returnDate)||form.returnDate<=form.departureDate))errors.returnDate="Choose a return date after departure.";} if(![form.adults,form.children,form.infants].every(Number.isInteger)||form.adults<1||form.children<0||form.infants<0||totalTravelers(form)>9)errors.travelers="Choose 1 to 9 travelers, including at least one adult.";if(!form.cabin||!FLIGHT_CABINS.includes(form.cabin))errors.cabin="Choose a supported cabin class.";return errors; }
 
-export function validateFlightForm(form: FlightForm, today = new Date()): FlightFormErrors {
-  const errors: FlightFormErrors = {}; const todayIso = localIsoDate(today);
-  if (!FLIGHT_TRIP_TYPES.includes(form.tripType)) errors.tripType = "Choose a supported trip type.";
-  if (!form.from || !airportByCode(form.from.code)) errors.from = "Choose an origin airport.";
-  if (!form.to || !airportByCode(form.to.code)) errors.to = "Choose a destination airport.";
-  if (form.from && form.to && form.from.code === form.to.code) errors.to = "Origin and destination must be different.";
-  if (!localDateFromIso(form.departureDate) || form.departureDate < todayIso) errors.departureDate = "Choose a current or future departure date.";
-  if (form.tripType === "round-trip" && (!localDateFromIso(form.returnDate) || form.returnDate <= form.departureDate)) errors.returnDate = "Choose a return date after departure.";
-  if (![form.adults, form.children, form.infants].every(Number.isInteger) || form.adults < 1 || form.children < 0 || form.infants < 0 || totalTravelers(form) > 9) errors.travelers = "Choose 1 to 9 travelers, including at least one adult.";
-  if (!form.cabin || !FLIGHT_CABINS.includes(form.cabin)) errors.cabin = "Choose a supported cabin class.";
-  return errors;
-}
-
-export function adjustFlightDeparture(form: FlightForm, departureDate: string, initializeHomepageDates = false) {
-  if (!form.returnDate || form.returnDate <= departureDate) {
-    const returnDate = initializeHomepageDates && form.tripType === "round-trip" ? addCalendarDays(departureDate, 7) : "";
-    return { form: { ...form, departureDate, returnDate }, adjusted: Boolean(form.returnDate) || Boolean(returnDate) };
-  }
-  return { form: { ...form, departureDate }, adjusted: false };
-}
-export function changeFlightTripType(form: FlightForm, tripType: FlightTripType, initializeHomepageDates = false): FlightForm {
-  if (tripType === "round-trip" && initializeHomepageDates && (!localDateFromIso(form.returnDate) || form.returnDate <= form.departureDate)) {
-    return { ...form, tripType, returnDate: addCalendarDays(form.departureDate, 7) };
-  }
-  return { ...form, tripType };
-}
-export function changeTraveler(form: FlightForm, kind: "adults" | "children" | "infants", delta: number): FlightForm { const next = form[kind] + delta; if (!Number.isInteger(next) || next < (kind === "adults" ? 1 : 0) || (delta > 0 && totalTravelers(form) >= 9)) return form; return { ...form, [kind]: next }; }
-export const flightSearchParams = (form: FlightForm) => ({ tripType: form.tripType, from: form.from!.code, to: form.to!.code, departureDate: form.departureDate, ...(form.tripType === "round-trip" ? { returnDate: form.returnDate } : {}), adults: String(form.adults), children: String(form.children), infants: String(form.infants), travelers: String(totalTravelers(form)), cabin: form.cabin });
+export function adjustFlightDeparture(form:FlightForm,departureDate:string,initializeHomepageDates=false){if(!form.returnDate||form.returnDate<=departureDate){const returnDate=initializeHomepageDates&&form.tripType==="round-trip"?addCalendarDays(departureDate,7):"";return{form:{...form,departureDate,returnDate},adjusted:Boolean(form.returnDate)||Boolean(returnDate)}}return{form:{...form,departureDate},adjusted:false};}
+export function changeFlightTripType(form:FlightForm,tripType:FlightTripType,initializeHomepageDates=false):FlightForm { if(tripType==="multi-city"){let legs=form.multiCityLegs;if(!legs.some(l=>l.from||l.to||l.departureDate)){legs=[{from:form.from,to:form.to,departureDate:form.departureDate},{from:form.to,to:form.tripType==="round-trip"?form.from:undefined,departureDate:form.tripType==="round-trip"?form.returnDate:form.departureDate}];}return{...form,tripType,multiCityLegs:legs};} if(form.tripType==="multi-city"){const first=form.multiCityLegs[0]??{departureDate:""};const second=form.multiCityLegs[1];const reverse=tripType==="round-trip"&&first.from&&first.to&&second?.from?.code===first.to.code&&second.to?.code===first.from.code&&second.departureDate>first.departureDate;return{...form,tripType,from:first.from,to:first.to,departureDate:first.departureDate,returnDate:reverse?second.departureDate:""};}if(tripType==="round-trip"&&initializeHomepageDates&&(!localDateFromIso(form.returnDate)||form.returnDate<=form.departureDate))return{...form,tripType,returnDate:addCalendarDays(form.departureDate,7)};return{...form,tripType}; }
+export function changeTraveler(form:FlightForm,kind:"adults"|"children"|"infants",delta:number):FlightForm{const next=form[kind]+delta;if(!Number.isInteger(next)||next<(kind==="adults"?1:0)||(delta>0&&totalTravelers(form)>=9))return form;return{...form,[kind]:next};}
+export const flightSearchParams=(form:FlightForm):Record<string,string|undefined>=>{const common={tripType:form.tripType,adults:String(form.adults),children:String(form.children),infants:String(form.infants),travelers:String(totalTravelers(form)),cabin:form.cabin};if(form.tripType==="multi-city"){const first=form.multiCityLegs[0]!,last=form.multiCityLegs.at(-1)!;const indexed:Record<string,string>={};form.multiCityLegs.forEach((leg,i)=>{indexed[`origin${i+1}`]=leg.from!.code;indexed[`destination${i+1}`]=leg.to!.code;indexed[`departureDate${i+1}`]=leg.departureDate;});return{...common,legCount:String(form.multiCityLegs.length),origin:first.from!.code,destination:last.to!.code,departureDate:first.departureDate,...indexed};}return{...common,from:form.from!.code,to:form.to!.code,departureDate:form.departureDate,...(form.tripType==="round-trip"?{returnDate:form.returnDate}:{})};};
 export { searchAirports };

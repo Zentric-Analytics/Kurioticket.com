@@ -6,7 +6,7 @@ const read = (file: string) => readFileSync(`src/features/flow/${file}`, "utf8")
 const panel = read("FlightSearchPanel.tsx");
 const packages = read("PackageSearchForm.tsx");
 const field = (label: string) => {
-  const start = panel.indexOf(`<CompactSearchField label="${label}"`);
+  const start = panel.lastIndexOf(`<CompactSearchField label="${label}"`);
   return start < 0 ? undefined : panel.slice(start, panel.indexOf("/>", start) + 2);
 };
 
@@ -20,7 +20,7 @@ test("Origin and Destination use the existing location icon without changing pic
   assert.ok(destination);
   assert.match(destination, /icon="location"/);
   assert.match(destination, /onPress=\{\(\) => setPicker\("to"\)\}/);
-  assert.equal(panel.match(/icon="location"/g)?.length, 2);
+  assert.equal(panel.match(/icon="location"/g)?.length, 4);
 });
 
 test("Destination has one concise empty value while retaining selected airport metadata", () => {

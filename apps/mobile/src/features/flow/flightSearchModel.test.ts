@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { adjustFlightDeparture, airportByCode, changeFlightTripType, changeTraveler, defaultFlightForm, flightEditSearchParams, FLIGHT_CABINS, FLIGHT_TRIP_TYPES, flightSearchParams, initializeFlightForm, searchAirports, totalTravelers, validateFlightForm } from "./flightSearchModel";
+import { addMultiCityLeg, adjustFlightDeparture, airportByCode, changeFlightTripType, changeTraveler, defaultFlightForm, flightEditSearchParams, FLIGHT_CABINS, FLIGHT_TRIP_TYPES, flightSearchParams, initializeFlightForm, removeMultiCityLeg, searchAirports, totalTravelers, updateMultiCityLegDate, validateFlightForm } from "./flightSearchModel";
 const today = new Date(2026, 7, 1, 12);
 
 test("fresh Flight form defaults traveler and cabin while route and dates remain unselected", () => {
@@ -53,7 +53,7 @@ test("explicit invalid traveler and cabin params remain correction-required", ()
   assert.match(invalidCabin.notice ?? "", /supported cabin class/);
   assert.ok(validateFlightForm(invalidCabin.form, today).cabin);
 });
-test("only supported trip types and cabins are modeled",()=>{ assert.deepEqual(FLIGHT_TRIP_TYPES,["round-trip","one-way"]); assert.deepEqual(FLIGHT_CABINS,["Economy","Premium Economy","Business","First"]); });
+test("only supported trip types and cabins are modeled",()=>{ assert.deepEqual(FLIGHT_TRIP_TYPES,["round-trip","one-way","multi-city"]); assert.deepEqual(FLIGHT_CABINS,["Economy","Premium Economy","Business","First"]); });
 test("airport search ranks the shared catalogue deterministically",()=>{ assert.equal(searchAirports(" jFk ")[0].code,"JFK"); assert.equal(searchAirports("Paris")[0].code,"CDG"); assert.equal(searchAirports("france")[0].code,"CDG"); assert.equal(searchAirports("los")[0].code,"LOS"); assert.equal(searchAirports("Los Angeles")[0].code,"LAX"); assert.ok(searchAirports("Heathrow").some((airport)=>airport.code==="LHR")); assert.deepEqual(searchAirports("unknown"),[]); assert.equal(new Set(searchAirports("").map(x=>x.code)).size,searchAirports("").length); });
 test("validation and serialization align round trip and one way",()=>{ const form={...defaultFlightForm(),from:airportByCode("JFK"),to:airportByCode("LAX"),departureDate:"2026-08-15",returnDate:"2026-08-22",adults:2,children:1,infants:1,cabin:"Business" as const}; assert.deepEqual(validateFlightForm(form,today),{}); const params=flightSearchParams(form); assert.equal(params.travelers,"4"); assert.equal(params.from,"JFK"); assert.equal(params.returnDate,form.returnDate); const one=flightSearchParams({...form,tripType:"one-way"}); assert.equal("returnDate" in one,false); assert.equal(validateFlightForm({...form,to:form.from},today).to,"Origin and destination must be different."); assert.ok(validateFlightForm({...form,departureDate:"2026-07-31"},today).departureDate); assert.ok(validateFlightForm({...form,returnDate:form.departureDate},today).returnDate); });
 
@@ -111,4 +111,22 @@ test("one-way homepage dates ignore return and switching back restores a valid r
   assert.equal(validateFlightForm(oneWay, today).returnDate, undefined);
   const roundTrip = changeFlightTripType(oneWay, "round-trip", true);
   assert.equal(roundTrip.returnDate, "2026-08-08");
+});
+
+test("multi-city transitions, leg bounds, carry-forward, removal, and chronology are canonical",()=>{
+  const base={...defaultFlightForm(),from:airportByCode("LAX"),to:airportByCode("JFK"),departureDate:"2026-08-10",returnDate:"2026-08-20"};
+  const multi=changeFlightTripType(base,"multi-city");
+  assert.deepEqual(multi.multiCityLegs.map(l=>[l.from?.code,l.to?.code,l.departureDate]),[["LAX","JFK","2026-08-10"],["JFK","LAX","2026-08-20"]]);
+  const oneMulti=changeFlightTripType({...base,tripType:"one-way",returnDate:""},"multi-city"); assert.deepEqual(oneMulti.multiCityLegs.map(l=>[l.from?.code,l.to?.code,l.departureDate]),[["LAX","JFK","2026-08-10"],["JFK",undefined,"2026-08-10"]]);
+  assert.equal(changeFlightTripType(multi,"one-way").from?.code,"LAX"); assert.equal(changeFlightTripType(multi,"round-trip").returnDate,"2026-08-20");
+  let legs=multi.multiCityLegs; legs=addMultiCityLeg(legs); assert.deepEqual([legs[2].from?.code,legs[2].departureDate],["LAX","2026-08-20"]); legs=addMultiCityLeg(addMultiCityLeg(legs)); assert.equal(addMultiCityLeg(legs),legs);
+  const retained=removeMultiCityLeg(legs,1); assert.equal(retained[1],legs[2]); assert.equal(removeMultiCityLeg(retained.slice(0,2),0).length,2);
+  const cascaded=updateMultiCityLegDate([{departureDate:"2026-08-10"},{departureDate:"2026-08-12"},{departureDate:"2026-08-14"}],0,"2026-08-13"); assert.deepEqual(cascaded.map(l=>l.departureDate),["2026-08-13","","2026-08-14"]);
+});
+
+test("multi-city validation, serialization, and restoration preserve authoritative legs",()=>{
+ const legs=[{from:airportByCode("LAX"),to:airportByCode("JFK"),departureDate:"2026-08-10"},{from:airportByCode("JFK"),to:airportByCode("LHR"),departureDate:"2026-08-10"},{from:airportByCode("LHR"),to:airportByCode("CDG"),departureDate:"2026-08-14"}];
+ const form={...defaultFlightForm(),tripType:"multi-city" as const,multiCityLegs:legs}; assert.deepEqual(validateFlightForm(form,today),{}); const params=flightSearchParams(form); assert.deepEqual({legCount:params.legCount,origin:params.origin,destination:params.destination,origin2:params.origin2,destination3:params.destination3}, {legCount:"3",origin:"LAX",destination:"CDG",origin2:"JFK",destination3:"CDG"}); assert.equal("returnDate" in params,false);
+ const edited=flightEditSearchParams(params); const restored=initializeFlightForm(edited,today); assert.equal(restored.form.tripType,"multi-city"); assert.deepEqual(restored.form.multiCityLegs.map(l=>[l.from?.code,l.to?.code,l.departureDate]),legs.map(l=>[l.from?.code,l.to?.code,l.departureDate]));
+ assert.ok(validateFlightForm({...form,multiCityLegs:legs.slice(0,1)},today).tripType); assert.ok(validateFlightForm({...form,multiCityLegs:[...legs,...legs,...legs]},today).tripType); assert.ok(validateFlightForm({...form,multiCityLegs:[legs[0],{...legs[1],departureDate:"2026-08-09"}]},today).multiCityLegs?.[1].departureDate);
 });
