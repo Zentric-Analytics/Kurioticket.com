@@ -44,3 +44,23 @@ test("Recent navigation stays delegated to the hardened mapper", () => {
   assert.match(screen, /router\.push\(recentSearchNavigation\(item\)\)/);
   assert.doesNotMatch(screen, /item\.href/);
 });
+
+test("authenticated empty Recent uses the travel-history landing state", () => {
+  assert.match(screen, /RecentSearchIllustration/);
+  assert.match(screen, /testID="recent-search-illustration"/);
+  assert.match(screen, />Your next search starts here<\/Text>/);
+  assert.match(screen, />Search for flights or hotels and your recent searches will appear here for easy access\.<\/Text>/);
+  assert.match(screen, /accessibilityLabel="Start a search"/);
+  assert.match(screen, /router\.dismissTo\("\/\(tabs\)"\)/);
+  assert.doesNotMatch(screen, /router\.push\("\/\(tabs\)"\)/);
+  assert.doesNotMatch(screen, />No recent searches<\/Text>/);
+});
+
+test("Recent keeps populated, loading, and signed-out branches intact", () => {
+  assert.match(screen, />Recent<\/Text>[\s\S]*>Clear all<\/Text>/);
+  assert.match(screen, /recent\.length \?/);
+  assert.match(screen, /!recentLoaded \? \(recentLoading && !recentError/);
+  assert.match(screen, /FlowIcon name="clock"[\s\S]*>Sign in to view recent searches<\/Text>/);
+  assert.match(screen, />Your recent searches are private to your account\.<\/Text>/);
+  assert.match(screen, /signInHref\("\/recent"\)/);
+});
