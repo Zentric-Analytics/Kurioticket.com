@@ -44,18 +44,18 @@ test("the local selected airport helper formats City (CODE) and preserves empty 
 });
 
 test("multi-city selected airports use the helper without country metadata and keep unrestricted wrapping", () => {
-  const multiCityStart = panel.indexOf('{form.tripType === "multi-city"');
-  const ordinaryStart = panel.indexOf(' : <><View style={styles.routeFields}>', multiCityStart);
-  const multiCity = panel.slice(multiCityStart, ordinaryStart);
-  const origin = multiCity.slice(multiCity.indexOf('<CompactSearchField label="Origin"'), multiCity.indexOf('/>', multiCity.indexOf('<CompactSearchField label="Origin"')) + 2);
-  const destination = multiCity.slice(multiCity.indexOf('<CompactSearchField label="Destination"'), multiCity.indexOf('/>', multiCity.indexOf('<CompactSearchField label="Destination"')) + 2);
+  const multiCity = panel.slice(panel.indexOf("function MultiCityEditor"), panel.indexOf("function ErrorText"));
+  const origin = multiCity.slice(multiCity.indexOf('<MultiCityField label="Origin"'), multiCity.indexOf('/>', multiCity.indexOf('<MultiCityField label="Origin"')) + 2);
+  const destination = multiCity.slice(multiCity.indexOf('<MultiCityField label="Destination"'), multiCity.indexOf('/>', multiCity.indexOf('<MultiCityField label="Destination"')) + 2);
 
-  assert.match(origin, /value=\{selectedAirportValue\(leg\.from,"Select origin"\)\}/);
-  assert.match(origin, /valueNumberOfLines=\{0\}/);
+  assert.match(origin, /value=\{selectedAirportValue\(leg\.from,"City or airport"\)\}/);
+  assert.match(origin, /icon="location"/);
   assert.doesNotMatch(origin, /meta=|leg\.from\.country/);
-  assert.match(destination, /value=\{selectedAirportValue\(leg\.to,"Select destination"\)\}/);
-  assert.match(destination, /valueNumberOfLines=\{0\}/);
+  assert.match(destination, /value=\{selectedAirportValue\(leg\.to,"City or airport"\)\}/);
+  assert.match(destination, /icon="location"/);
   assert.doesNotMatch(destination, /meta=|leg\.to\.country/);
+  assert.match(panel, /<Text numberOfLines=\{0\} style=\{\[styles\.multiFieldValue/);
+  assert.match(multiCity, /<MultiCityField label="Departure date"[\s\S]*?icon="calendar"/);
 });
 
 test("other Flight fields retain their intended icons", () => {
