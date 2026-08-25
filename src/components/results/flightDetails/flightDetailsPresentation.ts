@@ -25,23 +25,33 @@ export function canUseOfferAirlineLogo(
 }
 
 export function compactFareTerms(terms: FlightFareTerm[], tripType: TripType) {
-  return terms
-    .map((term, index) => ({ term, index }))
+  const rows = terms
+    .flatMap((term, index) =>
+      buildFareDisplayRows(term, tripType).map((text, rowIndex) => ({
+        term,
+        index,
+        rowIndex,
+        text,
+      })),
+    );
+  const conciseRows = tripType === "round-trip"
+    ? consolidateMatchingRoundTripBaggage(rows)
+    : rows;
+
+  return conciseRows
     .sort((left, right) => {
       const priorityDifference =
         fareTermSelectionPriority(left.term) -
         fareTermSelectionPriority(right.term);
-      return priorityDifference || left.index - right.index;
+      return (
+        priorityDifference ||
+        fareDisplayRowPriority(left.term, left.text) -
+          fareDisplayRowPriority(right.term, right.text) ||
+        left.index - right.index ||
+        left.rowIndex - right.rowIndex
+      );
     })
     .slice(0, 3)
-    .flatMap((term) =>
-      buildFareDisplayRows(term.term, tripType).map((text, rowIndex) => ({
-        term: term.term,
-        index: term.index,
-        rowIndex,
-        text,
-      })),
-    )
     .sort((left, right) => {
       const priorityDifference =
         fareDisplayRowPriority(left.term, left.text) -
@@ -52,6 +62,44 @@ export function compactFareTerms(terms: FlightFareTerm[], tripType: TripType) {
         left.rowIndex - right.rowIndex
       );
     });
+}
+
+type FareDisplayRow = {
+  term: FlightFareTerm;
+  index: number;
+  rowIndex: number;
+  text: string;
+};
+
+function consolidateMatchingRoundTripBaggage(rows: FareDisplayRow[]) {
+  const consumed = new Set<number>();
+
+  return rows.flatMap((row, rowPosition) => {
+    if (consumed.has(rowPosition)) return [];
+    const baggage = parseScopedIncludedBaggage(row);
+    if (!baggage || baggage.scope !== "outbound") return [row];
+
+    const returnPosition = rows.findIndex((candidate, candidatePosition) => {
+      if (candidatePosition === rowPosition || consumed.has(candidatePosition)) return false;
+      const candidateBaggage = parseScopedIncludedBaggage(candidate);
+      return candidateBaggage?.scope === "return" && candidateBaggage.fact === baggage.fact;
+    });
+    if (returnPosition < 0) return [row];
+
+    consumed.add(returnPosition);
+    return [{ ...row, text: `${baggage.displayText} each way` }];
+  });
+}
+
+function parseScopedIncludedBaggage(row: FareDisplayRow) {
+  if (row.term.category !== "baggage") return null;
+  const match = row.text.match(/^(Outbound|Return):\s*(\d+\s+(?:carry-ons?|checked bags?)\s+included)$/i);
+  if (!match) return null;
+  return {
+    scope: match[1].toLocaleLowerCase("en-US"),
+    fact: match[2].toLocaleLowerCase("en-US"),
+    displayText: match[2],
+  };
 }
 
 export function buildFareDisplayRows(
