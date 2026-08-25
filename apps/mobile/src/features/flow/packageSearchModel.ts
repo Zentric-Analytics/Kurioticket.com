@@ -37,6 +37,20 @@ export function applyPackageDestination(search: PackageSearch, destination: stri
     ...(search.carPickupLinked ? { carPickupLocation: destination } : {}) };
 }
 
+export function swapPackageAirports(search: PackageSearch): PackageSearch {
+  const previousOrigin = search.origin;
+  const previousOriginCode = search.originCode;
+  return applyPackageDestination(
+    {
+      ...search,
+      origin: search.destination,
+      originCode: search.destinationCode,
+    },
+    previousOrigin,
+    previousOriginCode,
+  );
+}
+
 export function applyPackageDates(search: PackageSearch, startDate: string, endDate: string): PackageSearch {
   return { ...search, startDate, endDate,
     ...(search.carDatesLinked ? { carPickupDate: startDate, carReturnDate: endDate } : {}) };

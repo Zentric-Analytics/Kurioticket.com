@@ -28,12 +28,12 @@ test("package party backdrop closes drafts and Done alone commits them", () => {
   assert.doesNotMatch(party.slice(party.indexOf("<Modal"), sheet), /onDone/);
 });
 
-test("all package modes reuse the existing destination, dates, and time sheets", () => {
+test("all package modes reuse the existing destination and date sheets without a time sheet", () => {
   assert.match(form, /packageModes\.map\(option =>/);
   assert.match(form, /transitionPackageMode\(current, option\.value\)/);
   assert.ok(form.includes("<HotelDestinationSheet") && form.includes("onCancel={() => setHotelDestinationOpen(false)}"));
   assert.ok(form.includes('<CarRentalDatesSheet visible={datesOpen} title="Travel dates"') && form.includes("onCancel={() => setDatesOpen(false)}"));
-  assert.ok(form.includes("<CarTimeRangeSheet") && form.includes("onCancel={() => setTimesOpen(false)}"));
+  assert.doesNotMatch(form, /CarTimeRangeSheet|timesOpen/);
 });
 
 
