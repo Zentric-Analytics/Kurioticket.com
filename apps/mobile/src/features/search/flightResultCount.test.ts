@@ -43,12 +43,14 @@ test("flight summary copy is removed while the hotel summary stays intact", () =
 });
 
 test("count and controls stay sticky while the price alert precedes the first FlightCard", () => {
-  const count = stickyHeader.indexOf("flightResultCountLabel(sorted.length)");
-  const controls = stickyHeader.indexOf("{filterRail}", count);
   const alert = renderItem.indexOf("<PriceAlert");
   const card = renderItem.indexOf("<FlightCard");
 
-  assert.ok(count >= 0 && count < controls, "result count should precede quick controls in the sticky header");
+  assert.match(
+    stickyHeader,
+    /flightResultCountLabel\(sorted\.length\)[\s\S]*?filterRail : null/,
+    "result count should precede quick controls in the sticky header",
+  );
   assert.ok(alert >= 0 && alert < card, "price alert should precede the first real flight card");
   assert.match(renderItem, /index === 0 && status === "ready" && !flightState && plan\.plan/);
   assert.doesNotMatch(stickyHeader, /PriceAlert/);
