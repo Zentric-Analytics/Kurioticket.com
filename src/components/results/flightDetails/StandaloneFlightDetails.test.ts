@@ -413,8 +413,14 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.match(source, /offerAirlineLogo=\{flight\.airlineLogo\}/);
   assert.match(source, /<SegmentAirlineMark segment=\{segment\}/);
   assert.match(source, /onError=\{\(\) => setLogoFailed\(true\)\}/);
-  assert.match(source, /lg:max-w-\[336px\]/);
+  assert.match(source, /fareChoices\.length === 1 \? "max-w-\[310px\]"/);
+  assert.match(source, /fareChoices\.length === 2 \? "sm:grid-cols-2 lg:max-w-\[632px\]"/);
+  assert.match(source, /md:grid-cols-3 lg:max-w-\[954px\]/);
+  assert.match(source, /xl:max-w-\[1276px\] xl:grid-cols-4/);
+  assert.match(source, /: "w-\[min\(100%,310px\)\]"/);
+  assert.doesNotMatch(source, /: "w-full"/);
   assert.doesNotMatch(source, /min-h-\[126px\]/);
+  assert.doesNotMatch(source, /min-h-\[(?:1[2-9]\d|[2-9]\d\d)px\]/);
   assert.match(source, /w-\[min\(82vw,310px\)\] shrink-0 snap-start/);
   assert.match(source, /overflow-x-auto.*sm:grid/s);
   assert.match(source, /scrollIntoView\(\{ behavior: "smooth", block: "nearest", inline: "nearest" \}\)/);
@@ -424,6 +430,8 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.match(source, /function FlightDetailsSkeleton[\s\S]*?px-0 sm:px-6 lg:px-8/);
   assert.match(source, /function FlightDetailsUnavailable[\s\S]*?px-0 sm:px-4/);
   assert.doesNotMatch(source, /lg:max-w-\[400px\]/);
+  assert.doesNotMatch(source, /rounded-full border-2/);
+  assert.doesNotMatch(source, /pl-6/);
   assert.doesNotMatch(source, /bg-slate-50 px-5 py-3 lg:px-6/);
   assert.doesNotMatch(source, /providerOfferId|rawProviderReference/);
 });

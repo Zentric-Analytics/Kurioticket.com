@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 
 import { AppHeader } from "@/components/layout/AppHeader";
-import { Footer } from "@/components/layout/Footer";
 import { FlightDetailsClient } from "@/components/results/FlightDetailsClient";
 import { getTranslations } from "@/lib/i18n";
 import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
@@ -33,9 +32,6 @@ export default async function FlightDetailsPage({ params }: { params: Promise<{ 
         data-flight-details-mobile-safe-area
       >
         <FlightDetailsClient id={id} />
-      </div>
-      <div className="hidden lg:block" data-flight-details-desktop-footer>
-        <Footer />
       </div>
     </>
   );
