@@ -16,6 +16,28 @@ function withoutFormatToParts(run: () => void) {
   }
 }
 
+function withIsoCurrencyParts(run: () => void) {
+  const descriptor = Object.getOwnPropertyDescriptor(Intl.NumberFormat.prototype, "formatToParts");
+  try {
+    Object.defineProperty(Intl.NumberFormat.prototype, "formatToParts", {
+      value() {
+        return [
+          { type: "currency", value: this.resolvedOptions().currency ?? "NGN" },
+          { type: "literal", value: " " },
+          { type: "integer", value: "91" },
+          { type: "group", value: "," },
+          { type: "integer", value: "234" },
+        ];
+      },
+      configurable: true,
+    });
+    run();
+  } finally {
+    if (descriptor) Object.defineProperty(Intl.NumberFormat.prototype, "formatToParts", descriptor);
+    else delete (Intl.NumberFormat.prototype as { formatToParts?: unknown }).formatToParts;
+  }
+}
+
 test("fare formatting uses compact symbols while keeping dollar currencies unambiguous", () => {
   assert.equal(formatCurrency(158811, "NGN"), "₦158,811");
   assert.equal(formatCurrency(420, "USD"), "US$420");
@@ -23,6 +45,22 @@ test("fare formatting uses compact symbols while keeping dollar currencies unamb
   assert.equal(formatCurrency(420, "AUD"), "A$420");
   assert.equal(formatCurrency(1240, "GBP"), "£1,240");
   assert.equal(formatCurrency(980, "EUR"), "€980");
+});
+
+test("successful Intl parts cannot replace canonical product currency labels with ISO codes", () => {
+  withIsoCurrencyParts(() => {
+    assert.equal(formatCurrency(91234, "NGN"), "₦91,234");
+    assert.equal(formatCurrency(420, "USD"), "US$420");
+    assert.equal(formatCurrency(420, "CAD"), "CA$420");
+    assert.equal(formatCurrency(420, "AUD"), "A$420");
+    assert.equal(formatCurrency(1240, "GBP"), "£1,240");
+    assert.equal(formatCurrency(980, "EUR"), "€980");
+
+    const fare = displayPrice(91234, "NGN", "NGN", { NGN: 1 });
+    assert.equal(fare.formatted, "₦91,234");
+    assert.equal(fare.providerAmount, 91234);
+    assert.equal(fare.providerCurrency, "NGN");
+  });
 });
 
 test("display fares include a spoken currency name without duplicating visual copy", () => {
