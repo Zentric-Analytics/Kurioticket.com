@@ -1,6 +1,20 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { currencyForCountry, displayPrice, formatCurrency, isDisplayPriceCurrent, resolveDisplayCurrency, resolveDisplayCurrencyContext } from "./displayCurrency";
+import { currencyAccessibilityLabel, currencyForCountry, displayPrice, formatCurrency, isDisplayPriceCurrent, resolveDisplayCurrency, resolveDisplayCurrencyContext } from "./displayCurrency";
+
+function withoutFormatToParts(run: () => void) {
+  const descriptor = Object.getOwnPropertyDescriptor(Intl.NumberFormat.prototype, "formatToParts");
+  try {
+    Object.defineProperty(Intl.NumberFormat.prototype, "formatToParts", {
+      value: undefined,
+      configurable: true,
+    });
+    run();
+  } finally {
+    if (descriptor) Object.defineProperty(Intl.NumberFormat.prototype, "formatToParts", descriptor);
+    else delete (Intl.NumberFormat.prototype as { formatToParts?: unknown }).formatToParts;
+  }
+}
 
 test("fare formatting uses compact symbols while keeping dollar currencies unambiguous", () => {
   assert.equal(formatCurrency(158811, "NGN"), "₦158,811");
@@ -15,6 +29,60 @@ test("display fares include a spoken currency name without duplicating visual co
   const fare = displayPrice(158811, "NGN", "NGN", { NGN: 1 });
   assert.equal(fare.formatted, "₦158,811");
   assert.match(fare.accessibilityLabel, /158,811 Nigerian nairas?/);
+});
+
+test("production fare formatting remains complete without formatToParts", () => {
+  withoutFormatToParts(() => {
+    assert.match(formatCurrency(158811, "NGN"), /₦|NGN/);
+    assert.match(formatCurrency(420, "USD"), /US\$|USD/);
+    assert.match(formatCurrency(420, "CAD"), /CA\$|CAD/);
+    assert.match(formatCurrency(420, "AUD"), /A\$|AUD/);
+    assert.match(formatCurrency(1240, "GBP"), /£|GBP/);
+    assert.match(formatCurrency(980, "EUR"), /€|EUR/);
+
+    const fare = displayPrice(420, "USD", "CAD", { USD: 1, CAD: 1.4 });
+    assert.equal(fare.providerAmount, 420);
+    assert.equal(fare.providerCurrency, "USD");
+    assert.equal(fare.amount, 588);
+    assert.equal(fare.currency, "CAD");
+    assert.equal(fare.converted, true);
+    assert.match(fare.formatted, /CA\$|CAD/);
+    assert.ok(fare.accessibilityLabel.length > 0);
+  });
+});
+
+test("throwing and malformed formatToParts results fall back safely", () => {
+  const descriptor = Object.getOwnPropertyDescriptor(Intl.NumberFormat.prototype, "formatToParts");
+  try {
+    Object.defineProperty(Intl.NumberFormat.prototype, "formatToParts", {
+      value() { throw new Error("unsupported"); },
+      configurable: true,
+    });
+    assert.match(formatCurrency(420, "USD"), /US\$|USD/);
+
+    Object.defineProperty(Intl.NumberFormat.prototype, "formatToParts", {
+      value() { return [{ type: "literal", value: "unexpected" }]; },
+      configurable: true,
+    });
+    assert.match(formatCurrency(420, "CAD"), /CA\$|CAD/);
+    assert.doesNotMatch(formatCurrency(420, "CAD"), /unexpected/);
+  } finally {
+    if (descriptor) Object.defineProperty(Intl.NumberFormat.prototype, "formatToParts", descriptor);
+  }
+});
+
+test("Intl failures retain truthful visual and accessible currency fallbacks", () => {
+  const OriginalNumberFormat = Intl.NumberFormat;
+  try {
+    Object.defineProperty(Intl, "NumberFormat", {
+      value: function NumberFormat() { throw new Error("unsupported"); },
+      configurable: true,
+    });
+    assert.equal(formatCurrency(420, "usd"), "USD 420");
+    assert.equal(currencyAccessibilityLabel(420, "usd"), "420 USD");
+  } finally {
+    Object.defineProperty(Intl, "NumberFormat", { value: OriginalNumberFormat, configurable: true });
+  }
 });
 
 test("country regions resolve to their ISO display currencies", () => {

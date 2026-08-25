@@ -109,41 +109,92 @@ export function convertAmount(
 
 export function formatCurrency(amount: number, currency: string) {
   const normalizedCurrency = currency.toUpperCase();
-  const formatter = new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: normalizedCurrency,
-    currencyDisplay: "narrowSymbol",
-    maximumFractionDigits: 0,
-  });
-  const parts = formatter.formatToParts(amount);
-  const narrowSymbol = parts.find(({ type }) => type === "currency")?.value;
-
-  // A bare dollar sign loses the fare currency. CLDR's English symbol form
-  // supplies compact disambiguators such as US$, CA$, and A$ without a
-  // currency-specific symbol table.
-  if (narrowSymbol === "$") {
-    const unambiguousSymbol = new Intl.NumberFormat("en-GB", {
+  try {
+    const formatter = new Intl.NumberFormat(undefined, {
       style: "currency",
       currency: normalizedCurrency,
-      currencyDisplay: "symbol",
+      currencyDisplay: "narrowSymbol",
       maximumFractionDigits: 0,
-    }).formatToParts(amount).find(({ type }) => type === "currency")?.value;
-    const dollarLabel = unambiguousSymbol && unambiguousSymbol !== narrowSymbol
-      ? unambiguousSymbol
-      : `${normalizedCurrency.slice(0, 2)}$`;
-    return parts.map((part) => part.type === "currency" ? dollarLabel : part.value).join("");
-  }
+    });
+    const formatToParts = formatter.formatToParts;
 
-  return parts.map(({ value }) => value).join("");
+    if (typeof formatToParts === "function") {
+      try {
+        const parts = formatToParts.call(formatter, amount);
+        const narrowSymbol = Array.isArray(parts)
+          ? parts.find(({ type }) => type === "currency")?.value
+          : undefined;
+        const hasNumericPart = Array.isArray(parts)
+          && parts.some(({ type }) => type === "integer" || type === "fraction");
+
+        if (narrowSymbol && hasNumericPart) {
+          // A bare dollar sign loses the fare currency. CLDR's English symbol
+          // form supplies compact disambiguators such as US$, CA$, and A$.
+          if (narrowSymbol === "$") {
+            try {
+              const symbolFormatter = new Intl.NumberFormat("en-GB", {
+                style: "currency",
+                currency: normalizedCurrency,
+                currencyDisplay: "symbol",
+                maximumFractionDigits: 0,
+              });
+              const symbolParts = typeof symbolFormatter.formatToParts === "function"
+                ? symbolFormatter.formatToParts(amount)
+                : null;
+              const unambiguousSymbol = Array.isArray(symbolParts)
+                ? symbolParts.find(({ type }) => type === "currency")?.value
+                : undefined;
+              const dollarLabel = unambiguousSymbol && unambiguousSymbol !== narrowSymbol
+                ? unambiguousSymbol
+                : `${normalizedCurrency.slice(0, 2)}$`;
+              return parts.map((part) => part.type === "currency" ? dollarLabel : part.value).join("");
+            } catch {
+              // The basic formatting fallback below remains currency-aware.
+            }
+          } else {
+            return parts.map(({ value }) => value).join("");
+          }
+        }
+      } catch {
+        // Some Hermes versions expose formatToParts but cannot execute it.
+      }
+    }
+
+    // English symbol formatting preserves USD/CAD/AUD disambiguation without
+    // relying on symbol position or formatToParts. Other currencies retain the
+    // device locale's narrow-symbol output.
+    if (normalizedCurrency === "USD" || normalizedCurrency === "CAD" || normalizedCurrency === "AUD") {
+      try {
+        return new Intl.NumberFormat("en-GB", {
+          style: "currency",
+          currency: normalizedCurrency,
+          currencyDisplay: "symbol",
+          maximumFractionDigits: 0,
+        }).format(amount);
+      } catch {
+        // Fall through to the already-created formatter, then plain text.
+      }
+    }
+    return formatter.format(amount);
+  } catch {
+    const readableAmount = Number.isFinite(amount) ? Math.round(amount).toString() : String(amount);
+    return `${normalizedCurrency} ${readableAmount}`;
+  }
 }
 
 export function currencyAccessibilityLabel(amount: number, currency: string) {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: currency.toUpperCase(),
-    currencyDisplay: "name",
-    maximumFractionDigits: 0,
-  }).format(amount);
+  const normalizedCurrency = currency.toUpperCase();
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: normalizedCurrency,
+      currencyDisplay: "name",
+      maximumFractionDigits: 0,
+    }).format(amount);
+  } catch {
+    const readableAmount = Number.isFinite(amount) ? Math.round(amount).toString() : String(amount);
+    return `${readableAmount} ${normalizedCurrency}`;
+  }
 }
 
 export function displayPrice(
