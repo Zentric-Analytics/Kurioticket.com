@@ -63,6 +63,15 @@ test("populated alert cards and mutation behavior remain present", () => {
   assert.match(screen, /accessibilityLabel=\{`Delete alert for \$\{route\}`\}/);
 });
 
+test("populated card container does not group nested action buttons into one accessibility element", () => {
+  assert.match(screen, /return <View key=\{alert\.id\} style=\{\[styles\.card,/);
+  assert.doesNotMatch(screen, /return <View key=\{alert\.id\} accessible/);
+  assert.doesNotMatch(screen, /return <View key=\{alert\.id\}[^>]*accessibilityRole="summary"/);
+  assert.match(screen, /<Pressable accessibilityRole="button" accessibilityLabel=\{`Pause alert for \$\{route\}`\}/);
+  assert.match(screen, /<Pressable accessibilityRole="button" accessibilityLabel=\{`Reactivate alert for \$\{route\}`\}/);
+  assert.match(screen, /<Pressable accessibilityRole="button" accessibilityLabel=\{`Delete alert for \$\{route\}`\}/);
+});
+
 test("populated cards use compact theme-aware icon, badge, hierarchy, and actions", () => {
   assert.match(screen, /FlowIcon name=\{alert\.type === "FLIGHT" \? "flight" : "hotel"\}/);
   assert.match(screen, /alertIconTile: \{ width: 40, height: 40, borderRadius: 11/);
