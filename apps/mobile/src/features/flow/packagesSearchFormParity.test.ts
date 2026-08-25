@@ -59,7 +59,8 @@ test("flight package routes expose one accessible, unclipped swap control", () =
   assert.equal((form.match(/accessibilityLabel="Swap origin and destination"/g) ?? []).length, 1);
   assert.match(flightRoute, /accessibilityRole="button" accessibilityLabel="Swap origin and destination"/);
   assert.match(flightRoute, /<ArrowRightLeft accessible=\{false\}/);
-  assert.match(form, /swapTarget:\{[^}]*bottom:-22[^}]*width:44,height:44/);
+  assert.match(form, /swapTarget:\{position:"absolute",left:"50%",bottom:-22,transform:\[\{translateX:-22\}\],width:44,height:44/);
+  assert.doesNotMatch(form.match(/swapTarget:\{[^}]+\}/)?.[0] ?? "", /right:12/);
   assert.match(form, /swapCircle:\{width:36,height:36,borderRadius:18/);
   assert.match(form, /originBoundary:\{position:"relative"/);
   assert.doesNotMatch(form, /fields:\{[^}]*overflow:"hidden"/);

@@ -82,13 +82,16 @@ test("the accessible Flight swap control matches the Packages presentation", () 
   assert.match(panel, /<ArrowRightLeft accessible=\{false\} size=\{17\} color=\{ft\.colors\.blue\}\/>/);
   assert.doesNotMatch(panel, /<FlowIcon name="swap"/);
   assert.match(panel, /routeFields:\{position:"relative"\}/);
-  assert.match(panel, /swapTarget:\{position:"absolute",right:12,top:"50%",transform:\[\{translateY:-22\}\],width:44,height:44/);
+  assert.match(panel, /swapTarget:\{position:"absolute",left:"50%",top:"50%",transform:\[\{translateX:-22\},\{translateY:-22\}\],width:44,height:44/);
+  assert.doesNotMatch(panel.match(/swapTarget:\{[^}]+\}/)?.[0] ?? "", /right:12/);
   assert.match(panel, /swapCircle:\{width:36,height:36,borderRadius:18,borderWidth:1[^}]*shadowOpacity:0\.12,shadowRadius:4,shadowOffset:\{width:0,height:2\},elevation:3\}/);
 
   for (const source of [panel, packages]) {
+    assert.match(source, /swapTarget:\{[^}]*left:"50%"[^}]*transform:\[\{translateX:-22\}/);
     assert.match(source, /swapTarget:\{[\s\S]*?width:44,height:44/);
     assert.match(source, /swapCircle:\{width:36,height:36,borderRadius:18/);
     assert.match(source, /<ArrowRightLeft accessible=\{false\} size=\{17\}/);
+    assert.doesNotMatch(source, /Dimensions\.get|useWindowDimensions|onLayout|screenWidth|windowWidth/);
   }
 });
 
