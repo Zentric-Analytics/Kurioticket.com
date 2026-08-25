@@ -34,19 +34,18 @@ test("flight card preserves display pricing and provider data during details nav
 });
 
 test("flight card gives the compact visual fare one semantic spoken label", () => {
-  assert.match(card, /accessibilityLabel=\{fare\?\.accessibilityLabel \?\? "Price unavailable"\}/);
+  assert.match(card, /accessibilityLabel=\{`\$\{result\.airlineName\}[\s\S]*fare\?\.accessibilityLabel/);
+  assert.match(card, /<Text accessible=\{false\} style=\{\[s0\.bigPrice/);
   assert.equal(card.match(/fare\?\.accessibilityLabel/g)?.length, 1);
   assert.doesNotMatch(card, /Taxes (?:and fees )?included/);
   assert.doesNotMatch(card, /Total for \d|Per traveler|Round trip|One way/);
 });
 
-test("every flight card uses the same primary details CTA regardless of rank or theme", () => {
-  assert.match(card, /style=\{s0\.detailsButton\}/);
-  assert.match(card, /<Text style=\{s0\.detailsButtonText\} numberOfLines=\{1\}>View details<\/Text>/);
-  assert.doesNotMatch(card, /rank\s*!==\s*0[\s\S]*detailsButton/);
-  assert.doesNotMatch(source, /detailsButtonOutline|detailsButtonTextOutline/);
-  assert.match(source, /detailsButton: \{[^}]*backgroundColor: ui\.blue/);
-  assert.match(source, /detailsButtonText: \{ color: "white"/);
+test("the whole card replaces the details CTA", () => {
+  assert.match(card, /return \(\s*<Pressable[\s\S]*accessibilityRole="button"[\s\S]*pathname: "\/flight-details"/);
+  assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
+  assert.doesNotMatch(card, /View details|detailsButton|detailsButtonText/);
+  assert.match(card, /event\.stopPropagation\(\); onToggleSaved\(\)/);
 });
 
 test("flight card derives singular, plural, and nonstop labels from provider stops", () => {
@@ -84,7 +83,7 @@ test("flight card keeps fixed footer content compact while airline identity may 
   assert.match(source, /benefits: \{[\s\S]*?paddingTop: 2,[\s\S]*?flexDirection: "row"/);
   assert.match(source, /benefitList: \{ flex: 1, minWidth: 0, flexDirection: "row", flexWrap: "wrap", gap: 5, alignSelf: "center" \}/);
   assert.match(source, /benefit: \{ minWidth: 0, fontSize: 10\.5, color: ui\.muted, flex: 1 \}/);
-  assert.match(source, /detailsButton: \{ width: "100%", minHeight: 44, paddingHorizontal: 10/);
+  assert.doesNotMatch(source, /detailsButton(?:Text)?:/);
   for (const viewport of [320, 360, 375, 390, 430]) {
     const cardContentWidth = viewport - 28 - 26;
     assert.ok(cardContentWidth >= 258, `${viewport}px reserves at least 258px for the journey row`);
@@ -109,7 +108,8 @@ test("flight loading skeleton mirrors the stacked benefit footer", () => {
   assert.match(source, /<View style=\{s0\.skeletonIdentityRow\}>[\s\S]*s0\.skeletonLogo[\s\S]*s0\.skeletonName[\s\S]*<View style=\{s0\.skeletonFlightRow\}>/);
   assert.match(source, /skeletonBenefitLines: \{ flex: 1, gap: 6 \}/);
   assert.match(source, /skeletonBenefitLine: \{ width: "82%" \}/);
-  assert.match(source, /skeletonButton: \{ width: 96, height: 44/);
+  const flightSkeleton = source.slice(source.indexOf("function FlightLoadingSkeleton"), source.indexOf("function HotelLoadingSkeleton"));
+  assert.doesNotMatch(flightSkeleton, /skeletonButton/);
 });
 
 test("flight card keeps long prices single-line in the stable footer action column", () => {
@@ -252,7 +252,7 @@ test("compact density keeps identity controls in one band and preserves practica
   assert.match(source, /airlineHeader: \{ minHeight: 20,[^}]*gap: 6 \}/);
   assert.match(source, /journeyList: \{ marginTop: 3, gap: 4 \}/);
   assert.match(source, /journeyLabel: \{ fontSize: 9, lineHeight: 10/);
-  assert.match(source, /detailsButton: \{ width: "100%", minHeight: 44/);
+  assert.doesNotMatch(source, /detailsButton(?:Text)?:/);
 
   const favoriteVisualSize = 20;
   const favoriteHitSlop = 12 * 2;

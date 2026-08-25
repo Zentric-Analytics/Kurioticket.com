@@ -14,10 +14,11 @@ test("the flight card summary and action area has spacing without a divider", ()
   assert.match(benefitsStyle, /paddingTop: 2/);
 });
 
-test("flight details navigation remains wired to the action", () => {
-  assert.match(flightCard, /accessibilityLabel="View details"[\s\S]*?onPress=\{\(\) =>[\s\S]*?router\.push\(\{/);
+test("flight details navigation is wired to the complete card", () => {
+  assert.match(flightCard, /<Pressable[\s\S]*?accessibilityRole="button"[\s\S]*?onPress=\{\(\) =>[\s\S]*?router\.push\(\{/);
   assert.match(flightCard, /pathname: "\/flight-details"/);
-  assert.match(flightCard, /<Text style=\{s0\.detailsButtonText\}[^>]*>View details<\/Text>/);
+  assert.doesNotMatch(flightCard, /View details|detailsButton|detailsButtonText/);
+  assert.match(flightCard, /event\.stopPropagation\(\); onToggleSaved\(\)/);
 });
 
 test("only provider-backed baggage and refundable benefits remain eligible", () => {

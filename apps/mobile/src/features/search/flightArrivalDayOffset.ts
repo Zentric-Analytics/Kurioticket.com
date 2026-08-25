@@ -29,6 +29,23 @@ function localCalendarDay(value: string | null | undefined): number | null {
   return calendarDay;
 }
 
+/** Formats the provider-local arrival date when it differs from departure. */
+export function providerLocalArrivalDate(
+  departureTime: string | null | undefined,
+  arrivalTime: string | null | undefined,
+): string | null {
+  const departureDay = localCalendarDay(departureTime);
+  const arrivalDay = localCalendarDay(arrivalTime);
+  if (departureDay === null || arrivalDay === null || departureDay === arrivalDay) return null;
+
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(arrivalDay));
+}
+
 /** Returns a positive provider-local arrival day offset, otherwise null. */
 export function flightArrivalDayOffset(
   departureTime: string | null | undefined,

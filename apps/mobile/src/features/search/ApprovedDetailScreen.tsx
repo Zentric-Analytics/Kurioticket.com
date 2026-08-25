@@ -41,6 +41,7 @@ import { flightTripDetails, type FlightTripDetail, type FlightTripDetailIcon } f
 import { useSavedFlights } from "../../storage/useSavedFlights";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
+import { providerLocalArrivalDate } from "./flightArrivalDayOffset";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -291,6 +292,11 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
                 <View style={{ flex: 1, alignItems: "flex-end" }}>
                   <Text style={[d.time, { color: theme.textPrimary }]}>{clock(leg.arrivalTime)}</Text>
                   <Text style={[d.airport, { color: theme.textSecondary }]}>{leg.destinationAirport}</Text>
+                  {providerLocalArrivalDate(leg.departureTime, leg.arrivalTime) ? (
+                    <Text style={[d.arrivalDate, { color: theme.textSecondary }]}>
+                      {`Arrives ${providerLocalArrivalDate(leg.departureTime, leg.arrivalTime)}`}
+                    </Text>
+                  ) : null}
                 </View>
               </View>
               {leg.layovers?.length ? (
@@ -798,6 +804,7 @@ const d = StyleSheet.create({
   legRoute: { flexDirection: "row", alignItems: "center" },
   time: { fontSize: 19, fontWeight: "900", color: ui.navy },
   airport: { fontSize: 12, color: ui.muted },
+  arrivalDate: { marginTop: 2, fontSize: 11, lineHeight: 15 },
   middle: { width: 120, alignItems: "center" },
   line: {
     height: 1,
