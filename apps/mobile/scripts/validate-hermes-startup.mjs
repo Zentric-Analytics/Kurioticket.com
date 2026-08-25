@@ -21,6 +21,20 @@ try {
   assert.equal(fare.providerCurrency, "USD");
   assert.equal(fare.formatted, "CA$588");
   assert.ok(fare.accessibilityLabel.length > 0);
+
+  Object.defineProperty(Intl.NumberFormat.prototype, "formatToParts", {
+    value() {
+      return [
+        { type: "currency", value: "NGN" },
+        { type: "literal", value: " " },
+        { type: "integer", value: "158" },
+        { type: "group", value: "," },
+        { type: "integer", value: "811" },
+      ];
+    },
+    configurable: true,
+  });
+  assert.equal(currency.formatCurrency(158811, "NGN"), "₦158,811");
 } finally {
   Object.defineProperty(Intl, "DisplayNames", { value: originalDisplayNames, configurable: true });
   if (formatToPartsDescriptor) {

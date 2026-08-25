@@ -119,6 +119,18 @@ export function convertAmount(
 export function formatCurrency(amount: number, currency: string) {
   const normalizedCurrency = currency.toUpperCase();
   try {
+    const canonicalLabel = fallbackCurrencyLabels[normalizedCurrency];
+    if (canonicalLabel) {
+      // Product currency labels are presentation contracts, not locale hints.
+      // Use Intl only for numeric grouping so differing CLDR data cannot replace
+      // established labels (for example, returning "NGN" instead of "₦").
+      const number = new Intl.NumberFormat("en-US", {
+        maximumFractionDigits: 0,
+      }).format(Math.abs(amount));
+      const sign = amount < 0 ? "-" : "";
+      return `${sign}${canonicalLabel}${number}`;
+    }
+
     const formatter = new Intl.NumberFormat(undefined, {
       style: "currency",
       currency: normalizedCurrency,
@@ -136,34 +148,7 @@ export function formatCurrency(amount: number, currency: string) {
         const hasNumericPart = Array.isArray(parts)
           && parts.some(({ type }) => type === "integer" || type === "fraction");
 
-        if (narrowSymbol && hasNumericPart) {
-          // A bare dollar sign loses the fare currency. CLDR's English symbol
-          // form supplies compact disambiguators such as US$, CA$, and A$.
-          if (narrowSymbol === "$") {
-            try {
-              const symbolFormatter = new Intl.NumberFormat("en-GB", {
-                style: "currency",
-                currency: normalizedCurrency,
-                currencyDisplay: "symbol",
-                maximumFractionDigits: 0,
-              });
-              const symbolParts = typeof symbolFormatter.formatToParts === "function"
-                ? symbolFormatter.formatToParts(amount)
-                : null;
-              const unambiguousSymbol = Array.isArray(symbolParts)
-                ? symbolParts.find(({ type }) => type === "currency")?.value
-                : undefined;
-              const dollarLabel = unambiguousSymbol && unambiguousSymbol !== narrowSymbol
-                ? unambiguousSymbol
-                : `${normalizedCurrency.slice(0, 2)}$`;
-              return parts.map((part) => part.type === "currency" ? dollarLabel : part.value).join("");
-            } catch {
-              // The basic formatting fallback below remains currency-aware.
-            }
-          } else {
-            return parts.map(({ value }) => value).join("");
-          }
-        }
+        if (narrowSymbol && hasNumericPart) return parts.map(({ value }) => value).join("");
       } catch {
         // Some Hermes versions expose formatToParts but cannot execute it.
       }
@@ -177,10 +162,7 @@ export function formatCurrency(amount: number, currency: string) {
       maximumFractionDigits: 0,
     }).format(Math.abs(amount));
     const sign = amount < 0 ? "-" : "";
-    const label = fallbackCurrencyLabels[normalizedCurrency];
-    return label
-      ? `${sign}${label}${number}`
-      : `${sign}${normalizedCurrency} ${number}`;
+    return `${sign}${normalizedCurrency} ${number}`;
   } catch {
     const readableAmount = Number.isFinite(amount) ? Math.round(amount).toString() : String(amount);
     return `${normalizedCurrency} ${readableAmount}`;
