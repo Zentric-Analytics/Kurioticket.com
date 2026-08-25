@@ -9,13 +9,16 @@ const resultsBody = source.slice(
   source.indexOf("const stopLabels"),
 );
 
-test("ready flight results place the hierarchy controls before the alert and cards", () => {
+test("ready flight results place the date strip and price alert before the sticky result controls and cards", () => {
   const sectionList = source.slice(source.indexOf("<SectionList"), source.indexOf(") : (", source.indexOf("<SectionList")));
   const renderItem = sectionList.slice(sectionList.indexOf("renderItem="), sectionList.indexOf("ListHeaderComponent="));
+  const listHeader = sectionList.slice(sectionList.indexOf("ListHeaderComponent="), sectionList.indexOf("renderSectionHeader="));
   const stickyHeader = sectionList.slice(sectionList.indexOf("renderSectionHeader="), sectionList.indexOf("ListEmptyComponent="));
 
-  assert.match(renderItem, /index === 0 && status === "ready" && !flightState && plan\.plan/);
-  assert.ok(renderItem.indexOf("<PriceAlert") < renderItem.indexOf("<FlightCard"), "the alert should precede the first real flight card");
+  assert.ok(listHeader.indexOf("{dateStrip}") < listHeader.indexOf("<PriceAlert"), "the alert should follow the date strip");
+  assert.match(listHeader, /status === "ready" && !flightState && plan\.plan/);
+  assert.match(renderItem, /<FlightCard/);
+  assert.doesNotMatch(renderItem, /PriceAlert/);
   assert.match(stickyHeader, /flightResultCountLabel\(sorted\.length\)[\s\S]*?filterRail : null/);
   assert.doesNotMatch(stickyHeader, /PriceAlert/);
   assert.match(sectionList, /stickySectionHeadersEnabled/);
@@ -23,7 +26,7 @@ test("ready flight results place the hierarchy controls before the alert and car
   assert.doesNotMatch(sectionList, /data:.*PriceAlert|keyExtractor=.*PriceAlert/);
   assert.doesNotMatch(sectionList, /ListFooterComponent=[^\n]*PriceAlert/);
   assert.equal(
-    renderItem.match(/<PriceAlert/g)?.length,
+    sectionList.match(/<PriceAlert/g)?.length,
     1,
     "the flight price alert should render only once",
   );
@@ -89,7 +92,7 @@ test("the flight alert uses semantic light and dark theme values", () => {
 });
 
 test("flight price-alert eligibility is route-level while the count stays filter-aware", () => {
-  assert.match(source, /index === 0 && status === "ready" && !flightState && plan\.plan/);
+  assert.match(source, /ListHeaderComponent={[\s\S]*?status === "ready" && !flightState && plan\.plan[\s\S]*?<PriceAlert/);
   assert.doesNotMatch(source, /sorted\.length > 0 && availability\.priceAlerts/);
   assert.match(source, /flightResultCountLabel\(sorted\.length\)/);
 });
@@ -101,5 +104,5 @@ test("feature-disabled flight results pass availability into the switch while re
 
 test("loading and error states cannot expose the flight price alert", () => {
   assert.doesNotMatch(source, /status === "(?:loading|error)"[^\n]*<PriceAlert/);
-  assert.match(source, /index === 0 && status === "ready" && !flightState && plan\.plan/);
+  assert.match(source, /status === "ready" && !flightState && plan\.plan/);
 });
