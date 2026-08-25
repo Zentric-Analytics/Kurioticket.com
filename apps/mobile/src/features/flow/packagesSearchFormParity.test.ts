@@ -50,7 +50,25 @@ test("package destination uses the exact empty copy and preserves picker routing
 });
 
 test("package origin remains limited to modes that include flights", () => {
-  assert.match(form, /\{included\.flight \? <CompactSearchField label="Origin"[^\n]+ : null\}/);
+  assert.match(form, /\{included\.flight \? <View style=\{styles\.originBoundary\}>[\s\S]*?<CompactSearchField label="Origin"[\s\S]*?<Pressable[\s\S]*?<\/View> : null\}/);
+});
+
+test("flight package routes expose one accessible, unclipped swap control", () => {
+  const flightRoute = form.match(/\{included\.flight \? <View style=\{styles\.originBoundary\}>[\s\S]*?<\/View> : null\}/)?.[0] ?? "";
+
+  assert.equal((form.match(/accessibilityLabel="Swap origin and destination"/g) ?? []).length, 1);
+  assert.match(flightRoute, /accessibilityRole="button" accessibilityLabel="Swap origin and destination"/);
+  assert.match(flightRoute, /<ArrowRightLeft accessible=\{false\}/);
+  assert.match(form, /swapTarget:\{[^}]*bottom:-22[^}]*width:44,height:44/);
+  assert.match(form, /swapCircle:\{width:36,height:36,borderRadius:18/);
+  assert.match(form, /originBoundary:\{position:"relative"/);
+  assert.doesNotMatch(form, /fields:\{[^}]*overflow:"hidden"/);
+});
+
+test("swapping takes ownership of origin before updating package route state", () => {
+  const handler = form.match(/const swapAirports = \(\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
+
+  assert.match(handler, /userControlsOrigin\.current = true;\s*setSearch\(current => swapPackageAirports\(current\)\)/);
 });
 
 test("package traveler summary derives from committed party state with singular grammar", () => {
@@ -68,7 +86,13 @@ test("package party draft copies committed state when the sheet opens", () => {
 
 test("Packages shares the compact search field presentation", () => {
   assert.match(form, /import \{ CompactSearchField, PrimaryButton \} from "\.\/FlowPrimitives"/);
-  assert.equal((form.match(/<CompactSearchField /g) ?? []).length, 5);
+  assert.equal((form.match(/<CompactSearchField /g) ?? []).length, 4);
   assert.doesNotMatch(form, /function CompactField/);
   assert.match(primitives, /export function CompactSearchField/);
+});
+
+test("Package form hides car-time presentation while retaining final Car handoff", () => {
+  assert.doesNotMatch(form, /label="Pick-up \/ Return time"|rentalTimesSummary|CarTimeRangeSheet|timesOpen|setTimesOpen/);
+  assert.match(form, /pickupTime: search\.carPickupTime/);
+  assert.match(form, /dropoffTime: search\.carReturnTime/);
 });

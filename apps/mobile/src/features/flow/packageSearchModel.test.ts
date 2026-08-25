@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { applyPackageDates, applyPackageDestination, createPackageSearch, includedProducts, packageModes, transitionPackageMode, updatePackageParty } from "./packageSearchModel";
+import { applyPackageDates, applyPackageDestination, createPackageSearch, includedProducts, packageModes, swapPackageAirports, transitionPackageMode, updatePackageParty } from "./packageSearchModel";
 
 test("package modes keep the exact customer order and internal mapping", () => {
   assert.deepEqual(packageModes, [
@@ -23,6 +23,63 @@ test("fresh package searches start with one traveler and one room", () => {
   assert.equal(search.rooms, 1);
   assert.equal(search.petFriendly, false);
   assert.equal(search.adults + search.children + search.infants, 1);
+  assert.equal(search.carPickupTime, "10:00");
+  assert.equal(search.carReturnTime, "10:00");
+});
+
+test("package airport swap keeps text and code pairs and updates linked Car pickup", () => {
+  const search = {
+    ...createPackageSearch(),
+    origin: "Los Angeles (LAX)",
+    originCode: "LAX",
+    destination: "New York (JFK)",
+    destinationCode: "JFK",
+    carPickupLocation: "New York (JFK)",
+  };
+
+  const swapped = swapPackageAirports(search);
+
+  assert.deepEqual(
+    { origin: swapped.origin, originCode: swapped.originCode },
+    { origin: "New York (JFK)", originCode: "JFK" },
+  );
+  assert.deepEqual(
+    { destination: swapped.destination, destinationCode: swapped.destinationCode },
+    { destination: "Los Angeles (LAX)", destinationCode: "LAX" },
+  );
+  assert.equal(swapped.carPickupLocation, "Los Angeles (LAX)");
+});
+
+test("package airport swap preserves a custom unlinked Car pickup", () => {
+  const swapped = swapPackageAirports({
+    ...createPackageSearch(),
+    origin: "Los Angeles (LAX)",
+    originCode: "LAX",
+    destination: "New York (JFK)",
+    destinationCode: "JFK",
+    carPickupLinked: false,
+    carPickupLocation: "Custom downtown pickup",
+  });
+
+  assert.equal(swapped.carPickupLocation, "Custom downtown pickup");
+});
+
+test("package airport swap exchanges an origin with an empty destination", () => {
+  const swapped = swapPackageAirports({
+    ...createPackageSearch(),
+    origin: "Los Angeles (LAX)",
+    originCode: "LAX",
+  });
+
+  assert.deepEqual(
+    {
+      origin: swapped.origin,
+      originCode: swapped.originCode,
+      destination: swapped.destination,
+      destinationCode: swapped.destinationCode,
+    },
+    { origin: "", originCode: "", destination: "Los Angeles (LAX)", destinationCode: "LAX" },
+  );
 });
 
 test("package adults can be increased by the user but cannot fall below one", () => {
