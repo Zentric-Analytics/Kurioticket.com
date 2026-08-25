@@ -61,6 +61,12 @@ export function rangeValueForPosition(position: number, available: NumericRange,
   return snapRangeValue(available.min + ((position - THUMB_CENTER_INSET) / trackWidth) * span, available, step);
 }
 
+/** Resolves a gesture from its local grant coordinate, never from a thumb's previous value. */
+export function rangeValueForGesture(grantX: number, deltaX: number, available: NumericRange, width: number, step: number): number {
+  const safeDelta = finite(deltaX) ? deltaX : 0;
+  return rangeValueForPosition(grantX + safeDelta, available, width, step);
+}
+
 /** At an overlap, drag direction determines which edge can move away from the shared value. */
 export function rangeEdgeForDrag(selected: NumericRange, requested: "min" | "max", deltaX: number): "min" | "max" {
   if (selected.min !== selected.max || deltaX === 0 || !finite(deltaX)) return requested;

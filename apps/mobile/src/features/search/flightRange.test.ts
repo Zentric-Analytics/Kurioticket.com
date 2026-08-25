@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { clampNumericRange, lockedRangeEdgeForDrag, moveRangeEdge, positionForRangeValue, priceRangeStep, rangeEdgeForDrag, rangeStepForSpan, rangeValueForPosition, snapRangeValue, THUMB_CENTER_INSET, THUMB_HIT_SIZE, usableRangeTrackWidth } from "./flightRange";
+import { clampNumericRange, lockedRangeEdgeForDrag, moveRangeEdge, positionForRangeValue, priceRangeStep, rangeEdgeForDrag, rangeStepForSpan, rangeValueForGesture, rangeValueForPosition, snapRangeValue, THUMB_CENTER_INSET, THUMB_HIT_SIZE, usableRangeTrackWidth } from "./flightRange";
 
 const available = { min: 100, max: 600 };
 
@@ -27,10 +27,40 @@ test("physical endpoints return exact awkward extents across common track widths
   }
 });
 
+test("a full-track grant and its dx continuously resolve price and duration values at phone widths", () => {
+  for (const width of [320, 360, 375, 390, 412, 430]) {
+    for (const [range, step] of [[{ min: 100, max: 600 }, 10], [{ min: 60, max: 600 }, 5]] as const) {
+      const left = THUMB_CENTER_INSET;
+      const right = width - THUMB_CENTER_INSET;
+      const middle = width / 2;
+      assert.equal(rangeValueForGesture(left, 0, range, width, step), range.min);
+      assert.equal(rangeValueForGesture(right, 0, range, width, step), range.max);
+      assert.equal(rangeValueForGesture(left - 100, 0, range, width, step), range.min);
+      assert.equal(rangeValueForGesture(right + 100, 0, range, width, step), range.max);
+      assert.equal(rangeValueForGesture(middle, 0, range, width, step), snapRangeValue((range.min + range.max) / 2, range, step));
+      assert.ok(rangeValueForGesture(middle, 40, range, width, step) > rangeValueForGesture(middle, 0, range, width, step));
+      assert.ok(rangeValueForGesture(middle, -40, range, width, step) < rangeValueForGesture(middle, 0, range, width, step));
+      assert.equal(rangeValueForGesture(middle, width, range, width, step), range.max);
+      assert.equal(rangeValueForGesture(middle, -width, range, width, step), range.min);
+    }
+  }
+});
+
+test("the physical stagnant-thumb regression updates from grant position and subsequent dx", () => {
+  const duration = { min: 60, max: 600 };
+  const grantX = THUMB_CENTER_INSET + usableRangeTrackWidth(360) * 0.75;
+  const granted = rangeValueForGesture(grantX, 0, duration, 360, 5);
+  const moved = rangeValueForGesture(grantX, 30, duration, 360, 5);
+  assert.notEqual(granted, 75);
+  assert.ok(moved > granted);
+});
+
 test("slider math safely handles invalid or zero-width tracks", () => {
   assert.equal(positionForRangeValue(350, available, 0), THUMB_CENTER_INSET);
   assert.equal(rangeValueForPosition(20, available, 0, 10), available.min);
   assert.equal(rangeValueForPosition(Number.NaN, available, 320, 10), available.min);
+  assert.equal(rangeValueForGesture(Number.NaN, 10, available, 320, 10), available.min);
+  assert.equal(rangeValueForGesture(160, Number.NaN, available, Number.NaN, 10), available.min);
 });
 
 test("snapping clamps out-of-bounds positions and uses useful dynamic steps", () => {
