@@ -331,7 +331,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   useEffect(() => {
     const nextCurrency = currencyState ? flightPriceContext?.identity ?? "unavailable" : null;
     if (nextCurrency && previousComparisonCurrency.current && previousComparisonCurrency.current !== nextCurrency) {
-      setFilters((current) => current.price ? { ...current, price: null } : current);
+      setFilters((current) => current.maximumPrice != null ? { ...current, maximumPrice: null } : current);
     }
     if (nextCurrency) previousComparisonCurrency.current = nextCurrency;
   }, [currencyState, flightPriceContext?.identity]);
@@ -426,7 +426,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 key={x}
                 label={x}
                 active={product === "flight" && (
-                  x === "Stops" ? filters.stops.length > 0 :
+                  x === "Stops" ? filters.maxStops != null :
                   x === "Airlines" ? filters.airlines.length > 0 : false
                 )}
                 flightResultsChevron={product === "flight"}

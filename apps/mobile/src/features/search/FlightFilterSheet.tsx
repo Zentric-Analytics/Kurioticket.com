@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { FlightResult } from "../../api/travelApi";
 import { useAppTheme } from "../../theme/AppTheme";
@@ -8,94 +8,33 @@ import { FlowIcon } from "../flow/FlowIcon";
 import { AirlineLogo } from "./AirlineLogo";
 import { FlightRangeSlider } from "./FlightRangeSlider";
 import { Button, ui } from "./SearchUi";
-import { activeFlightFilterCount, emptyFlightFilters, flightFacetCounts, isPriceFilteringAvailable, matchingFlightCount, type FlightFilterOptions, type FlightFilters, type NumericRange } from "./flightFilters";
+import { activeFlightFilterCount, emptyFlightFilters, isPriceFilteringAvailable, journeyKey, matchingFlightCount, type FlightFilterOptions, type FlightFilters, type NumericRange, type TimeBucket } from "./flightFilters";
 import { clampNumericRange, priceRangeStep } from "./flightRange";
-
 export type FlightFilterSectionName = "all" | "stops" | "airlines";
-const stopLabels = { nonstop: "Nonstop", one: "1 stop", twoPlus: "2+ stops" } as const;
-const timeLabels = {
-  morning: ["Morning", "05:00 – 12:00"], afternoon: ["Afternoon", "12:00 – 17:00"],
-  evening: ["Evening", "17:00 – 21:00"], night: ["Overnight", "21:00 – 05:00"],
-} as const;
-export const formatFlightDuration = (value: number) => {
-  const minutes = Math.max(0, Math.round(value));
-  const hours = Math.floor(minutes / 60);
-  const remainder = minutes % 60;
-  return hours === 0 ? `${remainder}m` : remainder === 0 ? `${hours}h` : `${hours}h ${remainder}m`;
-};
-
-export function FlightFilterSection({ title, children }: { title: string; children: React.ReactNode }) {
-  const { theme } = useAppTheme();
-  return <View style={styles.section}><Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>{title.toUpperCase()}</Text>{children}</View>;
-}
-
-type SheetProps = {
-  visible: boolean; section: FlightFilterSectionName; filters: FlightFilters; options: FlightFilterOptions;
-  results: readonly FlightResult[]; priceValue?: (result: FlightResult) => number | null; currency: string;
-  priceFilteringReady: boolean;
-  onChange: (filters: FlightFilters) => void; onClose: () => void;
-};
-
-export function FlightFilterSheet({ visible, section, filters, options, results, priceValue, currency, priceFilteringReady, onChange, onClose }: SheetProps) {
-  const { theme } = useAppTheme();
-  const inset = useSafeAreaInsets();
-  const [draft, setDraft] = useState(filters);
-  const [airlineQuery, setAirlineQuery] = useState("");
-  const [sliderDragging, setSliderDragging] = useState(false);
-  useEffect(() => { if (visible) { setDraft(filters); setAirlineQuery(""); } }, [visible, filters]);
-  const airlines = useMemo(() => options.airlines.filter((name) => name.toLowerCase().includes(airlineQuery.trim().toLowerCase())), [airlineQuery, options.airlines]);
-  const previewCount = useMemo(() => matchingFlightCount(results, draft, priceValue), [draft, priceValue, results]);
-  const facetCounts = useMemo(() => flightFacetCounts(results, draft, priceValue), [draft, priceValue, results]);
-  const logoByAirline = useMemo(() => results.reduce((logos, result) => {
-    if (result.airlineLogo && !logos.has(result.airlineName)) logos.set(result.airlineName, result.airlineLogo);
-    return logos;
-  }, new Map<string, string>()), [results]);
-  const hasDraftFilters = activeFlightFilterCount(draft, options) > 0;
-  const toggle = <K extends "stops" | "airlines" | "times" | "fromAirports" | "toAirports">(key: K, value: FlightFilters[K][number]) =>
-    setDraft((current) => ({ ...current, [key]: current[key].includes(value as never) ? current[key].filter((item) => item !== value) : [...current[key], value] } as FlightFilters));
-  const full = section === "all";
-  const priceCurrency = options.priceCurrency ?? currency;
-
-  const optionRows = (key: "stops" | "fromAirports" | "toAirports", values: readonly string[], labels?: Record<string, string>) =>
-    values.map((value) => <FilterOptionRow key={value} label={labels?.[value] ?? value} selected={draft[key].includes(value as never)} count={facetCounts[key][value] ?? 0} onPress={() => toggle(key, value as never)} />);
-  const range = (key: "price" | "duration", available: NumericRange, format: (value: number) => string, singleMaximum = false) => {
-    const selected = clampNumericRange(draft[key], available);
-    const step = key === "price" ? priceRangeStep(available.min, available.max) : 5;
-    return <><View style={styles.rangeLabels}>{singleMaximum ? <Text style={[styles.durationLead, { color: theme.textPrimary }]}>Up to {format(selected.max)}</Text> : <><Text numberOfLines={1} adjustsFontSizeToFit style={[styles.rangeValue, { color: theme.textPrimary }]}>{format(selected.min)}</Text><Text numberOfLines={1} adjustsFontSizeToFit style={[styles.rangeValue, styles.rangeValueRight, { color: theme.textPrimary }]}>{format(selected.max)}</Text></>}</View><FlightRangeSlider available={available} selected={selected} step={step} singleMaximum={singleMaximum} formatValue={format} onDragStateChange={setSliderDragging} onChange={(next) => setDraft((current) => ({ ...current, [key]: singleMaximum ? { min: available.min, max: next.max } : next }))} /></>;
-  };
-  const cta = `Show ${previewCount} ${previewCount === 1 ? "flight" : "flights"}`;
-
-  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} accessibilityViewIsModal>
-    <KeyboardAvoidingView style={styles.backdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-      <View accessibilityLabel="Flight filters" style={[styles.sheet, { backgroundColor: theme.surface, paddingBottom: Math.max(inset.bottom, 12) }]}>
-        <View style={[styles.header, { borderBottomColor: theme.border }]}><Text accessibilityRole="header" style={[styles.title, { color: theme.textPrimary }]}>Filters</Text><View style={styles.headerActions}><Pressable accessibilityRole="button" accessibilityLabel="Clear all flight filters" accessibilityState={{ disabled: !hasDraftFilters }} disabled={!hasDraftFilters} hitSlop={10} onPress={() => setDraft(emptyFlightFilters())}><Text style={[styles.clear, !hasDraftFilters && { color: theme.textSecondary, opacity: 0.55 }]}>Clear all</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Close filters" onPress={() => { Keyboard.dismiss(); onClose(); }} style={styles.close}><FlowIcon name="close" color={theme.icon} /></Pressable></View></View>
-        <ScrollView style={styles.scroll} scrollEnabled={!sliderDragging} contentContainerStyle={styles.content} keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          {full && isPriceFilteringAvailable(options, priceFilteringReady) ? <FlightFilterSection title="Price">{range("price", options.price!, (value) => formatCurrency(value, priceCurrency))}</FlightFilterSection> : null}
-          {full && (options.takeoffTimes.length || options.landingTimes.length) ? <FlightFilterSection title="Times"><Text style={[styles.timeScope, { color: theme.textSecondary }]}>Outbound journey</Text><View accessibilityRole="tablist" style={[styles.segment, { backgroundColor: theme.background }]}>{(["takeoff", "landing"] as const).map((field) => { const selected = draft.timeField === field; return <Pressable key={field} accessibilityRole="tab" accessibilityState={{ selected }} onPress={() => setDraft((current) => ({ ...current, timeField: field, times: [] }))} style={[styles.segmentChoice, selected && { backgroundColor: theme.surface }]}><Text style={[styles.segmentText, { color: selected ? theme.textPrimary : theme.textSecondary }]}>{field === "takeoff" ? "Departure" : "Arrival"}</Text></Pressable>; })}</View><View>{(draft.timeField === "takeoff" ? options.takeoffTimes : options.landingTimes).map((value) => <FilterOptionRow key={value} label={timeLabels[value][0]} detail={timeLabels[value][1]} selected={draft.times.includes(value)} onPress={() => toggle("times", value)} />)}</View></FlightFilterSection> : null}
-          {full && options.duration ? <FlightFilterSection title="Duration">{range("duration", options.duration, formatFlightDuration, true)}</FlightFilterSection> : null}
-          {(full || section === "stops") && options.stops.length ? <FlightFilterSection title="Stops"><View>{optionRows("stops", options.stops, stopLabels)}</View></FlightFilterSection> : null}
-          {(full || section === "airlines") && options.airlines.length ? <FlightFilterSection title="Airlines"><TextInput accessibilityLabel="Search airlines" placeholder="Search airlines…" placeholderTextColor={theme.textSecondary} value={airlineQuery} returnKeyType="search" onChangeText={setAirlineQuery} style={[styles.search, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} /><View>{airlines.map((name) => <FilterOptionRow key={name} label={name} selected={draft.airlines.includes(name)} count={facetCounts.airlines[name] ?? 0} logo={<AirlineLogo airlineName={name} logoUrl={logoByAirline.get(name)} />} onPress={() => toggle("airlines", name)} />)}</View></FlightFilterSection> : null}
-          {full && options.showAirports ? <FlightFilterSection title="Airports">{options.fromAirports.length > 1 ? <><Text style={[styles.subhead, { color: theme.textPrimary }]}>From</Text><View>{optionRows("fromAirports", options.fromAirports)}</View></> : null}{options.toAirports.length > 1 ? <><Text style={[styles.subhead, { color: theme.textPrimary }]}>To</Text><View>{optionRows("toAirports", options.toAirports)}</View></> : null}</FlightFilterSection> : null}
-          {full && (options.baggage || options.refundable) ? <FlightFilterSection title="Amenities">{options.baggage ? <FilterOptionRow label="Baggage included" selected={draft.baggageIncluded} onPress={() => setDraft((x) => ({ ...x, baggageIncluded: !x.baggageIncluded }))} /> : null}{options.refundable ? <FilterOptionRow label="Flexible / refundable" selected={draft.refundable} onPress={() => setDraft((x) => ({ ...x, refundable: !x.refundable }))} /> : null}</FlightFilterSection> : null}
-        </ScrollView>
-        <View style={[styles.footer, { borderColor: theme.border, backgroundColor: theme.surface }]}><Button label={cta} flightResults onPress={() => { Keyboard.dismiss(); onChange(draft); onClose(); }} /></View>
-      </View>
-    </KeyboardAvoidingView>
-  </Modal>;
-}
-
-function FilterOptionRow({ label, detail, count, selected, logo, onPress }: { label: string; detail?: string; count?: number; selected: boolean; logo?: React.ReactNode; onPress: () => void }) {
-  const { theme } = useAppTheme();
-  return <Pressable accessibilityRole="checkbox" accessibilityLabel={count == null ? label : `${label}, ${count} flights`} accessibilityState={{ checked: selected }} onPress={onPress} style={({ pressed }) => [styles.optionRow, selected && { backgroundColor: theme.dark ? "#142B55" : "#EEF4FF" }, pressed && { opacity: 0.72 }]}><View style={[styles.box, { borderColor: selected ? ui.blue : theme.border, backgroundColor: selected ? ui.blue : "transparent" }]}>{selected ? <Text style={styles.check}>✓</Text> : null}</View>{logo}<View style={styles.optionCopy}><Text numberOfLines={1} style={[styles.optionLabel, { color: theme.textPrimary }]}>{label}</Text>{detail ? <Text style={[styles.optionDetail, { color: theme.textSecondary }]}>{detail}</Text> : null}</View>{count != null ? <Text style={[styles.count, { color: theme.textSecondary }]}>{count}</Text> : null}</Pressable>;
-}
-
-const styles = StyleSheet.create({
-  backdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(10,24,48,.42)" }, sheet: { maxHeight: "94%", borderTopLeftRadius: 22, borderTopRightRadius: 22, overflow: "hidden" },
-  header: { minHeight: 54, paddingLeft: 20, paddingRight: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottomWidth: StyleSheet.hairlineWidth }, title: { fontSize: 20, fontWeight: "800" }, headerActions: { flexDirection: "row", alignItems: "center", gap: 8 }, clear: { color: ui.blue, fontSize: 13, fontWeight: "700" }, close: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  scroll: { flexShrink: 1 }, content: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 26, gap: 26 }, section: { gap: 10 }, sectionTitle: { fontSize: 11, lineHeight: 14, letterSpacing: 0.8, fontWeight: "800" }, subhead: { fontSize: 13, fontWeight: "800", marginTop: 2 },
-  rangeLabels: { flexDirection: "row", justifyContent: "space-between", gap: 12 }, rangeValue: { flex: 1, fontSize: 16, fontWeight: "800" }, rangeValueRight: { textAlign: "right" }, durationLead: { fontSize: 16, fontWeight: "800" },
-  timeScope: { fontSize: 12, fontWeight: "700" },
-  segment: { flexDirection: "row", borderRadius: 9, padding: 3 }, segmentChoice: { flex: 1, minHeight: 38, borderRadius: 7, alignItems: "center", justifyContent: "center" }, segmentText: { fontSize: 13, fontWeight: "800" },
-  optionRow: { minHeight: 48, borderRadius: 9, flexDirection: "row", alignItems: "center", paddingHorizontal: 8, gap: 10 }, box: { width: 20, height: 20, borderWidth: 1.5, borderRadius: 5, alignItems: "center", justifyContent: "center" }, check: { color: "white", fontSize: 13, lineHeight: 15, fontWeight: "900" }, optionCopy: { flex: 1, minWidth: 0 }, optionLabel: { fontSize: 14, fontWeight: "600" }, optionDetail: { fontSize: 11, marginTop: 2 }, count: { minWidth: 28, textAlign: "right", fontSize: 13, fontWeight: "700", fontVariant: ["tabular-nums"] },
-  search: { height: 42, borderWidth: 1, borderRadius: 9, paddingHorizontal: 12, fontSize: 14 }, footer: { paddingHorizontal: 18, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth },
-});
+const windows: {value:TimeBucket;label:string}[]=[{value:"overnight",label:"12:00 AM – 5:59 AM"},{value:"morning",label:"6:00 AM – 11:59 AM"},{value:"afternoon",label:"12:00 PM – 5:59 PM"},{value:"evening",label:"6:00 PM – 11:59 PM"}];
+export const formatFlightDuration=(v:number)=>{const n=Math.max(0,Math.round(v)),h=Math.floor(n/60),m=n%60;return h?(m?`${h}h ${m}m`:`${h}h`):`${m}m`};
+export function FlightFilterSection({title,actions,children}:{title:string;actions?:React.ReactNode;children:React.ReactNode}){const {theme}=useAppTheme();return <View style={s.section}><View style={s.sectionHead}><Text style={[s.sectionTitle,{color:theme.textPrimary}]}>{title}</Text>{actions}</View>{children}</View>}
+type Props={visible:boolean;section:FlightFilterSectionName;filters:FlightFilters;options:FlightFilterOptions;results:readonly FlightResult[];priceValue?:(r:FlightResult)=>number|null;currency:string;priceFilteringReady:boolean;onChange:(f:FlightFilters)=>void;onClose:()=>void};
+export function FlightFilterSheet({visible,section,filters,options,results,priceValue,currency,priceFilteringReady,onChange,onClose}:Props){
+ const {theme}=useAppTheme(),inset=useSafeAreaInsets();const [draft,setDraft]=useState(filters),[dragging,setDragging]=useState(false),[tab,setTab]=useState(0);
+ useEffect(()=>{if(visible){setDraft(filters);setDragging(false);setTab(0)}},[visible,filters]);
+ const count=useMemo(()=>matchingFlightCount(results,draft,priceValue),[results,draft,priceValue]);const logos=useMemo(()=>results.reduce((m,r)=>{if(r.airlineLogo&&!m.has(r.airlineName))m.set(r.airlineName,r.airlineLogo);return m},new Map<string,string>()),[results]);
+ const sample=results.find(r=>r.legs?.length);const structured=sample?.legs?.filter(l=>["outbound","return","leg"].includes(l.direction))??[];const first=results[0];const legs=structured.length?structured:(first?[{direction:"outbound" as const,originAirport:first.originAirport,destinationAirport:first.destinationAirport,departureTime:first.departureTime,arrivalTime:first.arrivalTime,duration:first.duration,durationMinutes:first.durationMinutes,stops:first.stops,layovers:first.layovers,segments:[]}]:[]);const leg=legs[tab],key=leg?journeyKey(leg,tab):"outbound",selection=draft.journeyTimes[key]??{departure:[],arrival:[]};const full=section==="all";
+ const toggle=(field:"airlines"|"fromAirports"|"toAirports",value:string)=>setDraft(x=>({...x,[field]:x[field].includes(value)?x[field].filter(v=>v!==value):[...x[field],value]}));
+ const toggleTime=(field:"departure"|"arrival",value:TimeBucket)=>setDraft(x=>{const group=x.journeyTimes[key]??{departure:[],arrival:[]},s=group[field];return {...x,journeyTimes:{...x.journeyTimes,[key]:{...group,[field]:s.includes(value)?s.filter(v=>v!==value):[...s,value]}}}});
+ const slider=(field:"maximumPrice"|"maximumDuration"|"maximumLayover",range:NumericRange,label:string,format:(v:number)=>string,step:number)=>{const selected=clampNumericRange({min:range.min,max:draft[field]??range.max},range);return <><Text style={[s.value,{color:theme.textPrimary}]}>{field==="maximumPrice"?`Up to ${format(selected.max)}`:format(selected.max)}</Text><FlightRangeSlider available={range} selected={selected} step={step} singleMaximum accessibilityLabel={label} formatValue={format} onDragStateChange={setDragging} onChange={v=>setDraft(x=>({...x,[field]:v.max}))}/></>};
+ const close=()=>{setDragging(false);onClose()};const row=(field:"fromAirports"|"toAirports",v:string)=><Check key={field+v} label={v} selected={draft[field].includes(v)} onPress={()=>toggle(field,v)}/>;
+ return <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={close} accessibilityViewIsModal><View accessibilityLabel="Flight filters" style={[s.screen,{backgroundColor:theme.surface,paddingTop:inset.top,paddingBottom:Math.max(inset.bottom,8)}]}>
+ <View style={s.header}><Pressable accessibilityRole="button" accessibilityLabel="Close filters" onPress={close} style={s.close}><FlowIcon name="close" color={theme.icon}/></Pressable><Text accessibilityRole="header" style={[s.title,{color:theme.textPrimary}]}>Filter by</Text><Text accessibilityRole="button" onPress={()=>setDraft(emptyFlightFilters())} style={s.action}>Reset</Text></View>
+ <ScrollView style={s.scroll} scrollEnabled={!dragging} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+ {(full||section==="stops")&&<FlightFilterSection title="Stops">{([{v:null,l:"Any"},{v:0,l:"Direct only"},{v:1,l:"Max 1 stop per flight"},{v:2,l:"Max 2 stops per flight"}] as const).map(x=><Radio key={String(x.v)} label={x.l} selected={draft.maxStops===x.v} onPress={()=>setDraft(f=>({...f,maxStops:x.v}))}/>)}</FlightFilterSection>}
+ {(full||section==="airlines")&&<FlightFilterSection title="Airlines" actions={<View style={s.actions}><Text onPress={()=>setDraft(x=>({...x,airlines:[]}))} style={s.action}>Select all</Text><Text onPress={()=>setDraft(x=>({...x,airlines:[]}))} style={s.action}>Reset</Text></View>}>{options.airlines.map(name=><Check key={name} label={name} logo={<AirlineLogo airlineName={name} logoUrl={logos.get(name)}/>} selected={!draft.airlines.length||draft.airlines.includes(name)} onPress={()=>{const chosen=draft.airlines.length?draft.airlines:options.airlines;setDraft(x=>({...x,airlines:chosen.includes(name)?chosen.filter(v=>v!==name):[...chosen,name]}))}}/>)}</FlightFilterSection>}
+ {full&&legs.length>0&&<FlightFilterSection title="Flight times">{legs.length>1&&<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.tabs}>{legs.map((l,i)=><Text accessibilityRole="tab" key={journeyKey(l,i)} onPress={()=>setTab(i)} style={[s.tab,{color:tab===i?ui.blue:theme.textSecondary,borderBottomColor:tab===i?ui.blue:"transparent"}]}>{l.direction==="outbound"?"Departing flight":l.direction==="return"?"Return flight":`Flight ${(l.legIndex??i)+1}`}</Text>)}</ScrollView>}<Text style={[s.subhead,{color:theme.textPrimary}]}>Departs from {leg.originAirport}</Text>{windows.map(w=><Check key={'d'+w.value} label={w.label} selected={selection.departure.includes(w.value)} onPress={()=>toggleTime("departure",w.value)}/>)}<Text style={[s.subhead,{color:theme.textPrimary}]}>Arrives to {leg.destinationAirport}</Text>{windows.map(w=><Check key={'a'+w.value} label={w.label} selected={selection.arrival.includes(w.value)} onPress={()=>toggleTime("arrival",w.value)}/>)}</FlightFilterSection>}
+ {full&&(options.duration||options.layover)&&<FlightFilterSection title="Duration">{options.duration&&<View><Text style={s.control}>Maximum travel time</Text>{slider("maximumDuration",options.duration,"Maximum travel time",formatFlightDuration,5)}</View>}{options.layover&&<View><Text style={s.control}>Maximum layover time</Text>{slider("maximumLayover",options.layover,"Maximum layover time",formatFlightDuration,5)}</View>}</FlightFilterSection>}
+ {full&&isPriceFilteringAvailable(options,priceFilteringReady)&&<FlightFilterSection title="Price">{slider("maximumPrice",options.price!,"Maximum price",v=>formatCurrency(v,options.priceCurrency??currency),priceRangeStep(options.price!.min,options.price!.max))}</FlightFilterSection>}
+ {full&&options.showAirports&&<FlightFilterSection title="Airports">{options.fromAirports.length>1&&<><Text style={s.subhead}>From</Text>{options.fromAirports.map(v=>row("fromAirports",v))}</>}{options.toAirports.length>1&&<><Text style={s.subhead}>To</Text>{options.toAirports.map(v=>row("toAirports",v))}</>}</FlightFilterSection>}
+ {full&&(options.baggage||options.refundable)&&<FlightFilterSection title="More options">{options.baggage&&<Check label="Baggage included" selected={draft.baggageIncluded} onPress={()=>setDraft(x=>({...x,baggageIncluded:!x.baggageIncluded}))}/>} {options.refundable&&<Check label="Flexible / refundable" selected={draft.refundable} onPress={()=>setDraft(x=>({...x,refundable:!x.refundable}))}/>}</FlightFilterSection>}
+ </ScrollView><View style={[s.footer,{borderTopColor:theme.border,backgroundColor:theme.surface}]}><Button label={`Show ${count} ${count===1?"flight":"flights"}`} flightResults onPress={()=>{onChange(draft);setDragging(false);onClose()}}/></View></View></Modal>}
+function Check({label,selected,logo,onPress}:{label:string;selected:boolean;logo?:React.ReactNode;onPress:()=>void}){const {theme}=useAppTheme();return <Pressable accessibilityRole="checkbox" accessibilityState={{checked:selected}} onPress={onPress} style={s.row}>{logo}<Text style={[s.rowText,{color:theme.textPrimary}]}>{label}</Text><View style={[s.box,{borderColor:selected?ui.blue:theme.border,backgroundColor:selected?ui.blue:"transparent"}]}>{selected&&<Text style={s.check}>✓</Text>}</View></Pressable>};
+function Radio({label,selected,onPress}:{label:string;selected:boolean;onPress:()=>void}){const {theme}=useAppTheme();return <Pressable accessibilityRole="radio" accessibilityState={{selected}} onPress={onPress} style={s.row}><Text style={[s.rowText,{color:theme.textPrimary}]}>{label}</Text><View style={[s.radio,{borderColor:selected?ui.blue:theme.border}]}>{selected&&<View style={s.dot}/>}</View></Pressable>};
+const s=StyleSheet.create({screen:{flex:1},header:{height:58,paddingHorizontal:10,flexDirection:"row",alignItems:"center"},close:{width:44,height:44,alignItems:"center",justifyContent:"center"},title:{flex:1,fontSize:21,fontWeight:"800"},action:{color:ui.blue,fontSize:13,fontWeight:"700",padding:8},actions:{flexDirection:"row",gap:8},scroll:{flex:1},content:{paddingHorizontal:20,paddingBottom:28,gap:30},section:{gap:7},sectionHead:{minHeight:30,flexDirection:"row",alignItems:"center",justifyContent:"space-between"},sectionTitle:{fontSize:18,fontWeight:"800"},row:{minHeight:44,flexDirection:"row",alignItems:"center",gap:11},rowText:{flex:1,fontSize:14,fontWeight:"500"},box:{width:20,height:20,borderWidth:1.5,borderRadius:4,alignItems:"center",justifyContent:"center"},check:{color:"white",fontWeight:"900"},radio:{width:21,height:21,borderWidth:2,borderRadius:11,alignItems:"center",justifyContent:"center"},dot:{width:11,height:11,borderRadius:6,backgroundColor:ui.blue},tabs:{gap:18},tab:{paddingVertical:11,borderBottomWidth:2,fontWeight:"700"},subhead:{fontSize:14,fontWeight:"700",marginTop:9},control:{fontSize:13,fontWeight:"600",marginTop:4},value:{fontSize:16,fontWeight:"800",marginTop:4},footer:{borderTopWidth:StyleSheet.hairlineWidth,paddingHorizontal:20,paddingTop:12}});
