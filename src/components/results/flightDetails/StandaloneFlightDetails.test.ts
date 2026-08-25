@@ -4,7 +4,7 @@ import test, { afterEach } from "node:test";
 
 import type { FlightSearchParams, NormalizedFlightResult } from "@/lib/types";
 import { flightDetailsRouteLabel, flightDetailsTotalLabel } from "@/lib/flights/flightDetailsContract";
-import { canUseOfferAirlineLogo, compactFareTerms, resolveSegmentCarrierName } from "@/components/results/flightDetails/flightDetailsPresentation";
+import { buildFareDisplayRows, canUseOfferAirlineLogo, compactFareTerms, resolveSegmentCarrierName } from "@/components/results/flightDetails/flightDetailsPresentation";
 import {
   buildMaterialFareChoices,
   buildStandaloneFlightDetails,
@@ -180,8 +180,53 @@ test("compact fare summaries prioritize restrictions and simplify only unambiguo
     { category: "change", semantic: "negative", text: "Outbound: Changes not allowed", legDirection: "outbound" },
     { category: "refund", semantic: "negative", text: "Outbound: Not refundable", legDirection: "outbound" },
   ] satisfies NonNullable<NormalizedFlightResult["fareTerms"]>;
-  assert.deepEqual(compactFareTerms(terms, "one-way").map(({ text }) => text), ["Changes not allowed", "Not refundable", "1 carry-on included"]);
-  assert.deepEqual(compactFareTerms(terms, "round-trip").map(({ text }) => text), ["Outbound: Changes not allowed", "Outbound: Not refundable", "Outbound: 1 carry-on included"]);
+  assert.deepEqual(compactFareTerms(terms, "one-way").map(({ text }) => text), ["1 carry-on included", "Changes not allowed", "Not refundable"]);
+  assert.deepEqual(compactFareTerms(terms, "round-trip").map(({ text }) => text), ["Outbound: 1 carry-on included", "Outbound: Changes not allowed", "Outbound: Not refundable"]);
+});
+
+test("fare display rows safely split included carry-on and checked baggage without changing facts", () => {
+  const combined = {
+    category: "baggage",
+    semantic: "positive",
+    text: "Outbound: 1 checked bag included, 1 carry-on included",
+    legDirection: "outbound",
+  } satisfies NonNullable<NormalizedFlightResult["fareTerms"]>[number];
+  const checkedOnly = { ...combined, text: "Outbound: 2 checked bags included" };
+  const carryOnOnly = { ...combined, text: "Outbound: 1 carry-on included" };
+  const unknown = { ...combined, text: "Outbound: Checked bag available for a fee" };
+  const negative = { ...combined, semantic: "negative" as const, text: "Outbound: No checked bag included" };
+
+  assert.deepEqual(buildFareDisplayRows(combined, "one-way"), [
+    "1 carry-on included",
+    "1 checked bag included",
+  ]);
+  assert.deepEqual(buildFareDisplayRows(combined, "round-trip"), [
+    "Outbound: 1 carry-on included",
+    "Outbound: 1 checked bag included",
+  ]);
+  assert.deepEqual(buildFareDisplayRows(checkedOnly, "one-way"), ["2 checked bags included"]);
+  assert.deepEqual(buildFareDisplayRows(carryOnOnly, "one-way"), ["1 carry-on included"]);
+  assert.deepEqual(buildFareDisplayRows(unknown, "one-way"), ["Checked bag available for a fee"]);
+  assert.deepEqual(buildFareDisplayRows(negative, "one-way"), ["No checked bag included"]);
+
+  const change = {
+    category: "change",
+    semantic: "negative",
+    text: "Outbound: Changes not allowed before departure",
+    legDirection: "outbound",
+  } satisfies NonNullable<NormalizedFlightResult["fareTerms"]>[number];
+  assert.deepEqual(
+    compactFareTerms([combined, change], "one-way").map(({ text }) => text),
+    [
+      "1 carry-on included",
+      "1 checked bag included",
+      "Changes not allowed before departure",
+    ],
+  );
+
+  const negativeRow = compactFareTerms([negative], "one-way")[0];
+  assert.equal(negativeRow.term.semantic, "negative");
+  assert.doesNotMatch(negativeRow.text, /^1 /);
 });
 
 test("unbranded exact offers never acquire synthetic fare identity from matching copy", () => {
@@ -334,25 +379,34 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   assert.match(source, /lg:grid-cols-\[minmax\(0,2\.45fr\)_minmax\(310px,0\.95fr\)\]/);
   assert.match(source, /className="hidden self-start rounded-\[13px\].*lg:block"/s);
-  assert.doesNotMatch(source, /\bsticky\b|\bfixed\b|top-24/);
-  assert.match(source, /function MobileTripTotal/);
-  assert.match(source, /className="mt-5 rounded-\[10px\].*lg:hidden"/s);
+  assert.doesNotMatch(source, /<aside className="[^"]*(?:sticky|fixed)|top-24/);
+  assert.match(source, /function MobileCheckoutDock/);
+  assert.doesNotMatch(source, /function MobileTripTotal/);
+  assert.match(source, /fixed inset-x-0 bottom-0 z-\[90px\]|fixed inset-x-0 bottom-0 z-\[90\]/);
+  assert.match(source, /pb-\[calc\(0\.75rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(source, /pb-\[calc\(6\.75rem\+env\(safe-area-inset-bottom\)\)\].*lg:pb-16/s);
   assert.match(source, /role="tablist"/);
   assert.equal((source.match(/role="tab"/g) || []).length, 1);
   assert.deepEqual(["Fare details", "Fare conditions", "Optional extras"].map((label) => source.includes(`label: "${label}"`)), [true, true, true]);
   assert.match(source, /useState<FareTab>\("details"\)/);
   assert.match(source, /role="tabpanel"/);
   assert.match(source, /ArrowRight.*ArrowLeft/s);
-  assert.match(source, /Selected<\/span>.*lg:hidden/s);
+  assert.doesNotMatch(source, />Selected<\/span>/);
   assert.match(source, /grid-cols-\[minmax\(0,1fr\)_minmax\(82px,1\.1fr\)_minmax\(0,1fr\)\]/);
   assert.match(source, /border-dashed border-\[#075EE8\]/);
   assert.match(source, /offerAirlineLogo=\{flight\.airlineLogo\}/);
   assert.match(source, /<SegmentAirlineMark segment=\{segment\}/);
   assert.match(source, /onError=\{\(\) => setLogoFailed\(true\)\}/);
   assert.match(source, /lg:max-w-\[336px\]/);
-  assert.match(source, /lg:min-h-0 lg:p-3/);
-  assert.match(source, /lg:h-8 lg:w-8/);
-  assert.match(source, /min-h-\[126px\].*lg:min-h-0/s);
+  assert.doesNotMatch(source, /min-h-\[126px\]/);
+  assert.match(source, /w-\[min\(82vw,310px\)\] shrink-0 snap-start/);
+  assert.match(source, /overflow-x-auto.*sm:grid/s);
+  assert.match(source, /scrollIntoView\(\{ behavior: "smooth", block: "nearest", inline: "nearest" \}\)/);
+  assert.match(source, /max-w-\[1470px\] px-0 sm:px-6 lg:px-\[34px\]/);
+  assert.match(source, /border-y border-\[#E2E8F0\].*sm:rounded-\[13px\] sm:border.*sm:shadow-/s);
+  assert.match(source, /ml-4.*sm:ml-0/);
+  assert.match(source, /function FlightDetailsSkeleton[\s\S]*?px-0 sm:px-6 lg:px-8/);
+  assert.match(source, /function FlightDetailsUnavailable[\s\S]*?px-0 sm:px-4/);
   assert.doesNotMatch(source, /lg:max-w-\[400px\]/);
   assert.doesNotMatch(source, /bg-slate-50 px-5 py-3 lg:px-6/);
   assert.doesNotMatch(source, /providerOfferId|rawProviderReference/);
