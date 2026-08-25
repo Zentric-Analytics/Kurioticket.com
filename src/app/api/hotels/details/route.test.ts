@@ -4,6 +4,7 @@ import test from "node:test";
 import { GET } from "./route";
 import { rememberHotels } from "@/lib/searchCache";
 import type { NormalizedHotelResult } from "@/lib/types";
+import { staticHotelCatalogue } from "@/services/travel/staticHotelCatalogue";
 
 function testHotel(id: string, name: string): NormalizedHotelResult {
   return {
@@ -179,4 +180,48 @@ test("Park Plaza details expose the matching Westminster address and coordinates
     ),
     false,
   );
+});
+
+test("every static hotel details response returns seven sanitized same-city alternatives", async () => {
+  for (const selected of staticHotelCatalogue) {
+    const response = GET(
+      new Request(
+        `https://kurioticket.test/api/hotels/details?id=${encodeURIComponent(selected.id)}&checkIn=2027-06-01&checkOut=2027-06-04&rooms=1&guests=2`,
+      ),
+    );
+    const payload = (await response.json()) as {
+      hotel: { id: string };
+      propertyDetails: { city: string };
+      relatedHotels: Array<{
+        id: string;
+        location: string;
+        imageUrl: string;
+        rawProviderReference?: unknown;
+      }>;
+    };
+    assert.equal(response.status, 200, selected.id);
+    assert.equal(payload.hotel.id, selected.id);
+    assert.equal(payload.relatedHotels.length, 7, selected.id);
+    assert.equal(
+      new Set(payload.relatedHotels.map((hotel) => hotel.id)).size,
+      7,
+      selected.id,
+    );
+    assert.ok(
+      payload.relatedHotels.every((hotel) => hotel.id !== selected.id),
+      selected.id,
+    );
+    assert.ok(
+      payload.relatedHotels.every((hotel) =>
+        hotel.location.startsWith(payload.propertyDetails.city),
+      ),
+      selected.id,
+    );
+    assert.ok(
+      payload.relatedHotels.every(
+        (hotel) => hotel.imageUrl && !("rawProviderReference" in hotel),
+      ),
+      selected.id,
+    );
+  }
 });
