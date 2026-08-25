@@ -67,7 +67,8 @@ test("mobile stay dock is fixed once, owns the safe area, and preserves desktop 
 });
 
 test("review and rate modules remain truthful and do not manufacture blueprint claims", () => {
-  for (const contract of ["props.reviewScore", "props.reviewLabel", "props.reviewCountText", "props.labels.reviewUnavailable", "props.labels.planningEstimate", "props.planningPriceText"]) assert.ok(source.includes(contract), contract);
+  for (const contract of ["props.reviewScore", "props.reviewLabel", "props.reviewCountText", "props.labels.reviewUnavailable", "props.labels.planningEstimate", "props.planningPriceText", 'props.perNightText.replace("{{price}}", props.nightlyDisplayPrice.formatted)']) assert.ok(source.includes(contract), contract);
+  assert.match(clientSource, /reviewScale === 5 \? ` \/ \$\{reviewScale\}` : ""/);
   assert.doesNotMatch(source, /Booking\.com|Expedia|Hotels\.com|100\+ sites|Cleanliness|Emily R\.|Free cancellation/);
 });
 

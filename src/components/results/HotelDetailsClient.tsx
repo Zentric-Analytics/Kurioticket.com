@@ -520,9 +520,9 @@ export function HotelDetailsClient({
       : "";
   const compactReviewScore =
     reviewBand && reviewScale
-      ? new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(
+      ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(
           normalizedReviewScore ?? 0,
-        )
+        )}${reviewScale === 5 ? ` / ${reviewScale}` : ""}`
       : "";
   const reviewCountText =
     reviewCount !== null
