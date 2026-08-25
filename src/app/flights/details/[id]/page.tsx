@@ -20,14 +20,23 @@ export default async function FlightDetailsPage({ params }: { params: Promise<{ 
   const { id } = await params;
   return (
     <>
-      <AppHeader
-        flushDesktopBottom
-        flushMobileBottom
-        hideDesktopTravelNav
-        hideMobileCategoryTabs
-      />
-      <FlightDetailsClient id={id} />
-      <Footer />
+      <div className="hidden lg:block" data-flight-details-desktop-header>
+        <AppHeader
+          flushDesktopBottom
+          flushMobileBottom
+          hideDesktopTravelNav
+          hideMobileCategoryTabs
+        />
+      </div>
+      <div
+        className="pt-[env(safe-area-inset-top)] lg:pt-0"
+        data-flight-details-mobile-safe-area
+      >
+        <FlightDetailsClient id={id} />
+      </div>
+      <div className="hidden lg:block" data-flight-details-desktop-footer>
+        <Footer />
+      </div>
     </>
   );
 }
