@@ -33,13 +33,41 @@ const narrowQueryEnd = globalsCss.indexOf(
 const narrowRules = globalsCss.slice(narrowQueryStart, narrowQueryEnd);
 const guidedSelector = '[data-flight-results-experience="deals-guided"]';
 
-test("FlightCard retains its container-responsive desktop architecture", () => {
-  assert.match(flightCardSource, /flight-card-desktop-shell hidden lg:block/);
+test("FlightCard shares one container-responsive hierarchy at every width", () => {
+  assert.match(flightCardSource, /className="flight-card-desktop-shell"/);
+  assert.doesNotMatch(flightCardSource, /const mobileCard/);
+  assert.doesNotMatch(flightCardSource, /flight-card-desktop-shell hidden/);
+  assert.doesNotMatch(flightCardSource, /flightOption/);
+  assert.equal(
+    flightCardSource.match(/visibleLegs\.map/g)?.length,
+    1,
+    "all viewports render legs from one map",
+  );
   assert.match(
     ruleBody(globalsCss, ".flight-card-desktop-shell"),
     /container-type:\s*inline-size/,
   );
   assert.notEqual(narrowQueryStart, -1, "narrow container query exists");
+});
+
+test("shared card keeps airline, badge, itinerary, details, price, and action", () => {
+  assert.match(flightCardSource, /<AirlineLogo flight={flight}/);
+  assert.match(flightCardSource, /<ResultBadgePill badge={resultBadge}/);
+  assert.match(flightCardSource, /<ResponsiveFlightLegRow/);
+  assert.match(flightCardSource, /<FlightDetailLines details={details}/);
+  assert.match(flightCardSource, /providerPrice/);
+  assert.match(flightCardSource, /viewFlightLabel/);
+  assert.doesNotMatch(flightCardSource, /seatSelection/);
+});
+
+test("mobile card navigation ignores nested controls and keeps canonical href", () => {
+  assert.match(flightCardSource, /max-width: 1023px/);
+  assert.match(flightCardSource, /closest\("a, button, input, select, textarea"\)/);
+  assert.match(flightCardSource, /router\.push\(resolvedDetailsHref\)/);
+  assert.match(
+    flightCardSource,
+    /`\/flights\/details\/\$\{encodeURIComponent\(flight\.id\)\}`/,
+  );
 });
 
 test("wide and medium desktop cards retain their side fare columns", () => {

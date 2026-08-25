@@ -1,12 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   Armchair,
   Award,
   Luggage,
   PlaneTakeoff,
-  Settings,
   ShieldCheck,
   Tag,
   Zap,
@@ -50,6 +50,7 @@ export function FlightCard({
   showProviderHandoffCopy?: boolean;
 }) {
   const { t: dictionary, locale } = useLocale();
+  const router = useRouter();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
@@ -68,9 +69,6 @@ export function FlightCard({
     locale,
   });
   const details = buildFlightDetails(flight, t);
-  const desktopDetails = details.filter(
-    (detail) => detail.label !== t("seatSelection"),
-  );
   const visibleLegs = getVisibleLegs(flight);
   const providerPrice = `${displayPrice.providerFormatted} ${displayPrice.sourceCurrency}`;
   const priceAriaLabel = displayPrice.isConvertedEstimate
@@ -94,77 +92,29 @@ export function FlightCard({
       : detailsHref;
   const resolvedActionLabel = actionLabel ?? t("viewFlight");
 
-  const mobileCard = (
-    <div className="p-2.5 sm:p-3 lg:hidden">
-      <div className="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_132px] lg:items-stretch">
-        <div className="min-w-0 space-y-2">
-          <div className="flex min-w-0 items-center justify-between gap-2 border-b border-slate-100 pb-1.5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#004BB8]">
-              {t("flightOption")}
-            </p>
-            <p
-              className="min-w-0 truncate text-end text-xs font-semibold text-slate-700"
-              dir="auto"
-            >
-              {flight.airlineName}
-              {flight.flightNumber ? ` · ${flight.flightNumber}` : ""}
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            {visibleLegs.map((leg, index) => (
-              <FlightLegRow
-                key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${leg.departureTime}-${index}`}
-                flight={flight}
-                leg={leg}
-                compact={visibleLegs.length > 1}
-                locale={locale}
-              />
-            ))}
-          </div>
-
-          <div className="mt-2 flex items-start justify-between gap-4 border-t border-slate-100 pt-4">
-            <FlightDetailLines details={details} />
-            <FlightFareAction
-              detailsHref={resolvedDetailsHref}
-              formattedPrice={cardPrice.formatted}
-              priceSize={cardPrice.size}
-              priceAriaLabel={priceAriaLabel}
-              priceTitle={priceTitle}
-              priceLabel={priceLabel}
-              showConvertedProviderPrice={displayPrice.isConvertedEstimate}
-              providerPrice={providerPrice}
-              providerPriceLabel={t("providerPrice")}
-              viewFlightLabel={resolvedActionLabel}
-              viewFlightAriaLabel={actionAriaLabel}
-              onAction={onAction ? () => onAction(flight) : undefined}
-            />
-          </div>
-        </div>
-      </div>
-
-      {showProviderHandoffCopy ? (
-        <div className="mt-3 rounded-lg border border-[#D8E1EC]/70 bg-[#F8FAFC]/80 px-3 py-2.5 text-xs font-medium leading-5 text-slate-600">
-          {providerHandoffCopy}
-        </div>
-      ) : null}
-    </div>
-  );
-
   return (
     <Card
       className={cn(
         "relative w-full overflow-hidden border-[#D8E1EC] bg-white shadow-[0_10px_28px_rgba(15,23,42,0.07)] transition hover:-translate-y-0.5 hover:border-[#CBD6E2] hover:shadow-[0_16px_34px_rgba(15,23,42,0.095)] lg:rounded-xl lg:border-[#CDD8E5] lg:bg-[#FEFFFF] lg:shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)]",
         isAccented && "ring-1 ring-slate-950/[0.03]",
       )}
+      onClick={(event) => {
+        if (
+          !resolvedDetailsHref ||
+          onAction ||
+          !window.matchMedia("(max-width: 1023px)").matches ||
+          (event.target as HTMLElement).closest("a, button, input, select, textarea")
+        ) {
+          return;
+        }
+        router.push(resolvedDetailsHref);
+      }}
     >
-      {mobileCard}
-
-      <div className="flight-card-desktop-shell hidden lg:block">
+      <div className="flight-card-desktop-shell">
         <div className="flight-card-desktop">
           <div className="flight-card-desktop-header flex min-w-0 items-start justify-between pb-2">
             <div className="flight-card-desktop-brand flex min-w-0 items-center">
-              <AirlineLogo flight={flight} desktop />
+              <AirlineLogo flight={flight} />
               <div className="min-w-0">
                 <p
                   className="flight-card-airline-name truncate font-semibold leading-5 text-slate-800"
@@ -188,7 +138,7 @@ export function FlightCard({
           <div className="flight-card-desktop-itinerary mt-2 grid min-w-0 items-stretch gap-y-4">
             <div className="grid min-w-0 gap-5">
               {visibleLegs.map((leg, index) => (
-                <DesktopFlightLegRow
+                <ResponsiveFlightLegRow
                   key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${leg.departureTime}-${index}`}
                   leg={leg}
                   locale={locale}
@@ -209,11 +159,15 @@ export function FlightCard({
               viewFlightLabel={resolvedActionLabel}
               viewFlightAriaLabel={actionAriaLabel}
               onAction={onAction ? () => onAction(flight) : undefined}
-              desktop
             />
           </div>
 
-          <FlightDetailLines details={desktopDetails} desktop />
+          <FlightDetailLines details={details} />
+          {showProviderHandoffCopy ? (
+            <p className="flight-card-handoff text-xs font-medium leading-5 text-slate-600">
+              {providerHandoffCopy}
+            </p>
+          ) : null}
         </div>
       </div>
     </Card>
@@ -266,108 +220,7 @@ function ResultBadgePill({ badge }: { badge?: ResultBadge }) {
   );
 }
 
-function FlightLegRow({
-  flight,
-  leg,
-  compact,
-  locale,
-}: {
-  flight: PublicFlightResult;
-  leg: FlightLeg;
-  compact: boolean;
-  locale: string;
-}) {
-  const { t: dictionary } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-
-  return (
-    <section
-      aria-label={formatLegTitle(leg, t)}
-      className={cn(
-        "rounded-xl border border-[#D8E1EC] bg-[#F8FAFC] p-2",
-        compact ? "sm:p-2" : "sm:p-2.5",
-      )}
-    >
-      <div className="flex min-w-0 gap-2.5">
-        <AirlineLogo flight={flight} />
-
-        <div className="min-w-0 flex-1">
-          <div className="mb-1.5 flex items-center justify-between gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#004BB8]">
-              {formatLegTitle(leg, t)}
-            </p>
-            <p
-              className="truncate text-xs font-medium text-slate-600"
-              dir="ltr"
-            >
-              {leg.originAirport} → {leg.destinationAirport}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
-            <div className="min-w-0">
-              <div
-                className="text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]"
-                dir="ltr"
-              >
-                {formatTime(leg.departureTime, locale)}
-              </div>
-              <div
-                className="mt-0.5 truncate text-xs font-medium text-slate-600"
-                dir="ltr"
-              >
-                {leg.originAirport}
-              </div>
-            </div>
-
-            <div className="min-w-[68px] text-center sm:min-w-24">
-              <div className="flex items-center justify-center text-teal">
-                <span className="h-px flex-1 bg-slate-200" />
-                <PlaneTakeoff className="mx-1.5 h-3 w-3" />
-                <span className="h-px flex-1 bg-slate-200" />
-              </div>
-              <div
-                className="mt-0.5 text-xs font-semibold leading-4 text-slate-800"
-                dir="auto"
-              >
-                {leg.duration}
-              </div>
-              <div className="text-[11px] font-medium leading-4 text-slate-600">
-                {formatStopsLabel(leg.stops, t)}
-              </div>
-            </div>
-
-            <div className="min-w-0 text-end">
-              <div
-                className="text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]"
-                dir="ltr"
-              >
-                {formatTime(leg.arrivalTime, locale)}
-              </div>
-              <div
-                className="mt-0.5 truncate text-xs font-medium text-slate-600"
-                dir="ltr"
-              >
-                {leg.destinationAirport}
-              </div>
-            </div>
-          </div>
-
-          {leg.layovers.length ? (
-            <p
-              className="mt-1 truncate text-xs font-medium text-slate-600"
-              title={formatLayoverText(leg, t)}
-            >
-              {formatLayoverText(leg, t)}
-            </p>
-          ) : null}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function DesktopFlightLegRow({
+function ResponsiveFlightLegRow({
   leg,
   locale,
 }: {
@@ -443,7 +296,7 @@ function DesktopFlightLegRow({
             {leg.destinationAirport}
           </div>
           <div
-            className="mt-0.5 text-sm font-medium leading-5 text-[#07133B]"
+            className="flight-card-arrival-date mt-0.5 text-sm font-medium leading-5 text-[#07133B]"
             dir="auto"
           >
             {formatItineraryShortDate({ value: leg.arrivalTime, locale })}
@@ -456,28 +309,23 @@ function DesktopFlightLegRow({
 
 function AirlineLogo({
   flight,
-  desktop = false,
 }: {
   flight: PublicFlightResult;
-  desktop?: boolean;
 }) {
   if (flight.airlineLogo) {
     return (
       <div
         className={cn(
           "flex shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white shadow-sm",
-          desktop ? "flight-card-logo-box" : "h-8 w-8",
+          "flight-card-logo-box",
         )}
       >
         <Image
           src={flight.airlineLogo}
           alt={`${flight.airlineName} logo`}
-          width={desktop ? 38 : 24}
-          height={desktop ? 38 : 24}
-          className={cn(
-            "object-contain",
-            desktop ? "flight-card-logo-image" : "h-6 w-6",
-          )}
+          width={38}
+          height={38}
+          className="flight-card-logo-image object-contain"
         />
       </div>
     );
@@ -487,11 +335,11 @@ function AirlineLogo({
     <div
       className={cn(
         "flex shrink-0 items-center justify-center rounded-lg border border-[#004BB8]/8 bg-[#004BB8]/5 text-[#004BB8] shadow-sm",
-        desktop ? "flight-card-logo-box" : "h-8 w-8",
+        "flight-card-logo-box",
       )}
     >
       <PlaneTakeoff
-        className={cn(desktop ? "flight-card-logo-icon" : "h-3.5 w-3.5")}
+        className="flight-card-logo-icon"
         aria-hidden="true"
       />
     </div>
@@ -512,7 +360,6 @@ function FlightFareAction({
   viewFlightAriaLabel,
   onAction,
   className,
-  desktop = false,
 }: {
   detailsHref: string | null;
   formattedPrice: string;
@@ -527,29 +374,24 @@ function FlightFareAction({
   viewFlightAriaLabel?: string;
   onAction?: () => void;
   className?: string;
-  desktop?: boolean;
 }) {
   return (
     <div
       className={cn(
-        desktop
-          ? "flight-card-fare-action flex flex-col items-center justify-center border-l border-[#D8E1EC] text-center"
-          : "flex w-[clamp(128px,42vw,152px)] shrink-0 flex-col items-center gap-2.5 rounded-xl px-0 py-0 text-center sm:w-[clamp(140px,34vw,168px)] lg:min-h-[118px] lg:w-auto lg:items-stretch lg:justify-center lg:gap-2 lg:self-stretch lg:px-1 lg:py-3 lg:text-center",
+        "flight-card-fare-action flex flex-col items-center justify-center border-l border-[#D8E1EC] text-center",
         className,
       )}
     >
       <div
         className={cn(
           "flight-card-price-frame min-w-0 text-center",
-          desktop
-            ? "flex flex-col items-center justify-center"
-            : "lg:flex lg:min-h-[72px] lg:flex-col lg:items-center lg:justify-center lg:text-center",
+          "flex flex-col items-center justify-center",
         )}
       >
         <div
           className={cn(
             "flight-card-price-value font-semibold leading-tight tracking-[-0.025em] text-slate-950",
-            desktop ? "flight-card-price" : "",
+            "flight-card-price",
           )}
           aria-label={priceAriaLabel}
           title={priceTitle}
@@ -577,9 +419,7 @@ function FlightFareAction({
           aria-label={viewFlightAriaLabel}
           className={cn(
             "inline-flex min-h-11 w-auto shrink-0 items-center justify-center whitespace-nowrap bg-[#004BB8] text-sm font-semibold text-white hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35",
-            desktop
-              ? "flight-card-view-button rounded-md px-3.5 py-2.5"
-              : "min-w-[104px] rounded-full px-5 py-2.5 sm:px-4 sm:py-2 sm:text-sm lg:w-full lg:min-w-0 lg:px-3.5 lg:py-2 lg:text-sm",
+            "flight-card-view-button rounded-md px-3.5 py-2.5",
           )}
         >
           {viewFlightLabel}
@@ -592,9 +432,7 @@ function FlightFareAction({
           size="sm"
           className={cn(
             "w-auto shrink-0 justify-center whitespace-nowrap bg-[#004BB8] text-sm font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35",
-            desktop
-              ? "flight-card-view-button rounded-md py-2.5"
-              : "min-w-[104px] rounded-full px-5 py-2.5 sm:px-4 sm:py-2 sm:text-sm lg:w-full lg:min-w-0 lg:px-3.5 lg:py-2 lg:text-sm",
+            "flight-card-view-button rounded-md py-2.5",
           )}
         >
           {viewFlightLabel}
@@ -607,7 +445,7 @@ function FlightFareAction({
           aria-label={viewFlightAriaLabel}
           className={cn(
             "inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-full bg-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-500",
-            desktop ? "flight-card-view-button rounded-md" : "min-w-[104px]",
+            "flight-card-view-button rounded-md",
           )}
         >
           {viewFlightLabel}
@@ -619,18 +457,13 @@ function FlightFareAction({
 
 function FlightDetailLines({
   details,
-  desktop = false,
 }: {
   details: DetailItem[];
-  desktop?: boolean;
 }) {
   return (
     <div
       className={cn(
-        "grid min-w-0 flex-1 text-xs leading-5 text-slate-600",
-        desktop
-          ? "flight-card-details mt-4 grid grid-cols-3 items-center border-t border-[#D8E1EC] pt-3"
-          : "gap-x-4 gap-y-1 sm:grid-cols-2 lg:border-t lg:border-slate-100 lg:pt-2",
+        "flight-card-details mt-4 grid min-w-0 flex-1 grid-cols-3 items-center border-t border-[#D8E1EC] pt-3 text-xs leading-5 text-slate-600",
       )}
     >
       {details.map((detail) => {
@@ -641,8 +474,7 @@ function FlightDetailLines({
             key={detail.label}
             className={cn(
               "flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5",
-              desktop &&
-                "flight-card-detail-item flex-nowrap whitespace-nowrap border-r border-[#EEF2F7] last:border-r-0 last:pr-0",
+              "flight-card-detail-item flex-nowrap whitespace-nowrap border-r border-[#EEF2F7] last:border-r-0 last:pr-0",
             )}
           >
             <Icon
@@ -695,11 +527,6 @@ function buildFlightDetails(
       label: t("cabin"),
       value: formatCabinClass(flight.cabinClass, t),
       icon: Armchair,
-    },
-    {
-      label: t("seatSelection"),
-      value: t("providerRulesApply"),
-      icon: Settings,
     },
     {
       label: t("fareRules"),
