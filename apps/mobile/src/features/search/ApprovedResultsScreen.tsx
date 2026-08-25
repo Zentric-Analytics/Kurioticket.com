@@ -29,7 +29,6 @@ import {
   PlaneTakeoff,
   ShieldCheck,
 } from "lucide-react-native";
-import { FLIGHT_TRIP_TYPE_LABELS } from "../flow/flightTripTypeLabels";
 import { Heart } from "lucide-react-native";
 import {
   travelApi,
@@ -521,12 +520,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       {flightResults ? (
         <FlightResultsHeader
           route={`${String(payload.origin || "").toUpperCase()} ${payload.tripType === "one-way" ? "→" : "⇄"} ${String(payload.destination || "").toUpperCase()}`}
-          dateRange={payload.tripType === "one-way"
-            ? shortDate(String(payload.departureDate || ""))
-            : `${shortDate(String(payload.departureDate || ""))} – ${shortDate(String(payload.returnDate || ""))}`}
-          travelerCount={Number(payload.travelers)}
-          tripTypeLabel={FLIGHT_TRIP_TYPE_LABELS[payload.tripType === "round-trip" ? "round-trip" : "one-way"]}
-          cabinClass={String(payload.cabinClass || "economy")}
           onEdit={edit}
         />
       ) : (
@@ -636,17 +629,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
 
 function FlightResultsHeader({
   route,
-  dateRange,
-  travelerCount,
-  tripTypeLabel,
-  cabinClass,
   onEdit,
 }: {
   route: string;
-  dateRange: string;
-  travelerCount: number;
-  tripTypeLabel: string;
-  cabinClass: string;
   onEdit: () => void;
 }) {
   const { theme } = useAppTheme();
@@ -682,28 +667,6 @@ function FlightResultsHeader({
         >
           <Text style={[s0.flightHeaderEditText, { color: theme.textPrimary }]}>Edit</Text>
         </Pressable>
-      </View>
-      <View style={s0.flightHeaderMetadataAlignmentRow}>
-        <View style={s0.flightHeaderMetadataInset} />
-        <ScrollView
-          accessibilityLabel="Trip metadata row"
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={s0.flightHeaderMetadataScroller}
-          contentContainerStyle={s0.flightHeaderMetadataRow}
-        >
-          <Text numberOfLines={1} style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{tripTypeLabel}</Text>
-          <Text style={[s0.flightHeaderMetadataSeparator, { color: theme.textSecondary }]}>·</Text>
-          <Text numberOfLines={1} style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{dateRange}</Text>
-          <Text style={[s0.flightHeaderMetadataSeparator, { color: theme.textSecondary }]}>·</Text>
-          <Text numberOfLines={1} style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>
-            {travelerCount} {travelerCount === 1 ? "Traveler" : "Travelers"}
-          </Text>
-          <Text style={[s0.flightHeaderMetadataSeparator, { color: theme.textSecondary }]}>·</Text>
-          <Text numberOfLines={1} style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>
-            {cabinClass.split("-").map((word) => word[0]?.toUpperCase() + word.slice(1)).join(" ")}
-          </Text>
-        </ScrollView>
       </View>
     </View>
   );
@@ -1311,22 +1274,6 @@ const s0 = StyleSheet.create({
   flightHeaderControlPressed: { opacity: 0.55 },
   flightHeaderRouteBlock: { flex: 1, minWidth: 0, alignItems: "center" },
   flightHeaderRoute: { minWidth: 0, textAlign: "center" },
-  flightHeaderMetadataAlignmentRow: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 7,
-  },
-  flightHeaderMetadataInset: { width: 52, flexShrink: 0 },
-  flightHeaderMetadataScroller: { flex: 1, minWidth: 0 },
-  flightHeaderMetadataRow: {
-    flexDirection: "row",
-    flexWrap: "nowrap",
-    alignItems: "center",
-    columnGap: 6,
-  },
-  flightHeaderMetadataText: { flexShrink: 0, fontSize: 12, lineHeight: 17 },
-  flightHeaderMetadataSeparator: { flexShrink: 0, fontSize: 12, lineHeight: 17 },
   flightHeaderEdit: {
     width: 52,
     height: 44,
