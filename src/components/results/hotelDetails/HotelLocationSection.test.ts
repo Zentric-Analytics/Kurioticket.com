@@ -14,9 +14,11 @@ test("renders a factual responsive hotel location card", () => {
     "NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY",
     "buildHotelDirectionsUrl(propertyDetails)",
     "data-hotel-location-section",
+    'id="hotel-location"',
+    "scroll-mt-20",
     "Map showing the location of ${hotelName}",
     "Street View near ${hotelName}",
-    'aria-pressed={active}',
+    "aria-pressed={active}",
     'useState<"map" | "streetview">("map")',
     'loading="lazy"',
     'referrerPolicy="strict-origin-when-cross-origin"',
@@ -25,7 +27,14 @@ test("renders a factual responsive hotel location card", () => {
     "h-[200px]",
     "sm:h-[220px]",
     "lg:h-[240px]",
-  ]) assert.ok(source.includes(contract), contract);
+  ])
+    assert.ok(source.includes(contract), contract);
+});
+
+test("keeps external directions distinct from the stable in-page location anchor", () => {
+  assert.match(source, /id="hotel-location"/);
+  assert.match(source, /href=\{directionsUrl\}/);
+  assert.match(source, /target="_blank"/);
 });
 test("keys the iframe to stable property coordinates", () => {
   assert.match(

@@ -7,7 +7,7 @@ const gallerySource = readFileSync(
   "utf8",
 );
 
-test("mobile hero restores compact accessible arrow controls without changing the desktop mosaic", () => {
+test("mobile hero uses small visible arrows inside accessible targets without changing the desktop mosaic", () => {
   for (const contract of [
     "ChevronLeft",
     "ChevronRight",
@@ -17,8 +17,33 @@ test("mobile hero restores compact accessible arrow controls without changing th
     "onClick={onNext}",
     "lg:hidden",
     "data-hotel-gallery-mosaic",
-  ]) assert.ok(gallerySource.includes(contract), contract);
+    "size-11",
+    "size-8",
+    'className="h-4 w-4"',
+    "bg-white/85 shadow-sm",
+  ])
+    assert.ok(gallerySource.includes(contract), contract);
   assert.ok(!gallerySource.includes("<IconButton"));
+});
+
+test("mobile hero and thumbnails share one balanced gallery gutter", () => {
+  const unit = gallerySource.slice(
+    gallerySource.indexOf('className="mx-3 lg:hidden"'),
+    gallerySource.indexOf(
+      "{mosaic}",
+      gallerySource.indexOf('className="mx-3 lg:hidden"'),
+    ),
+  );
+  for (const contract of [
+    "data-hotel-mobile-gallery-unit",
+    "{hero}",
+    "{mobileThumbnails}",
+  ])
+    assert.ok(unit.includes(contract), contract);
+  assert.equal(
+    gallerySource.match(/data-hotel-mobile-gallery-unit/g)?.length,
+    1,
+  );
 });
 
 test("preserves pointer swipe and keyboard gallery navigation", () => {
@@ -74,7 +99,10 @@ test("preserves counter, viewer, thumbnails, and image behavior", () => {
 test("preserves the photo-viewer dialog navigation contract", () => {
   const dialogCall = gallerySource.slice(
     gallerySource.indexOf("<HotelDetailsGalleryDialog"),
-    gallerySource.indexOf("/>", gallerySource.indexOf("<HotelDetailsGalleryDialog")) + 2,
+    gallerySource.indexOf(
+      "/>",
+      gallerySource.indexOf("<HotelDetailsGalleryDialog"),
+    ) + 2,
   );
 
   for (const dialogContract of [
@@ -92,7 +120,8 @@ test("builds a responsive four-tile mosaic with a dynamic remaining count", () =
     "data-hotel-gallery-mosaic",
     "usableIndices.slice(0, 4)",
     "usableIndices.length - visibleIndices.length",
-    'remainingPhotosLabel.replace("{{count}}"',
+    "remainingPhotosLabel.replace(",
     'layout === "hero" && showGalleryControls',
-  ]) assert.ok(gallerySource.includes(contract), contract);
+  ])
+    assert.ok(gallerySource.includes(contract), contract);
 });
