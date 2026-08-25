@@ -36,7 +36,7 @@ test("provider logos reuse the remote-image failure fallback used by flight resu
 
   assert.match(providerLogo, /<AirlineLogo/);
   assert.equal(airlineLogo.match(/onError=\{\(\) => setFailedUrl\(visibleUrl\)\}/g)?.length, 2);
-  assert.match(airlineLogo, /if \(!allowRemoteImages \|\| !visibleUrl \|\| failed \|\| \(isSvgUrl\(visibleUrl\) && !allowRemoteSvg\)\)/);
+  assert.match(airlineLogo, /if \(!visibleUrl \|\| failed \|\| \(isSvgUrl\(visibleUrl\) && !allowRemoteSvg\)\)/);
   assert.match(airlineLogo, /resolveTravelProviderLogo\(logoUrl\)/);
   assert.match(results, /<AirlineLogo[\s\S]*logoUrl=\{result\.airlineLogo\}/);
 });
