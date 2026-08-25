@@ -21,7 +21,6 @@ type SafeCheckpointDetails = {
   destination?: string;
   tripType?: string;
   platform: string;
-  airlineImagePolicy?: "remote" | "initials-only";
 };
 
 export function logFlightSearchCheckpoint(phase: FlightSearchCheckpoint, details: SafeCheckpointDetails) {

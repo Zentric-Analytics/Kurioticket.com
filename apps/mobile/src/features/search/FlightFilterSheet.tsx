@@ -7,7 +7,6 @@ import { formatCurrency } from "../currency/displayCurrency";
 import { FlowIcon } from "../flow/FlowIcon";
 import { AirlineLogo } from "./AirlineLogo";
 import { FlightRangeSlider } from "./FlightRangeSlider";
-import { airlineInitials } from "./flightResultsAirlineImagePolicy";
 import { Button, ui } from "./SearchUi";
 import { activeFlightFilterCount, emptyFlightFilters, flightFacetCounts, isPriceFilteringAvailable, matchingFlightCount, type FlightFilterOptions, type FlightFilters, type NumericRange } from "./flightFilters";
 import { clampNumericRange, priceRangeStep } from "./flightRange";
@@ -34,11 +33,10 @@ type SheetProps = {
   visible: boolean; section: FlightFilterSectionName; filters: FlightFilters; options: FlightFilterOptions;
   results: readonly FlightResult[]; priceValue?: (result: FlightResult) => number | null; currency: string;
   priceFilteringReady: boolean;
-  allowRemoteAirlineImages?: boolean;
   onChange: (filters: FlightFilters) => void; onClose: () => void;
 };
 
-export function FlightFilterSheet({ visible, section, filters, options, results, priceValue, currency, priceFilteringReady, allowRemoteAirlineImages = true, onChange, onClose }: SheetProps) {
+export function FlightFilterSheet({ visible, section, filters, options, results, priceValue, currency, priceFilteringReady, onChange, onClose }: SheetProps) {
   const { theme } = useAppTheme();
   const inset = useSafeAreaInsets();
   const [draft, setDraft] = useState(filters);
@@ -76,7 +74,7 @@ export function FlightFilterSheet({ visible, section, filters, options, results,
           {full && (options.takeoffTimes.length || options.landingTimes.length) ? <FlightFilterSection title="Times"><Text style={[styles.timeScope, { color: theme.textSecondary }]}>Outbound journey</Text><View accessibilityRole="tablist" style={[styles.segment, { backgroundColor: theme.background }]}>{(["takeoff", "landing"] as const).map((field) => { const selected = draft.timeField === field; return <Pressable key={field} accessibilityRole="tab" accessibilityState={{ selected }} onPress={() => setDraft((current) => ({ ...current, timeField: field, times: [] }))} style={[styles.segmentChoice, selected && { backgroundColor: theme.surface }]}><Text style={[styles.segmentText, { color: selected ? theme.textPrimary : theme.textSecondary }]}>{field === "takeoff" ? "Departure" : "Arrival"}</Text></Pressable>; })}</View><View>{(draft.timeField === "takeoff" ? options.takeoffTimes : options.landingTimes).map((value) => <FilterOptionRow key={value} label={timeLabels[value][0]} detail={timeLabels[value][1]} selected={draft.times.includes(value)} onPress={() => toggle("times", value)} />)}</View></FlightFilterSection> : null}
           {full && options.duration ? <FlightFilterSection title="Duration">{range("duration", options.duration, formatFlightDuration, true)}</FlightFilterSection> : null}
           {(full || section === "stops") && options.stops.length ? <FlightFilterSection title="Stops"><View>{optionRows("stops", options.stops, stopLabels)}</View></FlightFilterSection> : null}
-          {(full || section === "airlines") && options.airlines.length ? <FlightFilterSection title="Airlines"><TextInput accessibilityLabel="Search airlines" placeholder="Search airlines…" placeholderTextColor={theme.textSecondary} value={airlineQuery} returnKeyType="search" onChangeText={setAirlineQuery} style={[styles.search, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} /><View>{airlines.map((name) => <FilterOptionRow key={name} label={name} selected={draft.airlines.includes(name)} count={facetCounts.airlines[name] ?? 0} logo={<AirlineLogo airlineName={name} logoUrl={logoByAirline.get(name)} allowRemoteImages={allowRemoteAirlineImages} fallbackText={allowRemoteAirlineImages ? undefined : airlineInitials(name)} />} onPress={() => toggle("airlines", name)} />)}</View></FlightFilterSection> : null}
+          {(full || section === "airlines") && options.airlines.length ? <FlightFilterSection title="Airlines"><TextInput accessibilityLabel="Search airlines" placeholder="Search airlines…" placeholderTextColor={theme.textSecondary} value={airlineQuery} returnKeyType="search" onChangeText={setAirlineQuery} style={[styles.search, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} /><View>{airlines.map((name) => <FilterOptionRow key={name} label={name} selected={draft.airlines.includes(name)} count={facetCounts.airlines[name] ?? 0} logo={<AirlineLogo airlineName={name} logoUrl={logoByAirline.get(name)} />} onPress={() => toggle("airlines", name)} />)}</View></FlightFilterSection> : null}
           {full && options.showAirports ? <FlightFilterSection title="Airports">{options.fromAirports.length > 1 ? <><Text style={[styles.subhead, { color: theme.textPrimary }]}>From</Text><View>{optionRows("fromAirports", options.fromAirports)}</View></> : null}{options.toAirports.length > 1 ? <><Text style={[styles.subhead, { color: theme.textPrimary }]}>To</Text><View>{optionRows("toAirports", options.toAirports)}</View></> : null}</FlightFilterSection> : null}
           {full && (options.baggage || options.refundable) ? <FlightFilterSection title="Amenities">{options.baggage ? <FilterOptionRow label="Baggage included" selected={draft.baggageIncluded} onPress={() => setDraft((x) => ({ ...x, baggageIncluded: !x.baggageIncluded }))} /> : null}{options.refundable ? <FilterOptionRow label="Flexible / refundable" selected={draft.refundable} onPress={() => setDraft((x) => ({ ...x, refundable: !x.refundable }))} /> : null}</FlightFilterSection> : null}
         </ScrollView>
