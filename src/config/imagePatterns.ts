@@ -19,6 +19,8 @@ export const imageLocalPatterns: ImagePattern[] = [
 export const imageRemotePatterns: RemoteImagePattern[] = [
   { protocol: "https", hostname: "images.unsplash.com", port: "", pathname: "/**" },
   { protocol: "https", hostname: "images.pexels.com", port: "", pathname: "/**" },
+  { protocol: "https", hostname: "assets.duffel.com", port: "", pathname: "/airlines/**", search: "" },
+  { protocol: "https", hostname: "assets.duffel.com", port: "", pathname: "/img/airlines/**", search: "" },
 ];
 
 function wildcardPatternToRegExp(pattern: string) {
