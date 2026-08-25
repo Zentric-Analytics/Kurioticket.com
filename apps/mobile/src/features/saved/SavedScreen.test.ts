@@ -26,6 +26,36 @@ test("Saved UI has one canonical visible source and keeps guest protection", () 
   assert.match(screen, /signInHref\("\/saved"\)/);
 });
 
+test("authenticated empty Saved has a dedicated responsive landing state", () => {
+  const screen = source("src/features/saved/SavedScreen.tsx");
+  const illustration = source("src/features/saved/SavedTravelIllustration.tsx");
+  assert.match(screen, /cards\.length \? <ScrollView/);
+  assert.match(screen, /: !canonical\.loading \? <ScrollView/);
+  assert.match(screen, /SavedTravelIllustration/);
+  assert.match(screen, />Save what you like for later<\/Text>/);
+  assert.match(screen, /Keep flights, hotels and searches you’re interested in so you can easily find them again\./);
+  assert.match(screen, /accessibilityRole="button" accessibilityLabel="Start your search"/);
+  assert.match(screen, /router\.push\("\/\(tabs\)"\)/);
+  assert.match(screen, /emptyTopSpacer: \{ flexGrow:/);
+  assert.match(screen, /emptyBottomSpacer: \{ flexGrow:/);
+  assert.match(screen, /windowHeight < 760/);
+  assert.match(illustration, /viewBox="0 0 220 198"/);
+  assert.match(illustration, /accessibilityElementsHidden/);
+  assert.match(illustration, /importantForAccessibility="no-hide-descendants"/);
+  assert.doesNotMatch(screen, /No saved travel yet|Use Save on a flight/);
+});
+
+test("populated Saved alone retains its explanation and cards", () => {
+  const screen = source("src/features/saved/SavedScreen.tsx");
+  const populatedStart = screen.indexOf("cards.length ? <ScrollView");
+  const emptyStart = screen.indexOf(": !canonical.loading ? <ScrollView", populatedStart);
+  const populated = screen.slice(populatedStart, emptyStart);
+  const empty = screen.slice(emptyStart);
+  assert.match(populated, /Saved items are things you chose to keep\./);
+  assert.match(populated, /cards\.map/);
+  assert.doesNotMatch(empty, /Saved items are things you chose to keep\./);
+});
+
 test("flight, hotel, and search become the same stable card model", () => {
   const screen = source("src/features/saved/SavedScreen.tsx");
   assert.match(screen, /if \(item\.type === "flight"\)/);
