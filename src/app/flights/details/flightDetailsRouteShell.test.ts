@@ -7,17 +7,16 @@ const clientPath = "src/components/results/FlightDetailsClient.tsx";
 const detailsPath =
   "src/components/results/flightDetails/StandaloneFlightDetails.tsx";
 
-test("Flight Details gives its global shell desktop-only display ownership", async () => {
+test("Flight Details keeps only its global header with desktop display ownership", async () => {
   const source = await readFile(pagePath, "utf8");
 
   assert.match(
     source,
     /<div className="hidden lg:block" data-flight-details-desktop-header>[\s\S]*?<AppHeader[\s\S]*?<\/div>/,
   );
-  assert.match(
-    source,
-    /<div className="hidden lg:block" data-flight-details-desktop-footer>[\s\S]*?<Footer \/>[\s\S]*?<\/div>/,
-  );
+  assert.doesNotMatch(source, /import\s+\{\s*Footer\s*\}/);
+  assert.doesNotMatch(source, /<Footer\b/);
+  assert.doesNotMatch(source, /data-flight-details-desktop-footer/);
   assert.match(
     source,
     /className="pt-\[env\(safe-area-inset-top\)\] lg:pt-0"[\s\S]*?data-flight-details-mobile-safe-area[\s\S]*?<FlightDetailsClient id=\{id\} \/>[\s\S]*?<\/div>/,
