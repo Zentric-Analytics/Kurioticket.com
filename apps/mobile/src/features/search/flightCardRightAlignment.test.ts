@@ -17,10 +17,11 @@ test("outbound and return share one three-band journey component", () => {
   assert.match(source, /arrivalColumn: \{ flexBasis: 82, minWidth: 82, flexShrink: 0 \}/);
 });
 
-test("arrival, price, and action terminate on the shared right edge", () => {
+test("arrival and price terminate on the shared right edge", () => {
   assert.match(source, /rightColumnContract: \{ alignItems: "flex-end" \}/);
   assert.match(card, /style=\{\[s0\.actionColumn, s0\.rightColumnContract\]\}/);
-  assert.match(card, /style=\{\[s0\.actionColumn, s0\.rightColumnContract\]\}>[\s\S]*?s0\.bigPrice[\s\S]*?accessibilityLabel="View details"/);
+  assert.match(card, /style=\{\[s0\.actionColumn, s0\.rightColumnContract\]\}>[\s\S]*?s0\.bigPrice/);
+  assert.doesNotMatch(card, /View details|detailsButton/);
   assert.doesNotMatch(card, />\{roundTrip \? "round trip" : "one way"\}<\/Text>/);
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch"/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
@@ -57,14 +58,15 @@ test("long fares stay readable without changing details navigation or theme beha
   assert.match(card, /shadowColor: theme\.dark \?/);
 });
 
-test("the shared action column contains the only displayed fare above the unchanged CTA", () => {
+test("the compact shared action column contains the only displayed fare", () => {
   const actionColumn = /<View style=\{\[s0\.actionColumn, s0\.rightColumnContract\]\}>([\s\S]*?)<\/View>/.exec(card)?.[1] ?? "";
   const benefits = /<View style=\{s0\.benefits\}>([\s\S]*?)\n      <\/View>\n    <\/View>/.exec(card)?.[1] ?? "";
 
   assert.equal(card.match(/\{fare\?\.formatted \?\? "—"\}/g)?.length, 1);
-  assert.match(actionColumn, /\{fare\?\.formatted \?\? "—"\}[\s\S]*?View details/);
+  assert.match(actionColumn, /\{fare\?\.formatted \?\? "—"\}/);
   assert.match(actionColumn, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.8\}/);
   assert.match(benefits, /style=\{s0\.benefitList\}[\s\S]*?baggageBenefit[\s\S]*?fareBenefit[\s\S]*?style=\{\[s0\.actionColumn/);
-  assert.match(actionColumn, /pathname: "\/flight-details"/);
-  assert.match(actionColumn, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
+  assert.doesNotMatch(actionColumn, /Pressable|View details/);
+  assert.match(card, /pathname: "\/flight-details"/);
+  assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
 });

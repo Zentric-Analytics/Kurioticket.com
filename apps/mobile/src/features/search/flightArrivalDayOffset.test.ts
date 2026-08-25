@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { arrivalDayOffsetAccessibility, flightArrivalDayOffset } from "./flightArrivalDayOffset";
+import { arrivalDayOffsetAccessibility, flightArrivalDayOffset, providerLocalArrivalDate } from "./flightArrivalDayOffset";
 
 test("derives positive offsets from provider-local calendar dates", () => {
   assert.equal(flightArrivalDayOffset("2026-09-10T18:00:00+01:00", "2026-09-10T23:00:00-04:00"), null);
@@ -27,4 +27,12 @@ test("provides semantic accessibility wording only for positive offsets", () => 
   assert.equal(arrivalDayOffsetAccessibility(2), "arrives 2 days later");
   assert.equal(arrivalDayOffsetAccessibility(3), "arrives 3 days later");
   assert.equal(arrivalDayOffsetAccessibility(null), null);
+});
+
+test("formats only a different provider-local arrival calendar date", () => {
+  assert.equal(providerLocalArrivalDate("2026-08-25T18:00:00+14:00", "2026-08-25T23:00:00-10:00"), null);
+  assert.equal(providerLocalArrivalDate("2026-08-25T22:00:00+01:00", "2026-08-26T01:24:00-04:00"), "Wed, Aug 26");
+  assert.equal(providerLocalArrivalDate("2026-08-25T22:00:00Z", "2026-08-27T01:24:00Z"), "Thu, Aug 27");
+  assert.equal(providerLocalArrivalDate("invalid", "2026-08-27T01:24:00Z"), null);
+  assert.equal(providerLocalArrivalDate("2026-08-25T22:00:00Z", "invalid"), null);
 });
