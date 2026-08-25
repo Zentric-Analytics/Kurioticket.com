@@ -5,6 +5,7 @@ import type { NormalizedCarResult } from "../../../../src/lib/cars/types";
 import type { PublicFlightResult, PublicHotelResult } from "../../../../src/lib/types";
 import type { ContractResult, TravelSearchResponse } from "../../../../src/lib/travel/searchContract";
 import { parseMobileExploreCatalogue, type MobileExploreCatalogue } from "./exploreCatalogueContract";
+import { logFlightSearchCheckpoint } from "../features/search/flightSearchDiagnostics";
 
 export class TravelApiError extends Error {
   constructor(message: string, public status = 0, public code: "cancelled" | "timeout" | "configuration" | "validation" | "rate-limit" | "unavailable" | "server" | "network" | "invalid-response" = "network", public details?: Record<string, unknown>) { super(message); }
@@ -81,6 +82,14 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
         ...init.headers,
       },
     });
+    if (path === "/api/flights/search") {
+      logFlightSearchCheckpoint("flight-search:response-received", {
+        requestId: options.requestId,
+        responseBytes: response.headers.get("content-length"),
+        elapsedMs: Date.now() - requestStartedAt,
+        platform: Platform.OS,
+      });
+    }
     const jsonStartedAt = performance.now();
     let parsed: unknown;
     try {
@@ -93,6 +102,14 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
     }
     const data = parsed as Record<string, unknown>;
     const responseJsonMs = performance.now() - jsonStartedAt;
+    if (path === "/api/flights/search") {
+      logFlightSearchCheckpoint("flight-search:parsed", {
+        requestId: options.requestId,
+        resultCount: Array.isArray(data.results) ? data.results.length : undefined,
+        elapsedMs: Date.now() - requestStartedAt,
+        platform: Platform.OS,
+      });
+    }
     if (!response.ok) {
       const code = response.status === 400 ? "validation" : response.status === 429 ? "rate-limit" : response.status === 503 ? "unavailable" : response.status >= 500 ? "server" : "network";
       throw new TravelApiError(apiErrorMessage(data), response.status, code, data);
