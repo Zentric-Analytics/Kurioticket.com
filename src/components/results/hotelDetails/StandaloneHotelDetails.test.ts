@@ -79,7 +79,8 @@ test("mobile header owns stay metadata while the two-column dock owns price and 
     source.indexOf("data-mobile-hotel-stay-dock"),
   );
   for (const contract of [
-    "data-mobile-hotel-stay-meta",
+    "data-mobile-hotel-stay-dates",
+    "data-mobile-hotel-stay-guests",
     "props.staySummary.nightText",
     "props.staySummary.dateText",
     "props.staySummary.occupancyText",
@@ -108,20 +109,74 @@ test("mobile header owns stay metadata while the two-column dock owns price and 
     assert.ok(aside.includes(contract), contract);
 });
 
-test("mobile property header safely aligns actions, address navigation, and long titles", () => {
+test("mobile property header renders the canonical identity in the approved order", () => {
+  const header = source.slice(
+    source.indexOf("data-mobile-hotel-identity"),
+    source.indexOf("<HotelDetailsGallery"),
+  );
+  const orderedContracts = [
+    "data-mobile-hotel-stay-dates",
+    "data-mobile-hotel-stay-guests",
+    "data-mobile-hotel-address-row",
+    "data-mobile-hotel-classification-stars",
+  ];
+  let previous = -1;
+  for (const contract of orderedContracts) {
+    const index = header.indexOf(contract);
+    assert.ok(index > previous, contract);
+    previous = index;
+  }
   for (const contract of [
     "data-property-header-actions",
     "grid-cols-[minmax(0,1fr)_auto]",
     "min-w-0 break-words",
     "aria-pressed={props.isSaved}",
-    'className="hidden sm:inline"',
+    'className="hidden lg:inline"',
     "data-mobile-hotel-address-row",
-    'href="#hotel-location"',
+    "buildHotelAddress(props.propertyDetails)",
+    "buildHotelDirectionsUrl(props.propertyDetails)",
+    "href={directionsUrl}",
+    'target="_blank"',
+    'rel="noopener noreferrer"',
     "aria-label={`Show directions to ${props.hotelName}`}",
     "min-w-0 flex-1 truncate",
-    "props.propertyDetails.streetAddress",
+    "title={canonicalAddress}",
   ])
     assert.ok(source.includes(contract), contract);
+  assert.ok(
+    source.indexOf("{props.hotelName}") <
+      source.indexOf("data-mobile-hotel-stay-dates"),
+  );
+  assert.ok(
+    source.indexOf("data-mobile-hotel-classification-stars") <
+      source.indexOf("<HotelDetailsGallery"),
+  );
+  assert.doesNotMatch(header, /href="#hotel-location"/);
+  assert.doesNotMatch(header, /propertyDetails\.neighbourhood/);
+});
+
+test("canonical hotel result name flows directly into the standalone title", () => {
+  assert.match(
+    clientSource,
+    /<StandaloneHotelDetails[\s\S]*?hotelName=\{hotel\.name\}/,
+  );
+  assert.match(source, /<h1[^>]*>[\s\S]*?\{props\.hotelName\}[\s\S]*?<\/h1>/);
+  assert.doesNotMatch(source, /hotelName\.(?:slice|split|replace)|slug|alias/i);
+});
+
+test("mobile save and share are independent unboxed 44px actions", () => {
+  const actions = source.slice(
+    source.indexOf("data-property-header-actions"),
+    source.indexOf("</header>"),
+  );
+  assert.equal(actions.match(/<button/g)?.length, 2);
+  assert.match(actions, /size-11/);
+  assert.match(actions, /border-0 bg-transparent/);
+  assert.match(actions, /aria-pressed=\{props\.isSaved\}/);
+  assert.doesNotMatch(
+    actions.match(/data-property-header-actions[\s\S]*?>/)?.[0] ?? "",
+    /border|bg-white|shadow/,
+  );
 });
 
 test("review and rate modules remain truthful and do not manufacture blueprint claims", () => {
@@ -213,6 +268,7 @@ test("keeps save, share, gallery, amenity and description controls accessible", 
     "roomDialogRef",
     "trigger?.focus()",
     'document.body.style.overflow = "hidden"',
+    "document.body.style.overflow = previousOverflow",
   ])
     assert.ok(source.includes(contract), contract);
 });
