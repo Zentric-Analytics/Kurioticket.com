@@ -14,7 +14,11 @@ test("Flight Results use provider logos without a platform image policy", () => 
 });
 
 test("Flight Filter airline rows use the normal provider logo path", () => {
-  assert.match(filterSheet, /<AirlineLogo airlineName=\{name\} logoUrl=\{logoByAirline\.get\(name\)\} \/>/);
+  assert.match(filterSheet, /r\.airlineLogo/);
+  assert.match(
+    filterSheet,
+    /<AirlineLogo\s+airlineName=\{name\}\s+logoUrl=\{[A-Za-z_$][\w$]*\.get\(name\)\}\s*\/>/,
+  );
   assert.doesNotMatch(filterSheet, /allowRemoteAirlineImages|allowRemoteImages|fallbackText|airlineInitials/);
 });
 
