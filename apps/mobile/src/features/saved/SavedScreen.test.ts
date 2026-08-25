@@ -8,9 +8,8 @@ import { destinationMedia, FALLBACK_SOURCE } from "../explore/destinationMedia";
 import { formatFlightAccess } from "../explore/exploreModels";
 import {
   regionBrowseCardLayout,
-  REGION_BROWSE_IMAGE_ASPECT_RATIO,
-  REGION_BROWSE_IMAGE_HEIGHT_RATIO,
 } from "../explore/regionBrowseCardLayout";
+import { savedCardLayout } from "./savedCardLayout";
 
 const source = (path: string) => readFileSync(path, "utf8");
 const item = (value: Record<string, unknown>) => value as MobileSavedItem;
@@ -40,6 +39,10 @@ test("authenticated empty Saved has a dedicated responsive landing state", () =>
   assert.match(screen, /emptyTopSpacer: \{ flexGrow:/);
   assert.match(screen, /emptyBottomSpacer: \{ flexGrow:/);
   assert.match(screen, /windowHeight < 760/);
+  assert.match(screen, /width: Math\.min\(220, windowWidth - 72\), height: Math\.min\(198, \(windowWidth - 72\) \* \.9\)/);
+  assert.match(screen, /illustrationGap: \{ height: 66 \}/);
+  assert.match(screen, /illustrationGapShort: \{ height: 55 \}/);
+  assert.match(screen, /emptyPrimary: \{ width: 208, minHeight: 50, marginTop: 31/);
   assert.match(illustration, /viewBox="0 0 220 198"/);
   assert.match(illustration, /accessibilityElementsHidden/);
   assert.match(illustration, /importantForAccessibility="no-hide-descendants"/);
@@ -64,26 +67,43 @@ test("flight, hotel, and search become the same stable card model", () => {
   assert.match(screen, /const searchType = text\(item\.searchType\)/);
   assert.match(screen, /origin && destination \? `\$\{origin\} → \$\{destination\}`/);
   assert.equal((screen.match(/testID="saved-card"/g) ?? []).length, 2);
-  assert.match(screen, /regionBrowseCardLayout\(windowWidth\)/);
+  assert.match(screen, /savedCardLayout\(windowWidth\)/);
   assert.doesNotMatch(screen, /popularStayCardLayout|POPULAR_STAY_LAYOUT/);
   assert.doesNotMatch(screen, /regionPreviewCardLayout/);
   assert.doesNotMatch(screen, /(?:height|width): 104/);
   assert.match(screen, /source=\{source\}/);
 });
 
-test("Saved and Explore region browse cards derive geometry from one layout helper", () => {
+test("Saved cards use compact geometry without changing the shared Explore layout", () => {
   const saved = source("src/features/saved/SavedScreen.tsx");
   const explore = source("src/features/explore/ExploreRegionScreen.tsx");
-  assert.match(saved, /from "\.\.\/explore\/regionBrowseCardLayout"/);
+  assert.match(saved, /from "\.\/savedCardLayout"/);
   assert.match(explore, /from "\.\/regionBrowseCardLayout"/);
-  assert.match(saved, /regionBrowseCardLayout\(windowWidth\)/);
+  assert.match(saved, /savedCardLayout\(windowWidth\)/);
+  assert.doesNotMatch(saved, /regionBrowseCardLayout/);
   assert.match(explore, /regionBrowseCardLayout\(windowWidth\)/);
   assert.doesNotMatch(saved, /popularStayCardLayout|POPULAR_STAY_LAYOUT|footerHeight|height: 72/);
-  const layout = regionBrowseCardLayout(390);
-  assert.equal(layout.width, 374);
-  assert.equal(layout.imageHeight, layout.width / REGION_BROWSE_IMAGE_ASPECT_RATIO);
-  assert.equal(layout.imageHeight / layout.height, REGION_BROWSE_IMAGE_HEIGHT_RATIO);
-  assert.equal(layout.informationHeight / layout.height, 0.4);
+  const compact = savedCardLayout(591);
+  const previous = regionBrowseCardLayout(591);
+  assert.deepEqual(compact, { width: 555, height: 416, imageHeight: 244, informationHeight: 172 });
+  assert.ok(compact.width < previous.width);
+  assert.ok(compact.height < previous.height);
+  assert.ok(compact.imageHeight < previous.imageHeight);
+});
+
+test("Saved card geometry remains responsive while reserving room for its text", () => {
+  assert.deepEqual(savedCardLayout(390), {
+    width: 358,
+    height: 323,
+    imageHeight: 158,
+    informationHeight: 165,
+  });
+  assert.deepEqual(savedCardLayout(700), {
+    width: 555,
+    height: 416,
+    imageHeight: 244,
+    informationHeight: 172,
+  });
 });
 
 test("Saved cards have a full-width image, footer below it, and floating remove control", () => {
