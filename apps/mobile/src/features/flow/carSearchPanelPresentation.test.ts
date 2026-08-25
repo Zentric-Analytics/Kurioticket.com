@@ -22,7 +22,9 @@ test("Cars closed selectors share the compact field contract without custom chev
   for (const [label, icon] of fields) {
     assert.match(closedForm, new RegExp(`<CompactSearchField label="${label.replace("/", "\\/")}"[^\\n]*icon="${icon}"`));
   }
-  for (const copy of ["Enter city or airport", "Pickup date", "Return date", "Select driver age", "Search cars"]) {
+  assert.match(closedForm, /label="Pick-up location"[^\n]*value=\{form\.pickupLocation \|\| "Airport, city, or address"\}/);
+  assert.match(closedForm, /label="Drop-off location"[^\n]*value=\{form\.dropoffLocation \|\| "Enter city or airport"\}/);
+  for (const copy of ["Pickup date", "Return date", "Select driver age", "Search cars"]) {
     assert.match(closedForm, new RegExp(copy));
   }
   assert.doesNotMatch(closedForm, /<Field |LocationLauncher|trailing=|name="chevron"/);
