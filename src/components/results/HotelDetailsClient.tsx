@@ -821,8 +821,10 @@ export function HotelDetailsClient({
     return (
       <main className="flex-1 bg-[#f8fafc]">
         <section className="border-b border-slate-200/70 py-2 sm:py-2 lg:py-2">
-          <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-7">
-            <DetailsBackLink href={resultsHref}>{t("hotelDetails.backToHotelResults") || "Back to hotel results"}</DetailsBackLink>
+          <div className="mx-auto w-full max-w-[1400px] px-0 lg:px-7" data-hotel-details-page-shell>
+            <div className="px-4 lg:px-0">
+              <DetailsBackLink href={resultsHref}>{t("hotelDetails.backToHotelResults") || "Back to hotel results"}</DetailsBackLink>
+            </div>
             <div className="mt-3">
               <StandaloneHotelDetails
                 hotelName={hotel.name}

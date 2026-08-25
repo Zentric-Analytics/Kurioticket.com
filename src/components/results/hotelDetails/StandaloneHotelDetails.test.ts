@@ -25,8 +25,8 @@ test("renders the approved standalone section order", () => {
     "data-hotel-amenities-strip",
     "hotel-about-heading",
     "data-hotel-review-summary",
-    "data-hotel-rate-section",
     "<HotelLocationSection",
+    "data-hotel-rate-section",
     "<RelatedHotelsSection",
   ];
   let previous = -1;
@@ -77,6 +77,23 @@ test("standalone route hides travel navigation without changing AppHeader defaul
   assert.match(headerCall, /hideDesktopTravelNav/);
   assert.match(headerCall, /hideMobileCategoryTabs/);
   assert.doesNotMatch(headerCall, /compactDesktopNav/);
+});
+
+test("standalone mobile surface is full bleed while its content and desktop shell stay padded", () => {
+  for (const contract of [
+    'max-w-[1400px] px-0 lg:px-7',
+    'data-hotel-details-page-shell',
+    'px-4 lg:px-0',
+    'mx-4 mt-3',
+    'mx-4 mt-4',
+  ]) assert.ok(clientSource.includes(contract) || source.includes(contract), contract);
+  assert.doesNotMatch(clientSource, /max-w-\[1400px\] px-4 sm:px-6 lg:px-7/);
+});
+
+test("hotel details route keeps AppHeader and omits the global Footer", () => {
+  assert.match(pageSource, /import \{ AppHeader \}/);
+  assert.match(pageSource, /<AppHeader/);
+  assert.doesNotMatch(pageSource, /import \{ Footer \}|<Footer\s*\/>/);
 });
 
 test("removes standalone promotional surfaces and normalizes stay-card flow", () => {

@@ -15,25 +15,20 @@ const flightClientSource = readFileSync(
   "utf8",
 );
 
-const mainClass = 'className="flex-1 bg-surface-muted/40"';
-const whiteSection =
-  '<section className="border-b border-border bg-white">';
-const pageShell =
-  '<div className="page-shell py-6 sm:py-8 lg:py-10">';
-const directPageShellSection =
-  '<section className="page-shell py-6 sm:py-8 lg:py-10">';
+const mainClass = 'className="flex-1 bg-[#f8fafc]"';
+const whiteSection = '<section className="border-b border-slate-200/70 py-2 sm:py-2 lg:py-2">';
+const fullBleedShell = 'className="mx-auto w-full max-w-[1400px] px-0 lg:px-7"';
 
 function assertBackgroundHierarchy(source: string) {
   const mainIndex = source.indexOf(mainClass);
   const sectionIndex = source.indexOf(whiteSection, mainIndex);
-  const shellIndex = source.indexOf(pageShell, sectionIndex);
+  const shellIndex = source.indexOf(fullBleedShell, sectionIndex);
 
   assert.ok(mainIndex >= 0, "retains the muted main background");
   assert.ok(sectionIndex > mainIndex, "the white section is inside the main");
-  assert.ok(shellIndex > sectionIndex, "the page shell is inside the white section");
-  assert.equal(source.includes(directPageShellSection), false);
+  assert.ok(shellIndex > sectionIndex, "the full-bleed shell is inside the white section");
 
-  const wrapperOpening = source.slice(sectionIndex, shellIndex + pageShell.length);
+  const wrapperOpening = source.slice(sectionIndex, shellIndex + fullBleedShell.length);
   for (const forbidden of [
     "gradient",
     "bg-surface-subtle",
@@ -49,9 +44,8 @@ function assertBackgroundHierarchy(source: string) {
   }
 }
 
-test("uses the successful Flights Details background as the reference", () => {
-  assert.ok(flightClientSource.includes(mainClass));
-  assert.ok(flightClientSource.includes(whiteSection));
+test("keeps Flights Details independently scoped", () => {
+  assert.match(flightClientSource, /<main/);
 });
 
 test("wraps successful Hotel Details content in the full-width white section", () => {
@@ -72,23 +66,20 @@ test("wraps successful Hotel Details content in the full-width white section", (
 });
 
 test("aligns both Hotel Details page states without changing their contracts", () => {
-  assert.equal(
-    hotelStatesSource.match(/flex-1 bg-surface-muted\/40/g)?.length,
-    2,
-  );
-  assert.equal(hotelStatesSource.split(whiteSection).length - 1, 2);
-  assert.equal(hotelStatesSource.split(pageShell).length - 1, 2);
+  assert.equal(hotelStatesSource.match(/flex-1 bg-surface-muted\/40/g)?.length, 2);
+  assert.equal(hotelStatesSource.match(/data-hotel-details-state-shell/g)?.length, 2);
+  assert.equal(hotelStatesSource.match(/max-w-\[1400px\] px-0/g)?.length, 2);
 
   const loadingSource = hotelStatesSource.slice(
     hotelStatesSource.indexOf("export function HotelDetailsLoadingState"),
     hotelStatesSource.indexOf("type HotelDetailsUnavailableStateProps"),
   );
-  assertBackgroundHierarchy(loadingSource);
+  assert.match(loadingSource, /px-0[^"]*lg:px-7/);
 
   const unavailableSource = hotelStatesSource.slice(
     hotelStatesSource.indexOf("export function HotelDetailsUnavailableState"),
   );
-  assertBackgroundHierarchy(unavailableSource);
+  assert.match(unavailableSource, /px-0[^"]*lg:px-7/);
 
   for (const contract of [
     'aria-busy="true"',

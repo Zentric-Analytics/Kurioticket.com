@@ -7,7 +7,7 @@ const source = readFileSync(
   "utf8",
 );
 
-test("renders a keyboard-accessible seven-item responsive grid", () => {
+test("renders seven hotels in a native mobile rail and a desktop grid", () => {
   for (const contract of [
     "hotels.slice(0, 7)",
     "buildHotelDetailsHref(hotel.id, searchContext)",
@@ -15,20 +15,26 @@ test("renders a keyboard-accessible seven-item responsive grid", () => {
     "formatDisplayPrice({",
     "data-related-hotels-section",
     "data-related-hotels-grid",
-    "grid-cols-1",
-    "sm:grid-cols-2",
+    "flex w-full",
+    "overflow-x-auto",
+    "overflow-y-hidden",
+    "overscroll-x-contain",
+    "snap-x snap-mandatory",
+    "snap-start",
+    "w-[82vw]",
+    "max-w-[300px]",
+    "shrink-0",
     "lg:grid-cols-4",
-    "min-w-0 w-full",
+    "lg:grid",
+    "lg:overflow-visible",
+    "lg:w-full",
     "aspect-video",
-    "(max-width: 1023px) 50vw, 25vw",
+    "(max-width: 1023px) min(82vw, 300px), 25vw",
     "estimatedStayTotal",
     "priceUnavailable",
   ])
     assert.ok(source.includes(contract), contract);
-  assert.doesNotMatch(
-    source,
-    /lg:grid-cols-3|overflow-x-auto|snap-x|snap-proximity|snap-start|shrink-0|w-\[82%\]|sm:w-\[44%\]|lg:w-\[31%\]/,
-  );
+  assert.doesNotMatch(source, /grid-cols-1|sm:grid-cols-2|lg:grid-cols-3/);
   assert.doesNotMatch(source, /rawProviderReference|review count|only 1 room/i);
 });
 

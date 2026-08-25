@@ -199,7 +199,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
       >
         <div className="min-w-0">
           <article className="min-w-0 bg-white lg:rounded-[17px] lg:border lg:border-slate-200/80 lg:p-6 lg:shadow-[0_5px_24px_rgba(15,23,42,0.045)]">
-            <header className="relative mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <header className="relative mb-4 flex flex-col gap-4 px-4 sm:flex-row sm:items-start sm:justify-between lg:px-0">
               <div className="min-w-0">
                 <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1.5">
                   <h1 className="break-words pr-20 text-[22px] font-extrabold leading-tight tracking-[-0.025em] text-slate-950 sm:pr-0 lg:text-[30px]">
@@ -279,7 +279,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
 
             {primaryAmenities.length ? (
               <div
-                className="mt-3 overflow-hidden rounded-[11px] border border-slate-200 bg-white"
+                className="mx-4 mt-3 overflow-hidden rounded-[11px] border border-slate-200 bg-white lg:mx-0"
                 data-hotel-amenities-strip
               >
                 <div className="grid min-h-[52px] grid-cols-2 sm:grid-cols-4 lg:grid-cols-5">
@@ -319,7 +319,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
             ) : null}
 
             {description ? (
-              <section className="mt-4 rounded-[11px] border border-slate-200 p-3.5 lg:mt-5 lg:border-0 lg:p-0" aria-labelledby="hotel-about-heading">
+              <section className="mx-4 mt-4 rounded-[11px] border border-slate-200 p-3.5 lg:mx-0 lg:mt-5 lg:border-0 lg:p-0" aria-labelledby="hotel-about-heading">
                 <div className="flex items-start justify-between gap-3"><h2
                   id="hotel-about-heading"
                   className="text-[15px] font-bold text-slate-950 lg:text-[17px]"
@@ -351,26 +351,28 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
               </section>
             ) : null}
 
-            <section className="mt-4 rounded-[11px] border border-slate-200 p-4 lg:hidden" aria-labelledby="hotel-guest-reviews-heading" data-hotel-review-summary>
+            <section className="mx-4 mt-4 rounded-[11px] border border-slate-200 p-4 lg:hidden" aria-labelledby="hotel-guest-reviews-heading" data-hotel-review-summary>
               <h2 id="hotel-guest-reviews-heading" className="text-[15px] font-bold text-slate-950">{props.labels.guestReviews}</h2>
               {props.reviewScore ? <div className="mt-3 flex items-center gap-3"><span className="flex size-14 items-center justify-center rounded-lg bg-blue text-2xl font-extrabold text-white">{props.reviewScore}</span><div><strong className="block text-sm text-slate-950">{props.reviewLabel}</strong><span className="text-xs text-slate-600">{props.reviewCountText}</span></div></div> : <p className="mt-2 text-sm text-slate-600">{props.labels.reviewUnavailable}</p>}
             </section>
 
-            <section className="mt-4 rounded-[11px] border border-slate-200 p-4 lg:hidden" aria-labelledby="hotel-rates-heading" data-hotel-rate-section>
+            {props.propertyDetails ? (
+              <div className="px-4 lg:px-0">
+                <HotelLocationSection
+                  hotelName={props.hotelName}
+                  propertyDetails={props.propertyDetails}
+                  locationLabel={props.labels.location}
+                  directionsLabel={props.labels.directions}
+                  mapLabel={props.labels.map}
+                  streetViewLabel={props.labels.streetView}
+                />
+              </div>
+            ) : null}
+
+            <section className="mx-4 mt-4 rounded-[11px] border border-slate-200 p-4 lg:hidden" aria-labelledby="hotel-rates-heading" data-hotel-rate-section>
               <h2 id="hotel-rates-heading" className="text-[15px] font-bold text-slate-950">{props.labels.planningRate}</h2>
               <div className="mt-3 flex items-center justify-between gap-4 rounded-lg border border-slate-200 p-3"><div><strong className="block text-sm text-slate-950">{props.labels.planningEstimate}</strong><span className="text-xs text-slate-600">{props.planningPriceText}</span></div><div className="shrink-0 text-right">{props.nightlyDisplayPrice ? <strong className="block text-base text-blue">{props.perNightText.replace("{{price}}", props.nightlyDisplayPrice.formatted)}</strong> : <strong className="block text-sm text-slate-600">{props.labels.priceUnavailable}</strong>}<button type="button" disabled={!props.roomChoices.length} onClick={(event) => openRoomOptions(event.currentTarget)} className="focus-ring mt-2 min-h-11 rounded-lg bg-blue px-3 text-xs font-bold text-white disabled:opacity-50">{props.labels.viewRooms}</button></div></div>
             </section>
-
-            {props.propertyDetails ? (
-              <HotelLocationSection
-                hotelName={props.hotelName}
-                propertyDetails={props.propertyDetails}
-                locationLabel={props.labels.location}
-                directionsLabel={props.labels.directions}
-                mapLabel={props.labels.map}
-                streetViewLabel={props.labels.streetView}
-              />
-            ) : null}
           </article>
         </div>
 
