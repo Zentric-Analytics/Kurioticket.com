@@ -10,10 +10,6 @@ const flightCardSource = readFileSync(
   new URL("./FlightCard.tsx", import.meta.url),
   "utf8",
 );
-const flightResultsSource = readFileSync(
-  new URL("./FlightResultsClient.tsx", import.meta.url),
-  "utf8",
-);
 
 function ruleBody(source: string, selector: string, from = 0) {
   const selectorStart = source.indexOf(selector, from);
@@ -26,12 +22,6 @@ function ruleBody(source: string, selector: string, from = 0) {
 }
 
 const narrowQueryStart = globalsCss.indexOf("@container (max-width: 639px)");
-const narrowQueryEnd = globalsCss.indexOf(
-  "\n.flight-results-grid",
-  narrowQueryStart,
-);
-const narrowRules = globalsCss.slice(narrowQueryStart, narrowQueryEnd);
-const guidedSelector = '[data-flight-results-experience="deals-guided"]';
 
 test("FlightCard shares one container-responsive hierarchy at every width", () => {
   assert.match(flightCardSource, /className="flight-card-desktop-shell"/);
@@ -72,83 +62,50 @@ test("mobile card navigation ignores nested controls and keeps canonical href", 
 
 test("wide and medium desktop cards retain their side fare columns", () => {
   assert.match(
-    ruleBody(globalsCss, ".flight-card-desktop-itinerary"),
+    ruleBody(globalsCss, ".flight-card-body"),
     /grid-template-columns:\s*minmax\(0, 1fr\) 196px/,
   );
   const mediumQueryStart = globalsCss.indexOf("@container (max-width: 759px)");
   assert.match(
-    ruleBody(globalsCss, ".flight-card-desktop-itinerary", mediumQueryStart),
+    ruleBody(globalsCss, ".flight-card-body", mediumQueryStart),
     /grid-template-columns:\s*minmax\(0, 1fr\) 180px/,
   );
-  assert.match(
-    ruleBody(globalsCss, ".flight-card-details"),
-    /column-gap:\s*1rem/,
-  );
+  assert.match(globalsCss, /\.flight-card-details \{\n  column-gap:\s*1rem/);
   assert.match(flightCardSource, /flight-card-details[^\n]*grid-cols-3/);
 });
 
-test("guided narrow cards integrate fare information and action full width", () => {
-  assert.match(
-    flightResultsSource,
-    /data-flight-results-experience="deals-guided"/,
+test("phone and tablet lower card is a two-column decision area", () => {
+  const mobileStart = globalsCss.indexOf(
+    "@media (max-width: 1023px)",
+    globalsCss.indexOf("The approved desktop FlightCard hierarchy"),
   );
-  assert.ok(narrowRules.includes(guidedSelector));
+  const mobileRules = globalsCss.slice(mobileStart, globalsCss.indexOf(".flight-results-grid", mobileStart));
+  const bodyRule = ruleBody(mobileRules, ".flight-card-body");
+  assert.match(bodyRule, /grid-template-areas:\s*"legs legs" "fare details"/);
+  assert.match(bodyRule, /minmax\(112px, 0\.85fr\) minmax\(0, 1\.15fr\)/);
 
-  const fareRule = ruleBody(
-    narrowRules,
-    `${guidedSelector} .flight-card-fare-action`,
-  );
-  assert.match(fareRule, /display:\s*grid/);
-  assert.match(fareRule, /width:\s*100%/);
-  assert.match(fareRule, /grid-template-columns:\s*minmax\(0, 1fr\) auto/);
-  assert.match(fareRule, /justify-self:\s*stretch/);
-  assert.match(fareRule, /border-left-width:\s*0/);
-  assert.match(fareRule, /border-top:\s*1px solid #d8e1ec/);
-  assert.doesNotMatch(fareRule, /justify-self:\s*end/);
-  assert.doesNotMatch(fareRule, /width:\s*min\(176px, 100%\)/);
-
-  const priceRule = ruleBody(
-    narrowRules,
-    `${guidedSelector} .flight-card-price-frame`,
-  );
-  assert.match(priceRule, /align-items:\s*flex-start/);
-  assert.match(priceRule, /text-align:\s*left/);
-  assert.match(
-    ruleBody(narrowRules, `${guidedSelector} .flight-card-provider-price`),
-    /text-align:\s*left/,
-  );
+  const detailsRule = ruleBody(mobileRules, ".flight-card-details");
+  assert.match(detailsRule, /grid-template-columns:\s*minmax\(0, 1fr\)/);
+  assert.match(detailsRule, /align-content:\s*start/);
+  assert.match(mobileRules, /white-space:\s*normal/);
+  assert.match(mobileRules, /overflow-wrap:\s*anywhere/);
 });
 
-test("guided narrow footer wraps into two columns with full-row fare rules", () => {
-  const detailsRule = ruleBody(
-    narrowRules,
-    `${guidedSelector} .flight-card-details`,
-  );
-  assert.match(
-    detailsRule,
-    /grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
-  );
+test("price, provider label, and View Flight retain their semantic order", () => {
+  const actionStart = flightCardSource.indexOf("function FlightFareAction");
+  const action = flightCardSource.slice(actionStart, flightCardSource.indexOf("function FlightDetailLines", actionStart));
+  const price = action.indexOf("{formattedPrice}");
+  const label = action.indexOf("{priceLabel}");
+  const button = action.indexOf("{viewFlightLabel}");
+  assert.ok(price >= 0 && price < label && label < button);
+  assert.match(action, /min-h-11/);
+  assert.doesNotMatch(flightCardSource, /showProviderHandoffCopy|flightCardProviderHandoff|flight-card-handoff/);
+});
 
-  const itemRule = ruleBody(
-    narrowRules,
-    `${guidedSelector} .flight-card-detail-item {`,
-  );
-  assert.match(itemRule, /white-space:\s*normal/);
-  assert.match(itemRule, /align-items:\s*flex-start/);
-
-  const secondItemRule = ruleBody(
-    narrowRules,
-    ".flight-card-detail-item:nth-child(2)",
-  );
-  assert.match(secondItemRule, /border-inline-end-width:\s*0/);
-
-  const thirdItemRule = ruleBody(
-    narrowRules,
-    ".flight-card-detail-item:nth-child(3)",
-  );
-  assert.match(thirdItemRule, /grid-column:\s*1 \/ -1/);
-  assert.match(thirdItemRule, /border-inline-end-width:\s*0/);
-  assert.match(thirdItemRule, /border-top:\s*1px solid #eef2f7/);
+test("all three detail lines share the right-side details region", () => {
+  assert.equal(flightCardSource.match(/<FlightDetailLines details={details}/g)?.length, 1);
+  assert.match(flightCardSource, /label: t\("baggage"\)[\s\S]*label: t\("cabin"\)[\s\S]*label: t\("fareRules"\)/);
+  assert.match(ruleBody(globalsCss, ".flight-card-details"), /grid-area:\s*details/);
 });
 
 test("FlightCard retains fare pricing inputs and LinkButton behavior", () => {

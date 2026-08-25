@@ -77,6 +77,12 @@ test("traveler composition and cabin remain part of provider-result identity", (
   assert.notEqual(buildFlightResultsSearchKey({ ...base, cabinClass: "business" }), baseline);
 });
 
+test("UI pagination is not part of provider search identity", () => {
+  const base = { ...multiCitySearch, legs: fiveLegs };
+  const withUiPage = { ...base, page: 7 };
+  assert.equal(buildFlightResultsSearchKey(withUiPage), buildFlightResultsSearchKey(base));
+});
+
 test("one-way, round-trip, and multi-city identities restore only themselves", () => {
   const common = { adults: 1, children: 0, infants: 0, travelers: 1, cabinClass: "economy", currency: "USD" };
   const oneWay = buildFlightResultsSearchKey({ ...common, tripType: "one-way", origin: "IAH", destination: "LAX", departureDate: "2026-10-10" });
