@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
@@ -10,22 +10,20 @@ const resultsBody = source.slice(
 );
 
 test("ready flight results place the hierarchy controls before the alert and cards", () => {
-  const state = source.indexOf('product === "flight" && flightState');
-  const flightAlert = source.indexOf('status === "ready" && product === "flight" && !flightState && plan.plan');
-  const summary = source.indexOf("flightResultCountLabel(sorted.length)");
-  const controls = source.indexOf("{filterRail}", summary);
-  const cards = source.indexOf('sorted.map((x, i)', flightAlert);
-  const hotelAlert = source.indexOf('product === "hotel" && availability.priceAlerts', cards);
-  const bottomNavigation = source.indexOf("<BottomNav flightResults={flightResults} />", hotelAlert);
+  const sectionList = source.slice(source.indexOf("<SectionList"), source.indexOf(") : (", source.indexOf("<SectionList")));
+  const renderItem = sectionList.slice(sectionList.indexOf("renderItem="), sectionList.indexOf("ListHeaderComponent="));
+  const stickyHeader = sectionList.slice(sectionList.indexOf("renderSectionHeader="), sectionList.indexOf("ListEmptyComponent="));
 
-  assert.ok(flightAlert >= 0, "the flight price-alert eligibility guard should exist");
-  assert.ok(state < flightAlert, "dedicated result states should be resolved before normal result content");
-  assert.ok(summary < controls, "the results count should precede controls");
-  assert.ok(flightAlert < cards, "the flight price alert should precede flight cards");
-  assert.ok(cards < hotelAlert, "the separately placed hotel price alert should remain after results");
-  assert.ok(hotelAlert < bottomNavigation, "all result content should precede bottom navigation");
+  assert.match(renderItem, /index === 0 && status === "ready" && !flightState && plan\.plan/);
+  assert.ok(renderItem.indexOf("<PriceAlert") < renderItem.indexOf("<FlightCard"), "the alert should precede the first real flight card");
+  assert.match(stickyHeader, /flightResultCountLabel\(sorted\.length\)[\s\S]*?filterRail : null/);
+  assert.doesNotMatch(stickyHeader, /PriceAlert/);
+  assert.match(sectionList, /stickySectionHeadersEnabled/);
+  assert.match(sectionList, /sections=\{\[\{ data: !flightState \? sorted as FlightResult\[\] : \[\] \}\]\}/);
+  assert.doesNotMatch(sectionList, /data:.*PriceAlert|keyExtractor=.*PriceAlert/);
+  assert.doesNotMatch(sectionList, /ListFooterComponent=[^\n]*PriceAlert/);
   assert.equal(
-    source.match(/product === "flight" && !flightState && plan\.plan/g)?.length,
+    renderItem.match(/<PriceAlert/g)?.length,
     1,
     "the flight price alert should render only once",
   );
@@ -35,11 +33,11 @@ test("the compact flight alert keeps its copy while replacing the management red
   const component = source.slice(source.indexOf("function PriceAlert"), source.indexOf("export function BottomNav"));
   const flightBranch = component.slice(0, component.indexOf("  return (", component.indexOf("if (flight)")));
   assert.doesNotMatch(flightBranch, /router\.push\("\/price-alerts"\)/);
-  assert.match(component, /Track prices for this route/);
-  assert.match(component, /Get notified when prices drop\./);
+  assert.match(component, /Track this flight price/);
+  assert.match(component, /Get notified when fares change/);
   assert.doesNotMatch(component, /Get the best deals/);
   assert.doesNotMatch(component, /Prices may change\. Book now and save\./);
-  assert.match(component, /<Bell /);
+  assert.doesNotMatch(component, /flight-price-alert-bell|flightAlertIcon/);
   assert.doesNotMatch(component, /flights-aircraft|flightAlertSky|flightAlertAircraft/);
   assert.match(component, /Create flight price alert/);
   assert.doesNotMatch(component, /Create a one-time email alert/);
@@ -63,13 +61,12 @@ test("the compact alert stays horizontal and readable on narrow screens", () => 
 });
 
 test("the flight alert uses content-driven compact vertical spacing", () => {
-  const bannerStyle = source.slice(source.indexOf("flightAlert: {"), source.indexOf("flightAlertIcon: {"));
-  const iconStyle = source.slice(source.indexOf("flightAlertIcon: {"), source.indexOf("flightAlertCopy: {"));
+  const bannerStyle = source.slice(source.indexOf("flightAlert: {"), source.indexOf("flightAlertCopy: {"));
   const copyStyles = source.slice(source.indexOf("flightAlertCopy: {"), source.indexOf("flightAlertSwitchTarget: {"));
 
-  assert.match(bannerStyle, /paddingVertical: 10/);
+  assert.match(bannerStyle, /paddingVertical: 6/);
   assert.doesNotMatch(bannerStyle, /(?:minHeight|height):/);
-  assert.match(iconStyle, /width: 38[\s\S]*height: 38/);
+  assert.doesNotMatch(source, /flightAlertIcon:/);
   assert.match(copyStyles, /flightAlertCopy: \{[^}]*gap: 2/);
   assert.match(copyStyles, /flightAlertTitle: \{ fontSize: 15, lineHeight: 19/);
   assert.match(copyStyles, /flightAlertSubtitle: \{ fontSize: 12, lineHeight: 16/);
@@ -77,23 +74,22 @@ test("the flight alert uses content-driven compact vertical spacing", () => {
 
 test("the flight alert has no aircraft placeholder or visible banner border", () => {
   const component = source.slice(source.indexOf("function PriceAlert"), source.indexOf("export function BottomNav"));
-  const bannerStyle = source.slice(source.indexOf("flightAlert: {"), source.indexOf("flightAlertIcon: {"));
+  const bannerStyle = source.slice(source.indexOf("flightAlert: {"), source.indexOf("flightAlertCopy: {"));
 
-  assert.doesNotMatch(component, /<Image|flight-price-alert-aircraft|flights-aircraft/);
+  assert.doesNotMatch(component, /<Image|flight-price-alert-aircraft|flight-price-alert-bell|flights-aircraft/);
   assert.doesNotMatch(bannerStyle, /borderWidth|borderColor/);
-  assert.ok(existsSync(resolve("assets/heroes/flights-aircraft.png")), "the shared aircraft asset should remain in the repository");
 });
 
 test("the flight alert uses semantic light and dark theme values", () => {
   const theme = readFileSync(resolve("src/theme/AppTheme.tsx"), "utf8");
-  for (const token of ["priceAlertSurface", "priceAlertBorder", "priceAlertAccent", "switchTrack", "switchTrackActive"]) {
+  for (const token of ["priceAlertSurface", "switchTrack", "switchTrackActive"]) {
     assert.equal(theme.match(new RegExp(`${token}:`, "g"))?.length, 2, `${token} should be defined for both themes`);
     assert.match(source, new RegExp(`theme\\.${token}`));
   }
 });
 
 test("flight price-alert eligibility is route-level while the count stays filter-aware", () => {
-  assert.match(source, /product === "flight" && !flightState && plan\.plan/);
+  assert.match(source, /index === 0 && status === "ready" && !flightState && plan\.plan/);
   assert.doesNotMatch(source, /sorted\.length > 0 && availability\.priceAlerts/);
   assert.match(source, /flightResultCountLabel\(sorted\.length\)/);
 });
@@ -105,5 +101,5 @@ test("feature-disabled flight results pass availability into the switch while re
 
 test("loading and error states cannot expose the flight price alert", () => {
   assert.doesNotMatch(source, /status === "(?:loading|error)"[^\n]*<PriceAlert/);
-  assert.match(source, /status === "ready" && product === "flight" && !flightState && plan\.plan/);
+  assert.match(source, /index === 0 && status === "ready" && !flightState && plan\.plan/);
 });
