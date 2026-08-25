@@ -13,6 +13,10 @@ const renderItem = sectionList.slice(
   sectionList.indexOf("renderItem="),
   sectionList.indexOf("ListHeaderComponent="),
 );
+const listHeader = sectionList.slice(
+  sectionList.indexOf("ListHeaderComponent="),
+  sectionList.indexOf("renderSectionHeader="),
+);
 const stickyHeader = sectionList.slice(
   sectionList.indexOf("renderSectionHeader="),
   sectionList.indexOf("ListEmptyComponent="),
@@ -42,16 +46,14 @@ test("flight summary copy is removed while the hotel summary stays intact", () =
   assert.doesNotMatch(source, /Price may change|Book soon to lock in this price\./);
 });
 
-test("count and controls stay sticky while the price alert precedes the first FlightCard", () => {
-  const alert = renderItem.indexOf("<PriceAlert");
-  const card = renderItem.indexOf("<FlightCard");
-
+test("count and controls stay sticky after the non-sticky price alert", () => {
   assert.match(
     stickyHeader,
     /flightResultCountLabel\(sorted\.length\)[\s\S]*?filterRail : null/,
     "result count should precede quick controls in the sticky header",
   );
-  assert.ok(alert >= 0 && alert < card, "price alert should precede the first real flight card");
-  assert.match(renderItem, /index === 0 && status === "ready" && !flightState && plan\.plan/);
+  assert.match(listHeader, /\{dateStrip\}[\s\S]*?<PriceAlert/);
+  assert.doesNotMatch(renderItem, /PriceAlert/);
+  assert.match(renderItem, /<FlightCard/);
   assert.doesNotMatch(stickyHeader, /PriceAlert/);
 });

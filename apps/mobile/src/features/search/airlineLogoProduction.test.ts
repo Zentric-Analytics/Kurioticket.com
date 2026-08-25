@@ -40,5 +40,5 @@ test("Flight Result structure and SectionList controls remain intact", () => {
   assert.match(screen, /<PriceAlert/);
   assert.match(screen, /<FlightSortModal/);
   assert.match(screen, /<FlightFilterSheet/);
-  assert.match(screen, /ListHeaderComponent=\{<View>\{dateStrip\}<\/View>\}/);
+  assert.match(screen, /ListHeaderComponent=\{\([\s\S]*?\{dateStrip\}[\s\S]*?<PriceAlert/);
 });
