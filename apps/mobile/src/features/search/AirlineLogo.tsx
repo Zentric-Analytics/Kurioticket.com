@@ -10,11 +10,14 @@ type Props = {
   fallbackCharacters?: number;
   /** Diagnostic seam: false keeps layout identical without mounting remote SVG native views. */
   allowRemoteSvg?: boolean;
+  /** Diagnostic seam: false prevents both remote SVG and raster requests. */
+  allowRemoteImages?: boolean;
+  fallbackText?: string;
 };
 
 const isSvgUrl = (url: string) => /\.svg(?:[?#]|$)/i.test(url);
 
-export function AirlineLogo({ airlineName, logoUrl, fallbackCharacters = 2, allowRemoteSvg = true }: Props) {
+export function AirlineLogo({ airlineName, logoUrl, fallbackCharacters = 2, allowRemoteSvg = true, allowRemoteImages = true, fallbackText }: Props) {
   const { theme } = useAppTheme();
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const visibleUrl = resolveTravelProviderLogo(logoUrl);
@@ -24,7 +27,7 @@ export function AirlineLogo({ airlineName, logoUrl, fallbackCharacters = 2, allo
     setFailedUrl(null);
   }, [visibleUrl]);
 
-  if (!visibleUrl || failed || (isSvgUrl(visibleUrl) && !allowRemoteSvg)) {
+  if (!allowRemoteImages || !visibleUrl || failed || (isSvgUrl(visibleUrl) && !allowRemoteSvg)) {
     return (
       <View
         style={[
@@ -33,7 +36,7 @@ export function AirlineLogo({ airlineName, logoUrl, fallbackCharacters = 2, allo
         ]}
       >
         <Text style={[styles.initials, { color: theme.textPrimary }]}>
-          {airlineName.trim().slice(0, fallbackCharacters)}
+          {fallbackText ?? airlineName.trim().slice(0, fallbackCharacters)}
         </Text>
       </View>
     );

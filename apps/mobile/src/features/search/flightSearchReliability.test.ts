@@ -82,3 +82,11 @@ test("airline SVG isolation deterministically preserves the initials fallback", 
   assert.match(logo, /isSvgUrl\(visibleUrl\) && !allowRemoteSvg/);
   assert.match(screen, /EXPO_PUBLIC_DISABLE_REMOTE_AIRLINE_SVG/);
 });
+
+test("Experiment B isolates SVG and raster airline images on iOS without changing Android", () => {
+  const logo = readFileSync("src/features/search/AirlineLogo.tsx", "utf8");
+  const policy = readFileSync("src/features/search/flightResultsAirlineImagePolicy.ts", "utf8");
+  assert.match(logo, /!allowRemoteImages/);
+  assert.match(screen, /allowRemoteImages=\{allowRemoteAirlineImages\}/);
+  assert.match(policy, /return platform !== "ios"/);
+});
