@@ -89,7 +89,8 @@ import { AirlineLogo } from "./AirlineLogo";
 import { useAppTheme } from "../../theme/AppTheme";
 import { buildFlightDetailParams } from "./flightDetailNavigation";
 import { withinFlightLoadingDeadline } from "./flightLoadingDeadline";
-import { startFlightSearchEventLoopMonitor } from "./flightSearchDiagnostics";
+import { logFlightSearchCheckpoint, startFlightSearchEventLoopMonitor } from "./flightSearchDiagnostics";
+import { airlineInitials, flightResultsAllowRemoteAirlineImages } from "./flightResultsAirlineImagePolicy";
 import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recentSearch";
 import { buildPriceByDate, calendarIsoFromTimestamp } from "./dateStripModel";
 import { flightResultCountLabel } from "./flightResultCount";
@@ -114,6 +115,7 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 export function ApprovedResultsScreen({ product }: { product: Product }) {
   const { theme } = useAppTheme();
   const flightResults = product === "flight";
+  const allowRemoteAirlineImages = flightResultsAllowRemoteAirlineImages(Platform.OS);
   const { width } = useWindowDimensions();
   const narrowHeader = width < 360;
   const { availability } = useFeatureAvailability();
@@ -187,6 +189,16 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       setMessage(plan.error || "Invalid search");
       return;
     }
+    if (product === "flight") {
+      logFlightSearchCheckpoint("flight-search:start", {
+        requestId,
+        origin: String(plan.plan.payload.origin || ""),
+        destination: String(plan.plan.payload.destination || ""),
+        tripType: String(plan.plan.payload.tripType || ""),
+        platform: Platform.OS,
+        airlineImagePolicy: allowRemoteAirlineImages ? "remote" : "initials-only",
+      });
+    }
     requestInFlight.current = true;
     setStatus("loading");
     setMessage("");
@@ -220,6 +232,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             )
           : (response.results as HotelResult[]).filter(validBookableHotel);
       const clientValidationMs = performance.now() - validationStartedAt;
+      if (product === "flight") {
+        logFlightSearchCheckpoint("flight-search:validated", { requestId, resultCount: valid.length, elapsedMs: performance.now() - clientStartedAt, platform: Platform.OS });
+        logFlightSearchCheckpoint("flight-search:derived-ready", { requestId, resultCount: valid.length, elapsedMs: performance.now() - clientStartedAt, platform: Platform.OS });
+      }
       setResults(valid);
       resultsRef.current = valid;
       setStatus(valid.length ? "ready" : "empty");
@@ -256,6 +272,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       }
     }
   }, [product, plan.plan?.key, retry, visualTest]);
+  useEffect(() => {
+    if (product === "flight" && status === "ready") {
+      logFlightSearchCheckpoint("flight-search:render-ready", { resultCount: results.length, platform: Platform.OS, airlineImagePolicy: allowRemoteAirlineImages ? "remote" : "initials-only" });
+    }
+  }, [allowRemoteAirlineImages, product, results.length, status]);
   useEffect(() => {
     void load();
     return () => {
@@ -549,6 +570,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   params={params}
                   saved={savedFlights.has(item.id)}
                   onToggleSaved={() => toggleSavedFlight(item, params)}
+                  allowRemoteAirlineImages={allowRemoteAirlineImages}
+                  logInitialMount={index === 0}
                 />
               </View>
             </>
@@ -597,6 +620,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           <FlightSortModal visible={sortOpen} sort={sort} onChange={setSort} onClose={() => setSortOpen(false)} />
           <FlightFilterSheet
             visible={filterOpen}
+            allowRemoteAirlineImages={allowRemoteAirlineImages}
             section={filterSection}
             filters={filters}
             options={flightOptions}
@@ -739,8 +763,13 @@ function FlightSortModal({
   );
 }
 
-function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highlight, params, saved, onToggleSaved }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; highlight?: FlightResultHighlight; params: Record<string, string | string[]>; saved: boolean; onToggleSaved: () => void }) {
+function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highlight, params, saved, onToggleSaved, allowRemoteAirlineImages, logInitialMount }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; highlight?: FlightResultHighlight; params: Record<string, string | string[]>; saved: boolean; onToggleSaved: () => void; allowRemoteAirlineImages: boolean; logInitialMount: boolean }) {
   const { theme } = useAppTheme();
+  useEffect(() => {
+    if (logInitialMount) {
+      logFlightSearchCheckpoint("flight-search:initial-card-mounted", { platform: Platform.OS, airlineImagePolicy: allowRemoteAirlineImages ? "remote" : "initials-only" });
+    }
+  }, [allowRemoteAirlineImages, logInitialMount]);
   const roundTrip = one(params.tripType) === "round-trip";
   const { outbound, returnLeg } = flightCardLegs(result, roundTrip);
   const baggageBenefit = summarizeBaggage(result.baggageInfo);
@@ -754,6 +783,8 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
               airlineName={result.airlineName}
               logoUrl={result.airlineLogo}
               allowRemoteSvg={process.env.EXPO_PUBLIC_DISABLE_REMOTE_AIRLINE_SVG !== "1"}
+              allowRemoteImages={allowRemoteAirlineImages}
+              fallbackText={allowRemoteAirlineImages ? undefined : airlineInitials(result.airlineName)}
             />
           </View>
           <View style={s0.flightDetails}>

@@ -180,7 +180,7 @@ test("live airline logos support SVG and raster URLs with URL-scoped fallback", 
   assert.equal(airlineLogo.match(/onError=\{\(\) => setFailedUrl\(visibleUrl\)\}/g)?.length, 2);
   assert.match(airlineLogo, /useEffect\(\(\) => \{[\s\S]*setFailedUrl\(null\);[\s\S]*\}, \[visibleUrl\]\)/);
   assert.match(airlineLogo, /fallbackCharacters = 2/);
-  assert.match(airlineLogo, /\{airlineName\.trim\(\)\.slice\(0, fallbackCharacters\)\}/);
+  assert.match(airlineLogo, /fallbackText \?\? airlineName\.trim\(\)\.slice\(0, fallbackCharacters\)/);
 });
 
 test("flight journey gives its center column responsive surplus width", () => {

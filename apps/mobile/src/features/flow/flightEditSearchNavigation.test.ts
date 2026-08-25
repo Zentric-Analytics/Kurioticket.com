@@ -4,12 +4,14 @@ import test from "node:test";
 
 test("approved flight Edit search pushes current canonical params without going back", () => {
   const source = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
-  const flightStart = source.indexOf('if (product === "flight")');
-  const flightEnd = source.indexOf("    }\n", source.indexOf("      return;", flightStart)) + 6;
-  const flightBranch = source.slice(flightStart, flightEnd);
-  assert.match(flightBranch, /router\.push\(\{ pathname: "\/edit-flight-search", params: flightEditSearchParams\(params\) \}\)/);
-  assert.doesNotMatch(flightBranch, /pathname: "\/flights"/);
-  assert.doesNotMatch(flightBranch, /router\.(?:back|replace)/);
+  const editStart = source.indexOf("  const edit = () => {");
+  const editEnd = source.indexOf("  const normalizeFlightPrice", editStart);
+  const editHandler = source.slice(editStart, editEnd);
+
+  assert.ok(editStart >= 0 && editEnd > editStart, "expected the ApprovedResultsScreen edit handler");
+  assert.match(editHandler, /if \(product === "flight"\)[\s\S]*?router\.push\(\{ pathname: "\/edit-flight-search", params: flightEditSearchParams\(params\) \}\)[\s\S]*?return;/);
+  assert.doesNotMatch(editHandler, /pathname: "\/flights"/);
+  assert.doesNotMatch(editHandler, /router\.(?:back|replace)/);
 });
 
 test("dedicated edit screen hydrates the shared form, cancels, and replaces stale edit history on submit", () => {
