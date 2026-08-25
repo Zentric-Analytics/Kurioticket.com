@@ -551,27 +551,29 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           sections={[{ data: !flightState ? sorted as FlightResult[] : [] }]}
           keyExtractor={(item) => item.id}
           renderItem={({ item, index }) => (
-            <>
-              {index === 0 && status === "ready" && !flightState && plan.plan ? (
+            <View style={s0.flightCardItem}>
+              <FlightCard
+                result={item}
+                displayPrice={flightDisplayPrices.get(item.id)}
+                displayCurrencyContext={currencyState?.resolution}
+                highlight={flightHighlights.get(item.id)}
+                params={params}
+                saved={savedFlights.has(item.id)}
+                onToggleSaved={() => toggleSavedFlight(item, params)}
+                logInitialMount={index === 0}
+              />
+            </View>
+          )}
+          ListHeaderComponent={(
+            <View>
+              {dateStrip}
+              {status === "ready" && !flightState && plan.plan ? (
                 <View style={s0.flightPriceAlertItem}>
                   <PriceAlert product={product} plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} />
                 </View>
               ) : null}
-              <View style={s0.flightCardItem}>
-                <FlightCard
-                  result={item}
-                  displayPrice={flightDisplayPrices.get(item.id)}
-                  displayCurrencyContext={currencyState?.resolution}
-                  highlight={flightHighlights.get(item.id)}
-                  params={params}
-                  saved={savedFlights.has(item.id)}
-                  onToggleSaved={() => toggleSavedFlight(item, params)}
-                  logInitialMount={index === 0}
-                />
-              </View>
-            </>
+            </View>
           )}
-          ListHeaderComponent={<View>{dateStrip}</View>}
           renderSectionHeader={() => (
             <View
               style={[

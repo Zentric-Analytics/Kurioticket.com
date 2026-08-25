@@ -14,12 +14,16 @@ function styleBlock(name: string, nextName: string) {
   return screen.slice(screen.indexOf(`${name}:`), screen.indexOf(`${nextName}:`, screen.indexOf(`${name}:`)));
 }
 
-test("flight results naturally scroll the date strip into a sticky filter rail", () => {
+test("flight results scroll the date strip and price alert into sticky result controls", () => {
   assert.match(flightLayout, /stickySectionHeadersEnabled/);
   assert.match(
     flightLayout,
-    /ListHeaderComponent=\{<View>\{dateStrip\}<\/View>\}[\s\S]*?renderSectionHeader[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?filterRail : null/,
+    /ListHeaderComponent=\{\([\s\S]*?\{dateStrip\}[\s\S]*?<PriceAlert[\s\S]*?renderSectionHeader[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?filterRail : null/,
   );
+  const listHeader = flightLayout.slice(flightLayout.indexOf("ListHeaderComponent="), flightLayout.indexOf("renderSectionHeader="));
+  const sectionHeader = flightLayout.slice(flightLayout.indexOf("renderSectionHeader="), flightLayout.indexOf("ListEmptyComponent="));
+  assert.match(listHeader, /\{dateStrip\}[\s\S]*?<PriceAlert/);
+  assert.doesNotMatch(sectionHeader, /dateStrip|PriceAlert/);
   assert.doesNotMatch(flightLayout, /onScroll=|scrollEventThrottle=/);
   assert.doesNotMatch(screen, /dateHeaderCollapsed|dateHeaderProgress|Animated\.timing\(dateHeaderProgress/);
 });
