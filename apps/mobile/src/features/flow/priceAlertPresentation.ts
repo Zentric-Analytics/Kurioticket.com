@@ -16,9 +16,10 @@ function dateOnly(value: unknown): DateOnly | null {
 export function formatPriceAlertDateRange(departure: unknown, returning?: unknown) {
   const start = dateOnly(departure); const end = dateOnly(returning);
   if (!start) return null;
-  if (!end) return `${MONTHS[start.month - 1]} ${start.day}`;
-  if (start.year === end.year && start.month === end.month) return `${MONTHS[start.month - 1]} ${start.day}–${end.day}`;
-  return `${MONTHS[start.month - 1]} ${start.day} – ${MONTHS[end.month - 1]} ${end.day}`;
+  if (!end) return `${MONTHS[start.month - 1]} ${start.day}, ${start.year}`;
+  if (start.year !== end.year) return `${MONTHS[start.month - 1]} ${start.day}, ${start.year} – ${MONTHS[end.month - 1]} ${end.day}, ${end.year}`;
+  if (start.month === end.month) return `${MONTHS[start.month - 1]} ${start.day}–${end.day}, ${start.year}`;
+  return `${MONTHS[start.month - 1]} ${start.day} – ${MONTHS[end.month - 1]} ${end.day}, ${start.year}`;
 }
 
 export function formatTravelerCount(value: unknown) {
