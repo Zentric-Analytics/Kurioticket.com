@@ -26,27 +26,83 @@ export function canUseOfferAirlineLogo(
 
 export function compactFareTerms(terms: FlightFareTerm[], tripType: TripType) {
   return terms
-    .map((term, index) => ({
-      term,
-      index,
-      text:
-        tripType === "one-way"
-          ? term.text.replace(/^Outbound:\s*/i, "")
-          : term.text,
-    }))
+    .map((term, index) => ({ term, index }))
     .sort((left, right) => {
       const priorityDifference =
-        fareTermPriority(left.term) - fareTermPriority(right.term);
+        fareTermSelectionPriority(left.term) -
+        fareTermSelectionPriority(right.term);
       return priorityDifference || left.index - right.index;
     })
-    .slice(0, 3);
+    .slice(0, 3)
+    .flatMap((term) =>
+      buildFareDisplayRows(term.term, tripType).map((text, rowIndex) => ({
+        term: term.term,
+        index: term.index,
+        rowIndex,
+        text,
+      })),
+    )
+    .sort((left, right) => {
+      const priorityDifference =
+        fareDisplayRowPriority(left.term, left.text) -
+        fareDisplayRowPriority(right.term, right.text);
+      return (
+        priorityDifference ||
+        left.index - right.index ||
+        left.rowIndex - right.rowIndex
+      );
+    });
+}
+
+export function buildFareDisplayRows(
+  term: FlightFareTerm,
+  tripType: TripType,
+) {
+  const text =
+    tripType === "one-way"
+      ? term.text.replace(/^Outbound:\s*/i, "")
+      : term.text;
+
+  if (term.category !== "baggage") return [text];
+
+  const scopeMatch = text.match(/^(Outbound|Return|Flight \d+):\s*(.+)$/i);
+  const scope = scopeMatch?.[1];
+  const baggageText = scopeMatch?.[2] ?? text;
+  const clauses = baggageText.split(/,\s*/);
+  if (clauses.length !== 2) return [text];
+
+  const recognized = clauses.map((clause) => {
+    const match = clause.match(
+      /^(\d+)\s+(carry-ons?|checked bags?)\s+included$/i,
+    );
+    if (!match) return null;
+    return {
+      kind: match[2].toLowerCase().startsWith("carry")
+        ? "carry-on"
+        : "checked-bag",
+      text: clause,
+    } as const;
+  });
+  if (
+    recognized.some((clause) => clause === null) ||
+    new Set(recognized.map((clause) => clause?.kind)).size !== 2
+  ) {
+    return [text];
+  }
+
+  return recognized
+    .filter((clause): clause is NonNullable<typeof clause> => clause !== null)
+    .sort((left, right) =>
+      left.kind === right.kind ? 0 : left.kind === "carry-on" ? -1 : 1,
+    )
+    .map((clause) => (scope ? `${scope}: ${clause.text}` : clause.text));
 }
 
 function normalizeCarrierIdentity(value: string) {
   return value.trim().toLocaleLowerCase("en-US");
 }
 
-function fareTermPriority(term: FlightFareTerm) {
+function fareTermSelectionPriority(term: FlightFareTerm) {
   if (
     term.semantic === "negative" &&
     (term.category === "change" || term.category === "refund")
@@ -57,4 +113,19 @@ function fareTermPriority(term: FlightFareTerm) {
   if (term.category === "baggage") return 2;
   if (term.category === "change" || term.category === "refund") return 3;
   return 4;
+}
+
+function fareDisplayRowPriority(term: FlightFareTerm, text: string) {
+  if (term.category === "baggage" && /\bcarry-ons?\b/i.test(text)) return 0;
+  if (term.category === "baggage" && /\bchecked bags?\b/i.test(text)) return 1;
+  if (
+    term.semantic === "negative" &&
+    (term.category === "change" || term.category === "refund")
+  ) {
+    return 2;
+  }
+  if (term.semantic === "negative") return 3;
+  if (term.category === "change" || term.category === "refund") return 4;
+  if (term.category === "baggage") return 5;
+  return 6;
 }
