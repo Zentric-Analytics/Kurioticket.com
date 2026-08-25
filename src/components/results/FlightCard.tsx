@@ -38,7 +38,6 @@ export function FlightCard({
   actionLabel,
   actionAriaLabel,
   onAction,
-  showProviderHandoffCopy = true,
 }: {
   flight: PublicFlightResult;
   isAccented?: boolean;
@@ -47,7 +46,6 @@ export function FlightCard({
   actionLabel?: string;
   actionAriaLabel?: string;
   onAction?: (flight: PublicFlightResult) => void;
-  showProviderHandoffCopy?: boolean;
 }) {
   const { t: dictionary, locale } = useLocale();
   const router = useRouter();
@@ -85,7 +83,6 @@ export function FlightCard({
   const priceLabel = displayPrice.isConvertedEstimate
     ? t("estimatedPrice")
     : t("providerPrice");
-  const providerHandoffCopy = t("flightCardProviderHandoff");
   const resolvedDetailsHref =
     detailsHref === undefined
       ? `/flights/details/${encodeURIComponent(flight.id)}`
@@ -135,8 +132,8 @@ export function FlightCard({
             <ResultBadgePill badge={resultBadge} />
           </div>
 
-          <div className="flight-card-desktop-itinerary mt-2 grid min-w-0 items-stretch gap-y-4">
-            <div className="grid min-w-0 gap-5">
+          <div className="flight-card-body mt-2 grid min-w-0 items-stretch gap-y-4">
+            <div className="flight-card-legs grid min-w-0 gap-5">
               {visibleLegs.map((leg, index) => (
                 <ResponsiveFlightLegRow
                   key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${leg.departureTime}-${index}`}
@@ -160,14 +157,8 @@ export function FlightCard({
               viewFlightAriaLabel={actionAriaLabel}
               onAction={onAction ? () => onAction(flight) : undefined}
             />
+            <FlightDetailLines details={details} />
           </div>
-
-          <FlightDetailLines details={details} />
-          {showProviderHandoffCopy ? (
-            <p className="flight-card-handoff text-xs font-medium leading-5 text-slate-600">
-              {providerHandoffCopy}
-            </p>
-          ) : null}
         </div>
       </div>
     </Card>
