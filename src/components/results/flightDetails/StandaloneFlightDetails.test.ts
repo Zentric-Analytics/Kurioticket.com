@@ -4,6 +4,7 @@ import test, { afterEach } from "node:test";
 
 import type { FlightSearchParams, NormalizedFlightResult } from "@/lib/types";
 import { flightDetailsRouteLabel, flightDetailsTotalLabel } from "@/lib/flights/flightDetailsContract";
+import { canUseOfferAirlineLogo, compactFareTerms, resolveSegmentCarrierName } from "@/components/results/flightDetails/flightDetailsPresentation";
 import {
   buildMaterialFareChoices,
   buildStandaloneFlightDetails,
@@ -159,6 +160,30 @@ test("connecting segments remain ordered and provider-authored", async () => {
   assert.deepEqual(connected.legs![0].segments.map(({ originAirport, destinationAirport }) => `${originAirport}-${destinationAirport}`), ["ORD-DFW", "DFW-LAS"]);
 });
 
+test("segment airline marks use the offer logo only for the same carrier identity", () => {
+  const logo = "https://assets.example.test/iberia.svg";
+  const segment = fixture().legs![0].segments[0];
+  const matching = { ...segment, airlineName: "  IBERIA  " };
+  const marketingFallback = { ...segment, airlineName: undefined, marketingCarrier: { name: "Iberia" } };
+  const differentCarrier = { ...segment, airlineName: "Iberia Express" };
+  assert.equal(resolveSegmentCarrierName(marketingFallback, "Iberia"), "Iberia");
+  assert.equal(canUseOfferAirlineLogo(matching, "Iberia", logo), true);
+  assert.equal(canUseOfferAirlineLogo(marketingFallback, "Iberia", logo), true);
+  assert.equal(canUseOfferAirlineLogo(differentCarrier, "Iberia", logo), false);
+  assert.equal(canUseOfferAirlineLogo(matching, "Iberia", null), false);
+});
+
+test("compact fare summaries prioritize restrictions and simplify only unambiguous outbound scope", () => {
+  const terms = [
+    { category: "fare", semantic: "informational", text: "Provider fare" },
+    { category: "baggage", semantic: "positive", text: "Outbound: 1 carry-on included", legDirection: "outbound" },
+    { category: "change", semantic: "negative", text: "Outbound: Changes not allowed", legDirection: "outbound" },
+    { category: "refund", semantic: "negative", text: "Outbound: Not refundable", legDirection: "outbound" },
+  ] satisfies NonNullable<NormalizedFlightResult["fareTerms"]>;
+  assert.deepEqual(compactFareTerms(terms, "one-way").map(({ text }) => text), ["Changes not allowed", "Not refundable", "1 carry-on included"]);
+  assert.deepEqual(compactFareTerms(terms, "round-trip").map(({ text }) => text), ["Outbound: Changes not allowed", "Outbound: Not refundable", "Outbound: 1 carry-on included"]);
+});
+
 test("unbranded exact offers never acquire synthetic fare identity from matching copy", () => {
   const choices = buildMaterialFareChoices([
     fixture({ id: "one", providerOfferId: "one", price: 205 }),
@@ -308,8 +333,8 @@ test("standalone UI renders every leg and segment from selected offer and uses a
 test("standalone UI preserves the approved desktop and mobile blueprint composition", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   assert.match(source, /lg:grid-cols-\[minmax\(0,2\.45fr\)_minmax\(310px,0\.95fr\)\]/);
-  assert.match(source, /lg:sticky lg:top-24 lg:block/);
-  assert.match(source, /className="hidden rounded-\[13px\].*lg:block"/s);
+  assert.match(source, /className="hidden self-start rounded-\[13px\].*lg:block"/s);
+  assert.doesNotMatch(source, /\bsticky\b|\bfixed\b|top-24/);
   assert.match(source, /function MobileTripTotal/);
   assert.match(source, /className="mt-5 rounded-\[10px\].*lg:hidden"/s);
   assert.match(source, /role="tablist"/);
@@ -321,6 +346,14 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.match(source, /Selected<\/span>.*lg:hidden/s);
   assert.match(source, /grid-cols-\[minmax\(0,1fr\)_minmax\(82px,1\.1fr\)_minmax\(0,1fr\)\]/);
   assert.match(source, /border-dashed border-\[#075EE8\]/);
+  assert.match(source, /offerAirlineLogo=\{flight\.airlineLogo\}/);
+  assert.match(source, /<SegmentAirlineMark segment=\{segment\}/);
+  assert.match(source, /onError=\{\(\) => setLogoFailed\(true\)\}/);
+  assert.match(source, /lg:max-w-\[336px\]/);
+  assert.match(source, /lg:min-h-0 lg:p-3/);
+  assert.match(source, /lg:h-8 lg:w-8/);
+  assert.match(source, /min-h-\[126px\].*lg:min-h-0/s);
+  assert.doesNotMatch(source, /lg:max-w-\[400px\]/);
   assert.doesNotMatch(source, /bg-slate-50 px-5 py-3 lg:px-6/);
   assert.doesNotMatch(source, /providerOfferId|rawProviderReference/);
 });

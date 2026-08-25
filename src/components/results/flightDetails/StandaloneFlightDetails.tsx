@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -18,6 +19,7 @@ import {
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRegion } from "@/components/region/RegionProvider";
+import { canUseOfferAirlineLogo, compactFareTerms, resolveSegmentCarrierName } from "@/components/results/flightDetails/flightDetailsPresentation";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type {
   FlightDetailsFareChoice,
@@ -25,7 +27,7 @@ import type {
   FlightDetailsResponse,
 } from "@/lib/flights/flightDetailsContract";
 import { flightDetailsRouteLabel, flightDetailsTotalLabel } from "@/lib/flights/flightDetailsContract";
-import type { FlightLeg, FlightProviderCondition } from "@/lib/types";
+import type { FlightLeg, FlightProviderCondition, FlightSegment } from "@/lib/types";
 
 type FareTab = "details" | "conditions" | "extras";
 const fareTabs: Array<{ id: FareTab; label: string }> = [
@@ -188,17 +190,19 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
                 <Pencil className="h-4 w-4" aria-hidden="true" /> Edit search
               </Link>
             </div>
-            <div className="mt-5 space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} locale={locale} />)}</div>
+            <div className="mt-5 space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} locale={locale} offerAirlineName={flight.airlineName} offerAirlineLogo={flight.airlineLogo} />)}</div>
 
             <h2 className="mb-3 mt-6 text-[18px] font-semibold leading-tight text-slate-950">Pick your fare</h2>
-            <div role="radiogroup" aria-label="Available fares" className={`grid gap-3 ${fareChoices.length === 1 ? "lg:max-w-[400px]" : fareChoices.length === 2 ? "sm:grid-cols-2" : fareChoices.length === 3 ? "md:grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-4"}`}>
+            <div role="radiogroup" aria-label="Available fares" className={`grid gap-3 ${fareChoices.length === 1 ? "lg:max-w-[336px]" : fareChoices.length === 2 ? "sm:grid-cols-2 lg:max-w-[684px]" : fareChoices.length === 3 ? "md:grid-cols-3 lg:max-w-[1020px]" : "sm:grid-cols-2 xl:grid-cols-4"}`}>
               {fareChoices.map((fare, index) => {
                 const selected = fare.key === selectedFare?.key;
                 const price = formatDisplayPrice({ amount: fare.offer.price, sourceCurrency: fare.offer.currency, displayCurrency: selectedOption.currency, convertUsdEstimate: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback });
-                return <button key={fare.key} ref={(element) => { fareButtonRefs.current[index] = element; }} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} onClick={() => selectFare(index)} onKeyDown={(event) => handleFareKeyDown(event, index)} className={`relative min-h-[126px] rounded-[10px] border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 ${selected ? "border-[1.5px] border-[#075EE8] bg-[#075EE8]/[0.02]" : "border-[#E2E8F0] bg-white hover:border-slate-300"}`}>
+                const compactTerms = compactFareTerms(fare.distinguishingTerms, available.search.tripType);
+                return <button key={fare.key} ref={(element) => { fareButtonRefs.current[index] = element; }} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} onClick={() => selectFare(index)} onKeyDown={(event) => handleFareKeyDown(event, index)} className={`relative min-h-[126px] rounded-[10px] border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 lg:min-h-0 lg:p-3 ${selected ? "border-[1.5px] border-[#075EE8] bg-[#075EE8]/[0.02]" : "border-[#E2E8F0] bg-white hover:border-slate-300"}`}>
                   {selected ? <span className="absolute right-3 top-3 rounded-md bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 lg:hidden">Selected</span> : null}
-                  <div className="flex items-start gap-3 pr-14 lg:pr-0"><span className={`mt-1 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 ${selected ? "border-[#075EE8]" : "border-slate-300"}`} aria-hidden="true"><span className={`h-2 w-2 rounded-full ${selected ? "bg-[#075EE8]" : "bg-transparent"}`} /></span><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-[#075EE8]"><Luggage className="h-[18px] w-[18px]" aria-hidden="true" /></span><div className="min-w-0"><p className="text-sm font-semibold text-slate-950">{fare.label}</p><p className="text-xl font-bold leading-6 text-[#075EE8]" aria-label={price.ariaLabel}>{price.formatted}</p></div></div>
-                  {fare.distinguishingTerms.length ? <ul className="mt-3 space-y-1.5 pl-[30px]">{fare.distinguishingTerms.map((term) => <FareTerm key={`${term.category}-${term.legDirection || "trip"}-${term.text}`} term={term} />)}</ul> : null}
+                  <div className="flex items-start gap-3 pr-14 lg:gap-2.5 lg:pr-0"><span className={`mt-1 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 lg:h-4 lg:w-4 ${selected ? "border-[#075EE8]" : "border-slate-300"}`} aria-hidden="true"><span className={`h-2 w-2 rounded-full lg:h-1.5 lg:w-1.5 ${selected ? "bg-[#075EE8]" : "bg-transparent"}`} /></span><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-[#075EE8] lg:h-8 lg:w-8"><Luggage className="h-[18px] w-[18px] lg:h-4 lg:w-4" aria-hidden="true" /></span><div className="min-w-0"><p className="text-sm font-semibold text-slate-950 lg:text-[13px]">{fare.label}</p><p className="text-xl font-bold leading-6 text-[#075EE8] lg:text-[19px] lg:leading-5" aria-label={price.ariaLabel}>{price.formatted}</p></div></div>
+                  {fare.distinguishingTerms.length ? <ul className="mt-3 space-y-1.5 pl-[30px] lg:hidden">{fare.distinguishingTerms.map((term) => <FareTerm key={`${term.category}-${term.legDirection || "trip"}-${term.text}`} term={term} />)}</ul> : null}
+                  {compactTerms.length ? <ul className="mt-2 hidden space-y-1 pl-6 lg:block">{compactTerms.map(({ term, text }) => <FareTerm key={`${term.category}-${term.legDirection || "trip"}-${term.text}`} term={term} text={text} compact />)}</ul> : null}
                 </button>;
               })}
             </div>
@@ -214,7 +218,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   );
 }
 
-function ItineraryCard({ leg, label, locale }: { leg: FlightLeg; label: string; locale: string }) {
+function ItineraryCard({ leg, label, locale, offerAirlineName, offerAirlineLogo }: { leg: FlightLeg; label: string; locale: string; offerAirlineName: string; offerAirlineLogo?: string | null }) {
   return <section className="overflow-hidden rounded-[10px] border border-[#E2E8F0] bg-white" aria-labelledby={`${label.toLowerCase()}-heading`}>
     <div className="px-3 pt-3 sm:px-4 sm:pt-4">
       <h2 id={`${label.toLowerCase()}-heading`} className="inline-flex rounded-md bg-blue-50 px-2 py-1 text-[10px] font-bold tracking-[0.04em] text-[#075EE8]">{label}</h2>
@@ -229,14 +233,16 @@ function ItineraryCard({ leg, label, locale }: { leg: FlightLeg; label: string; 
         {leg.segments.map((segment, index) => (
           <li key={`${segment.originAirport}-${segment.destinationAirport}-${segment.departureTime}`}>
             {index > 0 && leg.layovers[index - 1] ? <p className="mb-3 rounded-md bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">Connection at {leg.layovers[index - 1].airport} • {leg.layovers[index - 1].duration}</p> : null}
-            <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-              <p className="font-semibold text-slate-900">{segment.originAirport} → {segment.destinationAirport}</p>
-              <p className="text-xs text-slate-600">{formatTime(segment.departureTime, locale)} – {formatTime(segment.arrivalTime, locale)}</p>
+            <div className="flex items-start gap-3">
+              <SegmentAirlineMark segment={segment} offerAirlineName={offerAirlineName} offerAirlineLogo={offerAirlineLogo} />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center justify-between gap-3 text-sm"><p className="font-semibold text-slate-900">{segment.originAirport} → {segment.destinationAirport}</p><p className="text-xs text-slate-600">{formatTime(segment.departureTime, locale)} – {formatTime(segment.arrivalTime, locale)}</p></div>
+                <p className="mt-1 text-xs text-slate-600">{resolveSegmentCarrierName(segment, offerAirlineName)}{segment.flightNumber || segment.marketingFlightNumber ? ` • Flight ${segment.flightNumber || segment.marketingFlightNumber}` : ""}</p>
+                {segment.operatingCarrier && segment.marketingCarrier && (segment.operatingCarrier.name !== segment.marketingCarrier.name || segment.operatingFlightNumber !== segment.marketingFlightNumber) ? <p className="mt-1 text-xs text-slate-600">Operated by {segment.operatingCarrier.name}{segment.operatingFlightNumber ? ` • Flight ${segment.operatingFlightNumber}` : ""}</p> : null}
+                {segment.aircraft?.name || segment.aircraft?.iataCode ? <p className="mt-1 text-xs text-slate-600">Aircraft: {segment.aircraft.name || segment.aircraft.iataCode}{segment.aircraft.name && segment.aircraft.iataCode ? ` (${segment.aircraft.iataCode})` : ""}</p> : null}
+                {segment.distanceKm !== undefined ? <p className="mt-1 text-xs text-slate-600">Flight distance: {formatDistanceKm(segment.distanceKm, locale)}</p> : null}
+              </div>
             </div>
-            {segment.airlineName ? <p className="mt-1 text-xs text-slate-600">{segment.airlineName}{segment.flightNumber ? ` • Flight ${segment.flightNumber}` : ""}</p> : null}
-            {segment.operatingCarrier && segment.marketingCarrier && (segment.operatingCarrier.name !== segment.marketingCarrier.name || segment.operatingFlightNumber !== segment.marketingFlightNumber) ? <p className="mt-1 text-xs text-slate-600">Operated by {segment.operatingCarrier.name}{segment.operatingFlightNumber ? ` • Flight ${segment.operatingFlightNumber}` : ""}</p> : null}
-            {segment.aircraft?.name || segment.aircraft?.iataCode ? <p className="mt-1 text-xs text-slate-600">Aircraft: {segment.aircraft.name || segment.aircraft.iataCode}{segment.aircraft.name && segment.aircraft.iataCode ? ` (${segment.aircraft.iataCode})` : ""}</p> : null}
-            {segment.distanceKm !== undefined ? <p className="mt-1 text-xs text-slate-600">Flight distance: {formatDistanceKm(segment.distanceKm, locale)}</p> : null}
             {segment.technicalStops?.map((stop) => <div key={`${stop.airport.iataCode}-${stop.arrivalTime || "stop"}`} className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-xs font-medium text-slate-700"><p>Technical stop at {stop.airport.iataCode}{stop.airport.name ? ` — ${stop.airport.name}` : ""}{stop.duration ? ` • ${stop.duration}` : ""}</p>{stop.arrivalTime || stop.departureTime ? <p className="mt-1 font-normal">{stop.arrivalTime ? `Arrives ${formatTime(stop.arrivalTime, locale)}` : ""}{stop.arrivalTime && stop.departureTime ? " • " : ""}{stop.departureTime ? `Departs ${formatTime(stop.departureTime, locale)}` : ""}</p> : null}</div>)}
           </li>
         ))}
@@ -247,10 +253,17 @@ function ItineraryCard({ leg, label, locale }: { leg: FlightLeg; label: string; 
 
 function AirportTime({ time, airport, city, name, terminal, timeZone, locale }: { time: string; airport: string; city: string; name?: string; terminal?: string; timeZone?: string; locale: string }) { return <div className="min-w-0"><p className="text-[15px] font-bold sm:text-[17px]">{formatTime(time, locale)}</p><p className="mt-1 text-sm font-bold">{airport}</p>{name ? <p className="mt-1 break-words text-[10px] leading-4 text-slate-600 sm:text-xs">{name}</p> : null}{city && city !== airport ? <p className="mt-1 break-words text-[10px] leading-4 text-slate-600 sm:text-xs">{city}</p> : null}{terminal ? <p className="mt-1 text-[10px] font-medium leading-4 text-slate-600 sm:text-xs">Terminal {terminal}</p> : null}{timeZone ? <p className="mt-1 break-words text-[10px] leading-4 text-slate-600 sm:text-xs">Time zone: {timeZone}</p> : null}</div>; }
 
-function FareTerm({ term }: { term: FlightDetailsFareChoice["distinguishingTerms"][number] }) {
+function SegmentAirlineMark({ segment, offerAirlineName, offerAirlineLogo }: { segment: FlightSegment; offerAirlineName: string; offerAirlineLogo?: string | null }) {
+  const [logoFailed, setLogoFailed] = useState(false);
+  const carrierName = resolveSegmentCarrierName(segment, offerAirlineName);
+  const canUseOfferLogo = canUseOfferAirlineLogo(segment, offerAirlineName, offerAirlineLogo);
+  return <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#075EE8]" aria-label={`${carrierName} airline mark`}>{canUseOfferLogo && !logoFailed ? <Image src={offerAirlineLogo!} alt="" width={24} height={24} className="h-6 w-6 object-contain" onError={() => setLogoFailed(true)} /> : <Plane className="h-4 w-4 rotate-45" aria-hidden="true" />}</span>;
+}
+
+function FareTerm({ term, text = term.text, compact = false }: { term: FlightDetailsFareChoice["distinguishingTerms"][number]; text?: string; compact?: boolean }) {
   const Icon = term.semantic === "positive" ? Check : term.semantic === "negative" ? MinusCircle : Info;
   const iconClass = term.semantic === "positive" ? "border-emerald-500 text-emerald-600" : "border-slate-300 text-slate-500";
-  return <li className="flex items-start gap-2 text-[13px] leading-5 text-slate-700"><span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${iconClass}`}><Icon className="h-2.5 w-2.5" aria-hidden="true" /></span>{term.text}</li>;
+  return <li className={`flex items-start text-slate-700 ${compact ? "gap-1.5 text-[11px] leading-4" : "gap-2 text-[13px] leading-5"}`}><span className={`mt-0.5 flex shrink-0 items-center justify-center rounded-full border ${compact ? "h-3.5 w-3.5" : "h-4 w-4"} ${iconClass}`}><Icon className={compact ? "h-2 w-2" : "h-2.5 w-2.5"} aria-hidden="true" /></span>{text}</li>;
 }
 
 function FarePanel({ activeTab, offer, locale }: { activeTab: FareTab; offer: FlightDetailsOffer; locale: string }) {
@@ -301,7 +314,7 @@ function CheckoutButton({ redirecting, handoff, canContinue, onContinue }: { red
 function MobileTripTotal({ travelerCount, price, redirecting, handoff, canContinue, onContinue, error }: { travelerCount: number; price: ReturnType<typeof formatDisplayPrice> | null; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string }) { return <section className="mt-5 rounded-[10px] border border-[#E2E8F0] bg-white p-4 shadow-[0_3px_12px_rgba(15,23,42,0.04)] lg:hidden" aria-labelledby="mobile-trip-total-heading"><div className="flex items-end justify-between gap-4"><h2 id="mobile-trip-total-heading" className="text-base font-semibold">{flightDetailsTotalLabel(travelerCount)}</h2>{price ? <p className="text-[25px] font-bold leading-none text-[#075EE8]" aria-label={price.ariaLabel}>{price.formatted}</p> : null}</div><CheckoutButton redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={onContinue} />{error ? <p role="alert" className="mt-3 text-sm font-medium text-red-700">{error}</p> : null}</section>; }
 
 function TripSidebar({ tripType, legs, route, date, tripLine, travelers, travelerCount, selectedFare, fareTerms, price, locale, redirecting, handoff, canContinue, onContinue, error }: { tripType: "one-way" | "round-trip" | "multi-city"; legs: FlightLeg[]; route: string; date: string; tripLine: string; travelers: string; travelerCount: number; selectedFare: string; fareTerms: FlightDetailsFareChoice["distinguishingTerms"]; price: ReturnType<typeof formatDisplayPrice> | null; locale: string; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string }) {
-  return <aside className="hidden rounded-[13px] border border-[#E2E8F0] bg-white p-6 shadow-[0_4px_18px_rgba(15,23,42,0.05)] lg:sticky lg:top-24 lg:block" aria-labelledby="your-trip-heading">
+  return <aside className="hidden self-start rounded-[13px] border border-[#E2E8F0] bg-white p-6 shadow-[0_4px_18px_rgba(15,23,42,0.05)] lg:block" aria-labelledby="your-trip-heading">
     <h2 id="your-trip-heading" className="text-xl font-bold">Your trip</h2><p className="mt-4 text-base font-semibold">{route}</p><p className="mt-1 text-xs leading-5 text-slate-600">{date} • {tripLine}</p>
     <div className="my-5 border-t border-[#E2E8F0]" />
     <div className="space-y-5">{legs.map((leg, index) => <div key={`${leg.direction}-${leg.departureTime}`}><p className="text-xs font-bold tracking-[0.12em] text-[#075EE8]">{tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"}</p><p className="mt-1 text-sm font-semibold">{leg.originAirport} → {leg.destinationAirport}</p><div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-600"><span>{formatTime(leg.departureTime, locale)}</span><span>{leg.duration} • {formatStops(leg.stops, technicalStopCount(leg))}</span><span>{formatTime(leg.arrivalTime, locale)}</span></div></div>)}</div>
