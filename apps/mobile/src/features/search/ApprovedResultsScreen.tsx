@@ -578,7 +578,16 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           )}
           ListHeaderComponent={<View>{dateStrip}</View>}
           renderSectionHeader={() => (
-            <View style={[s0.stickyFilterSurface, { backgroundColor: theme.background }]}>
+            <View
+              style={[
+                s0.stickyFilterSurface,
+                {
+                  backgroundColor: theme.background,
+                  shadowColor: theme.dark ? "#000000" : "#18305B",
+                  shadowOpacity: theme.dark ? 0.24 : 0.08,
+                },
+              ]}
+            >
               {status === "ready" && !flightState ? (
                 <Text accessibilityRole="header" style={[s0.flightResultCount, { color: theme.textPrimary }]}>
                   {flightResultCountLabel(sorted.length)}
@@ -1336,13 +1345,19 @@ const s0 = StyleSheet.create({
     justifyContent: "center",
   },
   flightHeaderEditText: { fontSize: 13, lineHeight: 18, fontWeight: "700" },
-  filterRail: { height: 52, flexGrow: 0 },
+  filterRail: { height: 44, flexGrow: 0 },
   resultsScroll: { flex: 1 },
   flightResultsContent: { flexGrow: 1 },
-  stickyFilterSurface: { backgroundColor: "white", zIndex: 1 },
+  stickyFilterSurface: {
+    backgroundColor: "white",
+    zIndex: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 3,
+    elevation: 3,
+  },
   route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
-  filters: { paddingHorizontal: 14, paddingVertical: 7, gap: 8, alignItems: "center" },
+  filters: { paddingHorizontal: 14, paddingVertical: 3, gap: 8, alignItems: "center" },
   modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(10, 24, 48, 0.42)" },
   sheet: { maxHeight: "82%", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 18, gap: 14, backgroundColor: "white" },
   sortSheet: { borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingHorizontal: 18, paddingTop: 14, gap: 4, backgroundColor: "white" },
@@ -1391,7 +1406,7 @@ const s0 = StyleSheet.create({
   },
   foundCopy: { flex: 1, minWidth: 0, gap: 2 },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
-  flightResultCount: { paddingHorizontal: 14, paddingTop: 10, fontSize: 16, lineHeight: 21, fontWeight: "800" },
+  flightResultCount: { paddingHorizontal: 14, paddingTop: 7, fontSize: 16, lineHeight: 21, fontWeight: "800" },
   card: {
     width: "100%",
     borderRadius: 14,
