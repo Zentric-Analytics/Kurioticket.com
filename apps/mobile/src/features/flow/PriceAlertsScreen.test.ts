@@ -43,16 +43,44 @@ test("loading and initial errors cannot masquerade as an empty landing", () => {
 
 test("populated alert cards and mutation behavior remain present", () => {
   assert.match(screen, /alerts\.length \? alerts\.map/);
-  assert.match(screen, /Target \{alert\.currency\} \{alert\.targetPrice\}/);
-  assert.match(screen, /Last seen \{alert\.currency\} \{alert\.lastSeenPrice\}/);
+  assert.match(screen, /styles\.alertRoute/);
+  assert.match(screen, /testID=\{`price-alert-status-\$\{alert\.id\}`\}/);
+  assert.match(screen, />Target price<\/Text>/);
+  assert.match(screen, />\{target\}<\/Text>/);
+  assert.match(screen, /Last seen \{lastSeen\}/);
   assert.match(screen, /Last checked/);
+  assert.match(screen, />Pause alert<\/Text>/);
   assert.match(screen, /mutateStatus\(alert, "PAUSED"\)/);
   assert.match(screen, /mutateStatus\(alert, "ACTIVE"\)/);
   assert.match(screen, /confirmDelete\(alert\)/);
   assert.match(screen, /setAlerts\(\(value\) => value\.map/);
   assert.match(screen, /setAlerts\(\(value\) => value\.filter/);
   assert.match(screen, /revision\.current \+= 1/);
-  assert.match(screen, /statusLabel\(alert\.status\)/);
+  assert.match(screen, /const status = statusLabel\(alert\.status\)/);
+  assert.match(screen, /alert\.status === "PAUSED" && availability\.priceAlerts/);
+  assert.match(screen, /Alert\.alert\("Delete price alert\?"/);
+  assert.match(screen, /accessibilityLabel=\{`Pause alert for \$\{route\}`\}/);
+  assert.match(screen, /accessibilityLabel=\{`Delete alert for \$\{route\}`\}/);
+});
+
+test("populated card container does not group nested action buttons into one accessibility element", () => {
+  assert.match(screen, /return <View key=\{alert\.id\} style=\{\[styles\.card,/);
+  assert.doesNotMatch(screen, /return <View key=\{alert\.id\} accessible/);
+  assert.doesNotMatch(screen, /return <View key=\{alert\.id\}[^>]*accessibilityRole="summary"/);
+  assert.match(screen, /<Pressable accessibilityRole="button" accessibilityLabel=\{`Pause alert for \$\{route\}`\}/);
+  assert.match(screen, /<Pressable accessibilityRole="button" accessibilityLabel=\{`Reactivate alert for \$\{route\}`\}/);
+  assert.match(screen, /<Pressable accessibilityRole="button" accessibilityLabel=\{`Delete alert for \$\{route\}`\}/);
+});
+
+test("populated cards use compact theme-aware icon, badge, hierarchy, and actions", () => {
+  assert.match(screen, /FlowIcon name=\{alert\.type === "FLIGHT" \? "flight" : "hotel"\}/);
+  assert.match(screen, /alertIconTile: \{ width: 40, height: 40, borderRadius: 11/);
+  assert.match(screen, /backgroundColor: theme\.surface, borderColor: theme\.border/);
+  assert.match(screen, /backgroundColor: theme\.priceAlertSurface, borderColor: theme\.priceAlertBorder/);
+  assert.match(screen, /statusPill: \{ borderRadius: 999/);
+  assert.match(screen, /targetValue: \{ fontSize: 20/);
+  assert.match(screen, /action: \{ minHeight: 44/);
+  assert.match(screen, /delete: \{ minHeight: 44/);
 });
 
 test("alert mutations clear stale errors before their optimistic updates", () => {
