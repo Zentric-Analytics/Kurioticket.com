@@ -4,9 +4,10 @@ import type { MobilePriceAlert } from "../../api/travelApi";
 import { formatLastChecked, formatPriceAlertAmount, formatPriceAlertDateRange, formatTravelerCount, priceAlertTripSummary, priceDifferencePresentation, statusLabel } from "./priceAlertPresentation";
 
 test("formats date-only flight dates without timezone-sensitive parsing", () => {
-  assert.equal(formatPriceAlertDateRange("2026-08-25", "2026-08-26"), "Aug 25–26");
-  assert.equal(formatPriceAlertDateRange("2026-08-30", "2026-09-02"), "Aug 30 – Sep 2");
-  assert.equal(formatPriceAlertDateRange("2026-10-09"), "Oct 9");
+  assert.equal(formatPriceAlertDateRange("2026-08-25", "2026-08-26"), "Aug 25–26, 2026");
+  assert.equal(formatPriceAlertDateRange("2026-08-30", "2026-09-02"), "Aug 30 – Sep 2, 2026");
+  assert.equal(formatPriceAlertDateRange("2026-10-09"), "Oct 9, 2026");
+  assert.equal(formatPriceAlertDateRange("2026-12-30", "2027-01-02"), "Dec 30, 2026 – Jan 2, 2027");
   assert.equal(formatPriceAlertDateRange("not-a-date"), null);
 });
 
@@ -41,7 +42,7 @@ test("formats bounded relative last-checked times and omits malformed timestamps
 test("summaries and labels support flights, statuses, and hotel alerts safely", () => {
   const base = { id: "a", origin: "LOS", destination: "ABV", targetPrice: "100", currency: "USD", status: "ACTIVE", createdAt: "", updatedAt: "", lastSeenPrice: null, lastCheckedAt: null } as const;
   const flight: MobilePriceAlert = { ...base, type: "FLIGHT", query: { tripType: "round-trip", departureDate: "2026-08-25", returnDate: "2026-08-26", travelers: 1, cabinClass: "economy" } };
-  assert.deepEqual(priceAlertTripSummary(flight), { primary: "Round trip · Aug 25–26", secondary: "1 traveler · Economy" });
+  assert.deepEqual(priceAlertTripSummary(flight), { primary: "Round trip · Aug 25–26, 2026", secondary: "1 traveler · Economy" });
   assert.equal(statusLabel("ACTIVE"), "Active");
   assert.equal(statusLabel("PAUSED"), "Paused");
   assert.deepEqual(priceAlertTripSummary({ ...base, type: "HOTEL", query: {} }), { primary: "Hotel alert", secondary: null });
