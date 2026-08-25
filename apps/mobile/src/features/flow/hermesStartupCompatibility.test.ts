@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
 
-test("Hermes startup supports missing Intl.DisplayNames and Flight Results formatToParts", () => {
+test("Hermes startup preserves fare symbols without Intl.DisplayNames or formatToParts", () => {
   const result = spawnSync(
     process.execPath,
     ["scripts/validate-hermes-startup.mjs"],
