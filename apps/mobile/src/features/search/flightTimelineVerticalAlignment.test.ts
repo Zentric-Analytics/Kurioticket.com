@@ -33,7 +33,7 @@ test("outbound, return, and one-way cards use the same journey implementation", 
 test("vertical correction has no offsets and preserves horizontal and data contracts", () => {
   assert.doesNotMatch(journey, /marginTop|translateY|\btop:/);
   assert.match(source, /departureColumn: \{ flexBasis: 62, minWidth: 62, flexShrink: 0 \}/);
-  assert.match(source, /arrivalColumn: \{ flexBasis: 62, minWidth: 62, flexShrink: 0 \}/);
+  assert.match(source, /arrivalColumn: \{ flexBasis: 82, minWidth: 82, flexShrink: 0 \}/);
   assert.match(source, /rightColumnContract: \{ alignItems: "flex-end" \}/);
   assert.match(journey, /const stopLabel = leg\.stops/);
   assert.match(journey, /theme\.textPrimary/);
