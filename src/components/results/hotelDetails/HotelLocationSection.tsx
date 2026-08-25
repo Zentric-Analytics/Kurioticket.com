@@ -66,7 +66,8 @@ export function HotelLocationSection({
 
   return (
     <section
-      className="mt-5"
+      id="hotel-location"
+      className="mt-5 scroll-mt-20"
       aria-labelledby="hotel-location-heading"
       data-hotel-location-section
     >

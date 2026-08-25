@@ -192,82 +192,141 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
   }
 
   return (
-    <div className="min-w-0 pb-[calc(8.5rem+env(safe-area-inset-bottom))] lg:pb-0" data-standalone-hotel-details>
+    <div
+      className="min-w-0 pb-[calc(8.5rem+env(safe-area-inset-bottom))] lg:pb-0"
+      data-standalone-hotel-details
+    >
       <div
         className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_334px] lg:items-start lg:gap-7"
         data-standalone-hotel-main-grid
       >
         <div className="min-w-0">
           <article className="min-w-0 bg-white lg:rounded-[17px] lg:border lg:border-slate-200/80 lg:p-6 lg:shadow-[0_5px_24px_rgba(15,23,42,0.045)]">
-            <header className="relative mb-4 flex flex-col gap-4 px-4 sm:flex-row sm:items-start sm:justify-between lg:px-0">
-              <div className="min-w-0">
-                <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1.5">
-                  <h1 className="break-words pr-20 text-[22px] font-extrabold leading-tight tracking-[-0.025em] text-slate-950 sm:pr-0 lg:text-[30px]">
-                    {props.hotelName}
-                  </h1>
-                  {props.starRating ? (
-                    <span
-                      aria-label={props.starRatingAriaLabel}
-                      className="whitespace-nowrap text-[15px] tracking-[0.08em] text-amber-500"
-                    >
-                      <span aria-hidden="true">
-                        {"★".repeat(props.starRating)}
+            <header className="mb-4 px-4 lg:px-0" data-mobile-property-header>
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                <div className="min-w-0">
+                  <div className="flex min-w-0 flex-col items-start gap-y-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4">
+                    <h1 className="min-w-0 break-words text-[22px] font-extrabold leading-tight tracking-[-0.025em] text-slate-950 lg:text-[30px]">
+                      {props.hotelName}
+                    </h1>
+                    {props.starRating ? (
+                      <span
+                        aria-label={props.starRatingAriaLabel}
+                        className="whitespace-nowrap text-[15px] tracking-[0.08em] text-amber-500"
+                      >
+                        <span aria-hidden="true">
+                          {"★".repeat(props.starRating)}
+                        </span>
                       </span>
-                    </span>
+                    ) : null}
+                  </div>
+                  {props.locationParts.length ? (
+                    <p className="mt-2 flex flex-wrap items-center gap-x-2 text-[13px] font-medium text-slate-600">
+                      <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      {props.locationParts.map((part, index) => (
+                        <span key={part}>
+                          {index ? <span aria-hidden="true"> · </span> : null}
+                          {part}
+                        </span>
+                      ))}
+                    </p>
+                  ) : null}
+                  {props.propertyDetails?.streetAddress ? (
+                    <div
+                      className="mt-1 flex min-w-0 items-center gap-3 text-xs leading-5 text-slate-600"
+                      data-mobile-hotel-address-row
+                    >
+                      <p
+                        className="min-w-0 flex-1 truncate"
+                        title={props.propertyDetails.streetAddress}
+                      >
+                        {props.propertyDetails.streetAddress}
+                      </p>
+                      <a
+                        href="#hotel-location"
+                        aria-label={`Show directions to ${props.hotelName}`}
+                        className="focus-ring inline-flex min-h-11 shrink-0 items-center font-bold text-blue hover:underline"
+                      >
+                        Show directions
+                      </a>
+                    </div>
+                  ) : null}
+                  {props.reviewScore ? (
+                    <div
+                      className="mt-2 flex items-center gap-2"
+                      data-hotel-review-identity
+                    >
+                      <span
+                        className="flex size-10 items-center justify-center rounded-md bg-blue text-lg font-extrabold text-white"
+                        aria-label={`${props.reviewScore}, ${props.reviewLabel}`}
+                      >
+                        {props.reviewScore}
+                      </span>
+                      <span className="hidden text-xs sm:block">
+                        <strong className="block text-slate-950">
+                          {props.reviewLabel}
+                        </strong>
+                        <span className="text-slate-600">
+                          {props.reviewCountText}
+                        </span>
+                      </span>
+                    </div>
+                  ) : null}
+                  {props.staySummary ? (
+                    <div
+                      className="mt-2 flex min-w-0 flex-wrap gap-x-5 gap-y-1.5 text-xs font-semibold text-slate-700 lg:hidden"
+                      data-mobile-hotel-stay-meta
+                    >
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <CalendarDays
+                          className="h-4 w-4 shrink-0"
+                          aria-hidden="true"
+                        />
+                        <span>
+                          {props.staySummary.dateText} ·{" "}
+                          {props.staySummary.nightText}
+                        </span>
+                      </span>
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <Users
+                          className="h-4 w-4 shrink-0"
+                          aria-hidden="true"
+                        />
+                        <span>{props.staySummary.occupancyText}</span>
+                      </span>
+                    </div>
                   ) : null}
                 </div>
-                {props.locationParts.length ? (
-                  <p className="mt-2 flex flex-wrap items-center gap-x-2 text-[13px] font-medium text-slate-600">
-                    <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    {props.locationParts.map((part, index) => (
-                      <span key={part}>
-                        {index ? <span aria-hidden="true"> · </span> : null}
-                        {part}
-                      </span>
-                    ))}
-                  </p>
-                ) : null}
-                {props.propertyDetails?.streetAddress ? (
-                  <p className="mt-1 pr-24 text-xs leading-5 text-slate-600 sm:pr-0">
-                    {props.propertyDetails.streetAddress}
-                  </p>
-                ) : null}
-                {props.reviewScore ? (
-                  <div className="absolute right-0 top-10 flex items-center gap-2 sm:static sm:mt-3" data-hotel-review-identity>
-                    <span className="flex size-10 items-center justify-center rounded-md bg-blue text-lg font-extrabold text-white" aria-label={`${props.reviewScore}, ${props.reviewLabel}`}>
-                      {props.reviewScore}
-                    </span>
-                    <span className="hidden text-xs sm:block">
-                      <strong className="block text-slate-950">{props.reviewLabel}</strong>
-                      <span className="text-slate-600">{props.reviewCountText}</span>
-                    </span>
-                  </div>
-                ) : null}
-              </div>
-              <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:gap-3">
-                <button
-                  type="button"
-                  aria-pressed={props.isSaved}
-                  aria-label={props.savedHotelLabel}
-                  onClick={props.onSave}
-                  className="focus-ring inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-900 hover:bg-slate-50 sm:h-10"
+                <div
+                  className="flex shrink-0 gap-1 sm:gap-3"
+                  data-property-header-actions
                 >
-                  <Heart
-                    className="h-[17px] w-[17px]"
-                    fill={props.isSaved ? "currentColor" : "none"}
-                    aria-hidden="true"
-                  />
-                  {props.saveText}
-                </button>
-                <button
-                  type="button"
-                  aria-label={props.labels.share}
-                  onClick={() => void sharePage()}
-                  className="focus-ring inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-900 hover:bg-slate-50 sm:h-10"
-                >
-                  <Share2 className="h-[17px] w-[17px]" aria-hidden="true" />
-                  {shareComplete ? props.labels.shared : props.labels.share}
-                </button>
+                  <button
+                    type="button"
+                    aria-pressed={props.isSaved}
+                    aria-label={props.savedHotelLabel}
+                    onClick={props.onSave}
+                    className="focus-ring inline-flex size-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold text-slate-900 hover:bg-slate-50 sm:h-10 sm:w-auto sm:px-3.5"
+                  >
+                    <Heart
+                      className="h-[17px] w-[17px]"
+                      fill={props.isSaved ? "currentColor" : "none"}
+                      aria-hidden="true"
+                    />
+                    <span className="hidden sm:inline">{props.saveText}</span>
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={props.labels.share}
+                    onClick={() => void sharePage()}
+                    className="focus-ring inline-flex size-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold text-slate-900 hover:bg-slate-50 sm:h-10 sm:w-auto sm:px-3.5"
+                  >
+                    <Share2 className="h-[17px] w-[17px]" aria-hidden="true" />
+                    <span className="hidden sm:inline">
+                      {shareComplete ? props.labels.shared : props.labels.share}
+                    </span>
+                  </button>
+                </div>
               </div>
             </header>
 
@@ -319,13 +378,35 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
             ) : null}
 
             {description ? (
-              <section className="mx-4 mt-4 rounded-[11px] border border-slate-200 p-3.5 lg:mx-0 lg:mt-5 lg:border-0 lg:p-0" aria-labelledby="hotel-about-heading">
-                <div className="flex items-start justify-between gap-3"><h2
-                  id="hotel-about-heading"
-                  className="text-[15px] font-bold text-slate-950 lg:text-[17px]"
-                >
-                  {props.labels.about}
-                </h2>{canExpandDescription ? <button type="button" aria-expanded={descriptionExpanded} onClick={() => setDescriptionExpanded((value) => !value)} className="focus-ring inline-flex min-h-11 items-center gap-1 text-xs font-bold text-blue hover:underline lg:hidden">{descriptionExpanded ? props.labels.less : props.labels.more}{descriptionExpanded ? <ChevronUp className="h-4 w-4" aria-hidden="true" /> : <ChevronDown className="h-4 w-4" aria-hidden="true" />}</button> : null}</div>
+              <section
+                className="mx-4 mt-4 rounded-[11px] border border-slate-200 p-3.5 lg:mx-0 lg:mt-5 lg:border-0 lg:p-0"
+                aria-labelledby="hotel-about-heading"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <h2
+                    id="hotel-about-heading"
+                    className="text-[15px] font-bold text-slate-950 lg:text-[17px]"
+                  >
+                    {props.labels.about}
+                  </h2>
+                  {canExpandDescription ? (
+                    <button
+                      type="button"
+                      aria-expanded={descriptionExpanded}
+                      onClick={() => setDescriptionExpanded((value) => !value)}
+                      className="focus-ring inline-flex min-h-11 items-center gap-1 text-xs font-bold text-blue hover:underline lg:hidden"
+                    >
+                      {descriptionExpanded
+                        ? props.labels.less
+                        : props.labels.more}
+                      {descriptionExpanded ? (
+                        <ChevronUp className="h-4 w-4" aria-hidden="true" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" aria-hidden="true" />
+                      )}
+                    </button>
+                  ) : null}
+                </div>
                 <p
                   className={`mt-2 text-[13px] leading-5 text-slate-600 ${descriptionExpanded ? "" : "line-clamp-2"}`}
                 >
@@ -351,9 +432,36 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
               </section>
             ) : null}
 
-            <section className="mx-4 mt-4 rounded-[11px] border border-slate-200 p-4 lg:hidden" aria-labelledby="hotel-guest-reviews-heading" data-hotel-review-summary>
-              <h2 id="hotel-guest-reviews-heading" className="text-[15px] font-bold text-slate-950">{props.labels.guestReviews}</h2>
-              {props.reviewScore ? <div className="mt-3 flex items-center gap-3"><span className="flex size-14 items-center justify-center rounded-lg bg-blue text-2xl font-extrabold text-white">{props.reviewScore}</span><div><strong className="block text-sm text-slate-950">{props.reviewLabel}</strong><span className="text-xs text-slate-600">{props.reviewCountText}</span></div></div> : <p className="mt-2 text-sm text-slate-600">{props.labels.reviewUnavailable}</p>}
+            <section
+              className="mx-4 mt-4 rounded-[11px] border border-slate-200 p-4 lg:hidden"
+              aria-labelledby="hotel-guest-reviews-heading"
+              data-hotel-review-summary
+            >
+              <h2
+                id="hotel-guest-reviews-heading"
+                className="text-[15px] font-bold text-slate-950"
+              >
+                {props.labels.guestReviews}
+              </h2>
+              {props.reviewScore ? (
+                <div className="mt-3 flex items-center gap-3">
+                  <span className="flex size-14 items-center justify-center rounded-lg bg-blue text-2xl font-extrabold text-white">
+                    {props.reviewScore}
+                  </span>
+                  <div>
+                    <strong className="block text-sm text-slate-950">
+                      {props.reviewLabel}
+                    </strong>
+                    <span className="text-xs text-slate-600">
+                      {props.reviewCountText}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-slate-600">
+                  {props.labels.reviewUnavailable}
+                </p>
+              )}
             </section>
 
             {props.propertyDetails ? (
@@ -369,14 +477,57 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
               </div>
             ) : null}
 
-            <section className="mx-4 mt-4 rounded-[11px] border border-slate-200 p-4 lg:hidden" aria-labelledby="hotel-rates-heading" data-hotel-rate-section>
-              <h2 id="hotel-rates-heading" className="text-[15px] font-bold text-slate-950">{props.labels.planningRate}</h2>
-              <div className="mt-3 flex items-center justify-between gap-4 rounded-lg border border-slate-200 p-3"><div><strong className="block text-sm text-slate-950">{props.labels.planningEstimate}</strong><span className="text-xs text-slate-600">{props.planningPriceText}</span></div><div className="shrink-0 text-right">{props.nightlyDisplayPrice ? <strong className="block text-base text-blue">{props.perNightText.replace("{{price}}", props.nightlyDisplayPrice.formatted)}</strong> : <strong className="block text-sm text-slate-600">{props.labels.priceUnavailable}</strong>}<button type="button" disabled={!props.roomChoices.length} onClick={(event) => openRoomOptions(event.currentTarget)} className="focus-ring mt-2 min-h-11 rounded-lg bg-blue px-3 text-xs font-bold text-white disabled:opacity-50">{props.labels.viewRooms}</button></div></div>
+            <section
+              className="mx-4 mt-4 rounded-[11px] border border-slate-200 p-4 lg:hidden"
+              aria-labelledby="hotel-rates-heading"
+              data-hotel-rate-section
+            >
+              <h2
+                id="hotel-rates-heading"
+                className="text-[15px] font-bold text-slate-950"
+              >
+                {props.labels.planningRate}
+              </h2>
+              <div className="mt-3 flex items-center justify-between gap-4 rounded-lg border border-slate-200 p-3">
+                <div>
+                  <strong className="block text-sm text-slate-950">
+                    {props.labels.planningEstimate}
+                  </strong>
+                  <span className="text-xs text-slate-600">
+                    {props.planningPriceText}
+                  </span>
+                </div>
+                <div className="shrink-0 text-right">
+                  {props.nightlyDisplayPrice ? (
+                    <strong className="block text-base text-blue">
+                      {props.perNightText.replace(
+                        "{{price}}",
+                        props.nightlyDisplayPrice.formatted,
+                      )}
+                    </strong>
+                  ) : (
+                    <strong className="block text-sm text-slate-600">
+                      {props.labels.priceUnavailable}
+                    </strong>
+                  )}
+                  <button
+                    type="button"
+                    disabled={!props.roomChoices.length}
+                    onClick={(event) => openRoomOptions(event.currentTarget)}
+                    className="focus-ring mt-2 min-h-11 rounded-lg bg-blue px-3 text-xs font-bold text-white disabled:opacity-50"
+                  >
+                    {props.labels.viewRooms}
+                  </button>
+                </div>
+              </div>
             </section>
           </article>
         </div>
 
-        <aside className="hidden min-w-0 self-start lg:block" data-standalone-stay-summary>
+        <aside
+          className="hidden min-w-0 self-start lg:block"
+          data-standalone-stay-summary
+        >
           <section
             className="rounded-[17px] border border-slate-200/80 bg-white p-5 shadow-[0_5px_24px_rgba(15,23,42,0.045)] sm:p-6"
             aria-labelledby="your-stay-heading"
@@ -468,15 +619,54 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
         </aside>
       </div>
 
-      <section className="fixed inset-x-0 bottom-0 z-[90] rounded-t-[22px] border-t border-slate-200 bg-white px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-8px_28px_rgba(15,23,42,0.14)] lg:hidden" data-mobile-hotel-stay-dock>
-        <div className="mx-auto grid max-w-3xl grid-cols-[1.15fr_.8fr_.8fr_1.25fr] items-center divide-x divide-slate-200">
-          <div className="min-w-0 pr-2">
-            <p className="flex items-center gap-1 text-[11px] font-semibold text-slate-600">{props.estimatedTotalText}<Info className="h-3 w-3" aria-hidden="true" /></p>
-            {props.totalDisplayPrice ? <p className="truncate text-[24px] font-extrabold leading-tight text-slate-950">{props.totalDisplayPrice.formatted}</p> : <p className="text-sm font-bold text-slate-700">{props.labels.priceUnavailable}</p>}
-            {props.nightlyDisplayPrice ? <p className="truncate text-[11px] text-slate-600">{props.perNightText.replace("{{price}}", props.nightlyDisplayPrice.formatted)}</p> : null}
+      <section
+        className="fixed inset-x-0 bottom-0 z-[90] rounded-t-[22px] border-t border-slate-200 bg-white px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-8px_28px_rgba(15,23,42,0.14)] lg:hidden"
+        data-mobile-hotel-stay-dock
+      >
+        <div className="mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)_minmax(132px,0.9fr)] items-center gap-3">
+          <div className="min-w-0">
+            <p className="flex items-center gap-1 text-[11px] font-semibold text-slate-600">
+              {props.estimatedTotalText}
+              <Info className="h-3 w-3" aria-hidden="true" />
+            </p>
+            {props.totalDisplayPrice ? (
+              <p
+                className="text-[clamp(1.25rem,6vw,1.5rem)] font-extrabold leading-tight text-slate-950"
+                title={props.totalDisplayPrice.title}
+                aria-label={props.totalDisplayPrice.ariaLabel}
+              >
+                {props.totalDisplayPrice.formatted}
+              </p>
+            ) : (
+              <p className="text-sm font-bold text-slate-700">
+                {props.labels.priceUnavailable}
+              </p>
+            )}
+            {props.nightlyDisplayPrice ? (
+              <p
+                className="text-[11px] text-slate-600"
+                title={props.nightlyDisplayPrice.title}
+              >
+                {props.perNightText.replace(
+                  "{{price}}",
+                  props.nightlyDisplayPrice.formatted,
+                )}
+              </p>
+            ) : null}
           </div>
-          {props.staySummary ? <><span className="flex min-w-0 items-center gap-1 px-2 text-[10px] text-slate-600"><CalendarDays className="h-4 w-4 shrink-0" aria-hidden="true" /><span className="min-w-0"><strong className="block text-[11px] text-slate-900">{props.staySummary.nightText}</strong><span className="line-clamp-2">{props.staySummary.dateText}</span></span></span><span className="flex min-w-0 items-center gap-1 px-2 text-[10px] text-slate-600"><Users className="h-4 w-4 shrink-0" aria-hidden="true" /><strong className="line-clamp-3 text-slate-900">{props.staySummary.occupancyText}</strong></span></> : <><span /><span /></>}
-          <div className="pl-2 text-center"><button type="button" disabled={!props.roomChoices.length} onClick={(event) => openRoomOptions(event.currentTarget)} className="focus-ring min-h-12 w-full rounded-lg bg-blue px-2 text-xs font-bold leading-4 text-white disabled:opacity-50">{props.labels.viewRooms}</button><p className="mt-1 text-[9px] leading-3 text-slate-500">{props.labels.roomSupport}</p></div>
+          <div className="text-center">
+            <button
+              type="button"
+              disabled={!props.roomChoices.length}
+              onClick={(event) => openRoomOptions(event.currentTarget)}
+              className="focus-ring min-h-12 w-full rounded-lg bg-blue px-3 text-xs font-bold leading-4 text-white disabled:opacity-50"
+            >
+              {props.labels.viewRooms}
+            </button>
+            <p className="mt-1 text-[9px] leading-3 text-slate-500">
+              {props.labels.roomSupport}
+            </p>
+          </div>
         </div>
       </section>
 

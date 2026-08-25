@@ -149,7 +149,10 @@ export function HotelDetailsGallery({
     .replace("{{hotelName}}", hotelName);
 
   const visibleIndices = usableIndices.slice(0, 4);
-  const remainingPhotoCount = Math.max(usableIndices.length - visibleIndices.length, 0);
+  const remainingPhotoCount = Math.max(
+    usableIndices.length - visibleIndices.length,
+    0,
+  );
 
   const mosaic = (
     <div
@@ -186,13 +189,18 @@ export function HotelDetailsGallery({
               alt={tileIndex === 0 ? imageAlt : ""}
               fill
               className="object-cover transition-transform duration-200 group-hover:scale-[1.01]"
-              sizes={tileIndex === 0 ? "(min-width: 1024px) 520px, 100vw" : "340px"}
+              sizes={
+                tileIndex === 0 ? "(min-width: 1024px) 520px, 100vw" : "340px"
+              }
               onError={() => onImageError(url)}
               priority={tileIndex < 2}
             />
             {tileIndex === 3 && remainingPhotoCount > 0 ? (
               <span className="absolute inset-0 flex items-center justify-center bg-slate-950/30 text-sm font-bold text-white">
-                {remainingPhotosLabel.replace("{{count}}", String(remainingPhotoCount))}
+                {remainingPhotosLabel.replace(
+                  "{{count}}",
+                  String(remainingPhotoCount),
+                )}
               </span>
             ) : null}
           </button>
@@ -201,7 +209,9 @@ export function HotelDetailsGallery({
       {!visibleIndices.length ? (
         <div className="flex h-full flex-col items-center justify-center gap-3 rounded-[10px] bg-surface-subtle px-6 text-center lg:col-span-2 lg:row-span-2">
           <Building2 className="h-11 w-11 text-blue" aria-hidden="true" />
-          <span className="max-w-xs text-sm font-semibold text-slate-600">{imageUnavailableText}</span>
+          <span className="max-w-xs text-sm font-semibold text-slate-600">
+            {imageUnavailableText}
+          </span>
         </div>
       ) : null}
     </div>
@@ -210,61 +220,81 @@ export function HotelDetailsGallery({
   const mobileThumbnailIndices = usableIndices.slice(0, 5);
   const mobileRemainingCount = Math.max(usableIndices.length - 5, 0);
 
-  const hero = <div
-    className="relative aspect-[16/9] min-h-[190px] max-h-[420px] w-full overflow-hidden rounded-[11px] bg-slate-100 sm:aspect-[16/10] sm:min-h-0 lg:rounded-none"
-    style={{ touchAction: "pan-y" }}
-    onPointerDown={(event) => {
-      if (event.pointerType !== "mouse")
-        pointerStartRef.current = { x: event.clientX, y: event.clientY };
-    }}
-    onPointerUp={handlePointerUp}
-    onPointerCancel={() => {
-      pointerStartRef.current = null;
-    }}
-  >
-    {activeUrl ? (
-      <button
-        type="button"
-        className="absolute inset-0 cursor-zoom-in focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-blue"
-        aria-label={openLabel}
-        onClick={(event) => openViewer(event.currentTarget)}
-      >
-        <Image
-          key={activeUrl}
-          src={activeUrl}
-          alt={imageAlt}
-          fill
-          className="object-cover"
-          sizes="(min-width: 1024px) 680px, 100vw"
-          onError={() => onImageError(activeUrl)}
-          preload
-        />
-      </button>
-    ) : (
-      <div className="flex h-full flex-col items-center justify-center gap-3 bg-surface-subtle px-6 text-center">
-        <Building2 className="h-11 w-11 text-blue" aria-hidden="true" />
-        <span className="max-w-xs text-sm font-semibold text-slate-600">
-          {imageUnavailableText}
-        </span>
-      </div>
-    )}
-    {showGalleryControls ? (
-      <>
-        <button type="button" aria-label={previousPhotoLabel} onClick={onPrevious} className="focus-ring absolute left-3 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-blue shadow-md">
-          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+  const hero = (
+    <div
+      className="relative aspect-[16/9] min-h-[190px] max-h-[420px] w-full overflow-hidden rounded-[11px] bg-slate-100 sm:aspect-[16/10] sm:min-h-0 lg:rounded-none"
+      style={{ touchAction: "pan-y" }}
+      onPointerDown={(event) => {
+        if (event.pointerType !== "mouse")
+          pointerStartRef.current = { x: event.clientX, y: event.clientY };
+      }}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={() => {
+        pointerStartRef.current = null;
+      }}
+    >
+      {activeUrl ? (
+        <button
+          type="button"
+          className="absolute inset-0 cursor-zoom-in focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-blue"
+          aria-label={openLabel}
+          onClick={(event) => openViewer(event.currentTarget)}
+        >
+          <Image
+            key={activeUrl}
+            src={activeUrl}
+            alt={imageAlt}
+            fill
+            className="object-cover"
+            sizes="(min-width: 1024px) 680px, 100vw"
+            onError={() => onImageError(activeUrl)}
+            preload
+          />
         </button>
-        <button type="button" aria-label={nextPhotoLabel} onClick={onNext} className="focus-ring absolute right-3 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-blue shadow-md">
-          <ChevronRight className="h-5 w-5" aria-hidden="true" />
-        </button>
-        <div className="absolute bottom-3 right-3 rounded-full bg-slate-950/80 px-3 py-1 text-xs font-semibold text-white">
-          {activePosition} / {usableIndices.length}
+      ) : (
+        <div className="flex h-full flex-col items-center justify-center gap-3 bg-surface-subtle px-6 text-center">
+          <Building2 className="h-11 w-11 text-blue" aria-hidden="true" />
+          <span className="max-w-xs text-sm font-semibold text-slate-600">
+            {imageUnavailableText}
+          </span>
         </div>
-      </>
-    ) : null}
-  </div>;
+      )}
+      {showGalleryControls ? (
+        <>
+          <button
+            type="button"
+            aria-label={previousPhotoLabel}
+            onClick={onPrevious}
+            className="focus-ring absolute left-3 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full text-blue"
+          >
+            <span className="flex size-8 items-center justify-center rounded-full bg-white/85 shadow-sm">
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+            </span>
+          </button>
+          <button
+            type="button"
+            aria-label={nextPhotoLabel}
+            onClick={onNext}
+            className="focus-ring absolute right-3 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full text-blue"
+          >
+            <span className="flex size-8 items-center justify-center rounded-full bg-white/85 shadow-sm">
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </span>
+          </button>
+          <div className="absolute bottom-3 right-3 rounded-full bg-slate-950/80 px-3 py-1 text-xs font-semibold text-white">
+            {activePosition} / {usableIndices.length}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
 
   const mobileThumbnails = showGalleryControls ? (
-    <div ref={thumbnailStripRef} className="mt-2 grid grid-cols-5 gap-1.5 lg:hidden" data-hotel-mobile-thumbnail-strip>
+    <div
+      ref={thumbnailStripRef}
+      className="mt-2 grid grid-cols-5 gap-1.5 lg:hidden"
+      data-hotel-mobile-thumbnail-strip
+    >
       {mobileThumbnailIndices.map((imageIndex, visibleIndex) => {
         const thumbnailUrl = displayCandidates[imageIndex];
         const isRemainingTile = visibleIndex === 4 && mobileRemainingCount > 0;
@@ -274,15 +304,34 @@ export function HotelDetailsGallery({
             type="button"
             data-gallery-index={imageIndex}
             aria-pressed={activeIndex === imageIndex}
-            aria-label={isRemainingTile ? viewAllPhotosLabel : selectPhotoLabel.replace("{{number}}", String(visibleIndex + 1))}
+            aria-label={
+              isRemainingTile
+                ? viewAllPhotosLabel
+                : selectPhotoLabel.replace(
+                    "{{number}}",
+                    String(visibleIndex + 1),
+                  )
+            }
             className={`relative aspect-[4/3] min-w-0 overflow-hidden rounded-md bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue ${activeIndex === imageIndex ? "ring-2 ring-blue" : "ring-1 ring-slate-200"}`}
             onClick={(event) => {
               onSelectImage(imageIndex);
               if (isRemainingTile) openViewer(event.currentTarget);
             }}
           >
-            <Image src={thumbnailUrl} alt="" fill className="object-cover" sizes="20vw" onError={() => onImageError(thumbnailUrl)} />
-            {isRemainingTile ? <span className="absolute inset-0 flex items-center justify-center bg-slate-950/55 text-xs font-bold text-white"><Images className="mr-1 h-4 w-4" aria-hidden="true" />+{mobileRemainingCount}</span> : null}
+            <Image
+              src={thumbnailUrl}
+              alt=""
+              fill
+              className="object-cover"
+              sizes="20vw"
+              onError={() => onImageError(thumbnailUrl)}
+            />
+            {isRemainingTile ? (
+              <span className="absolute inset-0 flex items-center justify-center bg-slate-950/55 text-xs font-bold text-white">
+                <Images className="mr-1 h-4 w-4" aria-hidden="true" />+
+                {mobileRemainingCount}
+              </span>
+            ) : null}
           </button>
         );
       })}
@@ -291,7 +340,17 @@ export function HotelDetailsGallery({
 
   const content = (
     <>
-      {layout === "mosaic" ? <><div className="lg:hidden">{hero}{mobileThumbnails}</div>{mosaic}</> : hero}
+      {layout === "mosaic" ? (
+        <>
+          <div className="mx-3 lg:hidden" data-hotel-mobile-gallery-unit>
+            {hero}
+            {mobileThumbnails}
+          </div>
+          {mosaic}
+        </>
+      ) : (
+        hero
+      )}
 
       {layout === "hero" && showGalleryControls ? (
         <div

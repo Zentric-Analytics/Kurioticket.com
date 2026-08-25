@@ -53,23 +53,96 @@ test("mobile gallery uses a truthful hero, controls, counter, and five-slot thum
     "lg:hidden",
     "hidden h-[300px]",
     "lg:grid",
-  ]) assert.ok(gallerySource.includes(contract), contract);
+    "data-hotel-mobile-gallery-unit",
+    "mx-3 lg:hidden",
+  ])
+    assert.ok(gallerySource.includes(contract), contract);
   assert.doesNotMatch(gallerySource, /1 \/ 29|\+25/);
 });
 
-test("mobile stay dock is fixed once, owns the safe area, and preserves desktop stay summary", () => {
+test("mobile header owns stay metadata while the two-column dock owns price and CTA", () => {
   assert.equal(source.match(/data-mobile-hotel-stay-dock/g)?.length, 1);
   assert.match(source, /fixed inset-x-0 bottom-0/);
   assert.match(source, /env\(safe-area-inset-bottom\)/);
   assert.match(source, /pb-\[calc\(8\.5rem\+env\(safe-area-inset-bottom\)\)\]/);
   assert.match(source, /hidden min-w-0 self-start lg:block/);
-  for (const contract of ["props.staySummary.nightText", "props.staySummary.dateText", "props.staySummary.occupancyText", "props.totalDisplayPrice.formatted", "props.nightlyDisplayPrice.formatted"]) assert.ok(source.includes(contract), contract);
+  const header = source.slice(
+    source.indexOf("data-mobile-property-header"),
+    source.indexOf("<HotelDetailsGallery"),
+  );
+  const dock = source.slice(
+    source.indexOf("data-mobile-hotel-stay-dock"),
+    source.indexOf("<RelatedHotelsSection"),
+  );
+  const aside = source.slice(
+    source.indexOf("data-standalone-stay-summary"),
+    source.indexOf("data-mobile-hotel-stay-dock"),
+  );
+  for (const contract of [
+    "data-mobile-hotel-stay-meta",
+    "props.staySummary.nightText",
+    "props.staySummary.dateText",
+    "props.staySummary.occupancyText",
+  ])
+    assert.ok(header.includes(contract), contract);
+  for (const contract of [
+    "props.totalDisplayPrice.formatted",
+    "props.nightlyDisplayPrice.formatted",
+    "props.labels.viewRooms",
+    "grid-cols-[minmax(0,1fr)_minmax(132px,0.9fr)]",
+  ])
+    assert.ok(dock.includes(contract), contract);
+  for (const removed of [
+    "props.staySummary.nightText",
+    "props.staySummary.dateText",
+    "props.staySummary.occupancyText",
+    "CalendarDays",
+    "<Users",
+  ])
+    assert.ok(!dock.includes(removed), removed);
+  for (const contract of [
+    "props.staySummary.nightText",
+    "props.staySummary.dateText",
+    "props.staySummary.occupancyText",
+  ])
+    assert.ok(aside.includes(contract), contract);
+});
+
+test("mobile property header safely aligns actions, address navigation, and long titles", () => {
+  for (const contract of [
+    "data-property-header-actions",
+    "grid-cols-[minmax(0,1fr)_auto]",
+    "min-w-0 break-words",
+    "aria-pressed={props.isSaved}",
+    'className="hidden sm:inline"',
+    "data-mobile-hotel-address-row",
+    'href="#hotel-location"',
+    "aria-label={`Show directions to ${props.hotelName}`}",
+    "min-w-0 flex-1 truncate",
+    "props.propertyDetails.streetAddress",
+  ])
+    assert.ok(source.includes(contract), contract);
 });
 
 test("review and rate modules remain truthful and do not manufacture blueprint claims", () => {
-  for (const contract of ["props.reviewScore", "props.reviewLabel", "props.reviewCountText", "props.labels.reviewUnavailable", "props.labels.planningEstimate", "props.planningPriceText", 'props.perNightText.replace("{{price}}", props.nightlyDisplayPrice.formatted)']) assert.ok(source.includes(contract), contract);
-  assert.match(clientSource, /reviewScale === 5 \? ` \/ \$\{reviewScale\}` : ""/);
-  assert.doesNotMatch(source, /Booking\.com|Expedia|Hotels\.com|100\+ sites|Cleanliness|Emily R\.|Free cancellation/);
+  for (const contract of [
+    "props.reviewScore",
+    "props.reviewLabel",
+    "props.reviewCountText",
+    "props.labels.reviewUnavailable",
+    "props.labels.planningEstimate",
+    "props.planningPriceText",
+    "props.perNightText.replace(",
+  ])
+    assert.ok(source.includes(contract), contract);
+  assert.match(
+    clientSource,
+    /reviewScale === 5 \? ` \/ \$\{reviewScale\}` : ""/,
+  );
+  assert.doesNotMatch(
+    source,
+    /Booking\.com|Expedia|Hotels\.com|100\+ sites|Cleanliness|Emily R\.|Free cancellation/,
+  );
 });
 
 test("standalone route hides travel navigation without changing AppHeader defaults", () => {
@@ -81,12 +154,16 @@ test("standalone route hides travel navigation without changing AppHeader defaul
 
 test("standalone mobile surface is full bleed while its content and desktop shell stay padded", () => {
   for (const contract of [
-    'max-w-[1400px] px-0 lg:px-7',
-    'data-hotel-details-page-shell',
-    'px-4 lg:px-0',
-    'mx-4 mt-3',
-    'mx-4 mt-4',
-  ]) assert.ok(clientSource.includes(contract) || source.includes(contract), contract);
+    "max-w-[1400px] px-0 lg:px-7",
+    "data-hotel-details-page-shell",
+    "px-4 lg:px-0",
+    "mx-4 mt-3",
+    "mx-4 mt-4",
+  ])
+    assert.ok(
+      clientSource.includes(contract) || source.includes(contract),
+      contract,
+    );
   assert.doesNotMatch(clientSource, /max-w-\[1400px\] px-4 sm:px-6 lg:px-7/);
 });
 
@@ -99,7 +176,7 @@ test("hotel details route keeps AppHeader and omits the global Footer", () => {
 test("removes standalone promotional surfaces and normalizes stay-card flow", () => {
   const stayAside =
     source.match(
-      /<aside className="([^"]+)" data-standalone-stay-summary>/,
+      /<aside\s+className="([^"]+)"\s+data-standalone-stay-summary/,
     )?.[1] ?? "";
   assert.ok(stayAside);
   assert.doesNotMatch(
