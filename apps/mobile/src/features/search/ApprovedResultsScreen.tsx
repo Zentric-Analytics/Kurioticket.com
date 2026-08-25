@@ -94,6 +94,7 @@ import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recen
 import { buildPriceByDate, calendarIsoFromTimestamp } from "./dateStripModel";
 import { flightResultCountLabel } from "./flightResultCount";
 import { flightCardLegs, type FlightCardLeg } from "./flightCardLegs";
+import { arrivalDayOffsetAccessibility, flightArrivalDayOffset } from "./flightArrivalDayOffset";
 import { deriveFlightResultHighlights, type FlightResultHighlight } from "./flightResultHighlights";
 import { readSession } from "../../storage/sessionStorage";
 import {
@@ -818,6 +819,8 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
 }
 function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: FlightCardLeg }) {
   const { theme } = useAppTheme();
+  const arrivalDayOffset = flightArrivalDayOffset(leg.departureTime, leg.arrivalTime);
+  const arrivalDayAnnouncement = arrivalDayOffsetAccessibility(arrivalDayOffset);
   const stopLabel = leg.stops
     ? `${leg.stops} stop${leg.stops === 1 ? "" : "s"}`
     : "Nonstop";
@@ -825,7 +828,7 @@ function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: F
     <View
       style={s0.journeyBlock}
       accessible
-      accessibilityLabel={`${label.toLowerCase()}: ${clock(leg.departureTime)} ${leg.originAirport} to ${clock(leg.arrivalTime)} ${leg.destinationAirport}, ${leg.duration}, ${stopLabel}`}
+      accessibilityLabel={`${label.toLowerCase()}: ${clock(leg.departureTime)} ${leg.originAirport} to ${clock(leg.arrivalTime)} ${leg.destinationAirport}${arrivalDayAnnouncement ? `, ${arrivalDayAnnouncement}` : ""}, ${leg.duration}, ${stopLabel}`}
     >
       <Text style={[s0.journeyLabel, { color: theme.textSecondary }]}>{label}</Text>
       <View style={s0.journeyRow}>
@@ -839,7 +842,10 @@ function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: F
             <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
           </View>
           <View style={[s0.arrivalColumn, s0.rightColumnContract]}>
-            <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.arrivalTime)}</Text>
+            <View style={s0.arrivalTimeRow}>
+              <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.arrivalTime)}</Text>
+              {arrivalDayOffset ? <Text style={[s0.arrivalDayOffset, { color: theme.textSecondary }]}>{`+${arrivalDayOffset}`}</Text> : null}
+            </View>
           </View>
         </View>
         <View style={s0.airportStopRow}>
@@ -1391,9 +1397,11 @@ const s0 = StyleSheet.create({
   timeTimelineRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
   airportStopRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
   departureColumn: { flexBasis: 62, minWidth: 62, flexShrink: 0 },
-  arrivalColumn: { flexBasis: 62, minWidth: 62, flexShrink: 0 },
+  arrivalColumn: { flexBasis: 82, minWidth: 82, flexShrink: 0 },
   rightColumnContract: { alignItems: "flex-end" },
   time: { fontSize: 15, fontWeight: "900", color: ui.navy },
+  arrivalTimeRow: { flexDirection: "row", alignItems: "baseline", justifyContent: "flex-end", gap: 2 },
+  arrivalDayOffset: { fontSize: 10, lineHeight: 15, fontWeight: "800" },
   timelineColumn: { flex: 1, minWidth: 46, alignItems: "center" },
   timelineTrack: { flex: 1, minWidth: 46, flexDirection: "row", alignItems: "center", gap: 2 },
   line: {

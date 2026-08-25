@@ -14,7 +14,7 @@ test("outbound and return share one three-band journey component", () => {
   assert.match(source, /timeTimelineRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6 \}/);
   assert.match(source, /departureColumn: \{ flexBasis: 62, minWidth: 62, flexShrink: 0 \}/);
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center" \}/);
-  assert.match(source, /arrivalColumn: \{ flexBasis: 62, minWidth: 62, flexShrink: 0 \}/);
+  assert.match(source, /arrivalColumn: \{ flexBasis: 82, minWidth: 82, flexShrink: 0 \}/);
 });
 
 test("arrival, price, and action terminate on the shared right edge", () => {

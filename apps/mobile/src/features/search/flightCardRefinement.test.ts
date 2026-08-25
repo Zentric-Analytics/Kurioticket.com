@@ -159,7 +159,7 @@ test("narrow flight cards reserve deterministic space for every journey section"
   assert.match(airlineLogo, /tile: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46/);
   assert.match(source, /departureColumn: \{ flexBasis: 62, minWidth: 62, flexShrink: 0 \}/);
-  assert.match(source, /arrivalColumn: \{ flexBasis: 62, minWidth: 62, flexShrink: 0 \}/);
+  assert.match(source, /arrivalColumn: \{ flexBasis: 82, minWidth: 82, flexShrink: 0 \}/);
 
   const readableMinimums = 78 + 70 + 78;
   const interSectionGaps = 6 * 2;
