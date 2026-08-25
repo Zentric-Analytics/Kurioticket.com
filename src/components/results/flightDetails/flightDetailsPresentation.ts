@@ -26,10 +26,18 @@ export function canUseOfferAirlineLogo(
 
 export function compactFareTerms(terms: FlightFareTerm[], tripType: TripType) {
   return terms
-    .flatMap((term, index) =>
-      buildFareDisplayRows(term, tripType).map((text, rowIndex) => ({
-        term,
-        index,
+    .map((term, index) => ({ term, index }))
+    .sort((left, right) => {
+      const priorityDifference =
+        fareTermSelectionPriority(left.term) -
+        fareTermSelectionPriority(right.term);
+      return priorityDifference || left.index - right.index;
+    })
+    .slice(0, 3)
+    .flatMap((term) =>
+      buildFareDisplayRows(term.term, tripType).map((text, rowIndex) => ({
+        term: term.term,
+        index: term.index,
         rowIndex,
         text,
       })),
@@ -43,8 +51,7 @@ export function compactFareTerms(terms: FlightFareTerm[], tripType: TripType) {
         left.index - right.index ||
         left.rowIndex - right.rowIndex
       );
-    })
-    .slice(0, 3);
+    });
 }
 
 export function buildFareDisplayRows(
@@ -93,6 +100,19 @@ export function buildFareDisplayRows(
 
 function normalizeCarrierIdentity(value: string) {
   return value.trim().toLocaleLowerCase("en-US");
+}
+
+function fareTermSelectionPriority(term: FlightFareTerm) {
+  if (
+    term.semantic === "negative" &&
+    (term.category === "change" || term.category === "refund")
+  ) {
+    return 0;
+  }
+  if (term.semantic === "negative") return 1;
+  if (term.category === "baggage") return 2;
+  if (term.category === "change" || term.category === "refund") return 3;
+  return 4;
 }
 
 function fareDisplayRowPriority(term: FlightFareTerm, text: string) {

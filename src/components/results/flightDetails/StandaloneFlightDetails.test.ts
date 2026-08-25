@@ -184,6 +184,22 @@ test("compact fare summaries prioritize restrictions and simplify only unambiguo
   assert.deepEqual(compactFareTerms(terms, "round-trip").map(({ text }) => text), ["Outbound: 1 carry-on included", "Outbound: Changes not allowed", "Outbound: Not refundable"]);
 });
 
+test("split baggage rows do not consume the source-term budget or hide material restrictions", () => {
+  const terms = [
+    { category: "fare", semantic: "informational", text: "Provider fare" },
+    { category: "baggage", semantic: "positive", text: "Outbound: 1 carry-on included, 1 checked bag included", legDirection: "outbound" },
+    { category: "change", semantic: "negative", text: "Outbound: Changes not allowed", legDirection: "outbound" },
+    { category: "refund", semantic: "negative", text: "Outbound: Not refundable", legDirection: "outbound" },
+  ] satisfies NonNullable<NormalizedFlightResult["fareTerms"]>;
+
+  assert.deepEqual(compactFareTerms(terms, "one-way").map(({ text }) => text), [
+    "1 carry-on included",
+    "1 checked bag included",
+    "Changes not allowed",
+    "Not refundable",
+  ]);
+});
+
 test("fare display rows safely split included carry-on and checked baggage without changing facts", () => {
   const combined = {
     category: "baggage",
