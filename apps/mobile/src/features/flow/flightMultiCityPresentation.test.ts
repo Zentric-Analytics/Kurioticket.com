@@ -31,6 +31,20 @@ test("each field is an independent accessible rounded surface with semantic icon
   assert.doesNotMatch(styles.match(/multiField:\{[^}]+\}/)?.[0] ?? "", /height:/);
 });
 
+test("Multi-city travelers reuse the standalone field after Add flight and before submit", () => {
+  const multiCityBranch = panel.slice(panel.indexOf('{form.tripType === "multi-city" ? <MultiCityField label="Travelers & Cabin Class"'));
+  const travelerField = multiCityBranch.slice(0, multiCityBranch.indexOf("/>") + 2);
+  assert.match(travelerField, /label="Travelers & Cabin Class"/);
+  assert.match(travelerField, /value=\{travelerCabinSummary\}/);
+  assert.match(travelerField, /icon="person"/);
+  assert.match(travelerField, /trailingChevron/);
+  assert.match(travelerField, /onPress=\{\(\) => setPicker\("travelers"\)\}/);
+  assert.match(field, /<Text numberOfLines=\{0\}/);
+  assert.ok(panel.indexOf('label="Travelers & Cabin Class"') > panel.indexOf("<MultiCityEditor"));
+  assert.ok(panel.indexOf("errors.travelers") > panel.indexOf('label="Travelers & Cabin Class"'));
+  assert.ok(panel.indexOf("<PrimaryButton label={submitLabel}") > panel.indexOf("errors.cabin"));
+});
+
 test("Remove flight is below fields, remains visible at two legs, and is fully tappable", () => {
   assert.match(editor, /const removeDisabled = form\.multiCityLegs\.length <= MULTI_CITY_MIN_LEGS/);
   assert.match(editor, /accessibilityLabel=\{`Remove Flight \$\{index\+1\}`\} accessibilityState=\{\{disabled:removeDisabled\}\} disabled=\{removeDisabled\}/);

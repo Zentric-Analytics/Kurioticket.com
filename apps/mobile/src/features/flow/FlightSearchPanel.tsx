@@ -71,7 +71,7 @@ export const FlightSearchPanel = forwardRef<FlightSearchHandle, { compact?: bool
     {errors.departureDate ? <ErrorText text={errors.departureDate}/> : null}
     {form.tripType === "round-trip" && errors.returnDate ? <ErrorText text={errors.returnDate}/> : null}
     </>}
-    <CompactSearchField label="Travelers & Cabin Class" value={travelerCabinSummary} icon="person" muted={!travelerCount || !form.cabin} trailing={<FlowIcon name="chevronDown" size={16} color={ft.colors.icon}/>} onPress={() => setPicker("travelers")}/>
+    {form.tripType === "multi-city" ? <MultiCityField label="Travelers & Cabin Class" value={travelerCabinSummary} icon="person" muted={!travelerCount || !form.cabin} trailingChevron onPress={() => setPicker("travelers")}/> : <CompactSearchField label="Travelers & Cabin Class" value={travelerCabinSummary} icon="person" muted={!travelerCount || !form.cabin} trailing={<FlowIcon name="chevronDown" size={16} color={ft.colors.icon}/>} onPress={() => setPicker("travelers")}/>}
     {errors.travelers ? <ErrorText text={errors.travelers}/> : null}
     {errors.cabin ? <ErrorText text={errors.cabin}/> : null}
     {notice ? <UnavailableNotice text={notice}/> : null}{showSubmit ? <View style={styles.button}><PrimaryButton label={submitLabel} icon={null} onPress={submit} disabled={submitting}/></View> : null}
@@ -83,7 +83,7 @@ export const FlightSearchPanel = forwardRef<FlightSearchHandle, { compact?: bool
     <TravelerCabinSheet visible={picker === "travelers" || picker === "cabin"} form={form} onDone={(draft) => { setForm({ ...form, ...draft }); clear("travelers", "cabin"); setPicker(undefined); }} onCancel={() => setPicker(undefined)}/>
   </View>;
 });
-function MultiCityField({ label, value, icon, muted, trailingChevron = false, onPress }: { label: string; value: string; icon: "location" | "calendar"; muted: boolean; trailingChevron?: boolean; onPress: () => void }) {
+function MultiCityField({ label, value, icon, muted, trailingChevron = false, onPress }: { label: string; value: string; icon: "location" | "calendar" | "person"; muted: boolean; trailingChevron?: boolean; onPress: () => void }) {
   const ft = useFlowTheme();
   return <Pressable accessibilityRole="button" accessibilityLabel={`${label}, ${value}`} onPress={onPress} style={({pressed})=>[styles.multiField,{backgroundColor:ft.colors.input,borderColor:ft.colors.border},pressed&&ft.styles.pressed]}><Text style={[styles.multiFieldLabel,{color:ft.colors.secondaryText}]}>{label.toUpperCase()}</Text><View style={styles.multiFieldValueRow}><FlowIcon name={icon} size={18} color={ft.colors.icon}/><Text numberOfLines={0} style={[styles.multiFieldValue,ft.styles.value,muted&&{color:ft.colors.placeholder}]}>{value}</Text>{trailingChevron?<FlowIcon name="chevronDown" size={16} color={ft.colors.icon}/>:null}</View></Pressable>;
 }
