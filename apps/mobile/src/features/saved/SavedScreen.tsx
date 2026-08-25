@@ -10,12 +10,12 @@ import { destinationById } from "../explore/destinationCatalogue";
 import { destinationMedia, FALLBACK_SOURCE, type DestinationMedia } from "../explore/destinationMedia";
 import { formatFlightAccess } from "../explore/exploreModels";
 import { exploreFlightDestinationNavigation } from "../explore/exploreSearchHandoff";
-import { regionBrowseCardLayout } from "../explore/regionBrowseCardLayout";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { hasValidSearchPlan, legacyFlightSearchParams, legacyHotelSearchParams, sanitizeSearchParams } from "../flow/savedSearchContext";
 import { signInHref } from "../auth/signInIntent";
 import { SavedTravelIllustration } from "./SavedTravelIllustration";
+import { savedCardLayout } from "./savedCardLayout";
 
 type SavedCardModel = {
   item: MobileSavedItem;
@@ -96,7 +96,7 @@ export function canonicalSavedCards(items: readonly MobileSavedItem[]): SavedCar
 function SavedCard({ model, remove }: { model: SavedCardModel; remove: (item: MobileSavedItem) => void }) {
   const { theme } = useAppTheme();
   const { width: windowWidth } = useWindowDimensions();
-  const layout = regionBrowseCardLayout(windowWidth);
+  const layout = savedCardLayout(windowWidth);
   const [imageFailed, setImageFailed] = useState(false);
   const geometry = { width: layout.width, height: layout.height };
   const source = imageFailed ? FALLBACK_SOURCE : (model.media?.source ?? FALLBACK_SOURCE);
