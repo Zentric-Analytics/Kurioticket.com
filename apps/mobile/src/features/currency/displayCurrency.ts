@@ -2,6 +2,15 @@ import { supportedRegions } from "../../../../../src/lib/region/supportedRegions
 
 export type ExchangeRates = Record<string, number>;
 
+const fallbackCurrencyLabels: Readonly<Record<string, string>> = {
+  NGN: "₦",
+  USD: "US$",
+  CAD: "CA$",
+  AUD: "A$",
+  GBP: "£",
+  EUR: "€",
+};
+
 const regionCurrency = new Map(
   supportedRegions.map(({ code, currency }) => [code.toUpperCase(), currency]),
 );
@@ -160,22 +169,18 @@ export function formatCurrency(amount: number, currency: string) {
       }
     }
 
-    // English symbol formatting preserves USD/CAD/AUD disambiguation without
-    // relying on symbol position or formatToParts. Other currencies retain the
-    // device locale's narrow-symbol output.
-    if (normalizedCurrency === "USD" || normalizedCurrency === "CAD" || normalizedCurrency === "AUD") {
-      try {
-        return new Intl.NumberFormat("en-GB", {
-          style: "currency",
-          currency: normalizedCurrency,
-          currencyDisplay: "symbol",
-          maximumFractionDigits: 0,
-        }).format(amount);
-      } catch {
-        // Fall through to the already-created formatter, then plain text.
-      }
-    }
-    return formatter.format(amount);
+    // Hermes can format a currency while omitting formatToParts, but may emit
+    // an ISO code instead of the requested narrow symbol. Format the number
+    // independently so the established fare labels do not depend on CLDR
+    // symbol support or on the locale's currency position.
+    const number = new Intl.NumberFormat("en-US", {
+      maximumFractionDigits: 0,
+    }).format(Math.abs(amount));
+    const sign = amount < 0 ? "-" : "";
+    const label = fallbackCurrencyLabels[normalizedCurrency];
+    return label
+      ? `${sign}${label}${number}`
+      : `${sign}${normalizedCurrency} ${number}`;
   } catch {
     const readableAmount = Number.isFinite(amount) ? Math.round(amount).toString() : String(amount);
     return `${normalizedCurrency} ${readableAmount}`;
