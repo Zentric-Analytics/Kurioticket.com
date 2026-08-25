@@ -13,9 +13,10 @@ type Props = {
   formatValue: (value: number) => string;
   onChange: (range: NumericRange) => void;
   onDragStateChange?: (dragging: boolean) => void;
+  accessibilityLabel?: string;
 };
 
-export function FlightRangeSlider({ available, selected, step, singleMaximum = false, formatValue, onChange, onDragStateChange }: Props) {
+export function FlightRangeSlider({ available, selected, step, singleMaximum = false, formatValue, onChange, onDragStateChange, accessibilityLabel }: Props) {
   const { theme } = useAppTheme();
   const [width, setWidth] = useState(0);
   const [activeEdge, setActiveEdge] = useState<"min" | "max" | null>(null);
@@ -70,12 +71,13 @@ export function FlightRangeSlider({ available, selected, step, singleMaximum = f
     {...handlers}
     style={({ pressed }) => [styles.hitTarget, { left: x - THUMB_CENTER_INSET, zIndex: activeEdge === edge ? 2 : 1, elevation: activeEdge === edge ? 2 : 0 }, pressed && styles.pressed]}
   ><View style={[styles.thumb, { backgroundColor: ui.blue, borderColor: theme.surface }]} /></Pressable>;
-  return <View style={styles.container} onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
+  const tapTrack = (x: number) => updateEdge(singleMaximum ? "max" : (Math.abs(x - minX) < Math.abs(x - maxX) ? "min" : "max"), x);
+  return <Pressable style={styles.container} onLayout={(event) => setWidth(event.nativeEvent.layout.width)} onPress={(event) => tapTrack(event.nativeEvent.locationX)}>
     <View pointerEvents="none" style={[styles.track, { backgroundColor: theme.border }]} />
     <View pointerEvents="none" style={[styles.active, { backgroundColor: ui.blue, left: singleMaximum ? 0 : minX, width: Math.max(0, maxX - (singleMaximum ? 0 : minX)) }]} />
     {!singleMaximum ? thumb("min", minX, minResponder.panHandlers, "Minimum price") : null}
-    {thumb("max", maxX, maxResponder.panHandlers, singleMaximum ? "Maximum flight duration" : "Maximum price")}
-  </View>;
+    {thumb("max", maxX, maxResponder.panHandlers, accessibilityLabel ?? (singleMaximum ? "Maximum travel time" : "Maximum price"))}
+  </Pressable>;
 }
 
 const styles = StyleSheet.create({
