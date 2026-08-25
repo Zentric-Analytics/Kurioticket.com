@@ -70,7 +70,7 @@ export function flightDetailsRouteLabel(
     return route;
   }
 
-  return `${cleanRouteLocation(fallbackOrigin)} to ${cleanRouteLocation(fallbackDestination)}`;
+  return `${cleanRouteLocation(fallbackOrigin)} → ${cleanRouteLocation(fallbackDestination)}`;
 }
 
 function cleanRouteLocation(value: string) {
