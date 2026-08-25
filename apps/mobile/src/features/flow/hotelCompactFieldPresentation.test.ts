@@ -15,7 +15,8 @@ test("Hotel closed rows reuse the Packages CompactSearchField architecture", () 
 });
 
 test("Destination uses the Hotel wording and shared location row", () => {
-  assert.match(closedFields, /<CompactSearchField label="Destination" value=\{form\.destination \|\| "City, area, or hotel"\} muted=\{!form\.destination\} icon="location" onPress=\{\(\) => setDestinationOpen\(true\)\}\/?>/);
+  assert.match(closedFields, /<CompactSearchField label="Destination" value=\{form\.destination \|\| "City or hotel"\} muted=\{!form\.destination\} icon="location" onPress=\{\(\) => setDestinationOpen\(true\)\}\/?>/);
+  assert.doesNotMatch(closedFields, /City, area, or hotel/);
 });
 
 test("Travel dates alone opt into unlimited wrapping", () => {
