@@ -184,7 +184,7 @@ test("compact fare summaries prioritize restrictions and simplify only unambiguo
   assert.deepEqual(compactFareTerms(terms, "round-trip").map(({ text }) => text), ["Outbound: 1 carry-on included", "Outbound: Changes not allowed", "Outbound: Not refundable"]);
 });
 
-test("split baggage rows do not consume the source-term budget or hide material restrictions", () => {
+test("compact fare rows stay within three decisions and do not hide material restrictions", () => {
   const terms = [
     { category: "fare", semantic: "informational", text: "Provider fare" },
     { category: "baggage", semantic: "positive", text: "Outbound: 1 carry-on included, 1 checked bag included", legDirection: "outbound" },
@@ -194,10 +194,36 @@ test("split baggage rows do not consume the source-term budget or hide material 
 
   assert.deepEqual(compactFareTerms(terms, "one-way").map(({ text }) => text), [
     "1 carry-on included",
-    "1 checked bag included",
     "Changes not allowed",
     "Not refundable",
   ]);
+});
+
+test("identical round-trip baggage is consolidated only when the verified facts match", () => {
+  const matching = [
+    { category: "baggage", semantic: "positive", text: "Outbound: 1 carry-on included, 1 checked bag included", legDirection: "outbound" },
+    { category: "baggage", semantic: "positive", text: "Return: 1 carry-on included, 1 checked bag included", legDirection: "return" },
+    { category: "change", semantic: "negative", text: "Changes not allowed before departure" },
+  ] satisfies NonNullable<NormalizedFlightResult["fareTerms"]>;
+  assert.deepEqual(compactFareTerms(matching, "round-trip").map(({ text }) => text), [
+    "1 carry-on included each way",
+    "1 checked bag included each way",
+    "Changes not allowed before departure",
+  ]);
+
+  const different = matching.map((term) => ({ ...term }));
+  different[1].text = "Return: 1 carry-on included, 2 checked bags included";
+  const differentRows = compactFareTerms(different, "round-trip").map(({ text }) => text);
+  assert.ok(differentRows.includes("1 carry-on included each way"));
+  assert.ok(!differentRows.some((text) => /checked bag included each way/i.test(text)));
+});
+
+test("long and unknown provider conditions remain complete in compact presentation", () => {
+  const terms = [
+    { category: "change", semantic: "negative", text: "Changes allowed with USD 1,870.00 penalty before departure" },
+    { category: "fare", semantic: "informational", text: "Provider-specific condition ZYQ-42 applies" },
+  ] satisfies NonNullable<NormalizedFlightResult["fareTerms"]>;
+  assert.deepEqual(compactFareTerms(terms, "one-way").map(({ text }) => text), terms.map(({ text }) => text));
 });
 
 test("fare display rows safely split included carry-on and checked baggage without changing facts", () => {
@@ -407,6 +433,9 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.match(source, /useState<FareTab>\("details"\)/);
   assert.match(source, /role="tabpanel"/);
   assert.match(source, /ArrowRight.*ArrowLeft/s);
+  assert.match(source, /grid min-w-0 grid-cols-3 sm:flex sm:flex-nowrap/);
+  assert.match(source, /min-w-0 whitespace-nowrap border-b-2 px-0 text-center text-\[11px\]/);
+  assert.doesNotMatch(source, /role="tablist"[^>]*overflow-x-auto/);
   assert.doesNotMatch(source, />Selected<\/span>/);
   assert.match(source, /grid-cols-\[minmax\(0,1fr\)_minmax\(82px,1\.1fr\)_minmax\(0,1fr\)\]/);
   assert.match(source, /border-dashed border-\[#075EE8\]/);
@@ -422,6 +451,9 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.doesNotMatch(source, /min-h-\[126px\]/);
   assert.doesNotMatch(source, /min-h-\[(?:1[2-9]\d|[2-9]\d\d)px\]/);
   assert.match(source, /w-\[min\(82vw,310px\)\] shrink-0 snap-start/);
+  assert.match(source, /min-w-0 max-w-\[310px\] rounded-\[10px\]/);
+  assert.match(source, /whitespace-normal break-words \[overflow-wrap:anywhere\].*\[word-break:normal\]/);
+  assert.doesNotMatch(source, /text-overflow|ellipsis/);
   assert.match(source, /overflow-x-auto.*sm:grid/s);
   assert.match(source, /scrollIntoView\(\{ behavior: "smooth", block: "nearest", inline: "nearest" \}\)/);
   assert.match(source, /max-w-\[1470px\] px-0 sm:px-6 lg:px-\[34px\]/);
