@@ -129,7 +129,7 @@ export function SavedScreen() {
       <View style={[styles.illustrationGap, windowHeight < 760 && styles.illustrationGapShort]} />
       <Text style={[styles.emptyTitle, { color: theme.text }]}>Save what you like for later</Text>
       <Text style={[styles.emptyText, { color: theme.muted }]}>Keep flights, hotels and searches you’re interested in so you can easily find them again.</Text>
-      <Pressable accessibilityRole="button" accessibilityLabel="Start your search" onPress={() => router.push("/(tabs)")} style={({ pressed }) => [styles.emptyPrimary, pressed && styles.pressed]}><Text style={styles.primaryText}>Start your search</Text></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="Start your search" onPress={() => router.dismissTo("/(tabs)")} style={({ pressed }) => [styles.emptyPrimary, pressed && styles.pressed]}><Text style={styles.primaryText}>Start your search</Text></Pressable>
       <View style={styles.emptyBottomSpacer} />
     </ScrollView> : null}
   </SafeAreaView>;

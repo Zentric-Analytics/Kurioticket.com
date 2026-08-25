@@ -35,7 +35,8 @@ test("authenticated empty Saved has a dedicated responsive landing state", () =>
   assert.match(screen, />Save what you like for later<\/Text>/);
   assert.match(screen, /Keep flights, hotels and searches you’re interested in so you can easily find them again\./);
   assert.match(screen, /accessibilityRole="button" accessibilityLabel="Start your search"/);
-  assert.match(screen, /router\.push\("\/\(tabs\)"\)/);
+  assert.match(screen, /router\.dismissTo\("\/\(tabs\)"\)/);
+  assert.doesNotMatch(screen, /router\.push\("\/\(tabs\)"\)/);
   assert.match(screen, /emptyTopSpacer: \{ flexGrow:/);
   assert.match(screen, /emptyBottomSpacer: \{ flexGrow:/);
   assert.match(screen, /windowHeight < 760/);
