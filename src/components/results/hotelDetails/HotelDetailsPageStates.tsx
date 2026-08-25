@@ -16,8 +16,8 @@ function SkeletonBlock({ className }: { className: string }) {
 export function HotelDetailsLoadingState({ loadingText, resultsHref = "/hotels/results", backToResultsText = "Back to hotel results", embedded = false, statusRef }: { loadingText: string; resultsHref?: string; backToResultsText?: string; embedded?: boolean; statusRef?: React.RefObject<HTMLDivElement | null> }) {
   const content = (
       <section className="border-b border-border bg-white">
-        <div className="page-shell py-6 sm:py-8 lg:py-10">
-          {!embedded ? <div className="mb-4"><DetailsBackLink href={resultsHref}>{backToResultsText}</DetailsBackLink></div> : null}
+        <div className="mx-auto w-full max-w-[1400px] px-0 py-6 sm:py-8 lg:px-7 lg:py-10" data-hotel-details-state-shell>
+          {!embedded ? <div className="mb-4 px-4 lg:px-0"><DetailsBackLink href={resultsHref}>{backToResultsText}</DetailsBackLink></div> : null}
           <div
           ref={statusRef}
           tabIndex={statusRef ? -1 : undefined}
@@ -103,7 +103,7 @@ export function HotelDetailsUnavailableState({
   const Heading = headingLevel;
   const content = (
       <section className="border-b border-border bg-white">
-        <div className="page-shell py-6 sm:py-8 lg:py-10">
+        <div className="mx-auto w-full max-w-[1400px] px-0 py-6 sm:py-8 lg:px-7 lg:py-10" data-hotel-details-state-shell>
           <div className="mx-auto max-w-3xl">
           <Card variant="elevated" className="p-6 sm:p-8">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start">

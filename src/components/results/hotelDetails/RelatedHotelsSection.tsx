@@ -75,7 +75,7 @@ function RelatedHotelCard({
     <Link
       href={href}
       aria-label={`${labels.viewHotel}: ${hotel.name}`}
-      className="group focus-ring block min-w-0 w-full overflow-hidden rounded-[15px] border border-slate-200 bg-white shadow-[0_4px_16px_rgba(15,23,42,0.05)] transition-shadow hover:shadow-[0_8px_24px_rgba(15,23,42,0.09)]"
+      className="group focus-ring block w-[82vw] max-w-[300px] shrink-0 snap-start overflow-hidden rounded-[15px] border border-slate-200 bg-white shadow-[0_4px_16px_rgba(15,23,42,0.05)] transition-shadow hover:shadow-[0_8px_24px_rgba(15,23,42,0.09)] lg:w-full lg:max-w-none lg:min-w-0"
     >
       <div className="relative aspect-video overflow-hidden bg-slate-100">
         {hotel.imageUrl && !imageFailed ? (
@@ -90,7 +90,7 @@ function RelatedHotelCard({
                   : "",
               )}
             fill
-            sizes="(max-width: 640px) calc(100vw - 40px), (max-width: 1023px) 50vw, 25vw"
+            sizes="(max-width: 1023px) min(82vw, 300px), 25vw"
             className="object-cover transition-transform duration-200 motion-safe:group-hover:scale-[1.02]"
             onError={() => setImageFailed(true)}
           />
@@ -165,12 +165,12 @@ export function RelatedHotelsSection({
     >
       <h2
         id="related-hotels-heading"
-        className="text-xl font-extrabold text-slate-950"
+        className="px-4 text-xl font-extrabold text-slate-950 lg:px-0"
       >
         {labels.heading.replace("{{destination}}", city)}
       </h2>
       <div
-        className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        className="mt-4 flex w-full min-w-0 max-w-full touch-pan-x gap-4 overflow-x-auto overflow-y-hidden overscroll-x-contain snap-x snap-mandatory px-4 pb-4 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [-ms-overflow-style:none] lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0 lg:pb-0 [&::-webkit-scrollbar]:hidden"
         data-related-hotels-grid
       >
         {displayedHotels.map((hotel) => (
