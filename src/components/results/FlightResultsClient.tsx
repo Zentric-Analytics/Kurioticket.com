@@ -91,6 +91,12 @@ import {
   readFlightResultsSessionSnapshot,
   writeFlightResultsSessionSnapshot,
 } from "@/lib/flights/flightResultsSessionCache";
+import {
+  buildFlightPaginationItems,
+  clampFlightResultsPage,
+  getFlightResultsPageCount,
+  paginateFlightResults,
+} from "@/lib/flights/flightResultsPagination";
 import { isFlightResultsPreparing } from "@/components/results/flightResultsReadiness";
 import {
   readSavedItemIds,
@@ -813,6 +819,51 @@ function lockDocumentScrollWithoutLayoutShift() {
 
 export type FlightResultsPresentationMode = "standalone" | "deals-guided";
 
+function FlightResultsPagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+  const items = buildFlightPaginationItems(currentPage, totalPages);
+  const mobileItems = buildFlightPaginationItems(currentPage, totalPages, true);
+
+  const renderItems = (pageItems: typeof items) => pageItems.map((item, index) => item === "ellipsis" ? (
+    <span key={`ellipsis-${index}`} className="flight-pagination-ellipsis" aria-hidden="true">…</span>
+  ) : (
+    <button
+      key={item}
+      type="button"
+      aria-label={`Go to flight results page ${item}`}
+      aria-current={item === currentPage ? "page" : undefined}
+      onClick={() => onPageChange(item)}
+      className="flight-pagination-control"
+    >
+      {item}
+    </button>
+  ));
+
+  return (
+    <nav
+      aria-label="Flight results pages"
+      className="flight-results-pagination mt-5 flex min-w-0 items-center justify-center rounded-xl border border-slate-200 bg-white p-2 shadow-sm"
+    >
+      <button type="button" aria-label="Previous flight results page" disabled={currentPage === 1} onClick={() => onPageChange(currentPage - 1)} className="flight-pagination-control">
+        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+      </button>
+      <span className="hidden items-center gap-1 sm:flex">{renderItems(items)}</span>
+      <span className="flex min-w-0 items-center sm:hidden">{renderItems(mobileItems)}</span>
+      <button type="button" aria-label="Next flight results page" disabled={currentPage === totalPages} onClick={() => onPageChange(currentPage + 1)} className="flight-pagination-control">
+        <ChevronRight className="h-4 w-4" aria-hidden="true" />
+      </button>
+    </nav>
+  );
+}
+
 export type FlightResultsSearchInput = {
   tripType: string;
   origin: string;
@@ -941,6 +992,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [sortMode, setSortMode] = useState<SortMode>(
     (params.get("sort") as SortMode) || "cheapest",
   );
+  const [guidedResultsPage, setGuidedResultsPage] = useState(1);
   const [desktopSortOpen, setDesktopSortOpen] = useState(false);
   const desktopSortRef = useRef<HTMLDivElement | null>(null);
   const desktopSortButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -4148,9 +4200,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }, []);
 
   const handleUserFilterCommit = useCallback(() => {
+    setGuidedResultsPage(1);
+    if (!guidedMode) {
+      const nextParams = new URLSearchParams(urlParams.toString());
+      nextParams.delete("page");
+      router.replace(`/flights/results?${nextParams.toString()}`, { scroll: false });
+    }
     triggerFilterApplying();
     scrollToFlightResultsTop();
-  }, [scrollToFlightResultsTop, triggerFilterApplying]);
+  }, [guidedMode, router, scrollToFlightResultsTop, triggerFilterApplying, urlParams]);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -4426,6 +4484,31 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
     return nextResults;
   }, [filtered, sortMode]);
+
+  const totalResultPages = getFlightResultsPageCount(sortedResults.length);
+  const requestedResultsPage = guidedMode
+    ? guidedResultsPage
+    : Math.max(1, Number(urlParams.get("page")) || 1);
+  const validResultsPage = clampFlightResultsPage(requestedResultsPage, totalResultPages);
+  const visibleResults = useMemo(
+    () => paginateFlightResults(sortedResults, validResultsPage),
+    [sortedResults, validResultsPage],
+  );
+
+  const changeResultsPage = useCallback((nextPage: number) => {
+    const page = clampFlightResultsPage(nextPage, totalResultPages);
+    if (page === validResultsPage) return;
+    if (guidedMode) {
+      setGuidedResultsPage(page);
+    } else {
+      const nextParams = new URLSearchParams(urlParams.toString());
+      if (page === 1) nextParams.delete("page");
+      else nextParams.set("page", String(page));
+      router.push(`/flights/results?${nextParams.toString()}`, { scroll: false });
+    }
+    scrollToFlightResultsTop();
+    window.setTimeout(() => resultsHeadingRef.current?.focus({ preventScroll: true }), 0);
+  }, [guidedMode, router, scrollToFlightResultsTop, totalResultPages, urlParams, validResultsPage]);
 
 
   useEffect(() => {
@@ -7016,7 +7099,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         <aside ref={desktopFilterSidebarRef} className="relative hidden self-stretch lg:block"><DesktopFlightFilters presentationMode="deals-guided" activeFilterCount={activeFilterCount} maxPrice={maxPrice} setMaxPrice={setMaxPrice} priceBounds={priceBounds} priceLabelCurrency={priceLabelCurrency} selectedCurrency={selectedCurrency} timeFilterMode={timeFilterMode} setTimeFilterMode={setTimeFilterMode} timeBounds={timeBounds} maxTakeoffMinutes={maxTakeoffMinutes} setMaxTakeoffMinutes={setMaxTakeoffMinutes} maxLandingMinutes={maxLandingMinutes} setMaxLandingMinutes={setMaxLandingMinutes} durationBounds={durationBounds} maxDurationMinutes={maxDurationMinutes} setMaxDurationMinutes={setMaxDurationMinutes} stopOptions={stopOptions} selectedStops={selectedStops} setSelectedStops={setSelectedStops} airlineOptions={airlineOptions} selectedAirlines={selectedAirlines} setSelectedAirlines={setSelectedAirlines} airportOptions={airportOptions} selectedAirports={selectedAirports} setSelectedAirports={setSelectedAirports} flightQualityOptions={flightQualityOptions} renderFlightQualityFilter={renderFlightQualityFilter} selectedFlightQuality={selectedFlightQuality} setSelectedFlightQuality={setSelectedFlightQuality} baggageIncludedOnly={baggageIncludedOnly} setBaggageIncludedOnly={setBaggageIncludedOnly} flexibleOnly={flexibleOnly} setFlexibleOnly={setFlexibleOnly} onFilterChange={triggerFilterApplying} onFilterCommit={handleUserFilterCommit} onClear={clearFlightFilters} originCode={originCode} destinationCode={destinationCode} /></aside>
         <section className="min-w-0 space-y-4">
           <div className="flex w-full flex-col gap-3 py-1"><div className="flex items-center justify-between gap-4"><p className="text-[16px] font-semibold text-[#142033]">{formatResultsFound(sortedResults.length, t)}</p>{renderDesktopSortControl()}<Button variant="secondary" className="h-10 rounded-xl border-slate-300 text-sm font-bold lg:hidden" onClick={(event) => openMobileFiltersDrawer(event.currentTarget)}>{activeFilterCount > 0 ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount)) : t("filters")}</Button></div><div className="lg:hidden">{renderMobileSortResultsRow()}</div></div>
-          {error ? <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger" role="alert"><h2 ref={errorHeadingRef} tabIndex={-1} className="text-lg font-extrabold">{t("deals.guided.flightResults.errorTitle")}</h2><p className="mt-2">{error}</p><p className="mt-2">{t("deals.guided.flightResults.errorBody")}</p>{renderGuidedRetryButton()}</div> : filterApplying ? <div className="space-y-3"><div role="status" className="rounded-xl border border-[#004BB8]/10 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm">{t("updatingResults")}</div><FlightCardSkeleton /><FlightCardSkeleton /></div> : sortedResults.length ? sortedResults.map((flight, index) => <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={buildDetailsHref ? buildDetailsHref(flight) : undefined} actionLabel={actionLabel} actionAriaLabel={actionAriaLabel?.(flight)} onAction={onSelectFlight} showProviderHandoffCopy={false} />) : <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm font-semibold text-muted shadow-sm"><h2 ref={emptyHeadingRef} tabIndex={-1} className="text-lg font-extrabold text-slate-950">{t("deals.guided.flightResults.emptyTitle")}</h2><p className="mt-2">{t("deals.guided.flightResults.emptyBody")}</p>{renderGuidedRetryButton()}</div>}
+          {error ? <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger" role="alert"><h2 ref={errorHeadingRef} tabIndex={-1} className="text-lg font-extrabold">{t("deals.guided.flightResults.errorTitle")}</h2><p className="mt-2">{error}</p><p className="mt-2">{t("deals.guided.flightResults.errorBody")}</p>{renderGuidedRetryButton()}</div> : filterApplying ? <div className="space-y-3"><div role="status" className="rounded-xl border border-[#004BB8]/10 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm">{t("updatingResults")}</div><FlightCardSkeleton /><FlightCardSkeleton /></div> : sortedResults.length ? <><div className="space-y-4">{visibleResults.map((flight, index) => <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={buildDetailsHref ? buildDetailsHref(flight) : undefined} actionLabel={actionLabel} actionAriaLabel={actionAriaLabel?.(flight)} onAction={onSelectFlight} />)}</div><FlightResultsPagination currentPage={validResultsPage} totalPages={totalResultPages} onPageChange={changeResultsPage} /></> : <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm font-semibold text-muted shadow-sm"><h2 ref={emptyHeadingRef} tabIndex={-1} className="text-lg font-extrabold text-slate-950">{t("deals.guided.flightResults.emptyTitle")}</h2><p className="mt-2">{t("deals.guided.flightResults.emptyBody")}</p>{renderGuidedRetryButton()}</div>}
         </section>
       </div>
       {filtersOpen ? (
@@ -7315,6 +7398,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             {priceAlertStatusMessage || priceAlertError}
           </p>
           <div ref={flightResultsTopRef} aria-hidden="true" />
+          <h2 ref={resultsHeadingRef} tabIndex={-1} className="sr-only">
+            {formatResultsFound(sortedResults.length, t)}
+          </h2>
           {error ? (
             <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger">
               {error}
@@ -7587,7 +7673,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   <p className="mb-3 text-[16px] font-semibold leading-6 tracking-[-0.01em] text-slate-900 sm:hidden">
                     {formatResultsFound(sortedResults.length, t)}
                   </p>
-                  {sortedResults.map((flight, index) => {
+                  {visibleResults.map((flight, index) => {
                     const detailsQuery = params.toString();
                     const detailsHref =
                       `/flights/details/${encodeURIComponent(flight.id)}` +
@@ -7603,6 +7689,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       />
                     );
                   })}
+                  <FlightResultsPagination
+                    currentPage={validResultsPage}
+                    totalPages={totalResultPages}
+                    onPageChange={changeResultsPage}
+                  />
                 </>
               ) : (
                 <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm font-semibold text-muted shadow-sm">
