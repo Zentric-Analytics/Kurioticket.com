@@ -2,6 +2,7 @@ import type React from "react";
 import { AlertTriangle } from "lucide-react";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { DetailsBackLink } from "@/components/results/DetailsBackLink";
 
 function SkeletonBlock({ className }: { className: string }) {
   return (
@@ -12,10 +13,11 @@ function SkeletonBlock({ className }: { className: string }) {
   );
 }
 
-export function HotelDetailsLoadingState({ loadingText, embedded = false, statusRef }: { loadingText: string; embedded?: boolean; statusRef?: React.RefObject<HTMLDivElement | null> }) {
+export function HotelDetailsLoadingState({ loadingText, resultsHref = "/hotels/results", backToResultsText = "Back to hotel results", embedded = false, statusRef }: { loadingText: string; resultsHref?: string; backToResultsText?: string; embedded?: boolean; statusRef?: React.RefObject<HTMLDivElement | null> }) {
   const content = (
       <section className="border-b border-border bg-white">
         <div className="page-shell py-6 sm:py-8 lg:py-10">
+          {!embedded ? <div className="mb-4"><DetailsBackLink href={resultsHref}>{backToResultsText}</DetailsBackLink></div> : null}
           <div
           ref={statusRef}
           tabIndex={statusRef ? -1 : undefined}
@@ -67,6 +69,7 @@ export function HotelDetailsLoadingState({ loadingText, embedded = false, status
           </div>
           </div>
         </div>
+        {!embedded ? <div className="fixed inset-x-0 bottom-0 z-[90] border-t border-slate-200 bg-white px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-8px_28px_rgba(15,23,42,0.14)] lg:hidden"><div className="mx-auto flex max-w-3xl items-center justify-between gap-4"><SkeletonBlock className="h-12 w-32" /><SkeletonBlock className="h-12 w-44" /></div></div> : null}
       </section>
   );
   return embedded ? content : <main className="flex-1 bg-surface-muted/40" aria-busy="true">{content}</main>;

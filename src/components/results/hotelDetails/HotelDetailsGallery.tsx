@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Building2, Images } from "lucide-react";
+import { Building2, ChevronLeft, ChevronRight, Images } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -153,7 +153,7 @@ export function HotelDetailsGallery({
 
   const mosaic = (
     <div
-      className="grid h-[300px] min-w-0 grid-cols-1 gap-2 overflow-hidden sm:h-[300px] lg:h-[300px] lg:grid-cols-[1.42fr_1fr] lg:grid-rows-2"
+      className="hidden h-[300px] min-w-0 grid-cols-[1.42fr_1fr] grid-rows-2 gap-2 overflow-hidden lg:grid"
       data-hotel-gallery-mosaic
     >
       {visibleIndices.map((imageIndex, tileIndex) => {
@@ -207,63 +207,91 @@ export function HotelDetailsGallery({
     </div>
   );
 
+  const mobileThumbnailIndices = usableIndices.slice(0, 5);
+  const mobileRemainingCount = Math.max(usableIndices.length - 5, 0);
+
+  const hero = <div
+    className="relative aspect-[16/9] min-h-[190px] max-h-[420px] w-full overflow-hidden rounded-[11px] bg-slate-100 sm:aspect-[16/10] sm:min-h-0 lg:rounded-none"
+    style={{ touchAction: "pan-y" }}
+    onPointerDown={(event) => {
+      if (event.pointerType !== "mouse")
+        pointerStartRef.current = { x: event.clientX, y: event.clientY };
+    }}
+    onPointerUp={handlePointerUp}
+    onPointerCancel={() => {
+      pointerStartRef.current = null;
+    }}
+  >
+    {activeUrl ? (
+      <button
+        type="button"
+        className="absolute inset-0 cursor-zoom-in focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-blue"
+        aria-label={openLabel}
+        onClick={(event) => openViewer(event.currentTarget)}
+      >
+        <Image
+          key={activeUrl}
+          src={activeUrl}
+          alt={imageAlt}
+          fill
+          className="object-cover"
+          sizes="(min-width: 1024px) 680px, 100vw"
+          onError={() => onImageError(activeUrl)}
+          preload
+        />
+      </button>
+    ) : (
+      <div className="flex h-full flex-col items-center justify-center gap-3 bg-surface-subtle px-6 text-center">
+        <Building2 className="h-11 w-11 text-blue" aria-hidden="true" />
+        <span className="max-w-xs text-sm font-semibold text-slate-600">
+          {imageUnavailableText}
+        </span>
+      </div>
+    )}
+    {showGalleryControls ? (
+      <>
+        <button type="button" aria-label={previousPhotoLabel} onClick={onPrevious} className="focus-ring absolute left-3 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-blue shadow-md">
+          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+        </button>
+        <button type="button" aria-label={nextPhotoLabel} onClick={onNext} className="focus-ring absolute right-3 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-blue shadow-md">
+          <ChevronRight className="h-5 w-5" aria-hidden="true" />
+        </button>
+        <div className="absolute bottom-3 right-3 rounded-full bg-slate-950/80 px-3 py-1 text-xs font-semibold text-white">
+          {activePosition} / {usableIndices.length}
+        </div>
+      </>
+    ) : null}
+  </div>;
+
+  const mobileThumbnails = showGalleryControls ? (
+    <div ref={thumbnailStripRef} className="mt-2 grid grid-cols-5 gap-1.5 lg:hidden" data-hotel-mobile-thumbnail-strip>
+      {mobileThumbnailIndices.map((imageIndex, visibleIndex) => {
+        const thumbnailUrl = displayCandidates[imageIndex];
+        const isRemainingTile = visibleIndex === 4 && mobileRemainingCount > 0;
+        return (
+          <button
+            key={thumbnailUrl}
+            type="button"
+            data-gallery-index={imageIndex}
+            aria-pressed={activeIndex === imageIndex}
+            aria-label={isRemainingTile ? viewAllPhotosLabel : selectPhotoLabel.replace("{{number}}", String(visibleIndex + 1))}
+            className={`relative aspect-[4/3] min-w-0 overflow-hidden rounded-md bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue ${activeIndex === imageIndex ? "ring-2 ring-blue" : "ring-1 ring-slate-200"}`}
+            onClick={(event) => {
+              onSelectImage(imageIndex);
+              if (isRemainingTile) openViewer(event.currentTarget);
+            }}
+          >
+            <Image src={thumbnailUrl} alt="" fill className="object-cover" sizes="20vw" onError={() => onImageError(thumbnailUrl)} />
+            {isRemainingTile ? <span className="absolute inset-0 flex items-center justify-center bg-slate-950/55 text-xs font-bold text-white"><Images className="mr-1 h-4 w-4" aria-hidden="true" />+{mobileRemainingCount}</span> : null}
+          </button>
+        );
+      })}
+    </div>
+  ) : null;
+
   const content = (
     <>
-      {layout === "mosaic" ? mosaic : <div
-        className="relative aspect-[4/3] min-h-[240px] max-h-[420px] w-full overflow-hidden bg-slate-100 sm:aspect-[16/10] sm:min-h-0"
-        style={{ touchAction: "pan-y" }}
-        onPointerDown={(event) => {
-          if (event.pointerType !== "mouse")
-            pointerStartRef.current = { x: event.clientX, y: event.clientY };
-        }}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={() => {
-          pointerStartRef.current = null;
-        }}
-      >
-        {activeUrl ? (
-          <button
-            type="button"
-            className="absolute inset-0 cursor-zoom-in focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-blue"
-            aria-label={openLabel}
-            onClick={(event) => openViewer(event.currentTarget)}
-          >
-            <Image
-              key={activeUrl}
-              src={activeUrl}
-              alt={imageAlt}
-              fill
-              className="object-cover"
-              sizes="(min-width: 1024px) 680px, 100vw"
-              onError={() => onImageError(activeUrl)}
-              priority
-            />
-          </button>
-        ) : (
-          <div className="flex h-full flex-col items-center justify-center gap-3 bg-surface-subtle px-6 text-center">
-            <Building2 className="h-11 w-11 text-blue" aria-hidden="true" />
-            <span className="max-w-xs text-sm font-semibold text-slate-600">
-              {imageUnavailableText}
-            </span>
-          </div>
-        )}
-
-        {showGalleryControls ? (
-          <>
-            <div className="absolute bottom-3 right-3 rounded-full bg-slate-950/75 px-3 py-1 text-xs font-semibold text-white">
-              {photoCounter}
-            </div>
-            <button
-              type="button"
-              className="focus-ring absolute bottom-3 left-3 inline-flex min-h-11 items-center gap-2 rounded-full bg-surface/95 px-3 text-xs font-semibold text-navy shadow-md hover:bg-surface"
-              onClick={(event) => openViewer(event.currentTarget)}
-            >
-              <Images className="h-4 w-4" aria-hidden="true" />
-              {viewAllPhotosLabel}
-            </button>
-          </>
-        ) : null}
-      </div>}
+      {layout === "mosaic" ? <><div className="lg:hidden">{hero}{mobileThumbnails}</div>{mosaic}</> : hero}
 
       {layout === "hero" && showGalleryControls ? (
         <div
