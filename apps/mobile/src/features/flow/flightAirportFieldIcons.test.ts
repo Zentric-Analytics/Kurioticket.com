@@ -23,14 +23,39 @@ test("Origin and Destination use the existing location icon without changing pic
   assert.equal(panel.match(/icon="location"/g)?.length, 4);
 });
 
-test("Destination has one concise empty value while retaining selected airport metadata", () => {
+test("ordinary selected airports use City (CODE), omit country metadata, and wrap without a finite cap", () => {
+  const origin = field("Origin");
   const destination = field("Destination");
 
+  assert.ok(origin);
+  assert.match(origin, /value=\{selectedAirportValue\(form\.from, "Select origin"\)\}/);
+  assert.match(origin, /meta=\{form\.from \? undefined : "No airport selected"\}/);
+  assert.match(origin, /valueNumberOfLines=\{0\}/);
   assert.ok(destination);
-  assert.match(destination, /value=\{form\.to\?\.code \?\? "To\?"\}/);
-  assert.match(destination, /meta=\{form\.to \? `\$\{form\.to\.city\}, \$\{form\.to\.country\}` : undefined\}/);
+  assert.match(destination, /value=\{selectedAirportValue\(form\.to, "To\?"\)\}/);
+  assert.doesNotMatch(destination, /meta=/);
   assert.doesNotMatch(destination, /Select destination|No airport selected/);
   assert.match(destination, /muted=\{!form\.to\}/);
+  assert.match(destination, /valueNumberOfLines=\{0\}/);
+});
+
+test("the local selected airport helper formats City (CODE) and preserves empty fallbacks", () => {
+  assert.match(panel, /const selectedAirportValue = \(airport: Airport \| undefined, fallback: string\) => airport \? `\$\{airport\.city\} \(\$\{airport\.code\}\)` : fallback;/);
+});
+
+test("multi-city selected airports use the helper without country metadata and keep unrestricted wrapping", () => {
+  const multiCityStart = panel.indexOf('{form.tripType === "multi-city"');
+  const ordinaryStart = panel.indexOf(' : <><View style={styles.routeFields}>', multiCityStart);
+  const multiCity = panel.slice(multiCityStart, ordinaryStart);
+  const origin = multiCity.slice(multiCity.indexOf('<CompactSearchField label="Origin"'), multiCity.indexOf('/>', multiCity.indexOf('<CompactSearchField label="Origin"')) + 2);
+  const destination = multiCity.slice(multiCity.indexOf('<CompactSearchField label="Destination"'), multiCity.indexOf('/>', multiCity.indexOf('<CompactSearchField label="Destination"')) + 2);
+
+  assert.match(origin, /value=\{selectedAirportValue\(leg\.from,"Select origin"\)\}/);
+  assert.match(origin, /valueNumberOfLines=\{0\}/);
+  assert.doesNotMatch(origin, /meta=|leg\.from\.country/);
+  assert.match(destination, /value=\{selectedAirportValue\(leg\.to,"Select destination"\)\}/);
+  assert.match(destination, /valueNumberOfLines=\{0\}/);
+  assert.doesNotMatch(destination, /meta=|leg\.to\.country/);
 });
 
 test("other Flight fields retain their intended icons", () => {
