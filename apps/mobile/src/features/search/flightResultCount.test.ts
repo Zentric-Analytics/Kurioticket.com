@@ -5,6 +5,18 @@ import test from "node:test";
 import { flightResultCountLabel } from "./flightResultCount";
 
 const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
+const sectionList = source.slice(
+  source.indexOf("<SectionList"),
+  source.indexOf(") : (", source.indexOf("<SectionList")),
+);
+const renderItem = sectionList.slice(
+  sectionList.indexOf("renderItem="),
+  sectionList.indexOf("ListHeaderComponent="),
+);
+const stickyHeader = sectionList.slice(
+  sectionList.indexOf("renderSectionHeader="),
+  sectionList.indexOf("ListEmptyComponent="),
+);
 
 test("flight result count uses correct singular and plural grammar", () => {
   assert.equal(flightResultCountLabel(1), "1 Result found");
@@ -13,9 +25,9 @@ test("flight result count uses correct singular and plural grammar", () => {
 });
 
 test("flight count is derived from the collection rendered as FlightCards", () => {
-  assert.match(source, /flightResultCountLabel\(sorted\.length\)/);
-  assert.match(source, /sections=\{\[\{ data: !flightState \? sorted as FlightResult\[\] : \[\] \}\]\}/);
-  assert.match(source, /renderItem=\{\(\{ item \}\) => \([\s\S]*?<FlightCard/);
+  assert.match(stickyHeader, /flightResultCountLabel\(sorted\.length\)/);
+  assert.match(sectionList, /sections=\{\[\{ data: !flightState \? sorted as FlightResult\[\] : \[\] \}\]\}/);
+  assert.match(renderItem, /renderItem=\{\(\{ item, index \}\) => \([\s\S]*?<FlightCard/);
   assert.doesNotMatch(source, /sorted\.map\(\(x, i\) =>\s*product === "flight"/);
 });
 
@@ -30,10 +42,16 @@ test("flight summary copy is removed while the hotel summary stays intact", () =
   assert.doesNotMatch(source, /Price may change|Book soon to lock in this price\./);
 });
 
-test("count and controls precede the price alert while FlightCard rendering remains in place", () => {
-  const alert = source.indexOf('product === "flight" && !flightState && plan.plan');
-  const count = source.indexOf("flightResultCountLabel(sorted.length)");
-  const controls = source.indexOf("{filterRail}", count);
-  const card = source.indexOf("<FlightCard", alert);
-  assert.ok(count >= 0 && count < controls && alert >= 0 && alert < card);
+test("count and controls stay sticky while the price alert precedes the first FlightCard", () => {
+  const alert = renderItem.indexOf("<PriceAlert");
+  const card = renderItem.indexOf("<FlightCard");
+
+  assert.match(
+    stickyHeader,
+    /flightResultCountLabel\(sorted\.length\)[\s\S]*?filterRail : null/,
+    "result count should precede quick controls in the sticky header",
+  );
+  assert.ok(alert >= 0 && alert < card, "price alert should precede the first real flight card");
+  assert.match(renderItem, /index === 0 && status === "ready" && !flightState && plan\.plan/);
+  assert.doesNotMatch(stickyHeader, /PriceAlert/);
 });
