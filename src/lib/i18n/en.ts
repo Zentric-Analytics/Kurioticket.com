@@ -4104,6 +4104,11 @@ export const translations: TranslationDictionary = {
   "hotelDetails.paymentBody": "Kurioticket does not collect payment for this planning listing.",
   "hotelDetails.moreHotelsIn": "More hotels in {{destination}}",
   "hotelDetails.priceUnavailable": "Price unavailable",
+  "hotelDetails.guestReviews": "What guests are saying",
+  "hotelDetails.reviewUnavailable":
+    "Guest review data is not available for this property yet.",
+  "hotelDetails.planningRate": "Available rates",
+  "hotelDetails.planningEstimate": "Kurioticket planning estimate",
 
   "flightResults.loading.title": "Searching the best flights for you",
   "carsResults.loading.title": "Searching the best cars for you",

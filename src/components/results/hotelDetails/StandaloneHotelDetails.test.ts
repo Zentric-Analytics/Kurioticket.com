@@ -14,12 +14,18 @@ const pageSource = readFileSync(
   new URL("../../../app/hotels/details/[id]/page.tsx", import.meta.url),
   "utf8",
 );
+const gallerySource = readFileSync(
+  new URL("./HotelDetailsGallery.tsx", import.meta.url),
+  "utf8",
+);
 
 test("renders the approved standalone section order", () => {
   const contracts = [
     "<HotelDetailsGallery",
     "data-hotel-amenities-strip",
     "hotel-about-heading",
+    "data-hotel-review-summary",
+    "data-hotel-rate-section",
     "<HotelLocationSection",
     "<RelatedHotelsSection",
   ];
@@ -30,10 +36,40 @@ test("renders the approved standalone section order", () => {
     previous = index;
   }
   assert.match(source, /lg:grid-cols-\[minmax\(0,1fr\)_334px\]/);
-  const mainGridEnd = source.indexOf("</div>\n\n      <RelatedHotelsSection");
+  const mainGridEnd = source.indexOf("data-mobile-hotel-stay-dock");
   assert.ok(mainGridEnd > source.indexOf("data-standalone-stay-summary"));
   assert.match(source, /data-standalone-hotel-main-grid/);
   assert.match(source, /data-standalone-stay-summary/);
+});
+
+test("mobile gallery uses a truthful hero, controls, counter, and five-slot thumbnail strip while desktop keeps mosaic", () => {
+  for (const contract of [
+    "data-hotel-mobile-thumbnail-strip",
+    "activePosition} / {usableIndices.length",
+    "mobileThumbnailIndices = usableIndices.slice(0, 5)",
+    "mobileRemainingCount",
+    "onPrevious",
+    "onNext",
+    "lg:hidden",
+    "hidden h-[300px]",
+    "lg:grid",
+  ]) assert.ok(gallerySource.includes(contract), contract);
+  assert.doesNotMatch(gallerySource, /1 \/ 29|\+25/);
+});
+
+test("mobile stay dock is fixed once, owns the safe area, and preserves desktop stay summary", () => {
+  assert.equal(source.match(/data-mobile-hotel-stay-dock/g)?.length, 1);
+  assert.match(source, /fixed inset-x-0 bottom-0/);
+  assert.match(source, /env\(safe-area-inset-bottom\)/);
+  assert.match(source, /pb-\[calc\(8\.5rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(source, /hidden min-w-0 self-start lg:block/);
+  for (const contract of ["props.staySummary.nightText", "props.staySummary.dateText", "props.staySummary.occupancyText", "props.totalDisplayPrice.formatted", "props.nightlyDisplayPrice.formatted"]) assert.ok(source.includes(contract), contract);
+});
+
+test("review and rate modules remain truthful and do not manufacture blueprint claims", () => {
+  for (const contract of ["props.reviewScore", "props.reviewLabel", "props.reviewCountText", "props.labels.reviewUnavailable", "props.labels.planningEstimate", "props.planningPriceText", 'props.perNightText.replace("{{price}}", props.nightlyDisplayPrice.formatted)']) assert.ok(source.includes(contract), contract);
+  assert.match(clientSource, /reviewScale === 5 \? ` \/ \$\{reviewScale\}` : ""/);
+  assert.doesNotMatch(source, /Booking\.com|Expedia|Hotels\.com|100\+ sites|Cleanliness|Emily R\.|Free cancellation/);
 });
 
 test("standalone route hides travel navigation without changing AppHeader defaults", () => {
