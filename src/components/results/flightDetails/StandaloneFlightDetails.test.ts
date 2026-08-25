@@ -251,8 +251,8 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     'index === 0 ? "OUTBOUND" : "RETURN"',
     "leg.segments.map",
     "const flight = selectedOffer",
-    "Continue to ${handoff.providerName}",
-    "Booking link currently unavailable",
+    '"Continue to checkout"',
+    'aria-disabled={!canContinue || redirecting}',
     "id: selectedOffer.id",
     'role="radiogroup"',
     'role="radio"',
@@ -261,7 +261,7 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     'tabIndex={selected ? 0 : -1}',
     "selectedFare?.label",
     "selectedOffer.price",
-    "<FareDetails offer={selectedOffer}",
+    "<FarePanel activeTab={activeTab} offer={selectedOffer}",
     "Operated by {segment.operatingCarrier.name}",
     "Technical stop at {stop.airport.iataCode}",
     "Optional extra",
@@ -301,9 +301,39 @@ test("standalone UI renders every leg and segment from selected offer and uses a
   assert.ok(!source.includes("Not included/not allowed"));
   assert.ok(!source.includes("Provider fare refreshed"));
   assert.ok(!source.includes("Supported loyalty programmes:"));
-  assert.match(source, /handoff\.available \? <>.*Secure provider handoff.*<\/> :/s);
-  assert.match(source, /Booking link currently unavailable/);
-  assert.match(source, /No verified external booking destination is available for this offer\./);
+  assert.match(source, /Checkout currently unavailable/);
+  assert.match(source, /disabled=\{!canContinue \|\| redirecting\}/);
+});
+
+test("standalone UI preserves the approved desktop and mobile blueprint composition", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  assert.match(source, /lg:grid-cols-\[minmax\(0,2\.45fr\)_minmax\(310px,0\.95fr\)\]/);
+  assert.match(source, /lg:sticky lg:top-24 lg:block/);
+  assert.match(source, /className="hidden rounded-\[13px\].*lg:block"/s);
+  assert.match(source, /function MobileTripTotal/);
+  assert.match(source, /className="mt-5 rounded-\[10px\].*lg:hidden"/s);
+  assert.match(source, /role="tablist"/);
+  assert.equal((source.match(/role="tab"/g) || []).length, 1);
+  assert.deepEqual(["Fare details", "Fare conditions", "Optional extras"].map((label) => source.includes(`label: "${label}"`)), [true, true, true]);
+  assert.match(source, /useState<FareTab>\("details"\)/);
+  assert.match(source, /role="tabpanel"/);
+  assert.match(source, /ArrowRight.*ArrowLeft/s);
+  assert.match(source, /Selected<\/span>.*lg:hidden/s);
+  assert.match(source, /grid-cols-\[minmax\(0,1fr\)_minmax\(82px,1\.1fr\)_minmax\(0,1fr\)\]/);
+  assert.match(source, /border-dashed border-\[#075EE8\]/);
+  assert.doesNotMatch(source, /bg-slate-50 px-5 py-3 lg:px-6/);
+  assert.doesNotMatch(source, /providerOfferId|rawProviderReference/);
+});
+
+test("flight details entry keeps the opaque canonical route and results query", async () => {
+  const client = await readFile(new URL("../FlightDetailsClient.tsx", import.meta.url), "utf8");
+  const card = await readFile(new URL("../FlightCard.tsx", import.meta.url), "utf8");
+  assert.match(client, /const resultsQuery = searchParams\.toString\(\)/);
+  assert.match(client, /`\/flights\/results\?\$\{resultsQuery\}`/);
+  assert.match(client, /<StandaloneFlightDetails id=\{id\} resultsHref=\{resultsHref\}/);
+  assert.match(card, /`\/flights\/details\/\$\{encodeURIComponent\(flight\.id\)\}`/);
+  assert.ok(!client.includes("providerOfferId"));
+  assert.ok(!client.includes("rawProviderReference"));
 });
 
 test("trip totals use canonical traveler count without changing provider amounts", () => {
@@ -336,8 +366,8 @@ test("multi-city details use the complete route chain for two through five fligh
     ], "IAH", "FCO"),
     "IAH → LHR · CDG → FCO",
   );
-  assert.equal(flightDetailsRouteLabel("one-way", routeLegs.slice(0, 1), "Houston (IAH)", "London (LHR)"), "Houston to London");
-  assert.equal(flightDetailsRouteLabel("round-trip", routeLegs.slice(0, 2), "Houston, TX", "London, UK"), "Houston to London");
+  assert.equal(flightDetailsRouteLabel("one-way", routeLegs.slice(0, 1), "Houston (IAH)", "London (LHR)"), "Houston → London");
+  assert.equal(flightDetailsRouteLabel("round-trip", routeLegs.slice(0, 2), "Houston, TX", "London, UK"), "Houston → London");
 });
 
 test("provider brands with identical comparable facts receive no invented benefit", () => {
