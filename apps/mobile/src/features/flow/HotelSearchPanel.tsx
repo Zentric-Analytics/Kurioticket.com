@@ -59,7 +59,7 @@ export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function Ho
   };
   const datesValue = form.checkIn && form.checkOut ? `${displayDate(form.checkIn)} — ${displayDate(form.checkOut)}` : "Check-in — Check-out";
   return <View style={[!embedded && ft.styles.card, !embedded && ft.styles.shadow]}>
-    <CompactSearchField label="Destination" value={form.destination || "City, area, or hotel"} muted={!form.destination} icon="location" onPress={() => setDestinationOpen(true)}/>
+    <CompactSearchField label="Destination" value={form.destination || "City or hotel"} muted={!form.destination} icon="location" onPress={() => setDestinationOpen(true)}/>
     {errors.destination ? <Text accessibilityRole="alert" style={styles.error}>{errors.destination}</Text> : null}
     <CompactSearchField label="Travel dates" value={datesValue} muted={!form.checkIn || !form.checkOut} icon="calendar" valueNumberOfLines={0} onPress={() => setDatesOpen(true)}/>
     {errors.checkIn || errors.checkOut ? <Text accessibilityRole="alert" style={styles.error}>{errors.checkIn || errors.checkOut}</Text> : null}
