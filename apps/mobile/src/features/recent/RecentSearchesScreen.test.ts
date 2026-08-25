@@ -64,3 +64,28 @@ test("Recent keeps populated, loading, and signed-out branches intact", () => {
   assert.match(screen, />Your recent searches are private to your account\.<\/Text>/);
   assert.match(screen, /signInHref\("\/recent"\)/);
 });
+
+test("populated Recent uses balanced section spacing without resizing its cards", () => {
+  assert.match(screen, /sectionHeader: \{ minHeight: 40, marginTop: -12,/);
+  assert.doesNotMatch(screen, /sectionHeader: \{ minHeight: 48,/);
+  assert.match(screen, /recentRow: \{ minHeight: 80,[^}]*marginBottom: 10,/);
+  assert.match(screen, /clearTouchTarget: \{ minHeight: 44,/);
+  assert.match(screen, /removeTouchTarget: \{ width: 44, height: 44,/);
+});
+
+test("populated Recent retains icon, copy, chevron, remove, and navigation structure", () => {
+  assert.match(screen, /style=\{\[styles\.iconTile,[\s\S]*style=\{styles\.rowCopy\}[\s\S]*style=\{styles\.rowActions\}><FlowIcon name="chevron"[\s\S]*styles\.removeTouchTarget/);
+  assert.match(screen, /onPress=\{\(\) => router\.push\(recentSearchNavigation\(item\)\)\}/);
+  assert.match(screen, /event\.stopPropagation\(\); void removeRecent\(item\)/);
+  assert.match(screen, /onPress=\{\(\) => void clearRecent\(\)\}/);
+});
+
+test("empty Recent measurements and copy remain unchanged", () => {
+  assert.match(screen, /Math\.min\(220, windowWidth - 72\)/);
+  assert.match(screen, /height: Math\.min\(198, \(windowWidth - 72\) \* \.9\)/);
+  assert.match(screen, /illustrationGap: \{ height: 66 \}/);
+  assert.match(screen, /illustrationGapShort: \{ height: 55 \}/);
+  assert.match(screen, />Your next search starts here<\/Text>/);
+  assert.match(screen, />Search for flights or hotels and your recent searches will appear here for easy access\.<\/Text>/);
+  assert.match(screen, /router\.dismissTo\("\/\(tabs\)"\)/);
+});
