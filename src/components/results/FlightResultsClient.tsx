@@ -28,6 +28,7 @@ import {
   ChevronRight,
   ChevronUp,
   Calendar,
+  Check,
   ChevronDown,
   Heart,
   MapPin,
@@ -1799,7 +1800,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     (rect: DOMRect, width: number) => {
       if (typeof window === "undefined") return;
 
-      const gutter = 16;
+      const gutter = 12;
       const safeWidth = Math.min(width, window.innerWidth - gutter * 2);
       const left = Math.min(
         Math.max(rect.left, gutter),
@@ -6559,9 +6560,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     const shortcutButtonClass =
       "focus-ring inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[11px] border border-[#D8E1EC] bg-white px-3.5 text-[14px] font-semibold text-[#142033] transition hover:border-[#B9C8D9] hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
     const menuClass =
-      "z-[90] max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_38px_-18px_rgba(15,23,42,0.35)]";
+      "z-[90] max-h-72 overflow-y-auto rounded-[13px] border border-[#D8E1EC] bg-white p-1.5 shadow-[0_22px_46px_-22px_rgba(15,23,42,0.32)]";
     const menuItemClass =
-      "flex min-h-9 w-full items-center justify-between gap-2 rounded-lg px-3 text-left text-[13px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
+      "flex min-h-11 w-full items-center justify-between gap-2 rounded-[10px] px-3 text-left text-[14px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
     const activeMenu = getActiveMobileShortcutMenu();
 
     const openMobileShortcutMenu = (
@@ -6650,13 +6651,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     closeMobileShortcutMenus();
                   }}
                   className={cn(
-                    "flex min-h-9 w-full items-center rounded-lg px-3 text-left text-[13px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30",
+                    menuItemClass,
                     sortMode === option.value
-                      ? "bg-[#004BB8]/8 text-[#004BB8]"
+                      ? "bg-[#004BB8]/6 text-[#004BB8]"
                       : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
                   )}
                 >
-                  {option.label}
+                  <span className="truncate">{option.label}</span>
+                  {sortMode === option.value ? <Check className="h-4 w-4 shrink-0" strokeWidth={2.4} aria-hidden="true" /> : null}
                 </button>
               ))
             : null}
@@ -6675,13 +6677,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   className={cn(
                     menuItemClass,
                     selectedAirlines.includes(option.value)
-                      ? "bg-[#004BB8]/8 text-[#004BB8]"
+                      ? "bg-[#004BB8]/6 text-[#004BB8]"
                       : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
                   )}
                 >
                   <span className="truncate">{option.label}</span>
-                  <span className="shrink-0 text-[11px] font-semibold text-slate-500">
+                  <span className="flex shrink-0 items-center gap-1.5 text-[11px] font-semibold text-slate-500">
                     {option.count}
+                    {selectedAirlines.includes(option.value) ? <Check className="h-3.5 w-3.5 text-[#004BB8]" strokeWidth={2.4} aria-hidden="true" /> : null}
                   </span>
                 </button>
               ))
@@ -6701,13 +6704,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   className={cn(
                     menuItemClass,
                     selectedStops.includes(option.value)
-                      ? "bg-[#004BB8]/8 text-[#004BB8]"
+                      ? "bg-[#004BB8]/6 text-[#004BB8]"
                       : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
                   )}
                 >
-                  <span>{option.label}</span>
-                  <span className="text-[11px] font-semibold text-slate-500">
+                  <span className="truncate">{option.label}</span>
+                  <span className="flex shrink-0 items-center gap-1.5 text-[11px] font-semibold text-slate-500">
                     {option.count}
+                    {selectedStops.includes(option.value) ? <Check className="h-3.5 w-3.5 text-[#004BB8]" strokeWidth={2.4} aria-hidden="true" /> : null}
                   </span>
                 </button>
               ))
@@ -6727,13 +6731,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   className={cn(
                     menuItemClass,
                     selectedAirports.includes(option.value)
-                      ? "bg-[#004BB8]/8 text-[#004BB8]"
+                      ? "bg-[#004BB8]/6 text-[#004BB8]"
                       : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
                   )}
                 >
-                  <span>{option.label}</span>
-                  <span className="text-[11px] font-semibold text-slate-500">
+                  <span className="truncate">{option.label}</span>
+                  <span className="flex shrink-0 items-center gap-1.5 text-[11px] font-semibold text-slate-500">
                     {option.count}
+                    {selectedAirports.includes(option.value) ? <Check className="h-3.5 w-3.5 text-[#004BB8]" strokeWidth={2.4} aria-hidden="true" /> : null}
                   </span>
                 </button>
               ))
@@ -6756,7 +6761,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               "sort",
               activeSortOption.label,
               mobileSortMenuOpen,
-              144,
+              168,
               mobileSortMenuRef,
             )}
             {renderTrigger(
@@ -6770,14 +6775,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               "stops",
               "Stops",
               mobileStopsMenuOpen,
-              160,
+              176,
               mobileStopsMenuRef,
             )}
             {renderTrigger(
               "airports",
               "Airports",
               mobileAirportMenuOpen,
-              176,
+              208,
               mobileAirportMenuRef,
             )}
           </div>
@@ -6891,10 +6896,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         <button
           type="button"
           onClick={(event) => openMobileSearchDrawer(event.currentTarget)}
-          className="group relative z-10 flex h-[4.25rem] min-w-0 w-full max-w-[30rem] items-center justify-between gap-3 overflow-hidden rounded-xl border border-slate-200/80 bg-white px-4 py-0 text-start shadow-[0_16px_34px_-26px_rgba(15,23,42,0.55)] transition hover:border-slate-300 hover:bg-white hover:shadow-[0_18px_38px_-28px_rgba(15,23,42,0.62)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+          className="group relative z-10 flex h-16 min-w-0 w-full max-w-[30rem] items-center justify-between gap-3 overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white px-4 py-0 text-start shadow-[0_8px_22px_-18px_rgba(15,23,42,0.3)] transition hover:border-[#C6D2E0] hover:bg-white hover:shadow-[0_10px_24px_-18px_rgba(15,23,42,0.34)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
         >
           <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden pe-1">
-            <span className="block truncate text-[16px] font-extrabold leading-5 tracking-[-0.015em] text-slate-950">
+            <span className="block truncate text-[16px] font-bold leading-5 tracking-[-0.01em] text-[#142033]">
               {mobileRouteSummary}
             </span>
             <span className="mt-1.5 block truncate text-[12.5px] font-semibold leading-4 text-slate-500">
@@ -6904,9 +6909,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           </span>
           <span
             aria-hidden="true"
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200/90 bg-slate-50 text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] transition group-hover:border-slate-300 group-hover:bg-slate-100"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-[#D8E1EC] bg-slate-50 text-slate-700 transition group-hover:border-[#C6D2E0] group-hover:bg-slate-100"
           >
-            <SquarePen size={15} strokeWidth={2.2} />
+            <SquarePen size={16} strokeWidth={2.2} />
           </span>
         </button>
       </div>
