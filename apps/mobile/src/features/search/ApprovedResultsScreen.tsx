@@ -26,20 +26,9 @@ import {
   ArrowLeft,
   Armchair,
   Bell,
-  Car,
-  Coffee,
-  Dumbbell,
-  Images,
   Luggage,
-  MapPin,
   PlaneTakeoff,
   ShieldCheck,
-  Snowflake,
-  Star,
-  Utensils,
-  Waves,
-  Wifi,
-  Wine,
 } from "lucide-react-native";
 import { Heart } from "lucide-react-native";
 import {
@@ -917,25 +906,18 @@ function HotelCard({
     result.reviewScore == null
       ? result.rating
       : result.reviewScore * (10 / (result.reviewScale || 10));
-  const classification = result.classificationStars || Math.round(result.rating);
-  const ratingLabel = score >= 9 ? "Exceptional" : score >= 8 ? "Excellent" : "Good";
-  const location = [result.location, result.distanceFromCenter ? `${result.distanceFromCenter} from city center` : ""]
-    .filter(Boolean)
-    .join(" · ");
-  const { theme } = useAppTheme();
   return (
-    <View style={[s0.hotelCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-      <View style={s0.hotelImageWrap}>
+    <View style={[s0.hotelCard, compact && s0.hotelCardCompact]}>
+      <View style={[s0.hotelImageWrap, compact && s0.hotelImageWrapCompact]}>
         {result.imageUrl ? (
-          <Image accessibilityLabel={`${result.name} hotel image`} source={{ uri: result.imageUrl }} style={s0.hotelImage} />
+          <Image source={{ uri: result.imageUrl }} style={s0.hotelImage} />
         ) : (
           <View style={s0.hotelImage} />
         )}
         <View style={s0.overlay}>
-          <Images accessible={false} accessibilityElementsHidden size={13} strokeWidth={2} color="white" />
           <Text style={s0.overlayText}>
             {result.imageUrls?.length
-              ? `1 / ${result.imageUrls.length}`
+              ? `▧ 1 / ${result.imageUrls.length}`
               : "Image unavailable"}
           </Text>
         </View>
@@ -949,50 +931,45 @@ function HotelCard({
           </Badge>
         </View>
       </View>
-      <View style={s0.hotelCopy}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={saved ? `Remove ${result.name} hotel from saved` : `Save ${result.name} hotel`}
-          accessibilityState={{ selected: saved }}
-          onPress={() => void canonical.toggleHotel(result, params)}
-          style={s0.heart}
-        >
-          <FlowIcon name="heart" fill={saved ? ui.blue : "white"} color={saved ? ui.blue : theme.icon} />
+      <View style={[s0.hotelCopy, compact && s0.hotelCopyCompact]}>
+        <Pressable onPress={() => void canonical.toggleHotel(result, params)} style={s0.heart}>
+          <FlowIcon name="heart" fill={saved ? ui.blue : "white"} />
         </Pressable>
-        <Text accessibilityRole="header" style={[s0.hotelName, { color: theme.textPrimary }]}>{result.name}</Text>
-        <View style={s0.classificationRow}>
-          {classification > 0 ? (
-            <Text accessibilityLabel={`${classification} star hotel`} style={s0.stars}>
-              {"★".repeat(classification)}
-            </Text>
-          ) : null}
-          {result.neighbourhood ? <Text style={[s0.hotelMetaText, { color: theme.textSecondary }]}>· {result.neighbourhood}</Text> : null}
-        </View>
-        <View accessible accessibilityLabel={`${score.toFixed(1)} out of 10, ${ratingLabel}${result.reviewCount ? `, ${result.reviewCount.toLocaleString()} reviews` : ""}`} style={s0.reviewRow}>
-          <Star accessible={false} accessibilityElementsHidden size={16} strokeWidth={2.25} color={ui.blue} />
-          <Text accessible={false} style={s0.score}>{score.toFixed(1)}</Text>
-          <Text accessible={false} style={[s0.reviewLabel, { color: theme.textPrimary }]}>{ratingLabel}</Text>
-          {result.reviewCount ? <Text accessible={false} style={[s0.hotelMetaText, { color: theme.textSecondary }]}>· {result.reviewCount.toLocaleString()} reviews</Text> : null}
-        </View>
-        {location ? (
-          <View style={s0.locationRow}>
-            <MapPin accessible={false} accessibilityElementsHidden size={16} strokeWidth={2} color={theme.textSecondary} />
-            <Text style={[s0.locationText, { color: theme.textSecondary }]}>{location}</Text>
-          </View>
+        <Text style={s0.hotelName}>{result.name}</Text>
+        <Text style={s0.stars}>
+          {"★".repeat(result.classificationStars || Math.round(result.rating))}{" "}
+          <Text style={s0.sub}>
+            {" "}
+            · {result.neighbourhood || result.location}
+          </Text>
+        </Text>
+        <Text style={s0.review}>
+          <Text style={s0.score}>{score.toFixed(1)}</Text>{" "}
+          {score >= 9 ? "Exceptional" : score >= 8 ? "Excellent" : "Good"}
+          {result.reviewCount
+            ? `  ·  ${result.reviewCount.toLocaleString()} reviews`
+            : ""}
+        </Text>
+        {result.distanceFromCenter ? (
+          <Text style={s0.sub}>
+            ⌾ {result.distanceFromCenter} from city center
+          </Text>
         ) : null}
         <View style={s0.amenities}>
           {result.amenities.slice(0, 3).map((a) => (
-            <HotelAmenity key={a} label={a} />
+            <Text key={a} style={s0.amenity}>
+              ● {a}
+            </Text>
           ))}
         </View>
-        <Text style={[s0.providers, { color: theme.textSecondary }]}>{result.provider}</Text>
-        <View style={[s0.hotelPrice, compact && s0.hotelPriceCompact]}>
-          <View style={s0.hotelPriceCopy}>
-            <Text style={[s0.hotelNightlyPrice, { color: theme.textPrimary }]}>
+        <Text style={s0.providers}>{result.provider}</Text>
+        <View style={s0.hotelPrice}>
+          <View style={s0.foundCopy}>
+            <Text style={s0.bigPrice}>
               {money(result.currency, result.pricePerNight)}
-              <Text style={[s0.hotelNightlyUnit, { color: theme.textSecondary }]}> / night</Text>
+              <Text style={s0.sub}> /night</Text>
             </Text>
-            <Text style={[s0.hotelTotalPrice, { color: theme.textSecondary }]}>
+            <Text style={s0.sub}>
               {money(result.currency, result.totalPrice)} total
             </Text>
           </View>
@@ -1012,40 +989,6 @@ function HotelCard({
           />
         </View>
       </View>
-    </View>
-  );
-}
-
-export type HotelAmenityIconName = "wifi" | "dining" | "bar" | "parking" | "pool" | "fitness" | "air-conditioning" | "breakfast";
-
-export function resolveHotelAmenityIcon(label: string): HotelAmenityIconName | undefined {
-  const amenity = label.trim().toLowerCase();
-  if (/wi-?fi|wireless internet/.test(amenity)) return "wifi";
-  if (/restaurant|dining/.test(amenity)) return "dining";
-  if (/\bbar\b|wine/.test(amenity)) return "bar";
-  if (/parking/.test(amenity)) return "parking";
-  if (/pool|swimming/.test(amenity)) return "pool";
-  if (/fitness|gym/.test(amenity)) return "fitness";
-  if (/air conditioning|air-conditioned|\ba\/c\b/.test(amenity)) return "air-conditioning";
-  if (/breakfast/.test(amenity)) return "breakfast";
-  return undefined;
-}
-
-function HotelAmenity({ label }: { label: string }) {
-  const { theme } = useAppTheme();
-  const icon = resolveHotelAmenityIcon(label);
-  const iconProps = { accessible: false as const, accessibilityElementsHidden: true, size: 15, strokeWidth: 2, color: theme.textSecondary };
-  return (
-    <View style={[s0.amenity, { borderColor: theme.border }]}>
-      {icon === "wifi" ? <Wifi {...iconProps} /> : null}
-      {icon === "dining" ? <Utensils {...iconProps} /> : null}
-      {icon === "bar" ? <Wine {...iconProps} /> : null}
-      {icon === "parking" ? <Car {...iconProps} /> : null}
-      {icon === "pool" ? <Waves {...iconProps} /> : null}
-      {icon === "fitness" ? <Dumbbell {...iconProps} /> : null}
-      {icon === "air-conditioning" ? <Snowflake {...iconProps} /> : null}
-      {icon === "breakfast" ? <Coffee {...iconProps} /> : null}
-      <Text style={[s0.amenityText, { color: theme.textSecondary }]}>{label}</Text>
     </View>
   );
 }
@@ -1554,7 +1497,7 @@ const s0 = StyleSheet.create({
   metadataItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 3 },
   metadataText: { flex: 1, minWidth: 0, fontSize: 9.5, lineHeight: 12.5 },
   hotelCard: {
-    minHeight: 234,
+    height: 234,
     borderWidth: 1,
     borderColor: ui.border,
     borderRadius: 13,
@@ -1562,7 +1505,9 @@ const s0 = StyleSheet.create({
     flexDirection: "row",
     backgroundColor: "white",
   },
-  hotelImageWrap: { width: "38%", minHeight: 234 },
+  hotelCardCompact: { height: 282 },
+  hotelImageWrap: { width: "39%" },
+  hotelImageWrapCompact: { width: "38%" },
   hotelImage: { width: "100%", height: "100%", backgroundColor: "#E9EDF3" },
   overlay: {
     position: "absolute",
@@ -1571,43 +1516,30 @@ const s0 = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,.72)",
     padding: 6,
     borderRadius: 5,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
   },
   overlayText: { color: "white", fontSize: 10, fontWeight: "700" },
   hotelBadge: { position: "absolute", top: 10, left: 9 },
-  hotelCopy: { flex: 1, minWidth: 0, padding: 12, gap: 8 },
-  heart: { position: "absolute", right: 6, top: 6, zIndex: 2, width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  hotelCopy: { flex: 1, padding: 12, gap: 5 },
+  hotelCopyCompact: { padding: 10 },
+  heart: { position: "absolute", right: 8, top: 7, zIndex: 2 },
   hotelName: {
-    minWidth: 0,
-    fontSize: 18,
-    lineHeight: 23,
+    fontSize: 17,
     fontWeight: "900",
     color: ui.navy,
-    paddingRight: 42,
+    paddingRight: 30,
   },
-  classificationRow: { minWidth: 0, flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 5 },
-  stars: { color: "#D78E00", fontSize: 14, lineHeight: 18 },
-  hotelMetaText: { minWidth: 0, flexShrink: 1, fontSize: 12, lineHeight: 17 },
-  reviewRow: { minWidth: 0, flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 5 },
-  score: { backgroundColor: ui.blue, color: "white", fontWeight: "900", fontSize: 12, lineHeight: 18, paddingHorizontal: 5, borderRadius: 4, overflow: "hidden" },
-  reviewLabel: { fontSize: 13, lineHeight: 18, fontWeight: "700" },
-  locationRow: { minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 6 },
-  locationText: { flex: 1, minWidth: 0, flexShrink: 1, fontSize: 12, lineHeight: 17 },
-  amenities: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  amenity: { minWidth: 0, maxWidth: "100%", flexDirection: "row", alignItems: "center", gap: 4, borderWidth: 1, borderRadius: 12, paddingHorizontal: 7, paddingVertical: 4 },
-  amenityText: { minWidth: 0, flexShrink: 1, fontSize: 11, lineHeight: 15 },
-  providers: { minWidth: 0, fontSize: 11, lineHeight: 16 },
+  stars: { color: "#FFB800", fontSize: 14 },
+  review: { fontSize: 11, color: ui.navy },
+  score: { backgroundColor: ui.blue, color: "white", fontWeight: "900" },
+  amenities: { gap: 3 },
+  amenity: { color: ui.green, fontSize: 10 },
+  providers: { fontSize: 10, color: ui.muted },
   hotelPrice: {
     marginTop: "auto",
-    gap: 9,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  hotelPriceCompact: { paddingTop: 2 },
-  hotelPriceCopy: { minWidth: 0, gap: 1 },
-  hotelNightlyPrice: { minWidth: 0, flexShrink: 1, fontSize: 20, lineHeight: 25, fontWeight: "900" },
-  hotelNightlyUnit: { fontSize: 12, lineHeight: 17, fontWeight: "500" },
-  hotelTotalPrice: { minWidth: 0, flexShrink: 1, fontSize: 12, lineHeight: 17 },
   loadingState: { width: "100%", gap: 14 },
   loadingMessage: {
     minHeight: 40,
