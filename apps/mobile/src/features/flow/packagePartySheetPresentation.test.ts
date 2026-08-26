@@ -36,7 +36,7 @@ test("package party rows use distinct decorative Lucide icons and icon circles",
   assert.match(sheet, /key: "infants"[^\n]+icon: Baby/);
   assert.match(sheet, /<PackagePartyRow icon=\{BedDouble\} label="Rooms"/);
   assert.match(sheet, /accessible=\{false\} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"/);
-  assert.match(styles, /partyIcon:\{width:44,height:44,borderRadius:22,flexShrink:0/);
+  assert.match(styles, /partyIcon:\{width:36,height:36,borderRadius:18,flexShrink:0/);
 });
 
 test("package counters use accessible Lucide controls with accurate disabled states", () => {
@@ -50,15 +50,15 @@ test("package counters use accessible Lucide controls with accurate disabled sta
   assert.match(sheet, /draft\.rooms <= 1/);
   assert.match(sheet, /draft\.rooms >= 6/);
   assert.match(styles, /partyCounterTarget:\{width:44,height:44/);
-  assert.match(styles, /partyCounterCircle:\{width:40,height:40/);
+  assert.match(styles, /partyCounterCircle:\{width:34,height:34/);
 });
 
 test("package descriptions remain flexible and the native pet Switch keeps draft semantics", () => {
   assert.doesNotMatch(sheet, /numberOfLines=\{[1-9]/);
-  assert.match(styles, /partyRow:\{minHeight:88/);
+  assert.match(styles, /partyRow:\{minHeight:62/);
   assert.match(styles, /partyCopy:\{flex:1,minWidth:0/);
   assert.match(styles, /partyCounter:\{flexShrink:0/);
   assert.match(sheet, /<Switch accessibilityLabel="Pet-friendly rooms" accessibilityRole="switch" accessibilityState=\{\{ checked: draft\.petFriendly \}\} value=\{draft\.petFriendly\} onValueChange=\{petFriendly => setDraft\(current => \(\{ \.\.\.current, petFriendly \}\)\)\}/);
   assert.doesNotMatch(sheet, /accessibilityRole="checkbox"|CheckBox|type="checkbox"/);
-  assert.match(sheet, /<PrimaryButton label="Done" icon=\{null\} onPress=\{\(\) => onDone\(draft\)\}/);
+  assert.match(sheet, /<PrimaryButton label="Done" icon=\{null\} size="compact" onPress=\{\(\) => onDone\(draft\)\}/);
 });

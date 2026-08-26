@@ -17,11 +17,11 @@ test("the native cabin picker offers only Economy, Business, and First in order"
 
 test("the web-parity cabin selector is one horizontal radio group with seats and a selected check", () => {
   assert.match(cabinSheet, />CABIN CLASS<\/Text><View style=\{\[styles\.cabinGroup/);
-  assert.match(panel, /cabinGroup:\{minHeight:92,flexDirection:"row"/);
+  assert.match(panel, /cabinGroup:\{minHeight:68,flexDirection:"row"/);
   assert.match(cabinSheet, /<CabinOption key=\{cabin\}/);
   assert.match(cabinSheet, /accessibilityRole="radio" accessibilityState=\{\{selected\}\}/);
-  assert.match(cabinSheet, /<DecorativeIcon icon=\{Armchair\} size=\{23\}/);
-  assert.match(cabinSheet, /selected\?<View[^>]*styles\.cabinCheck[\s\S]*?<DecorativeIcon icon=\{Check\} size=\{13\}/);
+  assert.match(cabinSheet, /<DecorativeIcon icon=\{Armchair\} size=\{18\}/);
+  assert.match(cabinSheet, /selected\?<View[^>]*styles\.cabinCheck[\s\S]*?<DecorativeIcon icon=\{Check\} size=\{11\}/);
   assert.match(cabinSheet, /accessible=\{false\} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"/);
   assert.match(cabinSheet, /selected&&\{backgroundColor:ft\.colors\.selected,borderColor:ft\.colors\.selectedBorder\}/);
 });
