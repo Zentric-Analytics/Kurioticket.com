@@ -140,12 +140,17 @@ export function buildHotelMapEmbedUrl(
 }
 
 export function buildHotelDirectionsUrl(
-  details: PublicHotelPropertyDetails,
+  { hotelName, propertyDetails }: HotelMapDetails,
 ): string | null {
-  const address = buildHotelAddress(details);
-  const destination = hasValidHotelCoordinates(details)
-    ? `${details.latitude},${details.longitude}`
-    : address;
+  const address = buildHotelAddress(propertyDetails);
+  const identifiedAddress = [normalizeAddressPart(hotelName), address]
+    .filter(Boolean)
+    .join(", ");
+  const destination =
+    identifiedAddress ||
+    (hasValidHotelCoordinates(propertyDetails)
+      ? `${propertyDetails.latitude},${propertyDetails.longitude}`
+      : "");
   if (!destination) return null;
 
   const url = new URL("https://www.google.com/maps/dir/");

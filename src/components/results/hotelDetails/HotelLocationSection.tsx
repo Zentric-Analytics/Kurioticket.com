@@ -57,7 +57,7 @@ export function HotelLocationSection({
     googleMapsEmbedApiKey,
   });
   const activeEmbedUrl = view === "streetview" ? streetViewUrl : mapUrl;
-  const directionsUrl = buildHotelDirectionsUrl(propertyDetails);
+  const directionsUrl = buildHotelDirectionsUrl({ hotelName, propertyDetails });
   const streetAddress = propertyDetails.streetAddress.trim();
   const secondaryLocation = getSecondaryLocation(propertyDetails);
   const hasAddress = Boolean(streetAddress || secondaryLocation);

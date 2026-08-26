@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Award,
   CalendarDays,
   Check,
   ChevronDown,
@@ -12,7 +13,6 @@ import {
   MoreHorizontal,
   Share2,
   Sparkles,
-  Star,
   Users,
   UtensilsCrossed,
   Wifi,
@@ -139,7 +139,10 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
     ? buildHotelAddress(props.propertyDetails)
     : "";
   const directionsUrl = props.propertyDetails
-    ? buildHotelDirectionsUrl(props.propertyDetails)
+    ? buildHotelDirectionsUrl({
+        hotelName: props.hotelName,
+        propertyDetails: props.propertyDetails,
+      })
     : null;
 
   useEffect(() => {
@@ -288,7 +291,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                     </div>
                   ) : null}
                   <div
-                    className="mt-2 space-y-1.5 lg:hidden"
+                    className="mt-2 space-y-1 lg:hidden"
                     data-mobile-hotel-identity
                     data-mobile-property-metadata
                   >
@@ -321,16 +324,16 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                     ) : null}
                     {canonicalAddress ? (
                       <div
-                        className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-1.5 text-xs font-semibold leading-5 text-slate-700"
+                        className="grid min-w-0 grid-cols-[1rem_minmax(0,1fr)_auto] items-start gap-x-1.5 text-xs font-semibold leading-5 text-slate-700"
                         data-mobile-hotel-address-row
                       >
                         <MapPin
-                          className="h-4 w-4 shrink-0"
+                          className="mt-0.5 h-4 w-4 shrink-0"
                           aria-hidden="true"
                           data-mobile-hotel-address-icon
                         />
                         <p
-                          className="min-w-0 flex-1 truncate"
+                          className="min-w-0 break-words"
                           title={canonicalAddress}
                         >
                           {canonicalAddress}
@@ -341,7 +344,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label={`Show directions to ${props.hotelName}`}
-                            className="focus-ring inline-flex min-h-11 shrink-0 items-center ps-1.5 font-bold text-blue hover:underline"
+                            className="focus-ring -my-3 inline-flex min-h-11 shrink-0 items-center ps-1.5 font-bold text-blue hover:underline"
                           >
                             Show directions
                           </a>
@@ -354,12 +357,12 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                         className="flex min-h-5 items-center gap-1.5 text-[15px] tracking-[0.08em] text-amber-500"
                         data-mobile-hotel-classification-stars
                       >
-                        <Star
-                          className="h-4 w-4 shrink-0"
+                        <Award
+                          className="h-4 w-4 shrink-0 text-slate-500"
                           aria-hidden="true"
                           data-mobile-hotel-classification-icon
                         />
-                        <span aria-hidden="true">
+                        <span className="text-amber-500" aria-hidden="true">
                           {"★".repeat(props.starRating)}
                         </span>
                       </div>
@@ -367,7 +370,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                   </div>
                 </div>
                 <div
-                  className="flex shrink-0 gap-1 sm:gap-3"
+                  className="flex shrink-0 gap-0 lg:gap-3"
                   data-property-header-actions
                 >
                   <button
@@ -375,10 +378,10 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                     aria-pressed={props.isSaved}
                     aria-label={props.savedHotelLabel}
                     onClick={props.onSave}
-                    className="focus-ring inline-flex size-11 items-center justify-center gap-2 rounded-lg border-0 bg-transparent text-sm font-semibold text-slate-900 hover:bg-slate-100 lg:h-10 lg:w-auto lg:border lg:border-slate-200 lg:bg-white lg:px-3.5 lg:hover:bg-slate-50"
+                    className="focus-ring inline-flex size-11 items-center justify-end gap-2 rounded-lg border-0 bg-transparent pe-1 text-sm font-semibold text-slate-900 hover:bg-slate-100 lg:h-10 lg:w-auto lg:justify-center lg:border lg:border-slate-200 lg:bg-white lg:px-3.5 lg:hover:bg-slate-50"
                   >
                     <Heart
-                      className="h-[17px] w-[17px]"
+                      className="h-5 w-5"
                       fill={props.isSaved ? "currentColor" : "none"}
                       aria-hidden="true"
                     />
@@ -388,9 +391,9 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                     type="button"
                     aria-label={props.labels.share}
                     onClick={() => void sharePage()}
-                    className="focus-ring inline-flex size-11 items-center justify-center gap-2 rounded-lg border-0 bg-transparent text-sm font-semibold text-slate-900 hover:bg-slate-100 lg:h-10 lg:w-auto lg:border lg:border-slate-200 lg:bg-white lg:px-3.5 lg:hover:bg-slate-50"
+                    className="focus-ring inline-flex size-11 items-center justify-start gap-2 rounded-lg border-0 bg-transparent ps-1 text-sm font-semibold text-slate-900 hover:bg-slate-100 lg:h-10 lg:w-auto lg:justify-center lg:border lg:border-slate-200 lg:bg-white lg:px-3.5 lg:hover:bg-slate-50"
                   >
-                    <Share2 className="h-[17px] w-[17px]" aria-hidden="true" />
+                    <Share2 className="h-5 w-5" aria-hidden="true" />
                     <span className="hidden lg:inline">
                       {shareComplete ? props.labels.shared : props.labels.share}
                     </span>

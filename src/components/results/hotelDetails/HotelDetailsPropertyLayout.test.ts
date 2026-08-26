@@ -42,7 +42,10 @@ test("isolates the approved standalone property composition from guided mode", (
     'role="dialog"',
   ]) assert.ok(clientSource.includes(contract) || standaloneSource.includes(contract), contract);
   assert.match(locationSource, /buildHotelMapEmbedUrl/);
-  assert.match(locationSource, /buildHotelDirectionsUrl/);
+  assert.match(
+    locationSource,
+    /buildHotelDirectionsUrl\(\{ hotelName, propertyDetails \}\)/,
+  );
 
   const guidedStart = clientSource.indexOf("const detailsContent = (");
   const guidedContent = clientSource.slice(guidedStart);

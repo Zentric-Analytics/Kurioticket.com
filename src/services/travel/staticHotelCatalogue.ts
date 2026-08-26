@@ -613,7 +613,7 @@ const staticHotelProperties: readonly StaticHotelRecord[] = [
     country: "France",
     region: "Île-de-France",
     aliases: ["paris", "par", "france", "ile de france", "île-de-france"],
-    location: "Rue de Lyon, Paris",
+    location: "8 Rue van Gogh, 75012 Paris",
     latitude: 48.8457,
     longitude: 2.3726,
     neighbourhood: "Gare de Lyon",
