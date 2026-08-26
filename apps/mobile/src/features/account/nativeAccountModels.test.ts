@@ -29,7 +29,7 @@ test("email preference async model protects drafts from stale GET/PATCH and supp
   const retry = beginSave(state); assert.ok(retry); state = finishSave(retry.state, retry.token, retry.editVersion, retry.value); assert.equal(isDirty(state), false);
   const old = finishSave(state, retry.token - 1, retry.editVersion, base); assert.equal(old.draft.receiveOptionalEmails, true);
   const invalidated = invalidateRequests({ ...retry.state, loading: true }); assert.equal(invalidated.loading, false); assert.equal(invalidated.saving, false); assert.ok(invalidated.requestVersion > retry.token);
-  for (const locale of ["en-us", "es-es"] as const) for (const key of ["emailPreferences", "masterDisabled", "saved"]) assert.ok((dictionaries[locale] as Record<string, string>)[key]);
+  for (const locale of ["en-us", "es-es"] as const) for (const key of ["emailPreferences", "emailAllOptional", "emailAllOptionalHelp", "emailSaveError"]) assert.ok((dictionaries[locale] as Record<string, string>)[key]);
 });
 
 test("travel model filters canonical data, prevents duplicates/max, and supports save/revert races", () => {
@@ -43,22 +43,20 @@ test("travel model filters canonical data, prevents duplicates/max, and supports
   for (const locale of ["en-us", "es-es"] as const) for (const key of ["travelPreferences", "homeAirport", "preferredAirlines", "airlineMaximum"]) assert.ok((dictionaries[locale] as Record<string, string>)[key]);
 });
 
-test("email preference screen uses explicit localized Save and Reset interactions", async () => {
+test("email preference screen uses immediate native settings interactions", async () => {
   const { readFile } = await import("node:fs/promises");
   const fullSource = await readFile("src/features/account/NativeAccountScreens.tsx", "utf8");
   const screen = fullSource.slice(fullSource.indexOf("export function EmailPreferencesScreen"), fullSource.indexOf("const travelDefaults"));
   assert.match(screen, /requireAccount\("\/email-preferences"\)/);
   assert.match(screen, /travelApi\.emailPreferences\(\)/);
   assert.equal((screen.match(/travelApi\.updateEmailPreferences\(/g) ?? []).length, 1);
-  assert.match(screen, /const change=.*editDraft/);
-  assert.match(screen, /const save=async.*beginSave/s);
-  assert.match(screen, /setTimeout\(.*2000\)/s);
-  assert.match(screen, /if\(successTimer\.current\)clearTimeout/);
-  assert.doesNotMatch(screen, /disabled=\{state\.saving\|\|!prefs\.receiveOptionalEmails\}/);
-  assert.doesNotMatch(screen, /subordinate/);
+  assert.match(screen, /const persist=async.*beginSave\(\{\.\.\.editDraft/s);
+  assert.match(screen, /draft:confirmed/);
+  assert.match(screen, /disabled=\{state\.saving\}/);
+  assert.match(screen, /value=\{areAllEmailCategoriesEnabled\(prefs\)\}/);
+  assert.match(fullSource, /emailRowCopy:\{flex:1,minWidth:0/);
+  assert.match(fullSource, /emailSwitch:\{flexShrink:0\}/);
+  assert.match(fullSource, /borderBottomWidth:StyleSheet\.hairlineWidth/);
+  assert.doesNotMatch(screen, /emailSurface|emailActions|showSaved|setTimeout|t\("reset"\)|t\("save"\)|opacity:/);
   assert.ok(fullSource.indexOf('label: "emailTravelAlerts"') < fullSource.indexOf('label: "emailInspirationUpdates"'));
-  assert.ok(screen.indexOf('t("reset")') < screen.indexOf('state.saving?t("saving"):t("save")'));
-  assert.match(fullSource, /emailActions:\{flexDirection:"row",justifyContent:"flex-end"/);
-  assert.match(fullSource, /secondaryAction:\{minHeight:44/);
-  assert.match(fullSource, /primaryAction:\{minHeight:44/);
 });
