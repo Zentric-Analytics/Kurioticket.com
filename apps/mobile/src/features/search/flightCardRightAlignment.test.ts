@@ -9,11 +9,11 @@ const card = source.slice(source.indexOf("function FlightCard"), source.indexOf(
 test("outbound and return share one structured journey component", () => {
   assert.match(card, /<FlightJourneyRow label="OUTBOUND" leg=\{outbound\} \/>/);
   assert.match(card, /\{returnLeg \? <FlightJourneyRow label="RETURN" leg=\{returnLeg\} \/> : null\}/);
-  assert.equal(card.match(/<View style=\{\[s0\.arrivalColumn, s0\.rightColumnContract\]\}>/g)?.length, 1);
-  assert.match(source, /journeyRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6 \}/);
-  assert.match(source, /departureColumn: \{ flexBasis: 62, minWidth: 62, flexShrink: 0 \}/);
-  assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center", gap: 1 \}/);
-  assert.match(source, /arrivalColumn: \{ flexBasis: 82, minWidth: 82, flexShrink: 0 \}/);
+  assert.equal(card.match(/<View style=\{\[s0\.arrivalColumn, s0\.rightColumnContract\]\}>/g)?.length, 2);
+  assert.match(source, /journeyTimeRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6 \}/);
+  assert.match(source, /departureColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);
+  assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center" \}/);
+  assert.match(source, /arrivalColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);
 });
 
 test("arrival and price terminate on the shared right edge", () => {

@@ -51,16 +51,16 @@ test("almost-done reuses three shared-pulse noninteractive flight skeletons", ()
 
 test("one-way uses one journey and round-trip conditionally adds the return journey", () => {
   assert.match(screen, /roundTrip=\{payload\.tripType === "round-trip"\}/);
-  assert.match(flightSkeleton, /\{roundTrip \? \([\s\S]*?<View style=\{s0\.skeletonFlightRow\}>/);
+  assert.match(flightSkeleton, /\{roundTrip \? \([\s\S]*?<View style=\{s0\.skeletonJourneyBlock\}>/);
   const identityStart = flightSkeleton.indexOf('<View style={s0.skeletonIdentityRow}>');
-  const journeyStart = flightSkeleton.indexOf('<View style={s0.skeletonFlightRow}>');
+  const journeyStart = flightSkeleton.indexOf('<View style={s0.skeletonJourneyBlock}>');
   assert.ok(journeyStart > identityStart, "the full-width journey placeholder follows the identity row");
-  assert.doesNotMatch(flightSkeleton.slice(identityStart, journeyStart), /skeletonFlightRow/);
+  assert.doesNotMatch(flightSkeleton.slice(identityStart, journeyStart), /skeletonJourneyBlock/);
 });
 
 test("flight skeleton stacks badge and heart in the right side of its identity row", () => {
   const identityStart = flightSkeleton.indexOf('<View style={s0.skeletonIdentityRow}>');
-  const journeyStart = flightSkeleton.indexOf('<View style={s0.skeletonFlightRow}>');
+  const journeyStart = flightSkeleton.indexOf('<View style={s0.skeletonJourneyBlock}>');
   const identity = flightSkeleton.slice(identityStart, journeyStart);
   assert.match(identity, /skeletonLogo[\s\S]*skeletonName[\s\S]*skeletonIdentityActions[\s\S]*skeletonBadge[\s\S]*skeletonHeart/);
   assert.match(screen, /skeletonIdentityActions: \{ flexDirection: "column", flexShrink: 0/);
