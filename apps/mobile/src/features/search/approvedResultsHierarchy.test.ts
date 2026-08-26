@@ -9,27 +9,25 @@ const resultsBody = source.slice(
   source.indexOf("const stopLabels"),
 );
 
-test("ready flight results place the date strip and price alert before the sticky result controls and cards", () => {
+test("ready flight results place persistent controls before the scrolling date, alert, count, and cards", () => {
+  const controls = source.slice(source.indexOf('{product === "flight" && status === "ready"'), source.indexOf("<SectionList"));
   const sectionList = source.slice(source.indexOf("<SectionList"), source.indexOf(") : (", source.indexOf("<SectionList")));
   const renderItem = sectionList.slice(sectionList.indexOf("renderItem="), sectionList.indexOf("ListHeaderComponent="));
-  const listHeader = sectionList.slice(sectionList.indexOf("ListHeaderComponent="), sectionList.indexOf("renderSectionHeader="));
-  const stickyHeader = sectionList.slice(sectionList.indexOf("renderSectionHeader="), sectionList.indexOf("ListEmptyComponent="));
+  const listHeader = sectionList.slice(sectionList.indexOf("ListHeaderComponent="), sectionList.indexOf("ListEmptyComponent="));
 
-  assert.ok(listHeader.indexOf("{dateStrip}") < listHeader.indexOf("<PriceAlert"), "the alert should follow the date strip");
+  assert.match(controls, /filterRail : null/);
+  assert.ok(listHeader.indexOf("{dateStrip}") < listHeader.indexOf("<PriceAlert"));
+  assert.ok(listHeader.indexOf("<PriceAlert") < listHeader.indexOf("flightResultCountLabel(sorted.length)"));
   assert.match(listHeader, /status === "ready" && !flightState && plan\.plan/);
   assert.match(renderItem, /<FlightCard/);
-  assert.doesNotMatch(renderItem, /PriceAlert/);
-  assert.match(stickyHeader, /flightResultCountLabel\(sorted\.length\)[\s\S]*?filterRail : null/);
-  assert.doesNotMatch(stickyHeader, /PriceAlert/);
-  assert.match(sectionList, /stickySectionHeadersEnabled/);
+  assert.doesNotMatch(renderItem, /PriceAlert|filterRail|flightResultCountLabel/);
+  assert.doesNotMatch(listHeader, /filterRail/);
+  assert.doesNotMatch(sectionList, /renderSectionHeader|stickySectionHeadersEnabled/);
   assert.match(sectionList, /sections=\{\[\{ data: !flightState \? sorted as FlightResult\[\] : \[\] \}\]\}/);
   assert.doesNotMatch(sectionList, /data:.*PriceAlert|keyExtractor=.*PriceAlert/);
-  assert.doesNotMatch(sectionList, /ListFooterComponent=[^\n]*PriceAlert/);
-  assert.equal(
-    sectionList.match(/<PriceAlert/g)?.length,
-    1,
-    "the flight price alert should render only once",
-  );
+  assert.equal(sectionList.match(/<PriceAlert/g)?.length, 1);
+  assert.equal(source.slice(source.indexOf("export function ApprovedResultsScreen"), source.indexOf("function FlightResultsHeader")).match(/filterRail : null/g)?.length, 1);
+  assert.equal(sectionList.match(/flightResultCountLabel\(sorted\.length\)/g)?.length, 1);
 });
 
 test("the compact flight alert keeps its copy while replacing the management redirect", () => {

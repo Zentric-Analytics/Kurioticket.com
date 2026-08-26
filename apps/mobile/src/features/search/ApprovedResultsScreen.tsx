@@ -538,6 +538,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           </View>
         </>
       )}
+      {product === "flight" && status === "ready" && results.length > 0 ? filterRail : null}
       {product === "flight" ? (
         <SectionList
           style={[s0.resultsScroll, { backgroundColor: theme.background }]}
@@ -565,30 +566,15 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   <PriceAlert product={product} plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} />
                 </View>
               ) : null}
-            </View>
-          )}
-          renderSectionHeader={() => (
-            <View
-              style={[
-                s0.stickyFilterSurface,
-                {
-                  backgroundColor: theme.background,
-                  shadowColor: theme.dark ? "#000000" : "#18305B",
-                  shadowOpacity: theme.dark ? 0.24 : 0.08,
-                },
-              ]}
-            >
               {status === "ready" && !flightState ? (
                 <Text accessibilityRole="header" style={[s0.flightResultCount, { color: theme.textPrimary }]}>
                   {flightResultCountLabel(sorted.length)}
                 </Text>
               ) : null}
-              {status === "ready" && results.length > 0 ? filterRail : null}
             </View>
           )}
           ListEmptyComponent={<View style={[s0.body, s0.flightResultsBody]}>{resultContent}</View>}
           ListFooterComponent={!flightState && sorted.length ? <View style={[s0.body, s0.flightResultsBody]}>{resultContent}</View> : null}
-          stickySectionHeadersEnabled
           alwaysBounceVertical={false}
           bounces={false}
           overScrollMode="never"
@@ -1285,13 +1271,6 @@ const s0 = StyleSheet.create({
   filterRail: { height: 44, flexGrow: 0 },
   resultsScroll: { flex: 1 },
   flightResultsContent: { flexGrow: 1 },
-  stickyFilterSurface: {
-    backgroundColor: "white",
-    zIndex: 2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 3,
-    elevation: 3,
-  },
   route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
   filters: { paddingHorizontal: 14, paddingVertical: 3, gap: 8, alignItems: "center" },
