@@ -10,8 +10,19 @@ export const defaultEmailPreferences: EmailPreferences = {
   dealsRecommendations: false,
 };
 
+export function normalizeLoadedEmailPreferences(value: EmailPreferences): EmailPreferences {
+  if (value.receiveOptionalEmails) return value;
+  return {
+    ...value,
+    priceAlerts: false,
+    travelInspiration: false,
+    productUpdates: false,
+    dealsRecommendations: false,
+  };
+}
+
 export function areAllEmailCategoriesEnabled(value: EmailPreferences) {
-  return value.priceAlerts && value.travelInspiration && value.productUpdates && value.dealsRecommendations;
+  return value.receiveOptionalEmails && value.priceAlerts && value.travelInspiration && value.productUpdates && value.dealsRecommendations;
 }
 
 export function toggleAllEmailCategories(value: EmailPreferences, checked: boolean): EmailPreferences {
