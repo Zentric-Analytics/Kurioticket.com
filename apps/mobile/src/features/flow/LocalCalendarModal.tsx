@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFlowTheme } from "./flowStyles";
+import { SEARCH_PICKER_BACKDROP_COLOR } from "./searchPickerPresentation";
 import { localDateFromIso, localIsoDate } from "./localDateModel";
 
 type LocalCalendarModalProps = { visible: boolean; title: string; selected: string; minimum: string; onChoose: (iso: string) => void; onClose: () => void; dismissOnBackdropPress?: boolean };
@@ -28,4 +29,4 @@ export function LocalCalendarModal({ visible, title, selected, minimum, onChoose
   </View></SafeAreaView></Modal>;
 }
 
-const styles = StyleSheet.create({ overlay:{flex:1,justifyContent:"flex-end"},modal:{borderTopLeftRadius:24,borderTopRightRadius:24,padding:16,gap:10,maxHeight:"92%"},monthRow:{minHeight:48,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:4},month:{flex:1,textAlign:"center",fontSize:18,fontWeight:"800"},control:{width:44,height:44,borderRadius:22,borderWidth:1,alignItems:"center",justifyContent:"center"},controlText:{fontSize:25},week:{flexDirection:"row"},weekday:{width:"14.285%",textAlign:"center",fontSize:11},grid:{flexDirection:"row",flexWrap:"wrap"},day:{width:"14.285%",minHeight:44,alignItems:"center",justifyContent:"center",borderRadius:8},dayText:{fontSize:13},selectedDay:{borderWidth:2},selectedText:{color:"white",fontWeight:"800"},disabled:{opacity:.35},close:{minHeight:48,alignItems:"center",justifyContent:"center"},closeText:{fontWeight:"800"} });
+const styles = StyleSheet.create({ overlay:{flex:1,justifyContent:"flex-end",backgroundColor:SEARCH_PICKER_BACKDROP_COLOR},modal:{borderTopLeftRadius:24,borderTopRightRadius:24,padding:16,gap:10,maxHeight:"92%"},monthRow:{minHeight:48,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:4},month:{flex:1,textAlign:"center",fontSize:18,fontWeight:"800"},control:{width:44,height:44,borderRadius:22,borderWidth:1,alignItems:"center",justifyContent:"center"},controlText:{fontSize:25},week:{flexDirection:"row"},weekday:{width:"14.285%",textAlign:"center",fontSize:11},grid:{flexDirection:"row",flexWrap:"wrap"},day:{width:"14.285%",minHeight:44,alignItems:"center",justifyContent:"center",borderRadius:8},dayText:{fontSize:13},selectedDay:{borderWidth:2},selectedText:{color:"white",fontWeight:"800"},disabled:{opacity:.35},close:{minHeight:48,alignItems:"center",justifyContent:"center"},closeText:{fontWeight:"800"} });
