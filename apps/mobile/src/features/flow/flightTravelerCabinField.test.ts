@@ -23,7 +23,7 @@ test("Flights render one combined Travelers and Cabin Class control per trip-typ
     assert.match(field, /onPress=\{\(\) => setPicker\("travelers"\)\}/);
   }
   assert.match(multiField, /trailingChevron/);
-  assert.match(compactField, /trailing=\{<FlowIcon name="chevronDown" size=\{16\} color=\{ft\.colors\.icon\}\/>\}/);
+  assert.match(compactField, /trailing=\{<FlowIcon name="chevron" size=\{16\} color=\{ft\.colors\.icon\}\/>\}/);
   assert.match(readFileSync("src/features/flow/FlowPrimitives.tsx", "utf8"), /trailing \?\? <FlowIcon name="chevron"/);
   assert.doesNotMatch(fields, /styles\.(?:row|half)/);
 });
@@ -38,12 +38,12 @@ test("the shared summary composes traveler categories and partial placeholders",
   assert.doesNotMatch(fields, /No travelers selected|travelerBreakdown| · /);
 });
 
-test("the disclosure chevron uses the decorative native SVG icon without changing the default chevron", () => {
+test("the disclosure chevron uses the right-facing decorative native SVG icon without changing the default chevron", () => {
   const icon = readFileSync("src/features/flow/FlowIcon.tsx", "utf8");
   const primitives = readFileSync("src/features/flow/FlowPrimitives.tsx", "utf8");
 
-  assert.match(icon, /\| "chevronDown"/);
-  assert.match(icon, /chevronDown: <Path \{\.\.\.line\} d="m6 9 6 6 6-6" \/>/);
+  assert.match(icon, /\| "chevron"/);
+  assert.match(icon, /chevron: <Path \{\.\.\.line\} d="m9 6 6 6-6 6" \/>/);
   assert.match(icon, /<Svg[\s\S]*accessibilityElementsHidden importantForAccessibility="no-hide-descendants"/);
   assert.match(primitives, /trailing \?\? <FlowIcon name="chevron"/);
 });

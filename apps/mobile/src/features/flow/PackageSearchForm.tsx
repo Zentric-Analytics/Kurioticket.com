@@ -61,14 +61,14 @@ export function PackageSearchForm({ presentation }: { presentation: "home" | "st
     </View>
     <View style={[styles.fields, { borderColor: ft.colors.border, backgroundColor: ft.colors.input }]}>
       {included.flight ? <View style={styles.originBoundary}>
-        <CompactSearchField label="Origin" value={search.origin || "City or airport"} muted={!search.origin} icon="location" onPress={() => { userControlsOrigin.current = true; setAirportField("origin"); }}/>
+        <CompactSearchField label="Origin" value={search.origin || "City or airport"} muted={!search.origin} icon="location" trailing={false} onPress={() => { userControlsOrigin.current = true; setAirportField("origin"); }}/>
         <Pressable accessibilityRole="button" accessibilityLabel="Swap origin and destination" onPress={swapAirports} style={({ pressed }) => [styles.swapTarget, pressed && ft.styles.pressed]}>
           <View style={[styles.swapCircle, { backgroundColor: ft.colors.surface, borderColor: ft.colors.border, shadowColor: ft.colors.shadow }]}>
             <ArrowRightLeft accessible={false} size={17} color={ft.colors.blue}/>
           </View>
         </Pressable>
       </View> : null}
-      <CompactSearchField label="Destination" value={search.destination || "Where to?"} muted={!search.destination} icon="location" onPress={() => included.flight ? setAirportField("destination") : setHotelDestinationOpen(true)}/>
+      <CompactSearchField label="Destination" value={search.destination || "Where to?"} muted={!search.destination} icon="location" trailing={false} onPress={() => included.flight ? setAirportField("destination") : setHotelDestinationOpen(true)}/>
       <CompactSearchField label="Travel dates" value={search.startDate ? `${dateText(search.startDate)} — ${dateText(search.endDate)}` : "Choose dates"} muted={!search.startDate} icon="calendar" onPress={() => setDatesOpen(true)}/>
       <CompactSearchField label={included.hotel ? "Travelers & Rooms" : "Travelers"} value={`${travelerCount} ${travelerCount === 1 ? "traveler" : "travelers"}${included.hotel ? ` · ${search.rooms} ${search.rooms === 1 ? "room" : "rooms"}` : ""}`} icon="person" onPress={() => setPartyOpen(true)}/>
     </View>

@@ -27,7 +27,8 @@ test("Cars closed selectors share the compact field contract without custom chev
   for (const copy of ["Pickup date", "Return date", "Select driver age", "Search cars"]) {
     assert.match(closedForm, new RegExp(copy));
   }
-  assert.doesNotMatch(closedForm, /<Field |LocationLauncher|trailing=|name="chevron"/);
+  assert.doesNotMatch(closedForm, /<Field |LocationLauncher|name="chevron"/);
+  assert.equal((closedForm.match(/trailing=\{false\}/g) ?? []).length, 2);
 });
 
 test("Cars keeps the checkbox semantics, toggle, conditional drop-off, and selected check", () => {
@@ -116,7 +117,8 @@ test("time rows keep horizontal separators and selected treatment without vertic
 
 test("Cars uses the compact field person icon and shared default chevron", () => {
   assert.match(panel, /<CompactSearchField label="Driver age"[^\n]*icon="person"[^\n]*onPress/);
-  assert.doesNotMatch(panel.slice(0, panel.indexOf("export function CarLocationSheet")), /trailing=|name="chevron"/);
+  assert.equal((panel.slice(0, panel.indexOf("export function CarLocationSheet")).match(/trailing=\{false\}/g) ?? []).length, 2);
+  assert.doesNotMatch(panel.slice(0, panel.indexOf("export function CarLocationSheet")), /name="chevron"/);
   assert.match(icons, /\| "clock" \| "close"/);
   assert.match(icons, /clock: <><Circle \{\.\.\.line\}[\s\S]*?<Path \{\.\.\.line\}/);
 });

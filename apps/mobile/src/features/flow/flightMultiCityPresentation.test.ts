@@ -27,8 +27,10 @@ test("Multi-city follows the web-mobile hierarchy with standalone leg headings",
 test("each field is an independent accessible rounded surface with semantic icons", () => {
   assert.match(field, /accessibilityRole="button"/);
   assert.match(field, /<Text numberOfLines=\{0\}/);
-  assert.match(editor, /label="Origin"[\s\S]*?icon="location"[\s\S]*?trailingChevron/);
-  assert.match(editor, /label="Destination"[\s\S]*?icon="location"[\s\S]*?trailingChevron/);
+  assert.match(editor, /label="Origin"[^>]*icon="location"[^>]*onPress/);
+  assert.doesNotMatch(editor, /label="Origin"[^>]*trailingChevron/);
+  assert.match(editor, /label="Destination"[^>]*icon="location"[^>]*onPress/);
+  assert.doesNotMatch(editor, /label="Destination"[^>]*trailingChevron/);
   assert.match(editor, /label="Departure date"[\s\S]*?icon="calendar"[\s\S]*?onPress/);
   assert.match(styles, /multiField:\{minHeight:74,borderWidth:1,borderRadius:13/);
   assert.doesNotMatch(styles.match(/multiField:\{[^}]+\}/)?.[0] ?? "", /height:/);
