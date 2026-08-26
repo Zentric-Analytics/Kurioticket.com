@@ -324,7 +324,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                     ) : null}
                     {canonicalAddress ? (
                       <div
-                        className="grid min-w-0 grid-cols-[1rem_minmax(0,1fr)_auto] items-start gap-x-1.5 text-xs font-semibold leading-5 text-slate-700"
+                        className="grid min-w-0 grid-cols-[1rem_minmax(0,1fr)] items-start gap-x-1.5 text-xs font-semibold leading-5 text-slate-700"
                         data-mobile-hotel-address-row
                       >
                         <MapPin
@@ -338,17 +338,6 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                         >
                           {canonicalAddress}
                         </p>
-                        {directionsUrl ? (
-                          <a
-                            href={directionsUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`Show directions to ${props.hotelName}`}
-                            className="focus-ring -my-3 inline-flex min-h-11 shrink-0 items-center ps-1.5 font-bold text-blue hover:underline"
-                          >
-                            Show directions
-                          </a>
-                        ) : null}
                       </div>
                     ) : null}
                     {props.starRating ? (
@@ -413,13 +402,43 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                 className="mx-4 mt-3 overflow-hidden rounded-[11px] border border-slate-200 bg-white lg:mx-0"
                 data-hotel-amenities-strip
               >
-                <div className="grid min-h-[52px] grid-cols-2 sm:grid-cols-4 lg:grid-cols-5">
+                <div className="grid grid-cols-2 lg:hidden">
+                  {primaryAmenities.slice(0, 4).map((item, index) => {
+                    const Icon = getAmenityIcon(item);
+                    return (
+                      <div
+                        key={item.key}
+                        className={`flex min-h-12 min-w-0 items-center justify-start gap-2 border-slate-200 px-4 text-xs font-semibold text-slate-800 ${
+                          index % 2 === 0 ? "border-e" : ""
+                        } ${index < 2 ? "border-b" : ""}`}
+                        data-mobile-amenity-cell
+                      >
+                        <Icon
+                          className="h-[18px] w-[18px] shrink-0"
+                          aria-hidden="true"
+                        />
+                        <span className="min-w-0">{item.label}</span>
+                      </div>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    aria-expanded={amenitiesExpanded}
+                    onClick={() => setAmenitiesExpanded((value) => !value)}
+                    className="focus-ring col-span-2 flex min-h-11 items-center justify-center gap-2 border-t border-slate-200 px-3 text-xs font-semibold text-slate-800 hover:bg-slate-50"
+                    data-mobile-amenities-more
+                  >
+                    <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
+                    {props.labels.more}
+                  </button>
+                </div>
+                <div className="hidden min-h-[52px] grid-cols-5 lg:grid">
                   {primaryAmenities.map((item) => {
                     const Icon = getAmenityIcon(item);
                     return (
                       <div
                         key={item.key}
-                        className="flex items-center justify-center gap-2 border-slate-200 px-2 text-xs font-semibold text-slate-800 sm:border-e last:border-e-0"
+                        className="flex items-center justify-center gap-2 border-e border-slate-200 px-2 text-xs font-semibold text-slate-800 last:border-e-0"
                       >
                         <Icon
                           className="h-[18px] w-[18px]"
@@ -433,7 +452,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                     type="button"
                     aria-expanded={amenitiesExpanded}
                     onClick={() => setAmenitiesExpanded((value) => !value)}
-                    className="focus-ring col-span-2 flex items-center justify-center gap-2 border-t border-slate-200 px-3 text-xs font-semibold text-slate-800 hover:bg-slate-50 sm:col-span-1 sm:border-t-0"
+                    className="focus-ring flex items-center justify-center gap-2 px-3 text-xs font-semibold text-slate-800 hover:bg-slate-50"
                   >
                     <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
                     {props.labels.more}
