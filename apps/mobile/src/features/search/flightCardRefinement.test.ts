@@ -135,7 +135,7 @@ test("flight card keeps long prices single-line in the stable footer action colu
   assert.match(card, /style=\{s0\.flightMain\}/);
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch" \}/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
-  assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center" \}/);
+  assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center", gap: 1 \}/);
   assert.match(source, /metadataItem: \{ flex: 1, minWidth: 0/);
   assert.match(source, /actionColumn: \{ width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 3 \}/);
   assert.doesNotMatch(source, /priceBox:/);
@@ -172,8 +172,7 @@ test("airline identity preserves its accessible name while bounding very long vi
 
 test("narrow flight cards reserve deterministic space for every journey section", () => {
   const airlineLogo = readFileSync(resolve("src/features/search/AirlineLogo.tsx"), "utf8");
-  assert.match(source, /journeyRow: \{ width: "100%" \}/);
-  assert.match(source, /timeTimelineRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6 \}/);
+  assert.match(source, /journeyRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6 \}/);
   assert.match(card, /<AirlineLogo[\s\S]*logoUrl=\{result\.airlineLogo\}/);
   assert.match(airlineLogo, /logo: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
   assert.match(airlineLogo, /tile: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
@@ -225,7 +224,7 @@ test("flight times, airports, duration, and stop labels remain single-line", () 
   assert.match(card, /\{leg\.duration\} · \{stopLabel\}<\/Text>/);
   assert.match(card, /\{leg\.originAirport\}<\/Text>/);
   assert.match(card, /\{leg\.destinationAirport\}<\/Text>/);
-  assert.match(card, /<Text style=\{s0\.nonstop\} numberOfLines=\{1\}>\{leg\.duration\} · \{stopLabel\}<\/Text>/);
+  assert.match(card, /<Text style=\{s0\.journeyDuration\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.82\}>\{leg\.duration\} · \{stopLabel\}<\/Text>/);
 });
 
 test("flight card uses Lucide icons for route, benefits, and saved state", () => {

@@ -862,29 +862,24 @@ function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: F
     >
       <Text style={[s0.journeyLabel, { color: theme.textSecondary }]}>{label}</Text>
       <View style={s0.journeyRow}>
-        <View style={s0.timeTimelineRow}>
-          <View style={s0.departureColumn}>
-            <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.departureTime)}</Text>
-          </View>
-          <View style={s0.timelineTrack}>
-            <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
-            <PlaneTakeoff size={14} strokeWidth={2} color={ui.blue} />
-            <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
-          </View>
-          <View style={[s0.arrivalColumn, s0.rightColumnContract]}>
-            <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.arrivalTime)}</Text>
-          </View>
+        <View style={s0.departureColumn}>
+          <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.departureTime)}</Text>
+          <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.originAirport}</Text>
         </View>
-        <View style={s0.airportStopRow}>
-          <View style={s0.departureColumn}>
-            <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.originAirport}</Text>
+        <View style={s0.timelineColumn} accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <Text style={s0.journeyDuration} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.82}>{leg.duration} · {stopLabel}</Text>
+          <View style={s0.routeTrack}>
+            <View style={[s0.routeDot, { backgroundColor: theme.textSecondary }]} />
+            <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
+            <PlaneTakeoff accessible={false} size={14} strokeWidth={2} color={ui.blue} />
+            <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
+            <View style={[s0.routeDot, { backgroundColor: theme.textSecondary }]} />
           </View>
-          <View style={s0.timelineColumn}>
-            <Text style={s0.nonstop} numberOfLines={1}>{leg.duration} · {stopLabel}</Text>
-          </View>
-          <View style={[s0.arrivalColumn, s0.rightColumnContract]}>
-            <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.destinationAirport}</Text>
-          </View>
+          <Text style={[s0.routeSummary, { color: theme.textSecondary }]} numberOfLines={1}>{leg.originAirport} → {leg.destinationAirport}</Text>
+        </View>
+        <View style={[s0.arrivalColumn, s0.rightColumnContract]}>
+          <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.arrivalTime)}</Text>
+          <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.destinationAirport}</Text>
         </View>
       </View>
     </View>
@@ -1475,21 +1470,21 @@ const s0 = StyleSheet.create({
   journeyList: { width: "100%", marginTop: 3, gap: 4 },
   journeyBlock: { width: "100%", gap: 0 },
   journeyLabel: { fontSize: 9, lineHeight: 10, fontWeight: "800", letterSpacing: 0.7 },
-  journeyRow: { width: "100%" },
-  timeTimelineRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
-  airportStopRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
+  journeyRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
   departureColumn: { flexBasis: 62, minWidth: 62, flexShrink: 0 },
   arrivalColumn: { flexBasis: 82, minWidth: 82, flexShrink: 0 },
   rightColumnContract: { alignItems: "flex-end" },
   time: { fontSize: 15, fontWeight: "900", color: ui.navy },
-  timelineColumn: { flex: 1, minWidth: 46, alignItems: "center" },
-  timelineTrack: { flex: 1, minWidth: 46, flexDirection: "row", alignItems: "center", gap: 2 },
+  timelineColumn: { flex: 1, minWidth: 46, alignItems: "center", gap: 1 },
+  journeyDuration: { maxWidth: "100%", fontSize: 11, lineHeight: 13, fontWeight: "600", color: ui.blue, textAlign: "center" },
+  routeTrack: { width: "100%", minWidth: 46, flexDirection: "row", alignItems: "center", gap: 2 },
+  routeDot: { width: 6, height: 6, borderRadius: 3, flexShrink: 0 },
   line: {
     flex: 1,
     height: 1,
     backgroundColor: ui.muted,
   },
-  nonstop: { fontSize: 11, color: ui.blue },
+  routeSummary: { maxWidth: "100%", fontSize: 9.5, lineHeight: 11, fontWeight: "500", textAlign: "center" },
   bigPrice: { fontSize: 20, fontWeight: "900", color: ui.navy, textAlign: "right" },
   fareRow: { paddingTop: 2, flexDirection: "row", justifyContent: "flex-end" },
   actionColumn: { width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 3 },
