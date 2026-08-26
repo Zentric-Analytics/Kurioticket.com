@@ -52,7 +52,7 @@ test("homepage keeps search product tabs and primary header controls", () => {
 
 test("mobile account and menu launchers use clean 44px utility targets", () => {
   const mobileControlsStart = headerSource.indexOf(
-    '<div className="flex items-center gap-2 md:hidden">',
+    '<div className="flex items-center gap-1 md:hidden">',
   );
   const mobileControls = headerSource.slice(
     mobileControlsStart,
@@ -63,6 +63,7 @@ test("mobile account and menu launchers use clean 44px utility targets", () => {
   );
 
   assert.ok(mobileControlsStart >= 0);
+  assert.match(mobileControls, /flex items-center gap-1 md:hidden/);
   assert.equal(mobileControls.match(/h-11 w-11/g)?.length, 3);
   assert.equal(mobileControls.match(/border border-transparent bg-transparent/g)?.length, 3);
   assert.doesNotMatch(mobileControls, /bg-\[#F3F7FA\]|border-\[#DDE7F0\]/);
@@ -85,4 +86,5 @@ test("desktop product navigation remains independent of the mobile suppression p
   assert.match(desktopRail, /className="hidden md:block"/);
   assert.match(desktopRail, /desktopPrimaryNavItems\.map/);
   assert.doesNotMatch(desktopRail, /hideMobileSecondaryNavLinks/);
+  assert.doesNotMatch(desktopRail, /gap-1 md:hidden/);
 });
