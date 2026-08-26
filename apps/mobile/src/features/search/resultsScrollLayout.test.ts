@@ -14,13 +14,14 @@ function styleBlock(name: string, nextName: string) {
   return screen.slice(screen.indexOf(`${name}:`), screen.indexOf(`${nextName}:`, screen.indexOf(`${name}:`)));
 }
 
-test("flight results use one native sticky header for dates and controls", () => {
-  const sectionHeader = flightLayout.slice(flightLayout.indexOf("renderSectionHeader="), flightLayout.indexOf("renderItem="));
+test("flight results keep quick controls persistent while dates scroll naturally", () => {
+  const persistentControls = screen.slice(screen.indexOf("flightResults && status"), layoutStart);
+  const listHeader = flightLayout.slice(flightLayout.indexOf("ListHeaderComponent="), flightLayout.indexOf("renderItem="));
   const renderItem = flightLayout.slice(flightLayout.indexOf("renderItem="), flightLayout.indexOf("ListEmptyComponent="));
-  assert.match(sectionHeader, /renderSectionHeader=\{\(\) => \([\s\S]*?\{dateStrip\}[\s\S]*?\{filterRail\}[\s\S]*?\)\}[\s\S]*?stickySectionHeadersEnabled/);
-  assert.match(sectionHeader, /backgroundColor: theme\.background/);
-  assert.doesNotMatch(sectionHeader, /PriceAlert|flightResultCountLabel|FlightCard/);
-  assert.doesNotMatch(flightLayout, /ListHeaderComponent=/);
+  assert.match(persistentControls, /flightPersistentSearchControls[\s\S]*?backgroundColor: theme\.background[\s\S]*?\{filterRail\}/);
+  assert.match(listHeader, /ListHeaderComponent=\{status === "loading" \? null : dateStrip\}/);
+  assert.doesNotMatch(persistentControls, /dateStrip|PriceAlert|flightResultCountLabel|FlightCard/);
+  assert.doesNotMatch(flightLayout, /renderSectionHeader|stickySectionHeadersEnabled/);
   assert.match(renderItem, /<PriceAlert[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?<FlightCard/);
   assert.doesNotMatch(flightLayout, /onScroll=|scrollEventThrottle=|Animated\.|stickyHeaderIndices|manualSticky|stickyFilterState/);
   assert.doesNotMatch(screen, /dateHeaderCollapsed|dateHeaderProgress|Animated\.timing\(dateHeaderProgress/);
@@ -38,7 +39,7 @@ test("date and filter rails retain their horizontal interactions", () => {
   }
 });
 
-test("sticky flight controls and scrolling count keep compact spacing", () => {
+test("persistent flight controls and scrolling count keep compact spacing", () => {
   const count = styleBlock("flightResultCount", "card");
   const rail = styleBlock("filterRail", "resultsScroll");
   const filters = styleBlock("filters", "modalBackdrop");
