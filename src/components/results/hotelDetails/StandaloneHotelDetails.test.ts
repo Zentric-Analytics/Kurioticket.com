@@ -144,7 +144,7 @@ test("mobile property header renders the canonical identity in the approved orde
     "min-w-0 break-words",
     "title={canonicalAddress}",
     "data-mobile-property-metadata",
-    "grid-cols-[1rem_minmax(0,1fr)_auto]",
+    "grid-cols-[1rem_minmax(0,1fr)]",
     "data-mobile-hotel-address-icon",
     "data-mobile-hotel-classification-icon",
     "<MapPin",
@@ -152,7 +152,10 @@ test("mobile property header renders the canonical identity in the approved orde
     "aria-label={props.starRatingAriaLabel}",
   ])
     assert.ok(source.includes(contract), contract);
-  assert.doesNotMatch(header, /<Star\b|min-w-0 flex-1 truncate/);
+  assert.doesNotMatch(
+    header,
+    /Show directions|href=\{directionsUrl\}|grid-cols-\[1rem_minmax\(0,1fr\)_auto\]|<Star\b|min-w-0 flex-1 truncate|\btruncate\b/,
+  );
   assert.ok(
     source.indexOf("{props.hotelName}") <
       source.indexOf("data-mobile-hotel-stay-dates"),
@@ -163,6 +166,30 @@ test("mobile property header renders the canonical identity in the approved orde
   );
   assert.doesNotMatch(header, /href="#hotel-location"/);
   assert.doesNotMatch(header, /propertyDetails\.neighbourhood/);
+});
+
+test("mobile amenities use balanced cells and a dedicated full-width More row", () => {
+  const amenities = source.slice(
+    source.indexOf("data-hotel-amenities-strip"),
+    source.indexOf("{description ? ("),
+  );
+  for (const contract of [
+    "grid grid-cols-2 lg:hidden",
+    "primaryAmenities.slice(0, 4)",
+    "data-mobile-amenity-cell",
+    "min-h-12",
+    'index % 2 === 0 ? "border-e"',
+    'index < 2 ? "border-b"',
+    "data-mobile-amenities-more",
+    "col-span-2",
+    "min-h-11",
+    "border-t border-slate-200",
+    "aria-expanded={amenitiesExpanded}",
+    "setAmenitiesExpanded",
+  ])
+    assert.ok(amenities.includes(contract), contract);
+  assert.equal(amenities.match(/data-mobile-amenity-cell/g)?.length, 1);
+  assert.match(amenities, /hidden min-h-\[52px\] grid-cols-5 lg:grid/);
 });
 
 test("canonical hotel result name flows directly into the standalone title", () => {
