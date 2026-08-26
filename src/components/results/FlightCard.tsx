@@ -143,6 +143,7 @@ export function FlightCard({
               ))}
             </div>
 
+            <FlightDetailLines details={details} />
             <FlightFareAction
               detailsHref={resolvedDetailsHref}
               formattedPrice={cardPrice.formatted}
@@ -157,7 +158,6 @@ export function FlightCard({
               viewFlightAriaLabel={actionAriaLabel}
               onAction={onAction ? () => onAction(flight) : undefined}
             />
-            <FlightDetailLines details={details} />
           </div>
         </div>
       </div>
@@ -521,10 +521,35 @@ function buildFlightDetails(
     },
     {
       label: t("fareRules"),
-      value: t("reviewBeforeBooking"),
+      value: getFlightResultFareRule(flight, t),
       icon: ShieldCheck,
     },
   ];
+}
+
+function getFlightResultFareRule(
+  flight: PublicFlightResult,
+  t: (key: string) => string,
+) {
+  const providerRule = flight.fareTerms
+    ?.find(
+      (term) =>
+        (term.category === "refund" || term.category === "fare") &&
+        term.text.trim(),
+    )
+    ?.text.trim();
+  const refundInfo = flight.refundInfo?.trim();
+  const genericProviderSummary =
+    !refundInfo ||
+    /^(?:fare rules vary|rules vary|provider rules(?: apply)?|change and refund rules not supplied by the provider)$/i.test(
+      refundInfo,
+    );
+
+  return (
+    providerRule ||
+    (!genericProviderSummary ? refundInfo : undefined) ||
+    t("flightResultReviewBooking")
+  );
 }
 
 function formatLegTitle(leg: FlightLeg, t: (key: string) => string) {

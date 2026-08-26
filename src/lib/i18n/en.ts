@@ -3256,6 +3256,7 @@ export const translations: TranslationDictionary = {
   fareRules: "Fare rules",
   providerRulesApply: "Provider rules apply",
   reviewBeforeBooking: "Review before booking",
+  flightResultReviewBooking: "Review booking",
   outbound: "Outbound",
   return: "Return",
   itinerary: "Itinerary",
