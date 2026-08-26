@@ -1061,6 +1061,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const nearbyFareCacheRef = useRef(new Map<string, NearbyFareState>());
   const nearbyFareRequestsRef = useRef(new Map<string, NearbyFareRequest>());
   const nearbyFareGenerationRef = useRef(0);
+  const mobileNearbyFareRailRef = useRef<HTMLDivElement>(null);
+  const mobileSelectedNearbyFareRef = useRef<HTMLButtonElement>(null);
+  const alignedMobileNearbyFareSearchRef = useRef<string | null>(null);
   const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
   const [nearbyFareVisibleStart, setNearbyFareVisibleStart] = useState(0);
   const [returnDateInput, setReturnDateInput] = useState(
@@ -3805,6 +3808,27 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     timeBounds.takeoff?.min,
   ]);
 
+  useLayoutEffect(() => {
+    if (!body?.departureDate || nearbyFares.length === 0) return;
+
+    const alignmentIdentity = `${buildFlightResultsSearchKey(body)}:${body.departureDate}`;
+    if (alignedMobileNearbyFareSearchRef.current === alignmentIdentity) return;
+
+    const rail = mobileNearbyFareRailRef.current;
+    const selectedCell = mobileSelectedNearbyFareRef.current;
+    if (!rail || !selectedCell) return;
+
+    const previousCell = selectedCell.previousElementSibling as HTMLElement | null;
+    const previousWidth = previousCell?.offsetWidth ?? selectedCell.offsetWidth;
+    const target = Math.min(
+      Math.max(selectedCell.offsetLeft - previousWidth - 8, 0),
+      Math.max(rail.scrollWidth - rail.clientWidth, 0),
+    );
+
+    rail.scrollTo({ left: target, behavior: "auto" });
+    alignedMobileNearbyFareSearchRef.current = alignmentIdentity;
+  }, [body, nearbyFares]);
+
   const resultsUiPreparing = isFlightResultsPreparing({
     loading,
     error,
@@ -6533,7 +6557,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       mobileSortOptions.find((option) => option.value === sortMode) ??
       mobileSortOptions[0];
     const shortcutButtonClass =
-      "focus-ring inline-flex h-10 flex-shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-300/80 bg-transparent px-3.5 text-[13px] font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-200/35 hover:text-slate-950 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
+      "focus-ring inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[11px] border border-[#D8E1EC] bg-white px-3.5 text-[14px] font-semibold text-[#142033] transition hover:border-[#B9C8D9] hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
     const menuClass =
       "z-[90] max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_38px_-18px_rgba(15,23,42,0.35)]";
     const menuItemClass =
@@ -6567,7 +6591,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       width: number,
       ref: RefObject<HTMLDivElement | null>,
     ) => (
-      <div ref={ref} className="flex-shrink-0">
+      <div ref={ref} className="shrink-0">
         <button
           type="button"
           aria-haspopup="menu"
@@ -6722,10 +6746,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     return (
       <>
         <div
-          className="w-full overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden"
+          data-mobile-flight-shortcuts
+          className="w-full min-w-0 overflow-x-auto pb-1 pe-3 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden"
           onScroll={closeMobileShortcutMenus}
         >
-          <div className="flex w-max flex-nowrap items-center gap-2.5">
+          <div className="flex w-max flex-nowrap items-center gap-2">
             {renderFloatingFilterButton(shortcutButtonClass)}
             {renderTrigger(
               "sort",
@@ -6777,7 +6802,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         type="button"
         aria-label={label}
         className={cn(
-          "focus-ring relative inline-flex h-9 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border border-slate-300/80 bg-transparent px-2 text-[13px] font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-200/35 hover:text-slate-950 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
+          "focus-ring relative inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[11px] border border-[#D8E1EC] bg-white px-3.5 text-[14px] font-semibold text-[#142033] transition hover:border-[#B9C8D9] hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
           className,
         )}
         onClick={handleClick}
@@ -7247,14 +7272,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               {body?.tripType !== "multi-city" ? (
                 <>
                   <div className="w-full min-w-0 max-w-full overflow-hidden sm:hidden" aria-label="Nearby departure fares" data-nearby-fare-presentation="mobile">
-                    <div className="flex w-full min-w-0 max-w-full touch-pan-x snap-x snap-proximity gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain px-0.5 py-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <div ref={mobileNearbyFareRailRef} className="flex w-full min-w-0 max-w-full touch-pan-x snap-x snap-proximity gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain px-0.5 py-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       {(nearbyFares.length ? nearbyFares : Array.from({ length: nearbyFareRangeSize }, (_, index) => ({ date: `loading-mobile-${index}`, status: "loading" as const }))).map((fare) => {
                         const selected = fare.date === body?.departureDate;
                         const displayPrice = fare.status === "success" ? formatDisplayPrice({ amount: fare.amount, sourceCurrency: fare.currency, displayCurrency: selectedCurrency, convertUsdEstimate: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback }).formatted : null;
                         const accessibleFare = displayPrice ?? (fare.status === "loading" ? "Loading fare" : "Unavailable");
                         const accessibleDate = fare.date.startsWith("loading-") ? "Loading date" : `${formatFareStripWeekdayLabel(fare.date, calendarLocale)}, ${formatFareStripDateLabel(fare.date, calendarLocale)}`;
                         return (
-                          <button key={fare.date} type="button" data-fare-date-cell aria-label={`${accessibleDate}: ${accessibleFare}`} aria-current={selected ? "date" : undefined} aria-pressed={selected} disabled={selected || loading || fare.status === "loading"} onClick={() => handleNearbyFareDateSelect(fare.date)} className={cn("focus-ring relative flex min-h-[76px] w-[calc((100vw-3.5rem)/3.35)] min-w-[88px] max-w-[108px] shrink-0 snap-start flex-col items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white px-1.5 py-2 text-center shadow-sm transition hover:border-[#075EE8]/40 hover:bg-slate-50", selected && "border-[#075EE8] bg-blue-50/60")}>
+                          <button ref={selected ? mobileSelectedNearbyFareRef : undefined} key={fare.date} type="button" data-fare-date-cell aria-label={`${accessibleDate}: ${accessibleFare}`} aria-current={selected ? "date" : undefined} aria-pressed={selected} disabled={selected || loading || fare.status === "loading"} onClick={() => handleNearbyFareDateSelect(fare.date)} className={cn("focus-ring relative flex min-h-[76px] w-[calc((100vw-3.5rem)/3.35)] min-w-[88px] max-w-[108px] shrink-0 snap-start flex-col items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white px-1.5 py-2 text-center shadow-sm transition hover:border-[#075EE8]/40 hover:bg-slate-50", selected && "border-[#075EE8] bg-blue-50/60")}>
                             {selected ? <span className="absolute inset-x-1.5 top-0 h-0.5 rounded-b bg-[#075EE8]" aria-hidden="true" /> : null}
                             {fare.status === "loading" ? (<>
                               <span className="h-3 w-12 animate-pulse rounded bg-slate-200" /><span className="mt-1.5 h-3 w-8 animate-pulse rounded bg-slate-200" /><span className="mt-1.5 h-3 w-14 animate-pulse rounded bg-slate-200" />

@@ -873,7 +873,7 @@ export function AppHeader({
               </div>
             </div>
 
-            <div className="flex items-center gap-3 md:hidden">
+            <div className="flex items-center gap-2 md:hidden">
               {isSignedIn ? (
                 <button
                   type="button"
@@ -885,7 +885,7 @@ export function AppHeader({
                     setMobileMenuOpen(false);
                     setMobileAccountOpen((value) => !value);
                   }}
-                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#DDE7F0] bg-[#F3F7FA]/70 text-xs font-black text-[#021C2B] transition-colors hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
+                  className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-transparent bg-transparent text-xs font-black text-[#021C2B] transition-colors hover:bg-[#EEF6FC] hover:text-[#004BB8] active:bg-[#E5F0FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
                 >
                   <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-transparent text-[11px] font-black text-[#004BB8]">
                     {session?.user?.image ? (
@@ -906,9 +906,9 @@ export function AppHeader({
                   onClick={(event) =>
                     handleRouteLinkClick(event, "/auth/signin")
                   }
-                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B] transition-colors hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
+                  className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-transparent bg-transparent text-[#021C2B] transition-colors hover:bg-[#EEF6FC] hover:text-[#004BB8] active:bg-[#E5F0FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
                 >
-                  <UserCircle size={18} />
+                  <UserCircle size={22} />
                 </Link>
               )}
 
@@ -919,13 +919,13 @@ export function AppHeader({
                 }
                 aria-expanded={mobileMenuOpen}
                 aria-controls="mobile-menu-drawer"
-                className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B] transition-colors hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
+                className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-transparent bg-transparent text-[#021C2B] transition-colors hover:bg-[#EEF6FC] hover:text-[#004BB8] active:bg-[#E5F0FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
                 onClick={() => {
                   setMobileAccountOpen(false);
                   setMobileMenuOpen((value) => !value);
                 }}
               >
-                {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+                {mobileMenuOpen ? <X size={23} /> : <Menu size={23} />}
               </button>
             </div>
 

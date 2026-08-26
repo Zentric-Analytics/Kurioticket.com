@@ -74,6 +74,21 @@ test("mobile nearby fares scroll horizontally without widening the page", () => 
   assert.match(mobileStrip, /disabled=\{selected \|\| loading \|\| fare\.status === "loading"\}/);
 });
 
+test("mobile nearby fares align the selected real date once per search", () => {
+  assert.match(source, /mobileNearbyFareRailRef = useRef<HTMLDivElement>/);
+  assert.match(source, /mobileSelectedNearbyFareRef = useRef<HTMLButtonElement>/);
+  assert.match(source, /alignedMobileNearbyFareSearchRef = useRef<string \| null>/);
+  assert.match(source, /buildFlightResultsSearchKey\(body\).*body\.departureDate/);
+  assert.match(source, /nearbyFares\.length === 0/);
+  assert.match(source, /if \(!rail \|\| !selectedCell\) return/);
+  assert.match(source, /ref=\{mobileNearbyFareRailRef\}/);
+  assert.match(source, /ref=\{selected \? mobileSelectedNearbyFareRef : undefined\}/);
+  assert.match(source, /Math\.max\(rail\.scrollWidth - rail\.clientWidth, 0\)/);
+  assert.match(source, /rail\.scrollTo\(\{ left: target, behavior: "auto" \}\)/);
+  assert.match(source, /alignedMobileNearbyFareSearchRef\.current = alignmentIdentity/);
+  assert.doesNotMatch(source, /scrollIntoView\(/);
+});
+
 test("nearby fares remain excluded from multi-city searches", () => {
   assert.match(source, /body\?\.tripType !== "multi-city" \? \(/);
 });
