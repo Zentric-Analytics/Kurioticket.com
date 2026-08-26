@@ -43,3 +43,46 @@ test("long nearby-fare currency values use adaptive sizing without wrapping", ()
   assert.match(source, /displayPrice \?\? "Unavailable"/);
   assert.match(source, /overflow-hidden text-ellipsis whitespace-nowrap/);
 });
+
+test("mobile and desktop nearby fares share one truthful fare state and selection handler", () => {
+  assert.equal(source.match(/const \[nearbyFares, setNearbyFares\]/g)?.length, 1);
+  assert.equal(source.match(/nearbyFareCacheRef = useRef/g)?.length, 1);
+  assert.match(source, /data-nearby-fare-presentation="mobile"/);
+  assert.match(source, /nearbyFares\.length[\s\S]*\? nearbyFares/);
+  assert.match(source, /nearbyFares\.slice\(/);
+  assert.ok((source.match(/handleNearbyFareDateSelect\(fare\.date\)/g) ?? []).length >= 2);
+});
+
+test("mobile nearby fares scroll horizontally without widening the page", () => {
+  const marker = source.indexOf('data-nearby-fare-presentation="mobile"');
+  const start = source.lastIndexOf("<div", marker);
+  const end = source.indexOf('className="hidden w-full sm:block"', start);
+  const mobileStrip = source.slice(start, end);
+
+  assert.match(mobileStrip, /sm:hidden/);
+  assert.match(mobileStrip, /min-w-0/);
+  assert.match(mobileStrip, /max-w-full/);
+  assert.match(mobileStrip, /overflow-hidden/);
+  assert.match(mobileStrip, /overflow-x-auto/);
+  assert.match(mobileStrip, /touch-pan-x/);
+  assert.match(mobileStrip, /overscroll-x-contain/);
+  assert.match(mobileStrip, /scrollbar-width:none/);
+  assert.match(mobileStrip, /data-fare-date-cell/);
+  assert.match(mobileStrip, /min-h-\[76px\]/);
+  assert.match(mobileStrip, /aria-current=\{selected \? "date"/);
+  assert.match(mobileStrip, /aria-pressed=\{selected\}/);
+  assert.match(mobileStrip, /disabled=\{selected \|\| loading \|\| fare\.status === "loading"\}/);
+});
+
+test("nearby fares remain excluded from multi-city searches", () => {
+  assert.match(source, /body\?\.tripType !== "multi-city" \? \(/);
+});
+
+test("nearby selection preserves round-trip duration", () => {
+  const start = source.indexOf("const handleNearbyFareDateSelect");
+  const end = source.indexOf("const stopOptions", start);
+  const selection = source.slice(start, end);
+  assert.match(selection, /tripType"\) === "round-trip"/);
+  assert.match(selection, /preserveRoundTripDuration\(/);
+  assert.match(selection, /nextParams\.set\("returnDate", adjustedReturnDate\)/);
+});
