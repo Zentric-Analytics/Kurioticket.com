@@ -58,6 +58,15 @@ test("one-way uses one journey and round-trip conditionally adds the return jour
   assert.doesNotMatch(flightSkeleton.slice(identityStart, journeyStart), /skeletonFlightRow/);
 });
 
+test("flight skeleton stacks badge and heart in the right side of its identity row", () => {
+  const identityStart = flightSkeleton.indexOf('<View style={s0.skeletonIdentityRow}>');
+  const journeyStart = flightSkeleton.indexOf('<View style={s0.skeletonFlightRow}>');
+  const identity = flightSkeleton.slice(identityStart, journeyStart);
+  assert.match(identity, /skeletonLogo[\s\S]*skeletonName[\s\S]*skeletonIdentityActions[\s\S]*skeletonBadge[\s\S]*skeletonHeart/);
+  assert.match(screen, /skeletonIdentityActions: \{ flexDirection: "column", flexShrink: 0/);
+  assert.doesNotMatch(screen, /skeletonTopRow/);
+});
+
 test("validated results become terminal immediately without presentation waiting", () => {
   const validationToReady = screen.slice(screen.indexOf("const valid ="), screen.indexOf("setMessage(response.warnings"));
   assert.match(validationToReady, /setResults\(valid\);\s*resultsRef\.current = valid;\s*setStatus\(valid\.length \? "ready" : "empty"\);/);

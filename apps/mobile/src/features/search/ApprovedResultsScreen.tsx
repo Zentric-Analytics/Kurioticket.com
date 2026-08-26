@@ -791,30 +791,32 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
               <Text accessibilityLabel={`Airline ${result.airlineName}`} style={[s0.airlineName, { color: theme.textPrimary }]} numberOfLines={2} ellipsizeMode="tail">
                 {result.airlineName}
               </Text>
-              {highlight ? (
-                <View
-                  accessible
-                  accessibilityLabel={`${highlight} flight result`}
-                  style={[s0.resultBadge, theme.dark && { backgroundColor: "#173568" }]}
+              <View style={s0.identityActions}>
+                {highlight ? (
+                  <View
+                    accessible
+                    accessibilityLabel={`${highlight} flight result`}
+                    style={[s0.resultBadge, theme.dark && { backgroundColor: "#173568" }]}
+                  >
+                    <Text style={[s0.resultBadgeText, theme.dark && { color: "#8FB5FF" }]}>{highlight}</Text>
+                  </View>
+                ) : null}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={saved ? `Remove ${result.airlineName} flight from saved` : `Save ${result.airlineName} flight`}
+                  accessibilityState={{ selected: saved }}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  onPress={(event) => { event.stopPropagation(); onToggleSaved(); }}
+                  style={({ pressed }) => [s0.favoriteButton, pressed && s0.favoritePressed]}
                 >
-                  <Text style={[s0.resultBadgeText, theme.dark && { color: "#8FB5FF" }]}>{highlight}</Text>
-                </View>
-              ) : null}
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={saved ? `Remove ${result.airlineName} flight from saved` : `Save ${result.airlineName} flight`}
-                accessibilityState={{ selected: saved }}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                onPress={(event) => { event.stopPropagation(); onToggleSaved(); }}
-                style={({ pressed }) => [s0.favoriteButton, pressed && s0.favoritePressed]}
-              >
-                <Heart
-                  size={20}
-                  strokeWidth={2}
-                  fill={saved ? androidFavoriteColors.active : "transparent"}
-                  color={saved ? androidFavoriteColors.active : theme.textSecondary}
-                />
-              </Pressable>
+                  <Heart
+                    size={20}
+                    strokeWidth={2}
+                    fill={saved ? androidFavoriteColors.active : "transparent"}
+                    color={saved ? androidFavoriteColors.active : theme.textSecondary}
+                  />
+                </Pressable>
+              </View>
             </View>
           </View>
         </View>
@@ -833,21 +835,15 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
       <View style={s0.metadataRow}>
         <View accessible accessibilityLabel={`Baggage: ${baggageSummary}`} style={s0.metadataItem}>
           <Luggage accessible={false} size={14} strokeWidth={1.8} color={theme.textSecondary} />
-          <Text style={[s0.metadataText, { color: theme.textSecondary }]}>
-            <Text style={s0.metadataLabel}>Baggage: </Text>{baggageSummary}
-          </Text>
+          <Text style={[s0.metadataText, { color: theme.textSecondary }]}>{baggageSummary}</Text>
         </View>
         <View accessible accessibilityLabel={`Cabin: ${cabinSummary}`} style={s0.metadataItem}>
           <Armchair accessible={false} size={14} strokeWidth={1.8} color={theme.textSecondary} />
-          <Text style={[s0.metadataText, { color: theme.textSecondary }]}>
-            <Text style={s0.metadataLabel}>Cabin: </Text>{cabinSummary}
-          </Text>
+          <Text style={[s0.metadataText, { color: theme.textSecondary }]}>{cabinSummary}</Text>
         </View>
         <View accessible accessibilityLabel={`Fare rules: ${fareRulesSummary}`} style={s0.metadataItem}>
           <ShieldCheck accessible={false} size={14} strokeWidth={1.8} color={theme.textSecondary} />
-          <Text style={[s0.metadataText, { color: theme.textSecondary }]}>
-            <Text style={s0.metadataLabel}>Fare rules: </Text>{fareRulesSummary}
-          </Text>
+          <Text style={[s0.metadataText, { color: theme.textSecondary }]}>{fareRulesSummary}</Text>
         </View>
       </View>
     </Pressable>
@@ -1114,13 +1110,13 @@ function FlightLoadingSkeleton({ roundTrip = false }: { roundTrip?: boolean }) {
   const placeholder = { backgroundColor: theme.border };
   return (
     <View style={[s0.skeletonCard, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityElementsHidden>
-      <View style={s0.skeletonTopRow}>
-        <View style={[s0.skeletonBadge, placeholder]} />
-        <View style={[s0.skeletonHeart, placeholder]} />
-      </View>
       <View style={s0.skeletonIdentityRow}>
         <View style={[s0.skeletonLogo, placeholder]} />
         <SkeletonLine flightResults style={s0.skeletonName} />
+        <View style={s0.skeletonIdentityActions}>
+          <View style={[s0.skeletonBadge, placeholder]} />
+          <View style={[s0.skeletonHeart, placeholder]} />
+        </View>
       </View>
       <View style={s0.skeletonFlightRow}>
         <View style={s0.skeletonDeparture}>
@@ -1464,7 +1460,8 @@ const s0 = StyleSheet.create({
     elevation: 2,
   },
   cardPressed: { opacity: 0.94 },
-  airlineHeader: { minHeight: 20, flexDirection: "row", alignItems: "center", gap: 6 },
+  airlineHeader: { minHeight: 20, flexDirection: "row", alignItems: "flex-start", gap: 6 },
+  identityActions: { flexDirection: "column", flexShrink: 0, alignItems: "center", justifyContent: "flex-start", gap: 3 },
   favoriteButton: { width: 20, height: 20, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   favoritePressed: { opacity: 0.7, transform: [{ scale: 0.94 }] },
   resultBadge: { height: 20, flexDirection: "row", alignItems: "center", paddingHorizontal: 7, borderRadius: 10, backgroundColor: "#EEF4FF" },
@@ -1499,7 +1496,6 @@ const s0 = StyleSheet.create({
   metadataRow: { width: "100%", flexDirection: "row", alignItems: "flex-start", gap: 5, paddingTop: 4 },
   metadataItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 3 },
   metadataText: { flex: 1, minWidth: 0, fontSize: 9.5, lineHeight: 12.5 },
-  metadataLabel: { fontWeight: "700" },
   hotelCard: {
     height: 234,
     borderWidth: 1,
@@ -1570,13 +1566,9 @@ const s0 = StyleSheet.create({
     gap: 10,
     backgroundColor: "white",
   },
-  skeletonTopRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
   skeletonIdentityRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  skeletonBadge: { width: 92, height: 23, borderRadius: 12, backgroundColor: "#E7EBF1" },
+  skeletonIdentityActions: { flexDirection: "column", flexShrink: 0, alignItems: "center", gap: 3 },
+  skeletonBadge: { width: 48, height: 20, borderRadius: 10, backgroundColor: "#E7EBF1" },
   skeletonHeart: { width: 22, height: 22, borderRadius: 11, backgroundColor: "#E7EBF1" },
   skeletonFlightRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   skeletonLogo: { width: 38, height: 38, borderRadius: 9, backgroundColor: "#E7EBF1" },
@@ -1585,7 +1577,7 @@ const s0 = StyleSheet.create({
   skeletonRoute: { flex: 1, minWidth: 38, maxWidth: 95, alignItems: "center", gap: 6 },
   skeletonPrice: { width: 52, flexShrink: 0, alignItems: "flex-end", gap: 6 },
   skeletonLine: { height: 7, borderRadius: 4, backgroundColor: "#E7EBF1" },
-  skeletonName: { width: "54%" },
+  skeletonName: { flex: 1, minWidth: 0, maxWidth: "54%" },
   skeletonTime: { width: "70%", height: 14 },
   skeletonAirport: { width: "48%" },
   skeletonDuration: { width: "65%", height: 6 },
