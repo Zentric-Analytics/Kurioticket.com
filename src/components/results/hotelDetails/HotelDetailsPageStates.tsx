@@ -1,6 +1,6 @@
 import type React from "react";
 import { AlertTriangle } from "lucide-react";
-import { Button, LinkButton } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DetailsBackLink } from "@/components/results/DetailsBackLink";
 
@@ -181,6 +181,13 @@ export function HotelDetailsUnavailableState({
         className="mx-auto w-full max-w-[1400px] px-0 py-6 sm:py-8 lg:px-7 lg:py-10"
         data-hotel-details-state-shell
       >
+        {!embedded && showBackLink ? (
+          <div className="mb-4 px-4 lg:px-0">
+            <DetailsBackLink href={resultsHref}>
+              {backToResultsText}
+            </DetailsBackLink>
+          </div>
+        ) : null}
         <div className="mx-auto max-w-3xl">
           <Card variant="elevated" className="p-6 sm:p-8">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
@@ -201,11 +208,6 @@ export function HotelDetailsUnavailableState({
                   <Button type="button" onClick={onRetry}>
                     {retryText}
                   </Button>
-                  {showBackLink ? (
-                    <LinkButton href={resultsHref} variant="secondary">
-                      {backToResultsText}
-                    </LinkButton>
-                  ) : null}
                 </div>
               </div>
             </div>
