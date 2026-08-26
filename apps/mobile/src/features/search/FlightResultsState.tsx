@@ -1,4 +1,4 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AlertCircle, Search, SlidersHorizontal } from "lucide-react-native";
 import { useAppTheme } from "../../theme/AppTheme";
 import { ui } from "./SearchUi";
@@ -11,30 +11,13 @@ export function FlightResultsState({
   onClearFilters,
   onAdjustFilters,
 }: {
-  state: FlightResultsStateKind;
+  state: Exclude<FlightResultsStateKind, "loading">;
   onRetry: () => void;
   onEditSearch: () => void;
   onClearFilters: () => void;
   onAdjustFilters: () => void;
 }) {
   const { theme } = useAppTheme();
-
-  if (state === "loading") {
-    return (
-      <View
-        accessibilityRole="progressbar"
-        accessibilityLabel="Searching for flights"
-        accessibilityLiveRegion="polite"
-        style={styles.loading}
-      >
-        <ActivityIndicator color={ui.blue} />
-        <View style={styles.copy}>
-          <Text style={[styles.title, { color: theme.textPrimary }]}>Searching the best flights for you</Text>
-          <Text style={[styles.body, { color: theme.textSecondary }]}>Checking airlines and fares...</Text>
-        </View>
-      </View>
-    );
-  }
 
   const filtered = state === "filtered-empty";
   const error = state === "error";
@@ -95,8 +78,6 @@ function StateAction({ accessibilityLabel, label, onPress, secondary = false }: 
 }
 
 const styles = StyleSheet.create({
-  loading: { minHeight: 150, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 12, paddingVertical: 28 },
-  copy: { flexShrink: 1, gap: 2 },
   state: { minHeight: 210, alignItems: "center", justifyContent: "center", paddingHorizontal: 18, paddingVertical: 28 },
   icon: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", marginBottom: 12 },
   title: { fontSize: 17, lineHeight: 22, fontWeight: "800", textAlign: "center" },
