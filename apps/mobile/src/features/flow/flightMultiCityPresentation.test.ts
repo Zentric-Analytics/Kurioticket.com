@@ -9,6 +9,9 @@ const styles = panel.slice(panel.indexOf("const styles=StyleSheet.create"));
 
 test("Multi-city follows the web-mobile hierarchy with standalone leg headings", () => {
   assert.match(editor, />Multi-city flights<\/Text>/);
+  assert.match(editor, /<Text accessibilityRole="header" style=\{\[styles\.multiTitle,\{color:ft\.colors\.text\}\]\}>Multi-city flights<\/Text>/);
+  assert.doesNotMatch(editor, /style=\{ft\.styles\.title\}>Multi-city flights/);
+  assert.match(styles, /multiTitle:\{fontSize:18,lineHeight:24,fontWeight:"700"\}/);
   assert.match(editor, /accessibilityLabel=\{`\$\{form\.multiCityLegs\.length\} of \$\{MULTI_CITY_MAX_LEGS\} flights`\}/);
   const order = ["Flight {index+1}", 'label="Origin"', 'label="Destination"', 'label="Departure date"', "Remove flight"];
   let cursor = 0;
