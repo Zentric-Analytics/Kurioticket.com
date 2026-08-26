@@ -10,24 +10,39 @@ export const defaultEmailPreferences: EmailPreferences = {
   dealsRecommendations: false,
 };
 
-export function isMasterUnsubscribeChecked(value: EmailPreferences) {
-  return !value.receiveOptionalEmails;
-}
-
-export function toggleMasterUnsubscribe(value: EmailPreferences, checked: boolean): EmailPreferences {
-  return { ...value, receiveOptionalEmails: !checked };
-}
-
-export function toggleEmailCategory(value: EmailPreferences, key: EmailCategoryKey, checked: boolean): EmailPreferences {
+export function normalizeLoadedEmailPreferences(value: EmailPreferences): EmailPreferences {
+  if (value.receiveOptionalEmails) return value;
   return {
     ...value,
-    [key]: checked,
-    receiveOptionalEmails: checked ? true : value.receiveOptionalEmails,
+    priceAlerts: false,
+    travelInspiration: false,
+    productUpdates: false,
+    dealsRecommendations: false,
   };
 }
 
-export function isDefaultEmailPreferences(value: EmailPreferences) {
-  return Object.keys(defaultEmailPreferences).every(
-    key => value[key as keyof EmailPreferences] === defaultEmailPreferences[key as keyof EmailPreferences],
-  );
+export function areAllEmailCategoriesEnabled(value: EmailPreferences) {
+  return value.receiveOptionalEmails && value.priceAlerts && value.travelInspiration && value.productUpdates && value.dealsRecommendations;
+}
+
+export function toggleAllEmailCategories(value: EmailPreferences, checked: boolean): EmailPreferences {
+  return {
+    ...value,
+    receiveOptionalEmails: checked,
+    priceAlerts: checked,
+    travelInspiration: checked,
+    productUpdates: checked,
+    dealsRecommendations: checked,
+  };
+}
+
+export function toggleEmailCategory(value: EmailPreferences, key: EmailCategoryKey, checked: boolean): EmailPreferences {
+  const next = {
+    ...value,
+    [key]: checked,
+  };
+  return {
+    ...next,
+    receiveOptionalEmails: next.priceAlerts || next.travelInspiration || next.productUpdates || next.dealsRecommendations,
+  };
 }
