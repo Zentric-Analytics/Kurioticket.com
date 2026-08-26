@@ -896,10 +896,6 @@ export function HotelDetailsClient({
                 labels={{
                   share: t("hotelDetails.share") || "Share",
                   shared: t("hotelDetails.shared") || "Copied",
-                  more: t("hotelDetails.more") || "More",
-                  less: t("hotelDetails.showLess") || "Show less",
-                  about: t("hotelDetails.aboutProperty") || "About this property",
-                  location: t("hotelDetails.location") || "Location",
                   directions: t("hotelDetails.getDirections") || "Get directions",
                   map: t("hotelDetails.map") || "Map",
                   streetView: t("hotelDetails.streetView") || "Street View",
@@ -919,10 +915,6 @@ export function HotelDetailsClient({
                   imageAlt: t("hotelResults.hotelImageAlt") || "{{name}} stay option{{location}}",
                   nearLocation: t("hotelResults.nearLocation") || "near {{location}}",
                   starHotelAria: t("hotelResults.starHotelAria") || "{{rating}}-star hotel",
-                  guestReviews: t("hotelDetails.guestReviews") || "What guests are saying",
-                  reviewUnavailable: t("hotelDetails.reviewUnavailable") || "Guest review data is not available for this property yet.",
-                  planningRate: t("hotelDetails.planningRate") || "Available rates",
-                  planningEstimate: t("hotelDetails.planningEstimate") || "Kurioticket planning estimate",
                 }}
               />
             </div>

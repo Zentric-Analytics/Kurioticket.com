@@ -18,6 +18,12 @@ function toPublicPropertyDetails(record: StaticHotelRecord | null) {
     city: record.city,
     country: record.country,
     neighbourhood: record.neighbourhood,
+    roomSummary: record.roomSummary,
+    bedSummary: record.bedSummary,
+    interestTags: [...record.interestTags],
+    familySuitable: record.familySuitable,
+    businessSuitable: record.businessSuitable,
+    accessibility: [...record.accessibility],
   };
 }
 export function GET(request: Request) {
