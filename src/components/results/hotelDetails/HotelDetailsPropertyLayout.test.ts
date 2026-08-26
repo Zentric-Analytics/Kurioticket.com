@@ -32,9 +32,10 @@ test("isolates the approved standalone property composition from guided mode", (
   assert.match(standaloneSource, /data-standalone-hotel-details/);
   assert.match(standaloneSource, /lg:grid-cols-\[minmax\(0,1fr\)_334px\]/);
   assert.match(standaloneSource, /<HotelDetailsGallery[\s\S]*layout="mosaic"/);
-  assert.match(standaloneSource, /data-hotel-amenities-strip/);
   for (const contract of [
-    "About this property",
+    "HotelAboutSection",
+    "HotelReviewsSection",
+    "HotelDetailsSectionNav",
     "propertyDetails?.description",
     "HotelLocationSection",
     "Your stay",
