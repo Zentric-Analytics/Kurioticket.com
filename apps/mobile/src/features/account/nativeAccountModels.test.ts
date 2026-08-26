@@ -43,20 +43,24 @@ test("travel model filters canonical data, prevents duplicates/max, and supports
   for (const locale of ["en-us", "es-es"] as const) for (const key of ["travelPreferences", "homeAirport", "preferredAirlines", "airlineMaximum"]) assert.ok((dictionaries[locale] as Record<string, string>)[key]);
 });
 
-test("email preference screen uses immediate native settings interactions", async () => {
+test("email preference screen uses immediate UI with coalesced persistence", async () => {
   const { readFile } = await import("node:fs/promises");
   const fullSource = await readFile("src/features/account/NativeAccountScreens.tsx", "utf8");
   const screen = fullSource.slice(fullSource.indexOf("export function EmailPreferencesScreen"), fullSource.indexOf("const travelDefaults"));
   assert.match(screen, /requireAccount\("\/email-preferences"\)/);
   assert.match(screen, /travelApi\.emailPreferences\(\)/);
   assert.equal((screen.match(/travelApi\.updateEmailPreferences\(/g) ?? []).length, 1);
-  assert.match(screen, /const persist=async.*beginSave\(\{\.\.\.editDraft/s);
+  assert.match(screen, /pendingEmailPreferences=useRef<EmailPreferences\|null>\(null\)/);
+  assert.match(screen, /persistTimer=useRef<ReturnType<typeof setTimeout>\|null>\(null\)/);
+  assert.match(screen, /const schedulePersist=.*editDraft/s);
+  assert.match(screen, /setTimeout\(\(\)=>\{persistTimer\.current=null;void flushPending\(\);\},500\)/);
+  assert.match(screen, /if\(pendingEmailPreferences\.current\)void flushPending\(\)/);
   assert.match(screen, /draft:confirmed/);
   assert.match(screen, /disabled=\{state\.saving\}/);
   assert.match(screen, /value=\{areAllEmailCategoriesEnabled\(prefs\)\}/);
   assert.match(fullSource, /emailRowCopy:\{flex:1,minWidth:0/);
   assert.match(fullSource, /emailSwitch:\{flexShrink:0\}/);
   assert.match(fullSource, /borderBottomWidth:StyleSheet\.hairlineWidth/);
-  assert.doesNotMatch(screen, /emailSurface|emailActions|showSaved|setTimeout|t\("reset"\)|t\("save"\)|opacity:/);
+  assert.doesNotMatch(screen, /emailSurface|emailActions|showSaved|t\("reset"\)|t\("save"\)|opacity:/);
   assert.ok(fullSource.indexOf('label: "emailTravelAlerts"') < fullSource.indexOf('label: "emailInspirationUpdates"'));
 });
