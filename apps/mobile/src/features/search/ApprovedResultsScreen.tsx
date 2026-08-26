@@ -59,6 +59,7 @@ import {
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { flightEditSearchParams } from "../flow/flightSearchModel";
+import { FlightEditSearchModal } from "./FlightEditSearchModal";
 import {
   activeFlightFilterCount,
   emptyFlightFilters,
@@ -129,6 +130,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [sortOpen, setSortOpen] = useState(false);
   const [filters, setFilters] = useState<FlightFilters>(emptyFlightFilters);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [editSearchOpen, setEditSearchOpen] = useState(false);
   const [filterSection, setFilterSection] = useState<FlightFilterSectionName>("all");
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
@@ -284,9 +286,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     activeSearch.current?.abort("screen-blur");
   }, []));
   const edit = () => {
-    activeSearch.current?.abort("edit-search");
     if (product === "flight") {
-      router.push({ pathname: "/edit-flight-search", params: flightEditSearchParams(params) });
+      setEditSearchOpen(true);
       return;
     }
     router.push({
@@ -607,6 +608,13 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             onClose={() => setFilterOpen(false)}
           />
         </>
+      ) : null}
+      {flightResults ? (
+        <FlightEditSearchModal
+          visible={editSearchOpen}
+          params={flightEditSearchParams(params)}
+          onClose={() => setEditSearchOpen(false)}
+        />
       ) : null}
       <BottomNav flightResults={flightResults} />
     </SafeAreaView>

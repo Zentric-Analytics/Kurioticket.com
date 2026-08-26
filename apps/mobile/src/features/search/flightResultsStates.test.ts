@@ -25,7 +25,7 @@ test("local sort and filters only derive displayed results and never set request
 test("filtered empty clears only filters while preserving sort and canonical search params", () => {
   assert.match(screen, /onClearFilters=\{\(\) => setFilters\(emptyFlightFilters\(\)\)\}/);
   assert.doesNotMatch(screen, /onClearFilters=\{[^}]*setSort/);
-  assert.match(screen, /flightEditSearchParams\(params\)/);
+  assert.match(screen, /params=\{flightEditSearchParams\(params\)\}/);
   assert.match(stateUi, /No flights match your filters/);
   assert.match(stateUi, /filtered \? "Clear flight filters"/);
 });

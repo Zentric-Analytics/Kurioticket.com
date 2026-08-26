@@ -17,7 +17,8 @@ test("Hotel Results Edit search opens the editable Hotels form with the current 
     assert.match(edit, new RegExp(`${key}: one\\(params\\.${key}\\) \\|\\| ""`));
   }
   assert.doesNotMatch(edit, /router\.canGoBack\(\) \? router\.back\(\)/);
-  assert.match(edit, /pathname: "\/edit-flight-search"/);
+  assert.match(edit, /if \(product === "flight"\)[\s\S]*setEditSearchOpen\(true\)/);
+  assert.doesNotMatch(edit, /pathname: "\/edit-flight-search"/);
 });
 
 test("Hotels form accepts every value forwarded from Hotel Results", () => {
