@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
-import { summarizeBaggage, summarizeFareRules } from "./flightCardSummaries";
+import { formatCabinClass, summarizeBaggage, summarizeFareRules } from "./flightCardSummaries";
 
 const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
 const card = source.slice(source.indexOf("function FlightCard"), source.indexOf("function HotelCard"));
@@ -54,18 +54,28 @@ test("flight card derives singular, plural, and nonstop labels from provider sto
   assert.match(card, /\{stopLabel\}/);
 });
 
-test("flight benefits use concise summaries while retaining provider data for details", () => {
+test("flight metadata uses authoritative provider values and safe fallbacks", () => {
   assert.match(card, /summarizeBaggage\(result\.baggageInfo\)/);
+  assert.match(card, /formatCabinClass\(result\.cabinClass\)/);
   assert.match(card, /summarizeFareRules\(result\.refundInfo\)/);
-  assert.doesNotMatch(card, /Seat unavailable/);
-  assert.match(card, /numberOfLines=\{1\}/);
+  assert.match(card, /"Review policy"/);
+  assert.match(card, /"Review before booking"/);
 });
 
 test("baggage summary only claims inclusions supported by provider copy", () => {
   assert.equal(summarizeBaggage("Carry-on and 1 checked bag included"), "Carry-on + checked bag");
   assert.equal(summarizeBaggage("Cabin baggage included"), "Carry-on included");
   assert.equal(summarizeBaggage("Baggage subject to airline policy"), null);
-  assert.equal(summarizeBaggage("No baggage included"), null);
+  assert.equal(summarizeBaggage("No baggage included"), "Not included");
+});
+
+test("cabin class formatting is canonical and capitalization-safe", () => {
+  assert.equal(formatCabinClass("economy"), "Economy");
+  assert.equal(formatCabinClass("premium-economy"), "Premium Economy");
+  assert.equal(formatCabinClass("business"), "Business");
+  assert.equal(formatCabinClass("first"), "First");
+  assert.equal(formatCabinClass("Economy"), "Economy");
+  assert.equal(formatCabinClass("BUSINESS"), "Business");
 });
 
 test("fare-rule summary classifies varied provider language without exact matching", () => {
@@ -75,14 +85,15 @@ test("fare-rule summary classifies varied provider language without exact matchi
   assert.equal(summarizeFareRules(), null);
 });
 
-test("flight card keeps fixed footer content compact while airline identity may grow", () => {
+test("flight card keeps horizontal metadata compact while airline identity may grow", () => {
   assert.match(card, /style=\{\[s0\.bigPrice, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.8\}/);
   assert.match(card, /style=\{\[s0\.airlineName, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{2\} ellipsizeMode="tail">/);
-  assert.equal(card.match(/style=\{\[s0\.benefit, \{ color: theme\.textSecondary \}\]\} numberOfLines=\{1\}/g)?.length, 2);
+  assert.equal(card.match(/style=\{s0\.metadataItem\}/g)?.length, 3);
   assert.match(source, /card: \{[\s\S]*?paddingHorizontal: 12,[\s\S]*?paddingVertical: 9,[\s\S]*?gap: 5,/);
-  assert.match(source, /benefits: \{[\s\S]*?paddingTop: 2,[\s\S]*?flexDirection: "row"/);
-  assert.match(source, /benefitList: \{ flex: 1, minWidth: 0, flexDirection: "row", flexWrap: "wrap", gap: 5, alignSelf: "center" \}/);
-  assert.match(source, /benefit: \{ minWidth: 0, fontSize: 10\.5, color: ui\.muted, flex: 1 \}/);
+  assert.match(source, /metadataRow: \{ width: "100%", flexDirection: "row"/);
+  assert.match(source, /metadataItem: \{ flex: 1, minWidth: 0, flexDirection: "row"/);
+  assert.match(source, /metadataText: \{ flex: 1, minWidth: 0, fontSize: 9\.5, lineHeight: 12\.5 \}/);
+  assert.doesNotMatch(source, /benefitList:|benefitItem:/);
   assert.doesNotMatch(source, /detailsButton(?:Text)?:/);
   for (const viewport of [320, 360, 375, 390, 430]) {
     const cardContentWidth = viewport - 28 - 24;
@@ -104,7 +115,7 @@ test("flight result cards use the responsive list width with a safe reduced oute
   }
 });
 
-test("flight loading skeleton mirrors the stacked benefit footer", () => {
+test("flight loading skeleton mirrors the horizontal metadata footer", () => {
   const flightSkeleton = source.slice(source.indexOf("function FlightLoadingSkeleton"), source.indexOf("function HotelLoadingSkeleton"));
   const identityStart = flightSkeleton.indexOf('<View style={s0.skeletonIdentityRow}>');
   const journeyStart = flightSkeleton.indexOf('<View style={s0.skeletonFlightRow}>');
@@ -112,8 +123,9 @@ test("flight loading skeleton mirrors the stacked benefit footer", () => {
   assert.ok(identityStart >= 0 && journeyStart > identityStart, "full-width flight placeholder follows the identity row");
   assert.match(identityRow, /s0\.skeletonLogo[\s\S]*s0\.skeletonName/);
   assert.doesNotMatch(identityRow, /skeletonFlightRow/);
-  assert.match(source, /skeletonBenefitLines: \{ flex: 1, gap: 6 \}/);
-  assert.match(source, /skeletonBenefitLine: \{ width: "82%" \}/);
+  assert.match(flightSkeleton, /\["baggage", "cabin", "fare-rules"\]\.map/);
+  assert.match(source, /skeletonMetadataRow: \{ width: "100%", flexDirection: "row"/);
+  assert.match(source, /skeletonMetadataItem: \{ flex: 1, minWidth: 0, flexDirection: "row"/);
   assert.doesNotMatch(flightSkeleton, /skeletonButton/);
 });
 
@@ -122,7 +134,7 @@ test("flight card keeps long prices single-line in the stable footer action colu
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch" \}/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center" \}/);
-  assert.match(source, /benefitList: \{ flex: 1, minWidth: 0/);
+  assert.match(source, /metadataItem: \{ flex: 1, minWidth: 0/);
   assert.match(source, /actionColumn: \{ width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 3 \}/);
   assert.doesNotMatch(source, /priceBox:/);
 
