@@ -316,6 +316,12 @@ export type PublicHotelPropertyDetails = {
   city: string;
   country: string;
   neighbourhood: string;
+  roomSummary?: string;
+  bedSummary?: string;
+  interestTags?: string[];
+  familySuitable?: boolean;
+  businessSuitable?: boolean;
+  accessibility?: string[];
 };
 
 export type ProviderErrorCategory =
