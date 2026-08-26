@@ -10,12 +10,13 @@ test("Hotel closed rows reuse the Packages CompactSearchField architecture", () 
   assert.match(hotel, /import \{ CompactSearchField, PrimaryButton, UnavailableNotice \} from "\.\/FlowPrimitives"/);
   assert.match(packages, /import \{ CompactSearchField, PrimaryButton \} from "\.\/FlowPrimitives"/);
   assert.equal(closedFields.match(/<CompactSearchField/g)?.length, 3);
-  assert.doesNotMatch(closedFields, /<Field\b|trailing=|locationFieldRow|locationFieldContent/);
+  assert.doesNotMatch(closedFields, /<Field\b|locationFieldRow|locationFieldContent/);
+  assert.equal(closedFields.match(/trailing=\{false\}/g)?.length, 1);
   assert.doesNotMatch(hotel, /function (?:HotelCompactField|HotelSearchRow|PackageStyleHotelField)/);
 });
 
 test("Destination uses the Hotel wording and shared location row", () => {
-  assert.match(closedFields, /<CompactSearchField label="Destination" value=\{form\.destination \|\| "City or hotel"\} muted=\{!form\.destination\} icon="location" onPress=\{\(\) => setDestinationOpen\(true\)\}\/?>/);
+  assert.match(closedFields, /<CompactSearchField label="Destination" value=\{form\.destination \|\| "City or hotel"\} muted=\{!form\.destination\} icon="location" trailing=\{false\} onPress=\{\(\) => setDestinationOpen\(true\)\}\/?>/);
   assert.doesNotMatch(closedFields, /City, area, or hotel/);
 });
 
