@@ -30,15 +30,29 @@ test("section navigator links to visible anchored sections and tracks natural sc
   assert.doesNotMatch(navigator, /role="tab"|hidden tabpanel/);
 });
 
-test("planning comparison uses existing price props without unsupported provider claims", () => {
+test("comparison presents Kurioticket as a normalized provider without development placeholders", () => {
   assert.match(standalone, /totalPrice=\{props\.totalDisplayPrice\}/);
   assert.match(standalone, /nightlyPrice=\{props\.nightlyDisplayPrice\}/);
+  assert.match(standalone, /props\.staySummary\.nightText/);
   assert.match(standalone, /offers=\{\[\]\}/);
-  assert.match(compare, /Kurioticket estimate/);
-  assert.match(compare, /Additional booking-site prices/);
-  assert.match(compare, /Live booking-site rates are not connected yet/);
+  assert.match(compare, /kurioticket-logo-primary-light-bg\.svg/);
+  assert.match(compare, /Estimated stay price/);
+  assert.match(compare, /Estimated for your selected stay\. Final availability and terms may vary\./);
+  assert.match(compare, /viewRoomsText/);
+  assert.match(compare, /onViewRoomOptions\(event\.currentTarget\)/);
   assert.match(compare, /offers\.map/);
+  assert.doesNotMatch(compare, /Planning estimate|Additional booking-site prices|Live booking-site rates are not connected yet|Comparable provider offers will appear here when available/);
   assert.doesNotMatch(compare, /Booking\.com|Expedia|Hotels\.com|Agoda|Lowest price|Best deal|Compare 3 prices/);
+});
+
+test("future offers share the provider presentation and render only supplied rate details", () => {
+  assert.match(compare, /providerOffers\.map\(\(offer\) => <ProviderOffer/);
+  for (const field of ["providerName", "providerLogoUrl", "roomName", "bedConfiguration", "mealPlanLabel", "cancellationLabel", "paymentLabel", "taxesAndFeesLabel", "totalPrice", "nightlyPrice", "deepLink"]) {
+    assert.ok(compare.includes(`offer.${field}`), field);
+  }
+  assert.match(compare, />View deal<\/a>/);
+  assert.match(compare, /\.filter\(\(detail\): detail is string => Boolean\(detail\)\)/);
+  assert.doesNotMatch(compare, /Cancellation terms unavailable|Meal plan unavailable|Provider 2/);
 });
 
 test("about exposes the full property information architecture without expansion controls", () => {
