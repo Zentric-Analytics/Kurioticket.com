@@ -1,6 +1,8 @@
 import Image from "next/image";
 import type { MouseEvent, ReactNode } from "react";
 
+import { HotelAmenityList } from "@/components/results/HotelAmenityList";
+import type { HotelAmenityPresentationItem } from "@/components/results/hotelAmenityPresentation";
 import type { HotelComparisonOffer } from "./hotelDetailsPresentation";
 
 type Price = { formatted: string; title?: string; ariaLabel: string };
@@ -9,6 +11,7 @@ type ProviderOfferPresentation = {
   id: string;
   providerName: string;
   providerLogoUrl?: string;
+  amenities?: HotelAmenityPresentationItem[];
   totalPrice: ReactNode;
   nightlyPrice?: ReactNode;
   action: ReactNode;
@@ -16,8 +19,8 @@ type ProviderOfferPresentation = {
 
 function ProviderOffer({ offer }: { offer: ProviderOfferPresentation }) {
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5" data-provider-offer>
-      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(9.5rem,auto)] items-center gap-4 sm:gap-6">
+    <article className="rounded-2xl border border-slate-200 bg-white p-4 sm:px-5 sm:py-4" data-provider-offer>
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(8.75rem,auto)] items-center gap-3 sm:gap-6">
         <div className="min-w-0">
           {offer.providerLogoUrl ? (
             <Image
@@ -30,12 +33,19 @@ function ProviderOffer({ offer }: { offer: ProviderOfferPresentation }) {
           ) : (
             <strong className="block text-base font-bold text-slate-950">{offer.providerName}</strong>
           )}
+          {offer.amenities?.length ? (
+            <HotelAmenityList
+              items={offer.amenities}
+              t={() => ""}
+              className="mt-2.5 grid grid-cols-1 gap-y-1"
+            />
+          ) : null}
         </div>
 
-        <div className="min-w-0 text-right sm:min-w-48">
+        <div className="min-w-0 text-right sm:min-w-44">
           <div>{offer.totalPrice}</div>
           {offer.nightlyPrice ? <div className="mt-0.5">{offer.nightlyPrice}</div> : null}
-          <div className="mt-3">{offer.action}</div>
+          <div className="mt-2.5">{offer.action}</div>
         </div>
       </div>
     </article>
@@ -50,6 +60,7 @@ export function HotelPriceComparisonSection({
   viewRoomRatesText,
   roomOptionsAvailable,
   onViewRoomOptions,
+  amenities = [],
   offers = [],
 }: {
   stayContext?: string;
@@ -59,6 +70,7 @@ export function HotelPriceComparisonSection({
   viewRoomRatesText: string;
   roomOptionsAvailable: boolean;
   onViewRoomOptions: (trigger: HTMLButtonElement) => void;
+  amenities?: HotelAmenityPresentationItem[];
   offers?: HotelComparisonOffer[];
 }) {
   const providerOffers: ProviderOfferPresentation[] = [
@@ -66,15 +78,16 @@ export function HotelPriceComparisonSection({
       id: "kurioticket",
       providerName: "Kurioticket",
       providerLogoUrl: "/brand/kurioticket-logo-primary-light-bg.svg",
+      amenities: amenities.slice(0, 3),
       totalPrice: totalPrice ? (
-        <strong className="block whitespace-nowrap text-xl font-extrabold tracking-tight text-slate-950 sm:text-2xl" title={totalPrice.title} aria-label={totalPrice.ariaLabel}>
-          {totalPrice.formatted} <span className="text-base font-bold">total</span>
+        <strong className="block whitespace-nowrap text-lg font-bold tracking-tight text-slate-950 sm:text-xl" title={totalPrice.title} aria-label={totalPrice.ariaLabel}>
+          {totalPrice.formatted} <span className="text-xs font-semibold text-slate-600">total</span>
         </strong>
       ) : (
         <strong className="text-sm font-semibold text-slate-600">Price unavailable</strong>
       ),
       nightlyPrice: nightlyPrice ? (
-        <span className="text-sm font-semibold text-slate-600" title={nightlyPrice.title} aria-label={nightlyPrice.ariaLabel}>
+        <span className="text-xs font-medium text-slate-600 sm:text-[13px]" title={nightlyPrice.title} aria-label={nightlyPrice.ariaLabel}>
           {perNightText.replace("{{price}}", nightlyPrice.formatted)}
         </span>
       ) : undefined,
@@ -83,7 +96,7 @@ export function HotelPriceComparisonSection({
           type="button"
           disabled={!roomOptionsAvailable}
           onClick={(event: MouseEvent<HTMLButtonElement>) => onViewRoomOptions(event.currentTarget)}
-          className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-[10px] bg-blue px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+          className="focus-ring inline-flex min-h-11 w-auto items-center justify-center whitespace-nowrap rounded-lg bg-blue px-3 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300 sm:px-3.5"
         >
           {viewRoomRatesText}
         </button>

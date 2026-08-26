@@ -43,9 +43,14 @@ test("comparison presents Kurioticket as a normalized provider without developme
   assert.match(standalone, /viewRoomRatesText="View room rates"/);
   assert.match(compare, /viewRoomRatesText/);
   assert.match(compare, /onViewRoomOptions\(event\.currentTarget\)/);
+  assert.match(standalone, /amenities=\{props\.amenityItems\}/);
+  assert.match(compare, /amenities: amenities\.slice\(0, 3\)/);
+  assert.match(compare, /items=\{offer\.amenities\}/);
+  assert.match(compare, /<HotelAmenityList/);
   assert.match(compare, /offers\.map/);
   assert.doesNotMatch(compare, /stayFacts|nightText|Estimated stay price|Estimated for your selected stay|Planning estimate|Additional booking-site prices|Live booking-site rates are not connected yet|Comparable provider offers will appear here when available/);
   assert.doesNotMatch(compare, /Booking\.com|Expedia|Hotels\.com|Agoda|Lowest price|Best deal|Compare 3 prices/);
+  assert.doesNotMatch(compare, /Free Wi|Restaurant|Workspaces|Breakfast available|Fitness centre/);
 });
 
 test("future offers share the concise provider price and action presentation", () => {
