@@ -846,6 +846,7 @@ export function HotelDetailsClient({
                 reviewScore={compactReviewScore}
                 reviewLabel={reviewLabel}
                 reviewCountText={reviewCountText}
+                reviewSource={hotel.reviewSource}
                 relatedHotels={relatedHotels}
                 relatedSearchContext={{
                   destination: propertyDetails?.city || searchContext?.destination,

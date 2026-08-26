@@ -15,12 +15,16 @@ export type HotelComparisonOffer = {
   id: string;
   providerName: string;
   providerLogoUrl?: string;
+  roomName?: string;
+  bedConfiguration?: string;
   nightlyPrice: string;
   totalPrice: string;
   cancellationLabel?: string;
   mealPlanLabel?: string;
   paymentLabel?: string;
+  taxesAndFeesLabel?: string;
   deepLink: string;
+  checkedAt?: string;
   isLowestComparableTotal?: boolean;
 };
 

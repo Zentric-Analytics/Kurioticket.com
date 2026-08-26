@@ -1,7 +1,4 @@
-"use client";
-
-import { Award, Bed, ChevronDown, ChevronUp, Laptop, Sparkles, UtensilsCrossed, Wifi, Wine, type LucideIcon } from "lucide-react";
-import { useState } from "react";
+import { Award, Bed, Laptop, Sparkles, UtensilsCrossed, Wifi, Wine, type LucideIcon } from "lucide-react";
 import type { HotelAmenityPresentationItem } from "@/components/results/hotelAmenityPresentation";
 
 function iconFor(item: HotelAmenityPresentationItem): LucideIcon {
@@ -13,22 +10,32 @@ function iconFor(item: HotelAmenityPresentationItem): LucideIcon {
   return Sparkles;
 }
 
-export function HotelAboutSection({ description, amenities, starRating, bedSummary }: { description: string; amenities: HotelAmenityPresentationItem[]; starRating: number | null; bedSummary?: string }) {
-  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
-  const [amenitiesExpanded, setAmenitiesExpanded] = useState(false);
-  const canExpandDescription = description.length > 220;
-  const facts = amenities.slice(0, amenitiesExpanded ? amenities.length : 5);
+export function HotelAboutSection({ description, amenities, starRating, roomSummary, bedSummary, accessibility = [] }: { description: string; amenities: HotelAmenityPresentationItem[]; starRating: number | null; roomSummary?: string; bedSummary?: string; accessibility?: string[] }) {
+  const highlights = amenities.slice(0, 6);
+  const remainingAmenities = amenities.slice(6);
   return (
-    <section className="mx-4 mt-4 rounded-[18px] border border-slate-200 bg-white p-[18px] lg:mx-0 lg:mt-5 lg:p-5" aria-labelledby="hotel-about-heading" data-hotel-about-section>
+    <section id="hotel-about" className="scroll-mt-16 border-b border-slate-200 px-4 py-8 lg:px-0 lg:py-10" aria-labelledby="hotel-about-heading" data-hotel-about-section>
       <h2 id="hotel-about-heading" className="text-xl font-extrabold tracking-tight text-slate-950">About this hotel</h2>
-      {description ? <><p className={`mt-3 text-sm leading-6 text-slate-600 ${descriptionExpanded ? "" : "line-clamp-4"}`}>{description}</p>{canExpandDescription ? <button type="button" aria-expanded={descriptionExpanded} onClick={() => setDescriptionExpanded((value) => !value)} className="focus-ring mt-1 inline-flex min-h-11 items-center gap-1 text-sm font-bold text-blue">{descriptionExpanded ? "Show less" : "More"}{descriptionExpanded ? <ChevronUp className="h-4 w-4" aria-hidden="true" /> : <ChevronDown className="h-4 w-4" aria-hidden="true" />}</button> : null}</> : null}
-      <h3 className="mt-5 text-base font-bold text-slate-950">At a glance</h3>
-      <div className="mt-2 grid grid-cols-2 gap-x-4 lg:grid-cols-3" data-hotel-at-a-glance>
-        {facts.map((item) => { const Icon = iconFor(item); return <div key={item.key} className="flex min-h-12 min-w-0 items-center gap-3 border-b border-slate-100 text-sm font-medium text-slate-800"><Icon className="h-[18px] w-[18px] shrink-0 text-slate-600" aria-hidden="true" /><span>{item.label}</span></div>; })}
-        {bedSummary ? <div className="flex min-h-12 min-w-0 items-center gap-3 border-b border-slate-100 text-sm font-medium text-slate-800"><Bed className="h-[18px] w-[18px] shrink-0 text-slate-600" aria-hidden="true" /><span>{bedSummary}</span></div> : null}
-        {starRating ? <div className="flex min-h-12 min-w-0 items-center gap-3 border-b border-slate-100 text-sm font-medium text-slate-800"><Award className="h-[18px] w-[18px] shrink-0 text-slate-600" aria-hidden="true" /><span>{starRating}-star hotel</span></div> : null}
+      {description ? <p className="mt-3 text-sm leading-6 text-slate-600">{description}</p> : <p className="mt-3 text-sm text-slate-600">A property description is not available yet.</p>}
+
+      <h3 className="mt-7 text-base font-bold text-slate-950">Property highlights</h3>
+      {highlights.length ? <div className="mt-3 grid grid-cols-2 gap-2.5 lg:grid-cols-3" data-property-highlights>{highlights.map((item) => { const Icon = iconFor(item); return <div key={item.key} className="flex min-h-14 min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5"><Icon className="h-[18px] w-[18px] shrink-0 text-blue" aria-hidden="true" /><span className="text-sm font-semibold text-slate-800">{item.label}</span></div>; })}</div> : <p className="mt-2 text-sm text-slate-600">Property highlights are not available yet.</p>}
+
+      <h3 className="mt-7 text-base font-bold text-slate-950">All amenities</h3>
+      {remainingAmenities.length ? <ul className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 text-sm text-slate-700 lg:grid-cols-3">{remainingAmenities.map((item) => <li key={item.key} className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-blue" aria-hidden="true" />{item.label}</li>)}</ul> : <p className="mt-2 text-sm text-slate-600">All available amenities are shown in Property highlights.</p>}
+
+      <h3 className="mt-7 text-base font-bold text-slate-950">Room &amp; comfort</h3>
+      <div className="mt-3 space-y-3 text-sm text-slate-700">
+        {roomSummary ? <p className="flex items-start gap-3"><Bed className="mt-0.5 h-[18px] w-[18px] shrink-0 text-slate-500" aria-hidden="true" /><span>{roomSummary}</span></p> : null}
+        {bedSummary ? <p className="flex items-start gap-3"><Bed className="mt-0.5 h-[18px] w-[18px] shrink-0 text-slate-500" aria-hidden="true" /><span>{bedSummary}</span></p> : null}
+        {!roomSummary && !bedSummary ? <p>Room details are confirmed when you choose a room.</p> : null}
       </div>
-      {amenities.length > 5 ? <button type="button" aria-expanded={amenitiesExpanded} onClick={() => setAmenitiesExpanded((value) => !value)} className="focus-ring mt-3 inline-flex min-h-11 items-center text-sm font-bold text-blue">{amenitiesExpanded ? "Show fewer amenities" : "See all amenities"}</button> : null}
+
+      <h3 className="mt-7 text-base font-bold text-slate-950">Hotel information</h3>
+      <p className="mt-3 flex items-center gap-3 text-sm text-slate-700"><Award className="h-[18px] w-[18px] shrink-0 text-slate-500" aria-hidden="true" />{starRating ? `${starRating}-star hotel` : "Hotel classification is not available."}</p>
+
+      <h3 className="mt-7 text-base font-bold text-slate-950">Accessibility</h3>
+      {accessibility.length ? <ul className="mt-3 list-disc space-y-2 ps-5 text-sm leading-6 text-slate-700">{accessibility.map((detail) => <li key={detail}>{detail}</li>)}</ul> : <p className="mt-3 text-sm leading-6 text-slate-600">Specific accessibility features should be confirmed before booking.</p>}
     </section>
   );
 }

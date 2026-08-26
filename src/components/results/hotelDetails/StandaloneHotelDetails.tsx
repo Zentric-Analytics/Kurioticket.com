@@ -16,6 +16,8 @@ import { useEffect, useRef, useState } from "react";
 import type { HotelAmenityPresentationItem } from "@/components/results/hotelAmenityPresentation";
 import { HotelPriceComparisonSection } from "./HotelPriceComparisonSection";
 import { HotelAboutSection } from "./HotelAboutSection";
+import { HotelDetailsSectionNav } from "./HotelDetailsSectionNav";
+import { HotelReviewsSection } from "./HotelReviewsSection";
 import type {
   PublicHotelPropertyDetails,
   PublicHotelResult,
@@ -56,6 +58,7 @@ export type StandaloneHotelDetailsProps = {
   reviewScore: string;
   reviewLabel: string;
   reviewCountText: string;
+  reviewSource?: string | null;
   relatedHotels: PublicHotelResult[];
   relatedSearchContext?: HotelDetailsSearchContext;
   amenityItems: HotelAmenityPresentationItem[];
@@ -370,12 +373,17 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
               layout="mosaic"
             />
 
+            <HotelDetailsSectionNav />
+
             <HotelPriceComparisonSection
               stayContext={props.staySummary ? `${props.staySummary.dateText} · ${props.staySummary.occupancyText}` : undefined}
               totalPrice={props.totalDisplayPrice}
               nightlyPrice={props.nightlyDisplayPrice}
               perNightText={props.perNightText}
               planningPriceText={props.planningPriceText}
+              viewRoomsText={props.labels.viewRooms}
+              roomOptionsAvailable={props.roomChoices.length > 0}
+              onViewRoomOptions={openRoomOptions}
               offers={[]}
             />
 
@@ -383,11 +391,19 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
               description={description}
               amenities={props.amenityItems}
               starRating={props.starRating}
+              roomSummary={props.propertyDetails?.roomSummary}
               bedSummary={props.propertyDetails?.bedSummary}
+              accessibility={props.propertyDetails?.accessibility}
+            />
+
+            <HotelReviewsSection
+              score={props.reviewScore}
+              label={props.reviewLabel}
+              countText={props.reviewCountText}
+              source={props.reviewSource}
             />
 
             {props.propertyDetails ? (
-              <div className="px-4 lg:px-0">
                 <HotelLocationSection
                   hotelName={props.hotelName}
                   propertyDetails={props.propertyDetails}
@@ -404,8 +420,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                   ].filter(Boolean)}
                   accessibilityDetails={props.propertyDetails.accessibility}
                 />
-              </div>
-            ) : null}
+            ) : <section id="hotel-location" className="scroll-mt-16 border-b border-slate-200 px-4 py-8 lg:px-0 lg:py-10" aria-labelledby="hotel-location-heading"><h2 id="hotel-location-heading" className="text-xl font-extrabold text-slate-950">Location &amp; stay fit</h2><p className="mt-3 text-sm text-slate-600">Verified location details are not available for this property yet.</p></section>}
           </article>
         </div>
 

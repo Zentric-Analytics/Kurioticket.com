@@ -6,37 +6,60 @@ const standalone = readFileSync(new URL("./StandaloneHotelDetails.tsx", import.m
 const compare = readFileSync(new URL("./HotelPriceComparisonSection.tsx", import.meta.url), "utf8");
 const about = readFileSync(new URL("./HotelAboutSection.tsx", import.meta.url), "utf8");
 const location = readFileSync(new URL("./HotelLocationSection.tsx", import.meta.url), "utf8");
+const navigator = readFileSync(new URL("./HotelDetailsSectionNav.tsx", import.meta.url), "utf8");
+const reviews = readFileSync(new URL("./HotelReviewsSection.tsx", import.meta.url), "utf8");
 
 test("standalone decision sections follow the approved order before related hotels", () => {
-  const order = ["<HotelPriceComparisonSection", "<HotelAboutSection", "<HotelLocationSection", "<RelatedHotelsSection"];
+  const order = ["<HotelPriceComparisonSection", "<HotelAboutSection", "<HotelReviewsSection", "<HotelLocationSection", "<RelatedHotelsSection"];
   let prior = -1;
   for (const contract of order) {
     const position = standalone.indexOf(contract);
     assert.ok(position > prior, contract);
     prior = position;
   }
-  assert.doesNotMatch(standalone, /data-hotel-amenities-strip|data-hotel-review-summary|reviewUnavailable/);
+  assert.match(standalone, /<HotelDetailsSectionNav/);
+});
+
+test("section navigator links to visible anchored sections and tracks natural scrolling", () => {
+  for (const label of ["Compare prices", "About", "Location"]) assert.ok(navigator.includes(label), label);
+  for (const id of ["hotel-compare-prices", "hotel-about", "hotel-reviews", "hotel-location"]) assert.ok((navigator + compare + about + reviews + location).includes(id), id);
+  assert.match(navigator, /IntersectionObserver/);
+  assert.match(navigator, /prefers-reduced-motion: reduce/);
+  assert.match(navigator, /aria-current/);
+  assert.match(navigator, /sticky top-0/);
+  assert.doesNotMatch(navigator, /role="tab"|hidden tabpanel/);
 });
 
 test("planning comparison uses existing price props without unsupported provider claims", () => {
   assert.match(standalone, /totalPrice=\{props\.totalDisplayPrice\}/);
   assert.match(standalone, /nightlyPrice=\{props\.nightlyDisplayPrice\}/);
   assert.match(standalone, /offers=\{\[\]\}/);
-  assert.match(compare, /Kurioticket planning estimate/);
+  assert.match(compare, /Kurioticket estimate/);
+  assert.match(compare, /Additional booking-site prices/);
+  assert.match(compare, /Live booking-site rates are not connected yet/);
+  assert.match(compare, /offers\.map/);
   assert.doesNotMatch(compare, /Booking\.com|Expedia|Hotels\.com|Agoda|Lowest price|Best deal|Compare 3 prices/);
 });
 
-test("about consolidates real description, amenities, bed summary and classification", () => {
+test("about exposes the full property information architecture without expansion controls", () => {
   assert.match(standalone, /description=\{description\}/);
   assert.match(standalone, /amenities=\{props\.amenityItems\}/);
   assert.match(standalone, /bedSummary=\{props\.propertyDetails\?\.bedSummary\}/);
-  assert.match(about, /aria-expanded=\{descriptionExpanded\}/);
-  assert.match(about, /aria-expanded=\{amenitiesExpanded\}/);
+  for (const heading of ["Property highlights", "All amenities", "Room &amp; comfort", "Hotel information", "Accessibility"]) assert.ok(about.includes(heading), heading);
+  assert.doesNotMatch(about, /line-clamp|descriptionExpanded|amenitiesExpanded|See all amenities|Show fewer|>More</);
+  assert.match(about, /remainingAmenities\.map/);
   assert.match(about, /\{starRating\}-star hotel/);
+});
+
+test("guest reviews remains visible and never manufactures review values", () => {
+  assert.match(reviews, /Guest reviews/);
+  assert.match(reviews, /Verified guest reviews are not connected/);
+  assert.doesNotMatch(reviews, /8\.6|1,246|Excellent/);
 });
 
 test("location preserves map, Street View and directions while facts use catalogue metadata", () => {
   for (const field of ["neighbourhood", "businessSuitable", "familySuitable", "interestTags", "accessibility"]) assert.ok(standalone.includes(`propertyDetails.${field}`), field);
   for (const contract of ["buildHotelMapEmbedUrl", "buildGoogleHotelStreetViewEmbedUrl", "buildHotelDirectionsUrl", "Why this location works"]) assert.ok(location.includes(contract), contract);
   assert.doesNotMatch(standalone + location, /\b\d+ min(?:ute)?s?\b|\b\d+ min walk\b/i);
+  assert.doesNotMatch(location, /\.slice\(|<details|<summary/);
 });

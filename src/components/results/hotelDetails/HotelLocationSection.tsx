@@ -66,18 +66,16 @@ export function HotelLocationSection({
   const secondaryLocation = getSecondaryLocation(propertyDetails);
   const hasAddress = Boolean(streetAddress || secondaryLocation);
 
-  if (!mapUrl && !hasAddress && !directionsUrl) return null;
-
   return (
     <section
       id="hotel-location"
-      className="mt-4 scroll-mt-20 rounded-[18px] border border-slate-200 bg-white p-[18px] lg:mt-5 lg:p-5"
+      className="scroll-mt-16 border-b border-slate-200 px-4 py-8 lg:px-0 lg:py-10"
       aria-labelledby="hotel-location-heading"
       data-hotel-location-section
     >
       <h2
         id="hotel-location-heading"
-        className="text-[17px] font-bold text-slate-950"
+        className="text-xl font-extrabold tracking-tight text-slate-950"
       >
         {locationLabel}
       </h2>
@@ -102,7 +100,7 @@ export function HotelLocationSection({
         </div>
       ) : null}
 
-      <div className="mt-3 overflow-hidden rounded-[14px] border border-slate-200 bg-white">
+      <div className="mt-4 overflow-hidden rounded-[14px] border border-slate-200 bg-white">
         {streetViewUrl ? (
           <div
             className="flex min-h-11 border-b border-slate-200 px-1"
@@ -151,15 +149,12 @@ export function HotelLocationSection({
           </a>
         ) : null}
       </div>
-      {stayFitFacts.length ? (
-        <div className="mt-5" data-hotel-stay-fit-facts>
+      <div className="mt-7" data-hotel-stay-fit-facts>
           <h3 className="text-base font-bold text-slate-950">Why this location works</h3>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {stayFitFacts.slice(0, 5).map((fact) => <span key={fact} className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">{fact}</span>)}
-          </div>
-          {accessibilityDetails.length ? <details className="mt-3 text-sm text-slate-600"><summary className="focus-ring min-h-11 cursor-pointer py-3 font-bold text-blue">Accessibility details</summary><ul className="list-disc space-y-1 ps-5">{accessibilityDetails.map((detail) => <li key={detail}>{detail}</li>)}</ul></details> : null}
+          {stayFitFacts.length ? <div className="mt-3 flex flex-wrap gap-2">{stayFitFacts.map((fact) => <span key={fact} className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">{fact}</span>)}</div> : <p className="mt-3 text-sm text-slate-600">Location fit details are limited to the verified address and map.</p>}
+          <h3 className="mt-7 text-base font-bold text-slate-950">Accessibility and location details</h3>
+          {accessibilityDetails.length ? <ul className="mt-3 list-disc space-y-2 ps-5 text-sm leading-6 text-slate-700">{accessibilityDetails.map((detail) => <li key={detail}>{detail}</li>)}</ul> : <p className="mt-3 text-sm leading-6 text-slate-600">Confirm specific accessibility requirements with the property before travel.</p>}
         </div>
-      ) : null}
     </section>
   );
 }
