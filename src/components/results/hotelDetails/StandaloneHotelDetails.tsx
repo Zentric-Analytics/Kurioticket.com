@@ -383,6 +383,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
               viewRoomRatesText="View room rates"
               roomOptionsAvailable={props.roomChoices.length > 0}
               onViewRoomOptions={openRoomOptions}
+              amenities={props.amenityItems}
               offers={[]}
             />
 
