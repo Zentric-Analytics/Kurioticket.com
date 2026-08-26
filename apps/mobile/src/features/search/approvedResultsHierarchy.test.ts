@@ -11,12 +11,13 @@ const resultsBody = source.slice(
 
 test("ready flight results use the date-first native sticky hierarchy", () => {
   const sectionList = source.slice(source.indexOf("<SectionList"), source.indexOf(") : (", source.indexOf("<SectionList")));
+  const listHeader = sectionList.slice(sectionList.indexOf("ListHeaderComponent="), sectionList.indexOf("renderSectionHeader="));
   const sectionHeader = sectionList.slice(sectionList.indexOf("renderSectionHeader="), sectionList.indexOf("renderItem="));
   const renderItem = sectionList.slice(sectionList.indexOf("renderItem="), sectionList.indexOf("ListEmptyComponent="));
 
-  assert.match(sectionHeader, /renderSectionHeader=\{\(\) => \([\s\S]*?\{dateStrip\}[\s\S]*?\{filterRail\}[\s\S]*?\)\}[\s\S]*?stickySectionHeadersEnabled/);
-  assert.match(sectionHeader, /flightStickySearchControls[\s\S]*?backgroundColor: theme\.background/);
-  assert.ok(sectionHeader.indexOf("{dateStrip}") < sectionHeader.indexOf("{filterRail}"));
+  assert.match(listHeader, /ListHeaderComponent=\{<View>\{dateStrip\}<\/View>\}/);
+  assert.match(sectionHeader, /renderSectionHeader=\{\(\) => filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
+  assert.ok(sectionList.indexOf("{dateStrip}") < sectionList.indexOf("renderSectionHeader"));
   assert.ok(sectionList.indexOf("renderSectionHeader") < sectionList.indexOf("<PriceAlert"));
   assert.ok(renderItem.indexOf("<PriceAlert") < renderItem.indexOf("flightResultCountLabel(sorted.length)"));
   assert.ok(renderItem.indexOf("flightResultCountLabel(sorted.length)") < renderItem.indexOf("<FlightCard"));
@@ -24,10 +25,7 @@ test("ready flight results use the date-first native sticky hierarchy", () => {
   assert.match(sectionList, /sections=\{\[\{ data: !flightState \? sorted as FlightResult\[\] : \[\] \}\]\}/);
   assert.doesNotMatch(sectionList, /data:.*(?:PriceAlert|filterRail|flightResultCountLabel)|keyExtractor=.*PriceAlert/);
   assert.equal(sectionList.match(/<PriceAlert/g)?.length, 1);
-  assert.equal(sectionList.match(/\{dateStrip\}/g)?.length, 1);
-  assert.equal(sectionList.match(/\{filterRail\}/g)?.length, 1);
-  assert.doesNotMatch(sectionList, /ListHeaderComponent=/);
-  assert.doesNotMatch(sectionHeader, /PriceAlert|flightResultCountLabel|FlightCard/);
+  assert.equal(sectionList.match(/renderSectionHeader=\{\(\) => filterRail\}/g)?.length, 1);
   assert.equal(sectionList.match(/flightResultCountLabel\(sorted\.length\)/g)?.length, 1);
 });
 
