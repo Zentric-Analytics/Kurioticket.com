@@ -66,10 +66,11 @@ test("obsolete Flight Results metadata styles are removed", () => {
   }
 });
 
-test("Back and Edit retain their existing navigation", () => {
+test("Back retains navigation while Edit opens the local results overlay", () => {
   assert.match(header, /accessibilityLabel="Go back"[\s\S]*?router\.back\(\)/);
   assert.match(header, /accessibilityLabel="Edit search"[\s\S]*?onPress=\{onEdit\}/);
-  assert.match(results, /pathname: "\/edit-flight-search", params: flightEditSearchParams\(params\)/);
+  assert.match(results, /setEditSearchOpen\(true\)/);
+  assert.doesNotMatch(results, /router\.push\(\{ pathname: "\/edit-flight-search"/);
   assert.match(styles, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
 });
 

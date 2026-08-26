@@ -46,7 +46,8 @@ test("loading decoration cannot intercept controls and route changes cannot loop
   assert.match(screen, /<View pointerEvents="none" style=\{s0\.loadingState\}>/);
   assert.doesNotMatch(screen, /\[product, JSON\.stringify\(params\)\]/);
   assert.match(screen, /\[product, plan\.plan\?\.key, retry, visualTest\]/);
-  assert.match(screen, /activeSearch\.current\?\.abort\("edit-search"\)/);
+  assert.doesNotMatch(screen, /activeSearch\.current\?\.abort\("edit-search"\)/);
+  assert.match(screen, /if \(product === "flight"\) \{\s*setEditSearchOpen\(true\);/);
   assert.match(screen, /activeSearch\.current\?\.abort\("screen-blur"\)/);
 });
 
