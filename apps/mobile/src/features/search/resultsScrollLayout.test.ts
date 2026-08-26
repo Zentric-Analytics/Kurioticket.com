@@ -14,17 +14,17 @@ function styleBlock(name: string, nextName: string) {
   return screen.slice(screen.indexOf(`${name}:`), screen.indexOf(`${nextName}:`, screen.indexOf(`${name}:`)));
 }
 
-test("flight results scroll the date strip and price alert into sticky result controls", () => {
-  assert.match(flightLayout, /stickySectionHeadersEnabled/);
-  assert.match(
-    flightLayout,
-    /ListHeaderComponent=\{\([\s\S]*?\{dateStrip\}[\s\S]*?<PriceAlert[\s\S]*?renderSectionHeader[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?filterRail : null/,
-  );
-  const listHeader = flightLayout.slice(flightLayout.indexOf("ListHeaderComponent="), flightLayout.indexOf("renderSectionHeader="));
-  const sectionHeader = flightLayout.slice(flightLayout.indexOf("renderSectionHeader="), flightLayout.indexOf("ListEmptyComponent="));
-  assert.match(listHeader, /\{dateStrip\}[\s\S]*?<PriceAlert/);
-  assert.doesNotMatch(sectionHeader, /dateStrip|PriceAlert/);
-  assert.doesNotMatch(flightLayout, /onScroll=|scrollEventThrottle=/);
+test("flight results keep controls persistent outside scrolling date, alert, count, and cards", () => {
+  const controls = screen.slice(screen.indexOf('{product === "flight" && status === "ready"'), layoutStart);
+  const listHeader = flightLayout.slice(flightLayout.indexOf("ListHeaderComponent="), flightLayout.indexOf("ListEmptyComponent="));
+  const renderItem = flightLayout.slice(flightLayout.indexOf("renderItem="), flightLayout.indexOf("ListHeaderComponent="));
+  assert.match(controls, /filterRail : null/);
+  assert.match(listHeader, /\{dateStrip\}[\s\S]*?<PriceAlert[\s\S]*?flightResultCountLabel\(sorted\.length\)/);
+  assert.doesNotMatch(listHeader, /filterRail/);
+  assert.match(renderItem, /<FlightCard/);
+  assert.doesNotMatch(renderItem, /PriceAlert|filterRail|flightResultCountLabel/);
+  assert.doesNotMatch(flightLayout, /renderSectionHeader|stickySectionHeadersEnabled/);
+  assert.doesNotMatch(flightLayout, /onScroll=|scrollEventThrottle=|Animated\./);
   assert.doesNotMatch(screen, /dateHeaderCollapsed|dateHeaderProgress|Animated\.timing\(dateHeaderProgress/);
 });
 
@@ -40,27 +40,14 @@ test("date and filter rails retain their horizontal interactions", () => {
   }
 });
 
-test("flight sticky controls use compact, opaque, restrained native depth", () => {
-  const stickySurface = styleBlock("stickyFilterSurface", "route");
+test("persistent flight controls and scrolling count keep compact spacing", () => {
   const count = styleBlock("flightResultCount", "card");
   const rail = styleBlock("filterRail", "resultsScroll");
   const filters = styleBlock("filters", "modalBackdrop");
-  const sectionHeader = flightLayout.slice(
-    flightLayout.indexOf("renderSectionHeader"),
-    flightLayout.indexOf("ListEmptyComponent"),
-  );
-
-  assert.match(sectionHeader, /backgroundColor: theme\.background/);
-  assert.match(sectionHeader, /shadowColor: theme\.dark/);
-  assert.match(sectionHeader, /shadowOpacity: theme\.dark/);
-  assert.match(stickySurface, /zIndex: 2/);
-  assert.match(stickySurface, /shadowOffset: \{ width: 0, height: 2 \}/);
-  assert.match(stickySurface, /shadowRadius: 3/);
-  assert.match(stickySurface, /elevation: 3/);
-  assert.doesNotMatch(stickySurface, /border(?:Width|Color)|borderRadius/);
   assert.match(rail, /height: 44/);
   assert.match(filters, /paddingVertical: 3/);
   assert.match(count, /paddingTop: 7/);
+  assert.doesNotMatch(screen, /stickyFilterSurface/);
 });
 
 test("the compact rail remains structurally safe at supported phone widths", () => {
