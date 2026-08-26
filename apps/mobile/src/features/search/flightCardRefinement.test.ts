@@ -121,7 +121,9 @@ test("flight loading skeleton mirrors the horizontal metadata footer", () => {
   const journeyStart = flightSkeleton.indexOf('<View style={s0.skeletonFlightRow}>');
   const identityRow = flightSkeleton.slice(identityStart, journeyStart);
   assert.ok(identityStart >= 0 && journeyStart > identityStart, "full-width flight placeholder follows the identity row");
-  assert.match(identityRow, /s0\.skeletonLogo[\s\S]*s0\.skeletonName/);
+  assert.match(identityRow, /s0\.skeletonLogo[\s\S]*s0\.skeletonName[\s\S]*s0\.skeletonIdentityActions[\s\S]*s0\.skeletonBadge[\s\S]*s0\.skeletonHeart/);
+  assert.match(source, /skeletonIdentityActions: \{ flexDirection: "column", flexShrink: 0/);
+  assert.doesNotMatch(source, /skeletonTopRow/);
   assert.doesNotMatch(identityRow, /skeletonFlightRow/);
   assert.match(flightSkeleton, /\["baggage", "cabin", "fare-rules"\]\.map/);
   assert.match(source, /skeletonMetadataRow: \{ width: "100%", flexDirection: "row"/);
@@ -150,6 +152,7 @@ test("airline identity preserves its accessible name while bounding very long vi
   assert.match(airlineText, /ellipsizeMode="tail"/);
   assert.doesNotMatch(source, /airlineName: \{[^}]*maxWidth/);
   assert.match(source, /airlineName: \{ flex: 1, minWidth: 0,[^}]*lineHeight: 18/);
+  assert.match(source, /identityActions: \{ flexDirection: "column", flexShrink: 0/);
   assert.match(card, /<View style=\{s0\.flightIdentityLayout\}>[\s\S]*?<AirlineLogo[\s\S]*?<View style=\{s0\.airlineHeader\}>[\s\S]*?<Text accessibilityLabel=[\s\S]*?style=\{\[s0\.airlineName/);
 
   for (const airlineName of [
@@ -253,7 +256,7 @@ test("flight favorite uses persistent shared state for initial, save, and remove
   assert.match(hook, /favoriteAction\(userId\)/);
 });
 
-test("flight favorite is accessible, isolated, and does not enlarge the top row", () => {
+test("flight favorite is accessible and isolated inside the identity action stack", () => {
   assert.match(card, /accessibilityRole="button"/);
   assert.match(card, /accessibilityState=\{\{ selected: saved \}\}/);
   assert.match(card, /hitSlop=\{\{ top: 12, bottom: 12, left: 12, right: 12 \}\}/);
@@ -263,10 +266,16 @@ test("flight favorite is accessible, isolated, and does not enlarge the top row"
   assert.doesNotMatch(card, /onPress=.*View details[\s\S]*toggleSavedFlight/);
 });
 
-test("compact density keeps identity controls in one band and preserves practical touch targets", () => {
+test("highlight sits above the favorite in a compact vertical identity action stack", () => {
   const header = card.slice(card.indexOf('<View style={s0.airlineHeader}>'), card.indexOf('<View style={s0.journeyList}>'));
-  assert.match(header, /s0\.airlineName[\s\S]*?highlight[\s\S]*?s0\.favoriteButton/);
+  const actions = header.slice(header.indexOf('<View style={s0.identityActions}>'), header.indexOf('</View>', header.indexOf('s0.favoriteButton')) + 7);
+  assert.match(header, /s0\.airlineName[\s\S]*?<View style=\{s0\.identityActions\}>/);
+  assert.match(actions, /highlight[\s\S]*?s0\.resultBadge[\s\S]*?s0\.favoriteButton/);
+  assert.ok(actions.indexOf("s0.resultBadge") < actions.indexOf("s0.favoriteButton"));
+  assert.match(source, /identityActions: \{ flexDirection: "column", flexShrink: 0,[^}]*gap: 3 \}/);
   assert.match(source, /airlineHeader: \{ minHeight: 20,[^}]*gap: 6 \}/);
+  assert.match(actions, /\{highlight \? \([\s\S]*?\) : null\}[\s\S]*?<Pressable/);
+  assert.doesNotMatch(actions, /placeholder/i);
   assert.match(source, /journeyList: \{ width: "100%", marginTop: 3, gap: 4 \}/);
   assert.match(source, /journeyLabel: \{ fontSize: 9, lineHeight: 10/);
   assert.doesNotMatch(source, /detailsButton(?:Text)?:/);

@@ -8,15 +8,26 @@ const card = source.slice(source.indexOf("function FlightCard"), source.indexOf(
 
 test("metadata is one horizontal, flexible row in baggage, cabin, fare-rules order", () => {
   const row = card.slice(card.indexOf('<View style={s0.metadataRow}>'));
-  const baggage = row.indexOf("Baggage:");
-  const cabin = row.indexOf("Cabin:");
-  const fareRules = row.indexOf("Fare rules:");
+  const baggage = row.indexOf("baggageSummary");
+  const cabin = row.indexOf("cabinSummary");
+  const fareRules = row.indexOf("fareRulesSummary");
 
   assert.ok(baggage >= 0 && cabin > baggage && fareRules > cabin);
   assert.equal(row.match(/style=\{s0\.metadataItem\}/g)?.length, 3);
   assert.match(source, /metadataRow: \{ width: "100%", flexDirection: "row"/);
   assert.match(source, /metadataItem: \{ flex: 1, minWidth: 0, flexDirection: "row"/);
   assert.doesNotMatch(source, /metadataRow: \{[^}]*flexWrap|metadataItem: \{[^}]*width:/);
+});
+
+test("metadata shows values without redundant visual category labels", () => {
+  const row = card.slice(card.indexOf('<View style={s0.metadataRow}>'));
+  assert.doesNotMatch(row, /<Text[^>]*>Baggage: <\/Text>/);
+  assert.doesNotMatch(row, /<Text[^>]*>Cabin: <\/Text>/);
+  assert.doesNotMatch(row, /<Text[^>]*>Fare rules: <\/Text>/);
+  assert.match(row, /metadataText[^>]*>\{baggageSummary\}<\/Text>/);
+  assert.match(row, /metadataText[^>]*>\{cabinSummary\}<\/Text>/);
+  assert.match(row, /metadataText[^>]*>\{fareRulesSummary\}<\/Text>/);
+  assert.doesNotMatch(source, /metadataLabel/);
 });
 
 test("metadata summaries use provider result fields exactly once", () => {
