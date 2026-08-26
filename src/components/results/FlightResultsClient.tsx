@@ -24,7 +24,6 @@ import { useSession } from "next-auth/react";
 import {
   ArrowLeft,
   ArrowRightLeft,
-  Bell,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
@@ -111,8 +110,8 @@ import {
   type SavedDiscoveryDisplayDetails,
   type SavedDiscoveryFlightSearch,
 } from "@/lib/saved-items-api";
-import { formatCurrency, formatDisplayPrice } from "@/lib/currency/formatCurrency";
-import type { FlightSearchParams, PublicFlightResult, SortMode } from "@/lib/types";
+import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { appendFlightLegParams, parseFlightLegParams, projectSearchLegs } from "@/lib/flights/flightSearchJourney";
 import { cn, getItineraryDateKey } from "@/lib/utils";
 import {
@@ -126,7 +125,6 @@ import {
   formatFlightsMonthHeading,
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
-import { MAX_PRICE_ALERT_TARGET, buildCanonicalFlightPriceAlertQuery } from "@/lib/price-alerts/flightPriceAlerts";
 
 const resultStackClass = "w-full min-w-0";
 const desktopCompactFilterTopOffset = 116;
@@ -1160,13 +1158,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     Record<string, string>
   >({});
   const [savedItemError, setSavedItemError] = useState("");
-  const [priceAlertDialogOpen, setPriceAlertDialogOpen] = useState(false);
-  const [priceAlertTarget, setPriceAlertTarget] = useState("");
-  const [priceAlertError, setPriceAlertError] = useState("");
-  const [priceAlertStatusMessage, setPriceAlertStatusMessage] = useState("");
-  const [priceAlertSubmitting, setPriceAlertSubmitting] = useState(false);
-  const priceAlertButtonRef = useRef<HTMLButtonElement | null>(null);
-  const priceAlertInputRef = useRef<HTMLInputElement | null>(null);
 
   const refreshBackendRecentSearches = useCallback(
     async (signal?: AbortSignal) => {
@@ -2597,150 +2588,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     () => (body ? buildFlightResultsSearchKey(body) : ""),
     [body],
   );
-
-  const canonicalPriceAlertQuery = useMemo(() => {
-    if (!body) return null;
-    if (body.tripType !== "round-trip" && body.tripType !== "one-way") return null;
-
-    const query = {
-      tripType: body.tripType,
-      origin: body.origin,
-      destination: body.destination,
-      departureDate: body.departureDate,
-      ...(body.tripType === "round-trip" ? { returnDate: body.returnDate } : {}),
-      adults: body.adults,
-      children: body.children,
-      infants: body.infants,
-      travelers: body.travelers,
-      cabinClass: body.cabinClass,
-      currency: body.currency,
-    };
-    const parsed = buildCanonicalFlightPriceAlertQuery(query);
-    return parsed.success ? parsed.data : null;
-  }, [body]);
-
-
-  const priceAlertRouteSummary = canonicalPriceAlertQuery
-    ? `${canonicalPriceAlertQuery.origin} → ${canonicalPriceAlertQuery.destination}`
-    : "Current flight search";
-  const priceAlertDateSummary = canonicalPriceAlertQuery
-    ? canonicalPriceAlertQuery.tripType === "round-trip" && canonicalPriceAlertQuery.returnDate
-      ? `${formatDateLabel(canonicalPriceAlertQuery.departureDate, calendarLocale)} – ${formatDateLabel(canonicalPriceAlertQuery.returnDate, calendarLocale)}`
-      : formatDateLabel(canonicalPriceAlertQuery.departureDate, calendarLocale)
-    : "";
-  const priceAlertUnavailableReason = !canonicalPriceAlertQuery
-    ? body?.tripType === "multi-city"
-      ? "Price alerts are not available for multi-city searches yet."
-      : "Complete a valid flight search before creating a price alert."
-    : "";
-
-  const openPriceAlertDialog = useCallback(() => {
-    setPriceAlertStatusMessage("");
-    if (!canonicalPriceAlertQuery) {
-      setPriceAlertError(priceAlertUnavailableReason || "Complete a valid flight search before creating a price alert.");
-      return;
-    }
-    if (sessionStatus === "loading") return;
-    if (sessionStatus !== "authenticated") {
-      const returnPath = `${window.location.pathname}${window.location.search}`;
-      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(returnPath)}`);
-      return;
-    }
-    setPriceAlertError("");
-    setPriceAlertTarget("");
-    setPriceAlertDialogOpen(true);
-  }, [canonicalPriceAlertQuery, priceAlertUnavailableReason, router, sessionStatus]);
-
-  const closePriceAlertDialog = useCallback(() => {
-    setPriceAlertDialogOpen(false);
-    setPriceAlertSubmitting(false);
-    setPriceAlertError("");
-    window.setTimeout(() => priceAlertButtonRef.current?.focus(), 0);
-  }, []);
-
-  const validatePriceAlertTarget = useCallback((value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) return "Enter a target price.";
-    if (!/^\d+(?:\.\d{1,2})?$/.test(trimmed)) return "Enter a positive number with up to two decimals.";
-    const amount = Number(trimmed);
-    if (!Number.isFinite(amount) || amount <= 0) return "Enter a target price above zero.";
-    if (amount > MAX_PRICE_ALERT_TARGET) return "Enter a target price below 10,000,000,000.";
-    return "";
-  }, []);
-
-  const submitPriceAlert = useCallback(async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!canonicalPriceAlertQuery) {
-      setPriceAlertError("Complete a valid flight search before creating a price alert.");
-      return;
-    }
-    const validationMessage = validatePriceAlertTarget(priceAlertTarget);
-    if (validationMessage) {
-      setPriceAlertError(validationMessage);
-      priceAlertInputRef.current?.focus();
-      return;
-    }
-
-    setPriceAlertSubmitting(true);
-    setPriceAlertError("");
-    try {
-      const targetPrice = Number(priceAlertTarget.trim());
-      const response = await fetch("/api/price-alerts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "FLIGHT",
-          origin: canonicalPriceAlertQuery.origin,
-          destination: canonicalPriceAlertQuery.destination,
-          targetPrice,
-          currency: canonicalPriceAlertQuery.currency,
-          query: canonicalPriceAlertQuery satisfies FlightSearchParams,
-        }),
-      });
-      const payload = await response.json().catch(() => ({})) as { error?: string; duplicate?: boolean };
-
-      if (response.status === 401) {
-        const returnPath = `${window.location.pathname}${window.location.search}`;
-        router.push(`/auth/signin?callbackUrl=${encodeURIComponent(returnPath)}`);
-        return;
-      }
-      if (response.status === 409 || payload.duplicate) {
-        setPriceAlertError("You already have this price alert.");
-        setPriceAlertSubmitting(false);
-        return;
-      }
-      if (!response.ok) {
-        setPriceAlertError(response.status === 400 ? "Please check the alert details and try again." : "We could not create your price alert. Please try again.");
-        setPriceAlertSubmitting(false);
-        return;
-      }
-
-      setPriceAlertDialogOpen(false);
-      setPriceAlertSubmitting(false);
-      setPriceAlertTarget("");
-      setPriceAlertStatusMessage("Price alert created. We’ll email you if the fare reaches your target.");
-      window.setTimeout(() => priceAlertButtonRef.current?.focus(), 0);
-    } catch {
-      setPriceAlertError("Network error. Check your connection and try again.");
-      setPriceAlertSubmitting(false);
-    }
-  }, [canonicalPriceAlertQuery, priceAlertTarget, router, validatePriceAlertTarget]);
-
-  useEffect(() => {
-    if (!priceAlertDialogOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const focusTimer = window.setTimeout(() => priceAlertInputRef.current?.focus(), 0);
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !priceAlertSubmitting) closePriceAlertDialog();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.clearTimeout(focusTimer);
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [closePriceAlertDialog, priceAlertDialogOpen, priceAlertSubmitting]);
 
   useEffect(() => {
     if (!body) {
@@ -4527,13 +4374,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
     return () => window.clearTimeout(focusTimer);
   }, [error, resultsUiPreparing, sortedResults.length]);
-
-  const lowestDisplayedFare = useMemo(() => {
-    if (warnings.length > 0) return null;
-    const fare = getLowestProviderFare(sortedResults);
-    if (!fare || fare.currency.toUpperCase() !== selectedCurrency.toUpperCase()) return null;
-    return fare;
-  }, [selectedCurrency, sortedResults, warnings.length]);
 
   const sortSummaries = useMemo(() => {
     if (!filtered.length) {
@@ -7394,9 +7234,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           <p className="sr-only" aria-live="polite">
             {savedItemError}
           </p>
-          <p className="sr-only" aria-live="polite">
-            {priceAlertStatusMessage || priceAlertError}
-          </p>
           <div ref={flightResultsTopRef} aria-hidden="true" />
           <h2 ref={resultsHeadingRef} tabIndex={-1} className="sr-only">
             {formatResultsFound(sortedResults.length, t)}
@@ -7408,7 +7245,30 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           ) : (
             <div className={cn(resultStackClass, "space-y-4")}>
               {body?.tripType !== "multi-city" ? (
-                <div
+                <>
+                  <div className="w-full min-w-0 max-w-full overflow-hidden sm:hidden" aria-label="Nearby departure fares" data-nearby-fare-presentation="mobile">
+                    <div className="flex w-full min-w-0 max-w-full touch-pan-x snap-x snap-proximity gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain px-0.5 py-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      {(nearbyFares.length ? nearbyFares : Array.from({ length: nearbyFareRangeSize }, (_, index) => ({ date: `loading-mobile-${index}`, status: "loading" as const }))).map((fare) => {
+                        const selected = fare.date === body?.departureDate;
+                        const displayPrice = fare.status === "success" ? formatDisplayPrice({ amount: fare.amount, sourceCurrency: fare.currency, displayCurrency: selectedCurrency, convertUsdEstimate: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback }).formatted : null;
+                        const accessibleFare = displayPrice ?? (fare.status === "loading" ? "Loading fare" : "Unavailable");
+                        const accessibleDate = fare.date.startsWith("loading-") ? "Loading date" : `${formatFareStripWeekdayLabel(fare.date, calendarLocale)}, ${formatFareStripDateLabel(fare.date, calendarLocale)}`;
+                        return (
+                          <button key={fare.date} type="button" data-fare-date-cell aria-label={`${accessibleDate}: ${accessibleFare}`} aria-current={selected ? "date" : undefined} aria-pressed={selected} disabled={selected || loading || fare.status === "loading"} onClick={() => handleNearbyFareDateSelect(fare.date)} className={cn("focus-ring relative flex min-h-[76px] w-[calc((100vw-3.5rem)/3.35)] min-w-[88px] max-w-[108px] shrink-0 snap-start flex-col items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white px-1.5 py-2 text-center shadow-sm transition hover:border-[#075EE8]/40 hover:bg-slate-50", selected && "border-[#075EE8] bg-blue-50/60")}>
+                            {selected ? <span className="absolute inset-x-1.5 top-0 h-0.5 rounded-b bg-[#075EE8]" aria-hidden="true" /> : null}
+                            {fare.status === "loading" ? (<>
+                              <span className="h-3 w-12 animate-pulse rounded bg-slate-200" /><span className="mt-1.5 h-3 w-8 animate-pulse rounded bg-slate-200" /><span className="mt-1.5 h-3 w-14 animate-pulse rounded bg-slate-200" />
+                            </>) : (<>
+                              <span className={cn("text-[12px] font-semibold uppercase leading-4", selected ? "text-[#075EE8]" : "text-slate-800")}>{formatFareStripDateLabel(fare.date, calendarLocale).toUpperCase()}</span>
+                              <span className={cn("text-[11px] font-medium uppercase leading-4", selected ? "text-[#075EE8]" : "text-slate-500")}>{formatFareStripWeekdayLabel(fare.date, calendarLocale).toUpperCase()}</span>
+                              <span className={cn("flight-fare-strip-price mt-1 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-medium leading-4", selected ? "font-semibold text-[#075EE8]" : "text-slate-900")} data-price-size={((displayPrice ?? "Unavailable").replace(/\s/g, "").length) >= 13 ? "extra-long" : ((displayPrice ?? "Unavailable").replace(/\s/g, "").length) >= 10 ? "long" : "default"} dir="ltr">{displayPrice ?? "Unavailable"}</span>
+                            </>)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div
                   className="hidden w-full sm:block"
                   aria-label="Nearby departure fares"
                 >
@@ -7552,27 +7412,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     </button>
                   </div>
                 </div>
+                </>
               ) : null}
-
-              <div className="flex w-full flex-col gap-3 rounded-2xl border border-[#D8E1EC] bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-4 lg:bg-transparent">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-slate-900">Track this route</p>
-                  <p className="mt-1 text-xs leading-5 text-slate-600">Create a one-time email alert when a periodically checked fare is at or below your target.</p>
-                  {priceAlertStatusMessage ? <p className="mt-2 text-xs font-semibold text-emerald-700" role="status">{priceAlertStatusMessage}</p> : null}
-                  {priceAlertUnavailableReason ? <p id="price-alert-unavailable" className="mt-2 text-xs font-semibold text-amber-700">{priceAlertUnavailableReason}</p> : null}
-                </div>
-                <button
-                  ref={priceAlertButtonRef}
-                  type="button"
-                  className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-[#004BB8]/30 bg-white px-4 text-sm font-bold text-[#004BB8] transition hover:border-[#004BB8] hover:bg-[#004BB8]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
-                  disabled={sessionStatus === "loading" || !canonicalPriceAlertQuery}
-                  aria-describedby={priceAlertUnavailableReason ? "price-alert-unavailable" : undefined}
-                  onClick={openPriceAlertDialog}
-                >
-                  <Bell size={17} aria-hidden="true" />
-                  Create price alert
-                </button>
-              </div>
 
               <div className="hidden w-full items-center justify-between gap-4 pt-2 sm:flex lg:bg-transparent lg:px-0 lg:pb-0.5">
                 <p className="text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">
@@ -7723,42 +7564,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       >
         <ChevronUp className="h-5 w-5" strokeWidth={2.6} aria-hidden="true" />
       </button>
-
-      {priceAlertDialogOpen && createPortal(
-          <div className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/45 px-4 py-4 sm:items-center" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !priceAlertSubmitting) closePriceAlertDialog(); }}>
-            <div role="dialog" aria-modal="true" aria-labelledby="price-alert-dialog-title" aria-describedby="price-alert-dialog-description" className="max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">Price alert</p>
-                  <h2 id="price-alert-dialog-title" className="mt-2 text-xl font-semibold tracking-tight text-slate-950">Create price alert</h2>
-                </div>
-                <button type="button" className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900" onClick={closePriceAlertDialog} aria-label="Cancel creating price alert" disabled={priceAlertSubmitting}>
-                  <X size={20} aria-hidden="true" />
-                </button>
-              </div>
-              <p id="price-alert-dialog-description" className="mt-3 text-sm leading-6 text-slate-600">Kurioticket checks this route periodically. We’ll email you once if an observed fare is at or below your target. Fares and availability can change before booking.</p>
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                <p className="font-semibold text-slate-950">{priceAlertRouteSummary}</p>
-                <p className="mt-1">{priceAlertDateSummary}</p>
-                <p className="mt-1">Currency: <span className="font-semibold">{canonicalPriceAlertQuery?.currency}</span></p>
-                {lowestDisplayedFare ? <p className="mt-2 text-xs leading-5 text-slate-600">Lowest displayed live fare: {formatCurrency(lowestDisplayedFare.price, lowestDisplayedFare.currency)}. Use this only as context; provider fares can change.</p> : null}
-              </div>
-              <form className="mt-5 space-y-4" onSubmit={submitPriceAlert}>
-                <div>
-                  <label htmlFor="price-alert-target" className="block text-sm font-semibold text-slate-900">Target price ({canonicalPriceAlertQuery?.currency})</label>
-                  <input id="price-alert-target" ref={priceAlertInputRef} inputMode="decimal" autoComplete="off" value={priceAlertTarget} onChange={(event) => { setPriceAlertTarget(event.target.value); if (priceAlertError) setPriceAlertError(""); }} aria-describedby="price-alert-target-help price-alert-error" aria-invalid={Boolean(priceAlertError)} className="mt-2 block min-h-12 w-full rounded-xl border border-slate-300 px-3 text-base font-semibold text-slate-950 shadow-sm focus:border-[#004BB8] focus:outline-none focus:ring-2 focus:ring-[#004BB8]/20" placeholder="Example: 450.00" />
-                  <p id="price-alert-target-help" className="mt-2 text-xs leading-5 text-slate-500">Use the current search currency. Up to two decimal places.</p>
-                  {priceAlertError ? <p id="price-alert-error" className="mt-2 text-sm font-semibold text-red-700" role="alert">{priceAlertError}</p> : null}
-                </div>
-                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                  <Button type="button" variant="secondary" className="min-h-11 rounded-xl" onClick={closePriceAlertDialog} disabled={priceAlertSubmitting}>Cancel</Button>
-                  <Button type="submit" className="min-h-11 rounded-xl" disabled={priceAlertSubmitting}>{priceAlertSubmitting ? "Creating…" : "Create alert"}</Button>
-                </div>
-              </form>
-            </div>
-          </div>,
-          document.body,
-        )}
 
       <aside
         id="flight-mobile-filters-dialog"
