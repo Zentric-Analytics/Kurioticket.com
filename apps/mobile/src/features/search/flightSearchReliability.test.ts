@@ -66,10 +66,12 @@ test("slow flight diagnostics measure processing and event-loop responsiveness",
   assert.match(screen, /\[flight-search:event-loop\]/);
 });
 
-test("flight results virtualize cards and own exactly one saved-flight subscription", () => {
+test("flight results virtualize cards, keep controls persistent, and own exactly one saved-flight subscription", () => {
   const card = screen.slice(screen.indexOf("function FlightCard"), screen.indexOf("function FlightJourneyRow"));
   assert.match(screen, /<SectionList/);
-  assert.match(screen, /renderSectionHeader=\{\(\) => \([\s\S]*?\{dateStrip\}[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
+  assert.match(screen, /flightResults && status !== "loading" \? \([\s\S]*?flightPersistentSearchControls[\s\S]*?\{filterRail\}/);
+  assert.match(screen, /<SectionList[\s\S]*?ListHeaderComponent=\{status === "loading" \? null : dateStrip\}/);
+  assert.doesNotMatch(screen, /renderSectionHeader|stickySectionHeadersEnabled/);
   assert.match(screen, /initialNumToRender=\{6\}/);
   assert.doesNotMatch(screen, /sorted\.map\(\(x, i\) =>\s*product === "flight"/);
   assert.equal((screen.match(/useSavedFlights\(\)/g) || []).length, 1);

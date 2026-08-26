@@ -73,6 +73,8 @@ test("validated results become terminal immediately without presentation waiting
   assert.doesNotMatch(validationToReady, /setTimeout|sleep|minimum|waitForAnimation|FLIGHT_LOADING_SKELETON_DELAY_MS/);
 });
 
-test("loading hides interactive date and filter rails without changing their ready order", () => {
-  assert.match(screen, /renderSectionHeader=\{\(\) => \([\s\S]*?status === "loading" \? null : \([\s\S]*?\{dateStrip\}[\s\S]*?\{filterRail\}/);
+test("loading hides interactive date and filter rails while preserving natural-scroll structure", () => {
+  assert.match(screen, /flightResults && status !== "loading" \? \([\s\S]*?flightPersistentSearchControls[\s\S]*?\{filterRail\}/);
+  assert.match(screen, /ListHeaderComponent=\{status === "loading" \? null : dateStrip\}/);
+  assert.doesNotMatch(screen, /renderSectionHeader|stickySectionHeadersEnabled/);
 });

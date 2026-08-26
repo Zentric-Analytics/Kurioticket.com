@@ -566,20 +566,17 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           </View>
         </>
       )}
+      {flightResults && status !== "loading" ? (
+        <View style={[s0.flightPersistentSearchControls, { backgroundColor: theme.background }]}>
+          {filterRail}
+        </View>
+      ) : null}
       {product === "flight" ? (
         <SectionList
           style={[s0.resultsScroll, { backgroundColor: theme.background }]}
           sections={[{ data: !flightState ? sorted as FlightResult[] : [] }]}
           keyExtractor={(item) => item.id}
-          renderSectionHeader={() => (
-            status === "loading" ? null : (
-              <View style={[s0.flightStickySearchControls, { backgroundColor: theme.background }]}>
-                {dateStrip}
-                {filterRail}
-              </View>
-            )
-          )}
-          stickySectionHeadersEnabled
+          ListHeaderComponent={status === "loading" ? null : dateStrip}
           renderItem={({ item, index }) => (
             <>
               {index === 0 && status === "ready" && !flightState && plan.plan ? (
@@ -1403,7 +1400,7 @@ const s0 = StyleSheet.create({
     justifyContent: "center",
   },
   flightHeaderEditText: { fontSize: 13, lineHeight: 18, fontWeight: "700" },
-  flightStickySearchControls: {},
+  flightPersistentSearchControls: {},
   filterRail: { height: 44, flexGrow: 0 },
   resultsScroll: { flex: 1 },
   flightResultsContent: { flexGrow: 1 },
