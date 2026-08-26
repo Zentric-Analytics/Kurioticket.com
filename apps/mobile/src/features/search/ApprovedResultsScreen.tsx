@@ -814,11 +814,11 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
                 />
               </Pressable>
             </View>
-            <View style={s0.journeyList}>
-              <FlightJourneyRow label="OUTBOUND" leg={outbound} />
-              {returnLeg ? <FlightJourneyRow label="RETURN" leg={returnLeg} /> : null}
-            </View>
           </View>
+        </View>
+        <View style={s0.journeyList}>
+          <FlightJourneyRow label="OUTBOUND" leg={outbound} />
+          {returnLeg ? <FlightJourneyRow label="RETURN" leg={returnLeg} /> : null}
         </View>
       </View>
       <View style={s0.benefits}>
@@ -1469,7 +1469,7 @@ const s0 = StyleSheet.create({
   airlineLogoColumn: { width: 32, flexShrink: 0, alignItems: "center" },
   flightDetails: { flex: 1, minWidth: 0 },
   airlineName: { flex: 1, minWidth: 0, fontSize: 14, lineHeight: 18, color: ui.navy, fontWeight: "800" },
-  journeyList: { marginTop: 3, gap: 4 },
+  journeyList: { width: "100%", marginTop: 3, gap: 4 },
   journeyBlock: { width: "100%", gap: 0 },
   journeyLabel: { fontSize: 9, lineHeight: 10, fontWeight: "800", letterSpacing: 0.7 },
   journeyRow: { width: "100%" },

@@ -52,6 +52,10 @@ test("almost-done reuses three shared-pulse noninteractive flight skeletons", ()
 test("one-way uses one journey and round-trip conditionally adds the return journey", () => {
   assert.match(screen, /roundTrip=\{payload\.tripType === "round-trip"\}/);
   assert.match(flightSkeleton, /\{roundTrip \? \([\s\S]*?<View style=\{s0\.skeletonFlightRow\}>/);
+  const identityStart = flightSkeleton.indexOf('<View style={s0.skeletonIdentityRow}>');
+  const journeyStart = flightSkeleton.indexOf('<View style={s0.skeletonFlightRow}>');
+  assert.ok(journeyStart > identityStart, "the full-width journey placeholder follows the identity row");
+  assert.doesNotMatch(flightSkeleton.slice(identityStart, journeyStart), /skeletonFlightRow/);
 });
 
 test("validated results become terminal immediately without presentation waiting", () => {

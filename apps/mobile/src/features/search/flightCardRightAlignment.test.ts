@@ -33,13 +33,21 @@ test("arrival and price terminate on the shared right edge", () => {
   assert.doesNotMatch(actionColumnStyle, /position|top|bottom|marginTop/);
 });
 
-test("journeys begin in the airline copy column rather than beneath the logo", () => {
-  const identityLayout = card.slice(card.indexOf('<View style={s0.flightIdentityLayout}>'), card.indexOf('<View style={s0.benefits}>'));
-  assert.match(identityLayout, /airlineLogoColumn[\s\S]*?flightDetails[\s\S]*?airlineName[\s\S]*?journeyList[\s\S]*?FlightJourneyRow/);
+test("journeys follow the compact identity row at the full card content width", () => {
+  const flightMain = card.slice(card.indexOf('<View style={s0.flightMain}>'), card.indexOf('<View style={s0.benefits}>'));
+  const identityStart = flightMain.indexOf('<View style={s0.flightIdentityLayout}>');
+  const journeyStart = flightMain.indexOf('<View style={s0.journeyList}>');
+  const identityLayout = flightMain.slice(identityStart, journeyStart);
+  const flightDetails = identityLayout.slice(identityLayout.indexOf('<View style={s0.flightDetails}>'));
+
+  assert.ok(identityStart >= 0 && journeyStart > identityStart, "journey list follows the identity row");
+  assert.match(identityLayout, /airlineLogoColumn[\s\S]*?<AirlineLogo[\s\S]*?flightDetails[\s\S]*?airlineHeader/);
+  assert.doesNotMatch(flightDetails, /journeyList|FlightJourneyRow/);
+  assert.match(flightMain.slice(journeyStart), /journeyList[\s\S]*?<FlightJourneyRow label="OUTBOUND"[\s\S]*?returnLeg \? <FlightJourneyRow label="RETURN"/);
   assert.match(source, /flightIdentityLayout: \{[^}]*flexDirection: "row"[^}]*gap: 10/);
   assert.match(source, /airlineLogoColumn: \{ width: 32, flexShrink: 0/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
-  assert.doesNotMatch(card, /<\/View>\s*<FlightJourneyRow label="OUTBOUND"/);
+  assert.match(source, /journeyList: \{ width: "100%", marginTop: 3, gap: 4 \}/);
 });
 
 test("one-way cards omit return while preserving the shared right-side contract", () => {

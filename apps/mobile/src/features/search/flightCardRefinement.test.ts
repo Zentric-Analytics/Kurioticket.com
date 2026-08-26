@@ -85,7 +85,7 @@ test("flight card keeps fixed footer content compact while airline identity may 
   assert.match(source, /benefit: \{ minWidth: 0, fontSize: 10\.5, color: ui\.muted, flex: 1 \}/);
   assert.doesNotMatch(source, /detailsButton(?:Text)?:/);
   for (const viewport of [320, 360, 375, 390, 430]) {
-    const cardContentWidth = viewport - 28 - 26;
+    const cardContentWidth = viewport - 28 - 24;
     assert.ok(cardContentWidth >= 258, `${viewport}px reserves at least 258px for the journey row`);
   }
 });
@@ -105,10 +105,15 @@ test("flight result cards use the responsive list width with a safe reduced oute
 });
 
 test("flight loading skeleton mirrors the stacked benefit footer", () => {
-  assert.match(source, /<View style=\{s0\.skeletonIdentityRow\}>[\s\S]*s0\.skeletonLogo[\s\S]*s0\.skeletonName[\s\S]*<View style=\{s0\.skeletonFlightRow\}>/);
+  const flightSkeleton = source.slice(source.indexOf("function FlightLoadingSkeleton"), source.indexOf("function HotelLoadingSkeleton"));
+  const identityStart = flightSkeleton.indexOf('<View style={s0.skeletonIdentityRow}>');
+  const journeyStart = flightSkeleton.indexOf('<View style={s0.skeletonFlightRow}>');
+  const identityRow = flightSkeleton.slice(identityStart, journeyStart);
+  assert.ok(identityStart >= 0 && journeyStart > identityStart, "full-width flight placeholder follows the identity row");
+  assert.match(identityRow, /s0\.skeletonLogo[\s\S]*s0\.skeletonName/);
+  assert.doesNotMatch(identityRow, /skeletonFlightRow/);
   assert.match(source, /skeletonBenefitLines: \{ flex: 1, gap: 6 \}/);
   assert.match(source, /skeletonBenefitLine: \{ width: "82%" \}/);
-  const flightSkeleton = source.slice(source.indexOf("function FlightLoadingSkeleton"), source.indexOf("function HotelLoadingSkeleton"));
   assert.doesNotMatch(flightSkeleton, /skeletonButton/);
 });
 
@@ -164,7 +169,7 @@ test("narrow flight cards reserve deterministic space for every journey section"
   const readableMinimums = 78 + 70 + 78;
   const interSectionGaps = 6 * 2;
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
-    const cardContentWidth = viewport - 28 - 26;
+    const cardContentWidth = viewport - 28 - 24;
     assert.ok(
       cardContentWidth >= readableMinimums + interSectionGaps,
       `${viewport}px fits departure, route, and arrival minimums without overlap`,
@@ -188,14 +193,14 @@ test("flight journey gives its center column responsive surplus width", () => {
   const arrivalWidth = 62;
   const interSectionGaps = 6 * 2;
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
-    const previousCardContentWidth = viewport - 36 - 26;
-    const cardContentWidth = viewport - 28 - 26;
+    const cardContentWidth = viewport - 28 - 24;
+    const indentedJourneyWidth = cardContentWidth - 32 - 10;
     const renderedTimelineWidth = cardContentWidth - departureWidth - arrivalWidth - interSectionGaps;
     assert.ok(renderedTimelineWidth >= 70, `${viewport}px keeps a readable route line`);
     assert.equal(
-      renderedTimelineWidth - (previousCardContentWidth - departureWidth - arrivalWidth - interSectionGaps),
-      8,
-      `${viewport}px gives the centered timeline all additional card width`,
+      renderedTimelineWidth - (indentedJourneyWidth - departureWidth - arrivalWidth - interSectionGaps),
+      42,
+      `${viewport}px journey no longer loses the 32px logo and 10px identity gap`,
     );
   }
 });
@@ -250,7 +255,7 @@ test("compact density keeps identity controls in one band and preserves practica
   const header = card.slice(card.indexOf('<View style={s0.airlineHeader}>'), card.indexOf('<View style={s0.journeyList}>'));
   assert.match(header, /s0\.airlineName[\s\S]*?highlight[\s\S]*?s0\.favoriteButton/);
   assert.match(source, /airlineHeader: \{ minHeight: 20,[^}]*gap: 6 \}/);
-  assert.match(source, /journeyList: \{ marginTop: 3, gap: 4 \}/);
+  assert.match(source, /journeyList: \{ width: "100%", marginTop: 3, gap: 4 \}/);
   assert.match(source, /journeyLabel: \{ fontSize: 9, lineHeight: 10/);
   assert.doesNotMatch(source, /detailsButton(?:Text)?:/);
 
