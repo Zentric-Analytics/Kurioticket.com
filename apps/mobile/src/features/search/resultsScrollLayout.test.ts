@@ -14,17 +14,15 @@ function styleBlock(name: string, nextName: string) {
   return screen.slice(screen.indexOf(`${name}:`), screen.indexOf(`${nextName}:`, screen.indexOf(`${name}:`)));
 }
 
-test("flight results keep controls persistent outside scrolling date, alert, count, and cards", () => {
-  const controls = screen.slice(screen.indexOf('{product === "flight" && status === "ready"'), layoutStart);
-  const listHeader = flightLayout.slice(flightLayout.indexOf("ListHeaderComponent="), flightLayout.indexOf("ListEmptyComponent="));
-  const renderItem = flightLayout.slice(flightLayout.indexOf("renderItem="), flightLayout.indexOf("ListHeaderComponent="));
-  assert.match(controls, /filterRail : null/);
-  assert.match(listHeader, /\{dateStrip\}[\s\S]*?<PriceAlert[\s\S]*?flightResultCountLabel\(sorted\.length\)/);
-  assert.doesNotMatch(listHeader, /filterRail/);
-  assert.match(renderItem, /<FlightCard/);
-  assert.doesNotMatch(renderItem, /PriceAlert|filterRail|flightResultCountLabel/);
-  assert.doesNotMatch(flightLayout, /renderSectionHeader|stickySectionHeadersEnabled/);
-  assert.doesNotMatch(flightLayout, /onScroll=|scrollEventThrottle=|Animated\./);
+test("flight results use native sticky controls after the scrolling date", () => {
+  const listHeader = flightLayout.slice(flightLayout.indexOf("ListHeaderComponent="), flightLayout.indexOf("renderSectionHeader="));
+  const sectionHeader = flightLayout.slice(flightLayout.indexOf("renderSectionHeader="), flightLayout.indexOf("renderItem="));
+  const renderItem = flightLayout.slice(flightLayout.indexOf("renderItem="), flightLayout.indexOf("ListEmptyComponent="));
+  assert.match(listHeader, /\{dateStrip\}/);
+  assert.doesNotMatch(listHeader, /PriceAlert|filterRail|flightResultCountLabel/);
+  assert.match(sectionHeader, /renderSectionHeader=\{\(\) => filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
+  assert.match(renderItem, /<PriceAlert[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?<FlightCard/);
+  assert.doesNotMatch(flightLayout, /onScroll=|scrollEventThrottle=|Animated\.|stickyHeaderIndices|manualSticky|stickyFilterState/);
   assert.doesNotMatch(screen, /dateHeaderCollapsed|dateHeaderProgress|Animated\.timing\(dateHeaderProgress/);
 });
 
@@ -40,7 +38,7 @@ test("date and filter rails retain their horizontal interactions", () => {
   }
 });
 
-test("persistent flight controls and scrolling count keep compact spacing", () => {
+test("sticky flight controls and scrolling count keep compact spacing", () => {
   const count = styleBlock("flightResultCount", "card");
   const rail = styleBlock("filterRail", "resultsScroll");
   const filters = styleBlock("filters", "modalBackdrop");

@@ -539,40 +539,39 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           </View>
         </>
       )}
-      {product === "flight" && status === "ready" && results.length > 0 ? filterRail : null}
       {product === "flight" ? (
         <SectionList
           style={[s0.resultsScroll, { backgroundColor: theme.background }]}
           sections={[{ data: !flightState ? sorted as FlightResult[] : [] }]}
           keyExtractor={(item) => item.id}
+          ListHeaderComponent={<View>{dateStrip}</View>}
+          renderSectionHeader={() => filterRail}
+          stickySectionHeadersEnabled
           renderItem={({ item, index }) => (
-            <View style={s0.flightCardItem}>
-              <FlightCard
-                result={item}
-                displayPrice={flightDisplayPrices.get(item.id)}
-                displayCurrencyContext={currencyState?.resolution}
-                highlight={flightHighlights.get(item.id)}
-                params={params}
-                saved={savedFlights.has(item.id)}
-                onToggleSaved={() => toggleSavedFlight(item, params)}
-                logInitialMount={index === 0}
-              />
-            </View>
-          )}
-          ListHeaderComponent={(
-            <View>
-              {dateStrip}
-              {status === "ready" && !flightState && plan.plan ? (
+            <>
+              {index === 0 && status === "ready" && !flightState && plan.plan ? (
                 <View style={s0.flightPriceAlertItem}>
                   <PriceAlert product={product} plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} />
                 </View>
               ) : null}
-              {status === "ready" && !flightState ? (
+              {index === 0 && status === "ready" && !flightState ? (
                 <Text accessibilityRole="header" style={[s0.flightResultCount, { color: theme.textPrimary }]}>
                   {flightResultCountLabel(sorted.length)}
                 </Text>
               ) : null}
-            </View>
+              <View style={s0.flightCardItem}>
+                <FlightCard
+                  result={item}
+                  displayPrice={flightDisplayPrices.get(item.id)}
+                  displayCurrencyContext={currencyState?.resolution}
+                  highlight={flightHighlights.get(item.id)}
+                  params={params}
+                  saved={savedFlights.has(item.id)}
+                  onToggleSaved={() => toggleSavedFlight(item, params)}
+                  logInitialMount={index === 0}
+                />
+              </View>
+            </>
           )}
           ListEmptyComponent={<View style={[s0.body, s0.flightResultsBody]}>{resultContent}</View>}
           ListFooterComponent={!flightState && sorted.length ? <View style={[s0.body, s0.flightResultsBody]}>{resultContent}</View> : null}

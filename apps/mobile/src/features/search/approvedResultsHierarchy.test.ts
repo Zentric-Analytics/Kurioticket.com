@@ -9,24 +9,23 @@ const resultsBody = source.slice(
   source.indexOf("const stopLabels"),
 );
 
-test("ready flight results place persistent controls before the scrolling date, alert, count, and cards", () => {
-  const controls = source.slice(source.indexOf('{product === "flight" && status === "ready"'), source.indexOf("<SectionList"));
+test("ready flight results use the date-first native sticky hierarchy", () => {
   const sectionList = source.slice(source.indexOf("<SectionList"), source.indexOf(") : (", source.indexOf("<SectionList")));
-  const renderItem = sectionList.slice(sectionList.indexOf("renderItem="), sectionList.indexOf("ListHeaderComponent="));
-  const listHeader = sectionList.slice(sectionList.indexOf("ListHeaderComponent="), sectionList.indexOf("ListEmptyComponent="));
+  const listHeader = sectionList.slice(sectionList.indexOf("ListHeaderComponent="), sectionList.indexOf("renderSectionHeader="));
+  const sectionHeader = sectionList.slice(sectionList.indexOf("renderSectionHeader="), sectionList.indexOf("renderItem="));
+  const renderItem = sectionList.slice(sectionList.indexOf("renderItem="), sectionList.indexOf("ListEmptyComponent="));
 
-  assert.match(controls, /filterRail : null/);
-  assert.ok(listHeader.indexOf("{dateStrip}") < listHeader.indexOf("<PriceAlert"));
-  assert.ok(listHeader.indexOf("<PriceAlert") < listHeader.indexOf("flightResultCountLabel(sorted.length)"));
-  assert.match(listHeader, /status === "ready" && !flightState && plan\.plan/);
-  assert.match(renderItem, /<FlightCard/);
-  assert.doesNotMatch(renderItem, /PriceAlert|filterRail|flightResultCountLabel/);
-  assert.doesNotMatch(listHeader, /filterRail/);
-  assert.doesNotMatch(sectionList, /renderSectionHeader|stickySectionHeadersEnabled/);
+  assert.match(listHeader, /ListHeaderComponent=\{<View>\{dateStrip\}<\/View>\}/);
+  assert.match(sectionHeader, /renderSectionHeader=\{\(\) => filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
+  assert.ok(sectionList.indexOf("{dateStrip}") < sectionList.indexOf("renderSectionHeader"));
+  assert.ok(sectionList.indexOf("renderSectionHeader") < sectionList.indexOf("<PriceAlert"));
+  assert.ok(renderItem.indexOf("<PriceAlert") < renderItem.indexOf("flightResultCountLabel(sorted.length)"));
+  assert.ok(renderItem.indexOf("flightResultCountLabel(sorted.length)") < renderItem.indexOf("<FlightCard"));
+  assert.match(renderItem, /index === 0 && status === "ready" && !flightState && plan\.plan/);
   assert.match(sectionList, /sections=\{\[\{ data: !flightState \? sorted as FlightResult\[\] : \[\] \}\]\}/);
-  assert.doesNotMatch(sectionList, /data:.*PriceAlert|keyExtractor=.*PriceAlert/);
+  assert.doesNotMatch(sectionList, /data:.*(?:PriceAlert|filterRail|flightResultCountLabel)|keyExtractor=.*PriceAlert/);
   assert.equal(sectionList.match(/<PriceAlert/g)?.length, 1);
-  assert.equal(source.slice(source.indexOf("export function ApprovedResultsScreen"), source.indexOf("function FlightResultsHeader")).match(/filterRail : null/g)?.length, 1);
+  assert.equal(sectionList.match(/renderSectionHeader=\{\(\) => filterRail\}/g)?.length, 1);
   assert.equal(sectionList.match(/flightResultCountLabel\(sorted\.length\)/g)?.length, 1);
 });
 
@@ -90,7 +89,7 @@ test("the flight alert uses semantic light and dark theme values", () => {
 });
 
 test("flight price-alert eligibility is route-level while the count stays filter-aware", () => {
-  assert.match(source, /ListHeaderComponent={[\s\S]*?status === "ready" && !flightState && plan\.plan[\s\S]*?<PriceAlert/);
+  assert.match(source, /renderItem={[\s\S]*?status === "ready" && !flightState && plan\.plan[\s\S]*?<PriceAlert/);
   assert.doesNotMatch(source, /sorted\.length > 0 && availability\.priceAlerts/);
   assert.match(source, /flightResultCountLabel\(sorted\.length\)/);
 });
