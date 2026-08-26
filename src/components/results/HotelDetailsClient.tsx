@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import type { SavedHotelSnapshot } from "@/components/results/hotelSavedStorage";
 import { useSavedHotel } from "@/components/results/useSavedHotel";
@@ -8,7 +10,6 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { Card } from "@/components/ui/Card";
-import { DetailsBackLink } from "@/components/results/DetailsBackLink";
 import type { PublicHotelPropertyDetails, PublicHotelResult } from "@/lib/types";
 import type { HotelRoomOption } from "@/lib/hotels/hotelRoomOptions";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
@@ -819,13 +820,20 @@ export function HotelDetailsClient({
     });
 
     return (
-      <main className="flex-1 bg-[#f8fafc]">
-        <section className="border-b border-slate-200/70 py-2 sm:py-2 lg:py-2">
+      <main className="flex-1 bg-white sm:bg-[#f8fafc]">
+        <section className="py-2 lg:py-2">
           <div className="mx-auto w-full max-w-[1400px] px-0 lg:px-7" data-hotel-details-page-shell>
             <div className="px-4 lg:px-0">
-              <DetailsBackLink href={resultsHref}>{t("hotelDetails.backToHotelResults") || "Back to hotel results"}</DetailsBackLink>
+              <Link
+                href={resultsHref}
+                className="mb-3 inline-flex min-h-10 items-center gap-2 text-[13px] font-semibold text-[#075EE8] hover:text-[#004BB8] focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35"
+                data-standalone-hotel-back-link
+              >
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                {t("hotelDetails.backToHotelResults") || "Back to hotel results"}
+              </Link>
             </div>
-            <div className="mt-3">
+            <div>
               <StandaloneHotelDetails
                 hotelName={hotel.name}
                 starRating={starRating}

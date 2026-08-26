@@ -12,7 +12,7 @@ test("renders a factual responsive hotel location card", () => {
     "buildHotelMapEmbedUrl({",
     "buildGoogleHotelStreetViewEmbedUrl({",
     "NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY",
-    "buildHotelDirectionsUrl(propertyDetails)",
+    "buildHotelDirectionsUrl({ hotelName, propertyDetails })",
     "data-hotel-location-section",
     'id="hotel-location"',
     "scroll-mt-20",

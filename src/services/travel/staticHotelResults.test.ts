@@ -45,6 +45,14 @@ test("static hotel catalogue is authoritative and destination relevant", () => {
   );
 });
 
+test("citizenM Paris Gare de Lyon has its complete corrected street address", () => {
+  const citizenM = getStaticHotelById("citizenm-paris-gare-de-lyon");
+  assert.ok(citizenM);
+  assert.equal(citizenM.location, "8 Rue van Gogh, 75012 Paris");
+  assert.equal(citizenM.city, "Paris");
+  assert.equal(citizenM.country, "France");
+});
+
 test("decorated supported destinations resolve only to their catalogue city", () => {
   for (const [destination, city] of [
     ["London, United Kingdom", "London"],

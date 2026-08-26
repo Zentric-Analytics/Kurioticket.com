@@ -134,22 +134,25 @@ test("mobile property header renders the canonical identity in the approved orde
     'className="hidden lg:inline"',
     "data-mobile-hotel-address-row",
     "buildHotelAddress(props.propertyDetails)",
-    "buildHotelDirectionsUrl(props.propertyDetails)",
+    "buildHotelDirectionsUrl({",
+    "hotelName: props.hotelName",
+    "propertyDetails: props.propertyDetails",
     "href={directionsUrl}",
     'target="_blank"',
     'rel="noopener noreferrer"',
     "aria-label={`Show directions to ${props.hotelName}`}",
-    "min-w-0 flex-1 truncate",
+    "min-w-0 break-words",
     "title={canonicalAddress}",
     "data-mobile-property-metadata",
-    "grid-cols-[auto_minmax(0,1fr)_auto]",
+    "grid-cols-[1rem_minmax(0,1fr)_auto]",
     "data-mobile-hotel-address-icon",
     "data-mobile-hotel-classification-icon",
     "<MapPin",
-    "<Star",
+    "<Award",
     "aria-label={props.starRatingAriaLabel}",
   ])
     assert.ok(source.includes(contract), contract);
+  assert.doesNotMatch(header, /<Star\b|min-w-0 flex-1 truncate/);
   assert.ok(
     source.indexOf("{props.hotelName}") <
       source.indexOf("data-mobile-hotel-stay-dates"),
@@ -178,12 +181,30 @@ test("mobile save and share are independent unboxed 44px actions", () => {
   );
   assert.equal(actions.match(/<button/g)?.length, 2);
   assert.match(actions, /size-11/);
+  assert.equal(actions.match(/size-11/g)?.length, 2);
+  assert.match(actions, /justify-end/);
+  assert.match(actions, /justify-start/);
+  assert.match(actions, /h-5 w-5/);
   assert.match(actions, /border-0 bg-transparent/);
   assert.match(actions, /aria-pressed=\{props\.isSaved\}/);
   assert.doesNotMatch(
     actions.match(/data-property-header-actions[\s\S]*?>/)?.[0] ?? "",
     /border|bg-white|shadow/,
   );
+});
+
+test("standalone hotel navigation locally matches the Flight-style mobile treatment", () => {
+  const standalone = clientSource.slice(
+    clientSource.indexOf('if (mode === "standalone")'),
+    clientSource.indexOf("<StandaloneHotelDetails"),
+  );
+  assert.match(standalone, /data-standalone-hotel-back-link/);
+  assert.match(standalone, /text-\[#075EE8\]/);
+  assert.match(standalone, /<ArrowLeft className="h-4 w-4"/);
+  assert.match(standalone, /min-h-10 items-center gap-2 text-\[13px\] font-semibold/);
+  assert.doesNotMatch(standalone, /<DetailsBackLink/);
+  assert.match(standalone, /bg-white sm:bg-\[#f8fafc\]/);
+  assert.doesNotMatch(standalone, /border-b border-slate/);
 });
 
 test("review and rate modules remain truthful and do not manufacture blueprint claims", () => {
