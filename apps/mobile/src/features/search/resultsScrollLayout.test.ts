@@ -14,13 +14,13 @@ function styleBlock(name: string, nextName: string) {
   return screen.slice(screen.indexOf(`${name}:`), screen.indexOf(`${nextName}:`, screen.indexOf(`${name}:`)));
 }
 
-test("flight results use one native sticky header for dates and controls", () => {
+test("flight results use native sticky controls after the scrolling date", () => {
+  const listHeader = flightLayout.slice(flightLayout.indexOf("ListHeaderComponent="), flightLayout.indexOf("renderSectionHeader="));
   const sectionHeader = flightLayout.slice(flightLayout.indexOf("renderSectionHeader="), flightLayout.indexOf("renderItem="));
   const renderItem = flightLayout.slice(flightLayout.indexOf("renderItem="), flightLayout.indexOf("ListEmptyComponent="));
-  assert.match(sectionHeader, /renderSectionHeader=\{\(\) => \([\s\S]*?\{dateStrip\}[\s\S]*?\{filterRail\}[\s\S]*?\)\}[\s\S]*?stickySectionHeadersEnabled/);
-  assert.match(sectionHeader, /backgroundColor: theme\.background/);
-  assert.doesNotMatch(sectionHeader, /PriceAlert|flightResultCountLabel|FlightCard/);
-  assert.doesNotMatch(flightLayout, /ListHeaderComponent=/);
+  assert.match(listHeader, /\{dateStrip\}/);
+  assert.doesNotMatch(listHeader, /PriceAlert|filterRail|flightResultCountLabel/);
+  assert.match(sectionHeader, /renderSectionHeader=\{\(\) => filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
   assert.match(renderItem, /<PriceAlert[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?<FlightCard/);
   assert.doesNotMatch(flightLayout, /onScroll=|scrollEventThrottle=|Animated\.|stickyHeaderIndices|manualSticky|stickyFilterState/);
   assert.doesNotMatch(screen, /dateHeaderCollapsed|dateHeaderProgress|Animated\.timing\(dateHeaderProgress/);

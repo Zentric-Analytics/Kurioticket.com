@@ -9,6 +9,7 @@ const sectionList = source.slice(
   source.indexOf("<SectionList"),
   source.indexOf(") : (", source.indexOf("<SectionList")),
 );
+const listHeader = sectionList.slice(sectionList.indexOf("ListHeaderComponent="), sectionList.indexOf("renderSectionHeader="));
 const sectionHeader = sectionList.slice(sectionList.indexOf("renderSectionHeader="), sectionList.indexOf("renderItem="));
 const renderItem = sectionList.slice(sectionList.indexOf("renderItem="), sectionList.indexOf("ListEmptyComponent="));
 
@@ -33,10 +34,10 @@ test("flight summary copy is removed while the hotel summary stays intact", () =
 });
 
 test("count follows the price alert and directly precedes rendered cards", () => {
-  assert.match(sectionHeader, /renderSectionHeader=\{\(\) => \([\s\S]*?\{dateStrip\}[\s\S]*?\{filterRail\}/);
+  assert.match(listHeader, /\{dateStrip\}/);
+  assert.match(sectionHeader, /renderSectionHeader=\{\(\) => filterRail\}/);
   assert.match(renderItem, /<PriceAlert[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?<FlightCard/);
-  assert.doesNotMatch(sectionList, /ListHeaderComponent=/);
-  assert.doesNotMatch(sectionHeader, /PriceAlert|flightResultCountLabel|FlightCard/);
+  assert.doesNotMatch(listHeader, /PriceAlert|flightResultCountLabel|filterRail/);
   assert.doesNotMatch(renderItem, /filterRail/);
   assert.equal(sectionList.match(/flightResultCountLabel\(sorted\.length\)/g)?.length, 1);
   assert.doesNotMatch(sectionList, /["'`]\d+ Results found/);
