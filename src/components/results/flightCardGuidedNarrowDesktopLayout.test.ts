@@ -83,6 +83,8 @@ test("phone and tablet lower card is a two-column decision area", () => {
   const bodyRule = ruleBody(mobileRules, ".flight-card-body");
   assert.match(bodyRule, /grid-template-areas:\s*"legs legs" "details fare"/);
   assert.match(bodyRule, /minmax\(0, 1\.2fr\) minmax\(120px, 0\.8fr\)/);
+  assert.match(bodyRule, /column-gap:\s*0/);
+  assert.match(bodyRule, /row-gap:\s*0\.75rem/);
 
   const detailsRule = ruleBody(mobileRules, ".flight-card-details");
   assert.match(detailsRule, /grid-template-columns:\s*minmax\(0, 1fr\)/);
@@ -93,6 +95,8 @@ test("phone and tablet lower card is a two-column decision area", () => {
   const fareRule = ruleBody(mobileRules, ".flight-card-fare-action");
   assert.match(fareRule, /align-items:\s*center/);
   assert.match(fareRule, /text-align:\s*center/);
+  assert.match(fareRule, /border-top:\s*1px solid #d8e1ec/);
+  assert.match(detailsRule, /border-top:\s*1px solid #d8e1ec/);
   assert.match(
     ruleBody(mobileRules, ".flight-card-price-frame"),
     /align-items:\s*center/,
@@ -104,6 +108,15 @@ test("phone and tablet lower card is a two-column decision area", () => {
     ),
     /display:\s*flex[\s\S]*align-items:\s*center[\s\S]*text-align:\s*center/,
   );
+
+  const extraNarrowRules = globalsCss.slice(
+    globalsCss.indexOf("@media (max-width: 359px)"),
+    globalsCss.indexOf(".flight-results-grid", globalsCss.indexOf("@media (max-width: 359px)")),
+  );
+  assert.match(
+    ruleBody(extraNarrowRules, ".flight-card-body"),
+    /column-gap:\s*0/,
+  );
 });
 
 test("price, provider label, and View Flight retain their semantic order", () => {
@@ -114,6 +127,23 @@ test("price, provider label, and View Flight retain their semantic order", () =>
   const button = action.indexOf("{viewFlightLabel}");
   assert.ok(price >= 0 && price < label && label < button);
   assert.match(action, /min-h-11/);
+  const priceRule = ruleBody(
+    globalsCss,
+    '.flight-card-price-value.flight-card-price[data-price-size="normal"]',
+  );
+  assert.match(priceRule, /font-size:\s*1\.25rem/);
+  assert.match(
+    ruleBody(globalsCss, ".flight-card-price-value.flight-card-price"),
+    /white-space:\s*nowrap/,
+  );
+  assert.match(
+    globalsCss,
+    /flight-card-price-value\.flight-card-price\[data-price-size="large"\]/,
+  );
+  assert.match(
+    globalsCss,
+    /flight-card-price-value\.flight-card-price\[data-price-size="compact"\]/,
+  );
   assert.doesNotMatch(flightCardSource, /showProviderHandoffCopy|flightCardProviderHandoff|flight-card-handoff/);
 });
 
@@ -123,10 +153,13 @@ test("all three detail lines share the left-side details region", () => {
   assert.match(ruleBody(globalsCss, ".flight-card-details"), /grid-area:\s*details/);
 });
 
-test("result-card fare rules use specific provider copy before the generic fallback", () => {
-  assert.match(flightCardSource, /providerRule \|\|[\s\S]*refundInfo[\s\S]*t\("flightResultReviewBooking"\)/);
-  assert.match(flightCardSource, /term\.category === "refund" \|\| term\.category === "fare"/);
-  assert.doesNotMatch(flightCardSource, /value: t\("reviewBeforeBooking"\)/);
+test("result-card fare rule stays concise and leaves provider terms to details", () => {
+  assert.match(
+    flightCardSource,
+    /label: t\("fareRules"\),\s*value: t\("checkProvider"\)/,
+  );
+  assert.doesNotMatch(flightCardSource, /flight\.fareTerms|flight\.refundInfo/);
+  assert.doesNotMatch(flightCardSource, /getFlightResultFareRule/);
 });
 
 test("FlightCard retains fare pricing inputs and LinkButton behavior", () => {
