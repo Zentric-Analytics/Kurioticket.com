@@ -544,8 +544,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           style={[s0.resultsScroll, { backgroundColor: theme.background }]}
           sections={[{ data: !flightState ? sorted as FlightResult[] : [] }]}
           keyExtractor={(item) => item.id}
-          ListHeaderComponent={<View>{dateStrip}</View>}
-          renderSectionHeader={() => filterRail}
+          renderSectionHeader={() => (
+            <View style={[s0.flightStickySearchControls, { backgroundColor: theme.background }]}>
+              {dateStrip}
+              {filterRail}
+            </View>
+          )}
           stickySectionHeadersEnabled
           renderItem={({ item, index }) => (
             <>
@@ -1275,6 +1279,7 @@ const s0 = StyleSheet.create({
     justifyContent: "center",
   },
   flightHeaderEditText: { fontSize: 13, lineHeight: 18, fontWeight: "700" },
+  flightStickySearchControls: {},
   filterRail: { height: 44, flexGrow: 0 },
   resultsScroll: { flex: 1 },
   flightResultsContent: { flexGrow: 1 },

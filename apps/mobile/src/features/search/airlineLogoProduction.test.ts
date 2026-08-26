@@ -36,9 +36,9 @@ test("normal SVG and raster logos retain their native render paths and fallback"
 test("Flight Result structure and SectionList controls remain intact", () => {
   assert.match(screen, /function FlightCard/);
   assert.match(screen, /<SectionList/);
-  assert.match(screen, /renderSectionHeader=\{\(\) => filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
+  assert.match(screen, /renderSectionHeader=\{\(\) => \([\s\S]*?\{dateStrip\}[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
   assert.match(screen, /<PriceAlert/);
   assert.match(screen, /<FlightSortModal/);
   assert.match(screen, /<FlightFilterSheet/);
-  assert.match(screen, /ListHeaderComponent=\{<View>\{dateStrip\}<\/View>\}[\s\S]*?renderSectionHeader=\{\(\) => filterRail\}[\s\S]*?<PriceAlert[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?<FlightCard/);
+  assert.match(screen, /renderSectionHeader=\{\(\) => \([\s\S]*?\{dateStrip\}[\s\S]*?\{filterRail\}[\s\S]*?<PriceAlert[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?<FlightCard/);
 });
