@@ -15,7 +15,7 @@ test("renders a factual responsive hotel location card", () => {
     "buildHotelDirectionsUrl({ hotelName, propertyDetails })",
     "data-hotel-location-section",
     'id="hotel-location"',
-    "scroll-mt-20",
+    "scroll-mt-16",
     "Map showing the location of ${hotelName}",
     "Street View near ${hotelName}",
     "aria-pressed={active}",
@@ -35,6 +35,11 @@ test("keeps external directions distinct from the stable in-page location anchor
   assert.match(source, /id="hotel-location"/);
   assert.match(source, /href=\{directionsUrl\}/);
   assert.match(source, /target="_blank"/);
+});
+test("keeps location-fit and accessibility details visibly expanded", () => {
+  assert.match(source, /stayFitFacts\.map/);
+  assert.match(source, /Accessibility and location details/);
+  assert.doesNotMatch(source, /stayFitFacts\.slice|<details|<summary/);
 });
 test("keys the iframe to stable property coordinates", () => {
   assert.match(
