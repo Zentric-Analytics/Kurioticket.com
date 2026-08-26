@@ -19,12 +19,14 @@ import { useEffect, useState } from "react";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
 import { useAppTheme } from "../../theme/AppTheme";
 import {
+  deriveNearbyDateSuggestion,
   getDateWindow,
   initialDateWindowStart,
   parseCalendarDate,
   shiftCalendarDate,
   type DateStripPrice,
 } from "./dateStripModel";
+import { currencyAccessibilityLabel, formatCurrency } from "../currency/displayCurrency";
 
 export const ui = {
   blue: "#0754F7",
@@ -202,12 +204,16 @@ export function DateStrip({
   priceByDate,
   currency = "USD",
   flightResults = false,
+  nearbyIntelligence = false,
+  displayCurrency,
   onSelect,
 }: {
   date: string;
   priceByDate: Record<string, DateStripPrice>;
   currency?: string;
   flightResults?: boolean;
+  nearbyIntelligence?: boolean;
+  displayCurrency?: string;
   onSelect: (v: string) => void;
 }) {
   const { theme } = useAppTheme();
@@ -223,10 +229,14 @@ export function DateStrip({
   }, [date]);
 
   const visibleDates = getDateWindow(visibleStart);
+  const nearbySuggestion = nearbyIntelligence
+    ? deriveNearbyDateSuggestion(date, visibleDates, priceByDate)
+    : null;
   const moveWindow = (days: number) =>
     setVisibleStart((current) => shiftCalendarDate(current, days));
 
   return (
+    <>
     <View style={[s.dateNavigator, flightResults && s.flightDateNavigator]}>
       {!flightResults ? (
         <Pressable
@@ -305,6 +315,7 @@ export function DateStrip({
                     flightResults && s.flightDatePrice,
                     flightResults && { color: theme.textPrimary },
                     active && { color: theme.dark ? "#8FB5FF" : ui.blue },
+                    flightResults && nearbySuggestion?.date === iso && !active && { color: ui.green },
                   ]}
                 >
                   {hasPrice
@@ -327,6 +338,20 @@ export function DateStrip({
         </Pressable>
       ) : null}
     </View>
+    {nearbySuggestion && displayCurrency ? (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Cheaper nearby date, ${parseCalendarDate(nearbySuggestion.date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}, save ${currencyAccessibilityLabel(nearbySuggestion.savings, displayCurrency)}`}
+        onPress={() => onSelect(nearbySuggestion.date)}
+        hitSlop={6}
+        style={({ pressed }) => [s.nearbyDateInsight, pressed && s.datePressed]}
+      >
+        <Text numberOfLines={1} ellipsizeMode="tail" style={[s.nearbyDateInsightText, { color: theme.textSecondary }]}>
+          {`Cheaper nearby: ${parseCalendarDate(nearbySuggestion.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })} · Save ${formatCurrency(nearbySuggestion.savings, displayCurrency)}`}
+        </Text>
+      </Pressable>
+    ) : null}
+    </>
   );
 }
 export function Button({
@@ -470,6 +495,8 @@ export const s = StyleSheet.create({
   dateRail: { height: 80, flex: 1 },
   dates: { gap: 9, alignItems: "center" },
   flightDateNavigator: { height: 72, paddingHorizontal: 0 },
+  nearbyDateInsight: { minHeight: 36, justifyContent: "center", paddingHorizontal: 14, marginTop: -4 },
+  nearbyDateInsightText: { minWidth: 0, flexShrink: 1, fontSize: 12, lineHeight: 16, fontWeight: "600" },
   flightDateRail: { height: 72 },
   flightDates: { paddingHorizontal: 16, paddingVertical: 7 },
   arrow: {
