@@ -69,7 +69,7 @@ test("slow flight diagnostics measure processing and event-loop responsiveness",
 test("flight results virtualize cards and own exactly one saved-flight subscription", () => {
   const card = screen.slice(screen.indexOf("function FlightCard"), screen.indexOf("function FlightJourneyRow"));
   assert.match(screen, /<SectionList/);
-  assert.match(screen, /renderSectionHeader=\{\(\) => filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
+  assert.match(screen, /renderSectionHeader=\{\(\) => \([\s\S]*?\{dateStrip\}[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
   assert.match(screen, /initialNumToRender=\{6\}/);
   assert.doesNotMatch(screen, /sorted\.map\(\(x, i\) =>\s*product === "flight"/);
   assert.equal((screen.match(/useSavedFlights\(\)/g) || []).length, 1);
