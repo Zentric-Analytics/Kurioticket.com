@@ -21,5 +21,18 @@ export function summarizeBaggage(baggageInfo?: string) {
   if (carryOn && checked && !excluded) return "Carry-on + checked bag";
   if (carryOn && !excluded) return "Carry-on included";
   if (checked && !excluded) return "Checked bag included";
+  if (excluded) return "Not included";
   return null;
+}
+
+export function formatCabinClass(cabinClass?: string) {
+  const value = cabinClass?.trim();
+  if (!value) return "Review fare";
+
+  return value
+    .replace(/[_-]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1).toLowerCase()}`)
+    .join(" ");
 }

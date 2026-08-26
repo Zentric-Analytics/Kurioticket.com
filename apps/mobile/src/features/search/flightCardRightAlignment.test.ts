@@ -26,7 +26,7 @@ test("arrival and price terminate on the shared right edge", () => {
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch"/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.doesNotMatch(source, /priceBox:/);
-  assert.match(source, /benefits: \{[\s\S]*?flexDirection: "row"/);
+  assert.match(source, /fareRow: \{ paddingTop: 2, flexDirection: "row", justifyContent: "flex-end" \}/);
   assert.match(source, /actionColumn: \{ width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 3 \}/);
   assert.doesNotMatch(card, /marginRight/);
   const actionColumnStyle = /actionColumn: \{([^}]*)\}/.exec(source)?.[1] ?? "";
@@ -34,7 +34,7 @@ test("arrival and price terminate on the shared right edge", () => {
 });
 
 test("journeys follow the compact identity row at the full card content width", () => {
-  const flightMain = card.slice(card.indexOf('<View style={s0.flightMain}>'), card.indexOf('<View style={s0.benefits}>'));
+  const flightMain = card.slice(card.indexOf('<View style={s0.flightMain}>'), card.indexOf('<View style={s0.fareRow}>'));
   const identityStart = flightMain.indexOf('<View style={s0.flightIdentityLayout}>');
   const journeyStart = flightMain.indexOf('<View style={s0.journeyList}>');
   const identityLayout = flightMain.slice(identityStart, journeyStart);
@@ -68,12 +68,13 @@ test("long fares stay readable without changing details navigation or theme beha
 
 test("the compact shared action column contains the only displayed fare", () => {
   const actionColumn = /<View style=\{\[s0\.actionColumn, s0\.rightColumnContract\]\}>([\s\S]*?)<\/View>/.exec(card)?.[1] ?? "";
-  const benefits = /<View style=\{s0\.benefits\}>([\s\S]*?)\n      <\/View>\n    <\/View>/.exec(card)?.[1] ?? "";
+  const fareRow = card.slice(card.indexOf('<View style={s0.fareRow}>'), card.indexOf('<View style={s0.metadataRow}>'));
 
   assert.equal(card.match(/\{fare\?\.formatted \?\? "—"\}/g)?.length, 1);
   assert.match(actionColumn, /\{fare\?\.formatted \?\? "—"\}/);
   assert.match(actionColumn, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.8\}/);
-  assert.match(benefits, /style=\{s0\.benefitList\}[\s\S]*?baggageBenefit[\s\S]*?fareBenefit[\s\S]*?style=\{\[s0\.actionColumn/);
+  assert.match(fareRow, /style=\{\[s0\.actionColumn, s0\.rightColumnContract\]\}/);
+  assert.doesNotMatch(fareRow, /baggageSummary|fareRulesSummary|metadataItem/);
   assert.doesNotMatch(actionColumn, /Pressable|View details/);
   assert.match(card, /pathname: "\/flight-details"/);
   assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);

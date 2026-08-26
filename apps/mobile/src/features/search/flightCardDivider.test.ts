@@ -5,13 +5,13 @@ import test from "node:test";
 
 const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
 const flightCard = source.slice(source.indexOf("function FlightCard"), source.indexOf("function FlightJourneyRow"));
-const benefitsStyle = source.slice(source.indexOf("  benefits: {"), source.indexOf("  benefitList:"));
+const footerStyles = source.slice(source.indexOf("  fareRow:"), source.indexOf("  hotelCard:"));
 
 test("the flight card summary and action area has spacing without a divider", () => {
-  assert.match(flightCard, /<View style=\{s0\.benefits\}>/);
+  assert.match(flightCard, /<View style=\{s0\.fareRow\}>[\s\S]*<View style=\{s0\.metadataRow\}>/);
   assert.doesNotMatch(flightCard, /borderTopColor|borderBottomColor|divider|separator|hairlineWidth/i);
-  assert.doesNotMatch(benefitsStyle, /borderTopWidth|borderBottomWidth|borderColor/);
-  assert.match(benefitsStyle, /paddingTop: 2/);
+  assert.doesNotMatch(footerStyles, /borderTopWidth|borderBottomWidth|borderColor/);
+  assert.match(footerStyles, /fareRow: \{ paddingTop: 2/);
 });
 
 test("flight details navigation is wired to the complete card", () => {
@@ -33,5 +33,5 @@ test("the flight card retains its light and dark mode theming", () => {
   assert.match(flightCard, /theme\.dark && \{ backgroundColor:/);
   assert.match(flightCard, /color: theme\.textPrimary/);
   assert.match(flightCard, /color: theme\.textSecondary/);
-  assert.match(flightCard, /color=\{theme\.icon\}/);
+  assert.match(flightCard, /color=\{theme\.textSecondary\}/);
 });
