@@ -1,27 +1,39 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { defaultEmailPreferences, isDefaultEmailPreferences, isMasterUnsubscribeChecked, toggleEmailCategory, toggleMasterUnsubscribe } from "./emailPreferencesModel";
+import { areAllEmailCategoriesEnabled, defaultEmailPreferences, normalizeLoadedEmailPreferences, toggleAllEmailCategories, toggleEmailCategory } from "./emailPreferencesModel";
 
-test("master unsubscribe is inverse and preserves category choices", () => {
-  const selected = { ...defaultEmailPreferences, receiveOptionalEmails: true, travelInspiration: true, dealsRecommendations: true };
-  const unsubscribed = toggleMasterUnsubscribe(selected, true);
-  assert.equal(isMasterUnsubscribeChecked(unsubscribed), true);
-  assert.deepEqual(unsubscribed, { ...selected, receiveOptionalEmails: false });
-  assert.deepEqual(toggleMasterUnsubscribe(unsubscribed, false), selected);
+const partial = { ...defaultEmailPreferences, receiveOptionalEmails: true, priceAlerts: true, travelInspiration: true };
+
+test("legacy unsubscribed state normalizes visible categories off without resubscribing", () => {
+  const legacy = { receiveOptionalEmails: false, priceAlerts: true, travelInspiration: true, productUpdates: true, dealsRecommendations: true };
+  assert.deepEqual(normalizeLoadedEmailPreferences(legacy), defaultEmailPreferences);
 });
 
-test("category switches stay deterministic while globally unsubscribed", () => {
-  const unsubscribed = { ...defaultEmailPreferences, travelInspiration: true, dealsRecommendations: true };
-  assert.deepEqual(toggleEmailCategory(unsubscribed, "priceAlerts", true), {
-    ...unsubscribed, receiveOptionalEmails: true, priceAlerts: true,
-  });
-  assert.deepEqual(toggleEmailCategory(unsubscribed, "travelInspiration", false), {
-    ...unsubscribed, travelInspiration: false,
-  });
+test("enabled loaded preferences keep their category choices", () => {
+  assert.deepEqual(normalizeLoadedEmailPreferences(partial), partial);
 });
 
-test("default equality covers the complete preference payload", () => {
-  assert.equal(isDefaultEmailPreferences(defaultEmailPreferences), true);
-  assert.equal(isDefaultEmailPreferences({ ...defaultEmailPreferences, productUpdates: true }), false);
+test("master is checked only when optional email delivery and every category are enabled", () => {
+  assert.equal(areAllEmailCategoriesEnabled(defaultEmailPreferences), false);
+  assert.equal(areAllEmailCategoriesEnabled(partial), false);
+  assert.equal(areAllEmailCategoriesEnabled({ ...toggleAllEmailCategories(partial, true), receiveOptionalEmails: false }), false);
+  assert.equal(areAllEmailCategoriesEnabled(toggleAllEmailCategories(partial, true)), true);
+});
+
+test("master toggle sets every category and the server master flag", () => {
+  assert.deepEqual(toggleAllEmailCategories(partial, false), defaultEmailPreferences);
+  assert.deepEqual(toggleAllEmailCategories(defaultEmailPreferences, true), { receiveOptionalEmails: true, priceAlerts: true, travelInspiration: true, productUpdates: true, dealsRecommendations: true });
+});
+
+test("category ON preserves peers and enables the server master flag", () => {
+  assert.deepEqual(toggleEmailCategory(defaultEmailPreferences, "priceAlerts", true), { ...defaultEmailPreferences, receiveOptionalEmails: true, priceAlerts: true });
+});
+
+test("category OFF preserves peers and derives the server master flag", () => {
+  assert.deepEqual(toggleEmailCategory(partial, "priceAlerts", false), { ...partial, priceAlerts: false, receiveOptionalEmails: true });
+  assert.deepEqual(toggleEmailCategory({ ...defaultEmailPreferences, receiveOptionalEmails: true, priceAlerts: true }, "priceAlerts", false), defaultEmailPreferences);
+});
+
+test("default object is the complete canonical API payload", () => {
   assert.deepEqual(Object.keys(defaultEmailPreferences), ["receiveOptionalEmails", "priceAlerts", "travelInspiration", "productUpdates", "dealsRecommendations"]);
 });
