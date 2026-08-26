@@ -265,7 +265,7 @@ export function HotelDetailsGallery({
             type="button"
             aria-label={previousPhotoLabel}
             onClick={onPrevious}
-            className="focus-ring absolute left-1 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg bg-transparent text-white drop-shadow-[0_1px_2px_rgba(15,23,42,0.8)]"
+            className="focus-ring absolute left-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-start rounded-lg bg-transparent ps-2 text-white drop-shadow-[0_1px_2px_rgba(15,23,42,0.8)]"
           >
             <ChevronLeft className="h-5 w-5" aria-hidden="true" />
           </button>
@@ -273,7 +273,7 @@ export function HotelDetailsGallery({
             type="button"
             aria-label={nextPhotoLabel}
             onClick={onNext}
-            className="focus-ring absolute right-1 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg bg-transparent text-white drop-shadow-[0_1px_2px_rgba(15,23,42,0.8)]"
+            className="focus-ring absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-end rounded-lg bg-transparent pe-2 text-white drop-shadow-[0_1px_2px_rgba(15,23,42,0.8)]"
           >
             <ChevronRight className="h-5 w-5" aria-hidden="true" />
           </button>
