@@ -377,11 +377,10 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
 
             <HotelPriceComparisonSection
               stayContext={props.staySummary ? `${props.staySummary.dateText} · ${props.staySummary.occupancyText}` : undefined}
-              stayFacts={props.staySummary ? [`${props.staySummary.dateText} · ${props.staySummary.nightText}`, props.staySummary.occupancyText] : []}
               totalPrice={props.totalDisplayPrice}
               nightlyPrice={props.nightlyDisplayPrice}
               perNightText={props.perNightText}
-              viewRoomsText={props.labels.viewRooms}
+              viewRoomRatesText="View room rates"
               roomOptionsAvailable={props.roomChoices.length > 0}
               onViewRoomOptions={openRoomOptions}
               offers={[]}
