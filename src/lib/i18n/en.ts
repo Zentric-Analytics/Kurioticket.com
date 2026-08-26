@@ -3253,7 +3253,7 @@ export const translations: TranslationDictionary = {
   baggage: "Baggage",
   cabin: "Cabin",
   seatSelection: "Seat selection",
-  fareRules: "Fare rules",
+  fareRules: "Fare rule",
   providerRulesApply: "Provider rules apply",
   reviewBeforeBooking: "Review before booking",
   flightResultReviewBooking: "Review booking",
