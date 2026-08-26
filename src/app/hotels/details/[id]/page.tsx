@@ -45,16 +45,23 @@ export default async function HotelDetailsPage({
 
   return (
     <>
-      <AppHeader
-        flushDesktopBottom
-        flushMobileBottom
-        hideDesktopTravelNav
-        hideMobileCategoryTabs
-      />
-      <HotelDetailsClient
-        id={id}
-        searchContext={searchContext}
-      />
+      <div className="hidden lg:block" data-hotel-details-desktop-header>
+        <AppHeader
+          flushDesktopBottom
+          flushMobileBottom
+          hideDesktopTravelNav
+          hideMobileCategoryTabs
+        />
+      </div>
+      <div
+        className="pt-[env(safe-area-inset-top)] lg:pt-0"
+        data-hotel-details-mobile-safe-area
+      >
+        <HotelDetailsClient
+          id={id}
+          searchContext={searchContext}
+        />
+      </div>
     </>
   );
 }

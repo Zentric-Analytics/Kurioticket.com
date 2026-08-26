@@ -33,8 +33,25 @@ test("mobile hotel loading geometry matches the loaded property shell", () => {
 });
 
 test("the destination route owns the branded first loading paint", () => {
-  assert.match(routeLoadingSource, /<AppHeader/);
+  assert.match(
+    routeLoadingSource,
+    /<div className="hidden lg:block" data-hotel-details-desktop-header>[\s\S]*?<AppHeader/,
+  );
   assert.match(routeLoadingSource, /hideDesktopTravelNav/);
   assert.match(routeLoadingSource, /hideMobileCategoryTabs/);
+  assert.match(
+    routeLoadingSource,
+    /pt-\[env\(safe-area-inset-top\)\] lg:pt-0/,
+  );
   assert.match(routeLoadingSource, /<HotelDetailsLoadingState/);
+});
+
+test("the unavailable route keeps results navigation ahead of its content", () => {
+  const unavailable = source.slice(
+    source.indexOf("export function HotelDetailsUnavailableState"),
+  );
+  assert.ok(
+    unavailable.indexOf("<DetailsBackLink") < unavailable.indexOf("<Card"),
+  );
+  assert.match(unavailable, /href=\{resultsHref\}/);
 });

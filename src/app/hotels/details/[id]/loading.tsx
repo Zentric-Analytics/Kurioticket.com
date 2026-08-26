@@ -4,13 +4,20 @@ import { HotelDetailsLoadingState } from "@/components/results/hotelDetails/Hote
 export default function LoadingHotelDetailsRoute() {
   return (
     <>
-      <AppHeader
-        flushDesktopBottom
-        flushMobileBottom
-        hideDesktopTravelNav
-        hideMobileCategoryTabs
-      />
-      <HotelDetailsLoadingState loadingText="Loading hotel details…" />
+      <div className="hidden lg:block" data-hotel-details-desktop-header>
+        <AppHeader
+          flushDesktopBottom
+          flushMobileBottom
+          hideDesktopTravelNav
+          hideMobileCategoryTabs
+        />
+      </div>
+      <div
+        className="pt-[env(safe-area-inset-top)] lg:pt-0"
+        data-hotel-details-mobile-safe-area
+      >
+        <HotelDetailsLoadingState loadingText="Loading hotel details…" />
+      </div>
     </>
   );
 }
