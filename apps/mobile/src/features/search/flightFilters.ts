@@ -86,6 +86,24 @@ export function flightMatchesFilters(result: FlightResult, filters: FlightFilter
     (!filters.baggageIncluded || hasPositiveTerm(result, "baggage")) && (!filters.refundable || hasPositiveTerm(result, "refund"));
 }
 export const matchingFlightCount = (results: readonly FlightResult[], filters: FlightFilters, priceValue?: (result: FlightResult) => number | null) => results.reduce((n, x) => n + Number(flightMatchesFilters(x, filters, priceValue)), 0);
+export type FlightFilterInsight = { count: number; lowestPrice: number | null };
+export function flightFilterInsight(results: readonly FlightResult[], filters: FlightFilters, priceValue?: (result: FlightResult) => number | null): FlightFilterInsight {
+  let count = 0; let lowestPrice: number | null = null;
+  for (const result of results) {
+    if (!flightMatchesFilters(result, filters, priceValue)) continue;
+    count += 1;
+    const price = finite(priceValue?.(result));
+    if (price != null && (lowestPrice == null || price < lowestPrice)) lowestPrice = price;
+  }
+  return { count, lowestPrice };
+}
+export const withStopsPreview = (filters: FlightFilters, maxStops: FlightFilters["maxStops"]): FlightFilters => ({ ...filters, maxStops, stops: undefined });
+export const withAirlinePreview = (filters: FlightFilters, airline: string): FlightFilters => ({ ...filters, airlines: [airline] });
+export const withAirportPreview = (filters: FlightFilters, field: "fromAirports" | "toAirports", airport: string): FlightFilters => ({ ...filters, [field]: [airport] });
+export function withTimePreview(filters: FlightFilters, key: string, field: keyof JourneyTimeSelection, bucket: TimeBucket): FlightFilters {
+  const group = filters.journeyTimes[key] ?? { departure: [], arrival: [] };
+  return { ...filters, journeyTimes: { ...filters.journeyTimes, [key]: { ...group, [field]: [bucket] } } };
+}
 const extent = (values: (number | null)[]): NumericRange | null => { const valid = values.filter((x): x is number => x != null && Number.isFinite(x)); return valid.length ? { min: Math.floor(Math.min(...valid)), max: Math.ceil(Math.max(...valid)) } : null; };
 export function flightFilterOptions(results: readonly FlightResult[], priceContext?: FlightPriceComparisonContext | null) {
   const fromAirports = [...new Set(results.map((x) => x.originAirport).filter(Boolean))].sort(); const toAirports = [...new Set(results.map((x) => x.destinationAirport).filter(Boolean))].sort();
