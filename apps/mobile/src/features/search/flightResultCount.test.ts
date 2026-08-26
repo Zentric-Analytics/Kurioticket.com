@@ -5,11 +5,12 @@ import test from "node:test";
 import { flightResultCountLabel } from "./flightResultCount";
 
 const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
+const persistentControls = source.slice(source.indexOf("flightResults && status"), source.indexOf("<SectionList"));
 const sectionList = source.slice(
   source.indexOf("<SectionList"),
   source.indexOf(") : (", source.indexOf("<SectionList")),
 );
-const sectionHeader = sectionList.slice(sectionList.indexOf("renderSectionHeader="), sectionList.indexOf("renderItem="));
+const listHeader = sectionList.slice(sectionList.indexOf("ListHeaderComponent="), sectionList.indexOf("renderItem="));
 const renderItem = sectionList.slice(sectionList.indexOf("renderItem="), sectionList.indexOf("ListEmptyComponent="));
 
 test("flight result count uses correct singular and plural grammar", () => {
@@ -33,10 +34,11 @@ test("flight summary copy is removed while the hotel summary stays intact", () =
 });
 
 test("count follows the price alert and directly precedes rendered cards", () => {
-  assert.match(sectionHeader, /renderSectionHeader=\{\(\) => \([\s\S]*?\{dateStrip\}[\s\S]*?\{filterRail\}/);
+  assert.match(persistentControls, /flightPersistentSearchControls[\s\S]*?\{filterRail\}/);
+  assert.doesNotMatch(persistentControls, /dateStrip|PriceAlert|flightResultCountLabel|FlightCard/);
+  assert.match(listHeader, /ListHeaderComponent=\{status === "loading" \? null : dateStrip\}/);
   assert.match(renderItem, /<PriceAlert[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?<FlightCard/);
-  assert.doesNotMatch(sectionList, /ListHeaderComponent=/);
-  assert.doesNotMatch(sectionHeader, /PriceAlert|flightResultCountLabel|FlightCard/);
+  assert.doesNotMatch(sectionList, /renderSectionHeader|stickySectionHeadersEnabled/);
   assert.doesNotMatch(renderItem, /filterRail/);
   assert.equal(sectionList.match(/flightResultCountLabel\(sorted\.length\)/g)?.length, 1);
   assert.doesNotMatch(sectionList, /["'`]\d+ Results found/);
