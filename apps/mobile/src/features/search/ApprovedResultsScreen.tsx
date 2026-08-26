@@ -92,7 +92,14 @@ import { buildFlightDetailParams } from "./flightDetailNavigation";
 import { withinFlightLoadingDeadline } from "./flightLoadingDeadline";
 import { logFlightSearchCheckpoint, startFlightSearchEventLoopMonitor } from "./flightSearchDiagnostics";
 import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recentSearch";
-import { buildPriceByDate, calendarIsoFromTimestamp } from "./dateStripModel";
+import {
+  buildPriceByDate,
+  calendarIsoFromTimestamp,
+  rememberVerifiedDateFares,
+  verifiedDateFareContextKey,
+  type DateStripPriceCandidate,
+  type VerifiedDateFareMemory,
+} from "./dateStripModel";
 import { flightResultCountLabel } from "./flightResultCount";
 import { flightCardLegs, type FlightCardLeg } from "./flightCardLegs";
 import { deriveFlightResultHighlights, type FlightResultHighlight } from "./flightResultHighlights";
@@ -138,6 +145,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [editSearchOpen, setEditSearchOpen] = useState(false);
   const [filterSection, setFilterSection] = useState<FlightFilterSectionName>("all");
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
+  const [verifiedDateFareMemory, setVerifiedDateFareMemory] = useState<VerifiedDateFareMemory>();
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
   const previousComparisonCurrency = useRef<string | null>(null);
   const previousFlightSearchKey = useRef<string | undefined>(undefined);
@@ -382,27 +390,50 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       displayPrice(result.price, result.currency, currencyState.resolution.resolvedCurrency, currencyState.rates),
     ]));
   }, [currencyState, product, results]);
+  const verifiedFareContextKey = useMemo(() => {
+    if (product !== "flight" || !plan.plan || !currencyState) return undefined;
+    return verifiedDateFareContextKey(plan.plan.payload, currencyState.resolution.resolvedCurrency);
+  }, [currencyState, plan.plan, product]);
+  const currentVerifiedDateFares = useMemo<DateStripPriceCandidate[]>(() => {
+    if (product !== "flight" || status !== "ready" || !results.length || !currencyState) return [];
+    return (results as FlightResult[]).flatMap((result) => {
+      const departureDate = calendarIsoFromTimestamp(result.departureTime);
+      const displayed = flightDisplayPrices.get(result.id);
+      return departureDate === date && displayed && Number.isFinite(displayed.amount) ? [{
+        date: departureDate,
+        amount: displayed.amount,
+        formatted: displayed.formatted,
+        accessibilityLabel: displayed.formatted,
+      }] : [];
+    });
+  }, [currencyState, date, flightDisplayPrices, product, results, status]);
+  useEffect(() => {
+    if (!verifiedFareContextKey) {
+      setVerifiedDateFareMemory(undefined);
+      return;
+    }
+    setVerifiedDateFareMemory((memory) => rememberVerifiedDateFares(
+      memory,
+      verifiedFareContextKey,
+      currentVerifiedDateFares,
+    ));
+  }, [currentVerifiedDateFares, verifiedFareContextKey]);
   const dateStripPriceByDate = useMemo(() => {
     if (product === "flight") {
-      return buildPriceByDate((results as FlightResult[]).flatMap((result) => {
-        const departureDate = calendarIsoFromTimestamp(result.departureTime);
-        const displayed = flightDisplayPrices.get(result.id);
-        return departureDate && displayed ? [{
-          date: departureDate,
-          amount: displayed.amount,
-          formatted: displayed.formatted,
-          accessibilityLabel: displayed.formatted,
-        }] : [];
-      }));
+      return verifiedFareContextKey && verifiedDateFareMemory?.contextKey === verifiedFareContextKey
+        ? verifiedDateFareMemory.priceByDate
+        : {};
     }
     const lowest = (sorted as HotelResult[])[0]?.pricePerNight;
     return lowest == null ? {} : buildPriceByDate([{ date, amount: lowest }]);
-  }, [date, flightDisplayPrices, product, results, sorted]);
+  }, [date, product, sorted, verifiedDateFareMemory, verifiedFareContextKey]);
   const dateStrip = (
     <DateStrip
             date={date}
             priceByDate={dateStripPriceByDate}
             flightResults={product === "flight"}
+            nearbyIntelligence={product === "flight" && status === "ready" && (payload.tripType === "one-way" || payload.tripType === "round-trip")}
+            displayCurrency={currencyState?.resolution.resolvedCurrency}
             onSelect={(v) =>
               router.setParams(
                 product === "flight" ? { departureDate: v } : { checkIn: v },
