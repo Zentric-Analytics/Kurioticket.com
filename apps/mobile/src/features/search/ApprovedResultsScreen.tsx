@@ -861,13 +861,18 @@ function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: F
       accessibilityLabel={`${label.toLowerCase()}: ${clock(leg.departureTime)} ${leg.originAirport} to ${clock(leg.arrivalTime)} ${leg.destinationAirport}, ${leg.duration}, ${stopLabel}`}
     >
       <Text style={[s0.journeyLabel, { color: theme.textSecondary }]}>{label}</Text>
-      <View style={s0.journeyRow}>
-        <View style={s0.departureColumn}>
-          <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.departureTime)}</Text>
-          <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.originAirport}</Text>
-        </View>
+      <View style={s0.journeyDurationRow}>
+        <View style={s0.departureColumn} />
         <View style={s0.timelineColumn} accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <Text style={s0.journeyDuration} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.82}>{leg.duration} · {stopLabel}</Text>
+        </View>
+        <View style={s0.arrivalColumn} />
+      </View>
+      <View style={s0.journeyTimeRow}>
+        <View style={s0.departureColumn}>
+          <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.departureTime)}</Text>
+        </View>
+        <View style={s0.timelineColumn} accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <View style={s0.routeTrack}>
             <View style={[s0.routeDot, { backgroundColor: theme.textSecondary }]} />
             <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
@@ -875,10 +880,19 @@ function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: F
             <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
             <View style={[s0.routeDot, { backgroundColor: theme.textSecondary }]} />
           </View>
-          <Text style={[s0.routeSummary, { color: theme.textSecondary }]} numberOfLines={1}>{leg.originAirport} → {leg.destinationAirport}</Text>
         </View>
         <View style={[s0.arrivalColumn, s0.rightColumnContract]}>
           <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.arrivalTime)}</Text>
+        </View>
+      </View>
+      <View style={s0.journeyAirportRow}>
+        <View style={s0.departureColumn}>
+          <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.originAirport}</Text>
+        </View>
+        <View style={s0.timelineColumn} accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <Text style={[s0.routeSummary, { color: theme.textSecondary }]} numberOfLines={1}>{leg.originAirport} → {leg.destinationAirport}</Text>
+        </View>
+        <View style={[s0.arrivalColumn, s0.rightColumnContract]}>
           <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.destinationAirport}</Text>
         </View>
       </View>
@@ -1113,35 +1127,39 @@ function FlightLoadingSkeleton({ roundTrip = false }: { roundTrip?: boolean }) {
           <View style={[s0.skeletonHeart, placeholder]} />
         </View>
       </View>
-      <View style={s0.skeletonFlightRow}>
-        <View style={s0.skeletonDeparture}>
-          <SkeletonLine flightResults style={s0.skeletonTime} />
-          <SkeletonLine flightResults style={s0.skeletonAirport} />
+      <View style={s0.skeletonJourneyBlock}>
+        <View style={s0.skeletonDurationRow}>
+          <View style={s0.skeletonSideColumn} />
+          <View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonDuration} /></View>
+          <View style={s0.skeletonSideColumn} />
         </View>
-        <View style={s0.skeletonRoute}>
-          <SkeletonLine flightResults style={s0.skeletonDuration} />
-          <SkeletonLine flightResults style={s0.skeletonRouteLine} />
-          <SkeletonLine flightResults style={s0.skeletonStop} />
+        <View style={s0.skeletonTimeRow}>
+          <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} />
+          <View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonRouteLine} /></View>
+          <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} />
         </View>
-        <View style={s0.skeletonArrival}>
-          <SkeletonLine flightResults style={s0.skeletonTime} />
-          <SkeletonLine flightResults style={s0.skeletonAirport} />
+        <View style={s0.skeletonAirportRow}>
+          <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} />
+          <View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonStop} /></View>
+          <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} />
         </View>
       </View>
       {roundTrip ? (
-        <View style={s0.skeletonFlightRow}>
-          <View style={s0.skeletonDeparture}>
-            <SkeletonLine flightResults style={s0.skeletonTime} />
-            <SkeletonLine flightResults style={s0.skeletonAirport} />
+        <View style={s0.skeletonJourneyBlock}>
+          <View style={s0.skeletonDurationRow}>
+            <View style={s0.skeletonSideColumn} />
+            <View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonDuration} /></View>
+            <View style={s0.skeletonSideColumn} />
           </View>
-          <View style={s0.skeletonRoute}>
-            <SkeletonLine flightResults style={s0.skeletonDuration} />
-            <SkeletonLine flightResults style={s0.skeletonRouteLine} />
-            <SkeletonLine flightResults style={s0.skeletonStop} />
+          <View style={s0.skeletonTimeRow}>
+            <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} />
+            <View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonRouteLine} /></View>
+            <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} />
           </View>
-          <View style={s0.skeletonArrival}>
-            <SkeletonLine flightResults style={s0.skeletonTime} />
-            <SkeletonLine flightResults style={s0.skeletonAirport} />
+          <View style={s0.skeletonAirportRow}>
+            <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} />
+            <View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonStop} /></View>
+            <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} />
           </View>
         </View>
       ) : null}
@@ -1449,9 +1467,9 @@ const s0 = StyleSheet.create({
     gap: 5,
     backgroundColor: "white",
     shadowColor: "#18305B",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 10,
     elevation: 2,
   },
   cardPressed: { opacity: 0.94 },
@@ -1470,12 +1488,14 @@ const s0 = StyleSheet.create({
   journeyList: { width: "100%", marginTop: 3, gap: 4 },
   journeyBlock: { width: "100%", gap: 0 },
   journeyLabel: { fontSize: 9, lineHeight: 10, fontWeight: "800", letterSpacing: 0.7 },
-  journeyRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
-  departureColumn: { flexBasis: 62, minWidth: 62, flexShrink: 0 },
-  arrivalColumn: { flexBasis: 82, minWidth: 82, flexShrink: 0 },
+  journeyDurationRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
+  journeyTimeRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
+  journeyAirportRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
+  departureColumn: { flexBasis: 72, minWidth: 72, flexShrink: 0 },
+  arrivalColumn: { flexBasis: 72, minWidth: 72, flexShrink: 0 },
   rightColumnContract: { alignItems: "flex-end" },
   time: { fontSize: 15, fontWeight: "900", color: ui.navy },
-  timelineColumn: { flex: 1, minWidth: 46, alignItems: "center", gap: 1 },
+  timelineColumn: { flex: 1, minWidth: 46, alignItems: "center" },
   journeyDuration: { maxWidth: "100%", fontSize: 11, lineHeight: 13, fontWeight: "600", color: ui.blue, textAlign: "center" },
   routeTrack: { width: "100%", minWidth: 46, flexDirection: "row", alignItems: "center", gap: 2 },
   routeDot: { width: 6, height: 6, borderRadius: 3, flexShrink: 0 },
@@ -1565,11 +1585,13 @@ const s0 = StyleSheet.create({
   skeletonIdentityActions: { flexDirection: "column", flexShrink: 0, alignItems: "center", gap: 3 },
   skeletonBadge: { width: 48, height: 20, borderRadius: 10, backgroundColor: "#E7EBF1" },
   skeletonHeart: { width: 22, height: 22, borderRadius: 11, backgroundColor: "#E7EBF1" },
-  skeletonFlightRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  skeletonJourneyBlock: { width: "100%", gap: 1 },
+  skeletonDurationRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
+  skeletonTimeRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
+  skeletonAirportRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
+  skeletonSideColumn: { flexBasis: 72, minWidth: 72, flexShrink: 0 },
+  skeletonTimelineColumn: { flex: 1, minWidth: 46, alignItems: "center" },
   skeletonLogo: { width: 38, height: 38, borderRadius: 9, backgroundColor: "#E7EBF1" },
-  skeletonDeparture: { flex: 1.15, minWidth: 0, gap: 5 },
-  skeletonArrival: { flex: 0.9, minWidth: 0, gap: 5 },
-  skeletonRoute: { flex: 1, minWidth: 38, maxWidth: 95, alignItems: "center", gap: 6 },
   skeletonPrice: { width: 52, flexShrink: 0, alignItems: "flex-end", gap: 6 },
   skeletonLine: { height: 7, borderRadius: 4, backgroundColor: "#E7EBF1" },
   skeletonName: { flex: 1, minWidth: 0, maxWidth: "54%" },

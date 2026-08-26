@@ -16,11 +16,11 @@ test("flight card renders labeled provider legs only for the active trip type", 
 
 test("main flight card is borderless and uses theme-aware native depth", () => {
   const cardStyle = /card: \{([\s\S]*?)\n  \},/.exec(source)?.[1] ?? "";
-  assert.doesNotMatch(cardStyle, /borderWidth|borderColor/);
+  assert.doesNotMatch(cardStyle, /borderWidth|borderColor|borderTopWidth|borderBottomWidth/);
   assert.match(cardStyle, /borderRadius: 14/);
-  assert.match(cardStyle, /shadowOffset: \{ width: 0, height: 3 \}/);
-  assert.match(cardStyle, /shadowOpacity: 0\.08/);
-  assert.match(cardStyle, /shadowRadius: 8/);
+  assert.match(cardStyle, /shadowOffset: \{ width: 0, height: 2 \}/);
+  assert.match(cardStyle, /shadowOpacity: 0\.09/);
+  assert.match(cardStyle, /shadowRadius: 10/);
   assert.match(cardStyle, /elevation: 2/);
   assert.match(card, /backgroundColor: theme\.surface/);
   assert.match(card, /shadowColor: theme\.dark \? "#000000" : "#18305B"/);
@@ -118,13 +118,13 @@ test("flight result cards use the responsive list width with a safe reduced oute
 test("flight loading skeleton mirrors the horizontal metadata footer", () => {
   const flightSkeleton = source.slice(source.indexOf("function FlightLoadingSkeleton"), source.indexOf("function HotelLoadingSkeleton"));
   const identityStart = flightSkeleton.indexOf('<View style={s0.skeletonIdentityRow}>');
-  const journeyStart = flightSkeleton.indexOf('<View style={s0.skeletonFlightRow}>');
+  const journeyStart = flightSkeleton.indexOf('<View style={s0.skeletonJourneyBlock}>');
   const identityRow = flightSkeleton.slice(identityStart, journeyStart);
   assert.ok(identityStart >= 0 && journeyStart > identityStart, "full-width flight placeholder follows the identity row");
   assert.match(identityRow, /s0\.skeletonLogo[\s\S]*s0\.skeletonName[\s\S]*s0\.skeletonIdentityActions[\s\S]*s0\.skeletonBadge[\s\S]*s0\.skeletonHeart/);
   assert.match(source, /skeletonIdentityActions: \{ flexDirection: "column", flexShrink: 0/);
   assert.doesNotMatch(source, /skeletonTopRow/);
-  assert.doesNotMatch(identityRow, /skeletonFlightRow/);
+  assert.doesNotMatch(identityRow, /skeletonJourneyBlock/);
   assert.match(flightSkeleton, /\["baggage", "cabin", "fare-rules"\]\.map/);
   assert.match(source, /skeletonMetadataRow: \{ width: "100%", flexDirection: "row"/);
   assert.match(source, /skeletonMetadataItem: \{ flex: 1, minWidth: 0, flexDirection: "row"/);
@@ -135,7 +135,7 @@ test("flight card keeps long prices single-line in the stable footer action colu
   assert.match(card, /style=\{s0\.flightMain\}/);
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch" \}/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
-  assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center", gap: 1 \}/);
+  assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center" \}/);
   assert.match(source, /metadataItem: \{ flex: 1, minWidth: 0/);
   assert.match(source, /actionColumn: \{ width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 3 \}/);
   assert.doesNotMatch(source, /priceBox:/);
@@ -172,15 +172,15 @@ test("airline identity preserves its accessible name while bounding very long vi
 
 test("narrow flight cards reserve deterministic space for every journey section", () => {
   const airlineLogo = readFileSync(resolve("src/features/search/AirlineLogo.tsx"), "utf8");
-  assert.match(source, /journeyRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6 \}/);
+  assert.match(source, /journeyTimeRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6 \}/);
   assert.match(card, /<AirlineLogo[\s\S]*logoUrl=\{result\.airlineLogo\}/);
   assert.match(airlineLogo, /logo: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
   assert.match(airlineLogo, /tile: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46/);
-  assert.match(source, /departureColumn: \{ flexBasis: 62, minWidth: 62, flexShrink: 0 \}/);
-  assert.match(source, /arrivalColumn: \{ flexBasis: 82, minWidth: 82, flexShrink: 0 \}/);
+  assert.match(source, /departureColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);
+  assert.match(source, /arrivalColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);
 
-  const readableMinimums = 78 + 70 + 78;
+  const readableMinimums = 72 + 70 + 72;
   const interSectionGaps = 6 * 2;
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
     const cardContentWidth = viewport - 28 - 24;
@@ -203,8 +203,8 @@ test("live airline logos support SVG and raster URLs with URL-scoped fallback", 
 });
 
 test("flight journey gives its center column responsive surplus width", () => {
-  const departureWidth = 62;
-  const arrivalWidth = 62;
+  const departureWidth = 72;
+  const arrivalWidth = 72;
   const interSectionGaps = 6 * 2;
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
     const cardContentWidth = viewport - 28 - 24;
