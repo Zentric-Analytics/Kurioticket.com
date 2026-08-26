@@ -24,6 +24,7 @@ import {
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import {
   ArrowLeft,
+  Armchair,
   Bell,
   Luggage,
   PlaneTakeoff,
@@ -81,7 +82,7 @@ import {
   type DisplayPrice,
   type ExchangeRates,
 } from "../currency/displayCurrency";
-import { summarizeBaggage, summarizeFareRules } from "./flightCardSummaries";
+import { formatCabinClass, summarizeBaggage, summarizeFareRules } from "./flightCardSummaries";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { useSavedFlights } from "../../storage/useSavedFlights";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
@@ -756,8 +757,9 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
   }, [logInitialMount]);
   const roundTrip = one(params.tripType) === "round-trip";
   const { outbound, returnLeg } = flightCardLegs(result, roundTrip);
-  const baggageBenefit = summarizeBaggage(result.baggageInfo);
-  const fareBenefit = summarizeFareRules(result.refundInfo);
+  const baggageSummary = summarizeBaggage(result.baggageInfo) ?? "Review policy";
+  const cabinSummary = formatCabinClass(result.cabinClass);
+  const fareRulesSummary = summarizeFareRules(result.refundInfo) ?? "Review before booking";
   return (
     <Pressable
       accessibilityRole="button"
@@ -821,24 +823,30 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
           {returnLeg ? <FlightJourneyRow label="RETURN" leg={returnLeg} /> : null}
         </View>
       </View>
-      <View style={s0.benefits}>
-        <View style={s0.benefitList}>
-          {baggageBenefit ? (
-            <View style={s0.benefitItem}>
-              <Luggage size={15} strokeWidth={1.9} color={theme.icon} />
-              <Text style={[s0.benefit, { color: theme.textSecondary }]} numberOfLines={1}>{baggageBenefit}</Text>
-            </View>
-          ) : null}
-          {fareBenefit ? (
-            <View style={s0.benefitItem}>
-              <ShieldCheck size={15} strokeWidth={1.9} color={theme.icon} />
-              <Text style={[s0.benefit, { color: theme.textSecondary }]} numberOfLines={1}>{fareBenefit}</Text>
-            </View>
-          ) : null}
-        </View>
+      <View style={s0.fareRow}>
         <View style={[s0.actionColumn, s0.rightColumnContract]}>
           <Text accessible={false} style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
             {fare?.formatted ?? "—"}
+          </Text>
+        </View>
+      </View>
+      <View style={s0.metadataRow}>
+        <View accessible accessibilityLabel={`Baggage: ${baggageSummary}`} style={s0.metadataItem}>
+          <Luggage accessible={false} size={14} strokeWidth={1.8} color={theme.textSecondary} />
+          <Text style={[s0.metadataText, { color: theme.textSecondary }]}>
+            <Text style={s0.metadataLabel}>Baggage: </Text>{baggageSummary}
+          </Text>
+        </View>
+        <View accessible accessibilityLabel={`Cabin: ${cabinSummary}`} style={s0.metadataItem}>
+          <Armchair accessible={false} size={14} strokeWidth={1.8} color={theme.textSecondary} />
+          <Text style={[s0.metadataText, { color: theme.textSecondary }]}>
+            <Text style={s0.metadataLabel}>Cabin: </Text>{cabinSummary}
+          </Text>
+        </View>
+        <View accessible accessibilityLabel={`Fare rules: ${fareRulesSummary}`} style={s0.metadataItem}>
+          <ShieldCheck accessible={false} size={14} strokeWidth={1.8} color={theme.textSecondary} />
+          <Text style={[s0.metadataText, { color: theme.textSecondary }]}>
+            <Text style={s0.metadataLabel}>Fare rules: </Text>{fareRulesSummary}
           </Text>
         </View>
       </View>
@@ -1128,10 +1136,6 @@ function FlightLoadingSkeleton({ roundTrip = false }: { roundTrip?: boolean }) {
           <SkeletonLine flightResults style={s0.skeletonTime} />
           <SkeletonLine flightResults style={s0.skeletonAirport} />
         </View>
-        <View style={s0.skeletonPrice}>
-          <SkeletonLine flightResults style={s0.skeletonPriceLine} />
-          <SkeletonLine flightResults style={s0.skeletonPriceCaption} />
-        </View>
       </View>
       {roundTrip ? (
         <View style={s0.skeletonFlightRow}>
@@ -1148,18 +1152,20 @@ function FlightLoadingSkeleton({ roundTrip = false }: { roundTrip?: boolean }) {
             <SkeletonLine flightResults style={s0.skeletonTime} />
             <SkeletonLine flightResults style={s0.skeletonAirport} />
           </View>
-          <View style={s0.skeletonPrice}>
-            <SkeletonLine flightResults style={s0.skeletonPriceLine} />
-            <SkeletonLine flightResults style={s0.skeletonPriceCaption} />
-          </View>
         </View>
       ) : null}
-      <View style={[s0.skeletonBenefits, { borderTopColor: theme.border }]}>
-        <View style={s0.skeletonBenefitLines}>
-          <SkeletonLine flightResults style={s0.skeletonBenefitLine} />
-          <SkeletonLine flightResults style={s0.skeletonBenefitLineShort} />
-          <SkeletonLine flightResults style={s0.skeletonBenefitLine} />
+      <View style={s0.skeletonFareRow}>
+        <View style={s0.skeletonPrice}>
+          <SkeletonLine flightResults style={s0.skeletonPriceLine} />
         </View>
+      </View>
+      <View style={s0.skeletonMetadataRow}>
+        {["baggage", "cabin", "fare-rules"].map((item, index) => (
+          <View key={item} style={s0.skeletonMetadataItem}>
+            <View style={[s0.skeletonMetadataIcon, placeholder]} />
+            <SkeletonLine flightResults style={index === 1 ? s0.skeletonMetadataLineShort : s0.skeletonMetadataLine} />
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -1488,16 +1494,12 @@ const s0 = StyleSheet.create({
   },
   nonstop: { fontSize: 11, color: ui.blue },
   bigPrice: { fontSize: 20, fontWeight: "900", color: ui.navy, textAlign: "right" },
-  benefits: {
-    paddingTop: 2,
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 6,
-  },
-  benefitList: { flex: 1, minWidth: 0, flexDirection: "row", flexWrap: "wrap", gap: 5, alignSelf: "center" },
+  fareRow: { paddingTop: 2, flexDirection: "row", justifyContent: "flex-end" },
   actionColumn: { width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 3 },
-  benefitItem: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 5 },
-  benefit: { minWidth: 0, fontSize: 10.5, color: ui.muted, flex: 1 },
+  metadataRow: { width: "100%", flexDirection: "row", alignItems: "flex-start", gap: 5, paddingTop: 4 },
+  metadataItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 3 },
+  metadataText: { flex: 1, minWidth: 0, fontSize: 9.5, lineHeight: 12.5 },
+  metadataLabel: { fontWeight: "700" },
   hotelCard: {
     height: 234,
     borderWidth: 1,
@@ -1591,17 +1593,12 @@ const s0 = StyleSheet.create({
   skeletonStop: { width: "52%", height: 6 },
   skeletonPriceLine: { width: "100%", height: 16 },
   skeletonPriceCaption: { width: "75%", height: 6 },
-  skeletonBenefits: {
-    borderTopWidth: 1,
-    borderTopColor: "#EDF0F5",
-    paddingTop: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  skeletonBenefitLines: { flex: 1, gap: 6 },
-  skeletonBenefitLine: { width: "82%" },
-  skeletonBenefitLineShort: { width: "64%" },
+  skeletonFareRow: { flexDirection: "row", justifyContent: "flex-end" },
+  skeletonMetadataRow: { width: "100%", flexDirection: "row", alignItems: "flex-start", gap: 5 },
+  skeletonMetadataItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4 },
+  skeletonMetadataIcon: { width: 12, height: 12, borderRadius: 3, flexShrink: 0 },
+  skeletonMetadataLine: { flex: 1, minWidth: 0, height: 7 },
+  skeletonMetadataLineShort: { width: "62%", height: 7 },
   skeletonButton: { width: 96, height: 44, borderRadius: 8, backgroundColor: "#E7EBF1" },
   hotelSkeletonCard: {
     width: "100%",
