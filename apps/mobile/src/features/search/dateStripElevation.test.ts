@@ -97,8 +97,10 @@ test("selected and unselected labels retain semantic light and dark hierarchies"
 test("horizontal rail keeps scrolling and includes breathing room for shadows", () => {
   assert.match(component, /<ScrollView\s+horizontal/);
   assert.match(component, /showsHorizontalScrollIndicator=\{false\}/);
-  assert.match(styles, /flightDateRail: \{ height: 80 \}/);
+  assert.match(styles, /flightDateNavigator: \{ height: 72, paddingHorizontal: 0 \}/);
+  assert.match(styles, /flightDateRail: \{ height: 72 \}/);
   assert.match(styles, /flightDates: \{ paddingHorizontal: 16, paddingVertical: 7 \}/);
+  assert.ok(72 - compactCard.height >= 14, "rail retains vertical room for native shadows");
 });
 
 test("responsive card widths expose the upcoming dates", () => {
@@ -107,7 +109,7 @@ test("responsive card widths expose the upcoming dates", () => {
     /const flightDateWidth = Math\.min\(96, Math\.max\(76, \(windowWidth - 43\) \/ 3\.65\)\)/,
   );
 
-  for (const windowWidth of [320, 360, 390, 430, 480]) {
+  for (const windowWidth of [320, 360, 375, 390, 412, 430, 480]) {
     const cardWidth = Math.min(96, Math.max(76, (windowWidth - 43) / 3.65));
     const visibleAfterThreeCards = windowWidth - 16 - cardWidth * 3 - 9 * 3;
 

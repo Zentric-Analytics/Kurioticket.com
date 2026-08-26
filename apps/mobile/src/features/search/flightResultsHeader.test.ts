@@ -79,9 +79,25 @@ test("route remains centered with balanced side controls and compact spacing", (
   assert.match(styles, /flightHeaderEdit: \{[\s\S]*?width: 52/);
   assert.match(styles, /flightHeaderRouteBlock: \{ flex: 1, minWidth: 0, alignItems: "center"/);
   assert.match(styles, /flightHeaderRoute: \{ minWidth: 0, textAlign: "center"/);
-  assert.match(styles, /flightHeader: \{[\s\S]*?paddingTop: 12,[\s\S]*?paddingBottom: 8/);
+  assert.match(styles, /flightHeader: \{[\s\S]*?paddingTop: 12,[\s\S]*?paddingBottom: 2/);
   assert.match(header, /backgroundColor: theme\.background/);
   assert.match(header, /color: theme\.textPrimary/);
+});
+
+test("header and date rail use a materially smaller Flight Results spacing shell", () => {
+  const headerBottom = Number(styles.match(/flightHeader: \{[\s\S]*?paddingBottom: (\d+)/)?.[1]);
+  const navigatorHeight = Number(
+    searchUi.match(/flightDateNavigator: \{ height: (\d+)/)?.[1],
+  );
+  const railHeight = Number(searchUi.match(/flightDateRail: \{ height: (\d+)/)?.[1]);
+
+  assert.ok(headerBottom <= 3, "header bottom padding remains compact");
+  assert.ok(navigatorHeight >= 70 && navigatorHeight <= 74, "navigator safely wraps card shadows");
+  assert.equal(railHeight, navigatorHeight);
+  assert.ok(
+    headerBottom + navigatorHeight <= 77,
+    "combined shell is smaller than the old 88px shell",
+  );
 });
 
 test("canonical flight search data remains available after presentation metadata removal", () => {

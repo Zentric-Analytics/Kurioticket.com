@@ -1360,7 +1360,7 @@ const s0 = StyleSheet.create({
   flightHeader: {
     paddingHorizontal: 12,
     paddingTop: 12,
-    paddingBottom: 8,
+    paddingBottom: 2,
   },
   flightHeaderMainRow: {
     width: "100%",

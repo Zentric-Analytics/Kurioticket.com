@@ -469,8 +469,8 @@ export const s = StyleSheet.create({
   },
   dateRail: { height: 80, flex: 1 },
   dates: { gap: 9, alignItems: "center" },
-  flightDateNavigator: { height: 80, paddingHorizontal: 0 },
-  flightDateRail: { height: 80 },
+  flightDateNavigator: { height: 72, paddingHorizontal: 0 },
+  flightDateRail: { height: 72 },
   flightDates: { paddingHorizontal: 16, paddingVertical: 7 },
   arrow: {
     width: 40,
