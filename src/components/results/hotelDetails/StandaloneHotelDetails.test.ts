@@ -141,6 +141,13 @@ test("mobile property header renders the canonical identity in the approved orde
     "aria-label={`Show directions to ${props.hotelName}`}",
     "min-w-0 flex-1 truncate",
     "title={canonicalAddress}",
+    "data-mobile-property-metadata",
+    "grid-cols-[auto_minmax(0,1fr)_auto]",
+    "data-mobile-hotel-address-icon",
+    "data-mobile-hotel-classification-icon",
+    "<MapPin",
+    "<Star",
+    "aria-label={props.starRatingAriaLabel}",
   ])
     assert.ok(source.includes(contract), contract);
   assert.ok(

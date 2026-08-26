@@ -222,7 +222,7 @@ export function HotelDetailsGallery({
 
   const hero = (
     <div
-      className="relative aspect-[16/9] min-h-[190px] max-h-[420px] w-full overflow-hidden rounded-[11px] bg-slate-100 sm:aspect-[16/10] sm:min-h-0 lg:rounded-none"
+      className="relative aspect-[16/10] min-h-[190px] max-h-[420px] w-full overflow-hidden rounded-[11px] bg-slate-100 lg:rounded-none"
       style={{ touchAction: "pan-y" }}
       onPointerDown={(event) => {
         if (event.pointerType !== "mouse")
@@ -265,21 +265,17 @@ export function HotelDetailsGallery({
             type="button"
             aria-label={previousPhotoLabel}
             onClick={onPrevious}
-            className="focus-ring absolute left-3 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full text-blue"
+            className="focus-ring absolute left-1 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg bg-transparent text-white drop-shadow-[0_1px_2px_rgba(15,23,42,0.8)]"
           >
-            <span className="flex size-8 items-center justify-center rounded-full bg-white/85 shadow-sm">
-              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-            </span>
+            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
           </button>
           <button
             type="button"
             aria-label={nextPhotoLabel}
             onClick={onNext}
-            className="focus-ring absolute right-3 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full text-blue"
+            className="focus-ring absolute right-1 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg bg-transparent text-white drop-shadow-[0_1px_2px_rgba(15,23,42,0.8)]"
           >
-            <span className="flex size-8 items-center justify-center rounded-full bg-white/85 shadow-sm">
-              <ChevronRight className="h-4 w-4" aria-hidden="true" />
-            </span>
+            <ChevronRight className="h-5 w-5" aria-hidden="true" />
           </button>
           <div className="absolute bottom-3 right-3 rounded-full bg-slate-950/80 px-3 py-1 text-xs font-semibold text-white">
             {activePosition} / {usableIndices.length}

@@ -18,12 +18,16 @@ test("mobile hero uses small visible arrows inside accessible targets without ch
     "lg:hidden",
     "data-hotel-gallery-mosaic",
     "size-11",
-    "size-8",
-    'className="h-4 w-4"',
-    "bg-white/85 shadow-sm",
+    'className="h-5 w-5"',
+    "left-1",
+    "right-1",
+    "bg-transparent text-white",
+    "aspect-[16/10]",
   ])
     assert.ok(gallerySource.includes(contract), contract);
   assert.ok(!gallerySource.includes("<IconButton"));
+  assert.doesNotMatch(gallerySource, /bg-white(?:\/85)? shadow-sm/);
+  assert.doesNotMatch(gallerySource, /left-3 top-1\/2|right-3 top-1\/2/);
 });
 
 test("mobile hero and thumbnails share one balanced gallery gutter", () => {
@@ -78,7 +82,7 @@ test("preserves counter, viewer, thumbnails, and image behavior", () => {
     "Images",
     "viewAllPhotosLabel",
     "openViewer",
-    "left-3",
+    "left-1",
     "thumbnailStripRef",
     "usableIndices.map",
     "data-gallery-index",

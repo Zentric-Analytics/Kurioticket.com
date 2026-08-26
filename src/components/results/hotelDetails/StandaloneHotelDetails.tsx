@@ -12,6 +12,7 @@ import {
   MoreHorizontal,
   Share2,
   Sparkles,
+  Star,
   Users,
   UtensilsCrossed,
   Wifi,
@@ -286,11 +287,15 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                       </span>
                     </div>
                   ) : null}
-                  <div className="lg:hidden" data-mobile-hotel-identity>
+                  <div
+                    className="mt-2 space-y-1.5 lg:hidden"
+                    data-mobile-hotel-identity
+                    data-mobile-property-metadata
+                  >
                     {props.staySummary ? (
                       <>
                         <div
-                          className="mt-2 flex min-w-0 items-center gap-1.5 text-xs font-semibold text-slate-700"
+                          className="flex min-w-0 items-center gap-1.5 text-xs font-semibold leading-5 text-slate-700"
                           data-mobile-hotel-stay-dates
                         >
                           <CalendarDays
@@ -303,7 +308,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                           </span>
                         </div>
                         <div
-                          className="mt-1.5 flex min-w-0 items-center gap-1.5 text-xs font-semibold text-slate-700"
+                          className="flex min-w-0 items-center gap-1.5 text-xs font-semibold leading-5 text-slate-700"
                           data-mobile-hotel-stay-guests
                         >
                           <Users
@@ -316,9 +321,14 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                     ) : null}
                     {canonicalAddress ? (
                       <div
-                        className="mt-1.5 flex min-w-0 items-center gap-3 text-xs leading-5 text-slate-600"
+                        className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-1.5 text-xs font-semibold leading-5 text-slate-700"
                         data-mobile-hotel-address-row
                       >
+                        <MapPin
+                          className="h-4 w-4 shrink-0"
+                          aria-hidden="true"
+                          data-mobile-hotel-address-icon
+                        />
                         <p
                           className="min-w-0 flex-1 truncate"
                           title={canonicalAddress}
@@ -331,7 +341,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label={`Show directions to ${props.hotelName}`}
-                            className="focus-ring inline-flex min-h-11 shrink-0 items-center font-bold text-blue hover:underline"
+                            className="focus-ring inline-flex min-h-11 shrink-0 items-center ps-1.5 font-bold text-blue hover:underline"
                           >
                             Show directions
                           </a>
@@ -341,9 +351,14 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                     {props.starRating ? (
                       <div
                         aria-label={props.starRatingAriaLabel}
-                        className="mt-1 text-[15px] tracking-[0.08em] text-amber-500"
+                        className="flex min-h-5 items-center gap-1.5 text-[15px] tracking-[0.08em] text-amber-500"
                         data-mobile-hotel-classification-stars
                       >
+                        <Star
+                          className="h-4 w-4 shrink-0"
+                          aria-hidden="true"
+                          data-mobile-hotel-classification-icon
+                        />
                         <span aria-hidden="true">
                           {"★".repeat(props.starRating)}
                         </span>

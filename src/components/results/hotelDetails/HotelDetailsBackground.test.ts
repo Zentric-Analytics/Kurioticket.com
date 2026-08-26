@@ -87,7 +87,7 @@ test("aligns both Hotel Details page states without changing their contracts", (
     'aria-live="polite"',
     "HotelDetailsLoadingState",
     "SkeletonBlock",
-    "lg:grid-cols-[minmax(0,1fr)_360px]",
+    "lg:grid-cols-[minmax(0,1fr)_334px]",
     "lg:sticky",
     "lg:top-24",
     "HotelDetailsUnavailableState",
