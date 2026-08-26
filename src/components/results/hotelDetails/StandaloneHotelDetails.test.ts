@@ -273,6 +273,40 @@ test("keeps save, share, gallery, amenity and description controls accessible", 
     assert.ok(source.includes(contract), contract);
 });
 
+test("room dialog releases its body scroll lock through every close path", () => {
+  const modal = source.slice(source.indexOf("{roomsOpen ? ("));
+  for (const contract of [
+    'event.key === "Escape"',
+    "setRoomsOpen(false)",
+    "onPointerDown={(event) =>",
+    "event.target === event.currentTarget",
+    "onClick={() => setRoomsOpen(false)}",
+    'document.body.style.overflow = "hidden"',
+    "document.body.style.overflow = previousOverflow",
+  ])
+    assert.ok(source.includes(contract), contract);
+  assert.doesNotMatch(modal, /onMouseDown=/);
+});
+
+test("mobile gesture surfaces preserve vertical document scrolling", () => {
+  const dock = source.slice(
+    source.indexOf("data-mobile-hotel-stay-dock"),
+    source.indexOf("<RelatedHotelsSection"),
+  );
+  assert.doesNotMatch(
+    dock,
+    /touch-pan-x|touch-action\s*:\s*(?:none|pan-x)|overscroll-(?:none|contain)/,
+  );
+  assert.match(gallerySource, /style=\{\{ touchAction: "pan-y" \}\}/);
+  assert.doesNotMatch(
+    gallerySource.slice(
+      gallerySource.indexOf("function handlePointerUp"),
+      gallerySource.indexOf("function handleGalleryKeyDown"),
+    ),
+    /preventDefault/,
+  );
+});
+
 test("uses public property metadata and truthful data-dependent claims", () => {
   for (const contract of [
     "propertyDetails?.description",
