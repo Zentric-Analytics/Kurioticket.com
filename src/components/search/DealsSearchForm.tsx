@@ -41,6 +41,7 @@ import { removeDealsStagedJourneyPlan } from "@/lib/deals/dealsTripPlanStorage";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { MobileCarLocationPicker } from "@/components/search/MobileCarLocationPicker";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
+import { openMobilePickerWithKeyboard } from "@/components/search/mobilePickerKeyboardFocus";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { MobilePackageTravelersRoomsPicker } from "@/components/search/MobilePackageTravelersRoomsPicker";
@@ -1670,7 +1671,10 @@ export function DealsSearchForm({
     closeCarMobilePickers();
     if (kind === "return") setDraftCarReturnLocation(search.carReturnLocation);
     if (window.matchMedia("(max-width: 639px)").matches)
-      setMobileCarLocation(kind);
+      openMobilePickerWithKeyboard(
+        () => setMobileCarLocation(kind),
+        `deals-car-${kind}-mobile-input`,
+      );
     else if (kind === "return") setCarReturnLocationOpen(true);
     else setMobileCarLocation(kind);
   };
@@ -2110,7 +2114,12 @@ export function DealsSearchForm({
       !mobile && (!isPackagesLanding || query.length >= 2);
     setFlightOriginOpen(showDesktopPanel && kind === "origin");
     setFlightDestinationOpen(showDesktopPanel && kind === "destination");
-    setFlightMobileAirport(mobile ? kind : null);
+    if (mobile) {
+      openMobilePickerWithKeyboard(
+        () => setFlightMobileAirport(kind),
+        `deals-flight-mobile-${kind}-input`,
+      );
+    } else setFlightMobileAirport(null);
   };
   const openHotelDestination = (mobile = false) => {
     closeDesktopLandingPanels();
@@ -2119,7 +2128,12 @@ export function DealsSearchForm({
     setFlightDestinationOpen(false);
     setFlightMobileAirport(null);
     setHotelDestinationOpen(!mobile);
-    setHotelDestinationMobileOpen(mobile);
+    if (mobile) {
+      openMobilePickerWithKeyboard(
+        () => setHotelDestinationMobileOpen(true),
+        "deals-hotel-mobile-destination-input",
+      );
+    } else setHotelDestinationMobileOpen(false);
   };
 
   useEffect(() => {
@@ -3400,7 +3414,7 @@ export function DealsSearchForm({
               type="button"
               aria-haspopup="dialog"
               aria-expanded={flightMobileAirport === "origin"}
-              onClick={() => setFlightMobileAirport("origin")}
+              onClick={() => openMobilePickerWithKeyboard(() => setFlightMobileAirport("origin"), "deals-flight-mobile-origin-input")}
               className={compactFieldClassName}
             >
               {compactPackageFieldContent(
@@ -3431,7 +3445,7 @@ export function DealsSearchForm({
               type="button"
               aria-haspopup="dialog"
               aria-expanded={flightMobileAirport === "destination"}
-              onClick={() => setFlightMobileAirport("destination")}
+              onClick={() => openMobilePickerWithKeyboard(() => setFlightMobileAirport("destination"), "deals-flight-mobile-destination-input")}
               className={compactFieldClassName}
             >
               {compactPackageFieldContent(
@@ -4821,6 +4835,7 @@ export function DealsSearchForm({
             key={kind}
             open={mobileCarLocation === kind}
             mode={pickup ? "pickup" : "return"}
+            inputId={`deals-car-${kind}-mobile-input`}
             value={value}
             launcherRef={launcherRef}
             onClose={() => {
