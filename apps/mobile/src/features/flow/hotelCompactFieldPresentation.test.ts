@@ -7,8 +7,8 @@ const packages = readFileSync(new URL("./PackageSearchForm.tsx", import.meta.url
 const closedFields = hotel.slice(hotel.indexOf("return <View"), hotel.indexOf("<DateRangeSheet"));
 
 test("Hotel closed rows reuse the Packages CompactSearchField architecture", () => {
-  assert.match(hotel, /import \{ CompactSearchField, PrimaryButton, UnavailableNotice \} from "\.\/FlowPrimitives"/);
-  assert.match(packages, /import \{ CompactSearchField, PrimaryButton \} from "\.\/FlowPrimitives"/);
+  assert.match(hotel, /import \{ CompactSearchField, PickerSheetHeader, PrimaryButton, UnavailableNotice \} from "\.\/FlowPrimitives"/);
+  assert.match(packages, /import \{ CompactSearchField, PickerSheetHeader, PrimaryButton \} from "\.\/FlowPrimitives"/);
   assert.equal(closedFields.match(/<CompactSearchField/g)?.length, 3);
   assert.doesNotMatch(closedFields, /<Field\b|locationFieldRow|locationFieldContent/);
   assert.equal(closedFields.match(/trailing=\{false\}/g)?.length, 1);
