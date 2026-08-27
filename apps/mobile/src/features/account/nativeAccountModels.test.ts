@@ -113,12 +113,14 @@ test("travel screen exposes local search and button-owned save feedback states",
   assert.match(screen, /state\.saving \? t\("saving"\) : saveSuccess \? `✓ \$\{t\("saved"\)\}` : t\("save"\)/);
   assert.match(screen, /accessibilityLabel=\{saveSuccess \? t\("saved"\) : undefined\}/);
   assert.doesNotMatch(screen, /saveSuccess[^?]*\?\s*<Text/);
-  assert.doesNotMatch(screen, /t\("travelSaved"\)/);
+  assert.match(screen, /AccessibilityInfo\.announceForAccessibility\(t\("travelSaved"\)\)/);
   assert.match(screen, /showRevertConfirmation\(\)/);
   assert.match(screen, /revertConfirmation \? <Text[^>]*>\{t\("travelReverted"\)\}/);
-  assert.match(screen, /clearSaveSuccess\(\); commit\(editDraft/);
-  assert.match(screen, /if \(!isDirty\(finished\)\) showSaveSuccess\(\)/);
+  assert.match(screen, /clearSaveSuccess\(\); clearRevertConfirmation\(\); commit\(editDraft/);
+  assert.match(screen, /clearSaveSuccess\(\); clearRevertConfirmation\(\); setErrorAction\(null\); commit\(started\.state\)/);
+  assert.match(screen, /if \(!isDirty\(finished\)\) \{[\s\S]*?showSaveSuccess\(\);[\s\S]*?announceForAccessibility/);
   assert.match(screen, /saveSuccessTimer\.current = setTimeout\([\s\S]*?setSaveSuccess\(false\);[\s\S]*?\}, 1500\)/);
   assert.match(screen, /if \(saveSuccessTimer\.current\) clearTimeout\(saveSuccessTimer\.current\)/);
-  assert.match(screen, /return \(\) => \{[\s\S]*?clearTimeout\(saveSuccessTimer\.current\)/);
+  assert.match(screen, /if \(revertConfirmationTimer\.current\) clearTimeout\(revertConfirmationTimer\.current\)/);
+  assert.match(screen, /return \(\) => \{[\s\S]*?clearSaveSuccess\(\);[\s\S]*?clearRevertConfirmation\(\)/);
 });
