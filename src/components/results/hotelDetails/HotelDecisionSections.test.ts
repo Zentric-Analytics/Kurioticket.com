@@ -87,7 +87,9 @@ test("comparison presents Kurioticket as a normalized provider without developme
   assert.match(compare, /perNightText\.replace/);
   assert.match(compare, /data-nightly-amount/);
   assert.match(compare, /data-nightly-supporting-label/);
-  assert.match(compare, /className="flex flex-col items-end"/);
+  assert.match(compare, /secondaryPrice: nightlyPrice \?/);
+  assert.match(compare, /data-provider-secondary-price-row/);
+  assert.match(compare, /data-provider-secondary-price/);
   assert.match(standalone, /viewDealText="View deal"/);
   assert.match(compare, /\{viewDealText\}/);
   assert.match(compare, /onViewRoomOptions\(event\.currentTarget\)/);
@@ -103,13 +105,18 @@ test("comparison presents Kurioticket as a normalized provider without developme
   assert.match(compare, /data-provider-action/);
   const topRow = compare.slice(
     compare.indexOf("data-provider-top-row"),
-    compare.indexOf("data-provider-bottom-row"),
+    compare.indexOf("data-provider-secondary-price-row"),
   );
   const bottomRow = compare.slice(compare.indexOf("data-provider-bottom-row"));
   assert.match(topRow, /data-provider-brand/);
   assert.match(topRow, /data-provider-price/);
+  assert.doesNotMatch(topRow, /data-provider-secondary-price/);
+  assert.ok(compare.indexOf("data-provider-top-row") < compare.indexOf("data-provider-secondary-price-row"));
+  assert.ok(compare.indexOf("data-provider-secondary-price-row") < compare.indexOf("data-provider-bottom-row"));
   assert.match(bottomRow, /data-provider-amenities/);
   assert.match(bottomRow, /data-provider-action/);
+  assert.match(bottomRow, /items-center/);
+  assert.doesNotMatch(bottomRow, /items-end/);
   assert.ok(compare.indexOf("data-provider-price") < compare.indexOf("data-provider-action"));
   assert.match(compare, /<HotelAmenityList/);
   assert.match(compare, /items=\{offer\.amenities \?\? \[\]\}/);
