@@ -1,6 +1,107 @@
-import type { CreateMobileSavedItem,FlightResult,HotelResult,MobileSavedItem } from "../api/travelApi";import { destinations } from "../features/explore/destinationCatalogue";import { sanitizeSearchParams } from "../features/flow/savedSearchContext";import { canonicalSavedFlightDateTime } from "./savedFlightDateTime";
-function stable(value:unknown):string{if(Array.isArray(value))return`[${value.map(stable).join(",")}]`;if(value&&typeof value==="object")return`{${Object.entries(value as Record<string,unknown>).filter(([k])=>k!=="id"&&k!=="createdAt"&&k!=="userId").sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>`${k}:${stable(v)}`).join(",")}}`;return JSON.stringify(value);}export function savedSignature(input:CreateMobileSavedItem|MobileSavedItem){if(input.type==="flight")return`flight:${input.provider}:${input.originAirport}:${input.destinationAirport}:${input.departureTime}:${input.arrivalTime}`;if(input.type==="hotel")return`hotel:${input.provider}:${input.hotelName}:${input.checkIn}:${input.checkOut}`;return`search:${String(input.searchType).toLowerCase()}:${stable(input.query)}`;}export function mapFlightToSaved(f:FlightResult,params?:Record<string,unknown>):CreateMobileSavedItem{return{type:"flight",provider:f.provider,airlineName:f.airlineName,flightNumber:f.flightNumber??null,originAirport:f.originAirport,destinationAirport:f.destinationAirport,departureTime:canonicalSavedFlightDateTime(f.departureTime),arrivalTime:canonicalSavedFlightDateTime(f.arrivalTime),price:f.price,currency:f.currency,payload:{nativeRoute:"/flight-details",result:f,...(params?{searchParams:sanitizeSearchParams("flight",params)}:{})}};}export function mapDestinationToSaved(id:string):CreateMobileSavedItem|null{const d=destinations.find(x=>x.id===id);if(!d)return null;return{type:"search",searchType:"flight",label:d.name,destination:d.name,query:{nativeRoute:"/flights",destinationId:d.id,destination:d.name,to:d.primaryAirportCode,airportCodes:d.airportCodes}};}
+import type { CreateMobileSavedItem, FlightResult, HotelResult, MobileSavedItem } from "../api/travelApi";
+import { destinations } from "../features/explore/destinationCatalogue";
+import { sanitizeSearchParams } from "../features/flow/savedSearchContext";
+import { canonicalSavedFlightDateTime } from "./savedFlightDateTime";
 
-export function flightSavedSignature(flight:FlightResult):string{return savedSignature(mapFlightToSaved(flight));}
+function stable(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stable).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.entries(value as Record<string, unknown>)
+      .filter(([key]) => key !== "id" && key !== "createdAt" && key !== "userId")
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, child]) => `${key}:${stable(child)}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
 
-export function mapHotelToSaved(h:HotelResult,params:Record<string,unknown>):CreateMobileSavedItem|null{const checkIn=String(params.checkIn||"");const checkOut=String(params.checkOut||"");if(!checkIn||!checkOut||h.totalPrice==null||!h.currency)return null;return{type:"hotel",provider:h.provider,hotelName:h.name,destination:String(params.destination||h.location),checkIn:new Date(`${checkIn}T00:00:00Z`).toISOString(),checkOut:new Date(`${checkOut}T00:00:00Z`).toISOString(),totalPrice:h.totalPrice,currency:h.currency,payload:{nativeRoute:"/hotel-details",result:h,searchParams:sanitizeSearchParams("hotel",params)}};}
+const text = (value: unknown) => typeof value === "string" ? value.trim() : "";
+const lower = (value: unknown) => text(value).toLowerCase();
+const upper = (value: unknown) => text(value).toUpperCase();
+const dateTime = (value: unknown) => {
+  const written = text(value);
+  if (!written) return "";
+  try { return canonicalSavedFlightDateTime(written); } catch { return written; }
+};
+
+/** Stable Saved identity for a normalized itinerary. Never includes offer ids or prices. */
+export function flightSavedSignature(flight: FlightResult): string {
+  const legs = Array.isArray(flight.legs) ? flight.legs : [];
+  if (legs.length && legs.every(leg => Array.isArray(leg.segments) && leg.segments.length > 0)) {
+    const identity = {
+      provider: lower(flight.provider),
+      cabinClass: lower(flight.cabinClass),
+      fareBrandName: lower(flight.fareBrandName),
+      legs: legs.map((leg, index) => ({
+        direction: lower(leg.direction) || "leg",
+        legIndex: leg.legIndex ?? index,
+        originAirport: upper(leg.originAirport),
+        destinationAirport: upper(leg.destinationAirport),
+        departureTime: dateTime(leg.departureTime),
+        arrivalTime: dateTime(leg.arrivalTime),
+        fareBrandName: lower(leg.fareBrandName),
+        segments: leg.segments.map(segment => ({
+          originAirport: upper(segment.originAirport),
+          destinationAirport: upper(segment.destinationAirport),
+          departureTime: dateTime(segment.departureTime),
+          arrivalTime: dateTime(segment.arrivalTime),
+          marketingCarrier: upper(segment.marketingCarrier?.iataCode) || lower(segment.marketingCarrier?.name) || lower(segment.airlineName) || lower(flight.airlineName),
+          marketingFlightNumber: upper(segment.marketingFlightNumber) || upper(segment.flightNumber) || upper(flight.flightNumber),
+          operatingCarrier: upper(segment.operatingCarrier?.iataCode) || lower(segment.operatingCarrier?.name),
+          operatingFlightNumber: upper(segment.operatingFlightNumber),
+        })),
+      })),
+    };
+    return `flight:v2:${stable(identity)}`;
+  }
+
+  return `flight:legacy:${stable({
+    provider: lower(flight.provider),
+    airlineName: lower(flight.airlineName),
+    flightNumber: upper(flight.flightNumber),
+    originAirport: upper(flight.originAirport),
+    destinationAirport: upper(flight.destinationAirport),
+    departureTime: dateTime(flight.departureTime),
+    arrivalTime: dateTime(flight.arrivalTime),
+    cabinClass: lower(flight.cabinClass),
+    fareBrandName: lower(flight.fareBrandName),
+  })}`;
+}
+
+function savedFlightResult(input: CreateMobileSavedItem | MobileSavedItem): FlightResult | null {
+  const payload = input.payload;
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
+  const result = (payload as Record<string, unknown>).result;
+  return result && typeof result === "object" && !Array.isArray(result) ? result as FlightResult : null;
+}
+
+export function savedSignature(input: CreateMobileSavedItem | MobileSavedItem) {
+  if (input.type === "flight") {
+    const result = savedFlightResult(input);
+    if (result) return flightSavedSignature(result);
+    return flightSavedSignature(input as unknown as FlightResult);
+  }
+  if (input.type === "hotel") return `hotel:${input.provider}:${input.hotelName}:${input.checkIn}:${input.checkOut}`;
+  return `search:${String(input.searchType).toLowerCase()}:${stable(input.query)}`;
+}
+
+export function mapFlightToSaved(f: FlightResult, params?: Record<string, unknown>): CreateMobileSavedItem {
+  return {
+    type: "flight", provider: f.provider, airlineName: f.airlineName, flightNumber: f.flightNumber ?? null,
+    originAirport: f.originAirport, destinationAirport: f.destinationAirport,
+    departureTime: canonicalSavedFlightDateTime(f.departureTime), arrivalTime: canonicalSavedFlightDateTime(f.arrivalTime),
+    price: f.price, currency: f.currency,
+    payload: { nativeRoute: "/flight-details", result: f, ...(params ? { searchParams: sanitizeSearchParams("flight", params) } : {}) },
+  };
+}
+
+export function mapDestinationToSaved(id: string): CreateMobileSavedItem | null {
+  const destination = destinations.find(value => value.id === id);
+  if (!destination) return null;
+  return { type: "search", searchType: "flight", label: destination.name, destination: destination.name, query: { nativeRoute: "/flights", destinationId: destination.id, destination: destination.name, to: destination.primaryAirportCode, airportCodes: destination.airportCodes } };
+}
+
+export function mapHotelToSaved(h: HotelResult, params: Record<string, unknown>): CreateMobileSavedItem | null {
+  const checkIn = String(params.checkIn || ""); const checkOut = String(params.checkOut || "");
+  if (!checkIn || !checkOut || h.totalPrice == null || !h.currency) return null;
+  return { type: "hotel", provider: h.provider, hotelName: h.name, destination: String(params.destination || h.location), checkIn: new Date(`${checkIn}T00:00:00Z`).toISOString(), checkOut: new Date(`${checkOut}T00:00:00Z`).toISOString(), totalPrice: h.totalPrice, currency: h.currency, payload: { nativeRoute: "/hotel-details", result: h, searchParams: sanitizeSearchParams("hotel", params) } };
+}
