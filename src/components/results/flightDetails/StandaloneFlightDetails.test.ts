@@ -96,6 +96,64 @@ const fixture = (overrides: Partial<NormalizedFlightResult> = {}): NormalizedFli
 const noUpsells = async () => ({ provider: "Duffel", results: [], status: "success" as const, latencyMs: 2 });
 const upsells = (...results: NormalizedFlightResult[]) => async () => ({ provider: "Duffel", results, status: "success" as const, latencyMs: 3 });
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((complete) => { resolve = complete; });
+  return { promise, resolve };
+}
+
+test("selected revalidation gates concurrent secondary fare discovery", async () => {
+  const selected = fixture();
+  const alternative = fixture({ id: "alternative", providerOfferId: "off_alternative", fareBrandName: "Flex", price: 240 });
+  const selectedRefresh = deferred<{ status: "confirmed"; offer: NormalizedFlightResult }>();
+  const alternativeRefresh = deferred<{ status: "confirmed"; offer: NormalizedFlightResult }>();
+  const upsellDiscovery = deferred<Awaited<ReturnType<typeof noUpsells>>>();
+  const events: string[] = [];
+  const detailsPromise = buildStandaloneFlightDetails({
+    cachedSelected: selected,
+    cachedAlternatives: [selected, alternative],
+    search,
+    now: 1,
+    refresh: ({ cachedOffer }) => {
+      events.push(`refresh:${cachedOffer.id}`);
+      return cachedOffer.id === selected.id ? selectedRefresh.promise : alternativeRefresh.promise;
+    },
+    discoverUpsells: () => {
+      events.push("upsells");
+      return upsellDiscovery.promise;
+    },
+  });
+  await Promise.resolve();
+  assert.deepEqual(events, [`refresh:${selected.id}`]);
+
+  selectedRefresh.resolve({ status: "confirmed", offer: selected });
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.deepEqual(events, [`refresh:${selected.id}`, "upsells", `refresh:${alternative.id}`]);
+
+  upsellDiscovery.resolve(await noUpsells());
+  await Promise.resolve();
+  let settled = false;
+  void detailsPromise.then(() => { settled = true; });
+  await Promise.resolve();
+  assert.equal(settled, false);
+  alternativeRefresh.resolve({ status: "confirmed", offer: alternative });
+  const details = await detailsPromise;
+  assert.equal(details.status, "available");
+  if (details.status === "available") assert.deepEqual(details.fareChoices.map(({ label }) => label), ["Economy", "Flex"]);
+});
+
+test("failed selected revalidation launches no secondary provider work", async () => {
+  let secondaryCalls = 0;
+  const details = await buildStandaloneFlightDetails({
+    cachedSelected: fixture(), cachedAlternatives: [fixture({ id: "alternative", fareBrandName: "Flex" })], search, now: 1,
+    refresh: async () => ({ status: "unavailable", offer: null }),
+    discoverUpsells: async () => { secondaryCalls += 1; return noUpsells(); },
+  });
+  assert.equal(details.status, "unavailable");
+  assert.equal(secondaryCalls, 0);
+});
+
 test("round trip preserves explicit outbound and return with their own carriers", async () => {
   const cached = fixture();
   const refreshed = fixture({ price: 205.4 });
@@ -450,7 +508,8 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.doesNotMatch(source, /: "w-full"/);
   assert.doesNotMatch(source, /min-h-\[126px\]/);
   assert.doesNotMatch(source, /min-h-\[(?:1[2-9]\d|[2-9]\d\d)px\]/);
-  assert.match(source, /w-\[min\(82vw,310px\)\] max-w-\[310px\] shrink-0 snap-start/);
+  assert.match(source, /w-\[min\(78vw,275px\)\] max-w-\[275px\] shrink-0 snap-start/);
+  assert.doesNotMatch(source, /310px\)\] max-w-\[310px\]/);
   assert.match(source, /min-w-0 rounded-\[10px\]/);
   assert.match(source, /whitespace-normal break-words \[overflow-wrap:anywhere\].*\[word-break:normal\]/);
   assert.doesNotMatch(source, /text-overflow|ellipsis/);
@@ -459,7 +518,7 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.match(source, /max-w-\[1470px\] px-0 sm:px-6 lg:px-\[34px\]/);
   assert.match(source, /border-y border-\[#E2E8F0\].*sm:rounded-\[13px\] sm:border.*sm:shadow-/s);
   assert.match(source, /ml-4.*sm:ml-0/);
-  assert.match(source, /function FlightDetailsSkeleton[\s\S]*?px-0 sm:px-6 lg:px-8/);
+  assert.match(source, /function FlightDetailsSkeleton[\s\S]*?<FlightDetailsLoadingShell/);
   assert.match(source, /function FlightDetailsUnavailable[\s\S]*?px-0 sm:px-4/);
   assert.doesNotMatch(source, /lg:max-w-\[400px\]/);
   assert.doesNotMatch(source, /rounded-full border-2/);
@@ -572,7 +631,12 @@ test("Flight Details mobile cleanup uses shared editing, peek tabs, and fare car
   assert.match(source, /shrink-0 whitespace-nowrap border-b-2 w-\[30%\] min-w-\[105px\]/);
   assert.match(source, /touch-pan-x snap-x snap-mandatory/);
   assert.match(source, /overflow-x-auto overflow-y-hidden/);
-  assert.match(source, /w-\[min\(82vw,310px\)\]/);
+  assert.match(source, /w-\[min\(78vw,275px\)\]/);
+  assert.match(source, /ref=\{fareRailRef\} role="radiogroup"/);
+  assert.match(source, /initialFareAlignmentRef/);
+  assert.match(source, /rail\.scrollTo\(\{ left: clampedLeft, behavior: "auto" \}\)/);
+  assert.match(source, /fareChoices\.length < 2/);
+  assert.match(source, /selectedFareKey !== initialSelectedFareKey/);
   assert.match(source, /fareChoices.length === 1 \? "max-w-\[270px\]"/);
   const emptyBranch = source.split("\n").find((line) => line.includes("if (deals.length === 0)")) ?? "";
   assert.match(emptyBranch, /No live booking deals are available for this fare right now\./);
