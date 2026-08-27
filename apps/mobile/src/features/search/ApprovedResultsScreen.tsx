@@ -104,7 +104,7 @@ import { flightResultCountLabel } from "./flightResultCount";
 import { flightCardLegs, type FlightCardLeg } from "./flightCardLegs";
 import { flightOperatingCarrierPresentation } from "./flightOperatingCarrier";
 import { deriveFlightResultHighlights, type FlightResultHighlight } from "./flightResultHighlights";
-import { readSession } from "../../storage/sessionStorage";
+import { readSession, subscribeSession } from "../../storage/sessionStorage";
 import {
   buildFlightPriceAlertPayload,
   flightAlertPresentation,
@@ -115,12 +115,15 @@ import type { SearchPlan } from "../flow/travelSearchModel";
 import { FlightResultsState } from "./FlightResultsState";
 import { resolveFlightResultsState } from "./flightResultsStateModel";
 import { signInHref } from "../auth/signInIntent";
+import { normalizePreferredAirlineFilterValues } from "./preferredAirlineDefaults";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
 type FlightLoadingPhase = "searching" | "skeleton";
 export const FLIGHT_LOADING_SKELETON_DELAY_MS = 1000;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+const sameStringArray = (left: readonly string[], right: readonly string[]) =>
+  left.length === right.length && left.every((value, index) => value === right[index]);
 export function ApprovedResultsScreen({ product }: { product: Product }) {
   const { theme } = useAppTheme();
   const flightResults = product === "flight";
@@ -142,6 +145,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [sort, setSort] = useState<FlightSort>("best");
   const [sortOpen, setSortOpen] = useState(false);
   const [filters, setFilters] = useState<FlightFilters>(emptyFlightFilters);
+  const [filtersFlightSearchKey, setFiltersFlightSearchKey] = useState(() => flightResults ? plan.plan?.key : undefined);
+  const [preferredAirlineCodes, setPreferredAirlineCodes] = useState<string[] | null>(null);
+  const [preferredAirlineSessionRevision, setPreferredAirlineSessionRevision] = useState(0);
   const [filterOpen, setFilterOpen] = useState(false);
   const [editSearchOpen, setEditSearchOpen] = useState(false);
   const [filterSection, setFilterSection] = useState<FlightFilterSectionName>("all");
@@ -152,7 +158,13 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
   const previousComparisonCurrency = useRef<string | null>(null);
   const previousFlightSearchKey = useRef<string | undefined>(undefined);
+  const preferredAirlineDefaultAttemptedSearchKey = useRef<string | undefined>(undefined);
+  const preferredAirlineFilterTouchedSearchKey = useRef<string | undefined>(undefined);
+  const preferredAirlineSessionUserId = useRef<string | null | undefined>(undefined);
   const { savedFlights, pendingFlightKeys, toggle: toggleSavedFlight } = useSavedFlights();
+  useEffect(() => subscribeSession(() => {
+    setPreferredAirlineSessionRevision((revision) => revision + 1);
+  }), []);
   useEffect(() => {
     if (!flightResults || !plan.plan?.key) return;
     if (previousFlightSearchKey.current && previousFlightSearchKey.current !== plan.plan.key) {
@@ -160,9 +172,41 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       setFilters(emptyFlightFilters());
       setSortOpen(false);
       setFilterOpen(false);
+      setFiltersFlightSearchKey(plan.plan.key);
+      preferredAirlineDefaultAttemptedSearchKey.current = undefined;
+      preferredAirlineFilterTouchedSearchKey.current = undefined;
     }
     previousFlightSearchKey.current = plan.plan.key;
   }, [flightResults, plan.plan?.key]);
+  useEffect(() => {
+    if (!flightResults) return;
+    let active = true;
+
+    void readSession().then((session) => {
+      if (!active) return;
+      const sessionUserId = session?.user.id ?? null;
+      if (preferredAirlineSessionUserId.current !== sessionUserId) {
+        preferredAirlineSessionUserId.current = sessionUserId;
+        preferredAirlineDefaultAttemptedSearchKey.current = undefined;
+      }
+      if (!session) {
+        setPreferredAirlineCodes([]);
+        return;
+      }
+      void travelApi.travelPreferences().then((response) => {
+        if (active) setPreferredAirlineCodes(
+          Array.isArray(response.preferences?.preferredAirlines) ? response.preferences.preferredAirlines : [],
+        );
+      }).catch(() => {
+        // Flight results keep today's behavior if travel preferences are unavailable.
+        if (active) setPreferredAirlineCodes([]);
+      });
+    }).catch(() => {
+      if (active) setPreferredAirlineCodes([]);
+    });
+
+    return () => { active = false; };
+  }, [flightResults, preferredAirlineSessionRevision]);
   useEffect(() => {
     if (!flightResults || status !== "loading") return;
     const presentationIdentity = `${plan.plan?.key || "invalid"}:${retry}`;
@@ -354,6 +398,32 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     : new Map<string, FlightResultHighlight>(), [normalizeFlightPrice, product, sorted]);
   const flightOptions = useMemo(() => flightFilterOptions(results as FlightResult[], flightPriceContext), [flightPriceContext, results]);
   useEffect(() => {
+    const searchKey = plan.plan?.key;
+    if (
+      !flightResults ||
+      status !== "ready" ||
+      !searchKey ||
+      filtersFlightSearchKey !== searchKey ||
+      preferredAirlineCodes === null ||
+      flightOptions.airlines.length === 0 ||
+      preferredAirlineFilterTouchedSearchKey.current === searchKey ||
+      preferredAirlineDefaultAttemptedSearchKey.current === searchKey
+    ) return;
+
+    preferredAirlineDefaultAttemptedSearchKey.current = searchKey;
+    if (filters.airlines.length > 0) return;
+    const preferredAirlines = normalizePreferredAirlineFilterValues(
+      preferredAirlineCodes,
+      flightOptions.airlines,
+    );
+    if (preferredAirlines.length === 0) return;
+    setFilters((current) => (
+      preferredAirlineFilterTouchedSearchKey.current === searchKey || current.airlines.length > 0
+        ? current
+        : { ...current, airlines: preferredAirlines }
+    ));
+  }, [filters.airlines.length, filtersFlightSearchKey, flightOptions.airlines, flightResults, plan.plan?.key, preferredAirlineCodes, status]);
+  useEffect(() => {
     const nextCurrency = currencyState ? flightPriceContext?.identity ?? "unavailable" : null;
     if (nextCurrency && previousComparisonCurrency.current && previousComparisonCurrency.current !== nextCurrency) {
       setFilters((current) => current.maximumPrice != null ? { ...current, maximumPrice: null } : current);
@@ -376,6 +446,22 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     setFilterSection(section);
     setFilterOpen(true);
   };
+  const handleFlightFiltersChange = useCallback((next: FlightFilters) => {
+    const searchKey = plan.plan?.key;
+    if (searchKey && !sameStringArray(filters.airlines, next.airlines)) {
+      preferredAirlineFilterTouchedSearchKey.current = searchKey;
+      preferredAirlineDefaultAttemptedSearchKey.current = searchKey;
+    }
+    setFilters(next);
+  }, [filters.airlines, plan.plan?.key]);
+  const clearFlightFilters = useCallback(() => {
+    const searchKey = plan.plan?.key;
+    if (searchKey) {
+      preferredAirlineFilterTouchedSearchKey.current = searchKey;
+      preferredAirlineDefaultAttemptedSearchKey.current = searchKey;
+    }
+    setFilters(emptyFlightFilters());
+  }, [plan.plan?.key]);
   const payload = plan.plan?.payload || {};
   const currentFlightLoadingIdentity = `${plan.plan?.key || "invalid"}:${retry}`;
   const visibleFlightLoadingPhase = flightLoadingIdentity === currentFlightLoadingIdentity
@@ -556,7 +642,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   state={terminalFlightState}
                   onRetry={retrySearch}
                   onEditSearch={edit}
-                  onClearFilters={() => setFilters(emptyFlightFilters())}
+                  onClearFilters={clearFlightFilters}
                   onAdjustFilters={() => openFlightFilters("all")}
                 />
               ) : null}
@@ -694,7 +780,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             priceValue={flightPriceContext?.valueForResult}
             currency={flightPriceContext?.currency ?? currencyState?.resolution.resolvedCurrency ?? "USD"}
             priceFilteringReady={flightPriceContext != null}
-            onChange={setFilters}
+            onChange={handleFlightFiltersChange}
             onClose={() => setFilterOpen(false)}
           />
         </>
