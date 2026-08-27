@@ -357,6 +357,38 @@ test("handoff identity comes from the allowlisted destination, not Duffel", () =
   assert.deepEqual(buildMaterialFareChoices([fixture()])[0].choice.handoff, { available: false });
 });
 
+
+test("material fares expose only real handoff deals, deduplicated and sorted", () => {
+  process.env.FLIGHT_HANDOFF_PARTNERS_JSON = JSON.stringify({
+    "book.alpha.test": "Alpha Travel",
+    "book.beta.test": "Beta Travel",
+  });
+  const choices = buildMaterialFareChoices([
+    fixture({ id: "alpha-high", fareBrandName: "Basic", price: 210, partnerRedirectUrl: "https://book.alpha.test/high" }),
+    fixture({ id: "alpha-low", providerOfferId: "alpha-low-secret", fareBrandName: "Basic", price: 190, partnerRedirectUrl: "https://book.alpha.test/low" }),
+    fixture({ id: "beta", providerOfferId: "beta-secret", fareBrandName: "Basic", price: 190, partnerRedirectUrl: "https://book.beta.test/deal" }),
+    fixture({ id: "no-handoff", providerOfferId: "private-no-handoff", fareBrandName: "Basic", price: 180, partnerRedirectUrl: "https://unknown.test/deal" }),
+  ]);
+  assert.equal(choices.length, 1);
+  assert.deepEqual(choices[0].choice.deals.map(({ offerId, providerName, price, currency }) => ({ offerId, providerName, price, currency })), [
+    { offerId: "alpha-low", providerName: "Alpha Travel", price: 190, currency: "USD" },
+    { offerId: "beta", providerName: "Beta Travel", price: 190, currency: "USD" },
+  ]);
+  const serialized = JSON.stringify(choices[0].choice.deals);
+  assert.doesNotMatch(serialized, /Duffel|providerOfferId|alpha-low-secret|beta-secret|private-no-handoff|https:\/\//);
+});
+
+test("fare choices are not manufactured into booking deals", () => {
+  process.env.FLIGHT_HANDOFF_PARTNERS_JSON = JSON.stringify({ "book.partner.test": "Real Seller" });
+  const choices = buildMaterialFareChoices([
+    fixture({ id: "basic", fareBrandName: "Basic", partnerRedirectUrl: "https://book.partner.test/basic" }),
+    fixture({ id: "main", providerOfferId: "main", fareBrandName: "Main Cabin", price: 230 }),
+    fixture({ id: "flex", providerOfferId: "flex", fareBrandName: "Flexible", price: 280 }),
+  ]);
+  assert.equal(choices.length, 3);
+  assert.deepEqual(choices.map(({ choice }) => choice.deals.length), [1, 0, 0]);
+});
+
 test("standalone UI renders every leg and segment from selected offer and uses attested CTA copy", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   for (const contract of [
@@ -365,7 +397,7 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     "const flight = selectedOffer",
     '"Continue to checkout"',
     'aria-disabled={!canContinue || redirecting}',
-    "id: selectedOffer.id",
+    "id: offerId",
     'role="radiogroup"',
     'role="radio"',
     "term.semantic === \"positive\" ? Check",
@@ -373,7 +405,7 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     'tabIndex={selected ? 0 : -1}',
     "selectedFare?.label",
     "selectedOffer.price",
-    "<FarePanel activeTab={activeTab} offer={selectedOffer}",
+    "<FarePanel activeTab={activeTab} fare={selectedFare} offer={selectedOffer}",
     "Operated by {segment.operatingCarrier.name}",
     "Technical stop at {stop.airport.iataCode}",
     "Optional extra",
@@ -429,24 +461,24 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.match(source, /pb-\[calc\(6\.75rem\+env\(safe-area-inset-bottom\)\)\].*lg:pb-16/s);
   assert.match(source, /role="tablist"/);
   assert.equal((source.match(/role="tab"/g) || []).length, 1);
-  assert.deepEqual(["Fare details", "Fare conditions", "Optional extras"].map((label) => source.includes(`label: "${label}"`)), [true, true, true]);
-  assert.match(source, /useState<FareTab>\("details"\)/);
+  assert.deepEqual(["Compare deals", "Fare details", "Fare conditions", "Optional extras"].map((label) => source.includes(`label: "${label}"`)), [true, true, true, true]);
+  assert.match(source, /useState<FareTab>\("deals"\)/);
   assert.match(source, /role="tabpanel"/);
   assert.match(source, /ArrowRight.*ArrowLeft/s);
-  assert.match(source, /grid min-w-0 grid-cols-3 sm:flex sm:flex-nowrap/);
-  assert.match(source, /min-w-0 whitespace-nowrap border-b-2 px-0 text-center text-\[11px\]/);
-  assert.doesNotMatch(source, /role="tablist"[^>]*overflow-x-auto/);
+  assert.match(source, /flex min-w-0 overflow-x-auto/);
+  assert.match(source, /shrink-0 whitespace-nowrap border-b-2 px-3/);
+  assert.match(source, /overflow-x-auto \[scrollbar-width:none\]/);
   assert.doesNotMatch(source, />Selected<\/span>/);
   assert.match(source, /grid-cols-\[minmax\(0,1fr\)_minmax\(82px,1\.1fr\)_minmax\(0,1fr\)\]/);
   assert.match(source, /border-dashed border-\[#075EE8\]/);
   assert.match(source, /offerAirlineLogo=\{flight\.airlineLogo\}/);
   assert.match(source, /<SegmentAirlineMark segment=\{segment\}/);
   assert.match(source, /onError=\{\(\) => setLogoFailed\(true\)\}/);
-  assert.match(source, /fareChoices\.length === 1 \? "max-w-\[310px\]"/);
+  assert.match(source, /fareChoices\.length === 1 \? "max-w-\[270px\]"/);
   assert.match(source, /fareChoices\.length === 2 \? "sm:grid-cols-2 lg:max-w-\[632px\]"/);
   assert.match(source, /md:grid-cols-3 lg:max-w-\[954px\]/);
   assert.match(source, /xl:max-w-\[1276px\] xl:grid-cols-4/);
-  assert.match(source, /: "w-\[min\(100%,310px\)\]"/);
+  assert.match(source, /: "w-\[min\(100%,270px\)\] max-w-\[270px\]"/);
   assert.doesNotMatch(source, /: "w-full"/);
   assert.doesNotMatch(source, /min-h-\[126px\]/);
   assert.doesNotMatch(source, /min-h-\[(?:1[2-9]\d|[2-9]\d\d)px\]/);

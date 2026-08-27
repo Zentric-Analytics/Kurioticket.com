@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import type {
+  FlightDetailsDeal,
   FlightDetailsFareChoice,
   FlightDetailsSuccess,
 } from "@/lib/flights/flightDetailsContract";
@@ -173,6 +174,7 @@ export function buildMaterialFareChoices(
   { upsellOfferIds = new Set<string>(), selectedProviderOfferId }: { upsellOfferIds?: ReadonlySet<string>; selectedProviderOfferId?: string } = {},
 ): Array<{
   source: NormalizedFlightResult;
+  memberOffers: NormalizedFlightResult[];
   memberProviderOfferIds: string[];
   choice: FlightDetailsFareChoice;
 }> {
@@ -187,6 +189,25 @@ export function buildMaterialFareChoices(
         candidate.price < lowest.price ? candidate : lowest,
       );
       const handoff = resolveFlightHandoff(source);
+      const dealsByProvider = new Map<string, FlightDetailsDeal>();
+      for (const offer of group) {
+        const dealHandoff = resolveFlightHandoff(offer);
+        if (!dealHandoff || !offer.id || !Number.isFinite(offer.price) || offer.price <= 0) continue;
+        const providerIdentity = canonical(dealHandoff.providerName);
+        const deal: FlightDetailsDeal = {
+          key: `deal-${createHash("sha256").update(`${key}|${providerIdentity}`).digest("base64url").slice(0, 16)}`,
+          offerId: offer.id,
+          providerName: dealHandoff.providerName,
+          price: offer.price,
+          currency: offer.currency,
+        };
+        const current = dealsByProvider.get(providerIdentity);
+        if (!current || deal.price < current.price || (deal.price === current.price && deal.offerId.localeCompare(current.offerId) < 0))
+          dealsByProvider.set(providerIdentity, deal);
+      }
+      const deals = [...dealsByProvider.values()].sort((left, right) =>
+        left.price - right.price || left.providerName.localeCompare(right.providerName),
+      );
       const choice: FlightDetailsFareChoice = {
         key: `fare-${createHash("sha256").update(key).digest("base64url").slice(0, 16)}`,
         label: fareLabel(source),
@@ -196,9 +217,11 @@ export function buildMaterialFareChoices(
         handoff: handoff
           ? { available: true, providerName: handoff.providerName }
           : { available: false },
+        deals,
       };
       return {
         source,
+        memberOffers: group,
         memberProviderOfferIds: group.flatMap(({ providerOfferId }) =>
           providerOfferId ? [providerOfferId] : [],
         ),
@@ -289,7 +312,7 @@ export async function buildStandaloneFlightDetails({
     fareChoices.find(({ choice }) => choice.selectedOffer) ??
     fareChoices[0];
   if (!initial) return { status: "unavailable", error: unavailableMessage };
-  await rememberFlights([selectedOffer, ...upsells, ...refreshedOffers.slice(1)], now, search);
+  await rememberFlights(fareChoices.flatMap(({ memberOffers }) => memberOffers), now, search);
   console.info("[flight-details:fare-discovery]", {
     upsellAttempted: Boolean(selectedOffer.providerOfferId),
     providerStatusCategory: upsellResponse?.errorCategory ?? upsellResponse?.status ?? "not_attempted",
