@@ -63,8 +63,8 @@ test("flight metadata uses authoritative provider values and safe fallbacks", ()
 });
 
 test("baggage summary only claims inclusions supported by provider copy", () => {
-  assert.equal(summarizeBaggage("Carry-on and 1 checked bag included"), "Carry-on + checked bag");
-  assert.equal(summarizeBaggage("Cabin baggage included"), "Carry-on included");
+  assert.equal(summarizeBaggage("Carry-on and 1 checked bag included"), "Bags included");
+  assert.equal(summarizeBaggage("Cabin baggage included"), "Carry-on");
   assert.equal(summarizeBaggage("Baggage subject to airline policy"), null);
   assert.equal(summarizeBaggage("No baggage included"), "Not included");
 });
