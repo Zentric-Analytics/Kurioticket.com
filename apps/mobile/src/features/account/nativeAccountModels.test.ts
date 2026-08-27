@@ -98,7 +98,7 @@ test("travel screen keeps the explicit airport draft and persistence payload iso
   assert.match(screen, /selectedLiveAirport\?\.code === value\.homeAirport\.toUpperCase\(\)/);
 });
 
-test("travel screen exposes local search and race-safe save feedback states", async () => {
+test("travel screen exposes local search and button-owned save feedback states", async () => {
   const { readFile } = await import("node:fs/promises");
   const source = await readFile("src/features/account/NativeAccountScreens.tsx", "utf8");
   const screen = source.slice(source.indexOf("export function TravelPreferencesScreen"), source.indexOf("const s=StyleSheet.create"));
@@ -110,8 +110,15 @@ test("travel screen exposes local search and race-safe save feedback states", as
   assert.match(screen, /airportStatus === "searching"/);
   assert.match(screen, /airportStatus === "success" && airportResults\.length === 0/);
   assert.match(screen, /airportStatus === "error"/);
-  assert.match(screen, /showConfirmation\("saved"\)/);
-  assert.match(screen, /showConfirmation\("reverted"\)/);
-  assert.match(screen, /setConfirmation\(current => current === next \? null : current\)/);
-  assert.match(screen, /clearConfirmation\(\); commit\(editDraft/);
+  assert.match(screen, /state\.saving \? t\("saving"\) : saveSuccess \? `✓ \$\{t\("saved"\)\}` : t\("save"\)/);
+  assert.match(screen, /accessibilityLabel=\{saveSuccess \? t\("saved"\) : undefined\}/);
+  assert.doesNotMatch(screen, /saveSuccess[^?]*\?\s*<Text/);
+  assert.doesNotMatch(screen, /t\("travelSaved"\)/);
+  assert.match(screen, /showRevertConfirmation\(\)/);
+  assert.match(screen, /revertConfirmation \? <Text[^>]*>\{t\("travelReverted"\)\}/);
+  assert.match(screen, /clearSaveSuccess\(\); commit\(editDraft/);
+  assert.match(screen, /if \(!isDirty\(finished\)\) showSaveSuccess\(\)/);
+  assert.match(screen, /saveSuccessTimer\.current = setTimeout\([\s\S]*?setSaveSuccess\(false\);[\s\S]*?\}, 1500\)/);
+  assert.match(screen, /if \(saveSuccessTimer\.current\) clearTimeout\(saveSuccessTimer\.current\)/);
+  assert.match(screen, /return \(\) => \{[\s\S]*?clearTimeout\(saveSuccessTimer\.current\)/);
 });

@@ -18,7 +18,7 @@ import { areAllEmailCategoriesEnabled, defaultEmailPreferences, normalizeLoadedE
 function Header({ title }: { title: string }) { const { theme } = useAppTheme(); const { t } = useMobileLocalization(); return <View style={s.header}><Pressable accessibilityRole="button" accessibilityLabel={t("back")} onPress={() => { Keyboard.dismiss(); router.back(); }} style={s.hit}><FlowIcon name="back" color={theme.icon} /></Pressable><Text accessibilityRole="header" style={[s.title, { color: theme.text }]}>{title}</Text><View style={s.hit} /></View>; }
 function Shell({ title, children }: { title: string; children: React.ReactNode }) { const { theme } = useAppTheme(); return <SafeAreaView style={[s.safe, { backgroundColor: theme.background }]} edges={["top", "bottom"]}><Header title={title}/>{children}</SafeAreaView>; }
 function Field({ label, ...props }: { label: string } & React.ComponentProps<typeof TextInput>) { const { theme } = useAppTheme(); return <View style={s.field}><Text style={[s.label, { color: theme.text }]}>{label}</Text><TextInput accessibilityLabel={label} placeholderTextColor={theme.muted} style={[s.input, props.multiline && s.multiline, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]} {...props}/></View>; }
-function Button({ label, onPress, disabled = false }: { label: string; onPress: () => void; disabled?: boolean }) { return <Pressable accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled} onPress={onPress} style={[s.button, disabled && s.disabled]}><Text style={s.buttonText}>{label}</Text></Pressable>; }
+function Button({ label, onPress, disabled = false, accessibilityLabel }: { label: string; onPress: () => void; disabled?: boolean; accessibilityLabel?: string }) { return <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel} accessibilityState={{ disabled }} disabled={disabled} onPress={onPress} style={[s.button, disabled && s.disabled]}><Text style={s.buttonText}>{label}</Text></Pressable>; }
 function ErrorNotice({ text, retry }: { text: string; retry?: () => void }) { const { t } = useMobileLocalization(); return <View><Text accessibilityRole="alert" style={s.error}>{text}</Text>{retry ? <Pressable accessibilityRole="button" onPress={retry} style={s.linkHit}><Text style={s.link}>{t("retry")}</Text></Pressable> : null}</View>; }
 async function requireAccount(returnTo: "/email-preferences" | "/travel-preferences") { if (await readSession().catch(() => null)) return true; router.replace(signInHref(returnTo)); return false; }
 
@@ -57,21 +57,31 @@ export function TravelPreferencesScreen() {
   const [airportResults, setAirportResults] = useState<TravelAirportSuggestion[]>([]);
   const [airportSearchStatus, setAirportSearchStatus] = useState<"idle" | "searching" | "success" | "error">("idle");
   const [selectedLiveAirport, setSelectedLiveAirport] = useState<TravelAirportSuggestion | null>(null);
-  const [confirmation, setConfirmation] = useState<"saved" | "reverted" | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [revertConfirmation, setRevertConfirmation] = useState(false);
   const airportRequestVersion = useRef(0);
-  const confirmationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveSuccessTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const revertConfirmationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const clearConfirmation = useCallback(() => {
-    if (confirmationTimer.current) clearTimeout(confirmationTimer.current);
-    confirmationTimer.current = null;
-    setConfirmation(null);
+  const clearSaveSuccess = useCallback(() => {
+    if (saveSuccessTimer.current) clearTimeout(saveSuccessTimer.current);
+    saveSuccessTimer.current = null;
+    setSaveSuccess(false);
   }, []);
-  const showConfirmation = useCallback((next: "saved" | "reverted") => {
-    if (confirmationTimer.current) clearTimeout(confirmationTimer.current);
-    setConfirmation(next);
-    confirmationTimer.current = setTimeout(() => {
-      confirmationTimer.current = null;
-      setConfirmation(current => current === next ? null : current);
+  const showSaveSuccess = useCallback(() => {
+    if (saveSuccessTimer.current) clearTimeout(saveSuccessTimer.current);
+    setSaveSuccess(true);
+    saveSuccessTimer.current = setTimeout(() => {
+      saveSuccessTimer.current = null;
+      setSaveSuccess(false);
+    }, 1500);
+  }, []);
+  const showRevertConfirmation = useCallback(() => {
+    if (revertConfirmationTimer.current) clearTimeout(revertConfirmationTimer.current);
+    setRevertConfirmation(true);
+    revertConfirmationTimer.current = setTimeout(() => {
+      revertConfirmationTimer.current = null;
+      setRevertConfirmation(false);
     }, 2000);
   }, []);
   const closeAirportSelector = useCallback(() => {
@@ -107,8 +117,10 @@ export function TravelPreferencesScreen() {
     void load();
     return () => {
       airportRequestVersion.current += 1;
-      if (confirmationTimer.current) clearTimeout(confirmationTimer.current);
-      confirmationTimer.current = null;
+      if (saveSuccessTimer.current) clearTimeout(saveSuccessTimer.current);
+      saveSuccessTimer.current = null;
+      if (revertConfirmationTimer.current) clearTimeout(revertConfirmationTimer.current);
+      revertConfirmationTimer.current = null;
       stateRef.current = invalidateRequests(stateRef.current);
     };
   }, [load, stateRef]));
@@ -142,20 +154,21 @@ export function TravelPreferencesScreen() {
   const selectedAirport = localAirport ?? (selectedLiveAirport?.code === value.homeAirport.toUpperCase() ? selectedLiveAirport : undefined);
   const airportSearchValue = selectedAirport ? `${selectedAirport.code} ${selectedAirport.airport}` : value.homeAirport;
   const airlineResults = useMemo(() => airlineOpen && airlineQuery.trim() && value.preferredAirlines.length < 10 ? filterAirlinePreferences(airlines, airlineQuery, value.preferredAirlines) : [], [airlineOpen, airlineQuery, value.preferredAirlines]);
-  const change = (next: TravelPreferences) => { clearConfirmation(); commit(editDraft(stateRef.current, next)); };
+  const change = (next: TravelPreferences) => { clearSaveSuccess(); commit(editDraft(stateRef.current, next)); };
   const dirty = isDirty(state);
   const revert = () => {
     if (!dirty || state.saving) return;
     setErrorAction(null); commit({ ...editDraft(stateRef.current, state.saved), error: "" });
-    closeSelectors(); Keyboard.dismiss(); showConfirmation("reverted");
+    closeSelectors(); Keyboard.dismiss(); showRevertConfirmation();
   };
   const save = async () => {
     const started = beginSave(stateRef.current); if (!started) return;
-    clearConfirmation(); setErrorAction(null); commit(started.state);
+    clearSaveSuccess(); setErrorAction(null); commit(started.state);
     try {
       const response = await travelApi.updateTravelPreferences({ homeAirport: started.value.homeAirport, preferredAirlines: started.value.preferredAirlines });
-      commit(finishSave(stateRef.current, started.token, started.editVersion, response.preferences));
-      setErrorAction(null); closeSelectors(); Keyboard.dismiss(); showConfirmation("saved");
+      const finished = commit(finishSave(stateRef.current, started.token, started.editVersion, response.preferences));
+      setErrorAction(null); closeSelectors(); Keyboard.dismiss();
+      if (!isDirty(finished)) showSaveSuccess();
     } catch (error) {
       setErrorAction("save");
       commit(failSave(stateRef.current, started.token, error instanceof TravelApiError ? error.message : t("travelSaveError")));
@@ -181,9 +194,9 @@ export function TravelPreferencesScreen() {
       {value.preferredAirlines.length >= 10 ? <Text accessibilityRole="alert" style={s.error}>{t("airlineMaximum")}</Text> : null}
     </View>
     {state.error ? <ErrorNotice text={state.error} retry={errorAction === "save" ? () => void save() : () => void load()} /> : null}
-    {confirmation ? <Text accessibilityLiveRegion="polite" style={s.success}>{confirmation === "saved" ? t("travelSaved") : t("travelReverted")}</Text> : null}
+    {revertConfirmation ? <Text accessibilityLiveRegion="polite" style={s.success}>{t("travelReverted")}</Text> : null}
     {dirty ? <Text style={[s.help, { color: theme.muted }]}>{t("unsavedChanges")}</Text> : null}
-    <View style={s.travelActions}><Pressable accessibilityRole="button" accessibilityState={{ disabled: !dirty || state.saving }} disabled={!dirty || state.saving} onPress={revert} style={[s.secondaryButton, { borderColor: theme.border }, (!dirty || state.saving) && s.disabled]}><Text style={[s.secondaryButtonText, { color: theme.text }]}>{t("revertChanges")}</Text></Pressable><View style={s.actionButton}><Button label={state.saving ? t("saving") : t("save")} onPress={() => void save()} disabled={!dirty || state.saving} /></View></View>
+    <View style={s.travelActions}><Pressable accessibilityRole="button" accessibilityState={{ disabled: !dirty || state.saving }} disabled={!dirty || state.saving} onPress={revert} style={[s.secondaryButton, { borderColor: theme.border }, (!dirty || state.saving) && s.disabled]}><Text style={[s.secondaryButtonText, { color: theme.text }]}>{t("revertChanges")}</Text></Pressable><View style={s.actionButton}><Button label={state.saving ? t("saving") : saveSuccess ? `✓ ${t("saved")}` : t("save")} accessibilityLabel={saveSuccess ? t("saved") : undefined} onPress={() => void save()} disabled={!dirty || state.saving} /></View></View>
   </>}</ScrollView></Shell>;
 }
 const s=StyleSheet.create({safe:{flex:1},flex:{flex:1},header:{minHeight:62,flexDirection:"row",alignItems:"center"},hit:{width:52,minHeight:52,alignItems:"center",justifyContent:"center"},title:{flex:1,textAlign:"center",fontSize:22,lineHeight:28,fontWeight:"800"},content:{padding:18,paddingBottom:40,gap:12},intro:{fontSize:15,lineHeight:22},field:{gap:6},label:{fontSize:14,fontWeight:"800",marginTop:5},input:{minHeight:50,borderWidth:1,borderRadius:12,paddingHorizontal:14,fontSize:16},multiline:{minHeight:130,textAlignVertical:"top",paddingTop:13},card:{borderWidth:1,borderRadius:14,padding:15,gap:10},row:{flexDirection:"row",alignItems:"center",gap:10},question:{flex:1,fontSize:16,lineHeight:22,fontWeight:"700"},answer:{fontSize:15,lineHeight:22},empty:{textAlign:"center",padding:28},button:{minHeight:52,borderRadius:12,backgroundColor:"#0754F7",alignItems:"center",justifyContent:"center",paddingHorizontal:18},buttonText:{color:"white",fontSize:16,fontWeight:"800"},disabled:{opacity:.45},error:{color:"#D92D20",fontSize:14,lineHeight:20},success:{color:"#16803C",fontWeight:"700"},link:{color:"#0754F7",fontWeight:"700"},linkHit:{minHeight:44,justifyContent:"center",alignSelf:"flex-start"},help:{fontSize:13,lineHeight:19},wrap:{flexDirection:"row",flexWrap:"wrap",gap:8},chip:{minHeight:44,borderWidth:1,borderRadius:22,paddingHorizontal:14,alignItems:"center",justifyContent:"center"},center:{flex:1,padding:24,alignItems:"center",justifyContent:"center",gap:18},switchRow:{minHeight:76,borderWidth:1,borderRadius:14,padding:14,flexDirection:"row",alignItems:"center",gap:12},option:{minHeight:56,borderBottomWidth:StyleSheet.hairlineWidth,paddingVertical:9,justifyContent:"center"},emailSectionGroup:{marginTop:16},emailSection:{fontSize:12,lineHeight:16,fontWeight:"800",letterSpacing:.6,marginBottom:4},emailRow:{minHeight:76,paddingVertical:12,flexDirection:"row",alignItems:"flex-start",gap:12,borderBottomWidth:StyleSheet.hairlineWidth},emailRowCopy:{flex:1,minWidth:0,gap:2},emailDescription:{textAlign:"left"},emailSwitch:{flexShrink:0},masterRow:{marginTop:16,paddingVertical:12,flexDirection:"row",alignItems:"flex-start",gap:12,borderTopWidth:StyleSheet.hairlineWidth},preferenceSection:{gap:8,marginBottom:8},sectionHeading:{flexDirection:"row",alignItems:"center",justifyContent:"space-between"},selector:{minHeight:54,borderWidth:1,borderRadius:10,paddingHorizontal:12,justifyContent:"center"},selectorInput:{minHeight:52,fontSize:16,padding:0},selectedAirport:{flexDirection:"row",alignItems:"center",paddingVertical:10},selectorValue:{flex:1,gap:2},selectorPrimary:{fontSize:16,fontWeight:"800"},selectorSecondary:{fontSize:14,lineHeight:19,fontWeight:"600"},clearButton:{width:40,minHeight:44,alignItems:"flex-end",justifyContent:"center"},clearIcon:{fontSize:26,lineHeight:28},suggestions:{borderWidth:1,borderTopWidth:0,paddingHorizontal:12},subtleAction:{minHeight:40,justifyContent:"center"},multiSelector:{paddingVertical:9,flexDirection:"row",flexWrap:"wrap",alignItems:"center",gap:7},selectedChip:{minHeight:36,borderWidth:1,borderRadius:18,paddingHorizontal:11,justifyContent:"center",maxWidth:"100%"},chipText:{fontSize:14,fontWeight:"600"},multiInput:{minWidth:150,flexGrow:1,minHeight:38,fontSize:16,padding:0},travelActions:{flexDirection:"row",gap:10,marginTop:4},secondaryButton:{flex:1,minHeight:48,borderWidth:1,borderRadius:10,alignItems:"center",justifyContent:"center",paddingHorizontal:10},secondaryButtonText:{fontSize:14,fontWeight:"800",textAlign:"center"},actionButton:{flex:1}});
