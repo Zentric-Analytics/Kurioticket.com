@@ -9,6 +9,7 @@ import {
   mobileTranslationKeys,
   normalizeMobileLocale,
 } from "./mobileLocalizationCatalog";
+import { translatedMobileValue } from "./mobileTranslationCorrections";
 
 const expectedLocales = ["en-us", "es-es", "fr", "de-de", "it-it", "pt-br", "nl", "ar", "zh-cn", "ja", "ko", "hi", "tr", "pl", "sv", "id", "th", "vi"] as const;
 
@@ -70,5 +71,12 @@ test("known expanded-dictionary English placeholders are localized", () => {
   assert.deepEqual(
     [dictionaries["pt-br"].emailPreferences, dictionaries["pt-br"].contactUs, dictionaries["pt-br"].supportMessage],
     ["Preferências de e-mail", "Fale conosco", "Como podemos ajudar?"],
+  );
+});
+
+test("Portuguese support introduction is natural in the runtime translation path", () => {
+  assert.equal(
+    translatedMobileValue("pt-br", "supportIntro", dictionaries["pt-br"].supportIntro),
+    "Diga-nos com o que você precisa de ajuda e inclua detalhes de rota, hotel, alerta ou conta que possam nos ajudar a entender o problema.",
   );
 });
