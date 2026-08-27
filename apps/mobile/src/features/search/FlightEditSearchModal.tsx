@@ -21,7 +21,7 @@ export function FlightEditSearchModal({ visible, params, onClose }: Props) {
 
   return (
     <Modal transparent animationType="none" visible onRequestClose={onClose} statusBarTranslucent>
-      <KeyboardAvoidingView style={styles.viewport} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <KeyboardAvoidingView pointerEvents={motion.pointerEvents} style={styles.viewport} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <SafeAreaView style={styles.backdrop} edges={["top", "bottom"]}>
           <Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill, styles.scrim, motion.backdropStyle]} />
           <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Close edit search" onPress={onClose} />

@@ -35,7 +35,7 @@ export function DateRangeSheet({ visible, title, startLabel, endLabel, startDate
   const valid = Boolean(draftStart && draftEnd && (endMustBeAfterStart ? draftEnd > draftStart : draftEnd >= draftStart));
   const activePart = activeDateRangePart(draftStart, draftEnd);
   return <Modal transparent animationType="none" visible onRequestClose={onCancel}>
-    <View style={styles.modalRoot}><Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill, styles.scrim, motion.backdropStyle]}/>
+    <View pointerEvents={motion.pointerEvents} style={styles.modalRoot}><Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill, styles.scrim, motion.backdropStyle]}/>
       <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel={`Cancel ${title.toLowerCase()} changes`} onPress={onCancel}/>
       <SafeAreaView edges={["bottom"]} style={styles.safeLayer} pointerEvents="box-none"><Animated.View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: ft.colors.surface }, motion.sheetStyle]}>
         <PickerSheetHeader title={title} onClose={onCancel}/>
