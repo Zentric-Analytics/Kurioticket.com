@@ -7,6 +7,12 @@ const source = readFileSync(
   "utf8",
 );
 
+test("maps every supported hotel amenity icon including the dedicated bar key", () => {
+  assert.match(source, /const amenityIcons: Record<HotelAmenityIconKey, LucideIcon>/);
+  assert.match(source, /bar: Wine/);
+  assert.match(source, /\bWine\b/);
+});
+
 test("supports embedded and standalone presentations with a flat root", () => {
   assert.match(source, /embedded\?: boolean/);
   assert.match(source, /embedded = false/);
