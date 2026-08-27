@@ -67,3 +67,9 @@ test("traveler density is opt-in and Done uses the local Kurioticket blue treatm
   assert.match(source, /h-12 w-full rounded-\[11px\] bg-\[#004BB8\].*text-white/);
   assert.match(source, /onClick=\{\(\) => setTravelerPickerOpen\(false\)\}>Done/);
 });
+
+test("edit search uses canonical date display helpers instead of raw ISO values", () => {
+  assert.match(source, /formatTravelDateRangeDisplay\(draft\.departureDate, draft\.returnDate, locale\)/);
+  assert.match(source, /formatTravelDateDisplay\(draft\.departureDate, locale\)/);
+  assert.doesNotMatch(source, /`\$\{draft\.departureDate\} – \$\{draft\.returnDate\}`/);
+});

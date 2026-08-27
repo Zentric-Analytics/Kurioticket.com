@@ -44,6 +44,7 @@ import {
   useHotelDestinationAutocomplete,
 } from "@/components/search/useHotelDestinationAutocomplete";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import { formatTravelDateDisplay, formatTravelDateRangeDisplay } from "@/lib/dateFormatting/travelDateDisplay";
 import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
 import {
   buildHotelRecentSearch,
@@ -124,18 +125,6 @@ const formatWeekdays = (locale: string) => {
       new Date(2024, 0, 7 + day),
     ),
   );
-};
-
-const formatShortDate = (value: string, locale: string) => {
-  if (!value) return "";
-
-  const [year, month, day] = value.split("-").map(Number);
-  if (!year || !month || !day) return "";
-
-  return new Intl.DateTimeFormat(locale, {
-    month: "short",
-    day: "numeric",
-  }).format(new Date(year, month - 1, day));
 };
 
 const clampCount = (value: string, min: number, max: number) => {
@@ -316,21 +305,9 @@ export function HotelSearchBar({
   );
 
   const dateSummary = useMemo(() => {
-    const formattedCheckIn = formatShortDate(checkIn, calendarLocale);
-    const formattedCheckOut = formatShortDate(checkOut, calendarLocale);
-
-    if (!formattedCheckIn) {
-      return t("hotelSearchDatePlaceholder");
-    }
-
-    if (formattedCheckOut) {
-      return formatHotelSearchTemplate(t("hotelSearch.dateRange"), {
-        checkIn: formattedCheckIn,
-        checkOut: formattedCheckOut,
-      });
-    }
-
-    return formattedCheckIn;
+    const range = formatTravelDateRangeDisplay(checkIn, checkOut, calendarLocale);
+    if (range) return range;
+    return formatTravelDateDisplay(checkIn, calendarLocale) ?? t("hotelSearchDatePlaceholder");
   }, [calendarLocale, checkIn, checkOut, t]);
 
   const totalHotelGuests = hotelAdultCount + hotelChildCount;

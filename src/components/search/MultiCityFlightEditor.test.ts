@@ -62,3 +62,11 @@ test("multi-city keeps one active picker and accessible portalled controls", () 
   assert.match(editor, /event\.key === "Escape"/);
   assert.match(editor, /window\.requestAnimationFrame\(\(\) => launcherRef\.current\?\.focus/);
 });
+
+test("each leg has an accessible route-boundary swap and canonical displayed date", () => {
+  assert.match(editor, /data-multi-city-route-pair/);
+  assert.match(editor, /data-multi-city-swap-control/);
+  assert.match(editor, /Swap origin and destination for \$\{flightLabel\(index\)\}/);
+  assert.match(editor, /<ArrowRightLeft className="h-5 w-5" aria-hidden="true"/);
+  assert.match(editor, /formatTravelDateDisplay\(value, locale\)/);
+});
