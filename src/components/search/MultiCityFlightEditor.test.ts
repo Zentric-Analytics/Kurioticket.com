@@ -68,5 +68,10 @@ test("each leg has an accessible route-boundary swap and canonical displayed dat
   assert.match(editor, /data-multi-city-swap-control/);
   assert.match(editor, /Swap origin and destination for \$\{flightLabel\(index\)\}/);
   assert.match(editor, /<ArrowRightLeft className="h-5 w-5" aria-hidden="true"/);
+  assert.match(
+    editor,
+    /absolute left-1\/2 top-1\/2 z-10[^"]*-translate-x-1\/2 -translate-y-1\/2/,
+  );
+  assert.doesNotMatch(editor, /inset-inline-start-1\/2|rtl:translate-x-1\/2/);
   assert.match(editor, /formatTravelDateDisplay\(value, locale\)/);
 });
