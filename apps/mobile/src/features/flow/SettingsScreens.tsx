@@ -8,6 +8,7 @@ import { mobileLocales } from "../../localization/mobileLocalizationCatalog";
 import { useAppTheme } from "../../theme/AppTheme";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { flowColors } from "./flowStyles";
+import { getSelectableCurrencyCodes } from "../currency/currencySelectionModel";
 
 function Header({ title }: { title: string }) { const { theme } = useAppTheme(); return <View style={[styles.header, { borderBottomColor: theme.border }]}><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.touch}><FlowIcon name="back" color={theme.icon} /></Pressable><Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>{title}</Text><View style={styles.touch} /></View>; }
 type RowProps = { label: string; icon: FlowIconName; value?: string; onPress: () => void };
@@ -19,7 +20,7 @@ export function SettingsScreen() {
 }
 export function CurrencyScreen() {
   const { theme } = useAppTheme(); const { currency: selected, setCurrency, t } = useMobileLocalization(); const [currencies, setCurrencies] = useState<string[]>([]); const [error, setError] = useState("");
-  useEffect(() => { void travelApi.currencyRates().then((payload) => setCurrencies(Object.keys(payload.rates).sort())).catch(() => setError("Unable to load current exchange rates. Try again.")); }, []);
+  useEffect(() => { void travelApi.currencyRates().then((payload) => setCurrencies(getSelectableCurrencyCodes(payload.rates))).catch(() => setError("Unable to load current exchange rates. Try again.")); }, []);
   const select = async (currency: string) => { setError(""); try { await setCurrency(currency); } catch { setError("Currency was saved for offline use but could not be synchronized."); } };
   return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}><Header title={t("currency")} /><ScrollView alwaysBounceVertical={false} bounces={false} overScrollMode="never" contentContainerStyle={styles.content}><Text style={{ color: theme.muted }}>Choose the currency used for price display.</Text>{error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}<View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>{currencies.map((currency) => <Pressable key={currency} accessibilityRole="radio" accessibilityState={{ checked: selected === currency }} onPress={() => void select(currency)} style={[styles.row, { borderBottomColor: theme.border }]}><Text style={[styles.rowText, { color: theme.text }]}>{currency}</Text>{selected === currency ? <FlowIcon name="check" color={flowColors.blue} /> : null}</Pressable>)}</View></ScrollView></SafeAreaView>;
 }
