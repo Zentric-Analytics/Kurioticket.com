@@ -31,27 +31,26 @@ test("section navigator links to visible anchored sections and tracks natural sc
 });
 
 test("comparison presents Kurioticket as a normalized provider without development placeholders", () => {
-  assert.match(standalone, /totalPrice=\{props\.totalDisplayPrice\}/);
+  assert.doesNotMatch(standalone, /totalPrice=\{props\.totalDisplayPrice\}/);
   assert.match(standalone, /nightlyPrice=\{props\.nightlyDisplayPrice\}/);
   assert.match(standalone, /stayContext=\{props\.staySummary/);
   assert.match(standalone, /offers=\{\[\]\}/);
   assert.match(compare, /kurioticket-logo-primary-light-bg\.svg/);
   assert.match(compare, />Compare prices<\/h2>/);
   assert.match(compare, /\{stayContext\}/);
-  assert.match(compare, /\{totalPrice\.formatted\}/);
+  assert.doesNotMatch(compare, /totalPrice\.formatted|>total</);
   assert.match(compare, /perNightText\.replace/);
   assert.match(standalone, /viewDealText="View deal"/);
   assert.match(compare, /\{viewDealText\}/);
   assert.match(compare, /onViewRoomOptions\(event\.currentTarget\)/);
   assert.match(standalone, /amenities=\{props\.amenityItems\}/);
   assert.match(compare, /amenities: amenities\.slice\(0, 3\)/);
-  assert.match(compare, /data-provider-offer-upper/);
-  assert.match(compare, /role="separator"/);
-  assert.match(compare, /data-provider-offer-divider/);
-  assert.match(compare, /data-provider-offer-lower/);
+  assert.match(compare, /data-provider-brand/);
+  assert.match(compare, /data-provider-price-action/);
+  assert.doesNotMatch(compare, /role="separator"|data-provider-offer-divider|border-t/);
   assert.match(compare, /data-provider-amenities/);
-  assert.match(compare, /offer\.amenities\?\.map/);
-  assert.doesNotMatch(compare, /<HotelAmenityList|<ul|<li/);
+  assert.match(compare, /<HotelAmenityList/);
+  assert.match(compare, /items=\{offer\.amenities \?\? \[\]\}/);
   assert.equal(compare.match(/\{stayContext\}/g)?.length, 1);
   assert.match(compare, /offers\.map/);
   assert.doesNotMatch(compare, /stayFacts|nightText|Estimated stay price|Estimated for your selected stay|Planning estimate|Additional booking-site prices|Live booking-site rates are not connected yet|Comparable provider offers will appear here when available/);

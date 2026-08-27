@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { MouseEvent, ReactNode } from "react";
 
+import { HotelAmenityList } from "@/components/results/HotelAmenityList";
 import type { HotelAmenityPresentationItem } from "@/components/results/hotelAmenityPresentation";
 import type { HotelComparisonOffer } from "./hotelDetailsPresentation";
 
@@ -11,16 +12,15 @@ type ProviderOfferPresentation = {
   providerName: string;
   providerLogoUrl?: string;
   amenities?: HotelAmenityPresentationItem[];
-  totalPrice: ReactNode;
-  nightlyPrice?: ReactNode;
+  price: ReactNode;
+  secondaryPrice?: ReactNode;
   action: ReactNode;
 };
 
 function ProviderOffer({ offer }: { offer: ProviderOfferPresentation }) {
   return (
-    <article className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 sm:px-5 sm:py-4" data-provider-offer>
-      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(8.75rem,auto)] items-center gap-3 sm:gap-6" data-provider-offer-upper>
-        <div className="min-w-0 self-start sm:self-center">
+    <article className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(8.5rem,auto)] gap-x-3 gap-y-3 rounded-xl border border-slate-200 bg-white px-4 py-4 sm:gap-x-6 sm:px-5" data-provider-offer>
+        <div className="min-w-0 self-center" data-provider-brand>
           {offer.providerLogoUrl ? (
             <Image
               src={offer.providerLogoUrl}
@@ -34,29 +34,24 @@ function ProviderOffer({ offer }: { offer: ProviderOfferPresentation }) {
           )}
         </div>
 
-        <div className="min-w-0 text-right sm:min-w-44">
-          <div>{offer.totalPrice}</div>
-          {offer.nightlyPrice ? <div className="mt-0.5">{offer.nightlyPrice}</div> : null}
+        <div className="row-span-2 flex min-w-0 flex-col items-end justify-center gap-2.5 text-right sm:min-w-44" data-provider-price-action>
+          <div>{offer.price}</div>
+          {offer.secondaryPrice ? <div>{offer.secondaryPrice}</div> : null}
+          <div className="shrink-0">{offer.action}</div>
         </div>
-      </div>
-
-      <div className="my-3 border-t border-slate-200" role="separator" aria-orientation="horizontal" data-provider-offer-divider />
-
-      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:gap-5" data-provider-offer-lower>
-        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium leading-4 text-slate-600" data-provider-amenities>
-          {offer.amenities?.map((amenity) => (
-            <span key={amenity.key}>{amenity.label}</span>
-          ))}
+        <div className="col-span-2 min-w-0 sm:col-span-1" data-provider-amenities>
+          <HotelAmenityList
+            items={offer.amenities ?? []}
+            t={() => ""}
+            className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5"
+          />
         </div>
-        <div className="shrink-0">{offer.action}</div>
-      </div>
     </article>
   );
 }
 
 export function HotelPriceComparisonSection({
   stayContext,
-  totalPrice,
   nightlyPrice,
   perNightText,
   viewDealText,
@@ -66,7 +61,6 @@ export function HotelPriceComparisonSection({
   offers = [],
 }: {
   stayContext?: string;
-  totalPrice: Price | null;
   nightlyPrice: Price | null;
   perNightText: string;
   viewDealText: string;
@@ -81,18 +75,13 @@ export function HotelPriceComparisonSection({
       providerName: "Kurioticket",
       providerLogoUrl: "/brand/kurioticket-logo-primary-light-bg.svg",
       amenities: amenities.slice(0, 3),
-      totalPrice: totalPrice ? (
-        <strong className="block whitespace-nowrap text-lg font-bold tracking-tight text-slate-950 sm:text-xl" title={totalPrice.title} aria-label={totalPrice.ariaLabel}>
-          {totalPrice.formatted} <span className="text-xs font-semibold text-slate-600">total</span>
+      price: nightlyPrice ? (
+        <strong className="block whitespace-nowrap text-base font-bold tracking-tight text-slate-950 sm:text-lg" title={nightlyPrice.title} aria-label={nightlyPrice.ariaLabel}>
+          {perNightText.replace("{{price}}", nightlyPrice.formatted)}
         </strong>
       ) : (
         <strong className="text-sm font-semibold text-slate-600">Price unavailable</strong>
       ),
-      nightlyPrice: nightlyPrice ? (
-        <span className="text-xs font-medium text-slate-600 sm:text-[13px]" title={nightlyPrice.title} aria-label={nightlyPrice.ariaLabel}>
-          {perNightText.replace("{{price}}", nightlyPrice.formatted)}
-        </span>
-      ) : undefined,
       action: (
         <button
           type="button"
@@ -108,8 +97,8 @@ export function HotelPriceComparisonSection({
       id: offer.id,
       providerName: offer.providerName,
       providerLogoUrl: offer.providerLogoUrl,
-      totalPrice: <strong className="block text-xl font-extrabold text-slate-950">{offer.totalPrice}</strong>,
-      nightlyPrice: <span className="text-sm font-semibold text-slate-600">{offer.nightlyPrice}</span>,
+      price: <strong className="block text-xl font-extrabold text-slate-950">{offer.totalPrice}</strong>,
+      secondaryPrice: <span className="text-sm font-semibold text-slate-600">{offer.nightlyPrice}</span>,
       action: <a className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-[10px] bg-blue px-4 text-sm font-bold text-white" href={offer.deepLink}>View deal</a>,
     })),
   ];
