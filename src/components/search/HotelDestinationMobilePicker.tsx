@@ -61,9 +61,11 @@ export function HotelDestinationMobilePicker({ open, value, titleId, inputId, la
   useEffect(() => {
     if (!open) return;
     setQuery(value); setDraftValue(value); setSuggestions([]);
-    const frame = requestAnimationFrame(() =>
-      inputRef.current?.focus({ preventScroll: true }),
-    );
+    const frame = requestAnimationFrame(() => {
+      if (inputRef.current && document.activeElement !== inputRef.current) {
+        inputRef.current.focus({ preventScroll: true });
+      }
+    });
     return () => cancelAnimationFrame(frame);
   }, [open, value]);
 

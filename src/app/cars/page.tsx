@@ -32,6 +32,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
 import { MobileCarLocationPicker } from "@/components/search/MobileCarLocationPicker";
+import { openMobilePickerWithKeyboard } from "@/components/search/mobilePickerKeyboardFocus";
 import {
   CarsDriverAgePickerContent,
   CarsRentalDatePickerContent,
@@ -698,6 +699,13 @@ function CarsSearchBar({
     setDatesOpen(false);
     setTimesOpen(false);
     setDriverAgeOpen(false);
+    if (picker === "pickupLocation" || picker === "dropoffLocation") {
+      openMobilePickerWithKeyboard(
+        () => setActiveMobilePicker(picker),
+        `cars-page-${picker === "pickupLocation" ? "pickup" : "return"}-mobile-input`,
+      );
+      return;
+    }
     setActiveMobilePicker(picker);
   };
 
@@ -1224,6 +1232,7 @@ function CarsMobilePickerDialogs({
       <MobileCarLocationPicker
         open={activeMobilePicker === "pickupLocation"}
         mode="pickup"
+        inputId="cars-page-pickup-mobile-input"
         value={values.pickupLocation}
         launcherRef={pickupLocationLauncherRef}
         onClose={onClose}
@@ -1233,6 +1242,7 @@ function CarsMobilePickerDialogs({
       <MobileCarLocationPicker
         open={activeMobilePicker === "dropoffLocation"}
         mode="return"
+        inputId="cars-page-return-mobile-input"
         value={values.dropoffLocation}
         launcherRef={dropoffLocationLauncherRef}
         onClose={onClose}

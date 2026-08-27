@@ -231,7 +231,7 @@ test("mobile Cars places its single return-location field directly after pickup"
 
 test("mobile homepage Cars aligns a decorative MapPin before the dynamic pickup value", () => {
   assert.match(carsPickupField, /cars-pickup-location-field[\s\S]*?carsSearch\.pickupLocationLabel/);
-  assert.match(carsPickupField, /id="homepage-cars-pickup"[\s\S]*?onClick=\{\(\) => setCarsOpenPicker\("pickup"\)\}/);
+  assert.match(carsPickupField, /id="homepage-cars-pickup"[\s\S]*?onClick=\{\(\) => openMobilePickerWithKeyboard\(\(\) => setCarsOpenPicker\("pickup"\), "homepage-cars-pickup-mobile-input"\)\}/);
   assert.match(carsPickupField, /sm:hidden[\s\S]*?<span className="flex min-w-0 items-center gap-2">/);
   assert.match(carsPickupField, /<MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" \/>[\s\S]*?<span className=\{cn\("truncate", carsValues\.pickupLocation \? "font-normal" : "text-\[16px\] font-medium text-slate-500"\)\}>/);
   assert.doesNotMatch(carsPickupField, /<MapPin[^>]*className="[^"]*(?:rounded|bg-)/);

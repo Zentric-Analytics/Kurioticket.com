@@ -17,6 +17,7 @@ import {
   parseFlightIsoDate,
 } from "@/components/search/FlightSingleDateCalendar";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
+import { openMobilePickerWithKeyboard } from "@/components/search/mobilePickerKeyboardFocus";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import {
   formatAirportLabel,
@@ -323,7 +324,14 @@ function MultiCityAirportField({
 
   const openPicker = () => {
     const mobile = window.matchMedia("(max-width: 639px)").matches;
-    onOpen({ legIndex, field, mode: mobile ? "mobile" : "desktop" });
+    if (mobile) {
+      openMobilePickerWithKeyboard(
+        () => onOpen({ legIndex, field, mode: "mobile" }),
+        `multi-city-${legIndex}-${field}-mobile-search`,
+      );
+      return;
+    }
+    onOpen({ legIndex, field, mode: "desktop" });
   };
 
   const commitOption = (option: AirportOption) => {
