@@ -68,8 +68,8 @@ test("counter controls remain accessible, bounded, and non-shrinking", () => {
 });
 
 test("counter buttons keep compact visuals with an expanded touch target", () => {
-  assert.match(counterButton, /<Pressable[^>]*hitSlop=\{4\}[^>]*style=\{\[styles\.control/);
-  assert.match(sheet, /control:\{width:40,height:40,borderRadius:20,/);
+  assert.match(counterButton, /<Pressable[^>]*style=\{styles\.controlTarget\}/);
+  assert.match(sheet, /controlTarget:\{width:44,height:44/);
 });
 
 test("sheet uses theme surface, safe area, and separate backdrop layers", () => {
@@ -81,5 +81,5 @@ test("sheet uses theme surface, safe area, and separate backdrop layers", () => 
 
 
 test("Guests and Rooms Done is explicitly iconless", () => {
-  assert.match(sheet, /<PrimaryButton label="Done" icon=\{null\} onPress=\{\(\) => onDone\(draft\)\}\/>/);
+  assert.match(sheet, /<PrimaryButton label="Done" icon=\{null\} size="compact" onPress=\{\(\) => onDone\(draft\)\}\/>/);
 });

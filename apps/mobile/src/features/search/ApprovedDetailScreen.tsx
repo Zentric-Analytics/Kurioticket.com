@@ -42,6 +42,7 @@ import { useSavedFlights } from "../../storage/useSavedFlights";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { providerLocalArrivalDate } from "./flightArrivalDayOffset";
+import { flightPriceBasis } from "./flightPriceBasis";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -151,6 +152,7 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
     passedFare?.amount, passedFare?.currency, passedFare?.providerAmount,
     passedFare?.providerCurrency, result.currency, result.id, result.price]));
   const formattedFare = fare?.formatted ?? "—";
+  const priceBasis = flightPriceBasis(params, fare);
   const legs = result.legs?.length
     ? result.legs
     : [
@@ -327,16 +329,19 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
             }
             price={formattedFare}
           />
-          <Text style={[d.disclosure, { color: theme.textSecondary }]}>
-            Booking provided by {provider}.
-          </Text>
+          {priceBasis.providerFareText ? (
+            <Text accessibilityLabel={priceBasis.providerFareAccessibilityText ?? undefined} style={[d.disclosure, { color: theme.textSecondary }]}>
+              {priceBasis.providerFareText}
+            </Text>
+          ) : null}
+          <Text style={[d.disclosure, { color: theme.textSecondary }]}>Final price is confirmed by {provider} before booking.</Text>
         </View>
       </ScrollView>
       <View style={[d.sticky, { paddingBottom: Math.max(inset.bottom, 10), backgroundColor: theme.surface, borderTopColor: theme.border }]}>
-        <View style={d.stickyTotal}>
+        <View accessible accessibilityLabel={`Total ${fare?.accessibilityLabel ?? formattedFare} for ${priceBasis.travelerLabel}, ${priceBasis.tripTypeLabel.toLowerCase()}.`} style={d.stickyTotal}>
           <Text style={[d.meta, { color: theme.textSecondary }]}>Total</Text>
           <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[d.price, { color: theme.textPrimary }]}>{formattedFare}</Text>
-          <Text style={[d.meta, { color: theme.textSecondary }]}>{header.tripTypeLabel}</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[d.meta, { color: theme.textSecondary }]}>{priceBasis.summary}</Text>
         </View>
         <View style={d.stickyCta}>
           <Button label={`Continue to ${provider}`} onPress={handleProviderBooking} />

@@ -15,11 +15,15 @@ test("PrimaryButton supports an explicit iconless mode without changing its defa
   assert.match(primaryButton, /icon = "search"/);
   assert.match(primaryButton, /icon\?: FlowIconName \| null/);
   assert.match(primaryButton, /\{icon \? <FlowIcon name=\{icon\} color="white" \/> : null\}/);
-  assert.match(primaryButton, /<Text style=\{ft\.styles\.primaryText\}>\{label\}<\/Text>/);
+  assert.match(primaryButton, /size === "compact" && styles\.compactPrimaryText/);
   assert.match(primaryButton, /accessibilityLabel=\{label\}/);
   assert.match(primaryButton, /accessibilityState=\{\{ disabled \}\}/);
   assert.match(primaryButton, /disabled=\{disabled\}/);
   assert.match(primaryButton, /onPress=\{onPress\}/);
+  assert.match(primaryButton, /size = "default"/);
+  assert.match(primaryButton, /size\?: "default" \| "compact"/);
+  assert.match(source, /compactPrimary: \{ minHeight: 46 \}/);
+  assert.match(source, /compactPrimaryText: \{ fontSize: 14 \}/);
 });
 
 test("the four native product search CTAs are uniquely iconless", () => {

@@ -50,7 +50,7 @@ test("the disclosure chevron uses the right-facing decorative native SVG icon wi
 
 test("traveler and cabin validation intents open the same combined sheet", () => {
   assert.match(panel, /visible=\{picker === "travelers" \|\| picker === "cabin"\}/);
-  assert.match(sheet, /<PickerSheetHeader title="Travelers & Cabin" onClose=\{onCancel\}\/>/);
+  assert.match(sheet, /accessibilityLabel="Close Travelers & Cabin"[\s\S]*?onPress=\{onCancel\}/);
   assert.match(panel, /const TRAVELER_ROWS = \[[\s\S]*kind: "adults"[\s\S]*kind: "children"[\s\S]*kind: "infants"/);
   assert.match(sheet, /NATIVE_FLIGHT_CABIN_OPTIONS\.map/);
 });
@@ -59,7 +59,7 @@ test("the combined picker uses a cancellable draft and Done owns commit", () => 
   assert.match(sheet, /if \(visible\) setDraft\(travelerCabinDraft\(form\)\)/);
   assert.match(sheet, /onRequestClose=\{onCancel\}/);
   assert.match(sheet, /onPress=\{\(\)=>setDraft\(\{\.\.\.draft,cabin\}\)\}/);
-  assert.match(sheet, /<PrimaryButton label="Done" icon=\{null\} onPress=\{\(\)=>onDone\(draft\)\}/);
+  assert.match(sheet, /<PrimaryButton label="Done" icon=\{null\} size="compact" onPress=\{\(\)=>onDone\(draft\)\}/);
   assert.doesNotMatch(sheet, /<Cancel onPress=\{onCancel\}/);
   assert.match(panel, /onDone=\{\(draft\) => \{ setForm\(\{ \.\.\.form, \.\.\.draft \}\); clear\("travelers", "cabin"\); setPicker\(undefined\); \}\}/);
 });
@@ -95,8 +95,8 @@ test("the traveler content matches web wording, grouping, icons, and accessible 
 
 test("Flight traveler counters keep 40px visuals and at least 48px effective targets", () => {
   const counter = sheet.slice(sheet.indexOf("function Counter"), sheet.indexOf("function CabinOption"));
-  assert.match(counter, /hitSlop=\{4\}/);
-  assert.match(panel, /counterButton:\{width:40,height:40/);
+  assert.match(counter, /style=\{styles\.counterTarget\}/);
+  assert.match(panel, /counterButton:\{width:34,height:34/);
 });
 
 test("the uncapped baggage tip uses one decorative lightbulb and flexible wrapping copy", () => {

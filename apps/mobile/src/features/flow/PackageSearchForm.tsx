@@ -106,9 +106,9 @@ function PackagePartySheet({ visible, search, onDone, onClose }: { visible: bool
   return <Modal transparent animationType="slide" visible onRequestClose={onClose}>
     <View style={styles.modalRoot}>
       <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Close Travelers & Rooms picker" onPress={onClose}/>
-      <View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: ft.colors.surface }]}>
-        <Text accessibilityRole="header" style={ft.styles.title}>{included.hotel ? "Travelers & Rooms" : "Travelers"}</Text>
-        <ScrollView bounces={false} contentContainerStyle={styles.partyContent}>
+      <View accessibilityViewIsModal style={[styles.sheet, styles.partySheet, { backgroundColor: ft.colors.surface }]}>
+        <Text accessibilityRole="header" style={[styles.partyTitle,{color:ft.colors.text}]}>{included.hotel ? "Travelers & Rooms" : "Travelers"}</Text>
+        <ScrollView style={styles.partyScroll} bounces={false} contentContainerStyle={styles.partyContent}>
           <View style={[styles.partyCard, { backgroundColor: ft.colors.input, borderColor: ft.colors.border }]}>
             {travelerRows.map((row, index) => {
               const value = draft[row.key];
@@ -134,7 +134,7 @@ function PackagePartySheet({ visible, search, onDone, onClose }: { visible: bool
             </View>
           </View> : null}
         </ScrollView>
-        <PrimaryButton label="Done" icon={null} onPress={() => onDone(draft)}/>
+        <PrimaryButton label="Done" icon={null} size="compact" onPress={() => onDone(draft)}/>
       </View>
     </View>
   </Modal>;
@@ -144,7 +144,7 @@ function PackagePartyRow({ icon: Icon, label, description, value, decreaseDisabl
   const ft = useFlowTheme();
   return <View style={styles.partyRow}>
     <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.partyIcon, { backgroundColor: ft.colors.selected }]}>
-      <Icon size={23} color={ft.colors.selectedBorder}/>
+      <Icon size={18} color={ft.colors.selectedBorder}/>
     </View>
     <View style={styles.partyCopy}>
       <Text style={ft.styles.value}>{label}</Text>
@@ -162,9 +162,9 @@ function PackageCounterButton({ label, disabled, icon: Icon, onPress }: { label:
   const ft = useFlowTheme();
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }} disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.partyCounterTarget, pressed && !disabled && ft.styles.pressed]}>
     <View style={[styles.partyCounterCircle, { borderColor: disabled ? ft.colors.border : ft.colors.selectedBorder }, disabled && styles.partyDisabled]}>
-      <Icon accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" size={19} color={disabled ? ft.colors.secondaryText : ft.colors.selectedBorder}/>
+      <Icon accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" size={16} color={disabled ? ft.colors.secondaryText : ft.colors.selectedBorder}/>
     </View>
   </Pressable>;
 }
 
-const styles = StyleSheet.create({ rail:{flexDirection:"row",flexWrap:"nowrap",borderBottomWidth:1,paddingHorizontal:6},standaloneRail:{minHeight:46},mode:{height:42,justifyContent:"center",paddingHorizontal:10,borderBottomWidth:2,borderBottomColor:"transparent"},modeText:{fontSize:12,fontWeight:"700"},fields:{borderWidth:1,borderRadius:11,margin:10},originBoundary:{position:"relative",zIndex:1},swapTarget:{position:"absolute",left:"50%",bottom:-22,transform:[{translateX:-22}],width:44,height:44,alignItems:"center",justifyContent:"center",zIndex:2},swapCircle:{width:36,height:36,borderRadius:18,borderWidth:1,alignItems:"center",justifyContent:"center",shadowOpacity:0.12,shadowRadius:4,shadowOffset:{width:0,height:2},elevation:3},submit:{paddingHorizontal:10,paddingBottom:10},modalRoot:{flex:1,justifyContent:"flex-end",backgroundColor:SEARCH_PICKER_BACKDROP_COLOR},sheet:{maxHeight:"86%",borderTopLeftRadius:24,borderTopRightRadius:24,padding:18,gap:12},airportInput:{minHeight:48,borderWidth:1,borderRadius:9,paddingHorizontal:12,fontSize:15},choice:{paddingVertical:12,borderBottomWidth:1},cancel:{height:44,alignItems:"center",justifyContent:"center"},partyContent:{gap:18,paddingBottom:4},partyCard:{borderWidth:1,borderRadius:12,overflow:"hidden"},partyDivider:{height:1,marginHorizontal:14},partyRow:{minHeight:88,flexDirection:"row",alignItems:"center",gap:10,paddingHorizontal:14,paddingVertical:12},partyIcon:{width:44,height:44,borderRadius:22,flexShrink:0,alignItems:"center",justifyContent:"center"},partyCopy:{flex:1,minWidth:0,gap:2},partyCounter:{flexShrink:0,flexDirection:"row",alignItems:"center",gap:4},partyCounterTarget:{width:44,height:44,alignItems:"center",justifyContent:"center"},partyCounterCircle:{width:40,height:40,borderRadius:20,borderWidth:1,alignItems:"center",justifyContent:"center"},partyDisabled:{opacity:.42},partyNumber:{minWidth:28,textAlign:"center",fontSize:16,fontWeight:"800",fontVariant:["tabular-nums"]},petRow:{minHeight:80,flexDirection:"row",alignItems:"center",gap:12,paddingHorizontal:14,paddingVertical:12},petSwitchSlot:{width:52,flexShrink:0,alignItems:"flex-end",justifyContent:"center"},fieldsStandalone:{marginTop:8} });
+const styles = StyleSheet.create({ rail:{flexDirection:"row",flexWrap:"nowrap",borderBottomWidth:1,paddingHorizontal:6},standaloneRail:{minHeight:46},mode:{height:42,justifyContent:"center",paddingHorizontal:10,borderBottomWidth:2,borderBottomColor:"transparent"},modeText:{fontSize:12,fontWeight:"700"},fields:{borderWidth:1,borderRadius:11,margin:10},originBoundary:{position:"relative",zIndex:1},swapTarget:{position:"absolute",left:"50%",bottom:-22,transform:[{translateX:-22}],width:44,height:44,alignItems:"center",justifyContent:"center",zIndex:2},swapCircle:{width:36,height:36,borderRadius:18,borderWidth:1,alignItems:"center",justifyContent:"center",shadowOpacity:0.12,shadowRadius:4,shadowOffset:{width:0,height:2},elevation:3},submit:{paddingHorizontal:10,paddingBottom:10},modalRoot:{flex:1,justifyContent:"flex-end",backgroundColor:SEARCH_PICKER_BACKDROP_COLOR},sheet:{maxHeight:"86%",borderTopLeftRadius:24,borderTopRightRadius:24,padding:18,gap:12},partySheet:{maxHeight:"64%",paddingHorizontal:15,paddingVertical:13,gap:8},airportInput:{minHeight:48,borderWidth:1,borderRadius:9,paddingHorizontal:12,fontSize:15},choice:{paddingVertical:12,borderBottomWidth:1},cancel:{height:44,alignItems:"center",justifyContent:"center"},partyTitle:{fontSize:18,lineHeight:24,fontWeight:"800"},partyScroll:{flexShrink:1,minHeight:0},partyContent:{gap:9,paddingBottom:2},partyCard:{borderWidth:1,borderRadius:12,overflow:"hidden"},partyDivider:{height:1,marginHorizontal:14},partyRow:{minHeight:62,flexDirection:"row",alignItems:"center",gap:8,paddingHorizontal:10,paddingVertical:6},partyIcon:{width:36,height:36,borderRadius:18,flexShrink:0,alignItems:"center",justifyContent:"center"},partyCopy:{flex:1,minWidth:0,gap:2},partyCounter:{flexShrink:0,flexDirection:"row",alignItems:"center",gap:2},partyCounterTarget:{width:44,height:44,alignItems:"center",justifyContent:"center"},partyCounterCircle:{width:34,height:34,borderRadius:17,borderWidth:1,alignItems:"center",justifyContent:"center"},partyDisabled:{opacity:.42},partyNumber:{minWidth:20,textAlign:"center",fontSize:15,fontWeight:"800",fontVariant:["tabular-nums"]},petRow:{minHeight:62,flexDirection:"row",alignItems:"center",gap:8,paddingHorizontal:10,paddingVertical:6},petSwitchSlot:{width:52,flexShrink:0,alignItems:"flex-end",justifyContent:"center"},fieldsStandalone:{marginTop:8} });
