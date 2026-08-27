@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { addAirline, beginLoad, beginSave, canSubmitSupport, editDraft, failSave, faqAccessibility, filterFaqs, filterOptions, finishLoad, finishSave, initialAsyncDraft, invalidateRequests, isDirty, supportDraft, supportErrors, toggleExpanded } from "./nativeAccountModels";
+import { addAirline, airlinePreferenceLabel, airportPreferenceValue, beginLoad, beginSave, canSubmitSupport, editDraft, failSave, faqAccessibility, filterAirlinePreferences, filterAirportPreferences, filterFaqs, filterOptions, finishLoad, finishSave, initialAsyncDraft, invalidateRequests, isDirty, supportDraft, supportErrors, toggleExpanded } from "./nativeAccountModels";
 import { getGeneralFaqs } from "../../../../../src/content/faqs";
 import { airports } from "../../../../../src/shared/airports";
 import { airlines } from "../../../../../src/data/airlines";
@@ -63,4 +63,42 @@ test("email preference screen uses immediate UI with coalesced persistence", asy
   assert.match(fullSource, /borderBottomWidth:StyleSheet\.hairlineWidth/);
   assert.doesNotMatch(screen, /emailSurface|emailActions|showSaved|t\("reset"\)|t\("save"\)|opacity:/);
   assert.ok(fullSource.indexOf('label: "emailTravelAlerts"') < fullSource.indexOf('label: "emailInspirationUpdates"'));
+});
+
+test("travel selector models resolve labels and filter integrated suggestions", () => {
+  assert.equal(airportPreferenceValue("jfk", airports)?.airport, "John F. Kennedy International Airport");
+  assert.equal(airportPreferenceValue("", airports), undefined);
+  assert.ok(filterAirportPreferences(airports, "kennedy").some(item => item.code === "JFK"));
+  assert.equal(filterAirportPreferences(airports, "a").length, 8);
+  assert.equal(airlinePreferenceLabel("P4", airlines), "Air Peace (P4)");
+  assert.equal(airlinePreferenceLabel("legacy", airlines), "legacy");
+  assert.ok(filterAirlinePreferences(airlines, "british", []).some(item => item.code === "BA"));
+  assert.ok(filterAirlinePreferences(airlines, "ba", []).some(item => item.code === "BA"));
+  assert.ok(!filterAirlinePreferences(airlines, "ba", ["BA"]).some(item => item.code === "BA"));
+});
+
+test("travel screen keeps location separate and selectors use draft-only save/revert", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile("src/features/account/NativeAccountScreens.tsx", "utf8");
+  const screen = source.slice(source.indexOf("export function TravelPreferencesScreen"), source.indexOf("const s=StyleSheet.create"));
+  assert.match(screen, /requireAccount\("\/travel-preferences"\)/);
+  assert.doesNotMatch(screen, /travelApi\.location|countryCode/);
+  assert.equal((screen.match(/travelApi\.updateTravelPreferences\(/g) ?? []).length, 1);
+  assert.match(screen, /updateTravelPreferences\(\{homeAirport:started\.value\.homeAirport,preferredAirlines:started\.value\.preferredAirlines\}\)/);
+  assert.doesNotMatch(screen, /updateTravelPreferences\(\{[^}]*notificationPreferences/);
+  assert.match(screen, /selectedAirport/);
+  assert.doesNotMatch(screen, /homeAirport\} · \{t\("clear"\)/);
+  assert.match(screen, /const revert=.*state\.saved/);
+  assert.match(screen, /closeSelectors\(\)/);
+});
+
+test("travel save errors retry the draft and airport editor restores a saved value on blur", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile("src/features/account/NativeAccountScreens.tsx", "utf8");
+  const screen = source.slice(source.indexOf("export function TravelPreferencesScreen"), source.indexOf("const s=StyleSheet.create"));
+  assert.match(screen, /setErrorAction\("save"\)/);
+  assert.match(screen, /retry=\{errorAction==="save"\?\(\)=>void save\(\):\(\)=>void load\(\)\}/);
+  assert.match(screen, /const airportSearchValue=/);
+  assert.match(screen, /setAirportQuery\(airportSearchValue\);setAirportOpen\(true\)/);
+  assert.match(screen, /onBlur=\{\(\)=>\{if\(value\.homeAirport&&\(!airportQuery\.trim\(\)\|\|airportQuery===airportSearchValue\)\)\{setAirportQuery\(""\);setAirportOpen\(false\);\}\}\}/);
 });
