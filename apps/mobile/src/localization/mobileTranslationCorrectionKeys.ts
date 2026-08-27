@@ -1,11 +1,9 @@
 import type { MobileTranslationKey } from "./mobileLocalizationCatalog";
 
+// These keys were English placeholders in every expanded locale after the initial
+// 18-language rollout. Keep the list deliberately limited to values that must
+// have an explicit correction for all 16 non-English/non-Spanish dictionaries.
 export const mobileTranslationCorrectionKeys = [
-  "appVersion",
-  "english",
-  "spanish",
-  "aboutLegal",
-  "appPreferences",
   "externalLinkHint",
   "notificationsHint",
   "unread",
@@ -15,7 +13,6 @@ export const mobileTranslationCorrectionKeys = [
   "guestHeroTitle",
   "guestHeroBody",
   "signInHint",
-  "back",
   "faqSearch",
   "clearSearch",
   "expandAnswer",
@@ -53,5 +50,4 @@ export const mobileTranslationCorrectionKeys = [
   "unsavedChanges",
   "travelLoadError",
   "travelSaveError",
-  "remove",
 ] as const satisfies readonly MobileTranslationKey[];
