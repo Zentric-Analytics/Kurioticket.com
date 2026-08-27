@@ -3,9 +3,33 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   filterCurrencyPresentations,
+  getCurrencyPresentation,
   getCurrencyPresentations,
   getSelectableCurrencyCodes,
 } from "./currencySelectionModel";
+
+test("common currencies use recognizable, disambiguated presentation symbols", () => {
+  const expectedSymbols = {
+    NGN: "₦",
+    USD: "$",
+    EUR: "€",
+    GBP: "£",
+    INR: "₹",
+    JPY: "¥",
+    BRL: "R$",
+    CAD: "CA$",
+    CNY: "CN¥",
+    KES: "KSh",
+  };
+
+  for (const [code, symbol] of Object.entries(expectedSymbols)) {
+    assert.equal(getCurrencyPresentation(code)?.symbol, symbol, code);
+  }
+});
+
+test("currencies without an explicit symbol fall back to their ISO code", () => {
+  assert.equal(getCurrencyPresentation("AFN")?.symbol, "AFN");
+});
 
 test("selectable currencies intersect approved display currencies with usable provider rates", () => {
   const rates = {
@@ -56,13 +80,15 @@ test("currency presentations provide readable names and sort by human-readable n
 });
 
 test("currency search matches name, ISO code, and symbol case-insensitively", () => {
-  const currencies = getCurrencyPresentations(["NGN", "USD", "CAD", "EUR", "INR"]);
+  const currencies = getCurrencyPresentations(["NGN", "USD", "CAD", "EUR", "INR", "CNY"]);
 
   assert.deepEqual(filterCurrencyPresentations(currencies, "NAI").map(({ code }) => code), ["NGN"]);
   assert.deepEqual(filterCurrencyPresentations(currencies, "ngn").map(({ code }) => code), ["NGN"]);
   assert.deepEqual(filterCurrencyPresentations(currencies, "₦").map(({ code }) => code), ["NGN"]);
   assert.deepEqual(filterCurrencyPresentations(currencies, "dollar").map(({ code }) => code), ["CAD", "USD"]);
   assert.deepEqual(filterCurrencyPresentations(currencies, "inr").map(({ code }) => code), ["INR"]);
+  assert.deepEqual(filterCurrencyPresentations(currencies, "₹").map(({ code }) => code), ["INR"]);
+  assert.deepEqual(filterCurrencyPresentations(currencies, "cn¥").map(({ code }) => code), ["CNY"]);
   assert.deepEqual(filterCurrencyPresentations(currencies, "not a currency"), []);
 
   const model = readFileSync("src/features/currency/currencySelectionModel.ts", "utf8");
