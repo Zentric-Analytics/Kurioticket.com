@@ -9,7 +9,7 @@ const travelerSheet = panel.slice(panel.indexOf("function TravelerCabinSheet"), 
 
 test("From and To share a backdrop that closes without choosing an airport", () => {
   assert.match(panel, /kind=\{picker === "from" \|\| picker === "to" \? picker : undefined\}/);
-  assert.match(airportSheet, /<SafeAreaView[^>]*><Pressable[^>]*onPress=\{onClose\}[^>]*accessibilityLabel="Close airport picker"\/><View accessibilityViewIsModal/);
+  assert.match(airportSheet, /<SafeAreaView[^>]*>[\s\S]*?<Pressable[^>]*onPress=\{onClose\}[^>]*accessibilityLabel="Close airport picker"\/><Animated.View accessibilityViewIsModal/);
   assert.match(airportSheet, /onRequestClose=\{onClose\}/);
   assert.match(airportSheet, /onChoose\(airport as Airport \| HomepageAirport as Airport\)/);
 });
@@ -24,7 +24,7 @@ test("Flight calendars opt into the backwards-compatible calendar backdrop", () 
 
 test("Travelers & Cabin backdrop and Android Back cancel rather than commit draft values", () => {
   const backdrop = travelerSheet.indexOf('accessibilityLabel="Close Travelers & Cabin picker"');
-  const sheet = travelerSheet.indexOf("<View accessibilityViewIsModal");
+  const sheet = travelerSheet.indexOf("<Animated.View accessibilityViewIsModal");
 
   assert.ok(backdrop >= 0 && sheet > backdrop);
   assert.match(travelerSheet, /<Pressable[^>]*onPress=\{onCancel\}[^>]*accessibilityLabel="Close Travelers & Cabin picker"\/>/);
@@ -36,7 +36,7 @@ test("Travelers & Cabin backdrop and Android Back cancel rather than commit draf
 });
 
 test("all interactive content is rendered in sibling sheets above each backdrop", () => {
-  assert.ok(airportSheet.indexOf('accessibilityLabel="Search airports"') > airportSheet.indexOf("<View accessibilityViewIsModal"));
-  assert.ok(travelerSheet.indexOf("<ScrollView") > travelerSheet.indexOf("<View accessibilityViewIsModal"));
-  assert.ok(calendar.indexOf('accessibilityLabel="Previous month"') > calendar.indexOf("<View accessibilityViewIsModal"));
+  assert.ok(airportSheet.indexOf('accessibilityLabel="Search airports"') > airportSheet.indexOf("<Animated.View accessibilityViewIsModal"));
+  assert.ok(travelerSheet.indexOf("<ScrollView") > travelerSheet.indexOf("<Animated.View accessibilityViewIsModal"));
+  assert.ok(calendar.indexOf('accessibilityLabel="Previous month"') > calendar.indexOf("<Animated.View accessibilityViewIsModal"));
 });

@@ -26,7 +26,7 @@ test("calendar controls and date copy use semantic foregrounds and borders", () 
 
 test("calendar selection, disabled state, and backdrop default remain unchanged", () => {
   assert.match(calendar, /dismissOnBackdropPress = false/);
-  assert.match(calendar, /const disabled = iso < minimum/);
+  assert.match(calendar, /const disabled = iso < presented\.minimum/);
   assert.match(calendar, /accessibilityState=\{\{ disabled, selected: chosen \}\}/);
   assert.match(calendar, /chosen && styles\.selectedDay/);
   assert.match(calendar, /backgroundColor: ft\.colors\.blue, borderColor: ft\.colors\.selectedBorder/);
