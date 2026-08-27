@@ -119,7 +119,7 @@ test("Currency screen uses an unboxed three-column list and localized local sear
   assert.match(catalog, /currencyEmpty:"No currencies found\."/);
   assert.match(catalog, /currencySearch:"Buscar monedas"/);
   assert.match(catalog, /currencyEmpty:"No se encontraron monedas\."/);
-  assert.match(screen, /currencySymbolColumn: \{ width: 42, flexShrink: 0/);
+  assert.match(screen, /currencySymbolColumn: \{ width: 54, flexShrink: 0/);
   assert.match(screen, /currencyTrailing: \{ width: 30, flexShrink: 0/);
   assert.doesNotMatch(currencyScreen, />Save<|>Reset</);
   assert.equal(currencyScreen.match(/currencyRates\(\)/g)?.length, 1);
@@ -129,6 +129,7 @@ test("Currency rows match the Language list hierarchy and selected treatment", (
   const screen = readFileSync("src/features/flow/SettingsScreens.tsx", "utf8");
   const currencyScreen = screen.slice(screen.indexOf("export function CurrencyScreen"), screen.indexOf("const styles"));
 
+  assert.match(currencyScreen, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.7\}/);
   assert.match(currencyScreen, /\{currency\.symbol\}<\/Text>/);
   assert.match(currencyScreen, /styles\.currencyCode[^>]*>\{currency\.code\}<\/Text>/);
   assert.match(currencyScreen, /styles\.currencyName[^>]*>\{currency\.name\}<\/Text>/);
