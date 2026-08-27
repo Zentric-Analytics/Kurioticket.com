@@ -13,7 +13,11 @@ test("shared native search picker motion has the approved contract", () => {
   assert.match(source, /Dimensions\.get\("screen"\)\.height/);
   assert.match(readFileSync("src/features/flow/searchPickerTravel.ts", "utf8"), /Math\.max\(windowHeight, screenHeight\)/);
   const travelSource = readFileSync("src/features/flow/searchPickerTravel.ts", "utf8");
-  assert.match(travelSource, /measuredSheetHeight[^?]+\? measuredSheetHeight \+ Math\.max\(0, bottomClearance\)\s+: Math\.max\(windowHeight, screenHeight\)/s);
+  assert.match(
+    travelSource,
+    /measuredSheetHeight[^?]+\? measuredSheetHeight\s+: Math\.max\(windowHeight, screenHeight\)/s,
+  );
+  assert.doesNotMatch(travelSource, /bottomClearance/);
   assert.match(source, /useWindowDimensions\(\)/);
   assert.doesNotMatch(source, /SHEET_OFFSET|toValue: 40|Animated\.Value\([^)]*40/);
   assert.match(source, /measuredSheetHeight\.current = nextHeight/);
@@ -41,7 +45,8 @@ test("measured sheet travel replaces the full-screen safety fallback", () => {
   assert.equal(searchPickerSheetTravelDistance(900, 820, 1100), 820);
   assert.equal(searchPickerSheetTravelDistance(700, 820, 1100), 820);
   assert.equal(searchPickerSheetTravelDistance(900, 0, 1100), 1100);
-  assert.equal(searchPickerSheetTravelDistance(900, 450, 1100, 34), 484);
+  // The measured moving surface already includes its 34-point safe area.
+  assert.equal(searchPickerSheetTravelDistance(900, 484, 1100), 484);
 });
 
 test("affected picker Modals do not translate their transparent surface", () => {
