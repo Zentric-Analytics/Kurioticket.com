@@ -91,8 +91,7 @@ export type StandaloneHotelDetailsProps = {
     streetView: string;
     yourStay: string;
     edit: string;
-    viewRooms: string;
-    roomSupport: string;
+    continueBooking: string;
     roomTitle: string;
     closeRooms: string;
     roomTerms: string;
@@ -553,11 +552,8 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
               onClick={(event) => openRoomOptions(event.currentTarget)}
               className="focus-ring mt-6 flex h-12 w-full items-center justify-center rounded-lg bg-blue px-4 text-sm font-bold text-white hover:bg-blue-dark disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {props.labels.viewRooms}
+              {props.labels.continueBooking}
             </button>
-            <p className="mt-2 text-center text-[11px] leading-4 text-slate-500">
-              {props.labels.roomSupport}
-            </p>
           </section>
         </aside>
       </div>
@@ -597,18 +593,15 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
               </p>
             ) : null}
           </div>
-          <div className="text-center">
+          <div>
             <button
               type="button"
               disabled={!props.roomChoices.length}
               onClick={(event) => openRoomOptions(event.currentTarget)}
               className="focus-ring min-h-12 w-full rounded-lg bg-blue px-3 text-xs font-bold leading-4 text-white disabled:opacity-50"
             >
-              {props.labels.viewRooms}
+              {props.labels.continueBooking}
             </button>
-            <p className="mt-1 text-[9px] leading-3 text-slate-500">
-              {props.labels.roomSupport}
-            </p>
           </div>
         </div>
       </section>
