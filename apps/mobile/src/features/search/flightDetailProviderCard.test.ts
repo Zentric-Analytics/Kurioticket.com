@@ -18,7 +18,7 @@ test("flight details presents its single authoritative offer as a booking provid
   assert.match(bookingCard, /<ProviderLogo provider=\{provider\} logoUrl=\{logoUrl\} \/>/);
   assert.match(bookingCard, /★ Recommended/);
   assert.match(flightDetail, /price=\{formattedFare\}/);
-  assert.match(flightDetail, /Booking provided by \{provider\}\./);
+  assert.match(flightDetail, /Final price is confirmed by \{provider\} before booking\./);
   assert.equal(flightDetail.match(/\{formattedFare\}/g)?.length, 2);
 });
 
