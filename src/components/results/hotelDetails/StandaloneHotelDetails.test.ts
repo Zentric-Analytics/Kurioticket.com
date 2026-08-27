@@ -49,7 +49,7 @@ test("mobile header owns stay metadata while the two-column dock owns price and 
   );
   const dock = source.slice(
     source.indexOf("data-mobile-hotel-stay-dock"),
-    source.indexOf("<RelatedHotelsSection"),
+    source.indexOf("{roomsOpen ? ("),
   );
   const aside = source.slice(
     source.indexOf("data-standalone-stay-summary"),
@@ -165,12 +165,25 @@ test("mobile save and share are independent unboxed 44px actions", () => {
   assert.match(actions, /justify-end/);
   assert.match(actions, /justify-start/);
   assert.match(actions, /h-5 w-5/);
+  assert.equal(actions.match(/-translate-y-1 lg:translate-y-0/g)?.length, 2);
   assert.match(actions, /border-0 bg-transparent/);
   assert.match(actions, /aria-pressed=\{props\.isSaved\}/);
   assert.doesNotMatch(
     actions.match(/data-property-header-actions[\s\S]*?>/)?.[0] ?? "",
     /border|bg-white|shadow/,
   );
+});
+
+test("mobile title and actions share a collision-safe top-aligned row", () => {
+  const titleRow = source.slice(
+    source.indexOf('data-mobile-property-header'),
+    source.indexOf('</header>'),
+  );
+  assert.match(titleRow, /grid-cols-\[minmax\(0,1fr\)_auto\] items-start/);
+  assert.match(titleRow, /<h1 className="min-w-0 break-words/);
+  assert.match(titleRow, /data-property-header-actions/);
+  assert.match(titleRow, /shrink-0/);
+  assert.doesNotMatch(titleRow, /whitespace-nowrap[^>]*>\s*\{props\.hotelName\}/);
 });
 
 test("standalone hotel navigation locally matches the Flight-style mobile treatment", () => {
@@ -244,7 +257,7 @@ test("room dialog releases its body scroll lock through every close path", () =>
 test("mobile gesture surfaces preserve vertical document scrolling", () => {
   const dock = source.slice(
     source.indexOf("data-mobile-hotel-stay-dock"),
-    source.indexOf("<RelatedHotelsSection"),
+    source.indexOf("{roomsOpen ? ("),
   );
   assert.doesNotMatch(
     dock,
