@@ -60,6 +60,30 @@ test("rapid duplicate toggles allow one mutation while different flights remain 
   first.resolve({ item: serverItem(flight("a"), "saved-a") }); second.resolve({ item: serverItem(bFlight, "saved-b") }); await Promise.all([a, b]);
 });
 
+test("same-time airlines have independent saved and pending state", async () => {
+  const american = { ...flight("american"), airlineName: "American Airlines", flightNumber: "AA101" };
+  const british = { ...flight("british"), airlineName: "British Airways", flightNumber: "BA101" };
+  const h = harness([serverItem(british, "saved-british")]);
+  await h.repository.refresh();
+  const americanCreate = deferred<{ item: MobileSavedItem }>();
+  h.setCreate(() => americanCreate.promise);
+  const savingAmerican = h.repository.toggleFlight(american);
+  const pending = h.repository.snapshot();
+  assert.equal(pending.pendingFlightKeys.has(flightSavedSignature(american)), true);
+  assert.equal(pending.pendingFlightKeys.has(flightSavedSignature(british)), false);
+  assert.equal(pending.flights.has(flightSavedSignature(american)), true);
+  assert.equal(pending.flights.has(flightSavedSignature(british)), true);
+  americanCreate.resolve({ item: serverItem(american, "saved-american") });
+  await savingAmerican;
+  const removal = harness([serverItem(american, "saved-american"), serverItem(british, "saved-british")]);
+  await removal.repository.refresh();
+  await removal.repository.toggleFlight(american);
+  const afterAmericanRemoval = removal.repository.snapshot();
+  assert.equal(afterAmericanRemoval.flights.has(flightSavedSignature(american)), false);
+  assert.equal(afterAmericanRemoval.flights.has(flightSavedSignature(british)), true);
+  assert.deepEqual(removal.removes, ["saved-american"]);
+});
+
 test("create failure rolls optimistic state back and rejects", async () => {
   const h = harness(); await h.repository.refresh(); h.setCreate(async () => { throw new Error("offline"); });
   const states: boolean[] = []; h.repository.subscribe(value => states.push(value.flights.has(flightSavedSignature(flight()))));
