@@ -6,7 +6,7 @@ const read = (file: string) => readFileSync(`src/features/flow/${file}`, "utf8")
 const panel = read("FlightSearchPanel.tsx");
 const packages = read("PackageSearchForm.tsx");
 const field = (label: string) => {
-  const start = panel.lastIndexOf(`<CompactSearchField label="${label}"`);
+  const start = panel.indexOf(`<CompactSearchField label="${label}"`);
   return start < 0 ? undefined : panel.slice(start, panel.indexOf("/>", start) + 2);
 };
 
@@ -45,8 +45,8 @@ test("the local selected airport helper formats City (CODE) and preserves empty 
 
 test("multi-city selected airports use the helper without country metadata and keep unrestricted wrapping", () => {
   const multiCity = panel.slice(panel.indexOf("function MultiCityEditor"), panel.indexOf("function ErrorText"));
-  const origin = multiCity.slice(multiCity.indexOf('<MultiCityField label="Origin"'), multiCity.indexOf('/>', multiCity.indexOf('<MultiCityField label="Origin"')) + 2);
-  const destination = multiCity.slice(multiCity.indexOf('<MultiCityField label="Destination"'), multiCity.indexOf('/>', multiCity.indexOf('<MultiCityField label="Destination"')) + 2);
+  const origin = multiCity.slice(multiCity.indexOf('<CompactSearchField label="Origin"'), multiCity.indexOf('/>', multiCity.indexOf('<CompactSearchField label="Origin"')) + 2);
+  const destination = multiCity.slice(multiCity.indexOf('<CompactSearchField label="Destination"'), multiCity.indexOf('/>', multiCity.indexOf('<CompactSearchField label="Destination"')) + 2);
 
   assert.match(origin, /value=\{selectedAirportValue\(leg\.from,"City or airport"\)\}/);
   assert.match(origin, /icon="location"/);
@@ -54,8 +54,9 @@ test("multi-city selected airports use the helper without country metadata and k
   assert.match(destination, /value=\{selectedAirportValue\(leg\.to,"City or airport"\)\}/);
   assert.match(destination, /icon="location"/);
   assert.doesNotMatch(destination, /meta=|leg\.to\.country/);
-  assert.match(panel, /<Text numberOfLines=\{0\} style=\{\[styles\.multiFieldValue/);
-  assert.match(multiCity, /<MultiCityField label="Departure date"[\s\S]*?icon="calendar"/);
+  assert.match(origin, /valueNumberOfLines=\{0\}/);
+  assert.match(destination, /valueNumberOfLines=\{0\}/);
+  assert.match(multiCity, /<CompactSearchField label="Departure date"[\s\S]*?icon="calendar"/);
 });
 
 test("other Flight fields retain their intended icons", () => {

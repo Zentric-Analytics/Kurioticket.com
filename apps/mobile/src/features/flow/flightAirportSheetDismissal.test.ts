@@ -34,7 +34,7 @@ test("Cancel, airport choices, search, and list interactions remain inside the s
   assert.match(sheetContent, /accessibilityLabel="Search airports"/);
   assert.match(sheetContent, /accessibilityLabel="Clear airport search"/);
   assert.match(sheetContent, /<FlatList keyboardShouldPersistTaps="handled"/);
-  assert.match(sheetContent, /onPress=\{\(\) => isMetro \? setExpanded\(airport\) : onChoose/);
+  assert.match(sheetContent, /if\(isMetro\)setExpanded\(airport\);else/);
   assert.match(sheetContent, /<Cancel onPress=\{onClose\}/);
 });
 

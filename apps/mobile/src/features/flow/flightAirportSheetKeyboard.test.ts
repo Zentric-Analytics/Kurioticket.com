@@ -1,31 +1,5 @@
-import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import test from "node:test";
-
-const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
-const airportSheet = panel.slice(panel.indexOf("function AirportSheet"), panel.indexOf("type TravelerCabinDraft"));
-
-test("the native airport sheet adapts to the iOS and Android keyboard viewport", () => {
-  assert.match(airportSheet, /<KeyboardAvoidingView/);
-  assert.match(airportSheet, /behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/);
-  assert.match(airportSheet, /<SafeAreaView edges=\{\["top"\]\}/);
-  assert.match(panel, /keyboardViewport:\{flex:1\}/);
-
-  assert.doesNotMatch(airportSheet, /keyboardHeight|useWindowDimensions|Dimensions\.get/);
-  assert.doesNotMatch(airportSheet, /(?:top|bottom|marginTop|translateY):\s*-/);
-  assert.doesNotMatch(airportSheet, /Platform\.OS\s*===\s*["'](?:ios|android)["']\s*\?\s*-?\d+/);
-});
-
-test("the keyboard-aware sheet preserves airport search and scrolling interactions", () => {
-  assert.match(airportSheet, /accessibilityLabel="Search airports"/);
-  assert.match(airportSheet, /placeholder="Search code, airport, city, or country"/);
-  assert.match(airportSheet, /<FlatList keyboardShouldPersistTaps="handled"/);
-  assert.match(airportSheet, /onPress=\{\(\) => isMetro \? setExpanded\(airport\) : onChoose/);
-});
-
-test("origin and destination share the sheet and selection still updates and closes the form", () => {
-  assert.match(panel, /kind=\{picker === "from" \|\| picker === "to" \? picker : undefined\}/);
-  assert.match(panel, /const chooseAirport = \(airport: Airport\) => \{ const key = picker as "from" \| "to";/);
-  assert.match(panel, /setForm\(\{ \.\.\.form, \[key\]: airport \}\); clear\(key\); setPicker\(undefined\);/);
-  assert.match(panel, /<AirportSheet[^>]*onChoose=\{chooseAirport\}/);
-});
+import assert from "node:assert/strict"; import { readFileSync } from "node:fs"; import test from "node:test";
+const panel=readFileSync("src/features/flow/FlightSearchPanel.tsx","utf8"); const sheet=panel.slice(panel.indexOf("function AirportSheet"),panel.indexOf("type TravelerCabinDraft"));
+test("Flight airport picker focuses on every active open",()=>{assert.match(sheet,/useRef<TextInput>/);assert.match(sheet,/\[active,kind\]/);assert.match(sheet,/requestAnimationFrame\(\(\)=>inputRef\.current\?\.focus\(\)\)/);assert.match(sheet,/autoFocus/);assert.match(sheet,/behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/);});
+test("Flight stages canonical airports and Done alone commits",()=>{assert.match(sheet,/setDraftAirport\(specific\);setQuery\(selectedAirportValue\(specific,""\)\)/);assert.match(sheet,/disabled=\{!draftAirport\}/);assert.match(sheet,/if\(draftAirport\)onChoose\(draftAirport\)/);assert.doesNotMatch(sheet,/isMetro \? setExpanded\(airport\) : onChoose/);assert.match(sheet,/keyboardShouldPersistTaps="handled"/);});
+test("Flight gates actual airport search",()=>{assert.match(sheet,/const searched = eligible \?/);assert.match(sheet,/hasMinimumLocationSearchLetters\(query\)/);assert.match(sheet,/Start typing to find an airport/);});
