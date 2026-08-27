@@ -85,6 +85,7 @@ import {
   formatFlightsWeekdays,
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
+import { formatTravelDateRangeDisplay } from "@/lib/dateFormatting/travelDateDisplay";
 import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
 import { calculateDesktopPopoverGeometry } from "@/components/search/desktopPopoverPosition";
 
@@ -1368,13 +1369,8 @@ export function DealsSearchForm({
       checkOut <= checkIn
     )
       return t("hotelSearchDatePlaceholder");
-    const formatter = new Intl.DateTimeFormat(hotelCalendarLocale, {
-      month: "short",
-      day: "numeric",
-    });
-    return t("hotelSearch.dateRange")
-      .replace("{{checkIn}}", formatter.format(checkIn))
-      .replace("{{checkOut}}", formatter.format(checkOut));
+    return formatTravelDateRangeDisplay(displayedHotelCheckIn, displayedHotelCheckOut, hotelCalendarLocale)
+      ?? t("hotelSearchDatePlaceholder");
   }, [
     hotelCalendarLocale,
     isBeforeToday,
@@ -1584,14 +1580,6 @@ export function DealsSearchForm({
       }),
     [carIntlLocale],
   );
-  const carShortDateFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(carIntlLocale, {
-        month: "short",
-        day: "numeric",
-      }),
-    [carIntlLocale],
-  );
   const carDatesSummary = useMemo(() => {
     const pickup = parseIsoDate(search.carPickupDate);
     const returning = parseIsoDate(search.carReturnDate);
@@ -1600,10 +1588,11 @@ export function DealsSearchForm({
       !isBeforeToday(pickup) &&
       !isBeforeToday(returning) &&
       returning >= pickup
-      ? `${carShortDateFormatter.format(pickup)} — ${carShortDateFormatter.format(returning)}`
+      ? formatTravelDateRangeDisplay(search.carPickupDate, search.carReturnDate, carIntlLocale)
+        ?? t("carsSearch.rentalDatePlaceholder")
       : t("carsSearch.rentalDatePlaceholder");
   }, [
-    carShortDateFormatter,
+    carIntlLocale,
     isBeforeToday,
     search.carPickupDate,
     search.carReturnDate,

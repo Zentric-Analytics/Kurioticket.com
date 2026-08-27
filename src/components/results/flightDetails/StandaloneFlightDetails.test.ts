@@ -421,7 +421,7 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     'index === 0 ? "OUTBOUND" : "RETURN"',
     "leg.segments.map",
     "const flight = selectedOffer",
-    '"Continue to checkout"',
+    '"Continue booking"',
     'aria-disabled={!canContinue || redirecting}',
     "id: offerId",
     'role="radiogroup"',
@@ -471,7 +471,7 @@ test("standalone UI renders every leg and segment from selected offer and uses a
   assert.ok(!source.includes("Not included/not allowed"));
   assert.ok(!source.includes("Provider fare refreshed"));
   assert.ok(!source.includes("Supported loyalty programmes:"));
-  assert.match(source, /Checkout currently unavailable/);
+  assert.match(source, /Booking currently unavailable/);
   assert.match(source, /disabled=\{!canContinue \|\| redirecting\}/);
 });
 

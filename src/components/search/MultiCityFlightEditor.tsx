@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Plane, Plus, Trash2 } from "lucide-react";
+import { ArrowRightLeft, Calendar, Plane, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -30,6 +30,8 @@ import {
   MULTI_CITY_MAX_LEGS,
   MULTI_CITY_MIN_LEGS,
 } from "@/lib/flights/flightSearchJourney";
+import { formatTravelDateDisplay } from "@/lib/dateFormatting/travelDateDisplay";
+import { swapMultiCityLegState } from "@/lib/flights/multiCitySwap";
 import {
   formatFlightsWeekdays,
   normalizeFlightsCalendarLocale,
@@ -115,6 +117,15 @@ export function MultiCityFlightEditor({
     setVerifiedAirports((current) => ({ ...current, [`${index}:${field}`]: code ?? "" }));
   };
 
+  const swap = (index: number) => {
+    setActivePicker(null);
+    setVerifiedAirports((current) => {
+      const swapped = swapMultiCityLegState(legs, current, index);
+      onChange(swapped.legs);
+      return swapped.verifiedAirports;
+    });
+  };
+
   const add = () => {
     if (legs.length >= MULTI_CITY_MAX_LEGS) return;
     const previous = legs.at(-1);
@@ -173,7 +184,8 @@ export function MultiCityFlightEditor({
           return (
             <div key={index} className="space-y-1.5">
               <p className="text-xs font-semibold text-slate-700">{flightLabel(index)}</p>
-              <div className="grid grid-cols-1 gap-2 sm:overflow-hidden sm:rounded-2xl sm:ring-1 sm:ring-slate-200 md:grid-cols-2 md:gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(170px,.72fr)_48px]">
+              <div className="grid grid-cols-1 gap-2 sm:overflow-hidden sm:rounded-2xl sm:ring-1 sm:ring-slate-200 md:grid-cols-[minmax(0,2fr)_minmax(170px,.72fr)] md:gap-0 lg:grid-cols-[minmax(0,2fr)_minmax(170px,.72fr)_48px]">
+                <div className="relative grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-0" data-multi-city-route-pair>
                 <MultiCityAirportField
                   legIndex={index}
                   field="origin"
@@ -214,6 +226,16 @@ export function MultiCityFlightEditor({
                   }}
                   t={t}
                 />
+                <button
+                  type="button"
+                  onClick={() => swap(index)}
+                  aria-label={`Swap origin and destination for ${flightLabel(index)}`}
+                  data-multi-city-swap-control
+                  className="focus-ring absolute inset-inline-start-1/2 top-1/2 z-20 inline-flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#D8E1EC] bg-white text-[#004BB8] shadow-[0_3px_10px_rgba(15,23,42,0.14)] transition-colors hover:bg-blue-50 rtl:translate-x-1/2"
+                >
+                  <ArrowRightLeft className="h-5 w-5" aria-hidden="true" />
+                </button>
+                </div>
                 <MultiCityDateField
                   legIndex={index}
                   value={leg.departureDate}
@@ -469,8 +491,7 @@ function MultiCityDateField({
   const open = activePicker?.legIndex === legIndex && activePicker.field === "date";
   const desktopOpen = open && activePicker.mode === "desktop";
   const mobileOpen = open && activePicker.mode === "mobile";
-  const parsed = parseFlightIsoDate(value);
-  const summary = parsed ? new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric" }).format(parsed) : t("flightMultiCity.departureDate");
+  const summary = formatTravelDateDisplay(value, locale) ?? t("flightMultiCity.departureDate");
   const openPicker = () => {
     const mode = window.matchMedia("(max-width: 639px)").matches ? "mobile" : "desktop";
     onOpen(open ? null : { legIndex, field: "date", mode });
@@ -487,7 +508,7 @@ function MultiCityDateField({
         <button
           ref={launcherRef}
           type="button"
-          aria-label={`${t("flightMultiCity.departureDate")} ${legIndex + 1}`}
+          aria-label={`${t("flightMultiCity.departureDate")} ${legIndex + 1}: ${summary}`}
           aria-expanded={open}
           aria-haspopup="dialog"
           onClick={openPicker}

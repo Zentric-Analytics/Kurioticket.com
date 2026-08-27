@@ -85,6 +85,7 @@ import {
 } from "@/data/airports";
 import { getHomeDiscoveryByRegion, homeDiscoveryByRegion } from "@/data/homeDiscovery";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import { formatTravelDateDisplay } from "@/lib/dateFormatting/travelDateDisplay";
 import {
   getLocalizedHotelDestinationCityName,
   getLocalizedHotelDestinationDetail,
@@ -97,7 +98,6 @@ import {
   type OriginFieldState,
 } from "@/lib/flights/defaultOrigin";
 import {
-  formatFlightsDateSummary,
   formatFlightsMonthHeading,
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
@@ -1466,40 +1466,8 @@ export function SearchTabs({
           : translate("roomPlural") || "rooms"
       }`;
 
-  const formatShortDate = useCallback((
-    isoDate: string
-  ) => {
-    if (!isoDate) {
-      return "";
-    }
-
-    const [year, month, day] =
-      isoDate.split("-");
-
-    if (
-      !year ||
-      !month ||
-      !day
-    ) {
-      return "";
-    }
-
-    const parsedDate = new Date(
-      Number(year),
-      Number(month) - 1,
-      Number(day)
-    );
-
-    if (
-      Number.isNaN(
-        parsedDate.getTime()
-      )
-    ) {
-      return "";
-    }
-
-    return formatFlightsDateSummary(parsedDate, null, calendarLocale);
-  }, [calendarLocale]);
+  const formatShortDate = useCallback((isoDate: string) =>
+    formatTravelDateDisplay(isoDate, calendarLocale) ?? "", [calendarLocale]);
 
   const dateSummary = useMemo(
     () => {
@@ -2310,17 +2278,8 @@ export function SearchTabs({
     area: translate("carsSearch.type.area") || "Area",
     customLocation: translate("carsSearch.type.customLocation") || "Custom location",
   };
-  const carsDateFormatter = new Intl.DateTimeFormat(calendarLocale, {
-    month: "short",
-    day: "numeric",
-  });
-  const formatCarsDate = (value: string) => {
-    if (!value) return "";
-    const [year, month, day] = value.split("-").map(Number);
-    return year && month && day
-      ? carsDateFormatter.format(new Date(year, month - 1, day))
-      : "";
-  };
+  const formatCarsDate = (value: string) =>
+    formatTravelDateDisplay(value, calendarLocale) ?? "";
   const carsPickupDateDisplay =
     formatCarsDate(carsValues.pickupDate) ||
     translate("carsSearch.pickupDateLabel") ||
