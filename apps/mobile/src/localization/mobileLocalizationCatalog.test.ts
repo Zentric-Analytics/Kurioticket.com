@@ -69,6 +69,6 @@ test("known expanded-dictionary English placeholders are localized", () => {
   );
   assert.deepEqual(
     [dictionaries["pt-br"].emailPreferences, dictionaries["pt-br"].contactUs, dictionaries["pt-br"].supportMessage],
-    ["Preferências de e-mail", "Fale conosco", "Mensagem"],
+    ["Preferências de e-mail", "Fale conosco", "Como podemos ajudar?"],
   );
 });
