@@ -102,6 +102,7 @@ import {
 } from "./dateStripModel";
 import { flightResultCountLabel } from "./flightResultCount";
 import { flightCardLegs, type FlightCardLeg } from "./flightCardLegs";
+import { flightOperatingCarrierPresentation } from "./flightOperatingCarrier";
 import { deriveFlightResultHighlights, type FlightResultHighlight } from "./flightResultHighlights";
 import { readSession } from "../../storage/sessionStorage";
 import {
@@ -785,13 +786,14 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
   }, [logInitialMount]);
   const roundTrip = one(params.tripType) === "round-trip";
   const { outbound, returnLeg } = flightCardLegs(result, roundTrip);
+  const operatingCarrierPresentation = flightOperatingCarrierPresentation(result);
   const baggageSummary = summarizeBaggage(result.baggageInfo) ?? "Review policy";
   const cabinSummary = formatCabinClass(result.cabinClass);
   const fareRulesSummary = summarizeFareRules(result.refundInfo) ?? "Review before booking";
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${result.airlineName} flight, ${result.originAirport} to ${result.destinationAirport}, ${fare?.accessibilityLabel ?? "price unavailable"}`}
+      accessibilityLabel={`${result.airlineName}${operatingCarrierPresentation ? `, ${operatingCarrierPresentation.accessibilityText}` : ""} flight, ${result.originAirport} to ${result.destinationAirport}, ${fare?.accessibilityLabel ?? "price unavailable"}`}
       accessibilityHint="Opens flight details"
       onPress={() =>
         router.push({
@@ -816,9 +818,19 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
           </View>
           <View style={s0.flightDetails}>
             <View style={s0.airlineHeader}>
-              <Text accessibilityLabel={`Airline ${result.airlineName}`} style={[s0.airlineName, { color: theme.textPrimary }]} numberOfLines={2} ellipsizeMode="tail">
-                {result.airlineName}
-              </Text>
+              <View
+                style={s0.airlineCopy}
+                accessibilityLabel={`${result.airlineName}${operatingCarrierPresentation ? `, ${operatingCarrierPresentation.accessibilityText}` : ""}`}
+              >
+                <Text style={[s0.airlineName, { color: theme.textPrimary }]} numberOfLines={2} ellipsizeMode="tail">
+                  {result.airlineName}
+                </Text>
+                {operatingCarrierPresentation ? (
+                  <Text style={[s0.operatingCarrierText, { color: theme.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">
+                    {operatingCarrierPresentation.text}
+                  </Text>
+                ) : null}
+              </View>
               <View style={s0.identityActions}>
                 {highlight ? (
                   <View
@@ -1502,6 +1514,7 @@ const s0 = StyleSheet.create({
   },
   cardPressed: { opacity: 0.94 },
   airlineHeader: { minHeight: 20, flexDirection: "row", alignItems: "flex-start", gap: 6 },
+  airlineCopy: { flex: 1, minWidth: 0 },
   identityActions: { flexDirection: "column", flexShrink: 0, alignItems: "center", justifyContent: "flex-start", gap: 3 },
   favoriteButton: { width: 20, height: 20, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   favoritePressed: { opacity: 0.7, transform: [{ scale: 0.94 }] },
@@ -1512,7 +1525,8 @@ const s0 = StyleSheet.create({
   flightIdentityLayout: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 10 },
   airlineLogoColumn: { width: 32, flexShrink: 0, alignItems: "center" },
   flightDetails: { flex: 1, minWidth: 0 },
-  airlineName: { flex: 1, minWidth: 0, fontSize: 14, lineHeight: 18, color: ui.navy, fontWeight: "800" },
+  airlineName: { fontSize: 14, lineHeight: 18, color: ui.navy, fontWeight: "800" },
+  operatingCarrierText: { fontSize: 11, lineHeight: 15, fontWeight: "500" },
   journeyList: { width: "100%", marginTop: 3, gap: 4 },
   journeyBlock: { width: "100%", gap: 0 },
   journeyLabel: { fontSize: 9, lineHeight: 10, fontWeight: "800", letterSpacing: 0.7 },
