@@ -1,1 +1,1 @@
-export { FaqScreen as default } from "../src/features/account/NativeAccountScreens";
+export { MobileFaqScreen as default } from "../src/features/account/MobileFaqScreen";
