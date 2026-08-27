@@ -1,4 +1,4 @@
-import type { FlightFareTerm, FlightLeg, FlightSearchLeg, PublicFlightResult, TripType } from "@/lib/types";
+import type { CabinClass, FlightFareTerm, FlightLeg, FlightSearchLeg, PublicFlightResult, TripType } from "@/lib/types";
 
 export type FlightDetailsOffer = Omit<
   PublicFlightResult,
@@ -42,6 +42,7 @@ export type FlightDetailsSuccess = {
     children: number;
     infants: number;
     travelers: number;
+    cabinClass: CabinClass;
   };
 };
 

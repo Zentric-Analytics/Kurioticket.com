@@ -556,3 +556,25 @@ test("fare choices are not manufactured into booking deals", () => {
     ["Basic", 1], ["Main Cabin", 0], ["Flexible", 0],
   ]);
 });
+
+test("details expose authoritative cabin class without provider secrets", async () => {
+  const details = await buildStandaloneFlightDetails({ cachedSelected: fixture({ cabinClass: "business" }), cachedAlternatives: [fixture({ cabinClass: "business" })], search: { ...search, cabinClass: "business" }, now: 1, refresh: async ({ cachedOffer }) => ({ status: "confirmed", offer: cachedOffer }), discoverUpsells: noUpsells });
+  assert.equal(details.status, "available");
+  if (details.status === "available") assert.equal(details.search.cabinClass, "business");
+  assert.doesNotMatch(JSON.stringify(details), /providerOfferId|rawProviderReference|partnerRedirectUrl|bookingUrl/);
+});
+
+test("Flight Details mobile cleanup uses shared editing, peek tabs, and fare carousel", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  assert.match(source, /<FlightEditSearchDrawer/);
+  assert.match(source, /ref=\{editSearchLauncherRef\}[\s\S]*?sm:hidden/);
+  assert.match(source, /<Link href=\{resultsHref\}[\s\S]*?Back to results/);
+  assert.match(source, /shrink-0 whitespace-nowrap border-b-2 w-\[30%\] min-w-\[105px\]/);
+  assert.match(source, /touch-pan-x snap-x snap-mandatory/);
+  assert.match(source, /overflow-x-auto overflow-y-hidden/);
+  assert.match(source, /w-\[min\(82vw,310px\)\]/);
+  assert.match(source, /fareChoices.length === 1 \? "max-w-\[270px\]"/);
+  const emptyBranch = source.split("\n").find((line) => line.includes("if (deals.length === 0)")) ?? "";
+  assert.match(emptyBranch, /No live booking deals are available for this fare right now\./);
+  assert.doesNotMatch(emptyBranch, /Compare available booking options|deals available/);
+});
