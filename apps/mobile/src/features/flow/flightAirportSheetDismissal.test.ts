@@ -6,14 +6,14 @@ const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
 const airportSheet = panel.slice(panel.indexOf("function AirportSheet"), panel.indexOf("type TravelerCabinDraft"));
 
 test("the airport sheet has a dedicated accessible backdrop dismissal target", () => {
-  assert.match(airportSheet, /<SafeAreaView[^>]*style=\{styles\.overlay\}><Pressable style=\{StyleSheet\.absoluteFill\} onPress=\{onClose\} accessibilityRole="button" accessibilityLabel="Close airport picker"\/>/);
-  assert.match(airportSheet, /<Modal transparent animationType="slide" visible=\{Boolean\(kind\)\} onRequestClose=\{onClose\}>/);
+  assert.match(airportSheet, /<SafeAreaView[^>]*style=\{styles\.overlay\}>[\s\S]*?<Pressable style=\{StyleSheet\.absoluteFill\} onPress=\{onClose\} accessibilityRole="button" accessibilityLabel="Close airport picker"\/>/);
+  assert.match(airportSheet, /<Modal transparent animationType="none" visible=\{motion\.rendered\} onRequestClose=\{onClose\}>/);
 });
 
 test("the interactive sheet is a sibling above the backdrop, not its child", () => {
   const backdropEnd = airportSheet.indexOf("accessibilityLabel=\"Close airport picker\"/>");
   const activeViewport = airportSheet.indexOf("<SafeAreaView");
-  const sheet = airportSheet.indexOf("<View accessibilityViewIsModal");
+  const sheet = airportSheet.indexOf("<Animated.View accessibilityViewIsModal");
 
   assert.ok(backdropEnd >= 0);
   assert.ok(activeViewport >= 0 && activeViewport < backdropEnd);
@@ -28,7 +28,7 @@ test("From and To use the shared airport sheet and its close path", () => {
 });
 
 test("Cancel, airport choices, search, and list interactions remain inside the sheet", () => {
-  const sheetStart = airportSheet.indexOf("<View accessibilityViewIsModal");
+  const sheetStart = airportSheet.indexOf("<Animated.View accessibilityViewIsModal");
   const sheetContent = airportSheet.slice(sheetStart);
 
   assert.match(sheetContent, /accessibilityLabel="Search airports"/);

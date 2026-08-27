@@ -19,7 +19,7 @@ test("approved flight Edit search opens a local modal with current canonical par
 
 test("results edit modal reuses the shared panel and dismisses locally", () => {
   const modal = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
-  assert.match(modal, /<Modal transparent animationType="slide" visible onRequestClose=\{onClose\}/);
+  assert.match(modal, /<Modal transparent animationType="none" visible=\{motion\.rendered\} onRequestClose=\{onClose\}/);
   assert.match(modal, /accessibilityViewIsModal/);
   assert.match(modal, /accessibilityLabel="Close edit search"/);
   assert.match(modal, /keyboardShouldPersistTaps="handled"/);
