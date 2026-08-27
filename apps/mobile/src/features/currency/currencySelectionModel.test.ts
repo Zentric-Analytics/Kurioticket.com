@@ -45,24 +45,28 @@ test("selectable approved currency codes remain alphabetically sorted", () => {
   ]);
 });
 
-test("currency presentations provide readable names and safe display symbols", () => {
+test("currency presentations provide readable names and sort by human-readable name", () => {
   assert.deepEqual(getCurrencyPresentations(["NGN", "USD", "EUR", "GBP", "AED"]), [
-    { code: "NGN", name: "Nigerian Naira", symbol: "₦" },
-    { code: "USD", name: "US Dollar", symbol: "$" },
-    { code: "EUR", name: "Euro", symbol: "€" },
     { code: "GBP", name: "British Pound", symbol: "£" },
+    { code: "EUR", name: "Euro", symbol: "€" },
+    { code: "NGN", name: "Nigerian Naira", symbol: "₦" },
     { code: "AED", name: "United Arab Emirates Dirham", symbol: "AED" },
+    { code: "USD", name: "US Dollar", symbol: "$" },
   ]);
 });
 
 test("currency search matches name, ISO code, and symbol case-insensitively", () => {
-  const currencies = getCurrencyPresentations(["NGN", "USD", "CAD", "EUR"]);
+  const currencies = getCurrencyPresentations(["NGN", "USD", "CAD", "EUR", "INR"]);
 
   assert.deepEqual(filterCurrencyPresentations(currencies, "NAI").map(({ code }) => code), ["NGN"]);
   assert.deepEqual(filterCurrencyPresentations(currencies, "ngn").map(({ code }) => code), ["NGN"]);
   assert.deepEqual(filterCurrencyPresentations(currencies, "₦").map(({ code }) => code), ["NGN"]);
-  assert.deepEqual(filterCurrencyPresentations(currencies, "dollar").map(({ code }) => code), ["USD", "CAD"]);
+  assert.deepEqual(filterCurrencyPresentations(currencies, "dollar").map(({ code }) => code), ["CAD", "USD"]);
+  assert.deepEqual(filterCurrencyPresentations(currencies, "inr").map(({ code }) => code), ["INR"]);
   assert.deepEqual(filterCurrencyPresentations(currencies, "not a currency"), []);
+
+  const model = readFileSync("src/features/currency/currencySelectionModel.ts", "utf8");
+  assert.doesNotMatch(model, /toLocaleLowerCase/);
 });
 
 test("the existing Currency screen wires filtering to loading and saving only to a user press", () => {
@@ -76,13 +80,19 @@ test("the existing Currency screen wires filtering to loading and saving only to
   assert.match(screen, /accessibilityState=\{\{ checked: selected === currency\.code \}\}/);
 });
 
-test("Currency screen uses an unboxed three-column list and local search", () => {
+test("Currency screen uses an unboxed three-column list and localized local search", () => {
   const screen = readFileSync("src/features/flow/SettingsScreens.tsx", "utf8");
+  const catalog = readFileSync("src/localization/mobileLocalizationCatalog.ts", "utf8");
   const currencyScreen = screen.slice(screen.indexOf("export function CurrencyScreen"), screen.indexOf("const styles"));
 
   assert.doesNotMatch(currencyScreen, /styles\.card/);
-  assert.match(currencyScreen, /placeholder="Search currencies"/);
-  assert.match(currencyScreen, /No currencies found\./);
+  assert.match(currencyScreen, /const currencySearch = t\("currencySearch"\)/);
+  assert.match(currencyScreen, /placeholder=\{currencySearch\}/);
+  assert.match(currencyScreen, /\{t\("currencyEmpty"\)\}/);
+  assert.match(catalog, /currencySearch:"Search currencies"/);
+  assert.match(catalog, /currencyEmpty:"No currencies found\."/);
+  assert.match(catalog, /currencySearch:"Buscar monedas"/);
+  assert.match(catalog, /currencyEmpty:"No se encontraron monedas\."/);
   assert.match(screen, /currencySymbolColumn: \{ width: 54, flexShrink: 0/);
   assert.match(screen, /currencyTrailing: \{ width: 28, flexShrink: 0/);
   assert.doesNotMatch(currencyScreen, />Save<|>Reset</);
