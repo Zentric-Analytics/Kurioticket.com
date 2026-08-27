@@ -93,9 +93,11 @@ test("flight card keeps horizontal metadata compact while airline identity may g
   assert.match(source, /metadataRow: \{ width: "100%", flexDirection: "row"/);
   assert.doesNotMatch(source, /metadataRow: \{[^}]*gap:/);
   assert.match(source, /metadataItem: \{ flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "center"/);
-  assert.match(source, /metadataText: \{ flexShrink: 1, minWidth: 0, fontSize: 9\.5, lineHeight: 12\.5 \}/);
+  assert.match(source, /metadataText: \{ flexShrink: 1, minWidth: 0, fontSize: 9\.5, lineHeight: 12\.5, fontWeight: "600" \}/);
   assert.doesNotMatch(source, /metadataText: \{[^}]*flex: 1/);
   assert.equal(card.match(/<Text numberOfLines=\{1\} ellipsizeMode="tail" style=\{\[s0\.metadataText/g)?.length, 3);
+  assert.equal(card.match(/s0\.metadataText, \{ color: theme\.textPrimary \}/g)?.length, 3);
+  assert.equal(card.match(/(?:Luggage|Armchair|ShieldCheck)[^>]*color=\{theme\.textSecondary\}/g)?.length, 3);
   assert.doesNotMatch(source, /benefitList:|benefitItem:/);
   assert.doesNotMatch(source, /detailsButton(?:Text)?:/);
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {

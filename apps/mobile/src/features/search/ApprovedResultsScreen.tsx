@@ -903,15 +903,15 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
       <View style={s0.metadataRow}>
         <View accessible accessibilityLabel={`Baggage: ${baggageAccessibility}`} style={s0.metadataItem}>
           <Luggage accessible={false} size={14} strokeWidth={1.8} color={theme.textSecondary} />
-          <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: theme.textSecondary }]}>{baggageSummary}</Text>
+          <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: theme.textPrimary }]}>{baggageSummary}</Text>
         </View>
         <View accessible accessibilityLabel={`Cabin: ${cabinSummary}`} style={s0.metadataItem}>
           <Armchair accessible={false} size={14} strokeWidth={1.8} color={theme.textSecondary} />
-          <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: theme.textSecondary }]}>{cabinSummary}</Text>
+          <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: theme.textPrimary }]}>{cabinSummary}</Text>
         </View>
         <View accessible accessibilityLabel={`Fare rules: ${fareRulesAccessibility}`} style={s0.metadataItem}>
           <ShieldCheck accessible={false} size={14} strokeWidth={1.8} color={theme.textSecondary} />
-          <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: theme.textSecondary }]}>Fare rules</Text>
+          <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: theme.textPrimary }]}>Fare rules</Text>
         </View>
       </View>
     </Pressable>
@@ -1580,7 +1580,7 @@ const s0 = StyleSheet.create({
   metadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 3, marginBottom: 4 },
   metadataRow: { width: "100%", flexDirection: "row", alignItems: "center" },
   metadataItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 3 },
-  metadataText: { flexShrink: 1, minWidth: 0, fontSize: 9.5, lineHeight: 12.5 },
+  metadataText: { flexShrink: 1, minWidth: 0, fontSize: 9.5, lineHeight: 12.5, fontWeight: "600" },
   hotelCard: {
     height: 234,
     borderWidth: 1,
