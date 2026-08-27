@@ -535,22 +535,18 @@ export function FlightLandingClient() {
           </div>
         </div>
 
-        {/*
-          Match the homepage mobile structure: the hero owns only the image/copy,
-          and the search card is anchored to the hero's bottom edge instead of
-          participating in normal flow. The following section reserves the card's
-          height so content begins cleanly after the overlap.
-        */}
-        <div className="page-shell absolute inset-x-0 bottom-[-23.5rem] z-30">
-          <div className="mx-auto max-w-6xl">
-            <StandaloneFlightSearchForm
-              localizeCalendarLabels
-              mobileHeroCard
-              presentation="main-flight-landing"
-            />
-          </div>
-        </div>
       </section>
+
+      {/* Keep the mobile card in flow so variable-height searches grow downward. */}
+      <div className="page-shell relative z-30 -mt-6 sm:hidden">
+        <div className="mx-auto max-w-6xl">
+          <StandaloneFlightSearchForm
+            localizeCalendarLabels
+            mobileHeroCard
+            presentation="main-flight-landing"
+          />
+        </div>
+      </div>
 
       <section className="relative hidden overflow-visible pb-28 sm:block lg:pb-32">
         <div className="relative isolate min-h-[28.75rem] bg-slate-950 lg:min-h-[31.75rem]">
@@ -588,7 +584,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="page-shell mt-0 pt-[28rem] sm:mt-32 sm:pt-0 lg:mt-36">
+      <section className="page-shell mt-10 sm:mt-32 lg:mt-36">
         <div>
           <div className="mb-5 max-w-3xl">
             <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
