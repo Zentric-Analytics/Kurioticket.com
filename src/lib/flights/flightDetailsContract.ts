@@ -5,6 +5,14 @@ export type FlightDetailsOffer = Omit<
   "bookingUrl" | "partnerRedirectUrl"
 >;
 
+export type FlightDetailsDeal = {
+  key: string;
+  offerId: string;
+  providerName: string;
+  price: number;
+  currency: string;
+};
+
 export type FlightDetailsFareChoice = {
   key: string;
   label: string;
@@ -12,6 +20,7 @@ export type FlightDetailsFareChoice = {
   distinguishingTerms: FlightFareTerm[];
   selectedOffer: boolean;
   handoff: FlightDetailsHandoff;
+  deals: FlightDetailsDeal[];
 };
 
 export type FlightDetailsHandoff =
