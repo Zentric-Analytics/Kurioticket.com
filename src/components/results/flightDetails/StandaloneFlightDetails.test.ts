@@ -4,7 +4,7 @@ import test, { afterEach } from "node:test";
 
 import type { FlightSearchParams, NormalizedFlightResult } from "@/lib/types";
 import { flightDetailsRouteLabel, flightDetailsTotalLabel } from "@/lib/flights/flightDetailsContract";
-import { buildFareDisplayRows, canUseOfferAirlineLogo, compactFareTerms, resolveSegmentCarrierName } from "@/components/results/flightDetails/flightDetailsPresentation";
+import { buildFareDisplayRows, canUseOfferAirlineLogo, compactFareTerms, getCenteredFareScrollLeft, resolveSegmentCarrierName } from "@/components/results/flightDetails/flightDetailsPresentation";
 import {
   buildMaterialFareChoices,
   buildStandaloneFlightDetails,
@@ -491,8 +491,8 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.match(source, /useState<FareTab>\("deals"\)/);
   assert.match(source, /role="tabpanel"/);
   assert.match(source, /ArrowRight.*ArrowLeft/s);
-  assert.match(source, /flex min-w-0 overflow-x-auto/);
-  assert.match(source, /min-h-11 shrink-0 whitespace-nowrap border-b-2/);
+  assert.match(source, /flex min-w-0 flex-nowrap gap-2 overflow-x-auto/);
+  assert.match(source, /min-h-11 w-auto shrink-0 whitespace-nowrap border-b-2/);
   assert.match(source, /\[scrollbar-width:none\]/);
   assert.doesNotMatch(source, />Selected<\/span>/);
   assert.match(source, /grid-cols-\[minmax\(0,1fr\)_minmax\(82px,1\.1fr\)_minmax\(0,1fr\)\]/);
@@ -628,17 +628,33 @@ test("Flight Details mobile cleanup uses shared editing, peek tabs, and fare car
   assert.match(source, /<FlightEditSearchDrawer/);
   assert.match(source, /ref=\{editSearchLauncherRef\}[\s\S]*?sm:hidden/);
   assert.match(source, /<Link href=\{resultsHref\}[\s\S]*?Back to results/);
-  assert.match(source, /shrink-0 whitespace-nowrap border-b-2 w-\[30%\] min-w-\[105px\]/);
-  assert.match(source, /touch-pan-x snap-x snap-mandatory/);
+  assert.match(source, /flex-nowrap gap-2 overflow-x-auto/);
+  assert.match(source, /w-auto shrink-0 whitespace-nowrap border-b-2/);
+  assert.doesNotMatch(source, /w-\[30%\] min-w-\[105px\]/);
+  assert.match(source, /Optional extras/);
+  assert.match(source, /flex snap-x snap-mandatory gap-3/);
   assert.match(source, /overflow-x-auto overflow-y-hidden/);
+  const fareRailClasses = source.match(/fareChoices\.length > 1 \? "([^"]+)"/)?.[1] ?? "";
+  assert.doesNotMatch(fareRailClasses, /touch-pan-x|touch-action:\s*(?:pan-x|none)|overscroll-x-contain|overscroll-behavior:\s*none/);
+  assert.match(fareRailClasses, /px-4/);
+  assert.match(fareRailClasses, /scroll-padding-inline:1rem/);
   assert.match(source, /w-\[min\(78vw,275px\)\]/);
   assert.match(source, /ref=\{fareRailRef\} role="radiogroup"/);
   assert.match(source, /initialFareAlignmentRef/);
   assert.match(source, /rail\.scrollTo\(\{ left: clampedLeft, behavior: "auto" \}\)/);
+  assert.match(source, /const railRect = rail\.getBoundingClientRect\(\)/);
+  assert.match(source, /selectedLeft: selectedRect\.left/);
   assert.match(source, /fareChoices\.length < 2/);
   assert.match(source, /selectedFareKey !== initialSelectedFareKey/);
   assert.match(source, /fareChoices.length === 1 \? "max-w-\[270px\]"/);
   const emptyBranch = source.split("\n").find((line) => line.includes("if (deals.length === 0)")) ?? "";
   assert.match(emptyBranch, /No live booking deals are available for this fare right now\./);
   assert.doesNotMatch(emptyBranch, /Compare available booking options|deals available/);
+});
+
+test("fare centering is rail-relative and clamps only at real edges", () => {
+  const geometry = { railLeft: 16, railScrollLeft: 0, railClientWidth: 358, railScrollWidth: 849, selectedWidth: 275 };
+  assert.equal(getCenteredFareScrollLeft({ ...geometry, selectedLeft: 315 }), 257.5);
+  assert.equal(getCenteredFareScrollLeft({ ...geometry, selectedLeft: 32 }), 0);
+  assert.equal(getCenteredFareScrollLeft({ ...geometry, selectedLeft: 598 }), 491);
 });
