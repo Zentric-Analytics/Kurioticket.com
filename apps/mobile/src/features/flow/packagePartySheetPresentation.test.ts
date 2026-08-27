@@ -69,7 +69,7 @@ test("package descriptions remain flexible and the native pet Switch keeps draft
 test("package airport and party sheets keep isolated height geometry", () => {
   assert.match(styles, /sheet:\{maxHeight:"86%",borderTopLeftRadius:24,borderTopRightRadius:24,padding:18,gap:12\}/);
   assert.match(styles, /partySheet:\{maxHeight:"64%",paddingHorizontal:15,paddingVertical:13,gap:8\}/);
-  assert.match(airportSheet, /style=\{\[styles\.sheet, \{ backgroundColor: ft\.colors\.surface \}\]\}/);
+  assert.match(airportSheet, /style=\{\[styles\.sheet, \{ backgroundColor: ft\.colors\.surface \},motion\.sheetStyle\]\}/);
   assert.doesNotMatch(airportSheet, /styles\.partySheet/);
-  assert.match(partySheet, /style=\{\[styles\.sheet, styles\.partySheet, \{ backgroundColor: ft\.colors\.surface \}\]\}/);
+  assert.match(partySheet, /style=\{\[styles\.sheet, styles\.partySheet, \{ backgroundColor: ft\.colors\.surface \},motion\.sheetStyle\]\}/);
 });
