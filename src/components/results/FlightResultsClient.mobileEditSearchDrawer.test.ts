@@ -31,7 +31,7 @@ test("trip types use three equal, tappable, non-wrapping columns", () => {
   assert.match(mobileDrawer, /whitespace-nowrap/);
   assert.match(mobileDrawer, /role="radio"/);
   assert.match(mobileDrawer, /aria-checked=\{selected\}/);
-  assert.match(mobileDrawer, /handleTripTypeChange\(option\.value\)/);
+  assert.match(mobileDrawer, /handleMobileTripTypeChange\(option\.value\)/);
   assert.doesNotMatch(
     mobileDrawer.match(/data-mobile-trip-type-grid[\s\S]*?<\/div>/)?.[0] ?? "",
     /flex-wrap/,

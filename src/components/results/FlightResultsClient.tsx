@@ -49,6 +49,7 @@ import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { MobileTravelerCabinPicker } from "@/components/search/MobileTravelerCabinPicker";
+import { MultiCityFlightEditor } from "@/components/search/MultiCityFlightEditor";
 import { Button } from "@/components/ui/Button";
 import { FlightCardSkeleton } from "@/components/ui/Skeleton";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -114,8 +115,14 @@ import {
   type SavedDiscoveryFlightSearch,
 } from "@/lib/saved-items-api";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
-import type { PublicFlightResult, SortMode } from "@/lib/types";
-import { appendFlightLegParams, parseFlightLegParams, projectSearchLegs } from "@/lib/flights/flightSearchJourney";
+import type { FlightSearchLeg, PublicFlightResult, SortMode } from "@/lib/types";
+import {
+  appendFlightLegParams,
+  MULTI_CITY_MAX_LEGS,
+  MULTI_CITY_MIN_LEGS,
+  parseFlightLegParams,
+  projectSearchLegs,
+} from "@/lib/flights/flightSearchJourney";
 import { cn, getItineraryDateKey } from "@/lib/utils";
 import {
   calculateCompactFilterPlacement,
@@ -1077,6 +1084,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [returnDateInput, setReturnDateInput] = useState(
     initialDateSafeParams.get("returnDate") || "",
   );
+  const [multiCityLegs, setMultiCityLegs] = useState<FlightSearchLeg[]>(() =>
+    initialDateSafeParams.get("tripType") === "multi-city"
+      ? parseFlightLegParams(params)
+      : [],
+  );
+  const [multiCityAirportsValid, setMultiCityAirportsValid] = useState(false);
   const [adultCount, setAdultCount] = useState(() => {
     const adultsParam = params.get("adults");
     const travelersParam = params.get("travelers");
@@ -2105,6 +2118,57 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     }
   }
 
+  function handleMobileTripTypeChange(nextTripType: string) {
+    markExpandedSearchInteraction();
+    setTripTypeMenuOpen(false);
+
+    if (nextTripType === "multi-city") {
+      if (multiCityLegs.length === 0) {
+        const firstLeg = {
+          origin: originCode || originInput.trim().toUpperCase(),
+          destination:
+            destinationCode || destinationInput.trim().toUpperCase(),
+          departureDate: departureDateInput,
+        };
+        const projectedLegs = [
+          firstLeg,
+          tripTypeInput === "round-trip" && returnDateInput
+            ? {
+                origin: firstLeg.destination,
+                destination: firstLeg.origin,
+                departureDate: returnDateInput,
+              }
+            : {
+                origin: firstLeg.destination,
+                destination: "",
+                departureDate: departureDateInput,
+              },
+        ];
+        const projection = projectSearchLegs("multi-city", projectedLegs);
+        setMultiCityLegs(projection.legs);
+      }
+      setTripTypeInput("multi-city");
+      closeFlightSearchPopovers();
+      return;
+    }
+
+    const normalizedTripType =
+      nextTripType === "one-way" ? "one-way" : "round-trip";
+    if (tripTypeInput === "multi-city" && multiCityLegs.length > 0) {
+      const projection = projectSearchLegs(normalizedTripType, multiCityLegs);
+      setOriginInput(projection.origin);
+      setOriginCode(projection.origin);
+      setDestinationInput(projection.destination);
+      setDestinationCode(projection.destination);
+      setDepartureDateInput(projection.departureDate);
+      setReturnDateInput(projection.returnDate ?? "");
+    } else if (normalizedTripType === "one-way") {
+      setReturnDateInput("");
+    }
+    setTripTypeInput(normalizedTripType);
+    closeFlightSearchPopovers();
+  }
+
   function rememberMobileSearchScrollPosition() {
     mobileSearchScrollTopRef.current =
       mobileSearchScrollRef.current?.scrollTop ?? 0;
@@ -2427,6 +2491,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setDestinationCode(nextDestination);
     setDepartureDateInput(nextDepartureDate);
     setReturnDateInput(nextTripType === "round-trip" ? nextReturnDate : "");
+    if (nextTripType === "multi-city") {
+      setMultiCityLegs(parseFlightLegParams(normalizedSearchValues));
+    }
     if (isValidFutureOrTodayDateValue(nextDepartureDate)) {
       setCalendarMonth(
         startOfMonth(parseDateValue(nextDepartureDate) ?? new Date()),
@@ -3220,11 +3287,28 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       (isValidFutureOrTodayDateValue(nextReturnDate) &&
         !isDateValueBefore(nextReturnDate, nextDepartureDate));
 
+    const hasValidMultiCitySearch =
+      multiCityLegs.length >= MULTI_CITY_MIN_LEGS &&
+      multiCityLegs.length <= MULTI_CITY_MAX_LEGS &&
+      multiCityAirportsValid &&
+      multiCityLegs.every(
+        (leg, index) =>
+          /^[A-Z0-9]{3}$/.test(leg.origin) &&
+          /^[A-Z0-9]{3}$/.test(leg.destination) &&
+          leg.origin !== leg.destination &&
+          isValidFutureOrTodayDateValue(leg.departureDate) &&
+          (index === 0 ||
+            leg.departureDate >= multiCityLegs[index - 1].departureDate),
+      );
+
+    if (tripTypeInput === "multi-city" && !hasValidMultiCitySearch) return;
+
     if (
-      !nextOrigin ||
-      !nextDestination ||
-      !hasValidDepartureDate ||
-      !hasValidReturnDate
+      tripTypeInput !== "multi-city" &&
+      (!nextOrigin ||
+        !nextDestination ||
+        !hasValidDepartureDate ||
+        !hasValidReturnDate)
     ) {
       return;
     }
@@ -3248,11 +3332,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setInfantCount(infants);
     }
 
+    const projection =
+      tripTypeInput === "multi-city"
+        ? projectSearchLegs("multi-city", multiCityLegs)
+        : null;
     const nextParams = new URLSearchParams({
       tripType: tripTypeInput,
-      origin: nextOrigin,
-      destination: nextDestination,
-      departureDate: nextDepartureDate,
+      origin: projection?.origin ?? nextOrigin,
+      destination: projection?.destination ?? nextDestination,
+      departureDate: projection?.departureDate ?? nextDepartureDate,
       adults: String(adults),
       children: String(children),
       infants: String(infants),
@@ -3260,11 +3348,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       cabinClass: cabinClassInput,
     });
 
+    if (tripTypeInput === "multi-city") {
+      nextParams.set("currency", selectedCurrency);
+      appendFlightLegParams(nextParams, multiCityLegs);
+    }
+
     if (tripTypeInput === "round-trip" && nextReturnDate) {
       nextParams.set("returnDate", nextReturnDate);
     }
 
-    try {
+    if (tripTypeInput !== "multi-city") try {
       const recentSearch = buildFlightRecentSearch({
         tripType: tripTypeInput === "one-way" ? "one-way" : "round-trip",
         origin: nextOrigin,
@@ -5827,7 +5920,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       type="button"
                       role="radio"
                       aria-checked={selected}
-                      onClick={() => handleTripTypeChange(option.value)}
+                      onClick={() => handleMobileTripTypeChange(option.value)}
                       className={cn(
                         "focus-ring inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-1 text-[13px] font-semibold leading-none transition-colors min-[360px]:gap-2 min-[360px]:text-sm",
                         selected
@@ -5857,10 +5950,17 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 })}
               </div>
 
-              <div
-                className="relative grid min-w-0 gap-3"
-                data-mobile-route-fields
-              >
+              {tripTypeInput === "multi-city" ? (
+                <MultiCityFlightEditor
+                  legs={multiCityLegs}
+                  onChange={setMultiCityLegs}
+                  minimumDate={formatDateValue(new Date())}
+                  presentation="homepage"
+                  onAirportValidityChange={setMultiCityAirportsValid}
+                />
+              ) : (
+                <>
+              <div className="relative grid min-w-0 gap-3" data-mobile-route-fields>
                 <div ref={originWrapRef} className="min-w-0">
                   <button
                     ref={mobileOriginLauncherRef}
@@ -5958,6 +6058,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   </span>
                 </button>
               </div>
+                </>
+              )}
 
               <div ref={travelerCabinWrapRef} className="relative">
                 <button
@@ -6000,6 +6102,22 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
               <Button
                 type="submit"
+                disabled={
+                  tripTypeInput === "multi-city" &&
+                  (multiCityLegs.length < MULTI_CITY_MIN_LEGS ||
+                    multiCityLegs.length > MULTI_CITY_MAX_LEGS ||
+                    !multiCityAirportsValid ||
+                    multiCityLegs.some(
+                      (leg, index) =>
+                        !/^[A-Z0-9]{3}$/.test(leg.origin) ||
+                        !/^[A-Z0-9]{3}$/.test(leg.destination) ||
+                        leg.origin === leg.destination ||
+                        !isValidFutureOrTodayDateValue(leg.departureDate) ||
+                        (index > 0 &&
+                          leg.departureDate <
+                            multiCityLegs[index - 1].departureDate),
+                    ))
+                }
                 className="mt-1 h-[54px] w-full rounded-[14px] bg-[#004BB8] text-base font-semibold text-white shadow-none ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B]"
               >
                 {t("search")}

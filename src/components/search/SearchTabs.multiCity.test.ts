@@ -56,15 +56,15 @@ test("homepage validates provider-backed airport suggestions before enabling sea
   assert.match(searchTabs, /!multiCityAirportsValid/);
 });
 
-test("Results transitions Multi-city edits to the canonical full-leg editor", () => {
-  assert.match(results, /if \(nextTripType === "multi-city"\)/);
-  assert.match(results, /projectSearchLegs\("multi-city", legs\)/);
-  assert.match(results, /appendFlightLegParams\(params, legs\)/);
-  assert.match(results, /router\.push\(`\/flights\?\$\{params\.toString\(\)\}`\)/);
-  assert.match(results, /tripTypeInput === "multi-city"[\s\S]*?router\.push\(`\/flights\?\$\{searchQueryString\}`\)/);
+test("Results mobile drawer consumes the canonical full-leg editor", () => {
+  assert.match(results, /function handleMobileTripTypeChange/);
+  assert.match(results, /projectSearchLegs\("multi-city", projectedLegs\)/);
+  assert.match(results, /<MultiCityFlightEditor[\s\S]*?legs=\{multiCityLegs\}[\s\S]*?onChange=\{setMultiCityLegs\}/);
+  assert.match(results, /appendFlightLegParams\(nextParams, multiCityLegs\)/);
+  assert.match(results, /router\.push\(`\/flights\/results\?\$\{nextParams\.toString\(\)\}`/);
 });
 
 test("native Multi-city remains explicitly out of scope for the web fix", () => {
-  assert.match(native, /if \(tripType === "multi-city"\) return/);
-  assert.match(native, /disabled: true/);
+  assert.match(native, /form\.tripType === "multi-city" \? <MultiCityEditor/);
+  assert.match(native, /changeFlightTripType\(form, tripType/);
 });
