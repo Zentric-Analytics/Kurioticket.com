@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { addMultiCityLeg, adjustFlightDeparture, airportByCode, changeFlightTripType, changeTraveler, defaultFlightForm, flightEditSearchParams, FLIGHT_CABINS, FLIGHT_TRIP_TYPES, flightSearchParams, initializeFlightForm, removeMultiCityLeg, searchAirports, totalTravelers, updateMultiCityLegDate, validateFlightForm } from "./flightSearchModel";
+import { addMultiCityLeg, adjustFlightDeparture, airportByCode, changeFlightTripType, changeTraveler, defaultFlightForm, flightEditSearchParams, FLIGHT_CABINS, FLIGHT_TRIP_TYPES, flightSearchParams, initializeFlightForm, removeMultiCityLeg, searchAirports, swapMultiCityLegAirports, totalTravelers, updateMultiCityLegDate, validateFlightForm } from "./flightSearchModel";
 const today = new Date(2026, 7, 1, 12);
 
 test("fresh Flight form defaults traveler and cabin while route and dates remain unselected", () => {
@@ -129,4 +129,23 @@ test("multi-city validation, serialization, and restoration preserve authoritati
  const form={...defaultFlightForm(),tripType:"multi-city" as const,multiCityLegs:legs}; assert.deepEqual(validateFlightForm(form,today),{}); const params=flightSearchParams(form); assert.deepEqual({legCount:params.legCount,origin:params.origin,destination:params.destination,origin2:params.origin2,destination3:params.destination3}, {legCount:"3",origin:"LAX",destination:"CDG",origin2:"JFK",destination3:"CDG"}); assert.equal("returnDate" in params,false);
  const edited=flightEditSearchParams(params); const restored=initializeFlightForm(edited,today); assert.equal(restored.form.tripType,"multi-city"); assert.deepEqual(restored.form.multiCityLegs.map(l=>[l.from?.code,l.to?.code,l.departureDate]),legs.map(l=>[l.from?.code,l.to?.code,l.departureDate]));
  assert.ok(validateFlightForm({...form,multiCityLegs:legs.slice(0,1)},today).tripType); assert.ok(validateFlightForm({...form,multiCityLegs:[...legs,...legs,...legs]},today).tripType); assert.ok(validateFlightForm({...form,multiCityLegs:[legs[0],{...legs[1],departureDate:"2026-08-09"}]},today).multiCityLegs?.[1].departureDate);
+});
+
+
+test("multi-city airport swapping is immutable and serializes only the target leg", () => {
+  const legs=[{from:airportByCode("LAX"),to:airportByCode("LOS"),departureDate:"2026-08-10"},{from:airportByCode("LOS"),to:airportByCode("LHR"),departureDate:"2026-08-12"}];
+  const originalFirst={...legs[0]};
+  const swapped=swapMultiCityLegAirports(legs,0);
+  assert.notEqual(swapped,legs); assert.notEqual(swapped[0],legs[0]); assert.equal(swapped[1],legs[1]);
+  assert.deepEqual(legs[0],originalFirst); assert.deepEqual(swapped.map(leg=>[leg.from?.code,leg.to?.code,leg.departureDate]),[["LOS","LAX","2026-08-10"],["LOS","LHR","2026-08-12"]]);
+  const params=flightSearchParams({...defaultFlightForm(),tripType:"multi-city",multiCityLegs:swapped,adults:2,cabin:"Business"});
+  assert.deepEqual({origin1:params.origin1,destination1:params.destination1,departureDate1:params.departureDate1,origin2:params.origin2,destination2:params.destination2,departureDate2:params.departureDate2,adults:params.adults,cabin:params.cabin},{origin1:"LOS",destination1:"LAX",departureDate1:"2026-08-10",origin2:"LOS",destination2:"LHR",departureDate2:"2026-08-12",adults:"2",cabin:"Business"});
+});
+
+test("multi-city airport swapping safely ignores invalid or incomplete legs", () => {
+  const complete={from:airportByCode("LAX"),to:airportByCode("LOS"),departureDate:"2026-08-10"};
+  const missingFrom={to:airportByCode("LHR"),departureDate:"2026-08-12"};
+  const missingTo={from:airportByCode("LOS"),departureDate:"2026-08-14"};
+  const legs=[complete,missingFrom,missingTo];
+  for (const index of [-1,3,1,2]) assert.equal(swapMultiCityLegAirports(legs,index),legs);
 });
