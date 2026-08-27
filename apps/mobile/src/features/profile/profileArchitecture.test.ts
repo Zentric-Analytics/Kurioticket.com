@@ -30,6 +30,16 @@ test("authenticated and guest profiles each own one guest-accessible legal secti
 test("version is a configured non-interactive footer on both profile states", () => {
   const footer = source("src/features/profile/AppVersionFooter.tsx");
   for (const profile of ["ProfileScreen.tsx", "GuestProfileScreen.tsx"]) assert.equal(source(`src/features/profile/${profile}`).match(/<AppVersionFooter \/>/g)?.length, 1);
-  assert.match(footer, /Constants\.expoConfig\?\.version/); assert.match(footer, /accessibilityLabel=\{label\}/);
+  assert.match(footer, /Constants\.expoConfig\?\.version/);
+  assert.match(footer, /if \(!version\) return null/);
+  assert.match(footer, /`\$\{t\("version"\)\} \$\{version\}`/);
+  assert.match(footer, /accessibilityLabel=\{label\}/);
   assert.doesNotMatch(footer, /Pressable|accessibilityRole="button"|router|0\.3\.0|0\.1\.0/);
+});
+
+test("version footer has no Preview-specific diagnostics UI or subscriptions", () => {
+  const footer = source("src/features/profile/AppVersionFooter.tsx");
+  assert.doesNotMatch(footer, /isPreview|Preview delivery diagnostics|formatPreviewDiagnostics|getRuntimeDiagnostics/);
+  assert.doesNotMatch(footer, /useSyncExternalStore|getUpdateCheckDiagnostics|subscribeToUpdateCheckDiagnostics/);
+  assert.doesNotMatch(footer, /\bView\b|preview:|heading:|detail:/);
 });
