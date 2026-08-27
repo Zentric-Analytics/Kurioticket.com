@@ -66,8 +66,10 @@ export const formatFlightsDateSummary = (
   locale: string | null | undefined,
 ) => {
   const formatter = new Intl.DateTimeFormat(normalizeFlightsCalendarLocale(locale), {
+    weekday: "short",
     month: "short",
     day: "numeric",
+    year: "numeric",
   });
   const departureSummary = formatter.format(departureDate);
 

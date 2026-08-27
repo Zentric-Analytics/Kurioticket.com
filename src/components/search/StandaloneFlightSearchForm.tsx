@@ -39,10 +39,10 @@ import {
   flightSearchFieldShellClassName,
   flightSearchFieldValueButtonClassName,
 } from "@/components/search/FlightSearchFieldPrimitives";
+import { formatTravelDateDisplay, formatTravelDateRangeDisplay } from "@/lib/dateFormatting/travelDateDisplay";
 import type { FlightSearchLeg } from "@/lib/types";
 import { appendFlightLegParams, parseFlightLegParams } from "@/lib/flights/flightSearchJourney";
 import {
-  formatFlightsDateSummary,
   formatFlightsMonthHeading,
   formatFlightsWeekdays,
   normalizeFlightsCalendarLocale,
@@ -370,18 +370,11 @@ export function StandaloneFlightSearchForm({
     : !origin.trim() || !destination.trim() || !isValidFlightDate(departureDate) || !isReturnRangeValid);
 
   const dateSummary = useMemo(() => {
-    const departureSummary = departureParsed
-      ? formatFlightsDateSummary(departureParsed, null, calendarLocale)
-      : "";
-    const returnSummary = returnParsed
-      ? formatFlightsDateSummary(returnParsed, null, calendarLocale)
-      : "";
-
-    if (!departureSummary) return t("travelDates");
-    if (tripType === "round-trip" && returnSummary)
-      return `${departureSummary} — ${returnSummary}`;
-    return departureSummary;
-  }, [calendarLocale, departureParsed, returnParsed, tripType, t]);
+    const summary = tripType === "round-trip"
+      ? formatTravelDateRangeDisplay(departureDate, returnDate, calendarLocale)
+      : formatTravelDateDisplay(departureDate, calendarLocale);
+    return summary ?? t("travelDates");
+  }, [calendarLocale, departureDate, returnDate, tripType, t]);
 
   const cabinClassLabel =
     cabinClass === "business"
