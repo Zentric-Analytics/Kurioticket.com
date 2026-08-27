@@ -193,20 +193,22 @@ test("security localization covers the compact hierarchy", () => {
 test("security uses selected-locale copy, event labels, and date metadata", () => {
   assert.match(security, /const c = securityCopy\[locale\]/);
   assert.match(security, /formatSecurityDate\(value, locale\)/);
-  assert.match(security, /securityEventLabel\(event\.type, locale\)/);
+  assert.match(security, /localizedAccountActivityLabel\(event\.type, locale, c\.unknown\)/);
   assert.doesNotMatch(security, /locale === "es-es"/);
   assert.doesNotMatch(security, /label="Add passkey"|>Created \{|A new Preview app binary/);
 });
 
-test("security dictionaries and event labels cover all 18 locales", async () => {
+test("security dictionaries and activity labels cover all 18 locales", async () => {
   const { mobileLocaleCodes } = await import("../../localization/mobileLocalizationCatalog");
-  const { securityCopy, securityEventLabels, securityEventTypes, securityEventLabel } = await import("./securityLocalization");
+  const { securityCopy } = await import("./securityLocalization");
+  const { accountActivityEventTypes, localizedAccountActivityLabel } = await import("../../localization/accountActivityLabels");
   assert.deepEqual(Object.keys(securityCopy).sort(), [...mobileLocaleCodes].sort());
   const englishKeys = Object.keys(securityCopy["en-us"]).sort();
   for (const locale of mobileLocaleCodes) {
     assert.deepEqual(Object.keys(securityCopy[locale]).sort(), englishKeys);
-    for (const type of securityEventTypes) assert.ok(securityEventLabels[type][locale].trim());
-    assert.equal(securityEventLabel("UNKNOWN_EVENT", locale), securityCopy[locale].unknown);
+    const resolved = accountActivityEventTypes.map((type) => localizedAccountActivityLabel(type, locale, securityCopy[locale].unknown));
+    assert.equal(new Set(resolved).size, accountActivityEventTypes.length, `${locale} must keep security event types distinguishable`);
+    assert.equal(localizedAccountActivityLabel("UNKNOWN_EVENT", locale, securityCopy[locale].unknown), securityCopy[locale].unknown);
   }
   assert.equal(securityCopy["es-es"].codeInvalid, "Introduce exactamente 6 dígitos.");
 });
