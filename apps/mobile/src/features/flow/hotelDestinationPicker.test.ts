@@ -65,7 +65,7 @@ test("rows show destination names and region/country detail with recoverable sta
 test("the native sheet is keyboard-aware, safe-area-aware, and scrollable", () => {
   assert.match(sheet, /<KeyboardAvoidingView/);
   assert.match(sheet, /behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/);
-  assert.match(sheet, /<SafeAreaView edges=\{\["top", "bottom"\]\}/);
+  assert.match(sheet, /<SafeAreaView edges=\{\["top"\]\}/);
   assert.match(sheet, /<FlatList style=\{styles\.destinationResults\} keyboardShouldPersistTaps="handled"/);
   assert.match(panel, /destinationResults:\{flexShrink:1,minHeight:0\}/);
   assert.doesNotMatch(sheet, /keyboardHeight|Dimensions\.get|useWindowDimensions/);

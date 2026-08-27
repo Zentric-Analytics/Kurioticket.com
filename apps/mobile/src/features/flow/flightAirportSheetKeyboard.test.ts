@@ -8,7 +8,7 @@ const airportSheet = panel.slice(panel.indexOf("function AirportSheet"), panel.i
 test("the native airport sheet adapts to the iOS and Android keyboard viewport", () => {
   assert.match(airportSheet, /<KeyboardAvoidingView/);
   assert.match(airportSheet, /behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/);
-  assert.match(airportSheet, /<SafeAreaView edges=\{\["top", "bottom"\]\}/);
+  assert.match(airportSheet, /<SafeAreaView edges=\{\["top"\]\}/);
   assert.match(panel, /keyboardViewport:\{flex:1\}/);
 
   assert.doesNotMatch(airportSheet, /keyboardHeight|useWindowDimensions|Dimensions\.get/);
