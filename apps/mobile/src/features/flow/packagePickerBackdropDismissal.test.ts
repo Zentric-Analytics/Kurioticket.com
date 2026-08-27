@@ -8,18 +8,18 @@ const party = form.slice(form.indexOf("function PackagePartySheet"), form.indexO
 
 test("package airport backdrop is separate and keyboard behavior is preserved", () => {
   const backdrop = airport.indexOf('accessibilityLabel="Close airport search"');
-  const sheet = airport.indexOf("<View accessibilityViewIsModal");
+  const sheet = airport.indexOf("<Animated.View accessibilityViewIsModal");
 
   assert.ok(backdrop >= 0 && sheet > backdrop);
   assert.match(airport, /onRequestClose=\{onClose\}/);
   assert.match(airport, /behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/);
   assert.match(airport, /keyboardShouldPersistTaps="handled"/);
-  assert.doesNotMatch(airport.slice(airport.indexOf("<KeyboardAvoidingView"), sheet), /<Pressable[^>]*>\s*<View accessibilityViewIsModal/);
+  assert.doesNotMatch(airport.slice(airport.indexOf("<KeyboardAvoidingView"), sheet), /<Pressable[^>]*>\s*<Animated\.View accessibilityViewIsModal/);
 });
 
 test("package party backdrop closes drafts and Done alone commits them", () => {
   const backdrop = party.indexOf('accessibilityLabel="Close Travelers & Rooms picker"');
-  const sheet = party.indexOf("<View accessibilityViewIsModal");
+  const sheet = party.indexOf("<Animated.View accessibilityViewIsModal");
 
   assert.ok(backdrop >= 0 && sheet > backdrop);
   assert.match(party, /onRequestClose=\{onClose\}/);
