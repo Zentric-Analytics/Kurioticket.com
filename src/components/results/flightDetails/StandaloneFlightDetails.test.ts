@@ -365,7 +365,7 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     "const flight = selectedOffer",
     '"Continue to checkout"',
     'aria-disabled={!canContinue || redirecting}',
-    "id: selectedOffer.id",
+    "id: offerId",
     'role="radiogroup"',
     'role="radio"',
     "term.semantic === \"positive\" ? Check",
@@ -373,7 +373,7 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     'tabIndex={selected ? 0 : -1}',
     "selectedFare?.label",
     "selectedOffer.price",
-    "<FarePanel activeTab={activeTab} offer={selectedOffer}",
+    "<FarePanel activeTab={activeTab} fare={selectedFare} offer={selectedOffer}",
     "Operated by {segment.operatingCarrier.name}",
     "Technical stop at {stop.airport.iataCode}",
     "Optional extra",
@@ -429,29 +429,29 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.match(source, /pb-\[calc\(6\.75rem\+env\(safe-area-inset-bottom\)\)\].*lg:pb-16/s);
   assert.match(source, /role="tablist"/);
   assert.equal((source.match(/role="tab"/g) || []).length, 1);
-  assert.deepEqual(["Fare details", "Fare conditions", "Optional extras"].map((label) => source.includes(`label: "${label}"`)), [true, true, true]);
-  assert.match(source, /useState<FareTab>\("details"\)/);
+  assert.deepEqual(["Compare deals", "Fare details", "Fare conditions", "Optional extras"].map((label) => source.includes(`label: "${label}"`)), [true, true, true, true]);
+  assert.match(source, /useState<FareTab>\("deals"\)/);
   assert.match(source, /role="tabpanel"/);
   assert.match(source, /ArrowRight.*ArrowLeft/s);
-  assert.match(source, /grid min-w-0 grid-cols-3 sm:flex sm:flex-nowrap/);
-  assert.match(source, /min-w-0 whitespace-nowrap border-b-2 px-0 text-center text-\[11px\]/);
-  assert.doesNotMatch(source, /role="tablist"[^>]*overflow-x-auto/);
+  assert.match(source, /flex min-w-0 overflow-x-auto/);
+  assert.match(source, /min-h-11 shrink-0 whitespace-nowrap border-b-2/);
+  assert.match(source, /\[scrollbar-width:none\]/);
   assert.doesNotMatch(source, />Selected<\/span>/);
   assert.match(source, /grid-cols-\[minmax\(0,1fr\)_minmax\(82px,1\.1fr\)_minmax\(0,1fr\)\]/);
   assert.match(source, /border-dashed border-\[#075EE8\]/);
   assert.match(source, /offerAirlineLogo=\{flight\.airlineLogo\}/);
   assert.match(source, /<SegmentAirlineMark segment=\{segment\}/);
   assert.match(source, /onError=\{\(\) => setLogoFailed\(true\)\}/);
-  assert.match(source, /fareChoices\.length === 1 \? "max-w-\[310px\]"/);
+  assert.match(source, /fareChoices\.length === 1 \? "max-w-\[270px\]"/);
   assert.match(source, /fareChoices\.length === 2 \? "sm:grid-cols-2 lg:max-w-\[632px\]"/);
   assert.match(source, /md:grid-cols-3 lg:max-w-\[954px\]/);
   assert.match(source, /xl:max-w-\[1276px\] xl:grid-cols-4/);
-  assert.match(source, /: "w-\[min\(100%,310px\)\]"/);
+  assert.match(source, /: "w-\[min\(100%,270px\)\] max-w-\[270px\]"/);
   assert.doesNotMatch(source, /: "w-full"/);
   assert.doesNotMatch(source, /min-h-\[126px\]/);
   assert.doesNotMatch(source, /min-h-\[(?:1[2-9]\d|[2-9]\d\d)px\]/);
-  assert.match(source, /w-\[min\(82vw,310px\)\] shrink-0 snap-start/);
-  assert.match(source, /min-w-0 max-w-\[310px\] rounded-\[10px\]/);
+  assert.match(source, /w-\[min\(82vw,310px\)\] max-w-\[310px\] shrink-0 snap-start/);
+  assert.match(source, /min-w-0 rounded-\[10px\]/);
   assert.match(source, /whitespace-normal break-words \[overflow-wrap:anywhere\].*\[word-break:normal\]/);
   assert.doesNotMatch(source, /text-overflow|ellipsis/);
   assert.match(source, /overflow-x-auto.*sm:grid/s);
@@ -522,4 +522,37 @@ test("provider brands with identical comparable facts receive no invented benefi
     assert.match(choice.distinguishingTerms.at(-1)?.text || "", /No additional comparable fare benefits/);
     assert.doesNotMatch(choice.distinguishingTerms.map(({ text }) => text).join(" "), /more flexible|priority boarding|free changes/i);
   }
+});
+
+test("real handoff deals are grouped by fare, deduplicated, sorted, and public-safe", () => {
+  process.env.FLIGHT_HANDOFF_PARTNERS_JSON = JSON.stringify({
+    "american.test": "American Airlines",
+    "agency.test": "Example Agency",
+  });
+  const offers = [
+    fixture({ id: "aa-high", fareBrandName: "Basic", price: 210, partnerRedirectUrl: "https://american.test/high" }),
+    fixture({ id: "aa-low", providerOfferId: "private-low", fareBrandName: "Basic", price: 188.61, partnerRedirectUrl: "https://american.test/low" }),
+    fixture({ id: "agency", providerOfferId: "private-agency", fareBrandName: "Basic", price: 188.61, partnerRedirectUrl: "https://agency.test/book" }),
+    fixture({ id: "no-handoff", providerOfferId: "private-none", fareBrandName: "Basic", price: 170, partnerRedirectUrl: "https://unconfigured.test/book" }),
+  ];
+  const [{ choice, memberOffers }] = buildMaterialFareChoices(offers);
+  assert.equal(memberOffers.length, 4);
+  assert.deepEqual(choice.deals.map(({ providerName, offerId, price, currency }) => ({ providerName, offerId, price, currency })), [
+    { providerName: "American Airlines", offerId: "aa-low", price: 188.61, currency: "USD" },
+    { providerName: "Example Agency", offerId: "agency", price: 188.61, currency: "USD" },
+  ]);
+  assert.doesNotMatch(JSON.stringify(choice), /private-low|private-agency|partnerRedirectUrl|bookingUrl|https:\/\//);
+  assert.doesNotMatch(choice.deals.map(({ providerName }) => providerName).join(" "), /Duffel|Basic/);
+});
+
+test("fare choices are not manufactured into booking deals", () => {
+  process.env.FLIGHT_HANDOFF_PARTNERS_JSON = JSON.stringify({ "seller.test": "Real Seller" });
+  const choices = buildMaterialFareChoices([
+    fixture({ fareBrandName: "Basic", partnerRedirectUrl: "https://seller.test/book" }),
+    fixture({ id: "main", providerOfferId: "main-private", fareBrandName: "Main Cabin", price: 240 }),
+    fixture({ id: "flex", providerOfferId: "flex-private", fareBrandName: "Flexible", price: 300 }),
+  ]);
+  assert.deepEqual(choices.map(({ choice }) => [choice.label, choice.deals.length]), [
+    ["Basic", 1], ["Main Cabin", 0], ["Flexible", 0],
+  ]);
 });
