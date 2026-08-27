@@ -19,7 +19,7 @@ type ProviderOfferPresentation = {
 
 function ProviderOffer({ offer }: { offer: ProviderOfferPresentation }) {
   return (
-    <article className="flex min-w-0 flex-col gap-4 rounded-xl border border-slate-200 bg-white px-3 py-4 sm:px-4" data-provider-offer>
+    <article className="flex min-w-0 flex-col rounded-xl border border-slate-200 bg-white px-3 py-4 sm:px-4" data-provider-offer>
       <div
         className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(7.5rem,auto)] items-center gap-x-3 sm:gap-x-6"
         data-provider-top-row
@@ -37,14 +37,25 @@ function ProviderOffer({ offer }: { offer: ProviderOfferPresentation }) {
             <strong className="block text-base font-bold text-slate-950">{offer.providerName}</strong>
           )}
         </div>
-        <div className="flex min-w-0 flex-col items-end text-right" data-provider-price>
-          <div>{offer.price}</div>
-          {offer.secondaryPrice ? <div>{offer.secondaryPrice}</div> : null}
+        <div className="min-w-0 text-right" data-provider-price>
+          {offer.price}
         </div>
       </div>
 
+      {offer.secondaryPrice ? (
+        <div
+          className="mt-0.5 grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(7.5rem,auto)] gap-x-3 sm:gap-x-6"
+          data-provider-secondary-price-row
+        >
+          <div aria-hidden="true" />
+          <div className="min-w-0 text-right" data-provider-secondary-price>
+            {offer.secondaryPrice}
+          </div>
+        </div>
+      ) : null}
+
       <div
-        className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(7.5rem,auto)] items-end gap-x-3 sm:gap-x-6"
+        className="mt-2 grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(7.5rem,auto)] items-center gap-x-3 sm:gap-x-6"
         data-provider-bottom-row
       >
         <div className="min-w-0" data-provider-amenities>
@@ -88,17 +99,22 @@ export function HotelPriceComparisonSection({
       providerLogoUrl: "/brand/kurioticket-logo-primary-light-bg.svg",
       amenities: amenities.slice(0, 3),
       price: nightlyPrice ? (
-        <p className="flex flex-col items-end" title={nightlyPrice.title} aria-label={nightlyPrice.ariaLabel}>
-          <strong className="text-xl font-extrabold tracking-tight text-slate-950" data-nightly-amount>
-            {nightlyPrice.formatted}
-          </strong>
-          <span className="mt-0.5 block text-xs font-medium leading-4 text-slate-600" data-nightly-supporting-label>
-            {perNightText.replace("{{price}}", "").trim()}
-          </span>
-        </p>
+        <strong
+          className="block text-xl font-extrabold tracking-tight text-slate-950"
+          title={nightlyPrice.title}
+          aria-label={nightlyPrice.ariaLabel}
+          data-nightly-amount
+        >
+          {nightlyPrice.formatted}
+        </strong>
       ) : (
         <strong className="text-sm font-semibold text-slate-600">Price unavailable</strong>
       ),
+      secondaryPrice: nightlyPrice ? (
+        <span className="block text-xs font-medium leading-4 text-slate-600" data-nightly-supporting-label>
+          {perNightText.replace("{{price}}", "").trim()}
+        </span>
+      ) : undefined,
       action: (
         <button
           type="button"
