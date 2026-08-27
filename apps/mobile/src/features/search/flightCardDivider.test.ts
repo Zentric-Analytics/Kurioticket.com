@@ -18,7 +18,8 @@ test("flight details navigation is wired to the complete borderless card", () =>
   assert.match(flightCard, /<Pressable[\s\S]*?accessibilityRole="button"[\s\S]*?onPress=\{\(\) =>[\s\S]*?router\.push\(\{/);
   assert.match(flightCard, /pathname: "\/flight-details"/);
   assert.doesNotMatch(flightCard, /View details|detailsButton|detailsButtonText/);
-  assert.match(flightCard, /event\.stopPropagation\(\); onToggleSaved\(\)/);
+  assert.match(flightCard, /onPressIn=\{\(event\) => event\.stopPropagation\(\)\}/);
+  assert.match(flightCard, /onPress=\{\(event\) => \{ event\.stopPropagation\(\); if \(!pending\) onToggleSaved\(\); \}\}/);
   const cardStyle = /card: \{([\s\S]*?)\n  \},/.exec(source)?.[1] ?? "";
   assert.doesNotMatch(cardStyle, /borderWidth|borderColor/);
 });

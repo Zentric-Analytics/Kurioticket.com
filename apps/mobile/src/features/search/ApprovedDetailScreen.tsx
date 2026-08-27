@@ -39,6 +39,7 @@ import { flightEditSearchParams } from "../flow/flightSearchModel";
 import { flightDetailHeaderModel } from "./flightDetailHeaderModel";
 import { flightTripDetails, type FlightTripDetail, type FlightTripDetailIcon } from "./flightTripDetails";
 import { useSavedFlights } from "../../storage/useSavedFlights";
+import { flightSavedSignature } from "../../storage/savedMapping";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { providerLocalArrivalDate } from "./flightArrivalDayOffset";
@@ -91,7 +92,7 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
   const inset = useSafeAreaInsets();
   const { theme } = useAppTheme();
   const { savedFlights, toggle: toggleSavedFlight } = useSavedFlights();
-  const saved = savedFlights.has(result.id);
+  const saved = savedFlights.has(flightSavedSignature(result));
   const header = flightDetailHeaderModel(result, params);
   const passedFare = parse<DisplayPrice>(params.displayFare);
   const parsedDisplayCurrencyContext = parse<DisplayCurrencyResolution>(params.displayCurrencyContext);

@@ -84,6 +84,7 @@ import {
 import { formatCabinClass, summarizeBaggage, summarizeFareRules } from "./flightCardSummaries";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { useSavedFlights } from "../../storage/useSavedFlights";
+import { flightSavedSignature } from "../../storage/savedMapping";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { AirlineLogo } from "./AirlineLogo";
 import { useAppTheme } from "../../theme/AppTheme";
@@ -151,7 +152,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
   const previousComparisonCurrency = useRef<string | null>(null);
   const previousFlightSearchKey = useRef<string | undefined>(undefined);
-  const { savedFlights, toggle: toggleSavedFlight } = useSavedFlights();
+  const { savedFlights, pendingFlightKeys, toggle: toggleSavedFlight } = useSavedFlights();
   useEffect(() => {
     if (!flightResults || !plan.plan?.key) return;
     if (previousFlightSearchKey.current && previousFlightSearchKey.current !== plan.plan.key) {
@@ -648,8 +649,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   displayCurrencyContext={currencyState?.resolution}
                   highlight={flightHighlights.get(item.id)}
                   params={params}
-                  saved={savedFlights.has(item.id)}
-                  onToggleSaved={() => toggleSavedFlight(item, params)}
+                  saved={savedFlights.has(flightSavedSignature(item))}
+                  pending={pendingFlightKeys.has(flightSavedSignature(item))}
+                  onToggleSaved={() => toggleSavedFlight(item, params).catch(() => {
+                    Alert.alert("Couldn't update saved flight", "Please try again.");
+                  })}
                   logInitialMount={index === 0}
                 />
               </View>
@@ -802,7 +806,7 @@ function FlightSortModal({
   );
 }
 
-function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highlight, params, saved, onToggleSaved, logInitialMount }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; highlight?: FlightResultHighlight; params: Record<string, string | string[]>; saved: boolean; onToggleSaved: () => void; logInitialMount: boolean }) {
+function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highlight, params, saved, pending, onToggleSaved, logInitialMount }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; highlight?: FlightResultHighlight; params: Record<string, string | string[]>; saved: boolean; pending: boolean; onToggleSaved: () => void; logInitialMount: boolean }) {
   const { theme } = useAppTheme();
   useEffect(() => {
     if (logInitialMount) {
@@ -871,10 +875,12 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={saved ? `Remove ${result.airlineName} flight from saved` : `Save ${result.airlineName} flight`}
-                  accessibilityState={{ selected: saved }}
+                  accessibilityState={{ selected: saved, busy: pending, disabled: pending }}
                   hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                  onPress={(event) => { event.stopPropagation(); onToggleSaved(); }}
-                  style={({ pressed }) => [s0.favoriteButton, pressed && s0.favoritePressed]}
+                  pressRetentionOffset={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  onPressIn={(event) => event.stopPropagation()}
+                  onPress={(event) => { event.stopPropagation(); if (!pending) onToggleSaved(); }}
+                  style={({ pressed }) => [s0.favoriteButton, pending && s0.favoritePending, pressed && !pending && s0.favoritePressed]}
                 >
                   <Heart
                     size={20}
@@ -1544,6 +1550,7 @@ const s0 = StyleSheet.create({
   airlineCopy: { flex: 1, minWidth: 0 },
   identityActions: { flexDirection: "column", flexShrink: 0, alignItems: "center", justifyContent: "flex-start", gap: 3 },
   favoriteButton: { width: 20, height: 20, flexShrink: 0, alignItems: "center", justifyContent: "center" },
+  favoritePending: { opacity: 0.65 },
   favoritePressed: { opacity: 0.7, transform: [{ scale: 0.94 }] },
   resultBadge: { height: 20, flexDirection: "row", alignItems: "center", paddingHorizontal: 7, borderRadius: 10, backgroundColor: "#EEF4FF" },
   resultBadgeText: { fontSize: 10, fontWeight: "800", color: ui.blue },
