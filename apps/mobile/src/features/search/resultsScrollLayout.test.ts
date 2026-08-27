@@ -21,8 +21,10 @@ test("flight results keep quick controls persistent while dates scroll naturally
   assert.match(persistentControls, /flightPersistentSearchControls[\s\S]*?backgroundColor: theme\.background[\s\S]*?\{filterRail\}/);
   assert.match(listHeader, /ListHeaderComponent=\{status === "loading" \? null : dateStrip\}/);
   assert.doesNotMatch(persistentControls, /dateStrip|PriceAlert|flightResultCountLabel|FlightCard/);
+  assert.doesNotMatch(persistentControls, /nearbyDateInsight|Cheaper nearby/);
   assert.doesNotMatch(flightLayout, /renderSectionHeader|stickySectionHeadersEnabled/);
   assert.match(renderItem, /<PriceAlert[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?<FlightCard/);
+  assert.match(readFileSync(resolve("src/features/search/SearchUi.tsx"), "utf8"), /numberOfLines=\{1\}[\s\S]*?nearbyDateInsightText[\s\S]*?Cheaper nearby:/);
   assert.doesNotMatch(flightLayout, /onScroll=|scrollEventThrottle=|Animated\.|stickyHeaderIndices|manualSticky|stickyFilterState/);
   assert.doesNotMatch(screen, /dateHeaderCollapsed|dateHeaderProgress|Animated\.timing\(dateHeaderProgress/);
 });

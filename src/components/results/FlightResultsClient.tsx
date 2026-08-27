@@ -24,11 +24,11 @@ import { useSession } from "next-auth/react";
 import {
   ArrowLeft,
   ArrowRightLeft,
-  Bell,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
   Calendar,
+  Check,
   ChevronDown,
   Heart,
   MapPin,
@@ -47,6 +47,9 @@ import { FlightCard } from "@/components/results/FlightCard";
 import { DesktopFlightFilters } from "@/components/results/DesktopFlightFilters";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
+import { MobileTravelerCabinPicker } from "@/components/search/MobileTravelerCabinPicker";
+import { MultiCityFlightEditor } from "@/components/search/MultiCityFlightEditor";
 import { Button } from "@/components/ui/Button";
 import { FlightCardSkeleton } from "@/components/ui/Skeleton";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -111,9 +114,15 @@ import {
   type SavedDiscoveryDisplayDetails,
   type SavedDiscoveryFlightSearch,
 } from "@/lib/saved-items-api";
-import { formatCurrency, formatDisplayPrice } from "@/lib/currency/formatCurrency";
-import type { FlightSearchParams, PublicFlightResult, SortMode } from "@/lib/types";
-import { appendFlightLegParams, parseFlightLegParams, projectSearchLegs } from "@/lib/flights/flightSearchJourney";
+import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import type { FlightSearchLeg, PublicFlightResult, SortMode } from "@/lib/types";
+import {
+  appendFlightLegParams,
+  MULTI_CITY_MAX_LEGS,
+  MULTI_CITY_MIN_LEGS,
+  parseFlightLegParams,
+  projectSearchLegs,
+} from "@/lib/flights/flightSearchJourney";
 import { cn, getItineraryDateKey } from "@/lib/utils";
 import {
   calculateCompactFilterPlacement,
@@ -124,9 +133,9 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import {
   formatFlightsDateSummary,
   formatFlightsMonthHeading,
+  formatFlightsWeekdays,
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
-import { MAX_PRICE_ALERT_TARGET, buildCanonicalFlightPriceAlertQuery } from "@/lib/price-alerts/flightPriceAlerts";
 
 const resultStackClass = "w-full min-w-0";
 const desktopCompactFilterTopOffset = 116;
@@ -914,6 +923,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     () => normalizeFlightResultsCalendarLocale(locale),
     [locale],
   );
+  const weekdays = useMemo(
+    () => formatFlightsWeekdays(calendarLocale),
+    [calendarLocale],
+  );
   const airportPickerLabels = useMemo(
     () => ({
       clear: dictionary.clear ?? enTranslations.clear ?? "",
@@ -1063,11 +1076,20 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const nearbyFareCacheRef = useRef(new Map<string, NearbyFareState>());
   const nearbyFareRequestsRef = useRef(new Map<string, NearbyFareRequest>());
   const nearbyFareGenerationRef = useRef(0);
+  const mobileNearbyFareRailRef = useRef<HTMLDivElement>(null);
+  const mobileSelectedNearbyFareRef = useRef<HTMLButtonElement>(null);
+  const alignedMobileNearbyFareSearchRef = useRef<string | null>(null);
   const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
   const [nearbyFareVisibleStart, setNearbyFareVisibleStart] = useState(0);
   const [returnDateInput, setReturnDateInput] = useState(
     initialDateSafeParams.get("returnDate") || "",
   );
+  const [multiCityLegs, setMultiCityLegs] = useState<FlightSearchLeg[]>(() =>
+    initialDateSafeParams.get("tripType") === "multi-city"
+      ? parseFlightLegParams(params)
+      : [],
+  );
+  const [multiCityAirportsValid, setMultiCityAirportsValid] = useState(false);
   const [adultCount, setAdultCount] = useState(() => {
     const adultsParam = params.get("adults");
     const travelersParam = params.get("travelers");
@@ -1160,13 +1182,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     Record<string, string>
   >({});
   const [savedItemError, setSavedItemError] = useState("");
-  const [priceAlertDialogOpen, setPriceAlertDialogOpen] = useState(false);
-  const [priceAlertTarget, setPriceAlertTarget] = useState("");
-  const [priceAlertError, setPriceAlertError] = useState("");
-  const [priceAlertStatusMessage, setPriceAlertStatusMessage] = useState("");
-  const [priceAlertSubmitting, setPriceAlertSubmitting] = useState(false);
-  const priceAlertButtonRef = useRef<HTMLButtonElement | null>(null);
-  const priceAlertInputRef = useRef<HTMLInputElement | null>(null);
 
   const refreshBackendRecentSearches = useCallback(
     async (signal?: AbortSignal) => {
@@ -1264,6 +1279,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     mobileTravelerTotal === 1 && adultCount === 1
       ? `1 ${t("adultSingular")}`
       : `${mobileTravelerTotal} ${t("travelerPlural")}`;
+  const mobileCabinClassSummary = cabinClassLabel(cabinClassInput, t);
   const travelerCabinSummary = buildTravelerCabinSummary(
     adultCount,
     childCount,
@@ -1805,7 +1821,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     (rect: DOMRect, width: number) => {
       if (typeof window === "undefined") return;
 
-      const gutter = 16;
+      const gutter = 12;
       const safeWidth = Math.min(width, window.innerWidth - gutter * 2);
       const left = Math.min(
         Math.max(rect.left, gutter),
@@ -2102,6 +2118,57 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     }
   }
 
+  function handleMobileTripTypeChange(nextTripType: string) {
+    markExpandedSearchInteraction();
+    setTripTypeMenuOpen(false);
+
+    if (nextTripType === "multi-city") {
+      if (multiCityLegs.length === 0) {
+        const firstLeg = {
+          origin: originCode || originInput.trim().toUpperCase(),
+          destination:
+            destinationCode || destinationInput.trim().toUpperCase(),
+          departureDate: departureDateInput,
+        };
+        const projectedLegs = [
+          firstLeg,
+          tripTypeInput === "round-trip" && returnDateInput
+            ? {
+                origin: firstLeg.destination,
+                destination: firstLeg.origin,
+                departureDate: returnDateInput,
+              }
+            : {
+                origin: firstLeg.destination,
+                destination: "",
+                departureDate: departureDateInput,
+              },
+        ];
+        const projection = projectSearchLegs("multi-city", projectedLegs);
+        setMultiCityLegs(projection.legs);
+      }
+      setTripTypeInput("multi-city");
+      closeFlightSearchPopovers();
+      return;
+    }
+
+    const normalizedTripType =
+      nextTripType === "one-way" ? "one-way" : "round-trip";
+    if (tripTypeInput === "multi-city" && multiCityLegs.length > 0) {
+      const projection = projectSearchLegs(normalizedTripType, multiCityLegs);
+      setOriginInput(projection.origin);
+      setOriginCode(projection.origin);
+      setDestinationInput(projection.destination);
+      setDestinationCode(projection.destination);
+      setDepartureDateInput(projection.departureDate);
+      setReturnDateInput(projection.returnDate ?? "");
+    } else if (normalizedTripType === "one-way") {
+      setReturnDateInput("");
+    }
+    setTripTypeInput(normalizedTripType);
+    closeFlightSearchPopovers();
+  }
+
   function rememberMobileSearchScrollPosition() {
     mobileSearchScrollTopRef.current =
       mobileSearchScrollRef.current?.scrollTop ?? 0;
@@ -2132,25 +2199,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setDraftMobileReturnDate(returnDateInput);
     setActiveDatePicker("departure");
     setDatePickerPosition(null);
-  }
-
-  function commitMobileDatePicker() {
-    const nextDepartureDate = draftMobileDepartureDate.trim();
-    const nextReturnDate = draftMobileReturnDate.trim();
-    const hasValidDepartureDate =
-      isValidFutureOrTodayDateValue(nextDepartureDate);
-    const hasValidReturnDate =
-      tripTypeInput !== "round-trip" ||
-      (isValidFutureOrTodayDateValue(nextReturnDate) &&
-        !isDateValueBefore(nextReturnDate, nextDepartureDate));
-
-    if (!hasValidDepartureDate || !hasValidReturnDate) return;
-
-    setDepartureDateInput(nextDepartureDate);
-    setReturnDateInput(tripTypeInput === "round-trip" ? nextReturnDate : "");
-    setActiveDatePicker(null);
-    setDatePickerPosition(null);
-    restoreMobileSearchScrollPosition();
   }
 
   function getMissingMobileDatePicker() {
@@ -2443,6 +2491,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setDestinationCode(nextDestination);
     setDepartureDateInput(nextDepartureDate);
     setReturnDateInput(nextTripType === "round-trip" ? nextReturnDate : "");
+    if (nextTripType === "multi-city") {
+      setMultiCityLegs(parseFlightLegParams(normalizedSearchValues));
+    }
     if (isValidFutureOrTodayDateValue(nextDepartureDate)) {
       setCalendarMonth(
         startOfMonth(parseDateValue(nextDepartureDate) ?? new Date()),
@@ -2597,150 +2648,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     () => (body ? buildFlightResultsSearchKey(body) : ""),
     [body],
   );
-
-  const canonicalPriceAlertQuery = useMemo(() => {
-    if (!body) return null;
-    if (body.tripType !== "round-trip" && body.tripType !== "one-way") return null;
-
-    const query = {
-      tripType: body.tripType,
-      origin: body.origin,
-      destination: body.destination,
-      departureDate: body.departureDate,
-      ...(body.tripType === "round-trip" ? { returnDate: body.returnDate } : {}),
-      adults: body.adults,
-      children: body.children,
-      infants: body.infants,
-      travelers: body.travelers,
-      cabinClass: body.cabinClass,
-      currency: body.currency,
-    };
-    const parsed = buildCanonicalFlightPriceAlertQuery(query);
-    return parsed.success ? parsed.data : null;
-  }, [body]);
-
-
-  const priceAlertRouteSummary = canonicalPriceAlertQuery
-    ? `${canonicalPriceAlertQuery.origin} → ${canonicalPriceAlertQuery.destination}`
-    : "Current flight search";
-  const priceAlertDateSummary = canonicalPriceAlertQuery
-    ? canonicalPriceAlertQuery.tripType === "round-trip" && canonicalPriceAlertQuery.returnDate
-      ? `${formatDateLabel(canonicalPriceAlertQuery.departureDate, calendarLocale)} – ${formatDateLabel(canonicalPriceAlertQuery.returnDate, calendarLocale)}`
-      : formatDateLabel(canonicalPriceAlertQuery.departureDate, calendarLocale)
-    : "";
-  const priceAlertUnavailableReason = !canonicalPriceAlertQuery
-    ? body?.tripType === "multi-city"
-      ? "Price alerts are not available for multi-city searches yet."
-      : "Complete a valid flight search before creating a price alert."
-    : "";
-
-  const openPriceAlertDialog = useCallback(() => {
-    setPriceAlertStatusMessage("");
-    if (!canonicalPriceAlertQuery) {
-      setPriceAlertError(priceAlertUnavailableReason || "Complete a valid flight search before creating a price alert.");
-      return;
-    }
-    if (sessionStatus === "loading") return;
-    if (sessionStatus !== "authenticated") {
-      const returnPath = `${window.location.pathname}${window.location.search}`;
-      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(returnPath)}`);
-      return;
-    }
-    setPriceAlertError("");
-    setPriceAlertTarget("");
-    setPriceAlertDialogOpen(true);
-  }, [canonicalPriceAlertQuery, priceAlertUnavailableReason, router, sessionStatus]);
-
-  const closePriceAlertDialog = useCallback(() => {
-    setPriceAlertDialogOpen(false);
-    setPriceAlertSubmitting(false);
-    setPriceAlertError("");
-    window.setTimeout(() => priceAlertButtonRef.current?.focus(), 0);
-  }, []);
-
-  const validatePriceAlertTarget = useCallback((value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) return "Enter a target price.";
-    if (!/^\d+(?:\.\d{1,2})?$/.test(trimmed)) return "Enter a positive number with up to two decimals.";
-    const amount = Number(trimmed);
-    if (!Number.isFinite(amount) || amount <= 0) return "Enter a target price above zero.";
-    if (amount > MAX_PRICE_ALERT_TARGET) return "Enter a target price below 10,000,000,000.";
-    return "";
-  }, []);
-
-  const submitPriceAlert = useCallback(async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!canonicalPriceAlertQuery) {
-      setPriceAlertError("Complete a valid flight search before creating a price alert.");
-      return;
-    }
-    const validationMessage = validatePriceAlertTarget(priceAlertTarget);
-    if (validationMessage) {
-      setPriceAlertError(validationMessage);
-      priceAlertInputRef.current?.focus();
-      return;
-    }
-
-    setPriceAlertSubmitting(true);
-    setPriceAlertError("");
-    try {
-      const targetPrice = Number(priceAlertTarget.trim());
-      const response = await fetch("/api/price-alerts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "FLIGHT",
-          origin: canonicalPriceAlertQuery.origin,
-          destination: canonicalPriceAlertQuery.destination,
-          targetPrice,
-          currency: canonicalPriceAlertQuery.currency,
-          query: canonicalPriceAlertQuery satisfies FlightSearchParams,
-        }),
-      });
-      const payload = await response.json().catch(() => ({})) as { error?: string; duplicate?: boolean };
-
-      if (response.status === 401) {
-        const returnPath = `${window.location.pathname}${window.location.search}`;
-        router.push(`/auth/signin?callbackUrl=${encodeURIComponent(returnPath)}`);
-        return;
-      }
-      if (response.status === 409 || payload.duplicate) {
-        setPriceAlertError("You already have this price alert.");
-        setPriceAlertSubmitting(false);
-        return;
-      }
-      if (!response.ok) {
-        setPriceAlertError(response.status === 400 ? "Please check the alert details and try again." : "We could not create your price alert. Please try again.");
-        setPriceAlertSubmitting(false);
-        return;
-      }
-
-      setPriceAlertDialogOpen(false);
-      setPriceAlertSubmitting(false);
-      setPriceAlertTarget("");
-      setPriceAlertStatusMessage("Price alert created. We’ll email you if the fare reaches your target.");
-      window.setTimeout(() => priceAlertButtonRef.current?.focus(), 0);
-    } catch {
-      setPriceAlertError("Network error. Check your connection and try again.");
-      setPriceAlertSubmitting(false);
-    }
-  }, [canonicalPriceAlertQuery, priceAlertTarget, router, validatePriceAlertTarget]);
-
-  useEffect(() => {
-    if (!priceAlertDialogOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const focusTimer = window.setTimeout(() => priceAlertInputRef.current?.focus(), 0);
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !priceAlertSubmitting) closePriceAlertDialog();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.clearTimeout(focusTimer);
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [closePriceAlertDialog, priceAlertDialogOpen, priceAlertSubmitting]);
 
   useEffect(() => {
     if (!body) {
@@ -3338,29 +3245,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setDropdownPosition(null);
   }
 
-  function applyMobileFlightDateSelection(date: Date) {
-    if (!activeDatePicker) return;
-
-    markExpandedSearchInteraction();
-
-    const nextDateState = getNextFlightDateSelection({
-      activePicker: activeDatePicker,
-      date,
-      departureDate: draftMobileDepartureDate,
-      returnDate: draftMobileReturnDate,
-      tripType: tripTypeInput,
-    });
-
-    if (!nextDateState) return;
-
-    setDraftMobileDepartureDate(nextDateState.departureDate);
-    setDraftMobileReturnDate(nextDateState.returnDate);
-
-    if (nextDateState.activePicker) {
-      setActiveDatePicker(nextDateState.activePicker);
-    }
-  }
-
   function applyFlightDateSelection(date: Date) {
     if (!activeDatePicker) return;
 
@@ -3403,11 +3287,28 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       (isValidFutureOrTodayDateValue(nextReturnDate) &&
         !isDateValueBefore(nextReturnDate, nextDepartureDate));
 
+    const hasValidMultiCitySearch =
+      multiCityLegs.length >= MULTI_CITY_MIN_LEGS &&
+      multiCityLegs.length <= MULTI_CITY_MAX_LEGS &&
+      multiCityAirportsValid &&
+      multiCityLegs.every(
+        (leg, index) =>
+          /^[A-Z0-9]{3}$/.test(leg.origin) &&
+          /^[A-Z0-9]{3}$/.test(leg.destination) &&
+          leg.origin !== leg.destination &&
+          isValidFutureOrTodayDateValue(leg.departureDate) &&
+          (index === 0 ||
+            leg.departureDate >= multiCityLegs[index - 1].departureDate),
+      );
+
+    if (tripTypeInput === "multi-city" && !hasValidMultiCitySearch) return;
+
     if (
-      !nextOrigin ||
-      !nextDestination ||
-      !hasValidDepartureDate ||
-      !hasValidReturnDate
+      tripTypeInput !== "multi-city" &&
+      (!nextOrigin ||
+        !nextDestination ||
+        !hasValidDepartureDate ||
+        !hasValidReturnDate)
     ) {
       return;
     }
@@ -3431,11 +3332,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setInfantCount(infants);
     }
 
+    const projection =
+      tripTypeInput === "multi-city"
+        ? projectSearchLegs("multi-city", multiCityLegs)
+        : null;
     const nextParams = new URLSearchParams({
       tripType: tripTypeInput,
-      origin: nextOrigin,
-      destination: nextDestination,
-      departureDate: nextDepartureDate,
+      origin: projection?.origin ?? nextOrigin,
+      destination: projection?.destination ?? nextDestination,
+      departureDate: projection?.departureDate ?? nextDepartureDate,
       adults: String(adults),
       children: String(children),
       infants: String(infants),
@@ -3443,11 +3348,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       cabinClass: cabinClassInput,
     });
 
+    if (tripTypeInput === "multi-city") {
+      nextParams.set("currency", selectedCurrency);
+      appendFlightLegParams(nextParams, multiCityLegs);
+    }
+
     if (tripTypeInput === "round-trip" && nextReturnDate) {
       nextParams.set("returnDate", nextReturnDate);
     }
 
-    try {
+    if (tripTypeInput !== "multi-city") try {
       const recentSearch = buildFlightRecentSearch({
         tripType: tripTypeInput === "one-way" ? "one-way" : "round-trip",
         origin: nextOrigin,
@@ -3957,6 +3867,27 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     timeBounds.takeoff?.max,
     timeBounds.takeoff?.min,
   ]);
+
+  useLayoutEffect(() => {
+    if (!body?.departureDate || nearbyFares.length === 0) return;
+
+    const alignmentIdentity = `${buildFlightResultsSearchKey(body)}:${body.departureDate}`;
+    if (alignedMobileNearbyFareSearchRef.current === alignmentIdentity) return;
+
+    const rail = mobileNearbyFareRailRef.current;
+    const selectedCell = mobileSelectedNearbyFareRef.current;
+    if (!rail || !selectedCell) return;
+
+    const previousCell = selectedCell.previousElementSibling as HTMLElement | null;
+    const previousWidth = previousCell?.offsetWidth ?? selectedCell.offsetWidth;
+    const target = Math.min(
+      Math.max(selectedCell.offsetLeft - previousWidth - 8, 0),
+      Math.max(rail.scrollWidth - rail.clientWidth, 0),
+    );
+
+    rail.scrollTo({ left: target, behavior: "auto" });
+    alignedMobileNearbyFareSearchRef.current = alignmentIdentity;
+  }, [body, nearbyFares]);
 
   const resultsUiPreparing = isFlightResultsPreparing({
     loading,
@@ -4527,13 +4458,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
     return () => window.clearTimeout(focusTimer);
   }, [error, resultsUiPreparing, sortedResults.length]);
-
-  const lowestDisplayedFare = useMemo(() => {
-    if (warnings.length > 0) return null;
-    const fare = getLowestProviderFare(sortedResults);
-    if (!fare || fare.currency.toUpperCase() !== selectedCurrency.toUpperCase()) return null;
-    return fare;
-  }, [selectedCurrency, sortedResults, warnings.length]);
 
   const sortSummaries = useMemo(() => {
     if (!filtered.length) {
@@ -5807,99 +5731,99 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     );
   }
 
-  function renderCompactSearchPopovers(
-    placement: "mobile" | "desktop" = "desktop",
-  ) {
-    const useMobileSheet = placement === "mobile";
+  function renderMobileSearchPickers() {
     return (
       <>
-        {activeDatePicker && (useMobileSheet || datePickerPosition) ? (
-          <DatePickerPopover
-            position={datePickerPosition ?? { top: 0, left: 0, width: 0 }}
-            mobileSheet={useMobileSheet}
-            launcherRef={useMobileSheet ? departureWrapRef : undefined}
-            onClose={
-              useMobileSheet
-                ? closeMobileDatePicker
-                : () => {
-                    setActiveDatePicker(null);
-                    setDatePickerPosition(null);
-                  }
-            }
-            month={calendarMonth}
-            departureValue={
-              useMobileSheet ? draftMobileDepartureDate : departureDateInput
-            }
-            returnValue={
-              useMobileSheet ? draftMobileReturnDate : returnDateInput
-            }
-            activePicker={activeDatePicker}
-            tripType={tripTypeInput}
-            doneDisabled={
-              useMobileSheet &&
-              (!isValidFutureOrTodayDateValue(draftMobileDepartureDate) ||
-                (tripTypeInput === "round-trip" &&
-                  (!isValidFutureOrTodayDateValue(draftMobileReturnDate) ||
-                    isDateValueBefore(
-                      draftMobileReturnDate,
-                      draftMobileDepartureDate,
-                    ))))
-            }
-            onMonthChange={setCalendarMonth}
-            onSelect={
-              useMobileSheet
-                ? applyMobileFlightDateSelection
-                : applyFlightDateSelection
-            }
-            onClear={() => {
-              if (activeDatePicker === "departure") {
-                if (useMobileSheet) {
-                  setDraftMobileDepartureDate("");
-                  setDraftMobileReturnDate("");
-                } else {
-                  setDepartureDateInput("");
-                  setReturnDateInput("");
-                }
-              }
-
-              if (activeDatePicker === "return") {
-                if (useMobileSheet) setDraftMobileReturnDate("");
-                else setReturnDateInput("");
-              }
+        {activeDatePicker ? (
+          <MobileDatePickerDialog
+            open={true}
+            title={t("chooseTravelDates")}
+            titleId="results-flight-mobile-dates-title"
+            launcherRef={departureWrapRef}
+            startDate={draftMobileDepartureDate}
+            endDate={draftMobileReturnDate}
+            rangeRequired={tripTypeInput === "round-trip"}
+            locale={calendarLocale}
+            weekdays={weekdays}
+            labels={{
+              selectDates: t("carsResults.selectDates") || "Select dates",
+              start: t("mobileDatePicker.start") || "Start",
+              end: t("mobileDatePicker.end") || "End",
+              done: t("done") || "Done",
+              selectDatePrefix: t("selectDateAriaPrefix") || "Select",
             }}
-            onToday={
-              useMobileSheet
-                ? commitMobileDatePicker
-                : () => {
-                    setActiveDatePicker(null);
-                    setDatePickerPosition(null);
-                  }
-            }
+            isDateDisabled={isPastLocalDate}
+            onCommit={(startDate, endDate) => {
+              setDraftMobileDepartureDate(startDate);
+              setDraftMobileReturnDate(endDate);
+              setDepartureDateInput(startDate);
+              setReturnDateInput(tripTypeInput === "round-trip" ? endDate : "");
+            }}
+            onClose={closeMobileDatePicker}
           />
         ) : null}
 
-        {travelerPopoverOpen && (useMobileSheet || travelerPopoverPosition) ? (
-          <TravelerCabinPopover
-            position={travelerPopoverPosition ?? { top: 0, left: 0, width: 0 }}
-            mobileSheet={useMobileSheet}
-            launcherRef={useMobileSheet ? travelerCabinWrapRef : undefined}
-            onClose={
-              useMobileSheet
-                ? closeMobileTravelerPopover
-                : () => {
-                    setTravelerPopoverOpen(false);
-                    setTravelerPopoverPosition(null);
-                  }
-            }
-            onDone={useMobileSheet ? commitMobileTravelerPopover : undefined}
-            adultCount={useMobileSheet ? draftAdultCount : adultCount}
-            childCount={useMobileSheet ? draftChildCount : childCount}
-            infantCount={useMobileSheet ? draftInfantCount : infantCount}
-            cabinClass={useMobileSheet ? draftCabinClassInput : cabinClassInput}
-            onAdultChange={(nextValue) => {
-              const nextAdultCount = Math.min(9, Math.max(1, nextValue));
-
-              if (useMobileSheet) {
+        {travelerPopoverOpen ? (
+          <FlightMobilePickerShell
+            open={true}
+            title={t("mobileTravelerCabin.title") || "Travelers & Cabin"}
+            titleId="results-flight-mobile-travelers-title"
+            launcherRef={travelerCabinWrapRef}
+            onClose={closeMobileTravelerPopover}
+            contentClassName="bg-[#fcfdfe] px-4 py-6"
+            headerVariant="close"
+            pickerMarker="traveler-cabin"
+            footer={(requestClose) => (
+              <button
+                type="button"
+                onClick={() => {
+                  commitMobileTravelerPopover();
+                  requestClose();
+                }}
+                className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[17px] font-bold text-white"
+              >
+                {t("done")}
+              </button>
+            )}
+          >
+            <MobileTravelerCabinPicker
+              adults={draftAdultCount}
+              // Traveler count is a domain prop, not React's nested-content API.
+              // eslint-disable-next-line react/no-children-prop
+              children={draftChildCount}
+              infants={draftInfantCount}
+              cabinClass={draftCabinClassInput}
+              strings={{
+                travelers: t("travelers") || "Travelers",
+                adults: t("adults") || "Adults",
+                adultDescription:
+                  t("mobileTravelerCabin.adultDescription") ||
+                  "18 years and above",
+                children: t("children") || "Children",
+                childDescription:
+                  t("mobileTravelerCabin.childDescription") || "2 to 17 years",
+                infants: t("infants") || "Infants",
+                infantDescription:
+                  t("mobileTravelerCabin.infantDescription") || "Under 2 years",
+                cabinClass: t("cabinClass") || "Cabin class",
+                economy: t("economy") || "Economy",
+                business: t("business") || "Business",
+                first: t("first") || "First",
+                tip: t("mobileTravelerCabin.tip") || "Tip",
+                baggageTip:
+                  t("mobileTravelerCabin.baggageTip") ||
+                  "Baggage allowance may vary by airline. Check details on the provider page.",
+                decrease: (label) =>
+                  (
+                    t("deals.decreaseCountAria") || "Decrease {{label}}"
+                  ).replace("{{label}}", label),
+                increase: (label) =>
+                  (
+                    t("deals.increaseCountAria") || "Increase {{label}}"
+                  ).replace("{{label}}", label),
+              }}
+              onAdultsChange={(nextValue) => {
+                const nextAdultCount = Math.min(9, Math.max(1, nextValue));
                 setDraftAdultCount(nextAdultCount);
                 setDraftChildCount((current) =>
                   Math.min(current, 9 - nextAdultCount),
@@ -5907,54 +5831,28 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 setDraftInfantCount((current) =>
                   Math.min(current, nextAdultCount, 9 - nextAdultCount),
                 );
-              } else {
-                setAdultCount(nextAdultCount);
-                setChildCount((current) =>
-                  Math.min(current, 9 - nextAdultCount),
+              }}
+              onChildrenChange={(nextValue) => {
+                const nextChildCount = Math.min(
+                  9 - draftAdultCount,
+                  Math.max(0, nextValue),
                 );
-                setInfantCount((current) =>
-                  Math.min(current, nextAdultCount, 9 - nextAdultCount),
-                );
-              }
-            }}
-            onChildChange={(nextValue) => {
-              const nextChildCount = Math.min(
-                9 - (useMobileSheet ? draftAdultCount : adultCount),
-                Math.max(0, nextValue),
-              );
-
-              if (useMobileSheet) {
                 setDraftChildCount(nextChildCount);
                 setDraftInfantCount((current) =>
                   Math.min(current, 9 - draftAdultCount - nextChildCount),
                 );
-              } else {
-                setChildCount(nextChildCount);
-                setInfantCount((current) =>
-                  Math.min(current, 9 - adultCount - nextChildCount),
+              }}
+              onInfantsChange={(nextValue) => {
+                const nextInfantCount = Math.min(
+                  draftAdultCount,
+                  9 - draftAdultCount - draftChildCount,
+                  Math.max(0, nextValue),
                 );
-              }
-            }}
-            onInfantChange={(nextValue) => {
-              const currentAdults = useMobileSheet
-                ? draftAdultCount
-                : adultCount;
-              const currentChildren = useMobileSheet
-                ? draftChildCount
-                : childCount;
-              const nextInfantCount = Math.min(
-                currentAdults,
-                9 - currentAdults - currentChildren,
-                Math.max(0, nextValue),
-              );
-
-              if (useMobileSheet) setDraftInfantCount(nextInfantCount);
-              else setInfantCount(nextInfantCount);
-            }}
-            onCabinClassChange={
-              useMobileSheet ? setDraftCabinClassInput : setCabinClassInput
-            }
-          />
+                setDraftInfantCount(nextInfantCount);
+              }}
+              onCabinClassChange={setDraftCabinClassInput}
+            />
+          </FlightMobilePickerShell>
         ) : null}
       </>
     );
@@ -5963,9 +5861,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   function renderCompactSearchForm(placement: "mobile" | "desktop") {
     if (placement === "mobile") {
       const mobileFieldClass =
-        "rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm shadow-slate-900/[0.025] transition-colors hover:border-slate-300 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/25";
+        "min-h-[70px] w-full min-w-0 rounded-[14px] border border-[#D8E1EC] bg-white px-4 py-3 text-start shadow-none transition-colors hover:border-slate-300 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25";
       const mobileLabelClass =
-        "mb-1.5 block text-[0.68rem] font-bold uppercase leading-4 tracking-[0.14em] text-slate-500";
+        "mb-1.5 block text-[11px] font-semibold uppercase leading-3 tracking-[0.08em] text-slate-500";
+      const mobileValueRowClass =
+        "grid min-w-0 grid-cols-[22px_minmax(0,1fr)_20px] items-center gap-2.5";
+      const mobileValueClass =
+        "min-w-0 truncate text-[16px] font-semibold leading-5 text-slate-950";
+      const mobileValueIconClass = "h-5 w-5 shrink-0 text-slate-500";
       const mobileTripTypeOptions = [
         { labelKey: "roundTrip", value: "round-trip" },
         { labelKey: "oneWay", value: "one-way" },
@@ -5977,11 +5880,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           onSubmit={handleCompactSearchSubmit}
           className="flex h-full min-h-0 w-full min-w-0 flex-col bg-slate-50"
         >
-          <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-3 pt-[calc(0.85rem+env(safe-area-inset-top))]">
-            <div className="flex min-h-10 items-center justify-between gap-3">
+          <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))]">
+            <div className="flex min-h-11 items-center justify-between gap-3">
               <h2
                 id="flight-mobile-search-title"
-                className="text-[1.15rem] font-bold leading-6 tracking-[-0.01em] text-slate-950"
+                className="text-xl font-bold leading-6 tracking-[-0.01em] text-slate-950"
               >
                 {t("editFlightSearch")}
               </h2>
@@ -5990,22 +5893,23 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 type="button"
                 aria-label={t("closeEditSearch")}
                 onClick={() => closeMobileSearchDrawer()}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-transparent text-slate-700 transition-colors hover:bg-slate-100 active:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
               >
-                ×
+                <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
           </div>
 
           <div
             ref={mobileSearchScrollRef}
-            className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+            className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
           >
-            <div className="mx-auto flex w-full max-w-xl flex-col gap-3">
+            <div className="mx-auto flex w-full min-w-0 max-w-xl flex-col gap-3.5">
               <div
                 role="radiogroup"
                 aria-label={t("tripType")}
-                className="flex min-h-11 items-center gap-5 rounded-2xl bg-slate-50/50 px-1 py-1"
+                data-mobile-trip-type-grid
+                className="grid min-h-11 w-full min-w-0 grid-cols-3 items-stretch gap-1 rounded-[13px] bg-slate-100/75 p-1"
               >
                 {mobileTripTypeOptions.map((option) => {
                   const selected = tripTypeInput === option.value;
@@ -6016,18 +5920,18 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       type="button"
                       role="radio"
                       aria-checked={selected}
-                      onClick={() => handleTripTypeChange(option.value)}
+                      onClick={() => handleMobileTripTypeChange(option.value)}
                       className={cn(
-                        "focus-ring inline-flex min-h-10 items-center gap-2 rounded-full px-2.5 py-1 text-sm font-semibold transition-colors",
+                        "focus-ring inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-1 text-[13px] font-semibold leading-none transition-colors min-[360px]:gap-2 min-[360px]:text-sm",
                         selected
-                          ? "text-slate-950"
+                          ? "bg-white text-slate-950 shadow-sm"
                           : "text-slate-600 hover:text-slate-900",
                       )}
                     >
                       <span
                         aria-hidden="true"
                         className={cn(
-                          "inline-flex h-4 w-4 items-center justify-center rounded-full border transition-colors",
+                          "inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border transition-colors",
                           selected
                             ? "border-[#004BB8] bg-white shadow-[0_0_0_3px_rgba(0,75,184,0.10)]"
                             : "border-slate-300 bg-white",
@@ -6046,33 +5950,57 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 })}
               </div>
 
-              <div ref={originWrapRef}>
-                <button
-                  ref={mobileOriginLauncherRef}
-                  type="button"
-                  aria-haspopup="dialog"
-                  aria-expanded={activeMobileAirportPicker === "origin"}
-                  onClick={() => {
-                    closeFlightSearchPopovers();
-                    setActiveMobileAirportPicker("origin");
-                  }}
-                  className={cn(
-                    mobileFieldClass,
-                    "flex min-h-[68px] w-full items-center justify-between gap-3 text-start",
-                  )}
-                >
-                  <span className="min-w-0">
-                    <span className={mobileLabelClass}>{t("origin")}</span>
-                    <span className="block truncate text-base font-bold leading-5 text-slate-950">
-                      {originInput.trim() || t("fromPlaceholder")}
+              {tripTypeInput === "multi-city" ? (
+                <MultiCityFlightEditor
+                  legs={multiCityLegs}
+                  onChange={setMultiCityLegs}
+                  minimumDate={formatDateValue(new Date())}
+                  presentation="homepage"
+                  onAirportValidityChange={setMultiCityAirportsValid}
+                />
+              ) : (
+                <>
+              <div className="relative grid min-w-0 gap-3" data-mobile-route-fields>
+                <div ref={originWrapRef} className="min-w-0">
+                  <button
+                    ref={mobileOriginLauncherRef}
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-expanded={activeMobileAirportPicker === "origin"}
+                    onClick={() => {
+                      closeFlightSearchPopovers();
+                      setActiveMobileAirportPicker("origin");
+                    }}
+                    className={mobileFieldClass}
+                    data-mobile-field="origin"
+                  >
+                    <span className="block min-w-0">
+                      <span className={mobileLabelClass}>{t("origin")}</span>
+                      <span className={mobileValueRowClass} data-mobile-value-row>
+                        <MapPin className={mobileValueIconClass} aria-hidden="true" />
+                        <span className={mobileValueClass}>{originInput.trim() || t("fromPlaceholder")}</span>
+                        <span aria-hidden="true" />
+                      </span>
                     </span>
-                  </span>
-                  <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
-                </button>
-              </div>
+                  </button>
+                </div>
 
-              <div ref={destinationWrapRef}>
                 <button
+                  type="button"
+                  aria-label={t("swapOriginDestination")}
+                  onClick={handleSwapLocations}
+                  data-mobile-swap-control
+                  className="focus-ring absolute left-1/2 top-1/2 z-10 inline-flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#D8E1EC] bg-white text-[#004BB8] shadow-[0_8px_18px_-12px_rgba(15,23,42,0.45)] transition-colors hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                >
+                  <ArrowRightLeft
+                    className="h-5 w-5"
+                    strokeWidth={2.1}
+                    aria-hidden="true"
+                  />
+                </button>
+
+                <div ref={destinationWrapRef} className="min-w-0">
+                  <button
                   ref={mobileDestinationLauncherRef}
                   type="button"
                   aria-haspopup="dialog"
@@ -6081,19 +6009,22 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     closeFlightSearchPopovers();
                     setActiveMobileAirportPicker("destination");
                   }}
-                  className={cn(
-                    mobileFieldClass,
-                    "flex min-h-[68px] w-full items-center justify-between gap-3 text-start",
-                  )}
+                  className={mobileFieldClass}
+                  data-mobile-field="destination"
                 >
-                  <span className="min-w-0">
+                  <span className="block min-w-0">
                     <span className={mobileLabelClass}>{t("destination")}</span>
-                    <span className="block truncate text-base font-bold leading-5 text-slate-950">
-                      {destinationInput.trim() || t("toPlaceholder")}
+                    <span className={mobileValueRowClass} data-mobile-value-row>
+                      <MapPin
+                        className={mobileValueIconClass}
+                        aria-hidden="true"
+                      />
+                      <span className={mobileValueClass}>{destinationInput.trim() || t("toPlaceholder")}</span>
+                      <span aria-hidden="true" />
                     </span>
                   </span>
-                  <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
-                </button>
+                  </button>
+                </div>
               </div>
 
               <div ref={departureWrapRef} className="relative">
@@ -6108,24 +6039,27 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     setTravelerPopoverPosition(null);
                     openMobileDatePicker();
                   }}
-                  className={cn(
-                    mobileFieldClass,
-                    "flex min-h-[68px] w-full items-center gap-3 text-start",
-                  )}
+                  className={mobileFieldClass}
+                  data-mobile-field="dates"
                 >
-                  <Calendar className="h-5 w-5 shrink-0 text-[#004BB8]" />
-                  <span className="min-w-0">
+                  <span className="block min-w-0">
                     <span className={mobileLabelClass}>{t("travelDates")}</span>
-                    <span className="block truncate text-base font-bold leading-5 text-slate-950">
-                      {departureDateInput
-                        ? tripTypeInput === "round-trip" && returnDateInput
-                          ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
-                          : formatDateLabel(departureDateInput, calendarLocale)
-                        : t("travelDates")}
+                    <span className={mobileValueRowClass} data-mobile-value-row>
+                      <Calendar className={mobileValueIconClass} aria-hidden="true" />
+                      <span className={mobileValueClass}>
+                        {departureDateInput
+                          ? tripTypeInput === "round-trip" && returnDateInput
+                            ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
+                            : formatDateLabel(departureDateInput, calendarLocale)
+                          : t("travelDates")}
+                      </span>
+                      <span aria-hidden="true" />
                     </span>
                   </span>
                 </button>
               </div>
+                </>
+              )}
 
               <div ref={travelerCabinWrapRef} className="relative">
                 <button
@@ -6139,32 +6073,52 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     setDatePickerPosition(null);
                     openMobileTravelerPopover();
                   }}
-                  className={cn(
-                    mobileFieldClass,
-                    "flex min-h-[68px] w-full items-center justify-between gap-3 text-start",
-                  )}
+                  className={mobileFieldClass}
+                  data-mobile-field="travelers"
                 >
-                  <span className="min-w-0">
+                  <span className="block min-w-0">
                     <span className={mobileLabelClass}>
                       {t("travelersAndCabin")}
                     </span>
-                    <span className="block truncate text-base font-bold leading-5 text-slate-950">
-                      {buildTravelerCabinSummary(
-                        adultCount,
-                        childCount,
-                        infantCount,
-                        cabinClassInput,
-                        t,
-                      )}
+                    <span className={mobileValueRowClass} data-mobile-value-row>
+                      <UserRound
+                        className={mobileValueIconClass}
+                        aria-hidden="true"
+                      />
+                      <span className={mobileValueClass}>
+                        {buildTravelerCabinSummary(
+                          adultCount,
+                          childCount,
+                          infantCount,
+                          cabinClassInput,
+                          t,
+                        )}
+                      </span>
+                      <ChevronDown className="h-4 w-4 justify-self-end text-slate-500" aria-hidden="true" />
                     </span>
                   </span>
-                  <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
                 </button>
               </div>
 
               <Button
                 type="submit"
-                className="mt-1 h-[52px] w-full rounded-2xl bg-[#004BB8] text-base font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B]"
+                disabled={
+                  tripTypeInput === "multi-city" &&
+                  (multiCityLegs.length < MULTI_CITY_MIN_LEGS ||
+                    multiCityLegs.length > MULTI_CITY_MAX_LEGS ||
+                    !multiCityAirportsValid ||
+                    multiCityLegs.some(
+                      (leg, index) =>
+                        !/^[A-Z0-9]{3}$/.test(leg.origin) ||
+                        !/^[A-Z0-9]{3}$/.test(leg.destination) ||
+                        leg.origin === leg.destination ||
+                        !isValidFutureOrTodayDateValue(leg.departureDate) ||
+                        (index > 0 &&
+                          leg.departureDate <
+                            multiCityLegs[index - 1].departureDate),
+                    ))
+                }
+                className="mt-1 h-[54px] w-full rounded-[14px] bg-[#004BB8] text-base font-semibold text-white shadow-none ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B]"
               >
                 {t("search")}
               </Button>
@@ -6693,11 +6647,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       mobileSortOptions.find((option) => option.value === sortMode) ??
       mobileSortOptions[0];
     const shortcutButtonClass =
-      "focus-ring inline-flex h-10 flex-shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-300/80 bg-transparent px-3.5 text-[13px] font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-200/35 hover:text-slate-950 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
+      "focus-ring inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[11px] border border-[#D8E1EC] bg-white px-3.5 text-[14px] font-semibold text-[#142033] transition hover:border-[#B9C8D9] hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
     const menuClass =
-      "z-[90] max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_38px_-18px_rgba(15,23,42,0.35)]";
+      "z-[90] max-h-72 overflow-y-auto rounded-[12px] border border-[#D8E1EC] bg-white p-1 shadow-[0_14px_32px_-18px_rgba(15,23,42,0.28)]";
     const menuItemClass =
-      "flex min-h-9 w-full items-center justify-between gap-2 rounded-lg px-3 text-left text-[13px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
+      "flex min-h-11 w-full items-center justify-between gap-2 rounded-[9px] px-2.5 text-left text-[14px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
     const activeMenu = getActiveMobileShortcutMenu();
 
     const openMobileShortcutMenu = (
@@ -6727,7 +6681,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       width: number,
       ref: RefObject<HTMLDivElement | null>,
     ) => (
-      <div ref={ref} className="flex-shrink-0">
+      <div ref={ref} className="shrink-0">
         <button
           type="button"
           aria-haspopup="menu"
@@ -6786,13 +6740,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     closeMobileShortcutMenus();
                   }}
                   className={cn(
-                    "flex min-h-9 w-full items-center rounded-lg px-3 text-left text-[13px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30",
+                    menuItemClass,
                     sortMode === option.value
-                      ? "bg-[#004BB8]/8 text-[#004BB8]"
+                      ? "bg-[#F7FAFF] text-[#004BB8]"
                       : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
                   )}
                 >
-                  {option.label}
+                  <span className="truncate">{option.label}</span>
+                  {sortMode === option.value ? <Check className="h-4 w-4 shrink-0" strokeWidth={2.4} aria-hidden="true" /> : null}
                 </button>
               ))
             : null}
@@ -6811,13 +6766,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   className={cn(
                     menuItemClass,
                     selectedAirlines.includes(option.value)
-                      ? "bg-[#004BB8]/8 text-[#004BB8]"
+                      ? "bg-[#F7FAFF] text-[#004BB8]"
                       : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
                   )}
                 >
                   <span className="truncate">{option.label}</span>
-                  <span className="shrink-0 text-[11px] font-semibold text-slate-500">
+                  <span className="flex shrink-0 items-center gap-1.5 text-[11px] font-semibold text-slate-500">
                     {option.count}
+                    {selectedAirlines.includes(option.value) ? <Check className="h-3.5 w-3.5 text-[#004BB8]" strokeWidth={2.4} aria-hidden="true" /> : null}
                   </span>
                 </button>
               ))
@@ -6837,13 +6793,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   className={cn(
                     menuItemClass,
                     selectedStops.includes(option.value)
-                      ? "bg-[#004BB8]/8 text-[#004BB8]"
+                      ? "bg-[#F7FAFF] text-[#004BB8]"
                       : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
                   )}
                 >
-                  <span>{option.label}</span>
-                  <span className="text-[11px] font-semibold text-slate-500">
+                  <span className="truncate">{option.label}</span>
+                  <span className="flex shrink-0 items-center gap-1.5 text-[11px] font-semibold text-slate-500">
                     {option.count}
+                    {selectedStops.includes(option.value) ? <Check className="h-3.5 w-3.5 text-[#004BB8]" strokeWidth={2.4} aria-hidden="true" /> : null}
                   </span>
                 </button>
               ))
@@ -6863,13 +6820,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   className={cn(
                     menuItemClass,
                     selectedAirports.includes(option.value)
-                      ? "bg-[#004BB8]/8 text-[#004BB8]"
+                      ? "bg-[#F7FAFF] text-[#004BB8]"
                       : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
                   )}
                 >
-                  <span>{option.label}</span>
-                  <span className="text-[11px] font-semibold text-slate-500">
+                  <span className="truncate">{option.label}</span>
+                  <span className="flex shrink-0 items-center gap-1.5 text-[11px] font-semibold text-slate-500">
                     {option.count}
+                    {selectedAirports.includes(option.value) ? <Check className="h-3.5 w-3.5 text-[#004BB8]" strokeWidth={2.4} aria-hidden="true" /> : null}
                   </span>
                 </button>
               ))
@@ -6882,37 +6840,38 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     return (
       <>
         <div
-          className="w-full overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden"
+          data-mobile-flight-shortcuts
+          className="w-full min-w-0 overflow-x-auto pb-1 pe-3 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden"
           onScroll={closeMobileShortcutMenus}
         >
-          <div className="flex w-max flex-nowrap items-center gap-2.5">
+          <div className="flex w-max flex-nowrap items-center gap-2">
             {renderFloatingFilterButton(shortcutButtonClass)}
             {renderTrigger(
               "sort",
               activeSortOption.label,
               mobileSortMenuOpen,
-              144,
+              164,
               mobileSortMenuRef,
             )}
             {renderTrigger(
               "airlines",
               "Airlines",
               mobileAirlineMenuOpen,
-              224,
+              220,
               mobileAirlineMenuRef,
             )}
             {renderTrigger(
               "stops",
               "Stops",
               mobileStopsMenuOpen,
-              160,
+              172,
               mobileStopsMenuRef,
             )}
             {renderTrigger(
               "airports",
               "Airports",
               mobileAirportMenuOpen,
-              176,
+              204,
               mobileAirportMenuRef,
             )}
           </div>
@@ -6937,7 +6896,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         type="button"
         aria-label={label}
         className={cn(
-          "focus-ring relative inline-flex h-9 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border border-slate-300/80 bg-transparent px-2 text-[13px] font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-200/35 hover:text-slate-950 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
+          "focus-ring relative inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[11px] border border-[#D8E1EC] bg-white px-3.5 text-[14px] font-semibold text-[#142033] transition hover:border-[#B9C8D9] hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
           className,
         )}
         onClick={handleClick}
@@ -7026,22 +6985,22 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         <button
           type="button"
           onClick={(event) => openMobileSearchDrawer(event.currentTarget)}
-          className="group relative z-10 flex h-[4.25rem] min-w-0 w-full max-w-[30rem] items-center justify-between gap-3 overflow-hidden rounded-xl border border-slate-200/80 bg-white px-4 py-0 text-start shadow-[0_16px_34px_-26px_rgba(15,23,42,0.55)] transition hover:border-slate-300 hover:bg-white hover:shadow-[0_18px_38px_-28px_rgba(15,23,42,0.62)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+          className="group relative z-10 flex h-16 min-w-0 w-full max-w-[30rem] items-center justify-between gap-3 overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white px-4 py-0 text-start shadow-[0_8px_22px_-18px_rgba(15,23,42,0.3)] transition hover:border-[#C6D2E0] hover:bg-white hover:shadow-[0_10px_24px_-18px_rgba(15,23,42,0.34)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
         >
           <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden pe-1">
-            <span className="block truncate text-[16px] font-extrabold leading-5 tracking-[-0.015em] text-slate-950">
+            <span className="block truncate text-[16px] font-bold leading-5 tracking-[-0.01em] text-[#142033]">
               {mobileRouteSummary}
             </span>
-            <span className="mt-1.5 block truncate text-[12.5px] font-semibold leading-4 text-slate-500">
+            <span className="mt-1 block truncate text-[12.5px] font-semibold leading-[17px] text-slate-600">
               {mobileTripTypeSummary} · {mobileDateSummary} ·{" "}
-              {mobileTravelerSummary}
+              {mobileTravelerSummary} · {mobileCabinClassSummary}
             </span>
           </span>
           <span
             aria-hidden="true"
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200/90 bg-slate-50 text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] transition group-hover:border-slate-300 group-hover:bg-slate-100"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-transparent bg-transparent text-slate-700 transition group-hover:bg-slate-100 group-active:bg-slate-200"
           >
-            <SquarePen size={15} strokeWidth={2.2} />
+            <SquarePen size={16} strokeWidth={2.2} />
           </span>
         </button>
       </div>
@@ -7153,7 +7112,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         {mobileSearchOpen ? renderCompactSearchForm("mobile") : null}
       </div>
 
-      {mobileSearchOpen ? renderCompactSearchPopovers("mobile") : null}
+      {mobileSearchOpen ? renderMobileSearchPickers() : null}
 
       {mobileSearchOpen ? (
         <>
@@ -7394,9 +7353,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           <p className="sr-only" aria-live="polite">
             {savedItemError}
           </p>
-          <p className="sr-only" aria-live="polite">
-            {priceAlertStatusMessage || priceAlertError}
-          </p>
           <div ref={flightResultsTopRef} aria-hidden="true" />
           <h2 ref={resultsHeadingRef} tabIndex={-1} className="sr-only">
             {formatResultsFound(sortedResults.length, t)}
@@ -7408,7 +7364,30 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           ) : (
             <div className={cn(resultStackClass, "space-y-4")}>
               {body?.tripType !== "multi-city" ? (
-                <div
+                <>
+                  <div className="w-full min-w-0 max-w-full overflow-hidden sm:hidden" aria-label="Nearby departure fares" data-nearby-fare-presentation="mobile">
+                    <div ref={mobileNearbyFareRailRef} className="flex w-full min-w-0 max-w-full touch-pan-x snap-x snap-proximity gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain px-0.5 py-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      {(nearbyFares.length ? nearbyFares : Array.from({ length: nearbyFareRangeSize }, (_, index) => ({ date: `loading-mobile-${index}`, status: "loading" as const }))).map((fare) => {
+                        const selected = fare.date === body?.departureDate;
+                        const displayPrice = fare.status === "success" ? formatDisplayPrice({ amount: fare.amount, sourceCurrency: fare.currency, displayCurrency: selectedCurrency, convertUsdEstimate: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback }).formatted : null;
+                        const accessibleFare = displayPrice ?? (fare.status === "loading" ? "Loading fare" : "Unavailable");
+                        const accessibleDate = fare.date.startsWith("loading-") ? "Loading date" : `${formatFareStripWeekdayLabel(fare.date, calendarLocale)}, ${formatFareStripDateLabel(fare.date, calendarLocale)}`;
+                        return (
+                          <button ref={selected ? mobileSelectedNearbyFareRef : undefined} key={fare.date} type="button" data-fare-date-cell aria-label={`${accessibleDate}: ${accessibleFare}`} aria-current={selected ? "date" : undefined} aria-pressed={selected} disabled={selected || loading || fare.status === "loading"} onClick={() => handleNearbyFareDateSelect(fare.date)} className={cn("focus-ring relative flex min-h-[76px] w-[calc((100vw-3.5rem)/3.35)] min-w-[88px] max-w-[108px] shrink-0 snap-start flex-col items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white px-1.5 py-2 text-center shadow-sm transition hover:border-[#075EE8]/40 hover:bg-slate-50", selected && "border-[#075EE8] bg-blue-50/60")}>
+                            {selected ? <span className="absolute inset-x-1.5 top-0 h-0.5 rounded-b bg-[#075EE8]" aria-hidden="true" /> : null}
+                            {fare.status === "loading" ? (<>
+                              <span className="h-3 w-12 animate-pulse rounded bg-slate-200" /><span className="mt-1.5 h-3 w-8 animate-pulse rounded bg-slate-200" /><span className="mt-1.5 h-3 w-14 animate-pulse rounded bg-slate-200" />
+                            </>) : (<>
+                              <span className={cn("text-[12px] font-semibold uppercase leading-4", selected ? "text-[#075EE8]" : "text-slate-800")}>{formatFareStripDateLabel(fare.date, calendarLocale).toUpperCase()}</span>
+                              <span className={cn("text-[11px] font-medium uppercase leading-4", selected ? "text-[#075EE8]" : "text-slate-500")}>{formatFareStripWeekdayLabel(fare.date, calendarLocale).toUpperCase()}</span>
+                              <span className={cn("flight-fare-strip-price mt-1 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-medium leading-4", selected ? "font-semibold text-[#075EE8]" : "text-slate-900")} data-price-size={((displayPrice ?? "Unavailable").replace(/\s/g, "").length) >= 13 ? "extra-long" : ((displayPrice ?? "Unavailable").replace(/\s/g, "").length) >= 10 ? "long" : "default"} dir="ltr">{displayPrice ?? "Unavailable"}</span>
+                            </>)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div
                   className="hidden w-full sm:block"
                   aria-label="Nearby departure fares"
                 >
@@ -7552,27 +7531,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     </button>
                   </div>
                 </div>
+                </>
               ) : null}
-
-              <div className="flex w-full flex-col gap-3 rounded-2xl border border-[#D8E1EC] bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-4 lg:bg-transparent">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-slate-900">Track this route</p>
-                  <p className="mt-1 text-xs leading-5 text-slate-600">Create a one-time email alert when a periodically checked fare is at or below your target.</p>
-                  {priceAlertStatusMessage ? <p className="mt-2 text-xs font-semibold text-emerald-700" role="status">{priceAlertStatusMessage}</p> : null}
-                  {priceAlertUnavailableReason ? <p id="price-alert-unavailable" className="mt-2 text-xs font-semibold text-amber-700">{priceAlertUnavailableReason}</p> : null}
-                </div>
-                <button
-                  ref={priceAlertButtonRef}
-                  type="button"
-                  className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-[#004BB8]/30 bg-white px-4 text-sm font-bold text-[#004BB8] transition hover:border-[#004BB8] hover:bg-[#004BB8]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
-                  disabled={sessionStatus === "loading" || !canonicalPriceAlertQuery}
-                  aria-describedby={priceAlertUnavailableReason ? "price-alert-unavailable" : undefined}
-                  onClick={openPriceAlertDialog}
-                >
-                  <Bell size={17} aria-hidden="true" />
-                  Create price alert
-                </button>
-              </div>
 
               <div className="hidden w-full items-center justify-between gap-4 pt-2 sm:flex lg:bg-transparent lg:px-0 lg:pb-0.5">
                 <p className="text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">
@@ -7723,42 +7683,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       >
         <ChevronUp className="h-5 w-5" strokeWidth={2.6} aria-hidden="true" />
       </button>
-
-      {priceAlertDialogOpen && createPortal(
-          <div className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/45 px-4 py-4 sm:items-center" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !priceAlertSubmitting) closePriceAlertDialog(); }}>
-            <div role="dialog" aria-modal="true" aria-labelledby="price-alert-dialog-title" aria-describedby="price-alert-dialog-description" className="max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">Price alert</p>
-                  <h2 id="price-alert-dialog-title" className="mt-2 text-xl font-semibold tracking-tight text-slate-950">Create price alert</h2>
-                </div>
-                <button type="button" className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900" onClick={closePriceAlertDialog} aria-label="Cancel creating price alert" disabled={priceAlertSubmitting}>
-                  <X size={20} aria-hidden="true" />
-                </button>
-              </div>
-              <p id="price-alert-dialog-description" className="mt-3 text-sm leading-6 text-slate-600">Kurioticket checks this route periodically. We’ll email you once if an observed fare is at or below your target. Fares and availability can change before booking.</p>
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                <p className="font-semibold text-slate-950">{priceAlertRouteSummary}</p>
-                <p className="mt-1">{priceAlertDateSummary}</p>
-                <p className="mt-1">Currency: <span className="font-semibold">{canonicalPriceAlertQuery?.currency}</span></p>
-                {lowestDisplayedFare ? <p className="mt-2 text-xs leading-5 text-slate-600">Lowest displayed live fare: {formatCurrency(lowestDisplayedFare.price, lowestDisplayedFare.currency)}. Use this only as context; provider fares can change.</p> : null}
-              </div>
-              <form className="mt-5 space-y-4" onSubmit={submitPriceAlert}>
-                <div>
-                  <label htmlFor="price-alert-target" className="block text-sm font-semibold text-slate-900">Target price ({canonicalPriceAlertQuery?.currency})</label>
-                  <input id="price-alert-target" ref={priceAlertInputRef} inputMode="decimal" autoComplete="off" value={priceAlertTarget} onChange={(event) => { setPriceAlertTarget(event.target.value); if (priceAlertError) setPriceAlertError(""); }} aria-describedby="price-alert-target-help price-alert-error" aria-invalid={Boolean(priceAlertError)} className="mt-2 block min-h-12 w-full rounded-xl border border-slate-300 px-3 text-base font-semibold text-slate-950 shadow-sm focus:border-[#004BB8] focus:outline-none focus:ring-2 focus:ring-[#004BB8]/20" placeholder="Example: 450.00" />
-                  <p id="price-alert-target-help" className="mt-2 text-xs leading-5 text-slate-500">Use the current search currency. Up to two decimal places.</p>
-                  {priceAlertError ? <p id="price-alert-error" className="mt-2 text-sm font-semibold text-red-700" role="alert">{priceAlertError}</p> : null}
-                </div>
-                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                  <Button type="button" variant="secondary" className="min-h-11 rounded-xl" onClick={closePriceAlertDialog} disabled={priceAlertSubmitting}>Cancel</Button>
-                  <Button type="submit" className="min-h-11 rounded-xl" disabled={priceAlertSubmitting}>{priceAlertSubmitting ? "Creating…" : "Create alert"}</Button>
-                </div>
-              </form>
-            </div>
-          </div>,
-          document.body,
-        )}
 
       <aside
         id="flight-mobile-filters-dialog"

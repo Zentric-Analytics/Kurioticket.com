@@ -10,6 +10,24 @@ export type HotelDetailsSearchContext = {
   rooms?: string;
 };
 
+/** Presentation-only shape for future, server-supplied comparable rates. */
+export type HotelComparisonOffer = {
+  id: string;
+  providerName: string;
+  providerLogoUrl?: string;
+  roomName?: string;
+  bedConfiguration?: string;
+  nightlyPrice: string;
+  totalPrice: string;
+  cancellationLabel?: string;
+  mealPlanLabel?: string;
+  paymentLabel?: string;
+  taxesAndFeesLabel?: string;
+  deepLink: string;
+  checkedAt?: string;
+  isLowestComparableTotal?: boolean;
+};
+
 export function isSafeHotelDetailsHttpUrl(value?: string) {
   if (!value) return false;
   try {

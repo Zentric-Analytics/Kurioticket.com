@@ -4,25 +4,20 @@ import {
   Award,
   CalendarDays,
   Check,
-  ChevronDown,
-  ChevronUp,
   Heart,
   Info,
-  Laptop,
   MapPin,
-  MoreHorizontal,
   Share2,
-  Sparkles,
   Users,
-  UtensilsCrossed,
-  Wifi,
-  Wine,
   X,
-  type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import type { HotelAmenityPresentationItem } from "@/components/results/hotelAmenityPresentation";
+import { HotelPriceComparisonSection } from "./HotelPriceComparisonSection";
+import { HotelAboutSection } from "./HotelAboutSection";
+import { HotelDetailsSectionNav } from "./HotelDetailsSectionNav";
+import { HotelReviewsSection } from "./HotelReviewsSection";
 import type {
   PublicHotelPropertyDetails,
   PublicHotelResult,
@@ -63,6 +58,7 @@ export type StandaloneHotelDetailsProps = {
   reviewScore: string;
   reviewLabel: string;
   reviewCountText: string;
+  reviewSource?: string | null;
   relatedHotels: PublicHotelResult[];
   relatedSearchContext?: HotelDetailsSearchContext;
   amenityItems: HotelAmenityPresentationItem[];
@@ -87,10 +83,6 @@ export type StandaloneHotelDetailsProps = {
   labels: {
     share: string;
     shared: string;
-    more: string;
-    less: string;
-    about: string;
-    location: string;
     directions: string;
     map: string;
     streetView: string;
@@ -110,31 +102,15 @@ export type StandaloneHotelDetailsProps = {
     imageAlt: string;
     nearLocation: string;
     starHotelAria: string;
-    guestReviews: string;
-    reviewUnavailable: string;
-    planningRate: string;
-    planningEstimate: string;
   };
 };
 
-function getAmenityIcon(item: HotelAmenityPresentationItem): LucideIcon {
-  if (item.iconKey === "wifi") return Wifi;
-  if (item.iconKey === "restaurant") return UtensilsCrossed;
-  if (item.iconKey === "workspace") return Laptop;
-  if (/bar|lounge/i.test(item.label)) return Wine;
-  return Sparkles;
-}
-
 export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
-  const [amenitiesExpanded, setAmenitiesExpanded] = useState(false);
-  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [shareComplete, setShareComplete] = useState(false);
   const [roomsOpen, setRoomsOpen] = useState(false);
   const roomOptionsButtonRef = useRef<HTMLButtonElement>(null);
   const roomDialogRef = useRef<HTMLElement>(null);
-  const primaryAmenities = props.amenityItems.slice(0, 6);
   const description = props.propertyDetails?.description || "";
-  const canExpandDescription = description.length > 130;
   const canonicalAddress = props.propertyDetails
     ? buildHotelAddress(props.propertyDetails)
     : "";
@@ -397,221 +373,53 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
               layout="mosaic"
             />
 
-            {primaryAmenities.length ? (
-              <div
-                className="mx-4 mt-3 overflow-hidden rounded-[11px] border border-slate-200 bg-white lg:mx-0"
-                data-hotel-amenities-strip
-              >
-                <div className="grid grid-cols-2 lg:hidden">
-                  {primaryAmenities.slice(0, 4).map((item, index) => {
-                    const Icon = getAmenityIcon(item);
-                    return (
-                      <div
-                        key={item.key}
-                        className={`flex min-h-12 min-w-0 items-center justify-start gap-2 border-slate-200 px-4 text-xs font-semibold text-slate-800 ${
-                          index % 2 === 0 ? "border-e" : ""
-                        } ${index < 2 ? "border-b" : ""}`}
-                        data-mobile-amenity-cell
-                      >
-                        <Icon
-                          className="h-[18px] w-[18px] shrink-0"
-                          aria-hidden="true"
-                        />
-                        <span className="min-w-0">{item.label}</span>
-                      </div>
-                    );
-                  })}
-                  <button
-                    type="button"
-                    aria-expanded={amenitiesExpanded}
-                    onClick={() => setAmenitiesExpanded((value) => !value)}
-                    className="focus-ring col-span-2 flex min-h-11 items-center justify-center gap-2 border-t border-slate-200 px-3 text-xs font-semibold text-slate-800 hover:bg-slate-50"
-                    data-mobile-amenities-more
-                  >
-                    <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
-                    {props.labels.more}
-                  </button>
-                </div>
-                <div className="hidden min-h-[52px] grid-cols-5 lg:grid">
-                  {primaryAmenities.map((item) => {
-                    const Icon = getAmenityIcon(item);
-                    return (
-                      <div
-                        key={item.key}
-                        className="flex items-center justify-center gap-2 border-e border-slate-200 px-2 text-xs font-semibold text-slate-800 last:border-e-0"
-                      >
-                        <Icon
-                          className="h-[18px] w-[18px]"
-                          aria-hidden="true"
-                        />
-                        <span className="truncate">{item.label}</span>
-                      </div>
-                    );
-                  })}
-                  <button
-                    type="button"
-                    aria-expanded={amenitiesExpanded}
-                    onClick={() => setAmenitiesExpanded((value) => !value)}
-                    className="focus-ring flex items-center justify-center gap-2 px-3 text-xs font-semibold text-slate-800 hover:bg-slate-50"
-                  >
-                    <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
-                    {props.labels.more}
-                  </button>
-                </div>
-                {amenitiesExpanded ? (
-                  <ul className="grid grid-cols-1 gap-2 border-t border-slate-200 p-4 text-sm text-slate-700 sm:grid-cols-2">
-                    {props.amenityItems.map((item) => (
-                      <li key={item.key}>{item.label}</li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-            ) : null}
+            <HotelDetailsSectionNav />
 
-            {description ? (
-              <section
-                className="mx-4 mt-4 rounded-[11px] border border-slate-200 p-3.5 lg:mx-0 lg:mt-5 lg:border-0 lg:p-0"
-                aria-labelledby="hotel-about-heading"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <h2
-                    id="hotel-about-heading"
-                    className="text-[15px] font-bold text-slate-950 lg:text-[17px]"
-                  >
-                    {props.labels.about}
-                  </h2>
-                  {canExpandDescription ? (
-                    <button
-                      type="button"
-                      aria-expanded={descriptionExpanded}
-                      onClick={() => setDescriptionExpanded((value) => !value)}
-                      className="focus-ring inline-flex min-h-11 items-center gap-1 text-xs font-bold text-blue hover:underline lg:hidden"
-                    >
-                      {descriptionExpanded
-                        ? props.labels.less
-                        : props.labels.more}
-                      {descriptionExpanded ? (
-                        <ChevronUp className="h-4 w-4" aria-hidden="true" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" aria-hidden="true" />
-                      )}
-                    </button>
-                  ) : null}
-                </div>
-                <p
-                  className={`mt-2 text-[13px] leading-5 text-slate-600 ${descriptionExpanded ? "" : "line-clamp-2"}`}
-                >
-                  {description}
-                </p>
-                {canExpandDescription ? (
-                  <button
-                    type="button"
-                    aria-expanded={descriptionExpanded}
-                    onClick={() => setDescriptionExpanded((value) => !value)}
-                    className="focus-ring mt-1 hidden items-center gap-1 text-xs font-bold text-blue hover:underline lg:inline-flex"
-                  >
-                    {descriptionExpanded
-                      ? props.labels.less
-                      : props.labels.more}
-                    {descriptionExpanded ? (
-                      <ChevronUp className="h-4 w-4" aria-hidden="true" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" aria-hidden="true" />
-                    )}
-                  </button>
-                ) : null}
-              </section>
-            ) : null}
+            <HotelPriceComparisonSection
+              stayContext={props.staySummary ? `${props.staySummary.dateText} · ${props.staySummary.occupancyText}` : undefined}
+              nightlyPrice={props.nightlyDisplayPrice}
+              perNightText={props.perNightText}
+              viewDealText="View deal"
+              roomOptionsAvailable={props.roomChoices.length > 0}
+              onViewRoomOptions={openRoomOptions}
+              amenities={props.amenityItems}
+              offers={[]}
+            />
 
-            <section
-              className="mx-4 mt-4 rounded-[11px] border border-slate-200 p-4 lg:hidden"
-              aria-labelledby="hotel-guest-reviews-heading"
-              data-hotel-review-summary
-            >
-              <h2
-                id="hotel-guest-reviews-heading"
-                className="text-[15px] font-bold text-slate-950"
-              >
-                {props.labels.guestReviews}
-              </h2>
-              {props.reviewScore ? (
-                <div className="mt-3 flex items-center gap-3">
-                  <span className="flex size-14 items-center justify-center rounded-lg bg-blue text-2xl font-extrabold text-white">
-                    {props.reviewScore}
-                  </span>
-                  <div>
-                    <strong className="block text-sm text-slate-950">
-                      {props.reviewLabel}
-                    </strong>
-                    <span className="text-xs text-slate-600">
-                      {props.reviewCountText}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <p className="mt-2 text-sm text-slate-600">
-                  {props.labels.reviewUnavailable}
-                </p>
-              )}
-            </section>
+            <HotelAboutSection
+              description={description}
+              amenities={props.amenityItems}
+              starRating={props.starRating}
+              roomSummary={props.propertyDetails?.roomSummary}
+              bedSummary={props.propertyDetails?.bedSummary}
+              accessibility={props.propertyDetails?.accessibility}
+            />
+
+            <HotelReviewsSection
+              score={props.reviewScore}
+              label={props.reviewLabel}
+              countText={props.reviewCountText}
+              source={props.reviewSource}
+            />
 
             {props.propertyDetails ? (
-              <div className="px-4 lg:px-0">
                 <HotelLocationSection
                   hotelName={props.hotelName}
                   propertyDetails={props.propertyDetails}
-                  locationLabel={props.labels.location}
+                  locationLabel="Location & stay fit"
                   directionsLabel={props.labels.directions}
                   mapLabel={props.labels.map}
                   streetViewLabel={props.labels.streetView}
+                  stayFitFacts={[
+                    props.propertyDetails.neighbourhood ? `${props.propertyDetails.neighbourhood} neighborhood` : "",
+                    props.propertyDetails.businessSuitable ? "Work-friendly property" : "",
+                    props.propertyDetails.familySuitable ? "Family-friendly" : "",
+                    props.propertyDetails.interestTags?.some((tag) => /sightseeing|culture|history|art|theatre/i.test(tag)) ? "Good for sightseeing" : "",
+                    props.propertyDetails.accessibility?.length ? "Accessibility details available" : "",
+                  ].filter(Boolean)}
+                  accessibilityDetails={props.propertyDetails.accessibility}
                 />
-              </div>
-            ) : null}
-
-            <section
-              className="mx-4 mt-4 rounded-[11px] border border-slate-200 p-4 lg:hidden"
-              aria-labelledby="hotel-rates-heading"
-              data-hotel-rate-section
-            >
-              <h2
-                id="hotel-rates-heading"
-                className="text-[15px] font-bold text-slate-950"
-              >
-                {props.labels.planningRate}
-              </h2>
-              <div className="mt-3 flex items-center justify-between gap-4 rounded-lg border border-slate-200 p-3">
-                <div>
-                  <strong className="block text-sm text-slate-950">
-                    {props.labels.planningEstimate}
-                  </strong>
-                  <span className="text-xs text-slate-600">
-                    {props.planningPriceText}
-                  </span>
-                </div>
-                <div className="shrink-0 text-right">
-                  {props.nightlyDisplayPrice ? (
-                    <strong className="block text-base text-blue">
-                      {props.perNightText.replace(
-                        "{{price}}",
-                        props.nightlyDisplayPrice.formatted,
-                      )}
-                    </strong>
-                  ) : (
-                    <strong className="block text-sm text-slate-600">
-                      {props.labels.priceUnavailable}
-                    </strong>
-                  )}
-                  <button
-                    type="button"
-                    disabled={!props.roomChoices.length}
-                    onClick={(event) => openRoomOptions(event.currentTarget)}
-                    className="focus-ring mt-2 min-h-11 rounded-lg bg-blue px-3 text-xs font-bold text-white disabled:opacity-50"
-                  >
-                    {props.labels.viewRooms}
-                  </button>
-                </div>
-              </div>
-            </section>
+            ) : <section id="hotel-location" className="scroll-mt-16 border-b border-slate-200 px-4 py-8 lg:px-0 lg:py-10" aria-labelledby="hotel-location-heading"><h2 id="hotel-location-heading" className="text-xl font-extrabold text-slate-950">Location &amp; stay fit</h2><p className="mt-3 text-sm text-slate-600">Verified location details are not available for this property yet.</p></section>}
           </article>
         </div>
 

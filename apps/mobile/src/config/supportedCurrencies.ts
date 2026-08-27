@@ -1,6 +1,7 @@
 export type SupportedCurrency = {
   code: string;
   name: string;
+  symbol?: string;
 };
 
 // Mobile-owned copy of the canonical display currencies. Keep this list aligned
@@ -12,7 +13,7 @@ export const supportedCurrencies: SupportedCurrency[] = [
   { code: "AMD", name: "Armenian Dram" },
   { code: "AOA", name: "Angolan Kwanza" },
   { code: "ARS", name: "Argentine Peso" },
-  { code: "AUD", name: "Australian Dollar" },
+  { code: "AUD", name: "Australian Dollar", symbol: "A$" },
   { code: "AWG", name: "Aruban Florin" },
   { code: "AZN", name: "Azerbaijani Manat" },
   { code: "BAM", name: "Bosnia-Herzegovina Convertible Mark" },
@@ -29,7 +30,7 @@ export const supportedCurrencies: SupportedCurrency[] = [
   { code: "BWP", name: "Botswanan Pula" },
   { code: "BYN", name: "Belarusian Ruble" },
   { code: "BZD", name: "Belize Dollar" },
-  { code: "CAD", name: "Canadian Dollar" },
+  { code: "CAD", name: "Canadian Dollar", symbol: "CA$" },
   { code: "CDF", name: "Congolese Franc" },
   { code: "CHF", name: "Swiss Franc" },
   { code: "CLP", name: "Chilean Peso" },
@@ -46,12 +47,12 @@ export const supportedCurrencies: SupportedCurrency[] = [
   { code: "EGP", name: "Egyptian Pound" },
   { code: "ERN", name: "Eritrean Nakfa" },
   { code: "ETB", name: "Ethiopian Birr" },
-  { code: "EUR", name: "Euro" },
+  { code: "EUR", name: "Euro", symbol: "€" },
   { code: "FJD", name: "Fijian Dollar" },
   { code: "FKP", name: "Falkland Islands Pound" },
-  { code: "GBP", name: "British Pound" },
+  { code: "GBP", name: "British Pound", symbol: "£" },
   { code: "GEL", name: "Georgian Lari" },
-  { code: "GHS", name: "Ghanaian Cedi" },
+  { code: "GHS", name: "Ghanaian Cedi", symbol: "GH₵" },
   { code: "GIP", name: "Gibraltar Pound" },
   { code: "GMD", name: "Gambian Dalasi" },
   { code: "GNF", name: "Guinean Franc" },
@@ -70,7 +71,7 @@ export const supportedCurrencies: SupportedCurrency[] = [
   { code: "JMD", name: "Jamaican Dollar" },
   { code: "JOD", name: "Jordanian Dinar" },
   { code: "JPY", name: "Japanese Yen" },
-  { code: "KES", name: "Kenyan Shilling" },
+  { code: "KES", name: "Kenyan Shilling", symbol: "KSh" },
   { code: "KGS", name: "Kyrgyz Som" },
   { code: "KHR", name: "Cambodian Riel" },
   { code: "KMF", name: "Comorian Franc" },
@@ -100,7 +101,7 @@ export const supportedCurrencies: SupportedCurrency[] = [
   { code: "MYR", name: "Malaysian Ringgit" },
   { code: "MZN", name: "Mozambican Metical" },
   { code: "NAD", name: "Namibian Dollar" },
-  { code: "NGN", name: "Nigerian Naira" },
+  { code: "NGN", name: "Nigerian Naira", symbol: "₦" },
   { code: "NIO", name: "Nicaraguan Córdoba" },
   { code: "NOK", name: "Norwegian Krone" },
   { code: "NPR", name: "Nepalese Rupee" },
@@ -143,7 +144,7 @@ export const supportedCurrencies: SupportedCurrency[] = [
   { code: "TZS", name: "Tanzanian Shilling" },
   { code: "UAH", name: "Ukrainian Hryvnia" },
   { code: "UGX", name: "Ugandan Shilling" },
-  { code: "USD", name: "US Dollar" },
+  { code: "USD", name: "US Dollar", symbol: "$" },
   { code: "UYU", name: "Uruguayan Peso" },
   { code: "UZS", name: "Uzbekistani Som" },
   { code: "VES", name: "Venezuelan Bolívar" },
@@ -156,7 +157,7 @@ export const supportedCurrencies: SupportedCurrency[] = [
   { code: "XOF", name: "West African CFA Franc" },
   { code: "XPF", name: "CFP Franc" },
   { code: "YER", name: "Yemeni Rial" },
-  { code: "ZAR", name: "South African Rand" },
+  { code: "ZAR", name: "South African Rand", symbol: "R" },
   { code: "ZMW", name: "Zambian Kwacha" },
   { code: "ZWG", name: "Zimbabwean Gold" },
 ];

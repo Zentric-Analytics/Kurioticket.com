@@ -18,6 +18,8 @@ test("ready flight results keep controls persistent and result content scrollabl
   assert.match(persistentControls, /flightPersistentSearchControls[\s\S]*?\{filterRail\}/);
   assert.match(listHeader, /ListHeaderComponent=\{status === "loading" \? null : dateStrip\}/);
   assert.doesNotMatch(sectionList, /renderSectionHeader|stickySectionHeadersEnabled/);
+  assert.doesNotMatch(persistentControls, /nearbyDateInsight|Cheaper nearby/);
+  assert.match(resultsBody, /nearbyIntelligence=\{product === "flight" && status === "ready"/);
   assert.ok(renderItem.indexOf("<PriceAlert") < renderItem.indexOf("flightResultCountLabel(sorted.length)"));
   assert.ok(renderItem.indexOf("flightResultCountLabel(sorted.length)") < renderItem.indexOf("<FlightCard"));
   assert.match(renderItem, /index === 0 && status === "ready" && !flightState && plan\.plan/);

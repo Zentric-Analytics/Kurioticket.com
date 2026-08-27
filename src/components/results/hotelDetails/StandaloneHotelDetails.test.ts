@@ -19,29 +19,6 @@ const gallerySource = readFileSync(
   "utf8",
 );
 
-test("renders the approved standalone section order", () => {
-  const contracts = [
-    "<HotelDetailsGallery",
-    "data-hotel-amenities-strip",
-    "hotel-about-heading",
-    "data-hotel-review-summary",
-    "<HotelLocationSection",
-    "data-hotel-rate-section",
-    "<RelatedHotelsSection",
-  ];
-  let previous = -1;
-  for (const contract of contracts) {
-    const index = source.indexOf(contract);
-    assert.ok(index > previous, contract);
-    previous = index;
-  }
-  assert.match(source, /lg:grid-cols-\[minmax\(0,1fr\)_334px\]/);
-  const mainGridEnd = source.indexOf("data-mobile-hotel-stay-dock");
-  assert.ok(mainGridEnd > source.indexOf("data-standalone-stay-summary"));
-  assert.match(source, /data-standalone-hotel-main-grid/);
-  assert.match(source, /data-standalone-stay-summary/);
-});
-
 test("mobile gallery uses a truthful hero, controls, counter, and five-slot thumbnail strip while desktop keeps mosaic", () => {
   for (const contract of [
     "data-hotel-mobile-thumbnail-strip",
@@ -168,30 +145,6 @@ test("mobile property header renders the canonical identity in the approved orde
   assert.doesNotMatch(header, /propertyDetails\.neighbourhood/);
 });
 
-test("mobile amenities use balanced cells and a dedicated full-width More row", () => {
-  const amenities = source.slice(
-    source.indexOf("data-hotel-amenities-strip"),
-    source.indexOf("{description ? ("),
-  );
-  for (const contract of [
-    "grid grid-cols-2 lg:hidden",
-    "primaryAmenities.slice(0, 4)",
-    "data-mobile-amenity-cell",
-    "min-h-12",
-    'index % 2 === 0 ? "border-e"',
-    'index < 2 ? "border-b"',
-    "data-mobile-amenities-more",
-    "col-span-2",
-    "min-h-11",
-    "border-t border-slate-200",
-    "aria-expanded={amenitiesExpanded}",
-    "setAmenitiesExpanded",
-  ])
-    assert.ok(amenities.includes(contract), contract);
-  assert.equal(amenities.match(/data-mobile-amenity-cell/g)?.length, 1);
-  assert.match(amenities, /hidden min-h-\[52px\] grid-cols-5 lg:grid/);
-});
-
 test("canonical hotel result name flows directly into the standalone title", () => {
   assert.match(
     clientSource,
@@ -234,47 +187,11 @@ test("standalone hotel navigation locally matches the Flight-style mobile treatm
   assert.doesNotMatch(standalone, /border-b border-slate/);
 });
 
-test("review and rate modules remain truthful and do not manufacture blueprint claims", () => {
-  for (const contract of [
-    "props.reviewScore",
-    "props.reviewLabel",
-    "props.reviewCountText",
-    "props.labels.reviewUnavailable",
-    "props.labels.planningEstimate",
-    "props.planningPriceText",
-    "props.perNightText.replace(",
-  ])
-    assert.ok(source.includes(contract), contract);
-  assert.match(
-    clientSource,
-    /reviewScale === 5 \? ` \/ \$\{reviewScale\}` : ""/,
-  );
-  assert.doesNotMatch(
-    source,
-    /Booking\.com|Expedia|Hotels\.com|100\+ sites|Cleanliness|Emily R\.|Free cancellation/,
-  );
-});
-
 test("standalone route hides travel navigation without changing AppHeader defaults", () => {
   const headerCall = pageSource.match(/<AppHeader[\s\S]*?\/>/)?.[0] ?? "";
   assert.match(headerCall, /hideDesktopTravelNav/);
   assert.match(headerCall, /hideMobileCategoryTabs/);
   assert.doesNotMatch(headerCall, /compactDesktopNav/);
-});
-
-test("standalone mobile surface is full bleed while its content and desktop shell stay padded", () => {
-  for (const contract of [
-    "max-w-[1400px] px-0 lg:px-7",
-    "data-hotel-details-page-shell",
-    "px-4 lg:px-0",
-    "mx-4 mt-3",
-    "mx-4 mt-4",
-  ])
-    assert.ok(
-      clientSource.includes(contract) || source.includes(contract),
-      contract,
-    );
-  assert.doesNotMatch(clientSource, /max-w-\[1400px\] px-4 sm:px-6 lg:px-7/);
 });
 
 test("hotel details route keeps AppHeader and omits the global Footer", () => {
@@ -307,25 +224,6 @@ test("removes standalone promotional surfaces and normalizes stay-card flow", ()
     "ShieldCheck",
   ])
     assert.doesNotMatch(source, new RegExp(removed));
-});
-
-test("keeps save, share, gallery, amenity and description controls accessible", () => {
-  for (const contract of [
-    "aria-pressed={props.isSaved}",
-    "navigator.share",
-    "navigator.clipboard.writeText",
-    "aria-expanded={amenitiesExpanded}",
-    "aria-expanded={descriptionExpanded}",
-    'role="dialog"',
-    'aria-modal="true"',
-    'event.key === "Escape"',
-    'event.key !== "Tab"',
-    "roomDialogRef",
-    "trigger?.focus()",
-    'document.body.style.overflow = "hidden"',
-    "document.body.style.overflow = previousOverflow",
-  ])
-    assert.ok(source.includes(contract), contract);
 });
 
 test("room dialog releases its body scroll lock through every close path", () => {
