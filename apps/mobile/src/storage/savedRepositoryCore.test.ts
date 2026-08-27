@@ -71,3 +71,27 @@ test("remove failure restores saved state and rejects", async () => {
   const states: boolean[] = []; h.repository.subscribe(value => states.push(value.flights.has(flightSavedSignature(flight()))));
   await assert.rejects(h.repository.toggleFlight(flight("new-id")), /offline/); assert.equal(states.includes(false), true); assert.equal(h.repository.snapshot().flights.has(flightSavedSignature(flight())), true);
 });
+
+test("successful create never republishes stale cache during canonical refresh or a later focus refresh", async () => {
+  const h = harness();
+  await h.repository.refresh();
+  const states: boolean[] = [];
+  h.repository.subscribe(value => states.push(value.flights.has(flightSavedSignature(flight()))));
+  await h.repository.toggleFlight(flight());
+  const optimisticIndex = states.indexOf(true);
+  assert.notEqual(optimisticIndex, -1);
+  assert.equal(states.slice(optimisticIndex).every(saved => saved), true);
+  await h.repository.refresh();
+  assert.equal(h.repository.snapshot().flights.has(flightSavedSignature(flight("new-transient-id"))), true);
+});
+
+test("successful delete never republishes a stale saved cache during canonical refresh", async () => {
+  const h = harness([serverItem(flight())]);
+  await h.repository.refresh();
+  const states: boolean[] = [];
+  h.repository.subscribe(value => states.push(value.flights.has(flightSavedSignature(flight()))));
+  await h.repository.toggleFlight(flight("new-transient-id"));
+  const afterOptimisticRemoval = states.slice(states.indexOf(false));
+  assert.equal(afterOptimisticRemoval.every(saved => !saved), true);
+  assert.equal(h.repository.snapshot().flights.size, 0);
+});
