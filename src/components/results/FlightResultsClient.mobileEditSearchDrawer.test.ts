@@ -45,15 +45,47 @@ test("all mobile fields share label and aligned icon-value row anatomy", () => {
   assert.equal(mobileDrawer.match(/data-mobile-value-row/g)?.length, 4);
   assert.match(mobileDrawer, /grid-cols-\[22px_minmax\(0,1fr\)_20px\]/);
   assert.equal(
-    mobileDrawer.match(/<MapPin[\s\S]*?className=\{mobileValueIconClass\}/g)?.length,
+    mobileDrawer.match(/<MapPin[\s\S]*?className=\{mobileValueIconClass\}/g)
+      ?.length,
     2,
   );
-  assert.match(mobileDrawer, /<Calendar[\s\S]*?className=\{mobileValueIconClass\}/);
-  assert.match(mobileDrawer, /<UserRound[\s\S]*?className=\{mobileValueIconClass\}/);
+  assert.match(
+    mobileDrawer,
+    /<Calendar[\s\S]*?className=\{mobileValueIconClass\}/,
+  );
+  assert.match(
+    mobileDrawer,
+    /<UserRound[\s\S]*?className=\{mobileValueIconClass\}/,
+  );
   assert.match(
     mobileDrawer,
     /data-mobile-field="travelers"[\s\S]*?<ChevronDown className="h-4 w-4 justify-self-end/,
   );
+});
+
+test("route fields omit trailing chevrons while travelers retains its disclosure", () => {
+  const fieldButton = (field: string) => {
+    const marker = mobileDrawer.indexOf(`data-mobile-field="${field}"`);
+    const buttonStart = mobileDrawer.lastIndexOf("<button", marker);
+    const buttonEnd = mobileDrawer.indexOf("</button>", marker);
+    return mobileDrawer.slice(buttonStart, buttonEnd + "</button>".length);
+  };
+  const originField = fieldButton("origin");
+  const destinationField = fieldButton("destination");
+  const travelersField = fieldButton("travelers");
+
+  for (const routeField of [originField, destinationField]) {
+    assert.match(routeField, /aria-haspopup="dialog"/);
+    assert.match(routeField, /<MapPin/);
+    assert.doesNotMatch(routeField, /<ChevronDown/);
+  }
+  assert.match(originField, /setActiveMobileAirportPicker\("origin"\)/);
+  assert.match(
+    destinationField,
+    /setActiveMobileAirportPicker\("destination"\)/,
+  );
+  assert.match(travelersField, /<UserRound/);
+  assert.match(travelersField, /<ChevronDown/);
 });
 
 test("route swap reuses the existing swap handler in a centered touch target", () => {
