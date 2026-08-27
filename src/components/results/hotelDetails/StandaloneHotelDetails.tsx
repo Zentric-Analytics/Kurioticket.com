@@ -377,7 +377,6 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
 
             <HotelPriceComparisonSection
               stayContext={props.staySummary ? `${props.staySummary.dateText} · ${props.staySummary.occupancyText}` : undefined}
-              totalPrice={props.totalDisplayPrice}
               nightlyPrice={props.nightlyDisplayPrice}
               perNightText={props.perNightText}
               viewDealText="View deal"
