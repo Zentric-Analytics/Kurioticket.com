@@ -23,6 +23,7 @@ const supportedIconKeys = new Set<HotelAmenityIconKey>([
   "courtyard",
   "lounge",
   "restaurant",
+  "bar",
   "airConditioning",
   "generic",
 ]);
@@ -143,6 +144,8 @@ test("Waterfront lounge maps to lounge", () =>
     buildHotelAmenityPresentation(["Waterfront lounge"])[0]?.iconKey,
     "lounge",
   ));
+test("Bar maps to the dedicated drinks icon", () =>
+  assert.equal(buildHotelAmenityPresentation(["Bar"])[0]?.iconKey, "bar"));
 test("Unknown amenity uses generic", () =>
   assert.equal(
     buildHotelAmenityPresentation(["Pet grooming"])[0]?.iconKey,
