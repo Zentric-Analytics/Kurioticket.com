@@ -31,7 +31,7 @@ test("only the four Done plus Cancel sheets use the close header and retain thei
   const time = slice(carPickers, "export function CarTimeRangeSheet", "function TimeColumn");
   const age = slice(cars, "function AgeSheet", "const styles");
   assert.match(dates, /<PickerSheetHeader title=\{title\} onClose=\{onCancel\}\/?>/);
-  assert.match(traveler, /<PickerSheetHeader title="Travelers & Cabin" onClose=\{onCancel\}\/?>/);
+  assert.match(traveler, /accessibilityLabel="Close Travelers & Cabin"[\s\S]*?onPress=\{onCancel\}/);
   assert.match(time, /<PickerSheetHeader title="Pick-up \/ Return time" onClose=\{onCancel\}\/?>/);
   assert.match(age, /<PickerSheetHeader title="Driver age" onClose=\{onClose\}\/?>/);
   for (const target of [dates, traveler, time, age]) {

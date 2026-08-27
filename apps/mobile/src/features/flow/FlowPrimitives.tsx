@@ -306,11 +306,13 @@ export function PrimaryButton({
   onPress,
   icon = "search",
   disabled = false,
+  size = "default",
 }: {
   label: string;
   onPress: () => void;
   icon?: FlowIconName | null;
   disabled?: boolean;
+  size?: "default" | "compact";
 }) {
   const ft = useFlowTheme();
   return (
@@ -320,10 +322,10 @@ export function PrimaryButton({
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [ft.styles.primary, disabled && { opacity: 0.6 }, pressed && ft.styles.pressed]}
+      style={({ pressed }) => [ft.styles.primary, size === "compact" && styles.compactPrimary, disabled && { opacity: 0.6 }, pressed && ft.styles.pressed]}
     >
       {icon ? <FlowIcon name={icon} color="white" /> : null}
-      <Text style={ft.styles.primaryText}>{label}</Text>
+      <Text style={[ft.styles.primaryText, size === "compact" && styles.compactPrimaryText]}>{label}</Text>
     </Pressable>
   );
 }
@@ -344,6 +346,8 @@ export function UnavailableNotice({ text }: { text: string }) {
 }
 
 const styles = StyleSheet.create({
+  compactPrimary: { minHeight: 46 },
+  compactPrimaryText: { fontSize: 14 },
   pickerSheetHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   pickerSheetTitle: { flex: 1, minWidth: 0 },
   centerTitle: {
