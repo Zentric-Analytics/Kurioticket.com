@@ -89,6 +89,54 @@ test("flight details themes every booking surface without changing its route or 
   assert.match(searchUi, /<FlowIcon name="(?:heart|share)" color=\{theme\.icon\}/);
 });
 
+test("the active Flight results journey keeps its semantic surface and text hierarchy", () => {
+  const results = read("src/features/search/ApprovedResultsScreen.tsx");
+  const searchUi = read("src/features/search/SearchUi.tsx");
+  const states = read("src/features/search/FlightResultsState.tsx");
+
+  assert.match(results, /s0\.safe, flightResults && \{ backgroundColor: theme\.background \}/);
+  assert.match(results, /s0\.flightPersistentSearchControls, \{ backgroundColor: theme\.background \}/);
+  assert.match(results, /s0\.card,[\s\S]*backgroundColor: theme\.surface/);
+  assert.match(results, /s0\.airlineName, \{ color: theme\.textPrimary \}/);
+  assert.match(results, /s0\.operatingCarrierText, \{ color: theme\.textSecondary \}/);
+  assert.match(results, /s0\.time, \{ color: theme\.textPrimary \}/);
+  assert.match(results, /s0\.metadataText, \{ color: theme\.textSecondary \}/);
+  assert.match(results, /backgroundColor: theme\.priceAlertSurface/);
+  assert.match(read("src/theme/AppTheme.tsx"), /priceAlertBorder:/);
+  assert.match(read("src/theme/AppTheme.tsx"), /priceAlertAccent:/);
+  assert.match(results, /s0\.sortSheet,[\s\S]*backgroundColor: theme\.surface/);
+  assert.match(results, /s0\.sortOptionLabel, \{ color: theme\.textPrimary \}/);
+  assert.match(results, /s0\.sortOptionDescription, \{ color: theme\.textSecondary \}/);
+  assert.match(results, /selected \? ui\.blue : theme\.border/);
+  assert.match(searchUi, /backgroundColor: flightResults \? theme\.background : theme\.surface/);
+  assert.match(searchUi, /backgroundColor: theme\.surface/);
+  assert.match(searchUi, /theme\.dark \? "#142B55" : "#F0F5FF"/);
+  assert.match(searchUi, /nearbyDateInsightText, \{ color: theme\.textSecondary \}/);
+  assert.match(states, /backgroundColor: theme\.surface/);
+  assert.match(states, /color: theme\.textPrimary/);
+  assert.match(states, /color: theme\.textSecondary/);
+});
+
+test("Flight filters, slider, and inline edit sheet have no implicit light text or surface", () => {
+  const filter = read("src/features/search/FlightFilterSheet.tsx");
+  const slider = read("src/features/search/FlightRangeSlider.tsx");
+  const edit = read("src/features/search/FlightEditSearchModal.tsx");
+
+  assert.match(filter, /sectionTitle,\{color:theme\.textPrimary\}/);
+  assert.match(filter, /s\.control,\{color:theme\.textPrimary\}/);
+  assert.match(filter, /s\.subhead,\{color:theme\.textPrimary\}/);
+  assert.match(filter, /s\.rowText,\{color:theme\.textPrimary\}/);
+  assert.match(filter, /s\.rowInsight,\{color:theme\.textSecondary\}/);
+  assert.match(filter, /borderTopColor:theme\.border,backgroundColor:theme\.surface/);
+  assert.match(filter, /selected\?ui\.blue:theme\.border/);
+  assert.match(slider, /backgroundColor: theme\.border/);
+  assert.match(slider, /borderColor: theme\.surface/);
+  assert.match(edit, /useFlowTheme/);
+  assert.match(edit, /backgroundColor: ft\.colors\.surface/);
+  assert.match(edit, /borderBottomColor: ft\.colors\.border/);
+  assert.match(edit, /color=\{ft\.colors\.icon\}/);
+});
+
 test("product search panels and picker sheets have theme-aware inputs, placeholders, and modals", () => {
   for (const file of ["FlightSearchPanel.tsx", "HotelSearchPanel.tsx", "CarSearchPanel.tsx"]) {
     const source = read(`src/features/flow/${file}`);
