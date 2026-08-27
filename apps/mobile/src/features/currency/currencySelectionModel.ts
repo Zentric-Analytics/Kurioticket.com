@@ -14,21 +14,23 @@ export function getCurrencyPresentation(code: string): CurrencyPresentation | un
 }
 
 export function getCurrencyPresentations(codes: string[]): CurrencyPresentation[] {
-  return codes.flatMap((code) => {
-    const currency = getCurrencyPresentation(code);
-    return currency ? [currency] : [];
-  });
+  return codes
+    .flatMap((code) => {
+      const currency = getCurrencyPresentation(code);
+      return currency ? [currency] : [];
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "base" }));
 }
 
 export function filterCurrencyPresentations(
   currencies: CurrencyPresentation[],
   query: string,
 ): CurrencyPresentation[] {
-  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const normalizedQuery = query.trim().toLowerCase();
   if (!normalizedQuery) return currencies;
 
   return currencies.filter(({ code, name, symbol }) =>
-    [code, name, symbol].some((value) => value.toLocaleLowerCase().includes(normalizedQuery)),
+    [code, name, symbol].some((value) => value.toLowerCase().includes(normalizedQuery)),
   );
 }
 
