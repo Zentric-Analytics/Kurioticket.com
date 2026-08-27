@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 type Props = {
   open: boolean;
   mode: "pickup" | "return";
+  inputId: string;
   value: string;
   launcherRef?: RefObject<HTMLElement | null>;
   onClose: () => void;
@@ -78,6 +79,7 @@ function LocationRow({
 export function MobileCarLocationPicker({
   open,
   mode,
+  inputId,
   value,
   launcherRef,
   onClose,
@@ -103,7 +105,9 @@ export function MobileCarLocationPicker({
       setSearchCompleted(false);
       setLoading(true);
       setError(false);
-      inputRef.current?.focus({ preventScroll: true });
+      if (inputRef.current && document.activeElement !== inputRef.current) {
+        inputRef.current.focus({ preventScroll: true });
+      }
       void searchCarLocationSuggestions("", { limit: 8 })
         .then((items) => {
           if (requestId !== searchRequestRef.current) return;
@@ -223,6 +227,7 @@ export function MobileCarLocationPicker({
           />
           <input
             ref={inputRef}
+            id={inputId}
             value={query}
             onChange={(event) => {
               searchRequestRef.current += 1;

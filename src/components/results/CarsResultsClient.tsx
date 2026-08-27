@@ -61,6 +61,7 @@ import { calculateCompactFilterMaxHeight } from "@/lib/hotels/desktopCompactFilt
 import { lockDesktopPageScroll } from "@/lib/search/desktopPageScrollLock";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
 import { MobileCarLocationPicker } from "@/components/search/MobileCarLocationPicker";
+import { openMobilePickerWithKeyboard } from "@/components/search/mobilePickerKeyboardFocus";
 import {
   CarsDriverAgePickerContent,
   CarsRentalDatePickerContent,
@@ -1220,7 +1221,7 @@ export function CarsResultsClient({
                 }
                 value={pickupLocation}
                 placeholder={t("carsSearch.pickupLocationPlaceholder")}
-                onClick={() => setMobilePicker("pickupLocation")}
+                onClick={() => openMobilePickerWithKeyboard(() => setMobilePicker("pickupLocation"), "cars-results-pickup-mobile-input")}
                 className="lg:rounded-s-xl"
               />
             ) : (
@@ -1269,7 +1270,7 @@ export function CarsResultsClient({
                   }
                   value={dropoffLocation}
                   placeholder={t("carsSearch.returnLocationPlaceholder")}
-                  onClick={() => setMobilePicker("returnLocation")}
+                  onClick={() => openMobilePickerWithKeyboard(() => setMobilePicker("returnLocation"), "cars-results-return-mobile-input")}
                   secondaryAction={{
                     label: t("carsResults.sameAsPickup"),
                     onClick: () => {
@@ -1522,6 +1523,7 @@ export function CarsResultsClient({
       <MobileCarLocationPicker
         open={mobileSearchOpen && mobilePicker === "pickupLocation"}
         mode="pickup"
+        inputId="cars-results-pickup-mobile-input"
         value={pickupLocation}
         launcherRef={pickupLocationLauncherRef}
         onCommit={setPickupLocation}
@@ -1531,6 +1533,7 @@ export function CarsResultsClient({
       <MobileCarLocationPicker
         open={mobileSearchOpen && mobilePicker === "returnLocation"}
         mode="return"
+        inputId="cars-results-return-mobile-input"
         value={dropoffLocation}
         launcherRef={returnLocationLauncherRef}
         onCommit={setDropoffLocation}
