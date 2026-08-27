@@ -74,7 +74,7 @@ test("counter buttons keep compact visuals with an expanded touch target", () =>
 
 test("sheet uses theme surface, safe area, and separate backdrop layers", () => {
   assert.match(source, /backgroundColor: ft\.colors\.surface/);
-  assert.match(source, /<SafeAreaView edges=\{\["bottom"\]\}/);
+  assert.match(source, /<View style=\{styles\.sheetPosition\} pointerEvents="box-none">/);
   assert.match(source, /StyleSheet\.absoluteFill/);
   assert.doesNotMatch(source, /backgroundColor:\s*["']white["']/);
 });
