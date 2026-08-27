@@ -300,7 +300,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                     ) : null}
                     {canonicalAddress ? (
                       <div
-                        className="grid min-w-0 grid-cols-[1rem_minmax(0,1fr)] items-start gap-x-1.5 text-xs font-semibold leading-5 text-slate-700"
+                        className="grid w-[calc(100%+6.25rem)] min-w-0 max-w-[calc(100vw-2rem)] grid-cols-[1rem_minmax(0,1fr)] items-start gap-x-1.5 text-xs font-semibold leading-5 text-slate-700"
                         data-mobile-hotel-address-row
                       >
                         <MapPin
@@ -309,7 +309,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                           data-mobile-hotel-address-icon
                         />
                         <p
-                          className="min-w-0 break-words"
+                          className="min-w-0"
                           title={canonicalAddress}
                         >
                           {canonicalAddress}

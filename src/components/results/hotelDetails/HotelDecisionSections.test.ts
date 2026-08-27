@@ -42,6 +42,7 @@ test("comparison presents Kurioticket as a normalized provider without developme
   assert.match(compare, /perNightText\.replace/);
   assert.match(compare, /data-nightly-amount/);
   assert.match(compare, /data-nightly-supporting-label/);
+  assert.match(compare, /className="flex flex-col items-end"/);
   assert.match(standalone, /viewDealText="View deal"/);
   assert.match(compare, /\{viewDealText\}/);
   assert.match(compare, /onViewRoomOptions\(event\.currentTarget\)/);
@@ -50,10 +51,10 @@ test("comparison presents Kurioticket as a normalized provider without developme
   assert.match(compare, /data-provider-brand/);
   assert.match(compare, /data-provider-price/);
   assert.doesNotMatch(compare, /role="separator"|data-provider-offer-divider|border-t/);
-  assert.match(compare, /data-provider-lower-row/);
+  assert.match(compare, /data-provider-price-action/);
   assert.match(compare, /data-provider-amenities/);
   assert.match(compare, /data-provider-action/);
-  assert.ok(compare.indexOf("data-provider-amenities") < compare.indexOf("data-provider-action"));
+  assert.ok(compare.indexOf("data-provider-price") < compare.indexOf("data-provider-action"));
   assert.match(compare, /<HotelAmenityList/);
   assert.match(compare, /items=\{offer\.amenities \?\? \[\]\}/);
   assert.equal(compare.match(/\{stayContext\}/g)?.length, 1);
@@ -61,6 +62,15 @@ test("comparison presents Kurioticket as a normalized provider without developme
   assert.doesNotMatch(compare, /stayFacts|nightText|Estimated stay price|Estimated for your selected stay|Planning estimate|Additional booking-site prices|Live booking-site rates are not connected yet|Comparable provider offers will appear here when available/);
   assert.doesNotMatch(compare, /Booking\.com|Expedia|Hotels\.com|Agoda|Lowest price|Best deal|Compare 3 prices/);
   assert.doesNotMatch(compare, /Free Wi|Restaurant|Workspaces|Breakfast available|Fitness centre/);
+});
+
+test("mobile address uses the available header width and wraps only when needed", () => {
+  const addressRow = standalone.slice(
+    standalone.indexOf('data-mobile-hotel-address-row') - 300,
+    standalone.indexOf('data-mobile-hotel-classification-stars'),
+  );
+  assert.match(addressRow, /max-w-\[calc\(100vw-2rem\)\]/);
+  assert.doesNotMatch(addressRow, /truncate|text-ellipsis|whitespace-nowrap|break-words/);
 });
 
 test("future offers share the concise provider price and action presentation", () => {

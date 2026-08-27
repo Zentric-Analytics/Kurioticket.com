@@ -19,7 +19,7 @@ type ProviderOfferPresentation = {
 
 function ProviderOffer({ offer }: { offer: ProviderOfferPresentation }) {
   return (
-    <article className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(8.5rem,auto)] gap-x-3 gap-y-3 rounded-xl border border-slate-200 bg-white px-3 py-4 sm:gap-x-6 sm:px-4" data-provider-offer>
+    <article className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(7.5rem,auto)] gap-x-3 gap-y-4 rounded-xl border border-slate-200 bg-white px-3 py-4 sm:gap-x-6 sm:px-4" data-provider-offer>
       <div className="min-w-0 self-center" data-provider-brand>
           {offer.providerLogoUrl ? (
             <Image
@@ -34,19 +34,24 @@ function ProviderOffer({ offer }: { offer: ProviderOfferPresentation }) {
           )}
       </div>
 
-      <div className="flex min-w-0 items-center justify-end text-right sm:min-w-44" data-provider-price>
-        <div>{offer.price}</div>
-        {offer.secondaryPrice ? <div>{offer.secondaryPrice}</div> : null}
-      </div>
-      <div className="col-span-2 flex min-w-0 items-end justify-between gap-3" data-provider-lower-row>
-        <div className="min-w-0 flex-1" data-provider-amenities>
-          <HotelAmenityList
-            items={offer.amenities ?? []}
-            t={() => ""}
-            className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5"
-          />
+      <div
+        className="row-span-2 flex min-w-0 flex-col items-end justify-center gap-3 text-right"
+        data-provider-price-action
+      >
+        <div className="flex min-w-0 flex-col items-end" data-provider-price>
+          <div>{offer.price}</div>
+          {offer.secondaryPrice ? <div>{offer.secondaryPrice}</div> : null}
         </div>
-        <div className="shrink-0" data-provider-action>{offer.action}</div>
+        <div className="shrink-0" data-provider-action>
+          {offer.action}
+        </div>
+      </div>
+      <div className="min-w-0 self-end" data-provider-amenities>
+        <HotelAmenityList
+          items={offer.amenities ?? []}
+          t={() => ""}
+          className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5"
+        />
       </div>
     </article>
   );
@@ -78,11 +83,11 @@ export function HotelPriceComparisonSection({
       providerLogoUrl: "/brand/kurioticket-logo-primary-light-bg.svg",
       amenities: amenities.slice(0, 3),
       price: nightlyPrice ? (
-        <p className="flex flex-wrap items-baseline justify-end gap-x-1.5 whitespace-nowrap" title={nightlyPrice.title} aria-label={nightlyPrice.ariaLabel}>
+        <p className="flex flex-col items-end" title={nightlyPrice.title} aria-label={nightlyPrice.ariaLabel}>
           <strong className="text-xl font-extrabold tracking-tight text-slate-950" data-nightly-amount>
             {nightlyPrice.formatted}
           </strong>
-          <span className="text-xs font-medium text-slate-600" data-nightly-supporting-label>
+          <span className="mt-0.5 block text-xs font-medium leading-4 text-slate-600" data-nightly-supporting-label>
             {perNightText.replace("{{price}}", "").trim()}
           </span>
         </p>

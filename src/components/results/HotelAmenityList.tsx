@@ -17,6 +17,7 @@ import {
   VolumeX,
   Waves,
   Wifi,
+  Wine,
   type LucideIcon,
 } from "lucide-react";
 import type {
@@ -41,6 +42,7 @@ const hotelAmenityIcons: Record<HotelAmenityIconKey, LucideIcon> = {
   courtyard: Trees,
   lounge: Armchair,
   restaurant: UtensilsCrossed,
+  bar: Wine,
   airConditioning: AirVent,
   generic: CircleDot,
 };

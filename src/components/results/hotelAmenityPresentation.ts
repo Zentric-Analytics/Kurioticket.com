@@ -15,6 +15,7 @@ export type HotelAmenityIconKey =
   | "courtyard"
   | "lounge"
   | "restaurant"
+  | "bar"
   | "airConditioning"
   | "generic";
 
@@ -42,15 +43,16 @@ const iconPriority: Record<HotelAmenityIconKey, number> = {
   fitness: 7,
   workspace: 8,
   restaurant: 9,
-  airConditioning: 10,
-  frontDesk: 11,
-  lateCheckIn: 12,
-  quietRooms: 13,
-  kitchenette: 14,
-  bikeStorage: 15,
-  courtyard: 16,
-  lounge: 17,
-  generic: 18,
+  bar: 10,
+  airConditioning: 11,
+  frontDesk: 12,
+  lateCheckIn: 13,
+  quietRooms: 14,
+  kitchenette: 15,
+  bikeStorage: 16,
+  courtyard: 17,
+  lounge: 18,
+  generic: 19,
 };
 
 const knownAmenityIconKeys = new Set<HotelAmenityIconKey>([
@@ -70,6 +72,7 @@ const knownAmenityIconKeys = new Set<HotelAmenityIconKey>([
   "courtyard",
   "lounge",
   "restaurant",
+  "bar",
   "airConditioning",
 ]);
 
@@ -133,6 +136,7 @@ const exactIconKeys: Record<string, HotelAmenityIconKey> = {
   "onsite restaurant": "restaurant",
   "on-site restaurant": "restaurant",
   dining: "restaurant",
+  bar: "bar",
   "air conditioning": "airConditioning",
   "air-conditioned": "airConditioning",
   "climate control": "airConditioning",
