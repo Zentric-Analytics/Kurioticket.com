@@ -26,3 +26,30 @@ test("affected picker Modals do not translate their transparent surface", () => 
     assert.match(picker, /motion\.sheetStyle/, file);
   }
 });
+
+test("interaction lifetime follows external activity rather than retained rendering", () => {
+  assert.match(source, /interactive: visible/);
+  assert.match(source, /pointerEvents: visible \? "auto" : "none"/);
+  assert.doesNotMatch(source, /pointerEvents: rendered/);
+});
+
+test("every retained-exit picker disables its highest content root during exit", () => {
+  const flowPickers = [
+    "FlightSearchPanel.tsx",
+    "HotelSearchPanel.tsx",
+    "CarSearchPanel.tsx",
+    "CarSearchPickers.tsx",
+    "PackageSearchForm.tsx",
+    "LocalCalendarModal.tsx",
+    "DateRangeSheet.tsx",
+  ];
+  for (const file of flowPickers) {
+    const picker = readFileSync(`src/features/flow/${file}`, "utf8");
+    const motions = picker.match(/useSearchPickerMotion\(/g) ?? [];
+    const gates = picker.match(/pointerEvents=\{motion\.pointerEvents\}/g) ?? [];
+    assert.equal(gates.length, motions.length, `${file} must gate every motion-retained picker root`);
+  }
+
+  const editSearch = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
+  assert.match(editSearch, /pointerEvents=\{motion\.pointerEvents\}/);
+});

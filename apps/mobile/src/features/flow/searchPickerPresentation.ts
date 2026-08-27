@@ -42,6 +42,8 @@ export function useSearchPickerMotion(visible: boolean) {
 
   return {
     rendered,
+    interactive: visible,
+    pointerEvents: visible ? "auto" : "none",
     backdropStyle: { opacity: backdropOpacity },
     sheetStyle: { transform: [{ translateY: sheetTranslateY }] },
   } as const;

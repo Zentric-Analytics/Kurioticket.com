@@ -115,7 +115,7 @@ export function HotelDestinationSheet({ visible, value, onDone, onCancel }: { vi
 
   const clear = () => { setQuery(""); setSuggestions([]); setError(false); inputRef.current?.focus(); };
   return <Modal transparent animationType="none" visible={motion.rendered} onRequestClose={onCancel}>
-      <KeyboardAvoidingView style={styles.keyboardViewport} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <KeyboardAvoidingView pointerEvents={motion.pointerEvents} style={styles.keyboardViewport} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <SafeAreaView edges={["top", "bottom"]} style={styles.destinationOverlay}><Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill,styles.scrim,motion.backdropStyle]}/>
           <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} accessibilityRole="button" accessibilityLabel="Close hotel destination picker"/>
           <Animated.View accessibilityViewIsModal style={[styles.destinationSheet,{backgroundColor:ft.colors.surface},motion.sheetStyle]}>
@@ -137,7 +137,7 @@ function HotelGuestsRoomsSheet({ visible, adults, children, rooms, petFriendly, 
   useEffect(() => { if (visible) setDraft({ adults, children, rooms, petFriendly }); }, [visible, adults, children, rooms, petFriendly]);
   const setCount = (key: "adults" | "children" | "rooms", value: number) => setDraft((current) => ({ ...current, [key]: value }));
   return <Modal visible={motion.rendered} transparent animationType="none" onRequestClose={onCancel}>
-    <View style={styles.modalRoot}><Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill,styles.scrim,motion.backdropStyle]}/>
+    <View pointerEvents={motion.pointerEvents} style={styles.modalRoot}><Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill,styles.scrim,motion.backdropStyle]}/>
       <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Close Guests & Rooms picker" onPress={onCancel}/>
       <SafeAreaView edges={["bottom"]} style={styles.sheetPosition} pointerEvents="box-none">
         <Animated.View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: ft.colors.surface },motion.sheetStyle]}>
