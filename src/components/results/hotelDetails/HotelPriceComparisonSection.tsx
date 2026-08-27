@@ -1,7 +1,6 @@
 import Image from "next/image";
 import type { MouseEvent, ReactNode } from "react";
 
-import { HotelAmenityList } from "@/components/results/HotelAmenityList";
 import type { HotelAmenityPresentationItem } from "@/components/results/hotelAmenityPresentation";
 import type { HotelComparisonOffer } from "./hotelDetailsPresentation";
 
@@ -19,9 +18,9 @@ type ProviderOfferPresentation = {
 
 function ProviderOffer({ offer }: { offer: ProviderOfferPresentation }) {
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-4 sm:px-5 sm:py-4" data-provider-offer>
-      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(8.75rem,auto)] items-center gap-3 sm:gap-6">
-        <div className="min-w-0">
+    <article className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 sm:px-5 sm:py-4" data-provider-offer>
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(8.75rem,auto)] items-center gap-3 sm:gap-6" data-provider-offer-upper>
+        <div className="min-w-0 self-start sm:self-center">
           {offer.providerLogoUrl ? (
             <Image
               src={offer.providerLogoUrl}
@@ -33,20 +32,23 @@ function ProviderOffer({ offer }: { offer: ProviderOfferPresentation }) {
           ) : (
             <strong className="block text-base font-bold text-slate-950">{offer.providerName}</strong>
           )}
-          {offer.amenities?.length ? (
-            <HotelAmenityList
-              items={offer.amenities}
-              t={() => ""}
-              className="mt-2.5 grid grid-cols-1 gap-y-1"
-            />
-          ) : null}
         </div>
 
         <div className="min-w-0 text-right sm:min-w-44">
           <div>{offer.totalPrice}</div>
           {offer.nightlyPrice ? <div className="mt-0.5">{offer.nightlyPrice}</div> : null}
-          <div className="mt-2.5">{offer.action}</div>
         </div>
+      </div>
+
+      <div className="my-3 border-t border-slate-200" role="separator" aria-orientation="horizontal" data-provider-offer-divider />
+
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:gap-5" data-provider-offer-lower>
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium leading-4 text-slate-600" data-provider-amenities>
+          {offer.amenities?.map((amenity) => (
+            <span key={amenity.key}>{amenity.label}</span>
+          ))}
+        </div>
+        <div className="shrink-0">{offer.action}</div>
       </div>
     </article>
   );
@@ -57,7 +59,7 @@ export function HotelPriceComparisonSection({
   totalPrice,
   nightlyPrice,
   perNightText,
-  viewRoomRatesText,
+  viewDealText,
   roomOptionsAvailable,
   onViewRoomOptions,
   amenities = [],
@@ -67,7 +69,7 @@ export function HotelPriceComparisonSection({
   totalPrice: Price | null;
   nightlyPrice: Price | null;
   perNightText: string;
-  viewRoomRatesText: string;
+  viewDealText: string;
   roomOptionsAvailable: boolean;
   onViewRoomOptions: (trigger: HTMLButtonElement) => void;
   amenities?: HotelAmenityPresentationItem[];
@@ -98,7 +100,7 @@ export function HotelPriceComparisonSection({
           onClick={(event: MouseEvent<HTMLButtonElement>) => onViewRoomOptions(event.currentTarget)}
           className="focus-ring inline-flex min-h-11 w-auto items-center justify-center whitespace-nowrap rounded-lg bg-blue px-3 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300 sm:px-3.5"
         >
-          {viewRoomRatesText}
+          {viewDealText}
         </button>
       ),
     },
@@ -117,7 +119,7 @@ export function HotelPriceComparisonSection({
       <h2 id="hotel-compare-heading" className="text-xl font-extrabold tracking-tight text-slate-950">Compare prices</h2>
       {stayContext ? <p className="mt-1 text-sm font-medium text-slate-600">{stayContext}</p> : null}
 
-      <div className="mt-5 space-y-3" data-comparison-offers>
+      <div className="-mx-1 mt-5 space-y-3 sm:mx-0" data-comparison-offers>
         {providerOffers.map((offer) => <ProviderOffer key={offer.id} offer={offer} />)}
       </div>
     </section>
