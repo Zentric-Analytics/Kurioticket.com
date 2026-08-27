@@ -27,7 +27,7 @@ test("From and To use the shared airport sheet and its close path", () => {
   assert.match(airportSheet, /kind\?: "from" \| "to"/);
 });
 
-test("Cancel, airport choices, search, and list interactions remain inside the sheet", () => {
+test("close header, Done, airport choices, search, and list interactions remain inside the sheet", () => {
   const sheetStart = airportSheet.indexOf("<Animated.View accessibilityViewIsModal");
   const sheetContent = airportSheet.slice(sheetStart);
 
@@ -35,7 +35,9 @@ test("Cancel, airport choices, search, and list interactions remain inside the s
   assert.match(sheetContent, /accessibilityLabel="Clear airport search"/);
   assert.match(sheetContent, /<FlatList keyboardShouldPersistTaps="handled"/);
   assert.match(sheetContent, /if\(isMetro\)setExpanded\(airport\);else/);
-  assert.match(sheetContent, /<Cancel onPress=\{onClose\}/);
+  assert.match(sheetContent, /<PickerSheetHeader[^>]+onClose=\{onClose\}/);
+  assert.match(sheetContent, /<PrimaryButton label="Done"/);
+  assert.doesNotMatch(sheetContent, />Cancel<|label="Cancel"/);
 });
 
 test("backdrop dismissal adds no device-specific sizing or positioning hacks", () => {

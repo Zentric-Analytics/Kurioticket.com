@@ -19,7 +19,7 @@ test("Car uses shared compact location fields for pick-up and conditional drop-o
 });
 
 test("location rows use shared flexible layout and retain their intended behavior", () => {
-  assert.match(hotel, /import \{ CompactSearchField, PrimaryButton, UnavailableNotice \} from "\.\/FlowPrimitives"/);
+  assert.match(hotel, /import \{ CompactSearchField, PickerSheetHeader, PrimaryButton, UnavailableNotice \} from "\.\/FlowPrimitives"/);
   assert.match(hotel, /accessibilityLabel="Search hotel destinations"[\s\S]*?returnKeyType="search"/);
   assert.doesNotMatch(car.slice(0, car.indexOf("export function CarLocationSheet")), /TextInput[^>]*accessibilityLabel="Pick-up location"/);
 });

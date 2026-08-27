@@ -86,7 +86,7 @@ test("package party draft copies committed state when the sheet opens", () => {
 
 
 test("Packages shares the compact search field presentation", () => {
-  assert.match(form, /import \{ CompactSearchField, PrimaryButton \} from "\.\/FlowPrimitives"/);
+  assert.match(form, /import \{ CompactSearchField, PickerSheetHeader, PrimaryButton \} from "\.\/FlowPrimitives"/);
   assert.equal((form.match(/<CompactSearchField /g) ?? []).length, 4);
   assert.doesNotMatch(form, /function CompactField/);
   assert.match(primitives, /export function CompactSearchField/);

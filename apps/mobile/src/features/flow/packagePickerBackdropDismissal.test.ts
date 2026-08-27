@@ -17,6 +17,12 @@ test("package airport backdrop is separate and keyboard behavior is preserved", 
   assert.doesNotMatch(airport.slice(airport.indexOf("<KeyboardAvoidingView"), sheet), /<Pressable[^>]*>\s*<Animated\.View accessibilityViewIsModal/);
 });
 
+test("package airport uses retained title close header and Done as its only bottom action", () => {
+  assert.match(airport, /<PickerSheetHeader title=\{context\.title\} onClose=\{onClose\}[^>]+closeLabel=/);
+  assert.match(airport, /<PrimaryButton label="Done"[^>]+disabled=\{!draft\}/);
+  assert.doesNotMatch(airport, />Cancel<|label="Cancel"/);
+});
+
 test("package party backdrop closes drafts and Done alone commits them", () => {
   const backdrop = party.indexOf('accessibilityLabel="Close Travelers & Rooms picker"');
   const sheet = party.indexOf("<Animated.View accessibilityViewIsModal");

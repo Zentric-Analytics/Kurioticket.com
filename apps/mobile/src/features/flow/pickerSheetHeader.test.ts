@@ -8,6 +8,8 @@ const dates = readFileSync("src/features/flow/DateRangeSheet.tsx", "utf8");
 const flights = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
 const carPickers = readFileSync("src/features/flow/CarSearchPickers.tsx", "utf8");
 const cars = readFileSync("src/features/flow/CarSearchPanel.tsx", "utf8");
+const hotels = readFileSync("src/features/flow/HotelSearchPanel.tsx", "utf8");
+const packages = readFileSync("src/features/flow/PackageSearchForm.tsx", "utf8");
 
 const slice = (source: string, start: string, end: string) => source.slice(source.indexOf(start), source.indexOf(end, source.indexOf(start)));
 
@@ -26,18 +28,18 @@ test("shared picker header is accessible, flexible, themed, and uses the establi
   assert.doesNotMatch(header, /<Text>[xX×]<\/Text>/);
 });
 
-test("only the four Done plus Cancel sheets use the close header and retain their cancellation callbacks", () => {
-  const traveler = slice(flights, "function TravelerCabinSheet", "function Counter");
-  const time = slice(carPickers, "export function CarTimeRangeSheet", "function TimeColumn");
-  const age = slice(cars, "function AgeSheet", "const styles");
-  assert.match(dates, /<PickerSheetHeader title=\{title\} onClose=\{onCancel\}\/?>/);
-  assert.match(traveler, /accessibilityLabel="Close Travelers & Cabin"[\s\S]*?onPress=\{onCancel\}/);
-  assert.match(time, /<PickerSheetHeader title="Pick-up \/ Return time" onClose=\{onCancel\}\/?>/);
-  assert.match(age, /<PickerSheetHeader title="Driver age" onClose=\{onClose\}\/?>/);
-  for (const target of [dates, traveler, time, age]) {
+test("every staged search picker with Done uses a close header and has no bottom Cancel", () => {
+  const airport = slice(flights, "function AirportSheet", "type TravelerCabinDraft");
+  const hotel = slice(hotels, "function HotelDestinationSheet", "type GuestsRoomsDraft");
+  const car = slice(cars, "export function CarLocationSheet", "function FieldError");
+  const packageAirport = slice(packages, "function AirportSheet", "const PACKAGE_TRAVELER_ROWS");
+  assert.match(airport, /<PickerSheetHeader[^>]+onClose=\{onClose\}[^>]+closeLabel=/);
+  assert.match(hotel, /<PickerSheetHeader title="Choose destination" onClose=\{onCancel\} closeLabel="Close hotel destination picker"\/>/);
+  assert.match(car, /<PickerSheetHeader[^>]+onClose=\{onClose\}[^>]+closeLabel=/);
+  assert.match(packageAirport, /<PickerSheetHeader title=\{context\.title\} onClose=\{onClose\}[^>]+closeLabel=/);
+  for (const target of [airport, hotel, car, packageAirport]) {
     assert.match(target, /PrimaryButton label="Done" icon=\{null\}/);
-    assert.doesNotMatch(target, />Cancel<|label="Cancel"/);
+    assert.doesNotMatch(target, />Cancel<|label="Cancel"|accessibilityLabel="Cancel/);
   }
-  assert.match(flights, /function Cancel\(/);
-  assert.match(slice(flights, "function AirportSheet", "type TravelerCabinDraft"), /<Cancel onPress=\{onClose\}/);
+  assert.doesNotMatch(flights, /function Cancel\(/);
 });
