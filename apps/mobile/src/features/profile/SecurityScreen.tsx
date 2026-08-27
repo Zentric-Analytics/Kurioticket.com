@@ -20,7 +20,8 @@ import { travelApi, TravelApiError, type AccountDeletionRequest, type SecurityEv
 import { clearSession, readSession } from "../../storage/sessionStorage";
 import { useAppTheme } from "../../theme/AppTheme";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
-import { formatSecurityDate, securityCopy, securityEventLabel } from "./securityLocalization";
+import { localizedAccountActivityLabel } from "../../localization/accountActivityLabels";
+import { formatSecurityDate, securityCopy } from "./securityLocalization";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { signInHref } from "../auth/signInIntent";
@@ -131,7 +132,7 @@ export function SecurityScreen() {
   const requestDeletion = () => { const request=deletionRequest.current; Alert.alert(c.deletionConfirmTitle,c.deletionConfirmBody,[{text:c.cancel,style:"cancel"},{text:c.deleteAccount,style:"destructive",onPress:()=>void (async()=>{if(submitting)return;setSubmitting(true);setDeletionError("");try{const result=await travelApi.requestDeletion();if(request===deletionRequest.current)setDeletion(result.request);}catch(e){if(!await unauth(e)&&request===deletionRequest.current)setDeletionError(e instanceof TravelApiError?e.message:c.deletionError);}finally{setSubmitting(false);}})()}]); };
   const reactivate = async () => { if(submitting)return;const request=deletionRequest.current;setSubmitting(true);setDeletionError("");try{await travelApi.reactivateDeletion();await clearSession();setDeletion(null);closeDeletion();router.replace(signInHref("/security"));}catch(e){if(!await unauth(e)&&request===deletionRequest.current)setDeletionError(e instanceof TravelApiError?e.message:c.deletionError);}finally{setSubmitting(false);} };
   const date = (value: string) => formatSecurityDate(value, locale);
-  const eventLabel = (event: SecurityEvent) => securityEventLabel(event.type, locale);
+  const eventLabel = (event: SecurityEvent) => localizedAccountActivityLabel(event.type, locale, c.unknown);
   const field = (key: keyof typeof passwords, label: string) => <TextInput accessibilityLabel={label} secureTextEntry={!visible} value={passwords[key]} onChangeText={(value) => setPasswords((v) => ({ ...v, [key]: value }))} placeholder={label} placeholderTextColor={theme.muted} autoCapitalize="none" style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]} />;
 
   return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top"]}>
