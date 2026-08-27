@@ -353,6 +353,7 @@ export async function buildStandaloneFlightDetails({
       children: search.children,
       infants: search.infants,
       travelers: search.travelers,
+      cabinClass: search.cabinClass,
     },
   };
 }

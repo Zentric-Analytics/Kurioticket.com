@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
+import { FlightEditSearchDrawer, type FlightEditSearchValue } from "@/components/search/FlightEditSearchDrawer";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { canUseOfferAirlineLogo, compactFareTerms, resolveSegmentCarrierName } from "@/components/results/flightDetails/flightDetailsPresentation";
@@ -28,6 +29,7 @@ import type {
   FlightDetailsResponse,
 } from "@/lib/flights/flightDetailsContract";
 import { flightDetailsRouteLabel, flightDetailsTotalLabel } from "@/lib/flights/flightDetailsContract";
+import { appendFlightLegParams, projectSearchLegs } from "@/lib/flights/flightSearchJourney";
 import type { FlightLeg, FlightProviderCondition, FlightSegment } from "@/lib/types";
 
 type FareTab = "deals" | "details" | "conditions" | "extras";
@@ -40,6 +42,7 @@ const fareTabs: Array<{ id: FareTab; label: string }> = [
 
 export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resultsHref: string }) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const detailsQuery = searchParams.toString();
   const { locale } = useLocale();
   const { selectedOption } = useRegion();
@@ -51,6 +54,8 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const [selectedFareKey, setSelectedFareKey] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
   const [activeTab, setActiveTab] = useState<FareTab>("deals");
+  const [editSearchOpen, setEditSearchOpen] = useState(false);
+  const editSearchLauncherRef = useRef<HTMLButtonElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const fareButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -177,6 +182,15 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     tabRefs.current[next]?.focus();
   };
 
+  const submitEditedSearch = (value: FlightEditSearchValue) => {
+    const projected = projectSearchLegs(value.tripType, value.legs);
+    const params = new URLSearchParams({ tripType: value.tripType, origin: projected.origin, destination: projected.destination, departureDate: value.departureDate, adults: String(value.adults), children: String(value.children), infants: String(value.infants), travelers: String(value.adults + value.children + value.infants), cabinClass: value.cabinClass });
+    if (value.tripType === "round-trip" && value.returnDate) params.set("returnDate", value.returnDate);
+    if (value.tripType === "multi-city") appendFlightLegParams(params, value.legs);
+    setEditSearchOpen(false);
+    router.push(`/flights/results?${params.toString()}`);
+  };
+
   return (
     <main className="flex-1 bg-white pb-[calc(6.75rem+env(safe-area-inset-bottom))] pt-2 text-[#142033] sm:bg-[#F7F9FC] sm:pt-4 lg:pb-16 lg:pt-3">
       <div className="mx-auto w-full max-w-[1470px] px-0 sm:px-6 lg:px-[34px]">
@@ -190,14 +204,13 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
                 <h1 ref={headingRef} id="flight-details-heading" tabIndex={-1} className="text-[22px] font-bold leading-tight tracking-[-0.025em] text-slate-950 outline-none sm:text-[26px]">{route}</h1>
                 <p className="mt-1.5 text-[13px] font-medium text-slate-600">{tripLine}</p>
               </div>
-              <Link href={resultsHref} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#075EE8] bg-white px-3 text-xs font-semibold text-[#075EE8] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 sm:px-4 sm:text-sm">
-                <Pencil className="h-4 w-4" aria-hidden="true" /> Edit search
-              </Link>
+              <button ref={editSearchLauncherRef} type="button" onClick={() => setEditSearchOpen(true)} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#075EE8] bg-white px-3 text-xs font-semibold text-[#075EE8] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 sm:hidden"><Pencil className="h-4 w-4" aria-hidden="true" /> Edit search</button>
+              <Link href={resultsHref} className="hidden min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#075EE8] bg-white px-4 text-sm font-semibold text-[#075EE8] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 sm:inline-flex"><Pencil className="h-4 w-4" aria-hidden="true" /> Edit search</Link>
             </div>
             <div className="mt-5 space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} locale={locale} offerAirlineName={flight.airlineName} offerAirlineLogo={flight.airlineLogo} />)}</div>
 
             <h2 className="mb-3 mt-6 text-[18px] font-semibold leading-tight text-slate-950">Pick your fare</h2>
-            <div role="radiogroup" aria-label="Available fares" className={`min-w-0 ${fareChoices.length > 1 ? "flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 sm:grid sm:snap-none sm:overflow-visible sm:pb-0" : "grid gap-3"} ${fareChoices.length === 1 ? "max-w-[270px]" : fareChoices.length === 2 ? "sm:grid-cols-2 lg:max-w-[632px]" : fareChoices.length === 3 ? "sm:grid-cols-2 md:grid-cols-3 lg:max-w-[954px]" : "sm:grid-cols-2 xl:max-w-[1276px] xl:grid-cols-4"}`}>
+            <div role="radiogroup" aria-label="Available fares" className={`min-w-0 ${fareChoices.length > 1 ? "flex touch-pan-x snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-2 pr-6 [scroll-padding-inline:0_1.5rem] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:touch-auto sm:snap-none sm:overflow-visible sm:pr-0 sm:pb-0" : "grid gap-3"} ${fareChoices.length === 1 ? "max-w-[270px]" : fareChoices.length === 2 ? "sm:grid-cols-2 lg:max-w-[632px]" : fareChoices.length === 3 ? "sm:grid-cols-2 md:grid-cols-3 lg:max-w-[954px]" : "sm:grid-cols-2 xl:max-w-[1276px] xl:grid-cols-4"}`}>
               {fareChoices.map((fare, index) => {
                 const selected = fare.key === selectedFare?.key;
                 const price = formatDisplayPrice({ amount: fare.offer.price, sourceCurrency: fare.offer.currency, displayCurrency: selectedOption.currency, convertUsdEstimate: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback });
@@ -209,13 +222,14 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               })}
             </div>
 
-            <div className="mt-5 flex min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:overflow-visible" role="tablist" aria-label="Fare information">{fareTabs.map((tab, index) => <button key={tab.id} ref={(element) => { tabRefs.current[index] = element; }} id={`fare-tab-${tab.id}`} type="button" role="tab" aria-selected={activeTab === tab.id} aria-controls={`fare-panel-${tab.id}`} tabIndex={activeTab === tab.id ? 0 : -1} onClick={() => setActiveTab(tab.id)} onKeyDown={(event) => handleTabKeyDown(event, index)} className={`min-h-11 shrink-0 whitespace-nowrap border-b-2 px-4 text-center text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 sm:flex-1 sm:text-sm ${activeTab === tab.id ? "border-[#075EE8] text-[#075EE8]" : "border-transparent text-slate-700 hover:text-slate-950"}`}>{tab.label}</button>)}</div>
+            <div className="mt-5 flex min-w-0 overflow-x-auto flex-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:overflow-visible" role="tablist" aria-label="Fare information">{fareTabs.map((tab, index) => <button key={tab.id} ref={(element) => { tabRefs.current[index] = element; }} id={`fare-tab-${tab.id}`} type="button" role="tab" aria-selected={activeTab === tab.id} aria-controls={`fare-panel-${tab.id}`} tabIndex={activeTab === tab.id ? 0 : -1} onClick={() => setActiveTab(tab.id)} onKeyDown={(event) => handleTabKeyDown(event, index)} className={`min-h-11 shrink-0 whitespace-nowrap border-b-2 w-[30%] min-w-[105px] px-2 text-center text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 sm:flex-1 sm:text-sm ${activeTab === tab.id ? "border-[#075EE8] text-[#075EE8]" : "border-transparent text-slate-700 hover:text-slate-950"}`}>{tab.label}</button>)}</div>
             <FarePanel activeTab={activeTab} fare={selectedFare} offer={selectedOffer} locale={locale} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} redirecting={redirecting} onViewDeal={continueToOffer} />
             <MobileCheckoutDock travelerCount={travelers.count} price={providerPrice} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={() => continueToOffer(selectedOffer.id)} error={error || notice} />
           </section>
           <TripSidebar tripType={available.search.tripType} legs={legs} route={route} date={date} tripLine={tripLine} travelers={travelers.label} travelerCount={travelers.count} selectedFare={selectedFare?.label || selectedOffer.cabinClass || ""} fareTerms={selectedFare?.distinguishingTerms ?? []} price={providerPrice} locale={locale} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={() => continueToOffer(selectedOffer.id)} error={error || notice} />
         </div>
       </div>
+      <FlightEditSearchDrawer open={editSearchOpen} launcherRef={editSearchLauncherRef} initialValue={{ ...available.search, cabinClass: available.search.cabinClass }} onClose={() => setEditSearchOpen(false)} onSearch={submitEditedSearch} />
     </main>
   );
 }
@@ -281,13 +295,14 @@ function FarePanel({ activeTab, fare, offer, locale, selectedCurrency, currencyR
 
 function CompareDealsPanel({ fare, selectedCurrency, currencyRates, isFallbackRate, redirecting, onViewDeal }: { fare?: FlightDetailsFareChoice; selectedCurrency: string; currencyRates: ExchangeRates; isFallbackRate: boolean; redirecting: boolean; onViewDeal: (offerId: string) => void }) {
   const deals = fare?.deals ?? [];
+  if (deals.length === 0) return <section id="fare-panel-deals" role="tabpanel" aria-labelledby="fare-tab-deals" className="rounded-[10px] border border-[#E2E8F0] p-4 sm:p-5"><p className="text-sm text-slate-700">No live booking deals are available for this fare right now.</p></section>;
   return <section id="fare-panel-deals" role="tabpanel" aria-labelledby="fare-tab-deals" className="rounded-[10px] border border-[#E2E8F0] p-4 sm:p-5">
     <h2 className="text-sm font-semibold text-slate-950">Compare deals</h2>
     <p className="mt-1 text-sm text-slate-600">Compare available booking options for this selected fare.</p>
-    {deals.length ? <><p className="mt-3 text-xs font-medium text-slate-600">{deals.length} {deals.length === 1 ? "deal" : "deals"} available</p><ul className="mt-2 space-y-2">{deals.map((deal) => {
+    <><p className="mt-3 text-xs font-medium text-slate-600">{deals.length} {deals.length === 1 ? "deal" : "deals"} available</p><ul className="mt-2 space-y-2">{deals.map((deal) => {
       const price = formatDisplayPrice({ amount: deal.price, sourceCurrency: deal.currency, displayCurrency: selectedCurrency, convertUsdEstimate: true, rates: currencyRates, isFallbackRate });
       return <li key={deal.key} className="flex min-h-11 min-w-0 items-center justify-between gap-3 rounded-[10px] border border-[#E2E8F0] bg-white px-3 py-2.5 sm:px-4"><p className="min-w-0 break-words text-sm font-semibold text-slate-950">{deal.providerName}</p><div className="flex shrink-0 items-center gap-2"><p className="text-sm font-bold text-slate-950" aria-label={price.ariaLabel}>{price.formatted}</p><button type="button" disabled={redirecting} onClick={() => onViewDeal(deal.offerId)} className="inline-flex min-h-11 items-center justify-center rounded-lg px-2 text-sm font-semibold text-[#075EE8] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 disabled:opacity-50">View deal</button></div></li>;
-    })}</ul></> : <p className="mt-4 text-sm text-slate-600">No live booking deals are available for this fare right now.</p>}
+    })}</ul></>
   </section>;
 }
 
