@@ -9,25 +9,70 @@ const location = readFileSync(new URL("./HotelLocationSection.tsx", import.meta.
 const navigator = readFileSync(new URL("./HotelDetailsSectionNav.tsx", import.meta.url), "utf8");
 const reviews = readFileSync(new URL("./HotelReviewsSection.tsx", import.meta.url), "utf8");
 
-test("standalone decision sections follow the approved order before related hotels", () => {
-  const order = ["<HotelPriceComparisonSection", "<HotelAboutSection", "<HotelReviewsSection", "<HotelLocationSection", "<RelatedHotelsSection"];
-  let prior = -1;
-  for (const contract of order) {
-    const position = standalone.indexOf(contract);
-    assert.ok(position > prior, contract);
-    prior = position;
-  }
+test("standalone decision sections render as four isolated content modes", () => {
   assert.match(standalone, /<HotelDetailsSectionNav/);
+  assert.match(standalone, /useState<HotelDetailsTab>\("compare"\)/);
+  assert.match(standalone, /activeTab=\{activeTab\}/);
+  assert.match(standalone, /onTabChange=\{setActiveTab\}/);
+  assert.match(standalone, /role="tabpanel"/);
+  assert.match(standalone, /aria-labelledby=\{`hotel-\$\{activeTab\}-tab`\}/);
+  for (const tab of ["compare", "about", "location", "reviews"]) {
+    assert.match(standalone, new RegExp(`activeTab === "${tab}"`));
+  }
+  assert.equal(standalone.match(/<HotelPriceComparisonSection/g)?.length, 1);
+  assert.equal(standalone.match(/<HotelAboutSection/g)?.length, 1);
+  assert.equal(standalone.match(/<HotelLocationSection/g)?.length, 1);
+  assert.equal(standalone.match(/<HotelReviewsSection/g)?.length, 1);
+  assert.equal(standalone.match(/<RelatedHotelsSection/g)?.length, 1);
 });
 
-test("section navigator links to visible anchored sections and tracks natural scrolling", () => {
-  for (const label of ["Compare prices", "About", "Location"]) assert.ok(navigator.includes(label), label);
-  for (const id of ["hotel-compare-prices", "hotel-about", "hotel-reviews", "hotel-location"]) assert.ok((navigator + compare + about + reviews + location).includes(id), id);
-  assert.match(navigator, /IntersectionObserver/);
-  assert.match(navigator, /prefers-reduced-motion: reduce/);
-  assert.match(navigator, /aria-current/);
+test("section navigator is a controlled four-tab interface", () => {
+  for (const label of ["Compare prices", "About", "Location", "Reviews"]) {
+    assert.equal(navigator.match(new RegExp(`label: "${label}"`, "g"))?.length, 1, label);
+  }
+  assert.match(navigator, /role="tablist"/);
+  assert.match(navigator, /role="tab"/);
+  assert.match(navigator, /aria-selected=\{selected\}/);
+  assert.match(navigator, /aria-controls=\{`hotel-\$\{tab\.id\}-panel`\}/);
+  assert.match(navigator, /tabIndex=\{selected \? 0 : -1\}/);
+  assert.match(navigator, /ArrowLeft/);
+  assert.match(navigator, /ArrowRight/);
   assert.match(navigator, /sticky top-0/);
-  assert.doesNotMatch(navigator, /role="tab"|hidden tabpanel/);
+  assert.doesNotMatch(navigator, /IntersectionObserver|scrollIntoView|aria-current|hotel-reviews.*about|href=/);
+  assert.doesNotMatch(navigator, /overflow-x|whitespace-normal/);
+  assert.match(navigator, /min-h-11/);
+});
+
+test("each content component belongs only to its selected tab", () => {
+  const comparePanel = standalone.slice(
+    standalone.indexOf('{activeTab === "compare"'),
+    standalone.indexOf('{activeTab === "about"'),
+  );
+  assert.match(comparePanel, /<HotelPriceComparisonSection/);
+  assert.match(comparePanel, /<RelatedHotelsSection/);
+  assert.doesNotMatch(comparePanel, /<HotelAboutSection|<HotelLocationSection|<HotelReviewsSection/);
+
+  const aboutPanel = standalone.slice(
+    standalone.indexOf('{activeTab === "about"'),
+    standalone.indexOf('{activeTab === "reviews"'),
+  );
+  assert.match(aboutPanel, /<HotelAboutSection/);
+  assert.doesNotMatch(aboutPanel, /<HotelPriceComparisonSection|<RelatedHotelsSection|<HotelLocationSection|<HotelReviewsSection/);
+
+  const reviewsPanel = standalone.slice(
+    standalone.indexOf('{activeTab === "reviews"'),
+    standalone.indexOf('{activeTab === "location"'),
+  );
+  assert.match(reviewsPanel, /<HotelReviewsSection/);
+  assert.doesNotMatch(reviewsPanel, /<HotelPriceComparisonSection|<RelatedHotelsSection|<HotelAboutSection|<HotelLocationSection/);
+
+  const locationPanel = standalone.slice(
+    standalone.indexOf('{activeTab === "location"'),
+    standalone.indexOf("</div>\n          </article>"),
+  );
+  assert.match(locationPanel, /<HotelLocationSection/);
+  assert.match(locationPanel, /Verified location details are not available/);
+  assert.doesNotMatch(locationPanel, /<HotelPriceComparisonSection|<RelatedHotelsSection|<HotelAboutSection|<HotelReviewsSection/);
 });
 
 test("comparison presents Kurioticket as a normalized provider without development placeholders", () => {

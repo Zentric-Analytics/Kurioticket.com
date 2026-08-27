@@ -16,7 +16,10 @@ import { useEffect, useRef, useState } from "react";
 import type { HotelAmenityPresentationItem } from "@/components/results/hotelAmenityPresentation";
 import { HotelPriceComparisonSection } from "./HotelPriceComparisonSection";
 import { HotelAboutSection } from "./HotelAboutSection";
-import { HotelDetailsSectionNav } from "./HotelDetailsSectionNav";
+import {
+  HotelDetailsSectionNav,
+  type HotelDetailsTab,
+} from "./HotelDetailsSectionNav";
 import { HotelReviewsSection } from "./HotelReviewsSection";
 import type {
   PublicHotelPropertyDetails,
@@ -108,6 +111,7 @@ export type StandaloneHotelDetailsProps = {
 export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
   const [shareComplete, setShareComplete] = useState(false);
   const [roomsOpen, setRoomsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<HotelDetailsTab>("compare");
   const roomOptionsButtonRef = useRef<HTMLButtonElement>(null);
   const roomDialogRef = useRef<HTMLElement>(null);
   const description = props.propertyDetails?.description || "";
@@ -346,7 +350,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                     className="focus-ring inline-flex size-11 items-center justify-end gap-2 rounded-lg border-0 bg-transparent pe-1 text-sm font-semibold text-slate-900 hover:bg-slate-100 lg:h-10 lg:w-auto lg:justify-center lg:border lg:border-slate-200 lg:bg-white lg:px-3.5 lg:hover:bg-slate-50"
                   >
                     <Heart
-                      className="h-5 w-5"
+                      className="h-5 w-5 -translate-y-1 lg:translate-y-0"
                       fill={props.isSaved ? "currentColor" : "none"}
                       aria-hidden="true"
                     />
@@ -358,7 +362,10 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                     onClick={() => void sharePage()}
                     className="focus-ring inline-flex size-11 items-center justify-start gap-2 rounded-lg border-0 bg-transparent ps-1 text-sm font-semibold text-slate-900 hover:bg-slate-100 lg:h-10 lg:w-auto lg:justify-center lg:border lg:border-slate-200 lg:bg-white lg:px-3.5 lg:hover:bg-slate-50"
                   >
-                    <Share2 className="h-5 w-5" aria-hidden="true" />
+                    <Share2
+                      className="h-5 w-5 -translate-y-1 lg:translate-y-0"
+                      aria-hidden="true"
+                    />
                     <span className="hidden lg:inline">
                       {shareComplete ? props.labels.shared : props.labels.share}
                     </span>
@@ -373,36 +380,70 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
               layout="mosaic"
             />
 
-            <HotelDetailsSectionNav />
-
-            <HotelPriceComparisonSection
-              stayContext={props.staySummary ? `${props.staySummary.dateText} · ${props.staySummary.occupancyText}` : undefined}
-              nightlyPrice={props.nightlyDisplayPrice}
-              perNightText={props.perNightText}
-              viewDealText="View deal"
-              roomOptionsAvailable={props.roomChoices.length > 0}
-              onViewRoomOptions={openRoomOptions}
-              amenities={props.amenityItems}
-              offers={[]}
+            <HotelDetailsSectionNav
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
             />
 
-            <HotelAboutSection
-              description={description}
-              amenities={props.amenityItems}
-              starRating={props.starRating}
-              roomSummary={props.propertyDetails?.roomSummary}
-              bedSummary={props.propertyDetails?.bedSummary}
-              accessibility={props.propertyDetails?.accessibility}
-            />
+            <div
+              id={`hotel-${activeTab}-panel`}
+              role="tabpanel"
+              aria-labelledby={`hotel-${activeTab}-tab`}
+              tabIndex={0}
+              data-hotel-details-active-panel={activeTab}
+            >
+              {activeTab === "compare" ? (
+                <>
+                  <HotelPriceComparisonSection
+                    stayContext={props.staySummary ? `${props.staySummary.dateText} · ${props.staySummary.occupancyText}` : undefined}
+                    nightlyPrice={props.nightlyDisplayPrice}
+                    perNightText={props.perNightText}
+                    viewDealText="View deal"
+                    roomOptionsAvailable={props.roomChoices.length > 0}
+                    onViewRoomOptions={openRoomOptions}
+                    amenities={props.amenityItems}
+                    offers={[]}
+                  />
+                  <RelatedHotelsSection
+                    hotels={props.relatedHotels}
+                    city={props.propertyDetails?.city || ""}
+                    searchContext={props.relatedSearchContext}
+                    labels={{
+                      heading: props.labels.moreHotelsIn,
+                      viewHotel: props.labels.viewHotel,
+                      pricePerNight: props.labels.pricePerNight,
+                      estimatedStayTotal: props.labels.estimatedStayTotal,
+                      priceUnavailable: props.labels.priceUnavailable,
+                      imageUnavailable: props.labels.imageUnavailable,
+                      imageAlt: props.labels.imageAlt,
+                      nearLocation: props.labels.nearLocation,
+                      starHotelAria: props.labels.starHotelAria,
+                    }}
+                  />
+                </>
+              ) : null}
 
-            <HotelReviewsSection
-              score={props.reviewScore}
-              label={props.reviewLabel}
-              countText={props.reviewCountText}
-              source={props.reviewSource}
-            />
+              {activeTab === "about" ? (
+                <HotelAboutSection
+                  description={description}
+                  amenities={props.amenityItems}
+                  starRating={props.starRating}
+                  roomSummary={props.propertyDetails?.roomSummary}
+                  bedSummary={props.propertyDetails?.bedSummary}
+                  accessibility={props.propertyDetails?.accessibility}
+                />
+              ) : null}
 
-            {props.propertyDetails ? (
+              {activeTab === "reviews" ? (
+                <HotelReviewsSection
+                  score={props.reviewScore}
+                  label={props.reviewLabel}
+                  countText={props.reviewCountText}
+                  source={props.reviewSource}
+                />
+              ) : null}
+
+              {activeTab === "location" ? props.propertyDetails ? (
                 <HotelLocationSection
                   hotelName={props.hotelName}
                   propertyDetails={props.propertyDetails}
@@ -419,7 +460,10 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                   ].filter(Boolean)}
                   accessibilityDetails={props.propertyDetails.accessibility}
                 />
-            ) : <section id="hotel-location" className="scroll-mt-16 border-b border-slate-200 px-4 py-8 lg:px-0 lg:py-10" aria-labelledby="hotel-location-heading"><h2 id="hotel-location-heading" className="text-xl font-extrabold text-slate-950">Location &amp; stay fit</h2><p className="mt-3 text-sm text-slate-600">Verified location details are not available for this property yet.</p></section>}
+              ) : (
+                <section className="border-b border-slate-200 px-4 py-8 lg:px-0 lg:py-10" aria-labelledby="hotel-location-heading"><h2 id="hotel-location-heading" className="text-xl font-extrabold text-slate-950">Location &amp; stay fit</h2><p className="mt-3 text-sm text-slate-600">Verified location details are not available for this property yet.</p></section>
+              ) : null}
+            </div>
           </article>
         </div>
 
@@ -568,23 +612,6 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
           </div>
         </div>
       </section>
-
-      <RelatedHotelsSection
-        hotels={props.relatedHotels}
-        city={props.propertyDetails?.city || ""}
-        searchContext={props.relatedSearchContext}
-        labels={{
-          heading: props.labels.moreHotelsIn,
-          viewHotel: props.labels.viewHotel,
-          pricePerNight: props.labels.pricePerNight,
-          estimatedStayTotal: props.labels.estimatedStayTotal,
-          priceUnavailable: props.labels.priceUnavailable,
-          imageUnavailable: props.labels.imageUnavailable,
-          imageAlt: props.labels.imageAlt,
-          nearLocation: props.labels.nearLocation,
-          starHotelAria: props.labels.starHotelAria,
-        }}
-      />
 
       {roomsOpen ? (
         <div

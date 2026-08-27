@@ -1,70 +1,73 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef } from "react";
 
-const items = [
-  { id: "hotel-compare-prices", label: "Compare prices", section: "compare" },
-  { id: "hotel-about", label: "About", section: "about" },
-  { id: "hotel-location", label: "Location", section: "location" },
-] as const;
+export type HotelDetailsTab = "compare" | "about" | "location" | "reviews";
 
-type ActiveSection = (typeof items)[number]["section"];
+const tabs: ReadonlyArray<{ id: HotelDetailsTab; label: string }> = [
+  { id: "compare", label: "Compare prices" },
+  { id: "about", label: "About" },
+  { id: "location", label: "Location" },
+  { id: "reviews", label: "Reviews" },
+];
 
-export function HotelDetailsSectionNav() {
-  const [active, setActive] = useState<ActiveSection>("compare");
+type HotelDetailsSectionNavProps = {
+  activeTab: HotelDetailsTab;
+  onTabChange: (tab: HotelDetailsTab) => void;
+};
 
-  useEffect(() => {
-    const sectionMap: Record<string, ActiveSection> = {
-      "hotel-compare-prices": "compare",
-      "hotel-about": "about",
-      "hotel-reviews": "about",
-      "hotel-location": "location",
-    };
-    const elements = Object.keys(sectionMap)
-      .map((id) => document.getElementById(id))
-      .filter((element): element is HTMLElement => Boolean(element));
-    if (!elements.length || !("IntersectionObserver" in window)) return;
+export function HotelDetailsSectionNav({
+  activeTab,
+  onTabChange,
+}: HotelDetailsSectionNavProps) {
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible) setActive(sectionMap[visible.target.id]);
-      },
-      { rootMargin: "-72px 0px -55% 0px", threshold: [0, 0.15, 0.4] },
-    );
-    elements.forEach((element) => observer.observe(element));
-    return () => observer.disconnect();
-  }, []);
-
-  function navigate(event: React.MouseEvent<HTMLAnchorElement>, id: string) {
-    const target = document.getElementById(id);
-    if (!target) return;
+  function handleKeyDown(
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    index: number,
+  ) {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     event.preventDefault();
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
-    history.replaceState(null, "", `#${id}`);
+    const direction = event.key === "ArrowRight" ? 1 : -1;
+    const nextIndex = (index + direction + tabs.length) % tabs.length;
+    const nextTab = tabs[nextIndex];
+    onTabChange(nextTab.id);
+    tabRefs.current[nextIndex]?.focus();
   }
 
   return (
-    <nav
-      aria-label="Hotel details sections"
-      className="sticky top-0 z-30 mt-3 grid grid-cols-3 border-b border-slate-200 bg-white px-4 lg:mt-5 lg:px-0"
+    <div
+      role="tablist"
+      aria-label="Hotel details"
+      className="sticky top-0 z-30 mt-3 grid grid-cols-[minmax(0,1.65fr)_repeat(3,minmax(0,1fr))] border-b border-slate-200 bg-white px-2 lg:mt-5 lg:px-0"
       data-hotel-details-section-nav
     >
-      {items.map((item) => (
-        <a
-          key={item.id}
-          href={`#${item.id}`}
-          aria-current={active === item.section ? "location" : undefined}
-          onClick={(event) => navigate(event, item.id)}
-          className={`focus-ring relative inline-flex min-h-11 items-center justify-center whitespace-nowrap px-1 text-[13px] font-bold transition-colors sm:px-2 sm:text-sm ${active === item.section ? "text-blue" : "text-slate-600 hover:text-slate-950"}`}
-        >
-          {item.label}
-          <span className={`absolute inset-x-2 bottom-0 h-0.5 bg-blue transition-opacity ${active === item.section ? "opacity-100" : "opacity-0"}`} aria-hidden="true" />
-        </a>
-      ))}
-    </nav>
+      {tabs.map((tab, index) => {
+        const selected = activeTab === tab.id;
+        return (
+          <button
+            key={tab.id}
+            ref={(element) => {
+              tabRefs.current[index] = element;
+            }}
+            id={`hotel-${tab.id}-tab`}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            aria-controls={`hotel-${tab.id}-panel`}
+            tabIndex={selected ? 0 : -1}
+            onClick={() => onTabChange(tab.id)}
+            onKeyDown={(event) => handleKeyDown(event, index)}
+            className={`focus-ring relative inline-flex min-h-11 min-w-0 items-center justify-center whitespace-nowrap px-0.5 text-[12px] font-bold transition-colors min-[390px]:text-[13px] sm:px-2 sm:text-sm ${selected ? "text-blue" : "text-slate-600 hover:text-slate-950"}`}
+          >
+            {tab.label}
+            <span
+              className={`absolute inset-x-1 bottom-0 h-0.5 bg-blue transition-opacity sm:inset-x-2 ${selected ? "opacity-100" : "opacity-0"}`}
+              aria-hidden="true"
+            />
+          </button>
+        );
+      })}
+    </div>
   );
 }
