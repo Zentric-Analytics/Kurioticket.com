@@ -5829,9 +5829,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   function renderCompactSearchForm(placement: "mobile" | "desktop") {
     if (placement === "mobile") {
       const mobileFieldClass =
-        "rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm shadow-slate-900/[0.025] transition-colors hover:border-slate-300 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/25";
+        "min-h-[70px] w-full min-w-0 rounded-[14px] border border-[#D8E1EC] bg-white px-4 py-3 text-start shadow-none transition-colors hover:border-slate-300 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25";
       const mobileLabelClass =
-        "mb-1.5 block text-[0.68rem] font-bold uppercase leading-4 tracking-[0.14em] text-slate-500";
+        "mb-1.5 block text-[11px] font-semibold uppercase leading-3 tracking-[0.08em] text-slate-500";
+      const mobileValueRowClass =
+        "grid min-w-0 grid-cols-[22px_minmax(0,1fr)_20px] items-center gap-2.5";
+      const mobileValueClass =
+        "min-w-0 truncate text-[16px] font-semibold leading-5 text-slate-950";
+      const mobileValueIconClass = "h-5 w-5 shrink-0 text-slate-500";
       const mobileTripTypeOptions = [
         { labelKey: "roundTrip", value: "round-trip" },
         { labelKey: "oneWay", value: "one-way" },
@@ -5843,11 +5848,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           onSubmit={handleCompactSearchSubmit}
           className="flex h-full min-h-0 w-full min-w-0 flex-col bg-slate-50"
         >
-          <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-3 pt-[calc(0.85rem+env(safe-area-inset-top))]">
-            <div className="flex min-h-10 items-center justify-between gap-3">
+          <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))]">
+            <div className="flex min-h-11 items-center justify-between gap-3">
               <h2
                 id="flight-mobile-search-title"
-                className="text-[1.15rem] font-bold leading-6 tracking-[-0.01em] text-slate-950"
+                className="text-xl font-bold leading-6 tracking-[-0.01em] text-slate-950"
               >
                 {t("editFlightSearch")}
               </h2>
@@ -5856,22 +5861,23 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 type="button"
                 aria-label={t("closeEditSearch")}
                 onClick={() => closeMobileSearchDrawer()}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-transparent text-slate-700 transition-colors hover:bg-slate-100 active:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
               >
-                ×
+                <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
           </div>
 
           <div
             ref={mobileSearchScrollRef}
-            className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+            className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
           >
-            <div className="mx-auto flex w-full max-w-xl flex-col gap-3">
+            <div className="mx-auto flex w-full min-w-0 max-w-xl flex-col gap-3.5">
               <div
                 role="radiogroup"
                 aria-label={t("tripType")}
-                className="flex min-h-11 items-center gap-5 rounded-2xl bg-slate-50/50 px-1 py-1"
+                data-mobile-trip-type-grid
+                className="grid min-h-11 w-full min-w-0 grid-cols-3 items-stretch gap-1 rounded-[13px] bg-slate-100/75 p-1"
               >
                 {mobileTripTypeOptions.map((option) => {
                   const selected = tripTypeInput === option.value;
@@ -5884,16 +5890,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       aria-checked={selected}
                       onClick={() => handleTripTypeChange(option.value)}
                       className={cn(
-                        "focus-ring inline-flex min-h-10 items-center gap-2 rounded-full px-2.5 py-1 text-sm font-semibold transition-colors",
+                        "focus-ring inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-1 text-[13px] font-semibold leading-none transition-colors min-[360px]:gap-2 min-[360px]:text-sm",
                         selected
-                          ? "text-slate-950"
+                          ? "bg-white text-slate-950 shadow-sm"
                           : "text-slate-600 hover:text-slate-900",
                       )}
                     >
                       <span
                         aria-hidden="true"
                         className={cn(
-                          "inline-flex h-4 w-4 items-center justify-center rounded-full border transition-colors",
+                          "inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border transition-colors",
                           selected
                             ? "border-[#004BB8] bg-white shadow-[0_0_0_3px_rgba(0,75,184,0.10)]"
                             : "border-slate-300 bg-white",
@@ -5912,33 +5918,50 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 })}
               </div>
 
-              <div ref={originWrapRef}>
-                <button
-                  ref={mobileOriginLauncherRef}
-                  type="button"
-                  aria-haspopup="dialog"
-                  aria-expanded={activeMobileAirportPicker === "origin"}
-                  onClick={() => {
-                    closeFlightSearchPopovers();
-                    setActiveMobileAirportPicker("origin");
-                  }}
-                  className={cn(
-                    mobileFieldClass,
-                    "flex min-h-[68px] w-full items-center justify-between gap-3 text-start",
-                  )}
-                >
-                  <span className="min-w-0">
-                    <span className={mobileLabelClass}>{t("origin")}</span>
-                    <span className="block truncate text-base font-bold leading-5 text-slate-950">
-                      {originInput.trim() || t("fromPlaceholder")}
+              <div
+                className="relative grid min-w-0 gap-3"
+                data-mobile-route-fields
+              >
+                <div ref={originWrapRef} className="min-w-0">
+                  <button
+                    ref={mobileOriginLauncherRef}
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-expanded={activeMobileAirportPicker === "origin"}
+                    onClick={() => {
+                      closeFlightSearchPopovers();
+                      setActiveMobileAirportPicker("origin");
+                    }}
+                    className={mobileFieldClass}
+                    data-mobile-field="origin"
+                  >
+                    <span className="block min-w-0">
+                      <span className={mobileLabelClass}>{t("origin")}</span>
+                      <span className={mobileValueRowClass} data-mobile-value-row>
+                        <MapPin className={mobileValueIconClass} aria-hidden="true" />
+                        <span className={mobileValueClass}>{originInput.trim() || t("fromPlaceholder")}</span>
+                        <ChevronDown className="h-4 w-4 justify-self-end text-slate-500" aria-hidden="true" />
+                      </span>
                     </span>
-                  </span>
-                  <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
-                </button>
-              </div>
+                  </button>
+                </div>
 
-              <div ref={destinationWrapRef}>
                 <button
+                  type="button"
+                  aria-label={t("swapOriginDestination")}
+                  onClick={handleSwapLocations}
+                  data-mobile-swap-control
+                  className="focus-ring absolute left-1/2 top-1/2 z-10 inline-flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#D8E1EC] bg-white text-[#004BB8] shadow-[0_8px_18px_-12px_rgba(15,23,42,0.45)] transition-colors hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                >
+                  <ArrowRightLeft
+                    className="h-5 w-5"
+                    strokeWidth={2.1}
+                    aria-hidden="true"
+                  />
+                </button>
+
+                <div ref={destinationWrapRef} className="min-w-0">
+                  <button
                   ref={mobileDestinationLauncherRef}
                   type="button"
                   aria-haspopup="dialog"
@@ -5947,19 +5970,22 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     closeFlightSearchPopovers();
                     setActiveMobileAirportPicker("destination");
                   }}
-                  className={cn(
-                    mobileFieldClass,
-                    "flex min-h-[68px] w-full items-center justify-between gap-3 text-start",
-                  )}
+                  className={mobileFieldClass}
+                  data-mobile-field="destination"
                 >
-                  <span className="min-w-0">
+                  <span className="block min-w-0">
                     <span className={mobileLabelClass}>{t("destination")}</span>
-                    <span className="block truncate text-base font-bold leading-5 text-slate-950">
-                      {destinationInput.trim() || t("toPlaceholder")}
+                    <span className={mobileValueRowClass} data-mobile-value-row>
+                      <MapPin
+                        className={mobileValueIconClass}
+                        aria-hidden="true"
+                      />
+                      <span className={mobileValueClass}>{destinationInput.trim() || t("toPlaceholder")}</span>
+                      <ChevronDown className="h-4 w-4 justify-self-end text-slate-500" aria-hidden="true" />
                     </span>
                   </span>
-                  <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
-                </button>
+                  </button>
+                </div>
               </div>
 
               <div ref={departureWrapRef} className="relative">
@@ -5974,20 +6000,21 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     setTravelerPopoverPosition(null);
                     openMobileDatePicker();
                   }}
-                  className={cn(
-                    mobileFieldClass,
-                    "flex min-h-[68px] w-full items-center gap-3 text-start",
-                  )}
+                  className={mobileFieldClass}
+                  data-mobile-field="dates"
                 >
-                  <Calendar className="h-5 w-5 shrink-0 text-[#004BB8]" />
-                  <span className="min-w-0">
+                  <span className="block min-w-0">
                     <span className={mobileLabelClass}>{t("travelDates")}</span>
-                    <span className="block truncate text-base font-bold leading-5 text-slate-950">
-                      {departureDateInput
-                        ? tripTypeInput === "round-trip" && returnDateInput
-                          ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
-                          : formatDateLabel(departureDateInput, calendarLocale)
-                        : t("travelDates")}
+                    <span className={mobileValueRowClass} data-mobile-value-row>
+                      <Calendar className={mobileValueIconClass} aria-hidden="true" />
+                      <span className={mobileValueClass}>
+                        {departureDateInput
+                          ? tripTypeInput === "round-trip" && returnDateInput
+                            ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
+                            : formatDateLabel(departureDateInput, calendarLocale)
+                          : t("travelDates")}
+                      </span>
+                      <span aria-hidden="true" />
                     </span>
                   </span>
                 </button>
@@ -6005,32 +6032,36 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     setDatePickerPosition(null);
                     openMobileTravelerPopover();
                   }}
-                  className={cn(
-                    mobileFieldClass,
-                    "flex min-h-[68px] w-full items-center justify-between gap-3 text-start",
-                  )}
+                  className={mobileFieldClass}
+                  data-mobile-field="travelers"
                 >
-                  <span className="min-w-0">
+                  <span className="block min-w-0">
                     <span className={mobileLabelClass}>
                       {t("travelersAndCabin")}
                     </span>
-                    <span className="block truncate text-base font-bold leading-5 text-slate-950">
-                      {buildTravelerCabinSummary(
-                        adultCount,
-                        childCount,
-                        infantCount,
-                        cabinClassInput,
-                        t,
-                      )}
+                    <span className={mobileValueRowClass} data-mobile-value-row>
+                      <UserRound
+                        className={mobileValueIconClass}
+                        aria-hidden="true"
+                      />
+                      <span className={mobileValueClass}>
+                        {buildTravelerCabinSummary(
+                          adultCount,
+                          childCount,
+                          infantCount,
+                          cabinClassInput,
+                          t,
+                        )}
+                      </span>
+                      <ChevronDown className="h-4 w-4 justify-self-end text-slate-500" aria-hidden="true" />
                     </span>
                   </span>
-                  <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
                 </button>
               </div>
 
               <Button
                 type="submit"
-                className="mt-1 h-[52px] w-full rounded-2xl bg-[#004BB8] text-base font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B]"
+                className="mt-1 h-[54px] w-full rounded-[14px] bg-[#004BB8] text-base font-semibold text-white shadow-none ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B]"
               >
                 {t("search")}
               </Button>
