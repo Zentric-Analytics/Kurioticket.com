@@ -15,15 +15,16 @@ test("flight favorites resolve an unknown session before choosing save or sign-i
   assert.match(hook, /useState<string \| null \| undefined>\(undefined\)/);
   assert.match(hook, /if \(resolvedUserId === undefined\) \{[\s\S]*?await readSession\(\)[\s\S]*?setUserId\(resolvedUserId\)/);
   assert.match(hook, /favoriteAction\(resolvedUserId\) === "sign-in"[\s\S]*?showFavoriteSignInPrompt\("\/saved"\)/);
-  assert.match(hook, /await repository\.savedRepositoryFor\(resolvedUserId\)\.toggleFlight/);
+  assert.match(hook, /await savedRepositoryFor\(resolvedUserId\)\.toggleFlight/);
   assert.doesNotMatch(hook, /toggleFlight\([\s\S]*?catch\(\(\) => undefined\)/);
 });
 
 test("favorite prompt offers dismissal and the existing sign-in flow", () => {
   const hook = source("src/storage/useSavedDestinations.ts");
-  assert.match(hook, /Sign in to save favorites/);
-  assert.match(hook, /Not now/);
-  assert.match(hook, /router\.push\(signInHref\(returnTo\)\)/);
+  const prompt = source("src/storage/favoriteSignInPrompt.ts");
+  assert.match(prompt, /Sign in to save favorites/);
+  assert.match(prompt, /Not now/);
+  assert.match(prompt, /router\.push\(signInHref\(returnTo\)\)/);
   assert.match(hook, /favoriteAction\(userId\).*showFavoriteSignInPrompt\("\/saved"\).*return/s);
 });
 
