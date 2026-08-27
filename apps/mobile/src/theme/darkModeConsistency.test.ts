@@ -95,7 +95,7 @@ test("the active Flight results journey keeps its semantic surface and text hier
   const states = read("src/features/search/FlightResultsState.tsx");
 
   assert.match(results, /s0\.safe, flightResults && \{ backgroundColor: theme\.background \}/);
-  assert.match(results, /s0\.flightPersistentSearchControls, \{ backgroundColor: theme\.background \}/);
+  assert.match(results, /renderSectionHeader[\s\S]*?backgroundColor: theme\.background[\s\S]*?\{filterRail\}/);
   assert.match(results, /s0\.card,[\s\S]*backgroundColor: theme\.surface/);
   assert.match(results, /s0\.airlineName, \{ color: theme\.textPrimary \}/);
   assert.match(results, /s0\.operatingCarrierText, \{ color: theme\.textSecondary \}/);

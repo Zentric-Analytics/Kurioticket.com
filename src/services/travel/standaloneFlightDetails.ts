@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import type {
   FlightDetailsFareChoice,
+  FlightDetailsDeal,
   FlightDetailsSuccess,
 } from "@/lib/flights/flightDetailsContract";
 import { rememberFlights, toFlightDetailsOffer } from "@/lib/searchCache";
@@ -173,6 +174,7 @@ export function buildMaterialFareChoices(
   { upsellOfferIds = new Set<string>(), selectedProviderOfferId }: { upsellOfferIds?: ReadonlySet<string>; selectedProviderOfferId?: string } = {},
 ): Array<{
   source: NormalizedFlightResult;
+  memberOffers: NormalizedFlightResult[];
   memberProviderOfferIds: string[];
   choice: FlightDetailsFareChoice;
 }> {
@@ -187,6 +189,25 @@ export function buildMaterialFareChoices(
         candidate.price < lowest.price ? candidate : lowest,
       );
       const handoff = resolveFlightHandoff(source);
+      const dealsByProvider = new Map<string, FlightDetailsDeal>();
+      for (const offer of group) {
+        const dealHandoff = resolveFlightHandoff(offer);
+        if (!dealHandoff || !offer.id || !Number.isFinite(offer.price) || offer.price <= 0) continue;
+        const providerIdentity = canonical(dealHandoff.providerName);
+        const candidate: FlightDetailsDeal = {
+          key: `deal-${createHash("sha256").update(`${key}|${providerIdentity}`).digest("base64url").slice(0, 16)}`,
+          offerId: offer.id,
+          providerName: dealHandoff.providerName,
+          price: offer.price,
+          currency: offer.currency,
+        };
+        const current = dealsByProvider.get(providerIdentity);
+        if (!current || candidate.price < current.price || candidate.price === current.price && candidate.offerId.localeCompare(current.offerId) < 0)
+          dealsByProvider.set(providerIdentity, candidate);
+      }
+      const deals = [...dealsByProvider.values()].sort((left, right) =>
+        left.price - right.price || left.providerName.localeCompare(right.providerName),
+      );
       const choice: FlightDetailsFareChoice = {
         key: `fare-${createHash("sha256").update(key).digest("base64url").slice(0, 16)}`,
         label: fareLabel(source),
@@ -196,9 +217,11 @@ export function buildMaterialFareChoices(
         handoff: handoff
           ? { available: true, providerName: handoff.providerName }
           : { available: false },
+        deals,
       };
       return {
         source,
+        memberOffers: group,
         memberProviderOfferIds: group.flatMap(({ providerOfferId }) =>
           providerOfferId ? [providerOfferId] : [],
         ),

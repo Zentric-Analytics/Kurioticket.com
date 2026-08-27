@@ -74,7 +74,7 @@ test("validated results become terminal immediately without presentation waiting
 });
 
 test("loading hides interactive date and filter rails while preserving natural-scroll structure", () => {
-  assert.match(screen, /flightResults && status !== "loading" \? \([\s\S]*?flightPersistentSearchControls[\s\S]*?\{filterRail\}/);
-  assert.match(screen, /ListHeaderComponent=\{status === "loading" \? null : dateStrip\}/);
-  assert.doesNotMatch(screen, /renderSectionHeader|stickySectionHeadersEnabled/);
+  assert.match(screen, /renderSectionHeader=\{\(\) => status === "loading" \? null : \([\s\S]*?\{filterRail\}/);
+  assert.match(screen, /ListHeaderComponent=\{status === "loading" \? null : animatedFlightDateStrip\}/);
+  assert.match(screen, /renderSectionHeader[\s\S]*?stickySectionHeadersEnabled/);
 });
