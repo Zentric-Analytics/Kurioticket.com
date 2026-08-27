@@ -1259,6 +1259,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     mobileTravelerTotal === 1 && adultCount === 1
       ? `1 ${t("adultSingular")}`
       : `${mobileTravelerTotal} ${t("travelerPlural")}`;
+  const mobileCabinClassSummary = cabinClassLabel(cabinClassInput, t);
   const travelerCabinSummary = buildTravelerCabinSummary(
     adultCount,
     childCount,
@@ -6560,9 +6561,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     const shortcutButtonClass =
       "focus-ring inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[11px] border border-[#D8E1EC] bg-white px-3.5 text-[14px] font-semibold text-[#142033] transition hover:border-[#B9C8D9] hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
     const menuClass =
-      "z-[90] max-h-72 overflow-y-auto rounded-[13px] border border-[#D8E1EC] bg-white p-1.5 shadow-[0_22px_46px_-22px_rgba(15,23,42,0.32)]";
+      "z-[90] max-h-72 overflow-y-auto rounded-[12px] border border-[#D8E1EC] bg-white p-1 shadow-[0_14px_32px_-18px_rgba(15,23,42,0.28)]";
     const menuItemClass =
-      "flex min-h-11 w-full items-center justify-between gap-2 rounded-[10px] px-3 text-left text-[14px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
+      "flex min-h-11 w-full items-center justify-between gap-2 rounded-[9px] px-2.5 text-left text-[14px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
     const activeMenu = getActiveMobileShortcutMenu();
 
     const openMobileShortcutMenu = (
@@ -6653,7 +6654,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   className={cn(
                     menuItemClass,
                     sortMode === option.value
-                      ? "bg-[#004BB8]/6 text-[#004BB8]"
+                      ? "bg-[#F7FAFF] text-[#004BB8]"
                       : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
                   )}
                 >
@@ -6677,7 +6678,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   className={cn(
                     menuItemClass,
                     selectedAirlines.includes(option.value)
-                      ? "bg-[#004BB8]/6 text-[#004BB8]"
+                      ? "bg-[#F7FAFF] text-[#004BB8]"
                       : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
                   )}
                 >
@@ -6704,7 +6705,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   className={cn(
                     menuItemClass,
                     selectedStops.includes(option.value)
-                      ? "bg-[#004BB8]/6 text-[#004BB8]"
+                      ? "bg-[#F7FAFF] text-[#004BB8]"
                       : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
                   )}
                 >
@@ -6731,7 +6732,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   className={cn(
                     menuItemClass,
                     selectedAirports.includes(option.value)
-                      ? "bg-[#004BB8]/6 text-[#004BB8]"
+                      ? "bg-[#F7FAFF] text-[#004BB8]"
                       : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
                   )}
                 >
@@ -6761,28 +6762,28 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               "sort",
               activeSortOption.label,
               mobileSortMenuOpen,
-              168,
+              164,
               mobileSortMenuRef,
             )}
             {renderTrigger(
               "airlines",
               "Airlines",
               mobileAirlineMenuOpen,
-              224,
+              220,
               mobileAirlineMenuRef,
             )}
             {renderTrigger(
               "stops",
               "Stops",
               mobileStopsMenuOpen,
-              176,
+              172,
               mobileStopsMenuRef,
             )}
             {renderTrigger(
               "airports",
               "Airports",
               mobileAirportMenuOpen,
-              208,
+              204,
               mobileAirportMenuRef,
             )}
           </div>
@@ -6902,14 +6903,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             <span className="block truncate text-[16px] font-bold leading-5 tracking-[-0.01em] text-[#142033]">
               {mobileRouteSummary}
             </span>
-            <span className="mt-1.5 block truncate text-[12.5px] font-semibold leading-4 text-slate-500">
+            <span className="mt-1 block truncate text-[12.5px] font-semibold leading-[17px] text-slate-600">
               {mobileTripTypeSummary} · {mobileDateSummary} ·{" "}
-              {mobileTravelerSummary}
+              {mobileTravelerSummary} · {mobileCabinClassSummary}
             </span>
           </span>
           <span
             aria-hidden="true"
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-[#D8E1EC] bg-slate-50 text-slate-700 transition group-hover:border-[#C6D2E0] group-hover:bg-slate-100"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-transparent bg-transparent text-slate-700 transition group-hover:bg-slate-100 group-active:bg-slate-200"
           >
             <SquarePen size={16} strokeWidth={2.2} />
           </span>

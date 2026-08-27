@@ -40,11 +40,15 @@ test("mobile flight shortcut triggers share compact 44px chip styling", () => {
 
 test("mobile shortcut popovers share one compact production surface", () => {
   assert.equal(shortcuts.match(/const menuClass =/g)?.length, 1);
-  assert.match(shortcuts, /rounded-\[13px\]/);
+  assert.match(shortcuts, /rounded-\[12px\]/);
   assert.match(shortcuts, /border-\[#D8E1EC\]/);
-  assert.match(shortcuts, /bg-white p-1\.5/);
-  assert.match(shortcuts, /shadow-\[0_22px_46px_-22px_rgba\(15,23,42,0\.32\)\]/);
-  assert.match(shortcuts, /const menuItemClass =\s*"[^"]*min-h-11[^"]*rounded-\[10px\][^"]*text-\[14px\]/);
+  assert.match(shortcuts, /bg-white p-1/);
+  assert.match(shortcuts, /shadow-\[0_14px_32px_-18px_rgba\(15,23,42,0\.28\)\]/);
+  assert.match(shortcuts, /const menuItemClass =\s*"[^"]*min-h-11[^"]*rounded-\[9px\][^"]*text-\[14px\]/);
+  assert.match(shortcuts, /mobileSortMenuOpen,\s*164,/);
+  assert.match(shortcuts, /mobileAirlineMenuOpen,\s*220,/);
+  assert.match(shortcuts, /mobileStopsMenuOpen,\s*172,/);
+  assert.match(shortcuts, /mobileAirportMenuOpen,\s*204,/);
 });
 
 test("shortcut menu choices retain accessible behavior and restrained selection", () => {
@@ -54,7 +58,8 @@ test("shortcut menu choices retain accessible behavior and restrained selection"
   assert.match(shortcuts, /aria-checked=\{selectedAirlines\.includes\(option\.value\)\}/);
   assert.match(shortcuts, /aria-checked=\{selectedStops\.includes\(option\.value\)\}/);
   assert.match(shortcuts, /aria-checked=\{selectedAirports\.includes\(option\.value\)\}/);
-  assert.match(shortcuts, /bg-\[#004BB8\]\/6 text-\[#004BB8\]/);
+  assert.match(shortcuts, /bg-\[#F7FAFF\] text-\[#004BB8\]/);
+  assert.doesNotMatch(shortcuts, /bg-\[#004BB8\]\/6/);
   assert.match(shortcuts, /text-slate-700 hover:bg-slate-50/);
   assert.match(shortcuts, /<Check className="h-4 w-4 shrink-0"/);
   assert.match(shortcuts, /\{option\.count\}/);
