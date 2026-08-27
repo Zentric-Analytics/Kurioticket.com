@@ -1,4 +1,5 @@
 import type { MobileLocale } from "./mobileLocalizationCatalog";
+import "./applySecurityTranslationCorrections";
 
 export const accountActivityEventTypes = [
   "PASSWORD_CHANGED",
