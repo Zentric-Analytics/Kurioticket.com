@@ -267,20 +267,19 @@ test("flight favorite uses persistent shared state for initial, save, and remove
   assert.match(source, /toggleSavedFlight\(item, params\)/);
   assert.doesNotMatch(card, /useState\(false\)/);
   const hook = readFileSync(resolve("src/storage/useSavedFlights.ts"), "utf8");
-  assert.match(hook, /SAVED_FLIGHTS_KEY/);
-  assert.match(hook, /SecureStore\.getItemAsync/);
-  assert.match(hook, /SecureStore\.setItemAsync/);
-  assert.match(hook, /next\.has\(flight\.id\) \? next\.delete\(flight\.id\) : next\.set\(flight\.id, flight\)/);
+  assert.match(hook, /savedRepositoryFor\(resolvedUserId\)\.toggleFlight\(flight, searchParams\)/);
+  assert.doesNotMatch(hook, /SecureStore|SavedFlightsStore|require\(/);
   assert.match(hook, /favoriteAction\(resolvedUserId\)/);
 });
 
 test("flight favorite is accessible and isolated inside the identity action stack", () => {
   assert.match(card, /accessibilityRole="button"/);
   assert.match(card, /accessibilityState=\{\{ selected: saved, busy: pending, disabled: pending \}\}/);
-  assert.match(card, /hitSlop=\{\{ top: 12, bottom: 12, left: 12, right: 12 \}\}/);
+  assert.doesNotMatch(card, /hitSlop=/);
   assert.match(card, /event\.stopPropagation\(\); if \(!pending\) onToggleSaved\(\)/g);
   assert.match(source, /airlineHeader: \{ minHeight: 20/);
-  assert.match(source, /favoriteButton: \{ width: 20, height: 20/);
+  assert.match(source, /favoriteButton: \{ width: 44, height: 44/);
+  assert.match(card, /<Heart[\s\S]*?size=\{20\}/);
   assert.doesNotMatch(card, /onPress=.*View details[\s\S]*toggleSavedFlight/);
 });
 
@@ -298,9 +297,8 @@ test("highlight sits above the favorite in a compact vertical identity action st
   assert.match(source, /journeyLabel: \{ fontSize: 9, lineHeight: 10/);
   assert.doesNotMatch(source, /detailsButton(?:Text)?:/);
 
-  const favoriteVisualSize = 20;
-  const favoriteHitSlop = 12 * 2;
-  assert.ok(favoriteVisualSize + favoriteHitSlop >= 44, "save control retains a 44px effective touch target");
+  assert.match(source, /favoriteButton: \{ width: 44, height: 44/);
+  assert.match(source, /identityActions: \{ flexDirection: "column", flexShrink: 0/);
 });
 
 test("saved flights remain visible through the canonical Saved source", () => {
