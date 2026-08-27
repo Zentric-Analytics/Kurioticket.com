@@ -25,7 +25,7 @@ export function FlightEditSearchModal({ visible, params, onClose }: Props) {
         <SafeAreaView style={styles.backdrop} edges={["top", "bottom"]}>
           <Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill, styles.scrim, motion.backdropStyle]} />
           <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Close edit search" onPress={onClose} />
-          <Animated.View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: ft.colors.surface }, motion.sheetStyle]}>
+          <Animated.View accessibilityViewIsModal onLayout={motion.onSheetLayout} style={[styles.sheet, { backgroundColor: ft.colors.surface }, motion.sheetStyle]}>
             <View style={[styles.header, { borderBottomColor: ft.colors.border }]}>
               <Pressable accessibilityRole="button" accessibilityLabel="Close edit search" hitSlop={8} onPress={onClose} style={({ pressed }) => [styles.close, pressed && ft.styles.pressed]}>
                 <X accessible={false} size={23} color={ft.colors.icon} />

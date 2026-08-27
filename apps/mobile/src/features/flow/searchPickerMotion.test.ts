@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { searchPickerSheetTravelDistance } from "./searchPickerTravel";
 
 const source = readFileSync("src/features/flow/searchPickerPresentation.ts", "utf8");
 const pickerFiles = ["FlightSearchPanel.tsx", "HotelSearchPanel.tsx", "CarSearchPanel.tsx", "CarSearchPickers.tsx", "PackageSearchForm.tsx", "LocalCalendarModal.tsx", "DateRangeSheet.tsx"];
@@ -10,12 +11,14 @@ test("shared native search picker motion has the approved contract", () => {
   assert.match(source, /OPEN_DURATION_MS = 280/);
   assert.match(source, /CLOSE_DURATION_MS = 240/);
   assert.match(source, /Dimensions\.get\("screen"\)\.height/);
-  assert.match(source, /Math\.max\(windowHeight, screenHeight\)/);
+  assert.match(readFileSync("src/features/flow/searchPickerTravel.ts", "utf8"), /Math\.max\(windowHeight, screenHeight\)/);
+  const travelSource = readFileSync("src/features/flow/searchPickerTravel.ts", "utf8");
+  assert.match(travelSource, /measuredSheetHeight[^?]+\? measuredSheetHeight \+ Math\.max\(0, bottomClearance\)\s+: Math\.max\(windowHeight, screenHeight\)/s);
   assert.match(source, /useWindowDimensions\(\)/);
   assert.doesNotMatch(source, /SHEET_OFFSET|toValue: 40|Animated\.Value\([^)]*40/);
-  assert.match(source, /new Animated\.Value\(visible \? 0 : sheetTravelDistance\)/);
-  assert.match(source, /sheetTranslateY\.setValue\(sheetTravelDistance\)/);
-  assert.match(source, /Animated\.timing\(sheetTranslateY, \{ toValue: sheetTravelDistance/);
+  assert.match(source, /measuredSheetHeight\.current = nextHeight/);
+  assert.match(source, /sheetTranslateY\.setValue\(currentTravelDistance\(\)\)/);
+  assert.match(source, /toValue: currentTravelDistance\(\)/);
   assert.match(source, /useNativeDriver: true/g);
   assert.match(source, /backdropStyle: \{ opacity: backdropOpacity \}/);
   assert.match(source, /sheetStyle: \{ transform: \[\{ translateY: sheetTranslateY \}\] \}/);
@@ -23,8 +26,22 @@ test("shared native search picker motion has the approved contract", () => {
   assert.match(source, /stopAnimation\(\)/);
   assert.match(source, /setRendered\(false\)/);
   assert.match(source, /finished && generation\.current === currentGeneration/);
-  assert.match(source, /Easing\.out\(Easing\.cubic\)/);
-  assert.match(source, /Easing\.in\(Easing\.cubic\)/);
+  const sheetTimings = source.match(/Animated\.timing\(sheetTranslateY[^\n]+/g) ?? [];
+  assert.equal(sheetTimings.length, 2);
+  for (const timing of sheetTimings) assert.match(timing, /Easing\.bezier\(0\.25, 0\.1, 0\.25, 1\)/);
+  assert.doesNotMatch(sheetTimings.join("\n"), /Easing\.(?:out|in)\(Easing\.cubic\)/);
+  assert.match(source, /Animated\.timing\(backdropOpacity[^\n]+Easing\.out\(Easing\.cubic\)/);
+  assert.match(source, /Animated\.timing\(backdropOpacity[^\n]+Easing\.in\(Easing\.cubic\)/);
+});
+
+test("measured sheet travel replaces the full-screen safety fallback", () => {
+  assert.equal(searchPickerSheetTravelDistance(900, undefined, 1100), 1100);
+  assert.equal(searchPickerSheetTravelDistance(900, 450, 1100), 450);
+  assert.notEqual(searchPickerSheetTravelDistance(900, 450, 1100), 1100);
+  assert.equal(searchPickerSheetTravelDistance(900, 820, 1100), 820);
+  assert.equal(searchPickerSheetTravelDistance(700, 820, 1100), 820);
+  assert.equal(searchPickerSheetTravelDistance(900, 0, 1100), 1100);
+  assert.equal(searchPickerSheetTravelDistance(900, 450, 1100, 34), 484);
 });
 
 test("affected picker Modals do not translate their transparent surface", () => {
@@ -61,4 +78,18 @@ test("every retained-exit picker disables its highest content root during exit",
 
   const editSearch = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
   assert.match(editSearch, /pointerEvents=\{motion\.pointerEvents\}/);
+});
+
+test("every shared motion sheet reports its rendered height", () => {
+  for (const file of pickerFiles) {
+    const picker = readFileSync(`src/features/flow/${file}`, "utf8");
+    assert.equal(
+      picker.match(/accessibilityViewIsModal onLayout=\{motion\.onSheetLayout\}/g)?.length ?? 0,
+      picker.match(/useSearchPickerMotion\(/g)?.length ?? 0,
+      `${file} must measure every shared motion sheet`,
+    );
+  }
+
+  const editSearch = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
+  assert.equal(editSearch.match(/accessibilityViewIsModal onLayout=\{motion\.onSheetLayout\}/g)?.length, editSearch.match(/useSearchPickerMotion\(/g)?.length);
 });
