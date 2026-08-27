@@ -15,7 +15,7 @@ test("every expanded locale corrects the shared English mobile placeholders", ()
     const corrections = mobileTranslationCorrections[locale];
     assert.ok(corrections, `${locale} corrections`);
     for (const key of mobileTranslationCorrectionKeys) {
-      const value = corrections[key];
+      const value: string | undefined = corrections[key];
       assert.equal(typeof value, "string", `${locale}.${key}`);
       assert.ok(value!.trim(), `${locale}.${key}`);
       assert.notEqual(value, dictionaries["en-us"][key], `${locale}.${key} must not retain English placeholder copy`);
