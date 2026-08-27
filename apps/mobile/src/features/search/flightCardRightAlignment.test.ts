@@ -46,7 +46,7 @@ test("journeys follow the compact identity row at the full card content width", 
   assert.match(source, /flightIdentityLayout: \{[^}]*flexDirection: "row"[^}]*gap: 10/);
   assert.match(source, /airlineLogoColumn: \{ width: 32, flexShrink: 0/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
-  assert.match(source, /journeyList: \{ width: "100%", marginTop: 3, gap: 4 \}/);
+  assert.match(source, /journeyList: \{ width: "100%", marginTop: 18, gap: 4 \}/);
 });
 
 test("one-way cards omit return while preserving the shared right-side contract", () => {

@@ -158,7 +158,7 @@ test("airline identity preserves its accessible name while bounding very long vi
   assert.doesNotMatch(source, /airlineName: \{[^}]*maxWidth/);
   assert.match(source, /airlineCopy: \{ flex: 1, minWidth: 0 \}/);
   assert.match(source, /airlineName: \{[^}]*lineHeight: 18/);
-  assert.match(source, /identityActions: \{ flexDirection: "column", flexShrink: 0/);
+  assert.match(source, /identityActions: \{ position: "absolute", top: 0, right: 0/);
   assert.match(card, /<View style=\{s0\.flightIdentityLayout\}>[\s\S]*?<AirlineLogo[\s\S]*?<View style=\{s0\.airlineHeader\}>[\s\S]*?<View[\s\S]*?style=\{s0\.airlineCopy\}[\s\S]*?<Text style=\{\[s0\.airlineName/);
 
   for (const airlineName of [
@@ -174,6 +174,13 @@ test("airline identity preserves its accessible name while bounding very long vi
   ]) {
     assert.equal(airlineName.includes("…"), false, `${airlineName} is retained as a complete Text value`);
   }
+});
+
+test("flight identity actions do not inflate the header before the outbound journey", () => {
+  assert.match(source, /airlineHeader: \{ minHeight: 20, position: "relative", paddingRight: 68 \}/);
+  assert.match(source, /identityActions: \{ position: "absolute", top: 0, right: 0/);
+  assert.match(source, /journeyList: \{ width: "100%", marginTop: 18, gap: 4 \}/);
+  assert.doesNotMatch(source, /identityActions: \{[^}]*flexShrink/);
 });
 
 test("operating-carrier clarity stays conditional beneath the primary airline identity", () => {
@@ -289,16 +296,16 @@ test("highlight sits above the favorite in a compact vertical identity action st
   assert.match(header, /s0\.airlineName[\s\S]*?<View style=\{s0\.identityActions\}>/);
   assert.match(actions, /highlight[\s\S]*?s0\.resultBadge[\s\S]*?s0\.favoriteButton/);
   assert.ok(actions.indexOf("s0.resultBadge") < actions.indexOf("s0.favoriteButton"));
-  assert.match(source, /identityActions: \{ flexDirection: "column", flexShrink: 0,[^}]*gap: 3 \}/);
-  assert.match(source, /airlineHeader: \{ minHeight: 20,[^}]*gap: 6 \}/);
+  assert.match(source, /identityActions: \{ position: "absolute", top: 0, right: 0,[^}]*gap: 3 \}/);
+  assert.match(source, /airlineHeader: \{ minHeight: 20, position: "relative", paddingRight: 68 \}/);
   assert.match(actions, /\{highlight \? \([\s\S]*?\) : null\}[\s\S]*?<Pressable/);
   assert.doesNotMatch(actions, /placeholder/i);
-  assert.match(source, /journeyList: \{ width: "100%", marginTop: 3, gap: 4 \}/);
+  assert.match(source, /journeyList: \{ width: "100%", marginTop: 18, gap: 4 \}/);
   assert.match(source, /journeyLabel: \{ fontSize: 9, lineHeight: 10/);
   assert.doesNotMatch(source, /detailsButton(?:Text)?:/);
 
   assert.match(source, /favoriteButton: \{ width: 44, height: 44/);
-  assert.match(source, /identityActions: \{ flexDirection: "column", flexShrink: 0/);
+  assert.match(source, /identityActions: \{ position: "absolute", top: 0, right: 0/);
 });
 
 test("saved flights remain visible through the canonical Saved source", () => {
