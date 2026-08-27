@@ -380,7 +380,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
               totalPrice={props.totalDisplayPrice}
               nightlyPrice={props.nightlyDisplayPrice}
               perNightText={props.perNightText}
-              viewRoomRatesText="View room rates"
+              viewDealText="View deal"
               roomOptionsAvailable={props.roomChoices.length > 0}
               onViewRoomOptions={openRoomOptions}
               amenities={props.amenityItems}
