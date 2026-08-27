@@ -107,7 +107,7 @@ test("the existing Currency screen wires filtering to loading and saving only to
   assert.match(screen, /accessibilityState=\{\{ checked: selected === currency\.code \}\}/);
 });
 
-test("Currency screen uses an unboxed three-column list and localized local search", () => {
+test("Currency screen uses an unboxed text-first list and localized local search", () => {
   const screen = readFileSync("src/features/flow/SettingsScreens.tsx", "utf8");
   const catalog = readFileSync("src/localization/mobileLocalizationCatalog.ts", "utf8");
   const currencyScreen = screen.slice(screen.indexOf("export function CurrencyScreen"), screen.indexOf("const styles"));
@@ -120,8 +120,11 @@ test("Currency screen uses an unboxed three-column list and localized local sear
   assert.match(catalog, /currencyEmpty:"No currencies found\."/);
   assert.match(catalog, /currencySearch:"Buscar monedas"/);
   assert.match(catalog, /currencyEmpty:"No se encontraron monedas\."/);
-  assert.match(screen, /currencySymbolColumn: \{ width: 42, flexShrink: 0,[^}]*marginRight: 10 \}/);
-  assert.match(screen, /currencySymbol: \{ fontSize: 17, fontWeight: "600" \}/);
+  assert.doesNotMatch(currencyScreen, /currency\.symbol/);
+  assert.doesNotMatch(currencyScreen, /styles\.currencySymbolColumn/);
+  assert.doesNotMatch(currencyScreen, /styles\.currencySymbol/);
+  assert.doesNotMatch(screen, /currencySymbolColumn:/);
+  assert.doesNotMatch(screen, /currencySymbol:/);
   assert.match(screen, /currencyTrailing: \{ width: 30, flexShrink: 0/);
   assert.doesNotMatch(currencyScreen, />Save<|>Reset</);
   assert.equal(currencyScreen.match(/currencyRates\(\)/g)?.length, 1);
@@ -131,16 +134,15 @@ test("Currency rows match the Language list hierarchy and selected treatment", (
   const screen = readFileSync("src/features/flow/SettingsScreens.tsx", "utf8");
   const currencyScreen = screen.slice(screen.indexOf("export function CurrencyScreen"), screen.indexOf("const styles"));
 
-  assert.match(currencyScreen, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.7\}/);
-  assert.match(currencyScreen, /const hasDistinctSymbol = currency\.symbol !== currency\.code/);
-  assert.match(currencyScreen, /style=\{styles\.currencySymbolColumn\}>\{hasDistinctSymbol \? <Text[^>]*>[{]currency\.symbol[}]<\/Text> : null\}<\/View>/);
-  assert.match(currencyScreen, /\{currency\.symbol\}<\/Text>/);
+  assert.doesNotMatch(currencyScreen, /currency\.symbol/);
+  assert.doesNotMatch(currencyScreen, /styles\.currencySymbol(?:Column)?/);
   assert.match(currencyScreen, /styles\.currencyCode[^>]*>\{currency\.code\}<\/Text>/);
   assert.match(currencyScreen, /styles\.currencyName[^>]*>\{currency\.name\}<\/Text>/);
   assert.match(currencyScreen, /backgroundColor: theme\.priceAlertSurface/);
   assert.match(currencyScreen, /selected === currency\.code \? <FlowIcon name="check" color="#0754F7" \/> : null/);
   assert.match(currencyScreen, /style=\{\[styles\.currencyRow, \{ borderBottomColor: theme\.border \}/);
-  assert.match(screen, /currencyRow: \{ minHeight: 74,[^}]*borderBottomWidth: StyleSheet\.hairlineWidth/);
+  assert.match(screen, /currencyRow: \{ minHeight: 74, paddingHorizontal: 16,[^}]*borderBottomWidth: StyleSheet\.hairlineWidth/);
+  assert.match(screen, /currencyTextColumn: \{ flex: 1 \}/);
   assert.match(screen, /currencyCode: \{ fontSize: 16, fontWeight: "700" \}/);
   assert.match(screen, /currencyName: \{ fontSize: 14, lineHeight: 19, marginTop: 3 \}/);
   assert.doesNotMatch(currencyScreen, /styles\.card/);
