@@ -21,7 +21,11 @@ export async function generateMetadata() {
 export default function HotelResultsPage() {
   return (
     <>
-      <AppHeader flushDesktopBottom hideDesktopTravelNav />
+      <AppHeader
+        flushDesktopBottom
+        hideDesktopTravelNav
+        hideMobileCategoryTabs
+      />
       <Suspense fallback={<main className="page-shell flex-1 py-6"><div className="rounded-3xl border border-indigo-100 bg-white p-5 text-sm font-semibold text-violet-700 shadow-sm"><LocalizedLoadingLabel labelKey="loadingHotelSearch" /></div></main>}>
         <HotelResultsClient />
       </Suspense>

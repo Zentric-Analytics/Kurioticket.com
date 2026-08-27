@@ -865,7 +865,7 @@ export function HotelSearchBar({
     >
       {compact ? (
         <div className={cn("sm:hidden", mobileSearchOpen && "hidden")}>
-          {onOpenFilters ? (
+          {onOpenFilters && mobileLayout !== "controls" ? (
             <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch gap-2.5">
               <button
                 type="button"
@@ -908,11 +908,35 @@ export function HotelSearchBar({
             <button
               type="button"
               onClick={openMobileSearchPanel}
-              className="focus-ring w-full rounded-xl border border-[#004BB8]/12 bg-white px-4 py-4 text-start shadow-[0_12px_26px_rgba(15,23,42,0.10)] transition hover:border-[#004BB8]/20 focus-visible:border-[#004BB8]"
+              className={cn(
+                "focus-ring w-full border border-[#004BB8]/12 bg-white text-start transition hover:border-[#004BB8]/20 focus-visible:border-[#004BB8]",
+                mobileLayout === "controls"
+                  ? "flex h-16 min-w-0 items-center justify-between gap-3 overflow-hidden rounded-lg px-4 shadow-[0_3px_12px_rgba(15,23,42,0.05)]"
+                  : "rounded-xl px-4 py-4 shadow-[0_12px_26px_rgba(15,23,42,0.10)]",
+              )}
             >
-              <span className="block truncate text-sm font-semibold text-slate-950">
-                {mobileSearchSummary}
-              </span>
+              {mobileLayout === "controls" ? (
+                <>
+                  <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
+                    <span className="block truncate text-[15px] font-bold leading-5 text-slate-950">
+                      {destination.trim() || t("destination")}
+                    </span>
+                    <span className="mt-1 block truncate text-[12px] font-semibold leading-4 text-slate-600">
+                      {resultsSearchSummary}
+                    </span>
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[#004BB8]/12 bg-[#004BB8]/8 text-[#004BB8]"
+                  >
+                    <PencilLine size={16} strokeWidth={2.1} />
+                  </span>
+                </>
+              ) : (
+                <span className="block truncate text-sm font-semibold text-slate-950">
+                  {mobileSearchSummary}
+                </span>
+              )}
             </button>
           )}
         </div>

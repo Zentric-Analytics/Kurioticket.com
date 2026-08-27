@@ -1652,7 +1652,7 @@ export function HotelResultsExperience({
     >
       {!guided ? <div
         className={cn(
-          "sticky top-0 z-50 border-b border-slate-200/70 bg-[#f6f8fb]/95 px-4 py-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur sm:hidden",
+          "sticky top-0 z-50 border-b border-slate-200/70 bg-[#f6f8fb]/95 px-4 py-2 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur sm:hidden",
           mobileHotelSearchOpen && "hidden",
         )}
       >
@@ -1673,6 +1673,44 @@ export function HotelResultsExperience({
           onMobileDraftChange={updateMobileHotelSearchDraft}
           onSubmitStart={triggerSearchApplying}
         />
+        <div
+          className="mt-2 flex min-w-0 items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          aria-label={t("hotelResults.summaryAria")}
+        >
+          <button
+            type="button"
+            onClick={() => setFiltersOpen(true)}
+            className="focus-ring inline-flex h-11 shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-bold text-slate-800 shadow-sm transition-colors hover:border-[#004BB8]/25 hover:text-[#004BB8]"
+          >
+            <SlidersHorizontal aria-hidden="true" className="h-4 w-4 text-[#004BB8]" />
+            <span>{t("filters")}</span>
+            {activeFilterCount ? (
+              <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[#004BB8] px-1.5 text-xs leading-5 text-white">
+                {activeFilterCount}
+              </span>
+            ) : null}
+          </button>
+          <label className="focus-within:ring-ring inline-flex h-11 shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-bold text-slate-900 shadow-sm focus-within:ring-2 focus-within:ring-offset-2">
+            <span className="sr-only">{t("sortBy") || "Sort by"}</span>
+            <select
+              aria-label={t("sortBy") || "Sort by"}
+              value={hotelSummarySortMode}
+              onChange={(event) =>
+                updateHotelSummarySortMode(
+                  event.target.value as HotelSummarySortMode,
+                )
+              }
+              className="h-full cursor-pointer appearance-none bg-transparent pe-5 outline-none"
+            >
+              {hotelSortOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown aria-hidden="true" className="-ms-5 h-4 w-4 pointer-events-none text-slate-600" />
+          </label>
+        </div>
       </div> : null}
 
       {!guided && mobileHotelSearchOpen ? (
@@ -1929,7 +1967,7 @@ export function HotelResultsExperience({
                   ) : (
                     <h1 className="whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">{resultsHeading}</h1>
                   )}
-                  <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
+                  <div className="hidden shrink-0 flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2">
                     <span className="whitespace-nowrap text-[clamp(0.68rem,3vw,0.875rem)] font-semibold text-slate-700 sm:text-base">
                       {`${t("sortBy") || "Sort by"}:`}
                     </span>
