@@ -3,22 +3,21 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getGeneralFaqs } from "../../../../../src/content/faqs";
-import { getTranslations } from "../../../../../src/lib/i18n";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { useAppTheme } from "../../theme/AppTheme";
 import { FlowIcon } from "../flow/FlowIcon";
 import { faqAccessibility, toggleExpanded } from "./nativeAccountModels";
+import { getMobileFaqCopy } from "./mobileFaqCopy";
 
 export function MobileFaqScreen() {
   const { theme } = useAppTheme();
   const { t, locale } = useMobileLocalization();
   const [open, setOpen] = useState<string | null>(null);
-  const webTranslations = useMemo(() => getTranslations(locale), [locale]);
+  const presentation = getMobileFaqCopy(locale);
   const faqs = useMemo(
     () => getGeneralFaqs((key) => t(key as Parameters<typeof t>[0])),
     [t],
   );
-  const supportSuffix = webTranslations.faqNeedMoreHelpSuffix ?? "";
 
   return (
     <SafeAreaView style={[s.safe, { backgroundColor: theme.background }]} edges={["top", "bottom"]}>
@@ -40,16 +39,16 @@ export function MobileFaqScreen() {
       <ScrollView contentContainerStyle={s.content}>
         <View style={s.hero}>
           <Text accessibilityRole="header" style={[s.heading, { color: theme.text }]}>
-            {webTranslations.faqHeading}
+            {presentation.heading}
           </Text>
           <Text style={[s.intro, { color: theme.muted }]}>
-            {webTranslations.faqIntro}
+            {presentation.intro}
           </Text>
         </View>
 
         <View style={s.faqSection}>
           <Text accessibilityRole="header" style={[s.sectionTitle, { color: theme.text }]}>
-            {webTranslations.faqGeneralQuestions}
+            {presentation.generalQuestions}
           </Text>
 
           <View style={s.faqList}>
@@ -67,7 +66,7 @@ export function MobileFaqScreen() {
                   <View style={s.questionRow}>
                     <Text style={[s.question, { color: theme.text }]}>{item.question}</Text>
                     <Text
-                      aria-hidden
+                      accessible={false}
                       style={[s.expandIndicator, { color: theme.muted }]}
                     >
                       {accessibilityState.expanded ? "−" : "+"}
@@ -83,19 +82,14 @@ export function MobileFaqScreen() {
         </View>
 
         <View style={[s.supportCta, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Text style={[s.supportCopy, { color: theme.text }]}>
-            {webTranslations.faqNeedMoreHelpPrefix}
-          </Text>
+          <Text style={[s.supportHeading, { color: theme.text }]}>{t("helpSupport")}</Text>
           <Pressable
             accessibilityRole="link"
             onPress={() => router.push("/support")}
             style={s.supportLinkHit}
           >
-            <Text style={s.supportLink}>{webTranslations.faqSupportPage}</Text>
+            <Text style={s.supportLink}>{t("contactSupport")}</Text>
           </Pressable>
-          {supportSuffix ? (
-            <Text style={[s.supportCopy, { color: theme.muted }]}>{supportSuffix}</Text>
-          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -120,7 +114,7 @@ const s = StyleSheet.create({
   expandIndicator: { width: 22, textAlign: "center", fontSize: 22, lineHeight: 24, fontWeight: "400" },
   answer: { marginTop: 8, paddingRight: 38, fontSize: 15, lineHeight: 22 },
   supportCta: { marginTop: 28, borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, padding: 16 },
-  supportCopy: { fontSize: 14, lineHeight: 21, fontWeight: "500" },
+  supportHeading: { fontSize: 15, lineHeight: 22, fontWeight: "700" },
   supportLinkHit: { alignSelf: "flex-start", minHeight: 40, justifyContent: "center" },
   supportLink: { color: "#0754F7", fontSize: 14, lineHeight: 21, fontWeight: "800" },
 });
