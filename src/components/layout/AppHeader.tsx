@@ -873,7 +873,7 @@ export function AppHeader({
               </div>
             </div>
 
-            <div className="flex items-center gap-1 md:hidden">
+            <div className="flex items-center gap-0 md:hidden">
               {isSignedIn ? (
                 <button
                   type="button"
