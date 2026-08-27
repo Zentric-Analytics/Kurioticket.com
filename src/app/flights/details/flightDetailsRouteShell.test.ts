@@ -6,6 +6,23 @@ const pagePath = "src/app/flights/details/[id]/page.tsx";
 const clientPath = "src/components/results/FlightDetailsClient.tsx";
 const detailsPath =
   "src/components/results/flightDetails/StandaloneFlightDetails.tsx";
+const loadingPath = "src/app/flights/details/[id]/loading.tsx";
+const loadingShellPath = "src/components/results/flightDetails/FlightDetailsLoadingShell.tsx";
+
+test("Flight Details route provides a truthful accessible loading boundary", async () => {
+  const [loadingSource, shellSource, pageSource] = await Promise.all([
+    readFile(loadingPath, "utf8"),
+    readFile(loadingShellPath, "utf8"),
+    readFile(pagePath, "utf8"),
+  ]);
+  assert.match(loadingSource, /<FlightDetailsLoadingShell \/>/);
+  assert.match(shellSource, /role="status"/);
+  assert.match(shellSource, /<span className="sr-only">Loading flight details<\/span>/);
+  assert.match(shellSource, /env\(safe-area-inset-(?:top|bottom)\)/);
+  assert.match(shellSource, /hidden[^\n]*lg:block/);
+  assert.doesNotMatch(shellSource, /\$\d|Duffel|Expedia|American Airlines/);
+  assert.match(pageSource, /<FlightDetailsClient id=\{id\} \/>/);
+});
 
 test("Flight Details keeps only its global header with desktop display ownership", async () => {
   const source = await readFile(pagePath, "utf8");
