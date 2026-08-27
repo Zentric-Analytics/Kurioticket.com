@@ -22,6 +22,26 @@ test("normal and multi-city flight searches share the production field primitive
   assert.match(primitives, /createPortal/);
 });
 
+test("multi-city airport fields opt into the clean mobile value row with 20px MapPins", () => {
+  assert.match(editor, /useMainFlightLandingMobilePresentation/);
+  assert.match(editor, /mobileLeadingIconClassName="h-5 w-5 shrink-0 text-slate-500 sm:hidden"/);
+  assert.match(editor, /mobileValueRowClassName="grid grid-cols-\[22px_minmax\(0,1fr\)\] items-center gap-2\.5 sm:contents"/);
+
+  const cleanMobileBranch = primitives.slice(
+    primitives.indexOf("{useMainFlightLandingMobilePresentation ? ("),
+    primitives.indexOf(") : (", primitives.indexOf("{useMainFlightLandingMobilePresentation ? (")),
+  );
+  assert.match(cleanMobileBranch, /<MapPin/);
+  assert.match(cleanMobileBranch, /mobileLeadingIconClassName/);
+  assert.doesNotMatch(cleanMobileBranch, /<ChevronDown/);
+});
+
+test("multi-city date fields use the aligned 20px mobile icon value row and shared picker", () => {
+  assert.match(editor, /grid-cols-\[22px_minmax\(0,1fr\)\] items-center gap-2\.5 sm:flex sm:gap-2/);
+  assert.match(editor, /<Calendar className="h-5 w-5 shrink-0 text-slate-500 sm:h-4 sm:w-4"/);
+  assert.match(editor, /<MobileDatePickerDialog/);
+});
+
 test("multi-city enforces chronological dates and clears invalid downstream legs", () => {
   assert.match(editor, /legs\[index - 1\]\.departureDate \|\| minimumDate/);
   assert.match(editor, /next\[cursor\]\.departureDate < patch\.departureDate/);

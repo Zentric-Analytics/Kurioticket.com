@@ -402,6 +402,9 @@ function MultiCityAirportField({
         value={query}
         placeholder={t("cityOrAirport")}
         mobilePlaceholder={t("cityOrAirport")}
+        useMainFlightLandingMobilePresentation
+        mobileLeadingIconClassName="h-5 w-5 shrink-0 text-slate-500 sm:hidden"
+        mobileValueRowClassName="grid grid-cols-[22px_minmax(0,1fr)] items-center gap-2.5 sm:contents"
         open={open}
         onMobileOpen={openPicker}
         onDesktopFocus={() => onOpen({ legIndex, field, mode: "desktop" })}
@@ -482,8 +485,8 @@ function MultiCityDateField({
           onClick={openPicker}
           className={flightSearchFieldValueButtonClassName}
         >
-          <span className="flex min-w-0 flex-1 items-center gap-2">
-            <Calendar className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+          <span className="grid min-w-0 flex-1 grid-cols-[22px_minmax(0,1fr)] items-center gap-2.5 sm:flex sm:gap-2">
+            <Calendar className="h-5 w-5 shrink-0 text-slate-500 sm:h-4 sm:w-4" aria-hidden="true" />
             <span className={cn("truncate", !value && "text-slate-500")}>{summary}</span>
           </span>
         </button>

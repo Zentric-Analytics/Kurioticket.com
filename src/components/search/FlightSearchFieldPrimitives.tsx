@@ -21,6 +21,8 @@ type FlightAirportFieldControlProps = {
   placeholder: string;
   mobilePlaceholder: string;
   useMainFlightLandingMobilePresentation?: boolean;
+  mobileLeadingIconClassName?: string;
+  mobileValueRowClassName?: string;
   open: boolean;
   inputRef: React.RefObject<HTMLInputElement | null>;
   mobileLauncherRef: React.RefObject<HTMLButtonElement | null>;
@@ -43,6 +45,8 @@ export const FlightAirportFieldControl = React.forwardRef<
     placeholder,
     mobilePlaceholder,
     useMainFlightLandingMobilePresentation = false,
+    mobileLeadingIconClassName,
+    mobileValueRowClassName,
     open,
     inputRef,
     mobileLauncherRef,
@@ -70,8 +74,11 @@ export const FlightAirportFieldControl = React.forwardRef<
         className={cn(flightSearchFieldValueButtonClassName, "sm:hidden")}
       >
         {useMainFlightLandingMobilePresentation ? (
-          <span className="flex min-w-0 flex-1 items-center gap-2 sm:contents">
-            <MapPin className="h-4 w-4 shrink-0 text-slate-500 sm:hidden" aria-hidden="true" />
+          <span className={cn("flex min-w-0 flex-1 items-center gap-2 sm:contents", mobileValueRowClassName)}>
+            <MapPin
+              className={cn("h-4 w-4 shrink-0 text-slate-500 sm:hidden", mobileLeadingIconClassName)}
+              aria-hidden="true"
+            />
             <span className={cn("truncate", !value && "text-slate-400")}>
               {value || mobilePlaceholder}
             </span>
