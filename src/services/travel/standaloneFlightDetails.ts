@@ -262,17 +262,38 @@ export async function buildStandaloneFlightDetails({
   refresh?: RefreshExactFlightOffer;
   discoverUpsells?: (providerOfferId: string, search: FlightSearchParams) => Promise<ProviderResult<NormalizedFlightResult>>;
 }): Promise<FlightDetailsSuccess | { status: "unavailable"; error: string }> {
+  const detailsStartedAt = performance.now();
   if (!isFlightProviderOfferUsableAt(cachedSelected, now))
     return { status: "unavailable", error: unavailableMessage };
+  const selectedRefreshStartedAt = performance.now();
   const selected = await refresh({ cachedOffer: cachedSelected, search, now });
+  const selectedRefreshMs = performance.now() - selectedRefreshStartedAt;
   if (!selected.offer || !validatesSearchContext(selected.offer, search))
     return { status: "unavailable", error: unavailableMessage };
 
   const selectedOffer = selected.offer;
   const selectedIdentity = itineraryIdentity(selectedOffer);
-  const upsellResponse = selectedOffer.providerOfferId
-    ? await discoverUpsells(selectedOffer.providerOfferId, search)
-    : null;
+  const compatibleAlternatives = cachedAlternatives
+    .filter((offer) => offer.id !== cachedSelected.id)
+    .filter((offer) => providerBrandIdentity(offer))
+    .slice(0, 4);
+  const secondaryDiscoveryStartedAt = performance.now();
+  let upsellDiscoveryMs = 0;
+  let alternativeRefreshMs = 0;
+  const upsellStartedAt = performance.now();
+  const upsellPromise = (selectedOffer.providerOfferId
+    ? discoverUpsells(selectedOffer.providerOfferId, search)
+    : Promise.resolve(null)
+  ).finally(() => { upsellDiscoveryMs = performance.now() - upsellStartedAt; });
+  const alternativeStartedAt = performance.now();
+  const alternativeRefreshPromise = Promise.all(
+    compatibleAlternatives.map((cachedOffer) => refresh({ cachedOffer, search, now })),
+  ).finally(() => { alternativeRefreshMs = performance.now() - alternativeStartedAt; });
+  const [upsellResponse, alternativeResults] = await Promise.all([
+    upsellPromise,
+    alternativeRefreshPromise,
+  ]);
+  const secondaryDiscoveryMs = performance.now() - secondaryDiscoveryStartedAt;
   const upsells = (upsellResponse?.status === "success" ? upsellResponse.results : []).filter((offer) =>
     offer.provider.trim().toLowerCase() === selectedOffer.provider.trim().toLowerCase() &&
     validatesSearchContext(offer, search, { allowDifferentCabin: true }) &&
@@ -280,13 +301,6 @@ export async function buildStandaloneFlightDetails({
     Boolean(offer.providerExpiresAt && offer.providerExpiresAt > now) &&
     Boolean(offer.providerOfferId) &&
     itineraryIdentity(offer) === selectedIdentity,
-  );
-  const alternativeResults = await Promise.all(
-    cachedAlternatives
-      .filter((offer) => offer.id !== cachedSelected.id)
-      .filter((offer) => providerBrandIdentity(offer))
-      .slice(0, 4)
-      .map((cachedOffer) => refresh({ cachedOffer, search, now })),
   );
   const refreshedOffers = [
     selectedOffer,
@@ -314,6 +328,13 @@ export async function buildStandaloneFlightDetails({
   if (!initial) return { status: "unavailable", error: unavailableMessage };
   await rememberFlights([selectedOffer, ...upsells, ...refreshedOffers.slice(1)], now, search);
   console.info("[flight-details:fare-discovery]", {
+    selectedRefreshMs: Math.round(selectedRefreshMs),
+    upsellDiscoveryMs: Math.round(upsellDiscoveryMs),
+    alternativeRefreshMs: Math.round(alternativeRefreshMs),
+    secondaryDiscoveryMs: Math.round(secondaryDiscoveryMs),
+    totalDetailsMs: Math.round(performance.now() - detailsStartedAt),
+    upsellResultCount: upsells.length,
+    compatibleAlternativeCount: compatibleAlternatives.length,
     upsellAttempted: Boolean(selectedOffer.providerOfferId),
     providerStatusCategory: upsellResponse?.errorCategory ?? upsellResponse?.status ?? "not_attempted",
     providerLatencyMs: upsellResponse?.latencyMs ?? 0,

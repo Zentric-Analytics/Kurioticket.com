@@ -18,6 +18,7 @@ import {
 
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { FlightEditSearchDrawer, type FlightEditSearchValue } from "@/components/search/FlightEditSearchDrawer";
+import { FlightDetailsLoadingShell } from "@/components/results/flightDetails/FlightDetailsLoadingShell";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { canUseOfferAirlineLogo, compactFareTerms, resolveSegmentCarrierName } from "@/components/results/flightDetails/flightDetailsPresentation";
@@ -57,7 +58,9 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const [editSearchOpen, setEditSearchOpen] = useState(false);
   const editSearchLauncherRef = useRef<HTMLButtonElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const fareRailRef = useRef<HTMLDivElement>(null);
   const fareButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const initialFareAlignmentRef = useRef("");
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
@@ -93,6 +96,22 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const selectedOffer = selectedFare?.offer ?? available?.flight;
   const handoff = selectedFare?.handoff ?? available?.handoff ?? { available: false as const };
   const canContinue = Boolean(selectedOffer && handoff.available);
+
+  useEffect(() => {
+    if (fareChoices.length < 2 || window.matchMedia("(min-width: 640px)").matches) return;
+    const initialSelectedFareKey = fareChoices.find((fare) => fare.selectedOffer)?.key ?? fareChoices[0]?.key;
+    if (!initialSelectedFareKey || selectedFareKey !== initialSelectedFareKey) return;
+    const alignmentKey = `${id}:${reloadToken}:${initialSelectedFareKey}:${fareChoices.map((fare) => fare.key).join("|")}`;
+    if (initialFareAlignmentRef.current === alignmentKey) return;
+    const rail = fareRailRef.current;
+    const selectedIndex = fareChoices.findIndex((fare) => fare.key === initialSelectedFareKey);
+    const selectedElement = fareButtonRefs.current[selectedIndex];
+    if (!rail || !selectedElement) return;
+    const targetLeft = selectedElement.offsetLeft - (rail.clientWidth - selectedElement.offsetWidth) / 2;
+    const clampedLeft = Math.max(0, Math.min(targetLeft, rail.scrollWidth - rail.clientWidth));
+    rail.scrollTo({ left: clampedLeft, behavior: "auto" });
+    initialFareAlignmentRef.current = alignmentKey;
+  }, [fareChoices, id, reloadToken, selectedFareKey]);
 
   function selectFare(index: number) {
     const fare = fareChoices[index];
@@ -210,12 +229,12 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
             <div className="mt-5 space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} locale={locale} offerAirlineName={flight.airlineName} offerAirlineLogo={flight.airlineLogo} />)}</div>
 
             <h2 className="mb-3 mt-6 text-[18px] font-semibold leading-tight text-slate-950">Pick your fare</h2>
-            <div role="radiogroup" aria-label="Available fares" className={`min-w-0 ${fareChoices.length > 1 ? "flex touch-pan-x snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-2 pr-6 [scroll-padding-inline:0_1.5rem] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:touch-auto sm:snap-none sm:overflow-visible sm:pr-0 sm:pb-0" : "grid gap-3"} ${fareChoices.length === 1 ? "max-w-[270px]" : fareChoices.length === 2 ? "sm:grid-cols-2 lg:max-w-[632px]" : fareChoices.length === 3 ? "sm:grid-cols-2 md:grid-cols-3 lg:max-w-[954px]" : "sm:grid-cols-2 xl:max-w-[1276px] xl:grid-cols-4"}`}>
+            <div ref={fareRailRef} role="radiogroup" aria-label="Available fares" className={`min-w-0 ${fareChoices.length > 1 ? "flex touch-pan-x snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-2 pr-6 [scroll-padding-inline:0_1.5rem] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:touch-auto sm:snap-none sm:overflow-visible sm:pr-0 sm:pb-0" : "grid gap-3"} ${fareChoices.length === 1 ? "max-w-[270px]" : fareChoices.length === 2 ? "sm:grid-cols-2 lg:max-w-[632px]" : fareChoices.length === 3 ? "sm:grid-cols-2 md:grid-cols-3 lg:max-w-[954px]" : "sm:grid-cols-2 xl:max-w-[1276px] xl:grid-cols-4"}`}>
               {fareChoices.map((fare, index) => {
                 const selected = fare.key === selectedFare?.key;
                 const price = formatDisplayPrice({ amount: fare.offer.price, sourceCurrency: fare.offer.currency, displayCurrency: selectedOption.currency, convertUsdEstimate: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback });
                 const compactTerms = compactFareTerms(fare.distinguishingTerms, available.search.tripType);
-                return <button key={fare.key} ref={(element) => { fareButtonRefs.current[index] = element; }} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} onClick={() => selectFare(index)} onKeyDown={(event) => handleFareKeyDown(event, index)} className={`min-w-0 rounded-[10px] border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 ${fareChoices.length > 1 ? "w-[min(82vw,310px)] max-w-[310px] shrink-0 snap-start sm:w-full sm:shrink" : "w-[min(100%,270px)] max-w-[270px]"} ${selected ? "border-[1.5px] border-[#075EE8] bg-[#075EE8]/[0.02]" : "border-[#E2E8F0] bg-white hover:border-slate-300"}`}>
+                return <button key={fare.key} ref={(element) => { fareButtonRefs.current[index] = element; }} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} onClick={() => selectFare(index)} onKeyDown={(event) => handleFareKeyDown(event, index)} className={`min-w-0 rounded-[10px] border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 ${fareChoices.length > 1 ? "w-[min(78vw,275px)] max-w-[275px] shrink-0 snap-start sm:w-full sm:shrink" : "w-[min(100%,270px)] max-w-[270px]"} ${selected ? "border-[1.5px] border-[#075EE8] bg-[#075EE8]/[0.02]" : "border-[#E2E8F0] bg-white hover:border-slate-300"}`}>
                   <div className="flex items-start gap-2.5"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-[#075EE8]"><Luggage className="h-4 w-4" aria-hidden="true" /></span><div className="min-w-0"><p className="text-[13px] font-semibold text-slate-950">{fare.label}</p><p className="text-[20px] font-bold leading-5 text-[#075EE8] lg:text-[19px]" aria-label={price.ariaLabel}>{price.formatted}</p></div></div>
                   {compactTerms.length ? <ul className="mt-2 space-y-1">{compactTerms.map(({ term, text }, termIndex) => <FareTerm key={`${term.category}-${term.legDirection || "trip"}-${term.text}-${termIndex}`} term={term} text={text} compact />)}</ul> : null}
                 </button>;
@@ -355,7 +374,7 @@ function TripSidebar({ tripType, legs, route, date, tripLine, travelers, travele
   </aside>;
 }
 
-function FlightDetailsSkeleton({ resultsHref }: { resultsHref: string }) { return <main className="flex-1 bg-white py-7 sm:bg-[#F7F9FC]"><div className="mx-auto max-w-[1500px] px-0 sm:px-6 lg:px-8"><Link href={resultsHref} className="ml-4 inline-flex items-center gap-2 text-sm font-semibold text-[#075EE8] sm:ml-0"><ArrowLeft className="h-4 w-4" /> Back to results</Link><div role="status" aria-label="Loading flight details" className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7"><div className="h-[720px] animate-pulse border-y border-slate-200 bg-white sm:rounded-[15px] sm:border" /><div className="hidden h-[620px] animate-pulse rounded-[15px] border border-slate-200 bg-white lg:block" /><div className="h-32 animate-pulse border-y border-slate-200 bg-white sm:rounded-[10px] sm:border lg:hidden" /></div></div></main>; }
+function FlightDetailsSkeleton({ resultsHref }: { resultsHref: string }) { return <FlightDetailsLoadingShell resultsHref={resultsHref} />; }
 function FlightDetailsUnavailable({ resultsHref, message }: { resultsHref: string; message: string }) { return <main className="flex-1 bg-white py-10 sm:bg-[#F7F9FC]"><div className="mx-auto max-w-3xl px-0 sm:px-4"><Link href={resultsHref} className="ml-4 inline-flex items-center gap-2 text-sm font-semibold text-[#075EE8] sm:ml-0"><ArrowLeft className="h-4 w-4" /> Back to results</Link><section className="mt-4 border-y border-slate-200 bg-white p-6 sm:rounded-[15px] sm:border sm:p-8"><h1 className="text-xl font-bold">Flight quote unavailable</h1><p className="mt-2 text-sm text-slate-600">{message || "Please return to results and search again for current prices."}</p></section></div></main>; }
 
 function readTravelerSummary(search: { adults: number; children: number; infants: number; travelers: number }) { const { adults, children, infants } = search; const count = search.travelers; const parts = [adults ? `${adults} ${adults === 1 ? "adult" : "adults"}` : "", children ? `${children} ${children === 1 ? "child" : "children"}` : "", infants ? `${infants} ${infants === 1 ? "infant" : "infants"}` : ""].filter(Boolean); return { count, label: parts.join(", ") || "1 adult" }; }
