@@ -1,14 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { z } from "zod";
 import type { FlightResult, MobileSavedItem } from "../api/travelApi";
 import { canonicalSavedFlightDateTime } from "./savedFlightDateTime";
 import { flightSavedSignature, mapFlightToSaved, savedSignature } from "./savedMapping";
 
-const savedFlightApiContract = z.object({
-  departureTime: z.string().datetime({ offset: true }),
-  arrivalTime: z.string().datetime({ offset: true }),
-});
+const OFFSET_AWARE_ISO =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/;
+
+function assertSavedFlightApiDateContract(value: string) {
+  assert.match(value, OFFSET_AWARE_ISO);
+  assert.equal(Number.isFinite(Date.parse(value)), true);
+}
 
 test("canonicalizes provider-local, UTC, offset, and fractional itinerary values", () => {
   assert.equal(canonicalSavedFlightDateTime("2026-08-27T20:07"), "2026-08-27T20:07:00.000Z");
@@ -24,7 +26,7 @@ test("rejects malformed and impossible datetimes instead of manufacturing dates"
   }
 });
 
-test("Duffel local mapping passes the real API contract and keeps round-trip identity", () => {
+test("Duffel local mapping passes the Saved API datetime contract and keeps round-trip identity", () => {
   const flight = {
     id: "off_private_transient", provider: "Duffel", airlineName: "Duffel Airways", originAirport: "LOS", destinationAirport: "JNB",
     departureTime: "2026-08-27T20:07:00", arrivalTime: "2026-08-28T03:43:00", price: 900, currency: "USD",
@@ -32,7 +34,8 @@ test("Duffel local mapping passes the real API contract and keeps round-trip ide
   const createdPayload = mapFlightToSaved(flight);
   assert.equal(createdPayload.departureTime, "2026-08-27T20:07:00.000Z");
   assert.equal(createdPayload.arrivalTime, "2026-08-28T03:43:00.000Z");
-  assert.equal(savedFlightApiContract.safeParse(createdPayload).success, true);
+  assertSavedFlightApiDateContract(createdPayload.departureTime);
+  assertSavedFlightApiDateContract(createdPayload.arrivalTime);
   assert.equal((createdPayload.payload as { result: FlightResult }).result.departureTime, flight.departureTime);
   assert.equal((createdPayload.payload as { result: FlightResult }).result.arrivalTime, flight.arrivalTime);
 
