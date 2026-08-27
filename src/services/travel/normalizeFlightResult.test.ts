@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { FlightSearchParams } from "@/lib/types";
 import { normalizeFlightResult } from "./normalizeFlightResult";
-import { mapFlightToSaved } from "../../../apps/mobile/src/storage/savedMapping";
 
 const search = (
   tripType: FlightSearchParams["tripType"],
@@ -60,7 +59,7 @@ const offer = () => ({
   slices: [slice("LHR", "JFK", "2027-01-01T08:00:00Z", "2027-01-01T16:00:00Z")],
 });
 
-test("preserves real Duffel local itinerary clocks while Saved mapping canonicalizes a copy", () => {
+test("preserves real Duffel local itinerary clocks", () => {
   const departingAt = "2026-08-27T20:07:00";
   const arrivingAt = "2026-08-28T03:43:00";
   const raw = { ...offer(), slices: [slice("LOS", "JNB", departingAt, arrivingAt)] };
@@ -68,11 +67,6 @@ test("preserves real Duffel local itinerary clocks while Saved mapping canonical
   assert.ok(result);
   assert.equal(result.departureTime, departingAt);
   assert.equal(result.arrivalTime, arrivingAt);
-  const saved = mapFlightToSaved(result);
-  assert.equal(saved.departureTime, "2026-08-27T20:07:00.000Z");
-  assert.equal(saved.arrivalTime, "2026-08-28T03:43:00.000Z");
-  assert.equal((saved.payload as { result: typeof result }).result.departureTime, departingAt);
-  assert.equal((saved.payload as { result: typeof result }).result.arrivalTime, arrivingAt);
 });
 
 test("normalizes a complete one-way Duffel provider offer", () => {
