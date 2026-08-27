@@ -16,15 +16,20 @@ test("state priority distinguishes async loading, failure, raw empty, filtered e
 
 test("local sort and filters only derive displayed results and never set request loading", () => {
   const sortedBlock = screen.slice(screen.indexOf("const sorted = useMemo"), screen.indexOf("const flightOptions"));
+  const filterChangeBlock = screen.slice(screen.indexOf("const handleFlightFiltersChange"), screen.indexOf("const clearFlightFilters"));
   assert.match(sortedBlock, /filterAndSortFlights/);
   assert.doesNotMatch(sortedBlock, /setStatus|setRetry|load\(/);
   assert.match(screen, /onChange=\{setSort\}/);
-  assert.match(screen, /onChange=\{setFilters\}/);
+  assert.match(screen, /onChange=\{handleFlightFiltersChange\}/);
+  assert.match(filterChangeBlock, /setFilters\(next\)/);
+  assert.doesNotMatch(filterChangeBlock, /setStatus|setRetry|load\(/);
 });
 
 test("filtered empty clears only filters while preserving sort and canonical search params", () => {
-  assert.match(screen, /onClearFilters=\{\(\) => setFilters\(emptyFlightFilters\(\)\)\}/);
-  assert.doesNotMatch(screen, /onClearFilters=\{[^}]*setSort/);
+  const clearFiltersBlock = screen.slice(screen.indexOf("const clearFlightFilters"), screen.indexOf("const payload"));
+  assert.match(screen, /onClearFilters=\{clearFlightFilters\}/);
+  assert.match(clearFiltersBlock, /setFilters\(emptyFlightFilters\(\)\)/);
+  assert.doesNotMatch(clearFiltersBlock, /setSort|router\.|setRetry|setStatus/);
   assert.match(screen, /params=\{flightEditSearchParams\(params\)\}/);
   assert.match(stateUi, /No flights match your filters/);
   assert.match(stateUi, /filtered \? "Clear flight filters"/);
