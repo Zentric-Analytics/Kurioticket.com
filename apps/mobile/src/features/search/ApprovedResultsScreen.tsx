@@ -1578,9 +1578,9 @@ const s0 = StyleSheet.create({
   fareRow: { paddingTop: 2, flexDirection: "row", justifyContent: "flex-end" },
   actionColumn: { width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 3 },
   metadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 3, marginBottom: 4 },
-  metadataRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 4 },
-  metadataItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 3 },
-  metadataText: { flex: 1, minWidth: 0, fontSize: 9.5, lineHeight: 12.5 },
+  metadataRow: { width: "100%", flexDirection: "row", alignItems: "center" },
+  metadataItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 3 },
+  metadataText: { flexShrink: 1, minWidth: 0, fontSize: 9.5, lineHeight: 12.5 },
   hotelCard: {
     height: 234,
     borderWidth: 1,
