@@ -10,6 +10,17 @@ export function getCenteredFareScrollLeft({
   return Math.max(0, Math.min(targetLeft, Math.max(0, railScrollWidth - railClientWidth)));
 }
 
+export function formatItineraryDepartureDate(value: string, locale: string) {
+  const date = new Date(value.includes("T") ? value : `${value}T12:00:00`);
+  return Number.isNaN(date.getTime())
+    ? value
+    : new Intl.DateTimeFormat(locale, {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }).format(date);
+}
+
 export function resolveSegmentCarrierName(
   segment: FlightSegment,
   offerAirlineName: string,

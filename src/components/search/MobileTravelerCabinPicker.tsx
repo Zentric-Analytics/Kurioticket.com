@@ -38,6 +38,7 @@ type Props = {
   infants: number;
   cabinClass: MobileCabinClass;
   maximumTravelers?: number;
+  density?: "default" | "compact";
   strings: MobileTravelerCabinStrings;
   onAdultsChange: (value: number) => void;
   onChildrenChange: (value: number) => void;
@@ -62,17 +63,19 @@ export function MobileTravelerCabinPicker({
   infants,
   cabinClass,
   maximumTravelers = 9,
+  density = "default",
   strings,
   onAdultsChange,
   onChildrenChange,
   onInfantsChange,
   onCabinClassChange,
 }: Props) {
+  const compact = density === "compact";
   const total = adults + children + infants;
   const rows = [
-    { key: "adults", label: strings.adults, description: strings.adultDescription, count: adults, minimum: 1, icon: <UserRound className="h-[22px] w-[22px]" aria-hidden="true" /> },
-    { key: "children", label: strings.children, description: strings.childDescription, count: children, minimum: 0, icon: <ChildOutlineIcon className="h-[22px] w-[22px]" /> },
-    { key: "infants", label: strings.infants, description: strings.infantDescription, count: infants, minimum: 0, icon: <Baby className="h-[22px] w-[22px]" aria-hidden="true" /> },
+    { key: "adults", label: strings.adults, description: strings.adultDescription, count: adults, minimum: 1, icon: <UserRound className={compact ? "h-5 w-5" : "h-[22px] w-[22px]"} aria-hidden="true" /> },
+    { key: "children", label: strings.children, description: strings.childDescription, count: children, minimum: 0, icon: <ChildOutlineIcon className={compact ? "h-5 w-5" : "h-[22px] w-[22px]"} /> },
+    { key: "infants", label: strings.infants, description: strings.infantDescription, count: infants, minimum: 0, icon: <Baby className={compact ? "h-5 w-5" : "h-[22px] w-[22px]"} aria-hidden="true" /> },
   ] as const;
 
   const change = (key: (typeof rows)[number]["key"], direction: -1 | 1) => {
@@ -104,11 +107,11 @@ export function MobileTravelerCabinPicker({
             const canDecrease = row.count > row.minimum;
             const canIncrease = total < maximumTravelers && (row.key !== "infants" || infants < adults);
             return (
-              <div key={row.key} data-traveler-row={row.key} className="flex min-h-[82px] items-center gap-2 border-b border-slate-200 px-[14px] last:border-b-0">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#075EE8]/[0.06] text-[#075EE8]">{row.icon}</span>
+              <div key={row.key} data-traveler-row={row.key} className={cn("flex items-center gap-2 border-b border-slate-200 last:border-b-0", compact ? "min-h-[72px] px-3" : "min-h-[82px] px-[14px]")}>
+                <span className={cn("flex shrink-0 items-center justify-center rounded-full bg-[#075EE8]/[0.06] text-[#075EE8]", compact ? "h-9 w-9" : "h-10 w-10")}>{row.icon}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-bold text-slate-950">{row.label}</span>
-                  <span className="mt-0.5 block text-[12px] font-medium leading-[16px] text-slate-600">{row.description}</span>
+                  <span className={cn("block font-bold text-slate-950", compact ? "text-[13px]" : "text-[14px]")}>{row.label}</span>
+                  <span className={cn("mt-0.5 block font-medium text-slate-600", compact ? "text-[11px] leading-[15px]" : "text-[12px] leading-[16px]")}>{row.description}</span>
                 </span>
                 <span className="flex shrink-0 items-center gap-2">
                   <button type="button" aria-label={strings.decrease(row.label)} disabled={!canDecrease} onClick={() => change(row.key, -1)} className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full bg-transparent disabled:cursor-not-allowed">
@@ -116,7 +119,7 @@ export function MobileTravelerCabinPicker({
                       <Minus className="h-4 w-4" aria-hidden="true" />
                     </span>
                   </button>
-                  <span aria-live="polite" className="min-w-7 text-center text-[15px] font-bold tabular-nums text-slate-950">{row.count}</span>
+                  <span aria-live="polite" className={cn("min-w-7 text-center font-bold tabular-nums text-slate-950", compact ? "text-[14px]" : "text-[15px]")}>{row.count}</span>
                   <button type="button" aria-label={strings.increase(row.label)} disabled={!canIncrease} onClick={() => change(row.key, 1)} className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full bg-transparent disabled:cursor-not-allowed">
                     <span className={cn("inline-flex h-9 w-9 items-center justify-center rounded-full border bg-white", canIncrease ? "border-[#075EE8] text-[#075EE8]" : "border-slate-200 text-slate-300")}>
                       <Plus className="h-4 w-4" aria-hidden="true" />
@@ -131,13 +134,13 @@ export function MobileTravelerCabinPicker({
 
       <section className="mt-4" aria-labelledby="mobile-cabin-heading">
         <h3 id="mobile-cabin-heading" className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">{strings.cabinClass}</h3>
-        <div role="radiogroup" aria-labelledby="mobile-cabin-heading" className="grid h-[86px] grid-cols-3 overflow-hidden rounded-[10px] bg-white">
+        <div role="radiogroup" aria-labelledby="mobile-cabin-heading" className={cn("grid grid-cols-3 overflow-hidden rounded-[10px] bg-white", compact ? "h-[74px]" : "h-[86px]")}>
           {cabins.map(([value, label], index) => {
             const selected = cabinClass === value;
             return (
               <button key={value} type="button" role="radio" aria-checked={selected} onClick={() => onCabinClassChange(value)} className={cn("focus-ring relative flex min-w-0 flex-col items-center justify-center gap-1.5 border border-slate-200 bg-white px-1 text-[12px] font-semibold text-slate-950", index > 0 && "-ms-px", selected && "z-10 border-[#075EE8] bg-[#eff6ff] text-[#075EE8]") }>
                 {selected ? <span aria-hidden="true" className="absolute end-2 top-2 flex h-[21px] w-[21px] items-center justify-center rounded-full bg-[#075EE8] text-white"><Check className="h-[13px] w-[13px]" /></span> : null}
-                <Armchair className="h-[23px] w-[23px]" aria-hidden="true" />
+                <Armchair className={compact ? "h-5 w-5" : "h-[23px] w-[23px]"} aria-hidden="true" />
                 <span>{label}</span>
               </button>
             );
@@ -145,9 +148,9 @@ export function MobileTravelerCabinPicker({
         </div>
       </section>
 
-      <aside className="mt-4 flex items-center gap-2.5 rounded-[11px] bg-[#eff6ff] p-3 text-slate-900">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/70 text-[#075ee8]"><Lightbulb className="h-5 w-5" aria-hidden="true" /></span>
-        <p className="text-[13px] font-medium leading-[1.45]"><strong className="font-bold">{strings.tip}:</strong> {strings.baggageTip}</p>
+      <aside className={cn("mt-4 flex items-center rounded-[11px] bg-[#eff6ff] text-slate-900", compact ? "gap-2 p-2.5" : "gap-2.5 p-3")}>
+        <span className={cn("flex shrink-0 items-center justify-center rounded-full bg-white/70 text-[#075ee8]", compact ? "h-9 w-9" : "h-10 w-10")}><Lightbulb className={compact ? "h-[18px] w-[18px]" : "h-5 w-5"} aria-hidden="true" /></span>
+        <p className={cn("font-medium leading-[1.45]", compact ? "text-[12px]" : "text-[13px]")}><strong className="font-bold">{strings.tip}:</strong> {strings.baggageTip}</p>
       </aside>
     </div>
   );
