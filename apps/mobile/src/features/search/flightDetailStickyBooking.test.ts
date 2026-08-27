@@ -13,7 +13,7 @@ const hotelStickyStyles = styles.slice(styles.indexOf("  hotelSticky: {"), style
 test("sticky booking keeps the authoritative fare, total, canonical trip type, and only booking CTA", () => {
   assert.match(sticky, />Total</);
   assert.match(sticky, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.75\}[\s\S]*?\{formattedFare\}/);
-  assert.match(sticky, /\{header\.tripTypeLabel\}/);
+  assert.match(sticky, /\{priceBasis\.summary\}/);
   assert.doesNotMatch(sticky, />Round trip</);
   assert.match(sticky, /<Button label=\{`Continue to \$\{provider\}`\} onPress=\{handleProviderBooking\} \/>/);
   assert.equal(flightDetail.match(/onPress=\{handleProviderBooking\}/g)?.length, 1);
