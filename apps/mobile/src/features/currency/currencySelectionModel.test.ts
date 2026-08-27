@@ -102,7 +102,7 @@ test("the existing Currency screen wires filtering to loading and saving only to
   assert.match(screen, /const select = async \(currency: string\) =>[\s\S]*?await setCurrency\(currency\);/);
   assert.match(screen, /onPress=\{\(\) => void select\(currency\.code\)\}/);
   assert.doesNotMatch(screen, /setCurrencies\(Object\.keys\(payload\.rates\)/);
-  assert.match(screen, /accessibilityLabel=\{`\$\{currency\.name\}, \$\{currency\.code\}`\}/);
+  assert.match(screen, /accessibilityLabel=\{`\$\{currency\.code\}, \$\{currency\.name\}`\}/);
   assert.match(screen, /accessibilityState=\{\{ checked: selected === currency\.code \}\}/);
 });
 
@@ -120,7 +120,25 @@ test("Currency screen uses an unboxed three-column list and localized local sear
   assert.match(catalog, /currencySearch:"Buscar monedas"/);
   assert.match(catalog, /currencyEmpty:"No se encontraron monedas\."/);
   assert.match(screen, /currencySymbolColumn: \{ width: 54, flexShrink: 0/);
-  assert.match(screen, /currencyTrailing: \{ width: 28, flexShrink: 0/);
+  assert.match(screen, /currencyTrailing: \{ width: 30, flexShrink: 0/);
   assert.doesNotMatch(currencyScreen, />Save<|>Reset</);
   assert.equal(currencyScreen.match(/currencyRates\(\)/g)?.length, 1);
+});
+
+test("Currency rows match the Language list hierarchy and selected treatment", () => {
+  const screen = readFileSync("src/features/flow/SettingsScreens.tsx", "utf8");
+  const currencyScreen = screen.slice(screen.indexOf("export function CurrencyScreen"), screen.indexOf("const styles"));
+
+  assert.match(currencyScreen, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.7\}/);
+  assert.match(currencyScreen, /\{currency\.symbol\}<\/Text>/);
+  assert.match(currencyScreen, /styles\.currencyCode[^>]*>\{currency\.code\}<\/Text>/);
+  assert.match(currencyScreen, /styles\.currencyName[^>]*>\{currency\.name\}<\/Text>/);
+  assert.match(currencyScreen, /backgroundColor: theme\.priceAlertSurface/);
+  assert.match(currencyScreen, /selected === currency\.code \? <FlowIcon name="check" color="#0754F7" \/> : null/);
+  assert.match(currencyScreen, /style=\{\[styles\.currencyRow, \{ borderBottomColor: theme\.border \}/);
+  assert.match(screen, /currencyRow: \{ minHeight: 74,[^}]*borderBottomWidth: StyleSheet\.hairlineWidth/);
+  assert.match(screen, /currencyCode: \{ fontSize: 16, fontWeight: "700" \}/);
+  assert.match(screen, /currencyName: \{ fontSize: 14, lineHeight: 19, marginTop: 3 \}/);
+  assert.doesNotMatch(currencyScreen, /styles\.card/);
+  assert.doesNotMatch(currencyScreen, />Save<|>Reset</);
 });
