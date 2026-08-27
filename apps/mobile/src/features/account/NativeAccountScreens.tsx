@@ -74,12 +74,21 @@ export function TravelPreferencesScreen() {
       setConfirmation(current => current === next ? null : current);
     }, 2000);
   }, []);
-  const closeSelectors = useCallback(() => {
+  const closeAirportSelector = useCallback(() => {
     airportRequestVersion.current += 1;
-    setAirportQuery(""); setAirlineQuery("");
-    setAirportResults([]); setAirportSearchStatus("idle");
-    setAirportOpen(false); setAirlineOpen(false);
+    setAirportQuery("");
+    setAirportResults([]);
+    setAirportSearchStatus("idle");
+    setAirportOpen(false);
   }, []);
+  const closeAirlineSelector = useCallback(() => {
+    setAirlineQuery("");
+    setAirlineOpen(false);
+  }, []);
+  const closeSelectors = useCallback(() => {
+    closeAirportSelector();
+    closeAirlineSelector();
+  }, [closeAirlineSelector, closeAirportSelector]);
   const load = useCallback(async () => {
     if (!await requireAccount("/travel-preferences")) return;
     const started = beginLoad(stateRef.current); setErrorAction(null); commit(started.state);
@@ -111,11 +120,12 @@ export function TravelPreferencesScreen() {
       setAirportResults([]); setAirportSearchStatus("idle");
       return undefined;
     }
+    setAirportResults([]);
+    setAirportSearchStatus("searching");
     const controller = new AbortController();
     const version = ++airportRequestVersion.current;
     const timer = setTimeout(() => {
       if (version !== airportRequestVersion.current) return;
-      setAirportSearchStatus("searching");
       void searchTravelAirports(query, { signal: controller.signal }).then(results => {
         if (version !== airportRequestVersion.current || controller.signal.aborted) return;
         setAirportResults(results); setAirportSearchStatus("success");
@@ -156,18 +166,18 @@ export function TravelPreferencesScreen() {
   return <Shell title={t("travelPreferences")}><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>{state.loading && !hasLoaded ? <ActivityIndicator /> : !hasLoaded && state.error ? <ErrorNotice text={state.error} retry={() => void load()} /> : <>
     <View style={s.preferenceSection}><Text style={[s.label, { color: theme.text }]}>{t("homeAirport")}</Text>
       <View style={[s.selector, { borderColor: theme.border, backgroundColor: theme.surface }]}>
-        {value.homeAirport && !airportOpen ? <View style={s.selectedAirport}><Pressable accessibilityRole="button" accessibilityLabel={`${t("homeAirport")}: ${selectedAirport ? `${selectedAirport.code}, ${selectedAirport.airport}, ${selectedAirport.city}, ${selectedAirport.country}` : value.homeAirport}`} onPress={() => { setAirportQuery(airportSearchValue); setAirportOpen(true); }} style={s.selectorValue}><Text style={[s.selectorPrimary, { color: theme.text }]}>{selectedAirport?.code ?? value.homeAirport}</Text>{selectedAirport ? <><Text style={[s.selectorSecondary, { color: theme.text }]}>{selectedAirport.airport}</Text><Text style={[s.help, { color: theme.muted }]}>{selectedAirport.city}, {selectedAirport.country}</Text></> : null}</Pressable><Pressable accessibilityRole="button" accessibilityLabel={`${t("clear")} ${t("homeAirport")}`} onPress={() => { change({ ...value, homeAirport: "" }); closeSelectors(); }} style={s.clearButton}><Text style={[s.clearIcon, { color: theme.muted }]}>×</Text></Pressable></View> :
-        <TextInput accessibilityLabel={t("airportSearch")} autoFocus={airportOpen} selectTextOnFocus={Boolean(value.homeAirport)} autoCapitalize="characters" autoCorrect={false} placeholder={t("airportSearch")} placeholderTextColor={theme.muted} value={airportQuery} onFocus={() => setAirportOpen(true)} onBlur={() => { if (value.homeAirport && (!airportQuery.trim() || airportQuery === airportSearchValue)) closeSelectors(); }} onChangeText={query => { setAirportQuery(query); setAirportOpen(true); }} style={[s.selectorInput, { color: theme.text }]} />}</View>
+        {value.homeAirport && !airportOpen ? <View style={s.selectedAirport}><Pressable accessibilityRole="button" accessibilityLabel={`${t("homeAirport")}: ${selectedAirport ? `${selectedAirport.code}, ${selectedAirport.airport}, ${selectedAirport.country ? `${selectedAirport.city}, ${selectedAirport.country}` : selectedAirport.city}` : value.homeAirport}`} onPress={() => { setAirportQuery(airportSearchValue); setAirportResults([]); setAirportSearchStatus("searching"); setAirportOpen(true); }} style={s.selectorValue}><Text style={[s.selectorPrimary, { color: theme.text }]}>{selectedAirport?.code ?? value.homeAirport}</Text>{selectedAirport ? <><Text style={[s.selectorSecondary, { color: theme.text }]}>{selectedAirport.airport}</Text><Text style={[s.help, { color: theme.muted }]}>{selectedAirport.country ? `${selectedAirport.city}, ${selectedAirport.country}` : selectedAirport.city}</Text></> : null}</Pressable><Pressable accessibilityRole="button" accessibilityLabel={`${t("clear")} ${t("homeAirport")}`} onPress={() => { change({ ...value, homeAirport: "" }); closeAirportSelector(); }} style={s.clearButton}><Text style={[s.clearIcon, { color: theme.muted }]}>×</Text></Pressable></View> :
+        <TextInput accessibilityLabel={t("airportSearch")} autoFocus={airportOpen} selectTextOnFocus={Boolean(value.homeAirport)} autoCapitalize="characters" autoCorrect={false} placeholder={t("airportSearch")} placeholderTextColor={theme.muted} value={airportQuery} onFocus={() => setAirportOpen(true)} onBlur={() => { setTimeout(closeAirportSelector, 0); }} onChangeText={query => { setAirportQuery(query); setAirportResults([]); setAirportSearchStatus(query.trim() ? "searching" : "idle"); setAirportOpen(true); }} style={[s.selectorInput, { color: theme.text }]} />}</View>
       {airportStatus === "searching" ? <Text accessibilityLiveRegion="polite" style={[s.help, { color: theme.muted }]}>{t("airportSearching")}</Text> : null}
       {airportStatus === "success" && airportResults.length === 0 ? <Text accessibilityLiveRegion="polite" style={[s.help, { color: theme.muted }]}>{t("airportNoResults")}</Text> : null}
       {airportStatus === "error" ? <Text accessibilityRole="alert" style={s.error}>{t("airportSearchError")}</Text> : null}
-      {airportResults.length ? <View style={[s.suggestions, { borderColor: theme.border }]}>{airportResults.map(airport => <Pressable key={airport.code} accessibilityRole="button" accessibilityLabel={`${airport.code}, ${airport.airport}, ${airport.city}, ${airport.country}`} accessibilityState={{ selected: value.homeAirport === airport.code }} onPress={() => { setSelectedLiveAirport(airport); change({ ...value, homeAirport: airport.code }); closeSelectors(); Keyboard.dismiss(); }} style={[s.option, { borderColor: theme.border }]}><Text style={[s.question, { color: theme.text }]}>{airport.code} · {airport.airport}</Text><Text style={[s.help, { color: theme.muted }]}>{airport.city}, {airport.country}</Text></Pressable>)}</View> : null}
+      {airportStatus === "success" && airportResults.length ? <View style={[s.suggestions, { borderColor: theme.border }]}>{airportResults.map(airport => <Pressable key={airport.code} accessibilityRole="button" accessibilityLabel={`${airport.code}, ${airport.airport}, ${airport.country ? `${airport.city}, ${airport.country}` : airport.city}`} accessibilityState={{ selected: value.homeAirport === airport.code }} onPress={() => { setSelectedLiveAirport(airport); change({ ...value, homeAirport: airport.code }); closeAirportSelector(); Keyboard.dismiss(); }} style={[s.option, { borderColor: theme.border }]}><Text style={[s.question, { color: theme.text }]}>{airport.code} · {airport.airport}</Text><Text style={[s.help, { color: theme.muted }]}>{airport.country ? `${airport.city}, ${airport.country}` : airport.city}</Text></Pressable>)}</View> : null}
     </View>
-    <View style={s.preferenceSection}><View style={s.sectionHeading}><Text style={[s.label, { color: theme.text }]}>{t("preferredAirlines")}</Text>{value.preferredAirlines.length ? <Pressable accessibilityRole="button" onPress={() => { change({ ...value, preferredAirlines: [] }); setAirlineQuery(""); setAirlineOpen(false); }} style={s.subtleAction}><Text style={s.link}>{t("clearAll")}</Text></Pressable> : null}</View>
+    <View style={s.preferenceSection}><View style={s.sectionHeading}><Text style={[s.label, { color: theme.text }]}>{t("preferredAirlines")}</Text>{value.preferredAirlines.length ? <Pressable accessibilityRole="button" onPress={() => { change({ ...value, preferredAirlines: [] }); closeAirlineSelector(); }} style={s.subtleAction}><Text style={s.link}>{t("clearAll")}</Text></Pressable> : null}</View>
       <Text accessibilityLiveRegion="polite" style={[s.help, { color: theme.muted }]}>{t("airlineSelectedCount").replace("{{count}}", String(value.preferredAirlines.length))}</Text>
       <Text style={[s.help, { color: theme.muted }]}>{t("airlineChooseHelp")}</Text>
-      <View style={[s.selector, s.multiSelector, { borderColor: theme.border, backgroundColor: theme.surface }]}>{value.preferredAirlines.map(code => { const label = airlinePreferenceLabel(code, airlines); return <Pressable key={code} accessibilityRole="button" accessibilityLabel={`${t("remove")} ${label}`} onPress={() => change({ ...value, preferredAirlines: value.preferredAirlines.filter(item => item !== code) })} style={[s.selectedChip, { borderColor: theme.border }]}><Text style={[s.chipText, { color: theme.text }]}>{label} ×</Text></Pressable>; })}<TextInput accessibilityLabel={t("airlineSearch")} editable={value.preferredAirlines.length < 10} placeholder={value.preferredAirlines.length >= 10 ? undefined : t("airlineSearch")} placeholderTextColor={theme.muted} value={airlineQuery} onFocus={() => setAirlineOpen(true)} onBlur={() => { if (!airlineQuery.trim()) setAirlineOpen(false); }} onChangeText={query => { setAirlineQuery(query); setAirlineOpen(true); }} style={[s.multiInput, { color: theme.text }]} /></View>
-      {airlineResults.length ? <View style={[s.suggestions, { borderColor: theme.border }]}>{airlineResults.map(airline => <Pressable key={airline.code} accessibilityRole="button" accessibilityLabel={`${airline.name}, ${airline.code}`} onPress={() => { change({ ...value, preferredAirlines: addAirline(value.preferredAirlines, airline.code) }); setAirlineQuery(""); setAirlineOpen(false); Keyboard.dismiss(); }} style={[s.option, { borderColor: theme.border }]}><Text style={[s.question, { color: theme.text }]}>{airline.name} ({airline.code})</Text></Pressable>)}</View> : null}
+      <View style={[s.selector, s.multiSelector, { borderColor: theme.border, backgroundColor: theme.surface }]}>{value.preferredAirlines.map(code => { const label = airlinePreferenceLabel(code, airlines); return <Pressable key={code} accessibilityRole="button" accessibilityLabel={`${t("remove")} ${label}`} onPress={() => change({ ...value, preferredAirlines: value.preferredAirlines.filter(item => item !== code) })} style={[s.selectedChip, { borderColor: theme.border }]}><Text style={[s.chipText, { color: theme.text }]}>{label} ×</Text></Pressable>; })}<TextInput accessibilityLabel={t("airlineSearch")} editable={value.preferredAirlines.length < 10} placeholder={value.preferredAirlines.length >= 10 ? undefined : t("airlineSearch")} placeholderTextColor={theme.muted} value={airlineQuery} onFocus={() => setAirlineOpen(true)} onBlur={() => { setTimeout(closeAirlineSelector, 0); }} onChangeText={query => { setAirlineQuery(query); setAirlineOpen(true); }} style={[s.multiInput, { color: theme.text }]} /></View>
+      {airlineResults.length ? <View style={[s.suggestions, { borderColor: theme.border }]}>{airlineResults.map(airline => <Pressable key={airline.code} accessibilityRole="button" accessibilityLabel={`${airline.name}, ${airline.code}`} onPress={() => { change({ ...value, preferredAirlines: addAirline(value.preferredAirlines, airline.code) }); closeAirlineSelector(); Keyboard.dismiss(); }} style={[s.option, { borderColor: theme.border }]}><Text style={[s.question, { color: theme.text }]}>{airline.name} ({airline.code})</Text></Pressable>)}</View> : null}
       {value.preferredAirlines.length >= 10 ? <Text accessibilityRole="alert" style={s.error}>{t("airlineMaximum")}</Text> : null}
     </View>
     {state.error ? <ErrorNotice text={state.error} retry={errorAction === "save" ? () => void save() : () => void load()} /> : null}
