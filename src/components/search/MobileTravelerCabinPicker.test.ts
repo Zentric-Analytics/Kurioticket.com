@@ -47,31 +47,19 @@ test("tip and accessible counters follow the approved contract", () => {
   assert.match(picker, /aria-live="polite"/);
 });
 
-test("shared picker protects the moderate mobile size contract", () => {
-  assert.match(picker, /min-h-\[82px\]/);
-  assert.match(picker, /h-10 w-10 shrink-0/);
-  assert.match(picker, /icon: <UserRound className="h-\[22px\] w-\[22px\]"/);
-  assert.match(picker, /icon: <ChildOutlineIcon className="h-\[22px\] w-\[22px\]"/);
-  assert.match(picker, /icon: <Baby className="h-\[22px\] w-\[22px\]"/);
-  assert.match(picker, /text-\[14px\] font-bold/);
-  assert.match(picker, /text-\[12px\][^\n]*leading-\[16px\]/);
+test("shared picker preserves default sizing and offers compact content with accessible controls", () => {
+  assert.match(picker, /density\?: "default" \| "compact"/);
+  assert.match(picker, /density = "default"/);
+  assert.match(picker, /compact \? "min-h-\[72px\] px-3" : "min-h-\[82px\] px-\[14px\]"/);
+  assert.match(picker, /compact \? "h-9 w-9" : "h-10 w-10"/);
+  assert.match(picker, /compact \? "h-5 w-5" : "h-\[22px\] w-\[22px\]"/);
+  assert.match(picker, /compact \? "text-\[13px\]" : "text-\[14px\]"/);
+  assert.match(picker, /compact \? "text-\[11px\] leading-\[15px\]" : "text-\[12px\] leading-\[16px\]"/);
   assert.match(picker, /inline-flex h-11 w-11 items-center/);
-  assert.match(picker, /inline-flex h-9 w-9 items-center/);
-  assert.match(picker, /<Minus className="h-4 w-4"/);
-  assert.match(picker, /<Plus className="h-4 w-4"/);
-  assert.match(picker, /min-w-7 text-center text-\[15px\]/);
-  assert.match(picker, /grid h-\[86px\] grid-cols-3/);
-  assert.match(picker, /<Armchair className="h-\[23px\] w-\[23px\]"/);
-  assert.match(picker, /end-2 top-2 flex h-\[21px\] w-\[21px\]/);
-  assert.match(picker, /flex h-10 w-10 shrink-0/);
-  assert.match(picker, /<Lightbulb className="h-5 w-5"/);
-  assert.match(picker, /bg-\[#eff6ff\] p-3/);
-
-  assert.doesNotMatch(picker, /min-h-\[106px\]/);
-  assert.doesNotMatch(picker, /h-14 w-14/);
-  assert.doesNotMatch(picker, /h-8 w-8/);
-  assert.doesNotMatch(picker, /h-\[118px\]/);
-  assert.doesNotMatch(picker, /h-12 w-12/);
+  assert.match(picker, /compact \? "h-\[74px\]" : "h-\[86px\]"/);
+  assert.match(picker, /compact \? "h-5 w-5" : "h-\[23px\] w-\[23px\]"/);
+  assert.match(picker, /compact \? "gap-2 p-2.5" : "gap-2.5 p-3"/);
+  assert.match(picker, /compact \? "h-\[18px\] w-\[18px\]" : "h-5 w-5"/);
 });
 
 test("traveler icons and enabled counters use restrained Kurioticket blue", () => {
@@ -82,8 +70,8 @@ test("traveler icons and enabled counters use restrained Kurioticket blue", () =
 });
 
 test("cabin segments own overlapping borders while the clipped parent has no competing outline", () => {
-  assert.match(picker, /grid h-\[86px\] grid-cols-3 overflow-hidden rounded-\[10px\] bg-white/);
-  assert.doesNotMatch(picker, /grid h-\[86px\] grid-cols-3[^\n"]*border border-slate-200/);
+  assert.match(picker, /grid grid-cols-3 overflow-hidden rounded-\[10px\] bg-white/);
+  assert.doesNotMatch(picker, /grid grid-cols-3[^\n"]*border border-slate-200/);
   assert.match(picker, /gap-1\.5 border border-slate-200 bg-white px-1/);
   assert.match(picker, /index > 0 && "-ms-px"/);
   assert.doesNotMatch(picker, /border-s border-slate-200/);

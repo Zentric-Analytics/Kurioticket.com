@@ -4,7 +4,7 @@ import test, { afterEach } from "node:test";
 
 import type { FlightSearchParams, NormalizedFlightResult } from "@/lib/types";
 import { flightDetailsRouteLabel, flightDetailsTotalLabel } from "@/lib/flights/flightDetailsContract";
-import { buildFareDisplayRows, canUseOfferAirlineLogo, compactFareTerms, getCenteredFareScrollLeft, resolveSegmentCarrierName } from "@/components/results/flightDetails/flightDetailsPresentation";
+import { buildFareDisplayRows, canUseOfferAirlineLogo, compactFareTerms, formatItineraryDepartureDate, getCenteredFareScrollLeft, resolveSegmentCarrierName } from "@/components/results/flightDetails/flightDetailsPresentation";
 import {
   buildMaterialFareChoices,
   buildStandaloneFlightDetails,
@@ -491,7 +491,7 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.match(source, /useState<FareTab>\("deals"\)/);
   assert.match(source, /role="tabpanel"/);
   assert.match(source, /ArrowRight.*ArrowLeft/s);
-  assert.match(source, /flex min-w-0 flex-nowrap gap-2 overflow-x-auto/);
+  assert.match(source, /flex min-w-0 flex-nowrap gap-1 overflow-x-auto/);
   assert.match(source, /min-h-11 w-auto shrink-0 whitespace-nowrap border-b-2/);
   assert.match(source, /\[scrollbar-width:none\]/);
   assert.doesNotMatch(source, />Selected<\/span>/);
@@ -508,7 +508,7 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.doesNotMatch(source, /: "w-full"/);
   assert.doesNotMatch(source, /min-h-\[126px\]/);
   assert.doesNotMatch(source, /min-h-\[(?:1[2-9]\d|[2-9]\d\d)px\]/);
-  assert.match(source, /w-\[min\(78vw,275px\)\] max-w-\[275px\] shrink-0 snap-start/);
+  assert.match(source, /w-\[min\(78vw,275px\)\] max-w-\[275px\] shrink-0 snap-center/);
   assert.doesNotMatch(source, /310px\)\] max-w-\[310px\]/);
   assert.match(source, /min-w-0 rounded-\[10px\]/);
   assert.match(source, /whitespace-normal break-words \[overflow-wrap:anywhere\].*\[word-break:normal\]/);
@@ -628,10 +628,11 @@ test("Flight Details mobile cleanup uses shared editing, peek tabs, and fare car
   assert.match(source, /<FlightEditSearchDrawer/);
   assert.match(source, /ref=\{editSearchLauncherRef\}[\s\S]*?sm:hidden/);
   assert.match(source, /<Link href=\{resultsHref\}[\s\S]*?Back to results/);
-  assert.match(source, /flex-nowrap gap-2 overflow-x-auto/);
+  assert.match(source, /flex-nowrap gap-1 overflow-x-auto/);
   assert.match(source, /w-auto shrink-0 whitespace-nowrap border-b-2/);
   assert.doesNotMatch(source, /w-\[30%\] min-w-\[105px\]/);
   assert.match(source, /Optional extras/);
+  assert.match(source, /px-1 text-center text-\[11px\].*min-\[390px\]:text-xs.*sm:text-sm/);
   assert.match(source, /flex snap-x snap-mandatory gap-3/);
   assert.match(source, /overflow-x-auto overflow-y-hidden/);
   const fareRailClasses = source.match(/fareChoices\.length > 1 \? "([^"]+)"/)?.[1] ?? "";
@@ -657,4 +658,14 @@ test("fare centering is rail-relative and clamps only at real edges", () => {
   assert.equal(getCenteredFareScrollLeft({ ...geometry, selectedLeft: 315 }), 257.5);
   assert.equal(getCenteredFareScrollLeft({ ...geometry, selectedLeft: 32 }), 0);
   assert.equal(getCenteredFareScrollLeft({ ...geometry, selectedLeft: 598 }), 491);
+});
+
+
+test("itinerary headers use authoritative per-leg dates with a localized year", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  assert.equal(formatItineraryDepartureDate("2026-10-16", "en-US"), "Oct 16, 2026");
+  assert.match(source, /departureDate=\{available\.search\.legs\[index\]\?\.departureDate \?\? leg\.departureTime\.slice\(0, 10\)\}/);
+  assert.match(source, /<time dateTime=\{departureDate\}/);
+  assert.match(source, /formatItineraryDepartureDate\(departureDate, locale\)/);
+  assert.match(source, /available\.search\.tripType === "multi-city" \? `FLIGHT \$\{index \+ 1\}`/);
 });
