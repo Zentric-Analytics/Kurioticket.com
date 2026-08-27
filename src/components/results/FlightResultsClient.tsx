@@ -47,6 +47,8 @@ import { FlightCard } from "@/components/results/FlightCard";
 import { DesktopFlightFilters } from "@/components/results/DesktopFlightFilters";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
+import { MobileTravelerCabinPicker } from "@/components/search/MobileTravelerCabinPicker";
 import { Button } from "@/components/ui/Button";
 import { FlightCardSkeleton } from "@/components/ui/Skeleton";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -124,6 +126,7 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import {
   formatFlightsDateSummary,
   formatFlightsMonthHeading,
+  formatFlightsWeekdays,
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
 
@@ -912,6 +915,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const calendarLocale = useMemo(
     () => normalizeFlightResultsCalendarLocale(locale),
     [locale],
+  );
+  const weekdays = useMemo(
+    () => formatFlightsWeekdays(calendarLocale),
+    [calendarLocale],
   );
   const airportPickerLabels = useMemo(
     () => ({
@@ -2130,25 +2137,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setDatePickerPosition(null);
   }
 
-  function commitMobileDatePicker() {
-    const nextDepartureDate = draftMobileDepartureDate.trim();
-    const nextReturnDate = draftMobileReturnDate.trim();
-    const hasValidDepartureDate =
-      isValidFutureOrTodayDateValue(nextDepartureDate);
-    const hasValidReturnDate =
-      tripTypeInput !== "round-trip" ||
-      (isValidFutureOrTodayDateValue(nextReturnDate) &&
-        !isDateValueBefore(nextReturnDate, nextDepartureDate));
-
-    if (!hasValidDepartureDate || !hasValidReturnDate) return;
-
-    setDepartureDateInput(nextDepartureDate);
-    setReturnDateInput(tripTypeInput === "round-trip" ? nextReturnDate : "");
-    setActiveDatePicker(null);
-    setDatePickerPosition(null);
-    restoreMobileSearchScrollPosition();
-  }
-
   function getMissingMobileDatePicker() {
     if (!departureDateInput.trim()) return "departure";
 
@@ -3188,29 +3176,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setDestinationCode(currentOriginCode);
     setActiveSuggest(null);
     setDropdownPosition(null);
-  }
-
-  function applyMobileFlightDateSelection(date: Date) {
-    if (!activeDatePicker) return;
-
-    markExpandedSearchInteraction();
-
-    const nextDateState = getNextFlightDateSelection({
-      activePicker: activeDatePicker,
-      date,
-      departureDate: draftMobileDepartureDate,
-      returnDate: draftMobileReturnDate,
-      tripType: tripTypeInput,
-    });
-
-    if (!nextDateState) return;
-
-    setDraftMobileDepartureDate(nextDateState.departureDate);
-    setDraftMobileReturnDate(nextDateState.returnDate);
-
-    if (nextDateState.activePicker) {
-      setActiveDatePicker(nextDateState.activePicker);
-    }
   }
 
   function applyFlightDateSelection(date: Date) {
@@ -5673,99 +5638,99 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     );
   }
 
-  function renderCompactSearchPopovers(
-    placement: "mobile" | "desktop" = "desktop",
-  ) {
-    const useMobileSheet = placement === "mobile";
+  function renderMobileSearchPickers() {
     return (
       <>
-        {activeDatePicker && (useMobileSheet || datePickerPosition) ? (
-          <DatePickerPopover
-            position={datePickerPosition ?? { top: 0, left: 0, width: 0 }}
-            mobileSheet={useMobileSheet}
-            launcherRef={useMobileSheet ? departureWrapRef : undefined}
-            onClose={
-              useMobileSheet
-                ? closeMobileDatePicker
-                : () => {
-                    setActiveDatePicker(null);
-                    setDatePickerPosition(null);
-                  }
-            }
-            month={calendarMonth}
-            departureValue={
-              useMobileSheet ? draftMobileDepartureDate : departureDateInput
-            }
-            returnValue={
-              useMobileSheet ? draftMobileReturnDate : returnDateInput
-            }
-            activePicker={activeDatePicker}
-            tripType={tripTypeInput}
-            doneDisabled={
-              useMobileSheet &&
-              (!isValidFutureOrTodayDateValue(draftMobileDepartureDate) ||
-                (tripTypeInput === "round-trip" &&
-                  (!isValidFutureOrTodayDateValue(draftMobileReturnDate) ||
-                    isDateValueBefore(
-                      draftMobileReturnDate,
-                      draftMobileDepartureDate,
-                    ))))
-            }
-            onMonthChange={setCalendarMonth}
-            onSelect={
-              useMobileSheet
-                ? applyMobileFlightDateSelection
-                : applyFlightDateSelection
-            }
-            onClear={() => {
-              if (activeDatePicker === "departure") {
-                if (useMobileSheet) {
-                  setDraftMobileDepartureDate("");
-                  setDraftMobileReturnDate("");
-                } else {
-                  setDepartureDateInput("");
-                  setReturnDateInput("");
-                }
-              }
-
-              if (activeDatePicker === "return") {
-                if (useMobileSheet) setDraftMobileReturnDate("");
-                else setReturnDateInput("");
-              }
+        {activeDatePicker ? (
+          <MobileDatePickerDialog
+            open={true}
+            title={t("chooseTravelDates")}
+            titleId="results-flight-mobile-dates-title"
+            launcherRef={departureWrapRef}
+            startDate={draftMobileDepartureDate}
+            endDate={draftMobileReturnDate}
+            rangeRequired={tripTypeInput === "round-trip"}
+            locale={calendarLocale}
+            weekdays={weekdays}
+            labels={{
+              selectDates: t("carsResults.selectDates") || "Select dates",
+              start: t("mobileDatePicker.start") || "Start",
+              end: t("mobileDatePicker.end") || "End",
+              done: t("done") || "Done",
+              selectDatePrefix: t("selectDateAriaPrefix") || "Select",
             }}
-            onToday={
-              useMobileSheet
-                ? commitMobileDatePicker
-                : () => {
-                    setActiveDatePicker(null);
-                    setDatePickerPosition(null);
-                  }
-            }
+            isDateDisabled={isPastLocalDate}
+            onCommit={(startDate, endDate) => {
+              setDraftMobileDepartureDate(startDate);
+              setDraftMobileReturnDate(endDate);
+              setDepartureDateInput(startDate);
+              setReturnDateInput(tripTypeInput === "round-trip" ? endDate : "");
+            }}
+            onClose={closeMobileDatePicker}
           />
         ) : null}
 
-        {travelerPopoverOpen && (useMobileSheet || travelerPopoverPosition) ? (
-          <TravelerCabinPopover
-            position={travelerPopoverPosition ?? { top: 0, left: 0, width: 0 }}
-            mobileSheet={useMobileSheet}
-            launcherRef={useMobileSheet ? travelerCabinWrapRef : undefined}
-            onClose={
-              useMobileSheet
-                ? closeMobileTravelerPopover
-                : () => {
-                    setTravelerPopoverOpen(false);
-                    setTravelerPopoverPosition(null);
-                  }
-            }
-            onDone={useMobileSheet ? commitMobileTravelerPopover : undefined}
-            adultCount={useMobileSheet ? draftAdultCount : adultCount}
-            childCount={useMobileSheet ? draftChildCount : childCount}
-            infantCount={useMobileSheet ? draftInfantCount : infantCount}
-            cabinClass={useMobileSheet ? draftCabinClassInput : cabinClassInput}
-            onAdultChange={(nextValue) => {
-              const nextAdultCount = Math.min(9, Math.max(1, nextValue));
-
-              if (useMobileSheet) {
+        {travelerPopoverOpen ? (
+          <FlightMobilePickerShell
+            open={true}
+            title={t("mobileTravelerCabin.title") || "Travelers & Cabin"}
+            titleId="results-flight-mobile-travelers-title"
+            launcherRef={travelerCabinWrapRef}
+            onClose={closeMobileTravelerPopover}
+            contentClassName="bg-[#fcfdfe] px-4 py-6"
+            headerVariant="close"
+            pickerMarker="traveler-cabin"
+            footer={(requestClose) => (
+              <button
+                type="button"
+                onClick={() => {
+                  commitMobileTravelerPopover();
+                  requestClose();
+                }}
+                className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[17px] font-bold text-white"
+              >
+                {t("done")}
+              </button>
+            )}
+          >
+            <MobileTravelerCabinPicker
+              adults={draftAdultCount}
+              // Traveler count is a domain prop, not React's nested-content API.
+              // eslint-disable-next-line react/no-children-prop
+              children={draftChildCount}
+              infants={draftInfantCount}
+              cabinClass={draftCabinClassInput}
+              strings={{
+                travelers: t("travelers") || "Travelers",
+                adults: t("adults") || "Adults",
+                adultDescription:
+                  t("mobileTravelerCabin.adultDescription") ||
+                  "18 years and above",
+                children: t("children") || "Children",
+                childDescription:
+                  t("mobileTravelerCabin.childDescription") || "2 to 17 years",
+                infants: t("infants") || "Infants",
+                infantDescription:
+                  t("mobileTravelerCabin.infantDescription") || "Under 2 years",
+                cabinClass: t("cabinClass") || "Cabin class",
+                economy: t("economy") || "Economy",
+                business: t("business") || "Business",
+                first: t("first") || "First",
+                tip: t("mobileTravelerCabin.tip") || "Tip",
+                baggageTip:
+                  t("mobileTravelerCabin.baggageTip") ||
+                  "Baggage allowance may vary by airline. Check details on the provider page.",
+                decrease: (label) =>
+                  (
+                    t("deals.decreaseCountAria") || "Decrease {{label}}"
+                  ).replace("{{label}}", label),
+                increase: (label) =>
+                  (
+                    t("deals.increaseCountAria") || "Increase {{label}}"
+                  ).replace("{{label}}", label),
+              }}
+              onAdultsChange={(nextValue) => {
+                const nextAdultCount = Math.min(9, Math.max(1, nextValue));
                 setDraftAdultCount(nextAdultCount);
                 setDraftChildCount((current) =>
                   Math.min(current, 9 - nextAdultCount),
@@ -5773,54 +5738,28 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 setDraftInfantCount((current) =>
                   Math.min(current, nextAdultCount, 9 - nextAdultCount),
                 );
-              } else {
-                setAdultCount(nextAdultCount);
-                setChildCount((current) =>
-                  Math.min(current, 9 - nextAdultCount),
+              }}
+              onChildrenChange={(nextValue) => {
+                const nextChildCount = Math.min(
+                  9 - draftAdultCount,
+                  Math.max(0, nextValue),
                 );
-                setInfantCount((current) =>
-                  Math.min(current, nextAdultCount, 9 - nextAdultCount),
-                );
-              }
-            }}
-            onChildChange={(nextValue) => {
-              const nextChildCount = Math.min(
-                9 - (useMobileSheet ? draftAdultCount : adultCount),
-                Math.max(0, nextValue),
-              );
-
-              if (useMobileSheet) {
                 setDraftChildCount(nextChildCount);
                 setDraftInfantCount((current) =>
                   Math.min(current, 9 - draftAdultCount - nextChildCount),
                 );
-              } else {
-                setChildCount(nextChildCount);
-                setInfantCount((current) =>
-                  Math.min(current, 9 - adultCount - nextChildCount),
+              }}
+              onInfantsChange={(nextValue) => {
+                const nextInfantCount = Math.min(
+                  draftAdultCount,
+                  9 - draftAdultCount - draftChildCount,
+                  Math.max(0, nextValue),
                 );
-              }
-            }}
-            onInfantChange={(nextValue) => {
-              const currentAdults = useMobileSheet
-                ? draftAdultCount
-                : adultCount;
-              const currentChildren = useMobileSheet
-                ? draftChildCount
-                : childCount;
-              const nextInfantCount = Math.min(
-                currentAdults,
-                9 - currentAdults - currentChildren,
-                Math.max(0, nextValue),
-              );
-
-              if (useMobileSheet) setDraftInfantCount(nextInfantCount);
-              else setInfantCount(nextInfantCount);
-            }}
-            onCabinClassChange={
-              useMobileSheet ? setDraftCabinClassInput : setCabinClassInput
-            }
-          />
+                setDraftInfantCount(nextInfantCount);
+              }}
+              onCabinClassChange={setDraftCabinClassInput}
+            />
+          </FlightMobilePickerShell>
         ) : null}
       </>
     );
@@ -5940,7 +5879,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       <span className={mobileValueRowClass} data-mobile-value-row>
                         <MapPin className={mobileValueIconClass} aria-hidden="true" />
                         <span className={mobileValueClass}>{originInput.trim() || t("fromPlaceholder")}</span>
-                        <ChevronDown className="h-4 w-4 justify-self-end text-slate-500" aria-hidden="true" />
+                        <span aria-hidden="true" />
                       </span>
                     </span>
                   </button>
@@ -5981,7 +5920,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         aria-hidden="true"
                       />
                       <span className={mobileValueClass}>{destinationInput.trim() || t("toPlaceholder")}</span>
-                      <ChevronDown className="h-4 w-4 justify-self-end text-slate-500" aria-hidden="true" />
+                      <span aria-hidden="true" />
                     </span>
                   </span>
                   </button>
@@ -7055,7 +6994,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         {mobileSearchOpen ? renderCompactSearchForm("mobile") : null}
       </div>
 
-      {mobileSearchOpen ? renderCompactSearchPopovers("mobile") : null}
+      {mobileSearchOpen ? renderMobileSearchPickers() : null}
 
       {mobileSearchOpen ? (
         <>
