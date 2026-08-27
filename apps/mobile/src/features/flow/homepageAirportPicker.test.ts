@@ -24,7 +24,7 @@ test("default origin is homepage-only and independent of authentication state", 
 });
 
 test("the actual AirportSheet calls the metro-aware search on the homepage", () => {
-  assert.match(panel, /const searched = homepageOnly \? searchHomepageAirports\(query\) : searchAirports\(query\)/);
+  assert.match(panel, /const searched = eligible \? \(homepageOnly \? searchHomepageAirports\(query\) : searchAirports\(query\)\) : \[\]/);
   assert.match(panel, /<AirportSheet[\s\S]*homepageOnly=\{homepageAirportPicker\}/);
 });
 
