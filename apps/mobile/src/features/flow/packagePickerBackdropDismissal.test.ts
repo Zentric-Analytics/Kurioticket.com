@@ -38,7 +38,7 @@ test("all package modes reuse the existing destination and date sheets without a
 
 
 test("package party and shared picker Done actions are iconless", () => {
-  assert.match(party, /<PrimaryButton label="Done" icon=\{null\} onPress=\{\(\) => onDone\(draft\)\}\/>/);
+  assert.match(party, /<PrimaryButton label="Done" icon=\{null\} size="compact" onPress=\{\(\) => onDone\(draft\)\}\/>/);
   assert.match(readFileSync("src/features/flow/DateRangeSheet.tsx", "utf8"), /label="Done" icon=\{null\}/);
   assert.match(readFileSync("src/features/flow/CarSearchPickers.tsx", "utf8"), /label="Done" icon=\{null\}/);
 });
