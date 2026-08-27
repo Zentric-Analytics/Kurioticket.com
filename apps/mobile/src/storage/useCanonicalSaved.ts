@@ -3,7 +3,7 @@ import { useFocusEffect } from "expo-router";
 import { readSession } from "./sessionStorage";
 import { savedRepositoryFor, type SavedSnapshot } from "./savedRepository";
 import { favoriteAction } from "./favoriteAccess";
-import { showFavoriteSignInPrompt } from "./useSavedDestinations";
+import { showFavoriteSignInPrompt } from "./favoriteSignInPrompt";
 
 const emptySnapshot = (): SavedSnapshot => ({ destinationIds: new Set(), flights: new Map(), pendingFlightKeys: new Set(), items: [], loading: true, error: "" });
 
