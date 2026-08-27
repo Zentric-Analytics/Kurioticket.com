@@ -4,9 +4,14 @@ import Link from "next/link";
 
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { useLocale } from "@/components/layout/LocaleProvider";
-import { getCaliforniaSellerOfTravelNotice, legalProfile } from "@/data/legalProfile";
+import {
+  getCaliforniaSellerOfTravelNotice,
+  legalProfile,
+} from "@/data/legalProfile";
 
-export function Footer() {
+export type FooterVariant = "full" | "brand-legal-only";
+
+export function Footer({ variant = "full" }: { variant?: FooterVariant }) {
   const { t } = useLocale();
   const currentYear = new Date().getFullYear();
   const sellerOfTravelNotice =
@@ -100,72 +105,84 @@ export function Footer() {
 
   return (
     <footer className="border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] text-slate-700">
-      <div className="page-shell py-10 md:py-12">
-        <div className="hidden gap-x-8 gap-y-8 lg:grid lg:grid-cols-[repeat(3,minmax(0,1fr))_minmax(0,0.85fr)] xl:gap-x-12">
-          {footerSections.map((section) => (
-            <div key={section.heading}>
-              <h2 className="text-sm font-semibold text-slate-900">
-                {section.heading}
-              </h2>
+      <div
+        className={
+          variant === "full" ? "page-shell py-10 md:py-12" : "page-shell py-8"
+        }
+      >
+        {variant === "full" ? (
+          <>
+            <div className="hidden gap-x-8 gap-y-8 lg:grid lg:grid-cols-[repeat(3,minmax(0,1fr))_minmax(0,0.85fr)] xl:gap-x-12">
+              {footerSections.map((section) => (
+                <div key={section.heading}>
+                  <h2 className="text-sm font-semibold text-slate-900">
+                    {section.heading}
+                  </h2>
 
-              <div className="mt-3 grid gap-2 text-sm text-slate-600">
-                {section.links.map((link) => (
-                  <Link
-                    key={`${section.heading}-${link.label}`}
-                    href={link.href}
-                    className="transition-colors hover:text-[#004BB8]"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="space-y-7 lg:hidden">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900">
-              {aboutSection.heading}
-            </h2>
-
-            <div className="mt-3 grid gap-2 text-sm text-slate-600">
-              {aboutSection.links.map((link) => (
-                <Link
-                  key={`${aboutSection.heading}-${link.label}`}
-                  href={link.href}
-                  className="transition-colors hover:text-[#004BB8]"
-                >
-                  {link.label}
-                </Link>
+                  <div className="mt-3 grid gap-2 text-sm text-slate-600">
+                    {section.links.map((link) => (
+                      <Link
+                        key={`${section.heading}-${link.label}`}
+                        href={link.href}
+                        className="transition-colors hover:text-[#004BB8]"
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-x-8 gap-y-6 border-t border-slate-200 pt-6 sm:grid-cols-3">
-            {linkSections.map((section) => (
-              <div key={section.heading} className="min-w-0">
+            <div className="space-y-7 lg:hidden">
+              <div>
                 <h2 className="text-sm font-semibold text-slate-900">
-                  {section.heading}
+                  {aboutSection.heading}
                 </h2>
 
                 <div className="mt-3 grid gap-2 text-sm text-slate-600">
-                  {section.links.map((link) => (
+                  {aboutSection.links.map((link) => (
                     <Link
-                      key={`${section.heading}-${link.label}`}
+                      key={`${aboutSection.heading}-${link.label}`}
                       href={link.href}
-                      className="break-words transition-colors hover:text-[#004BB8]"
+                      className="transition-colors hover:text-[#004BB8]"
                     >
                       {link.label}
                     </Link>
                   ))}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
 
-        <div className="mt-10 border-t border-slate-200 pt-5">
+              <div className="grid grid-cols-2 gap-x-8 gap-y-6 border-t border-slate-200 pt-6 sm:grid-cols-3">
+                {linkSections.map((section) => (
+                  <div key={section.heading} className="min-w-0">
+                    <h2 className="text-sm font-semibold text-slate-900">
+                      {section.heading}
+                    </h2>
+
+                    <div className="mt-3 grid gap-2 text-sm text-slate-600">
+                      {section.links.map((link) => (
+                        <Link
+                          key={`${section.heading}-${link.label}`}
+                          href={link.href}
+                          className="break-words transition-colors hover:text-[#004BB8]"
+                        >
+                          {link.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : null}
+
+        <div
+          className={
+            variant === "full" ? "mt-10 border-t border-slate-200 pt-5" : "pt-0"
+          }
+        >
           <div className="flex flex-col gap-3 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
             <div>
               <KurioticketLogo
@@ -189,8 +206,7 @@ export function Footer() {
 
             <div className="flex flex-wrap items-center gap-4 text-xs">
               <p>
-                © {currentYear} Kurioticket LLC.{" "}
-                {t.footerAllRightsReserved}
+                © {currentYear} Kurioticket LLC. {t.footerAllRightsReserved}
               </p>
 
               <Link

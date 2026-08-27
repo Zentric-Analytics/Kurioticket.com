@@ -140,7 +140,7 @@ export default async function FlightResultsPage({
       >
         <FlightResultsClient />
       </Suspense>
-      <Footer />
+      <Footer variant="brand-legal-only" />
     </>
   );
 }
