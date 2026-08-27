@@ -7,15 +7,24 @@ const pickerFiles = ["FlightSearchPanel.tsx", "HotelSearchPanel.tsx", "CarSearch
 
 test("shared native search picker motion has the approved contract", () => {
   assert.match(source, /BACKDROP_COLOR = "rgba\(8, 18, 35, 0\.20\)"/);
-  assert.match(source, /OPEN_DURATION_MS = 220/);
-  assert.match(source, /CLOSE_DURATION_MS = 180/);
-  assert.match(source, /SHEET_OFFSET = 40/);
+  assert.match(source, /OPEN_DURATION_MS = 280/);
+  assert.match(source, /CLOSE_DURATION_MS = 240/);
+  assert.match(source, /Dimensions\.get\("screen"\)\.height/);
+  assert.match(source, /Math\.max\(windowHeight, screenHeight\)/);
+  assert.match(source, /useWindowDimensions\(\)/);
+  assert.doesNotMatch(source, /SHEET_OFFSET|toValue: 40|Animated\.Value\([^)]*40/);
+  assert.match(source, /new Animated\.Value\(visible \? 0 : sheetTravelDistance\)/);
+  assert.match(source, /sheetTranslateY\.setValue\(sheetTravelDistance\)/);
+  assert.match(source, /Animated\.timing\(sheetTranslateY, \{ toValue: sheetTravelDistance/);
   assert.match(source, /useNativeDriver: true/g);
   assert.match(source, /backdropStyle: \{ opacity: backdropOpacity \}/);
   assert.match(source, /sheetStyle: \{ transform: \[\{ translateY: sheetTranslateY \}\] \}/);
   assert.match(source, /generation\.current/);
   assert.match(source, /stopAnimation\(\)/);
   assert.match(source, /setRendered\(false\)/);
+  assert.match(source, /finished && generation\.current === currentGeneration/);
+  assert.match(source, /Easing\.out\(Easing\.cubic\)/);
+  assert.match(source, /Easing\.in\(Easing\.cubic\)/);
 });
 
 test("affected picker Modals do not translate their transparent surface", () => {
