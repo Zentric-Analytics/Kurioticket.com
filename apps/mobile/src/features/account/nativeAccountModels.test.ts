@@ -65,7 +65,6 @@ test("email preference screen uses immediate UI with coalesced persistence", asy
   assert.ok(fullSource.indexOf('label: "emailTravelAlerts"') < fullSource.indexOf('label: "emailInspirationUpdates"'));
 });
 
-
 test("travel selector models resolve labels and filter integrated suggestions", () => {
   assert.equal(airportPreferenceValue("jfk", airports)?.airport, "John F. Kennedy International Airport");
   assert.equal(airportPreferenceValue("", airports), undefined);
@@ -91,4 +90,15 @@ test("travel screen keeps location separate and selectors use draft-only save/re
   assert.doesNotMatch(screen, /homeAirport\} · \{t\("clear"\)/);
   assert.match(screen, /const revert=.*state\.saved/);
   assert.match(screen, /closeSelectors\(\)/);
+});
+
+test("travel save errors retry the draft and airport editor restores a saved value on blur", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile("src/features/account/NativeAccountScreens.tsx", "utf8");
+  const screen = source.slice(source.indexOf("export function TravelPreferencesScreen"), source.indexOf("const s=StyleSheet.create"));
+  assert.match(screen, /setErrorAction\("save"\)/);
+  assert.match(screen, /retry=\{errorAction==="save"\?\(\)=>void save\(\):\(\)=>void load\(\)\}/);
+  assert.match(screen, /const airportSearchValue=/);
+  assert.match(screen, /setAirportQuery\(airportSearchValue\);setAirportOpen\(true\)/);
+  assert.match(screen, /onBlur=\{\(\)=>\{if\(value\.homeAirport&&\(!airportQuery\.trim\(\)\|\|airportQuery===airportSearchValue\)\)\{setAirportQuery\(""\);setAirportOpen\(false\);\}\}\}/);
 });
