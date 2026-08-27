@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getGeneralFaqs } from "../../../../../src/content/faqs";
@@ -68,6 +68,11 @@ export function TravelPreferencesScreen() {
     saveSuccessTimer.current = null;
     setSaveSuccess(false);
   }, []);
+  const clearRevertConfirmation = useCallback(() => {
+    if (revertConfirmationTimer.current) clearTimeout(revertConfirmationTimer.current);
+    revertConfirmationTimer.current = null;
+    setRevertConfirmation(false);
+  }, []);
   const showSaveSuccess = useCallback(() => {
     if (saveSuccessTimer.current) clearTimeout(saveSuccessTimer.current);
     setSaveSuccess(true);
@@ -117,13 +122,11 @@ export function TravelPreferencesScreen() {
     void load();
     return () => {
       airportRequestVersion.current += 1;
-      if (saveSuccessTimer.current) clearTimeout(saveSuccessTimer.current);
-      saveSuccessTimer.current = null;
-      if (revertConfirmationTimer.current) clearTimeout(revertConfirmationTimer.current);
-      revertConfirmationTimer.current = null;
+      clearSaveSuccess();
+      clearRevertConfirmation();
       stateRef.current = invalidateRequests(stateRef.current);
     };
-  }, [load, stateRef]));
+  }, [clearRevertConfirmation, clearSaveSuccess, load, stateRef]));
 
   useEffect(() => {
     const query = airportQuery.trim();
@@ -154,7 +157,7 @@ export function TravelPreferencesScreen() {
   const selectedAirport = localAirport ?? (selectedLiveAirport?.code === value.homeAirport.toUpperCase() ? selectedLiveAirport : undefined);
   const airportSearchValue = selectedAirport ? `${selectedAirport.code} ${selectedAirport.airport}` : value.homeAirport;
   const airlineResults = useMemo(() => airlineOpen && airlineQuery.trim() && value.preferredAirlines.length < 10 ? filterAirlinePreferences(airlines, airlineQuery, value.preferredAirlines) : [], [airlineOpen, airlineQuery, value.preferredAirlines]);
-  const change = (next: TravelPreferences) => { clearSaveSuccess(); commit(editDraft(stateRef.current, next)); };
+  const change = (next: TravelPreferences) => { clearSaveSuccess(); clearRevertConfirmation(); commit(editDraft(stateRef.current, next)); };
   const dirty = isDirty(state);
   const revert = () => {
     if (!dirty || state.saving) return;
@@ -163,12 +166,15 @@ export function TravelPreferencesScreen() {
   };
   const save = async () => {
     const started = beginSave(stateRef.current); if (!started) return;
-    clearSaveSuccess(); setErrorAction(null); commit(started.state);
+    clearSaveSuccess(); clearRevertConfirmation(); setErrorAction(null); commit(started.state);
     try {
       const response = await travelApi.updateTravelPreferences({ homeAirport: started.value.homeAirport, preferredAirlines: started.value.preferredAirlines });
       const finished = commit(finishSave(stateRef.current, started.token, started.editVersion, response.preferences));
       setErrorAction(null); closeSelectors(); Keyboard.dismiss();
-      if (!isDirty(finished)) showSaveSuccess();
+      if (!isDirty(finished)) {
+        showSaveSuccess();
+        AccessibilityInfo.announceForAccessibility(t("travelSaved"));
+      }
     } catch (error) {
       setErrorAction("save");
       commit(failSave(stateRef.current, started.token, error instanceof TravelApiError ? error.message : t("travelSaveError")));
