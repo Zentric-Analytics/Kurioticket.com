@@ -1,5 +1,15 @@
 import type { FlightFareTerm, FlightSegment, TripType } from "@/lib/types";
 
+export function getCenteredFareScrollLeft({
+  railLeft, railScrollLeft, railClientWidth, railScrollWidth, selectedLeft, selectedWidth,
+}: {
+  railLeft: number; railScrollLeft: number; railClientWidth: number; railScrollWidth: number; selectedLeft: number; selectedWidth: number;
+}) {
+  const selectedLeftWithinRail = selectedLeft - railLeft + railScrollLeft;
+  const targetLeft = selectedLeftWithinRail - (railClientWidth - selectedWidth) / 2;
+  return Math.max(0, Math.min(targetLeft, Math.max(0, railScrollWidth - railClientWidth)));
+}
+
 export function resolveSegmentCarrierName(
   segment: FlightSegment,
   offerAirlineName: string,
