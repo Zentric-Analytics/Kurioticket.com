@@ -20,6 +20,8 @@ test("renders seven hotels in a native mobile rail and a desktop grid", () => {
     "overflow-y-hidden",
     "overscroll-x-contain",
     "snap-x snap-mandatory",
+    "px-5 lg:px-0",
+    "scroll-px-0",
     "snap-start",
     "w-[82vw]",
     "max-w-[300px]",
@@ -35,6 +37,7 @@ test("renders seven hotels in a native mobile rail and a desktop grid", () => {
   ])
     assert.ok(source.includes(contract), contract);
   assert.doesNotMatch(source, /grid-cols-1|sm:grid-cols-2|lg:grid-cols-3/);
+  assert.doesNotMatch(source, /data-related-hotels-grid[\s\S]*?px-4/);
   assert.doesNotMatch(
     source,
     /touch-pan-x|touch-action\s*:\s*(?:pan-x|none)|overscroll-behavior\s*:\s*none/,

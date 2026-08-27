@@ -4094,6 +4094,7 @@ export const translations: TranslationDictionary = {
   "hotelDetails.yourStay": "Your stay",
   "hotelDetails.viewRoomOptions": "View room options",
   "hotelDetails.roomOptionsSupport": "You'll choose your room in the next step.",
+  "hotelDetails.continueBooking": "Continue booking",
   "hotelDetails.roomOptionsTitle": "Room options",
   "hotelDetails.closeRoomOptions": "Close room options",
   "hotelDetails.planningPriceMayVary": "Final taxes, availability, and terms may vary.",

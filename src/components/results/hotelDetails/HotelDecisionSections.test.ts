@@ -96,9 +96,20 @@ test("comparison presents Kurioticket as a normalized provider without developme
   assert.match(compare, /data-provider-brand/);
   assert.match(compare, /data-provider-price/);
   assert.doesNotMatch(compare, /role="separator"|data-provider-offer-divider|border-t/);
-  assert.match(compare, /data-provider-price-action/);
+  assert.match(compare, /data-provider-top-row/);
+  assert.match(compare, /data-provider-bottom-row/);
+  assert.doesNotMatch(compare, /row-span-2|data-provider-price-action/);
   assert.match(compare, /data-provider-amenities/);
   assert.match(compare, /data-provider-action/);
+  const topRow = compare.slice(
+    compare.indexOf("data-provider-top-row"),
+    compare.indexOf("data-provider-bottom-row"),
+  );
+  const bottomRow = compare.slice(compare.indexOf("data-provider-bottom-row"));
+  assert.match(topRow, /data-provider-brand/);
+  assert.match(topRow, /data-provider-price/);
+  assert.match(bottomRow, /data-provider-amenities/);
+  assert.match(bottomRow, /data-provider-action/);
   assert.ok(compare.indexOf("data-provider-price") < compare.indexOf("data-provider-action"));
   assert.match(compare, /<HotelAmenityList/);
   assert.match(compare, /items=\{offer\.amenities \?\? \[\]\}/);

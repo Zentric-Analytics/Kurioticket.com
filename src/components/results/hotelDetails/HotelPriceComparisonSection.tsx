@@ -19,8 +19,12 @@ type ProviderOfferPresentation = {
 
 function ProviderOffer({ offer }: { offer: ProviderOfferPresentation }) {
   return (
-    <article className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(7.5rem,auto)] gap-x-3 gap-y-4 rounded-xl border border-slate-200 bg-white px-3 py-4 sm:gap-x-6 sm:px-4" data-provider-offer>
-      <div className="min-w-0 self-center" data-provider-brand>
+    <article className="flex min-w-0 flex-col gap-4 rounded-xl border border-slate-200 bg-white px-3 py-4 sm:px-4" data-provider-offer>
+      <div
+        className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(7.5rem,auto)] items-center gap-x-3 sm:gap-x-6"
+        data-provider-top-row
+      >
+        <div className="min-w-0" data-provider-brand>
           {offer.providerLogoUrl ? (
             <Image
               src={offer.providerLogoUrl}
@@ -32,26 +36,27 @@ function ProviderOffer({ offer }: { offer: ProviderOfferPresentation }) {
           ) : (
             <strong className="block text-base font-bold text-slate-950">{offer.providerName}</strong>
           )}
-      </div>
-
-      <div
-        className="row-span-2 flex min-w-0 flex-col items-end justify-center gap-3 text-right"
-        data-provider-price-action
-      >
-        <div className="flex min-w-0 flex-col items-end" data-provider-price>
+        </div>
+        <div className="flex min-w-0 flex-col items-end text-right" data-provider-price>
           <div>{offer.price}</div>
           {offer.secondaryPrice ? <div>{offer.secondaryPrice}</div> : null}
         </div>
-        <div className="shrink-0" data-provider-action>
+      </div>
+
+      <div
+        className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(7.5rem,auto)] items-end gap-x-3 sm:gap-x-6"
+        data-provider-bottom-row
+      >
+        <div className="min-w-0" data-provider-amenities>
+          <HotelAmenityList
+            items={offer.amenities ?? []}
+            t={() => ""}
+            className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5"
+          />
+        </div>
+        <div className="shrink-0 justify-self-end" data-provider-action>
           {offer.action}
         </div>
-      </div>
-      <div className="min-w-0 self-end" data-provider-amenities>
-        <HotelAmenityList
-          items={offer.amenities ?? []}
-          t={() => ""}
-          className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5"
-        />
       </div>
     </article>
   );

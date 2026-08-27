@@ -159,18 +159,18 @@ export function RelatedHotelsSection({
 
   return (
     <section
-      className="mt-6 min-w-0"
+      className="mt-6 min-w-0 px-5 lg:px-0"
       aria-labelledby="related-hotels-heading"
       data-related-hotels-section
     >
       <h2
         id="related-hotels-heading"
-        className="px-4 text-xl font-extrabold text-slate-950 lg:px-0"
+        className="text-xl font-extrabold text-slate-950"
       >
         {labels.heading.replace("{{destination}}", city)}
       </h2>
       <div
-        className="mt-4 flex w-full min-w-0 max-w-full gap-4 overflow-x-auto overflow-y-hidden overscroll-x-contain snap-x snap-mandatory px-4 pb-4 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [-ms-overflow-style:none] lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0 lg:pb-0 [&::-webkit-scrollbar]:hidden"
+        className="mt-4 flex w-full min-w-0 max-w-full scroll-px-0 gap-4 overflow-x-auto overflow-y-hidden overscroll-x-contain snap-x snap-mandatory pb-4 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [-ms-overflow-style:none] lg:grid lg:grid-cols-4 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden"
         data-related-hotels-grid
       >
         {displayedHotels.map((hotel) => (
