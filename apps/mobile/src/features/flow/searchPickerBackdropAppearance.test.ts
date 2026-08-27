@@ -11,12 +11,12 @@ const pickerFiles = [
 const presentationSource = flowSource("searchPickerPresentation.ts");
 
 test("native search pickers share the approved subtle backdrop", () => {
-  assert.match(presentationSource, /SEARCH_PICKER_BACKDROP_COLOR = "rgba\(8, 18, 35, 0\.24\)"/);
+  assert.match(presentationSource, /SEARCH_PICKER_BACKDROP_COLOR = "rgba\(8, 18, 35, 0\.20\)"/);
   for (const file of pickerFiles) {
     const source = flowSource(file);
-    assert.match(source, /import \{ SEARCH_PICKER_BACKDROP_COLOR \} from "\.\/searchPickerPresentation";/, `${file} imports the shared backdrop`);
+    assert.match(source, /import \{[^}]*SEARCH_PICKER_BACKDROP_COLOR[^}]*\} from "\.\/searchPickerPresentation";/, `${file} imports the shared backdrop`);
     assert.match(source, /backgroundColor:SEARCH_PICKER_BACKDROP_COLOR/, `${file} applies the shared backdrop`);
-    assert.doesNotMatch(source, /rgba\(8, 18, 35, 0\.24\)/, `${file} does not duplicate the backdrop value`);
+    assert.doesNotMatch(source, /rgba\(8, 18, 35, 0\.20\)/, `${file} does not duplicate the backdrop value`);
   }
 });
 
