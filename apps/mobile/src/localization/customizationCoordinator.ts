@@ -1,5 +1,6 @@
+import type { MobileLocale } from "./mobileLocalizationCatalog";
 export type PreferenceOwner = { userId: string | null };
-export type PreferenceValue = { locale: "en-us" | "es-es"; currency: string };
+export type PreferenceValue = { locale: MobileLocale; currency: string };
 export type ServerPreferences = { hasPreferences: boolean; preferences: PreferenceValue };
 export type CoordinatorDependencies = {
   readGuest: () => Promise<PreferenceValue>;
