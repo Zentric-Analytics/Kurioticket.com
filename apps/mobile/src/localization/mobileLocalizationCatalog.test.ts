@@ -49,3 +49,26 @@ test("formatters use each locale's Intl identifier", () => {
     assert.equal(formatMobileDate("2027-01-02T00:00:00Z", code), new Intl.DateTimeFormat(intl).format(new Date("2027-01-02T00:00:00Z")));
   }
 });
+
+test("known expanded-dictionary English placeholders are localized", () => {
+  assert.deepEqual(
+    [dictionaries.fr.profile, dictionaries.fr.settings, dictionaries.fr.currencySearch, dictionaries.fr.darkMode],
+    ["Profil", "Paramètres", "Rechercher des devises", "Mode sombre"],
+  );
+  assert.deepEqual(
+    [dictionaries["de-de"].settings, dictionaries["de-de"].contactUs, dictionaries["de-de"].currencySearch],
+    ["Einstellungen", "Kontakt", "Währungen suchen"],
+  );
+  assert.deepEqual(
+    [dictionaries.ar.profile, dictionaries.ar.settings, dictionaries.ar.currency, dictionaries.ar.currencySearch, dictionaries.ar.security],
+    ["الملف الشخصي", "الإعدادات", "العملة", "البحث عن العملات", "الأمان"],
+  );
+  assert.deepEqual(
+    [dictionaries.ja.profile, dictionaries.ja.settings, dictionaries.ja.currency, dictionaries.ja.security],
+    ["プロフィール", "設定", "通貨", "セキュリティ"],
+  );
+  assert.deepEqual(
+    [dictionaries["pt-br"].emailPreferences, dictionaries["pt-br"].contactUs, dictionaries["pt-br"].supportMessage],
+    ["Preferências de e-mail", "Fale conosco", "Mensagem"],
+  );
+});
