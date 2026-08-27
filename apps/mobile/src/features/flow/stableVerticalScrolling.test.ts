@@ -35,18 +35,17 @@ test("major vertical screens disable iOS bounce and Android overscroll", () => {
   for (const [path, owner] of screens) assertStableOwner(read(path), owner);
 });
 
-test("flight results keep quick controls fixed, dates scrollable, and outer scrolling stable", () => {
+test("flight results use native sticky filters and an opacity-only animated scroll", () => {
   const source = read("src/features/search/ApprovedResultsScreen.tsx");
-  const listStart = source.indexOf("<SectionList");
+  const listStart = source.indexOf("<Animated.SectionList");
   const owner = source.slice(listStart, source.indexOf("/>", source.indexOf("windowSize", listStart)) + 2);
-  const persistentControls = source.slice(source.indexOf("flightResults && status"), listStart);
   for (const prop of stableProps) assert.match(owner, prop);
-  assert.match(persistentControls, /flightPersistentSearchControls[\s\S]*?\{filterRail\}/);
-  assert.doesNotMatch(persistentControls, /dateStrip|PriceAlert|flightResultCountLabel|FlightCard/);
-  assert.match(owner, /ListHeaderComponent=\{status === "loading" \? null : dateStrip\}/);
-  assert.doesNotMatch(owner, /renderSectionHeader|stickySectionHeadersEnabled/);
-  assert.doesNotMatch(owner, /onScroll=|scrollEventThrottle=/);
-  assert.match(source, /<SectionList[\s\S]*?\/>[\s\S]*?<BottomNav flightResults=\{flightResults\} \/>/);
+  assert.match(owner, /ListHeaderComponent=\{status === "loading" \? null : animatedFlightDateStrip\}/);
+  assert.match(owner, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
+  assert.match(owner, /onScroll=\{Animated\.event[\s\S]*?useNativeDriver: true/);
+  assert.match(source, /<Animated\.View[\s\S]*?style=\{\{ opacity: flightDateStripOpacity \}\}/);
+  assert.doesNotMatch(owner, /set[A-Z][A-Za-z]*\(/);
+  assert.doesNotMatch(source, /dateHeaderCollapsed|height:\s*flightDateStripOpacity/);
   assert.match(source, /const filterRail = \([\s\S]*?<ScrollView\s+horizontal/);
 });
 
