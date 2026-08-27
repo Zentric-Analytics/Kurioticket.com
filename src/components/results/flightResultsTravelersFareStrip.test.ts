@@ -64,14 +64,19 @@ test("mobile nearby fares scroll horizontally without widening the page", () => 
   assert.match(mobileStrip, /max-w-full/);
   assert.match(mobileStrip, /overflow-hidden/);
   assert.match(mobileStrip, /overflow-x-auto/);
-  assert.match(mobileStrip, /touch-pan-x/);
-  assert.match(mobileStrip, /overscroll-x-contain/);
+  assert.doesNotMatch(mobileStrip, /touch-pan-x/);
+  assert.doesNotMatch(mobileStrip, /overscroll-x-contain/);
+  assert.match(mobileStrip, /snap-center/);
+  assert.doesNotMatch(mobileStrip, /snap-start/);
+  assert.match(mobileStrip, /px-3/);
+  assert.match(mobileStrip, /scroll-padding-inline:0\.75rem/);
   assert.match(mobileStrip, /scrollbar-width:none/);
   assert.match(mobileStrip, /data-fare-date-cell/);
   assert.match(mobileStrip, /min-h-\[76px\]/);
   assert.match(mobileStrip, /aria-current=\{selected \? "date"/);
   assert.match(mobileStrip, /aria-pressed=\{selected\}/);
   assert.match(mobileStrip, /disabled=\{selected \|\| loading \|\| fare\.status === "loading"\}/);
+  assert.doesNotMatch(mobileStrip, /onPointer|onTouch|preventDefault\(\)/);
 });
 
 test("mobile nearby fares align the selected real date once per search", () => {
@@ -81,9 +86,12 @@ test("mobile nearby fares align the selected real date once per search", () => {
   assert.match(source, /buildFlightResultsSearchKey\(body\).*body\.departureDate/);
   assert.match(source, /nearbyFares\.length === 0/);
   assert.match(source, /if \(!rail \|\| !selectedCell\) return/);
+  assert.match(source, /rail\.getBoundingClientRect\(\)/);
+  assert.match(source, /selectedCell\.getBoundingClientRect\(\)/);
+  assert.match(source, /selectedRect\.left - railRect\.left \+ rail\.scrollLeft/);
+  assert.match(source, /getCenteredRailScrollLeft\(/);
   assert.match(source, /ref=\{mobileNearbyFareRailRef\}/);
   assert.match(source, /ref=\{selected \? mobileSelectedNearbyFareRef : undefined\}/);
-  assert.match(source, /Math\.max\(rail\.scrollWidth - rail\.clientWidth, 0\)/);
   assert.match(source, /rail\.scrollTo\(\{ left: target, behavior: "auto" \}\)/);
   assert.match(source, /alignedMobileNearbyFareSearchRef\.current = alignmentIdentity/);
   assert.doesNotMatch(source, /scrollIntoView\(/);

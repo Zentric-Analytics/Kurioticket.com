@@ -37,15 +37,15 @@ test("mobile search summary uses the refined compact neutral card system", () =>
   assert.match(summary, /border-\[#D8E1EC\]/);
   assert.match(summary, /bg-white/);
   assert.match(summary, /px-4 py-0/);
-  assert.match(summary, /shadow-\[0_8px_22px_-18px_rgba\(15,23,42,0\.3\)\]/);
+  assert.match(summary, /shadow-\[0_6px_18px_-16px_rgba\(15,23,42,0\.32\)\]/);
   assert.match(summary, /truncate text-\[16px\] font-bold leading-5/);
   assert.match(
     summary,
-    /mt-1 block truncate text-\[12\.5px\] font-semibold leading-\[17px\] text-slate-600/,
+    /mt-\[3px\] block truncate text-\[12\.5px\] font-semibold leading-\[17px\] text-slate-600/,
   );
   assert.match(
     summary,
-    /h-9 w-9[\s\S]*rounded-\[10px\][\s\S]*border-transparent bg-transparent text-slate-700/,
+    /h-11 w-11[\s\S]*rounded-\[10px\][\s\S]*border-transparent bg-transparent text-slate-700/,
   );
   assert.doesNotMatch(summary, /border-\[#D8E1EC\] bg-slate-50 text-slate-700/);
   assert.doesNotMatch(summary, /gradient|inset_|Edit search/i);
