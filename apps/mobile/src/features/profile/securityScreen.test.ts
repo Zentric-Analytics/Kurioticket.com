@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const security = readFileSync("src/features/profile/SecurityScreen.tsx", "utf8");
+const localization = readFileSync("src/features/profile/securityLocalization.ts", "utf8");
 
 const screenModalStart = security.indexOf("function ScreenModal");
 const screenModalEnd = security.indexOf("function SecurityBlock", screenModalStart);
@@ -179,12 +180,33 @@ test("internal modal refreshes do not overwrite landing feedback", () => {
   assert.match(security, /load\(\{\s*showLandingFeedback:\s*false\s*\}\)/);
 });
 
-test("English and Spanish security copy cover the compact hierarchy", () => {
+test("security localization covers the compact hierarchy", () => {
   for (const phrase of [
     "Manage sign-in and account security for your Kurioticket account.",
     "Gestiona el acceso y la seguridad de tu cuenta de Kurioticket.",
     "Review devices that have recently accessed your account.",
     "Revisa los dispositivos que han accedido recientemente a tu cuenta.",
     "Change the password used to sign in to your account.", "Add extra protection with an authenticator app.", "Review devices signed in to your account.", "Sesiones activas",
-  ]) assert.ok(security.includes(phrase), `missing copy: ${phrase}`);
+  ]) assert.ok(localization.includes(phrase), `missing copy: ${phrase}`);
+});
+
+test("security uses selected-locale copy, event labels, and date metadata", () => {
+  assert.match(security, /const c = securityCopy\[locale\]/);
+  assert.match(security, /formatSecurityDate\(value, locale\)/);
+  assert.match(security, /securityEventLabel\(event\.type, locale\)/);
+  assert.doesNotMatch(security, /locale === "es-es"/);
+  assert.doesNotMatch(security, /label="Add passkey"|>Created \{|A new Preview app binary/);
+});
+
+test("security dictionaries and event labels cover all 18 locales", async () => {
+  const { mobileLocaleCodes } = await import("../../localization/mobileLocalizationCatalog");
+  const { securityCopy, securityEventLabels, securityEventTypes, securityEventLabel } = await import("./securityLocalization");
+  assert.deepEqual(Object.keys(securityCopy).sort(), [...mobileLocaleCodes].sort());
+  const englishKeys = Object.keys(securityCopy["en-us"]).sort();
+  for (const locale of mobileLocaleCodes) {
+    assert.deepEqual(Object.keys(securityCopy[locale]).sort(), englishKeys);
+    for (const type of securityEventTypes) assert.ok(securityEventLabels[type][locale].trim());
+    assert.equal(securityEventLabel("UNKNOWN_EVENT", locale), securityCopy[locale].unknown);
+  }
+  assert.equal(securityCopy["es-es"].codeInvalid, "Introduce exactamente 6 dígitos.");
 });
