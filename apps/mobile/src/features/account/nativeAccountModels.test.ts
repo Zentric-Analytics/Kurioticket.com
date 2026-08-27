@@ -77,28 +77,41 @@ test("travel selector models resolve labels and filter integrated suggestions", 
   assert.ok(!filterAirlinePreferences(airlines, "ba", ["BA"]).some(item => item.code === "BA"));
 });
 
-test("travel screen keeps location separate and selectors use draft-only save/revert", async () => {
+test("travel screen keeps the explicit airport draft and persistence payload isolated", async () => {
   const { readFile } = await import("node:fs/promises");
   const source = await readFile("src/features/account/NativeAccountScreens.tsx", "utf8");
   const screen = source.slice(source.indexOf("export function TravelPreferencesScreen"), source.indexOf("const s=StyleSheet.create"));
   assert.match(screen, /requireAccount\("\/travel-preferences"\)/);
   assert.doesNotMatch(screen, /travelApi\.location|countryCode/);
   assert.equal((screen.match(/travelApi\.updateTravelPreferences\(/g) ?? []).length, 1);
-  assert.match(screen, /updateTravelPreferences\(\{homeAirport:started\.value\.homeAirport,preferredAirlines:started\.value\.preferredAirlines\}\)/);
+  assert.match(screen, /updateTravelPreferences\(\{\s*homeAirport: started\.value\.homeAirport,\s*preferredAirlines: started\.value\.preferredAirlines\s*\}\)/);
   assert.doesNotMatch(screen, /updateTravelPreferences\(\{[^}]*notificationPreferences/);
   assert.match(screen, /selectedAirport/);
   assert.doesNotMatch(screen, /homeAirport\} · \{t\("clear"\)/);
-  assert.match(screen, /const revert=.*state\.saved/);
+  assert.match(screen, /editDraft\(stateRef\.current, state\.saved\)/);
   assert.match(screen, /closeSelectors\(\)/);
+  assert.match(screen, /searchTravelAirports\(query, \{ signal: controller\.signal \}\)/);
+  assert.doesNotMatch(screen, /filterAirportPreferences\(airports,\s*airportQuery\)/);
+  assert.match(screen, /setTimeout\(\(\) => \{[\s\S]*?\}, 200\)/);
+  assert.match(screen, /version !== airportRequestVersion\.current \|\| controller\.signal\.aborted/);
+  assert.match(screen, /setSelectedLiveAirport\(airport\)/);
+  assert.match(screen, /selectedLiveAirport\?\.code === value\.homeAirport\.toUpperCase\(\)/);
 });
 
-test("travel save errors retry the draft and airport editor restores a saved value on blur", async () => {
+test("travel screen exposes local search and race-safe save feedback states", async () => {
   const { readFile } = await import("node:fs/promises");
   const source = await readFile("src/features/account/NativeAccountScreens.tsx", "utf8");
   const screen = source.slice(source.indexOf("export function TravelPreferencesScreen"), source.indexOf("const s=StyleSheet.create"));
   assert.match(screen, /setErrorAction\("save"\)/);
-  assert.match(screen, /retry=\{errorAction==="save"\?\(\)=>void save\(\):\(\)=>void load\(\)\}/);
-  assert.match(screen, /const airportSearchValue=/);
-  assert.match(screen, /setAirportQuery\(airportSearchValue\);setAirportOpen\(true\)/);
-  assert.match(screen, /onBlur=\{\(\)=>\{if\(value\.homeAirport&&\(!airportQuery\.trim\(\)\|\|airportQuery===airportSearchValue\)\)\{setAirportQuery\(""\);setAirportOpen\(false\);\}\}\}/);
+  assert.match(screen, /retry=\{errorAction === "save" \? \(\) => void save\(\) : \(\) => void load\(\)\}/);
+  assert.match(screen, /filterAirlinePreferences\(airlines, airlineQuery, value\.preferredAirlines\)/);
+  assert.match(screen, /value\.preferredAirlines\.length < 10/);
+  assert.match(screen, /t\("airlineSelectedCount"\)\.replace\("\{\{count\}\}"/);
+  assert.match(screen, /airportStatus === "searching"/);
+  assert.match(screen, /airportStatus === "success" && airportResults\.length === 0/);
+  assert.match(screen, /airportStatus === "error"/);
+  assert.match(screen, /showConfirmation\("saved"\)/);
+  assert.match(screen, /showConfirmation\("reverted"\)/);
+  assert.match(screen, /setConfirmation\(current => current === next \? null : current\)/);
+  assert.match(screen, /clearConfirmation\(\); commit\(editDraft/);
 });
