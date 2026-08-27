@@ -8,7 +8,6 @@ import {
   Modal,
   Platform,
   Pressable,
-  SectionList,
   ScrollView,
   StyleSheet,
   Switch,
@@ -147,6 +146,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [filterSection, setFilterSection] = useState<FlightFilterSectionName>("all");
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
   const [verifiedDateFareMemory, setVerifiedDateFareMemory] = useState<VerifiedDateFareMemory>();
+  const flightDateStripScrollY = useRef(new Animated.Value(0)).current;
+  const [flightDateStripHeaderHeight, setFlightDateStripHeaderHeight] = useState(72);
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
   const previousComparisonCurrency = useRef<string | null>(null);
   const previousFlightSearchKey = useRef<string | undefined>(undefined);
@@ -442,6 +443,24 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             }
           />
   );
+  const flightDateStripOpacity = flightDateStripScrollY.interpolate({
+    inputRange: [0, flightDateStripHeaderHeight],
+    outputRange: [1, 0],
+    extrapolate: "clamp",
+  });
+  const animatedFlightDateStrip = (
+    <Animated.View
+      onLayout={({ nativeEvent }) => {
+        const measuredHeight = nativeEvent.layout.height;
+        if (measuredHeight > 0 && measuredHeight !== flightDateStripHeaderHeight) {
+          setFlightDateStripHeaderHeight(measuredHeight);
+        }
+      }}
+      style={{ opacity: flightDateStripOpacity }}
+    >
+      {dateStrip}
+    </Animated.View>
+  );
   const filterRail = (
     <ScrollView
             horizontal
@@ -598,17 +617,18 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           </View>
         </>
       )}
-      {flightResults && status !== "loading" ? (
-        <View style={[s0.flightPersistentSearchControls, { backgroundColor: theme.background }]}>
-          {filterRail}
-        </View>
-      ) : null}
       {product === "flight" ? (
-        <SectionList
+        <Animated.SectionList
           style={[s0.resultsScroll, { backgroundColor: theme.background }]}
           sections={[{ data: !flightState ? sorted as FlightResult[] : [] }]}
           keyExtractor={(item) => item.id}
-          ListHeaderComponent={status === "loading" ? null : dateStrip}
+          ListHeaderComponent={status === "loading" ? null : animatedFlightDateStrip}
+          renderSectionHeader={() => status === "loading" ? null : (
+            <View style={{ backgroundColor: theme.background }}>
+              {filterRail}
+            </View>
+          )}
+          stickySectionHeadersEnabled
           renderItem={({ item, index }) => (
             <>
               {index === 0 && status === "ready" && !flightState && plan.plan ? (
@@ -640,6 +660,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           alwaysBounceVertical={false}
           bounces={false}
           overScrollMode="never"
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: flightDateStripScrollY } } }],
+            { useNativeDriver: true },
+          )}
+          scrollEventThrottle={16}
           contentContainerStyle={s0.flightResultsContent}
           initialNumToRender={6}
           maxToRenderPerBatch={5}
@@ -1443,7 +1468,6 @@ const s0 = StyleSheet.create({
     justifyContent: "center",
   },
   flightHeaderEditText: { fontSize: 13, lineHeight: 18, fontWeight: "700" },
-  flightPersistentSearchControls: {},
   filterRail: { height: 44, flexGrow: 0 },
   resultsScroll: { flex: 1 },
   flightResultsContent: { flexGrow: 1 },

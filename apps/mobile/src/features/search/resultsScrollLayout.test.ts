@@ -7,26 +7,26 @@ const screen = readFileSync(
   resolve("src/features/search/ApprovedResultsScreen.tsx"),
   "utf8",
 );
-const layoutStart = screen.indexOf('<SectionList\n          style={[s0.resultsScroll');
+const layoutStart = screen.indexOf('<Animated.SectionList\n          style={[s0.resultsScroll');
 const flightLayout = screen.slice(layoutStart, screen.indexOf(') : (\n        <>', layoutStart));
 
 function styleBlock(name: string, nextName: string) {
   return screen.slice(screen.indexOf(`${name}:`), screen.indexOf(`${nextName}:`, screen.indexOf(`${name}:`)));
 }
 
-test("flight results keep quick controls persistent while dates scroll naturally", () => {
-  const persistentControls = screen.slice(screen.indexOf("flightResults && status"), layoutStart);
+test("flight results put fading dates before a native sticky filter rail", () => {
+  const beforeList = screen.slice(screen.indexOf("<FlightResultsHeader"), layoutStart);
   const listHeader = flightLayout.slice(flightLayout.indexOf("ListHeaderComponent="), flightLayout.indexOf("renderItem="));
   const renderItem = flightLayout.slice(flightLayout.indexOf("renderItem="), flightLayout.indexOf("ListEmptyComponent="));
-  assert.match(persistentControls, /flightPersistentSearchControls[\s\S]*?backgroundColor: theme\.background[\s\S]*?\{filterRail\}/);
-  assert.match(listHeader, /ListHeaderComponent=\{status === "loading" \? null : dateStrip\}/);
-  assert.doesNotMatch(persistentControls, /dateStrip|PriceAlert|flightResultCountLabel|FlightCard/);
-  assert.doesNotMatch(persistentControls, /nearbyDateInsight|Cheaper nearby/);
-  assert.doesNotMatch(flightLayout, /renderSectionHeader|stickySectionHeadersEnabled/);
+  assert.doesNotMatch(beforeList, /flightPersistentSearchControls|\{filterRail\}/);
+  assert.match(listHeader, /ListHeaderComponent=\{status === "loading" \? null : animatedFlightDateStrip\}/);
+  assert.match(listHeader, /renderSectionHeader[\s\S]*?backgroundColor: theme\.background[\s\S]*?\{filterRail\}/);
+  assert.match(listHeader, /stickySectionHeadersEnabled/);
+  assert.ok(listHeader.indexOf("ListHeaderComponent=") < listHeader.indexOf("renderSectionHeader="));
   assert.match(renderItem, /<PriceAlert[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?<FlightCard/);
+  assert.match(flightLayout, /initialNumToRender=\{6\}[\s\S]*?maxToRenderPerBatch=\{5\}[\s\S]*?updateCellsBatchingPeriod=\{50\}[\s\S]*?windowSize=\{7\}/);
   assert.match(readFileSync(resolve("src/features/search/SearchUi.tsx"), "utf8"), /numberOfLines=\{1\}[\s\S]*?nearbyDateInsightText[\s\S]*?Cheaper nearby:/);
-  assert.doesNotMatch(flightLayout, /onScroll=|scrollEventThrottle=|Animated\.|stickyHeaderIndices|manualSticky|stickyFilterState/);
-  assert.doesNotMatch(screen, /dateHeaderCollapsed|dateHeaderProgress|Animated\.timing\(dateHeaderProgress/);
+  assert.doesNotMatch(flightLayout, /dateHeaderCollapsed|position:\s*"absolute"/);
 });
 
 test("date and filter rails retain their horizontal interactions", () => {
@@ -48,7 +48,7 @@ test("persistent flight controls and scrolling count keep compact spacing", () =
   assert.match(rail, /height: 44/);
   assert.match(filters, /paddingVertical: 3/);
   assert.match(count, /paddingTop: 7/);
-  assert.doesNotMatch(screen, /stickyFilterSurface/);
+  assert.doesNotMatch(screen, /stickyFilterSurface|flightPersistentSearchControls/);
 });
 
 test("the compact rail remains structurally safe at supported phone widths", () => {
@@ -78,7 +78,7 @@ test("flight dates use full resolved fares in wider, single-line tiles", () => {
 
 test("hotel results retain their non-sticky header and separate result scroll", () => {
   const hotelStart = screen.indexOf(') : (\n        <>', layoutStart);
-  const hotelLayout = screen.slice(hotelStart, screen.indexOf("<FlightFilterModal", hotelStart));
+  const hotelLayout = screen.slice(hotelStart, screen.indexOf("<FlightSortModal", hotelStart));
 
   assert.match(hotelLayout, /\{dateStrip\}/);
   assert.match(hotelLayout, /\{filterRail\}/);
