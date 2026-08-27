@@ -23,6 +23,7 @@ export const createDefaultMultiCityLegs = (from?: Airport): FlightSearchLeg[] =>
 export function addMultiCityLeg(legs: FlightSearchLeg[]) { if (legs.length >= MULTI_CITY_MAX_LEGS) return legs; const previous = legs.at(-1); return [...legs, { from: previous?.to, departureDate: previous?.departureDate ?? "" }]; }
 export function removeMultiCityLeg(legs: FlightSearchLeg[], index: number) { return legs.length <= MULTI_CITY_MIN_LEGS || index < 0 || index >= legs.length ? legs : legs.filter((_, current) => current !== index); }
 export function updateMultiCityLegAirport(legs: FlightSearchLeg[], index: number, field: "from" | "to", airport: Airport) { return legs.map((leg, current) => current === index ? { ...leg, [field]: airport } : leg); }
+export function swapMultiCityLegAirports(legs: FlightSearchLeg[], index: number) { const leg=legs[index]; if(!leg?.from||!leg.to)return legs; return legs.map((current,currentIndex)=>currentIndex===index?{...current,from:current.to,to:current.from}:current); }
 export function updateMultiCityLegDate(legs: FlightSearchLeg[], index: number, departureDate: string) { return legs.map((leg, current) => current === index ? { ...leg, departureDate } : current > index && leg.departureDate && leg.departureDate < departureDate ? { ...leg, departureDate: "" } : leg); }
 
 export function flightEditSearchParams(params: Record<string, RouteValue>) {

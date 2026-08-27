@@ -31,17 +31,16 @@ test("native search-form location fields suppress only their trailing affordance
 
   const editor = flight.slice(flight.indexOf("function MultiCityEditor"), flight.indexOf("function ErrorText"));
   for (const label of ["Origin", "Destination"]) {
-    const start = editor.indexOf(`<MultiCityField label="${label}"`);
+    const start = editor.indexOf(`<CompactSearchField label="${label}"`);
     const field = editor.slice(start, editor.indexOf("/>", start) + 2);
     assert.match(field, /icon="location"/);
     assert.match(field, /onPress=/);
-    assert.doesNotMatch(field, /trailingChevron/);
+    assert.match(field, /trailing=\{false\}/);
   }
 });
 
 test("remaining native search-form field chevrons are right-facing", () => {
   for (const source of searchForms) assert.doesNotMatch(source, /name="chevronDown"/);
-  assert.match(flight, /trailingChevron\?<FlowIcon name="chevron"/);
   assert.match(compactField(flight, "Travelers & Cabin Class"), /<FlowIcon name="chevron"/);
   assert.match(read("FlowPrimitives.tsx"), /trailing \?\? <FlowIcon name="chevron"/);
 });

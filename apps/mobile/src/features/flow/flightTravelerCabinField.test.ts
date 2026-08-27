@@ -4,25 +4,22 @@ import test from "node:test";
 
 const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
 const presentation = readFileSync("src/features/flow/flightSearchPresentation.ts", "utf8");
-const multiFieldStart = panel.indexOf('<MultiCityField label="Travelers & Cabin Class"');
-const multiField = panel.slice(multiFieldStart, panel.indexOf("/>", multiFieldStart) + 2);
 const compactFieldStart = panel.indexOf('<CompactSearchField label="Travelers & Cabin Class"');
 const compactField = panel.slice(compactFieldStart, panel.indexOf("\n", compactFieldStart));
-const fields = `${multiField}\n${compactField}`;
+const fields = compactField;
 const sheetStart = panel.indexOf("function TravelerCabinSheet");
 const sheet = panel.slice(sheetStart, panel.indexOf("function Cancel", sheetStart));
 
 test("Flights render one combined Travelers and Cabin Class control per trip-type branch", () => {
-  assert.equal(panel.match(/<MultiCityField label="Travelers & Cabin Class"/g)?.length, 1);
+  assert.doesNotMatch(panel, /MultiCityField/);
   assert.equal(panel.match(/<CompactSearchField label="Travelers & Cabin Class"/g)?.length, 1);
   assert.doesNotMatch(panel, /<CompactSearchField label="Cabin"/);
-  for (const field of [multiField, compactField]) {
+  for (const field of [compactField]) {
     assert.match(field, /value=\{travelerCabinSummary\}/);
     assert.doesNotMatch(field, /meta=/);
     assert.match(field, /icon="person"/);
     assert.match(field, /onPress=\{\(\) => setPicker\("travelers"\)\}/);
   }
-  assert.match(multiField, /trailingChevron/);
   assert.match(compactField, /trailing=\{<FlowIcon name="chevron" size=\{16\} color=\{ft\.colors\.icon\}\/>\}/);
   assert.match(readFileSync("src/features/flow/FlowPrimitives.tsx", "utf8"), /trailing \?\? <FlowIcon name="chevron"/);
   assert.doesNotMatch(fields, /styles\.(?:row|half)/);
@@ -66,7 +63,6 @@ test("the combined picker uses a cancellable draft and Done owns commit", () => 
 
 test("an empty committed form gets one draft adult without mutating on open", () => {
   assert.match(panel, /adults: totalTravelers\(form\) \? form\.adults : 1/);
-  assert.match(multiField, /onPress=\{\(\) => setPicker\("travelers"\)\}/);
   assert.match(compactField, /onPress=\{\(\) => setPicker\("travelers"\)\}/);
   assert.doesNotMatch(fields, /setForm/);
 });
