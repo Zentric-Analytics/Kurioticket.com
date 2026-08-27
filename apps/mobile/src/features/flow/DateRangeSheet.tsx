@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Animated, Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { PickerSheetHeader, PrimaryButton } from "./FlowPrimitives";
 import { useFlowTheme } from "./flowStyles";
 import { localDateFromIso, localIsoDate } from "./localDateModel";
@@ -37,14 +36,14 @@ export function DateRangeSheet({ visible, title, startLabel, endLabel, startDate
   return <Modal transparent animationType="none" visible onRequestClose={onCancel}>
     <View pointerEvents={motion.pointerEvents} style={styles.modalRoot}><Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill, styles.scrim, motion.backdropStyle]}/>
       <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel={`Cancel ${title.toLowerCase()} changes`} onPress={onCancel}/>
-      <SafeAreaView edges={["bottom"]} style={styles.safeLayer} pointerEvents="box-none"><Animated.View accessibilityViewIsModal onLayout={motion.onSheetLayout} style={[styles.sheet, { backgroundColor: ft.colors.surface }, motion.sheetStyle]}>
+      <View style={styles.safeLayer} pointerEvents="box-none"><Animated.View accessibilityViewIsModal onLayout={motion.onSheetLayout} style={[styles.sheet, { backgroundColor: ft.colors.surface, paddingBottom: 16 + motion.bottomSafeAreaInset }, motion.sheetStyle]}>
         <PickerSheetHeader title={title} onClose={onCancel}/>
         <View style={styles.rangeHeader}><RangeValue label={startLabel} value={draftStart} active={activePart === "start"} align="left"/><RangeValue label={endLabel} value={draftEnd} active={activePart === "end"} align="right"/></View>
         <View style={styles.monthRow}><Pressable accessibilityRole="button" accessibilityLabel="Previous month" accessibilityState={{ disabled: !canGoBack }} disabled={!canGoBack} onPress={() => setMonthOffset(value => value - 1)} style={[styles.monthControl, { borderColor: ft.colors.border }, !canGoBack && styles.disabled]}><Text style={[styles.controlText, { color: ft.colors.text }]}>‹</Text></Pressable><Text accessibilityRole="header" style={[styles.month, { color: ft.colors.text }]}>{month.toLocaleDateString(FLIGHT_DATE_LOCALE, { month: "long", year: "numeric" })}</Text><Pressable accessibilityRole="button" accessibilityLabel="Next month" onPress={() => setMonthOffset(value => value + 1)} style={[styles.monthControl, { borderColor: ft.colors.border }]}><Text style={[styles.controlText, { color: ft.colors.text }]}>›</Text></Pressable></View>
         <View style={styles.week}>{["S","M","T","W","T","F","S"].map((day,index) => <Text key={`${day}-${index}`} style={[styles.weekday, { color: ft.colors.secondaryText }]}>{day}</Text>)}</View>
         <View style={styles.grid}>{cells.map((date,index) => { if (!date) return <View key={`blank-${index}`} style={styles.day}/>; const iso=localIsoDate(date); const disabled=iso<minimumStartDate; const start=iso===draftStart; const end=iso===draftEnd; const inRange=Boolean(draftStart&&draftEnd&&iso>draftStart&&iso<draftEnd); const selected=start||end; const isToday=iso===localIsoDate(new Date()); return <Pressable key={iso} accessibilityRole="button" accessibilityLabel={date.toLocaleDateString(FLIGHT_DATE_LOCALE,{dateStyle:"full"})} accessibilityState={{disabled,selected}} disabled={disabled} onPress={() => choose(iso)} style={[styles.day,inRange&&{backgroundColor:ft.colors.selected},selected&&{backgroundColor:ft.colors.selectedBorder},isToday&&!selected&&{borderColor:ft.colors.selectedBorder,borderWidth:1},disabled&&styles.disabled]}><Text style={[styles.dayText,{color:selected?ft.colors.surface:ft.colors.text},selected&&styles.selectedText]}>{date.getDate()}</Text></Pressable>; })}</View>
         <PrimaryButton label="Done" icon={null} disabled={!valid} onPress={() => onDone(draftStart,draftEnd)}/>
-      </Animated.View></SafeAreaView>
+      </Animated.View></View>
     </View>
   </Modal>;
 }

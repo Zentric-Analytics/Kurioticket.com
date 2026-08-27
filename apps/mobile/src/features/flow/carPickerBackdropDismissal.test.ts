@@ -27,7 +27,7 @@ test("driver age backdrop and sheet are siblings and close without confirming", 
 
   assert.ok(backdrop >= 0 && sheet > backdrop);
   assert.match(ageSheet, /<View style=\{styles\.modalRoot\}>[\s\S]*?<Pressable[^>]+onPress=\{onClose\}\/?>/);
-  assert.match(ageSheet, /<SafeAreaView[^>]+pointerEvents="box-none"><Animated\.View accessibilityViewIsModal/);
+  assert.match(ageSheet, /<View[^>]+pointerEvents="box-none"><Animated\.View accessibilityViewIsModal/);
   assert.match(ageSheet, /onRequestClose=\{onClose\}/);
   assert.doesNotMatch(ageSheet.slice(ageSheet.indexOf("<Modal"), sheet), /<Pressable[^>]*>\s*<Pressable/);
 });

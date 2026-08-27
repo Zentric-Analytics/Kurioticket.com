@@ -15,17 +15,15 @@ export function useSearchPickerMotion(visible: boolean) {
   const renderedRef = useRef(false);
   const measuredSheetHeight = useRef<number | undefined>(undefined);
   const fallbackTravelDistanceRef = useRef(fallbackTravelDistance);
-  const bottomSafeAreaInsetRef = useRef(bottomSafeAreaInset);
   const awaitingFreshOpenLayout = useRef(false);
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const sheetTranslateY = useRef(new Animated.Value(fallbackTravelDistance)).current;
   const generation = useRef(0);
 
   fallbackTravelDistanceRef.current = fallbackTravelDistance;
-  bottomSafeAreaInsetRef.current = bottomSafeAreaInset;
 
   const currentTravelDistance = useCallback(
-    () => searchPickerSheetTravelDistance(fallbackTravelDistanceRef.current, measuredSheetHeight.current, fallbackTravelDistanceRef.current, bottomSafeAreaInsetRef.current),
+    () => searchPickerSheetTravelDistance(fallbackTravelDistanceRef.current, measuredSheetHeight.current, fallbackTravelDistanceRef.current),
     [],
   );
 
@@ -86,6 +84,7 @@ export function useSearchPickerMotion(visible: boolean) {
     pointerEvents: visible ? "auto" : "none",
     backdropStyle: { opacity: backdropOpacity },
     sheetStyle: { transform: [{ translateY: sheetTranslateY }] },
+    bottomSafeAreaInset,
     onSheetLayout,
   } as const;
 }

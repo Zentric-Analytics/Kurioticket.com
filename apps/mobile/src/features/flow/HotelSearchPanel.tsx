@@ -116,9 +116,9 @@ export function HotelDestinationSheet({ visible, value, onDone, onCancel }: { vi
   const clear = () => { setQuery(""); setSuggestions([]); setError(false); inputRef.current?.focus(); };
   return <Modal transparent animationType="none" visible={motion.rendered} onRequestClose={onCancel}>
       <KeyboardAvoidingView pointerEvents={motion.pointerEvents} style={styles.keyboardViewport} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        <SafeAreaView edges={["top", "bottom"]} style={styles.destinationOverlay}><Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill,styles.scrim,motion.backdropStyle]}/>
+        <SafeAreaView edges={["top"]} style={styles.destinationOverlay}><Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill,styles.scrim,motion.backdropStyle]}/>
           <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} accessibilityRole="button" accessibilityLabel="Close hotel destination picker"/>
-          <Animated.View accessibilityViewIsModal onLayout={motion.onSheetLayout} style={[styles.destinationSheet,{backgroundColor:ft.colors.surface},motion.sheetStyle]}>
+          <Animated.View accessibilityViewIsModal onLayout={motion.onSheetLayout} style={[styles.destinationSheet,{backgroundColor:ft.colors.surface,paddingBottom:20+motion.bottomSafeAreaInset},motion.sheetStyle]}>
             <View style={styles.destinationHeader}><Text accessibilityRole="header" style={ft.styles.title}>Choose destination</Text>{trimmedQuery ? <Pressable accessibilityRole="button" accessibilityLabel="Clear hotel destination search" onPress={clear}><Text style={[styles.link,{color:ft.colors.selectedBorder}]}>Clear</Text></Pressable> : null}</View>
             <View style={[styles.destinationSearch,{backgroundColor:ft.colors.input,borderColor:ft.colors.border}]}><FlowIcon name="location" size={20} color={ft.colors.icon}/><TextInput ref={inputRef} accessibilityLabel="Search hotel destinations" placeholder="City, area, or hotel" placeholderTextColor={ft.colors.placeholder} value={query} onChangeText={setQuery} returnKeyType="search" style={[styles.destinationSearchInput,{color:ft.colors.text}]}/></View>
             {loading ? <Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Finding destinations…</Text> : error ? <Text accessibilityRole="alert" style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Couldn’t load destinations. Please try again.</Text> : <FlatList style={styles.destinationResults} keyboardShouldPersistTaps="handled" data={suggestions} keyExtractor={(item) => item.id} contentContainerStyle={styles.destinationList} renderItem={({item}) => { const selected = draft === item.searchValue; const detail = item.region ? `${item.region} · ${item.country}` : item.country; return <Pressable accessibilityRole="button" accessibilityLabel={`${item.name}, ${detail}`} accessibilityState={{selected}} onPress={() => onDone(item.searchValue)} style={[styles.destinationChoice,{borderBottomColor:ft.colors.border},selected&&{backgroundColor:ft.colors.selected}]}><View style={[styles.destinationIcon,{backgroundColor:ft.colors.input}]}><FlowIcon name="hotel" size={22} color={ft.colors.icon}/></View><View style={styles.rowCopy}><Text numberOfLines={1} style={[ft.styles.value,selected&&{color:ft.colors.selectedPrimaryText}]}>{item.name}</Text><Text numberOfLines={1} style={[ft.styles.meta,selected&&{color:ft.colors.selectedSecondaryText}]}>{detail}</Text></View></Pressable>; }} ListEmptyComponent={trimmedQuery ? <Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>No matching destinations yet</Text> : <Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Start typing to find a destination.</Text>} />}
@@ -139,8 +139,8 @@ function HotelGuestsRoomsSheet({ visible, adults, children, rooms, petFriendly, 
   return <Modal visible={motion.rendered} transparent animationType="none" onRequestClose={onCancel}>
     <View pointerEvents={motion.pointerEvents} style={styles.modalRoot}><Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill,styles.scrim,motion.backdropStyle]}/>
       <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Close Guests & Rooms picker" onPress={onCancel}/>
-      <SafeAreaView edges={["bottom"]} style={styles.sheetPosition} pointerEvents="box-none">
-        <Animated.View accessibilityViewIsModal onLayout={motion.onSheetLayout} style={[styles.sheet, { backgroundColor: ft.colors.surface },motion.sheetStyle]}>
+      <View style={styles.sheetPosition} pointerEvents="box-none">
+        <Animated.View accessibilityViewIsModal onLayout={motion.onSheetLayout} style={[styles.sheet, { backgroundColor: ft.colors.surface, paddingBottom: 13 + motion.bottomSafeAreaInset },motion.sheetStyle]}>
           <Text accessibilityRole="header" style={[styles.partyTitle,{color:ft.colors.text}]}>Guests &amp; Rooms</Text>
           <ScrollView style={styles.partyScroll} bounces={false} contentContainerStyle={styles.sheetContent}>
             <View style={styles.pickerSection}>
@@ -167,7 +167,7 @@ function HotelGuestsRoomsSheet({ visible, adults, children, rooms, petFriendly, 
           </ScrollView>
           <PrimaryButton label="Done" icon={null} size="compact" onPress={() => onDone(draft)}/>
         </Animated.View>
-      </SafeAreaView>
+      </View>
     </View>
   </Modal>;
 }
