@@ -815,6 +815,8 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
   const baggageSummary = summarizeBaggage(result.baggageInfo) ?? "Review policy";
   const cabinSummary = formatCabinClass(result.cabinClass);
   const fareRulesSummary = summarizeFareRules(result.refundInfo) ?? "Review before booking";
+  const baggageAccessibility = result.baggageInfo?.trim() || baggageSummary;
+  const fareRulesAccessibility = result.refundInfo?.trim() || fareRulesSummary;
   return (
     <Pressable
       accessibilityRole="button"
@@ -897,18 +899,19 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
           </Text>
         </View>
       </View>
+      <View style={[s0.metadataDivider, { backgroundColor: theme.border }]} />
       <View style={s0.metadataRow}>
-        <View accessible accessibilityLabel={`Baggage: ${baggageSummary}`} style={s0.metadataItem}>
+        <View accessible accessibilityLabel={`Baggage: ${baggageAccessibility}`} style={s0.metadataItem}>
           <Luggage accessible={false} size={14} strokeWidth={1.8} color={theme.textSecondary} />
-          <Text style={[s0.metadataText, { color: theme.textSecondary }]}>{baggageSummary}</Text>
+          <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: theme.textSecondary }]}>{baggageSummary}</Text>
         </View>
         <View accessible accessibilityLabel={`Cabin: ${cabinSummary}`} style={s0.metadataItem}>
           <Armchair accessible={false} size={14} strokeWidth={1.8} color={theme.textSecondary} />
-          <Text style={[s0.metadataText, { color: theme.textSecondary }]}>{cabinSummary}</Text>
+          <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: theme.textSecondary }]}>{cabinSummary}</Text>
         </View>
-        <View accessible accessibilityLabel={`Fare rules: ${fareRulesSummary}`} style={s0.metadataItem}>
+        <View accessible accessibilityLabel={`Fare rules: ${fareRulesAccessibility}`} style={s0.metadataItem}>
           <ShieldCheck accessible={false} size={14} strokeWidth={1.8} color={theme.textSecondary} />
-          <Text style={[s0.metadataText, { color: theme.textSecondary }]}>{fareRulesSummary}</Text>
+          <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: theme.textSecondary }]}>Fare rules</Text>
         </View>
       </View>
     </Pressable>
@@ -1574,8 +1577,9 @@ const s0 = StyleSheet.create({
   bigPrice: { fontSize: 20, fontWeight: "900", color: ui.navy, textAlign: "right" },
   fareRow: { paddingTop: 2, flexDirection: "row", justifyContent: "flex-end" },
   actionColumn: { width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 3 },
-  metadataRow: { width: "100%", flexDirection: "row", alignItems: "flex-start", gap: 5, paddingTop: 4 },
-  metadataItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 3 },
+  metadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 3, marginBottom: 4 },
+  metadataRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 4 },
+  metadataItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 3 },
   metadataText: { flex: 1, minWidth: 0, fontSize: 9.5, lineHeight: 12.5 },
   hotelCard: {
     height: 234,
