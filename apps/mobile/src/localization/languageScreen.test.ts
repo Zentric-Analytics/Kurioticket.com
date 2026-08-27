@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const source = readFileSync(new URL("../../app/language.tsx", import.meta.url), "utf8");
+const source = readFileSync("app/language.tsx", "utf8");
 
 test("Language screen renders the shared locale catalog in a ScrollView", () => {
   assert.match(source, /<ScrollView/);
