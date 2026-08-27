@@ -22,7 +22,7 @@ export function LocalCalendarModal({ visible, title, selected, minimum, onChoose
   const leading = month.getDay();
   const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
   const cells = Array.from({ length: leading + days }, (_, index) => index < leading ? undefined : new Date(month.getFullYear(), month.getMonth(), index - leading + 1, 12));
-  return <Modal visible transparent animationType="none" onRequestClose={onClose}><SafeAreaView style={styles.overlay}>
+  return <Modal visible transparent animationType="none" onRequestClose={onClose}><SafeAreaView pointerEvents={motion.pointerEvents} style={styles.overlay}>
     <Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill, styles.scrim, motion.backdropStyle]}/>
     {context.dismissOnBackdropPress ? <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityRole="button" accessibilityLabel="Close calendar"/> : <View pointerEvents="none" style={StyleSheet.absoluteFill}/>}<Animated.View accessibilityViewIsModal style={[styles.modal, { backgroundColor: ft.colors.surface }, motion.sheetStyle]}>
     <Text accessibilityRole="header" style={ft.styles.title}>{context.title}</Text>
