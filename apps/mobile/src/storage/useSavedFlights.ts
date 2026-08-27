@@ -79,9 +79,43 @@ function storeFor(userId: string) {
 }
 
 export function useSavedFlights() {
-  const [userId, setUserId] = useState<string | null>(null); const [savedFlights, setSavedFlights] = useState(new Map<string, FlightResult>());
-  const refresh = useCallback(() => { void readSession().then((session) => setUserId(session?.user.id ?? null)).catch(() => setUserId(null)); }, []); useFocusEffect(refresh);
-  useEffect(() => { if (!userId) { setSavedFlights(new Map()); return; } const repository = require("./savedRepository") as typeof import("./savedRepository"); const store = repository.savedRepositoryFor(userId); setSavedFlights(store.snapshot().flights); const unsubscribe = store.subscribe((value) => setSavedFlights(value.flights)); void store.refresh(); return unsubscribe; }, [userId]);
-  const toggle = useCallback((flight: FlightResult, searchParams?: Record<string, unknown>) => { if (favoriteAction(userId) === "sign-in" || !userId) { showFavoriteSignInPrompt("/saved"); return; } const repository = require("./savedRepository") as typeof import("./savedRepository"); void repository.savedRepositoryFor(userId).toggleFlight(flight, searchParams).catch(() => undefined); }, [userId]);
-  return { savedFlights, toggle, refresh };
+  const [userId, setUserId] = useState<string | null | undefined>(undefined);
+  const [savedFlights, setSavedFlights] = useState(new Map<string, FlightResult>());
+  const [pendingFlightKeys, setPendingFlightKeys] = useState(new Set<string>());
+  const refresh = useCallback(() => {
+    void readSession().then((session) => setUserId(session?.user.id ?? null)).catch(() => setUserId(null));
+  }, []);
+  useFocusEffect(refresh);
+  useEffect(() => {
+    if (!userId) {
+      setSavedFlights(new Map());
+      setPendingFlightKeys(new Set());
+      return;
+    }
+    const repository = require("./savedRepository") as typeof import("./savedRepository");
+    const store = repository.savedRepositoryFor(userId);
+    const update = (value: import("./savedRepository").SavedSnapshot) => {
+      setSavedFlights(value.flights);
+      setPendingFlightKeys(value.pendingFlightKeys);
+    };
+    update(store.snapshot());
+    const unsubscribe = store.subscribe(update);
+    void store.refresh();
+    return unsubscribe;
+  }, [userId]);
+  const toggle = useCallback(async (flight: FlightResult, searchParams?: Record<string, unknown>) => {
+    let resolvedUserId = userId;
+    if (resolvedUserId === undefined) {
+      const session = await readSession();
+      resolvedUserId = session?.user.id ?? null;
+      setUserId(resolvedUserId);
+    }
+    if (favoriteAction(resolvedUserId) === "sign-in" || !resolvedUserId) {
+      showFavoriteSignInPrompt("/saved");
+      return;
+    }
+    const repository = require("./savedRepository") as typeof import("./savedRepository");
+    await repository.savedRepositoryFor(resolvedUserId).toggleFlight(flight, searchParams);
+  }, [userId]);
+  return { savedFlights, pendingFlightKeys, toggle, refresh };
 }

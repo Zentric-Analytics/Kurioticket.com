@@ -10,6 +10,15 @@ test("guest favorite attempts require sign-in and authenticated attempts toggle"
   assert.equal(favoriteAction("stable-user-id"), "toggle");
 });
 
+test("flight favorites resolve an unknown session before choosing save or sign-in", () => {
+  const hook = source("src/storage/useSavedFlights.ts");
+  assert.match(hook, /useState<string \| null \| undefined>\(undefined\)/);
+  assert.match(hook, /if \(resolvedUserId === undefined\) \{[\s\S]*?await readSession\(\)[\s\S]*?setUserId\(resolvedUserId\)/);
+  assert.match(hook, /favoriteAction\(resolvedUserId\) === "sign-in"[\s\S]*?showFavoriteSignInPrompt\("\/saved"\)/);
+  assert.match(hook, /await repository\.savedRepositoryFor\(resolvedUserId\)\.toggleFlight/);
+  assert.doesNotMatch(hook, /toggleFlight\([\s\S]*?catch\(\(\) => undefined\)/);
+});
+
 test("favorite prompt offers dismissal and the existing sign-in flow", () => {
   const hook = source("src/storage/useSavedDestinations.ts");
   assert.match(hook, /Sign in to save favorites/);

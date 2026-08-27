@@ -5,7 +5,7 @@ import { savedRepositoryFor, type SavedSnapshot } from "./savedRepository";
 import { favoriteAction } from "./favoriteAccess";
 import { showFavoriteSignInPrompt } from "./useSavedDestinations";
 
-const emptySnapshot = (): SavedSnapshot => ({ destinationIds: new Set(), flights: new Map(), items: [], loading: true, error: "" });
+const emptySnapshot = (): SavedSnapshot => ({ destinationIds: new Set(), flights: new Map(), pendingFlightKeys: new Set(), items: [], loading: true, error: "" });
 
 export function useCanonicalSaved() {
   const [userId, setUserId] = useState<string | null>(null);

@@ -76,7 +76,7 @@ test("flight results virtualize cards, keep controls persistent, and own exactly
   assert.doesNotMatch(screen, /sorted\.map\(\(x, i\) =>\s*product === "flight"/);
   assert.equal((screen.match(/useSavedFlights\(\)/g) || []).length, 1);
   assert.doesNotMatch(card, /useSavedFlights|savedRepository|readSession|SecureStore/);
-  assert.match(card, /saved: boolean; onToggleSaved: \(\) => void/);
+  assert.match(card, /saved: boolean; pending: boolean; onToggleSaved: \(\) => void/);
 });
 
 test("airline SVG isolation deterministically preserves the initials fallback", () => {

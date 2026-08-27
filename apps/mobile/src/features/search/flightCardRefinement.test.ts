@@ -45,7 +45,7 @@ test("the whole card replaces the details CTA", () => {
   assert.match(card, /return \(\s*<Pressable[\s\S]*accessibilityRole="button"[\s\S]*pathname: "\/flight-details"/);
   assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
   assert.doesNotMatch(card, /View details|detailsButton|detailsButtonText/);
-  assert.match(card, /event\.stopPropagation\(\); onToggleSaved\(\)/);
+  assert.match(card, /event\.stopPropagation\(\); if \(!pending\) onToggleSaved\(\)/g);
 });
 
 test("flight card derives singular, plural, and nonstop labels from provider stops", () => {
@@ -260,10 +260,10 @@ test("flight card uses Lucide icons for route, benefits, and saved state", () =>
 
 test("flight favorite uses persistent shared state for initial, save, and remove behavior", () => {
   assert.doesNotMatch(card, /useSavedFlights\(\)/);
-  assert.match(card, /saved: boolean; onToggleSaved: \(\) => void/);
+  assert.match(card, /saved: boolean; pending: boolean; onToggleSaved: \(\) => void/);
   assert.match(card, /onToggleSaved\(\)/);
   assert.equal((source.match(/useSavedFlights\(\)/g) || []).length, 1);
-  assert.match(source, /saved=\{savedFlights\.has\(item\.id\)\}/);
+  assert.match(source, /saved=\{savedFlights\.has\(flightSavedSignature\(item\)\)\}/);
   assert.match(source, /toggleSavedFlight\(item, params\)/);
   assert.doesNotMatch(card, /useState\(false\)/);
   const hook = readFileSync(resolve("src/storage/useSavedFlights.ts"), "utf8");
@@ -271,14 +271,14 @@ test("flight favorite uses persistent shared state for initial, save, and remove
   assert.match(hook, /SecureStore\.getItemAsync/);
   assert.match(hook, /SecureStore\.setItemAsync/);
   assert.match(hook, /next\.has\(flight\.id\) \? next\.delete\(flight\.id\) : next\.set\(flight\.id, flight\)/);
-  assert.match(hook, /favoriteAction\(userId\)/);
+  assert.match(hook, /favoriteAction\(resolvedUserId\)/);
 });
 
 test("flight favorite is accessible and isolated inside the identity action stack", () => {
   assert.match(card, /accessibilityRole="button"/);
-  assert.match(card, /accessibilityState=\{\{ selected: saved \}\}/);
+  assert.match(card, /accessibilityState=\{\{ selected: saved, busy: pending, disabled: pending \}\}/);
   assert.match(card, /hitSlop=\{\{ top: 12, bottom: 12, left: 12, right: 12 \}\}/);
-  assert.match(card, /event\.stopPropagation\(\); onToggleSaved\(\)/);
+  assert.match(card, /event\.stopPropagation\(\); if \(!pending\) onToggleSaved\(\)/g);
   assert.match(source, /airlineHeader: \{ minHeight: 20/);
   assert.match(source, /favoriteButton: \{ width: 20, height: 20/);
   assert.doesNotMatch(card, /onPress=.*View details[\s\S]*toggleSavedFlight/);

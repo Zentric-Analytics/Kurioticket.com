@@ -13,7 +13,7 @@ const hotelDetail = detailSource.slice(detailSource.indexOf("function HotelDetai
 
 test("flight detail reflects canonical saved state and toggles the displayed result", () => {
   assert.match(flightDetail, /useSavedFlights\(\)/);
-  assert.match(flightDetail, /savedFlights\.has\(result\.id\)/);
+  assert.match(flightDetail, /savedFlights\.has\(flightSavedSignature\(result\)\)/);
   assert.match(flightDetail, /onPress=\{\(\) => toggleSavedFlight\(result, params\)\}/);
   assert.match(flightDetail, /accessibilityRole="button"/);
   assert.match(flightDetail, /accessibilityLabel=\{saved \? `Remove \$\{result\.airlineName\} flight from saved` : `Save \$\{result\.airlineName\} flight`\}/);
