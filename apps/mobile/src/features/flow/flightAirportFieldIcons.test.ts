@@ -91,7 +91,7 @@ test("the accessible Flight swap control matches the Packages presentation", () 
     assert.match(source, /swapTarget:\{[\s\S]*?width:44,height:44/);
     assert.match(source, /swapCircle:\{width:36,height:36,borderRadius:18/);
     assert.match(source, /<ArrowRightLeft accessible=\{false\} size=\{17\}/);
-    assert.doesNotMatch(source, /Dimensions\.get|useWindowDimensions|onLayout|screenWidth|windowWidth/);
+    assert.doesNotMatch(source, /Dimensions\.get|useWindowDimensions|screenWidth|windowWidth/);
   }
 });
 

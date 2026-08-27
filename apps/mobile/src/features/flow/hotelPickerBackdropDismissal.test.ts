@@ -19,7 +19,7 @@ test("Hotel date backdrop and Android Back cancel the shared range draft", () =>
   assert.ok(panel.includes("<DateRangeSheet") && panel.includes("onCancel={() => setDatesOpen(false)}"));
   assert.match(calendar, /onRequestClose=\{onCancel\}/);
   assert.match(calendar, /StyleSheet\.absoluteFill[^\n]+onPress=\{onCancel\}/);
-  assert.match(calendar, /<Animated\.View accessibilityViewIsModal style=\{\[styles\.sheet, \{ backgroundColor: ft\.colors\.surface \}, motion\.sheetStyle\]}>/);
+  assert.match(calendar, /<Animated\.View accessibilityViewIsModal onLayout=\{motion\.onSheetLayout\} style=\{\[styles\.sheet, \{ backgroundColor: ft\.colors\.surface \}, motion\.sheetStyle\]}>/);
 });
 
 test("Guests backdrop and Android Back cancel drafts while Done remains the only commit path", () => {
