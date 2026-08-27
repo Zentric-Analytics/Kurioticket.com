@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import type { FlightResult } from "../api/travelApi";
+import { TravelApiError, type FlightResult } from "../api/travelApi";
 import { favoriteAction } from "./favoriteAccess";
 import { showFavoriteSignInPrompt } from "./favoriteSignInPrompt";
-import { readSession } from "./sessionStorage";
+import { clearSession, readSession } from "./sessionStorage";
+import { flightSavedSignature } from "./savedMapping";
 import { savedRepositoryFor, type SavedSnapshot } from "./savedRepository";
 
 export function useSavedFlights() {
@@ -41,7 +42,29 @@ export function useSavedFlights() {
       showFavoriteSignInPrompt("/saved");
       return;
     }
-    await savedRepositoryFor(resolvedUserId).toggleFlight(flight, searchParams);
+    const repository = savedRepositoryFor(resolvedUserId);
+    const operation = repository.snapshot().flights.has(flightSavedSignature(flight)) ? "remove" : "save";
+    try {
+      await savedRepositoryFor(resolvedUserId).toggleFlight(flight, searchParams);
+    } catch (error) {
+      if (error instanceof TravelApiError && error.status === 401) {
+        await clearSession();
+        setUserId(null);
+        showFavoriteSignInPrompt("/saved");
+        return;
+      }
+      if (__DEV__ && error instanceof TravelApiError && error.status === 400) {
+        const serverError = error.details?.error;
+        console.warn("Saved flight mutation rejected", {
+          operation,
+          status: error.status,
+          code: error.code,
+          serverCode: typeof serverError === "object" && serverError !== null ? (serverError as Record<string, unknown>).code : undefined,
+          serverMessage: error.message,
+        });
+      }
+      throw error;
+    }
   }, [userId]);
   return { savedFlights, pendingFlightKeys, toggle, refresh };
 }

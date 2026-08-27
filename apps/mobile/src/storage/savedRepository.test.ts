@@ -3,11 +3,15 @@ const flight={id:"f",provider:"p",airlineName:"Air",originAirport:"LOS",destinat
 test("flight mapping retains canonical and native replay data",()=>{const mapped=mapFlightToSaved(flight);assert.equal(mapped.type,"flight");assert.deepEqual((mapped.payload as Record<string,unknown>).result,flight);});test("destination mapping uses canonical search",()=>assert.equal(mapDestinationToSaved("fr-paris")?.type,"search"));test("signatures deduplicate records independent of database id",()=>{const mapped=mapFlightToSaved(flight);assert.equal(savedSignature(mapped),savedSignature({...mapped,id:"server",createdAt:"now"} as never));});
 test("flight mapping retains sanitized search context without changing identity",()=>{const before=mapFlightToSaved(flight);const mapped=mapFlightToSaved(flight,{tripType:"one-way",origin:"LOS",destination:"LHR",departureDate:"2030-01-01",travelers:"2",result:"excluded",visual:"1"});assert.deepEqual((mapped.payload as Record<string,unknown>).searchParams,{tripType:"one-way",origin:"LOS",destination:"LHR",departureDate:"2030-01-01",travelers:"2"});assert.equal(savedSignature(mapped),savedSignature(before));});
 
-test("normalized Duffel flight mapping satisfies the Saved API contract", () => {
-  const duffel = { ...flight, id: "off_0001", provider: "duffel", airlineName: "British Airways", flightNumber: "BA75", originAirport: "LOS", destinationAirport: "LHR", departureTime: "2030-04-12T23:10:00+01:00", arrivalTime: "2030-04-13T05:30:00+01:00", price: 824.45, currency: "USD" };
+test("normalized Duffel local and offset flight mappings satisfy the Saved API contract", () => {
+  const duffel = { ...flight, id: "off_0001", provider: "duffel", airlineName: "British Airways", flightNumber: "BA75", originAirport: "LOS", destinationAirport: "LHR", departureTime: "2026-08-27T20:07:00", arrivalTime: "2026-08-28T03:43:00", price: 824.45, currency: "USD" };
   const mapped = mapFlightToSaved(duffel);
-  assert.deepEqual({ type: mapped.type, provider: mapped.provider, airlineName: mapped.airlineName, flightNumber: mapped.flightNumber, originAirport: mapped.originAirport, destinationAirport: mapped.destinationAirport, departureTime: mapped.departureTime, arrivalTime: mapped.arrivalTime, price: mapped.price, currency: mapped.currency }, { type: "flight", provider: "duffel", airlineName: "British Airways", flightNumber: "BA75", originAirport: "LOS", destinationAirport: "LHR", departureTime: "2030-04-12T23:10:00+01:00", arrivalTime: "2030-04-13T05:30:00+01:00", price: 824.45, currency: "USD" });
+  assert.equal(mapped.departureTime, "2026-08-27T20:07:00.000Z");
+  assert.equal(mapped.arrivalTime, "2026-08-28T03:43:00.000Z");
   assert.equal(typeof mapped.departureTime === "string" && !Number.isNaN(Date.parse(mapped.departureTime)), true);
   assert.equal(typeof mapped.arrivalTime === "string" && !Number.isNaN(Date.parse(mapped.arrivalTime)), true);
   assert.deepEqual((mapped.payload as Record<string, unknown>).result, duffel);
+  const offset = mapFlightToSaved({ ...duffel, departureTime: "2030-04-12T23:10:00+01:00", arrivalTime: "2030-04-13T05:30:00+01:00" });
+  assert.equal(offset.departureTime, "2030-04-12T22:10:00.000Z");
+  assert.equal(offset.arrivalTime, "2030-04-13T04:30:00.000Z");
 });
