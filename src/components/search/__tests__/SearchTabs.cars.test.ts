@@ -146,7 +146,7 @@ test("mobile homepage Cars launches every picker in the shared full-screen shell
 test("mobile Cars fields stay launchers without inline panels or persistent open rings", () => {
   const summaryField = source.slice(source.indexOf("function CarsSummaryField"), source.indexOf("export function SearchTabs"));
   assert.match(summaryField, /mobilePresentation === "inline" \? <div className="mt-3">\{panel\}<\/div> : null/);
-  assert.match(source, /focus-within:border-\[#dee5ed\] focus-within:ring-0 sm:rounded-xl/);
+  assert.match(source, /carsMobileHomepageFieldClassName/);
   assert.match(carsBranch, /carsPickupLauncherRef[\s\S]*sm:hidden/);
   assert.match(returnLocationField, /carsDropoffLauncherRef[\s\S]*sm:hidden/);
 });

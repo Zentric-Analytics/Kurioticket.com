@@ -20,7 +20,7 @@ test("shared Cars picker matches the Flight navigation and input geometry", () =
   );
   assert.match(
     picker,
-    /mode === "pickup"[\s\S]*Pickup location[\s\S]*Return location/,
+    /mode === "pickup"[\s\S]*carsSearch.choosePickupLocation[\s\S]*carsSearch.chooseReturnLocation/,
   );
   assert.match(picker, /Airport, city, or address/);
   assert.match(

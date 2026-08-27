@@ -41,6 +41,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
+import { openMobilePickerWithKeyboard } from "@/components/search/mobilePickerKeyboardFocus";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { MobileTravelerCabinPicker } from "@/components/search/MobileTravelerCabinPicker";
 import { MultiCityFlightEditor } from "@/components/search/MultiCityFlightEditor";
@@ -2872,7 +2873,7 @@ export function SearchTabs({
       <label htmlFor="homepage-cars-dropoff" className={hotelFieldLabelClassName}>
         {translate("carsSearch.returnLocationLabel") || "Return location"}
       </label>
-      {mobileHomepage ? <button ref={carsDropoffLauncherRef} id="homepage-cars-dropoff" type="button" onClick={() => setCarsOpenPicker("dropoff")} className={cn(hotelFieldValueClassName, "focus-ring block h-8 w-full text-start sm:hidden")}>{carsValues.dropoffLocation || translate("carsSearch.returnLocationPlaceholder") || "Return city, airport or address"}</button> : null}
+      {mobileHomepage ? <button ref={carsDropoffLauncherRef} id="homepage-cars-dropoff" type="button" onClick={() => openMobilePickerWithKeyboard(() => setCarsOpenPicker("dropoff"), "homepage-cars-dropoff-mobile-input")} className={cn(hotelFieldValueClassName, "focus-ring block h-8 w-full text-start sm:hidden")}>{carsValues.dropoffLocation || translate("carsSearch.returnLocationPlaceholder") || "Return city, airport or address"}</button> : null}
       <div className={cn("relative", mobileHomepage && "hidden sm:block")}>
         <MapPin aria-hidden="true" className="pointer-events-none absolute start-0 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-500" />
         <CarLocationAutocomplete
@@ -3013,9 +3014,11 @@ export function SearchTabs({
                 aria-expanded={activeMobileAirportPicker === kind}
                 aria-label={`${label}: ${value.trim() || placeholder}`}
                 onClick={() => {
-                  setFromOpen(false);
-                  setToOpen(false);
-                  setActiveMobileAirportPicker(kind);
+                  openMobilePickerWithKeyboard(() => {
+                    setFromOpen(false);
+                    setToOpen(false);
+                    setActiveMobileAirportPicker(kind);
+                  }, `homepage-${kind}-picker-search`);
                 }}
                 className="focus-ring flex h-[68px] w-full items-center rounded-[10px] border border-[#dee5ed] bg-[#fcfdfe] px-4 text-start"
                 data-testid={`mobile-homepage-${kind}-field`}
@@ -3457,7 +3460,7 @@ export function SearchTabs({
                     onClick={() => {
                       setFromOpen(false);
                       setToOpen(false);
-                      setActiveMobileAirportPicker("origin");
+                      openMobilePickerWithKeyboard(() => setActiveMobileAirportPicker("origin"), "homepage-origin-picker-search");
                     }}
                     className="focus-ring flex h-full w-full min-w-0 items-center rounded-md border-0 bg-transparent py-0 ps-0 pe-11 text-start text-[16px] text-slate-900 outline-none transition-colors sm:hidden"
                   >
@@ -3574,7 +3577,7 @@ export function SearchTabs({
                     onClick={() => {
                       setFromOpen(false);
                       setToOpen(false);
-                      setActiveMobileAirportPicker("destination");
+                      openMobilePickerWithKeyboard(() => setActiveMobileAirportPicker("destination"), "homepage-destination-picker-search");
                     }}
                     className="focus-ring flex h-full w-full min-w-0 items-center rounded-md border-0 bg-transparent py-0 ps-0 pe-11 text-start text-[16px] text-slate-900 outline-none transition-colors sm:hidden"
                   >
@@ -3952,9 +3955,11 @@ export function SearchTabs({
                   ref={hotelDestinationMobileLauncherRef}
                   type="button"
                   onClick={() => {
-                    setHotelDestinationMobilePickerOpen(true);
-                    setHotelDatesOpen(false);
-                    setHotelGuestsRoomsOpen(false);
+                    openMobilePickerWithKeyboard(() => {
+                      setHotelDestinationMobilePickerOpen(true);
+                      setHotelDatesOpen(false);
+                      setHotelGuestsRoomsOpen(false);
+                    }, "homepage-hotel-mobile-destination-input");
                   }}
                   aria-haspopup="dialog"
                   aria-expanded={hotelDestinationMobilePickerOpen}
@@ -4478,7 +4483,7 @@ export function SearchTabs({
             <div className={carsGridClassName} data-testid="cars-primary-row">
               <div ref={carsPickupFieldRef} className={cn(hotelJoinedFieldClassName, "relative rounded-xl border border-slate-300 bg-white lg:rounded-s-xl", carsMobileHomepageFieldClassName)} data-testid="cars-pickup-location-field">
                 <label htmlFor="homepage-cars-pickup" className={hotelFieldLabelClassName}>{translate("carsSearch.pickupLocationLabel") || "Pickup location"}</label>
-                {mobileHomepage ? <button ref={carsPickupLauncherRef} id="homepage-cars-pickup" type="button" onClick={() => setCarsOpenPicker("pickup")} className={cn(hotelFieldValueClassName, "focus-ring block h-8 w-full text-start sm:hidden")}>
+                {mobileHomepage ? <button ref={carsPickupLauncherRef} id="homepage-cars-pickup" type="button" onClick={() => openMobilePickerWithKeyboard(() => setCarsOpenPicker("pickup"), "homepage-cars-pickup-mobile-input")} className={cn(hotelFieldValueClassName, "focus-ring block h-8 w-full text-start sm:hidden")}>
                   <span className="flex min-w-0 items-center gap-2">
                     <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
                     <span className={cn("truncate", carsValues.pickupLocation ? "font-normal" : "text-[16px] font-medium text-slate-500")}>{carsValues.pickupLocation || translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"}</span>
@@ -4535,6 +4540,7 @@ export function SearchTabs({
             return (
               <MobileCarLocationPicker
                 key={mode}
+                inputId={`homepage-cars-${mode}-mobile-input`}
                 open={carsOpenPicker === mode}
                 mode={isPickup ? "pickup" : "return"}
                 value={isPickup ? carsValues.pickupLocation : carsValues.dropoffLocation}

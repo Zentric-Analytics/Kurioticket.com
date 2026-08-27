@@ -25,6 +25,7 @@ import {
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
+import { openMobilePickerWithKeyboard } from "@/components/search/mobilePickerKeyboardFocus";
 import { HotelDesktopPopover } from "@/components/search/HotelDesktopPopover";
 import { MessageBanner } from "@/components/ui/MessageBanner";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
@@ -1055,10 +1056,12 @@ export function HotelSearchBar({
                   ref={destinationMobileLauncherRef}
                   type="button"
                   onClick={() => {
-                    setDestinationMobilePickerOpen(true);
-                    setDestinationSuggestionsOpen(false);
-                    setDatesOpen(false);
-                    setGuestsRoomsOpen(false);
+                    openMobilePickerWithKeyboard(() => {
+                      setDestinationMobilePickerOpen(true);
+                      setDestinationSuggestionsOpen(false);
+                      setDatesOpen(false);
+                      setGuestsRoomsOpen(false);
+                    }, `${idPrefix}-mobile-destination-input`);
                   }}
                   aria-haspopup="dialog"
                   aria-expanded={destinationMobilePickerOpen}

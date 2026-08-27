@@ -52,14 +52,16 @@ test("draft selection commits only through Done while shell close discards it", 
 });
 
 test("all mobile flight-airport consumers render the same shared picker", () => {
-  for (const source of consumers) {
+  for (const source of consumers.slice(0, 3)) {
     assert.match(source, /import \{ MobileAirportPicker \}/);
     assert.match(source, /<MobileAirportPicker/);
   }
+  assert.match(consumers[3], /import \{ FlightEditSearchDrawer/);
+  assert.match(consumers[3], /<FlightEditSearchDrawer/);
   assert.match(consumers[0], /field: "origin"[\s\S]*?field: "destination"/);
   assert.match(consumers[1], /field: "origin"[\s\S]*?field: "destination"/);
   assert.match(consumers[2], /field=\{kind\}/);
-  assert.match(consumers[3], /field="origin"[\s\S]*?field="destination"/);
+  assert.match(consumers[3], /<FlightEditSearchDrawer/);
 });
 
 test("opening and clearing the airport picker focus without moving the page", () => {

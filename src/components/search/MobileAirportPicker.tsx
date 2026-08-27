@@ -145,13 +145,14 @@ export function MobileAirportPicker({
       );
       setRecentEntries(merged);
     });
-    const focusId = window.setTimeout(
-      () => inputRef.current?.focus({ preventScroll: true }),
-      100,
-    );
+    const focusId = window.requestAnimationFrame(() => {
+      if (inputRef.current && document.activeElement !== inputRef.current) {
+        inputRef.current.focus({ preventScroll: true });
+      }
+    });
     return () => {
       controller.abort();
-      window.clearTimeout(focusId);
+      window.cancelAnimationFrame(focusId);
     };
   }, [open, selectedAirport, selectedCode, value]);
 

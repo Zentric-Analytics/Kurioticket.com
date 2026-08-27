@@ -27,6 +27,7 @@ import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
+import { openMobilePickerWithKeyboard } from "@/components/search/mobilePickerKeyboardFocus";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { MobileTravelerCabinPicker } from "@/components/search/MobileTravelerCabinPicker";
 import { MultiCityFlightEditor } from "@/components/search/MultiCityFlightEditor";
@@ -1568,7 +1569,7 @@ export function StandaloneFlightSearchForm({
                 useMainFlightLandingMobilePresentation
               }
               open={originOpen || activeMobilePicker === "origin"}
-              onMobileOpen={() => setActiveMobilePicker("origin")}
+              onMobileOpen={() => openMobilePickerWithKeyboard(() => setActiveMobilePicker("origin"), "standalone-flight-origin-mobile-search")}
               onDesktopFocus={openOriginDesktopPopover}
               onChange={(nextValue) => {
                 openOriginDesktopPopover();
@@ -1614,7 +1615,7 @@ export function StandaloneFlightSearchForm({
                 useMainFlightLandingMobilePresentation
               }
               open={destinationOpen || activeMobilePicker === "destination"}
-              onMobileOpen={() => setActiveMobilePicker("destination")}
+              onMobileOpen={() => openMobilePickerWithKeyboard(() => setActiveMobilePicker("destination"), "standalone-flight-destination-mobile-search")}
               onDesktopFocus={openDestinationDesktopPopover}
               onChange={(nextValue) => {
                 openDestinationDesktopPopover();
