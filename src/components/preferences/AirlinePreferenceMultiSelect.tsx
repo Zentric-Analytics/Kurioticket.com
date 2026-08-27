@@ -203,30 +203,34 @@ export function AirlinePreferenceMultiSelect({
               : ""
           } ${disabled || isAtLimit ? "bg-slate-100 text-slate-500" : ""}`}
         >
-          {normalizedValues.map((value) => {
-            const isKnown = codeToAirline.has(value.trim().toUpperCase());
-            return (
-              <span
-                key={value}
-                className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-bold ${
-                  isKnown
-                    ? "border-blue-100 bg-blue-50 text-[#004BB8]"
-                    : "border-amber-200 bg-amber-50 text-amber-800"
-                }`}
-              >
-                <span className="truncate">{getAirlineLabel(value)}</span>
-                <button
-                  type="button"
-                  aria-label={`Remove ${getAirlineLabel(value)}`}
-                  disabled={disabled}
-                  onClick={() => removeValue(value)}
-                  className="focus-ring cursor-pointer rounded-full p-0.5 transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <X aria-hidden="true" className="h-3.5 w-3.5" />
-                </button>
-              </span>
-            );
-          })}
+          {normalizedValues.length ? (
+            <div className="flex w-full flex-wrap justify-start gap-2">
+              {normalizedValues.map((value) => {
+                const isKnown = codeToAirline.has(value.trim().toUpperCase());
+                return (
+                  <span
+                    key={value}
+                    className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-bold ${
+                      isKnown
+                        ? "border-blue-100 bg-blue-50 text-[#004BB8]"
+                        : "border-amber-200 bg-amber-50 text-amber-800"
+                    }`}
+                  >
+                    <span className="truncate">{getAirlineLabel(value)}</span>
+                    <button
+                      type="button"
+                      aria-label={`Remove ${getAirlineLabel(value)}`}
+                      disabled={disabled}
+                      onClick={() => removeValue(value)}
+                      className="focus-ring cursor-pointer rounded-full p-0.5 transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <X aria-hidden="true" className="h-3.5 w-3.5" />
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
+          ) : null}
           <input
             id={id}
             type="text"
