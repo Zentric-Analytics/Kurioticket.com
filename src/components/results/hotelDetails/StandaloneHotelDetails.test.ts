@@ -66,7 +66,7 @@ test("mobile header owns stay metadata while the two-column dock owns price and 
   for (const contract of [
     "props.totalDisplayPrice.formatted",
     "props.nightlyDisplayPrice.formatted",
-    "props.labels.viewRooms",
+    "props.labels.continueBooking",
     "grid-cols-[minmax(0,1fr)_minmax(132px,0.9fr)]",
   ])
     assert.ok(dock.includes(contract), contract);
@@ -297,10 +297,34 @@ test("stay summary retains all functional data and pricing contracts", () => {
     "props.totalDisplayPrice.formatted",
     "props.nightlyDisplayPrice.formatted",
     "props.taxesText || props.planningPriceText",
-    "props.labels.viewRooms",
+    "props.labels.continueBooking",
     "disabled={!props.roomChoices.length}",
   ])
     assert.ok(source.includes(contract), contract);
+});
+
+test("persistent booking actions use the translated continuation copy without support text", () => {
+  assert.equal(source.match(/props\.labels\.continueBooking/g)?.length, 2);
+  assert.doesNotMatch(source, /props\.labels\.(?:viewRooms|roomSupport)/);
+  assert.match(
+    clientSource,
+    /continueBooking: t\("hotelDetails\.continueBooking"\) \|\| "Continue booking"/,
+  );
+  assert.doesNotMatch(clientSource, /roomSupport: t\("hotelDetails\.roomOptionsSupport"\)/);
+
+  const desktopAction = source.slice(
+    source.indexOf('data-standalone-stay-summary'),
+    source.indexOf('data-mobile-hotel-stay-dock'),
+  );
+  const mobileAction = source.slice(
+    source.indexOf('data-mobile-hotel-stay-dock'),
+    source.indexOf('{roomsOpen ? ('),
+  );
+  for (const action of [desktopAction, mobileAction]) {
+    assert.match(action, /onClick=\{\(event\) => openRoomOptions\(event\.currentTarget\)\}/);
+    assert.match(action, /props\.labels\.continueBooking/);
+    assert.doesNotMatch(action, /roomSupport/);
+  }
 });
 
 test("standalone pricing and search context are supplied by existing client pipelines", () => {
