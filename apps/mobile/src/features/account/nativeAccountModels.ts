@@ -31,3 +31,19 @@ export function failSave<T>(state: AsyncDraft<T>, token: number, error: string) 
 export function invalidateRequests<T>(state: AsyncDraft<T>) { return { ...state, loading: false, saving: false, requestVersion: state.requestVersion + 1 }; }
 export function filterOptions<T>(items: readonly T[], query: string, text: (item: T) => string) { const q = query.trim().toLowerCase(); return q ? items.filter(item => text(item).toLowerCase().includes(q)) : [...items]; }
 export function addAirline(values: string[], code: string) { return values.includes(code) || values.length >= 10 ? values : [...values, code]; }
+type AirlineMetadata = { code: string; name: string };
+type AirportMetadata = { code: string; airport: string; city: string; country?: string };
+export function airlinePreferenceLabel(value: string, items: readonly AirlineMetadata[]) {
+  const airline = items.find(item => item.code.toUpperCase() === value.trim().toUpperCase());
+  return airline ? `${airline.name} (${airline.code})` : value;
+}
+export function airportPreferenceValue(value: string, items: readonly AirportMetadata[]) {
+  return items.find(item => item.code.toUpperCase() === value.trim().toUpperCase());
+}
+export function filterAirportPreferences(items: readonly AirportMetadata[], query: string) {
+  return filterOptions(items, query, item => `${item.code} ${item.airport} ${item.city} ${item.country ?? ""}`).slice(0, 8);
+}
+export function filterAirlinePreferences(items: readonly AirlineMetadata[], query: string, selected: string[]) {
+  const selectedCodes = new Set(selected.map(value => value.trim().toUpperCase()));
+  return filterOptions(items, query, item => `${item.code} ${item.name}`).filter(item => !selectedCodes.has(item.code.toUpperCase())).slice(0, 8);
+}
