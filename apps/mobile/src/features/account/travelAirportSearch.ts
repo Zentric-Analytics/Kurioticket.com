@@ -4,7 +4,7 @@ export type TravelAirportSuggestion = {
   code: string;
   airport: string;
   city: string;
-  country: string;
+  country?: string;
 };
 
 type Fetcher = typeof fetch;
@@ -25,9 +25,9 @@ export function parseTravelAirportSuggestions(value: unknown): TravelAirportSugg
     const airport = typeof candidate.airport === "string" ? candidate.airport.trim() : "";
     const city = typeof candidate.city === "string" ? candidate.city.trim() : "";
     const country = typeof candidate.country === "string" ? candidate.country.trim() : "";
-    if (!/^[A-Z]{3}$/.test(code) || !airport || !city || !country || seen.has(code)) continue;
+    if (!/^[A-Z]{3}$/.test(code) || !airport || !city || seen.has(code)) continue;
     seen.add(code);
-    suggestions.push({ code, airport, city, country });
+    suggestions.push(country ? { code, airport, city, country } : { code, airport, city });
     if (suggestions.length === 8) break;
   }
   return suggestions;
