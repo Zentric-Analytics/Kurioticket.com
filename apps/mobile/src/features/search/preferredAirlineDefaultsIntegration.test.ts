@@ -32,9 +32,13 @@ test("the default waits for usable results and available airline options", () =>
   assert.match(application, /if \(preferredAirlines\.length === 0\) return/);
 });
 
-test("an existing explicit airline filter wins over the saved default", () => {
+test("an existing explicit airline filter or user airline interaction wins over the saved default", () => {
   assert.match(screen, /if \(filters\.airlines\.length > 0\) return/);
-  assert.match(screen, /setFilters\(\(current\) => current\.airlines\.length > 0[\s\S]*\? current/);
+  assert.match(screen, /preferredAirlineFilterTouchedSearchKey\.current === searchKey/);
+  assert.match(
+    screen,
+    /setFilters\(\(current\) => \([\s\S]*preferredAirlineFilterTouchedSearchKey\.current === searchKey \|\| current\.airlines\.length > 0[\s\S]*\? current/,
+  );
 });
 
 test("the default is attempted once per search so manual clear and same-search retry cannot restore it", () => {
@@ -44,7 +48,7 @@ test("the default is attempted once per search so manual clear and same-search r
   assert.doesNotMatch(screen, /preferredAirlineDefaultAttemptedSearchKey\.current = undefined;[\s\S]{0,120}retry/);
 });
 
-test("a new canonical search resets default eligibility along with existing local filters", () => {
+test("a new canonical search resets default eligibility and manual airline override tracking", () => {
   const reset = screen.slice(
     screen.indexOf("if (previousFlightSearchKey.current"),
     screen.indexOf("previousFlightSearchKey.current = plan.plan.key"),
@@ -52,6 +56,33 @@ test("a new canonical search resets default eligibility along with existing loca
   assert.match(reset, /setFilters\(emptyFlightFilters\(\)\)/);
   assert.match(reset, /setFiltersFlightSearchKey\(plan\.plan\.key\)/);
   assert.match(reset, /preferredAirlineDefaultAttemptedSearchKey\.current = undefined/);
+  assert.match(reset, /preferredAirlineFilterTouchedSearchKey\.current = undefined/);
+});
+
+test("session changes re-read preferences and reset default eligibility for a new signed-in user", () => {
+  assert.match(screen, /readSession, subscribeSession/);
+  assert.match(screen, /useEffect\(\(\) => subscribeSession\(\(\) => \{/);
+  assert.match(screen, /setPreferredAirlineSessionRevision\(\(revision\) => revision \+ 1\)/);
+  assert.match(screen, /\[flightResults, preferredAirlineSessionRevision\]/);
+  assert.match(screen, /const sessionUserId = session\?\.user\.id \?\? null/);
+  assert.match(screen, /preferredAirlineSessionUserId\.current !== sessionUserId/);
+  assert.match(screen, /preferredAirlineSessionUserId\.current = sessionUserId/);
+  assert.match(screen, /preferredAirlineDefaultAttemptedSearchKey\.current = undefined/);
+});
+
+test("manual airline changes win if preferences resolve later", () => {
+  assert.match(screen, /const handleFlightFiltersChange = useCallback/);
+  assert.match(screen, /!sameStringArray\(filters\.airlines, next\.airlines\)/);
+  assert.match(screen, /preferredAirlineFilterTouchedSearchKey\.current = searchKey/);
+  assert.match(screen, /preferredAirlineDefaultAttemptedSearchKey\.current = searchKey/);
+  assert.match(screen, /onChange=\{handleFlightFiltersChange\}/);
+});
+
+test("clearing flight filters also prevents the saved airline default from reapplying", () => {
+  assert.match(screen, /const clearFlightFilters = useCallback/);
+  assert.match(screen, /preferredAirlineFilterTouchedSearchKey\.current = searchKey/);
+  assert.match(screen, /preferredAirlineDefaultAttemptedSearchKey\.current = searchKey/);
+  assert.match(screen, /onClearFilters=\{clearFlightFilters\}/);
 });
 
 test("preference requests and updates are lifecycle guarded", () => {
