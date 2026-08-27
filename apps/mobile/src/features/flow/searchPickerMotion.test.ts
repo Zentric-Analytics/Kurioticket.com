@@ -13,7 +13,11 @@ test("shared native search picker motion has the approved contract", () => {
   assert.match(source, /Dimensions\.get\("screen"\)\.height/);
   assert.match(readFileSync("src/features/flow/searchPickerTravel.ts", "utf8"), /Math\.max\(windowHeight, screenHeight\)/);
   const travelSource = readFileSync("src/features/flow/searchPickerTravel.ts", "utf8");
-  assert.match(travelSource, /measuredSheetHeight[^?]+\? measuredSheetHeight\s+: Math\.max\(windowHeight, screenHeight\)/s);\n  assert.doesNotMatch(travelSource, /bottomClearance/);
+  assert.match(
+    travelSource,
+    /measuredSheetHeight[^?]+\? measuredSheetHeight\s+: Math\.max\(windowHeight, screenHeight\)/s,
+  );
+  assert.doesNotMatch(travelSource, /bottomClearance/);
   assert.match(source, /useWindowDimensions\(\)/);
   assert.doesNotMatch(source, /SHEET_OFFSET|toValue: 40|Animated\.Value\([^)]*40/);
   assert.match(source, /measuredSheetHeight\.current = nextHeight/);
