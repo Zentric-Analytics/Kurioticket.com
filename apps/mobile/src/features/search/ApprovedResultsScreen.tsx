@@ -876,7 +876,6 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
                   accessibilityRole="button"
                   accessibilityLabel={saved ? `Remove ${result.airlineName} flight from saved` : `Save ${result.airlineName} flight`}
                   accessibilityState={{ selected: saved, busy: pending, disabled: pending }}
-                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                   pressRetentionOffset={{ top: 12, bottom: 12, left: 12, right: 12 }}
                   onPressIn={(event) => event.stopPropagation()}
                   onPress={(event) => { event.stopPropagation(); if (!pending) onToggleSaved(); }}
@@ -1549,7 +1548,7 @@ const s0 = StyleSheet.create({
   airlineHeader: { minHeight: 20, flexDirection: "row", alignItems: "flex-start", gap: 6 },
   airlineCopy: { flex: 1, minWidth: 0 },
   identityActions: { flexDirection: "column", flexShrink: 0, alignItems: "center", justifyContent: "flex-start", gap: 3 },
-  favoriteButton: { width: 20, height: 20, flexShrink: 0, alignItems: "center", justifyContent: "center" },
+  favoriteButton: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   favoritePending: { opacity: 0.65 },
   favoritePressed: { opacity: 0.7, transform: [{ scale: 0.94 }] },
   resultBadge: { height: 20, flexDirection: "row", alignItems: "center", paddingHorizontal: 7, borderRadius: 10, backgroundColor: "#EEF4FF" },
