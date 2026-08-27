@@ -58,3 +58,12 @@ test("shared editor uses canonical mobile pickers and multi-city editor", () => 
   assert.match(source, /MULTI_CITY_MIN_LEGS/);
   assert.match(source, /MULTI_CITY_MAX_LEGS/);
 });
+
+
+test("traveler density is opt-in and Done uses the local Kurioticket blue treatment", () => {
+  assert.match(source, /travelerPickerDensity\?: "default" \| "compact"/);
+  assert.match(source, /travelerPickerDensity = "default"/);
+  assert.match(source, /density=\{travelerPickerDensity\}/);
+  assert.match(source, /h-12 w-full rounded-\[11px\] bg-\[#004BB8\].*text-white/);
+  assert.match(source, /onClick=\{\(\) => setTravelerPickerOpen\(false\)\}>Done/);
+});
