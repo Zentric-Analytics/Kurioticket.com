@@ -181,7 +181,7 @@ test("hotel result cards expose compact save and share actions", () => {
 test("mobile hotel utility glyphs meet at the inside edges of separate tap targets", () => {
   assert.match(
     source,
-    /grid-cols-\[minmax\(0,1fr\)_auto\][\s\S]*?<div className="min-w-0">[\s\S]*?data-hotel-utility-actions[\s\S]*?shrink-0/,
+    /className="relative min-w-0"[\s\S]*?pe-\[76px\][\s\S]*?data-hotel-utility-actions[\s\S]*?absolute -end-2 -top-2/,
   );
   assert.match(
     source,

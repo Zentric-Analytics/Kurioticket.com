@@ -67,6 +67,7 @@ import {
 import { calculateCompactFilterMaxHeight } from "@/lib/hotels/desktopCompactFilter";
 import { shouldShowDesktopStickySearch } from "@/lib/search/desktopStickySearch";
 import { lockDesktopPageScroll } from "@/lib/search/desktopPageScrollLock";
+import { acquireMobileResultsScrollLock, type MobileResultsScrollLockRelease } from "@/lib/search/mobileResultsScrollLock";
 import {
   buildHotelResultsPaginationItems,
   clampHotelResultsPage,
@@ -107,55 +108,6 @@ type CompactHotelFilterSectionId =
 const FILTER_APPLYING_DELAY_MS = 700;
 const SEARCH_APPLYING_TIMEOUT_MS = 15000;
 const FILTER_SCROLLBAR_HIDE_DELAY_MS = 700;
-
-function lockBodyScroll() {
-  const bodyElement = document.body;
-  const rootElement = document.documentElement;
-  const scrollY = window.scrollY;
-  const previousBodyStyles = {
-    left: bodyElement.style.left,
-    overflow: bodyElement.style.overflow,
-    overscrollBehavior: bodyElement.style.overscrollBehavior,
-    position: bodyElement.style.position,
-    right: bodyElement.style.right,
-    top: bodyElement.style.top,
-    touchAction: bodyElement.style.touchAction,
-    width: bodyElement.style.width,
-  };
-  const previousRootStyles = {
-    overflow: rootElement.style.overflow,
-    overscrollBehavior: rootElement.style.overscrollBehavior,
-  };
-
-  bodyElement.style.left = "0";
-  bodyElement.style.overflow = "hidden";
-  bodyElement.style.overscrollBehavior = "none";
-  bodyElement.style.position = "fixed";
-  bodyElement.style.right = "0";
-  bodyElement.style.top = `-${scrollY}px`;
-  bodyElement.style.touchAction = "none";
-  bodyElement.style.width = "100%";
-  rootElement.style.overflow = "hidden";
-  rootElement.style.overscrollBehavior = "none";
-
-  return {
-    restore: () => {
-      bodyElement.style.left = previousBodyStyles.left;
-      bodyElement.style.overflow = previousBodyStyles.overflow;
-      bodyElement.style.overscrollBehavior =
-        previousBodyStyles.overscrollBehavior;
-      bodyElement.style.position = previousBodyStyles.position;
-      bodyElement.style.right = previousBodyStyles.right;
-      bodyElement.style.top = previousBodyStyles.top;
-      bodyElement.style.touchAction = previousBodyStyles.touchAction;
-      bodyElement.style.width = previousBodyStyles.width;
-      rootElement.style.overflow = previousRootStyles.overflow;
-      rootElement.style.overscrollBehavior =
-        previousRootStyles.overscrollBehavior;
-      window.scrollTo(0, scrollY);
-    },
-  };
-}
 
 const MEAL_FILTERS = [
   {
@@ -465,10 +417,10 @@ export function HotelResultsExperience({
   const searchApplyingTimeoutRef = useRef<number | null>(null);
   const filterScrollbarTimeoutRef = useRef<number | null>(null);
   const currencyRatesRef = useRef(currencyRates.rates);
-  const mobileHotelSearchScrollLockRef = useRef<{ restore: () => void } | null>(
+  const mobileHotelSearchScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(
     null,
   );
-  const mobileFiltersScrollLockRef = useRef<{ restore: () => void } | null>(
+  const mobileFiltersScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(
     null,
   );
   const guidedLoadingStatusRef = useRef<HTMLHeadingElement | null>(null);
@@ -734,7 +686,7 @@ export function HotelResultsExperience({
 
   useEffect(() => {
     const releaseExistingLock = () => {
-      mobileHotelSearchScrollLockRef.current?.restore();
+      mobileHotelSearchScrollLockRef.current?.();
       mobileHotelSearchScrollLockRef.current = null;
     };
 
@@ -750,14 +702,14 @@ export function HotelResultsExperience({
       return releaseExistingLock;
     }
 
-    mobileHotelSearchScrollLockRef.current = lockBodyScroll();
+    mobileHotelSearchScrollLockRef.current = acquireMobileResultsScrollLock();
 
     return releaseExistingLock;
   }, [mobileHotelSearchOpen]);
 
   useEffect(() => {
     const releaseExistingLock = () => {
-      mobileFiltersScrollLockRef.current?.restore();
+      mobileFiltersScrollLockRef.current?.();
       mobileFiltersScrollLockRef.current = null;
     };
 
@@ -779,7 +731,7 @@ export function HotelResultsExperience({
       }
     };
 
-    mobileFiltersScrollLockRef.current = lockBodyScroll();
+    mobileFiltersScrollLockRef.current = acquireMobileResultsScrollLock();
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
@@ -2058,7 +2010,6 @@ export function HotelResultsExperience({
           open={mobileHotelSearchOpen}
           title={t("editHotelSearch") || "Edit hotel search"}
           onClose={closeMobileHotelSearch}
-          lockBodyScroll={false}
         >
           <HotelSearchBar
             key={`mobile-drawer-${bodySearchKey}-${body.sort}`}

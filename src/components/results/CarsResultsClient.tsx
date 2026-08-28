@@ -76,6 +76,7 @@ import {
 } from "@/components/search/CarsPickerContent";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { MobileResultsEditSheet } from "@/components/search/MobileResultsEditSheet";
+import { acquireMobileResultsScrollLock, type MobileResultsScrollLockRelease } from "@/lib/search/mobileResultsScrollLock";
 import {
   carsDesktopPopoverClassName,
   useCarsDesktopPopover,
@@ -191,57 +192,6 @@ const timeOptions = Array.from({ length: 48 }, (_, index) => {
 
   return `${String(hour).padStart(2, "0")}:${minute}`;
 });
-
-function lockBodyScroll() {
-  const bodyElement = document.body;
-  const rootElement = document.documentElement;
-  const scrollY = window.scrollY;
-  const scrollbarWidth = Math.max(
-    0,
-    window.innerWidth - rootElement.clientWidth,
-  );
-  let restored = false;
-  const previousBodyStyles = {
-    overflow: bodyElement.style.overflow,
-    overscrollBehavior: bodyElement.style.overscrollBehavior,
-    paddingRight: bodyElement.style.paddingRight,
-  };
-  const previousRootStyles = {
-    overflow: rootElement.style.overflow,
-    overscrollBehavior: rootElement.style.overscrollBehavior,
-  };
-
-  if (scrollbarWidth > 0) {
-    const computedPaddingRight =
-      window.getComputedStyle(bodyElement).paddingRight;
-    bodyElement.style.paddingRight = `calc(${computedPaddingRight} + ${scrollbarWidth}px)`;
-  }
-
-  bodyElement.style.overflow = "hidden";
-  bodyElement.style.overscrollBehavior = "none";
-  rootElement.style.overflow = "hidden";
-  rootElement.style.overscrollBehavior = "none";
-
-  return {
-    restore: ({ restoreScroll = true }: { restoreScroll?: boolean } = {}) => {
-      if (restored) return;
-      restored = true;
-      bodyElement.style.overflow = previousBodyStyles.overflow;
-      bodyElement.style.overscrollBehavior =
-        previousBodyStyles.overscrollBehavior;
-      bodyElement.style.paddingRight = previousBodyStyles.paddingRight;
-      rootElement.style.overflow = previousRootStyles.overflow;
-      rootElement.style.overscrollBehavior =
-        previousRootStyles.overscrollBehavior;
-
-      // Overflow locking leaves the Results document at its real position. This
-      // correction is only a safety net for browser-driven viewport changes.
-      if (restoreScroll && window.scrollY !== scrollY) {
-        window.scrollTo(0, scrollY);
-      }
-    },
-  };
-}
 
 function isSafelyFocusableElement(element: HTMLElement | null) {
   if (!element?.isConnected) return false;
@@ -658,9 +608,7 @@ export function CarsResultsClient({
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchSummarySentinelRef = useRef<HTMLDivElement | null>(null);
-  const mobileSearchScrollLockRef = useRef<{
-    restore: (options?: { restoreScroll?: boolean }) => void;
-  } | null>(null);
+  const mobileSearchScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(null);
   const mobileSearchLauncherRef = useRef<HTMLElement | null>(null);
   const mobileSearchSnapshotRef = useRef<CarsResultsSearchSnapshot | null>(
     null,
@@ -956,7 +904,7 @@ export function CarsResultsClient({
         dropoffTime,
         driverAge,
       };
-      mobileSearchScrollLockRef.current ??= lockBodyScroll();
+      mobileSearchScrollLockRef.current ??= acquireMobileResultsScrollLock();
       setMobileSearchOpen(true);
       setMobilePicker(null);
       setDesktopStickySearchSection(null);
@@ -983,7 +931,7 @@ export function CarsResultsClient({
 
   const releaseMobileSearchScrollLock = useCallback(
     ({ restoreScroll = true }: { restoreScroll?: boolean } = {}) => {
-      mobileSearchScrollLockRef.current?.restore({ restoreScroll });
+      mobileSearchScrollLockRef.current?.({ restoreScroll });
       mobileSearchScrollLockRef.current = null;
     },
     [],
@@ -1056,7 +1004,7 @@ export function CarsResultsClient({
 
   useLayoutEffect(() => {
     const releaseSearchOverlay = () => {
-      mobileSearchScrollLockRef.current?.restore();
+      mobileSearchScrollLockRef.current?.();
       mobileSearchScrollLockRef.current = null;
 
       const launcher = mobileSearchLauncherRef.current;
@@ -1070,7 +1018,7 @@ export function CarsResultsClient({
       return releaseSearchOverlay;
     }
 
-    mobileSearchScrollLockRef.current ??= lockBodyScroll();
+    mobileSearchScrollLockRef.current ??= acquireMobileResultsScrollLock();
     return releaseSearchOverlay;
   }, [mobileSearchOpen]);
 
@@ -1595,7 +1543,6 @@ export function CarsResultsClient({
         launcherRef={mobileSearchLauncherRef}
         nestedLayerOpen={mobilePicker !== null}
         onClose={() => cancelMobileSearchDrawer()}
-        lockBodyScroll={false}
         contentClassName="pb-[calc(1rem+env(safe-area-inset-bottom))]"
       >
         <div className="mx-auto w-full max-w-xl">
@@ -1855,7 +1802,7 @@ export function CarsResultsExperience({
   const mobileFiltersLauncherRef = useRef<HTMLButtonElement | null>(null);
   const filtersDialogRef = useRef<HTMLElement | null>(null);
   const filtersCloseButtonRef = useRef<HTMLButtonElement | null>(null);
-  const mobileFiltersScrollLockRef = useRef<{ restore: () => void } | null>(
+  const mobileFiltersScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(
     null,
   );
   const [selectedCarFilters, setSelectedCarFilters] =
@@ -2023,7 +1970,7 @@ export function CarsResultsExperience({
   }, [carsSortOpen]);
   useEffect(() => {
     const releaseExistingLock = () => {
-      mobileFiltersScrollLockRef.current?.restore();
+      mobileFiltersScrollLockRef.current?.();
       mobileFiltersScrollLockRef.current = null;
     };
     if (!filtersOpen || typeof window === "undefined") {
@@ -2065,7 +2012,7 @@ export function CarsResultsExperience({
         }
       }
     };
-    mobileFiltersScrollLockRef.current = lockBodyScroll();
+    mobileFiltersScrollLockRef.current = acquireMobileResultsScrollLock();
     window.addEventListener("keydown", handleKeyDown);
     media.addEventListener("change", closeForDesktop);
     const launcher =

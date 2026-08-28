@@ -571,20 +571,20 @@ export function HotelCard({
         </div>
         <div
           data-hotel-card-details
-          className="flex min-w-0 flex-col px-3 py-3 md:min-h-0 md:px-3 md:py-3"
+          className="relative flex min-w-0 flex-col px-3 py-3 md:min-h-0 md:px-3 md:py-3"
         >
           <div className="flex flex-1 flex-col">
             <div className="min-w-0">
               <div>
-                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-1.5 md:gap-3">
-                  <div className="min-w-0">
+                <div className="relative min-w-0">
+                  <div className="min-w-0 pe-[76px] md:pe-0">
                     <h2 className="min-w-0 text-[15px] font-bold leading-5 text-slate-950 sm:text-base lg:text-[17px]">
                       {hotel.name}
                     </h2>
                   </div>
                   <div
                     data-hotel-utility-actions
-                    className="-me-1.5 -mt-1.5 flex shrink-0 items-center gap-0 md:hidden"
+                    className="absolute -end-2 -top-2 flex shrink-0 items-center gap-0 md:hidden"
                   >
                     {renderSaveButton("flex pe-1", "justify-end")}
                     {renderShareButton("flex ps-1", "justify-start")}

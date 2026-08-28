@@ -12,6 +12,7 @@ import {
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { acquireMobileResultsScrollLock } from "@/lib/search/mobileResultsScrollLock";
 
 type Props = {
   open: boolean;
@@ -23,8 +24,6 @@ type Props = {
   footer?: ReactNode;
   className?: string;
   contentClassName?: string;
-  /** Set false when the domain owner already provides an equivalent scroll lock. */
-  lockBodyScroll?: boolean;
 };
 
 /** Presentation-only shell used by mobile search editors on Results pages. */
@@ -38,7 +37,6 @@ export function MobileResultsEditSheet({
   footer,
   className,
   contentClassName,
-  lockBodyScroll = true,
 }: Props) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -93,21 +91,9 @@ export function MobileResultsEditSheet({
   }, [launcherRef, open]);
 
   useEffect(() => {
-    if (!open || !lockBodyScroll) return;
-    const body = document.body;
-    const root = document.documentElement;
-    const scrollX = window.scrollX;
-    const scrollY = window.scrollY;
-    const bodyStyle = body.getAttribute("style");
-    const rootStyle = root.getAttribute("style");
-    Object.assign(body.style, { position: "fixed", inset: "0", top: `-${scrollY}px`, left: `-${scrollX}px`, overflow: "hidden", width: "100%", overscrollBehavior: "none" });
-    Object.assign(root.style, { overflow: "hidden", overscrollBehavior: "none" });
-    return () => {
-      if (bodyStyle === null) body.removeAttribute("style"); else body.setAttribute("style", bodyStyle);
-      if (rootStyle === null) root.removeAttribute("style"); else root.setAttribute("style", rootStyle);
-      window.scrollTo(scrollX, scrollY);
-    };
-  }, [lockBodyScroll, open]);
+    if (!open) return;
+    return acquireMobileResultsScrollLock();
+  }, [open]);
 
   if (!open) return null;
   return (

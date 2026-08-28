@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { formatTravelDateDisplay, formatTravelDateRangeDisplay } from "@/lib/dateFormatting/travelDateDisplay";
 import { MULTI_CITY_MAX_LEGS, MULTI_CITY_MIN_LEGS } from "@/lib/flights/flightSearchJourney";
 import type { CabinClass, FlightSearchLeg, TripType } from "@/lib/types";
+import { acquireMobileResultsScrollLock } from "@/lib/search/mobileResultsScrollLock";
 
 export type FlightEditSearchInitialValue = {
   tripType: TripType;
@@ -73,32 +74,7 @@ export function FlightEditSearchDrawer({ open, initialValue, launcherRef, onClos
 
   useEffect(() => {
     if (!open || presentation !== "bottom-sheet") return;
-    const body = document.body;
-    const root = document.documentElement;
-    const scrollX = window.scrollX;
-    const scrollY = window.scrollY;
-    const bodyStyle = body.getAttribute("style");
-    const rootStyle = root.getAttribute("style");
-
-    Object.assign(body.style, {
-      left: `-${scrollX}px`,
-      overflow: "hidden",
-      overscrollBehavior: "none",
-      position: "fixed",
-      right: "0",
-      top: `-${scrollY}px`,
-      width: "100%",
-    });
-    Object.assign(root.style, { height: "100%", overflow: "hidden", overscrollBehavior: "none" });
-
-    const restore = () => {
-      if (bodyStyle === null) body.removeAttribute("style");
-      else body.setAttribute("style", bodyStyle);
-      if (rootStyle === null) root.removeAttribute("style");
-      else root.setAttribute("style", rootStyle);
-      window.scrollTo(scrollX, scrollY);
-    };
-    return restore;
+    return acquireMobileResultsScrollLock();
   }, [open, presentation]);
 
   useEffect(() => {

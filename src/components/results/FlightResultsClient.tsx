@@ -48,6 +48,7 @@ import { FlightCard } from "@/components/results/FlightCard";
 import { DesktopFlightFilters } from "@/components/results/DesktopFlightFilters";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { FlightEditSearchDrawer, type FlightEditSearchValue } from "@/components/search/FlightEditSearchDrawer";
+import { acquireMobileResultsScrollLock, type MobileResultsScrollLockRelease } from "@/lib/search/mobileResultsScrollLock";
 import { MultiCityFlightEditor } from "@/components/search/MultiCityFlightEditor";
 import { Button } from "@/components/ui/Button";
 import { FlightCardSkeleton } from "@/components/ui/Skeleton";
@@ -733,50 +734,6 @@ function FlightBookingFaqSection() {
   );
 }
 
-function lockMobileOverlayScroll() {
-  const bodyElement = document.body;
-  const rootElement = document.documentElement;
-  const scrollbarWidth = Math.max(
-    0,
-    window.innerWidth - rootElement.clientWidth,
-  );
-  let restored = false;
-  const previousBodyStyles = {
-    overflow: bodyElement.style.overflow,
-    overscrollBehavior: bodyElement.style.overscrollBehavior,
-    paddingRight: bodyElement.style.paddingRight,
-  };
-  const previousRootStyles = {
-    overflow: rootElement.style.overflow,
-    overscrollBehavior: rootElement.style.overscrollBehavior,
-  };
-
-  if (scrollbarWidth > 0) {
-    const computedPaddingRight =
-      window.getComputedStyle(bodyElement).paddingRight;
-    bodyElement.style.paddingRight = `calc(${computedPaddingRight} + ${scrollbarWidth}px)`;
-  }
-
-  bodyElement.style.overflow = "hidden";
-  bodyElement.style.overscrollBehavior = "none";
-  rootElement.style.overflow = "hidden";
-  rootElement.style.overscrollBehavior = "none";
-
-  return {
-    restore: () => {
-      if (restored) return;
-      restored = true;
-      bodyElement.style.overflow = previousBodyStyles.overflow;
-      bodyElement.style.overscrollBehavior =
-        previousBodyStyles.overscrollBehavior;
-      bodyElement.style.paddingRight = previousBodyStyles.paddingRight;
-      rootElement.style.overflow = previousRootStyles.overflow;
-      rootElement.style.overscrollBehavior =
-        previousRootStyles.overscrollBehavior;
-    },
-  };
-}
-
 function lockDocumentScrollWithoutLayoutShift() {
   const bodyElement = document.body;
   const rootElement = document.documentElement;
@@ -1223,8 +1180,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const travelPreferencesRequestedRef = useRef(false);
   const preferredAirlineDefaultResolvedRef = useRef(false);
   const preferredAirlineDefaultAppliedRef = useRef(false);
-  const mobileSearchScrollLockRef = useRef<BodyScrollLock | null>(null);
-  const mobileFiltersScrollLockRef = useRef<BodyScrollLock | null>(null);
+  const mobileSearchScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(null);
+  const mobileFiltersScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(null);
   const mobileSearchLauncherRef = useRef<HTMLElement | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLElement | null>(null);
   const mobileFiltersDialogRef = useRef<HTMLElement | null>(null);
@@ -1901,7 +1858,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       const launcher = mobileSearchLauncherRef.current;
       const shouldRestoreFocus = shouldRestoreMobileSearchFocusRef.current;
 
-      mobileSearchScrollLockRef.current?.restore();
+      mobileSearchScrollLockRef.current?.();
       mobileSearchScrollLockRef.current = null;
       shouldRestoreMobileSearchFocusRef.current = true;
 
@@ -1928,7 +1885,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       }
     };
 
-    mobileSearchScrollLockRef.current ??= lockMobileOverlayScroll();
+    mobileSearchScrollLockRef.current ??= acquireMobileResultsScrollLock();
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
@@ -1943,7 +1900,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       const launcher = mobileFiltersLauncherRef.current;
       const shouldRestoreFocus = shouldRestoreMobileFiltersFocusRef.current;
 
-      mobileFiltersScrollLockRef.current?.restore();
+      mobileFiltersScrollLockRef.current?.();
       mobileFiltersScrollLockRef.current = null;
       shouldRestoreMobileFiltersFocusRef.current = true;
 
@@ -1965,7 +1922,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       return releaseExistingLock;
     }
 
-    mobileFiltersScrollLockRef.current ??= lockMobileOverlayScroll();
+    mobileFiltersScrollLockRef.current ??= acquireMobileResultsScrollLock();
 
     const focusFrame = window.requestAnimationFrame(() => {
       mobileFiltersCloseButtonRef.current?.focus({ preventScroll: true });
@@ -2334,7 +2291,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       typeof window !== "undefined" &&
       window.matchMedia("(max-width: 639px)").matches
     ) {
-      mobileSearchScrollLockRef.current ??= lockMobileOverlayScroll();
+      mobileSearchScrollLockRef.current ??= acquireMobileResultsScrollLock();
     }
     setMobileSearchOpen(true);
   }
