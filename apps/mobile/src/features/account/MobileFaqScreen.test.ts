@@ -27,9 +27,19 @@ test("mobile FAQ mirrors the web hierarchy without web navigation chrome", () =>
 });
 
 test("FAQ keeps inline expansion and native support handoff", () => {
+  const english = getMobileFaqCopy("en-us");
+  assert.equal(english.needMoreHelp, "Need more help?");
+  assert.equal(english.supportPrompt, "Can’t find what you’re looking for?");
+  assert.equal(english.supportSuffix, " and we’ll help you.");
+
   assert.match(screenSource, /faqAccessibility\(open, item\.question\)/);
   assert.match(screenSource, /toggleExpanded\(current, item\.question\)/);
   assert.match(screenSource, /accessibilityHint=\{accessibilityState\.expanded \? t\("collapseAnswer"\) : t\("expandAnswer"\)\}/);
+  assert.match(screenSource, /presentation\.needMoreHelp/);
+  assert.match(screenSource, /presentation\.supportPrompt/);
+  assert.match(screenSource, /presentation\.supportSuffix/);
   assert.match(screenSource, /router\.push\("\/support"\)/);
+  assert.match(screenSource, /accessibilityRole="link"/);
   assert.match(screenSource, /t\("contactSupport"\)/);
+  assert.doesNotMatch(screenSource, /t\("helpSupport"\)/);
 });
