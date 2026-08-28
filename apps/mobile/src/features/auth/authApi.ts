@@ -42,7 +42,8 @@ export const authApi = {
     const result = await request<{ session: { token: string; expires: string }; user: { id: string; email: string; name?: string | null } }>("two-factor", { method: "POST", body: JSON.stringify({ challengeToken, code }) });
     await writeSession({ ...result.session, user: result.user }); return result;
   },
-  forgotPassword: (email: string) => request<{ ok: true }>("forgot-password", { method: "POST", body: JSON.stringify({ email }) }),
+  sendForgotPasswordCode: (email: string, verificationToken: string) => request<{ ok: true; expiresInMinutes: number }>("forgot-password", { method: "POST", body: JSON.stringify({ action: "send-code", email, verificationToken }) }),
+  resetForgotPassword: (input: { email: string; code: string; newPassword: string; confirmPassword: string }) => request<{ success: true }>("forgot-password", { method: "POST", body: JSON.stringify({ action: "reset", ...input }) }),
   logout: async () => {
     const session = await readSession();
     try { if (session) await request<{ ok: true }>("logout", { method: "POST", headers: { Authorization: `Bearer ${session.token}` } }); }
