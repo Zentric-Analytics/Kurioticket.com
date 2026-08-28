@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { AuthIcon } from "./AuthIcon";
-import { AuthButton, authColors, ErrorText, Field, FormHeading, FormShell, SecurityMessage } from "./AuthPrimitives";
+import { AuthButton, authColors, ErrorText, Field, FormHeading, FormShell, SecurityMessage, StatusText } from "./AuthPrimitives";
 import { formatCountdown, isValidEmail, sanitizeCode } from "./authUtils";
 import { scheduleAuthCompletion } from "./authCompletion";
 
@@ -33,11 +33,11 @@ export function VerificationScreen({ email, onBack, onVerify, onResend, onDiffer
   </FormShell>;
 }
 
-export function PasswordScreen({ onBack, onSubmit, onForgot, loading, error }: { onBack: () => void; onSubmit: (password: string) => void; onForgot: () => void; loading: boolean; error?: string }) {
+export function PasswordScreen({ onBack, onSubmit, onForgot, loading, error, notice }: { onBack: () => void; onSubmit: (password: string) => void; onForgot: () => void; loading: boolean; error?: string; notice?: string }) {
   const [password, setPassword] = useState(""); const [visible, setVisible] = useState(false);
   return <FormShell onBack={onBack}><FormHeading icon="lock" title="Welcome back!" body="Enter your password to continue." />
     <Field label="Password" value={password} onChangeText={setPassword} secureTextEntry={!visible} autoComplete="current-password" textContentType="password" returnKeyType="go" onSubmitEditing={() => password && onSubmit(password)} right={<Pressable accessibilityRole="button" accessibilityLabel={visible ? "Hide password" : "Show password"} hitSlop={10} onPress={() => setVisible(!visible)}><AuthIcon name={visible ? "eyeOff" : "eye"} color={authColors.navy} size={21} /></Pressable>} />
-    <Pressable accessibilityRole="button" onPress={onForgot} style={styles.forgot}><Text style={styles.action}>Forgot password?</Text></Pressable><ErrorText>{error}</ErrorText><AuthButton label="Sign in" onPress={() => onSubmit(password)} loading={loading} disabled={!password} /><SecurityMessage />
+    <Pressable accessibilityRole="button" onPress={onForgot} style={styles.forgot}><Text style={styles.action}>Forgot password?</Text></Pressable><StatusText success={Boolean(notice)}>{notice || error}</StatusText><AuthButton label="Sign in" onPress={() => onSubmit(password)} loading={loading} disabled={!password} /><SecurityMessage />
   </FormShell>;
 }
 
