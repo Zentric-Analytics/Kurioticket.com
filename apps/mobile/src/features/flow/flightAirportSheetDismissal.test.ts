@@ -7,7 +7,7 @@ const airportSheet = panel.slice(panel.indexOf("function AirportSheet"), panel.i
 
 test("the airport sheet has a dedicated accessible backdrop dismissal target", () => {
   assert.match(airportSheet, /<SafeAreaView[^>]*style=\{styles\.overlay\}>[\s\S]*?<Pressable style=\{StyleSheet\.absoluteFill\} onPress=\{onClose\} accessibilityRole="button" accessibilityLabel="Close airport picker"\/>/);
-  assert.match(airportSheet, /<Modal transparent animationType="none" visible=\{motion\.rendered\} onRequestClose=\{onClose\}>/);
+  assert.match(airportSheet, /<Modal transparent animationType="none" visible=\{motion\.rendered\} onShow=\{keyboardPresentation\.onModalShow\} onRequestClose=\{onClose\}>/);
 });
 
 test("the interactive sheet is a sibling above the backdrop, not its child", () => {
