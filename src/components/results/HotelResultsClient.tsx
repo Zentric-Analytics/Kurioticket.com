@@ -1888,10 +1888,6 @@ export function HotelResultsExperience({
         aria-label="Hotel search controls"
       >
         <div className="relative translate-y-1/2">
-          <div
-            className="pointer-events-none absolute inset-x-0 top-1/2 z-0 h-px -translate-y-1/2 bg-slate-300 shadow-[0_1px_0_rgba(100,116,139,0.18)]"
-            aria-hidden="true"
-          />
           <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch justify-center px-4">
             <HotelSearchBar
               key={`mobile-controls-${activeMobileHotelSearchKey}`}

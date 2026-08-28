@@ -23,6 +23,7 @@ export default function HotelResultsPage() {
     <>
       <AppHeader
         flushDesktopBottom
+        flushMobileBottom
         hideDesktopTravelNav
         hideMobileCategoryTabs
       />
