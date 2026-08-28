@@ -128,29 +128,29 @@ export function CarResultCard({
                   {car.categoryLabel}
                 </p>
                 {badge && BadgeIcon && (
-                  <span className="inline-flex min-h-5 shrink-0 items-center gap-1 rounded-md bg-[#EAF2FB] px-1.5 py-0.5 text-[10px] font-semibold leading-4 text-[#004BB8]">
+                  <span className="inline-flex min-h-5 shrink-0 items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold leading-4 text-emerald-700">
                     <BadgeIcon size={11} aria-hidden="true" />
                     {badge}
                   </span>
                 )}
               </header>
               {headingLevel === "h3" ? (
-                <h3 className="mt-0.5 break-words text-[18px] font-extrabold leading-[1.15] text-[#102A43]">
+                <h3 className="mt-0.5 break-words text-[18px] font-bold leading-[1.18] text-[#07133B]">
                   {vehicleName}
                 </h3>
               ) : (
-                <h2 className="mt-0.5 break-words text-[18px] font-extrabold leading-[1.15] text-[#102A43]">
+                <h2 className="mt-0.5 break-words text-[18px] font-bold leading-[1.18] text-[#07133B]">
                   {vehicleName}
                 </h2>
               )}
-              <p className="mt-1 flex min-w-0 items-start gap-1 text-[11px] leading-4 text-slate-600">
+              <p className="mt-1 flex min-w-0 items-start gap-1 text-[12px] font-medium leading-4 text-[#536B92]">
                 <MapPin
                   size={13}
                   className="mt-0.5 shrink-0 text-[#004BB8]"
                   aria-hidden="true"
                 />
                 <span className="min-w-0">
-                  <strong className="font-semibold text-slate-700">
+                  <strong className="font-semibold text-[#536B92]">
                     {title(car.pickupType)}
                   </strong>
                   {" · "}
@@ -159,7 +159,7 @@ export function CarResultCard({
               </p>
               <ul
                 data-car-card-mobile-specs
-                className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1.5 text-[11px] font-medium leading-4 text-slate-700"
+                className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1.5 text-[12px] font-medium leading-4 text-[#536B92]"
               >
                 {mobilePrimarySpecs.map(([Icon, label]) => (
                   <li key={label} className="flex min-w-0 items-start gap-1">
@@ -187,7 +187,7 @@ export function CarResultCard({
           >
             <div className="min-w-0">
               <p
-                className="max-w-full whitespace-nowrap text-[21px] font-extrabold leading-none tracking-[-0.025em] text-slate-950 tabular-nums"
+                className="max-w-full whitespace-nowrap text-[23px] font-semibold leading-none tracking-[-0.02em] text-[#07133B] tabular-nums"
                 dir="ltr"
                 title={totalDisplayPrice.title}
                 aria-label={totalDisplayPrice.ariaLabel}
@@ -212,7 +212,7 @@ export function CarResultCard({
                 type="button"
                 onClick={() => onSelect(car)}
                 aria-label={actionAriaLabel}
-                className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-[10px] bg-[#004BB8] px-4 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
+                className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-md bg-[#004BB8] px-4 text-sm font-semibold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
               >
                 {actionLabel}
               </button>
@@ -220,7 +220,7 @@ export function CarResultCard({
               <Link
                 href={detailsHref}
                 aria-label={actionAriaLabel}
-                className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-[10px] bg-[#004BB8] px-4 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
+                className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-md bg-[#004BB8] px-4 text-sm font-semibold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
               >
                 {actionLabel}
               </Link>
@@ -229,7 +229,7 @@ export function CarResultCard({
                 type="button"
                 disabled
                 aria-label={actionAriaLabel}
-                className="inline-flex min-h-11 shrink-0 cursor-not-allowed items-center justify-center rounded-[10px] bg-slate-300 px-4 text-sm font-bold text-white"
+                className="inline-flex min-h-11 shrink-0 cursor-not-allowed items-center justify-center rounded-md bg-slate-300 px-4 text-sm font-semibold text-white"
               >
                 {actionLabel}
               </button>

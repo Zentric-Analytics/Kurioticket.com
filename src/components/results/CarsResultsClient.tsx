@@ -17,6 +17,7 @@ import { createPortal } from "react-dom";
 import {
   Calendar,
   CalendarDays,
+  ArrowUp,
   ArrowLeft,
   CheckCircle2,
   ChevronDown,
@@ -38,6 +39,10 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 import { CarResultCard } from "@/components/results/CarResultCard";
 import { CarCardSkeleton } from "@/components/ui/Skeleton";
+import {
+  getCarPaginationItems,
+  paginateCarResults,
+} from "@/lib/cars/carResultsPagination";
 import {
   assignCarBadges,
   buildCarDetailsHref,
@@ -1871,6 +1876,8 @@ export function CarsResultsExperience({
   const [sort, setSort] = useState<CarSort>(
     presentation === "guided-planning" ? "lowestTotal" : "recommended",
   );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showBackToTop, setShowBackToTop] = useState(false);
   const [carsSortOpen, setCarsSortOpen] = useState(false);
   const [resultsTransitioning, setResultsTransitioning] = useState(false);
   const resultsTransitionTimerRef = useRef<ReturnType<
@@ -1882,6 +1889,7 @@ export function CarsResultsExperience({
   const desktopFilterSentinelRef = useRef<HTMLDivElement | null>(null);
   const desktopCompactFilterRef = useRef<HTMLDivElement | null>(null);
   const carsResultsBodyRef = useRef<HTMLDivElement | null>(null);
+  const resultsStartRef = useRef<HTMLDivElement | null>(null);
   const [showDesktopCompactFilter, setShowDesktopCompactFilter] =
     useState(false);
   const [desktopCompactFilterFrame, setDesktopCompactFilterFrame] =
@@ -1925,6 +1933,12 @@ export function CarsResultsExperience({
   const selectedCarSortLabel =
     carSortOptions.find((option) => option.value === sort)?.label ??
     carSortOptions[0].label;
+  const quickFilters = [
+    { group: "transmission", option: "automatic", label: t("carsResults.automatic") },
+    { group: "vehicleType", option: "suvs", label: t("carsResults.suvs") },
+    { group: "cancellation", option: "freeCancellation", label: t("carsResults.freeCancellation") },
+    { group: "mileagePolicy", option: "unlimitedMileage", label: t("carsResults.unlimitedMileage") },
+  ] as const;
   const badges = useMemo(
     () => (guidedPlanning ? new Map() : assignCarBadges(results)),
     [guidedPlanning, results],
@@ -1933,6 +1947,33 @@ export function CarsResultsExperience({
     () => sortCarResults(filterCarResults(results, selectedCarFilters), sort),
     [results, selectedCarFilters, sort],
   );
+  const pagination = useMemo(
+    () => paginateCarResults(visibleResults, guidedPlanning ? 1 : currentPage),
+    [currentPage, guidedPlanning, visibleResults],
+  );
+  const pageResults = guidedPlanning ? visibleResults : pagination.pageResults;
+
+  useEffect(() => {
+    if (guidedPlanning) return undefined;
+    const update = () => setShowBackToTop(window.scrollY >= 600);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, [guidedPlanning]);
+
+  const motionBehavior = (): ScrollBehavior =>
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? "auto"
+      : "smooth";
+  const changePage = (page: number) => {
+    setCurrentPage(page);
+    requestAnimationFrame(() =>
+      resultsStartRef.current?.scrollIntoView({
+        behavior: motionBehavior(),
+        block: "start",
+      }),
+    );
+  };
   const setTransition = () => {
     setResultsTransitioning(true);
     if (resultsTransitionTimerRef.current)
@@ -1944,6 +1985,7 @@ export function CarsResultsExperience({
   };
   const toggleCarFilter = (groupId: string, option: string) => {
     setTransition();
+    setCurrentPage(1);
     setSelectedCarFilters((current) => {
       const currentGroupSelections = current[groupId] ?? [];
       const nextGroupSelections = currentGroupSelections.includes(option)
@@ -1958,6 +2000,7 @@ export function CarsResultsExperience({
   };
   const clearCarFilters = () => {
     setTransition();
+    setCurrentPage(1);
     setSelectedCarFilters({});
   };
   const openMobileFiltersDrawer = (launcher: HTMLButtonElement) => {
@@ -2338,23 +2381,57 @@ export function CarsResultsExperience({
           {results.length > 0 ? (
             <>
               <div
+                ref={resultsStartRef}
                 className="flex w-full min-w-0 flex-col items-start gap-2 pt-1 sm:gap-3 lg:py-1"
                 data-cars-results-toolbar
               >
-                <button
-                  ref={filtersButtonRef}
-                  type="button"
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-bold text-slate-900 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:hidden"
-                  onClick={() => setFiltersOpen(true)}
-                >
-                  <SlidersHorizontal size={17} aria-hidden="true" />
-                  {activeFilterCount > 0
-                    ? t("filtersWithCount").replace(
-                        "{{count}}",
-                        String(activeFilterCount),
-                      )
-                    : t("filters")}
-                </button>
+                {!guidedPlanning ? (
+                  <div
+                    data-cars-results-quick-filters
+                    className="scrollbar-hide flex w-full flex-nowrap gap-2 overflow-x-auto overscroll-x-contain pb-0.5 lg:hidden"
+                  >
+                    <button
+                      ref={filtersButtonRef}
+                      type="button"
+                      className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-bold text-[#142033] transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                      onClick={(event) => openMobileFiltersDrawer(event.currentTarget)}
+                    >
+                      <SlidersHorizontal size={17} aria-hidden="true" />
+                      {activeFilterCount > 0
+                        ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount))
+                        : t("filters")}
+                    </button>
+                    {quickFilters.map(({ group, option, label }) => {
+                      const active = selectedCarFilters[group]?.includes(option) ?? false;
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => toggleCarFilter(group, option)}
+                          className={cn(
+                            "inline-flex min-h-11 shrink-0 items-center rounded-lg border px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
+                            active
+                              ? "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"
+                              : "border-slate-300 bg-white text-[#142033] hover:bg-slate-50",
+                          )}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <button
+                    ref={filtersButtonRef}
+                    type="button"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-bold text-[#142033] lg:hidden"
+                    onClick={(event) => openMobileFiltersDrawer(event.currentTarget)}
+                  >
+                    <SlidersHorizontal size={17} aria-hidden="true" />
+                    {t("filters")}
+                  </button>
+                )}
                 <div
                   className="flex w-full min-w-0 flex-nowrap items-center justify-between gap-2"
                   data-cars-results-summary-row
@@ -2363,7 +2440,7 @@ export function CarsResultsExperience({
                     ref={resultHeadingRef}
                     id={resultHeadingId}
                     tabIndex={-1}
-                    className="min-w-0 flex-1 truncate whitespace-nowrap text-sm font-semibold leading-6 tracking-[-0.005em] text-[#142033] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-[16px]"
+                    className="min-w-0 flex-1 truncate whitespace-nowrap text-[16px] font-bold leading-6 tracking-[-0.005em] text-[#07133B] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-[17px]"
                   >
                     {resultHeading ??
                       t(
@@ -2378,7 +2455,7 @@ export function CarsResultsExperience({
                       )}
                   </h2>
                   <div className="flex min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
-                    <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-slate-700 sm:text-sm">
+                    <span className="shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm">
                       {t("carsResults.sortBy")}:
                     </span>
                     <div
@@ -2426,6 +2503,7 @@ export function CarsResultsExperience({
                             className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm font-semibold"
                             onClick={() => {
                               setTransition();
+                              setCurrentPage(1);
                               setSort(option.value);
                               setCarsSortOpen(false);
                             }}
@@ -2461,7 +2539,7 @@ export function CarsResultsExperience({
                     !guidedPlanning && "-mx-1.5 w-auto sm:mx-0 sm:w-full",
                   )}
                 >
-                  {visibleResults.map((car) => (
+                  {pageResults.map((car) => (
                     <CarResultCard
                       key={car.id}
                       car={car}
@@ -2494,6 +2572,46 @@ export function CarsResultsExperience({
                       }
                     />
                   ))}
+                  {!guidedPlanning && pagination.totalPages > 1 ? (
+                    <nav
+                      aria-label="Car results pagination"
+                      className="flex flex-wrap items-center justify-center gap-1.5 pt-4"
+                    >
+                      <button
+                        type="button"
+                        aria-label="Previous page"
+                        disabled={pagination.currentPage === 1}
+                        onClick={() => changePage(pagination.currentPage - 1)}
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-slate-300 text-[#07133B] disabled:cursor-not-allowed disabled:opacity-40"
+                      ><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
+                      {getCarPaginationItems(pagination.currentPage, pagination.totalPages).map((item, index) =>
+                        item === "ellipsis" ? (
+                          <span key={`ellipsis-${index}`} aria-hidden="true" className="inline-flex h-11 min-w-6 items-center justify-center text-[#536B92]">…</span>
+                        ) : (
+                          <button
+                            key={item}
+                            type="button"
+                            aria-label={`Page ${item}`}
+                            aria-current={item === pagination.currentPage ? "page" : undefined}
+                            onClick={() => changePage(item)}
+                            className={cn(
+                              "inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border text-sm font-semibold",
+                              item === pagination.currentPage
+                                ? "border-[#004BB8] bg-[#004BB8] text-white"
+                                : "border-slate-300 bg-white text-[#07133B] hover:bg-slate-50",
+                            )}
+                          >{item}</button>
+                        ),
+                      )}
+                      <button
+                        type="button"
+                        aria-label="Next page"
+                        disabled={pagination.currentPage === pagination.totalPages}
+                        onClick={() => changePage(pagination.currentPage + 1)}
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-slate-300 text-[#07133B] disabled:cursor-not-allowed disabled:opacity-40"
+                      ><ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
+                    </nav>
+                  ) : null}
                 </div>
               ) : (
                 <div
@@ -2604,6 +2722,17 @@ export function CarsResultsExperience({
             </Button>
           </div>
         </aside>
+      ) : null}
+      {!guidedPlanning && showBackToTop && !filtersOpen ? (
+        <button
+          type="button"
+          aria-label="Back to top"
+          onClick={() => window.scrollTo({ top: 0, behavior: motionBehavior() })}
+          className="fixed end-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-[#004BB8] shadow-lg transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
+          style={{ bottom: "calc(1rem + env(safe-area-inset-bottom))" }}
+        >
+          <ArrowUp className="h-5 w-5" aria-hidden="true" />
+        </button>
       ) : null}
     </section>
   );
