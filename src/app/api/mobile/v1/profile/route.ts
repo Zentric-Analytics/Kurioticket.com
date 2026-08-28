@@ -4,6 +4,7 @@ import { getMobileSession } from "@/lib/mobile-auth";
 import { getPrisma } from "@/lib/prisma";
 import { extractVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
 import { resolveMobileProfilePhoneCountry } from "@/lib/mobileProfilePhoneCountry";
+import { getSupportedPhoneCountryCode } from "@/lib/phoneProfile";
 import { serializeUserProfile, userProfileSchema } from "@/lib/userProfile";
 import { createNotificationEvent } from "@/services/notificationService";
 
@@ -15,11 +16,18 @@ export async function GET(request: Request) {
     const profile = await getPrisma().userProfile.findUnique({ where: { userId: session.user.id }, select });
     const serializedProfile = serializeUserProfile(profile);
     if (!serializedProfile.phoneCountryCode) {
-      const location = await resolveIpinfoLiteCountryContext(extractVisitorIp(request.headers)).catch(() => null);
+      const headerCountry =
+        getSupportedPhoneCountryCode(request.headers.get("x-vercel-ip-country")) ??
+        getSupportedPhoneCountryCode(request.headers.get("cf-ipcountry")) ??
+        getSupportedPhoneCountryCode(request.headers.get("x-country")) ??
+        getSupportedPhoneCountryCode(request.headers.get("x-kurioticket-detected-region"));
+      const location = headerCountry
+        ? null
+        : await resolveIpinfoLiteCountryContext(extractVisitorIp(request.headers)).catch(() => null);
       serializedProfile.phoneCountryCode = resolveMobileProfilePhoneCountry({
         savedCountryCode: profile?.phoneCountryCode,
         phoneNumber: profile?.phoneNumber,
-        detectedCountryCode: location?.countryCode,
+        detectedCountryCode: headerCountry ?? location?.countryCode,
       });
     }
     return NextResponse.json({ profile: serializedProfile, user: session.user });
