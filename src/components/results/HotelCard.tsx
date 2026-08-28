@@ -482,6 +482,7 @@ export function HotelCard({
         }}
       >
         <Heart
+          className="translate-x-0.5"
           size={20}
           aria-hidden="true"
           fill={isSaved ? "currentColor" : "none"}
@@ -514,7 +515,7 @@ export function HotelCard({
         className={`${className} z-20 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full border border-transparent bg-transparent text-slate-700 transition hover:bg-slate-100/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]`}
         onClick={() => void shareHotel()}
       >
-        <Share2 size={19} aria-hidden="true" />
+        <Share2 className="-translate-x-0.5" size={19} aria-hidden="true" />
       </button>
     );
   }
@@ -578,7 +579,7 @@ export function HotelCard({
                       {hotel.name}
                     </h2>
                   </div>
-                  <div className="-me-1.5 -mt-1.5 flex shrink-0 items-center gap-0.5 md:hidden">
+                  <div data-hotel-utility-actions className="-me-1.5 -mt-1.5 flex shrink-0 items-center gap-0 md:hidden">
                     {renderSaveButton("flex")}
                     {renderShareButton("flex")}
                   </div>

@@ -22,7 +22,6 @@ import {
   ChevronRight,
   ChevronDown,
   MapPin,
-  Pencil,
   SlidersHorizontal,
   Star,
   Users,
@@ -40,6 +39,7 @@ import {
   hotelMatchesFacilityFilters,
 } from "@/components/results/hotelFacilityFilter";
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
+import { MobileResultsEditSheet } from "@/components/search/MobileResultsEditSheet";
 import { normalizeHotelDestinationSearchValue } from "@/data/hotelDestinations";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
@@ -2011,20 +2011,24 @@ export function HotelResultsExperience({
           )}
           aria-hidden={!showMobileCompactHotelSearch || mobileHotelSearchOpen}
         >
-          <button
-            type="button"
-            onClick={openMobileHotelSearch}
-            className="flex h-14 w-full items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 text-left shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]"
-            aria-label={t("editHotelSearch") || "Edit hotel search"}
-          >
-            <span className="min-w-0">
+          <div className="flex h-14 w-full items-center border-b border-slate-200 bg-white px-2 shadow-sm">
+            <button
+              type="button"
+              onClick={openMobileHotelSearch}
+              className="flex min-w-0 flex-1 items-center px-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]"
+              aria-label={t("editHotelSearch") || "Edit hotel search"}
+            >
+              <span className="min-w-0">
               <span className="block truncate text-sm font-bold text-slate-950">{body.destination}</span>
               <span className="block truncate text-xs font-medium text-slate-600">
                 {desktopMinimizedDateSummary} · {desktopMinimizedGuestsSummary}
               </span>
-            </span>
-            <Pencil className="h-[18px] w-[18px] shrink-0 text-[#004BB8]" aria-hidden="true" />
-          </button>
+              </span>
+            </button>
+            <button type="button" onClick={() => setFiltersOpen(true)} className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg px-3 text-sm font-bold text-[#004BB8] hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]">
+              {t("filters")}
+            </button>
+          </div>
         </div>
       ) : null}
 
@@ -2036,8 +2040,13 @@ export function HotelResultsExperience({
         </section>
       ) : null}
 
-      {!guided && mobileHotelSearchOpen ? (
-        <div className="fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden bg-slate-50 sm:hidden">
+      {!guided ? (
+        <MobileResultsEditSheet
+          open={mobileHotelSearchOpen}
+          title={t("editHotelSearch") || "Edit hotel search"}
+          onClose={closeMobileHotelSearch}
+          lockBodyScroll={false}
+        >
           <HotelSearchBar
             key={`mobile-drawer-${bodySearchKey}-${body.sort}`}
             idPrefix="hotel-results-mobile-drawer"
@@ -2050,11 +2059,12 @@ export function HotelResultsExperience({
             errorRole="alert"
             compact
             mobileLayout="drawer"
+            mobileResultsSheet
             onCloseMobileSearch={closeMobileHotelSearch}
             onMobileDraftChange={updateMobileHotelSearchDraft}
             onSubmitStart={triggerSearchApplying}
           />
-        </div>
+        </MobileResultsEditSheet>
       ) : null}
 
       {!guided ? <section className="hidden bg-white pb-0 pt-7 shadow-none sm:block">
