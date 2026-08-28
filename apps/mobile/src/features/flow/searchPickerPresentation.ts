@@ -12,6 +12,7 @@ export function useSearchPickerMotion(visible: boolean) {
   const { bottom: bottomSafeAreaInset } = useSafeAreaInsets();
   const fallbackTravelDistance = searchPickerSheetTravelDistance(windowHeight, undefined, Dimensions.get("screen").height);
   const [rendered, setRendered] = useState(visible);
+  const [openSettled, setOpenSettled] = useState(false);
   const renderedRef = useRef(false);
   const measuredSheetHeight = useRef<number | undefined>(undefined);
   const fallbackTravelDistanceRef = useRef(fallbackTravelDistance);
@@ -40,6 +41,7 @@ export function useSearchPickerMotion(visible: boolean) {
 
   useEffect(() => {
     const currentGeneration = ++generation.current;
+    setOpenSettled(false);
     backdropOpacity.stopAnimation();
     sheetTranslateY.stopAnimation();
 
@@ -58,7 +60,9 @@ export function useSearchPickerMotion(visible: boolean) {
         Animated.parallel([
           Animated.timing(backdropOpacity, { toValue: 1, duration: SEARCH_PICKER_OPEN_DURATION_MS, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
           Animated.timing(sheetTranslateY, { toValue: 0, duration: SEARCH_PICKER_OPEN_DURATION_MS, easing: Easing.bezier(0.25, 0.1, 0.25, 1), useNativeDriver: true }),
-        ]).start();
+        ]).start(({ finished }) => {
+          if (finished && generation.current === currentGeneration) setOpenSettled(true);
+        });
       });
       return () => {
         awaitingFreshOpenLayout.current = false;
@@ -82,6 +86,7 @@ export function useSearchPickerMotion(visible: boolean) {
     rendered,
     interactive: visible,
     pointerEvents: visible ? "auto" : "none",
+    openSettled,
     backdropStyle: { opacity: backdropOpacity },
     sheetStyle: { transform: [{ translateY: sheetTranslateY }] },
     bottomSafeAreaInset,

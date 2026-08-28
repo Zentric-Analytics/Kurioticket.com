@@ -106,3 +106,11 @@ test("Flight Edit Search uses a local short top-origin reveal", () => {
   assert.doesNotMatch(editSearch, /justifyContent: "flex-end"|borderTopLeftRadius|borderTopRightRadius/);
   assert.match(editSearch, /borderBottomLeftRadius: 24, borderBottomRightRadius: 24/);
 });
+
+test("open settling belongs only to a successfully finished current generation", () => {
+  assert.match(source, /const \[openSettled, setOpenSettled\] = useState\(false\)/);
+  assert.match(source, /const currentGeneration = \+\+generation\.current;\s+setOpenSettled\(false\)/);
+  assert.match(source, /\.start\(\(\{ finished \}\) => \{\s+if \(finished && generation\.current === currentGeneration\) setOpenSettled\(true\)/);
+  assert.match(source, /if \(finished && generation\.current === currentGeneration\) \{\s+renderedRef\.current = false;\s+setRendered\(false\)/);
+  assert.match(source, /openSettled,/);
+});
