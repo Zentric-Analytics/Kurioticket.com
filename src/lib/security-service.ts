@@ -35,7 +35,7 @@ export async function changePassword(input: { userId: string; email: string; cur
   const user = await getPrisma().user.findUnique({ where: { id: input.userId }, select: { id:true, passwordHash:true, status:true } });
   if (!user || user.status !== "ACTIVE") return "invalid" as const;
   if (!user.passwordHash) return "oauth-only" as const;
-  if (!await bcrypt.compare(input.currentPassword, user.passwordHash)) return "invalid" as const;
+  if (!await bcrypt.compare(input.currentPassword, user.passwordHash)) return "invalid-current" as const;
   const passwordHash = await bcrypt.hash(input.newPassword, 12);
   const event = await getPrisma().$transaction(async tx => {
     await tx.user.update({ where: { id: user.id }, data: { passwordHash } });
