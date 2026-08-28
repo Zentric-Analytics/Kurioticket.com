@@ -19,6 +19,7 @@ import type { LucideIcon } from "lucide-react";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { CarResultImage } from "@/components/results/CarResultImage";
+import { getMobileCarPrimarySpecs } from "@/components/results/carResultCardSpecs";
 import type { CarResultBadge } from "@/lib/cars/carResults";
 import { getPrimaryCarOffer } from "@/lib/cars/carResults";
 import type { NormalizedCarResult } from "@/lib/cars/types";
@@ -94,10 +95,150 @@ export function CarResultCard({
     [CarFront, title(car.transmission)],
   ];
   if (car.airConditioning) specifications.push([Snowflake, "Air conditioning"]);
+  const mobilePrimarySpecs = getMobileCarPrimarySpecs(car);
 
   return (
     <article className="relative w-full overflow-hidden rounded-2xl border border-[#D8E1EC] bg-white shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] transition duration-200 hover:-translate-y-0.5 hover:border-[#CBD6E2] hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]">
-      <div className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[250px_minmax(0,1fr)_205px] xl:grid-cols-[270px_minmax(0,1fr)_205px]">
+      {!guidedPlanning && (
+        <div className="md:hidden">
+          <div
+            data-car-card-mobile-main
+            className="grid min-h-[168px] grid-cols-[40%_minmax(0,1fr)]"
+          >
+            <div
+              data-car-card-mobile-image
+              className="relative min-h-full overflow-hidden bg-slate-50"
+            >
+              <CarResultImage
+                imageUrl={car.imageUrl}
+                imageAlt={car.imageAlt}
+                modelName={car.modelName}
+                category={car.category}
+                sizes="(max-width: 767px) 40vw, 250px"
+                fit="contain"
+              />
+            </div>
+
+            <div
+              data-car-card-mobile-information
+              className="min-w-0 px-2.5 py-2.5"
+            >
+              <header className="flex min-w-0 items-start justify-between gap-1.5">
+                <p className="min-w-0 text-[10px] font-bold uppercase tracking-[0.14em] text-[#004BB8]">
+                  {car.categoryLabel}
+                </p>
+                {badge && BadgeIcon && (
+                  <span className="inline-flex min-h-5 shrink-0 items-center gap-1 rounded-md bg-[#EAF2FB] px-1.5 py-0.5 text-[10px] font-semibold leading-4 text-[#004BB8]">
+                    <BadgeIcon size={11} aria-hidden="true" />
+                    {badge}
+                  </span>
+                )}
+              </header>
+              {headingLevel === "h3" ? (
+                <h3 className="mt-0.5 break-words text-[18px] font-extrabold leading-[1.15] text-[#102A43]">
+                  {vehicleName}
+                </h3>
+              ) : (
+                <h2 className="mt-0.5 break-words text-[18px] font-extrabold leading-[1.15] text-[#102A43]">
+                  {vehicleName}
+                </h2>
+              )}
+              <p className="mt-1 flex min-w-0 items-start gap-1 text-[11px] leading-4 text-slate-600">
+                <MapPin
+                  size={13}
+                  className="mt-0.5 shrink-0 text-[#004BB8]"
+                  aria-hidden="true"
+                />
+                <span className="min-w-0">
+                  <strong className="font-semibold text-slate-700">
+                    {title(car.pickupType)}
+                  </strong>
+                  {" · "}
+                  {car.pickupLocation}
+                </span>
+              </p>
+              <ul
+                data-car-card-mobile-specs
+                className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1.5 text-[11px] font-medium leading-4 text-slate-700"
+              >
+                {mobilePrimarySpecs.map(([Icon, label]) => (
+                  <li key={label} className="flex min-w-0 items-start gap-1">
+                    <Icon
+                      size={14}
+                      className="mt-px shrink-0 text-slate-500"
+                      aria-hidden="true"
+                    />
+                    <span className="min-w-0 break-words">{label}</span>
+                  </li>
+                ))}
+              </ul>
+              {offer.freeCancellation && (
+                <span className="mt-2 inline-flex min-h-5 max-w-full items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-emerald-700">
+                  <Check size={13} className="shrink-0" aria-hidden="true" />
+                  <span className="min-w-0">Free cancellation</span>
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div
+            data-car-card-mobile-conversion
+            className="flex min-w-0 items-center justify-between gap-3 border-t border-[#E2E8F0] bg-slate-50/45 px-3 py-2.5"
+          >
+            <div className="min-w-0">
+              <p
+                className="max-w-full whitespace-nowrap text-[21px] font-extrabold leading-none tracking-[-0.025em] text-slate-950 tabular-nums"
+                dir="ltr"
+                title={totalDisplayPrice.title}
+                aria-label={totalDisplayPrice.ariaLabel}
+              >
+                {totalDisplayPrice.formatted}
+              </p>
+              <p className="mt-1 flex flex-wrap items-center gap-x-1 text-[10px] font-medium uppercase leading-3 tracking-[0.06em] text-slate-500">
+                <span>Total</span>
+                <span aria-hidden="true">·</span>
+                <span
+                  className="whitespace-nowrap normal-case tracking-normal text-slate-600 tabular-nums"
+                  dir="ltr"
+                  title={dailyDisplayPrice.title}
+                  aria-label={dailyDisplayPrice.ariaLabel}
+                >
+                  {dailyDisplayPrice.formatted}/day
+                </span>
+              </p>
+            </div>
+            {onSelect ? (
+              <button
+                type="button"
+                onClick={() => onSelect(car)}
+                aria-label={actionAriaLabel}
+                className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-[10px] bg-[#004BB8] px-4 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
+              >
+                {actionLabel}
+              </button>
+            ) : detailsHref ? (
+              <Link
+                href={detailsHref}
+                aria-label={actionAriaLabel}
+                className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-[10px] bg-[#004BB8] px-4 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
+              >
+                {actionLabel}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                disabled
+                aria-label={actionAriaLabel}
+                className="inline-flex min-h-11 shrink-0 cursor-not-allowed items-center justify-center rounded-[10px] bg-slate-300 px-4 text-sm font-bold text-white"
+              >
+                {actionLabel}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className={`${guidedPlanning ? "grid" : "hidden md:grid"} grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[250px_minmax(0,1fr)_205px] xl:grid-cols-[270px_minmax(0,1fr)_205px]`}>
         <div
           data-region="image"
           className="col-span-2 row-start-1 flex items-center border-b border-[#E2E8F0] bg-slate-50 md:col-span-1 md:col-start-1 md:row-span-2 md:row-start-1 md:border-b-0 md:border-e md:p-2.5"

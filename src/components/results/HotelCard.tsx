@@ -471,10 +471,10 @@ export function HotelCard({
           isSaved || hasValidPrice ? savedHotelLabel : saveRequiresLiveRateText
         }
         disabled={!isSaved && !hasValidPrice}
-        className={`${className} z-20 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full border bg-white/95 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] ${
+        className={`${className} z-20 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full border border-transparent bg-transparent transition hover:bg-slate-100/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] ${
           isSaved
-            ? "border-rose-200 text-rose-600"
-            : "border-slate-200 text-slate-800"
+            ? "text-rose-600"
+            : "text-slate-700"
         }`}
         onClick={() => {
           if (isSaved || hasValidPrice) void toggleSavedHotel();
@@ -490,7 +490,7 @@ export function HotelCard({
   }
 
   return (
-    <Card className="mx-auto w-full max-w-[800px] overflow-hidden border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(2,28,43,0.26)]">
+    <Card className="mx-auto w-[calc(100%+0.5rem)] max-w-[800px] overflow-hidden rounded-xl border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(2,28,43,0.26)] sm:w-full">
       <div
         data-hotel-card-mobile-grid
         className="grid min-h-[260px] grid-cols-[41%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)]"
@@ -547,7 +547,7 @@ export function HotelCard({
                       {hotel.name}
                     </h2>
                   </div>
-                  {renderSaveButton("flex -me-1 -mt-1 md:hidden")}
+                  {renderSaveButton("flex -me-1.5 -mt-1.5 md:hidden")}
                 </div>
 
                 {sortBadgeConfig && SortBadgeIcon ? (
@@ -694,7 +694,7 @@ export function HotelCard({
                   )}
                 </div>
               </div>
-              <div data-hotel-card-action className="mt-1.5 text-end">
+              <div data-hotel-card-action className="mt-1.5 flex justify-end">
                 {resolvedDetailsHref === null ? (
                   <Button
                     type="button"
@@ -702,7 +702,7 @@ export function HotelCard({
                     aria-label={unavailableActionAriaLabel}
                     variant="secondary"
                     size="sm"
-                    className="min-h-11 w-full whitespace-normal rounded-lg px-2 text-sm font-semibold md:px-3"
+                    className="h-10 min-h-10 w-auto whitespace-normal rounded-lg px-3 text-sm font-semibold"
                   >
                     {unavailableActionLabel ||
                       t("deals.guided.hotelResults.roomsUnavailable")}
@@ -713,7 +713,7 @@ export function HotelCard({
                     aria-label={actionAriaLabel}
                     variant="accent"
                     size="sm"
-                    className="min-h-11 w-full whitespace-nowrap rounded-[10px] border border-[#004BB8] bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-none hover:border-[#003B91] hover:bg-[#003B91] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                    className="h-10 min-h-10 w-auto whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-3.5 text-sm font-semibold text-white shadow-none hover:border-[#003B91] hover:bg-[#003B91] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
                   >
                     {actionLabel || t("hotelResults.viewHotel") || "View hotel"}
                   </LinkButton>
