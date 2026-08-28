@@ -26,16 +26,23 @@ test("recovery send requires prior verified-email proof and uses a dedicated cha
   assert.match(route, /attempts \+ 1 >= maxAttempts/);
 });
 
+test("passwordless active accounts can receive and complete recovery", () => {
+  assert.match(route, /where: \{ email, status: "ACTIVE" \}/);
+  assert.doesNotMatch(route, /passwordHash: \{ not: null \}/);
+  assert.match(route, /if \(!user\?\.email\)/);
+  assert.match(route, /if \(user\.passwordHash && await bcrypt\.compare/);
+});
+
 test("issued recovery code remains valid for its full challenge lifetime", () => {
   const resetBranch = route.slice(route.indexOf("// Sending the recovery code required"));
-  assert.match(resetBranch, /activePasswordUser\(parsed\.data\.email\)/);
+  assert.match(resetBranch, /activeUser\(parsed\.data\.email\)/);
   assert.doesNotMatch(resetBranch, /verifiedUser\(/);
   assert.doesNotMatch(resetBranch, /proof\.expires/);
   assert.match(resetBranch, /challenge\.expiresAt <= new Date\(\)/);
 });
 
 test("successful recovery rejects password reuse and revokes existing sessions", () => {
-  assert.match(route, /bcrypt\.compare\(parsed\.data\.newPassword, user\.passwordHash\)/);
+  assert.match(route, /user\.passwordHash && await bcrypt\.compare\(parsed\.data\.newPassword, user\.passwordHash\)/);
   assert.match(route, /Choose a new password that is different from your current password\./);
   assert.match(route, /sessionVersion: \{ increment: 1 \}/);
   assert.match(route, /revokeReason: "password_reset"/);
