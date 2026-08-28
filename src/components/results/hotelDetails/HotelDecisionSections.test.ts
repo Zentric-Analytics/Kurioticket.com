@@ -89,37 +89,25 @@ test("comparison presents Kurioticket as a normalized provider without developme
   assert.match(compare, /perNightText\.replace/);
   assert.match(compare, /data-nightly-amount/);
   assert.match(compare, /data-nightly-supporting-label/);
-  assert.match(compare, /data-provider-secondary-price-row/);
-  assert.match(compare, /data-provider-secondary-price/);
-  assert.match(standalone, /viewDealText="View deal"/);
-  assert.match(compare, /\{viewDealText\}/);
-  assert.match(compare, /onInternalRoomFlow\(event\.currentTarget\)/);
-  assert.match(compare, /providerOfferId !== null && providerOfferId === pendingProviderOfferId/);
+  assert.match(compare, /role="radiogroup"/);
+  assert.match(compare, /type="radio"/);
+  assert.match(compare, /checked=\{selected\}/);
+  assert.match(compare, /onChange=\{\(\) => onSelect\(offer\.id\)\}/);
+  assert.doesNotMatch(compare, /View deal|viewDealText|onInternalRoomFlow|onProviderOfferHandoff/);
   assert.match(standalone, /amenities: props\.amenityItems/);
   assert.match(continuation, /amenities: amenities\.slice\(0, 3\)/);
   assert.match(compare, /data-provider-brand/);
   assert.match(compare, /data-provider-price/);
   assert.doesNotMatch(compare, /role="separator"|data-provider-offer-divider|border-t/);
-  assert.match(compare, /data-provider-top-row/);
+  assert.match(compare, /data-provider-selector/);
   assert.match(compare, /data-provider-bottom-row/);
   assert.doesNotMatch(compare, /row-span-2|data-provider-price-action/);
   assert.match(compare, /data-provider-amenities/);
-  assert.match(compare, /data-provider-action/);
-  const topRow = compare.slice(
-    compare.indexOf("data-provider-top-row"),
-    compare.indexOf("data-provider-secondary-price-row"),
-  );
-  const bottomRow = compare.slice(compare.indexOf("data-provider-bottom-row"));
-  assert.match(topRow, /data-provider-brand/);
-  assert.match(topRow, /data-provider-price/);
-  assert.doesNotMatch(topRow, /data-provider-secondary-price/);
-  assert.ok(compare.indexOf("data-provider-top-row") < compare.indexOf("data-provider-secondary-price-row"));
-  assert.ok(compare.indexOf("data-provider-secondary-price-row") < compare.indexOf("data-provider-bottom-row"));
-  assert.match(bottomRow, /data-provider-amenities/);
-  assert.match(bottomRow, /data-provider-action/);
-  assert.match(bottomRow, /items-center/);
-  assert.doesNotMatch(bottomRow, /items-end/);
-  assert.ok(compare.indexOf("data-provider-price") < compare.indexOf("data-provider-action"));
+  assert.doesNotMatch(compare, /data-provider-action|<button/);
+  assert.ok(compare.indexOf("data-provider-brand") < compare.indexOf("data-provider-selector"));
+  assert.ok(compare.indexOf("data-provider-selector") < compare.indexOf("data-provider-price"));
+  assert.ok(compare.indexOf("data-provider-price") < compare.indexOf("data-provider-amenities"));
+  assert.ok(compare.indexOf("data-provider-amenities") < compare.indexOf("data-nightly-supporting-label"));
   assert.match(compare, /<HotelAmenityList/);
   assert.match(compare, /items=\{offer\.amenities \?\? \[\]\}/);
   assert.equal(compare.match(/\{stayContext\}/g)?.length, 1);
@@ -140,11 +128,10 @@ test("mobile address uses the available header width and wraps only when needed"
 
 test("future offers share the concise provider price and action presentation", () => {
   assert.match(compare, /offers\.map\(\(offer\) =>/);
-  for (const field of ["providerName", "providerLogoUrl", "nightlyPrice", "action"]) {
+  for (const field of ["providerName", "providerLogoUrl", "nightlyPrice"]) {
     assert.ok(compare.includes(`offer.${field}`), field);
   }
-  assert.match(compare, /onProviderOfferHandoff\(offer\.action\.providerOfferId\)/);
-  assert.match(compare, /type="button"/);
+  assert.match(compare, /type="radio"/);
   assert.doesNotMatch(compare, /href=\{offer\.|window\.location/);
   assert.doesNotMatch(presentation, /deepLink/);
   assert.match(presentation, /providerOfferId: string/);
@@ -153,11 +140,11 @@ test("future offers share the concise provider price and action presentation", (
   assert.doesNotMatch(compare, /Cancellation terms unavailable|Meal plan unavailable|Provider 2/);
 });
 
-test("persistent continuation uses the pure zero, one, or multiple provider decision", () => {
+test("persistent continuation uses the selected provider decision", () => {
   assert.match(standalone, /resolveHotelBookingContinuation/);
   assert.match(standalone, /bookingContinuation\.kind === "internal-room-flow"/);
   assert.match(standalone, /bookingContinuation\.kind === "provider-handoff"/);
-  assert.match(standalone, /bookingContinuation\.kind === "compare-prices"/);
+  assert.match(standalone, /bookingContinuation\.kind === "selection-required"/);
   assert.match(standalone, /setActiveTab\("compare"\)/);
   assert.match(standalone, /hotel-compare-heading/);
   assert.match(standalone, /focus\(\{ preventScroll: true \}\)/);
