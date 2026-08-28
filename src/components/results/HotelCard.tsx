@@ -286,6 +286,10 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
     8,
   );
   const collapsedAmenityItems = expandedAmenityItems.slice(0, 4);
+  const trailingAmenityItem = collapsedAmenityItems.at(-1) ?? null;
+  const leadingAmenityItems = trailingAmenityItem
+    ? collapsedAmenityItems.slice(0, -1)
+    : [];
   const hasBreakfastAmenity = expandedAmenityItems.some(
     (item) => item.iconKey === "breakfast",
   );
@@ -368,6 +372,10 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
         isFallbackRate: currencyRates.isFallback,
       })
     : null;
+  const pricePerNightTemplate = t("hotelResults.pricePerNight");
+  const perNightLabel = pricePerNightTemplate
+    .replace(/\{\{\s*price\s*\}\}/g, "")
+    .trim();
 
   function getHotelSnapshot(): SavedHotelSnapshot {
     if (resolvedDetailsHref === null) {
@@ -441,7 +449,7 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
   return (
     <Card className="mx-auto w-full max-w-[800px] overflow-hidden border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(2,28,43,0.26)]">
       <div className="grid md:grid-cols-[40%_minmax(0,1fr)]">
-        <div className="relative h-[clamp(280px,78vw,340px)] bg-surface-muted md:aspect-auto md:h-auto md:min-h-[230px] lg:min-h-[240px]">
+        <div className="relative h-[clamp(220px,58vw,250px)] bg-surface-muted md:aspect-auto md:h-auto md:min-h-[230px] lg:min-h-[240px]">
           {allowSave ? <button
             type="button"
             aria-label={savedHotelLabel}
@@ -577,10 +585,10 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                 </div>
               ) : null}
             </div>
-            <div className="mt-3 grid grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] gap-3">
+            <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-2">
               <div className="min-w-0 pe-2.5 md:pe-3">
                 {shouldShowMealPlanText ||
-                collapsedAmenityItems.length > 0 ? (
+                leadingAmenityItems.length > 0 ? (
                   <div className="space-y-1">
                     {shouldShowMealPlanText ? (
                       <p className="text-[13px] font-normal leading-5 text-slate-600">
@@ -588,8 +596,9 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                       </p>
                     ) : null}
                     <HotelAmenityList
-                      items={collapsedAmenityItems}
+                      items={leadingAmenityItems}
                       t={t}
+                      className="grid grid-cols-1 gap-y-1.5"
                     />
                   </div>
                 ) : null}
@@ -605,18 +614,26 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                   </p>
                 ) : null}
               </div>
-              <div className="flex min-w-0 flex-col items-end text-end">
+              <div className="min-w-0 text-end">
                 <div className="min-w-0 text-end">
                   {priceDetails && nightlyDisplayPrice ? (
                       <div
-                        className="text-base font-bold leading-6 text-slate-950 tabular-nums min-[380px]:whitespace-nowrap md:text-lg"
+                        className="min-w-0"
                         title={nightlyDisplayPrice.title}
                         aria-label={nightlyDisplayPrice.ariaLabel}
                       >
-                        {t("hotelResults.pricePerNight").replace(
-                          "{{price}}",
-                          nightlyDisplayPrice.formatted,
-                        )}
+                        <span
+                          aria-hidden="true"
+                          className="block whitespace-nowrap text-lg font-bold leading-5 text-slate-950 tabular-nums"
+                        >
+                          {nightlyDisplayPrice.formatted}
+                        </span>
+                        <span
+                          aria-hidden="true"
+                          className="mt-0.5 block text-xs font-medium leading-4 text-slate-500"
+                        >
+                          {perNightLabel}
+                        </span>
                       </div>
                   ) : (
                     <div className="min-w-0 space-y-1">
@@ -629,7 +646,17 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                     </div>
                   )}
                 </div>
-                <div className="mt-3 text-end">
+              </div>
+              <div className="min-w-0 self-center pe-2.5 md:pe-3">
+                {trailingAmenityItem ? (
+                  <HotelAmenityList
+                    items={[trailingAmenityItem]}
+                    t={t}
+                    className="grid grid-cols-1"
+                  />
+                ) : null}
+              </div>
+              <div className="self-center text-end">
                   {resolvedDetailsHref === null ? (
                     <Button
                       type="button"
@@ -652,7 +679,6 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                       {actionLabel || t("hotelResults.viewHotel") || "View hotel"}
                     </LinkButton>
                   )}
-                </div>
               </div>
             </div>
           </div>
