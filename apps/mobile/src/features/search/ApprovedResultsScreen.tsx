@@ -907,6 +907,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
   const roundTrip = one(params.tripType) === "round-trip";
   const { outbound, returnLeg } = flightCardLegs(result, roundTrip);
   const operatingCarrierPresentation = flightOperatingCarrierPresentation(result);
+  const flightNumber = result.flightNumber?.trim();
   const baggageSummary = summarizeBaggage(result.baggageInfo) ?? "Review policy";
   const cabinSummary = formatCabinClass(result.cabinClass);
   const fareRulesSummary = summarizeFareRules(result.refundInfo) ?? "Review before booking";
@@ -915,7 +916,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${result.airlineName}${operatingCarrierPresentation ? `, ${operatingCarrierPresentation.accessibilityText}` : ""} flight, ${result.originAirport} to ${result.destinationAirport}, ${fare?.accessibilityLabel ?? "price unavailable"}`}
+      accessibilityLabel={`${result.airlineName}${flightNumber ? `, ${flightNumber}` : ""}${operatingCarrierPresentation ? `, ${operatingCarrierPresentation.accessibilityText}` : ""} flight, ${result.originAirport} to ${result.destinationAirport}, ${fare?.accessibilityLabel ?? "price unavailable"}`}
       accessibilityHint="Opens flight details"
       onPress={() =>
         router.push({
@@ -947,11 +948,16 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
             <View style={s0.airlineHeader}>
               <View
                 style={s0.airlineCopy}
-                accessibilityLabel={`${result.airlineName}${operatingCarrierPresentation ? `, ${operatingCarrierPresentation.accessibilityText}` : ""}`}
+                accessibilityLabel={`${result.airlineName}${flightNumber ? `, ${flightNumber}` : ""}${operatingCarrierPresentation ? `, ${operatingCarrierPresentation.accessibilityText}` : ""}`}
               >
                 <Text style={[s0.airlineName, { color: theme.textPrimary }]} numberOfLines={2} ellipsizeMode="tail">
                   {result.airlineName}
                 </Text>
+                {flightNumber ? (
+                  <Text style={[s0.flightNumber, { color: theme.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">
+                    {flightNumber}
+                  </Text>
+                ) : null}
                 {operatingCarrierPresentation ? (
                   <Text style={[s0.operatingCarrierText, { color: theme.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">
                     {operatingCarrierPresentation.text}
@@ -1661,6 +1667,7 @@ const s0 = StyleSheet.create({
   airlineLogoColumn: { width: 42, flexShrink: 0, alignItems: "center" },
   flightDetails: { flex: 1, minWidth: 0 },
   airlineName: { fontSize: 14, lineHeight: 18, color: ui.navy, fontWeight: "800" },
+  flightNumber: { marginTop: 1, fontSize: 11, lineHeight: 14, fontWeight: "600" },
   operatingCarrierText: { fontSize: 11, lineHeight: 15, fontWeight: "500" },
   journeyList: { width: "100%", marginTop: 18, gap: 4 },
   journeyBlock: { width: "100%", gap: 0 },

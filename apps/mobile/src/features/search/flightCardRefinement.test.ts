@@ -160,6 +160,8 @@ test("airline identity preserves its accessible name while bounding very long vi
   assert.doesNotMatch(source, /airlineName: \{[^}]*maxWidth/);
   assert.match(source, /airlineCopy: \{ flex: 1, minWidth: 0 \}/);
   assert.match(source, /airlineName: \{[^}]*lineHeight: 18/);
+  assert.match(source, /airlineName: \{ fontSize: 14, lineHeight: 18, color: ui\.navy, fontWeight: "800" \}/);
+  assert.match(card, /s0\.airlineName, \{ color: theme\.textPrimary \}/);
   assert.match(source, /identityActions: \{ position: "absolute", top: 0, right: 0/);
   assert.match(card, /<View style=\{s0\.flightIdentityLayout\}>[\s\S]*?<AirlineLogo[\s\S]*?<View style=\{s0\.airlineHeader\}>[\s\S]*?<View[\s\S]*?style=\{s0\.airlineCopy\}[\s\S]*?<Text style=\{\[s0\.airlineName/);
 
@@ -188,13 +190,22 @@ test("flight identity actions do not inflate the header before the outbound jour
 test("operating-carrier clarity stays conditional beneath the primary airline identity", () => {
   const header = card.slice(card.indexOf('<View style={s0.airlineHeader}>'), card.indexOf('<View style={s0.journeyList}>'));
   assert.match(card, /flightOperatingCarrierPresentation\(result\)/);
-  assert.match(header, /s0\.airlineCopy[\s\S]*?s0\.airlineName[\s\S]*?\{result\.airlineName\}[\s\S]*?operatingCarrierPresentation \? \([\s\S]*?s0\.operatingCarrierText[\s\S]*?operatingCarrierPresentation\.text[\s\S]*?\) : null\}[\s\S]*?s0\.identityActions/);
+  assert.match(header, /s0\.airlineCopy[\s\S]*?s0\.airlineName[\s\S]*?\{result\.airlineName\}[\s\S]*?flightNumber \? \([\s\S]*?s0\.flightNumber[\s\S]*?\{flightNumber\}[\s\S]*?\) : null\}[\s\S]*?operatingCarrierPresentation \? \([\s\S]*?s0\.operatingCarrierText[\s\S]*?operatingCarrierPresentation\.text[\s\S]*?\) : null\}[\s\S]*?s0\.identityActions/);
   assert.match(header, /operatingCarrierPresentation\.accessibilityText/);
   assert.match(header, /numberOfLines=\{1\} ellipsizeMode="tail"/);
   assert.match(source, /operatingCarrierText: \{ fontSize: 11, lineHeight: 15, fontWeight: "500" \}/);
   assert.match(card, /operatingCarrierText, \{ color: theme\.textSecondary \}/);
   assert.doesNotMatch(header, /marketingFlightNumber|operatingFlightNumber|codeshare/i);
   assert.doesNotMatch(source, /operatingCarrierBadge|operatingCarrierChip/);
+});
+
+test("flight number is quiet conditional text directly beneath the airline name", () => {
+  const header = card.slice(card.indexOf('<View style={s0.airlineHeader}>'), card.indexOf('<View style={s0.journeyList}>'));
+  assert.match(card, /const flightNumber = result\.flightNumber\?\.trim\(\)/);
+  assert.match(header, /\{flightNumber \? \([\s\S]*?<Text style=\{\[s0\.flightNumber, \{ color: theme\.textSecondary \}\]\} numberOfLines=\{1\} ellipsizeMode="tail">[\s\S]*?\{flightNumber\}[\s\S]*?<\/Text>[\s\S]*?\) : null\}/);
+  assert.match(source, /flightNumber: \{ marginTop: 1, fontSize: 11, lineHeight: 14, fontWeight: "600" \}/);
+  assert.doesNotMatch(header, /N\/A|Unknown|—|placeholder/i);
+  assert.doesNotMatch(source, /flightNumber(?:Badge|Chip|Pill)/);
 });
 
 test("narrow flight cards reserve deterministic space for every journey section", () => {
