@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Animated, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { TravelApiError } from "../../api/travelApi";
 import { securityPasswordResetApi } from "../../api/securityPasswordResetApi";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
@@ -80,7 +80,6 @@ export function PasswordResetFlow({ active, copy: c, intro, onUnauthorized, onSu
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [visible, setVisible] = useState(false);
   const activeRef = useRef(active);
@@ -96,7 +95,6 @@ export function PasswordResetFlow({ active, copy: c, intro, onUnauthorized, onSu
     setNewPassword("");
     setConfirmPassword("");
     setError("");
-    setMessage("");
     setVisible(false);
   }, [active]);
 
@@ -106,13 +104,11 @@ export function PasswordResetFlow({ active, copy: c, intro, onUnauthorized, onSu
     inFlightRef.current = true;
     setSubmitting(true);
     setError("");
-    setMessage("");
     try {
       await securityPasswordResetApi.sendCode();
       if (!activeRef.current || generation !== generationRef.current) return;
       setStage("verify");
-      setMessage(actionCopy.sent);
-      AccessibilityInfo.announceForAccessibility(actionCopy.send);
+      AccessibilityInfo.announceForAccessibility(actionCopy.sent);
     } catch (e) {
       if (!activeRef.current || generation !== generationRef.current) return;
       if (!await onUnauthorized(e)) setError(e instanceof TravelApiError ? e.message : c.loadError);
@@ -147,37 +143,56 @@ export function PasswordResetFlow({ active, copy: c, intro, onUnauthorized, onSu
   if (stage === "request") {
     return <View style={styles.form}>
       <Text style={{ color: theme.muted }}>{intro ?? navigationCopy.entryHelp}</Text>
-      {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
-      <Button label={submitting ? c.loading : actionCopy.send} disabled={submitting} onPress={() => void sendCode()} />
+      <InlineFeedback error={error} />
+      <Button label={actionCopy.send} loading={submitting} onPress={() => void sendCode()} />
     </View>;
   }
 
   return <View style={styles.form}>
-    {message ? <Text accessibilityRole="alert" style={styles.success}>{message}</Text> : null}
-    {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
+    <Text style={[styles.instructions, { color: theme.muted }]}>{actionCopy.sent}</Text>
+    <InlineFeedback error={error} />
     <TextInput accessibilityLabel={actionCopy.field} keyboardType="number-pad" maxLength={6} value={code} onChangeText={(value) => { setCode(value.replace(/\D/g, "")); setError(""); }} placeholder={actionCopy.field} placeholderTextColor={theme.muted} style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]} />
     <TextInput accessibilityLabel={c.next} secureTextEntry={!visible} value={newPassword} onChangeText={(value) => { setNewPassword(value); setError(""); }} placeholder={c.next} placeholderTextColor={theme.muted} autoCapitalize="none" style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]} />
     <TextInput accessibilityLabel={c.confirm} secureTextEntry={!visible} value={confirmPassword} onChangeText={(value) => { setConfirmPassword(value); setError(""); }} placeholder={c.confirm} placeholderTextColor={theme.muted} autoCapitalize="none" style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]} />
     <Pressable accessibilityRole="button" accessibilityLabel={visible ? c.hide : c.show} onPress={() => setVisible((value) => !value)} style={styles.textAction}><Text style={styles.link}>{visible ? c.hide : c.show}</Text></Pressable>
     <Text style={{ color: theme.muted }}>{c.passwordRules}</Text>
-    <Button label={submitting ? c.changing : navigationCopy.submit} disabled={submitting} onPress={() => void resetPassword()} />
+    <Button label={navigationCopy.submit} loading={submitting} onPress={() => void resetPassword()} />
     <Pressable accessibilityRole="button" disabled={submitting} onPress={() => void sendCode()} style={styles.textAction}><Text style={styles.link}>{actionCopy.resend}</Text></Pressable>
   </View>;
 }
 
-function Button({ label, onPress, disabled }: { label: string; onPress: () => void; disabled: boolean }) {
-  return <Pressable accessibilityRole="button" accessibilityState={{ disabled, busy: disabled }} disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.button, disabled && styles.disabled, pressed && styles.pressed]}><Text style={styles.buttonText}>{label}</Text></Pressable>;
+function InlineFeedback({ error }: { error: string }) {
+  const opacity = useRef(new Animated.Value(error ? 1 : 0)).current;
+  const [displayed, setDisplayed] = useState(error);
+  useEffect(() => {
+    opacity.stopAnimation();
+    if (error) {
+      setDisplayed(error);
+      Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true }).start();
+      return;
+    }
+    Animated.timing(opacity, { toValue: 0, duration: 180, useNativeDriver: true }).start(({ finished }) => {
+      if (finished) setDisplayed("");
+    });
+  }, [error, opacity]);
+  return <View style={styles.feedbackSlot}><Animated.Text accessibilityRole="alert" style={[styles.error, { opacity }]}>{displayed || " "}</Animated.Text></View>;
+}
+
+function Button({ label, onPress, loading }: { label: string; onPress: () => void; loading: boolean }) {
+  return <Pressable accessibilityRole="button" accessibilityState={{ disabled: loading, busy: loading }} disabled={loading} onPress={onPress} style={({ pressed }) => [styles.button, loading && styles.disabled, pressed && styles.pressed]}><View style={styles.buttonContent}><Text style={styles.buttonText}>{label}</Text>{loading ? <ActivityIndicator size="small" color="white" /> : null}</View></Pressable>;
 }
 
 const styles = StyleSheet.create({
   form: { gap: 12 },
+  instructions: { lineHeight: 20 },
+  feedbackSlot: { minHeight: 20, justifyContent: "center" },
   input: { minHeight: 50, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, fontSize: 15 },
   textAction: { minHeight: 44, alignSelf: "flex-start", justifyContent: "center" },
   link: { color: "#1769E0", fontWeight: "700" },
   button: { minHeight: 50, borderRadius: 10, backgroundColor: "#1769E0", alignItems: "center", justifyContent: "center", paddingHorizontal: 16, marginTop: 4 },
-  disabled: { opacity: 0.45 },
+  buttonContent: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
+  disabled: { opacity: 0.75 },
   buttonText: { color: "white", fontWeight: "800" },
-  error: { color: "#B42318", fontWeight: "600" },
-  success: { color: "#067647", fontWeight: "600" },
+  error: { color: "#B42318", fontWeight: "600", lineHeight: 20 },
   pressed: { opacity: 0.65 },
 });
