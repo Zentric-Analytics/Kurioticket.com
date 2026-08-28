@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { getMobileSession } from "@/lib/mobile-auth";
 import { getPrisma } from "@/lib/prisma";
+import { extractVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
+import { resolveMobileProfilePhoneCountry } from "@/lib/mobileProfilePhoneCountry";
 import { serializeUserProfile, userProfileSchema } from "@/lib/userProfile";
 import { createNotificationEvent } from "@/services/notificationService";
 
@@ -11,7 +13,16 @@ export async function GET(request: Request) {
   if (!session || session.user.status !== "ACTIVE") return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   try {
     const profile = await getPrisma().userProfile.findUnique({ where: { userId: session.user.id }, select });
-    return NextResponse.json({ profile: serializeUserProfile(profile), user: session.user });
+    const serializedProfile = serializeUserProfile(profile);
+    if (!serializedProfile.phoneCountryCode) {
+      const location = await resolveIpinfoLiteCountryContext(extractVisitorIp(request.headers)).catch(() => null);
+      serializedProfile.phoneCountryCode = resolveMobileProfilePhoneCountry({
+        savedCountryCode: profile?.phoneCountryCode,
+        phoneNumber: profile?.phoneNumber,
+        detectedCountryCode: location?.countryCode,
+      });
+    }
+    return NextResponse.json({ profile: serializedProfile, user: session.user });
   } catch {
     return NextResponse.json({ error: "Unable to load profile." }, { status: 503 });
   }
