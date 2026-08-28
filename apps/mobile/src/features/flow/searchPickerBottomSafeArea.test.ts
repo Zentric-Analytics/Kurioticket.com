@@ -47,8 +47,9 @@ test("top safe-area positioning remains on full-height search overlays", () => {
     const source = sources.find((entry) => entry.file === file)!.source;
     assert.match(source, /SafeAreaView[^>]*edges=\{\["top"\]\}/s, file);
   }
-  assert.match(editSearchSource, /SafeAreaView[^>]*edges=\{\["top"\]\}/s, "FlightEditSearchModal.tsx");
-  assert.match(editSearchSource, /paddingBottom: bottomSafeAreaInset/);
+  assert.match(editSearchSource, /headerClearance, \{ height: headerAnchor \}/, "FlightEditSearchModal.tsx");
+  assert.doesNotMatch(editSearchSource, /SafeAreaView|bottomSafeAreaInset/);
+  assert.match(editSearchSource, /content: \{[^}]*paddingBottom: 20/);
 });
 
 test("local calendar preserves lateral safe areas while its moving surface owns the bottom inset", () => {

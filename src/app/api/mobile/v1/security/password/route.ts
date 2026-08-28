@@ -102,6 +102,12 @@ export function createPasswordHandlers(
             { status: 409 },
           );
         }
+        if (result === "invalid-current") {
+          return NextResponse.json(
+            { error: "Current password is incorrect." },
+            { status: 400 },
+          );
+        }
         if (result === "invalid") {
           return NextResponse.json(
             { error: "Unable to update password." },

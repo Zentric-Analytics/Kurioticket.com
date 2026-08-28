@@ -33,6 +33,8 @@ test("Flight Results uses a compact header containing only back, dynamic route, 
   assert.match(header, /accessibilityLabel="Go back"/);
   assert.match(header, /\{route\}/);
   assert.match(header, /accessibilityLabel="Edit search"[\s\S]*?>Edit<\/Text>/);
+  assert.match(invocation, /onLayout=\{\(event\) => setFlightResultsHeaderHeight\(event\.nativeEvent\.layout\.height\)\}/);
+  assert.match(results, /headerAnchor=\{topSafeAreaInset \+ flightResultsHeaderHeight\}/);
 });
 
 test("Flight Results header removes all secondary metadata and its component props", () => {
