@@ -43,7 +43,7 @@ export const authApi = {
     await writeSession({ ...result.session, user: result.user }); return result;
   },
   sendForgotPasswordCode: (email: string, verificationToken: string) => request<{ ok: true; expiresInMinutes: number }>("forgot-password", { method: "POST", body: JSON.stringify({ action: "send-code", email, verificationToken }) }),
-  resetForgotPassword: (input: { email: string; verificationToken: string; code: string; newPassword: string; confirmPassword: string }) => request<{ success: true }>("forgot-password", { method: "POST", body: JSON.stringify({ action: "reset", ...input }) }),
+  resetForgotPassword: (input: { email: string; code: string; newPassword: string; confirmPassword: string }) => request<{ success: true }>("forgot-password", { method: "POST", body: JSON.stringify({ action: "reset", ...input }) }),
   logout: async () => {
     const session = await readSession();
     try { if (session) await request<{ ok: true }>("logout", { method: "POST", headers: { Authorization: `Bearer ${session.token}` } }); }
