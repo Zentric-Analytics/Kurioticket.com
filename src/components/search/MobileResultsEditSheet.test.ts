@@ -13,11 +13,13 @@ test("mobile Results editor is an accessible rounded bottom sheet", () => {
   assert.match(source, /env\(safe-area-inset-bottom\)/);
 });
 
-test("sheet owns dismissal, focus, and document scroll restoration", () => {
+test("sheet owns dismissal and focus while using the shared Results lock", () => {
   assert.match(source, /event\.key === "Escape"/);
   assert.match(source, /event\.target === event\.currentTarget/);
   assert.match(source, /nestedLayerOpen/);
   assert.match(source, /launcher\?\.focus\(\{ preventScroll: true \}\)/);
-  assert.match(source, /window\.scrollTo\(scrollX, scrollY\)/);
+  assert.match(source, /acquireMobileResultsScrollLock\(\)/);
+  assert.doesNotMatch(source, /style\.position/);
+  assert.doesNotMatch(source, /window\.scrollTo/);
   assert.match(source, /motion-reduce:transition-none/);
 });
