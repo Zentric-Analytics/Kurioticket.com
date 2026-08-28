@@ -121,7 +121,7 @@ export function PasswordResetFlow({ active, copy: c, intro, onUnauthorized, onSu
 
   if (stage === "request") {
     return <View style={styles.form}>
-      <Text style={{ color: theme.muted }}>{intro ?? c.oauth}</Text>
+      <Text style={{ color: theme.muted }}>{intro ?? navigationCopy.entryHelp}</Text>
       {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
       <Button label={submitting ? c.loading : actionCopy.send} disabled={submitting} onPress={() => void sendCode()} />
     </View>;
