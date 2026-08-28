@@ -16,10 +16,7 @@ const sources = flowFiles.map((file) => ({
   file,
   source: readFileSync(`src/features/flow/${file}`, "utf8"),
 }));
-sources.push({
-  file: "FlightEditSearchModal.tsx",
-  source: readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8"),
-});
+const editSearchSource = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
 
 test("every moving native search sheet owns its bottom safe area", () => {
   for (const { file, source } of sources) {
@@ -46,11 +43,12 @@ test("top safe-area positioning remains on full-height search overlays", () => {
     "FlightSearchPanel.tsx",
     "HotelSearchPanel.tsx",
     "CarSearchPanel.tsx",
-    "FlightEditSearchModal.tsx",
   ]) {
     const source = sources.find((entry) => entry.file === file)!.source;
     assert.match(source, /SafeAreaView[^>]*edges=\{\["top"\]\}/s, file);
   }
+  assert.match(editSearchSource, /SafeAreaView[^>]*edges=\{\["top"\]\}/s, "FlightEditSearchModal.tsx");
+  assert.match(editSearchSource, /paddingBottom: bottomSafeAreaInset/);
 });
 
 test("local calendar preserves lateral safe areas while its moving surface owns the bottom inset", () => {
