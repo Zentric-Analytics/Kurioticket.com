@@ -10,6 +10,7 @@ import { DateRangeSheet } from "./DateRangeSheet";
 import { travelApi, TravelApiError, type HotelDestinationSuggestion } from "../../api/travelApi";
 import { HOTEL_LIMITS, countLabel, firstParam, hotelSearchParams, initializeHotelForm, localDateFromIso, localIsoDate, type HotelForm, type RouteValue, validateHotelForm } from "./hotelSearchModel";
 import { SEARCH_PICKER_BACKDROP_COLOR, useSearchPickerMotion } from "./searchPickerPresentation";
+import { useSearchPickerKeyboardPresentation } from "./searchPickerKeyboardPresentation";
 import { hasMinimumLocationSearchLetters, locationSearchLetterCount } from "./locationSearchQuery";
 
 export type HotelSearchHandle = { useDestination: (destination: string) => void };
@@ -93,7 +94,7 @@ export function HotelDestinationSheet({ visible, value, onDone, onCancel }: { vi
     setQuery(""); setDraft(undefined); setSuggestions([]); setLoading(false); setError(false); programmaticFilledQuery.current=undefined;
   }, [visible, value]);
 
-  useEffect(() => { if (!visible || !motion.openSettled) return; inputRef.current?.focus(); }, [visible, motion.openSettled, value]);
+  const keyboardPresentation = useSearchPickerKeyboardPresentation(visible, motion.rendered, value, inputRef);
 
   useEffect(() => {
     if (!visible) return;
@@ -121,7 +122,7 @@ export function HotelDestinationSheet({ visible, value, onDone, onCancel }: { vi
 
   const clear = () => { setQuery(""); setDraft(undefined); setSuggestions([]); setError(false); inputRef.current?.focus(); };
   const changeQuery = (next:string) => { programmaticFilledQuery.current=undefined; setQuery(next); if (draft && next !== draft.searchValue) setDraft(undefined); };
-  return <Modal transparent animationType="none" visible={motion.rendered} onRequestClose={onCancel}>
+  return <Modal transparent animationType="none" visible={motion.rendered} onShow={keyboardPresentation.onModalShow} onRequestClose={onCancel}>
       <KeyboardAvoidingView pointerEvents={motion.pointerEvents} style={styles.keyboardViewport} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <SafeAreaView edges={["top"]} style={styles.destinationOverlay}><Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill,styles.scrim,motion.backdropStyle]}/>
           <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} accessibilityRole="button" accessibilityLabel="Close hotel destination picker"/>
