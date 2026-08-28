@@ -1298,62 +1298,69 @@ function FlightLoadingSkeleton({ roundTrip = false }: { roundTrip?: boolean }) {
   const placeholder = { backgroundColor: theme.border };
   return (
     <View style={[s0.skeletonCard, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityElementsHidden>
-      <View style={s0.skeletonIdentityRow}>
+      <View style={s0.skeletonIdentityLayout}>
         <View style={[s0.skeletonLogo, placeholder]} />
-        <SkeletonLine flightResults style={s0.skeletonName} />
-        <View style={s0.skeletonIdentityActions}>
-          <View style={[s0.skeletonBadge, placeholder]} />
-          <View style={[s0.skeletonHeart, placeholder]} />
+        <View style={s0.skeletonIdentityContent}>
+          <View style={s0.skeletonIdentityHeader}>
+            <View style={s0.skeletonIdentityCopy}>
+              <SkeletonLine flightResults style={s0.skeletonName} />
+              <SkeletonLine flightResults style={s0.skeletonFlightNumber} />
+            </View>
+            <View style={s0.skeletonIdentityActions}>
+              <View style={[s0.skeletonBadge, placeholder]} />
+              <View style={s0.skeletonFavoriteButton}>
+                <View style={[s0.skeletonHeart, placeholder]} />
+              </View>
+            </View>
+          </View>
         </View>
       </View>
-      <View style={s0.skeletonJourneyBlock}>
-        <View style={s0.skeletonDurationRow}>
-          <View style={s0.skeletonSideColumn} />
-          <View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonDuration} /></View>
-          <View style={s0.skeletonSideColumn} />
-        </View>
-        <View style={s0.skeletonTimeRow}>
-          <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} />
-          <View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonRouteLine} /></View>
-          <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} />
-        </View>
-        <View style={s0.skeletonAirportRow}>
-          <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} />
-          <View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonStop} /></View>
-          <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} />
-        </View>
-      </View>
-      {roundTrip ? (
+      <View style={s0.skeletonJourneyList}>
         <View style={s0.skeletonJourneyBlock}>
-          <View style={s0.skeletonDurationRow}>
-            <View style={s0.skeletonSideColumn} />
+          <SkeletonLine flightResults style={s0.skeletonJourneyLabel} />
+          <View style={s0.skeletonJourneyPrimaryRow}>
+            <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} />
             <View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonDuration} /></View>
+            <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} />
+          </View>
+          <View style={s0.skeletonJourneyRouteRow}>
+            <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} />
+            <View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonRouteLine} /></View>
+            <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} />
+          </View>
+          <View style={s0.skeletonJourneyStopRow}>
+            <View style={s0.skeletonSideColumn} />
+            <View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonStop} /></View>
             <View style={s0.skeletonSideColumn} />
           </View>
-          <View style={s0.skeletonTimeRow}>
-            <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} />
-            <View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonRouteLine} /></View>
-            <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} />
-          </View>
-          <View style={s0.skeletonAirportRow}>
-            <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} />
-            <View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonStop} /></View>
-            <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} />
-          </View>
         </View>
-      ) : null}
-      <View style={s0.skeletonFareRow}>
-        <View style={s0.skeletonPrice}>
-          <SkeletonLine flightResults style={s0.skeletonPriceLine} />
-        </View>
+        {roundTrip ? (
+          <View style={s0.skeletonJourneyBlock}>
+            <SkeletonLine flightResults style={s0.skeletonJourneyLabel} />
+            <View style={s0.skeletonJourneyPrimaryRow}>
+              <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} />
+              <View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonDuration} /></View>
+              <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} />
+            </View>
+            <View style={s0.skeletonJourneyRouteRow}>
+              <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} />
+              <View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonRouteLine} /></View>
+              <SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} />
+            </View>
+            <View style={s0.skeletonJourneyStopRow}>
+              <View style={s0.skeletonSideColumn} />
+              <View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonStop} /></View>
+              <View style={s0.skeletonSideColumn} />
+            </View>
+          </View>
+        ) : null}
       </View>
+      <View style={s0.skeletonFareRow}>
+        <SkeletonLine flightResults style={s0.skeletonPriceLine} />
+      </View>
+      <View style={[s0.skeletonMetadataDivider, { backgroundColor: theme.border }]} />
       <View style={s0.skeletonMetadataRow}>
-        {["baggage", "cabin", "fare-rules"].map((item, index) => (
-          <View key={item} style={s0.skeletonMetadataItem}>
-            <View style={[s0.skeletonMetadataIcon, placeholder]} />
-            <SkeletonLine flightResults style={index === 1 ? s0.skeletonMetadataLineShort : s0.skeletonMetadataLine} />
-          </View>
-        ))}
+        <SkeletonLine flightResults style={s0.skeletonMetadataLine} />
       </View>
     </View>
   );
@@ -1758,41 +1765,42 @@ const s0 = StyleSheet.create({
   skeletonList: { width: "100%", gap: 14 },
   skeletonCard: {
     width: "100%",
-    minHeight: 178,
     borderWidth: 1,
-    borderColor: ui.border,
-    borderRadius: 14,
-    padding: 13,
-    gap: 10,
-    backgroundColor: "white",
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    gap: 5,
   },
-  skeletonIdentityRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  skeletonIdentityActions: { flexDirection: "column", flexShrink: 0, alignItems: "center", gap: 3 },
-  skeletonBadge: { width: 48, height: 20, borderRadius: 10, backgroundColor: "#E7EBF1" },
-  skeletonHeart: { width: 22, height: 22, borderRadius: 11, backgroundColor: "#E7EBF1" },
-  skeletonJourneyBlock: { width: "100%", gap: 1 },
-  skeletonDurationRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
-  skeletonTimeRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
-  skeletonAirportRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
+  skeletonIdentityLayout: { width: "100%", flexDirection: "row", alignItems: "center", gap: 8 },
+  skeletonIdentityContent: { flex: 1, minWidth: 0 },
+  skeletonIdentityHeader: { width: "100%", flexDirection: "row", alignItems: "center", gap: 8 },
+  skeletonIdentityCopy: { flex: 1, minWidth: 0 },
+  skeletonIdentityActions: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 8 },
+  skeletonBadge: { width: 60, height: 22, borderRadius: 11 },
+  skeletonFavoriteButton: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
+  skeletonHeart: { width: 20, height: 20, borderRadius: 10 },
+  skeletonJourneyList: { width: "100%", marginTop: 10, gap: 10 },
+  skeletonJourneyBlock: { width: "100%" },
+  skeletonJourneyLabel: { width: 60, height: 7, borderRadius: 4 },
+  skeletonJourneyPrimaryRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 },
+  skeletonJourneyRouteRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
+  skeletonJourneyStopRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
   skeletonSideColumn: { flexBasis: 72, minWidth: 72, flexShrink: 0 },
   skeletonTimelineColumn: { flex: 1, minWidth: 46, alignItems: "center" },
-  skeletonLogo: { width: 38, height: 38, borderRadius: 9, backgroundColor: "#E7EBF1" },
-  skeletonPrice: { width: 52, flexShrink: 0, alignItems: "flex-end", gap: 6 },
+  skeletonLogo: { width: 42, height: 42, borderRadius: 10, flexShrink: 0 },
   skeletonLine: { height: 7, borderRadius: 4, backgroundColor: "#E7EBF1" },
-  skeletonName: { flex: 1, minWidth: 0, maxWidth: "54%" },
+  skeletonName: { width: 110, height: 11 },
+  skeletonFlightNumber: { width: 48, height: 7, marginTop: 4 },
   skeletonTime: { width: "70%", height: 14 },
   skeletonAirport: { width: "48%" },
   skeletonDuration: { width: "65%", height: 6 },
   skeletonRouteLine: { width: "100%", height: 2 },
   skeletonStop: { width: "52%", height: 6 },
-  skeletonPriceLine: { width: "100%", height: 16 },
-  skeletonPriceCaption: { width: "75%", height: 6 },
-  skeletonFareRow: { flexDirection: "row", justifyContent: "flex-end" },
-  skeletonMetadataRow: { width: "100%", flexDirection: "row", alignItems: "flex-start", gap: 5 },
-  skeletonMetadataItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4 },
-  skeletonMetadataIcon: { width: 12, height: 12, borderRadius: 3, flexShrink: 0 },
-  skeletonMetadataLine: { flex: 1, minWidth: 0, height: 7 },
-  skeletonMetadataLineShort: { width: "62%", height: 7 },
+  skeletonPriceLine: { width: 100, height: 16 },
+  skeletonFareRow: { width: "100%", paddingTop: 10, flexDirection: "row", justifyContent: "flex-end", alignItems: "center" },
+  skeletonMetadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 6, marginBottom: 4 },
+  skeletonMetadataRow: { width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start" },
+  skeletonMetadataLine: { width: "68%", height: 7 },
   skeletonButton: { width: 96, height: 44, borderRadius: 8, backgroundColor: "#E7EBF1" },
   hotelSkeletonCard: {
     width: "100%",
