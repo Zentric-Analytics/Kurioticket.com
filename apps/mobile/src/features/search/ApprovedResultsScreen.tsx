@@ -1008,11 +1008,9 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
         </View>
       </View>
       <View style={s0.fareRow}>
-        <View style={[s0.actionColumn, s0.rightColumnContract]}>
-          <Text accessible={false} style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-            {fare?.formatted ?? "—"}
-          </Text>
-        </View>
+        <Text accessible={false} style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+          {fare?.formatted ?? "—"}
+        </Text>
       </View>
       <View style={[s0.metadataDivider, { backgroundColor: theme.border }]} />
       <View style={s0.metadataRow}>
@@ -1696,10 +1694,9 @@ const s0 = StyleSheet.create({
     backgroundColor: ui.muted,
   },
   routeSummary: { maxWidth: "100%", fontSize: 9.5, lineHeight: 11, fontWeight: "500", textAlign: "center" },
-  bigPrice: { fontSize: 20, fontWeight: "900", color: ui.navy, textAlign: "right" },
-  fareRow: { paddingTop: 2, flexDirection: "row", justifyContent: "flex-end" },
-  actionColumn: { width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 3 },
-  metadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 3, marginBottom: 4 },
+  bigPrice: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy, textAlign: "right" },
+  fareRow: { width: "100%", paddingTop: 10, flexDirection: "row", justifyContent: "flex-end", alignItems: "center" },
+  metadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 6, marginBottom: 4 },
   metadataRow: { width: "100%", flexDirection: "row", alignItems: "center" },
   metadataItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 3 },
   metadataText: { flexShrink: 1, minWidth: 0, fontSize: 9.5, lineHeight: 12.5, fontWeight: "600" },
