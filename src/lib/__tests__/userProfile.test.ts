@@ -97,7 +97,7 @@ test("saved phoneCountryCode is the source of truth for shared +1 numbers", () =
   assert.notEqual(
     parsePhoneDraftValue("+1 4165550100", "US").countryCode,
     "CA",
-    "legacy +1 parsing is ambiguous and does not reliably restore Canada",
+    "shared +1 parsing should not invent Canada over an explicit US default",
   );
   assert.equal(
     getEffectivePhoneCountryCode({
@@ -109,7 +109,7 @@ test("saved phoneCountryCode is the source of truth for shared +1 numbers", () =
   );
 });
 
-test("compact international numbers split recognized calling codes without requiring spaces", () => {
+test("compact international numbers split unique calling codes without requiring spaces", () => {
   assert.deepEqual(parsePhoneDraftValue("+2348012345678"), {
     countryCode: "NG",
     hasRecognizedDialCode: true,
@@ -127,7 +127,7 @@ test("compact international numbers split recognized calling codes without requi
   });
 });
 
-test("shared +1 compact numbers preserve an explicit supported default country", () => {
+test("shared compact dial codes require an explicit supported default", () => {
   assert.deepEqual(parsePhoneDraftValue("+14165550100", "CA"), {
     countryCode: "CA",
     hasRecognizedDialCode: true,
@@ -138,13 +138,23 @@ test("shared +1 compact numbers preserve an explicit supported default country",
     hasRecognizedDialCode: true,
     localNumber: "2025550199",
   });
+  assert.deepEqual(parsePhoneDraftValue("+12125550199"), {
+    countryCode: "NG",
+    hasRecognizedDialCode: false,
+    localNumber: "2125550199",
+  });
+  assert.deepEqual(parsePhoneDraftValue("+74951234567"), {
+    countryCode: "NG",
+    hasRecognizedDialCode: false,
+    localNumber: "4951234567",
+  });
 });
 
-test("unknown international prefixes are preserved instead of stripping the phone value", () => {
+test("unsupported international prefixes keep the legacy safe fallback", () => {
   assert.deepEqual(parsePhoneDraftValue("+999123456789", "GB"), {
     countryCode: "GB",
     hasRecognizedDialCode: false,
-    localNumber: "+999123456789",
+    localNumber: "",
   });
 });
 
