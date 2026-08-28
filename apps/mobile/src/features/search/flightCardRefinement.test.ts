@@ -90,16 +90,17 @@ test("fare-rule summary classifies varied provider language without exact matchi
 test("flight card keeps horizontal metadata compact while airline identity may grow", () => {
   assert.match(card, /style=\{\[s0\.bigPrice, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.8\}/);
   assert.match(card, /style=\{\[s0\.airlineName, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{2\} ellipsizeMode="tail">/);
-  assert.equal(card.match(/style=\{s0\.metadataItem\}/g)?.length, 3);
+  assert.doesNotMatch(card, /style=\{s0\.metadataItem\}/);
   assert.match(source, /card: \{[\s\S]*?paddingHorizontal: 12,[\s\S]*?paddingVertical: 9,[\s\S]*?gap: 5,/);
-  assert.match(source, /metadataRow: \{ width: "100%", flexDirection: "row"/);
+  assert.match(source, /metadataRow: \{ width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start" \}/);
   assert.doesNotMatch(source, /metadataRow: \{[^}]*gap:/);
-  assert.match(source, /metadataItem: \{ flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "center"/);
-  assert.match(source, /metadataText: \{ flexShrink: 1, minWidth: 0, fontSize: 9\.5, lineHeight: 12\.5, fontWeight: "600" \}/);
+  assert.doesNotMatch(source, /metadataItem:/);
+  assert.match(source, /metadataText: \{ flexShrink: 1, minWidth: 0, fontSize: 11, lineHeight: 14, fontWeight: "600" \}/);
   assert.doesNotMatch(source, /metadataText: \{[^}]*flex: 1/);
-  assert.equal(card.match(/<Text numberOfLines=\{1\} ellipsizeMode="tail" style=\{\[s0\.metadataText/g)?.length, 3);
-  assert.equal(card.match(/s0\.metadataText, \{ color: theme\.textPrimary \}/g)?.length, 3);
-  assert.equal(card.match(/(?:Luggage|Armchair|ShieldCheck)[^>]*color=\{theme\.textSecondary\}/g)?.length, 3);
+  assert.equal(card.match(/<Text accessible=\{false\} numberOfLines=\{1\} ellipsizeMode="tail" style=\{\[s0\.metadataText/g)?.length, 1);
+  assert.equal(card.match(/s0\.metadataText, \{ color: theme\.textSecondary \}/g)?.length, 1);
+  assert.equal(card.match(/<Text> · <\/Text>/g)?.length, 2);
+  assert.doesNotMatch(card, /<(?:Luggage|Armchair|ShieldCheck)\b/);
   assert.doesNotMatch(source, /benefitList:|benefitItem:/);
   assert.doesNotMatch(source, /detailsButton(?:Text)?:/);
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
@@ -143,7 +144,7 @@ test("flight card keeps long prices single-line in the full-width fare row", () 
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch" \}/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center" \}/);
-  assert.match(source, /metadataItem: \{ flex: 1, minWidth: 0/);
+  assert.doesNotMatch(source, /metadataItem:/);
   assert.match(source, /fareRow: \{ width: "100%", paddingTop: 10, flexDirection: "row", justifyContent: "flex-end", alignItems: "center" \}/);
   assert.doesNotMatch(source, /actionColumn:/);
   assert.doesNotMatch(source, /priceBox:/);
@@ -270,10 +271,9 @@ test("flight times, airports, duration, and stop labels remain single-line", () 
   assert.match(card, /<Text style=\{s0\.journeyDuration\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.82\}>\{leg\.duration\} · \{stopLabel\}<\/Text>/);
 });
 
-test("flight card uses Lucide icons for route, benefits, and saved state", () => {
-  for (const icon of ["PlaneTakeoff", "Luggage", "ShieldCheck"]) {
-    assert.match(card, new RegExp(`<${icon}\\b`));
-  }
+test("flight card uses Lucide icons for its route and saved state only", () => {
+  assert.match(card, /<PlaneTakeoff\b/);
+  assert.doesNotMatch(card, /<(?:Luggage|Armchair|ShieldCheck)\b/);
   assert.match(source, /import \{ Heart \} from "lucide-react-native"/);
   assert.match(card, /<Heart[\s\S]*fill=\{saved \? androidFavoriteColors\.active : "transparent"\}/);
   assert.match(card, /color=\{saved \? androidFavoriteColors\.active : theme\.textSecondary\}/);
