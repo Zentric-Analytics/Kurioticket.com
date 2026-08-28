@@ -9,6 +9,7 @@ const rootLayoutSource = readSource("../../app/layout.tsx");
 const globalStylesSource = readSource("../../app/globals.css");
 const headerSource = readSource("./AppHeader.tsx");
 const footerSource = readSource("./Footer.tsx");
+const manifest = JSON.parse(readSource("../../../public/manifest.json"));
 
 test("root viewport enables edge-to-edge rendering with light browser chrome", () => {
   assert.match(rootLayoutSource, /width: "device-width"/);
@@ -17,7 +18,9 @@ test("root viewport enables edge-to-edge rendering with light browser chrome", (
   assert.match(rootLayoutSource, /themeColor: "#ffffff"/);
 });
 
-test("document canvas covers the dynamic viewport with the root background", () => {
+test("document canvas is white independently of the content background token", () => {
+  assert.match(globalStylesSource, /:root \{[\s\S]*?--background: #f2f6fa;/);
+
   const htmlAndBodyRules = globalStylesSource.slice(
     globalStylesSource.indexOf("html {"),
     globalStylesSource.indexOf("a {"),
@@ -25,10 +28,16 @@ test("document canvas covers the dynamic viewport with the root background", () 
 
   assert.equal((htmlAndBodyRules.match(/min-height: 100dvh/g) ?? []).length, 2);
   assert.equal(
-    (htmlAndBodyRules.match(/background: var\(--background\)/g) ?? []).length,
+    (htmlAndBodyRules.match(/background: #ffffff/g) ?? []).length,
     2,
   );
+  assert.doesNotMatch(htmlAndBodyRules, /background: var\(--background\)/);
   assert.match(htmlAndBodyRules, /body \{[\s\S]*?width: 100%/);
+});
+
+test("standalone manifest keeps a white launch and browser theme", () => {
+  assert.equal(manifest.background_color, "#FFFFFF");
+  assert.equal(manifest.theme_color, "#FFFFFF");
 });
 
 test("shared public chrome owns the mobile safe-area surfaces", () => {
