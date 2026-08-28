@@ -62,7 +62,7 @@ test("password change validates on submit while keeping the action pressable", (
   assert.match(security, /passwords\.newPassword === passwords\.confirmPassword/);
   assert.match(security, /passwords\.currentPassword !== passwords\.newPassword/);
   assert.match(security, /if \(!passwordReady\) \{ setPasswordError\(c\.passwordInvalid\); return; \}/);
-  assert.match(security, /label=\{submitting \? c\.changing : c\.change\} disabled=\{submitting\}/);
+  assert.match(security, /<Button label=\{c\.change\} loading=\{submitting\} disabled=\{submitting\}/);
   assert.doesNotMatch(security, /disabled=\{submitting \|\| !passwordReady\}/);
   assert.match(security, /setPasswordError\(""\)/);
 });
@@ -76,11 +76,23 @@ test("password reset validates on submit while keeping the reset action pressabl
   assert.match(resetFlow, /maxLength=\{6\}/);
   assert.match(resetFlow, /newPassword\.length < 8/);
   assert.match(resetFlow, /newPassword !== confirmPassword/);
-  assert.match(resetFlow, /label=\{submitting \? c\.changing : navigationCopy\.submit\} disabled=\{submitting\}/);
+  assert.match(resetFlow, /<Button label=\{navigationCopy\.submit\} loading=\{submitting\}/);
   assert.doesNotMatch(resetFlow, /disabled=\{submitting \|\| !resetReady\}/);
   assert.match(resetFlow, /if \(active\) return;/);
   assert.match(resetFlow, /setCode\(""\)/);
   assert.match(resetFlow, /setVisible\(false\)/);
+});
+
+test("password feedback stays visually stable", () => {
+  assert.match(security, /setTimeout\(\(\) => setLandingMessage\(""\), 2000\)/);
+  assert.match(security, /<FloatingNotice message=\{landingMessage\} \/>/);
+  assert.match(security, /function FloatingNotice/);
+  assert.match(security, /duration: 180/);
+  assert.match(security, /feedbackSlot: \{ minHeight: 20/);
+  assert.match(resetFlow, /<Text style=\{\[styles\.instructions, \{ color: theme\.muted \}\]\}>\{actionCopy\.sent\}<\/Text>/);
+  assert.match(resetFlow, /function InlineFeedback/);
+  assert.match(resetFlow, /feedbackSlot: \{ minHeight: 20/);
+  assert.match(resetFlow, /<Text style=\{styles\.buttonText\}>\{label\}<\/Text>\{loading \? <ActivityIndicator/);
 });
 
 test("passkeys use the native security drill-down instead of the web handoff", () => {
@@ -153,7 +165,8 @@ test("visual feedback is owned by the landing and individual security flows", ()
     assert.match(security, new RegExp(`const \\[${state}, set${state[0].toUpperCase()}${state.slice(1)}\\]`));
 
   const landing = security.slice(security.indexOf("return <SafeAreaView"), security.indexOf("<ScreenModal visible={passkeysOpen}"));
-  assert.match(landing, /<Feedback error=\{landingError\} message=\{landingMessage\}/);
+  assert.match(landing, /<Feedback error=\{landingError\} message=""/);
+  assert.match(landing, /<FloatingNotice message=\{landingMessage\}/);
   assert.doesNotMatch(landing, /passwordError|passwordMessage|devicesError|twoFactorError|deletionError|passkeysError|passkeysMessage/);
   assert.match(security, /<Feedback error=\{passkeysError\} message=\{passkeysMessage\}/);
   assert.match(security, /<Feedback error=\{passwordError\} message=\{passwordMessage\}/);

@@ -1,5 +1,5 @@
-import { ReactNode, useState } from "react";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TextInputProps, View } from "react-native";
+import { ReactNode, useEffect, useRef, useState } from "react";
+import { AccessibilityInfo, ActivityIndicator, Animated, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TextInputProps, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AuthIcon, IconName } from "./AuthIcon";
 
@@ -7,7 +7,7 @@ export const authColors = { blue: "#075BE8", navy: "#061237", text: "#48526A", b
 
 export function AuthButton({ label, onPress, loading, disabled, secondary, icon }: { label: string; onPress: () => void; loading?: boolean; disabled?: boolean; secondary?: boolean; icon?: ReactNode }) {
   return <Pressable accessibilityRole="button" accessibilityState={{ disabled: disabled || loading, busy: loading }} disabled={disabled || loading} onPress={onPress} style={({ pressed }) => [styles.button, secondary ? styles.secondary : styles.primary, (disabled || loading) && styles.disabled, pressed && styles.pressed]}>
-    <View style={styles.buttonContent}>{icon}{loading ? <ActivityIndicator color={secondary ? authColors.blue : "white"} /> : <Text style={[styles.buttonText, secondary && styles.secondaryText]}>{label}</Text>}</View>
+    <View style={styles.buttonContent}>{icon ? <View style={styles.buttonIcon}>{icon}</View> : null}<Text style={[styles.buttonText, secondary && styles.secondaryText]}>{label}</Text>{loading ? <ActivityIndicator style={styles.buttonSpinner} color={secondary ? authColors.blue : "white"} /> : null}</View>
   </Pressable>;
 }
 
@@ -26,7 +26,27 @@ export function Field({ label, error, right, ...props }: TextInputProps & { labe
   const [focused, setFocused] = useState(false);
   return <View style={styles.fieldWrap}><Text style={styles.label}>{label}</Text><View style={[styles.fieldBox, focused && styles.focused, error && styles.fieldError]}><TextInput {...props} accessibilityLabel={label} onFocus={(e) => { setFocused(true); props.onFocus?.(e); }} onBlur={(e) => { setFocused(false); props.onBlur?.(e); }} placeholderTextColor="#8A93A6" style={styles.input} />{right}</View><Text accessibilityLiveRegion="polite" style={styles.error}>{error || " "}</Text></View>;
 }
-export function ErrorText({ children }: { children?: string }) { return <Text accessibilityLiveRegion="assertive" style={styles.submitError}>{children || " "}</Text>; }
+
+export function StatusText({ children, success = false }: { children?: string; success?: boolean }) {
+  const opacity = useRef(new Animated.Value(children ? 1 : 0)).current;
+  const [displayed, setDisplayed] = useState(children || "");
+  const [displayedSuccess, setDisplayedSuccess] = useState(success);
+  useEffect(() => {
+    opacity.stopAnimation();
+    if (children) {
+      setDisplayed(children);
+      setDisplayedSuccess(success);
+      if (success) void AccessibilityInfo.announceForAccessibility(children);
+      Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true }).start();
+      return;
+    }
+    Animated.timing(opacity, { toValue: 0, duration: 180, useNativeDriver: true }).start(({ finished }) => { if (finished) setDisplayed(""); });
+  }, [children, opacity, success]);
+  return <Animated.Text accessibilityLiveRegion={displayedSuccess ? "polite" : "assertive"} style={[displayedSuccess ? styles.submitSuccess : styles.submitError, { opacity }]}>{displayed || " "}</Animated.Text>;
+}
+
+export function ErrorText({ children }: { children?: string }) { return <StatusText>{children}</StatusText>; }
+export function SuccessText({ children }: { children?: string }) { return <StatusText success>{children}</StatusText>; }
 export function SecurityMessage() { return <View style={styles.security}><AuthIcon name="shield" color={authColors.green} size={18} /><Text style={styles.securityText}>Secure and encrypted</Text></View>; }
 
 const styles = StyleSheet.create({
@@ -37,8 +57,8 @@ const styles = StyleSheet.create({
   body: { color: authColors.text, fontSize: 15, lineHeight: 21, textAlign: "center", marginTop: 6 }, fieldWrap: { gap: 6 }, label: { color: authColors.navy, fontSize: 14, fontWeight: "700" },
   fieldBox: { height: 54, borderWidth: 1, borderColor: authColors.border, borderRadius: 10, flexDirection: "row", alignItems: "center", paddingHorizontal: 14 },
   focused: { borderColor: authColors.blue, borderWidth: 2 }, fieldError: { borderColor: authColors.danger }, input: { flex: 1, fontSize: 16, color: authColors.navy, paddingVertical: 0 },
-  error: { minHeight: 17, color: authColors.danger, fontSize: 12 }, submitError: { minHeight: 19, color: authColors.danger, fontSize: 13, textAlign: "center" },
+  error: { minHeight: 17, color: authColors.danger, fontSize: 12 }, submitError: { minHeight: 19, color: authColors.danger, fontSize: 13, textAlign: "center" }, submitSuccess: { minHeight: 19, color: authColors.green, fontSize: 13, fontWeight: "600", textAlign: "center" },
   button: { height: 54, borderRadius: 9, justifyContent: "center", paddingHorizontal: 18 }, primary: { backgroundColor: authColors.blue }, secondary: { backgroundColor: "white", borderColor: authColors.border, borderWidth: 1 },
-  buttonContent: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12 }, buttonText: { color: "white", fontSize: 16, fontWeight: "700" }, secondaryText: { color: authColors.navy },
+  buttonContent: { width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "center" }, buttonIcon: { position: "absolute", left: 0, alignItems: "center", justifyContent: "center" }, buttonSpinner: { position: "absolute", right: 0 }, buttonText: { color: "white", fontSize: 16, fontWeight: "700" }, secondaryText: { color: authColors.navy },
   disabled: { opacity: .48 }, pressed: { opacity: .78 }, security: { flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 7, marginTop: 8 }, securityText: { color: authColors.green, fontSize: 13, fontWeight: "600" },
 });

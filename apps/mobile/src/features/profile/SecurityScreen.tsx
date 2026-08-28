@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   AccessibilityInfo,
+  ActivityIndicator,
   Animated,
   Alert,
   KeyboardAvoidingView,
@@ -88,7 +89,7 @@ export function SecurityScreen() {
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     if (!landingMessage) return;
-    const timer = setTimeout(() => setLandingMessage(""), 3500);
+    const timer = setTimeout(() => setLandingMessage(""), 2000);
     return () => clearTimeout(timer);
   }, [landingMessage]);
 
@@ -146,7 +147,7 @@ export function SecurityScreen() {
     <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
       <Text style={[styles.intro, { color: theme.muted }]}>{c.intro}</Text>
       {loading ? <Text style={{ color: theme.muted }}>{c.loading}</Text> : null}
-      <Feedback error={landingError} message={landingMessage} retry={c.retry} onRetry={load} />
+      <Feedback error={landingError} message="" retry={c.retry} onRetry={load} />
       {overview ? <>
         <View style={styles.landingBlocks}>
           <SecurityBlock label={c.password} description={c.passwordHelp} accessibilityValue={overview.hasPassword ? c.configured : c.notConfigured} onPress={openPassword} />
@@ -160,6 +161,7 @@ export function SecurityScreen() {
         <Pressable accessibilityRole="button" accessibilityLabel={c.deleteAccount} onPress={() => void openDeletion()} style={({ pressed }) => [styles.deleteButton, { borderColor: flowColors.red }, pressed && styles.pressed]}><Text style={styles.deleteButtonText}>{c.deleteAccount}</Text></Pressable>
       </> : null}
     </ScrollView>
+    <FloatingNotice message={landingMessage} />
 
     <ScreenModal visible={passkeysOpen} title={c.passkeys} closeLabel={c.close} onClose={closePasskeys}>
       <Text style={[styles.intro,{color:theme.muted}]}>{c.passkeysHelp}</Text><Feedback error={passkeysError} message={passkeysMessage}/>
@@ -169,7 +171,7 @@ export function SecurityScreen() {
     </ScreenModal>
     <ScreenModal visible={passwordOpen} title={passwordMode === "reset" ? resetCopy.title : c.change} closeLabel={c.close} onClose={closePassword}>
       <Feedback error={passwordError} message={passwordMessage} />
-      {overview?.hasPassword && passwordMode === "change" ? <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}><View style={styles.form}>{field("currentPassword", c.current)}{field("newPassword", c.next)}{field("confirmPassword", c.confirm)}<Pressable accessibilityRole="button" accessibilityLabel={visible ? c.hide : c.show} onPress={() => setVisible((v) => !v)} style={styles.textAction}><Text style={styles.link}>{visible ? c.hide : c.show}</Text></Pressable><Text style={{ color: theme.muted }}>{c.passwordRules}</Text><Button label={submitting ? c.changing : c.change} disabled={submitting} onPress={() => void change()} /><View style={[styles.resetAlternative, { borderTopColor: theme.border }]}><Pressable accessibilityRole="button" accessibilityLabel={resetCopy.entry} onPress={() => { clearPasswordDraft(); setPasswordMode("reset"); }} style={styles.textAction}><Text style={styles.link}>{resetCopy.entry}</Text></Pressable><Text style={[styles.rowDetail, { color: theme.muted }]}>{resetCopy.entryHelp}</Text></View></View></KeyboardAvoidingView> : <PasswordResetFlow active={passwordOpen && passwordMode === "reset"} copy={c} onUnauthorized={unauth} onSuccess={async () => { closePassword(); setLandingMessage(resetCopy.success); await load({ showLandingFeedback: false, showLoading: false }); }} />}
+      {overview?.hasPassword && passwordMode === "change" ? <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}><View style={styles.form}>{field("currentPassword", c.current)}{field("newPassword", c.next)}{field("confirmPassword", c.confirm)}<Pressable accessibilityRole="button" accessibilityLabel={visible ? c.hide : c.show} onPress={() => setVisible((v) => !v)} style={styles.textAction}><Text style={styles.link}>{visible ? c.hide : c.show}</Text></Pressable><Text style={{ color: theme.muted }}>{c.passwordRules}</Text><Button label={c.change} loading={submitting} disabled={submitting} onPress={() => void change()} /><View style={[styles.resetAlternative, { borderTopColor: theme.border }]}><Pressable accessibilityRole="button" accessibilityLabel={resetCopy.entry} onPress={() => { clearPasswordDraft(); setPasswordMode("reset"); }} style={styles.textAction}><Text style={styles.link}>{resetCopy.entry}</Text></Pressable><Text style={[styles.rowDetail, { color: theme.muted }]}>{resetCopy.entryHelp}</Text></View></View></KeyboardAvoidingView> : <PasswordResetFlow active={passwordOpen && passwordMode === "reset"} copy={c} onUnauthorized={unauth} onSuccess={async () => { closePassword(); setLandingMessage(resetCopy.success); await load({ showLandingFeedback: false, showLoading: false }); }} />}
       {overview?.hasPassword && passwordMode === "reset" ? <Pressable accessibilityRole="button" accessibilityLabel={resetCopy.back} onPress={() => { clearPasswordDraft(); setPasswordMode("change"); }} style={styles.textAction}><Text style={styles.link}>{resetCopy.back}</Text></Pressable> : null}
     </ScreenModal>
     <ScreenModal visible={devicesOpen} title={c.yourDevices} closeLabel={c.close} onClose={closeDevices}>
@@ -194,9 +196,47 @@ function Header({ title, backLabel, onBack, close = false }: { title: string; ba
 function ScreenModal({ visible, title, closeLabel, onClose, children }: { visible: boolean; title: string; closeLabel: string; onClose: () => void; children: ReactNode }) { const { theme } = useAppTheme(); const insets = useSafeAreaInsets(); const push = useRef(new Animated.Value(24)).current; useEffect(() => { if (visible) { push.setValue(24); Animated.timing(push, { toValue: 0, duration: 220, useNativeDriver: true }).start(); } }, [push, visible]); return <Modal animationType="none" presentationStyle="overFullScreen" transparent visible={visible} onRequestClose={onClose}><Animated.View accessibilityViewIsModal style={[styles.safe, { backgroundColor: theme.background, paddingTop: insets.top, paddingBottom: insets.bottom, transform: [{ translateX: push }] }]}><Header title={title} backLabel={closeLabel} onBack={onClose} close /><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.modalContent}>{children}</ScrollView></Animated.View></Modal>; }
 function SecurityBlock({ label, description, onPress, accessibilityValue, destructive = false, chevron = true }: { label: string; description: string; onPress: () => void; accessibilityValue?: string; destructive?: boolean; chevron?: boolean }) { const { theme } = useAppTheme(); return <Pressable accessibilityRole="button" accessibilityLabel={`${label}. ${description}`} accessibilityValue={accessibilityValue ? { text: accessibilityValue } : undefined} onPress={onPress} style={({ pressed }) => [styles.securityBlock, { borderBottomColor: theme.border }, pressed && styles.pressed]}><View style={styles.rowCopy}><Text style={[styles.rowLabel, { color: destructive ? flowColors.red : theme.text }]}>{label}</Text><Text style={[styles.rowDetail, { color: theme.muted }]}>{description}</Text></View>{chevron ? <FlowIcon name="chevron" color={theme.muted} size={18} /> : null}</Pressable>; }
 function EventRow({ label, date }: { label: string; date: string }) { const { theme } = useAppTheme(); return <View style={[styles.event, { borderBottomColor: theme.border }]}><Text style={[styles.rowLabel, { color: theme.text }]}>{label}</Text><Text style={[styles.rowDetail, { color: theme.muted }]}>{date}</Text></View>; }
-function Feedback({ error, message, retry, onRetry }: { error: string; message: string; retry?: string; onRetry?: () => Promise<void> }) { return <>{error ? <View><Text accessibilityRole="alert" style={styles.error}>{error}</Text>{retry && onRetry ? <Pressable accessibilityRole="button" onPress={() => void onRetry()} style={styles.textAction}><Text style={styles.link}>{retry}</Text></Pressable> : null}</View> : null}{message ? <Text accessibilityRole="alert" style={styles.success}>{message}</Text> : null}</>; }
-function Button({ label, onPress, disabled = false }: { label: string; onPress: () => void; disabled?: boolean }) { return <Pressable accessibilityRole="button" accessibilityState={{ disabled, busy: disabled }} disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.button, disabled && styles.disabledButton, pressed && styles.pressed]}><Text style={styles.buttonText}>{label}</Text></Pressable>; }
+function Feedback({ error, message, retry, onRetry }: { error: string; message: string; retry?: string; onRetry?: () => Promise<void> }) {
+  const opacity = useRef(new Animated.Value(error || message ? 1 : 0)).current;
+  const [displayed, setDisplayed] = useState(error || message);
+  const current = error || message;
+  useEffect(() => {
+    opacity.stopAnimation();
+    if (current) {
+      setDisplayed(current);
+      Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true }).start();
+      return;
+    }
+    Animated.timing(opacity, { toValue: 0, duration: 180, useNativeDriver: true }).start(({ finished }) => { if (finished) setDisplayed(""); });
+  }, [current, opacity]);
+  return <View style={styles.feedbackSlot}><Animated.Text accessibilityRole="alert" style={[error ? styles.error : styles.success, { opacity }]}>{displayed || " "}</Animated.Text>{error && retry && onRetry ? <Pressable accessibilityRole="button" onPress={() => void onRetry()} style={styles.textAction}><Text style={styles.link}>{retry}</Text></Pressable> : null}</View>;
+}
+function FloatingNotice({ message }: { message: string }) {
+  const { theme } = useAppTheme();
+  const insets = useSafeAreaInsets();
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(8)).current;
+  const [displayed, setDisplayed] = useState(message);
+  useEffect(() => {
+    opacity.stopAnimation(); translateY.stopAnimation();
+    if (message) {
+      setDisplayed(message); opacity.setValue(0); translateY.setValue(8);
+      Animated.parallel([
+        Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true }),
+        Animated.timing(translateY, { toValue: 0, duration: 180, useNativeDriver: true }),
+      ]).start();
+      return;
+    }
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 0, duration: 180, useNativeDriver: true }),
+      Animated.timing(translateY, { toValue: 8, duration: 180, useNativeDriver: true }),
+    ]).start(({ finished }) => { if (finished) setDisplayed(""); });
+  }, [message, opacity, translateY]);
+  if (!displayed) return null;
+  return <Animated.View pointerEvents="none" style={[styles.toastPosition, { bottom: insets.bottom + 16, opacity, transform: [{ translateY }] }]}><View style={[styles.toast, { backgroundColor: theme.surface, borderColor: theme.border }]}><Text accessibilityLiveRegion="polite" style={styles.toastText}>{displayed}</Text></View></Animated.View>;
+}
+function Button({ label, onPress, disabled = false, loading = false }: { label: string; onPress: () => void; disabled?: boolean; loading?: boolean }) { const inactive = disabled || loading; return <Pressable accessibilityRole="button" accessibilityState={{ disabled: inactive, busy: loading }} disabled={inactive} onPress={onPress} style={({ pressed }) => [styles.button, inactive && styles.disabledButton, pressed && styles.pressed]}><View style={styles.buttonContent}><Text style={styles.buttonText}>{label}</Text>{loading ? <ActivityIndicator size="small" color="white" /> : null}</View></Pressable>; }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1 }, header: { minHeight: 56, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 8 }, iconButton: { width: 48, height: 48, alignItems: "center", justifyContent: "center" }, title: { flex: 1, textAlign: "center", fontSize: 18, lineHeight: 24, fontWeight: "800" }, scroll: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 48 }, intro: { fontSize: 15, lineHeight: 22, marginBottom: 18 }, landingBlocks: {}, securityBlock: { minHeight: 88, flexDirection: "row", alignItems: "center", gap: 16, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 18 }, rowCopy: { flex: 1, gap: 7 }, rowLabel: { flexShrink: 1, fontSize: 16, lineHeight: 22, fontWeight: "700" }, rowDetail: { fontSize: 14, lineHeight: 20 }, notificationRow: { minHeight: 88, flexDirection: "row", alignItems: "center", gap: 16, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 18 }, saving: { fontSize: 12 }, deleteButton: { minHeight: 50, borderRadius: 10, borderWidth: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, marginTop: 32 }, deleteButtonText: { color: flowColors.red, fontSize: 16, fontWeight: "800" }, event: { gap: 3, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 12 }, empty: { paddingVertical: 12 }, modalContent: { padding: 20, paddingBottom: 48, gap: 16 }, form: { gap: 12 }, resetAlternative: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 8, paddingTop: 12, gap: 2 }, input: { minHeight: 50, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, fontSize: 15 }, textAction: { minHeight: 44, alignSelf: "flex-start", justifyContent: "center" }, link: { color: "#1769E0", fontWeight: "700" }, button: { minHeight: 50, borderRadius: 10, backgroundColor: "#1769E0", alignItems: "center", justifyContent: "center", paddingHorizontal: 16, marginTop: 4 }, disabledButton: { opacity: 0.45 }, buttonText: { color: "white", fontWeight: "800" }, error: { color: "#B42318", fontWeight: "600" }, success: { color: "#067647", fontWeight: "600" }, device: { borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 14, gap: 5 }, deviceHeading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }, current: { color: "#1769E0", fontSize: 12, fontWeight: "700" }, removeTouch: { minHeight: 44, alignSelf: "flex-start", justifyContent: "center", marginTop: 3 }, danger: { color: "#B42318", fontWeight: "700" }, setupKey: { fontSize: 17, fontWeight: "700", letterSpacing: 1 }, pressed: { opacity: 0.65 },
+  safe: { flex: 1 }, header: { minHeight: 56, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 8 }, iconButton: { width: 48, height: 48, alignItems: "center", justifyContent: "center" }, title: { flex: 1, textAlign: "center", fontSize: 18, lineHeight: 24, fontWeight: "800" }, scroll: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 48 }, intro: { fontSize: 15, lineHeight: 22, marginBottom: 18 }, landingBlocks: {}, securityBlock: { minHeight: 88, flexDirection: "row", alignItems: "center", gap: 16, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 18 }, rowCopy: { flex: 1, gap: 7 }, rowLabel: { flexShrink: 1, fontSize: 16, lineHeight: 22, fontWeight: "700" }, rowDetail: { fontSize: 14, lineHeight: 20 }, notificationRow: { minHeight: 88, flexDirection: "row", alignItems: "center", gap: 16, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 18 }, saving: { fontSize: 12 }, deleteButton: { minHeight: 50, borderRadius: 10, borderWidth: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, marginTop: 32 }, deleteButtonText: { color: flowColors.red, fontSize: 16, fontWeight: "800" }, event: { gap: 3, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 12 }, empty: { paddingVertical: 12 }, modalContent: { padding: 20, paddingBottom: 48, gap: 16 }, form: { gap: 12 }, feedbackSlot: { minHeight: 20, justifyContent: "center" }, resetAlternative: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 8, paddingTop: 12, gap: 2 }, input: { minHeight: 50, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, fontSize: 15 }, textAction: { minHeight: 44, alignSelf: "flex-start", justifyContent: "center" }, link: { color: "#1769E0", fontWeight: "700" }, button: { minHeight: 50, borderRadius: 10, backgroundColor: "#1769E0", alignItems: "center", justifyContent: "center", paddingHorizontal: 16, marginTop: 4 }, buttonContent: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 }, disabledButton: { opacity: 0.55 }, buttonText: { color: "white", fontWeight: "800" }, error: { color: "#B42318", fontWeight: "600", lineHeight: 20 }, success: { color: "#067647", fontWeight: "600", lineHeight: 20 }, toastPosition: { position: "absolute", left: 16, right: 16, alignItems: "center", zIndex: 20 }, toast: { maxWidth: 560, borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12 }, toastText: { color: "#067647", fontWeight: "700", textAlign: "center" }, device: { borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 14, gap: 5 }, deviceHeading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }, current: { color: "#1769E0", fontSize: 12, fontWeight: "700" }, removeTouch: { minHeight: 44, alignSelf: "flex-start", justifyContent: "center", marginTop: 3 }, danger: { color: "#B42318", fontWeight: "700" }, setupKey: { fontSize: 17, fontWeight: "700", letterSpacing: 1 }, pressed: { opacity: 0.65 },
 });
