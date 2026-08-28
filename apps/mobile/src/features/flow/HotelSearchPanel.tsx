@@ -82,7 +82,7 @@ export function HotelDestinationSheet({ visible, value, onDone, onCancel }: { vi
   const requestSequence = useRef(0);
   const [query, setQuery] = useState(value);
   const [draft, setDraft] = useState<HotelDestinationSuggestion>();
-  const selectionFilled = useRef(false);
+  const programmaticFilledQuery = useRef<string | undefined>(undefined);
   const [suggestions, setSuggestions] = useState<HotelDestinationSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -90,13 +90,15 @@ export function HotelDestinationSheet({ visible, value, onDone, onCancel }: { vi
 
   useEffect(() => {
     if (!visible) return;
-    setQuery(""); setDraft(undefined); setSuggestions([]); setLoading(false); setError(false); selectionFilled.current=false;
+    setQuery(""); setDraft(undefined); setSuggestions([]); setLoading(false); setError(false); programmaticFilledQuery.current=undefined;
   }, [visible, value]);
 
   useEffect(() => { if (!visible || !motion.openSettled) return; inputRef.current?.focus(); }, [visible, motion.openSettled, value]);
 
   useEffect(() => {
-    if (!visible || !hasMinimumLocationSearchLetters(trimmedQuery) || selectionFilled.current) { selectionFilled.current=false; setSuggestions([]); setLoading(false); setError(false); return; }
+    if (!visible) return;
+    if (programmaticFilledQuery.current === trimmedQuery) { programmaticFilledQuery.current=undefined; setLoading(false); setError(false); return; }
+    if (!hasMinimumLocationSearchLetters(trimmedQuery)) { setSuggestions([]); setLoading(false); setError(false); return; }
     const controller = new AbortController();
     const sequence = ++requestSequence.current;
     const timer = setTimeout(async () => {
@@ -118,7 +120,7 @@ export function HotelDestinationSheet({ visible, value, onDone, onCancel }: { vi
   }, [trimmedQuery, visible]);
 
   const clear = () => { setQuery(""); setDraft(undefined); setSuggestions([]); setError(false); inputRef.current?.focus(); };
-  const changeQuery = (next:string) => { setQuery(next); if (draft && next !== draft.searchValue) setDraft(undefined); };
+  const changeQuery = (next:string) => { programmaticFilledQuery.current=undefined; setQuery(next); if (draft && next !== draft.searchValue) setDraft(undefined); };
   return <Modal transparent animationType="none" visible={motion.rendered} onRequestClose={onCancel}>
       <KeyboardAvoidingView pointerEvents={motion.pointerEvents} style={styles.keyboardViewport} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <SafeAreaView edges={["top"]} style={styles.destinationOverlay}><Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill,styles.scrim,motion.backdropStyle]}/>
@@ -126,7 +128,7 @@ export function HotelDestinationSheet({ visible, value, onDone, onCancel }: { vi
           <Animated.View accessibilityViewIsModal onLayout={motion.onSheetLayout} style={[styles.destinationSheet,{backgroundColor:ft.colors.surface,paddingBottom:20+motion.bottomSafeAreaInset},motion.sheetStyle]}>
             <PickerSheetHeader title="Choose destination" onClose={onCancel} closeLabel="Close hotel destination picker"/>
             <View style={[styles.destinationSearch,{backgroundColor:ft.colors.input,borderColor:ft.colors.border}]}><FlowIcon name="location" size={20} color={ft.colors.icon}/><TextInput ref={inputRef} accessibilityLabel="Search hotel destinations" placeholder="City, area, or hotel" placeholderTextColor={ft.colors.placeholder} value={query} onChangeText={changeQuery} returnKeyType="search" style={[styles.destinationSearchInput,{color:ft.colors.text}]}/>{trimmedQuery ? <Pressable accessibilityRole="button" accessibilityLabel="Clear hotel destination search" onPress={clear}><Text style={[styles.link,{color:ft.colors.selectedBorder}]}>Clear</Text></Pressable> : null}</View>
-            {loading ? <Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Finding destinations…</Text> : error ? <Text accessibilityRole="alert" style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Couldn’t load destinations. Please try again.</Text> : <FlatList style={styles.destinationResults} keyboardShouldPersistTaps="handled" data={suggestions} keyExtractor={(item) => item.id} contentContainerStyle={styles.destinationList} renderItem={({item}) => { const selected = draft?.id === item.id; const detail = item.region ? `${item.region} · ${item.country}` : item.country; return <Pressable accessibilityRole="button" accessibilityLabel={`${item.name}, ${detail}`} accessibilityState={{selected}} onPress={() => { selectionFilled.current=true; setDraft(item); setQuery(item.searchValue); }} style={[styles.destinationChoice,{borderBottomColor:ft.colors.border},selected&&{backgroundColor:ft.colors.selected}]}><View style={[styles.destinationIcon,{backgroundColor:ft.colors.input}]}><FlowIcon name="hotel" size={22} color={ft.colors.icon}/></View><View style={styles.rowCopy}><Text numberOfLines={1} style={[ft.styles.value,selected&&{color:ft.colors.selectedPrimaryText}]}>{item.name}</Text><Text numberOfLines={1} style={[ft.styles.meta,selected&&{color:ft.colors.selectedSecondaryText}]}>{detail}</Text></View></Pressable>; }} ListEmptyComponent={<Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>{locationSearchLetterCount(query)===0?"Start typing to find a destination.":!hasMinimumLocationSearchLetters(query)?"Type at least 2 letters to see suggestions.":"No matching destinations yet."}</Text>} />}
+            {loading ? <Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Finding destinations…</Text> : error ? <Text accessibilityRole="alert" style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Couldn’t load destinations. Please try again.</Text> : <FlatList style={styles.destinationResults} keyboardShouldPersistTaps="handled" data={suggestions} keyExtractor={(item) => item.id} contentContainerStyle={styles.destinationList} renderItem={({item}) => { const selected = draft?.id === item.id; const detail = item.region ? `${item.region} · ${item.country}` : item.country; return <Pressable accessibilityRole="button" accessibilityLabel={`${item.name}, ${detail}`} accessibilityState={{selected}} onPress={() => { requestSequence.current+=1; programmaticFilledQuery.current=item.searchValue.trim(); setDraft(item); setQuery(item.searchValue); setLoading(false); setError(false); }} style={[styles.destinationChoice,{borderBottomColor:ft.colors.border},selected&&{backgroundColor:ft.colors.selected}]}><View style={[styles.destinationIcon,{backgroundColor:ft.colors.input}]}><FlowIcon name="hotel" size={22} color={ft.colors.icon}/></View><View style={styles.rowCopy}><Text numberOfLines={1} style={[ft.styles.value,selected&&{color:ft.colors.selectedPrimaryText}]}>{item.name}</Text><Text numberOfLines={1} style={[ft.styles.meta,selected&&{color:ft.colors.selectedSecondaryText}]}>{detail}</Text></View></Pressable>; }} ListEmptyComponent={draft?null:<Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>{locationSearchLetterCount(query)===0?"Start typing to find a destination.":!hasMinimumLocationSearchLetters(query)?"Type at least 2 letters to see suggestions.":"No matching destinations yet."}</Text>} />}
             <PrimaryButton label="Done" icon={null} size="compact" disabled={!draft} onPress={() => { if (draft) onDone(draft.searchValue); }}/>
           </Animated.View>
         </SafeAreaView>
