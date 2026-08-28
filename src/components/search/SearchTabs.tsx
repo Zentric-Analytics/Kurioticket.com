@@ -3112,13 +3112,13 @@ export function SearchTabs({
           launcherRef={travelersLauncherRef}
           footer={(requestClose) => (
             <div>
-              <button type="button" onClick={() => { applyTravelersDraft(false); requestClose(); }} className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[17px] font-bold text-white">
+              <button type="button" onClick={() => { applyTravelersDraft(false); requestClose(); }} className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[16px] font-semibold text-white">
                 {t.done || "Done"}
               </button>
             </div>
           )}
           onClose={cancelTravelersDraft}
-          contentClassName="bg-[#fcfdfe] px-4 py-6"
+          contentClassName="bg-[#fcfdfe] px-4 py-4"
           pickerMarker="traveler-cabin"
           headerVariant="close"
         >
