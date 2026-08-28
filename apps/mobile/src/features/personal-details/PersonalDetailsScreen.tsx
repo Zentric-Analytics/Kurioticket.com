@@ -640,7 +640,7 @@ function PhoneControl({
             {option?.isoCode || "--"}
           </Text>
         )}
-        <FlowIcon name="chevron" color={theme.muted} size={16} />
+        <FlowIcon name="chevron" color={theme.icon} size={16} />
       </Pressable>
       <View
         style={[
@@ -894,7 +894,14 @@ export function PersonalDetailsScreen() {
       setEditing(false);
       showSuccess(c.saveSuccess);
       AccessibilityInfo.announceForAccessibility(c.saveSuccess);
-    } catch {
+    } catch (e) {
+      const expired =
+        (e instanceof TravelApiError && e.status === 401) ||
+        !(await readSession().catch(() => null));
+      if (expired) {
+        router.replace(signInHref("/personal-information"));
+        return;
+      }
       if (mounted.current) {
         setError(c.saveFailure);
         AccessibilityInfo.announceForAccessibility(c.saveFailure);
