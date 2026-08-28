@@ -7,28 +7,26 @@ const source = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "ut
 const card = source.slice(source.indexOf("function FlightCard"), source.indexOf("function FlightJourneyRow"));
 
 test("metadata is one horizontal, flexible row in baggage, cabin, fare-rules order", () => {
-  const row = card.slice(card.indexOf('<View style={s0.metadataRow}>'));
+  const row = card.slice(card.indexOf('style={s0.metadataRow}'));
   const baggage = row.indexOf("baggageSummary");
   const cabin = row.indexOf("cabinSummary");
-  const fareRules = row.indexOf(">Fare rules</Text>");
+  const fareRules = row.indexOf("Fare rules\n");
 
   assert.ok(baggage >= 0 && cabin > baggage && fareRules > cabin);
-  assert.equal(row.match(/style=\{s0\.metadataItem\}/g)?.length, 3);
-  assert.match(source, /metadataRow: \{ width: "100%", flexDirection: "row"/);
-  assert.match(source, /metadataItem: \{ flex: 1, minWidth: 0, flexDirection: "row"/);
-  assert.doesNotMatch(source, /metadataRow: \{[^}]*flexWrap|metadataItem: \{[^}]*width:/);
+  assert.doesNotMatch(row, /metadataItem|Luggage|Armchair|ShieldCheck/);
+  assert.match(source, /metadataRow: \{ width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start" \}/);
+  assert.equal(row.match(/<Text> · <\/Text>/g)?.length, 2);
 });
 
 test("metadata shows values without redundant visual category labels", () => {
-  const row = card.slice(card.indexOf('<View style={s0.metadataRow}>'));
+  const row = card.slice(card.indexOf('style={s0.metadataRow}'));
   assert.doesNotMatch(row, /<Text[^>]*>Baggage: <\/Text>/);
   assert.doesNotMatch(row, /<Text[^>]*>Cabin: <\/Text>/);
   assert.doesNotMatch(row, /<Text[^>]*>Fare rules: <\/Text>/);
-  assert.match(row, /metadataText[^>]*>\{baggageSummary\}<\/Text>/);
-  assert.match(row, /metadataText[^>]*>\{cabinSummary\}<\/Text>/);
-  assert.match(row, /metadataText[^>]*>Fare rules<\/Text>/);
-  assert.equal(row.match(/numberOfLines=\{1\}/g)?.length, 3);
-  assert.equal(row.match(/ellipsizeMode="tail"/g)?.length, 3);
+  assert.match(row, /\{baggageSummary\}<Text> · <\/Text>\{cabinSummary\}<Text> · <\/Text>Fare rules/);
+  assert.equal(row.match(/numberOfLines=\{1\}/g)?.length, 1);
+  assert.equal(row.match(/ellipsizeMode="tail"/g)?.length, 1);
+  assert.doesNotMatch(row, /adjustsFontSizeToFit/);
   assert.doesNotMatch(source, /metadataLabel/);
 });
 
@@ -39,13 +37,12 @@ test("metadata summaries use provider result fields exactly once", () => {
   assert.doesNotMatch(card, /baggageBenefit|fareBenefit|benefitList|benefitItem/);
 });
 
-test("metadata has complete accessibility labels and decorative icons", () => {
+test("metadata has one complete accessibility label without visible icons", () => {
   assert.match(card, /const baggageAccessibility = result\.baggageInfo\?\.trim\(\) \|\| baggageSummary/);
   assert.match(card, /const fareRulesAccessibility = result\.refundInfo\?\.trim\(\) \|\| fareRulesSummary/);
-  assert.match(card, /accessibilityLabel=\{`Baggage: \$\{baggageAccessibility\}`\}/);
-  assert.match(card, /accessibilityLabel=\{`Cabin: \$\{cabinSummary\}`\}/);
-  assert.match(card, /accessibilityLabel=\{`Fare rules: \$\{fareRulesAccessibility\}`\}/);
-  assert.equal(card.match(/accessible=\{false\} size=\{14\}/g)?.length, 3);
+  assert.match(card, /accessibilityLabel=\{`Baggage: \$\{baggageAccessibility\}\. Cabin: \$\{cabinSummary\}\. Fare rules: \$\{fareRulesAccessibility\}\.`\}/);
+  assert.match(card, /<Text accessible=\{false\} numberOfLines=\{1\} ellipsizeMode="tail"/);
+  assert.doesNotMatch(card, /<(?:Luggage|Armchair|ShieldCheck)\b/);
 });
 
 test("metadata and full-width journey fit supported mobile widths", () => {
@@ -53,10 +50,10 @@ test("metadata and full-width journey fit supported mobile widths", () => {
     const cardWidth = viewport - 28;
     const contentWidth = cardWidth - 24;
     assert.ok(contentWidth > 0, `${viewport}px card remains inside its viewport`);
-    assert.ok((contentWidth - 10) / 3 > 80, `${viewport}px retains three flexible metadata columns`);
+    assert.ok(contentWidth >= 268, `${viewport}px retains a non-overflowing footer text region`);
   }
   assert.match(source, /journeyList: \{ width: "100%"/);
-  assert.match(card, /<View style=\{s0\.fareRow\}>[\s\S]*?<View style=\{s0\.metadataRow\}>/);
+  assert.match(card, /<View style=\{s0\.fareRow\}>[\s\S]*?style=\{s0\.metadataRow\}/);
 });
 
 test("baggage summaries distinguish positive, negative, and unknown provider states", () => {
