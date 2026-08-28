@@ -2712,7 +2712,9 @@ export function CarsResultsExperience({
         <button
           type="button"
           aria-label="Back to top"
-          onClick={() => window.scrollTo({ top: 0, behavior: motionBehavior() })}
+          onClick={() => {
+            window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+          }}
           className="fixed end-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-[#004BB8] shadow-lg transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
           style={{ bottom: "calc(1rem + env(safe-area-inset-bottom))" }}
         >
