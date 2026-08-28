@@ -908,6 +908,14 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
   const { outbound, returnLeg } = flightCardLegs(result, roundTrip);
   const operatingCarrierPresentation = flightOperatingCarrierPresentation(result);
   const flightNumber = result.flightNumber?.trim();
+  const highlightLabel = highlight === "Best" ? "Best value" : highlight;
+  const highlightUsesGreen = highlight === "Best" || highlight === "Cheapest";
+  const highlightBackgroundColor = highlightUsesGreen
+    ? theme.dark ? "#153D2A" : "#EAF8F0"
+    : theme.dark ? "#173568" : "#EEF4FF";
+  const highlightTextColor = highlightUsesGreen
+    ? theme.dark ? "#8BE0B0" : "#157347"
+    : theme.dark ? "#8FB5FF" : ui.blue;
   const baggageSummary = summarizeBaggage(result.baggageInfo) ?? "Review policy";
   const cabinSummary = formatCabinClass(result.cabinClass);
   const fareRulesSummary = summarizeFareRules(result.refundInfo) ?? "Review before booking";
@@ -968,10 +976,10 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
                 {highlight ? (
                   <View
                     accessible
-                    accessibilityLabel={`${highlight} flight result`}
-                    style={[s0.resultBadge, theme.dark && { backgroundColor: "#173568" }]}
+                    accessibilityLabel={`${highlightLabel} flight result`}
+                    style={[s0.resultBadge, { backgroundColor: highlightBackgroundColor }]}
                   >
-                    <Text style={[s0.resultBadgeText, theme.dark && { color: "#8FB5FF" }]}>{highlight}</Text>
+                    <Text numberOfLines={1} style={[s0.resultBadgeText, { color: highlightTextColor }]}>{highlightLabel}</Text>
                   </View>
                 ) : null}
                 <Pressable
@@ -1653,15 +1661,14 @@ const s0 = StyleSheet.create({
     elevation: 2,
   },
   cardPressed: { opacity: 0.94 },
-  airlineHeader: { minHeight: 20, position: "relative", paddingRight: 68 },
+  airlineHeader: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start" },
   airlineCopy: { flex: 1, minWidth: 0 },
-  identityActions: { position: "absolute", top: 0, right: 0, flexDirection: "column", alignItems: "center", gap: 3 },
+  identityActions: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 8 },
   favoriteButton: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   favoritePending: { opacity: 0.65 },
   favoritePressed: { opacity: 0.7, transform: [{ scale: 0.94 }] },
-  resultBadge: { height: 20, flexDirection: "row", alignItems: "center", paddingHorizontal: 7, borderRadius: 10, backgroundColor: "#EEF4FF" },
-  resultBadgeText: { fontSize: 10, fontWeight: "800", color: ui.blue },
-  resultBadgeTextGreen: { color: ui.green },
+  resultBadge: { height: 22, flexDirection: "row", alignItems: "center", paddingHorizontal: 8, borderRadius: 11 },
+  resultBadgeText: { fontSize: 10, lineHeight: 13, fontWeight: "800" },
   flightMain: { width: "100%", alignItems: "stretch" },
   flightIdentityLayout: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 10 },
   airlineLogoColumn: { width: 42, flexShrink: 0, alignItems: "center" },

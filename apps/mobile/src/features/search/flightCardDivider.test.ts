@@ -34,7 +34,10 @@ test("only provider-backed baggage and refundable benefits remain eligible", () 
 test("the flight card retains its light and dark mode theming", () => {
   assert.match(flightCard, /backgroundColor: theme\.surface/);
   assert.match(flightCard, /shadowColor: theme\.dark \?/);
-  assert.match(flightCard, /theme\.dark && \{ backgroundColor:/);
+  assert.match(flightCard, /const highlightBackgroundColor = highlightUsesGreen[\s\S]*?theme\.dark \? "#153D2A" : "#EAF8F0"[\s\S]*?: theme\.dark \? "#173568" : "#EEF4FF"/);
+  assert.match(flightCard, /const highlightTextColor = highlightUsesGreen[\s\S]*?theme\.dark \? "#8BE0B0" : "#157347"[\s\S]*?: theme\.dark \? "#8FB5FF" : ui\.blue/);
+  assert.match(flightCard, /style=\{\[s0\.resultBadge, \{ backgroundColor: highlightBackgroundColor \}\]\}/);
+  assert.match(flightCard, /color: highlightTextColor/);
   assert.match(flightCard, /color: theme\.textPrimary/);
   assert.match(flightCard, /color: theme\.textSecondary/);
   assert.match(flightCard, /color=\{theme\.textSecondary\}/);
