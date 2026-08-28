@@ -44,7 +44,7 @@ test("journeys follow the compact identity row at the full card content width", 
   assert.doesNotMatch(flightDetails, /journeyList|FlightJourneyRow/);
   assert.match(flightMain.slice(journeyStart), /journeyList[\s\S]*?<FlightJourneyRow label="OUTBOUND"[\s\S]*?returnLeg \? <FlightJourneyRow label="RETURN"/);
   assert.match(source, /flightIdentityLayout: \{[^}]*flexDirection: "row"[^}]*gap: 10/);
-  assert.match(source, /airlineLogoColumn: \{ width: 32, flexShrink: 0/);
+  assert.match(source, /airlineLogoColumn: \{ width: 42, flexShrink: 0/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.match(source, /journeyList: \{ width: "100%", marginTop: 18, gap: 4 \}/);
 });
