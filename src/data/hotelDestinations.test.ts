@@ -96,3 +96,13 @@ test("hotel destination search value normalizes decorated suggestions to city na
   assert.equal(normalizeHotelDestinationSearchValue("Tokyo"), "Tokyo");
   assert.equal(normalizeHotelDestinationSearchValue("  Custom Beach  "), "Custom Beach");
 });
+
+
+test("short hotel queries do not qualify arbitrary mid-word metadata matches", () => {
+  const results = searchHotelDestinations({ query: "we", limit: hotelDestinations.length });
+  for (const result of results) {
+    const words = [result.name, result.searchValue, ...(result.aliases ?? []), result.region, result.country].filter(Boolean).join(" ").toLowerCase().split(/[^a-z]+/);
+    assert.ok(words.some((word) => word.startsWith("we")), result.id);
+  }
+  assert.equal(searchHotelDestinations({ query: "lag", limit: 8 })[0]?.id, "ng-lagos");
+});

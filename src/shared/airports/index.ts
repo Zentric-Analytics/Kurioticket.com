@@ -493,7 +493,8 @@ function airportSearchRank(airport: AirportOption, query: string): number {
   if (code.startsWith(query)) return 1;
   if (fields.some((value) => value.startsWith(query))) return 2;
   if (fields.some((value) => value.split(/[^\p{L}\p{N}]+/u).some((word) => word.startsWith(query)))) return 3;
-  if (fields.some((value) => value.includes(query))) return 4;
+  // Short queries only qualify through exact, prefix, or word-prefix matches.
+  if (query.length >= 3 && fields.some((value) => value.includes(query))) return 4;
   return Number.POSITIVE_INFINITY;
 }
 

@@ -95,11 +95,12 @@ const scoreCandidate = (candidate: Candidate, query: string, countryHint?: strin
   const exactPrimary = normalizeCarLocationSearchText(candidate.primaryText) === query || normalizeCarLocationSearchText(candidate.value) === query;
   const exactTerm = normalizedTerms.some((term) => term === query);
   const prefix = normalizedTerms.some((term) => term.startsWith(query));
-  const containedWord = normalizedTerms.some((term) => term.split(" ").some((word) => word.startsWith(query)) || term.includes(query));
+  const wordPrefix = normalizedTerms.some((term) => term.split(" ").some((word) => word.startsWith(query)));
+  const longerContains = query.length >= 3 && normalizedTerms.some((term) => term.includes(query));
 
-  if (!exactCode && !exactPrimary && !exactTerm && !prefix && !containedWord) return undefined;
+  if (!exactCode && !exactPrimary && !exactTerm && !prefix && !wordPrefix && !longerContains) return undefined;
 
-  const bucket = exactCode ? 0 : exactPrimary ? 1 : exactTerm ? 2 : prefix ? 3 : 4;
+  const bucket = exactCode ? 0 : exactPrimary ? 1 : exactTerm ? 2 : prefix ? 3 : wordPrefix ? 4 : 5;
   const countryBoost = countryHint && candidate.countryCode === countryHint ? -2 : 0;
   const kindBoost = candidate.kind === "city" ? -0.08 : candidate.kind === "airport" ? -0.04 : 0;
   return bucket + countryBoost + kindBoost;
@@ -145,22 +146,7 @@ export async function searchCarLocationSuggestions(query: string, options: Searc
     .sort((a, b) => a.score - b.score || b.candidate.priority - a.candidate.priority || a.index - b.index)
     .map((entry) => entry.candidate);
 
-  const deduped = dedupe(ranked);
-  const hasExactValue = deduped.some((candidate) => normalizeCarLocationSearchText(candidate.value) === normalizedQuery || normalizeCarLocationSearchText(candidate.primaryText) === normalizedQuery);
-
-  if (trimmedQuery.length >= 2 && !hasExactValue) {
-    deduped.push({
-      id: `custom-${normalizedQuery.replace(/\s/g, "-").slice(0, 80)}`,
-      kind: "custom",
-      value: trimmedQuery,
-      primaryText: `Use “${trimmedQuery}”`,
-      secondaryText: "Unverified typed location",
-      priority: -1,
-      terms: [trimmedQuery],
-    });
-  }
-
-  return deduped.slice(0, limit).map(stripInternalFields);
+  return dedupe(ranked).slice(0, limit).map(stripInternalFields);
 }
 
 function stripInternalFields(candidate: Candidate): CarLocationSuggestion {

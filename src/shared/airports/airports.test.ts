@@ -31,3 +31,10 @@ test("local search enforces its default and explicit result limits", () => {
   assert.equal(searchAirports("").length, AIRPORT_RESULT_LIMIT);
   assert.equal(searchAirports("international", 3).length, 3);
 });
+
+
+test("two-letter fallback search requires exact, prefix, or word-prefix relevance", () => {
+  assert.ok(!searchAirports("we", airports.length).some(({ code }) => code === "ABV"));
+  assert.equal(searchAirports("jfk")[0]?.code, "JFK");
+  assert.equal(searchAirports("lag")[0]?.code, "LOS");
+});

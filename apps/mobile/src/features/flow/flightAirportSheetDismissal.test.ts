@@ -34,7 +34,7 @@ test("close header, Done, airport choices, search, and list interactions remain 
   assert.match(sheetContent, /accessibilityLabel="Search airports"/);
   assert.match(sheetContent, /accessibilityLabel="Clear airport search"/);
   assert.match(sheetContent, /<FlatList keyboardShouldPersistTaps="handled"/);
-  assert.match(sheetContent, /if\(isMetro\)setExpanded\(airport\);else/);
+  assert.match(sheetContent, /setDraftAirport\(airport\);setQuery\(filledQuery\.current\)/);
   assert.match(sheetContent, /<PickerSheetHeader[^>]+onClose=\{onClose\}/);
   assert.match(sheetContent, /<PrimaryButton label="Done"/);
   assert.doesNotMatch(sheetContent, />Cancel<|label="Cancel"/);

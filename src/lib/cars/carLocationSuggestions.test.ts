@@ -60,12 +60,11 @@ test("matching and ranking are stable and flexible", async () => {
   assert.ok(hinted.some((item) => item.countryCode !== "NG"));
 });
 
-test("custom input remains available without duplicating exact locations", async () => {
-  const custom = await search("  15 Example Road, Lagos  ");
-  assert.equal(custom.at(-1)?.kind, "custom");
-  assert.equal(custom.at(-1)?.value, "15 Example Road, Lagos");
-  assert.ok(!(await search("Lagos")).some((item) => item.kind === "custom"));
-  assert.ok(!(await search("   ")).some((item) => item.kind === "custom"));
+test("search only returns verified locations and rejects short mid-word matches", async () => {
+  assert.deepEqual(await search("15 Example Road, Lagos"), []);
+  assert.deepEqual(await search("asdfgh"), []);
+  assert.ok(!(await search("we")).some((item) => item.primaryText.includes("Azikiwe")));
+  for (const item of await search("Lagos")) assert.notEqual(item.kind, "custom");
 });
 
 test("popular results are concise and geographically useful", async () => {
