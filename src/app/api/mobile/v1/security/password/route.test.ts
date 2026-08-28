@@ -15,7 +15,7 @@ function createFixture(email: string | null = sessionEmail) {
   const rateLimitEmails: Array<string | undefined> = [];
   const resetEmails: string[] = [];
   const passwordEmails: string[] = [];
-  let passwordResult: "changed" | "invalid" | "oauth-only" = "changed";
+  let passwordResult: "changed" | "invalid" | "invalid-current" | "oauth-only" = "changed";
 
   const handlers = createPasswordHandlers({
     requireSecurity: async () => ({
@@ -92,6 +92,17 @@ test("password change uses the authoritative session email", async () => {
   assert.equal(response.status, 200);
   assert.deepEqual(fixture.rateLimitEmails, [sessionEmail]);
   assert.deepEqual(fixture.passwordEmails, [sessionEmail]);
+});
+
+test("incorrect current password returns a specific validation error", async () => {
+  const fixture = createFixture();
+  fixture.setPasswordResult("invalid-current");
+  const response = await fixture.handlers.PATCH(request("PATCH", validPasswordBody));
+
+  assert.equal(response.status, 400);
+  assert.deepEqual(await response.json(), {
+    error: "Current password is incorrect.",
+  });
 });
 
 test("OAuth-only password reset behavior remains unchanged", async () => {
