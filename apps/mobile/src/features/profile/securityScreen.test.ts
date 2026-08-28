@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const security = readFileSync("src/features/profile/SecurityScreen.tsx", "utf8");
+const resetFlow = readFileSync("src/features/profile/PasswordResetFlow.tsx", "utf8");
 const localization = readFileSync("src/features/profile/securityLocalization.ts", "utf8");
 
 const screenModalStart = security.indexOf("function ScreenModal");
@@ -48,7 +49,18 @@ test("password fields exist only in a full-screen password flow", () => {
   assert.match(security, /presentationStyle="overFullScreen"/);
   assert.match(security, /travelApi\.changePassword\(passwords\)/);
   assert.match(security, /const closePassword = \(\) => \{[^}]*setPasswordOpen\(false\); clearPasswordFeedback\(\)/);
-  assert.match(security, /travelApi\.requestAccountPasswordReset\(\)/);
+  assert.match(security, /<PasswordResetFlow copy=\{c\} onUnauthorized=\{unauth\}/);
+});
+
+test("password reset requires a six-digit email code before accepting a new password", () => {
+  assert.match(resetFlow, /securityPasswordResetApi\.sendCode\(\)/);
+  assert.match(resetFlow, /setStage\("verify"\)/);
+  assert.match(resetFlow, /\^\\d\{6\}\$/);
+  assert.match(resetFlow, /securityPasswordResetApi\.reset\(\{ code, newPassword, confirmPassword \}\)/);
+  assert.match(resetFlow, /keyboardType="number-pad"/);
+  assert.match(resetFlow, /maxLength=\{6\}/);
+  assert.match(resetFlow, /newPassword\.length < 8/);
+  assert.match(resetFlow, /newPassword !== confirmPassword/);
 });
 
 test("passkeys use the native security drill-down instead of the web handoff", () => {
@@ -146,7 +158,7 @@ test("drill-down feedback is cleared on both open and close", () => {
 test("operation failures and messages target only their owning feedback scope", () => {
   const expectations = [
     ["startTwoFactor", "setTwoFactorError"], ["confirmTwoFactor", "setTwoFactorError"], ["disableTwoFactor", "setTwoFactorError"],
-    ["change", "setPasswordError"], ["reset", "setPasswordMessage"], ["remove", "setDevicesError"],
+    ["change", "setPasswordError"], ["remove", "setDevicesError"],
     ["openDeletion", "setDeletionError"], ["requestDeletion", "setDeletionError"], ["reactivate", "setDeletionError"],
     ["toggle", "setLandingMessage"], ["all", "setLandingError"],
   ];

@@ -22,6 +22,7 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { localizedAccountActivityLabel } from "../../localization/accountActivityLabels";
 import { formatSecurityDate, securityCopy } from "./securityLocalization";
+import { PasswordResetFlow } from "./PasswordResetFlow";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { signInHref } from "../auth/signInIntent";
@@ -108,10 +109,6 @@ export function SecurityScreen() {
       await load({ showLandingFeedback: false });
     } catch (e) { if (!await unauth(e) && request === passwordRequest.current) setPasswordError(e instanceof TravelApiError ? e.message : c.loadError); } finally { setSubmitting(false); }
   };
-  const reset = async () => {
-    const request = passwordRequest.current; setPasswordError(""); setPasswordMessage("");
-    try { await travelApi.requestAccountPasswordReset(); if (request === passwordRequest.current) { setPasswordMessage(c.resetSent); AccessibilityInfo.announceForAccessibility(c.resetSent); } } catch (e) { if (!await unauth(e) && request === passwordRequest.current) setPasswordError(c.loadError); }
-  };
   const toggle = async (value: boolean) => {
     if (!overview) return;
     const previous = overview.securityEmailAlerts; const id = ++preferenceRequest.current;
@@ -163,7 +160,7 @@ export function SecurityScreen() {
     </ScreenModal>
     <ScreenModal visible={passwordOpen} title={c.change} closeLabel={c.close} onClose={closePassword}>
       <Feedback error={passwordError} message={passwordMessage} />
-      {overview?.hasPassword ? <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}><View style={styles.form}>{field("currentPassword", c.current)}{field("newPassword", c.next)}{field("confirmPassword", c.confirm)}<Pressable accessibilityRole="button" accessibilityLabel={visible ? c.hide : c.show} onPress={() => setVisible((v) => !v)} style={styles.textAction}><Text style={styles.link}>{visible ? c.hide : c.show}</Text></Pressable><Text style={{ color: theme.muted }}>{c.passwordRules}</Text><Button label={submitting ? c.changing : c.change} disabled={submitting} onPress={() => void change()} /></View></KeyboardAvoidingView> : <View style={styles.form}><Text style={{ color: theme.muted }}>{c.oauth}</Text><Button label={c.reset} onPress={() => void reset()} /></View>}
+      {overview?.hasPassword ? <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}><View style={styles.form}>{field("currentPassword", c.current)}{field("newPassword", c.next)}{field("confirmPassword", c.confirm)}<Pressable accessibilityRole="button" accessibilityLabel={visible ? c.hide : c.show} onPress={() => setVisible((v) => !v)} style={styles.textAction}><Text style={styles.link}>{visible ? c.hide : c.show}</Text></Pressable><Text style={{ color: theme.muted }}>{c.passwordRules}</Text><Button label={submitting ? c.changing : c.change} disabled={submitting} onPress={() => void change()} /></View></KeyboardAvoidingView> : <PasswordResetFlow copy={c} onUnauthorized={unauth} onSuccess={async () => { closePassword(); setLandingMessage(c.passwordSuccess); await load({ showLandingFeedback: false }); }} />}
     </ScreenModal>
     <ScreenModal visible={devicesOpen} title={c.yourDevices} closeLabel={c.close} onClose={closeDevices}>
       <Text style={[styles.intro, { color: theme.muted }]}>{c.devicesHelp}</Text><Feedback error={devicesError} message="" />
