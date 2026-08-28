@@ -25,7 +25,6 @@ const schema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("reset"),
     email: z.string().email().transform((value) => value.toLowerCase().trim()),
-    verificationToken: z.string().min(16),
     code: z.string().trim().regex(/^\d{6}$/),
     newPassword: z.string().min(8),
     confirmPassword: z.string().min(8),
@@ -45,13 +44,17 @@ function resetCodeEmail(input: { code: string; name?: string | null }) {
   `;
 }
 
-async function verifiedUser(email: string, verificationToken: string) {
-  const proof = await getPrisma().verificationToken.findUnique({ where: { token: verificationToken } });
-  if (!proof || proof.identifier !== verifiedIdentifier(email) || proof.expires <= new Date()) return null;
+async function activePasswordUser(email: string) {
   return getPrisma().user.findFirst({
     where: { email, status: "ACTIVE", passwordHash: { not: null } },
     select: { id: true, email: true, name: true, passwordHash: true },
   });
+}
+
+async function verifiedUser(email: string, verificationToken: string) {
+  const proof = await getPrisma().verificationToken.findUnique({ where: { token: verificationToken } });
+  if (!proof || proof.identifier !== verifiedIdentifier(email) || proof.expires <= new Date()) return null;
+  return activePasswordUser(email);
 }
 
 export async function POST(request: Request) {
@@ -76,12 +79,12 @@ export async function POST(request: Request) {
     throw error;
   }
 
-  const user = await verifiedUser(parsed.data.email, parsed.data.verificationToken);
-  if (!user?.email || !user.passwordHash) {
-    return NextResponse.json({ error: "Verify your email again before resetting your password." }, { status: 401 });
-  }
-
   if (parsed.data.action === "send-code") {
+    const user = await verifiedUser(parsed.data.email, parsed.data.verificationToken);
+    if (!user?.email || !user.passwordHash) {
+      return NextResponse.json({ error: "Verify your email again before resetting your password." }, { status: 401 });
+    }
+
     const code = randomInt(100000, 1000000).toString();
     const expiresAt = new Date(Date.now() + challengeTtlMs);
     const loginToken = hashCode(user.id, code);
@@ -113,6 +116,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unable to send the verification code. Try again." }, { status: 503 });
     }
     return NextResponse.json({ ok: true, expiresInMinutes: 5 });
+  }
+
+  // Sending the recovery code required a fresh verified-email proof. Once that
+  // dedicated challenge exists, the code itself is the recovery credential for
+  // its advertised five-minute lifetime; it must not be shortened by expiry of
+  // the earlier generic mobile-verified proof.
+  const user = await activePasswordUser(parsed.data.email);
+  if (!user?.email || !user.passwordHash) {
+    return NextResponse.json({ error: "That verification code is incorrect or expired." }, { status: 400 });
   }
 
   const challenge = await getPrisma().webAuthnChallenge.findFirst({
