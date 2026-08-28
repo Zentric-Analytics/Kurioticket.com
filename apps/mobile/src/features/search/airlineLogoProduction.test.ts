@@ -5,6 +5,7 @@ import test from "node:test";
 const logo = readFileSync("src/features/search/AirlineLogo.tsx", "utf8");
 const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
 const filterSheet = readFileSync("src/features/search/FlightFilterSheet.tsx", "utf8");
+const detailScreen = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
 
 test("Flight Results use provider logos without a platform image policy", () => {
   assert.match(screen, /<AirlineLogo[\s\S]*?logoUrl=\{result\.airlineLogo\}/);
@@ -20,6 +21,25 @@ test("Flight Filter airline rows use the normal provider logo path", () => {
     /<AirlineLogo\s+airlineName=\{name\}\s+logoUrl=\{[A-Za-z_$][\w$]*\.get\(name\)\}\s*\/>/,
   );
   assert.doesNotMatch(filterSheet, /allowRemoteAirlineImages|allowRemoteImages|fallbackText|airlineInitials/);
+});
+
+test("only Flight Results opt into the result-card logo presentation", () => {
+  assert.match(screen, /<AirlineLogo[\s\S]*?logoUrl=\{result\.airlineLogo\}[\s\S]*?variant="result-card"/);
+  assert.doesNotMatch(filterSheet, /variant="result-card"/);
+  assert.doesNotMatch(detailScreen, /variant="result-card"/);
+  assert.match(logo, /variant = "default"/);
+});
+
+test("result-card logos share one bounded premium tile while defaults remain 32px", () => {
+  assert.match(logo, /logo: \{[\s\S]*?width: 32,[\s\S]*?height: 32/);
+  assert.match(logo, /tile: \{[\s\S]*?width: 32,[\s\S]*?height: 32/);
+  assert.match(logo, /resultCardTile: \{[\s\S]*?width: 42,[\s\S]*?height: 42,[\s\S]*?borderRadius: 10,[\s\S]*?borderWidth: 1/);
+  assert.match(logo, /resultCardArtwork: \{ width: 32, height: 32 \}/);
+  assert.match(logo, /width=\{isResultCard \? 32 : "100%"\}/);
+  assert.match(logo, /style=\{isResultCard \? styles\.resultCardArtwork : styles\.image\}/);
+  assert.match(logo, /resizeMode="contain"/);
+  assert.match(logo, /isResultCard \? styles\.resultCardTile : styles\.tile/);
+  assert.match(logo, /isResultCard \? \[styles\.resultCardTile, resultCardTileColors\] : styles\.logo/);
 });
 
 test("normal SVG and raster logos retain their native render paths and fallback", () => {

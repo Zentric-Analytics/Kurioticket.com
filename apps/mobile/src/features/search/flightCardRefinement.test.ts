@@ -201,8 +201,10 @@ test("narrow flight cards reserve deterministic space for every journey section"
   const airlineLogo = readFileSync(resolve("src/features/search/AirlineLogo.tsx"), "utf8");
   assert.match(source, /journeyTimeRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6 \}/);
   assert.match(card, /<AirlineLogo[\s\S]*logoUrl=\{result\.airlineLogo\}/);
+  assert.match(card, /<AirlineLogo[\s\S]*?variant="result-card"/);
   assert.match(airlineLogo, /logo: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
   assert.match(airlineLogo, /tile: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
+  assert.match(source, /airlineLogoColumn: \{ width: 42, flexShrink: 0, alignItems: "center" \}/);
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46/);
   assert.match(source, /departureColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);
   assert.match(source, /arrivalColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);
