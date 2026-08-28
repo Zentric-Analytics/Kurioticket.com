@@ -17,6 +17,7 @@ import {
   MapPin,
   Minus,
   PencilLine,
+  SquarePen,
   Plus,
   SlidersHorizontal,
   UserRound,
@@ -78,6 +79,29 @@ const todayLocal = () => startOfLocalDay(new Date());
 
 const isBeforeToday = (date: Date) =>
   startOfLocalDay(date).getTime() < todayLocal().getTime();
+
+function formatCompactHotelDateRange(
+  startIso: string,
+  endIso: string,
+  locale: string,
+) {
+  const start = parseIsoDate(startIso);
+  const end = parseIsoDate(endIso);
+  if (!start || !end) return null;
+
+  const sameYear = start.getFullYear() === end.getFullYear();
+  const sameMonth = sameYear && start.getMonth() === end.getMonth();
+  const formatter = (date: Date, includeMonth: boolean, includeYear: boolean) =>
+    new Intl.DateTimeFormat(locale, {
+      ...(includeMonth ? { month: "short" as const } : {}),
+      day: "numeric",
+      ...(includeYear ? { year: "numeric" as const } : {}),
+    }).format(date);
+
+  const startLabel = formatter(start, true, !sameYear);
+  const endLabel = formatter(end, !sameMonth, true);
+  return `${startLabel} – ${endLabel}`;
+}
 
 const addMonths = (date: Date, offset: number) =>
   new Date(date.getFullYear(), date.getMonth() + offset, 1);
@@ -344,10 +368,12 @@ export function HotelSearchBar({
   const resultsSearchSummary = useMemo(
     () =>
       formatHotelSearchTemplate(t("hotelSearch.resultsSummary"), {
-        dates: dateSummary,
+        dates:
+          formatCompactHotelDateRange(checkIn, checkOut, calendarLocale) ??
+          dateSummary,
         summary: guestsRoomsSummary,
       }),
-    [dateSummary, guestsRoomsSummary, t],
+    [calendarLocale, checkIn, checkOut, dateSummary, guestsRoomsSummary, t],
   );
 
   const checkInParsed = parseIsoDate(checkIn);
@@ -909,27 +935,27 @@ export function HotelSearchBar({
               type="button"
               onClick={openMobileSearchPanel}
               className={cn(
-                "focus-ring w-full border border-[#004BB8]/12 bg-white text-start transition hover:border-[#004BB8]/20 focus-visible:border-[#004BB8]",
+                "focus-ring w-full bg-white text-start transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
                 mobileLayout === "controls"
-                  ? "flex h-16 min-w-0 items-center justify-between gap-3 overflow-hidden rounded-lg px-4 shadow-[0_3px_12px_rgba(15,23,42,0.05)]"
-                  : "rounded-xl px-4 py-4 shadow-[0_12px_26px_rgba(15,23,42,0.10)]",
+                  ? "group relative z-10 flex h-16 min-w-0 items-center justify-between gap-3 overflow-hidden rounded-[13px] border border-[#D8E1EC] px-4 py-0 shadow-[0_6px_18px_-16px_rgba(15,23,42,0.32)] hover:border-[#C6D2E0] hover:shadow-[0_8px_20px_-16px_rgba(15,23,42,0.36)]"
+                  : "rounded-xl border border-[#004BB8]/12 px-4 py-4 shadow-[0_12px_26px_rgba(15,23,42,0.10)] hover:border-[#004BB8]/20 focus-visible:border-[#004BB8]",
               )}
             >
               {mobileLayout === "controls" ? (
                 <>
                   <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
-                    <span className="block truncate text-[15px] font-bold leading-5 text-slate-950">
+                    <span className="block truncate text-[16px] font-bold leading-5 tracking-[-0.01em] text-[#142033]">
                       {destination.trim() || t("destination")}
                     </span>
-                    <span className="mt-1 block truncate text-[12px] font-semibold leading-4 text-slate-600">
+                    <span className="mt-[3px] block truncate text-[12.5px] font-semibold leading-[17px] text-slate-600">
                       {resultsSearchSummary}
                     </span>
                   </span>
                   <span
                     aria-hidden="true"
-                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[#004BB8]/12 bg-[#004BB8]/8 text-[#004BB8]"
+                    className="-my-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-transparent bg-transparent text-slate-700 transition group-hover:bg-slate-100 group-active:bg-slate-200"
                   >
-                    <PencilLine size={16} strokeWidth={2.1} />
+                    <SquarePen size={16} strokeWidth={2.2} />
                   </span>
                 </>
               ) : (
