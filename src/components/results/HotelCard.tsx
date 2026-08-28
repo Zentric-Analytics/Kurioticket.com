@@ -135,24 +135,6 @@ function getCancellationDisplay(
   return null;
 }
 
-function getDistanceDisplay(distanceFromCenter?: string) {
-  const distanceText = distanceFromCenter
-    ? toSentenceCase(distanceFromCenter)
-    : "";
-
-  if (!distanceText) return "";
-
-  if (
-    /^(central|transit-friendly area|central or transit-friendly area)$/i.test(
-      distanceText,
-    )
-  ) {
-    return "";
-  }
-
-  return distanceText;
-}
-
 function translateKnownHotelLabel(value: string, t: (key: string) => string) {
   const normalized = normalizeWhitespace(value).toLocaleLowerCase();
 
@@ -221,14 +203,14 @@ function translateKnownHotelLabel(value: string, t: (key: string) => string) {
 
 function getMealPlanDisplay(
   hotel: PublicHotelResult,
-  roomTypeText: string,
+  normalizedRoomType: string,
   t: (key: string) => string,
 ) {
   const mealText = [hotel.roomType, ...hotel.amenities]
     .map((value) => toSentenceCase(value || ""))
     .find((value) => value && isMealPlanText(value));
 
-  if (!mealText || toTitleCase(mealText) === roomTypeText) return "";
+  if (!mealText || toTitleCase(mealText) === normalizedRoomType) return "";
 
   return translateKnownHotelLabel(mealText, t);
 }
@@ -297,10 +279,6 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
       : "";
   const displayImageUrl = activeGalleryImageUrl;
   const rawRoomTypeText = hotel.roomType ? toTitleCase(hotel.roomType) : "";
-  const roomTypeText = rawRoomTypeText
-    ? translateKnownHotelLabel(rawRoomTypeText, t)
-    : "";
-  const distanceText = getDistanceDisplay(hotel.distanceFromCenter);
   const mealPlanText = getMealPlanDisplay(hotel, rawRoomTypeText, t);
   const cancellationDisplay = getCancellationDisplay(hotel.cancellationInfo, t);
   const expandedAmenityItems = buildHotelAmenityPresentation(
@@ -347,13 +325,6 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
   const saveRequiresLiveRateText =
     t("hotelResults.saveRequiresLiveRate") ||
     "Saving is available once a live room rate is provided.";
-  const taxesAndFeesText =
-    hotel.taxesAndFeesIncluded === true
-      ? t("hotelResults.taxesFeesIncluded") || "Includes taxes and fees"
-      : hotel.taxesAndFeesIncluded === false
-        ? t("hotelResults.taxesFeesNotIncluded") ||
-          "Taxes and fees not included"
-        : "";
   const sortBadgeConfig = sortBadge && ((sortBadge !== "cheapest" && sortBadge !== "bestValue") || hasValidPrice)
     ? ({
         cheapest: {
@@ -387,16 +358,6 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
       providerUri: attribution.providerUri?.trim(),
     }))
     .filter((attribution) => attribution.provider);
-  const totalDisplayPrice = priceDetails
-    ? formatDisplayPrice({
-        amount: priceDetails.totalPrice,
-        sourceCurrency: priceDetails.currency,
-        displayCurrency: selectedOption.currency,
-        convertSourceEstimate: true,
-        rates: currencyRates.rates,
-        isFallbackRate: currencyRates.isFallback,
-      })
-    : null;
   const nightlyDisplayPrice = priceDetails
     ? formatDisplayPrice({
         amount: priceDetails.pricePerNight,
@@ -582,19 +543,6 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                 <p className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[13px] font-semibold leading-5 text-[#004BB8] lg:text-sm">
                   <MapPin size={15} className="shrink-0 text-[#004BB8]" />
                   <span className="min-w-0">{hotel.location}</span>
-                  {distanceText ? (
-                    <>
-                      <span
-                        aria-hidden="true"
-                        className="shrink-0 font-normal text-slate-400"
-                      >
-                        ·
-                      </span>
-                      <span className="font-normal text-slate-600">
-                        {distanceText}
-                      </span>
-                    </>
-                  ) : null}
                 </p>
               </div>
               {reviewBand || reviewCountText ? (
@@ -629,17 +577,11 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                 </div>
               ) : null}
             </div>
-            <div className="mt-3 grid grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] border-t border-slate-200 pt-3">
+            <div className="mt-3 grid grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] gap-3">
               <div className="min-w-0 pe-2.5 md:pe-3">
-                {roomTypeText ||
-                shouldShowMealPlanText ||
+                {shouldShowMealPlanText ||
                 collapsedAmenityItems.length > 0 ? (
                   <div className="space-y-1">
-                    {roomTypeText ? (
-                      <p className="text-sm font-medium leading-5 text-slate-800">
-                        {roomTypeText}
-                      </p>
-                    ) : null}
                     {shouldShowMealPlanText ? (
                       <p className="text-[13px] font-normal leading-5 text-slate-600">
                         {mealPlanText}
@@ -663,26 +605,11 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                   </p>
                 ) : null}
               </div>
-              <div className="flex min-w-0 flex-col border-s border-slate-200 ps-2.5 text-end md:ps-3">
+              <div className="flex min-w-0 flex-col items-end text-end">
                 <div className="min-w-0 text-end">
-                  {priceDetails && totalDisplayPrice && nightlyDisplayPrice ? (
-                    <>
+                  {priceDetails && nightlyDisplayPrice ? (
                       <div
-                        className="text-lg font-bold leading-7 tracking-[-0.01em] text-slate-950 tabular-nums min-[380px]:whitespace-nowrap md:text-xl"
-                        dir="ltr"
-                        title={totalDisplayPrice.title}
-                        aria-label={totalDisplayPrice.ariaLabel}
-                      >
-                        {totalDisplayPrice.formatted}
-                      </div>
-
-                    <div className="mt-1 text-[13px] font-medium leading-5 text-slate-500">
-                      {t("hotelResults.estimatedStayTotal")}
-                    </div>
-
-                    <div className="mt-3 space-y-1.5">
-                      <div
-                        className="text-sm font-semibold leading-5 text-slate-800 tabular-nums"
+                        className="text-base font-bold leading-6 text-slate-950 tabular-nums min-[380px]:whitespace-nowrap md:text-lg"
                         title={nightlyDisplayPrice.title}
                         aria-label={nightlyDisplayPrice.ariaLabel}
                       >
@@ -691,14 +618,6 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                           nightlyDisplayPrice.formatted,
                         )}
                       </div>
-
-                      {taxesAndFeesText ? (
-                        <div className="text-xs font-medium leading-[18px] text-slate-500">
-                          {taxesAndFeesText}
-                        </div>
-                      ) : null}
-                    </div>
-                    </>
                   ) : (
                     <div className="min-w-0 space-y-1">
                       <p className="text-lg font-bold leading-6 text-slate-950">
@@ -728,7 +647,7 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                       aria-label={actionAriaLabel}
                       variant="accent"
                       size="sm"
-                      className="w-full whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:border-[#021C2B] hover:bg-[#021C2B] md:px-3"
+                      className="min-h-11 w-full whitespace-nowrap rounded-[10px] border border-[#004BB8] bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-none hover:border-[#003B91] hover:bg-[#003B91] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
                     >
                       {actionLabel || t("hotelResults.viewHotel") || "View hotel"}
                     </LinkButton>

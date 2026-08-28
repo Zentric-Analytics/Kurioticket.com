@@ -82,13 +82,41 @@ test("hotel result cards retain content, pricing, and details contracts", () => 
     "reviewBand",
     "reviewCountText",
     "HotelAmenityList",
-    "totalDisplayPrice",
     "nightlyDisplayPrice",
     "LinkButton",
     "resolvedDetailsHref",
   ]) {
     assert.match(source, new RegExp(retainedContract.replace(".", "\\.")));
   }
+});
+
+test("hotel result cards present only primary location and nightly pricing", () => {
+  for (const removedContract of [
+    "distanceText",
+    "getDistanceDisplay",
+    "roomTypeText",
+    "totalDisplayPrice",
+    "hotelResults.estimatedStayTotal",
+    "taxesAndFeesText",
+  ]) {
+    assert.ok(!source.includes(removedContract), `unexpected ${removedContract}`);
+  }
+
+  for (const retainedContract of [
+    "hotel.location",
+    "HotelAmenityList",
+    "nightlyDisplayPrice",
+    "hotelResults.pricePerNight",
+    "hotelResults.viewHotel",
+  ]) {
+    assert.ok(source.includes(retainedContract), `missing ${retainedContract}`);
+  }
+});
+
+test("hotel result cards use whitespace instead of internal rules", () => {
+  assert.doesNotMatch(source, /border-t border-slate-200/);
+  assert.doesNotMatch(source, /border-s border-slate-200/);
+  assert.match(source, /min-h-11[\s\S]*rounded-\[10px\][\s\S]*shadow-none/);
 });
 
 test("hotel details actions distinguish omitted, valid, and unavailable destinations", () => {

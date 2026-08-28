@@ -20,6 +20,7 @@ test("Hotel Results hides only the mobile category tabs", () => {
 
   assert.match(headerCall, /hideMobileCategoryTabs/);
   assert.match(headerCall, /hideDesktopTravelNav/);
+  assert.match(headerCall, /flushMobileBottom/);
   assert.doesNotMatch(headerCall, /hideTravelNav/);
 });
 
@@ -66,7 +67,7 @@ test("mobile Hotel shortcut rail reuses filter, sort, stars, and amenities state
   assert.doesNotMatch(toolbar, /<select/);
   assert.match(resultsSource, /relative z-40 bg-white pb-0 pt-0 sm:hidden/);
   assert.match(resultsSource, /relative translate-y-1\/2/);
-  assert.match(resultsSource, /absolute inset-x-0 top-1\/2[\s\S]*?bg-slate-300/);
+  assert.doesNotMatch(resultsSource, /absolute inset-x-0 top-1\/2[\s\S]*?bg-slate-300/);
   assert.match(resultsSource, /relative z-30 px-4 pb-0 pt-12 sm:hidden/);
   assert.match(resultsSource, /hidden shrink-0 flex-nowrap[\s\S]*?sm:flex/);
   assert.match(resultsSource, /<h1[^>]*>\{resultsHeading\}<\/h1>/);
