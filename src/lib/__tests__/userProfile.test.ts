@@ -109,6 +109,45 @@ test("saved phoneCountryCode is the source of truth for shared +1 numbers", () =
   );
 });
 
+test("compact international numbers split recognized calling codes without requiring spaces", () => {
+  assert.deepEqual(parsePhoneDraftValue("+2348012345678"), {
+    countryCode: "NG",
+    hasRecognizedDialCode: true,
+    localNumber: "8012345678",
+  });
+  assert.deepEqual(parsePhoneDraftValue("+447911123456"), {
+    countryCode: "GB",
+    hasRecognizedDialCode: true,
+    localNumber: "7911123456",
+  });
+  assert.deepEqual(parsePhoneDraftValue("+233241234567"), {
+    countryCode: "GH",
+    hasRecognizedDialCode: true,
+    localNumber: "241234567",
+  });
+});
+
+test("shared +1 compact numbers preserve an explicit supported default country", () => {
+  assert.deepEqual(parsePhoneDraftValue("+14165550100", "CA"), {
+    countryCode: "CA",
+    hasRecognizedDialCode: true,
+    localNumber: "4165550100",
+  });
+  assert.deepEqual(parsePhoneDraftValue("+12025550199", "US"), {
+    countryCode: "US",
+    hasRecognizedDialCode: true,
+    localNumber: "2025550199",
+  });
+});
+
+test("unknown international prefixes are preserved instead of stripping the phone value", () => {
+  assert.deepEqual(parsePhoneDraftValue("+999123456789", "GB"), {
+    countryCode: "GB",
+    hasRecognizedDialCode: false,
+    localNumber: "+999123456789",
+  });
+});
+
 test("shared +1 country and territory selections remain distinct in state", () => {
   const localNumber = "5550100";
   const countries = ["US", "CA", "JM", "PR", "VI"] as const;
