@@ -23,7 +23,7 @@ test("Hotel Results hides only the mobile category tabs", () => {
   assert.doesNotMatch(headerCall, /hideTravelNav/);
 });
 
-test("mobile Hotel search promotes the data-driven summary without its old filter tile", () => {
+test("mobile Hotel search uses the Flight-parity data-driven summary shell", () => {
   const controlsStart = searchBarSource.indexOf(
     '{onOpenFilters && mobileLayout !== "controls" ? (',
   );
@@ -33,27 +33,41 @@ test("mobile Hotel search promotes the data-driven summary without its old filte
   assert.match(searchBarSource, /mobileLayout === "controls"/);
   assert.match(searchBarSource, /destination\.trim\(\) \|\| t\("destination"\)/);
   assert.match(searchBarSource, /\{resultsSearchSummary\}/);
-  assert.match(searchBarSource, /<PencilLine size=\{16\}/);
+  assert.match(searchBarSource, /<SquarePen size=\{16\} strokeWidth=\{2\.2\}/);
   assert.match(searchBarSource, /onClick=\{openMobileSearchPanel\}/);
+  assert.match(searchBarSource, /h-16[\s\S]*?rounded-\[13px\][\s\S]*?border-\[#D8E1EC\]/);
+  assert.match(searchBarSource, /h-11 w-11[\s\S]*?bg-transparent[\s\S]*?text-slate-700/);
+  assert.match(searchBarSource, /formatCompactHotelDateRange/);
+  assert.doesNotMatch(searchBarSource, /SquarePen[\s\S]{0,300}bg-\[#004BB8\]\/8/);
   assert.doesNotMatch(
     searchBarSource.slice(controlsStart, controlsEnd),
     /mobileLayout === "controls"[\s\S]*?w-\[72px\]/,
   );
 });
 
-test("mobile Hotel toolbar reuses filter and sort state while desktop sort remains", () => {
+test("mobile Hotel shortcut rail reuses filter, sort, stars, and amenities state", () => {
   const toolbarStart = resultsSource.indexOf(
-    'className="mt-2 flex min-w-0 items-center gap-2 overflow-x-auto',
+    "data-mobile-hotel-shortcuts",
   );
-  const toolbarEnd = resultsSource.indexOf("</div>", toolbarStart);
+  const toolbarEnd = resultsSource.indexOf("{menu}", toolbarStart);
   const toolbar = resultsSource.slice(toolbarStart, toolbarEnd);
 
   assert.notEqual(toolbarStart, -1);
-  assert.match(toolbar, /setFiltersOpen\(true\)/);
-  assert.match(toolbar, /activeFilterCount/);
-  assert.match(toolbar, /value=\{hotelSummarySortMode\}/);
-  assert.match(toolbar, /updateHotelSummarySortMode/);
-  assert.match(toolbar, /hotelSortOptions\.map/);
+  assert.match(resultsSource, /setFiltersOpen\(true\)/);
+  assert.match(resultsSource, /activeFilterCount/);
+  assert.match(resultsSource, /trigger\("sort", currentSortLabel/);
+  assert.match(resultsSource, /updateHotelSummarySortMode/);
+  assert.match(resultsSource, /selectedStarRating/);
+  assert.match(resultsSource, /updateSelectedStarRating/);
+  assert.match(resultsSource, /selectedFilters\.facilities/);
+  assert.match(resultsSource, /toggleFilter\("facilities"/);
+  assert.match(toolbar, /overflow-x-auto/);
+  assert.match(toolbar, /flex w-max flex-nowrap items-center gap-2/);
+  assert.doesNotMatch(toolbar, /<select/);
+  assert.match(resultsSource, /relative z-40 bg-white pb-0 pt-0 sm:hidden/);
+  assert.match(resultsSource, /relative translate-y-1\/2/);
+  assert.match(resultsSource, /absolute inset-x-0 top-1\/2[\s\S]*?bg-slate-300/);
+  assert.match(resultsSource, /relative z-30 px-4 pb-0 pt-12 sm:hidden/);
   assert.match(resultsSource, /hidden shrink-0 flex-nowrap[\s\S]*?sm:flex/);
   assert.match(resultsSource, /<h1[^>]*>\{resultsHeading\}<\/h1>/);
 });
