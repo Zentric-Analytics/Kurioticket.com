@@ -122,8 +122,6 @@ export function PasswordResetFlow({ active, copy: c, intro, onUnauthorized, onSu
     }
   };
 
-  const resetReady = /^\d{6}$/.test(code) && newPassword.length >= 8 && confirmPassword.length >= 8 && newPassword === confirmPassword;
-
   const resetPassword = async () => {
     if (inFlightRef.current) return;
     if (!/^\d{6}$/.test(code)) { setError(c.codeInvalid); return; }
@@ -162,7 +160,7 @@ export function PasswordResetFlow({ active, copy: c, intro, onUnauthorized, onSu
     <TextInput accessibilityLabel={c.confirm} secureTextEntry={!visible} value={confirmPassword} onChangeText={(value) => { setConfirmPassword(value); setError(""); }} placeholder={c.confirm} placeholderTextColor={theme.muted} autoCapitalize="none" style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]} />
     <Pressable accessibilityRole="button" accessibilityLabel={visible ? c.hide : c.show} onPress={() => setVisible((value) => !value)} style={styles.textAction}><Text style={styles.link}>{visible ? c.hide : c.show}</Text></Pressable>
     <Text style={{ color: theme.muted }}>{c.passwordRules}</Text>
-    <Button label={submitting ? c.changing : navigationCopy.submit} disabled={submitting || !resetReady} onPress={() => void resetPassword()} />
+    <Button label={submitting ? c.changing : navigationCopy.submit} disabled={submitting} onPress={() => void resetPassword()} />
     <Pressable accessibilityRole="button" disabled={submitting} onPress={() => void sendCode()} style={styles.textAction}><Text style={styles.link}>{actionCopy.resend}</Text></Pressable>
   </View>;
 }
