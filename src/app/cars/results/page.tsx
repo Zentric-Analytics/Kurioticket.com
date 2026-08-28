@@ -104,7 +104,7 @@ export default async function CarsResultsPage({
       >
         <CarsResultsContent values={values} searchIdentity={searchIdentity} />
       </Suspense>
-      <Footer />
+      <Footer variant="brand-legal-only" />
     </>
   );
 }
