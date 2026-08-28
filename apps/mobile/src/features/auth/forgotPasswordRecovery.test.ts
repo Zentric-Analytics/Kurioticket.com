@@ -35,7 +35,7 @@ test("reset submits the issued recovery code without reusing the older email pro
 });
 
 test("successful recovery uses one brief reserved status slot instead of a modal alert", () => {
-  assert.match(flow, /setResetNotice\("Password reset\. Sign in with your new password\."\)/);
+  assert.match(flow, /setResetNotice\("Password reset\. Sign in again\."\)/);
   assert.match(flow, /setTimeout\(\(\) => setResetNotice\(""\), 2000\)/);
   assert.doesNotMatch(flow, /Alert\.alert/);
   assert.match(screens, /<StatusText success=\{Boolean\(notice\)\}>\{notice \|\| error\}<\/StatusText>/);
