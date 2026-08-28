@@ -44,9 +44,9 @@ function resetCodeEmail(input: { code: string; name?: string | null }) {
   `;
 }
 
-async function activePasswordUser(email: string) {
+async function activeUser(email: string) {
   return getPrisma().user.findFirst({
-    where: { email, status: "ACTIVE", passwordHash: { not: null } },
+    where: { email, status: "ACTIVE" },
     select: { id: true, email: true, name: true, passwordHash: true },
   });
 }
@@ -54,7 +54,7 @@ async function activePasswordUser(email: string) {
 async function verifiedUser(email: string, verificationToken: string) {
   const proof = await getPrisma().verificationToken.findUnique({ where: { token: verificationToken } });
   if (!proof || proof.identifier !== verifiedIdentifier(email) || proof.expires <= new Date()) return null;
-  return activePasswordUser(email);
+  return activeUser(email);
 }
 
 export async function POST(request: Request) {
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
 
   if (parsed.data.action === "send-code") {
     const user = await verifiedUser(parsed.data.email, parsed.data.verificationToken);
-    if (!user?.email || !user.passwordHash) {
+    if (!user?.email) {
       return NextResponse.json({ error: "Verify your email again before resetting your password." }, { status: 401 });
     }
 
@@ -122,8 +122,8 @@ export async function POST(request: Request) {
   // dedicated challenge exists, the code itself is the recovery credential for
   // its advertised five-minute lifetime; it must not be shortened by expiry of
   // the earlier generic mobile-verified proof.
-  const user = await activePasswordUser(parsed.data.email);
-  if (!user?.email || !user.passwordHash) {
+  const user = await activeUser(parsed.data.email);
+  if (!user?.email) {
     return NextResponse.json({ error: "That verification code is incorrect or expired." }, { status: 400 });
   }
 
@@ -147,7 +147,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({ error: "That verification code is incorrect or expired." }, { status: 400 });
   }
-  if (await bcrypt.compare(parsed.data.newPassword, user.passwordHash)) {
+  if (user.passwordHash && await bcrypt.compare(parsed.data.newPassword, user.passwordHash)) {
     return NextResponse.json({ error: "Choose a new password that is different from your current password." }, { status: 400 });
   }
 
