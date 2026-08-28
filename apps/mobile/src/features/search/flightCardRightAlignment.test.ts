@@ -10,7 +10,7 @@ test("outbound and return share one structured journey component", () => {
   assert.match(card, /<FlightJourneyRow label="OUTBOUND" leg=\{outbound\} \/>/);
   assert.match(card, /\{returnLeg \? <FlightJourneyRow label="RETURN" leg=\{returnLeg\} \/> : null\}/);
   assert.equal(card.match(/<View style=\{\[s0\.arrivalColumn, s0\.rightColumnContract\]\}>/g)?.length, 2);
-  assert.match(source, /journeyTimeRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6 \}/);
+  assert.match(source, /journeyPrimaryRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 \}/);
   assert.match(source, /departureColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center" \}/);
   assert.match(source, /arrivalColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);
@@ -46,7 +46,7 @@ test("journeys follow the compact identity row at the full card content width", 
   assert.match(source, /flightIdentityLayout: \{[^}]*flexDirection: "row"[^}]*gap: 10/);
   assert.match(source, /airlineLogoColumn: \{ width: 42, flexShrink: 0/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
-  assert.match(source, /journeyList: \{ width: "100%", marginTop: 18, gap: 4 \}/);
+  assert.match(source, /journeyList: \{ width: "100%", marginTop: 10, gap: 10 \}/);
 });
 
 test("one-way cards omit return while preserving the full-width fare alignment", () => {

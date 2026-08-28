@@ -188,7 +188,7 @@ test("flight identity actions use a normal horizontal row without changing journ
   assert.match(source, /identityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 8 \}/);
   assert.doesNotMatch(source, /identityActions: \{[^}]*position: "absolute"/);
   assert.doesNotMatch(source, /airlineHeader: \{[^}]*paddingRight: 68/);
-  assert.match(source, /journeyList: \{ width: "100%", marginTop: 18, gap: 4 \}/);
+  assert.match(source, /journeyList: \{ width: "100%", marginTop: 10, gap: 10 \}/);
 });
 
 test("operating-carrier clarity stays conditional beneath the primary airline identity", () => {
@@ -214,7 +214,7 @@ test("flight number is quiet conditional text directly beneath the airline name"
 
 test("narrow flight cards reserve deterministic space for every journey section", () => {
   const airlineLogo = readFileSync(resolve("src/features/search/AirlineLogo.tsx"), "utf8");
-  assert.match(source, /journeyTimeRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6 \}/);
+  assert.match(source, /journeyPrimaryRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 \}/);
   assert.match(card, /<AirlineLogo[\s\S]*logoUrl=\{result\.airlineLogo\}/);
   assert.match(card, /<AirlineLogo[\s\S]*?variant="result-card"/);
   assert.match(airlineLogo, /logo: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
@@ -263,12 +263,24 @@ test("flight journey gives its center column responsive surplus width", () => {
   }
 });
 
-test("flight times, airports, duration, and stop labels remain single-line", () => {
+test("flight journey applies the approved Step 5 hierarchy, colors, and accessibility", () => {
+  assert.match(card, /s0\.journeyLabel, \{ color: theme\.dark \? "#8FB5FF" : ui\.blue \}/);
   assert.equal(card.match(/style=\{\[s0\.time, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.85\}/g)?.length, 2);
-  assert.match(card, /\{leg\.duration\} · \{stopLabel\}<\/Text>/);
-  assert.match(card, /\{leg\.originAirport\}<\/Text>/);
-  assert.match(card, /\{leg\.destinationAirport\}<\/Text>/);
-  assert.match(card, /<Text style=\{s0\.journeyDuration\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.82\}>\{leg\.duration\} · \{stopLabel\}<\/Text>/);
+  assert.match(card, /s0\.journeyDuration, \{ color: theme\.textPrimary \}[\s\S]*?minimumFontScale=\{0\.85\}>\{leg\.duration\}<\/Text>/);
+  assert.doesNotMatch(card, /\{leg\.duration\} · \{stopLabel\}/);
+  assert.equal(card.match(/s0\.airportCode, \{ color: theme\.textPrimary \}/g)?.length, 2);
+  assert.match(card, /s0\.stopLabel, \{ color: theme\.textSecondary \}[\s\S]*?numberOfLines=\{1\}>\{stopLabel\}/);
+  assert.doesNotMatch(card, /routeSummary|\{leg\.originAirport\} → \{leg\.destinationAirport\}/);
+  assert.equal(card.match(/s0\.routeDot, \{ backgroundColor: theme\.textSecondary \}/g)?.length, 2);
+  assert.equal(card.match(/s0\.line, \{ backgroundColor: theme\.border \}/g)?.length, 2);
+  assert.match(card, /<PlaneTakeoff accessible=\{false\} size=\{14\} strokeWidth=\{2\} color=\{theme\.dark \? "#8FB5FF" : ui\.blue\} \/>/);
+  assert.equal(card.match(/accessible=\{false\} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"/g)?.length, 3);
+  assert.match(card, /accessibilityLabel=\{`\$\{label\.toLowerCase\(\)\}: \$\{clock\(leg\.departureTime\)\} \$\{leg\.originAirport\} to \$\{clock\(leg\.arrivalTime\)\} \$\{leg\.destinationAirport\}, \$\{leg\.duration\}, \$\{stopLabel\}`\}/);
+  assert.match(source, /journeyLabel: \{ fontSize: 10, lineHeight: 12, fontWeight: "800", letterSpacing: 0\.7 \}/);
+  assert.match(source, /time: \{ fontSize: 15, lineHeight: 19, fontWeight: "900"/);
+  assert.match(source, /airportCode: \{ fontSize: 11, lineHeight: 14, fontWeight: "800" \}/);
+  assert.match(source, /journeyDuration: \{[^}]*fontSize: 11, lineHeight: 14, fontWeight: "700", textAlign: "center" \}/);
+  assert.match(source, /stopLabel: \{[^}]*fontSize: 10, lineHeight: 13, fontWeight: "600", textAlign: "center" \}/);
 });
 
 test("flight card uses Lucide icons for its route and saved state only", () => {
@@ -331,7 +343,7 @@ test("highlight sits immediately left of the fixed-right favorite action", () =>
   assert.match(card, /theme\.dark \? "#8FB5FF" : ui\.blue/);
   assert.match(source, /resultBadge: \{ height: 22,[^}]*paddingHorizontal: 8, borderRadius: 11 \}/);
   assert.match(source, /resultBadgeText: \{ fontSize: 10, lineHeight: 13, fontWeight: "800" \}/);
-  assert.match(source, /journeyList: \{ width: "100%", marginTop: 18, gap: 4 \}/);
+  assert.match(source, /journeyList: \{ width: "100%", marginTop: 10, gap: 10 \}/);
 });
 
 test("saved flights remain visible through the canonical Saved source", () => {
