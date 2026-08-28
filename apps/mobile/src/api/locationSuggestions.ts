@@ -6,6 +6,7 @@ export type FlightPlaceSuggestion = {
   airport: string;
   city: string;
   country?: string;
+  type: "airport" | "city";
 };
 type Fetcher = typeof fetch;
 
@@ -31,11 +32,12 @@ export function parseFlightPlaceSuggestions(
       typeof candidate.city === "string" ? candidate.city.trim() : "";
     const country =
       typeof candidate.country === "string" ? candidate.country.trim() : "";
-    if (!/^[A-Z]{3}$/.test(code) || !airport || !city || seen.has(code))
+    const type = candidate.type;
+    if (!/^[A-Z]{3}$/.test(code) || !airport || !city || (type !== "airport" && type !== "city") || seen.has(code))
       continue;
     seen.add(code);
     suggestions.push(
-      country ? { code, airport, city, country } : { code, airport, city },
+      country ? { code, airport, city, country, type } : { code, airport, city, type },
     );
     if (suggestions.length === 8) break;
   }

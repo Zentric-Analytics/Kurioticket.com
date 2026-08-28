@@ -36,12 +36,12 @@ test("location parsers skip malformed and duplicate suggestions", () => {
   assert.deepEqual(
     parseFlightPlaceSuggestions({
       suggestions: [
-        { code: "los", city: "Lagos", airport: "Murtala Muhammed" },
-        { code: "LOS", city: "Duplicate", airport: "Duplicate" },
-        { code: "12", city: "Bad", airport: "Bad" },
+        { code: "los", city: "Lagos", airport: "Murtala Muhammed", type: "airport" },
+        { code: "LOS", city: "Duplicate", airport: "Duplicate", type: "city" },
+        { code: "12", city: "Bad", airport: "Bad", type: "airport" },
       ],
     }),
-    [{ code: "LOS", city: "Lagos", airport: "Murtala Muhammed" }],
+    [{ code: "LOS", city: "Lagos", airport: "Murtala Muhammed", type: "airport" }],
   );
   assert.deepEqual(
     parseCarLocationSuggestions({
@@ -68,4 +68,16 @@ test("location parsers skip malformed and duplicate suggestions", () => {
     () => parseCarLocationSuggestions({ suggestions: null }),
     /Invalid car location response/,
   );
+});
+
+
+test("flight parser preserves supported provider place types only", () => {
+  assert.deepEqual(parseFlightPlaceSuggestions({ suggestions: [
+    { code: "lhr", airport: "Heathrow", city: "London", country: "United Kingdom", type: "airport" },
+    { code: "lon", airport: "All airports", city: "London", country: "United Kingdom", type: "city" },
+    { code: "bad", airport: "Unknown", city: "Nowhere", type: "region" },
+  ] }).map(({ code, type }) => ({ code, type })), [
+    { code: "LHR", type: "airport" },
+    { code: "LON", type: "city" },
+  ]);
 });

@@ -23,9 +23,21 @@ test("default origin is homepage-only and independent of authentication state", 
   assert.doesNotMatch(panel.split("useEffect")[0], /fetchHomepageDefaultOrigin\(\)/);
 });
 
-test("the actual AirportSheet calls the metro-aware search on the homepage", () => {
-  assert.match(panel, /const searched = eligible \? \(homepageOnly \? searchHomepageAirports\(query\) : searchAirports\(query\)\) : \[\]/);
+test("homepage typed search stays provider-backed and uses homepageOnly for provider cities", () => {
+  assert.match(panel, /searchFlightPlaces\(query,/);
+  assert.match(panel, /setMatches\(flightPlaceMatches\(items,homepageOnly\)\)/);
+  assert.match(panel, /if \(!homepageOnly\) return \[\]/);
+  assert.match(panel, /homepageAirportGroupByCode\(item.code\)/);
+  assert.doesNotMatch(panel, /searchHomepageAirports\(query\)|searchAirports\(query\)/);
   assert.match(panel, /<AirportSheet[\s\S]*homepageOnly=\{homepageAirportPicker\}/);
+});
+
+test("a provider city expands canonical airports without becoming the draft", () => {
+  assert.match(panel, /item.type === "airport"[\s\S]*airportByCode\(item.code\)/);
+  assert.match(panel, /setDraftAirport\(undefined\);setMetroPrompt\(`Choose a specific airport in \${group.city}\.`\);setMatches\(homepageMetroAirports\(group\)/);
+  assert.match(panel, /group.airportCodes.map\(airportByCode\).filter/);
+  assert.match(panel, /disabled=\{!draftAirport\}/);
+  assert.match(panel, /setDraftAirport\(airport\)[\s\S]*setQuery\(filledQuery.current\)/);
 });
 
 test("origin and destination use the same metro-aware homepage AirportSheet", () => {
