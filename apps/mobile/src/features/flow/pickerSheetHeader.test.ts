@@ -28,7 +28,7 @@ test("shared picker header is accessible, flexible, themed, and uses the establi
   assert.doesNotMatch(header, /<Text>[xX×]<\/Text>/);
 });
 
-test("every staged search picker with Done uses a close header and has no bottom Cancel", () => {
+test("every immediate location picker uses a close header and has no bottom action", () => {
   const airport = slice(flights, "function AirportSheet", "type TravelerCabinDraft");
   const hotel = slice(hotels, "function HotelDestinationSheet", "type GuestsRoomsDraft");
   const car = slice(cars, "export function CarLocationSheet", "function FieldError");
@@ -38,7 +38,7 @@ test("every staged search picker with Done uses a close header and has no bottom
   assert.match(car, /<PickerSheetHeader[^>]+onClose=\{onClose\}[^>]+closeLabel=/);
   assert.match(packageAirport, /<PickerSheetHeader title=\{context\.title\} onClose=\{onClose\}[^>]+closeLabel=/);
   for (const target of [airport, hotel, car, packageAirport]) {
-    assert.match(target, /PrimaryButton label="Done" icon=\{null\}/);
+    assert.doesNotMatch(target, /PrimaryButton label="Done"/);
     assert.doesNotMatch(target, />Cancel<|label="Cancel"|accessibilityLabel="Cancel/);
   }
   assert.doesNotMatch(flights, /function Cancel\(/);
