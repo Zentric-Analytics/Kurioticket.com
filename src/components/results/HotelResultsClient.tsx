@@ -13,6 +13,7 @@ import {
 } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { createPortal } from "react-dom";
 import {
   Calendar,
   Check,
@@ -77,6 +78,7 @@ type DesktopStickyHotelSearchSection =
   | "dates"
   | "guests"
   | null;
+type MobileHotelShortcutMenu = "sort" | "stars" | "amenities";
 
 type CompactHotelFilterSectionId =
   | "price"
@@ -402,6 +404,13 @@ export function HotelResultsExperience({
   const [hotelSummarySortMode, setHotelSummarySortMode] =
     useState<HotelSummarySortMode>("cheapest");
   const [hotelSortMenuOpen, setHotelSortMenuOpen] = useState(false);
+  const [mobileShortcutMenu, setMobileShortcutMenu] =
+    useState<MobileHotelShortcutMenu | null>(null);
+  const [mobileShortcutMenuPosition, setMobileShortcutMenuPosition] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
   const [mobileHotelSearchOpen, setMobileHotelSearchOpen] = useState(false);
   const [showDesktopMinimizedSearch, setShowDesktopMinimizedSearch] =
     useState(false);
@@ -433,6 +442,8 @@ export function HotelResultsExperience({
   const hotelSortMenuRef = useRef<HTMLDivElement | null>(null);
   const hotelSortTriggerRef = useRef<HTMLButtonElement | null>(null);
   const hotelSortOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const mobileShortcutMenuContentRef = useRef<HTMLDivElement | null>(null);
+  const mobileShortcutTriggerRef = useRef<HTMLButtonElement | null>(null);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
   const searchApplyingTimeoutRef = useRef<number | null>(null);
   const filterScrollbarTimeoutRef = useRef<number | null>(null);
@@ -1468,6 +1479,225 @@ export function HotelResultsExperience({
     };
   }, [hotelSortMenuOpen]);
 
+  const closeMobileShortcutMenu = useCallback((returnFocus = false) => {
+    setMobileShortcutMenu(null);
+    setMobileShortcutMenuPosition(null);
+    if (returnFocus) {
+      mobileShortcutTriggerRef.current?.focus({ preventScroll: true });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!mobileShortcutMenu) return;
+
+    function handlePointerDown(event: MouseEvent) {
+      if (mobileShortcutMenuContentRef.current?.contains(event.target as Node)) {
+        return;
+      }
+      closeMobileShortcutMenu();
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") closeMobileShortcutMenu(true);
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    const handleResize = () => closeMobileShortcutMenu();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [closeMobileShortcutMenu, mobileShortcutMenu]);
+
+  function openMobileShortcutMenu(
+    menu: MobileHotelShortcutMenu,
+    requestedWidth: number,
+    trigger: HTMLButtonElement,
+  ) {
+    if (mobileShortcutMenu === menu) {
+      closeMobileShortcutMenu();
+      return;
+    }
+
+    const rect = trigger.getBoundingClientRect();
+    const gutter = 16;
+    const width = Math.min(requestedWidth, window.innerWidth - gutter * 2);
+    const left = Math.min(
+      Math.max(gutter, rect.left),
+      window.innerWidth - width - gutter,
+    );
+    mobileShortcutTriggerRef.current = trigger;
+    setMobileShortcutMenu(menu);
+    setMobileShortcutMenuPosition({ top: rect.bottom + 8, left, width });
+  }
+
+  function renderMobileHotelShortcuts() {
+    const shortcutButtonClass =
+      "focus-ring inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[11px] border border-[#D8E1EC] bg-white px-3.5 text-[14px] font-semibold text-[#142033] transition hover:border-[#B9C8D9] hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
+    const menuItemClass =
+      "flex min-h-11 w-full items-center justify-between gap-2 rounded-[9px] px-2.5 text-left text-[14px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
+    const starOptions: HotelStarRatingSelection[] = [
+      ALL_HOTEL_STAR_RATINGS,
+      5,
+      4,
+      3,
+      2,
+      1,
+    ];
+    const starLabel =
+      selectedStarRating === ALL_HOTEL_STAR_RATINGS
+        ? "Stars"
+        : formatHotelRating(selectedStarRating, t, locale);
+    const amenitiesLabel = selectedFilters.facilities.length
+      ? `Amenities (${selectedFilters.facilities.length})`
+      : "Amenities";
+
+    const trigger = (
+      menu: MobileHotelShortcutMenu,
+      label: string,
+      width: number,
+    ) => (
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={mobileShortcutMenu === menu}
+        className={shortcutButtonClass}
+        onClick={(event) => {
+          event.stopPropagation();
+          openMobileShortcutMenu(menu, width, event.currentTarget);
+        }}
+      >
+        <span>{label}</span>
+        <ChevronDown
+          aria-hidden="true"
+          className={cn(
+            "h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform",
+            mobileShortcutMenu === menu && "rotate-180",
+          )}
+        />
+      </button>
+    );
+
+    const menu =
+      mobileShortcutMenu &&
+      mobileShortcutMenuPosition &&
+      typeof document !== "undefined"
+        ? createPortal(
+            <div
+              ref={mobileShortcutMenuContentRef}
+              role="menu"
+              style={{ position: "fixed", ...mobileShortcutMenuPosition }}
+              className="z-[90] max-h-72 overflow-y-auto rounded-[12px] border border-[#D8E1EC] bg-white p-1 shadow-[0_14px_32px_-18px_rgba(15,23,42,0.28)]"
+              onClick={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
+            >
+              {mobileShortcutMenu === "sort"
+                ? hotelSortOptions.map((option) => {
+                    const selected = option.value === hotelSummarySortMode;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={selected}
+                        className={cn(
+                          menuItemClass,
+                          selected
+                            ? "bg-[#F7FAFF] text-[#004BB8]"
+                            : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
+                        )}
+                        onClick={() => {
+                          updateHotelSummarySortMode(option.value);
+                          closeMobileShortcutMenu(true);
+                        }}
+                      >
+                        <span className="truncate">{option.label}</span>
+                        {selected ? <Check className="h-4 w-4 shrink-0" aria-hidden="true" /> : null}
+                      </button>
+                    );
+                  })
+                : null}
+              {mobileShortcutMenu === "stars"
+                ? starOptions.map((rating) => {
+                    const selected = selectedStarRating === rating;
+                    const label =
+                      rating === ALL_HOTEL_STAR_RATINGS
+                        ? t("recentSearchesFilterAll") || "All"
+                        : formatHotelRating(rating, t, locale);
+                    return (
+                      <button
+                        key={rating}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={selected}
+                        className={cn(menuItemClass, selected ? "bg-[#F7FAFF] text-[#004BB8]" : "text-slate-700 hover:bg-slate-50")}
+                        onClick={() => {
+                          updateSelectedStarRating(rating);
+                          closeMobileShortcutMenu(true);
+                        }}
+                      >
+                        <span>{label}</span>
+                        <span className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                          {formatHotelCount(starRatingCounts[rating], locale)}
+                          {selected ? <Check className="h-3.5 w-3.5 text-[#004BB8]" aria-hidden="true" /> : null}
+                        </span>
+                      </button>
+                    );
+                  })
+                : null}
+              {mobileShortcutMenu === "amenities"
+                ? filterOptions.facilities.map((option) => {
+                    const selected = selectedFilters.facilities.includes(option.value);
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        role="menuitemcheckbox"
+                        aria-checked={selected}
+                        className={cn(menuItemClass, selected ? "bg-[#F7FAFF] text-[#004BB8]" : "text-slate-700 hover:bg-slate-50")}
+                        onClick={() => toggleFilter("facilities", option.value)}
+                      >
+                        <span className="truncate">{option.label}</span>
+                        <span className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                          {formatHotelCount(option.count, locale)}
+                          {selected ? <Check className="h-3.5 w-3.5 text-[#004BB8]" aria-hidden="true" /> : null}
+                        </span>
+                      </button>
+                    );
+                  })
+                : null}
+            </div>,
+            document.body,
+          )
+        : null;
+
+    return (
+      <>
+        <div
+          data-mobile-hotel-shortcuts
+          className="w-full min-w-0 overflow-x-auto pb-1 pe-3 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden"
+          onScroll={() => closeMobileShortcutMenu()}
+        >
+          <div className="flex w-max flex-nowrap items-center gap-2">
+            <button type="button" className={shortcutButtonClass} onClick={() => setFiltersOpen(true)}>
+              <SlidersHorizontal className="h-4 w-4 text-[#004BB8]" strokeWidth={2.2} aria-hidden="true" />
+              <span>Filter</span>
+              {activeFilterCount ? <span className="ms-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] text-[#004BB8]">{activeFilterCount}</span> : null}
+            </button>
+            {trigger("sort", currentSortLabel, 190)}
+            {trigger("stars", starLabel, 190)}
+            {trigger("amenities", amenitiesLabel, 240)}
+          </div>
+        </div>
+        {menu}
+      </>
+    );
+  }
+
   function renderDesktopMinimizedHotelSearchBar() {
     const compactSectionClass =
       "flex h-[56px] min-w-0 items-center gap-2.5 border-r border-slate-200/85 px-3 text-start outline-none transition-colors hover:bg-slate-50/80 focus:outline-none focus-visible:outline-none";
@@ -1650,68 +1880,47 @@ export function HotelResultsExperience({
       className={guided ? "mt-6 min-w-0" : "flex-1 overflow-x-clip bg-[#f6f8fb] pb-8"}
       {...(guided && !error ? { role: "region", "aria-labelledby": "deals-guided-hotel-results-heading" } : {})}
     >
-      {!guided ? <div
+      {!guided ? <section
         className={cn(
-          "sticky top-0 z-50 border-b border-slate-200/70 bg-[#f6f8fb]/95 px-4 py-2 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur sm:hidden",
+          "relative z-40 bg-white pb-0 pt-0 sm:hidden",
           mobileHotelSearchOpen && "hidden",
         )}
+        aria-label="Hotel search controls"
       >
-        <HotelSearchBar
-          key={`mobile-controls-${activeMobileHotelSearchKey}`}
-          idPrefix="hotel-results-mobile-controls"
-          initialDestination={activeMobileHotelSearchDraft.destination}
-          initialCheckIn={activeMobileHotelSearchDraft.checkIn}
-          initialCheckOut={activeMobileHotelSearchDraft.checkOut}
-          initialGuests={activeMobileHotelSearchDraft.guests}
-          initialRooms={activeMobileHotelSearchDraft.rooms}
-          initialSort={body.sort}
-          errorRole="alert"
-          compact
-          mobileLayout="controls"
-          onOpenFilters={() => setFiltersOpen(true)}
-          onOpenMobileSearch={openMobileHotelSearch}
-          onMobileDraftChange={updateMobileHotelSearchDraft}
-          onSubmitStart={triggerSearchApplying}
-        />
-        <div
-          className="mt-2 flex min-w-0 items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          aria-label={t("hotelResults.summaryAria")}
-        >
-          <button
-            type="button"
-            onClick={() => setFiltersOpen(true)}
-            className="focus-ring inline-flex h-11 shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-bold text-slate-800 shadow-sm transition-colors hover:border-[#004BB8]/25 hover:text-[#004BB8]"
-          >
-            <SlidersHorizontal aria-hidden="true" className="h-4 w-4 text-[#004BB8]" />
-            <span>{t("filters")}</span>
-            {activeFilterCount ? (
-              <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[#004BB8] px-1.5 text-xs leading-5 text-white">
-                {activeFilterCount}
-              </span>
-            ) : null}
-          </button>
-          <label className="focus-within:ring-ring inline-flex h-11 shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-bold text-slate-900 shadow-sm focus-within:ring-2 focus-within:ring-offset-2">
-            <span className="sr-only">{t("sortBy") || "Sort by"}</span>
-            <select
-              aria-label={t("sortBy") || "Sort by"}
-              value={hotelSummarySortMode}
-              onChange={(event) =>
-                updateHotelSummarySortMode(
-                  event.target.value as HotelSummarySortMode,
-                )
-              }
-              className="h-full cursor-pointer appearance-none bg-transparent pe-5 outline-none"
-            >
-              {hotelSortOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown aria-hidden="true" className="-ms-5 h-4 w-4 pointer-events-none text-slate-600" />
-          </label>
+        <div className="relative translate-y-1/2">
+          <div
+            className="pointer-events-none absolute inset-x-0 top-1/2 z-0 h-px -translate-y-1/2 bg-slate-300 shadow-[0_1px_0_rgba(100,116,139,0.18)]"
+            aria-hidden="true"
+          />
+          <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch justify-center px-4">
+            <HotelSearchBar
+              key={`mobile-controls-${activeMobileHotelSearchKey}`}
+              idPrefix="hotel-results-mobile-controls"
+              initialDestination={activeMobileHotelSearchDraft.destination}
+              initialCheckIn={activeMobileHotelSearchDraft.checkIn}
+              initialCheckOut={activeMobileHotelSearchDraft.checkOut}
+              initialGuests={activeMobileHotelSearchDraft.guests}
+              initialRooms={activeMobileHotelSearchDraft.rooms}
+              initialSort={body.sort}
+              errorRole="alert"
+              className="max-w-[30rem]"
+              compact
+              mobileLayout="controls"
+              onOpenMobileSearch={openMobileHotelSearch}
+              onMobileDraftChange={updateMobileHotelSearchDraft}
+              onSubmitStart={triggerSearchApplying}
+            />
+          </div>
         </div>
-      </div> : null}
+      </section> : null}
+
+      {!guided && !mobileHotelSearchOpen ? (
+        <section className="relative z-30 px-4 pb-0 pt-12 sm:hidden" aria-label={t("filters")}>
+          {/* The shortcut renderer mirrors Flight Results and refs are only read by event handlers. */}
+          {/* eslint-disable-next-line react-hooks/refs */}
+          {renderMobileHotelShortcuts()}
+        </section>
+      ) : null}
 
       {!guided && mobileHotelSearchOpen ? (
         <div className="fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden bg-slate-50 sm:hidden">
