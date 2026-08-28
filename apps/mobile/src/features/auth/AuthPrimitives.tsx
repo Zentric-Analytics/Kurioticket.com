@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Animated, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TextInputProps, View } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Animated, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TextInputProps, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AuthIcon, IconName } from "./AuthIcon";
 
@@ -7,7 +7,7 @@ export const authColors = { blue: "#075BE8", navy: "#061237", text: "#48526A", b
 
 export function AuthButton({ label, onPress, loading, disabled, secondary, icon }: { label: string; onPress: () => void; loading?: boolean; disabled?: boolean; secondary?: boolean; icon?: ReactNode }) {
   return <Pressable accessibilityRole="button" accessibilityState={{ disabled: disabled || loading, busy: loading }} disabled={disabled || loading} onPress={onPress} style={({ pressed }) => [styles.button, secondary ? styles.secondary : styles.primary, (disabled || loading) && styles.disabled, pressed && styles.pressed]}>
-    <View style={styles.buttonContent}>{icon}<Text style={[styles.buttonText, secondary && styles.secondaryText]}>{label}</Text>{loading ? <ActivityIndicator style={styles.buttonSpinner} color={secondary ? authColors.blue : "white"} /> : null}</View>
+    <View style={styles.buttonContent}>{icon ? <View style={styles.buttonIcon}>{icon}</View> : null}<Text style={[styles.buttonText, secondary && styles.secondaryText]}>{label}</Text>{loading ? <ActivityIndicator style={styles.buttonSpinner} color={secondary ? authColors.blue : "white"} /> : null}</View>
   </Pressable>;
 }
 
@@ -36,6 +36,7 @@ export function StatusText({ children, success = false }: { children?: string; s
     if (children) {
       setDisplayed(children);
       setDisplayedSuccess(success);
+      if (success) void AccessibilityInfo.announceForAccessibility(children);
       Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true }).start();
       return;
     }
@@ -58,6 +59,6 @@ const styles = StyleSheet.create({
   focused: { borderColor: authColors.blue, borderWidth: 2 }, fieldError: { borderColor: authColors.danger }, input: { flex: 1, fontSize: 16, color: authColors.navy, paddingVertical: 0 },
   error: { minHeight: 17, color: authColors.danger, fontSize: 12 }, submitError: { minHeight: 19, color: authColors.danger, fontSize: 13, textAlign: "center" }, submitSuccess: { minHeight: 19, color: authColors.green, fontSize: 13, fontWeight: "600", textAlign: "center" },
   button: { height: 54, borderRadius: 9, justifyContent: "center", paddingHorizontal: 18 }, primary: { backgroundColor: authColors.blue }, secondary: { backgroundColor: "white", borderColor: authColors.border, borderWidth: 1 },
-  buttonContent: { width: "100%", alignItems: "center", justifyContent: "center" }, buttonSpinner: { position: "absolute", right: 0 }, buttonText: { color: "white", fontSize: 16, fontWeight: "700" }, secondaryText: { color: authColors.navy },
+  buttonContent: { width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "center" }, buttonIcon: { position: "absolute", left: 0, alignItems: "center", justifyContent: "center" }, buttonSpinner: { position: "absolute", right: 0 }, buttonText: { color: "white", fontSize: 16, fontWeight: "700" }, secondaryText: { color: authColors.navy },
   disabled: { opacity: .48 }, pressed: { opacity: .78 }, security: { flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 7, marginTop: 8 }, securityText: { color: authColors.green, fontSize: 13, fontWeight: "600" },
 });
