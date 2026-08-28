@@ -858,7 +858,7 @@ function FlightResultsPagination({
   return (
     <nav
       aria-label="Flight results pages"
-      className="flight-results-pagination mt-5 flex min-w-0 items-center justify-center rounded-xl border border-slate-200 bg-white p-2 shadow-sm"
+      className="flight-results-pagination mb-6 mt-6 flex min-w-0 items-center justify-center"
     >
       <button type="button" aria-label="Previous flight results page" disabled={currentPage === 1} onClick={() => onPageChange(currentPage - 1)} className="flight-pagination-control">
         <ChevronLeft className="h-4 w-4" aria-hidden="true" />

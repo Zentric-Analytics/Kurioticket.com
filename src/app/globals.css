@@ -1150,15 +1150,16 @@ textarea {
   justify-content: center;
   border: 1px solid transparent;
   border-radius: 0.5rem;
-  color: #004bb8;
+  background: transparent;
+  color: #07133b;
   font-size: 0.875rem;
-  font-weight: 700;
+  font-weight: 600;
   transition: background-color 150ms, border-color 150ms, color 150ms;
 }
 
 .flight-pagination-control:hover:not(:disabled) { background: #f1f5f9; }
 .flight-pagination-control:focus-visible { outline: 2px solid rgb(0 75 184 / 35%); outline-offset: 2px; }
-.flight-pagination-control[aria-current="page"] { border-color: #334155; background: #f8fafc; color: #0f172a; }
+.flight-pagination-control[aria-current="page"] { background: transparent; border-color: transparent; color: #004bb8; font-weight: 700; }
 .flight-pagination-control:disabled { cursor: not-allowed; color: #94a3b8; }
 .flight-pagination-ellipsis { display: inline-flex; min-width: 24px; justify-content: center; color: #64748b; }
 
