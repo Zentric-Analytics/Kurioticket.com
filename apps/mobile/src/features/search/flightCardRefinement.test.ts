@@ -138,13 +138,14 @@ test("flight loading skeleton mirrors the horizontal metadata footer", () => {
   assert.doesNotMatch(flightSkeleton, /skeletonButton/);
 });
 
-test("flight card keeps long prices single-line in the stable footer action column", () => {
+test("flight card keeps long prices single-line in the full-width fare row", () => {
   assert.match(card, /style=\{s0\.flightMain\}/);
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch" \}/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center" \}/);
   assert.match(source, /metadataItem: \{ flex: 1, minWidth: 0/);
-  assert.match(source, /actionColumn: \{ width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 3 \}/);
+  assert.match(source, /fareRow: \{ width: "100%", paddingTop: 10, flexDirection: "row", justifyContent: "flex-end", alignItems: "center" \}/);
+  assert.doesNotMatch(source, /actionColumn:/);
   assert.doesNotMatch(source, /priceBox:/);
 
   for (const formattedPrice of ["₦89,482", "₦837,706", "₦12,450,000", "US$1,850", "CA$2,310", "A$2,310", "£1,250", "€1,099"]) {

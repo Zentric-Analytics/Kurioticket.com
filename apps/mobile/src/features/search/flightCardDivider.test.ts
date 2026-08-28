@@ -10,7 +10,7 @@ const footerStyles = source.slice(source.indexOf("  fareRow:"), source.indexOf("
 test("the flight card has one subtle theme-aware horizontal metadata divider", () => {
   assert.match(flightCard, /<View style=\{s0\.fareRow\}>[\s\S]*<View style=\{\[s0\.metadataDivider, \{ backgroundColor: theme\.border \}\]\} \/>[\s\S]*<View style=\{s0\.metadataRow\}>/);
   assert.equal(flightCard.match(/s0\.metadataDivider/g)?.length, 1);
-  assert.match(footerStyles, /metadataDivider: \{ width: "100%", height: StyleSheet\.hairlineWidth, marginTop: 3, marginBottom: 4 \}/);
+  assert.match(footerStyles, /metadataDivider: \{ width: "100%", height: StyleSheet\.hairlineWidth, marginTop: 6, marginBottom: 4 \}/);
   assert.doesNotMatch(footerStyles, /borderLeftWidth|borderRightWidth/);
 });
 
