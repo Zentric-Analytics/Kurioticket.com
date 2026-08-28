@@ -17,9 +17,10 @@ test("package airport backdrop is separate and keyboard behavior is preserved", 
   assert.doesNotMatch(airport.slice(airport.indexOf("<KeyboardAvoidingView"), sheet), /<Pressable[^>]*>\s*<Animated\.View accessibilityViewIsModal/);
 });
 
-test("package airport uses retained title close header and Done as its only bottom action", () => {
+test("package airport uses retained title close header without a bottom action", () => {
   assert.match(airport, /<PickerSheetHeader title=\{context\.title\} onClose=\{onClose\}[^>]+closeLabel=/);
-  assert.match(airport, /<PrimaryButton label="Done"[^>]+disabled=\{!draft\}/);
+  assert.doesNotMatch(airport, /<PrimaryButton label="Done"/);
+  assert.match(airport, /setDraft\(airport\);setQuery\(value\)[\s\S]*?onChoose\(airport\)/);
   assert.doesNotMatch(airport, />Cancel<|label="Cancel"/);
 });
 
