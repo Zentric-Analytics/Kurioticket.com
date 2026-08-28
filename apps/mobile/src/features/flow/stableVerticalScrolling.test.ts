@@ -40,7 +40,7 @@ test("flight results use native sticky filters and an opacity-only animated scro
   const listStart = source.indexOf("<Animated.SectionList");
   const owner = source.slice(listStart, source.indexOf("/>", source.indexOf("windowSize", listStart)) + 2);
   for (const prop of stableProps) assert.match(owner, prop);
-  assert.match(owner, /ListHeaderComponent=\{status === "loading" \? null : animatedFlightDateStrip\}/);
+  assert.match(owner, /ListHeaderComponent=\{status === "loading" \? \([\s\S]*?<FlightLoadingExperience[\s\S]*?\) : animatedFlightDateStrip\}/);
   assert.match(owner, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
   assert.match(owner, /onScroll=\{Animated\.event[\s\S]*?useNativeDriver: true/);
   assert.match(source, /<Animated\.View[\s\S]*?style=\{\{ opacity: flightDateStripOpacity \}\}/);
