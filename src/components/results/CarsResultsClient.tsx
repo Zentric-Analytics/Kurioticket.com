@@ -75,6 +75,7 @@ import {
   MobileCarTimePickerDialog,
 } from "@/components/search/CarsPickerContent";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
+import { MobileResultsEditSheet } from "@/components/search/MobileResultsEditSheet";
 import {
   carsDesktopPopoverClassName,
   useCarsDesktopPopover,
@@ -1586,35 +1587,19 @@ export function CarsResultsClient({
         doneLabel={t("done")}
       />
 
-      <div
-        className={cn(
-          "fixed inset-0 z-[10000] min-h-[100dvh] overflow-y-auto bg-slate-50 px-4 py-4 sm:hidden",
-          mobileSearchOpen ? "block" : "hidden",
-        )}
+      <MobileResultsEditSheet
+        open={mobileSearchOpen}
+        title={t("carsResults.editSearch")}
+        launcherRef={mobileSearchLauncherRef}
+        nestedLayerOpen={mobilePicker !== null}
+        onClose={() => cancelMobileSearchDrawer()}
+        lockBodyScroll={false}
+        contentClassName="pb-[calc(1rem+env(safe-area-inset-bottom))]"
       >
-        <div className="mx-auto flex min-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col gap-4 pb-[env(safe-area-inset-bottom)]">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">
-                {t("carsResults.editSearch")}
-              </p>
-              <h2 className="mt-1 text-base font-bold text-slate-950">
-                {t("carsResults.carRentalSearch")}
-              </h2>
-            </div>
-            <Button
-              type="button"
-              variant="secondary"
-              aria-label={t("carsResults.closeEditSearch")}
-              className="h-10 w-10 rounded-full border-slate-200 bg-white p-0 text-slate-700 shadow-sm"
-              onClick={() => cancelMobileSearchDrawer()}
-            >
-              <X className="h-5 w-5" aria-hidden="true" />
-            </Button>
-          </div>
+        <div className="mx-auto w-full max-w-xl">
           {mobileSearchOpen ? renderCarsSearchForm("mobile") : null}
         </div>
-      </div>
+      </MobileResultsEditSheet>
 
       <div
         className={cn(

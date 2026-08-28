@@ -198,6 +198,7 @@ export type HotelSearchBarProps = {
   errorRole?: "alert" | "status";
   compact?: boolean;
   mobileLayout?: "default" | "controls" | "drawer";
+  mobileResultsSheet?: boolean;
   mobileLandingPresentation?: boolean;
   onOpenFilters?: () => void;
   onOpenMobileSearch?: () => void;
@@ -226,6 +227,7 @@ export function HotelSearchBar({
   errorRole,
   compact = false,
   mobileLayout = "default",
+  mobileResultsSheet = false,
   mobileLandingPresentation = false,
   onOpenFilters,
   onOpenMobileSearch,
@@ -985,7 +987,7 @@ export function HotelSearchBar({
         )}
         noValidate
       >
-        {compact ? (
+        {compact && !mobileResultsSheet ? (
           <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-3 pt-[calc(0.85rem+env(safe-area-inset-top))] sm:hidden">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-base font-bold tracking-tight text-slate-950">
@@ -1012,7 +1014,7 @@ export function HotelSearchBar({
                 ? cn(
                     "rounded-xl border border-slate-300 bg-slate-50 p-2 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:rounded-[1.35rem] sm:border-slate-200/90 sm:bg-white sm:p-1.5 sm:shadow-[0_16px_36px_-24px_rgba(15,23,42,0.32)] sm:ring-1 sm:ring-slate-950/[0.02] lg:p-1",
                     mobileSearchOpen &&
-                      "min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-none border-0 bg-slate-50 px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-none",
+                      cn("min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-none border-0 bg-slate-50 px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-none", mobileResultsSheet && "overflow-visible bg-transparent p-0 pb-0"),
                   )
                 : "rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
           )}
