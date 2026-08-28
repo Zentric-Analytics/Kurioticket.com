@@ -49,7 +49,7 @@ test("every supported destination renders thirty distinct static hotel results",
     assert.equal(results.length, 30, city);
     assert.equal(new Set(results.map((hotel) => hotel.id)).size, 30, city);
     assert.equal(new Set(results.map((hotel) => hotel.name)).size, 30, city);
-    assert.ok(new Set(results.map((hotel) => hotel.imageUrl)).size >= 8, city);
+    assert.equal(new Set(results.map((hotel) => hotel.imageUrl)).size, 30, city);
   }
 });
 

@@ -57,26 +57,48 @@ const staticHotelGalleryImages = [
 // The catalogue owns image selection so result components can remain provider-agnostic.
 // A stable rotation gives every property a consistent lead image and gallery while
 // avoiding the repeated destination hero that made the fixture look duplicated.
-const curatedHotelResultImages = [
-  "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1000&q=85",
-  "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1000&q=85",
-  "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1000&q=85",
-  "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1000&q=85",
-  "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1000&q=85",
-  "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1000&q=85",
+export const STATIC_HOTEL_FIXTURE_GALLERY_IMAGES = [
   "https://images.unsplash.com/photo-1445019980597-93fa8acb246c?auto=format&fit=crop&w=1000&q=85",
   "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1000&q=85",
   "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=1000&q=85",
   "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1568084680786-a84f91d1153c?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1560200353-ce0a76b1d438?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1601918774946-25832a4be0d6?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1600566753051-f0b89df2dd90?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1615529162924-f8605388461d?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1600566752355-35792bedcfea?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1600607688960-e095ff83135c?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1600566752229-250ed79470f8?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1600607688066-890987f18a86?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1600585152915-d208bec867a1?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1600607687644-c7171b42498f?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1600566752734-2a0cd65f0d4e?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1600607687929-6a6b8f7e9c8b?auto=format&fit=crop&w=1000&q=85",
 ] as const;
 
-function withCuratedResultGallery(hotel: StaticHotelRecord): StaticHotelRecord {
-  const offset = [...hotel.id].reduce(
-    (total, character) => total + character.charCodeAt(0),
-    0,
-  ) % curatedHotelResultImages.length;
-  const imageUrls = curatedHotelResultImages.map(
-    (_image, index, images) => images[(index + offset) % images.length]!,
+function withCuratedResultGallery(
+  hotel: StaticHotelRecord,
+  destinationIndex: number,
+): StaticHotelRecord {
+  const offset = destinationIndex % STATIC_HOTEL_FIXTURE_GALLERY_IMAGES.length;
+  const imageUrls = Array.from({ length: 10 }, (_, index) =>
+    STATIC_HOTEL_FIXTURE_GALLERY_IMAGES[
+      (offset + index) % STATIC_HOTEL_FIXTURE_GALLERY_IMAGES.length
+    ]!,
   );
 
   return { ...hotel, imageUrl: imageUrls[0]!, imageUrls };
@@ -1583,10 +1605,15 @@ const expandedStaticHotelProperties = catalogueExpansions.flatMap((destination) 
 
 // Each property owns its planning facts and deterministic gallery. The result
 // layer can later be replaced by provider records without changing HotelCard.
+const hotelImageIndexByCity = new Map<string, number>();
 export const staticHotelCatalogue: readonly StaticHotelRecord[] = [
   ...staticHotelProperties,
   ...expandedStaticHotelProperties,
-].map(withCuratedResultGallery);
+].map((hotel) => {
+  const destinationIndex = hotelImageIndexByCity.get(hotel.city) ?? 0;
+  hotelImageIndexByCity.set(hotel.city, destinationIndex + 1);
+  return withCuratedResultGallery(hotel, destinationIndex);
+});
 
 export const supportedStaticHotelDestinations = [
   "London",
