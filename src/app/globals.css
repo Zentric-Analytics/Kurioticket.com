@@ -89,7 +89,7 @@ html {
   min-width: 320px;
   min-height: 100%;
   min-height: 100dvh;
-  background: var(--background);
+  background: #ffffff;
   scroll-behavior: smooth;
 }
 
@@ -98,7 +98,7 @@ body {
   min-height: 100%;
   min-height: 100dvh;
   margin: 0;
-  background: var(--background);
+  background: #ffffff;
   color: var(--foreground);
   font-family: var(--font-sans);
 }
