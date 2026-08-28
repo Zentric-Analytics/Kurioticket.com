@@ -50,7 +50,7 @@ export async function POST(request: Request) {
 
   const user = await getPrisma().user.findUnique({
     where: { id: auth.user.id },
-    select: { id: true, email: true, emailVerified: true, name: true, status: true },
+    select: { id: true, email: true, emailVerified: true, name: true, status: true, passwordHash: true },
   });
   if (!user?.email || user.status !== "ACTIVE") return mobileUnauthorized();
   if (!user.emailVerified) {
@@ -106,6 +106,13 @@ export async function POST(request: Request) {
   if (!challenge || challenge.identifier !== identifier || challenge.expires <= new Date()) {
     if (challenge) await getPrisma().verificationToken.deleteMany({ where: { token } });
     return NextResponse.json({ error: "That verification code is incorrect or expired." }, { status: 400 });
+  }
+
+  if (user.passwordHash && await bcrypt.compare(parsed.data.newPassword, user.passwordHash)) {
+    return NextResponse.json(
+      { error: "Choose a new password that is different from your current password." },
+      { status: 400 },
+    );
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.newPassword, 12);
