@@ -6,6 +6,8 @@ const picker = readFileSync("src/components/search/MobileTravelerCabinPicker.tsx
 const shell = readFileSync("src/components/search/FlightMobilePickerShell.tsx", "utf8");
 const homepage = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
 const standalone = readFileSync("src/components/search/StandaloneFlightSearchForm.tsx", "utf8");
+const drawer = readFileSync("src/components/search/FlightEditSearchDrawer.tsx", "utf8");
+const details = readFileSync("src/components/results/flightDetails/StandaloneFlightDetails.tsx", "utf8");
 
 test("shared picker preserves approved traveler order, descriptions, and icon system", () => {
   assert.ok(picker.indexOf('key: "adults"') < picker.indexOf('key: "children"'));
@@ -47,19 +49,22 @@ test("tip and accessible counters follow the approved contract", () => {
   assert.match(picker, /aria-live="polite"/);
 });
 
-test("shared picker preserves default sizing and offers compact content with accessible controls", () => {
-  assert.match(picker, /density\?: "default" \| "compact"/);
-  assert.match(picker, /density = "default"/);
-  assert.match(picker, /compact \? "min-h-\[72px\] px-3" : "min-h-\[82px\] px-\[14px\]"/);
-  assert.match(picker, /compact \? "h-9 w-9" : "h-10 w-10"/);
-  assert.match(picker, /compact \? "h-5 w-5" : "h-\[22px\] w-\[22px\]"/);
-  assert.match(picker, /compact \? "text-\[13px\]" : "text-\[14px\]"/);
-  assert.match(picker, /compact \? "text-\[11px\] leading-\[15px\]" : "text-\[12px\] leading-\[16px\]"/);
+test("shared picker uses one canonical moderate density with accessible controls", () => {
+  assert.doesNotMatch(picker, /density\?:|const compact/);
+  assert.match(picker, /min-h-\[70px\]/);
+  assert.match(picker, /h-9 w-9 shrink-0/);
+  assert.match(picker, /h-\[19px\] w-\[19px\]/);
+  assert.match(picker, /text-\[13px\] font-bold/);
+  assert.match(picker, /text-\[11px\] font-medium leading-\[15px\]/);
   assert.match(picker, /inline-flex h-11 w-11 items-center/);
-  assert.match(picker, /compact \? "h-\[74px\]" : "h-\[86px\]"/);
-  assert.match(picker, /compact \? "h-5 w-5" : "h-\[23px\] w-\[23px\]"/);
-  assert.match(picker, /compact \? "gap-2 p-2.5" : "gap-2.5 p-3"/);
-  assert.match(picker, /compact \? "h-\[18px\] w-\[18px\]" : "h-5 w-5"/);
+  assert.match(picker, /inline-flex h-9 w-9 items-center/);
+  assert.match(picker, /text-\[14px\] font-bold tabular-nums/);
+  assert.match(picker, /grid h-\[72px\] grid-cols-3/);
+  assert.match(picker, /Armchair className="h-\[19px\] w-\[19px\]"/);
+  assert.match(picker, /mt-3 flex items-center gap-2.*p-2\.5/);
+  assert.match(picker, /h-\[34px\] w-\[34px\] shrink-0/);
+  assert.match(picker, /Lightbulb className="h-\[18px\] w-\[18px\]"/);
+  assert.match(picker, /text-\[12px\] font-medium/);
 });
 
 test("traveler icons and enabled counters use restrained Kurioticket blue", () => {
@@ -70,8 +75,8 @@ test("traveler icons and enabled counters use restrained Kurioticket blue", () =
 });
 
 test("cabin segments own overlapping borders while the clipped parent has no competing outline", () => {
-  assert.match(picker, /grid grid-cols-3 overflow-hidden rounded-\[10px\] bg-white/);
-  assert.doesNotMatch(picker, /grid grid-cols-3[^\n"]*border border-slate-200/);
+  assert.match(picker, /grid h-\[72px\] grid-cols-3 overflow-hidden rounded-\[10px\] bg-white/);
+  assert.doesNotMatch(picker, /grid h-\[72px\] grid-cols-3[^\n"]*border border-slate-200/);
   assert.match(picker, /gap-1\.5 border border-slate-200 bg-white px-1/);
   assert.match(picker, /index > 0 && "-ms-px"/);
   assert.doesNotMatch(picker, /border-s border-slate-200/);
@@ -109,9 +114,15 @@ test("shell supports both navigation and close-only centered headers", () => {
 test("homepage and standalone mobile pickers share draft-only presentation and Done commit", () => {
   for (const source of [homepage, standalone]) {
     assert.match(source, /<MobileTravelerCabinPicker/);
+    assert.doesNotMatch(source, /<MobileTravelerCabinPicker[^>]*density=/);
+    assert.match(source, /contentClassName="bg-\[#fcfdfe\] px-4 py-4"/);
     assert.match(source, /headerVariant="close"/);
     assert.match(source, /pickerMarker="traveler-cabin"/);
     assert.match(source, /applyTravelersDraft\(false\)/);
     assert.match(source, /onClose=\{(?:cancelTravelersDraft|closeTravelersMobilePicker)\}/);
   }
+  assert.match(drawer, /<MobileTravelerCabinPicker/);
+  assert.doesNotMatch(drawer, /travelerPickerDensity|<MobileTravelerCabinPicker[^>]*density=/);
+  assert.match(details, /<FlightEditSearchDrawer/);
+  assert.doesNotMatch(details, /travelerPickerDensity|density=/);
 });

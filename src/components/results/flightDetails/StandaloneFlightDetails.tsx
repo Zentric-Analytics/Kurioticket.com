@@ -256,7 +256,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
           <TripSidebar tripType={available.search.tripType} legs={legs} route={route} date={date} tripLine={tripLine} travelers={travelers.label} travelerCount={travelers.count} selectedFare={selectedFare?.label || selectedOffer.cabinClass || ""} fareTerms={selectedFare?.distinguishingTerms ?? []} price={providerPrice} locale={locale} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={() => continueToOffer(selectedOffer.id)} error={error || notice} />
         </div>
       </div>
-      <FlightEditSearchDrawer open={editSearchOpen} presentation="bottom-sheet" travelerPickerDensity="compact" launcherRef={editSearchLauncherRef} initialValue={{ ...available.search, cabinClass: available.search.cabinClass }} onClose={() => setEditSearchOpen(false)} onSearch={submitEditedSearch} />
+      <FlightEditSearchDrawer open={editSearchOpen} presentation="bottom-sheet" launcherRef={editSearchLauncherRef} initialValue={{ ...available.search, cabinClass: available.search.cabinClass }} onClose={() => setEditSearchOpen(false)} onSearch={submitEditedSearch} />
     </main>
   );
 }
