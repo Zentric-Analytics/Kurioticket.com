@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const source = readFileSync(new URL("./CarResultCard.tsx", import.meta.url), "utf8");
+const source = readFileSync(
+  new URL("./CarResultCard.tsx", import.meta.url),
+  "utf8",
+);
 const between = (startMarker: string, endMarker: string) => {
   const start = source.indexOf(startMarker);
   const end = source.indexOf(endMarker, start);
@@ -12,17 +15,23 @@ const between = (startMarker: string, endMarker: string) => {
 };
 
 test("standalone mobile uses a marked 40/60 image and information row", () => {
-  const main = between("data-car-card-mobile-main", "data-car-card-mobile-conversion");
+  const main = between(
+    "data-car-card-mobile-main",
+    "data-car-card-mobile-conversion",
+  );
   assert.match(main, /grid-cols-\[40%_minmax\(0,1fr\)\]/);
   assert.match(main, /data-car-card-mobile-image/);
   assert.match(main, /data-car-card-mobile-information/);
-  assert.match(main, /fit="contain"/);
+  assert.match(main, /fit="cover"/);
   assert.match(main, /sizes="\(max-width: 767px\) 40vw, 250px"/);
   assert.doesNotMatch(main, /col-span-2/);
 });
 
 test("mobile identity and exactly four readable primary specs live beside the image", () => {
-  const main = between("data-car-card-mobile-main", "data-car-card-mobile-conversion");
+  const main = between(
+    "data-car-card-mobile-main",
+    "data-car-card-mobile-conversion",
+  );
   assert.match(main, /\{car\.categoryLabel\}/);
   assert.match(main, /\{badge && BadgeIcon &&/);
   assert.match(main, /text-\[18px\]/);
@@ -30,11 +39,18 @@ test("mobile identity and exactly four readable primary specs live beside the im
   assert.match(main, /\{car\.pickupLocation\}/);
   assert.match(main, /data-car-card-mobile-specs/);
   assert.match(main, /grid-cols-2/);
-  assert.match(source, /const mobilePrimarySpecs = getMobileCarPrimarySpecs\(car\)/);
+  assert.match(source, /rounded-\[13px\][^"]*md:rounded-2xl/);
+  assert.match(
+    source,
+    /const mobilePrimarySpecs = getMobileCarPrimarySpecs\(car\)/,
+  );
 });
 
 test("mobile conversion strip is full width, divided once, and retains accessible pricing/action", () => {
-  const conversion = between("data-car-card-mobile-conversion", "guidedPlanning ? \"grid\"");
+  const conversion = between(
+    "data-car-card-mobile-conversion",
+    'guidedPlanning ? "grid"',
+  );
   assert.match(conversion, /border-t/);
   assert.match(conversion, /totalDisplayPrice\.formatted/);
   assert.match(conversion, /dailyDisplayPrice\.formatted/);

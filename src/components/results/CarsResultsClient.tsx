@@ -1221,7 +1221,12 @@ export function CarsResultsClient({
                 }
                 value={pickupLocation}
                 placeholder={t("carsSearch.pickupLocationPlaceholder")}
-                onClick={() => openMobilePickerWithKeyboard(() => setMobilePicker("pickupLocation"), "cars-results-pickup-mobile-input")}
+                onClick={() =>
+                  openMobilePickerWithKeyboard(
+                    () => setMobilePicker("pickupLocation"),
+                    "cars-results-pickup-mobile-input",
+                  )
+                }
                 className="lg:rounded-s-xl"
               />
             ) : (
@@ -1270,7 +1275,12 @@ export function CarsResultsClient({
                   }
                   value={dropoffLocation}
                   placeholder={t("carsSearch.returnLocationPlaceholder")}
-                  onClick={() => openMobilePickerWithKeyboard(() => setMobilePicker("returnLocation"), "cars-results-return-mobile-input")}
+                  onClick={() =>
+                    openMobilePickerWithKeyboard(
+                      () => setMobilePicker("returnLocation"),
+                      "cars-results-return-mobile-input",
+                    )
+                  }
                   secondaryAction={{
                     label: t("carsResults.sameAsPickup"),
                     onClick: () => {
@@ -2432,13 +2442,25 @@ export function CarsResultsExperience({
                 </div>
               </div>
               {resultsTransitioning ? (
-                <div className="w-full space-y-4">
+                <div
+                  data-cars-results-card-list
+                  className={cn(
+                    "w-full space-y-4",
+                    !guidedPlanning && "-mx-1.5 w-auto sm:mx-0 sm:w-full",
+                  )}
+                >
                   {[0, 1, 2].map((item) => (
                     <CarCardSkeleton key={item} />
                   ))}
                 </div>
               ) : visibleResults.length ? (
-                <div className="w-full space-y-4">
+                <div
+                  data-cars-results-card-list
+                  className={cn(
+                    "w-full space-y-4",
+                    !guidedPlanning && "-mx-1.5 w-auto sm:mx-0 sm:w-full",
+                  )}
+                >
                   {visibleResults.map((car) => (
                     <CarResultCard
                       key={car.id}
