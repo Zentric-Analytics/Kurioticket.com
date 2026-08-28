@@ -94,7 +94,15 @@ test("every shared motion sheet reports its rendered height", () => {
       `${file} must measure every shared motion sheet`,
     );
   }
+});
 
+test("Flight Edit Search uses a local short top-origin reveal", () => {
   const editSearch = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
-  assert.equal(editSearch.match(/accessibilityViewIsModal onLayout=\{motion\.onSheetLayout\}/g)?.length, editSearch.match(/useSearchPickerMotion\(/g)?.length);
+  assert.doesNotMatch(editSearch, /useSearchPickerMotion/);
+  assert.match(editSearch, /EDIT_SEARCH_REVEAL_OFFSET = -36/);
+  assert.match(editSearch, /panelTranslateY, \{ toValue: 0, duration: EDIT_SEARCH_OPEN_DURATION_MS/);
+  assert.match(editSearch, /panelTranslateY, \{ toValue: EDIT_SEARCH_REVEAL_OFFSET, duration: EDIT_SEARCH_CLOSE_DURATION_MS/);
+  assert.match(editSearch, /backdrop: \{ flex: 1, justifyContent: "flex-start" \}/);
+  assert.doesNotMatch(editSearch, /justifyContent: "flex-end"|borderTopLeftRadius|borderTopRightRadius/);
+  assert.match(editSearch, /borderBottomLeftRadius: 24, borderBottomRightRadius: 24/);
 });
