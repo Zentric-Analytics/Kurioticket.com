@@ -925,7 +925,11 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
       }
       style={({ pressed }) => [
         s0.card,
-        { backgroundColor: theme.surface, shadowColor: theme.dark ? "#000000" : "#18305B" },
+        {
+          backgroundColor: theme.surface,
+          borderColor: theme.dark ? theme.border : "#D8E1EC",
+          shadowColor: theme.dark ? "#000000" : "#18305B",
+        },
         pressed && s0.cardPressed,
       ]}
     >
@@ -1630,14 +1634,14 @@ const s0 = StyleSheet.create({
   flightResultCount: { paddingHorizontal: 14, paddingTop: 7, fontSize: 16, lineHeight: 21, fontWeight: "800" },
   card: {
     width: "100%",
-    borderRadius: 14,
+    borderWidth: 1,
+    borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 9,
     gap: 5,
-    backgroundColor: "white",
     shadowColor: "#18305B",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.09,
+    shadowOpacity: 0.08,
     shadowRadius: 10,
     elevation: 2,
   },
