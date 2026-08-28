@@ -65,10 +65,9 @@ export function CarResultCard({
   const offer = getPrimaryCarOffer(car);
   if (!offer) return null;
   const guidedPlanning = presentation === "guided-planning";
-  const vehicleName =
-    guidedPlanning && car.orSimilar
-      ? `${car.modelName} ${planningLabels?.orSimilar ?? "or similar"}`
-      : car.modelName;
+  const vehicleName = car.orSimilar
+    ? `${car.modelName} ${guidedPlanning ? (planningLabels?.orSimilar ?? "or similar") : "or similar"}`
+    : car.modelName;
   const BadgeIcon = badge ? carResultBadgeIcons[badge] : null;
   const dailyDisplayPrice = formatDisplayPrice({
     amount: offer.pricePerDay,
@@ -98,7 +97,7 @@ export function CarResultCard({
   const mobilePrimarySpecs = getMobileCarPrimarySpecs(car);
 
   return (
-    <article className="relative w-full overflow-hidden rounded-2xl border border-[#D8E1EC] bg-white shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] transition duration-200 hover:-translate-y-0.5 hover:border-[#CBD6E2] hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]">
+    <article className="relative w-full overflow-hidden rounded-[13px] border md:rounded-2xl border-[#D8E1EC] bg-white shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] transition duration-200 hover:-translate-y-0.5 hover:border-[#CBD6E2] hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]">
       {!guidedPlanning && (
         <div className="md:hidden">
           <div
@@ -115,7 +114,8 @@ export function CarResultCard({
                 modelName={car.modelName}
                 category={car.category}
                 sizes="(max-width: 767px) 40vw, 250px"
-                fit="contain"
+                fit="cover"
+                position={car.imagePosition}
               />
             </div>
 
@@ -238,7 +238,9 @@ export function CarResultCard({
         </div>
       )}
 
-      <div className={`${guidedPlanning ? "grid" : "hidden md:grid"} grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[250px_minmax(0,1fr)_205px] xl:grid-cols-[270px_minmax(0,1fr)_205px]`}>
+      <div
+        className={`${guidedPlanning ? "grid" : "hidden md:grid"} grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[250px_minmax(0,1fr)_205px] xl:grid-cols-[270px_minmax(0,1fr)_205px]`}
+      >
         <div
           data-region="image"
           className="col-span-2 row-start-1 flex items-center border-b border-[#E2E8F0] bg-slate-50 md:col-span-1 md:col-start-1 md:row-span-2 md:row-start-1 md:border-b-0 md:border-e md:p-2.5"

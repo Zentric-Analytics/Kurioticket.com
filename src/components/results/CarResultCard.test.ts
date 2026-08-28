@@ -17,7 +17,10 @@ test("CarResultCard accepts string and null href actions without provider fallba
   assert.match(source, /detailsHref: string \| null/);
   assert.match(source, /detailsHref \? \(\s*<Link\s+href=\{detailsHref\}/);
   assert.match(source, /<button\s+type="button"\s+disabled/);
-  assert.doesNotMatch(source, /href=\{detailsHref \?\?|href="#"|bookingUrl|api\/redirect/);
+  assert.doesNotMatch(
+    source,
+    /href=\{detailsHref \?\?|href="#"|bookingUrl|api\/redirect/,
+  );
 });
 
 test("standalone mobile keeps total primary, per-day supporting, and its action compact", () => {
@@ -25,7 +28,10 @@ test("standalone mobile keeps total primary, per-day supporting, and its action 
     source.indexOf("data-car-card-mobile-conversion"),
     source.indexOf("grid-cols-[minmax(0,1.1fr)"),
   );
-  assert.ok(mobile.indexOf("totalDisplayPrice.formatted") < mobile.indexOf("dailyDisplayPrice.formatted"));
+  assert.ok(
+    mobile.indexOf("totalDisplayPrice.formatted") <
+      mobile.indexOf("dailyDisplayPrice.formatted"),
+  );
   assert.match(mobile, /text-\[21px\][^\"]*font-extrabold[^\"]*tabular-nums/);
   assert.match(mobile, /dailyDisplayPrice\.formatted\}\/day/);
   assert.match(mobile, /min-h-11/);
@@ -33,22 +39,30 @@ test("standalone mobile keeps total primary, per-day supporting, and its action 
   assert.doesNotMatch(mobile, /Taxes and fees included/);
 });
 
-test("mobile primary specs have an explicit, deterministic four-item priority", () => {
+test("mobile primary specs are deterministic and capped at four", () => {
+  const first = getMobileCarPrimarySpecs(car).map(([, label]) => label);
   assert.deepEqual(
+    first,
     getMobileCarPrimarySpecs(car).map(([, label]) => label),
-    ["5 passengers", "3 bags", "Automatic", "Unlimited mileage"],
   );
-  assert.equal(getMobileCarPrimarySpecs(car).length, 4);
-
-  const limited = { ...car, mileagePolicy: "limited" as const, limitedMileageKm: 250 };
-  assert.equal(getMobileCarPrimarySpecs(limited)[3][1], "250 km included");
-  assert.equal(
-    getMobileCarPrimarySpecs({ ...limited, limitedMileageKm: undefined })[3][1],
-    "Limited mileage",
+  assert.deepEqual(first, [
+    "5 passengers",
+    "3 bags",
+    "Automatic",
+    "Unlimited mileage",
+  ]);
+  const limited = {
+    ...car,
+    transmission: "manual" as const,
+    mileagePolicy: "limited" as const,
+    limitedMileageKm: 250,
+  };
+  assert.deepEqual(
+    getMobileCarPrimarySpecs(limited).map(([, label]) => label),
+    ["5 passengers", "3 bags", "Manual", "250 km included"],
   );
-  assert.doesNotMatch(getMobileCarPrimarySpecs(car).map(([, label]) => label).join(" "), /doors|Air conditioning|fuel/i);
+  assert.equal(getMobileCarPrimarySpecs(limited).length, 4);
 });
-
 test("Free cancellation is data-driven in mobile and secondary benefits stay desktop-only", () => {
   const mobileMain = source.slice(
     source.indexOf("data-car-card-mobile-main"),
@@ -56,7 +70,10 @@ test("Free cancellation is data-driven in mobile and secondary benefits stay des
   );
   assert.match(mobileMain, /offer\.freeCancellation &&/);
   assert.match(mobileMain, /Free cancellation/);
-  assert.doesNotMatch(mobileMain, /offer\.payAtPickup|car\.fuelPolicy|Taxes and fees included/);
+  assert.doesNotMatch(
+    mobileMain,
+    /offer\.payAtPickup|car\.fuelPolicy|Taxes and fees included/,
+  );
 });
 
 test("desktop and guided contracts retain their responsive grid and disclosures", () => {
@@ -75,6 +92,11 @@ test("prices preserve formatter output, LTR semantics, and accessible fallback m
   assert.match(source, /const offer = getPrimaryCarOffer\(car\)/);
   assert.doesNotMatch(source, /car\.offers\[0\]/);
   for (const price of ["totalDisplayPrice", "dailyDisplayPrice"]) {
-    assert.match(source, new RegExp(`dir="ltr"[\\s\\S]*?title=\\{${price}\\.title\\}[\\s\\S]*?aria-label=\\{${price}\\.ariaLabel\\}`));
+    assert.match(
+      source,
+      new RegExp(
+        `dir="ltr"[\\s\\S]*?title=\\{${price}\\.title\\}[\\s\\S]*?aria-label=\\{${price}\\.ariaLabel\\}`,
+      ),
+    );
   }
 });

@@ -11,8 +11,20 @@ export type CarSearchParams = {
 export type CarTransmission = "automatic" | "manual";
 export type CarFuelPolicy = "full-to-full" | "same-to-same" | "other";
 export type CarMileagePolicy = "unlimited" | "limited";
-export type CarPickupType = "airport-counter" | "shuttle" | "city-location" | "meet-and-greet";
-export type CarCategory = "mini" | "economy" | "compact" | "intermediate" | "full-size" | "suv" | "luxury" | "van";
+export type CarPickupType =
+  | "airport-counter"
+  | "shuttle"
+  | "city-location"
+  | "meet-and-greet";
+export type CarCategory =
+  | "mini"
+  | "economy"
+  | "compact"
+  | "intermediate"
+  | "full-size"
+  | "suv"
+  | "luxury"
+  | "van";
 
 export type CarOffer = {
   id: string;
@@ -35,6 +47,7 @@ export type NormalizedCarResult = {
   orSimilar: boolean;
   imageUrl?: string;
   imageAlt: string;
+  imagePosition?: string;
   passengers: number;
   bags: number;
   doors: number;

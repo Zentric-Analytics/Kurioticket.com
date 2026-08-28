@@ -93,14 +93,12 @@ export function CarCardSkeleton() {
     <div
       role="status"
       aria-label="Loading car result"
-      className="overflow-hidden rounded-2xl border border-[#D8E1EC] bg-white"
+      className="overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white md:rounded-2xl"
     >
       <span className="sr-only">Loading car result</span>
       <div data-car-card-skeleton-mobile className="md:hidden">
         <div className="grid min-h-[168px] grid-cols-[40%_minmax(0,1fr)]">
-          <div className="flex items-center bg-slate-50 p-2">
-            <Skeleton className="aspect-[4/3] w-full rounded-lg" />
-          </div>
+          <Skeleton className="h-full w-full rounded-none bg-slate-100" />
           <div className="space-y-2 px-2.5 py-2.5">
             <div className="flex items-center justify-between gap-2">
               <Skeleton className="h-2.5 w-14" />
@@ -124,7 +122,10 @@ export function CarCardSkeleton() {
           <Skeleton className="h-11 w-24 rounded-[10px]" />
         </div>
       </div>
-      <div data-car-card-skeleton-desktop className="hidden md:grid md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[250px_minmax(0,1fr)_205px] xl:grid-cols-[270px_minmax(0,1fr)_205px]">
+      <div
+        data-car-card-skeleton-desktop
+        className="hidden md:grid md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[250px_minmax(0,1fr)_205px] xl:grid-cols-[270px_minmax(0,1fr)_205px]"
+      >
         <div className="flex items-center border-b border-[#E2E8F0] bg-slate-50 p-2.5 md:border-b-0 md:border-e">
           <Skeleton className="aspect-[4/3] w-full rounded-xl" />
         </div>

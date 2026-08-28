@@ -1,10 +1,15 @@
 import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { calculateRentalDays } from "@/lib/cars/carResults";
-import { staticCarCatalogue, getStaticCarId } from "@/services/travel/staticCarCatalogue";
+import {
+  staticCarCatalogue,
+  getStaticCarId,
+} from "@/services/travel/staticCarCatalogue";
 
-export function buildStaticCarResults(search: CarSearchParams): NormalizedCarResult[] {
+export function buildStaticCarResults(
+  search: CarSearchParams,
+): NormalizedCarResult[] {
   const days = calculateRentalDays(search.pickupDate, search.dropoffDate);
-  return staticCarCatalogue.map(({ dailyPrices, ...car }) => ({
+  return staticCarCatalogue.map(({ offerFixtures, ...car }) => ({
     ...car,
     id: getStaticCarId(car.id),
     pickupLocation: search.pickupLocation,
@@ -12,16 +17,13 @@ export function buildStaticCarResults(search: CarSearchParams): NormalizedCarRes
     requiredDocuments: [...car.requiredDocuments],
     includedItems: [...car.includedItems],
     importantInformation: [...car.importantInformation],
-    offers: dailyPrices.map((pricePerDay, index) => ({
+    offers: offerFixtures.map((fixture, index) => ({
+      ...fixture,
       id: `${getStaticCarId(car.id)}-offer-${index + 1}`,
-      bookingProviderName: index ? "Journey Desk" : "Kurioticket Desk",
+      bookingProviderName: "Kurioticket static fixture",
       rentalCompanyName: car.rentalCompanyName,
       currency: "USD",
-      pricePerDay,
-      totalPrice: pricePerDay * days,
-      taxesAndFeesIncluded: index % 2 === 0,
-      payAtPickup: (dailyPrices.length + index) % 2 === 1,
-      freeCancellation: index === 0 && car.recommendationScore >= 75,
+      totalPrice: fixture.pricePerDay * days,
     })),
   }));
 }
