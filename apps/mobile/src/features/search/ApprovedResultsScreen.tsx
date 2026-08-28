@@ -940,6 +940,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
             <AirlineLogo
               airlineName={result.airlineName}
               logoUrl={result.airlineLogo}
+              variant="result-card"
               allowRemoteSvg={process.env.EXPO_PUBLIC_DISABLE_REMOTE_AIRLINE_SVG !== "1"}
             />
           </View>
@@ -1663,7 +1664,7 @@ const s0 = StyleSheet.create({
   resultBadgeTextGreen: { color: ui.green },
   flightMain: { width: "100%", alignItems: "stretch" },
   flightIdentityLayout: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 10 },
-  airlineLogoColumn: { width: 32, flexShrink: 0, alignItems: "center" },
+  airlineLogoColumn: { width: 42, flexShrink: 0, alignItems: "center" },
   flightDetails: { flex: 1, minWidth: 0 },
   airlineName: { fontSize: 14, lineHeight: 18, color: ui.navy, fontWeight: "800" },
   flightNumber: { marginTop: 1, fontSize: 11, lineHeight: 14, fontWeight: "600" },
