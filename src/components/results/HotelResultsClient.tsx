@@ -16,9 +16,13 @@ import { useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
 import {
   Calendar,
+  ArrowUp,
   Check,
+  ChevronLeft,
+  ChevronRight,
   ChevronDown,
   MapPin,
+  Pencil,
   SlidersHorizontal,
   Star,
   Users,
@@ -62,6 +66,13 @@ import {
 import { calculateCompactFilterMaxHeight } from "@/lib/hotels/desktopCompactFilter";
 import { shouldShowDesktopStickySearch } from "@/lib/search/desktopStickySearch";
 import { lockDesktopPageScroll } from "@/lib/search/desktopPageScrollLock";
+import {
+  buildHotelResultsPaginationItems,
+  clampHotelResultsPage,
+  getHotelResultsPageCount,
+  HOTEL_RESULTS_PAGE_SIZE,
+  paginateHotelResults,
+} from "@/lib/hotels/hotelResultsPagination";
 
 const hotelResultStackClass = "w-full max-w-[800px]";
 const desktopCompactFilterTopOffset = 116;
@@ -412,6 +423,10 @@ export function HotelResultsExperience({
     width: number;
   } | null>(null);
   const [mobileHotelSearchOpen, setMobileHotelSearchOpen] = useState(false);
+  const [showMobileCompactHotelSearch, setShowMobileCompactHotelSearch] =
+    useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const [currentResultsPage, setCurrentResultsPage] = useState(1);
   const [showDesktopMinimizedSearch, setShowDesktopMinimizedSearch] =
     useState(false);
   const [desktopStickyHotelSearchOpen, setDesktopStickyHotelSearchOpen] =
@@ -456,6 +471,8 @@ export function HotelResultsExperience({
   );
   const guidedLoadingStatusRef = useRef<HTMLHeadingElement | null>(null);
   const guidedResultsHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const standaloneResultsHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const mobileSearchSummarySentinelRef = useRef<HTMLDivElement | null>(null);
   const guidedErrorRef = useRef<HTMLDivElement | null>(null);
   const retryFocusPendingRef = useRef(false);
 
@@ -989,6 +1006,24 @@ export function HotelResultsExperience({
       ),
     [currencyRates.rates, hotelSummarySortMode, visibleFilteredHotels],
   );
+  const totalHotelResultPages = guided
+    ? 0
+    : getHotelResultsPageCount(sortedVisibleHotels.length);
+  const paginatedVisibleHotels = useMemo(
+    () =>
+      guided
+        ? sortedVisibleHotels
+        : paginateHotelResults(sortedVisibleHotels, currentResultsPage),
+    [currentResultsPage, guided, sortedVisibleHotels],
+  );
+  const paginationItems = useMemo(
+    () =>
+      buildHotelResultsPaginationItems(
+        currentResultsPage,
+        totalHotelResultPages,
+      ),
+    [currentResultsPage, totalHotelResultPages],
+  );
   const hotelSortOptions = useMemo(
     () =>
       [
@@ -1028,6 +1063,60 @@ export function HotelResultsExperience({
     !filterApplying &&
     results.length > 0 &&
     filtered.length === 0;
+
+  useEffect(() => {
+    setCurrentResultsPage((page) =>
+      clampHotelResultsPage(page, totalHotelResultPages),
+    );
+  }, [totalHotelResultPages]);
+
+  useEffect(() => {
+    if (guided || typeof window === "undefined") return undefined;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const sentinel = mobileSearchSummarySentinelRef.current;
+      setShowMobileCompactHotelSearch(
+        window.innerWidth < 640 &&
+          Boolean(sentinel && sentinel.getBoundingClientRect().bottom < 8) &&
+          window.scrollY > 96,
+      );
+      setShowBackToTop(window.scrollY > 600);
+    };
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+    const observer =
+      typeof IntersectionObserver === "undefined"
+        ? null
+        : new IntersectionObserver(schedule, { threshold: 0 });
+    if (mobileSearchSummarySentinelRef.current) {
+      observer?.observe(mobileSearchSummarySentinelRef.current);
+    }
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [guided]);
+
+  const useReducedMotion = () =>
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function changeResultsPage(page: number) {
+    setCurrentResultsPage(clampHotelResultsPage(page, totalHotelResultPages));
+    window.requestAnimationFrame(() => {
+      standaloneResultsHeadingRef.current?.scrollIntoView({
+        behavior: useReducedMotion() ? "auto" : "smooth",
+        block: "start",
+      });
+      standaloneResultsHeadingRef.current?.focus({ preventScroll: true });
+    });
+  }
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -1289,6 +1378,7 @@ export function HotelResultsExperience({
   }
 
   const triggerFilterApplying = useCallback(() => {
+    setCurrentResultsPage(1);
     setVisibleFiltered((current) => {
       if (resultsApplying && current.length > 0) return current;
       return filtered;
@@ -1908,7 +1998,35 @@ export function HotelResultsExperience({
             />
           </div>
         </div>
+        <div ref={mobileSearchSummarySentinelRef} className="h-px" aria-hidden="true" />
       </section> : null}
+
+      {!guided ? (
+        <div
+          className={cn(
+            "fixed inset-x-0 top-0 z-[900] px-3 pt-[env(safe-area-inset-top)] transition-all duration-200 sm:hidden",
+            showMobileCompactHotelSearch && !mobileHotelSearchOpen
+              ? "translate-y-0 opacity-100"
+              : "pointer-events-none -translate-y-2 opacity-0",
+          )}
+          aria-hidden={!showMobileCompactHotelSearch || mobileHotelSearchOpen}
+        >
+          <button
+            type="button"
+            onClick={openMobileHotelSearch}
+            className="flex h-14 w-full items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 text-left shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]"
+            aria-label={t("editHotelSearch") || "Edit hotel search"}
+          >
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-bold text-slate-950">{body.destination}</span>
+              <span className="block truncate text-xs font-medium text-slate-600">
+                {desktopMinimizedDateSummary} · {desktopMinimizedGuestsSummary}
+              </span>
+            </span>
+            <Pencil className="h-[18px] w-[18px] shrink-0 text-[#004BB8]" aria-hidden="true" />
+          </button>
+        </div>
+      ) : null}
 
       {!guided && !mobileHotelSearchOpen ? (
         <section className="relative z-30 px-4 pb-0 pt-12 sm:hidden" aria-label={t("filters")}>
@@ -2170,7 +2288,7 @@ export function HotelResultsExperience({
                   {guided ? (
                     <h2 ref={guidedResultsHeadingRef} id="deals-guided-hotel-results-heading" tabIndex={-1} className="whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">{resultsHeading}</h2>
                   ) : (
-                    <h1 className="whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">{resultsHeading}</h1>
+                    <h1 ref={standaloneResultsHeadingRef} tabIndex={-1} className="scroll-mt-20 whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">{resultsHeading}</h1>
                   )}
                   <div className="hidden shrink-0 flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2">
                     <span className="whitespace-nowrap text-[clamp(0.68rem,3vw,0.875rem)] font-semibold text-slate-700 sm:text-base">
@@ -2291,8 +2409,8 @@ export function HotelResultsExperience({
                     <HotelCardSkeleton />
                     <HotelCardSkeleton />
                   </div>
-                ) : sortedVisibleHotels.length ? (
-                  sortedVisibleHotels.map((hotel, index) => (
+                ) : paginatedVisibleHotels.length ? (
+                  paginatedVisibleHotels.map((hotel, index) => (
                     <HotelCard
                       key={hotel.id}
                       hotel={hotel}
@@ -2303,7 +2421,7 @@ export function HotelResultsExperience({
                       unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined}
                       allowExternalAttribution={!guided}
                       allowSave={!guided}
-                      sortBadge={index === 0 ? hotelSummarySortMode : undefined}
+                      sortBadge={(currentResultsPage - 1) * HOTEL_RESULTS_PAGE_SIZE + index === 0 ? hotelSummarySortMode : undefined}
                     />
                   ))
                 ) : (
@@ -2316,11 +2434,35 @@ export function HotelResultsExperience({
                     ) : null}
                   </div>
                 )}
+                {!guided && totalHotelResultPages > 1 && !filterApplying ? (
+                  <nav aria-label="Hotel results pages" className="flex flex-wrap items-center justify-center gap-1.5 pt-4">
+                    <button type="button" aria-label="Previous page" disabled={currentResultsPage === 1} onClick={() => changeResultsPage(currentResultsPage - 1)} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
+                    {paginationItems.map((item, index) =>
+                      item === "ellipsis" ? (
+                        <span key={`ellipsis-${index}`} className="inline-flex min-h-11 min-w-8 items-center justify-center text-slate-500" aria-hidden="true">…</span>
+                      ) : (
+                        <button key={item} type="button" aria-current={item === currentResultsPage ? "page" : undefined} onClick={() => changeResultsPage(item)} className={cn("inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border text-sm font-bold", item === currentResultsPage ? "border-[#004BB8] bg-[#004BB8] text-white" : "border-slate-200 bg-white text-slate-800 hover:border-[#004BB8]/40")}>{item}</button>
+                      ),
+                    )}
+                    <button type="button" aria-label="Next page" disabled={currentResultsPage === totalHotelResultPages} onClick={() => changeResultsPage(currentResultsPage + 1)} className="inline-flex min-h-11 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 disabled:cursor-not-allowed disabled:opacity-40">Next <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
+                  </nav>
+                ) : null}
               </div>
             </div>
           )}
         </section>
       </div>
+
+      {!guided ? (
+        <button
+          type="button"
+          aria-label="Back to top"
+          onClick={() => window.scrollTo({ top: 0, behavior: useReducedMotion() ? "auto" : "smooth" })}
+          className={cn("fixed right-4 z-[800] flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#004BB8] shadow-md transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] sm:bottom-6 sm:right-6", "bottom-[calc(5rem+env(safe-area-inset-bottom))]", showBackToTop ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0")}
+        >
+          <ArrowUp className="h-[18px] w-[18px]" aria-hidden="true" />
+        </button>
+      ) : null}
 
       <aside
         className={cn(

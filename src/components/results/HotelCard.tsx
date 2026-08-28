@@ -7,6 +7,7 @@ import {
   Building2,
   Heart,
   MapPin,
+  Share2,
   Star,
   Tag,
   type LucideIcon,
@@ -489,6 +490,35 @@ export function HotelCard({
     );
   }
 
+  async function shareHotel() {
+    if (!resolvedDetailsHref) return;
+    const url = new URL(resolvedDetailsHref, window.location.origin).toString();
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: hotel.name, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      // Sharing is an enhancement; clipboard/browser denial must not disrupt booking.
+    }
+  }
+
+  function renderShareButton(className: string) {
+    if (!resolvedDetailsHref || !allowSave) return null;
+    return (
+      <button
+        type="button"
+        aria-label={`Share ${hotel.name}`}
+        className={`${className} z-20 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full border border-transparent bg-transparent text-slate-700 transition hover:bg-slate-100/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]`}
+        onClick={() => void shareHotel()}
+      >
+        <Share2 size={19} aria-hidden="true" />
+      </button>
+    );
+  }
+
   return (
     <Card className="mx-auto w-[calc(100%+0.5rem)] max-w-[800px] overflow-hidden rounded-xl border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(2,28,43,0.26)] sm:w-full">
       <div
@@ -499,9 +529,10 @@ export function HotelCard({
           data-hotel-card-image
           className="relative h-full min-h-[260px] bg-surface-muted md:min-h-[230px] lg:min-h-[240px]"
         >
-          {renderSaveButton(
-            "absolute right-2 top-2 hidden shadow-lg hover:bg-white md:flex",
-          )}
+          <div className="absolute right-2 top-2 z-20 hidden items-center gap-0.5 md:flex">
+            {renderSaveButton("flex hover:bg-white/90")}
+            {renderShareButton("flex hover:bg-white/90")}
+          </div>
           {displayImageUrl ? (
             <>
               <Image
@@ -547,7 +578,10 @@ export function HotelCard({
                       {hotel.name}
                     </h2>
                   </div>
-                  {renderSaveButton("flex -me-1.5 -mt-1.5 md:hidden")}
+                  <div className="-me-1.5 -mt-1.5 flex shrink-0 items-center gap-0.5 md:hidden">
+                    {renderSaveButton("flex")}
+                    {renderShareButton("flex")}
+                  </div>
                 </div>
 
                 {sortBadgeConfig && SortBadgeIcon ? (
@@ -644,7 +678,7 @@ export function HotelCard({
                   <HotelAmenityList
                     items={collapsedAmenityItems}
                     t={t}
-                    className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] leading-4 md:gap-x-3 md:gap-y-1.5 md:text-xs"
+                    className="grid grid-cols-1 gap-y-1 text-[11px] leading-4 md:grid-cols-2 md:gap-x-3 md:gap-y-1.5 md:text-xs"
                   />
                 </div>
               ) : null}
