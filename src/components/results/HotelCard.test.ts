@@ -60,6 +60,12 @@ test("hotel result cards retain image fallback and presentation contracts", () =
   }
 });
 
+test("hotel result cards use the compact mobile image height", () => {
+  assert.ok(source.includes("h-[clamp(220px,58vw,250px)]"));
+  assert.ok(!source.includes("h-[clamp(280px,78vw,340px)]"));
+  assert.match(source, /md:h-auto[\s\S]*md:min-h-\[230px\][\s\S]*lg:min-h-\[240px\]/);
+});
+
 test("hotel result cards retain saved-hotel controls", () => {
   for (const retainedContract of [
     "savedHotelLabel",
@@ -110,6 +116,32 @@ test("hotel result cards present only primary location and nightly pricing", () 
     "hotelResults.viewHotel",
   ]) {
     assert.ok(source.includes(retainedContract), `missing ${retainedContract}`);
+  }
+});
+
+test("hotel result cards separate the nightly amount from its localized label", () => {
+  assert.ok(source.includes('const pricePerNightTemplate = t("hotelResults.pricePerNight")'));
+  assert.match(source, /pricePerNightTemplate\s*\.replace\(\/\\\{\\\{\\s\*price/);
+  assert.match(
+    source,
+    /aria-hidden="true"[\s\S]*nightlyDisplayPrice\.formatted[\s\S]*aria-hidden="true"[\s\S]*perNightLabel/,
+  );
+  assert.match(source, /text-lg[\s\S]*font-bold[\s\S]*tabular-nums/);
+  assert.match(source, /text-xs[\s\S]*text-slate-500/);
+});
+
+test("hotel result cards align the trailing amenity and details action structurally", () => {
+  assert.ok(source.includes("collapsedAmenityItems.at(-1)"));
+  assert.ok(source.includes("collapsedAmenityItems.slice(0, -1)"));
+  assert.ok(source.includes("items={leadingAmenityItems}"));
+  assert.ok(source.includes("items={[trailingAmenityItem]}"));
+  assert.match(
+    source,
+    /items=\{\[trailingAmenityItem\]\}[\s\S]*className="grid grid-cols-1"[\s\S]*<div className="self-center text-end">[\s\S]*href=\{resolvedDetailsHref\}/,
+  );
+
+  for (const layoutHack of ["self-center -translate-y", "-mt-"]) {
+    assert.ok(!source.includes(layoutHack), `unexpected ${layoutHack}`);
   }
 });
 
