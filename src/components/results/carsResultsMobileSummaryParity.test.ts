@@ -30,6 +30,9 @@ test("normal Cars summary uses the Flights mobile presentation and remains mobil
   assert.doesNotMatch(summary, /h-14[\s\S]*rounded-md/);
   assert.match(mobileSummarySection, /bg-white pb-0 pt-0 sm:hidden/);
   assert.match(mobileSummarySection, /relative translate-y-1\/2/);
+  assert.match(summary, /text-\[16px\] font-bold[^\"]*text-\[#07133B\]/);
+  assert.match(summary, /text-\[12\.5px\] font-medium[^\"]*text-\[#536B92\]/);
+  assert.doesNotMatch(summary, /font-extrabold/);
 });
 
 test("summary sentinel remains a non-visual one-pixel sticky threshold", () => {

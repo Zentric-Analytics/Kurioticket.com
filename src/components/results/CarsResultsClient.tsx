@@ -82,6 +82,8 @@ import {
   useCarsDesktopPopover,
 } from "@/components/search/useCarsDesktopPopover";
 
+export const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 320;
+
 type CarsResultsValues = CarSearchParams & {
   returnToDifferentLocation: boolean;
   pickupLocation: string;
@@ -1069,10 +1071,10 @@ export function CarsResultsClient({
         className="group relative z-10 flex h-[4.25rem] min-w-0 w-full max-w-[30rem] items-center justify-between gap-3 overflow-hidden rounded-xl border border-slate-200/80 bg-white px-4 py-0 text-start shadow-[0_16px_34px_-26px_rgba(15,23,42,0.55)] transition hover:border-slate-300 hover:bg-white hover:shadow-[0_18px_38px_-28px_rgba(15,23,42,0.62)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
       >
         <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden pe-1">
-          <span className="block truncate text-[16px] font-extrabold leading-5 tracking-[-0.015em] text-slate-950">
+          <span className="block truncate text-[16px] font-bold leading-5 tracking-[-0.015em] text-[#07133B]">
             {locationPairSummary}
           </span>
-          <span className="mt-1.5 block truncate text-[12.5px] font-semibold leading-4 text-slate-500">
+          <span className="mt-1.5 block truncate text-[12.5px] font-medium leading-4 text-[#536B92]">
             {rentalDateSummary} · {driverAgeSummary}
           </span>
         </span>
@@ -1887,7 +1889,8 @@ export function CarsResultsExperience({
 
   useEffect(() => {
     if (guidedPlanning) return undefined;
-    const update = () => setShowBackToTop(window.scrollY >= 600);
+    const update = () =>
+      setShowBackToTop(window.scrollY >= CAR_BACK_TO_TOP_SCROLL_THRESHOLD);
     update();
     window.addEventListener("scroll", update, { passive: true });
     return () => window.removeEventListener("scroll", update);
@@ -2196,10 +2199,10 @@ export function CarsResultsExperience({
             onClick={(event) => onMobileModifySearch?.(event.currentTarget)}
             className="focus-ring flex min-w-0 flex-col items-center justify-center rounded-xl px-2 py-1 text-center transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           >
-            <span className="block max-w-full truncate text-[15px] font-extrabold leading-5 tracking-[-0.015em] text-slate-950">
+            <span className="block max-w-full truncate text-[15px] font-bold leading-5 tracking-[-0.015em] text-[#07133B]">
               {summary}
             </span>
-            <span className="mt-0.5 block text-[11px] font-semibold leading-4 text-slate-500">
+            <span className="mt-0.5 block text-[11px] font-medium leading-4 text-[#536B92]">
               {t("deals.results.modifySearch")}
             </span>
           </button>
@@ -2214,7 +2217,7 @@ export function CarsResultsExperience({
                 : t("carsResults.openFilters")
             }
             onClick={(event) => openMobileFiltersDrawer(event.currentTarget)}
-            className="focus-ring inline-flex h-11 min-w-0 items-center justify-center gap-1 rounded-full px-2 text-[13px] font-bold text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+            className="focus-ring inline-flex h-11 min-w-0 items-center justify-center gap-1 rounded-full px-2 text-[14px] font-semibold text-[#07133B] transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           >
             <SlidersHorizontal
               className="h-4 w-4 shrink-0 text-[#004BB8]"
@@ -2325,7 +2328,7 @@ export function CarsResultsExperience({
                     <button
                       ref={filtersButtonRef}
                       type="button"
-                      className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-bold text-[#142033] transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                      className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-[#07133B] transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
                       onClick={(event) => openMobileFiltersDrawer(event.currentTarget)}
                     >
                       <SlidersHorizontal size={17} aria-hidden="true" />
@@ -2345,7 +2348,7 @@ export function CarsResultsExperience({
                             "inline-flex min-h-11 shrink-0 items-center rounded-lg border px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
                             active
                               ? "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"
-                              : "border-slate-300 bg-white text-[#142033] hover:bg-slate-50",
+                              : "border-slate-300 bg-white text-[#07133B] hover:bg-slate-50",
                           )}
                         >
                           {label}
@@ -2400,7 +2403,7 @@ export function CarsResultsExperience({
                         aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
                         aria-haspopup="menu"
                         aria-expanded={carsSortOpen}
-                        className="inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-1 rounded-md bg-transparent px-1 text-sm font-semibold text-[#142033] sm:gap-2 sm:px-2 sm:text-[16px]"
+                        className="inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-1 rounded-md bg-transparent px-1 text-sm font-semibold text-[#07133B] sm:gap-2 sm:px-2 sm:text-[16px]"
                         onClick={() => setCarsSortOpen((open) => !open)}
                       >
                         <span className="min-w-0 truncate whitespace-nowrap">
@@ -2662,8 +2665,7 @@ export function CarsResultsExperience({
           onClick={() => {
             window.scrollTo({ top: 0, left: 0, behavior: "auto" });
           }}
-          className="fixed end-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-[#004BB8] shadow-lg transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
-          style={{ bottom: "calc(1rem + env(safe-area-inset-bottom))" }}
+          className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] end-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-[#004BB8] shadow-lg transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 sm:bottom-[calc(1rem+env(safe-area-inset-bottom))]"
         >
           <ArrowUp className="h-5 w-5" aria-hidden="true" />
         </button>
