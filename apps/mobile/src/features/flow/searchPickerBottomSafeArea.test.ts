@@ -20,7 +20,7 @@ const editSearchSource = readFileSync("src/features/search/FlightEditSearchModal
 
 test("every moving native search sheet owns its bottom safe area", () => {
   for (const { file, source } of sources) {
-    const sheets = source.match(/onLayout=\{motion\.onSheetLayout\}/g) ?? [];
+    const sheets = source.match(/onLayout=\{(?:motion|keyboardPresentation)\.onSheetLayout\}/g) ?? [];
     const internalInsets =
       source.match(
         /paddingBottom:\s*\d*\s*\+?\s*motion\.bottomSafeAreaInset/g,
@@ -75,7 +75,7 @@ test("the safe-area inset is painted by the themed moving surface", () => {
       source.match(
         /backgroundColor:\s*ft\.colors\.surface[\s\S]{0,100}paddingBottom:[\s\S]{0,50}motion\.bottomSafeAreaInset/g,
       ) ?? [];
-    const sheets = source.match(/onLayout=\{motion\.onSheetLayout\}/g) ?? [];
+    const sheets = source.match(/onLayout=\{(?:motion|keyboardPresentation)\.onSheetLayout\}/g) ?? [];
     assert.equal(
       surfaceInsets.length,
       sheets.length,

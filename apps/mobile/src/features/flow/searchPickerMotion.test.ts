@@ -30,12 +30,12 @@ test("shared native search picker motion has the approved contract", () => {
   assert.match(source, /stopAnimation\(\)/);
   assert.match(source, /setRendered\(false\)/);
   assert.match(source, /finished && generation\.current === currentGeneration/);
-  const sheetTimings = source.match(/Animated\.timing\(sheetTranslateY[^\n]+/g) ?? [];
+  const sheetTimings = source.match(/Animated\.timing\(sheetTranslateY, \{[\s\S]*?\}\)/g) ?? [];
   assert.equal(sheetTimings.length, 2);
   for (const timing of sheetTimings) assert.match(timing, /Easing\.bezier\(0\.25, 0\.1, 0\.25, 1\)/);
   assert.doesNotMatch(sheetTimings.join("\n"), /Easing\.(?:out|in)\(Easing\.cubic\)/);
-  assert.match(source, /Animated\.timing\(backdropOpacity[^\n]+Easing\.out\(Easing\.cubic\)/);
-  assert.match(source, /Animated\.timing\(backdropOpacity[^\n]+Easing\.in\(Easing\.cubic\)/);
+  assert.match(source, /Animated\.timing\(backdropOpacity, \{[\s\S]*?easing: Easing\.out\(Easing\.cubic\)/);
+  assert.match(source, /Animated\.timing\(backdropOpacity, \{[\s\S]*?easing: Easing\.in\(Easing\.cubic\)/);
 });
 
 test("measured sheet travel replaces the full-screen safety fallback", () => {
@@ -89,7 +89,7 @@ test("every shared motion sheet reports its rendered height", () => {
   for (const file of pickerFiles) {
     const picker = readFileSync(`src/features/flow/${file}`, "utf8");
     assert.equal(
-      picker.match(/accessibilityViewIsModal onLayout=\{motion\.onSheetLayout\}/g)?.length ?? 0,
+      picker.match(/accessibilityViewIsModal onLayout=\{(?:motion|keyboardPresentation)\.onSheetLayout\}/g)?.length ?? 0,
       picker.match(/useSearchPickerMotion\(/g)?.length ?? 0,
       `${file} must measure every shared motion sheet`,
     );
@@ -110,7 +110,15 @@ test("Flight Edit Search uses a local short top-origin reveal", () => {
 test("open settling belongs only to a successfully finished current generation", () => {
   assert.match(source, /const \[openSettled, setOpenSettled\] = useState\(false\)/);
   assert.match(source, /const currentGeneration = \+\+generation\.current;\s+setOpenSettled\(false\)/);
-  assert.match(source, /\.start\(\(\{ finished \}\) => \{\s+if \(finished && generation\.current === currentGeneration\) setOpenSettled\(true\)/);
-  assert.match(source, /if \(finished && generation\.current === currentGeneration\) \{\s+renderedRef\.current = false;\s+setRendered\(false\)/);
+  assert.match(source, /\.start\(\(\{ finished \}\) => \{\s+if \(finished && generation\.current === currentGeneration\)\s+setOpenSettled\(true\)/);
+  assert.match(source, /if \(finished && generation\.current === currentGeneration\) \{\s+renderedRef\.current = false;\s+measuredSheetHeight\.current = undefined;\s+setRendered\(false\)/);
   assert.match(source, /openSettled,/);
+});
+
+test("searchable opening waits for measured layout and an explicit presentation start", () => {
+  assert.match(source, /controlledOpening = false/);
+  assert.match(source, /if \(\s*!visible \|\|\s+openingGeneration\.current !== currentGeneration \|\|\s+measuredSheetHeight\.current === undefined\s*\)\s+return false/);
+  assert.match(source, /openingGeneration\.current = undefined;\s+awaitingFreshOpenLayout\.current = false;\s+Animated\.parallel/s);
+  assert.match(source, /if \(controlledOpening\) return;\s+const frame = requestAnimationFrame/);
+  assert.match(source, /openingGeneration\.current = undefined;\s+Animated\.parallel\(\[/);
 });
