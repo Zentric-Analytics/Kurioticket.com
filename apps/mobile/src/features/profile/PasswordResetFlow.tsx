@@ -60,20 +60,20 @@ export function PasswordResetFlow({ copy: c, onUnauthorized, onSuccess }: Props)
     return <View style={styles.form}>
       <Text style={{ color: theme.muted }}>{c.oauth}</Text>
       {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
-      <Button label={submitting ? c.sendingCode : c.sendCode} disabled={submitting} onPress={() => void sendCode()} />
+      <Button label={submitting ? c.loading : c.reset} disabled={submitting} onPress={() => void sendCode()} />
     </View>;
   }
 
   return <View style={styles.form}>
     {message ? <Text accessibilityRole="alert" style={styles.success}>{message}</Text> : null}
     {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
-    <TextInput accessibilityLabel={c.verificationCode} keyboardType="number-pad" maxLength={6} value={code} onChangeText={(value) => setCode(value.replace(/\D/g, ""))} placeholder={c.verificationCode} placeholderTextColor={theme.muted} style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]} />
+    <TextInput accessibilityLabel={c.authenticatorCode} keyboardType="number-pad" maxLength={6} value={code} onChangeText={(value) => setCode(value.replace(/\D/g, ""))} placeholder={c.authenticatorCode} placeholderTextColor={theme.muted} style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]} />
     <TextInput accessibilityLabel={c.next} secureTextEntry={!visible} value={newPassword} onChangeText={setNewPassword} placeholder={c.next} placeholderTextColor={theme.muted} autoCapitalize="none" style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]} />
     <TextInput accessibilityLabel={c.confirm} secureTextEntry={!visible} value={confirmPassword} onChangeText={setConfirmPassword} placeholder={c.confirm} placeholderTextColor={theme.muted} autoCapitalize="none" style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]} />
     <Pressable accessibilityRole="button" accessibilityLabel={visible ? c.hide : c.show} onPress={() => setVisible((value) => !value)} style={styles.textAction}><Text style={styles.link}>{visible ? c.hide : c.show}</Text></Pressable>
     <Text style={{ color: theme.muted }}>{c.passwordRules}</Text>
-    <Button label={submitting ? c.resetting : c.resetPassword} disabled={submitting || code.length !== 6 || newPassword.length < 8 || confirmPassword.length < 8} onPress={() => void resetPassword()} />
-    <Pressable accessibilityRole="button" disabled={submitting} onPress={() => void sendCode()} style={styles.textAction}><Text style={styles.link}>{c.resendCode}</Text></Pressable>
+    <Button label={submitting ? c.changing : c.change} disabled={submitting || code.length !== 6 || newPassword.length < 8 || confirmPassword.length < 8} onPress={() => void resetPassword()} />
+    <Pressable accessibilityRole="button" disabled={submitting} onPress={() => void sendCode()} style={styles.textAction}><Text style={styles.link}>{c.reset}</Text></Pressable>
   </View>;
 }
 
