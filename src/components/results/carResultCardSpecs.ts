@@ -10,6 +10,11 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { NormalizedCarResult } from "@/lib/cars/types";
 
+export const formatCarPickupType = (value: string) => {
+  const normalized = value.replaceAll("-", " ").toLowerCase();
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+};
+
 const title = (value: string) =>
   value.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 

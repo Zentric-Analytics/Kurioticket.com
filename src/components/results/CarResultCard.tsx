@@ -19,7 +19,10 @@ import type { LucideIcon } from "lucide-react";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { CarResultImage } from "@/components/results/CarResultImage";
-import { getMobileCarPrimarySpecs } from "@/components/results/carResultCardSpecs";
+import {
+  formatCarPickupType,
+  getMobileCarPrimarySpecs,
+} from "@/components/results/carResultCardSpecs";
 import type { CarResultBadge } from "@/lib/cars/carResults";
 import { getPrimaryCarOffer } from "@/lib/cars/carResults";
 import type { NormalizedCarResult } from "@/lib/cars/types";
@@ -66,7 +69,7 @@ export function CarResultCard({
   if (!offer) return null;
   const guidedPlanning = presentation === "guided-planning";
   const vehicleName = car.orSimilar
-    ? `${car.modelName} ${guidedPlanning ? (planningLabels?.orSimilar ?? "or similar") : "or similar"}`
+    ? `${car.modelName} ${planningLabels?.orSimilar ?? "or similar"}`
     : car.modelName;
   const BadgeIcon = badge ? carResultBadgeIcons[badge] : null;
   const dailyDisplayPrice = formatDisplayPrice({
@@ -134,15 +137,22 @@ export function CarResultCard({
                   </span>
                 )}
               </header>
-              {headingLevel === "h3" ? (
-                <h3 className="mt-0.5 break-words text-[18px] font-bold leading-[1.18] text-[#07133B]">
-                  {vehicleName}
-                </h3>
-              ) : (
-                <h2 className="mt-0.5 break-words text-[18px] font-bold leading-[1.18] text-[#07133B]">
-                  {vehicleName}
-                </h2>
-              )}
+              <div className="mt-0.5 flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0">
+                {headingLevel === "h3" ? (
+                  <h3 className="min-w-0 break-words text-[18px] font-bold leading-[1.18] text-[#07133B]">
+                    {car.modelName}
+                  </h3>
+                ) : (
+                  <h2 className="min-w-0 break-words text-[18px] font-bold leading-[1.18] text-[#07133B]">
+                    {car.modelName}
+                  </h2>
+                )}
+                {car.orSimilar ? (
+                  <span className="text-[11px] font-medium leading-4 text-[#536B92]">
+                    or similar
+                  </span>
+                ) : null}
+              </div>
               <p className="mt-1 flex min-w-0 items-start gap-1 text-[12px] font-medium leading-4 text-[#536B92]">
                 <MapPin
                   size={13}
@@ -151,7 +161,7 @@ export function CarResultCard({
                 />
                 <span className="min-w-0">
                   <strong className="font-semibold text-[#536B92]">
-                    {title(car.pickupType)}
+                    {formatCarPickupType(car.pickupType)}
                   </strong>
                   {" · "}
                   {car.pickupLocation}
@@ -264,14 +274,33 @@ export function CarResultCard({
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#004BB8]">
                 {car.categoryLabel}
               </p>
-              {headingLevel === "h3" ? (
-                <h3 className="mt-0.5 break-words text-[22px] font-extrabold leading-tight text-[#102A43]">
-                  {vehicleName}
-                </h3>
+              {guidedPlanning ? (
+                headingLevel === "h3" ? (
+                  <h3 className="mt-0.5 break-words text-[22px] font-extrabold leading-tight text-[#102A43]">
+                    {vehicleName}
+                  </h3>
+                ) : (
+                  <h2 className="mt-0.5 break-words text-[22px] font-extrabold leading-tight text-[#102A43]">
+                    {vehicleName}
+                  </h2>
+                )
               ) : (
-                <h2 className="mt-0.5 break-words text-[22px] font-extrabold leading-tight text-[#102A43]">
-                  {vehicleName}
-                </h2>
+                <div className="mt-0.5 flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0">
+                  {headingLevel === "h3" ? (
+                    <h3 className="min-w-0 break-words text-[22px] font-bold leading-tight text-[#07133B]">
+                      {car.modelName}
+                    </h3>
+                  ) : (
+                    <h2 className="min-w-0 break-words text-[22px] font-bold leading-tight text-[#07133B]">
+                      {car.modelName}
+                    </h2>
+                  )}
+                  {car.orSimilar ? (
+                    <span className="text-[12px] font-medium leading-4 text-[#536B92]">
+                      or similar
+                    </span>
+                  ) : null}
+                </div>
               )}
             </div>
             {badge && BadgeIcon && (
@@ -282,15 +311,15 @@ export function CarResultCard({
             )}
           </header>
 
-          <p className="mt-1 flex min-w-0 items-center gap-2 text-sm text-slate-600">
+          <p className="mt-1 flex min-w-0 items-center gap-2 text-sm font-medium text-[#536B92]">
             <MapPin
               size={16}
               className="shrink-0 text-[#004BB8]"
               aria-hidden="true"
             />
             <span className="min-w-0 whitespace-normal md:whitespace-nowrap">
-              <strong className="font-semibold text-slate-700">
-                {title(car.pickupType)}
+              <strong className="font-semibold text-[#536B92]">
+                {formatCarPickupType(car.pickupType)}
               </strong>
               {" · "}
               {car.pickupLocation}
@@ -303,7 +332,7 @@ export function CarResultCard({
           data-region="details"
           className="col-start-1 row-start-3 min-w-0 border-t border-[#E2E8F0] px-3 py-3 md:col-start-2 md:row-start-2 md:border-t-0 md:px-4 md:pb-3 md:pt-1"
         >
-          <ul className="grid grid-cols-1 gap-y-1.5 text-[12px] font-medium leading-4 text-slate-600 md:flex md:flex-wrap md:gap-x-3 md:gap-y-1.5 md:text-sm">
+          <ul className="grid grid-cols-1 gap-y-1.5 text-[12px] font-medium leading-4 text-[#536B92] md:flex md:flex-wrap md:gap-x-3 md:gap-y-1.5 md:text-sm">
             {specifications.map(([Icon, label]) => (
               <li key={label} className="flex min-w-0 items-center gap-1.5">
                 <Icon

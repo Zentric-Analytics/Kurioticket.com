@@ -34,7 +34,10 @@ test("source-contract: phone and tablet filter launchers remain responsive", () 
     source.indexOf("function SearchInputCell"),
   );
   assert.match(source, /backdrop-blur[^"\n]*sm:hidden/);
-  assert.match(mobileControls, /onClick=\{\(\) => setFiltersOpen\(true\)\}/);
+  assert.match(
+    mobileControls,
+    /onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget\)\}/,
+  );
 
   const resultsToolbar = source.slice(
     source.indexOf("data-cars-results-toolbar"),
@@ -47,7 +50,28 @@ test("source-contract: phone and tablet filter launchers remain responsive", () 
   for (const token of ["inline-flex", "lg:hidden"])
     assert.ok(tabletFilterClass.split(" ").includes(token));
   assert.equal(tabletFilterClass.split(" ").includes("hidden"), false);
-  assert.match(resultsToolbar, /onClick=\{\(\) => setFiltersOpen\(true\)\}/);
+  assert.match(
+    resultsToolbar,
+    /onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget\)\}/,
+  );
+});
+
+test("source-contract: mobile Cars typography uses a restrained primary-secondary hierarchy", () => {
+  const compactHeader = source.slice(
+    source.indexOf("const renderMobileCompactResultsHeader"),
+    source.indexOf("\n  return (", source.indexOf("const renderMobileCompactResultsHeader")),
+  );
+  assert.match(compactHeader, /text-\[15px\] font-bold[^\"]*text-\[#07133B\]/);
+  assert.match(compactHeader, /text-\[11px\] font-medium[^\"]*text-\[#536B92\]/);
+  assert.match(compactHeader, /text-\[14px\] font-semibold text-\[#07133B\]/);
+  assert.doesNotMatch(compactHeader, /font-extrabold/);
+
+  const quickFilters = source.slice(
+    source.indexOf("data-cars-results-quick-filters"),
+    source.indexOf("data-cars-results-summary-row"),
+  );
+  assert.match(quickFilters, /text-sm font-semibold text-\[#07133B\]/);
+  assert.match(quickFilters, /text-sm font-semibold transition/);
 });
 
 test("source-contract: Cars result count and Sort share a shrink-safe row", () => {
@@ -114,7 +138,7 @@ test("source-contract: mobile Filter precedes the final count and Sort row", () 
   assert.ok(summaryStart < resultsToolbar.indexOf("ref={carsSortRef}"));
   assert.match(
     resultsToolbar.slice(filterStart, summaryStart),
-    /lg:hidden[\s\S]*onClick=\{\(\) => setFiltersOpen\(true\)\}/,
+    /lg:hidden[\s\S]*onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget\)\}/,
   );
   assert.match(
     resultsToolbar.slice(summaryStart),
