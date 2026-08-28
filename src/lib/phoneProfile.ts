@@ -99,19 +99,27 @@ export function getDefaultPhoneCountryCode(countryCode: string | null | undefine
 
 export function parsePhoneDraftValue(value: string, defaultCountryCode?: string | null) {
   const trimmedValue = value.trim();
-  const matchedOption = [...phoneCountryOptions]
+  const defaultCountry = getSupportedPhoneCountryCode(defaultCountryCode);
+  const matchingOptions = [...phoneCountryOptions]
     .sort((left, right) => right.dialCode.length - left.dialCode.length)
-    .find(
+    .filter(
       (option) =>
         trimmedValue === option.dialCode ||
-        trimmedValue.startsWith(`${option.dialCode} `),
+        trimmedValue.startsWith(option.dialCode),
     );
+  const longestDialCodeLength = matchingOptions[0]?.dialCode.length ?? 0;
+  const longestMatches = matchingOptions.filter(
+    (option) => option.dialCode.length === longestDialCodeLength,
+  );
+  const matchedOption =
+    longestMatches.find((option) => option.isoCode === defaultCountry) ??
+    longestMatches[0];
 
   if (!matchedOption) {
     return {
       countryCode: getDefaultPhoneCountryCode(defaultCountryCode),
       hasRecognizedDialCode: false,
-      localNumber: trimmedValue.replace(/^\+\d+\s*/, ""),
+      localNumber: trimmedValue,
     };
   }
 
