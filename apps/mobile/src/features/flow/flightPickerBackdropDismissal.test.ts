@@ -11,7 +11,8 @@ test("From and To share a backdrop that closes without choosing an airport", () 
   assert.match(panel, /kind=\{picker === "from" \|\| picker === "to" \? picker : undefined\}/);
   assert.match(airportSheet, /<SafeAreaView[^>]*>[\s\S]*?<Pressable[^>]*onPress=\{onClose\}[^>]*accessibilityLabel="Close airport picker"\/><Animated\.View accessibilityViewIsModal/);
   assert.match(airportSheet, /onRequestClose=\{onClose\}/);
-  assert.match(airportSheet, /if\(draftAirport\)onChoose\(draftAirport\)/);
+  assert.match(airportSheet, /onPress=\{\(\)=>void choosePlace\(item\)\}/);
+  assert.match(airportSheet, /onRequestClose=\{onClose\}/);
 });
 
 test("Flight calendars opt into the backwards-compatible calendar backdrop", () => {

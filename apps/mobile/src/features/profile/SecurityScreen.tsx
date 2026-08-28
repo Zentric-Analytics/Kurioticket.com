@@ -28,6 +28,11 @@ import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { signInHref } from "../auth/signInIntent";
 
+function shortFeedbackMessage(message: string) {
+  const firstSentence = message.match(/^.*?[.!?。！？](?=\s|$)/u)?.[0] ?? message;
+  return firstSentence.trim().replace(/[.!?。！？]+$/u, "");
+}
+
 export function SecurityScreen() {
   const { theme } = useAppTheme();
   const { locale } = useMobileLocalization();
@@ -114,7 +119,7 @@ export function SecurityScreen() {
     try {
       await travelApi.changePassword(passwords);
       if (request !== passwordRequest.current) { await load({ showLandingFeedback: false, showLoading: false }); return; }
-      closePassword(); setLandingMessage(c.passwordSuccess);
+      closePassword(); setLandingMessage(shortFeedbackMessage(c.passwordSuccess));
       AccessibilityInfo.announceForAccessibility(c.passwordSuccess);
       await load({ showLandingFeedback: false, showLoading: false });
     } catch (e) { if (!await unauth(e) && request === passwordRequest.current) setPasswordError(e instanceof TravelApiError ? e.message : c.loadError); } finally { setSubmitting(false); }
@@ -171,7 +176,7 @@ export function SecurityScreen() {
     </ScreenModal>
     <ScreenModal visible={passwordOpen} title={passwordMode === "reset" ? resetCopy.title : c.change} closeLabel={c.close} onClose={closePassword}>
       <Feedback error={passwordError} message={passwordMessage} />
-      {overview?.hasPassword && passwordMode === "change" ? <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}><View style={styles.form}>{field("currentPassword", c.current)}{field("newPassword", c.next)}{field("confirmPassword", c.confirm)}<Pressable accessibilityRole="button" accessibilityLabel={visible ? c.hide : c.show} onPress={() => setVisible((v) => !v)} style={styles.textAction}><Text style={styles.link}>{visible ? c.hide : c.show}</Text></Pressable><Text style={{ color: theme.muted }}>{c.passwordRules}</Text><Button label={c.change} loading={submitting} disabled={submitting} onPress={() => void change()} /><View style={[styles.resetAlternative, { borderTopColor: theme.border }]}><Pressable accessibilityRole="button" accessibilityLabel={resetCopy.entry} onPress={() => { clearPasswordDraft(); setPasswordMode("reset"); }} style={styles.textAction}><Text style={styles.link}>{resetCopy.entry}</Text></Pressable><Text style={[styles.rowDetail, { color: theme.muted }]}>{resetCopy.entryHelp}</Text></View></View></KeyboardAvoidingView> : <PasswordResetFlow active={passwordOpen && passwordMode === "reset"} copy={c} onUnauthorized={unauth} onSuccess={async () => { closePassword(); setLandingMessage(resetCopy.success); await load({ showLandingFeedback: false, showLoading: false }); }} />}
+      {overview?.hasPassword && passwordMode === "change" ? <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}><View style={styles.form}>{field("currentPassword", c.current)}{field("newPassword", c.next)}{field("confirmPassword", c.confirm)}<Pressable accessibilityRole="button" accessibilityLabel={visible ? c.hide : c.show} onPress={() => setVisible((v) => !v)} style={styles.textAction}><Text style={styles.link}>{visible ? c.hide : c.show}</Text></Pressable><Text style={{ color: theme.muted }}>{c.passwordRules}</Text><Button label={c.change} loading={submitting} disabled={submitting} onPress={() => void change()} /><View style={[styles.resetAlternative, { borderTopColor: theme.border }]}><Pressable accessibilityRole="button" accessibilityLabel={resetCopy.entry} onPress={() => { clearPasswordDraft(); setPasswordMode("reset"); }} style={styles.textAction}><Text style={styles.link}>{resetCopy.entry}</Text></Pressable><Text style={[styles.rowDetail, { color: theme.muted }]}>{resetCopy.entryHelp}</Text></View></View></KeyboardAvoidingView> : <PasswordResetFlow active={passwordOpen && passwordMode === "reset"} copy={c} onUnauthorized={unauth} onSuccess={async () => { closePassword(); setLandingMessage(shortFeedbackMessage(resetCopy.success)); await load({ showLandingFeedback: false, showLoading: false }); }} />}
       {overview?.hasPassword && passwordMode === "reset" ? <Pressable accessibilityRole="button" accessibilityLabel={resetCopy.back} onPress={() => { clearPasswordDraft(); setPasswordMode("change"); }} style={styles.textAction}><Text style={styles.link}>{resetCopy.back}</Text></Pressable> : null}
     </ScreenModal>
     <ScreenModal visible={devicesOpen} title={c.yourDevices} closeLabel={c.close} onClose={closeDevices}>
@@ -215,12 +220,12 @@ function FloatingNotice({ message }: { message: string }) {
   const { theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(8)).current;
+  const translateY = useRef(new Animated.Value(-8)).current;
   const [displayed, setDisplayed] = useState(message);
   useEffect(() => {
     opacity.stopAnimation(); translateY.stopAnimation();
     if (message) {
-      setDisplayed(message); opacity.setValue(0); translateY.setValue(8);
+      setDisplayed(message); opacity.setValue(0); translateY.setValue(-8);
       Animated.parallel([
         Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true }),
         Animated.timing(translateY, { toValue: 0, duration: 180, useNativeDriver: true }),
@@ -229,11 +234,11 @@ function FloatingNotice({ message }: { message: string }) {
     }
     Animated.parallel([
       Animated.timing(opacity, { toValue: 0, duration: 180, useNativeDriver: true }),
-      Animated.timing(translateY, { toValue: 8, duration: 180, useNativeDriver: true }),
+      Animated.timing(translateY, { toValue: -8, duration: 180, useNativeDriver: true }),
     ]).start(({ finished }) => { if (finished) setDisplayed(""); });
   }, [message, opacity, translateY]);
   if (!displayed) return null;
-  return <Animated.View pointerEvents="none" style={[styles.toastPosition, { bottom: insets.bottom + 16, opacity, transform: [{ translateY }] }]}><View style={[styles.toast, { backgroundColor: theme.surface, borderColor: theme.border }]}><Text accessibilityLiveRegion="polite" style={styles.toastText}>{displayed}</Text></View></Animated.View>;
+  return <Animated.View pointerEvents="none" style={[styles.toastPosition, { top: insets.top + 64, opacity, transform: [{ translateY }] }]}><View style={[styles.toast, { backgroundColor: theme.surface, borderColor: theme.border }]}><Text accessibilityLiveRegion="polite" style={styles.toastText}>{displayed}</Text></View></Animated.View>;
 }
 function Button({ label, onPress, disabled = false, loading = false }: { label: string; onPress: () => void; disabled?: boolean; loading?: boolean }) { const inactive = disabled || loading; return <Pressable accessibilityRole="button" accessibilityState={{ disabled: inactive, busy: loading }} disabled={inactive} onPress={onPress} style={({ pressed }) => [styles.button, inactive && styles.disabledButton, pressed && styles.pressed]}><View style={styles.buttonContent}><Text style={styles.buttonText}>{label}</Text>{loading ? <ActivityIndicator size="small" color="white" /> : null}</View></Pressable>; }
 
