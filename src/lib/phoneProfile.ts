@@ -113,13 +113,16 @@ export function parsePhoneDraftValue(value: string, defaultCountryCode?: string 
   );
   const matchedOption =
     longestMatches.find((option) => option.isoCode === defaultCountry) ??
-    longestMatches[0];
+    (longestMatches.length === 1 ? longestMatches[0] : null);
 
   if (!matchedOption) {
+    const ambiguousDialCode = longestMatches.length > 1 ? longestMatches[0]?.dialCode : null;
     return {
       countryCode: getDefaultPhoneCountryCode(defaultCountryCode),
       hasRecognizedDialCode: false,
-      localNumber: trimmedValue,
+      localNumber: ambiguousDialCode
+        ? trimmedValue.slice(ambiguousDialCode.length).trimStart()
+        : trimmedValue.replace(/^\+\d+\s*/, ""),
     };
   }
 
