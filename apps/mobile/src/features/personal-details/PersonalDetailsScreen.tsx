@@ -640,7 +640,7 @@ function PhoneControl({
             {option?.isoCode || "--"}
           </Text>
         )}
-        <FlowIcon name="chevron" color={theme.icon} size={16} />
+        <FlowIcon name="chevron" color={theme.muted} size={16} />
       </Pressable>
       <View
         style={[
