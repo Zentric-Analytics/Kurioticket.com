@@ -56,16 +56,18 @@ test("password screen separates change and reset flows and wipes sensitive draft
   assert.match(security, /travelApi\.changePassword\(passwords\)/);
 });
 
-test("password change validity gates submission and clears stale errors while editing", () => {
+test("password change validates on submit while keeping the action pressable", () => {
   assert.match(security, /const passwordReady = Boolean\(passwords\.currentPassword\)/);
   assert.match(security, /passwords\.newPassword\.length >= 8/);
   assert.match(security, /passwords\.newPassword === passwords\.confirmPassword/);
   assert.match(security, /passwords\.currentPassword !== passwords\.newPassword/);
-  assert.match(security, /disabled=\{submitting \|\| !passwordReady\}/);
+  assert.match(security, /if \(!passwordReady\) \{ setPasswordError\(c\.passwordInvalid\); return; \}/);
+  assert.match(security, /label=\{submitting \? c\.changing : c\.change\} disabled=\{submitting\}/);
+  assert.doesNotMatch(security, /disabled=\{submitting \|\| !passwordReady\}/);
   assert.match(security, /setPasswordError\(""\)/);
 });
 
-test("password reset requires a six-digit email code before accepting a new password", () => {
+test("password reset validates on submit while keeping the reset action pressable", () => {
   assert.match(resetFlow, /securityPasswordResetApi\.sendCode\(\)/);
   assert.match(resetFlow, /setStage\("verify"\)/);
   assert.match(resetFlow, /\^\\d\{6\}\$/);
@@ -74,7 +76,8 @@ test("password reset requires a six-digit email code before accepting a new pass
   assert.match(resetFlow, /maxLength=\{6\}/);
   assert.match(resetFlow, /newPassword\.length < 8/);
   assert.match(resetFlow, /newPassword !== confirmPassword/);
-  assert.match(resetFlow, /const resetReady =/);
+  assert.match(resetFlow, /label=\{submitting \? c\.changing : navigationCopy\.submit\} disabled=\{submitting\}/);
+  assert.doesNotMatch(resetFlow, /disabled=\{submitting \|\| !resetReady\}/);
   assert.match(resetFlow, /if \(active\) return;/);
   assert.match(resetFlow, /setCode\(""\)/);
   assert.match(resetFlow, /setVisible\(false\)/);
