@@ -97,7 +97,7 @@ test("saved phoneCountryCode is the source of truth for shared +1 numbers", () =
   assert.notEqual(
     parsePhoneDraftValue("+1 4165550100", "US").countryCode,
     "CA",
-    "legacy +1 parsing is ambiguous and does not reliably restore Canada",
+    "shared +1 parsing should not invent Canada over an explicit US default",
   );
   assert.equal(
     getEffectivePhoneCountryCode({
@@ -107,6 +107,55 @@ test("saved phoneCountryCode is the source of truth for shared +1 numbers", () =
     }),
     "CA",
   );
+});
+
+test("compact international numbers split unique calling codes without requiring spaces", () => {
+  assert.deepEqual(parsePhoneDraftValue("+2348012345678"), {
+    countryCode: "NG",
+    hasRecognizedDialCode: true,
+    localNumber: "8012345678",
+  });
+  assert.deepEqual(parsePhoneDraftValue("+447911123456"), {
+    countryCode: "GB",
+    hasRecognizedDialCode: true,
+    localNumber: "7911123456",
+  });
+  assert.deepEqual(parsePhoneDraftValue("+233241234567"), {
+    countryCode: "GH",
+    hasRecognizedDialCode: true,
+    localNumber: "241234567",
+  });
+});
+
+test("shared compact dial codes require an explicit supported default", () => {
+  assert.deepEqual(parsePhoneDraftValue("+14165550100", "CA"), {
+    countryCode: "CA",
+    hasRecognizedDialCode: true,
+    localNumber: "4165550100",
+  });
+  assert.deepEqual(parsePhoneDraftValue("+12025550199", "US"), {
+    countryCode: "US",
+    hasRecognizedDialCode: true,
+    localNumber: "2025550199",
+  });
+  assert.deepEqual(parsePhoneDraftValue("+12125550199"), {
+    countryCode: "NG",
+    hasRecognizedDialCode: false,
+    localNumber: "2125550199",
+  });
+  assert.deepEqual(parsePhoneDraftValue("+74951234567"), {
+    countryCode: "NG",
+    hasRecognizedDialCode: false,
+    localNumber: "4951234567",
+  });
+});
+
+test("unsupported international prefixes keep the legacy safe fallback", () => {
+  assert.deepEqual(parsePhoneDraftValue("+999123456789", "GB"), {
+    countryCode: "GB",
+    hasRecognizedDialCode: false,
+    localNumber: "",
+  });
 });
 
 test("shared +1 country and territory selections remain distinct in state", () => {
