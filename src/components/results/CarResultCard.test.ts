@@ -32,7 +32,7 @@ test("standalone mobile keeps total primary, per-day supporting, and its action 
     mobile.indexOf("totalDisplayPrice.formatted") <
       mobile.indexOf("dailyDisplayPrice.formatted"),
   );
-  assert.match(mobile, /text-\[21px\][^\"]*font-extrabold[^\"]*tabular-nums/);
+  assert.match(mobile, /text-\[23px\][^\"]*font-semibold[^\"]*text-\[#07133B\][^\"]*tabular-nums/);
   assert.match(mobile, /dailyDisplayPrice\.formatted\}\/day/);
   assert.match(mobile, /min-h-11/);
   assert.match(mobile, /bg-\[#004BB8\]/);
