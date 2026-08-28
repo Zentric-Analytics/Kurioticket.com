@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { getMobileSession } from "@/lib/mobile-auth";
 import { getPrisma } from "@/lib/prisma";
+import { extractVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
+import {
+  getExistingMobileProfilePhoneCountry,
+  resolveMobileProfilePhoneCountry,
+} from "@/lib/mobileProfilePhoneCountry";
+import { getSupportedPhoneCountryCode } from "@/lib/phoneProfile";
 import { serializeUserProfile, userProfileSchema } from "@/lib/userProfile";
 import { createNotificationEvent } from "@/services/notificationService";
 
@@ -11,7 +17,32 @@ export async function GET(request: Request) {
   if (!session || session.user.status !== "ACTIVE") return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   try {
     const profile = await getPrisma().userProfile.findUnique({ where: { userId: session.user.id }, select });
-    return NextResponse.json({ profile: serializeUserProfile(profile), user: session.user });
+    const serializedProfile = serializeUserProfile(profile);
+    if (!serializedProfile.phoneCountryCode) {
+      const existingPhoneCountry = getExistingMobileProfilePhoneCountry({
+        savedCountryCode: profile?.phoneCountryCode,
+        phoneNumber: profile?.phoneNumber,
+      });
+      if (existingPhoneCountry) {
+        serializedProfile.phoneCountryCode = existingPhoneCountry;
+      } else {
+        const headerCountry =
+          getSupportedPhoneCountryCode(request.headers.get("x-vercel-ip-country")) ??
+          getSupportedPhoneCountryCode(request.headers.get("cf-ipcountry")) ??
+          getSupportedPhoneCountryCode(request.headers.get("x-country")) ??
+          getSupportedPhoneCountryCode(request.headers.get("x-kurioticket-detected-region"));
+        const visitorIp = headerCountry ? null : extractVisitorIp(request.headers);
+        const location = !headerCountry && visitorIp
+          ? await resolveIpinfoLiteCountryContext(visitorIp).catch(() => null)
+          : null;
+        serializedProfile.phoneCountryCode = resolveMobileProfilePhoneCountry({
+          savedCountryCode: profile?.phoneCountryCode,
+          phoneNumber: profile?.phoneNumber,
+          detectedCountryCode: headerCountry ?? location?.countryCode,
+        });
+      }
+    }
+    return NextResponse.json({ profile: serializedProfile, user: session.user });
   } catch {
     return NextResponse.json({ error: "Unable to load profile." }, { status: 503 });
   }
