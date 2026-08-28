@@ -60,10 +60,9 @@ test("shared editor uses canonical mobile pickers and multi-city editor", () => 
 });
 
 
-test("traveler density is opt-in and Done uses the local Kurioticket blue treatment", () => {
-  assert.match(source, /travelerPickerDensity\?: "default" \| "compact"/);
-  assert.match(source, /travelerPickerDensity = "default"/);
-  assert.match(source, /density=\{travelerPickerDensity\}/);
+test("traveler picker uses the canonical density and Done uses the local Kurioticket blue treatment", () => {
+  assert.doesNotMatch(source, /travelerPickerDensity|density=/);
+  assert.match(source, /pickerMarker="traveler-cabin" contentClassName="px-4 py-4"/);
   assert.match(source, /h-12 w-full rounded-\[11px\] bg-\[#004BB8\].*text-white/);
   assert.match(source, /onClick=\{\(\) => setTravelerPickerOpen\(false\)\}>Done/);
 });
