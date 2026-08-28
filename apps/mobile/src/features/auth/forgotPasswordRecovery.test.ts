@@ -34,12 +34,13 @@ test("reset submits the issued recovery code without reusing the older email pro
   assert.match(flow, /setStep\("password"\)/);
 });
 
-test("successful recovery uses a brief reserved confirmation instead of a modal alert", () => {
+test("successful recovery uses one brief reserved status slot instead of a modal alert", () => {
   assert.match(flow, /setResetNotice\("Password reset\. Sign in with your new password\."\)/);
   assert.match(flow, /setTimeout\(\(\) => setResetNotice\(""\), 2000\)/);
   assert.doesNotMatch(flow, /Alert\.alert/);
-  assert.match(screens, /<SuccessText>\{notice\}<\/SuccessText>/);
-  assert.match(primitives, /export function SuccessText/);
+  assert.match(screens, /<StatusText success=\{Boolean\(notice\)\}>\{notice \|\| error\}<\/StatusText>/);
+  assert.doesNotMatch(screens, /<SuccessText>\{notice\}<\/SuccessText><ErrorText>\{error\}<\/ErrorText>/);
+  assert.match(primitives, /export function StatusText/);
   assert.match(primitives, /submitSuccess: \{ minHeight: 19/);
   assert.match(primitives, /Animated\.timing\(opacity, \{ toValue: 1, duration: 180/);
 });
@@ -51,7 +52,9 @@ test("reset action remains pressable and validates on tap", () => {
   assert.match(screens, /Passwords do not match\./);
 });
 
-test("auth buttons keep their labels while showing in-flight activity", () => {
-  assert.match(primitives, /<Text style=\{\[styles\.buttonText, secondary && styles\.secondaryText\]\}>\{label\}<\/Text>\{loading \? <ActivityIndicator/);
+test("auth buttons keep labels centered while showing in-flight activity", () => {
+  assert.match(primitives, /<Text style=\{\[styles\.buttonText, secondary && styles\.secondaryText\]\}>\{label\}<\/Text>\{loading \? <ActivityIndicator style=\{styles\.buttonSpinner\}/);
+  assert.match(primitives, /buttonContent: \{ width: "100%", alignItems: "center", justifyContent: "center" \}/);
+  assert.match(primitives, /buttonSpinner: \{ position: "absolute", right: 0 \}/);
   assert.doesNotMatch(primitives, /loading \? <ActivityIndicator[^>]*\/> : <Text/);
 });
