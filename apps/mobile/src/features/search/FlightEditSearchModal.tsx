@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Animated, Easing, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { X } from "lucide-react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlightSearchPanel } from "../flow/FlightSearchPanel";
 import type { RouteValue } from "../flow/flightSearchModel";
 import { useFlowTheme } from "../flow/flowStyles";
@@ -64,35 +63,35 @@ function useFlightEditSearchMotion(visible: boolean) {
 type Props = {
   visible: boolean;
   params: Record<string, RouteValue>;
+  headerAnchor: number;
   onClose: () => void;
 };
 
-export function FlightEditSearchModal({ visible, params, onClose }: Props) {
+export function FlightEditSearchModal({ visible, params, headerAnchor, onClose }: Props) {
   const ft = useFlowTheme();
   const motion = useFlightEditSearchMotion(visible);
-  const { bottom: bottomSafeAreaInset } = useSafeAreaInsets();
   const presentedParams = useRetainedPickerContext(visible, params);
   if (!motion.rendered) return null;
 
   return (
     <Modal transparent animationType="none" visible onRequestClose={onClose} statusBarTranslucent>
       <KeyboardAvoidingView pointerEvents={motion.pointerEvents} style={styles.viewport} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        <SafeAreaView style={styles.backdrop} edges={["top"]}>
+        <View style={[styles.headerClearance, { height: headerAnchor }]} />
+        <View style={styles.backdrop}>
           <Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill, styles.scrim, motion.backdropStyle]} />
           <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Close edit search" onPress={onClose} />
-          <Animated.View accessibilityViewIsModal style={[styles.panel, { backgroundColor: ft.colors.surface, paddingBottom: bottomSafeAreaInset }, motion.panelStyle]}>
+          <Animated.View accessibilityViewIsModal style={[styles.panel, { backgroundColor: ft.colors.surface }, motion.panelStyle]}>
             <View style={[styles.header, { borderBottomColor: ft.colors.border }]}>
+              <Text accessibilityRole="header" style={[ft.styles.title, styles.title]}>Change your search</Text>
               <Pressable accessibilityRole="button" accessibilityLabel="Close edit search" hitSlop={8} onPress={onClose} style={({ pressed }) => [styles.close, pressed && ft.styles.pressed]}>
                 <X accessible={false} size={23} color={ft.colors.icon} />
               </Pressable>
-              <Text accessibilityRole="header" style={[ft.styles.title, styles.title]}>Change your search</Text>
-              <View style={styles.close} />
             </View>
             <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}>
-              <FlightSearchPanel params={presentedParams} submitNavigation="replace" onBeforeNavigate={onClose} editAppearance />
+              <FlightSearchPanel embedded params={presentedParams} submitNavigation="replace" onBeforeNavigate={onClose} editAppearance />
             </ScrollView>
           </Animated.View>
-        </SafeAreaView>
+        </View>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -100,11 +99,12 @@ export function FlightEditSearchModal({ visible, params, onClose }: Props) {
 
 const styles = StyleSheet.create({
   viewport: { flex: 1 },
+  headerClearance: { flexShrink: 0 },
   backdrop: { flex: 1, justifyContent: "flex-start" },
   scrim: { backgroundColor: "rgba(8, 18, 35, 0.52)" },
-  panel: { maxHeight: "88%", borderBottomLeftRadius: 24, borderBottomRightRadius: 24, overflow: "hidden" },
-  header: { minHeight: 56, flexDirection: "row", alignItems: "center", borderBottomWidth: 1, paddingHorizontal: 8 },
+  panel: { maxHeight: "100%", borderBottomLeftRadius: 24, borderBottomRightRadius: 24, overflow: "hidden" },
+  header: { minHeight: 52, flexDirection: "row", alignItems: "center", borderBottomWidth: 1, paddingLeft: 16, paddingRight: 8 },
   close: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  title: { flex: 1, textAlign: "center", fontSize: 19, lineHeight: 24 },
-  content: { flexGrow: 1, paddingHorizontal: 12, paddingTop: 10, paddingBottom: 24 },
+  title: { flex: 1, textAlign: "left", fontSize: 19, lineHeight: 24 },
+  content: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 20 },
 });
