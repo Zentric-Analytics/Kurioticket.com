@@ -97,3 +97,12 @@ test("Package form hides car-time presentation while retaining final Car handoff
   assert.match(form, /pickupTime: search\.carPickupTime/);
   assert.match(form, /dropoffTime: search\.carReturnTime/);
 });
+
+test("package suggestion presentation preserves shared destination architecture and linkage", () => {
+  assert.match(form, /<AirportSheet[\s\S]*?mode=\{search\.mode\}/);
+  assert.match(form, /suggestionIcons=\{PACKAGE_SUGGESTION_ICONS\[search\.mode\]\}/);
+  assert.match(form, /useRetainedPickerContext\(visible,\{title,mode\}\)/);
+  assert.match(form, /PACKAGE_SUGGESTION_ICONS\[context\.mode\]/);
+  assert.doesNotMatch(form, /CarLocationSheet/);
+  assert.match(form, /applyPackageDestination\(current, destination\)/);
+});

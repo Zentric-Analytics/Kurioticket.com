@@ -36,7 +36,7 @@ test("Flight city groups remain intermediate and final airport rows retain icons
   assert.match(locationSheets[0], /if\(place.type==="city"\)[\s\S]*?return;\}const airport=/);
   assert.match(locationSheets[3], /if\(place.type!=="airport"\)return;/);
   assert.match(locationSheets[0], /<FlowIcon name="flight" size=\{22\}/);
-  assert.match(locationSheets[3], /<FlowIcon name="flight" size=\{22\}/);
+  assert.match(locationSheets[3], /SearchResultProductIcons icons=\{PACKAGE_SUGGESTION_ICONS\[context\.mode\]\}/);
 });
 
 test("unrelated draft pickers retain Done", () => {
