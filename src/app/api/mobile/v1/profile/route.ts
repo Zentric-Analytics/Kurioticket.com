@@ -7,6 +7,7 @@ import {
   getExistingMobileProfilePhoneCountry,
   resolveMobileProfilePhoneCountry,
 } from "@/lib/mobileProfilePhoneCountry";
+import { validateMobilePersonalDetailsChange } from "@/lib/mobileProfileValidation";
 import { getSupportedPhoneCountryCode } from "@/lib/phoneProfile";
 import { serializeUserProfile, userProfileSchema } from "@/lib/userProfile";
 import { createNotificationEvent } from "@/services/notificationService";
@@ -54,6 +55,9 @@ export async function PATCH(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Please check the profile details." }, { status: 400 });
   try {
     const previous = await getPrisma().userProfile.findUnique({ where: { userId: session.user.id }, select });
+    if (!validateMobilePersonalDetailsChange({ next: parsed.data, previous })) {
+      return NextResponse.json({ error: "Please check the profile details." }, { status: 400 });
+    }
     const profile = await getPrisma().userProfile.upsert({ where: { userId: session.user.id }, create: { userId: session.user.id, ...parsed.data }, update: parsed.data, select });
     const phoneChanged = previous && `${previous.phoneCountryCode || ""}${previous.phoneNumber || ""}` !== `${profile.phoneCountryCode || ""}${profile.phoneNumber || ""}`;
     if (phoneChanged) {
