@@ -2004,7 +2004,7 @@ export function HotelResultsExperience({
       {!guided ? (
         <div
           className={cn(
-            "fixed inset-x-0 top-0 z-[900] px-3 pt-[env(safe-area-inset-top)] transition-all duration-200 sm:hidden",
+            "fixed inset-x-0 top-0 z-[900] px-2 pt-[env(safe-area-inset-top)] transition-all duration-200 sm:hidden",
             showMobileCompactHotelSearch && !mobileHotelSearchOpen
               ? "translate-y-0 opacity-100"
               : "pointer-events-none -translate-y-2 opacity-0",
@@ -2015,7 +2015,7 @@ export function HotelResultsExperience({
             <button
               type="button"
               onClick={openMobileHotelSearch}
-              className="flex min-w-0 flex-1 items-center px-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]"
+              className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-1 px-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]"
               aria-label={t("editHotelSearch") || "Edit hotel search"}
             >
               <span className="min-w-0">
@@ -2024,8 +2024,10 @@ export function HotelResultsExperience({
                 {desktopMinimizedDateSummary} · {desktopMinimizedGuestsSummary}
               </span>
               </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-slate-700" aria-hidden="true" />
             </button>
-            <button type="button" onClick={() => setFiltersOpen(true)} className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg px-3 text-sm font-bold text-[#004BB8] hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]">
+            <button type="button" onClick={() => setFiltersOpen(true)} className="inline-flex h-11 shrink-0 items-center justify-center gap-1 rounded-lg px-2 text-sm font-bold text-[#004BB8] hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]">
+              <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
               {t("filters")}
             </button>
           </div>

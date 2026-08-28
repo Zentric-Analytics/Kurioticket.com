@@ -460,7 +460,10 @@ export function HotelCard({
     .replace("{{current}}", String(activeGalleryPosition + 1))
     .replace("{{total}}", String(availableImageIndices.length));
 
-  function renderSaveButton(className: string) {
+  function renderSaveButton(
+    className: string,
+    horizontalAlignment = "justify-center",
+  ) {
     if (!allowSave) return null;
 
     return (
@@ -472,17 +475,14 @@ export function HotelCard({
           isSaved || hasValidPrice ? savedHotelLabel : saveRequiresLiveRateText
         }
         disabled={!isSaved && !hasValidPrice}
-        className={`${className} z-20 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full border border-transparent bg-transparent transition hover:bg-slate-100/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] ${
-          isSaved
-            ? "text-rose-600"
-            : "text-slate-700"
+        className={`${className} ${horizontalAlignment} z-20 flex min-h-11 min-w-11 shrink-0 items-center rounded-full border border-transparent bg-transparent transition hover:bg-slate-100/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] ${
+          isSaved ? "text-rose-600" : "text-slate-700"
         }`}
         onClick={() => {
           if (isSaved || hasValidPrice) void toggleSavedHotel();
         }}
       >
         <Heart
-          className="translate-x-0.5"
           size={20}
           aria-hidden="true"
           fill={isSaved ? "currentColor" : "none"}
@@ -506,16 +506,19 @@ export function HotelCard({
     }
   }
 
-  function renderShareButton(className: string) {
+  function renderShareButton(
+    className: string,
+    horizontalAlignment = "justify-center",
+  ) {
     if (!resolvedDetailsHref || !allowSave) return null;
     return (
       <button
         type="button"
         aria-label={`Share ${hotel.name}`}
-        className={`${className} z-20 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full border border-transparent bg-transparent text-slate-700 transition hover:bg-slate-100/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]`}
+        className={`${className} ${horizontalAlignment} z-20 flex min-h-11 min-w-11 shrink-0 items-center rounded-full border border-transparent bg-transparent text-slate-700 transition hover:bg-slate-100/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]`}
         onClick={() => void shareHotel()}
       >
-        <Share2 className="-translate-x-0.5" size={19} aria-hidden="true" />
+        <Share2 size={19} aria-hidden="true" />
       </button>
     );
   }
@@ -579,9 +582,12 @@ export function HotelCard({
                       {hotel.name}
                     </h2>
                   </div>
-                  <div data-hotel-utility-actions className="-me-1.5 -mt-1.5 flex shrink-0 items-center gap-0 md:hidden">
-                    {renderSaveButton("flex")}
-                    {renderShareButton("flex")}
+                  <div
+                    data-hotel-utility-actions
+                    className="-me-1.5 -mt-1.5 flex shrink-0 items-center gap-0 md:hidden"
+                  >
+                    {renderSaveButton("flex pe-1", "justify-end")}
+                    {renderShareButton("flex ps-1", "justify-start")}
                   </div>
                 </div>
 
