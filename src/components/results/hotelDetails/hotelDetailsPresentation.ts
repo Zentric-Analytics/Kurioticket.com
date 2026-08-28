@@ -10,22 +10,28 @@ export type HotelDetailsSearchContext = {
   rooms?: string;
 };
 
-/** Presentation-only shape for future, server-supplied comparable rates. */
-export type HotelComparisonOffer = {
+export type HotelDetailsProviderOfferAction =
+  | { kind: "internal-room-flow" }
+  | { kind: "provider-handoff"; providerOfferId: string };
+
+/** Public Hotel Details offer identity. Provider destinations remain server-owned. */
+export type HotelDetailsProviderOffer = {
   id: string;
   providerName: string;
   providerLogoUrl?: string;
+  amenities?: HotelAmenityPresentationItem[];
   roomName?: string;
   bedConfiguration?: string;
   nightlyPrice: string;
-  totalPrice: string;
+  nightlyPriceTitle?: string;
+  nightlyPriceAriaLabel?: string;
+  totalPrice?: string;
   cancellationLabel?: string;
   mealPlanLabel?: string;
   paymentLabel?: string;
   taxesAndFeesLabel?: string;
-  deepLink: string;
   checkedAt?: string;
-  isLowestComparableTotal?: boolean;
+  action: HotelDetailsProviderOfferAction;
 };
 
 export function isSafeHotelDetailsHttpUrl(value?: string) {
