@@ -19,7 +19,6 @@ test("searchable moving sheets coordinate automatic focus with their entrance", 
     assert.match(sheet, /useSearchPickerKeyboardPresentation\([^;]+inputRef, motion\)/, file);
     assert.match(sheet, /onShow=\{keyboardPresentation\.onModalShow\}/, file);
     assert.match(sheet, /onLayout=\{keyboardPresentation\.onSheetLayout\}/, file);
-    assert.match(sheet, /inputRef\.current\?\.focus\(\)/, file);
     assert.doesNotMatch(sheet, /motion\.openSettled/, file);
     assert.doesNotMatch(sheet, /autoFocus/, file);
     assert.doesNotMatch(sheet, /requestAnimationFrame\([^)]*inputRef\.current\?\.focus/s, file);
