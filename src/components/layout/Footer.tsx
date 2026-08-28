@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
 
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -11,15 +13,20 @@ import {
 
 export type FooterVariant = "full" | "brand-legal-only";
 
+type FooterSectionId = "contact" | "discover" | "terms-settings" | "about";
+
 export function Footer({ variant = "full" }: { variant?: FooterVariant }) {
   const { t } = useLocale();
   const currentYear = new Date().getFullYear();
+  const [openMobileSection, setOpenMobileSection] =
+    useState<FooterSectionId | null>(null);
   const sellerOfTravelNotice =
     t.footerSellerOfTravelNotice ||
     `${legalProfile.company.legalName} — ${getCaliforniaSellerOfTravelNotice()}`;
 
   const footerSections = [
     {
+      id: "contact" as const,
       heading: t.footerContactUs,
       links: [
         {
@@ -37,6 +44,7 @@ export function Footer({ variant = "full" }: { variant?: FooterVariant }) {
       ],
     },
     {
+      id: "discover" as const,
       heading: t.footerDiscover,
       links: [
         {
@@ -66,6 +74,7 @@ export function Footer({ variant = "full" }: { variant?: FooterVariant }) {
       ],
     },
     {
+      id: "terms-settings" as const,
       heading: t.footerTermsSettings,
       links: [
         {
@@ -87,6 +96,7 @@ export function Footer({ variant = "full" }: { variant?: FooterVariant }) {
       ],
     },
     {
+      id: "about" as const,
       heading: t.footerAboutKurioticket,
       links: [
         {
@@ -101,20 +111,20 @@ export function Footer({ variant = "full" }: { variant?: FooterVariant }) {
     },
   ];
 
-  const [aboutSection, ...linkSections] = footerSections;
-
   return (
     <footer className="border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] text-slate-700">
       <div
         className={
-          variant === "full" ? "page-shell py-10 md:py-12" : "page-shell py-8"
+          variant === "full"
+            ? "page-shell py-6 sm:py-8 lg:py-12"
+            : "page-shell py-8"
         }
       >
         {variant === "full" ? (
           <>
             <div className="hidden gap-x-8 gap-y-8 lg:grid lg:grid-cols-[repeat(3,minmax(0,1fr))_minmax(0,0.85fr)] xl:gap-x-12">
               {footerSections.map((section) => (
-                <div key={section.heading}>
+                <div key={section.id}>
                   <h2 className="text-sm font-semibold text-slate-900">
                     {section.heading}
                   </h2>
@@ -134,62 +144,71 @@ export function Footer({ variant = "full" }: { variant?: FooterVariant }) {
               ))}
             </div>
 
-            <div className="space-y-7 lg:hidden">
-              <div>
-                <h2 className="text-sm font-semibold text-slate-900">
-                  {aboutSection.heading}
-                </h2>
+            <div className="border-t border-slate-200 lg:hidden">
+              {footerSections.map((section) => {
+                const isOpen = openMobileSection === section.id;
+                const panelId = `footer-mobile-panel-${section.id}`;
 
-                <div className="mt-3 grid gap-2 text-sm text-slate-600">
-                  {aboutSection.links.map((link) => (
-                    <Link
-                      key={`${aboutSection.heading}-${link.label}`}
-                      href={link.href}
-                      className="transition-colors hover:text-[#004BB8]"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-x-8 gap-y-6 border-t border-slate-200 pt-6 sm:grid-cols-3">
-                {linkSections.map((section) => (
-                  <div key={section.heading} className="min-w-0">
-                    <h2 className="text-sm font-semibold text-slate-900">
-                      {section.heading}
+                return (
+                  <section key={section.id} className="border-b border-slate-200">
+                    <h2>
+                      <button
+                        id={`footer-mobile-trigger-${section.id}`}
+                        type="button"
+                        aria-expanded={isOpen}
+                        aria-controls={panelId}
+                        onClick={() =>
+                          setOpenMobileSection(isOpen ? null : section.id)
+                        }
+                        className="flex min-h-11 w-full items-center justify-between gap-3 py-2 text-start text-sm font-semibold text-slate-900"
+                      >
+                        <span className="min-w-0">{section.heading}</span>
+                        <ChevronDown
+                          aria-hidden="true"
+                          className={`size-4 shrink-0 text-slate-500 transition-transform duration-200 ${
+                            isOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
                     </h2>
 
-                    <div className="mt-3 grid gap-2 text-sm text-slate-600">
-                      {section.links.map((link) => (
-                        <Link
-                          key={`${section.heading}-${link.label}`}
-                          href={link.href}
-                          className="break-words transition-colors hover:text-[#004BB8]"
-                        >
-                          {link.label}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                    {isOpen ? (
+                      <div
+                        id={panelId}
+                        aria-labelledby={`footer-mobile-trigger-${section.id}`}
+                        className="grid gap-2 pb-4 ps-1 text-sm leading-5 text-slate-600"
+                      >
+                        {section.links.map((link) => (
+                          <Link
+                            key={`${section.id}-${link.href}`}
+                            href={link.href}
+                            className="break-words transition-colors hover:text-[#004BB8]"
+                          >
+                            {link.label}
+                          </Link>
+                        ))}
+                      </div>
+                    ) : null}
+                  </section>
+                );
+              })}
             </div>
           </>
         ) : null}
 
         <div
           className={
-            variant === "full" ? "mt-10 border-t border-slate-200 pt-5" : "pt-0"
+            variant === "full"
+              ? "mt-6 border-t border-slate-200 pt-5 lg:mt-10"
+              : "pt-0"
           }
         >
-          <div className="flex flex-col gap-3 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-4 text-sm text-slate-600 md:flex-row md:items-center md:justify-between md:gap-3">
             <div>
               <KurioticketLogo
                 variant="full"
                 tone="dark"
-                markClassName="h-9 w-9"
-                textClassName="text-base"
+                className="h-7 w-auto sm:h-8 lg:h-9"
               />
 
               <p className="mt-1 text-xs text-slate-500">
