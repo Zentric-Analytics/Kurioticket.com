@@ -27,7 +27,8 @@ test("results edit modal reuses the shared panel and dismisses locally", () => {
   assert.doesNotMatch(modal, /router\.|flightSearchParams|travelApi/);
   assert.doesNotMatch(modal, /accessibilityLabel="Go back"|ArrowLeft/);
   assert.doesNotMatch(modal, /bottomSafeAreaInset|paddingBottom: bottomSafeAreaInset/);
-  assert.match(modal, /headerClearance, \{ height: headerAnchor \}/);
+  assert.match(modal, /safeAreaClearance, \{ height: topInset \}/);
+  assert.doesNotMatch(modal, /headerAnchor|flightResultsHeaderHeight/);
   assert.match(modal, /<View style=\{styles.backdrop\}>[\s\S]*StyleSheet.absoluteFill, styles.scrim/);
   assert.match(modal, /panel: \{ maxHeight: "100%", borderBottomLeftRadius: 24, borderBottomRightRadius: 24/);
   assert.match(modal, /content: \{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 20 \}/);

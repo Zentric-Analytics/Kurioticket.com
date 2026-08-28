@@ -47,7 +47,8 @@ test("top safe-area positioning remains on full-height search overlays", () => {
     const source = sources.find((entry) => entry.file === file)!.source;
     assert.match(source, /SafeAreaView[^>]*edges=\{\["top"\]\}/s, file);
   }
-  assert.match(editSearchSource, /headerClearance, \{ height: headerAnchor \}/, "FlightEditSearchModal.tsx");
+  assert.match(editSearchSource, /safeAreaClearance, \{ height: topInset \}/, "FlightEditSearchModal.tsx");
+  assert.doesNotMatch(editSearchSource, /headerAnchor|flightResultsHeaderHeight/);
   assert.doesNotMatch(editSearchSource, /SafeAreaView|bottomSafeAreaInset/);
   assert.match(editSearchSource, /content: \{[^}]*paddingBottom: 20/);
 });
