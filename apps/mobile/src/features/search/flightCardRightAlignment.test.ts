@@ -18,18 +18,18 @@ test("outbound and return share one structured journey component", () => {
 
 test("arrival and price terminate on the shared right edge", () => {
   assert.match(source, /rightColumnContract: \{ alignItems: "flex-end" \}/);
-  assert.match(card, /style=\{\[s0\.actionColumn, s0\.rightColumnContract\]\}/);
-  assert.match(card, /style=\{\[s0\.actionColumn, s0\.rightColumnContract\]\}>[\s\S]*?s0\.bigPrice/);
+  assert.match(card, /<View style=\{s0\.fareRow\}>\s*<Text[^>]*s0\.bigPrice/);
   assert.doesNotMatch(card, /View details|detailsButton/);
   assert.doesNotMatch(card, />\{roundTrip \? "round trip" : "one way"\}<\/Text>/);
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch"/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.doesNotMatch(source, /priceBox:/);
-  assert.match(source, /fareRow: \{ paddingTop: 2, flexDirection: "row", justifyContent: "flex-end" \}/);
-  assert.match(source, /actionColumn: \{ width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 3 \}/);
+  assert.match(source, /fareRow: \{ width: "100%", paddingTop: 10, flexDirection: "row", justifyContent: "flex-end", alignItems: "center" \}/);
+  assert.match(source, /metadataDivider: \{ width: "100%", height: StyleSheet\.hairlineWidth, marginTop: 6, marginBottom: 4 \}/);
+  assert.doesNotMatch(source, /actionColumn:/);
   assert.doesNotMatch(card, /marginRight/);
-  const actionColumnStyle = /actionColumn: \{([^}]*)\}/.exec(source)?.[1] ?? "";
-  assert.doesNotMatch(actionColumnStyle, /position|top|bottom|marginTop/);
+  const fareRowStyle = /fareRow: \{([^}]*)\}/.exec(source)?.[1] ?? "";
+  assert.doesNotMatch(fareRowStyle, /position|top|bottom|marginRight/);
 });
 
 test("journeys follow the compact identity row at the full card content width", () => {
@@ -49,11 +49,11 @@ test("journeys follow the compact identity row at the full card content width", 
   assert.match(source, /journeyList: \{ width: "100%", marginTop: 18, gap: 4 \}/);
 });
 
-test("one-way cards omit return while preserving the shared right-side contract", () => {
+test("one-way cards omit return while preserving the full-width fare alignment", () => {
   assert.match(card, /const roundTrip = one\(params\.tripType\) === "round-trip"/);
   assert.match(card, /\{returnLeg \? <FlightJourneyRow[^\n]+ : null\}/);
   assert.doesNotMatch(card, /"round trip" : "one way"/);
-  assert.match(card, /style=\{\[s0\.actionColumn, s0\.rightColumnContract\]\}/);
+  assert.match(card, /<View style=\{s0\.fareRow\}>\s*<Text/);
 });
 
 test("long fares stay readable without changing details navigation or theme behavior", () => {
@@ -65,16 +65,22 @@ test("long fares stay readable without changing details navigation or theme beha
   assert.match(card, /shadowColor: theme\.dark \?/);
 });
 
-test("the compact shared action column contains the only displayed fare", () => {
-  const actionColumn = /<View style=\{\[s0\.actionColumn, s0\.rightColumnContract\]\}>([\s\S]*?)<\/View>/.exec(card)?.[1] ?? "";
-  const fareRow = card.slice(card.indexOf('<View style={s0.fareRow}>'), card.indexOf('<View style={s0.metadataRow}>'));
+test("the full-width fare row contains the only displayed fare", () => {
+  const fareRow = /<View style=\{s0\.fareRow\}>([\s\S]*?)<\/View>/.exec(card)?.[1] ?? "";
 
   assert.equal(card.match(/\{fare\?\.formatted \?\? "—"\}/g)?.length, 1);
-  assert.match(actionColumn, /\{fare\?\.formatted \?\? "—"\}/);
-  assert.match(actionColumn, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.8\}/);
-  assert.match(fareRow, /style=\{\[s0\.actionColumn, s0\.rightColumnContract\]\}/);
+  assert.match(fareRow, /\{fare\?\.formatted \?\? "—"\}/);
+  assert.match(fareRow, /accessible=\{false\}/);
+  assert.match(fareRow, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.8\}/);
+  assert.match(source, /bigPrice: \{ fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui\.navy, textAlign: "right" \}/);
+  assert.match(fareRow, /color: theme\.textPrimary/);
+  assert.doesNotMatch(fareRow, /actionColumn|width: 112|maxWidth|marginRight|position:/);
   assert.doesNotMatch(fareRow, /baggageSummary|fareRulesSummary|metadataItem/);
-  assert.doesNotMatch(actionColumn, /Pressable|View details/);
+  assert.doesNotMatch(fareRow, /Total price|Estimated price|Per traveler|Round trip|One way|Taxes included|From/);
+  assert.doesNotMatch(fareRow, /Pressable|View details/);
+  assert.ok(card.indexOf('<View style={s0.journeyList}>') < card.indexOf('<View style={s0.fareRow}>'));
+  assert.ok(card.indexOf('<View style={s0.fareRow}>') < card.indexOf('<View style={[s0.metadataDivider'));
+  assert.match(card, /fare\?\.accessibilityLabel \?\? "price unavailable"/);
   assert.match(card, /pathname: "\/flight-details"/);
   assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
 });
