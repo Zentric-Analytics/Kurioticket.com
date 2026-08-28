@@ -8,7 +8,7 @@ const flightCard = source.slice(source.indexOf("function FlightCard"), source.in
 const footerStyles = source.slice(source.indexOf("  fareRow:"), source.indexOf("  hotelCard:"));
 
 test("the flight card has one subtle theme-aware horizontal metadata divider", () => {
-  assert.match(flightCard, /<View style=\{s0\.fareRow\}>[\s\S]*<View style=\{\[s0\.metadataDivider, \{ backgroundColor: theme\.border \}\]\} \/>[\s\S]*<View style=\{s0\.metadataRow\}>/);
+  assert.match(flightCard, /<View style=\{s0\.fareRow\}>[\s\S]*<View style=\{\[s0\.metadataDivider, \{ backgroundColor: theme\.border \}\]\} \/>[\s\S]*style=\{s0\.metadataRow\}/);
   assert.equal(flightCard.match(/s0\.metadataDivider/g)?.length, 1);
   assert.match(footerStyles, /metadataDivider: \{ width: "100%", height: StyleSheet\.hairlineWidth, marginTop: 6, marginBottom: 4 \}/);
   assert.doesNotMatch(footerStyles, /borderLeftWidth|borderRightWidth/);
@@ -40,6 +40,6 @@ test("the flight card retains its light and dark mode theming", () => {
   assert.match(flightCard, /color: highlightTextColor/);
   assert.match(flightCard, /color: theme\.textPrimary/);
   assert.match(flightCard, /color: theme\.textSecondary/);
-  assert.match(flightCard, /color=\{theme\.textSecondary\}/);
+  assert.match(flightCard, /s0\.metadataText, \{ color: theme\.textSecondary \}/);
   assert.match(flightCard, /backgroundColor: theme\.border/);
 });
