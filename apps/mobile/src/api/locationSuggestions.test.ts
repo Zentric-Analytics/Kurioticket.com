@@ -18,5 +18,5 @@ test("flight request encodes context and preserves AbortSignal",async()=>{
 test("car parser permits only verified valid rows, deduplicates, and caps results",()=>{
   const valid=Array.from({length:10},(_,i)=>({id:`city-${i}`,kind:"city",value:`City ${i}`,primaryText:`City ${i}`,secondaryText:"Country"}));
   const result=parseCarLocationSuggestions({suggestions:[{id:"airport-los",kind:"airport",value:"LOS",primaryText:"Lagos",secondaryText:"Nigeria",airportCode:"los"},{id:"custom",kind:"custom",value:"x",primaryText:"Use x",secondaryText:"Unverified typed location"},...valid]});
-  assert.equal(result[0].airportCode,"LOS");assert.equal(result.length,8);assert.ok(result.every(row=>row.kind!=="custom"));assert.throws(()=>parseCarLocationSuggestions({}),/Invalid car/);
+  assert.equal(result[0].airportCode,"LOS");assert.equal(result.length,8);assert.equal(result.some(row=>row.id==="custom"),false);assert.throws(()=>parseCarLocationSuggestions({}),/Invalid car/);
 });

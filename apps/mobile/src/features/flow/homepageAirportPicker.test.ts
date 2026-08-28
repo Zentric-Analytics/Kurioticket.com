@@ -42,3 +42,11 @@ test("non-homepage flight search does not enable homepage airport logic", () => 
   assert.doesNotMatch(products, /homepageAirportPicker|searchHomepageAirports/);
   assert.match(panel, /homepageAirportPicker = false/);
 });
+
+test("airport selection preserves provider results and defensively hides an empty state", () => {
+  assert.match(panel, /if\(query===programmaticFilledQuery\.current\)\{programmaticFilledQuery\.current="";return;\}/);
+  assert.doesNotMatch(panel, /query===programmaticFilledQuery\.current\)\{setMatches\(\[\]\)/);
+  assert.match(panel, /ListEmptyComponent=\{draftAirport\?null:/);
+  assert.match(panel, /value!==programmaticFilledQuery\.current\)programmaticFilledQuery\.current=""/);
+  assert.match(panel, /clearSearch=.*setMatches\(\[\]\)/);
+});

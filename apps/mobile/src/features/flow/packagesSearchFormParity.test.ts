@@ -97,3 +97,11 @@ test("Package form hides car-time presentation while retaining final Car handoff
   assert.match(form, /pickupTime: search\.carPickupTime/);
   assert.match(form, /dropoffTime: search\.carReturnTime/);
 });
+
+test("Package airport selection preserves choices and hides only the false empty state", () => {
+  assert.match(form, /query===programmaticFilledQuery\.current\)\{programmaticFilledQuery\.current="";return;\}/);
+  assert.doesNotMatch(form, /query===programmaticFilledQuery\.current\)\{setChoices\(\[\]\)/);
+  assert.match(form, /choices\.length===0&&!draft\?/);
+  assert.match(form, /value!==programmaticFilledQuery\.current\)programmaticFilledQuery\.current=""/);
+  assert.match(form, /const clear=.*setChoices\(\[\]\)/);
+});
