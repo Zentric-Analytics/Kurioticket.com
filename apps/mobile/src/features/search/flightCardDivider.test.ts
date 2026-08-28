@@ -14,14 +14,15 @@ test("the flight card has one subtle theme-aware horizontal metadata divider", (
   assert.doesNotMatch(footerStyles, /borderLeftWidth|borderRightWidth/);
 });
 
-test("flight details navigation is wired to the complete borderless card", () => {
+test("flight details navigation is wired to the complete bordered card", () => {
   assert.match(flightCard, /<Pressable[\s\S]*?accessibilityRole="button"[\s\S]*?onPress=\{\(\) =>[\s\S]*?router\.push\(\{/);
   assert.match(flightCard, /pathname: "\/flight-details"/);
   assert.doesNotMatch(flightCard, /View details|detailsButton|detailsButtonText/);
   assert.match(flightCard, /onPressIn=\{\(event\) => event\.stopPropagation\(\)\}/);
   assert.match(flightCard, /onPress=\{\(event\) => \{ event\.stopPropagation\(\); if \(!pending\) onToggleSaved\(\); \}\}/);
   const cardStyle = /card: \{([\s\S]*?)\n  \},/.exec(source)?.[1] ?? "";
-  assert.doesNotMatch(cardStyle, /borderWidth|borderColor/);
+  assert.match(cardStyle, /borderWidth: 1/);
+  assert.match(flightCard, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
 });
 
 test("only provider-backed baggage and refundable benefits remain eligible", () => {

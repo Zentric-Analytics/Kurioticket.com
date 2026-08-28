@@ -14,16 +14,18 @@ test("flight card renders labeled provider legs only for the active trip type", 
   assert.match(card, /\{returnLeg \? <FlightJourneyRow label="RETURN" leg=\{returnLeg\} \/> : null\}/);
 });
 
-test("main flight card is borderless and uses theme-aware native depth", () => {
+test("main flight card uses a theme-aware bordered surface and restrained native depth", () => {
   const cardStyle = /card: \{([\s\S]*?)\n  \},/.exec(source)?.[1] ?? "";
-  assert.doesNotMatch(cardStyle, /borderWidth|borderColor|borderTopWidth|borderBottomWidth/);
-  assert.match(cardStyle, /borderRadius: 14/);
+  assert.match(cardStyle, /borderWidth: 1/);
+  assert.match(cardStyle, /borderRadius: 16/);
   assert.match(cardStyle, /shadowOffset: \{ width: 0, height: 2 \}/);
-  assert.match(cardStyle, /shadowOpacity: 0\.09/);
+  assert.match(cardStyle, /shadowOpacity: 0\.08/);
   assert.match(cardStyle, /shadowRadius: 10/);
   assert.match(cardStyle, /elevation: 2/);
   assert.match(card, /backgroundColor: theme\.surface/);
+  assert.match(card, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
   assert.match(card, /shadowColor: theme\.dark \? "#000000" : "#18305B"/);
+  assert.doesNotMatch(cardStyle, /backgroundColor: ["']white["']/);
 });
 
 test("flight card preserves display pricing and provider data during details navigation", () => {
@@ -193,7 +195,6 @@ test("operating-carrier clarity stays conditional beneath the primary airline id
   assert.match(card, /operatingCarrierText, \{ color: theme\.textSecondary \}/);
   assert.doesNotMatch(header, /marketingFlightNumber|operatingFlightNumber|codeshare/i);
   assert.doesNotMatch(source, /operatingCarrierBadge|operatingCarrierChip/);
-  assert.doesNotMatch(source, /card: \{[^}]*borderWidth/);
 });
 
 test("narrow flight cards reserve deterministic space for every journey section", () => {
