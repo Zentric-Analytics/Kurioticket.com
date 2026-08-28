@@ -40,16 +40,29 @@ test("security landing uses flat descriptive blocks and the native header", () =
   assert.doesNotMatch(security, /#003B95|#0071C2|Booking/);
 });
 
-test("password fields exist only in a full-screen password flow", () => {
+test("password screen separates change and reset flows and wipes sensitive drafts", () => {
   const landingEnd = security.indexOf("<ScreenModal visible={passwordOpen}");
   assert.ok(landingEnd > 0);
   const landing = security.slice(0, landingEnd);
   assert.doesNotMatch(landing, /field\("currentPassword"|field\("newPassword"|field\("confirmPassword"/);
-  assert.match(security, /const openPassword = \(\) => \{[^}]*clearPasswordFeedback\(\); setPasswordOpen\(true\)/);
-  assert.match(security, /presentationStyle="overFullScreen"/);
+  assert.match(security, /const \[passwordMode, setPasswordMode\] = useState<"change" \| "reset">\("change"\)/);
+  assert.match(security, /const clearPasswordDraft = \(\) => \{ setPasswords\(\{ currentPassword: "", newPassword: "", confirmPassword: "" \}\); setVisible\(false\); clearPasswordFeedback\(\); \}/);
+  assert.match(security, /const openPassword = \(\) => \{[^\n]*clearPasswordDraft\(\)[^\n]*setPasswordOpen\(true\)/);
+  assert.match(security, /const closePassword = \(\) => \{[^\n]*setPasswordOpen\(false\)[^\n]*clearPasswordDraft\(\)/);
+  assert.match(security, /passwordMode === "change"/);
+  assert.match(security, /setPasswordMode\("reset"\)/);
+  assert.match(security, /resetCopy\.entry/);
+  assert.match(security, /<PasswordResetFlow active=\{passwordOpen && passwordMode === "reset"\} copy=\{c\} onUnauthorized=\{unauth\}/);
   assert.match(security, /travelApi\.changePassword\(passwords\)/);
-  assert.match(security, /const closePassword = \(\) => \{[^}]*setPasswordOpen\(false\); clearPasswordFeedback\(\)/);
-  assert.match(security, /<PasswordResetFlow copy=\{c\} onUnauthorized=\{unauth\}/);
+});
+
+test("password change validity gates submission and clears stale errors while editing", () => {
+  assert.match(security, /const passwordReady = Boolean\(passwords\.currentPassword\)/);
+  assert.match(security, /passwords\.newPassword\.length >= 8/);
+  assert.match(security, /passwords\.newPassword === passwords\.confirmPassword/);
+  assert.match(security, /passwords\.currentPassword !== passwords\.newPassword/);
+  assert.match(security, /disabled=\{submitting \|\| !passwordReady\}/);
+  assert.match(security, /setPasswordError\(""\)/);
 });
 
 test("password reset requires a six-digit email code before accepting a new password", () => {
@@ -61,6 +74,10 @@ test("password reset requires a six-digit email code before accepting a new pass
   assert.match(resetFlow, /maxLength=\{6\}/);
   assert.match(resetFlow, /newPassword\.length < 8/);
   assert.match(resetFlow, /newPassword !== confirmPassword/);
+  assert.match(resetFlow, /const resetReady =/);
+  assert.match(resetFlow, /if \(active\) return;/);
+  assert.match(resetFlow, /setCode\(""\)/);
+  assert.match(resetFlow, /setVisible\(false\)/);
 });
 
 test("passkeys use the native security drill-down instead of the web handoff", () => {
@@ -143,8 +160,8 @@ test("visual feedback is owned by the landing and individual security flows", ()
 });
 
 test("drill-down feedback is cleared on both open and close", () => {
-  assert.match(security, /openPassword[^\n]+clearPasswordFeedback\(\)[^\n]+setPasswordOpen\(true\)/);
-  assert.match(security, /closePassword[^\n]+setPasswordOpen\(false\)[^\n]+clearPasswordFeedback\(\)/);
+  assert.match(security, /openPassword[^\n]+clearPasswordDraft\(\)[^\n]+setPasswordOpen\(true\)/);
+  assert.match(security, /closePassword[^\n]+setPasswordOpen\(false\)[^\n]+clearPasswordDraft\(\)/);
   for (const flow of ["Devices", "TwoFactor"] ) {
     assert.match(security, new RegExp(`open${flow}[^\\n]+set${flow}Error\\(""\\)[^\\n]+set${flow}Open\\(true\\)`));
     assert.match(security, new RegExp(`close${flow}[^\\n]+set${flow}Open\\(false\\)[^\\n]+set${flow}Error\\(""\\)`));
@@ -186,10 +203,13 @@ test("late modal requests cannot repopulate feedback after close or reopen", () 
   assert.match(security, /request===passkeysRequest\.current/);
 });
 
-test("internal modal refreshes do not overwrite landing feedback", () => {
+test("internal modal refreshes stay silent and do not overwrite landing feedback", () => {
   assert.match(security, /showLandingFeedback = true/);
+  assert.match(security, /showLoading = true/);
   assert.match(security, /showLandingFeedback\) setLandingError/);
-  assert.match(security, /load\(\{\s*showLandingFeedback:\s*false\s*\}\)/);
+  assert.match(security, /showLoading\) setLoading\(true\)/);
+  assert.match(security, /showLoading\) setLoading\(false\)/);
+  assert.match(security, /load\(\{\s*showLandingFeedback:\s*false,\s*showLoading:\s*false\s*\}\)/);
 });
 
 test("security localization covers the compact hierarchy", () => {
