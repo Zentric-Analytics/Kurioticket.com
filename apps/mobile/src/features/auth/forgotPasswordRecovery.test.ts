@@ -24,10 +24,12 @@ test("forgot password has a native six-digit reset form", () => {
   assert.match(screens, /label="Reset password"/);
 });
 
-test("reset submits the code and new password then returns to sign in", () => {
-  assert.match(api, /resetForgotPassword/);
+test("reset submits the issued recovery code without reusing the older email proof", () => {
+  assert.match(api, /resetForgotPassword: \(input: \{ email: string; code: string; newPassword: string; confirmPassword: string \}\)/);
   assert.match(api, /action: "reset"/);
-  assert.match(flow, /await authApi\.resetForgotPassword\(\{ email, verificationToken: proof, \.\.\.input \}\)/);
+  assert.doesNotMatch(api, /resetForgotPassword: \(input: \{ email: string; verificationToken:/);
+  assert.match(flow, /await authApi\.resetForgotPassword\(\{ email, \.\.\.input \}\)/);
+  assert.doesNotMatch(flow, /resetForgotPassword\(\{ email, verificationToken: proof/);
   assert.match(flow, /setStep\("password"\)/);
   assert.match(flow, /Your password was reset\. Sign in with your new password\./);
 });
