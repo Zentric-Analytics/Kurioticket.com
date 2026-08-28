@@ -231,7 +231,7 @@ export function MultiCityFlightEditor({
                   onClick={() => swap(index)}
                   aria-label={`Swap origin and destination for ${flightLabel(index)}`}
                   data-multi-city-swap-control
-                  className="focus-ring absolute inset-inline-start-1/2 top-1/2 z-20 inline-flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#D8E1EC] bg-white text-[#004BB8] shadow-[0_3px_10px_rgba(15,23,42,0.14)] transition-colors hover:bg-blue-50 rtl:translate-x-1/2"
+                  className="focus-ring absolute left-1/2 top-1/2 z-10 inline-flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#D8E1EC] bg-white text-[#004BB8]"
                 >
                   <ArrowRightLeft className="h-5 w-5" aria-hidden="true" />
                 </button>
