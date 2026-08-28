@@ -171,8 +171,26 @@ test("hotel result cards expose compact save and share actions", () => {
   assert.match(source, /aria-label=\{`Share \$\{hotel\.name\}`\}/);
   assert.match(source, /navigator\.share/);
   assert.match(source, /navigator\.clipboard\.writeText/);
-  assert.match(source, /new URL\(resolvedDetailsHref, window\.location\.origin\)/);
+  assert.match(
+    source,
+    /new URL\(resolvedDetailsHref, window\.location\.origin\)/,
+  );
   assert.match(source, /AbortError/);
+});
+
+test("mobile hotel utility glyphs meet at the inside edges of separate tap targets", () => {
+  assert.match(
+    source,
+    /data-hotel-utility-actions[\s\S]*?renderSaveButton\("flex pe-1", "justify-end"\)[\s\S]*?renderShareButton\("flex ps-1", "justify-start"\)/,
+  );
+  assert.equal(
+    source.match(/min-h-11 min-w-11/g)?.length,
+    2,
+    "save and share helpers each preserve a 44px minimum target",
+  );
+  assert.doesNotMatch(source, /translate-x-0\.5/);
+  assert.doesNotMatch(source, /-translate-x-0\.5/);
+  assert.match(source, /horizontalAlignment = "justify-center"/);
 });
 
 test("hotel result cards use whitespace instead of internal rules", () => {

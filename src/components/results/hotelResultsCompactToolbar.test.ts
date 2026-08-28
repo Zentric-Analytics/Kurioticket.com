@@ -38,6 +38,19 @@ function desktopCompactStickyWrapperSource() {
   return source.slice(start, end);
 }
 
+function mobileCompactHotelSearchSource() {
+  const start = source.indexOf('"fixed inset-x-0 top-0 z-[900]');
+  const end = source.indexOf("<MobileResultsEditSheet", start);
+
+  assert.notEqual(start, -1, "mobile compact Hotel search exists");
+  assert.notEqual(
+    end,
+    -1,
+    "mobile Edit Search sheet follows the compact search",
+  );
+  return source.slice(start, end);
+}
+
 test("Hotel desktop compact sticky wrapper is a transparent positioning layer", () => {
   const wrapper = desktopCompactStickyWrapperSource();
 
@@ -173,4 +186,23 @@ test("Hotel sticky lifecycle and neighboring search/filter contracts remain inta
   assert.match(source, /desktopSearchFormRef\.current/);
   assert.match(source, /desktopFormRef=\{setDesktopSearchFormRef\}/);
   assert.match(source, /desktopCompactFilterTopOffset = 116/);
+});
+
+test("mobile compact Hotel search has narrow gutters and distinct edit and filter affordances", () => {
+  const compactSearch = mobileCompactHotelSearchSource();
+
+  assert.match(
+    compactSearch,
+    /z-\[900\] px-2 pt-\[env\(safe-area-inset-top\)\]/,
+  );
+  assert.doesNotMatch(compactSearch, /z-\[900\] px-3/);
+  assert.match(compactSearch, /grid-cols-\[minmax\(0,1fr\)_auto\]/);
+  assert.match(
+    compactSearch,
+    /aria-label=\{t\("editHotelSearch"\) \|\| "Edit hotel search"\}[\s\S]*?<ChevronRight[\s\S]*?aria-hidden="true"[\s\S]*?<\/button>/,
+  );
+  assert.match(
+    compactSearch,
+    /onClick=\{\(\) => setFiltersOpen\(true\)\}[\s\S]*?<SlidersHorizontal[\s\S]*?aria-hidden="true"[\s\S]*?\{t\("filters"\)\}/,
+  );
 });
