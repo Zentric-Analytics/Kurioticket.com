@@ -12,69 +12,71 @@ const flightSkeleton = screen.slice(
   screen.indexOf("function FlightLoadingSkeleton"),
   screen.indexOf("function HotelLoadingSkeleton"),
 );
+const flightList = screen.slice(screen.indexOf("<Animated.SectionList"), screen.indexOf(") : (", screen.indexOf("<Animated.SectionList")));
 
-test("request truth stays loading while presentation starts in a separate searching phase", () => {
-  assert.match(screen, /type Status = "loading" \| "ready" \| "empty" \| "error"/);
-  assert.match(screen, /type FlightLoadingPhase = "searching" \| "skeleton"/);
-  assert.match(screen, /useState<FlightLoadingPhase>\("searching"\)/);
-  assert.match(screen, /flightLoadingIdentity === currentFlightLoadingIdentity[\s\S]*?flightLoadingPhase[\s\S]*?: "searching"/);
-  assert.match(screen, /status === "loading"[\s\S]*?<FlightLoadingExperience/);
+test("loading is the single guaranteed SectionList header presentation", () => {
+  assert.match(flightList, /ListHeaderComponent=\{status === "loading" \? \([\s\S]*?<FlightLoadingExperience/);
+  assert.match(flightList, /ListEmptyComponent=\{null\}/);
+  assert.equal(screen.match(/<FlightLoadingExperience/g)?.length, 1);
+  assert.match(flightList, /origin=\{String\(payload\.origin \|\| ""\)\.toUpperCase\(\)\}/);
+  assert.match(flightList, /destination=\{String\(payload\.destination \|\| ""\)\.toUpperCase\(\)\}/);
   assert.doesNotMatch(stateUi, /ActivityIndicator|Searching the best flights for you/);
 });
 
-test("searching copy uses the canonical destination without splash branding or result chrome", () => {
-  assert.match(loader, /Searching for flights to \{destination\}…/);
-  assert.match(loader, /Checking airlines and fares…/);
+test("route status uses canonical endpoints and evolves only its copy", () => {
+  assert.match(loader, /\{origin\}[\s\S]*?\{destination\}/);
+  assert.match(loader, /Searching for flights to \$\{destination\}…/);
+  assert.match(loader, /Checking airlines, schedules and fares…/);
+  assert.match(loader, /Comparing the best options…/);
+  assert.match(loader, /Reviewing fares and journey times…/);
   assert.match(loader, /<PlaneTakeoff/);
-  assert.doesNotMatch(loader, /Kurioticket|splash|PriceAlert|Results found|flightResultCountLabel/);
+  assert.doesNotMatch(loader, /Kurioticket|splash|PriceAlert|flightResultCountLabel/);
 });
 
-test("a presentation-only timer reveals and cleans up the almost-done phase", () => {
+test("the presentation timer changes copy without gating skeletons", () => {
   assert.match(screen, /FLIGHT_LOADING_SKELETON_DELAY_MS = 1000/);
   assert.match(screen, /setFlightLoadingPhase\("searching"\)[\s\S]*?setTimeout\(\(\) => \{[\s\S]*?setFlightLoadingPhase\("skeleton"\)/);
   assert.match(screen, /return \(\) => clearTimeout\(skeletonTimer\)/);
-  assert.match(screen, /\[flightResults, plan\.plan\?\.key, retry, status\]/);
-  assert.match(loader, /Almost done…/);
-  assert.match(loader, /Comparing available flights and fares…/);
+  const conditionalCopy = loader.indexOf("{searching ?");
+  const skeletonList = loader.indexOf("<Animated.View", conditionalCopy);
+  assert.ok(conditionalCopy >= 0 && skeletonList > conditionalCopy);
+  assert.doesNotMatch(loader.slice(conditionalCopy, skeletonList), /FlightLoadingSkeleton/);
+  assert.match(loader.slice(skeletonList), /\[0, 1, 2\]\.map\(\(item\) => <FlightLoadingSkeleton/);
 });
 
-test("almost-done reuses three shared-pulse noninteractive flight skeletons", () => {
+test("three skeletons share a subtle native pulse that cleans up", () => {
   assert.match(loader, /pointerEvents="none"/);
-  assert.match(loader, /\[0, 1, 2\]\.map\(\(item\) => <FlightLoadingSkeleton/);
-  assert.match(loader, /accessibilityElementsHidden/);
-  assert.match(loader, /importantForAccessibility="no-hide-descendants"/);
+  assert.match(loader, /accessibilityRole="progressbar"/);
+  assert.match(loader, /accessibilityLiveRegion="polite"/);
+  assert.match(loader, /outputRange: \[0\.72, 1\]/);
   assert.match(loader, /Animated\.loop/);
   assert.match(loader, /useNativeDriver: true/);
   assert.match(loader, /return \(\) => animation\.stop\(\)/);
-  assert.doesNotMatch(flightSkeleton, /Pressable|View details|\+1|\+2|provider|airlineName|skeletonButton/);
+  assert.match(loader, /accessibilityElementsHidden/);
+  assert.match(loader, /importantForAccessibility="no-hide-descendants"/);
+  assert.doesNotMatch(flightSkeleton, /Pressable|View details|provider|airlineName|skeletonButton/);
 });
 
 test("one-way uses one journey and round-trip conditionally adds the return journey", () => {
-  assert.match(screen, /roundTrip=\{payload\.tripType === "round-trip"\}/);
+  assert.match(flightList, /roundTrip=\{payload\.tripType === "round-trip"\}/);
   assert.match(flightSkeleton, /\{roundTrip \? \([\s\S]*?<View style=\{s0\.skeletonJourneyBlock\}>/);
   const identityStart = flightSkeleton.indexOf('<View style={s0.skeletonIdentityRow}>');
   const journeyStart = flightSkeleton.indexOf('<View style={s0.skeletonJourneyBlock}>');
-  assert.ok(journeyStart > identityStart, "the full-width journey placeholder follows the identity row");
-  assert.doesNotMatch(flightSkeleton.slice(identityStart, journeyStart), /skeletonJourneyBlock/);
+  assert.ok(journeyStart > identityStart);
 });
 
-test("flight skeleton stacks badge and heart in the right side of its identity row", () => {
-  const identityStart = flightSkeleton.indexOf('<View style={s0.skeletonIdentityRow}>');
-  const journeyStart = flightSkeleton.indexOf('<View style={s0.skeletonJourneyBlock}>');
-  const identity = flightSkeleton.slice(identityStart, journeyStart);
-  assert.match(identity, /skeletonLogo[\s\S]*skeletonName[\s\S]*skeletonIdentityActions[\s\S]*skeletonBadge[\s\S]*skeletonHeart/);
-  assert.match(screen, /skeletonIdentityActions: \{ flexDirection: "column", flexShrink: 0/);
-  assert.doesNotMatch(screen, /skeletonTopRow/);
+test("terminal states use a guaranteed footer and retain their actions", () => {
+  assert.match(flightList, /ListFooterComponent=\{terminalFlightState \? \([\s\S]*?<FlightResultsState/);
+  assert.match(flightList, /onRetry=\{retrySearch\}/);
+  assert.match(flightList, /onEditSearch=\{edit\}/);
+  assert.match(flightList, /onClearFilters=\{clearFlightFilters\}/);
+  assert.match(flightList, /onAdjustFilters=\{\(\) => openFlightFilters\("all"\)\}/);
 });
 
-test("validated results become terminal immediately without presentation waiting", () => {
+test("loading hides interactive rails and valid results become ready immediately", () => {
+  assert.match(screen, /renderSectionHeader=\{\(\) => status === "loading" \? null : \([\s\S]*?\{filterRail\}/);
+  assert.match(flightList, /status === "loading"[\s\S]*?<FlightLoadingExperience[\s\S]*?: animatedFlightDateStrip/);
   const validationToReady = screen.slice(screen.indexOf("const valid ="), screen.indexOf("setMessage(response.warnings"));
   assert.match(validationToReady, /setResults\(valid\);\s*resultsRef\.current = valid;\s*setStatus\(valid\.length \? "ready" : "empty"\);/);
   assert.doesNotMatch(validationToReady, /setTimeout|sleep|minimum|waitForAnimation|FLIGHT_LOADING_SKELETON_DELAY_MS/);
-});
-
-test("loading hides interactive date and filter rails while preserving natural-scroll structure", () => {
-  assert.match(screen, /renderSectionHeader=\{\(\) => status === "loading" \? null : \([\s\S]*?\{filterRail\}/);
-  assert.match(screen, /ListHeaderComponent=\{status === "loading" \? null : animatedFlightDateStrip\}/);
-  assert.match(screen, /renderSectionHeader[\s\S]*?stickySectionHeadersEnabled/);
 });

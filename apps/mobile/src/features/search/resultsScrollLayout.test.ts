@@ -19,7 +19,7 @@ test("flight results put fading dates before a native sticky filter rail", () =>
   const listHeader = flightLayout.slice(flightLayout.indexOf("ListHeaderComponent="), flightLayout.indexOf("renderItem="));
   const renderItem = flightLayout.slice(flightLayout.indexOf("renderItem="), flightLayout.indexOf("ListEmptyComponent="));
   assert.doesNotMatch(beforeList, /flightPersistentSearchControls|\{filterRail\}/);
-  assert.match(listHeader, /ListHeaderComponent=\{status === "loading" \? null : animatedFlightDateStrip\}/);
+  assert.match(listHeader, /ListHeaderComponent=\{status === "loading" \? \([\s\S]*?<FlightLoadingExperience[\s\S]*?\) : animatedFlightDateStrip\}/);
   assert.match(listHeader, /renderSectionHeader[\s\S]*?backgroundColor: theme\.background[\s\S]*?\{filterRail\}/);
   assert.match(listHeader, /stickySectionHeadersEnabled/);
   assert.ok(listHeader.indexOf("ListHeaderComponent=") < listHeader.indexOf("renderSectionHeader="));

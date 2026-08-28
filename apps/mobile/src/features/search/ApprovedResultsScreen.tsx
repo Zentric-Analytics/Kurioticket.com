@@ -607,13 +607,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const resultContent = (
     <>
       {product === "hotel" && status === "loading" ? <Loading product={product} /> : null}
-              {product === "flight" && status === "loading" ? (
-                <FlightLoadingExperience
-                  phase={visibleFlightLoadingPhase}
-                  destination={String(payload.destination || "").toUpperCase()}
-                  roundTrip={payload.tripType === "round-trip"}
-                />
-              ) : null}
               {message && (!flightResults || status === "ready") ? (
                 <Text accessibilityRole="alert" style={[s0.notice, flightResults && { backgroundColor: theme.surface, color: theme.textPrimary, borderColor: theme.border, borderWidth: 1 }]}>
                   {message}
@@ -635,15 +628,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   retry={() => setRetry((x) => x + 1)}
                   edit={edit}
                   flightResults={flightResults}
-                />
-              ) : null}
-              {product === "flight" && terminalFlightState ? (
-                <FlightResultsState
-                  state={terminalFlightState}
-                  onRetry={retrySearch}
-                  onEditSearch={edit}
-                  onClearFilters={clearFlightFilters}
-                  onAdjustFilters={() => openFlightFilters("all")}
                 />
               ) : null}
               {status === "ready" && product === "hotel" ? (
@@ -709,7 +693,16 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           style={[s0.resultsScroll, { backgroundColor: theme.background }]}
           sections={[{ data: !flightState ? sorted as FlightResult[] : [] }]}
           keyExtractor={(item) => item.id}
-          ListHeaderComponent={status === "loading" ? null : animatedFlightDateStrip}
+          ListHeaderComponent={status === "loading" ? (
+            <View style={[s0.body, s0.flightResultsBody]}>
+              <FlightLoadingExperience
+                phase={visibleFlightLoadingPhase}
+                origin={String(payload.origin || "").toUpperCase()}
+                destination={String(payload.destination || "").toUpperCase()}
+                roundTrip={payload.tripType === "round-trip"}
+              />
+            </View>
+          ) : animatedFlightDateStrip}
           renderSectionHeader={() => status === "loading" ? null : (
             <View style={{ backgroundColor: theme.background }}>
               {filterRail}
@@ -745,8 +738,18 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               </View>
             </>
           )}
-          ListEmptyComponent={<View style={[s0.body, s0.flightResultsBody]}>{resultContent}</View>}
-          ListFooterComponent={!flightState && sorted.length ? <View style={[s0.body, s0.flightResultsBody]}>{resultContent}</View> : null}
+          ListEmptyComponent={null}
+          ListFooterComponent={terminalFlightState ? (
+            <View style={[s0.body, s0.flightResultsBody]}>
+              <FlightResultsState
+                state={terminalFlightState}
+                onRetry={retrySearch}
+                onEditSearch={edit}
+                onClearFilters={clearFlightFilters}
+                onAdjustFilters={() => openFlightFilters("all")}
+              />
+            </View>
+          ) : !flightState && sorted.length ? <View style={[s0.body, s0.flightResultsBody]}>{resultContent}</View> : null}
           alwaysBounceVertical={false}
           bounces={false}
           overScrollMode="never"
@@ -1208,8 +1211,9 @@ function Loading({ product }: { product: Product }) {
   );
 }
 
-function FlightLoadingExperience({ phase, destination, roundTrip }: {
+function FlightLoadingExperience({ phase, origin, destination, roundTrip }: {
   phase: FlightLoadingPhase;
+  origin: string;
   destination: string;
   roundTrip: boolean;
 }) {
@@ -1226,44 +1230,49 @@ function FlightLoadingExperience({ phase, destination, roundTrip }: {
     );
     animation.start();
     return () => animation.stop();
-  }, [phase, progress]);
+  }, [progress]);
 
   const searching = phase === "searching";
-  const opacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0.58, 1] });
-  const planeTranslateX = progress.interpolate({ inputRange: [0, 1], outputRange: [-5, 5] });
+  const opacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0.72, 1] });
+  const planeTranslateX = progress.interpolate({ inputRange: [0, 1], outputRange: [-6, 6] });
   return (
     <View
       pointerEvents="none"
       accessibilityRole="progressbar"
       accessibilityLabel={searching ? "Searching for flights" : "Almost done loading flights"}
       accessibilityLiveRegion="polite"
-      style={[s0.flightLoadingExperience, searching && s0.flightSearchingExperience]}
+      style={s0.flightLoadingExperience}
     >
-      {searching ? (
-        <>
-          <Animated.View style={[s0.flightLoadingIcon, { backgroundColor: theme.surface, opacity, transform: [{ translateX: planeTranslateX }] }]}>
-            <PlaneTakeoff size={25} color={ui.blue} strokeWidth={1.8} />
+      <View style={s0.flightLoadingStatus}>
+        <View style={s0.flightLoadingRouteCodes}>
+          <Text style={[s0.flightLoadingRouteCode, { color: theme.textPrimary }]}>{origin}</Text>
+          <Text style={[s0.flightLoadingRouteCode, { color: theme.textPrimary }]}>{destination}</Text>
+        </View>
+        <View style={s0.flightLoadingRouteLine}>
+          <View style={[s0.flightLoadingRouteDot, { backgroundColor: theme.textSecondary }]} />
+          <View style={[s0.flightLoadingRouteTrack, { backgroundColor: theme.border }]} />
+          <Animated.View style={{ transform: [{ translateX: planeTranslateX }] }}>
+            <PlaneTakeoff size={22} color={ui.blue} strokeWidth={1.8} />
           </Animated.View>
+          <View style={[s0.flightLoadingRouteTrack, { backgroundColor: theme.border }]} />
+          <View style={[s0.flightLoadingRouteDot, { backgroundColor: theme.textSecondary }]} />
+        </View>
+        <View style={s0.flightLoadingCopy}>
           <Text accessibilityRole="header" style={[s0.flightLoadingTitle, { color: theme.textPrimary }]}>
-            Searching for flights to {destination}…
+            {searching ? `Searching for flights to ${destination}…` : "Comparing the best options…"}
           </Text>
-          <Text style={[s0.flightLoadingBody, { color: theme.textSecondary }]}>Checking airlines and fares…</Text>
-        </>
-      ) : (
-        <>
-          <View style={s0.flightLoadingCopy}>
-            <Text accessibilityRole="header" style={[s0.flightLoadingTitle, { color: theme.textPrimary }]}>Almost done…</Text>
-            <Text style={[s0.flightLoadingBody, { color: theme.textSecondary }]}>Comparing available flights and fares…</Text>
-          </View>
-          <Animated.View
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-            style={[s0.skeletonList, { opacity }]}
-          >
-            {[0, 1, 2].map((item) => <FlightLoadingSkeleton key={item} roundTrip={roundTrip} />)}
-          </Animated.View>
-        </>
-      )}
+          <Text style={[s0.flightLoadingBody, { color: theme.textSecondary }]}>
+            {searching ? "Checking airlines, schedules and fares…" : "Reviewing fares and journey times…"}
+          </Text>
+        </View>
+      </View>
+      <Animated.View
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={[s0.skeletonList, { opacity }]}
+      >
+        {[0, 1, 2].map((item) => <FlightLoadingSkeleton key={item} roundTrip={roundTrip} />)}
+      </Animated.View>
     </View>
   );
 }
@@ -1726,11 +1735,15 @@ const s0 = StyleSheet.create({
     gap: 9,
   },
   loadingText: { fontSize: 13, lineHeight: 18, color: ui.navy, fontWeight: "700" },
-  flightLoadingExperience: { width: "100%", alignItems: "center", gap: 14 },
-  flightSearchingExperience: { minHeight: 300, justifyContent: "center", paddingHorizontal: 16, paddingBottom: 34 },
-  flightLoadingIcon: { width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center", marginBottom: 2 },
-  flightLoadingCopy: { alignItems: "center", gap: 3, paddingTop: 8, paddingBottom: 2 },
-  flightLoadingTitle: { fontSize: 19, lineHeight: 25, fontWeight: "800", textAlign: "center" },
+  flightLoadingExperience: { width: "100%", gap: 14 },
+  flightLoadingStatus: { width: "100%", paddingHorizontal: 16, paddingTop: 4, gap: 5 },
+  flightLoadingRouteCodes: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  flightLoadingRouteCode: { fontSize: 15, lineHeight: 20, fontWeight: "800" },
+  flightLoadingRouteLine: { flexDirection: "row", alignItems: "center", paddingHorizontal: 3, gap: 7 },
+  flightLoadingRouteDot: { width: 6, height: 6, borderRadius: 3 },
+  flightLoadingRouteTrack: { flex: 1, height: 1 },
+  flightLoadingCopy: { alignItems: "center", gap: 2, paddingTop: 5, minHeight: 48 },
+  flightLoadingTitle: { fontSize: 17, lineHeight: 22, fontWeight: "800", textAlign: "center" },
   flightLoadingBody: { fontSize: 13, lineHeight: 19, textAlign: "center" },
   skeletonList: { width: "100%", gap: 14 },
   skeletonCard: {

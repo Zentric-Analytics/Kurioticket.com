@@ -70,7 +70,7 @@ test("flight results virtualize cards, keep controls persistent, and own exactly
   const card = screen.slice(screen.indexOf("function FlightCard"), screen.indexOf("function FlightJourneyRow"));
   assert.match(screen, /<Animated\.SectionList/);
   assert.match(screen, /renderSectionHeader=\{\(\) => status === "loading" \? null : \([\s\S]*?\{filterRail\}/);
-  assert.match(screen, /<Animated\.SectionList[\s\S]*?ListHeaderComponent=\{status === "loading" \? null : animatedFlightDateStrip\}/);
+  assert.match(screen, /<Animated\.SectionList[\s\S]*?ListHeaderComponent=\{status === "loading" \? \([\s\S]*?<FlightLoadingExperience[\s\S]*?\) : animatedFlightDateStrip\}/);
   assert.match(screen, /renderSectionHeader[\s\S]*?stickySectionHeadersEnabled/);
   assert.match(screen, /initialNumToRender=\{6\}/);
   assert.doesNotMatch(screen, /sorted\.map\(\(x, i\) =>\s*product === "flight"/);
