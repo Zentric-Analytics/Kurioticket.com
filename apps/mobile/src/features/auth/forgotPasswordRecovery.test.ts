@@ -41,6 +41,7 @@ test("successful recovery uses one brief reserved status slot instead of a modal
   assert.match(screens, /<StatusText success=\{Boolean\(notice\)\}>\{notice \|\| error\}<\/StatusText>/);
   assert.doesNotMatch(screens, /<SuccessText>\{notice\}<\/SuccessText><ErrorText>\{error\}<\/ErrorText>/);
   assert.match(primitives, /export function StatusText/);
+  assert.match(primitives, /if \(success\) void AccessibilityInfo\.announceForAccessibility\(children\)/);
   assert.match(primitives, /submitSuccess: \{ minHeight: 19/);
   assert.match(primitives, /Animated\.timing\(opacity, \{ toValue: 1, duration: 180/);
 });
@@ -53,8 +54,10 @@ test("reset action remains pressable and validates on tap", () => {
 });
 
 test("auth buttons keep labels centered while showing in-flight activity", () => {
+  assert.match(primitives, /\{icon \? <View style=\{styles\.buttonIcon\}>\{icon\}<\/View> : null\}/);
   assert.match(primitives, /<Text style=\{\[styles\.buttonText, secondary && styles\.secondaryText\]\}>\{label\}<\/Text>\{loading \? <ActivityIndicator style=\{styles\.buttonSpinner\}/);
-  assert.match(primitives, /buttonContent: \{ width: "100%", alignItems: "center", justifyContent: "center" \}/);
+  assert.match(primitives, /buttonContent: \{ width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "center" \}/);
+  assert.match(primitives, /buttonIcon: \{ position: "absolute", left: 0/);
   assert.match(primitives, /buttonSpinner: \{ position: "absolute", right: 0 \}/);
   assert.doesNotMatch(primitives, /loading \? <ActivityIndicator[^>]*\/> : <Text/);
 });
