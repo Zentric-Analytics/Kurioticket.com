@@ -8,6 +8,8 @@ const about = readFileSync(new URL("./HotelAboutSection.tsx", import.meta.url), 
 const location = readFileSync(new URL("./HotelLocationSection.tsx", import.meta.url), "utf8");
 const navigator = readFileSync(new URL("./HotelDetailsSectionNav.tsx", import.meta.url), "utf8");
 const reviews = readFileSync(new URL("./HotelReviewsSection.tsx", import.meta.url), "utf8");
+const presentation = readFileSync(new URL("./hotelDetailsPresentation.ts", import.meta.url), "utf8");
+const continuation = readFileSync(new URL("./hotelBookingContinuation.ts", import.meta.url), "utf8");
 
 test("standalone decision sections render as four isolated content modes", () => {
   assert.match(standalone, /<HotelDetailsSectionNav/);
@@ -77,24 +79,24 @@ test("each content component belongs only to its selected tab", () => {
 
 test("comparison presents Kurioticket as a normalized provider without development placeholders", () => {
   assert.doesNotMatch(standalone, /totalPrice=\{props\.totalDisplayPrice\}/);
-  assert.match(standalone, /nightlyPrice=\{props\.nightlyDisplayPrice\}/);
   assert.match(standalone, /stayContext=\{props\.staySummary/);
-  assert.match(standalone, /offers=\{\[\]\}/);
-  assert.match(compare, /kurioticket-logo-primary-light-bg\.svg/);
+  assert.match(standalone, /buildKurioticketHotelDetailsProviderOffer/);
+  assert.match(continuation, /kurioticket-logo-primary-light-bg\.svg/);
+  assert.match(continuation, /action: \{ kind: "internal-room-flow" \}/);
   assert.match(compare, />Compare prices<\/h2>/);
   assert.match(compare, /\{stayContext\}/);
   assert.doesNotMatch(compare, /totalPrice\.formatted|>total</);
   assert.match(compare, /perNightText\.replace/);
   assert.match(compare, /data-nightly-amount/);
   assert.match(compare, /data-nightly-supporting-label/);
-  assert.match(compare, /secondaryPrice: nightlyPrice \?/);
   assert.match(compare, /data-provider-secondary-price-row/);
   assert.match(compare, /data-provider-secondary-price/);
   assert.match(standalone, /viewDealText="View deal"/);
   assert.match(compare, /\{viewDealText\}/);
-  assert.match(compare, /onViewRoomOptions\(event\.currentTarget\)/);
-  assert.match(standalone, /amenities=\{props\.amenityItems\}/);
-  assert.match(compare, /amenities: amenities\.slice\(0, 3\)/);
+  assert.match(compare, /onInternalRoomFlow\(event\.currentTarget\)/);
+  assert.match(compare, /providerOfferId !== null && providerOfferId === pendingProviderOfferId/);
+  assert.match(standalone, /amenities: props\.amenityItems/);
+  assert.match(continuation, /amenities: amenities\.slice\(0, 3\)/);
   assert.match(compare, /data-provider-brand/);
   assert.match(compare, /data-provider-price/);
   assert.doesNotMatch(compare, /role="separator"|data-provider-offer-divider|border-t/);
@@ -137,12 +139,30 @@ test("mobile address uses the available header width and wraps only when needed"
 });
 
 test("future offers share the concise provider price and action presentation", () => {
-  assert.match(compare, /providerOffers\.map\(\(offer\) => <ProviderOffer/);
-  for (const field of ["providerName", "providerLogoUrl", "totalPrice", "nightlyPrice", "deepLink"]) {
+  assert.match(compare, /offers\.map\(\(offer\) =>/);
+  for (const field of ["providerName", "providerLogoUrl", "nightlyPrice", "action"]) {
     assert.ok(compare.includes(`offer.${field}`), field);
   }
-  assert.match(compare, />View deal<\/a>/);
+  assert.match(compare, /onProviderOfferHandoff\(offer\.action\.providerOfferId\)/);
+  assert.match(compare, /type="button"/);
+  assert.doesNotMatch(compare, /href=\{offer\.|window\.location/);
+  assert.doesNotMatch(presentation, /deepLink/);
+  assert.match(presentation, /providerOfferId: string/);
+  assert.match(presentation, /kind: "internal-room-flow"/);
+  assert.match(presentation, /kind: "provider-handoff"/);
   assert.doesNotMatch(compare, /Cancellation terms unavailable|Meal plan unavailable|Provider 2/);
+});
+
+test("persistent continuation uses the pure zero, one, or multiple provider decision", () => {
+  assert.match(standalone, /resolveHotelBookingContinuation/);
+  assert.match(standalone, /bookingContinuation\.kind === "internal-room-flow"/);
+  assert.match(standalone, /bookingContinuation\.kind === "provider-handoff"/);
+  assert.match(standalone, /bookingContinuation\.kind === "compare-prices"/);
+  assert.match(standalone, /setActiveTab\("compare"\)/);
+  assert.match(standalone, /hotel-compare-heading/);
+  assert.match(standalone, /focus\(\{ preventScroll: true \}\)/);
+  assert.match(standalone, /providerHandoffPendingRef\.current/);
+  assert.match(compare, /role="alert"/);
 });
 
 test("about exposes the full property information architecture without expansion controls", () => {

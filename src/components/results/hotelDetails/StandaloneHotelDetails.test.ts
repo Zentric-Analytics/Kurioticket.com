@@ -298,7 +298,7 @@ test("stay summary retains all functional data and pricing contracts", () => {
     "props.nightlyDisplayPrice.formatted",
     "props.taxesText || props.planningPriceText",
     "props.labels.continueBooking",
-    "disabled={!props.roomChoices.length}",
+    'bookingContinuation.kind === "unavailable"',
   ])
     assert.ok(source.includes(contract), contract);
 });
@@ -321,7 +321,7 @@ test("persistent booking actions use the translated continuation copy without su
     source.indexOf('{roomsOpen ? ('),
   );
   for (const action of [desktopAction, mobileAction]) {
-    assert.match(action, /onClick=\{\(event\) => openRoomOptions\(event\.currentTarget\)\}/);
+    assert.match(action, /onClick=\{\(event\) => continueBooking\(event\.currentTarget\)\}/);
     assert.match(action, /props\.labels\.continueBooking/);
     assert.doesNotMatch(action, /roomSupport/);
   }
