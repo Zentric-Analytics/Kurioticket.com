@@ -63,11 +63,11 @@ function useFlightEditSearchMotion(visible: boolean) {
 type Props = {
   visible: boolean;
   params: Record<string, RouteValue>;
-  headerAnchor: number;
+  topInset: number;
   onClose: () => void;
 };
 
-export function FlightEditSearchModal({ visible, params, headerAnchor, onClose }: Props) {
+export function FlightEditSearchModal({ visible, params, topInset, onClose }: Props) {
   const ft = useFlowTheme();
   const motion = useFlightEditSearchMotion(visible);
   const presentedParams = useRetainedPickerContext(visible, params);
@@ -76,7 +76,7 @@ export function FlightEditSearchModal({ visible, params, headerAnchor, onClose }
   return (
     <Modal transparent animationType="none" visible onRequestClose={onClose} statusBarTranslucent>
       <KeyboardAvoidingView pointerEvents={motion.pointerEvents} style={styles.viewport} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        <View style={[styles.headerClearance, { height: headerAnchor }]} />
+        <View style={[styles.safeAreaClearance, { height: topInset }]} />
         <View style={styles.backdrop}>
           <Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill, styles.scrim, motion.backdropStyle]} />
           <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Close edit search" onPress={onClose} />
@@ -99,7 +99,7 @@ export function FlightEditSearchModal({ visible, params, headerAnchor, onClose }
 
 const styles = StyleSheet.create({
   viewport: { flex: 1 },
-  headerClearance: { flexShrink: 0 },
+  safeAreaClearance: { flexShrink: 0 },
   backdrop: { flex: 1, justifyContent: "flex-start" },
   scrim: { backgroundColor: "rgba(8, 18, 35, 0.52)" },
   panel: { maxHeight: "100%", borderBottomLeftRadius: 24, borderBottomRightRadius: 24, overflow: "hidden" },

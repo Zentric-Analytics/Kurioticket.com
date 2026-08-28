@@ -13,7 +13,6 @@ import {
   Switch,
   Text,
   TextInput,
-  type LayoutChangeEvent,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -152,7 +151,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [preferredAirlineSessionRevision, setPreferredAirlineSessionRevision] = useState(0);
   const [filterOpen, setFilterOpen] = useState(false);
   const [editSearchOpen, setEditSearchOpen] = useState(false);
-  const [flightResultsHeaderHeight, setFlightResultsHeaderHeight] = useState(0);
   const [filterSection, setFilterSection] = useState<FlightFilterSectionName>("all");
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
   const [verifiedDateFareMemory, setVerifiedDateFareMemory] = useState<VerifiedDateFareMemory>();
@@ -674,7 +672,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         <FlightResultsHeader
           route={`${String(payload.origin || "").toUpperCase()} ${payload.tripType === "one-way" ? "→" : "⇄"} ${String(payload.destination || "").toUpperCase()}`}
           onEdit={edit}
-          onLayout={(event) => setFlightResultsHeaderHeight(event.nativeEvent.layout.height)}
         />
       ) : (
         <>
@@ -796,7 +793,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         <FlightEditSearchModal
           visible={editSearchOpen}
           params={flightEditSearchParams(params)}
-          headerAnchor={topSafeAreaInset + flightResultsHeaderHeight}
+          topInset={topSafeAreaInset}
           onClose={() => setEditSearchOpen(false)}
         />
       ) : null}
@@ -808,17 +805,14 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
 function FlightResultsHeader({
   route,
   onEdit,
-  onLayout,
 }: {
   route: string;
   onEdit: () => void;
-  onLayout: (event: LayoutChangeEvent) => void;
 }) {
   const { theme } = useAppTheme();
   return (
     <View
       accessibilityLabel="Flight search summary"
-      onLayout={onLayout}
       style={[s0.flightHeader, { backgroundColor: theme.background }]}
     >
       <View accessibilityLabel="Flight route controls" style={s0.flightHeaderMainRow}>
