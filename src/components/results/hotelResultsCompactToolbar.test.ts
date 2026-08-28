@@ -188,7 +188,7 @@ test("Hotel sticky lifecycle and neighboring search/filter contracts remain inta
   assert.match(source, /desktopCompactFilterTopOffset = 116/);
 });
 
-test("mobile compact Hotel search has narrow gutters and distinct edit and filter affordances", () => {
+test("mobile compact Hotel search has narrow gutters and distinct back, edit, and filter affordances", () => {
   const compactSearch = mobileCompactHotelSearchSource();
 
   assert.match(
@@ -196,11 +196,19 @@ test("mobile compact Hotel search has narrow gutters and distinct edit and filte
     /z-\[900\] px-2 pt-\[env\(safe-area-inset-top\)\]/,
   );
   assert.doesNotMatch(compactSearch, /z-\[900\] px-3/);
-  assert.match(compactSearch, /grid-cols-\[minmax\(0,1fr\)_auto\]/);
   assert.match(
     compactSearch,
-    /aria-label=\{t\("editHotelSearch"\) \|\| "Edit hotel search"\}[\s\S]*?<ChevronRight[\s\S]*?aria-hidden="true"[\s\S]*?<\/button>/,
+    /grid-cols-\[auto_minmax\(0,1fr\)_auto\]/,
   );
+  assert.match(
+    compactSearch,
+    /aria-label="Back to hotels"[\s\S]*?router\.push\("\/hotels"\)[\s\S]*?<ArrowLeft[\s\S]*?aria-hidden="true"[\s\S]*?<\/button>/,
+  );
+  assert.match(
+    compactSearch,
+    /onClick=\{openMobileHotelSearch\}[\s\S]*?aria-label=\{t\("editHotelSearch"\) \|\| "Edit hotel search"\}/,
+  );
+  assert.doesNotMatch(compactSearch, /<ChevronRight/);
   assert.match(
     compactSearch,
     /onClick=\{\(\) => setFiltersOpen\(true\)\}[\s\S]*?<SlidersHorizontal[\s\S]*?aria-hidden="true"[\s\S]*?\{t\("filters"\)\}/,

@@ -576,8 +576,8 @@ export function HotelCard({
           <div className="flex flex-1 flex-col">
             <div className="min-w-0">
               <div>
-                <div className="flex min-w-0 items-start justify-between gap-1.5 md:gap-3">
-                  <div className="min-w-0 flex-1">
+                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-1.5 md:gap-3">
+                  <div className="min-w-0">
                     <h2 className="min-w-0 text-[15px] font-bold leading-5 text-slate-950 sm:text-base lg:text-[17px]">
                       {hotel.name}
                     </h2>

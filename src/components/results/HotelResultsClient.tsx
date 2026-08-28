@@ -12,11 +12,12 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
 import {
-  Calendar,
+  ArrowLeft,
   ArrowUp,
+  Calendar,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -388,6 +389,7 @@ export function HotelResultsExperience({
   guided?: boolean;
   buildDetailsHref?: (hotelId: string) => string | null;
 }) {
+  const router = useRouter();
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
@@ -2011,20 +2013,29 @@ export function HotelResultsExperience({
           )}
           aria-hidden={!showMobileCompactHotelSearch || mobileHotelSearchOpen}
         >
-          <div className="flex h-14 w-full items-center border-b border-slate-200 bg-white px-2 shadow-sm">
+          <div className="grid h-14 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center border-b border-slate-200 bg-white px-1 shadow-sm">
+            <button
+              type="button"
+              aria-label="Back to hotels"
+              onClick={() => router.push("/hotels")}
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center bg-transparent text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+            >
+              <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+            </button>
             <button
               type="button"
               onClick={openMobileHotelSearch}
-              className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-1 px-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]"
+              className="min-w-0 px-1 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]"
               aria-label={t("editHotelSearch") || "Edit hotel search"}
             >
-              <span className="min-w-0">
-              <span className="block truncate text-sm font-bold text-slate-950">{body.destination}</span>
-              <span className="block truncate text-xs font-medium text-slate-600">
-                {desktopMinimizedDateSummary} · {desktopMinimizedGuestsSummary}
+              <span className="block min-w-0">
+                <span className="block truncate text-sm font-bold text-slate-950">
+                  {body.destination}
+                </span>
+                <span className="block truncate text-xs font-medium text-slate-600">
+                  {desktopMinimizedDateSummary} · {desktopMinimizedGuestsSummary}
+                </span>
               </span>
-              </span>
-              <ChevronRight className="h-4 w-4 shrink-0 text-slate-700" aria-hidden="true" />
             </button>
             <button type="button" onClick={() => setFiltersOpen(true)} className="inline-flex h-11 shrink-0 items-center justify-center gap-1 rounded-lg px-2 text-sm font-bold text-[#004BB8] hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]">
               <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
