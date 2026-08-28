@@ -98,3 +98,11 @@ test("every shared motion sheet reports its rendered height", () => {
   const editSearch = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
   assert.equal(editSearch.match(/accessibilityViewIsModal onLayout=\{motion\.onSheetLayout\}/g)?.length, editSearch.match(/useSearchPickerMotion\(/g)?.length);
 });
+
+test("open settling belongs only to a successfully finished current generation", () => {
+  assert.match(source, /const \[openSettled, setOpenSettled\] = useState\(false\)/);
+  assert.match(source, /const currentGeneration = \+\+generation\.current;\s+setOpenSettled\(false\)/);
+  assert.match(source, /\.start\(\(\{ finished \}\) => \{\s+if \(finished && generation\.current === currentGeneration\) setOpenSettled\(true\)/);
+  assert.match(source, /if \(finished && generation\.current === currentGeneration\) \{\s+renderedRef\.current = false;\s+setRendered\(false\)/);
+  assert.match(source, /openSettled,/);
+});
