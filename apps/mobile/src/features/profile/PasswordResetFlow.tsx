@@ -10,6 +10,7 @@ import type { SecurityCopy } from "./securityLocalization";
 type Props = {
   active: boolean;
   copy: SecurityCopy;
+  intro?: string;
   onUnauthorized: (error: unknown) => Promise<boolean>;
   onSuccess: () => Promise<void>;
 };
@@ -56,7 +57,7 @@ export function passwordResetNavigationCopy(locale: MobileLocale) {
   } as const;
 }
 
-export function PasswordResetFlow({ active, copy: c, onUnauthorized, onSuccess }: Props) {
+export function PasswordResetFlow({ active, copy: c, intro, onUnauthorized, onSuccess }: Props) {
   const { theme } = useAppTheme();
   const { locale } = useMobileLocalization();
   const actionCopy = codeActionCopy[locale];
@@ -120,7 +121,7 @@ export function PasswordResetFlow({ active, copy: c, onUnauthorized, onSuccess }
 
   if (stage === "request") {
     return <View style={styles.form}>
-      <Text style={{ color: theme.muted }}>{c.oauth}</Text>
+      <Text style={{ color: theme.muted }}>{intro ?? c.oauth}</Text>
       {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
       <Button label={submitting ? c.loading : actionCopy.send} disabled={submitting} onPress={() => void sendCode()} />
     </View>;
