@@ -894,7 +894,14 @@ export function PersonalDetailsScreen() {
       setEditing(false);
       showSuccess(c.saveSuccess);
       AccessibilityInfo.announceForAccessibility(c.saveSuccess);
-    } catch {
+    } catch (e) {
+      const expired =
+        (e instanceof TravelApiError && e.status === 401) ||
+        !(await readSession().catch(() => null));
+      if (expired) {
+        router.replace(signInHref("/personal-information"));
+        return;
+      }
       if (mounted.current) {
         setError(c.saveFailure);
         AccessibilityInfo.announceForAccessibility(c.saveFailure);
