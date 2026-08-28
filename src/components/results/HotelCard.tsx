@@ -245,15 +245,28 @@ type HotelCardProps = {
   allowSave?: boolean;
 };
 
-export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAriaLabel, unavailableActionLabel, unavailableActionAriaLabel, allowExternalAttribution = true, allowSave = true }: HotelCardProps) {
+export function HotelCard({
+  hotel,
+  detailsHref,
+  sortBadge,
+  actionLabel,
+  actionAriaLabel,
+  unavailableActionLabel,
+  unavailableActionAriaLabel,
+  allowExternalAttribution = true,
+  allowSave = true,
+}: HotelCardProps) {
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const starRating = normalizeHotelClassificationStars(hotel.classificationStars);
-  const resolvedDetailsHref = detailsHref === undefined
-    ? `/hotels/details/${encodeURIComponent(hotel.id)}`
-    : detailsHref;
+  const starRating = normalizeHotelClassificationStars(
+    hotel.classificationStars,
+  );
+  const resolvedDetailsHref =
+    detailsHref === undefined
+      ? `/hotels/details/${encodeURIComponent(hotel.id)}`
+      : detailsHref;
   const explicitGalleryImages = useMemo(
     () => buildHotelGalleryCandidates(hotel.imageUrls, hotel.imageUrl),
     [hotel.imageUrl, hotel.imageUrls],
@@ -286,10 +299,6 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
     8,
   );
   const collapsedAmenityItems = expandedAmenityItems.slice(0, 4);
-  const trailingAmenityItem = collapsedAmenityItems.at(-1) ?? null;
-  const leadingAmenityItems = trailingAmenityItem
-    ? collapsedAmenityItems.slice(0, -1)
-    : [];
   const hasBreakfastAmenity = expandedAmenityItems.some(
     (item) => item.iconKey === "breakfast",
   );
@@ -329,32 +338,36 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
   const saveRequiresLiveRateText =
     t("hotelResults.saveRequiresLiveRate") ||
     "Saving is available once a live room rate is provided.";
-  const sortBadgeConfig = sortBadge && ((sortBadge !== "cheapest" && sortBadge !== "bestValue") || hasValidPrice)
-    ? ({
-        cheapest: {
-          label: t("hotelResults.cheapest") || "Cheapest",
-          Icon: Tag,
-          className: "border-emerald-100 bg-emerald-50 text-emerald-700",
-        },
-        bestValue: {
-          label: t("hotelResults.bestValue") || "Best value",
-          Icon: Award,
-          className: "border-blue-100 bg-blue-50 text-[#004BB8]",
-        },
-        topRated: {
-          label: t("hotelResults.topRated") || "Top rated",
-          Icon: Star,
-          className: "border-amber-100 bg-amber-50 text-amber-700",
-        },
-      } satisfies Record<
-        HotelSortBadge,
-        {
-          label: string;
-          Icon: LucideIcon;
-          className: string;
-        }
-      >)[sortBadge]
-    : null;
+  const sortBadgeConfig =
+    sortBadge &&
+    ((sortBadge !== "cheapest" && sortBadge !== "bestValue") || hasValidPrice)
+      ? (
+          {
+            cheapest: {
+              label: t("hotelResults.cheapest") || "Cheapest",
+              Icon: Tag,
+              className: "border-emerald-100 bg-emerald-50 text-emerald-700",
+            },
+            bestValue: {
+              label: t("hotelResults.bestValue") || "Best value",
+              Icon: Award,
+              className: "border-blue-100 bg-blue-50 text-[#004BB8]",
+            },
+            topRated: {
+              label: t("hotelResults.topRated") || "Top rated",
+              Icon: Star,
+              className: "border-amber-100 bg-amber-50 text-amber-700",
+            },
+          } satisfies Record<
+            HotelSortBadge,
+            {
+              label: string;
+              Icon: LucideIcon;
+              className: string;
+            }
+          >
+        )[sortBadge]
+      : null;
   const SortBadgeIcon = sortBadgeConfig?.Icon;
   const sourceAttributions = (hotel.sourceAttributions || [])
     .map((attribution) => ({
@@ -388,7 +401,8 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
     }
 
     const params = new URLSearchParams(window.location.search);
-    const checkIn = params.get("checkIn") || new Date().toISOString().slice(0, 10);
+    const checkIn =
+      params.get("checkIn") || new Date().toISOString().slice(0, 10);
     const checkOut = params.get("checkOut") || checkIn;
     const image = displayImageUrl || undefined;
 
@@ -424,7 +438,6 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
         : saveRequiresLiveRateText
   ).replace("{{name}}", hotel.name);
 
-
   function markImageFailed(url: string) {
     if (!url) return;
 
@@ -446,31 +459,49 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
     .replace("{{current}}", String(activeGalleryPosition + 1))
     .replace("{{total}}", String(availableImageIndices.length));
 
+  function renderSaveButton(className: string) {
+    if (!allowSave) return null;
+
+    return (
+      <button
+        type="button"
+        aria-label={savedHotelLabel}
+        aria-pressed={isSaved}
+        title={
+          isSaved || hasValidPrice ? savedHotelLabel : saveRequiresLiveRateText
+        }
+        disabled={!isSaved && !hasValidPrice}
+        className={`${className} z-20 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full border bg-white/95 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] ${
+          isSaved
+            ? "border-rose-200 text-rose-600"
+            : "border-slate-200 text-slate-800"
+        }`}
+        onClick={() => {
+          if (isSaved || hasValidPrice) void toggleSavedHotel();
+        }}
+      >
+        <Heart
+          size={20}
+          aria-hidden="true"
+          fill={isSaved ? "currentColor" : "none"}
+        />
+      </button>
+    );
+  }
+
   return (
     <Card className="mx-auto w-full max-w-[800px] overflow-hidden border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(2,28,43,0.26)]">
-      <div className="grid md:grid-cols-[40%_minmax(0,1fr)]">
-        <div className="relative h-[clamp(220px,58vw,250px)] bg-surface-muted md:aspect-auto md:h-auto md:min-h-[230px] lg:min-h-[240px]">
-          {allowSave ? <button
-            type="button"
-            aria-label={savedHotelLabel}
-            aria-pressed={isSaved}
-            title={isSaved || hasValidPrice ? savedHotelLabel : saveRequiresLiveRateText}
-            disabled={!isSaved && !hasValidPrice}
-            className={
-              isSaved
-                ? "absolute right-2 top-2 z-20 flex min-h-10 min-w-10 items-center justify-center rounded-full border border-rose-200 bg-white/95 text-rose-600 shadow-lg transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
-                : "absolute right-2 top-2 z-20 flex min-h-10 min-w-10 items-center justify-center rounded-full border border-white/80 bg-white/90 text-slate-800 shadow-lg transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
-            }
-            onClick={() => {
-              if (isSaved || hasValidPrice) void toggleSavedHotel();
-            }}
-          >
-            <Heart
-              size={20}
-              aria-hidden="true"
-              fill={isSaved ? "currentColor" : "none"}
-            />
-          </button> : null}
+      <div
+        data-hotel-card-mobile-grid
+        className="grid min-h-[260px] grid-cols-[41%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)]"
+      >
+        <div
+          data-hotel-card-image
+          className="relative h-full min-h-[260px] bg-surface-muted md:min-h-[230px] lg:min-h-[240px]"
+        >
+          {renderSaveButton(
+            "absolute right-2 top-2 hidden shadow-lg hover:bg-white md:flex",
+          )}
           {displayImageUrl ? (
             <>
               <Image
@@ -485,11 +516,11 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                   )}
                 fill
                 className="object-cover"
-                sizes="(min-width: 768px) 40vw, 100vw"
+                sizes="(min-width: 768px) 320px, 41vw"
                 onError={() => markImageFailed(displayImageUrl)}
               />
               {showGalleryControls ? (
-                <div className="absolute bottom-2 right-2 rounded-full bg-slate-950/75 px-2.5 py-1 text-xs font-semibold text-white shadow-lg ring-1 ring-white/30">
+                <div className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] whitespace-nowrap rounded-full bg-slate-950/75 px-2 py-1 text-[10px] font-semibold text-white shadow-lg ring-1 ring-white/30 sm:text-xs">
                   {photoCounterText}
                 </div>
               ) : null}
@@ -503,29 +534,30 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
             </div>
           )}
         </div>
-        <div className="flex min-h-[200px] flex-col px-3.5 py-3.5 md:min-h-0 md:px-3 md:py-3">
+        <div
+          data-hotel-card-details
+          className="flex min-w-0 flex-col px-3 py-3 md:min-h-0 md:px-3 md:py-3"
+        >
           <div className="flex flex-1 flex-col">
             <div className="min-w-0">
               <div>
-                <div className="flex min-w-0 items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start justify-between gap-1.5 md:gap-3">
                   <div className="min-w-0 flex-1">
-                    <h2 className="min-w-0 text-base font-bold leading-6 text-slate-950 lg:text-[17px]">
+                    <h2 className="min-w-0 text-[15px] font-bold leading-5 text-slate-950 sm:text-base lg:text-[17px]">
                       {hotel.name}
                     </h2>
                   </div>
-
-                  {sortBadgeConfig && SortBadgeIcon ? (
-                    <span
-                      className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md border px-2 py-0.5 text-[11px] font-semibold leading-4 ${sortBadgeConfig.className}`}
-                    >
-                      <SortBadgeIcon
-                        className="h-3.5 w-3.5"
-                        aria-hidden="true"
-                      />
-                      {sortBadgeConfig.label}
-                    </span>
-                  ) : null}
+                  {renderSaveButton("flex -me-1 -mt-1 md:hidden")}
                 </div>
+
+                {sortBadgeConfig && SortBadgeIcon ? (
+                  <span
+                    className={`mt-1 inline-flex max-w-full items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold leading-4 md:px-2 md:text-[11px] ${sortBadgeConfig.className}`}
+                  >
+                    <SortBadgeIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                    {sortBadgeConfig.label}
+                  </span>
+                ) : null}
 
                 {starRating ? (
                   <div
@@ -548,16 +580,22 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                   </div>
                 ) : null}
 
-                <p className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[13px] font-semibold leading-5 text-[#004BB8] lg:text-sm">
-                  <MapPin size={15} className="shrink-0 text-[#004BB8]" />
+                <p className="mt-1 flex min-w-0 items-start gap-x-1 text-[12px] font-semibold leading-4 text-[#004BB8] sm:text-[13px] lg:text-sm">
+                  <MapPin
+                    size={14}
+                    className="mt-px shrink-0 text-[#004BB8]"
+                    aria-hidden="true"
+                  />
                   <span className="min-w-0">{hotel.location}</span>
                 </p>
               </div>
               {reviewBand || reviewCountText ? (
-                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-slate-600">
+                <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[10px] font-semibold text-slate-600 md:mt-2 md:gap-1.5 md:text-[11px]">
                   {reviewBand ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-white">
-                      <span>{formattedReviewScore} / {reviewScale}</span>
+                      <span>
+                        {formattedReviewScore} / {reviewScale}
+                      </span>
                       <span>{reviewLabel}</span>
                     </span>
                   ) : null}
@@ -569,12 +607,22 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                 </div>
               ) : null}
               {sourceAttributions.length ? (
-                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-slate-600">
+                <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[10px] font-medium text-slate-600 md:mt-2 md:gap-1.5 md:text-[11px]">
                   {sourceAttributions.map((attribution, index) => (
-                    <span key={`${attribution.provider}-${index}`} className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5">
+                    <span
+                      key={`${attribution.provider}-${index}`}
+                      className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5"
+                    >
                       <span>Data:</span>
-                      {allowExternalAttribution && isSafeHttpUrl(attribution.providerUri) ? (
-                        <a href={attribution.providerUri} target="_blank" rel="noopener noreferrer" translate="no" className="text-[#004BB8] hover:underline">
+                      {allowExternalAttribution &&
+                      isSafeHttpUrl(attribution.providerUri) ? (
+                        <a
+                          href={attribution.providerUri}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          translate="no"
+                          className="text-[#004BB8] hover:underline"
+                        >
                           {attribution.provider}
                         </a>
                       ) : (
@@ -585,62 +633,55 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                 </div>
               ) : null}
             </div>
-            <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1.5">
-              <div
-                data-hotel-card-leading-amenities
-                className="min-w-0 pe-2.5 md:pe-3"
-              >
-                {shouldShowMealPlanText ||
-                leadingAmenityItems.length > 0 ? (
-                  <div className="space-y-1">
-                    {shouldShowMealPlanText ? (
-                      <p className="text-[13px] font-normal leading-5 text-slate-600">
-                        {mealPlanText}
-                      </p>
-                    ) : null}
-                    <HotelAmenityList
-                      items={leadingAmenityItems}
-                      t={t}
-                      className="grid grid-cols-1 gap-y-1.5"
-                    />
-                  </div>
-                ) : null}
-                {cancellationDisplay ? (
-                  <p
-                    className={
-                      cancellationDisplay.positive
-                        ? "mt-2 text-[13px] font-medium leading-5 text-emerald-700"
-                        : "mt-2 text-[13px] font-medium leading-5 text-slate-600"
-                    }
-                  >
-                    {cancellationDisplay.label}
-                  </p>
-                ) : null}
-              </div>
-              <div
-                data-hotel-card-price
-                className="min-w-0 self-end text-end"
-              >
+            <div data-hotel-card-amenities className="mt-2 min-w-0 md:mt-3">
+              {shouldShowMealPlanText || collapsedAmenityItems.length > 0 ? (
+                <div className="space-y-1.5">
+                  {shouldShowMealPlanText ? (
+                    <p className="text-[11px] font-normal leading-4 text-slate-600 md:text-[13px] md:leading-5">
+                      {mealPlanText}
+                    </p>
+                  ) : null}
+                  <HotelAmenityList
+                    items={collapsedAmenityItems}
+                    t={t}
+                    className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] leading-4 md:gap-x-3 md:gap-y-1.5 md:text-xs"
+                  />
+                </div>
+              ) : null}
+              {cancellationDisplay ? (
+                <p
+                  className={
+                    cancellationDisplay.positive
+                      ? "mt-1.5 text-[11px] font-medium leading-4 text-emerald-700 md:mt-2 md:text-[13px] md:leading-5"
+                      : "mt-1.5 text-[11px] font-medium leading-4 text-slate-600 md:mt-2 md:text-[13px] md:leading-5"
+                  }
+                >
+                  {cancellationDisplay.label}
+                </p>
+              ) : null}
+            </div>
+            <div className="mt-auto pt-2 md:pt-3">
+              <div data-hotel-card-price className="min-w-0 text-end">
                 <div className="min-w-0 text-end">
                   {priceDetails && nightlyDisplayPrice ? (
-                      <div
-                        className="min-w-0"
-                        title={nightlyDisplayPrice.title}
-                        aria-label={nightlyDisplayPrice.ariaLabel}
+                    <div
+                      className="min-w-0"
+                      title={nightlyDisplayPrice.title}
+                      aria-label={nightlyDisplayPrice.ariaLabel}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="block whitespace-nowrap text-lg font-bold leading-6 text-slate-950 tabular-nums sm:text-xl"
                       >
-                        <span
-                          aria-hidden="true"
-                          className="block whitespace-nowrap text-xl font-bold leading-6 text-slate-950 tabular-nums"
-                        >
-                          {nightlyDisplayPrice.formatted}
-                        </span>
-                        <span
-                          aria-hidden="true"
-                          className="mt-0.5 block text-xs font-medium leading-4 text-slate-500"
-                        >
-                          {perNightLabel}
-                        </span>
-                      </div>
+                        {nightlyDisplayPrice.formatted}
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className="mt-0.5 block text-xs font-medium leading-4 text-slate-500"
+                      >
+                        {perNightLabel}
+                      </span>
+                    </div>
                   ) : (
                     <div className="min-w-0 space-y-1">
                       <p className="text-lg font-bold leading-6 text-slate-950">
@@ -653,46 +694,30 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                   )}
                 </div>
               </div>
-              <div
-                data-hotel-card-bottom-row
-                className="col-span-2 grid min-h-11 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3"
-              >
-                <div
-                  data-hotel-card-trailing-amenity
-                  className="min-w-0 pe-2.5 md:pe-3"
-                >
-                  {trailingAmenityItem ? (
-                    <HotelAmenityList
-                      items={[trailingAmenityItem]}
-                      t={t}
-                      className="flex min-h-11 items-center"
-                    />
-                  ) : null}
-                </div>
-                <div data-hotel-card-action className="text-end">
-                  {resolvedDetailsHref === null ? (
-                    <Button
-                      type="button"
-                      disabled
-                      aria-label={unavailableActionAriaLabel}
-                      variant="secondary"
-                      size="sm"
-                      className="w-full whitespace-normal rounded-lg px-2 text-sm font-semibold md:px-3"
-                    >
-                      {unavailableActionLabel || t("deals.guided.hotelResults.roomsUnavailable")}
-                    </Button>
-                  ) : (
-                    <LinkButton
-                      href={resolvedDetailsHref}
-                      aria-label={actionAriaLabel}
-                      variant="accent"
-                      size="sm"
-                      className="min-h-11 w-full whitespace-nowrap rounded-[10px] border border-[#004BB8] bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-none hover:border-[#003B91] hover:bg-[#003B91] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-                    >
-                      {actionLabel || t("hotelResults.viewHotel") || "View hotel"}
-                    </LinkButton>
-                  )}
-                </div>
+              <div data-hotel-card-action className="mt-1.5 text-end">
+                {resolvedDetailsHref === null ? (
+                  <Button
+                    type="button"
+                    disabled
+                    aria-label={unavailableActionAriaLabel}
+                    variant="secondary"
+                    size="sm"
+                    className="min-h-11 w-full whitespace-normal rounded-lg px-2 text-sm font-semibold md:px-3"
+                  >
+                    {unavailableActionLabel ||
+                      t("deals.guided.hotelResults.roomsUnavailable")}
+                  </Button>
+                ) : (
+                  <LinkButton
+                    href={resolvedDetailsHref}
+                    aria-label={actionAriaLabel}
+                    variant="accent"
+                    size="sm"
+                    className="min-h-11 w-full whitespace-nowrap rounded-[10px] border border-[#004BB8] bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-none hover:border-[#003B91] hover:bg-[#003B91] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                  >
+                    {actionLabel || t("hotelResults.viewHotel") || "View hotel"}
+                  </LinkButton>
+                )}
               </div>
             </div>
           </div>
