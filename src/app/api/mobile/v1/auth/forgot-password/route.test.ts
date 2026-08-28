@@ -17,12 +17,21 @@ test("recovery code delivery must succeed before the API reports success", () =>
   assert.match(route, /return NextResponse\.json\(\{ ok: true, expiresInMinutes: 5 \}\)/);
 });
 
-test("recovery uses the prior verified-email proof and a dedicated challenge", () => {
+test("recovery send requires prior verified-email proof and uses a dedicated challenge", () => {
   assert.match(route, /mobile-verified:/);
+  assert.match(route, /verifiedUser\(parsed\.data\.email, parsed\.data\.verificationToken\)/);
   assert.match(route, /mobile-forgot-password/);
   assert.match(route, /maxAttempts = 5/);
   assert.match(route, /challengeTtlMs = 5 \* 60 \* 1000/);
   assert.match(route, /attempts \+ 1 >= maxAttempts/);
+});
+
+test("issued recovery code remains valid for its full challenge lifetime", () => {
+  const resetBranch = route.slice(route.indexOf("// Sending the recovery code required"));
+  assert.match(resetBranch, /activePasswordUser\(parsed\.data\.email\)/);
+  assert.doesNotMatch(resetBranch, /verifiedUser\(/);
+  assert.doesNotMatch(resetBranch, /proof\.expires/);
+  assert.match(resetBranch, /challenge\.expiresAt <= new Date\(\)/);
 });
 
 test("successful recovery rejects password reuse and revokes existing sessions", () => {
