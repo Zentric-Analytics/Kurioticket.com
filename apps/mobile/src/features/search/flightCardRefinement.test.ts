@@ -162,7 +162,7 @@ test("airline identity preserves its accessible name while bounding very long vi
   assert.match(source, /airlineName: \{[^}]*lineHeight: 18/);
   assert.match(source, /airlineName: \{ fontSize: 14, lineHeight: 18, color: ui\.navy, fontWeight: "800" \}/);
   assert.match(card, /s0\.airlineName, \{ color: theme\.textPrimary \}/);
-  assert.match(source, /identityActions: \{ position: "absolute", top: 0, right: 0/);
+  assert.match(source, /identityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 8 \}/);
   assert.match(card, /<View style=\{s0\.flightIdentityLayout\}>[\s\S]*?<AirlineLogo[\s\S]*?<View style=\{s0\.airlineHeader\}>[\s\S]*?<View[\s\S]*?style=\{s0\.airlineCopy\}[\s\S]*?<Text style=\{\[s0\.airlineName/);
 
   for (const airlineName of [
@@ -180,11 +180,13 @@ test("airline identity preserves its accessible name while bounding very long vi
   }
 });
 
-test("flight identity actions do not inflate the header before the outbound journey", () => {
-  assert.match(source, /airlineHeader: \{ minHeight: 20, position: "relative", paddingRight: 68 \}/);
-  assert.match(source, /identityActions: \{ position: "absolute", top: 0, right: 0/);
+test("flight identity actions use a normal horizontal row without changing journey spacing", () => {
+  assert.match(source, /airlineHeader: \{ width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start" \}/);
+  assert.match(source, /airlineCopy: \{ flex: 1, minWidth: 0 \}/);
+  assert.match(source, /identityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 8 \}/);
+  assert.doesNotMatch(source, /identityActions: \{[^}]*position: "absolute"/);
+  assert.doesNotMatch(source, /airlineHeader: \{[^}]*paddingRight: 68/);
   assert.match(source, /journeyList: \{ width: "100%", marginTop: 18, gap: 4 \}/);
-  assert.doesNotMatch(source, /identityActions: \{[^}]*flexShrink/);
 });
 
 test("operating-carrier clarity stays conditional beneath the primary airline identity", () => {
@@ -298,28 +300,37 @@ test("flight favorite is accessible and isolated inside the identity action stac
   assert.match(card, /accessibilityState=\{\{ selected: saved, busy: pending, disabled: pending \}\}/);
   assert.doesNotMatch(card, /hitSlop=/);
   assert.match(card, /event\.stopPropagation\(\); if \(!pending\) onToggleSaved\(\)/g);
-  assert.match(source, /airlineHeader: \{ minHeight: 20/);
+  assert.match(source, /airlineHeader: \{ width: "100%", minWidth: 0, flexDirection: "row"/);
   assert.match(source, /favoriteButton: \{ width: 44, height: 44/);
   assert.match(card, /<Heart[\s\S]*?size=\{20\}/);
   assert.doesNotMatch(card, /onPress=.*View details[\s\S]*toggleSavedFlight/);
 });
 
-test("highlight sits above the favorite in a compact vertical identity action stack", () => {
+test("highlight sits immediately left of the fixed-right favorite action", () => {
   const header = card.slice(card.indexOf('<View style={s0.airlineHeader}>'), card.indexOf('<View style={s0.journeyList}>'));
   const actions = header.slice(header.indexOf('<View style={s0.identityActions}>'), header.indexOf('</View>', header.indexOf('s0.favoriteButton')) + 7);
-  assert.match(header, /s0\.airlineName[\s\S]*?<View style=\{s0\.identityActions\}>/);
-  assert.match(actions, /highlight[\s\S]*?s0\.resultBadge[\s\S]*?s0\.favoriteButton/);
+  assert.match(actions, /\{highlight \? \([\s\S]*?s0\.resultBadge[\s\S]*?\) : null\}[\s\S]*?<Pressable[\s\S]*?s0\.favoriteButton/);
   assert.ok(actions.indexOf("s0.resultBadge") < actions.indexOf("s0.favoriteButton"));
-  assert.match(source, /identityActions: \{ position: "absolute", top: 0, right: 0,[^}]*gap: 3 \}/);
-  assert.match(source, /airlineHeader: \{ minHeight: 20, position: "relative", paddingRight: 68 \}/);
-  assert.match(actions, /\{highlight \? \([\s\S]*?\) : null\}[\s\S]*?<Pressable/);
-  assert.doesNotMatch(actions, /placeholder/i);
-  assert.match(source, /journeyList: \{ width: "100%", marginTop: 18, gap: 4 \}/);
-  assert.match(source, /journeyLabel: \{ fontSize: 9, lineHeight: 10/);
-  assert.doesNotMatch(source, /detailsButton(?:Text)?:/);
+  assert.doesNotMatch(actions, /placeholder|invisible|opacity:\s*0/i);
+  assert.match(source, /identityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 8 \}/);
+  assert.match(source, /favoriteButton: \{ width: 44, height: 44, flexShrink: 0/);
+  assert.match(card, /<Heart[\s\S]*?size=\{20\}/);
+  assert.match(card, /fill=\{saved \? androidFavoriteColors\.active : "transparent"\}/);
+  assert.match(card, /color=\{saved \? androidFavoriteColors\.active : theme\.textSecondary\}/);
+  assert.match(card, /onPressIn=\{\(event\) => event\.stopPropagation\(\)\}/);
+  assert.match(card, /event\.stopPropagation\(\); if \(!pending\) onToggleSaved\(\);/);
 
-  assert.match(source, /favoriteButton: \{ width: 44, height: 44/);
-  assert.match(source, /identityActions: \{ position: "absolute", top: 0, right: 0/);
+  assert.match(card, /const highlightLabel = highlight === "Best" \? "Best value" : highlight/);
+  assert.match(card, /accessibilityLabel=\{`\$\{highlightLabel\} flight result`\}/);
+  assert.match(card, /<Text numberOfLines=\{1\} style=\{\[s0\.resultBadgeText/);
+  assert.match(card, /highlight === "Best" \|\| highlight === "Cheapest"/);
+  assert.match(card, /theme\.dark \? "#153D2A" : "#EAF8F0"/);
+  assert.match(card, /theme\.dark \? "#8BE0B0" : "#157347"/);
+  assert.match(card, /theme\.dark \? "#173568" : "#EEF4FF"/);
+  assert.match(card, /theme\.dark \? "#8FB5FF" : ui\.blue/);
+  assert.match(source, /resultBadge: \{ height: 22,[^}]*paddingHorizontal: 8, borderRadius: 11 \}/);
+  assert.match(source, /resultBadgeText: \{ fontSize: 10, lineHeight: 13, fontWeight: "800" \}/);
+  assert.match(source, /journeyList: \{ width: "100%", marginTop: 18, gap: 4 \}/);
 });
 
 test("saved flights remain visible through the canonical Saved source", () => {
