@@ -3,10 +3,10 @@ import { createHash, randomInt } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
-import { getBaseUrl } from "@/lib/env";
 import { requireMobileSecurity, mobileUnauthorized } from "@/lib/mobile-security-route";
 import { getPrisma } from "@/lib/prisma";
-import { sendTransactionalEmail, verificationCodeEmail } from "@/services/emailService";
+import { escapeHtml } from "@/services/emailDeliveryService";
+import { sendTransactionalEmail } from "@/services/emailService";
 import { deliverSecurityEvent } from "@/services/securityEventService";
 
 export const runtime = "nodejs";
@@ -24,6 +24,20 @@ const schema = z.discriminatedUnion("action", [
     confirmPassword: z.string().min(8),
   }).refine((value) => value.newPassword === value.confirmPassword, { path: ["confirmPassword"] }),
 ]);
+
+function passwordResetCodeEmail(input: { code: string; name?: string | null; expiresInMinutes: number }) {
+  const greeting = input.name ? `Hi ${escapeHtml(input.name)},` : "Hi,";
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+      <h1 style="font-size:22px">Reset your Kurioticket password</h1>
+      <p>${greeting} enter this code in the Kurioticket app to continue resetting your password:</p>
+      <p style="display:inline-block;font-size:32px;font-weight:700;letter-spacing:7px;color:#0f766e;background:#eef4f7;border-radius:12px;padding:12px 16px">${escapeHtml(input.code)}</p>
+      <p>This code expires in ${escapeHtml(input.expiresInMinutes)} minutes.</p>
+      <p>Return to the Kurioticket app and enter the code in Security → Password.</p>
+      <p>If you did not request a Kurioticket password reset, you can ignore this email.</p>
+    </div>
+  `;
+}
 
 export async function POST(request: Request) {
   const auth = await requireMobileSecurity(request);
@@ -65,27 +79,23 @@ export async function POST(request: Request) {
 
   if (parsed.data.action === "send-code") {
     const code = randomInt(100000, 1000000).toString();
+    const token = hashCode(user.id, code);
     const expires = new Date(Date.now() + codeTtlMs);
     await getPrisma().verificationToken.deleteMany({ where: { identifier } });
     await getPrisma().verificationToken.create({
-      data: { identifier, token: hashCode(user.id, code), expires },
+      data: { identifier, token, expires },
     });
     try {
       await sendTransactionalEmail({
         to: user.email,
         subject: "Confirm your Kurioticket password reset",
-        html: verificationCodeEmail({
-          code,
-          name: user.name,
-          expiresInMinutes: 5,
-          verifyUrl: `${getBaseUrl()}/dashboard/security`,
-        }),
+        html: passwordResetCodeEmail({ code, name: user.name, expiresInMinutes: 5 }),
         idempotencyKey: `mobile-password-reset-${user.id}-${expires.getTime()}`,
         requireConfigured: true,
         metadata: { purpose: "mobile-password-reset" },
       });
     } catch {
-      await getPrisma().verificationToken.deleteMany({ where: { identifier } });
+      await getPrisma().verificationToken.deleteMany({ where: { token } });
       return NextResponse.json({ error: "Unable to send the verification code. Try again." }, { status: 503 });
     }
     return NextResponse.json({ ok: true, expiresInMinutes: 5 });
