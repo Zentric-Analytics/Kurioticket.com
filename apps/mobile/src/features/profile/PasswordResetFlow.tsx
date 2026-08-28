@@ -2,13 +2,13 @@ import { useState } from "react";
 import { AccessibilityInfo, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { TravelApiError } from "../../api/travelApi";
 import { securityPasswordResetApi } from "../../api/securityPasswordResetApi";
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import type { MobileLocale } from "../../localization/mobileLocalizationCatalog";
 import { useAppTheme } from "../../theme/AppTheme";
 import type { SecurityCopy } from "./securityLocalization";
 
 type Props = {
   copy: SecurityCopy;
-  locale: MobileLocale;
   onUnauthorized: (error: unknown) => Promise<boolean>;
   onSuccess: () => Promise<void>;
 };
@@ -34,8 +34,9 @@ const codeActionCopy: Record<MobileLocale, { send: string; resend: string; sent:
   vi: { send: "Gửi mã xác minh", resend: "Gửi lại mã xác minh", sent: "Mã xác minh gồm 6 chữ số đã được gửi đến email đã xác minh của tài khoản. Mã sẽ hết hạn sau 5 phút.", field: "Mã xác minh" },
 };
 
-export function PasswordResetFlow({ copy: c, locale, onUnauthorized, onSuccess }: Props) {
+export function PasswordResetFlow({ copy: c, onUnauthorized, onSuccess }: Props) {
   const { theme } = useAppTheme();
+  const { locale } = useMobileLocalization();
   const actionCopy = codeActionCopy[locale];
   const [stage, setStage] = useState<"request" | "verify">("request");
   const [code, setCode] = useState("");
