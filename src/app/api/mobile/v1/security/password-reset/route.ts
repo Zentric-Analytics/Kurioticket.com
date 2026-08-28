@@ -3,6 +3,7 @@ import { createHash, randomInt } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
+import { getBaseUrl } from "@/lib/env";
 import { requireMobileSecurity, mobileUnauthorized } from "@/lib/mobile-security-route";
 import { getPrisma } from "@/lib/prisma";
 import { sendTransactionalEmail, verificationCodeEmail } from "@/services/emailService";
@@ -73,7 +74,12 @@ export async function POST(request: Request) {
       await sendTransactionalEmail({
         to: user.email,
         subject: "Confirm your Kurioticket password reset",
-        html: verificationCodeEmail({ code, name: user.name, expiresInMinutes: 5 }),
+        html: verificationCodeEmail({
+          code,
+          name: user.name,
+          expiresInMinutes: 5,
+          verifyUrl: `${getBaseUrl()}/dashboard/security`,
+        }),
         idempotencyKey: `mobile-password-reset-${user.id}-${expires.getTime()}`,
         requireConfigured: true,
         metadata: { purpose: "mobile-password-reset" },
