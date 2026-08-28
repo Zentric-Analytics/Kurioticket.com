@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { resolveMobileProfilePhoneCountry } from "@/lib/mobileProfilePhoneCountry";
+import {
+  getExistingMobileProfilePhoneCountry,
+  resolveMobileProfilePhoneCountry,
+} from "@/lib/mobileProfilePhoneCountry";
 
 test("saved phone country wins over detected location", () => {
   assert.equal(
@@ -21,6 +24,23 @@ test("recognized international phone prefix wins when saved country is missing",
       detectedCountryCode: "NG",
     }),
     "GB",
+  );
+  assert.equal(
+    getExistingMobileProfilePhoneCountry({
+      savedCountryCode: "",
+      phoneNumber: "+1 212 555 0199",
+    }),
+    "US",
+  );
+});
+
+test("missing saved country and unrecognized local phone require location/default resolution", () => {
+  assert.equal(
+    getExistingMobileProfilePhoneCountry({
+      savedCountryCode: "",
+      phoneNumber: "0803 123 4567",
+    }),
+    null,
   );
 });
 
