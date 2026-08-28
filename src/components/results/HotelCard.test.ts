@@ -149,12 +149,12 @@ test("hotel result cards separate the nightly amount from its localized label", 
   assert.match(source, /text-xs[\s\S]*text-slate-500/);
 });
 
-test("hotel result cards use a compact amenity grid and bottom conversion cluster", () => {
+test("hotel result cards use a single mobile amenity column and bottom conversion cluster", () => {
   assert.ok(source.includes("expandedAmenityItems.slice(0, 4)"));
   assert.ok(source.includes("items={collapsedAmenityItems}"));
   assert.match(
     source,
-    /data-hotel-card-amenities[\s\S]*grid-cols-2[\s\S]*data-hotel-card-price[\s\S]*data-hotel-card-action[\s\S]*href=\{resolvedDetailsHref\}/,
+    /data-hotel-card-amenities[\s\S]*grid-cols-1[\s\S]*md:grid-cols-2[\s\S]*data-hotel-card-price[\s\S]*data-hotel-card-action[\s\S]*href=\{resolvedDetailsHref\}/,
   );
   assert.match(source, /className="mt-auto pt-2 md:pt-3"/);
 
@@ -164,6 +164,15 @@ test("hotel result cards use a compact amenity grid and bottom conversion cluste
   ]) {
     assert.ok(!source.includes(layoutHack), `unexpected ${layoutHack}`);
   }
+});
+
+test("hotel result cards expose compact save and share actions", () => {
+  assert.match(source, /Share2/);
+  assert.match(source, /aria-label=\{`Share \$\{hotel\.name\}`\}/);
+  assert.match(source, /navigator\.share/);
+  assert.match(source, /navigator\.clipboard\.writeText/);
+  assert.match(source, /new URL\(resolvedDetailsHref, window\.location\.origin\)/);
+  assert.match(source, /AbortError/);
 });
 
 test("hotel result cards use whitespace instead of internal rules", () => {
