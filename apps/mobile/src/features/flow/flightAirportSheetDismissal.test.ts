@@ -32,7 +32,7 @@ test("close header, Done, airport choices, search, and list interactions remain 
   const sheetContent = airportSheet.slice(sheetStart);
 
   assert.match(sheetContent, /accessibilityLabel="Search airports"/);
-  assert.match(sheetContent, /accessibilityLabel="Clear airport search"/);
+  assert.doesNotMatch(sheetContent, /accessibilityLabel="Clear airport search"|>Clear</);
   assert.match(sheetContent, /<FlatList keyboardShouldPersistTaps="handled"/);
   assert.match(sheetContent, /onPress=\{\(\)=>void choosePlace\(item\)\}/);
   assert.match(sheetContent, /<PickerSheetHeader[^>]+onClose=\{onClose\}/);

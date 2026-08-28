@@ -34,7 +34,7 @@ test("Guests keeps the existing Hotel count summary in the shared person row", (
 test("the obsolete closed input ref stays removed while the real picker ref remains", () => {
   assert.doesNotMatch(hotel, /destinationRef/);
   assert.match(hotel, /const inputRef = useRef<TextInput>\(null\)/);
-  assert.match(hotel, /inputRef\.current\?\.focus\(\)/);
+  assert.match(hotel, /useSearchPickerKeyboardPresentation\(visible, motion\.rendered, value, inputRef, motion\)/);
   assert.match(hotel, /export type HotelSearchHandle = \{ useDestination:/);
   assert.match(hotel, /setNotice\(`\$\{destination\} selected\. Review your details, then search\.`\)/);
 });
