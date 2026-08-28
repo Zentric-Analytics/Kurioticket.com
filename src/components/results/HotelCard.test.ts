@@ -126,7 +126,7 @@ test("hotel result cards separate the nightly amount from its localized label", 
     source,
     /aria-hidden="true"[\s\S]*nightlyDisplayPrice\.formatted[\s\S]*aria-hidden="true"[\s\S]*perNightLabel/,
   );
-  assert.match(source, /text-lg[\s\S]*font-bold[\s\S]*tabular-nums/);
+  assert.match(source, /text-xl[\s\S]*font-bold[\s\S]*tabular-nums/);
   assert.match(source, /text-xs[\s\S]*text-slate-500/);
 });
 
@@ -137,8 +137,11 @@ test("hotel result cards align the trailing amenity and details action structura
   assert.ok(source.includes("items={[trailingAmenityItem]}"));
   assert.match(
     source,
-    /items=\{\[trailingAmenityItem\]\}[\s\S]*className="grid grid-cols-1"[\s\S]*<div className="self-center text-end">[\s\S]*href=\{resolvedDetailsHref\}/,
+    /data-hotel-card-bottom-row[\s\S]*items=\{\[trailingAmenityItem\]\}[\s\S]*data-hotel-card-action[\s\S]*href=\{resolvedDetailsHref\}/,
   );
+  assert.match(source, /data-hotel-card-price[\s\S]*self-end text-end/);
+  assert.match(source, /data-hotel-card-bottom-row[\s\S]*col-span-2 grid min-h-11[\s\S]*items-center/);
+  assert.match(source, /items=\{\[trailingAmenityItem\]\}[\s\S]*className="flex min-h-11 items-center"/);
 
   for (const layoutHack of ["self-center -translate-y", "-mt-"]) {
     assert.ok(!source.includes(layoutHack), `unexpected ${layoutHack}`);

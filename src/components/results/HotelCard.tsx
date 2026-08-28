@@ -585,8 +585,11 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                 </div>
               ) : null}
             </div>
-            <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-2">
-              <div className="min-w-0 pe-2.5 md:pe-3">
+            <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1.5">
+              <div
+                data-hotel-card-leading-amenities
+                className="min-w-0 pe-2.5 md:pe-3"
+              >
                 {shouldShowMealPlanText ||
                 leadingAmenityItems.length > 0 ? (
                   <div className="space-y-1">
@@ -614,7 +617,10 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                   </p>
                 ) : null}
               </div>
-              <div className="min-w-0 text-end">
+              <div
+                data-hotel-card-price
+                className="min-w-0 self-end text-end"
+              >
                 <div className="min-w-0 text-end">
                   {priceDetails && nightlyDisplayPrice ? (
                       <div
@@ -624,7 +630,7 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                       >
                         <span
                           aria-hidden="true"
-                          className="block whitespace-nowrap text-lg font-bold leading-5 text-slate-950 tabular-nums"
+                          className="block whitespace-nowrap text-xl font-bold leading-6 text-slate-950 tabular-nums"
                         >
                           {nightlyDisplayPrice.formatted}
                         </span>
@@ -647,16 +653,23 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                   )}
                 </div>
               </div>
-              <div className="min-w-0 self-center pe-2.5 md:pe-3">
-                {trailingAmenityItem ? (
-                  <HotelAmenityList
-                    items={[trailingAmenityItem]}
-                    t={t}
-                    className="grid grid-cols-1"
-                  />
-                ) : null}
-              </div>
-              <div className="self-center text-end">
+              <div
+                data-hotel-card-bottom-row
+                className="col-span-2 grid min-h-11 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3"
+              >
+                <div
+                  data-hotel-card-trailing-amenity
+                  className="min-w-0 pe-2.5 md:pe-3"
+                >
+                  {trailingAmenityItem ? (
+                    <HotelAmenityList
+                      items={[trailingAmenityItem]}
+                      t={t}
+                      className="flex min-h-11 items-center"
+                    />
+                  ) : null}
+                </div>
+                <div data-hotel-card-action className="text-end">
                   {resolvedDetailsHref === null ? (
                     <Button
                       type="button"
@@ -679,6 +692,7 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                       {actionLabel || t("hotelResults.viewHotel") || "View hotel"}
                     </LinkButton>
                   )}
+                </div>
               </div>
             </div>
           </div>

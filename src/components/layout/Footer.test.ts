@@ -7,6 +7,10 @@ const resultsPage = readFileSync(
   new URL("../../app/flights/results/page.tsx", import.meta.url),
   "utf8",
 );
+const hotelResultsPage = readFileSync(
+  new URL("../../app/hotels/results/page.tsx", import.meta.url),
+  "utf8",
+);
 
 test("Footer defaults to the complete navigation and brand/legal presentation", () => {
   assert.match(footer, /variant = "full"/);
@@ -33,4 +37,9 @@ test("brand/legal-only Footer retains shared legal content without upper navigat
 test("Flight Results explicitly selects the brand/legal-only Footer", () => {
   assert.match(resultsPage, /<Footer variant="brand-legal-only" \/>/);
   assert.equal(resultsPage.match(/<Footer/g)?.length, 1);
+});
+
+test("Hotel Results explicitly selects the brand/legal-only Footer", () => {
+  assert.match(hotelResultsPage, /<Footer variant="brand-legal-only" \/>/);
+  assert.equal(hotelResultsPage.match(/<Footer/g)?.length, 1);
 });
