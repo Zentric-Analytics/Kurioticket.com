@@ -13,11 +13,12 @@ test("searchable moving sheets coordinate automatic focus with their entrance", 
   for (const [file, start, end] of pickers) {
     const source = readFileSync(`src/features/flow/${file}`, "utf8");
     const sheet = source.slice(source.indexOf(start), source.indexOf(end));
-    assert.match(sheet, /useSearchPickerMotion\(/, file);
+    assert.match(sheet, /useSearchPickerMotion\([^;]+controlledOpening: true/, file);
     assert.match(sheet, /KeyboardAvoidingView/, file);
     assert.match(sheet, /TextInput/, file);
-    assert.match(sheet, /useSearchPickerKeyboardPresentation\(/, file);
+    assert.match(sheet, /useSearchPickerKeyboardPresentation\([^;]+inputRef, motion\)/, file);
     assert.match(sheet, /onShow=\{keyboardPresentation\.onModalShow\}/, file);
+    assert.match(sheet, /onLayout=\{keyboardPresentation\.onSheetLayout\}/, file);
     assert.match(sheet, /inputRef\.current\?\.focus\(\)/, file);
     assert.doesNotMatch(sheet, /motion\.openSettled/, file);
     assert.doesNotMatch(sheet, /autoFocus/, file);
@@ -34,6 +35,10 @@ test("the shared coordinator focuses once per live opening generation", () => {
   assert.match(source, /if \(!visible/);
   assert.match(source, /Keyboard\.dismiss\(\)/);
   assert.match(source, /modalPresentedRef\.current/);
+  assert.match(source, /!modalPresentedRef\.current \|\| !startOpening\(\)/);
+  assert.match(source, /reportSheetLayout\(event\);\s+startCurrentOpening\(\)/);
+  assert.match(source, /if \(modalPresentedRef\.current\) startCurrentOpening\(\)/);
+  assert.match(source, /startOpening\(\)[\s\S]+inputRef\.current\?\.focus\(\)/);
   assert.doesNotMatch(source, /openSettled/);
   assert.doesNotMatch(source, /autoFocus/);
   assert.doesNotMatch(source, /requestAnimationFrame/);
