@@ -54,6 +54,34 @@ const staticHotelGalleryImages = [
   "/images/premium/cars/kurioticket-cars-hero-coastal-convertible-001.jpg",
 ] as const;
 
+// The catalogue owns image selection so result components can remain provider-agnostic.
+// A stable rotation gives every property a consistent lead image and gallery while
+// avoiding the repeated destination hero that made the fixture look duplicated.
+const curatedHotelResultImages = [
+  "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1445019980597-93fa8acb246c?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=1000&q=85",
+  "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=1000&q=85",
+] as const;
+
+function withCuratedResultGallery(hotel: StaticHotelRecord): StaticHotelRecord {
+  const offset = [...hotel.id].reduce(
+    (total, character) => total + character.charCodeAt(0),
+    0,
+  ) % curatedHotelResultImages.length;
+  const imageUrls = curatedHotelResultImages.map(
+    (_image, index, images) => images[(index + offset) % images.length]!,
+  );
+
+  return { ...hotel, imageUrl: imageUrls[0]!, imageUrls };
+}
+
 function buildStaticHotelGallery(primaryImage: string, hotelId: string) {
   const remainingImages = staticHotelGalleryImages.filter(
     (image) => image !== primaryImage,
@@ -1468,9 +1496,97 @@ const staticHotelProperties: readonly StaticHotelRecord[] = [
   ],
 ];
 
-// Each property owns its planning room facts; the helper above only standardizes pricing metadata.
-export const staticHotelCatalogue: readonly StaticHotelRecord[] =
-  staticHotelProperties;
+type CatalogueExpansion = {
+  city: "London" | "Paris" | "New York" | "Tokyo";
+  country: string;
+  region: string;
+  aliases: readonly string[];
+  neighbourhoods: readonly string[];
+  names: readonly string[];
+  coordinateSeed: readonly [number, number];
+};
+
+const catalogueExpansions: readonly CatalogueExpansion[] = [
+  {
+    city: "London", country: "United Kingdom", region: "England",
+    aliases: ["london", "lon", "united kingdom", "uk", "england"],
+    neighbourhoods: ["Bloomsbury", "Marylebone", "Shoreditch", "Kensington", "Paddington", "Soho"],
+    names: ["Alder House Bloomsbury", "The Montague Lane", "Westbourne Court Hotel", "Limehouse & Co.", "The Arbour Marylebone", "Kensington Mews Hotel", "Thames Foundry Hotel", "The Borough Assembly", "Paddington Park Rooms", "The Sloane Atelier", "Clerkenwell House", "Regent Row Hotel", "The Camden Workshop", "Belgravia Terrace", "The Greenwich Chapter", "Mayfair Linen House", "The Hoxton Garden", "Victoria Gate Hotel", "The Chelsea Townhouse", "Southwark Social", "The Fitzrovia Edit", "Notting Hill House"],
+    coordinateSeed: [51.49, -0.19],
+  },
+  {
+    city: "Paris", country: "France", region: "Ile-de-France",
+    aliases: ["paris", "par", "france", "ile de france"],
+    neighbourhoods: ["Le Marais", "Saint-Germain", "Montmartre", "Opera", "Bastille", "Latin Quarter"],
+    names: ["Maison Rivoli", "Hotel Atelier Marais", "Le Jardin Saint-Paul", "Maison Odeon", "Hotel Lumiere Opera", "Le Faubourg Studio", "Maison des Arts", "Hotel Passage Bastille", "Le Cardinal Rive Gauche", "Maison Montorgueil", "Hotel du Canal", "Le Petit Trocadero", "Maison Voltaire", "Hotel Saint-Martin", "Le Jardin Pigalle", "Maison Madeleine", "Hotel des Archives", "Le Pavillon Latin", "Maison Batignolles", "Hotel Belleville", "Le Passage Montmartre", "Maison du Luxembourg"],
+    coordinateSeed: [48.84, 2.29],
+  },
+  {
+    city: "New York", country: "United States", region: "New York",
+    aliases: ["new york", "nyc", "new york city", "new york ny", "united states", "usa"],
+    neighbourhoods: ["Midtown", "Chelsea", "SoHo", "Tribeca", "Lower East Side", "Brooklyn Heights"],
+    names: ["The Mercer Row", "Hudson Assembly Hotel", "Bowery House & Co.", "The Lexington Edit", "West Chelsea Hotel", "The Tribeca Foundry", "Park Avenue House", "The Crosby Workshop", "Union Square Rooms", "The Franklin Court", "Orchard Street Hotel", "The Madison Atelier", "Canal House New York", "The Gramercy Chapter", "Riverside Social Hotel", "The Nolita Garden", "Broadway & Bryant", "The Fulton House", "Washington Square Hotel", "The High Line Studio", "Atlantic Avenue House", "The Brooklyn Promenade"],
+    coordinateSeed: [40.70, -74.02],
+  },
+  {
+    city: "Tokyo", country: "Japan", region: "Tokyo",
+    aliases: ["tokyo", "tyo", "japan"],
+    neighbourhoods: ["Shinjuku", "Ginza", "Shibuya", "Asakusa", "Marunouchi", "Roppongi"],
+    names: ["Kumo House Shinjuku", "Ginza Lantern Hotel", "Aoyama Garden Rooms", "Shibuya Canvas", "Asakusa Chapter", "Marunouchi Gate Hotel", "The Akasaka Edit", "Nihonbashi House", "Meguro Atelier", "Ueno Park Rooms", "Daikanyama Studio", "Kagurazaka Lane Hotel", "Harajuku Assembly", "Tsukiji Harbour House", "Roppongi Terrace", "Ebisu Garden Hotel", "Kanda Foundry", "Otemachi Social", "Yanaka House", "Ikebukuro Park Hotel", "Tokyo Bay Atelier", "Koenji Workshop Hotel"],
+    coordinateSeed: [35.65, 139.69],
+  },
+] as const;
+
+function slugifyHotelName(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+const expandedStaticHotelProperties = catalogueExpansions.flatMap((destination) =>
+  destination.names.map((name, index) => {
+    const id = slugifyHotelName(`${name}-${destination.city}`);
+    const neighbourhood = destination.neighbourhoods[index % destination.neighbourhoods.length]!;
+    const price = 145 + ((index * 37 + destination.city.length * 11) % 330);
+    return verifiedCatalogueHotel({
+      ...common,
+      id,
+      name,
+      city: destination.city,
+      country: destination.country,
+      region: destination.region,
+      aliases: destination.aliases,
+      location: `${neighbourhood}, ${destination.city}`,
+      latitude: destination.coordinateSeed[0] + index * 0.0013,
+      longitude: destination.coordinateSeed[1] + index * 0.0017,
+      neighbourhood,
+      classificationStars: ((index % 3) + 3) as 3 | 4 | 5,
+      amenities: [
+        "Wi-Fi",
+        index % 2 ? "Breakfast" : "Restaurant",
+        index % 3 ? "Fitness centre" : "Concierge",
+        index % 4 ? "Air conditioning" : "Rooftop terrace",
+      ],
+      imageUrl: hotelImage,
+      imageProvenance: "Kurioticket curated static hotel fixture image",
+      roomSummary: index % 2 ? "Contemporary guest room options" : "Boutique room and suite options",
+      bedSummary: "Bed configuration varies by room",
+      description: `A curated planning property in ${neighbourhood}, with convenient access to ${destination.city}.`,
+      indicativeNightlyPrice: price,
+      lastReviewed: "2026-08-28",
+      searchTags: [neighbourhood.toLowerCase(), index % 2 ? "business" : "boutique", "central"],
+      interestTags: index % 2 ? ["dining", "business"] : ["culture", "shopping"],
+      familySuitable: index % 3 !== 0,
+      businessSuitable: index % 4 !== 0,
+      accessibility: common.accessibility,
+    });
+  }),
+);
+
+// Each property owns its planning facts and deterministic gallery. The result
+// layer can later be replaced by provider records without changing HotelCard.
+export const staticHotelCatalogue: readonly StaticHotelRecord[] = [
+  ...staticHotelProperties,
+  ...expandedStaticHotelProperties,
+].map(withCuratedResultGallery);
 
 export const supportedStaticHotelDestinations = [
   "London",

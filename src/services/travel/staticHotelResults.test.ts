@@ -1,6 +1,4 @@
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
-import path from "node:path";
 import test from "node:test";
 import { buildHotelGalleryCandidates } from "@/components/results/hotelGalleryPresentation";
 import {
@@ -25,7 +23,7 @@ const search = {
 } as const;
 
 test("static hotel catalogue is authoritative and destination relevant", () => {
-  assert.ok(staticHotelCatalogue.length >= 32);
+  assert.equal(staticHotelCatalogue.length, 120);
   assert.deepEqual(
     [...supportedStaticHotelDestinations],
     ["London", "Paris", "New York", "Tokyo"],
@@ -43,6 +41,16 @@ test("static hotel catalogue is authoritative and destination relevant", () => {
     new Set(staticHotelCatalogue.map((hotel) => hotel.slug)).size,
     staticHotelCatalogue.length,
   );
+});
+
+test("every supported destination renders thirty distinct static hotel results", () => {
+  for (const city of supportedStaticHotelDestinations) {
+    const results = buildStaticHotelResults({ ...search, destination: city });
+    assert.equal(results.length, 30, city);
+    assert.equal(new Set(results.map((hotel) => hotel.id)).size, 30, city);
+    assert.equal(new Set(results.map((hotel) => hotel.name)).size, 30, city);
+    assert.ok(new Set(results.map((hotel) => hotel.imageUrl)).size >= 8, city);
+  }
 });
 
 test("citizenM Paris Gare de Lyon has its complete corrected street address", () => {
@@ -85,24 +93,11 @@ test("static hotel results are deterministic planning estimates", () => {
   assert.equal(firstHotel.partnerRedirectUrl, "");
 });
 
-test("every static hotel supplies a production-safe local lead image and gallery", () => {
+test("every static hotel supplies a deterministic curated lead image and gallery", () => {
   for (const hotel of staticHotelCatalogue) {
     assert.ok(hotel.imageUrl.trim(), hotel.id);
     assert.ok(hotel.imageProvenance.trim(), hotel.id);
-    assert.match(
-      hotel.imageUrl,
-      /^\/images\/premium\/(?:homepage\/destinations|hotels)\//,
-      hotel.id,
-    );
-    assert.doesNotMatch(
-      hotel.imageUrl,
-      /^https?:|\/cars\/|\/packages\//,
-      hotel.id,
-    );
-    assert.ok(
-      existsSync(path.join(process.cwd(), "public", hotel.imageUrl)),
-      hotel.imageUrl,
-    );
+    assert.match(hotel.imageUrl, /^https:\/\/images\.unsplash\.com\//, hotel.id);
     assert.equal(hotel.imageUrls.length, 10, hotel.id);
     assert.equal(new Set(hotel.imageUrls).size, 10, hotel.id);
     assert.equal(hotel.imageUrls[0], hotel.imageUrl, hotel.id);
