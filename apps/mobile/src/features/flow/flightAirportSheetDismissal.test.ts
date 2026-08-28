@@ -27,7 +27,7 @@ test("From and To use the shared airport sheet and its close path", () => {
   assert.match(airportSheet, /kind\?: "from" \| "to"/);
 });
 
-test("close header, Done, airport choices, search, and list interactions remain inside the sheet", () => {
+test("close header, airport choices, search, and list interactions remain inside the sheet", () => {
   const sheetStart = airportSheet.indexOf("<Animated.View accessibilityViewIsModal");
   const sheetContent = airportSheet.slice(sheetStart);
 
@@ -36,7 +36,7 @@ test("close header, Done, airport choices, search, and list interactions remain 
   assert.match(sheetContent, /<FlatList keyboardShouldPersistTaps="handled"/);
   assert.match(sheetContent, /onPress=\{\(\)=>void choosePlace\(item\)\}/);
   assert.match(sheetContent, /<PickerSheetHeader[^>]+onClose=\{onClose\}/);
-  assert.match(sheetContent, /<PrimaryButton label="Done"/);
+  assert.doesNotMatch(sheetContent, /<PrimaryButton label="Done"/);
   assert.doesNotMatch(sheetContent, />Cancel<|label="Cancel"/);
 });
 
