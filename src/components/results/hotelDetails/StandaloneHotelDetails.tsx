@@ -37,7 +37,9 @@ import type { HotelDetailsProviderOffer } from "@/components/results/hotelDetail
 import {
   buildKurioticketHotelDetailsProviderOffer,
   isActionableExternalHotelProviderOffer,
+  isActionableHotelProviderOffer,
   resolveHotelBookingContinuation,
+  resolveSelectedHotelProviderOfferId,
 } from "./hotelBookingContinuation";
 
 type DisplayPrice = {
@@ -206,10 +208,36 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
     ? (props.providerOffers ?? []).filter(isActionableExternalHotelProviderOffer)
     : [];
   const providerOffers = [kurioticketOffer, ...externalProviderOffers];
-  const bookingContinuation = resolveHotelBookingContinuation(
-    providerOffers,
-    internalRoomFlowAvailable,
+  const selectableProviderOfferIds = new Set(
+    providerOffers
+      .filter((offer) => isActionableHotelProviderOffer(offer, internalRoomFlowAvailable))
+      .map((offer) => offer.id),
   );
+  const selectableProviderOfferIdKey = [...selectableProviderOfferIds].join("\u0000");
+  const [selectedProviderOfferId, setSelectedProviderOfferId] = useState<string | null>(() =>
+    resolveSelectedHotelProviderOfferId({
+      selectedOfferId: null,
+      offers: providerOffers,
+      internalRoomFlowAvailable,
+    }),
+  );
+  const [selectionOfferKey, setSelectionOfferKey] = useState(selectableProviderOfferIdKey);
+  if (selectionOfferKey !== selectableProviderOfferIdKey) {
+    setSelectionOfferKey(selectableProviderOfferIdKey);
+    setSelectedProviderOfferId((current) =>
+      resolveSelectedHotelProviderOfferId({
+        selectedOfferId: current,
+        offers: providerOffers,
+        internalRoomFlowAvailable,
+      }),
+    );
+  }
+
+  const bookingContinuation = resolveHotelBookingContinuation({
+    selectedOfferId: selectedProviderOfferId,
+    offers: providerOffers,
+    internalRoomFlowAvailable,
+  });
 
   function focusComparePrices(targetId = "hotel-compare-heading") {
     setActiveTab("compare");
@@ -242,8 +270,6 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
       openRoomOptions(trigger);
     } else if (bookingContinuation.kind === "provider-handoff") {
       void runProviderOfferHandoff(bookingContinuation.providerOfferId);
-    } else if (bookingContinuation.kind === "compare-prices") {
-      focusComparePrices();
     }
   }
 
@@ -459,13 +485,11 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                   <HotelPriceComparisonSection
                     stayContext={props.staySummary ? `${props.staySummary.dateText} · ${props.staySummary.occupancyText}` : undefined}
                     perNightText={props.perNightText}
-                    viewDealText="View deal"
-                    internalRoomFlowAvailable={internalRoomFlowAvailable}
                     offers={providerOffers}
-                    pendingProviderOfferId={pendingProviderOfferId}
+                    selectedOfferId={selectedProviderOfferId}
+                    selectableOfferIds={selectableProviderOfferIds}
                     providerHandoffError={providerHandoffError}
-                    onInternalRoomFlow={openRoomOptions}
-                    onProviderOfferHandoff={runProviderOfferHandoff}
+                    onSelectOffer={setSelectedProviderOfferId}
                   />
                   <RelatedHotelsSection
                     hotels={props.relatedHotels}
@@ -612,7 +636,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
             )}
             <button
               type="button"
-              disabled={bookingContinuation.kind === "unavailable" || pendingProviderOfferId !== null}
+              disabled={bookingContinuation.kind === "unavailable" || bookingContinuation.kind === "selection-required" || pendingProviderOfferId !== null}
               onClick={(event) => continueBooking(event.currentTarget)}
               className="focus-ring mt-6 flex h-12 w-full items-center justify-center rounded-lg bg-blue px-4 text-sm font-bold text-white hover:bg-blue-dark disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -660,7 +684,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
           <div>
             <button
               type="button"
-              disabled={bookingContinuation.kind === "unavailable" || pendingProviderOfferId !== null}
+              disabled={bookingContinuation.kind === "unavailable" || bookingContinuation.kind === "selection-required" || pendingProviderOfferId !== null}
               onClick={(event) => continueBooking(event.currentTarget)}
               className="focus-ring min-h-12 w-full rounded-lg bg-blue px-3 text-xs font-bold leading-4 text-white disabled:opacity-50"
             >

@@ -6,68 +6,53 @@ import {
   buildKurioticketHotelDetailsProviderOffer,
   isActionableExternalHotelProviderOffer,
   resolveHotelBookingContinuation,
+  resolveSelectedHotelProviderOfferId,
 } from "./hotelBookingContinuation";
 
 function externalOffer(id: string): HotelDetailsProviderOffer {
-  return {
-    id: `offer-${id}`,
-    providerName: `Test Provider ${id}`,
-    nightlyPrice: `$${id}`,
-    action: { kind: "provider-handoff", providerOfferId: `opaque-${id}` },
-  };
+  return { id: `offer-${id}`, providerName: `Test Provider ${id}`, nightlyPrice: `$${id}`, action: { kind: "provider-handoff", providerOfferId: `opaque-${id}` } };
 }
 
+const current = buildKurioticketHotelDetailsProviderOffer({ nightlyPrice: "$230", amenities: [] });
+
 test("current static Hotel Details creates exactly one internal Kurioticket offer", () => {
-  const offers = [
-    buildKurioticketHotelDetailsProviderOffer({
-      nightlyPrice: "$230",
-      amenities: [],
-    }),
-  ];
-  assert.equal(offers.length, 1);
-  assert.equal(offers[0].providerName, "Kurioticket");
-  assert.deepEqual(offers[0].action, { kind: "internal-room-flow" });
-  assert.equal("deepLink" in offers[0], false);
+  assert.equal(current.providerName, "Kurioticket");
+  assert.deepEqual(current.action, { kind: "internal-room-flow" });
+  assert.equal("deepLink" in current, false);
 });
 
-test("zero external offers continues through the internal room flow", () => {
-  const current = buildKurioticketHotelDetailsProviderOffer({
-    nightlyPrice: "$230",
-    amenities: [],
-  });
-  assert.deepEqual(resolveHotelBookingContinuation([current], true), {
-    kind: "internal-room-flow",
-  });
+test("a sole actionable Kurioticket offer is selected and continues internally", () => {
+  const selectedOfferId = resolveSelectedHotelProviderOfferId({ selectedOfferId: null, offers: [current], internalRoomFlowAvailable: true });
+  assert.equal(selectedOfferId, "kurioticket");
+  assert.deepEqual(resolveHotelBookingContinuation({ selectedOfferId, offers: [current], internalRoomFlowAvailable: true }), { kind: "internal-room-flow" });
 });
 
-test("one external offer continues to its opaque provider handoff", () => {
-  assert.deepEqual(resolveHotelBookingContinuation([externalOffer("A")], true), {
-    kind: "provider-handoff",
-    providerOfferId: "opaque-A",
-  });
+test("multiple providers begin without a selection and require one", () => {
+  const offers = [current, externalOffer("A")];
+  const selectedOfferId = resolveSelectedHotelProviderOfferId({ selectedOfferId: null, offers, internalRoomFlowAvailable: true });
+  assert.equal(selectedOfferId, null);
+  assert.deepEqual(resolveHotelBookingContinuation({ selectedOfferId, offers, internalRoomFlowAvailable: true }), { kind: "selection-required" });
 });
 
-test("two or more external offers require a neutral comparison choice", () => {
-  assert.deepEqual(
-    resolveHotelBookingContinuation([externalOffer("A"), externalOffer("B")], true),
-    { kind: "compare-prices" },
-  );
-  assert.deepEqual(
-    resolveHotelBookingContinuation(
-      [externalOffer("A"), externalOffer("B"), externalOffer("C")],
-      true,
-    ),
-    { kind: "compare-prices" },
-  );
+test("the selected offer alone controls continuation", () => {
+  const offers = [current, externalOffer("A"), externalOffer("B")];
+  assert.deepEqual(resolveHotelBookingContinuation({ selectedOfferId: "kurioticket", offers, internalRoomFlowAvailable: true }), { kind: "internal-room-flow" });
+  assert.deepEqual(resolveHotelBookingContinuation({ selectedOfferId: "offer-B", offers, internalRoomFlowAvailable: true }), { kind: "provider-handoff", providerOfferId: "opaque-B" });
 });
 
-test("blank provider identities are not actionable external offers", () => {
-  const invalid: HotelDetailsProviderOffer = {
-    ...externalOffer("A"),
-    action: { kind: "provider-handoff", providerOfferId: "   " },
-  };
+test("selection is preserved while actionable and cleared when it disappears among multiple offers", () => {
+  const offers = [current, externalOffer("A")];
+  assert.equal(resolveSelectedHotelProviderOfferId({ selectedOfferId: "offer-A", offers, internalRoomFlowAvailable: true }), "offer-A");
+  assert.equal(resolveSelectedHotelProviderOfferId({ selectedOfferId: "missing", offers, internalRoomFlowAvailable: true }), null);
+});
+
+test("a disappeared selection falls back to the sole remaining actionable offer", () => {
+  assert.equal(resolveSelectedHotelProviderOfferId({ selectedOfferId: "missing", offers: [externalOffer("A")], internalRoomFlowAvailable: false }), "offer-A");
+});
+
+test("invalid or absent actions are unavailable", () => {
+  const invalid: HotelDetailsProviderOffer = { ...externalOffer("A"), action: { kind: "provider-handoff", providerOfferId: "   " } };
   assert.equal(isActionableExternalHotelProviderOffer(invalid), false);
-  assert.deepEqual(resolveHotelBookingContinuation([invalid], false), {
-    kind: "unavailable",
-  });
+  assert.deepEqual(resolveHotelBookingContinuation({ selectedOfferId: invalid.id, offers: [invalid], internalRoomFlowAvailable: false }), { kind: "unavailable" });
+  assert.deepEqual(resolveHotelBookingContinuation({ selectedOfferId: current.id, offers: [current], internalRoomFlowAvailable: false }), { kind: "unavailable" });
 });
