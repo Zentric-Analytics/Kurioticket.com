@@ -41,6 +41,32 @@ export function PasswordScreen({ onBack, onSubmit, onForgot, loading, error }: {
   </FormShell>;
 }
 
+export function ForgotPasswordScreen({ email, onBack, onReset, onResend, loading, error }: { email: string; onBack: () => void; onReset: (input: { code: string; newPassword: string; confirmPassword: string }) => void; onResend: () => void; loading: boolean; error?: string }) {
+  const [code, setCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [visible, setVisible] = useState(false);
+  const [localError, setLocalError] = useState("");
+  const submit = () => {
+    if (!/^\d{6}$/.test(code)) { setLocalError("Enter the 6-digit verification code."); return; }
+    if (newPassword.length < 8) { setLocalError("Your new password must contain at least 8 characters."); return; }
+    if (newPassword !== confirmPassword) { setLocalError("Passwords do not match."); return; }
+    setLocalError("");
+    onReset({ code, newPassword, confirmPassword });
+  };
+  const edit = (setter: (value: string) => void) => (value: string) => { setter(value); setLocalError(""); };
+  return <FormShell onBack={onBack}><FormHeading icon="lock" title="Reset your password" body={<>Enter the 6-digit code sent to{"\n"}<Text style={styles.email}>{email}</Text></>} />
+    <Field autoFocus label="Verification code" value={code} onChangeText={(value) => { setCode(sanitizeCode(value)); setLocalError(""); }} keyboardType="number-pad" autoComplete="one-time-code" textContentType="oneTimeCode" maxLength={6} />
+    <Field label="New password" value={newPassword} onChangeText={edit(setNewPassword)} secureTextEntry={!visible} autoComplete="new-password" textContentType="newPassword" right={<Pressable accessibilityRole="button" accessibilityLabel={visible ? "Hide password" : "Show password"} hitSlop={10} onPress={() => setVisible(!visible)}><AuthIcon name={visible ? "eyeOff" : "eye"} color={authColors.navy} size={21} /></Pressable>} />
+    <Field label="Confirm new password" value={confirmPassword} onChangeText={edit(setConfirmPassword)} secureTextEntry={!visible} autoComplete="new-password" textContentType="newPassword" returnKeyType="go" onSubmitEditing={submit} />
+    <Text style={styles.muted}>Use at least 8 characters and choose a different password.</Text>
+    <ErrorText>{localError || error}</ErrorText>
+    <AuthButton label="Reset password" onPress={submit} loading={loading} />
+    <Pressable accessibilityRole="button" disabled={loading} onPress={onResend} style={styles.centerAction}><Text style={styles.action}>Resend verification code</Text></Pressable>
+    <SecurityMessage />
+  </FormShell>;
+}
+
 export function TwoFactorLoginScreen({ onBack, onVerify, loading, error }: { onBack: () => void; onVerify: (code: string) => void; loading: boolean; error?: string }) {
   const [code, setCode] = useState(""); const [recovery, setRecovery] = useState(false);
   return <FormShell onBack={onBack}><FormHeading icon="lock" title="Two-factor authentication" body={recovery ? "Enter one of your recovery codes." : "Enter the 6-digit code from your\nauthenticator app."} />
@@ -72,7 +98,7 @@ const styles = StyleSheet.create({
   legal: { color: authColors.text, fontSize: 12, lineHeight: 18, textAlign: "center", marginTop: 12 }, link: { color: authColors.blue, textDecorationLine: "underline" }, email: { color: authColors.navy, fontWeight: "800" },
   codeRow: { height: 58, flexDirection: "row", justifyContent: "center", gap: 8, position: "relative" }, codeBox: { width: 45, height: 52, borderWidth: 1, borderColor: authColors.border, borderRadius: 8, alignItems: "center", justifyContent: "center" },
   codeFocused: { borderColor: authColors.blue, borderWidth: 2 }, codeDigit: { color: authColors.navy, fontSize: 22, fontWeight: "700" }, hiddenInput: { position: "absolute", opacity: 0, width: 1, height: 1 },
-  resend: { alignItems: "center", gap: 11, marginTop: 14 }, muted: { color: authColors.text, fontSize: 14 }, action: { color: authColors.blue, fontSize: 14, fontWeight: "600" }, forgot: { alignSelf: "flex-end", marginTop: -8 },
+  resend: { alignItems: "center", gap: 11, marginTop: 14 }, muted: { color: authColors.text, fontSize: 14 }, action: { color: authColors.blue, fontSize: 14, fontWeight: "600" }, centerAction: { alignSelf: "center", minHeight: 44, justifyContent: "center" }, forgot: { alignSelf: "flex-end", marginTop: -8 },
   success: { flex: 1, backgroundColor: "white", justifyContent: "center", alignItems: "center", padding: 28 }, successCircle: { width: 106, height: 106, borderRadius: 53, backgroundColor: "#10BF78", alignItems: "center", justifyContent: "center", shadowColor: "#10BF78", shadowOpacity: .2, shadowRadius: 15 },
   successTitle: { color: authColors.navy, fontSize: 28, fontWeight: "800", marginTop: 28 }, successBody: { color: authColors.text, fontSize: 16, lineHeight: 23, textAlign: "center", marginTop: 6 }, progress: { width: 190, height: 3, backgroundColor: "#E5EAF1", marginVertical: 38 }, progressFill: { width: "82%", height: 3, backgroundColor: authColors.blue },
 });
