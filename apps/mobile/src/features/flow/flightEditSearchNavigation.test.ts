@@ -23,8 +23,14 @@ test("results edit modal reuses the shared panel and dismisses locally", () => {
   assert.match(modal, /accessibilityViewIsModal/);
   assert.match(modal, /accessibilityLabel="Close edit search"/);
   assert.match(modal, /keyboardShouldPersistTaps="handled"/);
-  assert.match(modal, /<FlightSearchPanel params=\{presentedParams\} submitNavigation="replace" onBeforeNavigate=\{onClose\} editAppearance \/>/);
+  assert.match(modal, /<FlightSearchPanel embedded params=\{presentedParams\} submitNavigation="replace" onBeforeNavigate=\{onClose\} editAppearance \/>/);
   assert.doesNotMatch(modal, /router\.|flightSearchParams|travelApi/);
+  assert.doesNotMatch(modal, /accessibilityLabel="Go back"|ArrowLeft/);
+  assert.doesNotMatch(modal, /bottomSafeAreaInset|paddingBottom: bottomSafeAreaInset/);
+  assert.match(modal, /headerClearance, \{ height: headerAnchor \}/);
+  assert.match(modal, /<View style=\{styles.backdrop\}>[\s\S]*StyleSheet.absoluteFill, styles.scrim/);
+  assert.match(modal, /panel: \{ maxHeight: "100%", borderBottomLeftRadius: 24, borderBottomRightRadius: 24/);
+  assert.match(modal, /content: \{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 20 \}/);
 });
 
 test("dedicated edit screen hydrates the shared form, cancels, and replaces stale edit history on submit", () => {
@@ -49,6 +55,9 @@ test("edit flight search uses the unified responsive editor hierarchy", () => {
   assert.match(panel, /label: FLIGHT_TRIP_TYPE_LABELS\["multi-city"\] }/);
   assert.match(panel, /accessibilityLabel="Swap origin and destination"/);
   assert.match(panel, /editCard:\{borderWidth:0,borderRadius:22/);
+  assert.match(panel, /embedded \? styles\.embeddedEdit : styles\.editCard/);
+  assert.match(panel, /embeddedEdit:\{borderWidth:0,padding:8\}/);
+  assert.match(panel, /!embedded && ft\.styles\.card, !embedded && ft\.styles\.shadow/);
   assert.match(panel, /form\.departureDate && form\.returnDate \? `\$\{displayDate\(form\.departureDate\)\} — \$\{displayDate\(form\.returnDate\)\}` : "Travel dates"/);
   assert.match(panel, /formatTravelerCabinSummary\(form\)/);
 });
