@@ -23,8 +23,10 @@ test("default origin is homepage-only and independent of authentication state", 
   assert.doesNotMatch(panel.split("useEffect")[0], /fetchHomepageDefaultOrigin\(\)/);
 });
 
-test("the actual AirportSheet calls the metro-aware search on the homepage", () => {
-  assert.match(panel, /const searched = eligible \? \(homepageOnly \? searchHomepageAirports\(query\) : searchAirports\(query\)\) : \[\]/);
+test("the actual AirportSheet uses provider results to trigger homepage metro metadata", () => {
+  assert.match(panel, /searchFlightPlaces\(query/);
+  assert.match(panel, /homepageAirportGroupByCode\(item\.code\)/);
+  assert.doesNotMatch(panel, /searchHomepageAirports\(query\)|searchAirports\(query\)/);
   assert.match(panel, /<AirportSheet[\s\S]*homepageOnly=\{homepageAirportPicker\}/);
 });
 

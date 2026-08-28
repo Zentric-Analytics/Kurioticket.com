@@ -28,3 +28,6 @@ export const homepageAirportGroups: readonly HomepageAirportGroup[] = [
   { code: "SAO", city: "Sao Paulo", country: "Brazil", airportCodes: ["GRU", "CGH", "VCP"], aliases: ["São Paulo"] },
   { code: "BUE", city: "Buenos Aires", country: "Argentina", airportCodes: ["EZE", "AEP"], aliases: ["Greater Buenos Aires"] },
 ];
+
+export const homepageAirportGroupByCode = (code: string) =>
+  homepageAirportGroups.find((group) => group.code === code.trim().toUpperCase());

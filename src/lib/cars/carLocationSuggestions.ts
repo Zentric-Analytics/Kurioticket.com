@@ -2,7 +2,7 @@ import { airports } from "@/data/airports";
 import { carRentalAreas } from "@/data/carRentalAreas";
 import { countryCodeToCountryName } from "@/lib/geo/context";
 
-export type CarLocationSuggestionKind = "airport" | "city" | "area" | "custom";
+export type CarLocationSuggestionKind = "airport" | "city" | "area";
 
 export type CarLocationSuggestion = {
   id: string;
@@ -95,7 +95,7 @@ const scoreCandidate = (candidate: Candidate, query: string, countryHint?: strin
   const exactPrimary = normalizeCarLocationSearchText(candidate.primaryText) === query || normalizeCarLocationSearchText(candidate.value) === query;
   const exactTerm = normalizedTerms.some((term) => term === query);
   const prefix = normalizedTerms.some((term) => term.startsWith(query));
-  const containedWord = normalizedTerms.some((term) => term.split(" ").some((word) => word.startsWith(query)) || term.includes(query));
+  const containedWord = normalizedTerms.some((term) => term.split(" ").some((word) => word.startsWith(query)) || (query.length >= 3 && term.includes(query)));
 
   if (!exactCode && !exactPrimary && !exactTerm && !prefix && !containedWord) return undefined;
 
@@ -146,20 +146,6 @@ export async function searchCarLocationSuggestions(query: string, options: Searc
     .map((entry) => entry.candidate);
 
   const deduped = dedupe(ranked);
-  const hasExactValue = deduped.some((candidate) => normalizeCarLocationSearchText(candidate.value) === normalizedQuery || normalizeCarLocationSearchText(candidate.primaryText) === normalizedQuery);
-
-  if (trimmedQuery.length >= 2 && !hasExactValue) {
-    deduped.push({
-      id: `custom-${normalizedQuery.replace(/\s/g, "-").slice(0, 80)}`,
-      kind: "custom",
-      value: trimmedQuery,
-      primaryText: `Use “${trimmedQuery}”`,
-      secondaryText: "Unverified typed location",
-      priority: -1,
-      terms: [trimmedQuery],
-    });
-  }
-
   return deduped.slice(0, limit).map(stripInternalFields);
 }
 

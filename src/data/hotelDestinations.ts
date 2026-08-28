@@ -485,7 +485,7 @@ const getQueryMatch = (
     directName.startsWith(query) ||
     directSearchValue.startsWith(query);
   const wordOrAliasPrefix = primarySearchText.some((value) => hasWordStartingWith(value, query));
-  const contains = primarySearchText.some((value) => value.includes(query));
+  const contains = query.length >= 3 && primarySearchText.some((value) => value.includes(query));
   const contextPrefix = contextSearchText.some((value) => hasWordStartingWith(value, query));
 
   if (!exactOrPrefix && !wordOrAliasPrefix && !contains && !contextPrefix) return null;
