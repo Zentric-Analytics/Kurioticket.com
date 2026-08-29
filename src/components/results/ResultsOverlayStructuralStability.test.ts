@@ -8,7 +8,8 @@ function source(relativePath: string) {
 
 const flights = source("./FlightResultsClient.tsx");
 const cars = source("./CarsResultsClient.tsx");
-const hotels = source("../search/HotelSearchBar.tsx");
+const hotelSearch = source("../search/HotelSearchBar.tsx");
+const hotelResults = source("./HotelResultsClient.tsx");
 
 function expectInteractionOnlyGating(region: string) {
   assert.match(region, /inert=\{mobileSearchOpen \? true : undefined\}/);
@@ -31,12 +32,17 @@ test("flight mobile summary and shortcuts stay in normal flow beneath Edit Searc
 });
 
 test("hotel mobile results summary stays mounted beneath Edit Search", () => {
-  const start = hotels.indexOf("{compact ? (");
-  const end = hotels.indexOf("{onOpenFilters && mobileLayout", start);
-  const summaryWrapper = hotels.slice(start, end);
+  const start = hotelResults.indexOf('aria-label="Hotel search controls"');
+  const end = hotelResults.indexOf("<MobileResultsEditSheet", start);
+  const summaryWrapper = hotelResults.slice(start, end);
 
   assert.ok(start >= 0 && end > start);
-  expectInteractionOnlyGating(summaryWrapper);
+  assert.match(summaryWrapper, /inert=\{mobileHotelSearchOpen \? true : undefined\}/);
+  assert.match(summaryWrapper, /aria-hidden=\{mobileHotelSearchOpen \? true : undefined\}/);
+  assert.match(summaryWrapper, /mobileHotelSearchOpen && "pointer-events-none"/);
+  assert.doesNotMatch(summaryWrapper, /mobileHotelSearchOpen && "hidden"/);
+  assert.doesNotMatch(summaryWrapper, /!mobileHotelSearchOpen \? \(/);
+  assert.match(hotelSearch, /compact && !mobileResultsSheet \? \(/);
 });
 
 test("cars mobile results summary stays mounted beneath Edit Search", () => {

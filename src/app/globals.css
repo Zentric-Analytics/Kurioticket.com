@@ -18,6 +18,7 @@
 }
 
 :root {
+  --mobile-results-overlay-canvas: #a6a8ae;
   --background: #f2f6fa;
   --foreground: #021c2b;
   --navy: #021c2b;
@@ -44,6 +45,21 @@
   --status-surface: #eaf2f9;
   --status-border: #b9cfe2;
   --status-text: #1f4d75;
+}
+
+html[data-mobile-results-overlay-open],
+html[data-mobile-results-overlay-open] body {
+  background-color: var(--mobile-results-overlay-canvas);
+}
+
+.mobile-results-overlay-root::before {
+  content: "";
+  position: fixed;
+  pointer-events: none;
+  inset-inline: 0;
+  top: calc(-1 * env(safe-area-inset-top));
+  height: calc(env(safe-area-inset-top) + 1px);
+  background: rgb(2 6 23 / 0.35);
 }
 
 @theme inline {

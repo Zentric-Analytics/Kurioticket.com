@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArrowRightLeft, Calendar, ChevronDown, MapPin, UserRound, X } from "lucide-react";
+import { createPortal } from "react-dom";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
@@ -15,6 +16,7 @@ import { formatTravelDateDisplay, formatTravelDateRangeDisplay } from "@/lib/dat
 import { MULTI_CITY_MAX_LEGS, MULTI_CITY_MIN_LEGS } from "@/lib/flights/flightSearchJourney";
 import type { CabinClass, FlightSearchLeg, TripType } from "@/lib/types";
 import { acquireMobileResultsScrollLock, type MobileResultsScrollLockRelease } from "@/lib/search/mobileResultsScrollLock";
+import { acquireMobileResultsOverlayCanvas, type MobileResultsOverlayCanvasRelease } from "@/lib/search/mobileResultsOverlayCanvas";
 
 export type FlightEditSearchInitialValue = {
   tripType: TripType;
@@ -57,6 +59,7 @@ export function FlightEditSearchDrawer({ open, initialValue, onClose, onSearch, 
   const closePreparationFrameRef = useRef<number | null>(null);
   const isPreparingCloseRef = useRef(false);
   const scrollLockReleaseRef = useRef<MobileResultsScrollLockRelease | null>(null);
+  const overlayCanvasReleaseRef = useRef<MobileResultsOverlayCanvasRelease | null>(null);
   const openingScrollPositionRef = useRef<{ x: number; y: number } | null>(null);
 
   const correctUnderlyingResultsScroll = useCallback(() => {
@@ -107,10 +110,13 @@ export function FlightEditSearchDrawer({ open, initialValue, onClose, onSearch, 
     if (!open || presentation !== "bottom-sheet") return;
     openingScrollPositionRef.current = { x: window.scrollX, y: window.scrollY };
     isPreparingCloseRef.current = false;
+    overlayCanvasReleaseRef.current = acquireMobileResultsOverlayCanvas();
     scrollLockReleaseRef.current = acquireMobileResultsScrollLock();
     return () => {
       scrollLockReleaseRef.current?.({ restoreScroll: true });
       scrollLockReleaseRef.current = null;
+      overlayCanvasReleaseRef.current?.();
+      overlayCanvasReleaseRef.current = null;
       openingScrollPositionRef.current = null;
       isPreparingCloseRef.current = false;
     };
@@ -153,8 +159,8 @@ export function FlightEditSearchDrawer({ open, initialValue, onClose, onSearch, 
 
   if (!open) return null;
   const bottomSheet = presentation === "bottom-sheet";
-  return <>
-    <div onPointerDown={(event) => { if (bottomSheet && event.target === event.currentTarget) closeDrawer(); }} data-flight-edit-presentation={presentation} className={`${bottomSheet ? `fixed inset-0 z-[10000] flex items-end overflow-hidden bg-slate-950/35 transition-opacity duration-200 sm:hidden ${isClosing || !hasEntered ? "opacity-0" : "opacity-100"}` : "fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden overscroll-contain bg-slate-50 sm:hidden"}`}>
+  const overlay = (
+    <div onPointerDown={(event) => { if (bottomSheet && event.target === event.currentTarget) closeDrawer(); }} data-mobile-results-overlay-root={bottomSheet ? true : undefined} data-flight-edit-presentation={presentation} className={`${bottomSheet ? `mobile-results-overlay-root fixed inset-0 z-[10000] flex h-[100dvh] min-h-[100svh] w-screen items-end overflow-hidden overscroll-none bg-slate-950/35 transition-opacity duration-200 sm:hidden ${isClosing || !hasEntered ? "opacity-0" : "opacity-100"}` : "fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden overscroll-contain bg-slate-50 sm:hidden"}`}>
       <form role="dialog" aria-modal="true" aria-labelledby="flight-mobile-search-title" onSubmit={(event) => { event.preventDefault(); if (canSearch) { if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current); if (bottomSheet) { scrollLockReleaseRef.current?.({ restoreScroll: false }); scrollLockReleaseRef.current = null; } onSearch(draft); } }} className={`flex min-h-0 w-full min-w-0 flex-col bg-slate-50 ${bottomSheet ? `max-h-[94dvh] overflow-hidden rounded-t-[22px] shadow-[0_-12px_36px_rgba(15,23,42,0.18)] transition-transform duration-200 ease-out ${isClosing || !hasEntered ? "translate-y-full" : "translate-y-0"}` : "h-full"}`}>
         <div className={`shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 ${bottomSheet ? "pt-2" : "pt-[calc(0.5rem+env(safe-area-inset-top))]"}`}><div className="flex min-h-11 items-center justify-between gap-3"><h2 id="flight-mobile-search-title" className="text-xl font-bold leading-6 tracking-[-0.01em] text-slate-950">Edit flight search</h2><button type="button" aria-label="Close edit search" onClick={closeDrawer} className="inline-flex h-11 w-11 items-center justify-center rounded-[10px] text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"><X className="h-5 w-5" aria-hidden="true" /></button></div></div>
         <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"><div className="mx-auto flex w-full min-w-0 max-w-xl flex-col gap-3.5">
@@ -165,6 +171,9 @@ export function FlightEditSearchDrawer({ open, initialValue, onClose, onSearch, 
         </div></div>
       </form>
     </div>
+  );
+  return <>
+    {bottomSheet && typeof document !== "undefined" ? createPortal(overlay, document.body) : overlay}
     <MobileAirportPicker open={airportPicker === "origin"} field="origin" title="Choose origin" inputId="edit-flight-origin" value={firstLeg.origin} selectedCode={firstLeg.origin} launcherRef={originRef} locale={locale} onCommit={(option) => { if (option) setDraft((current) => ({ ...current, legs: [{ ...firstLeg, origin: option.code }, ...current.legs.slice(1)] })); }} onClose={() => setAirportPicker(null)} />
     <MobileAirportPicker open={airportPicker === "destination"} field="destination" title="Choose destination" inputId="edit-flight-destination" value={firstLeg.destination} selectedCode={firstLeg.destination} launcherRef={destinationRef} locale={locale} onCommit={(option) => { if (option) setDraft((current) => ({ ...current, legs: [{ ...firstLeg, destination: option.code }, ...current.legs.slice(1)] })); }} onClose={() => setAirportPicker(null)} />
     <MobileDatePickerDialog open={datePickerOpen} title="Travel dates" titleId="edit-flight-dates-title" dialogId="edit-flight-dates" launcherRef={datesRef} startDate={draft.departureDate} endDate={draft.returnDate ?? ""} rangeRequired={draft.tripType === "round-trip"} locale={locale} weekdays={weekdays} labels={{ selectDates: "Select dates", start: "Departure", end: "Return", done: "Done", selectDatePrefix: "Select" }} isDateDisabled={(date) => date < today()} onCommit={(departureDate, returnDate) => setDraft((current) => ({ ...current, departureDate, returnDate: current.tripType === "round-trip" ? returnDate : undefined, legs: [{ ...firstLeg, departureDate }, ...current.legs.slice(1)] }))} onClose={() => setDatePickerOpen(false)} />

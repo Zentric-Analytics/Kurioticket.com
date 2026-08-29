@@ -211,6 +211,6 @@ test("mobile compact Hotel search has narrow gutters and distinct back, edit, an
   assert.doesNotMatch(compactSearch, /<ChevronRight/);
   assert.match(
     compactSearch,
-    /onClick=\{\(\) => setFiltersOpen\(true\)\}[\s\S]*?<SlidersHorizontal[\s\S]*?aria-hidden="true"[\s\S]*?\{t\("filters"\)\}/,
+    /onClick=\{\(event\) => \{[\s\S]*?setFiltersOpen\(true\); \}\}[\s\S]*?<SlidersHorizontal[\s\S]*?aria-hidden="true"[\s\S]*?\{t\("filters"\)\}/,
   );
 });

@@ -4,13 +4,16 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { acquireMobileResultsScrollLock } from "@/lib/search/mobileResultsScrollLock";
+import { acquireMobileResultsOverlayCanvas } from "@/lib/search/mobileResultsOverlayCanvas";
 
 type Props = {
   open: boolean;
@@ -79,16 +82,22 @@ export function MobileResultsEditSheet({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [close, nestedLayerOpen, open]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) return;
-    return acquireMobileResultsScrollLock();
+    const releaseCanvas = acquireMobileResultsOverlayCanvas();
+    const releaseScrollLock = acquireMobileResultsScrollLock();
+    return () => {
+      releaseScrollLock();
+      releaseCanvas();
+    };
   }, [open]);
 
-  if (!open) return null;
-  return (
+  if (!open || typeof document === "undefined") return null;
+  return createPortal(
     <div
+      data-mobile-results-overlay-root
       data-mobile-results-edit-sheet
-      className="mobile-results-sheet-backdrop fixed inset-0 z-[10000] flex items-end bg-slate-950/35 motion-reduce:transition-none sm:hidden"
+      className="mobile-results-overlay-root mobile-results-sheet-backdrop fixed inset-0 z-[10000] flex h-[100dvh] min-h-[100svh] w-screen items-end overflow-hidden overscroll-none bg-slate-950/35 motion-reduce:transition-none sm:hidden"
       onPointerDown={(event) => { if (event.target === event.currentTarget) close(); }}
     >
       <div
@@ -110,6 +119,7 @@ export function MobileResultsEditSheet({
         <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4", footer && "pb-2", contentClassName)}>{children}</div>
         {footer ? <div className="shrink-0 border-t border-slate-200 bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3">{footer}</div> : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

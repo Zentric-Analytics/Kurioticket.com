@@ -8,6 +8,13 @@ const source = readFileSync(
 );
 
 test("mobile Results editor is an accessible rounded bottom sheet", () => {
+  assert.match(source, /import \{ createPortal \} from "react-dom"/);
+  assert.match(source, /createPortal\([\s\S]*?document\.body/);
+  assert.match(source, /data-mobile-results-overlay-root/);
+  assert.match(source, /mobile-results-overlay-root/);
+  assert.match(source, /h-\[100dvh\]/);
+  assert.match(source, /min-h-\[100svh\]/);
+  assert.match(source, /w-screen/);
   assert.match(source, /role="dialog"/);
   assert.match(source, /aria-modal="true"/);
   assert.match(source, /rounded-t-\[22px\]/);
@@ -23,6 +30,7 @@ test("sheet owns internal focus but leaves launcher restoration to Results", () 
   assert.doesNotMatch(source, /launcherRef/);
   assert.doesNotMatch(source, /launcher\?\.focus/);
   assert.match(source, /acquireMobileResultsScrollLock\(\)/);
+  assert.match(source, /acquireMobileResultsOverlayCanvas\(\)/);
   assert.doesNotMatch(source, /style\.position/);
   assert.doesNotMatch(source, /window\.scrollTo/);
   assert.match(source, /motion-reduce:transition-none/);
