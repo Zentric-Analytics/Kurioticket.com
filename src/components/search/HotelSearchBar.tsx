@@ -32,6 +32,7 @@ import { HotelDesktopPopover } from "@/components/search/HotelDesktopPopover";
 import { MessageBanner } from "@/components/ui/MessageBanner";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { MobileHotelGuestsRoomsPicker } from "@/components/search/MobileHotelGuestsRoomsPicker";
+import { mobileResultsEditGroupClass } from "@/components/search/MobileResultsEditRow";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { useRegion } from "@/components/region/RegionProvider";
 import {
@@ -858,7 +859,7 @@ export function HotelSearchBar({
             mobileSearchOpen &&
               cn(
                 "min-h-[60px] rounded-none border-0 px-4 py-2.5 shadow-none sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:px-3 sm:py-1.5 sm:shadow-none lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200",
-                mobileResultsSheet && "min-h-[68px] px-4 py-2.5 hover:bg-slate-50/70 focus-within:bg-blue-50/40",
+                mobileResultsSheet && "min-h-[60px] px-4 py-2.5 hover:bg-slate-50/70 focus-within:bg-blue-50/40",
               ),
           )
         : "min-h-[54px] px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
@@ -1071,7 +1072,7 @@ export function HotelSearchBar({
                     mobileSearchOpen &&
                       cn(
                         "mx-auto flex w-full max-w-xl flex-col gap-0 overflow-hidden rounded-[14px] border border-slate-200 bg-white divide-y divide-slate-200 sm:grid sm:max-w-none sm:gap-1.5 lg:gap-0",
-                        mobileResultsSheet && "divide-y-0",
+                        mobileResultsSheet && mobileResultsEditGroupClass,
                       ),
                   )
                 : !isStickyDialog
@@ -1084,8 +1085,6 @@ export function HotelSearchBar({
               className={cn(
                 fieldClassName,
                 "lg:rounded-s-xl",
-                mobileResultsSheet &&
-                  "after:pointer-events-none after:absolute after:inset-x-4 after:bottom-0 after:h-px after:bg-slate-200/80 after:content-['']",
                 shouldShowDestinationSuggestions && "z-[1000]",
               )}
             >
@@ -1261,8 +1260,6 @@ export function HotelSearchBar({
               ref={datesWrapperRef}
               className={cn(
                 fieldClassName,
-                mobileResultsSheet &&
-                  "after:pointer-events-none after:absolute after:inset-x-4 after:bottom-0 after:h-px after:bg-slate-200/80 after:content-['']",
                 datesOpen && "z-[1000]",
               )}
             >

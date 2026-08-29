@@ -77,6 +77,7 @@ import {
   HOTEL_RESULTS_PAGE_SIZE,
   paginateHotelResults,
 } from "@/lib/hotels/hotelResultsPagination";
+import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
 
 const hotelResultStackClass = "w-full max-w-[800px]";
 const desktopCompactFilterTopOffset = 116;
@@ -1025,6 +1026,13 @@ export function HotelResultsExperience({
   const resultsHeading = t(
     visibleFilteredHotels.length === 1 ? "resultFound" : "resultsFound",
   ).replace("{{count}}", formattedDisplayedHotelCount);
+  const resultsDisplayRange = guided
+    ? null
+    : getResultsDisplayRange({
+        currentPage: currentResultsPage,
+        pageSize: HOTEL_RESULTS_PAGE_SIZE,
+        totalResults: sortedVisibleHotels.length,
+      });
   const showFilteredEmptyState =
     !loading &&
     !error &&
@@ -2282,11 +2290,21 @@ export function HotelResultsExperience({
                   aria-label={t("hotelResults.summaryAria")}
                   className="flex w-full flex-nowrap items-center justify-between gap-2 py-1"
                 >
-                  {guided ? (
-                    <h2 ref={guidedResultsHeadingRef} id="deals-guided-hotel-results-heading" tabIndex={-1} className="whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">{resultsHeading}</h2>
-                  ) : (
-                    <h1 ref={standaloneResultsHeadingRef} tabIndex={-1} className="scroll-mt-20 whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">{resultsHeading}</h1>
-                  )}
+                  <div>
+                    {guided ? (
+                      <h2 ref={guidedResultsHeadingRef} id="deals-guided-hotel-results-heading" tabIndex={-1} className="whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">{resultsHeading}</h2>
+                    ) : (
+                      <h1 ref={standaloneResultsHeadingRef} tabIndex={-1} className="scroll-mt-20 whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">{resultsHeading}</h1>
+                    )}
+                    {resultsDisplayRange ? (
+                      <p
+                        aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${sortedVisibleHotels.length}`}
+                        className="mt-0.5 text-xs font-medium leading-4 text-slate-500"
+                      >
+                        {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
+                      </p>
+                    ) : null}
+                  </div>
                   <div className="hidden shrink-0 flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2">
                     <span className="whitespace-nowrap text-[clamp(0.68rem,3vw,0.875rem)] font-semibold text-slate-700 sm:text-base">
                       {`${t("sortBy") || "Sort by"}:`}
