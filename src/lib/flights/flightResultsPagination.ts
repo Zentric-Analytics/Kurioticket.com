@@ -27,11 +27,14 @@ export function buildFlightPaginationItems(
   compact = false,
 ): FlightPaginationItem[] {
   if (totalPages <= 0) return [];
-  if (compact && totalPages > 5) {
+  if (compact) {
+    const windowSize = Math.min(5, totalPages);
     const page = clampFlightResultsPage(currentPage, totalPages);
-    if (page <= 2) return [1, 2, 3, "ellipsis", totalPages];
-    if (page >= totalPages - 1) return [1, "ellipsis", totalPages - 2, totalPages - 1, totalPages];
-    return [1, "ellipsis", page, "ellipsis", totalPages];
+    const start = Math.min(
+      Math.max(1, page - Math.floor(windowSize / 2)),
+      totalPages - windowSize + 1,
+    );
+    return Array.from({ length: windowSize }, (_, index) => start + index);
   }
   if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1);
 
