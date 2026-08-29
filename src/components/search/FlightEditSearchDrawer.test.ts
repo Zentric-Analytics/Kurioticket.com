@@ -53,9 +53,18 @@ test("bottom sheet uses the shared no-shake lock and delegates launcher focus", 
     source.indexOf("const closeDrawer"),
     source.indexOf("useLayoutEffect", source.indexOf("const closeDrawer")),
   );
-  assert.ok(closeHelper.indexOf("stabilizeUnderlyingResultsBeforeClose()") < closeHelper.indexOf("setIsClosing(true)"));
-  assert.match(closeHelper, /requestAnimationFrame\([\s\S]*?setIsClosing\(true\)/);
-  assert.match(source, /restoreScroll: !scrollPreparedForCloseRef\.current/);
+  const releaseIndex = closeHelper.indexOf("scrollLockReleaseRef.current?.({ restoreScroll: false })");
+  const firstFrameIndex = closeHelper.indexOf("requestAnimationFrame");
+  const correctionIndex = closeHelper.indexOf("correctUnderlyingResultsScroll()", firstFrameIndex);
+  const closingIndex = closeHelper.indexOf("setIsClosing(true)");
+  const timerIndex = closeHelper.indexOf("window.setTimeout(finishClose, 200)");
+  assert.ok(releaseIndex >= 0 && releaseIndex < firstFrameIndex);
+  assert.ok(firstFrameIndex < correctionIndex && correctionIndex < closingIndex);
+  assert.ok(closingIndex < timerIndex);
+  assert.equal(closeHelper.match(/restoreScroll: false/g)?.length, 1);
+  assert.match(closeHelper, /requestAnimationFrame\([\s\S]*?requestAnimationFrame\([\s\S]*?requestAnimationFrame\([\s\S]*?setIsClosing\(true\)/);
+  assert.match(source, /scrollLockReleaseRef\.current\?\.\(\{ restoreScroll: true \}\)/);
+  assert.match(source, /isPreparingCloseRef\.current/);
   assert.doesNotMatch(source, /position: "fixed"/);
   assert.match(source, /window\.scrollTo\(\{[\s\S]*?behavior: "auto"/);
   assert.doesNotMatch(source, /touchAction:\s*"none"/);
