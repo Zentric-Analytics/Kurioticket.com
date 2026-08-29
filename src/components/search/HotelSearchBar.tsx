@@ -1069,7 +1069,10 @@ export function HotelSearchBar({
                 ? cn(
                     "lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px]",
                     mobileSearchOpen &&
-                      "mx-auto flex w-full max-w-xl flex-col gap-0 overflow-hidden rounded-[14px] border border-slate-200 bg-white divide-y divide-slate-200 sm:grid sm:max-w-none sm:gap-1.5 lg:gap-0",
+                      cn(
+                        "mx-auto flex w-full max-w-xl flex-col gap-0 overflow-hidden rounded-[14px] border border-slate-200 bg-white divide-y divide-slate-200 sm:grid sm:max-w-none sm:gap-1.5 lg:gap-0",
+                        mobileResultsSheet && "divide-y-0",
+                      ),
                   )
                 : !isStickyDialog
                   ? "lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_104px]"
@@ -1081,6 +1084,8 @@ export function HotelSearchBar({
               className={cn(
                 fieldClassName,
                 "lg:rounded-s-xl",
+                mobileResultsSheet &&
+                  "after:pointer-events-none after:absolute after:inset-x-4 after:bottom-0 after:h-px after:bg-slate-200/80 after:content-['']",
                 shouldShowDestinationSuggestions && "z-[1000]",
               )}
             >
@@ -1254,7 +1259,12 @@ export function HotelSearchBar({
 
             <div
               ref={datesWrapperRef}
-              className={cn(fieldClassName, datesOpen && "z-[1000]")}
+              className={cn(
+                fieldClassName,
+                mobileResultsSheet &&
+                  "after:pointer-events-none after:absolute after:inset-x-4 after:bottom-0 after:h-px after:bg-slate-200/80 after:content-['']",
+                datesOpen && "z-[1000]",
+              )}
             >
               <span className={fieldLabelClassName}>
                 {t("hotelSearchTravelDatesLabel")}
@@ -1698,7 +1708,10 @@ export function HotelSearchBar({
         onClose={() => setGuestsRoomsOpen(false)}
         showCancelAction={false}
         showBackLabel={false}
-        contentClassName="bg-[#fcfdfe] px-4 py-6"
+        contentClassName={cn(
+          "bg-[#fcfdfe] px-4",
+          mobileResultsSheet ? "py-4" : "py-6",
+        )}
         footer={(requestClose) => (
             <button type="button" onClick={() => {
               setHotelAdultCount(draftHotelAdults);
@@ -1711,7 +1724,7 @@ export function HotelSearchBar({
             </button>
         )}
       >
-        <MobileHotelGuestsRoomsPicker adults={draftHotelAdults} children={draftHotelChildren} rooms={draftHotelRooms} petFriendly={draftHotelPetFriendly} density={mobileLandingPresentation ? "compact" : undefined}
+        <MobileHotelGuestsRoomsPicker adults={draftHotelAdults} children={draftHotelChildren} rooms={draftHotelRooms} petFriendly={draftHotelPetFriendly} density={mobileLandingPresentation || mobileResultsSheet ? "compact" : undefined}
           onAdultsChange={setDraftHotelAdults} onChildrenChange={setDraftHotelChildren} onRoomsChange={setDraftHotelRooms} onPetFriendlyChange={setDraftHotelPetFriendly}
           strings={{ guests: t("guests"), adults: t("adults"), adultDescription: t("hotelGuests.adultDescription") || "Ages 18+", children: t("children"), childDescription: t("hotelGuests.childDescription") || "Ages 0–17", rooms: t("rooms"), roomDescription: t("hotelGuests.roomDescription") || "Separate rooms", petFriendly: t("petFriendly"), petDescription: t("onlyShowPetFriendlyStays"), decrease: (label) => `Decrease ${label}`, increase: (label) => `Increase ${label}` }} />
       </HotelMobilePickerShell>
