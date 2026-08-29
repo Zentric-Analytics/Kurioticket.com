@@ -1072,7 +1072,8 @@ export function HotelSearchBar({
                     mobileSearchOpen &&
                       cn(
                         "mx-auto flex w-full max-w-xl flex-col gap-0 overflow-hidden rounded-[14px] border border-slate-200 bg-white divide-y divide-slate-200 sm:grid sm:max-w-none sm:gap-1.5 lg:gap-0",
-                        mobileResultsSheet && mobileResultsEditGroupClass,
+                        mobileResultsSheet &&
+                          "gap-3 overflow-visible rounded-none border-0 bg-transparent sm:flex",
                       ),
                   )
                 : !isStickyDialog
@@ -1080,6 +1081,12 @@ export function HotelSearchBar({
                   : undefined,
             )}
           >
+            <div
+              data-hotel-mobile-edit-group={
+                mobileResultsSheet ? "" : undefined
+              }
+              className={mobileResultsSheet ? mobileResultsEditGroupClass : "contents"}
+            >
             <label
               ref={destinationWrapperRef}
               className={cn(
@@ -1606,8 +1613,12 @@ export function HotelSearchBar({
                 </HotelDesktopPopover>
               ) : null}
             </div>
+            </div>
 
             <div
+              data-hotel-mobile-edit-search-action={
+                mobileResultsSheet ? "" : undefined
+              }
               className={cn(
                 "sm:col-span-2 lg:col-span-1 lg:self-stretch",
                 compact ? "sm:min-h-[54px]" : "lg:min-h-[54px]",
@@ -1627,7 +1638,7 @@ export function HotelSearchBar({
                         mobileSearchOpen &&
                           cn(
                             "mt-3 h-12 rounded-[11px] text-[15px] sm:mt-0 sm:h-[54px] sm:rounded-xl lg:rounded-s-none",
-                            mobileResultsSheet && "mt-3 h-[52px] shadow-none active:bg-[#003f9c]",
+                            mobileResultsSheet && "mt-0 h-12 shadow-none active:bg-[#003f9c]",
                           ),
                       )
                     : !isStickyDialog
