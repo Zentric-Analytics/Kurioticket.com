@@ -151,17 +151,17 @@ export function CarResultCard({
   const mobileCardActions = (
     <div
       data-car-card-mobile-actions
-      className="flex shrink-0 items-center gap-0"
+      className="ms-auto flex shrink-0 items-center gap-0"
     >
       <button
         type="button"
         aria-label={`${isSaved ? "Unsave" : "Save"} ${car.modelName}`}
         aria-pressed={isSaved}
         onClick={toggleSavedCar}
-        className={`flex min-h-11 min-w-11 shrink-0 items-center justify-end rounded-full border border-transparent bg-transparent pe-1 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 ${isSaved ? "text-rose-600" : "text-slate-700"}`}
+        className={`relative flex h-11 w-9 shrink-0 items-center justify-center rounded-full border border-transparent bg-transparent transition before:absolute before:inset-y-0 before:-start-2 before:end-0 before:content-[''] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 ${isSaved ? "text-rose-600" : "text-slate-700"}`}
       >
         <Heart
-          size={20}
+          size={18}
           fill={isSaved ? "currentColor" : "none"}
           aria-hidden="true"
         />
@@ -170,9 +170,9 @@ export function CarResultCard({
         type="button"
         aria-label={`Share ${car.modelName}`}
         onClick={() => void shareCar()}
-        className="flex min-h-11 min-w-11 shrink-0 items-center justify-start rounded-full border border-transparent bg-transparent ps-1 text-slate-700 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
+        className="relative flex h-11 w-9 shrink-0 items-center justify-center rounded-full border border-transparent bg-transparent text-slate-700 transition before:absolute before:inset-y-0 before:start-0 before:-end-2 before:content-[''] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
       >
-        <Share2 size={19} aria-hidden="true" />
+        <Share2 size={18} aria-hidden="true" />
       </button>
     </div>
   );
@@ -211,18 +211,21 @@ export function CarResultCard({
 
             <div
               data-car-card-mobile-information
-              className="min-w-0 px-2.5 py-2.5"
+              className="min-w-0 ps-2.5 pe-2 py-2.5"
             >
               <header
                 data-car-card-mobile-utility-row
-                className="flex min-h-8 min-w-0 items-center justify-between gap-1"
+                className="flex min-h-11 min-w-0 items-center gap-2"
               >
-                <div className="flex min-w-0 items-center gap-1.5">
-                  <p className="min-w-0 text-[10px] font-bold uppercase tracking-[0.14em] text-[#004BB8]">
+                <div
+                  data-car-card-mobile-utility-copy
+                  className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden"
+                >
+                  <p className="min-w-0 shrink truncate whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.14em] text-[#004BB8]">
                     {car.categoryLabel}
                   </p>
                   {badge && BadgeIcon && (
-                    <span className="inline-flex min-h-5 max-w-full items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold leading-4 text-emerald-700">
+                    <span className="inline-flex min-h-5 shrink-0 items-center gap-1 whitespace-nowrap rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold leading-4 text-emerald-700">
                       <BadgeIcon size={11} aria-hidden="true" />
                       {badge}
                     </span>

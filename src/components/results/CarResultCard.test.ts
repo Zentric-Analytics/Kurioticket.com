@@ -181,23 +181,49 @@ test("cards expose compact, functional save and share actions", () => {
   assert.match(source, /aria-live="polite"/);
   assert.match(actions, /gap-0/);
   assert.equal(
-    (actions.match(/min-h-11 min-w-11/g) ?? []).length,
+    (actions.match(/h-11 w-9/g) ?? []).length,
     2,
-    "save and share each preserve an independent 44px minimum target",
+    "save and share each use a 44px by 36px layout box",
   );
   assert.match(
     actions,
-    /min-h-11 min-w-11[^\n]*justify-end[^\n]*pe-1/,
+    /h-11 w-9[^\n]*before:inset-y-0[^\n]*before:-start-2[^\n]*before:end-0/,
   );
   assert.match(
     actions,
-    /min-h-11 min-w-11[^\n]*justify-start[^\n]*ps-1/,
+    /h-11 w-9[^\n]*before:inset-y-0[^\n]*before:start-0[^\n]*before:-end-2/,
   );
-  assert.match(actions, /<Heart\s+size=\{20\}/);
-  assert.match(actions, /<Share2 size=\{19\}/);
-  assert.doesNotMatch(actions, /before:-inset|before:-start|before:-end/);
-  assert.doesNotMatch(actions, /justify-center/);
-  assert.match(mobileUtility, /min-h-8 min-w-0 items-center/);
+  assert.match(actions, /<Heart\s+size=\{18\}/);
+  assert.match(actions, /<Share2 size=\{18\}/);
+  assert.doesNotMatch(actions, /before:-inset-/);
+  assert.match(mobileUtility, /min-h-11 min-w-0 items-center gap-2/);
+  assert.match(
+    mobileUtility,
+    /data-car-card-mobile-utility-copy[\s\S]*?flex min-w-0 flex-1 items-center gap-1\.5 overflow-hidden/,
+  );
+  assert.match(
+    mobileUtility,
+    /<p className="min-w-0 shrink truncate whitespace-nowrap text-\[10px\]/,
+  );
+  assert.match(
+    mobileUtility,
+    /<span className="inline-flex min-h-5 shrink-0 items-center gap-1 whitespace-nowrap/,
+  );
+  assert.match(
+    source,
+    /data-car-card-mobile-information[\s\S]*?className="min-w-0 ps-2\.5 pe-2 py-2\.5"/,
+  );
+});
+
+test("every supported mobile badge keeps its full single-line label", () => {
+  const badgeMap = source.slice(
+    source.indexOf("const carResultBadgeIcons"),
+    source.indexOf("export function CarResultCard"),
+  );
+  assert.match(badgeMap, /"Best value": Award/);
+  assert.match(badgeMap, /Cheapest: Tag/);
+  assert.match(badgeMap, /"Top rated": Star/);
+  assert.match(source, /shrink-0[^\"]*whitespace-nowrap/);
 });
 
 test("long mobile model names retain an action-independent identity row", () => {
