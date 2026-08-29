@@ -23,6 +23,7 @@ import {
   ChevronRight,
   ChevronDown,
   MapPin,
+  PencilLine,
   SlidersHorizontal,
   Star,
   Users,
@@ -2021,8 +2022,15 @@ export function HotelResultsExperience({
                 <span className="block truncate text-sm font-bold text-slate-950">
                   {body.destination}
                 </span>
-                <span className="block truncate text-xs font-medium text-slate-600">
-                  {desktopMinimizedDateSummary} · {desktopMinimizedGuestsSummary}
+                <span className="inline-flex max-w-full items-center gap-1.5 text-xs font-medium text-slate-600">
+                  <span className="min-w-0 truncate">
+                    {desktopMinimizedDateSummary} · {desktopMinimizedGuestsSummary}
+                  </span>
+                  <PencilLine
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5 shrink-0 text-slate-500"
+                    strokeWidth={2}
+                  />
                 </span>
               </span>
             </button>

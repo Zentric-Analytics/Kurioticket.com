@@ -208,6 +208,31 @@ test("mobile compact Hotel search has narrow gutters and distinct back, edit, an
     compactSearch,
     /onClick=\{openMobileHotelSearch\}[\s\S]*?aria-label=\{t\("editHotelSearch"\) \|\| "Edit hotel search"\}/,
   );
+  const editButton = compactSearch.match(
+    /<button\n\s+type="button"\n\s+onClick=\{openMobileHotelSearch\}[\s\S]*?<\/button>/,
+  )?.[0];
+  assert.ok(editButton, "the existing middle Edit Search button exists");
+  assert.match(
+    editButton,
+    /desktopMinimizedGuestsSummary\}[\s\S]*?<PencilLine/,
+    "the pencil follows the dates/guests/rooms summary",
+  );
+  assert.match(editButton, /<PencilLine[\s\S]*?aria-hidden="true"/);
+  assert.match(
+    editButton,
+    /className="h-3\.5 w-3\.5 shrink-0 text-slate-500"/,
+  );
+  assert.match(editButton, /strokeWidth=\{2\}/);
+  assert.equal(
+    compactSearch.match(/<button/g)?.length,
+    3,
+    "the compact toolbar retains exactly Back, Edit Search, and Filters controls",
+  );
+  assert.equal(
+    compactSearch.match(/<PencilLine/g)?.length,
+    1,
+    "the pencil is decorative within Edit Search, not a separate control",
+  );
   assert.doesNotMatch(compactSearch, /<ChevronRight/);
   assert.match(
     compactSearch,
