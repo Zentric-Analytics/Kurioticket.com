@@ -81,10 +81,17 @@ test("route remains centered with balanced side controls and compact spacing", (
   assert.match(styles, /flightHeaderSide: \{ width: 52/);
   assert.match(styles, /flightHeaderEdit: \{[\s\S]*?width: 52/);
   assert.match(styles, /flightHeaderRouteBlock: \{ flex: 1, minWidth: 0, alignItems: "center"/);
-  assert.match(styles, /flightHeaderRoute: \{ minWidth: 0, textAlign: "center"/);
+  assert.match(styles, /flightHeaderRoute: \{ minWidth: 0, textAlign: "center", fontFamily: appFonts\.black/);
+  assert.match(styles, /flightHeaderEditText: \{ fontSize: 13, lineHeight: 18, fontWeight: "700", fontFamily: appFonts\.bold/);
   assert.match(styles, /flightHeader: \{[\s\S]*?paddingTop: 12,[\s\S]*?paddingBottom: 2/);
   assert.match(header, /backgroundColor: theme\.background/);
   assert.match(header, /color: theme\.textPrimary/);
+});
+
+test("visible Flight Results labels use scoped Inter families", () => {
+  assert.match(styles, /flightResultCount: \{[^\n]*fontWeight: "700", fontFamily: appFonts\.bold/);
+  assert.match(searchUi, /flightResults && \{ color: theme\.textPrimary, fontFamily: appFonts\.bold \}/);
+  assert.match(searchUi, /pillText: \{ fontSize: 12, fontWeight: "700"/);
 });
 
 test("header and date rail use the structured Flight Results fare-calendar shell", () => {

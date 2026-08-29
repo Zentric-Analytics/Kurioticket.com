@@ -18,6 +18,7 @@ import {
 import { useEffect, useState } from "react";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
 import { useAppTheme } from "../../theme/AppTheme";
+import { appFonts } from "../../theme/typography";
 import {
   deriveNearbyDateSuggestion,
   getDateWindow,
@@ -183,7 +184,7 @@ export function Pill({
       ) : null}
       <Text
         numberOfLines={1}
-        style={[s.pillText, flightResults && { color: theme.textPrimary }, active && { color: ui.blue }]}
+        style={[s.pillText, flightResults && { color: theme.textPrimary, fontFamily: appFonts.bold }, active && { color: ui.blue }]}
       >
         {label}
       </Text>
@@ -357,7 +358,7 @@ export function DateStrip({
         hitSlop={6}
         style={({ pressed }) => [s.nearbyDateInsight, pressed && s.datePressed]}
       >
-        <Text numberOfLines={1} ellipsizeMode="tail" style={[s.nearbyDateInsightText, { color: theme.textSecondary }]}>
+        <Text numberOfLines={1} ellipsizeMode="tail" style={[s.nearbyDateInsightText, { color: theme.textSecondary, fontFamily: appFonts.semibold }]}>
           {`Cheaper nearby: ${parseCalendarDate(nearbySuggestion.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })} · Save ${formatCurrency(nearbySuggestion.savings, displayCurrency)}`}
         </Text>
       </Pressable>
@@ -545,9 +546,9 @@ export const s = StyleSheet.create({
   datePressed: { opacity: 0.92, transform: [{ scale: 0.985 }] },
   day: { fontSize: 12, lineHeight: 16, color: ui.muted },
   datePrice: { maxWidth: "100%", fontSize: 16, fontWeight: "800", color: ui.navy, marginTop: 1 },
-  flightDateWeekday: { width: "100%", fontSize: 10, fontWeight: "600", lineHeight: 13, letterSpacing: 0.5, textAlign: "center" },
-  flightDateLabel: { width: "100%", fontSize: 12, fontWeight: "700", lineHeight: 15, letterSpacing: 0.2, textAlign: "center" },
-  flightDatePrice: { width: "100%", height: 14, marginTop: 3, fontSize: 11, fontWeight: "600", textAlign: "center", lineHeight: 14, paddingHorizontal: 1 },
+  flightDateWeekday: { width: "100%", fontSize: 10, fontWeight: "600", fontFamily: appFonts.semibold, lineHeight: 13, letterSpacing: 0.5, textAlign: "center" },
+  flightDateLabel: { width: "100%", fontSize: 12, fontWeight: "700", fontFamily: appFonts.bold, lineHeight: 15, letterSpacing: 0.2, textAlign: "center" },
+  flightDatePrice: { width: "100%", height: 14, marginTop: 3, fontSize: 11, fontWeight: "600", fontFamily: appFonts.semibold, textAlign: "center", lineHeight: 14, paddingHorizontal: 1 },
   button: {
     height: 45,
     minWidth: 104,

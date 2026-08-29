@@ -1,4 +1,14 @@
 import { Stack } from "expo-router";
+import { useFonts } from "expo-font";
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+  Inter_900Black,
+} from "@expo-google-fonts/inter";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import * as Updates from "expo-updates";
 import { AppThemeProvider, useAppTheme } from "../src/theme/AppTheme";
@@ -10,7 +20,17 @@ import { FeatureAvailabilityProvider } from "../src/features/availability/Featur
 import { MobileLocalizationProvider } from "../src/localization/MobileLocalizationProvider";
 import { createForegroundUpdateHandler, ensureLatestUpdate } from "../src/updates/ensureLatestUpdate";
 
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+    Inter_900Black,
+  });
   useEffect(() => { console.info(buildStartupLog(getRuntimeDiagnostics())); }, []);
   useEffect(() => {
     const handleAppStateChange = createForegroundUpdateHandler(
@@ -20,6 +40,14 @@ export default function RootLayout() {
     const subscription = AppState.addEventListener("change", handleAppStateChange);
     return () => subscription.remove();
   }, []);
+  useEffect(() => {
+    if (!fontsLoaded && !fontError) return;
+    if (fontError && __DEV__) console.warn("Inter fonts failed to load; continuing with system fonts.");
+    SplashScreen.hideAsync().catch(() => {});
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) return null;
+
   return <AppThemeProvider><MobileLocalizationProvider><FeatureAvailabilityProvider><ThemedRootLayout /></FeatureAvailabilityProvider></MobileLocalizationProvider></AppThemeProvider>;
 }
 

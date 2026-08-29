@@ -73,7 +73,7 @@ test("the full-width fare row contains the only displayed fare", () => {
   assert.match(fareRow, /\{fare\?\.formatted \?\? "—"\}/);
   assert.match(fareRow, /accessible=\{false\}/);
   assert.match(fareRow, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.8\}/);
-  assert.match(source, /bigPrice: \{ fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui\.navy, textAlign: "right" \}/);
+  assert.match(source, /bigPrice: \{ fontSize: 20, lineHeight: 25, fontWeight: "900", fontFamily: appFonts\.black, color: ui\.navy, textAlign: "right" \}/);
   assert.match(fareRow, /color: theme\.textPrimary/);
   assert.doesNotMatch(fareRow, /actionColumn|width: 112|marginRight|position:/);
   assert.doesNotMatch(fareRow, /baggageSummary|fareRulesSummary|metadataItem/);
