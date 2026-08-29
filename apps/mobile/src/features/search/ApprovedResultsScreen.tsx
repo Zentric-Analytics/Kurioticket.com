@@ -153,7 +153,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
   const [verifiedDateFareMemory, setVerifiedDateFareMemory] = useState<VerifiedDateFareMemory>();
   const flightDateStripScrollY = useRef(new Animated.Value(0)).current;
-  const [flightDateStripHeaderHeight, setFlightDateStripHeaderHeight] = useState(72);
+  const [flightDateStripHeaderHeight, setFlightDateStripHeaderHeight] = useState(88);
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
   const previousComparisonCurrency = useRef<string | null>(null);
   const previousFlightSearchKey = useRef<string | undefined>(undefined);
