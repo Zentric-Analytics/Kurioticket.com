@@ -683,6 +683,8 @@ export function HotelResultsExperience({
     mobileHotelSearchLauncherRef.current = event?.currentTarget ?? null;
     mobileHotelSearchModalityRef.current = event ? getOverlayActivationModality(event) : "programmatic";
     setFiltersOpen(false);
+    setMobileShortcutMenu(null);
+    setMobileShortcutMenuPosition(null);
     setMobileHotelSearchOpen(true);
   }, []);
 
@@ -1958,9 +1960,11 @@ export function HotelResultsExperience({
       {!guided ? <section
         className={cn(
           "relative z-40 bg-white pb-0 pt-0 sm:hidden",
-          mobileHotelSearchOpen && "hidden",
+          mobileHotelSearchOpen && "pointer-events-none",
         )}
         aria-label="Hotel search controls"
+        aria-hidden={mobileHotelSearchOpen ? true : undefined}
+        inert={mobileHotelSearchOpen ? true : undefined}
       >
         <div className="relative translate-y-1/2">
           <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch justify-center px-4">
@@ -2030,8 +2034,13 @@ export function HotelResultsExperience({
         </div>
       ) : null}
 
-      {!guided && !mobileHotelSearchOpen ? (
-        <section className="relative z-30 px-4 pb-0 pt-12 sm:hidden" aria-label={t("filters")}>
+      {!guided ? (
+        <section
+          className={cn("relative z-30 px-4 pb-0 pt-12 sm:hidden", mobileHotelSearchOpen && "pointer-events-none")}
+          aria-label={t("filters")}
+          aria-hidden={mobileHotelSearchOpen ? true : undefined}
+          inert={mobileHotelSearchOpen ? true : undefined}
+        >
           {/* The shortcut renderer mirrors Flight Results and refs are only read by event handlers. */}
           {/* eslint-disable-next-line react-hooks/refs */}
           {renderMobileHotelShortcuts()}

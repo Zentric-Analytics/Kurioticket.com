@@ -33,6 +33,12 @@ test("shared mobile flight editor retains the approved drawer structure", () => 
 });
 
 test("shared editor supports a Details-only bottom sheet while fullscreen remains the default", () => {
+  assert.match(source, /import \{ createPortal \} from "react-dom"/);
+  assert.match(source, /createPortal\(overlay, document\.body\)/);
+  assert.match(source, /mobile-results-overlay-root/);
+  assert.match(source, /data-mobile-results-overlay-root/);
+  assert.match(source, /h-\[100dvh\]/);
+  assert.match(source, /min-h-\[100svh\]/);
   assert.match(source, /presentation\?: "fullscreen" \| "bottom-sheet"/);
   assert.match(source, /presentation = "fullscreen"/);
   assert.match(source, /data-flight-edit-presentation=\{presentation\}/);

@@ -898,7 +898,7 @@ export function HotelSearchBar({
         className,
       )}
     >
-      {compact ? (
+      {compact && !mobileResultsSheet ? (
         <div
           inert={mobileSearchOpen ? true : undefined}
           aria-hidden={mobileSearchOpen ? true : undefined}
@@ -982,11 +982,11 @@ export function HotelSearchBar({
             </button>
           )}
         </div>
-      ) : (
+      ) : !compact ? (
         <p className="px-1 text-sm font-medium text-slate-600">
           {hotelSearchIntroLabel}
         </p>
-      )}
+      ) : null}
       <form
         onSubmit={handleSubmit}
         ref={setSearchPanelRef}

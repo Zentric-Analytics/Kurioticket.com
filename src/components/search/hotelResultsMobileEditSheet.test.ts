@@ -8,6 +8,7 @@ const sheet = read("./MobileResultsEditSheet.tsx");
 const results = read("../results/HotelResultsClient.tsx");
 
 test("Hotel results editor renders three independent canonical field cards", () => {
+  assert.match(searchBar, /compact && !mobileResultsSheet \? \(/);
   assert.match(searchBar, /data-hotel-results-edit-fields=/);
   assert.match(searchBar, /className=\{mobileResultsSheet \? "flex flex-col gap-2\.5" : "contents"\}/);
   assert.equal(searchBar.match(/data-hotel-mobile-edit-row=/g)?.length, 3);
@@ -22,6 +23,20 @@ test("Hotel results editor renders three independent canonical field cards", () 
   assert.ok(fieldsStart < destination && destination < dates && dates < guests && guests < fieldsEnd);
   assert.doesNotMatch(searchBar.slice(fieldsStart, fieldsEnd), /type="submit"/);
   assert.match(searchBar.slice(fieldsEnd), /type="submit"/);
+});
+
+test("Hotel Results keeps page summaries mounted but omits the sheet summary", () => {
+  assert.doesNotMatch(results, /mobileHotelSearchOpen && "hidden"/);
+  assert.match(results, /aria-hidden=\{mobileHotelSearchOpen \? true : undefined\}/);
+  assert.match(results, /inert=\{mobileHotelSearchOpen \? true : undefined\}/);
+  assert.match(results, /mobileHotelSearchOpen && "pointer-events-none"/);
+  assert.doesNotMatch(results, /!guided && !mobileHotelSearchOpen \? \(/);
+  assert.match(searchBar, /mobileLayout === "controls"/);
+
+  const summary = searchBar.indexOf("{compact && !mobileResultsSheet ? (");
+  const form = searchBar.indexOf("<form", summary);
+  assert.ok(summary >= 0 && form > summary);
+  assert.doesNotMatch(searchBar.slice(form), /\{mobileSearchSummary\}/);
 });
 
 test("Hotel results cards place their icons and approved affordances in value rows", () => {
