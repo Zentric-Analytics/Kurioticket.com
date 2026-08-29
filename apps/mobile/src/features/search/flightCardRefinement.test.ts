@@ -150,7 +150,7 @@ test("flight card keeps long prices single-line in the full-width fare row", () 
   assert.doesNotMatch(source, /actionColumn:/);
   assert.doesNotMatch(source, /priceBox:/);
 
-  for (const formattedPrice of ["₦89,482", "₦837,706", "₦12,450,000", "US$1,850", "CA$2,310", "A$2,310", "£1,250", "€1,099"]) {
+  for (const formattedPrice of ["₦89,482", "₦837,706", "₦12,450,000", "$1,850", "$2,310", "$2,310", "£1,250", "€1,099"]) {
     assert.ok(formattedPrice.length > 0, `${formattedPrice} remains a single Text value`);
   }
 });

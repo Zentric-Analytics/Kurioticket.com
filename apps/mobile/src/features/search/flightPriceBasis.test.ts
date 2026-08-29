@@ -27,9 +27,9 @@ test("invalid counts safely use the canonical default", () => {
 
 test("discloses a valid converted provider fare only", () => {
   const converted: DisplayPrice = { amount: 670000, currency: "NGN", formatted: "₦670,000", accessibilityLabel: "670,000 naira", providerAmount: 420, providerCurrency: "USD", converted: true };
-  assert.equal(basis({ travelers: "4" }, converted).providerFareText, "Provider fare US$420");
+  assert.equal(basis({ travelers: "4" }, converted).providerFareText, "Provider fare $420");
   assert.match(basis({ travelers: "4" }, converted).providerFareAccessibilityText!, /Provider fare.*US dollar/i);
-  assert.equal(basis({ travelers: "4" }, { ...converted, currency: "USD", formatted: "US$420", converted: false }).providerFareText, null);
+  assert.equal(basis({ travelers: "4" }, { ...converted, currency: "USD", formatted: "$420", converted: false }).providerFareText, null);
   assert.equal(basis({ travelers: "4" }, { ...converted, providerAmount: Number.NaN }).providerFareText, null);
 });
 

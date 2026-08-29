@@ -15,11 +15,11 @@ try {
   Object.defineProperty(Intl.NumberFormat.prototype, "formatToParts", { value: undefined, configurable: true });
   const currency = await jiti.import(resolve(import.meta.dirname, "../src/features/currency/displayCurrency.ts"));
   assert.equal(currency.formatCurrency(158811, "NGN"), "₦158,811");
-  assert.equal(currency.formatCurrency(420, "USD"), "US$420");
+  assert.equal(currency.formatCurrency(420, "USD"), "$420");
   const fare = currency.displayPrice(420, "USD", "CAD", { USD: 1, CAD: 1.4 });
   assert.equal(fare.providerAmount, 420);
   assert.equal(fare.providerCurrency, "USD");
-  assert.equal(fare.formatted, "CA$588");
+  assert.equal(fare.formatted, "$588");
   assert.ok(fare.accessibilityLabel.length > 0);
 
   Object.defineProperty(Intl.NumberFormat.prototype, "formatToParts", {

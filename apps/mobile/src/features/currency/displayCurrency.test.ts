@@ -38,21 +38,26 @@ function withIsoCurrencyParts(run: () => void) {
   }
 }
 
-test("fare formatting uses compact symbols while keeping dollar currencies unambiguous", () => {
+test("fare formatting uses clean symbols without country-letter prefixes", () => {
   assert.equal(formatCurrency(158811, "NGN"), "₦158,811");
-  assert.equal(formatCurrency(420, "USD"), "US$420");
-  assert.equal(formatCurrency(420, "CAD"), "CA$420");
-  assert.equal(formatCurrency(420, "AUD"), "A$420");
+  assert.equal(formatCurrency(420, "USD"), "$420");
+  assert.equal(formatCurrency(420, "CAD"), "$420");
+  assert.equal(formatCurrency(420, "AUD"), "$420");
   assert.equal(formatCurrency(1240, "GBP"), "£1,240");
   assert.equal(formatCurrency(980, "EUR"), "€980");
+  assert.doesNotMatch(formatCurrency(420, "USD"), /US\$/);
+  assert.doesNotMatch(formatCurrency(420, "AUD"), /A\$/);
+  assert.doesNotMatch(formatCurrency(420, "CAD"), /CA\$/);
+  assert.equal(formatCurrency(1000, "XYZ"), "1,000 XYZ");
+  assert.doesNotMatch(formatCurrency(1000, "XYZ"), /^XYZ /);
 });
 
 test("successful Intl parts cannot replace canonical product currency labels with ISO codes", () => {
   withIsoCurrencyParts(() => {
     assert.equal(formatCurrency(91234, "NGN"), "₦91,234");
-    assert.equal(formatCurrency(420, "USD"), "US$420");
-    assert.equal(formatCurrency(420, "CAD"), "CA$420");
-    assert.equal(formatCurrency(420, "AUD"), "A$420");
+    assert.equal(formatCurrency(420, "USD"), "$420");
+    assert.equal(formatCurrency(420, "CAD"), "$420");
+    assert.equal(formatCurrency(420, "AUD"), "$420");
     assert.equal(formatCurrency(1240, "GBP"), "£1,240");
     assert.equal(formatCurrency(980, "EUR"), "€980");
 
@@ -72,13 +77,13 @@ test("display fares include a spoken currency name without duplicating visual co
 test("production fare formatting remains complete without formatToParts", () => {
   withoutFormatToParts(() => {
     assert.equal(formatCurrency(158811, "NGN"), "₦158,811");
-    assert.equal(formatCurrency(420, "USD"), "US$420");
-    assert.equal(formatCurrency(420, "CAD"), "CA$420");
-    assert.equal(formatCurrency(420, "AUD"), "A$420");
+    assert.equal(formatCurrency(420, "USD"), "$420");
+    assert.equal(formatCurrency(420, "CAD"), "$420");
+    assert.equal(formatCurrency(420, "AUD"), "$420");
     assert.equal(formatCurrency(1240, "GBP"), "£1,240");
     assert.equal(formatCurrency(980, "EUR"), "€980");
     assert.equal(formatCurrency(-158811, "NGN"), "-₦158,811");
-    assert.equal(formatCurrency(1000, "XYZ"), "XYZ 1,000");
+    assert.equal(formatCurrency(1000, "XYZ"), "1,000 XYZ");
 
     const fare = displayPrice(420, "USD", "CAD", { USD: 1, CAD: 1.4 });
     assert.equal(fare.providerAmount, 420);
@@ -86,7 +91,7 @@ test("production fare formatting remains complete without formatToParts", () => 
     assert.equal(fare.amount, 588);
     assert.equal(fare.currency, "CAD");
     assert.equal(fare.converted, true);
-    assert.equal(fare.formatted, "CA$588");
+    assert.equal(fare.formatted, "$588");
     assert.ok(fare.accessibilityLabel.length > 0);
   });
 });
@@ -99,18 +104,18 @@ test("throwing and malformed formatToParts results fall back safely", () => {
       configurable: true,
     });
     assert.equal(formatCurrency(158811, "NGN"), "₦158,811");
-    assert.equal(formatCurrency(420, "USD"), "US$420");
-    assert.equal(formatCurrency(420, "CAD"), "CA$420");
-    assert.equal(formatCurrency(420, "AUD"), "A$420");
+    assert.equal(formatCurrency(420, "USD"), "$420");
+    assert.equal(formatCurrency(420, "CAD"), "$420");
+    assert.equal(formatCurrency(420, "AUD"), "$420");
 
     Object.defineProperty(Intl.NumberFormat.prototype, "formatToParts", {
       value() { return [{ type: "literal", value: "unexpected" }]; },
       configurable: true,
     });
     assert.equal(formatCurrency(158811, "NGN"), "₦158,811");
-    assert.equal(formatCurrency(420, "USD"), "US$420");
-    assert.equal(formatCurrency(420, "CAD"), "CA$420");
-    assert.equal(formatCurrency(420, "AUD"), "A$420");
+    assert.equal(formatCurrency(420, "USD"), "$420");
+    assert.equal(formatCurrency(420, "CAD"), "$420");
+    assert.equal(formatCurrency(420, "AUD"), "$420");
     assert.doesNotMatch(formatCurrency(420, "CAD"), /unexpected/);
   } finally {
     if (descriptor) Object.defineProperty(Intl.NumberFormat.prototype, "formatToParts", descriptor);
@@ -124,7 +129,7 @@ test("Intl failures retain truthful visual and accessible currency fallbacks", (
       value: function NumberFormat() { throw new Error("unsupported"); },
       configurable: true,
     });
-    assert.equal(formatCurrency(420, "usd"), "USD 420");
+    assert.equal(formatCurrency(420, "usd"), "$420");
     assert.equal(currencyAccessibilityLabel(420, "usd"), "420 USD");
   } finally {
     Object.defineProperty(Intl, "NumberFormat", { value: OriginalNumberFormat, configurable: true });
@@ -206,6 +211,6 @@ test("a missing rate falls back accurately to the provider currency", () => {
   const fare = displayPrice(604, "USD", "NGN", { USD: 1 });
   assert.equal(fare.amount, 604);
   assert.equal(fare.currency, "USD");
-  assert.equal(fare.formatted, "US$604");
+  assert.equal(fare.formatted, "$604");
   assert.equal(fare.converted, false);
 });
