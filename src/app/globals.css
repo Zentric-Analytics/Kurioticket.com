@@ -49,7 +49,10 @@
 
 html[data-mobile-results-overlay-open],
 html[data-mobile-results-overlay-open] body {
-  background-color: var(--mobile-results-overlay-canvas);
+  background-color: var(
+    --mobile-results-overlay-active-canvas,
+    var(--mobile-results-overlay-canvas)
+  );
 }
 
 @theme inline {

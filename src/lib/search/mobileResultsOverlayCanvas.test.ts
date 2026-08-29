@@ -29,6 +29,7 @@ class FakeMeta {
 
 function installDocument(themeColor?: string) {
   const attributes = new Set<string>();
+  const styleProperties = new Map<string, string>();
   const metas: FakeMeta[] = [];
   const existingMeta = themeColor === undefined ? null : new FakeMeta();
   if (existingMeta) {
@@ -42,6 +43,12 @@ function installDocument(themeColor?: string) {
     documentElement: {
       setAttribute: (name: string) => attributes.add(name),
       removeAttribute: (name: string) => attributes.delete(name),
+      style: {
+        getPropertyValue: (name: string) => styleProperties.get(name) ?? "",
+        setProperty: (name: string, value: string) =>
+          styleProperties.set(name, value),
+        removeProperty: (name: string) => styleProperties.delete(name),
+      },
     },
     head: {
       appendChild: (meta: FakeMeta) => {
@@ -74,6 +81,7 @@ function installDocument(themeColor?: string) {
 
   return {
     attributes,
+    styleProperties,
     existingMeta,
     themeMetas: () =>
       metas.filter(
@@ -92,9 +100,83 @@ test("existing white theme is temporarily dimmed and restored", () => {
     const release = acquireMobileResultsOverlayCanvas();
     assert.equal(fixture.attributes.has("data-mobile-results-overlay-open"), true);
     assert.equal(fixture.existingMeta?.getAttribute("content"), MOBILE_RESULTS_OVERLAY_CANVAS_COLOR);
+    assert.equal(
+      fixture.styleProperties.get("--mobile-results-overlay-active-canvas"),
+      MOBILE_RESULTS_OVERLAY_CANVAS_COLOR,
+    );
     release();
     assert.equal(fixture.attributes.has("data-mobile-results-overlay-open"), false);
     assert.equal(fixture.existingMeta?.getAttribute("content"), "#ffffff");
+    assert.equal(
+      fixture.styleProperties.has("--mobile-results-overlay-active-canvas"),
+      false,
+    );
+  } finally {
+    fixture.restore();
+  }
+});
+
+test("white canvas override controls the theme and root canvas", () => {
+  const fixture = installDocument("#abcdef");
+  try {
+    const release = acquireMobileResultsOverlayCanvas({ canvasColor: "#ffffff" });
+    assert.equal(fixture.existingMeta?.getAttribute("content"), "#ffffff");
+    assert.equal(
+      fixture.styleProperties.get("--mobile-results-overlay-active-canvas"),
+      "#ffffff",
+    );
+    assert.equal(fixture.attributes.has("data-mobile-results-overlay-open"), true);
+    release();
+    assert.equal(fixture.existingMeta?.getAttribute("content"), "#abcdef");
+    assert.equal(
+      fixture.styleProperties.has("--mobile-results-overlay-active-canvas"),
+      false,
+    );
+  } finally {
+    fixture.restore();
+  }
+});
+
+test("restores the exact original inline active canvas value", () => {
+  const fixture = installDocument("#abcdef");
+  fixture.styleProperties.set(
+    "--mobile-results-overlay-active-canvas",
+    "  #123456",
+  );
+  try {
+    const release = acquireMobileResultsOverlayCanvas({ canvasColor: "#ffffff" });
+    assert.equal(
+      fixture.styleProperties.get("--mobile-results-overlay-active-canvas"),
+      "#ffffff",
+    );
+    release();
+    assert.equal(
+      fixture.styleProperties.get("--mobile-results-overlay-active-canvas"),
+      "  #123456",
+    );
+  } finally {
+    fixture.restore();
+  }
+});
+
+test("first owner keeps its custom color until the final release", () => {
+  const fixture = installDocument("#abcdef");
+  try {
+    const releaseFirst = acquireMobileResultsOverlayCanvas({
+      canvasColor: "#123456",
+    });
+    const releaseSecond = acquireMobileResultsOverlayCanvas({
+      canvasColor: "#ffffff",
+    });
+    assert.equal(fixture.existingMeta?.getAttribute("content"), "#123456");
+    assert.equal(
+      fixture.styleProperties.get("--mobile-results-overlay-active-canvas"),
+      "#123456",
+    );
+    releaseFirst();
+    assert.equal(fixture.existingMeta?.getAttribute("content"), "#123456");
+    releaseSecond();
+    assert.equal(fixture.existingMeta?.getAttribute("content"), "#abcdef");
   } finally {
     fixture.restore();
   }

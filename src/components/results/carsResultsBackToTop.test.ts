@@ -24,6 +24,10 @@ test("standalone Cars owns one accessible immediate Back-to-top control", () => 
   assert.match(source, /end-4 z-40/);
   assert.match(
     source,
+    /bottom-\[calc\(3rem\+env\(safe-area-inset-bottom\)\)\]/,
+  );
+  assert.doesNotMatch(
+    source,
     /bottom-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/,
   );
   assert.match(
