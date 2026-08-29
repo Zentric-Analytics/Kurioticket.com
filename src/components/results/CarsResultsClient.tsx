@@ -1512,6 +1512,7 @@ export function CarsResultsClient({
         inputId="cars-results-pickup-mobile-input"
         value={pickupLocation}
         launcherRef={pickupLocationLauncherRef}
+        commitOnSelect
         onCommit={setPickupLocation}
         onClose={() => setMobilePicker(null)}
       />
@@ -1522,6 +1523,7 @@ export function CarsResultsClient({
         inputId="cars-results-return-mobile-input"
         value={dropoffLocation}
         launcherRef={returnLocationLauncherRef}
+        commitOnSelect
         onCommit={setDropoffLocation}
         onClose={() => setMobilePicker(null)}
       />

@@ -55,7 +55,7 @@ test("mobile form submits one hidden control for each launcher value", () => {
   );
 });
 
-test("picker query is isolated until a selected candidate is committed by Done", () => {
+test("picker query is isolated until an explicit candidate selection", () => {
   assert.match(pickerSource, /const \[query, setQuery\] = useState\(""\)/);
   assert.match(
     pickerSource,
@@ -67,9 +67,29 @@ test("picker query is isolated until a selected candidate is committed by Done",
   );
   assert.doesNotMatch(pickerSource, /onChange=\{[^}]*onCommit/);
   assert.match(pickerSource, /onCommit\(draft\.value\);\s*requestClose\(\)/);
+  assert.match(
+    pickerSource,
+    /if \(commitOnSelect\) \{\s*onCommit\(item\.value\);\s*requestClose\(\);/,
+  );
 });
 
-test("Back discards picker-local state and Flights shell restores launcher focus", () => {
+test("both Results location pickers opt into immediate canonical commit", () => {
+  const dialogs = resultsSource.match(
+    /<MobileCarLocationPicker[\s\S]*?<MobileCarTimePickerDialog/,
+  )?.[0];
+  assert.ok(dialogs);
+  assert.equal((dialogs.match(/commitOnSelect/g) ?? []).length, 2);
+  assert.match(
+    dialogs,
+    /mode="pickup"[\s\S]*?commitOnSelect[\s\S]*?onCommit=\{setPickupLocation\}/,
+  );
+  assert.match(
+    dialogs,
+    /mode="return"[\s\S]*?commitOnSelect[\s\S]*?onCommit=\{setDropoffLocation\}/,
+  );
+});
+
+test("Back and Clear do not commit, and the shell restores launcher focus", () => {
   assert.match(pickerSource, /onClose=\{onClose\}/);
   assert.match(pickerSource, /launcherRef=\{launcherRef\}/);
   assert.match(resultsSource, /onClose=\{\(\) => setMobilePicker\(null\)\}/);
@@ -77,6 +97,11 @@ test("Back discards picker-local state and Flights shell restores launcher focus
     pickerSource,
     /router\.|onSubmit|closeMobileSearchDrawer/,
   );
+  const clear = pickerSource.match(
+    /const clear = \(\) => \{[\s\S]*?\n  \};/,
+  )?.[0];
+  assert.ok(clear);
+  assert.doesNotMatch(clear, /onCommit/);
 });
 
 test("Cars suggestion engine and typed custom values remain in the picker", () => {
