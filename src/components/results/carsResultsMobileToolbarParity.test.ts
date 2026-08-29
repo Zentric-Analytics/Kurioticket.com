@@ -39,13 +39,13 @@ test("compact toolbar opens the existing filter drawer without duplicate state",
   assert.doesNotMatch(source, /mobileStickyFiltersOpen|stickySelectedFilters/);
 });
 
-test("Hotel-style PencilLine remains exclusive to the normal summary", () => {
+test("Hotel-style SquarePen remains exclusive to the normal summary", () => {
   const normalControls = source.slice(
     source.indexOf("const renderMobileControlsRow"),
     source.indexOf("const renderCarsSearchForm"),
   );
   assert.match(normalControls, /locationPairSummary/);
-  assert.match(normalControls, /PencilLine/);
+  assert.match(normalControls, /SquarePen/);
   assert.match(toolbar, /data-cars-compact-edit-icon[\s\S]*aria-hidden="true"/);
   assert.doesNotMatch(
     toolbar,

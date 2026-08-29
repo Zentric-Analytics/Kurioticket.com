@@ -27,7 +27,7 @@ import {
   Clock3,
   MapPin,
   Pencil,
-  PencilLine,
+  SquarePen,
   SlidersHorizontal,
   UserRound,
   X,
@@ -1083,9 +1083,9 @@ export function CarsResultsClient({
         </span>
         <span
           aria-hidden="true"
-          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[#004BB8]/12 bg-[#004BB8]/8 text-[#004BB8] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-transparent bg-transparent text-slate-700 transition group-hover:bg-slate-100 group-active:bg-slate-200"
         >
-          <PencilLine size={16} strokeWidth={2.1} />
+          <SquarePen size={16} strokeWidth={2.2} />
         </span>
       </button>
     </div>
