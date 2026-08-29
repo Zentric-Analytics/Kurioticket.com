@@ -33,6 +33,7 @@ import {
   Heart,
   MapPin,
   Minus,
+  Pencil,
   SquarePen,
   Users,
   UserRound,
@@ -6617,8 +6618,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             >
               {routeLabel}
             </span>
-            <span className="mt-0.5 block text-[11px] font-semibold leading-4 text-slate-500">
-              Modify search
+            <span className="mt-0.5 inline-flex items-center justify-center gap-1 text-[11px] font-semibold leading-4 text-slate-500">
+              <span>Modify search</span>
+              <Pencil
+                data-flight-compact-edit-icon
+                className="h-3 w-3 shrink-0 text-[#536B92]"
+                strokeWidth={2}
+                aria-hidden="true"
+              />
             </span>
           </button>
 
@@ -6772,6 +6779,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       </section>
 
       <FlightEditSearchDrawer
+        resultsMode
         open={mobileSearchOpen}
         presentation="bottom-sheet"
         initialValue={{ tripType: tripTypeInput === "multi-city" ? "multi-city" : tripTypeInput === "one-way" ? "one-way" : "round-trip", legs: tripTypeInput === "multi-city" ? multiCityLegs : [{ origin: originCode || originInput.trim(), destination: destinationCode || destinationInput.trim(), departureDate: departureDateInput }], departureDate: departureDateInput, returnDate: returnDateInput || undefined, adults: adultCount, children: childCount, infants: infantCount, cabinClass: cabinClassInput }}

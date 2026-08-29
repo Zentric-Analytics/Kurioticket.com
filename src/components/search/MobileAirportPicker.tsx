@@ -42,6 +42,7 @@ type MobileAirportPickerProps = {
   launcherRef?: RefObject<HTMLElement | null>;
   labels?: LegacyLabels;
   locale?: string | null;
+  commitOnSelect?: boolean;
   onCommit: (option: AirportOption | null) => void;
   onClose: () => void;
 };
@@ -105,6 +106,7 @@ export function MobileAirportPicker({
   launcherRef,
   labels,
   locale,
+  commitOnSelect = false,
   onCommit,
   onClose,
 }: MobileAirportPickerProps) {
@@ -166,13 +168,18 @@ export function MobileAirportPicker({
     const timeout = window.setTimeout(async () => {
       setLoading(true);
       try {
-        const params = new URLSearchParams({ q: normalizedQuery, context: field });
+        const params = new URLSearchParams({
+          q: normalizedQuery,
+          context: field,
+        });
         const response = await fetch(`/api/flights/places?${params}`, {
           signal: controller.signal,
           cache: "no-store",
         });
         if (!response.ok) throw new Error("Airport lookup failed");
-        const payload = (await response.json()) as { suggestions?: AirportOption[] };
+        const payload = (await response.json()) as {
+          suggestions?: AirportOption[];
+        };
         setSuggestions(payload.suggestions?.slice(0, 8) ?? []);
       } catch {
         if (!controller.signal.aborted) setSuggestions([]);
@@ -209,91 +216,106 @@ export function MobileAirportPicker({
       onClose={onClose}
       showCancelAction={false}
       contentClassName="bg-[#fcfdff] px-4 py-6"
-      footer={(requestClose) => (
-        <button
-          type="button"
-          onClick={() => commit(requestClose)}
-          className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[16px] font-semibold text-white transition-colors hover:bg-[#004bb8] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {labels?.done || t.done}
-        </button>
-      )}
+      footer={
+        commitOnSelect
+          ? undefined
+          : (requestClose) => (
+              <button
+                type="button"
+                onClick={() => commit(requestClose)}
+                className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[16px] font-semibold text-white transition-colors hover:bg-[#004bb8] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {labels?.done || t.done}
+              </button>
+            )
+      }
     >
-      <div className="mx-auto w-full max-w-xl">
-        <div className="relative">
-          <MapPin
-            className="pointer-events-none absolute start-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-700"
-            aria-hidden="true"
-          />
-          <label className="sr-only" htmlFor={inputId}>
-            {labels?.searchAirportsAndCities || t.searchAirportsAndCities}
-          </label>
-          <input
-            ref={inputRef}
-            id={inputId}
-            value={query}
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setDraft(null);
-            }}
-            placeholder={
-              labels?.searchAirportsAndCities ||
-              labels?.searchAirportsOrCities ||
-              t.searchAirportsAndCities
-            }
-            autoComplete="off"
-            className="h-[50px] w-full rounded-[10px] border border-slate-300 bg-white py-3 ps-12 pe-12 text-[15px] font-medium text-slate-950 outline-none transition-colors placeholder:text-slate-500 focus:border-[#075ee8] focus:ring-2 focus:ring-[#075ee8]/10"
-          />
-          <button
-            type="button"
-            aria-label={
-              field === "origin"
-                ? labels?.clearOrigin || t.clearOrigin
-                : labels?.clearDestination || t.clearDestination
-            }
-            onClick={() => {
-              setQuery("");
-              setDraft(null);
-              setSuggestions([]);
-              window.requestAnimationFrame(() =>
-                inputRef.current?.focus({ preventScroll: true }),
-              );
-            }}
-            className="focus-ring absolute end-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-50"
-          >
-            <X className="h-[18px] w-[18px]" aria-hidden="true" />
-          </button>
-        </div>
+      {(requestClose) => (
+        <div className="mx-auto w-full max-w-xl">
+          <div className="relative">
+            <MapPin
+              className="pointer-events-none absolute start-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-700"
+              aria-hidden="true"
+            />
+            <label className="sr-only" htmlFor={inputId}>
+              {labels?.searchAirportsAndCities || t.searchAirportsAndCities}
+            </label>
+            <input
+              ref={inputRef}
+              id={inputId}
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setDraft(null);
+              }}
+              placeholder={
+                labels?.searchAirportsAndCities ||
+                labels?.searchAirportsOrCities ||
+                t.searchAirportsAndCities
+              }
+              autoComplete="off"
+              className="h-[50px] w-full rounded-[10px] border border-slate-300 bg-white py-3 ps-12 pe-12 text-[15px] font-medium text-slate-950 outline-none transition-colors placeholder:text-slate-500 focus:border-[#075ee8] focus:ring-2 focus:ring-[#075ee8]/10"
+            />
+            <button
+              type="button"
+              aria-label={
+                field === "origin"
+                  ? labels?.clearOrigin || t.clearOrigin
+                  : labels?.clearDestination || t.clearDestination
+              }
+              onClick={() => {
+                setQuery("");
+                setDraft(null);
+                setSuggestions([]);
+                window.requestAnimationFrame(() =>
+                  inputRef.current?.focus({ preventScroll: true }),
+                );
+              }}
+              className="focus-ring absolute end-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-50"
+            >
+              <X className="h-[18px] w-[18px]" aria-hidden="true" />
+            </button>
+          </div>
 
-        <div className="mt-8">
-          {normalizedQuery.length < 2 && recentAirports.length ? (
-            <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600">
-              {t["recentSearches.title"]}
-            </h3>
-          ) : null}
-          {loading ? (
-            <p className="px-4 py-8 text-center text-sm font-medium text-slate-500">
-              {labels?.searchingAirportsAndCities || t.searchingAirportsAndCities}
-            </p>
-          ) : list.length ? (
-            <div className="overflow-hidden rounded-[11px] border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05)]">
-              {list.map((airport) => (
-                <MobileAirportOptionRow
-                  key={airport.code}
-                  airport={airport}
-                  selected={draft?.code === airport.code}
-                  locale={locale}
-                  onSelect={() => selectDraft(airport)}
-                />
-              ))}
-            </div>
-          ) : normalizedQuery.length >= 2 ? (
-            <p className="px-4 py-8 text-center text-sm font-medium text-slate-500">
-              {labels?.noMatchingAirportsOrCities || t.noMatchingAirportsOrCities}
-            </p>
-          ) : null}
+          <div className="mt-8">
+            {normalizedQuery.length < 2 && recentAirports.length ? (
+              <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+                {t["recentSearches.title"]}
+              </h3>
+            ) : null}
+            {loading ? (
+              <p className="px-4 py-8 text-center text-sm font-medium text-slate-500">
+                {labels?.searchingAirportsAndCities ||
+                  t.searchingAirportsAndCities}
+              </p>
+            ) : list.length ? (
+              <div className="overflow-hidden rounded-[11px] border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05)]">
+                {list.map((airport) => (
+                  <MobileAirportOptionRow
+                    key={airport.code}
+                    airport={airport}
+                    selected={draft?.code === airport.code}
+                    locale={locale}
+                    onSelect={() => {
+                      if (commitOnSelect) {
+                        onCommit(airport);
+                        requestClose();
+                        return;
+                      }
+                      selectDraft(airport);
+                    }}
+                  />
+                ))}
+              </div>
+            ) : normalizedQuery.length >= 2 ? (
+              <p className="px-4 py-8 text-center text-sm font-medium text-slate-500">
+                {labels?.noMatchingAirportsOrCities ||
+                  t.noMatchingAirportsOrCities}
+              </p>
+            ) : null}
+          </div>
         </div>
-      </div>
+      )}
     </FlightMobilePickerShell>
   );
 }
