@@ -13,9 +13,24 @@ test("Cars mobile edit search is one grouped surface with an external CTA", () =
 
 test("mobile pickup uses a leading MapPin without a disclosure arrow", () => {
   const launcher = source.slice(source.indexOf("function MobileLocationLauncher"), source.indexOf("function SearchInputCell"));
-  assert.match(launcher, /<Icon className="h-4 w-4 shrink-0 text-\[#004BB8\]"/);
+  assert.match(launcher, /<Icon className="h-4 w-4 shrink-0 text-slate-500"/);
   assert.doesNotMatch(launcher, /Chevron(?:Down|Right)/);
   assert.match(launcher, /onClick=\{onClick\}/);
+});
+
+test("grouped mobile leading field icons use one neutral color", () => {
+  const groupedLeadingIcons = [
+    /groupedMobile \? <Icon className="h-4 w-4 shrink-0 ([^"]+)"/,
+    /groupedMobile \? <CalendarDays className="h-4 w-4 shrink-0 ([^"]+)"/,
+    /groupedMobile \? <Clock3 className="h-4 w-4 shrink-0 ([^"]+)"/,
+    /groupedMobile \? <UserRound className="h-4 w-4 shrink-0 ([^"]+)"/,
+  ];
+
+  for (const iconPattern of groupedLeadingIcons) {
+    const classes = source.match(iconPattern)?.[1];
+    assert.equal(classes, "text-slate-500");
+    assert.doesNotMatch(classes, /#004BB8/);
+  }
 });
 
 test("dates, time, and driver age retain disclosure chevrons", () => {
@@ -23,5 +38,16 @@ test("dates, time, and driver age retain disclosure chevrons", () => {
     const start = source.indexOf(`function ${name}`);
     const next = source.indexOf("\nfunction ", start + 10);
     assert.match(source.slice(start, next < 0 ? undefined : next), /<ChevronDown/);
+  }
+});
+
+test("grouped time and driver age values own the left-aligned flexible column", () => {
+  for (const name of ["SearchTimeCell", "DriverAgeCell"]) {
+    const start = source.indexOf(`function ${name}`);
+    const next = source.indexOf("\nfunction ", start + 10);
+    const cell = source.slice(start, next < 0 ? undefined : next);
+
+    assert.match(cell, /groupedMobile && "min-w-0 flex-1 text-start"/);
+    assert.doesNotMatch(cell, /groupedMobile && "[^"]*(?:text-center|justify-center|mx-auto)/);
   }
 });
