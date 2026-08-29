@@ -255,11 +255,13 @@ export function DateStrip({
           const active = iso === date;
           const price = priceByDate[iso];
           const hasPrice = price != null;
+          const fullDate = x.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
           return (
             <Pressable
               key={iso}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
+              accessibilityLabel={flightResults ? `${fullDate}, ${hasPrice ? price.accessibilityLabel : "fare not checked"}` : undefined}
               onPress={() => onSelect(iso)}
               hitSlop={flightResults ? 6 : undefined}
               style={({ pressed }) => [
@@ -268,18 +270,28 @@ export function DateStrip({
                 flightResults && { width: flightDateWidth },
                 flightResults && {
                   backgroundColor: theme.surface,
-                  shadowColor: theme.dark ? "#000000" : "#18305B",
-                  shadowOpacity: theme.dark ? 0.28 : 0.1,
+                  borderColor: theme.border,
                 },
                 !flightResults && active && s.dateActive,
                 flightResults && active && {
                   backgroundColor: theme.dark ? "#142B55" : "#F0F5FF",
-                  shadowOpacity: theme.dark ? 0.34 : 0.15,
-                  elevation: 5,
+                  borderColor: ui.blue,
                 },
                 pressed && s.datePressed,
               ]}
             >
+              {flightResults && active ? <View accessible={false} style={s.flightDateSelectedAccent} /> : null}
+              {flightResults ? (
+                <>
+                  <Text style={[s.day, s.flightDateLabel, { color: theme.textPrimary }, active && { color: theme.dark ? "#8FB5FF" : ui.blue }]}>
+                    {shortDate(iso).toUpperCase()}
+                  </Text>
+                  <Text style={[s.day, s.flightDateWeekday, { color: theme.textSecondary }, active && { color: theme.dark ? "#8FB5FF" : ui.blue }]}>
+                    {x.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase()}
+                  </Text>
+                </>
+              ) : (
+                <>
               <Text
                 style={[
                   s.day,
@@ -300,8 +312,11 @@ export function DateStrip({
               >
                 {shortDate(iso)}
               </Text>
+                </>
+              )}
               {hasPrice || flightResults ? (
                 <Text
+                  accessible={!flightResults}
                   accessibilityLabel={price?.accessibilityLabel}
                   numberOfLines={1}
                   adjustsFontSizeToFit
@@ -316,7 +331,7 @@ export function DateStrip({
                 >
                   {hasPrice
                     ? (price.formatted ?? money(currency, price.amount))
-                    : ""}
+                    : "—"}
                 </Text>
               ) : null}
             </Pressable>
@@ -490,11 +505,11 @@ export const s = StyleSheet.create({
   },
   dateRail: { height: 80, flex: 1 },
   dates: { gap: 9, alignItems: "center" },
-  flightDateNavigator: { height: 72, paddingHorizontal: 0 },
+  flightDateNavigator: { height: 88, paddingHorizontal: 0 },
   nearbyDateInsight: { minHeight: 36, justifyContent: "center", paddingHorizontal: 14, marginTop: -4 },
   nearbyDateInsightText: { minWidth: 0, flexShrink: 1, fontSize: 12, lineHeight: 16, fontWeight: "600" },
-  flightDateRail: { height: 72 },
-  flightDates: { paddingHorizontal: 16, paddingVertical: 7 },
+  flightDateRail: { height: 88 },
+  flightDates: { paddingHorizontal: 16, paddingVertical: 6 },
   arrow: {
     width: 40,
     height: 40,
@@ -517,24 +532,22 @@ export const s = StyleSheet.create({
   flightDate: {
     minWidth: 76,
     maxWidth: 96,
-    height: 50,
-    paddingHorizontal: 3,
-    paddingVertical: 2,
-    borderRadius: 14,
-    borderWidth: 0,
-    shadowColor: "#18305B",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 3,
+    height: 76,
+    paddingHorizontal: 6,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    position: "relative",
+    overflow: "hidden",
   },
+  flightDateSelectedAccent: { position: "absolute", top: 0, left: 8, right: 8, height: 2, backgroundColor: ui.blue, borderBottomLeftRadius: 2, borderBottomRightRadius: 2 },
   dateActive: { borderColor: ui.blue, backgroundColor: "#F5F8FF" },
   datePressed: { opacity: 0.92, transform: [{ scale: 0.985 }] },
   day: { fontSize: 12, lineHeight: 16, color: ui.muted },
   datePrice: { maxWidth: "100%", fontSize: 16, fontWeight: "800", color: ui.navy, marginTop: 1 },
-  flightDateWeekday: { width: "100%", fontSize: 12, fontWeight: "500", lineHeight: 14, letterSpacing: 0.1, textAlign: "center" },
-  flightDateLabel: { width: "100%", fontSize: 13, fontWeight: "600", lineHeight: 15, letterSpacing: -0.1, textAlign: "center" },
-  flightDatePrice: { width: "100%", height: 17, fontSize: 15, fontWeight: "700", textAlign: "center", lineHeight: 17, paddingHorizontal: 1 },
+  flightDateWeekday: { width: "100%", fontSize: 10, fontWeight: "600", lineHeight: 13, letterSpacing: 0.5, textAlign: "center" },
+  flightDateLabel: { width: "100%", fontSize: 12, fontWeight: "700", lineHeight: 15, letterSpacing: 0.2, textAlign: "center" },
+  flightDatePrice: { width: "100%", height: 14, marginTop: 3, fontSize: 11, fontWeight: "600", textAlign: "center", lineHeight: 14, paddingHorizontal: 1 },
   button: {
     height: 45,
     minWidth: 104,
