@@ -3826,31 +3826,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     timeBounds.takeoff?.min,
   ]);
 
-  useLayoutEffect(() => {
-    if (!body?.departureDate || nearbyFares.length === 0) return;
-
-    const alignmentIdentity = `${buildFlightResultsSearchKey(body)}:${body.departureDate}`;
-    if (alignedMobileNearbyFareSearchRef.current === alignmentIdentity) return;
-
-    const rail = mobileNearbyFareRailRef.current;
-    const selectedCell = mobileSelectedNearbyFareRef.current;
-    if (!rail || !selectedCell) return;
-
-    const railRect = rail.getBoundingClientRect();
-    const selectedRect = selectedCell.getBoundingClientRect();
-    const selectedLeftWithinRail =
-      selectedRect.left - railRect.left + rail.scrollLeft;
-    const target = getCenteredRailScrollLeft({
-      selectedLeftWithinRail,
-      selectedWidth: selectedCell.offsetWidth,
-      railWidth: rail.clientWidth,
-      scrollWidth: rail.scrollWidth,
-    });
-
-    rail.scrollTo({ left: target, behavior: "auto" });
-    alignedMobileNearbyFareSearchRef.current = alignmentIdentity;
-  }, [body, nearbyFares]);
-
   const resultsUiPreparing = isFlightResultsPreparing({
     loading,
     error,
@@ -4387,6 +4362,31 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     () => paginateFlightResults(sortedResults, validResultsPage),
     [sortedResults, validResultsPage],
   );
+
+  useLayoutEffect(() => {
+    if (!body?.departureDate || nearbyFares.length === 0) return;
+
+    const alignmentIdentity = `${buildFlightResultsSearchKey(body)}:${body.departureDate}:page=${validResultsPage}`;
+    if (alignedMobileNearbyFareSearchRef.current === alignmentIdentity) return;
+
+    const rail = mobileNearbyFareRailRef.current;
+    const selectedCell = mobileSelectedNearbyFareRef.current;
+    if (!rail || !selectedCell) return;
+
+    const railRect = rail.getBoundingClientRect();
+    const selectedRect = selectedCell.getBoundingClientRect();
+    const selectedLeftWithinRail =
+      selectedRect.left - railRect.left + rail.scrollLeft;
+    const target = getCenteredRailScrollLeft({
+      selectedLeftWithinRail,
+      selectedWidth: selectedCell.offsetWidth,
+      railWidth: rail.clientWidth,
+      scrollWidth: rail.scrollWidth,
+    });
+
+    rail.scrollTo({ left: target, behavior: "auto" });
+    alignedMobileNearbyFareSearchRef.current = alignmentIdentity;
+  }, [body, nearbyFares, validResultsPage]);
 
   const changeResultsPage = useCallback((nextPage: number) => {
     const page = clampFlightResultsPage(nextPage, totalResultPages);
@@ -6669,6 +6669,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
       <FlightEditSearchDrawer
         open={mobileSearchOpen}
+        presentation="bottom-sheet"
         initialValue={{ tripType: tripTypeInput === "multi-city" ? "multi-city" : tripTypeInput === "one-way" ? "one-way" : "round-trip", legs: tripTypeInput === "multi-city" ? multiCityLegs : [{ origin: originCode || originInput.trim(), destination: destinationCode || destinationInput.trim(), departureDate: departureDateInput }], departureDate: departureDateInput, returnDate: returnDateInput || undefined, adults: adultCount, children: childCount, infants: infantCount, cabinClass: cabinClassInput }}
         onClose={() => closeMobileSearchDrawer()}
         onSearch={(value: FlightEditSearchValue) => {

@@ -6,5 +6,6 @@ test("Results delegates mobile Edit Search to the shared drawer", () => {
   assert.match(source, /import \{ FlightEditSearchDrawer/);
   assert.match(source, /<FlightEditSearchDrawer/);
   assert.match(source, /open=\{mobileSearchOpen\}/);
+  assert.match(source, /<FlightEditSearchDrawer[\s\S]*?presentation="bottom-sheet"/);
   assert.match(source, /router\.push\(`\/flights\/results\?/);
 });
