@@ -79,14 +79,25 @@ test("mobile nearby fares scroll horizontally without widening the page", () => 
   assert.doesNotMatch(mobileStrip, /onPointer|onTouch|preventDefault\(\)/);
 });
 
-test("mobile nearby fares align the selected real date once per results page", () => {
+test("mobile nearby fares align once per flight search and preserve rail state across result pagination", () => {
   assert.match(source, /mobileNearbyFareRailRef = useRef<HTMLDivElement>/);
   assert.match(source, /mobileSelectedNearbyFareRef = useRef<HTMLButtonElement>/);
   assert.match(source, /alignedMobileNearbyFareSearchRef = useRef<string \| null>/);
-  assert.match(source, /buildFlightResultsSearchKey\(body\).*body\.departureDate/);
-  assert.match(source, /body\.departureDate}:page=\$\{validResultsPage}/);
+  assert.match(source, /mobileNearbyFareScrollLeftRef = useRef\(0\)/);
+  assert.match(source, /preservedMobileNearbyFareScrollLeftRef = useRef<number \| null>/);
+
+  const alignmentStart = source.indexOf("const alignmentIdentity");
+  const paginationStart = source.indexOf("const changeResultsPage", alignmentStart);
+  const alignment = source.slice(alignmentStart, paginationStart);
+  assert.match(alignment, /buildFlightResultsSearchKey\(body\).*body\.departureDate/);
+  assert.doesNotMatch(alignment, /validResultsPage|page=/);
   assert.match(source, /nearbyFares\.length === 0/);
-  assert.match(source, /if \(!rail \|\| !selectedCell\) return/);
+  assert.match(alignment, /selectedCell\?\.isConnected/);
+  assert.match(alignment, /rail\.clientWidth > 0/);
+  assert.match(alignment, /rail\.scrollWidth > 0/);
+  assert.match(alignment, /selectedCell\.offsetWidth > 0/);
+  assert.match(alignment, /requestAnimationFrame\(alignSelectedFare\)/);
+  assert.match(alignment, /cancelAnimationFrame\(frame\)/);
   assert.match(source, /rail\.getBoundingClientRect\(\)/);
   assert.match(source, /selectedCell\.getBoundingClientRect\(\)/);
   assert.match(source, /selectedRect\.left - railRect\.left \+ rail\.scrollLeft/);
@@ -94,9 +105,25 @@ test("mobile nearby fares align the selected real date once per results page", (
   assert.match(source, /ref=\{mobileNearbyFareRailRef\}/);
   assert.match(source, /ref=\{selected \? mobileSelectedNearbyFareRef : undefined\}/);
   assert.match(source, /rail\.scrollTo\(\{ left: target, behavior: "auto" \}\)/);
-  assert.match(source, /alignedMobileNearbyFareSearchRef\.current = alignmentIdentity/);
-  assert.match(source, /\[body, nearbyFares, validResultsPage\]/);
+  assert.ok(
+    alignment.indexOf("rail.scrollTo({ left: target, behavior: \"auto\" })") <
+      alignment.indexOf("alignedMobileNearbyFareSearchRef.current = alignmentIdentity"),
+  );
+  assert.match(alignment, /\[body, nearbyFares\]/);
   assert.doesNotMatch(source, /scrollIntoView\(/);
+});
+
+test("results pagination snapshots and conditionally restores the exact mobile rail position", () => {
+  assert.match(source, /onScroll=\{\(event\) => \{ mobileNearbyFareScrollLeftRef\.current = event\.currentTarget\.scrollLeft; \}\}/);
+
+  const pageChangeStart = source.indexOf("const changeResultsPage");
+  const pageChangeEnd = source.indexOf("useEffect", pageChangeStart);
+  const pagination = source.slice(pageChangeStart, pageChangeEnd);
+  assert.match(pagination, /mobileNearbyFareRailRef\.current\?\.scrollLeft/);
+  assert.match(pagination, /preservedMobileNearbyFareScrollLeftRef\.current =/);
+  assert.match(pagination, /Math\.abs\(rail\.scrollLeft - preservedScrollLeft\) > 1/);
+  assert.match(pagination, /rail\.scrollTo\(\{ left: preservedScrollLeft, behavior: "auto" \}\)/);
+  assert.doesNotMatch(pagination, /getCenteredRailScrollLeft|mobileSelectedNearbyFareRef/);
 });
 
 test("results pagination preserves the searched departure date and its blue selected state", () => {
@@ -111,6 +138,15 @@ test("results pagination preserves the searched departure date and its blue sele
   const pageChange = source.slice(pageChangeStart, pageChangeEnd);
   assert.match(pageChange, /nextParams\.set\("page", String\(page\)\)/);
   assert.doesNotMatch(pageChange, /departureDate|nearbyFareCacheRef|setNearbyFares/);
+});
+
+test("desktop nearby-fare window resets for departure-date changes, not pagination", () => {
+  const resetMarker = source.indexOf("setNearbyFareVisibleStart(0)");
+  const resetEffectStart = source.lastIndexOf("useEffect", resetMarker);
+  const resetEffectEnd = source.indexOf("useEffect", resetMarker + 1);
+  const resetEffect = source.slice(resetEffectStart, resetEffectEnd);
+  assert.match(resetEffect, /body\?\.departureDate/);
+  assert.doesNotMatch(resetEffect, /validResultsPage/);
 });
 
 test("nearby fares remain excluded from multi-city searches", () => {
