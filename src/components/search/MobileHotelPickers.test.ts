@@ -12,15 +12,17 @@ const standalone = read("./HotelSearchBar.tsx");
 const recents = read("../../lib/recent-searches.ts");
 const english = read("../../lib/i18n/en.ts");
 
-test("hotel destination uses draft selection, real recents, and Done-only footer", () => {
+test("hotel destination preserves its query and applies a suggestion immediately", () => {
   assert.match(
     destination,
     /deriveRecentHotelDestinations\(readRecentSearches\(\), 3\)/,
   );
-  assert.match(destination, /setDraftValue\(option\.searchValue\)/);
-  assert.match(destination, /onChange\(draftValue\.trim\(\)\)/);
+  assert.match(destination, /setQuery\(value\); setDraftValue\(value\)/);
+  assert.match(destination, /onChange\(option\.searchValue\); requestClose\(\)/);
   assert.match(destination, /showCancelAction=\{false\}/);
   assert.match(destination, /Building2/);
+  assert.match(destination, /className="h-4 w-4" strokeWidth=\{1\.8\}/);
+  assert.doesNotMatch(destination, /footer=/);
   assert.doesNotMatch(destination, /hotelDestinationKindLabels/);
   assert.doesNotMatch(destination, />\s*\{t\("clear"\)\}/);
 });
