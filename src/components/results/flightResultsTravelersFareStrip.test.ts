@@ -79,12 +79,12 @@ test("mobile nearby fares scroll horizontally without widening the page", () => 
   assert.doesNotMatch(mobileStrip, /onPointer|onTouch|preventDefault\(\)/);
 });
 
-test("mobile nearby fares align once per flight search and preserve rail state across result pagination", () => {
+test("mobile nearby fares align once per flight search and preserve selected geometry across result pagination", () => {
   assert.match(source, /mobileNearbyFareRailRef = useRef<HTMLDivElement>/);
   assert.match(source, /mobileSelectedNearbyFareRef = useRef<HTMLButtonElement>/);
   assert.match(source, /alignedMobileNearbyFareSearchRef = useRef<string \| null>/);
   assert.match(source, /mobileNearbyFareScrollLeftRef = useRef\(0\)/);
-  assert.match(source, /preservedMobileNearbyFareScrollLeftRef = useRef<number \| null>/);
+  assert.match(source, /nearbyFarePaginationSnapshotRef/);
 
   const alignmentStart = source.indexOf("const alignmentIdentity");
   const paginationStart = source.indexOf("const changeResultsPage", alignmentStart);
@@ -113,17 +113,40 @@ test("mobile nearby fares align once per flight search and preserve rail state a
   assert.doesNotMatch(source, /scrollIntoView\(/);
 });
 
-test("results pagination snapshots and conditionally restores the exact mobile rail position", () => {
+test("results pagination snapshots and restores the selected date's visible offset", () => {
   assert.match(source, /onScroll=\{\(event\) => \{ mobileNearbyFareScrollLeftRef\.current = event\.currentTarget\.scrollLeft; \}\}/);
 
   const pageChangeStart = source.indexOf("const changeResultsPage");
   const pageChangeEnd = source.indexOf("useEffect", pageChangeStart);
   const pagination = source.slice(pageChangeStart, pageChangeEnd);
-  assert.match(pagination, /mobileNearbyFareRailRef\.current\?\.scrollLeft/);
-  assert.match(pagination, /preservedMobileNearbyFareScrollLeftRef\.current =/);
-  assert.match(pagination, /Math\.abs\(rail\.scrollLeft - preservedScrollLeft\) > 1/);
-  assert.match(pagination, /rail\.scrollTo\(\{ left: preservedScrollLeft, behavior: "auto" \}\)/);
-  assert.doesNotMatch(pagination, /getCenteredRailScrollLeft|mobileSelectedNearbyFareRef/);
+  assert.match(pagination, /mobileSelectedNearbyFareRef\.current/);
+  assert.match(pagination, /departureDate: body\?\.departureDate/);
+  assert.match(pagination, /selectedRect\.left - railRect\.left/);
+  assert.match(pagination, /selectedWidth: selectedRect\?\.width/);
+  assert.match(pagination, /selectedWasVisible/);
+  assert.match(pagination, /isHorizontallyVisibleWithinContainer/);
+  assert.match(pagination, /getNearbyFareAnchorCorrection/);
+  assert.match(pagination, /rail\.scrollLeft \+ correction/);
+  assert.match(pagination, /nearbyFareAnchorTolerancePx/);
+  assert.match(pagination, /geometryPasses < 3/);
+  assert.match(pagination, /snapshot\.scrollLeft/);
+  assert.doesNotMatch(pagination, /getCenteredRailScrollLeft/);
+});
+
+test("mobile compact header freezes geometry and sentinel state while Edit Search owns interaction", () => {
+  const headerStart = source.indexOf("function renderMobileCompactResultsHeader");
+  const headerEnd = source.indexOf("function renderMobile", headerStart + 20);
+  const header = source.slice(headerStart, headerEnd > headerStart ? headerEnd : headerStart + 8000);
+  assert.match(header, /transition-opacity/);
+  assert.doesNotMatch(header, /transition-all|-translate-y-2|translate-y-0/);
+  assert.match(header, /mobileCompactHeaderVisible \? "opacity-100" : "opacity-0"/);
+  assert.match(header, /mobileCompactHeaderVisible && !mobileSearchOpen[\s\S]*pointer-events-auto[\s\S]*pointer-events-none/);
+  assert.match(header, /aria-hidden=\{!mobileCompactHeaderVisible \|\| mobileSearchOpen\}/);
+
+  assert.match(source, /if \(mobileSearchOpenRef\.current\) return/);
+  assert.match(source, /mobileSearchOpenRef\.current = true/);
+  assert.match(source, /mobileSearchOpenRef\.current = false/);
+  assert.match(source, /requestAnimationFrame\(\(\) => \{[\s\S]*mobileCompactHeaderUpdateRef\.current\?\.\(\)/);
 });
 
 test("results pagination preserves the searched departure date and its blue selected state", () => {
@@ -137,7 +160,7 @@ test("results pagination preserves the searched departure date and its blue sele
   const pageChangeEnd = source.indexOf("useEffect", pageChangeStart);
   const pageChange = source.slice(pageChangeStart, pageChangeEnd);
   assert.match(pageChange, /nextParams\.set\("page", String\(page\)\)/);
-  assert.doesNotMatch(pageChange, /departureDate|nearbyFareCacheRef|setNearbyFares/);
+  assert.doesNotMatch(pageChange, /setDepartureDate|nearbyFareCacheRef|setNearbyFares/);
 });
 
 test("desktop nearby-fare window resets for departure-date changes, not pagination", () => {
