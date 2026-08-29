@@ -6,7 +6,7 @@ import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 export const mobileResultsEditGroupClass =
-  "overflow-hidden rounded-[14px] border border-slate-200 bg-white divide-y divide-slate-200";
+  "overflow-hidden rounded-[14px] border border-[#D8E1EC] bg-white divide-y divide-[#E2E8F0] [&>[data-hotel-mobile-edit-row]+[data-hotel-mobile-edit-row]]:border-t [&>[data-hotel-mobile-edit-row]+[data-hotel-mobile-edit-row]]:border-[#E2E8F0]";
 
 type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> & {
   label: string;

@@ -1089,10 +1089,15 @@ export function HotelSearchBar({
             >
             <label
               ref={destinationWrapperRef}
+              data-hotel-mobile-edit-row={
+                mobileResultsSheet ? "destination" : undefined
+              }
               className={cn(
                 fieldClassName,
                 "lg:rounded-s-xl",
                 shouldShowDestinationSuggestions && "z-[1000]",
+                mobileResultsSheet &&
+                  "min-h-[60px] rounded-none px-4 py-3 hover:bg-slate-50/70 focus-within:bg-blue-50/40",
               )}
             >
               <span className={fieldLabelClassName}>
@@ -1113,17 +1118,33 @@ export function HotelSearchBar({
                   aria-haspopup="dialog"
                   aria-expanded={destinationMobilePickerOpen}
                   aria-label={t("chooseHotelDestination")}
+                  data-hotel-mobile-edit-chevron={
+                    mobileResultsSheet ? "false" : undefined
+                  }
                   className={cn(
                     valueControlClassName,
                     "flex items-center gap-2 text-start sm:hidden",
                     !mobileLandingPresentation && "justify-between pe-2",
+                    mobileResultsSheet &&
+                      "mt-1 h-auto min-h-5 justify-start gap-0 pe-0 text-[15px] font-semibold leading-5",
                   )}
                 >
                   {mobileLandingPresentation || mobileResultsSheet ? (
-                    <span className="flex min-w-0 items-center gap-2">
+                    <span
+                      data-hotel-destination-value={
+                        mobileResultsSheet ? "" : undefined
+                      }
+                      className={cn(
+                        "flex min-w-0 items-center gap-2",
+                        mobileResultsSheet && "gap-3",
+                      )}
+                    >
                       <MapPin
                         aria-hidden="true"
-                        className="h-4 w-4 shrink-0 text-slate-500"
+                        className={cn(
+                          "h-4 w-4 shrink-0 text-slate-500",
+                          mobileResultsSheet && "h-5 w-5",
+                        )}
                       />
                       <span
                         className={cn(
@@ -1265,9 +1286,14 @@ export function HotelSearchBar({
 
             <div
               ref={datesWrapperRef}
+              data-hotel-mobile-edit-row={
+                mobileResultsSheet ? "dates" : undefined
+              }
               className={cn(
                 fieldClassName,
                 datesOpen && "z-[1000]",
+                mobileResultsSheet &&
+                  "min-h-[60px] rounded-none px-4 py-3 hover:bg-slate-50/70 focus-within:bg-blue-50/40",
               )}
             >
               <span className={fieldLabelClassName}>
@@ -1280,14 +1306,22 @@ export function HotelSearchBar({
                 aria-expanded={datesOpen}
                 aria-haspopup="dialog"
                 aria-label={t("chooseTravelDates")}
+                data-hotel-mobile-edit-chevron={
+                  mobileResultsSheet ? "true" : undefined
+                }
                 className={cn(
                   valueControlClassName,
                   "flex items-center gap-1.5 text-start",
+                  mobileResultsSheet &&
+                    "mt-1 h-auto min-h-5 gap-3 text-[15px] font-semibold leading-5",
                 )}
               >
                 <Calendar
-                  size={16}
-                  className="shrink-0 text-slate-500"
+                  aria-hidden="true"
+                  className={cn(
+                    "h-4 w-4 shrink-0 text-slate-500",
+                    mobileResultsSheet && "h-5 w-5",
+                  )}
                 />
                 <span className="truncate">{dateSummary}</span>
                 {mobileResultsSheet ? <ChevronRight aria-hidden="true" className="ms-auto h-4 w-4 shrink-0 text-slate-400" /> : null}
@@ -1433,7 +1467,15 @@ export function HotelSearchBar({
 
             <div
               ref={guestsRoomsWrapperRef}
-              className={cn(fieldClassName, guestsRoomsOpen && "z-[1000]")}
+              data-hotel-mobile-edit-row={
+                mobileResultsSheet ? "guests" : undefined
+              }
+              className={cn(
+                fieldClassName,
+                guestsRoomsOpen && "z-[1000]",
+                mobileResultsSheet &&
+                  "min-h-[60px] rounded-none px-4 py-3 hover:bg-slate-50/70 focus-within:bg-blue-50/40",
+              )}
             >
               <span className={fieldLabelClassName}>
                 {t("hotelSearchGuestsLabel")}
@@ -1445,9 +1487,14 @@ export function HotelSearchBar({
                 aria-expanded={guestsRoomsOpen}
                 aria-haspopup="dialog"
                 aria-label={t("chooseGuestsAndRooms")}
+                data-hotel-mobile-edit-chevron={
+                  mobileResultsSheet ? "true" : undefined
+                }
                 className={cn(
                   valueControlClassName,
                   "flex items-center justify-between gap-1.5 text-start",
+                  mobileResultsSheet &&
+                    "mt-1 h-auto min-h-5 gap-3 text-[15px] font-semibold leading-5",
                 )}
               >
                 <span className="flex min-w-0 items-center gap-2">
@@ -1455,6 +1502,7 @@ export function HotelSearchBar({
                     aria-hidden="true"
                     className={cn(
                       "h-4 w-4 shrink-0 text-slate-500",
+                      mobileResultsSheet && "h-5 w-5",
                       !mobileLandingPresentation && !mobileResultsSheet && "max-sm:hidden",
                     )}
                   />

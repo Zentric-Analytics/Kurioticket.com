@@ -10,6 +10,10 @@ const sheet = readFileSync(
   new URL("./MobileResultsEditSheet.tsx", import.meta.url),
   "utf8",
 );
+const groupedRow = readFileSync(
+  new URL("./MobileResultsEditRow.tsx", import.meta.url),
+  "utf8",
+);
 
 test("results Hotel editor separates its grouped fields from the search action", () => {
   assert.match(
@@ -24,6 +28,16 @@ test("results Hotel editor separates its grouped fields from the search action",
     searchBar,
     /data-hotel-mobile-edit-group=\{[\s\S]*?mobileResultsSheet[\s\S]*?mobileResultsEditGroupClass/,
   );
+  assert.equal(
+    searchBar.match(/data-hotel-mobile-edit-row=/g)?.length,
+    3,
+    "the Hotel grouped card exposes exactly three rows",
+  );
+  assert.match(groupedRow, /divide-y divide-\[#E2E8F0\]/);
+  assert.match(
+    groupedRow,
+    /\[&>\[data-hotel-mobile-edit-row\]\+\[data-hotel-mobile-edit-row\]\]:border-t/,
+  );
   assert.match(searchBar, /data-hotel-mobile-edit-search-action=/);
   const groupStart = searchBar.indexOf("data-hotel-mobile-edit-group");
   const destination = searchBar.indexOf("ref={destinationWrapperRef}", groupStart);
@@ -32,6 +46,16 @@ test("results Hotel editor separates its grouped fields from the search action",
   const groupEnd = searchBar.indexOf("data-hotel-mobile-edit-search-action", guests);
   assert.ok(groupStart < destination && destination < dates && dates < guests);
   assert.ok(guests < groupEnd, "all three field rows precede the group boundary");
+  const destinationRow = searchBar.slice(destination, dates);
+  const datesRow = searchBar.slice(dates, guests);
+  const guestsRow = searchBar.slice(guests, groupEnd);
+  assert.match(destinationRow, /data-hotel-mobile-edit-chevron=\{[\s\S]*?"false"/);
+  assert.match(datesRow, /data-hotel-mobile-edit-chevron=\{[\s\S]*?"true"/);
+  assert.match(guestsRow, /data-hotel-mobile-edit-chevron=\{[\s\S]*?"true"/);
+  assert.match(
+    destinationRow,
+    /data-hotel-destination-value=[\s\S]*?className=\{cn\([\s\S]*?"flex min-w-0 items-center gap-2"[\s\S]*?<MapPin/,
+  );
   assert.doesNotMatch(searchBar.slice(groupStart, groupEnd), /type="submit"/);
   assert.match(searchBar.slice(groupEnd), /type="submit"/);
   assert.doesNotMatch(searchBar, /divide-y-0/);
