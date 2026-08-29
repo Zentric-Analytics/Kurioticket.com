@@ -6737,9 +6737,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     <main className="flex-1 bg-[#F3F6FA] pb-8">
       {renderMobileCompactResultsHeader()}
       <section
+        inert={mobileSearchOpen ? true : undefined}
+        aria-hidden={mobileSearchOpen ? true : undefined}
         className={cn(
           "relative z-40 bg-white pb-0 pt-0 sm:hidden",
-          mobileSearchOpen && "hidden",
+          mobileSearchOpen && "pointer-events-none",
         )}
         aria-label="Flight search controls"
       >
@@ -6757,14 +6759,17 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         />
       </section>
 
-      {!mobileSearchOpen ? (
-        <section
-          className="relative z-30 px-4 pb-0 pt-12 sm:hidden"
-          aria-label={t("filters")}
-        >
-          {renderMobileSortResultsRow()}
-        </section>
-      ) : null}
+      <section
+        inert={mobileSearchOpen ? true : undefined}
+        aria-hidden={mobileSearchOpen ? true : undefined}
+        className={cn(
+          "relative z-30 px-4 pb-0 pt-12 sm:hidden",
+          mobileSearchOpen && "pointer-events-none",
+        )}
+        aria-label={t("filters")}
+      >
+        {renderMobileSortResultsRow()}
+      </section>
 
       <FlightEditSearchDrawer
         open={mobileSearchOpen}
@@ -7281,22 +7286,24 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       </p>
                     ) : null}
                   </div>
-                  {visibleResults.map((flight, index) => {
-                    const detailsQuery = params.toString();
-                    const detailsHref =
-                      `/flights/details/${encodeURIComponent(flight.id)}` +
-                      (detailsQuery ? `?${detailsQuery}` : "");
+                  <div data-flight-results-card-list className="space-y-3 sm:space-y-4">
+                    {visibleResults.map((flight, index) => {
+                      const detailsQuery = params.toString();
+                      const detailsHref =
+                        `/flights/details/${encodeURIComponent(flight.id)}` +
+                        (detailsQuery ? `?${detailsQuery}` : "");
 
-                    return (
-                      <FlightCard
-                        key={flight.id}
-                        flight={flight}
-                        isAccented={index % 2 === 0}
-                        resultBadge={resultBadgeByFlightId.get(flight.id)}
-                        detailsHref={detailsHref}
-                      />
-                    );
-                  })}
+                      return (
+                        <FlightCard
+                          key={flight.id}
+                          flight={flight}
+                          isAccented={index % 2 === 0}
+                          resultBadge={resultBadgeByFlightId.get(flight.id)}
+                          detailsHref={detailsHref}
+                        />
+                      );
+                    })}
+                  </div>
                   <FlightResultsPagination
                     currentPage={validResultsPage}
                     totalPages={totalResultPages}

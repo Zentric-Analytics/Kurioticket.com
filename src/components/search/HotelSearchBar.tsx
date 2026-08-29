@@ -899,7 +899,14 @@ export function HotelSearchBar({
       )}
     >
       {compact ? (
-        <div className={cn("sm:hidden", mobileSearchOpen && "hidden")}>
+        <div
+          inert={mobileSearchOpen ? true : undefined}
+          aria-hidden={mobileSearchOpen ? true : undefined}
+          className={cn(
+            "sm:hidden",
+            mobileSearchOpen && "pointer-events-none",
+          )}
+        >
           {onOpenFilters && mobileLayout !== "controls" ? (
             <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch gap-2.5">
               <button

@@ -1464,9 +1464,11 @@ export function CarsResultsClient({
     <>
     <main className="flex-1 bg-[#f6f8fb] pb-8">
       <section
+        inert={mobileSearchOpen ? true : undefined}
+        aria-hidden={mobileSearchOpen ? true : undefined}
         className={cn(
           "relative z-40 bg-white pb-0 pt-0 sm:hidden",
-          mobileSearchOpen && "hidden",
+          mobileSearchOpen && "pointer-events-none",
         )}
         aria-label={t("carsResults.carRentalSearch")}
       >
