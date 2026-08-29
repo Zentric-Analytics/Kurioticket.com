@@ -5,6 +5,21 @@ import { FLIGHT_TRIP_TYPE_LABELS } from "../flow/flightTripTypeLabels";
 
 type PriceBasisParams = Record<string, RouteValue>;
 
+export function flightProviderFarePresentation(fare?: DisplayPrice | null) {
+  if (
+    fare?.converted !== true
+    || !Number.isFinite(fare.providerAmount)
+    || typeof fare.providerCurrency !== "string"
+    || !/^[A-Z]{3}$/.test(fare.providerCurrency)
+  ) return null;
+
+  return {
+    formatted: formatCurrency(fare.providerAmount, fare.providerCurrency),
+    currency: fare.providerCurrency,
+    accessibilityLabel: currencyAccessibilityLabel(fare.providerAmount, fare.providerCurrency),
+  };
+}
+
 const nonNegativeInteger = (value: RouteValue) => {
   const raw = firstFlightParam(value);
   if (raw === "" || raw === undefined) return undefined;
@@ -32,22 +47,16 @@ export function flightPriceBasis(params: PriceBasisParams, fare?: DisplayPrice |
     ? requestedTripType
     : "round-trip";
   const tripTypeLabel = FLIGHT_TRIP_TYPE_LABELS[tripType];
-  const validProviderFare = fare?.converted === true
-    && Number.isFinite(fare.providerAmount)
-    && typeof fare.providerCurrency === "string"
-    && /^[A-Z]{3}$/.test(fare.providerCurrency);
-  const providerFare = validProviderFare
-    ? formatCurrency(fare!.providerAmount, fare!.providerCurrency)
-    : null;
+  const providerFare = flightProviderFarePresentation(fare);
 
   return {
     travelerCount,
     travelerLabel,
     tripTypeLabel,
     summary: `${travelerLabel} · ${tripTypeLabel}`,
-    providerFareText: providerFare ? `Provider fare ${providerFare}` : null,
-    providerFareAccessibilityText: validProviderFare
-      ? `Provider fare ${currencyAccessibilityLabel(fare!.providerAmount, fare!.providerCurrency)}`
+    providerFareText: providerFare ? `Provider fare ${providerFare.formatted}` : null,
+    providerFareAccessibilityText: providerFare
+      ? `Provider fare ${providerFare.accessibilityLabel}`
       : null,
   };
 }

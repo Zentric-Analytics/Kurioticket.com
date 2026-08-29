@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { DisplayPrice } from "../currency/displayCurrency";
-import { flightPriceBasis } from "./flightPriceBasis";
+import { flightPriceBasis, flightProviderFarePresentation } from "./flightPriceBasis";
 
 const basis = (params: Record<string, string>, fare?: DisplayPrice) => flightPriceBasis(params, fare);
 
@@ -31,6 +31,29 @@ test("discloses a valid converted provider fare only", () => {
   assert.match(basis({ travelers: "4" }, converted).providerFareAccessibilityText!, /Provider fare.*US dollar/i);
   assert.equal(basis({ travelers: "4" }, { ...converted, currency: "USD", formatted: "$420", converted: false }).providerFareText, null);
   assert.equal(basis({ travelers: "4" }, { ...converted, providerAmount: Number.NaN }).providerFareText, null);
+});
+
+test("presents authoritative converted provider fares with explicit ISO identity", () => {
+  const converted: DisplayPrice = { amount: 670000, currency: "NGN", formatted: "₦670,000", accessibilityLabel: "670,000 Nigerian naira", providerAmount: 420, providerCurrency: "USD", converted: true };
+  for (const [currency, formatted, accessibilityCurrency] of [
+    ["USD", "$420", /US dollars?/i],
+    ["AUD", "$420", /Australian dollars?/i],
+    ["CAD", "$420", /Canadian dollars?/i],
+    ["GBP", "£420", /British pounds?/i],
+  ] as const) {
+    const presentation = flightProviderFarePresentation({ ...converted, providerCurrency: currency });
+    assert.equal(presentation?.formatted, formatted);
+    assert.equal(presentation?.currency, currency);
+    assert.match(presentation?.accessibilityLabel ?? "", accessibilityCurrency);
+  }
+});
+
+test("rejects unconverted and malformed provider fares", () => {
+  const converted: DisplayPrice = { amount: 670000, currency: "NGN", formatted: "₦670,000", accessibilityLabel: "670,000 Nigerian naira", providerAmount: 420, providerCurrency: "USD", converted: true };
+  assert.equal(flightProviderFarePresentation({ ...converted, converted: false }), null);
+  assert.equal(flightProviderFarePresentation({ ...converted, providerAmount: Number.POSITIVE_INFINITY }), null);
+  assert.equal(flightProviderFarePresentation({ ...converted, providerCurrency: "usd" }), null);
+  assert.equal(flightProviderFarePresentation({ ...converted, providerCurrency: "US" }), null);
 });
 
 test("preserves the provider offer total without per-traveler arithmetic", () => {

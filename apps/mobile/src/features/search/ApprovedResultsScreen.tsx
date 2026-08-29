@@ -88,6 +88,7 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { buildFlightDetailParams } from "./flightDetailNavigation";
 import { withinFlightLoadingDeadline } from "./flightLoadingDeadline";
 import { logFlightSearchCheckpoint, startFlightSearchEventLoopMonitor } from "./flightSearchDiagnostics";
+import { flightProviderFarePresentation } from "./flightPriceBasis";
 import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recentSearch";
 import {
   buildPriceByDate,
@@ -918,10 +919,12 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
   const fareRulesSummary = summarizeFareRules(result.refundInfo) ?? "Review before booking";
   const baggageAccessibility = result.baggageInfo?.trim() || baggageSummary;
   const fareRulesAccessibility = result.refundInfo?.trim() || fareRulesSummary;
+  const providerFare = flightProviderFarePresentation(fare);
+  const fareAccessibility = `${fare?.accessibilityLabel ?? "price unavailable"}${fare?.converted === true ? ", estimated price" : ""}${providerFare ? `, provider price ${providerFare.accessibilityLabel}` : ""}`;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${result.airlineName}${flightNumber ? `, ${flightNumber}` : ""}${operatingCarrierPresentation ? `, ${operatingCarrierPresentation.accessibilityText}` : ""} flight, ${result.originAirport} to ${result.destinationAirport}, ${fare?.accessibilityLabel ?? "price unavailable"}`}
+      accessibilityLabel={`${result.airlineName}${flightNumber ? `, ${flightNumber}` : ""}${operatingCarrierPresentation ? `, ${operatingCarrierPresentation.accessibilityText}` : ""} flight, ${result.originAirport} to ${result.destinationAirport}, ${fareAccessibility}`}
       accessibilityHint="Opens flight details"
       onPress={() =>
         router.push({
@@ -1005,9 +1008,19 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
         </View>
       </View>
       <View style={s0.fareRow}>
-        <Text accessible={false} style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-          {fare?.formatted ?? "—"}
-        </Text>
+        <View style={s0.fareCopy}>
+          <Text accessible={false} style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+            {fare?.formatted ?? "—"}
+          </Text>
+          {fare?.converted === true ? (
+            <Text accessible={false} style={[s0.estimatedPrice, { color: theme.textSecondary }]}>ESTIMATED PRICE</Text>
+          ) : null}
+          {providerFare ? (
+            <Text accessible={false} style={[s0.providerPrice, { color: theme.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+              Provider price: {providerFare.formatted} {providerFare.currency}
+            </Text>
+          ) : null}
+        </View>
       </View>
       <View style={[s0.metadataDivider, { backgroundColor: theme.border }]} />
       <View
@@ -1356,7 +1369,11 @@ function FlightLoadingSkeleton({ roundTrip = false }: { roundTrip?: boolean }) {
         ) : null}
       </View>
       <View style={s0.skeletonFareRow}>
-        <SkeletonLine flightResults style={s0.skeletonPriceLine} />
+        <View style={s0.skeletonFareCopy}>
+          <SkeletonLine flightResults style={s0.skeletonPriceLine} />
+          <SkeletonLine flightResults style={s0.skeletonEstimatedPriceLine} />
+          <SkeletonLine flightResults style={s0.skeletonProviderPriceLine} />
+        </View>
       </View>
       <View style={[s0.skeletonMetadataDivider, { backgroundColor: theme.border }]} />
       <View style={s0.skeletonMetadataRow}>
@@ -1695,7 +1712,10 @@ const s0 = StyleSheet.create({
     backgroundColor: ui.muted,
   },
   bigPrice: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy, textAlign: "right" },
-  fareRow: { width: "100%", paddingTop: 10, flexDirection: "row", justifyContent: "flex-end", alignItems: "center" },
+  fareRow: { width: "100%", paddingTop: 10, flexDirection: "row", justifyContent: "flex-end" },
+  fareCopy: { maxWidth: "100%", minWidth: 0, alignItems: "flex-end" },
+  estimatedPrice: { fontSize: 9, lineHeight: 11, fontWeight: "700", letterSpacing: 0.7, textAlign: "right" },
+  providerPrice: { marginTop: 1, fontSize: 10, lineHeight: 13, fontWeight: "500", textAlign: "right" },
   metadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 6, marginBottom: 4 },
   metadataRow: { width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start" },
   metadataText: { flexShrink: 1, minWidth: 0, fontSize: 11, lineHeight: 14, fontWeight: "500" },
@@ -1797,7 +1817,10 @@ const s0 = StyleSheet.create({
   skeletonRouteLine: { width: "100%", height: 2 },
   skeletonStop: { width: "52%", height: 6 },
   skeletonPriceLine: { width: 100, height: 16 },
-  skeletonFareRow: { width: "100%", paddingTop: 10, flexDirection: "row", justifyContent: "flex-end", alignItems: "center" },
+  skeletonEstimatedPriceLine: { width: 54, height: 7, marginTop: 3 },
+  skeletonProviderPriceLine: { width: 82, height: 8, marginTop: 2 },
+  skeletonFareRow: { width: "100%", paddingTop: 10, flexDirection: "row", justifyContent: "flex-end" },
+  skeletonFareCopy: { alignItems: "flex-end" },
   skeletonMetadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 6, marginBottom: 4 },
   skeletonMetadataRow: { width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start" },
   skeletonMetadataLine: { width: "68%", height: 7 },

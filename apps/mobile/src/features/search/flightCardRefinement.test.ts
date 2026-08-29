@@ -36,11 +36,24 @@ test("flight card preserves display pricing and provider data during details nav
 });
 
 test("flight card gives the compact visual fare one semantic spoken label", () => {
-  assert.match(card, /accessibilityLabel=\{`\$\{result\.airlineName\}[\s\S]*fare\?\.accessibilityLabel/);
+  assert.match(card, /const fareAccessibility = `\$\{fare\?\.accessibilityLabel/);
+  assert.match(card, /provider price \$\{providerFare\.accessibilityLabel\}/);
   assert.match(card, /<Text accessible=\{false\} style=\{\[s0\.bigPrice/);
   assert.equal(card.match(/fare\?\.accessibilityLabel/g)?.length, 1);
   assert.doesNotMatch(card, /Taxes (?:and fees )?included/);
   assert.doesNotMatch(card, /Total for \d|Per traveler|Round trip|One way/);
+});
+
+test("converted fares add truthful provider context without duplicating same-currency fares", () => {
+  const fareBlock = card.slice(card.indexOf('<View style={s0.fareRow}>'), card.indexOf('<View style={[s0.metadataDivider'));
+  assert.match(card, /flightProviderFarePresentation\(fare\)/);
+  assert.match(fareBlock, /\{fare\?\.converted === true \? \([\s\S]*ESTIMATED PRICE[\s\S]*\) : null\}/);
+  assert.match(fareBlock, /\{providerFare \? \([\s\S]*Provider price: \{providerFare\.formatted\} \{providerFare\.currency\}[\s\S]*\) : null\}/);
+  assert.match(fareBlock, /estimatedPrice, \{ color: theme\.textSecondary \}/);
+  assert.match(fareBlock, /providerPrice, \{ color: theme\.textSecondary \}/);
+  assert.equal(card.match(/\{fare\?\.formatted \?\? "—"\}/g)?.length, 1);
+  assert.doesNotMatch(fareBlock, /US\$|A\$|CA\$/);
+  assert.ok(card.indexOf('<View style={s0.fareRow}>') < card.indexOf('<View style={[s0.metadataDivider'));
 });
 
 test("the whole card replaces the details CTA", () => {
@@ -146,7 +159,7 @@ test("flight card keeps long prices single-line in the full-width fare row", () 
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center" \}/);
   assert.doesNotMatch(source, /metadataItem:/);
-  assert.match(source, /fareRow: \{ width: "100%", paddingTop: 10, flexDirection: "row", justifyContent: "flex-end", alignItems: "center" \}/);
+  assert.match(source, /fareRow: \{ width: "100%", paddingTop: 10, flexDirection: "row", justifyContent: "flex-end" \}/);
   assert.doesNotMatch(source, /actionColumn:/);
   assert.doesNotMatch(source, /priceBox:/);
 
