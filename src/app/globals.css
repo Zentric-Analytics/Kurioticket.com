@@ -52,16 +52,6 @@ html[data-mobile-results-overlay-open] body {
   background-color: var(--mobile-results-overlay-canvas);
 }
 
-.mobile-results-overlay-root::before {
-  content: "";
-  position: fixed;
-  pointer-events: none;
-  inset-inline: 0;
-  top: calc(-1 * env(safe-area-inset-top));
-  height: calc(env(safe-area-inset-top) + 1px);
-  background: rgb(2 6 23 / 0.35);
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
