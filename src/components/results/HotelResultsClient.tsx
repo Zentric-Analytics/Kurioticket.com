@@ -33,6 +33,7 @@ import type { PublicHotelResult } from "@/lib/types";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { Button } from "@/components/ui/Button";
 import { HotelCardSkeleton } from "@/components/ui/Skeleton";
+import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion, scrollToResultsAndWait } from "@/lib/results/paginationTransition";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
 import {
@@ -382,6 +383,10 @@ export function HotelResultsExperience({
     useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [currentResultsPage, setCurrentResultsPage] = useState(1);
+  const [paginationPendingPage, setPaginationPendingPage] = useState<number | null>(null);
+  const [paginationMinHeight, setPaginationMinHeight] = useState<number | null>(null);
+  const [paginationRevealing, setPaginationRevealing] = useState(false);
+  const paginationListRef = useRef<HTMLDivElement | null>(null);
   const [showDesktopMinimizedSearch, setShowDesktopMinimizedSearch] =
     useState(false);
   const [desktopStickyHotelSearchOpen, setDesktopStickyHotelSearchOpen] =
@@ -1028,9 +1033,12 @@ export function HotelResultsExperience({
     filtered.length === 0;
 
   useEffect(() => {
-    setCurrentResultsPage((page) =>
-      clampHotelResultsPage(page, totalHotelResultPages),
-    );
+    const frame = window.requestAnimationFrame(() => {
+      setCurrentResultsPage((page) =>
+        clampHotelResultsPage(page, totalHotelResultPages),
+      );
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [totalHotelResultPages]);
 
   useEffect(() => {
@@ -1067,18 +1075,22 @@ export function HotelResultsExperience({
     };
   }, [guided]);
 
-  const useReducedMotion = () =>
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  function changeResultsPage(page: number) {
-    setCurrentResultsPage(clampHotelResultsPage(page, totalHotelResultPages));
-    window.requestAnimationFrame(() => {
-      standaloneResultsHeadingRef.current?.scrollIntoView({
-        behavior: useReducedMotion() ? "auto" : "smooth",
-        block: "start",
-      });
-      standaloneResultsHeadingRef.current?.focus({ preventScroll: true });
-    });
+  async function changeResultsPage(page: number) {
+    const target = clampHotelResultsPage(page, totalHotelResultPages);
+    if (paginationPendingPage !== null || target === currentResultsPage) return;
+    setPaginationMinHeight(paginationListRef.current?.getBoundingClientRect().height ?? null);
+    setPaginationPendingPage(target);
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    await scrollToResultsAndWait({ element: standaloneResultsHeadingRef.current });
+    setCurrentResultsPage(target);
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    setPaginationPendingPage(null);
+    setPaginationMinHeight(null);
+    standaloneResultsHeadingRef.current?.focus({ preventScroll: true });
+    if (!prefersReducedResultsMotion()) {
+      setPaginationRevealing(true);
+      window.setTimeout(() => setPaginationRevealing(false), PAGINATION_REVEAL_MS);
+    }
   }
 
   useEffect(() => {
@@ -2382,7 +2394,13 @@ export function HotelResultsExperience({
                   </p>
                 ) : null}
 
-                {filterApplying ? (
+                <div
+                  ref={paginationListRef}
+                  aria-busy={paginationPendingPage !== null}
+                  style={paginationMinHeight ? { minHeight: paginationMinHeight } : undefined}
+                  className={cn("space-y-4", paginationRevealing && "animate-[fadeIn_150ms_ease-out]")}
+                >
+                {filterApplying || paginationPendingPage !== null ? (
                   <div className="space-y-4">
                     <div
                       role="status"
@@ -2391,8 +2409,7 @@ export function HotelResultsExperience({
                     >
                       {t("updatingResults")}
                     </div>
-                    <HotelCardSkeleton />
-                    <HotelCardSkeleton />
+                    {Array.from({ length: paginationPendingPage !== null ? paginatedVisibleHotels.length : 2 }, (_, index) => <HotelCardSkeleton key={index} />)}
                   </div>
                 ) : paginatedVisibleHotels.length ? (
                   paginatedVisibleHotels.map((hotel, index) => (
@@ -2421,17 +2438,18 @@ export function HotelResultsExperience({
                 )}
                 {!guided && totalHotelResultPages > 1 && !filterApplying ? (
                   <nav aria-label="Hotel results pages" className="flex flex-wrap items-center justify-center gap-1.5 pt-4">
-                    <button type="button" aria-label="Previous page" disabled={currentResultsPage === 1} onClick={() => changeResultsPage(currentResultsPage - 1)} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
+                    <button type="button" aria-label="Previous page" disabled={currentResultsPage === 1 || paginationPendingPage !== null} onClick={() => changeResultsPage(currentResultsPage - 1)} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
                     {paginationItems.map((item, index) =>
                       item === "ellipsis" ? (
                         <span key={`ellipsis-${index}`} className="inline-flex min-h-11 min-w-8 items-center justify-center text-slate-500" aria-hidden="true">…</span>
                       ) : (
-                        <button key={item} type="button" aria-current={item === currentResultsPage ? "page" : undefined} onClick={() => changeResultsPage(item)} className={cn("inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border text-sm font-bold", item === currentResultsPage ? "border-[#004BB8] bg-[#004BB8] text-white" : "border-slate-200 bg-white text-slate-800 hover:border-[#004BB8]/40")}>{item}</button>
+                        <button key={item} type="button" disabled={paginationPendingPage !== null} aria-current={item === currentResultsPage ? "page" : undefined} onClick={() => changeResultsPage(item)} className={cn("inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border text-sm font-bold", item === currentResultsPage ? "border-[#004BB8] bg-[#004BB8] text-white" : "border-slate-200 bg-white text-slate-800 hover:border-[#004BB8]/40")}>{item}</button>
                       ),
                     )}
-                    <button type="button" aria-label="Next page" disabled={currentResultsPage === totalHotelResultPages} onClick={() => changeResultsPage(currentResultsPage + 1)} className="inline-flex min-h-11 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 disabled:cursor-not-allowed disabled:opacity-40">Next <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
+                    <button type="button" aria-label="Next page" disabled={currentResultsPage === totalHotelResultPages || paginationPendingPage !== null} onClick={() => changeResultsPage(currentResultsPage + 1)} className="inline-flex min-h-11 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 disabled:cursor-not-allowed disabled:opacity-40">Next <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
                   </nav>
                 ) : null}
+                </div>
               </div>
             </div>
           )}
@@ -2442,7 +2460,7 @@ export function HotelResultsExperience({
         <button
           type="button"
           aria-label="Back to top"
-          onClick={() => window.scrollTo({ top: 0, behavior: useReducedMotion() ? "auto" : "smooth" })}
+          onClick={() => window.scrollTo({ top: 0, behavior: prefersReducedResultsMotion() ? "auto" : "smooth" })}
           className={cn("fixed right-4 z-[800] flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#004BB8] shadow-md transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] sm:bottom-6 sm:right-6", "bottom-[calc(5rem+env(safe-area-inset-bottom))]", showBackToTop ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0")}
         >
           <ArrowUp className="h-[18px] w-[18px]" aria-hidden="true" />

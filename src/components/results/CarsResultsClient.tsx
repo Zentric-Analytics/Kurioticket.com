@@ -39,6 +39,7 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 import { CarResultCard } from "@/components/results/CarResultCard";
 import { CarCardSkeleton } from "@/components/ui/Skeleton";
+import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion, scrollToResultsAndWait } from "@/lib/results/paginationTransition";
 import {
   getCarPaginationItems,
   paginateCarResults,
@@ -1132,7 +1133,7 @@ export function CarsResultsClient({
         id={`${idPrefix}-form`}
         action="/cars/results"
         method="get"
-        className="mx-auto w-full min-w-0 max-w-5xl"
+        className={cn("mx-auto w-full min-w-0 max-w-5xl", placement === "mobile" && "bg-transparent")}
         onSubmit={(event) => {
           if (placement === "mobile") {
             submitMobileSearch(event);
@@ -1152,18 +1153,21 @@ export function CarsResultsClient({
         ) : null}
         <div
           className={cn(
-            "overflow-visible border border-slate-200/90 bg-white transition-[padding,border-color,box-shadow,border-radius] duration-200",
-            isCompactSearch
+            "overflow-visible transition-[padding,border-color,box-shadow,border-radius] duration-200",
+            placement === "mobile"
+              ? "border-0 bg-transparent p-0 shadow-none ring-0"
+              : isCompactSearch
               ? "rounded-xl border-slate-200/85 bg-white/90 p-0 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]"
               : "rounded-[1.15rem] p-1.5 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-slate-950/[0.025]",
           )}
         >
           <div
-            className={
-              returnToDifferentLocation
+            className={cn(
+              placement === "mobile" && "grid grid-cols-1 gap-0 overflow-hidden rounded-[14px] border border-[#D8E1EC] bg-white divide-y divide-[#E2E8F0]",
+              placement !== "mobile" && (returnToDifferentLocation
                 ? differentReturnSearchGridClass
-                : sameReturnSearchGridClass
-            }
+                : sameReturnSearchGridClass),
+            )}
             data-return-location-mode={
               returnToDifferentLocation ? "different" : "same"
             }
@@ -1185,6 +1189,7 @@ export function CarsResultsClient({
                   )
                 }
                 className="lg:rounded-s-xl"
+                groupedMobile
               />
             ) : (
               <SearchInputCell
@@ -1246,6 +1251,7 @@ export function CarsResultsClient({
                       setMobilePicker(null);
                     },
                   }}
+                  groupedMobile
                 />
               ) : (
                 <SearchInputCell
@@ -1347,6 +1353,7 @@ export function CarsResultsClient({
               intlLocale={intlLocale}
               wrapRef={searchSurfaceRefs.dateWrapRef}
               popoverRef={searchSurfaceRefs.datePopoverRef}
+              groupedMobile={placement === "mobile"}
             />
             <SearchTimeCell
               dropoffTime={dropoffTime}
@@ -1376,6 +1383,7 @@ export function CarsResultsClient({
               wrapRef={searchSurfaceRefs.timeWrapRef}
               popoverRef={searchSurfaceRefs.timePopoverRef}
               useMainPageDesktopPresentation={placement !== "mobile"}
+              groupedMobile={placement === "mobile"}
             />
             <DriverAgeCell
               driverAge={driverAge}
@@ -1400,11 +1408,13 @@ export function CarsResultsClient({
               wrapRef={searchSurfaceRefs.driverAgeWrapRef}
               popoverRef={searchSurfaceRefs.driverAgePopoverRef}
               useMainPageDesktopPresentation={placement !== "mobile"}
+              groupedMobile={placement === "mobile"}
             />
             <Button
               type="submit"
               className={cn(
-                "mt-2 h-12 w-full rounded-xl bg-[#075EE8] px-4 text-sm font-bold text-white shadow-[0_8px_18px_rgba(7,94,232,0.2)] transition-[min-height,height,box-shadow,background-color] duration-200 hover:bg-[#064fc2] hover:shadow-[0_10px_20px_rgba(7,94,232,0.24)] sm:mt-3 lg:m-[4px] lg:h-auto lg:w-[calc(100%-8px)] lg:self-stretch lg:rounded-[9px] lg:ring-1 lg:ring-[#075EE8]/12",
+                "h-12 w-full rounded-[10px] bg-[#004BB8] px-4 text-[15px] font-semibold text-white shadow-none transition-colors duration-200 hover:bg-[#021C2B] lg:m-[4px] lg:h-auto lg:w-[calc(100%-8px)] lg:self-stretch lg:rounded-[9px] lg:ring-1 lg:ring-[#075EE8]/12",
+                placement === "mobile" && "hidden",
                 isCompactSearch ? "lg:min-h-[54px]" : "lg:min-h-[58px]",
               )}
             >
@@ -1412,6 +1422,15 @@ export function CarsResultsClient({
             </Button>
           </div>
         </div>
+        {placement === "mobile" ? (
+          <Button
+            type="submit"
+            data-cars-mobile-search-submit
+            className="mt-[13px] h-12 w-full rounded-[10px] bg-[#004BB8] px-4 text-[15px] font-semibold text-white shadow-none transition-colors hover:bg-[#021C2B]"
+          >
+            {t("search")}
+          </Button>
+        ) : null}
       </form>
     );
   };
@@ -1815,6 +1834,10 @@ export function CarsResultsExperience({
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [carsSortOpen, setCarsSortOpen] = useState(false);
   const [resultsTransitioning, setResultsTransitioning] = useState(false);
+  const [paginationPendingPage, setPaginationPendingPage] = useState<number | null>(null);
+  const [paginationMinHeight, setPaginationMinHeight] = useState<number | null>(null);
+  const [paginationRevealing, setPaginationRevealing] = useState(false);
+  const paginationListRef = useRef<HTMLDivElement | null>(null);
   const resultsTransitionTimerRef = useRef<ReturnType<
     typeof setTimeout
   > | null>(null);
@@ -1897,18 +1920,20 @@ export function CarsResultsExperience({
     return () => window.removeEventListener("scroll", update);
   }, [guidedPlanning]);
 
-  const motionBehavior = (): ScrollBehavior =>
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      ? "auto"
-      : "smooth";
-  const changePage = (page: number) => {
+  const changePage = async (page: number) => {
+    if (paginationPendingPage !== null || page === currentPage) return;
+    setPaginationMinHeight(paginationListRef.current?.getBoundingClientRect().height ?? null);
+    setPaginationPendingPage(page);
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    await scrollToResultsAndWait({ element: resultsStartRef.current });
     setCurrentPage(page);
-    requestAnimationFrame(() =>
-      resultsStartRef.current?.scrollIntoView({
-        behavior: motionBehavior(),
-        block: "start",
-      }),
-    );
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    setPaginationPendingPage(null);
+    setPaginationMinHeight(null);
+    if (!prefersReducedResultsMotion()) {
+      setPaginationRevealing(true);
+      window.setTimeout(() => setPaginationRevealing(false), PAGINATION_REVEAL_MS);
+    }
   };
   const setTransition = () => {
     setResultsTransitioning(true);
@@ -2461,24 +2486,37 @@ export function CarsResultsExperience({
                   </div>
                 </div>
               </div>
-              {resultsTransitioning ? (
+              {resultsTransitioning || paginationPendingPage !== null ? (
                 <div
+                  ref={paginationListRef}
                   data-cars-results-card-list
+                  aria-busy={paginationPendingPage !== null}
+                  style={paginationMinHeight ? { minHeight: paginationMinHeight } : undefined}
                   className={cn(
                     "w-full space-y-4",
                     !guidedPlanning && "-mx-1.5 w-auto sm:mx-0 sm:w-full",
                   )}
                 >
-                  {[0, 1, 2].map((item) => (
+                  {Array.from({ length: paginationPendingPage !== null ? pageResults.length : 3 }, (_, item) => (
                     <CarCardSkeleton key={item} />
                   ))}
+                  {paginationPendingPage !== null && pagination.totalPages > 1 ? (
+                    <nav aria-label="Car results pagination" className="flex flex-wrap items-center justify-center gap-1.5 pt-4">
+                      <button type="button" disabled className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-slate-300 opacity-40"><ChevronLeft className="h-4 w-4" /></button>
+                      <button type="button" disabled className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-[#004BB8] bg-[#004BB8] text-white">{pagination.currentPage}</button>
+                      <button type="button" disabled className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-slate-300 opacity-40"><ChevronRight className="h-4 w-4" /></button>
+                    </nav>
+                  ) : null}
                 </div>
               ) : visibleResults.length ? (
                 <div
+                  ref={paginationListRef}
                   data-cars-results-card-list
+                  aria-busy="false"
                   className={cn(
                     "w-full space-y-4",
                     !guidedPlanning && "-mx-1.5 w-auto sm:mx-0 sm:w-full",
+                    paginationRevealing && "animate-[fadeIn_150ms_ease-out]",
                   )}
                 >
                   {pageResults.map((car) => (
@@ -2522,7 +2560,7 @@ export function CarsResultsExperience({
                       <button
                         type="button"
                         aria-label="Previous page"
-                        disabled={pagination.currentPage === 1}
+                        disabled={pagination.currentPage === 1 || paginationPendingPage !== null}
                         onClick={() => changePage(pagination.currentPage - 1)}
                         className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-[#07133B] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
                       ><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
@@ -2536,6 +2574,7 @@ export function CarsResultsExperience({
                             aria-label={`Page ${item}`}
                             aria-current={item === pagination.currentPage ? "page" : undefined}
                             onClick={() => changePage(item)}
+                            disabled={paginationPendingPage !== null}
                             className={cn(
                               "inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border text-sm font-semibold",
                               item === pagination.currentPage
@@ -2548,7 +2587,7 @@ export function CarsResultsExperience({
                       <button
                         type="button"
                         aria-label="Next page"
-                        disabled={pagination.currentPage === pagination.totalPages}
+                        disabled={pagination.currentPage === pagination.totalPages || paginationPendingPage !== null}
                         onClick={() => changePage(pagination.currentPage + 1)}
                         className="inline-flex min-h-11 items-center justify-center gap-1 rounded-md px-2.5 text-sm font-semibold text-[#07133B] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
                       ><span>Next</span><ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
@@ -2690,6 +2729,7 @@ function MobileLocationLauncher({
   placeholder,
   secondaryAction,
   value,
+  groupedMobile = false,
 }: {
   buttonRef: RefObject<HTMLButtonElement | null>;
   className?: string;
@@ -2699,14 +2739,15 @@ function MobileLocationLauncher({
   placeholder: string;
   secondaryAction?: { label: string; onClick: () => void };
   value: string;
+  groupedMobile?: boolean;
 }) {
   return (
-    <div className={cn(fieldShellClass, className)}>
-      <div className={fieldLabelClass}>
-        <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+    <div data-cars-mobile-grouped-row className={cn(groupedMobile ? "relative flex min-h-[70px] flex-col justify-center px-4 py-2.5 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/30" : fieldShellClass, className)}>
+      <div className={cn(fieldLabelClass, groupedMobile && "mb-1 text-[10px] leading-4 text-[#64748B]")}>
         <span className="truncate">{label}</span>
       </div>
       <div className="flex min-w-0 items-center gap-2">
+        {groupedMobile ? <Icon className="h-4 w-4 shrink-0 text-[#004BB8]" aria-hidden="true" /> : null}
         <button
           ref={buttonRef}
           type="button"
@@ -2900,6 +2941,7 @@ function SearchDateCell({
   intlLocale,
   wrapRef,
   popoverRef,
+  groupedMobile = false,
 }: {
   dropoffDate: string;
   doneButtonVariant: "brand" | "neutral";
@@ -2919,6 +2961,7 @@ function SearchDateCell({
   intlLocale: string;
   wrapRef: RefObject<HTMLDivElement | null>;
   popoverRef: RefObject<HTMLDivElement | null>;
+  groupedMobile?: boolean;
 }) {
   const dateFormatter = useCompactDateSummary ? formatCompactDate : formatDate;
   const pickupDisplay = dateFormatter(
@@ -2956,11 +2999,12 @@ function SearchDateCell({
   return (
     <div
       ref={wrapRef}
-      className={cn(fieldShellClass, isCompact && compactFieldShellClass)}
+      data-cars-mobile-grouped-row={groupedMobile || undefined}
+      className={cn(groupedMobile ? "relative flex min-h-[70px] flex-col justify-center px-4 py-2.5 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/30" : fieldShellClass, isCompact && compactFieldShellClass)}
     >
-      <div className={fieldLabelClass}>
+      <div className={cn(fieldLabelClass, groupedMobile && "mb-1 text-[10px] leading-4 text-[#64748B]")}>
         <CalendarDays
-          className="h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden"
+          className={cn("h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden", groupedMobile && "hidden")}
           aria-hidden="true"
         />
         <span className="min-w-0 truncate">
@@ -2974,12 +3018,16 @@ function SearchDateCell({
         aria-haspopup="dialog"
         className="focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
       >
-        {showRentalDuration || isCompact ? (
+        {showRentalDuration ? (
           <Calendar
             className="h-4 w-4 shrink-0 text-slate-500"
             aria-hidden="true"
           />
         ) : null}
+        {!showRentalDuration && isCompact ? (
+          <Calendar className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+        ) : null}
+        {groupedMobile ? <CalendarDays className="h-4 w-4 shrink-0 text-[#004BB8]" aria-hidden="true" /> : null}
         <span className="min-w-0 flex-1">
           <span
             className={cn(
@@ -3197,6 +3245,7 @@ function SearchTimeCell({
   wrapRef,
   popoverRef,
   useMainPageDesktopPresentation,
+  groupedMobile = false,
 }: {
   dropoffTime: string;
   isCompact: boolean;
@@ -3210,15 +3259,17 @@ function SearchTimeCell({
   wrapRef: RefObject<HTMLDivElement | null>;
   popoverRef: RefObject<HTMLDivElement | null>;
   useMainPageDesktopPresentation: boolean;
+  groupedMobile?: boolean;
 }) {
   return (
     <div
       ref={wrapRef}
-      className={cn(fieldShellClass, isCompact && compactFieldShellClass)}
+      data-cars-mobile-grouped-row={groupedMobile || undefined}
+      className={cn(groupedMobile ? "relative flex min-h-[70px] flex-col justify-center px-4 py-2.5 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/30" : fieldShellClass, isCompact && compactFieldShellClass)}
     >
-      <div className={fieldLabelClass}>
+      <div className={cn(fieldLabelClass, groupedMobile && "mb-1 text-[10px] leading-4 text-[#64748B]")}>
         <Clock3
-          className="h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden"
+          className={cn("h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden", groupedMobile && "hidden")}
           aria-hidden="true"
         />
         <span className="min-w-0 truncate">
@@ -3233,6 +3284,7 @@ function SearchTimeCell({
         aria-haspopup="menu"
         className="focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
       >
+        {groupedMobile ? <Clock3 className="h-4 w-4 shrink-0 text-[#004BB8]" aria-hidden="true" /> : null}
         {useMainPageDesktopPresentation ? (
           <span className="flex min-w-0 items-center gap-2">
             <Clock
@@ -3335,6 +3387,7 @@ function DriverAgeCell({
   wrapRef,
   popoverRef,
   useMainPageDesktopPresentation,
+  groupedMobile = false,
 }: {
   driverAge: string;
   isCompact: boolean;
@@ -3345,17 +3398,19 @@ function DriverAgeCell({
   wrapRef: RefObject<HTMLDivElement | null>;
   popoverRef: RefObject<HTMLDivElement | null>;
   useMainPageDesktopPresentation: boolean;
+  groupedMobile?: boolean;
 }) {
   const visibleOptions = useMemo(() => driverAgeOptions, []);
 
   return (
     <div
       ref={wrapRef}
-      className={cn(fieldShellClass, isCompact && compactFieldShellClass)}
+      data-cars-mobile-grouped-row={groupedMobile || undefined}
+      className={cn(groupedMobile ? "relative flex min-h-[70px] flex-col justify-center px-4 py-2.5 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/30" : fieldShellClass, isCompact && compactFieldShellClass)}
     >
-      <div className={fieldLabelClass}>
+      <div className={cn(fieldLabelClass, groupedMobile && "mb-1 text-[10px] leading-4 text-[#64748B]")}>
         <UserRound
-          className="h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden"
+          className={cn("h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden", groupedMobile && "hidden")}
           aria-hidden="true"
         />
         <span className="min-w-0 truncate">
@@ -3369,6 +3424,7 @@ function DriverAgeCell({
         aria-haspopup="listbox"
         className="focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
       >
+        {groupedMobile ? <UserRound className="h-4 w-4 shrink-0 text-[#004BB8]" aria-hidden="true" /> : null}
         {useMainPageDesktopPresentation ? (
           <span className="flex min-w-0 items-center gap-2">
             <UserRound

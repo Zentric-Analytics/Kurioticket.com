@@ -53,6 +53,7 @@ import { getOverlayActivationModality, restoreOverlayLauncherFocus, type Overlay
 import { MultiCityFlightEditor } from "@/components/search/MultiCityFlightEditor";
 import { Button } from "@/components/ui/Button";
 import { FlightCardSkeleton } from "@/components/ui/Skeleton";
+import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion, scrollToResultsAndWait } from "@/lib/results/paginationTransition";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -789,10 +790,12 @@ function FlightResultsPagination({
   currentPage,
   totalPages,
   onPageChange,
+  disabled = false,
 }: {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  disabled?: boolean;
 }) {
   if (totalPages <= 1) return null;
   const items = buildFlightPaginationItems(currentPage, totalPages);
@@ -806,6 +809,7 @@ function FlightResultsPagination({
       type="button"
       aria-label={`Go to flight results page ${item}`}
       aria-current={item === currentPage ? "page" : undefined}
+      disabled={disabled}
       onClick={() => onPageChange(item)}
       className="flight-pagination-control"
     >
@@ -818,12 +822,12 @@ function FlightResultsPagination({
       aria-label="Flight results pages"
       className="flight-results-pagination mb-6 mt-6 flex min-w-0 items-center justify-center"
     >
-      <button type="button" aria-label="Previous flight results page" disabled={currentPage === 1} onClick={() => onPageChange(currentPage - 1)} className="flight-pagination-control">
+      <button type="button" aria-label="Previous flight results page" disabled={disabled || currentPage === 1} onClick={() => onPageChange(currentPage - 1)} className="flight-pagination-control">
         <ChevronLeft className="h-4 w-4" aria-hidden="true" />
       </button>
       <span className="hidden items-center gap-1 sm:flex">{renderItems(items)}</span>
       <span className="flex min-w-0 items-center sm:hidden">{renderItems(mobileItems)}</span>
-      <button type="button" aria-label="Next flight results page" disabled={currentPage === totalPages} onClick={() => onPageChange(currentPage + 1)} className="flight-pagination-control">
+      <button type="button" aria-label="Next flight results page" disabled={disabled || currentPage === totalPages} onClick={() => onPageChange(currentPage + 1)} className="flight-pagination-control">
         <ChevronRight className="h-4 w-4" aria-hidden="true" />
       </button>
     </nav>
@@ -978,6 +982,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const userInitiatedRetryRef = useRef(false);
   const loadingFocusRef = useRef<HTMLDivElement | null>(null);
   const resultsHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const paginationListRef = useRef<HTMLDivElement | null>(null);
+  const [paginationPendingPage, setPaginationPendingPage] = useState<number | null>(null);
+  const [paginationCommitting, setPaginationCommitting] = useState(false);
+  const [paginationMinHeight, setPaginationMinHeight] = useState<number | null>(null);
+  const [paginationRevealing, setPaginationRevealing] = useState(false);
   const errorHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const emptyHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -4388,9 +4397,18 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     alignedMobileNearbyFareSearchRef.current = alignmentIdentity;
   }, [body, nearbyFares, validResultsPage]);
 
-  const changeResultsPage = useCallback((nextPage: number) => {
+  const changeResultsPage = useCallback(async (nextPage: number) => {
     const page = clampFlightResultsPage(nextPage, totalResultPages);
-    if (page === validResultsPage) return;
+    if (page === validResultsPage || paginationPendingPage !== null) return;
+    setPaginationMinHeight(paginationListRef.current?.getBoundingClientRect().height ?? null);
+    setPaginationPendingPage(page);
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    const target = flightResultsTopRef.current;
+    const top = target
+      ? target.getBoundingClientRect().top + window.scrollY - (desktopCompactFilterTopOffset + 16)
+      : 0;
+    await scrollToResultsAndWait({ top });
+    setPaginationCommitting(true);
     if (guidedMode) {
       setGuidedResultsPage(page);
     } else {
@@ -4399,9 +4417,22 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       else nextParams.set("page", String(page));
       router.push(`/flights/results?${nextParams.toString()}`, { scroll: false });
     }
-    scrollToFlightResultsTop();
-    window.setTimeout(() => resultsHeadingRef.current?.focus({ preventScroll: true }), 0);
-  }, [guidedMode, router, scrollToFlightResultsTop, totalResultPages, urlParams, validResultsPage]);
+  }, [guidedMode, paginationPendingPage, router, totalResultPages, urlParams, validResultsPage]);
+
+  useEffect(() => {
+    if (!paginationCommitting || paginationPendingPage !== validResultsPage) return;
+    const frame = window.requestAnimationFrame(() => {
+      setPaginationPendingPage(null);
+      setPaginationCommitting(false);
+      setPaginationMinHeight(null);
+      resultsHeadingRef.current?.focus({ preventScroll: true });
+      if (!prefersReducedResultsMotion()) {
+        setPaginationRevealing(true);
+        window.setTimeout(() => setPaginationRevealing(false), PAGINATION_REVEAL_MS);
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [paginationCommitting, paginationPendingPage, validResultsPage]);
 
 
   useEffect(() => {
@@ -7137,7 +7168,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 </div>
               ) : null}
 
-              {filterApplying ? (
+              <div
+                ref={paginationListRef}
+                aria-busy={paginationPendingPage !== null}
+                style={paginationMinHeight ? { minHeight: paginationMinHeight } : undefined}
+                className={paginationRevealing ? "animate-[fadeIn_150ms_ease-out]" : undefined}
+              >
+              {filterApplying || paginationPendingPage !== null ? (
                 <div className="space-y-3">
                   <div
                     role="status"
@@ -7146,8 +7183,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   >
                     {t("updatingResults")}
                   </div>
-                  <FlightCardSkeleton />
-                  <FlightCardSkeleton />
+                  {Array.from({ length: paginationPendingPage !== null ? visibleResults.length : 2 }, (_, index) => <FlightCardSkeleton key={index} />)}
+                  {paginationPendingPage !== null ? (
+                    <FlightResultsPagination currentPage={validResultsPage} totalPages={totalResultPages} onPageChange={changeResultsPage} disabled />
+                  ) : null}
                 </div>
               ) : sortedResults.length ? (
                 <>
@@ -7181,6 +7220,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   {t("noFlightsMatchFilters")}
                 </div>
               )}
+              </div>
             </div>
           )}
         </section>
