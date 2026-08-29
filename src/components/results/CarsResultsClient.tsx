@@ -28,7 +28,6 @@ import {
   MapPin,
   Pencil,
   SlidersHorizontal,
-  SquarePen,
   UserRound,
   X,
 } from "lucide-react";
@@ -1083,9 +1082,9 @@ export function CarsResultsClient({
         </span>
         <span
           aria-hidden="true"
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200/90 bg-slate-50 text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] transition group-hover:border-slate-300 group-hover:bg-slate-100"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-transparent text-[#536B92] transition group-hover:bg-slate-100 group-hover:text-[#004BB8]"
         >
-          <SquarePen size={15} strokeWidth={2.2} />
+          <Pencil size={18} strokeWidth={1.8} />
         </span>
       </button>
     </div>
@@ -2563,7 +2562,7 @@ export function CarsResultsExperience({
                         aria-label="Previous page"
                         disabled={pagination.currentPage === 1 || paginationPendingPage !== null}
                         onClick={() => changePage(pagination.currentPage - 1)}
-                        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-slate-300 text-[#07133B] disabled:cursor-not-allowed disabled:opacity-40"
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-[#07133B] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
                       ><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
                       {getCarPaginationItems(pagination.currentPage, pagination.totalPages).map((item, index) =>
                         item === "ellipsis" ? (
@@ -2590,8 +2589,8 @@ export function CarsResultsExperience({
                         aria-label="Next page"
                         disabled={pagination.currentPage === pagination.totalPages || paginationPendingPage !== null}
                         onClick={() => changePage(pagination.currentPage + 1)}
-                        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-slate-300 text-[#07133B] disabled:cursor-not-allowed disabled:opacity-40"
-                      ><ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
+                        className="inline-flex min-h-11 items-center justify-center gap-1 rounded-md px-2.5 text-sm font-semibold text-[#07133B] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
+                      ><span>Next</span><ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
                     </nav>
                   ) : null}
                 </div>

@@ -9,16 +9,20 @@ import {
   DoorOpen,
   Fuel,
   Gauge,
+  Heart,
   MapPin,
   Snowflake,
+  Share2,
   Star,
   Tag,
   Users,
 } from "lucide-react";
+import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { CarResultImage } from "@/components/results/CarResultImage";
+import { useSavedCar } from "@/components/results/useSavedCar";
 import {
   formatCarPickupType,
   getMobileCarPrimarySpecs,
@@ -63,6 +67,8 @@ export function CarResultCard({
     orSimilar: string;
   };
 }) {
+  const { isSaved, toggleSavedCar } = useSavedCar(car.id);
+  const [shareConfirmation, setShareConfirmation] = useState("");
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const offer = getPrimaryCarOffer(car);
@@ -99,8 +105,60 @@ export function CarResultCard({
   if (car.airConditioning) specifications.push([Snowflake, "Air conditioning"]);
   const mobilePrimarySpecs = getMobileCarPrimarySpecs(car);
 
+  async function shareCar() {
+    const relativeUrl = detailsHref ?? window.location.href;
+    const url = new URL(relativeUrl, window.location.origin).toString();
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: car.modelName, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setShareConfirmation(`${car.modelName} link copied`);
+      window.setTimeout(() => setShareConfirmation(""), 2200);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      // Share and clipboard permissions are browser-controlled enhancements.
+    }
+  }
+
+  const cardActions = (
+    <div data-car-card-actions className="flex shrink-0 items-center">
+      <button
+        type="button"
+        aria-label={`${isSaved ? "Unsave" : "Save"} ${car.modelName}`}
+        aria-pressed={isSaved}
+        onClick={toggleSavedCar}
+        className={`inline-flex h-11 w-11 items-center justify-center rounded-full bg-transparent transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 ${isSaved ? "text-rose-600" : "text-slate-600"}`}
+      >
+        <Heart
+          size={18}
+          fill={isSaved ? "currentColor" : "none"}
+          aria-hidden="true"
+        />
+      </button>
+      <button
+        type="button"
+        aria-label={`Share ${car.modelName}`}
+        onClick={() => void shareCar()}
+        className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-transparent text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
+      >
+        <Share2 size={18} aria-hidden="true" />
+      </button>
+    </div>
+  );
+
   return (
     <article className="relative w-full overflow-hidden rounded-[13px] border md:rounded-2xl border-[#D8E1EC] bg-white shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] transition duration-200 hover:-translate-y-0.5 hover:border-[#CBD6E2] hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]">
+      {shareConfirmation ? (
+        <span
+          role="status"
+          aria-live="polite"
+          className="fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-[100] mx-auto w-fit max-w-[calc(100%-2rem)] rounded-full bg-[#07133B] px-4 py-2 text-center text-sm font-semibold text-white shadow-lg"
+        >
+          {shareConfirmation}
+        </span>
+      ) : null}
       {!guidedPlanning && (
         <div className="md:hidden">
           <div
@@ -126,16 +184,19 @@ export function CarResultCard({
               data-car-card-mobile-information
               className="min-w-0 px-2.5 py-2.5"
             >
-              <header className="flex min-w-0 items-start justify-between gap-1.5">
-                <p className="min-w-0 text-[10px] font-bold uppercase tracking-[0.14em] text-[#004BB8]">
-                  {car.categoryLabel}
-                </p>
-                {badge && BadgeIcon && (
-                  <span className="inline-flex min-h-5 shrink-0 items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold leading-4 text-emerald-700">
-                    <BadgeIcon size={11} aria-hidden="true" />
-                    {badge}
-                  </span>
-                )}
+              <header className="flex min-w-0 items-start justify-between gap-1">
+                <div className="min-w-0 pt-1">
+                  <p className="min-w-0 text-[10px] font-bold uppercase tracking-[0.14em] text-[#004BB8]">
+                    {car.categoryLabel}
+                  </p>
+                  {badge && BadgeIcon && (
+                    <span className="mt-1 inline-flex min-h-5 max-w-full items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold leading-4 text-emerald-700">
+                      <BadgeIcon size={11} aria-hidden="true" />
+                      {badge}
+                    </span>
+                  )}
+                </div>
+                {cardActions}
               </header>
               <div className="mt-0.5 flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0">
                 {headingLevel === "h3" ? (
@@ -303,12 +364,15 @@ export function CarResultCard({
                 </div>
               )}
             </div>
-            {badge && BadgeIcon && (
-              <span className="inline-flex min-h-6 shrink-0 items-center gap-1 rounded-md bg-[#EAF2FB] px-2 py-0.5 text-xs font-semibold text-[#004BB8]">
-                <BadgeIcon size={13} aria-hidden="true" />
-                {badge}
-              </span>
-            )}
+            <div className="flex shrink-0 items-start gap-1">
+              {badge && BadgeIcon && (
+                <span className="inline-flex min-h-6 shrink-0 items-center gap-1 rounded-md bg-[#EAF2FB] px-2 py-0.5 text-xs font-semibold text-[#004BB8]">
+                  <BadgeIcon size={13} aria-hidden="true" />
+                  {badge}
+                </span>
+              )}
+              {cardActions}
+            </div>
           </header>
 
           <p className="mt-1 flex min-w-0 items-center gap-2 text-sm font-medium text-[#536B92]">
