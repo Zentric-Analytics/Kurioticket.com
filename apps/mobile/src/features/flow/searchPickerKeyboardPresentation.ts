@@ -10,13 +10,20 @@ export function useSearchPickerKeyboardPresentation(
   openingKey: unknown,
   inputRef: RefObject<FocusableInput | null>,
   motion: {
+    openSettled: boolean;
     startOpening: () => boolean;
     onSheetLayout: (event: LayoutChangeEvent) => void;
   },
 ) {
-  const { onSheetLayout: reportSheetLayout, startOpening } = motion;
+  const {
+    onSheetLayout: reportSheetLayout,
+    openSettled,
+    startOpening,
+  } = motion;
   const generationRef = useRef(0);
   const previousOpeningRef = useRef({ visible, openingKey });
+  const openingStartedGenerationRef = useRef<number | undefined>(undefined);
+  const settleArmedGenerationRef = useRef<number | undefined>(undefined);
   const focusedGenerationRef = useRef<number | undefined>(undefined);
   const modalPresentedRef = useRef(false);
 
@@ -34,13 +41,38 @@ export function useSearchPickerKeyboardPresentation(
     if (
       !visible ||
       generationRef.current !== generation ||
-      focusedGenerationRef.current === generation
+      openingStartedGenerationRef.current === generation
     )
       return;
     if (!modalPresentedRef.current || !startOpening()) return;
+    openingStartedGenerationRef.current = generation;
+    // A fresh opening is already unsettled. Arm it here because recording the
+    // successful start in a ref does not itself cause another render.
+    if (!openSettled) settleArmedGenerationRef.current = generation;
+  }, [generation, openSettled, startOpening, visible]);
+
+  useEffect(() => {
+    if (
+      !visible ||
+      generationRef.current !== generation ||
+      openingStartedGenerationRef.current !== generation
+    )
+      return;
+
+    // A retained reopen can briefly render the previous generation's settled
+    // state. Observe this generation's unsettled state before accepting settle.
+    if (!openSettled) {
+      settleArmedGenerationRef.current = generation;
+      return;
+    }
+    if (
+      settleArmedGenerationRef.current !== generation ||
+      focusedGenerationRef.current === generation
+    )
+      return;
     focusedGenerationRef.current = generation;
     inputRef.current?.focus();
-  }, [generation, inputRef, startOpening, visible]);
+  }, [generation, inputRef, openSettled, visible]);
 
   const onModalShow = useCallback(() => {
     modalPresentedRef.current = true;
