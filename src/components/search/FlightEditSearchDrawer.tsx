@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArrowRightLeft, Calendar, ChevronDown, MapPin, UserRound, X } from "lucide-react";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { formatTravelDateDisplay, formatTravelDateRangeDisplay } from "@/lib/dateFormatting/travelDateDisplay";
 import { MULTI_CITY_MAX_LEGS, MULTI_CITY_MIN_LEGS } from "@/lib/flights/flightSearchJourney";
 import type { CabinClass, FlightSearchLeg, TripType } from "@/lib/types";
-import { acquireMobileResultsScrollLock } from "@/lib/search/mobileResultsScrollLock";
+import { acquireMobileResultsScrollLock, type MobileResultsScrollLockRelease } from "@/lib/search/mobileResultsScrollLock";
 
 export type FlightEditSearchInitialValue = {
   tripType: TripType;
@@ -54,6 +54,26 @@ export function FlightEditSearchDrawer({ open, initialValue, onClose, onSearch, 
   const [isClosing, setIsClosing] = useState(false);
   const [hasEntered, setHasEntered] = useState(false);
   const closeTimerRef = useRef<number | null>(null);
+  const closePreparationFrameRef = useRef<number | null>(null);
+  const scrollLockReleaseRef = useRef<MobileResultsScrollLockRelease | null>(null);
+  const openingScrollPositionRef = useRef<{ x: number; y: number } | null>(null);
+  const scrollPreparedForCloseRef = useRef(false);
+
+  const stabilizeUnderlyingResultsBeforeClose = useCallback(() => {
+    const openingPosition = openingScrollPositionRef.current;
+    if (
+      openingPosition &&
+      (Math.abs(window.scrollX - openingPosition.x) > 1 ||
+        Math.abs(window.scrollY - openingPosition.y) > 1)
+    ) {
+      window.scrollTo({
+        left: openingPosition.x,
+        top: openingPosition.y,
+        behavior: "auto",
+      });
+    }
+    scrollPreparedForCloseRef.current = true;
+  }, []);
 
   const finishClose = useCallback(() => {
     setDraft(initialValue);
@@ -63,16 +83,29 @@ export function FlightEditSearchDrawer({ open, initialValue, onClose, onSearch, 
   const closeDrawer = useCallback(() => {
     if (isClosing) return;
     if (presentation === "bottom-sheet") {
-      setIsClosing(true);
-      closeTimerRef.current = window.setTimeout(finishClose, 200);
+      stabilizeUnderlyingResultsBeforeClose();
+      closePreparationFrameRef.current = window.requestAnimationFrame(() => {
+        closePreparationFrameRef.current = null;
+        setIsClosing(true);
+        closeTimerRef.current = window.setTimeout(finishClose, 200);
+      });
       return;
     }
     finishClose();
-  }, [finishClose, isClosing, presentation]);
+  }, [finishClose, isClosing, presentation, stabilizeUnderlyingResultsBeforeClose]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open || presentation !== "bottom-sheet") return;
-    return acquireMobileResultsScrollLock();
+    openingScrollPositionRef.current = { x: window.scrollX, y: window.scrollY };
+    scrollPreparedForCloseRef.current = false;
+    scrollLockReleaseRef.current = acquireMobileResultsScrollLock();
+    return () => {
+      scrollLockReleaseRef.current?.({
+        restoreScroll: !scrollPreparedForCloseRef.current,
+      });
+      scrollLockReleaseRef.current = null;
+      openingScrollPositionRef.current = null;
+    };
   }, [open, presentation]);
 
   useEffect(() => {
@@ -85,6 +118,9 @@ export function FlightEditSearchDrawer({ open, initialValue, onClose, onSearch, 
     }
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
+      if (closePreparationFrameRef.current !== null) {
+        window.cancelAnimationFrame(closePreparationFrameRef.current);
+      }
       if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
     };
   }, [open, presentation]);
@@ -111,7 +147,7 @@ export function FlightEditSearchDrawer({ open, initialValue, onClose, onSearch, 
   const bottomSheet = presentation === "bottom-sheet";
   return <>
     <div onPointerDown={(event) => { if (bottomSheet && event.target === event.currentTarget) closeDrawer(); }} data-flight-edit-presentation={presentation} className={`${bottomSheet ? `fixed inset-0 z-[10000] flex items-end overflow-hidden bg-slate-950/35 transition-opacity duration-200 sm:hidden ${isClosing || !hasEntered ? "opacity-0" : "opacity-100"}` : "fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden overscroll-contain bg-slate-50 sm:hidden"}`}>
-      <form role="dialog" aria-modal="true" aria-labelledby="flight-mobile-search-title" onSubmit={(event) => { event.preventDefault(); if (canSearch) { if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current); onSearch(draft); } }} className={`flex min-h-0 w-full min-w-0 flex-col bg-slate-50 ${bottomSheet ? `max-h-[94dvh] overflow-hidden rounded-t-[22px] shadow-[0_-12px_36px_rgba(15,23,42,0.18)] transition-transform duration-200 ease-out ${isClosing || !hasEntered ? "translate-y-full" : "translate-y-0"}` : "h-full"}`}>
+      <form role="dialog" aria-modal="true" aria-labelledby="flight-mobile-search-title" onSubmit={(event) => { event.preventDefault(); if (canSearch) { if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current); if (bottomSheet) stabilizeUnderlyingResultsBeforeClose(); onSearch(draft); } }} className={`flex min-h-0 w-full min-w-0 flex-col bg-slate-50 ${bottomSheet ? `max-h-[94dvh] overflow-hidden rounded-t-[22px] shadow-[0_-12px_36px_rgba(15,23,42,0.18)] transition-transform duration-200 ease-out ${isClosing || !hasEntered ? "translate-y-full" : "translate-y-0"}` : "h-full"}`}>
         <div className={`shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 ${bottomSheet ? "pt-2" : "pt-[calc(0.5rem+env(safe-area-inset-top))]"}`}><div className="flex min-h-11 items-center justify-between gap-3"><h2 id="flight-mobile-search-title" className="text-xl font-bold leading-6 tracking-[-0.01em] text-slate-950">Edit flight search</h2><button type="button" aria-label="Close edit search" onClick={closeDrawer} className="inline-flex h-11 w-11 items-center justify-center rounded-[10px] text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"><X className="h-5 w-5" aria-hidden="true" /></button></div></div>
         <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"><div className="mx-auto flex w-full min-w-0 max-w-xl flex-col gap-3.5">
           <div role="radiogroup" aria-label="Trip type" data-mobile-trip-type-grid className="grid min-h-11 w-full min-w-0 grid-cols-3 items-stretch gap-1 rounded-[13px] bg-slate-100/75 p-1">{([['round-trip','Round-trip'],['one-way','One-way'],['multi-city','Multi-city']] as const).map(([value, label]) => <button key={value} type="button" role="radio" aria-checked={draft.tripType === value} onClick={() => setDraft((current) => ({ ...current, tripType: value, legs: value === "multi-city" && current.legs.length < 2 ? [firstLeg, { origin: firstLeg.destination, destination: "", departureDate: firstLeg.departureDate }] : current.legs }))} className={`inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-1 text-[13px] font-semibold min-[360px]:text-sm ${draft.tripType === value ? "bg-white text-slate-950 shadow-sm" : "text-slate-600"}`}><span aria-hidden="true" className={`inline-flex h-[18px] w-[18px] items-center justify-center rounded-full border ${draft.tripType === value ? "border-[#004BB8]" : "border-slate-300"}`}><span className={`h-2 w-2 rounded-full ${draft.tripType === value ? "bg-[#004BB8]" : "bg-transparent"}`} /></span>{label}</button>)}</div>

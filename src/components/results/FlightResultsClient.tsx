@@ -42,9 +42,7 @@ import {
 } from "lucide-react";
 import {
   getCenteredRailScrollLeft,
-  getNearbyFareAnchorCorrection,
   isHorizontallyVisibleWithinContainer,
-  nearbyFareAnchorTolerancePx,
 } from "@/components/results/mobileNearbyFareRail";
 
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
@@ -170,14 +168,6 @@ type NearbyFareState =
 type NearbyFareRequest = {
   controller: AbortController;
   promise: Promise<void>;
-};
-
-type NearbyFarePaginationSnapshot = {
-  departureDate: string;
-  selectedOffsetX: number | null;
-  selectedWidth: number;
-  selectedWasVisible: boolean;
-  scrollLeft: number;
 };
 
 const nearbyFareRangeSize = 10;
@@ -982,6 +972,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     (params.get("sort") as SortMode) || "cheapest",
   );
   const [guidedResultsPage, setGuidedResultsPage] = useState(1);
+  const [standaloneResultsPage, setStandaloneResultsPage] = useState(() =>
+    Math.max(1, Number(urlParams.get("page")) || 1),
+  );
   const [desktopSortOpen, setDesktopSortOpen] = useState(false);
   const desktopSortRef = useRef<HTMLDivElement | null>(null);
   const desktopSortButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -1060,9 +1053,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const mobileNearbyFareRailRef = useRef<HTMLDivElement>(null);
   const mobileSelectedNearbyFareRef = useRef<HTMLButtonElement>(null);
   const alignedMobileNearbyFareSearchRef = useRef<string | null>(null);
-  const mobileNearbyFareScrollLeftRef = useRef(0);
-  const nearbyFarePaginationSnapshotRef =
-    useRef<NearbyFarePaginationSnapshot | null>(null);
   const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
   const [nearbyFareVisibleStart, setNearbyFareVisibleStart] = useState(0);
   const [returnDateInput, setReturnDateInput] = useState(
@@ -1211,7 +1201,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const travelPreferencesRequestedRef = useRef(false);
   const preferredAirlineDefaultResolvedRef = useRef(false);
   const preferredAirlineDefaultAppliedRef = useRef(false);
-  const mobileSearchScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(null);
   const mobileFiltersScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(null);
   const mobileSearchLauncherRef = useRef<HTMLElement | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLElement | null>(null);
@@ -1900,43 +1889,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }, []);
 
   useLayoutEffect(() => {
-    const releaseExistingLock = () => {
+    if (!mobileSearchOpen) return;
+
+    return () => {
       const launcher = mobileSearchLauncherRef.current;
       const shouldRestoreFocus = shouldRestoreMobileSearchFocusRef.current;
 
-      mobileSearchScrollLockRef.current?.();
-      mobileSearchScrollLockRef.current = null;
       shouldRestoreMobileSearchFocusRef.current = true;
 
       if (shouldRestoreFocus) restoreOverlayLauncherFocus(launcher, mobileSearchModalityRef.current);
     };
-
-    if (!mobileSearchOpen || typeof window === "undefined") {
-      releaseExistingLock();
-      return releaseExistingLock;
-    }
-
-    const mobileQuery = window.matchMedia("(max-width: 639px)");
-
-    if (!mobileQuery.matches) {
-      releaseExistingLock();
-      return releaseExistingLock;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        closeMobileSearchDrawer();
-      }
-    };
-
-    mobileSearchScrollLockRef.current ??= acquireMobileResultsScrollLock();
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      releaseExistingLock();
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- Existing drawer lifecycle intentionally depends on open state only.
   }, [mobileSearchOpen]);
 
   useLayoutEffect(() => {
@@ -2340,12 +2302,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     mobileSearchModalityRef.current = modality;
     closeMobileFiltersDrawer({ restoreFocus: false });
     closeFlightSearchPopovers();
-    if (
-      typeof window !== "undefined" &&
-      window.matchMedia("(max-width: 639px)").matches
-    ) {
-      mobileSearchScrollLockRef.current ??= acquireMobileResultsScrollLock();
-    }
     mobileSearchOpenRef.current = true;
     setMobileSearchOpen(true);
   }
@@ -4124,13 +4080,18 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const handleUserFilterCommit = useCallback(() => {
     setGuidedResultsPage(1);
     if (!guidedMode) {
+      setStandaloneResultsPage(1);
       const nextParams = new URLSearchParams(urlParams.toString());
       nextParams.delete("page");
-      router.replace(`/flights/results?${nextParams.toString()}`, { scroll: false });
+      window.history.replaceState(
+        window.history.state,
+        "",
+        `/flights/results?${nextParams.toString()}`,
+      );
     }
     triggerFilterApplying();
     scrollToFlightResultsTop();
-  }, [guidedMode, router, scrollToFlightResultsTop, triggerFilterApplying, urlParams]);
+  }, [guidedMode, scrollToFlightResultsTop, triggerFilterApplying, urlParams]);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -4410,7 +4371,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const totalResultPages = getFlightResultsPageCount(sortedResults.length);
   const requestedResultsPage = guidedMode
     ? guidedResultsPage
-    : Math.max(1, Number(urlParams.get("page")) || 1);
+    : standaloneResultsPage;
   const validResultsPage = clampFlightResultsPage(requestedResultsPage, totalResultPages);
   const visibleResults = useMemo(
     () => paginateFlightResults(sortedResults, validResultsPage),
@@ -4421,6 +4382,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     pageSize: FLIGHT_RESULTS_PAGE_SIZE,
     totalResults: sortedResults.length,
   });
+
+  useEffect(() => {
+    if (guidedMode) return;
+    const pageFromUrl = Math.max(1, Number(urlParams.get("page")) || 1);
+    const syncPageFromExternalUrl = () => setStandaloneResultsPage(pageFromUrl);
+    const frame = window.requestAnimationFrame(syncPageFromExternalUrl);
+    return () => window.cancelAnimationFrame(frame);
+  }, [guidedMode, urlParams]);
 
   useLayoutEffect(() => {
     if (!body?.departureDate || nearbyFares.length === 0) return;
@@ -4461,7 +4430,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       });
 
       rail.scrollTo({ left: target, behavior: "auto" });
-      mobileNearbyFareScrollLeftRef.current = target;
       const updatedRailRect = rail.getBoundingClientRect();
       const updatedSelectedRect = selectedCell.getBoundingClientRect();
       if (
@@ -4483,23 +4451,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const changeResultsPage = useCallback(async (nextPage: number) => {
     const page = clampFlightResultsPage(nextPage, totalResultPages);
     if (page === validResultsPage || paginationPendingPage !== null) return;
-    const rail = mobileNearbyFareRailRef.current;
-    const selectedCell = mobileSelectedNearbyFareRef.current;
-    if (rail) mobileNearbyFareScrollLeftRef.current = rail.scrollLeft;
-    const railRect = rail?.getBoundingClientRect();
-    const selectedRect = selectedCell?.getBoundingClientRect();
-    nearbyFarePaginationSnapshotRef.current = {
-      departureDate: body?.departureDate ?? "",
-      selectedOffsetX:
-        railRect && selectedRect ? selectedRect.left - railRect.left : null,
-      selectedWidth: selectedRect?.width ?? 0,
-      selectedWasVisible: Boolean(
-        railRect &&
-          selectedRect &&
-          isHorizontallyVisibleWithinContainer(selectedRect, railRect),
-      ),
-      scrollLeft: rail?.scrollLeft ?? mobileNearbyFareScrollLeftRef.current,
-    };
     setPaginationMinHeight(paginationListRef.current?.getBoundingClientRect().height ?? null);
     setPaginationPendingPage(page);
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
@@ -4512,77 +4463,17 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     if (guidedMode) {
       setGuidedResultsPage(page);
     } else {
+      setStandaloneResultsPage(page);
       const nextParams = new URLSearchParams(urlParams.toString());
       if (page === 1) nextParams.delete("page");
       else nextParams.set("page", String(page));
-      router.push(`/flights/results?${nextParams.toString()}`, { scroll: false });
+      window.history.replaceState(
+        window.history.state,
+        "",
+        `/flights/results?${nextParams.toString()}`,
+      );
     }
-  }, [body?.departureDate, guidedMode, paginationPendingPage, router, totalResultPages, urlParams, validResultsPage]);
-
-  useLayoutEffect(() => {
-    if (!paginationCommitting || paginationPendingPage !== validResultsPage) return;
-
-    const snapshot = nearbyFarePaginationSnapshotRef.current;
-    if (!snapshot) return;
-
-    let frame: number | null = null;
-    let geometryPasses = 0;
-    const restoreSelectedFareAnchor = () => {
-      geometryPasses += 1;
-      const rail = mobileNearbyFareRailRef.current;
-      const selectedCell = mobileSelectedNearbyFareRef.current;
-      const selectedDateMatches = snapshot.departureDate === body?.departureDate;
-
-      if (
-        rail &&
-        selectedCell?.isConnected &&
-        selectedDateMatches &&
-        snapshot.selectedWasVisible
-      ) {
-        const railRect = rail.getBoundingClientRect();
-        const selectedRect = selectedCell.getBoundingClientRect();
-        const currentOffsetX = selectedRect.left - railRect.left;
-        const correction = getNearbyFareAnchorCorrection({
-          selectedWasVisible: snapshot.selectedWasVisible,
-          previousOffsetX: snapshot.selectedOffsetX,
-          currentOffsetX,
-        });
-        if (correction !== 0) {
-          rail.scrollTo({ left: rail.scrollLeft + correction, behavior: "auto" });
-        }
-
-        const verifiedRailRect = rail.getBoundingClientRect();
-        const verifiedSelectedRect = selectedCell.getBoundingClientRect();
-        const verifiedOffsetX = verifiedSelectedRect.left - verifiedRailRect.left;
-        const isRestored =
-          isHorizontallyVisibleWithinContainer(
-            verifiedSelectedRect,
-            verifiedRailRect,
-          ) &&
-          snapshot.selectedOffsetX !== null &&
-          Math.abs(verifiedOffsetX - snapshot.selectedOffsetX) <=
-            nearbyFareAnchorTolerancePx;
-        if (!isRestored && geometryPasses < 3) {
-          frame = window.requestAnimationFrame(restoreSelectedFareAnchor);
-          return;
-        }
-      } else if (rail && Math.abs(rail.scrollLeft - snapshot.scrollLeft) > 1) {
-        rail.scrollTo({ left: snapshot.scrollLeft, behavior: "auto" });
-      }
-
-      nearbyFarePaginationSnapshotRef.current = null;
-    };
-
-    frame = window.requestAnimationFrame(restoreSelectedFareAnchor);
-    return () => {
-      if (frame !== null) window.cancelAnimationFrame(frame);
-    };
-  }, [
-    body?.departureDate,
-    paginationCommitting,
-    paginationPendingPage,
-    validResultsPage,
-  ]);
+  }, [guidedMode, paginationPendingPage, totalResultPages, urlParams, validResultsPage]);
 
   useEffect(() => {
     if (!paginationCommitting || paginationPendingPage !== validResultsPage) return;
@@ -7093,7 +6984,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               {body?.tripType !== "multi-city" ? (
                 <>
                   <div className="w-full min-w-0 max-w-full overflow-hidden sm:hidden" aria-label="Nearby departure fares" data-nearby-fare-presentation="mobile">
-                    <div ref={mobileNearbyFareRailRef} onScroll={(event) => { mobileNearbyFareScrollLeftRef.current = event.currentTarget.scrollLeft; }} className="flex w-full min-w-0 max-w-full snap-x snap-proximity gap-2 overflow-x-auto overflow-y-hidden px-3 py-0.5 [scroll-padding-inline:0.75rem] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <div ref={mobileNearbyFareRailRef} className="flex w-full min-w-0 max-w-full snap-x snap-proximity gap-2 overflow-x-auto overflow-y-hidden px-3 py-0.5 [scroll-padding-inline:0.75rem] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       {(nearbyFares.length ? nearbyFares : Array.from({ length: nearbyFareRangeSize }, (_, index) => ({ date: `loading-mobile-${index}`, status: "loading" as const }))).map((fare) => {
                         const selected = fare.date === body?.departureDate;
                         const displayPrice = fare.status === "success" ? formatDisplayPrice({ amount: fare.amount, sourceCurrency: fare.currency, displayCurrency: selectedCurrency, convertUsdEstimate: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback }).formatted : null;

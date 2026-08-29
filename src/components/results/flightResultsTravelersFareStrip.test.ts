@@ -79,12 +79,12 @@ test("mobile nearby fares scroll horizontally without widening the page", () => 
   assert.doesNotMatch(mobileStrip, /onPointer|onTouch|preventDefault\(\)/);
 });
 
-test("mobile nearby fares align once per flight search and preserve selected geometry across result pagination", () => {
+test("mobile nearby fares align once per flight search", () => {
   assert.match(source, /mobileNearbyFareRailRef = useRef<HTMLDivElement>/);
   assert.match(source, /mobileSelectedNearbyFareRef = useRef<HTMLButtonElement>/);
   assert.match(source, /alignedMobileNearbyFareSearchRef = useRef<string \| null>/);
-  assert.match(source, /mobileNearbyFareScrollLeftRef = useRef\(0\)/);
-  assert.match(source, /nearbyFarePaginationSnapshotRef/);
+  assert.doesNotMatch(source, /mobileNearbyFareScrollLeftRef/);
+  assert.doesNotMatch(source, /nearbyFarePaginationSnapshotRef/);
 
   const alignmentStart = source.indexOf("const alignmentIdentity");
   const paginationStart = source.indexOf("const changeResultsPage", alignmentStart);
@@ -113,24 +113,41 @@ test("mobile nearby fares align once per flight search and preserve selected geo
   assert.doesNotMatch(source, /scrollIntoView\(/);
 });
 
-test("results pagination snapshots and restores the selected date's visible offset", () => {
-  assert.match(source, /onScroll=\{\(event\) => \{ mobileNearbyFareScrollLeftRef\.current = event\.currentTarget\.scrollLeft; \}\}/);
-
+test("results pagination is calendar-blind", () => {
   const pageChangeStart = source.indexOf("const changeResultsPage");
   const pageChangeEnd = source.indexOf("useEffect", pageChangeStart);
   const pagination = source.slice(pageChangeStart, pageChangeEnd);
-  assert.match(pagination, /mobileSelectedNearbyFareRef\.current/);
-  assert.match(pagination, /departureDate: body\?\.departureDate/);
-  assert.match(pagination, /selectedRect\.left - railRect\.left/);
-  assert.match(pagination, /selectedWidth: selectedRect\?\.width/);
-  assert.match(pagination, /selectedWasVisible/);
-  assert.match(pagination, /isHorizontallyVisibleWithinContainer/);
-  assert.match(pagination, /getNearbyFareAnchorCorrection/);
-  assert.match(pagination, /rail\.scrollLeft \+ correction/);
-  assert.match(pagination, /nearbyFareAnchorTolerancePx/);
-  assert.match(pagination, /geometryPasses < 3/);
-  assert.match(pagination, /snapshot\.scrollLeft/);
-  assert.doesNotMatch(pagination, /getCenteredRailScrollLeft/);
+  for (const forbidden of [
+    "mobileNearbyFareRailRef",
+    "mobileSelectedNearbyFareRef",
+    "nearbyFare",
+    "departureDate",
+    "scrollLeft",
+    "getCenteredRailScrollLeft",
+    "getNearbyFareAnchorCorrection",
+  ]) assert.doesNotMatch(pagination, new RegExp(forbidden));
+  assert.doesNotMatch(source, /getNearbyFareAnchorCorrection|NearbyFarePaginationSnapshot/);
+});
+
+test("standalone pagination owns local state and mirrors it through native history", () => {
+  assert.match(source, /const \[standaloneResultsPage, setStandaloneResultsPage\] = useState\(\(\) =>[\s\S]*?urlParams\.get\("page"\)/);
+  assert.match(source, /guidedMode[\s\S]*?guidedResultsPage[\s\S]*?: standaloneResultsPage/);
+  assert.match(source, /paginateFlightResults\(sortedResults, validResultsPage\)/);
+  const start = source.indexOf("const changeResultsPage");
+  const end = source.indexOf("useEffect", start);
+  const pagination = source.slice(start, end);
+  assert.match(pagination, /setStandaloneResultsPage\(page\)/);
+  assert.match(pagination, /page === 1\) nextParams\.delete\("page"\)/);
+  assert.match(pagination, /nextParams\.set\("page", String\(page\)\)/);
+  assert.match(pagination, /window\.history\.replaceState/);
+  assert.doesNotMatch(pagination, /router\.push/);
+});
+
+test("nearby fare DOM remains outside the paginated card subtree", () => {
+  const rail = source.indexOf('data-nearby-fare-presentation="mobile"');
+  const paginatedCards = source.indexOf("ref={paginationListRef}");
+  assert.ok(rail > -1 && paginatedCards > rail);
+  assert.doesNotMatch(source.slice(rail, paginatedCards), /paginationPendingPage/);
 });
 
 test("mobile compact header freezes geometry and sentinel state while Edit Search owns interaction", () => {
