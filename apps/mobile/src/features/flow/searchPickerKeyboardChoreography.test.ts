@@ -19,10 +19,10 @@ test("searchable moving sheets coordinate automatic focus with their entrance", 
     assert.match(sheet, /useSearchPickerKeyboardPresentation\([^;]+inputRef, motion\)/, file);
     assert.match(sheet, /onShow=\{keyboardPresentation\.onModalShow\}/, file);
     assert.match(sheet, /onLayout=\{keyboardPresentation\.onSheetLayout\}/, file);
-    assert.doesNotMatch(sheet, /motion\.openSettled/, file);
     assert.doesNotMatch(sheet, /autoFocus/, file);
     assert.doesNotMatch(sheet, /requestAnimationFrame\([^)]*inputRef\.current\?\.focus/s, file);
     assert.doesNotMatch(sheet, /setTimeout\([^)]*inputRef\.current\?\.focus/s, file);
+    assert.doesNotMatch(sheet, /InteractionManager/, file);
   }
 });
 
@@ -30,6 +30,8 @@ test("the shared coordinator focuses once per live opening generation", () => {
   const source = readFileSync("src/features/flow/searchPickerKeyboardPresentation.ts", "utf8");
   assert.match(source, /generationRef\.current \+= 1/);
   assert.match(source, /focusedGenerationRef\.current === generation/);
+  assert.match(source, /openingStartedGenerationRef\.current === generation/);
+  assert.match(source, /openingStartedGenerationRef\.current = generation/);
   assert.match(source, /generationRef\.current !== generation/);
   assert.match(source, /if \(!visible/);
   assert.match(source, /Keyboard\.dismiss\(\)/);
@@ -37,11 +39,14 @@ test("the shared coordinator focuses once per live opening generation", () => {
   assert.match(source, /!modalPresentedRef\.current \|\| !startOpening\(\)/);
   assert.match(source, /reportSheetLayout\(event\);\s+startCurrentOpening\(\)/);
   assert.match(source, /if \(modalPresentedRef\.current\) startCurrentOpening\(\)/);
-  assert.match(source, /startOpening\(\)[\s\S]+inputRef\.current\?\.focus\(\)/);
-  assert.doesNotMatch(source, /openSettled/);
+  assert.match(source, /openSettled: boolean/);
+  assert.match(source, /if \(!openSettled\) \{\s+settleArmedGenerationRef\.current = generation/);
+  assert.match(source, /settleArmedGenerationRef\.current !== generation/);
+  assert.match(source, /openingStartedGenerationRef\.current !== generation[\s\S]+!openSettled[\s\S]+focusedGenerationRef\.current = generation;\s+inputRef\.current\?\.focus\(\)/);
   assert.doesNotMatch(source, /autoFocus/);
   assert.doesNotMatch(source, /requestAnimationFrame/);
   assert.doesNotMatch(source, /setTimeout/);
+  assert.doesNotMatch(source, /InteractionManager/);
 });
 
 test("non-searchable sheets do not opt into keyboard choreography", () => {
