@@ -119,13 +119,14 @@ test("compact Hotel guest density is scoped to approved mobile integrations", ()
   assert.doesNotMatch(standalone, /density="compact"/);
 });
 
-test("Hotel results edit flow uses compact guest spacing and structural row dividers", () => {
+test("Hotel results edit flow uses compact guest spacing and independent field cards", () => {
   assert.match(
     standalone,
     /mobileResultsSheet \? "py-4" : "py-6"/,
   );
-  assert.match(standalone, /mobileResultsSheet && mobileResultsEditGroupClass/);
-  assert.doesNotMatch(standalone, /after:inset-x-4 after:bottom-0/);
+  assert.match(standalone, /data-hotel-results-edit-fields=/);
+  assert.match(standalone, /flex flex-col gap-2\.5/);
+  assert.doesNotMatch(standalone, /mobileResultsEditGroupClass/);
 });
 
 test("both mobile Hotel picker shells use the dedicated Guests & Rooms title", () => {
