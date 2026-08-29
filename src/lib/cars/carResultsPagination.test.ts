@@ -24,3 +24,9 @@ test("pagination clamps invalid pages and builds compact deterministic windows",
   assert.deepEqual(getCarPaginationItems(6, 12), [1, "ellipsis", 5, 6, 7, "ellipsis", 12]);
   assert.deepEqual(getCarPaginationItems(11, 12), [1, "ellipsis", 9, 10, 11, 12]);
 });
+
+
+test("two-page pagination exposes both pages without truncation", () => {
+  assert.deepEqual(getCarPaginationItems(1, 2), [1, 2]);
+  assert.deepEqual(getCarPaginationItems(2, 2), [1, 2]);
+});

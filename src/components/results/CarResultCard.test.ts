@@ -138,3 +138,17 @@ test("prices preserve formatter output, LTR semantics, and accessible fallback m
     );
   }
 });
+
+
+test("cards expose compact, functional save and share actions", () => {
+  assert.match(source, /data-car-card-actions/);
+  assert.match(source, /aria-label=\{`\$\{isSaved \? "Unsave" : "Save"\} \$\{car\.modelName\}`\}/);
+  assert.match(source, /aria-pressed=\{isSaved\}/);
+  assert.match(source, /fill=\{isSaved \? "currentColor" : "none"\}/);
+  assert.match(source, /aria-label=\{`Share \$\{car\.modelName\}`\}/);
+  assert.match(source, /navigator\.share/);
+  assert.match(source, /navigator\.clipboard\.writeText/);
+  assert.match(source, /role="status"/);
+  assert.match(source, /aria-live="polite"/);
+  assert.match(source, /h-11 w-11/);
+});
