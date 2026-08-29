@@ -2747,7 +2747,7 @@ function MobileLocationLauncher({
         <span className="truncate">{label}</span>
       </div>
       <div className="flex min-w-0 items-center gap-2">
-        {groupedMobile ? <Icon className="h-4 w-4 shrink-0 text-[#004BB8]" aria-hidden="true" /> : null}
+        {groupedMobile ? <Icon className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" /> : null}
         <button
           ref={buttonRef}
           type="button"
@@ -3027,7 +3027,7 @@ function SearchDateCell({
         {!showRentalDuration && isCompact ? (
           <Calendar className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
         ) : null}
-        {groupedMobile ? <CalendarDays className="h-4 w-4 shrink-0 text-[#004BB8]" aria-hidden="true" /> : null}
+        {groupedMobile ? <CalendarDays className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" /> : null}
         <span className="min-w-0 flex-1">
           <span
             className={cn(
@@ -3284,7 +3284,7 @@ function SearchTimeCell({
         aria-haspopup="menu"
         className="focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
       >
-        {groupedMobile ? <Clock3 className="h-4 w-4 shrink-0 text-[#004BB8]" aria-hidden="true" /> : null}
+        {groupedMobile ? <Clock3 className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" /> : null}
         {useMainPageDesktopPresentation ? (
           <span className="flex min-w-0 items-center gap-2">
             <Clock
@@ -3296,7 +3296,12 @@ function SearchTimeCell({
             </span>
           </span>
         ) : (
-          <span className="truncate">
+          <span
+            className={cn(
+              "truncate",
+              groupedMobile && "min-w-0 flex-1 text-start",
+            )}
+          >
             {formatTimeLabel(pickupTime, intlLocale)} —{" "}
             {formatTimeLabel(dropoffTime, intlLocale)}
           </span>
@@ -3424,7 +3429,7 @@ function DriverAgeCell({
         aria-haspopup="listbox"
         className="focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
       >
-        {groupedMobile ? <UserRound className="h-4 w-4 shrink-0 text-[#004BB8]" aria-hidden="true" /> : null}
+        {groupedMobile ? <UserRound className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" /> : null}
         {useMainPageDesktopPresentation ? (
           <span className="flex min-w-0 items-center gap-2">
             <UserRound
@@ -3438,7 +3443,12 @@ function DriverAgeCell({
             </span>
           </span>
         ) : (
-          <span className="truncate">
+          <span
+            className={cn(
+              "truncate",
+              groupedMobile && "min-w-0 flex-1 text-start",
+            )}
+          >
             {getDriverAgeOptionLabel(driverAge, t)}
           </span>
         )}
