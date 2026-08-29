@@ -87,7 +87,7 @@ test("route remains centered with balanced side controls and compact spacing", (
   assert.match(header, /color: theme\.textPrimary/);
 });
 
-test("header and date rail use a materially smaller Flight Results spacing shell", () => {
+test("header and date rail use the structured Flight Results fare-calendar shell", () => {
   const headerBottom = Number(styles.match(/flightHeader: \{[\s\S]*?paddingBottom: (\d+)/)?.[1]);
   const navigatorHeight = Number(
     searchUi.match(/flightDateNavigator: \{ height: (\d+)/)?.[1],
@@ -95,12 +95,9 @@ test("header and date rail use a materially smaller Flight Results spacing shell
   const railHeight = Number(searchUi.match(/flightDateRail: \{ height: (\d+)/)?.[1]);
 
   assert.ok(headerBottom <= 3, "header bottom padding remains compact");
-  assert.ok(navigatorHeight >= 70 && navigatorHeight <= 74, "navigator safely wraps card shadows");
+  assert.equal(navigatorHeight, 88, "navigator fits the 76px tile and compact vertical padding");
   assert.equal(railHeight, navigatorHeight);
-  assert.ok(
-    headerBottom + navigatorHeight <= 77,
-    "combined shell is smaller than the old 88px shell",
-  );
+  assert.equal(headerBottom + navigatorHeight, 90);
 });
 
 test("canonical flight search data remains available after presentation metadata removal", () => {

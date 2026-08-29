@@ -12,7 +12,7 @@ const list = source.slice(source.indexOf("<Animated.SectionList"), source.indexO
 
 test("the date strip fades across its measured height without collapsing layout", () => {
   assert.match(animation, /useRef\(new Animated\.Value\(0\)\)\.current/);
-  assert.match(animation, /useState\(72\)/);
+  assert.match(animation, /useState\(88\)/);
   assert.match(animation, /onLayout=\{\(\{ nativeEvent \}\) =>/);
   assert.match(animation, /inputRange: \[0, flightDateStripHeaderHeight\]/);
   assert.match(animation, /outputRange: \[1, 0\]/);
