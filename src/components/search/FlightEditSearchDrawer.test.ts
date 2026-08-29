@@ -53,23 +53,42 @@ test("shared editor supports a Details-only bottom sheet while fullscreen remain
 });
 
 test("bottom sheet uses the shared no-shake lock and delegates launcher focus", () => {
-  assert.match(source, /useLayoutEffect\(\(\) => \{[\s\S]*?acquireMobileResultsScrollLock\(\)/);
-  assert.match(source, /openingScrollPositionRef\.current = \{ x: window\.scrollX, y: window\.scrollY \}/);
+  assert.match(
+    source,
+    /useLayoutEffect\(\(\) => \{[\s\S]*?acquireMobileResultsScrollLock\(\)/,
+  );
+  assert.match(
+    source,
+    /openingScrollPositionRef\.current = \{ x: window\.scrollX, y: window\.scrollY \}/,
+  );
   const closeHelper = source.slice(
     source.indexOf("const closeDrawer"),
     source.indexOf("useLayoutEffect", source.indexOf("const closeDrawer")),
   );
-  const releaseIndex = closeHelper.indexOf("scrollLockReleaseRef.current?.({ restoreScroll: false })");
+  const releaseIndex = closeHelper.indexOf(
+    "scrollLockReleaseRef.current?.({ restoreScroll: false })",
+  );
   const firstFrameIndex = closeHelper.indexOf("requestAnimationFrame");
-  const correctionIndex = closeHelper.indexOf("correctUnderlyingResultsScroll()", firstFrameIndex);
+  const correctionIndex = closeHelper.indexOf(
+    "correctUnderlyingResultsScroll()",
+    firstFrameIndex,
+  );
   const closingIndex = closeHelper.indexOf("setIsClosing(true)");
   const timerIndex = closeHelper.indexOf("window.setTimeout(finishClose, 200)");
   assert.ok(releaseIndex >= 0 && releaseIndex < firstFrameIndex);
-  assert.ok(firstFrameIndex < correctionIndex && correctionIndex < closingIndex);
+  assert.ok(
+    firstFrameIndex < correctionIndex && correctionIndex < closingIndex,
+  );
   assert.ok(closingIndex < timerIndex);
   assert.equal(closeHelper.match(/restoreScroll: false/g)?.length, 1);
-  assert.match(closeHelper, /requestAnimationFrame\([\s\S]*?requestAnimationFrame\([\s\S]*?requestAnimationFrame\([\s\S]*?setIsClosing\(true\)/);
-  assert.match(source, /scrollLockReleaseRef\.current\?\.\(\{ restoreScroll: true \}\)/);
+  assert.match(
+    closeHelper,
+    /requestAnimationFrame\([\s\S]*?requestAnimationFrame\([\s\S]*?requestAnimationFrame\([\s\S]*?setIsClosing\(true\)/,
+  );
+  assert.match(
+    source,
+    /scrollLockReleaseRef\.current\?\.\(\{ restoreScroll: true \}\)/,
+  );
   assert.match(source, /isPreparingCloseRef\.current/);
   assert.doesNotMatch(source, /position: "fixed"/);
   assert.match(source, /window\.scrollTo\(\{[\s\S]*?behavior: "auto"/);
@@ -94,6 +113,52 @@ test("Results flight fields use compact grouped rows", () => {
   assert.match(source, /min-h-\[60px\]/);
   assert.match(source, /rounded-\[14px\].*border border-slate-200/);
   assert.doesNotMatch(source, /min-h-\[70px\]/);
+});
+
+test("Results mode connects all non-multi-city fields while preserving route swap geometry", () => {
+  assert.match(source, /resultsMode\?: boolean/);
+  assert.match(source, /resultsMode = false/);
+  const groupStart = source.indexOf("data-flight-results-edit-fields");
+  const groupEnd = source.indexOf(
+    "</div>",
+    source.indexOf('data-mobile-field="travelers"', groupStart),
+  );
+  const group = source.slice(groupStart, groupEnd);
+  assert.match(
+    group,
+    /min-w-0 overflow-hidden rounded-\[14px\] border border-slate-200 bg-white/,
+  );
+  const fields = ["origin", "destination", "dates", "travelers"].map((field) =>
+    group.indexOf(`data-mobile-field="${field}"`),
+  );
+  assert.ok(fields.every((index) => index >= 0));
+  assert.deepEqual(
+    fields,
+    [...fields].sort((a, b) => a - b),
+  );
+  const routeStart = group.indexOf("data-mobile-route-fields");
+  const routeEnd = group.indexOf("</div>", routeStart);
+  const route = group.slice(routeStart, routeEnd);
+  assert.match(
+    route,
+    /data-mobile-field="origin"[\s\S]*data-mobile-swap-control[\s\S]*data-mobile-field="destination"/,
+  );
+  assert.match(
+    route,
+    /left-1\/2 top-1\/2[\s\S]*-translate-x-1\/2 -translate-y-1\/2/,
+  );
+  assert.doesNotMatch(
+    route,
+    /data-mobile-field="dates"|data-mobile-field="travelers"/,
+  );
+  assert.match(
+    group,
+    /data-mobile-field="dates"[\s\S]*border-t border-slate-200[\s\S]*data-mobile-field="travelers"/,
+  );
+});
+
+test("Results airport pickers opt in without changing the shared default flow", () => {
+  assert.equal(source.match(/commitOnSelect=\{resultsMode\}/g)?.length, 2);
 });
 
 test("shared editor uses canonical mobile pickers and multi-city editor", () => {
