@@ -6,6 +6,10 @@ const source = readFileSync(
   new URL("./CarsResultsClient.tsx", import.meta.url),
   "utf8",
 );
+const hotelSource = readFileSync(
+  new URL("../search/HotelSearchBar.tsx", import.meta.url),
+  "utf8",
+);
 const summary = source.slice(
   source.indexOf("const renderMobileControlsRow"),
   source.indexOf("const renderCarsSearchForm"),
@@ -19,8 +23,32 @@ test("normal Cars mobile summary preserves Cars content and its actual Edit Sear
   assert.match(summary, /locationPairSummary/);
   assert.match(summary, /rentalDateSummary/);
   assert.match(summary, /driverAgeSummary/);
-  assert.match(summary, /openMobileSearchDrawer\(event\.currentTarget\)/);
-  assert.match(summary, /SquarePen size=\{15\} strokeWidth=\{2\.2\}/);
+  assert.match(
+    summary,
+    /openMobileSearchDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)/,
+  );
+  assert.match(summary, /<PencilLine size=\{16\} strokeWidth=\{2\.1\} \/>/);
+  assert.match(
+    summary,
+    /inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-\[#004BB8\]\/12 bg-\[#004BB8\]\/8 text-\[#004BB8\] shadow-\[inset_0_1px_0_rgba\(255,255,255,0\.8\)\]/,
+  );
+  assert.match(summary, /aria-hidden="true"/);
+  assert.doesNotMatch(summary, /<SquarePen|<Pencil size=\{18\}/);
+});
+
+test("normal Cars summary pins the current Hotel edit affordance contract", () => {
+  for (const contract of [
+    /<PencilLine size=\{16\} strokeWidth=\{2\.1\} \/>/,
+    /h-8 w-8/,
+    /rounded-md/,
+    /border-\[#004BB8\]\/12/,
+    /bg-\[#004BB8\]\/8/,
+    /text-\[#004BB8\]/,
+    /shadow-\[inset_0_1px_0_rgba\(255,255,255,0\.8\)\]/,
+  ]) {
+    assert.match(summary, contract);
+    assert.match(hotelSource, contract);
+  }
 });
 
 test("normal Cars summary uses the Flights mobile presentation and remains mobile-only", () => {

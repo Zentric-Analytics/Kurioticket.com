@@ -39,14 +39,18 @@ test("compact toolbar opens the existing filter drawer without duplicate state",
   assert.doesNotMatch(source, /mobileStickyFiltersOpen|stickySelectedFilters/);
 });
 
-test("SquarePen remains exclusive to the normal summary instead of the compact toolbar", () => {
+test("Hotel-style PencilLine remains exclusive to the normal summary", () => {
   const normalControls = source.slice(
     source.indexOf("const renderMobileControlsRow"),
     source.indexOf("const renderCarsSearchForm"),
   );
   assert.match(normalControls, /locationPairSummary/);
-  assert.match(normalControls, /SquarePen/);
-  assert.doesNotMatch(toolbar, /SquarePen|rentalDateSummary|driverAgeSummary/);
+  assert.match(normalControls, /PencilLine/);
+  assert.match(toolbar, /data-cars-compact-edit-icon[\s\S]*aria-hidden="true"/);
+  assert.doesNotMatch(
+    toolbar,
+    /PencilLine|SquarePen|rounded[^\n]*data-cars-compact-edit-icon|rentalDateSummary|driverAgeSummary/,
+  );
   assert.match(source, /mobileSearchSummarySentinelRef/);
   assert.match(source, /mobileCompactHeaderVisible/);
 });
