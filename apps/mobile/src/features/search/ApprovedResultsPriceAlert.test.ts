@@ -5,6 +5,11 @@ import fs from "node:fs";
 const source = fs.readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
 const flightAlert = source.slice(source.indexOf("function PriceAlert"), source.indexOf("export function BottomNav"));
 
+test("Flight Results price alert maps its existing weights to Inter faces", () => {
+  assert.match(source, /flightAlertTitle: \{ fontSize: 15, lineHeight: 19, fontWeight: "900", fontFamily: appFonts\.black \}/);
+  assert.match(source, /flightAlertSubtitle: \{ fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts\.medium \}/);
+});
+
 test("Flight Results toggle manages alerts in place rather than opening Price Alerts", () => {
   assert.doesNotMatch(flightAlert.slice(0, flightAlert.indexOf("if (flight)")), /push\("\/price-alerts"\)/);
   assert.match(flightAlert, /updatePriceAlertStatus\(matchingAlert\.id, "ACTIVE"\)/);

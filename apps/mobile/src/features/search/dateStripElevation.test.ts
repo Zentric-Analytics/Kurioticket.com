@@ -30,6 +30,9 @@ test("flight results order uppercase date, uppercase weekday, then fare", () => 
   assert.match(dateLabel, /fontSize: 12[\s\S]*?fontWeight: "700"/);
   assert.match(weekday, /fontSize: 10[\s\S]*?fontWeight: "600"/);
   assert.match(priceLabel, /fontSize: 11[\s\S]*?fontWeight: "600"/);
+  assert.match(dateLabel, /fontFamily: appFonts\.bold/);
+  assert.match(weekday, /fontFamily: appFonts\.semibold/);
+  assert.match(priceLabel, /fontFamily: appFonts\.semibold/);
 });
 
 test("missing fares use a truthful neutral row and dates remain pressable", () => {
