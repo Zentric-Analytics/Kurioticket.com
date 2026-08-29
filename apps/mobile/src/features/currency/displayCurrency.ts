@@ -2,11 +2,11 @@ import { supportedRegions } from "../../../../../src/lib/region/supportedRegions
 
 export type ExchangeRates = Record<string, number>;
 
-const fallbackCurrencyLabels: Readonly<Record<string, string>> = {
+const canonicalCurrencySymbols: Readonly<Record<string, string>> = {
   NGN: "₦",
-  USD: "US$",
-  CAD: "CA$",
-  AUD: "A$",
+  USD: "$",
+  CAD: "$",
+  AUD: "$",
   GBP: "£",
   EUR: "€",
 };
@@ -118,54 +118,51 @@ export function convertAmount(
 
 export function formatCurrency(amount: number, currency: string) {
   const normalizedCurrency = currency.toUpperCase();
-  try {
-    const canonicalLabel = fallbackCurrencyLabels[normalizedCurrency];
-    if (canonicalLabel) {
-      // Product currency labels are presentation contracts, not locale hints.
-      // Use Intl only for numeric grouping so differing CLDR data cannot replace
-      // established labels (for example, returning "NGN" instead of "₦").
-      const number = new Intl.NumberFormat("en-US", {
-        maximumFractionDigits: 0,
-      }).format(Math.abs(amount));
-      const sign = amount < 0 ? "-" : "";
-      return `${sign}${canonicalLabel}${number}`;
-    }
+  const number = formatCurrencyNumber(amount);
+  const sign = amount < 0 ? "-" : "";
+  const symbol = canonicalCurrencySymbols[normalizedCurrency]
+    ?? resolveIntlCurrencySymbol(normalizedCurrency);
 
+  return symbol
+    ? `${sign}${symbol}${number}`
+    : `${sign}${number} ${normalizedCurrency}`;
+}
+
+function formatCurrencyNumber(amount: number) {
+  try {
+    return new Intl.NumberFormat("en-US", {
+      maximumFractionDigits: 0,
+    }).format(Math.abs(amount));
+  } catch {
+    return Number.isFinite(amount) ? Math.round(Math.abs(amount)).toString() : String(Math.abs(amount));
+  }
+}
+
+function resolveIntlCurrencySymbol(currency: string) {
+  try {
     const formatter = new Intl.NumberFormat(undefined, {
       style: "currency",
-      currency: normalizedCurrency,
+      currency,
       currencyDisplay: "narrowSymbol",
       maximumFractionDigits: 0,
     });
     const formatToParts = formatter.formatToParts;
+    if (typeof formatToParts !== "function") return null;
 
-    if (typeof formatToParts === "function") {
-      try {
-        const parts = formatToParts.call(formatter, amount);
-        const narrowSymbol = Array.isArray(parts)
-          ? parts.find(({ type }) => type === "currency")?.value
-          : undefined;
-        const hasNumericPart = Array.isArray(parts)
-          && parts.some(({ type }) => type === "integer" || type === "fraction");
-
-        if (narrowSymbol && hasNumericPart) return parts.map(({ value }) => value).join("");
-      } catch {
-        // Some Hermes versions expose formatToParts but cannot execute it.
-      }
+    try {
+      const parts = formatToParts.call(formatter, 0);
+      if (!Array.isArray(parts)) return null;
+      const currencyToken = parts.find(({ type }) => type === "currency")?.value?.trim();
+      const hasNumericPart = parts.some(({ type }) => type === "integer" || type === "fraction");
+      if (!currencyToken || !hasNumericPart) return null;
+      if (currencyToken.includes("$")) return "$";
+      return /[A-Za-z]/.test(currencyToken) ? null : currencyToken;
+    } catch {
+      // Some Hermes versions expose formatToParts but cannot execute it.
+      return null;
     }
-
-    // Hermes can format a currency while omitting formatToParts, but may emit
-    // an ISO code instead of the requested narrow symbol. Format the number
-    // independently so the established fare labels do not depend on CLDR
-    // symbol support or on the locale's currency position.
-    const number = new Intl.NumberFormat("en-US", {
-      maximumFractionDigits: 0,
-    }).format(Math.abs(amount));
-    const sign = amount < 0 ? "-" : "";
-    return `${sign}${normalizedCurrency} ${number}`;
   } catch {
-    const readableAmount = Number.isFinite(amount) ? Math.round(amount).toString() : String(amount);
-    return `${normalizedCurrency} ${readableAmount}`;
+    return null;
   }
 }
 

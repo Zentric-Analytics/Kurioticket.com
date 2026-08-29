@@ -20,8 +20,13 @@ for (const [vertical, file, skeleton] of [
   });
 }
 
-test("Flight pagination defers URL commit and prevents Next scrolling", () => {
+test("Flight pagination defers local commit and mirrors URL without Next navigation", () => {
   const source = read("FlightResultsClient.tsx");
-  assert.match(source, /await scrollToResultsAndWait[\s\S]*router\.push[\s\S]*scroll: false/);
+  const start = source.indexOf("const changeResultsPage");
+  const end = source.indexOf("useEffect", start);
+  const pagination = source.slice(start, end);
+  assert.match(pagination, /await scrollToResultsAndWait[\s\S]*setStandaloneResultsPage\(page\)/);
+  assert.match(pagination, /window\.history\.replaceState/);
+  assert.doesNotMatch(pagination, /router\.push/);
   assert.match(source, /paginationPendingPage !== validResultsPage/);
 });
