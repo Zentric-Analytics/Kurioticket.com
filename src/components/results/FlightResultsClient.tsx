@@ -99,9 +99,11 @@ import {
 import {
   buildFlightPaginationItems,
   clampFlightResultsPage,
+  FLIGHT_RESULTS_PAGE_SIZE,
   getFlightResultsPageCount,
   paginateFlightResults,
 } from "@/lib/flights/flightResultsPagination";
+import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
 import { isFlightResultsPreparing } from "@/components/results/flightResultsReadiness";
 import {
   readSavedItemIds,
@@ -4371,6 +4373,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     () => paginateFlightResults(sortedResults, validResultsPage),
     [sortedResults, validResultsPage],
   );
+  const resultsDisplayRange = getResultsDisplayRange({
+    currentPage: validResultsPage,
+    pageSize: FLIGHT_RESULTS_PAGE_SIZE,
+    totalResults: sortedResults.length,
+  });
 
   useLayoutEffect(() => {
     if (!body?.departureDate || nearbyFares.length === 0) return;
@@ -7087,9 +7094,19 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               ) : null}
 
               <div className="hidden w-full items-center justify-between gap-4 pt-2 sm:flex lg:bg-transparent lg:px-0 lg:pb-0.5">
-                <p className="text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">
-                  {formatResultsFound(sortedResults.length, t)}
-                </p>
+                <div>
+                  <p className="text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">
+                    {formatResultsFound(sortedResults.length, t)}
+                  </p>
+                  {resultsDisplayRange ? (
+                    <p
+                      aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${sortedResults.length}`}
+                      className="mt-0.5 text-xs font-medium leading-4 text-slate-500"
+                    >
+                      {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
+                    </p>
+                  ) : null}
+                </div>
 
                 <div
                   ref={desktopSortRef}
@@ -7190,9 +7207,19 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 </div>
               ) : sortedResults.length ? (
                 <>
-                  <p className="mb-3 text-[16px] font-semibold leading-6 tracking-[-0.01em] text-slate-900 sm:hidden">
-                    {formatResultsFound(sortedResults.length, t)}
-                  </p>
+                  <div className="mb-3 sm:hidden">
+                    <p className="text-[16px] font-semibold leading-6 tracking-[-0.01em] text-slate-900">
+                      {formatResultsFound(sortedResults.length, t)}
+                    </p>
+                    {resultsDisplayRange ? (
+                      <p
+                        aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${sortedResults.length}`}
+                        className="mt-0.5 text-xs font-medium leading-4 text-slate-500"
+                      >
+                        {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
+                      </p>
+                    ) : null}
+                  </div>
                   {visibleResults.map((flight, index) => {
                     const detailsQuery = params.toString();
                     const detailsHref =

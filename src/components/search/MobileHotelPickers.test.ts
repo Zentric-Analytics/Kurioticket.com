@@ -119,16 +119,13 @@ test("compact Hotel guest density is scoped to approved mobile integrations", ()
   assert.doesNotMatch(standalone, /density="compact"/);
 });
 
-test("Hotel results edit flow uses compact guest spacing and inset row dividers", () => {
+test("Hotel results edit flow uses compact guest spacing and structural row dividers", () => {
   assert.match(
     standalone,
     /mobileResultsSheet \? "py-4" : "py-6"/,
   );
-  assert.equal(
-    standalone.match(/after:inset-x-4 after:bottom-0 after:h-px after:bg-slate-200\/80/g)?.length,
-    2,
-    "Destination and Travel dates receive the two requested inset dividers",
-  );
+  assert.match(standalone, /mobileResultsSheet && mobileResultsEditGroupClass/);
+  assert.doesNotMatch(standalone, /after:inset-x-4 after:bottom-0/);
 });
 
 test("both mobile Hotel picker shells use the dedicated Guests & Rooms title", () => {

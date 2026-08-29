@@ -14,7 +14,7 @@ const sheet = readFileSync(
 test("results Hotel editor uses compact grouped picker rows", () => {
   assert.match(
     searchBar,
-    /mobileResultsSheet && "min-h-\[68px\][^"]*hover:bg-slate-50\/70/,
+    /mobileResultsSheet && "min-h-\[60px\][^"]*hover:bg-slate-50\/70/,
   );
   assert.match(
     searchBar,
@@ -22,8 +22,9 @@ test("results Hotel editor uses compact grouped picker rows", () => {
   );
   assert.match(
     searchBar,
-    /rounded-\[14px\] border border-slate-200 bg-white divide-y divide-slate-200/,
+    /mobileResultsSheet && mobileResultsEditGroupClass/,
   );
+  assert.doesNotMatch(searchBar, /after:inset-x-4 after:bottom-0/);
   assert.match(searchBar, /mobileLandingPresentation \|\| mobileResultsSheet/);
   assert.match(
     searchBar,

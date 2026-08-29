@@ -42,9 +42,11 @@ import { CarResultCard } from "@/components/results/CarResultCard";
 import { CarCardSkeleton } from "@/components/ui/Skeleton";
 import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion, scrollToResultsAndWait } from "@/lib/results/paginationTransition";
 import {
+  CAR_RESULTS_PAGE_SIZE,
   getCarPaginationItems,
   paginateCarResults,
 } from "@/lib/cars/carResultsPagination";
+import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
 import {
   assignCarBadges,
   buildCarDetailsHref,
@@ -1913,6 +1915,13 @@ export function CarsResultsExperience({
     [currentPage, guidedPlanning, visibleResults],
   );
   const pageResults = guidedPlanning ? visibleResults : pagination.pageResults;
+  const resultsDisplayRange = guidedPlanning
+    ? null
+    : getResultsDisplayRange({
+        currentPage: pagination.currentPage,
+        pageSize: CAR_RESULTS_PAGE_SIZE,
+        totalResults: visibleResults.length,
+      });
 
   useEffect(() => {
     if (guidedPlanning) return undefined;
@@ -2406,24 +2415,34 @@ export function CarsResultsExperience({
                   className="flex w-full min-w-0 flex-nowrap items-center justify-between gap-2"
                   data-cars-results-summary-row
                 >
-                  <h2
-                    ref={resultHeadingRef}
-                    id={resultHeadingId}
-                    tabIndex={-1}
-                    className="min-w-0 flex-1 truncate whitespace-nowrap text-[16px] font-bold leading-6 tracking-[-0.005em] text-[#07133B] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-[17px]"
-                  >
-                    {resultHeading ??
-                      t(
-                        visibleResults.length === 1
-                          ? "resultFound"
-                          : "resultsFound",
-                      ).replace(
-                        "{{count}}",
-                        new Intl.NumberFormat(intlLocale, {
-                          maximumFractionDigits: 0,
-                        }).format(visibleResults.length),
-                      )}
-                  </h2>
+                  <div className="min-w-0 flex-1">
+                    <h2
+                      ref={resultHeadingRef}
+                      id={resultHeadingId}
+                      tabIndex={-1}
+                      className="truncate whitespace-nowrap text-[16px] font-bold leading-6 tracking-[-0.005em] text-[#07133B] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-[17px]"
+                    >
+                      {resultHeading ??
+                        t(
+                          visibleResults.length === 1
+                            ? "resultFound"
+                            : "resultsFound",
+                        ).replace(
+                          "{{count}}",
+                          new Intl.NumberFormat(intlLocale, {
+                            maximumFractionDigits: 0,
+                          }).format(visibleResults.length),
+                        )}
+                    </h2>
+                    {resultsDisplayRange ? (
+                      <p
+                        aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${visibleResults.length}`}
+                        className="mt-0.5 text-xs font-medium leading-4 text-slate-500"
+                      >
+                        {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
+                      </p>
+                    ) : null}
+                  </div>
                   <div className="flex min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
                     <span className="shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm">
                       {t("carsResults.sortBy")}:

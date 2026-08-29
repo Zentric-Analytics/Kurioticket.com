@@ -12,11 +12,12 @@ type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> & {
   label: string;
   value: string;
   icon?: LucideIcon;
+  showChevron?: boolean;
 };
 
 export const MobileResultsEditRow = forwardRef<HTMLButtonElement, Props>(
   function MobileResultsEditRow(
-    { label, value, icon: Icon, className, ...props },
+    { label, value, icon: Icon, showChevron = true, className, ...props },
     ref,
   ) {
     return (
@@ -46,7 +47,11 @@ export const MobileResultsEditRow = forwardRef<HTMLButtonElement, Props>(
             {value}
           </span>
         </span>
-        <ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" />
+        {showChevron ? (
+          <ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" />
+        ) : (
+          <span aria-hidden="true" />
+        )}
       </button>
     );
   },
