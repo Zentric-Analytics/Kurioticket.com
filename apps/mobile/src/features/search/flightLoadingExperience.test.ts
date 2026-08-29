@@ -94,10 +94,13 @@ test("journey skeleton separates labels, primary route, and stop rows", () => {
 });
 
 test("fare and metadata skeletons follow the final full-width hierarchy", () => {
-  assert.match(skeletonStyles, /skeletonFareRow: \{ width: "100%", paddingTop: 10, flexDirection: "row", justifyContent: "flex-end", alignItems: "center" \}/);
+  assert.match(skeletonStyles, /skeletonFareRow: \{ width: "100%", paddingTop: 10, flexDirection: "row", justifyContent: "flex-end" \}/);
   assert.match(skeletonStyles, /skeletonPriceLine: \{ width: 100, height: 16 \}/);
+  assert.match(skeletonStyles, /skeletonEstimatedPriceLine: \{ width: 54, height: 7, marginTop: 3 \}/);
+  assert.match(skeletonStyles, /skeletonProviderPriceLine: \{ width: 82, height: 8, marginTop: 2 \}/);
+  assert.match(skeletonStyles, /skeletonFareCopy: \{ alignItems: "flex-end" \}/);
   assert.doesNotMatch(skeletonStyles, /skeletonPrice:|width: 52/);
-  assert.match(flightSkeleton, /skeletonFareRow[\s\S]*?skeletonPriceLine[\s\S]*?skeletonMetadataDivider[\s\S]*?backgroundColor: theme\.border[\s\S]*?skeletonMetadataRow[\s\S]*?skeletonMetadataLine/);
+  assert.match(flightSkeleton, /skeletonFareRow[\s\S]*?skeletonFareCopy[\s\S]*?skeletonPriceLine[\s\S]*?skeletonEstimatedPriceLine[\s\S]*?skeletonProviderPriceLine[\s\S]*?skeletonMetadataDivider[\s\S]*?backgroundColor: theme\.border[\s\S]*?skeletonMetadataRow[\s\S]*?skeletonMetadataLine/);
   assert.match(skeletonStyles, /skeletonMetadataDivider: \{ width: "100%", height: StyleSheet\.hairlineWidth, marginTop: 6, marginBottom: 4 \}/);
   assert.match(skeletonStyles, /skeletonMetadataRow: \{ width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start" \}/);
   assert.doesNotMatch(screen, /skeletonMetadataItem|skeletonMetadataIcon|skeletonMetadataLineShort|skeletonPriceCaption/);

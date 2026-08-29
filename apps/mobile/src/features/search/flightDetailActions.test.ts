@@ -64,12 +64,12 @@ test("Flight Results and Flight Details booking body remain structurally unchang
   assert.match(flightDetail, /authoritativeProviderUrl\(result\)/);
 });
 
-test("Flight Details explains total price basis without changing result cards", () => {
+test("Flight Details explains total price basis without leaking its summary into result cards", () => {
   assert.match(flightDetail, /const priceBasis = flightPriceBasis\(params, fare\)/);
   assert.match(flightDetail, />\{priceBasis\.summary\}<\/Text>/);
   assert.match(flightDetail, /priceBasis\.providerFareText \?/);
   assert.match(flightDetail, /Final price is confirmed by \{provider\} before booking\./);
   assert.doesNotMatch(flightDetail.toLowerCase(), /per traveler|price breakdown|base fare card|tax card/);
-  assert.doesNotMatch(resultsSource, /flightPriceBasis|priceBasis\.summary/);
+  assert.doesNotMatch(resultsSource, /flightPriceBasis\(|priceBasis\.summary/);
   assert.match(flightDetail, /accessibilityLabel="Share flight"/);
 });
