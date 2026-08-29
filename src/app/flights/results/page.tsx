@@ -4,7 +4,6 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { AppHeader } from "@/components/layout/AppHeader";
-import { Footer } from "@/components/layout/Footer";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { FlightResultsClient } from "@/components/results/FlightResultsClient";
 import { getTranslations } from "@/lib/i18n";
@@ -139,7 +138,6 @@ export default async function FlightResultsPage({
         }
       >
         <FlightResultsClient />
-        <Footer variant="brand-legal-only" />
       </Suspense>
     </>
   );

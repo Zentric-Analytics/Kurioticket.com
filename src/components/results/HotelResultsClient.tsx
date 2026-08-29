@@ -31,6 +31,7 @@ import {
 
 import type { PublicHotelResult } from "@/lib/types";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
+import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/Button";
 import { HotelCardSkeleton } from "@/components/ui/Skeleton";
 import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion, scrollToResultsAndWait } from "@/lib/results/paginationTransition";
@@ -1949,6 +1950,7 @@ export function HotelResultsExperience({
   const ResultsRoot = guided ? "div" : "main";
 
   return (
+    <>
     <ResultsRoot
       className={guided ? "mt-6 min-w-0" : "flex-1 overflow-x-clip bg-[#f6f8fb] pb-8"}
       {...(guided && !error ? { role: "region", "aria-labelledby": "deals-guided-hotel-results-heading" } : {})}
@@ -1988,11 +1990,13 @@ export function HotelResultsExperience({
         <div
           className={cn(
             "fixed inset-x-0 top-0 z-[900] px-2 pt-[env(safe-area-inset-top)] transition-all duration-200 sm:hidden",
-            showMobileCompactHotelSearch && !mobileHotelSearchOpen
+            showMobileCompactHotelSearch
               ? "translate-y-0 opacity-100"
               : "pointer-events-none -translate-y-2 opacity-0",
+            mobileHotelSearchOpen && "pointer-events-none",
           )}
           aria-hidden={!showMobileCompactHotelSearch || mobileHotelSearchOpen}
+          inert={mobileHotelSearchOpen || !showMobileCompactHotelSearch}
         >
           <div className="grid h-14 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center border-b border-slate-200 bg-white px-1 shadow-sm">
             <button
@@ -2560,6 +2564,8 @@ export function HotelResultsExperience({
         </div>
       </aside>
     </ResultsRoot>
+    {!guided ? <Footer variant="brand-legal-only" /> : null}
+    </>
   );
 }
 

@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { cookies } from "next/headers";
 
 import { AppHeader } from "@/components/layout/AppHeader";
-import { Footer } from "@/components/layout/Footer";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { CarsResultsClient } from "@/components/results/CarsResultsClient";
 import type { CarSearchParams } from "@/lib/cars/types";
@@ -103,7 +102,6 @@ export default async function CarsResultsPage({
         }
       >
         <CarsResultsContent values={values} searchIdentity={searchIdentity} />
-        <Footer variant="brand-legal-only" />
       </Suspense>
     </>
   );
