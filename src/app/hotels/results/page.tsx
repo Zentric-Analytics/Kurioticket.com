@@ -27,10 +27,18 @@ export default function HotelResultsPage() {
         hideDesktopTravelNav
         hideMobileCategoryTabs
       />
-      <Suspense fallback={<main className="page-shell flex-1 py-6"><div className="rounded-3xl border border-indigo-100 bg-white p-5 text-sm font-semibold text-violet-700 shadow-sm"><LocalizedLoadingLabel labelKey="loadingHotelSearch" /></div></main>}>
+      <Suspense
+        fallback={
+          <main className="page-shell min-h-[calc(100svh-5rem)] flex-1 py-6">
+            <div className="rounded-3xl border border-indigo-100 bg-white p-5 text-sm font-semibold text-violet-700 shadow-sm">
+              <LocalizedLoadingLabel labelKey="loadingHotelSearch" />
+            </div>
+          </main>
+        }
+      >
         <HotelResultsClient />
+        <Footer variant="brand-legal-only" />
       </Suspense>
-      <Footer variant="brand-legal-only" />
     </>
   );
 }

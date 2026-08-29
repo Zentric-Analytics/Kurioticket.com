@@ -43,3 +43,37 @@ test("summary sentinel remains a non-visual one-pixel sticky threshold", () => {
   );
   assert.match(source, /setMobileCompactHeaderVisible/);
 });
+
+test("compact Cars header keeps one accessible center control with an inward-facing inline Pencil", () => {
+  const compactStart = source.indexOf("const renderMobileCompactResultsHeader");
+  const compactHeader = source.slice(
+    compactStart,
+    source.indexOf("return (", compactStart + 2500),
+  );
+  const centerLabelIndex = compactHeader.indexOf(
+    "aria-label={modifySearchLabel}",
+  );
+  const centerButton = compactHeader.slice(
+    compactHeader.lastIndexOf("<button", centerLabelIndex),
+    compactHeader.indexOf("</button>", centerLabelIndex) + "</button>".length,
+  );
+
+  assert.match(compactHeader, /grid-cols-\[44px_minmax\(0,1fr\)_82px\]/);
+  assert.match(compactHeader, /<ArrowLeft[^>]*aria-hidden="true"/);
+  assert.match(compactHeader, /aria-label=\{modifySearchLabel\}/);
+  assert.match(compactHeader, /text-\[15px\] font-bold/);
+  assert.match(
+    compactHeader,
+    /<span>\{t\("deals\.results\.modifySearch"\)\}<\/span>[\s\S]*?<Pencil/,
+  );
+  assert.match(compactHeader, /data-cars-compact-edit-icon/);
+  assert.match(compactHeader, /className="h-3 w-3 shrink-0 text-\[#536B92\]"/);
+  assert.equal(centerButton.match(/<button/g)?.length, 1);
+  assert.match(centerButton, /data-cars-compact-edit-icon/);
+  assert.doesNotMatch(
+    centerButton,
+    /SquarePen|rounded[^\n]*data-cars-compact-edit-icon/,
+  );
+  assert.match(compactHeader, /openFiltersWithCount/);
+  assert.match(compactHeader, /<SlidersHorizontal/);
+});

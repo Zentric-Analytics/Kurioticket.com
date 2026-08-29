@@ -139,8 +139,8 @@ export default async function FlightResultsPage({
         }
       >
         <FlightResultsClient />
+        <Footer variant="brand-legal-only" />
       </Suspense>
-      <Footer variant="brand-legal-only" />
     </>
   );
 }
@@ -153,12 +153,12 @@ function ResultsFallback({
   description: string;
 }) {
   return (
-    <main className="min-h-[100svh] bg-white">
+    <main className="min-h-[calc(100svh-5rem)] bg-white">
       <BrandedLoading
         variant="fullscreen"
         visual="logoPulse"
         showProgress={false}
-        className="min-h-[100svh] bg-transparent px-5"
+        className="min-h-[calc(100svh-5rem)] bg-transparent px-5"
         contentClassName="max-w-md text-center"
         title={title}
         description={description}
