@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { cookies } from "next/headers";
 
 import { AppHeader } from "@/components/layout/AppHeader";
-import { Footer } from "@/components/layout/Footer";
 import { HotelResultsClient } from "@/components/results/HotelResultsClient";
 import { LocalizedLoadingLabel } from "@/components/layout/LocalizedLoadingLabel";
 import { getTranslations } from "@/lib/i18n";
@@ -37,7 +36,6 @@ export default function HotelResultsPage() {
         }
       >
         <HotelResultsClient />
-        <Footer variant="brand-legal-only" />
       </Suspense>
     </>
   );

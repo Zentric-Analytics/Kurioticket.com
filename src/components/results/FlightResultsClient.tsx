@@ -47,6 +47,7 @@ import {
 
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
+import { Footer } from "@/components/layout/Footer";
 import { FlightCard } from "@/components/results/FlightCard";
 import { DesktopFlightFilters } from "@/components/results/DesktopFlightFilters";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
@@ -6732,6 +6733,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   );
 
   return (
+    <>
     <main className="flex-1 bg-[#F3F6FA] pb-8">
       {renderMobileCompactResultsHeader()}
       <section
@@ -7434,6 +7436,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         </div>
       </aside>
     </main>
+    <Footer variant="brand-legal-only" />
+    </>
   );
 }
 

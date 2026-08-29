@@ -35,6 +35,7 @@ import {
 
 import { Button } from "@/components/ui/Button";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
+import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
@@ -1460,6 +1461,7 @@ export function CarsResultsClient({
   }
 
   return (
+    <>
     <main className="flex-1 bg-[#f6f8fb] pb-8">
       <section
         className={cn(
@@ -1778,6 +1780,8 @@ export function CarsResultsClient({
         />
       </div>
     </main>
+    <Footer variant="brand-legal-only" />
+    </>
   );
 }
 
