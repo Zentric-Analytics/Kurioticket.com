@@ -39,11 +39,7 @@ export const ui = {
 export const money = (currency?: string, amount?: number) =>
   amount == null
     ? ""
-    : new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: currency || "USD",
-        maximumFractionDigits: 0,
-      }).format(amount);
+    : formatCurrency(amount, currency || "USD");
 export const shortDate = (v?: string) =>
   v
     ? new Date(`${v}T12:00:00`).toLocaleDateString("en-US", {

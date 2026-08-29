@@ -64,7 +64,7 @@ test("a new explicit USD preference replaces the passed NGN fare", () => {
   assert.deepEqual(createFlightDetailFare(67, "USD", "USD", {}), {
     amount: 67,
     currency: "USD",
-    formatted: "US$67",
+    formatted: "$67",
     accessibilityLabel: "67 US dollars",
     providerAmount: 67,
     providerCurrency: "USD",
