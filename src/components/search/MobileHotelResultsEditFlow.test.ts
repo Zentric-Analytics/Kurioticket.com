@@ -8,11 +8,12 @@ const search = read("./HotelSearchBar.tsx");
 const sheet = read("./MobileResultsEditSheet.tsx");
 const styles = read("../../app/globals.css");
 
-test("mobile hotel results fields are one divided card with only the required chevrons", () => {
+test("mobile hotel results fields are independent cards with only the required chevrons", () => {
   assert.match(
     search,
-    /rounded-\[14px\][^"\n]*border border-slate-200 bg-white divide-y divide-slate-200/,
+    /data-hotel-results-edit-fields=[\s\S]*?flex flex-col gap-2\.5/,
   );
+  assert.doesNotMatch(search, /mobileResultsEditGroupClass/);
   assert.match(
     search,
     /dateSummary[\s\S]*?mobileResultsSheet \? <ChevronRight aria-hidden="true"/,
