@@ -180,8 +180,16 @@ test("cards expose compact, functional save and share actions", () => {
   assert.match(source, /role="status"/);
   assert.match(source, /aria-live="polite"/);
   assert.match(actions, /h-8 w-8/);
-  assert.match(actions, /before:-inset-1/);
-  assert.match(actions, /gap-2/);
+  assert.match(actions, /gap-0\.5/);
+  assert.doesNotMatch(actions, /gap-2|before:-inset-1/);
+  assert.match(
+    actions,
+    /before:-inset-y-1\.5 before:-start-3 before:end-0/,
+  );
+  assert.match(
+    actions,
+    /before:-inset-y-1\.5 before:start-0 before:-end-3/,
+  );
   assert.equal((actions.match(/size=\{17\}/g) ?? []).length, 2);
   assert.doesNotMatch(actions, /h-11 w-11/);
   assert.match(mobileUtility, /min-h-8 min-w-0 items-center/);
