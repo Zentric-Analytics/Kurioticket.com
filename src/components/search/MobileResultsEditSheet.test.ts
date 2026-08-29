@@ -30,7 +30,12 @@ test("sheet owns internal focus but leaves launcher restoration to Results", () 
   assert.doesNotMatch(source, /launcherRef/);
   assert.doesNotMatch(source, /launcher\?\.focus/);
   assert.match(source, /acquireMobileResultsScrollLock\(\)/);
-  assert.match(source, /acquireMobileResultsOverlayCanvas\(\)/);
+  assert.match(source, /browserCanvasColor\?: string/);
+  assert.match(
+    source,
+    /acquireMobileResultsOverlayCanvas\(\{\s*canvasColor: browserCanvasColor,\s*\}\)/,
+  );
+  assert.match(source, /\[browserCanvasColor, open\]/);
   assert.doesNotMatch(source, /style\.position/);
   assert.doesNotMatch(source, /window\.scrollTo/);
   assert.match(source, /motion-reduce:transition-none/);

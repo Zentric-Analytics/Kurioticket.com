@@ -1568,6 +1568,7 @@ export function CarsResultsClient({
 
       <MobileResultsEditSheet
         open={mobileSearchOpen}
+        browserCanvasColor="#ffffff"
         title={t("carsResults.editSearch")}
         nestedLayerOpen={mobilePicker !== null}
         onClose={() => cancelMobileSearchDrawer()}
@@ -2739,7 +2740,7 @@ export function CarsResultsExperience({
           onClick={() => {
             window.scrollTo({ top: 0, left: 0, behavior: "auto" });
           }}
-          className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] end-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-[#004BB8] shadow-lg transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 sm:bottom-[calc(1rem+env(safe-area-inset-bottom))]"
+          className="fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] end-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-[#004BB8] shadow-lg transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 sm:bottom-[calc(1rem+env(safe-area-inset-bottom))]"
         >
           <ArrowUp className="h-5 w-5" aria-hidden="true" />
         </button>

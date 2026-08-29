@@ -24,6 +24,7 @@ type Props = {
   footer?: ReactNode;
   className?: string;
   contentClassName?: string;
+  browserCanvasColor?: string;
 };
 
 /** Presentation-only shell used by mobile search editors on Results pages. */
@@ -36,6 +37,7 @@ export function MobileResultsEditSheet({
   footer,
   className,
   contentClassName,
+  browserCanvasColor,
 }: Props) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -84,13 +86,15 @@ export function MobileResultsEditSheet({
 
   useLayoutEffect(() => {
     if (!open) return;
-    const releaseCanvas = acquireMobileResultsOverlayCanvas();
+    const releaseCanvas = acquireMobileResultsOverlayCanvas({
+      canvasColor: browserCanvasColor,
+    });
     const releaseScrollLock = acquireMobileResultsScrollLock();
     return () => {
       releaseScrollLock();
       releaseCanvas();
     };
-  }, [open]);
+  }, [browserCanvasColor, open]);
 
   if (!open || typeof document === "undefined") return null;
   return createPortal(
