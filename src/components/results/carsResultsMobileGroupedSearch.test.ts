@@ -37,7 +37,11 @@ test("dates, time, and driver age retain disclosure chevrons", () => {
   for (const name of ["SearchDateCell", "SearchTimeCell", "DriverAgeCell"]) {
     const start = source.indexOf(`function ${name}`);
     const next = source.indexOf("\nfunction ", start + 10);
-    assert.match(source.slice(start, next < 0 ? undefined : next), /<ChevronDown/);
+    const cell = source.slice(start, next < 0 ? undefined : next);
+    assert.match(
+      cell,
+      /<ChevronDown[\s\S]*?text-slate-500[\s\S]*?aria-hidden="true"/,
+    );
   }
 });
 
