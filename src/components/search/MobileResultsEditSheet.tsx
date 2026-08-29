@@ -37,7 +37,6 @@ export function MobileResultsEditSheet({
 }: Props) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
   const [entered, setEntered] = useState(false);
 
   const close = useCallback(() => {
@@ -50,7 +49,10 @@ export function MobileResultsEditSheet({
     if (!open) return;
     const frame = window.requestAnimationFrame(() => {
       setEntered(true);
-      closeRef.current?.focus({ preventScroll: true });
+      // Focus the dialog rather than a visible action. This establishes an
+      // accessible focus boundary without painting a focus-visible ring for a
+      // sheet that was opened by touch.
+      dialogRef.current?.focus({ preventScroll: true });
     });
     return () => window.cancelAnimationFrame(frame);
   }, [open]);
@@ -96,14 +98,15 @@ export function MobileResultsEditSheet({
       <div
         ref={dialogRef}
         role="dialog"
+        tabIndex={-1}
         aria-modal="true"
         aria-labelledby={titleId}
-        className={cn("flex max-h-[94dvh] min-h-0 w-full flex-col overflow-hidden rounded-t-[22px] bg-slate-50 shadow-[0_-12px_36px_rgba(15,23,42,0.18)] transition-transform duration-200 ease-out motion-reduce:transition-none", entered ? "translate-y-0" : "translate-y-full", className)}
+        className={cn("flex max-h-[94dvh] min-h-0 w-full flex-col overflow-hidden rounded-t-[22px] bg-slate-50 shadow-[0_-12px_36px_rgba(15,23,42,0.18)] outline-none transition-transform duration-200 ease-out motion-reduce:transition-none", entered ? "translate-y-0" : "translate-y-full", className)}
       >
         <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 pt-2">
           <div className="mx-auto flex min-h-11 w-full max-w-xl items-center justify-between gap-3">
             <h2 id={titleId} className="text-xl font-bold tracking-[-0.01em] text-slate-950">{title}</h2>
-            <button ref={closeRef} type="button" aria-label={`Close ${title.toLocaleLowerCase()}`} onClick={close} className="inline-flex h-11 w-11 items-center justify-center rounded-[10px] text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
+            <button type="button" aria-label={`Close ${title.toLocaleLowerCase()}`} onClick={close} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
               <X className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>

@@ -855,7 +855,10 @@ export function HotelSearchBar({
         ? cn(
             "min-h-[56px] px-3 py-2 sm:min-h-[54px] sm:px-3 sm:py-1.5 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
             mobileSearchOpen &&
-              "min-h-[60px] rounded-none border-0 px-4 py-2.5 shadow-none sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:px-3 sm:py-1.5 sm:shadow-none lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200",
+              cn(
+                "min-h-[60px] rounded-none border-0 px-4 py-2.5 shadow-none sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:px-3 sm:py-1.5 sm:shadow-none lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200",
+                mobileResultsSheet && "min-h-[68px] px-4 py-2.5 hover:bg-slate-50/70 focus-within:bg-blue-50/40",
+              ),
           )
         : "min-h-[54px] px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
   );
@@ -878,7 +881,10 @@ export function HotelSearchBar({
         ? cn(
             "text-[10px] leading-4 tracking-[0.08em] text-slate-600 sm:mb-1 sm:text-xs sm:tracking-wide sm:text-slate-600",
             mobileSearchOpen &&
-              "mb-1.5 text-[0.68rem] font-black tracking-[0.16em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600",
+              cn(
+                "mb-1.5 text-[0.68rem] font-black tracking-[0.16em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600",
+                mobileResultsSheet && "mb-0.5 normal-case text-[11px] font-semibold tracking-normal text-slate-500",
+              ),
           )
         : "mb-1 text-xs leading-4 tracking-wide text-slate-600",
   );
@@ -1101,7 +1107,7 @@ export function HotelSearchBar({
                     !mobileLandingPresentation && "justify-between pe-2",
                   )}
                 >
-                  {mobileLandingPresentation ? (
+                  {mobileLandingPresentation || mobileResultsSheet ? (
                     <span className="flex min-w-0 items-center gap-2">
                       <MapPin
                         aria-hidden="true"
@@ -1433,17 +1439,19 @@ export function HotelSearchBar({
                     aria-hidden="true"
                     className={cn(
                       "h-4 w-4 shrink-0 text-slate-500",
-                      !mobileLandingPresentation && "max-sm:hidden",
+                      !mobileLandingPresentation && !mobileResultsSheet && "max-sm:hidden",
                     )}
                   />
                   <span className="truncate">{guestsRoomsSummary}</span>
                 </span>
-                <ChevronDown
-                  size={16}
-                  className={`shrink-0 text-slate-500 transition-transform ${
-                    guestsRoomsOpen ? "rotate-180" : ""
-                  }`}
-                />
+                {!mobileResultsSheet ? (
+                  <ChevronDown
+                    size={16}
+                    className={`shrink-0 text-slate-500 transition-transform ${
+                      guestsRoomsOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                ) : null}
               </button>
               {guestsRoomsOpen ? (
                 <HotelDesktopPopover
@@ -1606,7 +1614,10 @@ export function HotelSearchBar({
                     ? cn(
                         "h-[54px] shadow-lg sm:min-h-[54px] lg:min-w-[112px] lg:rounded-s-none",
                         mobileSearchOpen &&
-                          "mt-3 h-12 rounded-[11px] text-[15px] sm:mt-0 sm:h-[54px] sm:rounded-xl lg:rounded-s-none",
+                          cn(
+                            "mt-3 h-12 rounded-[11px] text-[15px] sm:mt-0 sm:h-[54px] sm:rounded-xl lg:rounded-s-none",
+                            mobileResultsSheet && "mt-3 h-[52px] shadow-none active:bg-[#003f9c]",
+                          ),
                       )
                     : !isStickyDialog
                       ? "h-12 lg:min-h-[54px] lg:rounded-none"
