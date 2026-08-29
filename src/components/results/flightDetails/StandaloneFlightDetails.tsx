@@ -56,7 +56,6 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const [reloadToken, setReloadToken] = useState(0);
   const [activeTab, setActiveTab] = useState<FareTab>("deals");
   const [editSearchOpen, setEditSearchOpen] = useState(false);
-  const editSearchLauncherRef = useRef<HTMLButtonElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const fareRailRef = useRef<HTMLDivElement>(null);
   const fareButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -231,7 +230,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
                 <h1 ref={headingRef} id="flight-details-heading" tabIndex={-1} className="text-[22px] font-bold leading-tight tracking-[-0.025em] text-slate-950 outline-none sm:text-[26px]">{route}</h1>
                 <p className="mt-1.5 text-[13px] font-medium text-slate-600">{tripLine}</p>
               </div>
-              <button ref={editSearchLauncherRef} type="button" onClick={() => setEditSearchOpen(true)} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#075EE8] bg-white px-3 text-xs font-semibold text-[#075EE8] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 sm:hidden"><Pencil className="h-4 w-4" aria-hidden="true" /> Edit search</button>
+              <button type="button" onClick={() => setEditSearchOpen(true)} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#075EE8] bg-white px-3 text-xs font-semibold text-[#075EE8] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 sm:hidden"><Pencil className="h-4 w-4" aria-hidden="true" /> Edit search</button>
               <Link href={resultsHref} className="hidden min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#075EE8] bg-white px-4 text-sm font-semibold text-[#075EE8] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 sm:inline-flex"><Pencil className="h-4 w-4" aria-hidden="true" /> Edit search</Link>
             </div>
             <div className="mt-5 space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} departureDate={available.search.legs[index]?.departureDate ?? leg.departureTime.slice(0, 10)} locale={locale} offerAirlineName={flight.airlineName} offerAirlineLogo={flight.airlineLogo} />)}</div>
@@ -256,7 +255,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
           <TripSidebar tripType={available.search.tripType} legs={legs} route={route} date={date} tripLine={tripLine} travelers={travelers.label} travelerCount={travelers.count} selectedFare={selectedFare?.label || selectedOffer.cabinClass || ""} fareTerms={selectedFare?.distinguishingTerms ?? []} price={providerPrice} locale={locale} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={() => continueToOffer(selectedOffer.id)} error={error || notice} />
         </div>
       </div>
-      <FlightEditSearchDrawer open={editSearchOpen} presentation="bottom-sheet" launcherRef={editSearchLauncherRef} initialValue={{ ...available.search, cabinClass: available.search.cabinClass }} onClose={() => setEditSearchOpen(false)} onSearch={submitEditedSearch} />
+      <FlightEditSearchDrawer open={editSearchOpen} presentation="bottom-sheet" initialValue={{ ...available.search, cabinClass: available.search.cabinClass }} onClose={() => setEditSearchOpen(false)} onSearch={submitEditedSearch} />
     </main>
   );
 }

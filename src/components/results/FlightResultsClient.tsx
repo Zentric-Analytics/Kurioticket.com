@@ -49,6 +49,7 @@ import { DesktopFlightFilters } from "@/components/results/DesktopFlightFilters"
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { FlightEditSearchDrawer, type FlightEditSearchValue } from "@/components/search/FlightEditSearchDrawer";
 import { acquireMobileResultsScrollLock, type MobileResultsScrollLockRelease } from "@/lib/search/mobileResultsScrollLock";
+import { getOverlayActivationModality, restoreOverlayLauncherFocus, type OverlayActivationModality } from "@/lib/search/mobileResultsOverlayFocus";
 import { MultiCityFlightEditor } from "@/components/search/MultiCityFlightEditor";
 import { Button } from "@/components/ui/Button";
 import { FlightCardSkeleton } from "@/components/ui/Skeleton";
@@ -1186,6 +1187,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const mobileFiltersLauncherRef = useRef<HTMLElement | null>(null);
   const mobileFiltersDialogRef = useRef<HTMLElement | null>(null);
   const mobileFiltersCloseButtonRef = useRef<HTMLButtonElement | null>(null);
+  const mobileSearchModalityRef = useRef<OverlayActivationModality>("programmatic");
+  const mobileFiltersModalityRef = useRef<OverlayActivationModality>("programmatic");
   const shouldRestoreMobileSearchFocusRef = useRef(true);
   const shouldRestoreMobileFiltersFocusRef = useRef(true);
   const shouldScrollToTopAfterFilterApplyRef = useRef(false);
@@ -1862,9 +1865,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       mobileSearchScrollLockRef.current = null;
       shouldRestoreMobileSearchFocusRef.current = true;
 
-      if (shouldRestoreFocus && launcher?.isConnected) {
-        launcher.focus({ preventScroll: true });
-      }
+      if (shouldRestoreFocus) restoreOverlayLauncherFocus(launcher, mobileSearchModalityRef.current);
     };
 
     if (!mobileSearchOpen || typeof window === "undefined") {
@@ -1904,9 +1905,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       mobileFiltersScrollLockRef.current = null;
       shouldRestoreMobileFiltersFocusRef.current = true;
 
-      if (shouldRestoreFocus && launcher?.isConnected && launcher.offsetParent !== null) {
-        launcher.focus({ preventScroll: true });
-      }
+      if (shouldRestoreFocus) restoreOverlayLauncherFocus(launcher, mobileFiltersModalityRef.current);
     };
 
     if (!filtersOpen || typeof window === "undefined") {
@@ -2279,12 +2278,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setFiltersOpen(false);
   }
 
-  function openMobileSearchDrawer(launcher?: HTMLElement | null) {
+  function openMobileSearchDrawer(launcher?: HTMLElement | null, modality: OverlayActivationModality = "programmatic") {
     if (tripTypeInput === "multi-city") {
       router.push(`/flights?${searchQueryString}`);
       return;
     }
     mobileSearchLauncherRef.current = launcher ?? null;
+    mobileSearchModalityRef.current = modality;
     closeMobileFiltersDrawer({ restoreFocus: false });
     closeFlightSearchPopovers();
     if (
@@ -2296,8 +2296,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setMobileSearchOpen(true);
   }
 
-  function openMobileFiltersDrawer(launcher?: HTMLElement | null) {
+  function openMobileFiltersDrawer(launcher?: HTMLElement | null, modality: OverlayActivationModality = "programmatic") {
     mobileFiltersLauncherRef.current = launcher ?? null;
+    mobileFiltersModalityRef.current = modality;
     closeMobileShortcutMenus();
     setFiltersOpen(true);
   }
@@ -6454,7 +6455,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         : t("openFilters");
 
     const handleClick = (event: ReactMouseEvent<HTMLButtonElement>) => {
-      openMobileFiltersDrawer(event.currentTarget);
+      openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event));
     };
 
     return (
@@ -6509,7 +6510,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           <button
             type="button"
             aria-label={modifySearchLabel}
-            onClick={(event) => openMobileSearchDrawer(event.currentTarget)}
+            onClick={(event) => openMobileSearchDrawer(event.currentTarget, getOverlayActivationModality(event))}
             className="focus-ring flex min-w-0 flex-col items-center justify-center rounded-xl px-2 py-1 text-center transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           >
             <span
@@ -6530,7 +6531,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 ? `Open filters, ${activeFilterCount} active`
                 : "Open filters"
             }
-            onClick={(event) => openMobileFiltersDrawer(event.currentTarget)}
+            onClick={(event) => openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))}
             className="focus-ring inline-flex h-11 min-w-0 items-center justify-center gap-1 rounded-full px-2 text-[13px] font-bold text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           >
             <SlidersHorizontal
@@ -6550,7 +6551,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch justify-center px-4">
         <button
           type="button"
-          onClick={(event) => openMobileSearchDrawer(event.currentTarget)}
+          onClick={(event) => openMobileSearchDrawer(event.currentTarget, getOverlayActivationModality(event))}
           className="group relative z-10 flex h-16 min-w-0 w-full max-w-[30rem] items-center justify-between gap-3 overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white px-4 py-0 text-start shadow-[0_6px_18px_-16px_rgba(15,23,42,0.32)] transition hover:border-[#C6D2E0] hover:bg-white hover:shadow-[0_8px_20px_-16px_rgba(15,23,42,0.36)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
         >
           <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden pe-1">
@@ -6623,7 +6624,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <div ref={resultsGridRef} className="grid gap-x-6 gap-y-4 pb-5 pt-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-x-6 xl:grid-cols-[304px_minmax(0,1fr)]">
         <aside ref={desktopFilterSidebarRef} className="relative hidden self-stretch lg:block"><DesktopFlightFilters presentationMode="deals-guided" activeFilterCount={activeFilterCount} maxPrice={maxPrice} setMaxPrice={setMaxPrice} priceBounds={priceBounds} priceLabelCurrency={priceLabelCurrency} selectedCurrency={selectedCurrency} timeFilterMode={timeFilterMode} setTimeFilterMode={setTimeFilterMode} timeBounds={timeBounds} maxTakeoffMinutes={maxTakeoffMinutes} setMaxTakeoffMinutes={setMaxTakeoffMinutes} maxLandingMinutes={maxLandingMinutes} setMaxLandingMinutes={setMaxLandingMinutes} durationBounds={durationBounds} maxDurationMinutes={maxDurationMinutes} setMaxDurationMinutes={setMaxDurationMinutes} stopOptions={stopOptions} selectedStops={selectedStops} setSelectedStops={setSelectedStops} airlineOptions={airlineOptions} selectedAirlines={selectedAirlines} setSelectedAirlines={setSelectedAirlines} airportOptions={airportOptions} selectedAirports={selectedAirports} setSelectedAirports={setSelectedAirports} flightQualityOptions={flightQualityOptions} renderFlightQualityFilter={renderFlightQualityFilter} selectedFlightQuality={selectedFlightQuality} setSelectedFlightQuality={setSelectedFlightQuality} baggageIncludedOnly={baggageIncludedOnly} setBaggageIncludedOnly={setBaggageIncludedOnly} flexibleOnly={flexibleOnly} setFlexibleOnly={setFlexibleOnly} onFilterChange={triggerFilterApplying} onFilterCommit={handleUserFilterCommit} onClear={clearFlightFilters} originCode={originCode} destinationCode={destinationCode} /></aside>
         <section className="min-w-0 space-y-4">
-          <div className="flex w-full flex-col gap-3 py-1"><div className="flex items-center justify-between gap-4"><p className="text-[16px] font-semibold text-[#142033]">{formatResultsFound(sortedResults.length, t)}</p>{renderDesktopSortControl()}<Button variant="secondary" className="h-10 rounded-xl border-slate-300 text-sm font-bold lg:hidden" onClick={(event) => openMobileFiltersDrawer(event.currentTarget)}>{activeFilterCount > 0 ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount)) : t("filters")}</Button></div><div className="lg:hidden">{renderMobileSortResultsRow()}</div></div>
+          <div className="flex w-full flex-col gap-3 py-1"><div className="flex items-center justify-between gap-4"><p className="text-[16px] font-semibold text-[#142033]">{formatResultsFound(sortedResults.length, t)}</p>{renderDesktopSortControl()}<Button variant="secondary" className="h-10 rounded-xl border-slate-300 text-sm font-bold lg:hidden" onClick={(event) => openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))}>{activeFilterCount > 0 ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount)) : t("filters")}</Button></div><div className="lg:hidden">{renderMobileSortResultsRow()}</div></div>
           {error ? <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger" role="alert"><h2 ref={errorHeadingRef} tabIndex={-1} className="text-lg font-extrabold">{t("deals.guided.flightResults.errorTitle")}</h2><p className="mt-2">{error}</p><p className="mt-2">{t("deals.guided.flightResults.errorBody")}</p>{renderGuidedRetryButton()}</div> : filterApplying ? <div className="space-y-3"><div role="status" className="rounded-xl border border-[#004BB8]/10 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm">{t("updatingResults")}</div><FlightCardSkeleton /><FlightCardSkeleton /></div> : sortedResults.length ? <><div className="space-y-4">{visibleResults.map((flight, index) => <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={buildDetailsHref ? buildDetailsHref(flight) : undefined} actionLabel={actionLabel} actionAriaLabel={actionAriaLabel?.(flight)} onAction={onSelectFlight} />)}</div><FlightResultsPagination currentPage={validResultsPage} totalPages={totalResultPages} onPageChange={changeResultsPage} /></> : <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm font-semibold text-muted shadow-sm"><h2 ref={emptyHeadingRef} tabIndex={-1} className="text-lg font-extrabold text-slate-950">{t("deals.guided.flightResults.emptyTitle")}</h2><p className="mt-2">{t("deals.guided.flightResults.emptyBody")}</p>{renderGuidedRetryButton()}</div>}
         </section>
       </div>
@@ -6668,7 +6669,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
       <FlightEditSearchDrawer
         open={mobileSearchOpen}
-        launcherRef={mobileSearchLauncherRef}
         initialValue={{ tripType: tripTypeInput === "multi-city" ? "multi-city" : tripTypeInput === "one-way" ? "one-way" : "round-trip", legs: tripTypeInput === "multi-city" ? multiCityLegs : [{ origin: originCode || originInput.trim(), destination: destinationCode || destinationInput.trim(), departureDate: departureDateInput }], departureDate: departureDateInput, returnDate: returnDateInput || undefined, adults: adultCount, children: childCount, infants: infantCount, cabinClass: cabinClassInput }}
         onClose={() => closeMobileSearchDrawer()}
         onSearch={(value: FlightEditSearchValue) => {
@@ -7114,7 +7114,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   variant="secondary"
                   className="h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] lg:hidden"
                   onClick={(event) =>
-                    openMobileFiltersDrawer(event.currentTarget)
+                    openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))
                   }
                 >
                   <SlidersHorizontal size={17} />
