@@ -77,6 +77,7 @@ import {
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { MobileResultsEditSheet } from "@/components/search/MobileResultsEditSheet";
 import { acquireMobileResultsScrollLock, type MobileResultsScrollLockRelease } from "@/lib/search/mobileResultsScrollLock";
+import { getOverlayActivationModality, restoreOverlayLauncherFocus, type OverlayActivationModality } from "@/lib/search/mobileResultsOverlayFocus";
 import {
   carsDesktopPopoverClassName,
   useCarsDesktopPopover,
@@ -610,6 +611,7 @@ export function CarsResultsClient({
   const mobileSearchSummarySentinelRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(null);
   const mobileSearchLauncherRef = useRef<HTMLElement | null>(null);
+  const mobileSearchModalityRef = useRef<OverlayActivationModality>("programmatic");
   const mobileSearchSnapshotRef = useRef<CarsResultsSearchSnapshot | null>(
     null,
   );
@@ -892,8 +894,9 @@ export function CarsResultsClient({
   };
 
   const openMobileSearchDrawer = useCallback(
-    (launcher?: HTMLElement | null) => {
+    (launcher?: HTMLElement | null, modality: OverlayActivationModality = "programmatic") => {
       mobileSearchLauncherRef.current = launcher ?? null;
+      mobileSearchModalityRef.current = modality;
       mobileSearchSnapshotRef.current = {
         pickupLocation,
         dropoffLocation,
@@ -1008,9 +1011,7 @@ export function CarsResultsClient({
       mobileSearchScrollLockRef.current = null;
 
       const launcher = mobileSearchLauncherRef.current;
-      if (launcher && isSafelyFocusableElement(launcher)) {
-        launcher.focus({ preventScroll: true });
-      }
+      restoreOverlayLauncherFocus(launcher, mobileSearchModalityRef.current);
     };
 
     if (!mobileSearchOpen) {
@@ -1067,7 +1068,7 @@ export function CarsResultsClient({
     <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch justify-center px-4">
       <button
         type="button"
-        onClick={(event) => openMobileSearchDrawer(event.currentTarget)}
+        onClick={(event) => openMobileSearchDrawer(event.currentTarget, getOverlayActivationModality(event))}
         className="group relative z-10 flex h-[4.25rem] min-w-0 w-full max-w-[30rem] items-center justify-between gap-3 overflow-hidden rounded-xl border border-slate-200/80 bg-white px-4 py-0 text-start shadow-[0_16px_34px_-26px_rgba(15,23,42,0.55)] transition hover:border-slate-300 hover:bg-white hover:shadow-[0_18px_38px_-28px_rgba(15,23,42,0.62)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
       >
         <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden pe-1">
@@ -1540,7 +1541,6 @@ export function CarsResultsClient({
       <MobileResultsEditSheet
         open={mobileSearchOpen}
         title={t("carsResults.editSearch")}
-        launcherRef={mobileSearchLauncherRef}
         nestedLayerOpen={mobilePicker !== null}
         onClose={() => cancelMobileSearchDrawer()}
         contentClassName="pb-[calc(1rem+env(safe-area-inset-bottom))]"
@@ -1800,6 +1800,7 @@ export function CarsResultsExperience({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const mobileFiltersModalityRef = useRef<OverlayActivationModality>("programmatic");
   const filtersDialogRef = useRef<HTMLElement | null>(null);
   const filtersCloseButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(
@@ -1938,8 +1939,9 @@ export function CarsResultsExperience({
     setCurrentPage(1);
     setSelectedCarFilters({});
   };
-  const openMobileFiltersDrawer = (launcher: HTMLButtonElement) => {
+  const openMobileFiltersDrawer = (launcher: HTMLButtonElement, modality: OverlayActivationModality) => {
     mobileFiltersLauncherRef.current = launcher;
+    mobileFiltersModalityRef.current = modality;
     setFiltersOpen(true);
   };
   useEffect(
@@ -2022,8 +2024,7 @@ export function CarsResultsExperience({
       window.removeEventListener("keydown", handleKeyDown);
       media.removeEventListener("change", closeForDesktop);
       releaseExistingLock();
-      if (shouldRestoreFocus && launcher && isSafelyFocusableElement(launcher))
-        launcher.focus({ preventScroll: true });
+      if (shouldRestoreFocus) restoreOverlayLauncherFocus(launcher, mobileFiltersModalityRef.current);
     };
   }, [filtersOpen]);
 
@@ -2216,7 +2217,7 @@ export function CarsResultsExperience({
                   )
                 : t("carsResults.openFilters")
             }
-            onClick={(event) => openMobileFiltersDrawer(event.currentTarget)}
+            onClick={(event) => openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))}
             className="focus-ring inline-flex h-11 min-w-0 items-center justify-center gap-1 rounded-full px-2 text-[14px] font-semibold text-[#07133B] transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           >
             <SlidersHorizontal
@@ -2329,7 +2330,7 @@ export function CarsResultsExperience({
                       ref={filtersButtonRef}
                       type="button"
                       className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-[#07133B] transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-                      onClick={(event) => openMobileFiltersDrawer(event.currentTarget)}
+                      onClick={(event) => openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))}
                     >
                       <SlidersHorizontal size={17} aria-hidden="true" />
                       {activeFilterCount > 0
@@ -2361,7 +2362,7 @@ export function CarsResultsExperience({
                     ref={filtersButtonRef}
                     type="button"
                     className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-bold text-[#142033] lg:hidden"
-                    onClick={(event) => openMobileFiltersDrawer(event.currentTarget)}
+                    onClick={(event) => openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))}
                   >
                     <SlidersHorizontal size={17} aria-hidden="true" />
                     {t("filters")}

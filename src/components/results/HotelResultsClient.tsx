@@ -68,6 +68,7 @@ import { calculateCompactFilterMaxHeight } from "@/lib/hotels/desktopCompactFilt
 import { shouldShowDesktopStickySearch } from "@/lib/search/desktopStickySearch";
 import { lockDesktopPageScroll } from "@/lib/search/desktopPageScrollLock";
 import { acquireMobileResultsScrollLock, type MobileResultsScrollLockRelease } from "@/lib/search/mobileResultsScrollLock";
+import { getOverlayActivationModality, restoreOverlayLauncherFocus, type OverlayActivationModality } from "@/lib/search/mobileResultsOverlayFocus";
 import {
   buildHotelResultsPaginationItems,
   clampHotelResultsPage,
@@ -423,6 +424,10 @@ export function HotelResultsExperience({
   const mobileFiltersScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(
     null,
   );
+  const mobileHotelSearchLauncherRef = useRef<HTMLElement | null>(null);
+  const mobileHotelSearchModalityRef = useRef<OverlayActivationModality>("programmatic");
+  const mobileFiltersLauncherRef = useRef<HTMLElement | null>(null);
+  const mobileFiltersModalityRef = useRef<OverlayActivationModality>("programmatic");
   const guidedLoadingStatusRef = useRef<HTMLHeadingElement | null>(null);
   const guidedResultsHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const standaloneResultsHeadingRef = useRef<HTMLHeadingElement | null>(null);
@@ -667,7 +672,9 @@ export function HotelResultsExperience({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [closeDesktopStickyHotelSearch, desktopStickyHotelSearchOpen]);
 
-  const openMobileHotelSearch = useCallback(() => {
+  const openMobileHotelSearch = useCallback((event?: ReactMouseEvent<HTMLElement>) => {
+    mobileHotelSearchLauncherRef.current = event?.currentTarget ?? null;
+    mobileHotelSearchModalityRef.current = event ? getOverlayActivationModality(event) : "programmatic";
     setFiltersOpen(false);
     setMobileHotelSearchOpen(true);
   }, []);
@@ -688,6 +695,7 @@ export function HotelResultsExperience({
     const releaseExistingLock = () => {
       mobileHotelSearchScrollLockRef.current?.();
       mobileHotelSearchScrollLockRef.current = null;
+      restoreOverlayLauncherFocus(mobileHotelSearchLauncherRef.current, mobileHotelSearchModalityRef.current);
     };
 
     if (!mobileHotelSearchOpen || typeof window === "undefined") {
@@ -711,6 +719,7 @@ export function HotelResultsExperience({
     const releaseExistingLock = () => {
       mobileFiltersScrollLockRef.current?.();
       mobileFiltersScrollLockRef.current = null;
+      restoreOverlayLauncherFocus(mobileFiltersLauncherRef.current, mobileFiltersModalityRef.current);
     };
 
     if (!filtersOpen || typeof window === "undefined") {
@@ -1727,7 +1736,7 @@ export function HotelResultsExperience({
           onScroll={() => closeMobileShortcutMenu()}
         >
           <div className="flex w-max flex-nowrap items-center gap-2">
-            <button type="button" className={shortcutButtonClass} onClick={() => setFiltersOpen(true)}>
+            <button type="button" className={shortcutButtonClass} onClick={(event) => { mobileFiltersLauncherRef.current = event.currentTarget; mobileFiltersModalityRef.current = getOverlayActivationModality(event); setFiltersOpen(true); }}>
               <SlidersHorizontal className="h-4 w-4 text-[#004BB8]" strokeWidth={2.2} aria-hidden="true" />
               <span>Filter</span>
               {activeFilterCount ? <span className="ms-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] text-[#004BB8]">{activeFilterCount}</span> : null}
@@ -1882,7 +1891,7 @@ export function HotelResultsExperience({
               submitOnDesktopOpen={submitDesktopStickyHotelSearchOnOpen}
               idPrefix="sticky-hotel-search"
               onDesktopDraftChange={updateDesktopHotelSearchDraft}
-              onSubmitStart={triggerSearchApplying}
+              onSubmitStart={() => { mobileHotelSearchModalityRef.current = "programmatic"; triggerSearchApplying(); }}
               onSubmitComplete={closeDesktopStickyHotelSearch}
             />
           </div>
@@ -1948,7 +1957,7 @@ export function HotelResultsExperience({
               mobileLayout="controls"
               onOpenMobileSearch={openMobileHotelSearch}
               onMobileDraftChange={updateMobileHotelSearchDraft}
-              onSubmitStart={triggerSearchApplying}
+              onSubmitStart={() => { mobileHotelSearchModalityRef.current = "programmatic"; triggerSearchApplying(); }}
             />
           </div>
         </div>
@@ -1989,7 +1998,7 @@ export function HotelResultsExperience({
                 </span>
               </span>
             </button>
-            <button type="button" onClick={() => setFiltersOpen(true)} className="inline-flex h-11 shrink-0 items-center justify-center gap-1 rounded-lg px-2 text-sm font-bold text-[#004BB8] hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]">
+            <button type="button" onClick={(event) => { mobileFiltersLauncherRef.current = event.currentTarget; mobileFiltersModalityRef.current = getOverlayActivationModality(event); setFiltersOpen(true); }} className="inline-flex h-11 shrink-0 items-center justify-center gap-1 rounded-lg px-2 text-sm font-bold text-[#004BB8] hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]">
               <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
               {t("filters")}
             </button>
@@ -2026,7 +2035,7 @@ export function HotelResultsExperience({
             mobileResultsSheet
             onCloseMobileSearch={closeMobileHotelSearch}
             onMobileDraftChange={updateMobileHotelSearchDraft}
-            onSubmitStart={triggerSearchApplying}
+            onSubmitStart={() => { mobileHotelSearchModalityRef.current = "programmatic"; triggerSearchApplying(); }}
           />
         </MobileResultsEditSheet>
       ) : null}
@@ -2052,7 +2061,7 @@ export function HotelResultsExperience({
                 className="min-w-0"
                 desktopFormRef={setDesktopSearchFormRef}
                 onDesktopDraftChange={updateDesktopHotelSearchDraft}
-                onSubmitStart={triggerSearchApplying}
+                onSubmitStart={() => { mobileHotelSearchModalityRef.current = "programmatic"; triggerSearchApplying(); }}
               />
             </div>
           </div>
@@ -2249,7 +2258,7 @@ export function HotelResultsExperience({
                 />
 
                 {guided ? (
-                  <Button type="button" variant="secondary" className="min-h-11 lg:hidden" onClick={() => setFiltersOpen(true)}>
+                  <Button type="button" variant="secondary" className="min-h-11 lg:hidden" onClick={(event) => { mobileFiltersLauncherRef.current = event.currentTarget; mobileFiltersModalityRef.current = getOverlayActivationModality(event); setFiltersOpen(true); }}>
                     {t("filters")}{activeFilterCount ? ` (${activeFilterCount})` : ""}
                   </Button>
                 ) : null}

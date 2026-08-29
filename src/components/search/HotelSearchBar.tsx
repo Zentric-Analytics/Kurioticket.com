@@ -812,7 +812,7 @@ export function HotelSearchBar({
     setIsSubmitting(true);
     onSubmitStart?.();
 
-    if (!mobileSearchOpen) {
+    if (mobileLayout === "drawer") {
       closeMobileSearchPanel();
     }
 
@@ -855,7 +855,7 @@ export function HotelSearchBar({
         ? cn(
             "min-h-[56px] px-3 py-2 sm:min-h-[54px] sm:px-3 sm:py-1.5 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
             mobileSearchOpen &&
-              "min-h-[74px] rounded-3xl border-slate-200 px-4 py-3.5 shadow-sm shadow-slate-900/[0.03] sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:px-3 sm:py-1.5 sm:shadow-none lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200",
+              "min-h-[60px] rounded-none border-0 px-4 py-2.5 shadow-none sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:px-3 sm:py-1.5 sm:shadow-none lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200",
           )
         : "min-h-[54px] px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
   );
@@ -1062,7 +1062,7 @@ export function HotelSearchBar({
                 ? cn(
                     "lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px]",
                     mobileSearchOpen &&
-                      "mx-auto flex w-full max-w-xl flex-col gap-3 sm:grid sm:max-w-none sm:gap-1.5 lg:gap-0",
+                      "mx-auto flex w-full max-w-xl flex-col gap-0 overflow-hidden rounded-[14px] border border-slate-200 bg-white divide-y divide-slate-200 sm:grid sm:max-w-none sm:gap-1.5 lg:gap-0",
                   )
                 : !isStickyDialog
                   ? "lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_104px]"
@@ -1606,7 +1606,7 @@ export function HotelSearchBar({
                     ? cn(
                         "h-[54px] shadow-lg sm:min-h-[54px] lg:min-w-[112px] lg:rounded-s-none",
                         mobileSearchOpen &&
-                          "mt-1 h-[52px] rounded-2xl text-base sm:mt-0 sm:h-[54px] sm:rounded-xl lg:rounded-s-none",
+                          "mt-3 h-12 rounded-[11px] text-[15px] sm:mt-0 sm:h-[54px] sm:rounded-xl lg:rounded-s-none",
                       )
                     : !isStickyDialog
                       ? "h-12 lg:min-h-[54px] lg:rounded-none"
