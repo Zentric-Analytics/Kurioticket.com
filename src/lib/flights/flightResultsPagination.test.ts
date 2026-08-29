@@ -23,7 +23,38 @@ test("builds bounded start, middle, and end windows", () => {
   assert.deepEqual(buildFlightPaginationItems(1, 13), [1, 2, 3, 4, 5, "ellipsis", 13]);
   assert.deepEqual(buildFlightPaginationItems(7, 13), [1, "ellipsis", 6, 7, 8, "ellipsis", 13]);
   assert.deepEqual(buildFlightPaginationItems(13, 13), [1, "ellipsis", 9, 10, 11, 12, 13]);
-  assert.deepEqual(buildFlightPaginationItems(7, 13, true), [1, "ellipsis", 7, "ellipsis", 13]);
+});
+
+test("compact pagination shows every page when there are at most five", () => {
+  for (let totalPages = 1; totalPages <= 5; totalPages += 1) {
+    assert.deepEqual(
+      buildFlightPaginationItems(totalPages, totalPages, true),
+      Array.from({ length: totalPages }, (_, index) => index + 1),
+    );
+  }
+});
+
+test("compact pagination uses a consecutive five-page sliding window", () => {
+  const expected = [
+    [1, 2, 3, 4, 5],
+    [1, 2, 3, 4, 5],
+    [1, 2, 3, 4, 5],
+    [2, 3, 4, 5, 6],
+    [3, 4, 5, 6, 7],
+    [4, 5, 6, 7, 8],
+    [5, 6, 7, 8, 9],
+    [5, 6, 7, 8, 9],
+    [5, 6, 7, 8, 9],
+  ];
+  expected.forEach((items, index) => {
+    assert.deepEqual(buildFlightPaginationItems(index + 1, 9, true), items);
+  });
+});
+
+test("compact pagination never includes an ellipsis", () => {
+  for (const totalPages of [6, 9, 20, 100]) {
+    assert.equal(buildFlightPaginationItems(Math.ceil(totalPages / 2), totalPages, true).includes("ellipsis"), false);
+  }
 });
 
 test("pagination is applied after filtering and sorting", () => {
