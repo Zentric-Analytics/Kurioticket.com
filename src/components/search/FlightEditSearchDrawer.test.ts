@@ -47,9 +47,17 @@ test("shared editor supports a Details-only bottom sheet while fullscreen remain
 });
 
 test("bottom sheet uses the shared no-shake lock and delegates launcher focus", () => {
-  assert.match(source, /acquireMobileResultsScrollLock\(\)/);
+  assert.match(source, /useLayoutEffect\(\(\) => \{[\s\S]*?acquireMobileResultsScrollLock\(\)/);
+  assert.match(source, /openingScrollPositionRef\.current = \{ x: window\.scrollX, y: window\.scrollY \}/);
+  const closeHelper = source.slice(
+    source.indexOf("const closeDrawer"),
+    source.indexOf("useLayoutEffect", source.indexOf("const closeDrawer")),
+  );
+  assert.ok(closeHelper.indexOf("stabilizeUnderlyingResultsBeforeClose()") < closeHelper.indexOf("setIsClosing(true)"));
+  assert.match(closeHelper, /requestAnimationFrame\([\s\S]*?setIsClosing\(true\)/);
+  assert.match(source, /restoreScroll: !scrollPreparedForCloseRef\.current/);
   assert.doesNotMatch(source, /position: "fixed"/);
-  assert.doesNotMatch(source, /window\.scrollTo/);
+  assert.match(source, /window\.scrollTo\(\{[\s\S]*?behavior: "auto"/);
   assert.doesNotMatch(source, /touchAction:\s*"none"/);
   assert.match(source, /event\.target === event\.currentTarget/);
   assert.match(source, /event\.key === "Escape"/);

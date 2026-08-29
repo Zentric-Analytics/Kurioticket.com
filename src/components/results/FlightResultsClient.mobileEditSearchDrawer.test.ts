@@ -9,3 +9,11 @@ test("Results delegates mobile Edit Search to the shared drawer", () => {
   assert.match(source, /<FlightEditSearchDrawer[\s\S]*?presentation="bottom-sheet"/);
   assert.match(source, /router\.push\(`\/flights\/results\?/);
 });
+
+test("Results parent leaves Edit Search scroll locking to the drawer", () => {
+  assert.doesNotMatch(source, /mobileSearchScrollLockRef/);
+  const openStart = source.indexOf("function openMobileSearchDrawer");
+  const openEnd = source.indexOf("function openMobileFiltersDrawer", openStart);
+  assert.doesNotMatch(source.slice(openStart, openEnd), /acquireMobileResultsScrollLock/);
+  assert.match(source, /mobileFiltersScrollLockRef\.current \?\?= acquireMobileResultsScrollLock\(\)/);
+});

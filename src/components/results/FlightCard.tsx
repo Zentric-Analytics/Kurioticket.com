@@ -91,6 +91,7 @@ export function FlightCard({
 
   return (
     <Card
+      data-flight-result-card
       className={cn(
         "relative w-full overflow-hidden border-[#D8E1EC] bg-white shadow-[0_10px_28px_rgba(15,23,42,0.07)] transition hover:-translate-y-0.5 hover:border-[#CBD6E2] hover:shadow-[0_16px_34px_rgba(15,23,42,0.095)] lg:rounded-xl lg:border-[#CDD8E5] lg:bg-[#FEFFFF] lg:shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)]",
         isAccented && "ring-1 ring-slate-950/[0.03]",
