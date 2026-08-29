@@ -26,6 +26,7 @@ import {
   Clock,
   Clock3,
   MapPin,
+  Pencil,
   SlidersHorizontal,
   SquarePen,
   UserRound,
@@ -2178,7 +2179,7 @@ export function CarsResultsExperience({
     return (
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-[90] border-b border-slate-200/80 bg-white/95 px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-[0_10px_26px_-20px_rgba(15,23,42,0.55)] backdrop-blur-xl transition-all duration-200 ease-out sm:hidden",
+          "fixed inset-x-0 top-0 z-[90] border-b border-slate-200/80 bg-white/95 px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] backdrop-blur-md transition-all duration-200 ease-out sm:hidden",
           mobileCompactToolbarVisible
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none -translate-y-2 opacity-0",
@@ -2198,13 +2199,19 @@ export function CarsResultsExperience({
             type="button"
             aria-label={modifySearchLabel}
             onClick={(event) => onMobileModifySearch?.(event.currentTarget)}
-            className="focus-ring flex min-w-0 flex-col items-center justify-center rounded-xl px-2 py-1 text-center transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+            className="focus-ring flex min-h-11 min-w-0 flex-col items-center justify-center px-2 py-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           >
             <span className="block max-w-full truncate text-[15px] font-bold leading-5 tracking-[-0.015em] text-[#07133B]">
               {summary}
             </span>
-            <span className="mt-0.5 block text-[11px] font-medium leading-4 text-[#536B92]">
-              {t("deals.results.modifySearch")}
+            <span className="mt-0.5 inline-flex items-center justify-center gap-1 text-[11px] font-medium leading-4 text-[#536B92]">
+              <span>{t("deals.results.modifySearch")}</span>
+              <Pencil
+                data-cars-compact-edit-icon
+                className="h-3 w-3 shrink-0 text-[#536B92]"
+                strokeWidth={2}
+                aria-hidden="true"
+              />
             </span>
           </button>
           <button

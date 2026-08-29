@@ -103,8 +103,8 @@ export default async function CarsResultsPage({
         }
       >
         <CarsResultsContent values={values} searchIdentity={searchIdentity} />
+        <Footer variant="brand-legal-only" />
       </Suspense>
-      <Footer variant="brand-legal-only" />
     </>
   );
 }
