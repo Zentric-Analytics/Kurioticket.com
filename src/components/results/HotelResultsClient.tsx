@@ -2040,7 +2040,7 @@ export function HotelResultsExperience({
           title={t("editHotelSearch") || "Edit hotel search"}
           onClose={closeMobileHotelSearch}
           className="bg-white"
-          contentClassName="bg-white pb-[calc(1rem+env(safe-area-inset-bottom))]"
+          contentClassName="bg-slate-50 pb-[calc(1rem+env(safe-area-inset-bottom))]"
         >
           <HotelSearchBar
             key={`mobile-drawer-${bodySearchKey}-${body.sort}`}

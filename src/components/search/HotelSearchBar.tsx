@@ -32,7 +32,6 @@ import { HotelDesktopPopover } from "@/components/search/HotelDesktopPopover";
 import { MessageBanner } from "@/components/ui/MessageBanner";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { MobileHotelGuestsRoomsPicker } from "@/components/search/MobileHotelGuestsRoomsPicker";
-import { mobileResultsEditGroupClass } from "@/components/search/MobileResultsEditRow";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { useRegion } from "@/components/region/RegionProvider";
 import {
@@ -859,7 +858,7 @@ export function HotelSearchBar({
             mobileSearchOpen &&
               cn(
                 "min-h-[60px] rounded-none border-0 px-4 py-2.5 shadow-none sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:px-3 sm:py-1.5 sm:shadow-none lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200",
-                mobileResultsSheet && "min-h-[60px] px-4 py-2.5 hover:bg-slate-50/70 focus-within:bg-blue-50/40",
+                mobileResultsSheet && "min-h-[70px] rounded-[14px] border-[#D8E1EC] px-4 py-2.5 shadow-none hover:border-slate-400 hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25",
               ),
           )
         : "min-h-[54px] px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
@@ -885,7 +884,7 @@ export function HotelSearchBar({
             mobileSearchOpen &&
               cn(
                 "mb-1.5 text-[0.68rem] font-black tracking-[0.16em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600",
-                mobileResultsSheet && "mb-0.5 normal-case text-[11px] font-semibold tracking-normal text-slate-500",
+                mobileResultsSheet && "mb-0.5 text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500",
               ),
           )
         : "mb-1 text-xs leading-4 tracking-wide text-slate-600",
@@ -1082,10 +1081,10 @@ export function HotelSearchBar({
             )}
           >
             <div
-              data-hotel-mobile-edit-group={
+              data-hotel-results-edit-fields={
                 mobileResultsSheet ? "" : undefined
               }
-              className={mobileResultsSheet ? mobileResultsEditGroupClass : "contents"}
+              className={mobileResultsSheet ? "flex flex-col gap-2.5" : "contents"}
             >
             <label
               ref={destinationWrapperRef}
@@ -1097,7 +1096,7 @@ export function HotelSearchBar({
                 "lg:rounded-s-xl",
                 shouldShowDestinationSuggestions && "z-[1000]",
                 mobileResultsSheet &&
-                  "min-h-[60px] rounded-none px-4 py-3 hover:bg-slate-50/70 focus-within:bg-blue-50/40",
+                  "min-h-[70px] rounded-[14px] border-[#D8E1EC] px-4 py-2.5 shadow-none hover:border-slate-400 hover:bg-slate-50 focus-within:bg-white",
               )}
             >
               <span className={fieldLabelClassName}>
@@ -1126,7 +1125,7 @@ export function HotelSearchBar({
                     "flex items-center gap-2 text-start sm:hidden",
                     !mobileLandingPresentation && "justify-between pe-2",
                     mobileResultsSheet &&
-                      "mt-1 h-auto min-h-5 justify-start gap-0 pe-0 text-[15px] font-semibold leading-5",
+                      "mt-1 h-auto min-h-5 justify-start gap-0 pe-0 text-[16px] font-semibold leading-5",
                   )}
                 >
                   {mobileLandingPresentation || mobileResultsSheet ? (
@@ -1136,14 +1135,14 @@ export function HotelSearchBar({
                       }
                       className={cn(
                         "flex min-w-0 items-center gap-2",
-                        mobileResultsSheet && "gap-3",
+                        mobileResultsSheet && "gap-2.5",
                       )}
                     >
                       <MapPin
                         aria-hidden="true"
                         className={cn(
                           "h-4 w-4 shrink-0 text-slate-500",
-                          mobileResultsSheet && "h-5 w-5",
+                          mobileResultsSheet && "h-[18px] w-[18px]",
                         )}
                       />
                       <span
@@ -1293,7 +1292,7 @@ export function HotelSearchBar({
                 fieldClassName,
                 datesOpen && "z-[1000]",
                 mobileResultsSheet &&
-                  "min-h-[60px] rounded-none px-4 py-3 hover:bg-slate-50/70 focus-within:bg-blue-50/40",
+                  "min-h-[70px] rounded-[14px] border-[#D8E1EC] px-4 py-2.5 shadow-none hover:border-slate-400 hover:bg-slate-50 focus-within:bg-white",
               )}
             >
               <span className={fieldLabelClassName}>
@@ -1313,18 +1312,18 @@ export function HotelSearchBar({
                   valueControlClassName,
                   "flex items-center gap-1.5 text-start",
                   mobileResultsSheet &&
-                    "mt-1 h-auto min-h-5 gap-3 text-[15px] font-semibold leading-5",
+                    "mt-1 grid h-auto min-h-5 grid-cols-[20px_minmax(0,1fr)_16px] items-center gap-2.5 text-[15px] font-semibold leading-5",
                 )}
               >
                 <Calendar
                   aria-hidden="true"
                   className={cn(
                     "h-4 w-4 shrink-0 text-slate-500",
-                    mobileResultsSheet && "h-5 w-5",
+                    mobileResultsSheet && "h-[18px] w-[18px]",
                   )}
                 />
                 <span className="truncate">{dateSummary}</span>
-                {mobileResultsSheet ? <ChevronRight aria-hidden="true" className="ms-auto h-4 w-4 shrink-0 text-slate-400" /> : null}
+                {mobileResultsSheet ? <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" /> : null}
               </button>
               {datesOpen ? (
                 <HotelDesktopPopover
@@ -1474,7 +1473,7 @@ export function HotelSearchBar({
                 fieldClassName,
                 guestsRoomsOpen && "z-[1000]",
                 mobileResultsSheet &&
-                  "min-h-[60px] rounded-none px-4 py-3 hover:bg-slate-50/70 focus-within:bg-blue-50/40",
+                  "min-h-[70px] rounded-[14px] border-[#D8E1EC] px-4 py-2.5 shadow-none hover:border-slate-400 hover:bg-slate-50 focus-within:bg-white",
               )}
             >
               <span className={fieldLabelClassName}>
@@ -1494,15 +1493,15 @@ export function HotelSearchBar({
                   valueControlClassName,
                   "flex items-center justify-between gap-1.5 text-start",
                   mobileResultsSheet &&
-                    "mt-1 h-auto min-h-5 gap-3 text-[15px] font-semibold leading-5",
+                    "mt-1 grid h-auto min-h-5 grid-cols-[20px_minmax(0,1fr)_16px] items-center gap-2.5 text-[16px] font-semibold leading-5",
                 )}
               >
-                <span className="flex min-w-0 items-center gap-2">
+                <span className={cn("flex min-w-0 items-center gap-2", mobileResultsSheet && "contents")}>
                   <UserRound
                     aria-hidden="true"
                     className={cn(
                       "h-4 w-4 shrink-0 text-slate-500",
-                      mobileResultsSheet && "h-5 w-5",
+                      mobileResultsSheet && "h-[18px] w-[18px]",
                       !mobileLandingPresentation && !mobileResultsSheet && "max-sm:hidden",
                     )}
                   />
@@ -1686,7 +1685,7 @@ export function HotelSearchBar({
                         mobileSearchOpen &&
                           cn(
                             "mt-3 h-12 rounded-[11px] text-[15px] sm:mt-0 sm:h-[54px] sm:rounded-xl lg:rounded-s-none",
-                            mobileResultsSheet && "mt-0 h-12 shadow-none active:bg-[#003f9c]",
+                            mobileResultsSheet && "mt-0 h-[52px] rounded-xl text-[16px] font-semibold shadow-none active:bg-[#003f9c]",
                           ),
                       )
                     : !isStickyDialog
