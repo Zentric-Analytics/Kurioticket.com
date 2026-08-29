@@ -7,7 +7,6 @@ import {
   useRef,
   useState,
   type ReactNode,
-  type RefObject,
 } from "react";
 import { X } from "lucide-react";
 
@@ -19,7 +18,6 @@ type Props = {
   title: string;
   children: ReactNode;
   onClose: () => void;
-  launcherRef?: RefObject<HTMLElement | null>;
   nestedLayerOpen?: boolean;
   footer?: ReactNode;
   className?: string;
@@ -32,7 +30,6 @@ export function MobileResultsEditSheet({
   title,
   children,
   onClose,
-  launcherRef,
   nestedLayerOpen = false,
   footer,
   className,
@@ -83,12 +80,6 @@ export function MobileResultsEditSheet({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [close, nestedLayerOpen, open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const launcher = launcherRef?.current;
-    return () => launcher?.focus({ preventScroll: true });
-  }, [launcherRef, open]);
 
   useEffect(() => {
     if (!open) return;
