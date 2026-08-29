@@ -40,7 +40,12 @@ import {
   SlidersHorizontal,
   X,
 } from "lucide-react";
-import { getCenteredRailScrollLeft } from "@/components/results/mobileNearbyFareRail";
+import {
+  getCenteredRailScrollLeft,
+  getNearbyFareAnchorCorrection,
+  isHorizontallyVisibleWithinContainer,
+  nearbyFareAnchorTolerancePx,
+} from "@/components/results/mobileNearbyFareRail";
 
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
@@ -165,6 +170,14 @@ type NearbyFareState =
 type NearbyFareRequest = {
   controller: AbortController;
   promise: Promise<void>;
+};
+
+type NearbyFarePaginationSnapshot = {
+  departureDate: string;
+  selectedOffsetX: number | null;
+  selectedWidth: number;
+  selectedWasVisible: boolean;
+  scrollLeft: number;
 };
 
 const nearbyFareRangeSize = 10;
@@ -1048,7 +1061,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const mobileSelectedNearbyFareRef = useRef<HTMLButtonElement>(null);
   const alignedMobileNearbyFareSearchRef = useRef<string | null>(null);
   const mobileNearbyFareScrollLeftRef = useRef(0);
-  const preservedMobileNearbyFareScrollLeftRef = useRef<number | null>(null);
+  const nearbyFarePaginationSnapshotRef =
+    useRef<NearbyFarePaginationSnapshot | null>(null);
   const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
   const [nearbyFareVisibleStart, setNearbyFareVisibleStart] = useState(0);
   const [returnDateInput, setReturnDateInput] = useState(
@@ -1115,6 +1129,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileCompactHeaderVisible, setMobileCompactHeaderVisible] =
     useState(false);
+  const mobileSearchOpenRef = useRef(false);
+  const mobileCompactHeaderUpdateRef = useRef<(() => void) | null>(null);
+  const mobileCompactHeaderResyncFrameRef = useRef<number | null>(null);
   const [activeMobileAirportPicker, setActiveMobileAirportPicker] = useState<
     "origin" | "destination" | null
   >(null);
@@ -1596,6 +1613,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     const sentinel = mobileSearchSummarySentinelRef.current;
 
     const updateFromSentinel = () => {
+      if (mobileSearchOpenRef.current) return;
+
       const currentSentinel = mobileSearchSummarySentinelRef.current;
 
       if (!currentSentinel) {
@@ -1607,6 +1626,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setMobileCompactHeaderVisible(rect.bottom < 8 && window.scrollY > 96);
     };
 
+    mobileCompactHeaderUpdateRef.current = updateFromSentinel;
+
     updateFromSentinel();
 
     if (typeof IntersectionObserver === "undefined" || !sentinel) {
@@ -1616,14 +1637,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       return () => {
         window.removeEventListener("scroll", updateFromSentinel);
         window.removeEventListener("resize", updateFromSentinel);
+        mobileCompactHeaderUpdateRef.current = null;
       };
     }
 
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        setMobileCompactHeaderVisible(
-          !entry.isIntersecting && window.scrollY > 96,
-        );
+      () => {
+        updateFromSentinel();
       },
       { rootMargin: "-8px 0px 0px 0px", threshold: 0 },
     );
@@ -1634,8 +1654,18 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     return () => {
       observer.disconnect();
       window.removeEventListener("scroll", updateFromSentinel);
+      mobileCompactHeaderUpdateRef.current = null;
     };
   }, [loading]);
+
+  useEffect(
+    () => () => {
+      if (mobileCompactHeaderResyncFrameRef.current !== null) {
+        window.cancelAnimationFrame(mobileCompactHeaderResyncFrameRef.current);
+      }
+    },
+    [],
+  );
 
   const refreshBackendSavedItems = useCallback(async (signal?: AbortSignal) => {
     const result = await fetchBackendSavedDiscoveries(signal);
@@ -2281,7 +2311,17 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }: MobileOverlayCloseOptions = {}) {
     closeFlightSearchPopovers();
     shouldRestoreMobileSearchFocusRef.current = restoreFocus;
+    mobileSearchOpenRef.current = false;
     setMobileSearchOpen(false);
+    if (typeof window !== "undefined") {
+      if (mobileCompactHeaderResyncFrameRef.current !== null) {
+        window.cancelAnimationFrame(mobileCompactHeaderResyncFrameRef.current);
+      }
+      mobileCompactHeaderResyncFrameRef.current = window.requestAnimationFrame(() => {
+        mobileCompactHeaderResyncFrameRef.current = null;
+        mobileCompactHeaderUpdateRef.current?.();
+      });
+    }
   }
 
   function closeMobileFiltersDrawer({
@@ -2306,6 +2346,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     ) {
       mobileSearchScrollLockRef.current ??= acquireMobileResultsScrollLock();
     }
+    mobileSearchOpenRef.current = true;
     setMobileSearchOpen(true);
   }
 
@@ -4421,7 +4462,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
       rail.scrollTo({ left: target, behavior: "auto" });
       mobileNearbyFareScrollLeftRef.current = target;
-      alignedMobileNearbyFareSearchRef.current = alignmentIdentity;
+      const updatedRailRect = rail.getBoundingClientRect();
+      const updatedSelectedRect = selectedCell.getBoundingClientRect();
+      if (
+        isHorizontallyVisibleWithinContainer(updatedSelectedRect, updatedRailRect)
+      ) {
+        alignedMobileNearbyFareSearchRef.current = alignmentIdentity;
+      } else if (attemptsRemaining > 0) {
+        attemptsRemaining -= 1;
+        frame = window.requestAnimationFrame(alignSelectedFare);
+      }
     };
 
     alignSelectedFare();
@@ -4433,12 +4483,23 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const changeResultsPage = useCallback(async (nextPage: number) => {
     const page = clampFlightResultsPage(nextPage, totalResultPages);
     if (page === validResultsPage || paginationPendingPage !== null) return;
-    const currentRailScrollLeft = mobileNearbyFareRailRef.current?.scrollLeft;
-    if (currentRailScrollLeft !== undefined) {
-      mobileNearbyFareScrollLeftRef.current = currentRailScrollLeft;
-    }
-    preservedMobileNearbyFareScrollLeftRef.current =
-      mobileNearbyFareScrollLeftRef.current;
+    const rail = mobileNearbyFareRailRef.current;
+    const selectedCell = mobileSelectedNearbyFareRef.current;
+    if (rail) mobileNearbyFareScrollLeftRef.current = rail.scrollLeft;
+    const railRect = rail?.getBoundingClientRect();
+    const selectedRect = selectedCell?.getBoundingClientRect();
+    nearbyFarePaginationSnapshotRef.current = {
+      departureDate: body?.departureDate ?? "",
+      selectedOffsetX:
+        railRect && selectedRect ? selectedRect.left - railRect.left : null,
+      selectedWidth: selectedRect?.width ?? 0,
+      selectedWasVisible: Boolean(
+        railRect &&
+          selectedRect &&
+          isHorizontallyVisibleWithinContainer(selectedRect, railRect),
+      ),
+      scrollLeft: rail?.scrollLeft ?? mobileNearbyFareScrollLeftRef.current,
+    };
     setPaginationMinHeight(paginationListRef.current?.getBoundingClientRect().height ?? null);
     setPaginationPendingPage(page);
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
@@ -4456,36 +4517,95 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       else nextParams.set("page", String(page));
       router.push(`/flights/results?${nextParams.toString()}`, { scroll: false });
     }
-  }, [guidedMode, paginationPendingPage, router, totalResultPages, urlParams, validResultsPage]);
+  }, [body?.departureDate, guidedMode, paginationPendingPage, router, totalResultPages, urlParams, validResultsPage]);
 
   useLayoutEffect(() => {
     if (!paginationCommitting || paginationPendingPage !== validResultsPage) return;
 
-    const preservedScrollLeft = preservedMobileNearbyFareScrollLeftRef.current;
-    const rail = mobileNearbyFareRailRef.current;
-    if (
-      rail &&
-      preservedScrollLeft !== null &&
-      Math.abs(rail.scrollLeft - preservedScrollLeft) > 1
-    ) {
-      rail.scrollTo({ left: preservedScrollLeft, behavior: "auto" });
-    }
-    preservedMobileNearbyFareScrollLeftRef.current = null;
-  }, [paginationCommitting, paginationPendingPage, validResultsPage]);
+    const snapshot = nearbyFarePaginationSnapshotRef.current;
+    if (!snapshot) return;
+
+    let frame: number | null = null;
+    let geometryPasses = 0;
+    const restoreSelectedFareAnchor = () => {
+      geometryPasses += 1;
+      const rail = mobileNearbyFareRailRef.current;
+      const selectedCell = mobileSelectedNearbyFareRef.current;
+      const selectedDateMatches = snapshot.departureDate === body?.departureDate;
+
+      if (
+        rail &&
+        selectedCell?.isConnected &&
+        selectedDateMatches &&
+        snapshot.selectedWasVisible
+      ) {
+        const railRect = rail.getBoundingClientRect();
+        const selectedRect = selectedCell.getBoundingClientRect();
+        const currentOffsetX = selectedRect.left - railRect.left;
+        const correction = getNearbyFareAnchorCorrection({
+          selectedWasVisible: snapshot.selectedWasVisible,
+          previousOffsetX: snapshot.selectedOffsetX,
+          currentOffsetX,
+        });
+        if (correction !== 0) {
+          rail.scrollTo({ left: rail.scrollLeft + correction, behavior: "auto" });
+        }
+
+        const verifiedRailRect = rail.getBoundingClientRect();
+        const verifiedSelectedRect = selectedCell.getBoundingClientRect();
+        const verifiedOffsetX = verifiedSelectedRect.left - verifiedRailRect.left;
+        const isRestored =
+          isHorizontallyVisibleWithinContainer(
+            verifiedSelectedRect,
+            verifiedRailRect,
+          ) &&
+          snapshot.selectedOffsetX !== null &&
+          Math.abs(verifiedOffsetX - snapshot.selectedOffsetX) <=
+            nearbyFareAnchorTolerancePx;
+        if (!isRestored && geometryPasses < 3) {
+          frame = window.requestAnimationFrame(restoreSelectedFareAnchor);
+          return;
+        }
+      } else if (rail && Math.abs(rail.scrollLeft - snapshot.scrollLeft) > 1) {
+        rail.scrollTo({ left: snapshot.scrollLeft, behavior: "auto" });
+      }
+
+      nearbyFarePaginationSnapshotRef.current = null;
+    };
+
+    frame = window.requestAnimationFrame(restoreSelectedFareAnchor);
+    return () => {
+      if (frame !== null) window.cancelAnimationFrame(frame);
+    };
+  }, [
+    body?.departureDate,
+    paginationCommitting,
+    paginationPendingPage,
+    validResultsPage,
+  ]);
 
   useEffect(() => {
     if (!paginationCommitting || paginationPendingPage !== validResultsPage) return;
+    let secondFrame: number | null = null;
     const frame = window.requestAnimationFrame(() => {
-      setPaginationPendingPage(null);
-      setPaginationCommitting(false);
-      setPaginationMinHeight(null);
-      resultsHeadingRef.current?.focus({ preventScroll: true });
-      if (!prefersReducedResultsMotion()) {
-        setPaginationRevealing(true);
-        window.setTimeout(() => setPaginationRevealing(false), PAGINATION_REVEAL_MS);
-      }
+      secondFrame = window.requestAnimationFrame(() => {
+        setPaginationPendingPage(null);
+        setPaginationCommitting(false);
+        setPaginationMinHeight(null);
+        resultsHeadingRef.current?.focus({ preventScroll: true });
+        if (!prefersReducedResultsMotion()) {
+          setPaginationRevealing(true);
+          window.setTimeout(
+            () => setPaginationRevealing(false),
+            PAGINATION_REVEAL_MS,
+          );
+        }
+      });
     });
-    return () => window.cancelAnimationFrame(frame);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      if (secondFrame !== null) window.cancelAnimationFrame(secondFrame);
+    };
   }, [paginationCommitting, paginationPendingPage, validResultsPage]);
 
 
@@ -6575,10 +6695,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     return (
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-[90] border-b border-slate-200/80 bg-white/95 px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-[0_10px_26px_-20px_rgba(15,23,42,0.55)] backdrop-blur-xl transition-all duration-200 ease-out sm:hidden",
+          "fixed inset-x-0 top-0 z-[90] border-b border-slate-200/80 bg-white/95 px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-[0_10px_26px_-20px_rgba(15,23,42,0.55)] backdrop-blur-xl transition-opacity duration-200 ease-out sm:hidden",
+          mobileCompactHeaderVisible ? "opacity-100" : "opacity-0",
           mobileCompactHeaderVisible && !mobileSearchOpen
-            ? "pointer-events-auto translate-y-0 opacity-100"
-            : "pointer-events-none -translate-y-2 opacity-0",
+            ? "pointer-events-auto"
+            : "pointer-events-none",
         )}
         aria-hidden={!mobileCompactHeaderVisible || mobileSearchOpen}
       >
