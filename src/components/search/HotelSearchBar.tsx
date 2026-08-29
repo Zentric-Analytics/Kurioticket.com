@@ -14,6 +14,7 @@ import {
   BedDouble,
   Calendar,
   ChevronDown,
+  ChevronRight,
   MapPin,
   Minus,
   PencilLine,
@@ -1275,6 +1276,7 @@ export function HotelSearchBar({
                   className="shrink-0 text-slate-500"
                 />
                 <span className="truncate">{dateSummary}</span>
+                {mobileResultsSheet ? <ChevronRight aria-hidden="true" className="ms-auto h-4 w-4 shrink-0 text-slate-400" /> : null}
               </button>
               {datesOpen ? (
                 <HotelDesktopPopover
@@ -1444,14 +1446,16 @@ export function HotelSearchBar({
                   />
                   <span className="truncate">{guestsRoomsSummary}</span>
                 </span>
-                {!mobileResultsSheet ? (
+                {mobileResultsSheet ? (
+                  <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />
+                ) : (
                   <ChevronDown
                     size={16}
                     className={`shrink-0 text-slate-500 transition-transform ${
                       guestsRoomsOpen ? "rotate-180" : ""
                     }`}
                   />
-                ) : null}
+                )}
               </button>
               {guestsRoomsOpen ? (
                 <HotelDesktopPopover

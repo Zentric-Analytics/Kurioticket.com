@@ -5,7 +5,6 @@ import {
   useEffect,
   useId,
   useRef,
-  useState,
   type ReactNode,
 } from "react";
 import { X } from "lucide-react";
@@ -37,18 +36,15 @@ export function MobileResultsEditSheet({
 }: Props) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
-  const [entered, setEntered] = useState(false);
 
   const close = useCallback(() => {
     if (nestedLayerOpen) return;
-    setEntered(false);
     onClose();
   }, [nestedLayerOpen, onClose]);
 
   useEffect(() => {
     if (!open) return;
     const frame = window.requestAnimationFrame(() => {
-      setEntered(true);
       // Focus the dialog rather than a visible action. This establishes an
       // accessible focus boundary without painting a focus-visible ring for a
       // sheet that was opened by touch.
@@ -92,7 +88,7 @@ export function MobileResultsEditSheet({
   return (
     <div
       data-mobile-results-edit-sheet
-      className={cn("fixed inset-0 z-[10000] flex items-end bg-slate-950/35 transition-opacity duration-200 motion-reduce:transition-none sm:hidden", entered ? "opacity-100" : "opacity-0")}
+      className="mobile-results-sheet-backdrop fixed inset-0 z-[10000] flex items-end bg-slate-950/35 motion-reduce:transition-none sm:hidden"
       onPointerDown={(event) => { if (event.target === event.currentTarget) close(); }}
     >
       <div
@@ -101,7 +97,7 @@ export function MobileResultsEditSheet({
         tabIndex={-1}
         aria-modal="true"
         aria-labelledby={titleId}
-        className={cn("flex max-h-[94dvh] min-h-0 w-full flex-col overflow-hidden rounded-t-[22px] bg-slate-50 shadow-[0_-12px_36px_rgba(15,23,42,0.18)] outline-none transition-transform duration-200 ease-out motion-reduce:transition-none", entered ? "translate-y-0" : "translate-y-full", className)}
+        className={cn("mobile-results-sheet-surface flex max-h-[94dvh] min-h-0 w-full flex-col overflow-hidden rounded-t-[22px] border border-b-0 border-slate-200/80 bg-white shadow-[0_-12px_36px_rgba(15,23,42,0.18)] outline-none", className)}
       >
         <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 pt-2">
           <div className="mx-auto flex min-h-11 w-full max-w-xl items-center justify-between gap-3">

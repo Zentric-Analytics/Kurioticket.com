@@ -37,9 +37,9 @@ function MobileHotelDestinationRow({ option, selected, locale, onSelect }: {
   const detail = getLocalizedHotelDestinationDetail(option, locale) || option.country;
   return (
     <button type="button" aria-pressed={selected} aria-label={`${name}, ${detail}`} onClick={onSelect}
-      className={cn("focus-ring flex min-h-[88px] w-full items-center gap-3 px-4 text-start transition-colors hover:bg-slate-50", selected && "bg-blue-50/70")}>
-      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-        <Building2 aria-hidden="true" className="h-[22px] w-[22px]" />
+      className={cn("focus-ring flex min-h-[72px] w-full items-center gap-3 px-4 py-2.5 text-start transition-colors hover:bg-slate-50", selected && "bg-blue-50/70")}>
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100/80 text-slate-500">
+        <Building2 aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
       </span>
       <span className="min-w-0"><span className="block truncate text-[16px] font-bold text-slate-950">{name}</span>
         <span className="mt-1 block truncate text-[13px] font-medium text-slate-600">{detail}</span></span>
@@ -87,14 +87,12 @@ export function HotelDestinationMobilePicker({ open, value, titleId, inputId, la
     return () => { clearTimeout(timer); controller.abort(); };
   }, [open, trimmed, selectedCountryHint, detectedCountryHint]);
 
-  const choose = (option: HotelDestinationSuggestion) => { setDraftValue(option.searchValue); setQuery(option.searchValue); };
   const clearDraft = () => { setQuery(""); setDraftValue(""); setSuggestions([]); requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true })); };
   const rows = trimmed ? suggestions : recents;
 
   return <HotelMobilePickerShell open={open} title={t("chooseDestination")} titleId={titleId} launcherRef={launcherRef}
-    onClose={onClose} showCancelAction={false} contentClassName="bg-[#fcfdfe] px-4 py-6"
-    footer={(requestClose) => <button type="button" disabled={!draftValue.trim()} onClick={() => { onChange(draftValue.trim()); requestClose(); }}
-      className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[16px] font-bold text-white disabled:cursor-not-allowed">{t("done")}</button>}>
+    onClose={onClose} showCancelAction={false} contentClassName="bg-[#fcfdfe] px-4 py-6">
+    {(requestClose) => <>
     <div className="mx-auto w-full max-w-xl">
       <label htmlFor={inputId} className="mb-4 block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">{t("hotelSearchDestinationLabel")}</label>
       <div className="relative"><MapPin aria-hidden="true" className="absolute start-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-600" />
@@ -104,8 +102,9 @@ export function HotelDestinationMobilePicker({ open, value, titleId, inputId, la
       </div>
       {!trimmed && recents.length ? <h3 className="mb-4 mt-8 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">{t("recentSearches")}</h3> : null}
       {loading ? <p className="py-8 text-center text-sm text-slate-500">{t("findingDestinations")}</p> : rows.length ?
-        <div className={cn("overflow-hidden rounded-xl border border-slate-200 bg-white divide-y divide-slate-200", trimmed && "mt-5")}>{rows.map(option => <MobileHotelDestinationRow key={option.id} option={option} locale={locale} selected={draftValue === option.searchValue} onSelect={() => choose(option)} />)}</div>
+        <div className={cn("overflow-hidden rounded-xl border border-slate-200 bg-white divide-y divide-slate-200", trimmed && "mt-5")}>{rows.map(option => <MobileHotelDestinationRow key={option.id} option={option} locale={locale} selected={draftValue === option.searchValue} onSelect={() => { onChange(option.searchValue); requestClose(); }} />)}</div>
         : trimmed ? <p className="py-8 text-center text-sm text-slate-500">{t("noMatchingDestinationsYet")}</p> : null}
     </div>
+    </>}
   </HotelMobilePickerShell>;
 }
