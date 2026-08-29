@@ -23,10 +23,7 @@ test("shared Cars picker matches the Flight navigation and input geometry", () =
     /mode === "pickup"[\s\S]*carsSearch.choosePickupLocation[\s\S]*carsSearch.chooseReturnLocation/,
   );
   assert.match(picker, /Airport, city, or address/);
-  assert.match(
-    picker,
-    /<MapPin[\s\S]*h-\[18px\] w-\[18px\][\s\S]*<input/,
-  );
+  assert.match(picker, /<MapPin[\s\S]*h-\[18px\] w-\[18px\][\s\S]*<input/);
   assert.match(
     picker,
     /h-\[50px\][\s\S]*rounded-\[10px\][\s\S]*border-slate-300[\s\S]*ps-12 pe-12[\s\S]*text-\[15px\] font-medium/,
@@ -53,7 +50,7 @@ test("blank queries stay clean and never request generic suggestions", () => {
 test("selecting Rome canonically updates the query and leaves exactly one row", () => {
   assert.match(
     picker,
-    /const select = \(item: CarLocationSuggestion\) => \{[\s\S]*?setDraft\(item\);[\s\S]*?setQuery\(formatSelectedCarLocation\(item\)\);[\s\S]*?setResults\(\[item\]\);[\s\S]*?setSearchCompleted\(true\);[\s\S]*?\};/,
+    /const select = \(item: CarLocationSuggestion, requestClose: \(\) => void\) => \{[\s\S]*?setDraft\(item\);[\s\S]*?setQuery\(formatSelectedCarLocation\(item\)\);[\s\S]*?setResults\(\[item\]\);[\s\S]*?setSearchCompleted\(true\);[\s\S]*?\};/,
   );
   assert.match(picker, /const visibleResults = draft \? \[draft\] : results;/);
   assert.match(picker, /visibleResults\.map\(\(item\)/);
@@ -74,10 +71,7 @@ test("airport selection uses its canonical city and code while retaining airport
 
 test("selection prevents a second search and ignores stale responses", () => {
   assert.match(picker, /if \(!open \|\| draft\) return;/);
-  assert.match(
-    picker,
-    /requestId !== searchRequestRef\.current\) return;/,
-  );
+  assert.match(picker, /requestId !== searchRequestRef\.current\) return;/);
   assert.match(picker, /\}, \[draft, open, query\]\);/);
   assert.match(
     picker,
@@ -100,14 +94,27 @@ test("clear X resets all selection and search state before focusing the input", 
   assert.match(picker, /onClick=\{clear\}/);
 });
 
-test("Done commits only a canonical selected draft and Back only closes", () => {
+test("default mode keeps canonical draft and Done behavior while Back only closes", () => {
+  assert.match(picker, /commitOnSelect = false/);
   assert.match(
     picker,
     /if \(!draft\) return;\s*onCommit\(draft\.value\);\s*requestClose\(\);/,
   );
   assert.match(picker, /disabled=\{!draft\}/);
   assert.match(picker, /launcherRef=\{launcherRef\}[\s\S]*onClose=\{onClose\}/);
-  assert.equal((picker.match(/onCommit\(/g) ?? []).length, 1);
+  assert.match(picker, /commitOnSelect\s*\? undefined/);
+  assert.match(picker, /: \(requestClose\) => \(/);
+});
+
+test("commitOnSelect immediately commits the canonical row and closes without Done", () => {
+  assert.match(picker, /commitOnSelect\?: boolean/);
+  assert.match(
+    picker,
+    /searchRequestRef\.current \+= 1;\s*if \(commitOnSelect\) \{\s*onCommit\(item\.value\);\s*requestClose\(\);\s*return;/,
+  );
+  assert.match(picker, /\{\(requestClose\) => \(/);
+  assert.match(picker, /onSelect=\{\(\) => select\(item, requestClose\)\}/);
+  assert.equal((picker.match(/onCommit\(/g) ?? []).length, 2);
 });
 
 test("rows use the clean neutral MapPin hierarchy without chips or chevrons", () => {

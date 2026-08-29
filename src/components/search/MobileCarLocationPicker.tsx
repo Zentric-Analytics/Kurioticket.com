@@ -17,6 +17,7 @@ type Props = {
   inputId: string;
   value: string;
   launcherRef?: RefObject<HTMLElement | null>;
+  commitOnSelect?: boolean;
   onClose: () => void;
   onCommit: (value: string) => void;
 };
@@ -82,6 +83,7 @@ export function MobileCarLocationPicker({
   inputId,
   value,
   launcherRef,
+  commitOnSelect = false,
   onClose,
   onCommit,
 }: Props) {
@@ -159,8 +161,13 @@ export function MobileCarLocationPicker({
     };
   }, [draft, open, query]);
 
-  const select = (item: CarLocationSuggestion) => {
+  const select = (item: CarLocationSuggestion, requestClose: () => void) => {
     searchRequestRef.current += 1;
+    if (commitOnSelect) {
+      onCommit(item.value);
+      requestClose();
+      return;
+    }
     setDraft(item);
     setQuery(formatSelectedCarLocation(item));
     setResults([item]);
@@ -208,94 +215,100 @@ export function MobileCarLocationPicker({
       showBackLabel={true}
       showCancelAction={false}
       contentClassName="bg-[#fcfdff] px-4 py-6"
-      footer={(requestClose) => (
-        <button
-          type="button"
-          onClick={() => commit(requestClose)}
-          disabled={!draft}
-          className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[16px] font-semibold text-white transition-colors hover:bg-[#004bb8] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {text("done", "Done")}
-        </button>
-      )}
+      footer={
+        commitOnSelect
+          ? undefined
+          : (requestClose) => (
+              <button
+                type="button"
+                onClick={() => commit(requestClose)}
+                disabled={!draft}
+                className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[16px] font-semibold text-white transition-colors hover:bg-[#004bb8] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {text("done", "Done")}
+              </button>
+            )
+      }
     >
-      <div className="mx-auto w-full max-w-xl">
-        <div className="relative">
-          <MapPin
-            aria-hidden="true"
-            className="pointer-events-none absolute start-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-700"
-          />
-          <input
-            ref={inputRef}
-            id={inputId}
-            value={query}
-            onChange={(event) => {
-              searchRequestRef.current += 1;
-              setQuery(event.target.value);
-              setDraft(null);
-              setResults([]);
-              setSearchCompleted(false);
-              setLoading(false);
-              setError(false);
-            }}
-            aria-label={placeholder}
-            placeholder={placeholder}
-            autoComplete="off"
-            className="h-[50px] w-full rounded-[10px] border border-slate-300 bg-white py-3 ps-12 pe-12 text-[15px] font-medium text-slate-950 outline-none transition-colors placeholder:text-slate-500 focus:border-[#075ee8] focus:ring-2 focus:ring-[#075ee8]/10"
-          />
-          <button
-            type="button"
-            aria-label={text("carsSearch.clearLocation", "Clear location")}
-            onClick={clear}
-            className="focus-ring absolute end-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-50"
-          >
-            <X className="h-[18px] w-[18px]" aria-hidden="true" />
-          </button>
-        </div>
+      {(requestClose) => (
+        <div className="mx-auto w-full max-w-xl">
+          <div className="relative">
+            <MapPin
+              aria-hidden="true"
+              className="pointer-events-none absolute start-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-700"
+            />
+            <input
+              ref={inputRef}
+              id={inputId}
+              value={query}
+              onChange={(event) => {
+                searchRequestRef.current += 1;
+                setQuery(event.target.value);
+                setDraft(null);
+                setResults([]);
+                setSearchCompleted(false);
+                setLoading(false);
+                setError(false);
+              }}
+              aria-label={placeholder}
+              placeholder={placeholder}
+              autoComplete="off"
+              className="h-[50px] w-full rounded-[10px] border border-slate-300 bg-white py-3 ps-12 pe-12 text-[15px] font-medium text-slate-950 outline-none transition-colors placeholder:text-slate-500 focus:border-[#075ee8] focus:ring-2 focus:ring-[#075ee8]/10"
+            />
+            <button
+              type="button"
+              aria-label={text("carsSearch.clearLocation", "Clear location")}
+              onClick={clear}
+              className="focus-ring absolute end-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-50"
+            >
+              <X className="h-[18px] w-[18px]" aria-hidden="true" />
+            </button>
+          </div>
 
-        <div className="mt-8">
-          {loading ? (
-            <p
-              className="px-4 py-8 text-center text-sm font-medium text-slate-500"
-              aria-live="polite"
-            >
-              {text("carsSearch.loadingSuggestions", "Loading suggestions…")}
-            </p>
-          ) : error ? (
-            <p
-              className="px-4 py-8 text-center text-sm font-medium text-slate-500"
-              aria-live="polite"
-            >
-              {text(
-                "carsSearch.suggestionsUnavailable",
-                "Suggestions unavailable.",
-              )}{" "}
-              {text(
-                "carsSearch.continueTypingManually",
-                "Continue typing manually.",
-              )}
-            </p>
-          ) : visibleResults.length ? (
-            <div className="overflow-hidden rounded-[11px] border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05)]">
-              {visibleResults.map((item) => (
-                <LocationRow
-                  key={item.id}
-                  item={item}
-                  selected={draft?.id === item.id}
-                  onSelect={() => select(item)}
-                />
-              ))}
-            </div>
-          ) : searchCompleted && trimmedQuery ? (
-            <p className="px-4 py-8 text-center text-sm font-medium text-slate-500">
-              {text(
-                "carsSearch.noMatchingLocations",
-                "No matching locations found.",
-              )}
-            </p>
-          ) : null}
+          <div className="mt-8">
+            {loading ? (
+              <p
+                className="px-4 py-8 text-center text-sm font-medium text-slate-500"
+                aria-live="polite"
+              >
+                {text("carsSearch.loadingSuggestions", "Loading suggestions…")}
+              </p>
+            ) : error ? (
+              <p
+                className="px-4 py-8 text-center text-sm font-medium text-slate-500"
+                aria-live="polite"
+              >
+                {text(
+                  "carsSearch.suggestionsUnavailable",
+                  "Suggestions unavailable.",
+                )}{" "}
+                {text(
+                  "carsSearch.continueTypingManually",
+                  "Continue typing manually.",
+                )}
+              </p>
+            ) : visibleResults.length ? (
+              <div className="overflow-hidden rounded-[11px] border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05)]">
+                {visibleResults.map((item) => (
+                  <LocationRow
+                    key={item.id}
+                    item={item}
+                    selected={draft?.id === item.id}
+                    onSelect={() => select(item, requestClose)}
+                  />
+                ))}
+              </div>
+            ) : searchCompleted && trimmedQuery ? (
+              <p className="px-4 py-8 text-center text-sm font-medium text-slate-500">
+                {text(
+                  "carsSearch.noMatchingLocations",
+                  "No matching locations found.",
+                )}
+              </p>
+            ) : null}
+          </div>
         </div>
-      </div>
+      )}
     </FlightMobilePickerShell>
   );
 }

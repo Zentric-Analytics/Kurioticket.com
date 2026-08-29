@@ -37,7 +37,10 @@ test("standalone mobile keeps total primary, per-day supporting, and its action 
     mobile.indexOf("totalDisplayPrice.formatted") <
       mobile.indexOf("dailyDisplayPrice.formatted"),
   );
-  assert.match(mobile, /text-\[23px\][^\"]*font-semibold[^\"]*text-\[#07133B\][^\"]*tabular-nums/);
+  assert.match(
+    mobile,
+    /text-\[23px\][^\"]*font-semibold[^\"]*text-\[#07133B\][^\"]*tabular-nums/,
+  );
   assert.match(mobile, /dailyDisplayPrice\.formatted\}\/day/);
   assert.match(mobile, /min-h-11/);
   assert.match(mobile, /bg-\[#004BB8\]/);
@@ -56,7 +59,10 @@ test("standalone identity separates the semantic model heading from its qualifie
     mobile,
     /text-\[11px\] font-medium leading-4 text-\[#536B92\][^>]*>\s*or similar/,
   );
-  assert.match(mobile, /text-\[18px\] font-bold leading-\[1\.18\] text-\[#07133B\]/);
+  assert.match(
+    mobile,
+    /text-\[18px\] font-bold leading-\[1\.18\] text-\[#07133B\]/,
+  );
   assert.doesNotMatch(mobile, /aria-hidden[^>]*>\s*or similar/);
 });
 
@@ -139,10 +145,33 @@ test("prices preserve formatter output, LTR semantics, and accessible fallback m
   }
 });
 
-
 test("cards expose compact, functional save and share actions", () => {
-  assert.match(source, /data-car-card-actions/);
-  assert.match(source, /aria-label=\{`\$\{isSaved \? "Unsave" : "Save"\} \$\{car\.modelName\}`\}/);
+  const mobileUtility = source.slice(
+    source.indexOf("data-car-card-mobile-utility-row"),
+    source.indexOf("data-car-card-mobile-specs"),
+  );
+  assert.match(mobileUtility, /\{mobileCardActions\}/);
+  assert.ok(
+    mobileUtility.indexOf("car.categoryLabel") <
+      mobileUtility.indexOf("{mobileCardActions}"),
+  );
+  assert.ok(
+    mobileUtility.indexOf("{mobileCardActions}") <
+      mobileUtility.indexOf("data-car-card-mobile-identity"),
+  );
+  const actions = source.slice(
+    source.indexOf("data-car-card-mobile-actions"),
+    source.indexOf("return ("),
+  );
+  assert.doesNotMatch(actions, /car\.modelName\}\s*<\/h[23]>/);
+  assert.match(
+    mobileUtility,
+    /data-car-card-mobile-identity[\s\S]*min-w-0 flex-wrap/,
+  );
+  assert.match(
+    source,
+    /aria-label=\{`\$\{isSaved \? "Unsave" : "Save"\} \$\{car\.modelName\}`\}/,
+  );
   assert.match(source, /aria-pressed=\{isSaved\}/);
   assert.match(source, /fill=\{isSaved \? "currentColor" : "none"\}/);
   assert.match(source, /aria-label=\{`Share \$\{car\.modelName\}`\}/);
@@ -150,5 +179,30 @@ test("cards expose compact, functional save and share actions", () => {
   assert.match(source, /navigator\.clipboard\.writeText/);
   assert.match(source, /role="status"/);
   assert.match(source, /aria-live="polite"/);
-  assert.match(source, /h-11 w-11/);
+  assert.match(actions, /h-8 w-8/);
+  assert.match(actions, /before:-inset-1/);
+  assert.match(actions, /gap-2/);
+  assert.equal((actions.match(/size=\{17\}/g) ?? []).length, 2);
+  assert.doesNotMatch(actions, /h-11 w-11/);
+  assert.match(mobileUtility, /min-h-8 min-w-0 items-center/);
+});
+
+test("long mobile model names retain an action-independent identity row", () => {
+  for (const modelName of [
+    "Citroën Grand C4 SpaceTourer",
+    "Mercedes-Benz E-Class",
+    "Mercedes-Benz V-Class",
+  ]) {
+    assert.ok(modelName.length > 20);
+  }
+  const identity = source.slice(
+    source.indexOf("data-car-card-mobile-identity"),
+    source.indexOf("data-car-card-mobile-specs"),
+  );
+  assert.match(identity, /\{car\.modelName\}/);
+  assert.match(identity, /min-w-0 break-words text-\[18px\]/);
+  assert.doesNotMatch(
+    identity,
+    /data-car-card-mobile-actions|p[er]-\d+|w-\[(?:80|88)px\]/,
+  );
 });

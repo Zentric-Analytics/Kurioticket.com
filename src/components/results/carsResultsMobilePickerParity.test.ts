@@ -43,7 +43,7 @@ test("mobile launchers enter one nested picker instead of inline panels", () => 
   );
 });
 
-test("picker Back and Done return to Edit Search without submitting", () => {
+test("nested picker close returns to Edit Search without submitting", () => {
   const dialogs = source.match(
     /<MobileDatePickerDialog[\s\S]*?<div\n        className=\{cn\(/,
   )?.[0];
@@ -56,6 +56,10 @@ test("picker Back and Done return to Edit Search without submitting", () => {
   assert.doesNotMatch(
     dialogs,
     /router\.(?:push|replace)|onSubmit|closeMobileSearchDrawer/,
+  );
+  assert.match(
+    dialogs,
+    /<MobileCarLocationPicker[\s\S]*?commitOnSelect[\s\S]*?onClose=\{\(\) => setMobilePicker\(null\)\}/,
   );
 });
 

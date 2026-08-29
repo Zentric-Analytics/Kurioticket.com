@@ -148,6 +148,35 @@ export function CarResultCard({
     </div>
   );
 
+  const mobileCardActions = (
+    <div
+      data-car-card-mobile-actions
+      className="flex h-8 shrink-0 items-center gap-2"
+    >
+      <button
+        type="button"
+        aria-label={`${isSaved ? "Unsave" : "Save"} ${car.modelName}`}
+        aria-pressed={isSaved}
+        onClick={toggleSavedCar}
+        className={`relative inline-flex h-8 w-8 items-center justify-center rounded-md bg-transparent transition before:absolute before:-inset-1 before:content-[''] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 ${isSaved ? "text-rose-600" : "text-slate-600"}`}
+      >
+        <Heart
+          size={17}
+          fill={isSaved ? "currentColor" : "none"}
+          aria-hidden="true"
+        />
+      </button>
+      <button
+        type="button"
+        aria-label={`Share ${car.modelName}`}
+        onClick={() => void shareCar()}
+        className="relative inline-flex h-8 w-8 items-center justify-center rounded-md bg-transparent text-slate-600 transition before:absolute before:-inset-1 before:content-[''] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
+      >
+        <Share2 size={17} aria-hidden="true" />
+      </button>
+    </div>
+  );
+
   return (
     <article className="relative w-full overflow-hidden rounded-[13px] border md:rounded-2xl border-[#D8E1EC] bg-white shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] transition duration-200 hover:-translate-y-0.5 hover:border-[#CBD6E2] hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]">
       {shareConfirmation ? (
@@ -184,21 +213,27 @@ export function CarResultCard({
               data-car-card-mobile-information
               className="min-w-0 px-2.5 py-2.5"
             >
-              <header className="flex min-w-0 items-start justify-between gap-1">
-                <div className="min-w-0 pt-1">
+              <header
+                data-car-card-mobile-utility-row
+                className="flex min-h-8 min-w-0 items-center justify-between gap-1"
+              >
+                <div className="flex min-w-0 items-center gap-1.5">
                   <p className="min-w-0 text-[10px] font-bold uppercase tracking-[0.14em] text-[#004BB8]">
                     {car.categoryLabel}
                   </p>
                   {badge && BadgeIcon && (
-                    <span className="mt-1 inline-flex min-h-5 max-w-full items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold leading-4 text-emerald-700">
+                    <span className="inline-flex min-h-5 max-w-full items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold leading-4 text-emerald-700">
                       <BadgeIcon size={11} aria-hidden="true" />
                       {badge}
                     </span>
                   )}
                 </div>
-                {cardActions}
+                {mobileCardActions}
               </header>
-              <div className="mt-0.5 flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0">
+              <div
+                data-car-card-mobile-identity
+                className="mt-0.5 flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0"
+              >
                 {headingLevel === "h3" ? (
                   <h3 className="min-w-0 break-words text-[18px] font-bold leading-[1.18] text-[#07133B]">
                     {car.modelName}
