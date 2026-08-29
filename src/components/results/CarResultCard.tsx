@@ -151,17 +151,17 @@ export function CarResultCard({
   const mobileCardActions = (
     <div
       data-car-card-mobile-actions
-      className="flex h-8 shrink-0 items-center gap-0.5"
+      className="flex shrink-0 items-center gap-0"
     >
       <button
         type="button"
         aria-label={`${isSaved ? "Unsave" : "Save"} ${car.modelName}`}
         aria-pressed={isSaved}
         onClick={toggleSavedCar}
-        className={`relative inline-flex h-8 w-8 items-center justify-center rounded-md bg-transparent transition before:absolute before:-inset-y-1.5 before:-start-3 before:end-0 before:content-[''] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 ${isSaved ? "text-rose-600" : "text-slate-600"}`}
+        className={`flex min-h-11 min-w-11 shrink-0 items-center justify-end rounded-full border border-transparent bg-transparent pe-1 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 ${isSaved ? "text-rose-600" : "text-slate-700"}`}
       >
         <Heart
-          size={17}
+          size={20}
           fill={isSaved ? "currentColor" : "none"}
           aria-hidden="true"
         />
@@ -170,9 +170,9 @@ export function CarResultCard({
         type="button"
         aria-label={`Share ${car.modelName}`}
         onClick={() => void shareCar()}
-        className="relative inline-flex h-8 w-8 items-center justify-center rounded-md bg-transparent text-slate-600 transition before:absolute before:-inset-y-1.5 before:start-0 before:-end-3 before:content-[''] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
+        className="flex min-h-11 min-w-11 shrink-0 items-center justify-start rounded-full border border-transparent bg-transparent ps-1 text-slate-700 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
       >
-        <Share2 size={17} aria-hidden="true" />
+        <Share2 size={19} aria-hidden="true" />
       </button>
     </div>
   );

@@ -179,19 +179,24 @@ test("cards expose compact, functional save and share actions", () => {
   assert.match(source, /navigator\.clipboard\.writeText/);
   assert.match(source, /role="status"/);
   assert.match(source, /aria-live="polite"/);
-  assert.match(actions, /h-8 w-8/);
-  assert.match(actions, /gap-0\.5/);
-  assert.doesNotMatch(actions, /gap-2|before:-inset-1/);
-  assert.match(
-    actions,
-    /before:-inset-y-1\.5 before:-start-3 before:end-0/,
+  assert.match(actions, /gap-0/);
+  assert.equal(
+    (actions.match(/min-h-11 min-w-11/g) ?? []).length,
+    2,
+    "save and share each preserve an independent 44px minimum target",
   );
   assert.match(
     actions,
-    /before:-inset-y-1\.5 before:start-0 before:-end-3/,
+    /min-h-11 min-w-11[^\n]*justify-end[^\n]*pe-1/,
   );
-  assert.equal((actions.match(/size=\{17\}/g) ?? []).length, 2);
-  assert.doesNotMatch(actions, /h-11 w-11/);
+  assert.match(
+    actions,
+    /min-h-11 min-w-11[^\n]*justify-start[^\n]*ps-1/,
+  );
+  assert.match(actions, /<Heart\s+size=\{20\}/);
+  assert.match(actions, /<Share2 size=\{19\}/);
+  assert.doesNotMatch(actions, /before:-inset|before:-start|before:-end/);
+  assert.doesNotMatch(actions, /justify-center/);
   assert.match(mobileUtility, /min-h-8 min-w-0 items-center/);
 });
 

@@ -27,28 +27,30 @@ test("normal Cars mobile summary preserves Cars content and its actual Edit Sear
     summary,
     /openMobileSearchDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)/,
   );
-  assert.match(summary, /<PencilLine size=\{16\} strokeWidth=\{2\.1\} \/>/);
+  assert.match(summary, /<SquarePen size=\{16\} strokeWidth=\{2\.2\} \/>/);
   assert.match(
     summary,
-    /inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-\[#004BB8\]\/12 bg-\[#004BB8\]\/8 text-\[#004BB8\] shadow-\[inset_0_1px_0_rgba\(255,255,255,0\.8\)\]/,
+    /inline-flex h-11 w-11 shrink-0 items-center justify-center[^\n]*bg-transparent text-slate-700/,
   );
   assert.match(summary, /aria-hidden="true"/);
-  assert.doesNotMatch(summary, /<SquarePen|<Pencil size=\{18\}/);
+  assert.doesNotMatch(
+    summary,
+    /PencilLine|bg-\[#004BB8\]\/8|border-\[#004BB8\]\/12/,
+  );
 });
 
 test("normal Cars summary pins the current Hotel edit affordance contract", () => {
   for (const contract of [
-    /<PencilLine size=\{16\} strokeWidth=\{2\.1\} \/>/,
-    /h-8 w-8/,
-    /rounded-md/,
-    /border-\[#004BB8\]\/12/,
-    /bg-\[#004BB8\]\/8/,
-    /text-\[#004BB8\]/,
-    /shadow-\[inset_0_1px_0_rgba\(255,255,255,0\.8\)\]/,
+    /<SquarePen size=\{16\} strokeWidth=\{2\.2\}/,
+    /h-11 w-11/,
+    /bg-transparent/,
+    /text-slate-700/,
   ]) {
     assert.match(summary, contract);
     assert.match(hotelSource, contract);
   }
+  assert.doesNotMatch(summary, /SquarePen[\s\S]{0,300}bg-\[#004BB8\]\/8/);
+  assert.doesNotMatch(summary, /PencilLine|border-\[#004BB8\]\/12/);
 });
 
 test("normal Cars summary uses the Flights mobile presentation and remains mobile-only", () => {
