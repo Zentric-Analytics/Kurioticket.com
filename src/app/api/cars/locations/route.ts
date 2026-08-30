@@ -1,4 +1,4 @@
-import { searchCarLocationSuggestions } from "@/lib/cars/carLocationSuggestions";
+import { searchCanonicalCarCatalog } from "@/lib/cars/carLocationSuggestions";
 
 export const dynamic = "force-dynamic";
 
@@ -13,8 +13,8 @@ export async function GET(request: Request) {
   const limit = Math.min(10, Math.max(1, Number.isFinite(parsedLimit) ? parsedLimit : 8));
 
   try {
-    const suggestions = await searchCarLocationSuggestions(q, { limit, country });
-    return Response.json({ suggestions, source: "local-fallback" }, { headers: jsonHeaders });
+    const result = await searchCanonicalCarCatalog(q, { limit, country });
+    return Response.json({ ...result, source: "local-fallback" }, { headers: jsonHeaders });
   } catch {
     return Response.json({ suggestions: [], source: "local-fallback" }, { headers: jsonHeaders });
   }
