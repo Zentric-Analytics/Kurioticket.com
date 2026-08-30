@@ -61,18 +61,18 @@ test("successful Cars Details uses a full-width white section inside the muted m
   assertOrdered(clientSource, [
     successfulMainWrapper,
     successfulSection,
-    '<div className="page-shell py-3 sm:py-7">',
+    '<div className="page-shell py-2 sm:py-7">',
   ]);
   assert.doesNotMatch(
     clientSource,
     /<main className="[^"]*lg:pb-14[^"]*">/,
   );
   assert.doesNotMatch(clientSource, /flex-1 bg-\[#f6f8fb\] lg:pb-14/);
-  assert.match(clientSource, /page-shell py-3 sm:py-7/);
+  assert.match(clientSource, /page-shell py-2 sm:py-7/);
   assertNoForbiddenBackgroundTreatments(
     clientSource.slice(
       clientSource.indexOf(successfulMainWrapper),
-      clientSource.indexOf('<div className="page-shell py-3 sm:py-7">'),
+      clientSource.indexOf('<div className="page-shell py-2 sm:py-7">'),
     ),
   );
 });
@@ -133,9 +133,9 @@ test("unavailable content and route behavior contracts remain present", () => {
     "resultsHref",
     "getCarDetails",
     "CarDetailsClient",
-    "data-mobile-car-footer-clearance",
     "AppHeader",
-    "Footer",
+    "data-car-details-desktop-header",
+    "data-car-details-mobile-safe-area",
     "pickupLocation",
     "dropoffLocation",
     "pickupDate",
@@ -146,4 +146,7 @@ test("unavailable content and route behavior contracts remain present", () => {
   ]) {
     assert.ok(routeSource.includes(contract), `${contract} remains present`);
   }
+  assert.doesNotMatch(routeSource, /Footer|data-mobile-car-footer-clearance/);
+  assert.match(routeSource, /hidden lg:block/);
+  assert.match(routeSource, /pt-\[env\(safe-area-inset-top\)\] lg:pt-0/);
 });
