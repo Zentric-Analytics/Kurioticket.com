@@ -135,17 +135,17 @@ export function MobileResultsEditSheet({
           <div className={cn("mobile-results-sheet-content min-h-0 flex-1 overflow-y-auto overscroll-contain bg-inherit px-4 py-4", footer && "pb-2", contentClassName)}>{children}</div>
           {footer ? <div className="shrink-0 border-t border-slate-200 bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3">{footer}</div> : null}
         </div>
-        {bottomSurfaceContinuation ? (
-          <div
-            data-mobile-results-sheet-bottom-continuation
-            aria-hidden="true"
-            className={cn(
-              "mobile-results-sheet-bottom-continuation pointer-events-none absolute inset-x-0 top-[calc(100%-1px)] bg-white",
-              bottomSurfaceContinuationClassName,
-            )}
-          />
-        ) : null}
       </div>
+      {bottomSurfaceContinuation ? (
+        <div
+          data-mobile-results-sheet-bottom-continuation
+          aria-hidden="true"
+          className={cn(
+            "mobile-results-sheet-bottom-continuation pointer-events-none fixed inset-x-0 top-[calc(100dvh-1px)] z-20 bg-white",
+            bottomSurfaceContinuationClassName,
+          )}
+        />
+      ) : null}
     </div>,
     document.body,
   );

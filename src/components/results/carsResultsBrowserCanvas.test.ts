@@ -11,7 +11,7 @@ const hotelSource = readFileSync(
   "utf8",
 );
 
-test("Cars blends its header from a white browser canvas while Results sheets own lower continuations", () => {
+test("Cars uses a stable white browser canvas and masked header blend while Results sheets own lower continuations", () => {
   assert.match(carsSource, /browserCanvasColor="#ffffff"/);
   assert.match(carsSource, /blendHeaderBackdrop/);
   assert.match(
