@@ -51,7 +51,7 @@ export function CarDetailsExperience({ car, search, primaryAction, presentation,
 
 export function CarDetailsClient({ car, search, resultsHref }: { car: NormalizedCarResult; search: CarSearchParams; resultsHref: string }) {
   const { t } = useLocale(); const copy = (key: string) => t[key] || enTranslations[key] || key;
-  return <main className="flex-1 bg-white pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bg-surface-muted/40 lg:pb-0"><section className="bg-white lg:border-b lg:border-border lg:pb-14"><div className="page-shell py-3 sm:py-7"><DetailsBackLink href={resultsHref}>{copy("carDetails.backToResults")}</DetailsBackLink><div className="mt-3 sm:mt-5"><CarDetailsExperience car={car} search={search} presentation="standalone-content" primaryAction={{ kind: "standalone-disabled-provider", label: copy("continueToProvider") }} /></div></div></section></main>;
+  return <main className="flex-1 bg-white pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bg-surface-muted/40 lg:pb-0"><section className="bg-white lg:border-b lg:border-border lg:pb-14"><div className="page-shell py-2 sm:py-7"><DetailsBackLink href={resultsHref} className="text-[#075EE8] hover:text-[#004BB8]">{copy("carDetails.backToResults")}</DetailsBackLink><div className="mt-2 sm:mt-5"><CarDetailsExperience car={car} search={search} presentation="standalone-content" primaryAction={{ kind: "standalone-disabled-provider", label: copy("continueToProvider") }} /></div></div></section></main>;
 }
 
 function BookingSummary({ offer, days, price, copy, action }: { offer: CarOffer; days: number; price: PriceFn; copy: (k: string) => string; action: CarDetailsPrimaryAction }) {
