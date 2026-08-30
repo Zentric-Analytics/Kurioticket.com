@@ -178,10 +178,10 @@ test("hotel result cards expose compact save and share actions", () => {
   assert.match(source, /AbortError/);
 });
 
-test("mobile hotel utility glyphs meet at the inside edges of separate tap targets", () => {
+test("mobile hotel utility actions sit at the card edge without entering the hotel name", () => {
   assert.match(
     source,
-    /className="relative min-w-0"[\s\S]*?pe-\[76px\][\s\S]*?data-hotel-utility-actions[\s\S]*?absolute -end-2 -top-2/,
+    /className="relative min-w-0"[\s\S]*?pe-\[88px\][\s\S]*?data-hotel-utility-actions[\s\S]*?absolute -end-3 -top-2/,
   );
   assert.match(
     source,
