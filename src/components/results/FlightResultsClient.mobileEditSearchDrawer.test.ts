@@ -10,6 +10,15 @@ test("Results delegates mobile Edit Search to the shared drawer", () => {
   assert.match(source, /router\.push\(`\/flights\/results\?/);
 });
 
+test("Results launcher avoids Android tap flash while retaining focus-visible", () => {
+  const start = source.indexOf("function renderMobileControlsRow");
+  const end = source.indexOf("function renderDesktopSortControl", start);
+  const launcher = source.slice(start, end);
+  assert.match(launcher, /\[-webkit-tap-highlight-color:transparent\]/);
+  assert.match(launcher, /focus-visible:ring-2 focus-visible:ring-\[#004BB8\]\/35/);
+  assert.doesNotMatch(launcher, /group-active:bg-slate-200/);
+});
+
 test("Results parent leaves Edit Search scroll locking to the drawer", () => {
   assert.doesNotMatch(source, /mobileSearchScrollLockRef/);
   const openStart = source.indexOf("function openMobileSearchDrawer");

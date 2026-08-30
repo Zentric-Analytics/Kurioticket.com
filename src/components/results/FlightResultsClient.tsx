@@ -6736,7 +6736,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         <button
           type="button"
           onClick={(event) => openMobileSearchDrawer(event.currentTarget, getOverlayActivationModality(event))}
-          className="group relative z-10 flex h-16 min-w-0 w-full max-w-[30rem] items-center justify-between gap-3 overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white px-4 py-0 text-start shadow-[0_6px_18px_-16px_rgba(15,23,42,0.32)] transition hover:border-[#C6D2E0] hover:bg-white hover:shadow-[0_8px_20px_-16px_rgba(15,23,42,0.36)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+          className="group relative z-10 flex h-16 min-w-0 w-full max-w-[30rem] touch-manipulation items-center justify-between gap-3 overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white px-4 py-0 text-start shadow-[0_6px_18px_-16px_rgba(15,23,42,0.32)] transition [-webkit-tap-highlight-color:transparent] hover:border-[#C6D2E0] hover:bg-white hover:shadow-[0_8px_20px_-16px_rgba(15,23,42,0.36)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
         >
           <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden pe-1">
             <span className="block truncate text-[16px] font-bold leading-5 tracking-[-0.01em] text-[#142033]">
@@ -6749,7 +6749,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           </span>
           <span
             aria-hidden="true"
-            className="-my-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-transparent bg-transparent text-slate-700 transition group-hover:bg-slate-100 group-active:bg-slate-200"
+            className="-my-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-transparent bg-transparent text-slate-700 transition group-hover:bg-slate-100"
           >
             <SquarePen size={16} strokeWidth={2.2} />
           </span>

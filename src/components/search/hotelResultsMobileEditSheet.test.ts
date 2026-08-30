@@ -10,9 +10,9 @@ const results = read("../results/HotelResultsClient.tsx");
 test("Hotel results editor renders three independent canonical field cards", () => {
   assert.match(searchBar, /compact && !mobileResultsSheet \? \(/);
   assert.match(searchBar, /data-hotel-results-edit-fields=/);
-  assert.match(searchBar, /className=\{mobileResultsSheet \? "flex flex-col gap-2\.5" : "contents"\}/);
+  assert.match(searchBar, /className=\{mobileResultsSheet \? "flex flex-col gap-2" : "contents"\}/);
   assert.equal(searchBar.match(/data-hotel-mobile-edit-row=/g)?.length, 3);
-  assert.equal(searchBar.match(/min-h-\[70px\] rounded-\[14px\] border-\[#D8E1EC\]/g)?.length, 4);
+  assert.equal(searchBar.match(/min-h-16 rounded-\[14px\] border-\[#D8E1EC\]/g)?.length, 4);
   assert.doesNotMatch(searchBar, /mobileResultsEditGroupClass/);
 
   const fieldsStart = searchBar.indexOf("data-hotel-results-edit-fields");
@@ -69,16 +69,24 @@ test("Hotel results cards place their icons and approved affordances in value ro
   assert.equal((searchBar.match(/<ChevronRight aria-hidden="true" className=/g) ?? []).length, 2);
 });
 
-test("Hotel results sheet uses neutral content behind white cards", () => {
-  assert.match(results, /className="bg-slate-50"/);
-  assert.match(results, /contentClassName="bg-slate-50/);
+test("Hotel results sheet uses the shared white canvas and clean motion", () => {
+  assert.match(results, /browserCanvasColor="#ffffff"/);
+  assert.match(results, /cleanBackdrop/);
+  assert.match(results, /smoothMotion/);
+  assert.match(results, /closing=\{mobileHotelSearchClosing\}/);
+  assert.match(results, /className="bg-white"/);
+  assert.match(results, /contentClassName="!pt-3 bg-white/);
   assert.match(results, /bottomSurfaceContinuation/);
-  assert.match(
-    results,
-    /bottomSurfaceContinuationClassName="bg-slate-50"/,
-  );
+  assert.doesNotMatch(results, /bottomSurfaceContinuationClassName="bg-slate-50"/);
   assert.match(sheet, /mobile-results-sheet-content[\s\S]*?bg-inherit/);
   assert.match(sheet, /border-b border-slate-200\/80 bg-white/);
+});
+
+test("Hotel results launcher avoids touch flash while retaining keyboard focus", () => {
+  assert.match(searchBar, /\[-webkit-tap-highlight-color:transparent\]/);
+  assert.match(searchBar, /focus-visible:ring-2 focus-visible:ring-\[#004BB8\]\/35/);
+  assert.doesNotMatch(searchBar, /group-active:bg-slate-200/);
+  assert.ok((searchBar.match(/h-4 w-4 shrink-0 text-slate-700/g)?.length ?? 0) >= 3);
 });
 
 test("the shared sheet exclusively owns locking while nested Hotel pickers are open", () => {
