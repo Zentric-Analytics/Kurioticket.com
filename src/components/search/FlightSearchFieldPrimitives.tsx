@@ -5,6 +5,7 @@ import { ChevronDown, MapPin } from "lucide-react";
 import { createPortal } from "react-dom";
 
 import { cn } from "@/lib/utils";
+import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 
 export const flightSearchFieldShellClassName =
   "homepage-no-decorative-focus homepage-keyboard-focus-within relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:border-e sm:border-slate-200 sm:bg-white sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-200 lg:flex lg:flex-col lg:justify-center";
@@ -61,6 +62,7 @@ export const FlightAirportFieldControl = React.forwardRef<
   ref,
 ) {
   const suggestionsId = useId();
+  const display = getLocationFieldDisplay(value);
   return (
     <div ref={ref} data-multi-city-picker-anchor className={cn(flightSearchFieldShellClassName, className)}>
       <label className={flightSearchFieldLabelClassName}>{label}</label>
@@ -79,14 +81,16 @@ export const FlightAirportFieldControl = React.forwardRef<
               className={cn("h-4 w-4 shrink-0 text-slate-500 sm:hidden", mobileLeadingIconClassName)}
               aria-hidden="true"
             />
-            <span className={cn("truncate", !value && "text-slate-400")}>
-              {value || mobilePlaceholder}
+            <span className={cn("min-w-0", !value && "text-slate-400")}>
+              <span className="block truncate">{display.primary || mobilePlaceholder}</span>
+              {display.secondary ? <span className="block truncate text-xs font-medium leading-4 text-slate-600">{display.secondary}</span> : null}
             </span>
           </span>
         ) : (
           <>
-            <span className={cn("truncate", !value && "text-slate-400")}>
-              {value || mobilePlaceholder || placeholder}
+            <span className={cn("min-w-0 flex-1", !value && "text-slate-400")}>
+              <span className="block truncate">{display.primary || mobilePlaceholder || placeholder}</span>
+              {display.secondary ? <span className="block truncate text-xs font-medium leading-4 text-slate-600">{display.secondary}</span> : null}
             </span>
             <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
           </>
@@ -94,22 +98,25 @@ export const FlightAirportFieldControl = React.forwardRef<
       </button>
       <div className="relative hidden min-w-0 items-center gap-2 sm:flex">
         <MapPin className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
-        <input
-          ref={inputRef}
-          type="text"
-          aria-label={inputLabel ?? label}
-          role="combobox"
-          aria-autocomplete="list"
-          aria-controls={open ? suggestionsId : undefined}
-          aria-expanded={open}
-          value={value}
-          onFocus={onDesktopFocus}
-          onChange={(event) => onChange(event.target.value)}
-          onKeyDown={onKeyDown}
-          placeholder={placeholder}
-          autoComplete="off"
-          className="h-7 min-w-0 flex-1 rounded-none border-0 bg-transparent pe-0 text-[15px] font-semibold tracking-[-0.01em] text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-500"
-        />
+        <span className="min-w-0 flex-1">
+          <input
+            ref={inputRef}
+            type="text"
+            aria-label={inputLabel ?? label}
+            role="combobox"
+            aria-autocomplete="list"
+            aria-controls={open ? suggestionsId : undefined}
+            aria-expanded={open}
+            value={value}
+            onFocus={onDesktopFocus}
+            onChange={(event) => onChange(event.target.value)}
+            onKeyDown={onKeyDown}
+            placeholder={placeholder}
+            autoComplete="off"
+            className="h-6 w-full min-w-0 rounded-none border-0 bg-transparent pe-0 text-[15px] font-semibold tracking-[-0.01em] text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-500"
+          />
+          {display.secondary ? <span className="block truncate text-[10px] font-medium leading-3 text-slate-600">{display.secondary}</span> : null}
+        </span>
       </div>
       <div id={suggestionsId}>{desktopSuggestions}</div>
     </div>

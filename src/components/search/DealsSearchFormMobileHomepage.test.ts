@@ -66,7 +66,7 @@ test("selection stays visible and keyboard navigation reaches every package", ()
 test("mobile packages are text-only and selected state is an underline", () => {
   assert.match(compact, /\{isPackagesLanding \? \([\s\S]*?<PackagesIcon/);
   assert.match(compact, /\{isPackagesLanding \? \([\s\S]*?\) : null\}[\s\S]*?<span className="whitespace-nowrap">\{text\}<\/span>/);
-  assert.match(compact, /text-slate-900/);
+  assert.match(compact, /text-\[#075ee8\]/);
   assert.match(compact, /after:h-\[2px\]/);
   assert.match(compact, /after:bg-\[#075ee8\]/);
   assert.doesNotMatch(compact, /presentation === "mobile-homepage"[\s\S]*?bg-\[#f2f7ff\]|bg-\[#eef5ff\]/);

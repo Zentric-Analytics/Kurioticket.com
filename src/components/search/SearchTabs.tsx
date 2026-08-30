@@ -71,6 +71,8 @@ import {
 } from "@/components/search/CarsPickerContent";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
+import { canonicalHomepageAirportField } from "@/lib/search/homepageAirportField";
 import {
   buildFlightRecentSearch,
   buildHotelRecentSearch,
@@ -1728,9 +1730,17 @@ export function SearchTabs({
     if (tripType === "multi-city") {
       const firstLeg = multiCityLegs[0];
       if (firstLeg) {
-        setFromState((current) => markOriginManualInput(current, firstLeg.origin, firstLeg.origin));
-        setTo(firstLeg.destination);
-        setToCode(firstLeg.destination);
+        const canonicalOrigin = canonicalHomepageAirportField(firstLeg.origin, locale);
+        const canonicalDestination = canonicalHomepageAirportField(firstLeg.destination, locale);
+        setFromState((current) =>
+          markOriginManualInput(
+            current,
+            canonicalOrigin.text,
+            canonicalOrigin.code,
+          ),
+        );
+        setTo(canonicalDestination.text);
+        setToCode(canonicalDestination.code);
         setDepartureDate(firstLeg.departureDate);
         if (mode === "round-trip") {
           const reverseLeg = multiCityLegs.slice(1).find((leg) =>
@@ -2289,6 +2299,7 @@ export function SearchTabs({
     translate("carsSearch.returnDateLabel") ||
     "Return date";
   const carsDateRangeIsEmpty = !carsValues.pickupDate && !carsValues.dropoffDate;
+  const carsPickupDisplay = getLocationFieldDisplay(carsValues.pickupLocation);
   const carsEmptyDateTextClassName = mobileHomepage && carsDateRangeIsEmpty ? "text-slate-950" : undefined;
   const carsDateSummary = (
     <>
@@ -2964,8 +2975,9 @@ export function SearchTabs({
             {([
               ["origin", mobileOriginLabel, from, t.fromPlaceholder || "From?"],
               ["destination", mobileDestinationLabel, to, mobileDestinationPlaceholder],
-            ] as const).map(([kind, label, value, placeholder]) => (
-              <button
+            ] as const).map(([kind, label, value, placeholder]) => {
+              const display = getLocationFieldDisplay(value);
+              return <button
                 key={kind}
                 ref={kind === "origin" ? fromMobileLauncherRef : toMobileLauncherRef}
                 type="button"
@@ -2984,13 +2996,16 @@ export function SearchTabs({
               >
                 <span className="min-w-0">
                   <span className="block text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600">{label}</span>
-                  <span data-testid={`mobile-homepage-${kind}-value`} className={cn("mt-1.5 flex min-w-0 items-center gap-2 text-[17px] font-medium leading-5 text-slate-950", !value.trim() && "text-slate-500")}>
+                  <span data-testid={`mobile-homepage-${kind}-value`} className={cn("mt-1.5 flex min-w-0 items-start gap-2 text-[17px] font-medium leading-5 text-slate-950", !value.trim() && "text-slate-500")}>
                     <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
-                    <span className="truncate">{value.trim() || placeholder}</span>
+                    <span className="min-w-0">
+                      <span className="block truncate">{display.primary || placeholder}</span>
+                      {display.secondary ? <span className="block truncate text-[11px] font-medium leading-4 text-slate-600">{display.secondary}</span> : null}
+                    </span>
                   </span>
                 </span>
               </button>
-            ))}
+            })}
             <button
               type="button"
               onClick={onSwapAirports}
@@ -4445,7 +4460,10 @@ export function SearchTabs({
                 {mobileHomepage ? <button ref={carsPickupLauncherRef} id="homepage-cars-pickup" type="button" onClick={() => openMobilePickerWithKeyboard(() => setCarsOpenPicker("pickup"), "homepage-cars-pickup-mobile-input")} className={cn(hotelFieldValueClassName, "focus-ring block h-8 w-full text-start sm:hidden")}>
                   <span className="flex min-w-0 items-center gap-2">
                     <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
-                    <span className={cn("truncate", carsValues.pickupLocation ? "font-normal" : "text-[16px] font-medium text-slate-500")}>{carsValues.pickupLocation || translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"}</span>
+                    <span className={cn("min-w-0", carsValues.pickupLocation ? "font-normal" : "text-[16px] font-medium text-slate-500")}>
+                      <span className="block truncate">{carsPickupDisplay.primary || translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"}</span>
+                      {carsPickupDisplay.secondary ? <span className="block truncate text-xs font-medium leading-4 text-slate-600">{carsPickupDisplay.secondary}</span> : null}
+                    </span>
                   </span>
                 </button> : null}
                 <div className={cn("relative", mobileHomepage && "hidden sm:block")}>

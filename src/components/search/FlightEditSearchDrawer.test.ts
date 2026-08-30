@@ -52,15 +52,17 @@ test("shared editor supports a Details-only bottom sheet while fullscreen remain
   assert.match(source, /max-h-\[94dvh\]/);
   assert.match(source, /overflow-hidden rounded-t-\[22px\]/);
   assert.match(source, /rounded-t-\[22px\]/);
-  assert.match(source, /bg-slate-950\/35/);
+  assert.match(source, /mobile-results-sheet-backdrop-clean/);
+  assert.match(source, /canvasColor: "#ffffff"/);
   assert.match(source, /data-flight-edit-bottom-continuation/);
   assert.match(source, /data-mobile-results-sheet-bottom-continuation/);
   assert.match(
     source,
-    /data-flight-edit-bottom-continuation[\s\S]*?mobile-results-sheet-bottom-continuation[\s\S]*?bg-slate-50/,
+    /data-flight-edit-bottom-continuation[\s\S]*?mobile-results-sheet-bottom-continuation[\s\S]*?bg-white/,
   );
   assert.match(source, /mobile-results-sheet-backdrop/);
   assert.match(source, /mobile-results-sheet-surface/);
+  assert.match(source, /mobile-results-sheet-surface-smooth/);
   assert.match(source, /mobile-results-sheet-backdrop-closing/);
   assert.match(source, /mobile-results-sheet-surface-closing/);
   assert.doesNotMatch(source, /!hasEntered/);
@@ -88,7 +90,7 @@ test("bottom sheet uses the shared no-shake lock and delegates launcher focus", 
     firstFrameIndex,
   );
   const closingIndex = closeHelper.indexOf("setIsClosing(true)");
-  const timerIndex = closeHelper.indexOf("window.setTimeout(finishClose, 200)");
+  const timerIndex = closeHelper.indexOf("window.setTimeout(finishClose, 280)");
   assert.ok(releaseIndex >= 0 && releaseIndex < firstFrameIndex);
   assert.ok(
     firstFrameIndex < correctionIndex && correctionIndex < closingIndex,
@@ -127,6 +129,7 @@ test("Results flight fields use compact grouped rows", () => {
   assert.match(source, /min-h-\[60px\]/);
   assert.match(source, /rounded-\[14px\].*border border-slate-200/);
   assert.doesNotMatch(source, /min-h-\[70px\]/);
+  assert.equal(source.match(/h-5 w-5 text-slate-700/g)?.length, 8);
 });
 
 test("Results mode connects all non-multi-city fields while preserving route swap geometry", () => {
