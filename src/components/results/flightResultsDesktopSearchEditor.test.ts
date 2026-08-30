@@ -8,7 +8,7 @@ const source = readFileSync(
 );
 
 function desktopEditorSource() {
-  const label = source.indexOf('aria-label={t("tripType")}\n              className="hidden translate-y-2');
+  const label = source.indexOf("data-desktop-trip-selector");
   const start = source.lastIndexOf('role="radiogroup"', label);
   const end = source.indexOf("<form", start);
   assert.notEqual(start, -1);
@@ -17,8 +17,8 @@ function desktopEditorSource() {
 }
 
 function fareStripSource() {
-  const start = source.indexOf('aria-label="Nearby departure fares"');
-  const end = source.indexOf("Track this route", start);
+  const start = source.indexOf("data-desktop-nearby-fare-rail");
+  const end = source.indexOf('className="hidden w-full items-center', start);
   assert.notEqual(start, -1);
   assert.notEqual(end, -1);
   return source.slice(start, end);
@@ -44,6 +44,10 @@ test("desktop results editor exposes exact ordered trip labels with radio-only s
   assert.doesNotMatch(optionButton, /bg-\[#075EE8\]|bg-blue/);
   assert.doesNotMatch(editor, /label: t\("oneWay"\)/);
   assert.doesNotMatch(editor, /label: t\("roundTrip"\)/);
+  assert.match(editor, /data-desktop-trip-selector/);
+  assert.match(editor, /w-fit/);
+  assert.match(editor, /gap-1/);
+  assert.doesNotMatch(editor, /translate-y|gap-8/);
 });
 
 test("desktop populated airport inputs remain editable without clear controls", () => {
@@ -92,17 +96,19 @@ test("desktop traveler picker uses clean traveler names and preserves counters",
 
 test("fare strip is one bounded seven-date grid with adjacent week controls", () => {
   const strip = fareStripSource();
-  assert.equal(source.match(/const nearbyFareRangeSize = 7;/g)?.length, 1);
-  assert.match(strip, /grid-cols-\[36px_repeat\(7,minmax\(72px,1fr\)\)_36px\]/);
-  assert.match(strip, /aria-label="Previous week"/);
-  assert.match(strip, /aria-label="Next week"/);
-  assert.match(strip, /navigateNearbyFareWeek\("previous"\)/);
-  assert.match(strip, /navigateNearbyFareWeek\("next"\)/);
+  assert.equal(source.match(/const nearbyFareVisibleCount = 7;/g)?.length, 1);
+  assert.match(strip, /data-desktop-nearby-fare-rail/);
+  assert.match(strip, /repeat\(7,minmax\(72px,1fr\)\)/);
+  assert.match(strip, /aria-label="Previous nearby fare date"/);
+  assert.match(strip, /aria-label="Next nearby fare date"/);
+  assert.match(strip, /navigateNearbyFareWindow\("previous"\)/);
+  assert.match(strip, /navigateNearbyFareWindow\("next"\)/);
   assert.match(strip, /displayPrice \?\? "Unavailable"/);
-  assert.doesNotMatch(strip, /overflow-x-auto/);
+  const desktopRail = strip.slice(strip.indexOf("data-desktop-nearby-fare-rail"));
+  assert.doesNotMatch(desktopRail, /overflow-x-auto/);
 });
 
-test("fare windows advance by seven days and are hidden for multi-city", () => {
-  assert.match(source, /direction === "previous" \? -7 : 7/);
+test("fare windows are bounded and hidden for multi-city", () => {
+  assert.match(source, /nearbyFareRangeSize - nearbyFareVisibleCount/);
   assert.match(source, /body\?\.tripType !== "multi-city"/);
 });
