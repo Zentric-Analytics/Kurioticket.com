@@ -28,7 +28,7 @@ class FakeMeta {
 }
 
 function installDocument(themeColor?: string) {
-  const attributes = new Set<string>();
+  const attributes = new Map<string, string>();
   const styleProperties = new Map<string, string>();
   const metas: FakeMeta[] = [];
   const existingMeta = themeColor === undefined ? null : new FakeMeta();
@@ -41,7 +41,8 @@ function installDocument(themeColor?: string) {
 
   const fakeDocument = {
     documentElement: {
-      setAttribute: (name: string) => attributes.add(name),
+      getAttribute: (name: string) => attributes.get(name) ?? null,
+      setAttribute: (name: string, value: string) => attributes.set(name, value),
       removeAttribute: (name: string) => attributes.delete(name),
       style: {
         getPropertyValue: (name: string) => styleProperties.get(name) ?? "",
@@ -159,7 +160,7 @@ test("restores the exact original inline active canvas value", () => {
   }
 });
 
-test("first owner keeps its custom color until the final release", () => {
+test("the latest active owner deterministically owns the canvas color", () => {
   const fixture = installDocument("#abcdef");
   try {
     const releaseFirst = acquireMobileResultsOverlayCanvas({
@@ -168,15 +169,61 @@ test("first owner keeps its custom color until the final release", () => {
     const releaseSecond = acquireMobileResultsOverlayCanvas({
       canvasColor: "#ffffff",
     });
-    assert.equal(fixture.existingMeta?.getAttribute("content"), "#123456");
+    assert.equal(fixture.existingMeta?.getAttribute("content"), "#ffffff");
     assert.equal(
       fixture.styleProperties.get("--mobile-results-overlay-active-canvas"),
-      "#123456",
+      "#ffffff",
     );
     releaseFirst();
-    assert.equal(fixture.existingMeta?.getAttribute("content"), "#123456");
+    assert.equal(fixture.existingMeta?.getAttribute("content"), "#ffffff");
     releaseSecond();
     assert.equal(fixture.existingMeta?.getAttribute("content"), "#abcdef");
+  } finally {
+    fixture.restore();
+  }
+});
+
+test("releasing the latest owner restores the preceding active owner", () => {
+  const fixture = installDocument("#abcdef");
+  try {
+    const releaseFirst = acquireMobileResultsOverlayCanvas({ canvasColor: "#123456" });
+    const releaseSecond = acquireMobileResultsOverlayCanvas({ canvasColor: "#ffffff" });
+    releaseSecond();
+    assert.equal(fixture.existingMeta?.getAttribute("content"), "#123456");
+    assert.equal(fixture.attributes.has("data-mobile-results-overlay-open"), true);
+    releaseFirst();
+    assert.equal(fixture.existingMeta?.getAttribute("content"), "#abcdef");
+  } finally {
+    fixture.restore();
+  }
+});
+
+test("Strict Mode acquire release acquire restores only after the live owner closes", () => {
+  const fixture = installDocument("#ffffff");
+  try {
+    const releaseSetup = acquireMobileResultsOverlayCanvas();
+    releaseSetup();
+    const releaseRemount = acquireMobileResultsOverlayCanvas();
+    assert.equal(fixture.existingMeta?.getAttribute("content"), MOBILE_RESULTS_OVERLAY_CANVAS_COLOR);
+    assert.equal(fixture.attributes.has("data-mobile-results-overlay-open"), true);
+    releaseSetup();
+    assert.equal(fixture.attributes.has("data-mobile-results-overlay-open"), true);
+    releaseRemount();
+    assert.equal(fixture.existingMeta?.getAttribute("content"), "#ffffff");
+  } finally {
+    fixture.restore();
+  }
+});
+
+test("restores a pre-existing root marker and custom canvas exactly", () => {
+  const fixture = installDocument("#ffffff");
+  fixture.attributes.set("data-mobile-results-overlay-open", "existing");
+  fixture.styleProperties.set("--mobile-results-overlay-active-canvas", "  #112233");
+  try {
+    const release = acquireMobileResultsOverlayCanvas();
+    release();
+    assert.equal(fixture.attributes.get("data-mobile-results-overlay-open"), "existing");
+    assert.equal(fixture.styleProperties.get("--mobile-results-overlay-active-canvas"), "  #112233");
   } finally {
     fixture.restore();
   }

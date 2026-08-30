@@ -205,6 +205,7 @@ export type HotelSearchBarProps = {
   onOpenMobileSearch?: () => void;
   onCloseMobileSearch?: () => void;
   onMobileDraftChange?: (draft: HotelSearchDraft) => void;
+  onMobileNestedLayerChange?: (open: boolean) => void;
   onDesktopDraftChange?: (draft: HotelSearchDraft) => void;
   onSubmitStart?: () => void;
   className?: string;
@@ -234,6 +235,7 @@ export function HotelSearchBar({
   onOpenMobileSearch,
   onCloseMobileSearch,
   onMobileDraftChange,
+  onMobileNestedLayerChange,
   onDesktopDraftChange,
   onSubmitStart,
   className,
@@ -288,6 +290,17 @@ export function HotelSearchBar({
   const destinationInputRef = useRef<HTMLInputElement>(null);
   const [destinationMobilePickerOpen, setDestinationMobilePickerOpen] =
     useState(false);
+  useEffect(() => {
+    onMobileNestedLayerChange?.(
+      destinationMobilePickerOpen || datesOpen || guestsRoomsOpen,
+    );
+    return () => onMobileNestedLayerChange?.(false);
+  }, [
+    datesOpen,
+    destinationMobilePickerOpen,
+    guestsRoomsOpen,
+    onMobileNestedLayerChange,
+  ]);
   const destinationMobileLauncherRef = useRef<HTMLButtonElement>(null);
   const datesMobileLauncherRef = useRef<HTMLButtonElement>(null);
   const guestsRoomsMobileLauncherRef = useRef<HTMLButtonElement>(null);

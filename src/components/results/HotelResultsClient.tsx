@@ -382,6 +382,7 @@ export function HotelResultsExperience({
     width: number;
   } | null>(null);
   const [mobileHotelSearchOpen, setMobileHotelSearchOpen] = useState(false);
+  const [mobileHotelNestedLayerOpen, setMobileHotelNestedLayerOpen] = useState(false);
   const [showMobileCompactHotelSearch, setShowMobileCompactHotelSearch] =
     useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
@@ -426,9 +427,6 @@ export function HotelResultsExperience({
   const searchApplyingTimeoutRef = useRef<number | null>(null);
   const filterScrollbarTimeoutRef = useRef<number | null>(null);
   const currencyRatesRef = useRef(currencyRates.rates);
-  const mobileHotelSearchScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(
-    null,
-  );
   const mobileFiltersScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(
     null,
   );
@@ -702,27 +700,11 @@ export function HotelResultsExperience({
   }, [bodySearchKey]);
 
   useEffect(() => {
-    const releaseExistingLock = () => {
-      mobileHotelSearchScrollLockRef.current?.();
-      mobileHotelSearchScrollLockRef.current = null;
-      restoreOverlayLauncherFocus(mobileHotelSearchLauncherRef.current, mobileHotelSearchModalityRef.current);
-    };
-
-    if (!mobileHotelSearchOpen || typeof window === "undefined") {
-      releaseExistingLock();
-      return releaseExistingLock;
-    }
-
-    const mobileQuery = window.matchMedia("(max-width: 639px)");
-
-    if (!mobileQuery.matches) {
-      releaseExistingLock();
-      return releaseExistingLock;
-    }
-
-    mobileHotelSearchScrollLockRef.current = acquireMobileResultsScrollLock();
-
-    return releaseExistingLock;
+    if (mobileHotelSearchOpen) return;
+    restoreOverlayLauncherFocus(
+      mobileHotelSearchLauncherRef.current,
+      mobileHotelSearchModalityRef.current,
+    );
   }, [mobileHotelSearchOpen]);
 
   useEffect(() => {
@@ -2058,9 +2040,10 @@ export function HotelResultsExperience({
       {!guided ? (
         <MobileResultsEditSheet
           open={mobileHotelSearchOpen}
+          nestedLayerOpen={mobileHotelNestedLayerOpen}
           title={t("editHotelSearch") || "Edit hotel search"}
           onClose={closeMobileHotelSearch}
-          className="bg-white"
+          className="bg-slate-50"
           contentClassName="bg-slate-50 pb-[calc(1rem+env(safe-area-inset-bottom))]"
         >
           <HotelSearchBar
@@ -2078,6 +2061,7 @@ export function HotelResultsExperience({
             mobileResultsSheet
             onCloseMobileSearch={closeMobileHotelSearch}
             onMobileDraftChange={updateMobileHotelSearchDraft}
+            onMobileNestedLayerChange={setMobileHotelNestedLayerOpen}
             onSubmitStart={() => { mobileHotelSearchModalityRef.current = "programmatic"; triggerSearchApplying(); }}
           />
         </MobileResultsEditSheet>
