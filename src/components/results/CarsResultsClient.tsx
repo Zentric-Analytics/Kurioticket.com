@@ -1103,7 +1103,7 @@ export function CarsResultsClient({
       <button
         type="button"
         onClick={(event) => openMobileSearchDrawer(event.currentTarget, getOverlayActivationModality(event))}
-        className="group relative z-10 flex h-[4.25rem] min-w-0 w-full max-w-[30rem] items-center justify-between gap-3 overflow-hidden rounded-xl border border-slate-200/80 bg-white px-4 py-0 text-start shadow-[0_16px_34px_-26px_rgba(15,23,42,0.55)] transition hover:border-slate-300 hover:bg-white hover:shadow-[0_18px_38px_-28px_rgba(15,23,42,0.62)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+        className="group relative z-10 flex h-[4.25rem] min-w-0 w-full max-w-[30rem] touch-manipulation items-center justify-between gap-3 overflow-hidden rounded-xl border border-slate-200/80 bg-white px-4 py-0 text-start shadow-[0_16px_34px_-26px_rgba(15,23,42,0.55)] transition [-webkit-tap-highlight-color:transparent] hover:border-slate-300 hover:bg-white hover:shadow-[0_18px_38px_-28px_rgba(15,23,42,0.62)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
       >
         <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden pe-1">
           <span className="block truncate text-[16px] font-bold leading-5 tracking-[-0.015em] text-[#07133B]">
@@ -1115,7 +1115,7 @@ export function CarsResultsClient({
         </span>
         <span
           aria-hidden="true"
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-transparent bg-transparent text-slate-700 transition group-hover:bg-slate-100 group-active:bg-slate-200"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-transparent bg-transparent text-slate-700 transition group-hover:bg-slate-100"
         >
           <SquarePen size={16} strokeWidth={2.2} />
         </span>
@@ -1605,7 +1605,7 @@ export function CarsResultsClient({
         title={t("carsResults.editSearch")}
         nestedLayerOpen={mobilePicker !== null}
         onClose={requestMobileSearchDrawerClose}
-        contentClassName="pb-[calc(1rem+env(safe-area-inset-bottom))]"
+        contentClassName="!pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]"
       >
         <div className="mx-auto w-full max-w-xl">
           {mobileSearchOpen ? renderCarsSearchForm("mobile") : null}
@@ -2804,12 +2804,12 @@ function MobileLocationLauncher({
   groupedMobile?: boolean;
 }) {
   return (
-    <div data-cars-mobile-grouped-row className={cn(groupedMobile ? "relative flex min-h-[70px] flex-col justify-center px-4 py-2.5 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/30" : fieldShellClass, className)}>
+    <div data-cars-mobile-grouped-row className={cn(groupedMobile ? "relative flex min-h-16 flex-col justify-center px-4 py-2 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/30" : fieldShellClass, className)}>
       <div className={cn(fieldLabelClass, groupedMobile && "mb-1 text-[10px] leading-4 text-[#64748B]")}>
         <span className="truncate">{label}</span>
       </div>
       <div className="flex min-w-0 items-center gap-2">
-        {groupedMobile ? <Icon className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" /> : null}
+        {groupedMobile ? <Icon className="h-4 w-4 shrink-0 text-slate-700" aria-hidden="true" /> : null}
         <button
           ref={buttonRef}
           type="button"
@@ -3062,7 +3062,7 @@ function SearchDateCell({
     <div
       ref={wrapRef}
       data-cars-mobile-grouped-row={groupedMobile || undefined}
-      className={cn(groupedMobile ? "relative flex min-h-[70px] flex-col justify-center px-4 py-2.5 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/30" : fieldShellClass, isCompact && compactFieldShellClass)}
+      className={cn(groupedMobile ? "relative flex min-h-16 flex-col justify-center px-4 py-2 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/30" : fieldShellClass, isCompact && compactFieldShellClass)}
     >
       <div className={cn(fieldLabelClass, groupedMobile && "mb-1 text-[10px] leading-4 text-[#64748B]")}>
         <CalendarDays
@@ -3089,7 +3089,7 @@ function SearchDateCell({
         {!showRentalDuration && isCompact ? (
           <Calendar className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
         ) : null}
-        {groupedMobile ? <CalendarDays className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" /> : null}
+        {groupedMobile ? <CalendarDays className="h-4 w-4 shrink-0 text-slate-700" aria-hidden="true" /> : null}
         <span className="min-w-0 flex-1">
           <span
             className={cn(
@@ -3327,7 +3327,7 @@ function SearchTimeCell({
     <div
       ref={wrapRef}
       data-cars-mobile-grouped-row={groupedMobile || undefined}
-      className={cn(groupedMobile ? "relative flex min-h-[70px] flex-col justify-center px-4 py-2.5 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/30" : fieldShellClass, isCompact && compactFieldShellClass)}
+      className={cn(groupedMobile ? "relative flex min-h-16 flex-col justify-center px-4 py-2 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/30" : fieldShellClass, isCompact && compactFieldShellClass)}
     >
       <div className={cn(fieldLabelClass, groupedMobile && "mb-1 text-[10px] leading-4 text-[#64748B]")}>
         <Clock3
@@ -3346,7 +3346,7 @@ function SearchTimeCell({
         aria-haspopup="menu"
         className="focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
       >
-        {groupedMobile ? <Clock3 className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" /> : null}
+        {groupedMobile ? <Clock3 className="h-4 w-4 shrink-0 text-slate-700" aria-hidden="true" /> : null}
         {useMainPageDesktopPresentation ? (
           <span className="flex min-w-0 items-center gap-2">
             <Clock
@@ -3473,7 +3473,7 @@ function DriverAgeCell({
     <div
       ref={wrapRef}
       data-cars-mobile-grouped-row={groupedMobile || undefined}
-      className={cn(groupedMobile ? "relative flex min-h-[70px] flex-col justify-center px-4 py-2.5 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/30" : fieldShellClass, isCompact && compactFieldShellClass)}
+      className={cn(groupedMobile ? "relative flex min-h-16 flex-col justify-center px-4 py-2 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/30" : fieldShellClass, isCompact && compactFieldShellClass)}
     >
       <div className={cn(fieldLabelClass, groupedMobile && "mb-1 text-[10px] leading-4 text-[#64748B]")}>
         <UserRound
@@ -3491,7 +3491,7 @@ function DriverAgeCell({
         aria-haspopup="listbox"
         className="focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
       >
-        {groupedMobile ? <UserRound className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" /> : null}
+        {groupedMobile ? <UserRound className="h-4 w-4 shrink-0 text-slate-700" aria-hidden="true" /> : null}
         {useMainPageDesktopPresentation ? (
           <span className="flex min-w-0 items-center gap-2">
             <UserRound
