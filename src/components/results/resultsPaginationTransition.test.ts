@@ -20,6 +20,27 @@ for (const [vertical, file, skeleton] of [
   });
 }
 
+test("Cars pagination switches every control through an instant page-top transition", () => {
+  const source = read("CarsResultsClient.tsx");
+  const start = source.indexOf("const changePage");
+  const end = source.indexOf("const setTransition", start);
+  const changePage = source.slice(start, end);
+  assert.match(
+    changePage,
+    /setPaginationPendingPage\(page\)[\s\S]*scrollToResultsAndWait\(\{ top: 0 \}, \{ behavior: "instant" \}\)[\s\S]*setCurrentPage\(page\)/,
+  );
+  assert.doesNotMatch(changePage, /resultsStartRef/);
+
+  const paginationStart = source.lastIndexOf('aria-label="Car results pagination"');
+  const pagination = source.slice(
+    paginationStart,
+    source.indexOf("</nav>", paginationStart),
+  );
+  assert.match(pagination, /onClick=\{\(\) => changePage\(pagination\.currentPage - 1\)\}/);
+  assert.match(pagination, /onClick=\{\(\) => changePage\(item\)\}/);
+  assert.match(pagination, /onClick=\{\(\) => changePage\(pagination\.currentPage \+ 1\)\}/);
+});
+
 test("Flight pagination defers local commit and mirrors URL without Next navigation", () => {
   const source = read("FlightResultsClient.tsx");
   const start = source.indexOf("const changeResultsPage");
