@@ -52,6 +52,7 @@ import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { getTranslations } from "@/lib/i18n";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
+import { buildCarRecentSearch, upsertRecentSearch } from "@/lib/recent-searches";
 import {
   addMonths,
   buildCarResultsHref,
@@ -299,6 +300,15 @@ function CarsSearchPage() {
     }
 
     const href = `/cars/results?${params.toString()}`;
+    upsertRecentSearch(buildCarRecentSearch({
+      pickupLocation,
+      dropoffLocation: values.returnToDifferentLocation ? values.dropoffLocation.trim() : undefined,
+      pickupDate: values.pickupDate,
+      dropoffDate: values.dropoffDate,
+      pickupTime: values.pickupTime,
+      dropoffTime: values.dropoffTime,
+      driverAge: values.driverAge,
+    }));
     setIsSubmitting(true);
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     startRouteProgress();

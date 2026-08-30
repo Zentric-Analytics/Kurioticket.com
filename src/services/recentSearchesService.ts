@@ -4,7 +4,8 @@ import type { InputJsonValue } from "@prisma/client/runtime/client";
 import { getPrisma } from "@/lib/prisma";
 import type { SearchType as PrismaSearchType } from "@/generated/prisma/enums";
 
-const MAX_RECENT_SEARCHES = 5;
+export const MAX_RECENT_SEARCHES = 10;
+export const RECENT_SEARCH_RETENTION_DAYS = 90;
 
 const recentSearchTypeToPrisma = {
   flight: "FLIGHT",
@@ -142,8 +143,9 @@ export async function listUserRecentSearches(
   userId: string,
 ): Promise<PublicRecentSearch[]> {
   const prisma = getPrisma();
+  const retainedAfter = new Date(Date.now() - RECENT_SEARCH_RETENTION_DAYS * 24 * 60 * 60 * 1000);
   const searches = await prisma.recentSearch.findMany({
-    where: { userId },
+    where: { userId, updatedAt: { gte: retainedAfter } },
     orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
     take: MAX_RECENT_SEARCHES,
     select: recentSearchSelect,

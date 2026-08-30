@@ -25,6 +25,7 @@ import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
+import { RecentSearches } from "@/components/search/RecentSearches";
 import { LinkButton } from "@/components/ui/Button";
 import {
   HOME_DISCOVERY_IMAGE_CARD_COUNT,
@@ -1113,6 +1114,9 @@ export default function Home() {
         >
           <div className="mx-auto h-px w-[calc(100%-2rem)] max-w-[1280px] bg-slate-200/80 sm:hidden" />
           <div className="page-shell pt-5 sm:pt-0">
+            <div className="mb-6">
+              <RecentSearches />
+            </div>
             <div className="flex items-center">
               <h2 className="text-xl font-bold tracking-normal text-slate-900 sm:text-2xl">
                 {t("homePopularDestinations")}

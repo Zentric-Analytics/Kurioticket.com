@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  buildCarRecentSearch,
   useCallback,
   useEffect,
   type Dispatch,
@@ -2260,6 +2261,15 @@ export function SearchTabs({
     }
 
     const href = `/cars/results?${params.toString()}`;
+    upsertRecentSearch(buildCarRecentSearch({
+      pickupLocation,
+      dropoffLocation: carsValues.returnToDifferentLocation ? dropoffLocation : undefined,
+      pickupDate: carsValues.pickupDate,
+      dropoffDate: carsValues.dropoffDate,
+      pickupTime: carsValues.pickupTime,
+      dropoffTime: carsValues.dropoffTime,
+      driverAge: carsValues.driverAge,
+    }));
     setIsCarsSubmitting(true);
     onCarsResultsNavigationStart?.();
     startRouteProgress();

@@ -1,7 +1,9 @@
 import { getAirportByCode, type AirportOption } from "@/data/airports";
 import { hotelDestinations, type HotelDestinationSuggestion } from "@/data/hotelDestinations";
 
-export type RecentSearchType = "flight" | "hotel";
+export type RecentSearchType = "flight" | "hotel" | "car";
+export const RECENT_SEARCH_MAX_ENTRIES = 10;
+export const RECENT_SEARCH_RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
 
 export type RecentFlightParams = {
   tripType: "round-trip" | "one-way";
@@ -24,6 +26,17 @@ export type RecentHotelParams = {
   rooms: number;
 };
 
+export type RecentCarParams = {
+  pickupLocation: string;
+  dropoffLocation?: string;
+  pickupDate: string;
+  dropoffDate: string;
+  pickupTime: string;
+  dropoffTime: string;
+  driverAge: string;
+  unverifiedLocation?: boolean;
+};
+
 export type RecentSearchEntry = {
   id: string;
   type: RecentSearchType;
@@ -33,7 +46,7 @@ export type RecentSearchEntry = {
   image?: string;
   imageAlt?: string;
   href: string;
-  params: RecentFlightParams | RecentHotelParams;
+  params: RecentFlightParams | RecentHotelParams | RecentCarParams;
 };
 
 const airportCodeFromRecentValue = (value: unknown) => {
@@ -106,6 +119,47 @@ export function deriveRecentHotelDestinations(
 }
 
 const STORAGE_KEY = "kurioticket_recent_searches_v1";
+const STORAGE_V2_KEY = "kurioticket_recent_searches_v2";
+const REMEMBER_KEY = "kurioticket_remember_recent_searches_v1";
+const LEGACY_CLEARED_AT_KEY = "kurioticket_recent_searches_legacy_cleared_at_v1";
+const REMOVED_IDS_KEY = "kurioticket_recent_searches_removed_ids_v1";
+
+type RecentSearchEnvelope = { version: 2; entries: RecentSearchEntry[] };
+
+const recentTimestamp = (entry: RecentSearchEntry) => Date.parse(entry.createdAt);
+const isRetained = (entry: RecentSearchEntry, now: number) => {
+  const timestamp = recentTimestamp(entry);
+  return Number.isFinite(timestamp) && timestamp <= now + 5 * 60 * 1000 && now - timestamp <= RECENT_SEARCH_RETENTION_MS;
+};
+
+export const normalizeRecentSearches = (
+  entries: readonly RecentSearchEntry[],
+  now = Date.now(),
+  max = RECENT_SEARCH_MAX_ENTRIES,
+) => {
+  const byId = new Map<string, RecentSearchEntry>();
+  [...entries]
+    .filter((entry) => isRetained(entry, now))
+    .sort((a, b) => recentTimestamp(b) - recentTimestamp(a))
+    .forEach((entry) => { if (!byId.has(entry.id)) byId.set(entry.id, entry); });
+  return [...byId.values()].slice(0, Math.max(0, max));
+};
+
+export const mergeRecentSearches = (
+  accountEntries: readonly RecentSearchEntry[],
+  deviceEntries: readonly RecentSearchEntry[],
+  now = Date.now(),
+) => normalizeRecentSearches([...accountEntries, ...deviceEntries], now);
+
+export const isRememberRecentSearchesEnabled = () => {
+  if (typeof window === "undefined") return true;
+  try { return window.localStorage.getItem(REMEMBER_KEY) !== "false"; } catch { return true; }
+};
+
+export const setRememberRecentSearches = (enabled: boolean) => {
+  if (typeof window === "undefined") return;
+  try { window.localStorage.setItem(REMEMBER_KEY, String(enabled)); } catch { /* best effort */ }
+};
 
 const formatIsoDate = (value: string) => {
   if (!value) return "";
@@ -132,13 +186,22 @@ const buildId = (type: RecentSearchType, params: Record<string, unknown>) =>
 
 export const readRecentSearches = (): RecentSearchEntry[] => {
   if (typeof window === "undefined") return [];
+  if (!isRememberRecentSearchesEnabled()) return [];
 
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
+    const rawV2 = window.localStorage.getItem(STORAGE_V2_KEY);
+    const parsedV2 = rawV2 ? JSON.parse(rawV2) as Partial<RecentSearchEnvelope> : null;
+    const v2Entries = parsedV2?.version === 2 && Array.isArray(parsedV2.entries) ? parsedV2.entries : [];
+    const rawLegacy = window.localStorage.getItem(STORAGE_KEY);
+    const parsedLegacy = rawLegacy ? JSON.parse(rawLegacy) : [];
+    const clearedAt = Date.parse(window.localStorage.getItem(LEGACY_CLEARED_AT_KEY) ?? "");
+    const removedIdsValue = JSON.parse(window.localStorage.getItem(REMOVED_IDS_KEY) ?? "[]");
+    const removedIds = new Set(Array.isArray(removedIdsValue) ? removedIdsValue.filter((id): id is string => typeof id === "string") : []);
+    const legacyEntries = (Array.isArray(parsedLegacy) ? parsedLegacy : []).filter((entry) =>
+      !removedIds.has(entry?.id) && (!Number.isFinite(clearedAt) || Date.parse(entry?.createdAt) > clearedAt),
+    );
+    return normalizeRecentSearches(
+      [...v2Entries, ...legacyEntries]
       .filter((entry): entry is RecentSearchEntry =>
         Boolean(entry?.id && entry?.href && entry?.label),
       )
@@ -147,7 +210,8 @@ export const readRecentSearches = (): RecentSearchEntry[] => {
         image: typeof entry.image === "string" ? entry.image : undefined,
         imageAlt:
           typeof entry.imageAlt === "string" ? entry.imageAlt : undefined,
-      }));
+      })),
+    );
   } catch {
     return [];
   }
@@ -155,9 +219,11 @@ export const readRecentSearches = (): RecentSearchEntry[] => {
 
 export const writeRecentSearches = (entries: RecentSearchEntry[]): void => {
   if (typeof window === "undefined") return;
+  if (!isRememberRecentSearchesEnabled()) return;
 
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    const envelope: RecentSearchEnvelope = { version: 2, entries: normalizeRecentSearches(entries) };
+    window.localStorage.setItem(STORAGE_V2_KEY, JSON.stringify(envelope));
   } catch {
     // ignore write failures in Phase 1
   }
@@ -165,9 +231,16 @@ export const writeRecentSearches = (entries: RecentSearchEntry[]): void => {
 
 export const upsertRecentSearch = (
   entry: RecentSearchEntry,
-  max = 5,
+  max = RECENT_SEARCH_MAX_ENTRIES,
 ): RecentSearchEntry[] => {
   const existing = readRecentSearches();
+  try {
+    if (typeof window === "undefined") return existing;
+    const removed = JSON.parse(window.localStorage.getItem(REMOVED_IDS_KEY) ?? "[]");
+    if (Array.isArray(removed) && removed.includes(entry.id)) {
+      window.localStorage.setItem(REMOVED_IDS_KEY, JSON.stringify(removed.filter((id) => id !== entry.id)));
+    }
+  } catch { /* best effort */ }
   const deduped = [
     entry,
     ...existing.filter((item) => item.id !== entry.id),
@@ -196,6 +269,7 @@ const isRecentSearchEntry = (entry: unknown): entry is RecentSearchEntry => {
 export const fetchBackendRecentSearches = async (
   signal?: AbortSignal,
 ): Promise<{ ok: boolean; items?: RecentSearchEntry[] }> => {
+  if (!isRememberRecentSearchesEnabled()) return { ok: true, items: [] };
   try {
     const response = await fetch(RECENT_SEARCHES_API, {
       method: "GET",
@@ -207,10 +281,15 @@ export const fetchBackendRecentSearches = async (
 
     const payload = (await response.json()) as { items?: unknown[] };
     const items = Array.isArray(payload.items)
-      ? payload.items.filter(isRecentSearchEntry)
+      ? payload.items.filter(isRecentSearchEntry).map((entry) => ({
+          ...entry,
+          createdAt: typeof (entry as RecentSearchEntry & { updatedAt?: unknown }).updatedAt === "string"
+            ? (entry as RecentSearchEntry & { updatedAt: string }).updatedAt
+            : entry.createdAt,
+        }))
       : [];
 
-    return { ok: true, items };
+    return { ok: true, items: mergeRecentSearches(items, readRecentSearches()) };
   } catch {
     if (signal?.aborted) return { ok: false };
     return { ok: false };
@@ -220,6 +299,7 @@ export const fetchBackendRecentSearches = async (
 export const syncBackendRecentSearch = async (
   entry: RecentSearchEntry,
 ): Promise<{ ok: boolean; item?: RecentSearchEntry }> => {
+  if (!isRememberRecentSearchesEnabled()) return { ok: true };
   try {
     const response = await fetch(RECENT_SEARCHES_API, {
       method: "POST",
@@ -273,6 +353,13 @@ export const clearBackendRecentSearches = async (): Promise<{
 };
 
 export const removeRecentSearch = (id: string): RecentSearchEntry[] => {
+  try {
+    if (typeof window === "undefined") return [];
+    const removed = JSON.parse(window.localStorage.getItem(REMOVED_IDS_KEY) ?? "[]");
+    const ids = new Set(Array.isArray(removed) ? removed.filter((value): value is string => typeof value === "string") : []);
+    ids.add(id);
+    window.localStorage.setItem(REMOVED_IDS_KEY, JSON.stringify([...ids].slice(-50)));
+  } catch { /* best effort */ }
   const nextEntries = readRecentSearches().filter((entry) => entry.id !== id);
   writeRecentSearches(nextEntries);
   return nextEntries;
@@ -282,10 +369,30 @@ export const clearRecentSearches = (): void => {
   if (typeof window === "undefined") return;
 
   try {
-    window.localStorage.removeItem(STORAGE_KEY);
+    window.localStorage.removeItem(STORAGE_V2_KEY);
+    window.localStorage.setItem(LEGACY_CLEARED_AT_KEY, new Date().toISOString());
   } catch {
     // ignore write failures in Phase 1
   }
+};
+
+export const buildCarRecentSearch = (params: RecentCarParams): RecentSearchEntry => {
+  const id = buildId("car", params);
+  const dropoff = params.dropoffLocation?.trim();
+  const label = dropoff && dropoff !== params.pickupLocation
+    ? `${params.pickupLocation} → ${dropoff}`
+    : params.pickupLocation;
+  const subtitle = `${formatIsoDate(params.pickupDate) || params.pickupDate} – ${formatIsoDate(params.dropoffDate) || params.dropoffDate}${params.unverifiedLocation ? " · Unverified location" : ""}`;
+  const query = new URLSearchParams({
+    pickupLocation: params.pickupLocation,
+    pickupDate: params.pickupDate,
+    pickupTime: params.pickupTime,
+    dropoffDate: params.dropoffDate,
+    dropoffTime: params.dropoffTime,
+    driverAge: params.driverAge,
+  });
+  if (dropoff) query.set("dropoffLocation", dropoff);
+  return { id, type: "car", createdAt: new Date().toISOString(), label, subtitle, href: `/cars/results?${query.toString()}`, params };
 };
 
 type SearchImageMeta = {
