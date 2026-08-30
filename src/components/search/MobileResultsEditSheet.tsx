@@ -28,6 +28,8 @@ type Props = {
   cleanBackdrop?: boolean;
   bottomSurfaceContinuation?: boolean;
   bottomSurfaceContinuationClassName?: string;
+  smoothMotion?: boolean;
+  closing?: boolean;
 };
 
 /** Presentation-only shell used by mobile search editors on Results pages. */
@@ -44,6 +46,8 @@ export function MobileResultsEditSheet({
   cleanBackdrop = false,
   bottomSurfaceContinuation = false,
   bottomSurfaceContinuationClassName,
+  smoothMotion = false,
+  closing = false,
 }: Props) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -110,11 +114,16 @@ export function MobileResultsEditSheet({
       className={cn(
         "mobile-results-overlay-root mobile-results-sheet-backdrop fixed inset-0 z-[10000] flex min-h-0 w-screen items-end overflow-visible overscroll-none bg-slate-950/35 motion-reduce:transition-none sm:hidden",
         cleanBackdrop && "mobile-results-sheet-backdrop-clean",
+        closing && "mobile-results-sheet-backdrop-closing",
       )}
       onPointerDown={(event) => { if (event.target === event.currentTarget) close(); }}
     >
       <div
-        className="mobile-results-sheet-surface relative flex max-h-[94dvh] min-h-0 w-full flex-col"
+        className={cn(
+          "mobile-results-sheet-surface relative flex max-h-[94dvh] min-h-0 w-full flex-col",
+          smoothMotion && "mobile-results-sheet-surface-smooth",
+          closing && "mobile-results-sheet-surface-closing",
+        )}
       >
         <div
           ref={dialogRef}

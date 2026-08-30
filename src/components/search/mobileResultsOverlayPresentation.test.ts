@@ -27,7 +27,7 @@ test("shared Results sheet motion supports synchronized close and reduced motion
   assert.match(styles, /@keyframes mobile-results-sheet-backdrop-out/);
   assert.match(styles, /@keyframes mobile-results-sheet-surface-out/);
   assert.match(styles, /\.mobile-results-sheet-backdrop-closing[\s\S]*?200ms ease-out both/);
-  assert.match(styles, /\.mobile-results-sheet-surface-closing[\s\S]*?200ms ease-out both/);
+  assert.match(styles, /\.mobile-results-sheet-surface-closing[\s\S]*?280ms cubic-bezier\(0\.4, 0, 0\.8, 0\.2\) both/);
   assert.match(
     styles,
     /@media \(prefers-reduced-motion: reduce\)[\s\S]*?mobile-results-sheet-backdrop-closing[\s\S]*?mobile-results-sheet-surface-closing[\s\S]*?animation: none/,

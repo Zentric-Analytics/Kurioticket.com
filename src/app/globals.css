@@ -242,9 +242,10 @@ textarea {
   animation: mobile-results-sheet-surface-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
   will-change: transform;
 }
+.mobile-results-sheet-surface-smooth { animation-duration: 320ms; }
 .mobile-results-sheet-backdrop-closing { animation: mobile-results-sheet-backdrop-out 200ms ease-out both; }
 .mobile-results-sheet-surface-closing {
-  animation: mobile-results-sheet-surface-out 200ms ease-out both;
+  animation: mobile-results-sheet-surface-out 280ms cubic-bezier(0.4, 0, 0.8, 0.2) both;
   will-change: transform;
 }
 
