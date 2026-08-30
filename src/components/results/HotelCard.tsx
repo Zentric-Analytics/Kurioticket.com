@@ -524,16 +524,16 @@ export function HotelCard({
   }
 
   return (
-    <Card className="mx-auto w-[calc(100%+0.5rem)] max-w-[800px] overflow-hidden rounded-xl border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(2,28,43,0.26)] sm:w-full">
+    <Card className="mx-auto w-[calc(100%+0.5rem)] max-w-[800px] overflow-hidden rounded-xl border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(2,28,43,0.26)] sm:w-full lg:mx-0 lg:max-w-[680px]">
       <div
         data-hotel-card-mobile-grid
-        className="grid min-h-[260px] grid-cols-[41%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)]"
+        className="grid min-h-[260px] grid-cols-[41%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)] lg:grid-cols-[320px_minmax(0,1fr)]"
       >
         <div
           data-hotel-card-image
           className="relative h-full min-h-[260px] bg-surface-muted md:min-h-[230px] lg:min-h-[240px]"
         >
-          <div className="absolute right-2 top-2 z-20 hidden items-center gap-0.5 md:flex">
+          <div className="absolute right-2 top-2 z-20 hidden items-center gap-0.5 md:flex lg:hidden">
             {renderSaveButton("flex hover:bg-white/90")}
             {renderShareButton("flex hover:bg-white/90")}
           </div>
@@ -577,14 +577,21 @@ export function HotelCard({
             <div className="min-w-0">
               <div>
                 <div className="relative min-w-0">
-                  <div className="min-w-0 pe-[88px] md:pe-0">
-                    <h2 className="min-w-0 text-[15px] font-bold leading-5 text-slate-950 sm:text-base lg:text-[17px]">
+                  <div className="min-w-0 pe-[88px] md:pe-0 lg:pe-[88px]">
+                    <h2 className="min-w-0 text-[15px] font-bold leading-5 text-slate-950 sm:text-base lg:line-clamp-2 lg:text-[17px]">
                       {hotel.name}
                     </h2>
                   </div>
                   <div
                     data-hotel-utility-actions
                     className="absolute -end-3 -top-2 flex shrink-0 items-center gap-0 md:hidden"
+                  >
+                    {renderSaveButton("flex pe-1", "justify-end")}
+                    {renderShareButton("flex ps-1", "justify-start")}
+                  </div>
+                  <div
+                    data-hotel-desktop-utility-actions
+                    className="absolute -end-3 -top-2 hidden shrink-0 items-center gap-0 lg:flex"
                   >
                     {renderSaveButton("flex pe-1", "justify-end")}
                     {renderShareButton("flex ps-1", "justify-start")}

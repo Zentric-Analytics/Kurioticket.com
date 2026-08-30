@@ -73,6 +73,30 @@ test("hotel result cards use a horizontal image and details grid on mobile", () 
   assert.ok(!source.includes("h-[clamp(220px,58vw,250px)]"));
   assert.ok(!source.includes("h-[clamp(280px,78vw,340px)]"));
   assert.match(source, /md:grid-cols-\[40%_minmax\(0,1fr\)\]/);
+  assert.match(source, /lg:grid-cols-\[320px_minmax\(0,1fr\)\]/);
+  assert.match(source, /lg:max-w-\[680px\]/);
+});
+
+test("desktop cards narrow only the details column and remain left aligned", () => {
+  assert.match(
+    source,
+    /max-w-\[800px\][\s\S]*lg:mx-0 lg:max-w-\[680px\]/,
+  );
+  assert.match(
+    source,
+    /md:grid-cols-\[40%_minmax\(0,1fr\)\][\s\S]*lg:grid-cols-\[320px_minmax\(0,1fr\)\]/,
+  );
+  assert.match(source, /sizes="\(min-width: 768px\) 320px, 41vw"/);
+  assert.match(source, /className="object-cover"/);
+});
+
+test("desktop hotel headings reserve two-line space for card-edge actions", () => {
+  assert.match(source, /lg:pe-\[88px\]/);
+  assert.match(source, /lg:line-clamp-2/);
+  assert.match(
+    source,
+    /data-hotel-desktop-utility-actions[\s\S]*absolute -end-3 -top-2[\s\S]*lg:flex/,
+  );
 });
 
 test("hotel result cards retain saved-hotel controls", () => {
