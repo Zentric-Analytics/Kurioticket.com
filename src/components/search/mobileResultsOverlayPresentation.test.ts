@@ -14,11 +14,11 @@ test("mobile Results overlay gives the backdrop the root canvas and the sheet it
   assert.doesNotMatch(styles, /top:\s*calc\(-1\s*\*\s*env\(safe-area-inset-top\)\)/);
   assert.match(
     styles,
-    /\.mobile-results-sheet-bottom-continuation\s*\{[\s\S]*?env\(safe-area-inset-bottom, 0px\)[\s\S]*?calc\(100lvh - 100dvh\)/,
+    /\.mobile-results-sheet-bottom-continuation\s*\{[\s\S]*?min-height:\s*2px[\s\S]*?env\(safe-area-inset-bottom, 0px\)[\s\S]*?calc\(100lvh - 100dvh\)/,
   );
   assert.match(
     styles,
-    /\.mobile-results-sheet-backdrop-blend-header\s*\{[\s\S]*?background-color:\s*transparent[\s\S]*?rgb\(2 6 23 \/ 0\) 0[\s\S]*?rgb\(2 6 23 \/ 0\.35\) 7rem/,
+    /\.mobile-results-sheet-backdrop-blend-header::before\s*\{[\s\S]*?background-color:\s*rgb\(15 23 42 \/ 0\.32\)[\s\S]*?-webkit-mask-image:[\s\S]*?mask-image:/,
   );
 });
 

@@ -46,6 +46,8 @@ test("sheet owns internal focus but leaves launcher restoration to Results", () 
     source,
     /blendHeaderBackdrop && "mobile-results-sheet-backdrop-blend-header"/,
   );
+  assert.match(source, /fixed inset-x-0 top-\[calc\(100dvh-1px\)\] z-20 bg-white/);
+  assert.doesNotMatch(source, /top-\[calc\(100%-1px\)\]/);
   assert.match(
     source,
     /acquireMobileResultsOverlayCanvas\(\{\s*canvasColor: browserCanvasColor,\s*\}\)/,
