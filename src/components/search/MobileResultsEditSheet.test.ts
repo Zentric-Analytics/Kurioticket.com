@@ -21,6 +21,7 @@ test("mobile Results editor is an accessible rounded bottom sheet", () => {
   assert.match(source, /rounded-t-\[22px\]/);
   assert.match(source, /max-h-\[94dvh\]/);
   assert.match(source, /bg-slate-950\/35/);
+  assert.match(source, /mobile-results-sheet-content[\s\S]*?bg-inherit/);
   assert.match(source, /env\(safe-area-inset-bottom\)/);
   assert.match(source, /bottomSurfaceContinuation\?: boolean/);
   assert.match(source, /data-mobile-results-sheet-bottom-continuation/);

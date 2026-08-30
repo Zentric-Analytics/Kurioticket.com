@@ -53,8 +53,28 @@ test("Hotel results cards place their icons and approved affordances in value ro
 });
 
 test("Hotel results sheet uses neutral content behind white cards", () => {
+  assert.match(results, /className="bg-slate-50"/);
   assert.match(results, /contentClassName="bg-slate-50/);
+  assert.match(sheet, /mobile-results-sheet-content[\s\S]*?bg-inherit/);
   assert.match(sheet, /border-b border-slate-200\/80 bg-white/);
+});
+
+test("the shared sheet exclusively owns locking while nested Hotel pickers are open", () => {
+  assert.match(results, /nestedLayerOpen=\{mobileHotelNestedLayerOpen\}/);
+  assert.match(
+    results,
+    /onMobileNestedLayerChange=\{setMobileHotelNestedLayerOpen\}/,
+  );
+  assert.match(
+    searchBar,
+    /destinationMobilePickerOpen \|\| datesOpen \|\| guestsRoomsOpen/,
+  );
+  assert.doesNotMatch(results, /mobileHotelSearchScrollLockRef/);
+  assert.equal(
+    results.match(/acquireMobileResultsScrollLock\(\)/g)?.length,
+    1,
+    "only the independent Filters drawer should retain Results-owned locking",
+  );
 });
 
 test("submitting a Hotel results edit closes the sheet before navigation", () => {

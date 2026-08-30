@@ -4,91 +4,111 @@ const ACTIVE_CANVAS_PROPERTY = "--mobile-results-overlay-active-canvas";
 
 export const MOBILE_RESULTS_OVERLAY_CANVAS_COLOR = "#a6a8ae";
 
-let ownerCount = 0;
-let originalThemeMeta: HTMLMetaElement | null = null;
-let originalThemeContent: string | null = null;
-let createdThemeMeta: HTMLMetaElement | null = null;
-let originalActiveCanvasValue = "";
-let activeCanvasColor = MOBILE_RESULTS_OVERLAY_CANVAS_COLOR;
-
-export type MobileResultsOverlayCanvasOptions = {
-  canvasColor?: string;
+type CanvasOwner = { color: string };
+type CanvasSession = {
+  document: Document;
+  root: HTMLElement;
+  themeMeta: HTMLMetaElement;
+  createdThemeMeta: boolean;
+  originalThemeContent: string | null;
+  originalActiveCanvasValue: string;
+  originalOpenAttribute: string | null;
 };
 
+const owners = new Map<symbol, CanvasOwner>();
+let session: CanvasSession | null = null;
+
+export type MobileResultsOverlayCanvasOptions = { canvasColor?: string };
 export type MobileResultsOverlayCanvasRelease = () => void;
 
-/** Keeps the browser-owned root canvas dimmed for as long as any Results overlay owns it. */
+function applyActiveOwner() {
+  if (!session) return;
+  const activeOwner = Array.from(owners.values()).at(-1);
+  if (!activeOwner) return;
+  session.themeMeta.setAttribute("content", activeOwner.color);
+  session.root.style.setProperty(ACTIVE_CANVAS_PROPERTY, activeOwner.color);
+  session.root.setAttribute(OVERLAY_OPEN_ATTRIBUTE, "");
+}
+
+function restoreSession() {
+  if (!session) return;
+  const currentSession = session;
+  session = null;
+
+  if (currentSession.createdThemeMeta) {
+    currentSession.themeMeta.remove();
+    currentSession.document
+      .querySelectorAll<HTMLMetaElement>(`meta[${OVERLAY_THEME_ATTRIBUTE}]`)
+      .forEach((meta) => meta.remove());
+  } else if (currentSession.themeMeta.isConnected) {
+    if (currentSession.originalThemeContent === null) {
+      currentSession.themeMeta.removeAttribute("content");
+    } else {
+      currentSession.themeMeta.setAttribute(
+        "content",
+        currentSession.originalThemeContent,
+      );
+    }
+  }
+
+  if (currentSession.originalActiveCanvasValue) {
+    currentSession.root.style.setProperty(
+      ACTIVE_CANVAS_PROPERTY,
+      currentSession.originalActiveCanvasValue,
+    );
+  } else {
+    currentSession.root.style.removeProperty(ACTIVE_CANVAS_PROPERTY);
+  }
+  if (currentSession.originalOpenAttribute === null) {
+    currentSession.root.removeAttribute(OVERLAY_OPEN_ATTRIBUTE);
+  } else {
+    currentSession.root.setAttribute(
+      OVERLAY_OPEN_ATTRIBUTE,
+      currentSession.originalOpenAttribute,
+    );
+  }
+}
+
+/** Keeps the browser-owned root canvas dimmed until the final tokenized owner releases it. */
 export function acquireMobileResultsOverlayCanvas(
   options?: MobileResultsOverlayCanvasOptions,
 ): MobileResultsOverlayCanvasRelease {
-  if (ownerCount === 0) {
-    activeCanvasColor =
-      options?.canvasColor ?? MOBILE_RESULTS_OVERLAY_CANVAS_COLOR;
-    originalThemeMeta = document.querySelector<HTMLMetaElement>(
+  const owner = Symbol("mobile-results-overlay-canvas-owner");
+  const color = options?.canvasColor ?? MOBILE_RESULTS_OVERLAY_CANVAS_COLOR;
+
+  if (!session) {
+    const root = document.documentElement;
+    const existingThemeMeta = document.querySelector<HTMLMetaElement>(
       'meta[name="theme-color"]',
     );
-    originalThemeContent = originalThemeMeta?.getAttribute("content") ?? null;
-    originalActiveCanvasValue = document.documentElement.style.getPropertyValue(
-      ACTIVE_CANVAS_PROPERTY,
-    );
-
-    const themeMeta = originalThemeMeta ?? document.createElement("meta");
-    if (!originalThemeMeta) {
+    const themeMeta = existingThemeMeta ?? document.createElement("meta");
+    if (!existingThemeMeta) {
       themeMeta.setAttribute("name", "theme-color");
       themeMeta.setAttribute(OVERLAY_THEME_ATTRIBUTE, "");
       document.head.appendChild(themeMeta);
-      createdThemeMeta = themeMeta;
     }
-    themeMeta.setAttribute("content", activeCanvasColor);
-    document.documentElement.style.setProperty(
-      ACTIVE_CANVAS_PROPERTY,
-      activeCanvasColor,
-    );
-    document.documentElement.setAttribute(OVERLAY_OPEN_ATTRIBUTE, "");
+    session = {
+      document,
+      root,
+      themeMeta,
+      createdThemeMeta: !existingThemeMeta,
+      originalThemeContent: themeMeta.getAttribute("content"),
+      originalActiveCanvasValue: root.style.getPropertyValue(
+        ACTIVE_CANVAS_PROPERTY,
+      ),
+      originalOpenAttribute: root.getAttribute(OVERLAY_OPEN_ATTRIBUTE),
+    };
   }
 
-  ownerCount += 1;
+  owners.set(owner, { color });
+  applyActiveOwner();
 
   let released = false;
   return () => {
     if (released) return;
     released = true;
-    ownerCount = Math.max(0, ownerCount - 1);
-    if (ownerCount === 0) {
-      if (createdThemeMeta) {
-        createdThemeMeta.remove();
-        document
-          .querySelectorAll<HTMLMetaElement>(`meta[${OVERLAY_THEME_ATTRIBUTE}]`)
-          .forEach((meta) => meta.remove());
-      } else if (originalThemeMeta?.isConnected) {
-        if (originalThemeContent === null) originalThemeMeta.removeAttribute("content");
-        else originalThemeMeta.setAttribute("content", originalThemeContent);
-      } else {
-        const currentThemeMeta = document.querySelector<HTMLMetaElement>(
-          'meta[name="theme-color"]',
-        );
-        if (
-          currentThemeMeta?.getAttribute("content") ===
-          activeCanvasColor
-        ) {
-          if (originalThemeContent === null) currentThemeMeta.removeAttribute("content");
-          else currentThemeMeta.setAttribute("content", originalThemeContent);
-        }
-      }
-      if (originalActiveCanvasValue) {
-        document.documentElement.style.setProperty(
-          ACTIVE_CANVAS_PROPERTY,
-          originalActiveCanvasValue,
-        );
-      } else {
-        document.documentElement.style.removeProperty(ACTIVE_CANVAS_PROPERTY);
-      }
-      document.documentElement.removeAttribute(OVERLAY_OPEN_ATTRIBUTE);
-      originalThemeMeta = null;
-      originalThemeContent = null;
-      createdThemeMeta = null;
-      originalActiveCanvasValue = "";
-      activeCanvasColor = MOBILE_RESULTS_OVERLAY_CANVAS_COLOR;
-    }
+    owners.delete(owner);
+    if (owners.size > 0) applyActiveOwner();
+    else restoreSession();
   };
 }
