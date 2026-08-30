@@ -1,5 +1,4 @@
 import { StyleSheet, View } from "react-native";
-import { FlowIcon } from "./FlowIcon";
 import { useFlowTheme } from "./flowStyles";
 import type { PackageMode } from "./packageSearchModel";
 
@@ -13,10 +12,7 @@ export const PACKAGE_SUGGESTION_ICONS: Record<PackageMode, readonly SearchResult
 
 export function SearchResultProductIcons({ icons }: { icons: readonly SearchResultProductIconName[] }) {
   const ft = useFlowTheme();
-  const size = icons.length === 1 ? 22 : icons.length === 2 ? 17 : 14;
-  return <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.slot, { backgroundColor: ft.colors.input }, icons.length === 3 && styles.threeIcons]}>
-    {icons.map((icon) => <FlowIcon key={icon} name={icon} size={size} color={ft.colors.icon}/>)}
-  </View>;
+  return <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.slot, { backgroundColor: ft.colors.input }, icons.length === 3 && styles.threeIcons]}/>;
 }
 
 const styles = StyleSheet.create({
