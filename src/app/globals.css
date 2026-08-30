@@ -228,6 +228,15 @@ textarea {
   will-change: transform;
 }
 
+.mobile-results-sheet-bottom-continuation {
+  height: calc(
+    1px + max(
+      env(safe-area-inset-bottom, 0px),
+      calc(100lvh - 100dvh)
+    )
+  );
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mobile-results-sheet-backdrop, .mobile-results-sheet-surface { animation: none; }
 }

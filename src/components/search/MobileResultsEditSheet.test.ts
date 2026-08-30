@@ -12,8 +12,9 @@ test("mobile Results editor is an accessible rounded bottom sheet", () => {
   assert.match(source, /createPortal\([\s\S]*?document\.body/);
   assert.match(source, /data-mobile-results-overlay-root/);
   assert.match(source, /mobile-results-overlay-root/);
-  assert.match(source, /h-\[100dvh\]/);
-  assert.match(source, /min-h-\[100svh\]/);
+  assert.match(source, /fixed inset-0/);
+  assert.doesNotMatch(source, /h-\[100dvh\]/);
+  assert.doesNotMatch(source, /min-h-\[100svh\]/);
   assert.match(source, /w-screen/);
   assert.match(source, /role="dialog"/);
   assert.match(source, /aria-modal="true"/);
@@ -21,6 +22,9 @@ test("mobile Results editor is an accessible rounded bottom sheet", () => {
   assert.match(source, /max-h-\[94dvh\]/);
   assert.match(source, /bg-slate-950\/35/);
   assert.match(source, /env\(safe-area-inset-bottom\)/);
+  assert.match(source, /bottomSurfaceContinuation\?: boolean/);
+  assert.match(source, /data-mobile-results-sheet-bottom-continuation/);
+  assert.match(source, /mobile-results-sheet-bottom-continuation/);
 });
 
 test("sheet owns internal focus but leaves launcher restoration to Results", () => {

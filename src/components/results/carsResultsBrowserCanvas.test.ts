@@ -11,10 +11,12 @@ const hotelSource = readFileSync(
   "utf8",
 );
 
-test("Cars Edit Search alone requests a white browser canvas", () => {
+test("Cars keeps the browser canvas backdrop-colored and owns its white lower continuation", () => {
+  assert.doesNotMatch(carsSource, /browserCanvasColor=/);
   assert.match(
     carsSource,
-    /<MobileResultsEditSheet\s+[\s\S]{0,300}browserCanvasColor="#ffffff"/,
+    /<MobileResultsEditSheet\s+[\s\S]{0,300}bottomSurfaceContinuation/,
   );
+  assert.doesNotMatch(hotelSource, /bottomSurfaceContinuation/);
   assert.doesNotMatch(hotelSource, /browserCanvasColor=/);
 });
