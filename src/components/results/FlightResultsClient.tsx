@@ -6587,14 +6587,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
     return (
       <header
+        data-flight-results-compact-header
         className={cn(
           "fixed inset-x-0 top-0 z-[90] border-b border-slate-200/80 bg-white/95 px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-[0_10px_26px_-20px_rgba(15,23,42,0.55)] backdrop-blur-xl transition-opacity duration-200 ease-out sm:hidden",
           mobileCompactHeaderVisible ? "opacity-100" : "opacity-0",
-          mobileCompactHeaderVisible && !mobileSearchOpen
+          mobileCompactHeaderVisible
             ? "pointer-events-auto"
             : "pointer-events-none",
         )}
-        aria-hidden={!mobileCompactHeaderVisible || mobileSearchOpen}
+        inert={mobileSearchOpen ? true : undefined}
+        aria-hidden={!mobileCompactHeaderVisible}
       >
         <div className="mx-auto grid h-12 w-full max-w-3xl grid-cols-[44px_minmax(0,1fr)_82px] items-center gap-2">
           <button
@@ -6741,9 +6743,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   return (
     <>
-    <main className="flex-1 bg-[#F3F6FA] pb-8">
+    <main data-flight-results-main className="flex-1 bg-[#F3F6FA] pb-8">
       {renderMobileCompactResultsHeader()}
       <section
+        data-flight-results-top-summary
         inert={mobileSearchOpen ? true : undefined}
         aria-hidden={mobileSearchOpen ? true : undefined}
         className={cn(

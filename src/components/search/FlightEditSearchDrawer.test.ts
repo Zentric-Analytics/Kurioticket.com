@@ -37,8 +37,12 @@ test("shared editor supports a Details-only bottom sheet while fullscreen remain
   assert.match(source, /createPortal\(overlay, document\.body\)/);
   assert.match(source, /mobile-results-overlay-root/);
   assert.match(source, /data-mobile-results-overlay-root/);
-  assert.match(source, /h-\[100dvh\]/);
-  assert.match(source, /min-h-\[100svh\]/);
+  assert.match(source, /fixed inset-0/);
+  assert.match(source, /fixed inset-0[^\n]*?min-h-0/);
+  assert.doesNotMatch(
+    source.match(/bottomSheet \? "([^"]+)/)?.[1] ?? "",
+    /h-\[100dvh\]|min-h-\[100svh\]/,
+  );
   assert.match(source, /presentation\?: "fullscreen" \| "bottom-sheet"/);
   assert.match(source, /presentation = "fullscreen"/);
   assert.match(source, /data-flight-edit-presentation=\{presentation\}/);
