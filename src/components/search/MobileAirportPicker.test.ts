@@ -49,9 +49,9 @@ test("origin and destination headers keep Back and centered titles without Cance
   );
 });
 
-test("draft selection commits only through Done while shell close discards it", () => {
+test("selection defaults to immediate commit while draft mode remains available", () => {
   assert.match(picker, /const \[draft, setDraft\]/);
-  assert.match(picker, /commitOnSelect = false/);
+  assert.match(picker, /commitOnSelect = true/);
   assert.match(picker, /if \(commitOnSelect\)[\s\S]*?selectDraft\(airport\)/);
   assert.match(picker, /onClick=\{\(\) => commit\(requestClose\)\}/);
   assert.match(picker, /onClose=\{onClose\}/);
