@@ -59,4 +59,8 @@ test("sheet owns internal focus but leaves launcher restoration to Results", () 
   assert.doesNotMatch(source, /window\.scrollTo/);
   assert.match(source, /motion-reduce:transition-none/);
   assert.match(source, /closing && "mobile-results-sheet-surface-closing"/);
+  assert.match(
+    source,
+    /closing && "mobile-results-sheet-bottom-continuation-closing"/,
+  );
 });

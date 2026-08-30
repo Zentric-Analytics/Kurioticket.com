@@ -258,12 +258,17 @@ textarea {
     )
   );
 }
+.mobile-results-sheet-bottom-continuation-closing {
+  animation: mobile-results-sheet-surface-out 280ms cubic-bezier(0.4, 0, 0.8, 0.2) both;
+  will-change: transform;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .mobile-results-sheet-backdrop,
   .mobile-results-sheet-surface,
   .mobile-results-sheet-backdrop-closing,
-  .mobile-results-sheet-surface-closing { animation: none; }
+  .mobile-results-sheet-surface-closing,
+  .mobile-results-sheet-bottom-continuation-closing { animation: none; }
 }
 
 @keyframes loading-line {

@@ -151,6 +151,7 @@ export function MobileResultsEditSheet({
           aria-hidden="true"
           className={cn(
             "mobile-results-sheet-bottom-continuation pointer-events-none fixed inset-x-0 top-[calc(100dvh-1px)] z-20 bg-white",
+            closing && "mobile-results-sheet-bottom-continuation-closing",
             bottomSurfaceContinuationClassName,
           )}
         />
