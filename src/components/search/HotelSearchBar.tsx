@@ -871,7 +871,7 @@ export function HotelSearchBar({
             mobileSearchOpen &&
               cn(
                 "min-h-[60px] rounded-none border-0 px-4 py-2.5 shadow-none sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:px-3 sm:py-1.5 sm:shadow-none lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200",
-                mobileResultsSheet && "min-h-[70px] rounded-[14px] border-[#D8E1EC] px-4 py-2.5 shadow-none hover:border-slate-400 hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25",
+                mobileResultsSheet && "min-h-16 rounded-[14px] border-[#D8E1EC] px-4 py-2 shadow-none hover:border-slate-400 hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25",
               ),
           )
         : "min-h-[54px] px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
@@ -964,7 +964,7 @@ export function HotelSearchBar({
               type="button"
               onClick={openMobileSearchPanel}
               className={cn(
-                "focus-ring w-full bg-white text-start transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
+                "focus-ring w-full touch-manipulation bg-white text-start transition [-webkit-tap-highlight-color:transparent] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
                 mobileLayout === "controls"
                   ? "group relative z-10 flex h-16 min-w-0 items-center justify-between gap-3 overflow-hidden rounded-[13px] border border-[#D8E1EC] px-4 py-0 shadow-[0_6px_18px_-16px_rgba(15,23,42,0.32)] hover:border-[#C6D2E0] hover:shadow-[0_8px_20px_-16px_rgba(15,23,42,0.36)]"
                   : "rounded-xl border border-[#004BB8]/12 px-4 py-4 shadow-[0_12px_26px_rgba(15,23,42,0.10)] hover:border-[#004BB8]/20 focus-visible:border-[#004BB8]",
@@ -982,7 +982,7 @@ export function HotelSearchBar({
                   </span>
                   <span
                     aria-hidden="true"
-                    className="-my-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-transparent bg-transparent text-slate-700 transition group-hover:bg-slate-100 group-active:bg-slate-200"
+                    className="-my-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-transparent bg-transparent text-slate-700 transition group-hover:bg-slate-100"
                   >
                     <SquarePen size={16} strokeWidth={2.2} />
                   </span>
@@ -1011,6 +1011,7 @@ export function HotelSearchBar({
                 : "fixed inset-0 z-[10000] flex h-[100dvh] min-h-0 w-full min-w-0 flex-col overflow-hidden bg-slate-50 sm:hidden"
               : "hidden sm:block sm:space-y-2"
             : "space-y-4",
+          mobileResultsSheet && "bg-white",
         )}
         noValidate
       >
@@ -1104,7 +1105,7 @@ export function HotelSearchBar({
               data-hotel-results-edit-fields={
                 mobileResultsSheet ? "" : undefined
               }
-              className={mobileResultsSheet ? "flex flex-col gap-2.5" : "contents"}
+              className={mobileResultsSheet ? "flex flex-col gap-2" : "contents"}
             >
             <label
               ref={destinationWrapperRef}
@@ -1116,7 +1117,7 @@ export function HotelSearchBar({
                 "lg:rounded-s-xl",
                 shouldShowDestinationSuggestions && "z-[1000]",
                 mobileResultsSheet &&
-                  "min-h-[70px] rounded-[14px] border-[#D8E1EC] px-4 py-2.5 shadow-none hover:border-slate-400 hover:bg-slate-50 focus-within:bg-white",
+                  "min-h-16 rounded-[14px] border-[#D8E1EC] px-4 py-2 shadow-none hover:border-slate-400 hover:bg-slate-50 focus-within:bg-white",
               )}
             >
               <span className={fieldLabelClassName}>
@@ -1161,7 +1162,7 @@ export function HotelSearchBar({
                       <MapPin
                         aria-hidden="true"
                         className={cn(
-                          "h-4 w-4 shrink-0 text-slate-500",
+                          "h-4 w-4 shrink-0 text-slate-700",
                           mobileResultsSheet && "h-[18px] w-[18px]",
                         )}
                       />
@@ -1312,7 +1313,7 @@ export function HotelSearchBar({
                 fieldClassName,
                 datesOpen && "z-[1000]",
                 mobileResultsSheet &&
-                  "min-h-[70px] rounded-[14px] border-[#D8E1EC] px-4 py-2.5 shadow-none hover:border-slate-400 hover:bg-slate-50 focus-within:bg-white",
+                  "min-h-16 rounded-[14px] border-[#D8E1EC] px-4 py-2 shadow-none hover:border-slate-400 hover:bg-slate-50 focus-within:bg-white",
               )}
             >
               <span className={fieldLabelClassName}>
@@ -1338,7 +1339,7 @@ export function HotelSearchBar({
                 <Calendar
                   aria-hidden="true"
                   className={cn(
-                    "h-4 w-4 shrink-0 text-slate-500",
+                    "h-4 w-4 shrink-0 text-slate-700",
                     mobileResultsSheet && "h-[18px] w-[18px]",
                   )}
                 />
@@ -1493,7 +1494,7 @@ export function HotelSearchBar({
                 fieldClassName,
                 guestsRoomsOpen && "z-[1000]",
                 mobileResultsSheet &&
-                  "min-h-[70px] rounded-[14px] border-[#D8E1EC] px-4 py-2.5 shadow-none hover:border-slate-400 hover:bg-slate-50 focus-within:bg-white",
+                  "min-h-16 rounded-[14px] border-[#D8E1EC] px-4 py-2 shadow-none hover:border-slate-400 hover:bg-slate-50 focus-within:bg-white",
               )}
             >
               <span className={fieldLabelClassName}>
@@ -1520,7 +1521,7 @@ export function HotelSearchBar({
                   <UserRound
                     aria-hidden="true"
                     className={cn(
-                      "h-4 w-4 shrink-0 text-slate-500",
+                      "h-4 w-4 shrink-0 text-slate-700",
                       mobileResultsSheet && "h-[18px] w-[18px]",
                       !mobileLandingPresentation && !mobileResultsSheet && "max-sm:hidden",
                     )}

@@ -146,7 +146,7 @@ export function FlightEditSearchDrawer({
               closePreparationFrameRef.current = null;
               correctUnderlyingResultsScroll();
               setIsClosing(true);
-              closeTimerRef.current = window.setTimeout(finishClose, 200);
+              closeTimerRef.current = window.setTimeout(finishClose, 280);
             },
           );
         });
@@ -160,7 +160,9 @@ export function FlightEditSearchDrawer({
     if (!open || presentation !== "bottom-sheet") return;
     openingScrollPositionRef.current = { x: window.scrollX, y: window.scrollY };
     isPreparingCloseRef.current = false;
-    overlayCanvasReleaseRef.current = acquireMobileResultsOverlayCanvas();
+    overlayCanvasReleaseRef.current = acquireMobileResultsOverlayCanvas({
+      canvasColor: "#ffffff",
+    });
     scrollLockReleaseRef.current = acquireMobileResultsScrollLock();
     return () => {
       scrollLockReleaseRef.current?.({ restoreScroll: true });
@@ -277,12 +279,12 @@ export function FlightEditSearchDrawer({
       }}
       data-mobile-results-overlay-root={bottomSheet ? true : undefined}
       data-flight-edit-presentation={presentation}
-      className={`${bottomSheet ? `mobile-results-overlay-root mobile-results-sheet-backdrop fixed inset-0 z-[10000] flex min-h-0 w-screen items-end overflow-visible overscroll-none bg-slate-950/35 sm:hidden ${isClosing ? "mobile-results-sheet-backdrop-closing" : ""}` : "fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden overscroll-contain bg-slate-50 sm:hidden"}`}
+      className={`${bottomSheet ? `mobile-results-overlay-root mobile-results-sheet-backdrop mobile-results-sheet-backdrop-clean fixed inset-0 z-[10000] flex min-h-0 w-screen items-end overflow-visible overscroll-none sm:hidden ${isClosing ? "mobile-results-sheet-backdrop-closing" : ""}` : "fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden overscroll-contain bg-slate-50 sm:hidden"}`}
     >
       <div
         className={
           bottomSheet
-            ? `relative flex max-h-[94dvh] min-h-0 w-full flex-col ${isClosing ? "mobile-results-sheet-surface-closing" : "mobile-results-sheet-surface"}`
+            ? `mobile-results-sheet-surface mobile-results-sheet-surface-smooth relative flex max-h-[94dvh] min-h-0 w-full flex-col ${isClosing ? "mobile-results-sheet-surface-closing" : ""}`
             : "contents"
         }
       >
@@ -302,7 +304,7 @@ export function FlightEditSearchDrawer({
             onSearch(draft);
           }
         }}
-        className={`relative z-10 flex min-h-0 w-full min-w-0 flex-col bg-slate-50 ${bottomSheet ? "overflow-hidden rounded-t-[22px] shadow-[0_-12px_36px_rgba(15,23,42,0.18)]" : "h-full"}`}
+        className={`relative z-10 flex min-h-0 w-full min-w-0 flex-col bg-white ${bottomSheet ? "overflow-hidden rounded-t-[22px] shadow-[0_-12px_36px_rgba(15,23,42,0.18)]" : "h-full"}`}
       >
         <div
           className={`shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 ${bottomSheet ? "pt-2" : "pt-[calc(0.5rem+env(safe-area-inset-top))]"}`}
@@ -324,7 +326,7 @@ export function FlightEditSearchDrawer({
             </button>
           </div>
         </div>
-        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
           <div className="mx-auto flex w-full min-w-0 max-w-xl flex-col gap-3.5">
             <div
               role="radiogroup"
@@ -411,7 +413,7 @@ export function FlightEditSearchDrawer({
                       "Origin",
                       firstLeg.origin || "Choose origin",
                       <MapPin
-                        className="h-5 w-5 text-slate-500"
+                        className="h-5 w-5 text-slate-700"
                         aria-hidden="true"
                       />,
                     )}
@@ -454,7 +456,7 @@ export function FlightEditSearchDrawer({
                       "Destination",
                       firstLeg.destination || "Choose destination",
                       <MapPin
-                        className="h-5 w-5 text-slate-500"
+                        className="h-5 w-5 text-slate-700"
                         aria-hidden="true"
                       />,
                     )}
@@ -473,7 +475,7 @@ export function FlightEditSearchDrawer({
                     "Travel dates",
                     travelDatesDisplay ?? "Travel dates",
                     <Calendar
-                      className="h-5 w-5 text-slate-500"
+                      className="h-5 w-5 text-slate-700"
                       aria-hidden="true"
                     />,
                   )}
@@ -489,7 +491,7 @@ export function FlightEditSearchDrawer({
                     "Travelers and cabin",
                     `${travelerTotal} ${travelerTotal === 1 ? "traveler" : "travelers"}, ${draft.cabinClass.replace("-", " ")}`,
                     <UserRound
-                      className="h-5 w-5 text-slate-500"
+                      className="h-5 w-5 text-slate-700"
                       aria-hidden="true"
                     />,
                     <ChevronDown
@@ -523,7 +525,7 @@ export function FlightEditSearchDrawer({
                       "Origin",
                       firstLeg.origin || "Choose origin",
                       <MapPin
-                        className="h-5 w-5 text-slate-500"
+                        className="h-5 w-5 text-slate-700"
                         aria-hidden="true"
                       />,
                     )}
@@ -566,7 +568,7 @@ export function FlightEditSearchDrawer({
                       "Destination",
                       firstLeg.destination || "Choose destination",
                       <MapPin
-                        className="h-5 w-5 text-slate-500"
+                        className="h-5 w-5 text-slate-700"
                         aria-hidden="true"
                       />,
                     )}
@@ -589,7 +591,7 @@ export function FlightEditSearchDrawer({
                       "Travel dates",
                       travelDatesDisplay ?? "Travel dates",
                       <Calendar
-                        className="h-5 w-5 text-slate-500"
+                        className="h-5 w-5 text-slate-700"
                         aria-hidden="true"
                       />,
                     )}
@@ -605,7 +607,7 @@ export function FlightEditSearchDrawer({
                       "Travelers and cabin",
                       `${travelerTotal} ${travelerTotal === 1 ? "traveler" : "travelers"}, ${draft.cabinClass.replace("-", " ")}`,
                       <UserRound
-                        className="h-5 w-5 text-slate-500"
+                        className="h-5 w-5 text-slate-700"
                         aria-hidden="true"
                       />,
                       <ChevronDown
@@ -632,7 +634,7 @@ export function FlightEditSearchDrawer({
           aria-hidden="true"
           data-flight-edit-bottom-continuation
           data-mobile-results-sheet-bottom-continuation
-          className="mobile-results-sheet-bottom-continuation pointer-events-none absolute inset-x-0 top-[calc(100%-1px)] bg-slate-50"
+          className="mobile-results-sheet-bottom-continuation pointer-events-none absolute inset-x-0 top-[calc(100%-1px)] bg-white"
         />
       ) : null}
       </div>
