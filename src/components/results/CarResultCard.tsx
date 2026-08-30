@@ -162,6 +162,7 @@ export function CarResultCard({
       >
         <Heart
           size={18}
+          className="translate-x-1"
           fill={isSaved ? "currentColor" : "none"}
           aria-hidden="true"
         />
@@ -172,7 +173,7 @@ export function CarResultCard({
         onClick={() => void shareCar()}
         className="relative flex h-11 w-9 shrink-0 items-center justify-center rounded-full border border-transparent bg-transparent text-slate-700 transition before:absolute before:inset-y-0 before:start-0 before:-end-2 before:content-[''] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
       >
-        <Share2 size={18} aria-hidden="true" />
+        <Share2 size={18} className="-translate-x-1" aria-hidden="true" />
       </button>
     </div>
   );
