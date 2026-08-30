@@ -55,6 +55,7 @@ import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerS
 import { FlightEditSearchDrawer, type FlightEditSearchValue } from "@/components/search/FlightEditSearchDrawer";
 import { acquireMobileResultsScrollLock, type MobileResultsScrollLockRelease } from "@/lib/search/mobileResultsScrollLock";
 import { getOverlayActivationModality, restoreOverlayLauncherFocus, type OverlayActivationModality } from "@/lib/search/mobileResultsOverlayFocus";
+import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 import { MultiCityFlightEditor } from "@/components/search/MultiCityFlightEditor";
 import { Button } from "@/components/ui/Button";
 import { FlightCardSkeleton } from "@/components/ui/Skeleton";
@@ -6087,6 +6088,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       className="h-6 min-w-0 flex-1 border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold leading-6 text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-400 md:text-sm"
                       />
                     </div>
+                    {getLocationFieldDisplay(originInput).secondary ? (
+                      <span className="block truncate ps-6 text-[10px] font-medium leading-3 text-slate-600">
+                        {getLocationFieldDisplay(originInput).secondary}
+                      </span>
+                    ) : null}
 
                     {activeSuggest === "origin" &&
                     activeDesktopSearchSurface !== "sticky" ? (
@@ -6177,6 +6183,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       className="h-6 min-w-0 flex-1 border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold leading-6 text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-400 md:text-sm"
                       />
                     </div>
+                    {getLocationFieldDisplay(destinationInput).secondary ? (
+                      <span className="block truncate ps-6 text-[10px] font-medium leading-3 text-slate-600">
+                        {getLocationFieldDisplay(destinationInput).secondary}
+                      </span>
+                    ) : null}
 
                     {activeSuggest === "destination" &&
                     activeDesktopSearchSurface !== "sticky" ? (

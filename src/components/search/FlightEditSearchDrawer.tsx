@@ -43,6 +43,7 @@ import {
   acquireMobileResultsOverlayCanvas,
   type MobileResultsOverlayCanvasRelease,
 } from "@/lib/search/mobileResultsOverlayCanvas";
+import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 
 export type FlightEditSearchInitialValue = {
   tripType: TripType;
@@ -252,7 +253,10 @@ export function FlightEditSearchDrawer({
     value: string,
     icon: React.ReactNode,
     trailing?: React.ReactNode,
-  ) => (
+    location = false,
+  ) => {
+    const display = location ? getLocationFieldDisplay(value) : { primary: value };
+    return (
     <span className="block min-w-0">
       <span className="mb-1.5 block text-[11px] font-semibold uppercase leading-3 tracking-[0.08em] text-slate-500">
         {label}
@@ -262,13 +266,15 @@ export function FlightEditSearchDrawer({
         data-mobile-value-row
       >
         {icon}
-        <span className="min-w-0 truncate text-[16px] font-semibold leading-5 text-slate-950">
-          {value}
+        <span className="min-w-0 text-slate-950">
+          <span className="block truncate text-[16px] font-semibold leading-5">{display.primary}</span>
+          {display.secondary ? <span className="block truncate text-xs font-medium leading-4 text-slate-600">{display.secondary}</span> : null}
         </span>
         {trailing ?? <span aria-hidden="true" />}
       </span>
     </span>
-  );
+    );
+  };
 
   if (!open) return null;
   const bottomSheet = presentation === "bottom-sheet";
@@ -416,6 +422,8 @@ export function FlightEditSearchDrawer({
                         className="h-5 w-5 text-slate-700"
                         aria-hidden="true"
                       />,
+                      undefined,
+                      Boolean(firstLeg.origin),
                     )}
                   </button>
                   <button
@@ -459,6 +467,8 @@ export function FlightEditSearchDrawer({
                         className="h-5 w-5 text-slate-700"
                         aria-hidden="true"
                       />,
+                      undefined,
+                      Boolean(firstLeg.destination),
                     )}
                   </button>
                 </div>
@@ -528,6 +538,8 @@ export function FlightEditSearchDrawer({
                         className="h-5 w-5 text-slate-700"
                         aria-hidden="true"
                       />,
+                      undefined,
+                      Boolean(firstLeg.origin),
                     )}
                   </button>
                   <button
@@ -571,6 +583,8 @@ export function FlightEditSearchDrawer({
                         className="h-5 w-5 text-slate-700"
                         aria-hidden="true"
                       />,
+                      undefined,
+                      Boolean(firstLeg.destination),
                     )}
                   </button>
                 </div>

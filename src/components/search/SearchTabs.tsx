@@ -71,6 +71,7 @@ import {
 } from "@/components/search/CarsPickerContent";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 import {
   buildFlightRecentSearch,
   buildHotelRecentSearch,
@@ -2289,6 +2290,7 @@ export function SearchTabs({
     translate("carsSearch.returnDateLabel") ||
     "Return date";
   const carsDateRangeIsEmpty = !carsValues.pickupDate && !carsValues.dropoffDate;
+  const carsPickupDisplay = getLocationFieldDisplay(carsValues.pickupLocation);
   const carsEmptyDateTextClassName = mobileHomepage && carsDateRangeIsEmpty ? "text-slate-950" : undefined;
   const carsDateSummary = (
     <>
@@ -4445,7 +4447,10 @@ export function SearchTabs({
                 {mobileHomepage ? <button ref={carsPickupLauncherRef} id="homepage-cars-pickup" type="button" onClick={() => openMobilePickerWithKeyboard(() => setCarsOpenPicker("pickup"), "homepage-cars-pickup-mobile-input")} className={cn(hotelFieldValueClassName, "focus-ring block h-8 w-full text-start sm:hidden")}>
                   <span className="flex min-w-0 items-center gap-2">
                     <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
-                    <span className={cn("truncate", carsValues.pickupLocation ? "font-normal" : "text-[16px] font-medium text-slate-500")}>{carsValues.pickupLocation || translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"}</span>
+                    <span className={cn("min-w-0", carsValues.pickupLocation ? "font-normal" : "text-[16px] font-medium text-slate-500")}>
+                      <span className="block truncate">{carsPickupDisplay.primary || translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"}</span>
+                      {carsPickupDisplay.secondary ? <span className="block truncate text-xs font-medium leading-4 text-slate-600">{carsPickupDisplay.secondary}</span> : null}
+                    </span>
                   </span>
                 </button> : null}
                 <div className={cn("relative", mobileHomepage && "hidden sm:block")}>

@@ -54,6 +54,7 @@ import {
   upsertRecentSearch,
 } from "@/lib/recent-searches";
 import { cn } from "@/lib/utils";
+import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 
 const parseIsoDate = (value: string) => {
   if (!value) return null;
@@ -262,6 +263,7 @@ export function HotelSearchBar({
     hasUserSelectedRegion,
   } = useRegion();
   const [destination, setDestination] = useState(initialDestination);
+  const destinationDisplay = getLocationFieldDisplay(destination);
   const [checkIn, setCheckIn] = useState(initialCheckIn);
   const [checkOut, setCheckOut] = useState(initialCheckOut);
   const [hotelAdultCount, setHotelAdultCount] = useState(() =>
@@ -1168,12 +1170,12 @@ export function HotelSearchBar({
                       />
                       <span
                         className={cn(
-                          "truncate",
+                          "min-w-0",
                           !destination.trim() && "text-slate-400",
                         )}
                       >
-                        {destination.trim() ||
-                          t("hotelSearchDestinationPlaceholder")}
+                        <span className="block truncate">{destinationDisplay.primary || t("hotelSearchDestinationPlaceholder")}</span>
+                        {destinationDisplay.secondary ? <span className="block truncate text-xs font-medium leading-4 text-slate-600">{destinationDisplay.secondary}</span> : null}
                       </span>
                     </span>
                   ) : (

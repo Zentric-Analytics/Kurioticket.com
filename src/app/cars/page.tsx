@@ -51,6 +51,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { getTranslations } from "@/lib/i18n";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 import {
   addMonths,
   buildCarResultsHref,
@@ -591,6 +592,7 @@ function CarsSearchBar({
   values: CarsFormValues;
 }) {
   const { t } = useCarsLandingTranslations();
+  const pickupDisplay = getLocationFieldDisplay(values.pickupLocation);
   const pickupLocationRef = useRef<HTMLInputElement | null>(null);
   const dropoffLocationRef = useRef<HTMLInputElement | null>(null);
   const pickupLocationLauncherRef = useRef<HTMLButtonElement | null>(null);
@@ -903,14 +905,14 @@ function CarsSearchBar({
                         className="h-4 w-4 shrink-0 text-slate-500"
                       />
                       <span
-                        className={`truncate ${
+                        className={`min-w-0 ${
                           values.pickupLocation
                             ? "text-slate-950"
                             : "text-slate-400"
                         }`}
                       >
-                        {values.pickupLocation ||
-                          t("carsSearch.pickupLocationPlaceholder")}
+                        <span className="block truncate">{pickupDisplay.primary || t("carsSearch.pickupLocationPlaceholder")}</span>
+                        {pickupDisplay.secondary ? <span className="block truncate text-xs font-medium leading-4 text-slate-600">{pickupDisplay.secondary}</span> : null}
                       </span>
                     </span>
                   </button>
