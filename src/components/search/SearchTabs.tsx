@@ -2966,8 +2966,9 @@ export function SearchTabs({
             {([
               ["origin", mobileOriginLabel, from, t.fromPlaceholder || "From?"],
               ["destination", mobileDestinationLabel, to, mobileDestinationPlaceholder],
-            ] as const).map(([kind, label, value, placeholder]) => (
-              <button
+            ] as const).map(([kind, label, value, placeholder]) => {
+              const display = getLocationFieldDisplay(value);
+              return <button
                 key={kind}
                 ref={kind === "origin" ? fromMobileLauncherRef : toMobileLauncherRef}
                 type="button"
@@ -2986,13 +2987,16 @@ export function SearchTabs({
               >
                 <span className="min-w-0">
                   <span className="block text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600">{label}</span>
-                  <span data-testid={`mobile-homepage-${kind}-value`} className={cn("mt-1.5 flex min-w-0 items-center gap-2 text-[17px] font-medium leading-5 text-slate-950", !value.trim() && "text-slate-500")}>
+                  <span data-testid={`mobile-homepage-${kind}-value`} className={cn("mt-1.5 flex min-w-0 items-start gap-2 text-[17px] font-medium leading-5 text-slate-950", !value.trim() && "text-slate-500")}>
                     <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
-                    <span className="truncate">{value.trim() || placeholder}</span>
+                    <span className="min-w-0">
+                      <span className="block truncate">{display.primary || placeholder}</span>
+                      {display.secondary ? <span className="block truncate text-[11px] font-medium leading-4 text-slate-600">{display.secondary}</span> : null}
+                    </span>
                   </span>
                 </span>
               </button>
-            ))}
+            })}
             <button
               type="button"
               onClick={onSwapAirports}

@@ -443,7 +443,7 @@ export function FlightMobilePickerShell({
           className={cn(
             "min-h-0 flex-1 overflow-x-hidden bg-slate-50 px-4 py-4",
             contentLayout === "scroll"
-              ? "touch-pan-y overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]"
+              ? "touch-pan-y overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable]"
               : "flex touch-auto flex-col overflow-y-hidden",
             contentClassName,
           )}

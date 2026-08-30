@@ -94,8 +94,8 @@ test("clear X resets all selection and search state before focusing the input", 
   assert.match(picker, /onClick=\{clear\}/);
 });
 
-test("default mode keeps canonical draft and Done behavior while Back only closes", () => {
-  assert.match(picker, /commitOnSelect = false/);
+test("default mode auto-commits while canonical draft behavior remains available", () => {
+  assert.match(picker, /commitOnSelect = true/);
   assert.match(
     picker,
     /if \(!draft\) return;\s*onCommit\(draft\.value\);\s*requestClose\(\);/,

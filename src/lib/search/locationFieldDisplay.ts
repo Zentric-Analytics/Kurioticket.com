@@ -8,7 +8,15 @@ export function getLocationFieldDisplay(value: string): LocationFieldDisplay {
   const trimmed = value.trim();
   if (!trimmed) return { primary: "" };
   const match = trimmed.match(trailingAirportCode);
-  if (!match) return { primary: trimmed };
+  if (!match) {
+    const separatorIndex = trimmed.indexOf(",");
+    if (separatorIndex > 0) {
+      const primary = trimmed.slice(0, separatorIndex).trim();
+      const secondary = trimmed.slice(separatorIndex + 1).trim();
+      if (primary && secondary) return { primary, secondary };
+    }
+    return { primary: trimmed };
+  }
 
   const code = match[1].toUpperCase();
   const selectedName = trimmed.slice(0, match.index).trim();

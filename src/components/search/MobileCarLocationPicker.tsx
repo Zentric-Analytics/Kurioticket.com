@@ -83,7 +83,7 @@ export function MobileCarLocationPicker({
   inputId,
   value,
   launcherRef,
-  commitOnSelect = false,
+  commitOnSelect = true,
   onClose,
   onCommit,
 }: Props) {
