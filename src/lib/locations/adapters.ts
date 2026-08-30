@@ -46,11 +46,15 @@ const carKinds: Record<CarLocationSuggestion["kind"], LocationKind> = {
 };
 
 export function fromCarLocation(location: CarLocationSuggestion): CanonicalLocation {
+  const primaryLabel = location.kind === "airport" && location.airportCode
+    ? `${location.city || location.primaryText} (${location.airportCode})`
+    : location.kind === "custom" ? location.value : location.primaryText;
+  const supportingLabel = location.kind === "airport" ? location.primaryText : location.secondaryText;
   return {
     id: `car:${location.id}`,
     kind: carKinds[location.kind],
-    primaryLabel: location.primaryText,
-    supportingLabel: location.secondaryText,
+    primaryLabel,
+    supportingLabel,
     submittedValue: location.value,
     country: { code: location.countryCode },
     codes: location.airportCode ? { iata: location.airportCode } : undefined,
