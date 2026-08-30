@@ -11,12 +11,15 @@ const hotelSource = readFileSync(
   "utf8",
 );
 
-test("Cars keeps the browser canvas backdrop-colored and owns its white lower continuation", () => {
+test("Cars and Hotel keep the backdrop canvas while owning product-colored lower continuations", () => {
   assert.doesNotMatch(carsSource, /browserCanvasColor=/);
   assert.match(
     carsSource,
     /<MobileResultsEditSheet\s+[\s\S]{0,300}bottomSurfaceContinuation/,
   );
-  assert.doesNotMatch(hotelSource, /bottomSurfaceContinuation/);
+  assert.match(
+    hotelSource,
+    /<MobileResultsEditSheet\s+[\s\S]{0,300}bottomSurfaceContinuation[\s\S]{0,120}bottomSurfaceContinuationClassName="bg-slate-50"/,
+  );
   assert.doesNotMatch(hotelSource, /browserCanvasColor=/);
 });

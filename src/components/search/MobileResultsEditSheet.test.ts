@@ -24,8 +24,13 @@ test("mobile Results editor is an accessible rounded bottom sheet", () => {
   assert.match(source, /mobile-results-sheet-content[\s\S]*?bg-inherit/);
   assert.match(source, /env\(safe-area-inset-bottom\)/);
   assert.match(source, /bottomSurfaceContinuation\?: boolean/);
+  assert.match(source, /bottomSurfaceContinuationClassName\?: string/);
   assert.match(source, /data-mobile-results-sheet-bottom-continuation/);
   assert.match(source, /mobile-results-sheet-bottom-continuation/);
+  assert.match(
+    source,
+    /mobile-results-sheet-bottom-continuation[\s\S]*?bg-white[\s\S]*?bottomSurfaceContinuationClassName/,
+  );
 });
 
 test("sheet owns internal focus but leaves launcher restoration to Results", () => {

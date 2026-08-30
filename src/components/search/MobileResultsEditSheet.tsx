@@ -26,6 +26,7 @@ type Props = {
   contentClassName?: string;
   browserCanvasColor?: string;
   bottomSurfaceContinuation?: boolean;
+  bottomSurfaceContinuationClassName?: string;
 };
 
 /** Presentation-only shell used by mobile search editors on Results pages. */
@@ -40,6 +41,7 @@ export function MobileResultsEditSheet({
   contentClassName,
   browserCanvasColor,
   bottomSurfaceContinuation = false,
+  bottomSurfaceContinuationClassName,
 }: Props) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -132,7 +134,10 @@ export function MobileResultsEditSheet({
           <div
             data-mobile-results-sheet-bottom-continuation
             aria-hidden="true"
-            className="mobile-results-sheet-bottom-continuation pointer-events-none absolute inset-x-0 top-[calc(100%-1px)] bg-white"
+            className={cn(
+              "mobile-results-sheet-bottom-continuation pointer-events-none absolute inset-x-0 top-[calc(100%-1px)] bg-white",
+              bottomSurfaceContinuationClassName,
+            )}
           />
         ) : null}
       </div>
