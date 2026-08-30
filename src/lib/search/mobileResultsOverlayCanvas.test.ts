@@ -210,6 +210,11 @@ test("Strict Mode acquire release acquire restores only after the live owner clo
     assert.equal(fixture.attributes.has("data-mobile-results-overlay-open"), true);
     releaseRemount();
     assert.equal(fixture.existingMeta?.getAttribute("content"), "#ffffff");
+    assert.equal(fixture.attributes.has("data-mobile-results-overlay-open"), false);
+    assert.equal(
+      fixture.styleProperties.has("--mobile-results-overlay-active-canvas"),
+      false,
+    );
   } finally {
     fixture.restore();
   }

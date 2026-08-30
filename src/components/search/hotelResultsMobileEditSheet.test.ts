@@ -55,6 +55,11 @@ test("Hotel results cards place their icons and approved affordances in value ro
 test("Hotel results sheet uses neutral content behind white cards", () => {
   assert.match(results, /className="bg-slate-50"/);
   assert.match(results, /contentClassName="bg-slate-50/);
+  assert.match(results, /bottomSurfaceContinuation/);
+  assert.match(
+    results,
+    /bottomSurfaceContinuationClassName="bg-slate-50"/,
+  );
   assert.match(sheet, /mobile-results-sheet-content[\s\S]*?bg-inherit/);
   assert.match(sheet, /border-b border-slate-200\/80 bg-white/);
 });

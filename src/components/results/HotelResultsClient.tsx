@@ -2040,6 +2040,8 @@ export function HotelResultsExperience({
       {!guided ? (
         <MobileResultsEditSheet
           open={mobileHotelSearchOpen}
+          bottomSurfaceContinuation
+          bottomSurfaceContinuationClassName="bg-slate-50"
           nestedLayerOpen={mobileHotelNestedLayerOpen}
           title={t("editHotelSearch") || "Edit hotel search"}
           onClose={closeMobileHotelSearch}
