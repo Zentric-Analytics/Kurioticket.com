@@ -1,4 +1,5 @@
 import { getCountryDisplayNameForLocale } from "@/lib/region/countryDisplayNames";
+import type { CanonicalLocation } from "@/lib/locations/types";
 
 export type HotelDestinationKind = "city" | "district" | "landmark" | "airport-area";
 
@@ -11,6 +12,7 @@ export type HotelDestinationSuggestion = {
   kind: HotelDestinationKind;
   searchValue: string;
   aliases?: string[];
+  canonical?: CanonicalLocation;
 };
 
 export const activeHotelDestinationDisplayLocales = [
@@ -347,6 +349,20 @@ export function getLocalizedHotelDestinationDetail(
   const country = getLocalizedHotelDestinationCountryName(destination, locale);
 
   return [region, country].filter(Boolean).join(", ") || country;
+}
+
+export function getHotelDestinationPrimaryLabel(
+  destination: HotelDestinationSuggestion,
+  locale?: string | null,
+) {
+  return destination.canonical?.primaryLabel ?? getLocalizedHotelDestinationCityName(destination.name, locale);
+}
+
+export function getHotelDestinationSupportingLabel(
+  destination: HotelDestinationSuggestion,
+  locale?: string | null,
+) {
+  return destination.canonical?.supportingLabel ?? getLocalizedHotelDestinationDetail(destination, locale) ?? destination.country;
 }
 
 export function getHotelDestinationLocalizationCoverage() {

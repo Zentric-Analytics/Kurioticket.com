@@ -35,8 +35,8 @@ import { MobileHotelGuestsRoomsPicker } from "@/components/search/MobileHotelGue
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { useRegion } from "@/components/region/RegionProvider";
 import {
-  getLocalizedHotelDestinationCityName,
-  getLocalizedHotelDestinationDetail,
+  getHotelDestinationPrimaryLabel,
+  getHotelDestinationSupportingLabel,
   normalizeHotelDestinationSearchValue,
   type HotelDestinationSuggestion,
 } from "@/data/hotelDestinations";
@@ -54,7 +54,7 @@ import {
   upsertRecentSearch,
 } from "@/lib/recent-searches";
 import { cn } from "@/lib/utils";
-import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
+import { getHotelLocationFieldDisplay } from "@/lib/search/hotelLocationFieldDisplay";
 
 const parseIsoDate = (value: string) => {
   if (!value) return null;
@@ -263,7 +263,7 @@ export function HotelSearchBar({
     hasUserSelectedRegion,
   } = useRegion();
   const [destination, setDestination] = useState(initialDestination);
-  const destinationDisplay = getLocationFieldDisplay(destination);
+  const destinationDisplay = getHotelLocationFieldDisplay(destination, locale);
   const [checkIn, setCheckIn] = useState(initialCheckIn);
   const [checkOut, setCheckOut] = useState(initialCheckOut);
   const [hotelAdultCount, setHotelAdultCount] = useState(() =>
@@ -1256,15 +1256,8 @@ export function HotelSearchBar({
                   ) : visibleDestinationSuggestions.length ? (
                     visibleDestinationSuggestions.map((suggestion, index) => {
                       const isActive = destinationHighlight === index;
-                      const detail = getLocalizedHotelDestinationDetail(
-                        suggestion,
-                        locale,
-                      );
-                      const localizedName =
-                        getLocalizedHotelDestinationCityName(
-                          suggestion.name,
-                          locale,
-                        );
+                      const detail = getHotelDestinationSupportingLabel(suggestion, locale);
+                      const localizedName = getHotelDestinationPrimaryLabel(suggestion, locale);
 
                       return (
                         <button

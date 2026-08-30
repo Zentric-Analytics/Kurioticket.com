@@ -27,6 +27,9 @@ export function fromAirport(airport: AirportOption): CanonicalLocation {
 }
 
 export function fromHotelDestination(destination: HotelDestinationSuggestion): CanonicalLocation {
+  const airportCode = destination.kind === "airport-area"
+    ? destination.aliases?.find((alias) => /^[A-Za-z]{3}$/.test(alias.trim()))?.toUpperCase()
+    : undefined;
   return {
     id: `hotel:${destination.id}`,
     kind: destination.kind === "airport-area" ? "airport" : destination.kind,
@@ -35,6 +38,7 @@ export function fromHotelDestination(destination: HotelDestinationSuggestion): C
     submittedValue: destination.searchValue,
     country: { code: destination.countryCode, name: destination.country },
     region: destination.region,
+    codes: airportCode ? { iata: airportCode } : undefined,
     aliases: destination.aliases,
     staticCoverage: { flights: "none", hotels: "exact", cars: "none", packages: "exact" },
     source,
