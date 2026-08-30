@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { AppHeader } from "@/components/layout/AppHeader";
-import { Footer } from "@/components/layout/Footer";
 import { CarDetailsClient } from "@/components/results/CarDetailsClient";
 import type { CarSearchParams } from "@/lib/cars/types";
 import { getCarDetails } from "@/services/travel/carAggregator";
@@ -16,5 +15,5 @@ export default async function CarDetailsPage({ params, searchParams }: { params:
     flushMobileBottom
     hideDesktopTravelNav
     hideMobileCategoryTabs
-  />{car ? <CarDetailsClient car={car} search={search} resultsHref={resultsHref} /> : <main className="flex-1 bg-surface-muted/40"><section className="border-b border-border bg-white"><div className="page-shell py-20"><div role="status" className="mx-auto max-w-xl rounded-xl border border-slate-200 bg-white p-10 text-center"><h1 className="text-2xl font-extrabold">Car unavailable</h1><p className="mt-3 text-slate-600">This vehicle cannot be displayed for the current search.</p><Link href={resultsHref} className="mt-6 inline-flex rounded-lg bg-[#004BB8] px-5 py-3 font-bold text-white">Back to Cars results</Link></div></div></section></main>}<Footer />{car ? <div className="h-[calc(7.5rem+env(safe-area-inset-bottom))] lg:hidden" aria-hidden="true" data-mobile-car-footer-clearance /> : null}</>;
+  />{car ? <CarDetailsClient car={car} search={search} resultsHref={resultsHref} /> : <main className="flex-1 bg-surface-muted/40"><section className="border-b border-border bg-white"><div className="page-shell py-20"><div role="status" className="mx-auto max-w-xl rounded-xl border border-slate-200 bg-white p-10 text-center"><h1 className="text-2xl font-extrabold">Car unavailable</h1><p className="mt-3 text-slate-600">This vehicle cannot be displayed for the current search.</p><Link href={resultsHref} className="mt-6 inline-flex rounded-lg bg-[#004BB8] px-5 py-3 font-bold text-white">Back to Cars results</Link></div></div></section></main>}</>;
 }

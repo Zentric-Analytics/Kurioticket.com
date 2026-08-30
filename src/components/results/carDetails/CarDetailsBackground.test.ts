@@ -133,9 +133,7 @@ test("unavailable content and route behavior contracts remain present", () => {
     "resultsHref",
     "getCarDetails",
     "CarDetailsClient",
-    "data-mobile-car-footer-clearance",
     "AppHeader",
-    "Footer",
     "pickupLocation",
     "dropoffLocation",
     "pickupDate",
@@ -146,4 +144,5 @@ test("unavailable content and route behavior contracts remain present", () => {
   ]) {
     assert.ok(routeSource.includes(contract), `${contract} remains present`);
   }
+  assert.doesNotMatch(routeSource, /Footer|data-mobile-car-footer-clearance/);
 });
