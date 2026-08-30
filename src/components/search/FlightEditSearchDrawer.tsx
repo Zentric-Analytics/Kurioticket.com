@@ -277,7 +277,7 @@ export function FlightEditSearchDrawer({
       }}
       data-mobile-results-overlay-root={bottomSheet ? true : undefined}
       data-flight-edit-presentation={presentation}
-      className={`${bottomSheet ? "mobile-results-overlay-root fixed inset-0 z-[10000] flex h-[100dvh] min-h-[100svh] w-screen items-end overflow-visible overscroll-none bg-slate-950/35 sm:hidden" : "fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden overscroll-contain bg-slate-50 sm:hidden"}`}
+      className={`${bottomSheet ? "mobile-results-overlay-root fixed inset-0 z-[10000] flex min-h-0 w-screen items-end overflow-visible overscroll-none bg-slate-950/35 sm:hidden" : "fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden overscroll-contain bg-slate-50 sm:hidden"}`}
     >
       <div
         className={
