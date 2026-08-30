@@ -7,6 +7,20 @@ import { formatCabinClass, summarizeBaggage, summarizeFareRules } from "./flight
 const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
 const card = source.slice(source.indexOf("function FlightCard"), source.indexOf("function HotelCard"));
 
+test("Flight Results uses its narrow support palette only for approved supporting copy", () => {
+  assert.match(source, /const flightSupportText = \{\s*light: "#465675",\s*dark: "#B8C3D8",\s*\} as const/);
+  assert.match(card, /const supportTextColor = theme\.dark \? flightSupportText\.dark : flightSupportText\.light/);
+  for (const style of ["flightNumber", "operatingCarrierText", "stopLabel", "estimatedPrice", "providerPrice", "metadataText"]) {
+    assert.match(card, new RegExp(`s0\\.${style}, \\{ color: supportTextColor \\}`));
+  }
+  for (const style of ["airlineName", "time", "airportCode", "journeyDuration", "bigPrice"]) {
+    assert.match(card, new RegExp(`s0\\.${style}, \\{ color: theme\\.textPrimary \\}`));
+  }
+  const appTheme = readFileSync(resolve("src/theme/AppTheme.tsx"), "utf8");
+  assert.match(appTheme, /textSecondary: "#56658E"/);
+  assert.match(appTheme, /textSecondary: "#AAB5CD"/);
+});
+
 test("flight card maps every approved semantic weight to its matching Inter face", () => {
   const mappings = {
     resultBadgeText: "extraBold",
@@ -70,8 +84,8 @@ test("converted fares add truthful provider context without duplicating same-cur
   assert.match(card, /flightProviderFarePresentation\(fare\)/);
   assert.match(fareBlock, /\{fare\?\.converted === true \? \([\s\S]*ESTIMATED PRICE[\s\S]*\) : null\}/);
   assert.match(fareBlock, /\{providerFare \? \([\s\S]*Provider price: \{providerFare\.formatted\} \{providerFare\.currency\}[\s\S]*\) : null\}/);
-  assert.match(fareBlock, /estimatedPrice, \{ color: theme\.textSecondary \}/);
-  assert.match(fareBlock, /providerPrice, \{ color: theme\.textSecondary \}/);
+  assert.match(fareBlock, /estimatedPrice, \{ color: supportTextColor \}/);
+  assert.match(fareBlock, /providerPrice, \{ color: supportTextColor \}/);
   assert.equal(card.match(/\{fare\?\.formatted \?\? "—"\}/g)?.length, 1);
   assert.doesNotMatch(fareBlock, /US\$|A\$|CA\$/);
   assert.ok(card.indexOf('<View style={s0.fareRow}>') < card.indexOf('<View style={[s0.metadataDivider'));
@@ -132,7 +146,7 @@ test("flight card keeps horizontal metadata compact while airline identity may g
   assert.match(source, /metadataText: \{ flexShrink: 1, minWidth: 0, fontSize: 11, lineHeight: 14, fontWeight: "500", fontFamily: appFonts\.medium \}/);
   assert.doesNotMatch(source, /metadataText: \{[^}]*flex: 1/);
   assert.equal(card.match(/<Text accessible=\{false\} numberOfLines=\{1\} ellipsizeMode="tail" style=\{\[s0\.metadataText/g)?.length, 1);
-  assert.equal(card.match(/s0\.metadataText, \{ color: theme\.textSecondary \}/g)?.length, 1);
+  assert.equal(card.match(/s0\.metadataText, \{ color: supportTextColor \}/g)?.length, 1);
   assert.equal(card.match(/<Text> · <\/Text>/g)?.length, 2);
   assert.doesNotMatch(card, /<(?:Luggage|Armchair|ShieldCheck)\b/);
   assert.doesNotMatch(source, /benefitList:|benefitItem:/);
@@ -233,7 +247,7 @@ test("operating-carrier clarity stays conditional beneath the primary airline id
   assert.match(header, /operatingCarrierPresentation\.accessibilityText/);
   assert.match(header, /numberOfLines=\{1\} ellipsizeMode="tail"/);
   assert.match(source, /operatingCarrierText: \{ fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts\.medium \}/);
-  assert.match(card, /operatingCarrierText, \{ color: theme\.textSecondary \}/);
+  assert.match(card, /operatingCarrierText, \{ color: supportTextColor \}/);
   assert.doesNotMatch(header, /marketingFlightNumber|operatingFlightNumber|codeshare/i);
   assert.doesNotMatch(source, /operatingCarrierBadge|operatingCarrierChip/);
 });
@@ -241,7 +255,7 @@ test("operating-carrier clarity stays conditional beneath the primary airline id
 test("flight number is quiet conditional text directly beneath the airline name", () => {
   const header = card.slice(card.indexOf('<View style={s0.airlineHeader}>'), card.indexOf('<View style={s0.journeyList}>'));
   assert.match(card, /const flightNumber = result\.flightNumber\?\.trim\(\)/);
-  assert.match(header, /\{flightNumber \? \([\s\S]*?<Text style=\{\[s0\.flightNumber, \{ color: theme\.textSecondary \}\]\} numberOfLines=\{1\} ellipsizeMode="tail">[\s\S]*?\{flightNumber\}[\s\S]*?<\/Text>[\s\S]*?\) : null\}/);
+  assert.match(header, /\{flightNumber \? \([\s\S]*?<Text style=\{\[s0\.flightNumber, \{ color: supportTextColor \}\]\} numberOfLines=\{1\} ellipsizeMode="tail">[\s\S]*?\{flightNumber\}[\s\S]*?<\/Text>[\s\S]*?\) : null\}/);
   assert.match(source, /flightNumber: \{ marginTop: 1, fontSize: 11, lineHeight: 14, fontWeight: "500", fontFamily: appFonts\.medium \}/);
   assert.doesNotMatch(header, /N\/A|Unknown|—|placeholder/i);
   assert.doesNotMatch(source, /flightNumber(?:Badge|Chip|Pill)/);
@@ -304,7 +318,7 @@ test("flight journey applies the approved Step 5 hierarchy, colors, and accessib
   assert.match(card, /s0\.journeyDuration, \{ color: theme\.textPrimary \}[\s\S]*?minimumFontScale=\{0\.85\}>\{leg\.duration\}<\/Text>/);
   assert.doesNotMatch(card, /\{leg\.duration\} · \{stopLabel\}/);
   assert.equal(card.match(/s0\.airportCode, \{ color: theme\.textPrimary \}/g)?.length, 2);
-  assert.match(card, /s0\.stopLabel, \{ color: theme\.textSecondary \}[\s\S]*?numberOfLines=\{1\}>\{stopLabel\}/);
+  assert.match(card, /s0\.stopLabel, \{ color: supportTextColor \}[\s\S]*?numberOfLines=\{1\}>\{stopLabel\}/);
   assert.doesNotMatch(card, /routeSummary|\{leg\.originAirport\} → \{leg\.destinationAirport\}/);
   assert.equal(card.match(/s0\.routeDot, \{ backgroundColor: theme\.textSecondary \}/g)?.length, 2);
   assert.equal(card.match(/s0\.line, \{ backgroundColor: theme\.border \}/g)?.length, 2);
@@ -316,7 +330,7 @@ test("flight journey applies the approved Step 5 hierarchy, colors, and accessib
   assert.match(source, /airportCode: \{ fontSize: 11, lineHeight: 14, fontWeight: "700", fontFamily: appFonts\.bold \}/);
   assert.match(source, /journeyDuration: \{[^}]*fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts\.semibold, textAlign: "center" \}/);
   assert.match(source, /stopLabel: \{[^}]*fontSize: 10, lineHeight: 13, fontWeight: "500", fontFamily: appFonts\.medium, textAlign: "center" \}/);
-  assert.match(source, /flightResultCount: \{[^}]*fontSize: 16, lineHeight: 21, fontWeight: "700", fontFamily: appFonts\.bold \}/);
+  assert.match(source, /flightResultCount: \{ paddingHorizontal: 14, paddingTop: 4, fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts\.bold \}/);
   assert.match(source, /bigPrice: \{ fontSize: 20, lineHeight: 25, fontWeight: "900"/);
 });
 

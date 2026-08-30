@@ -6,8 +6,22 @@ const source = fs.readFileSync("src/features/search/ApprovedResultsScreen.tsx", 
 const flightAlert = source.slice(source.indexOf("function PriceAlert"), source.indexOf("export function BottomNav"));
 
 test("Flight Results price alert maps its existing weights to Inter faces", () => {
-  assert.match(source, /flightAlertTitle: \{ fontSize: 15, lineHeight: 19, fontWeight: "900", fontFamily: appFonts\.black \}/);
+  assert.match(source, /flightAlertTitle: \{ fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts\.bold \}/);
   assert.match(source, /flightAlertSubtitle: \{ fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts\.medium \}/);
+});
+
+test("Flight Results price alert has the approved compact, content-driven footprint", () => {
+  const bannerStyle = source.slice(source.indexOf("flightAlert: {"), source.indexOf("flightAlertCopy: {"));
+  assert.match(bannerStyle, /borderRadius: 10/);
+  assert.match(bannerStyle, /paddingHorizontal: 12/);
+  assert.match(bannerStyle, /paddingVertical: 4/);
+  assert.match(bannerStyle, /flexDirection: "row"/);
+  assert.match(bannerStyle, /gap: 8/);
+  assert.doesNotMatch(bannerStyle, /(?:minHeight|height):/);
+  assert.match(source, /flightPriceAlertItem: \{ paddingHorizontal: 14, paddingBottom: 5 \}/);
+  assert.match(source, /flightAlertSwitchTarget: \{ minWidth: 48, minHeight: 48/);
+  assert.match(source, /Get notified when fares change<\/Text>/);
+  assert.match(flightAlert, /flightAlertSubtitle, \{ color: supportTextColor \}/);
 });
 
 test("Flight Results toggle manages alerts in place rather than opening Price Alerts", () => {

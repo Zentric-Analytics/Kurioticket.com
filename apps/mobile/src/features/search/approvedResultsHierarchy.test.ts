@@ -62,11 +62,12 @@ test("the flight alert uses content-driven compact vertical spacing", () => {
   const bannerStyle = source.slice(source.indexOf("flightAlert: {"), source.indexOf("flightAlertCopy: {"));
   const copyStyles = source.slice(source.indexOf("flightAlertCopy: {"), source.indexOf("flightAlertSwitchTarget: {"));
 
-  assert.match(bannerStyle, /paddingVertical: 6/);
+  assert.match(bannerStyle, /borderRadius: 10/);
+  assert.match(bannerStyle, /paddingVertical: 4/);
   assert.doesNotMatch(bannerStyle, /(?:minHeight|height):/);
   assert.doesNotMatch(source, /flightAlertIcon:/);
   assert.match(copyStyles, /flightAlertCopy: \{[^}]*gap: 2/);
-  assert.match(copyStyles, /flightAlertTitle: \{ fontSize: 15, lineHeight: 19/);
+  assert.match(copyStyles, /flightAlertTitle: \{ fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts\.bold/);
   assert.match(copyStyles, /flightAlertSubtitle: \{ fontSize: 12, lineHeight: 16/);
 });
 
