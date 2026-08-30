@@ -277,12 +277,12 @@ export function FlightEditSearchDrawer({
       }}
       data-mobile-results-overlay-root={bottomSheet ? true : undefined}
       data-flight-edit-presentation={presentation}
-      className={`${bottomSheet ? "mobile-results-overlay-root fixed inset-0 z-[10000] flex min-h-0 w-screen items-end overflow-visible overscroll-none bg-slate-950/35 sm:hidden" : "fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden overscroll-contain bg-slate-50 sm:hidden"}`}
+      className={`${bottomSheet ? `mobile-results-overlay-root mobile-results-sheet-backdrop fixed inset-0 z-[10000] flex min-h-0 w-screen items-end overflow-visible overscroll-none bg-slate-950/35 sm:hidden ${isClosing ? "mobile-results-sheet-backdrop-closing" : ""}` : "fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden overscroll-contain bg-slate-50 sm:hidden"}`}
     >
       <div
         className={
           bottomSheet
-            ? `relative flex max-h-[94dvh] min-h-0 w-full flex-col transition-transform duration-200 ease-out ${isClosing ? "translate-y-full" : "translate-y-0"}`
+            ? `relative flex max-h-[94dvh] min-h-0 w-full flex-col ${isClosing ? "mobile-results-sheet-surface-closing" : "mobile-results-sheet-surface"}`
             : "contents"
         }
       >
@@ -631,6 +631,7 @@ export function FlightEditSearchDrawer({
         <div
           aria-hidden="true"
           data-flight-edit-bottom-continuation
+          data-mobile-results-sheet-bottom-continuation
           className="mobile-results-sheet-bottom-continuation pointer-events-none absolute inset-x-0 top-[calc(100%-1px)] bg-slate-50"
         />
       ) : null}

@@ -222,9 +222,24 @@ textarea {
   to { transform: translate3d(0, 0, 0); }
 }
 
+@keyframes mobile-results-sheet-backdrop-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes mobile-results-sheet-surface-out {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, 100%, 0); }
+}
+
 .mobile-results-sheet-backdrop { animation: mobile-results-sheet-backdrop-in 180ms ease-out both; }
 .mobile-results-sheet-surface {
   animation: mobile-results-sheet-surface-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform;
+}
+.mobile-results-sheet-backdrop-closing { animation: mobile-results-sheet-backdrop-out 200ms ease-out both; }
+.mobile-results-sheet-surface-closing {
+  animation: mobile-results-sheet-surface-out 200ms ease-out both;
   will-change: transform;
 }
 
@@ -238,7 +253,10 @@ textarea {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mobile-results-sheet-backdrop, .mobile-results-sheet-surface { animation: none; }
+  .mobile-results-sheet-backdrop,
+  .mobile-results-sheet-surface,
+  .mobile-results-sheet-backdrop-closing,
+  .mobile-results-sheet-surface-closing { animation: none; }
 }
 
 @keyframes loading-line {
