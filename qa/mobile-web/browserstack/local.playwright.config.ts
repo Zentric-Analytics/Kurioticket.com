@@ -17,13 +17,13 @@ export default defineConfig({
     screenshot: "only-on-failure",
     trace: "retain-on-failure",
     video: "retain-on-failure",
-    isMobile: true,
     hasTouch: true,
   },
   projects: engines.flatMap((browserName) => widths.map((width) => ({
     name: `${browserName}-${width}`,
     use: {
       browserName,
+      isMobile: browserName !== "firefox",
       viewport: { width, height: width === 320 ? 568 : width >= 430 ? 932 : 844 },
     },
   }))),
