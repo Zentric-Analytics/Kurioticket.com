@@ -5,8 +5,8 @@
  * deliberately avoided because fixed-body locks make mobile visual viewports jump.
  */
 type InlineSnapshot = {
-  body: Pick<CSSStyleDeclaration, "overflow" | "overscrollBehavior" | "paddingRight" | "touchAction" | "scrollbarGutter">;
-  root: Pick<CSSStyleDeclaration, "overflow" | "overscrollBehavior" | "touchAction" | "scrollbarGutter">;
+  body: Pick<CSSStyleDeclaration, "overscrollBehavior">;
+  root: Pick<CSSStyleDeclaration, "overscrollBehavior">;
   scrollX: number;
   scrollY: number;
 };
@@ -23,17 +23,10 @@ function captureSnapshot(): InlineSnapshot {
   const root = document.documentElement.style;
   return {
     body: {
-      overflow: body.overflow,
       overscrollBehavior: body.overscrollBehavior,
-      paddingRight: body.paddingRight,
-      touchAction: body.touchAction,
-      scrollbarGutter: body.scrollbarGutter,
     },
     root: {
-      overflow: root.overflow,
       overscrollBehavior: root.overscrollBehavior,
-      touchAction: root.touchAction,
-      scrollbarGutter: root.scrollbarGutter,
     },
     scrollX: window.scrollX,
     scrollY: window.scrollY,
@@ -50,15 +43,10 @@ export function acquireMobileResultsScrollLock(): MobileResultsScrollLockRelease
     snapshot = captureSnapshot();
     const body = document.body;
     const root = document.documentElement;
-    const scrollbarWidth = Math.max(0, window.innerWidth - root.clientWidth);
-
-    if (scrollbarWidth > 0) {
-      const padding = window.getComputedStyle(body).paddingRight || "0px";
-      body.style.paddingRight = `calc(${padding} + ${scrollbarWidth}px)`;
-    }
-    body.style.overflow = "hidden";
+    // The fixed overlay is the gesture target and owns overscroll containment.
+    // Changing root overflow makes WebKit recompute its layout viewport, moving
+    // fixed/sticky headers and firing scroll-threshold observers on sheet open.
     body.style.overscrollBehavior = "none";
-    root.style.overflow = "hidden";
     root.style.overscrollBehavior = "none";
   }
 
@@ -87,4 +75,3 @@ export function acquireMobileResultsScrollLock(): MobileResultsScrollLockRelease
     }
   };
 }
-
