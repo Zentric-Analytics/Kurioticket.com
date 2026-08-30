@@ -41,6 +41,11 @@ test("sheet owns internal focus but leaves launcher restoration to Results", () 
   assert.doesNotMatch(source, /launcher\?\.focus/);
   assert.match(source, /acquireMobileResultsScrollLock\(\)/);
   assert.match(source, /browserCanvasColor\?: string/);
+  assert.match(source, /blendHeaderBackdrop\?: boolean/);
+  assert.match(
+    source,
+    /blendHeaderBackdrop && "mobile-results-sheet-backdrop-blend-header"/,
+  );
   assert.match(
     source,
     /acquireMobileResultsOverlayCanvas\(\{\s*canvasColor: browserCanvasColor,\s*\}\)/,
