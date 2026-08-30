@@ -4,7 +4,7 @@ import test from "node:test";
 
 const styles = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
 
-test("mobile Results overlay gives the backdrop the root canvas and the sheet its lower continuation", () => {
+test("mobile Results overlay gives the backdrop a restrained focus tint and the sheet its lower continuation", () => {
   assert.match(styles, /:root\s*\{[\s\S]*?--mobile-results-overlay-canvas:\s*#a6a8ae/);
   assert.match(
     styles,
@@ -18,7 +18,7 @@ test("mobile Results overlay gives the backdrop the root canvas and the sheet it
   );
   assert.match(
     styles,
-    /\.mobile-results-sheet-backdrop-clean\s*\{[\s\S]*?background-color:\s*transparent/,
+    /\.mobile-results-sheet-backdrop-clean\s*\{[\s\S]*?background-color:\s*rgb\(15 23 42 \/ 8%\)/,
   );
   assert.doesNotMatch(styles, /mobile-results-sheet-backdrop-clean::before/);
 });
