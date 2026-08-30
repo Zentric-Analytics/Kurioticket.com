@@ -95,7 +95,6 @@ export function FlightEditSearchDrawer({
   const datesRef = useRef<HTMLButtonElement>(null);
   const travelersRef = useRef<HTMLButtonElement>(null);
   const [isClosing, setIsClosing] = useState(false);
-  const [hasEntered, setHasEntered] = useState(false);
   const closeTimerRef = useRef<number | null>(null);
   const closePreparationFrameRef = useRef<number | null>(null);
   const isPreparingCloseRef = useRef(false);
@@ -125,6 +124,9 @@ export function FlightEditSearchDrawer({
 
   const finishClose = useCallback(() => {
     setDraft(initialValue);
+    // Reset before the parent unmounts the portal so the next open owns its
+    // final geometry on the first committed frame.
+    setIsClosing(false);
     onClose();
   }, [initialValue, onClose]);
 
@@ -171,15 +173,7 @@ export function FlightEditSearchDrawer({
   }, [open, presentation]);
 
   useEffect(() => {
-    let frame = 0;
-    if (open) {
-      frame = window.requestAnimationFrame(() => {
-        setIsClosing(false);
-        setHasEntered(true);
-      });
-    }
     return () => {
-      if (frame) window.cancelAnimationFrame(frame);
       if (closePreparationFrameRef.current !== null) {
         window.cancelAnimationFrame(closePreparationFrameRef.current);
       }
@@ -283,8 +277,15 @@ export function FlightEditSearchDrawer({
       }}
       data-mobile-results-overlay-root={bottomSheet ? true : undefined}
       data-flight-edit-presentation={presentation}
-      className={`${bottomSheet ? `mobile-results-overlay-root fixed inset-0 z-[10000] flex h-[100dvh] min-h-[100svh] w-screen items-end overflow-hidden overscroll-none bg-slate-950/35 transition-opacity duration-200 sm:hidden ${isClosing || !hasEntered ? "opacity-0" : "opacity-100"}` : "fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden overscroll-contain bg-slate-50 sm:hidden"}`}
+      className={`${bottomSheet ? "mobile-results-overlay-root fixed inset-0 z-[10000] flex h-[100dvh] min-h-[100svh] w-screen items-end overflow-visible overscroll-none bg-slate-950/35 sm:hidden" : "fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden overscroll-contain bg-slate-50 sm:hidden"}`}
     >
+      <div
+        className={
+          bottomSheet
+            ? `relative flex max-h-[94dvh] min-h-0 w-full flex-col transition-transform duration-200 ease-out ${isClosing ? "translate-y-full" : "translate-y-0"}`
+            : "contents"
+        }
+      >
       <form
         role="dialog"
         aria-modal="true"
@@ -301,7 +302,7 @@ export function FlightEditSearchDrawer({
             onSearch(draft);
           }
         }}
-        className={`flex min-h-0 w-full min-w-0 flex-col bg-slate-50 ${bottomSheet ? `max-h-[94dvh] overflow-hidden rounded-t-[22px] shadow-[0_-12px_36px_rgba(15,23,42,0.18)] transition-transform duration-200 ease-out ${isClosing || !hasEntered ? "translate-y-full" : "translate-y-0"}` : "h-full"}`}
+        className={`relative z-10 flex min-h-0 w-full min-w-0 flex-col bg-slate-50 ${bottomSheet ? "overflow-hidden rounded-t-[22px] shadow-[0_-12px_36px_rgba(15,23,42,0.18)]" : "h-full"}`}
       >
         <div
           className={`shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 ${bottomSheet ? "pt-2" : "pt-[calc(0.5rem+env(safe-area-inset-top))]"}`}
@@ -626,6 +627,14 @@ export function FlightEditSearchDrawer({
           </div>
         </div>
       </form>
+      {bottomSheet ? (
+        <div
+          aria-hidden="true"
+          data-flight-edit-bottom-continuation
+          className="mobile-results-sheet-bottom-continuation pointer-events-none absolute inset-x-0 top-[calc(100%-1px)] bg-slate-50"
+        />
+      ) : null}
+      </div>
     </div>
   );
   return (
