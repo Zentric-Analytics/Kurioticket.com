@@ -106,7 +106,7 @@ export function MobileAirportPicker({
   launcherRef,
   labels,
   locale,
-  commitOnSelect = false,
+  commitOnSelect = true,
   onCommit,
   onClose,
 }: MobileAirportPickerProps) {

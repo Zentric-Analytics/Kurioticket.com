@@ -15,6 +15,15 @@ test("car airport labels keep the selected full name below the code", () => {
   assert.match(display.secondary || "", /Heathrow Airport/i);
 });
 
-test("cities and free text remain a single clear line", () => {
-  assert.deepEqual(getLocationFieldDisplay("Miami, United States"), { primary: "Miami, United States" });
+test("cities retain their region context on a supporting line", () => {
+  assert.deepEqual(getLocationFieldDisplay("Miami, United States"), {
+    primary: "Miami",
+    secondary: "United States",
+  });
+});
+
+test("free text without structured context remains a single clear line", () => {
+  assert.deepEqual(getLocationFieldDisplay("Downtown pickup"), {
+    primary: "Downtown pickup",
+  });
 });
