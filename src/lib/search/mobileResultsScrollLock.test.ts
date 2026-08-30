@@ -36,19 +36,25 @@ function installBrowser({ scrollbarWidth = 0 } = {}) {
   return { bodyStyle, rootStyle, calls, fakeWindow };
 }
 
-test("locks once, nests safely, restores exact styles, and does not scroll a stable viewport", () => {
+test("locks once without changing layout geometry, nests safely, and restores exact styles", () => {
   const browser = installBrowser({ scrollbarWidth: 15 });
   const originalBody = { ...browser.bodyStyle };
   const originalRoot = { ...browser.rootStyle };
   const first = acquireMobileResultsScrollLock();
-  assert.equal(browser.bodyStyle.overflow, "hidden");
-  assert.equal(browser.bodyStyle.paddingRight, "calc(7px + 15px)");
+  assert.equal(browser.bodyStyle.overflow, "clip");
+  assert.equal(browser.bodyStyle.paddingRight, "7px");
+  assert.equal(browser.bodyStyle.overscrollBehavior, "none");
+  assert.equal(browser.rootStyle.overflow, "visible");
+  assert.equal(browser.bodyStyle.touchAction, "pan-y");
+  assert.equal(browser.bodyStyle.scrollbarGutter, "stable");
+  assert.equal(browser.rootStyle.touchAction, "auto");
+  assert.equal(browser.rootStyle.scrollbarGutter, "both-edges");
 
   browser.fakeWindow.scrollY = 2600;
   const nested = acquireMobileResultsScrollLock();
-  assert.equal(browser.bodyStyle.paddingRight, "calc(7px + 15px)");
+  assert.equal(browser.bodyStyle.paddingRight, "7px");
   nested();
-  assert.equal(browser.bodyStyle.overflow, "hidden");
+  assert.equal(browser.bodyStyle.overscrollBehavior, "none");
 
   browser.fakeWindow.scrollY = 1800;
   first();
@@ -67,4 +73,3 @@ test("corrects genuine viewport drift exactly once on final release", () => {
   release();
   assert.deepEqual(browser.calls, [[{ left: 12, top: 1800, behavior: "auto" }]]);
 });
-

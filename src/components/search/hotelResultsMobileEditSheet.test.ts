@@ -39,6 +39,23 @@ test("Hotel Results keeps page summaries mounted but omits the sheet summary", (
   assert.doesNotMatch(searchBar.slice(form), /\{mobileSearchSummary\}/);
 });
 
+test("top and compact Hotel headers remain scroll-owned when Edit Search opens", () => {
+  const topHeader = results.slice(
+    results.indexOf('aria-label="Hotel search controls"') - 300,
+    results.indexOf('aria-label="Hotel search controls"') + 500,
+  );
+  const compactHeader = results.slice(
+    results.indexOf('fixed inset-x-0 top-0 z-[900]'),
+    results.indexOf('fixed inset-x-0 top-0 z-[900]') + 900,
+  );
+
+  assert.doesNotMatch(topHeader, /mobileHotelSearchOpen[^\n]*(?:hidden|opacity|translate|position|height|padding)/);
+  assert.match(compactHeader, /showMobileCompactHotelSearch[\s\S]*?translate-y-0 opacity-100/);
+  assert.doesNotMatch(compactHeader, /mobileHotelSearchOpen[^\n]*(?:opacity|translate|top-|h-)/);
+  assert.match(compactHeader, /mobileHotelSearchOpen && "pointer-events-none"/);
+  assert.match(compactHeader, /inert=\{mobileHotelSearchOpen \|\| !showMobileCompactHotelSearch\}/);
+});
+
 test("Hotel results cards place their icons and approved affordances in value rows", () => {
   const destination = searchBar.slice(searchBar.indexOf("ref={destinationWrapperRef}"), searchBar.indexOf("ref={datesWrapperRef}"));
   const dates = searchBar.slice(searchBar.indexOf("ref={datesWrapperRef}"), searchBar.indexOf("ref={guestsRoomsWrapperRef}"));
