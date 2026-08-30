@@ -120,6 +120,10 @@ type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
 type FlightLoadingPhase = "searching" | "skeleton";
 export const FLIGHT_LOADING_SKELETON_DELAY_MS = 1000;
+const flightSupportText = {
+  light: "#465675",
+  dark: "#B8C3D8",
+} as const;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 const sameStringArray = (left: readonly string[], right: readonly string[]) =>
   left.length === right.length && left.every((value, index) => value === right[index]);
@@ -898,6 +902,7 @@ function FlightSortModal({
 
 function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highlight, params, saved, pending, onToggleSaved, logInitialMount }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; highlight?: FlightResultHighlight; params: Record<string, string | string[]>; saved: boolean; pending: boolean; onToggleSaved: () => void; logInitialMount: boolean }) {
   const { theme } = useAppTheme();
+  const supportTextColor = theme.dark ? flightSupportText.dark : flightSupportText.light;
   useEffect(() => {
     if (logInitialMount) {
       logFlightSearchCheckpoint("flight-search:initial-card-mounted", { platform: Platform.OS });
@@ -963,12 +968,12 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
                   {result.airlineName}
                 </Text>
                 {flightNumber ? (
-                  <Text style={[s0.flightNumber, { color: theme.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">
+                  <Text style={[s0.flightNumber, { color: supportTextColor }]} numberOfLines={1} ellipsizeMode="tail">
                     {flightNumber}
                   </Text>
                 ) : null}
                 {operatingCarrierPresentation ? (
-                  <Text style={[s0.operatingCarrierText, { color: theme.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">
+                  <Text style={[s0.operatingCarrierText, { color: supportTextColor }]} numberOfLines={1} ellipsizeMode="tail">
                     {operatingCarrierPresentation.text}
                   </Text>
                 ) : null}
@@ -1014,10 +1019,10 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
             {fare?.formatted ?? "—"}
           </Text>
           {fare?.converted === true ? (
-            <Text accessible={false} style={[s0.estimatedPrice, { color: theme.textSecondary }]}>ESTIMATED PRICE</Text>
+            <Text accessible={false} style={[s0.estimatedPrice, { color: supportTextColor }]}>ESTIMATED PRICE</Text>
           ) : null}
           {providerFare ? (
-            <Text accessible={false} style={[s0.providerPrice, { color: theme.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+            <Text accessible={false} style={[s0.providerPrice, { color: supportTextColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
               Provider price: {providerFare.formatted} {providerFare.currency}
             </Text>
           ) : null}
@@ -1029,7 +1034,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
         accessibilityLabel={`Baggage: ${baggageAccessibility}. Cabin: ${cabinSummary}. Fare rules: ${fareRulesAccessibility}.`}
         style={s0.metadataRow}
       >
-        <Text accessible={false} numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: theme.textSecondary }]}>
+        <Text accessible={false} numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: supportTextColor }]}>
           {baggageSummary}<Text> · </Text>{cabinSummary}<Text> · </Text>Fare rules
         </Text>
       </View>
@@ -1038,6 +1043,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
 }
 function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: FlightCardLeg }) {
   const { theme } = useAppTheme();
+  const supportTextColor = theme.dark ? flightSupportText.dark : flightSupportText.light;
   const stopLabel = leg.stops
     ? `${leg.stops} stop${leg.stops === 1 ? "" : "s"}`
     : "Nonstop";
@@ -1079,7 +1085,7 @@ function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: F
       <View style={s0.journeyStopRow}>
         <View style={s0.departureColumn} />
         <View style={s0.timelineColumn} accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <Text style={[s0.stopLabel, { color: theme.textSecondary }]} numberOfLines={1}>{stopLabel}</Text>
+          <Text style={[s0.stopLabel, { color: supportTextColor }]} numberOfLines={1}>{stopLabel}</Text>
         </View>
         <View style={s0.arrivalColumn} />
       </View>
@@ -1474,6 +1480,7 @@ function PriceAlert({ product, plan, results, available = true }: { product: Pro
     } finally { pendingRef.current = false; setPending(false); }
   };
   if (flight) {
+    const supportTextColor = theme.dark ? flightSupportText.dark : flightSupportText.light;
     return (
       <View
         accessibilityLabel="Flight price alert"
@@ -1484,7 +1491,7 @@ function PriceAlert({ product, plan, results, available = true }: { product: Pro
       >
         <View style={s0.flightAlertCopy}>
           <Text style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track this flight price</Text>
-          <Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Get notified when fares change</Text>
+          <Text style={[s0.flightAlertSubtitle, { color: supportTextColor }]}>Get notified when fares change</Text>
         </View>
         <View style={s0.flightAlertSwitchTarget}>
           <Switch
@@ -1639,7 +1646,7 @@ const s0 = StyleSheet.create({
   sheetActions: { gap: 9 },
   body: { paddingHorizontal: 18, paddingBottom: 92, gap: 14 },
   flightResultsBody: { paddingHorizontal: 14, gap: 8 },
-  flightPriceAlertItem: { paddingHorizontal: 14, paddingBottom: 8 },
+  flightPriceAlertItem: { paddingHorizontal: 14, paddingBottom: 5 },
   flightCardItem: { paddingHorizontal: 14, paddingBottom: 8 },
   notice: {
     backgroundColor: "#F2F6FF",
@@ -1661,7 +1668,7 @@ const s0 = StyleSheet.create({
   },
   foundCopy: { flex: 1, minWidth: 0, gap: 2 },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
-  flightResultCount: { paddingHorizontal: 14, paddingTop: 7, fontSize: 16, lineHeight: 21, fontWeight: "700", fontFamily: appFonts.bold },
+  flightResultCount: { paddingHorizontal: 14, paddingTop: 4, fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
   card: {
     width: "100%",
     borderWidth: 1,
@@ -1860,16 +1867,16 @@ const s0 = StyleSheet.create({
   },
   alertCopy: { gap: 4 },
   flightAlert: {
-    borderRadius: 12,
+    borderRadius: 10,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 4,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     overflow: "hidden",
   },
   flightAlertCopy: { flex: 1, minWidth: 0, gap: 2 },
-  flightAlertTitle: { fontSize: 15, lineHeight: 19, fontWeight: "900", fontFamily: appFonts.black },
+  flightAlertTitle: { fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
   flightAlertSubtitle: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
   flightAlertSwitchTarget: { minWidth: 48, minHeight: 48, alignItems: "center", justifyContent: "center" },
   alertModalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,.45)" },
