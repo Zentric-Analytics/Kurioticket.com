@@ -23,7 +23,7 @@ import {
   ChevronRight,
   ChevronDown,
   MapPin,
-  PencilLine,
+  Pencil,
   SlidersHorizontal,
   Star,
   Users,
@@ -2008,7 +2008,7 @@ export function HotelResultsExperience({
                   <span className="min-w-0 truncate">
                     {desktopMinimizedDateSummary} · {desktopMinimizedGuestsSummary}
                   </span>
-                  <PencilLine
+                  <Pencil
                     aria-hidden="true"
                     className="h-3.5 w-3.5 shrink-0 text-slate-500"
                     strokeWidth={2}

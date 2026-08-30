@@ -577,14 +577,14 @@ export function HotelCard({
             <div className="min-w-0">
               <div>
                 <div className="relative min-w-0">
-                  <div className="min-w-0 pe-[76px] md:pe-0">
+                  <div className="min-w-0 pe-[88px] md:pe-0">
                     <h2 className="min-w-0 text-[15px] font-bold leading-5 text-slate-950 sm:text-base lg:text-[17px]">
                       {hotel.name}
                     </h2>
                   </div>
                   <div
                     data-hotel-utility-actions
-                    className="absolute -end-2 -top-2 flex shrink-0 items-center gap-0 md:hidden"
+                    className="absolute -end-3 -top-2 flex shrink-0 items-center gap-0 md:hidden"
                   >
                     {renderSaveButton("flex pe-1", "justify-end")}
                     {renderShareButton("flex ps-1", "justify-start")}
