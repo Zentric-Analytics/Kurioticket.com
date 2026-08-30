@@ -195,6 +195,8 @@ test("cards expose compact, functional save and share actions", () => {
   );
   assert.match(actions, /<Heart\s+size=\{18\}/);
   assert.match(actions, /<Share2 size=\{18\}/);
+  assert.match(actions, /<Heart[\s\S]*?className="translate-x-1"/);
+  assert.match(actions, /<Share2 size=\{18\} className="-translate-x-1"/);
   assert.doesNotMatch(actions, /before:-inset-/);
   assert.match(mobileUtility, /min-h-11 min-w-0 items-center gap-2/);
   assert.match(

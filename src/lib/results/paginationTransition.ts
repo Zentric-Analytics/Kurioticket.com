@@ -2,6 +2,11 @@ export const PAGINATION_MIN_BUSY_MS = 140;
 export const PAGINATION_REVEAL_MS = 150;
 
 type ScrollTarget = { top?: number; element?: HTMLElement | null };
+type ScrollOptions = {
+  maximumWaitMs?: number;
+  settleMs?: number;
+  behavior?: "motion-aware" | "instant";
+};
 
 export function prefersReducedResultsMotion() {
   return typeof window !== "undefined" &&
@@ -11,20 +16,21 @@ export function prefersReducedResultsMotion() {
 /** Scrolls to a results anchor and resolves once scrolling has actually settled. */
 export function scrollToResultsAndWait(
   target: ScrollTarget,
-  { maximumWaitMs = 1600, settleMs = 90 }: { maximumWaitMs?: number; settleMs?: number } = {},
+  { maximumWaitMs = 1600, settleMs = 90, behavior = "motion-aware" }: ScrollOptions = {},
 ) {
   if (typeof window === "undefined") return Promise.resolve();
 
   const reducedMotion = prefersReducedResultsMotion();
+  const scrollBehavior = reducedMotion || behavior === "instant" ? "auto" : "smooth";
   const startedAt = performance.now();
 
   if (target.element) {
-    target.element.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+    target.element.scrollIntoView({ behavior: scrollBehavior, block: "start" });
   } else {
-    window.scrollTo({ top: Math.max(0, target.top ?? 0), behavior: reducedMotion ? "auto" : "smooth" });
+    window.scrollTo({ top: Math.max(0, target.top ?? 0), behavior: scrollBehavior });
   }
 
-  if (reducedMotion) return Promise.resolve();
+  if (reducedMotion || behavior === "instant") return Promise.resolve();
 
   return new Promise<void>((resolve) => {
     let settleTimer = 0;
