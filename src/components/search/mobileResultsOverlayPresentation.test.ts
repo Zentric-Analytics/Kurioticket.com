@@ -18,8 +18,9 @@ test("mobile Results overlay gives the backdrop the root canvas and the sheet it
   );
   assert.match(
     styles,
-    /\.mobile-results-sheet-backdrop-blend-header::before\s*\{[\s\S]*?background-color:\s*rgb\(15 23 42 \/ 0\.32\)[\s\S]*?-webkit-mask-image:[\s\S]*?mask-image:/,
+    /\.mobile-results-sheet-backdrop-clean\s*\{[\s\S]*?background-color:\s*transparent/,
   );
+  assert.doesNotMatch(styles, /mobile-results-sheet-backdrop-clean::before/);
 });
 
 test("shared Results sheet motion supports synchronized close and reduced motion", () => {
