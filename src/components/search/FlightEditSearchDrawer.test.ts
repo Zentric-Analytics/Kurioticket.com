@@ -45,9 +45,20 @@ test("shared editor supports a Details-only bottom sheet while fullscreen remain
   assert.match(source, /max-h-\[94dvh\]/);
   assert.doesNotMatch(source, /(?:^|\s)h-\[94dvh\]/);
   assert.match(source, /flex min-h-0 w-full min-w-0 flex-col/);
-  assert.match(source, /max-h-\[94dvh\] overflow-hidden rounded-t-\[22px\]/);
+  assert.match(source, /max-h-\[94dvh\]/);
+  assert.match(source, /overflow-hidden rounded-t-\[22px\]/);
   assert.match(source, /rounded-t-\[22px\]/);
   assert.match(source, /bg-slate-950\/35/);
+  assert.match(source, /data-flight-edit-bottom-continuation/);
+  assert.match(
+    source,
+    /data-flight-edit-bottom-continuation[\s\S]*?mobile-results-sheet-bottom-continuation[\s\S]*?bg-slate-50/,
+  );
+  assert.doesNotMatch(
+    source,
+    /mobile-results-overlay-root[^\n]*?(?:opacity-0|transition-opacity)/,
+  );
+  assert.doesNotMatch(source, /!hasEntered/);
   assert.match(source, /translate-y-full/);
   assert.match(source, /duration-200/);
 });
