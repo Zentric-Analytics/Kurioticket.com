@@ -111,11 +111,11 @@ test("mobile Packages fields use label then left icon and value with one canonic
 test("standalone mobile Packages alone uses the short localized destination placeholder", () => {
   assert.match(
     compact,
-    /search\.flightDestinationText \|\|[\s\S]*?isPackagesLanding[\s\S]*?"flightSearchDestinationPlaceholderShort"[\s\S]*?: "deals\.destinationLabel"/,
+    /compactFlightDestinationDisplay\.primary \|\|[\s\S]*?isPackagesLanding[\s\S]*?"flightSearchDestinationPlaceholderShort"[\s\S]*?: "deals\.destinationLabel"/,
   );
   assert.match(
     compact,
-    /displayedHotelDestination \|\|[\s\S]*?isPackagesLanding[\s\S]*?"flightSearchDestinationPlaceholderShort"[\s\S]*?: "deals\.destinationLabel"/,
+    /compactHotelDestinationDisplay\.primary \|\|[\s\S]*?isPackagesLanding[\s\S]*?"flightSearchDestinationPlaceholderShort"[\s\S]*?: "deals\.destinationLabel"/,
   );
   assert.match(
     form,

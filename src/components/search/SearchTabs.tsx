@@ -72,6 +72,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
+import { canonicalHomepageAirportField } from "@/lib/search/homepageAirportField";
 import {
   buildFlightRecentSearch,
   buildHotelRecentSearch,
@@ -1729,9 +1730,17 @@ export function SearchTabs({
     if (tripType === "multi-city") {
       const firstLeg = multiCityLegs[0];
       if (firstLeg) {
-        setFromState((current) => markOriginManualInput(current, firstLeg.origin, firstLeg.origin));
-        setTo(firstLeg.destination);
-        setToCode(firstLeg.destination);
+        const canonicalOrigin = canonicalHomepageAirportField(firstLeg.origin, locale);
+        const canonicalDestination = canonicalHomepageAirportField(firstLeg.destination, locale);
+        setFromState((current) =>
+          markOriginManualInput(
+            current,
+            canonicalOrigin.text,
+            canonicalOrigin.code,
+          ),
+        );
+        setTo(canonicalDestination.text);
+        setToCode(canonicalDestination.code);
         setDepartureDate(firstLeg.departureDate);
         if (mode === "round-trip") {
           const reverseLeg = multiCityLegs.slice(1).find((leg) =>
