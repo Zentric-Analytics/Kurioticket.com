@@ -12,6 +12,9 @@ node_modules/
 
 # testing
 /coverage
+/qa/mobile-web/artifacts/
+/qa/mobile-web/test-results/
+/qa/mobile-web/browserstack/log/
 
 # next.js
 /.next/
