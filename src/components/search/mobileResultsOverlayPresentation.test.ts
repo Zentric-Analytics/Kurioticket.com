@@ -18,7 +18,7 @@ test("mobile Results overlay gives the backdrop the root canvas and the sheet it
   );
   assert.match(
     styles,
-    /\.mobile-results-sheet-backdrop-preserve-header\s*\{[\s\S]*?background-color:\s*transparent[\s\S]*?transparent 5rem[\s\S]*?rgb\(2 6 23 \/ 0\.35\) 5rem/,
+    /\.mobile-results-sheet-backdrop-blend-header\s*\{[\s\S]*?background-color:\s*transparent[\s\S]*?rgb\(2 6 23 \/ 0\) 0[\s\S]*?rgb\(2 6 23 \/ 0\.35\) 7rem/,
   );
 });
 

@@ -233,13 +233,13 @@ textarea {
 }
 
 .mobile-results-sheet-backdrop { animation: mobile-results-sheet-backdrop-in 180ms ease-out both; }
-.mobile-results-sheet-backdrop-preserve-header {
+.mobile-results-sheet-backdrop-blend-header {
   background-color: transparent;
   background-image: linear-gradient(
     to bottom,
-    transparent 0,
-    transparent 5rem,
-    rgb(2 6 23 / 0.35) 5rem
+    rgb(2 6 23 / 0) 0,
+    rgb(2 6 23 / 0.18) 2.5rem,
+    rgb(2 6 23 / 0.35) 7rem
   );
 }
 .mobile-results-sheet-surface {
