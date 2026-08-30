@@ -48,6 +48,7 @@ import { MobilePackageTravelersRoomsPicker } from "@/components/search/MobilePac
 import { MobileCarDriverAgePickerDialog, MobileCarTimePickerDialog } from "@/components/search/CarsPickerContent";
 import { translations as en } from "@/lib/i18n/en";
 import { driverAgeOptions, timeOptions } from "@/lib/cars/carsSearchUtils";
+import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 import {
   createDefaultDealsSearch,
   dealsProductOrder,
@@ -3288,6 +3289,7 @@ export function DealsSearchForm({
     icon: ReactNode,
     value: ReactNode,
     placeholder = false,
+    supportingText = "",
   ) => (
     <span className={compactFieldContentClassName}>
       <span className={compactLabelClassName}>{label}</span>
@@ -3296,10 +3298,25 @@ export function DealsSearchForm({
         <span
           className={`${compactValueTextClassName} ${placeholder ? "text-slate-500" : ""}`}
         >
-          {value}
+          <span className="block truncate">{value}</span>
+          {supportingText ? (
+            <span className="block truncate text-[11px] font-medium leading-4 text-slate-600">
+              {supportingText}
+            </span>
+          ) : null}
         </span>
       </span>
     </span>
+  );
+
+  const compactFlightOriginDisplay = getLocationFieldDisplay(
+    search.flightOriginText,
+  );
+  const compactFlightDestinationDisplay = getLocationFieldDisplay(
+    search.flightDestinationText,
+  );
+  const compactHotelDestinationDisplay = getLocationFieldDisplay(
+    displayedHotelDestination,
   );
 
   const compactMobileControls =
@@ -3408,12 +3425,10 @@ export function DealsSearchForm({
             >
               {compactPackageFieldContent(
                 t("origin"),
-                <MapPin
-                  aria-hidden="true"
-                  className={compactValueIconClassName}
-                />,
-                search.flightOriginText || t("cityOrAirport"),
+                <MapPin aria-hidden="true" className={compactValueIconClassName} />,
+                compactFlightOriginDisplay.primary || t("cityOrAirport"),
                 !search.flightOriginText,
+                compactFlightOriginDisplay.secondary,
               )}
             </button>
             <button
@@ -3439,17 +3454,14 @@ export function DealsSearchForm({
             >
               {compactPackageFieldContent(
                 t("destination"),
-                <MapPin
-                  aria-hidden="true"
-                  className={compactValueIconClassName}
-                />,
-                search.flightDestinationText ||
-                  t(
+                <MapPin aria-hidden="true" className={compactValueIconClassName} />,
+                compactFlightDestinationDisplay.primary || t(
                     isPackagesLanding
                       ? "flightSearchDestinationPlaceholderShort"
                       : "deals.destinationLabel",
                   ),
                 !search.flightDestinationText,
+                compactFlightDestinationDisplay.secondary,
               )}
             </button>
             <button
@@ -3486,17 +3498,14 @@ export function DealsSearchForm({
             >
               {compactPackageFieldContent(
                 t("destination"),
-                <MapPin
-                  aria-hidden="true"
-                  className={compactValueIconClassName}
-                />,
-                displayedHotelDestination ||
-                  t(
+                <MapPin aria-hidden="true" className={compactValueIconClassName} />,
+                compactHotelDestinationDisplay.primary || t(
                     isPackagesLanding
                       ? "flightSearchDestinationPlaceholderShort"
                       : "deals.destinationLabel",
                   ),
                 !displayedHotelDestination,
+                compactHotelDestinationDisplay.secondary,
               )}
             </button>
             <button
