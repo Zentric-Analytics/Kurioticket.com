@@ -233,17 +233,8 @@ textarea {
 }
 
 .mobile-results-sheet-backdrop { animation: mobile-results-sheet-backdrop-in 180ms ease-out both; }
-.mobile-results-sheet-backdrop-blend-header {
+.mobile-results-sheet-backdrop-clean {
   background-color: transparent;
-}
-.mobile-results-sheet-backdrop-blend-header::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-color: rgb(15 23 42 / 0.32);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 7rem);
-  mask-image: linear-gradient(to bottom, transparent 0, #000 7rem);
 }
 .mobile-results-sheet-surface {
   position: relative;

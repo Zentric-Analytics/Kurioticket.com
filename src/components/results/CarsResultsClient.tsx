@@ -1569,7 +1569,7 @@ export function CarsResultsClient({
       <MobileResultsEditSheet
         open={mobileSearchOpen}
         browserCanvasColor="#ffffff"
-        blendHeaderBackdrop
+        cleanBackdrop
         bottomSurfaceContinuation
         title={t("carsResults.editSearch")}
         nestedLayerOpen={mobilePicker !== null}

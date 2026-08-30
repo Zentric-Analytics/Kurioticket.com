@@ -25,7 +25,7 @@ type Props = {
   className?: string;
   contentClassName?: string;
   browserCanvasColor?: string;
-  blendHeaderBackdrop?: boolean;
+  cleanBackdrop?: boolean;
   bottomSurfaceContinuation?: boolean;
   bottomSurfaceContinuationClassName?: string;
 };
@@ -41,7 +41,7 @@ export function MobileResultsEditSheet({
   className,
   contentClassName,
   browserCanvasColor,
-  blendHeaderBackdrop = false,
+  cleanBackdrop = false,
   bottomSurfaceContinuation = false,
   bottomSurfaceContinuationClassName,
 }: Props) {
@@ -109,7 +109,7 @@ export function MobileResultsEditSheet({
       data-mobile-results-edit-sheet
       className={cn(
         "mobile-results-overlay-root mobile-results-sheet-backdrop fixed inset-0 z-[10000] flex min-h-0 w-screen items-end overflow-visible overscroll-none bg-slate-950/35 motion-reduce:transition-none sm:hidden",
-        blendHeaderBackdrop && "mobile-results-sheet-backdrop-blend-header",
+        cleanBackdrop && "mobile-results-sheet-backdrop-clean",
       )}
       onPointerDown={(event) => { if (event.target === event.currentTarget) close(); }}
     >
