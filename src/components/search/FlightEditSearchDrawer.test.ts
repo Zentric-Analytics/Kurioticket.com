@@ -54,17 +54,16 @@ test("shared editor supports a Details-only bottom sheet while fullscreen remain
   assert.match(source, /rounded-t-\[22px\]/);
   assert.match(source, /bg-slate-950\/35/);
   assert.match(source, /data-flight-edit-bottom-continuation/);
+  assert.match(source, /data-mobile-results-sheet-bottom-continuation/);
   assert.match(
     source,
     /data-flight-edit-bottom-continuation[\s\S]*?mobile-results-sheet-bottom-continuation[\s\S]*?bg-slate-50/,
   );
-  assert.doesNotMatch(
-    source,
-    /mobile-results-overlay-root[^\n]*?(?:opacity-0|transition-opacity)/,
-  );
+  assert.match(source, /mobile-results-sheet-backdrop/);
+  assert.match(source, /mobile-results-sheet-surface/);
+  assert.match(source, /mobile-results-sheet-backdrop-closing/);
+  assert.match(source, /mobile-results-sheet-surface-closing/);
   assert.doesNotMatch(source, /!hasEntered/);
-  assert.match(source, /translate-y-full/);
-  assert.match(source, /duration-200/);
 });
 
 test("bottom sheet uses the shared no-shake lock and delegates launcher focus", () => {
