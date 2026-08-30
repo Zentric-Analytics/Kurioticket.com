@@ -234,7 +234,7 @@ textarea {
 
 .mobile-results-sheet-backdrop { animation: mobile-results-sheet-backdrop-in 180ms ease-out both; }
 .mobile-results-sheet-backdrop-clean {
-  background-color: transparent;
+  background-color: rgb(15 23 42 / 8%);
 }
 .mobile-results-sheet-surface {
   position: relative;
