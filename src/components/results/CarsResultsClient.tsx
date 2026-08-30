@@ -1944,7 +1944,7 @@ export function CarsResultsExperience({
     setPaginationMinHeight(paginationListRef.current?.getBoundingClientRect().height ?? null);
     setPaginationPendingPage(page);
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-    await scrollToResultsAndWait({ element: resultsStartRef.current });
+    await scrollToResultsAndWait({ top: 0 }, { behavior: "instant" });
     setCurrentPage(page);
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     setPaginationPendingPage(null);

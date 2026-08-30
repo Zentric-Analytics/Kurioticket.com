@@ -6,6 +6,7 @@ import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { CarsResultsClient } from "@/components/results/CarsResultsClient";
 import type { CarSearchParams } from "@/lib/cars/types";
 import { hasExplicitDifferentReturnLocation } from "@/lib/cars/carsSearchUtils";
+import { CARS_RESULTS_RELOAD_SCROLL_SCRIPT } from "@/lib/cars/carsResultsReloadScroll";
 import { getTranslations } from "@/lib/i18n";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
@@ -70,6 +71,10 @@ export default async function CarsResultsPage({
 
   return (
     <>
+      <script
+        data-cars-results-reload-scroll-policy
+        dangerouslySetInnerHTML={{ __html: CARS_RESULTS_RELOAD_SCROLL_SCRIPT }}
+      />
       <AppHeader
         flushDesktopBottom
         flushMobileBottom
