@@ -562,6 +562,8 @@ const fieldLabelClass =
 const fieldInputClass =
   "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:text-[15px] lg:font-medium lg:leading-6";
 
+const mobileSearchCloseMotionMs = 280;
+
 export function CarsResultsClient({
   values,
   initialResults,
@@ -576,6 +578,7 @@ export function CarsResultsClient({
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const intlLocale = getCarsResultsIntlLocale(locale);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mobileSearchClosing, setMobileSearchClosing] = useState(false);
   const [isSearchSubmitting, setIsSearchSubmitting] = useState(false);
   const isSearchSubmittingRef = useRef(false);
   const [mobileCompactHeaderVisible, setMobileCompactHeaderVisible] =
@@ -615,6 +618,7 @@ export function CarsResultsClient({
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchSummarySentinelRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(null);
+  const mobileSearchCloseTimerRef = useRef<number | null>(null);
   const mobileSearchLauncherRef = useRef<HTMLElement | null>(null);
   const mobileSearchModalityRef = useRef<OverlayActivationModality>("programmatic");
   const mobileSearchSnapshotRef = useRef<CarsResultsSearchSnapshot | null>(
@@ -913,6 +917,11 @@ export function CarsResultsClient({
         driverAge,
       };
       mobileSearchScrollLockRef.current ??= acquireMobileResultsScrollLock();
+      if (mobileSearchCloseTimerRef.current !== null) {
+        window.clearTimeout(mobileSearchCloseTimerRef.current);
+        mobileSearchCloseTimerRef.current = null;
+      }
+      setMobileSearchClosing(false);
       setMobileSearchOpen(true);
       setMobilePicker(null);
       setDesktopStickySearchSection(null);
@@ -966,6 +975,7 @@ export function CarsResultsClient({
     setDatesOpen(false);
     setTimesOpen(false);
     setDriverAgeOpen(false);
+    setMobileSearchClosing(false);
   }, [
     releaseMobileSearchScrollLock,
     setMobileSearchOpen,
@@ -973,6 +983,25 @@ export function CarsResultsClient({
     setTimesOpen,
     setDriverAgeOpen,
   ]);
+
+  const requestMobileSearchDrawerClose = useCallback(() => {
+    if (mobileSearchClosing) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      cancelMobileSearchDrawer();
+      return;
+    }
+    setMobileSearchClosing(true);
+    mobileSearchCloseTimerRef.current = window.setTimeout(() => {
+      mobileSearchCloseTimerRef.current = null;
+      cancelMobileSearchDrawer();
+    }, mobileSearchCloseMotionMs);
+  }, [cancelMobileSearchDrawer, mobileSearchClosing]);
+
+  useEffect(() => () => {
+    if (mobileSearchCloseTimerRef.current !== null) {
+      window.clearTimeout(mobileSearchCloseTimerRef.current);
+    }
+  }, []);
 
   const submitMobileSearch = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
@@ -1571,9 +1600,11 @@ export function CarsResultsClient({
         browserCanvasColor="#ffffff"
         cleanBackdrop
         bottomSurfaceContinuation
+        smoothMotion
+        closing={mobileSearchClosing}
         title={t("carsResults.editSearch")}
         nestedLayerOpen={mobilePicker !== null}
-        onClose={() => cancelMobileSearchDrawer()}
+        onClose={requestMobileSearchDrawerClose}
         contentClassName="pb-[calc(1rem+env(safe-area-inset-bottom))]"
       >
         <div className="mx-auto w-full max-w-xl">

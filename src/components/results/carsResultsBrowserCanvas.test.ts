@@ -18,6 +18,7 @@ test("Cars uses a stable white browser canvas and clean backdrop while Results s
     carsSource,
     /<MobileResultsEditSheet\s+[\s\S]{0,300}bottomSurfaceContinuation/,
   );
+  assert.match(carsSource, /<MobileResultsEditSheet\s+[\s\S]{0,400}smoothMotion/);
   assert.match(
     hotelSource,
     /<MobileResultsEditSheet\s+[\s\S]{0,300}bottomSurfaceContinuation[\s\S]{0,120}bottomSurfaceContinuationClassName="bg-slate-50"/,
