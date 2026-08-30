@@ -83,6 +83,7 @@ import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicke
 import { MobileResultsEditSheet } from "@/components/search/MobileResultsEditSheet";
 import { acquireMobileResultsScrollLock, type MobileResultsScrollLockRelease } from "@/lib/search/mobileResultsScrollLock";
 import { getOverlayActivationModality, restoreOverlayLauncherFocus, type OverlayActivationModality } from "@/lib/search/mobileResultsOverlayFocus";
+import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 import {
   carsDesktopPopoverClassName,
   useCarsDesktopPopover,
@@ -2250,12 +2251,13 @@ export function CarsResultsExperience({
     if (presentation !== "standalone") return null;
 
     const summary = mobileSearchSummary || t("carsResults.pickupLocationLabel");
+    const summaryDisplay = getLocationFieldDisplay(summary);
     const modifySearchLabel = `${t("deals.results.modifySearch")}: ${summary}`;
 
     return (
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-[90] border-b border-slate-200/80 bg-white/95 px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] backdrop-blur-md transition-all duration-200 ease-out sm:hidden",
+          "fixed inset-x-0 top-0 z-[90] border-b border-slate-200/80 bg-white px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] transition-all duration-200 ease-out sm:hidden",
           mobileCompactToolbarVisible
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none -translate-y-2 opacity-0",
@@ -2278,8 +2280,9 @@ export function CarsResultsExperience({
             className="focus-ring flex min-h-11 min-w-0 flex-col items-center justify-center px-2 py-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           >
             <span className="block max-w-full truncate text-[15px] font-bold leading-5 tracking-[-0.015em] text-[#07133B]">
-              {summary}
+              {summaryDisplay.primary}
             </span>
+            {summaryDisplay.secondary ? <span className="block max-w-full truncate text-[10px] font-medium leading-3 text-[#536B92]">{summaryDisplay.secondary}</span> : null}
             <span className="mt-0.5 inline-flex items-center justify-center gap-1 text-[11px] font-medium leading-4 text-[#536B92]">
               <span>{t("deals.results.modifySearch")}</span>
               <Pencil
@@ -2803,6 +2806,7 @@ function MobileLocationLauncher({
   value: string;
   groupedMobile?: boolean;
 }) {
+  const display = getLocationFieldDisplay(value);
   return (
     <div data-cars-mobile-grouped-row className={cn(groupedMobile ? "relative flex min-h-16 flex-col justify-center px-4 py-2 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/30" : fieldShellClass, className)}>
       <div className={cn(fieldLabelClass, groupedMobile && "mb-1 text-[10px] leading-4 text-[#64748B]")}>
@@ -2816,11 +2820,12 @@ function MobileLocationLauncher({
           onClick={onClick}
           className={cn(
             fieldInputClass,
-            "focus-ring min-w-0 flex-1 truncate text-start",
+            "focus-ring min-w-0 flex-1 text-start",
             !value && "text-slate-400",
           )}
         >
-          {value || placeholder}
+          <span className="block truncate">{display.primary || placeholder}</span>
+          {display.secondary ? <span className="block truncate text-xs font-medium leading-4 text-slate-600">{display.secondary}</span> : null}
         </button>
         {secondaryAction ? (
           <button
