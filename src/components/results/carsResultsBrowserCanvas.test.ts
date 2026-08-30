@@ -11,8 +11,9 @@ const hotelSource = readFileSync(
   "utf8",
 );
 
-test("Cars and Hotel keep the backdrop canvas while owning product-colored lower continuations", () => {
-  assert.doesNotMatch(carsSource, /browserCanvasColor=/);
+test("Cars blends its header from a white browser canvas while Results sheets own lower continuations", () => {
+  assert.match(carsSource, /browserCanvasColor="#ffffff"/);
+  assert.match(carsSource, /blendHeaderBackdrop/);
   assert.match(
     carsSource,
     /<MobileResultsEditSheet\s+[\s\S]{0,300}bottomSurfaceContinuation/,
