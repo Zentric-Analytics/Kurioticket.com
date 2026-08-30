@@ -81,7 +81,7 @@ import {
 } from "@/lib/hotels/hotelResultsPagination";
 import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
 
-const hotelResultStackClass = "w-full max-w-[800px]";
+const hotelResultStackClass = "w-full max-w-[800px] lg:max-w-[680px]";
 const desktopCompactFilterTopOffset = 116;
 const desktopCompactFilterBottomGap = 16;
 
