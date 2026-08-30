@@ -20,9 +20,10 @@ const hotelSource = readFileSync(
 );
 
 const mainWrapper = '<main className="flex-1 bg-surface-muted/40">';
+const successfulMainWrapper = '<main className="flex-1 bg-white pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bg-surface-muted/40 lg:pb-0">';
 const whiteSection = '<section className="border-b border-border bg-white">';
 const successfulSection =
-  '<section className="border-b border-border bg-white lg:pb-14">';
+  '<section className="bg-white lg:border-b lg:border-border lg:pb-14">';
 
 function assertOrdered(source: string, parts: string[]) {
   let previous = -1;
@@ -58,20 +59,20 @@ test("reference details pages retain the shared background architecture", () => 
 
 test("successful Cars Details uses a full-width white section inside the muted main", () => {
   assertOrdered(clientSource, [
-    mainWrapper,
+    successfulMainWrapper,
     successfulSection,
-    '<div className="page-shell py-5 sm:py-7">',
+    '<div className="page-shell py-3 sm:py-7">',
   ]);
   assert.doesNotMatch(
     clientSource,
     /<main className="[^"]*lg:pb-14[^"]*">/,
   );
   assert.doesNotMatch(clientSource, /flex-1 bg-\[#f6f8fb\] lg:pb-14/);
-  assert.match(clientSource, /page-shell py-5 sm:py-7/);
+  assert.match(clientSource, /page-shell py-3 sm:py-7/);
   assertNoForbiddenBackgroundTreatments(
     clientSource.slice(
-      clientSource.indexOf(mainWrapper),
-      clientSource.indexOf('<div className="page-shell py-5 sm:py-7">'),
+      clientSource.indexOf(successfulMainWrapper),
+      clientSource.indexOf('<div className="page-shell py-3 sm:py-7">'),
     ),
   );
 });
@@ -132,6 +133,7 @@ test("unavailable content and route behavior contracts remain present", () => {
     "resultsHref",
     "getCarDetails",
     "CarDetailsClient",
+    "data-mobile-car-footer-clearance",
     "AppHeader",
     "Footer",
     "pickupLocation",

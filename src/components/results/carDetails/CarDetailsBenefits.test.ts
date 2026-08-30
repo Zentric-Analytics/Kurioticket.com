@@ -55,18 +55,18 @@ test("source contract renders no benefit structure when an offer is absent", () 
 });
 
 test("source contract places two separate semantic cards beneath amenities", () => {
-  const amenities = heroSource.indexOf('<ul className="mt-5 flex flex-wrap gap-2">');
+  const amenities = heroSource.indexOf('<ul className="mt-4 grid grid-cols-2');
   const benefits = heroSource.indexOf("<dl data-car-benefits");
   assert.ok(amenities >= 0 && benefits > amenities, "benefits follow amenities");
 
   const benefitSource = sourceBetween(heroSource, "<dl data-car-benefits", "</dl>");
   assert.equal(
-    benefitSource.match(/<div className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">/g)?.length,
+    benefitSource.match(/<div className="flex min-w-0 items-center gap-2\.5 rounded-\[10px\] bg-slate-50 p-3 sm:gap-3 sm:border sm:border-slate-200">/g)?.length,
     2,
   );
   assert.equal(benefitSource.match(/<dt /g)?.length, 2);
   assert.equal(benefitSource.match(/<dd /g)?.length, 2);
-  assert.match(benefitSource, /grid grid-cols-1 gap-3 sm:grid-cols-2/);
+  assert.match(benefitSource, /grid grid-cols-2 gap-2\.5 sm:gap-3/);
   assert.doesNotMatch(benefitSource, /h-\[|min-h-|max-h-|overflow-x/);
 });
 
@@ -94,21 +94,22 @@ test("source contract keeps only pricing and the provider CTA in BookingSummary"
   assert.doesNotMatch(clientSource, /function Term|<Term|<dl/);
 });
 
-test("source contract uses one in-flow responsive booking summary", () => {
-  assert.doesNotMatch(clientSource, /function MobileBar|<MobileBar/);
-  assert.doesNotMatch(clientSource, /fixed inset-x-0 bottom-0|z-30|safe-area-inset-bottom|pb-32/);
-  assert.match(clientSource, /<main className="flex-1 bg-surface-muted\/40">/);
+test("source contract uses a desktop summary and a mobile safe-area booking dock", () => {
+  assert.match(clientSource, /function MobileBookingDock|<MobileBookingDock/);
+  assert.match(clientSource, /fixed inset-x-0 bottom-0/);
+  assert.match(clientSource, /safe-area-inset-bottom/);
+  assert.match(clientSource, /data-mobile-car-booking-dock/);
+  assert.match(clientSource, /<main className="flex-1 bg-white pb-/);
 
   const summaryRenders = clientSource.match(/<BookingSummary\b/g) ?? [];
   assert.equal(summaryRenders.length, 1);
   assert.match(
     clientSource,
-    /{primaryOffer && <aside className="self-start lg:sticky lg:top-24"><BookingSummary offer={primaryOffer}/,
+    /hidden self-start lg:sticky lg:top-24 lg:block/,
   );
-  assert.doesNotMatch(clientSource, /<aside className="[^"]*(?:hidden lg:block|\bfixed\b|(?<!lg:)sticky)/);
   assert.match(
     clientSource,
-    /grid items-start gap-6 lg:grid-cols-\[minmax\(0,1fr\)_320px\] xl:grid-cols-\[minmax\(0,1fr\)_340px\]/,
+    /grid items-start gap-5 lg:grid-cols-\[minmax\(0,1fr\)_320px\].*xl:grid-cols-\[minmax\(0,1fr\)_340px\]/,
   );
 
   const summary = clientSource.slice(clientSource.indexOf("function BookingSummary"));
@@ -123,9 +124,9 @@ test("source contract uses one in-flow responsive booking summary", () => {
   assert.ok(hero >= 0 && pickupReturn > hero && responsiveSummary > pickupReturn);
 });
 
-test("source contract keeps the single provider CTA disabled, inert, teal, and localized", () => {
+test("source contract keeps desktop and mobile provider CTAs disabled, inert, teal, and localized", () => {
   const buttons = clientSource.match(/<button disabled className="[^"]+">{action.label}<\/button>/g) ?? [];
-  assert.equal(buttons.length, 1);
+  assert.equal(buttons.length, 2);
   for (const button of buttons) {
     assert.match(button, /bg-teal-dark/);
     assert.match(button, /text-white/);
