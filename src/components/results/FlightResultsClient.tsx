@@ -5881,12 +5881,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           placement === "desktop" && "hidden sm:block",
         )}
       >
-        <div className="flex flex-col gap-0">
+        <div className={cn("flex flex-col gap-0", placement === "desktop" && "gap-3")}>
           {placement === "desktop" ? (
             <div
               role="radiogroup"
               aria-label={t("tripType")}
-              className="hidden translate-y-2 items-center gap-8 px-1 pb-0 sm:flex"
+              data-desktop-trip-selector
+              className="hidden w-fit items-center gap-1 rounded-lg border border-slate-200/90 bg-slate-50/80 p-1 sm:flex"
             >
               {[
                 { label: "Round-trip", value: "round-trip" },
@@ -5903,19 +5904,22 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     aria-checked={selected}
                     onClick={() => handleTripTypeChange(option.value)}
                     className={cn(
-                      "focus-ring inline-flex min-h-9 items-center gap-2 rounded-md px-1 py-1 text-[14px] font-medium text-slate-900 transition-colors hover:text-slate-950",
+                      "focus-ring inline-flex min-h-8 items-center gap-2 rounded-md px-2.5 py-1 text-[13px] font-semibold transition-colors",
+                      selected
+                        ? "bg-white text-slate-950 shadow-sm ring-1 ring-slate-200/80"
+                        : "text-slate-600 hover:bg-white/70 hover:text-slate-950",
                     )}
                   >
                     <span
                       aria-hidden="true"
                       className={cn(
-                        "inline-flex h-[18px] w-[18px] items-center justify-center rounded-full border-2 bg-white transition-colors",
+                        "inline-flex h-4 w-4 items-center justify-center rounded-full border bg-white transition-colors",
                         selected ? "border-[#075EE8]" : "border-slate-300",
                       )}
                     >
                       <span
                         className={cn(
-                          "h-2 w-2 rounded-full transition-colors",
+                          "h-1.5 w-1.5 rounded-full transition-colors",
                           selected ? "bg-[#075EE8]" : "bg-transparent",
                         )}
                       />
@@ -5931,7 +5935,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             ref={placement === "desktop" ? searchFormRef : undefined}
             onSubmit={handleCompactSearchSubmit}
             onChangeCapture={markExpandedSearchInteraction}
-            className="sm:translate-y-4"
           >
             <div className="flex items-center justify-between sm:hidden">
               <span className="text-sm font-semibold text-slate-500">
@@ -7027,13 +7030,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   className="hidden w-full sm:block"
                   aria-label="Nearby departure fares"
                 >
-                  <div className="mx-auto grid w-full max-w-[780px] grid-cols-[36px_repeat(7,minmax(72px,1fr))_36px] items-stretch overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                  <div data-desktop-nearby-fare-rail className="mx-auto grid w-full max-w-[820px] grid-cols-[34px_repeat(7,minmax(72px,1fr))_34px] items-stretch gap-1.5 rounded-xl border border-slate-200/80 bg-slate-50/60 p-1.5 shadow-[0_8px_24px_-20px_rgba(15,23,42,0.45)]">
                     <button
                       type="button"
                       aria-label="Previous nearby fare date"
                       disabled={nearbyFareVisibleStart === 0}
                       onClick={() => navigateNearbyFareWindow("previous")}
-                      className="focus-ring inline-flex min-h-[88px] items-center justify-center border-e border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-[#075EE8] focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-white"
+                      className="focus-ring inline-flex min-h-[78px] items-center justify-center rounded-lg text-slate-400 transition hover:bg-white hover:text-[#075EE8] focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
                     >
                       <ChevronLeft className="h-5 w-5" aria-hidden="true" />
                     </button>
@@ -7085,13 +7088,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                           }
                           onClick={() => handleNearbyFareDateSelect(fare.date)}
                           className={cn(
-                            "focus-ring relative flex min-h-[88px] min-w-0 flex-col items-center justify-center border-e border-slate-100 px-1.5 py-2 text-center transition last:border-e-0 hover:bg-slate-50",
-                            selected && "bg-blue-50/60",
+                            "focus-ring relative flex min-h-[78px] min-w-0 flex-col items-center justify-center rounded-lg border border-slate-200/80 bg-white px-1.5 py-2 text-center shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-[#075EE8]/30 hover:bg-slate-50",
+                            selected && "border-[#075EE8]/55 bg-blue-50/70 shadow-[0_3px_10px_rgba(7,94,232,0.10)]",
                           )}
                         >
                           {selected ? (
                             <span
-                              className="absolute inset-x-2 top-0 h-0.5 rounded-b bg-[#075EE8]"
+                              className="absolute inset-x-3 top-0 h-0.5 rounded-b bg-[#075EE8]"
                               aria-hidden="true"
                             />
                           ) : null}
@@ -7105,7 +7108,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                             <>
                               <span
                                 className={cn(
-                                  "text-[12px] font-semibold uppercase leading-4",
+                                  "text-[11px] font-semibold uppercase leading-4 tracking-[0.04em]",
                                   selected
                                     ? "text-[#075EE8]"
                                     : "text-slate-800",
@@ -7118,7 +7121,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                               </span>
                               <span
                                 className={cn(
-                                  "text-[11px] font-medium uppercase leading-4",
+                                  "text-[10px] font-medium uppercase leading-4 tracking-[0.08em]",
                                   selected
                                     ? "text-[#075EE8]"
                                     : "text-slate-500",
@@ -7131,7 +7134,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                               </span>
                               <span
                                 className={cn(
-                                  "flight-fare-strip-price mt-1 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-medium leading-4",
+                                  "flight-fare-strip-price mt-1.5 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-semibold leading-4",
                                   selected
                                     ? "font-semibold text-[#075EE8]"
                                     : "text-slate-900",
@@ -7161,7 +7164,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         nearbyFareRangeSize - nearbyFareVisibleCount
                       }
                       onClick={() => navigateNearbyFareWindow("next")}
-                      className="focus-ring inline-flex min-h-[88px] items-center justify-center text-slate-500 transition hover:bg-slate-50 hover:text-[#075EE8] focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-white"
+                      className="focus-ring inline-flex min-h-[78px] items-center justify-center rounded-lg text-slate-400 transition hover:bg-white hover:text-[#075EE8] focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
                     >
                       <ChevronRight className="h-5 w-5" aria-hidden="true" />
                     </button>
