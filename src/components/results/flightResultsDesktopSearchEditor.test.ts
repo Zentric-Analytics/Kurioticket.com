@@ -9,7 +9,7 @@ const source = readFileSync(
 
 function desktopEditorSource() {
   const label = source.indexOf("data-desktop-trip-selector");
-  const start = source.lastIndexOf('role="radiogroup"', label);
+  const start = source.lastIndexOf("<div", label);
   const end = source.indexOf("<form", start);
   assert.notEqual(start, -1);
   assert.notEqual(end, -1);
@@ -24,30 +24,27 @@ function fareStripSource() {
   return source.slice(start, end);
 }
 
-test("desktop results editor exposes exact ordered trip labels with radio-only selection", () => {
+test("desktop results editor uses one compact accessible trip-type listbox", () => {
   const editor = desktopEditorSource();
   const roundTrip = editor.indexOf('label: "Round-trip"');
   const oneWay = editor.indexOf('label: "One-way"');
   const multiCity = editor.indexOf('label: "Multi-city"');
 
   assert.ok(roundTrip >= 0 && roundTrip < oneWay && oneWay < multiCity);
-  assert.match(editor, /role="radiogroup"/);
-  assert.match(editor, /role="radio"/);
-  assert.match(editor, /aria-checked={selected}/);
-  assert.match(editor, /border-\[#075EE8\]/);
-  assert.match(editor, /bg-\[#075EE8\]/);
-  assert.match(editor, /border-slate-300/);
-  const optionButton = editor.slice(
-    editor.indexOf("<button"),
-    editor.indexOf('aria-hidden="true"'),
-  );
-  assert.doesNotMatch(optionButton, /bg-\[#075EE8\]|bg-blue/);
+  assert.match(editor, /aria-haspopup="listbox"/);
+  assert.match(editor, /aria-expanded={tripTypeMenuOpen}/);
+  assert.match(editor, /role="listbox"/);
+  assert.match(editor, /role="option"/);
+  assert.match(editor, /aria-selected={selected}/);
+  assert.match(editor, /<Check\s/);
+  assert.match(editor, /event\.key === "ArrowDown"/);
+  assert.match(editor, /event\.key === "Escape"/);
+  assert.doesNotMatch(editor, /role="radio"|role="radiogroup"|aria-checked/);
   assert.doesNotMatch(editor, /label: t\("oneWay"\)/);
   assert.doesNotMatch(editor, /label: t\("roundTrip"\)/);
   assert.match(editor, /data-desktop-trip-selector/);
   assert.match(editor, /w-fit/);
-  assert.match(editor, /gap-1/);
-  assert.doesNotMatch(editor, /translate-y|gap-8/);
+  assert.match(editor, /min-w-\[176px\]/);
 });
 
 test("desktop populated airport inputs remain editable without clear controls", () => {
@@ -60,9 +57,19 @@ test("desktop populated airport inputs remain editable without clear controls", 
 });
 
 test("desktop results fields lead values with neutral semantic icons", () => {
-  assert.equal(source.match(/<MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500"/g)?.length, 2);
-  assert.match(source, /<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-600"/);
-  assert.match(source, /<UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-600"/);
+  assert.ok(
+    (source.match(
+      /<MapPin[\s\S]*?aria-hidden="true"[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"/g,
+    )?.length ?? 0) >= 2,
+  );
+  assert.match(
+    source,
+    /<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-600"/,
+  );
+  assert.match(
+    source,
+    /<UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-600"/,
+  );
   assert.match(source, /locale\?\.startsWith\("en"\)/);
   assert.match(source, /adultSingular\.charAt\(0\)\.toUpperCase\(\)/);
 });
@@ -87,8 +94,8 @@ test("desktop traveler picker uses clean traveler names and preserves counters",
   const counterStart = source.indexOf("function CounterRow", popoverStart);
   const popover = source.slice(popoverStart, counterStart);
 
-  assert.match(popover, /label={t\("adultPlural"\)}/);
-  assert.match(popover, /label={t\("childPlural"\)}/);
+  assert.match(popover, /label={t\("adults"\)}/);
+  assert.match(popover, /label={t\("children"\)}/);
   assert.match(popover, /label={t\("infantPlural"\)}/);
   assert.doesNotMatch(popover, /label={t\("infantsOnLap"\)}/);
   assert.match(popover, /max={adultCount}/);
@@ -98,14 +105,22 @@ test("fare strip is one bounded seven-date grid with adjacent week controls", ()
   const strip = fareStripSource();
   assert.equal(source.match(/const nearbyFareVisibleCount = 7;/g)?.length, 1);
   assert.match(strip, /data-desktop-nearby-fare-rail/);
-  assert.match(strip, /repeat\(7,minmax\(72px,1fr\)\)/);
+  assert.match(strip, /repeat\(7,minmax\(78px,1fr\)\)/);
   assert.match(strip, /aria-label="Previous nearby fare date"/);
   assert.match(strip, /aria-label="Next nearby fare date"/);
   assert.match(strip, /navigateNearbyFareWindow\("previous"\)/);
   assert.match(strip, /navigateNearbyFareWindow\("next"\)/);
   assert.match(strip, /displayPrice \?\? "Unavailable"/);
-  const desktopRail = strip.slice(strip.indexOf("data-desktop-nearby-fare-rail"));
+  const desktopRail = strip.slice(
+    strip.indexOf("data-desktop-nearby-fare-rail"),
+  );
   assert.doesNotMatch(desktopRail, /overflow-x-auto/);
+  assert.match(desktopRail, /selected && "after:scale-x-100"/);
+  assert.doesNotMatch(
+    desktopRail,
+    /selected && "[^"]*(?:bg-blue|bg-\[#075EE8\]|border-\[#075EE8\])/,
+  );
+  assert.match(desktopRail, /h-10 w-10/);
 });
 
 test("fare windows are bounded and hidden for multi-city", () => {
