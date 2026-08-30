@@ -4,15 +4,15 @@ import test from "node:test";
 
 const footer = readFileSync(new URL("./Footer.tsx", import.meta.url), "utf8");
 const resultsPage = readFileSync(
-  new URL("../../app/flights/results/page.tsx", import.meta.url),
+  new URL("../results/FlightResultsClient.tsx", import.meta.url),
   "utf8",
 );
 const hotelResultsPage = readFileSync(
-  new URL("../../app/hotels/results/page.tsx", import.meta.url),
+  new URL("../results/HotelResultsClient.tsx", import.meta.url),
   "utf8",
 );
 const carResultsPage = readFileSync(
-  new URL("../../app/cars/results/page.tsx", import.meta.url),
+  new URL("../results/CarsResultsClient.tsx", import.meta.url),
   "utf8",
 );
 
@@ -48,7 +48,7 @@ test("mobile full Footer uses one accessible, single-open accordion", () => {
     /useState<FooterSectionId \| null>\(null\)/,
     "all sections should start collapsed",
   );
-  assert.match(footer, /<div className="border-t border-slate-200 lg:hidden">/);
+  assert.match(footer, /<nav[^>]+className="lg:hidden">/);
   assert.match(footer, /footerSections\.map\(\(section\) =>/);
   assert.match(footer, /<button[\s\S]*?type="button"/);
   assert.match(footer, /aria-expanded=\{isOpen\}/);
@@ -56,7 +56,8 @@ test("mobile full Footer uses one accessible, single-open accordion", () => {
   assert.match(footer, /footer-mobile-panel-\$\{section\.id\}/);
   assert.match(footer, /footer-mobile-trigger-\$\{section\.id\}/);
   assert.match(footer, /<ChevronDown/);
-  assert.match(footer, /min-h-11/);
+  assert.match(footer, /min-h-14/);
+  assert.match(footer, /motion-reduce:transition-none/);
   assert.match(footer, /isOpen \? "rotate-180" : ""/);
   assert.match(
     footer,
@@ -71,9 +72,22 @@ test("mobile full Footer uses one accessible, single-open accordion", () => {
 });
 
 test("mobile accordion and expanded desktop navigation have complementary breakpoints", () => {
-  assert.match(footer, /className="hidden gap-x-8 gap-y-8 lg:grid/);
-  assert.match(footer, /className="border-t border-slate-200 lg:hidden"/);
-  assert.match(footer, /lg:grid-cols-\[repeat\(3,minmax\(0,1fr\)\)_minmax\(0,0\.85fr\)\]/);
+  assert.match(footer, /className="hidden gap-x-8 lg:grid lg:grid-cols-4/);
+  assert.match(footer, /className="lg:hidden"/);
+  assert.match(footer, /text-\[15px\] font-semibold/);
+  assert.match(footer, /className="grid pb-2 text-sm leading-5/);
+  assert.match(footer, /className="flex min-h-11 items-center break-words py-2/);
+});
+
+test("Footer spacing forms one compact surface without duplicate mobile borders", () => {
+  assert.match(footer, /"page-shell pb-5 lg:py-8"/);
+  assert.doesNotMatch(footer, /page-shell py-6 sm:py-8 lg:py-12/);
+  assert.doesNotMatch(footer, /border-t border-slate-200 lg:hidden/);
+  assert.match(
+    footer,
+    /"pt-5 lg:mt-7 lg:border-t lg:border-slate-200 lg:pt-6"/,
+  );
+  assert.match(footer, /pb-\[env\(safe-area-inset-bottom\)\]/);
 });
 
 test("Footer preserves every navigation route", () => {
@@ -103,7 +117,7 @@ test("Footer preserves every navigation route", () => {
 test("Footer owns responsive sizing for the official full wordmark", () => {
   assert.match(
     footer,
-    /<KurioticketLogo[\s\S]*?variant="full"[\s\S]*?className="h-7 w-auto sm:h-8 lg:h-9"/,
+    /<KurioticketLogo[\s\S]*?variant="full"[\s\S]*?className="h-7 w-auto lg:h-8"/,
   );
   assert.doesNotMatch(footer, /markClassName=/);
   assert.doesNotMatch(footer, /textClassName=/);
@@ -118,7 +132,7 @@ test("brand/legal-only Footer retains shared legal content without upper navigat
   assert.match(footer, /footerTerms/);
   assert.match(footer, /footerCookies/);
   assert.match(footer, /variant === "full" \? \(/);
-  assert.match(footer, /variant === "full"[\s\S]*?"mt-6 border-t border-slate-200 pt-5 lg:mt-10"[\s\S]*?: "pt-0"/);
+  assert.match(footer, /variant === "full"[\s\S]*?"pt-5 lg:mt-7 lg:border-t lg:border-slate-200 lg:pt-6"[\s\S]*?: "pt-0"/);
   assert.match(footer, /pb-\[env\(safe-area-inset-bottom\)\]/);
 });
 
