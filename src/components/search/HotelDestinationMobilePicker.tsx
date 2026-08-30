@@ -5,8 +5,8 @@ import { Building2, MapPin, X } from "lucide-react";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import {
-  getLocalizedHotelDestinationCityName,
-  getLocalizedHotelDestinationDetail,
+  getHotelDestinationPrimaryLabel,
+  getHotelDestinationSupportingLabel,
   type HotelDestinationSuggestion,
 } from "@/data/hotelDestinations";
 import { deriveRecentHotelDestinations, readRecentSearches } from "@/lib/recent-searches";
@@ -33,8 +33,8 @@ type Props = {
 function MobileHotelDestinationRow({ option, selected, locale, onSelect }: {
   option: HotelDestinationSuggestion; selected: boolean; locale: string; onSelect: () => void;
 }) {
-  const name = getLocalizedHotelDestinationCityName(option.name, locale);
-  const detail = getLocalizedHotelDestinationDetail(option, locale) || option.country;
+  const name = getHotelDestinationPrimaryLabel(option, locale);
+  const detail = getHotelDestinationSupportingLabel(option, locale);
   return (
     <button type="button" aria-pressed={selected} aria-label={`${name}, ${detail}`} onClick={onSelect}
       className={cn("focus-ring flex min-h-[72px] w-full items-center gap-3 px-4 py-2.5 text-start transition-colors hover:bg-slate-50", selected && "bg-blue-50/70")}>
