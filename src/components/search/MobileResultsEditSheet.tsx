@@ -25,6 +25,7 @@ type Props = {
   className?: string;
   contentClassName?: string;
   browserCanvasColor?: string;
+  preserveHeaderBackdrop?: boolean;
   bottomSurfaceContinuation?: boolean;
   bottomSurfaceContinuationClassName?: string;
 };
@@ -40,6 +41,7 @@ export function MobileResultsEditSheet({
   className,
   contentClassName,
   browserCanvasColor,
+  preserveHeaderBackdrop = false,
   bottomSurfaceContinuation = false,
   bottomSurfaceContinuationClassName,
 }: Props) {
@@ -105,7 +107,10 @@ export function MobileResultsEditSheet({
     <div
       data-mobile-results-overlay-root
       data-mobile-results-edit-sheet
-      className="mobile-results-overlay-root mobile-results-sheet-backdrop fixed inset-0 z-[10000] flex min-h-0 w-screen items-end overflow-visible overscroll-none bg-slate-950/35 motion-reduce:transition-none sm:hidden"
+      className={cn(
+        "mobile-results-overlay-root mobile-results-sheet-backdrop fixed inset-0 z-[10000] flex min-h-0 w-screen items-end overflow-visible overscroll-none bg-slate-950/35 motion-reduce:transition-none sm:hidden",
+        preserveHeaderBackdrop && "mobile-results-sheet-backdrop-preserve-header",
+      )}
       onPointerDown={(event) => { if (event.target === event.currentTarget) close(); }}
     >
       <div

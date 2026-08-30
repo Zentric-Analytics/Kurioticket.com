@@ -1568,7 +1568,9 @@ export function CarsResultsClient({
 
       <MobileResultsEditSheet
         open={mobileSearchOpen}
+        browserCanvasColor="#ffffff"
         bottomSurfaceContinuation
+        preserveHeaderBackdrop
         title={t("carsResults.editSearch")}
         nestedLayerOpen={mobilePicker !== null}
         onClose={() => cancelMobileSearchDrawer()}
