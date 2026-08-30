@@ -37,6 +37,9 @@ test("normal Cars mobile summary preserves Cars content and its actual Edit Sear
     summary,
     /PencilLine|bg-\[#004BB8\]\/8|border-\[#004BB8\]\/12/,
   );
+  assert.match(summary, /\[-webkit-tap-highlight-color:transparent\]/);
+  assert.match(summary, /focus-visible:ring-2 focus-visible:ring-\[#004BB8\]\/35/);
+  assert.doesNotMatch(summary, /group-active:bg-/);
 });
 
 test("normal Cars summary pins the current Hotel edit affordance contract", () => {

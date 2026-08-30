@@ -13,7 +13,7 @@ test("Cars mobile edit search is one grouped surface with an external CTA", () =
 
 test("mobile pickup uses a leading MapPin without a disclosure arrow", () => {
   const launcher = source.slice(source.indexOf("function MobileLocationLauncher"), source.indexOf("function SearchInputCell"));
-  assert.match(launcher, /<Icon className="h-4 w-4 shrink-0 text-slate-500"/);
+  assert.match(launcher, /<Icon className="h-4 w-4 shrink-0 text-slate-700"/);
   assert.doesNotMatch(launcher, /Chevron(?:Down|Right)/);
   assert.match(launcher, /onClick=\{onClick\}/);
 });
@@ -28,9 +28,14 @@ test("grouped mobile leading field icons use one neutral color", () => {
 
   for (const iconPattern of groupedLeadingIcons) {
     const classes = source.match(iconPattern)?.[1];
-    assert.equal(classes, "text-slate-500");
+    assert.equal(classes, "text-slate-700");
     assert.doesNotMatch(classes, /#004BB8/);
   }
+});
+
+test("grouped mobile rows stay compact without sacrificing their touch target", () => {
+  assert.equal(source.match(/min-h-16 flex-col justify-center px-4 py-2/g)?.length, 4);
+  assert.doesNotMatch(source, /data-cars-mobile-grouped-row[^\n]*min-h-\[70px\]/);
 });
 
 test("dates, time, and driver age retain disclosure chevrons", () => {
