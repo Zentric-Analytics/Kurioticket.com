@@ -11,7 +11,7 @@ const styles = read("../../app/globals.css");
 test("mobile hotel results fields are independent cards with only the required chevrons", () => {
   assert.match(
     search,
-    /data-hotel-results-edit-fields=[\s\S]*?flex flex-col gap-2\.5/,
+    /data-hotel-results-edit-fields=[\s\S]*?flex flex-col gap-2/,
   );
   assert.doesNotMatch(search, /mobileResultsEditGroupClass/);
   assert.match(

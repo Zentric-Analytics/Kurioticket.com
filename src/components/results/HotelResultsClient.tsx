@@ -84,6 +84,7 @@ import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
 const hotelResultStackClass = "w-full max-w-[800px] lg:max-w-[680px]";
 const desktopCompactFilterTopOffset = 116;
 const desktopCompactFilterBottomGap = 16;
+const mobileHotelSearchCloseMotionMs = 280;
 
 type DesktopCompactFilterFrame = {
   left: number;
@@ -382,6 +383,7 @@ export function HotelResultsExperience({
     width: number;
   } | null>(null);
   const [mobileHotelSearchOpen, setMobileHotelSearchOpen] = useState(false);
+  const [mobileHotelSearchClosing, setMobileHotelSearchClosing] = useState(false);
   const [mobileHotelNestedLayerOpen, setMobileHotelNestedLayerOpen] = useState(false);
   const [showMobileCompactHotelSearch, setShowMobileCompactHotelSearch] =
     useState(false);
@@ -432,6 +434,7 @@ export function HotelResultsExperience({
   );
   const mobileHotelSearchLauncherRef = useRef<HTMLElement | null>(null);
   const mobileHotelSearchModalityRef = useRef<OverlayActivationModality>("programmatic");
+  const mobileHotelSearchCloseTimerRef = useRef<number | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLElement | null>(null);
   const mobileFiltersModalityRef = useRef<OverlayActivationModality>("programmatic");
   const guidedLoadingStatusRef = useRef<HTMLHeadingElement | null>(null);
@@ -679,6 +682,11 @@ export function HotelResultsExperience({
   }, [closeDesktopStickyHotelSearch, desktopStickyHotelSearchOpen]);
 
   const openMobileHotelSearch = useCallback((event?: ReactMouseEvent<HTMLElement>) => {
+    if (mobileHotelSearchCloseTimerRef.current !== null) {
+      window.clearTimeout(mobileHotelSearchCloseTimerRef.current);
+      mobileHotelSearchCloseTimerRef.current = null;
+    }
+    setMobileHotelSearchClosing(false);
     mobileHotelSearchLauncherRef.current = event?.currentTarget ?? null;
     mobileHotelSearchModalityRef.current = event ? getOverlayActivationModality(event) : "programmatic";
     setFiltersOpen(false);
@@ -688,16 +696,35 @@ export function HotelResultsExperience({
   }, []);
 
   const closeMobileHotelSearch = useCallback(() => {
-    setMobileHotelSearchOpen(false);
-  }, []);
+    if (mobileHotelSearchClosing) return;
+    setMobileHotelSearchClosing(true);
+    mobileHotelSearchCloseTimerRef.current = window.setTimeout(() => {
+      mobileHotelSearchCloseTimerRef.current = null;
+      setMobileHotelSearchOpen(false);
+      setMobileHotelSearchClosing(false);
+    }, mobileHotelSearchCloseMotionMs);
+  }, [mobileHotelSearchClosing]);
 
   useEffect(() => {
     const closeId = window.setTimeout(() => {
+      if (mobileHotelSearchCloseTimerRef.current !== null) {
+        window.clearTimeout(mobileHotelSearchCloseTimerRef.current);
+        mobileHotelSearchCloseTimerRef.current = null;
+      }
       setMobileHotelSearchOpen(false);
+      setMobileHotelSearchClosing(false);
     }, 0);
 
     return () => window.clearTimeout(closeId);
   }, [bodySearchKey]);
+
+  useEffect(
+    () => () => {
+      if (mobileHotelSearchCloseTimerRef.current !== null)
+        window.clearTimeout(mobileHotelSearchCloseTimerRef.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (mobileHotelSearchOpen) return;
@@ -2040,13 +2067,16 @@ export function HotelResultsExperience({
       {!guided ? (
         <MobileResultsEditSheet
           open={mobileHotelSearchOpen}
+          browserCanvasColor="#ffffff"
+          cleanBackdrop
           bottomSurfaceContinuation
-          bottomSurfaceContinuationClassName="bg-slate-50"
+          smoothMotion
+          closing={mobileHotelSearchClosing}
           nestedLayerOpen={mobileHotelNestedLayerOpen}
           title={t("editHotelSearch") || "Edit hotel search"}
           onClose={closeMobileHotelSearch}
-          className="bg-slate-50"
-          contentClassName="bg-slate-50 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+          className="bg-white"
+          contentClassName="!pt-3 bg-white pb-[calc(0.75rem+env(safe-area-inset-bottom))]"
         >
           <HotelSearchBar
             key={`mobile-drawer-${bodySearchKey}-${body.sort}`}
