@@ -3,13 +3,19 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Heart, X } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
 
 import {
   clearRecentSearches,
+  clearBackendRecentSearches,
+  deleteBackendRecentSearch,
+  fetchBackendRecentSearches,
+  isRememberRecentSearchesEnabled,
   readRecentSearches,
   removeRecentSearch,
+  setRememberRecentSearches,
   type RecentSearchEntry,
 } from "@/lib/recent-searches";
 
@@ -123,23 +129,35 @@ const resolveCardImage = (entry: RecentSearchEntry): string => {
 
 export function RecentSearches() {
   const { t } = useLocale();
+  const { status: sessionStatus } = useSession();
   const [entries, setEntries] = useState<RecentSearchEntry[]>([]);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [rememberEnabled, setRememberEnabled] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
 
+    const controller = new AbortController();
     const timeoutId = window.setTimeout(() => {
       if (!isMounted) return;
-      setEntries(readRecentSearches());
+      const remember = isRememberRecentSearchesEnabled();
+      setRememberEnabled(remember);
+      if (sessionStatus === "authenticated") {
+        void fetchBackendRecentSearches(controller.signal).then((result) => {
+          if (isMounted && result.ok) setEntries(result.items ?? []);
+        });
+      } else if (sessionStatus !== "loading") {
+        setEntries(readRecentSearches());
+      }
       setSavedIds(readSavedRecentSearchIds());
     }, 0);
 
     return () => {
       isMounted = false;
+      controller.abort();
       window.clearTimeout(timeoutId);
     };
-  }, []);
+  }, [sessionStatus]);
 
   const persistSavedIds = (nextSavedIds: Set<string>) => {
     try {
@@ -150,7 +168,11 @@ export function RecentSearches() {
   };
 
   const handleRemove = (id: string) => {
-    setEntries(removeRecentSearch(id));
+    const remainingDeviceEntries = removeRecentSearch(id);
+    setEntries((current) => sessionStatus === "authenticated"
+      ? current.filter((entry) => entry.id !== id)
+      : remainingDeviceEntries);
+    if (sessionStatus === "authenticated") void deleteBackendRecentSearch(id);
     setSavedIds((previousSavedIds) => {
       if (!previousSavedIds.has(id)) return previousSavedIds;
       const nextSavedIds = new Set(previousSavedIds);
@@ -163,6 +185,7 @@ export function RecentSearches() {
   const handleClearAll = () => {
     const removedIds = new Set(entries.map((entry) => entry.id));
     clearRecentSearches();
+    if (sessionStatus === "authenticated") void clearBackendRecentSearches();
     setEntries([]);
     setSavedIds((previousSavedIds) => {
       if (!previousSavedIds.size) return previousSavedIds;
@@ -186,9 +209,19 @@ export function RecentSearches() {
     });
   };
 
-  if (!entries.length) {
-    return null;
-  }
+  const handleRememberChange = (enabled: boolean) => {
+    setRememberRecentSearches(enabled);
+    setRememberEnabled(enabled);
+    if (!enabled) {
+      setEntries([]);
+    } else if (sessionStatus === "authenticated") {
+      void fetchBackendRecentSearches().then((result) => {
+        if (result.ok) setEntries(result.items ?? []);
+      });
+    } else {
+      setEntries(readRecentSearches());
+    }
+  };
 
   return (
     <section className="mx-auto w-full max-w-6xl px-1">
@@ -197,16 +230,16 @@ export function RecentSearches() {
           <h2 className="text-sm font-semibold leading-tight text-slate-900 md:text-base">{t["recentSearches.title"]}</h2>
           <p className="text-[13px] leading-5 text-slate-600">{t["recentSearches.subtitle"]}</p>
         </div>
-        <button
-          type="button"
-          onClick={handleClearAll}
-          className="focus-ring rounded-full px-2 py-1 text-xs font-semibold text-slate-500 transition-colors hover:bg-white/70 hover:text-slate-800"
-        >
-          {t["recentSearches.clearAll"]}
-        </button>
+        <div className="flex items-center gap-2">
+          <label className="focus-within:ring-2 focus-within:ring-[#004BB8] inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full px-2 text-xs font-semibold text-slate-600">
+            <input type="checkbox" checked={rememberEnabled} onChange={(event) => handleRememberChange(event.target.checked)} />
+            Remember searches
+          </label>
+          {entries.length || !rememberEnabled ? <button type="button" onClick={handleClearAll} className="focus-ring min-h-11 rounded-full px-2 py-1 text-xs font-semibold text-slate-500 transition-colors hover:bg-white/70 hover:text-slate-800">{t["recentSearches.clearAll"]}</button> : null}
+        </div>
       </div>
 
-      <div className="grid auto-cols-[206px] grid-flow-col gap-2.5 overflow-x-auto pb-1.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:grid-flow-row md:grid-cols-3 md:auto-cols-auto md:overflow-visible lg:grid-cols-4">
+      {!rememberEnabled ? <p className="rounded-xl border border-slate-200 bg-white/70 p-3 text-sm text-slate-600">Recent searches are not being saved on this device. Existing history is hidden until you turn this back on or clear it.</p> : entries.length ? <div className="grid auto-cols-[206px] grid-flow-col gap-2.5 overflow-x-auto pb-1.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:grid-flow-row md:grid-cols-3 md:auto-cols-auto md:overflow-visible lg:grid-cols-4">
         {entries.map((entry) => (
           <article key={entry.id} className="h-full min-w-0">
             <Link
@@ -246,7 +279,7 @@ export function RecentSearches() {
               </div>
               <div className="flex flex-1 flex-col gap-1.5 p-2.5">
                 <span className="inline-flex w-fit rounded-full border border-slate-200/80 bg-white/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
-                  {entry.type === "flight" ? "Flight" : "Hotel"}
+                  {entry.type === "flight" ? "Flight" : entry.type === "hotel" ? "Hotel" : "Car"}
                 </span>
                 <p className="line-clamp-1 text-[0.95rem] font-semibold leading-snug text-slate-950">{entry.label}</p>
                 <p className="line-clamp-2 text-[13px] leading-5 text-slate-600">{entry.subtitle}</p>
@@ -254,7 +287,7 @@ export function RecentSearches() {
             </Link>
           </article>
         ))}
-      </div>
+      </div> : null}
     </section>
   );
 }
