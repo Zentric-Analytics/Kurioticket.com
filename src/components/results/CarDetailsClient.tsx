@@ -196,7 +196,7 @@ export function CarDetailsExperience({
                   </Heading>
                 </div>
                 <div
-                  className="flex shrink-0 items-center gap-2"
+                  className="flex shrink-0 items-center gap-0"
                   data-car-details-actions
                 >
                   <button
@@ -204,7 +204,7 @@ export function CarDetailsExperience({
                     aria-label={`${isSaved ? copy("carDetails.unsave") : copy("carDetails.save")} ${car.modelName}`}
                     aria-pressed={isSaved}
                     onClick={toggleSavedCar}
-                    className={`focus-ring flex size-11 items-center justify-center rounded-lg border-0 bg-transparent text-[#075EE8] shadow-none transition hover:bg-blue-50 md:size-10 md:rounded-full md:border md:border-white/35 md:bg-slate-950/35 md:text-white md:backdrop-blur-sm md:hover:bg-slate-950/55 ${isSaved ? "text-rose-500 md:text-rose-300" : ""}`}
+                    className={`focus-ring flex size-11 items-center justify-center rounded-lg border-0 bg-transparent shadow-none transition hover:bg-slate-100 md:size-10 md:rounded-full md:border md:border-white/35 md:bg-slate-950/35 md:backdrop-blur-sm md:hover:bg-slate-950/55 ${isSaved ? "text-rose-500 md:text-rose-300" : "text-slate-700 md:text-white"}`}
                   >
                     <Heart
                       size={20}
@@ -216,7 +216,7 @@ export function CarDetailsExperience({
                     type="button"
                     aria-label={`${copy("carDetails.share")} ${car.modelName}`}
                     onClick={() => void shareCar()}
-                    className="focus-ring flex size-11 items-center justify-center rounded-lg border-0 bg-transparent text-[#075EE8] shadow-none transition hover:bg-blue-50 md:size-10 md:rounded-full md:border md:border-white/35 md:bg-slate-950/35 md:text-white md:backdrop-blur-sm md:hover:bg-slate-950/55"
+                    className="focus-ring flex size-11 items-center justify-center rounded-lg border-0 bg-transparent text-slate-700 shadow-none transition hover:bg-slate-100 md:size-10 md:rounded-full md:border md:border-white/35 md:bg-slate-950/35 md:text-white md:backdrop-blur-sm md:hover:bg-slate-950/55"
                   >
                     <Share2 size={19} aria-hidden="true" />
                   </button>
@@ -439,7 +439,7 @@ function CarPriceComparisonSection({
                 <Icon
                   size={14}
                   strokeWidth={2}
-                  className="shrink-0 text-[#075EE8]"
+                  className="shrink-0 text-slate-600"
                   aria-hidden="true"
                 />
                 {label}
