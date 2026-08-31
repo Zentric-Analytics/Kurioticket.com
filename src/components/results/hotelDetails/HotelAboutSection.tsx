@@ -10,7 +10,7 @@ function iconFor(item: HotelAmenityPresentationItem): LucideIcon {
   return Sparkles;
 }
 
-export function HotelAboutSection({ description, amenities, starRating, roomSummary, bedSummary, accessibility = [] }: { description: string; amenities: HotelAmenityPresentationItem[]; starRating: number | null; roomSummary?: string; bedSummary?: string; accessibility?: string[] }) {
+export function HotelAboutSection({ description, amenities, starRating, propertyType, roomSummary, bedSummary, accessibility = [] }: { description: string; amenities: HotelAmenityPresentationItem[]; starRating: number | null; propertyType?: string; roomSummary?: string; bedSummary?: string; accessibility?: string[] }) {
   const highlights = amenities.slice(0, 6);
   const remainingAmenities = amenities.slice(6);
   return (
@@ -32,7 +32,10 @@ export function HotelAboutSection({ description, amenities, starRating, roomSumm
       </div>
 
       <h3 className="mt-7 text-base font-bold text-slate-950">Hotel information</h3>
-      <p className="mt-3 flex items-center gap-3 text-sm text-slate-700"><Award className="h-[18px] w-[18px] shrink-0 text-slate-500" aria-hidden="true" />{starRating ? `${starRating}-star hotel` : "Hotel classification is not available."}</p>
+      <div className="mt-3 space-y-3 text-sm text-slate-700">
+        {propertyType ? <p className="flex items-center gap-3"><Award className="h-[18px] w-[18px] shrink-0 text-slate-500" aria-hidden="true" />{propertyType}</p> : null}
+        <p className="flex items-center gap-3"><Award className="h-[18px] w-[18px] shrink-0 text-slate-500" aria-hidden="true" />{starRating ? `${starRating}-star classification` : "Hotel classification is not available."}</p>
+      </div>
 
       <h3 className="mt-7 text-base font-bold text-slate-950">Accessibility</h3>
       {accessibility.length ? <ul className="mt-3 list-disc space-y-2 ps-5 text-sm leading-6 text-slate-700">{accessibility.map((detail) => <li key={detail}>{detail}</li>)}</ul> : <p className="mt-3 text-sm leading-6 text-slate-600">Specific accessibility features should be confirmed before booking.</p>}

@@ -66,6 +66,11 @@ test("mobile results expose one filter toolbar and one in-sheet clear action", (
   assert.match(sheet, /items-center justify-center text-slate-700/);
   assert.doesNotMatch(source, /<HotelFilters\s+layout="compact"/);
   assert.doesNotMatch(source, /onClearAll=\{resetFilters\}/);
+  assert.match(source, /mobileQuickFacilities = \["wifi", "breakfast", "pool"\]/);
+  assert.match(source, /aria-pressed=\{selected\}/);
+  assert.match(source, /toggleFilter\("facilities", option\.value\)/);
+  assert.match(source, /overflow-x-auto overscroll-x-contain/);
+  assert.match(source, /\[&::-webkit-scrollbar\]:hidden/);
 });
 
 test("results omit the superseded comparison disclosure", () => {

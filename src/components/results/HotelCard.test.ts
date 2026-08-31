@@ -14,8 +14,8 @@ test("hotel result cards expose accessible image carousel controls", () => {
     "Previous photo",
     "Next photo",
     "moveGallery",
-    "left-1 top-1/2",
-    "right-1 top-1/2",
+    "left-0 top-1/2",
+    "right-0 top-1/2",
     "-translate-y-1/2",
   ]) {
     assert.match(source, new RegExp(galleryContract));
@@ -143,13 +143,13 @@ test("hotel result cards present primary location and truthful stay pricing", ()
     "hotel.location",
     "HotelAmenityList",
     "nightlyDisplayPrice",
-    "totalDisplayPrice",
-    "estimated total for",
     "hotelResults.pricePerNight",
     "hotelResults.viewHotel",
   ]) {
     assert.ok(source.includes(retainedContract), `missing ${retainedContract}`);
   }
+  assert.doesNotMatch(source, /totalDisplayPrice|estimated total for|estimated stay total/);
+  assert.doesNotMatch(source, /catalogueProfile\.propertyType|catalogueProfile\.room\.(?:name|bedConfiguration)/);
 });
 
 test("hotel result cards separate the nightly amount from its localized label", () => {
@@ -246,7 +246,7 @@ test("standalone Hotel actions and attribution retain their link fallbacks", () 
 test("hotel galleries keep imagery edge-to-edge with unobtrusive edge controls", () => {
   assert.match(source, /data-hotel-card-image[\s\S]*overflow-hidden bg-slate-200/);
   assert.match(source, /className="bg-slate-200 object-cover"/);
-  assert.match(source, /Previous photo[\s\S]*absolute left-1[\s\S]*bg-slate-950\/55 text-white/);
-  assert.match(source, /Next photo[\s\S]*absolute right-1[\s\S]*bg-slate-950\/55 text-white/);
-  assert.doesNotMatch(source, /bg-white\/95 text-slate-900/);
+  assert.match(source, /Previous photo[\s\S]*absolute left-0[\s\S]*h-11 w-11[\s\S]*bg-transparent text-white/);
+  assert.match(source, /Next photo[\s\S]*absolute right-0[\s\S]*h-11 w-11[\s\S]*bg-transparent text-white/);
+  assert.doesNotMatch(source, /bg-(?:white\/95|slate-950\/55)|rounded-full[^\n]*Previous photo/);
 });

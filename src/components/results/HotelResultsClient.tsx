@@ -1720,6 +1720,9 @@ export function HotelResultsExperience({
       "focus-ring inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[11px] border border-[#D8E1EC] bg-white px-3.5 text-[14px] font-semibold text-[#142033] transition hover:border-[#B9C8D9] hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
     const menuItemClass =
       "flex min-h-11 w-full items-center justify-between gap-2 rounded-[9px] px-2.5 text-left text-[14px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
+    const mobileQuickFacilities = ["wifi", "breakfast", "pool"]
+      .map((value) => filterOptions.facilities.find((option) => option.value === value))
+      .filter((option): option is FilterOption => Boolean(option));
     const trigger = (
       menu: MobileHotelShortcutMenu,
       label: string,
@@ -1792,18 +1795,39 @@ export function HotelResultsExperience({
 
     return (
       <>
-        <div
-          data-mobile-hotel-shortcuts
-          className="w-full min-w-0 pe-3"
-          onScroll={() => closeMobileShortcutMenu()}
-        >
-          <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-            <button type="button" className={cn(shortcutButtonClass, "w-full justify-start !border-transparent !bg-transparent !text-slate-800 hover:!bg-slate-50")} onClick={(event) => { mobileFiltersLauncherRef.current = event.currentTarget; mobileFiltersModalityRef.current = getOverlayActivationModality(event); setFiltersOpen(true); }}>
+        <div data-mobile-hotel-shortcuts className="w-full min-w-0 border-y border-slate-200/80 bg-white">
+          <div
+            className="overflow-x-auto overscroll-x-contain px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            onScroll={() => closeMobileShortcutMenu()}
+          >
+          <div className="flex min-w-max items-center gap-2 py-2">
+            <button type="button" className={cn(shortcutButtonClass, "justify-start !border-transparent !bg-transparent !px-2 !text-slate-800 hover:!bg-slate-50")} onClick={(event) => { mobileFiltersLauncherRef.current = event.currentTarget; mobileFiltersModalityRef.current = getOverlayActivationModality(event); setFiltersOpen(true); }}>
               <SlidersHorizontal className="h-4 w-4 text-slate-700" strokeWidth={2.2} aria-hidden="true" />
               <span>{t("filters")}</span>
               {activeFilterCount ? <span className="ms-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] text-[#004BB8]">{activeFilterCount}</span> : null}
             </button>
             {trigger("sort", currentSortLabel, 190)}
+            <span className="h-6 w-px shrink-0 bg-slate-200" aria-hidden="true" />
+            {mobileQuickFacilities.map((option) => {
+              const selected = selectedFilters.facilities.includes(option.value);
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={selected}
+                  className={cn(
+                    shortcutButtonClass,
+                    "rounded-full px-3",
+                    selected && "border-[#004BB8] bg-[#EAF2FB] text-[#004BB8]",
+                  )}
+                  onClick={() => toggleFilter("facilities", option.value)}
+                >
+                  {option.label}
+                  <span className="text-xs font-medium text-slate-500" aria-hidden="true">{option.count}</span>
+                </button>
+              );
+            })}
+          </div>
           </div>
         </div>
         {menu}

@@ -334,6 +334,7 @@ export type PublicHotelResult = PublicHotelBase & HotelInventory;
 
 export type PublicHotelPropertyDetails = {
   description: string;
+  propertyType?: string;
   latitude: number;
   longitude: number;
   streetAddress: string;

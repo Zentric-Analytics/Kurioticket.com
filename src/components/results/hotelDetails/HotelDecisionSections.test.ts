@@ -241,6 +241,7 @@ test("persistent continuation uses the selected provider decision", () => {
 test("about exposes the full property information architecture without expansion controls", () => {
   assert.match(standalone, /description=\{description\}/);
   assert.match(standalone, /amenities=\{props\.amenityItems\}/);
+  assert.match(standalone, /propertyType=\{props\.propertyDetails\?\.propertyType\}/);
   assert.match(
     standalone,
     /bedSummary=\{props\.propertyDetails\?\.bedSummary\}/,
@@ -258,7 +259,8 @@ test("about exposes the full property information architecture without expansion
     /line-clamp|descriptionExpanded|amenitiesExpanded|See all amenities|Show fewer|>More</,
   );
   assert.match(about, /remainingAmenities\.map/);
-  assert.match(about, /\{starRating\}-star hotel/);
+  assert.match(about, /\{propertyType\}/);
+  assert.match(about, /\{starRating\}-star classification/);
 });
 
 test("guest reviews remains visible and never manufactures review values", () => {

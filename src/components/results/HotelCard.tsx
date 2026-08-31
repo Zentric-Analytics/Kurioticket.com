@@ -155,7 +155,6 @@ export function HotelCard({
   unavailableActionAriaLabel,
   allowExternalAttribution = true,
   allowSave = true,
-  stayNights,
 }: HotelCardProps) {
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
@@ -286,16 +285,6 @@ export function HotelCard({
   const nightlyDisplayPrice = priceDetails
     ? formatDisplayPrice({
         amount: priceDetails.pricePerNight,
-        sourceCurrency: priceDetails.currency,
-        displayCurrency: selectedOption.currency,
-        convertSourceEstimate: true,
-        rates: currencyRates.rates,
-        isFallbackRate: currencyRates.isFallback,
-      })
-    : null;
-  const totalDisplayPrice = priceDetails
-    ? formatDisplayPrice({
-        amount: priceDetails.totalPrice,
         sourceCurrency: priceDetails.currency,
         displayCurrency: selectedOption.currency,
         convertSourceEstimate: true,
@@ -499,7 +488,7 @@ export function HotelCard({
                     type="button"
                     aria-label={`Previous photo of ${hotel.name}`}
                     onClick={() => moveGallery(-1)}
-                    className="absolute left-1 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/55 text-white shadow-md ring-1 ring-white/30 backdrop-blur-sm transition hover:bg-slate-950/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#004BB8] motion-reduce:transition-none"
+                    className="absolute left-0 top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-transparent text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] transition hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-reduce:transition-none"
                   >
                     <ChevronLeft className="h-5 w-5" aria-hidden="true" />
                   </button>
@@ -507,7 +496,7 @@ export function HotelCard({
                     type="button"
                     aria-label={`Next photo of ${hotel.name}`}
                     onClick={() => moveGallery(1)}
-                    className="absolute right-1 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/55 text-white shadow-md ring-1 ring-white/30 backdrop-blur-sm transition hover:bg-slate-950/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#004BB8] motion-reduce:transition-none"
+                    className="absolute right-0 top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-transparent text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] transition hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-reduce:transition-none"
                   >
                     <ChevronRight className="h-5 w-5" aria-hidden="true" />
                   </button>
@@ -639,15 +628,6 @@ export function HotelCard({
               ) : null}
             </div>
             <div data-hotel-card-amenities className="mt-2 min-w-0 md:mt-3">
-              {hotel.catalogueProfile ? (
-                <p className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold leading-4 text-slate-700 md:text-xs">
-                  <span>{hotel.catalogueProfile.propertyType}</span>
-                  <span aria-hidden="true" className="text-slate-300">•</span>
-                  <span>{hotel.catalogueProfile.room.name}</span>
-                  <span aria-hidden="true" className="text-slate-300">•</span>
-                  <span>{hotel.catalogueProfile.room.bedConfiguration}</span>
-                </p>
-              ) : null}
               {shouldShowMealPlanText || collapsedAmenityItems.length > 0 ? (
                 <div className="space-y-1.5">
                   {shouldShowMealPlanText ? (
@@ -695,14 +675,6 @@ export function HotelCard({
                       >
                         {perNightLabel}
                       </span>
-                      {totalDisplayPrice ? (
-                        <span className="mt-1 block text-xs font-semibold leading-4 text-slate-700" title={totalDisplayPrice.title}>
-                          {totalDisplayPrice.formatted}{" "}
-                          {stayNights && stayNights > 0
-                            ? `estimated total for ${stayNights} ${stayNights === 1 ? "night" : "nights"}`
-                            : "estimated stay total"}
-                        </span>
-                      ) : null}
                     </div>
                   ) : (
                     <div className="min-w-0 space-y-1">
