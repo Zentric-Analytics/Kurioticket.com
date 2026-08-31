@@ -4525,6 +4525,11 @@ export const translations: TranslationDictionary = {
   "carDetails.unsave": "Unsave",
   "carDetails.share": "Share",
   "carDetails.linkCopied": "link copied",
+  "carDetails.getDirections": "Get directions",
+  "carDetails.whyLocationWorks": "Why this pickup location works",
+  "carDetails.pickupLocationDetails": "Pickup and location details",
+  "carDetails.confirmPickupDetails":
+    "Confirm the exact collection point and accessibility requirements with the rental provider before pickup.",
   "carDetails.pickupInstructions": "Pickup instructions",
   "carDetails.demoUnavailable": "Live deal unavailable in demo mode",
   "carDetails.bags": "bags",

@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactNode, Ref } from "react";
-import { Clock3, Heart, MapPin, Share2 } from "lucide-react";
+import Image from "next/image";
+import { Clock3, ExternalLink, Heart, MapPin, Share2 } from "lucide-react";
 import { useState } from "react";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -164,47 +165,53 @@ export function CarDetailsExperience({
       ) : null}
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0 space-y-4 sm:space-y-5">
-          <div className="flex min-w-0 items-start justify-between gap-3 px-0.5 pt-1">
-            <div className="min-w-0">
-              <p className="text-[11px] font-bold uppercase tracking-[.12em] text-[#075EE8]">
-                {car.categoryLabel}
-              </p>
-              <Heading
-                level={modelHeadingLevel}
-                headingRef={modelHeadingRef}
-                className="mt-1 scroll-mt-24 text-[22px] font-extrabold leading-tight tracking-[-0.025em] text-[#102A43] outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8] sm:text-3xl"
-              >
-                {car.modelName}
-              </Heading>
-            </div>
-            <div
-              className="flex shrink-0 items-center"
-              data-car-details-actions
-            >
-              <button
-                type="button"
-                aria-label={`${isSaved ? copy("carDetails.unsave") : copy("carDetails.save")} ${car.modelName}`}
-                aria-pressed={isSaved}
-                onClick={toggleSavedCar}
-                className={`focus-ring flex size-11 items-center justify-center rounded-full transition hover:bg-slate-100 ${isSaved ? "text-rose-600" : "text-slate-800"}`}
-              >
-                <Heart
-                  size={22}
-                  fill={isSaved ? "currentColor" : "none"}
-                  aria-hidden="true"
-                />
-              </button>
-              <button
-                type="button"
-                aria-label={`${copy("carDetails.share")} ${car.modelName}`}
-                onClick={() => void shareCar()}
-                className="focus-ring flex size-11 items-center justify-center rounded-full text-slate-800 transition hover:bg-slate-100"
-              >
-                <Share2 size={21} aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-          <CarDetailsHero car={car} offer={primaryOffer} text={text} />
+          <CarDetailsHero
+            car={car}
+            offer={primaryOffer}
+            text={text}
+            overlay={
+              <div className="flex min-w-0 items-start justify-between gap-3 text-white">
+                <div className="min-w-0 pt-0.5">
+                  <p className="text-[10px] font-bold uppercase tracking-[.14em] text-white/85">
+                    {car.categoryLabel}
+                  </p>
+                  <Heading
+                    level={modelHeadingLevel}
+                    headingRef={modelHeadingRef}
+                    className="mt-0.5 scroll-mt-24 text-xl font-extrabold leading-tight tracking-[-0.025em] text-white outline-none focus-visible:ring-2 focus-visible:ring-white sm:text-3xl"
+                  >
+                    {car.modelName}
+                  </Heading>
+                </div>
+                <div
+                  className="flex shrink-0 items-center gap-1"
+                  data-car-details-actions
+                >
+                  <button
+                    type="button"
+                    aria-label={`${isSaved ? copy("carDetails.unsave") : copy("carDetails.save")} ${car.modelName}`}
+                    aria-pressed={isSaved}
+                    onClick={toggleSavedCar}
+                    className={`focus-ring flex size-10 items-center justify-center rounded-full border border-white/35 bg-slate-950/35 text-white shadow-sm backdrop-blur-sm transition hover:bg-slate-950/55 ${isSaved ? "text-rose-300" : ""}`}
+                  >
+                    <Heart
+                      size={20}
+                      fill={isSaved ? "currentColor" : "none"}
+                      aria-hidden="true"
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`${copy("carDetails.share")} ${car.modelName}`}
+                    onClick={() => void shareCar()}
+                    className="focus-ring flex size-10 items-center justify-center rounded-full border border-white/35 bg-slate-950/35 text-white shadow-sm backdrop-blur-sm transition hover:bg-slate-950/55"
+                  >
+                    <Share2 size={19} aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            }
+          />
           {presentation === "standalone-content" ? (
             <>
               <CarDetailsSectionNav
@@ -226,43 +233,16 @@ export function CarDetailsExperience({
                   className="py-5"
                 >
                   {primaryOffer ? (
-                    <>
-                      <Heading
-                        level={sectionHeadingLevel}
-                        className="text-xl font-extrabold tracking-tight text-slate-950"
-                      >
-                        {copy("carDetails.comparePrices")}
-                      </Heading>
-                      <p className="mt-1 text-sm text-slate-600">
-                        {copy("carDetails.estimatedCataloguePrice")}
-                      </p>
-                      <div className="mt-4 rounded-[13px] border border-slate-200 bg-white p-4 shadow-sm">
-                        <div className="flex items-end justify-between gap-4">
-                          <div>
-                            <p className="text-sm font-semibold text-slate-500">
-                              {copy("carDetails.bookingSummary")}
-                            </p>
-                            <p className="mt-1 text-2xl font-extrabold text-[#102A43]">
-                              {
-                                price(
-                                  primaryOffer.totalPrice,
-                                  primaryOffer.currency,
-                                ).formatted
-                              }
-                            </p>
-                          </div>
-                          <p className="text-right text-sm text-slate-600">
-                            {
-                              price(
-                                primaryOffer.pricePerDay,
-                                primaryOffer.currency,
-                              ).formatted
-                            }{" "}
-                            {copy("carsResults.perDay")}
-                          </p>
-                        </div>
-                      </div>
-                    </>
+                    <CarPriceComparisonSection
+                      car={car}
+                      search={search}
+                      offer={primaryOffer}
+                      days={days}
+                      price={price}
+                      copy={copy}
+                      locale={locale}
+                      headingLevel={sectionHeadingLevel}
+                    />
                   ) : null}
                 </section>
                 <div
@@ -278,42 +258,15 @@ export function CarDetailsExperience({
                   role="tabpanel"
                   aria-labelledby="car-location-tab"
                   hidden={activeTab !== "location"}
-                  className="py-5"
+                  className=""
                 >
-                  <Heading
-                    level={sectionHeadingLevel}
-                    className="text-xl font-extrabold tracking-tight text-slate-950"
-                  >
-                    {copy("carDetails.location")}
-                  </Heading>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    {[
-                      [copy("carDetails.pickup"), car.pickupLocation],
-                      [copy("carDetails.return"), car.returnLocation],
-                    ].map(([label, location]) => (
-                      <div
-                        key={label}
-                        className="rounded-[13px] border border-slate-200 p-4"
-                      >
-                        <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                          {label}
-                        </p>
-                        <p className="mt-2 flex items-start gap-2 font-semibold text-slate-900">
-                          <MapPin
-                            size={18}
-                            className="mt-0.5 shrink-0 text-[#075EE8]"
-                          />
-                          {location || copy("carDetails.locationUnavailable")}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="mt-4 text-sm font-medium text-slate-700">
-                    {pickupTypeLabels[car.pickupType]}
-                    {car.shuttleRequired
-                      ? ` · ${copy("carDetails.shuttleRequired")}`
-                      : ""}
-                  </p>
+                  <CarLocationSection
+                    car={car}
+                    search={search}
+                    locale={locale}
+                    copy={copy}
+                    headingLevel={sectionHeadingLevel}
+                  />
                 </section>
               </div>
             </>
@@ -387,6 +340,234 @@ export function CarDetailsClient({
         </div>
       </section>
     </main>
+  );
+}
+
+function CarPriceComparisonSection({
+  car,
+  search,
+  offer,
+  days,
+  price,
+  copy,
+  locale,
+  headingLevel,
+}: {
+  car: NormalizedCarResult;
+  search: CarSearchParams;
+  offer: CarOffer;
+  days: number;
+  price: PriceFn;
+  copy: (key: string) => string;
+  locale: string;
+  headingLevel: HeadingLevel;
+}) {
+  const total = price(offer.totalPrice, offer.currency);
+  const daily = price(offer.pricePerDay, offer.currency);
+  const facts = [
+    offer.freeCancellation
+      ? copy("carDetails.freeCancellation")
+      : copy("carDetails.nonRefundable"),
+    offer.taxesAndFeesIncluded
+      ? `${copy("carDetails.taxesFees")} ${copy("carDetails.includedShort")}`
+      : copy("carDetails.notIncluded"),
+    car.mileagePolicy === "unlimited"
+      ? copy("carDetails.unlimitedMileage")
+      : `${car.limitedMileageKm ?? "—"} km ${copy("carDetails.includedShort")}`,
+  ];
+  return (
+    <div className="border-b border-slate-200 py-7" data-car-price-comparison>
+      <Heading
+        level={headingLevel}
+        className="text-xl font-extrabold tracking-tight text-slate-950"
+      >
+        {copy("carDetails.comparePrices")}
+      </Heading>
+      <p className="mt-1 text-sm font-medium text-slate-600">
+        {formatCarDate(search.pickupDate, locale)} –{" "}
+        {formatCarDate(search.dropoffDate, locale)} · {days}{" "}
+        {days === 1 ? copy("carDetails.day") : copy("carDetails.days")}
+      </p>
+      <div className="relative mt-5 rounded-[14px] border border-[#075EE8] bg-white p-4 ring-1 ring-[#075EE8]/10">
+        <span
+          className="absolute end-4 top-4 flex size-[22px] items-center justify-center rounded-full border-2 border-[#075EE8]"
+          aria-hidden="true"
+        >
+          <span className="size-2.5 rounded-full bg-[#075EE8]" />
+        </span>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
+          <Image
+            src="/brand/kurioticket-logo-primary-light-bg.svg"
+            alt="Kurioticket"
+            width={146}
+            height={32}
+            style={{ width: "auto" }}
+            className="h-8 w-auto max-w-[145px] object-contain object-left"
+          />
+          <div className="pe-8 text-right">
+            <p
+              className="text-2xl font-extrabold tracking-tight text-slate-950"
+              dir="ltr"
+              title={total.title}
+              aria-label={total.ariaLabel}
+            >
+              {total.formatted}
+            </p>
+            <p className="text-xs font-medium text-slate-600">
+              {copy("carDetails.bookingSummary")}
+            </p>
+          </div>
+        </div>
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            {facts.map((fact) => (
+              <span key={fact} className="text-xs font-semibold text-slate-600">
+                {fact}
+              </span>
+            ))}
+          </div>
+          <p
+            className="ms-auto whitespace-nowrap text-sm font-bold text-slate-800"
+            dir="ltr"
+            title={daily.title}
+            aria-label={daily.ariaLabel}
+          >
+            {daily.formatted}{" "}
+            <span className="font-medium text-slate-500">
+              {copy("carsResults.perDay")}
+            </span>
+          </p>
+        </div>
+      </div>
+      <p className="mt-3 text-xs leading-5 text-slate-500">
+        {copy("carDetails.estimatedCataloguePrice")}
+      </p>
+    </div>
+  );
+}
+
+function CarLocationSection({
+  car,
+  search,
+  locale,
+  copy,
+  headingLevel,
+}: {
+  car: NormalizedCarResult;
+  search: CarSearchParams;
+  locale: string;
+  copy: (key: string) => string;
+  headingLevel: HeadingLevel;
+}) {
+  const pickupLocation =
+    car.pickupLocation || copy("carDetails.locationUnavailable");
+  const returnLocation =
+    car.returnLocation || copy("carDetails.locationUnavailable");
+  const directionsUrl = car.pickupLocation
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(car.pickupLocation)}`
+    : null;
+  const locationFacts = [
+    pickupTypeLabels[car.pickupType],
+    car.mileagePolicy === "unlimited"
+      ? copy("carDetails.unlimitedMileage")
+      : null,
+    car.shuttleRequired ? copy("carDetails.shuttleRequired") : null,
+  ].filter((fact): fact is string => Boolean(fact));
+  return (
+    <div className="border-b border-slate-200 py-7" data-car-location-section>
+      <Heading
+        level={headingLevel}
+        className="text-xl font-extrabold tracking-tight text-slate-950"
+      >
+        {copy("carDetails.location")}
+      </Heading>
+      <div className="mt-3 flex items-start gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue">
+          <MapPin size={18} aria-hidden="true" />
+        </span>
+        <div className="min-w-0 pt-0.5">
+          <p className="text-[13px] font-semibold leading-5 text-slate-800">
+            {pickupLocation}
+          </p>
+          <p className="text-xs leading-5 text-slate-500">
+            {pickupTypeLabels[car.pickupType]}
+          </p>
+        </div>
+      </div>
+      <div className="mt-4 overflow-hidden rounded-[14px] border border-slate-200 bg-white">
+        <div className="p-4">
+          {[
+            [
+              copy("carDetails.pickup"),
+              pickupLocation,
+              search.pickupDate,
+              search.pickupTime,
+            ],
+            [
+              copy("carDetails.return"),
+              returnLocation,
+              search.dropoffDate,
+              search.dropoffTime,
+            ],
+          ].map(([label, location, date, time], index) => (
+            <div
+              key={label}
+              className={`relative flex gap-3 ${index === 0 ? "pb-6" : ""}`}
+            >
+              <div className="relative flex w-9 shrink-0 justify-center">
+                <span className="mt-1.5 size-3 rounded-full bg-[#075EE8]" />
+                {index === 0 ? (
+                  <span className="absolute bottom-[-6px] top-4 w-px bg-blue-200" />
+                ) : null}
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                  {label}
+                </p>
+                <p className="mt-1 font-semibold text-slate-900">{location}</p>
+                <p className="mt-1 text-xs text-slate-600">
+                  {formatCarDate(date, locale)}
+                  {time ? ` · ${time}` : ""}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+        {directionsUrl ? (
+          <a
+            href={directionsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="focus-ring flex min-h-11 items-center justify-between border-t border-slate-200 px-4 text-sm font-bold text-blue hover:bg-slate-50"
+          >
+            {copy("carDetails.getDirections")}
+            <ExternalLink size={16} aria-hidden="true" />
+          </a>
+        ) : null}
+      </div>
+      <div className="mt-7">
+        <h3 className="text-base font-bold text-slate-950">
+          {copy("carDetails.whyLocationWorks")}
+        </h3>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {locationFacts.map((fact) => (
+            <span
+              key={fact}
+              className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700"
+            >
+              {fact}
+            </span>
+          ))}
+        </div>
+        <h3 className="mt-7 text-base font-bold text-slate-950">
+          {copy("carDetails.pickupLocationDetails")}
+        </h3>
+        <ul className="mt-3 list-disc space-y-2 ps-5 text-sm leading-6 text-slate-700">
+          {car.pickupInstructions ? <li>{car.pickupInstructions}</li> : null}
+          <li>{copy("carDetails.confirmPickupDetails")}</li>
+        </ul>
+      </div>
+    </div>
   );
 }
 
