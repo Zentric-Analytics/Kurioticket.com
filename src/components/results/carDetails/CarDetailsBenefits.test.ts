@@ -160,12 +160,16 @@ test("standalone details place the model actions before the image and expose thr
     new URL("./CarDetailsSectionNav.tsx", import.meta.url),
     "utf8",
   ).replace(/\s+/g, " ");
-  for (const label of ["Compare prices", "Pickup & return", "Location"]) {
-    assert.match(navSource, new RegExp(label.replace("&", "&")));
+  for (const label of ["compare", "pickup", "location"]) {
+    assert.match(navSource, new RegExp(`label: labels\\.${label}`));
   }
   assert.match(navSource, /role="tablist"/);
   assert.match(navSource, /ArrowLeft/);
   assert.match(navSource, /ArrowRight/);
+  for (const panel of ["compare", "pickup", "location"]) {
+    assert.match(clientSource, new RegExp(`id="car-${panel}-panel"`));
+    assert.match(clientSource, new RegExp(`hidden={activeTab !== "${panel}"}`));
+  }
 });
 
 test("source contract keeps desktop and mobile provider CTAs disabled, inert, teal, and localized", () => {

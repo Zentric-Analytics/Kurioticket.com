@@ -129,7 +129,9 @@ export function CarDetailsExperience({
       if (navigator.share) await navigator.share({ title: car.modelName, url });
       else {
         await navigator.clipboard.writeText(url);
-        setShareConfirmation(`${car.modelName} link copied`);
+        setShareConfirmation(
+          `${car.modelName} ${copy("carDetails.linkCopied")}`,
+        );
         window.setTimeout(() => setShareConfirmation(""), 2200);
       }
     } catch (error) {
@@ -181,7 +183,7 @@ export function CarDetailsExperience({
             >
               <button
                 type="button"
-                aria-label={`${isSaved ? "Unsave" : "Save"} ${car.modelName}`}
+                aria-label={`${isSaved ? copy("carDetails.unsave") : copy("carDetails.save")} ${car.modelName}`}
                 aria-pressed={isSaved}
                 onClick={toggleSavedCar}
                 className={`focus-ring flex size-11 items-center justify-center rounded-full transition hover:bg-slate-100 ${isSaved ? "text-rose-600" : "text-slate-800"}`}
@@ -194,7 +196,7 @@ export function CarDetailsExperience({
               </button>
               <button
                 type="button"
-                aria-label={`Share ${car.modelName}`}
+                aria-label={`${copy("carDetails.share")} ${car.modelName}`}
                 onClick={() => void shareCar()}
                 className="focus-ring flex size-11 items-center justify-center rounded-full text-slate-800 transition hover:bg-slate-100"
               >
@@ -208,104 +210,111 @@ export function CarDetailsExperience({
               <CarDetailsSectionNav
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
+                labels={{
+                  navigation: copy("carDetails.title"),
+                  compare: copy("carDetails.comparePrices"),
+                  pickup: copy("carDetails.pickupReturn"),
+                  location: copy("carDetails.location"),
+                }}
               />
               <div className="min-h-[240px]">
-                {activeTab === "compare" && primaryOffer ? (
-                  <section
-                    id="car-compare-panel"
-                    role="tabpanel"
-                    aria-labelledby="car-compare-tab"
-                    className="py-5"
-                  >
-                    <Heading
-                      level={sectionHeadingLevel}
-                      className="text-xl font-extrabold tracking-tight text-slate-950"
-                    >
-                      Compare prices
-                    </Heading>
-                    <p className="mt-1 text-sm text-slate-600">
-                      Estimated catalogue price for your selected rental dates.
-                    </p>
-                    <div className="mt-4 rounded-[13px] border border-slate-200 bg-white p-4 shadow-sm">
-                      <div className="flex items-end justify-between gap-4">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-500">
-                            {copy("carDetails.bookingSummary")}
-                          </p>
-                          <p className="mt-1 text-2xl font-extrabold text-[#102A43]">
+                <section
+                  id="car-compare-panel"
+                  role="tabpanel"
+                  aria-labelledby="car-compare-tab"
+                  hidden={activeTab !== "compare"}
+                  className="py-5"
+                >
+                  {primaryOffer ? (
+                    <>
+                      <Heading
+                        level={sectionHeadingLevel}
+                        className="text-xl font-extrabold tracking-tight text-slate-950"
+                      >
+                        {copy("carDetails.comparePrices")}
+                      </Heading>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {copy("carDetails.estimatedCataloguePrice")}
+                      </p>
+                      <div className="mt-4 rounded-[13px] border border-slate-200 bg-white p-4 shadow-sm">
+                        <div className="flex items-end justify-between gap-4">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-500">
+                              {copy("carDetails.bookingSummary")}
+                            </p>
+                            <p className="mt-1 text-2xl font-extrabold text-[#102A43]">
+                              {
+                                price(
+                                  primaryOffer.totalPrice,
+                                  primaryOffer.currency,
+                                ).formatted
+                              }
+                            </p>
+                          </div>
+                          <p className="text-right text-sm text-slate-600">
                             {
                               price(
-                                primaryOffer.totalPrice,
+                                primaryOffer.pricePerDay,
                                 primaryOffer.currency,
                               ).formatted
-                            }
+                            }{" "}
+                            {copy("carsResults.perDay")}
                           </p>
                         </div>
-                        <p className="text-right text-sm text-slate-600">
-                          {
-                            price(
-                              primaryOffer.pricePerDay,
-                              primaryOffer.currency,
-                            ).formatted
-                          }{" "}
-                          {copy("carsResults.perDay")}
+                      </div>
+                    </>
+                  ) : null}
+                </section>
+                <div
+                  id="car-pickup-panel"
+                  role="tabpanel"
+                  aria-labelledby="car-pickup-tab"
+                  hidden={activeTab !== "pickup"}
+                >
+                  {pickupSection}
+                </div>
+                <section
+                  id="car-location-panel"
+                  role="tabpanel"
+                  aria-labelledby="car-location-tab"
+                  hidden={activeTab !== "location"}
+                  className="py-5"
+                >
+                  <Heading
+                    level={sectionHeadingLevel}
+                    className="text-xl font-extrabold tracking-tight text-slate-950"
+                  >
+                    {copy("carDetails.location")}
+                  </Heading>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {[
+                      [copy("carDetails.pickup"), car.pickupLocation],
+                      [copy("carDetails.return"), car.returnLocation],
+                    ].map(([label, location]) => (
+                      <div
+                        key={label}
+                        className="rounded-[13px] border border-slate-200 p-4"
+                      >
+                        <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                          {label}
+                        </p>
+                        <p className="mt-2 flex items-start gap-2 font-semibold text-slate-900">
+                          <MapPin
+                            size={18}
+                            className="mt-0.5 shrink-0 text-[#075EE8]"
+                          />
+                          {location || copy("carDetails.locationUnavailable")}
                         </p>
                       </div>
-                    </div>
-                  </section>
-                ) : null}
-                {activeTab === "pickup" ? (
-                  <div
-                    id="car-pickup-panel"
-                    role="tabpanel"
-                    aria-labelledby="car-pickup-tab"
-                  >
-                    {pickupSection}
+                    ))}
                   </div>
-                ) : null}
-                {activeTab === "location" ? (
-                  <section
-                    id="car-location-panel"
-                    role="tabpanel"
-                    aria-labelledby="car-location-tab"
-                    className="py-5"
-                  >
-                    <Heading
-                      level={sectionHeadingLevel}
-                      className="text-xl font-extrabold tracking-tight text-slate-950"
-                    >
-                      Location
-                    </Heading>
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                      {[
-                        [copy("carDetails.pickup"), car.pickupLocation],
-                        [copy("carDetails.return"), car.returnLocation],
-                      ].map(([label, location]) => (
-                        <div
-                          key={label}
-                          className="rounded-[13px] border border-slate-200 p-4"
-                        >
-                          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                            {label}
-                          </p>
-                          <p className="mt-2 flex items-start gap-2 font-semibold text-slate-900">
-                            <MapPin
-                              size={18}
-                              className="mt-0.5 shrink-0 text-[#075EE8]"
-                            />
-                            {location || copy("carDetails.locationUnavailable")}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="mt-4 text-sm font-medium text-slate-700">
-                      {pickupTypeLabels[car.pickupType]}
-                      {car.shuttleRequired
-                        ? ` · ${copy("carDetails.shuttleRequired")}`
-                        : ""}
-                    </p>
-                  </section>
-                ) : null}
+                  <p className="mt-4 text-sm font-medium text-slate-700">
+                    {pickupTypeLabels[car.pickupType]}
+                    {car.shuttleRequired
+                      ? ` · ${copy("carDetails.shuttleRequired")}`
+                      : ""}
+                  </p>
+                </section>
               </div>
             </>
           ) : (

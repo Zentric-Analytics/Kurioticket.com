@@ -4,20 +4,21 @@ import { useRef } from "react";
 
 export type CarDetailsTab = "compare" | "pickup" | "location";
 
-const tabs: ReadonlyArray<{ id: CarDetailsTab; label: string }> = [
-  { id: "compare", label: "Compare prices" },
-  { id: "pickup", label: "Pickup & return" },
-  { id: "location", label: "Location" },
-];
-
 export function CarDetailsSectionNav({
   activeTab,
   onTabChange,
+  labels,
 }: {
   activeTab: CarDetailsTab;
   onTabChange: (tab: CarDetailsTab) => void;
+  labels: Record<CarDetailsTab, string> & { navigation: string };
 }) {
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const tabs: ReadonlyArray<{ id: CarDetailsTab; label: string }> = [
+    { id: "compare", label: labels.compare },
+    { id: "pickup", label: labels.pickup },
+    { id: "location", label: labels.location },
+  ];
 
   function handleKeyDown(
     event: React.KeyboardEvent<HTMLButtonElement>,
@@ -35,7 +36,7 @@ export function CarDetailsSectionNav({
   return (
     <div
       role="tablist"
-      aria-label="Car details"
+      aria-label={labels.navigation}
       className="sticky top-0 z-30 mt-1 flex items-stretch justify-between gap-2 border-b border-slate-200 bg-white"
       data-car-details-section-nav
     >
