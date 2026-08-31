@@ -80,7 +80,7 @@ function ProviderOffer({
         </strong>
 
         <span
-          className="col-span-2 row-start-4 mt-3 min-w-0 self-center sm:col-span-1 sm:row-start-3 sm:mt-0.5"
+          className="col-span-1 row-start-3 mt-0.5 min-w-0 self-center"
           data-provider-bottom-row
           data-provider-amenities
         >
@@ -91,7 +91,7 @@ function ProviderOffer({
           />
         </span>
         <span
-          className="col-start-2 row-start-3 mt-0.5 self-center whitespace-nowrap text-right text-xs font-medium leading-4 text-slate-600"
+          className="col-start-2 row-start-3 mt-0.5 self-center whitespace-nowrap text-right text-xs font-medium leading-4 text-[#075EE8]"
           data-nightly-supporting-label
         >
           {perNightText.replace("{{price}}", "").trim()}
