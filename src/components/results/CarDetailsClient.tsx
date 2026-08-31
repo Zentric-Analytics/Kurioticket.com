@@ -2,7 +2,16 @@
 
 import type { ReactNode, Ref } from "react";
 import Image from "next/image";
-import { Clock3, ExternalLink, Heart, MapPin, Share2 } from "lucide-react";
+import {
+  Clock3,
+  ExternalLink,
+  Gauge,
+  Heart,
+  MapPin,
+  ReceiptText,
+  Share2,
+  ShieldCheck,
+} from "lucide-react";
 import { useState } from "react";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -368,15 +377,25 @@ function CarPriceComparisonSection({
 }) {
   const daily = price(offer.pricePerDay, offer.currency);
   const facts = [
-    offer.freeCancellation
-      ? copy("carDetails.freeCancellation")
-      : copy("carDetails.nonRefundable"),
-    offer.taxesAndFeesIncluded
-      ? copy("carDetails.feesIncludedShort")
-      : copy("carDetails.notIncluded"),
-    car.mileagePolicy === "unlimited"
-      ? copy("carDetails.unlimitedMileage")
-      : `${car.limitedMileageKm ?? "—"} km ${copy("carDetails.includedShort")}`,
+    {
+      label: offer.freeCancellation
+        ? copy("carDetails.freeCancellation")
+        : copy("carDetails.nonRefundable"),
+      Icon: ShieldCheck,
+    },
+    {
+      label: offer.taxesAndFeesIncluded
+        ? copy("carDetails.feesIncludedShort")
+        : copy("carDetails.notIncluded"),
+      Icon: ReceiptText,
+    },
+    {
+      label:
+        car.mileagePolicy === "unlimited"
+          ? copy("carDetails.unlimitedMileage")
+          : `${car.limitedMileageKm ?? "—"} km ${copy("carDetails.includedShort")}`,
+      Icon: Gauge,
+    },
   ];
   return (
     <div
@@ -394,8 +413,8 @@ function CarPriceComparisonSection({
         {formatCarDate(search.dropoffDate, locale)} · {days}{" "}
         {days === 1 ? copy("carDetails.day") : copy("carDetails.days")}
       </p>
-      <div className="mt-5 rounded-[14px] border border-[#075EE8] bg-white px-3 py-4 ring-1 ring-[#075EE8]/10 sm:px-4">
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto_auto_auto] gap-x-3 sm:grid-rows-[auto_auto_auto] sm:gap-x-6">
+      <div className="-mx-2 mt-5 rounded-[14px] border border-[#075EE8] bg-white px-2 py-4 ring-1 ring-[#075EE8]/10 sm:mx-0 sm:px-4">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-x-3 sm:gap-x-6">
           <Image
             src="/brand/kurioticket-logo-primary-light-bg.svg"
             alt="Kurioticket"
@@ -409,28 +428,35 @@ function CarPriceComparisonSection({
           >
             <span className="size-2.5 rounded-full bg-[#075EE8]" />
           </span>
-          <span aria-hidden="true" />
-          <strong
-            className="mt-3 min-w-0 whitespace-nowrap text-right text-xl font-extrabold tracking-tight text-slate-950 tabular-nums"
-            dir="ltr"
-            title={daily.title}
-            aria-label={daily.ariaLabel}
-          >
-            {daily.formatted}
-          </strong>
-          <div className="col-span-2 row-start-4 mt-3 flex min-w-0 flex-nowrap items-center justify-between gap-x-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:col-span-1 sm:row-start-3 sm:mt-0.5 sm:justify-start sm:gap-x-3">
-            {facts.map((fact) => (
+          <div className="col-span-2 mt-5 flex min-w-0 flex-nowrap items-center gap-x-0.5 overflow-x-auto border-t border-slate-100 pt-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-x-4">
+            {facts.map(({ label, Icon }) => (
               <span
-                key={fact}
-                className="shrink-0 whitespace-nowrap text-[10px] font-semibold text-slate-600 sm:text-xs"
+                key={label}
+                className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap text-[9px] font-semibold text-slate-600 sm:gap-1.5 sm:text-xs"
               >
-                {fact}
+                <Icon
+                  size={12}
+                  strokeWidth={2}
+                  className="shrink-0 text-[#075EE8]"
+                  aria-hidden="true"
+                />
+                {label}
               </span>
             ))}
+            <span className="ms-auto inline-flex shrink-0 items-baseline gap-1 whitespace-nowrap text-right">
+              <strong
+                className="text-base font-extrabold tracking-tight text-slate-950 tabular-nums sm:text-xl"
+                dir="ltr"
+                title={daily.title}
+                aria-label={daily.ariaLabel}
+              >
+                {daily.formatted}
+              </strong>
+              <span className="text-[9px] font-medium text-slate-600 sm:text-xs">
+                {copy("carsResults.perDay")}
+              </span>
+            </span>
           </div>
-          <span className="col-start-2 row-start-3 mt-0.5 self-center whitespace-nowrap text-right text-xs font-medium leading-4 text-slate-600">
-            {copy("carsResults.perDay")}
-          </span>
         </div>
       </div>
       <p className="mt-3 text-xs leading-5 text-slate-500">
