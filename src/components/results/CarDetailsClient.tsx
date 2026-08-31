@@ -5,10 +5,10 @@ import Image from "next/image";
 import {
   Clock3,
   ExternalLink,
+  Fuel,
   Gauge,
   Heart,
   MapPin,
-  ReceiptText,
   Share2,
   ShieldCheck,
 } from "lucide-react";
@@ -384,10 +384,13 @@ function CarPriceComparisonSection({
       Icon: ShieldCheck,
     },
     {
-      label: offer.taxesAndFeesIncluded
-        ? copy("carDetails.feesIncludedShort")
-        : copy("carDetails.notIncluded"),
-      Icon: ReceiptText,
+      label:
+        car.fuelPolicy === "full-to-full"
+          ? copy("carsResults.fullToFull")
+          : car.fuelPolicy === "same-to-same"
+            ? copy("carsResults.sameToSame")
+            : copy("carsResults.fuelPolicy"),
+      Icon: Fuel,
     },
     {
       label:
@@ -413,7 +416,7 @@ function CarPriceComparisonSection({
         {formatCarDate(search.dropoffDate, locale)} · {days}{" "}
         {days === 1 ? copy("carDetails.day") : copy("carDetails.days")}
       </p>
-      <div className="-mx-2 mt-5 rounded-[14px] border border-[#075EE8] bg-white px-2 py-4 ring-1 ring-[#075EE8]/10 sm:mx-0 sm:px-4">
+      <div className="-mx-3 mt-5 rounded-[14px] border border-[#075EE8] bg-white px-2 py-4 ring-1 ring-[#075EE8]/10 sm:mx-0 sm:px-4">
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-x-3 sm:gap-x-6">
           <Image
             src="/brand/kurioticket-logo-primary-light-bg.svg"
@@ -428,14 +431,14 @@ function CarPriceComparisonSection({
           >
             <span className="size-2.5 rounded-full bg-[#075EE8]" />
           </span>
-          <div className="col-span-2 mt-5 flex min-w-0 flex-nowrap items-center gap-x-0.5 overflow-x-auto border-t border-slate-100 pt-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-x-4">
+          <div className="col-span-2 mt-5 flex min-w-0 flex-nowrap items-center gap-x-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-x-4">
             {facts.map(({ label, Icon }) => (
               <span
                 key={label}
-                className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap text-[9px] font-semibold text-slate-600 sm:gap-1.5 sm:text-xs"
+                className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap text-[11px] font-semibold text-slate-700 sm:gap-1.5 sm:text-xs"
               >
                 <Icon
-                  size={12}
+                  size={14}
                   strokeWidth={2}
                   className="shrink-0 text-[#075EE8]"
                   aria-hidden="true"
@@ -443,16 +446,16 @@ function CarPriceComparisonSection({
                 {label}
               </span>
             ))}
-            <span className="ms-auto inline-flex shrink-0 items-baseline gap-1 whitespace-nowrap text-right">
+            <span className="ms-auto inline-flex shrink-0 flex-col items-end whitespace-nowrap text-right leading-none">
               <strong
-                className="text-base font-extrabold tracking-tight text-slate-950 tabular-nums sm:text-xl"
+                className="text-xl font-extrabold tracking-tight text-slate-950 tabular-nums"
                 dir="ltr"
                 title={daily.title}
                 aria-label={daily.ariaLabel}
               >
                 {daily.formatted}
               </strong>
-              <span className="text-[9px] font-medium text-slate-600 sm:text-xs">
+              <span className="mt-1 text-[11px] font-medium text-slate-600 sm:text-xs">
                 {copy("carsResults.perDay")}
               </span>
             </span>

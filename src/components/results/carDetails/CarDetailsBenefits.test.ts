@@ -180,12 +180,15 @@ test("price comparison aligns icon benefits and the per-day price on one row", (
     "function CarPriceComparison",
     "function CarLocationSection",
   );
-  for (const icon of ["ShieldCheck", "ReceiptText", "Gauge"]) {
+  for (const icon of ["ShieldCheck", "Fuel", "Gauge"]) {
     assert.match(comparison, new RegExp(`Icon: ${icon}`));
   }
   assert.match(comparison, /flex min-w-0 flex-nowrap items-center/);
-  assert.match(comparison, /inline-flex shrink-0 items-baseline/);
+  assert.match(comparison, /inline-flex shrink-0 flex-col items-end/);
   assert.match(comparison, /carsResults\.perDay/);
+  assert.match(comparison, /carsResults\.fullToFull/);
+  assert.doesNotMatch(comparison, /border-t border-slate-100/);
+  assert.doesNotMatch(comparison, /feesIncludedShort/);
   assert.doesNotMatch(comparison, /row-start-4/);
 });
 
