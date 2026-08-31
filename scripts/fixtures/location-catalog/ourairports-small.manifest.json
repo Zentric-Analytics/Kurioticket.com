@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "dataset": "ourairports-airports",
+  "version": "fixture-2026-08-30",
+  "status": "snapshot",
+  "sourceUrl": "https://ourairports.com/data/airports.csv",
+  "retrievedAt": "2026-08-30T00:00:00.000Z",
+  "sha256": "95bde414c64ced8737b800609b53df3a8203d4f91938ed550587eecbf6dcb450",
+  "license": "Public Domain",
+  "attribution": "OurAirports fixture derived from the public airports.csv schema.",
+  "approvalState": "test-fixture-only"
+}

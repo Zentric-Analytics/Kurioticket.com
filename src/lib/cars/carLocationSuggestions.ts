@@ -1,6 +1,9 @@
 import { airports } from "@/data/airports";
 import { carRentalAreas } from "@/data/carRentalAreas";
 import { countryCodeToCountryName } from "@/lib/geo/context";
+import { fromCarLocation } from "@/lib/locations/adapters";
+import { searchLocations } from "@/lib/locations/search";
+import type { CanonicalLocation } from "@/lib/locations/types";
 
 export type CarLocationSuggestionKind = "airport" | "city" | "area" | "custom";
 
@@ -14,6 +17,9 @@ export type CarLocationSuggestion = {
   countryCode?: string;
   airportCode?: string;
   providerPlaceId?: string;
+  canonical?: CanonicalLocation;
+  validation?: "owned-catalog" | "unverified-text";
+  isProviderValidated?: false;
 };
 
 type SearchOptions = { limit?: number; country?: string | null };
@@ -89,22 +95,6 @@ const areaCandidates: Candidate[] = carRentalAreas.map((area) => ({
 
 const allCandidates = [...airportCandidates, ...cityCandidates, ...areaCandidates];
 
-const scoreCandidate = (candidate: Candidate, query: string, countryHint?: string) => {
-  const normalizedTerms = candidate.terms.map(normalizeCarLocationSearchText).filter(Boolean);
-  const exactCode = candidate.airportCode && normalizeCarLocationSearchText(candidate.airportCode) === query;
-  const exactPrimary = normalizeCarLocationSearchText(candidate.primaryText) === query || normalizeCarLocationSearchText(candidate.value) === query;
-  const exactTerm = normalizedTerms.some((term) => term === query);
-  const prefix = normalizedTerms.some((term) => term.startsWith(query));
-  const containedWord = normalizedTerms.some((term) => term.split(" ").some((word) => word.startsWith(query)) || term.includes(query));
-
-  if (!exactCode && !exactPrimary && !exactTerm && !prefix && !containedWord) return undefined;
-
-  const bucket = exactCode ? 0 : exactPrimary ? 1 : exactTerm ? 2 : prefix ? 3 : 4;
-  const countryBoost = countryHint && candidate.countryCode === countryHint ? -2 : 0;
-  const kindBoost = candidate.kind === "city" ? -0.08 : candidate.kind === "airport" ? -0.04 : 0;
-  return bucket + countryBoost + kindBoost;
-};
-
 const popularIds = [
   "city-ng-lagos", "airport-los", "area-ng-lagos-victoria-island", "area-ng-lagos-ikeja", "city-ng-abuja", "airport-abv", "area-ng-abuja-central-area",
   "city-gb-london", "airport-lhr", "city-us-new-york", "airport-jfk", "city-ae-dubai", "airport-dxb", "city-jp-tokyo", "city-fr-paris", "city-sg-singapore",
@@ -131,22 +121,81 @@ function dedupe(candidates: Candidate[]) {
   });
 }
 
-export async function searchCarLocationSuggestions(query: string, options: SearchOptions = {}): Promise<CarLocationSuggestion[]> {
+export type CarCatalogSearchResult = {
+  suggestions: CarLocationSuggestion[];
+  provenance: {
+    source: "owned-catalog";
+    catalogVersion: "legacy-catalog-v1";
+    isLiveAvailability: false;
+  };
+  recovery?: {
+      kind: "unverified" | "continue-typing";
+      coverage: "unverified" | "none";
+      canSubmit: boolean;
+      canSubmitQuery: boolean;
+    message: string;
+  };
+};
+
+const canonicalCandidate = (candidate: Candidate) => ({
+  ...fromCarLocation(stripInternalFields(candidate)),
+  aliases: candidate.terms,
+});
+
+const publicOwnedSuggestion = (candidate: Candidate): CarLocationSuggestion => {
+  const suggestion = stripInternalFields(candidate);
+  return {
+    ...suggestion,
+    canonical: canonicalCandidate(candidate),
+    validation: "owned-catalog",
+    isProviderValidated: false,
+  };
+};
+
+export async function searchCanonicalCarCatalog(query: string, options: SearchOptions = {}): Promise<CarCatalogSearchResult> {
   const limit = Math.min(MAX_LIMIT, Math.max(1, Math.trunc(options.limit ?? DEFAULT_LIMIT)));
   const countryHint = normalizeCountryHint(options.country);
   const trimmedQuery = query.trim().replace(/\s+/g, " ");
   const normalizedQuery = normalizeCarLocationSearchText(trimmedQuery);
 
-  if (!normalizedQuery) return popularSuggestions(limit, countryHint).map(stripInternalFields);
+  if (!normalizedQuery && !trimmedQuery) {
+    return {
+      suggestions: popularSuggestions(limit, countryHint).map(publicOwnedSuggestion),
+      provenance: { source: "owned-catalog", catalogVersion: "legacy-catalog-v1", isLiveAvailability: false },
+    };
+  }
+  if (!normalizedQuery) {
+    return {
+      suggestions: [],
+      provenance: { source: "owned-catalog", catalogVersion: "legacy-catalog-v1", isLiveAvailability: false },
+        recovery: { kind: "continue-typing", coverage: "none", canSubmit: false, canSubmitQuery: false, message: "Continue typing to search or use an unverified location." },
+    };
+  }
 
-  const ranked = allCandidates
-    .map((candidate, index) => ({ candidate, index, score: scoreCandidate(candidate, normalizedQuery, countryHint) }))
-    .filter((entry): entry is { candidate: Candidate; index: number; score: number } => entry.score !== undefined)
-    .sort((a, b) => a.score - b.score || b.candidate.priority - a.candidate.priority || a.index - b.index)
+  const candidatesById = new Map(allCandidates.map((candidate) => [`car:${candidate.id}`, candidate]));
+  const localMatches = countryHint
+    ? searchLocations(allCandidates.filter((candidate) => candidate.countryCode === countryHint).map(canonicalCandidate), trimmedQuery, 25)
+    : [];
+  const rankedMatches = [...localMatches, ...searchLocations(allCandidates.map(canonicalCandidate), trimmedQuery, 25)]
+    .filter((entry, index, entries) => entries.findIndex((candidate) => candidate.match.location.id === entry.match.location.id) === index);
+  const ranked = rankedMatches
+    .map(({ match, index }) => ({ candidate: candidatesById.get(match.location.id), match, index }))
+    .filter((entry): entry is typeof entry & { candidate: Candidate } => Boolean(entry.candidate))
+    .sort((a, b) => {
+      const aLocal = Number(Boolean(countryHint && a.candidate.countryCode === countryHint));
+      const bLocal = Number(Boolean(countryHint && b.candidate.countryCode === countryHint));
+      const kindDelta = Number(b.candidate.kind === "city") - Number(a.candidate.kind === "city");
+      return bLocal - aLocal || b.match.score - a.match.score || kindDelta || b.candidate.priority - a.candidate.priority || a.index - b.index;
+    })
     .map((entry) => entry.candidate);
 
   const deduped = dedupe(ranked);
-  const hasExactValue = deduped.some((candidate) => normalizeCarLocationSearchText(candidate.value) === normalizedQuery || normalizeCarLocationSearchText(candidate.primaryText) === normalizedQuery);
+  const hasExactValue = deduped.some((candidate) =>
+    normalizeCarLocationSearchText(candidate.value) === normalizedQuery ||
+    normalizeCarLocationSearchText(candidate.primaryText) === normalizedQuery ||
+    normalizeCarLocationSearchText(candidate.airportCode ?? "") === normalizedQuery ||
+    candidate.terms.some((term) => normalizeCarLocationSearchText(term) === normalizedQuery),
+  );
 
   if (trimmedQuery.length >= 2 && !hasExactValue) {
     deduped.push({
@@ -160,7 +209,34 @@ export async function searchCarLocationSuggestions(query: string, options: Searc
     });
   }
 
-  return deduped.slice(0, limit).map(stripInternalFields);
+  const ownedSuggestions = deduped.filter((candidate) => candidate.kind !== "custom").slice(0, limit).map(publicOwnedSuggestion);
+  const hasCustom = deduped.some((candidate) => candidate.kind === "custom");
+  const suggestions = hasCustom && ownedSuggestions.length < limit
+    ? [
+        ...ownedSuggestions,
+        {
+          ...stripInternalFields(deduped.find((candidate) => candidate.kind === "custom")!),
+          canonical: fromCarLocation(stripInternalFields(deduped.find((candidate) => candidate.kind === "custom")!)),
+          validation: "unverified-text" as const,
+          isProviderValidated: false as const,
+        },
+      ]
+    : ownedSuggestions;
+
+  const hasOwnedMatch = ownedSuggestions.length > 0;
+  return {
+    suggestions,
+    provenance: { source: "owned-catalog", catalogVersion: "legacy-catalog-v1", isLiveAvailability: false },
+    recovery: !hasOwnedMatch
+      ? trimmedQuery.length >= 2
+          ? { kind: "unverified", coverage: "unverified", canSubmit: true, canSubmitQuery: true, message: "No verified catalogue match. You can use this unverified typed location; static cars may be unavailable." }
+          : { kind: "continue-typing", coverage: "none", canSubmit: false, canSubmitQuery: false, message: "Continue typing to search or use an unverified location." }
+      : undefined,
+  };
+}
+
+export async function searchCarLocationSuggestions(query: string, options: SearchOptions = {}): Promise<CarLocationSuggestion[]> {
+  return (await searchCanonicalCarCatalog(query, options)).suggestions;
 }
 
 function stripInternalFields(candidate: Candidate): CarLocationSuggestion {

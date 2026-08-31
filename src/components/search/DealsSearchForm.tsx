@@ -49,6 +49,7 @@ import { MobileCarDriverAgePickerDialog, MobileCarTimePickerDialog } from "@/com
 import { translations as en } from "@/lib/i18n/en";
 import { driverAgeOptions, timeOptions } from "@/lib/cars/carsSearchUtils";
 import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
+import { getHotelLocationFieldDisplay } from "@/lib/search/hotelLocationFieldDisplay";
 import {
   createDefaultDealsSearch,
   dealsProductOrder,
@@ -77,8 +78,9 @@ import {
   type AirportOption,
 } from "@/data/airports";
 import {
-  getLocalizedHotelDestinationCityName,
-  getLocalizedHotelDestinationDetail,
+  getHotelDestinationPrimaryLabel,
+  getHotelDestinationSupportingLabel,
+  type HotelDestinationSuggestion,
 } from "@/data/hotelDestinations";
 import {
   formatFlightsDateSummary,
@@ -97,7 +99,8 @@ type HotelSuggestion = {
   searchValue: string;
   countryCode?: string;
   region?: string;
-  kind?: string;
+  kind?: HotelDestinationSuggestion["kind"];
+  canonical?: import("@/lib/locations/types").CanonicalLocation;
 };
 type DealsPlacesApiResponse = { defaultOriginAirport?: AirportOption | null };
 type LocationApiResponse = {
@@ -3019,12 +3022,11 @@ export function DealsSearchForm({
               >
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-extrabold text-slate-950">
-                    {getLocalizedHotelDestinationCityName(option.name, locale)}
+                    {getHotelDestinationPrimaryLabel({ ...option, countryCode: option.countryCode ?? "", kind: option.kind ?? "city" }, locale)}
                   </span>
                   <span className="block truncate text-xs font-medium text-slate-500">
-                    {getLocalizedHotelDestinationDetail(
-                      { ...option, countryCode: option.countryCode ?? "" },
-                      locale,
+                    {getHotelDestinationSupportingLabel(
+                      { ...option, countryCode: option.countryCode ?? "", kind: option.kind ?? "city" }, locale,
                     )}
                   </span>
                 </span>
@@ -3315,8 +3317,9 @@ export function DealsSearchForm({
   const compactFlightDestinationDisplay = getLocationFieldDisplay(
     search.flightDestinationText,
   );
-  const compactHotelDestinationDisplay = getLocationFieldDisplay(
+  const compactHotelDestinationDisplay = getHotelLocationFieldDisplay(
     displayedHotelDestination,
+    locale,
   );
 
   const compactMobileControls =

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "dataset": "ourairports-airports",
+  "version": "planned-next-reviewed-snapshot",
+  "status": "planned",
+  "sourceUrl": "https://ourairports.com/data/airports.csv",
+  "retrievedAt": null,
+  "sha256": null,
+  "license": "Public Domain",
+  "attribution": "OurAirports data; attribution retained voluntarily with source/version metadata.",
+  "cadence": "monthly review; urgent review for material closures/code changes",
+  "approvalState": "not-downloaded-not-approved",
+  "notes": "Operator must create an immutable snapshot manifest with retrieval timestamp and SHA-256 before validation. This file does not authorize automatic catalogue replacement."
+}

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { searchHotelDestinations } from "@/data/hotelDestinations";
+import { searchCanonicalHotelCatalog } from "@/lib/locations/hotelCatalogService";
 import { normalizeCountryCode } from "@/lib/geo/context";
 import { extractVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
 import { countryToRegion, normalizeRegion } from "@/lib/region/detectRegion";
@@ -88,11 +88,16 @@ export async function GET(request: Request) {
     detectedCountryCode,
   );
 
+  const catalogResult = searchCanonicalHotelCatalog({ query, countryCode, locale, limit });
+  const canonicalLocations = catalogResult.suggestions.map((suggestion) => suggestion.canonical);
+
   return NextResponse.json({
-    suggestions: searchHotelDestinations({ query, countryCode, limit }),
+    ...catalogResult,
+    canonicalLocations,
     source: "curated-destinations" satisfies HotelDestinationSource,
     countryCode: countryCode || null,
     countrySource,
     locale,
+    isLiveAvailability: false,
   });
 }

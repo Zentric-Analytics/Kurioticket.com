@@ -23,6 +23,7 @@ type Props = {
 };
 
 export function formatSelectedCarLocation(item: CarLocationSuggestion) {
+  if (item.canonical) return item.canonical.primaryLabel;
   if (item.kind === "airport" && item.airportCode) {
     return `${item.city || item.primaryText} (${item.airportCode})`;
   }
@@ -31,6 +32,7 @@ export function formatSelectedCarLocation(item: CarLocationSuggestion) {
 }
 
 function locationSecondaryText(item: CarLocationSuggestion) {
+  if (item.canonical) return item.canonical.supportingLabel;
   return item.kind === "airport" ? item.primaryText : item.secondaryText;
 }
 

@@ -72,8 +72,10 @@ import {
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
+import { getHotelLocationFieldDisplay } from "@/lib/search/hotelLocationFieldDisplay";
 import { canonicalHomepageAirportField } from "@/lib/search/homepageAirportField";
 import {
+  buildCarRecentSearch,
   buildFlightRecentSearch,
   buildHotelRecentSearch,
   syncBackendRecentSearch,
@@ -89,8 +91,8 @@ import { getHomeDiscoveryByRegion, homeDiscoveryByRegion } from "@/data/homeDisc
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { formatTravelDateDisplay } from "@/lib/dateFormatting/travelDateDisplay";
 import {
-  getLocalizedHotelDestinationCityName,
-  getLocalizedHotelDestinationDetail,
+  getHotelDestinationPrimaryLabel,
+  getHotelDestinationSupportingLabel,
   type HotelDestinationSuggestion,
 } from "@/data/hotelDestinations";
 import {
@@ -2259,6 +2261,15 @@ export function SearchTabs({
     }
 
     const href = `/cars/results?${params.toString()}`;
+    upsertRecentSearch(buildCarRecentSearch({
+      pickupLocation,
+      dropoffLocation: carsValues.returnToDifferentLocation ? dropoffLocation : undefined,
+      pickupDate: carsValues.pickupDate,
+      dropoffDate: carsValues.dropoffDate,
+      pickupTime: carsValues.pickupTime,
+      dropoffTime: carsValues.dropoffTime,
+      driverAge: carsValues.driverAge,
+    }));
     setIsCarsSubmitting(true);
     onCarsResultsNavigationStart?.();
     startRouteProgress();
@@ -2300,6 +2311,7 @@ export function SearchTabs({
     "Return date";
   const carsDateRangeIsEmpty = !carsValues.pickupDate && !carsValues.dropoffDate;
   const carsPickupDisplay = getLocationFieldDisplay(carsValues.pickupLocation);
+  const hotelDestinationDisplay = getHotelLocationFieldDisplay(destination, locale ?? activeLocale);
   const carsEmptyDateTextClassName = mobileHomepage && carsDateRangeIsEmpty ? "text-slate-950" : undefined;
   const carsDateSummary = (
     <>
@@ -3949,14 +3961,20 @@ export function SearchTabs({
                         aria-hidden="true"
                         className="h-4 w-4 shrink-0 text-slate-500"
                       />
-                      <span className={cn("truncate", !destination.trim() && "text-slate-400")}>
-                        {destination.trim() || t.cityOrHotel || "City or hotel"}
+                      <span className="min-w-0">
+                        <span className={cn("block truncate", !destination.trim() && "text-slate-400")}>
+                          {hotelDestinationDisplay.primary || t.cityOrHotel || "City or hotel"}
+                        </span>
+                        {hotelDestinationDisplay.secondary ? <span className="block truncate text-[11px] font-medium leading-4 text-slate-600">{hotelDestinationDisplay.secondary}</span> : null}
                       </span>
                     </span>
                   ) : (
                     <>
-                      <span className={cn("truncate", !destination.trim() && "text-slate-400")}>
-                        {destination.trim() || t.cityOrHotel || "City or hotel"}
+                      <span className="min-w-0">
+                        <span className={cn("block truncate", !destination.trim() && "text-slate-400")}>
+                          {hotelDestinationDisplay.primary || t.cityOrHotel || "City or hotel"}
+                        </span>
+                        {hotelDestinationDisplay.secondary ? <span className="block truncate text-[11px] font-medium leading-4 text-slate-600">{hotelDestinationDisplay.secondary}</span> : null}
                       </span>
                       <ChevronDown
                         size={16}
@@ -4059,16 +4077,10 @@ export function SearchTabs({
                             />
                             <span className="min-w-0 flex-1">
                               <span className="block truncate text-sm font-semibold text-slate-950">
-                                {getLocalizedHotelDestinationCityName(
-                                  suggestion.name,
-                                  locale ?? activeLocale,
-                                )}
+                                {getHotelDestinationPrimaryLabel(suggestion, locale ?? activeLocale)}
                               </span>
                               <span className="mt-0.5 block truncate text-xs font-medium text-slate-600">
-                                {getLocalizedHotelDestinationDetail(
-                                  suggestion,
-                                  locale ?? activeLocale,
-                                )}
+                                {getHotelDestinationSupportingLabel(suggestion, locale ?? activeLocale)}
                               </span>
                             </span>
                             <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">
