@@ -51,3 +51,13 @@ test("Flight pagination defers local commit and mirrors URL without Next navigat
   assert.doesNotMatch(pagination, /router\.push/);
   assert.match(source, /paginationPendingPage !== validResultsPage/);
 });
+
+test("Hotel pagination commits behind its skeleton before anchoring the results heading", () => {
+  const source = read("HotelResultsClient.tsx");
+  const start = source.indexOf("async function changeResultsPage");
+  const end = source.indexOf("useEffect", start);
+  const pagination = source.slice(start, end);
+  assert.match(pagination, /setPaginationPendingPage\(target\)[\s\S]*setCurrentResultsPage\(target\)[\s\S]*scrollToResultsAndWait\(\{[\s\S]*standaloneResultsHeadingRef\.current[\s\S]*setPaginationPendingPage\(null\)/);
+  assert.match(pagination, /focus\(\{ preventScroll: true \}\)/);
+  assert.doesNotMatch(pagination, /\{ top: 0 \}/);
+});

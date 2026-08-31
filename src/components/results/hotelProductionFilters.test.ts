@@ -63,18 +63,24 @@ test("mobile results expose one filter toolbar and one in-sheet clear action", (
   assert.doesNotMatch(sheet, /disabled=\{activeFilterCount === 0\}/);
   assert.match(sheet, /bg-transparent px-0 text-slate-700/);
   assert.match(sheet, /items-center justify-center text-slate-700/);
-  assert.doesNotMatch(source, /<HotelFilters\s+layout="compact"/);
+  assert.match(source, /desktopCompactFilterPlacement === "fixed"/);
+  assert.match(source, /<HotelFilters\s+layout="compact"/);
   assert.doesNotMatch(source, /onClearAll=\{resetFilters\}/);
   assert.doesNotMatch(source, /mobileQuickFacilities = \["wifi", "breakfast", "pool"\]/);
   assert.match(source, /overflow-x-auto overscroll-x-contain/);
   assert.match(source, /\[&::-webkit-scrollbar\]:hidden/);
   assert.match(source, /sticky top-\[calc\(3\.5rem\+env\(safe-area-inset-top\)\)\]/);
   assert.match(source, /<span>Filter<\/span>[\s\S]*trigger\("sort", currentSortLabel\)[\s\S]*trigger\(\s*"stars",\s*"Stars"[\s\S]*trigger\(\s*"amenities",\s*"Amenities"/);
-  assert.match(source, /type MobileHotelShortcutMenu = "sort" \| "stars" \| "amenities"/);
+  assert.match(source, /type MobileHotelShortcutMenu = "sort" \| "price" \| "stars" \| "amenities"/);
+  assert.match(source, /trigger\("price", "Price", priceFilterActive \? 1 : 0\)/);
+  assert.match(source, /mobileShortcutDraftMinPrice/);
+  assert.match(source, /setMinPrice\(mobileShortcutDraftMinPrice\)/);
   assert.match(source, /role="dialog"[\s\S]*mobile-hotel-\$\{mobileShortcutMenu\}-title/);
   assert.match(source, /mobileShortcutMenu === "stars"[\s\S]*setSelectedHotelClasses\(mobileShortcutDraftStars\)/);
   assert.match(source, /facilities: mobileShortcutDraftFacilities/);
   assert.match(source, /fixed inset-y-0 right-0[^\n]*h-\[100dvh\][^\n]*w-full/);
+  assert.match(source, /!guided && !showMobileCompactHotelSearch/);
+  assert.match(source, /openMobileShortcutMenu\("sort", event\.currentTarget\)/);
 });
 
 test("results omit the superseded comparison disclosure", () => {

@@ -48,7 +48,7 @@ type DesktopCompactFilterFrame = {
 
 type DesktopCompactFilterPlacementState = "hidden" | "fixed" | "docked";
 type DesktopStickyHotelSearchSection = "destination" | "dates" | "guests" | null;
-type MobileHotelShortcutMenu = "sort" | "stars" | "amenities";
+type MobileHotelShortcutMenu = "sort" | "price" | "stars" | "amenities";
 
 type CompactHotelFilterSectionId = "price" | "rating" | "locations" | "propertyTypes" | "roomTypes" | "bedTypes" | "meals" | "cancellationPolicies" | "facilities" | null;
 
@@ -294,6 +294,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const [mobileShortcutMenu, setMobileShortcutMenu] = useState<MobileHotelShortcutMenu | null>(null);
   const [mobileShortcutDraftStars, setMobileShortcutDraftStars] = useState<number[]>([]);
   const [mobileShortcutDraftFacilities, setMobileShortcutDraftFacilities] = useState<string[]>([]);
+  const [mobileShortcutDraftMinPrice, setMobileShortcutDraftMinPrice] = useState(0);
+  const [mobileShortcutDraftMaxPrice, setMobileShortcutDraftMaxPrice] = useState(1200);
   const [mobileHotelSearchOpen, setMobileHotelSearchOpen] = useState(false);
   const [mobileHotelSearchClosing, setMobileHotelSearchClosing] = useState(false);
   const [mobileHotelNestedLayerOpen, setMobileHotelNestedLayerOpen] = useState(false);
@@ -758,9 +760,10 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
   const desktopCompactFilterRef = useRef<HTMLDivElement | null>(null);
   const [showDesktopFilterShortcut, setShowDesktopFilterShortcut] = useState(false);
-  const [, setDesktopCompactFilterFrame] = useState<DesktopCompactFilterFrame | null>(null);
+  const [desktopCompactFilterFrame, setDesktopCompactFilterFrame] = useState<DesktopCompactFilterFrame | null>(null);
   const [desktopCompactFilterPlacement, setDesktopCompactFilterPlacement] = useState<DesktopCompactFilterPlacementState>("hidden");
-  const [, setDesktopCompactFilterMaxHeight] = useState(0);
+  const [desktopCompactFilterOpen, setDesktopCompactFilterOpen] = useState(false);
+  const [desktopCompactFilterMaxHeight, setDesktopCompactFilterMaxHeight] = useState(0);
   const desktopFilterShortcutVisibilityRef = useRef(false);
   const desktopCompactFilterPlacementRef = useRef<DesktopCompactFilterPlacementState>("hidden");
   const desktopCompactFilterFrameRef = useRef<DesktopCompactFilterFrame | null>(null);
@@ -845,11 +848,11 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     setPaginationMinHeight(paginationListRef.current?.getBoundingClientRect().height ?? null);
     setPaginationPendingPage(target);
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    setCurrentResultsPage(target);
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     await scrollToResultsAndWait({
       element: standaloneResultsHeadingRef.current,
     });
-    setCurrentResultsPage(target);
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     setPaginationPendingPage(null);
     setPaginationMinHeight(null);
     standaloneResultsHeadingRef.current?.focus({ preventScroll: true });
@@ -1043,6 +1046,13 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
 
     return () => window.cancelAnimationFrame(animationFrameId);
   }, [activeFilterCount, results.length, showDesktopFilterShortcut]);
+
+  useEffect(() => {
+    if (desktopCompactFilterPlacement !== "hidden") return;
+
+    const animationFrameId = window.requestAnimationFrame(() => setDesktopCompactFilterOpen(false));
+    return () => window.cancelAnimationFrame(animationFrameId);
+  }, [desktopCompactFilterPlacement]);
 
   useEffect(() => {
     if (!filterApplying || loading || error) return;
@@ -1328,6 +1338,10 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     }
 
     mobileShortcutTriggerRef.current = trigger;
+    if (menu === "price") {
+      setMobileShortcutDraftMinPrice(minPrice);
+      setMobileShortcutDraftMaxPrice(maxPrice);
+    }
     if (menu === "stars") setMobileShortcutDraftStars(selectedHotelClasses);
     if (menu === "amenities") setMobileShortcutDraftFacilities(selectedFilters.facilities);
     setMobileShortcutMenu(menu);
@@ -1361,9 +1375,9 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                 <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
                   <div>
                     <h2 id={`mobile-hotel-${mobileShortcutMenu}-title`} className="text-lg font-bold text-slate-950">
-                      {mobileShortcutMenu === "sort" ? "Sort results" : mobileShortcutMenu === "stars" ? "Hotel class" : "Amenities"}
+                      {mobileShortcutMenu === "sort" ? "Sort results" : mobileShortcutMenu === "price" ? "Total price" : mobileShortcutMenu === "stars" ? "Hotel class" : "Amenities"}
                     </h2>
-                    <p className="text-xs font-medium text-slate-500">{mobileShortcutMenu === "sort" ? "Choose how results are ordered" : "Choose one or more options"}</p>
+                    <p className="text-xs font-medium text-slate-500">{mobileShortcutMenu === "sort" ? "Choose how results are ordered" : mobileShortcutMenu === "price" ? `Estimated total for ${stayNights} ${stayNights === 1 ? "night" : "nights"}` : "Choose one or more options"}</p>
                   </div>
                   <button type="button" aria-label={`Close ${mobileShortcutMenu} selector`} onClick={() => closeMobileShortcutMenu(true)} className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
                     <X className="h-5 w-5" aria-hidden="true" />
@@ -1407,6 +1421,11 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                           );
                         })
                     : null}
+                  {mobileShortcutMenu === "price" ? (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                      <PriceFilterControl stayNights={stayNights} minPrice={mobileShortcutDraftMinPrice} maxPrice={mobileShortcutDraftMaxPrice} setMinPrice={(value) => setMobileShortcutDraftMinPrice(Math.min(value, mobileShortcutDraftMaxPrice))} setMaxPrice={(value) => setMobileShortcutDraftMaxPrice(Math.max(value, mobileShortcutDraftMinPrice))} resultMaxPrice={resultMaxPrice} formatPrice={formatHotelFilterPrice} filterRangeClass="h-2 w-full cursor-pointer appearance-none rounded-full bg-[#D7E5F8] accent-[#0067DB]" />
+                    </div>
+                  ) : null}
                   {mobileShortcutMenu === "amenities"
                     ? filterOptions.facilities.map((option) => {
                         const selected = mobileShortcutDraftFacilities.includes(option.value);
@@ -1424,7 +1443,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                 </div>
                 {mobileShortcutMenu !== "sort" ? (
                   <footer className="flex items-center gap-3 border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
-                    <button type="button" className="h-12 min-w-24 rounded-xl border border-slate-300 px-4 font-bold text-slate-700" onClick={() => (mobileShortcutMenu === "stars" ? setMobileShortcutDraftStars([]) : setMobileShortcutDraftFacilities([]))}>
+                    <button type="button" className="h-12 min-w-24 rounded-xl border border-slate-300 px-4 font-bold text-slate-700" onClick={() => { if (mobileShortcutMenu === "price") { setMobileShortcutDraftMinPrice(0); setMobileShortcutDraftMaxPrice(resultMaxPrice); } else if (mobileShortcutMenu === "stars") setMobileShortcutDraftStars([]); else setMobileShortcutDraftFacilities([]); }}>
                       Reset
                     </button>
                     <button
@@ -1432,7 +1451,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                       className="h-12 flex-1 rounded-xl bg-[#004BB8] px-5 font-bold text-white"
                       onClick={() => {
                         triggerFilterApplying();
-                        if (mobileShortcutMenu === "stars") setSelectedHotelClasses(mobileShortcutDraftStars);
+                        if (mobileShortcutMenu === "price") { setMinPrice(mobileShortcutDraftMinPrice); setMaxPrice(mobileShortcutDraftMaxPrice); }
+                        else if (mobileShortcutMenu === "stars") setSelectedHotelClasses(mobileShortcutDraftStars);
                         else
                           setSelectedFilters((current) => ({
                             ...current,
@@ -1456,6 +1476,10 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         <div data-mobile-hotel-shortcuts className="w-full min-w-0 bg-transparent">
           <div className="overflow-x-auto overscroll-x-contain px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" onScroll={() => closeMobileShortcutMenu()}>
             <div className="flex min-w-max items-center gap-2 py-2">
+              <div className="flex items-center gap-0.5">
+              <button type="button" aria-haspopup="dialog" aria-expanded={mobileShortcutMenu === "sort"} onClick={(event) => openMobileShortcutMenu("sort", event.currentTarget)} className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg px-2 text-sm font-bold text-slate-700 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]">
+                Sort
+              </button>
               <button
                 type="button"
                 className={cn(shortcutButtonClass, activeFilterCount > 0 && "border-[#004BB8] bg-[#F7FAFF] text-[#004BB8]")}
@@ -1470,10 +1494,12 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                 {activeFilterCount ? <span className="ms-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] text-[#004BB8]">{activeFilterCount}</span> : null}
               </button>
               {trigger("sort", currentSortLabel)}
+              {hasPricedResults ? trigger("price", "Price", priceFilterActive ? 1 : 0) : null}
               {trigger("stars", "Stars", selectedHotelClasses.length)}
               {trigger("amenities", "Amenities", selectedFilters.facilities.length)}
             </div>
           </div>
+        </div>
         </div>
         {menu}
       </>
@@ -1642,23 +1668,28 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                   </span>
                 </span>
               </button>
-              <button
-                type="button"
-                onClick={(event) => {
-                  mobileFiltersLauncherRef.current = event.currentTarget;
-                  mobileFiltersModalityRef.current = getOverlayActivationModality(event);
-                  setFiltersOpen(true);
-                }}
-                className="inline-flex h-11 shrink-0 items-center justify-center gap-1 rounded-lg px-2 text-sm font-bold text-[#004BB8] hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]"
-              >
-                <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-                {t("filters")}
-              </button>
+              <div className="flex items-center gap-0.5">
+                <button type="button" aria-haspopup="dialog" aria-expanded={mobileShortcutMenu === "sort"} onClick={(event) => openMobileShortcutMenu("sort", event.currentTarget)} className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg px-2 text-sm font-bold text-slate-700 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]">
+                  Sort
+                </button>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    mobileFiltersLauncherRef.current = event.currentTarget;
+                    mobileFiltersModalityRef.current = getOverlayActivationModality(event);
+                    setFiltersOpen(true);
+                  }}
+                  className="inline-flex h-11 shrink-0 items-center justify-center gap-1 rounded-lg px-2 text-sm font-bold text-[#004BB8] hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]"
+                >
+                  <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                  {t("filters")}
+                </button>
+              </div>
             </div>
           </div>
         ) : null}
 
-        {!guided ? (
+        {!guided && !showMobileCompactHotelSearch ? (
           <section className={cn("sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-[850] mt-12 bg-[#f6f8fb]/95 px-1 py-2 sm:hidden", mobileHotelSearchOpen && "pointer-events-none")} aria-label={t("filters")} aria-hidden={mobileHotelSearchOpen ? true : undefined} inert={mobileHotelSearchOpen ? true : undefined}>
             {/* The shortcut renderer mirrors Flight Results and refs are only read by event handlers. */}
             {/* eslint-disable-next-line react-hooks/refs */}
@@ -1767,6 +1798,16 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
               <div ref={desktopFilterSentinelRef} className="h-px w-full" aria-hidden="true" />
             </div>
           </aside>
+
+          {desktopCompactFilterPlacement === "fixed" && desktopCompactFilterFrame ? (
+            <div className="fixed z-[980] hidden min-[1200px]:block" style={{ left: desktopCompactFilterFrame.left, top: desktopCompactFilterTopOffset, width: desktopCompactFilterFrame.width }}>
+              <button type="button" aria-expanded={desktopCompactFilterOpen} aria-controls="desktop-compact-hotel-filters" onClick={() => setDesktopCompactFilterOpen((open) => !open)} className="flex h-11 w-full items-center justify-between rounded-xl border border-[#C9D9EA] bg-white px-3.5 text-sm font-bold text-slate-900 shadow-[0_12px_28px_-18px_rgba(15,23,42,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
+                <span className="flex items-center gap-2"><SlidersHorizontal className="h-4 w-4 text-[#004BB8]" aria-hidden="true" />Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</span>
+                <ChevronDown className={cn("h-4 w-4 transition-transform", desktopCompactFilterOpen && "rotate-180")} aria-hidden="true" />
+              </button>
+              {desktopCompactFilterOpen ? <div id="desktop-compact-hotel-filters" ref={desktopCompactFilterRef} className="mt-2 overflow-hidden" style={{ maxHeight: desktopCompactFilterMaxHeight }}><HotelFilters layout="compact" propertyNameQuery={propertyNameQuery} setPropertyNameQuery={updatePropertyNameQuery} t={t} maxPrice={maxPrice} minPrice={minPrice} setMaxPrice={updateMaxPrice} setMinPrice={updateMinPrice} resultMaxPrice={resultMaxPrice} hasPricedResults={hasPricedResults} formatPrice={formatHotelFilterPrice} locale={locale} stayNights={stayNights} selectedRatings={selectedHotelClasses} toggleRating={toggleHotelClass} starRatingCounts={starRatingCounts} options={filterOptions} selectedFilters={selectedFilters} toggleFilter={toggleFilter} activeFilterCount={activeFilterCount} onClear={resetFilters} /></div> : null}
+            </div>
+          ) : null}
 
           <section className="min-w-0 space-y-4">
             {error ? (
