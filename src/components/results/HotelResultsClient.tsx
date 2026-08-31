@@ -96,7 +96,7 @@ type DesktopStickyHotelSearchSection =
   | "dates"
   | "guests"
   | null;
-type MobileHotelShortcutMenu = "sort" | "stars" | "amenities";
+type MobileHotelShortcutMenu = "sort";
 
 type CompactHotelFilterSectionId =
   | "price"
@@ -782,6 +782,49 @@ export function HotelResultsExperience({
       window.removeEventListener("keydown", handleKeyDown);
       releaseExistingLock();
     };
+  }, [filtersOpen]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const marker = "kurioticketHotelFiltersOpen";
+
+    if (filtersOpen) {
+      if (!window.history.state?.[marker]) {
+        window.history.pushState(
+          { ...(window.history.state ?? {}), [marker]: true },
+          "",
+          window.location.href,
+        );
+      }
+
+      const handlePopState = (event: PopStateEvent) => {
+        if (!event.state?.[marker]) {
+          setFiltersOpen(false);
+          window.requestAnimationFrame(() =>
+            restoreOverlayLauncherFocus(
+              mobileFiltersLauncherRef.current,
+              mobileFiltersModalityRef.current,
+            ),
+          );
+        }
+      };
+
+      window.addEventListener("popstate", handlePopState);
+      return () => window.removeEventListener("popstate", handlePopState);
+    }
+
+    if (window.history.state?.[marker]) {
+      window.history.back();
+      window.setTimeout(
+        () =>
+          restoreOverlayLauncherFocus(
+            mobileFiltersLauncherRef.current,
+            mobileFiltersModalityRef.current,
+          ),
+        50,
+      );
+    }
   }, [filtersOpen]);
 
   useEffect(() => {
@@ -1677,15 +1720,6 @@ export function HotelResultsExperience({
       "focus-ring inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[11px] border border-[#D8E1EC] bg-white px-3.5 text-[14px] font-semibold text-[#142033] transition hover:border-[#B9C8D9] hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
     const menuItemClass =
       "flex min-h-11 w-full items-center justify-between gap-2 rounded-[9px] px-2.5 text-left text-[14px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
-    const starOptions = [5, 4, 3, 2, 1];
-    const starLabel =
-      selectedHotelClasses.length === 0
-        ? "Stars"
-        : `Class (${selectedHotelClasses.length})`;
-    const amenitiesLabel = selectedFilters.facilities.length
-      ? `Amenities (${selectedFilters.facilities.length})`
-      : "Amenities";
-
     const trigger = (
       menu: MobileHotelShortcutMenu,
       label: string,
@@ -1751,51 +1785,6 @@ export function HotelResultsExperience({
                     );
                   })
                 : null}
-              {mobileShortcutMenu === "stars"
-                ? starOptions.map((rating) => {
-                    const selected = selectedHotelClasses.includes(rating);
-                    const label = formatHotelRating(rating, t, locale);
-                    return (
-                      <button
-                        key={rating}
-                        type="button"
-                        role="menuitemcheckbox"
-                        aria-checked={selected}
-                        className={cn(menuItemClass, selected ? "bg-[#F7FAFF] text-[#004BB8]" : "text-slate-700 hover:bg-slate-50")}
-                        onClick={() => {
-                          toggleHotelClass(rating);
-                        }}
-                      >
-                        <span>{label}</span>
-                        <span className="flex items-center gap-1.5 text-[11px] text-slate-500">
-                          {formatHotelCount(starRatingCounts[rating as HotelStarRatingSelection], locale)}
-                          {selected ? <Check className="h-3.5 w-3.5 text-[#004BB8]" aria-hidden="true" /> : null}
-                        </span>
-                      </button>
-                    );
-                  })
-                : null}
-              {mobileShortcutMenu === "amenities"
-                ? filterOptions.facilities.map((option) => {
-                    const selected = selectedFilters.facilities.includes(option.value);
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        role="menuitemcheckbox"
-                        aria-checked={selected}
-                        className={cn(menuItemClass, selected ? "bg-[#F7FAFF] text-[#004BB8]" : "text-slate-700 hover:bg-slate-50")}
-                        onClick={() => toggleFilter("facilities", option.value)}
-                      >
-                        <span className="truncate">{option.label}</span>
-                        <span className="flex items-center gap-1.5 text-[11px] text-slate-500">
-                          {formatHotelCount(option.count, locale)}
-                          {selected ? <Check className="h-3.5 w-3.5 text-[#004BB8]" aria-hidden="true" /> : null}
-                        </span>
-                      </button>
-                    );
-                  })
-                : null}
             </div>,
             document.body,
           )
@@ -1805,18 +1794,16 @@ export function HotelResultsExperience({
       <>
         <div
           data-mobile-hotel-shortcuts
-          className="w-full min-w-0 overflow-x-auto pb-1 pe-3 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden"
+          className="w-full min-w-0 pe-3"
           onScroll={() => closeMobileShortcutMenu()}
         >
-          <div className="flex w-max flex-nowrap items-center gap-2">
-            <button type="button" className={shortcutButtonClass} onClick={(event) => { mobileFiltersLauncherRef.current = event.currentTarget; mobileFiltersModalityRef.current = getOverlayActivationModality(event); setFiltersOpen(true); }}>
+          <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+            <button type="button" className={cn(shortcutButtonClass, "w-full justify-start")} onClick={(event) => { mobileFiltersLauncherRef.current = event.currentTarget; mobileFiltersModalityRef.current = getOverlayActivationModality(event); setFiltersOpen(true); }}>
               <SlidersHorizontal className="h-4 w-4 text-[#004BB8]" strokeWidth={2.2} aria-hidden="true" />
-              <span>Filter</span>
+              <span>{t("filters")}</span>
               {activeFilterCount ? <span className="ms-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] text-[#004BB8]">{activeFilterCount}</span> : null}
             </button>
             {trigger("sort", currentSortLabel, 190)}
-            {trigger("stars", starLabel, 190)}
-            {trigger("amenities", amenitiesLabel, 240)}
           </div>
         </div>
         {menu}
@@ -2374,7 +2361,7 @@ export function HotelResultsExperience({
                   t={t}
                 />
 
-                <Button type="button" variant="secondary" className="min-h-11 gap-2 min-[1200px]:hidden" onClick={(event) => { mobileFiltersLauncherRef.current = event.currentTarget; mobileFiltersModalityRef.current = getOverlayActivationModality(event); setFiltersOpen(true); }}>
+                <Button type="button" variant="secondary" className="hidden min-h-11 gap-2 sm:inline-flex min-[1200px]:hidden" onClick={(event) => { mobileFiltersLauncherRef.current = event.currentTarget; mobileFiltersModalityRef.current = getOverlayActivationModality(event); setFiltersOpen(true); }}>
                   <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
                   {t("filters")}{activeFilterCount ? ` (${activeFilterCount})` : ""}
                 </Button>
@@ -2608,10 +2595,10 @@ export function HotelResultsExperience({
                 <div className="min-w-0"><h2 className="truncate text-lg font-bold leading-6 tracking-[-0.01em] text-slate-950">{t("filters")}</h2><p className="text-xs font-medium text-slate-500">{activeFilterCount ? `${activeFilterCount} applied` : "All stays shown"}</p></div>
               </div>
             </div>
-            <div className="flex items-center gap-1"><button type="button" disabled={activeFilterCount === 0} onClick={resetFilters} className="min-h-10 rounded-lg px-2 text-sm font-bold text-[#004BB8] disabled:text-slate-400">{t("clearAll")}</button><Button
+            <div className="flex items-center gap-1"><button type="button" disabled={activeFilterCount === 0} onClick={resetFilters} className="min-h-11 rounded-lg px-2.5 text-sm font-bold text-[#004BB8] transition hover:bg-[#EAF2FB] disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent">{t("clearAll")}</button><Button
               type="button"
               variant="ghost"
-              className="h-10 w-10 shrink-0 rounded-full border border-slate-200 bg-white px-0 text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+              className="h-11 w-11 shrink-0 rounded-xl bg-slate-100 px-0 text-slate-700 transition hover:bg-slate-200 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
               aria-label={t("closeFilters")}
               onClick={() => setFiltersOpen(false)}
             >
@@ -2632,7 +2619,7 @@ export function HotelResultsExperience({
           {activeFilterChips.length ? (
             <div className="mb-3 rounded-xl border border-[#C9D9EA] bg-white p-3 shadow-[0_8px_24px_-20px_rgba(15,23,42,0.5)]">
               <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Applied filters</p>
-              <ActiveHotelFilterChips chips={activeFilterChips} onRemove={removeFilterChip} onClearAll={resetFilters} t={t} />
+              <ActiveHotelFilterChips chips={activeFilterChips} onRemove={removeFilterChip} onClearAll={resetFilters} t={t} showClearAll={false} />
             </div>
           ) : null}
           <HotelFilters
@@ -2660,25 +2647,24 @@ export function HotelResultsExperience({
           />
         </div>
 
-        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_24px_rgba(15,23,42,0.08)] sm:px-5 sm:pb-4 sm:pt-4">
+        <div className="flex shrink-0 items-center border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_24px_rgba(15,23,42,0.08)] sm:px-5 sm:pb-4 sm:pt-4">
           <Button
             type="button"
-            variant="ghost"
-            disabled={activeFilterChips.length === 0}
-            className="h-12 min-w-0 rounded-xl px-0 text-sm font-bold text-[#004BB8] transition hover:bg-transparent hover:text-[#003f9c] disabled:pointer-events-none disabled:text-slate-400"
-            onClick={resetFilters}
-          >
-            {t("clearAll")}
-          </Button>
-          <Button
-            type="button"
-            className="h-12 min-w-0 flex-1 rounded-xl bg-[#004BB8] px-5 text-base font-bold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
+            disabled={filterApplying || sortedVisibleHotels.length === 0}
+            aria-live="polite"
+            className="h-12 w-full min-w-0 rounded-xl bg-[#004BB8] px-5 text-base font-bold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
             onClick={() => {
               triggerFilterApplying();
               setFiltersOpen(false);
             }}
           >
-              Show {sortedVisibleHotels.length} {sortedVisibleHotels.length === 1 ? "result" : "results"}
+              {filterApplying
+                ? "Updating results…"
+                : sortedVisibleHotels.length === 0
+                  ? "No matching stays"
+                  : activeFilterCount > 0
+                    ? `View ${sortedVisibleHotels.length} matching ${sortedVisibleHotels.length === 1 ? "stay" : "stays"}`
+                    : `View all ${sortedVisibleHotels.length} stays`}
           </Button>
         </div>
       </aside>
@@ -2798,11 +2784,13 @@ function ActiveHotelFilterChips({
   onRemove,
   onClearAll,
   t,
+  showClearAll = true,
 }: {
   chips: ActiveHotelFilterChip[];
   onRemove: (chip: ActiveHotelFilterChip) => void;
   onClearAll: () => void;
   t: (key: string) => string;
+  showClearAll?: boolean;
 }) {
   if (!chips.length) return null;
 
@@ -2831,13 +2819,13 @@ function ActiveHotelFilterChips({
           </span>
         </button>
       ))}
-      <button
+      {showClearAll ? <button
         type="button"
-        className="rounded-full px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 transition-colors hover:text-[#235A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+        className="hidden rounded-full px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 transition-colors hover:text-[#235A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 sm:inline-flex"
         onClick={onClearAll}
       >
         {t("clearAll")}
-      </button>
+      </button> : null}
     </div>
   );
 }

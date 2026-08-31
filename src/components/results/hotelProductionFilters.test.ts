@@ -41,14 +41,27 @@ test("price filters share the static estimated-total basis", () => {
 
 test("filter sheet exposes clear and deterministic result apply feedback", () => {
   assert.match(source, /disabled=\{activeFilterCount === 0\}/);
-  assert.match(source, /Show \{sortedVisibleHotels\.length\}/);
+  assert.match(source, /No matching stays/);
+  assert.match(source, /View \$\{sortedVisibleHotels\.length\} matching/);
+  assert.match(source, /disabled=\{filterApplying \|\| sortedVisibleHotels\.length === 0\}/);
   assert.match(source, /event\.key === "Escape"/);
   assert.match(source, /event\.key === "Tab"/);
+  assert.match(source, /kurioticketHotelFiltersOpen/);
+  assert.match(source, /window\.addEventListener\("popstate"/);
   assert.match(source, /env\(safe-area-inset-top\)/);
   assert.match(source, /env\(safe-area-inset-bottom\)/);
   assert.match(source, /overflow-y-auto overflow-x-hidden overscroll-contain/);
   assert.match(source, /Applied filters/);
   assert.match(source, /bg-slate-950\/35 backdrop-blur-\[1px\]/);
+});
+
+test("mobile results expose one filter toolbar and one in-sheet clear action", () => {
+  assert.match(source, /type MobileHotelShortcutMenu = "sort"/);
+  assert.doesNotMatch(source, /trigger\("stars"|trigger\("amenities"/);
+  assert.match(source, /hidden min-h-11 gap-2 sm:inline-flex min-\[1200px\]:hidden/);
+  const sheet = source.slice(source.indexOf('<aside\n        ref={mobileFiltersDialogRef}'), source.indexOf('</aside>', source.indexOf('<aside\n        ref={mobileFiltersDialogRef}')));
+  assert.equal((sheet.match(/\{t\("clearAll"\)\}/g) ?? []).length, 1);
+  assert.match(sheet, /showClearAll=\{false\}/);
 });
 
 test("results omit the superseded comparison disclosure", () => {
