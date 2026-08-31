@@ -12,15 +12,17 @@ test("discovery telemetry is a no-op without a configured sink", () => {
   assert.doesNotThrow(() => recordFlightLocationDiscovery({ providerStatus: "failed", latencyMs: 7_001, resultCount: 0, usedFallback: true, errorCategory: "timeout" }));
 });
 
-test("discovery telemetry emits only bounded aggregate fields and never raw queries", () => {
+test("flight discovery adapts to the one privacy-safe aggregate event contract", async () => {
   const events: FlightLocationDiscoveryEvent[] = [];
   setFlightLocationDiscoverySinkForTests((event) => events.push(event));
   recordFlightLocationDiscovery({ providerStatus: "failed", latencyMs: 7_001, resultCount: 2, usedFallback: true, errorCategory: "timeout" });
   recordFlightLocationSelection("owned-catalog", 999);
+  await new Promise((resolve) => setTimeout(resolve, 0));
   setFlightLocationDiscoverySinkForTests(null);
-  assert.deepEqual(events, [
-    { name: "flight_location_discovery", outcome: "fallback", providerStatus: "failed", latencyBucket: "over-3s", resultCountBucket: "1-3", errorCategory: "timeout" },
-    { name: "flight_location_selection", outcome: "selected", source: "owned-catalog", rank: 24 },
+  assert.equal(events.length, 2);
+  assert.deepEqual(events.map(({ name, product, outcome, provenance, providerOutcome, errorCategory, resultCountBucket, selectionRankBucket }) => ({ name, product, outcome, provenance, providerOutcome, errorCategory, resultCountBucket, selectionRankBucket })), [
+    { name: "location-discovery-quality", product: "flights", outcome: "results", provenance: "fallback-catalog", providerOutcome: "failed", errorCategory: "timeout", resultCountBucket: "two-to-five", selectionRankBucket: "none" },
+    { name: "location-discovery-quality", product: "flights", outcome: "selected", provenance: "fallback-catalog", providerOutcome: "not-applicable", errorCategory: "none", resultCountBucket: "one", selectionRankBucket: "eleven-plus" },
   ]);
   assert.ok(events.every((event) => !("query" in event) && !("location" in event)));
 });

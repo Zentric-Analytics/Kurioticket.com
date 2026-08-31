@@ -50,7 +50,11 @@ Static recovery uses `resolveStaticSearch`: `exact` is a known owned-catalog mat
 
 Record privacy-safe counters and timings only: product, source, latency bucket, normalized query-length bucket, result count, selected rank/kind, fallback and empty reason. Do not log raw queries, coordinates, recent entries, account identity, or provider payloads. Provider timeouts, failure ratios, fallback rates, empty rates and stale-catalog age require alerts.
 
-The flight hook emits bounded latency/result buckets, provider status/error category, fallback/zero-result outcome, and bounded selection source/rank. It is a no-op without a configured sink, so this increment creates no new external data flow. A later operations change may bind it to an approved aggregated sink; raw queries and selected location values are intentionally absent from the event type.
+Phase 7 implements that boundary in `src/lib/locations/observability.ts`. Its closed, versioned event type accepts no raw location text, IDs, coordinates, identity/network fields, provider payloads, precise timestamps or history. Counts, ranks and latency are bucketed before the pluggable sink; no sink is configured, and sink failure cannot break search. Activation requires a separate privacy/legal/operations decision, aggregation and retention controls, enrichment prohibition, named ownership and a kill switch as specified in the operations runbook.
+
+The flight discovery hook is an adapter to this same event contract rather than a second telemetry schema or sink. It maps provider outcome/error category, live-versus-fallback provenance, zero-result recovery, latency/result buckets and bounded selection rank into the generic privacy-safe event. The shared sink remains no-op by default, so integration creates no external data flow.
+
+Static catalogue review uses deterministic candidate IDs, an explicit proposed/evidence/approved/promoted/rollback lifecycle and a versioned manifest/report boundary. Approved candidates require evidence, rejected/rolled-back candidates require reasons, and reports never claim availability. This is intentionally file/interface tooling only: no feedback transmission, admin UI or database migration is introduced. Promotion remains a separate reviewed catalogue PR with the previous catalogue version as its rollback point.
 
 ## Dataset ingestion and maintenance
 
