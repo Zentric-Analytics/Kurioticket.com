@@ -26,12 +26,28 @@ test("recovery codes remain one-time selectable state and close through localize
   assert.match(security, /setRecoveryCodes\(\[\]\)/);
 });
 
-test("setup keeps strict verification, dismisses the keyboard, and never renders the URI", () => {
+test("setup renders the server URI only into a local QR code and keeps the manual fallback", () => {
+  assert.match(security, /import QRCode from "react-native-qrcode-svg"/);
+  assert.match(security, /<QRCode value=\{setup\.otpauthUri\} size=\{200\} quietZone=\{12\} backgroundColor="#FFFFFF" \/>/);
+  assert.match(security, /accessibilityLabel=\{c\.twoFactorQrAccessibilityLabel\}/);
+  assert.match(security, /\{c\.scanQrInstructions\}[^]*\{c\.manualSetupInstructions\}/);
+  assert.match(security, /<Text selectable style=\{\[styles\.setupKey/);
+  assert.match(security, /\{setup\.manualSetupKey\}<\/Text>/);
+  assert.doesNotMatch(security, />\{setup\.otpauthUri\}</);
+  assert.doesNotMatch(security, /accessibilityLabel=\{setup\.(?:otpauthUri|manualSetupKey)\}/);
+});
+
+test("setup remains ephemeral and disappears whenever sensitive setup state is cleared", () => {
+  assert.match(security, /: setup \? <View[^]*<QRCode value=\{setup\.otpauthUri\}/);
+  assert.match(security, /setRecoveryCodes\(result\.recoveryCodes\);setSetup\(null\);setAuthenticatorCode\(""\)/);
+  assert.doesNotMatch(security, /console\.(?:log|info|debug|warn|error)/);
+  assert.doesNotMatch(security, /(?:SecureStore|AsyncStorage|persist|cache).*?(?:otpauthUri|manualSetupKey|authenticatorCode|recoveryCodes)/i);
+});
+
+test("setup keeps strict verification and dismisses the keyboard", () => {
   assert.match(security, /!\/\^\\d\{6\}\$\/\.test\(authenticatorCode\)/);
   assert.match(security, /Keyboard\.dismiss\(\);setRecoveryCodes/);
   assert.match(security, /AccessibilityInfo\.announceForAccessibility\(c\.recoveryHelp\)/);
-  assert.match(security, /<Text selectable style=\{\[styles\.setupKey/);
-  assert.doesNotMatch(security, />\{setup\.otpauthUri\}</);
 });
 
 test("successful disable closes the sensitive flow and surfaces localized disabled feedback", () => {
