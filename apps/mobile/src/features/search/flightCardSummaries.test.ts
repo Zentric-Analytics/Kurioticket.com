@@ -13,9 +13,12 @@ test("metadata is one horizontal, flexible row in baggage, cabin, fare-rules ord
   const fareRules = row.indexOf("Fare rules\n");
 
   assert.ok(baggage >= 0 && cabin > baggage && fareRules > cabin);
-  assert.doesNotMatch(row, /metadataItem|Luggage|Armchair|ShieldCheck/);
-  assert.match(source, /metadataRow: \{ width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start" \}/);
-  assert.equal(row.match(/<Text> · <\/Text>/g)?.length, 2);
+  assert.equal(row.match(/style=\{s0\.metadataItem\}/g)?.length, 3);
+  assert.match(row, /<Luggage\b/);
+  assert.match(row, /<Armchair\b/);
+  assert.match(row, /<FileText\b/);
+  assert.match(source, /metadataRow: \{ width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", paddingTop: 1, paddingBottom: 2 \}/);
+  assert.equal(row.match(/>·<\/Text>/g)?.length, 2);
 });
 
 test("metadata shows values without redundant visual category labels", () => {
@@ -23,9 +26,11 @@ test("metadata shows values without redundant visual category labels", () => {
   assert.doesNotMatch(row, /<Text[^>]*>Baggage: <\/Text>/);
   assert.doesNotMatch(row, /<Text[^>]*>Cabin: <\/Text>/);
   assert.doesNotMatch(row, /<Text[^>]*>Fare rules: <\/Text>/);
-  assert.match(row, /\{baggageSummary\}<Text> · <\/Text>\{cabinSummary\}<Text> · <\/Text>Fare rules/);
-  assert.equal(row.match(/numberOfLines=\{1\}/g)?.length, 1);
-  assert.equal(row.match(/ellipsizeMode="tail"/g)?.length, 1);
+  assert.match(row, /\{baggageSummary\}/);
+  assert.match(row, /\{cabinSummary\}/);
+  assert.match(row, />\s*Fare rules\s*<\/Text>/);
+  assert.equal(row.match(/numberOfLines=\{1\}/g)?.length, 3);
+  assert.equal(row.match(/ellipsizeMode="tail"/g)?.length, 3);
   assert.doesNotMatch(row, /adjustsFontSizeToFit/);
   assert.doesNotMatch(source, /metadataLabel/);
 });
@@ -37,12 +42,13 @@ test("metadata summaries use provider result fields exactly once", () => {
   assert.doesNotMatch(card, /baggageBenefit|fareBenefit|benefitList|benefitItem/);
 });
 
-test("metadata has one complete accessibility label without visible icons", () => {
+test("metadata has one complete accessibility label with decorative icons", () => {
   assert.match(card, /const baggageAccessibility = result\.baggageInfo\?\.trim\(\) \|\| baggageSummary/);
   assert.match(card, /const fareRulesAccessibility = result\.refundInfo\?\.trim\(\) \|\| fareRulesSummary/);
   assert.match(card, /accessibilityLabel=\{`Baggage: \$\{baggageAccessibility\}\. Cabin: \$\{cabinSummary\}\. Fare rules: \$\{fareRulesAccessibility\}\.`\}/);
-  assert.match(card, /<Text accessible=\{false\} numberOfLines=\{1\} ellipsizeMode="tail"/);
-  assert.doesNotMatch(card, /<(?:Luggage|Armchair|ShieldCheck)\b/);
+  assert.equal(card.match(/<View accessible=\{false\} style=\{s0\.metadataItem\}>/g)?.length, 3);
+  assert.equal(card.match(/<(?:Luggage|Armchair|FileText) accessible=\{false\} size=\{13\} strokeWidth=\{2\} color=\{supportTextColor\} \/>/g)?.length, 3);
+  assert.ok((card.match(/<Text accessible=\{false\}/g)?.length ?? 0) >= 5);
 });
 
 test("metadata and full-width journey fit supported mobile widths", () => {

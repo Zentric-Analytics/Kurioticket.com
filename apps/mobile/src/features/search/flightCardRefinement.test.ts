@@ -138,17 +138,19 @@ test("fare-rule summary classifies varied provider language without exact matchi
 test("flight card keeps horizontal metadata compact while airline identity may grow", () => {
   assert.match(card, /style=\{\[s0\.bigPrice, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.8\}/);
   assert.match(card, /style=\{\[s0\.airlineName, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{2\} ellipsizeMode="tail">/);
-  assert.doesNotMatch(card, /style=\{s0\.metadataItem\}/);
+  assert.equal(card.match(/style=\{s0\.metadataItem\}/g)?.length, 3);
   assert.match(source, /card: \{[\s\S]*?paddingHorizontal: 12,[\s\S]*?paddingVertical: 9,[\s\S]*?gap: 5,/);
-  assert.match(source, /metadataRow: \{ width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start" \}/);
-  assert.doesNotMatch(source, /metadataRow: \{[^}]*gap:/);
-  assert.doesNotMatch(source, /metadataItem:/);
-  assert.match(source, /metadataText: \{ flexShrink: 1, minWidth: 0, fontSize: 11, lineHeight: 14, fontWeight: "500", fontFamily: appFonts\.medium \}/);
+  assert.match(source, /metadataRow: \{ width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", paddingTop: 1, paddingBottom: 2 \}/);
+  assert.doesNotMatch(source, /metadataRow: \{[^}]*flexWrap/);
+  assert.match(source, /metadataItem: \{ flexDirection: "row", alignItems: "center", gap: 3, minWidth: 0, flexShrink: 1 \}/);
+  assert.match(source, /metadataText: \{ flexShrink: 1, minWidth: 0, fontSize: 12, lineHeight: 15, fontWeight: "500", fontFamily: appFonts\.medium \}/);
   assert.doesNotMatch(source, /metadataText: \{[^}]*flex: 1/);
-  assert.equal(card.match(/<Text accessible=\{false\} numberOfLines=\{1\} ellipsizeMode="tail" style=\{\[s0\.metadataText/g)?.length, 1);
-  assert.equal(card.match(/s0\.metadataText, \{ color: supportTextColor \}/g)?.length, 1);
-  assert.equal(card.match(/<Text> · <\/Text>/g)?.length, 2);
-  assert.doesNotMatch(card, /<(?:Luggage|Armchair|ShieldCheck)\b/);
+  assert.equal(card.match(/<Text accessible=\{false\} numberOfLines=\{1\} ellipsizeMode="tail" style=\{\[s0\.metadataText/g)?.length, 3);
+  assert.equal(card.match(/s0\.metadataText, \{ color: supportTextColor \}/g)?.length, 3);
+  assert.equal(card.match(/style=\{\[s0\.metadataSeparator, \{ color: supportTextColor \}\]\}>·<\/Text>/g)?.length, 2);
+  for (const icon of ["Luggage", "Armchair", "FileText"]) {
+    assert.match(card, new RegExp(`<${icon} accessible=\\{false\\} size=\\{13\\} strokeWidth=\\{2\\} color=\\{supportTextColor\\} />`));
+  }
   assert.doesNotMatch(source, /benefitList:|benefitItem:/);
   assert.doesNotMatch(source, /detailsButton(?:Text)?:/);
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
@@ -193,7 +195,7 @@ test("flight card keeps long prices single-line in the full-width fare row", () 
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch" \}/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center" \}/);
-  assert.doesNotMatch(source, /metadataItem:/);
+  assert.match(source, /metadataItem: \{ flexDirection: "row"/);
   assert.match(source, /fareRow: \{ width: "100%", paddingTop: 10, flexDirection: "row", justifyContent: "flex-end" \}/);
   assert.doesNotMatch(source, /actionColumn:/);
   assert.doesNotMatch(source, /priceBox:/);
@@ -334,9 +336,11 @@ test("flight journey applies the approved Step 5 hierarchy, colors, and accessib
   assert.match(source, /bigPrice: \{ fontSize: 20, lineHeight: 25, fontWeight: "900"/);
 });
 
-test("flight card uses Lucide icons for its route and saved state only", () => {
+test("flight card uses the approved Lucide icons", () => {
   assert.match(card, /<PlaneTakeoff\b/);
-  assert.doesNotMatch(card, /<(?:Luggage|Armchair|ShieldCheck)\b/);
+  assert.match(card, /<Luggage\b/);
+  assert.match(card, /<Armchair\b/);
+  assert.match(card, /<FileText\b/);
   assert.match(source, /import \{ Heart \} from "lucide-react-native"/);
   assert.match(card, /<Heart[\s\S]*fill=\{saved \? androidFavoriteColors\.active : "transparent"\}/);
   assert.match(card, /color=\{saved \? androidFavoriteColors\.active : theme\.textSecondary\}/);
