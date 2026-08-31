@@ -56,7 +56,7 @@ test("every legitimate amenity becomes an option, including universal facilities
 
   assert.deepEqual(
     options.map((option) => option.value),
-    ["wifi", "generic-pet grooming", "pool", "spa"],
+    ["pool", "spa", "wifi", "generic-pet grooming"],
   );
   assert.equal(options.find((option) => option.value === "wifi")?.count, 2);
 });
@@ -123,7 +123,7 @@ test("invalid facility-like text is excluded through amenity presentation rules"
   assert.deepEqual(options, []);
 });
 
-test("options sort by count, then label", () => {
+test("high-intent amenities are prioritized before remaining options", () => {
   const options = buildHotelFacilityFilterOptions(
     [
       hotel("one", ["Pool", "Spa", "Breakfast", "Parking"]),
@@ -135,12 +135,21 @@ test("options sort by count, then label", () => {
 
   assert.deepEqual(
     options.map((option) => option.value),
-    ["pool", "parking", "spa", "breakfast"],
+    ["parking", "pool", "spa", "breakfast"],
   );
   assert.deepEqual(
     options.map((option) => option.count),
-    [3, 2, 2, 1],
+    [2, 3, 2, 1],
   );
+});
+
+test("pet, EV and fitness aliases share canonical values and priority", () => {
+  const options = buildHotelFacilityFilterOptions([
+    hotel("one", ["Pets allowed", "EV charging", "Fitness centre"]),
+    hotel("two", ["Pet friendly", "Electric vehicle charging", "Gym"]),
+  ], t);
+  assert.deepEqual(options.map((option) => option.value), ["petFriendly", "evCharging", "fitness"]);
+  assert.deepEqual(options.map((option) => option.count), [2, 2, 2]);
 });
 
 test("empty selection matches every hotel", () => {

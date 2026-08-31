@@ -15,6 +15,8 @@ const canonicalFacilityLabels: Record<string, string> = {
   spa: "Spa",
   airportShuttle: "Airport shuttle",
   parking: "Parking",
+  petFriendly: "Pet friendly",
+  evCharging: "EV charging",
   fitness: "Fitness center",
   workspace: "Workspace",
   quietRooms: "Quiet rooms",
@@ -87,10 +89,17 @@ export function buildHotelFacilityFilterOptions(
       label: optionLabels.get(value) ?? value,
       count,
     }))
-    .sort(
-      (first, second) =>
-        second.count - first.count || first.label.localeCompare(second.label),
-    );
+    .sort((first, second) => {
+      const priority = ["petFriendly", "parking", "evCharging", "pool", "spa", "fitness"];
+      const firstPriority = priority.indexOf(first.value);
+      const secondPriority = priority.indexOf(second.value);
+      if (firstPriority >= 0 || secondPriority >= 0) {
+        if (firstPriority < 0) return 1;
+        if (secondPriority < 0) return -1;
+        return firstPriority - secondPriority;
+      }
+      return second.count - first.count || first.label.localeCompare(second.label);
+    });
 }
 
 export function hotelMatchesFacilityFilters(

@@ -266,7 +266,7 @@ type ActiveHotelFilterChip = {
   label: string;
   group?: keyof HotelFilterSelections;
   value?: string;
-  kind?: "priceRange" | "hotelClass";
+  kind?: "priceRange" | "hotelClass" | "propertySearch";
   rating?: number;
 };
 
@@ -374,6 +374,7 @@ export function HotelResultsExperience({
   const [maxPrice, setMaxPrice] = useState(1200);
   const [minPrice, setMinPrice] = useState(0);
   const [selectedHotelClasses, setSelectedHotelClasses] = useState<number[]>([]);
+  const [propertyNameQuery, setPropertyNameQuery] = useState("");
   const [selectedFilters, setSelectedFilters] =
     useState<HotelFilterSelections>(emptySelections);
   const [hotelSummarySortMode, setHotelSummarySortMode] =
@@ -900,6 +901,7 @@ export function HotelResultsExperience({
       results.filter((hotel) =>
         hotelMatchesFilters(
           hotel,
+          propertyNameQuery,
           minPrice,
           maxPrice,
           priceFilterActive,
@@ -910,6 +912,7 @@ export function HotelResultsExperience({
       ),
     [
       currencyRates.rates,
+      propertyNameQuery,
       maxPrice,
       minPrice,
       priceFilterActive,
@@ -939,6 +942,7 @@ export function HotelResultsExperience({
     () =>
       buildActiveFilterChips(
         selectedFilters,
+        propertyNameQuery,
         minPrice,
         maxPrice,
         resultMaxPrice,
@@ -959,6 +963,7 @@ export function HotelResultsExperience({
       resultMaxPrice,
       priceFilterActive,
       selectedFilters,
+      propertyNameQuery,
       t,
       filterOptions.facilities,
       filterOptions.locations,
@@ -969,13 +974,14 @@ export function HotelResultsExperience({
 
   const activeFilterCount = useMemo(() => {
     let count = priceFilterActive ? 1 : 0;
+    count += propertyNameQuery.trim() ? 1 : 0;
     count += selectedHotelClasses.length;
     count += Object.values(selectedFilters).reduce(
       (total, group) => total + group.length,
       0,
     );
     return count;
-  }, [priceFilterActive, selectedFilters, selectedHotelClasses]);
+  }, [priceFilterActive, propertyNameQuery, selectedFilters, selectedHotelClasses]);
   const desktopFilterSidebarRef = useRef<HTMLElement | null>(null);
   const desktopFilterSentinelRef = useRef<HTMLDivElement | null>(null);
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
@@ -1433,6 +1439,11 @@ export function HotelResultsExperience({
     setMinPrice(Math.min(value, maxPrice));
   };
 
+  const updatePropertyNameQuery = (value: string) => {
+    triggerFilterApplying();
+    setPropertyNameQuery(value);
+  };
+
   const toggleHotelClass = (rating: number) => {
     triggerFilterApplying();
     setSelectedHotelClasses((current) =>
@@ -1447,6 +1458,7 @@ export function HotelResultsExperience({
     setMinPrice(0);
     setMaxPrice(resultMaxPrice);
     setSelectedHotelClasses([]);
+    setPropertyNameQuery("");
     setSelectedFilters(emptySelections);
   };
 
@@ -1469,6 +1481,11 @@ export function HotelResultsExperience({
     if (chip.kind === "priceRange") {
       setMinPrice(0);
       setMaxPrice(resultMaxPrice);
+      return;
+    }
+
+    if (chip.kind === "propertySearch") {
+      setPropertyNameQuery("");
       return;
     }
 
@@ -2227,6 +2244,8 @@ export function HotelResultsExperience({
           <div>
             <HotelFilters
               layout="desktop"
+              propertyNameQuery={propertyNameQuery}
+              setPropertyNameQuery={updatePropertyNameQuery}
               t={t}
               maxPrice={maxPrice}
               minPrice={minPrice}
@@ -2278,6 +2297,8 @@ export function HotelResultsExperience({
               >
                 <HotelFilters
                   layout="compact"
+                  propertyNameQuery={propertyNameQuery}
+                  setPropertyNameQuery={updatePropertyNameQuery}
                   t={t}
                   maxPrice={maxPrice}
                   minPrice={minPrice}
@@ -2605,6 +2626,8 @@ export function HotelResultsExperience({
         >
           <HotelFilters
             layout="mobile"
+            propertyNameQuery={propertyNameQuery}
+            setPropertyNameQuery={updatePropertyNameQuery}
             t={t}
             maxPrice={maxPrice}
             minPrice={minPrice}
@@ -2810,6 +2833,8 @@ function ActiveHotelFilterChips({
 
 function HotelFilters({
   layout = "desktop",
+  propertyNameQuery,
+  setPropertyNameQuery,
   t,
   minPrice,
   maxPrice,
@@ -2830,6 +2855,8 @@ function HotelFilters({
   onClear,
 }: {
   layout?: "desktop" | "compact" | "mobile";
+  propertyNameQuery: string;
+  setPropertyNameQuery: (value: string) => void;
   t: (key: string) => string;
   maxPrice: number;
   minPrice: number;
@@ -3101,6 +3128,30 @@ function HotelFilters({
         </div>
       ) : null}
 
+      {(
+        <div className={cn("border-b border-slate-200 pb-4", layout === "mobile" ? "mb-0" : "mb-2")}>
+          <label className="block text-sm font-bold text-slate-950" htmlFor={`hotel-property-search-${layout}`}>
+            Property name
+          </label>
+          <div className="relative mt-2">
+            <input
+              id={`hotel-property-search-${layout}`}
+              type="search"
+              value={propertyNameQuery}
+              onChange={(event) => setPropertyNameQuery(event.target.value)}
+              placeholder="Search properties"
+              autoComplete="off"
+              className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 pr-10 text-sm text-slate-950 outline-none placeholder:text-slate-500 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20"
+            />
+            {propertyNameQuery ? (
+              <button type="button" aria-label="Clear property search" onClick={() => setPropertyNameQuery("")} className="absolute right-1 top-1 inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30">
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
+            ) : null}
+          </div>
+        </div>
+      )}
+
       <div
         className={cn(
           layout === "mobile"
@@ -3116,7 +3167,7 @@ function HotelFilters({
 
         {options.travellerFeatures.length > 0 ? (
           <CheckboxFilterSection
-            title="Popular"
+            title="Good for your trip"
             options={options.travellerFeatures}
             selected={selectedFilters.travellerFeatures}
             onToggle={(value) => toggleFilter("travellerFeatures", value)}
@@ -3651,6 +3702,7 @@ function CheckboxFilterSection({
 
 function buildActiveFilterChips(
   selectedFilters: HotelFilterSelections,
+  propertyNameQuery: string,
   minPrice: number,
   maxPrice: number,
   resultMaxPrice: number,
@@ -3686,6 +3738,14 @@ function buildActiveFilterChips(
         };
       }),
   );
+
+  if (propertyNameQuery.trim()) {
+    chips.unshift({
+      key: "propertySearch",
+      label: `Property: ${propertyNameQuery.trim()}`,
+      kind: "propertySearch",
+    });
+  }
 
   selectedFilters.locations.forEach((value) => {
     const option = locationOptions.find((item) => item.value === value);
@@ -3927,6 +3987,7 @@ function hotelMatchesNeighbourhoodFilters(
 
 function hotelMatchesFilters(
   hotel: PublicHotelResult,
+  propertyNameQuery: string,
   minPrice: number,
   maxPrice: number,
   priceFilterActive: boolean,
@@ -3935,6 +3996,10 @@ function hotelMatchesFilters(
   rates?: ExchangeRates,
 ) {
   return (
+    (!propertyNameQuery.trim() ||
+      normalizePropertySearchText(hotel.name).includes(
+        normalizePropertySearchText(propertyNameQuery),
+      )) &&
     (!priceFilterActive || (() => {
       const total = getComparableHotelTotalUsd(hotel, rates);
       return total !== null && total >= minPrice && total <= maxPrice;
@@ -3983,6 +4048,15 @@ function hotelMatchesFilters(
       (item) => item.catalogueProfile?.room.bedConfiguration ?? "",
     )
   );
+}
+
+function normalizePropertySearchText(value: string) {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }
 
 function matchesTermGroup(

@@ -45,3 +45,13 @@ test("filter sheet exposes clear and deterministic result apply feedback", () =>
   assert.match(source, /event\.key === "Escape"/);
   assert.match(source, /event\.key === "Tab"/);
 });
+
+test("property search is shared, normalized and represented as an active filter", () => {
+  assert.match(source, /Property name/);
+  assert.match(source, /placeholder="Search properties"/);
+  assert.match(source, /normalize\("NFKD"\)/);
+  assert.match(source, /kind: "propertySearch"/);
+  assert.match(source, /Clear property search/);
+  assert.match(source, /title="Good for your trip"/);
+  assert.doesNotMatch(source, /title="Popular"/);
+});
