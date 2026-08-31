@@ -105,11 +105,12 @@ test("hotel surviving sections own moderate spacing without changing the shared 
     screen.indexOf("function HotelResultsHeader"),
     screen.indexOf("function FlightSortModal"),
   );
-  const headerSpacing = styleBlock("hotelHeader", "hotelHeaderMeta");
+  const headerSpacing = styleBlock("hotelHeader", "filterRail");
   const resultSpacing = styleBlock("hotelResultsContent", "flightResultsBody");
 
   assert.match(hotelHeader, /style=\{\[s0\.flightHeader, s0\.hotelHeader,/);
   assert.match(headerSpacing, /marginBottom: 12/);
+  assert.doesNotMatch(screen, /hotelHeaderMeta/);
   assert.match(resultSpacing, /paddingTop: 12/);
   assert.doesNotMatch(styleBlock("filterRail", "resultsScroll"), /margin|paddingTop|paddingBottom/);
   assert.doesNotMatch(flightLayout, /hotelHeader|hotelResultsContent/);

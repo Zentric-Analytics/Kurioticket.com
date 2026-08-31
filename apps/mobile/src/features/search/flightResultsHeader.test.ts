@@ -143,12 +143,10 @@ test("Hotel Results shares Flight's balanced controls and truncates long destina
   assert.match(styles, /flightHeaderEdit: \{[\s\S]*?width: 52,[\s\S]*?height: 44/);
 });
 
-test("Hotel metadata and Edit navigation preserve the canonical search state", () => {
-  assert.match(hotelInvocation, /shortDate\(String\(payload\.checkIn/);
-  assert.match(hotelInvocation, /shortDate\(String\(payload\.checkOut/);
-  assert.match(hotelInvocation, /payload\.rooms \|\| 1/);
-  assert.match(hotelInvocation, /payload\.guests \|\| 2/);
-  assert.match(hotelHeader, /\{metadata\}/);
+test("Hotel Results removes header metadata while Edit preserves canonical search state", () => {
+  assert.doesNotMatch(hotelInvocation, /metadata|checkIn|checkOut|rooms|guests|shortDate/);
+  assert.doesNotMatch(hotelHeader, /metadata|hotelHeaderMeta/);
+  assert.match(hotelHeader, /destination: string;[\s\S]*?onEdit: \(\) => void;/);
   assert.match(results, /pathname: "\/hotels",[\s\S]*?destination: one\(params\.destination\)[\s\S]*?checkIn: one\(params\.checkIn\)[\s\S]*?checkOut: one\(params\.checkOut\)[\s\S]*?guests: one\(params\.guests\)[\s\S]*?rooms: one\(params\.rooms\)/);
 });
 

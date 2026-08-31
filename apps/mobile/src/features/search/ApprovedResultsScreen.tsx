@@ -52,7 +52,6 @@ import {
   clock,
   money,
   s,
-  shortDate,
   ui,
 } from "./SearchUi";
 import { visualFlights, visualHotels } from "./visualFixtures";
@@ -666,7 +665,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       ) : (
         <HotelResultsHeader
           destination={String(payload.destination || "")}
-          metadata={`${shortDate(String(payload.checkIn || ""))} – ${shortDate(String(payload.checkOut || ""))}  ·  ${payload.rooms || 1} Room, ${payload.guests || 2} Guests`}
           onEdit={edit}
         />
       )}
@@ -828,11 +826,9 @@ function FlightResultsHeader({
 }
 function HotelResultsHeader({
   destination,
-  metadata,
   onEdit,
 }: {
   destination: string;
-  metadata: string;
   onEdit: () => void;
 }) {
   const { theme } = useAppTheme();
@@ -873,13 +869,6 @@ function HotelResultsHeader({
           <Text style={[s0.flightHeaderEditText, { color: theme.textPrimary }]}>Edit</Text>
         </Pressable>
       </View>
-      <Text
-        numberOfLines={1}
-        ellipsizeMode="tail"
-        style={[s0.sub, s0.hotelHeaderMeta, { color: theme.textSecondary }]}
-      >
-        {metadata}
-      </Text>
     </View>
   );
 }
@@ -1656,7 +1645,6 @@ const s0 = StyleSheet.create({
   },
   flightHeaderEditText: { fontSize: 13, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
   hotelHeader: { marginBottom: 12 },
-  hotelHeaderMeta: { marginTop: 3, paddingHorizontal: 52, textAlign: "center" },
   filterRail: { height: 44, flexGrow: 0 },
   resultsScroll: { flex: 1 },
   flightResultsContent: { flexGrow: 1 },
