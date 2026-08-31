@@ -76,7 +76,7 @@ export function defaultPasskeyName(copy: { ios: string; android: string }): stri
   return Platform.OS === "ios" ? copy.ios : copy.android;
 }
 
-export type NativePasskeyAuthenticationOptions = Record<string, unknown>;
+export type NativePasskeyAuthenticationOptions = Parameters<PasskeyModule["get"]>[0];
 export type NormalizedPasskeyAssertion = {
   id: string;
   rawId: string;
@@ -109,7 +109,9 @@ export function normalizePasskeyAssertion(credential: unknown): NormalizedPasske
   const attachment = value.authenticatorAttachment;
   if (attachment !== undefined && attachment !== null && typeof attachment !== "string") throw new Error("Passkey authentication returned an invalid attachment.");
   const extensions = value.clientExtensionResults;
-  if (extensions !== undefined && (extensions === null || typeof extensions !== "object" || Array.isArray(extensions))) throw new Error("Passkey authentication returned invalid extensions.");
+  if (extensions !== undefined && extensions !== null && (typeof extensions !== "object" || Array.isArray(extensions))) {
+    throw new Error("Passkey authentication returned invalid extensions.");
+  }
   return {
     id: requiredString(value.id, "id"), rawId: requiredString(value.rawId, "rawId"), type,
     response: {
@@ -123,16 +125,28 @@ export function normalizePasskeyAssertion(credential: unknown): NormalizedPasske
   };
 }
 
-export async function getNativePasskey(options: NativePasskeyAuthenticationOptions, signal?: AbortSignal): Promise<NormalizedPasskeyAssertion | null> {
+export async function getNativePasskey(
+  options: NativePasskeyAuthenticationOptions,
+  signal?: AbortSignal,
+): Promise<NormalizedPasskeyAssertion | null> {
+  if (signal?.aborted) return null;
   const module = await loadPasskeyModule();
-  if (!module.isSupported()) return null;
-  const credential = await module.get({ ...(options as Parameters<PasskeyModule["get"]>[0]), signal });
-  return credential ? normalizePasskeyAssertion(credential) : null;
+  if (!module.isSupported() || signal?.aborted) return null;
+  // react-native-passkeys@0.4.2 cannot actively cancel get(); callers use the
+  // signal and generation guards to ignore a result after navigation or retry.
+  const credential = await module.get(options);
+  if (!credential || signal?.aborted) return null;
+  return normalizePasskeyAssertion(credential);
 }
 
 export function isPasskeyNoCredential(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
   const value = error as { name?: unknown; message?: unknown; code?: unknown };
   const text = `${String(value.name ?? "")} ${String(value.message ?? "")} ${String(value.code ?? "")}`.toLowerCase();
-  return text.includes("notallowederror") || text.includes("no credential") || text.includes("no passkey") || text.includes("credential not found");
+  const compact = text.replace(/[^a-z]/g, "");
+  return text.includes("notallowederror")
+    || compact.includes("nocredential")
+    || compact.includes("nomatchingcredential")
+    || text.includes("no passkey")
+    || text.includes("credential not found");
 }
