@@ -90,7 +90,8 @@ test("route remains centered with balanced side controls and compact spacing", (
 
 test("visible Flight Results labels use scoped Inter families", () => {
   assert.match(styles, /flightResultCount: \{[^\n]*fontWeight: "700", fontFamily: appFonts\.bold/);
-  assert.match(searchUi, /flightResults && \{ color: theme\.textPrimary, fontFamily: appFonts\.bold \}/);
+  assert.match(searchUi, /flightPillText: \{[\s\S]*?fontWeight: "600",[\s\S]*?fontFamily: appFonts\.semibold/);
+  assert.match(searchUi, /flightPillTextActive: \{ fontWeight: "700", fontFamily: appFonts\.bold \}/);
   assert.match(searchUi, /pillText: \{ fontSize: 12, fontWeight: "700"/);
 });
 

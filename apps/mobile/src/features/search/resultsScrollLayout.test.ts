@@ -46,7 +46,9 @@ test("persistent flight controls and scrolling count keep compact spacing", () =
   const rail = styleBlock("filterRail", "resultsScroll");
   const filters = styleBlock("filters", "modalBackdrop");
   assert.match(rail, /height: 44/);
+  assert.match(filters, /paddingHorizontal: 14/);
   assert.match(filters, /paddingVertical: 3/);
+  assert.match(filters, /gap: 8/);
   assert.match(count, /paddingTop: 4/);
   assert.doesNotMatch(screen, /stickyFilterSurface|flightPersistentSearchControls/);
 });
