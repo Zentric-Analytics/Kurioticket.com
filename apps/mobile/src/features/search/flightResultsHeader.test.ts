@@ -147,7 +147,8 @@ test("Hotel Results removes header metadata while Edit preserves canonical searc
   assert.doesNotMatch(hotelInvocation, /metadata|checkIn|checkOut|rooms|guests|shortDate/);
   assert.doesNotMatch(hotelHeader, /metadata|hotelHeaderMeta/);
   assert.match(hotelHeader, /destination: string;[\s\S]*?onEdit: \(\) => void;/);
-  assert.match(results, /pathname: "\/hotels",[\s\S]*?destination: one\(params\.destination\)[\s\S]*?checkIn: one\(params\.checkIn\)[\s\S]*?checkOut: one\(params\.checkOut\)[\s\S]*?guests: one\(params\.guests\)[\s\S]*?rooms: one\(params\.rooms\)/);
+  assert.match(results, /<HotelEditSearchModal[\s\S]*?params=\{params\}/);
+  assert.doesNotMatch(results, /pathname: "\/hotels"/);
 });
 
 test("Flight Details, result content, and bottom navigation contracts remain present", () => {

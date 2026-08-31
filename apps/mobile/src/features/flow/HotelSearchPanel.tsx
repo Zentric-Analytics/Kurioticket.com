@@ -18,10 +18,18 @@ import { SearchResultProductIcons, type SearchResultProductIconName } from "./Se
 const HOTEL_DESTINATION_SUGGESTION_ICONS = ["hotel"] as const;
 
 export type HotelSearchHandle = { useDestination: (destination: string) => void };
-type Props = { params: Record<string, RouteValue>; embedded?: boolean; showSubmit?: boolean; submitLabel?: string };
+type Props = {
+  params: Record<string, RouteValue>;
+  embedded?: boolean;
+  showSubmit?: boolean;
+  submitLabel?: string;
+  submitNavigation?: "push" | "replace";
+  onBeforeNavigate?: () => void;
+  editAppearance?: boolean;
+};
 const displayDate = (iso: string) => localDateFromIso(iso)?.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }) ?? iso;
 
-export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function HotelSearchPanel({ params, embedded = false, showSubmit = true, submitLabel = "Search hotels" }, ref) {
+export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function HotelSearchPanel({ params, embedded = false, showSubmit = true, submitLabel = "Search hotels", submitNavigation = "push", onBeforeNavigate, editAppearance = false }, ref) {
   const ft = useFlowTheme();
   const initial = useRef<ReturnType<typeof initializeHotelForm> | undefined>(undefined);
   if (!initial.current) {
@@ -62,10 +70,11 @@ export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function Ho
     const nextErrors = validateHotelForm(form);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) { setNotice("Please correct the highlighted search details."); if (nextErrors.destination) setDestinationOpen(true); else if (nextErrors.checkIn || nextErrors.checkOut) setDatesOpen(true); return; }
-    router.push({ pathname: "/hotel-results", params: hotelSearchParams(form) });
+    onBeforeNavigate?.();
+    router[submitNavigation]({ pathname: "/hotel-results", params: hotelSearchParams(form) });
   };
   const datesValue = form.checkIn && form.checkOut ? `${displayDate(form.checkIn)} — ${displayDate(form.checkOut)}` : "Check-in — Check-out";
-  return <View style={[!embedded && ft.styles.card, !embedded && ft.styles.shadow]}>
+  return <View style={[!embedded && ft.styles.card, !embedded && ft.styles.shadow, editAppearance && { backgroundColor: ft.colors.surface }]}>
     <CompactSearchField label="Destination" value={form.destination || "City or hotel"} muted={!form.destination} icon="location" trailing={false} onPress={() => setDestinationOpen(true)}/>
     {errors.destination ? <Text accessibilityRole="alert" style={styles.error}>{errors.destination}</Text> : null}
     <CompactSearchField label="Travel dates" value={datesValue} muted={!form.checkIn || !form.checkOut} icon="calendar" valueNumberOfLines={0} onPress={() => setDatesOpen(true)}/>
