@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   correct-gap:
-    if: github.event.head_commit.message == 'Bootstrap flight action gap correction'
+    if: github.event.head_commit.message == 'Retry flight action gap correction'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -54,7 +54,6 @@ jobs:
               raise SystemExit('Expected zero-gap assertion was not written')
           if 'assert.equal((44 - 20) / 2, 12);' not in text:
               raise SystemExit('Expected safe visible-spacing regression was not written')
-          # Guard against replacing the gap with another positioning workaround.
           marker = 'test("highlight sits immediately left of the fixed-right favorite action"'
           section = text[text.index(marker):]
           for forbidden in ['marginRight: -', 'marginLeft: -', 'position: "absolute"']:
@@ -79,8 +78,7 @@ jobs:
           set -euo pipefail
           git diff -- apps/mobile/src/features/search/ApprovedResultsScreen.tsx apps/mobile/src/features/search/flightCardRefinement.test.ts
           changed="$(git diff --name-only)"
-          expected=$(printf '%s\n%s\n%s\n' \
-            '.github/workflows/fix-flight-action-gap-zero.yml' \
+          expected=$(printf '%s\n%s\n' \
             'apps/mobile/src/features/search/ApprovedResultsScreen.tsx' \
             'apps/mobile/src/features/search/flightCardRefinement.test.ts' | sort)
           actual=$(printf '%s\n' "$changed" | sort)
