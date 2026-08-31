@@ -4,7 +4,6 @@ import {
   ActivityIndicator,
   Alert,
   Keyboard,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -238,7 +237,7 @@ export function PasskeysManager({
 
   const confirmRemoval = (item: MobilePasskey) => {
     Alert.alert(copy.removeTitle, copy.removeBody, [
-      { text: passkeyCopyForLocale(locale).backToPasskeys, style: "cancel" },
+      { text: copy.cancel, style: "cancel" },
       { text: copy.remove, style: "destructive", onPress: () => beginVerification("removal", item) },
     ]);
   };
@@ -264,6 +263,7 @@ export function PasskeysManager({
   if (stage === "verify") {
     const usesEmail = !twoFactorEnabled && !hasPassword;
     const help = twoFactorEnabled ? copy.verifyTotp : hasPassword ? copy.verifyPassword : copy.verifyEmail;
+    const verificationLabel = usesEmail || twoFactorEnabled ? copy.verificationCode : copy.currentPassword;
     return <View style={styles.form}>
       <Text style={[styles.heading, { color: theme.text }]}>{copy.verifyTitle}</Text>
       <Text style={[styles.detail, { color: theme.muted }]}>{help}</Text>
@@ -271,13 +271,14 @@ export function PasskeysManager({
         <ActionButton label={copy.sendEmailCode} loading={busy} disabled={busy} onPress={() => void sendEmailCode()} /> :
         <>
           <TextInput
-            accessibilityLabel={usesEmail || twoFactorEnabled ? copy.verificationCode : copy.currentPassword}
-            keyboardType={usesEmail || twoFactorEnabled ? "number-pad" : "default"}
+            accessibilityLabel={verificationLabel}
+            keyboardType={usesEmail ? "number-pad" : "default"}
+            maxLength={usesEmail ? 6 : undefined}
             secureTextEntry={!usesEmail && !twoFactorEnabled}
             autoCapitalize="none"
             value={verification}
             onChangeText={(value) => { setVerification(value); onError(""); }}
-            placeholder={usesEmail || twoFactorEnabled ? copy.verificationCode : copy.currentPassword}
+            placeholder={verificationLabel}
             placeholderTextColor={theme.muted}
             style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]}
           />
@@ -289,17 +290,7 @@ export function PasskeysManager({
 
   return <View style={styles.form}>
     <ActionButton
-      label={passkeyCopyForLocale(locale).checkingSupport === copy.checkingSupport ? "" : ""}
-      hidden
-      onPress={() => undefined}
-    />
-    <ActionButton
-      label={Platform.OS === "ios" || Platform.OS === "android" ? "" : ""}
-      hidden
-      onPress={() => undefined}
-    />
-    <ActionButton
-      label={locale === "es-es" ? "Añadir llave de acceso" : "Add passkey"}
+      label={copy.addPasskey}
       loading={supported === null}
       disabled={supported !== true || busy}
       onPress={() => beginVerification("setup")}
@@ -310,7 +301,7 @@ export function PasskeysManager({
     {passkeys.map((item) => <View key={item.id} style={[styles.passkey, { borderBottomColor: theme.border }]}>
       <Text style={[styles.heading, { color: theme.text }]}>{item.name}</Text>
       <Text style={[styles.detail, { color: theme.muted }]}>{item.label}</Text>
-      <Text style={[styles.detail, { color: theme.muted }]}>{locale === "es-es" ? "Creada" : "Created"} {formatSecurityDate(item.createdAt, locale)}</Text>
+      <Text style={[styles.detail, { color: theme.muted }]}>{copy.created} {formatSecurityDate(item.createdAt, locale)}</Text>
       <Text style={[styles.detail, { color: theme.muted }]}>{copy.lastUsed}: {item.lastUsedAt ? formatSecurityDate(item.lastUsedAt, locale) : copy.neverUsed}</Text>
       <View style={styles.actions}>
         <TextAction label={copy.rename} onPress={() => beginRename(item)} />
@@ -320,8 +311,7 @@ export function PasskeysManager({
   </View>;
 }
 
-function ActionButton({ label, onPress, disabled = false, loading = false, hidden = false }: { label: string; onPress: () => void; disabled?: boolean; loading?: boolean; hidden?: boolean }) {
-  if (hidden) return null;
+function ActionButton({ label, onPress, disabled = false, loading = false }: { label: string; onPress: () => void; disabled?: boolean; loading?: boolean }) {
   const inactive = disabled || loading;
   return <Pressable
     accessibilityRole="button"
