@@ -161,35 +161,47 @@ export function Pill({
 }) {
   const { theme } = useAppTheme();
   const flightResults = Boolean(flightResultsIcon || flightResultsChevron);
-  const iconColor = active ? ui.blue : flightResults ? theme.icon : ui.navy;
+  const selectedColor = theme.dark ? "#8FB5FF" : ui.blue;
+  const iconColor = flightResults
+    ? active ? selectedColor : theme.textSecondary
+    : active ? ui.blue : ui.navy;
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ selected: active }}
       onPress={onPress}
-      style={[
+      hitSlop={flightResults ? { top: 3, bottom: 3, left: 2, right: 2 } : undefined}
+      style={({ pressed }) => [
         s.pill,
-        flightResults && { backgroundColor: theme.surface, borderColor: theme.border },
-        active && s.pillActive,
-        flightResults && active && { backgroundColor: theme.dark ? "#142B55" : "#F6F8FF", borderColor: ui.blue },
+        flightResults && s.flightPill,
+        flightResults && { backgroundColor: theme.dark ? theme.surface : ui.pale, borderColor: theme.border },
+        active && !flightResults && s.pillActive,
+        flightResults && active && { backgroundColor: theme.dark ? "#142B55" : "#EEF4FF", borderColor: ui.blue },
+        flightResults && pressed && s.flightPillPressed,
       ]}
     >
       {flightResultsIcon === "edit" ? (
         <FilePenLine size={18} strokeWidth={2} color={iconColor} />
       ) : flightResultsIcon === "filters" ? (
-        <SlidersHorizontal size={18} strokeWidth={2} color={iconColor} />
+        <SlidersHorizontal size={17} strokeWidth={2} color={iconColor} />
       ) : icon ? (
         <FlowIcon name={icon} size={15} color={iconColor} />
       ) : null}
       <Text
         numberOfLines={1}
-        style={[s.pillText, flightResults && { color: theme.textPrimary, fontFamily: appFonts.bold }, active && { color: ui.blue }]}
+        style={[
+          s.pillText,
+          flightResults && s.flightPillText,
+          flightResults && { color: active ? selectedColor : theme.textPrimary },
+          flightResults && active && s.flightPillTextActive,
+          active && !flightResults && { color: ui.blue },
+        ]}
       >
         {label}
       </Text>
       {flightResultsChevron ? (
-        <ChevronRight size={17} strokeWidth={2} color={iconColor} />
+        <ChevronRight size={15} strokeWidth={1.9} color={iconColor} />
       ) : !icon && !flightResultsIcon ? (
         <FlowIcon name="chevron" size={12} color={iconColor} />
       ) : null}
@@ -497,6 +509,23 @@ export const s = StyleSheet.create({
   },
   pillActive: { borderColor: "#B9CBFF", backgroundColor: "#F6F8FF" },
   pillText: { fontSize: 12, fontWeight: "700", color: ui.navy },
+  flightPill: {
+    height: 38,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  flightPillPressed: { opacity: 0.82, transform: [{ scale: 0.985 }] },
+  flightPillText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "600",
+    fontFamily: appFonts.semibold,
+  },
+  flightPillTextActive: { fontWeight: "700", fontFamily: appFonts.bold },
   dateNavigator: {
     height: 80,
     paddingHorizontal: 8,
