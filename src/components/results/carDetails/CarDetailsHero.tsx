@@ -49,6 +49,12 @@ export function CarDetailsHero({
     specs.splice(4, 0, [Snowflake, text.airConditioning]);
   return (
     <section className="border-y border-slate-200 bg-white py-4 sm:rounded-[13px] sm:border sm:p-6 sm:shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
+      <div
+        className="px-4 pb-3 md:hidden"
+        data-car-details-mobile-header
+      >
+        {overlay}
+      </div>
       <div className="grid gap-4 md:grid-cols-2 md:items-start md:gap-6">
         <figure className="min-w-0">
           <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[11px] bg-slate-100 sm:aspect-[4/3] sm:rounded-xl">
@@ -61,7 +67,7 @@ export function CarDetailsHero({
               fit="cover"
               priority
             />
-            <div className="absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-slate-950/80 via-slate-950/35 to-transparent px-4 pb-12 pt-3.5 sm:px-5 sm:pt-4">
+            <div className="absolute inset-x-0 top-0 z-10 hidden bg-gradient-to-b from-slate-950/80 via-slate-950/35 to-transparent px-4 pb-12 pt-3.5 md:block md:px-5 md:pt-4">
               {overlay}
             </div>
           </div>
