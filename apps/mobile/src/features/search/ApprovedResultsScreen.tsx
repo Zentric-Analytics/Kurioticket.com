@@ -749,7 +749,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       ) : (
         <>
           {filterRail}
-          <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={s0.body} overScrollMode="never">{resultContent}</ScrollView>
+          <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={[s0.body, s0.hotelResultsContent]} overScrollMode="never">{resultContent}</ScrollView>
         </>
       )}
       {product === "flight" ? (
@@ -839,7 +839,7 @@ function HotelResultsHeader({
   return (
     <View
       accessibilityLabel="Hotel search summary"
-      style={[s0.flightHeader, { backgroundColor: theme.background }]}
+      style={[s0.flightHeader, s0.hotelHeader, { backgroundColor: theme.background }]}
     >
       <View style={s0.flightHeaderMainRow}>
         <View style={s0.flightHeaderSide}>
@@ -1655,6 +1655,7 @@ const s0 = StyleSheet.create({
     justifyContent: "center",
   },
   flightHeaderEditText: { fontSize: 13, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
+  hotelHeader: { marginBottom: 12 },
   hotelHeaderMeta: { marginTop: 3, paddingHorizontal: 52, textAlign: "center" },
   filterRail: { height: 44, flexGrow: 0 },
   resultsScroll: { flex: 1 },
@@ -1687,6 +1688,7 @@ const s0 = StyleSheet.create({
   noChoices: { color: ui.muted, fontSize: 13, lineHeight: 19 },
   sheetActions: { gap: 9 },
   body: { paddingHorizontal: 18, paddingBottom: 92, gap: 14 },
+  hotelResultsContent: { paddingTop: 12 },
   flightResultsBody: { paddingHorizontal: 14, gap: 8 },
   flightPriceAlertItem: { paddingHorizontal: 14, paddingBottom: 5 },
   flightCardItem: { paddingHorizontal: 14, paddingBottom: 8 },

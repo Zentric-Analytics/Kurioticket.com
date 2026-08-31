@@ -84,10 +84,25 @@ test("hotel results omit the date rail and keep filters above the separate resul
 
   assert.doesNotMatch(hotelLayout, /DateStrip|dateStrip|flightDateStrip/);
   assert.match(hotelLayout, /\{filterRail\}/);
-  assert.match(hotelLayout, /<ScrollView[^>]*contentContainerStyle=\{s0\.body\}[^>]*>\{resultContent\}<\/ScrollView>/);
+  assert.match(hotelLayout, /<ScrollView[^>]*contentContainerStyle=\{\[s0\.body, s0\.hotelResultsContent\]\}[^>]*>\{resultContent\}<\/ScrollView>/);
   assert.ok(hotelLayout.indexOf("{filterRail}") < hotelLayout.indexOf("<ScrollView"));
   assert.doesNotMatch(hotelLayout, /stickyHeaderIndices|stickySectionHeadersEnabled/);
   assert.doesNotMatch(hotelLayout, /<View[^>]*>\s*<\/View>|dateStripWrapper/);
+});
+
+test("hotel surviving sections own moderate spacing without changing the shared flight rail", () => {
+  const hotelHeader = screen.slice(
+    screen.indexOf("function HotelResultsHeader"),
+    screen.indexOf("function FlightSortModal"),
+  );
+  const headerSpacing = styleBlock("hotelHeader", "hotelHeaderMeta");
+  const resultSpacing = styleBlock("hotelResultsContent", "flightResultsBody");
+
+  assert.match(hotelHeader, /style=\{\[s0\.flightHeader, s0\.hotelHeader,/);
+  assert.match(headerSpacing, /marginBottom: 12/);
+  assert.match(resultSpacing, /paddingTop: 12/);
+  assert.doesNotMatch(styleBlock("filterRail", "resultsScroll"), /margin|paddingTop|paddingBottom/);
+  assert.doesNotMatch(flightLayout, /hotelHeader|hotelResultsContent/);
 });
 
 test("the results date rail remains Flight-only and updates departure date", () => {
