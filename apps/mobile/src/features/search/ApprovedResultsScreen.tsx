@@ -58,6 +58,7 @@ import { visualFlights, visualHotels } from "./visualFixtures";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { flightEditSearchParams } from "../flow/flightSearchModel";
 import { FlightEditSearchModal } from "./FlightEditSearchModal";
+import { HotelEditSearchModal } from "./HotelEditSearchModal";
 import {
   activeFlightFilterCount,
   emptyFlightFilters,
@@ -152,6 +153,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [preferredAirlineSessionRevision, setPreferredAirlineSessionRevision] = useState(0);
   const [filterOpen, setFilterOpen] = useState(false);
   const [editSearchOpen, setEditSearchOpen] = useState(false);
+  const [hotelEditSearchOpen, setHotelEditSearchOpen] = useState(false);
+  const [hotelEditPresentation, setHotelEditPresentation] = useState(0);
   const [filterSection, setFilterSection] = useState<FlightFilterSectionName>("all");
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
   const [verifiedDateFareMemory, setVerifiedDateFareMemory] = useState<VerifiedDateFareMemory>();
@@ -362,16 +365,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       setEditSearchOpen(true);
       return;
     }
-    router.push({
-      pathname: "/hotels",
-      params: {
-        destination: one(params.destination) || "",
-        checkIn: one(params.checkIn) || "",
-        checkOut: one(params.checkOut) || "",
-        guests: one(params.guests) || "",
-        rooms: one(params.rooms) || "",
-      },
-    });
+    setHotelEditPresentation((presentation) => presentation + 1);
+    setHotelEditSearchOpen(true);
   };
   const normalizeFlightPrice = useCallback((result: FlightResult) => currencyState
     ? convertAmount(result.price, result.currency, currencyState.resolution.resolvedCurrency, currencyState.rates)
@@ -766,6 +761,15 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             onClose={() => setFilterOpen(false)}
           />
         </>
+      ) : null}
+      {!flightResults ? (
+        <HotelEditSearchModal
+          key={hotelEditPresentation}
+          visible={hotelEditSearchOpen}
+          params={params}
+          topInset={topSafeAreaInset}
+          onClose={() => setHotelEditSearchOpen(false)}
+        />
       ) : null}
       {flightResults ? (
         <FlightEditSearchModal
