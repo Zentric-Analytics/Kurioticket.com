@@ -4,6 +4,8 @@ import { searchHotelDestinations } from "@/data/hotelDestinations";
 import { normalizeCountryCode } from "@/lib/geo/context";
 import { extractVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
 import { countryToRegion, normalizeRegion } from "@/lib/region/detectRegion";
+import { fromHotelDestination } from "@/lib/locations/adapters";
+import { resolveStaticSearch } from "@/lib/locations/staticRecovery";
 
 const MIN_QUERY_LENGTH = 0;
 const MAX_QUERY_LENGTH = 80;
@@ -88,11 +90,16 @@ export async function GET(request: Request) {
     detectedCountryCode,
   );
 
+  const suggestions = searchHotelDestinations({ query, countryCode, limit });
+  const canonicalLocations = suggestions.map(fromHotelDestination);
   return NextResponse.json({
-    suggestions: searchHotelDestinations({ query, countryCode, limit }),
+    suggestions,
+    canonicalLocations,
     source: "curated-destinations" satisfies HotelDestinationSource,
     countryCode: countryCode || null,
     countrySource,
     locale,
+    isLiveAvailability: false,
+    recovery: resolveStaticSearch({ product: "hotels", location: canonicalLocations[0], typedValue: query, allowUnverifiedText: false }),
   });
 }

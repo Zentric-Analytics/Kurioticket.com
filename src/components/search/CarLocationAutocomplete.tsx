@@ -240,6 +240,7 @@ export function CarLocationAutocomplete({
   };
 
   const activeId = showPanel && highlightedIndex >= 0 ? `${listboxId}-option-${highlightedIndex}` : undefined;
+  const statusId = `${listboxId}-status`;
   const label = usesDesktopPanel
     ? strings.locationSuggestions
     : trimmedQuery
@@ -254,9 +255,7 @@ export function CarLocationAutocomplete({
   const panelContent = (
     <>
       {!usesDesktopPanel ? <div className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</div> : null}
-      {loading ? <p className="px-3 py-3 text-sm font-semibold text-slate-600" aria-live="polite">{strings.loadingSuggestions}</p> : null}
-      {error ? <p className="px-3 py-3 text-sm font-semibold text-slate-600" aria-live="polite">{strings.suggestionsUnavailable} {strings.continueTypingManually}</p> : null}
-      {!loading && !error && suggestions.length === 0 ? <p className="px-3 py-3 text-sm font-semibold text-slate-600" aria-live="polite">{strings.noMatchingLocations} {strings.continueTypingManually}</p> : null}
+      <p id={statusId} role="status" aria-live="polite" className={loading || error || suggestions.length === 0 ? "px-3 py-3 text-sm font-semibold text-slate-600" : "sr-only"}>{loading ? strings.loadingSuggestions : error ? `${strings.suggestionsUnavailable} ${strings.continueTypingManually}` : suggestions.length === 0 ? `${strings.noMatchingLocations} ${strings.continueTypingManually}` : `${suggestions.length} ${label}`}</p>
       <div role="listbox" id={listboxId} aria-label={label}>
         {suggestions.map((suggestion, index) => {
           const Icon = kindIcon[suggestion.kind];
@@ -316,6 +315,7 @@ export function CarLocationAutocomplete({
         aria-expanded={showPanel}
         aria-controls={listboxId}
         aria-activedescendant={activeId}
+        aria-describedby={statusId}
       />
 
       {showPanel ? (usesDesktopPanel && typeof document !== "undefined" ? createPortal(
