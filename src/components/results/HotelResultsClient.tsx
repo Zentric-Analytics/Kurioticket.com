@@ -2506,15 +2506,6 @@ export function HotelResultsExperience({
                   </p>
                 ) : null}
 
-                {!guided ? (
-                  <div className="flex items-start gap-2 rounded-xl border border-[#C9D9EA] bg-[#F0F6FC] px-4 py-3 text-sm leading-5 text-slate-700">
-                    <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#004BB8]" aria-hidden="true" />
-                    <p>
-                      Compare property details and estimated prices for your selected stay. Booking terms appear only when supplied with an offer.
-                    </p>
-                  </div>
-                ) : null}
-
                 <div
                   ref={paginationListRef}
                   aria-busy={paginationPendingPage !== null}
@@ -2589,6 +2580,15 @@ export function HotelResultsExperience({
         </button>
       ) : null}
 
+      {filtersOpen ? (
+        <button
+          type="button"
+          aria-label={t("closeFilters")}
+          onClick={() => setFiltersOpen(false)}
+          className="fixed inset-0 z-[9999] hidden bg-slate-950/35 backdrop-blur-[1px] sm:block min-[1200px]:hidden"
+        />
+      ) : null}
+
       <aside
         ref={mobileFiltersDialogRef}
         role="dialog"
@@ -2596,13 +2596,18 @@ export function HotelResultsExperience({
         aria-label="Hotel filters"
         aria-hidden={!filtersOpen}
         className={cn(
-          "fixed inset-y-0 right-0 z-[10000] flex h-[100dvh] w-full flex-col overflow-hidden bg-white shadow-2xl transition-transform duration-200 ease-out sm:w-[420px] min-[1200px]:hidden",
-          filtersOpen ? "translate-y-0 sm:translate-x-0" : "translate-y-full sm:translate-x-full sm:translate-y-0",
+          "fixed inset-y-0 right-0 z-[10000] flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F6F8FB] shadow-2xl transition-transform duration-200 ease-out sm:w-[420px] min-[1200px]:hidden",
+          filtersOpen ? "translate-y-0 sm:translate-x-0" : "pointer-events-none translate-y-full sm:translate-x-full sm:translate-y-0",
         )}
       >
-        <div className="shrink-0 border-b border-slate-200 bg-white px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+        <div className="shrink-0 border-b border-slate-200 bg-white px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(15,23,42,0.04)] sm:px-5 sm:pb-4 sm:pt-4">
           <div className="flex items-center justify-between gap-3">
-            <div><h2 className="text-lg font-bold leading-6 text-slate-950">{t("filters")}{activeFilterCount ? ` (${activeFilterCount})` : ""}</h2><p className="text-xs text-slate-500">Refine your stay options</p></div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EAF2FB] text-[#004BB8]" aria-hidden="true"><SlidersHorizontal className="h-4 w-4" /></span>
+                <div className="min-w-0"><h2 className="truncate text-lg font-bold leading-6 tracking-[-0.01em] text-slate-950">{t("filters")}</h2><p className="text-xs font-medium text-slate-500">{activeFilterCount ? `${activeFilterCount} applied` : "All stays shown"}</p></div>
+              </div>
+            </div>
             <div className="flex items-center gap-1"><button type="button" disabled={activeFilterCount === 0} onClick={resetFilters} className="min-h-10 rounded-lg px-2 text-sm font-bold text-[#004BB8] disabled:text-slate-400">{t("clearAll")}</button><Button
               type="button"
               variant="ghost"
@@ -2617,13 +2622,19 @@ export function HotelResultsExperience({
 
         <div
           className={cn(
-            "hotel-filter-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4",
+            "hotel-filter-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-4 sm:px-5",
             filterScrollbarVisible
               ? "hotel-filter-scrollbar--visible"
               : undefined,
           )}
           onScroll={showFilterScrollbarWhileScrolling}
         >
+          {activeFilterChips.length ? (
+            <div className="mb-3 rounded-xl border border-[#C9D9EA] bg-white p-3 shadow-[0_8px_24px_-20px_rgba(15,23,42,0.5)]">
+              <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Applied filters</p>
+              <ActiveHotelFilterChips chips={activeFilterChips} onRemove={removeFilterChip} onClearAll={resetFilters} t={t} />
+            </div>
+          ) : null}
           <HotelFilters
             layout="mobile"
             propertyNameQuery={propertyNameQuery}
@@ -2649,7 +2660,7 @@ export function HotelResultsExperience({
           />
         </div>
 
-        <div className="flex shrink-0 items-center justify-between gap-4 border-t border-slate-200 bg-white px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-8px_20px_rgba(15,23,42,0.06)]">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_24px_rgba(15,23,42,0.08)] sm:px-5 sm:pb-4 sm:pt-4">
           <Button
             type="button"
             variant="ghost"
@@ -2661,7 +2672,7 @@ export function HotelResultsExperience({
           </Button>
           <Button
             type="button"
-            className="h-12 min-w-[8.75rem] rounded-xl bg-[#004BB8] px-7 text-base font-bold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
+            className="h-12 min-w-0 flex-1 rounded-xl bg-[#004BB8] px-5 text-base font-bold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
             onClick={() => {
               triggerFilterApplying();
               setFiltersOpen(false);
@@ -3098,7 +3109,7 @@ function HotelFilters({
     <div
       className={cn(
         layout === "mobile"
-          ? "bg-white"
+          ? "bg-transparent"
           : "overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-5 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.45)]",
       )}
     >
@@ -3129,7 +3140,7 @@ function HotelFilters({
       ) : null}
 
       {(
-        <div className={cn("border-b border-slate-200 pb-4", layout === "mobile" ? "mb-0" : "mb-2")}>
+        <div className={cn("border-b border-slate-200 pb-4", layout === "mobile" ? "mb-3 rounded-xl border border-slate-200 bg-white p-4 shadow-[0_8px_24px_-20px_rgba(15,23,42,0.5)]" : "mb-2")}>
           <label className="block text-sm font-bold text-slate-950" htmlFor={`hotel-property-search-${layout}`}>
             Property name
           </label>
@@ -3141,7 +3152,7 @@ function HotelFilters({
               onChange={(event) => setPropertyNameQuery(event.target.value)}
               placeholder="Search properties"
               autoComplete="off"
-              className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 pr-10 text-sm text-slate-950 outline-none placeholder:text-slate-500 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20"
+              className="h-11 w-full appearance-none rounded-lg border border-slate-300 bg-white px-3 pr-10 text-sm text-slate-950 outline-none placeholder:text-slate-500 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20 [&::-webkit-search-cancel-button]:appearance-none"
             />
             {propertyNameQuery ? (
               <button type="button" aria-label="Clear property search" onClick={() => setPropertyNameQuery("")} className="absolute right-1 top-1 inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30">
@@ -3155,7 +3166,7 @@ function HotelFilters({
       <div
         className={cn(
           layout === "mobile"
-            ? "space-y-0 bg-white"
+            ? "space-y-3 bg-transparent"
             : "space-y-5 bg-transparent",
         )}
       >
@@ -3635,7 +3646,7 @@ function FilterSection({
         layout === "desktop"
           ? "border-t-0 py-0"
           : layout === "mobile"
-            ? "py-4"
+            ? "rounded-xl border border-slate-200 bg-white px-4 py-1 shadow-[0_8px_24px_-20px_rgba(15,23,42,0.5)]"
             : "py-4",
       )}
     >
@@ -3650,7 +3661,7 @@ function FilterSection({
           <span>{title}</span><ChevronDown className={cn("h-4 w-4 text-slate-500 transition-transform", expanded && "rotate-180")} aria-hidden="true" />
         </button>
       </h3>
-      <div id={panelId} hidden={!expanded} className="grid gap-0.5 pb-4">{children}</div>
+      <div id={panelId} hidden={!expanded} className={cn("grid gap-0.5", layout === "mobile" ? "pb-4" : "pb-4")}>{children}</div>
     </section>
   );
 }

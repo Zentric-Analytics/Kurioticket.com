@@ -44,6 +44,18 @@ test("filter sheet exposes clear and deterministic result apply feedback", () =>
   assert.match(source, /Show \{sortedVisibleHotels\.length\}/);
   assert.match(source, /event\.key === "Escape"/);
   assert.match(source, /event\.key === "Tab"/);
+  assert.match(source, /env\(safe-area-inset-top\)/);
+  assert.match(source, /env\(safe-area-inset-bottom\)/);
+  assert.match(source, /overflow-y-auto overflow-x-hidden overscroll-contain/);
+  assert.match(source, /Applied filters/);
+  assert.match(source, /bg-slate-950\/35 backdrop-blur-\[1px\]/);
+});
+
+test("results omit the superseded comparison disclosure", () => {
+  assert.doesNotMatch(
+    source,
+    /Compare property details and estimated prices for your selected stay\. Booking terms appear only when supplied with an offer\./,
+  );
 });
 
 test("property search is shared, normalized and represented as an active filter", () => {
