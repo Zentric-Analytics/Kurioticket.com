@@ -61,17 +61,21 @@ export function MobileAirportOptionRow({
   selected,
   locale,
   onSelect,
+  id,
 }: {
   airport: AirportOption;
   selected: boolean;
   locale?: string | null;
   onSelect: () => void;
+  id: string;
 }) {
   const city = getLocalizedCityName(airport.city, locale);
   return (
     <button
+      id={id}
       type="button"
-      aria-pressed={selected}
+      role="option"
+      aria-selected={selected}
       aria-label={`${city}, ${airport.airport}, ${airport.code}`}
       onClick={onSelect}
       className={cn(
@@ -116,6 +120,7 @@ export function MobileAirportPicker({
   const [draft, setDraft] = useState<AirportOption | null>(null);
   const [suggestions, setSuggestions] = useState<AirportOption[]>([]);
   const [loading, setLoading] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [recentEntries, setRecentEntries] = useState<RecentSearchEntry[]>([]);
   const titleId = `${inputId}-title`;
   const normalizedQuery = query.trim();
@@ -136,6 +141,7 @@ export function MobileAirportPicker({
     setQuery("");
     setSuggestions([]);
     setLoading(false);
+    setHighlightedIndex(-1);
     const local = readRecentSearches();
     setRecentEntries(local);
     const controller = new AbortController();
@@ -181,6 +187,7 @@ export function MobileAirportPicker({
           suggestions?: AirportOption[];
         };
         setSuggestions(payload.suggestions?.slice(0, 8) ?? []);
+        setHighlightedIndex(-1);
       } catch {
         if (!controller.signal.aborted) setSuggestions([]);
       } finally {
@@ -205,6 +212,9 @@ export function MobileAirportPicker({
     requestClose();
   };
   const list = normalizedQuery.length < 2 ? recentAirports : suggestions;
+  const listboxId = `${inputId}-listbox`;
+  const statusId = `${inputId}-status`;
+  const activeId = highlightedIndex >= 0 && list[highlightedIndex] ? `${listboxId}-option-${highlightedIndex}` : undefined;
 
   return (
     <FlightMobilePickerShell
@@ -247,6 +257,16 @@ export function MobileAirportPicker({
               onChange={(event) => {
                 setQuery(event.target.value);
                 setDraft(null);
+                setHighlightedIndex(-1);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") { event.preventDefault(); requestClose(); return; }
+                if (event.key === "ArrowDown" && list.length) { event.preventDefault(); setHighlightedIndex((current) => Math.min(list.length - 1, current + 1)); return; }
+                if (event.key === "ArrowUp" && list.length) { event.preventDefault(); setHighlightedIndex((current) => current <= 0 ? list.length - 1 : current - 1); return; }
+                if (event.key === "Enter" && highlightedIndex >= 0 && list[highlightedIndex]) {
+                  event.preventDefault();
+                  if (commitOnSelect) { onCommit(list[highlightedIndex]); requestClose(); } else { selectDraft(list[highlightedIndex]); }
+                }
               }}
               placeholder={
                 labels?.searchAirportsAndCities ||
@@ -254,6 +274,12 @@ export function MobileAirportPicker({
                 t.searchAirportsAndCities
               }
               autoComplete="off"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded={list.length > 0}
+              aria-controls={listboxId}
+              aria-activedescendant={activeId}
+              aria-describedby={statusId}
               className="h-[50px] w-full rounded-[10px] border border-slate-300 bg-white py-3 ps-12 pe-12 text-[15px] font-medium text-slate-950 outline-none transition-colors placeholder:text-slate-500 focus:border-[#075ee8] focus:ring-2 focus:ring-[#075ee8]/10"
             />
             <button
@@ -283,18 +309,17 @@ export function MobileAirportPicker({
                 {t["recentSearches.title"]}
               </h3>
             ) : null}
-            {loading ? (
-              <p className="px-4 py-8 text-center text-sm font-medium text-slate-500">
-                {labels?.searchingAirportsAndCities ||
-                  t.searchingAirportsAndCities}
-              </p>
-            ) : list.length ? (
-              <div className="overflow-hidden rounded-[11px] border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05)]">
-                {list.map((airport) => (
+            <p id={statusId} role="status" aria-live="polite" className={loading || (!list.length && normalizedQuery.length >= 2) ? "px-4 py-8 text-center text-sm font-medium text-slate-500" : "sr-only"}>
+              {loading ? (labels?.searchingAirportsAndCities || t.searchingAirportsAndCities) : !list.length && normalizedQuery.length >= 2 ? `${labels?.noMatchingAirportsOrCities || t.noMatchingAirportsOrCities} ${labels?.searchAirportsAndCities || t.searchAirportsAndCities}` : list.length ? `${list.length} ${labels?.searchAirportsAndCities || t.searchAirportsAndCities}` : ""}
+            </p>
+            {loading ? null : list.length ? (
+              <div id={listboxId} role="listbox" aria-label={labels?.searchAirportsAndCities || t.searchAirportsAndCities} className="overflow-hidden rounded-[11px] border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05)]">
+                {list.map((airport, index) => (
                   <MobileAirportOptionRow
+                    id={`${listboxId}-option-${index}`}
                     key={airport.code}
                     airport={airport}
-                    selected={draft?.code === airport.code}
+                    selected={highlightedIndex === index || draft?.code === airport.code}
                     locale={locale}
                     onSelect={() => {
                       if (commitOnSelect) {
@@ -307,12 +332,7 @@ export function MobileAirportPicker({
                   />
                 ))}
               </div>
-            ) : normalizedQuery.length >= 2 ? (
-              <p className="px-4 py-8 text-center text-sm font-medium text-slate-500">
-                {labels?.noMatchingAirportsOrCities ||
-                  t.noMatchingAirportsOrCities}
-              </p>
-            ) : null}
+            ) : normalizedQuery.length >= 2 ? null : null}
           </div>
         </div>
       )}

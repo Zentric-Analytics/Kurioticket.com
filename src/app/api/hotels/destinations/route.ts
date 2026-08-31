@@ -89,12 +89,15 @@ export async function GET(request: Request) {
   );
 
   const catalogResult = searchCanonicalHotelCatalog({ query, countryCode, locale, limit });
+  const canonicalLocations = catalogResult.suggestions.map((suggestion) => suggestion.canonical);
 
   return NextResponse.json({
     ...catalogResult,
+    canonicalLocations,
     source: "curated-destinations" satisfies HotelDestinationSource,
     countryCode: countryCode || null,
     countrySource,
     locale,
+    isLiveAvailability: false,
   });
 }

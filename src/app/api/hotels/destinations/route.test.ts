@@ -17,6 +17,8 @@ test("hotel destination API returns permissive zero-result recovery", async () =
   const response = await GET(new Request("https://example.test/api/hotels/destinations?q=Uncatalogued%20Moon%20Base"));
   const payload = await response.json();
   assert.deepEqual(payload.suggestions, []);
-  assert.equal(payload.recovery.kind, "permissive-text");
+  assert.equal(payload.recovery.kind, "unverified");
+  assert.equal(payload.recovery.coverage, "unverified");
+  assert.equal(payload.recovery.canSubmit, true);
   assert.equal(payload.recovery.canSubmitQuery, true);
 });

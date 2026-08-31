@@ -7,12 +7,12 @@ import {
 } from "@/data/hotelDestinations";
 import { fromHotelDestination } from "./adapters";
 import { searchLocations } from "./search";
-import type { LocationSearchMatch } from "./types";
+import type { CanonicalLocation, LocationSearchMatch } from "./types";
 
 export const HOTEL_CATALOG_VERSION = "legacy-catalog-v1";
 
 export type HotelCatalogSearchResult = {
-  suggestions: HotelDestinationSuggestion[];
+  suggestions: Array<HotelDestinationSuggestion & { canonical: CanonicalLocation }>;
   provenance: {
     source: "owned-catalog";
     catalogVersion: typeof HOTEL_CATALOG_VERSION;
@@ -20,7 +20,9 @@ export type HotelCatalogSearchResult = {
     staticCoverage: "exact";
   };
   recovery?: {
-    kind: "permissive-text";
+    kind: "unverified";
+    coverage: "unverified";
+    canSubmit: true;
     canSubmitQuery: true;
     message: string;
   };
@@ -79,9 +81,11 @@ export function searchCanonicalHotelCatalog({
     },
     recovery: query.trim() && canonicalSuggestions.length === 0
       ? {
-          kind: "permissive-text",
+          kind: "unverified",
+          coverage: "unverified",
+          canSubmit: true,
           canSubmitQuery: true,
-          message: "No matching catalogue destination. You can still search this location; static results may be unavailable.",
+          message: "No matching catalogue destination. You can continue with this unverified location; static results may be unavailable.",
         }
       : undefined,
   };

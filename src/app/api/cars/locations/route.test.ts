@@ -22,5 +22,7 @@ test("cars API labels custom text as unverified and preserves it exactly for sub
   assert.equal(custom.validation, "unverified-text");
   assert.equal(custom.isProviderValidated, false);
   assert.equal(custom.canonical.staticCoverage.cars, "none");
-  assert.equal(payload.recovery.kind, "unverified-text");
+  assert.equal(payload.recovery.kind, "unverified");
+  assert.equal(payload.recovery.coverage, "unverified");
+  assert.equal(payload.recovery.canSubmit, true);
 });

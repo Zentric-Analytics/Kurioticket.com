@@ -129,8 +129,10 @@ export type CarCatalogSearchResult = {
     isLiveAvailability: false;
   };
   recovery?: {
-    kind: "unverified-text" | "continue-typing";
-    canSubmitQuery: boolean;
+      kind: "unverified" | "continue-typing";
+      coverage: "unverified" | "none";
+      canSubmit: boolean;
+      canSubmitQuery: boolean;
     message: string;
   };
 };
@@ -166,7 +168,7 @@ export async function searchCanonicalCarCatalog(query: string, options: SearchOp
     return {
       suggestions: [],
       provenance: { source: "owned-catalog", catalogVersion: "legacy-catalog-v1", isLiveAvailability: false },
-      recovery: { kind: "continue-typing", canSubmitQuery: false, message: "Continue typing to search or use an unverified location." },
+        recovery: { kind: "continue-typing", coverage: "none", canSubmit: false, canSubmitQuery: false, message: "Continue typing to search or use an unverified location." },
     };
   }
 
@@ -227,8 +229,8 @@ export async function searchCanonicalCarCatalog(query: string, options: SearchOp
     provenance: { source: "owned-catalog", catalogVersion: "legacy-catalog-v1", isLiveAvailability: false },
     recovery: !hasOwnedMatch
       ? trimmedQuery.length >= 2
-        ? { kind: "unverified-text", canSubmitQuery: true, message: "No verified catalogue match. You can use this unverified typed location; static cars may be unavailable." }
-        : { kind: "continue-typing", canSubmitQuery: false, message: "Continue typing to search or use an unverified location." }
+          ? { kind: "unverified", coverage: "unverified", canSubmit: true, canSubmitQuery: true, message: "No verified catalogue match. You can use this unverified typed location; static cars may be unavailable." }
+          : { kind: "continue-typing", coverage: "none", canSubmit: false, canSubmitQuery: false, message: "Continue typing to search or use an unverified location." }
       : undefined,
   };
 }

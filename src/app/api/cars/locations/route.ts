@@ -1,4 +1,6 @@
 import { searchCanonicalCarCatalog } from "@/lib/cars/carLocationSuggestions";
+import { fromCarLocation } from "@/lib/locations/adapters";
+import { resolveStaticSearch } from "@/lib/locations/staticRecovery";
 
 export const dynamic = "force-dynamic";
 
@@ -14,8 +16,9 @@ export async function GET(request: Request) {
 
   try {
     const result = await searchCanonicalCarCatalog(q, { limit, country });
-    return Response.json({ ...result, source: "local-fallback" }, { headers: jsonHeaders });
+    const canonicalLocations = result.suggestions.map((suggestion) => suggestion.canonical ?? fromCarLocation(suggestion));
+    return Response.json({ ...result, canonicalLocations, source: "local-fallback", isLiveAvailability: false }, { headers: jsonHeaders });
   } catch {
-    return Response.json({ suggestions: [], source: "local-fallback" }, { headers: jsonHeaders });
+    return Response.json({ suggestions: [], canonicalLocations: [], source: "local-fallback", isLiveAvailability: false, recovery: resolveStaticSearch({ product: "cars", typedValue: q, allowUnverifiedText: true }) }, { headers: jsonHeaders });
   }
 }

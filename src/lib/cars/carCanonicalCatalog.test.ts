@@ -34,7 +34,9 @@ test("owned suggestions expose static non-live provenance and canonical labels",
 test("unknown locations are explicit unverified submission recovery, never fabricated catalog matches", async () => {
   const result = await searchCanonicalCarCatalog("15 Example Road, Lagos");
   const custom = result.suggestions.at(-1);
-  assert.equal(result.recovery?.kind, "unverified-text");
+  assert.equal(result.recovery?.kind, "unverified");
+  assert.equal(result.recovery?.coverage, "unverified");
+  assert.equal(result.recovery?.canSubmit, true);
   assert.equal(result.recovery?.canSubmitQuery, true);
   assert.equal(custom?.kind, "custom");
   assert.equal(custom?.validation, "unverified-text");

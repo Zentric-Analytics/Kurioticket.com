@@ -36,6 +36,8 @@ test("canonical display is additive and preserves submitted URL values", () => {
 test("unknown text returns truthful permissive recovery without fabricated suggestions", () => {
   const result = searchCanonicalHotelCatalog({ query: "Uncatalogued Moon Base" });
   assert.equal(result.suggestions.length, 0);
-  assert.equal(result.recovery?.kind, "permissive-text");
+  assert.equal(result.recovery?.kind, "unverified");
+  assert.equal(result.recovery?.coverage, "unverified");
+  assert.equal(result.recovery?.canSubmit, true);
   assert.equal(result.recovery?.canSubmitQuery, true);
 });
