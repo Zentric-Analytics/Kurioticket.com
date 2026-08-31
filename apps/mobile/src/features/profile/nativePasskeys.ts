@@ -9,7 +9,7 @@ export type NormalizedPasskeyRegistration = {
   rawId: string;
   type: string;
   clientDataJSON: string;
-  authenticatorData: string;
+  authenticatorData?: string;
   attestationObject: string;
   transports: string[];
   authenticatorAttachment: string | null;
@@ -36,7 +36,7 @@ export function normalizePasskeyRegistration(credential: NativeCreationResponse)
     attestationObject?: string;
     transports?: string[];
   };
-  if (!credential.id || !credential.rawId || !response.clientDataJSON || !response.authenticatorData || !response.attestationObject) {
+  if (!credential.id || !credential.rawId || !response.clientDataJSON || !response.attestationObject) {
     throw new Error("Passkey registration returned an incomplete credential.");
   }
   return {
@@ -44,7 +44,7 @@ export function normalizePasskeyRegistration(credential: NativeCreationResponse)
     rawId: credential.rawId,
     type: credential.type,
     clientDataJSON: response.clientDataJSON,
-    authenticatorData: response.authenticatorData,
+    ...(response.authenticatorData ? { authenticatorData: response.authenticatorData } : {}),
     attestationObject: response.attestationObject,
     transports: Array.isArray(response.transports) ? response.transports : [],
     authenticatorAttachment: credential.authenticatorAttachment ?? null,
