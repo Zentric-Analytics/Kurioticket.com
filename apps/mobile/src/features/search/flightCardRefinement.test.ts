@@ -218,7 +218,6 @@ test("airline identity preserves its accessible name while bounding very long vi
   assert.match(source, /airlineName: \{[^}]*lineHeight: 18/);
   assert.match(source, /airlineName: \{ fontSize: 14, lineHeight: 18, color: ui\.navy, fontWeight: "700", fontFamily: appFonts\.bold \}/);
   assert.match(card, /s0\.airlineName, \{ color: theme\.textPrimary \}/);
-  assert.match(source, /identityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 8 \}/);
   assert.match(card, /<View style=\{s0\.flightIdentityLayout\}>[\s\S]*?<AirlineLogo[\s\S]*?<View style=\{s0\.airlineHeader\}>[\s\S]*?<View[\s\S]*?style=\{s0\.airlineCopy\}[\s\S]*?<Text style=\{\[s0\.airlineName/);
 
   for (const airlineName of [
@@ -239,7 +238,7 @@ test("airline identity preserves its accessible name while bounding very long vi
 test("flight identity actions use a normal horizontal row without changing journey spacing", () => {
   assert.match(source, /airlineHeader: \{ width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start" \}/);
   assert.match(source, /airlineCopy: \{ flex: 1, minWidth: 0 \}/);
-  assert.match(source, /identityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 8 \}/);
+  assert.match(source, /identityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: -4 \}/);
   assert.doesNotMatch(source, /identityActions: \{[^}]*position: "absolute"/);
   assert.doesNotMatch(source, /airlineHeader: \{[^}]*paddingRight: 68/);
   assert.match(source, /journeyList: \{ width: "100%", marginTop: 10, gap: 10 \}/);
@@ -383,7 +382,10 @@ test("highlight sits immediately left of the fixed-right favorite action", () =>
   assert.match(actions, /\{highlight \? \([\s\S]*?s0\.resultBadge[\s\S]*?\) : null\}[\s\S]*?<Pressable[\s\S]*?s0\.favoriteButton/);
   assert.ok(actions.indexOf("s0.resultBadge") < actions.indexOf("s0.favoriteButton"));
   assert.doesNotMatch(actions, /placeholder|invisible|opacity:\s*0/i);
-  assert.match(source, /identityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 8 \}/);
+  // The 20px heart is centered in its fixed 44px target. A -4px flex gap leaves
+  // 8px between the badge edge and the visible heart without moving the target.
+  assert.match(source, /identityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: -4 \}/);
+  assert.equal(-4 + (44 - 20) / 2, 8);
   assert.match(source, /favoriteButton: \{ width: 44, height: 44, flexShrink: 0/);
   assert.match(card, /<Heart[\s\S]*?size=\{20\}/);
   assert.match(card, /fill=\{saved \? androidFavoriteColors\.active : "transparent"\}/);
