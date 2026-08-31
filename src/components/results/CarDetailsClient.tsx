@@ -18,6 +18,10 @@ import {
   pickupTypeLabels,
 } from "@/components/results/carDetails/helpers";
 import { useSavedCar } from "@/components/results/useSavedCar";
+import {
+  buildCarDirectionsUrl,
+  buildGoogleCarMapEmbedUrl,
+} from "@/lib/cars/carMap";
 import { calculateRentalDays, getPrimaryCarOffer } from "@/lib/cars/carResults";
 import type {
   CarOffer,
@@ -449,22 +453,28 @@ function CarLocationSection({
   copy: (key: string) => string;
   headingLevel: HeadingLevel;
 }) {
+  const searchedPickupLocation = search.pickupLocation.trim();
+  const searchedReturnLocation = search.dropoffLocation.trim();
   const pickupLocation =
-    car.pickupLocation || copy("carDetails.locationUnavailable");
+    searchedPickupLocation ||
+    car.pickupLocation ||
+    copy("carDetails.locationUnavailable");
   const returnLocation =
-    car.returnLocation || copy("carDetails.locationUnavailable");
-  const directionsUrl = car.pickupLocation
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(car.pickupLocation)}`
-    : null;
-  const locationFacts = [
-    pickupTypeLabels[car.pickupType],
-    car.mileagePolicy === "unlimited"
-      ? copy("carDetails.unlimitedMileage")
-      : null,
-    car.shuttleRequired ? copy("carDetails.shuttleRequired") : null,
-  ].filter((fact): fact is string => Boolean(fact));
+    searchedReturnLocation ||
+    car.returnLocation ||
+    copy("carDetails.locationUnavailable");
+  const mapUrl = buildGoogleCarMapEmbedUrl({
+    pickupLocation: searchedPickupLocation || car.pickupLocation,
+    googleMapsEmbedApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY,
+  });
+  const directionsUrl = buildCarDirectionsUrl(
+    searchedPickupLocation || car.pickupLocation,
+  );
   return (
-    <div className="border-b border-slate-200 py-7" data-car-location-section>
+    <div
+      className="border-b border-slate-200 pb-7 pt-3"
+      data-car-location-section
+    >
       <Heading
         level={headingLevel}
         className="text-xl font-extrabold tracking-tight text-slate-950"
@@ -484,6 +494,28 @@ function CarLocationSection({
           </p>
         </div>
       </div>
+      {mapUrl ? (
+        <div className="mt-4 overflow-hidden rounded-[14px] border border-slate-200 bg-white">
+          <iframe
+            title={`${copy("carDetails.mapShowingPickup")} ${pickupLocation}`}
+            src={mapUrl}
+            loading="lazy"
+            referrerPolicy="strict-origin-when-cross-origin"
+            className="h-[200px] w-full border-0 sm:h-[220px] lg:h-[240px]"
+          />
+          {directionsUrl ? (
+            <a
+              href={directionsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="focus-ring flex min-h-11 items-center justify-between border-t border-slate-200 px-4 text-sm font-bold text-blue hover:bg-slate-50"
+            >
+              {copy("carDetails.getDirections")}
+              <ExternalLink size={16} aria-hidden="true" />
+            </a>
+          ) : null}
+        </div>
+      ) : null}
       <div className="mt-4 overflow-hidden rounded-[14px] border border-slate-200 bg-white">
         <div className="p-4">
           {[
@@ -523,7 +555,7 @@ function CarLocationSection({
             </div>
           ))}
         </div>
-        {directionsUrl ? (
+        {!mapUrl && directionsUrl ? (
           <a
             href={directionsUrl}
             target="_blank"
@@ -537,19 +569,6 @@ function CarLocationSection({
       </div>
       <div className="mt-7">
         <h3 className="text-base font-bold text-slate-950">
-          {copy("carDetails.whyLocationWorks")}
-        </h3>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {locationFacts.map((fact) => (
-            <span
-              key={fact}
-              className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700"
-            >
-              {fact}
-            </span>
-          ))}
-        </div>
-        <h3 className="mt-7 text-base font-bold text-slate-950">
           {copy("carDetails.pickupLocationDetails")}
         </h3>
         <ul className="mt-3 list-disc space-y-2 ps-5 text-sm leading-6 text-slate-700">
