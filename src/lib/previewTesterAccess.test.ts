@@ -1,7 +1,19 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test, { afterEach } from "node:test";
-import { canReceiveStagingEmail, canUseStagingCredentials, canUseStagingGoogle, hasPreviewTesterPermission, isActivePreviewTester, isStagingEmailRecipientAllowed, isStagingGoogleAccessAllowed, isTrustedPreviewCompanyEmail, normalizePreviewTesterEmail } from "@/lib/previewTesterAccess";
+import {
+  canReceiveStagingEmail,
+  canUseStagingCredentials,
+  canUseStagingGoogle,
+  canUseStagingPasskey,
+  hasPreviewTesterPermission,
+  isActivePreviewTester,
+  isStagingEmailRecipientAllowed,
+  isStagingGoogleAccessAllowed,
+  isStagingPasskeyAccessAllowed,
+  isTrustedPreviewCompanyEmail,
+  normalizePreviewTesterEmail,
+} from "@/lib/previewTesterAccess";
 
 const keys = ["TRAVEL_PROVIDER_MODE", "NEXT_PUBLIC_APP_URL", "NEXTAUTH_URL", "STAGING_EMAIL_DELIVERY_ENABLED"] as const;
 const original = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
@@ -16,6 +28,12 @@ function production() {
   process.env.TRAVEL_PROVIDER_MODE = "production";
   process.env.NEXT_PUBLIC_APP_URL = "https://kurioticket.com";
   process.env.NEXTAUTH_URL = "https://kurioticket.com";
+}
+
+function staging() {
+  process.env.TRAVEL_PROVIDER_MODE = "staging";
+  process.env.NEXT_PUBLIC_APP_URL = "https://staging.kurioticket.com";
+  process.env.NEXTAUTH_URL = "https://staging.kurioticket.com";
 }
 
 test("normalization and exact trusted-domain matching allow both approved company domains", () => {
@@ -50,6 +68,7 @@ test("active tester evaluation fails closed for suspended, revoked, and expired 
 
 test("active tester permissions are independently enforced", () => {
   const tester = { status: "ACTIVE" as const, allowGoogleSignIn: true, allowStagingEmail: false, expiresAt: null, approvedAt: new Date() };
+  assert.equal(hasPreviewTesterPermission(tester, "preview"), true);
   assert.equal(hasPreviewTesterPermission(tester, "google"), true);
   assert.equal(hasPreviewTesterPermission(tester, "email"), false);
 });
@@ -83,18 +102,57 @@ test("staging email recipients require a trusted domain or explicit tester permi
   assert.equal(isStagingEmailRecipientAllowed("tester@gmail.com", null), false);
 });
 
+test("passkey access uses Preview access rather than Google or staging-email permission", async () => {
+  const approvedAt = new Date();
+  const roleTester = {
+    status: "ACTIVE" as const,
+    allowGoogleSignIn: false,
+    allowStagingEmail: false,
+    expiresAt: null,
+    approvedAt,
+    roles: ["TESTER" as const],
+  };
+  const legacyGoogleOnly = {
+    status: "ACTIVE" as const,
+    allowGoogleSignIn: true,
+    allowStagingEmail: false,
+    expiresAt: null,
+    approvedAt,
+  };
+
+  assert.equal(isStagingPasskeyAccessAllowed("employee@zentricanalytics.com", null), true);
+  assert.equal(isStagingPasskeyAccessAllowed("tester@gmail.com", roleTester), true);
+  assert.equal(isStagingPasskeyAccessAllowed("tester@gmail.com", legacyGoogleOnly), true);
+  assert.equal(isStagingPasskeyAccessAllowed("tester@gmail.com", { ...roleTester, status: "SUSPENDED" }), false);
+  assert.equal(isStagingPasskeyAccessAllowed("tester@gmail.com", { ...roleTester, status: "REVOKED" }), false);
+  assert.equal(isStagingPasskeyAccessAllowed("tester@gmail.com", { ...roleTester, expiresAt: new Date(0) }), false);
+  assert.equal(isStagingPasskeyAccessAllowed("tester@gmail.com", null), false);
+
+  staging();
+  let lookedUp = "";
+  assert.equal(await canUseStagingPasskey(" Preview.User@Gmail.com ", async (email) => {
+    lookedUp = email;
+    return roleTester;
+  }), true);
+  assert.equal(lookedUp, "preview.user@gmail.com");
+  assert.equal(await canUseStagingPasskey("not-an-email", async () => {
+    assert.fail("malformed passkey email must not query PreviewTester");
+  }), false);
+});
+
 test("Production access paths return before any PreviewTester database query", async () => {
   production();
   delete process.env.DATABASE_URL;
   for (const email of ["customer@gmail.com", "customer@kurioticket.com", "customer@example.com"]) {
     assert.equal(await canUseStagingCredentials(email), true);
     assert.equal(await canUseStagingGoogle(email, true), true);
+    assert.equal(await canUseStagingPasskey(email), true);
     assert.equal(await canReceiveStagingEmail(email), true);
   }
 });
 
 test("staging email emergency control fails closed unless explicitly enabled", async () => {
-  process.env.TRAVEL_PROVIDER_MODE = "staging";
+  staging();
   delete process.env.STAGING_EMAIL_DELIVERY_ENABLED;
   assert.equal(await canReceiveStagingEmail("employee@zentricanalytics.com"), false);
   assert.equal(await canReceiveStagingEmail("admin@kurioticket.com"), false);
@@ -104,13 +162,13 @@ test("staging email emergency control fails closed unless explicitly enabled", a
 });
 
 test("staging credentials allow only exact trusted company domains", async () => {
-  process.env.TRAVEL_PROVIDER_MODE = "staging";
+  staging();
   assert.equal(await canUseStagingCredentials(" admin@Kurioticket.com "), true);
   assert.equal(await canUseStagingCredentials("employee@zentricanalytics.com"), true);
 });
 
 test("staging credentials allow an approved external tester with email permission", async () => {
-  process.env.TRAVEL_PROVIDER_MODE = "staging";
+  staging();
   let lookedUpEmail: string | undefined;
   const allowed = await canUseStagingCredentials(" Approved.Tester@Gmail.com ", async (email) => {
     lookedUpEmail = email;
@@ -121,7 +179,7 @@ test("staging credentials allow an approved external tester with email permissio
 });
 
 test("staging credentials block every ineligible external tester state", async () => {
-  process.env.TRAVEL_PROVIDER_MODE = "staging";
+  staging();
   const approvedAt = new Date();
   const base = { status: "ACTIVE" as const, allowGoogleSignIn: false, allowStagingEmail: true, expiresAt: null, approvedAt };
   const blocked = [
@@ -139,7 +197,7 @@ test("staging credentials block every ineligible external tester state", async (
 });
 
 test("staging credentials reject malformed addresses without querying PreviewTester", async () => {
-  process.env.TRAVEL_PROVIDER_MODE = "staging";
+  staging();
   for (const email of ["not-an-email", "user@@gmail.com"]) {
     assert.equal(await canUseStagingCredentials(email, async () => {
       assert.fail(`must not query malformed address: ${email}`);
@@ -165,5 +223,7 @@ test("website, mobile, and session email authentication share the staging creden
     const source = await readFile(path, "utf8");
     assert.match(source, /canUseStagingCredentials/, path);
   }
-  assert.match(await readFile("src/lib/previewTesterAccess.ts", "utf8"), /canRetainStagingSession[\s\S]*canUseStagingCredentials/);
+  const accessSource = await readFile("src/lib/previewTesterAccess.ts", "utf8");
+  assert.match(accessSource, /canRetainStagingSession[\s\S]*canUseStagingCredentials/);
+  assert.match(accessSource, /canRetainStagingSession[\s\S]*canUseStagingPasskey/);
 });
