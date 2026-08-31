@@ -26,6 +26,7 @@ import { useMobileLocalization } from "../../localization/MobileLocalizationProv
 import { localizedAccountActivityLabel } from "../../localization/accountActivityLabels";
 import { formatSecurityDate, securityCopy } from "./securityLocalization";
 import { PasswordResetFlow, passwordResetNavigationCopy } from "./PasswordResetFlow";
+import { PasskeysManager } from "./PasskeysManager";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { signInHref } from "../auth/signInIntent";
@@ -173,9 +174,16 @@ export function SecurityScreen() {
 
     <ScreenModal visible={passkeysOpen} title={c.passkeys} closeLabel={c.close} onClose={closePasskeys}>
       <Text style={[styles.intro,{color:theme.muted}]}>{c.passkeysHelp}</Text><Feedback error={passkeysError} message={passkeysMessage}/>
-      <Button label={c.addPasskey} disabled onPress={()=>{}} />
-      <Text style={{color:theme.muted}}>{c.passkeyPreviewRequired}</Text>
-      {passkeys.map(item=><View key={item.id} style={[styles.device,{borderBottomColor:theme.border}]}><Text style={[styles.rowLabel,{color:theme.text}]}>{item.name}</Text><Text style={{color:theme.muted}}>{item.label}</Text><Text style={{color:theme.muted}}>{c.created} {date(item.createdAt)}</Text></View>)}
+      <PasskeysManager
+        active={passkeysOpen}
+        passkeys={passkeys}
+        hasPassword={Boolean(overview?.hasPassword)}
+        twoFactorEnabled={Boolean(overview?.twoFactorEnabled)}
+        onReload={() => loadPasskeys()}
+        onUnauthorized={unauth}
+        onError={setPasskeysError}
+        onMessage={setPasskeysMessage}
+      />
     </ScreenModal>
     <ScreenModal visible={passwordOpen} title={passwordMode === "reset" ? resetCopy.title : c.change} closeLabel={c.close} onClose={closePassword}>
       <Feedback error={passwordError} message={passwordMessage} />

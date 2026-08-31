@@ -46,6 +46,13 @@ function readCbor(data: Buffer, offset = 0): [unknown, number] {
   if (major === 7) return [ai === 20 ? false : ai === 21 ? true : null, offset];
   throw new Error("Unsupported CBOR");
 }
+export function authenticatorDataFromAttestationObject(attestationObjectB64: string) {
+  const [decoded] = readCbor(fromB64url(attestationObjectB64));
+  if (!(decoded instanceof Map)) throw new Error("Invalid attestation object");
+  const authenticatorData = decoded.get("authData");
+  if (!Buffer.isBuffer(authenticatorData)) throw new Error("Invalid attestation object");
+  return b64url(authenticatorData);
+}
 function coseToJwk(cose: Buffer) {
   const [decoded] = readCbor(cose); if (!(decoded instanceof Map)) throw new Error("Invalid public key");
   const kty = decoded.get(1), alg = decoded.get(3), crv = decoded.get(-1), x = decoded.get(-2), y = decoded.get(-3);

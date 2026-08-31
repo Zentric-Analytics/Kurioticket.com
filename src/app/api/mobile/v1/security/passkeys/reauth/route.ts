@@ -73,8 +73,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, method: "email", expiresInMinutes: 5, purpose });
   }
 
+  if (!user.securitySettings?.twoFactorEnabled && user.passwordHash && parsed.data.password) {
+    if (await bcrypt.compare(parsed.data.password, user.passwordHash)) {
+      return mintReauthToken(session.user.id, canonical.accountSession.id, purpose, "password");
+    }
+    return NextResponse.json({ error: "That password is incorrect. Try again." }, { status: 400 });
+  }
+
   const code = parsed.data.code || "";
-  if (!code) return NextResponse.json({ error: "Enter a verification code." }, { status: 400 });
+  if (!code) return NextResponse.json({ error: "Enter a verification code or password." }, { status: 400 });
   if (user.securitySettings?.twoFactorEnabled && await verifySecondFactor({ userId: session.user.id, code, consumeRecoveryCode: true })) return mintReauthToken(session.user.id, canonical.accountSession.id, purpose, "totp");
   if (!user.securitySettings?.twoFactorEnabled && /^\d{6}$/.test(code)) {
     const challenge = await prisma.webAuthnChallenge.findFirst({ where: { userId: session.user.id, type: emailChallengeType(purpose), consumedAt: null }, orderBy: { createdAt: "desc" } });
@@ -87,7 +94,6 @@ export async function POST(request: Request) {
     await prisma.webAuthnChallenge.update({ where: { id: challenge.id }, data: { consumedAt: attempts + 1 >= maxEmailCodeAttempts ? new Date() : null, metadata: { attempts: attempts + 1, purpose } } });
     return NextResponse.json({ error: "That code is incorrect or expired. Try again." }, { status: 400 });
   }
-  if (!user.securitySettings?.twoFactorEnabled && user.passwordHash && parsed.data.password && await bcrypt.compare(parsed.data.password, user.passwordHash)) return mintReauthToken(session.user.id, canonical.accountSession.id, purpose, "password");
 
   return NextResponse.json({ error: "That code is incorrect or expired. Try again." }, { status: 400 });
 }
