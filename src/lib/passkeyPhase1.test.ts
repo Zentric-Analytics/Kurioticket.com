@@ -40,7 +40,10 @@ test("Android association includes login credential delegation and authoritative
     WEBAUTHN_ANDROID_PACKAGE_NAME: "com.kurioticket.app.preview",
     WEBAUTHN_ANDROID_CERT_SHA256: fingerprint,
   }));
-  assert.deepEqual(result[0].relation, ["delegate_permission/common.get_login_creds"]);
+  assert.deepEqual(result[0].relation, [
+    "delegate_permission/common.handle_all_urls",
+    "delegate_permission/common.get_login_creds",
+  ]);
   assert.equal(result[0].target.package_name, "com.kurioticket.app.preview");
   assert.deepEqual(result[0].target.sha256_cert_fingerprints, [fingerprint.toUpperCase()]);
   assert.throws(() => androidAssociation(environment({ WEBAUTHN_ANDROID_PACKAGE_NAME: "com.kurioticket.app.preview" })));
