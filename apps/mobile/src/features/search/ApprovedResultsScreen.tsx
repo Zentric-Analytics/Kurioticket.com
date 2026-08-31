@@ -1537,7 +1537,7 @@ function PriceAlert({ product, plan, results, available = true }: { product: Pro
       >
         <View style={s0.flightAlertCopy}>
           <Text style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track this flight price</Text>
-          <Text style={[s0.flightAlertSubtitle, { color: supportTextColor }]}>Get notified when fares change</Text>
+          <Text style={[s0.flightAlertSubtitle, { color: supportTextColor }]} numberOfLines={1} ellipsizeMode="tail">Get notified when fares change</Text>
         </View>
         <View style={s0.flightAlertSwitchTarget}>
           <Switch
@@ -1749,10 +1749,10 @@ const s0 = StyleSheet.create({
   journeyDuration: { maxWidth: "100%", fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts.semibold, textAlign: "center" },
   stopLabel: { maxWidth: "100%", fontSize: 10, lineHeight: 13, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "center" },
   routeTrack: { width: "100%", minWidth: 46, flexDirection: "row", alignItems: "center", gap: 2 },
-  routeDot: { width: 6, height: 6, borderRadius: 3, flexShrink: 0 },
+  routeDot: { width: 7, height: 7, borderRadius: 3.5, flexShrink: 0 },
   line: {
     flex: 1,
-    height: 1,
+    height: 1.5,
     backgroundColor: ui.muted,
   },
   bigPrice: { fontSize: 20, lineHeight: 25, fontWeight: "900", fontFamily: appFonts.black, color: ui.navy, textAlign: "right" },
@@ -1764,7 +1764,7 @@ const s0 = StyleSheet.create({
   metadataFooterContainer: { width: "100%", alignItems: "center" },
   metadataRow: { maxWidth: "100%", flexDirection: "row", alignItems: "center", justifyContent: "center", alignSelf: "center", paddingTop: 1, paddingBottom: 2 },
   metadataItem: { flexDirection: "row", alignItems: "center", gap: 3, minWidth: 0, flexShrink: 1 },
-  metadataText: { flexShrink: 1, minWidth: 0, fontSize: 12, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
+  metadataText: { flexShrink: 1, minWidth: 0, fontSize: 13, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
   metadataSeparator: { flexShrink: 0, fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium, marginHorizontal: 4 },
   hotelCard: {
     height: 234,
@@ -1908,13 +1908,13 @@ const s0 = StyleSheet.create({
   flightAlert: {
     borderRadius: 10,
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 2,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
     overflow: "hidden",
   },
-  flightAlertCopy: { flex: 1, minWidth: 0, gap: 2 },
+  flightAlertCopy: { flex: 1, minWidth: 0, gap: 1 },
   flightAlertTitle: { fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
   flightAlertSubtitle: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
   flightAlertSwitchTarget: { minWidth: 48, minHeight: 48, alignItems: "center", justifyContent: "center" },

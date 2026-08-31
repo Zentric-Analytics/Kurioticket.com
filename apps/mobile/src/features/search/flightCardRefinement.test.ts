@@ -146,7 +146,7 @@ test("flight card keeps horizontal metadata compact while airline identity may g
   assert.doesNotMatch(source, /metadataRow: \{[^}]*flexWrap/);
   assert.doesNotMatch(source, /metadataRow: \{[^}]*justifyContent: "space-between"/);
   assert.match(source, /metadataItem: \{ flexDirection: "row", alignItems: "center", gap: 3, minWidth: 0, flexShrink: 1 \}/);
-  assert.match(source, /metadataText: \{ flexShrink: 1, minWidth: 0, fontSize: 12, lineHeight: 15, fontWeight: "500", fontFamily: appFonts\.medium \}/);
+  assert.match(source, /metadataText: \{ flexShrink: 1, minWidth: 0, fontSize: 13, lineHeight: 16, fontWeight: "500", fontFamily: appFonts\.medium \}/);
   assert.doesNotMatch(source, /metadataText: \{[^}]*flex: 1/);
   assert.equal(card.match(/<Text accessible=\{false\} numberOfLines=\{1\} ellipsizeMode="tail" style=\{\[s0\.metadataText/g)?.length, 3);
   assert.equal(card.match(/s0\.metadataText, \{ color: supportTextColor \}/g)?.length, 3);
