@@ -230,7 +230,7 @@ export function CarDetailsExperience({
                   role="tabpanel"
                   aria-labelledby="car-compare-tab"
                   hidden={activeTab !== "compare"}
-                  className="py-5"
+                  className=""
                 >
                   {primaryOffer ? (
                     <CarPriceComparisonSection
@@ -362,21 +362,23 @@ function CarPriceComparisonSection({
   locale: string;
   headingLevel: HeadingLevel;
 }) {
-  const total = price(offer.totalPrice, offer.currency);
   const daily = price(offer.pricePerDay, offer.currency);
   const facts = [
     offer.freeCancellation
       ? copy("carDetails.freeCancellation")
       : copy("carDetails.nonRefundable"),
     offer.taxesAndFeesIncluded
-      ? `${copy("carDetails.taxesFees")} ${copy("carDetails.includedShort")}`
+      ? copy("carDetails.feesIncludedShort")
       : copy("carDetails.notIncluded"),
     car.mileagePolicy === "unlimited"
       ? copy("carDetails.unlimitedMileage")
       : `${car.limitedMileageKm ?? "—"} km ${copy("carDetails.includedShort")}`,
   ];
   return (
-    <div className="border-b border-slate-200 py-7" data-car-price-comparison>
+    <div
+      className="border-b border-slate-200 pb-7 pt-3"
+      data-car-price-comparison
+    >
       <Heading
         level={headingLevel}
         className="text-xl font-extrabold tracking-tight text-slate-950"
@@ -388,55 +390,43 @@ function CarPriceComparisonSection({
         {formatCarDate(search.dropoffDate, locale)} · {days}{" "}
         {days === 1 ? copy("carDetails.day") : copy("carDetails.days")}
       </p>
-      <div className="relative mt-5 rounded-[14px] border border-[#075EE8] bg-white p-4 ring-1 ring-[#075EE8]/10">
-        <span
-          className="absolute end-4 top-4 flex size-[22px] items-center justify-center rounded-full border-2 border-[#075EE8]"
-          aria-hidden="true"
-        >
-          <span className="size-2.5 rounded-full bg-[#075EE8]" />
-        </span>
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
+      <div className="mt-5 rounded-[14px] border border-[#075EE8] bg-white px-3 py-4 ring-1 ring-[#075EE8]/10 sm:px-4">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto_auto_auto] gap-x-3 sm:grid-rows-[auto_auto_auto] sm:gap-x-6">
           <Image
             src="/brand/kurioticket-logo-primary-light-bg.svg"
             alt="Kurioticket"
             width={146}
             height={32}
-            style={{ width: "auto" }}
-            className="h-8 w-auto max-w-[145px] object-contain object-left"
+            className="self-start object-contain object-left"
           />
-          <div className="pe-8 text-right">
-            <p
-              className="text-2xl font-extrabold tracking-tight text-slate-950"
-              dir="ltr"
-              title={total.title}
-              aria-label={total.ariaLabel}
-            >
-              {total.formatted}
-            </p>
-            <p className="text-xs font-medium text-slate-600">
-              {copy("carDetails.bookingSummary")}
-            </p>
-          </div>
-        </div>
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
-          <div className="flex flex-wrap gap-x-3 gap-y-1">
-            {facts.map((fact) => (
-              <span key={fact} className="text-xs font-semibold text-slate-600">
-                {fact}
-              </span>
-            ))}
-          </div>
-          <p
-            className="ms-auto whitespace-nowrap text-sm font-bold text-slate-800"
+          <span
+            className="flex size-[22px] items-center justify-center justify-self-end rounded-full border-2 border-[#075EE8] bg-white"
+            aria-hidden="true"
+          >
+            <span className="size-2.5 rounded-full bg-[#075EE8]" />
+          </span>
+          <span aria-hidden="true" />
+          <strong
+            className="mt-3 min-w-0 whitespace-nowrap text-right text-xl font-extrabold tracking-tight text-slate-950 tabular-nums"
             dir="ltr"
             title={daily.title}
             aria-label={daily.ariaLabel}
           >
-            {daily.formatted}{" "}
-            <span className="font-medium text-slate-500">
-              {copy("carsResults.perDay")}
-            </span>
-          </p>
+            {daily.formatted}
+          </strong>
+          <div className="col-span-2 row-start-4 mt-3 flex min-w-0 flex-nowrap items-center justify-between gap-x-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:col-span-1 sm:row-start-3 sm:mt-0.5 sm:justify-start sm:gap-x-3">
+            {facts.map((fact) => (
+              <span
+                key={fact}
+                className="shrink-0 whitespace-nowrap text-[10px] font-semibold text-slate-600 sm:text-xs"
+              >
+                {fact}
+              </span>
+            ))}
+          </div>
+          <span className="col-start-2 row-start-3 mt-0.5 self-center whitespace-nowrap text-right text-xs font-medium leading-4 text-slate-600">
+            {copy("carsResults.perDay")}
+          </span>
         </div>
       </div>
       <p className="mt-3 text-xs leading-5 text-slate-500">
