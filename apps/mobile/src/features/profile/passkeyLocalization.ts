@@ -1,13 +1,16 @@
 import type { MobileLocale } from "../../localization/mobileLocalizationCatalog";
 
 const english = {
+  addPasskey: "Add passkey",
   unsupported: "Passkeys are not available in this app build or on this device. Install the latest Kurioticket Preview build and make sure a screen lock is enabled.",
   checkingSupport: "Checking passkey support…",
   noPasskeys: "No passkeys have been added yet.",
+  created: "Created",
   lastUsed: "Last used",
   neverUsed: "Not used yet",
   rename: "Rename",
   remove: "Remove",
+  cancel: "Cancel",
   renameTitle: "Rename passkey",
   passkeyName: "Passkey name",
   saveName: "Save name",
@@ -37,13 +40,16 @@ const english = {
 export type PasskeyCopy = { [K in keyof typeof english]: string };
 
 const spanish: PasskeyCopy = {
+  addPasskey: "Añadir llave de acceso",
   unsupported: "Las llaves de acceso no están disponibles en esta versión de la aplicación o en este dispositivo. Instala la última versión Preview de Kurioticket y asegúrate de tener un bloqueo de pantalla.",
   checkingSupport: "Comprobando la compatibilidad con llaves de acceso…",
   noPasskeys: "Todavía no se ha añadido ninguna llave de acceso.",
+  created: "Creada",
   lastUsed: "Último uso",
   neverUsed: "Aún no se ha usado",
   rename: "Cambiar nombre",
   remove: "Eliminar",
+  cancel: "Cancelar",
   renameTitle: "Cambiar el nombre de la llave",
   passkeyName: "Nombre de la llave de acceso",
   saveName: "Guardar nombre",
