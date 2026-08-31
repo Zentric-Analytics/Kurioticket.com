@@ -64,25 +64,6 @@ function normalizeWhitespace(value: string) {
   return value.trim().replace(/\s+/g, " ");
 }
 
-function toTitleCase(value: string) {
-  const normalized = normalizeWhitespace(value);
-
-  if (!normalized) return "";
-
-  const shouldNormalizeCase =
-    normalized === normalized.toLocaleUpperCase() ||
-    normalized === normalized.toLocaleLowerCase();
-  const title = shouldNormalizeCase
-    ? normalized.toLocaleLowerCase()
-    : normalized;
-
-  return title.replace(
-    /(^|[\s/-])([\p{L}\p{N}])/gu,
-    (_match, separator: string, character: string) =>
-      `${separator}${character.toLocaleUpperCase()}`,
-  );
-}
-
 function toSentenceCase(value: string) {
   const normalized = normalizeWhitespace(value);
 
@@ -96,12 +77,6 @@ function toSentenceCase(value: string) {
     : normalized;
 
   return `${sentence.charAt(0).toLocaleUpperCase()}${sentence.slice(1)}`;
-}
-
-function isMealPlanText(value: string) {
-  return /breakfast|room only|accommodation only|half board|full board|all[-\s]?inclusive/i.test(
-    value,
-  );
 }
 
 function getCancellationDisplay(
@@ -137,86 +112,6 @@ function getCancellationDisplay(
   }
 
   return null;
-}
-
-function translateKnownHotelLabel(value: string, t: (key: string) => string) {
-  const normalized = normalizeWhitespace(value).toLocaleLowerCase();
-
-  if (/^half board$/.test(normalized)) {
-    return t("hotelResults.filter.halfBoard");
-  }
-
-  if (/^full board$/.test(normalized)) {
-    return t("hotelResults.filter.fullBoard");
-  }
-
-  if (/^all[-\s]?inclusive$/.test(normalized)) {
-    return t("hotelResults.filter.allInclusive");
-  }
-
-  if (/^double business$/.test(normalized)) {
-    return t("hotelResults.filter.doubleBusiness");
-  }
-
-  if (/^bed and breakfast$/.test(normalized)) {
-    return t("hotelResults.filter.bedAndBreakfast");
-  }
-
-  if (/^breakfast$/.test(normalized)) {
-    return t("hotelResults.filter.breakfastIncludedAvailable");
-  }
-
-  if (/^(room only|accommodation only)$/.test(normalized)) {
-    return t("hotelResults.filter.roomOnly");
-  }
-
-  if (/^double room$/.test(normalized)) {
-    return t("hotelResults.filter.doubleRoom");
-  }
-
-  if (/^king bed$/.test(normalized)) {
-    return t("hotelResults.filter.kingBed");
-  }
-
-  if (/^deluxe king room$/.test(normalized)) {
-    return t("hotelResults.filter.deluxeKingRoom");
-  }
-
-  if (/^classic room$/.test(normalized)) {
-    return t("hotelResults.filter.classicRoom");
-  }
-
-  if (/^luxury king$/.test(normalized)) {
-    return t("hotelResults.filter.luxuryKing");
-  }
-
-  if (/^single standard$/.test(normalized)) {
-    return t("hotelResults.filter.singleStandard");
-  }
-
-  if (/^superior room$/.test(normalized)) {
-    return t("hotelResults.filter.superiorRoom");
-  }
-
-  if (/^superior double room$/.test(normalized)) {
-    return t("hotelResults.filter.superiorDoubleRoom");
-  }
-
-  return value;
-}
-
-function getMealPlanDisplay(
-  hotel: PublicHotelResult,
-  normalizedRoomType: string,
-  t: (key: string) => string,
-) {
-  const mealText = [hotel.roomType, ...hotel.amenities]
-    .map((value) => toSentenceCase(value || ""))
-    .find((value) => value && isMealPlanText(value));
-
-  if (!mealText || toTitleCase(mealText) === normalizedRoomType) return "";
-
-  return translateKnownHotelLabel(mealText, t);
 }
 
 const reviewLabelKeys: Record<HotelReviewBand, string> = {
@@ -301,9 +196,12 @@ export function HotelCard({
       ? explicitGalleryImages[resolvedActiveImageIndex]
       : "";
   const displayImageUrl = activeGalleryImageUrl;
-  const rawRoomTypeText = hotel.roomType ? toTitleCase(hotel.roomType) : "";
-  const mealPlanText = getMealPlanDisplay(hotel, rawRoomTypeText, t);
-  const cancellationDisplay = getCancellationDisplay(hotel.cancellationInfo, t);
+  const mealPlanText = hotel.catalogueProfile?.mealPlan
+    ? toSentenceCase(hotel.catalogueProfile.mealPlan)
+    : "";
+  const cancellationDisplay = hotel.catalogueProfile?.cancellationPolicy
+    ? getCancellationDisplay(hotel.catalogueProfile.cancellationPolicy, t)
+    : null;
   const expandedAmenityItems = buildHotelAmenityPresentation(
     hotel.amenities,
     8,
@@ -741,6 +639,15 @@ export function HotelCard({
               ) : null}
             </div>
             <div data-hotel-card-amenities className="mt-2 min-w-0 md:mt-3">
+              {hotel.catalogueProfile ? (
+                <p className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold leading-4 text-slate-700 md:text-xs">
+                  <span>{hotel.catalogueProfile.propertyType}</span>
+                  <span aria-hidden="true" className="text-slate-300">•</span>
+                  <span>{hotel.catalogueProfile.room.name}</span>
+                  <span aria-hidden="true" className="text-slate-300">•</span>
+                  <span>{hotel.catalogueProfile.room.bedConfiguration}</span>
+                </p>
+              ) : null}
               {shouldShowMealPlanText || collapsedAmenityItems.length > 0 ? (
                 <div className="space-y-1.5">
                   {shouldShowMealPlanText ? (

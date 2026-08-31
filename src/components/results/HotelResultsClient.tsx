@@ -278,6 +278,8 @@ type HotelFilterSelections = {
   locations: string[];
   roomTypes: string[];
   bedTypes: string[];
+  accessibility: string[];
+  travellerFeatures: string[];
 };
 
 const emptySelections: HotelFilterSelections = {
@@ -288,6 +290,8 @@ const emptySelections: HotelFilterSelections = {
   locations: [],
   roomTypes: [],
   bedTypes: [],
+  accessibility: [],
+  travellerFeatures: [],
 };
 
 const getResultMaxPrice = (
@@ -2485,7 +2489,7 @@ export function HotelResultsExperience({
                   <div className="flex items-start gap-2 rounded-xl border border-[#C9D9EA] bg-[#F0F6FC] px-4 py-3 text-sm leading-5 text-slate-700">
                     <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#004BB8]" aria-hidden="true" />
                     <p>
-                      Planning results for your selected stay. Prices are estimates from the current sample listings; availability and booking terms are not verified.
+                      Compare property details and estimated prices for your selected stay. Booking terms appear only when supplied with an offer.
                     </p>
                   </div>
                 ) : null}
@@ -2577,7 +2581,7 @@ export function HotelResultsExperience({
       >
         <div className="shrink-0 border-b border-slate-200 bg-white px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(15,23,42,0.04)]">
           <div className="flex items-center justify-between gap-3">
-            <div><h2 className="text-lg font-bold leading-6 text-slate-950">{t("filters")}{activeFilterCount ? ` (${activeFilterCount})` : ""}</h2><p className="text-xs text-slate-500">Refine these sample stays</p></div>
+            <div><h2 className="text-lg font-bold leading-6 text-slate-950">{t("filters")}{activeFilterCount ? ` (${activeFilterCount})` : ""}</h2><p className="text-xs text-slate-500">Refine your stay options</p></div>
             <div className="flex items-center gap-1"><button type="button" disabled={activeFilterCount === 0} onClick={resetFilters} className="min-h-10 rounded-lg px-2 text-sm font-bold text-[#004BB8] disabled:text-slate-400">{t("clearAll")}</button><Button
               type="button"
               variant="ghost"
@@ -3110,12 +3114,12 @@ function HotelFilters({
         </FilterSection>
         ) : null}
 
-        {options.meals.length > 0 ? (
+        {options.travellerFeatures.length > 0 ? (
           <CheckboxFilterSection
             title="Popular"
-            options={options.meals}
-            selected={selectedFilters.meals}
-            onToggle={(value) => toggleFilter("meals", value)}
+            options={options.travellerFeatures}
+            selected={selectedFilters.travellerFeatures}
+            onToggle={(value) => toggleFilter("travellerFeatures", value)}
             t={t}
             locale={locale}
             layout={layout}
@@ -3162,6 +3166,17 @@ function HotelFilters({
           t={t}
           locale={locale}
           collapsedCount={6}
+          layout={layout}
+        />
+
+        <CheckboxFilterSection
+          title="Accessibility"
+          options={options.accessibility}
+          selected={selectedFilters.accessibility}
+          onToggle={(value) => toggleFilter("accessibility", value)}
+          t={t}
+          locale={locale}
+          collapsedCount={5}
           layout={layout}
         />
 
@@ -3711,6 +3726,17 @@ function buildActiveFilterChips(
     });
   });
 
+  (["accessibility", "travellerFeatures"] as const).forEach((group) => {
+    selectedFilters[group].forEach((value) => {
+      chips.push({
+        key: `${group}-${value}`,
+        label: value.replace(/\b\w/g, (letter) => letter.toUpperCase()),
+        group,
+        value,
+      });
+    });
+  });
+
   return chips;
 }
 
@@ -3724,15 +3750,20 @@ function buildHotelFilterOptions(
     propertyTypes: buildTermOptions(
       hotels,
       PROPERTY_TYPE_FILTERS,
-      (hotel) => [hotel.name, hotel.roomType].join(" "),
+      (hotel) => hotel.catalogueProfile?.propertyType ?? "",
       t,
-      true,
+      false,
     ),
-    meals: buildTermOptions(hotels, MEAL_FILTERS, getSearchableHotelText, t),
+    meals: buildTermOptions(
+      hotels,
+      MEAL_FILTERS,
+      (hotel) => hotel.catalogueProfile?.mealPlan ?? "",
+      t,
+    ),
     cancellationPolicies: buildTermOptions(
       hotels,
       CANCELLATION_FILTERS,
-      (hotel) => [hotel.cancellationInfo, ...hotel.amenities].join(" "),
+      (hotel) => hotel.catalogueProfile?.cancellationPolicy ?? "",
       t,
     ),
     facilities: buildHotelFacilityFilterOptions(hotels, t),
@@ -3740,17 +3771,53 @@ function buildHotelFilterOptions(
     roomTypes: buildTermOptions(
       hotels,
       ROOM_TYPE_FILTERS,
-      (hotel) => hotel.roomType,
+      (hotel) => hotel.catalogueProfile?.room.name ?? "",
       t,
       true,
     ),
     bedTypes: buildTermOptions(
       hotels,
       BED_TYPE_FILTERS,
-      (hotel) => hotel.roomType,
+      (hotel) => hotel.catalogueProfile?.room.bedConfiguration ?? "",
       t,
     ),
+    accessibility: buildStructuredListOptions(
+      hotels,
+      (hotel) => hotel.catalogueProfile?.accessibilityFeatures ?? [],
+    ),
+    travellerFeatures: buildStructuredListOptions(
+      hotels,
+      (hotel) => hotel.catalogueProfile?.travellerFeatures ?? [],
+    ),
   };
+}
+
+function buildStructuredListOptions(
+  hotels: PublicHotelResult[],
+  valuesForHotel: (hotel: PublicHotelResult) => string[],
+): FilterOption[] {
+  const counts = new Map<string, FilterOption>();
+  hotels.forEach((hotel) => {
+    valuesForHotel(hotel).forEach((label) => {
+      const value = label.trim().toLocaleLowerCase();
+      if (!value) return;
+      const existing = counts.get(value);
+      if (existing) existing.count += 1;
+      else counts.set(value, { value, label: label.trim(), count: 1 });
+    });
+  });
+  return Array.from(counts.values())
+    .filter((option) => option.count >= 2 && option.count < hotels.length)
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+}
+
+function matchesStructuredList(
+  values: string[] | undefined,
+  selected: string[],
+) {
+  if (!selected.length) return true;
+  const normalized = new Set((values ?? []).map((value) => value.trim().toLocaleLowerCase()));
+  return selected.some((value) => normalized.has(value));
 }
 
 function cleanHotelNeighbourhood(value: string | undefined) {
@@ -3879,33 +3946,41 @@ function hotelMatchesFilters(
       hotel,
       selectedFilters.propertyTypes,
       PROPERTY_TYPE_FILTERS,
-      (item) => [item.name, item.roomType].join(" "),
+      (item) => item.catalogueProfile?.propertyType ?? "",
     ) &&
     matchesTermGroup(
       hotel,
       selectedFilters.meals,
       MEAL_FILTERS,
-      getSearchableHotelText,
+      (item) => item.catalogueProfile?.mealPlan ?? "",
     ) &&
     matchesTermGroup(
       hotel,
       selectedFilters.cancellationPolicies,
       CANCELLATION_FILTERS,
-      (item) => [item.cancellationInfo, ...item.amenities].join(" "),
+      (item) => item.catalogueProfile?.cancellationPolicy ?? "",
     ) &&
     hotelMatchesFacilityFilters(hotel, selectedFilters.facilities) &&
+    matchesStructuredList(
+      hotel.catalogueProfile?.accessibilityFeatures,
+      selectedFilters.accessibility,
+    ) &&
+    matchesStructuredList(
+      hotel.catalogueProfile?.travellerFeatures,
+      selectedFilters.travellerFeatures,
+    ) &&
     hotelMatchesNeighbourhoodFilters(hotel, selectedFilters.locations) &&
     matchesTermGroup(
       hotel,
       selectedFilters.roomTypes,
       ROOM_TYPE_FILTERS,
-      (item) => item.roomType,
+      (item) => item.catalogueProfile?.room.name ?? "",
     ) &&
     matchesTermGroup(
       hotel,
       selectedFilters.bedTypes,
       BED_TYPE_FILTERS,
-      (item) => item.roomType,
+      (item) => item.catalogueProfile?.room.bedConfiguration ?? "",
     )
   );
 }
@@ -3924,16 +3999,6 @@ function matchesTermGroup(
       ? textIncludesTerms(textForHotel(hotel), filter.terms)
       : false;
   });
-}
-
-function getSearchableHotelText(hotel: PublicHotelResult) {
-  return [
-    hotel.name,
-    hotel.location,
-    hotel.roomType,
-    hotel.cancellationInfo,
-    ...hotel.amenities,
-  ].join(" ");
 }
 
 function textIncludesTerms(text: string, terms: string[]) {
