@@ -83,7 +83,8 @@ test("converted fares add truthful provider context without duplicating same-cur
   const fareBlock = card.slice(card.indexOf('<View style={s0.fareRow}>'), card.indexOf('<View style={[s0.metadataDivider'));
   assert.match(card, /flightProviderFarePresentation\(fare\)/);
   assert.match(fareBlock, /\{fare\?\.converted === true \? \([\s\S]*ESTIMATED PRICE[\s\S]*\) : null\}/);
-  assert.match(fareBlock, /\{providerFare \? \([\s\S]*Provider price: \{providerFare\.formatted\} \{providerFare\.currency\}[\s\S]*\) : null\}/);
+  assert.match(fareBlock, /\{providerFare \? \([\s\S]*Provider price: \{providerFare\.formatted\}[\s\S]*\) : null\}/);
+  assert.doesNotMatch(fareBlock, /Provider price: \{providerFare\.formatted\} \{providerFare\.currency\}/);
   assert.match(fareBlock, /estimatedPrice, \{ color: supportTextColor \}/);
   assert.match(fareBlock, /providerPrice, \{ color: supportTextColor \}/);
   assert.equal(card.match(/\{fare\?\.formatted \?\? "—"\}/g)?.length, 1);

@@ -78,7 +78,8 @@ test("the full-width fare row contains the only displayed fare", () => {
   assert.doesNotMatch(fareRow, /actionColumn|width: 112|marginRight|position:/);
   assert.doesNotMatch(fareRow, /baggageSummary|fareRulesSummary|metadataItem/);
   assert.match(fareRow, /fare\?\.converted === true[\s\S]*ESTIMATED PRICE/);
-  assert.match(fareRow, /providerFare \? \([\s\S]*Provider price: \{providerFare\.formatted\} \{providerFare\.currency\}/);
+  assert.match(fareRow, /providerFare \? \([\s\S]*Provider price: \{providerFare\.formatted\}/);
+  assert.doesNotMatch(fareRow, /Provider price: \{providerFare\.formatted\} \{providerFare\.currency\}/);
   assert.doesNotMatch(fareRow, /US\$|A\$|CA\$|Per traveler|Round trip|One way|Taxes included|From/);
   assert.doesNotMatch(fareRow, /Pressable|View details/);
   assert.ok(card.indexOf('<View style={s0.journeyList}>') < card.indexOf('<View style={s0.fareRow}>'));
