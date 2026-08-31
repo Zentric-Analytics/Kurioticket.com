@@ -535,11 +535,11 @@ export const s = StyleSheet.create({
   },
   dateRail: { height: 80, flex: 1 },
   dates: { gap: 9, alignItems: "center" },
-  flightDateNavigator: { height: 88, paddingHorizontal: 0 },
+  flightDateNavigator: { height: 82, paddingHorizontal: 0 },
   nearbyDateInsight: { minHeight: 36, justifyContent: "center", paddingHorizontal: 14, marginTop: -4 },
   nearbyDateInsightText: { minWidth: 0, flexShrink: 1, fontSize: 12, lineHeight: 16, fontWeight: "600" },
-  flightDateRail: { height: 88 },
-  flightDates: { paddingHorizontal: 16, paddingVertical: 6 },
+  flightDateRail: { height: 82 },
+  flightDates: { paddingHorizontal: 16, paddingVertical: 5 },
   arrow: {
     width: 40,
     height: 40,
@@ -562,7 +562,7 @@ export const s = StyleSheet.create({
   flightDate: {
     minWidth: 76,
     maxWidth: 96,
-    height: 76,
+    height: 70,
     paddingHorizontal: 6,
     paddingVertical: 8,
     borderRadius: 8,

@@ -404,11 +404,11 @@ test("highlight sits immediately left of the fixed-right favorite action", () =>
   assert.match(card, /accessibilityLabel=\{`\$\{highlightLabel\} flight result`\}/);
   assert.match(card, /<Text numberOfLines=\{1\} style=\{\[s0\.resultBadgeText/);
   assert.match(card, /highlight === "Best" \|\| highlight === "Cheapest"/);
-  assert.match(card, /theme\.dark \? "#153D2A" : "#EAF8F0"/);
+  assert.match(card, /theme\.dark \? "#153D2A" : "#E3F6EA"/);
   assert.match(card, /theme\.dark \? "#8BE0B0" : "#157347"/);
   assert.match(card, /theme\.dark \? "#173568" : "#EEF4FF"/);
   assert.match(card, /theme\.dark \? "#8FB5FF" : ui\.blue/);
-  assert.match(source, /resultBadge: \{ height: 22,[^}]*paddingHorizontal: 8, borderRadius: 11 \}/);
+  assert.match(source, /resultBadge: \{ height: 24,[^}]*paddingHorizontal: 9, borderRadius: 12 \}/);
   assert.match(source, /resultBadgeText: \{ fontSize: 10, lineHeight: 13, fontWeight: "800", fontFamily: appFonts\.extraBold \}/);
   assert.match(source, /journeyList: \{ width: "100%", marginTop: 10, gap: 10 \}/);
 });

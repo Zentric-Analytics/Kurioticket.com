@@ -13,7 +13,7 @@ const dateLabel = styles.slice(styles.indexOf("  flightDateLabel:"), styles.inde
 const priceLabel = styles.slice(styles.indexOf("  flightDatePrice:"), styles.indexOf("  button:"));
 
 test("flight result tiles use bordered fare-calendar geometry without elevation", () => {
-  for (const expected of [/minWidth: 76/, /maxWidth: 96/, /height: 76/, /borderRadius: 8/, /borderWidth: 1/, /position: "relative"/, /overflow: "hidden"/]) assert.match(baseCard, expected);
+  for (const expected of [/minWidth: 76/, /maxWidth: 96/, /height: 70/, /borderRadius: 8/, /borderWidth: 1/, /position: "relative"/, /overflow: "hidden"/]) assert.match(baseCard, expected);
   assert.doesNotMatch(baseCard, /shadow|elevation/);
   assert.match(component, /backgroundColor: theme\.surface,[\s\S]*?borderColor: theme\.border/);
   assert.match(component, /backgroundColor: theme\.dark \? "#142B55" : "#F0F5FF",[\s\S]*?borderColor: ui\.blue/);
@@ -45,9 +45,9 @@ test("missing fares use a truthful neutral row and dates remain pressable", () =
 
 test("horizontal rail remains swipeable with three full tiles and a fourth peek", () => {
   assert.match(component, /<ScrollView\s+horizontal/);
-  assert.match(styles, /flightDateNavigator: \{ height: 88, paddingHorizontal: 0 \}/);
-  assert.match(styles, /flightDateRail: \{ height: 88 \}/);
-  assert.match(styles, /flightDates: \{ paddingHorizontal: 16, paddingVertical: 6 \}/);
+  assert.match(styles, /flightDateNavigator: \{ height: 82, paddingHorizontal: 0 \}/);
+  assert.match(styles, /flightDateRail: \{ height: 82 \}/);
+  assert.match(styles, /flightDates: \{ paddingHorizontal: 16, paddingVertical: 5 \}/);
   assert.match(component, /const flightDateWidth = Math\.min\(96, Math\.max\(76, \(windowWidth - 43\) \/ 3\.65\)\)/);
   for (const windowWidth of [320, 360, 375, 390, 412, 430, 480]) {
     const cardWidth = Math.min(96, Math.max(76, (windowWidth - 43) / 3.65));
