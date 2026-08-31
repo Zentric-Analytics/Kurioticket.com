@@ -490,7 +490,7 @@ export function HotelCard({
                     onClick={() => moveGallery(-1)}
                     className="absolute left-0 top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-transparent text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] transition hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-reduce:transition-none"
                   >
-                    <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                    <ChevronLeft className="h-5 w-5 -translate-x-2.5" aria-hidden="true" />
                   </button>
                   <button
                     type="button"
@@ -498,7 +498,7 @@ export function HotelCard({
                     onClick={() => moveGallery(1)}
                     className="absolute right-0 top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-transparent text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] transition hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-reduce:transition-none"
                   >
-                    <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                    <ChevronRight className="h-5 w-5 translate-x-2.5" aria-hidden="true" />
                   </button>
                   <div className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] whitespace-nowrap rounded-full bg-slate-950/75 px-2 py-1 text-[10px] font-semibold text-white shadow-lg ring-1 ring-white/30 sm:text-xs" aria-live="polite">
                     {photoCounterText}

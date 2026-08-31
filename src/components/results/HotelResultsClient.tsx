@@ -16,6 +16,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
 import {
   ArrowLeft,
+  ArrowUpDown,
   ArrowUp,
   Calendar,
   Check,
@@ -1738,6 +1739,7 @@ export function HotelResultsExperience({
           openMobileShortcutMenu(menu, width, event.currentTarget);
         }}
       >
+        {menu === "sort" ? <ArrowUpDown className="h-4 w-4 shrink-0 text-slate-600" aria-hidden="true" /> : null}
         <span>{label}</span>
         <ChevronDown
           aria-hidden="true"
@@ -1795,7 +1797,7 @@ export function HotelResultsExperience({
 
     return (
       <>
-        <div data-mobile-hotel-shortcuts className="w-full min-w-0 border-y border-slate-200/80 bg-white">
+        <div data-mobile-hotel-shortcuts className="w-full min-w-0 border-y border-slate-200/80 bg-white/95 shadow-[0_8px_22px_-22px_rgba(15,23,42,0.65)] backdrop-blur-md">
           <div
             className="overflow-x-auto overscroll-x-contain px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             onScroll={() => closeMobileShortcutMenu()}
@@ -2112,7 +2114,7 @@ export function HotelResultsExperience({
 
       {!guided ? (
         <section
-          className={cn("relative z-30 px-4 pb-0 pt-12 sm:hidden", mobileHotelSearchOpen && "pointer-events-none")}
+          className={cn("sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-[850] mt-12 bg-[#f6f8fb]/95 py-2 sm:hidden", mobileHotelSearchOpen && "pointer-events-none")}
           aria-label={t("filters")}
           aria-hidden={mobileHotelSearchOpen ? true : undefined}
           inert={mobileHotelSearchOpen ? true : undefined}
@@ -2351,10 +2353,10 @@ export function HotelResultsExperience({
                     )}
                     {resultsDisplayRange ? (
                       <p
-                        aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${sortedVisibleHotels.length}`}
+                        aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end}`}
                         className="mt-0.5 text-xs font-medium leading-4 text-slate-500"
                       >
-                        Showing {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end} of {sortedVisibleHotels.length}
+                        Showing {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
                       </p>
                     ) : null}
                   </div>
@@ -2544,7 +2546,7 @@ export function HotelResultsExperience({
           type="button"
           aria-label={t("closeFilters")}
           onClick={() => setFiltersOpen(false)}
-          className="fixed inset-0 z-[9999] hidden bg-slate-950/35 backdrop-blur-[1px] sm:block min-[1200px]:hidden"
+          className="fixed inset-0 z-[9999] bg-slate-950/35 backdrop-blur-[1px] min-[1200px]:hidden"
         />
       ) : null}
 
@@ -2555,11 +2557,11 @@ export function HotelResultsExperience({
         aria-label="Hotel filters"
         aria-hidden={!filtersOpen}
         className={cn(
-          "fixed inset-y-0 right-0 z-[10000] flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F6F8FB] shadow-2xl transition-transform duration-200 ease-out sm:w-[420px] min-[1200px]:hidden",
+          "fixed inset-x-0 bottom-0 top-[calc(0.5rem+env(safe-area-inset-top))] z-[10000] flex h-auto w-full flex-col overflow-hidden rounded-t-[24px] bg-[#F6F8FB] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] sm:inset-y-0 sm:left-auto sm:right-0 sm:h-[100dvh] sm:w-[420px] sm:rounded-none min-[1200px]:hidden",
           filtersOpen ? "translate-y-0 sm:translate-x-0" : "pointer-events-none translate-y-full sm:translate-x-full sm:translate-y-0",
         )}
       >
-        <div className="shrink-0 border-b border-slate-200 bg-white px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(15,23,42,0.04)] sm:px-5 sm:pb-4 sm:pt-4">
+        <div className="shrink-0 border-b border-slate-200 bg-white/95 px-4 pb-3 pt-3 shadow-[0_1px_0_rgba(15,23,42,0.04)] backdrop-blur-md sm:px-5 sm:pb-4 sm:pt-4">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="flex items-center gap-2">

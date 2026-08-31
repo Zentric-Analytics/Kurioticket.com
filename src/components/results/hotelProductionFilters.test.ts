@@ -7,7 +7,7 @@ const source = readFileSync(new URL("./HotelResultsClient.tsx", import.meta.url)
 test("wide desktop uses a dedicated 288px rail and smaller screens use the filter dialog", () => {
   assert.match(source, /min-\[1200px\]:grid-cols-\[288px_minmax\(0,1fr\)\]/);
   assert.match(source, /w-\[288px\][^\n]*min-\[1200px\]:block/);
-  assert.match(source, /sm:w-\[420px\] min-\[1200px\]:hidden/);
+  assert.match(source, /sm:w-\[420px\][^\n]*min-\[1200px\]:hidden/);
   assert.match(source, /role="dialog"/);
   assert.match(source, /aria-modal="true"/);
   assert.match(source, /max-width: 1199px/);
@@ -71,6 +71,9 @@ test("mobile results expose one filter toolbar and one in-sheet clear action", (
   assert.match(source, /toggleFilter\("facilities", option\.value\)/);
   assert.match(source, /overflow-x-auto overscroll-x-contain/);
   assert.match(source, /\[&::-webkit-scrollbar\]:hidden/);
+  assert.match(source, /sticky top-\[calc\(3\.5rem\+env\(safe-area-inset-top\)\)\]/);
+  assert.match(source, /rounded-t-\[24px\][^\n]*duration-300/);
+  assert.match(source, /ArrowUpDown/);
 });
 
 test("results omit the superseded comparison disclosure", () => {

@@ -248,5 +248,7 @@ test("hotel galleries keep imagery edge-to-edge with unobtrusive edge controls",
   assert.match(source, /className="bg-slate-200 object-cover"/);
   assert.match(source, /Previous photo[\s\S]*absolute left-0[\s\S]*h-11 w-11[\s\S]*bg-transparent text-white/);
   assert.match(source, /Next photo[\s\S]*absolute right-0[\s\S]*h-11 w-11[\s\S]*bg-transparent text-white/);
+  assert.match(source, /ChevronLeft className="h-5 w-5 -translate-x-2\.5"/);
+  assert.match(source, /ChevronRight className="h-5 w-5 translate-x-2\.5"/);
   assert.doesNotMatch(source, /bg-(?:white\/95|slate-950\/55)|rounded-full[^\n]*Previous photo/);
 });
