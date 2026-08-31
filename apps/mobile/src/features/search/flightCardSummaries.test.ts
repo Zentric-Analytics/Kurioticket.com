@@ -6,7 +6,7 @@ import { formatCabinClass, summarizeBaggage, summarizeFareRules } from "./flight
 const source = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
 const card = source.slice(source.indexOf("function FlightCard"), source.indexOf("function FlightJourneyRow"));
 
-test("metadata is one horizontal, flexible row in baggage, cabin, fare-rules order", () => {
+test("metadata is one centered horizontal group in baggage, cabin, fare-rules order", () => {
   const row = card.slice(card.indexOf('style={s0.metadataRow}'));
   const baggage = row.indexOf("baggageSummary");
   const cabin = row.indexOf("cabinSummary");
@@ -17,7 +17,11 @@ test("metadata is one horizontal, flexible row in baggage, cabin, fare-rules ord
   assert.match(row, /<Luggage\b/);
   assert.match(row, /<Armchair\b/);
   assert.match(row, /<FileText\b/);
-  assert.match(source, /metadataRow: \{ width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", paddingTop: 1, paddingBottom: 2 \}/);
+  assert.match(card, /<View style=\{s0\.metadataFooterContainer\}>[\s\S]*?style=\{s0\.metadataRow\}/);
+  assert.match(source, /metadataFooterContainer: \{ width: "100%", alignItems: "center" \}/);
+  assert.match(source, /metadataRow: \{ maxWidth: "100%", flexDirection: "row", alignItems: "center", justifyContent: "center", alignSelf: "center", paddingTop: 1, paddingBottom: 2 \}/);
+  assert.doesNotMatch(source, /metadataRow: \{[^}]*justifyContent: "space-between"/);
+  assert.doesNotMatch(source, /metadataItem: \{[^}]*flex: 1/);
   assert.equal(row.match(/>·<\/Text>/g)?.length, 2);
 });
 
@@ -59,7 +63,7 @@ test("metadata and full-width journey fit supported mobile widths", () => {
     assert.ok(contentWidth >= 268, `${viewport}px retains a non-overflowing footer text region`);
   }
   assert.match(source, /journeyList: \{ width: "100%"/);
-  assert.match(card, /<View style=\{s0\.fareRow\}>[\s\S]*?style=\{s0\.metadataRow\}/);
+  assert.match(card, /<View style=\{s0\.fareRow\}>[\s\S]*?style=\{s0\.metadataFooterContainer\}>[\s\S]*?style=\{s0\.metadataRow\}/);
 });
 
 test("baggage summaries distinguish positive, negative, and unknown provider states", () => {

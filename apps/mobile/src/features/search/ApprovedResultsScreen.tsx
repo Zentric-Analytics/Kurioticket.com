@@ -1063,30 +1063,32 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
         </View>
       </View>
       <View style={[s0.metadataDivider, { backgroundColor: theme.border }]} />
-      <View
-        accessible
-        accessibilityLabel={`Baggage: ${baggageAccessibility}. Cabin: ${cabinSummary}. Fare rules: ${fareRulesAccessibility}.`}
-        style={s0.metadataRow}
-      >
-        <View accessible={false} style={s0.metadataItem}>
-          <Luggage accessible={false} size={13} strokeWidth={2} color={supportTextColor} />
-          <Text accessible={false} numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: supportTextColor }]}>
-            {baggageSummary}
-          </Text>
-        </View>
-        <Text accessible={false} style={[s0.metadataSeparator, { color: supportTextColor }]}>·</Text>
-        <View accessible={false} style={s0.metadataItem}>
-          <Armchair accessible={false} size={13} strokeWidth={2} color={supportTextColor} />
-          <Text accessible={false} numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: supportTextColor }]}>
-            {cabinSummary}
-          </Text>
-        </View>
-        <Text accessible={false} style={[s0.metadataSeparator, { color: supportTextColor }]}>·</Text>
-        <View accessible={false} style={s0.metadataItem}>
-          <FileText accessible={false} size={13} strokeWidth={2} color={supportTextColor} />
-          <Text accessible={false} numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: supportTextColor }]}>
-            Fare rules
-          </Text>
+      <View style={s0.metadataFooterContainer}>
+        <View
+          accessible
+          accessibilityLabel={`Baggage: ${baggageAccessibility}. Cabin: ${cabinSummary}. Fare rules: ${fareRulesAccessibility}.`}
+          style={s0.metadataRow}
+        >
+          <View accessible={false} style={s0.metadataItem}>
+            <Luggage accessible={false} size={13} strokeWidth={2} color={supportTextColor} />
+            <Text accessible={false} numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: supportTextColor }]}>
+              {baggageSummary}
+            </Text>
+          </View>
+          <Text accessible={false} style={[s0.metadataSeparator, { color: supportTextColor }]}>·</Text>
+          <View accessible={false} style={s0.metadataItem}>
+            <Armchair accessible={false} size={13} strokeWidth={2} color={supportTextColor} />
+            <Text accessible={false} numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: supportTextColor }]}>
+              {cabinSummary}
+            </Text>
+          </View>
+          <Text accessible={false} style={[s0.metadataSeparator, { color: supportTextColor }]}>·</Text>
+          <View accessible={false} style={s0.metadataItem}>
+            <FileText accessible={false} size={13} strokeWidth={2} color={supportTextColor} />
+            <Text accessible={false} numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: supportTextColor }]}>
+              Fare rules
+            </Text>
+          </View>
         </View>
       </View>
     </Pressable>
@@ -1765,7 +1767,8 @@ const s0 = StyleSheet.create({
   estimatedPrice: { fontSize: 9, lineHeight: 11, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: 0.7, textAlign: "right" },
   providerPrice: { marginTop: 1, fontSize: 10, lineHeight: 13, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "right" },
   metadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 6, marginBottom: 4 },
-  metadataRow: { width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", paddingTop: 1, paddingBottom: 2 },
+  metadataFooterContainer: { width: "100%", alignItems: "center" },
+  metadataRow: { maxWidth: "100%", flexDirection: "row", alignItems: "center", justifyContent: "center", alignSelf: "center", paddingTop: 1, paddingBottom: 2 },
   metadataItem: { flexDirection: "row", alignItems: "center", gap: 3, minWidth: 0, flexShrink: 1 },
   metadataText: { flexShrink: 1, minWidth: 0, fontSize: 12, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
   metadataSeparator: { flexShrink: 0, fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium, marginHorizontal: 4 },
