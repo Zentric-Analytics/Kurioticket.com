@@ -58,8 +58,8 @@ test("mobile Hotel shortcut rail reuses filter, sort, stars, and amenities state
   assert.match(resultsSource, /activeFilterCount/);
   assert.match(resultsSource, /trigger\("sort", currentSortLabel/);
   assert.match(resultsSource, /updateHotelSummarySortMode/);
-  assert.match(resultsSource, /selectedStarRating/);
-  assert.match(resultsSource, /updateSelectedStarRating/);
+  assert.match(resultsSource, /selectedHotelClasses/);
+  assert.match(resultsSource, /toggleHotelClass/);
   assert.match(resultsSource, /selectedFilters\.facilities/);
   assert.match(resultsSource, /toggleFilter\("facilities"/);
   assert.match(toolbar, /overflow-x-auto/);
