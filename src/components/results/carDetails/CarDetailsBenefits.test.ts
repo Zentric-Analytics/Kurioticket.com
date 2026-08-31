@@ -148,11 +148,14 @@ test("source contract uses a desktop summary and a mobile safe-area booking dock
   );
 });
 
-test("standalone details overlay the model actions on the image and expose three keyboard tabs", () => {
+test("standalone details separate mobile model actions from the image while retaining the desktop overlay", () => {
   const title = clientSource.indexOf("data-car-details-actions");
   const hero = clientSource.indexOf("<CarDetailsHero");
   assert.ok(hero >= 0 && title > hero);
-  assert.match(heroSource, /absolute inset-x-0 top-0 z-10 bg-gradient-to-b/);
+  assert.match(heroSource, /data-car-details-mobile-header/);
+  assert.match(heroSource, /px-4 pb-3 md:hidden/);
+  assert.match(heroSource, /absolute inset-x-0 top-0 z-10 hidden bg-gradient-to-b/);
+  assert.match(heroSource, /md:block/);
   assert.match(heroSource, /{overlay}/);
   assert.match(clientSource, /useSavedCar\(car\.id\)/);
   assert.match(clientSource, /navigator\.share/);

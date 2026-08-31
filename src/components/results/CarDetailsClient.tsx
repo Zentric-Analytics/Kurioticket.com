@@ -183,15 +183,15 @@ export function CarDetailsExperience({
             offer={primaryOffer}
             text={text}
             overlay={
-              <div className="flex min-w-0 items-start justify-between gap-3 text-white">
+              <div className="flex min-w-0 items-start justify-between gap-3 text-slate-950 md:text-white">
                 <div className="min-w-0 pt-0.5">
-                  <p className="text-[10px] font-bold uppercase tracking-[.14em] text-white/85">
+                  <p className="text-[10px] font-bold uppercase tracking-[.14em] text-slate-500 md:text-white/85">
                     {car.categoryLabel}
                   </p>
                   <Heading
                     level={modelHeadingLevel}
                     headingRef={modelHeadingRef}
-                    className="mt-0.5 scroll-mt-24 text-xl font-extrabold leading-tight tracking-[-0.025em] text-white outline-none focus-visible:ring-2 focus-visible:ring-white sm:text-3xl"
+                    className="mt-0.5 scroll-mt-24 text-xl font-extrabold leading-tight tracking-[-0.025em] text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8] sm:text-3xl md:text-white md:focus-visible:ring-white"
                   >
                     {car.modelName}
                   </Heading>
@@ -205,7 +205,7 @@ export function CarDetailsExperience({
                     aria-label={`${isSaved ? copy("carDetails.unsave") : copy("carDetails.save")} ${car.modelName}`}
                     aria-pressed={isSaved}
                     onClick={toggleSavedCar}
-                    className={`focus-ring flex size-10 items-center justify-center rounded-full border border-white/35 bg-slate-950/35 text-white shadow-sm backdrop-blur-sm transition hover:bg-slate-950/55 ${isSaved ? "text-rose-300" : ""}`}
+                    className={`focus-ring flex size-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 md:border-white/35 md:bg-slate-950/35 md:text-white md:backdrop-blur-sm md:hover:bg-slate-950/55 ${isSaved ? "text-rose-500 md:text-rose-300" : ""}`}
                   >
                     <Heart
                       size={20}
@@ -217,7 +217,7 @@ export function CarDetailsExperience({
                     type="button"
                     aria-label={`${copy("carDetails.share")} ${car.modelName}`}
                     onClick={() => void shareCar()}
-                    className="focus-ring flex size-10 items-center justify-center rounded-full border border-white/35 bg-slate-950/35 text-white shadow-sm backdrop-blur-sm transition hover:bg-slate-950/55"
+                    className="focus-ring flex size-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 md:border-white/35 md:bg-slate-950/35 md:text-white md:backdrop-blur-sm md:hover:bg-slate-950/55"
                   >
                     <Share2 size={19} aria-hidden="true" />
                   </button>
