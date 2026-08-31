@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  buildCarRecentSearch,
   useCallback,
   useEffect,
   type Dispatch,
@@ -76,6 +75,7 @@ import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 import { getHotelLocationFieldDisplay } from "@/lib/search/hotelLocationFieldDisplay";
 import { canonicalHomepageAirportField } from "@/lib/search/homepageAirportField";
 import {
+  buildCarRecentSearch,
   buildFlightRecentSearch,
   buildHotelRecentSearch,
   syncBackendRecentSearch,

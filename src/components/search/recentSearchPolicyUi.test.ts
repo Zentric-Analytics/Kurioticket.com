@@ -18,6 +18,17 @@ test("recent history UI exposes scoped opt-out, per-item removal and Clear all",
 test("homepage and standalone cars record the same semantic recent-search model", () => {
   assert.match(read("../../app/page.tsx"), /<RecentSearches \/>/);
   assert.match(read("./SearchTabs.tsx"), /upsertRecentSearch\(buildCarRecentSearch\(/);
+  assert.match(read("./SearchTabs.tsx"), /buildCarRecentSearch,[\s\S]*from "@\/lib\/recent-searches"/);
   const carsPage = read("../../app/cars/page.tsx");
   assert.match(carsPage, /upsertRecentSearch\(buildCarRecentSearch\(/);
+});
+
+test("account hydration never deletes device recents as a side effect", () => {
+  const results = read("../results/FlightResultsClient.tsx");
+  const hydrationEffects = results.slice(
+    results.indexOf("const refreshBackendSavedItems"),
+    results.indexOf("const closeMobileShortcutMenus"),
+  );
+  assert.doesNotMatch(hydrationEffects, /removeRecentSearch\(/);
+  assert.doesNotMatch(hydrationEffects, /clearRecentSearches\(/);
 });

@@ -1679,7 +1679,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     if (sessionStatus === "loading") return;
 
     if (sessionStatus === "authenticated") {
-      removeRecentSearch(id);
       const controller = new AbortController();
       // eslint-disable-next-line react-hooks/set-state-in-effect -- Clears any logged-out device searches before hydrating account-backed recent searches.
       setRecentSearches([]);
@@ -1711,7 +1710,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     if (sessionStatus === "loading") return;
 
     if (sessionStatus === "authenticated") {
-      clearRecentSearches();
       const controller = new AbortController();
       const timeoutId = window.setTimeout(() => {
         void refreshBackendSavedItems(controller.signal);
