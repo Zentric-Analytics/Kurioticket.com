@@ -35,14 +35,24 @@ export function isActivePreviewTester(record: TesterRecord | null | undefined, n
   return Boolean(record?.status === "ACTIVE" && record.approvedAt && (!record.expiresAt || record.expiresAt > now));
 }
 
-export function hasPreviewTesterPermission(record: TesterRecord | null | undefined, permission: "google" | "email", now = new Date()) {
+export function hasPreviewTesterPermission(
+  record: TesterRecord | null | undefined,
+  permission: "preview" | "google" | "email",
+  now = new Date(),
+) {
   if (!isActivePreviewTester(record, now)) return false;
   const roles = record?.roles ?? [];
   if (roles.length) {
-    return permission === "google"
-      ? hasTeamAccessCapability(roles, "GOOGLE_PREVIEW_LOGIN")
-      : hasTeamAccessCapability(roles, "STAGING_EMAIL");
+    const capability = permission === "preview"
+      ? "PREVIEW_ACCESS"
+      : permission === "google"
+        ? "GOOGLE_PREVIEW_LOGIN"
+        : "STAGING_EMAIL";
+    return hasTeamAccessCapability(roles, capability);
   }
+  // Legacy tester rows predate roles. An active approved row itself granted
+  // Preview access, while the older booleans continue to govern Google/email.
+  if (permission === "preview") return true;
   return permission === "google" ? Boolean(record?.allowGoogleSignIn) : Boolean(record?.allowStagingEmail);
 }
 
@@ -60,6 +70,13 @@ export function isStagingEmailRecipientAllowed(
   tester: TesterRecord | null | undefined,
 ) {
   return isTrustedPreviewCompanyEmail(email) || hasPreviewTesterPermission(tester, "email");
+}
+
+export function isStagingPasskeyAccessAllowed(
+  email: string,
+  tester: TesterRecord | null | undefined,
+) {
+  return isTrustedPreviewCompanyEmail(email) || hasPreviewTesterPermission(tester, "preview");
 }
 
 export async function findTester(email: string) {
@@ -106,9 +123,16 @@ export async function canReceiveStagingEmail(email: string) {
   return isStagingEmailRecipientAllowed(email, tester);
 }
 
-export async function canUseStagingPasskey(email: string) {
-  // Passkeys prove account control but never grant Preview access by themselves.
-  return canUseStagingCredentials(email);
+export async function canUseStagingPasskey(
+  email: string,
+  lookupTester: (email: string) => Promise<TesterRecord | null> = findTester,
+) {
+  if (!isStagingEnvironment()) return true;
+  if (isTrustedPreviewCompanyEmail(email)) return true;
+  const normalized = normalizePreviewTesterEmail(email);
+  if (!EMAIL.test(normalized)) return false;
+  const tester = await lookupTester(normalized);
+  return isStagingPasskeyAccessAllowed(normalized, tester);
 }
 
 export async function canRetainStagingSession(email: string, method: "credentials" | "google" | "passkey") {
