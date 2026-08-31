@@ -81,7 +81,7 @@ import {
 } from "@/lib/hotels/hotelResultsPagination";
 import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
 
-const hotelResultStackClass = "w-full max-w-[800px] lg:max-w-[680px]";
+const hotelResultStackClass = "w-full max-w-[800px] lg:max-w-[860px]";
 const desktopCompactFilterTopOffset = 116;
 const desktopCompactFilterBottomGap = 16;
 const mobileHotelSearchCloseMotionMs = 280;
@@ -1960,6 +1960,14 @@ export function HotelResultsExperience({
   }
 
   const ResultsRoot = guided ? "div" : "main";
+  const stayNights = Math.max(
+    1,
+    Math.round(
+      (new Date(`${body.checkOut}T00:00:00Z`).getTime() -
+        new Date(`${body.checkIn}T00:00:00Z`).getTime()) /
+        86_400_000,
+    ),
+  );
 
   return (
     <>
@@ -2329,16 +2337,16 @@ export function HotelResultsExperience({
                 >
                   <div>
                     {guided ? (
-                      <h2 ref={guidedResultsHeadingRef} id="deals-guided-hotel-results-heading" tabIndex={-1} className="whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">{resultsHeading}</h2>
+                      <h2 ref={guidedResultsHeadingRef} id="deals-guided-hotel-results-heading" tabIndex={-1} className="text-xl font-bold leading-7 tracking-[-0.015em] text-[#142033] sm:text-2xl">{resultsHeading}</h2>
                     ) : (
-                      <h1 ref={standaloneResultsHeadingRef} tabIndex={-1} className="scroll-mt-20 whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">{resultsHeading}</h1>
+                      <h1 ref={standaloneResultsHeadingRef} tabIndex={-1} className="scroll-mt-20 text-xl font-bold leading-7 tracking-[-0.015em] text-[#142033] sm:text-2xl">{resultsHeading}</h1>
                     )}
                     {resultsDisplayRange ? (
                       <p
                         aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${sortedVisibleHotels.length}`}
                         className="mt-0.5 text-xs font-medium leading-4 text-slate-500"
                       >
-                        {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
+                        Showing {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end} of {sortedVisibleHotels.length}
                       </p>
                     ) : null}
                   </div>
@@ -2449,6 +2457,15 @@ export function HotelResultsExperience({
                   </p>
                 ) : null}
 
+                {!guided ? (
+                  <div className="flex items-start gap-2 rounded-xl border border-[#C9D9EA] bg-[#F0F6FC] px-4 py-3 text-sm leading-5 text-slate-700">
+                    <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#004BB8]" aria-hidden="true" />
+                    <p>
+                      Planning results for your selected stay. Prices are estimates from the current sample listings; availability and booking terms are not verified.
+                    </p>
+                  </div>
+                ) : null}
+
                 <div
                   ref={paginationListRef}
                   aria-busy={paginationPendingPage !== null}
@@ -2478,6 +2495,7 @@ export function HotelResultsExperience({
                       unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined}
                       allowExternalAttribution={!guided}
                       allowSave={!guided}
+                      stayNights={stayNights}
                       sortBadge={(currentResultsPage - 1) * HOTEL_RESULTS_PAGE_SIZE + index === 0 ? hotelSummarySortMode : undefined}
                     />
                   ))

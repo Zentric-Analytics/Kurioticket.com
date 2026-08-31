@@ -5,6 +5,9 @@ import { useMemo, useState } from "react";
 import {
   Award,
   Building2,
+  Check,
+  ChevronLeft,
+  ChevronRight,
   Heart,
   MapPin,
   Share2,
@@ -244,6 +247,7 @@ type HotelCardProps = {
   unavailableActionAriaLabel?: string;
   allowExternalAttribution?: boolean;
   allowSave?: boolean;
+  stayNights?: number;
 };
 
 export function HotelCard({
@@ -256,6 +260,7 @@ export function HotelCard({
   unavailableActionAriaLabel,
   allowExternalAttribution = true,
   allowSave = true,
+  stayNights,
 }: HotelCardProps) {
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
@@ -275,10 +280,14 @@ export function HotelCard({
   const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(
     () => new Set(),
   );
+  const [requestedImageIndex, setRequestedImageIndex] = useState(0);
+  const [shareStatus, setShareStatus] = useState<
+    "idle" | "shared" | "unavailable"
+  >("idle");
   const resolvedActiveImageIndex = resolveHotelGalleryIndex(
     explicitGalleryImages,
     failedImageUrls,
-    0,
+    requestedImageIndex,
   );
   const availableImageIndices = explicitGalleryImages.reduce<number[]>(
     (indices, url, index) => {
@@ -379,6 +388,16 @@ export function HotelCard({
   const nightlyDisplayPrice = priceDetails
     ? formatDisplayPrice({
         amount: priceDetails.pricePerNight,
+        sourceCurrency: priceDetails.currency,
+        displayCurrency: selectedOption.currency,
+        convertSourceEstimate: true,
+        rates: currencyRates.rates,
+        isFallbackRate: currencyRates.isFallback,
+      })
+    : null;
+  const totalDisplayPrice = priceDetails
+    ? formatDisplayPrice({
+        amount: priceDetails.totalPrice,
         sourceCurrency: priceDetails.currency,
         displayCurrency: selectedOption.currency,
         convertSourceEstimate: true,
@@ -500,10 +519,22 @@ export function HotelCard({
       } else {
         await navigator.clipboard.writeText(url);
       }
+      setShareStatus("shared");
+      window.setTimeout(() => setShareStatus("idle"), 2400);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
-      // Sharing is an enhancement; clipboard/browser denial must not disrupt booking.
+      setShareStatus("unavailable");
+      window.setTimeout(() => setShareStatus("idle"), 2400);
     }
+  }
+
+  function moveGallery(direction: -1 | 1) {
+    if (availableImageIndices.length < 2) return;
+    const currentPosition = Math.max(0, activeGalleryPosition);
+    const nextPosition =
+      (currentPosition + direction + availableImageIndices.length) %
+      availableImageIndices.length;
+    setRequestedImageIndex(availableImageIndices[nextPosition]);
   }
 
   function renderShareButton(
@@ -514,20 +545,30 @@ export function HotelCard({
     return (
       <button
         type="button"
-        aria-label={`Share ${hotel.name}`}
+        aria-label={
+          shareStatus === "shared"
+            ? `${hotel.name} shared`
+            : shareStatus === "unavailable"
+              ? `Sharing ${hotel.name} is unavailable`
+            : `Share ${hotel.name}`
+        }
         className={`${className} ${horizontalAlignment} z-20 flex min-h-11 min-w-11 shrink-0 items-center rounded-full border border-transparent bg-transparent text-slate-700 transition hover:bg-slate-100/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]`}
         onClick={() => void shareHotel()}
       >
-        <Share2 size={19} aria-hidden="true" />
+        {shareStatus === "shared" ? (
+          <Check size={19} aria-hidden="true" />
+        ) : (
+          <Share2 size={19} aria-hidden="true" />
+        )}
       </button>
     );
   }
 
   return (
-    <Card className="mx-auto w-[calc(100%+0.5rem)] max-w-[800px] overflow-hidden rounded-xl border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(2,28,43,0.26)] sm:w-full lg:mx-0 lg:max-w-[680px]">
+    <Card className="mx-auto w-[calc(100%+0.5rem)] max-w-[800px] overflow-hidden rounded-2xl border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_22px_50px_-24px_rgba(2,28,43,0.30)] focus-within:border-[#004BB8]/40 focus-within:ring-2 focus-within:ring-[#004BB8]/10 motion-reduce:transform-none motion-reduce:transition-none sm:w-full lg:mx-0 lg:max-w-none">
       <div
         data-hotel-card-mobile-grid
-        className="grid min-h-[260px] grid-cols-[41%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)] lg:grid-cols-[320px_minmax(0,1fr)]"
+        className="grid min-h-[260px] grid-cols-[41%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)] lg:grid-cols-[clamp(280px,36%,340px)_minmax(0,1fr)]"
       >
         <div
           data-hotel-card-image
@@ -555,9 +596,27 @@ export function HotelCard({
                 onError={() => markImageFailed(displayImageUrl)}
               />
               {showGalleryControls ? (
-                <div className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] whitespace-nowrap rounded-full bg-slate-950/75 px-2 py-1 text-[10px] font-semibold text-white shadow-lg ring-1 ring-white/30 sm:text-xs">
-                  {photoCounterText}
-                </div>
+                <>
+                  <button
+                    type="button"
+                    aria-label={`Previous photo of ${hotel.name}`}
+                    onClick={() => moveGallery(-1)}
+                    className="absolute left-2 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-slate-900 shadow-lg ring-1 ring-slate-900/10 transition hover:scale-105 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] motion-reduce:transition-none"
+                  >
+                    <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Next photo of ${hotel.name}`}
+                    onClick={() => moveGallery(1)}
+                    className="absolute right-2 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-slate-900 shadow-lg ring-1 ring-slate-900/10 transition hover:scale-105 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] motion-reduce:transition-none"
+                  >
+                    <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                  <div className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] whitespace-nowrap rounded-full bg-slate-950/75 px-2 py-1 text-[10px] font-semibold text-white shadow-lg ring-1 ring-white/30 sm:text-xs" aria-live="polite">
+                    {photoCounterText}
+                  </div>
+                </>
               ) : null}
             </>
           ) : (
@@ -729,6 +788,14 @@ export function HotelCard({
                       >
                         {perNightLabel}
                       </span>
+                      {totalDisplayPrice ? (
+                        <span className="mt-1 block text-xs font-semibold leading-4 text-slate-700" title={totalDisplayPrice.title}>
+                          {totalDisplayPrice.formatted}{" "}
+                          {stayNights && stayNights > 0
+                            ? `estimated total for ${stayNights} ${stayNights === 1 ? "night" : "nights"}`
+                            : "estimated stay total"}
+                        </span>
+                      ) : null}
                     </div>
                   ) : (
                     <div className="min-w-0 space-y-1">
