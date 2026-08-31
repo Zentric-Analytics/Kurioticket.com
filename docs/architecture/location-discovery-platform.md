@@ -58,6 +58,8 @@ Approved sources are downloaded in CI or an operator job to ephemeral storage, c
 
 The 249-airport flight fallback is deliberately not bulk-expanded in this PR. Safe expansion should use the documented ephemeral OurAirports ingestion path, retain only validated scheduled-service airports with stable IATA identity, publish count/checksum/license validation in a small manifest, and measure bundle/server-index size plus false-positive ranking before rollout. Until that review, retaining the known catalogue avoids a large uncontrolled data commit and ranking regression while Duffel continues to provide broader live place discovery when available.
 
+Phase 6 implementation (2026-08-30) adds a review-only OurAirports pipeline and operator runbook. Raw downloads and generated candidate artifacts are ignored. Snapshot manifests must bind the approved HTTPS URL, Public Domain license record, immutable version/retrieval time and SHA-256 before parsing. Normalization admits scheduled-service large/medium/small airports with valid IATA, optional valid ICAO, country, coordinates and city/name; duplicate IATA identities are quarantined as ambiguous, not guessed. Coverage reports compare the current 249-airport catalogue to candidates and explicitly assert no availability claim. No output automatically replaces the deployed catalogue; promotion requires a separate small human-reviewed PR. At least three prior checksum-addressed snapshots/artifacts are retained for last-known-good rollback. Public Nominatim remains forbidden for autocomplete and is not used by this tooling.
+
 ## Phased roadmap and acceptance
 
 1. **Foundation:** contract, normalization/ranking, legacy adapters, provider boundary, decision record and unit tests. No UI or URL behavior changes.
