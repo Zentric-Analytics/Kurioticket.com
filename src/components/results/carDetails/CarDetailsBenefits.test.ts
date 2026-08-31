@@ -19,73 +19,28 @@ function sourceBetween(source: string, startText: string, endText: string) {
   return source.slice(start, end);
 }
 
-test("source contract keeps getPrimaryCarOffer as the offer source passed to the hero", () => {
+test("source contract keeps getPrimaryCarOffer as the authoritative pricing offer", () => {
   assert.match(
     clientSource,
     /const primaryOffer = suppliedPrimaryOffer \?\? getPrimaryCarOffer\(car\);/,
   );
-  assert.match(
-    clientSource,
-    /<CarDetailsHero car={car} offer={primaryOffer} text={text} overlay=/,
-  );
   assert.doesNotMatch(clientSource, /car\.offers\[0\]/);
 });
 
-test("source contract maps both positive and negative offer states to localized hero text", () => {
-  assert.match(
-    heroSource,
-    /offer\.freeCancellation \? text\.freeCancellation : text\.nonRefundable/,
-  );
-  assert.match(
-    heroSource,
-    /offer\.taxesAndFeesIncluded \? text\.includedShort : text\.notIncluded/,
-  );
-  for (const key of [
-    "cancellation",
-    "freeCancellation",
-    "nonRefundable",
-    "taxesFees",
-    "includedShort",
-    "notIncluded",
+test("hero omits the duplicate cancellation and taxes benefit cards", () => {
+  assert.doesNotMatch(clientSource, /<CarDetailsHero car={car} offer=/);
+  for (const removedContract of [
+    "data-car-benefits",
+    "ReceiptText",
+    "ShieldCheck",
+    "offer.freeCancellation",
+    "offer.taxesAndFeesIncluded",
   ]) {
-    assert.match(
-      clientSource,
-      new RegExp(`${key}: copy\\("carDetails\\.${key}"\\)`),
+    assert.ok(
+      !heroSource.includes(removedContract),
+      `unexpected ${removedContract}`,
     );
   }
-});
-
-test("source contract renders no benefit structure when an offer is absent", () => {
-  assert.match(heroSource, /{offer && \( <dl data-car-benefits/);
-  assert.doesNotMatch(
-    heroSource,
-    /offer\?\.(freeCancellation|taxesAndFeesIncluded)/,
-  );
-});
-
-test("source contract places two separate semantic cards beneath amenities", () => {
-  const amenities = heroSource.indexOf('<ul className="grid grid-cols-2');
-  const benefits = heroSource.indexOf("<dl data-car-benefits");
-  assert.ok(
-    amenities >= 0 && benefits > amenities,
-    "benefits follow amenities",
-  );
-
-  const benefitSource = sourceBetween(
-    heroSource,
-    "<dl data-car-benefits",
-    "</dl>",
-  );
-  assert.equal(
-    benefitSource.match(
-      /<div className="flex min-w-0 items-center gap-2\.5 rounded-\[10px\] bg-slate-50 p-3 sm:gap-3 sm:border sm:border-slate-200">/g,
-    )?.length,
-    2,
-  );
-  assert.equal(benefitSource.match(/<dt /g)?.length, 2);
-  assert.equal(benefitSource.match(/<dd /g)?.length, 2);
-  assert.match(benefitSource, /grid grid-cols-2 gap-2\.5 sm:gap-3/);
-  assert.doesNotMatch(benefitSource, /h-\[|min-h-|max-h-|overflow-x/);
 });
 
 test("source contract keeps only pricing and the provider CTA in BookingSummary", () => {
@@ -186,7 +141,7 @@ test("price comparison aligns icon benefits and the per-day price on one row", (
   for (const icon of ["ShieldCheck", "Fuel", "Gauge"]) {
     assert.match(comparison, new RegExp(`Icon: ${icon}`));
   }
-  assert.match(comparison, /flex min-w-0 flex-nowrap items-end gap-x-0/);
+  assert.match(comparison, /flex min-w-0 flex-nowrap items-end gap-x-4/);
   assert.match(comparison, /inline-flex shrink-0 flex-col items-end/);
   assert.match(comparison, /carsResults\.perDay/);
   assert.match(comparison, /carsResults\.fullToFull/);
