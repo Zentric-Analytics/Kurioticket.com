@@ -46,7 +46,7 @@ test("mobile Hotel search uses the Flight-parity data-driven summary shell", () 
   );
 });
 
-test("mobile Hotel shortcut rail reuses filter, sort, stars, and amenities state", () => {
+test("mobile Hotel shortcut rail reuses filter, price, stars, and amenities state", () => {
   const toolbarStart = resultsSource.indexOf(
     "data-mobile-hotel-shortcuts",
   );
@@ -56,19 +56,17 @@ test("mobile Hotel shortcut rail reuses filter, sort, stars, and amenities state
   assert.notEqual(toolbarStart, -1);
   assert.match(resultsSource, /setFiltersOpen\(true\)/);
   assert.match(resultsSource, /activeFilterCount/);
-  assert.match(resultsSource, /trigger\("sort", currentSortLabel/);
-  assert.match(resultsSource, /updateHotelSummarySortMode/);
+  assert.match(resultsSource, /trigger\("price", "Price"/);
+  assert.doesNotMatch(toolbar, /trigger\("sort"|>\s*Sort\s*</);
   assert.match(resultsSource, /selectedHotelClasses/);
   assert.match(resultsSource, /toggleHotelClass/);
   assert.match(resultsSource, /selectedFilters\.facilities/);
   assert.match(resultsSource, /toggleFilter\("facilities"/);
   assert.match(toolbar, /overflow-x-auto/);
-  assert.match(toolbar, /flex w-max flex-nowrap items-center gap-2/);
+  assert.match(toolbar, /flex min-w-max items-center gap-2/);
   assert.doesNotMatch(toolbar, /<select/);
   assert.match(resultsSource, /relative z-40 bg-white pb-0 pt-0 sm:hidden/);
   assert.match(resultsSource, /relative translate-y-1\/2/);
   assert.doesNotMatch(resultsSource, /absolute inset-x-0 top-1\/2[\s\S]*?bg-slate-300/);
-  assert.match(resultsSource, /relative z-30 px-4 pb-0 pt-12 sm:hidden/);
   assert.match(resultsSource, /hidden shrink-0 flex-nowrap[\s\S]*?sm:flex/);
-  assert.match(resultsSource, /<h1[^>]*>\{resultsHeading\}<\/h1>/);
 });

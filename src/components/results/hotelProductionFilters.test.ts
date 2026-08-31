@@ -69,9 +69,8 @@ test("mobile results expose one filter toolbar and one in-sheet clear action", (
   assert.doesNotMatch(source, /mobileQuickFacilities = \["wifi", "breakfast", "pool"\]/);
   assert.match(source, /overflow-x-auto overscroll-x-contain/);
   assert.match(source, /\[&::-webkit-scrollbar\]:hidden/);
-  assert.match(source, /sticky top-\[calc\(3\.5rem\+env\(safe-area-inset-top\)\)\]/);
-  assert.match(source, /<span>Filter<\/span>[\s\S]*trigger\("sort", currentSortLabel\)[\s\S]*trigger\(\s*"stars",\s*"Stars"[\s\S]*trigger\(\s*"amenities",\s*"Amenities"/);
-  assert.match(source, /type MobileHotelShortcutMenu = "sort" \| "price" \| "stars" \| "amenities"/);
+  assert.match(source, /<span>Filter<\/span>[\s\S]*trigger\("price", "Price"[\s\S]*trigger\(\s*"stars",\s*"Stars"[\s\S]*trigger\(\s*"amenities",\s*"Amenities"/);
+  assert.match(source, /type MobileHotelShortcutMenu = "price" \| "stars" \| "amenities"/);
   assert.match(source, /trigger\("price", "Price", priceFilterActive \? 1 : 0\)/);
   assert.match(source, /mobileShortcutDraftMinPrice/);
   assert.match(source, /setMinPrice\(mobileShortcutDraftMinPrice\)/);
@@ -79,8 +78,9 @@ test("mobile results expose one filter toolbar and one in-sheet clear action", (
   assert.match(source, /mobileShortcutMenu === "stars"[\s\S]*setSelectedHotelClasses\(mobileShortcutDraftStars\)/);
   assert.match(source, /facilities: mobileShortcutDraftFacilities/);
   assert.match(source, /fixed inset-y-0 right-0[^\n]*h-\[100dvh\][^\n]*w-full/);
-  assert.match(source, /!guided && !showMobileCompactHotelSearch/);
-  assert.match(source, /openMobileShortcutMenu\("sort", event\.currentTarget\)/);
+  assert.match(source, /!guided && showMobileCompactHotelSearch/);
+  assert.doesNotMatch(source, /openMobileShortcutMenu\("sort", event\.currentTarget\)/);
+  assert.doesNotMatch(source, /transition-all duration-200 sm:hidden/);
 });
 
 test("results omit the superseded comparison disclosure", () => {
