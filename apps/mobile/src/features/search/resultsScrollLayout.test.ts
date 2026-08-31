@@ -14,6 +14,16 @@ function styleBlock(name: string, nextName: string) {
   return screen.slice(screen.indexOf(`${name}:`), screen.indexOf(`${nextName}:`, screen.indexOf(`${name}:`)));
 }
 
+test("the shared results root owns the semantic themed canvas", () => {
+  const root = screen.slice(screen.indexOf("<SafeAreaView"), screen.indexOf("</SafeAreaView>"));
+
+  assert.match(root, /<SafeAreaView style=\{\[s0\.safe, \{ backgroundColor: theme\.background \}\]\} edges=\{\["top"\]\}>/);
+  assert.doesNotMatch(root, /flightResults\s*&&\s*\{ backgroundColor: theme\.background \}/);
+  assert.match(flightLayout, /<Animated\.SectionList[\s\S]*?style=\{\[s0\.resultsScroll, \{ backgroundColor: theme\.background \}\]\}/);
+  assert.match(flightLayout, /renderSectionHeader[\s\S]*?<View style=\{\{ backgroundColor: theme\.background \}\}>[\s\S]*?\{filterRail\}/);
+  assert.match(styleBlock("hotelCard", "hotelCardCompact"), /backgroundColor: "white"/);
+});
+
 test("flight results put fading dates before a native sticky filter rail", () => {
   const beforeList = screen.slice(screen.indexOf("<FlightResultsHeader"), layoutStart);
   const listHeader = flightLayout.slice(flightLayout.indexOf("ListHeaderComponent="), flightLayout.indexOf("renderItem="));
