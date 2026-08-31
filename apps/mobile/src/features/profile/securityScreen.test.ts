@@ -237,6 +237,8 @@ test("security localization covers the compact hierarchy", () => {
     "Review devices that have recently accessed your account.",
     "Revisa los dispositivos que han accedido recientemente a tu cuenta.",
     "Change the password used to sign in to your account.", "Add extra protection with an authenticator app.", "Review devices signed in to your account.", "Sesiones activas",
+    "Scan this QR code with your authenticator app.", "Or enter this setup key manually.",
+    "Escanea este código QR con tu aplicación de autenticación.", "O introduce esta clave de configuración manualmente.",
   ]) assert.ok(localization.includes(phrase), `missing copy: ${phrase}`);
 });
 
