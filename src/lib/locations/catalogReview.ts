@@ -32,7 +32,6 @@ const transitions: Readonly<Record<CatalogCandidateStatus, readonly CatalogCandi
 export function canTransitionCatalogCandidate(from: CatalogCandidateStatus, to: CatalogCandidateStatus) {
   return transitions[from].includes(to);
 }
-
 export function deterministicCandidateId(location: Pick<CanonicalLocation, "kind" | "submittedValue">) {
   const identity = `${location.kind}:${location.submittedValue.normalize("NFKC").trim().toLocaleLowerCase("en-US")}`;
   return `candidate:${createHash("sha256").update(identity).digest("hex").slice(0, 20)}`;

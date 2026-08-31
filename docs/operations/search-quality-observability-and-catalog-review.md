@@ -31,4 +31,3 @@ The example manifest is `config/location-catalog/review-manifest.example.json`. 
 - Operations owner: sink health, aggregation, kill switch, catalogue release and rollback.
 
 Release requires a valid deterministic report, zero unresolved duplicate IDs, explicit approval evidence, focused matching/form tests, build/type checks, visible desktop/responsive validation and—when available—physical mobile validation. Static catalogue coverage never implies provider inventory or live availability.
-

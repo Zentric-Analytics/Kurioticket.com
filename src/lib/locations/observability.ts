@@ -51,7 +51,6 @@ export function bucketResultCount(value: number): ResultCountBucket {
   if (count <= 10) return "six-to-ten";
   return "eleven-plus";
 }
-
 export function bucketLatency(value: number): LatencyBucket {
   const milliseconds = Math.max(0, Number.isFinite(value) ? value : 0);
   if (milliseconds < 100) return "under-100ms";
