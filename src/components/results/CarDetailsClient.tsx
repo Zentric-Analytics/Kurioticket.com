@@ -184,7 +184,7 @@ export function CarDetailsExperience({
             overlay={
               <div className="flex min-w-0 items-start justify-between gap-3 text-slate-950 md:text-white">
                 <div className="min-w-0 pt-0.5">
-                  <p className="text-[10px] font-bold uppercase tracking-[.14em] text-slate-500 md:text-white/85">
+                  <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#075EE8] md:text-white/85">
                     {car.categoryLabel}
                   </p>
                   <Heading
@@ -196,7 +196,7 @@ export function CarDetailsExperience({
                   </Heading>
                 </div>
                 <div
-                  className="flex shrink-0 items-center gap-1"
+                  className="flex shrink-0 items-center gap-2"
                   data-car-details-actions
                 >
                   <button
@@ -204,7 +204,7 @@ export function CarDetailsExperience({
                     aria-label={`${isSaved ? copy("carDetails.unsave") : copy("carDetails.save")} ${car.modelName}`}
                     aria-pressed={isSaved}
                     onClick={toggleSavedCar}
-                    className={`focus-ring flex size-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 md:border-white/35 md:bg-slate-950/35 md:text-white md:backdrop-blur-sm md:hover:bg-slate-950/55 ${isSaved ? "text-rose-500 md:text-rose-300" : ""}`}
+                    className={`focus-ring flex size-11 items-center justify-center rounded-lg border-0 bg-transparent text-[#075EE8] shadow-none transition hover:bg-blue-50 md:size-10 md:rounded-full md:border md:border-white/35 md:bg-slate-950/35 md:text-white md:backdrop-blur-sm md:hover:bg-slate-950/55 ${isSaved ? "text-rose-500 md:text-rose-300" : ""}`}
                   >
                     <Heart
                       size={20}
@@ -216,7 +216,7 @@ export function CarDetailsExperience({
                     type="button"
                     aria-label={`${copy("carDetails.share")} ${car.modelName}`}
                     onClick={() => void shareCar()}
-                    className="focus-ring flex size-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 md:border-white/35 md:bg-slate-950/35 md:text-white md:backdrop-blur-sm md:hover:bg-slate-950/55"
+                    className="focus-ring flex size-11 items-center justify-center rounded-lg border-0 bg-transparent text-[#075EE8] shadow-none transition hover:bg-blue-50 md:size-10 md:rounded-full md:border md:border-white/35 md:bg-slate-950/35 md:text-white md:backdrop-blur-sm md:hover:bg-slate-950/55"
                   >
                     <Share2 size={19} aria-hidden="true" />
                   </button>
@@ -345,7 +345,7 @@ export function CarDetailsClient({
               presentation="standalone-content"
               primaryAction={{
                 kind: "standalone-disabled-provider",
-                label: copy("continueToProvider"),
+                label: copy("carDetails.continueDeal"),
               }}
             />
           </div>
@@ -454,16 +454,13 @@ function CarPriceComparisonSection({
               >
                 {daily.formatted}
               </strong>
-              <span className="mt-1 text-[11px] font-medium text-slate-600 sm:text-xs">
+              <span className="mt-1 text-[11px] font-medium text-[#075EE8] sm:text-xs">
                 {copy("carsResults.perDay")}
               </span>
             </span>
           </div>
         </div>
       </div>
-      <p className="mt-3 text-xs leading-5 text-slate-500">
-        {copy("carDetails.estimatedCataloguePrice")}
-      </p>
     </div>
   );
 }
@@ -650,7 +647,7 @@ function BookingSummary({
       {action.kind === "standalone-disabled-provider" ? (
         <button
           disabled
-          className="mt-5 w-full rounded-lg bg-teal-dark px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-5 w-full rounded-lg bg-blue px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-100"
         >
           {action.label}
         </button>
@@ -806,7 +803,7 @@ function MobileBookingDock({
         {action.kind === "standalone-disabled-provider" ? (
           <button
             disabled
-            className="min-h-12 w-full rounded-lg bg-teal-dark px-3 text-xs font-bold leading-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+            className="focus-ring min-h-12 w-full rounded-lg bg-blue px-3 text-xs font-bold leading-4 text-white disabled:cursor-not-allowed disabled:opacity-100"
           >
             {action.label}
           </button>
