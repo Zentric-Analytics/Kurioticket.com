@@ -91,7 +91,6 @@ import { logFlightSearchCheckpoint, startFlightSearchEventLoopMonitor } from "./
 import { flightProviderFarePresentation } from "./flightPriceBasis";
 import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recentSearch";
 import {
-  buildPriceByDate,
   calendarIsoFromTimestamp,
   rememberVerifiedDateFares,
   verifiedDateFareContextKey,
@@ -468,11 +467,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const visibleFlightLoadingPhase = flightLoadingIdentity === currentFlightLoadingIdentity
     ? flightLoadingPhase
     : "searching";
-  const date = String(
-    product === "flight"
-      ? payload.departureDate
-      : payload.checkIn || new Date().toISOString().slice(0, 10),
-  );
+  const flightDate = String(payload.departureDate);
   const flightDisplayPrices = useMemo(() => {
     if (product !== "flight" || !currencyState) return new Map<string, DisplayPrice>();
     return new Map((results as FlightResult[]).map((result) => [
@@ -489,14 +484,14 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     return (results as FlightResult[]).flatMap((result) => {
       const departureDate = calendarIsoFromTimestamp(result.departureTime);
       const displayed = flightDisplayPrices.get(result.id);
-      return departureDate === date && displayed && Number.isFinite(displayed.amount) ? [{
+      return departureDate === flightDate && displayed && Number.isFinite(displayed.amount) ? [{
         date: departureDate,
         amount: displayed.amount,
         formatted: displayed.formatted,
         accessibilityLabel: displayed.formatted,
       }] : [];
     });
-  }, [currencyState, date, flightDisplayPrices, product, results, status]);
+  }, [currencyState, flightDate, flightDisplayPrices, product, results, status]);
   useEffect(() => {
     if (!verifiedFareContextKey) {
       setVerifiedDateFareMemory(undefined);
@@ -508,27 +503,19 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       currentVerifiedDateFares,
     ));
   }, [currentVerifiedDateFares, verifiedFareContextKey]);
-  const dateStripPriceByDate = useMemo(() => {
-    if (product === "flight") {
-      return verifiedFareContextKey && verifiedDateFareMemory?.contextKey === verifiedFareContextKey
-        ? verifiedDateFareMemory.priceByDate
-        : {};
-    }
-    const lowest = (sorted as HotelResult[])[0]?.pricePerNight;
-    return lowest == null ? {} : buildPriceByDate([{ date, amount: lowest }]);
-  }, [date, product, sorted, verifiedDateFareMemory, verifiedFareContextKey]);
-  const dateStrip = (
+  const flightDateStripPriceByDate = useMemo(() => (
+    verifiedFareContextKey && verifiedDateFareMemory?.contextKey === verifiedFareContextKey
+      ? verifiedDateFareMemory.priceByDate
+      : {}
+  ), [verifiedDateFareMemory, verifiedFareContextKey]);
+  const flightDateStrip = (
     <DateStrip
-            date={date}
-            priceByDate={dateStripPriceByDate}
-            flightResults={product === "flight"}
-            nearbyIntelligence={product === "flight" && status === "ready" && (payload.tripType === "one-way" || payload.tripType === "round-trip")}
+            date={flightDate}
+            priceByDate={flightDateStripPriceByDate}
+            flightResults
+            nearbyIntelligence={status === "ready" && (payload.tripType === "one-way" || payload.tripType === "round-trip")}
             displayCurrency={currencyState?.resolution.resolvedCurrency}
-            onSelect={(v) =>
-              router.setParams(
-                product === "flight" ? { departureDate: v } : { checkIn: v },
-              )
-            }
+            onSelect={(v) => router.setParams({ departureDate: v })}
           />
   );
   const flightDateStripOpacity = flightDateStripScrollY.interpolate({
@@ -546,7 +533,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       }}
       style={{ opacity: flightDateStripOpacity }}
     >
-      {dateStrip}
+      {flightDateStrip}
     </Animated.View>
   );
   const filterRail = (
@@ -758,7 +745,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         />
       ) : (
         <>
-          {dateStrip}
           {filterRail}
           <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={s0.body} overScrollMode="never">{resultContent}</ScrollView>
         </>
