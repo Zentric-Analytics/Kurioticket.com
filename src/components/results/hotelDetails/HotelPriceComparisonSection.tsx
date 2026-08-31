@@ -37,29 +37,63 @@ function ProviderOffer({
         className="peer sr-only"
         aria-label={`Select ${offer.providerName} offer`}
       />
-      <span className="pointer-events-none absolute inset-0 rounded-xl peer-focus-visible:ring-2 peer-focus-visible:ring-[#075EE8] peer-focus-visible:ring-offset-2" aria-hidden="true" />
+      <span
+        className="pointer-events-none absolute inset-0 rounded-xl peer-focus-visible:ring-2 peer-focus-visible:ring-[#075EE8] peer-focus-visible:ring-offset-2"
+        aria-hidden="true"
+      />
 
-      <span className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto_auto] gap-x-3 sm:gap-x-6">
+      <span className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto_auto_auto] gap-x-3 sm:grid-rows-[auto_auto_auto] sm:gap-x-6">
         <span className="min-w-0 self-start" data-provider-brand>
           {offer.providerLogoUrl ? (
-            <Image src={offer.providerLogoUrl} alt={offer.providerName} width={136} height={30} className="h-auto max-h-7 w-auto max-w-32 object-contain object-left sm:max-w-36" />
+            <Image
+              src={offer.providerLogoUrl}
+              alt={offer.providerName}
+              width={136}
+              height={30}
+              className="h-auto max-h-7 w-auto max-w-32 object-contain object-left sm:max-w-36"
+            />
           ) : (
-            <strong className="block text-base font-bold text-slate-950">{offer.providerName}</strong>
+            <strong className="block text-base font-bold text-slate-950">
+              {offer.providerName}
+            </strong>
           )}
         </span>
-        <span className={`flex h-[22px] w-[22px] items-center justify-center justify-self-end rounded-full border-2 bg-white ${selected ? "border-[#075EE8]" : "border-slate-400"}`} data-provider-selector aria-hidden="true">
-          {selected ? <span className="h-2.5 w-2.5 rounded-full bg-[#075EE8]" /> : null}
+        <span
+          className={`flex h-[22px] w-[22px] items-center justify-center justify-self-end rounded-full border-2 bg-white ${selected ? "border-[#075EE8]" : "border-slate-400"}`}
+          data-provider-selector
+          aria-hidden="true"
+        >
+          {selected ? (
+            <span className="h-2.5 w-2.5 rounded-full bg-[#075EE8]" />
+          ) : null}
         </span>
 
         <span aria-hidden="true" />
-        <strong className="mt-3 min-w-0 text-right text-xl font-extrabold tracking-tight text-slate-950 tabular-nums" title={offer.nightlyPriceTitle} aria-label={offer.nightlyPriceAriaLabel} data-provider-price data-nightly-amount>
+        <strong
+          className="mt-3 min-w-0 text-right text-xl font-extrabold tracking-tight text-slate-950 tabular-nums"
+          title={offer.nightlyPriceTitle}
+          aria-label={offer.nightlyPriceAriaLabel}
+          data-provider-price
+          data-nightly-amount
+        >
           {offer.nightlyPrice}
         </strong>
 
-        <span className="mt-0.5 min-w-0 self-center" data-provider-bottom-row data-provider-amenities>
-          <HotelAmenityList items={offer.amenities ?? []} t={() => ""} className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1" />
+        <span
+          className="col-span-2 row-start-4 mt-3 min-w-0 self-center sm:col-span-1 sm:row-start-3 sm:mt-0.5"
+          data-provider-bottom-row
+          data-provider-amenities
+        >
+          <HotelAmenityList
+            items={offer.amenities ?? []}
+            t={() => ""}
+            className="flex min-w-0 flex-nowrap items-center gap-x-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>li]:shrink-0 [&>li>span]:whitespace-nowrap"
+          />
         </span>
-        <span className="mt-0.5 self-center whitespace-nowrap text-right text-xs font-medium leading-4 text-slate-600" data-nightly-supporting-label>
+        <span
+          className="col-start-2 row-start-3 mt-0.5 self-center whitespace-nowrap text-right text-xs font-medium leading-4 text-slate-600"
+          data-nightly-supporting-label
+        >
           {perNightText.replace("{{price}}", "").trim()}
         </span>
       </span>
@@ -85,11 +119,38 @@ export function HotelPriceComparisonSection({
   onSelectOffer: (offerId: string) => void;
 }) {
   return (
-    <section id="hotel-compare-prices" className="scroll-mt-16 border-b border-slate-200 px-4 py-7 lg:px-0 lg:py-8" aria-labelledby="hotel-compare-heading" data-hotel-compare-prices>
-      <h2 id="hotel-compare-heading" tabIndex={-1} className="text-xl font-extrabold tracking-tight text-slate-950">Compare prices</h2>
-      {stayContext ? <p className="mt-1 text-sm font-medium text-slate-600">{stayContext}</p> : null}
-      {providerHandoffError ? <p id="hotel-provider-handoff-error" role="alert" tabIndex={-1} className="mt-3 text-sm font-semibold text-red-700">{providerHandoffError}</p> : null}
-      <div role="radiogroup" aria-label="Hotel provider offers" className="-mx-1 mt-5 space-y-3 sm:mx-0" data-comparison-offers>
+    <section
+      id="hotel-compare-prices"
+      className="scroll-mt-16 border-b border-slate-200 px-4 py-7 lg:px-0 lg:py-8"
+      aria-labelledby="hotel-compare-heading"
+      data-hotel-compare-prices
+    >
+      <h2
+        id="hotel-compare-heading"
+        tabIndex={-1}
+        className="text-xl font-extrabold tracking-tight text-slate-950"
+      >
+        Compare prices
+      </h2>
+      {stayContext ? (
+        <p className="mt-1 text-sm font-medium text-slate-600">{stayContext}</p>
+      ) : null}
+      {providerHandoffError ? (
+        <p
+          id="hotel-provider-handoff-error"
+          role="alert"
+          tabIndex={-1}
+          className="mt-3 text-sm font-semibold text-red-700"
+        >
+          {providerHandoffError}
+        </p>
+      ) : null}
+      <div
+        role="radiogroup"
+        aria-label="Hotel provider offers"
+        className="-mx-1 mt-5 space-y-3 sm:mx-0"
+        data-comparison-offers
+      >
         {offers.map((offer) => (
           <ProviderOffer
             key={offer.id}

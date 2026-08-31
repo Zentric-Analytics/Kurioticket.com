@@ -4549,6 +4549,7 @@ export const translations: TranslationDictionary = {
   "carDetails.cancellation": "Cancellation",
   "carDetails.payment": "Payment",
   "carDetails.taxesFees": "Taxes and fees",
+  "carDetails.feesIncludedShort": "Fees included",
   "carDetails.notIncluded": "Not included",
   "carDetails.unavailable": "Car unavailable",
   "deals.results.package.title": "Mix-and-match trip options",
