@@ -77,7 +77,7 @@ export function CarDetailsHero({
               >
                 <Icon
                   size={15}
-                  className="shrink-0 text-[#075EE8]"
+                  className="shrink-0 text-slate-600"
                   aria-hidden="true"
                 />
                 <span className="min-w-0 truncate sm:overflow-visible sm:whitespace-normal">
