@@ -40,7 +40,7 @@ test("price filters share the static estimated-total basis", () => {
 });
 
 test("filter sheet exposes clear and deterministic result apply feedback", () => {
-  assert.match(source, /activeFilterCount > 0 \? <button/);
+  assert.match(source, /activeFilterCount > 0 \?\s*\(?\s*<button/);
   assert.match(source, /No matching stays/);
   assert.match(source, /View \$\{sortedVisibleHotels\.length\} matching/);
   assert.match(source, /disabled=\{filterApplying \|\| sortedVisibleHotels\.length === 0\}/);
@@ -56,31 +56,29 @@ test("filter sheet exposes clear and deterministic result apply feedback", () =>
 });
 
 test("mobile results expose one filter toolbar and one in-sheet clear action", () => {
-  assert.match(source, /type MobileHotelShortcutMenu = "sort"/);
-  assert.doesNotMatch(source, /trigger\("stars"|trigger\("amenities"/);
   assert.match(source, /hidden min-h-11 gap-2 sm:inline-flex min-\[1200px\]:!hidden/);
-  const sheet = source.slice(source.indexOf('<aside\n        ref={mobileFiltersDialogRef}'), source.indexOf('</aside>', source.indexOf('<aside\n        ref={mobileFiltersDialogRef}')));
+  const sheetStart = source.indexOf("ref={mobileFiltersDialogRef}");
+  const sheet = source.slice(sheetStart, source.indexOf("</aside>", sheetStart));
   assert.equal((sheet.match(/\{t\("clearAll"\)\}/g) ?? []).length, 1);
   assert.doesNotMatch(sheet, /disabled=\{activeFilterCount === 0\}/);
   assert.match(sheet, /bg-transparent px-0 text-slate-700/);
   assert.match(sheet, /items-center justify-center text-slate-700/);
   assert.doesNotMatch(source, /<HotelFilters\s+layout="compact"/);
   assert.doesNotMatch(source, /onClearAll=\{resetFilters\}/);
-  assert.match(source, /mobileQuickFacilities = \["wifi", "breakfast", "pool"\]/);
-  assert.match(source, /aria-pressed=\{selected\}/);
-  assert.match(source, /toggleFilter\("facilities", option\.value\)/);
+  assert.doesNotMatch(source, /mobileQuickFacilities = \["wifi", "breakfast", "pool"\]/);
   assert.match(source, /overflow-x-auto overscroll-x-contain/);
   assert.match(source, /\[&::-webkit-scrollbar\]:hidden/);
   assert.match(source, /sticky top-\[calc\(3\.5rem\+env\(safe-area-inset-top\)\)\]/);
-  assert.match(source, /rounded-t-\[24px\][^\n]*duration-300/);
-  assert.match(source, /ArrowUpDown/);
+  assert.match(source, /<span>Filter<\/span>[\s\S]*trigger\("sort", currentSortLabel\)[\s\S]*trigger\(\s*"stars",\s*"Stars"[\s\S]*trigger\(\s*"amenities",\s*"Amenities"/);
+  assert.match(source, /type MobileHotelShortcutMenu = "sort" \| "stars" \| "amenities"/);
+  assert.match(source, /role="dialog"[\s\S]*mobile-hotel-\$\{mobileShortcutMenu\}-title/);
+  assert.match(source, /mobileShortcutMenu === "stars"[\s\S]*setSelectedHotelClasses\(mobileShortcutDraftStars\)/);
+  assert.match(source, /facilities: mobileShortcutDraftFacilities/);
+  assert.match(source, /fixed inset-y-0 right-0[^\n]*h-\[100dvh\][^\n]*w-full/);
 });
 
 test("results omit the superseded comparison disclosure", () => {
-  assert.doesNotMatch(
-    source,
-    /Compare property details and estimated prices for your selected stay\. Booking terms appear only when supplied with an offer\./,
-  );
+  assert.doesNotMatch(source, /Compare property details and estimated prices for your selected stay\. Booking terms appear only when supplied with an offer\./);
 });
 
 test("property search is shared, normalized and represented as an active filter", () => {

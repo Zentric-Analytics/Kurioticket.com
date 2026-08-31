@@ -14,7 +14,7 @@ for (const [product, file, pageSize] of [
 
     assert.match(source, /getResultsDisplayRange\(\{/);
     assert.match(source, new RegExp(`pageSize: ${pageSize}`));
-    assert.match(source, /resultsDisplayRange\.start}&ndash;\{resultsDisplayRange\.end/);
+    assert.match(source, /resultsDisplayRange\.start\}\s*&ndash;\s*\{resultsDisplayRange\.end/);
     if (product === "Hotels") {
       assert.match(source, /Showing results \$\{resultsDisplayRange\.start\} through \$\{resultsDisplayRange\.end\}`/);
       assert.doesNotMatch(source, /Showing \{resultsDisplayRange\.start\}&ndash;\{resultsDisplayRange\.end\} of/);
