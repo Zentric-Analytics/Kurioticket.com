@@ -431,7 +431,7 @@ function CarPriceComparisonSection({
           >
             <span className="size-2.5 rounded-full bg-[#075EE8]" />
           </span>
-          <div className="col-span-2 mt-5 flex min-w-0 flex-nowrap items-center gap-x-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-x-4">
+          <div className="col-span-2 mt-5 flex min-w-0 flex-nowrap items-end gap-x-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {facts.map(({ label, Icon }) => (
               <span
                 key={label}

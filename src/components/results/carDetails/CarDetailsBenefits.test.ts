@@ -186,7 +186,7 @@ test("price comparison aligns icon benefits and the per-day price on one row", (
   for (const icon of ["ShieldCheck", "Fuel", "Gauge"]) {
     assert.match(comparison, new RegExp(`Icon: ${icon}`));
   }
-  assert.match(comparison, /flex min-w-0 flex-nowrap items-center/);
+  assert.match(comparison, /flex min-w-0 flex-nowrap items-end gap-x-0/);
   assert.match(comparison, /inline-flex shrink-0 flex-col items-end/);
   assert.match(comparison, /carsResults\.perDay/);
   assert.match(comparison, /carsResults\.fullToFull/);
