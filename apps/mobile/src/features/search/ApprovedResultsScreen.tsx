@@ -1057,7 +1057,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
           ) : null}
           {providerFare ? (
             <Text accessible={false} style={[s0.providerPrice, { color: supportTextColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-              Provider price: {providerFare.formatted} {providerFare.currency}
+              Provider price: {providerFare.formatted}
             </Text>
           ) : null}
         </View>
