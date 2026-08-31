@@ -1,0 +1,73 @@
+name: Repair PR 4780 mobile QR lockfile
+
+on:
+  push:
+    branches:
+      - codex/add-qr-code-for-mobile-2fa-setup
+    paths:
+      - .github/workflows/repair-pr4780-lockfile.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair-lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out PR branch
+        uses: actions/checkout@v5
+        with:
+          ref: codex/add-qr-code-for-mobile-2fa-setup
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Remove fabricated QR lock entries
+        working-directory: apps/mobile
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = 'package-lock.json';
+          const lock = JSON.parse(fs.readFileSync(path, 'utf8'));
+          delete lock.packages['node_modules/qr.js'];
+          delete lock.packages['node_modules/react-native-qrcode-svg'];
+          fs.writeFileSync(path, `${JSON.stringify(lock, null, 2)}\n`);
+          NODE
+
+      - name: Resolve the real published dependency graph
+        working-directory: apps/mobile
+        run: npm install --package-lock-only --ignore-scripts react-native-qrcode-svg@6.3.21
+
+      - name: Remove redundant local declaration
+        run: rm -f apps/mobile/src/types/react-native-qrcode-svg.d.ts
+
+      - name: Verify clean install and Android Metro export
+        working-directory: apps/mobile
+        env:
+          CI: "1"
+          APP_VARIANT: preview
+          APP_BUILD_MODE: release
+          EXPO_PUBLIC_API_BASE_URL: https://staging.kurioticket.com
+        run: |
+          npm ci
+          npm run typecheck
+          npm test
+          npm run expo:doctor
+          npx expo export --platform android --output-dir /tmp/kurioticket-mobile-export --clear
+
+      - name: Commit repaired lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/mobile/package.json apps/mobile/package-lock.json apps/mobile/src/types/react-native-qrcode-svg.d.ts
+          if git diff --cached --quiet; then
+            echo "No repair changes were produced."
+            exit 0
+          fi
+          git commit -m "fix(mobile): resolve QR package dependencies"
+          git push origin HEAD:codex/add-qr-code-for-mobile-2fa-setup
