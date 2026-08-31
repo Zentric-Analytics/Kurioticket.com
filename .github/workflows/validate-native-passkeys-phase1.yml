@@ -1,0 +1,46 @@
+name: Validate native passkeys phase one
+
+on:
+  push:
+    branches:
+      - codex/native-passkeys-phase1
+    paths:
+      - .github/workflows/validate-native-passkeys-phase1.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validate-server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Run focused server tests
+        run: npx cross-env JITI_TSCONFIG_PATHS=true node --test --import jiti/register src/lib/passkeys.test.ts src/lib/passkeyPhase1.test.ts
+      - name: Type-check server changes
+        run: npx tsc --noEmit --pretty false
+      - name: Check diff formatting
+        run: git diff --check origin/dev...HEAD
+
+  validate-mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - name: Run focused mobile passkey tests
+        run: node --test --require ./testAssetSetup.cjs --import jiti/register src/features/profile/passkeysManager.test.ts src/features/profile/securityScreen.test.ts
+      - run: npm run expo:doctor
