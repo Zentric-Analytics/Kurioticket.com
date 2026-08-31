@@ -1,0 +1,102 @@
+name: Temporary flight action gap correction
+
+on:
+  push:
+    branches:
+      - fix/flight-card-action-gap-zero
+    paths:
+      - .github/workflows/fix-flight-action-gap-zero.yml
+
+permissions:
+  contents: write
+
+jobs:
+  correct-gap:
+    if: github.event.head_commit.message == 'Bootstrap flight action gap correction'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout correction branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Correct negative flex gap and regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          screen = Path('apps/mobile/src/features/search/ApprovedResultsScreen.tsx')
+          text = screen.read_text()
+          old = 'identityActions: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: -4 }'
+          new = 'identityActions: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 0 }'
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one negative identityActions gap, found {text.count(old)}')
+          screen.write_text(text.replace(old, new))
+
+          test = Path('apps/mobile/src/features/search/flightCardRefinement.test.ts')
+          text = test.read_text()
+          text = text.replace('gap: -4 \\}/', 'gap: 0 \\}/')
+          text = text.replace('// The 20px heart is centered in its fixed 44px target. A -4px flex gap leaves\n  // 8px between the badge edge and the visible heart without moving the target.\n', '// The 20px heart remains centered in its fixed 44px target. A zero flex gap\n  // keeps the badge close without relying on an invalid negative gutter.\n')
+          text = text.replace('assert.equal(-4 + (44 - 20) / 2, 8);', 'assert.equal((44 - 20) / 2, 12);')
+          if 'gap: -4' in text:
+              raise SystemExit('Negative gap assertion still exists in flightCardRefinement.test.ts')
+          if 'gap: 0' not in text:
+              raise SystemExit('Expected zero-gap assertion was not written')
+          if 'assert.equal((44 - 20) / 2, 12);' not in text:
+              raise SystemExit('Expected safe visible-spacing regression was not written')
+          # Guard against replacing the gap with another positioning workaround.
+          marker = 'test("highlight sits immediately left of the fixed-right favorite action"'
+          section = text[text.index(marker):]
+          for forbidden in ['marginRight: -', 'marginLeft: -', 'position: "absolute"']:
+              if forbidden in section:
+                  raise SystemExit(f'Forbidden spacing workaround introduced: {forbidden}')
+          test.write_text(text)
+          PY
+
+      - name: Verify focused regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd apps/mobile
+          npm ci --ignore-scripts
+          node --test --require ./testAssetSetup.cjs --import jiti/register src/features/search/flightCardRefinement.test.ts
+          npm run typecheck
+          git diff --check
+
+      - name: Audit intended diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff -- apps/mobile/src/features/search/ApprovedResultsScreen.tsx apps/mobile/src/features/search/flightCardRefinement.test.ts
+          changed="$(git diff --name-only)"
+          expected=$(printf '%s\n%s\n%s\n' \
+            '.github/workflows/fix-flight-action-gap-zero.yml' \
+            'apps/mobile/src/features/search/ApprovedResultsScreen.tsx' \
+            'apps/mobile/src/features/search/flightCardRefinement.test.ts' | sort)
+          actual=$(printf '%s\n' "$changed" | sort)
+          if [ "$actual" != "$expected" ]; then
+            echo "Unexpected changed files:" >&2
+            printf '%s\n' "$changed" >&2
+            exit 1
+          fi
+
+      - name: Commit correction and remove temporary workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/fix-flight-action-gap-zero.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apps/mobile/src/features/search/ApprovedResultsScreen.tsx apps/mobile/src/features/search/flightCardRefinement.test.ts .github/workflows/fix-flight-action-gap-zero.yml
+          git commit -m 'Use safe zero gap for flight card actions'
+          git push origin HEAD:"${GITHUB_REF_NAME}"
