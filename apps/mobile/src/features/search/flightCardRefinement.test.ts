@@ -238,7 +238,7 @@ test("airline identity preserves its accessible name while bounding very long vi
 test("flight identity actions use a normal horizontal row without changing journey spacing", () => {
   assert.match(source, /airlineHeader: \{ width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start" \}/);
   assert.match(source, /airlineCopy: \{ flex: 1, minWidth: 0 \}/);
-  assert.match(source, /identityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 0 \}/);
+  assert.match(source, /identityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 0, transform: \[\{ translateY: -3 \}\] \}/);
   assert.doesNotMatch(source, /identityActions: \{[^}]*position: "absolute"/);
   assert.doesNotMatch(source, /airlineHeader: \{[^}]*paddingRight: 68/);
   assert.match(source, /journeyList: \{ width: "100%", marginTop: 10, gap: 10 \}/);
@@ -384,7 +384,12 @@ test("highlight sits immediately left of the fixed-right favorite action", () =>
   assert.doesNotMatch(actions, /placeholder|invisible|opacity:\s*0/i);
   // The 20px heart remains centered in its fixed 44px target. A zero flex gap
   // keeps the badge close without relying on an invalid negative gutter.
-  assert.match(source, /identityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 0 \}/);
+  assert.match(source, /identityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 0, transform: \[\{ translateY: -3 \}\] \}/);
+  assert.doesNotMatch(source, /identityActions: \{[^}]*gap: -/);
+  assert.doesNotMatch(source, /identityActions: \{[^}]*margin(?:Top|Bottom)?: -/);
+  assert.doesNotMatch(source, /identityActions: \{[^}]*position: "absolute"/);
+  assert.doesNotMatch(source, /resultBadge: \{[^}]*translateY/);
+  assert.doesNotMatch(source, /favoriteButton: \{[^}]*translateY/);
   assert.equal((44 - 20) / 2, 12);
   assert.match(source, /favoriteButton: \{ width: 44, height: 44, flexShrink: 0/);
   assert.match(card, /<Heart[\s\S]*?size=\{20\}/);
