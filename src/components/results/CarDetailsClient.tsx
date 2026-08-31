@@ -204,7 +204,7 @@ export function CarDetailsExperience({
                     aria-label={`${isSaved ? copy("carDetails.unsave") : copy("carDetails.save")} ${car.modelName}`}
                     aria-pressed={isSaved}
                     onClick={toggleSavedCar}
-                    className={`focus-ring flex size-11 items-center justify-center rounded-lg border-0 bg-transparent text-slate-700 shadow-none transition hover:bg-slate-100 md:size-10 md:rounded-full md:border md:border-white/35 md:bg-slate-950/35 md:text-white md:backdrop-blur-sm md:hover:bg-slate-950/55 ${isSaved ? "text-rose-500 md:text-rose-300" : ""}`}
+                    className={`focus-ring flex size-11 items-center justify-center rounded-lg border-0 bg-transparent shadow-none transition hover:bg-slate-100 md:size-10 md:rounded-full md:border md:border-white/35 md:bg-slate-950/35 md:backdrop-blur-sm md:hover:bg-slate-950/55 ${isSaved ? "text-rose-500 md:text-rose-300" : "text-slate-700 md:text-white"}`}
                   >
                     <Heart
                       size={20}

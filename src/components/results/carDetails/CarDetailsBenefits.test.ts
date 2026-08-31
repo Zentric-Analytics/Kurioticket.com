@@ -115,11 +115,13 @@ test("standalone details separate mobile model actions from the image while reta
   assert.match(clientSource, /useSavedCar\(car\.id\)/);
   assert.match(clientSource, /navigator\.share/);
   assert.match(clientSource, /text-\[#075EE8\] md:text-white\/85/);
-  assert.equal(
-    clientSource.match(
-      /rounded-lg border-0 bg-transparent text-slate-700 shadow-none/g,
-    )?.length,
-    2,
+  assert.match(
+    clientSource,
+    /isSaved \? "text-rose-500 md:text-rose-300" : "text-slate-700 md:text-white"/,
+  );
+  assert.match(
+    clientSource,
+    /rounded-lg border-0 bg-transparent text-slate-700 shadow-none/,
   );
   assert.match(clientSource, /items-center gap-0" data-car-details-actions/);
   assert.match(heroSource, /className="shrink-0 text-slate-600"/);
