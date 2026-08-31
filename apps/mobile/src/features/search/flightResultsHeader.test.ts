@@ -105,9 +105,9 @@ test("header and date rail use the structured Flight Results fare-calendar shell
   const railHeight = Number(searchUi.match(/flightDateRail: \{ height: (\d+)/)?.[1]);
 
   assert.ok(headerBottom <= 3, "header bottom padding remains compact");
-  assert.equal(navigatorHeight, 88, "navigator fits the 76px tile and compact vertical padding");
+  assert.equal(navigatorHeight, 82, "navigator fits the 70px tile and compact vertical padding");
   assert.equal(railHeight, navigatorHeight);
-  assert.equal(headerBottom + navigatorHeight, 90);
+  assert.equal(headerBottom + navigatorHeight, 84);
 });
 
 test("canonical flight search data remains available after presentation metadata removal", () => {
