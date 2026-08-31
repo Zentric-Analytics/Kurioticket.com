@@ -58,7 +58,7 @@ export async function issueMobileSession(userId: string, authMethod: AuthMethod,
 export async function validateMobileBearer(request: Request, lookup: MobileBearerLookup = findMobileBearerSession) {
   const session = await validateMobileBearerToken(request, lookup);
   if (!session || session.revokedAt || session.sessionVersion !== session.user.sessionVersion) return null;
-  if (!(await canAuthenticateAccount(session.user, session.authMethod === "GOOGLE" ? "google" : "credentials"))) return null;
+  if (!(await canAuthenticateAccount(session.user, session.authMethod === "GOOGLE" ? "google" : session.authMethod === "PASSKEY" ? "passkey" : "credentials"))) return null;
   if (session.user.securitySettings?.twoFactorEnabled && session.assuranceLevel === "PRIMARY") return null;
   if (Date.now() - session.lastSeenAt.getTime() >= LAST_SEEN_WRITE_MS) void getPrisma().accountSession.updateMany({ where: { id: session.id, revokedAt: null }, data: { lastSeenAt: new Date() } });
   return session;
@@ -76,7 +76,7 @@ export async function validateMobileDeletionReactivationBearer(request: Request,
 export async function validateAccountSession(id: string, userId: string, options: { requireCompletedTwoFactor?: boolean } = {}) {
   const session = await getPrisma().accountSession.findFirst({ where: { id, userId }, include: { user: { include: { securitySettings: { select: { twoFactorEnabled: true } } } } } });
   if (!session || session.revokedAt || session.expiresAt <= new Date() || session.sessionVersion !== session.user.sessionVersion) return null;
-  if (!(await canAuthenticateAccount(session.user, session.authMethod === "GOOGLE" ? "google" : "credentials"))) return null;
+  if (!(await canAuthenticateAccount(session.user, session.authMethod === "GOOGLE" ? "google" : session.authMethod === "PASSKEY" ? "passkey" : "credentials"))) return null;
   if (options.requireCompletedTwoFactor !== false && session.user.securitySettings?.twoFactorEnabled && session.assuranceLevel === "PRIMARY") return null;
   return session;
 }

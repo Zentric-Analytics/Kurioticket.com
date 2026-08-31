@@ -21,7 +21,7 @@ import {
   defaultPasskeyName,
   isNativePasskeySupported,
   isPasskeyCancellation,
-} from "./nativePasskeys";
+} from "../passkeys/nativePasskeys";
 
 type Purpose = "setup" | "removal";
 type Stage = "list" | "verify" | "rename";

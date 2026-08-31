@@ -1,16 +1,22 @@
 import { getApiBaseUrl } from "../../config/apiUrl";
 import { clearSession, readSession, writeSession } from "../../storage/sessionStorage";
 
+export type PasskeyAuthenticationOptions = { challenge: string; rpId: string; timeout: number; userVerification: "required" };
+export type PasskeyAssertion = import("../passkeys/nativePasskeys").NormalizedPasskeyAssertion;
+
 type AuthResult = { session: { token: string; expires: string }; user: { id: string; email: string; name?: string | null } } | { requiresTwoFactor: true; challengeToken: string; expiresAt: string };
 
 export class AuthApiError extends Error {
   constructor(message: string, public status = 0, public code = "") { super(message); }
 }
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+async function request<T>(path: string, options: RequestInit = {}, externalSignal?: AbortSignal): Promise<T> {
   const base = getApiBaseUrl();
   if (!base.ok) throw new AuthApiError(base.message);
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 12000);
+  const abort = () => controller.abort();
+  externalSignal?.addEventListener("abort", abort, { once: true });
+  if (externalSignal?.aborted) controller.abort();
+  const timer = setTimeout(abort, 12000);
   try {
     const response = await fetch(`${base.baseUrl}/api/mobile/v1/auth/${path}`, {
       ...options, signal: controller.signal, headers: { Accept: "application/json", "Content-Type": "application/json", ...options.headers },
@@ -21,9 +27,15 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   } catch (error) {
     if (error instanceof AuthApiError) throw error;
     throw new AuthApiError("Check your connection and try again.");
-  } finally { clearTimeout(timer); }
+  } finally { clearTimeout(timer); externalSignal?.removeEventListener("abort", abort); }
 }
 export const authApi = {
+  passkeyOptions: (signal?: AbortSignal) => request<{ options: PasskeyAuthenticationOptions }>("passkey/options", { method: "POST", body: "{}" }, signal),
+  passkeyVerify: async (assertion: PasskeyAssertion, signal?: AbortSignal) => {
+    const result = await request<{ session: { token: string; expires: string }; user: { id: string; email: string; name?: string | null } }>("passkey/verify", { method: "POST", body: JSON.stringify(assertion) }, signal);
+    await writeSession({ ...result.session, user: result.user });
+    return result;
+  },
   requestCode: (email: string) => request<{ cooldownSeconds: number }>("request-code", { method: "POST", body: JSON.stringify({ email }) }),
   verifyCode: (email: string, code: string) => request<{ accountType: "existing" | "new"; verificationToken: string }>("verify-code", { method: "POST", body: JSON.stringify({ email, code }) }),
   password: async (email: string, password: string) => {

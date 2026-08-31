@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const manager = readFileSync("src/features/profile/PasskeysManager.tsx", "utf8");
-const adapter = readFileSync("src/features/profile/nativePasskeys.ts", "utf8");
+const adapter = readFileSync("src/features/passkeys/nativePasskeys.ts", "utf8");
 const security = readFileSync("src/features/profile/SecurityScreen.tsx", "utf8");
 const localization = readFileSync("src/features/profile/passkeyLocalization.ts", "utf8");
 

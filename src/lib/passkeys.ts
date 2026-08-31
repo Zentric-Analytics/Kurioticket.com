@@ -26,7 +26,9 @@ export function assertAllowedOrigin(origin: string, androidPackageName?: unknown
   if (origins.includes(origin)) return;
   if (!androidOrigins().includes(origin)) throw new Error("Origin is not allowed for passkey authentication.");
   const configuredPackage = process.env.WEBAUTHN_ANDROID_PACKAGE_NAME?.trim();
-  if (!configuredPackage || (androidPackageName !== undefined && androidPackageName !== configuredPackage)) throw new Error("Android package is not allowed for passkey authentication.");
+  if (!configuredPackage || (androidPackageName !== undefined && androidPackageName !== configuredPackage)) {
+    throw new Error("Android package is not allowed for passkey authentication.");
+  }
 }
 export function newChallenge() { return b64url(randomBytes(32)); }
 export function newPasskeyLoginToken() { return `${PASSKEY_LOGIN_TOKEN_PREFIX}${randomUUID()}:${b64url(randomBytes(32))}`; }
