@@ -106,7 +106,14 @@ export async function canReceiveStagingEmail(email: string) {
   return isStagingEmailRecipientAllowed(email, tester);
 }
 
-export async function canRetainStagingSession(email: string, usesGoogle: boolean) {
+export async function canUseStagingPasskey(email: string) {
+  // Passkeys prove account control but never grant Preview access by themselves.
+  return canUseStagingCredentials(email);
+}
+
+export async function canRetainStagingSession(email: string, method: "credentials" | "google" | "passkey") {
   if (!isStagingEnvironment()) return true;
-  return usesGoogle ? canUseStagingGoogle(email) : canUseStagingCredentials(email);
+  if (method === "google") return canUseStagingGoogle(email);
+  if (method === "passkey") return canUseStagingPasskey(email);
+  return canUseStagingCredentials(email);
 }

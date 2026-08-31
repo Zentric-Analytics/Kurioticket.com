@@ -609,7 +609,7 @@ export const authOptions: NextAuthOptions =
             const previewAuthMethod = token.previewAuthMethod || (dbUser.accounts.some((linkedAccount) => linkedAccount.provider === "google") ? "google" : "credentials");
             const retainsPreviewAccess = await canRetainStagingSession(
               dbUser.email || "",
-              previewAuthMethod === "google",
+              previewAuthMethod === "google" ? "google" : "credentials",
             );
             token.id =
               dbUser.id;
