@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "reviewId": "lagos-review-2026-08",
+  "catalogVersion": "candidate-2026-08",
+  "candidates": [
+    {
+      "id": "candidate:6cc9cb1881d3d7748b8f",
+      "location": {
+        "id": "city:ng:lagos",
+        "kind": "city",
+        "primaryLabel": "Lagos",
+        "supportingLabel": "Lagos, Nigeria",
+        "submittedValue": "Lagos",
+        "country": { "code": "NG", "name": "Nigeria" },
+        "aliases": ["Èkó"],
+        "staticCoverage": { "flights": "reference-only", "hotels": "exact", "cars": "exact", "packages": "exact" },
+        "source": { "catalog": "kurioticket", "datasetVersion": "fixture-v1" }
+      },
+      "status": "approved",
+      "requestedProducts": ["hotels", "cars"],
+      "evidenceReferences": ["manifest:approved-source-version"]
+    }
+  ]
+}
+
