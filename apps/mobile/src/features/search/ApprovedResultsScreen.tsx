@@ -116,6 +116,8 @@ import { FlightResultsState } from "./FlightResultsState";
 import { resolveFlightResultsState } from "./flightResultsStateModel";
 import { signInHref } from "../auth/signInIntent";
 import { normalizePreferredAirlineFilterValues } from "./preferredAirlineDefaults";
+import { HotelFilterSheet, type HotelFilterSectionName } from "./HotelFilterSheet";
+import { activeHotelFilterCount, buildHotelFilterOptions, emptyHotelFilters, filterHotels, type HotelFilters } from "./hotelFilters";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -156,6 +158,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [hotelEditSearchOpen, setHotelEditSearchOpen] = useState(false);
   const [hotelEditPresentation, setHotelEditPresentation] = useState(0);
   const [filterSection, setFilterSection] = useState<FlightFilterSectionName>("all");
+  const [hotelFilters, setHotelFilters] = useState<HotelFilters>(emptyHotelFilters);
+  const [hotelFilterOpen, setHotelFilterOpen] = useState(false);
+  const [hotelFilterSection, setHotelFilterSection] = useState<HotelFilterSectionName>("all");
+  const previousHotelSearchKey = useRef<string | undefined>(undefined);
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
   const [verifiedDateFareMemory, setVerifiedDateFareMemory] = useState<VerifiedDateFareMemory>();
   const flightDateStripScrollY = useRef(new Animated.Value(0)).current;
@@ -182,6 +188,14 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       preferredAirlineFilterTouchedSearchKey.current = undefined;
     }
     previousFlightSearchKey.current = plan.plan.key;
+  }, [flightResults, plan.plan?.key]);
+  useEffect(() => {
+    if (flightResults || !plan.plan?.key) return;
+    if (previousHotelSearchKey.current && previousHotelSearchKey.current !== plan.plan.key) {
+      setHotelFilters(emptyHotelFilters());
+      setHotelFilterOpen(false);
+    }
+    previousHotelSearchKey.current = plan.plan.key;
   }, [flightResults, plan.plan?.key]);
   useEffect(() => {
     if (!flightResults) return;
@@ -374,6 +388,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const flightPriceContext = useMemo(() => product === "flight" && currencyState
     ? resolveFlightPriceComparisonContext(results as FlightResult[], currencyState.resolution.resolvedCurrency, normalizeFlightPrice)
     : null, [currencyState, normalizeFlightPrice, product, results]);
+  const hotelOptions = useMemo(() => buildHotelFilterOptions(
+    product === "hotel" ? results as HotelResult[] : [],
+    String(plan.plan?.payload.destination || ""),
+    currencyState?.rates ?? {},
+  ), [currencyState?.rates, plan.plan?.payload.destination, product, results]);
   const sorted = useMemo(() => {
     if (product === "flight") {
       return filterAndSortFlights(
@@ -384,12 +403,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         normalizeFlightPrice,
       );
     }
-    return [...results].sort((a, b) =>
+    return filterHotels(results as HotelResult[], hotelFilters, hotelOptions).sort((a, b) =>
         sort === "price"
-          ? (a as HotelResult).totalPrice! - (b as HotelResult).totalPrice!
-          : (b as HotelResult).valueScore - (a as HotelResult).valueScore,
+          ? a.totalPrice! - b.totalPrice!
+          : b.valueScore - a.valueScore,
       );
-  }, [results, filters, sort, product, flightPriceContext, normalizeFlightPrice]);
+  }, [results, filters, hotelFilters, hotelOptions, sort, product, flightPriceContext, normalizeFlightPrice]);
   const flightHighlights = useMemo(() => product === "flight"
     ? deriveFlightResultHighlights(sorted as FlightResult[], normalizeFlightPrice)
     : new Map<string, FlightResultHighlight>(), [normalizeFlightPrice, product, sorted]);
@@ -428,6 +447,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     if (nextCurrency) previousComparisonCurrency.current = nextCurrency;
   }, [currencyState, flightPriceContext?.identity]);
   const activeFilterCount = activeFlightFilterCount(filters, flightOptions);
+  const activeHotelFilters = activeHotelFilterCount(hotelFilters, hotelOptions);
   const flightState = product === "flight" ? resolveFlightResultsState({
     status,
     rawResultCount: results.length,
@@ -442,6 +462,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const openFlightFilters = (section: FlightFilterSectionName) => {
     setFilterSection(section);
     setFilterOpen(true);
+  };
+  const openHotelFilters = (section: HotelFilterSectionName) => {
+    setHotelFilterSection(section);
+    setHotelFilterOpen(true);
   };
   const handleFlightFiltersChange = useCallback((next: FlightFilters) => {
     const searchKey = plan.plan?.key;
@@ -549,20 +573,15 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               />
             ) : null}
             <Pill
-              label={product === "flight" && activeFilterCount ? `Filter · ${activeFilterCount}` : "Filter"}
-              active={product === "flight" && activeFilterCount > 0}
+              label={product === "flight" && activeFilterCount ? `Filter · ${activeFilterCount}` : product === "hotel" && activeHotelFilters ? `Filter · ${activeHotelFilters}` : "Filter"}
+              active={product === "flight" ? activeFilterCount > 0 : activeHotelFilters > 0}
               icon={product === "flight" ? undefined : "sliders"}
               flightResultsIcon={product === "flight" ? "filters" : undefined}
-              onPress={() => product === "flight" ? openFlightFilters("all") :
-                Alert.alert(
-                  "Filters",
-                  "Filter controls use the current live result set.",
-                )
-              }
+              onPress={() => product === "flight" ? openFlightFilters("all") : openHotelFilters("all")}
             />
             {(product === "flight"
               ? ["Airlines", "Stops"]
-              : ["Price", "Guest rating", "Property type"]
+              : ["Price", "Star rating", "Property type"]
             ).map((x) => (
               <Pill
                 key={x}
@@ -572,12 +591,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   x === "Airlines" ? filters.airlines.length > 0 : false
                 )}
                 flightResultsChevron={product === "flight"}
-                onPress={() => product === "flight" ? openFlightFilters(x.toLowerCase() as "stops" | "airlines") :
-                  Alert.alert(
-                    x,
-                    "No additional values are available from this search response.",
-                  )
-                }
+                onPress={() => product === "flight" ? openFlightFilters(x.toLowerCase() as "stops" | "airlines") : openHotelFilters(x === "Price" ? "price" : x === "Star rating" ? "rating" : "propertyTypes")}
               />
             ))}
             {product === "hotel" ? (
@@ -636,6 +650,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                     }
                   />
                 </View>
+              ) : null}
+              {status === "ready" && product === "hotel" && results.length > 0 && sorted.length === 0 ? (
+                <View style={s0.hotelFilteredEmpty}><Text accessibilityRole="header" style={[s0.foundTitle,{color:theme.textPrimary}]}>No stays match these filters.</Text><Pressable accessibilityRole="button" onPress={()=>setHotelFilters(emptyHotelFilters())}><Text style={s0.hotelClearFilters}>Clear filters</Text></Pressable></View>
               ) : null}
               {!flightState && product === "hotel" && sorted.map((x, i) =>
                 (
@@ -761,7 +778,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             onClose={() => setFilterOpen(false)}
           />
         </>
-      ) : null}
+      ) : (
+        <HotelFilterSheet visible={hotelFilterOpen} section={hotelFilterSection} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} onChange={setHotelFilters} onClose={()=>setHotelFilterOpen(false)}/>
+      )}
       {!flightResults ? (
         <HotelEditSearchModal
           key={hotelEditPresentation}
@@ -1704,6 +1723,8 @@ const s0 = StyleSheet.create({
   },
   foundCopy: { flex: 1, minWidth: 0, gap: 2 },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
+  hotelFilteredEmpty: { alignItems: "center", gap: 10, paddingVertical: 28 },
+  hotelClearFilters: { color: ui.blue, fontSize: 15, fontWeight: "800" },
   flightResultCount: { paddingHorizontal: 14, paddingTop: 4, fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
   card: {
     width: "100%",
