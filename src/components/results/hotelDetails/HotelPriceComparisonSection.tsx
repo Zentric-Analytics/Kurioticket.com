@@ -87,7 +87,7 @@ function ProviderOffer({
             <HotelAmenityList
               items={offer.amenities ?? []}
               t={() => ""}
-              className="flex min-w-0 flex-nowrap items-center gap-x-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>li]:shrink-0 [&>li>span]:whitespace-nowrap"
+              className="flex min-w-0 flex-nowrap items-center gap-x-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>li]:shrink-0 [&>li>span]:whitespace-nowrap"
             />
           </span>
           <span
