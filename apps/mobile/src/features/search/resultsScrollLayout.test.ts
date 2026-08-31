@@ -78,14 +78,29 @@ test("flight dates use full resolved fares in wider, single-line tiles", () => {
   assert.doesNotMatch(dateStrip, /ellipsizeMode="clip"/);
 });
 
-test("hotel results retain their non-sticky header and separate result scroll", () => {
+test("hotel results omit the date rail and keep filters above the separate result scroll", () => {
   const hotelStart = screen.indexOf(') : (\n        <>', layoutStart);
   const hotelLayout = screen.slice(hotelStart, screen.indexOf("<FlightSortModal", hotelStart));
 
-  assert.match(hotelLayout, /\{dateStrip\}/);
+  assert.doesNotMatch(hotelLayout, /DateStrip|dateStrip|flightDateStrip/);
   assert.match(hotelLayout, /\{filterRail\}/);
   assert.match(hotelLayout, /<ScrollView[^>]*contentContainerStyle=\{s0\.body\}[^>]*>\{resultContent\}<\/ScrollView>/);
+  assert.ok(hotelLayout.indexOf("{filterRail}") < hotelLayout.indexOf("<ScrollView"));
   assert.doesNotMatch(hotelLayout, /stickyHeaderIndices|stickySectionHeadersEnabled/);
+  assert.doesNotMatch(hotelLayout, /<View[^>]*>\s*<\/View>|dateStripWrapper/);
+});
+
+test("the results date rail remains Flight-only and updates departure date", () => {
+  const flightDateStrip = screen.slice(
+    screen.indexOf("const flightDateStrip ="),
+    screen.indexOf("const flightDateStripOpacity"),
+  );
+
+  assert.match(flightDateStrip, /<DateStrip/);
+  assert.match(flightDateStrip, /date=\{flightDate\}/);
+  assert.match(flightDateStrip, /onSelect=\{\(v\) => router\.setParams\(\{ departureDate: v \}\)\}/);
+  assert.doesNotMatch(flightDateStrip, /checkIn/);
+  assert.match(screen, /const animatedFlightDateStrip = \([\s\S]*?\{flightDateStrip\}/);
 });
 
 test("Flight Results removes bell work without changing the shared notification implementation", () => {
