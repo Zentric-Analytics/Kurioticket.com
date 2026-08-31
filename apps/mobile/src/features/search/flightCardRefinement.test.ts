@@ -140,8 +140,10 @@ test("flight card keeps horizontal metadata compact while airline identity may g
   assert.match(card, /style=\{\[s0\.airlineName, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{2\} ellipsizeMode="tail">/);
   assert.equal(card.match(/style=\{s0\.metadataItem\}/g)?.length, 3);
   assert.match(source, /card: \{[\s\S]*?paddingHorizontal: 12,[\s\S]*?paddingVertical: 9,[\s\S]*?gap: 5,/);
-  assert.match(source, /metadataRow: \{ width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", paddingTop: 1, paddingBottom: 2 \}/);
+  assert.match(source, /metadataFooterContainer: \{ width: "100%", alignItems: "center" \}/);
+  assert.match(source, /metadataRow: \{ maxWidth: "100%", flexDirection: "row", alignItems: "center", justifyContent: "center", alignSelf: "center", paddingTop: 1, paddingBottom: 2 \}/);
   assert.doesNotMatch(source, /metadataRow: \{[^}]*flexWrap/);
+  assert.doesNotMatch(source, /metadataRow: \{[^}]*justifyContent: "space-between"/);
   assert.match(source, /metadataItem: \{ flexDirection: "row", alignItems: "center", gap: 3, minWidth: 0, flexShrink: 1 \}/);
   assert.match(source, /metadataText: \{ flexShrink: 1, minWidth: 0, fontSize: 12, lineHeight: 15, fontWeight: "500", fontFamily: appFonts\.medium \}/);
   assert.doesNotMatch(source, /metadataText: \{[^}]*flex: 1/);
