@@ -5,12 +5,23 @@ import test from "node:test";
 const source = readFileSync(new URL("./HotelResultsClient.tsx", import.meta.url), "utf8");
 
 test("wide desktop uses a dedicated 288px rail and smaller screens use the filter dialog", () => {
-  assert.match(source, /xl:grid-cols-\[288px_minmax\(0,1fr\)\]/);
-  assert.match(source, /w-\[288px\][^\n]*xl:block/);
-  assert.match(source, /sm:w-\[420px\] xl:hidden/);
+  assert.match(source, /min-\[1200px\]:grid-cols-\[288px_minmax\(0,1fr\)\]/);
+  assert.match(source, /w-\[288px\][^\n]*min-\[1200px\]:block/);
+  assert.match(source, /sm:w-\[420px\] min-\[1200px\]:hidden/);
   assert.match(source, /role="dialog"/);
   assert.match(source, /aria-modal="true"/);
-  assert.match(source, /max-width: 1279px/);
+  assert.match(source, /max-width: 1199px/);
+});
+
+test("facets follow the production hierarchy and omit cancellation claims", () => {
+  const price = source.indexOf('title={t("hotelResults.budgetPrice")}');
+  const hotelClass = source.indexOf('title="Hotel class"', price);
+  const area = source.indexOf('title={t("hotelResults.locationArea")}', hotelClass);
+  const property = source.indexOf('title={t("hotelResults.propertyType")}', area);
+  const amenities = source.indexOf('title={t("hotelResults.facilities")}', property);
+  const room = source.indexOf('title="Room & bed"', amenities);
+  assert.ok(price < hotelClass && hotelClass < area && area < property && property < amenities && amenities < room);
+  assert.match(source, /section\.id !== "cancellationPolicies"/);
 });
 
 test("hotel class is multi-select and empty selection means all", () => {

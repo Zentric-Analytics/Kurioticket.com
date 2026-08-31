@@ -747,7 +747,7 @@ export function HotelResultsExperience({
       return releaseExistingLock;
     }
 
-    const mobileQuery = window.matchMedia("(max-width: 1279px)");
+    const mobileQuery = window.matchMedia("(max-width: 1199px)");
 
     if (!mobileQuery.matches) {
       releaseExistingLock();
@@ -2214,11 +2214,11 @@ export function HotelResultsExperience({
 
       <div
         ref={resultsGridRef}
-        className={cn(guided ? "grid gap-y-5 pb-6 xl:grid-cols-[288px_minmax(0,1fr)] xl:gap-x-8" : "page-shell grid gap-y-5 pb-6 pt-5 sm:pt-6 xl:grid-cols-[288px_minmax(0,1fr)] xl:gap-x-8")}
+        className={cn(guided ? "grid gap-y-5 pb-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8" : "page-shell grid gap-y-5 pb-6 pt-5 sm:pt-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8")}
       >
         <aside
           ref={desktopFilterSidebarRef}
-          className="relative hidden w-[288px] self-stretch xl:block xl:justify-self-end"
+          className="relative hidden w-[288px] self-stretch min-[1200px]:block min-[1200px]:justify-self-end"
         >
           <div>
             <HotelFilters
@@ -2349,7 +2349,7 @@ export function HotelResultsExperience({
                   t={t}
                 />
 
-                <Button type="button" variant="secondary" className="min-h-11 gap-2 xl:hidden" onClick={(event) => { mobileFiltersLauncherRef.current = event.currentTarget; mobileFiltersModalityRef.current = getOverlayActivationModality(event); setFiltersOpen(true); }}>
+                <Button type="button" variant="secondary" className="min-h-11 gap-2 min-[1200px]:hidden" onClick={(event) => { mobileFiltersLauncherRef.current = event.currentTarget; mobileFiltersModalityRef.current = getOverlayActivationModality(event); setFiltersOpen(true); }}>
                   <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
                   {t("filters")}{activeFilterCount ? ` (${activeFilterCount})` : ""}
                 </Button>
@@ -2571,7 +2571,7 @@ export function HotelResultsExperience({
         aria-label="Hotel filters"
         aria-hidden={!filtersOpen}
         className={cn(
-          "fixed inset-y-0 right-0 z-[10000] flex h-[100dvh] w-full flex-col overflow-hidden bg-white shadow-2xl transition-transform duration-200 ease-out sm:w-[420px] xl:hidden",
+          "fixed inset-y-0 right-0 z-[10000] flex h-[100dvh] w-full flex-col overflow-hidden bg-white shadow-2xl transition-transform duration-200 ease-out sm:w-[420px] min-[1200px]:hidden",
           filtersOpen ? "translate-y-0 sm:translate-x-0" : "translate-y-full sm:translate-x-full sm:translate-y-0",
         )}
       >
@@ -3003,7 +3003,7 @@ function HotelFilters({
     (section) =>
       (section.id !== "price" || hasPricedResults) &&
       (section.id !== "meals" || options.meals.length > 0) &&
-      (section.id !== "cancellationPolicies" || options.cancellationPolicies.length > 0) &&
+      section.id !== "cancellationPolicies" &&
       (section.id !== "roomTypes" || options.roomTypes.length > 1) &&
       (section.id !== "bedTypes" || options.bedTypes.length > 1),
   );
@@ -3110,6 +3110,18 @@ function HotelFilters({
         </FilterSection>
         ) : null}
 
+        {options.meals.length > 0 ? (
+          <CheckboxFilterSection
+            title="Popular"
+            options={options.meals}
+            selected={selectedFilters.meals}
+            onToggle={(value) => toggleFilter("meals", value)}
+            t={t}
+            locale={locale}
+            layout={layout}
+          />
+        ) : null}
+
         <FilterSection title="Hotel class" layout={layout}>
           <StarRatingFilterControl
             selectedRatings={selectedRatings}
@@ -3143,7 +3155,18 @@ function HotelFilters({
         />
 
         <CheckboxFilterSection
-          title={t("hotelResults.roomType")}
+          title={t("hotelResults.facilities")}
+          options={options.facilities}
+          selected={selectedFilters.facilities}
+          onToggle={(value) => toggleFilter("facilities", value)}
+          t={t}
+          locale={locale}
+          collapsedCount={6}
+          layout={layout}
+        />
+
+        <CheckboxFilterSection
+          title="Room & bed"
           minimumOptionCount={2}
           options={options.roomTypes}
           selected={selectedFilters.roomTypes}
@@ -3154,50 +3177,19 @@ function HotelFilters({
           layout={layout}
         />
 
-        <CheckboxFilterSection
-          title={t("hotelResults.bedType")}
-          minimumOptionCount={2}
-          options={options.bedTypes}
-          selected={selectedFilters.bedTypes}
-          onToggle={(value) => toggleFilter("bedTypes", value)}
-          t={t}
-          locale={locale}
-          collapsedCount={5}
-          layout={layout}
-        />
-
-        {options.meals.length > 0 ? (
+        {options.bedTypes.length > 1 ? (
           <CheckboxFilterSection
-            title={t("hotelResults.meals")}
-            options={options.meals}
-            selected={selectedFilters.meals}
-            onToggle={(value) => toggleFilter("meals", value)}
+            title="Bed options"
+            minimumOptionCount={2}
+            options={options.bedTypes}
+            selected={selectedFilters.bedTypes}
+            onToggle={(value) => toggleFilter("bedTypes", value)}
             t={t}
             locale={locale}
+            collapsedCount={5}
             layout={layout}
           />
         ) : null}
-
-        <CheckboxFilterSection
-          title={t("hotelResults.cancellationPolicy")}
-          options={options.cancellationPolicies}
-          selected={selectedFilters.cancellationPolicies}
-          onToggle={(value) => toggleFilter("cancellationPolicies", value)}
-          t={t}
-          locale={locale}
-          layout={layout}
-        />
-
-        <CheckboxFilterSection
-          title={t("hotelResults.facilities")}
-          options={options.facilities}
-          selected={selectedFilters.facilities}
-          onToggle={(value) => toggleFilter("facilities", value)}
-          t={t}
-          locale={locale}
-          collapsedCount={6}
-          layout={layout}
-        />
       </div>
     </div>
   );
