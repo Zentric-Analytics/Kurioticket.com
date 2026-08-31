@@ -1,11 +1,14 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+
 const source = (path: string) => readFileSync(path, "utf8");
 
 test("welcome preserves every existing action and conditionally adds passkeys", () => {
   const welcome = source("src/features/auth/AuthWelcomeScreen.tsx");
-  for (const label of ["Continue with Email", "Continue with Google", "Continue as Guest", "Continue with passkey"]) assert.match(welcome, new RegExp(label));
+  for (const label of ["Continue with Email", "Continue with Google", "Continue as Guest", "Continue with passkey"]) {
+    assert.match(welcome, new RegExp(label));
+  }
   assert.match(welcome, /onPasskey \? <AuthButton/);
   assert.match(welcome, /height < 700 && styles\.compactPanel/);
 });
@@ -27,8 +30,15 @@ test("passkey ceremony is username-less, ordered, cancellable, and generation pr
 test("adapter safely detects old binaries and normalizes every assertion field", () => {
   const adapter = source("src/features/passkeys/nativePasskeys.ts");
   assert.match(adapter, /Old binaries and Expo Go/);
-  assert.match(adapter, /await module\.get/);
-  for (const field of ["id", "rawId", "clientDataJSON", "authenticatorData", "signature", "userHandle", "authenticatorAttachment", "clientExtensionResults"]) assert.match(adapter, new RegExp(field));
+  assert.match(adapter, /await module\.get\(options\)/);
+  assert.doesNotMatch(adapter, /module\.get\(\{[^}]*signal/);
+  assert.match(adapter, /cannot actively cancel get\(\)/);
+  assert.match(adapter, /signal\?\.aborted/);
+  for (const field of ["id", "rawId", "clientDataJSON", "authenticatorData", "signature", "userHandle", "authenticatorAttachment", "clientExtensionResults"]) {
+    assert.match(adapter, new RegExp(field));
+  }
+  assert.match(adapter, /extensions !== undefined && extensions !== null/);
+  assert.match(adapter, /compact\.includes\("nocredential"\)/);
   assert.doesNotMatch(adapter, /console\.|AsyncStorage|SecureStore/);
 });
 
