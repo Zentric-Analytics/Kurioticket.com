@@ -657,7 +657,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     </>
   );
   return (
-    <SafeAreaView style={[s0.safe, flightResults && { backgroundColor: theme.background }]} edges={["top"]}>
+    <SafeAreaView style={[s0.safe, { backgroundColor: theme.background }]} edges={["top"]}>
       {flightResults ? (
         <FlightResultsHeader
           route={`${String(payload.origin || "").toUpperCase()} ${payload.tripType === "one-way" ? "→" : "⇄"} ${String(payload.destination || "").toUpperCase()}`}
