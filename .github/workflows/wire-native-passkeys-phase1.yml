@@ -37,20 +37,22 @@ jobs:
           const start = source.indexOf(startMarker);
           const end = source.indexOf(endMarker, start);
           if (start < 0 || end < 0) throw new Error('Passkey modal anchors not found');
-          const replacement = `    <ScreenModal visible={passkeysOpen} title={c.passkeys} closeLabel={c.close} onClose={closePasskeys}>
-      <Text style={[styles.intro,{color:theme.muted}]}>{c.passkeysHelp}</Text><Feedback error={passkeysError} message={passkeysMessage}/>
-      <PasskeysManager
-        active={passkeysOpen}
-        passkeys={passkeys}
-        hasPassword={Boolean(overview?.hasPassword)}
-        twoFactorEnabled={Boolean(overview?.twoFactorEnabled)}
-        onReload={() => loadPasskeys()}
-        onUnauthorized={unauth}
-        onError={setPasskeysError}
-        onMessage={setPasskeysMessage}
-      />
-    </ScreenModal>
-`;
+          const replacement = [
+            '    <ScreenModal visible={passkeysOpen} title={c.passkeys} closeLabel={c.close} onClose={closePasskeys}>',
+            '      <Text style={[styles.intro,{color:theme.muted}]}>{c.passkeysHelp}</Text><Feedback error={passkeysError} message={passkeysMessage}/>',
+            '      <PasskeysManager',
+            '        active={passkeysOpen}',
+            '        passkeys={passkeys}',
+            '        hasPassword={Boolean(overview?.hasPassword)}',
+            '        twoFactorEnabled={Boolean(overview?.twoFactorEnabled)}',
+            '        onReload={() => loadPasskeys()}',
+            '        onUnauthorized={unauth}',
+            '        onError={setPasskeysError}',
+            '        onMessage={setPasskeysMessage}',
+            '      />',
+            '    </ScreenModal>',
+            '',
+          ].join('\n');
           source = source.slice(0, start) + replacement + source.slice(end);
           fs.writeFileSync(path, source);
           NODE
