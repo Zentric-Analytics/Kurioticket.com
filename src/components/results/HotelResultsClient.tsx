@@ -1031,11 +1031,11 @@ export function HotelResultsExperience({
   const desktopCompactFilterRef = useRef<HTMLDivElement | null>(null);
   const [showDesktopFilterShortcut, setShowDesktopFilterShortcut] =
     useState(false);
-  const [desktopCompactFilterFrame, setDesktopCompactFilterFrame] =
+  const [, setDesktopCompactFilterFrame] =
     useState<DesktopCompactFilterFrame | null>(null);
   const [desktopCompactFilterPlacement, setDesktopCompactFilterPlacement] =
     useState<DesktopCompactFilterPlacementState>("hidden");
-  const [desktopCompactFilterMaxHeight, setDesktopCompactFilterMaxHeight] =
+  const [, setDesktopCompactFilterMaxHeight] =
     useState(0);
   const desktopFilterShortcutVisibilityRef = useRef(false);
   const desktopCompactFilterPlacementRef =
@@ -1798,8 +1798,8 @@ export function HotelResultsExperience({
           onScroll={() => closeMobileShortcutMenu()}
         >
           <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-            <button type="button" className={cn(shortcutButtonClass, "w-full justify-start")} onClick={(event) => { mobileFiltersLauncherRef.current = event.currentTarget; mobileFiltersModalityRef.current = getOverlayActivationModality(event); setFiltersOpen(true); }}>
-              <SlidersHorizontal className="h-4 w-4 text-[#004BB8]" strokeWidth={2.2} aria-hidden="true" />
+            <button type="button" className={cn(shortcutButtonClass, "w-full justify-start !border-transparent !bg-transparent !text-slate-800 hover:!bg-slate-50")} onClick={(event) => { mobileFiltersLauncherRef.current = event.currentTarget; mobileFiltersModalityRef.current = getOverlayActivationModality(event); setFiltersOpen(true); }}>
+              <SlidersHorizontal className="h-4 w-4 text-slate-700" strokeWidth={2.2} aria-hidden="true" />
               <span>{t("filters")}</span>
               {activeFilterCount ? <span className="ms-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] text-[#004BB8]">{activeFilterCount}</span> : null}
             </button>
@@ -2257,56 +2257,6 @@ export function HotelResultsExperience({
               className="h-px w-full"
               aria-hidden="true"
             />
-            {showDesktopFilterShortcut &&
-            desktopCompactFilterFrame &&
-            desktopCompactFilterPlacement !== "hidden" ? (
-              <div
-                ref={desktopCompactFilterRef}
-                className={cn(
-                  "z-30 overflow-hidden",
-                  desktopCompactFilterPlacement === "fixed" && "fixed",
-                  desktopCompactFilterPlacement === "docked" &&
-                    "absolute inset-x-0 bottom-0",
-                )}
-                style={
-                  desktopCompactFilterPlacement === "fixed"
-                    ? {
-                        top: desktopCompactFilterTopOffset,
-                        left: desktopCompactFilterFrame.left,
-                        width: desktopCompactFilterFrame.width,
-                        maxHeight: desktopCompactFilterMaxHeight,
-                      }
-                    : {
-                        width: "100%",
-                        maxHeight: desktopCompactFilterMaxHeight,
-                      }
-                }
-              >
-                <HotelFilters
-                  layout="compact"
-                  propertyNameQuery={propertyNameQuery}
-                  setPropertyNameQuery={updatePropertyNameQuery}
-                  t={t}
-                  maxPrice={maxPrice}
-                  minPrice={minPrice}
-                  setMaxPrice={updateMaxPrice}
-                  setMinPrice={updateMinPrice}
-                  resultMaxPrice={resultMaxPrice}
-                  hasPricedResults={hasPricedResults}
-                  formatPrice={formatHotelFilterPrice}
-                  locale={locale}
-                  stayNights={stayNights}
-                  selectedRatings={selectedHotelClasses}
-                  toggleRating={toggleHotelClass}
-                  starRatingCounts={starRatingCounts}
-                  options={filterOptions}
-                  selectedFilters={selectedFilters}
-                  toggleFilter={toggleFilter}
-                  activeFilterCount={activeFilterCount}
-                  onClear={resetFilters}
-                />
-              </div>
-            ) : null}
           </div>
         </aside>
 
@@ -2332,7 +2282,6 @@ export function HotelResultsExperience({
               <ActiveHotelFilterChips
                 chips={activeFilterChips}
                 onRemove={removeFilterChip}
-                onClearAll={resetFilters}
                 t={t}
               />
               <div className="rounded-2xl border border-[#004BB8]/10 bg-white p-4 shadow-[0_16px_40px_-24px_rgba(2,28,43,0.28)]">
@@ -2357,11 +2306,10 @@ export function HotelResultsExperience({
                 <ActiveHotelFilterChips
                   chips={activeFilterChips}
                   onRemove={removeFilterChip}
-                  onClearAll={resetFilters}
                   t={t}
                 />
 
-                <Button type="button" variant="secondary" className="hidden min-h-11 gap-2 sm:inline-flex min-[1200px]:hidden" onClick={(event) => { mobileFiltersLauncherRef.current = event.currentTarget; mobileFiltersModalityRef.current = getOverlayActivationModality(event); setFiltersOpen(true); }}>
+                <Button type="button" variant="secondary" className="hidden min-h-11 gap-2 sm:inline-flex min-[1200px]:!hidden" onClick={(event) => { mobileFiltersLauncherRef.current = event.currentTarget; mobileFiltersModalityRef.current = getOverlayActivationModality(event); setFiltersOpen(true); }}>
                   <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
                   {t("filters")}{activeFilterCount ? ` (${activeFilterCount})` : ""}
                 </Button>
@@ -2591,14 +2539,14 @@ export function HotelResultsExperience({
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EAF2FB] text-[#004BB8]" aria-hidden="true"><SlidersHorizontal className="h-4 w-4" /></span>
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center text-slate-700" aria-hidden="true"><SlidersHorizontal className="h-4 w-4" /></span>
                 <div className="min-w-0"><h2 className="truncate text-lg font-bold leading-6 tracking-[-0.01em] text-slate-950">{t("filters")}</h2><p className="text-xs font-medium text-slate-500">{activeFilterCount ? `${activeFilterCount} applied` : "All stays shown"}</p></div>
               </div>
             </div>
-            <div className="flex items-center gap-1"><button type="button" disabled={activeFilterCount === 0} onClick={resetFilters} className="min-h-11 rounded-lg px-2.5 text-sm font-bold text-[#004BB8] transition hover:bg-[#EAF2FB] disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent">{t("clearAll")}</button><Button
+            <div className="flex items-center gap-1">{activeFilterCount > 0 ? <button type="button" onClick={resetFilters} className="min-h-11 rounded-lg px-2.5 text-sm font-bold text-[#004BB8] transition hover:bg-[#EAF2FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30">{t("clearAll")}</button> : null}<Button
               type="button"
               variant="ghost"
-              className="h-11 w-11 shrink-0 rounded-xl bg-slate-100 px-0 text-slate-700 transition hover:bg-slate-200 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
+              className="h-11 w-11 shrink-0 rounded-xl bg-transparent px-0 text-slate-700 transition hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
               aria-label={t("closeFilters")}
               onClick={() => setFiltersOpen(false)}
             >
@@ -2618,8 +2566,7 @@ export function HotelResultsExperience({
         >
           {activeFilterChips.length ? (
             <div className="mb-3 rounded-xl border border-[#C9D9EA] bg-white p-3 shadow-[0_8px_24px_-20px_rgba(15,23,42,0.5)]">
-              <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Applied filters</p>
-              <ActiveHotelFilterChips chips={activeFilterChips} onRemove={removeFilterChip} onClearAll={resetFilters} t={t} showClearAll={false} />
+              <ActiveHotelFilterChips chips={activeFilterChips} onRemove={removeFilterChip} t={t} />
             </div>
           ) : null}
           <HotelFilters
@@ -2782,23 +2729,20 @@ function formatHotelCount(count: number, locale: string) {
 function ActiveHotelFilterChips({
   chips,
   onRemove,
-  onClearAll,
   t,
-  showClearAll = true,
 }: {
   chips: ActiveHotelFilterChip[];
   onRemove: (chip: ActiveHotelFilterChip) => void;
-  onClearAll: () => void;
   t: (key: string) => string;
-  showClearAll?: boolean;
 }) {
   if (!chips.length) return null;
 
   return (
-    <div
-      className="flex max-w-full flex-wrap items-center gap-2 overflow-x-clip"
-      aria-label={t("hotelResults.activeHotelFilters")}
-    >
+    <div className="max-w-full space-y-2 overflow-x-clip">
+      <p className="text-xs font-semibold text-slate-500">
+        {chips.length} {chips.length === 1 ? "filter" : "filters"} applied
+      </p>
+      <div className="flex max-w-full flex-wrap items-center gap-2" aria-label={t("hotelResults.activeHotelFilters")}>
       {chips.map((chip) => (
         <button
           key={chip.key}
@@ -2819,13 +2763,7 @@ function ActiveHotelFilterChips({
           </span>
         </button>
       ))}
-      {showClearAll ? <button
-        type="button"
-        className="hidden rounded-full px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 transition-colors hover:text-[#235A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 sm:inline-flex"
-        onClick={onClearAll}
-      >
-        {t("clearAll")}
-      </button> : null}
+      </div>
     </div>
   );
 }
@@ -3114,14 +3052,13 @@ function HotelFilters({
                 {t("hotelResults.filterBy")}
               </h2>
             </div>
-              <button
+              {activeFilterCount > 0 ? <button
                 type="button"
-                disabled={activeFilterCount === 0}
                 className="rounded-md px-2 py-1 text-xs font-semibold text-[#004BB8] transition hover:bg-[#EAF2FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 disabled:cursor-not-allowed disabled:text-slate-400"
                 onClick={onClear}
               >
                 Clear all
-              </button>
+              </button> : null}
           </div>
           <p className="mt-1 text-xs text-slate-500">{activeFilterCount ? `${activeFilterCount} applied` : "All stays shown"}</p>
         </div>

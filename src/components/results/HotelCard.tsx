@@ -470,7 +470,7 @@ export function HotelCard({
       >
         <div
           data-hotel-card-image
-          className="relative h-full min-h-[260px] bg-surface-muted md:min-h-[230px] lg:min-h-[240px]"
+          className="relative h-full min-h-[260px] overflow-hidden bg-slate-200 md:min-h-[230px] lg:min-h-[240px]"
         >
           <div className="absolute right-2 top-2 z-20 hidden items-center gap-0.5 md:flex lg:hidden">
             {renderSaveButton("flex hover:bg-white/90")}
@@ -489,7 +489,7 @@ export function HotelCard({
                       : "",
                   )}
                 fill
-                className="object-cover"
+                className="bg-slate-200 object-cover"
                 sizes="(min-width: 768px) 320px, 41vw"
                 onError={() => markImageFailed(displayImageUrl)}
               />
@@ -499,7 +499,7 @@ export function HotelCard({
                     type="button"
                     aria-label={`Previous photo of ${hotel.name}`}
                     onClick={() => moveGallery(-1)}
-                    className="absolute left-2 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-slate-900 shadow-lg ring-1 ring-slate-900/10 transition hover:scale-105 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] motion-reduce:transition-none"
+                    className="absolute left-1 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/55 text-white shadow-md ring-1 ring-white/30 backdrop-blur-sm transition hover:bg-slate-950/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#004BB8] motion-reduce:transition-none"
                   >
                     <ChevronLeft className="h-5 w-5" aria-hidden="true" />
                   </button>
@@ -507,7 +507,7 @@ export function HotelCard({
                     type="button"
                     aria-label={`Next photo of ${hotel.name}`}
                     onClick={() => moveGallery(1)}
-                    className="absolute right-2 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-slate-900 shadow-lg ring-1 ring-slate-900/10 transition hover:scale-105 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] motion-reduce:transition-none"
+                    className="absolute right-1 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/55 text-white shadow-md ring-1 ring-white/30 backdrop-blur-sm transition hover:bg-slate-950/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#004BB8] motion-reduce:transition-none"
                   >
                     <ChevronRight className="h-5 w-5" aria-hidden="true" />
                   </button>

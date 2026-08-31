@@ -14,8 +14,8 @@ test("hotel result cards expose accessible image carousel controls", () => {
     "Previous photo",
     "Next photo",
     "moveGallery",
-    "left-2 top-1/2",
-    "right-2 top-1/2",
+    "left-1 top-1/2",
+    "right-1 top-1/2",
     "-translate-y-1/2",
   ]) {
     assert.match(source, new RegExp(galleryContract));
@@ -84,7 +84,7 @@ test("desktop cards narrow only the details column and remain left aligned", () 
     /md:grid-cols-\[40%_minmax\(0,1fr\)\][\s\S]*lg:grid-cols-\[clamp\(280px,36%,340px\)_minmax\(0,1fr\)\]/,
   );
   assert.match(source, /sizes="\(min-width: 768px\) 320px, 41vw"/);
-  assert.match(source, /className="object-cover"/);
+  assert.match(source, /className="bg-slate-200 object-cover"/);
 });
 
 test("desktop hotel headings reserve two-line space for card-edge actions", () => {
@@ -241,4 +241,12 @@ test("standalone Hotel actions and attribution retain their link fallbacks", () 
   assert.match(source, /t\("hotelResults\.viewHotel"\) \|\| "View hotel"/);
   assert.match(source, /allowExternalAttribution\s*&&\s*isSafeHttpUrl/);
   assert.match(source, /<a\s+href=\{attribution\.providerUri\}/);
+});
+
+test("hotel galleries keep imagery edge-to-edge with unobtrusive edge controls", () => {
+  assert.match(source, /data-hotel-card-image[\s\S]*overflow-hidden bg-slate-200/);
+  assert.match(source, /className="bg-slate-200 object-cover"/);
+  assert.match(source, /Previous photo[\s\S]*absolute left-1[\s\S]*bg-slate-950\/55 text-white/);
+  assert.match(source, /Next photo[\s\S]*absolute right-1[\s\S]*bg-slate-950\/55 text-white/);
+  assert.doesNotMatch(source, /bg-white\/95 text-slate-900/);
 });
