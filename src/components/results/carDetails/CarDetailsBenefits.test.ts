@@ -174,6 +174,21 @@ test("standalone details overlay the model actions on the image and expose three
   }
 });
 
+test("price comparison aligns icon benefits and the per-day price on one row", () => {
+  const comparison = sourceBetween(
+    clientSource,
+    "function CarPriceComparison",
+    "function CarLocationSection",
+  );
+  for (const icon of ["ShieldCheck", "ReceiptText", "Gauge"]) {
+    assert.match(comparison, new RegExp(`Icon: ${icon}`));
+  }
+  assert.match(comparison, /flex min-w-0 flex-nowrap items-center/);
+  assert.match(comparison, /inline-flex shrink-0 items-baseline/);
+  assert.match(comparison, /carsResults\.perDay/);
+  assert.doesNotMatch(comparison, /row-start-4/);
+});
+
 test("source contract keeps desktop and mobile provider CTAs disabled, inert, teal, and localized", () => {
   const buttons =
     clientSource.match(
