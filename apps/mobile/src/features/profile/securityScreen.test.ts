@@ -178,10 +178,12 @@ test("visual feedback is owned by the landing and individual security flows", ()
 test("drill-down feedback is cleared on both open and close", () => {
   assert.match(security, /openPassword[^\n]+clearPasswordDraft\(\)[^\n]+setPasswordOpen\(true\)/);
   assert.match(security, /closePassword[^\n]+setPasswordOpen\(false\)[^\n]+clearPasswordDraft\(\)/);
-  for (const flow of ["Devices", "TwoFactor"] ) {
+  for (const flow of ["Devices"] ) {
     assert.match(security, new RegExp(`open${flow}[^\\n]+set${flow}Error\\(""\\)[^\\n]+set${flow}Open\\(true\\)`));
     assert.match(security, new RegExp(`close${flow}[^\\n]+set${flow}Open\\(false\\)[^\\n]+set${flow}Error\\(""\\)`));
   }
+  assert.match(security, /openTwoFactor[^\n]+clearTwoFactorState\(\)[^\n]+setTwoFactorOpen\(true\)/);
+  assert.match(security, /closeTwoFactor[^\n]+setTwoFactorOpen\(false\)[^\n]+clearTwoFactorState\(\)/);
   assert.match(security, /openDeletion[^\n]+setDeletionError\(""\)[^\n]+setDeletionOpen\(true\)/);
   assert.match(security, /closeDeletion[^\n]+setDeletionOpen\(false\)[^\n]+setDeletionError\(""\)/);
   assert.match(security, /openPasskeys[^\n]+setPasskeysError\(""\)[^\n]+setPasskeysMessage\(""\)[^\n]+setPasskeysOpen\(true\)/);
