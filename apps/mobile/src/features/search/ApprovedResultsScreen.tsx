@@ -942,7 +942,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
   const highlightLabel = highlight === "Best" ? "Best value" : highlight;
   const highlightUsesGreen = highlight === "Best" || highlight === "Cheapest";
   const highlightBackgroundColor = highlightUsesGreen
-    ? theme.dark ? "#153D2A" : "#EAF8F0"
+    ? theme.dark ? "#153D2A" : "#E3F6EA"
     : theme.dark ? "#173568" : "#EEF4FF";
   const highlightTextColor = highlightUsesGreen
     ? theme.dark ? "#8BE0B0" : "#157347"
@@ -1725,7 +1725,7 @@ const s0 = StyleSheet.create({
   favoriteButton: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   favoritePending: { opacity: 0.65 },
   favoritePressed: { opacity: 0.7, transform: [{ scale: 0.94 }] },
-  resultBadge: { height: 22, flexDirection: "row", alignItems: "center", paddingHorizontal: 8, borderRadius: 11 },
+  resultBadge: { height: 24, flexDirection: "row", alignItems: "center", paddingHorizontal: 9, borderRadius: 12 },
   resultBadgeText: { fontSize: 10, lineHeight: 13, fontWeight: "800", fontFamily: appFonts.extraBold },
   flightMain: { width: "100%", alignItems: "stretch" },
   flightIdentityLayout: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 10 },
