@@ -19,13 +19,14 @@ import {
   skippedProvider,
 } from "@/services/travel/providerUtils";
 import { getStagingProviderSafety } from "@/lib/stagingSafety";
-import { airports, searchAirports, type AirportOption } from "@/data/airports";
+import { airports, type AirportOption } from "@/data/airports";
 import {
   countryNameToCountryCode,
   isIsoCountryCode,
   normalizeCountryCode,
 } from "@/lib/geo/context";
 import { distanceKm } from "@/lib/geo/distance";
+import { searchOwnedFlightLocations } from "@/lib/locations/flightDiscovery";
 import {
   deduplicateFlightOffers,
   isFlightProviderOfferUsableAt,
@@ -689,7 +690,9 @@ export const searchCuratedPlaceSuggestions = (
   const normalizedQuery = normalizeSuggestionText(query);
   if (!normalizedQuery) return [];
 
-  const matchingAirports = searchAirports(query, airports.length);
+  const matchingAirports = searchOwnedFlightLocations(query, airports.length).locations
+    .map((location) => airports.find((airport) => airport.code === location.codes?.iata))
+    .filter((airport): airport is AirportOption => Boolean(airport));
   const orderByCode = new Map(
     airports.map((airport, index) => [airport.code, index]),
   );

@@ -22,6 +22,8 @@ The repository has PostgreSQL/Prisma and deploy-time migration tooling, but no g
 
 Adapters translate legacy records at boundaries. Provider adapters return both provenance and `isLiveAvailability`; static/fallback implementations must return false. UI and URLs consume canonical display/submission fields, not provider-specific shapes.
 
+Flight read-path implementation (2026-08-30): `/api/flights/places` retains Duffel as the live place-discovery source and the existing owned airport catalogue as deterministic enrichment/fallback. Both paths now expose canonical locations alongside the unchanged legacy `suggestions` contract. Per-response provenance distinguishes live-provider enrichment from owned fallback; `isLiveAvailability` is always false because discovering a place does not prove itinerary inventory. Provider failures expose only stable recovery copy and allow-listed status categories, never raw payloads, credentials, or query text.
+
 ## Matching and result semantics
 
 Owned-catalog matching normalizes Unicode, accents, punctuation and spacing, then ranks exact code, exact label/alias, prefix, word-prefix and substring. Typo tolerance is limited to one edit on terms and queries of at least five characters; it never fuzzes short codes. Stable catalogue order breaks ties until measured popularity exists. Locale terms are searchable but do not overwrite the selected canonical label.
@@ -42,9 +44,13 @@ Comboboxes follow the WAI-ARIA pattern: labelled input, listbox ownership, activ
 
 Record privacy-safe counters and timings only: product, source, latency bucket, normalized query-length bucket, result count, selected rank/kind, fallback and empty reason. Do not log raw queries, coordinates, recent entries, account identity, or provider payloads. Provider timeouts, failure ratios, fallback rates, empty rates and stale-catalog age require alerts.
 
+The flight hook emits bounded latency/result buckets, provider status/error category, fallback/zero-result outcome, and bounded selection source/rank. It is a no-op without a configured sink, so this increment creates no new external data flow. A later operations change may bind it to an approved aggregated sink; raw queries and selected location values are intentionally absent from the event type.
+
 ## Dataset ingestion and maintenance
 
 Approved sources are downloaded in CI or an operator job to ephemeral storage, checksum-verified, schema/license validated, normalized and deduplicated. The review artifact is a small manifest (source URL, license, retrieval/version date, checksum, counts, validation report), not a raw global dump. A generated compact serving index is published as a versioned artifact or loaded through a reviewed, reversible DB migration after capacity tests. Updates create scheduled review PRs; failures retain the last-known-good version. Rollback selects the previous manifest/index version. Attribution is rendered wherever the source license requires it.
+
+The 249-airport flight fallback is deliberately not bulk-expanded in this PR. Safe expansion should use the documented ephemeral OurAirports ingestion path, retain only validated scheduled-service airports with stable IATA identity, publish count/checksum/license validation in a small manifest, and measure bundle/server-index size plus false-positive ranking before rollout. Until that review, retaining the known catalogue avoids a large uncontrolled data commit and ranking regression while Duffel continues to provide broader live place discovery when available.
 
 ## Phased roadmap and acceptance
 

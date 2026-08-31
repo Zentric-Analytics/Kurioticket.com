@@ -6,6 +6,8 @@ import { prioritizeOriginSuggestions } from "@/lib/flights/originAirportSuggesti
 import { normalizeCountryCode } from "@/lib/geo/context";
 import { resolveMaxMindGeoIpLocationForRequest } from "@/lib/geo/maxmind";
 import { extractVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
+import { FLIGHT_LOCATION_CATALOG_VERSION, fromFlightPlaceSuggestion } from "@/lib/locations/flightDiscovery";
+import { recordFlightLocationDiscovery } from "@/lib/locations/flightDiscoveryObservability";
 import { searchCuratedPlaceSuggestions, searchDuffelPlaces } from "@/services/travel/providers/duffelProvider";
 
 const MIN_QUERY_LENGTH = 1;
@@ -78,11 +80,28 @@ export async function GET(request: Request) {
       const orderedFallbackSuggestions = context === "origin"
         ? prioritizeOriginSuggestions(fallbackSuggestions, maxMindLocation)
         : fallbackSuggestions;
+      recordFlightLocationDiscovery({
+        providerStatus: providerResult.status,
+        latencyMs: providerResult.latencyMs,
+        resultCount: orderedFallbackSuggestions.length,
+        usedFallback: true,
+        errorCategory: providerResult.errorCategory,
+      });
 
       return NextResponse.json(
         {
           suggestions: orderedFallbackSuggestions,
+          canonicalLocations: orderedFallbackSuggestions.map(fromFlightPlaceSuggestion),
           fallback: true,
+          discovery: {
+            source: "owned-catalog",
+            catalogVersion: FLIGHT_LOCATION_CATALOG_VERSION,
+            isLiveAvailability: false,
+          },
+          recovery: orderedFallbackSuggestions.length === 0 ? {
+            kind: "refine-query",
+            message: "Try a city, airport name, or three-letter IATA code.",
+          } : undefined,
           error: orderedFallbackSuggestions.length > 0 ? undefined : "Suggestions are temporarily unavailable.",
         },
         { headers: { "Cache-Control": context === "origin" ? "private, no-store" : "no-store" } },
@@ -91,8 +110,22 @@ export async function GET(request: Request) {
     const suggestions = context === "origin"
       ? prioritizeOriginSuggestions(providerResult.results, maxMindLocation)
       : providerResult.results;
+    const hasLiveProviderSuggestion = suggestions.some((suggestion) => "duffelPlaceId" in suggestion && Boolean(suggestion.duffelPlaceId));
+    recordFlightLocationDiscovery({ providerStatus: "success", latencyMs: providerResult.latencyMs, resultCount: suggestions.length, usedFallback: !hasLiveProviderSuggestion });
     return NextResponse.json(
-      { suggestions },
+      {
+        suggestions,
+        canonicalLocations: suggestions.map(fromFlightPlaceSuggestion),
+        discovery: {
+          source: hasLiveProviderSuggestion ? "live-provider-with-owned-catalog-fallback" : "owned-catalog",
+          catalogVersion: FLIGHT_LOCATION_CATALOG_VERSION,
+          isLiveAvailability: false,
+        },
+        recovery: suggestions.length === 0 ? {
+          kind: "refine-query",
+          message: "Try a city, airport name, or three-letter IATA code.",
+        } : undefined,
+      },
       { headers: { "Cache-Control": context === "origin" ? "private, no-store" : "no-store" } },
     );
   }
@@ -104,12 +137,19 @@ export async function GET(request: Request) {
     const suggestions = defaultOrigin
       ? defaultOrigin.suggestions
       : getDefaultAirports({ context, countryCode, lat: resolvedLat, lon: resolvedLng, limit: 8 });
+    recordFlightLocationDiscovery({ providerStatus: "skipped", latencyMs: 0, resultCount: suggestions.length, usedFallback: true });
 
     return NextResponse.json(
       {
         suggestions,
+        canonicalLocations: suggestions.map(fromFlightPlaceSuggestion),
         defaultOriginAirport: context === "origin" ? defaultOrigin?.airport ?? null : undefined,
         source: "curated",
+        discovery: {
+          source: "owned-catalog",
+          catalogVersion: FLIGHT_LOCATION_CATALOG_VERSION,
+          isLiveAvailability: false,
+        },
       },
       { headers: { "Cache-Control": context === "origin" ? "private, no-store" : "no-store" } },
     );
