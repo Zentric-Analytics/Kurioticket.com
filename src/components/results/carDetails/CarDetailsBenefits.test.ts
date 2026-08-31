@@ -64,7 +64,7 @@ test("source contract keeps only pricing and the provider CTA in BookingSummary"
   assert.match(summary, /carsResults\.perDay/);
   assert.match(
     summary,
-    /<button disabled className="mt-5 w-full rounded-lg bg-teal-dark px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-60" > {action.label} <\/button>/,
+    /<button disabled className="mt-5 w-full rounded-lg bg-blue px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-100" > {action.label} <\/button>/,
   );
   assert.doesNotMatch(clientSource, /function Term|<Term|<dl/);
 });
@@ -114,6 +114,13 @@ test("standalone details separate mobile model actions from the image while reta
   assert.match(heroSource, /{overlay}/);
   assert.match(clientSource, /useSavedCar\(car\.id\)/);
   assert.match(clientSource, /navigator\.share/);
+  assert.match(clientSource, /text-\[#075EE8\] md:text-white\/85/);
+  assert.equal(
+    clientSource.match(
+      /rounded-lg border-0 bg-transparent text-\[#075EE8\] shadow-none/g,
+    )?.length,
+    2,
+  );
   assert.match(clientSource, /<CarDetailsSectionNav activeTab={activeTab}/);
 
   const navSource = readFileSync(
@@ -144,25 +151,29 @@ test("price comparison aligns icon benefits and the per-day price on one row", (
   assert.match(comparison, /flex min-w-0 flex-nowrap items-end gap-x-4/);
   assert.match(comparison, /inline-flex shrink-0 flex-col items-end/);
   assert.match(comparison, /carsResults\.perDay/);
+  assert.match(comparison, /text-\[#075EE8\] sm:text-xs/);
   assert.match(comparison, /carsResults\.fullToFull/);
+  assert.doesNotMatch(comparison, /carDetails\.estimatedCataloguePrice/);
   assert.doesNotMatch(comparison, /border-t border-slate-100/);
   assert.doesNotMatch(comparison, /feesIncludedShort/);
   assert.doesNotMatch(comparison, /row-start-4/);
 });
 
-test("source contract keeps desktop and mobile provider CTAs disabled, inert, teal, and localized", () => {
+test("source contract keeps desktop and mobile deal CTAs disabled, inert, blue, and localized", () => {
   const buttons =
     clientSource.match(
       /<button disabled className="[^"]+" > {action.label} <\/button>/g,
     ) ?? [];
   assert.equal(buttons.length, 2);
   for (const button of buttons) {
-    assert.match(button, /bg-teal-dark/);
+    assert.match(button, /bg-blue/);
     assert.match(button, /text-white/);
-    assert.match(button, /disabled:opacity-60/);
+    assert.match(button, /disabled:opacity-100/);
     assert.doesNotMatch(button, /bg-slate-200|text-slate-600/);
     assert.doesNotMatch(button, /href|onClick|bookingUrl/);
   }
+  assert.match(clientSource, /label: copy\("carDetails\.continueDeal"\)/);
+  assert.doesNotMatch(clientSource, /label: copy\("continueToProvider"\)/);
 });
 
 test("source contract does not restore removed booking-disabled messaging", () => {
