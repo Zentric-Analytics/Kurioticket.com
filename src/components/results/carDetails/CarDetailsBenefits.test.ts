@@ -26,7 +26,7 @@ test("source contract keeps getPrimaryCarOffer as the offer source passed to the
   );
   assert.match(
     clientSource,
-    /<CarDetailsHero car={car} offer={primaryOffer} text={text} \/>/,
+    /<CarDetailsHero car={car} offer={primaryOffer} text={text} overlay=/,
   );
   assert.doesNotMatch(clientSource, /car\.offers\[0\]/);
 });
@@ -148,10 +148,12 @@ test("source contract uses a desktop summary and a mobile safe-area booking dock
   );
 });
 
-test("standalone details place the model actions before the image and expose three keyboard tabs", () => {
+test("standalone details overlay the model actions on the image and expose three keyboard tabs", () => {
   const title = clientSource.indexOf("data-car-details-actions");
-  const hero = clientSource.indexOf("<CarDetailsHero", title);
-  assert.ok(title >= 0 && hero > title);
+  const hero = clientSource.indexOf("<CarDetailsHero");
+  assert.ok(hero >= 0 && title > hero);
+  assert.match(heroSource, /absolute inset-x-0 top-0 z-10 bg-gradient-to-b/);
+  assert.match(heroSource, /{overlay}/);
   assert.match(clientSource, /useSavedCar\(car\.id\)/);
   assert.match(clientSource, /navigator\.share/);
   assert.match(clientSource, /<CarDetailsSectionNav activeTab={activeTab}/);

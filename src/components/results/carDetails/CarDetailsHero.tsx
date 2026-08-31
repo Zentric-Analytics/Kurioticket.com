@@ -11,6 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import { CarResultImage } from "@/components/results/CarResultImage";
 import type { CarOffer, NormalizedCarResult } from "@/lib/cars/types";
 import {
@@ -23,10 +24,12 @@ export function CarDetailsHero({
   car,
   offer,
   text,
+  overlay,
 }: {
   car: NormalizedCarResult;
   offer?: CarOffer;
   text: Record<string, string>;
+  overlay: ReactNode;
 }) {
   const specs: Array<[LucideIcon, string]> = [
     [Users, `${car.passengers} ${text.passengers}`],
@@ -58,6 +61,9 @@ export function CarDetailsHero({
               fit="cover"
               priority
             />
+            <div className="absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-slate-950/80 via-slate-950/35 to-transparent px-4 pb-12 pt-3.5 sm:px-5 sm:pt-4">
+              {overlay}
+            </div>
           </div>
         </figure>
         <div className="min-w-0">
