@@ -46,7 +46,6 @@ import {
   DateStrip,
   Empty,
   Pill,
-  TopBar,
   clock,
   money,
   s,
@@ -131,8 +130,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const { theme } = useAppTheme();
   const { top: topSafeAreaInset } = useSafeAreaInsets();
   const flightResults = product === "flight";
-  const { width } = useWindowDimensions();
-  const narrowHeader = width < 360;
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const plan = buildSearchPlan(product, params);
@@ -677,20 +674,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           onEdit={edit}
         />
       ) : (
-        <>
-          <TopBar />
-          <View style={[s0.summary, narrowHeader && s0.summaryNarrow]}>
-            <View style={s0.summaryCopy}>
-              <Text style={s0.route}>{String(payload.destination || "")}</Text>
-              <Text style={[s0.sub, s0.summaryMeta]}>
-                {`${shortDate(String(payload.checkIn || ""))} – ${shortDate(String(payload.checkOut || ""))}  ·  ${payload.rooms || 1} Room, ${payload.guests || 2} Guests`}
-              </Text>
-            </View>
-            <View style={narrowHeader && s0.editNarrow}>
-              <Pill label="Edit search" icon="document" onPress={edit} />
-            </View>
-          </View>
-        </>
+        <HotelResultsHeader
+          destination={String(payload.destination || "")}
+          metadata={`${shortDate(String(payload.checkIn || ""))} – ${shortDate(String(payload.checkOut || ""))}  ·  ${payload.rooms || 1} Room, ${payload.guests || 2} Guests`}
+          onEdit={edit}
+        />
       )}
       {product === "flight" ? (
         <Animated.SectionList
@@ -846,6 +834,63 @@ function FlightResultsHeader({
           <Text style={[s0.flightHeaderEditText, { color: theme.textPrimary }]}>Edit</Text>
         </Pressable>
       </View>
+    </View>
+  );
+}
+function HotelResultsHeader({
+  destination,
+  metadata,
+  onEdit,
+}: {
+  destination: string;
+  metadata: string;
+  onEdit: () => void;
+}) {
+  const { theme } = useAppTheme();
+  return (
+    <View
+      accessibilityLabel="Hotel search summary"
+      style={[s0.flightHeader, { backgroundColor: theme.background }]}
+    >
+      <View style={s0.flightHeaderMainRow}>
+        <View style={s0.flightHeaderSide}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            onPress={() => router.back()}
+            style={({ pressed }) => [s0.flightHeaderBack, pressed && s0.flightHeaderControlPressed]}
+          >
+            <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
+          </Pressable>
+        </View>
+        <View style={s0.flightHeaderRouteBlock}>
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={[s0.route, s0.flightHeaderRoute, { color: theme.textPrimary }]}
+          >
+            {destination}
+          </Text>
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Edit search"
+          onPress={onEdit}
+          style={({ pressed }) => [
+            s0.flightHeaderEdit,
+            pressed && s0.flightHeaderControlPressed,
+          ]}
+        >
+          <Text style={[s0.flightHeaderEditText, { color: theme.textPrimary }]}>Edit</Text>
+        </Pressable>
+      </View>
+      <Text
+        numberOfLines={1}
+        ellipsizeMode="tail"
+        style={[s0.sub, s0.hotelHeaderMeta, { color: theme.textSecondary }]}
+      >
+        {metadata}
+      </Text>
     </View>
   );
 }
@@ -1574,18 +1619,6 @@ export function BottomNav({ flightResults = false }: { flightResults?: boolean }
 }
 const s0 = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "white" },
-  summary: {
-    paddingHorizontal: 18,
-    paddingTop: 4,
-    paddingBottom: 12,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-  },
-  summaryNarrow: { flexDirection: "column", gap: 8 },
-  summaryCopy: { flex: 1, minWidth: 0 },
-  summaryMeta: { marginTop: 3 },
-  editNarrow: { alignSelf: "flex-start" },
   flightHeader: {
     paddingHorizontal: 12,
     paddingTop: 12,
@@ -1614,6 +1647,7 @@ const s0 = StyleSheet.create({
     justifyContent: "center",
   },
   flightHeaderEditText: { fontSize: 13, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
+  hotelHeaderMeta: { marginTop: 3, paddingHorizontal: 52, textAlign: "center" },
   filterRail: { height: 44, flexGrow: 0 },
   resultsScroll: { flex: 1 },
   flightResultsContent: { flexGrow: 1 },
