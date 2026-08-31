@@ -9,7 +9,9 @@ const results = read("src/features/search/ApprovedResultsScreen.tsx");
 const searchUi = read("src/features/search/SearchUi.tsx");
 const details = read("src/features/search/ApprovedDetailScreen.tsx");
 const invocation = results.slice(results.indexOf("<FlightResultsHeader"), results.indexOf("/>", results.indexOf("<FlightResultsHeader")) + 2);
-const header = results.slice(results.indexOf("function FlightResultsHeader"), results.indexOf("function FlightSortModal"));
+const hotelInvocation = results.slice(results.indexOf("<HotelResultsHeader"), results.indexOf("/>", results.indexOf("<HotelResultsHeader")) + 2);
+const header = results.slice(results.indexOf("function FlightResultsHeader"), results.indexOf("function HotelResultsHeader"));
+const hotelHeader = results.slice(results.indexOf("function HotelResultsHeader"), results.indexOf("function FlightSortModal"));
 const styles = results.slice(results.indexOf("const s0 = StyleSheet.create"));
 
 const payload = buildSearchPlan("flight", {
@@ -115,10 +117,44 @@ test("canonical flight search data remains available after presentation metadata
   assert.equal(payload?.cabinClass, "premium-economy");
 });
 
-test("hotel TopBar and Flight Details header remain unchanged", () => {
-  assert.match(results, /<TopBar \/>/);
+test("Hotel Results replaces only its TopBar with a dynamic compact header", () => {
+  assert.doesNotMatch(results, /<TopBar \/>/);
   assert.match(searchUi, /export function TopBar/);
+  assert.match(results, /flightResults \? \([\s\S]*?<FlightResultsHeader[\s\S]*?\) : \(\s*<HotelResultsHeader/);
+  assert.match(hotelInvocation, /destination=\{String\(payload\.destination/);
+  assert.match(hotelHeader, /accessibilityLabel="Hotel search summary"/);
+  assert.match(hotelHeader, /accessibilityLabel="Go back"[\s\S]*?router\.back\(\)/);
+  assert.match(hotelHeader, /accessibilityLabel="Edit search"[\s\S]*?onPress=\{onEdit\}/);
+  assert.match(hotelHeader, />Edit<\/Text>/);
+});
+
+test("Hotel Results shares Flight's balanced controls and truncates long destinations", () => {
+  assert.match(hotelHeader, /style=\{s0\.flightHeaderMainRow\}/);
+  assert.match(hotelHeader, /style=\{s0\.flightHeaderSide\}/);
+  assert.match(hotelHeader, /s0\.flightHeaderBack/);
+  assert.match(hotelHeader, /style=\{s0\.flightHeaderRouteBlock\}/);
+  assert.match(hotelHeader, /s0\.flightHeaderRoute/);
+  assert.match(hotelHeader, /s0\.flightHeaderEdit/);
+  assert.match(hotelHeader, /numberOfLines=\{1\}[\s\S]*?ellipsizeMode="tail"[\s\S]*?\{destination\}/);
+  assert.match(styles, /flightHeaderSide: \{ width: 52/);
+  assert.match(styles, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
+  assert.match(styles, /flightHeaderRouteBlock: \{ flex: 1, minWidth: 0, alignItems: "center"/);
+  assert.match(styles, /flightHeaderEdit: \{[\s\S]*?width: 52,[\s\S]*?height: 44/);
+});
+
+test("Hotel metadata and Edit navigation preserve the canonical search state", () => {
+  assert.match(hotelInvocation, /shortDate\(String\(payload\.checkIn/);
+  assert.match(hotelInvocation, /shortDate\(String\(payload\.checkOut/);
+  assert.match(hotelInvocation, /payload\.rooms \|\| 1/);
+  assert.match(hotelInvocation, /payload\.guests \|\| 2/);
+  assert.match(hotelHeader, /\{metadata\}/);
+  assert.match(results, /pathname: "\/hotels",[\s\S]*?destination: one\(params\.destination\)[\s\S]*?checkIn: one\(params\.checkIn\)[\s\S]*?checkOut: one\(params\.checkOut\)[\s\S]*?guests: one\(params\.guests\)[\s\S]*?rooms: one\(params\.rooms\)/);
+});
+
+test("Flight Details, result content, and bottom navigation contracts remain present", () => {
   assert.match(details, /accessibilityLabel="Flight details header"/);
   assert.match(details, /accessibilityLabel="Trip metadata row"/);
+  assert.match(results, /<DateStrip/);
+  assert.match(results, /<HotelCard/);
   assert.match(results, /<BottomNav flightResults=\{flightResults\} \/>/);
 });
