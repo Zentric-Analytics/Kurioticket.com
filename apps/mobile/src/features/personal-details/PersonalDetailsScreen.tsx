@@ -1446,8 +1446,13 @@ const s = StyleSheet.create({
     padding: 24,
   },
   scroll: { padding: 16, paddingBottom: 40 },
-  description: { fontSize: 14, lineHeight: 20, padding: 16, paddingBottom: 10 },
-  detailRow: { paddingHorizontal: 16, paddingVertical: 13, gap: 4 },
+  description: {
+    fontSize: 14,
+    lineHeight: 20,
+    paddingVertical: 16,
+    paddingBottom: 10,
+  },
+  detailRow: { paddingVertical: 13, gap: 4 },
   label: { fontSize: 13, lineHeight: 18, fontWeight: "700", marginBottom: 5 },
   value: { fontSize: 16, lineHeight: 23 },
   edit: {
