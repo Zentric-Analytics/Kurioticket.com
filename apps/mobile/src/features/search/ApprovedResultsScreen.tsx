@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -122,6 +122,7 @@ import { HotelFilterSheet, type HotelFilterSectionName } from "./HotelFilterShee
 import { activeHotelFilterCount, buildHotelFilterOptions, emptyHotelFilters, filterHotels, type HotelFilters } from "./hotelFilters";
 import { HotelCardAmenityList } from "./HotelCardAmenityList";
 import { defaultHotelSort, hotelSortLabel, hotelSortOptions, sortHotelsForResults, type HotelSortMode } from "./hotelSort";
+import { HotelResultsShortcutMenu, type HotelResultsShortcutAnchor, type HotelResultsShortcutMenuKind } from "./HotelResultsShortcutMenu";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -167,6 +168,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [hotelFilters, setHotelFilters] = useState<HotelFilters>(emptyHotelFilters);
   const [hotelFilterOpen, setHotelFilterOpen] = useState(false);
   const [hotelFilterSection, setHotelFilterSection] = useState<HotelFilterSectionName>("all");
+  const [hotelShortcutMenu, setHotelShortcutMenu] = useState<HotelResultsShortcutMenuKind | null>(null);
+  const [hotelShortcutAnchor, setHotelShortcutAnchor] = useState<HotelResultsShortcutAnchor | null>(null);
+  const starsShortcutRef = useRef<View>(null);
+  const amenitiesShortcutRef = useRef<View>(null);
+  const windowDimensions = useWindowDimensions();
+  const previousWindowDimensions = useRef(`${windowDimensions.width}x${windowDimensions.height}`);
   const previousHotelSearchKey = useRef<string | undefined>(undefined);
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
   const [verifiedDateFareMemory, setVerifiedDateFareMemory] = useState<VerifiedDateFareMemory>();
@@ -200,9 +207,19 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       setHotelFilters(emptyHotelFilters());
       setHotelFilterOpen(false);
       setHotelSortOpen(false);
+      setHotelShortcutMenu(null);
+      setHotelShortcutAnchor(null);
     }
     previousHotelSearchKey.current = plan.plan.key;
   }, [flightResults, plan.plan?.key]);
+  useEffect(() => {
+    const identity = `${windowDimensions.width}x${windowDimensions.height}`;
+    if (previousWindowDimensions.current !== identity) {
+      setHotelShortcutMenu(null);
+      setHotelShortcutAnchor(null);
+      previousWindowDimensions.current = identity;
+    }
+  }, [windowDimensions.height, windowDimensions.width]);
   useEffect(() => {
     if (!flightResults) return;
     let active = true;
@@ -473,6 +490,16 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     setHotelFilterSection(section);
     setHotelFilterOpen(true);
   };
+  const openHotelShortcutMenu = (kind: HotelResultsShortcutMenuKind, ref: React.RefObject<View | null>) => {
+    ref.current?.measureInWindow((x, y, width, height) => {
+      setHotelShortcutAnchor({ x, y, width, height });
+      setHotelShortcutMenu(kind);
+    });
+  };
+  const closeHotelShortcutMenu = () => {
+    setHotelShortcutMenu(null);
+    setHotelShortcutAnchor(null);
+  };
   const handleFlightFiltersChange = useCallback((next: FlightFilters) => {
     const searchKey = plan.plan?.key;
     if (searchKey && !sameStringArray(filters.airlines, next.airlines)) {
@@ -586,8 +613,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             /> : <>
               <HotelResultsShortcut label="Filter" count={activeHotelFilters || undefined} icon onPress={() => openHotelFilters("all")} />
               <HotelResultsShortcut label={hotelSortLabel(hotelSort)} onPress={() => setHotelSortOpen(true)} />
-              <HotelResultsShortcut label={hotelFilters.starRating ? `${hotelFilters.starRating} ${hotelFilters.starRating === 1 ? "star" : "stars"}` : "Stars"} onPress={() => openHotelFilters("rating")} />
-              <HotelResultsShortcut label={hotelFilters.facilities.length ? `Amenities (${hotelFilters.facilities.length})` : "Amenities"} onPress={() => openHotelFilters("facilities")} />
+              <HotelResultsShortcut ref={starsShortcutRef} label={hotelFilters.starRating ? `${hotelFilters.starRating} ${hotelFilters.starRating === 1 ? "star" : "stars"}` : "Stars"} expanded={hotelShortcutMenu === "stars"} onPress={() => openHotelShortcutMenu("stars", starsShortcutRef)} />
+              <HotelResultsShortcut ref={amenitiesShortcutRef} label={hotelFilters.facilities.length ? `Amenities (${hotelFilters.facilities.length})` : "Amenities"} expanded={hotelShortcutMenu === "amenities"} onPress={() => openHotelShortcutMenu("amenities", amenitiesShortcutRef)} />
             </>}
             {(product === "flight"
               ? ["Airlines", "Stops"]
@@ -780,6 +807,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         <>
           <HotelSortModal visible={hotelSortOpen} sort={hotelSort} onChange={setHotelSort} onClose={() => setHotelSortOpen(false)} />
           <HotelFilterSheet visible={hotelFilterOpen} section={hotelFilterSection} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} onChange={setHotelFilters} onClose={()=>setHotelFilterOpen(false)}/>
+          {hotelShortcutMenu && hotelShortcutAnchor ? <HotelResultsShortcutMenu kind={hotelShortcutMenu} anchor={hotelShortcutAnchor} filters={hotelFilters} options={hotelOptions} onChange={setHotelFilters} onClose={closeHotelShortcutMenu} /> : null}
         </>
       )}
       {!flightResults ? (
@@ -947,23 +975,21 @@ function FlightSortModal({
   );
 }
 
-function HotelResultsShortcut({
-  label,
-  icon = false,
-  count,
-  onPress,
-}: {
+const HotelResultsShortcut = forwardRef<View, {
   label: string;
   icon?: boolean;
   count?: number;
+  expanded?: boolean;
   onPress: () => void;
-}) {
+}>(function HotelResultsShortcut({ label, icon = false, count, expanded = false, onPress }, ref) {
   const { theme } = useAppTheme();
   const accessibilityLabel = icon && count ? `Filter, ${count} active filters` : label;
   return (
     <Pressable
+      ref={ref}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ expanded }}
       onPress={onPress}
       style={({ pressed }) => [
         s0.hotelShortcut,
@@ -974,10 +1000,10 @@ function HotelResultsShortcut({
       {icon ? <SlidersHorizontal size={15} color={theme.icon} /> : null}
       <Text style={[s0.hotelShortcutLabel, { color: theme.textPrimary }]}>{label}</Text>
       {count ? <View style={s0.hotelShortcutCount}><Text style={s0.hotelShortcutCountText}>{count}</Text></View> : null}
-      {!icon ? <ChevronDown size={14} color={theme.icon} /> : null}
+      {!icon ? <ChevronDown size={14} color={theme.icon} style={expanded ? { transform: [{ rotate: "180deg" }] } : undefined} /> : null}
     </Pressable>
   );
-}
+});
 
 function HotelSortModal({
   visible,
