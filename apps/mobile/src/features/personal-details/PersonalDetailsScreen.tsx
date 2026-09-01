@@ -1019,18 +1019,7 @@ export function PersonalDetailsScreen() {
         >
           {c.title}
         </Text>
-        {!editing && saved ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={c.edit}
-            onPress={beginEditing}
-            style={s.headerAction}
-          >
-            <Text style={s.headerActionText}>{c.edit}</Text>
-          </Pressable>
-        ) : (
-          <View style={s.iconButton} />
-        )}
+        <View style={s.iconButton} />
       </View>
       {loading && !saved ? (
         <View style={s.center}>
@@ -1104,6 +1093,14 @@ export function PersonalDetailsScreen() {
                     </View>
                   );
                 })}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={c.edit}
+                  onPress={beginEditing}
+                  style={s.readOnlyEdit}
+                >
+                  <Text style={s.blue}>{c.edit}</Text>
+                </Pressable>
               </View>
             ) : (
               <View style={s.formContent}>
@@ -1422,18 +1419,6 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  headerAction: {
-    width: 52,
-    minHeight: 52,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerActionText: {
-    color: flowColors.blue,
-    fontSize: 15,
-    lineHeight: 20,
-    fontWeight: "700",
-  },
   title: {
     flex: 1,
     textAlign: "center",
@@ -1461,6 +1446,18 @@ const s = StyleSheet.create({
   label: { fontSize: 13, lineHeight: 18, fontWeight: "700", marginBottom: 5 },
   value: { fontSize: 16, lineHeight: 23, fontWeight: "500" },
   missingValue: { fontWeight: "400" },
+  readOnlyEdit: {
+    minHeight: 44,
+    alignSelf: "flex-end",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: flowColors.blue,
+    borderRadius: 9,
+    paddingHorizontal: 18,
+    marginHorizontal: 16,
+    marginTop: 8,
+  },
   blue: { color: flowColors.blue, fontWeight: "800" },
   formContent: { gap: 12 },
   sectionTitle: { fontSize: 17, lineHeight: 23, fontWeight: "800" },
