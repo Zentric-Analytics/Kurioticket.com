@@ -7,12 +7,12 @@ const searchBar = read("./HotelSearchBar.tsx");
 const sheet = read("./MobileResultsEditSheet.tsx");
 const results = read("../results/HotelResultsClient.tsx");
 
-test("Hotel results editor renders three independent canonical field cards", () => {
+test("Hotel results editor groups three canonical rows with visible separators", () => {
   assert.match(searchBar, /compact && !mobileResultsSheet \? \(/);
   assert.match(searchBar, /data-hotel-results-edit-fields=/);
-  assert.match(searchBar, /className=\{mobileResultsSheet \? "flex flex-col gap-2" : "contents"\}/);
+  assert.match(searchBar, /className=\{mobileResultsSheet \? "flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white divide-y divide-slate-200" : "contents"\}/);
   assert.equal(searchBar.match(/data-hotel-mobile-edit-row=/g)?.length, 3);
-  assert.equal(searchBar.match(/min-h-16 rounded-\[14px\] border-\[#D8E1EC\]/g)?.length, 4);
+  assert.equal(searchBar.match(/min-h-\[72px\] rounded-none border-0 px-4 py-3/g)?.length, 3);
   assert.doesNotMatch(searchBar, /mobileResultsEditGroupClass/);
 
   const fieldsStart = searchBar.indexOf("data-hotel-results-edit-fields");

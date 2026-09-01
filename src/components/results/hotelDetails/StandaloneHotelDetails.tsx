@@ -28,7 +28,7 @@ import type {
 import { buildHotelAddress } from "@/lib/hotels/hotelMap";
 import { HotelDetailsGallery } from "@/components/results/hotelDetails/HotelDetailsGallery";
 import { HotelLocationSection } from "@/components/results/hotelDetails/HotelLocationSection";
-import { HotelStayMap } from "@/components/results/hotelDetails/HotelStayMap";
+import { HotelDetailsGoogleMap } from "@/components/results/hotelDetails/HotelDetailsGoogleMap";
 import { RelatedHotelsSection } from "@/components/results/hotelDetails/RelatedHotelsSection";
 import type { HotelDetailsSearchContext } from "@/components/results/hotelDetails/hotelDetailsPresentation";
 import type { HotelDetailsProviderOffer } from "@/components/results/hotelDetails/hotelDetailsPresentation";
@@ -623,15 +623,16 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
             >
               {props.labels.continueBooking}
             </button>
-            {props.propertyDetails ? (
-              <HotelStayMap
-                hotelName={props.hotelName}
-                propertyDetails={props.propertyDetails}
-              />
-            ) : null}
           </section>
         </aside>
       </div>
+
+      {props.propertyDetails ? (
+        <HotelDetailsGoogleMap
+          hotelName={props.hotelName}
+          propertyDetails={props.propertyDetails}
+        />
+      ) : null}
 
       <section
         className="fixed inset-x-0 bottom-0 z-[90] rounded-t-[22px] border-t border-slate-200 bg-white px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-8px_28px_rgba(15,23,42,0.14)] lg:hidden"

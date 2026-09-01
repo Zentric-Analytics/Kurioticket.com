@@ -296,19 +296,37 @@ test("stay summary retains all functional data and pricing contracts", () => {
     assert.ok(source.includes(contract), contract);
 });
 
-test("desktop stay summary owns the safe coordinate-backed location map", () => {
+test("Google map is a separate full-row section below the booking grid", () => {
   const desktopAside = source.slice(
     source.indexOf("data-standalone-stay-summary"),
-    source.indexOf("data-mobile-hotel-stay-dock"),
+    source.indexOf("</aside>", source.indexOf("data-standalone-stay-summary")),
   );
-  assert.match(desktopAside, /<HotelStayMap/);
-  assert.match(desktopAside, /hotelName=\{props\.hotelName\}/);
-  assert.match(desktopAside, /propertyDetails=\{props\.propertyDetails\}/);
+  assert.doesNotMatch(desktopAside, /<HotelDetailsGoogleMap/);
+  assert.match(source, /<HotelDetailsGoogleMap/);
   assert.ok(
-    desktopAside.indexOf("<HotelStayMap") >
-      desktopAside.indexOf("props.labels.continueBooking"),
+    source.indexOf("<HotelDetailsGoogleMap") >
+      source.indexOf("data-standalone-stay-summary"),
+  );
+  assert.ok(
+    source.indexOf("<HotelDetailsGoogleMap") <
+      source.indexOf("data-mobile-hotel-stay-dock"),
   );
   assert.doesNotMatch(source, /Show directions|href=\{directionsUrl\}/);
+});
+
+test("desktop mosaic gallery uses independent transparent edge controls", () => {
+  const mosaic = gallerySource.slice(
+    gallerySource.indexOf("const mosaic = ("),
+    gallerySource.indexOf("const mobileThumbnailIndices"),
+  );
+  assert.match(mosaic, /aria-label=\{previousPhotoLabel\}/);
+  assert.match(mosaic, /aria-label=\{nextPhotoLabel\}/);
+  assert.match(mosaic, /absolute left-0 top-1\/2/);
+  assert.match(mosaic, /absolute right-0 top-1\/2/);
+  assert.match(mosaic, /size-11/);
+  assert.match(mosaic, /bg-transparent/);
+  const edgeControls = mosaic.slice(mosaic.indexOf("{showGalleryControls ? ("));
+  assert.doesNotMatch(edgeControls, /bg-slate-950|rounded-full|rounded-lg/);
 });
 
 test("persistent booking actions use the translated continuation copy without support text", () => {
