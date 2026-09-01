@@ -153,24 +153,30 @@ export function serializeAddress(parts: AddressParts) {
 export function displayAddress(value: string) {
   if (!value.startsWith(STRUCTURED_ADDRESS_PREFIX)) return value.trim();
   const p = parseAddress(value);
-  const street = [p.apartmentOrSuite, p.addressLine1]
+  const clean = (part: string) => part.trim();
+  const street = [clean(p.apartmentOrSuite), clean(p.addressLine1)]
     .filter(Boolean)
     .join(", ");
   const locality = [
-    [p.city, p.stateOrRegion].filter(Boolean).join(", "),
-    p.postalCode,
+    [clean(p.city), clean(p.stateOrRegion)].filter(Boolean).join(", "),
+    clean(p.postalCode),
   ]
     .filter(Boolean)
     .join(" ");
   const country =
-    COUNTRY_OPTIONS.find((x) => x.code === p.countryCode)?.label ||
-    p.countryCode;
+    COUNTRY_OPTIONS.find((x) => x.code === clean(p.countryCode))?.label ||
+    clean(p.countryCode);
   return [street, locality, country].filter(Boolean).join("\n");
 }
 export function displayPhone(countryCode: string, localNumber: string) {
   if (!localNumber.trim()) return "";
   const parsed = parsePhoneDraftValue(localNumber, countryCode);
-  return formatPhoneDraftValue(parsed.countryCode, parsed.localNumber);
+  const digits = parsed.localNumber.replace(/\D/g, "");
+  const displayLocalNumber =
+    parsed.countryCode === "NG" && digits.length === 10
+      ? `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`
+      : parsed.localNumber;
+  return formatPhoneDraftValue(parsed.countryCode, displayLocalNumber);
 }
 export function serializePhone(countryCode: string, localNumber: string) {
   const country =
