@@ -1242,17 +1242,16 @@ function HotelCard({
         )}
         <HotelCardAmenityList amenities={result.amenities} />
         <View style={s0.hotelPrice}>
-          <View style={s0.foundCopy}>
-            <Text style={s0.bigPrice}>
+          <View style={s0.hotelPriceCopy}>
+            <Text style={s0.hotelNightlyPrice}>
               {money(result.currency, result.pricePerNight)}
-              <Text style={s0.sub}> /night</Text>
             </Text>
-            <Text style={s0.sub}>
-              {money(result.currency, result.totalPrice)} total
-            </Text>
+            <Text style={s0.hotelPerNight}>per night</Text>
           </View>
-          <Button
-            label="View deal"
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`View deal for ${result.name}`}
+            style={s0.hotelDealButton}
             onPress={() =>
               router.push({
                 pathname: "/hotel-details",
@@ -1264,7 +1263,9 @@ function HotelCard({
                 },
               })
             }
-          />
+          >
+            <Text style={s0.hotelDealButtonText}>View deal</Text>
+          </Pressable>
         </View>
       </View>
     </View>
@@ -1829,8 +1830,9 @@ const s0 = StyleSheet.create({
   hotelName: {
     flex: 1,
     minWidth: 0,
-    fontSize: 17,
-    fontWeight: "900",
+    fontSize: 15,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
     color: ui.navy,
     lineHeight: 20,
   },
@@ -1840,9 +1842,44 @@ const s0 = StyleSheet.create({
   score: { backgroundColor: ui.blue, color: "white", fontWeight: "900" },
   hotelPrice: {
     marginTop: "auto",
-    flexDirection: "row",
-    justifyContent: "space-between",
+    alignItems: "flex-end",
+    paddingTop: 8,
+  },
+  hotelPriceCopy: { minWidth: 0, alignItems: "flex-end" },
+  hotelNightlyPrice: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
+    color: ui.navy,
+    textAlign: "right",
+    fontVariant: ["tabular-nums"],
+  },
+  hotelPerNight: {
+    marginTop: 1,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "500",
+    fontFamily: appFonts.medium,
+    color: ui.muted,
+    textAlign: "right",
+  },
+  hotelDealButton: {
+    minHeight: 40,
+    minWidth: 104,
+    marginTop: 6,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    backgroundColor: ui.blue,
     alignItems: "center",
+    justifyContent: "center",
+  },
+  hotelDealButtonText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: "600",
+    fontFamily: appFonts.semibold,
+    color: "white",
   },
   loadingState: { width: "100%", gap: 14 },
   loadingMessage: {
