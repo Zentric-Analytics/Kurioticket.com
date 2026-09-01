@@ -20,6 +20,8 @@ test("metadata is one centered horizontal group in baggage, cabin, fare-rules or
   assert.match(card, /<View style=\{s0\.metadataFooterContainer\}>[\s\S]*?style=\{s0\.metadataRow\}/);
   assert.match(source, /metadataFooterContainer: \{ width: "100%", alignItems: "center" \}/);
   assert.match(source, /metadataRow: \{ maxWidth: "100%", flexDirection: "row", alignItems: "center", justifyContent: "center", alignSelf: "center", paddingTop: 1, paddingBottom: 2 \}/);
+  assert.match(source, /metadataItem: \{ flexDirection: "row", alignItems: "center", gap: 4, minWidth: 0, flexShrink: 1 \}/);
+  assert.match(source, /metadataSeparator: \{ flexShrink: 0, fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts\.medium, marginHorizontal: 7 \}/);
   assert.doesNotMatch(source, /metadataRow: \{[^}]*justifyContent: "space-between"/);
   assert.doesNotMatch(source, /metadataItem: \{[^}]*flex: 1/);
   assert.equal(row.match(/>·<\/Text>/g)?.length, 2);
