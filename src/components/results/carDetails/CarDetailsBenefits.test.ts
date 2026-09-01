@@ -155,10 +155,11 @@ test("price comparison aligns icon benefits and the per-day price on one row", (
   for (const icon of ["ShieldCheck", "Fuel", "Gauge"]) {
     assert.match(comparison, new RegExp(`Icon: ${icon}`));
   }
-  assert.match(comparison, /flex min-w-0 flex-nowrap items-end gap-x-4/);
-  assert.match(comparison, /inline-flex shrink-0 flex-col items-end/);
+  assert.match(comparison, /flex min-w-0 items-end gap-x-4 overflow-visible/);
+  assert.match(comparison, /flex-1 flex-nowrap items-center gap-x-4 overflow-x-auto overflow-y-hidden/);
+  assert.match(comparison, /min-h-12 shrink-0 flex-col items-end justify-end overflow-visible/);
   assert.match(comparison, /carsResults\.perDay/);
-  assert.match(comparison, /pb-0\.5[^\"]*leading-4/);
+  assert.match(comparison, /min-h-5[^\"]*overflow-visible[^\"]*pb-1[^\"]*leading-5/);
   assert.doesNotMatch(comparison, /leading-none/);
   assert.match(comparison, /text-\[#075EE8\] sm:text-xs/);
   assert.match(comparison, /className="shrink-0 text-slate-600"/);

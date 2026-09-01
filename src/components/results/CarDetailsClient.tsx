@@ -431,22 +431,24 @@ function CarPriceComparisonSection({
           >
             <span className="size-2.5 rounded-full bg-[#075EE8]" />
           </span>
-          <div className="col-span-2 mt-5 flex min-w-0 flex-nowrap items-end gap-x-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {facts.map(({ label, Icon }) => (
-              <span
-                key={label}
-                className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap text-[11px] font-semibold text-slate-700 sm:gap-1.5 sm:text-xs"
-              >
-                <Icon
-                  size={14}
-                  strokeWidth={2}
-                  className="shrink-0 text-slate-600"
-                  aria-hidden="true"
-                />
-                {label}
-              </span>
-            ))}
-            <span className="ms-auto inline-flex shrink-0 flex-col items-end whitespace-nowrap text-right">
+          <div className="col-span-2 mt-5 flex min-w-0 items-end gap-x-4 overflow-visible">
+            <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-x-4 overflow-x-auto overflow-y-hidden pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {facts.map(({ label, Icon }) => (
+                <span
+                  key={label}
+                  className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap text-[11px] font-semibold text-slate-700 sm:gap-1.5 sm:text-xs"
+                >
+                  <Icon
+                    size={14}
+                    strokeWidth={2}
+                    className="shrink-0 text-slate-600"
+                    aria-hidden="true"
+                  />
+                  {label}
+                </span>
+              ))}
+            </div>
+            <span className="ms-auto inline-flex min-h-12 shrink-0 flex-col items-end justify-end overflow-visible whitespace-nowrap pb-1 text-right">
               <strong
                 className="text-xl font-extrabold tracking-tight text-slate-950 tabular-nums"
                 dir="ltr"
@@ -455,7 +457,7 @@ function CarPriceComparisonSection({
               >
                 {daily.formatted}
               </strong>
-              <span className="mt-1 pb-0.5 text-[11px] font-medium leading-4 text-[#075EE8] sm:text-xs">
+              <span className="mt-0.5 inline-flex min-h-5 items-center overflow-visible pb-1 text-[11px] font-medium leading-5 text-[#075EE8] sm:text-xs">
                 {copy("carsResults.perDay")}
               </span>
             </span>
