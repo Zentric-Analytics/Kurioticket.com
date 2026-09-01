@@ -4,6 +4,7 @@ import {
   canonicalDate,
   COUNTRY_OPTIONS,
   filterSelectorOptions,
+  displayPhone,
   GENDER_VALUES,
   getCountryFlagUri,
   NATIONALITY_OPTIONS,
@@ -37,6 +38,10 @@ test("phone country and local number serialize with canonical catalogue", () => 
   assert.equal(result.phoneCountryCode, "US");
   assert.match(result.phoneNumber, /212/);
   assert.ok(COUNTRY_OPTIONS.some((x) => x.code === "US"));
+});
+test("read-only phone display preserves missing values and does not repeat dial codes", () => {
+  assert.equal(displayPhone("NG", ""), "");
+  assert.equal(displayPhone("US", "+1 4165550100"), "+1 4165550100");
 });
 test("selector matching supports labels, ISO codes, and phone calling codes", () => {
   const nigeria = PHONE_COUNTRY_OPTIONS.find(
