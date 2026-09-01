@@ -32,11 +32,25 @@ test("facet rows reserve flexible copy space and a fixed count column", async ()
   );
   const facetRow = source.slice(source.indexOf("function FacetRow"));
 
-  assert.match(facetRow, /flex min-w-0 flex-1 items-start/);
+  assert.match(facetRow, /min-h-11/);
+  assert.match(facetRow, /flex min-w-0 flex-1 items-center/);
   assert.match(facetRow, /className="min-w-0 flex-1"/);
-  assert.match(facetRow, /block break-words text-\[12px\]/);
-  assert.match(facetRow, /className="shrink-0 text-\[12px\]/);
+  assert.match(facetRow, /h-4 w-4 shrink-0/);
+  assert.match(facetRow, /block break-words/);
+  assert.match(facetRow, /shrink-0 text-xs/);
   assert.doesNotMatch(facetRow, /block truncate/);
+});
+
+test("desktop filter groups use sentence-case headings and accessible rows", async () => {
+  const source = await readFile(
+    new URL("./DesktopFlightFilters.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /rounded-2xl border border-\[#D8E1EC\] bg-white/);
+  assert.match(source, /text-sm font-bold leading-5/);
+  assert.doesNotMatch(source, /uppercase tracking-\[0\.12em\]/);
+  assert.match(source, /min-h-11 w-full/);
 });
 
 test("alternate time mode control remains full width with comfortable guided sizing", async () => {
