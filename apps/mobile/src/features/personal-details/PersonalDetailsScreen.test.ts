@@ -5,12 +5,20 @@ const screen = readFileSync(
   "src/features/personal-details/PersonalDetailsScreen.tsx",
   "utf8",
 );
-test("screen opens read-only and Edit switches the same card to editing", () => {
+test("screen opens read-only and header Edit switches the same screen to editing", () => {
   assert.match(screen, /!editing\s*\?\s*\(/);
+  const header = screen.slice(screen.indexOf("<SafeAreaView"), screen.indexOf("{loading"));
+  assert.match(header, /!editing && saved/);
+  assert.match(header, /onPress=\{beginEditing\}/);
+  const readOnly = screen.slice(
+    screen.indexOf("{!editing ? ("),
+    screen.indexOf(") : (", screen.indexOf("{!editing ? (")),
+  );
+  assert.doesNotMatch(readOnly, /accessibilityLabel=\{c\.edit\}/);
   assert.match(screen, /setEditing\(true\)/);
 });
 test("missing values use localized fallback", () =>
-  assert.match(screen, /values\[index\]\s*\|\|\s*c\.missing/));
+  assert.match(screen, /value\s*\|\|\s*c\.missing/));
 test("Cancel restores authoritative saved values", () => {
   assert.match(screen, /setDraft\(saved\s*\|\|\s*\{\}\)/);
   assert.match(screen, /setEditing\(false\)/);
@@ -37,7 +45,7 @@ test("successful main Save shows a floating toast and preserves its announcement
   );
   assert.match(screen, /testID="personal-details-success-toast"/);
 });
-test("success toast is an overlay outside ScrollView content and measures around Edit", () => {
+test("success toast is an overlay anchored inside the bottom safe area", () => {
   const contentScrollStart = screen.indexOf(
     '<ScrollView\n            keyboardShouldPersistTaps="handled"',
   );
@@ -46,12 +54,8 @@ test("success toast is an overlay outside ScrollView content and measures around
   assert.ok(contentScrollStart >= 0 && contentScrollEnd > contentScrollStart);
   assert.ok(toast > contentScrollEnd);
   assert.match(screen, /toastPosition:\s*\{[\s\S]*?position:\s*"absolute"/);
-  assert.match(screen, /editButtonRef = useRef<View>\(null\)/);
-  assert.match(screen, /button\.measureInWindow/);
-  assert.match(screen, /height - y \+ 12/);
-  assert.match(screen, /ref=\{editButtonRef\}/);
-  assert.match(screen, /onLayout=\{updateToastPosition\}/);
-  assert.doesNotMatch(screen, /bottom: insets\.bottom \+ 76/);
+  assert.match(screen, /bottom: insets\.bottom \+ 16/);
+  assert.doesNotMatch(screen, /measureInWindow|updateToastPosition/);
 });
 test("success toast clears after exactly 1500ms and Edit dismisses it", () => {
   assert.match(
@@ -59,8 +63,8 @@ test("success toast clears after exactly 1500ms and Edit dismisses it", () => {
     /successTimer\.current = setTimeout\(\(\) => \{[\s\S]*?setSuccess\(""\);[\s\S]*?\}, 1500\)/,
   );
   const editAction = screen.slice(
-    screen.indexOf("accessibilityLabel={c.edit}"),
-    screen.indexOf("setEditing(true)"),
+    screen.indexOf("const beginEditing"),
+    screen.indexOf("const openWeb"),
   );
   assert.match(editAction, /dismissSuccess\(\)/);
 });
