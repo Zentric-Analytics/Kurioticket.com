@@ -62,4 +62,7 @@ test("Hotel pagination masks an instant results-start handoff before revealing c
   assert.match(source, /paginationPendingPage !== null[\s\S]*fixed inset-0 z-\[1200\][\s\S]*<HotelCardSkeleton \/>/);
   assert.match(pagination, /window\.innerWidth >= 1024[\s\S]*setTimeout\(resolve, 240\)[\s\S]*positionResultsStart\(\)/);
   assert.match(pagination, /overflowAnchor = "none"/);
+  assert.match(pagination, /mobile \? mobileResultsTopRef\.current : standaloneResultsHeadingRef\.current/);
+  assert.match(pagination, /const stickyOffset = mobile \? 8 : 128/);
+  assert.match(source, /ref=\{mobileResultsTopRef\} className="relative translate-y-1\/2"/);
 });

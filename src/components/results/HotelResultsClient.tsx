@@ -343,6 +343,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const guidedLoadingStatusRef = useRef<HTMLHeadingElement | null>(null);
   const guidedResultsHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const standaloneResultsHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const mobileResultsTopRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchSummarySentinelRef = useRef<HTMLDivElement | null>(null);
   const guidedErrorRef = useRef<HTMLDivElement | null>(null);
   const retryFocusPendingRef = useRef(false);
@@ -847,10 +848,11 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
 
     const positionResultsStart = () => {
-      const resultsHeading = standaloneResultsHeadingRef.current;
-      if (!resultsHeading) return;
-      const stickyOffset = window.innerWidth < 640 ? 72 : 128;
-      const resultsTop = Math.max(0, window.scrollY + resultsHeading.getBoundingClientRect().top - stickyOffset);
+      const mobile = window.innerWidth < 640;
+      const resultsAnchor = mobile ? mobileResultsTopRef.current : standaloneResultsHeadingRef.current;
+      if (!resultsAnchor) return;
+      const stickyOffset = mobile ? 8 : 128;
+      const resultsTop = Math.max(0, window.scrollY + resultsAnchor.getBoundingClientRect().top - stickyOffset);
       window.scrollTo({ top: resultsTop, behavior: "auto" });
     };
 
@@ -1646,7 +1648,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       >
         {!guided ? (
           <section className={cn("relative z-40 bg-white pb-0 pt-0 sm:hidden", mobileHotelSearchOpen && "pointer-events-none")} aria-label="Hotel search controls" aria-hidden={mobileHotelSearchOpen ? true : undefined} inert={mobileHotelSearchOpen ? true : undefined}>
-            <div className="relative translate-y-1/2">
+            <div ref={mobileResultsTopRef} className="relative translate-y-1/2">
               <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch justify-center px-4">
                 <HotelSearchBar
                   key={`mobile-controls-${activeMobileHotelSearchKey}`}
