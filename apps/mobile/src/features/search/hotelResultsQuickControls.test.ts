@@ -16,10 +16,13 @@ test("Hotel shortcut rail has the web order and derives active labels from filte
   assert.match(screen, /hotelFilters\.facilities\.length/);
 });
 
-test("Hotel shortcuts keep Filter, Stars, and Amenities wired to the existing sheet", () => {
+test("Hotel shortcuts keep Filter and Cheapest unchanged while Stars and Amenities use quick menus", () => {
   assert.match(screen, /label="Filter" count=\{activeHotelFilters \|\| undefined\} icon onPress=\{\(\) => openHotelFilters\("all"\)\}/);
-  assert.match(screen, /onPress=\{\(\) => openHotelFilters\("rating"\)\}/);
-  assert.match(screen, /onPress=\{\(\) => openHotelFilters\("facilities"\)\}/);
+  assert.doesNotMatch(screen, /openHotelFilters\("rating"\)/);
+  assert.doesNotMatch(screen, /openHotelFilters\("facilities"\)/);
+  assert.match(screen, /openHotelShortcutMenu\("stars", starsShortcutRef\)/);
+  assert.match(screen, /openHotelShortcutMenu\("amenities", amenitiesShortcutRef\)/);
+  assert.match(screen, /<HotelResultsShortcutMenu kind=\{hotelShortcutMenu\} anchor=\{hotelShortcutAnchor\} filters=\{hotelFilters\} options=\{hotelOptions\} onChange=\{setHotelFilters\}/);
   assert.doesNotMatch(screen, /openHotelFilters\("price"\)|openHotelFilters\("propertyTypes"\)/);
   assert.doesNotMatch(screen, /Filter · \$\{activeHotelFilters\}/);
   assert.match(screen, /setHotelSortOpen\(true\)/);
