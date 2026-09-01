@@ -1777,7 +1777,7 @@ const s0 = StyleSheet.create({
     backgroundColor: ui.muted,
   },
   bigPrice: { fontSize: 20, lineHeight: 25, fontWeight: "900", fontFamily: appFonts.black, color: ui.navy, textAlign: "right" },
-  fareRow: { width: "100%", paddingTop: 5, flexDirection: "row", justifyContent: "flex-end" },
+  fareRow: { width: "100%", paddingTop: 0, flexDirection: "row", justifyContent: "flex-end" },
   fareCopy: { maxWidth: "100%", minWidth: 0, alignItems: "flex-end" },
   estimatedPrice: { fontSize: 10, lineHeight: 13, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: 0.7, textAlign: "right" },
   providerPrice: { marginTop: 1, fontSize: 11, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "right" },
