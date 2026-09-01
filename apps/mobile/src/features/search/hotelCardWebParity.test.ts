@@ -15,6 +15,23 @@ test("hotel card keeps provider data but never prints its internal label", () =>
   assert.match(api, /PublicHotelResult/);
 });
 
+test("content-driven hotel card cannot create a percentage-height image loop", () => {
+  const hotelStyles = source.slice(source.indexOf("  hotelCard: {"), source.indexOf("  overlay: {"));
+  const hotelCardStyle = hotelStyles.slice(hotelStyles.indexOf("  hotelCard: {"), hotelStyles.indexOf("  hotelCardCompact:"));
+  const hotelImageStyle = hotelStyles.slice(hotelStyles.indexOf("  hotelImage:"));
+
+  assert.match(hotelCardStyle, /minHeight:\s*260/);
+  assert.doesNotMatch(hotelCardStyle, /\bheight:/);
+  assert.match(hotelStyles, /hotelImageWrap:\s*\{[^}]*alignSelf:\s*"stretch"/s);
+  assert.match(hotelStyles, /hotelImageWrap:\s*\{[^}]*position:\s*"relative"/s);
+  assert.match(hotelImageStyle, /\.\.\.StyleSheet\.absoluteFillObject/);
+  assert.doesNotMatch(hotelImageStyle, /height:\s*"100%"/);
+  assert.match(source, /hotelPrice:\s*\{\s*marginTop:\s*"auto"/s);
+
+  assert.match(card, /<Image source=\{\{ uri: result\.imageUrl \}\} style=\{s0\.hotelImage\} \/>/);
+  assert.match(card, /<View style=\{s0\.hotelImage\} \/>/);
+});
+
 test("hotel actions independently save and share without share navigation", () => {
   assert.match(card, /<Heart /);
   assert.match(card, /canonical\.toggleHotel\(result, params\)/);

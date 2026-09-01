@@ -1808,9 +1808,9 @@ const s0 = StyleSheet.create({
     backgroundColor: "white",
   },
   hotelCardCompact: { minHeight: 292 },
-  hotelImageWrap: { width: "39%" },
+  hotelImageWrap: { width: "39%", alignSelf: "stretch", position: "relative" },
   hotelImageWrapCompact: { width: "38%" },
-  hotelImage: { width: "100%", height: "100%", backgroundColor: "#E9EDF3" },
+  hotelImage: { ...StyleSheet.absoluteFillObject, backgroundColor: "#E9EDF3" },
   overlay: {
     position: "absolute",
     bottom: 10,
