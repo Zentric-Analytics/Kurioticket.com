@@ -35,15 +35,15 @@ function WelcomeCard({ name, email }: { name: string | null; email: string | nul
 }
 
 export function AuthenticatedProfileScreen() {
-  const { theme } = useAppTheme(); const { t } = useMobileLocalization(); const [unreadCount, setUnreadCount] = useState(0); const [authenticated, setAuthenticated] = useState(false); const [name, setName] = useState<string | null>(null); const [email, setEmail] = useState<string | null>(null);
-  const load = useCallback(() => { void readSession().then(session => { setAuthenticated(Boolean(session)); setEmail(session?.user.email ?? null); if (!session) { setName(null); return; } const sessionUserId = session.user.id; void travelApi.profile().then(({ user }) => { const authoritativeName = user.name ?? null; setName(authoritativeName); setEmail(user.email || session.user.email || null); if (authoritativeName !== (session.user.name ?? null)) void updateStoredSessionName(authoritativeName, sessionUserId).catch(() => undefined); }).catch(() => undefined); }).catch(() => { setAuthenticated(false); setName(null); setEmail(null); }); void travelApi.notificationUnreadCount().then(({ count }) => setUnreadCount(count)).catch(() => undefined); }, []);
+  const { theme } = useAppTheme(); const { t } = useMobileLocalization(); const [unreadCount, setUnreadCount] = useState(0); const [authenticated, setAuthenticated] = useState(false); const [name, setName] = useState<string | null>(null); const [email, setEmail] = useState<string | null>(null); const [identityResolved, setIdentityResolved] = useState(false);
+  const load = useCallback(() => { void readSession().then(session => { setAuthenticated(Boolean(session)); setEmail(session?.user.email ?? null); if (!session) { setName(null); setIdentityResolved(false); return; } const sessionUserId = session.user.id; void travelApi.profile().then(({ user }) => { const authoritativeName = user.name ?? null; setName(authoritativeName); setEmail(user.email || session.user.email || null); setIdentityResolved(true); if (authoritativeName !== (session.user.name ?? null)) void updateStoredSessionName(authoritativeName, sessionUserId).catch(() => undefined); }).catch(() => undefined); }).catch(() => { setAuthenticated(false); setName(null); setEmail(null); setIdentityResolved(false); }); void travelApi.notificationUnreadCount().then(({ count }) => setUnreadCount(count)).catch(() => undefined); }, []);
   useEffect(load, [load]); useFocusEffect(load);
   const logout = () => Alert.alert(t("logoutConfirm"), t("logoutExplanation"), [{ text: t("cancel"), style: "cancel" }, { text: t("logout"), style: "destructive", onPress: () => void authApi.logout().catch(() => undefined).finally(() => router.replace("/(tabs)/profile")) }]);
   const [manageAccount, ...remainingSections] = authenticatedProfileSections;
   return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top"]}><ScrollView alwaysBounceVertical={false} bounces={false} overScrollMode="never" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
     <View style={[styles.hero, { backgroundColor: theme.dark ? "#102B4A" : "#F3F8FF" }]}>
       <Header unreadCount={unreadCount} />
-      <WelcomeCard name={name} email={email} />
+      {identityResolved ? <WelcomeCard name={name} email={email} /> : <View accessible={false} style={styles.welcomeCard} />}
     </View>
     <View style={styles.manageAccountOverlap}><ProfileCardSection section={manageAccount} /></View>
     <View style={styles.sections}>{remainingSections.map(section => <ProfileCardSection key={section.title} section={section} />)}</View>
