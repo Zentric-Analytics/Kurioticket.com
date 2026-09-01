@@ -5,16 +5,20 @@ const screen = readFileSync(
   "src/features/personal-details/PersonalDetailsScreen.tsx",
   "utf8",
 );
-test("screen opens read-only and header Edit switches the same screen to editing", () => {
+test("screen opens read-only and Edit below the details switches the same screen to editing", () => {
   assert.match(screen, /!editing\s*\?\s*\(/);
   const header = screen.slice(screen.indexOf("<SafeAreaView"), screen.indexOf("{loading"));
-  assert.match(header, /!editing && saved/);
-  assert.match(header, /onPress=\{beginEditing\}/);
+  assert.doesNotMatch(header, /accessibilityLabel=\{c\.edit\}|onPress=\{beginEditing\}/);
   const readOnly = screen.slice(
     screen.indexOf("{!editing ? ("),
     screen.indexOf(") : (", screen.indexOf("{!editing ? (")),
   );
-  assert.doesNotMatch(readOnly, /accessibilityLabel=\{c\.edit\}/);
+  assert.match(readOnly, /accessibilityLabel=\{c\.edit\}/);
+  assert.match(readOnly, /onPress=\{beginEditing\}/);
+  assert.ok(
+    readOnly.indexOf("labels.map") <
+      readOnly.indexOf("accessibilityLabel={c.edit}"),
+  );
   assert.match(screen, /setEditing\(true\)/);
 });
 test("missing values use localized fallback", () =>
@@ -78,7 +82,7 @@ test("toast timers are cleared on replacement, dismissal, and unmount", () => {
       3,
   );
   assert.match(lifecycle, /successTimer\.current = null/);
-  assert.match(lifecycle, /useEffect\([\s\S]*?\(\) => \(\) => \{/);
+  assert.match(lifecycle, /useEffect\([\s\S]*?\(\) => \(\) => \(\) => \{/);
 });
 test("failed and selector draft-only Saves never show the success toast", () => {
   const mainSave = screen.slice(
