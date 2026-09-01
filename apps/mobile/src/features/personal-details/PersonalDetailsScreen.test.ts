@@ -82,7 +82,7 @@ test("toast timers are cleared on replacement, dismissal, and unmount", () => {
       3,
   );
   assert.match(lifecycle, /successTimer\.current = null/);
-  assert.match(lifecycle, /useEffect\([\s\S]*?\(\) => \(\) => \(\) => \{/);
+  assert.match(lifecycle, /useEffect\([\s\S]*?\(\) => \(\) => \{/);
 });
 test("failed and selector draft-only Saves never show the success toast", () => {
   const mainSave = screen.slice(
