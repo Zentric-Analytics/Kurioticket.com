@@ -49,11 +49,10 @@ test("top and compact Hotel headers remain scroll-owned when Edit Search opens",
     results.indexOf('fixed inset-x-0 top-0 z-[900]') + 900,
   );
 
-  assert.doesNotMatch(topHeader, /mobileHotelSearchOpen[^\n]*(?:hidden|opacity|translate|position|height|padding)/);
-  assert.match(compactHeader, /showMobileCompactHotelSearch[\s\S]*?translate-y-0 opacity-100/);
-  assert.doesNotMatch(compactHeader, /mobileHotelSearchOpen[^\n]*(?:opacity|translate|top-|h-)/);
+  assert.doesNotMatch(topHeader, /mobileHotelSearchOpen && "(?:hidden|opacity|translate|position|height|padding)/);
+  assert.doesNotMatch(compactHeader, /mobileHotelSearchOpen && "(?:opacity|translate|top-|h-)/);
   assert.match(compactHeader, /mobileHotelSearchOpen && "pointer-events-none"/);
-  assert.match(compactHeader, /inert=\{mobileHotelSearchOpen \|\| !showMobileCompactHotelSearch\}/);
+  assert.match(compactHeader, /inert=\{mobileHotelSearchOpen \? true : undefined\}/);
 });
 
 test("Hotel results cards place their icons and approved affordances in value rows", () => {
@@ -69,10 +68,10 @@ test("Hotel results cards place their icons and approved affordances in value ro
   assert.equal((searchBar.match(/<ChevronRight aria-hidden="true" className=/g) ?? []).length, 2);
 });
 
-test("Hotel results sheet uses the shared white canvas and clean motion", () => {
+test("Hotel results sheet matches the focused selector motion and backdrop", () => {
   assert.match(results, /browserCanvasColor="#ffffff"/);
-  assert.match(results, /cleanBackdrop/);
-  assert.match(results, /smoothMotion/);
+  assert.doesNotMatch(results, /<MobileResultsEditSheet[^>]*cleanBackdrop/);
+  assert.doesNotMatch(results, /<MobileResultsEditSheet[^>]*smoothMotion/);
   assert.match(results, /closing=\{mobileHotelSearchClosing\}/);
   assert.match(results, /className="bg-white"/);
   assert.match(results, /contentClassName="!pt-3 bg-white/);
@@ -102,8 +101,8 @@ test("the shared sheet exclusively owns locking while nested Hotel pickers are o
   assert.doesNotMatch(results, /mobileHotelSearchScrollLockRef/);
   assert.equal(
     results.match(/acquireMobileResultsScrollLock\(\)/g)?.length,
-    1,
-    "only the independent Filters drawer should retain Results-owned locking",
+    2,
+    "the independent mobile Filters drawer and desktop compact panel own Results-level locking",
   );
 });
 

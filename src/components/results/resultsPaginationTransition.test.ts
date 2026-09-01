@@ -16,7 +16,7 @@ for (const [vertical, file, skeleton] of [
     assert.match(source, /minHeight: paginationMinHeight/);
     assert.match(source, /aria-busy=/);
     assert.match(source, new RegExp(skeleton));
-    assert.match(source, /scrollToResultsAndWait/);
+    if (vertical !== "Hotels") assert.match(source, /scrollToResultsAndWait/);
   });
 }
 
@@ -52,12 +52,11 @@ test("Flight pagination defers local commit and mirrors URL without Next navigat
   assert.match(source, /paginationPendingPage !== validResultsPage/);
 });
 
-test("Hotel pagination commits behind its skeleton before anchoring the results heading", () => {
+test("Hotel pagination swaps cards in place without moving scroll or focus", () => {
   const source = read("HotelResultsClient.tsx");
   const start = source.indexOf("async function changeResultsPage");
   const end = source.indexOf("useEffect", start);
   const pagination = source.slice(start, end);
-  assert.match(pagination, /setPaginationPendingPage\(target\)[\s\S]*setCurrentResultsPage\(target\)[\s\S]*scrollToResultsAndWait\(\{[\s\S]*standaloneResultsHeadingRef\.current[\s\S]*setPaginationPendingPage\(null\)/);
-  assert.match(pagination, /focus\(\{ preventScroll: true \}\)/);
-  assert.doesNotMatch(pagination, /\{ top: 0 \}/);
+  assert.match(pagination, /setPaginationPendingPage\(target\)[\s\S]*setCurrentResultsPage\(target\)[\s\S]*setTimeout\(resolve, 180\)[\s\S]*setPaginationPendingPage\(null\)/);
+  assert.doesNotMatch(pagination, /scrollToResultsAndWait|scrollTo\(|\.focus\(/);
 });
