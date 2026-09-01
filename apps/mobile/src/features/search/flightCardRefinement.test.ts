@@ -96,7 +96,8 @@ test("the whole card replaces the details CTA", () => {
   assert.match(card, /return \(\s*<Pressable[\s\S]*accessibilityRole="button"[\s\S]*pathname: "\/flight-details"/);
   assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
   assert.doesNotMatch(card, /View details|detailsButton|detailsButtonText/);
-  assert.match(card, /event\.stopPropagation\(\); if \(!pending\) onToggleSaved\(\)/g);
+  assert.equal((card.match(/<Pressable/g) || []).length, 1);
+  assert.doesNotMatch(card, /stopPropagation|onToggleSaved|favoriteButton/);
 });
 
 test("flight card derives singular, plural, and nonstop labels from provider stops", () => {
@@ -182,7 +183,8 @@ test("flight loading skeleton mirrors the horizontal metadata footer", () => {
   const journeyStart = flightSkeleton.indexOf('<View style={s0.skeletonJourneyBlock}>');
   const identityRow = flightSkeleton.slice(identityStart, journeyStart);
   assert.ok(identityStart >= 0 && journeyStart > identityStart, "full-width flight placeholder follows the identity row");
-  assert.match(identityRow, /s0\.skeletonLogo[\s\S]*s0\.skeletonName[\s\S]*s0\.skeletonFlightNumber[\s\S]*s0\.skeletonIdentityActions[\s\S]*s0\.skeletonBadge[\s\S]*s0\.skeletonFavoriteButton[\s\S]*s0\.skeletonHeart/);
+  assert.match(identityRow, /s0\.skeletonLogo[\s\S]*s0\.skeletonName[\s\S]*s0\.skeletonFlightNumber[\s\S]*s0\.skeletonIdentityActions[\s\S]*s0\.skeletonBadge/);
+  assert.doesNotMatch(identityRow, /skeletonFavoriteButton|skeletonHeart/);
   assert.match(source, /skeletonIdentityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0/);
   assert.doesNotMatch(source, /skeletonTopRow/);
   assert.doesNotMatch(identityRow, /skeletonJourneyBlock/);
@@ -340,69 +342,26 @@ test("flight journey applies the approved Step 5 hierarchy, colors, and accessib
   assert.match(source, /bigPrice: \{ fontSize: 20, lineHeight: 25, fontWeight: "900"/);
 });
 
-test("flight card uses the approved Lucide icons", () => {
+test("flight result card removes favorite UI while retaining approved travel icons", () => {
   assert.match(card, /<PlaneTakeoff\b/);
   assert.match(card, /<Luggage\b/);
   assert.match(card, /<Armchair\b/);
   assert.match(card, /<FileText\b/);
-  assert.match(source, /import \{ Heart \} from "lucide-react-native"/);
-  assert.match(card, /<Heart[\s\S]*fill=\{saved \? androidFavoriteColors\.active : "transparent"\}/);
-  assert.match(card, /color=\{saved \? androidFavoriteColors\.active : theme\.textSecondary\}/);
-  assert.match(card, /accessibilityLabel=\{saved \? `Remove \$\{result\.airlineName\} flight from saved` : `Save \$\{result\.airlineName\} flight`\}/);
-  assert.doesNotMatch(card, /[▣◉★]/);
-  assert.doesNotMatch(card, /<FlowIcon[\s\S]*name="heart"/);
+  assert.doesNotMatch(card, /<Heart\b|favoriteButton|Save .* flight|Remove .* flight from saved/);
+  assert.doesNotMatch(card, /saved: boolean|pending: boolean|onToggleSaved/);
+  assert.doesNotMatch(source, /useSavedFlights\(\)|flightSavedSignature\(item\)|toggleSavedFlight\(item, params\)/);
+  assert.equal((card.match(/<Pressable/g) || []).length, 1);
 });
 
-test("flight favorite uses persistent shared state for initial, save, and remove behavior", () => {
-  assert.doesNotMatch(card, /useSavedFlights\(\)/);
-  assert.match(card, /saved: boolean; pending: boolean; onToggleSaved: \(\) => void/);
-  assert.match(card, /onToggleSaved\(\)/);
-  assert.equal((source.match(/useSavedFlights\(\)/g) || []).length, 1);
-  assert.match(source, /saved=\{savedFlights\.has\(flightSavedSignature\(item\)\)\}/);
-  assert.match(source, /toggleSavedFlight\(item, params\)/);
-  assert.doesNotMatch(card, /useState\(false\)/);
-  const hook = readFileSync(resolve("src/storage/useSavedFlights.ts"), "utf8");
-  assert.match(hook, /savedRepositoryFor\(resolvedUserId\)\.toggleFlight\(flight, searchParams\)/);
-  assert.doesNotMatch(hook, /SecureStore|SavedFlightsStore|require\(/);
-  assert.match(hook, /favoriteAction\(resolvedUserId\)/);
-});
-
-test("flight favorite is accessible and isolated inside the identity action stack", () => {
-  assert.match(card, /accessibilityRole="button"/);
-  assert.match(card, /accessibilityState=\{\{ selected: saved, busy: pending, disabled: pending \}\}/);
-  assert.doesNotMatch(card, /hitSlop=/);
-  assert.match(card, /event\.stopPropagation\(\); if \(!pending\) onToggleSaved\(\)/g);
-  assert.match(source, /airlineHeader: \{ width: "100%", minWidth: 0, flexDirection: "row"/);
-  assert.match(source, /favoriteButton: \{ width: 44, height: 44/);
-  assert.match(card, /<Heart[\s\S]*?size=\{20\}/);
-  assert.doesNotMatch(card, /onPress=.*View details[\s\S]*toggleSavedFlight/);
-});
-
-test("highlight sits immediately left of the fixed-right favorite action", () => {
+test("highlight is the only conditional identity action and uses the released right edge", () => {
   const header = card.slice(card.indexOf('<View style={s0.airlineHeader}>'), card.indexOf('<View style={s0.journeyList}>'));
-  const actions = header.slice(header.indexOf('<View style={s0.identityActions}>'), header.indexOf('</View>', header.indexOf('s0.favoriteButton')) + 7);
-  assert.match(actions, /\{highlight \? \([\s\S]*?s0\.resultBadge[\s\S]*?\) : null\}[\s\S]*?<Pressable[\s\S]*?s0\.favoriteButton/);
-  assert.ok(actions.indexOf("s0.resultBadge") < actions.indexOf("s0.favoriteButton"));
-  assert.doesNotMatch(actions, /placeholder|invisible|opacity:\s*0/i);
-  // The 20px heart remains centered in its fixed 44px target. A zero flex gap
-  // keeps the badge close without relying on an invalid negative gutter.
+  assert.match(header, /\{highlight \? \(\s*<View style=\{s0\.identityActions\}>[\s\S]*?s0\.resultBadge[\s\S]*?<\/View>\s*\) : null\}/);
+  assert.doesNotMatch(header, /favorite|placeholder|invisible|opacity:\s*0/i);
+  assert.match(source, /airlineCopy: \{ flex: 1, minWidth: 0 \}/);
   assert.match(source, /identityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 0, transform: \[\{ translateY: -3 \}\] \}/);
-  assert.doesNotMatch(source, /identityActions: \{[^}]*gap: -/);
-  assert.doesNotMatch(source, /identityActions: \{[^}]*margin(?:Top|Bottom)?: -/);
-  assert.doesNotMatch(source, /identityActions: \{[^}]*position: "absolute"/);
-  assert.doesNotMatch(source, /resultBadge: \{[^}]*translateY/);
-  assert.doesNotMatch(source, /favoriteButton: \{[^}]*translateY/);
-  assert.equal((44 - 20) / 2, 12);
-  assert.match(source, /favoriteButton: \{ width: 44, height: 44, flexShrink: 0/);
-  assert.match(card, /<Heart[\s\S]*?size=\{20\}/);
-  assert.match(card, /fill=\{saved \? androidFavoriteColors\.active : "transparent"\}/);
-  assert.match(card, /color=\{saved \? androidFavoriteColors\.active : theme\.textSecondary\}/);
-  assert.match(card, /onPressIn=\{\(event\) => event\.stopPropagation\(\)\}/);
-  assert.match(card, /event\.stopPropagation\(\); if \(!pending\) onToggleSaved\(\);/);
-
+  assert.doesNotMatch(source, /favoriteButton|favoritePending|favoritePressed/);
   assert.match(card, /const highlightLabel = highlight === "Best" \? "Best value" : highlight/);
   assert.match(card, /accessibilityLabel=\{`\$\{highlightLabel\} flight result`\}/);
-  assert.match(card, /<Text numberOfLines=\{1\} style=\{\[s0\.resultBadgeText/);
   assert.match(card, /highlight === "Best" \|\| highlight === "Cheapest"/);
   assert.match(card, /theme\.dark \? "#153D2A" : "#E3F6EA"/);
   assert.match(card, /theme\.dark \? "#8BE0B0" : "#157347"/);

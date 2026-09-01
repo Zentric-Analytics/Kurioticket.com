@@ -18,8 +18,8 @@ test("flight details navigation is wired to the complete bordered card", () => {
   assert.match(flightCard, /<Pressable[\s\S]*?accessibilityRole="button"[\s\S]*?onPress=\{\(\) =>[\s\S]*?router\.push\(\{/);
   assert.match(flightCard, /pathname: "\/flight-details"/);
   assert.doesNotMatch(flightCard, /View details|detailsButton|detailsButtonText/);
-  assert.match(flightCard, /onPressIn=\{\(event\) => event\.stopPropagation\(\)\}/);
-  assert.match(flightCard, /onPress=\{\(event\) => \{ event\.stopPropagation\(\); if \(!pending\) onToggleSaved\(\); \}\}/);
+  assert.equal((flightCard.match(/<Pressable/g) || []).length, 1);
+  assert.doesNotMatch(flightCard, /stopPropagation|onToggleSaved|favoriteButton/);
   const cardStyle = /card: \{([\s\S]*?)\n  \},/.exec(source)?.[1] ?? "";
   assert.match(cardStyle, /borderWidth: 1/);
   assert.match(flightCard, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
@@ -40,7 +40,6 @@ test("the flight card retains its light and dark mode theming", () => {
   assert.match(flightCard, /color: highlightTextColor/);
   assert.match(flightCard, /color: theme\.textPrimary/);
   assert.match(flightCard, /supportTextColor = theme\.dark \? flightSupportText\.dark : flightSupportText\.light/);
-  assert.match(flightCard, /color=\{saved \? androidFavoriteColors\.active : theme\.textSecondary\}/);
   assert.match(flightCard, /s0\.metadataText, \{ color: supportTextColor \}/);
   assert.match(flightCard, /backgroundColor: theme\.border/);
 });

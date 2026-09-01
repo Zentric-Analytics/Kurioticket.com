@@ -66,7 +66,7 @@ test("slow flight diagnostics measure processing and event-loop responsiveness",
   assert.match(screen, /\[flight-search:event-loop\]/);
 });
 
-test("flight results virtualize cards, keep controls persistent, and own exactly one saved-flight subscription", () => {
+test("flight results virtualize cards, keep controls persistent, and do not own saved-flight state", () => {
   const card = screen.slice(screen.indexOf("function FlightCard"), screen.indexOf("function FlightJourneyRow"));
   assert.match(screen, /<Animated\.SectionList/);
   assert.match(screen, /renderSectionHeader=\{\(\) => status === "loading" \? null : \([\s\S]*?\{filterRail\}/);
@@ -74,9 +74,8 @@ test("flight results virtualize cards, keep controls persistent, and own exactly
   assert.match(screen, /renderSectionHeader[\s\S]*?stickySectionHeadersEnabled/);
   assert.match(screen, /initialNumToRender=\{6\}/);
   assert.doesNotMatch(screen, /sorted\.map\(\(x, i\) =>\s*product === "flight"/);
-  assert.equal((screen.match(/useSavedFlights\(\)/g) || []).length, 1);
-  assert.doesNotMatch(card, /useSavedFlights|savedRepository|readSession|SecureStore/);
-  assert.match(card, /saved: boolean; pending: boolean; onToggleSaved: \(\) => void/);
+  assert.doesNotMatch(screen, /useSavedFlights\(\)|flightSavedSignature\(item\)|toggleSavedFlight\(item, params\)/);
+  assert.doesNotMatch(card, /savedRepository|readSession|SecureStore|saved: boolean|pending: boolean|onToggleSaved/);
 });
 
 test("airline SVG isolation deterministically preserves the initials fallback", () => {
