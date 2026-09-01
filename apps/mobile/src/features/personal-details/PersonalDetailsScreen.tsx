@@ -667,15 +667,14 @@ function PhoneControl({
 export function PersonalDetailsScreen() {
   const { theme } = useAppTheme();
   const insets = useSafeAreaInsets();
-  const { width, height } = useWindowDimensions();
+  const { width } = useWindowDimensions();
   const { locale } = useMobileLocalization();
   const c = personalDetailsCopy(locale);
   const navigation = useNavigation();
   const mounted = useRef(true),
     submitting = useRef(false),
     selectorVisibleRef = useRef(false),
-    successTimer = useRef<ReturnType<typeof setTimeout> | null>(null),
-    editButtonRef = useRef<View>(null);
+    successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [saved, setSaved] = useState<MobileProfile | null>(null),
     [draft, setDraft] = useState<MobileProfile>({}),
     [dateDraft, setDateDraft] = useState<DateDraft>(() => dateDraftFromValue()),
@@ -685,8 +684,6 @@ export function PersonalDetailsScreen() {
     [saving, setSaving] = useState(false),
     [error, setError] = useState(""),
     [success, setSuccess] = useState(""),
-    [toastBottom, setToastBottom] = useState(0),
-    [toastPositionReady, setToastPositionReady] = useState(false),
     [selector, setSelector] = useState<
       | "phone"
       | "gender"
@@ -704,34 +701,18 @@ export function PersonalDetailsScreen() {
       successTimer.current = null;
     }
     setSuccess("");
-    setToastPositionReady(false);
   }, []);
   const showSuccess = useCallback(
     (message: string) => {
       if (successTimer.current) clearTimeout(successTimer.current);
-      setToastBottom(insets.bottom + 16);
-      setToastPositionReady(false);
       setSuccess(message);
       successTimer.current = setTimeout(() => {
         successTimer.current = null;
         setSuccess("");
-        setToastPositionReady(false);
       }, 1500);
     },
-    [insets.bottom],
+    [],
   );
-  const updateToastPosition = useCallback(() => {
-    const button = editButtonRef.current;
-    if (!button) return;
-    button.measureInWindow((_x, y, _buttonWidth, buttonHeight) => {
-      const safeBottom = insets.bottom + 16;
-      const buttonVisible = y < height && y + buttonHeight > 0;
-      setToastBottom(
-        buttonVisible ? Math.max(safeBottom, height - y + 12) : safeBottom,
-      );
-      setToastPositionReady(true);
-    });
-  }, [height, insets.bottom]);
   useEffect(
     () => () => {
       if (successTimer.current) clearTimeout(successTimer.current);
@@ -1040,8 +1021,6 @@ export function PersonalDetailsScreen() {
         </Text>
         {!editing && saved ? (
           <Pressable
-            ref={editButtonRef}
-            onLayout={updateToastPosition}
             accessibilityRole="button"
             accessibilityLabel={c.edit}
             onPress={beginEditing}
@@ -1079,8 +1058,6 @@ export function PersonalDetailsScreen() {
           <ScrollView
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
-            onScroll={success ? updateToastPosition : undefined}
-            scrollEventThrottle={16}
             contentContainerStyle={s.scroll}
           >
             {error ? (
@@ -1312,8 +1289,7 @@ export function PersonalDetailsScreen() {
           style={[
             s.toastPosition,
             {
-              bottom: toastBottom,
-              opacity: toastPositionReady ? 1 : 0,
+              bottom: insets.bottom + 16,
             },
           ]}
         >
