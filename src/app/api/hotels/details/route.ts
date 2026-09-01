@@ -12,6 +12,7 @@ function toPublicPropertyDetails(record: StaticHotelRecord | null) {
   if (!record) return null;
   return {
     description: record.description,
+    propertyType: record.propertyType,
     latitude: record.latitude,
     longitude: record.longitude,
     streetAddress: record.location,

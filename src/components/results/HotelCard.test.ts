@@ -7,21 +7,18 @@ const source = readFileSync(
   "utf8",
 );
 
-test("hotel result cards do not expose image carousel arrows", () => {
-  for (const removedContract of [
+test("hotel result cards expose accessible image carousel controls", () => {
+  for (const galleryContract of [
     "ChevronLeft",
     "ChevronRight",
-    "hotelResults.previousPhoto",
-    "hotelResults.nextPhoto",
     "Previous photo",
     "Next photo",
-    "selectAdjacentImage",
-    "getAdjacentHotelGalleryIndex",
-    "left-2 top-1/2",
-    "right-2 top-1/2",
+    "moveGallery",
+    "left-0 top-1/2",
+    "right-0 top-1/2",
     "-translate-y-1/2",
   ]) {
-    assert.doesNotMatch(source, new RegExp(removedContract));
+    assert.match(source, new RegExp(galleryContract));
   }
 });
 
@@ -42,7 +39,7 @@ test("hotel result cards retain the conditional photo counter", () => {
     source,
     /const showGalleryControls = availableImageIndices\.length > 1;/,
   );
-  assert.match(source, /\{showGalleryControls \? \(\s*<div/);
+  assert.match(source, /\{showGalleryControls \? \(\s*<>/);
 });
 
 test("hotel result cards retain image fallback and presentation contracts", () => {
@@ -73,21 +70,21 @@ test("hotel result cards use a horizontal image and details grid on mobile", () 
   assert.ok(!source.includes("h-[clamp(220px,58vw,250px)]"));
   assert.ok(!source.includes("h-[clamp(280px,78vw,340px)]"));
   assert.match(source, /md:grid-cols-\[40%_minmax\(0,1fr\)\]/);
-  assert.match(source, /lg:grid-cols-\[320px_minmax\(0,1fr\)\]/);
-  assert.match(source, /lg:max-w-\[680px\]/);
+  assert.match(source, /lg:grid-cols-\[clamp\(280px,36%,340px\)_minmax\(0,1fr\)\]/);
+  assert.match(source, /lg:max-w-none/);
 });
 
 test("desktop cards narrow only the details column and remain left aligned", () => {
   assert.match(
     source,
-    /max-w-\[800px\][\s\S]*lg:mx-0 lg:max-w-\[680px\]/,
+    /max-w-\[800px\][\s\S]*lg:mx-0 lg:max-w-none/,
   );
   assert.match(
     source,
-    /md:grid-cols-\[40%_minmax\(0,1fr\)\][\s\S]*lg:grid-cols-\[320px_minmax\(0,1fr\)\]/,
+    /md:grid-cols-\[40%_minmax\(0,1fr\)\][\s\S]*lg:grid-cols-\[clamp\(280px,36%,340px\)_minmax\(0,1fr\)\]/,
   );
   assert.match(source, /sizes="\(min-width: 768px\) 320px, 41vw"/);
-  assert.match(source, /className="object-cover"/);
+  assert.match(source, /className="bg-slate-200 object-cover"/);
 });
 
 test("desktop hotel headings reserve two-line space for card-edge actions", () => {
@@ -129,13 +126,11 @@ test("hotel result cards retain content, pricing, and details contracts", () => 
   }
 });
 
-test("hotel result cards present only primary location and nightly pricing", () => {
+test("hotel result cards present primary location and truthful stay pricing", () => {
   for (const removedContract of [
     "distanceText",
     "getDistanceDisplay",
     "roomTypeText",
-    "totalDisplayPrice",
-    "hotelResults.estimatedStayTotal",
     "taxesAndFeesText",
   ]) {
     assert.ok(
@@ -153,6 +148,8 @@ test("hotel result cards present only primary location and nightly pricing", () 
   ]) {
     assert.ok(source.includes(retainedContract), `missing ${retainedContract}`);
   }
+  assert.doesNotMatch(source, /totalDisplayPrice|estimated total for|estimated stay total/);
+  assert.doesNotMatch(source, /catalogueProfile\.propertyType|catalogueProfile\.room\.(?:name|bedConfiguration)/);
 });
 
 test("hotel result cards separate the nightly amount from its localized label", () => {
@@ -169,7 +166,7 @@ test("hotel result cards separate the nightly amount from its localized label", 
     source,
     /aria-hidden="true"[\s\S]*nightlyDisplayPrice\.formatted[\s\S]*aria-hidden="true"[\s\S]*perNightLabel/,
   );
-  assert.match(source, /text-xl[\s\S]*font-bold[\s\S]*tabular-nums/);
+  assert.match(source, /text-lg font-bold[\s\S]*tabular-nums[\s\S]*sm:text-xl/);
   assert.match(source, /text-xs[\s\S]*text-slate-500/);
 });
 
@@ -190,9 +187,10 @@ test("hotel result cards use a single mobile amenity column and bottom conversio
   }
 });
 
-test("hotel result cards expose compact save and share actions", () => {
+test("hotel result cards expose compact save and share actions with feedback", () => {
   assert.match(source, /Share2/);
-  assert.match(source, /aria-label=\{`Share \$\{hotel\.name\}`\}/);
+  assert.match(source, /shareStatus === "shared"/);
+  assert.match(source, /\$\{hotel\.name\} shared/);
   assert.match(source, /navigator\.share/);
   assert.match(source, /navigator\.clipboard\.writeText/);
   assert.match(
@@ -224,7 +222,7 @@ test("mobile hotel utility actions sit at the card edge without entering the hot
 test("hotel result cards use whitespace instead of internal rules", () => {
   assert.doesNotMatch(source, /border-t border-slate-200/);
   assert.doesNotMatch(source, /border-s border-slate-200/);
-  assert.match(source, /min-h-11[\s\S]*rounded-\[10px\][\s\S]*shadow-none/);
+  assert.match(source, /min-h-11[\s\S]*rounded-lg[\s\S]*shadow-none/);
 });
 
 test("hotel details actions distinguish omitted, valid, and unavailable destinations", () => {
@@ -241,6 +239,16 @@ test("hotel details actions distinguish omitted, valid, and unavailable destinat
 
 test("standalone Hotel actions and attribution retain their link fallbacks", () => {
   assert.match(source, /t\("hotelResults\.viewHotel"\) \|\| "View hotel"/);
-  assert.match(source, /allowExternalAttribution && isSafeHttpUrl/);
-  assert.match(source, /<a href=\{attribution\.providerUri\}/);
+  assert.match(source, /allowExternalAttribution\s*&&\s*isSafeHttpUrl/);
+  assert.match(source, /<a\s+href=\{attribution\.providerUri\}/);
+});
+
+test("hotel galleries keep imagery edge-to-edge with unobtrusive edge controls", () => {
+  assert.match(source, /data-hotel-card-image[\s\S]*overflow-hidden bg-slate-200/);
+  assert.match(source, /className="bg-slate-200 object-cover"/);
+  assert.match(source, /Previous photo[\s\S]*absolute left-0[\s\S]*h-11 w-11[\s\S]*bg-transparent text-white/);
+  assert.match(source, /Next photo[\s\S]*absolute right-0[\s\S]*h-11 w-11[\s\S]*bg-transparent text-white/);
+  assert.match(source, /ChevronLeft className="h-5 w-5 -translate-x-2\.5"/);
+  assert.match(source, /ChevronRight className="h-5 w-5 translate-x-2\.5"/);
+  assert.doesNotMatch(source, /bg-(?:white\/95|slate-950\/55)|rounded-full[^\n]*Previous photo/);
 });

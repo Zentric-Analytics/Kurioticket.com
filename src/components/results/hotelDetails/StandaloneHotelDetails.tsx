@@ -515,6 +515,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                   description={description}
                   amenities={props.amenityItems}
                   starRating={props.starRating}
+                  propertyType={props.propertyDetails?.propertyType}
                   roomSummary={props.propertyDetails?.roomSummary}
                   bedSummary={props.propertyDetails?.bedSummary}
                   accessibility={props.propertyDetails?.accessibility}

@@ -16,7 +16,7 @@ for (const [vertical, file, skeleton] of [
     assert.match(source, /minHeight: paginationMinHeight/);
     assert.match(source, /aria-busy=/);
     assert.match(source, new RegExp(skeleton));
-    assert.match(source, /scrollToResultsAndWait/);
+    if (vertical !== "Hotels") assert.match(source, /scrollToResultsAndWait/);
   });
 }
 
@@ -50,4 +50,19 @@ test("Flight pagination defers local commit and mirrors URL without Next navigat
   assert.match(pagination, /window\.history\.replaceState/);
   assert.doesNotMatch(pagination, /router\.push/);
   assert.match(source, /paginationPendingPage !== validResultsPage/);
+});
+
+test("Hotel pagination masks an instant results-start handoff before revealing cards", () => {
+  const source = read("HotelResultsClient.tsx");
+  const start = source.indexOf("async function changeResultsPage");
+  const end = source.indexOf("useEffect", start);
+  const pagination = source.slice(start, end);
+  assert.match(pagination, /setPaginationPendingPage\(target\)[\s\S]*requestAnimationFrame\(\(\) => requestAnimationFrame[\s\S]*window\.scrollTo\(\{ top: resultsTop, behavior: "auto" \}\)[\s\S]*setCurrentResultsPage\(target\)[\s\S]*setTimeout\(resolve, 520\)[\s\S]*setPaginationPendingPage\(null\)/);
+  assert.doesNotMatch(pagination, /behavior: "smooth"|\.focus\(/);
+  assert.match(source, /paginationPendingPage !== null[\s\S]*fixed inset-0 z-\[1200\][\s\S]*<HotelCardSkeleton \/>/);
+  assert.match(pagination, /window\.innerWidth >= 1024[\s\S]*setTimeout\(resolve, 240\)[\s\S]*positionResultsStart\(\)/);
+  assert.match(pagination, /overflowAnchor = "none"/);
+  assert.match(pagination, /mobile \? mobileResultsTopRef\.current : standaloneResultsHeadingRef\.current/);
+  assert.match(pagination, /const stickyOffset = mobile \? 8 : 128/);
+  assert.match(source, /ref=\{mobileResultsTopRef\} className="relative translate-y-1\/2"/);
 });

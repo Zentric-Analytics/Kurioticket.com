@@ -81,7 +81,7 @@ test("guest reviews are only rendered from a genuine reviewScore", () => {
 test("amenities use the shared semantic presentation and four neutral icon rows", () => {
   assert.match(card, /<HotelCardAmenityList amenities=\{result\.amenities\} \/>/);
   assert.match(amenities, /buildHotelAmenityPresentation\(amenities, 4\)/);
-  for (const mapping of ["wifi: Wifi", "breakfast: Coffee", "fitness: Dumbbell", "restaurant: UtensilsCrossed", "pool: Waves", "parking: CircleParking", "generic: CircleDot"]) {
+  for (const mapping of ["wifi: Wifi", "breakfast: Coffee", "petFriendly: PawPrint", "evCharging: BatteryCharging", "fitness: Dumbbell", "restaurant: UtensilsCrossed", "pool: Waves", "parking: CircleParking", "generic: CircleDot"]) {
     assert.match(amenities, new RegExp(mapping));
   }
   assert.doesNotMatch(amenities, /●/);
@@ -89,7 +89,7 @@ test("amenities use the shared semantic presentation and four neutral icon rows"
   const presented = buildHotelAmenityPresentation([
     "Wi-Fi", "Fitness centre", "Restaurant", "Breakfast", "Pool", "Mystery amenity",
   ], 10);
-  assert.deepEqual(presented.map((item) => item.iconKey), ["wifi", "breakfast", "pool", "fitness", "restaurant", "generic"]);
+  assert.deepEqual(presented.map((item) => item.iconKey), ["pool", "fitness", "wifi", "breakfast", "restaurant", "generic"]);
   assert.equal(buildHotelAmenityPresentation(["Wi-Fi", "Free Wi-Fi"], 4).length, 1);
   assert.deepEqual(buildHotelAmenityPresentation(["Free cancellation", "Pay later"], 4), []);
 });

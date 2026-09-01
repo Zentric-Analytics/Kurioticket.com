@@ -9,9 +9,11 @@ const hotelSource = readFileSync(
   "utf8",
 );
 
-const compactBranch = hotelSource.match(
-  /if \(layout === "compact"\) \{([\s\S]*?)\n  return \(\n    <div\n      className=\{cn\(/,
-)?.[1];
+const compactStart = hotelSource.indexOf('if (layout === "compact") {');
+const compactEnd = hotelSource.indexOf("\n  return (", compactStart + 1);
+const compactBranch = compactStart >= 0 && compactEnd > compactStart
+  ? hotelSource.slice(compactStart, compactEnd)
+  : "";
 
 assert.ok(compactBranch, "the compact Hotel filter branch should be present");
 
@@ -89,7 +91,7 @@ test("Hotel sticky compact-filter placement contract remains intact", () => {
   assert.match(hotelSource, /shouldShowDesktopCompactFilter\(\{/);
   assert.match(hotelSource, /calculateCompactFilterPlacement\(\{/);
   assert.match(hotelSource, /desktopCompactFilterPlacement === "fixed"/);
-  assert.match(hotelSource, /desktopCompactFilterPlacement === "docked"/);
+  assert.match(hotelSource, /desktopCompactFilterPlacement === "fixed" && desktopCompactFilterFrame/);
 });
 
 test("compact Hotel maximum height reserves its viewport offsets", () => {

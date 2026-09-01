@@ -51,7 +51,7 @@ export function buildStaticHotelResult(
   });
   return {
     id: record.id,
-    provider: "Kurioticket static catalogue",
+    provider: "Kurioticket catalogue",
     name: record.name,
     imageUrl: record.imageUrl,
     imageUrls: [...record.imageUrls],
@@ -76,6 +76,26 @@ export function buildStaticHotelResult(
       "Price is an indicative estimate for the selected stay.",
     ],
     badges: [],
+    catalogueProfile: {
+      propertyType: record.propertyType,
+      neighbourhood: record.neighbourhood,
+      coordinates: {
+        latitude: record.latitude,
+        longitude: record.longitude,
+      },
+      amenities: [...record.amenities],
+      accessibilityFeatures: record.accessibility.filter(
+        (feature) => !/should be confirmed/i.test(feature),
+      ),
+      room: {
+        name: record.roomSummary,
+        bedConfiguration: record.bedSummary,
+      },
+      travellerFeatures: [
+        ...(record.familySuitable ? ["Family friendly"] : []),
+        ...(record.businessSuitable ? ["Business friendly"] : []),
+      ],
+    },
     rawProviderReference: {
       catalogueId: record.id,
       latitude: record.latitude,
