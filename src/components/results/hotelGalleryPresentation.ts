@@ -120,3 +120,21 @@ export function getHotelGalleryPhotoPosition(
     total: usableIndices.length,
   };
 }
+
+export function getHotelGalleryMosaicIndices(
+  usableIndices: readonly number[],
+  activeIndex: number,
+  limit = 4,
+): number[] {
+  if (!usableIndices.length || limit <= 0) return [];
+
+  const activePosition = usableIndices.indexOf(activeIndex);
+  const startPosition = activePosition >= 0 ? activePosition : 0;
+  const visibleCount = Math.min(Math.trunc(limit), usableIndices.length);
+
+  return Array.from(
+    { length: visibleCount },
+    (_, offset) =>
+      usableIndices[(startPosition + offset) % usableIndices.length],
+  );
+}

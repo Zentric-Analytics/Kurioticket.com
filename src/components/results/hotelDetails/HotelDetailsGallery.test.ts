@@ -127,7 +127,7 @@ test("builds a responsive four-tile mosaic with a dynamic remaining count", () =
   for (const contract of [
     'layout?: "hero" | "mosaic"',
     "data-hotel-gallery-mosaic",
-    "usableIndices.slice(0, 4)",
+    "getHotelGalleryMosaicIndices(",
     "usableIndices.length - visibleIndices.length",
     "remainingPhotosLabel.replace(",
     'layout === "hero" && showGalleryControls',

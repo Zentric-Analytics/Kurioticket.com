@@ -296,13 +296,15 @@ test("stay summary retains all functional data and pricing contracts", () => {
     assert.ok(source.includes(contract), contract);
 });
 
-test("Google map sits inside Your stay beneath Continue booking", () => {
+test("Google map is a standalone wide section below the full booking grid", () => {
   const desktopAside = source.slice(
     source.indexOf("data-standalone-stay-summary"),
     source.indexOf("</aside>", source.indexOf("data-standalone-stay-summary")),
   );
-  assert.match(desktopAside, /props\.labels\.continueBooking[\s\S]*<HotelDetailsGoogleMap/);
+  assert.doesNotMatch(desktopAside, /<HotelDetailsGoogleMap/);
   assert.equal(source.match(/<HotelDetailsGoogleMap/g)?.length, 1);
+  assert.ok(source.indexOf("<HotelDetailsGoogleMap") > source.indexOf("</aside>"));
+  assert.ok(source.indexOf("<HotelDetailsGoogleMap") < source.indexOf("data-mobile-hotel-stay-dock"));
   assert.doesNotMatch(source, /Show directions|href=\{directionsUrl\}/);
 });
 
@@ -315,6 +317,9 @@ test("desktop mosaic gallery uses independent transparent edge controls", () => 
   assert.match(mosaic, /aria-label=\{nextPhotoLabel\}/);
   assert.match(mosaic, /absolute left-0 top-1\/2/);
   assert.match(mosaic, /absolute right-0 top-1\/2/);
+  assert.match(mosaic, /pointer-events-none absolute inset-0 z-10 grid grid-cols-\[1\.42fr_1fr\] gap-2/);
+  assert.match(mosaic, /relative min-w-0 overflow-hidden rounded-\[10px\]/);
+  assert.equal(mosaic.match(/pointer-events-auto absolute/g)?.length, 2);
   assert.match(mosaic, /size-11/);
   assert.match(mosaic, /bg-transparent/);
   const edgeControls = mosaic.slice(mosaic.indexOf("{showGalleryControls ? ("));
