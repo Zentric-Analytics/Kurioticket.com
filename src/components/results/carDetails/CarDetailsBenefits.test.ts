@@ -124,6 +124,9 @@ test("standalone details separate mobile model actions from the image while reta
     /rounded-lg border-0 bg-transparent text-slate-700 shadow-none/,
   );
   assert.match(clientSource, /items-center gap-0" data-car-details-actions/);
+  assert.match(clientSource, /<Heart[\s\S]*?className="translate-x-1\.5"/);
+  assert.match(clientSource, /<Share2 size=\{19\} className="-translate-x-1\.5"/);
+  assert.doesNotMatch(clientSource, /md:size-10/);
   assert.match(heroSource, /className="shrink-0 text-slate-600"/);
   assert.match(clientSource, /<CarDetailsSectionNav activeTab={activeTab}/);
 
@@ -155,6 +158,8 @@ test("price comparison aligns icon benefits and the per-day price on one row", (
   assert.match(comparison, /flex min-w-0 flex-nowrap items-end gap-x-4/);
   assert.match(comparison, /inline-flex shrink-0 flex-col items-end/);
   assert.match(comparison, /carsResults\.perDay/);
+  assert.match(comparison, /pb-0\.5[^\"]*leading-4/);
+  assert.doesNotMatch(comparison, /leading-none/);
   assert.match(comparison, /text-\[#075EE8\] sm:text-xs/);
   assert.match(comparison, /className="shrink-0 text-slate-600"/);
   assert.match(comparison, /carsResults\.fullToFull/);
