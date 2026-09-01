@@ -1151,14 +1151,12 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
               {baggageSummary}
             </Text>
           </View>
-          <Text accessible={false} style={[s0.metadataSeparator, { color: supportTextColor }]}>·</Text>
           <View accessible={false} style={s0.metadataItem}>
             <Armchair accessible={false} size={13} strokeWidth={2} color={supportTextColor} />
             <Text accessible={false} numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: supportTextColor }]}>
               {cabinSummary}
             </Text>
           </View>
-          <Text accessible={false} style={[s0.metadataSeparator, { color: supportTextColor }]}>·</Text>
           <View accessible={false} style={s0.metadataItem}>
             <FileText accessible={false} size={13} strokeWidth={2} color={supportTextColor} />
             <Text accessible={false} numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: supportTextColor }]}>
@@ -1883,10 +1881,9 @@ const s0 = StyleSheet.create({
   providerPrice: { marginTop: 1, fontSize: 11, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "right" },
   metadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 6, marginBottom: 4 },
   metadataFooterContainer: { width: "100%", alignItems: "center" },
-  metadataRow: { maxWidth: "100%", flexDirection: "row", alignItems: "center", justifyContent: "center", alignSelf: "center", paddingTop: 1, paddingBottom: 2 },
-  metadataItem: { flexDirection: "row", alignItems: "center", gap: 4, minWidth: 0, flexShrink: 1 },
+  metadataRow: { width: "100%", flexDirection: "row", alignItems: "center", paddingTop: 1, paddingBottom: 2 },
+  metadataItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingHorizontal: 2 },
   metadataText: { flexShrink: 1, minWidth: 0, fontSize: 13, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
-  metadataSeparator: { flexShrink: 0, fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium, marginHorizontal: 7 },
   hotelCard: {
     minHeight: 260,
     borderWidth: 1,

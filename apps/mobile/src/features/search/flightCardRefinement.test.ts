@@ -138,21 +138,23 @@ test("fare-rule summary classifies varied provider language without exact matchi
 });
 
 test("flight card keeps horizontal metadata compact while airline identity may grow", () => {
+  const metadataBlock = card.slice(card.indexOf('style={s0.metadataRow}'), card.indexOf("</Pressable>"));
   assert.match(card, /style=\{\[s0\.bigPrice, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.8\}/);
   assert.match(card, /style=\{\[s0\.airlineName, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{2\} ellipsizeMode="tail">/);
   assert.equal(card.match(/style=\{s0\.metadataItem\}/g)?.length, 3);
   assert.match(source, /card: \{[\s\S]*?paddingHorizontal: 12,[\s\S]*?paddingVertical: 9,[\s\S]*?gap: 5,/);
   assert.match(source, /metadataFooterContainer: \{ width: "100%", alignItems: "center" \}/);
-  assert.match(source, /metadataRow: \{ maxWidth: "100%", flexDirection: "row", alignItems: "center", justifyContent: "center", alignSelf: "center", paddingTop: 1, paddingBottom: 2 \}/);
+  assert.match(source, /metadataRow: \{ width: "100%", flexDirection: "row", alignItems: "center", paddingTop: 1, paddingBottom: 2 \}/);
+  assert.doesNotMatch(source, /metadataRow: \{[^}]*maxWidth/);
   assert.doesNotMatch(source, /metadataRow: \{[^}]*flexWrap/);
   assert.doesNotMatch(source, /metadataRow: \{[^}]*justifyContent: "space-between"/);
-  assert.match(source, /metadataItem: \{ flexDirection: "row", alignItems: "center", gap: 4, minWidth: 0, flexShrink: 1 \}/);
+  assert.match(source, /metadataItem: \{ flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingHorizontal: 2 \}/);
   assert.match(source, /metadataText: \{ flexShrink: 1, minWidth: 0, fontSize: 13, lineHeight: 16, fontWeight: "500", fontFamily: appFonts\.medium \}/);
   assert.doesNotMatch(source, /metadataText: \{[^}]*flex: 1/);
   assert.equal(card.match(/<Text accessible=\{false\} numberOfLines=\{1\} ellipsizeMode="tail" style=\{\[s0\.metadataText/g)?.length, 3);
   assert.equal(card.match(/s0\.metadataText, \{ color: supportTextColor \}/g)?.length, 3);
-  assert.equal(card.match(/style=\{\[s0\.metadataSeparator, \{ color: supportTextColor \}\]\}>·<\/Text>/g)?.length, 2);
-  assert.match(source, /metadataSeparator: \{ flexShrink: 0, fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts\.medium, marginHorizontal: 7 \}/);
+  assert.doesNotMatch(source, /metadataSeparator:/);
+  assert.doesNotMatch(metadataBlock, />·<\/Text>/);
   for (const icon of ["Luggage", "Armchair", "FileText"]) {
     assert.match(card, new RegExp(`<${icon} accessible=\\{false\\} size=\\{13\\} strokeWidth=\\{2\\} color=\\{supportTextColor\\} />`));
   }
@@ -201,7 +203,7 @@ test("flight card keeps long prices single-line in the full-width fare row", () 
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch" \}/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center" \}/);
-  assert.match(source, /metadataItem: \{ flexDirection: "row"/);
+  assert.match(source, /metadataItem: \{ flex: 1, minWidth: 0, flexDirection: "row"/);
   assert.match(source, /fareRow: \{ width: "100%", paddingTop: 0, flexDirection: "row", justifyContent: "flex-end" \}/);
   assert.match(source, /estimatedPrice: \{ fontSize: 10, lineHeight: 13, fontWeight: "700", fontFamily: appFonts\.bold, letterSpacing: 0\.7, textAlign: "right" \}/);
   assert.match(source, /providerPrice: \{ marginTop: 1, fontSize: 11, lineHeight: 14, fontWeight: "500", fontFamily: appFonts\.medium, textAlign: "right" \}/);
