@@ -81,18 +81,18 @@ export function HotelLocationSection({
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue">
             <MapPin className="h-[18px] w-[18px]" aria-hidden="true" />
           </span>
-          <div className="min-w-0 pt-0.5">
+          <address className="min-w-0 pt-0.5 not-italic">
             {streetAddress ? (
-              <p className="text-[13px] font-semibold leading-5 text-slate-800">
+              <p className="break-words text-[13px] font-semibold leading-5 text-slate-800">
                 {streetAddress}
               </p>
             ) : null}
             {secondaryLocation ? (
-              <p className="text-xs leading-5 text-slate-500">
+              <p className="mt-0.5 break-words text-xs leading-5 text-slate-500">
                 {secondaryLocation}
               </p>
             ) : null}
-          </div>
+          </address>
         </div>
       ) : null}
 

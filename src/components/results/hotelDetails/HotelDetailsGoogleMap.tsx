@@ -26,19 +26,19 @@ export function HotelDetailsGoogleMap({
 
   return (
     <section
-      className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.05)] lg:mt-8"
+      className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white"
       aria-labelledby="hotel-details-google-map-heading"
       data-hotel-details-google-map
     >
-      <div className="px-4 py-4 sm:px-5">
+      <div className="px-4 py-3.5">
         <h2
           id="hotel-details-google-map-heading"
-          className="text-lg font-extrabold text-slate-950"
+          className="text-base font-extrabold text-slate-950"
         >
           Property location
         </h2>
         {address ? (
-          <p className="mt-1 text-sm leading-5 text-slate-600">{address}</p>
+          <p className="mt-1 break-words text-xs leading-5 text-slate-600">{address}</p>
         ) : null}
       </div>
       <iframe
@@ -46,7 +46,7 @@ export function HotelDetailsGoogleMap({
         src={mapUrl}
         loading="lazy"
         referrerPolicy="strict-origin-when-cross-origin"
-        className="h-[260px] w-full border-0 bg-slate-100 sm:h-[340px] lg:h-[420px]"
+        className="h-[220px] w-full border-0 bg-slate-100"
         allowFullScreen
       />
     </section>

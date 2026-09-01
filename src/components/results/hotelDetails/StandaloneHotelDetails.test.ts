@@ -296,21 +296,13 @@ test("stay summary retains all functional data and pricing contracts", () => {
     assert.ok(source.includes(contract), contract);
 });
 
-test("Google map is a separate full-row section below the booking grid", () => {
+test("Google map sits inside Your stay beneath Continue booking", () => {
   const desktopAside = source.slice(
     source.indexOf("data-standalone-stay-summary"),
     source.indexOf("</aside>", source.indexOf("data-standalone-stay-summary")),
   );
-  assert.doesNotMatch(desktopAside, /<HotelDetailsGoogleMap/);
-  assert.match(source, /<HotelDetailsGoogleMap/);
-  assert.ok(
-    source.indexOf("<HotelDetailsGoogleMap") >
-      source.indexOf("data-standalone-stay-summary"),
-  );
-  assert.ok(
-    source.indexOf("<HotelDetailsGoogleMap") <
-      source.indexOf("data-mobile-hotel-stay-dock"),
-  );
+  assert.match(desktopAside, /props\.labels\.continueBooking[\s\S]*<HotelDetailsGoogleMap/);
+  assert.equal(source.match(/<HotelDetailsGoogleMap/g)?.length, 1);
   assert.doesNotMatch(source, /Show directions|href=\{directionsUrl\}/);
 });
 
