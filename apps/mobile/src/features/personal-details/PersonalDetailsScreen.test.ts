@@ -5,12 +5,20 @@ const screen = readFileSync(
   "src/features/personal-details/PersonalDetailsScreen.tsx",
   "utf8",
 );
-test("screen opens read-only and Edit switches the same card to editing", () => {
+test("screen opens read-only and header Edit switches the same screen to editing", () => {
   assert.match(screen, /!editing\s*\?\s*\(/);
+  const header = screen.slice(screen.indexOf("<SafeAreaView"), screen.indexOf("{loading"));
+  assert.match(header, /!editing && saved/);
+  assert.match(header, /onPress=\{beginEditing\}/);
+  const readOnly = screen.slice(
+    screen.indexOf("{!editing ? ("),
+    screen.indexOf(") : (", screen.indexOf("{!editing ? (")),
+  );
+  assert.doesNotMatch(readOnly, /accessibilityLabel=\{c\.edit\}/);
   assert.match(screen, /setEditing\(true\)/);
 });
 test("missing values use localized fallback", () =>
-  assert.match(screen, /values\[index\]\s*\|\|\s*c\.missing/));
+  assert.match(screen, /value\s*\|\|\s*c\.missing/));
 test("Cancel restores authoritative saved values", () => {
   assert.match(screen, /setDraft\(saved\s*\|\|\s*\{\}\)/);
   assert.match(screen, /setEditing\(false\)/);
@@ -59,8 +67,8 @@ test("success toast clears after exactly 1500ms and Edit dismisses it", () => {
     /successTimer\.current = setTimeout\(\(\) => \{[\s\S]*?setSuccess\(""\);[\s\S]*?\}, 1500\)/,
   );
   const editAction = screen.slice(
-    screen.indexOf("accessibilityLabel={c.edit}"),
-    screen.indexOf("setEditing(true)"),
+    screen.indexOf("const beginEditing"),
+    screen.indexOf("const openWeb"),
   );
   assert.match(editAction, /dismissSuccess\(\)/);
 });

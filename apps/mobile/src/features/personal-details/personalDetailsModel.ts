@@ -1,6 +1,7 @@
 import { personalDetailsCountryOptions } from "../../../../../src/lib/region/supportedRegions";
 import {
   defaultPhoneCountryOption,
+  formatPhoneDraftValue,
   getSupportedPhoneCountryCode,
   parsePhoneDraftValue,
   phoneCountryOptions,
@@ -165,6 +166,9 @@ export function displayAddress(value: string) {
     COUNTRY_OPTIONS.find((x) => x.code === p.countryCode)?.label ||
     p.countryCode;
   return [street, locality, country].filter(Boolean).join("\n");
+}
+export function displayPhone(countryCode: string, localNumber: string) {
+  return formatPhoneDraftValue(countryCode, localNumber);
 }
 export function serializePhone(countryCode: string, localNumber: string) {
   const country =

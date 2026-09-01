@@ -42,6 +42,7 @@ import {
   canonicalDate,
   COUNTRY_OPTIONS,
   displayAddress,
+  displayPhone,
   EMPTY_ADDRESS,
   filterSelectorOptions,
   GENDER_VALUES,
@@ -912,6 +913,14 @@ export function PersonalDetailsScreen() {
     }
   };
   const goBack = () => (editing ? discard(true) : router.back());
+  const beginEditing = () => {
+    if (!saved) return;
+    setDraft(saved);
+    setDateDraft(dateDraftFromValue(saved.dateOfBirth));
+    setError("");
+    dismissSuccess();
+    setEditing(true);
+  };
   const openWeb = async () => {
     const base = getApiBaseUrl(Platform.OS, __DEV__);
     if (
@@ -936,7 +945,7 @@ export function PersonalDetailsScreen() {
   const values = [
     saved?.fullName,
     email,
-    saved?.phoneNumber,
+    displayPhone(saved?.phoneCountryCode || "", saved?.phoneNumber || ""),
     saved?.dateOfBirth ? safeDate(saved.dateOfBirth, locale) : "",
     saved?.gender,
     saved?.nationality,
@@ -1029,7 +1038,20 @@ export function PersonalDetailsScreen() {
         >
           {c.title}
         </Text>
-        <View style={s.iconButton} />
+        {!editing && saved ? (
+          <Pressable
+            ref={editButtonRef}
+            onLayout={updateToastPosition}
+            accessibilityRole="button"
+            accessibilityLabel={c.edit}
+            onPress={beginEditing}
+            style={s.headerAction}
+          >
+            <Text style={s.headerActionText}>{c.edit}</Text>
+          </Pressable>
+        ) : (
+          <View style={s.iconButton} />
+        )}
       </View>
       {loading && !saved ? (
         <View style={s.center}>
@@ -1072,46 +1094,39 @@ export function PersonalDetailsScreen() {
             ) : null}
             {!editing ? (
               <View>
-                <Text style={[s.description, { color: theme.muted }]}> 
+                <Text style={[s.description, { color: theme.muted }]}>
                   {c.description}
                 </Text>
-                {labels.map((label, index) => (
-                  <View
-                    key={label}
-                    accessible
-                    accessibilityLabel={`${label}: ${values[index] || c.missing}`}
-                    style={[
-                      s.detailRow,
-                      index > 0 && {
-                        borderTopColor: theme.border,
-                        borderTopWidth: StyleSheet.hairlineWidth,
-                      },
-                    ]}
-                  >
-                    <Text style={[s.label, { color: theme.muted }]}> 
-                      {label}
-                    </Text>
-                    <Text style={[s.value, { color: theme.text }]}> 
-                      {values[index] || c.missing}
-                    </Text>
-                  </View>
-                ))}
-                <Pressable
-                  ref={editButtonRef}
-                  onLayout={updateToastPosition}
-                  accessibilityRole="button"
-                  accessibilityLabel={c.edit}
-                  onPress={() => {
-                    setDraft(saved);
-                    setDateDraft(dateDraftFromValue(saved.dateOfBirth));
-                    setError("");
-                    dismissSuccess();
-                    setEditing(true);
-                  }}
-                  style={s.edit}
-                >
-                  <Text style={s.blue}>{c.edit}</Text>
-                </Pressable>
+                {labels.map((label, index) => {
+                  const value = values[index];
+                  return (
+                    <View
+                      key={label}
+                      accessible
+                      accessibilityLabel={`${label}: ${value || c.missing}`}
+                      style={[
+                        s.detailRow,
+                        index > 0 && {
+                          borderTopColor: theme.border,
+                          borderTopWidth: StyleSheet.hairlineWidth,
+                        },
+                      ]}
+                    >
+                      <Text style={[s.detailLabel, { color: theme.muted }]}>
+                        {label}
+                      </Text>
+                      <Text
+                        style={[
+                          s.value,
+                          { color: value ? theme.text : theme.muted },
+                          !value && s.missingValue,
+                        ]}
+                      >
+                        {value || c.missing}
+                      </Text>
+                    </View>
+                  );
+                })}
               </View>
             ) : (
               <View style={s.formContent}>
@@ -1431,6 +1446,18 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  headerAction: {
+    width: 52,
+    minHeight: 52,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerActionText: {
+    color: flowColors.blue,
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: "700",
+  },
   title: {
     flex: 1,
     textAlign: "center",
@@ -1446,20 +1473,18 @@ const s = StyleSheet.create({
     padding: 24,
   },
   scroll: { padding: 16, paddingBottom: 40 },
-  description: { fontSize: 14, lineHeight: 20, padding: 16, paddingBottom: 10 },
-  detailRow: { paddingHorizontal: 16, paddingVertical: 13, gap: 4 },
-  label: { fontSize: 13, lineHeight: 18, fontWeight: "700", marginBottom: 5 },
-  value: { fontSize: 16, lineHeight: 23 },
-  edit: {
-    minHeight: 44,
-    alignSelf: "flex-end",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: flowColors.blue,
-    borderRadius: 9,
-    paddingHorizontal: 18,
-    margin: 16,
+  description: {
+    fontSize: 14,
+    lineHeight: 20,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 14,
   },
+  detailRow: { paddingHorizontal: 16, paddingVertical: 12, gap: 3 },
+  detailLabel: { fontSize: 13, lineHeight: 18, fontWeight: "600" },
+  label: { fontSize: 13, lineHeight: 18, fontWeight: "700", marginBottom: 5 },
+  value: { fontSize: 16, lineHeight: 23, fontWeight: "500" },
+  missingValue: { fontWeight: "400" },
   blue: { color: flowColors.blue, fontWeight: "800" },
   formContent: { gap: 12 },
   sectionTitle: { fontSize: 17, lineHeight: 23, fontWeight: "800" },
