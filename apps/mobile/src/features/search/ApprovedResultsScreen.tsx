@@ -1620,7 +1620,7 @@ function PriceAlert({ product, plan, results, available = true }: { product: Pro
         accessibilityLabel="Flight price alert"
         style={[
           s0.flightAlert,
-          { backgroundColor: theme.priceAlertSurface },
+          { backgroundColor: theme.surface, borderColor: theme.priceAlertBorder },
         ]}
       >
         <View style={s0.flightAlertCopy}>
@@ -2064,11 +2064,12 @@ const s0 = StyleSheet.create({
   alertCopy: { gap: 4 },
   flightAlert: {
     borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 2,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 0,
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 4,
     overflow: "hidden",
   },
   flightAlertCopy: { flex: 1, minWidth: 0, gap: 1 },
