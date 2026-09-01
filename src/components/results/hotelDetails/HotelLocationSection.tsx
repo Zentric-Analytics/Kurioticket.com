@@ -1,11 +1,10 @@
 "use client";
 
-import { ExternalLink, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { useState } from "react";
 
 import type { PublicHotelPropertyDetails } from "@/lib/types";
 import {
-  buildHotelDirectionsUrl,
   buildHotelMapEmbedUrl,
   buildGoogleHotelStreetViewEmbedUrl,
 } from "@/lib/hotels/hotelMap";
@@ -14,7 +13,6 @@ type HotelLocationSectionProps = {
   hotelName: string;
   propertyDetails: PublicHotelPropertyDetails;
   locationLabel: string;
-  directionsLabel: string;
   mapLabel: string;
   streetViewLabel: string;
   stayFitFacts?: string[];
@@ -41,7 +39,6 @@ export function HotelLocationSection({
   hotelName,
   propertyDetails,
   locationLabel,
-  directionsLabel,
   mapLabel,
   streetViewLabel,
   stayFitFacts = [],
@@ -61,7 +58,6 @@ export function HotelLocationSection({
     googleMapsEmbedApiKey,
   });
   const activeEmbedUrl = view === "streetview" ? streetViewUrl : mapUrl;
-  const directionsUrl = buildHotelDirectionsUrl({ hotelName, propertyDetails });
   const streetAddress = propertyDetails.streetAddress.trim();
   const secondaryLocation = getSecondaryLocation(propertyDetails);
   const hasAddress = Boolean(streetAddress || secondaryLocation);
@@ -136,17 +132,6 @@ export function HotelLocationSection({
             referrerPolicy="strict-origin-when-cross-origin"
             className="h-[200px] w-full border-0 sm:h-[220px] lg:h-[240px]"
           />
-        ) : null}
-        {directionsUrl ? (
-          <a
-            href={directionsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`focus-ring flex min-h-11 items-center justify-between border-slate-200 bg-white px-4 text-sm font-bold text-blue hover:bg-slate-50 ${activeEmbedUrl ? "border-t" : ""}`}
-          >
-            {directionsLabel}
-            <ExternalLink className="h-4 w-4" aria-hidden="true" />
-          </a>
         ) : null}
       </div>
       <div className="mt-7" data-hotel-stay-fit-facts>

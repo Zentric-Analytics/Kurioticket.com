@@ -111,13 +111,6 @@ test("mobile property header renders the canonical identity in the approved orde
     'className="hidden lg:inline"',
     "data-mobile-hotel-address-row",
     "buildHotelAddress(props.propertyDetails)",
-    "buildHotelDirectionsUrl({",
-    "hotelName: props.hotelName",
-    "propertyDetails: props.propertyDetails",
-    "href={directionsUrl}",
-    'target="_blank"',
-    'rel="noopener noreferrer"',
-    "aria-label={`Show directions to ${props.hotelName}`}",
     "min-w-0 break-words",
     "title={canonicalAddress}",
     "data-mobile-property-metadata",
@@ -301,6 +294,21 @@ test("stay summary retains all functional data and pricing contracts", () => {
     'bookingContinuation.kind === "unavailable"',
   ])
     assert.ok(source.includes(contract), contract);
+});
+
+test("desktop stay summary owns the safe coordinate-backed location map", () => {
+  const desktopAside = source.slice(
+    source.indexOf("data-standalone-stay-summary"),
+    source.indexOf("data-mobile-hotel-stay-dock"),
+  );
+  assert.match(desktopAside, /<HotelStayMap/);
+  assert.match(desktopAside, /hotelName=\{props\.hotelName\}/);
+  assert.match(desktopAside, /propertyDetails=\{props\.propertyDetails\}/);
+  assert.ok(
+    desktopAside.indexOf("<HotelStayMap") >
+      desktopAside.indexOf("props.labels.continueBooking"),
+  );
+  assert.doesNotMatch(source, /Show directions|href=\{directionsUrl\}/);
 });
 
 test("persistent booking actions use the translated continuation copy without support text", () => {
