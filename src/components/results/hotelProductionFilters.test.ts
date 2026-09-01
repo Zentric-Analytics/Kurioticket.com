@@ -84,6 +84,8 @@ test("mobile results expose one filter toolbar and one in-sheet clear action", (
   assert.match(source, /!guided && showMobileCompactHotelSearch/);
   assert.doesNotMatch(source, /openMobileShortcutMenu\("sort", event\.currentTarget\)/);
   assert.doesNotMatch(source, /transition-all duration-200 sm:hidden/);
+  assert.match(source, /mt-10 bg-\[#f6f8fb\] px-1 pb-0 pt-1 sm:hidden/);
+  assert.match(source, /page-shell grid gap-y-5 pb-6 pt-3 sm:pt-6/);
 });
 
 test("results omit the superseded comparison disclosure", () => {

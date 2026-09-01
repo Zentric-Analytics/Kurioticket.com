@@ -47,6 +47,7 @@ type DesktopCompactFilterFrame = {
 };
 
 type DesktopCompactFilterPlacementState = "hidden" | "fixed" | "docked";
+type PaginationTransitionPhase = "idle" | "covering" | "settling";
 type DesktopStickyHotelSearchSection = "destination" | "dates" | "guests" | null;
 type MobileHotelShortcutMenu = "price" | "stars" | "amenities";
 
@@ -303,6 +304,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [currentResultsPage, setCurrentResultsPage] = useState(1);
   const [paginationPendingPage, setPaginationPendingPage] = useState<number | null>(null);
+  const [paginationTransitionPhase, setPaginationTransitionPhase] = useState<PaginationTransitionPhase>("idle");
   const [paginationMinHeight, setPaginationMinHeight] = useState<number | null>(null);
   const [paginationRevealing, setPaginationRevealing] = useState(false);
   const paginationListRef = useRef<HTMLDivElement | null>(null);
@@ -837,19 +839,41 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     if (paginationPendingPage !== null || target === currentResultsPage) return;
     setPaginationMinHeight(paginationListRef.current?.getBoundingClientRect().height ?? null);
     setPaginationPendingPage(target);
+    setPaginationTransitionPhase("covering");
+    const previousRootOverflowAnchor = document.documentElement.style.overflowAnchor;
+    const previousBodyOverflowAnchor = document.body.style.overflowAnchor;
+    document.documentElement.style.overflowAnchor = "none";
+    document.body.style.overflowAnchor = "none";
     await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
 
-    const resultsHeading = standaloneResultsHeadingRef.current;
-    if (resultsHeading) {
+    const positionResultsStart = () => {
+      const resultsHeading = standaloneResultsHeadingRef.current;
+      if (!resultsHeading) return;
       const stickyOffset = window.innerWidth < 640 ? 72 : 128;
       const resultsTop = Math.max(0, window.scrollY + resultsHeading.getBoundingClientRect().top - stickyOffset);
       window.scrollTo({ top: resultsTop, behavior: "auto" });
-    }
+    };
 
+    positionResultsStart();
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
     setCurrentResultsPage(target);
-    await new Promise<void>((resolve) => window.setTimeout(resolve, 320));
-    setPaginationPendingPage(null);
+    setPaginationTransitionPhase("settling");
     setPaginationMinHeight(null);
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 520));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    positionResultsStart();
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    positionResultsStart();
+    if (window.innerWidth >= 1024) {
+      await new Promise<void>((resolve) => window.setTimeout(resolve, 240));
+      positionResultsStart();
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    }
+    setPaginationTransitionPhase("idle");
+    setPaginationPendingPage(null);
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    document.documentElement.style.overflowAnchor = previousRootOverflowAnchor;
+    document.body.style.overflowAnchor = previousBodyOverflowAnchor;
     if (!prefersReducedResultsMotion()) {
       setPaginationRevealing(true);
       window.setTimeout(() => setPaginationRevealing(false), PAGINATION_REVEAL_MS);
@@ -1605,19 +1629,9 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
 
   return (
     <>
-      {!guided && paginationPendingPage !== null && typeof document !== "undefined"
+      {!guided && paginationTransitionPhase !== "idle" && typeof document !== "undefined"
         ? createPortal(
-            <div aria-hidden="true" className="fixed inset-0 z-[1200] overflow-hidden bg-[#f6f8fb]">
-              <div className="mx-auto w-full max-w-[920px] px-4 pb-10 pt-20 sm:pt-28">
-                <div className="mb-4 rounded-xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-700 shadow-sm">
-                  {t("updatingResults")}
-                </div>
-                <div className="space-y-4">
-                  <HotelCardSkeleton />
-                  <HotelCardSkeleton />
-                </div>
-              </div>
-            </div>,
+            <HotelResultsPageTransitionSkeleton />,
             document.body,
           )
         : null}
@@ -1693,7 +1707,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         ) : null}
 
         {!guided ? (
-          <section className={cn("mt-12 bg-[#f6f8fb] px-1 py-2 sm:hidden", mobileHotelSearchOpen && "pointer-events-none")} aria-label={t("filters")} aria-hidden={mobileHotelSearchOpen ? true : undefined} inert={mobileHotelSearchOpen ? true : undefined}>
+          <section className={cn("mt-10 bg-[#f6f8fb] px-1 pb-0 pt-1 sm:hidden", mobileHotelSearchOpen && "pointer-events-none")} aria-label={t("filters")} aria-hidden={mobileHotelSearchOpen ? true : undefined} inert={mobileHotelSearchOpen ? true : undefined}>
             {renderMobileHotelShortcuts()}
             <div ref={mobileSearchSummarySentinelRef} className="h-px" aria-hidden="true" />
           </section>
@@ -1793,7 +1807,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           </nav>
         ) : null}
 
-        <div ref={resultsGridRef} className={cn(guided ? "grid gap-y-5 pb-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8" : "page-shell grid gap-y-5 pb-6 pt-5 sm:pt-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8")}>
+        <div ref={resultsGridRef} className={cn(guided ? "grid gap-y-5 pb-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8" : "page-shell grid gap-y-5 pb-6 pt-3 sm:pt-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8")}>
           <aside ref={desktopFilterSidebarRef} className="relative hidden w-[288px] self-stretch min-[1200px]:block min-[1200px]:justify-self-end">
             <div>
               <HotelFilters layout="desktop" propertyNameQuery={propertyNameQuery} setPropertyNameQuery={updatePropertyNameQuery} t={t} maxPrice={maxPrice} minPrice={minPrice} setMaxPrice={updateMaxPrice} setMinPrice={updateMinPrice} resultMaxPrice={resultMaxPrice} hasPricedResults={hasPricedResults} formatPrice={formatHotelFilterPrice} locale={locale} stayNights={stayNights} selectedRatings={selectedHotelClasses} toggleRating={toggleHotelClass} starRatingCounts={starRatingCounts} options={filterOptions} selectedFilters={selectedFilters} toggleFilter={toggleFilter} activeFilterCount={activeFilterCount} onClear={resetFilters} />
@@ -1858,7 +1872,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                     {activeFilterCount ? ` (${activeFilterCount})` : ""}
                   </Button>
 
-                  <div role="group" aria-label={t("hotelResults.summaryAria")} className="flex w-full flex-nowrap items-center justify-between gap-2 py-1">
+                  <div role="group" aria-label={t("hotelResults.summaryAria")} className="flex w-full flex-nowrap items-center justify-between gap-2 py-0 sm:py-1">
                     <div>
                       {guided ? (
                         <h2 ref={guidedResultsHeadingRef} id="deals-guided-hotel-results-heading" tabIndex={-1} className="text-xl font-bold leading-7 tracking-[-0.015em] text-[#142033] sm:text-2xl">
@@ -1940,9 +1954,9 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                   ) : null}
 
                   <div ref={paginationListRef} aria-busy={paginationPendingPage !== null} style={paginationMinHeight ? { minHeight: paginationMinHeight } : undefined} className={cn("space-y-4", paginationRevealing && "animate-[fadeIn_150ms_ease-out]")}>
-                    {filterApplying || paginationPendingPage !== null ? (
+                    {filterApplying || paginationTransitionPhase === "covering" ? (
                       <div className="space-y-4">
-                        <div role="status" aria-live="polite" className="rounded-xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-700 shadow-sm">
+                        <div role="status" aria-live="polite" className={cn(paginationPendingPage !== null ? "sr-only" : "rounded-xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-700 shadow-sm")}>
                           {t("updatingResults")}
                         </div>
                         {Array.from(
@@ -2160,6 +2174,69 @@ function ActiveHotelFilterChips({ chips, onRemove, t }: { chips: ActiveHotelFilt
             </span>
           </button>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function HotelResultsPageTransitionSkeleton() {
+  return (
+    <div aria-hidden="true" className="fixed inset-0 z-[1200] overflow-hidden bg-[#f6f8fb]">
+      <div className="h-20 border-b border-slate-100 bg-white px-4 sm:h-24">
+        <div className="mx-auto flex h-full max-w-[1400px] items-center justify-between">
+          <div className="h-8 w-40 animate-pulse rounded-md bg-slate-200 motion-reduce:animate-none" />
+          <div className="flex items-center gap-3">
+            <div className="hidden h-5 w-16 animate-pulse rounded bg-slate-200 motion-reduce:animate-none sm:block" />
+            <div className="h-10 w-10 animate-pulse rounded-full bg-slate-200 motion-reduce:animate-none" />
+          </div>
+        </div>
+      </div>
+
+      <div className="border-b border-slate-100 bg-white px-4 py-5">
+        <div className="mx-auto max-w-[1180px]">
+          <div className="hidden h-[72px] animate-pulse grid-cols-[1.2fr_1fr_.7fr_112px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm motion-reduce:animate-none sm:grid">
+            <div className="border-r border-slate-200 p-4"><div className="h-4 w-36 rounded bg-slate-200" /><div className="mt-2 h-3 w-24 rounded bg-slate-100" /></div>
+            <div className="border-r border-slate-200 p-4"><div className="h-4 w-40 rounded bg-slate-200" /><div className="mt-2 h-3 w-28 rounded bg-slate-100" /></div>
+            <div className="border-r border-slate-200 p-4"><div className="h-4 w-28 rounded bg-slate-200" /><div className="mt-2 h-3 w-20 rounded bg-slate-100" /></div>
+            <div className="m-2 rounded-xl bg-[#D9E7F7]" />
+          </div>
+          <div className="h-16 animate-pulse rounded-2xl border border-slate-200 bg-white p-4 shadow-sm motion-reduce:animate-none sm:hidden">
+            <div className="h-4 w-32 rounded bg-slate-200" /><div className="mt-2 h-3 w-48 rounded bg-slate-100" />
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-[1400px] px-4 py-6">
+        <div className="mb-5 flex gap-2 sm:hidden">
+          {[76, 68, 72, 96].map((width) => <div key={width} className="h-11 shrink-0 animate-pulse rounded-xl border border-slate-200 bg-white motion-reduce:animate-none" style={{ width }} />)}
+        </div>
+        <div className="grid min-w-0 gap-8 min-[1200px]:grid-cols-[288px_minmax(0,1fr)]">
+          <aside className="hidden min-[1200px]:block">
+            <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="h-5 w-24 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" />
+              <div className="h-11 animate-pulse rounded-lg bg-slate-100 motion-reduce:animate-none" />
+              {["price", "class", "trip", "area", "type"].map((item, index) => (
+                <div key={item} className="border-t border-slate-100 pt-4">
+                  <div className="h-4 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" style={{ width: `${52 + index * 6}%` }} />
+                  <div className="mt-3 h-3 w-full animate-pulse rounded bg-slate-100 motion-reduce:animate-none" />
+                  <div className="mt-2 h-3 w-4/5 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" />
+                </div>
+              ))}
+            </div>
+          </aside>
+
+          <section className="min-w-0">
+            <div className="mb-4 flex items-center justify-between">
+              <div><div className="h-7 w-48 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /><div className="mt-2 h-3 w-24 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /></div>
+              <div className="hidden h-10 w-36 animate-pulse rounded-lg bg-slate-200 motion-reduce:animate-none sm:block" />
+            </div>
+            <div className="space-y-4">
+              <HotelCardSkeleton />
+              <HotelCardSkeleton />
+              <HotelCardSkeleton />
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );
