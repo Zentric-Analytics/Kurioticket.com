@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   canonicalDate,
   COUNTRY_OPTIONS,
+  displayAddress,
   filterSelectorOptions,
   displayPhone,
   GENDER_VALUES,
@@ -39,9 +40,10 @@ test("phone country and local number serialize with canonical catalogue", () => 
   assert.match(result.phoneNumber, /212/);
   assert.ok(COUNTRY_OPTIONS.some((x) => x.code === "US"));
 });
-test("read-only phone display preserves missing values and does not repeat dial codes", () => {
+test("read-only phone display preserves missing values, avoids repeated dial codes, and groups Nigerian digits", () => {
   assert.equal(displayPhone("NG", ""), "");
   assert.equal(displayPhone("US", "+1 4165550100"), "+1 4165550100");
+  assert.equal(displayPhone("NG", "7056890436"), "+234 705 689 0436");
 });
 test("selector matching supports labels, ISO codes, and phone calling codes", () => {
   const nigeria = PHONE_COUNTRY_OPTIONS.find(
@@ -71,16 +73,24 @@ test("gender and nationality use canonical supported options", () => {
   assert.deepEqual(GENDER_VALUES, ["Male", "Female", "I prefer not to say"]);
   assert.ok(NATIONALITY_OPTIONS.includes("United States"));
 });
-test("structured addresses round trip and legacy values remain readable", () => {
+test("structured addresses round trip, trim display punctuation, and legacy values remain readable", () => {
   const legacy = "1 Main St\nLagos\nNigeria";
   assert.equal(parseAddress(legacy).addressLine1, "1 Main St");
   const encoded = serializeAddress({
     ...parseAddress(""),
-    countryCode: "NG",
-    addressLine1: "1 Main St",
+    countryCode: "AR",
+    apartmentOrSuite: "Kuola ",
+    addressLine1: "C2 legacy ",
+    city: "Ibadan ",
+    stateOrRegion: "Ibadan ",
+    postalCode: "1111111122222 ",
   });
   assert.ok(encoded.startsWith(STRUCTURED_ADDRESS_PREFIX));
-  assert.equal(parseAddress(encoded).addressLine1, "1 Main St");
+  assert.equal(parseAddress(encoded).addressLine1, "C2 legacy ");
+  assert.equal(
+    displayAddress(encoded),
+    "Kuola, C2 legacy\nIbadan, Ibadan 1111111122222\nArgentina",
+  );
 });
 test("English and Spanish Personal details labels and fallbacks exist", () => {
   for (const locale of ["en-us", "es-es"] as const) {
