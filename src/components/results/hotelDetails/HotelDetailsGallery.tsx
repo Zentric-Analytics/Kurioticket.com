@@ -215,24 +215,26 @@ export function HotelDetailsGallery({
         </div>
       ) : null}
       {showGalleryControls ? (
-        <>
-          <button
-            type="button"
-            aria-label={previousPhotoLabel}
-            onClick={onPrevious}
-            className="absolute left-0 top-1/2 z-10 flex size-11 -translate-y-1/2 items-center justify-start bg-transparent ps-1 text-white drop-shadow-[0_1px_2px_rgba(15,23,42,0.9)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-white"
-          >
-            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            aria-label={nextPhotoLabel}
-            onClick={onNext}
-            className="absolute right-0 top-1/2 z-10 flex size-11 -translate-y-1/2 items-center justify-end bg-transparent pe-1 text-white drop-shadow-[0_1px_2px_rgba(15,23,42,0.9)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-white"
-          >
-            <ChevronRight className="h-5 w-5" aria-hidden="true" />
-          </button>
-        </>
+        <div className="pointer-events-none absolute inset-0 z-10 grid grid-cols-[1.42fr_1fr] gap-2">
+          <div className="relative min-w-0 overflow-hidden rounded-[10px]">
+            <button
+              type="button"
+              aria-label={previousPhotoLabel}
+              onClick={onPrevious}
+              className="pointer-events-auto absolute left-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-start bg-transparent ps-1 text-white drop-shadow-[0_1px_2px_rgba(15,23,42,0.9)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-white"
+            >
+              <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              aria-label={nextPhotoLabel}
+              onClick={onNext}
+              className="pointer-events-auto absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-end bg-transparent pe-1 text-white drop-shadow-[0_1px_2px_rgba(15,23,42,0.9)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-white"
+            >
+              <ChevronRight className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
       ) : null}
     </div>
   );
