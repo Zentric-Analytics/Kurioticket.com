@@ -144,6 +144,8 @@ test("desktop and guided contracts retain their responsive grid and owned disclo
   assert.match(source, /xl:grid-cols-\[270px_minmax\(0,1fr\)_205px\]/);
   assert.match(source, /!guidedPlanning && offer\.freeCancellation/);
   assert.match(source, /!guidedPlanning && offer\.payAtPickup/);
+  assert.doesNotMatch(source, /Unlimited mileage|car\.limitedMileageKm/);
+  assert.doesNotMatch(source, /<Fuel|title\(car\.fuelPolicy\)/);
   assert.doesNotMatch(source, /offer\.taxesAndFeesIncluded|Taxes and fees included/);
   assert.match(source, /planningLabels\?\.estimatedTotal/);
   assert.match(source, /planningLabels\?\.disclosure/);

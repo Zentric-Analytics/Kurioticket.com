@@ -7,8 +7,6 @@ import {
   CarFront,
   Check,
   DoorOpen,
-  Fuel,
-  Gauge,
   Heart,
   MapPin,
   Snowflake,
@@ -444,26 +442,6 @@ export function CarResultCard({
           </ul>
 
           <div className="mt-2 flex min-w-0 flex-col items-start gap-1.5 md:flex-row md:flex-wrap">
-            <span className="inline-flex min-h-6 max-w-full items-start gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-slate-700 md:items-center md:px-2 md:text-xs">
-              <Gauge
-                size={13}
-                className="mt-0.5 shrink-0 md:mt-0"
-                aria-hidden="true"
-              />
-              <span className="min-w-0">
-                {car.mileagePolicy === "unlimited"
-                  ? "Unlimited mileage"
-                  : `${car.limitedMileageKm} km included`}
-              </span>
-            </span>
-            <span className="inline-flex min-h-6 max-w-full items-start gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-slate-700 md:items-center md:px-2 md:text-xs">
-              <Fuel
-                size={13}
-                className="mt-0.5 shrink-0 md:mt-0"
-                aria-hidden="true"
-              />
-              <span className="min-w-0">{title(car.fuelPolicy)}</span>
-            </span>
             {!guidedPlanning && offer.freeCancellation && (
               <span className="inline-flex min-h-6 max-w-full items-start gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-emerald-700 md:items-center md:px-2 md:text-xs">
                 <Check
