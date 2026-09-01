@@ -45,3 +45,27 @@ test("pagination uses an occluding full-page transition with an accessible statu
   assert.match(source, /className="sr-only" role="status" aria-live="polite"/);
   assert.match(source, /motion-reduce:animate-none/);
 });
+
+test("desktop cards pair each leg time with the airline logo while keeping one identity line", async () => {
+  const source = await readFile(new URL("./FlightCard.tsx", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
+
+  assert.match(source, /flight-card-airline-name truncate whitespace-nowrap/);
+  assert.match(source, /flight\.airlineName[\s\S]*flight\.flightNumber/);
+  assert.match(source, /flight-card-leg-time-row[\s\S]*flight-card-leg-logo[\s\S]*<AirlineLogo flight=\{flight\}/);
+  assert.match(source, /visibleLegs\.map[\s\S]*flight=\{flight\}/);
+  assert.match(styles, /\.flight-card-header-logo \{\s*display: none;/);
+  assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-header-logo \{\s*display: block;/);
+  assert.match(styles, /\.flight-card-time \{\s*font-size: 1\.25rem;/);
+});
+
+test("desktop nearby fares use a contained mobile-like hierarchy", async () => {
+  const source = await readFile(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("data-desktop-nearby-fare-rail");
+  const strip = source.slice(start, source.indexOf("Next nearby fare date", start) + 300);
+
+  assert.match(strip, /rounded-xl border border-slate-200 bg-white/);
+  assert.match(strip, /min-h-\[72px\]/);
+  assert.match(strip, /rounded-lg/);
+  assert.match(strip, /selected && "bg-blue-50\/70 after:scale-x-100"/);
+});

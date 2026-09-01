@@ -112,22 +112,21 @@ export function FlightCard({
         <div className="flight-card-desktop">
           <div className="flight-card-desktop-header flex min-w-0 items-start justify-between pb-2">
             <div className="flight-card-desktop-brand flex min-w-0 items-center">
-              <AirlineLogo flight={flight} />
+              <div className="flight-card-header-logo">
+                <AirlineLogo flight={flight} />
+              </div>
               <div className="min-w-0">
                 <p
-                  className="flight-card-airline-name truncate font-semibold leading-5 text-slate-800"
+                  className="flight-card-airline-name truncate whitespace-nowrap font-semibold leading-5 text-slate-800"
                   dir="auto"
                 >
-                  {flight.airlineName}
+                  <span>{flight.airlineName}</span>
+                  {flight.flightNumber ? (
+                    <span className="ms-2 font-medium text-[#536B92]" dir="ltr">
+                      {flight.flightNumber}
+                    </span>
+                  ) : null}
                 </p>
-                {flight.flightNumber ? (
-                  <p
-                    className="mt-0.5 truncate text-sm font-medium leading-5 text-[#536B92]"
-                    dir="ltr"
-                  >
-                    {flight.flightNumber}
-                  </p>
-                ) : null}
               </div>
             </div>
             <ResultBadgePill badge={resultBadge} />
@@ -140,6 +139,7 @@ export function FlightCard({
                   key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${leg.departureTime}-${index}`}
                   leg={leg}
                   locale={locale}
+                  flight={flight}
                 />
               ))}
             </div>
@@ -215,9 +215,11 @@ function ResultBadgePill({ badge }: { badge?: ResultBadge }) {
 function ResponsiveFlightLegRow({
   leg,
   locale,
+  flight,
 }: {
   leg: FlightLeg;
   locale: string;
+  flight: PublicFlightResult;
 }) {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -230,11 +232,16 @@ function ResponsiveFlightLegRow({
           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#0057E7]">
             {legTitle}
           </p>
-          <div
-            className="flight-card-time mt-1 font-semibold leading-6 tracking-[-0.025em] text-[#07133B]"
-            dir="ltr"
-          >
-            {formatTime(leg.departureTime, locale)}
+          <div className="flight-card-leg-time-row mt-1 flex min-w-0 items-center gap-2.5">
+            <div className="flight-card-leg-logo hidden shrink-0 lg:block">
+              <AirlineLogo flight={flight} />
+            </div>
+            <div
+              className="flight-card-time min-w-0 font-semibold leading-6 tracking-[-0.025em] text-[#07133B]"
+              dir="ltr"
+            >
+              {formatTime(leg.departureTime, locale)}
+            </div>
           </div>
           <div
             className="mt-1 text-sm font-bold leading-5 text-[#07133B]"

@@ -573,6 +573,10 @@ textarea {
   font-size: 0.875rem;
 }
 
+.flight-card-header-logo {
+  display: none;
+}
+
 .flight-card-logo-box {
   height: 3rem;
   width: 3rem;
@@ -607,7 +611,17 @@ textarea {
 }
 
 .flight-card-time {
-  font-size: 1.375rem;
+  font-size: 1.25rem;
+}
+
+.flight-card-leg-logo .flight-card-logo-box {
+  height: 2.25rem;
+  width: 2.25rem;
+}
+
+.flight-card-leg-logo .flight-card-logo-image {
+  height: 1.75rem;
+  width: 1.75rem;
 }
 
 .flight-card-price {
@@ -800,6 +814,10 @@ textarea {
 
   .flight-card-desktop-brand {
     gap: 0.625rem;
+  }
+
+  .flight-card-header-logo {
+    display: block;
   }
 
   .flight-card-airline-name {
