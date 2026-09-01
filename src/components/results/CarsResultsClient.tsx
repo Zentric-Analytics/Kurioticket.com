@@ -41,7 +41,7 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 import { CarResultCard } from "@/components/results/CarResultCard";
 import { CarCardSkeleton } from "@/components/ui/Skeleton";
-import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion, scrollToResultsAndWait } from "@/lib/results/paginationTransition";
+import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
 import {
   CAR_RESULTS_PAGE_SIZE,
   getCarPaginationItems,
@@ -61,6 +61,8 @@ import type {
   CarSearchParams,
   NormalizedCarResult,
 } from "@/lib/cars/types";
+
+type CarsPaginationTransitionPhase = "idle" | "covering" | "settling";
 import { shouldShowDesktopStickySearch } from "@/lib/search/desktopStickySearch";
 import {
   calculateCompactFilterPlacement,
@@ -1881,6 +1883,7 @@ export function CarsResultsExperience({
   const [carsSortOpen, setCarsSortOpen] = useState(false);
   const [resultsTransitioning, setResultsTransitioning] = useState(false);
   const [paginationPendingPage, setPaginationPendingPage] = useState<number | null>(null);
+  const [paginationTransitionPhase, setPaginationTransitionPhase] = useState<CarsPaginationTransitionPhase>("idle");
   const [paginationMinHeight, setPaginationMinHeight] = useState<number | null>(null);
   const [paginationRevealing, setPaginationRevealing] = useState(false);
   const paginationListRef = useRef<HTMLDivElement | null>(null);
@@ -1977,12 +1980,39 @@ export function CarsResultsExperience({
     if (paginationPendingPage !== null || page === currentPage) return;
     setPaginationMinHeight(paginationListRef.current?.getBoundingClientRect().height ?? null);
     setPaginationPendingPage(page);
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-    await scrollToResultsAndWait({ top: 0 }, { behavior: "instant" });
+    setPaginationTransitionPhase("covering");
+    const previousRootOverflowAnchor = document.documentElement.style.overflowAnchor;
+    const previousBodyOverflowAnchor = document.body.style.overflowAnchor;
+    document.documentElement.style.overflowAnchor = "none";
+    document.body.style.overflowAnchor = "none";
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    const positionResultsStart = () => {
+      const anchor = resultsStartRef.current;
+      if (!anchor) return;
+      const stickyOffset = window.innerWidth < 640 ? 8 : 160;
+      const top = Math.max(0, window.scrollY + anchor.getBoundingClientRect().top - stickyOffset);
+      window.scrollTo({ top, behavior: "auto" });
+    };
+    positionResultsStart();
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
     setCurrentPage(page);
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-    setPaginationPendingPage(null);
+    setPaginationTransitionPhase("settling");
     setPaginationMinHeight(null);
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 420));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    positionResultsStart();
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    positionResultsStart();
+    if (window.innerWidth >= 1024) {
+      await new Promise<void>((resolve) => window.setTimeout(resolve, 220));
+      positionResultsStart();
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    }
+    setPaginationTransitionPhase("idle");
+    setPaginationPendingPage(null);
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    document.documentElement.style.overflowAnchor = previousRootOverflowAnchor;
+    document.body.style.overflowAnchor = previousBodyOverflowAnchor;
     if (!prefersReducedResultsMotion()) {
       setPaginationRevealing(true);
       window.setTimeout(() => setPaginationRevealing(false), PAGINATION_REVEAL_MS);
@@ -2322,6 +2352,8 @@ export function CarsResultsExperience({
   };
 
   return (
+    <>
+    {paginationTransitionPhase !== "idle" && typeof document !== "undefined" ? createPortal(<CarsResultsPageTransitionSkeleton />, document.body) : null}
     <section
       className={cn("min-w-0", embedded ? "mt-6" : "w-full")}
       aria-labelledby={resultHeadingId}
@@ -2551,7 +2583,7 @@ export function CarsResultsExperience({
                   </div>
                 </div>
               </div>
-              {resultsTransitioning || paginationPendingPage !== null ? (
+              {resultsTransitioning || paginationTransitionPhase === "covering" ? (
                 <div
                   ref={paginationListRef}
                   data-cars-results-card-list
@@ -2782,6 +2814,17 @@ export function CarsResultsExperience({
         </button>
       ) : null}
     </section>
+    </>
+  );
+}
+
+function CarsResultsPageTransitionSkeleton() {
+  return (
+    <div aria-hidden="true" className="fixed inset-0 z-[1200] overflow-hidden bg-[#f6f8fb]">
+      <div className="h-20 border-b border-slate-100 bg-white px-4 sm:h-24"><div className="mx-auto flex h-full max-w-[1400px] items-center justify-between"><div className="h-8 w-40 animate-pulse rounded-md bg-slate-200 motion-reduce:animate-none" /><div className="h-10 w-10 animate-pulse rounded-full bg-slate-200 motion-reduce:animate-none" /></div></div>
+      <div className="border-b border-slate-100 bg-white px-4 py-5"><div className="mx-auto max-w-[1180px]"><div className="hidden h-[72px] animate-pulse grid-cols-[1.2fr_.9fr_1fr_.7fr_112px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm motion-reduce:animate-none sm:grid">{["pickup", "return", "dates", "age"].map((item) => <div key={item} className="border-r border-slate-200 p-4"><div className="h-4 w-28 rounded bg-slate-200" /><div className="mt-2 h-3 w-20 rounded bg-slate-100" /></div>)}<div className="m-2 rounded-xl bg-[#D9E7F7]" /></div><div className="h-16 animate-pulse rounded-2xl border border-slate-200 bg-white p-4 shadow-sm motion-reduce:animate-none sm:hidden"><div className="h-4 w-52 rounded bg-slate-200" /><div className="mt-2 h-3 w-36 rounded bg-slate-100" /></div></div></div>
+      <div className="mx-auto max-w-[1400px] px-4 py-5 sm:py-6"><div className="mb-4 flex gap-2 sm:hidden">{[84, 92, 76, 116].map((width) => <div key={width} className="h-11 shrink-0 animate-pulse rounded-lg border border-slate-200 bg-white motion-reduce:animate-none" style={{ width }} />)}</div><div className="grid min-w-0 gap-5 lg:grid-cols-[256px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]"><aside className="hidden space-y-5 border-r border-slate-200 pr-5 lg:block"><div className="h-6 w-24 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" />{["vehicle", "transmission", "seats", "features"].map((item) => <div key={item} className="border-t border-slate-200 pt-5"><div className="h-4 w-28 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /><div className="mt-4 h-4 w-4/5 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /><div className="mt-3 h-4 w-3/5 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /></div>)}</aside><section className="min-w-0"><div className="mb-4 flex items-center justify-between"><div><div className="h-6 w-40 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /><div className="mt-2 h-3 w-16 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /></div><div className="hidden h-9 w-36 animate-pulse rounded bg-slate-200 motion-reduce:animate-none sm:block" /></div><div className="space-y-4"><CarCardSkeleton /><CarCardSkeleton /><CarCardSkeleton /></div></section></div></div>
+    </div>
   );
 }
 

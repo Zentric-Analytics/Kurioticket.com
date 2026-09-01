@@ -16,20 +16,23 @@ for (const [vertical, file, skeleton] of [
     assert.match(source, /minHeight: paginationMinHeight/);
     assert.match(source, /aria-busy=/);
     assert.match(source, new RegExp(skeleton));
-    if (vertical !== "Hotels") assert.match(source, /scrollToResultsAndWait/);
+    if (vertical === "Flights") assert.match(source, /scrollToResultsAndWait/);
   });
 }
 
-test("Cars pagination switches every control through an instant page-top transition", () => {
+test("Cars pagination masks the full page while repositioning and settling", () => {
   const source = read("CarsResultsClient.tsx");
   const start = source.indexOf("const changePage");
   const end = source.indexOf("const setTransition", start);
   const changePage = source.slice(start, end);
   assert.match(
     changePage,
-    /setPaginationPendingPage\(page\)[\s\S]*scrollToResultsAndWait\(\{ top: 0 \}, \{ behavior: "instant" \}\)[\s\S]*setCurrentPage\(page\)/,
+    /setPaginationPendingPage\(page\)[\s\S]*setPaginationTransitionPhase\("covering"\)[\s\S]*positionResultsStart\(\)[\s\S]*setCurrentPage\(page\)[\s\S]*setPaginationTransitionPhase\("settling"\)/,
   );
-  assert.doesNotMatch(changePage, /resultsStartRef/);
+  assert.match(changePage, /resultsStartRef/);
+  assert.match(changePage, /overflowAnchor = "none"/);
+  assert.match(source, /createPortal\(<CarsResultsPageTransitionSkeleton \/>, document\.body\)/);
+  assert.match(source, /fixed inset-0 z-\[1200\]/);
 
   const paginationStart = source.lastIndexOf('aria-label="Car results pagination"');
   const pagination = source.slice(
