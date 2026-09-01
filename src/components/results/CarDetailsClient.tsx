@@ -432,7 +432,7 @@ function CarPriceComparisonSection({
             <span className="size-2.5 rounded-full bg-[#075EE8]" />
           </span>
           <div className="col-span-2 mt-5 flex min-w-0 items-end gap-x-4 overflow-visible">
-            <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-x-4 overflow-x-auto overflow-y-hidden pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex min-w-0 flex-1 flex-nowrap items-end gap-x-4 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {facts.map(({ label, Icon }) => (
                 <span
                   key={label}
@@ -448,16 +448,16 @@ function CarPriceComparisonSection({
                 </span>
               ))}
             </div>
-            <span className="ms-auto inline-flex min-h-12 shrink-0 flex-col items-end justify-end overflow-visible whitespace-nowrap pb-1 text-right">
+            <span className="ms-auto inline-flex min-h-9 shrink-0 flex-col items-end justify-end overflow-visible whitespace-nowrap text-right">
               <strong
-                className="text-xl font-extrabold tracking-tight text-slate-950 tabular-nums"
+                className="text-xl font-extrabold leading-5 tracking-tight text-slate-950 tabular-nums"
                 dir="ltr"
                 title={daily.title}
                 aria-label={daily.ariaLabel}
               >
                 {daily.formatted}
               </strong>
-              <span className="mt-0.5 inline-flex min-h-5 items-center overflow-visible pb-1 text-[11px] font-medium leading-5 text-[#075EE8] sm:text-xs">
+              <span className="inline-flex min-h-4 items-center overflow-visible text-[11px] font-medium leading-4 text-[#075EE8] sm:text-xs">
                 {copy("carsResults.perDay")}
               </span>
             </span>
