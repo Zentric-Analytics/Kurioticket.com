@@ -199,7 +199,7 @@ test("flight card keeps long prices single-line in the full-width fare row", () 
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center" \}/);
   assert.match(source, /metadataItem: \{ flexDirection: "row"/);
-  assert.match(source, /fareRow: \{ width: "100%", paddingTop: 5, flexDirection: "row", justifyContent: "flex-end" \}/);
+  assert.match(source, /fareRow: \{ width: "100%", paddingTop: 0, flexDirection: "row", justifyContent: "flex-end" \}/);
   assert.match(source, /estimatedPrice: \{ fontSize: 10, lineHeight: 13, fontWeight: "700", fontFamily: appFonts\.bold, letterSpacing: 0\.7, textAlign: "right" \}/);
   assert.match(source, /providerPrice: \{ marginTop: 1, fontSize: 11, lineHeight: 14, fontWeight: "500", fontFamily: appFonts\.medium, textAlign: "right" \}/);
   assert.doesNotMatch(source, /actionColumn:/);
