@@ -8,6 +8,7 @@ const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.t
 const card = source.slice(source.indexOf("function HotelCard"), source.indexOf("function Loading", source.indexOf("function HotelCard")));
 const amenities = readFileSync(resolve("src/features/search/HotelCardAmenityList.tsx"), "utf8");
 const api = readFileSync(resolve("src/api/travelApi.ts"), "utf8");
+const publicTypes = readFileSync(resolve("../../src/lib/types.ts"), "utf8");
 
 test("hotel card keeps provider data but never prints its internal label", () => {
   assert.doesNotMatch(card, /result\.provider|s0\.providers/);
@@ -42,6 +43,19 @@ test("hotel actions independently save and share without share navigation", () =
   assert.match(card, /Share\.share\(\{ message \}\)/);
   const share = card.slice(card.indexOf("const shareHotel"), card.indexOf("return ("));
   assert.doesNotMatch(share, /router\.|toggleHotel/);
+});
+
+test("hotel title matches mobile web typography without compromising actions", () => {
+  const hotelNameStyle = source.slice(source.indexOf("  hotelName: {"), source.indexOf("  stars:"));
+  assert.match(card, /<Text numberOfLines=\{2\} style=\{s0\.hotelName\}>/);
+  assert.match(hotelNameStyle, /flex:\s*1/);
+  assert.match(hotelNameStyle, /minWidth:\s*0/);
+  assert.match(hotelNameStyle, /fontSize:\s*15/);
+  assert.match(hotelNameStyle, /lineHeight:\s*20/);
+  assert.match(hotelNameStyle, /fontWeight:\s*"700"/);
+  assert.match(hotelNameStyle, /fontFamily:\s*appFonts\.bold/);
+  assert.doesNotMatch(hotelNameStyle, /fontWeight:\s*"900"|appFonts\.black/);
+  assert.match(source, /hotelAction:\s*\{[^}]*width:\s*44[^}]*height:\s*44/s);
 });
 
 test("ranking, stars, and location follow the web-like hierarchy", () => {
@@ -81,9 +95,24 @@ test("amenities use the shared semantic presentation and four neutral icon rows"
 });
 
 test("price and Hotel Details search context remain intact", () => {
+  const hotelPriceStyles = source.slice(source.indexOf("  hotelPrice: {"), source.indexOf("  loadingState:"));
+  const hotelPriceMarkup = card.slice(card.indexOf("<View style={s0.hotelPrice}>"));
   assert.match(card, /result\.pricePerNight/);
-  assert.match(card, /result\.totalPrice/);
+  assert.doesNotMatch(hotelPriceMarkup, /s0\.bigPrice|s0\.foundCopy|result\.totalPrice|\/night/);
+  assert.match(card, /<View style=\{s0\.hotelPriceCopy\}>[\s\S]*s0\.hotelNightlyPrice[\s\S]*s0\.hotelPerNight[\s\S]*per night[\s\S]*s0\.hotelDealButton/);
+  assert.match(hotelPriceStyles, /hotelPrice:\s*\{[^}]*marginTop:\s*"auto"[^}]*alignItems:\s*"flex-end"[^}]*paddingTop:\s*8/s);
+  assert.doesNotMatch(hotelPriceStyles.slice(0, hotelPriceStyles.indexOf("hotelPriceCopy")), /flexDirection:\s*"row"|justifyContent:\s*"space-between"/);
+  assert.match(hotelPriceStyles, /hotelNightlyPrice:\s*\{[^}]*fontSize:\s*18[^}]*lineHeight:\s*24[^}]*fontWeight:\s*"700"[^}]*fontFamily:\s*appFonts\.bold/s);
+  assert.match(hotelPriceStyles, /hotelPerNight:\s*\{[^}]*fontSize:\s*12[^}]*lineHeight:\s*16[^}]*fontWeight:\s*"500"[^}]*fontFamily:\s*appFonts\.medium/s);
+  assert.match(hotelPriceStyles, /hotelDealButton:\s*\{[^}]*minHeight:\s*40[^}]*minWidth:\s*104[^}]*marginTop:\s*6/s);
+  assert.match(hotelPriceStyles, /hotelDealButtonText:\s*\{[^}]*fontFamily:\s*appFonts\.semibold/s);
+  assert.match(card, /accessibilityRole="button"[\s\S]*accessibilityLabel=\{`View deal for \$\{result\.name\}`\}[\s\S]*style=\{s0\.hotelDealButton\}/);
+  assert.match(card, />View deal<\/Text>/);
   assert.match(card, /pathname: "\/hotel-details"/);
   assert.match(card, /result: JSON\.stringify\(result\)/);
   assert.match(card, /Object\.entries\(params\)/);
+  assert.match(publicTypes, /totalPrice/);
+
+  const flightCard = source.slice(source.indexOf("function FlightCard"), source.indexOf("function HotelCard"));
+  assert.match(flightCard, /s0\.bigPrice/);
 });
