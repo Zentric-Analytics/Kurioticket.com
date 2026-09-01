@@ -11,7 +11,10 @@ import {
   type PointerEvent,
 } from "react";
 import { Card } from "@/components/ui/Card";
-import { getHotelGallerySwipeDirection } from "@/components/results/hotelGalleryPresentation";
+import {
+  getHotelGalleryMosaicIndices,
+  getHotelGallerySwipeDirection,
+} from "@/components/results/hotelGalleryPresentation";
 import { HotelDetailsGalleryDialog } from "@/components/results/hotelDetails/HotelDetailsGalleryDialog";
 
 type HotelDetailsGalleryProps = {
@@ -148,7 +151,10 @@ export function HotelDetailsGallery({
     .replace("{{total}}", String(usableIndices.length))
     .replace("{{hotelName}}", hotelName);
 
-  const visibleIndices = usableIndices.slice(0, 4);
+  const visibleIndices = getHotelGalleryMosaicIndices(
+    usableIndices,
+    activeIndex,
+  );
   const remainingPhotoCount = Math.max(
     usableIndices.length - visibleIndices.length,
     0,
