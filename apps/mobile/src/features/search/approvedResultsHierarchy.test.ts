@@ -63,7 +63,7 @@ test("the flight alert uses content-driven compact vertical spacing", () => {
   const copyStyles = source.slice(source.indexOf("flightAlertCopy: {"), source.indexOf("flightAlertSwitchTarget: {"));
 
   assert.match(bannerStyle, /borderRadius: 10/);
-  assert.match(bannerStyle, /paddingVertical: 2/);
+  assert.match(bannerStyle, /paddingVertical: 0/);
   assert.doesNotMatch(bannerStyle, /(?:minHeight|height):/);
   assert.doesNotMatch(source, /flightAlertIcon:/);
   assert.match(copyStyles, /flightAlertCopy: \{[^}]*gap: 1/);
@@ -71,17 +71,21 @@ test("the flight alert uses content-driven compact vertical spacing", () => {
   assert.match(copyStyles, /flightAlertSubtitle: \{ fontSize: 12, lineHeight: 16/);
 });
 
-test("the flight alert has no aircraft placeholder or visible banner border", () => {
+test("the flight alert is a neutral bordered utility row without decoration or elevation", () => {
   const component = source.slice(source.indexOf("function PriceAlert"), source.indexOf("export function BottomNav"));
   const bannerStyle = source.slice(source.indexOf("flightAlert: {"), source.indexOf("flightAlertCopy: {"));
 
   assert.doesNotMatch(component, /<Image|flight-price-alert-aircraft|flight-price-alert-bell|flights-aircraft/);
-  assert.doesNotMatch(bannerStyle, /borderWidth|borderColor/);
+  assert.doesNotMatch(component, /<FlowIcon/);
+  assert.match(bannerStyle, /borderWidth: 1/);
+  assert.match(component, /backgroundColor: theme\.surface, borderColor: theme\.priceAlertBorder/);
+  assert.doesNotMatch(bannerStyle, /shadowColor|shadowOpacity|shadowRadius|elevation/);
+  assert.doesNotMatch(bannerStyle, /(?:minHeight|height):/);
 });
 
 test("the flight alert uses semantic light and dark theme values", () => {
   const theme = readFileSync(resolve("src/theme/AppTheme.tsx"), "utf8");
-  for (const token of ["priceAlertSurface", "switchTrack", "switchTrackActive"]) {
+  for (const token of ["surface", "priceAlertBorder", "switchTrack", "switchTrackActive"]) {
     assert.equal(theme.match(new RegExp(`${token}:`, "g"))?.length, 2, `${token} should be defined for both themes`);
     assert.match(source, new RegExp(`theme\\.${token}`));
   }
