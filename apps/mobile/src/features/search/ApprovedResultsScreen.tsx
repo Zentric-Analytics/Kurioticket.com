@@ -33,6 +33,7 @@ import {
   PlaneTakeoff,
   Share2,
   SlidersHorizontal,
+  SquarePen,
 } from "lucide-react-native";
 import { Heart } from "lucide-react-native";
 import {
@@ -856,22 +857,41 @@ function FlightResultsHeader({
             <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
           </Pressable>
         </View>
-        <View style={s0.flightHeaderRouteBlock}>
-          <Text style={[s0.route, s0.flightHeaderRoute, { color: theme.textPrimary }]}>
-            {route}
-          </Text>
-        </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Edit search"
-          onPress={onEdit}
-          style={({ pressed }) => [
-            s0.flightHeaderEdit,
-            pressed && s0.flightHeaderControlPressed,
+        <View
+          style={[
+            s0.flightRouteSummaryCard,
+            {
+              backgroundColor: theme.surface,
+              borderColor: theme.dark ? theme.border : "#D8E1EC",
+            },
           ]}
         >
-          <Text style={[s0.flightHeaderEditText, { color: theme.textPrimary }]}>Edit</Text>
-        </Pressable>
+          <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.85}
+            style={[s0.flightRouteSummaryText, { color: theme.textPrimary }]}
+          >
+            {route}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Edit search"
+            onPress={onEdit}
+            style={({ pressed }) => [
+              s0.flightRouteSummaryEdit,
+              pressed && s0.flightHeaderControlPressed,
+            ]}
+          >
+            <SquarePen
+              accessible={false}
+              accessibilityElementsHidden
+              size={18}
+              strokeWidth={2.1}
+              color={theme.icon}
+            />
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -1746,6 +1766,35 @@ const s0 = StyleSheet.create({
     justifyContent: "center",
   },
   flightHeaderControlPressed: { opacity: 0.55 },
+  flightRouteSummaryCard: {
+    flex: 1,
+    minWidth: 0,
+    height: 52,
+    borderWidth: 1,
+    borderRadius: 12,
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  flightRouteSummaryText: {
+    width: "100%",
+    paddingHorizontal: 52,
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: "800",
+    fontFamily: appFonts.extraBold,
+    textAlign: "center",
+  },
+  flightRouteSummaryEdit: {
+    position: "absolute",
+    right: 4,
+    top: 4,
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   flightHeaderRouteBlock: { flex: 1, minWidth: 0, alignItems: "center" },
   flightHeaderRoute: { minWidth: 0, textAlign: "center", fontFamily: appFonts.black },
   flightHeaderEdit: {
