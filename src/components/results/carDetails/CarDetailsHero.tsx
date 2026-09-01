@@ -5,15 +5,13 @@ import {
   Fuel,
   Gauge,
   MapPin,
-  ReceiptText,
-  ShieldCheck,
   Snowflake,
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { CarResultImage } from "@/components/results/CarResultImage";
-import type { CarOffer, NormalizedCarResult } from "@/lib/cars/types";
+import type { NormalizedCarResult } from "@/lib/cars/types";
 import {
   fuelPolicyLabels,
   pickupTypeLabels,
@@ -22,12 +20,10 @@ import {
 
 export function CarDetailsHero({
   car,
-  offer,
   text,
   overlay,
 }: {
   car: NormalizedCarResult;
-  offer?: CarOffer;
   text: Record<string, string>;
   overlay: ReactNode;
 }) {
@@ -81,7 +77,7 @@ export function CarDetailsHero({
               >
                 <Icon
                   size={15}
-                  className="shrink-0 text-[#075EE8]"
+                  className="shrink-0 text-slate-600"
                   aria-hidden="true"
                 />
                 <span className="min-w-0 truncate sm:overflow-visible sm:whitespace-normal">
@@ -90,47 +86,6 @@ export function CarDetailsHero({
               </li>
             ))}
           </ul>
-          {offer && (
-            <dl
-              data-car-benefits
-              className="mt-4 grid grid-cols-2 gap-2.5 sm:gap-3"
-            >
-              <div className="flex min-w-0 items-center gap-2.5 rounded-[10px] bg-slate-50 p-3 sm:gap-3 sm:border sm:border-slate-200">
-                <span
-                  className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${offer.freeCancellation ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600"}`}
-                >
-                  <ShieldCheck size={18} aria-hidden="true" />
-                </span>
-                <div className="min-w-0">
-                  <dt className="text-xs font-medium text-slate-500">
-                    {text.cancellation}
-                  </dt>
-                  <dd className="mt-0.5 text-sm font-semibold leading-snug text-slate-800">
-                    {offer.freeCancellation
-                      ? text.freeCancellation
-                      : text.nonRefundable}
-                  </dd>
-                </div>
-              </div>
-              <div className="flex min-w-0 items-center gap-2.5 rounded-[10px] bg-slate-50 p-3 sm:gap-3 sm:border sm:border-slate-200">
-                <span
-                  className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${offer.taxesAndFeesIncluded ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600"}`}
-                >
-                  <ReceiptText size={18} aria-hidden="true" />
-                </span>
-                <div className="min-w-0">
-                  <dt className="text-xs font-medium text-slate-500">
-                    {text.taxesFees}
-                  </dt>
-                  <dd className="mt-0.5 text-sm font-semibold leading-snug text-slate-800">
-                    {offer.taxesAndFeesIncluded
-                      ? text.includedShort
-                      : text.notIncluded}
-                  </dd>
-                </div>
-              </div>
-            </dl>
-          )}
         </div>
       </div>
     </section>

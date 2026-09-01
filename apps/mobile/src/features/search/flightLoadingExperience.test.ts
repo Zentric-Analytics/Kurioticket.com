@@ -75,10 +75,11 @@ test("skeleton surface and identity mirror the final result card", () => {
   assert.doesNotMatch(skeletonStyles, /minHeight: 178|backgroundColor: "white"/);
   assert.match(skeletonStyles, /skeletonLogo: \{ width: 42, height: 42, borderRadius: 10, flexShrink: 0 \}/);
   assert.match(skeletonStyles, /skeletonIdentityCopy: \{ flex: 1, minWidth: 0 \}/);
-  assert.match(flightSkeleton, /skeletonName[\s\S]*?skeletonFlightNumber[\s\S]*?skeletonBadge[\s\S]*?skeletonFavoriteButton[\s\S]*?skeletonHeart/);
+  assert.match(flightSkeleton, /skeletonName[\s\S]*?skeletonFlightNumber[\s\S]*?skeletonBadge/);
+  assert.doesNotMatch(flightSkeleton, /skeletonFavoriteButton|skeletonHeart/);
   assert.match(skeletonStyles, /skeletonIdentityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 8 \}/);
   assert.doesNotMatch(skeletonStyles, /skeletonIdentityActions: \{[^\n]*flexDirection: "column"/);
-  assert.match(skeletonStyles, /skeletonFavoriteButton: \{ width: 44, height: 44,[^\n]*alignItems: "center", justifyContent: "center" \}/);
+  assert.doesNotMatch(skeletonStyles, /skeletonFavoriteButton|skeletonHeart/);
 });
 
 test("journey skeleton separates labels, primary route, and stop rows", () => {

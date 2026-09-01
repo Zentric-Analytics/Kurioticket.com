@@ -26,7 +26,7 @@ const payload = buildSearchPlan("flight", {
   cabin: "premium-economy",
 }, new Date("2030-01-01T00:00:00Z")).plan?.payload;
 
-test("Flight Results uses a compact header containing only back, dynamic route, and visible Edit", () => {
+test("Flight Results uses a route-only search-summary card with accessible controls", () => {
   assert.match(results, /flightResults \? \(\s*<FlightResultsHeader/);
   assert.match(invocation, /route=\{`\$\{String\(payload\.origin/);
   assert.match(invocation, /payload\.tripType === "one-way" \? "→" : "⇄"/);
@@ -34,7 +34,9 @@ test("Flight Results uses a compact header containing only back, dynamic route, 
   assert.match(header, /accessibilityLabel="Flight search summary"/);
   assert.match(header, /accessibilityLabel="Go back"/);
   assert.match(header, /\{route\}/);
-  assert.match(header, /accessibilityLabel="Edit search"[\s\S]*?>Edit<\/Text>/);
+  assert.match(header, /accessibilityLabel="Edit search"[\s\S]*?onPress=\{onEdit\}/);
+  assert.match(header, /<SquarePen[\s\S]*?accessible=\{false\}/);
+  assert.doesNotMatch(header, />Edit<\/Text>/);
   assert.doesNotMatch(invocation, /onLayout=/);
   assert.match(results, /topInset=\{topSafeAreaInset\}/);
   assert.doesNotMatch(results, /flightResultsHeaderHeight|setFlightResultsHeaderHeight|LayoutChangeEvent/);
@@ -79,12 +81,14 @@ test("Back retains navigation while Edit opens the local results overlay", () =>
   assert.match(styles, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
 });
 
-test("route remains centered with balanced side controls and compact spacing", () => {
+test("route summary card centers its route and contains the icon-only Edit action", () => {
   assert.match(styles, /flightHeaderSide: \{ width: 52/);
-  assert.match(styles, /flightHeaderEdit: \{[\s\S]*?width: 52/);
-  assert.match(styles, /flightHeaderRouteBlock: \{ flex: 1, minWidth: 0, alignItems: "center"/);
-  assert.match(styles, /flightHeaderRoute: \{ minWidth: 0, textAlign: "center", fontFamily: appFonts\.black/);
-  assert.match(styles, /flightHeaderEditText: \{ fontSize: 13, lineHeight: 18, fontWeight: "700", fontFamily: appFonts\.bold/);
+  assert.match(styles, /flightRouteSummaryCard: \{[\s\S]*?flex: 1,[\s\S]*?minWidth: 0,[\s\S]*?height: 52,[\s\S]*?borderWidth: 1,[\s\S]*?borderRadius: 12,[\s\S]*?position: "relative",[\s\S]*?alignItems: "center",[\s\S]*?justifyContent: "center"/);
+  assert.match(styles, /flightRouteSummaryText: \{[\s\S]*?width: "100%",[\s\S]*?paddingHorizontal: 52,[\s\S]*?fontSize: 18,[\s\S]*?lineHeight: 22,[\s\S]*?fontWeight: "800",[\s\S]*?fontFamily: appFonts\.extraBold,[\s\S]*?textAlign: "center"/);
+  assert.match(styles, /flightRouteSummaryEdit: \{[\s\S]*?position: "absolute",[\s\S]*?right: 4,[\s\S]*?top: 4,[\s\S]*?width: 44,[\s\S]*?height: 44/);
+  assert.match(header, /numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit[\s\S]*?minimumFontScale=\{0\.85\}/);
+  assert.match(header, /backgroundColor: theme\.surface/);
+  assert.match(header, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
   assert.match(styles, /flightHeader: \{[\s\S]*?paddingTop: 12,[\s\S]*?paddingBottom: 2/);
   assert.match(header, /backgroundColor: theme\.background/);
   assert.match(header, /color: theme\.textPrimary/);
@@ -105,9 +109,9 @@ test("header and date rail use the structured Flight Results fare-calendar shell
   const railHeight = Number(searchUi.match(/flightDateRail: \{ height: (\d+)/)?.[1]);
 
   assert.ok(headerBottom <= 3, "header bottom padding remains compact");
-  assert.equal(navigatorHeight, 88, "navigator fits the 76px tile and compact vertical padding");
+  assert.equal(navigatorHeight, 82, "navigator fits the 70px tile and compact vertical padding");
   assert.equal(railHeight, navigatorHeight);
-  assert.equal(headerBottom + navigatorHeight, 90);
+  assert.equal(headerBottom + navigatorHeight, 84);
 });
 
 test("canonical flight search data remains available after presentation metadata removal", () => {

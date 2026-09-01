@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -9,6 +9,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Switch,
   Text,
@@ -25,9 +26,14 @@ import {
   Armchair,
   ArrowLeft,
   Bell,
+  ChevronDown,
   FileText,
   Luggage,
+  MapPin,
   PlaneTakeoff,
+  Share2,
+  SlidersHorizontal,
+  SquarePen,
 } from "lucide-react-native";
 import { Heart } from "lucide-react-native";
 import {
@@ -81,9 +87,6 @@ import {
   type ExchangeRates,
 } from "../currency/displayCurrency";
 import { formatCabinClass, summarizeBaggage, summarizeFareRules } from "./flightCardSummaries";
-import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
-import { useSavedFlights } from "../../storage/useSavedFlights";
-import { flightSavedSignature } from "../../storage/savedMapping";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { AirlineLogo } from "./AirlineLogo";
 import { useAppTheme } from "../../theme/AppTheme";
@@ -116,6 +119,11 @@ import { FlightResultsState } from "./FlightResultsState";
 import { resolveFlightResultsState } from "./flightResultsStateModel";
 import { signInHref } from "../auth/signInIntent";
 import { normalizePreferredAirlineFilterValues } from "./preferredAirlineDefaults";
+import { HotelFilterSheet, type HotelFilterSectionName } from "./HotelFilterSheet";
+import { activeHotelFilterCount, buildHotelFilterOptions, emptyHotelFilters, filterHotels, type HotelFilters } from "./hotelFilters";
+import { HotelCardAmenityList } from "./HotelCardAmenityList";
+import { defaultHotelSort, hotelSortLabel, sortHotelsForResults, type HotelSortMode } from "./hotelSort";
+import { HotelResultsShortcutMenu, type HotelResultsShortcutAnchor, type HotelResultsShortcutMenuKind } from "./HotelResultsShortcutMenu";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -147,6 +155,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const resultsRef = useRef<(FlightResult | HotelResult)[]>([]);
   const [sort, setSort] = useState<FlightSort>("best");
   const [sortOpen, setSortOpen] = useState(false);
+  const [hotelSort, setHotelSort] = useState<HotelSortMode>(defaultHotelSort);
   const [filters, setFilters] = useState<FlightFilters>(emptyFlightFilters);
   const [filtersFlightSearchKey, setFiltersFlightSearchKey] = useState(() => flightResults ? plan.plan?.key : undefined);
   const [preferredAirlineCodes, setPreferredAirlineCodes] = useState<string[] | null>(null);
@@ -156,6 +165,17 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [hotelEditSearchOpen, setHotelEditSearchOpen] = useState(false);
   const [hotelEditPresentation, setHotelEditPresentation] = useState(0);
   const [filterSection, setFilterSection] = useState<FlightFilterSectionName>("all");
+  const [hotelFilters, setHotelFilters] = useState<HotelFilters>(emptyHotelFilters);
+  const [hotelFilterOpen, setHotelFilterOpen] = useState(false);
+  const [hotelFilterSection, setHotelFilterSection] = useState<HotelFilterSectionName>("all");
+  const [hotelShortcutMenu, setHotelShortcutMenu] = useState<HotelResultsShortcutMenuKind | null>(null);
+  const [hotelShortcutAnchor, setHotelShortcutAnchor] = useState<HotelResultsShortcutAnchor | null>(null);
+  const sortShortcutRef = useRef<View>(null);
+  const starsShortcutRef = useRef<View>(null);
+  const amenitiesShortcutRef = useRef<View>(null);
+  const windowDimensions = useWindowDimensions();
+  const previousWindowDimensions = useRef(`${windowDimensions.width}x${windowDimensions.height}`);
+  const previousHotelSearchKey = useRef<string | undefined>(undefined);
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
   const [verifiedDateFareMemory, setVerifiedDateFareMemory] = useState<VerifiedDateFareMemory>();
   const flightDateStripScrollY = useRef(new Animated.Value(0)).current;
@@ -166,7 +186,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const preferredAirlineDefaultAttemptedSearchKey = useRef<string | undefined>(undefined);
   const preferredAirlineFilterTouchedSearchKey = useRef<string | undefined>(undefined);
   const preferredAirlineSessionUserId = useRef<string | null | undefined>(undefined);
-  const { savedFlights, pendingFlightKeys, toggle: toggleSavedFlight } = useSavedFlights();
   useEffect(() => subscribeSession(() => {
     setPreferredAirlineSessionRevision((revision) => revision + 1);
   }), []);
@@ -183,6 +202,24 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     }
     previousFlightSearchKey.current = plan.plan.key;
   }, [flightResults, plan.plan?.key]);
+  useEffect(() => {
+    if (flightResults || !plan.plan?.key) return;
+    if (previousHotelSearchKey.current && previousHotelSearchKey.current !== plan.plan.key) {
+      setHotelFilters(emptyHotelFilters());
+      setHotelFilterOpen(false);
+      setHotelShortcutMenu(null);
+      setHotelShortcutAnchor(null);
+    }
+    previousHotelSearchKey.current = plan.plan.key;
+  }, [flightResults, plan.plan?.key]);
+  useEffect(() => {
+    const identity = `${windowDimensions.width}x${windowDimensions.height}`;
+    if (previousWindowDimensions.current !== identity) {
+      setHotelShortcutMenu(null);
+      setHotelShortcutAnchor(null);
+      previousWindowDimensions.current = identity;
+    }
+  }, [windowDimensions.height, windowDimensions.width]);
   useEffect(() => {
     if (!flightResults) return;
     let active = true;
@@ -374,6 +411,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const flightPriceContext = useMemo(() => product === "flight" && currencyState
     ? resolveFlightPriceComparisonContext(results as FlightResult[], currencyState.resolution.resolvedCurrency, normalizeFlightPrice)
     : null, [currencyState, normalizeFlightPrice, product, results]);
+  const hotelOptions = useMemo(() => buildHotelFilterOptions(
+    product === "hotel" ? results as HotelResult[] : [],
+    String(plan.plan?.payload.destination || ""),
+    currencyState?.rates ?? {},
+  ), [currencyState?.rates, plan.plan?.payload.destination, product, results]);
   const sorted = useMemo(() => {
     if (product === "flight") {
       return filterAndSortFlights(
@@ -384,12 +426,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         normalizeFlightPrice,
       );
     }
-    return [...results].sort((a, b) =>
-        sort === "price"
-          ? (a as HotelResult).totalPrice! - (b as HotelResult).totalPrice!
-          : (b as HotelResult).valueScore - (a as HotelResult).valueScore,
-      );
-  }, [results, filters, sort, product, flightPriceContext, normalizeFlightPrice]);
+    return sortHotelsForResults(
+      filterHotels(results as HotelResult[], hotelFilters, hotelOptions),
+      hotelSort,
+      currencyState?.rates,
+    );
+  }, [results, filters, hotelFilters, hotelOptions, sort, hotelSort, product, flightPriceContext, normalizeFlightPrice, currencyState?.rates]);
   const flightHighlights = useMemo(() => product === "flight"
     ? deriveFlightResultHighlights(sorted as FlightResult[], normalizeFlightPrice)
     : new Map<string, FlightResultHighlight>(), [normalizeFlightPrice, product, sorted]);
@@ -428,6 +470,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     if (nextCurrency) previousComparisonCurrency.current = nextCurrency;
   }, [currencyState, flightPriceContext?.identity]);
   const activeFilterCount = activeFlightFilterCount(filters, flightOptions);
+  const activeHotelFilters = activeHotelFilterCount(hotelFilters, hotelOptions);
   const flightState = product === "flight" ? resolveFlightResultsState({
     status,
     rawResultCount: results.length,
@@ -442,6 +485,20 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const openFlightFilters = (section: FlightFilterSectionName) => {
     setFilterSection(section);
     setFilterOpen(true);
+  };
+  const openHotelFilters = (section: HotelFilterSectionName) => {
+    setHotelFilterSection(section);
+    setHotelFilterOpen(true);
+  };
+  const openHotelShortcutMenu = (kind: HotelResultsShortcutMenuKind, ref: React.RefObject<View | null>) => {
+    ref.current?.measureInWindow((x, y, width, height) => {
+      setHotelShortcutAnchor({ x, y, width, height });
+      setHotelShortcutMenu(kind);
+    });
+  };
+  const closeHotelShortcutMenu = () => {
+    setHotelShortcutMenu(null);
+    setHotelShortcutAnchor(null);
   };
   const handleFlightFiltersChange = useCallback((next: FlightFilters) => {
     const searchKey = plan.plan?.key;
@@ -548,21 +605,20 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 onPress={() => setSortOpen(true)}
               />
             ) : null}
-            <Pill
-              label={product === "flight" && activeFilterCount ? `Filter · ${activeFilterCount}` : "Filter"}
-              active={product === "flight" && activeFilterCount > 0}
-              icon={product === "flight" ? undefined : "sliders"}
-              flightResultsIcon={product === "flight" ? "filters" : undefined}
-              onPress={() => product === "flight" ? openFlightFilters("all") :
-                Alert.alert(
-                  "Filters",
-                  "Filter controls use the current live result set.",
-                )
-              }
-            />
+            {product === "flight" ? <Pill
+              label={activeFilterCount ? `Filter · ${activeFilterCount}` : "Filter"}
+              active={product === "flight" ? activeFilterCount > 0 : activeHotelFilters > 0}
+              flightResultsIcon="filters"
+              onPress={() => openFlightFilters("all")}
+            /> : <>
+              <HotelResultsShortcut label="Filter" count={activeHotelFilters || undefined} icon onPress={() => openHotelFilters("all")} />
+              <HotelResultsShortcut ref={sortShortcutRef} label={hotelSortLabel(hotelSort)} expanded={hotelShortcutMenu === "sort"} onPress={() => openHotelShortcutMenu("sort", sortShortcutRef)} />
+              <HotelResultsShortcut ref={starsShortcutRef} label={hotelFilters.starRating ? `${hotelFilters.starRating} ${hotelFilters.starRating === 1 ? "star" : "stars"}` : "Stars"} expanded={hotelShortcutMenu === "stars"} onPress={() => openHotelShortcutMenu("stars", starsShortcutRef)} />
+              <HotelResultsShortcut ref={amenitiesShortcutRef} label={hotelFilters.facilities.length ? `Amenities (${hotelFilters.facilities.length})` : "Amenities"} expanded={hotelShortcutMenu === "amenities"} onPress={() => openHotelShortcutMenu("amenities", amenitiesShortcutRef)} />
+            </>}
             {(product === "flight"
               ? ["Airlines", "Stops"]
-              : ["Price", "Guest rating", "Property type"]
+              : []
             ).map((x) => (
               <Pill
                 key={x}
@@ -572,21 +628,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   x === "Airlines" ? filters.airlines.length > 0 : false
                 )}
                 flightResultsChevron={product === "flight"}
-                onPress={() => product === "flight" ? openFlightFilters(x.toLowerCase() as "stops" | "airlines") :
-                  Alert.alert(
-                    x,
-                    "No additional values are available from this search response.",
-                  )
-                }
+                onPress={() => openFlightFilters(x.toLowerCase() as "stops" | "airlines")}
               />
             ))}
-            {product === "hotel" ? (
-              <Pill
-                label={`Sort: ${sort === "price" ? "Price" : "Recommended"}`}
-                active
-                onPress={() => setSort((x) => (x === "best" ? "price" : "best"))}
-              />
-            ) : null}
           </ScrollView>
   );
   const resultContent = (
@@ -636,6 +680,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                     }
                   />
                 </View>
+              ) : null}
+              {status === "ready" && product === "hotel" && results.length > 0 && sorted.length === 0 ? (
+                <View style={s0.hotelFilteredEmpty}><Text accessibilityRole="header" style={[s0.foundTitle,{color:theme.textPrimary}]}>No stays match these filters.</Text><Pressable accessibilityRole="button" onPress={()=>setHotelFilters(emptyHotelFilters())}><Text style={s0.hotelClearFilters}>Clear filters</Text></Pressable></View>
               ) : null}
               {!flightState && product === "hotel" && sorted.map((x, i) =>
                 (
@@ -703,11 +750,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   displayCurrencyContext={currencyState?.resolution}
                   highlight={flightHighlights.get(item.id)}
                   params={params}
-                  saved={savedFlights.has(flightSavedSignature(item))}
-                  pending={pendingFlightKeys.has(flightSavedSignature(item))}
-                  onToggleSaved={() => toggleSavedFlight(item, params).catch(() => {
-                    Alert.alert("Couldn't update saved flight", "Please try again.");
-                  })}
                   logInitialMount={index === 0}
                 />
               </View>
@@ -761,7 +803,15 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             onClose={() => setFilterOpen(false)}
           />
         </>
-      ) : null}
+      ) : (
+        <>
+          <HotelFilterSheet visible={hotelFilterOpen} section={hotelFilterSection} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} onChange={setHotelFilters} onClose={()=>setHotelFilterOpen(false)}/>
+          {hotelShortcutMenu && hotelShortcutAnchor ? hotelShortcutMenu === "sort"
+            ? <HotelResultsShortcutMenu kind="sort" anchor={hotelShortcutAnchor} sort={hotelSort} onSortChange={setHotelSort} onClose={closeHotelShortcutMenu} />
+            : <HotelResultsShortcutMenu kind={hotelShortcutMenu} anchor={hotelShortcutAnchor} filters={hotelFilters} options={hotelOptions} onChange={setHotelFilters} onClose={closeHotelShortcutMenu} />
+            : null}
+        </>
+      )}
       {!flightResults ? (
         <HotelEditSearchModal
           key={hotelEditPresentation}
@@ -808,22 +858,41 @@ function FlightResultsHeader({
             <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
           </Pressable>
         </View>
-        <View style={s0.flightHeaderRouteBlock}>
-          <Text style={[s0.route, s0.flightHeaderRoute, { color: theme.textPrimary }]}>
-            {route}
-          </Text>
-        </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Edit search"
-          onPress={onEdit}
-          style={({ pressed }) => [
-            s0.flightHeaderEdit,
-            pressed && s0.flightHeaderControlPressed,
+        <View
+          style={[
+            s0.flightRouteSummaryCard,
+            {
+              backgroundColor: theme.surface,
+              borderColor: theme.dark ? theme.border : "#D8E1EC",
+            },
           ]}
         >
-          <Text style={[s0.flightHeaderEditText, { color: theme.textPrimary }]}>Edit</Text>
-        </Pressable>
+          <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.85}
+            style={[s0.flightRouteSummaryText, { color: theme.textPrimary }]}
+          >
+            {route}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Edit search"
+            onPress={onEdit}
+            style={({ pressed }) => [
+              s0.flightRouteSummaryEdit,
+              pressed && s0.flightHeaderControlPressed,
+            ]}
+          >
+            <SquarePen
+              accessible={false}
+              accessibilityElementsHidden
+              size={18}
+              strokeWidth={2.1}
+              color={theme.icon}
+            />
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -927,7 +996,37 @@ function FlightSortModal({
   );
 }
 
-function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highlight, params, saved, pending, onToggleSaved, logInitialMount }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; highlight?: FlightResultHighlight; params: Record<string, string | string[]>; saved: boolean; pending: boolean; onToggleSaved: () => void; logInitialMount: boolean }) {
+const HotelResultsShortcut = forwardRef<View, {
+  label: string;
+  icon?: boolean;
+  count?: number;
+  expanded?: boolean;
+  onPress: () => void;
+}>(function HotelResultsShortcut({ label, icon = false, count, expanded = false, onPress }, ref) {
+  const { theme } = useAppTheme();
+  const accessibilityLabel = icon && count ? `Filter, ${count} active filters` : label;
+  return (
+    <Pressable
+      ref={ref}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ expanded }}
+      onPress={onPress}
+      style={({ pressed }) => [
+        s0.hotelShortcut,
+        { borderColor: theme.border, backgroundColor: theme.surface },
+        pressed && s0.hotelShortcutPressed,
+      ]}
+    >
+      {icon ? <SlidersHorizontal size={15} color={theme.icon} /> : null}
+      <Text style={[s0.hotelShortcutLabel, { color: theme.textPrimary }]}>{label}</Text>
+      {count ? <View style={s0.hotelShortcutCount}><Text style={s0.hotelShortcutCountText}>{count}</Text></View> : null}
+      {!icon ? <ChevronDown size={14} color={theme.icon} style={expanded ? { transform: [{ rotate: "180deg" }] } : undefined} /> : null}
+    </Pressable>
+  );
+});
+
+function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highlight, params, logInitialMount }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; highlight?: FlightResultHighlight; params: Record<string, string | string[]>; logInitialMount: boolean }) {
   const { theme } = useAppTheme();
   const supportTextColor = theme.dark ? flightSupportText.dark : flightSupportText.light;
   useEffect(() => {
@@ -942,7 +1041,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
   const highlightLabel = highlight === "Best" ? "Best value" : highlight;
   const highlightUsesGreen = highlight === "Best" || highlight === "Cheapest";
   const highlightBackgroundColor = highlightUsesGreen
-    ? theme.dark ? "#153D2A" : "#EAF8F0"
+    ? theme.dark ? "#153D2A" : "#E3F6EA"
     : theme.dark ? "#173568" : "#EEF4FF";
   const highlightTextColor = highlightUsesGreen
     ? theme.dark ? "#8BE0B0" : "#157347"
@@ -1005,8 +1104,8 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
                   </Text>
                 ) : null}
               </View>
-              <View style={s0.identityActions}>
-                {highlight ? (
+              {highlight ? (
+                <View style={s0.identityActions}>
                   <View
                     accessible
                     accessibilityLabel={`${highlightLabel} flight result`}
@@ -1014,24 +1113,8 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
                   >
                     <Text numberOfLines={1} style={[s0.resultBadgeText, { color: highlightTextColor }]}>{highlightLabel}</Text>
                   </View>
-                ) : null}
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={saved ? `Remove ${result.airlineName} flight from saved` : `Save ${result.airlineName} flight`}
-                  accessibilityState={{ selected: saved, busy: pending, disabled: pending }}
-                  pressRetentionOffset={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                  onPressIn={(event) => event.stopPropagation()}
-                  onPress={(event) => { event.stopPropagation(); if (!pending) onToggleSaved(); }}
-                  style={({ pressed }) => [s0.favoriteButton, pending && s0.favoritePending, pressed && !pending && s0.favoritePressed]}
-                >
-                  <Heart
-                    size={20}
-                    strokeWidth={2}
-                    fill={saved ? androidFavoriteColors.active : "transparent"}
-                    color={saved ? androidFavoriteColors.active : theme.textSecondary}
-                  />
-                </Pressable>
-              </View>
+                </View>
+              ) : null}
             </View>
           </View>
         </View>
@@ -1150,10 +1233,19 @@ function HotelCard({
   const canonical = useCanonicalSaved();
   const saved = canonical.items.some(item => item.type === "hotel" && ((item.payload as Record<string, unknown> | undefined)?.result as { id?: string } | undefined)?.id === result.id);
   const compact = useWindowDimensions().width < 430;
-  const score =
-    result.reviewScore == null
-      ? result.rating
-      : result.reviewScore * (10 / (result.reviewScale || 10));
+  const score = result.reviewScore == null
+    ? null
+    : result.reviewScore * (10 / (result.reviewScale || 10));
+  const classificationStars = result.classificationStars || Math.round(result.rating);
+  const rankLabel = rank === 0
+    ? "Best overall"
+    : rank === 1
+      ? "Great price"
+      : "Highly rated";
+  const shareHotel = () => {
+    const message = `${result.name} — ${result.location} — ${money(result.currency, result.pricePerNight)}/night`;
+    void Share.share({ message }).catch(() => undefined);
+  };
   return (
     <View style={[s0.hotelCard, compact && s0.hotelCardCompact]}>
       <View style={[s0.hotelImageWrap, compact && s0.hotelImageWrapCompact]}>
@@ -1169,60 +1261,57 @@ function HotelCard({
               : "Image unavailable"}
           </Text>
         </View>
-        <View style={s0.hotelBadge}>
-          <Badge>
-            {rank === 0
-              ? "Best overall"
-              : rank === 1
-                ? "Great price"
-                : "Highly rated"}
-          </Badge>
-        </View>
       </View>
       <View style={[s0.hotelCopy, compact && s0.hotelCopyCompact]}>
-        <Pressable onPress={() => void canonical.toggleHotel(result, params)} style={s0.heart}>
-          <FlowIcon name="heart" fill={saved ? ui.blue : "white"} />
-        </Pressable>
-        <Text style={s0.hotelName}>{result.name}</Text>
-        <Text style={s0.stars}>
-          {"★".repeat(result.classificationStars || Math.round(result.rating))}{" "}
-          <Text style={s0.sub}>
-            {" "}
-            · {result.neighbourhood || result.location}
-          </Text>
-        </Text>
-        <Text style={s0.review}>
-          <Text style={s0.score}>{score.toFixed(1)}</Text>{" "}
-          {score >= 9 ? "Exceptional" : score >= 8 ? "Excellent" : "Good"}
-          {result.reviewCount
-            ? `  ·  ${result.reviewCount.toLocaleString()} reviews`
-            : ""}
-        </Text>
-        {result.distanceFromCenter ? (
-          <Text style={s0.sub}>
-            ⌾ {result.distanceFromCenter} from city center
-          </Text>
-        ) : null}
-        <View style={s0.amenities}>
-          {result.amenities.slice(0, 3).map((a) => (
-            <Text key={a} style={s0.amenity}>
-              ● {a}
-            </Text>
-          ))}
-        </View>
-        <Text style={s0.providers}>{result.provider}</Text>
-        <View style={s0.hotelPrice}>
-          <View style={s0.foundCopy}>
-            <Text style={s0.bigPrice}>
-              {money(result.currency, result.pricePerNight)}
-              <Text style={s0.sub}> /night</Text>
-            </Text>
-            <Text style={s0.sub}>
-              {money(result.currency, result.totalPrice)} total
-            </Text>
+        <View style={s0.hotelTitleRow}>
+          <Text numberOfLines={2} style={s0.hotelName}>{result.name}</Text>
+          <View style={s0.hotelActions}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={saved ? `Remove ${result.name} from saved` : `Save ${result.name}`}
+              accessibilityState={{ selected: saved }}
+              onPress={() => void canonical.toggleHotel(result, params)}
+              style={s0.hotelAction}
+            >
+              <Heart accessible={false} size={20} color={ui.blue} fill={saved ? ui.blue : "none"} />
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Share ${result.name}`}
+              onPress={shareHotel}
+              style={s0.hotelAction}
+            >
+              <Share2 accessible={false} size={20} color={ui.blue} />
+            </Pressable>
           </View>
-          <Button
-            label="View deal"
+        </View>
+        <View style={s0.hotelBadge}><Badge>{rankLabel}</Badge></View>
+        <Text accessibilityLabel={`${classificationStars} star hotel`} style={s0.stars}>
+          {"★".repeat(classificationStars)}
+        </Text>
+        <View style={s0.hotelLocation}>
+          <MapPin accessible={false} size={14} strokeWidth={2} color={ui.muted} />
+          <Text numberOfLines={1} style={s0.sub}>{result.location}</Text>
+        </View>
+        {score == null ? null : (
+          <Text style={s0.review}>
+            <Text style={s0.score}>{score.toFixed(1)}</Text>{" "}
+            {score >= 9 ? "Exceptional" : score >= 8 ? "Excellent" : "Good"}
+            {result.reviewCount ? `  ·  ${result.reviewCount.toLocaleString()} reviews` : ""}
+          </Text>
+        )}
+        <HotelCardAmenityList amenities={result.amenities} />
+        <View style={s0.hotelPrice}>
+          <View style={s0.hotelPriceCopy}>
+            <Text style={s0.hotelNightlyPrice}>
+              {money(result.currency, result.pricePerNight)}
+            </Text>
+            <Text style={s0.hotelPerNight}>per night</Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`View deal for ${result.name}`}
+            style={s0.hotelDealButton}
             onPress={() =>
               router.push({
                 pathname: "/hotel-details",
@@ -1234,7 +1323,9 @@ function HotelCard({
                 },
               })
             }
-          />
+          >
+            <Text style={s0.hotelDealButtonText}>View deal</Text>
+          </Pressable>
         </View>
       </View>
     </View>
@@ -1374,9 +1465,6 @@ function FlightLoadingSkeleton({ roundTrip = false }: { roundTrip?: boolean }) {
             </View>
             <View style={s0.skeletonIdentityActions}>
               <View style={[s0.skeletonBadge, placeholder]} />
-              <View style={s0.skeletonFavoriteButton}>
-                <View style={[s0.skeletonHeart, placeholder]} />
-              </View>
             </View>
           </View>
         </View>
@@ -1532,12 +1620,12 @@ function PriceAlert({ product, plan, results, available = true }: { product: Pro
         accessibilityLabel="Flight price alert"
         style={[
           s0.flightAlert,
-          { backgroundColor: theme.priceAlertSurface },
+          { backgroundColor: theme.surface, borderColor: theme.priceAlertBorder },
         ]}
       >
         <View style={s0.flightAlertCopy}>
           <Text style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track this flight price</Text>
-          <Text style={[s0.flightAlertSubtitle, { color: supportTextColor }]}>Get notified when fares change</Text>
+          <Text style={[s0.flightAlertSubtitle, { color: supportTextColor }]} numberOfLines={1} ellipsizeMode="tail">Get notified when fares change</Text>
         </View>
         <View style={s0.flightAlertSwitchTarget}>
           <Switch
@@ -1638,6 +1726,35 @@ const s0 = StyleSheet.create({
     justifyContent: "center",
   },
   flightHeaderControlPressed: { opacity: 0.55 },
+  flightRouteSummaryCard: {
+    flex: 1,
+    minWidth: 0,
+    height: 52,
+    borderWidth: 1,
+    borderRadius: 12,
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  flightRouteSummaryText: {
+    width: "100%",
+    paddingHorizontal: 52,
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: "800",
+    fontFamily: appFonts.extraBold,
+    textAlign: "center",
+  },
+  flightRouteSummaryEdit: {
+    position: "absolute",
+    right: 4,
+    top: 4,
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   flightHeaderRouteBlock: { flex: 1, minWidth: 0, alignItems: "center" },
   flightHeaderRoute: { minWidth: 0, textAlign: "center", fontFamily: appFonts.black },
   flightHeaderEdit: {
@@ -1655,6 +1772,11 @@ const s0 = StyleSheet.create({
   route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
   filters: { paddingHorizontal: 14, paddingVertical: 3, gap: 8, alignItems: "center" },
+  hotelShortcut: { height: 38, flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderRadius: 19, paddingHorizontal: 12 },
+  hotelShortcutPressed: { opacity: 0.72 },
+  hotelShortcutLabel: { fontSize: 13, fontWeight: "700", fontFamily: appFonts.bold },
+  hotelShortcutCount: { minWidth: 19, height: 19, borderRadius: 10, paddingHorizontal: 5, alignItems: "center", justifyContent: "center", backgroundColor: ui.blue },
+  hotelShortcutCountText: { color: "white", fontSize: 11, fontWeight: "800", fontFamily: appFonts.extraBold },
   modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(10, 24, 48, 0.42)" },
   sheet: { maxHeight: "82%", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 18, gap: 14, backgroundColor: "white" },
   sortSheet: { borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingHorizontal: 18, paddingTop: 14, gap: 4, backgroundColor: "white" },
@@ -1704,6 +1826,8 @@ const s0 = StyleSheet.create({
   },
   foundCopy: { flex: 1, minWidth: 0, gap: 2 },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
+  hotelFilteredEmpty: { alignItems: "center", gap: 10, paddingVertical: 28 },
+  hotelClearFilters: { color: ui.blue, fontSize: 15, fontWeight: "800" },
   flightResultCount: { paddingHorizontal: 14, paddingTop: 4, fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
   card: {
     width: "100%",
@@ -1722,10 +1846,7 @@ const s0 = StyleSheet.create({
   airlineHeader: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start" },
   airlineCopy: { flex: 1, minWidth: 0 },
   identityActions: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 0, transform: [{ translateY: -3 }] },
-  favoriteButton: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
-  favoritePending: { opacity: 0.65 },
-  favoritePressed: { opacity: 0.7, transform: [{ scale: 0.94 }] },
-  resultBadge: { height: 22, flexDirection: "row", alignItems: "center", paddingHorizontal: 8, borderRadius: 11 },
+  resultBadge: { height: 24, flexDirection: "row", alignItems: "center", paddingHorizontal: 9, borderRadius: 12 },
   resultBadgeText: { fontSize: 10, lineHeight: 13, fontWeight: "800", fontFamily: appFonts.extraBold },
   flightMain: { width: "100%", alignItems: "stretch" },
   flightIdentityLayout: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 10 },
@@ -1749,14 +1870,14 @@ const s0 = StyleSheet.create({
   journeyDuration: { maxWidth: "100%", fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts.semibold, textAlign: "center" },
   stopLabel: { maxWidth: "100%", fontSize: 10, lineHeight: 13, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "center" },
   routeTrack: { width: "100%", minWidth: 46, flexDirection: "row", alignItems: "center", gap: 2 },
-  routeDot: { width: 6, height: 6, borderRadius: 3, flexShrink: 0 },
+  routeDot: { width: 7, height: 7, borderRadius: 3.5, flexShrink: 0 },
   line: {
     flex: 1,
-    height: 1,
+    height: 1.5,
     backgroundColor: ui.muted,
   },
   bigPrice: { fontSize: 20, lineHeight: 25, fontWeight: "900", fontFamily: appFonts.black, color: ui.navy, textAlign: "right" },
-  fareRow: { width: "100%", paddingTop: 5, flexDirection: "row", justifyContent: "flex-end" },
+  fareRow: { width: "100%", paddingTop: 0, flexDirection: "row", justifyContent: "flex-end" },
   fareCopy: { maxWidth: "100%", minWidth: 0, alignItems: "flex-end" },
   estimatedPrice: { fontSize: 10, lineHeight: 13, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: 0.7, textAlign: "right" },
   providerPrice: { marginTop: 1, fontSize: 11, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "right" },
@@ -1764,10 +1885,10 @@ const s0 = StyleSheet.create({
   metadataFooterContainer: { width: "100%", alignItems: "center" },
   metadataRow: { maxWidth: "100%", flexDirection: "row", alignItems: "center", justifyContent: "center", alignSelf: "center", paddingTop: 1, paddingBottom: 2 },
   metadataItem: { flexDirection: "row", alignItems: "center", gap: 3, minWidth: 0, flexShrink: 1 },
-  metadataText: { flexShrink: 1, minWidth: 0, fontSize: 12, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
+  metadataText: { flexShrink: 1, minWidth: 0, fontSize: 13, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
   metadataSeparator: { flexShrink: 0, fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium, marginHorizontal: 4 },
   hotelCard: {
-    height: 234,
+    minHeight: 260,
     borderWidth: 1,
     borderColor: ui.border,
     borderRadius: 13,
@@ -1775,10 +1896,10 @@ const s0 = StyleSheet.create({
     flexDirection: "row",
     backgroundColor: "white",
   },
-  hotelCardCompact: { height: 282 },
-  hotelImageWrap: { width: "39%" },
+  hotelCardCompact: { minHeight: 292 },
+  hotelImageWrap: { width: "39%", alignSelf: "stretch", position: "relative" },
   hotelImageWrapCompact: { width: "38%" },
-  hotelImage: { width: "100%", height: "100%", backgroundColor: "#E9EDF3" },
+  hotelImage: { ...StyleSheet.absoluteFillObject, backgroundColor: "#E9EDF3" },
   overlay: {
     position: "absolute",
     bottom: 10,
@@ -1788,27 +1909,65 @@ const s0 = StyleSheet.create({
     borderRadius: 5,
   },
   overlayText: { color: "white", fontSize: 10, fontWeight: "700" },
-  hotelBadge: { position: "absolute", top: 10, left: 9 },
-  hotelCopy: { flex: 1, padding: 12, gap: 5 },
+  hotelBadge: { alignSelf: "flex-start" },
+  hotelCopy: { flex: 1, minWidth: 0, padding: 12, gap: 4 },
   hotelCopyCompact: { padding: 10 },
-  heart: { position: "absolute", right: 8, top: 7, zIndex: 2 },
+  hotelTitleRow: { flexDirection: "row", alignItems: "flex-start", minWidth: 0 },
+  hotelActions: { flexDirection: "row", flexShrink: 0, marginRight: -8, marginTop: -8 },
+  hotelAction: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   hotelName: {
-    fontSize: 17,
-    fontWeight: "900",
+    flex: 1,
+    minWidth: 0,
+    fontSize: 15,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
     color: ui.navy,
-    paddingRight: 30,
+    lineHeight: 20,
   },
   stars: { color: "#FFB800", fontSize: 14 },
+  hotelLocation: { flexDirection: "row", alignItems: "center", gap: 5, minWidth: 0 },
   review: { fontSize: 11, color: ui.navy },
   score: { backgroundColor: ui.blue, color: "white", fontWeight: "900" },
-  amenities: { gap: 3 },
-  amenity: { color: ui.green, fontSize: 10 },
-  providers: { fontSize: 10, color: ui.muted },
   hotelPrice: {
     marginTop: "auto",
-    flexDirection: "row",
-    justifyContent: "space-between",
+    alignItems: "flex-end",
+    paddingTop: 8,
+  },
+  hotelPriceCopy: { minWidth: 0, alignItems: "flex-end" },
+  hotelNightlyPrice: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
+    color: ui.navy,
+    textAlign: "right",
+    fontVariant: ["tabular-nums"],
+  },
+  hotelPerNight: {
+    marginTop: 1,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "500",
+    fontFamily: appFonts.medium,
+    color: ui.muted,
+    textAlign: "right",
+  },
+  hotelDealButton: {
+    minHeight: 40,
+    minWidth: 104,
+    marginTop: 6,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    backgroundColor: ui.blue,
     alignItems: "center",
+    justifyContent: "center",
+  },
+  hotelDealButtonText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: "600",
+    fontFamily: appFonts.semibold,
+    color: "white",
   },
   loadingState: { width: "100%", gap: 14 },
   loadingMessage: {
@@ -1844,8 +2003,6 @@ const s0 = StyleSheet.create({
   skeletonIdentityCopy: { flex: 1, minWidth: 0 },
   skeletonIdentityActions: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 8 },
   skeletonBadge: { width: 60, height: 22, borderRadius: 11 },
-  skeletonFavoriteButton: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
-  skeletonHeart: { width: 20, height: 20, borderRadius: 10 },
   skeletonJourneyList: { width: "100%", marginTop: 10, gap: 10 },
   skeletonJourneyBlock: { width: "100%" },
   skeletonJourneyLabel: { width: 60, height: 7, borderRadius: 4 },
@@ -1907,14 +2064,15 @@ const s0 = StyleSheet.create({
   alertCopy: { gap: 4 },
   flightAlert: {
     borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 0,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 4,
     overflow: "hidden",
   },
-  flightAlertCopy: { flex: 1, minWidth: 0, gap: 2 },
+  flightAlertCopy: { flex: 1, minWidth: 0, gap: 1 },
   flightAlertTitle: { fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
   flightAlertSubtitle: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
   flightAlertSwitchTarget: { minWidth: 48, minHeight: 48, alignItems: "center", justifyContent: "center" },

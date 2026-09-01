@@ -82,7 +82,7 @@ test("flight dates use full resolved fares in wider, single-line tiles", () => {
   assert.match(dateStrip, /flightResults && s\.flightDate/);
   assert.match(dateStrip, /flightDate: \{[\s\S]*?minWidth: 76,[\s\S]*?maxWidth: 96/);
   assert.match(dateStrip, /numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit/);
-  assert.match(dateStrip, /flightDate: \{[\s\S]*?height: 76/);
+  assert.match(dateStrip, /flightDate: \{[\s\S]*?height: 70/);
   assert.match(dateStrip, /\{hasPrice \|\| flightResults \? \(/);
   assert.match(dateStrip, /: "—"\}/);
   assert.doesNotMatch(dateStrip, /ellipsizeMode="clip"/);

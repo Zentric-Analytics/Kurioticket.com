@@ -192,8 +192,8 @@ export function DesktopFlightFilters({
   const isGuidedComfortable = presentationMode === "deals-guided";
 
   return (
-    <div className={cn("rounded-[10px] border border-[#D8E1EC] bg-[#F5F8FC] px-4 py-4 shadow-[0_10px_26px_-24px_rgba(15,23,42,0.5)] xl:px-5", isGuidedComfortable && "px-5")}>
-      <div className="mb-4 border-b border-[#C7D5E6]/80 pb-3">
+    <div className={cn("rounded-2xl border border-[#D8E1EC] bg-white px-4 py-4 shadow-[0_16px_38px_-30px_rgba(15,23,42,0.38)] xl:px-5", isGuidedComfortable && "px-5")}>
+      <div className="mb-5 border-b border-slate-200 pb-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <SlidersHorizontal aria-hidden="true" className="h-4 w-4 text-[#004BB8]" strokeWidth={2.2} />
@@ -203,7 +203,7 @@ export function DesktopFlightFilters({
             <button
               type="button"
               aria-label="Reset filters"
-              className="rounded-md px-1.5 py-1 text-xs font-semibold text-[#004BB8] transition hover:bg-[#EAF2FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+              className="inline-flex min-h-9 items-center rounded-lg px-2.5 py-1 text-xs font-semibold text-[#004BB8] transition hover:bg-[#EAF2FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
               onClick={onClear}
             >
               {t("carsResults.reset")}
@@ -212,7 +212,7 @@ export function DesktopFlightFilters({
         </div>
       </div>
 
-      <div className="space-y-5">
+      <div className="space-y-6">
         <section>
           <SectionTitle>{t("price")}</SectionTitle>
           <div className={cn("mb-2.5 grid grid-cols-2 gap-4 text-[12px] font-semibold leading-5 tabular-nums text-slate-950", isGuidedComfortable && "text-[13px]")}>
@@ -257,7 +257,7 @@ export function DesktopFlightFilters({
 }
 
 function SectionTitle({ children }: { children: ReactNode }) {
-  return <h3 className="mb-3 text-[12px] font-extrabold uppercase leading-4 tracking-[0.12em] text-slate-950">{children}</h3>;
+  return <h3 className="mb-3 text-sm font-bold leading-5 tracking-[-0.005em] text-slate-950">{children}</h3>;
 }
 
 function OptionSection({ title, emptyText, children }: { title: string; emptyText?: string; children: ReactNode }) {
@@ -270,11 +270,11 @@ function Accordion({ title, emptyText, children }: { title: string; emptyText?: 
   const panelId = `desktop-flight-filter-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-panel`;
   const hasOptions = Boolean(children) && (!Array.isArray(children) || children.length > 0);
 
-  return <section className="border-t border-slate-200/80"><button type="button" aria-expanded={isOpen} aria-controls={panelId} className="flex min-h-10 w-full items-center justify-between gap-3 py-2.5 text-left text-[12px] font-semibold uppercase tracking-[0.055em] text-slate-700 transition hover:bg-[#EAF2FB]/55 hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30" onClick={() => setIsOpen((current) => !current)}><span>{title}</span><ChevronDown aria-hidden="true" className={cn("h-4 w-4 text-slate-500 transition", isOpen && "rotate-180 text-[#004BB8]")} /></button><div id={panelId} className={cn("grid gap-0.5 pb-2.5", !isOpen && "hidden")}>{hasOptions ? children : <p className="py-1 text-xs text-slate-500">{emptyText}</p>}</div></section>;
+  return <section className="border-t border-slate-200"><button type="button" aria-expanded={isOpen} aria-controls={panelId} className="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg py-2.5 text-left text-sm font-bold text-slate-800 transition hover:bg-[#F5F8FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30" onClick={() => setIsOpen((current) => !current)}><span>{title}</span><ChevronDown aria-hidden="true" className={cn("h-4 w-4 text-slate-500 transition", isOpen && "rotate-180 text-[#004BB8]")} /></button><div id={panelId} className={cn("grid gap-0.5 pb-3", !isOpen && "hidden")}>{hasOptions ? children : <p className="py-1 text-xs text-slate-500">{emptyText}</p>}</div></section>;
 }
 
 function FacetRow({ label, count, secondaryLabel, rightLabel, checked, onChange }: { label: string; count?: number; secondaryLabel?: string; rightLabel?: string; checked: boolean; onChange: () => void }) {
   const trailingLabel = rightLabel ?? (typeof count === "number" ? String(count) : null);
 
-  return <label className="flex min-h-9 cursor-pointer items-start gap-3 rounded-md px-0.5 py-1 text-[12px] font-medium leading-5 text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"><span className="flex min-w-0 flex-1 items-start gap-2"><input type="checkbox" className="mt-0.5 h-[14px] w-[14px] shrink-0 rounded border-slate-300 accent-[#0067DB] focus-visible:ring-2 focus-visible:ring-[#004BB8]/25" checked={checked} onChange={onChange} /><span className="min-w-0 flex-1"><span className="block break-words">{label}</span>{secondaryLabel ? <span className="block break-words text-[12px] font-medium leading-4 text-slate-500">{secondaryLabel}</span> : null}</span></span>{trailingLabel ? <span className="shrink-0 text-[12px] font-medium leading-5 text-slate-500">{trailingLabel}</span> : null}</label>;
+  return <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-1.5 py-1.5 text-[13px] font-medium leading-5 text-slate-700 transition hover:bg-[#F5F8FC] hover:text-slate-950"><span className="flex min-w-0 flex-1 items-center gap-2.5"><input type="checkbox" className="h-4 w-4 shrink-0 rounded border-slate-300 accent-[#0067DB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2" checked={checked} onChange={onChange} /><span className="min-w-0 flex-1"><span className="block break-words">{label}</span>{secondaryLabel ? <span className="block break-words text-xs font-medium leading-4 text-slate-500">{secondaryLabel}</span> : null}</span></span>{trailingLabel ? <span className="shrink-0 text-xs font-medium leading-5 text-slate-500">{trailingLabel}</span> : null}</label>;
 }

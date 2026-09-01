@@ -80,21 +80,22 @@ function ProviderOffer({
         </strong>
 
         <span
-          className="col-span-1 row-start-3 mt-0.5 min-w-0 self-center"
+          className="col-span-2 row-start-3 mt-0.5 flex min-w-0 items-center justify-between"
           data-provider-bottom-row
-          data-provider-amenities
         >
-          <HotelAmenityList
-            items={offer.amenities ?? []}
-            t={() => ""}
-            className="flex min-w-0 flex-nowrap items-center gap-x-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>li]:shrink-0 [&>li>span]:whitespace-nowrap"
-          />
-        </span>
-        <span
-          className="col-start-2 row-start-3 mt-0.5 self-center whitespace-nowrap text-right text-xs font-medium leading-4 text-[#075EE8]"
-          data-nightly-supporting-label
-        >
-          {perNightText.replace("{{price}}", "").trim()}
+          <span className="min-w-0" data-provider-amenities>
+            <HotelAmenityList
+              items={offer.amenities ?? []}
+              t={() => ""}
+              className="flex min-w-0 flex-nowrap items-center gap-x-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>li]:shrink-0 [&>li>span]:whitespace-nowrap"
+            />
+          </span>
+          <span
+            className="shrink-0 whitespace-nowrap text-right text-xs font-medium leading-4 text-[#075EE8]"
+            data-nightly-supporting-label
+          >
+            {perNightText.replace("{{price}}", "").trim()}
+          </span>
         </span>
       </span>
     </label>

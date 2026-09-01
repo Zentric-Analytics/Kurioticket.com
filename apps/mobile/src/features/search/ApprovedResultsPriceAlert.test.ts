@@ -13,15 +13,22 @@ test("Flight Results price alert maps its existing weights to Inter faces", () =
 test("Flight Results price alert has the approved compact, content-driven footprint", () => {
   const bannerStyle = source.slice(source.indexOf("flightAlert: {"), source.indexOf("flightAlertCopy: {"));
   assert.match(bannerStyle, /borderRadius: 10/);
-  assert.match(bannerStyle, /paddingHorizontal: 12/);
-  assert.match(bannerStyle, /paddingVertical: 4/);
+  assert.match(bannerStyle, /borderWidth: 1/);
+  assert.match(bannerStyle, /paddingHorizontal: 10/);
+  assert.match(bannerStyle, /paddingVertical: 0/);
   assert.match(bannerStyle, /flexDirection: "row"/);
-  assert.match(bannerStyle, /gap: 8/);
+  assert.match(bannerStyle, /gap: 4/);
   assert.doesNotMatch(bannerStyle, /(?:minHeight|height):/);
   assert.match(source, /flightPriceAlertItem: \{ paddingHorizontal: 14, paddingBottom: 5 \}/);
+  assert.match(source, /flightAlertCopy: \{ flex: 1, minWidth: 0, gap: 1 \}/);
   assert.match(source, /flightAlertSwitchTarget: \{ minWidth: 48, minHeight: 48/);
-  assert.match(source, /Get notified when fares change<\/Text>/);
+  assert.match(source, /numberOfLines=\{1\} ellipsizeMode="tail">Get notified when fares change<\/Text>/);
   assert.match(flightAlert, /flightAlertSubtitle, \{ color: supportTextColor \}/);
+});
+
+test("Flight Results price alert uses a neutral semantic surface and restrained border", () => {
+  assert.match(flightAlert, /\{ backgroundColor: theme\.surface, borderColor: theme\.priceAlertBorder \}/);
+  assert.doesNotMatch(flightAlert, /backgroundColor: theme\.priceAlertSurface/);
 });
 
 test("Flight Results toggle manages alerts in place rather than opening Price Alerts", () => {

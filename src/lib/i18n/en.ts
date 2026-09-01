@@ -4519,6 +4519,7 @@ export const translations: TranslationDictionary = {
   "carDetails.pickupReturn": "Pickup and return",
   "carDetails.comparePrices": "Compare prices",
   "carDetails.location": "Location",
+  "carDetails.continueDeal": "Continue deal",
   "carDetails.estimatedCataloguePrice":
     "Estimated catalogue price for your selected rental dates.",
   "carDetails.save": "Save",

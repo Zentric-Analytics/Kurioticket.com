@@ -19,73 +19,28 @@ function sourceBetween(source: string, startText: string, endText: string) {
   return source.slice(start, end);
 }
 
-test("source contract keeps getPrimaryCarOffer as the offer source passed to the hero", () => {
+test("source contract keeps getPrimaryCarOffer as the authoritative pricing offer", () => {
   assert.match(
     clientSource,
     /const primaryOffer = suppliedPrimaryOffer \?\? getPrimaryCarOffer\(car\);/,
   );
-  assert.match(
-    clientSource,
-    /<CarDetailsHero car={car} offer={primaryOffer} text={text} overlay=/,
-  );
   assert.doesNotMatch(clientSource, /car\.offers\[0\]/);
 });
 
-test("source contract maps both positive and negative offer states to localized hero text", () => {
-  assert.match(
-    heroSource,
-    /offer\.freeCancellation \? text\.freeCancellation : text\.nonRefundable/,
-  );
-  assert.match(
-    heroSource,
-    /offer\.taxesAndFeesIncluded \? text\.includedShort : text\.notIncluded/,
-  );
-  for (const key of [
-    "cancellation",
-    "freeCancellation",
-    "nonRefundable",
-    "taxesFees",
-    "includedShort",
-    "notIncluded",
+test("hero omits the duplicate cancellation and taxes benefit cards", () => {
+  assert.doesNotMatch(clientSource, /<CarDetailsHero car={car} offer=/);
+  for (const removedContract of [
+    "data-car-benefits",
+    "ReceiptText",
+    "ShieldCheck",
+    "offer.freeCancellation",
+    "offer.taxesAndFeesIncluded",
   ]) {
-    assert.match(
-      clientSource,
-      new RegExp(`${key}: copy\\("carDetails\\.${key}"\\)`),
+    assert.ok(
+      !heroSource.includes(removedContract),
+      `unexpected ${removedContract}`,
     );
   }
-});
-
-test("source contract renders no benefit structure when an offer is absent", () => {
-  assert.match(heroSource, /{offer && \( <dl data-car-benefits/);
-  assert.doesNotMatch(
-    heroSource,
-    /offer\?\.(freeCancellation|taxesAndFeesIncluded)/,
-  );
-});
-
-test("source contract places two separate semantic cards beneath amenities", () => {
-  const amenities = heroSource.indexOf('<ul className="grid grid-cols-2');
-  const benefits = heroSource.indexOf("<dl data-car-benefits");
-  assert.ok(
-    amenities >= 0 && benefits > amenities,
-    "benefits follow amenities",
-  );
-
-  const benefitSource = sourceBetween(
-    heroSource,
-    "<dl data-car-benefits",
-    "</dl>",
-  );
-  assert.equal(
-    benefitSource.match(
-      /<div className="flex min-w-0 items-center gap-2\.5 rounded-\[10px\] bg-slate-50 p-3 sm:gap-3 sm:border sm:border-slate-200">/g,
-    )?.length,
-    2,
-  );
-  assert.equal(benefitSource.match(/<dt /g)?.length, 2);
-  assert.equal(benefitSource.match(/<dd /g)?.length, 2);
-  assert.match(benefitSource, /grid grid-cols-2 gap-2\.5 sm:gap-3/);
-  assert.doesNotMatch(benefitSource, /h-\[|min-h-|max-h-|overflow-x/);
 });
 
 test("source contract keeps only pricing and the provider CTA in BookingSummary", () => {
@@ -109,7 +64,7 @@ test("source contract keeps only pricing and the provider CTA in BookingSummary"
   assert.match(summary, /carsResults\.perDay/);
   assert.match(
     summary,
-    /<button disabled className="mt-5 w-full rounded-lg bg-teal-dark px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-60" > {action.label} <\/button>/,
+    /<button disabled className="mt-5 w-full rounded-lg bg-blue px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-100" > {action.label} <\/button>/,
   );
   assert.doesNotMatch(clientSource, /function Term|<Term|<dl/);
 });
@@ -159,6 +114,17 @@ test("standalone details separate mobile model actions from the image while reta
   assert.match(heroSource, /{overlay}/);
   assert.match(clientSource, /useSavedCar\(car\.id\)/);
   assert.match(clientSource, /navigator\.share/);
+  assert.match(clientSource, /text-\[#075EE8\] md:text-white\/85/);
+  assert.match(
+    clientSource,
+    /isSaved \? "text-rose-500 md:text-rose-300" : "text-slate-700 md:text-white"/,
+  );
+  assert.match(
+    clientSource,
+    /rounded-lg border-0 bg-transparent text-slate-700 shadow-none/,
+  );
+  assert.match(clientSource, /items-center gap-0" data-car-details-actions/);
+  assert.match(heroSource, /className="shrink-0 text-slate-600"/);
   assert.match(clientSource, /<CarDetailsSectionNav activeTab={activeTab}/);
 
   const navSource = readFileSync(
@@ -186,28 +152,33 @@ test("price comparison aligns icon benefits and the per-day price on one row", (
   for (const icon of ["ShieldCheck", "Fuel", "Gauge"]) {
     assert.match(comparison, new RegExp(`Icon: ${icon}`));
   }
-  assert.match(comparison, /flex min-w-0 flex-nowrap items-end gap-x-0/);
+  assert.match(comparison, /flex min-w-0 flex-nowrap items-end gap-x-4/);
   assert.match(comparison, /inline-flex shrink-0 flex-col items-end/);
   assert.match(comparison, /carsResults\.perDay/);
+  assert.match(comparison, /text-\[#075EE8\] sm:text-xs/);
+  assert.match(comparison, /className="shrink-0 text-slate-600"/);
   assert.match(comparison, /carsResults\.fullToFull/);
+  assert.doesNotMatch(comparison, /carDetails\.estimatedCataloguePrice/);
   assert.doesNotMatch(comparison, /border-t border-slate-100/);
   assert.doesNotMatch(comparison, /feesIncludedShort/);
   assert.doesNotMatch(comparison, /row-start-4/);
 });
 
-test("source contract keeps desktop and mobile provider CTAs disabled, inert, teal, and localized", () => {
+test("source contract keeps desktop and mobile deal CTAs disabled, inert, blue, and localized", () => {
   const buttons =
     clientSource.match(
       /<button disabled className="[^"]+" > {action.label} <\/button>/g,
     ) ?? [];
   assert.equal(buttons.length, 2);
   for (const button of buttons) {
-    assert.match(button, /bg-teal-dark/);
+    assert.match(button, /bg-blue/);
     assert.match(button, /text-white/);
-    assert.match(button, /disabled:opacity-60/);
+    assert.match(button, /disabled:opacity-100/);
     assert.doesNotMatch(button, /bg-slate-200|text-slate-600/);
     assert.doesNotMatch(button, /href|onClick|bookingUrl/);
   }
+  assert.match(clientSource, /label: copy\("carDetails\.continueDeal"\)/);
+  assert.doesNotMatch(clientSource, /label: copy\("continueToProvider"\)/);
 });
 
 test("source contract does not restore removed booking-disabled messaging", () => {

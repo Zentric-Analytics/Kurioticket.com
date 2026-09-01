@@ -42,6 +42,7 @@ import {
   canonicalDate,
   COUNTRY_OPTIONS,
   displayAddress,
+  displayPhone,
   EMPTY_ADDRESS,
   filterSelectorOptions,
   GENDER_VALUES,
@@ -666,15 +667,14 @@ function PhoneControl({
 export function PersonalDetailsScreen() {
   const { theme } = useAppTheme();
   const insets = useSafeAreaInsets();
-  const { width, height } = useWindowDimensions();
+  const { width } = useWindowDimensions();
   const { locale } = useMobileLocalization();
   const c = personalDetailsCopy(locale);
   const navigation = useNavigation();
   const mounted = useRef(true),
     submitting = useRef(false),
     selectorVisibleRef = useRef(false),
-    successTimer = useRef<ReturnType<typeof setTimeout> | null>(null),
-    editButtonRef = useRef<View>(null);
+    successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [saved, setSaved] = useState<MobileProfile | null>(null),
     [draft, setDraft] = useState<MobileProfile>({}),
     [dateDraft, setDateDraft] = useState<DateDraft>(() => dateDraftFromValue()),
@@ -684,8 +684,6 @@ export function PersonalDetailsScreen() {
     [saving, setSaving] = useState(false),
     [error, setError] = useState(""),
     [success, setSuccess] = useState(""),
-    [toastBottom, setToastBottom] = useState(0),
-    [toastPositionReady, setToastPositionReady] = useState(false),
     [selector, setSelector] = useState<
       | "phone"
       | "gender"
@@ -703,34 +701,18 @@ export function PersonalDetailsScreen() {
       successTimer.current = null;
     }
     setSuccess("");
-    setToastPositionReady(false);
   }, []);
   const showSuccess = useCallback(
     (message: string) => {
       if (successTimer.current) clearTimeout(successTimer.current);
-      setToastBottom(insets.bottom + 16);
-      setToastPositionReady(false);
       setSuccess(message);
       successTimer.current = setTimeout(() => {
         successTimer.current = null;
         setSuccess("");
-        setToastPositionReady(false);
       }, 1500);
     },
-    [insets.bottom],
+    [],
   );
-  const updateToastPosition = useCallback(() => {
-    const button = editButtonRef.current;
-    if (!button) return;
-    button.measureInWindow((_x, y, _buttonWidth, buttonHeight) => {
-      const safeBottom = insets.bottom + 16;
-      const buttonVisible = y < height && y + buttonHeight > 0;
-      setToastBottom(
-        buttonVisible ? Math.max(safeBottom, height - y + 12) : safeBottom,
-      );
-      setToastPositionReady(true);
-    });
-  }, [height, insets.bottom]);
   useEffect(
     () => () => {
       if (successTimer.current) clearTimeout(successTimer.current);
@@ -912,6 +894,14 @@ export function PersonalDetailsScreen() {
     }
   };
   const goBack = () => (editing ? discard(true) : router.back());
+  const beginEditing = () => {
+    if (!saved) return;
+    setDraft(saved);
+    setDateDraft(dateDraftFromValue(saved.dateOfBirth));
+    setError("");
+    dismissSuccess();
+    setEditing(true);
+  };
   const openWeb = async () => {
     const base = getApiBaseUrl(Platform.OS, __DEV__);
     if (
@@ -936,7 +926,7 @@ export function PersonalDetailsScreen() {
   const values = [
     saved?.fullName,
     email,
-    saved?.phoneNumber,
+    displayPhone(saved?.phoneCountryCode || "", saved?.phoneNumber || ""),
     saved?.dateOfBirth ? safeDate(saved.dateOfBirth, locale) : "",
     saved?.gender,
     saved?.nationality,
@@ -1057,8 +1047,6 @@ export function PersonalDetailsScreen() {
           <ScrollView
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
-            onScroll={success ? updateToastPosition : undefined}
-            scrollEventThrottle={16}
             contentContainerStyle={s.scroll}
           >
             {error ? (
@@ -1072,43 +1060,44 @@ export function PersonalDetailsScreen() {
             ) : null}
             {!editing ? (
               <View>
-                <Text style={[s.description, { color: theme.muted }]}> 
+                <Text style={[s.description, { color: theme.muted }]}>
                   {c.description}
                 </Text>
-                {labels.map((label, index) => (
-                  <View
-                    key={label}
-                    accessible
-                    accessibilityLabel={`${label}: ${values[index] || c.missing}`}
-                    style={[
-                      s.detailRow,
-                      index > 0 && {
-                        borderTopColor: theme.border,
-                        borderTopWidth: StyleSheet.hairlineWidth,
-                      },
-                    ]}
-                  >
-                    <Text style={[s.label, { color: theme.muted }]}> 
-                      {label}
-                    </Text>
-                    <Text style={[s.value, { color: theme.text }]}> 
-                      {values[index] || c.missing}
-                    </Text>
-                  </View>
-                ))}
+                {labels.map((label, index) => {
+                  const value = values[index];
+                  return (
+                    <View
+                      key={label}
+                      accessible
+                      accessibilityLabel={`${label}: ${value || c.missing}`}
+                      style={[
+                        s.detailRow,
+                        index > 0 && {
+                          borderTopColor: theme.border,
+                          borderTopWidth: StyleSheet.hairlineWidth,
+                        },
+                      ]}
+                    >
+                      <Text style={[s.detailLabel, { color: theme.muted }]}>
+                        {label}
+                      </Text>
+                      <Text
+                        style={[
+                          s.value,
+                          { color: value ? theme.text : theme.muted },
+                          !value && s.missingValue,
+                        ]}
+                      >
+                        {value || c.missing}
+                      </Text>
+                    </View>
+                  );
+                })}
                 <Pressable
-                  ref={editButtonRef}
-                  onLayout={updateToastPosition}
                   accessibilityRole="button"
                   accessibilityLabel={c.edit}
-                  onPress={() => {
-                    setDraft(saved);
-                    setDateDraft(dateDraftFromValue(saved.dateOfBirth));
-                    setError("");
-                    dismissSuccess();
-                    setEditing(true);
-                  }}
-                  style={s.edit}
+                  onPress={beginEditing}
+                  style={s.readOnlyEdit}
                 >
                   <Text style={s.blue}>{c.edit}</Text>
                 </Pressable>
@@ -1297,8 +1286,7 @@ export function PersonalDetailsScreen() {
           style={[
             s.toastPosition,
             {
-              bottom: toastBottom,
-              opacity: toastPositionReady ? 1 : 0,
+              bottom: insets.bottom + 16,
             },
           ]}
         >
@@ -1446,19 +1434,29 @@ const s = StyleSheet.create({
     padding: 24,
   },
   scroll: { padding: 16, paddingBottom: 40 },
-  description: { fontSize: 14, lineHeight: 20, padding: 16, paddingBottom: 10 },
-  detailRow: { paddingHorizontal: 16, paddingVertical: 13, gap: 4 },
+  description: {
+    fontSize: 14,
+    lineHeight: 20,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 14,
+  },
+  detailRow: { paddingHorizontal: 16, paddingVertical: 12, gap: 3 },
+  detailLabel: { fontSize: 13, lineHeight: 18, fontWeight: "600" },
   label: { fontSize: 13, lineHeight: 18, fontWeight: "700", marginBottom: 5 },
-  value: { fontSize: 16, lineHeight: 23 },
-  edit: {
+  value: { fontSize: 16, lineHeight: 23, fontWeight: "500" },
+  missingValue: { fontWeight: "400" },
+  readOnlyEdit: {
     minHeight: 44,
     alignSelf: "flex-end",
+    alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
     borderColor: flowColors.blue,
     borderRadius: 9,
     paddingHorizontal: 18,
-    margin: 16,
+    marginHorizontal: 16,
+    marginTop: 8,
   },
   blue: { color: flowColors.blue, fontWeight: "800" },
   formContent: { gap: 12 },
