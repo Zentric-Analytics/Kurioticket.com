@@ -98,6 +98,11 @@ export function profilesDiffer(a: MobileProfile, b: MobileProfile) {
     ] as const
   ).some((key) => left[key] !== right[key]);
 }
+
+function addressString(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
+
 export function parseAddress(value: string): AddressParts {
   const trimmed = value.trim();
   if (!trimmed) return { ...EMPTY_ADDRESS };
@@ -107,14 +112,15 @@ export function parseAddress(value: string): AddressParts {
         trimmed.slice(STRUCTURED_ADDRESS_PREFIX.length),
       );
       if (raw && typeof raw === "object") {
-        const p = raw as Partial<AddressParts> & { streetAddress?: string };
+        const p = raw as Record<string, unknown>;
         return {
-          countryCode: p.countryCode || "",
-          addressLine1: p.addressLine1 || p.streetAddress || "",
-          apartmentOrSuite: p.apartmentOrSuite || "",
-          city: p.city || "",
-          stateOrRegion: p.stateOrRegion || "",
-          postalCode: p.postalCode || "",
+          countryCode: addressString(p.countryCode),
+          addressLine1:
+            addressString(p.addressLine1) || addressString(p.streetAddress),
+          apartmentOrSuite: addressString(p.apartmentOrSuite),
+          city: addressString(p.city),
+          stateOrRegion: addressString(p.stateOrRegion),
+          postalCode: addressString(p.postalCode),
         };
       }
     } catch {
