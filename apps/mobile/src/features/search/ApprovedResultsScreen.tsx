@@ -1884,9 +1884,9 @@ const s0 = StyleSheet.create({
   metadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 6, marginBottom: 4 },
   metadataFooterContainer: { width: "100%", alignItems: "center" },
   metadataRow: { maxWidth: "100%", flexDirection: "row", alignItems: "center", justifyContent: "center", alignSelf: "center", paddingTop: 1, paddingBottom: 2 },
-  metadataItem: { flexDirection: "row", alignItems: "center", gap: 3, minWidth: 0, flexShrink: 1 },
+  metadataItem: { flexDirection: "row", alignItems: "center", gap: 4, minWidth: 0, flexShrink: 1 },
   metadataText: { flexShrink: 1, minWidth: 0, fontSize: 13, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
-  metadataSeparator: { flexShrink: 0, fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium, marginHorizontal: 4 },
+  metadataSeparator: { flexShrink: 0, fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium, marginHorizontal: 7 },
   hotelCard: {
     minHeight: 260,
     borderWidth: 1,
