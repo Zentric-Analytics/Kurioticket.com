@@ -51,6 +51,7 @@ import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
 import {
   assignCarBadges,
   buildCarDetailsHref,
+  doesCarMatchFilterOption,
   filterCarResults,
   sortCarResults,
   type CarSort,
@@ -151,11 +152,14 @@ export function isSameCarsResultsHref(targetHref: string, currentHref: string) {
 type CarFilterOption = {
   id: string;
   labelKey: string;
+  label?: string;
+  count?: number;
 };
 
 type CarFilterGroup = {
   id: string;
   titleKey: string;
+  title?: string;
   options: CarFilterOption[];
 };
 
@@ -221,6 +225,16 @@ const driverAgeOptions = [
 ];
 
 const carFilterGroups: CarFilterGroup[] = [
+  {
+    id: "totalPrice",
+    titleKey: "",
+    title: "Total price",
+    options: [
+      { id: "totalUnder100", labelKey: "", label: "Under $100 total" },
+      { id: "total100To149", labelKey: "", label: "$100–$149 total" },
+      { id: "total150Plus", labelKey: "", label: "$150+ total" },
+    ],
+  },
   {
     id: "vehicleType",
     titleKey: "carsResults.vehicleType",
@@ -578,7 +592,7 @@ export function CarsResultsClient({
 }) {
   const { locale, t: dictionary } = useLocale();
   const router = useRouter();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
   const intlLocale = getCarsResultsIntlLocale(locale);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileSearchClosing, setMobileSearchClosing] = useState(false);
@@ -1193,8 +1207,8 @@ export function CarsResultsClient({
             placement === "mobile"
               ? "border-0 bg-transparent p-0 shadow-none ring-0"
               : isCompactSearch
-              ? "rounded-xl border-slate-200/85 bg-white/90 p-0 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]"
-              : "rounded-[1.15rem] p-1.5 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-slate-950/[0.025]",
+              ? "rounded-xl border border-slate-200 bg-white p-0 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]"
+              : "rounded-[1.15rem] border border-slate-200 bg-white p-1.5 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-white",
           )}
         >
           <div
@@ -1723,7 +1737,7 @@ export function CarsResultsClient({
               tabIndex={-1}
               onMouseDown={(event) => event.stopPropagation()}
               className={cn(
-                "w-full rounded-2xl border border-slate-200/90 bg-[#fbfaf7]/95 p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white/80 backdrop-blur-md",
+                "w-full rounded-2xl border border-slate-200 bg-white p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white",
                 returnToDifferentLocation ? "max-w-5xl" : "max-w-4xl",
               )}
             >
@@ -1862,7 +1876,7 @@ export function CarsResultsExperience({
   onSelectCar?: (car: NormalizedCarResult) => void;
 }) {
   const { locale, t: dictionary } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
   const intlLocale = getCarsResultsIntlLocale(locale);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -1873,8 +1887,8 @@ export function CarsResultsExperience({
   const mobileFiltersScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(
     null,
   );
-  const [selectedCarFilters, setSelectedCarFilters] =
-    useState<SelectedCarFilters>({});
+  const [selectedCarFilters, setSelectedCarFilters] = useState<SelectedCarFilters>({});
+  const filterUrlReadyRef = useRef(false);
   const [sort, setSort] = useState<CarSort>(
     presentation === "guided-planning" ? "lowestTotal" : "recommended",
   );
@@ -1924,6 +1938,43 @@ export function CarsResultsExperience({
   const activeFilterLabel = interpolate(t("carsResults.activeFilterCount"), {
     count: String(activeFilterCount),
   });
+  const visibleCarFilterGroups = useMemo(() => carFilterGroups.map((group) => ({
+    ...group,
+    options: group.options.map((option) => ({
+      ...option,
+      count: results.filter((car) => doesCarMatchFilterOption(car, option.id)).length,
+    })).filter((option) => option.count > 0),
+  })).filter((group) => group.options.length > 0), [results]);
+  const appliedCarFilters = useMemo(() => visibleCarFilterGroups.flatMap((group) =>
+    (selectedCarFilters[group.id] ?? []).map((optionId) => {
+      const option = group.options.find((item) => item.id === optionId);
+      return option ? { groupId: group.id, optionId, label: option.label ?? t(option.labelKey) } : null;
+    }).filter((item): item is { groupId: string; optionId: string; label: string } => Boolean(item))), [selectedCarFilters, visibleCarFilterGroups, t]);
+
+  useEffect(() => {
+    const readUrlFilters = () => {
+      const value = new URLSearchParams(window.location.search).get("filters");
+      const next: SelectedCarFilters = {};
+      value?.split(",").forEach((token) => {
+        const [group, option] = token.split(":");
+        if (group && option && visibleCarFilterGroups.some((item) => item.id === group && item.options.some((choice) => choice.id === option)))
+          next[group] = [...(next[group] ?? []), option];
+      });
+      setSelectedCarFilters(next);
+      filterUrlReadyRef.current = true;
+    };
+    readUrlFilters();
+    window.addEventListener("popstate", readUrlFilters);
+    return () => window.removeEventListener("popstate", readUrlFilters);
+  }, [visibleCarFilterGroups]);
+
+  useEffect(() => {
+    if (!filterUrlReadyRef.current) return;
+    const url = new URL(window.location.href);
+    const value = Object.entries(selectedCarFilters).flatMap(([group, options]) => options.map((option) => `${group}:${option}`)).join(",");
+    if (value) url.searchParams.set("filters", value); else url.searchParams.delete("filters");
+    window.history.replaceState(window.history.state, "", url);
+  }, [selectedCarFilters]);
   const guidedPlanning = presentation === "guided-planning";
   const carSortOptions: { value: CarSort; label: string }[] = guidedPlanning
     ? [
@@ -2372,10 +2423,10 @@ export function CarsResultsExperience({
             <CarFilters
               groups={
                 guidedPlanning
-                  ? carFilterGroups.filter(
+                  ? visibleCarFilterGroups.filter(
                       (group) => group.id !== "cancellation",
                     )
-                  : carFilterGroups
+                  : visibleCarFilterGroups
               }
               activeFilterCount={activeFilterCount}
               layout="desktop"
@@ -2417,7 +2468,7 @@ export function CarsResultsExperience({
                     }
                   >
                     <CarFilters
-                      groups={carFilterGroups}
+                      groups={visibleCarFilterGroups}
                       activeFilterCount={activeFilterCount}
                       layout="compact"
                       onClear={clearCarFilters}
@@ -2582,6 +2633,15 @@ export function CarsResultsExperience({
                     </div>
                   </div>
                 </div>
+                {appliedCarFilters.length > 0 ? (
+                  <div className="flex w-full flex-wrap gap-2" aria-label="Applied car filters">
+                    {appliedCarFilters.map((filter) => (
+                      <button key={`${filter.groupId}-${filter.optionId}`} type="button" onClick={() => toggleCarFilter(filter.groupId, filter.optionId)} className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[#B8CDED] bg-[#EEF5FF] px-3 text-xs font-semibold text-[#064A9B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35" aria-label={`Remove ${filter.label} filter`}>
+                        {filter.label}<X className="h-3.5 w-3.5" aria-hidden="true" />
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
               {resultsTransitioning || paginationTransitionPhase === "covering" ? (
                 <div
@@ -2768,10 +2828,10 @@ export function CarsResultsExperience({
             <CarFilters
               groups={
                 guidedPlanning
-                  ? carFilterGroups.filter(
+                  ? visibleCarFilterGroups.filter(
                       (group) => group.id !== "cancellation",
                     )
-                  : carFilterGroups
+                  : visibleCarFilterGroups
               }
               activeFilterCount={activeFilterCount}
               layout="mobile"
@@ -3804,7 +3864,7 @@ function FilterSection({
             compactOpen && "text-[#004BB8]",
           )}
         >
-          <span className="min-w-0 truncate">{t(group.titleKey)}</span>
+          <span className="min-w-0 truncate">{group.title ?? t(group.titleKey)}</span>
           <span className="flex shrink-0 items-center gap-2">
             {selectedOptions.length ? (
               <span className="min-w-5 rounded-full bg-[#E2EAF3] px-2 py-0.5 text-center text-[11px] font-semibold normal-case leading-4 tracking-normal text-[#235A9F] ring-1 ring-[#004BB8]/10 group-hover:bg-[#DCE8F6]">
@@ -3823,7 +3883,7 @@ function FilterSection({
         </button>
       ) : (
         <h3 className="text-sm font-extrabold uppercase tracking-[0.14em] text-slate-950">
-          {t(group.titleKey)}
+          {group.title ?? t(group.titleKey)}
         </h3>
       )}
       <div
@@ -3852,8 +3912,9 @@ function FilterSection({
             />
           );
           const label = (
-            <span className="min-w-0 flex-1 truncate">
-              {t(option.labelKey)}
+            <span className="flex min-w-0 flex-1 items-center gap-2">
+              <span className="min-w-0 flex-1 truncate">{option.label ?? t(option.labelKey)}</span>
+              {typeof option.count === "number" ? <span className="ms-auto text-xs font-medium tabular-nums text-slate-500">{option.count}</span> : null}
             </span>
           );
           return (

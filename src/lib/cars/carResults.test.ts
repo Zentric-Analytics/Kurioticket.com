@@ -28,6 +28,9 @@ const search: CarSearchParams = {
 };
 const cars = buildStaticCarResults(search);
 const expectations: Record<string, (c: (typeof cars)[number]) => boolean> = {
+  totalUnder100: (c) => (getPrimaryCarOffer(c)?.totalPrice ?? Infinity) < 100,
+  total100To149: (c) => { const total = getPrimaryCarOffer(c)?.totalPrice ?? Infinity; return total >= 100 && total < 150; },
+  total150Plus: (c) => (getPrimaryCarOffer(c)?.totalPrice ?? -Infinity) >= 150,
   smallCars: (c) => ["mini", "economy", "compact"].includes(c.category),
   mediumCars: (c) => ["intermediate", "full-size"].includes(c.category),
   suvs: (c) => c.category === "suv",
