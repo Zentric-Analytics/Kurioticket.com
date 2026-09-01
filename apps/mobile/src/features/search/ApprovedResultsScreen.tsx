@@ -9,6 +9,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Switch,
   Text,
@@ -27,7 +28,9 @@ import {
   Bell,
   FileText,
   Luggage,
+  MapPin,
   PlaneTakeoff,
+  Share2,
 } from "lucide-react-native";
 import { Heart } from "lucide-react-native";
 import {
@@ -118,6 +121,7 @@ import { signInHref } from "../auth/signInIntent";
 import { normalizePreferredAirlineFilterValues } from "./preferredAirlineDefaults";
 import { HotelFilterSheet, type HotelFilterSectionName } from "./HotelFilterSheet";
 import { activeHotelFilterCount, buildHotelFilterOptions, emptyHotelFilters, filterHotels, type HotelFilters } from "./hotelFilters";
+import { HotelCardAmenityList } from "./HotelCardAmenityList";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -1169,10 +1173,19 @@ function HotelCard({
   const canonical = useCanonicalSaved();
   const saved = canonical.items.some(item => item.type === "hotel" && ((item.payload as Record<string, unknown> | undefined)?.result as { id?: string } | undefined)?.id === result.id);
   const compact = useWindowDimensions().width < 430;
-  const score =
-    result.reviewScore == null
-      ? result.rating
-      : result.reviewScore * (10 / (result.reviewScale || 10));
+  const score = result.reviewScore == null
+    ? null
+    : result.reviewScore * (10 / (result.reviewScale || 10));
+  const classificationStars = result.classificationStars || Math.round(result.rating);
+  const rankLabel = rank === 0
+    ? "Best overall"
+    : rank === 1
+      ? "Great price"
+      : "Highly rated";
+  const shareHotel = () => {
+    const message = `${result.name} — ${result.location} — ${money(result.currency, result.pricePerNight)}/night`;
+    void Share.share({ message }).catch(() => undefined);
+  };
   return (
     <View style={[s0.hotelCard, compact && s0.hotelCardCompact]}>
       <View style={[s0.hotelImageWrap, compact && s0.hotelImageWrapCompact]}>
@@ -1188,48 +1201,46 @@ function HotelCard({
               : "Image unavailable"}
           </Text>
         </View>
-        <View style={s0.hotelBadge}>
-          <Badge>
-            {rank === 0
-              ? "Best overall"
-              : rank === 1
-                ? "Great price"
-                : "Highly rated"}
-          </Badge>
-        </View>
       </View>
       <View style={[s0.hotelCopy, compact && s0.hotelCopyCompact]}>
-        <Pressable onPress={() => void canonical.toggleHotel(result, params)} style={s0.heart}>
-          <FlowIcon name="heart" fill={saved ? ui.blue : "white"} />
-        </Pressable>
-        <Text style={s0.hotelName}>{result.name}</Text>
-        <Text style={s0.stars}>
-          {"★".repeat(result.classificationStars || Math.round(result.rating))}{" "}
-          <Text style={s0.sub}>
-            {" "}
-            · {result.neighbourhood || result.location}
-          </Text>
-        </Text>
-        <Text style={s0.review}>
-          <Text style={s0.score}>{score.toFixed(1)}</Text>{" "}
-          {score >= 9 ? "Exceptional" : score >= 8 ? "Excellent" : "Good"}
-          {result.reviewCount
-            ? `  ·  ${result.reviewCount.toLocaleString()} reviews`
-            : ""}
-        </Text>
-        {result.distanceFromCenter ? (
-          <Text style={s0.sub}>
-            ⌾ {result.distanceFromCenter} from city center
-          </Text>
-        ) : null}
-        <View style={s0.amenities}>
-          {result.amenities.slice(0, 3).map((a) => (
-            <Text key={a} style={s0.amenity}>
-              ● {a}
-            </Text>
-          ))}
+        <View style={s0.hotelTitleRow}>
+          <Text numberOfLines={2} style={s0.hotelName}>{result.name}</Text>
+          <View style={s0.hotelActions}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={saved ? `Remove ${result.name} from saved` : `Save ${result.name}`}
+              accessibilityState={{ selected: saved }}
+              onPress={() => void canonical.toggleHotel(result, params)}
+              style={s0.hotelAction}
+            >
+              <Heart accessible={false} size={20} color={ui.blue} fill={saved ? ui.blue : "none"} />
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Share ${result.name}`}
+              onPress={shareHotel}
+              style={s0.hotelAction}
+            >
+              <Share2 accessible={false} size={20} color={ui.blue} />
+            </Pressable>
+          </View>
         </View>
-        <Text style={s0.providers}>{result.provider}</Text>
+        <View style={s0.hotelBadge}><Badge>{rankLabel}</Badge></View>
+        <Text accessibilityLabel={`${classificationStars} star hotel`} style={s0.stars}>
+          {"★".repeat(classificationStars)}
+        </Text>
+        <View style={s0.hotelLocation}>
+          <MapPin accessible={false} size={14} strokeWidth={2} color={ui.muted} />
+          <Text numberOfLines={1} style={s0.sub}>{result.location}</Text>
+        </View>
+        {score == null ? null : (
+          <Text style={s0.review}>
+            <Text style={s0.score}>{score.toFixed(1)}</Text>{" "}
+            {score >= 9 ? "Exceptional" : score >= 8 ? "Excellent" : "Good"}
+            {result.reviewCount ? `  ·  ${result.reviewCount.toLocaleString()} reviews` : ""}
+          </Text>
+        )}
+        <HotelCardAmenityList amenities={result.amenities} />
         <View style={s0.hotelPrice}>
           <View style={s0.foundCopy}>
             <Text style={s0.bigPrice}>
@@ -1788,7 +1799,7 @@ const s0 = StyleSheet.create({
   metadataText: { flexShrink: 1, minWidth: 0, fontSize: 13, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
   metadataSeparator: { flexShrink: 0, fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium, marginHorizontal: 4 },
   hotelCard: {
-    height: 234,
+    minHeight: 260,
     borderWidth: 1,
     borderColor: ui.border,
     borderRadius: 13,
@@ -1796,7 +1807,7 @@ const s0 = StyleSheet.create({
     flexDirection: "row",
     backgroundColor: "white",
   },
-  hotelCardCompact: { height: 282 },
+  hotelCardCompact: { minHeight: 292 },
   hotelImageWrap: { width: "39%" },
   hotelImageWrapCompact: { width: "38%" },
   hotelImage: { width: "100%", height: "100%", backgroundColor: "#E9EDF3" },
@@ -1809,22 +1820,24 @@ const s0 = StyleSheet.create({
     borderRadius: 5,
   },
   overlayText: { color: "white", fontSize: 10, fontWeight: "700" },
-  hotelBadge: { position: "absolute", top: 10, left: 9 },
-  hotelCopy: { flex: 1, padding: 12, gap: 5 },
+  hotelBadge: { alignSelf: "flex-start" },
+  hotelCopy: { flex: 1, minWidth: 0, padding: 12, gap: 4 },
   hotelCopyCompact: { padding: 10 },
-  heart: { position: "absolute", right: 8, top: 7, zIndex: 2 },
+  hotelTitleRow: { flexDirection: "row", alignItems: "flex-start", minWidth: 0 },
+  hotelActions: { flexDirection: "row", flexShrink: 0, marginRight: -8, marginTop: -8 },
+  hotelAction: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   hotelName: {
+    flex: 1,
+    minWidth: 0,
     fontSize: 17,
     fontWeight: "900",
     color: ui.navy,
-    paddingRight: 30,
+    lineHeight: 20,
   },
   stars: { color: "#FFB800", fontSize: 14 },
+  hotelLocation: { flexDirection: "row", alignItems: "center", gap: 5, minWidth: 0 },
   review: { fontSize: 11, color: ui.navy },
   score: { backgroundColor: ui.blue, color: "white", fontWeight: "900" },
-  amenities: { gap: 3 },
-  amenity: { color: ui.green, fontSize: 10 },
-  providers: { fontSize: 10, color: ui.muted },
   hotelPrice: {
     marginTop: "auto",
     flexDirection: "row",
