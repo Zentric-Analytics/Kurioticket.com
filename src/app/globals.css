@@ -603,7 +603,7 @@ textarea {
 .flight-card-details { grid-area: details; }
 
 .flight-card-leg-grid {
-  grid-template-columns: minmax(105px, 0.8fr) minmax(190px, 1.5fr) minmax(
+  grid-template-columns: minmax(112px, 0.8fr) minmax(180px, 1.5fr) minmax(
       105px,
       0.75fr
     );
@@ -611,17 +611,27 @@ textarea {
 }
 
 .flight-card-time {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
+  white-space: nowrap;
 }
 
-.flight-card-leg-logo .flight-card-logo-box {
-  height: 2.25rem;
-  width: 2.25rem;
-}
-
-.flight-card-leg-logo .flight-card-logo-image {
+.flight-card-inline-logo {
   height: 1.75rem;
   width: 1.75rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.flight-card-inline-logo-image {
+  height: 1.5rem;
+  width: 1.5rem;
+}
+
+.flight-card-inline-logo-icon {
+  height: 1rem;
+  width: 1rem;
 }
 
 .flight-card-price {
@@ -686,7 +696,7 @@ textarea {
   }
 
   .flight-card-leg-grid {
-    grid-template-columns: minmax(96px, 0.8fr) minmax(150px, 1.35fr) minmax(
+    grid-template-columns: minmax(106px, 0.8fr) minmax(142px, 1.35fr) minmax(
         100px,
         0.75fr
       );
@@ -694,7 +704,7 @@ textarea {
   }
 
   .flight-card-time {
-    font-size: 1.25rem;
+    font-size: 1.0625rem;
   }
 
   .flight-card-price {
