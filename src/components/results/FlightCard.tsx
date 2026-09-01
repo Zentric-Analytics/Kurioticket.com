@@ -93,7 +93,7 @@ export function FlightCard({
     <Card
       data-flight-result-card
       className={cn(
-        "relative w-full overflow-hidden border-[#D8E1EC] bg-white shadow-[0_10px_28px_rgba(15,23,42,0.07)] transition hover:-translate-y-0.5 hover:border-[#CBD6E2] hover:shadow-[0_16px_34px_rgba(15,23,42,0.095)] lg:rounded-xl lg:border-[#CDD8E5] lg:bg-[#FEFFFF] lg:shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)]",
+        "relative w-full overflow-hidden rounded-[14px] border-[#D8E1EC] bg-white shadow-[0_12px_30px_-24px_rgba(15,23,42,0.5)] transition duration-200 hover:-translate-y-0.5 hover:border-[#BFCEDF] hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.4)] lg:rounded-2xl lg:border-[#CDD8E5] lg:bg-[#FEFFFF]",
         isAccented && "ring-1 ring-slate-950/[0.03]",
       )}
       onClick={(event) => {
