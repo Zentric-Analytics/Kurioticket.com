@@ -1331,6 +1331,7 @@ export function CarsResultsClient({
                     searchSurfaceRefs.dropoffInputRef.current?.focus();
                   }}
                   placeholder={t("carsResults.sameAsPickup")}
+                  showClearButton={false}
                   value={dropoffLocation}
                   clearLabel={t("carsSearch.clearReturnLocation")}
                   strings={locationStrings}

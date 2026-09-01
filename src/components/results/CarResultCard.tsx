@@ -133,6 +133,7 @@ export function CarResultCard({
       >
         <Heart
           size={18}
+          className="translate-x-1.5"
           fill={isSaved ? "currentColor" : "none"}
           aria-hidden="true"
         />
@@ -143,7 +144,7 @@ export function CarResultCard({
         onClick={() => void shareCar()}
         className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-transparent text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
       >
-        <Share2 size={18} aria-hidden="true" />
+        <Share2 size={18} className="-translate-x-1.5" aria-hidden="true" />
       </button>
     </div>
   );
@@ -353,9 +354,9 @@ export function CarResultCard({
       >
         <div
           data-region="image"
-          className="col-span-2 row-start-1 flex items-center border-b border-[#E2E8F0] bg-slate-50 md:col-span-1 md:col-start-1 md:row-span-2 md:row-start-1 md:border-b-0 md:border-e md:p-2.5"
+          className="col-span-2 row-start-1 flex items-stretch border-b border-[#E2E8F0] bg-slate-50 md:col-span-1 md:col-start-1 md:row-span-2 md:row-start-1 md:border-b-0 md:border-e"
         >
-          <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 md:rounded-xl">
+          <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 md:aspect-auto md:h-full md:min-h-[220px]">
             <CarResultImage
               imageUrl={car.imageUrl}
               imageAlt={car.imageAlt}
@@ -522,11 +523,6 @@ export function CarResultCard({
                 {dailyDisplayPrice.formatted}
               </span>
             </p>
-            {!guidedPlanning && offer.taxesAndFeesIncluded && (
-              <p className="mt-1.5 text-xs leading-4 text-slate-500">
-                Taxes and fees included
-              </p>
-            )}
           </div>
           {guidedPlanning && (
             <p className="mt-2 text-xs leading-4 text-slate-600">
