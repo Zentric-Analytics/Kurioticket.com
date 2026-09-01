@@ -98,6 +98,25 @@ test("structured addresses round trip, trim display punctuation, and legacy valu
     "Kuola, C2 legacy\nIbadan, Ibadan 1111111122222\nArgentina",
   );
 });
+test("malformed structured address members cannot crash read-only display", () => {
+  const malformed = `${STRUCTURED_ADDRESS_PREFIX}${JSON.stringify({
+    countryCode: "NG",
+    addressLine1: 7,
+    apartmentOrSuite: { value: "Suite 2" },
+    city: " Lagos ",
+    stateOrRegion: false,
+    postalCode: null,
+  })}`;
+  assert.deepEqual(parseAddress(malformed), {
+    countryCode: "NG",
+    addressLine1: "",
+    apartmentOrSuite: "",
+    city: " Lagos ",
+    stateOrRegion: "",
+    postalCode: "",
+  });
+  assert.equal(displayAddress(malformed), "Lagos\nNigeria");
+});
 test("English and Spanish Personal details labels and fallbacks exist", () => {
   for (const locale of ["en-us", "es-es"] as const) {
     const copy = personalDetailsCopy(locale);
