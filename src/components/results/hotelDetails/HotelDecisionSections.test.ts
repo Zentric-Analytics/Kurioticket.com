@@ -281,7 +281,7 @@ test("location preserves map and Street View while facts use catalogue metadata"
   ])
     assert.ok(standalone.includes(`propertyDetails.${field}`), field);
   for (const contract of [
-    "buildHotelMapEmbedUrl",
+    "buildGoogleHotelMapEmbedUrl",
     "buildGoogleHotelStreetViewEmbedUrl",
     "Why this location works",
   ])

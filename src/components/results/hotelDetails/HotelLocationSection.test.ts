@@ -9,7 +9,7 @@ const source = readFileSync(
 
 test("renders a factual responsive hotel location card", () => {
   for (const contract of [
-    "buildHotelMapEmbedUrl({",
+    "buildGoogleHotelMapEmbedUrl({",
     "buildGoogleHotelStreetViewEmbedUrl({",
     "NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY",
     "data-hotel-location-section",
@@ -31,6 +31,9 @@ test("renders a factual responsive hotel location card", () => {
 test("keeps the stable in-page location anchor without an external directions link", () => {
   assert.match(source, /id="hotel-location"/);
   assert.doesNotMatch(source, /directionsUrl|Show directions|maps\/dir/);
+});
+test("never substitutes a non-Google map when Google configuration is absent", () => {
+  assert.doesNotMatch(source, /buildHotelMapEmbedUrl|OpenStreetMap|openstreetmap/i);
 });
 test("keeps location-fit and accessibility details visibly expanded", () => {
   assert.match(source, /stayFitFacts\.map/);

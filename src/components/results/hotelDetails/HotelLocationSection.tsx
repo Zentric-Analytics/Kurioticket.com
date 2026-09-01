@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import type { PublicHotelPropertyDetails } from "@/lib/types";
 import {
-  buildHotelMapEmbedUrl,
+  buildGoogleHotelMapEmbedUrl,
   buildGoogleHotelStreetViewEmbedUrl,
 } from "@/lib/hotels/hotelMap";
 
@@ -47,7 +47,7 @@ export function HotelLocationSection({
   const [view, setView] = useState<"map" | "streetview">("map");
   const googleMapsEmbedApiKey =
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY;
-  const mapUrl = buildHotelMapEmbedUrl({
+  const mapUrl = buildGoogleHotelMapEmbedUrl({
     hotelName,
     propertyDetails,
     googleMapsEmbedApiKey,
