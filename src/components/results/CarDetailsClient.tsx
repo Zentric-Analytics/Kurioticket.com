@@ -204,10 +204,11 @@ export function CarDetailsExperience({
                     aria-label={`${isSaved ? copy("carDetails.unsave") : copy("carDetails.save")} ${car.modelName}`}
                     aria-pressed={isSaved}
                     onClick={toggleSavedCar}
-                    className={`focus-ring flex size-11 items-center justify-center rounded-lg border-0 bg-transparent shadow-none transition hover:bg-slate-100 md:size-10 md:rounded-full md:border md:border-white/35 md:bg-slate-950/35 md:backdrop-blur-sm md:hover:bg-slate-950/55 ${isSaved ? "text-rose-500 md:text-rose-300" : "text-slate-700 md:text-white"}`}
+                    className={`focus-ring flex size-11 items-center justify-center rounded-lg border-0 bg-transparent shadow-none transition hover:bg-slate-100 md:rounded-full md:border md:border-white/35 md:bg-slate-950/35 md:backdrop-blur-sm md:hover:bg-slate-950/55 ${isSaved ? "text-rose-500 md:text-rose-300" : "text-slate-700 md:text-white"}`}
                   >
                     <Heart
                       size={20}
+                      className="translate-x-1.5"
                       fill={isSaved ? "currentColor" : "none"}
                       aria-hidden="true"
                     />
@@ -216,9 +217,9 @@ export function CarDetailsExperience({
                     type="button"
                     aria-label={`${copy("carDetails.share")} ${car.modelName}`}
                     onClick={() => void shareCar()}
-                    className="focus-ring flex size-11 items-center justify-center rounded-lg border-0 bg-transparent text-slate-700 shadow-none transition hover:bg-slate-100 md:size-10 md:rounded-full md:border md:border-white/35 md:bg-slate-950/35 md:text-white md:backdrop-blur-sm md:hover:bg-slate-950/55"
+                    className="focus-ring flex size-11 items-center justify-center rounded-lg border-0 bg-transparent text-slate-700 shadow-none transition hover:bg-slate-100 md:rounded-full md:border md:border-white/35 md:bg-slate-950/35 md:text-white md:backdrop-blur-sm md:hover:bg-slate-950/55"
                   >
-                    <Share2 size={19} aria-hidden="true" />
+                    <Share2 size={19} className="-translate-x-1.5" aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -430,31 +431,33 @@ function CarPriceComparisonSection({
           >
             <span className="size-2.5 rounded-full bg-[#075EE8]" />
           </span>
-          <div className="col-span-2 mt-5 flex min-w-0 flex-nowrap items-end gap-x-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {facts.map(({ label, Icon }) => (
-              <span
-                key={label}
-                className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap text-[11px] font-semibold text-slate-700 sm:gap-1.5 sm:text-xs"
-              >
-                <Icon
-                  size={14}
-                  strokeWidth={2}
-                  className="shrink-0 text-slate-600"
-                  aria-hidden="true"
-                />
-                {label}
-              </span>
-            ))}
-            <span className="ms-auto inline-flex shrink-0 flex-col items-end whitespace-nowrap text-right leading-none">
+          <div className="col-span-2 mt-5 flex min-w-0 items-end gap-x-4 overflow-visible">
+            <div className="flex min-w-0 flex-1 flex-nowrap items-end gap-x-4 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {facts.map(({ label, Icon }) => (
+                <span
+                  key={label}
+                  className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap text-[11px] font-semibold text-slate-700 sm:gap-1.5 sm:text-xs"
+                >
+                  <Icon
+                    size={14}
+                    strokeWidth={2}
+                    className="shrink-0 text-slate-600"
+                    aria-hidden="true"
+                  />
+                  {label}
+                </span>
+              ))}
+            </div>
+            <span className="ms-auto inline-flex min-h-9 shrink-0 flex-col items-end justify-end overflow-visible whitespace-nowrap text-right">
               <strong
-                className="text-xl font-extrabold tracking-tight text-slate-950 tabular-nums"
+                className="text-xl font-extrabold leading-5 tracking-tight text-slate-950 tabular-nums"
                 dir="ltr"
                 title={daily.title}
                 aria-label={daily.ariaLabel}
               >
                 {daily.formatted}
               </strong>
-              <span className="mt-1 text-[11px] font-medium text-[#075EE8] sm:text-xs">
+              <span className="inline-flex min-h-4 items-center overflow-visible text-[11px] font-medium leading-4 text-[#075EE8] sm:text-xs">
                 {copy("carsResults.perDay")}
               </span>
             </span>

@@ -41,7 +41,7 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 import { CarResultCard } from "@/components/results/CarResultCard";
 import { CarCardSkeleton } from "@/components/ui/Skeleton";
-import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion, scrollToResultsAndWait } from "@/lib/results/paginationTransition";
+import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
 import {
   CAR_RESULTS_PAGE_SIZE,
   getCarPaginationItems,
@@ -51,6 +51,7 @@ import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
 import {
   assignCarBadges,
   buildCarDetailsHref,
+  doesCarMatchFilterOption,
   filterCarResults,
   sortCarResults,
   type CarSort,
@@ -61,6 +62,8 @@ import type {
   CarSearchParams,
   NormalizedCarResult,
 } from "@/lib/cars/types";
+
+type CarsPaginationTransitionPhase = "idle" | "covering" | "settling";
 import { shouldShowDesktopStickySearch } from "@/lib/search/desktopStickySearch";
 import {
   calculateCompactFilterPlacement,
@@ -149,11 +152,14 @@ export function isSameCarsResultsHref(targetHref: string, currentHref: string) {
 type CarFilterOption = {
   id: string;
   labelKey: string;
+  label?: string;
+  count?: number;
 };
 
 type CarFilterGroup = {
   id: string;
   titleKey: string;
+  title?: string;
   options: CarFilterOption[];
 };
 
@@ -219,6 +225,16 @@ const driverAgeOptions = [
 ];
 
 const carFilterGroups: CarFilterGroup[] = [
+  {
+    id: "totalPrice",
+    titleKey: "",
+    title: "Total price",
+    options: [
+      { id: "totalUnder100", labelKey: "", label: "Under $100 total" },
+      { id: "total100To149", labelKey: "", label: "$100–$149 total" },
+      { id: "total150Plus", labelKey: "", label: "$150+ total" },
+    ],
+  },
   {
     id: "vehicleType",
     titleKey: "carsResults.vehicleType",
@@ -576,7 +592,7 @@ export function CarsResultsClient({
 }) {
   const { locale, t: dictionary } = useLocale();
   const router = useRouter();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
   const intlLocale = getCarsResultsIntlLocale(locale);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileSearchClosing, setMobileSearchClosing] = useState(false);
@@ -1191,8 +1207,8 @@ export function CarsResultsClient({
             placement === "mobile"
               ? "border-0 bg-transparent p-0 shadow-none ring-0"
               : isCompactSearch
-              ? "rounded-xl border-slate-200/85 bg-white/90 p-0 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]"
-              : "rounded-[1.15rem] p-1.5 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-slate-950/[0.025]",
+              ? "rounded-xl border border-slate-200 bg-white p-0 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]"
+              : "rounded-[1.15rem] border border-slate-200 bg-white p-1.5 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-white",
           )}
         >
           <div
@@ -1315,6 +1331,7 @@ export function CarsResultsClient({
                     searchSurfaceRefs.dropoffInputRef.current?.focus();
                   }}
                   placeholder={t("carsResults.sameAsPickup")}
+                  showClearButton={false}
                   value={dropoffLocation}
                   clearLabel={t("carsSearch.clearReturnLocation")}
                   strings={locationStrings}
@@ -1721,7 +1738,7 @@ export function CarsResultsClient({
               tabIndex={-1}
               onMouseDown={(event) => event.stopPropagation()}
               className={cn(
-                "w-full rounded-2xl border border-slate-200/90 bg-[#fbfaf7]/95 p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white/80 backdrop-blur-md",
+                "w-full rounded-2xl border border-slate-200 bg-white p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white",
                 returnToDifferentLocation ? "max-w-5xl" : "max-w-4xl",
               )}
             >
@@ -1860,9 +1877,10 @@ export function CarsResultsExperience({
   onSelectCar?: (car: NormalizedCarResult) => void;
 }) {
   const { locale, t: dictionary } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
   const intlLocale = getCarsResultsIntlLocale(locale);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [quickFilterGroupId, setQuickFilterGroupId] = useState<string | null>(null);
   const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersModalityRef = useRef<OverlayActivationModality>("programmatic");
@@ -1871,8 +1889,8 @@ export function CarsResultsExperience({
   const mobileFiltersScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(
     null,
   );
-  const [selectedCarFilters, setSelectedCarFilters] =
-    useState<SelectedCarFilters>({});
+  const [selectedCarFilters, setSelectedCarFilters] = useState<SelectedCarFilters>({});
+  const filterUrlReadyRef = useRef(false);
   const [sort, setSort] = useState<CarSort>(
     presentation === "guided-planning" ? "lowestTotal" : "recommended",
   );
@@ -1881,6 +1899,7 @@ export function CarsResultsExperience({
   const [carsSortOpen, setCarsSortOpen] = useState(false);
   const [resultsTransitioning, setResultsTransitioning] = useState(false);
   const [paginationPendingPage, setPaginationPendingPage] = useState<number | null>(null);
+  const [paginationTransitionPhase, setPaginationTransitionPhase] = useState<CarsPaginationTransitionPhase>("idle");
   const [paginationMinHeight, setPaginationMinHeight] = useState<number | null>(null);
   const [paginationRevealing, setPaginationRevealing] = useState(false);
   const paginationListRef = useRef<HTMLDivElement | null>(null);
@@ -1921,6 +1940,46 @@ export function CarsResultsExperience({
   const activeFilterLabel = interpolate(t("carsResults.activeFilterCount"), {
     count: String(activeFilterCount),
   });
+  const visibleCarFilterGroups = useMemo(() => carFilterGroups.map((group) => ({
+    ...group,
+    options: group.options.map((option) => ({
+      ...option,
+      count: results.filter((car) => doesCarMatchFilterOption(car, option.id)).length,
+    })).filter((option) => option.count > 0),
+  })).filter((group) => group.options.length > 0), [results]);
+  const appliedCarFilters = useMemo(() => visibleCarFilterGroups.flatMap((group) =>
+    (selectedCarFilters[group.id] ?? []).map((optionId) => {
+      const option = group.options.find((item) => item.id === optionId);
+      return option ? { groupId: group.id, optionId, label: option.label ?? t(option.labelKey) } : null;
+    }).filter((item): item is { groupId: string; optionId: string; label: string } => Boolean(item))), [selectedCarFilters, visibleCarFilterGroups, t]);
+  const activeQuickFilterGroup = quickFilterGroupId
+    ? visibleCarFilterGroups.find((group) => group.id === quickFilterGroupId) ?? null
+    : null;
+
+  useEffect(() => {
+    const readUrlFilters = () => {
+      const value = new URLSearchParams(window.location.search).get("filters");
+      const next: SelectedCarFilters = {};
+      value?.split(",").forEach((token) => {
+        const [group, option] = token.split(":");
+        if (group && option && visibleCarFilterGroups.some((item) => item.id === group && item.options.some((choice) => choice.id === option)))
+          next[group] = [...(next[group] ?? []), option];
+      });
+      setSelectedCarFilters(next);
+      filterUrlReadyRef.current = true;
+    };
+    readUrlFilters();
+    window.addEventListener("popstate", readUrlFilters);
+    return () => window.removeEventListener("popstate", readUrlFilters);
+  }, [visibleCarFilterGroups]);
+
+  useEffect(() => {
+    if (!filterUrlReadyRef.current) return;
+    const url = new URL(window.location.href);
+    const value = Object.entries(selectedCarFilters).flatMap(([group, options]) => options.map((option) => `${group}:${option}`)).join(",");
+    if (value) url.searchParams.set("filters", value); else url.searchParams.delete("filters");
+    window.history.replaceState(window.history.state, "", url);
+  }, [selectedCarFilters]);
   const guidedPlanning = presentation === "guided-planning";
   const carSortOptions: { value: CarSort; label: string }[] = guidedPlanning
     ? [
@@ -1937,12 +1996,17 @@ export function CarsResultsExperience({
   const selectedCarSortLabel =
     carSortOptions.find((option) => option.value === sort)?.label ??
     carSortOptions[0].label;
-  const quickFilters = [
-    { group: "transmission", option: "automatic", label: t("carsResults.automatic") },
-    { group: "vehicleType", option: "suvs", label: t("carsResults.suvs") },
-    { group: "cancellation", option: "freeCancellation", label: t("carsResults.freeCancellation") },
-    { group: "mileagePolicy", option: "unlimitedMileage", label: t("carsResults.unlimitedMileage") },
-  ] as const;
+  const quickFilterGroups = [
+    "totalPrice",
+    "vehicleType",
+    "transmission",
+    "seats",
+    "cancellation",
+    "pickupType",
+  ].flatMap((id) => {
+    const group = visibleCarFilterGroups.find((item) => item.id === id);
+    return group ? [group] : [];
+  });
   const badges = useMemo(
     () => (guidedPlanning ? new Map() : assignCarBadges(results)),
     [guidedPlanning, results],
@@ -1977,12 +2041,34 @@ export function CarsResultsExperience({
     if (paginationPendingPage !== null || page === currentPage) return;
     setPaginationMinHeight(paginationListRef.current?.getBoundingClientRect().height ?? null);
     setPaginationPendingPage(page);
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-    await scrollToResultsAndWait({ top: 0 }, { behavior: "instant" });
+    setPaginationTransitionPhase("covering");
+    const previousRootOverflowAnchor = document.documentElement.style.overflowAnchor;
+    const previousBodyOverflowAnchor = document.body.style.overflowAnchor;
+    document.documentElement.style.overflowAnchor = "none";
+    document.body.style.overflowAnchor = "none";
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    const positionResultsStart = () => {
+      const anchor = resultsStartRef.current;
+      if (!anchor) return;
+      const stickyOffset = window.innerWidth < 640 ? 8 : 160;
+      const top = Math.max(0, window.scrollY + anchor.getBoundingClientRect().top - stickyOffset);
+      window.scrollTo({ top, behavior: "auto" });
+    };
     setCurrentPage(page);
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-    setPaginationPendingPage(null);
+    setPaginationTransitionPhase("settling");
     setPaginationMinHeight(null);
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 460));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    positionResultsStart();
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 180));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    setPaginationTransitionPhase("idle");
+    setPaginationPendingPage(null);
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    window.setTimeout(() => {
+      document.documentElement.style.overflowAnchor = previousRootOverflowAnchor;
+      document.body.style.overflowAnchor = previousBodyOverflowAnchor;
+    }, 240);
     if (!prefersReducedResultsMotion()) {
       setPaginationRevealing(true);
       window.setTimeout(() => setPaginationRevealing(false), PAGINATION_REVEAL_MS);
@@ -2053,7 +2139,7 @@ export function CarsResultsExperience({
       mobileFiltersScrollLockRef.current?.();
       mobileFiltersScrollLockRef.current = null;
     };
-    if (!filtersOpen || typeof window === "undefined") {
+    if ((!filtersOpen && !quickFilterGroupId) || typeof window === "undefined") {
       releaseExistingLock();
       return releaseExistingLock;
     }
@@ -2104,7 +2190,7 @@ export function CarsResultsExperience({
       releaseExistingLock();
       if (shouldRestoreFocus) restoreOverlayLauncherFocus(launcher, mobileFiltersModalityRef.current);
     };
-  }, [filtersOpen]);
+  }, [filtersOpen, quickFilterGroupId]);
 
   useEffect(() => {
     if (presentation !== "standalone" || typeof window === "undefined")
@@ -2257,7 +2343,7 @@ export function CarsResultsExperience({
     return (
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-[90] border-b border-slate-200/80 bg-white px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] transition-all duration-200 ease-out sm:hidden",
+          "fixed inset-x-0 top-0 z-[90] bg-white px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-[0_8px_24px_-22px_rgba(15,23,42,0.5)] transition-[transform,opacity] duration-200 ease-out sm:hidden",
           mobileCompactToolbarVisible
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none -translate-y-2 opacity-0",
@@ -2322,6 +2408,8 @@ export function CarsResultsExperience({
   };
 
   return (
+    <>
+    {paginationTransitionPhase !== "idle" && typeof document !== "undefined" ? createPortal(<CarsResultsPageTransitionSkeleton />, document.body) : null}
     <section
       className={cn("min-w-0", embedded ? "mt-6" : "w-full")}
       aria-labelledby={resultHeadingId}
@@ -2340,10 +2428,10 @@ export function CarsResultsExperience({
             <CarFilters
               groups={
                 guidedPlanning
-                  ? carFilterGroups.filter(
+                  ? visibleCarFilterGroups.filter(
                       (group) => group.id !== "cancellation",
                     )
-                  : carFilterGroups
+                  : visibleCarFilterGroups
               }
               activeFilterCount={activeFilterCount}
               layout="desktop"
@@ -2385,7 +2473,7 @@ export function CarsResultsExperience({
                     }
                   >
                     <CarFilters
-                      groups={carFilterGroups}
+                      groups={visibleCarFilterGroups}
                       activeFilterCount={activeFilterCount}
                       layout="compact"
                       onClear={clearCarFilters}
@@ -2410,7 +2498,7 @@ export function CarsResultsExperience({
                 {!guidedPlanning ? (
                   <div
                     data-cars-results-quick-filters
-                    className="scrollbar-hide flex w-full flex-nowrap gap-2 overflow-x-auto overscroll-x-contain pb-0.5 lg:hidden"
+                    className="scrollbar-hide -mx-1 flex w-[calc(100%+0.5rem)] flex-nowrap gap-2 overflow-x-auto overscroll-x-contain px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden"
                   >
                     <button
                       ref={filtersButtonRef}
@@ -2423,22 +2511,25 @@ export function CarsResultsExperience({
                         ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount))
                         : t("filters")}
                     </button>
-                    {quickFilters.map(({ group, option, label }) => {
-                      const active = selectedCarFilters[group]?.includes(option) ?? false;
+                    {quickFilterGroups.map((group) => {
+                      const count = selectedCarFilters[group.id]?.length ?? 0;
                       return (
                         <button
-                          key={option}
+                          key={group.id}
                           type="button"
-                          aria-pressed={active}
-                          onClick={() => toggleCarFilter(group, option)}
+                          aria-haspopup="dialog"
+                          aria-expanded={quickFilterGroupId === group.id}
+                          onClick={() => setQuickFilterGroupId(group.id)}
                           className={cn(
-                            "inline-flex min-h-11 shrink-0 items-center rounded-lg border px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
-                            active
+                            "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
+                            count > 0
                               ? "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"
                               : "border-slate-300 bg-white text-[#07133B] hover:bg-slate-50",
                           )}
                         >
-                          {label}
+                          {group.title ?? t(group.titleKey)}
+                          {count > 0 ? <span className="rounded-full bg-[#004BB8] px-1.5 py-0.5 text-[10px] text-white">{count}</span> : null}
+                          <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
                         </button>
                       );
                     })}
@@ -2550,8 +2641,17 @@ export function CarsResultsExperience({
                     </div>
                   </div>
                 </div>
+                {appliedCarFilters.length > 0 ? (
+                  <div className="flex w-full flex-wrap gap-2" aria-label="Applied car filters">
+                    {appliedCarFilters.map((filter) => (
+                      <button key={`${filter.groupId}-${filter.optionId}`} type="button" onClick={() => toggleCarFilter(filter.groupId, filter.optionId)} className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[#B8CDED] bg-[#EEF5FF] px-3 text-xs font-semibold text-[#064A9B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35" aria-label={`Remove ${filter.label} filter`}>
+                        {filter.label}<X className="h-3.5 w-3.5" aria-hidden="true" />
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
-              {resultsTransitioning || paginationPendingPage !== null ? (
+              {resultsTransitioning || paginationTransitionPhase === "covering" ? (
                 <div
                   ref={paginationListRef}
                   data-cars-results-card-list
@@ -2704,19 +2804,19 @@ export function CarsResultsExperience({
           role="dialog"
           aria-modal="true"
           aria-labelledby="cars-guided-filters-title"
-          className="fixed inset-0 z-[10000] flex h-[100dvh] flex-col overflow-hidden bg-white lg:hidden"
+          className="fixed inset-0 z-[10000] flex h-[100dvh] flex-col overflow-hidden bg-[#F7F9FC] lg:hidden"
         >
-          <div className="shrink-0 border-b border-slate-200 bg-white px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))]">
+          <div className="shrink-0 bg-white px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] shadow-[0_8px_24px_-22px_rgba(15,23,42,0.5)]">
             <div className="flex items-center justify-between gap-3">
-              <div>
+              <div className="min-w-0">
                 <h2
                   id="cars-guided-filters-title"
-                  className="text-lg font-bold leading-6 text-slate-950"
+                  className="text-xl font-extrabold leading-7 tracking-[-0.015em] text-slate-950"
                 >
                   {t("filters")}
                 </h2>
                 {activeFilterCount > 0 ? (
-                  <p className="mt-1 inline-flex rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-bold text-[#004BB8]">
+                  <p className="mt-1 text-xs font-semibold text-[#536B92]">
                     {activeFilterLabel}
                   </p>
                 ) : null}
@@ -2724,7 +2824,7 @@ export function CarsResultsExperience({
               <button
                 ref={filtersCloseButtonRef}
                 type="button"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-700 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
                 aria-label={t("carsResults.closeFilters")}
                 onClick={() => setFiltersOpen(false)}
               >
@@ -2732,14 +2832,14 @@ export function CarsResultsExperience({
               </button>
             </div>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 [scrollbar-gutter:stable]">
             <CarFilters
               groups={
                 guidedPlanning
-                  ? carFilterGroups.filter(
+                  ? visibleCarFilterGroups.filter(
                       (group) => group.id !== "cancellation",
                     )
-                  : carFilterGroups
+                  : visibleCarFilterGroups
               }
               activeFilterCount={activeFilterCount}
               layout="mobile"
@@ -2749,26 +2849,35 @@ export function CarsResultsExperience({
               t={t}
             />
           </div>
-          <div className="flex shrink-0 items-center justify-between gap-4 border-t border-slate-200 bg-white px-5 py-4">
+          <div className="flex shrink-0 items-center gap-3 border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_30px_-24px_rgba(15,23,42,0.45)]">
+            {activeFilterCount > 0 ? <Button type="button" variant="ghost" className="h-12 px-3" onClick={clearCarFilters}>{t("clearAll")}</Button> : null}
             <Button
               type="button"
-              variant="ghost"
-              disabled={activeFilterCount === 0}
-              className="h-12"
-              onClick={clearCarFilters}
-            >
-              {t("clearAll")}
-            </Button>
-            <Button
-              type="button"
-              className="h-12 min-w-[8.75rem] bg-[#004BB8] text-white"
+              className="h-12 flex-1 bg-[#004BB8] text-white"
               onClick={() => setFiltersOpen(false)}
             >
-              {t("done")}
+              Show {visibleResults.length} {visibleResults.length === 1 ? "car" : "cars"}
             </Button>
           </div>
         </aside>
       ) : null}
+      {activeQuickFilterGroup ? createPortal(
+          <div className="fixed inset-0 z-[10010] flex items-end bg-slate-950/35 px-3 pt-16 backdrop-blur-[1px] lg:hidden" role="presentation" onMouseDown={() => setQuickFilterGroupId(null)}>
+            <section role="dialog" aria-modal="true" aria-labelledby={`cars-quick-${activeQuickFilterGroup.id}`} onMouseDown={(event) => event.stopPropagation()} className="w-full rounded-t-[1.5rem] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-24px_70px_-30px_rgba(15,23,42,0.65)]">
+              <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-slate-300" aria-hidden="true" />
+              <div className="flex items-center justify-between px-5 pb-3 pt-3">
+                <div><h2 id={`cars-quick-${activeQuickFilterGroup.id}`} className="text-lg font-extrabold text-slate-950">{activeQuickFilterGroup.title ?? t(activeQuickFilterGroup.titleKey)}</h2>{(selectedCarFilters[activeQuickFilterGroup.id]?.length ?? 0) > 0 ? <p className="mt-0.5 text-xs font-semibold text-[#536B92]">{selectedCarFilters[activeQuickFilterGroup.id]?.length} selected</p> : null}</div>
+                <button type="button" aria-label="Close" onClick={() => setQuickFilterGroupId(null)} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"><X className="h-5 w-5" aria-hidden="true" /></button>
+              </div>
+              <div className="max-h-[55dvh] overflow-y-auto overscroll-contain border-y border-slate-100 px-4 py-2">
+                {activeQuickFilterGroup.options.map((option) => {
+                  const selected = selectedCarFilters[activeQuickFilterGroup.id]?.includes(option.id) ?? false;
+                  return <label key={option.id} className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl px-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"><input type="checkbox" checked={selected} onChange={() => toggleCarFilter(activeQuickFilterGroup.id, option.id)} className="h-5 w-5 rounded border-slate-300 accent-blue" /><span className="min-w-0 flex-1">{option.label ?? t(option.labelKey)}</span>{typeof option.count === "number" ? <span className="text-xs tabular-nums text-slate-500">{option.count}</span> : null}</label>;
+                })}
+              </div>
+              <div className="flex items-center gap-3 px-4 py-3">{(selectedCarFilters[activeQuickFilterGroup.id]?.length ?? 0) > 0 ? <Button type="button" variant="ghost" className="h-12" onClick={() => { setSelectedCarFilters((current) => { const next = {...current}; delete next[activeQuickFilterGroup.id]; return next; }); setCurrentPage(1); }}>{t("clearAll")}</Button> : null}<Button type="button" className="h-12 flex-1 bg-[#004BB8] text-white" onClick={() => setQuickFilterGroupId(null)}>Apply</Button></div>
+            </section>
+          </div>, document.body) : null}
       {!guidedPlanning && showBackToTop && !filtersOpen ? (
         <button
           type="button"
@@ -2782,6 +2891,17 @@ export function CarsResultsExperience({
         </button>
       ) : null}
     </section>
+    </>
+  );
+}
+
+function CarsResultsPageTransitionSkeleton() {
+  return (
+    <div aria-hidden="true" className="fixed inset-0 z-[1200] overflow-hidden bg-[#f6f8fb]">
+      <div className="h-20 border-b border-slate-100 bg-white px-4 sm:h-24"><div className="mx-auto flex h-full max-w-[1400px] items-center justify-between"><div className="h-8 w-40 animate-pulse rounded-md bg-slate-200 motion-reduce:animate-none" /><div className="h-10 w-10 animate-pulse rounded-full bg-slate-200 motion-reduce:animate-none" /></div></div>
+      <div className="border-b border-slate-100 bg-white px-4 py-5"><div className="mx-auto max-w-[1180px]"><div className="hidden h-[72px] animate-pulse grid-cols-[1.2fr_.9fr_1fr_.7fr_112px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm motion-reduce:animate-none sm:grid">{["pickup", "return", "dates", "age"].map((item) => <div key={item} className="border-r border-slate-200 p-4"><div className="h-4 w-28 rounded bg-slate-200" /><div className="mt-2 h-3 w-20 rounded bg-slate-100" /></div>)}<div className="m-2 rounded-xl bg-[#D9E7F7]" /></div><div className="h-16 animate-pulse rounded-2xl border border-slate-200 bg-white p-4 shadow-sm motion-reduce:animate-none sm:hidden"><div className="h-4 w-52 rounded bg-slate-200" /><div className="mt-2 h-3 w-36 rounded bg-slate-100" /></div></div></div>
+      <div className="mx-auto max-w-[1400px] px-4 py-5 sm:py-6"><div className="mb-4 flex gap-2 sm:hidden">{[84, 92, 76, 116].map((width) => <div key={width} className="h-11 shrink-0 animate-pulse rounded-lg border border-slate-200 bg-white motion-reduce:animate-none" style={{ width }} />)}</div><div className="grid min-w-0 gap-5 lg:grid-cols-[256px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]"><aside className="hidden space-y-5 border-r border-slate-200 pr-5 lg:block"><div className="h-6 w-24 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" />{["vehicle", "transmission", "seats", "features"].map((item) => <div key={item} className="border-t border-slate-200 pt-5"><div className="h-4 w-28 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /><div className="mt-4 h-4 w-4/5 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /><div className="mt-3 h-4 w-3/5 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /></div>)}</aside><section className="min-w-0"><div className="mb-4 flex items-center justify-between"><div><div className="h-6 w-40 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /><div className="mt-2 h-3 w-16 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /></div><div className="hidden h-9 w-36 animate-pulse rounded bg-slate-200 motion-reduce:animate-none sm:block" /></div><div className="space-y-4"><CarCardSkeleton /><CarCardSkeleton /><CarCardSkeleton /></div></section></div></div>
+    </div>
   );
 }
 
@@ -3620,7 +3740,7 @@ function CarFilters({
   t: (key: string) => string;
 }) {
   const [openCompactSection, setOpenCompactSection] = useState<string | null>(
-    null,
+    layout === "mobile" ? "totalPrice" : null,
   );
   const activeFilterLabel = interpolate(t("carsResults.activeFilterCount"), {
     count: String(activeFilterCount),
@@ -3746,22 +3866,23 @@ function FilterSection({
         layout === "compact"
           ? "border-t border-[#D8E1EC]/75 first:border-t-0"
           : layout === "mobile"
-            ? "border-t border-border py-4 first:border-t-0 first:pt-0"
+            ? "mb-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_10px_26px_-24px_rgba(15,23,42,0.45)] last:mb-0"
             : "border-t border-slate-200/75 py-3 first:border-t-0",
       )}
     >
-      {layout === "compact" ? (
+      {layout === "compact" || layout === "mobile" ? (
         <button
           type="button"
           aria-expanded={compactOpen}
           aria-controls={panelId}
           onClick={onCompactOpen}
           className={cn(
-            "group flex min-h-9 w-full items-center justify-between gap-3 rounded-md px-2.5 py-2 text-start text-[13px] font-semibold leading-5 tracking-[-0.005em] text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:bg-[#E5ECF4] hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
+            "group flex w-full items-center justify-between gap-3 text-start font-semibold text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
+            layout === "mobile" ? "min-h-14 px-4 py-3 text-[15px]" : "min-h-9 rounded-md px-2.5 py-2 text-[13px] leading-5 tracking-[-0.005em] hover:bg-[#E5ECF4]",
             compactOpen && "text-[#004BB8]",
           )}
         >
-          <span className="min-w-0 truncate">{t(group.titleKey)}</span>
+          <span className="min-w-0 truncate">{group.title ?? t(group.titleKey)}</span>
           <span className="flex shrink-0 items-center gap-2">
             {selectedOptions.length ? (
               <span className="min-w-5 rounded-full bg-[#E2EAF3] px-2 py-0.5 text-center text-[11px] font-semibold normal-case leading-4 tracking-normal text-[#235A9F] ring-1 ring-[#004BB8]/10 group-hover:bg-[#DCE8F6]">
@@ -3780,17 +3901,19 @@ function FilterSection({
         </button>
       ) : (
         <h3 className="text-sm font-extrabold uppercase tracking-[0.14em] text-slate-950">
-          {t(group.titleKey)}
+          {group.title ?? t(group.titleKey)}
         </h3>
       )}
       <div
         id={panelId}
-        hidden={layout === "compact" && !compactOpen}
-        aria-hidden={layout === "compact" && !compactOpen}
+        hidden={(layout === "compact" || layout === "mobile") && !compactOpen}
+        aria-hidden={(layout === "compact" || layout === "mobile") && !compactOpen}
         className={cn(
           layout === "compact"
             ? "grid h-auto gap-0.5 overflow-visible bg-transparent px-2.5 pb-3 pt-0.5"
-            : "mt-2 grid gap-0.5",
+            : layout === "mobile"
+              ? "grid gap-1 border-t border-slate-100 px-3 pb-3 pt-2"
+              : "mt-2 grid gap-0.5",
         )}
       >
         {group.options.map((option) => {
@@ -3809,8 +3932,9 @@ function FilterSection({
             />
           );
           const label = (
-            <span className="min-w-0 flex-1 truncate">
-              {t(option.labelKey)}
+            <span className="flex min-w-0 flex-1 items-center gap-2">
+              <span className="min-w-0 flex-1 truncate">{option.label ?? t(option.labelKey)}</span>
+              {typeof option.count === "number" ? <span className="ms-auto text-xs font-medium tabular-nums text-slate-500">{option.count}</span> : null}
             </span>
           );
           return (
@@ -3819,7 +3943,9 @@ function FilterSection({
               className={cn(
                 layout === "compact"
                   ? "flex min-h-8 cursor-pointer items-start justify-between gap-2 rounded-lg px-1.5 py-1 text-[13px] font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
-                  : "flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-sm font-medium transition-all",
+                  : layout === "mobile"
+                    ? "flex min-h-12 cursor-pointer items-center gap-3 rounded-xl px-2 py-2 text-sm font-medium transition hover:bg-slate-50"
+                    : "flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-sm font-medium transition-all",
                 selected
                   ? "font-semibold text-[#021C2B]"
                   : layout === "compact"

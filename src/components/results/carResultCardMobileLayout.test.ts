@@ -37,6 +37,7 @@ test("mobile identity and exactly four readable primary specs live beside the im
   assert.match(main, /text-\[18px\]/);
   assert.match(main, /<MapPin/);
   assert.match(main, /\{car\.pickupLocation\}/);
+  assert.doesNotMatch(main, /formatCarPickupType\(car\.pickupType\)/);
   assert.match(main, /data-car-card-mobile-specs/);
   assert.match(main, /grid-cols-2/);
   assert.match(source, /rounded-\[13px\][^"]*md:rounded-2xl/);
