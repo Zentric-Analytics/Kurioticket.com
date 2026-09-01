@@ -8,10 +8,10 @@ const search = read("./HotelSearchBar.tsx");
 const sheet = read("./MobileResultsEditSheet.tsx");
 const styles = read("../../app/globals.css");
 
-test("mobile hotel results fields are independent cards with only the required chevrons", () => {
+test("mobile hotel results fields are separated rows with only the required chevrons", () => {
   assert.match(
     search,
-    /data-hotel-results-edit-fields=[\s\S]*?flex flex-col gap-2/,
+    /data-hotel-results-edit-fields=[\s\S]*?flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white divide-y divide-slate-200/,
   );
   assert.doesNotMatch(search, /mobileResultsEditGroupClass/);
   assert.match(

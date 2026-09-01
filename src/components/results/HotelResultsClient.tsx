@@ -1820,12 +1820,12 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           {desktopCompactFilterPlacement === "fixed" && desktopCompactFilterFrame ? (
             <>
               <div className="fixed z-[980] hidden min-[1200px]:block" style={{ left: desktopCompactFilterFrame.left, top: desktopCompactFilterTopOffset, width: desktopCompactFilterFrame.width }}>
-                <button ref={desktopCompactFilterTriggerRef} type="button" aria-expanded={desktopCompactFilterOpen} aria-controls="desktop-compact-hotel-filters" onClick={() => setDesktopCompactFilterOpen((open) => !open)} className="flex h-11 w-full items-center justify-between rounded-xl border border-[#C9D9EA] bg-white px-3.5 text-sm font-bold text-slate-900 shadow-[0_12px_28px_-18px_rgba(15,23,42,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
-                  <span className="flex items-center gap-2"><SlidersHorizontal className="h-4 w-4 text-[#004BB8]" aria-hidden="true" />Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</span>
+                <button ref={desktopCompactFilterTriggerRef} type="button" aria-expanded={desktopCompactFilterOpen} aria-controls="desktop-compact-hotel-filters" onClick={() => setDesktopCompactFilterOpen((open) => !open)} className="flex h-11 w-full items-center justify-between rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-900 shadow-[0_10px_26px_-20px_rgba(15,23,42,0.55)] transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
+                  <span className="flex items-center gap-2"><SlidersHorizontal className="h-4 w-4 text-[#004BB8]" aria-hidden="true" />Refine results{activeFilterCount ? ` (${activeFilterCount})` : ""}</span>
                   <ChevronDown className={cn("h-4 w-4 transition-transform", desktopCompactFilterOpen && "rotate-180")} aria-hidden="true" />
                 </button>
                 {desktopCompactFilterOpen ? (
-                  <div id="desktop-compact-hotel-filters" ref={desktopCompactFilterRef} role="region" aria-label="Quick hotel filters" className="mt-2 overflow-hidden rounded-2xl shadow-[0_20px_45px_-24px_rgba(15,23,42,0.5)]" style={{ maxHeight: desktopCompactFilterMaxHeight }}>
+                  <div id="desktop-compact-hotel-filters" ref={desktopCompactFilterRef} role="region" aria-label="Refine hotel results" className="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_20px_45px_-24px_rgba(15,23,42,0.5)]" style={{ maxHeight: desktopCompactFilterMaxHeight }}>
                     <HotelFilters layout="compact" propertyNameQuery={propertyNameQuery} setPropertyNameQuery={updatePropertyNameQuery} t={t} maxPrice={maxPrice} minPrice={minPrice} setMaxPrice={updateMaxPrice} setMinPrice={updateMinPrice} resultMaxPrice={resultMaxPrice} hasPricedResults={hasPricedResults} formatPrice={formatHotelFilterPrice} locale={locale} stayNights={stayNights} selectedRatings={selectedHotelClasses} toggleRating={toggleHotelClass} starRatingCounts={starRatingCounts} options={filterOptions} selectedFilters={selectedFilters} toggleFilter={toggleFilter} activeFilterCount={activeFilterCount} onClear={resetFilters} />
                   </div>
                 ) : null}
@@ -2315,24 +2315,18 @@ function HotelFilters({ layout = "desktop", propertyNameQuery, setPropertyNameQu
 
   if (layout === "compact") {
     return (
-      <div className="desktop-filter-sidebar flex max-h-full flex-col overflow-hidden rounded-2xl border border-[#D8E1EC] bg-[#EEF3F8] p-0 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.42)]">
-        <div className="desktop-filter-sidebar__header shrink-0 border-b border-[#D8E1EC]/80 bg-[#EEF3F8] px-3.5 py-2.5">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-[15px] font-semibold leading-5 tracking-[-0.01em] text-slate-950">
-              <SlidersHorizontal className="desktop-filter-sidebar__icon shrink-0 text-[#004BB8]" size={15} strokeWidth={2.25} aria-hidden="true" />
-              <span className="truncate">{t("hotelResults.filterBy")}</span>
-            </h2>
-          </div>
-          {activeFilterCount > 0 ? (
-            <div className="mt-2 flex items-center justify-between gap-3">
-              <span className="desktop-filter-sidebar__count rounded-full bg-[#EAF2FB] px-2 py-0.5 text-[11px] font-semibold text-[#235A9F] ring-1 ring-[#004BB8]/8">{t("activeFilterCount").replace("{{count}}", String(activeFilterCount))}</span>
-              <button type="button" className="rounded-full px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-[#235A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25" onClick={onClear}>
+      <div className="desktop-filter-sidebar flex max-h-full flex-col overflow-hidden bg-white p-0">
+        {activeFilterCount > 0 ? (
+          <div className="desktop-filter-sidebar__summary shrink-0 border-b border-slate-200 bg-slate-50/80 px-3 py-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="desktop-filter-sidebar__count text-xs font-semibold text-slate-600">{t("activeFilterCount").replace("{{count}}", String(activeFilterCount))}</span>
+              <button type="button" className="rounded-md px-2 py-1 text-xs font-semibold text-[#004BB8] transition hover:bg-[#EAF2FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25" onClick={onClear}>
                 Clear all
               </button>
             </div>
-          ) : null}
-        </div>
-        <div className="min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain bg-[#EEF3F8] px-2 py-1">
+          </div>
+        ) : null}
+        <div className="min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain bg-white px-2 py-1.5">
           {compactSections.map((section) => (
             <CompactHotelFilterSection key={section.id} sectionId={section.id} title={section.title} selectedCount={section.selectedCount} expanded={openCompactSection === section.id} onToggle={() => setOpenCompactSection((current) => (current === section.id ? null : section.id))}>
               {section.content}

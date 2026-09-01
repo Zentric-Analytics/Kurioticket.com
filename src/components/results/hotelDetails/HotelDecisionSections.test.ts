@@ -271,7 +271,7 @@ test("guest reviews remains visible and never manufactures review values", () =>
   assert.doesNotMatch(reviews, /8\.6|1,246|Excellent/);
 });
 
-test("location preserves map, Street View and directions while facts use catalogue metadata", () => {
+test("location preserves map and Street View while facts use catalogue metadata", () => {
   for (const field of [
     "neighbourhood",
     "businessSuitable",
@@ -281,9 +281,8 @@ test("location preserves map, Street View and directions while facts use catalog
   ])
     assert.ok(standalone.includes(`propertyDetails.${field}`), field);
   for (const contract of [
-    "buildHotelMapEmbedUrl",
+    "buildGoogleHotelMapEmbedUrl",
     "buildGoogleHotelStreetViewEmbedUrl",
-    "buildHotelDirectionsUrl",
     "Why this location works",
   ])
     assert.ok(location.includes(contract), contract);
@@ -292,4 +291,5 @@ test("location preserves map, Street View and directions while facts use catalog
     /\b\d+ min(?:ute)?s?\b|\b\d+ min walk\b/i,
   );
   assert.doesNotMatch(location, /\.slice\(|<details|<summary/);
+  assert.doesNotMatch(location, /Show directions|directionsUrl/);
 });

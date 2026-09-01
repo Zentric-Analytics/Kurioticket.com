@@ -1,12 +1,11 @@
 "use client";
 
-import { ExternalLink, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { useState } from "react";
 
 import type { PublicHotelPropertyDetails } from "@/lib/types";
 import {
-  buildHotelDirectionsUrl,
-  buildHotelMapEmbedUrl,
+  buildGoogleHotelMapEmbedUrl,
   buildGoogleHotelStreetViewEmbedUrl,
 } from "@/lib/hotels/hotelMap";
 
@@ -14,7 +13,6 @@ type HotelLocationSectionProps = {
   hotelName: string;
   propertyDetails: PublicHotelPropertyDetails;
   locationLabel: string;
-  directionsLabel: string;
   mapLabel: string;
   streetViewLabel: string;
   stayFitFacts?: string[];
@@ -41,7 +39,6 @@ export function HotelLocationSection({
   hotelName,
   propertyDetails,
   locationLabel,
-  directionsLabel,
   mapLabel,
   streetViewLabel,
   stayFitFacts = [],
@@ -50,7 +47,7 @@ export function HotelLocationSection({
   const [view, setView] = useState<"map" | "streetview">("map");
   const googleMapsEmbedApiKey =
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY;
-  const mapUrl = buildHotelMapEmbedUrl({
+  const mapUrl = buildGoogleHotelMapEmbedUrl({
     hotelName,
     propertyDetails,
     googleMapsEmbedApiKey,
@@ -61,7 +58,6 @@ export function HotelLocationSection({
     googleMapsEmbedApiKey,
   });
   const activeEmbedUrl = view === "streetview" ? streetViewUrl : mapUrl;
-  const directionsUrl = buildHotelDirectionsUrl({ hotelName, propertyDetails });
   const streetAddress = propertyDetails.streetAddress.trim();
   const secondaryLocation = getSecondaryLocation(propertyDetails);
   const hasAddress = Boolean(streetAddress || secondaryLocation);
@@ -85,18 +81,18 @@ export function HotelLocationSection({
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue">
             <MapPin className="h-[18px] w-[18px]" aria-hidden="true" />
           </span>
-          <div className="min-w-0 pt-0.5">
+          <address className="min-w-0 pt-0.5 not-italic">
             {streetAddress ? (
-              <p className="text-[13px] font-semibold leading-5 text-slate-800">
+              <p className="break-words text-[13px] font-semibold leading-5 text-slate-800">
                 {streetAddress}
               </p>
             ) : null}
             {secondaryLocation ? (
-              <p className="text-xs leading-5 text-slate-500">
+              <p className="mt-0.5 break-words text-xs leading-5 text-slate-500">
                 {secondaryLocation}
               </p>
             ) : null}
-          </div>
+          </address>
         </div>
       ) : null}
 
@@ -136,17 +132,6 @@ export function HotelLocationSection({
             referrerPolicy="strict-origin-when-cross-origin"
             className="h-[200px] w-full border-0 sm:h-[220px] lg:h-[240px]"
           />
-        ) : null}
-        {directionsUrl ? (
-          <a
-            href={directionsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`focus-ring flex min-h-11 items-center justify-between border-slate-200 bg-white px-4 text-sm font-bold text-blue hover:bg-slate-50 ${activeEmbedUrl ? "border-t" : ""}`}
-          >
-            {directionsLabel}
-            <ExternalLink className="h-4 w-4" aria-hidden="true" />
-          </a>
         ) : null}
       </div>
       <div className="mt-7" data-hotel-stay-fit-facts>

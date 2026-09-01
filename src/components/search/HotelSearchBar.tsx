@@ -1107,7 +1107,7 @@ export function HotelSearchBar({
               data-hotel-results-edit-fields={
                 mobileResultsSheet ? "" : undefined
               }
-              className={mobileResultsSheet ? "flex flex-col gap-2" : "contents"}
+              className={mobileResultsSheet ? "flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white divide-y divide-slate-200" : "contents"}
             >
             <label
               ref={destinationWrapperRef}
@@ -1119,7 +1119,7 @@ export function HotelSearchBar({
                 "lg:rounded-s-xl",
                 shouldShowDestinationSuggestions && "z-[1000]",
                 mobileResultsSheet &&
-                  "min-h-16 rounded-[14px] border-[#D8E1EC] px-4 py-2 shadow-none hover:border-slate-400 hover:bg-slate-50 focus-within:bg-white",
+                  "min-h-[72px] rounded-none border-0 px-4 py-3 shadow-none hover:bg-slate-50 focus-within:bg-white focus-within:ring-0",
               )}
             >
               <span className={fieldLabelClassName}>
@@ -1308,7 +1308,7 @@ export function HotelSearchBar({
                 fieldClassName,
                 datesOpen && "z-[1000]",
                 mobileResultsSheet &&
-                  "min-h-16 rounded-[14px] border-[#D8E1EC] px-4 py-2 shadow-none hover:border-slate-400 hover:bg-slate-50 focus-within:bg-white",
+                  "min-h-[72px] rounded-none border-0 px-4 py-3 shadow-none hover:bg-slate-50 focus-within:bg-white focus-within:ring-0",
               )}
             >
               <span className={fieldLabelClassName}>
@@ -1489,7 +1489,7 @@ export function HotelSearchBar({
                 fieldClassName,
                 guestsRoomsOpen && "z-[1000]",
                 mobileResultsSheet &&
-                  "min-h-16 rounded-[14px] border-[#D8E1EC] px-4 py-2 shadow-none hover:border-slate-400 hover:bg-slate-50 focus-within:bg-white",
+                  "min-h-[72px] rounded-none border-0 px-4 py-3 shadow-none hover:bg-slate-50 focus-within:bg-white focus-within:ring-0",
               )}
             >
               <span className={fieldLabelClassName}>
