@@ -64,9 +64,10 @@ test("mobile results expose one filter toolbar and one in-sheet clear action", (
   assert.match(sheet, /bg-transparent px-0 text-slate-700/);
   assert.match(sheet, /items-center justify-center text-slate-700/);
   assert.match(source, /desktopCompactFilterPlacement === "fixed"/);
-  assert.match(source, /id="desktop-compact-hotel-filters"[\s\S]*<HotelFilters layout="desktop"/);
-  assert.match(source, /aria-label="Close desktop filters"/);
-  assert.match(source, /role="dialog" aria-modal="true" aria-label="Desktop hotel filters"/);
+  assert.match(source, /id="desktop-compact-hotel-filters"[\s\S]*<HotelFilters layout="compact"/);
+  assert.match(source, /role="region" aria-label="Quick hotel filters"/);
+  assert.doesNotMatch(source, /aria-label="Close desktop filters"|aria-modal="true" aria-label="Desktop hotel filters"/);
+  assert.match(source, /document\.addEventListener\("pointerdown", handlePointerDown\)/);
   assert.doesNotMatch(source, /onClearAll=\{resetFilters\}/);
   assert.doesNotMatch(source, /mobileQuickFacilities = \["wifi", "breakfast", "pool"\]/);
   assert.match(source, /overflow-x-auto overscroll-x-contain/);

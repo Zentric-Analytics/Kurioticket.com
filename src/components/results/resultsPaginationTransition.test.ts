@@ -52,11 +52,12 @@ test("Flight pagination defers local commit and mirrors URL without Next navigat
   assert.match(source, /paginationPendingPage !== validResultsPage/);
 });
 
-test("Hotel pagination swaps cards in place without moving scroll or focus", () => {
+test("Hotel pagination masks an instant results-start handoff before revealing cards", () => {
   const source = read("HotelResultsClient.tsx");
   const start = source.indexOf("async function changeResultsPage");
   const end = source.indexOf("useEffect", start);
   const pagination = source.slice(start, end);
-  assert.match(pagination, /setPaginationPendingPage\(target\)[\s\S]*setCurrentResultsPage\(target\)[\s\S]*setTimeout\(resolve, 180\)[\s\S]*setPaginationPendingPage\(null\)/);
-  assert.doesNotMatch(pagination, /scrollToResultsAndWait|scrollTo\(|\.focus\(/);
+  assert.match(pagination, /setPaginationPendingPage\(target\)[\s\S]*requestAnimationFrame\(\(\) => requestAnimationFrame[\s\S]*window\.scrollTo\(\{ top: resultsTop, behavior: "auto" \}\)[\s\S]*setCurrentResultsPage\(target\)[\s\S]*setTimeout\(resolve, 320\)[\s\S]*setPaginationPendingPage\(null\)/);
+  assert.doesNotMatch(pagination, /behavior: "smooth"|\.focus\(/);
+  assert.match(source, /paginationPendingPage !== null[\s\S]*fixed inset-0 z-\[1200\][\s\S]*<HotelCardSkeleton \/>/);
 });

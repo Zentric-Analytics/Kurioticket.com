@@ -837,9 +837,17 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     if (paginationPendingPage !== null || target === currentResultsPage) return;
     setPaginationMinHeight(paginationListRef.current?.getBoundingClientRect().height ?? null);
     setPaginationPendingPage(target);
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+
+    const resultsHeading = standaloneResultsHeadingRef.current;
+    if (resultsHeading) {
+      const stickyOffset = window.innerWidth < 640 ? 72 : 128;
+      const resultsTop = Math.max(0, window.scrollY + resultsHeading.getBoundingClientRect().top - stickyOffset);
+      window.scrollTo({ top: resultsTop, behavior: "auto" });
+    }
+
     setCurrentResultsPage(target);
-    await new Promise<void>((resolve) => window.setTimeout(resolve, 180));
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 320));
     setPaginationPendingPage(null);
     setPaginationMinHeight(null);
     if (!prefersReducedResultsMotion()) {
@@ -1043,7 +1051,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   useEffect(() => {
     if (!desktopCompactFilterOpen) return undefined;
 
-    const scrollLock = lockDesktopPageScroll();
     const animationFrameId = window.requestAnimationFrame(() => {
       desktopCompactFilterRef.current?.querySelector<HTMLElement>('input, button:not([disabled]), [tabindex]:not([tabindex="-1"])')?.focus({ preventScroll: true });
     });
@@ -1052,27 +1059,20 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         event.preventDefault();
         setDesktopCompactFilterOpen(false);
         desktopCompactFilterTriggerRef.current?.focus({ preventScroll: true });
-        return;
       }
-      if (event.key !== "Tab") return;
-      const focusable = desktopCompactFilterRef.current?.querySelectorAll<HTMLElement>('input:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])');
-      if (!focusable?.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
+    };
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (desktopCompactFilterRef.current?.contains(target) || desktopCompactFilterTriggerRef.current?.contains(target)) return;
+      setDesktopCompactFilterOpen(false);
     };
 
     document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("pointerdown", handlePointerDown);
     return () => {
       window.cancelAnimationFrame(animationFrameId);
       document.removeEventListener("keydown", handleKeyDown);
-      scrollLock.restore();
+      document.removeEventListener("pointerdown", handlePointerDown);
     };
   }, [desktopCompactFilterOpen]);
 
@@ -1605,6 +1605,22 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
 
   return (
     <>
+      {!guided && paginationPendingPage !== null && typeof document !== "undefined"
+        ? createPortal(
+            <div aria-hidden="true" className="fixed inset-0 z-[1200] overflow-hidden bg-[#f6f8fb]">
+              <div className="mx-auto w-full max-w-[920px] px-4 pb-10 pt-20 sm:pt-28">
+                <div className="mb-4 rounded-xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-700 shadow-sm">
+                  {t("updatingResults")}
+                </div>
+                <div className="space-y-4">
+                  <HotelCardSkeleton />
+                  <HotelCardSkeleton />
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
       <ResultsRoot
         className={guided ? "mt-6 min-w-0" : "flex-1 overflow-x-clip bg-[#f6f8fb] pb-8"}
         {...(guided && !error
@@ -1787,15 +1803,14 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
 
           {desktopCompactFilterPlacement === "fixed" && desktopCompactFilterFrame ? (
             <>
-              {desktopCompactFilterOpen ? <button type="button" aria-label="Close desktop filters" onClick={() => setDesktopCompactFilterOpen(false)} className="fixed inset-0 z-[970] hidden cursor-default bg-slate-950/10 backdrop-blur-[1px] min-[1200px]:block" /> : null}
               <div className="fixed z-[980] hidden min-[1200px]:block" style={{ left: desktopCompactFilterFrame.left, top: desktopCompactFilterTopOffset, width: desktopCompactFilterFrame.width }}>
                 <button ref={desktopCompactFilterTriggerRef} type="button" aria-expanded={desktopCompactFilterOpen} aria-controls="desktop-compact-hotel-filters" onClick={() => setDesktopCompactFilterOpen((open) => !open)} className="flex h-11 w-full items-center justify-between rounded-xl border border-[#C9D9EA] bg-white px-3.5 text-sm font-bold text-slate-900 shadow-[0_12px_28px_-18px_rgba(15,23,42,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
                   <span className="flex items-center gap-2"><SlidersHorizontal className="h-4 w-4 text-[#004BB8]" aria-hidden="true" />Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</span>
                   <ChevronDown className={cn("h-4 w-4 transition-transform", desktopCompactFilterOpen && "rotate-180")} aria-hidden="true" />
                 </button>
                 {desktopCompactFilterOpen ? (
-                  <div id="desktop-compact-hotel-filters" ref={desktopCompactFilterRef} role="dialog" aria-modal="true" aria-label="Desktop hotel filters" className="mt-2 overflow-y-auto overscroll-contain rounded-2xl" style={{ maxHeight: desktopCompactFilterMaxHeight }}>
-                    <HotelFilters layout="desktop" propertyNameQuery={propertyNameQuery} setPropertyNameQuery={updatePropertyNameQuery} t={t} maxPrice={maxPrice} minPrice={minPrice} setMaxPrice={updateMaxPrice} setMinPrice={updateMinPrice} resultMaxPrice={resultMaxPrice} hasPricedResults={hasPricedResults} formatPrice={formatHotelFilterPrice} locale={locale} stayNights={stayNights} selectedRatings={selectedHotelClasses} toggleRating={toggleHotelClass} starRatingCounts={starRatingCounts} options={filterOptions} selectedFilters={selectedFilters} toggleFilter={toggleFilter} activeFilterCount={activeFilterCount} onClear={resetFilters} />
+                  <div id="desktop-compact-hotel-filters" ref={desktopCompactFilterRef} role="region" aria-label="Quick hotel filters" className="mt-2 overflow-hidden rounded-2xl shadow-[0_20px_45px_-24px_rgba(15,23,42,0.5)]" style={{ maxHeight: desktopCompactFilterMaxHeight }}>
+                    <HotelFilters layout="compact" propertyNameQuery={propertyNameQuery} setPropertyNameQuery={updatePropertyNameQuery} t={t} maxPrice={maxPrice} minPrice={minPrice} setMaxPrice={updateMaxPrice} setMinPrice={updateMinPrice} resultMaxPrice={resultMaxPrice} hasPricedResults={hasPricedResults} formatPrice={formatHotelFilterPrice} locale={locale} stayNights={stayNights} selectedRatings={selectedHotelClasses} toggleRating={toggleHotelClass} starRatingCounts={starRatingCounts} options={filterOptions} selectedFilters={selectedFilters} toggleFilter={toggleFilter} activeFilterCount={activeFilterCount} onClear={resetFilters} />
                   </div>
                 ) : null}
               </div>
