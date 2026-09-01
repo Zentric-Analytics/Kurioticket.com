@@ -3,7 +3,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-nati
 import { router, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { travelApi } from "../../api/travelApi";
-import { readSession } from "../../storage/sessionStorage";
+import { readSession, updateStoredSessionName } from "../../storage/sessionStorage";
 import { authApi } from "../auth/authApi";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
@@ -36,7 +36,7 @@ function WelcomeCard({ name, email }: { name: string | null; email: string | nul
 
 export function AuthenticatedProfileScreen() {
   const { theme } = useAppTheme(); const { t } = useMobileLocalization(); const [unreadCount, setUnreadCount] = useState(0); const [authenticated, setAuthenticated] = useState(false); const [name, setName] = useState<string | null>(null); const [email, setEmail] = useState<string | null>(null);
-  const load = useCallback(() => { void readSession().then(session => { setAuthenticated(Boolean(session)); setName(session?.user.name ?? null); setEmail(session?.user.email ?? null); if (!session) return; void travelApi.profile().then(({ user }) => { setName(user.name ?? session.user.name ?? null); setEmail(user.email || session.user.email || null); }).catch(() => undefined); }).catch(() => { setAuthenticated(false); setName(null); setEmail(null); }); void travelApi.notificationUnreadCount().then(({ count }) => setUnreadCount(count)).catch(() => undefined); }, []);
+  const load = useCallback(() => { void readSession().then(session => { setAuthenticated(Boolean(session)); setEmail(session?.user.email ?? null); if (!session) { setName(null); return; } void travelApi.profile().then(({ user }) => { const authoritativeName = user.name ?? null; setName(authoritativeName); setEmail(user.email || session.user.email || null); if (authoritativeName !== (session.user.name ?? null)) void updateStoredSessionName(authoritativeName).catch(() => undefined); }).catch(() => undefined); }).catch(() => { setAuthenticated(false); setName(null); setEmail(null); }); void travelApi.notificationUnreadCount().then(({ count }) => setUnreadCount(count)).catch(() => undefined); }, []);
   useEffect(load, [load]); useFocusEffect(load);
   const logout = () => Alert.alert(t("logoutConfirm"), t("logoutExplanation"), [{ text: t("cancel"), style: "cancel" }, { text: t("logout"), style: "destructive", onPress: () => void authApi.logout().catch(() => undefined).finally(() => router.replace("/(tabs)/profile")) }]);
   const [manageAccount, ...remainingSections] = authenticatedProfileSections;
