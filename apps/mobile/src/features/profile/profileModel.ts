@@ -7,6 +7,12 @@ export type ProfileDestination =
 export type ProfileItem = { label: MobileTranslationKey; icon: FlowIconName; destination: ProfileDestination };
 export type ProfileSection = { title: MobileTranslationKey; items: ProfileItem[] };
 
+export function profileFirstName(name?: string | null): string | null {
+  const normalized = name?.trim();
+  if (!normalized || normalized.includes("@")) return null;
+  return normalized.split(/\s+/)[0] || null;
+}
+
 export const authenticatedProfileSections: ProfileSection[] = [
   { title: "manageAccount", items: [
     { label: "personalDetails", icon: "person", destination: { kind: "native", href: "/personal-information" } },
@@ -18,9 +24,9 @@ export const authenticatedProfileSections: ProfileSection[] = [
     { label: "priceAlerts", icon: "bell", destination: { kind: "native", href: "/price-alerts" } },
   ] },
   { title: "preferences", items: [
-    { label: "emailPreferences", icon: "mail", destination: { kind: "native", href: "/email-preferences" } },
     { label: "customizationPreferences", icon: "palette", destination: { kind: "native", href: "/settings" } },
     { label: "travelPreferences", icon: "settings", destination: { kind: "native", href: "/travel-preferences" } },
+    { label: "emailPreferences", icon: "mail", destination: { kind: "native", href: "/email-preferences" } },
   ] },
   { title: "helpSupport", items: [
     { label: "contactSupport", icon: "headset", destination: { kind: "native", href: "/support" } },

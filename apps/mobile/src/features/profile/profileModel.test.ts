@@ -2,12 +2,20 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { dictionaries } from "../../localization/mobileLocalizationCatalog";
-import { authenticatedProfileSections } from "./profileModel";
+import { authenticatedProfileSections, profileFirstName } from "./profileModel";
 
 test("authenticated profile keeps its existing order and appends legal", () => {
   assert.deepEqual(authenticatedProfileSections.map(section => section.title), ["manageAccount", "travelActivity", "preferences", "helpSupport", "aboutLegal"]);
   assert.deepEqual(authenticatedProfileSections.find(section => section.title === "travelActivity")?.items.map(item => [item.label, item.destination.href]), [["savedItems", "/saved"], ["recentSearches", "/recent"], ["priceAlerts", "/price-alerts"]]);
+  assert.deepEqual(authenticatedProfileSections.find(section => section.title === "preferences")?.items.map(item => item.label), ["customizationPreferences", "travelPreferences", "emailPreferences"]);
   assert.deepEqual(authenticatedProfileSections.at(-1)?.items.map(item => [item.label, item.destination.href]), [["terms", "/terms"], ["privacy", "/privacy"]]);
+});
+
+test("profile greeting uses only a usable first name", () => {
+  assert.equal(profileFirstName("  Bisola Adeyemi "), "Bisola");
+  assert.equal(profileFirstName("traveler@example.com"), null);
+  assert.equal(profileFirstName("   "), null);
+  assert.equal(profileFirstName(undefined), null);
 });
 
 test("authenticated profile controls remain unique", () => {

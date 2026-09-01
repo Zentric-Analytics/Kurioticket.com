@@ -3,6 +3,8 @@ import type { MobileLocale, MobileTranslationKey } from "./mobileLocalizationCat
 type MobileDictionary = Record<MobileTranslationKey, string>;
 
 const fr: MobileDictionary = {
+  "profileGreeting": "Hi",
+  "profileWelcomeLine": "Ready for your next journey?",
   "profile": "Profil",
   "settings": "Paramètres",
   "notifications": "Notifications",
@@ -153,6 +155,8 @@ const fr: MobileDictionary = {
 };
 
 const de_de: MobileDictionary = {
+  "profileGreeting": "Hi",
+  "profileWelcomeLine": "Ready for your next journey?",
   "profile": "Profil",
   "settings": "Einstellungen",
   "notifications": "Benachrichtigungen",
@@ -303,6 +307,8 @@ const de_de: MobileDictionary = {
 };
 
 const it_it: MobileDictionary = {
+  "profileGreeting": "Hi",
+  "profileWelcomeLine": "Ready for your next journey?",
   "profile": "Profilo",
   "settings": "Impostazioni",
   "notifications": "Notifiche",
@@ -453,6 +459,8 @@ const it_it: MobileDictionary = {
 };
 
 const pt_br: MobileDictionary = {
+  "profileGreeting": "Hi",
+  "profileWelcomeLine": "Ready for your next journey?",
   "profile": "Perfil",
   "settings": "Configurações",
   "notifications": "Notificações",
@@ -603,6 +611,8 @@ const pt_br: MobileDictionary = {
 };
 
 const nl: MobileDictionary = {
+  "profileGreeting": "Hi",
+  "profileWelcomeLine": "Ready for your next journey?",
   "profile": "Profiel",
   "settings": "Instellingen",
   "notifications": "Meldingen",
@@ -753,6 +763,8 @@ const nl: MobileDictionary = {
 };
 
 const ar: MobileDictionary = {
+  "profileGreeting": "Hi",
+  "profileWelcomeLine": "Ready for your next journey?",
   "profile": "الملف الشخصي",
   "settings": "الإعدادات",
   "notifications": "الإشعارات",
@@ -903,6 +915,8 @@ const ar: MobileDictionary = {
 };
 
 const zh_cn: MobileDictionary = {
+  "profileGreeting": "Hi",
+  "profileWelcomeLine": "Ready for your next journey?",
   "profile": "个人资料",
   "settings": "设置",
   "notifications": "通知",
@@ -1053,6 +1067,8 @@ const zh_cn: MobileDictionary = {
 };
 
 const ja: MobileDictionary = {
+  "profileGreeting": "Hi",
+  "profileWelcomeLine": "Ready for your next journey?",
   "profile": "プロフィール",
   "settings": "設定",
   "notifications": "通知",
@@ -1203,6 +1219,8 @@ const ja: MobileDictionary = {
 };
 
 const ko: MobileDictionary = {
+  "profileGreeting": "Hi",
+  "profileWelcomeLine": "Ready for your next journey?",
   "profile": "프로필",
   "settings": "설정",
   "notifications": "알림",
@@ -1353,6 +1371,8 @@ const ko: MobileDictionary = {
 };
 
 const hi: MobileDictionary = {
+  "profileGreeting": "Hi",
+  "profileWelcomeLine": "Ready for your next journey?",
   "profile": "प्रोफ़ाइल",
   "settings": "सेटिंग्स",
   "notifications": "सूचनाएँ",
@@ -1503,6 +1523,8 @@ const hi: MobileDictionary = {
 };
 
 const tr: MobileDictionary = {
+  "profileGreeting": "Hi",
+  "profileWelcomeLine": "Ready for your next journey?",
   "profile": "Profil",
   "settings": "Ayarlar",
   "notifications": "Bildirimler",
@@ -1653,6 +1675,8 @@ const tr: MobileDictionary = {
 };
 
 const pl: MobileDictionary = {
+  "profileGreeting": "Hi",
+  "profileWelcomeLine": "Ready for your next journey?",
   "profile": "Profil",
   "settings": "Ustawienia",
   "notifications": "Powiadomienia",
@@ -1803,6 +1827,8 @@ const pl: MobileDictionary = {
 };
 
 const sv: MobileDictionary = {
+  "profileGreeting": "Hi",
+  "profileWelcomeLine": "Ready for your next journey?",
   "profile": "Profil",
   "settings": "Inställningar",
   "notifications": "Aviseringar",
@@ -1953,6 +1979,8 @@ const sv: MobileDictionary = {
 };
 
 const id: MobileDictionary = {
+  "profileGreeting": "Hi",
+  "profileWelcomeLine": "Ready for your next journey?",
   "profile": "Profil",
   "settings": "Pengaturan",
   "notifications": "Notifikasi",
@@ -2103,6 +2131,8 @@ const id: MobileDictionary = {
 };
 
 const th: MobileDictionary = {
+  "profileGreeting": "Hi",
+  "profileWelcomeLine": "Ready for your next journey?",
   "profile": "โปรไฟล์",
   "settings": "การตั้งค่า",
   "notifications": "การแจ้งเตือน",
@@ -2253,6 +2283,8 @@ const th: MobileDictionary = {
 };
 
 const vi: MobileDictionary = {
+  "profileGreeting": "Hi",
+  "profileWelcomeLine": "Ready for your next journey?",
   "profile": "Hồ sơ",
   "settings": "Cài đặt",
   "notifications": "Thông báo",
