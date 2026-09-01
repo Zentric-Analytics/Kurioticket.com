@@ -168,7 +168,12 @@ export function displayAddress(value: string) {
   return [street, locality, country].filter(Boolean).join("\n");
 }
 export function displayPhone(countryCode: string, localNumber: string) {
-  return formatPhoneDraftValue(countryCode, localNumber);
+  const trimmedLocalNumber = localNumber.trim();
+  if (!trimmedLocalNumber) return "";
+  const fallbackCountry =
+    getSupportedPhoneCountryCode(countryCode) || defaultPhoneCountryOption.isoCode;
+  const parsed = parsePhoneDraftValue(trimmedLocalNumber, fallbackCountry);
+  return formatPhoneDraftValue(parsed.countryCode, parsed.localNumber);
 }
 export function serializePhone(countryCode: string, localNumber: string) {
   const country =
