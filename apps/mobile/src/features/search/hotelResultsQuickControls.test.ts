@@ -16,16 +16,19 @@ test("Hotel shortcut rail has the web order and derives active labels from filte
   assert.match(screen, /hotelFilters\.facilities\.length/);
 });
 
-test("Hotel shortcuts keep Filter and Cheapest unchanged while Stars and Amenities use quick menus", () => {
+test("Hotel shortcuts keep Filter full-screen while Sort, Stars, and Amenities use quick menus", () => {
   assert.match(screen, /label="Filter" count=\{activeHotelFilters \|\| undefined\} icon onPress=\{\(\) => openHotelFilters\("all"\)\}/);
+  assert.match(screen, /sortShortcutRef = useRef<View>\(null\)/);
+  assert.match(screen, /ref=\{sortShortcutRef\}[\s\S]*expanded=\{hotelShortcutMenu === "sort"\}[\s\S]*openHotelShortcutMenu\("sort", sortShortcutRef\)/);
   assert.doesNotMatch(screen, /openHotelFilters\("rating"\)/);
   assert.doesNotMatch(screen, /openHotelFilters\("facilities"\)/);
   assert.match(screen, /openHotelShortcutMenu\("stars", starsShortcutRef\)/);
   assert.match(screen, /openHotelShortcutMenu\("amenities", amenitiesShortcutRef\)/);
+  assert.match(screen, /<HotelResultsShortcutMenu kind="sort" anchor=\{hotelShortcutAnchor\} sort=\{hotelSort\} onSortChange=\{setHotelSort\}/);
   assert.match(screen, /<HotelResultsShortcutMenu kind=\{hotelShortcutMenu\} anchor=\{hotelShortcutAnchor\} filters=\{hotelFilters\} options=\{hotelOptions\} onChange=\{setHotelFilters\}/);
   assert.doesNotMatch(screen, /openHotelFilters\("price"\)|openHotelFilters\("propertyTypes"\)/);
   assert.doesNotMatch(screen, /Filter · \$\{activeHotelFilters\}/);
-  assert.match(screen, /setHotelSortOpen\(true\)/);
+  assert.doesNotMatch(screen, /setHotelSortOpen\(true\)|hotelSortOpen/);
 });
 
 test("Hotel-only visual controls use sliders, count badge, and down chevrons", () => {
@@ -38,11 +41,12 @@ test("Hotel-only visual controls use sliders, count badge, and down chevrons", (
 test("Hotel sort selector has exactly the three web modes and no navigation", () => {
   const model = readFileSync("src/features/search/hotelSort.ts", "utf8");
   assert.deepEqual([...model.matchAll(/label: "(Cheapest|Best value|Top rated)"/g)].map((match) => match[1]), ["Cheapest", "Best value", "Top rated"]);
-  const modal = screen.slice(screen.indexOf("function HotelSortModal"), screen.indexOf("function FlightCard"));
-  assert.match(modal, /accessibilityLabel="Sort hotels"/);
-  assert.match(modal, /accessibilityRole="radiogroup"/);
-  assert.match(modal, /accessibilityRole="radio"/);
-  assert.doesNotMatch(modal, /router\.|setParams|navigate/);
+  const menu = readFileSync("src/features/search/HotelResultsShortcutMenu.tsx", "utf8");
+  const sortBranch = menu.slice(menu.indexOf('kind === "sort" ? hotelSortOptions.map'), menu.indexOf('}) : kind === "stars"'));
+  assert.match(sortBranch, /accessibilityRole="radio"/);
+  assert.doesNotMatch(sortBranch, /router\.|setParams|navigate|description/);
+  assert.doesNotMatch(screen, /function HotelSortModal|<HotelSortModal/);
+  assert.match(screen, /function FlightSortModal|<FlightSortModal/);
 });
 
 test("Price and Property Type remain in the full Filter sheet and facilities is focusable", () => {
