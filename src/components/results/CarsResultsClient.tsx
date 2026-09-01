@@ -1879,6 +1879,7 @@ export function CarsResultsExperience({
   const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
   const intlLocale = getCarsResultsIntlLocale(locale);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [quickFilterGroupId, setQuickFilterGroupId] = useState<string | null>(null);
   const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersModalityRef = useRef<OverlayActivationModality>("programmatic");
@@ -1950,6 +1951,9 @@ export function CarsResultsExperience({
       const option = group.options.find((item) => item.id === optionId);
       return option ? { groupId: group.id, optionId, label: option.label ?? t(option.labelKey) } : null;
     }).filter((item): item is { groupId: string; optionId: string; label: string } => Boolean(item))), [selectedCarFilters, visibleCarFilterGroups, t]);
+  const activeQuickFilterGroup = quickFilterGroupId
+    ? visibleCarFilterGroups.find((group) => group.id === quickFilterGroupId) ?? null
+    : null;
 
   useEffect(() => {
     const readUrlFilters = () => {
@@ -1991,12 +1995,17 @@ export function CarsResultsExperience({
   const selectedCarSortLabel =
     carSortOptions.find((option) => option.value === sort)?.label ??
     carSortOptions[0].label;
-  const quickFilters = [
-    { group: "transmission", option: "automatic", label: t("carsResults.automatic") },
-    { group: "vehicleType", option: "suvs", label: t("carsResults.suvs") },
-    { group: "cancellation", option: "freeCancellation", label: t("carsResults.freeCancellation") },
-    { group: "mileagePolicy", option: "unlimitedMileage", label: t("carsResults.unlimitedMileage") },
-  ] as const;
+  const quickFilterGroups = [
+    "totalPrice",
+    "vehicleType",
+    "transmission",
+    "seats",
+    "cancellation",
+    "pickupType",
+  ].flatMap((id) => {
+    const group = visibleCarFilterGroups.find((item) => item.id === id);
+    return group ? [group] : [];
+  });
   const badges = useMemo(
     () => (guidedPlanning ? new Map() : assignCarBadges(results)),
     [guidedPlanning, results],
@@ -2044,26 +2053,21 @@ export function CarsResultsExperience({
       const top = Math.max(0, window.scrollY + anchor.getBoundingClientRect().top - stickyOffset);
       window.scrollTo({ top, behavior: "auto" });
     };
-    positionResultsStart();
-    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
     setCurrentPage(page);
     setPaginationTransitionPhase("settling");
     setPaginationMinHeight(null);
-    await new Promise<void>((resolve) => window.setTimeout(resolve, 420));
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 460));
     await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
     positionResultsStart();
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 180));
     await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-    positionResultsStart();
-    if (window.innerWidth >= 1024) {
-      await new Promise<void>((resolve) => window.setTimeout(resolve, 220));
-      positionResultsStart();
-      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-    }
     setPaginationTransitionPhase("idle");
     setPaginationPendingPage(null);
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-    document.documentElement.style.overflowAnchor = previousRootOverflowAnchor;
-    document.body.style.overflowAnchor = previousBodyOverflowAnchor;
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    window.setTimeout(() => {
+      document.documentElement.style.overflowAnchor = previousRootOverflowAnchor;
+      document.body.style.overflowAnchor = previousBodyOverflowAnchor;
+    }, 240);
     if (!prefersReducedResultsMotion()) {
       setPaginationRevealing(true);
       window.setTimeout(() => setPaginationRevealing(false), PAGINATION_REVEAL_MS);
@@ -2134,7 +2138,7 @@ export function CarsResultsExperience({
       mobileFiltersScrollLockRef.current?.();
       mobileFiltersScrollLockRef.current = null;
     };
-    if (!filtersOpen || typeof window === "undefined") {
+    if ((!filtersOpen && !quickFilterGroupId) || typeof window === "undefined") {
       releaseExistingLock();
       return releaseExistingLock;
     }
@@ -2185,7 +2189,7 @@ export function CarsResultsExperience({
       releaseExistingLock();
       if (shouldRestoreFocus) restoreOverlayLauncherFocus(launcher, mobileFiltersModalityRef.current);
     };
-  }, [filtersOpen]);
+  }, [filtersOpen, quickFilterGroupId]);
 
   useEffect(() => {
     if (presentation !== "standalone" || typeof window === "undefined")
@@ -2338,7 +2342,7 @@ export function CarsResultsExperience({
     return (
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-[90] border-b border-slate-200/80 bg-white px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] transition-all duration-200 ease-out sm:hidden",
+          "fixed inset-x-0 top-0 z-[90] bg-white px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-[0_8px_24px_-22px_rgba(15,23,42,0.5)] transition-[transform,opacity] duration-200 ease-out sm:hidden",
           mobileCompactToolbarVisible
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none -translate-y-2 opacity-0",
@@ -2493,7 +2497,7 @@ export function CarsResultsExperience({
                 {!guidedPlanning ? (
                   <div
                     data-cars-results-quick-filters
-                    className="scrollbar-hide flex w-full flex-nowrap gap-2 overflow-x-auto overscroll-x-contain pb-0.5 lg:hidden"
+                    className="scrollbar-hide -mx-1 flex w-[calc(100%+0.5rem)] flex-nowrap gap-2 overflow-x-auto overscroll-x-contain px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden"
                   >
                     <button
                       ref={filtersButtonRef}
@@ -2506,22 +2510,25 @@ export function CarsResultsExperience({
                         ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount))
                         : t("filters")}
                     </button>
-                    {quickFilters.map(({ group, option, label }) => {
-                      const active = selectedCarFilters[group]?.includes(option) ?? false;
+                    {quickFilterGroups.map((group) => {
+                      const count = selectedCarFilters[group.id]?.length ?? 0;
                       return (
                         <button
-                          key={option}
+                          key={group.id}
                           type="button"
-                          aria-pressed={active}
-                          onClick={() => toggleCarFilter(group, option)}
+                          aria-haspopup="dialog"
+                          aria-expanded={quickFilterGroupId === group.id}
+                          onClick={() => setQuickFilterGroupId(group.id)}
                           className={cn(
-                            "inline-flex min-h-11 shrink-0 items-center rounded-lg border px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
-                            active
+                            "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
+                            count > 0
                               ? "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"
                               : "border-slate-300 bg-white text-[#07133B] hover:bg-slate-50",
                           )}
                         >
-                          {label}
+                          {group.title ?? t(group.titleKey)}
+                          {count > 0 ? <span className="rounded-full bg-[#004BB8] px-1.5 py-0.5 text-[10px] text-white">{count}</span> : null}
+                          <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
                         </button>
                       );
                     })}
@@ -2796,19 +2803,19 @@ export function CarsResultsExperience({
           role="dialog"
           aria-modal="true"
           aria-labelledby="cars-guided-filters-title"
-          className="fixed inset-0 z-[10000] flex h-[100dvh] flex-col overflow-hidden bg-white lg:hidden"
+          className="fixed inset-0 z-[10000] flex h-[100dvh] flex-col overflow-hidden bg-[#F7F9FC] lg:hidden"
         >
-          <div className="shrink-0 border-b border-slate-200 bg-white px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))]">
+          <div className="shrink-0 bg-white px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] shadow-[0_8px_24px_-22px_rgba(15,23,42,0.5)]">
             <div className="flex items-center justify-between gap-3">
-              <div>
+              <div className="min-w-0">
                 <h2
                   id="cars-guided-filters-title"
-                  className="text-lg font-bold leading-6 text-slate-950"
+                  className="text-xl font-extrabold leading-7 tracking-[-0.015em] text-slate-950"
                 >
                   {t("filters")}
                 </h2>
                 {activeFilterCount > 0 ? (
-                  <p className="mt-1 inline-flex rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-bold text-[#004BB8]">
+                  <p className="mt-1 text-xs font-semibold text-[#536B92]">
                     {activeFilterLabel}
                   </p>
                 ) : null}
@@ -2816,7 +2823,7 @@ export function CarsResultsExperience({
               <button
                 ref={filtersCloseButtonRef}
                 type="button"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-700 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
                 aria-label={t("carsResults.closeFilters")}
                 onClick={() => setFiltersOpen(false)}
               >
@@ -2824,7 +2831,7 @@ export function CarsResultsExperience({
               </button>
             </div>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 [scrollbar-gutter:stable]">
             <CarFilters
               groups={
                 guidedPlanning
@@ -2841,26 +2848,35 @@ export function CarsResultsExperience({
               t={t}
             />
           </div>
-          <div className="flex shrink-0 items-center justify-between gap-4 border-t border-slate-200 bg-white px-5 py-4">
+          <div className="flex shrink-0 items-center gap-3 border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_30px_-24px_rgba(15,23,42,0.45)]">
+            {activeFilterCount > 0 ? <Button type="button" variant="ghost" className="h-12 px-3" onClick={clearCarFilters}>{t("clearAll")}</Button> : null}
             <Button
               type="button"
-              variant="ghost"
-              disabled={activeFilterCount === 0}
-              className="h-12"
-              onClick={clearCarFilters}
-            >
-              {t("clearAll")}
-            </Button>
-            <Button
-              type="button"
-              className="h-12 min-w-[8.75rem] bg-[#004BB8] text-white"
+              className="h-12 flex-1 bg-[#004BB8] text-white"
               onClick={() => setFiltersOpen(false)}
             >
-              {t("done")}
+              Show {visibleResults.length} {visibleResults.length === 1 ? "car" : "cars"}
             </Button>
           </div>
         </aside>
       ) : null}
+      {activeQuickFilterGroup ? createPortal(
+          <div className="fixed inset-0 z-[10010] flex items-end bg-slate-950/35 px-3 pt-16 backdrop-blur-[1px] lg:hidden" role="presentation" onMouseDown={() => setQuickFilterGroupId(null)}>
+            <section role="dialog" aria-modal="true" aria-labelledby={`cars-quick-${activeQuickFilterGroup.id}`} onMouseDown={(event) => event.stopPropagation()} className="w-full rounded-t-[1.5rem] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-24px_70px_-30px_rgba(15,23,42,0.65)]">
+              <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-slate-300" aria-hidden="true" />
+              <div className="flex items-center justify-between px-5 pb-3 pt-3">
+                <div><h2 id={`cars-quick-${activeQuickFilterGroup.id}`} className="text-lg font-extrabold text-slate-950">{activeQuickFilterGroup.title ?? t(activeQuickFilterGroup.titleKey)}</h2>{(selectedCarFilters[activeQuickFilterGroup.id]?.length ?? 0) > 0 ? <p className="mt-0.5 text-xs font-semibold text-[#536B92]">{selectedCarFilters[activeQuickFilterGroup.id]?.length} selected</p> : null}</div>
+                <button type="button" aria-label="Close" onClick={() => setQuickFilterGroupId(null)} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"><X className="h-5 w-5" aria-hidden="true" /></button>
+              </div>
+              <div className="max-h-[55dvh] overflow-y-auto overscroll-contain border-y border-slate-100 px-4 py-2">
+                {activeQuickFilterGroup.options.map((option) => {
+                  const selected = selectedCarFilters[activeQuickFilterGroup.id]?.includes(option.id) ?? false;
+                  return <label key={option.id} className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl px-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"><input type="checkbox" checked={selected} onChange={() => toggleCarFilter(activeQuickFilterGroup.id, option.id)} className="h-5 w-5 rounded border-slate-300 accent-blue" /><span className="min-w-0 flex-1">{option.label ?? t(option.labelKey)}</span>{typeof option.count === "number" ? <span className="text-xs tabular-nums text-slate-500">{option.count}</span> : null}</label>;
+                })}
+              </div>
+              <div className="flex items-center gap-3 px-4 py-3">{(selectedCarFilters[activeQuickFilterGroup.id]?.length ?? 0) > 0 ? <Button type="button" variant="ghost" className="h-12" onClick={() => { setSelectedCarFilters((current) => { const next = {...current}; delete next[activeQuickFilterGroup.id]; return next; }); setCurrentPage(1); }}>{t("clearAll")}</Button> : null}<Button type="button" className="h-12 flex-1 bg-[#004BB8] text-white" onClick={() => setQuickFilterGroupId(null)}>Apply</Button></div>
+            </section>
+          </div>, document.body) : null}
       {!guidedPlanning && showBackToTop && !filtersOpen ? (
         <button
           type="button"
@@ -3723,7 +3739,7 @@ function CarFilters({
   t: (key: string) => string;
 }) {
   const [openCompactSection, setOpenCompactSection] = useState<string | null>(
-    null,
+    layout === "mobile" ? "totalPrice" : null,
   );
   const activeFilterLabel = interpolate(t("carsResults.activeFilterCount"), {
     count: String(activeFilterCount),
@@ -3849,18 +3865,19 @@ function FilterSection({
         layout === "compact"
           ? "border-t border-[#D8E1EC]/75 first:border-t-0"
           : layout === "mobile"
-            ? "border-t border-border py-4 first:border-t-0 first:pt-0"
+            ? "mb-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_10px_26px_-24px_rgba(15,23,42,0.45)] last:mb-0"
             : "border-t border-slate-200/75 py-3 first:border-t-0",
       )}
     >
-      {layout === "compact" ? (
+      {layout === "compact" || layout === "mobile" ? (
         <button
           type="button"
           aria-expanded={compactOpen}
           aria-controls={panelId}
           onClick={onCompactOpen}
           className={cn(
-            "group flex min-h-9 w-full items-center justify-between gap-3 rounded-md px-2.5 py-2 text-start text-[13px] font-semibold leading-5 tracking-[-0.005em] text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:bg-[#E5ECF4] hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
+            "group flex w-full items-center justify-between gap-3 text-start font-semibold text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
+            layout === "mobile" ? "min-h-14 px-4 py-3 text-[15px]" : "min-h-9 rounded-md px-2.5 py-2 text-[13px] leading-5 tracking-[-0.005em] hover:bg-[#E5ECF4]",
             compactOpen && "text-[#004BB8]",
           )}
         >
@@ -3888,12 +3905,14 @@ function FilterSection({
       )}
       <div
         id={panelId}
-        hidden={layout === "compact" && !compactOpen}
-        aria-hidden={layout === "compact" && !compactOpen}
+        hidden={(layout === "compact" || layout === "mobile") && !compactOpen}
+        aria-hidden={(layout === "compact" || layout === "mobile") && !compactOpen}
         className={cn(
           layout === "compact"
             ? "grid h-auto gap-0.5 overflow-visible bg-transparent px-2.5 pb-3 pt-0.5"
-            : "mt-2 grid gap-0.5",
+            : layout === "mobile"
+              ? "grid gap-1 border-t border-slate-100 px-3 pb-3 pt-2"
+              : "mt-2 grid gap-0.5",
         )}
       >
         {group.options.map((option) => {
@@ -3923,7 +3942,9 @@ function FilterSection({
               className={cn(
                 layout === "compact"
                   ? "flex min-h-8 cursor-pointer items-start justify-between gap-2 rounded-lg px-1.5 py-1 text-[13px] font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
-                  : "flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-sm font-medium transition-all",
+                  : layout === "mobile"
+                    ? "flex min-h-12 cursor-pointer items-center gap-3 rounded-xl px-2 py-2 text-sm font-medium transition hover:bg-slate-50"
+                    : "flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-sm font-medium transition-all",
                 selected
                   ? "font-semibold text-[#021C2B]"
                   : layout === "compact"

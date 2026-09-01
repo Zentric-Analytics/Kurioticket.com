@@ -27,8 +27,9 @@ test("Cars pagination masks the full page while repositioning and settling", () 
   const changePage = source.slice(start, end);
   assert.match(
     changePage,
-    /setPaginationPendingPage\(page\)[\s\S]*setPaginationTransitionPhase\("covering"\)[\s\S]*positionResultsStart\(\)[\s\S]*setCurrentPage\(page\)[\s\S]*setPaginationTransitionPhase\("settling"\)/,
+    /setPaginationPendingPage\(page\)[\s\S]*setPaginationTransitionPhase\("covering"\)[\s\S]*setCurrentPage\(page\)[\s\S]*setPaginationTransitionPhase\("settling"\)[\s\S]*positionResultsStart\(\)[\s\S]*setPaginationTransitionPhase\("idle"\)/,
   );
+  assert.equal(changePage.match(/positionResultsStart\(\)/g)?.length, 1);
   assert.match(changePage, /resultsStartRef/);
   assert.match(changePage, /overflowAnchor = "none"/);
   assert.match(source, /createPortal\(<CarsResultsPageTransitionSkeleton \/>, document\.body\)/);
