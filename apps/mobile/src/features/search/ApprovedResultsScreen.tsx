@@ -26,11 +26,13 @@ import {
   Armchair,
   ArrowLeft,
   Bell,
+  ChevronDown,
   FileText,
   Luggage,
   MapPin,
   PlaneTakeoff,
   Share2,
+  SlidersHorizontal,
 } from "lucide-react-native";
 import { Heart } from "lucide-react-native";
 import {
@@ -122,6 +124,7 @@ import { normalizePreferredAirlineFilterValues } from "./preferredAirlineDefault
 import { HotelFilterSheet, type HotelFilterSectionName } from "./HotelFilterSheet";
 import { activeHotelFilterCount, buildHotelFilterOptions, emptyHotelFilters, filterHotels, type HotelFilters } from "./hotelFilters";
 import { HotelCardAmenityList } from "./HotelCardAmenityList";
+import { defaultHotelSort, hotelSortLabel, hotelSortOptions, sortHotelsForResults, type HotelSortMode } from "./hotelSort";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -153,6 +156,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const resultsRef = useRef<(FlightResult | HotelResult)[]>([]);
   const [sort, setSort] = useState<FlightSort>("best");
   const [sortOpen, setSortOpen] = useState(false);
+  const [hotelSort, setHotelSort] = useState<HotelSortMode>(defaultHotelSort);
+  const [hotelSortOpen, setHotelSortOpen] = useState(false);
   const [filters, setFilters] = useState<FlightFilters>(emptyFlightFilters);
   const [filtersFlightSearchKey, setFiltersFlightSearchKey] = useState(() => flightResults ? plan.plan?.key : undefined);
   const [preferredAirlineCodes, setPreferredAirlineCodes] = useState<string[] | null>(null);
@@ -198,6 +203,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     if (previousHotelSearchKey.current && previousHotelSearchKey.current !== plan.plan.key) {
       setHotelFilters(emptyHotelFilters());
       setHotelFilterOpen(false);
+      setHotelSortOpen(false);
     }
     previousHotelSearchKey.current = plan.plan.key;
   }, [flightResults, plan.plan?.key]);
@@ -407,12 +413,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         normalizeFlightPrice,
       );
     }
-    return filterHotels(results as HotelResult[], hotelFilters, hotelOptions).sort((a, b) =>
-        sort === "price"
-          ? a.totalPrice! - b.totalPrice!
-          : b.valueScore - a.valueScore,
-      );
-  }, [results, filters, hotelFilters, hotelOptions, sort, product, flightPriceContext, normalizeFlightPrice]);
+    return sortHotelsForResults(
+      filterHotels(results as HotelResult[], hotelFilters, hotelOptions),
+      hotelSort,
+      currencyState?.rates,
+    );
+  }, [results, filters, hotelFilters, hotelOptions, sort, hotelSort, product, flightPriceContext, normalizeFlightPrice, currencyState?.rates]);
   const flightHighlights = useMemo(() => product === "flight"
     ? deriveFlightResultHighlights(sorted as FlightResult[], normalizeFlightPrice)
     : new Map<string, FlightResultHighlight>(), [normalizeFlightPrice, product, sorted]);
@@ -576,16 +582,20 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 onPress={() => setSortOpen(true)}
               />
             ) : null}
-            <Pill
-              label={product === "flight" && activeFilterCount ? `Filter · ${activeFilterCount}` : product === "hotel" && activeHotelFilters ? `Filter · ${activeHotelFilters}` : "Filter"}
+            {product === "flight" ? <Pill
+              label={activeFilterCount ? `Filter · ${activeFilterCount}` : "Filter"}
               active={product === "flight" ? activeFilterCount > 0 : activeHotelFilters > 0}
-              icon={product === "flight" ? undefined : "sliders"}
-              flightResultsIcon={product === "flight" ? "filters" : undefined}
-              onPress={() => product === "flight" ? openFlightFilters("all") : openHotelFilters("all")}
-            />
+              flightResultsIcon="filters"
+              onPress={() => openFlightFilters("all")}
+            /> : <>
+              <HotelResultsShortcut label="Filter" count={activeHotelFilters || undefined} icon onPress={() => openHotelFilters("all")} />
+              <HotelResultsShortcut label={hotelSortLabel(hotelSort)} onPress={() => setHotelSortOpen(true)} />
+              <HotelResultsShortcut label={hotelFilters.starRating ? `${hotelFilters.starRating} ${hotelFilters.starRating === 1 ? "star" : "stars"}` : "Stars"} onPress={() => openHotelFilters("rating")} />
+              <HotelResultsShortcut label={hotelFilters.facilities.length ? `Amenities (${hotelFilters.facilities.length})` : "Amenities"} onPress={() => openHotelFilters("facilities")} />
+            </>}
             {(product === "flight"
               ? ["Airlines", "Stops"]
-              : ["Price", "Star rating", "Property type"]
+              : []
             ).map((x) => (
               <Pill
                 key={x}
@@ -595,16 +605,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   x === "Airlines" ? filters.airlines.length > 0 : false
                 )}
                 flightResultsChevron={product === "flight"}
-                onPress={() => product === "flight" ? openFlightFilters(x.toLowerCase() as "stops" | "airlines") : openHotelFilters(x === "Price" ? "price" : x === "Star rating" ? "rating" : "propertyTypes")}
+                onPress={() => openFlightFilters(x.toLowerCase() as "stops" | "airlines")}
               />
             ))}
-            {product === "hotel" ? (
-              <Pill
-                label={`Sort: ${sort === "price" ? "Price" : "Recommended"}`}
-                active
-                onPress={() => setSort((x) => (x === "best" ? "price" : "best"))}
-              />
-            ) : null}
           </ScrollView>
   );
   const resultContent = (
@@ -783,7 +786,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           />
         </>
       ) : (
-        <HotelFilterSheet visible={hotelFilterOpen} section={hotelFilterSection} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} onChange={setHotelFilters} onClose={()=>setHotelFilterOpen(false)}/>
+        <>
+          <HotelSortModal visible={hotelSortOpen} sort={hotelSort} onChange={setHotelSort} onClose={() => setHotelSortOpen(false)} />
+          <HotelFilterSheet visible={hotelFilterOpen} section={hotelFilterSection} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} onChange={setHotelFilters} onClose={()=>setHotelFilterOpen(false)}/>
+        </>
       )}
       {!flightResults ? (
         <HotelEditSearchModal
@@ -942,6 +948,79 @@ function FlightSortModal({
                   </View>
                 </Pressable>
               );
+            })}
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function HotelResultsShortcut({
+  label,
+  icon = false,
+  count,
+  onPress,
+}: {
+  label: string;
+  icon?: boolean;
+  count?: number;
+  onPress: () => void;
+}) {
+  const { theme } = useAppTheme();
+  const accessibilityLabel = icon && count ? `Filter, ${count} active filters` : label;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      onPress={onPress}
+      style={({ pressed }) => [
+        s0.hotelShortcut,
+        { borderColor: theme.border, backgroundColor: theme.surface },
+        pressed && s0.hotelShortcutPressed,
+      ]}
+    >
+      {icon ? <SlidersHorizontal size={15} color={theme.icon} /> : null}
+      <Text style={[s0.hotelShortcutLabel, { color: theme.textPrimary }]}>{label}</Text>
+      {count ? <View style={s0.hotelShortcutCount}><Text style={s0.hotelShortcutCountText}>{count}</Text></View> : null}
+      {!icon ? <ChevronDown size={14} color={theme.icon} /> : null}
+    </Pressable>
+  );
+}
+
+function HotelSortModal({
+  visible,
+  sort,
+  onChange,
+  onClose,
+}: {
+  visible: boolean;
+  sort: HotelSortMode;
+  onChange: (sort: HotelSortMode) => void;
+  onClose: () => void;
+}) {
+  const { theme } = useAppTheme();
+  const inset = useSafeAreaInsets();
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} accessibilityViewIsModal>
+      <View style={s0.modalBackdrop}>
+        <View style={[s0.sortSheet, { paddingBottom: Math.max(inset.bottom, 18), backgroundColor: theme.surface }]} accessibilityLabel="Sort hotels">
+          <View style={s0.sheetHead}>
+            <Text accessibilityRole="header" style={[s0.foundTitle, { color: theme.textPrimary }]}>Sort hotels</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Close hotel sort options" onPress={onClose} style={s0.closeButton}>
+              <FlowIcon name="close" color={theme.icon} />
+            </Pressable>
+          </View>
+          <View accessibilityRole="radiogroup" style={s0.sortOptions}>
+            {hotelSortOptions.map((option) => {
+              const selected = sort === option.value;
+              return <Pressable key={option.value} accessibilityRole="radio" accessibilityState={{ checked: selected }} onPress={() => { onChange(option.value); onClose(); }} style={({ pressed }) => [s0.sortOption, pressed && s0.sortOptionPressed]}>
+                <View style={[s0.radio, { borderColor: selected ? ui.blue : theme.border }]}>{selected ? <View style={s0.radioDot} /> : null}</View>
+                <View style={s0.sortOptionCopy}>
+                  <Text style={[s0.sortOptionLabel, { color: theme.textPrimary }, selected && { color: ui.blue }]}>{option.label}</Text>
+                  <Text style={[s0.sortOptionDescription, { color: theme.textSecondary }]}>{option.description}</Text>
+                </View>
+              </Pressable>;
             })}
           </View>
         </View>
@@ -1686,6 +1765,11 @@ const s0 = StyleSheet.create({
   route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
   filters: { paddingHorizontal: 14, paddingVertical: 3, gap: 8, alignItems: "center" },
+  hotelShortcut: { height: 38, flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderRadius: 19, paddingHorizontal: 12 },
+  hotelShortcutPressed: { opacity: 0.72 },
+  hotelShortcutLabel: { fontSize: 13, fontWeight: "700", fontFamily: appFonts.bold },
+  hotelShortcutCount: { minWidth: 19, height: 19, borderRadius: 10, paddingHorizontal: 5, alignItems: "center", justifyContent: "center", backgroundColor: ui.blue },
+  hotelShortcutCountText: { color: "white", fontSize: 11, fontWeight: "800", fontFamily: appFonts.extraBold },
   modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(10, 24, 48, 0.42)" },
   sheet: { maxHeight: "82%", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 18, gap: 14, backgroundColor: "white" },
   sortSheet: { borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingHorizontal: 18, paddingTop: 14, gap: 4, backgroundColor: "white" },

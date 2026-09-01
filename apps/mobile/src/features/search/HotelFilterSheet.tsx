@@ -8,7 +8,7 @@ import { FlightRangeSlider } from "./FlightRangeSlider";
 import { ui } from "./SearchUi";
 import { activeHotelFilterCount, emptyHotelFilters, type HotelFilterGroup, type HotelFilterOption, type HotelFilterOptions, type HotelFilters, type HotelStarRating } from "./hotelFilters";
 
-export type HotelFilterSectionName = "all" | "price" | "rating" | "propertyTypes";
+export type HotelFilterSectionName = "all" | "price" | "rating" | "propertyTypes" | "facilities";
 type Props={visible:boolean;section:HotelFilterSectionName;filters:HotelFilters;options:HotelFilterOptions;displayCurrency:string;rates:ExchangeRates;onChange:(filters:HotelFilters)=>void;onClose:()=>void};
 const groupSections: {group:HotelFilterGroup;title:string;limit:number}[]=[{group:"areas",title:"AREA",limit:5},{group:"propertyTypes",title:"PROPERTY TYPE",limit:5},{group:"roomTypes",title:"ROOM TYPE",limit:5},{group:"bedTypes",title:"BED TYPE",limit:5},{group:"meals",title:"MEALS",limit:5},{group:"cancellationPolicies",title:"CANCELLATION POLICY",limit:5},{group:"facilities",title:"FACILITIES",limit:6}];
 
