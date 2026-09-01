@@ -6,7 +6,8 @@ const source = (path: string) => readFileSync(path, "utf8");
 test("profile headers expose notifications only to authenticated users and never settings", () => {
   const authenticated = source("src/features/profile/ProfileScreen.tsx"); const guest = source("src/features/profile/GuestProfileScreen.tsx");
   assert.match(authenticated, /router\.push\("\/notifications"\)/); assert.doesNotMatch(authenticated, /name="settings"/); assert.doesNotMatch(guest, /name="settings"|\/notifications/);
-  assert.doesNotMatch(authenticated, /ProfileSummary|avatar|identity\.name|identity\.email/);
+  assert.doesNotMatch(authenticated, /ProfileSummary|identity\.email/);
+  assert.match(authenticated, /<WelcomeCard name=\{name\} \/>/);
 });
 
 test("customization owns only language, currency, and dark mode", () => {
