@@ -7137,7 +7137,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   className="hidden w-full sm:block"
                   aria-label="Nearby departure fares"
                 >
-                  <div data-desktop-nearby-fare-rail className="mx-auto grid w-full max-w-[860px] grid-cols-[44px_repeat(7,minmax(78px,1fr))_44px] items-center gap-1 border-y border-slate-200/80 bg-white px-1 py-2">
+                  <div data-desktop-nearby-fare-rail className="mx-auto grid w-full max-w-[860px] grid-cols-[44px_repeat(7,minmax(78px,1fr))_44px] items-center gap-1 rounded-xl border border-slate-200 bg-white px-2 py-2 shadow-[0_8px_24px_-20px_rgba(15,23,42,0.45)]">
                     <button
                       type="button"
                       aria-label="Previous nearby fare date"
@@ -7195,8 +7195,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                           }
                           onClick={() => handleNearbyFareDateSelect(fare.date)}
                           className={cn(
-                            "focus-ring relative flex min-h-[76px] min-w-0 flex-col items-center justify-center px-1 py-2 text-center transition-colors after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:bg-[#075EE8] after:transition-transform hover:text-[#075EE8] hover:after:scale-x-50",
-                            selected && "after:scale-x-100",
+                            "focus-ring relative flex min-h-[72px] min-w-0 flex-col items-center justify-center rounded-lg px-1 py-2 text-center transition-colors after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:bg-[#075EE8] after:transition-transform hover:bg-slate-50 hover:text-[#075EE8] hover:after:scale-x-50",
+                            selected && "bg-blue-50/70 after:scale-x-100",
                           )}
                         >
                           {fare.status === "loading" ? (
