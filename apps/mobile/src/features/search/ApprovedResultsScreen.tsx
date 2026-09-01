@@ -86,9 +86,6 @@ import {
   type ExchangeRates,
 } from "../currency/displayCurrency";
 import { formatCabinClass, summarizeBaggage, summarizeFareRules } from "./flightCardSummaries";
-import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
-import { useSavedFlights } from "../../storage/useSavedFlights";
-import { flightSavedSignature } from "../../storage/savedMapping";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { AirlineLogo } from "./AirlineLogo";
 import { useAppTheme } from "../../theme/AppTheme";
@@ -188,7 +185,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const preferredAirlineDefaultAttemptedSearchKey = useRef<string | undefined>(undefined);
   const preferredAirlineFilterTouchedSearchKey = useRef<string | undefined>(undefined);
   const preferredAirlineSessionUserId = useRef<string | null | undefined>(undefined);
-  const { savedFlights, pendingFlightKeys, toggle: toggleSavedFlight } = useSavedFlights();
   useEffect(() => subscribeSession(() => {
     setPreferredAirlineSessionRevision((revision) => revision + 1);
   }), []);
@@ -754,11 +750,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   displayCurrencyContext={currencyState?.resolution}
                   highlight={flightHighlights.get(item.id)}
                   params={params}
-                  saved={savedFlights.has(flightSavedSignature(item))}
-                  pending={pendingFlightKeys.has(flightSavedSignature(item))}
-                  onToggleSaved={() => toggleSavedFlight(item, params).catch(() => {
-                    Alert.alert("Couldn't update saved flight", "Please try again.");
-                  })}
                   logInitialMount={index === 0}
                 />
               </View>
@@ -1055,7 +1046,7 @@ function HotelSortModal({
   );
 }
 
-function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highlight, params, saved, pending, onToggleSaved, logInitialMount }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; highlight?: FlightResultHighlight; params: Record<string, string | string[]>; saved: boolean; pending: boolean; onToggleSaved: () => void; logInitialMount: boolean }) {
+function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highlight, params, logInitialMount }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; highlight?: FlightResultHighlight; params: Record<string, string | string[]>; logInitialMount: boolean }) {
   const { theme } = useAppTheme();
   const supportTextColor = theme.dark ? flightSupportText.dark : flightSupportText.light;
   useEffect(() => {
@@ -1133,8 +1124,8 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
                   </Text>
                 ) : null}
               </View>
-              <View style={s0.identityActions}>
-                {highlight ? (
+              {highlight ? (
+                <View style={s0.identityActions}>
                   <View
                     accessible
                     accessibilityLabel={`${highlightLabel} flight result`}
@@ -1142,24 +1133,8 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
                   >
                     <Text numberOfLines={1} style={[s0.resultBadgeText, { color: highlightTextColor }]}>{highlightLabel}</Text>
                   </View>
-                ) : null}
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={saved ? `Remove ${result.airlineName} flight from saved` : `Save ${result.airlineName} flight`}
-                  accessibilityState={{ selected: saved, busy: pending, disabled: pending }}
-                  pressRetentionOffset={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                  onPressIn={(event) => event.stopPropagation()}
-                  onPress={(event) => { event.stopPropagation(); if (!pending) onToggleSaved(); }}
-                  style={({ pressed }) => [s0.favoriteButton, pending && s0.favoritePending, pressed && !pending && s0.favoritePressed]}
-                >
-                  <Heart
-                    size={20}
-                    strokeWidth={2}
-                    fill={saved ? androidFavoriteColors.active : "transparent"}
-                    color={saved ? androidFavoriteColors.active : theme.textSecondary}
-                  />
-                </Pressable>
-              </View>
+                </View>
+              ) : null}
             </View>
           </View>
         </View>
@@ -1510,9 +1485,6 @@ function FlightLoadingSkeleton({ roundTrip = false }: { roundTrip?: boolean }) {
             </View>
             <View style={s0.skeletonIdentityActions}>
               <View style={[s0.skeletonBadge, placeholder]} />
-              <View style={s0.skeletonFavoriteButton}>
-                <View style={[s0.skeletonHeart, placeholder]} />
-              </View>
             </View>
           </View>
         </View>
@@ -1865,9 +1837,6 @@ const s0 = StyleSheet.create({
   airlineHeader: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start" },
   airlineCopy: { flex: 1, minWidth: 0 },
   identityActions: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 0, transform: [{ translateY: -3 }] },
-  favoriteButton: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
-  favoritePending: { opacity: 0.65 },
-  favoritePressed: { opacity: 0.7, transform: [{ scale: 0.94 }] },
   resultBadge: { height: 24, flexDirection: "row", alignItems: "center", paddingHorizontal: 9, borderRadius: 12 },
   resultBadgeText: { fontSize: 10, lineHeight: 13, fontWeight: "800", fontFamily: appFonts.extraBold },
   flightMain: { width: "100%", alignItems: "stretch" },
@@ -2025,8 +1994,6 @@ const s0 = StyleSheet.create({
   skeletonIdentityCopy: { flex: 1, minWidth: 0 },
   skeletonIdentityActions: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 8 },
   skeletonBadge: { width: 60, height: 22, borderRadius: 11 },
-  skeletonFavoriteButton: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
-  skeletonHeart: { width: 20, height: 20, borderRadius: 10 },
   skeletonJourneyList: { width: "100%", marginTop: 10, gap: 10 },
   skeletonJourneyBlock: { width: "100%" },
   skeletonJourneyLabel: { width: 60, height: 7, borderRadius: 4 },

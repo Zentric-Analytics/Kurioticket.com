@@ -24,8 +24,6 @@ test("server-rejected favorite sessions are cleared and use sign-in recovery ins
   assert.match(hook, /error instanceof TravelApiError && error\.status === 401/);
   assert.match(hook, /await clearSession\(\)[\s\S]*?setUserId\(null\)[\s\S]*?showFavoriteSignInPrompt\("\/saved"\)[\s\S]*?return/);
   assert.match(hook, /error\.status === 400[\s\S]*?operation[\s\S]*?status: error\.status[\s\S]*?code: error\.code/);
-  const results = source("src/features/search/ApprovedResultsScreen.tsx");
-  assert.match(results, /\.catch\(\(\) => \{[\s\S]*?Alert\.alert\("Couldn't update saved flight", "Please try again\."\)/);
 });
 
 test("favorite prompt offers dismissal and the existing sign-in flow", () => {
