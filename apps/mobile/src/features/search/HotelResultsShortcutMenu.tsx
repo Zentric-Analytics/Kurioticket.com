@@ -6,18 +6,27 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import { ui } from "./SearchUi";
 import type { HotelFilterOptions, HotelFilters, HotelStarRating } from "./hotelFilters";
+import { hotelSortOptions, type HotelSortMode } from "./hotelSort";
 
-export type HotelResultsShortcutMenuKind = "stars" | "amenities";
+export type HotelResultsShortcutMenuKind = "sort" | "stars" | "amenities";
 export type HotelResultsShortcutAnchor = { x: number; y: number; width: number; height: number };
 
-type Props = {
+type CommonProps = {
   kind: HotelResultsShortcutMenuKind;
   anchor: HotelResultsShortcutAnchor;
+  onClose: () => void;
+};
+
+type Props = CommonProps & ({
+  kind: "sort";
+  sort: HotelSortMode;
+  onSortChange: (mode: HotelSortMode) => void;
+} | {
+  kind: "stars" | "amenities";
   filters: HotelFilters;
   options: HotelFilterOptions;
   onChange: Dispatch<SetStateAction<HotelFilters>>;
-  onClose: () => void;
-};
+});
 
 const STAR_OPTIONS: readonly (HotelStarRating | null)[] = [null, 5, 4, 3, 2, 1];
 const HORIZONTAL_GUTTER = 16;
@@ -37,21 +46,27 @@ export function toggleHotelShortcutFacility(filters: HotelFilters, value: string
   };
 }
 
-export function HotelResultsShortcutMenu({ kind, anchor, filters, options, onChange, onClose }: Props) {
+export function HotelResultsShortcutMenu(props: Props) {
+  const { kind, anchor, onClose } = props;
   const { theme } = useAppTheme();
   const { width: viewportWidth, height: viewportHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const desiredWidth = kind === "stars" ? 190 : 240;
+  const desiredWidth = kind === "amenities" ? 240 : 200;
   const width = Math.min(desiredWidth, viewportWidth - HORIZONTAL_GUTTER * 2);
   const left = Math.max(HORIZONTAL_GUTTER, Math.min(anchor.x, viewportWidth - HORIZONTAL_GUTTER - width));
   const belowTop = anchor.y + anchor.height + MENU_GAP;
   const availableBelow = viewportHeight - insets.bottom - HORIZONTAL_GUTTER - belowTop;
-  const estimatedHeight = Math.min(MAX_MENU_HEIGHT, (kind === "stars" ? STAR_OPTIONS.length : options.facilities.length) * 44 + 8);
+  const optionCount = kind === "sort"
+    ? hotelSortOptions.length
+    : kind === "stars" ? STAR_OPTIONS.length : props.options.facilities.length;
+  const estimatedHeight = Math.min(MAX_MENU_HEIGHT, optionCount * 44 + 8);
   const top = availableBelow >= Math.min(estimatedHeight, 132)
     ? belowTop
     : Math.max(insets.top + HORIZONTAL_GUTTER, anchor.y - MENU_GAP - estimatedHeight);
   const maxHeight = Math.max(88, Math.min(MAX_MENU_HEIGHT, viewportHeight - insets.bottom - HORIZONTAL_GUTTER - top));
-  const dismissLabel = kind === "stars" ? "Close star options" : "Close amenity options";
+  const dismissLabel = kind === "sort"
+    ? "Close sort options"
+    : kind === "stars" ? "Close star options" : "Close amenity options";
 
   return (
     <Modal
@@ -70,7 +85,7 @@ export function HotelResultsShortcutMenu({ kind, anchor, filters, options, onCha
           style={StyleSheet.absoluteFill}
         />
         <View
-          accessibilityRole={kind === "stars" ? "radiogroup" : undefined}
+          accessibilityRole={kind === "sort" || kind === "stars" ? "radiogroup" : undefined}
           style={[styles.menu, { left, top, width, maxHeight, backgroundColor: theme.surface, borderColor: theme.border }]}
         >
           <ScrollView
@@ -79,32 +94,48 @@ export function HotelResultsShortcutMenu({ kind, anchor, filters, options, onCha
             showsVerticalScrollIndicator={kind === "amenities"}
             contentContainerStyle={styles.menuContent}
           >
-            {kind === "stars" ? STAR_OPTIONS.map((rating) => {
-              const selected = filters.starRating === rating;
+            {kind === "sort" ? hotelSortOptions.map((option) => {
+              const selected = props.sort === option.value;
+              return (
+                <Pressable
+                  key={option.value}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected, checked: selected }}
+                  onPress={() => { props.onSortChange(option.value); onClose(); }}
+                  style={({ pressed }) => [styles.row, selected && styles.selectedRow, pressed && styles.pressedRow]}
+                >
+                  <Text numberOfLines={1} style={[styles.label, { color: selected ? ui.blue : theme.textPrimary }]}>{option.label}</Text>
+                  <View style={styles.rowEnd}>
+                    <View style={styles.checkSlot}>{selected ? <Check accessible={false} size={16} color={ui.blue} /> : null}</View>
+                  </View>
+                </Pressable>
+              );
+            }) : kind === "stars" ? STAR_OPTIONS.map((rating) => {
+              const selected = props.filters.starRating === rating;
               const label = rating === null ? "All" : `${rating} ${rating === 1 ? "star" : "stars"}`;
               return (
                 <Pressable
                   key={rating ?? "all"}
                   accessibilityRole="radio"
                   accessibilityState={{ selected, checked: selected }}
-                  onPress={() => { onChange((current) => selectHotelShortcutStar(current, rating)); onClose(); }}
+                  onPress={() => { props.onChange((current) => selectHotelShortcutStar(current, rating)); onClose(); }}
                   style={({ pressed }) => [styles.row, selected && styles.selectedRow, pressed && styles.pressedRow]}
                 >
                   <Text numberOfLines={1} style={[styles.label, { color: selected ? ui.blue : theme.textPrimary }]}>{label}</Text>
                   <View style={styles.rowEnd}>
-                    <Text style={[styles.count, { color: theme.textSecondary }]}>{options.starCounts[rating ?? 0]}</Text>
+                    <Text style={[styles.count, { color: theme.textSecondary }]}>{props.options.starCounts[rating ?? 0]}</Text>
                     <View style={styles.checkSlot}>{selected ? <Check accessible={false} size={16} color={ui.blue} /> : null}</View>
                   </View>
                 </Pressable>
               );
-            }) : options.facilities.map((option) => {
-              const selected = filters.facilities.includes(option.value);
+            }) : props.options.facilities.map((option) => {
+              const selected = props.filters.facilities.includes(option.value);
               return (
                 <Pressable
                   key={option.value}
                   accessibilityRole="checkbox"
                   accessibilityState={{ checked: selected }}
-                  onPress={() => onChange((current) => toggleHotelShortcutFacility(current, option.value))}
+                  onPress={() => props.onChange((current) => toggleHotelShortcutFacility(current, option.value))}
                   style={({ pressed }) => [styles.row, selected && styles.selectedRow, pressed && styles.pressedRow]}
                 >
                   <Text numberOfLines={1} style={[styles.label, { color: selected ? ui.blue : theme.textPrimary }]}>{option.label}</Text>
