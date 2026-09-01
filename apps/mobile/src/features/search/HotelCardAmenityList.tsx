@@ -1,7 +1,7 @@
 import {
-  AirVent, Armchair, Bike, BusFront, CircleDot, CircleParking, Clock3, Coffee,
+  AirVent, Armchair, BatteryCharging, Bike, BusFront, CircleDot, CircleParking, Clock3, Coffee,
   ConciergeBell, CookingPot, Dumbbell, Flower2, Laptop, Trees, UtensilsCrossed,
-  VolumeX, Waves, Wifi, Wine, type LucideIcon,
+  PawPrint, VolumeX, Waves, Wifi, Wine, type LucideIcon,
 } from "lucide-react-native";
 import { StyleSheet, Text, View } from "react-native";
 import { buildHotelAmenityPresentation, type HotelAmenityIconKey } from "../../../../../src/components/results/hotelAmenityPresentation";
@@ -9,6 +9,7 @@ import { ui } from "./SearchUi";
 
 const amenityIcons: Record<HotelAmenityIconKey, LucideIcon> = {
   wifi: Wifi, breakfast: Coffee, pool: Waves, spa: Flower2,
+  petFriendly: PawPrint, evCharging: BatteryCharging,
   airportShuttle: BusFront, parking: CircleParking, fitness: Dumbbell,
   workspace: Laptop, quietRooms: VolumeX, frontDesk: ConciergeBell,
   lateCheckIn: Clock3, kitchenette: CookingPot, bikeStorage: Bike,
