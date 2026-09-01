@@ -260,13 +260,7 @@ export function CarResultCard({
                   className="mt-0.5 shrink-0 text-[#004BB8]"
                   aria-hidden="true"
                 />
-                <span className="min-w-0">
-                  <strong className="font-semibold text-[#536B92]">
-                    {formatCarPickupType(car.pickupType)}
-                  </strong>
-                  {" · "}
-                  {car.pickupLocation}
-                </span>
+                <span className="min-w-0">{car.pickupLocation}</span>
               </p>
               <ul
                 data-car-card-mobile-specs

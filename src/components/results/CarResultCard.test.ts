@@ -108,9 +108,9 @@ test("mobile primary specs are deterministic and capped at four", () => {
   );
   assert.deepEqual(first, [
     "5 passengers",
-    "3 bags",
     "Automatic",
-    "Unlimited mileage",
+    "5 doors",
+    "3 bags",
   ]);
   const limited = {
     ...car,
@@ -120,7 +120,7 @@ test("mobile primary specs are deterministic and capped at four", () => {
   };
   assert.deepEqual(
     getMobileCarPrimarySpecs(limited).map(([, label]) => label),
-    ["5 passengers", "3 bags", "Manual", "250 km included"],
+    ["5 passengers", "Manual", "5 doors", "3 bags"],
   );
   assert.equal(getMobileCarPrimarySpecs(limited).length, 4);
 });
