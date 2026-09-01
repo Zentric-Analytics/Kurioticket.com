@@ -52,11 +52,13 @@ test("desktop cards pair each leg time with the airline logo while keeping one i
 
   assert.match(source, /flight-card-airline-name truncate whitespace-nowrap/);
   assert.match(source, /flight\.airlineName[\s\S]*flight\.flightNumber/);
-  assert.match(source, /flight-card-leg-time-row[\s\S]*flight-card-leg-logo[\s\S]*<AirlineLogo flight=\{flight\}/);
+  assert.match(source, /flight-card-leg-time-row[\s\S]*flight-card-leg-logo[\s\S]*<AirlineLogo flight=\{flight\} inline/);
   assert.match(source, /visibleLegs\.map[\s\S]*flight=\{flight\}/);
   assert.match(styles, /\.flight-card-header-logo \{\s*display: none;/);
   assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-header-logo \{\s*display: block;/);
-  assert.match(styles, /\.flight-card-time \{\s*font-size: 1\.25rem;/);
+  assert.match(styles, /\.flight-card-time \{\s*font-size: 1\.125rem;\s*white-space: nowrap;/);
+  assert.match(styles, /\.flight-card-inline-logo \{[\s\S]*border: 0;[\s\S]*background: transparent;[\s\S]*box-shadow: none;/);
+  assert.match(styles, /\.flight-card-inline-logo-image \{\s*height: 1\.5rem;\s*width: 1\.5rem;/);
 });
 
 test("desktop nearby fares use a contained mobile-like hierarchy", async () => {

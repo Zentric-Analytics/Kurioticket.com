@@ -234,7 +234,7 @@ function ResponsiveFlightLegRow({
           </p>
           <div className="flight-card-leg-time-row mt-1 flex min-w-0 items-center gap-2.5">
             <div className="flight-card-leg-logo hidden shrink-0 lg:block">
-              <AirlineLogo flight={flight} />
+              <AirlineLogo flight={flight} inline />
             </div>
             <div
               className="flight-card-time min-w-0 font-semibold leading-6 tracking-[-0.025em] text-[#07133B]"
@@ -308,14 +308,17 @@ function ResponsiveFlightLegRow({
 
 function AirlineLogo({
   flight,
+  inline = false,
 }: {
   flight: PublicFlightResult;
+  inline?: boolean;
 }) {
   if (flight.airlineLogo) {
     return (
       <div
         className={cn(
-          "flex shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white shadow-sm",
+          "flex shrink-0 items-center justify-center",
+          inline ? "flight-card-inline-logo" : "rounded-lg border border-slate-200 bg-white shadow-sm",
           "flight-card-logo-box",
         )}
       >
@@ -324,7 +327,7 @@ function AirlineLogo({
           alt={`${flight.airlineName} logo`}
           width={38}
           height={38}
-          className="flight-card-logo-image object-contain"
+          className={cn("flight-card-logo-image object-contain", inline && "flight-card-inline-logo-image")}
         />
       </div>
     );
@@ -333,12 +336,13 @@ function AirlineLogo({
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-lg border border-[#004BB8]/8 bg-[#004BB8]/5 text-[#004BB8] shadow-sm",
+        "flex shrink-0 items-center justify-center text-[#004BB8]",
+        inline ? "flight-card-inline-logo" : "rounded-lg border border-[#004BB8]/8 bg-[#004BB8]/5 shadow-sm",
         "flight-card-logo-box",
       )}
     >
       <PlaneTakeoff
-        className="flight-card-logo-icon"
+        className={cn("flight-card-logo-icon", inline && "flight-card-inline-logo-icon")}
         aria-hidden="true"
       />
     </div>
