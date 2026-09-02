@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { AccessibilityInfo, ActivityIndicator, Alert, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Alert, Keyboard, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, Line, Path } from "react-native-svg";
 import { TravelApiError, travelApi } from "../../api/travelApi";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
@@ -7,6 +8,7 @@ import type { MobileLocale } from "../../localization/mobileLocalizationCatalog"
 import { useAppTheme } from "../../theme/AppTheme";
 import { flowColors } from "../flow/flowStyles";
 import type { SecurityCopy } from "./securityLocalization";
+import { twoFactorPolishCopy } from "./twoFactorPolishCopy";
 
 type VerificationMethod = "authenticator" | "recovery" | "password";
 type Stage = "overview" | "verify";
@@ -70,7 +72,9 @@ function EyeIcon({ hidden, color }: { hidden: boolean; color: string }) {
 export function TwoFactorEnabledFlow({ active, hasPassword, copy: c, onUnauthorized, onDisabled }: Props) {
   const { theme } = useAppTheme();
   const { locale } = useMobileLocalization();
+  const insets = useSafeAreaInsets();
   const f = flowCopy[locale];
+  const polish = twoFactorPolishCopy[locale];
   const [stage, setStage] = useState<Stage>("overview");
   const [method, setMethod] = useState<VerificationMethod>("authenticator");
   const [showMethods, setShowMethods] = useState(false);
@@ -183,6 +187,7 @@ export function TwoFactorEnabledFlow({ active, hasPassword, copy: c, onUnauthori
 
   const fieldLabel = method === "authenticator" ? f.authenticatorCode : method === "recovery" ? f.recoveryCode : f.password;
   const methodHelp = method === "recovery" ? f.recoveryHelp : method === "password" ? f.passwordHelp : "";
+  const placeholder = method === "authenticator" ? f.authenticatorPlaceholder : method === "recovery" ? polish.recoveryPlaceholder : polish.passwordPlaceholder;
   const ready = method === "authenticator" ? /^\d{6}$/.test(verification) : Boolean(verification.trim());
 
   return <View style={styles.form}>
@@ -208,7 +213,7 @@ export function TwoFactorEnabledFlow({ active, hasPassword, copy: c, onUnauthori
             setFieldError("");
             setGeneralError("");
           }}
-          placeholder={method === "authenticator" ? f.authenticatorPlaceholder : fieldLabel}
+          placeholder={placeholder}
           placeholderTextColor={theme.muted}
           style={[styles.input, { color: theme.text }]}
         />
@@ -221,24 +226,30 @@ export function TwoFactorEnabledFlow({ active, hasPassword, copy: c, onUnauthori
       <View style={styles.buttonContent}><Text style={styles.dangerButtonText}>{f.turnOff}</Text>{submitting ? <ActivityIndicator size="small" color="white" /> : null}</View>
     </Pressable>
 
-    <Pressable accessibilityRole="button" onPress={() => setShowMethods((current) => !current)} style={styles.secondaryAction}>
+    <Pressable accessibilityRole="button" onPress={() => { Keyboard.dismiss(); setShowMethods(true); }} style={styles.secondaryAction}>
       <Text style={styles.link}>{f.useAnother}</Text>
     </Pressable>
 
-    {showMethods ? <View style={[styles.methodPicker, { borderColor: theme.border, backgroundColor: theme.surface }]}>
-      <Text style={[styles.methodPickerTitle, { color: theme.text }]}>{f.chooseMethod}</Text>
-      <MethodOption title={f.authenticatorApp} detail={f.authenticatorPlaceholder} selected={method === "authenticator"} onPress={() => chooseMethod("authenticator")} />
-      <MethodOption title={f.recoveryCode} detail={f.recoveryHelp} selected={method === "recovery"} onPress={() => chooseMethod("recovery")} />
-      {hasPassword ? <MethodOption title={f.password} detail={f.passwordHelp} selected={method === "password"} onPress={() => chooseMethod("password")} /> : null}
-    </View> : null}
+    <Modal animationType="fade" presentationStyle="overFullScreen" transparent visible={showMethods} onRequestClose={() => setShowMethods(false)}>
+      <View style={styles.sheetRoot}>
+        <Pressable accessibilityRole="button" accessibilityLabel={c.close} onPress={() => setShowMethods(false)} style={styles.sheetBackdrop} />
+        <View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: theme.surface, paddingBottom: Math.max(insets.bottom, 16) }]}>
+          <View style={styles.sheetHandle} />
+          <Text accessibilityRole="header" style={[styles.sheetTitle, { color: theme.text }]}>{polish.verifyAnotherWay}</Text>
+          {method !== "authenticator" ? <MethodOption title={f.authenticatorApp} detail={f.authenticatorPlaceholder} onPress={() => chooseMethod("authenticator")} /> : null}
+          {method !== "recovery" ? <MethodOption title={f.recoveryCode} detail={f.recoveryHelp} onPress={() => chooseMethod("recovery")} /> : null}
+          {hasPassword && method !== "password" ? <MethodOption title={f.password} detail={f.passwordHelp} onPress={() => chooseMethod("password")} /> : null}
+        </View>
+      </View>
+    </Modal>
   </View>;
 }
 
-function MethodOption({ title, detail, selected, onPress }: { title: string; detail: string; selected: boolean; onPress: () => void }) {
+function MethodOption({ title, detail, onPress }: { title: string; detail: string; onPress: () => void }) {
   const { theme } = useAppTheme();
-  return <Pressable accessibilityRole="button" accessibilityState={{ selected }} onPress={onPress} style={({ pressed }) => [styles.methodOption, { borderTopColor: theme.border }, pressed && styles.pressed]}>
+  return <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.methodOption, { borderTopColor: theme.border }, pressed && styles.pressed]}>
     <View style={styles.methodOptionCopy}><Text style={[styles.methodTitle, { color: theme.text }]}>{title}</Text><Text style={[styles.methodDetail, { color: theme.muted }]}>{detail}</Text></View>
-    {selected ? <Text style={styles.selectedMark}>✓</Text> : null}
+    <Text style={[styles.chevron, { color: theme.muted }]}>›</Text>
   </Pressable>;
 }
 
@@ -268,11 +279,14 @@ const styles = StyleSheet.create({
   dangerButtonText: { color: "white", fontSize: 16, fontWeight: "800", textAlign: "center" },
   secondaryAction: { minHeight: 44, alignSelf: "center", justifyContent: "center", paddingHorizontal: 8 },
   link: { color: "#1769E0", fontSize: 15, fontWeight: "800", textAlign: "center" },
-  methodPicker: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, overflow: "hidden" },
-  methodPickerTitle: { paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, fontWeight: "800" },
-  methodOption: { minHeight: 68, borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 14, paddingVertical: 11, flexDirection: "row", alignItems: "center", gap: 12 },
+  sheetRoot: { flex: 1, justifyContent: "flex-end" },
+  sheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(15, 23, 42, 0.28)" },
+  sheet: { borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingHorizontal: 20, paddingTop: 12, maxHeight: "52%" },
+  sheetHandle: { width: 48, height: 5, borderRadius: 3, backgroundColor: "#C9CED7", alignSelf: "center", marginBottom: 20 },
+  sheetTitle: { fontSize: 20, lineHeight: 27, fontWeight: "800", marginBottom: 8 },
+  methodOption: { minHeight: 76, borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 13, flexDirection: "row", alignItems: "center", gap: 12 },
   methodOptionCopy: { flex: 1, gap: 3 },
   methodDetail: { fontSize: 13, lineHeight: 18 },
-  selectedMark: { color: "#1769E0", fontSize: 17, fontWeight: "900" },
+  chevron: { fontSize: 26, lineHeight: 30, fontWeight: "400" },
   pressed: { opacity: 0.68 },
 });
