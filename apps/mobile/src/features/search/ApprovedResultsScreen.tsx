@@ -95,6 +95,7 @@ import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { AirlineLogo } from "./AirlineLogo";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
+import { colors } from "../../theme/tokens";
 import { buildFlightDetailParams } from "./flightDetailNavigation";
 import { withinFlightLoadingDeadline } from "./flightLoadingDeadline";
 import { logFlightSearchCheckpoint, startFlightSearchEventLoopMonitor } from "./flightSearchDiagnostics";
@@ -139,6 +140,8 @@ const flightSupportText = {
   dark: "#B8C3D8",
 } as const;
 const flightResultsLightCanvas = "#F5F7FB";
+const HOTEL_UTILITY_ICON_COLOR = "#334155";
+const HOTEL_SAVED_HEART_COLOR = "#E11D48";
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 const sameStringArray = (left: readonly string[], right: readonly string[]) =>
   left.length === right.length && left.every((value, index) => value === right[index]);
@@ -1306,17 +1309,22 @@ function HotelCard({
               accessibilityLabel={saved ? `Remove ${result.name} from saved` : `Save ${result.name}`}
               accessibilityState={{ selected: saved }}
               onPress={() => void canonical.toggleHotel(result, params)}
-              style={s0.hotelAction}
+              style={[s0.hotelAction, s0.hotelSaveAction]}
             >
-              <Heart accessible={false} size={20} color={ui.blue} fill={saved ? ui.blue : "none"} />
+              <Heart
+                accessible={false}
+                size={20}
+                color={saved ? HOTEL_SAVED_HEART_COLOR : HOTEL_UTILITY_ICON_COLOR}
+                fill={saved ? HOTEL_SAVED_HEART_COLOR : "none"}
+              />
             </Pressable>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Share ${result.name}`}
               onPress={shareHotel}
-              style={s0.hotelAction}
+              style={[s0.hotelAction, s0.hotelShareAction]}
             >
-              <Share2 accessible={false} size={20} color={ui.blue} />
+              <Share2 accessible={false} size={20} color={HOTEL_UTILITY_ICON_COLOR} />
             </Pressable>
           </View>
         </View>
@@ -1327,8 +1335,8 @@ function HotelCard({
           {"★".repeat(classificationStars)}
         </Text>
         <View style={s0.hotelLocation}>
-          <MapPin accessible={false} size={14} strokeWidth={2} color={ui.muted} />
-          <Text numberOfLines={1} style={s0.sub}>{result.location}</Text>
+          <MapPin accessible={false} size={14} strokeWidth={2} color={colors.blue} />
+          <Text numberOfLines={1} style={[s0.sub, s0.hotelLocationText]}>{result.location}</Text>
         </View>
         {score == null ? null : (
           <Text style={s0.review}>
@@ -1935,8 +1943,10 @@ const s0 = StyleSheet.create({
   hotelCopy: { flex: 1, minWidth: 0, padding: 12, gap: 4 },
   hotelCopyCompact: { padding: 10 },
   hotelTitleRow: { flexDirection: "row", alignItems: "flex-start", minWidth: 0 },
-  hotelActions: { flexDirection: "row", flexShrink: 0, marginRight: -8, marginTop: -8 },
+  hotelActions: { flexDirection: "row", flexShrink: 0, gap: 0, marginRight: -8, marginTop: -8 },
   hotelAction: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  hotelSaveAction: { alignItems: "flex-end", paddingRight: 4 },
+  hotelShareAction: { alignItems: "flex-start", paddingLeft: 4 },
   hotelName: {
     flex: 1,
     minWidth: 0,
@@ -1948,6 +1958,7 @@ const s0 = StyleSheet.create({
   },
   stars: { color: "#FFB800", fontSize: 14 },
   hotelLocation: { flexDirection: "row", alignItems: "center", gap: 5, minWidth: 0 },
+  hotelLocationText: { color: colors.blue },
   review: { fontSize: 11, color: ui.navy },
   score: { backgroundColor: ui.blue, color: "white", fontWeight: "900" },
   hotelPrice: {
