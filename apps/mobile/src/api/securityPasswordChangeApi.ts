@@ -5,6 +5,7 @@ import { TravelApiError } from "./travelApi";
 
 export type PasswordChangeChallenge = {
   kind: "issued";
+  challengeId: string;
   maskedEmail: string;
   expiresInSeconds: number;
   resendAfterSeconds: number;
@@ -48,7 +49,8 @@ export const securityPasswordChangeApi = {
   status: () => request<PasswordChangeStatus>("GET"),
   start: (body: { currentPassword: string; newPassword: string; confirmPassword: string }) =>
     request<PasswordChangeChallenge>("PATCH", { action: "start", ...body }),
-  resend: () => request<PasswordChangeChallenge>("PATCH", { action: "resend" }),
-  confirm: (body: { code: string; newPassword: string; confirmPassword: string }) =>
+  resend: (body: { challengeId: string; newPassword: string }) =>
+    request<PasswordChangeChallenge>("PATCH", { action: "resend", ...body }),
+  confirm: (body: { challengeId: string; code: string; newPassword: string; confirmPassword: string }) =>
     request<{ success: true }>("PATCH", { action: "confirm", ...body }),
 };
