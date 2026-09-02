@@ -1,1 +1,1 @@
-export { PersonalDetailsScreen as default } from "../src/features/personal-details/PersonalDetailsScreen";
+export { AlignedPersonalDetailsScreen as default } from "../src/features/personal-details/AlignedPersonalDetailsScreen";
