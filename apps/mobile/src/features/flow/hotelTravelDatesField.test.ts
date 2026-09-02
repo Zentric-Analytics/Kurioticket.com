@@ -19,3 +19,9 @@ test("Hotel Done commits atomically and cancellation only closes the sheet", () 
 test("Hotel date validation opens the same range picker", () => {
   assert.match(panel, /else if \(nextErrors\.checkIn \|\| nextErrors\.checkOut\) setDatesOpen\(true\)/);
 });
+
+
+test("Hotel dates truncate only in Results Edit appearance", () => {
+  assert.match(panel, /label="Travel dates"[^>]*valueNumberOfLines=\{editAppearance \? 1 : 0\}/);
+  assert.match(panel, /appearance=\{editAppearance \? "resultsEdit" : "default"\}/);
+});

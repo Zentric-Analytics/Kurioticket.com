@@ -210,6 +210,7 @@ export function CompactSearchField({
   onPress,
   trailing,
   valueNumberOfLines = 1,
+  appearance = "default",
 }: {
   label: string;
   value: string;
@@ -219,6 +220,7 @@ export function CompactSearchField({
   onPress: () => void;
   trailing?: ReactNode;
   valueNumberOfLines?: number;
+  appearance?: "default" | "resultsEdit";
 }) {
   const ft = useFlowTheme();
   return (
@@ -228,17 +230,19 @@ export function CompactSearchField({
       onPress={onPress}
       style={({ pressed }) => [
         styles.compactField,
+        appearance === "resultsEdit" && styles.resultsEditCompactField,
         { backgroundColor: ft.colors.input, borderBottomColor: ft.colors.border },
+        appearance === "resultsEdit" && { backgroundColor: "transparent" },
         pressed && ft.styles.pressed,
       ]}
     >
-      <Text style={[styles.compactLabel, { color: ft.colors.secondaryText }]}>
+      <Text style={[styles.compactLabel, appearance === "resultsEdit" && styles.resultsEditCompactLabel, { color: ft.colors.secondaryText }]}>
         {label.toUpperCase()}
       </Text>
       <View style={styles.compactValueRow}>
         <FlowIcon name={icon} size={18} color={ft.colors.icon} />
         <View style={styles.compactTextColumn}>
-          <Text numberOfLines={valueNumberOfLines} style={[styles.compactValue, { color: muted ? ft.colors.placeholder : ft.colors.text }]}>{value}</Text>
+          <Text numberOfLines={valueNumberOfLines} style={[styles.compactValue, appearance === "resultsEdit" && styles.resultsEditCompactValue, { color: muted ? ft.colors.placeholder : ft.colors.text }]}>{value}</Text>
           {meta ? <Text style={[styles.compactMeta, { color: ft.colors.secondaryText }]}>{meta}</Text> : null}
         </View>
         {trailing ?? <FlowIcon name="chevron" size={16} color={ft.colors.icon} />}
@@ -307,12 +311,14 @@ export function PrimaryButton({
   icon = "search",
   disabled = false,
   size = "default",
+  appearance = "default",
 }: {
   label: string;
   onPress: () => void;
   icon?: FlowIconName | null;
   disabled?: boolean;
   size?: "default" | "compact";
+  appearance?: "default" | "resultsEdit";
 }) {
   const ft = useFlowTheme();
   return (
@@ -322,10 +328,10 @@ export function PrimaryButton({
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [ft.styles.primary, size === "compact" && styles.compactPrimary, disabled && { opacity: 0.6 }, pressed && ft.styles.pressed]}
+      style={({ pressed }) => [ft.styles.primary, size === "compact" && styles.compactPrimary, appearance === "resultsEdit" && styles.resultsEditPrimary, disabled && { opacity: 0.6 }, pressed && ft.styles.pressed]}
     >
       {icon ? <FlowIcon name={icon} color="white" /> : null}
-      <Text style={[ft.styles.primaryText, size === "compact" && styles.compactPrimaryText]}>{label}</Text>
+      <Text style={[ft.styles.primaryText, size === "compact" && styles.compactPrimaryText, appearance === "resultsEdit" && styles.resultsEditPrimaryText]}>{label}</Text>
     </Pressable>
   );
 }
@@ -348,6 +354,8 @@ export function UnavailableNotice({ text }: { text: string }) {
 const styles = StyleSheet.create({
   compactPrimary: { minHeight: 46 },
   compactPrimaryText: { fontSize: 14 },
+  resultsEditPrimary: { minHeight: 52, borderRadius: 12 },
+  resultsEditPrimaryText: { fontSize: 16, fontWeight: "600" },
   pickerSheetHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   pickerSheetTitle: { flex: 1, minWidth: 0 },
   centerTitle: {
@@ -395,10 +403,13 @@ const styles = StyleSheet.create({
   },
   grow: { flex: 1 },
   compactField: { minHeight: 66, paddingHorizontal: 12, paddingVertical: 9, borderBottomWidth: 1, justifyContent: "center", gap: 4 },
+  resultsEditCompactField: { minHeight: 72, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 0 },
   compactLabel: { fontSize: 10, fontWeight: "800", letterSpacing: 0.5 },
+  resultsEditCompactLabel: { fontSize: 11, lineHeight: 15, fontWeight: "700", letterSpacing: 1.1 },
   compactValueRow: { flexDirection: "row", alignItems: "center", gap: 9 },
   compactTextColumn: { flex: 1, minWidth: 0 },
   compactValue: { fontSize: 15, fontWeight: "600", flexShrink: 1 },
+  resultsEditCompactValue: { fontSize: 16, lineHeight: 20, fontWeight: "600" },
   compactMeta: { fontSize: 12, lineHeight: 17, marginTop: 1 },
   overlay: {
     flex: 1,
