@@ -96,7 +96,7 @@ test("Footer preserves every navigation route", () => {
     "/service-guarantee",
     "/more-service-info",
     "/flights",
-    "/hotels/results",
+    "/hotels",
     "/cars",
     "/packages",
     "/destinations",

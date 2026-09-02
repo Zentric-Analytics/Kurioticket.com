@@ -15460,9 +15460,8 @@ test("Vietnamese Hotels landing and hotel results screenshot copy resolves witho
     "Weekend ideas",
   ]);
   assert.ok(hotelsPageSource.includes('destinationQuery: "Tokyo"'));
-  assert.ok(hotelsPageSource.includes('/hotels/results?${new URLSearchParams({'));
-  assert.ok(hotelsPageSource.includes('guests: "2"'));
-  assert.ok(hotelsPageSource.includes('rooms: "1"'));
+  assert.ok(hotelsPageSource.includes('buildHotelDiscoveryHref(destinationQuery, "hotels-featured")'));
+  assert.equal(hotelsPageSource.includes('/hotels/results?${new URLSearchParams({'), false);
   assert.equal(languageOptions.find((o) => o.code === "vi")?.direction, "ltr");
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
   assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");

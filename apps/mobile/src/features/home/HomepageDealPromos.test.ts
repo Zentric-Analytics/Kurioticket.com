@@ -93,7 +93,7 @@ test("deal cards reuse vector icons and navigate through shared handlers", () =>
   assert.match(promo, /icon: "hotel"/);
   assert.match(promo, /<FlowIcon name=\{promo\.icon\}/);
   assert.match(navigation, /HOMEPAGE_FLIGHT_PROMO_ROUTE = "\/deals"/);
-  assert.match(navigation, /pathname: "\/hotel-results"/);
+  assert.match(navigation, /pathname: "\/hotels"/);
   assert.doesNotMatch(promo, /require\(|\.(?:png|jpe?g|gif|webp)/i);
 });
 

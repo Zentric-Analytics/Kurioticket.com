@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import {
   exploreFlightDestinationNavigation,
   exploreFlightResultsNavigation,
-  exploreHotelResultsNavigation,
+  exploreHotelSearchNavigation,
 } from "./exploreSearchHandoff";
 
 const detailsSource = () => readFileSync("src/features/explore/DestinationDetailsScreen.tsx", "utf8");
@@ -64,12 +64,23 @@ test("destination handoff prefills Flights when the homepage origin is unavailab
   assert.deepEqual(await exploreFlightDestinationNavigation(abidjan, async () => { throw new Error("offline"); }), fallback);
 });
 
-test("Explore hotel handoff goes directly to results with the selected destination", () => {
-  assert.deepEqual(exploreHotelResultsNavigation("  Paris  "), {
-    pathname: "/hotel-results",
-    params: { destination: "Paris" },
+test("Explore hotel handoff creates canonical destination intent for the Hotel form", () => {
+  assert.deepEqual(exploreHotelSearchNavigation({ id: "fr-paris", name: "  Paris  " }), {
+    pathname: "/hotels",
+    params: { destinationId: "fr-paris", destination: "Paris", intentSource: "explore" },
   });
-  assert.equal(exploreHotelResultsNavigation("   "), null);
+  assert.deepEqual(
+    exploreHotelSearchNavigation({ id: "gb-london", name: "London" }, "saved-destination"),
+    {
+      pathname: "/hotels",
+      params: {
+        destinationId: "gb-london",
+        destination: "London",
+        intentSource: "saved-destination",
+      },
+    },
+  );
+  assert.equal(exploreHotelSearchNavigation({ id: "", name: "Paris" }), null);
 });
 
 test("destination details resolves the same geo default origin used by Home before opening flight results", () => {
@@ -81,6 +92,6 @@ test("destination details resolves the same geo default origin used by Home befo
   const handoffSource = readFileSync("src/features/explore/exploreSearchHandoff.ts", "utf8");
   assert.match(handoffSource, /fetchHomepageDefaultOrigin/);
   assert.match(handoffSource, /exploreFlightResultsNavigation\(origin\.code, destination\.primaryAirportCode\)/);
-  assert.match(source, /exploreHotelResultsNavigation\(destination\.name\)/);
+  assert.match(source, /exploreHotelSearchNavigation\(\{ id: destination\.id, name: destination\.name \}\)/);
   assert.doesNotMatch(source, /origin:\s*["']LOS["']|currency:\s*["']USD["']|market:\s*["']NG["']/);
 });

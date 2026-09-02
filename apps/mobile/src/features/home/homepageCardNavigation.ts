@@ -1,4 +1,5 @@
 import type { Href } from "expo-router";
+import { resolvePopularDestinationStay } from "./PopularDestinationStaysData";
 
 export type HomepageAdventureCard = { originCode: string; destinationCode: string };
 export type HomepageHotelCard = { city: string };
@@ -6,10 +7,15 @@ export type HomepageHotelCard = { city: string };
 const DEFAULT_ROUTE_CARD_CURRENCY = "USD";
 const DEFAULT_ROUTE_CARD_MARKET = "NG";
 
-export const homepageHotelDestinationParams = (card: HomepageHotelCard) => ({ destination: card.city });
+export const homepageHotelDestinationParams = (card: HomepageHotelCard) => {
+  const destination = resolvePopularDestinationStay(card);
+  if (!destination) return null;
+  return { destinationId: destination.id, destination: destination.name, intentSource: "home-popular-stays" };
+};
 
 export function popularDestinationStayNavigation(card: HomepageHotelCard): Href {
-  return { pathname: "/hotel-results", params: homepageHotelDestinationParams(card) };
+  const params = homepageHotelDestinationParams(card);
+  return params ? { pathname: "/hotels", params } : "/hotels";
 }
 
 export const homepageAdventureRouteParams = (card: HomepageAdventureCard, now = new Date()) => ({

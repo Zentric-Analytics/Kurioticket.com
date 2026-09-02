@@ -159,13 +159,10 @@ test("canonical destination saves use catalogue country and flight access instea
   assert.match(screen, /formatFlightAccess\(canonicalDestination\.primaryAirportCode, canonicalDestination\.airportCodes\)/);
 });
 
-test("canonical destination saves use the shared Explore flight handoff with a per-card duplicate-tap guard", () => {
+test("canonical destination saves create Hotel form intent through the shared Explore handoff", () => {
   const screen = source("src/features/saved/SavedScreen.tsx");
   assert.match(screen, /const canonicalDestinationOpen = canonicalDestination/);
-  assert.match(screen, /exploreFlightDestinationNavigation\(\{/);
-  assert.match(screen, /primaryAirportCode: canonicalDestination\.primaryAirportCode/);
-  assert.match(screen, /airportCodes: canonicalDestination\.airportCodes/);
-  assert.match(screen, /if \(exploreNavigationPending\) return/);
+  assert.match(screen, /exploreHotelSearchNavigation\([\s\S]*canonicalDestination\.id[\s\S]*"saved-destination"/);
   assert.match(screen, /canonicalDestinationOpen \?\?/);
 });
 

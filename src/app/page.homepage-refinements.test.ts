@@ -219,7 +219,7 @@ test("hotels page source remains on the shared destination image catalog", () =>
   assert.doesNotMatch(hotelsPageSource, /homepageHotelCountryCards/);
 });
 
-test("homepage country directory hotel links use existing hotel results contract", () => {
+test("homepage country directory hotel links use canonical Hotel discovery intent", () => {
   const directoryDataSource = readFileSync(
     new URL("../data/homepageCountryDirectory.ts", import.meta.url),
     "utf8",
@@ -233,12 +233,9 @@ test("homepage country directory hotel links use existing hotel results contract
     ),
   );
 
-  assert.match(hrefSource, /pathname: "\/hotels\/results"/);
+  assert.match(hrefSource, /buildHotelDiscoveryHref/);
   assert.match(hrefSource, /destination/);
-  assert.match(hrefSource, /checkIn/);
-  assert.match(hrefSource, /checkOut/);
-  assert.match(hrefSource, /guests: "2"/);
-  assert.match(hrefSource, /rooms: "1"/);
+  assert.doesNotMatch(hrefSource, /checkIn|checkOut|guests|rooms/);
 });
 
 test("homepage country directory flag, row, service, and dropdown typography are production-refined", () => {
@@ -311,13 +308,12 @@ test("homepage country directory links preserve exact search contracts", () => {
     }
 
     for (const link of country.links.Hotels) {
-      assert.equal(typeof link.href, "object");
-      assert.equal(link.href.pathname, "/hotels/results");
-      assert.ok(link.href.query?.destination);
-      assert.match(String(link.href.query?.checkIn), /^\d{4}-\d{2}-\d{2}$/);
-      assert.match(String(link.href.query?.checkOut), /^\d{4}-\d{2}-\d{2}$/);
-      assert.equal(link.href.query?.guests, "2");
-      assert.equal(link.href.query?.rooms, "1");
+      assert.equal(typeof link.href, "string");
+      const hotelUrl = new URL(link.href, "https://www.kurioticket.test");
+      assert.equal(hotelUrl.pathname, "/hotels");
+      assert.ok(hotelUrl.searchParams.get("destination"));
+      assert.ok(hotelUrl.searchParams.get("destinationId"));
+      assert.equal(hotelUrl.searchParams.has("checkIn"), false);
     }
 
     for (const link of country.links.Cars) {

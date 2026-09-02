@@ -8,7 +8,7 @@ import { destinationMedia, resolvedDestinationHeroSource } from "./destinationMe
 import { destinationHandoff } from "./exploreInteractionModels";
 import {
   exploreFlightDestinationNavigation,
-  exploreHotelResultsNavigation,
+  exploreHotelSearchNavigation,
 } from "./exploreSearchHandoff";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { useExploreCatalogue } from "./exploreCatalogueStore";
@@ -94,7 +94,7 @@ function DestinationPage({ destination, destinationById, saved, onToggle }: { de
       });
   };
   const searchHotels = () => {
-    const resultsRoute = exploreHotelResultsNavigation(destination.name);
+    const resultsRoute = exploreHotelSearchNavigation({ id: destination.id, name: destination.name });
     if (resultsRoute) router.push(resultsRoute);
     else router.push({ pathname: "/hotels", params: { destinationId: destination.id, destination: destination.name } });
   };

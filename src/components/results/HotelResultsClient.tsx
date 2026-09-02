@@ -256,11 +256,11 @@ export function HotelResultsClient() {
   const params = useSearchParams();
   const searchInput = useMemo<HotelResultsSearchInput>(
     () => ({
-      destination: normalizeHotelDestinationSearchValue(params.get("destination") || "Tokyo"),
-      checkIn: params.get("checkIn") || nextDate(28),
-      checkOut: params.get("checkOut") || nextDate(35),
-      guests: Number(params.get("guests") || 2),
-      rooms: Number(params.get("rooms") || 1),
+      destination: normalizeHotelDestinationSearchValue(params.get("destination") || ""),
+      checkIn: params.get("checkIn") || "",
+      checkOut: params.get("checkOut") || "",
+      guests: Number(params.get("guests")),
+      rooms: Number(params.get("rooms")),
       sort: params.get("sort") || "cheapest",
     }),
     [params],
@@ -268,7 +268,6 @@ export function HotelResultsClient() {
 
   return <HotelResultsExperience searchInput={searchInput} />;
 }
-
 export function HotelResultsExperience({ searchInput, guided = false, buildDetailsHref }: { searchInput: HotelResultsSearchInput; guided?: boolean; buildDetailsHref?: (hotelId: string) => string | null }) {
   const router = useRouter();
   const { locale, t: dictionary } = useLocale();
@@ -2854,10 +2853,4 @@ function matchesTermGroup(hotel: PublicHotelResult, selectedValues: string[], fi
 function textIncludesTerms(text: string, terms: string[]) {
   const normalizedText = text.toLowerCase();
   return terms.some((term) => normalizedText.includes(term));
-}
-
-function nextDate(offset: number) {
-  const date = new Date();
-  date.setDate(date.getDate() + offset);
-  return date.toISOString().slice(0, 10);
 }
