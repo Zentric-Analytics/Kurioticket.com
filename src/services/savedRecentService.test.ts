@@ -20,3 +20,10 @@ test("saved Cars reject missing search context instead of inventing it", () => {
   Reflect.deleteProperty(incomplete, "driverAge");
   assert.equal(createSavedItemInputSchema.safeParse(incomplete).success, false);
 });
+
+test("saved Cars preserve distinct canonical any-age and explicit age values", () => {
+  const anyAge = createSavedItemInputSchema.parse({ ...car, driverAge: "18-70" });
+  const explicit = createSavedItemInputSchema.parse({ ...car, driverAge: 18 });
+  assert.equal(anyAge.type === "car" && anyAge.driverAge, "18-70");
+  assert.equal(explicit.type === "car" && explicit.driverAge, "18");
+});

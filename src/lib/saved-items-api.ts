@@ -25,7 +25,7 @@ export type SavedCarApiItem = {
   pickupTime: string;
   dropoffDate: string;
   dropoffTime: string;
-  driverAge: number;
+  driverAge: string;
   totalPrice: number;
   currency: string;
   payload: unknown;

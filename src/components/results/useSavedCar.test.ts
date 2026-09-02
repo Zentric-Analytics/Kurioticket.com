@@ -18,7 +18,7 @@ test("saved Car payload preserves canonical result and complete search context",
   for (const field of ["pickupLocation", "dropoffLocation", "pickupDate", "pickupTime", "dropoffDate", "dropoffTime"]) {
     assert.match(source, new RegExp(`${field}: search\\.${field}`));
   }
-  assert.match(source, /driverAge: search\.driverAge === "18-70" \? 18 : Number\(search\.driverAge\)/);
+  assert.match(source, /driverAge: search\.driverAge/);
   assert.match(source, /payload: \{ result: car, searchParams: search \}/);
 });
 

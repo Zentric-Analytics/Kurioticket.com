@@ -502,7 +502,7 @@ model SavedCar {
   pickupTime        String
   dropoffDate       String
   dropoffTime       String
-  driverAge         Int
+  driverAge         String
   totalPrice        Decimal  @db.Decimal(12, 2)
   currency          String   @default("USD")
   payload           Json

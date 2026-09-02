@@ -13,7 +13,7 @@ CREATE TABLE "SavedCar" (
     "pickupTime" TEXT NOT NULL,
     "dropoffDate" TEXT NOT NULL,
     "dropoffTime" TEXT NOT NULL,
-    "driverAge" INTEGER NOT NULL,
+    "driverAge" TEXT NOT NULL,
     "totalPrice" DECIMAL(12,2) NOT NULL,
     "currency" TEXT NOT NULL DEFAULT 'USD',
     "payload" JSONB NOT NULL,

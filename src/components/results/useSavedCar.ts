@@ -102,7 +102,7 @@ export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams) {
         pickupTime: search.pickupTime,
         dropoffDate: search.dropoffDate,
         dropoffTime: search.dropoffTime,
-        driverAge: search.driverAge === "18-70" ? 18 : Number(search.driverAge),
+        driverAge: search.driverAge,
         totalPrice: offer.totalPrice,
         currency: offer.currency,
         payload: { result: car, searchParams: search },

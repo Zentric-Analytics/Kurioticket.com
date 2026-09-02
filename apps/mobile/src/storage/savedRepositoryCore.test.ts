@@ -82,6 +82,22 @@ test("persisted server hashes do not replace the canonical Car identity", async 
   assert.equal(h.creates.length, 0);
 });
 
+test("Any-age and explicit age-18 Cars keep distinct identities", () => {
+  assert.notEqual(carSavedSignature(car, { ...carParams, driverAge: "18-70" }), carSavedSignature(car, { ...carParams, driverAge: "18" }));
+});
+
+test("rapid duplicate Car toggles serialize one mutation per rental context", async () => {
+  const h = harness(); await h.repository.refresh();
+  const pending = deferred<{ item: MobileSavedItem }>();
+  h.setCreate(() => pending.promise);
+  const first = h.repository.toggleCar(car, carParams);
+  await h.repository.toggleCar(car, carParams);
+  assert.equal(h.creates.length, 1);
+  assert.deepEqual(h.removes, []);
+  pending.resolve({ item: { ...mapCarToSaved(car, carParams), id: "saved-car", createdAt: "2030-01-01T00:00:00Z" } as MobileSavedItem });
+  await first;
+});
+
 test("rapid duplicate toggles allow one mutation while different flights remain concurrent", async () => {
   const h = harness(); await h.repository.refresh(); const first = deferred<{ item: MobileSavedItem }>(); const second = deferred<{ item: MobileSavedItem }>();
   h.setCreate(value => h.creates.length === 1 ? first.promise : second.promise);

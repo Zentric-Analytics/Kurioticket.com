@@ -120,7 +120,7 @@ export function mapCarToSaved(car: CarResult, params: Record<string, unknown>): 
     type: "car", resultId: car.id, provider: offer.bookingProviderName || offer.rentalCompanyName || car.rentalCompanyName,
     modelName: car.modelName, categoryLabel: car.categoryLabel, pickupLocation: searchParams.pickupLocation,
     dropoffLocation: searchParams.dropoffLocation, pickupDate: searchParams.pickupDate, pickupTime: searchParams.pickupTime,
-    dropoffDate: searchParams.dropoffDate, dropoffTime: searchParams.dropoffTime, driverAge: searchParams.driverAge === "18-70" ? 18 : Number(searchParams.driverAge),
+    dropoffDate: searchParams.dropoffDate, dropoffTime: searchParams.dropoffTime, driverAge: searchParams.driverAge,
     totalPrice: offer.totalPrice, currency: offer.currency,
     payload: { nativeRoute: "/car-details", result: car, searchParams },
   };
