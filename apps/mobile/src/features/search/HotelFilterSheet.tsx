@@ -9,14 +9,13 @@ import { FlightRangeSlider } from "./FlightRangeSlider";
 import { ui } from "./SearchUi";
 import { activeHotelFilterCount, emptyHotelFilters, type HotelFilterGroup, type HotelFilterOptions, type HotelFilters, type HotelStarRating } from "./hotelFilters";
 
-export type HotelFilterSectionName = "all" | "price" | "rating" | "propertyTypes" | "facilities";
+export type HotelFilterSectionName = "all" | "price" | "rating" | "facilities";
 type Props={visible:boolean;section:HotelFilterSectionName;filters:HotelFilters;options:HotelFilterOptions;displayCurrency:string;rates:ExchangeRates;stayNights:number;totalCount:number;matchingCount:number;onChange:(filters:HotelFilters)=>void;onClose:()=>void};
 type PostPriceSection={kind:"group";group:HotelFilterGroup;title:string;limit:number;minimum?:number}|{kind:"hotelClass";title:"Hotel class"};
 const postPriceSections:PostPriceSection[]=[
  {kind:"group",group:"travellerFeatures",title:"Good for your trip",limit:4},
  {kind:"hotelClass",title:"Hotel class"},
  {kind:"group",group:"areas",title:"Area",limit:5},
- {kind:"group",group:"propertyTypes",title:"Property type",limit:4},
  {kind:"group",group:"facilities",title:"Facilities",limit:6},
  {kind:"group",group:"accessibility",title:"Accessibility",limit:5},
  {kind:"group",group:"roomTypes",title:"Room & bed",limit:5,minimum:2},
@@ -32,7 +31,7 @@ export function HotelFilterSheet({visible,section,filters,options,displayCurrenc
  const fromDisplay=(amount:number)=>convertAmount(amount,visibleCurrency,"USD",rates);
  const [minimumDraft,setMinimumDraft]=useState(""),[maximumDraft,setMaximumDraft]=useState("");
  const activeCount=activeHotelFilterCount(filters,options);
- useEffect(()=>{if(visible){setExpanded({price:true,rating:true,travellerFeatures:true,areas:true,propertyTypes:true,facilities:true,accessibility:true,roomTypes:true,bedTypes:true});setShowAll({});}},[visible]);
+ useEffect(()=>{if(visible){setExpanded({price:true,rating:true,travellerFeatures:true,areas:true,facilities:true,accessibility:true,roomTypes:true,bedTypes:true});setShowAll({});}},[visible]);
  useEffect(()=>{if(price){setMinimumDraft(String(Math.round(toDisplay(selectedMin))));setMaximumDraft(String(Math.round(toDisplay(selectedMax))));}},[displayCurrency,filters.minimumPrice,filters.maximumPrice,price?.minimum,price?.maximum,rates]);
  const update=(next:HotelFilters)=>onChange(next),toggle=(group:HotelFilterGroup,value:string)=>update({...filters,[group]:filters[group].includes(value)?filters[group].filter(v=>v!==value):[...filters[group],value]});
  const commitPrice=(edge:"min"|"max",draft:string)=>{if(!price)return;const parsed=Number(draft);if(!Number.isFinite(parsed))return;const usd=fromDisplay(parsed);if(usd===null)return;if(edge==="min"){const value=Math.min(Math.max(price.minimum,usd),selectedMax);update({...filters,minimumPrice:value<=price.minimum?null:value});}else{const value=Math.max(Math.min(price.maximum,usd),selectedMin);update({...filters,maximumPrice:value>=price.maximum?null:value});}};
