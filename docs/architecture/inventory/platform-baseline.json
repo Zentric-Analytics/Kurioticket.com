@@ -29,8 +29,8 @@
     ]
   },
   "web": {
-    "service": "Kurioticket.com-staging",
-    "serviceId": "srv-d86ulfgg4nts73bctt20",
+    "service": "Kurioticket-web-staging",
+    "serviceId": "srv-dabmo50jo6nc73881d60",
     "branch": "dev",
     "url": "https://staging.kurioticket.com",
     "build": "npm ci && npm run build",
