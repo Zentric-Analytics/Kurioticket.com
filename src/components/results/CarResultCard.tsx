@@ -20,6 +20,12 @@ import type { LucideIcon } from "lucide-react";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { CarResultImage } from "@/components/results/CarResultImage";
+import {
+  CarPriceComparison,
+  type CarComparisonSource,
+} from "@/components/results/CarPriceComparison";
+import { useLocale } from "@/components/layout/LocaleProvider";
+import { translations as enTranslations } from "@/lib/i18n/en";
 import { useSavedCar } from "@/components/results/useSavedCar";
 import {
   formatCarPickupType,
@@ -69,6 +75,8 @@ export function CarResultCard({
   };
 }) {
   const { isSaved, toggleSavedCar } = useSavedCar(car, search);
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? key;
   const [shareConfirmation, setShareConfirmation] = useState("");
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
@@ -97,14 +105,32 @@ export function CarResultCard({
     rates: currencyRates.rates,
     isFallbackRate: currencyRates.isFallback,
   });
-  const specifications: Array<[LucideIcon, string]> = [
+  const primarySpecifications: Array<[LucideIcon, string]> = [
     [Users, `${car.passengers} passengers`],
     [BriefcaseBusiness, `${car.bags} bags`],
     [DoorOpen, `${car.doors} doors`],
     [CarFront, title(car.transmission)],
   ];
-  if (car.airConditioning) specifications.push([Snowflake, "Air conditioning"]);
+  const specifications: Array<[LucideIcon, string]> =
+    guidedPlanning && car.airConditioning
+      ? [...primarySpecifications, [Snowflake, "Air conditioning"]]
+      : primarySpecifications;
   const mobilePrimarySpecs = getMobileCarPrimarySpecs(car);
+  const comparisonSources: CarComparisonSource[] = [
+    {
+      id: `${car.id}-kurioticket-estimate`,
+      displayName: t("carsResults.comparison.estimateName"),
+      currency: offer.currency,
+      totalPrice: offer.totalPrice,
+      perDayPrice: offer.pricePerDay,
+      totalDisplay: totalDisplayPrice.formatted,
+      perDayDisplay: dailyDisplayPrice.formatted,
+      priceStatus: "estimate",
+      bookable: false,
+      handoffAvailable: false,
+      disclosure: t("carsResults.comparison.planningPriceNotLive"),
+    },
+  ];
 
   async function shareCar() {
     const relativeUrl = detailsHref ?? window.location.href;
@@ -367,7 +393,7 @@ export function CarResultCard({
         >
           <header className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#004BB8]">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#004BB8]">
                 {car.categoryLabel}
               </p>
               {guidedPlanning ? (
@@ -383,16 +409,16 @@ export function CarResultCard({
               ) : (
                 <div className="mt-0.5 flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0">
                   {headingLevel === "h3" ? (
-                    <h3 className="min-w-0 break-words text-[22px] font-bold leading-tight text-[#07133B]">
+                    <h3 className="min-w-0 break-words text-[18px] font-bold leading-tight text-[#07133B]">
                       {car.modelName}
                     </h3>
                   ) : (
-                    <h2 className="min-w-0 break-words text-[22px] font-bold leading-tight text-[#07133B]">
+                    <h2 className="min-w-0 break-words text-[18px] font-bold leading-tight text-[#07133B]">
                       {car.modelName}
                     </h2>
                   )}
                   {car.orSimilar ? (
-                    <span className="text-[12px] font-medium leading-4 text-[#536B92]">
+                    <span className="text-[11px] font-medium leading-4 text-[#536B92]">
                       or similar
                     </span>
                   ) : null}
@@ -410,7 +436,7 @@ export function CarResultCard({
             </div>
           </header>
 
-          <p className="mt-1 flex min-w-0 items-center gap-2 text-sm font-medium text-[#536B92]">
+          <p className="mt-1 flex min-w-0 items-center gap-1.5 text-[12px] font-medium text-[#536B92]">
             <MapPin
               size={16}
               className="shrink-0 text-[#004BB8]"
@@ -431,7 +457,7 @@ export function CarResultCard({
           data-region="details"
           className="col-start-1 row-start-3 min-w-0 border-t border-[#E2E8F0] px-3 py-3 md:col-start-2 md:row-start-2 md:border-t-0 md:px-4 md:pb-3 md:pt-1"
         >
-          <ul className="grid grid-cols-1 gap-y-1.5 text-[12px] font-medium leading-4 text-[#536B92] md:flex md:flex-wrap md:gap-x-3 md:gap-y-1.5 md:text-sm">
+          <ul data-car-card-desktop-primary-specs className="grid grid-cols-2 gap-2 text-[12px] font-medium leading-4 text-[#536B92] lg:grid-cols-4">
             {specifications.map(([Icon, label]) => (
               <li key={label} className="flex min-w-0 items-center gap-1.5">
                 <Icon
@@ -444,34 +470,29 @@ export function CarResultCard({
             ))}
           </ul>
 
-          <div className="mt-2 flex min-w-0 flex-col items-start gap-1.5 md:flex-row md:flex-wrap">
-            {!guidedPlanning && offer.freeCancellation && (
-              <span className="inline-flex min-h-6 max-w-full items-start gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-emerald-700 md:items-center md:px-2 md:text-xs">
-                <Check
-                  size={13}
-                  className="mt-0.5 shrink-0 md:mt-0"
-                  aria-hidden="true"
-                />
-                <span className="min-w-0">Free cancellation</span>
-              </span>
-            )}
-            {!guidedPlanning && offer.payAtPickup && (
-              <span className="inline-flex min-h-6 max-w-full items-start gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-emerald-700 md:items-center md:px-2 md:text-xs">
-                <Check
-                  size={13}
-                  className="mt-0.5 shrink-0 md:mt-0"
-                  aria-hidden="true"
-                />
-                <span className="min-w-0">Pay at pickup</span>
-              </span>
-            )}
-          </div>
         </div>
 
         <div
           data-region="pricing"
           className="col-start-2 row-start-3 flex min-w-0 flex-col items-center border-s border-t border-[#E2E8F0] bg-slate-50/45 px-3 py-3 text-center md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:justify-center lg:border-s lg:border-t-0 lg:bg-white"
         >
+          {!guidedPlanning ? (
+            <CarPriceComparison
+              resultId={car.id}
+              sources={comparisonSources}
+              labels={{
+                source: t("carsResults.comparison.source"),
+                estimate: t("carsResults.comparison.estimate"),
+                comparePrices: t("carsResults.comparison.comparePrices"),
+                hidePrices: t("carsResults.comparison.hidePrices"),
+                liveDealsComingSoon: t("carsResults.comparison.liveDealsComingSoon"),
+                notBookable: t("carsResults.comparison.notBookable"),
+                total: t("carsResults.comparison.total"),
+                perDay: t("carsResults.comparison.perDay"),
+              }}
+            />
+          ) : (
+            <>
           <div className="flex min-w-0 w-full flex-col items-center text-center">
             <p
               className="max-w-full whitespace-nowrap text-[clamp(1rem,4.5vw,1.25rem)] font-extrabold leading-tight tracking-[-0.025em] text-slate-950 tabular-nums lg:text-xl"
@@ -530,6 +551,8 @@ export function CarResultCard({
             >
               {actionLabel}
             </button>
+          )}
+            </>
           )}
         </div>
       </div>
