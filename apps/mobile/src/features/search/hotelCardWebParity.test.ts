@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 import { buildHotelAmenityPresentation } from "../../../../../src/components/results/hotelAmenityPresentation";
+import { colors } from "../../theme/tokens";
 
 const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
 const card = source.slice(source.indexOf("function HotelCard"), source.indexOf("function Loading", source.indexOf("function HotelCard")));
@@ -35,7 +36,7 @@ test("content-driven hotel card cannot create a percentage-height image loop", (
 });
 
 test("hotel actions independently save and share without share navigation", () => {
-  assert.match(card, /<Heart /);
+  assert.match(card, /<Heart\s/);
   assert.match(card, /canonical\.toggleHotel\(result, params\)/);
   assert.match(card, /accessibilityState=\{\{ selected: saved \}\}/);
   assert.match(card, /accessibilityLabel=\{saved \? `Remove \$\{result\.name\} from saved` : `Save \$\{result\.name\}`\}/);
@@ -44,6 +45,39 @@ test("hotel actions independently save and share without share navigation", () =
   assert.match(card, /Share\.share\(\{ message \}\)/);
   const share = card.slice(card.indexOf("const shareHotel"), card.indexOf("return ("));
   assert.doesNotMatch(share, /router\.|toggleHotel/);
+});
+
+test("hotel utility colors match mobile web while saved and share states stay independent", () => {
+  assert.match(source, /const HOTEL_UTILITY_ICON_COLOR = "#334155"/);
+  assert.match(source, /const HOTEL_SAVED_HEART_COLOR = "#E11D48"/);
+  assert.match(card, /color=\{saved \? HOTEL_SAVED_HEART_COLOR : HOTEL_UTILITY_ICON_COLOR\}/);
+  assert.match(card, /fill=\{saved \? HOTEL_SAVED_HEART_COLOR : "none"\}/);
+  assert.match(card, /<Share2 accessible=\{false\} size=\{20\} color=\{HOTEL_UTILITY_ICON_COLOR\} \/>/);
+  assert.doesNotMatch(card, /<Heart[^>]*color=\{ui\.blue\}|<Share2[^>]*color=\{ui\.blue\}|fill=\{saved \? ui\.blue : "none"\}/s);
+});
+
+test("hotel location alone uses the exact web blue without changing typography", () => {
+  const location = card.slice(card.indexOf("<View style={s0.hotelLocation}>"), card.indexOf("{score == null"));
+  const locationTextStyle = source.slice(source.indexOf("  hotelLocationText:"), source.indexOf("\n", source.indexOf("  hotelLocationText:")));
+
+  assert.equal(colors.blue, "#004BB8");
+  assert.match(location, /<MapPin accessible=\{false\} size=\{14\} strokeWidth=\{2\} color=\{colors\.blue\} \/>/);
+  assert.match(location, /<Text numberOfLines=\{1\} style=\{\[s0\.sub, s0\.hotelLocationText\]\}>\{result\.location\}<\/Text>/);
+  assert.match(locationTextStyle, /color:\s*colors\.blue/);
+  assert.doesNotMatch(location, /color=\{ui\.muted\}|style=\{s0\.sub\}/);
+});
+
+test("hotel utility icons move inward without shrinking or overlapping touch targets", () => {
+  const hotelActionStyles = source.slice(source.indexOf("  hotelActions:"), source.indexOf("  hotelName:"));
+
+  assert.match(hotelActionStyles, /hotelActions:\s*\{[^}]*flexDirection:\s*"row"[^}]*gap:\s*0/s);
+  assert.match(hotelActionStyles, /hotelAction:\s*\{[^}]*width:\s*44[^}]*height:\s*44/s);
+  assert.match(hotelActionStyles, /hotelSaveAction:\s*\{[^}]*alignItems:\s*"flex-end"[^}]*paddingRight:\s*4/s);
+  assert.match(hotelActionStyles, /hotelShareAction:\s*\{[^}]*alignItems:\s*"flex-start"[^}]*paddingLeft:\s*4/s);
+  const inwardOverrides = hotelActionStyles.slice(hotelActionStyles.indexOf("  hotelSaveAction:"));
+  assert.doesNotMatch(inwardOverrides, /\b(?:width|height):|margin(?:Left|Right):\s*-/);
+  assert.match(card, /style=\{\[s0\.hotelAction, s0\.hotelSaveAction\]\}/);
+  assert.match(card, /style=\{\[s0\.hotelAction, s0\.hotelShareAction\]\}/);
 });
 
 test("hotel title matches mobile web typography without compromising actions", () => {
