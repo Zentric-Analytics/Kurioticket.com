@@ -79,10 +79,12 @@ export function validFlight(result: FlightResult, plan: SearchPlan) {
   const routeMatches = requestedLegs ? Array.isArray(result.legs) && result.legs.length === requestedLegs.length && result.legs.every((leg,index) => leg.originAirport === requestedLegs[index].origin && leg.destinationAirport === requestedLegs[index].destination && leg.departureTime.slice(0,10) === requestedLegs[index].departureDate) : result.originAirport === payload.origin && result.destinationAirport === payload.destination;
   return Boolean(result.id && result.provider && result.airlineName && routeMatches && Number.isFinite(result.price) && result.price >= 0 && /^[A-Z]{3}$/.test(result.currency) && !Number.isNaN(Date.parse(result.departureTime)) && !Number.isNaN(Date.parse(result.arrivalTime)) && safeImage(result.airlineLogo) && safeAction(result));
 }
-export function validBookableHotel(result: HotelResult) {
+/** Transport and presentation safety only; result eligibility is server-owned. */
+export function safeCanonicalHotelResult(result: HotelResult) {
   return Boolean(result.id && result.provider && result.name && Number.isFinite(result.totalPrice) && (result.totalPrice ?? -1) >= 0 && result.currency && /^[A-Z]{3}$/.test(result.currency) && safeImage(result.imageUrl) && safeAction(result));
 }
-export function validBookableCar(result: CarResult) {
+/** Transport and presentation safety only; result eligibility is server-owned. */
+export function safeCanonicalCarResult(result: CarResult) {
   return Boolean(result.id && result.rentalCompanyName && Array.isArray(result.offers) && result.offers.length && result.offers.every((offer) => Number.isFinite(offer.totalPrice) && offer.totalPrice >= 0 && /^[A-Z]{3}$/.test(offer.currency)) && safeImage(result.imageUrl) && safeAction(result));
 }
 export { httpsUrl };

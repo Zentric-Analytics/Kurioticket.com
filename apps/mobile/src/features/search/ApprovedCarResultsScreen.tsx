@@ -4,7 +4,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import { travelApi, type CarResult } from "../../api/travelApi";
 import { getApiBaseUrl } from "../../config/apiUrl";
-import { buildSearchPlan, validBookableCar } from "../flow/travelSearchModel";
+import { acceptCanonicalResults, canonicalResultsWereSilentlyLost } from "../flow/canonicalResultAcceptance";
+import { buildSearchPlan, safeCanonicalCarResult } from "../flow/travelSearchModel";
 import { FlowIcon } from "../flow/FlowIcon";
 import { BottomNav } from "./ApprovedResultsScreen";
 import { CarResultCard } from "./CarResultCard";
@@ -30,7 +31,7 @@ export function ApprovedCarResultsScreen() {
   const load = useCallback(async()=>{
     if(!plan.plan){setStatus("error");setMessage(plan.error||"Invalid car search");return;}
     setStatus("loading");setMessage("");
-    try{const response=await travelApi.searchCars(plan.plan.payload);const valid=response.results.filter(validBookableCar);setResults(valid);setStatus(valid.length?"ready":"empty");setMessage(response.warnings?.[0]||"");}
+    try{const response=await travelApi.searchCars(plan.plan.payload);const acceptance=acceptCanonicalResults(response.results,safeCanonicalCarResult);if(acceptance.rejectedIds.length)console.warn("[travel-search] canonical car results failed client safety checks",{requestId:response.requestId,canonicalCount:acceptance.canonicalCount,acceptedCount:acceptance.accepted.length,rejectedIds:acceptance.rejectedIds});setResults(acceptance.accepted);if(canonicalResultsWereSilentlyLost(acceptance)){setStatus("error");setMessage("The canonical search returned inventory that this app could not render safely.");}else{setStatus(acceptance.accepted.length?"ready":"empty");setMessage(response.warnings?.[0]||"");}}
     catch(error){setStatus("error");setMessage(error instanceof Error?error.message:"Car search failed");}
   },[plan.plan?.key,retry]);
   useEffect(()=>{void load();},[load]);

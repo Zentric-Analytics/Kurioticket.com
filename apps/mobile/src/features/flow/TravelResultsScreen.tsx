@@ -4,7 +4,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import { travelApi, TravelApiError, type CarResult, type FlightResult, type HotelResult } from "../../api/travelApi";
 import { getApiBaseUrl } from "../../config/apiUrl";
-import { buildSearchPlan, type Product, validBookableCar, validBookableHotel, validFlight } from "./travelSearchModel";
+import { acceptCanonicalResults, canonicalResultsWereSilentlyLost } from "./canonicalResultAcceptance";
+import { buildSearchPlan, safeCanonicalCarResult, safeCanonicalHotelResult, type Product, validFlight } from "./travelSearchModel";
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
 import { buildFlightPriceAlertPayload, flightAlertPresentation, parseTargetPrice } from "./flightPriceAlertModel";
@@ -79,14 +80,14 @@ function LegacyTravelResultsScreen({ product }: { product: Product }) {
       const raw = Array.isArray(response.results) ? response.results : [];
       let valid: Result[] = [];
       if (product === "flight") valid = (raw as FlightResult[]).filter((result) => validFlight(result, planResult.plan!));
-      if (product === "hotel") valid = (raw as HotelResult[]).filter(validBookableHotel);
-      if (product === "car") valid = (raw as CarResult[]).filter(validBookableCar);
+      if (product === "hotel") valid = acceptCanonicalResults(raw as HotelResult[], safeCanonicalHotelResult).accepted;
+      if (product === "car") valid = acceptCanonicalResults(raw as CarResult[], safeCanonicalCarResult).accepted;
       const rejected = raw.filter((result) => !valid.includes(result as Result));
       if (rejected.length) console.warn("[travel-search] response contract validation rejected results", { requestId, product, rejectedIds: rejected.map((result) => typeof result === "object" && result && "id" in result ? String(result.id) : "missing-id") });
       setResults(valid);
       const warning = Array.isArray(response.warnings) ? response.warnings[0] || "" : "";
       if (response.status === "unavailable") { setMessage(warning || `Live ${product} inventory is temporarily unavailable.`); setStatus("unavailable"); }
-      else if (rejected.length && !valid.length) { setMessage("The search service returned malformed inventory."); setStatus("error"); }
+      else if (canonicalResultsWereSilentlyLost({ canonicalCount: raw.length, accepted: valid })) { setMessage("The canonical search returned inventory that this app could not render safely."); setStatus("error"); }
       else if (valid.length) { setMessage(warning); setStatus(response.status === "partial" || rejected.length > 0 ? "partial" : "ready"); }
       else setStatus("empty");
     }).catch((error) => {

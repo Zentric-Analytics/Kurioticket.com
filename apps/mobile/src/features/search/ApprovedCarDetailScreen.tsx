@@ -5,7 +5,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { travelApi, type CarResult } from "../../api/travelApi";
 import { getApiBaseUrl } from "../../config/apiUrl";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
-import { buildSearchPlan, validBookableCar } from "../flow/travelSearchModel";
+import { buildSearchPlan, safeCanonicalCarResult } from "../flow/travelSearchModel";
 import { Button, Logo, money, shortDate, ui } from "./SearchUi";
 import { useSavedCar } from "./carSavedState";
 import { canBookCarOffer, sortedValidCarOffers } from "./carDetailState";
@@ -21,14 +21,14 @@ export function ApprovedCarDetailScreen() {
   const params = useLocalSearchParams<Record<string,string|string[]>>();
   const plan = useMemo(()=>buildSearchPlan("car",params),[JSON.stringify(params)]);
   const supplied = parseResult(one(params.result));
-  const initial = supplied && validBookableCar(supplied) ? supplied : undefined;
+  const initial = supplied && safeCanonicalCarResult(supplied) ? supplied : undefined;
   const [result,setResult] = useState<CarResult|undefined>(initial);
   const [status,setStatus] = useState<Status>(initial?"ready":"loading");
   useEffect(()=>{
     if(initial){setResult(initial);setStatus("ready");return;}
     if(!plan.plan||!one(params.resultId)){setStatus("unavailable");return;}
     let active=true;setStatus("loading");
-    void travelApi.searchCars(plan.plan.payload).then((response)=>{if(!active)return;const found=response.results.find((item)=>item.id===one(params.resultId)&&validBookableCar(item));setResult(found);setStatus(found?"ready":"unavailable");}).catch(()=>{if(active)setStatus("unavailable");});
+    void travelApi.searchCars(plan.plan.payload).then((response)=>{if(!active)return;const found=response.results.find((item)=>item.id===one(params.resultId)&&safeCanonicalCarResult(item));setResult(found);setStatus(found?"ready":"unavailable");}).catch(()=>{if(active)setStatus("unavailable");});
     return()=>{active=false;};
   },[initial?.id,plan.plan?.key,one(params.resultId)]);
   if(status==="loading") return <CarDetailLoading/>;
