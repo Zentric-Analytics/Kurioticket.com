@@ -36,6 +36,13 @@ test("recovery codes are a dedicated completion step with selectable two-column 
   assert.doesNotMatch(setupFlow, /SecureStore|AsyncStorage/);
 });
 
+test("recovery-code completion outranks the refreshed enabled overview until acknowledged", () => {
+  assert.match(security, /active=\{twoFactorOpen && \(!Boolean\(overview\?\.twoFactorEnabled\) \|\| recoveryCodes\.length > 0\)\}/);
+  assert.match(security, /overview\?\.twoFactorEnabled \? \([^]*recoveryCodes\.length \? twoFactorSetupFlow : <TwoFactorEnabledFlow/);
+  assert.match(setupFlow, /if \(recoveryCodes\.length\)/);
+  assert.match(setupFlow, /label=\{p\.savedCodesAction\} onPress=\{onClose\}/);
+});
+
 test("setup renders the server URI only into a local QR code and keeps the manual fallback", () => {
   assert.match(setupFlow, /import QRCode from "react-native-qrcode-svg"/);
   assert.match(setupFlow, /<QRCode value=\{setup\.otpauthUri\} size=\{200\} quietZone=\{12\} backgroundColor="#FFFFFF" \/>/);
