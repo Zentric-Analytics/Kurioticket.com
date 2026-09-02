@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { PreviewLedger } from "./ledger.mjs";
+import { PREVIEW_IDENTITY } from "./config.mjs";
 
 const connectionString = process.env.PREVIEW_RELEASE_TEST_DATABASE_URL;
 
@@ -66,6 +67,30 @@ test("PostgreSQL atomically replaces one legacy OTA mismatch and preserves its a
     }), /rejected/);
     const authoritative = await ledger.getAction("OTA", identityKey);
     assert.equal(authoritative.remote_id, "android=corrected-group");
+  } finally {
+    await ledger.close();
+  }
+});
+
+test("PostgreSQL reserves an Android artifact backfill from the delivered native projection", { skip: !connectionString }, async () => {
+  const ledger = new PreviewLedger(connectionString);
+  const sourceSha = "d".repeat(40);
+  const fingerprint = "e".repeat(40);
+  const buildId = "45cd5871-2ab1-4ecf-83ef-f9a35d2c6d3c";
+  const identityKey = `native-build:android:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}`;
+  try {
+    await resetLedger(ledger);
+    await ledger.pool.query("INSERT INTO preview_release(source_sha,mode,state) VALUES($1,'active','COMPLETE')", [sourceSha]);
+    await ledger.recordAction({ sourceSha, kind: "ANDROID_BUILD", identityKey, remoteId: buildId, state: "FINISHED", evidence: { nativeFingerprint: fingerprint } });
+    await ledger.advanceDeliveredNative({ platform: "android", sourceSha, fingerprint, buildId, appVersion: "0.3.0", buildNumber: "41" });
+    await ledger.markRemoteObjectUnavailable({ kind: "ANDROID_BUILD", identityKey, remoteId: buildId, reason: "provider confirmed exact object absence" });
+
+    const reservation = await ledger.reserveNativeBuildRecovery({ sourceSha, platform: "android", fingerprint, allowUnavailableDelivered: true });
+
+    assert.equal(reservation.created, true);
+    assert.equal(reservation.action.state, "RESERVED");
+    assert.equal(reservation.action.evidence.ownershipSource, "OWNER_AUTHORIZED_ARTIFACT_BACKFILL");
+    assert.equal(reservation.action.evidence.replacesUnavailableBuildId, buildId);
   } finally {
     await ledger.close();
   }

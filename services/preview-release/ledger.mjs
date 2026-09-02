@@ -580,14 +580,14 @@ export class PreviewLedger {
       await client.query("BEGIN");
       await client.query("SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))", [kind, canonicalIdentity]);
       const delivered = await client.query(
-        "SELECT build_id FROM preview_delivered_native_state WHERE platform=$1 AND fingerprint=$2 LIMIT 1",
+        "SELECT eas_build_id FROM preview_delivered_native_state WHERE platform=$1 AND fingerprint=$2 LIMIT 1",
         [platform, fingerprint],
       );
       if (delivered.rowCount) {
         const unavailable = allowUnavailableDelivered ? await client.query(
           `SELECT 1 FROM preview_release_action
            WHERE kind=$1 AND identity_key=$2 AND remote_id=$3 AND state='REMOTE_OBJECT_UNAVAILABLE' LIMIT 1`,
-          [kind, canonicalIdentity, delivered.rows[0].build_id],
+          [kind, canonicalIdentity, delivered.rows[0].eas_build_id],
         ) : { rowCount: 0 };
         if (!unavailable.rowCount) throw new Error(`A compatible delivered ${platform} native baseline already exists; replacement is forbidden.`);
       }
@@ -620,7 +620,7 @@ export class PreviewLedger {
       const inserted = await client.query(
         `INSERT INTO preview_release_action (source_sha,kind,identity_key,state,evidence)
          VALUES ($1,$2,$3,'RESERVED',$4::jsonb) RETURNING *`,
-        [sourceSha, kind, identityKey, JSON.stringify({ nativeFingerprint: fingerprint, nativeArtifactSourceSha: sourceSha, latestCompatibleSourceSha: sourceSha, ownershipSource: allowUnavailableDelivered ? "OWNER_AUTHORIZED_ARTIFACT_BACKFILL" : "OWNER_AUTHORIZED_TERMINAL_REPLACEMENT", recoveryAttempt, replacesTerminalActionId: failed.rows[0]?.id ?? null, replacesUnavailableBuildId: allowUnavailableDelivered ? delivered.rows[0]?.build_id ?? null : null })],
+        [sourceSha, kind, identityKey, JSON.stringify({ nativeFingerprint: fingerprint, nativeArtifactSourceSha: sourceSha, latestCompatibleSourceSha: sourceSha, ownershipSource: allowUnavailableDelivered ? "OWNER_AUTHORIZED_ARTIFACT_BACKFILL" : "OWNER_AUTHORIZED_TERMINAL_REPLACEMENT", recoveryAttempt, replacesTerminalActionId: failed.rows[0]?.id ?? null, replacesUnavailableBuildId: allowUnavailableDelivered ? delivered.rows[0]?.eas_build_id ?? null : null })],
       );
       await client.query("COMMIT");
       return { action: inserted.rows[0], created: true };
