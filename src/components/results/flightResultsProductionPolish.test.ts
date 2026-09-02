@@ -84,6 +84,18 @@ test("desktop leg columns share strict time airport and date row tracks", async 
   assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-leg-endpoint,[\s\S]*\.flight-card-leg-center \{\s*display: block;/);
 });
 
+test("desktop departure metadata aligns beneath time and card rhythm stays compact", async () => {
+  const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
+
+  assert.match(styles, /\.flight-card-leg-grid > \.flight-card-leg-endpoint:first-child \.flight-card-airport,[\s\S]*\.flight-card-departure-date \{\s*margin-inline-start: 1\.875rem;/);
+  assert.match(styles, /\.flight-card-inline-logo \{\s*height: 1\.375rem;\s*width: 1\.375rem;/);
+  assert.match(styles, /\.flight-card-leg-time-row \{\s*gap: 0\.5rem;/);
+  assert.match(styles, /\.flight-card-desktop-header \{[\s\S]*padding-bottom: 0\.25rem;/);
+  assert.match(styles, /\.flight-card-legs \{\s*grid-area: legs;\s*gap: 0\.75rem;/);
+  assert.match(styles, /\.flight-card-details \{\s*column-gap: 1rem;\s*margin-top: 0\.5rem;\s*padding-top: 0\.5rem;/);
+  assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-departure-date \{\s*margin-inline-start: 0;/);
+});
+
 test("desktop nearby fares use a contained mobile-like hierarchy", async () => {
   const source = await readFile(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
   const start = source.indexOf("data-desktop-nearby-fare-rail");
