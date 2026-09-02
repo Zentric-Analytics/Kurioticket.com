@@ -137,6 +137,7 @@ const flightSupportText = {
   light: "#465675",
   dark: "#B8C3D8",
 } as const;
+const flightResultsLightCanvas = "#F5F7FB";
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 const sameStringArray = (left: readonly string[], right: readonly string[]) =>
   left.length === right.length && left.every((value, index) => value === right[index]);
@@ -149,6 +150,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const { theme } = useAppTheme();
   const { top: topSafeAreaInset } = useSafeAreaInsets();
   const flightResults = product === "flight";
+  const flightCanvasColor = theme.dark ? theme.background : flightResultsLightCanvas;
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const plan = buildSearchPlan(product, params);
@@ -726,11 +728,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     </>
   );
   return (
-    <SafeAreaView style={[s0.safe, { backgroundColor: theme.background }]} edges={["top"]}>
+    <SafeAreaView style={[s0.safe, { backgroundColor: flightResults ? flightCanvasColor : theme.background }]} edges={["top"]}>
       {flightResults ? (
         <FlightResultsHeader
           route={`${String(payload.origin || "").toUpperCase()} ${payload.tripType === "one-way" ? "→" : "⇄"} ${String(payload.destination || "").toUpperCase()}`}
           onEdit={edit}
+          backgroundColor={flightCanvasColor}
         />
       ) : (
         <HotelResultsHeader
@@ -740,7 +743,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       )}
       {product === "flight" ? (
         <Animated.SectionList
-          style={[s0.resultsScroll, { backgroundColor: theme.background }]}
+          style={[s0.resultsScroll, { backgroundColor: flightCanvasColor }]}
           sections={[{ data: !flightState ? sorted as FlightResult[] : [] }]}
           keyExtractor={(item) => item.id}
           ListHeaderComponent={status === "loading" ? (
@@ -754,7 +757,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             </View>
           ) : animatedFlightDateStrip}
           renderSectionHeader={() => status === "loading" ? null : (
-            <View style={{ backgroundColor: theme.background }}>
+            <View style={[s0.flightFilterSectionHeader, { backgroundColor: flightCanvasColor }]}>
               {filterRail}
             </View>
           )}
@@ -865,15 +868,17 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
 function FlightResultsHeader({
   route,
   onEdit,
+  backgroundColor,
 }: {
   route: string;
   onEdit: () => void;
+  backgroundColor: string;
 }) {
   const { theme } = useAppTheme();
   return (
     <View
       accessibilityLabel="Flight search summary"
-      style={[s0.flightHeader, { backgroundColor: theme.background }]}
+      style={[s0.flightHeader, { backgroundColor }]}
     >
       <View accessibilityLabel="Flight route controls" style={s0.flightHeaderMainRow}>
         <View style={s0.flightHeaderSide}>
@@ -1740,7 +1745,7 @@ const s0 = StyleSheet.create({
   flightHeader: {
     paddingHorizontal: 12,
     paddingTop: 12,
-    paddingBottom: 2,
+    paddingBottom: 8,
   },
   flightHeaderMainRow: {
     width: "100%",
@@ -1792,6 +1797,7 @@ const s0 = StyleSheet.create({
   flightHeaderEditText: { fontSize: 13, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
   hotelHeader: { marginBottom: 12 },
   filterRail: { height: 44, flexGrow: 0 },
+  flightFilterSectionHeader: { paddingTop: 8 },
   resultsScroll: { flex: 1 },
   flightResultsContent: { flexGrow: 1 },
   route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
@@ -1829,7 +1835,7 @@ const s0 = StyleSheet.create({
   body: { paddingHorizontal: 18, paddingBottom: 92, gap: 14 },
   hotelResultsContent: { paddingTop: 12 },
   flightResultsBody: { paddingHorizontal: 14, gap: 8 },
-  flightPriceAlertItem: { paddingHorizontal: 14, paddingBottom: 5 },
+  flightPriceAlertItem: { paddingHorizontal: 14, paddingTop: 8, paddingBottom: 6 },
   flightCardItem: { paddingHorizontal: 14, paddingBottom: 8 },
   notice: {
     backgroundColor: "#F2F6FF",
@@ -1853,7 +1859,7 @@ const s0 = StyleSheet.create({
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
   hotelFilteredEmpty: { alignItems: "center", gap: 10, paddingVertical: 28 },
   hotelClearFilters: { color: ui.blue, fontSize: 15, fontWeight: "800" },
-  flightResultCount: { paddingHorizontal: 14, paddingTop: 4, fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
+  flightResultCount: { paddingHorizontal: 14, paddingTop: 4, paddingBottom: 5, fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
   card: {
     width: "100%",
     borderWidth: 1,
