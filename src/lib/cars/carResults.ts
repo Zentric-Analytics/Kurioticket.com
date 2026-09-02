@@ -15,6 +15,9 @@ export const sortCarOffers = (offers: CarOffer[]) =>
     .sort((a, b) => a.totalPrice - b.totalPrice || a.id.localeCompare(b.id));
 
 const optionMatches: Record<string, (car: NormalizedCarResult) => boolean> = {
+  totalUnder100: (car) => (getPrimaryCarOffer(car)?.totalPrice ?? Infinity) < 100,
+  total100To149: (car) => { const total = getPrimaryCarOffer(car)?.totalPrice ?? Infinity; return total >= 100 && total < 150; },
+  total150Plus: (car) => (getPrimaryCarOffer(car)?.totalPrice ?? -Infinity) >= 150,
   smallCars: (car) => ["mini", "economy", "compact"].includes(car.category),
   mediumCars: (car) => ["intermediate", "full-size"].includes(car.category),
   suvs: (car) => car.category === "suv",
@@ -36,6 +39,9 @@ const optionMatches: Record<string, (car: NormalizedCarResult) => boolean> = {
   shuttlePickup: (car) => car.pickupType === "shuttle",
   cityLocation: (car) => car.pickupType === "city-location",
 };
+
+export const doesCarMatchFilterOption = (car: NormalizedCarResult, option: string) =>
+  optionMatches[option]?.(car) ?? false;
 
 export function filterCarResults(results: NormalizedCarResult[], filters: SelectedCarFilters) {
   const groups = Object.values(filters).filter((options) => options.length);

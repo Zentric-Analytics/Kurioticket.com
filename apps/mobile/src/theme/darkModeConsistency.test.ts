@@ -102,7 +102,7 @@ test("the active Flight results journey keeps its semantic surface and text hier
   assert.match(results, /s0\.operatingCarrierText, \{ color: supportTextColor \}/);
   assert.match(results, /s0\.time, \{ color: theme\.textPrimary \}/);
   assert.match(results, /s0\.metadataText, \{ color: supportTextColor \}/);
-  assert.match(results, /backgroundColor: theme\.priceAlertSurface/);
+  assert.match(results, /backgroundColor: theme\.surface, borderColor: theme\.priceAlertBorder/);
   assert.match(read("src/theme/AppTheme.tsx"), /priceAlertBorder:/);
   assert.match(read("src/theme/AppTheme.tsx"), /priceAlertAccent:/);
   assert.match(results, /s0\.sortSheet,[\s\S]*backgroundColor: theme\.surface/);

@@ -6677,8 +6677,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <header
         data-flight-results-compact-header
         className={cn(
-          "fixed inset-x-0 top-0 z-[90] border-b border-slate-200/80 bg-white/95 px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-[0_10px_26px_-20px_rgba(15,23,42,0.55)] backdrop-blur-xl transition-opacity duration-200 ease-out sm:hidden",
-          mobileCompactHeaderVisible ? "opacity-100" : "opacity-0",
+          "fixed inset-x-0 top-0 z-[90] border-b border-slate-200/80 bg-white/95 px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-[0_10px_26px_-20px_rgba(15,23,42,0.55)] backdrop-blur-xl transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none sm:hidden",
+          mobileCompactHeaderVisible ? "translate-y-0 opacity-100" : "-translate-y-1 opacity-0",
           mobileCompactHeaderVisible
             ? "pointer-events-auto"
             : "pointer-events-none",
@@ -6743,7 +6743,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   function renderMobileControlsRow() {
     return (
-      <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch justify-center px-4">
+      <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch justify-center">
         <button
           type="button"
           onClick={(event) => openMobileSearchDrawer(event.currentTarget, getOverlayActivationModality(event))}
@@ -6833,21 +6833,42 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     <>
     <main data-flight-results-main className="flex-1 bg-[#F3F6FA] pb-8">
       {renderMobileCompactResultsHeader()}
+      {paginationPendingPage !== null ? (
+        <div
+          data-flight-results-transition-cover
+          className="fixed inset-0 z-[9990] overflow-hidden bg-[#F3F6FA]"
+          aria-busy="true"
+        >
+          <p className="sr-only" role="status" aria-live="polite">
+            {t("updatingResults")}
+          </p>
+          <div className="h-[72px] border-b border-slate-200 bg-white sm:h-[86px]" />
+          <div className="page-shell py-5 sm:py-8">
+            <div className="h-16 animate-pulse rounded-2xl border border-slate-200 bg-white sm:h-20 motion-reduce:animate-none" />
+            <div className="mt-6 grid gap-6 lg:grid-cols-[288px_minmax(0,1fr)]">
+              <div className="hidden h-[34rem] animate-pulse rounded-2xl border border-slate-200 bg-white lg:block motion-reduce:animate-none" />
+              <div className="space-y-4">
+                <div className="h-7 w-44 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" />
+                {Array.from({ length: 3 }, (_, index) => (
+                  <div key={index} className="h-52 animate-pulse rounded-2xl border border-slate-200 bg-white motion-reduce:animate-none" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <section
         data-flight-results-top-summary
+        data-flight-mobile-results-summary
         inert={mobileSearchOpen ? true : undefined}
         aria-hidden={mobileSearchOpen ? true : undefined}
         className={cn(
-          "relative z-40 bg-white pb-0 pt-0 sm:hidden",
+          "relative z-40 bg-white px-4 pb-3 pt-3 sm:hidden",
           mobileSearchOpen && "pointer-events-none",
         )}
         aria-label="Flight search controls"
       >
-        <div className="relative translate-y-1/2">
-          <div
-            className="pointer-events-none absolute inset-x-0 top-1/2 z-0 h-px -translate-y-1/2 bg-slate-300 shadow-[0_1px_0_rgba(100,116,139,0.18)]"
-            aria-hidden="true"
-          />
+        <div className="relative">
           {renderMobileControlsRow()}
         </div>
         <div
@@ -6858,10 +6879,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       </section>
 
       <section
+        data-flight-mobile-results-shortcuts
         inert={mobileSearchOpen ? true : undefined}
         aria-hidden={mobileSearchOpen ? true : undefined}
         className={cn(
-          "relative z-30 px-4 pb-0 pt-12 sm:hidden",
+          "relative z-30 px-4 pb-0 pt-2 sm:hidden",
           mobileSearchOpen && "pointer-events-none",
         )}
         aria-label={t("filters")}
@@ -7115,7 +7137,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   className="hidden w-full sm:block"
                   aria-label="Nearby departure fares"
                 >
-                  <div data-desktop-nearby-fare-rail className="mx-auto grid w-full max-w-[860px] grid-cols-[44px_repeat(7,minmax(78px,1fr))_44px] items-center gap-1 border-y border-slate-200/80 bg-white px-1 py-2">
+                  <div data-desktop-nearby-fare-rail className="mx-auto grid w-full max-w-[860px] grid-cols-[44px_repeat(7,minmax(78px,1fr))_44px] items-center gap-1 rounded-xl border border-slate-200 bg-white px-2 py-2 shadow-[0_8px_24px_-20px_rgba(15,23,42,0.45)]">
                     <button
                       type="button"
                       aria-label="Previous nearby fare date"
@@ -7173,8 +7195,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                           }
                           onClick={() => handleNearbyFareDateSelect(fare.date)}
                           className={cn(
-                            "focus-ring relative flex min-h-[76px] min-w-0 flex-col items-center justify-center px-1 py-2 text-center transition-colors after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:bg-[#075EE8] after:transition-transform hover:text-[#075EE8] hover:after:scale-x-50",
-                            selected && "after:scale-x-100",
+                            "focus-ring relative flex min-h-[72px] min-w-0 flex-col items-center justify-center rounded-lg px-1 py-2 text-center transition-colors after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:bg-[#075EE8] after:transition-transform hover:bg-slate-50 hover:text-[#075EE8] hover:after:scale-x-50",
+                            selected && "bg-blue-50/70 after:scale-x-100",
                           )}
                         >
                           {fare.status === "loading" ? (
@@ -7352,11 +7374,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               >
               {filterApplying || paginationPendingPage !== null ? (
                 <div className="space-y-3">
-                  <div
-                    role="status"
-                    aria-live="polite"
-                    className="rounded-xl border border-[#004BB8]/10 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm"
-                  >
+                  <div role="status" aria-live="polite" className="sr-only">
                     {t("updatingResults")}
                   </div>
                   {Array.from({ length: paginationPendingPage !== null ? visibleResults.length : 2 }, (_, index) => <FlightCardSkeleton key={index} />)}
@@ -7443,12 +7461,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           filtersOpen ? "translate-y-0" : "translate-y-full",
         )}
       >
-        <div className="shrink-0 border-b border-slate-200 bg-white px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+        <div className="shrink-0 border-b border-slate-200 bg-white px-5 pb-4 pt-[calc(0.75rem+env(safe-area-inset-top))] shadow-[0_8px_24px_-22px_rgba(15,23,42,0.38)]">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <h2
                 id="flight-mobile-filters-title"
-                className="text-lg font-bold leading-6 text-slate-950"
+                className="text-xl font-extrabold leading-7 tracking-[-0.015em] text-slate-950"
               >
                 {t("filters")}
               </h2>
@@ -7461,7 +7479,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             <Button
               type="button"
               variant="ghost"
-              className="h-10 w-10 shrink-0 rounded-full border border-slate-200 bg-white px-0 text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+              className="h-11 w-11 shrink-0 rounded-full border border-transparent bg-transparent px-0 text-slate-700 shadow-none transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
               aria-label={t("closeFilters")}
               onClick={() => closeMobileFiltersDrawer()}
             >
@@ -7470,7 +7488,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 [scrollbar-gutter:stable]">
           <Filters
             layout="mobile"
             activeFilterCount={activeFilterCount}
@@ -7512,26 +7530,27 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           />
         </div>
 
-        <div className="flex shrink-0 items-center justify-between gap-4 border-t border-slate-200 bg-white px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-8px_20px_rgba(15,23,42,0.06)]">
+        <div className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-200 bg-white px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-10px_26px_-22px_rgba(15,23,42,0.38)]">
+          {activeFilterCount > 0 ? (
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-12 min-w-0 rounded-xl px-3 text-sm font-bold text-[#004BB8] transition hover:bg-[#F5F8FC] hover:text-[#003f9c]"
+              onClick={clearFlightFilters}
+            >
+              {t("clearAll")}
+            </Button>
+          ) : null}
           <Button
             type="button"
-            variant="ghost"
-            disabled={activeFilterCount === 0}
-            className="h-12 min-w-0 rounded-xl px-0 text-sm font-bold text-[#004BB8] transition hover:bg-transparent hover:text-[#003f9c] disabled:pointer-events-none disabled:text-slate-400"
-            onClick={clearFlightFilters}
-          >
-            {t("clearAll")}
-          </Button>
-          <Button
-            type="button"
-            className="h-12 min-w-[8.75rem] rounded-xl bg-[#004BB8] px-7 text-base font-bold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
+            className="h-12 min-w-[11rem] flex-1 rounded-xl bg-[#004BB8] px-5 text-sm font-bold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 sm:flex-none"
             onClick={() => {
               shouldScrollToTopAfterFilterApplyRef.current = true;
               triggerFilterApplying();
               closeMobileFiltersDrawer({ restoreFocus: false });
             }}
           >
-            {t("done")}
+            {formatResultsFound(sortedResults.length, t)}
           </Button>
         </div>
       </aside>
@@ -9820,7 +9839,7 @@ function FilterSection({
 
   return (
     <section className="border-t border-slate-200/75 py-4 first:border-t-0">
-      <h3 className="mb-2 text-sm font-extrabold uppercase leading-5 tracking-[0.14em] text-slate-950">
+      <h3 className="mb-2.5 text-sm font-bold leading-5 tracking-[-0.005em] text-slate-950">
         {title}
       </h3>
       <div className="grid gap-0.5">
@@ -9857,15 +9876,15 @@ function FilterOptionRow({
   return (
     <label
       className={cn(
-        "flex cursor-pointer items-start justify-between rounded-lg font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950",
+        "flex cursor-pointer items-center justify-between rounded-lg font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950 focus-within:bg-slate-50 focus-within:text-slate-950",
         compact
           ? "min-h-8 gap-2 px-1.5 py-1 text-[13px]"
-          : "min-h-10 gap-3 px-1 py-1.5 text-[13px] leading-5",
+          : "min-h-11 gap-3 px-1.5 py-1.5 text-[13px] leading-5",
       )}
     >
       <span
         className={cn(
-          "flex min-w-0 items-start",
+          "flex min-w-0 items-center",
           compact ? "gap-1.5" : "gap-2",
         )}
       >
@@ -9873,7 +9892,7 @@ function FilterOptionRow({
           type="checkbox"
           className={cn(
             "mt-0.5 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-[#004BB8]/25",
-            compact ? "h-3.5 w-3.5" : "h-[15px] w-[15px]",
+            compact ? "h-3.5 w-3.5" : "h-4 w-4",
           )}
           checked={checked}
           onChange={onChange}

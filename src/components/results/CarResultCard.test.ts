@@ -47,6 +47,23 @@ test("standalone mobile keeps total primary, per-day supporting, and its action 
   assert.doesNotMatch(mobile, /Taxes and fees included/);
 });
 
+test("desktop media fills its column and unsupported tax copy stays hidden", () => {
+  const desktop = source.slice(source.indexOf('data-region="image"'));
+  assert.match(desktop, /md:aspect-auto md:h-full md:min-h-\[220px\]/);
+  assert.doesNotMatch(desktop, /md:p-2\.5/);
+  assert.doesNotMatch(source, /Taxes and fees included/);
+});
+
+test("desktop save and share glyphs sit closer within independent targets", () => {
+  const actions = source.slice(
+    source.indexOf("const cardActions"),
+    source.indexOf("const mobileCardActions"),
+  );
+  assert.match(actions, /h-11 w-11/);
+  assert.match(actions, /translate-x-1\.5/);
+  assert.match(actions, /-translate-x-1\.5/);
+});
+
 test("standalone identity separates the semantic model heading from its qualifier", () => {
   const mobile = source.slice(
     source.indexOf("data-car-card-mobile-information"),
@@ -91,9 +108,9 @@ test("mobile primary specs are deterministic and capped at four", () => {
   );
   assert.deepEqual(first, [
     "5 passengers",
-    "3 bags",
     "Automatic",
-    "Unlimited mileage",
+    "5 doors",
+    "3 bags",
   ]);
   const limited = {
     ...car,
@@ -103,7 +120,7 @@ test("mobile primary specs are deterministic and capped at four", () => {
   };
   assert.deepEqual(
     getMobileCarPrimarySpecs(limited).map(([, label]) => label),
-    ["5 passengers", "3 bags", "Manual", "250 km included"],
+    ["5 passengers", "Manual", "5 doors", "3 bags"],
   );
   assert.equal(getMobileCarPrimarySpecs(limited).length, 4);
 });
@@ -120,14 +137,16 @@ test("Free cancellation is data-driven in mobile and secondary benefits stay des
   );
 });
 
-test("desktop and guided contracts retain their responsive grid and disclosures", () => {
+test("desktop and guided contracts retain their responsive grid and owned disclosures", () => {
   assert.match(source, /guidedPlanning \? "grid" : "hidden md:grid"/);
   assert.match(source, /md:grid-cols-\[250px_minmax\(0,1fr\)\]/);
   assert.match(source, /lg:grid-cols-\[250px_minmax\(0,1fr\)_205px\]/);
   assert.match(source, /xl:grid-cols-\[270px_minmax\(0,1fr\)_205px\]/);
   assert.match(source, /!guidedPlanning && offer\.freeCancellation/);
   assert.match(source, /!guidedPlanning && offer\.payAtPickup/);
-  assert.match(source, /!guidedPlanning && offer\.taxesAndFeesIncluded/);
+  assert.doesNotMatch(source, /Unlimited mileage|car\.limitedMileageKm/);
+  assert.doesNotMatch(source, /<Fuel|title\(car\.fuelPolicy\)/);
+  assert.doesNotMatch(source, /offer\.taxesAndFeesIncluded|Taxes and fees included/);
   assert.match(source, /planningLabels\?\.estimatedTotal/);
   assert.match(source, /planningLabels\?\.disclosure/);
 });

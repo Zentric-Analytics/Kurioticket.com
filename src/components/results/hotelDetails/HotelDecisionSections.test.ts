@@ -155,7 +155,7 @@ test("comparison presents Kurioticket as a normalized provider without developme
   assert.doesNotMatch(compare, /row-span-2|data-provider-price-action/);
   assert.match(compare, /data-provider-amenities/);
   assert.match(compare, /flex-nowrap/);
-  assert.match(compare, /gap-x-0/);
+  assert.match(compare, /gap-x-4/);
   assert.doesNotMatch(compare, /\[&>li\]:text-\[11px\]/);
   assert.match(compare, /whitespace-nowrap/);
   assert.doesNotMatch(compare, /data-provider-action|<button/);
@@ -243,6 +243,7 @@ test("persistent continuation uses the selected provider decision", () => {
 test("about exposes the full property information architecture without expansion controls", () => {
   assert.match(standalone, /description=\{description\}/);
   assert.match(standalone, /amenities=\{props\.amenityItems\}/);
+  assert.match(standalone, /propertyType=\{props\.propertyDetails\?\.propertyType\}/);
   assert.match(
     standalone,
     /bedSummary=\{props\.propertyDetails\?\.bedSummary\}/,
@@ -260,7 +261,8 @@ test("about exposes the full property information architecture without expansion
     /line-clamp|descriptionExpanded|amenitiesExpanded|See all amenities|Show fewer|>More</,
   );
   assert.match(about, /remainingAmenities\.map/);
-  assert.match(about, /\{starRating\}-star hotel/);
+  assert.match(about, /\{propertyType\}/);
+  assert.match(about, /\{starRating\}-star classification/);
 });
 
 test("guest reviews remains visible and never manufactures review values", () => {
@@ -269,7 +271,7 @@ test("guest reviews remains visible and never manufactures review values", () =>
   assert.doesNotMatch(reviews, /8\.6|1,246|Excellent/);
 });
 
-test("location preserves map, Street View and directions while facts use catalogue metadata", () => {
+test("location preserves map and Street View while facts use catalogue metadata", () => {
   for (const field of [
     "neighbourhood",
     "businessSuitable",
@@ -279,9 +281,8 @@ test("location preserves map, Street View and directions while facts use catalog
   ])
     assert.ok(standalone.includes(`propertyDetails.${field}`), field);
   for (const contract of [
-    "buildHotelMapEmbedUrl",
+    "buildGoogleHotelMapEmbedUrl",
     "buildGoogleHotelStreetViewEmbedUrl",
-    "buildHotelDirectionsUrl",
     "Why this location works",
   ])
     assert.ok(location.includes(contract), contract);
@@ -290,4 +291,5 @@ test("location preserves map, Street View and directions while facts use catalog
     /\b\d+ min(?:ute)?s?\b|\b\d+ min walk\b/i,
   );
   assert.doesNotMatch(location, /\.slice\(|<details|<summary/);
+  assert.doesNotMatch(location, /Show directions|directionsUrl/);
 });

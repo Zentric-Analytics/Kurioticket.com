@@ -9,10 +9,9 @@ const source = readFileSync(
 
 test("renders a factual responsive hotel location card", () => {
   for (const contract of [
-    "buildHotelMapEmbedUrl({",
+    "buildGoogleHotelMapEmbedUrl({",
     "buildGoogleHotelStreetViewEmbedUrl({",
     "NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY",
-    "buildHotelDirectionsUrl({ hotelName, propertyDetails })",
     "data-hotel-location-section",
     'id="hotel-location"',
     "scroll-mt-16",
@@ -22,8 +21,6 @@ test("renders a factual responsive hotel location card", () => {
     'useState<"map" | "streetview">("map")',
     'loading="lazy"',
     'referrerPolicy="strict-origin-when-cross-origin"',
-    'target="_blank"',
-    'rel="noopener noreferrer"',
     "h-[200px]",
     "sm:h-[220px]",
     "lg:h-[240px]",
@@ -31,10 +28,12 @@ test("renders a factual responsive hotel location card", () => {
     assert.ok(source.includes(contract), contract);
 });
 
-test("keeps external directions distinct from the stable in-page location anchor", () => {
+test("keeps the stable in-page location anchor without an external directions link", () => {
   assert.match(source, /id="hotel-location"/);
-  assert.match(source, /href=\{directionsUrl\}/);
-  assert.match(source, /target="_blank"/);
+  assert.doesNotMatch(source, /directionsUrl|Show directions|maps\/dir/);
+});
+test("never substitutes a non-Google map when Google configuration is absent", () => {
+  assert.doesNotMatch(source, /buildHotelMapEmbedUrl|OpenStreetMap|openstreetmap/i);
 });
 test("keeps location-fit and accessibility details visibly expanded", () => {
   assert.match(source, /stayFitFacts\.map/);

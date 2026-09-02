@@ -9,19 +9,19 @@ const hotelSource = readFileSync(
   "utf8",
 );
 
-const compactBranch = hotelSource.match(
-  /if \(layout === "compact"\) \{([\s\S]*?)\n  return \(\n    <div\n      className=\{cn\(/,
-)?.[1];
+const compactStart = hotelSource.indexOf('if (layout === "compact") {');
+const compactEnd = hotelSource.indexOf("\n  return (", compactStart + 1);
+const compactBranch = compactStart >= 0 && compactEnd > compactStart
+  ? hotelSource.slice(compactStart, compactEnd)
+  : "";
 
 assert.ok(compactBranch, "the compact Hotel filter branch should be present");
 
-test("compact Hotel filters use the Flights panel and header contract", () => {
-  assert.match(compactBranch, /desktop-filter-sidebar flex max-h-full flex-col overflow-hidden rounded-2xl border border-\[#D8E1EC\] bg-\[#EEF3F8\]/);
-  assert.match(compactBranch, /desktop-filter-sidebar__header shrink-0 border-b border-\[#D8E1EC\]\/80 bg-\[#EEF3F8\] px-3\.5 py-2\.5/);
-  assert.match(compactBranch, /<SlidersHorizontal[\s\S]*?size=\{15\}[\s\S]*?strokeWidth=\{2\.25\}[\s\S]*?aria-hidden="true"/);
-  assert.match(compactBranch, /t\("hotelResults\.filterBy"\)/);
-  assert.doesNotMatch(compactBranch, /rounded-\[1\.15rem\]/);
-  assert.doesNotMatch(compactBranch, /ring-slate-950/);
+test("compact Hotel filters use a desktop-native panel without a duplicate title", () => {
+  assert.match(compactBranch, /desktop-filter-sidebar flex max-h-full flex-col overflow-hidden bg-white p-0/);
+  assert.match(compactBranch, /desktop-filter-sidebar__summary shrink-0 border-b border-slate-200 bg-slate-50\/80 px-3 py-2\.5/);
+  assert.doesNotMatch(compactBranch, /desktop-filter-sidebar__title|hotelResults\.filterBy|<SlidersHorizontal/);
+  assert.doesNotMatch(compactBranch, /bg-\[#EEF3F8\]|rounded-2xl/);
   assert.match(compactBranch, /min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain/);
 });
 
@@ -89,7 +89,7 @@ test("Hotel sticky compact-filter placement contract remains intact", () => {
   assert.match(hotelSource, /shouldShowDesktopCompactFilter\(\{/);
   assert.match(hotelSource, /calculateCompactFilterPlacement\(\{/);
   assert.match(hotelSource, /desktopCompactFilterPlacement === "fixed"/);
-  assert.match(hotelSource, /desktopCompactFilterPlacement === "docked"/);
+  assert.match(hotelSource, /desktopCompactFilterPlacement === "fixed" && desktopCompactFilterFrame/);
 });
 
 test("compact Hotel maximum height reserves its viewport offsets", () => {

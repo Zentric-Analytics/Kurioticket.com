@@ -28,7 +28,9 @@ export async function clearSession() {
   else await SecureStore.deleteItemAsync(SESSION_KEY);
   publishSession(null);
 }
-export async function updateStoredSessionName(name: string | null) {
+export async function updateStoredSessionName(name: string | null, expectedUserId?: string) {
+  if (!expectedUserId) return;
   const session = await readSession();
-  if (session) await writeSession({ ...session, user: { ...session.user, name } });
+  if (!session || session.user.id !== expectedUserId) return;
+  await writeSession({ ...session, user: { ...session.user, name } });
 }

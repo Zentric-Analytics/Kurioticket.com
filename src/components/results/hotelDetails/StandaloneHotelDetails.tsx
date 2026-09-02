@@ -25,12 +25,10 @@ import type {
   PublicHotelPropertyDetails,
   PublicHotelResult,
 } from "@/lib/types";
-import {
-  buildHotelAddress,
-  buildHotelDirectionsUrl,
-} from "@/lib/hotels/hotelMap";
+import { buildHotelAddress } from "@/lib/hotels/hotelMap";
 import { HotelDetailsGallery } from "@/components/results/hotelDetails/HotelDetailsGallery";
 import { HotelLocationSection } from "@/components/results/hotelDetails/HotelLocationSection";
+import { HotelDetailsGoogleMap } from "@/components/results/hotelDetails/HotelDetailsGoogleMap";
 import { RelatedHotelsSection } from "@/components/results/hotelDetails/RelatedHotelsSection";
 import type { HotelDetailsSearchContext } from "@/components/results/hotelDetails/hotelDetailsPresentation";
 import type { HotelDetailsProviderOffer } from "@/components/results/hotelDetails/hotelDetailsPresentation";
@@ -96,7 +94,6 @@ export type StandaloneHotelDetailsProps = {
   labels: {
     share: string;
     shared: string;
-    directions: string;
     map: string;
     streetView: string;
     yourStay: string;
@@ -130,12 +127,6 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
   const canonicalAddress = props.propertyDetails
     ? buildHotelAddress(props.propertyDetails)
     : "";
-  const directionsUrl = props.propertyDetails
-    ? buildHotelDirectionsUrl({
-        hotelName: props.hotelName,
-        propertyDetails: props.propertyDetails,
-      })
-    : null;
 
   useEffect(() => {
     if (!roomsOpen) return;
@@ -315,26 +306,15 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                   ) : null}
                   {canonicalAddress ? (
                     <div
-                      className="mt-1 hidden min-w-0 items-center gap-3 text-xs leading-5 text-slate-600 lg:flex"
+                      className={`mt-1 hidden min-w-0 text-xs leading-5 text-slate-600 lg:flex ${props.locationParts.length ? "ps-6" : "items-start gap-2"}`}
                       data-desktop-hotel-address-row
                     >
-                      <p
-                        className="min-w-0 flex-1 truncate"
-                        title={canonicalAddress}
-                      >
+                      {!props.locationParts.length ? (
+                        <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                      ) : null}
+                      <p className="min-w-0 break-words" title={canonicalAddress}>
                         {canonicalAddress}
                       </p>
-                      {directionsUrl ? (
-                        <a
-                          href={directionsUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label={`Show directions to ${props.hotelName}`}
-                          className="focus-ring inline-flex min-h-11 shrink-0 items-center font-bold text-blue hover:underline"
-                        >
-                          Show directions
-                        </a>
-                      ) : null}
                     </div>
                   ) : null}
                   {props.reviewScore ? (
@@ -515,6 +495,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                   description={description}
                   amenities={props.amenityItems}
                   starRating={props.starRating}
+                  propertyType={props.propertyDetails?.propertyType}
                   roomSummary={props.propertyDetails?.roomSummary}
                   bedSummary={props.propertyDetails?.bedSummary}
                   accessibility={props.propertyDetails?.accessibility}
@@ -535,7 +516,6 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                   hotelName={props.hotelName}
                   propertyDetails={props.propertyDetails}
                   locationLabel="Location & stay fit"
-                  directionsLabel={props.labels.directions}
                   mapLabel={props.labels.map}
                   streetViewLabel={props.labels.streetView}
                   stayFitFacts={[
@@ -645,6 +625,13 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
           </section>
         </aside>
       </div>
+
+      {props.propertyDetails ? (
+        <HotelDetailsGoogleMap
+          hotelName={props.hotelName}
+          propertyDetails={props.propertyDetails}
+        />
+      ) : null}
 
       <section
         className="fixed inset-x-0 bottom-0 z-[90] rounded-t-[22px] border-t border-slate-200 bg-white px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-8px_28px_rgba(15,23,42,0.14)] lg:hidden"

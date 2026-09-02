@@ -88,9 +88,22 @@ test("static hotel results are deterministic planning estimates", () => {
   assert.ok(firstHotel?.pricePerNight);
   assert.equal(calculateHotelStayNights(search.checkIn, search.checkOut), 3);
   assert.equal(firstHotel.totalPrice, firstHotel.pricePerNight * 3 * 2);
-  assert.equal(firstHotel.provider, "Kurioticket static catalogue");
+  assert.equal(firstHotel.provider, "Kurioticket catalogue");
   assert.equal(firstHotel.bookingUrl, "");
   assert.equal(firstHotel.partnerRedirectUrl, "");
+});
+
+test("catalogue results expose only explicitly owned structured card facts", () => {
+  for (const result of buildStaticHotelResults(search)) {
+    assert.ok(result.catalogueProfile, result.id);
+    assert.ok(result.catalogueProfile.propertyType.trim(), result.id);
+    assert.ok(result.catalogueProfile.room.name.trim(), result.id);
+    assert.ok(result.catalogueProfile.room.bedConfiguration.trim(), result.id);
+    assert.deepEqual(result.catalogueProfile.amenities, result.amenities);
+    assert.equal(result.catalogueProfile.cancellationPolicy, undefined);
+    assert.equal(result.catalogueProfile.paymentPolicy, undefined);
+    assert.equal(result.reviewScore, undefined);
+  }
 });
 
 test("every static hotel supplies a deterministic curated lead image and gallery", () => {

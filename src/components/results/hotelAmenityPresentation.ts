@@ -5,6 +5,8 @@ export type HotelAmenityIconKey =
   | "spa"
   | "airportShuttle"
   | "parking"
+  | "petFriendly"
+  | "evCharging"
   | "fitness"
   | "workspace"
   | "quietRooms"
@@ -34,25 +36,27 @@ type ClassifiedAmenity = {
 };
 
 const iconPriority: Record<HotelAmenityIconKey, number> = {
-  wifi: 1,
-  breakfast: 2,
-  pool: 3,
-  spa: 4,
-  airportShuttle: 5,
-  parking: 6,
-  fitness: 7,
-  workspace: 8,
-  restaurant: 9,
-  bar: 10,
-  airConditioning: 11,
-  frontDesk: 12,
-  lateCheckIn: 13,
-  quietRooms: 14,
-  kitchenette: 15,
-  bikeStorage: 16,
-  courtyard: 17,
-  lounge: 18,
-  generic: 19,
+  petFriendly: 1,
+  parking: 2,
+  evCharging: 3,
+  pool: 4,
+  spa: 5,
+  fitness: 6,
+  wifi: 7,
+  breakfast: 8,
+  airportShuttle: 9,
+  workspace: 10,
+  restaurant: 11,
+  bar: 12,
+  airConditioning: 13,
+  frontDesk: 14,
+  lateCheckIn: 15,
+  quietRooms: 16,
+  kitchenette: 17,
+  bikeStorage: 18,
+  courtyard: 19,
+  lounge: 20,
+  generic: 21,
 };
 
 const knownAmenityIconKeys = new Set<HotelAmenityIconKey>([
@@ -62,6 +66,8 @@ const knownAmenityIconKeys = new Set<HotelAmenityIconKey>([
   "spa",
   "airportShuttle",
   "parking",
+  "petFriendly",
+  "evCharging",
   "fitness",
   "workspace",
   "quietRooms",
@@ -101,6 +107,13 @@ const exactIconKeys: Record<string, HotelAmenityIconKey> = {
   "free parking": "parking",
   "onsite parking": "parking",
   "on-site parking": "parking",
+  "pet friendly": "petFriendly",
+  "pet-friendly": "petFriendly",
+  "pets allowed": "petFriendly",
+  "ev charging": "evCharging",
+  "ev charger": "evCharging",
+  "electric vehicle charging": "evCharging",
+  "electric car charging": "evCharging",
   "fitness room": "fitness",
   "fitness centre": "fitness",
   "fitness center": "fitness",

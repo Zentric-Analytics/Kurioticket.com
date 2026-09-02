@@ -271,6 +271,7 @@ type NormalizedHotelBase = {
   sourceUrl?: string;
   sourceAttributions?: HotelSourceAttribution[];
   rawProviderReference?: unknown;
+  catalogueProfile?: HotelCatalogueProfile;
 };
 
 type PublicHotelBase = {
@@ -302,6 +303,29 @@ type PublicHotelBase = {
   badges: string[];
   sourceUrl?: string;
   sourceAttributions?: HotelSourceAttribution[];
+  catalogueProfile?: HotelCatalogueProfile;
+};
+
+export type HotelCatalogueProfile = {
+  propertyType: string;
+  neighbourhood?: string;
+  coordinates?: { latitude: number; longitude: number };
+  amenities: string[];
+  accessibilityFeatures: string[];
+  room: {
+    name: string;
+    bedConfiguration: string;
+    capacity?: { adults: number; children?: number };
+  };
+  mealPlan?: string;
+  cancellationPolicy?: string;
+  paymentPolicy?: string;
+  checkIn?: string;
+  checkOut?: string;
+  houseRules?: string[];
+  brand?: string;
+  sustainabilityFeatures?: string[];
+  travellerFeatures?: string[];
 };
 
 export type NormalizedHotelResult = NormalizedHotelBase & HotelInventory;
@@ -310,6 +334,7 @@ export type PublicHotelResult = PublicHotelBase & HotelInventory;
 
 export type PublicHotelPropertyDetails = {
   description: string;
+  propertyType?: string;
   latitude: number;
   longitude: number;
   streetAddress: string;

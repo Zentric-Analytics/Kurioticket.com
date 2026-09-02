@@ -29,9 +29,8 @@ test("hotel detail replaces the passive heart with a canonical saved button", ()
   assert.match(hotelDetail, /<FlowIcon name="heart" fill=\{saved \? ui\.blue : "white"\}/);
 });
 
-test("result cards and detail actions share the same repositories", () => {
-  assert.equal((resultsSource.match(/useSavedFlights\(\)/g) || []).length, 1);
-  assert.doesNotMatch(resultsSource.slice(resultsSource.indexOf("function FlightCard"), resultsSource.indexOf("function FlightJourneyRow")), /useSavedFlights\(\)/);
+test("flight details exclusively own flight saving while Saved remains canonical", () => {
+  assert.doesNotMatch(resultsSource, /useSavedFlights\(\)|toggleSavedFlight\(item, params\)|flightSavedSignature\(item\)/);
   assert.match(flightDetail, /useSavedFlights\(\)/);
   assert.match(resultsSource, /function HotelCard[\s\S]*?useCanonicalSaved\(\)/);
   assert.match(hotelDetail, /useCanonicalSaved\(\)/);
@@ -44,7 +43,7 @@ test("guest hotel detail taps use the existing favorite sign-in flow", () => {
   assert.match(flightHook, /favoriteAction\(resolvedUserId\) === "sign-in"[\s\S]*?showFavoriteSignInPrompt\("\/saved"\)/);
 });
 
-test("flight result and detail saves pass their current search context", () => {
-  assert.match(resultsSource, /toggleSavedFlight\(item, params\)/);
+test("flight detail save passes its current search context while result cards do not save", () => {
+  assert.doesNotMatch(resultsSource, /toggleSavedFlight\(item, params\)/);
   assert.match(flightDetail, /toggleSavedFlight\(result, params\)/);
 });

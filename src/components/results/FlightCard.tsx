@@ -93,7 +93,7 @@ export function FlightCard({
     <Card
       data-flight-result-card
       className={cn(
-        "relative w-full overflow-hidden border-[#D8E1EC] bg-white shadow-[0_10px_28px_rgba(15,23,42,0.07)] transition hover:-translate-y-0.5 hover:border-[#CBD6E2] hover:shadow-[0_16px_34px_rgba(15,23,42,0.095)] lg:rounded-xl lg:border-[#CDD8E5] lg:bg-[#FEFFFF] lg:shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)]",
+        "relative w-full overflow-hidden rounded-[14px] border-[#D8E1EC] bg-white shadow-[0_12px_30px_-24px_rgba(15,23,42,0.5)] transition duration-200 hover:-translate-y-0.5 hover:border-[#BFCEDF] hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.4)] lg:rounded-2xl lg:border-[#CDD8E5] lg:bg-[#FEFFFF]",
         isAccented && "ring-1 ring-slate-950/[0.03]",
       )}
       onClick={(event) => {
@@ -112,22 +112,21 @@ export function FlightCard({
         <div className="flight-card-desktop">
           <div className="flight-card-desktop-header flex min-w-0 items-start justify-between pb-2">
             <div className="flight-card-desktop-brand flex min-w-0 items-center">
-              <AirlineLogo flight={flight} />
+              <div className="flight-card-header-logo">
+                <AirlineLogo flight={flight} />
+              </div>
               <div className="min-w-0">
                 <p
-                  className="flight-card-airline-name truncate font-semibold leading-5 text-slate-800"
+                  className="flight-card-airline-name truncate whitespace-nowrap font-semibold leading-5 text-slate-800"
                   dir="auto"
                 >
-                  {flight.airlineName}
+                  <span>{flight.airlineName}</span>
+                  {flight.flightNumber ? (
+                    <span className="ms-2 font-medium text-[#536B92]" dir="ltr">
+                      {flight.flightNumber}
+                    </span>
+                  ) : null}
                 </p>
-                {flight.flightNumber ? (
-                  <p
-                    className="mt-0.5 truncate text-sm font-medium leading-5 text-[#536B92]"
-                    dir="ltr"
-                  >
-                    {flight.flightNumber}
-                  </p>
-                ) : null}
               </div>
             </div>
             <ResultBadgePill badge={resultBadge} />
@@ -140,6 +139,7 @@ export function FlightCard({
                   key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${leg.departureTime}-${index}`}
                   leg={leg}
                   locale={locale}
+                  flight={flight}
                 />
               ))}
             </div>
@@ -215,9 +215,11 @@ function ResultBadgePill({ badge }: { badge?: ResultBadge }) {
 function ResponsiveFlightLegRow({
   leg,
   locale,
+  flight,
 }: {
   leg: FlightLeg;
   locale: string;
+  flight: PublicFlightResult;
 }) {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -225,27 +227,38 @@ function ResponsiveFlightLegRow({
 
   return (
     <section aria-label={legTitle} className="min-w-0">
-      <div className="flight-card-leg-grid grid min-w-0 items-center">
-        <div className="min-w-0 self-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#0057E7]">
-            {legTitle}
-          </p>
-          <div
-            className="flight-card-time mt-1 font-semibold leading-6 tracking-[-0.025em] text-[#07133B]"
-            dir="ltr"
-          >
-            {formatTime(leg.departureTime, locale)}
+      <p className="flight-card-leg-label font-bold uppercase text-[#0057E7]">
+        {legTitle}
+      </p>
+      <div className="flight-card-leg-grid grid min-w-0">
+        <div className="flight-card-leg-endpoint min-w-0">
+          <div className="flight-card-leg-time-row flex min-w-0 items-center">
+            <div className="flight-card-leg-logo hidden shrink-0 lg:block">
+              <AirlineLogo flight={flight} inline />
+            </div>
+            <div
+              className="flight-card-time min-w-0 font-semibold leading-6 tracking-[-0.025em] text-[#07133B]"
+              dir="ltr"
+            >
+              {formatTime(leg.departureTime, locale)}
+            </div>
           </div>
           <div
-            className="mt-1 text-sm font-bold leading-5 text-[#07133B]"
+            className="flight-card-airport font-bold text-[#07133B]"
             dir="ltr"
           >
             {leg.originAirport}
           </div>
+          <div
+            className="flight-card-departure-date flight-card-leg-meta font-medium text-[#07133B]"
+            dir="auto"
+          >
+            {formatItineraryShortDate({ value: leg.departureTime, locale })}
+          </div>
         </div>
 
-        <div className="min-w-0 self-center text-center">
-          <div className="mb-2 flex items-center justify-center gap-2 text-sm font-semibold text-[#07133B]">
+        <div className="flight-card-leg-center min-w-0 text-center">
+          <div className="flight-card-duration flex items-center justify-center font-semibold text-[#07133B]">
             <span dir="auto">{leg.duration}</span>
             <span
               className="h-1 w-1 rounded-full bg-[#07133B]"
@@ -253,7 +266,7 @@ function ResponsiveFlightLegRow({
             />
             <span>{formatStopsLabel(leg.stops, t)}</span>
           </div>
-          <div className="flex items-center text-[#7890B8]" aria-hidden="true">
+          <div className="flight-card-path flex items-center text-[#7890B8]" aria-hidden="true">
             <span className="h-2 w-2 rounded-full bg-[#7890B8]" />
             <span className="h-px flex-1 bg-[#B9C5D8]" />
             <PlaneTakeoff className="mx-2 h-3.5 w-3.5 text-[#0057E7]" />
@@ -262,19 +275,19 @@ function ResponsiveFlightLegRow({
           </div>
           {leg.layovers.length ? (
             <p
-              className="mt-2 truncate text-sm font-medium leading-5 text-[#536B92]"
+              className="flight-card-layover flight-card-leg-meta truncate font-medium text-[#536B92]"
               title={formatLayoverText(leg, t)}
             >
               {formatLayoverText(leg, t)}
             </p>
           ) : (
-            <p className="mt-2 text-sm font-medium leading-5 text-[#536B92]">
+            <p className="flight-card-route-codes flight-card-leg-meta font-medium text-[#536B92]">
               {leg.originAirport} → {leg.destinationAirport}
             </p>
           )}
         </div>
 
-        <div className="min-w-0 self-center text-right">
+        <div className="flight-card-leg-endpoint min-w-0 text-right">
           <div
             className="flight-card-time font-semibold leading-6 tracking-[-0.025em] text-[#07133B]"
             dir="ltr"
@@ -282,13 +295,13 @@ function ResponsiveFlightLegRow({
             {formatTime(leg.arrivalTime, locale)}
           </div>
           <div
-            className="mt-1 truncate text-sm font-bold leading-5 text-[#07133B]"
+            className="flight-card-airport truncate font-bold text-[#07133B]"
             dir="ltr"
           >
             {leg.destinationAirport}
           </div>
           <div
-            className="flight-card-arrival-date mt-0.5 text-sm font-medium leading-5 text-[#07133B]"
+            className="flight-card-arrival-date flight-card-leg-meta font-medium text-[#07133B]"
             dir="auto"
           >
             {formatItineraryShortDate({ value: leg.arrivalTime, locale })}
@@ -301,14 +314,17 @@ function ResponsiveFlightLegRow({
 
 function AirlineLogo({
   flight,
+  inline = false,
 }: {
   flight: PublicFlightResult;
+  inline?: boolean;
 }) {
   if (flight.airlineLogo) {
     return (
       <div
         className={cn(
-          "flex shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white shadow-sm",
+          "flex shrink-0 items-center justify-center",
+          inline ? "flight-card-inline-logo" : "rounded-lg border border-slate-200 bg-white shadow-sm",
           "flight-card-logo-box",
         )}
       >
@@ -317,7 +333,7 @@ function AirlineLogo({
           alt={`${flight.airlineName} logo`}
           width={38}
           height={38}
-          className="flight-card-logo-image object-contain"
+          className={cn("flight-card-logo-image object-contain", inline && "flight-card-inline-logo-image")}
         />
       </div>
     );
@@ -326,12 +342,13 @@ function AirlineLogo({
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-lg border border-[#004BB8]/8 bg-[#004BB8]/5 text-[#004BB8] shadow-sm",
+        "flex shrink-0 items-center justify-center text-[#004BB8]",
+        inline ? "flight-card-inline-logo" : "rounded-lg border border-[#004BB8]/8 bg-[#004BB8]/5 shadow-sm",
         "flight-card-logo-box",
       )}
     >
       <PlaneTakeoff
-        className="flight-card-logo-icon"
+        className={cn("flight-card-logo-icon", inline && "flight-card-inline-logo-icon")}
         aria-hidden="true"
       />
     </div>

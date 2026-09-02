@@ -7,8 +7,6 @@ import {
   CarFront,
   Check,
   DoorOpen,
-  Fuel,
-  Gauge,
   Heart,
   MapPin,
   Snowflake,
@@ -133,6 +131,7 @@ export function CarResultCard({
       >
         <Heart
           size={18}
+          className="translate-x-1.5"
           fill={isSaved ? "currentColor" : "none"}
           aria-hidden="true"
         />
@@ -143,7 +142,7 @@ export function CarResultCard({
         onClick={() => void shareCar()}
         className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-transparent text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
       >
-        <Share2 size={18} aria-hidden="true" />
+        <Share2 size={18} className="-translate-x-1.5" aria-hidden="true" />
       </button>
     </div>
   );
@@ -259,13 +258,7 @@ export function CarResultCard({
                   className="mt-0.5 shrink-0 text-[#004BB8]"
                   aria-hidden="true"
                 />
-                <span className="min-w-0">
-                  <strong className="font-semibold text-[#536B92]">
-                    {formatCarPickupType(car.pickupType)}
-                  </strong>
-                  {" · "}
-                  {car.pickupLocation}
-                </span>
+                <span className="min-w-0">{car.pickupLocation}</span>
               </p>
               <ul
                 data-car-card-mobile-specs
@@ -353,9 +346,9 @@ export function CarResultCard({
       >
         <div
           data-region="image"
-          className="col-span-2 row-start-1 flex items-center border-b border-[#E2E8F0] bg-slate-50 md:col-span-1 md:col-start-1 md:row-span-2 md:row-start-1 md:border-b-0 md:border-e md:p-2.5"
+          className="col-span-2 row-start-1 flex items-stretch border-b border-[#E2E8F0] bg-slate-50 md:col-span-1 md:col-start-1 md:row-span-2 md:row-start-1 md:border-b-0 md:border-e"
         >
-          <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 md:rounded-xl">
+          <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 md:aspect-auto md:h-full md:min-h-[220px]">
             <CarResultImage
               imageUrl={car.imageUrl}
               imageAlt={car.imageAlt}
@@ -449,26 +442,6 @@ export function CarResultCard({
           </ul>
 
           <div className="mt-2 flex min-w-0 flex-col items-start gap-1.5 md:flex-row md:flex-wrap">
-            <span className="inline-flex min-h-6 max-w-full items-start gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-slate-700 md:items-center md:px-2 md:text-xs">
-              <Gauge
-                size={13}
-                className="mt-0.5 shrink-0 md:mt-0"
-                aria-hidden="true"
-              />
-              <span className="min-w-0">
-                {car.mileagePolicy === "unlimited"
-                  ? "Unlimited mileage"
-                  : `${car.limitedMileageKm} km included`}
-              </span>
-            </span>
-            <span className="inline-flex min-h-6 max-w-full items-start gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-slate-700 md:items-center md:px-2 md:text-xs">
-              <Fuel
-                size={13}
-                className="mt-0.5 shrink-0 md:mt-0"
-                aria-hidden="true"
-              />
-              <span className="min-w-0">{title(car.fuelPolicy)}</span>
-            </span>
             {!guidedPlanning && offer.freeCancellation && (
               <span className="inline-flex min-h-6 max-w-full items-start gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-emerald-700 md:items-center md:px-2 md:text-xs">
                 <Check
@@ -522,11 +495,6 @@ export function CarResultCard({
                 {dailyDisplayPrice.formatted}
               </span>
             </p>
-            {!guidedPlanning && offer.taxesAndFeesIncluded && (
-              <p className="mt-1.5 text-xs leading-4 text-slate-500">
-                Taxes and fees included
-              </p>
-            )}
           </div>
           {guidedPlanning && (
             <p className="mt-2 text-xs leading-4 text-slate-600">

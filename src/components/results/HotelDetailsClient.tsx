@@ -897,7 +897,6 @@ export function HotelDetailsClient({
                 labels={{
                   share: t("hotelDetails.share") || "Share",
                   shared: t("hotelDetails.shared") || "Copied",
-                  directions: t("hotelDetails.getDirections") || "Get directions",
                   map: t("hotelDetails.map") || "Map",
                   streetView: t("hotelDetails.streetView") || "Street View",
                   yourStay: t("hotelDetails.yourStay") || "Your stay",

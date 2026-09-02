@@ -7,25 +7,38 @@ const source = readFileSync(
   "utf8",
 );
 
-const compactHeader = source.match(
-  /<div\n\s+className=\{cn\(\n\s+"fixed inset-x-0 top-0 z-\[900\][\s\S]*?\n\s+>\n\s+<div className="grid h-14/,
-)?.[0];
+const compactHeaderStart = source.indexOf("!guided && showMobileCompactHotelSearch");
+const compactHeaderEnd = source.indexOf("!guided ? (", compactHeaderStart);
+const compactHeader = source.slice(compactHeaderStart, compactHeaderEnd);
 
-test("Hotel compact header visibility remains scroll-driven while Edit Search is open", () => {
+test("Hotel compact header uses an atomic scroll-driven branch", () => {
   assert.ok(compactHeader, "compact Hotel header branch must exist");
-  assert.match(
-    compactHeader,
-    /showMobileCompactHotelSearch\n\s+\? "translate-y-0 opacity-100"/,
-  );
-  assert.doesNotMatch(
-    compactHeader,
-    /showMobileCompactHotelSearch\s*&&\s*!mobileHotelSearchOpen/,
-  );
+  assert.match(compactHeader, /!guided && showMobileCompactHotelSearch/);
+  assert.doesNotMatch(compactHeader, /translate-y|opacity-0|transition-all/);
   assert.match(compactHeader, /mobileHotelSearchOpen && "pointer-events-none"/);
-  assert.match(
-    compactHeader,
-    /inert=\{mobileHotelSearchOpen \|\| !showMobileCompactHotelSearch\}/,
-  );
+  assert.match(compactHeader, /inert=\{mobileHotelSearchOpen \? true : undefined\}/);
+  assert.doesNotMatch(compactHeader, />\s*Sort\s*</);
+});
+
+test("Hotel shortcut rail stays in document flow and owns the handoff sentinel", () => {
+  const shortcutsStart = source.indexOf("data-mobile-hotel-shortcuts");
+  const shortcutsEnd = source.indexOf("mobileSearchSummarySentinelRef", shortcutsStart);
+  const shortcutBranch = source.slice(shortcutsStart, shortcutsEnd + 100);
+
+  assert.ok(shortcutsStart >= 0 && shortcutsEnd > shortcutsStart);
+  assert.doesNotMatch(shortcutBranch, /sticky top-/);
+  assert.match(shortcutBranch, /mobileSearchSummarySentinelRef/);
+  assert.doesNotMatch(shortcutBranch, /trigger\("sort"|>\s*Sort\s*</);
+});
+
+test("Hotel mobile handoff updates directly in the scroll event", () => {
+  const effectStart = source.indexOf('setShowMobileCompactHotelSearch(window.innerWidth < 640');
+  const effectEnd = source.indexOf("}, [guided]);", effectStart);
+  const handoffEffect = source.slice(effectStart, effectEnd);
+
+  assert.match(handoffEffect, /getBoundingClientRect\(\)\.bottom <= 0/);
+  assert.match(handoffEffect, /window\.addEventListener\("scroll", update/);
+  assert.doesNotMatch(handoffEffect, /requestAnimationFrame|IntersectionObserver/);
 });
 
 test("opening and closing Hotel Edit Search does not reset scroll visibility", () => {

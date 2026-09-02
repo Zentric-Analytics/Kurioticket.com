@@ -111,13 +111,6 @@ test("mobile property header renders the canonical identity in the approved orde
     'className="hidden lg:inline"',
     "data-mobile-hotel-address-row",
     "buildHotelAddress(props.propertyDetails)",
-    "buildHotelDirectionsUrl({",
-    "hotelName: props.hotelName",
-    "propertyDetails: props.propertyDetails",
-    "href={directionsUrl}",
-    'target="_blank"',
-    'rel="noopener noreferrer"',
-    "aria-label={`Show directions to ${props.hotelName}`}",
     "min-w-0 break-words",
     "title={canonicalAddress}",
     "data-mobile-property-metadata",
@@ -301,6 +294,36 @@ test("stay summary retains all functional data and pricing contracts", () => {
     'bookingContinuation.kind === "unavailable"',
   ])
     assert.ok(source.includes(contract), contract);
+});
+
+test("Google map is a standalone wide section below the full booking grid", () => {
+  const desktopAside = source.slice(
+    source.indexOf("data-standalone-stay-summary"),
+    source.indexOf("</aside>", source.indexOf("data-standalone-stay-summary")),
+  );
+  assert.doesNotMatch(desktopAside, /<HotelDetailsGoogleMap/);
+  assert.equal(source.match(/<HotelDetailsGoogleMap/g)?.length, 1);
+  assert.ok(source.indexOf("<HotelDetailsGoogleMap") > source.indexOf("</aside>"));
+  assert.ok(source.indexOf("<HotelDetailsGoogleMap") < source.indexOf("data-mobile-hotel-stay-dock"));
+  assert.doesNotMatch(source, /Show directions|href=\{directionsUrl\}/);
+});
+
+test("desktop mosaic gallery uses independent transparent edge controls", () => {
+  const mosaic = gallerySource.slice(
+    gallerySource.indexOf("const mosaic = ("),
+    gallerySource.indexOf("const mobileThumbnailIndices"),
+  );
+  assert.match(mosaic, /aria-label=\{previousPhotoLabel\}/);
+  assert.match(mosaic, /aria-label=\{nextPhotoLabel\}/);
+  assert.match(mosaic, /absolute left-0 top-1\/2/);
+  assert.match(mosaic, /absolute right-0 top-1\/2/);
+  assert.match(mosaic, /pointer-events-none absolute inset-0 z-10 grid grid-cols-\[1\.42fr_1fr\] gap-2/);
+  assert.match(mosaic, /relative min-w-0 overflow-hidden rounded-\[10px\]/);
+  assert.equal(mosaic.match(/pointer-events-auto absolute/g)?.length, 2);
+  assert.match(mosaic, /size-11/);
+  assert.match(mosaic, /bg-transparent/);
+  const edgeControls = mosaic.slice(mosaic.indexOf("{showGalleryControls ? ("));
+  assert.doesNotMatch(edgeControls, /bg-slate-950|rounded-full|rounded-lg/);
 });
 
 test("persistent booking actions use the translated continuation copy without support text", () => {

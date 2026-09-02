@@ -5,6 +5,9 @@ import { useMemo, useState } from "react";
 import {
   Award,
   Building2,
+  Check,
+  ChevronLeft,
+  ChevronRight,
   Heart,
   MapPin,
   Share2,
@@ -61,25 +64,6 @@ function normalizeWhitespace(value: string) {
   return value.trim().replace(/\s+/g, " ");
 }
 
-function toTitleCase(value: string) {
-  const normalized = normalizeWhitespace(value);
-
-  if (!normalized) return "";
-
-  const shouldNormalizeCase =
-    normalized === normalized.toLocaleUpperCase() ||
-    normalized === normalized.toLocaleLowerCase();
-  const title = shouldNormalizeCase
-    ? normalized.toLocaleLowerCase()
-    : normalized;
-
-  return title.replace(
-    /(^|[\s/-])([\p{L}\p{N}])/gu,
-    (_match, separator: string, character: string) =>
-      `${separator}${character.toLocaleUpperCase()}`,
-  );
-}
-
 function toSentenceCase(value: string) {
   const normalized = normalizeWhitespace(value);
 
@@ -93,12 +77,6 @@ function toSentenceCase(value: string) {
     : normalized;
 
   return `${sentence.charAt(0).toLocaleUpperCase()}${sentence.slice(1)}`;
-}
-
-function isMealPlanText(value: string) {
-  return /breakfast|room only|accommodation only|half board|full board|all[-\s]?inclusive/i.test(
-    value,
-  );
 }
 
 function getCancellationDisplay(
@@ -136,86 +114,6 @@ function getCancellationDisplay(
   return null;
 }
 
-function translateKnownHotelLabel(value: string, t: (key: string) => string) {
-  const normalized = normalizeWhitespace(value).toLocaleLowerCase();
-
-  if (/^half board$/.test(normalized)) {
-    return t("hotelResults.filter.halfBoard");
-  }
-
-  if (/^full board$/.test(normalized)) {
-    return t("hotelResults.filter.fullBoard");
-  }
-
-  if (/^all[-\s]?inclusive$/.test(normalized)) {
-    return t("hotelResults.filter.allInclusive");
-  }
-
-  if (/^double business$/.test(normalized)) {
-    return t("hotelResults.filter.doubleBusiness");
-  }
-
-  if (/^bed and breakfast$/.test(normalized)) {
-    return t("hotelResults.filter.bedAndBreakfast");
-  }
-
-  if (/^breakfast$/.test(normalized)) {
-    return t("hotelResults.filter.breakfastIncludedAvailable");
-  }
-
-  if (/^(room only|accommodation only)$/.test(normalized)) {
-    return t("hotelResults.filter.roomOnly");
-  }
-
-  if (/^double room$/.test(normalized)) {
-    return t("hotelResults.filter.doubleRoom");
-  }
-
-  if (/^king bed$/.test(normalized)) {
-    return t("hotelResults.filter.kingBed");
-  }
-
-  if (/^deluxe king room$/.test(normalized)) {
-    return t("hotelResults.filter.deluxeKingRoom");
-  }
-
-  if (/^classic room$/.test(normalized)) {
-    return t("hotelResults.filter.classicRoom");
-  }
-
-  if (/^luxury king$/.test(normalized)) {
-    return t("hotelResults.filter.luxuryKing");
-  }
-
-  if (/^single standard$/.test(normalized)) {
-    return t("hotelResults.filter.singleStandard");
-  }
-
-  if (/^superior room$/.test(normalized)) {
-    return t("hotelResults.filter.superiorRoom");
-  }
-
-  if (/^superior double room$/.test(normalized)) {
-    return t("hotelResults.filter.superiorDoubleRoom");
-  }
-
-  return value;
-}
-
-function getMealPlanDisplay(
-  hotel: PublicHotelResult,
-  normalizedRoomType: string,
-  t: (key: string) => string,
-) {
-  const mealText = [hotel.roomType, ...hotel.amenities]
-    .map((value) => toSentenceCase(value || ""))
-    .find((value) => value && isMealPlanText(value));
-
-  if (!mealText || toTitleCase(mealText) === normalizedRoomType) return "";
-
-  return translateKnownHotelLabel(mealText, t);
-}
-
 const reviewLabelKeys: Record<HotelReviewBand, string> = {
   exceptional: "hotelResults.review.exceptional",
   veryGood: "hotelResults.review.veryGood",
@@ -244,6 +142,7 @@ type HotelCardProps = {
   unavailableActionAriaLabel?: string;
   allowExternalAttribution?: boolean;
   allowSave?: boolean;
+  stayNights?: number;
 };
 
 export function HotelCard({
@@ -275,10 +174,14 @@ export function HotelCard({
   const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(
     () => new Set(),
   );
+  const [requestedImageIndex, setRequestedImageIndex] = useState(0);
+  const [shareStatus, setShareStatus] = useState<
+    "idle" | "shared" | "unavailable"
+  >("idle");
   const resolvedActiveImageIndex = resolveHotelGalleryIndex(
     explicitGalleryImages,
     failedImageUrls,
-    0,
+    requestedImageIndex,
   );
   const availableImageIndices = explicitGalleryImages.reduce<number[]>(
     (indices, url, index) => {
@@ -292,9 +195,12 @@ export function HotelCard({
       ? explicitGalleryImages[resolvedActiveImageIndex]
       : "";
   const displayImageUrl = activeGalleryImageUrl;
-  const rawRoomTypeText = hotel.roomType ? toTitleCase(hotel.roomType) : "";
-  const mealPlanText = getMealPlanDisplay(hotel, rawRoomTypeText, t);
-  const cancellationDisplay = getCancellationDisplay(hotel.cancellationInfo, t);
+  const mealPlanText = hotel.catalogueProfile?.mealPlan
+    ? toSentenceCase(hotel.catalogueProfile.mealPlan)
+    : "";
+  const cancellationDisplay = hotel.catalogueProfile?.cancellationPolicy
+    ? getCancellationDisplay(hotel.catalogueProfile.cancellationPolicy, t)
+    : null;
   const expandedAmenityItems = buildHotelAmenityPresentation(
     hotel.amenities,
     8,
@@ -500,10 +406,22 @@ export function HotelCard({
       } else {
         await navigator.clipboard.writeText(url);
       }
+      setShareStatus("shared");
+      window.setTimeout(() => setShareStatus("idle"), 2400);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
-      // Sharing is an enhancement; clipboard/browser denial must not disrupt booking.
+      setShareStatus("unavailable");
+      window.setTimeout(() => setShareStatus("idle"), 2400);
     }
+  }
+
+  function moveGallery(direction: -1 | 1) {
+    if (availableImageIndices.length < 2) return;
+    const currentPosition = Math.max(0, activeGalleryPosition);
+    const nextPosition =
+      (currentPosition + direction + availableImageIndices.length) %
+      availableImageIndices.length;
+    setRequestedImageIndex(availableImageIndices[nextPosition]);
   }
 
   function renderShareButton(
@@ -514,24 +432,34 @@ export function HotelCard({
     return (
       <button
         type="button"
-        aria-label={`Share ${hotel.name}`}
+        aria-label={
+          shareStatus === "shared"
+            ? `${hotel.name} shared`
+            : shareStatus === "unavailable"
+              ? `Sharing ${hotel.name} is unavailable`
+            : `Share ${hotel.name}`
+        }
         className={`${className} ${horizontalAlignment} z-20 flex min-h-11 min-w-11 shrink-0 items-center rounded-full border border-transparent bg-transparent text-slate-700 transition hover:bg-slate-100/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]`}
         onClick={() => void shareHotel()}
       >
-        <Share2 size={19} aria-hidden="true" />
+        {shareStatus === "shared" ? (
+          <Check size={19} aria-hidden="true" />
+        ) : (
+          <Share2 size={19} aria-hidden="true" />
+        )}
       </button>
     );
   }
 
   return (
-    <Card className="mx-auto w-[calc(100%+0.5rem)] max-w-[800px] overflow-hidden rounded-xl border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(2,28,43,0.26)] sm:w-full lg:mx-0 lg:max-w-[680px]">
+    <Card className="mx-auto w-[calc(100%+0.5rem)] max-w-[800px] overflow-hidden rounded-2xl border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_22px_50px_-24px_rgba(2,28,43,0.30)] focus-within:border-[#004BB8]/40 focus-within:ring-2 focus-within:ring-[#004BB8]/10 motion-reduce:transform-none motion-reduce:transition-none sm:w-full lg:mx-0 lg:max-w-none">
       <div
         data-hotel-card-mobile-grid
-        className="grid min-h-[260px] grid-cols-[41%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)] lg:grid-cols-[320px_minmax(0,1fr)]"
+        className="grid min-h-[260px] grid-cols-[41%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)] lg:grid-cols-[clamp(280px,36%,340px)_minmax(0,1fr)]"
       >
         <div
           data-hotel-card-image
-          className="relative h-full min-h-[260px] bg-surface-muted md:min-h-[230px] lg:min-h-[240px]"
+          className="relative h-full min-h-[260px] overflow-hidden bg-slate-200 md:min-h-[230px] lg:min-h-[240px]"
         >
           <div className="absolute right-2 top-2 z-20 hidden items-center gap-0.5 md:flex lg:hidden">
             {renderSaveButton("flex hover:bg-white/90")}
@@ -550,14 +478,32 @@ export function HotelCard({
                       : "",
                   )}
                 fill
-                className="object-cover"
+                className="bg-slate-200 object-cover"
                 sizes="(min-width: 768px) 320px, 41vw"
                 onError={() => markImageFailed(displayImageUrl)}
               />
               {showGalleryControls ? (
-                <div className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] whitespace-nowrap rounded-full bg-slate-950/75 px-2 py-1 text-[10px] font-semibold text-white shadow-lg ring-1 ring-white/30 sm:text-xs">
-                  {photoCounterText}
-                </div>
+                <>
+                  <button
+                    type="button"
+                    aria-label={`Previous photo of ${hotel.name}`}
+                    onClick={() => moveGallery(-1)}
+                    className="absolute left-0 top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-transparent text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] transition hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-reduce:transition-none"
+                  >
+                    <ChevronLeft className="h-5 w-5 -translate-x-2.5" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Next photo of ${hotel.name}`}
+                    onClick={() => moveGallery(1)}
+                    className="absolute right-0 top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-transparent text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] transition hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-reduce:transition-none"
+                  >
+                    <ChevronRight className="h-5 w-5 translate-x-2.5" aria-hidden="true" />
+                  </button>
+                  <div className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] whitespace-nowrap rounded-full bg-slate-950/75 px-2 py-1 text-[10px] font-semibold text-white shadow-lg ring-1 ring-white/30 sm:text-xs" aria-live="polite">
+                    {photoCounterText}
+                  </div>
+                </>
               ) : null}
             </>
           ) : (

@@ -563,6 +563,7 @@ textarea {
 
 .flight-card-desktop-header {
   gap: 1rem;
+  padding-bottom: 0.25rem;
 }
 
 .flight-card-desktop-brand {
@@ -570,7 +571,11 @@ textarea {
 }
 
 .flight-card-airline-name {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
+}
+
+.flight-card-header-logo {
+  display: none;
 }
 
 .flight-card-logo-box {
@@ -592,26 +597,103 @@ textarea {
   grid-template-columns: minmax(0, 1fr) 196px;
   grid-template-areas: "legs fare" "details details";
   column-gap: 1rem;
+  row-gap: 0.75rem;
+  margin-top: 0.25rem;
 }
 
-.flight-card-legs { grid-area: legs; }
+.flight-card-legs {
+  grid-area: legs;
+  gap: 0.75rem;
+}
 .flight-card-fare-action { grid-area: fare; }
 .flight-card-details { grid-area: details; }
 
 .flight-card-leg-grid {
-  grid-template-columns: minmax(105px, 0.8fr) minmax(190px, 1.5fr) minmax(
+  grid-template-columns: minmax(112px, 0.8fr) minmax(180px, 1.5fr) minmax(
       105px,
       0.75fr
     );
   gap: 1.25rem;
 }
 
+.flight-card-leg-label {
+  margin-bottom: 0.375rem;
+  font-size: 0.625rem;
+  line-height: 0.875rem;
+  letter-spacing: 0.11em;
+}
+
+.flight-card-leg-endpoint,
+.flight-card-leg-center {
+  display: grid;
+  grid-template-rows: 1.5rem 1.25rem 1.25rem;
+  align-items: center;
+}
+
+.flight-card-leg-time-row {
+  gap: 0.5rem;
+}
+
+.flight-card-leg-grid > .flight-card-leg-endpoint:first-child .flight-card-airport,
+.flight-card-leg-grid > .flight-card-leg-endpoint:first-child .flight-card-departure-date {
+  margin-inline-start: 1.875rem;
+}
+
+.flight-card-duration {
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.flight-card-path {
+  align-self: center;
+}
+
+.flight-card-airport,
+.flight-card-leg-meta {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
 .flight-card-time {
-  font-size: 1.375rem;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+}
+
+.flight-card-inline-logo {
+  height: 1.375rem;
+  width: 1.375rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.flight-card-inline-logo-image {
+  height: 1.125rem;
+  width: 1.125rem;
+}
+
+.flight-card-inline-logo-icon {
+  height: 0.75rem;
+  width: 0.75rem;
+}
+
+.flight-card-route-codes {
+  display: none;
 }
 
 .flight-card-price {
-  font-size: clamp(1.125rem, 1.75cqi, 1.375rem);
+  font-size: clamp(1.0625rem, 1.6cqi, 1.25rem);
+}
+
+.flight-card-provider-price,
+.flight-card-details {
+  font-size: 0.6875rem;
+}
+
+.flight-card-view-button {
+  font-size: 0.8125rem;
 }
 
 .flight-card-fare-action {
@@ -628,6 +710,8 @@ textarea {
 
 .flight-card-details {
   column-gap: 1rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
 }
 
 .flight-card-detail-item {
@@ -648,7 +732,7 @@ textarea {
   }
 
   .flight-card-airline-name {
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
   }
 
   .flight-card-logo-box {
@@ -672,7 +756,7 @@ textarea {
   }
 
   .flight-card-leg-grid {
-    grid-template-columns: minmax(96px, 0.8fr) minmax(150px, 1.35fr) minmax(
+    grid-template-columns: minmax(106px, 0.8fr) minmax(142px, 1.35fr) minmax(
         100px,
         0.75fr
       );
@@ -680,11 +764,11 @@ textarea {
   }
 
   .flight-card-time {
-    font-size: 1.25rem;
+    font-size: 0.875rem;
   }
 
   .flight-card-price {
-    font-size: clamp(1rem, 2.25cqi, 1.25rem);
+    font-size: clamp(1rem, 2cqi, 1.125rem);
   }
 
   .flight-card-fare-action {
@@ -802,6 +886,10 @@ textarea {
     gap: 0.625rem;
   }
 
+  .flight-card-header-logo {
+    display: block;
+  }
+
   .flight-card-airline-name {
     font-size: 0.8125rem;
   }
@@ -841,6 +929,64 @@ textarea {
 
   .flight-card-time {
     font-size: 1.0625rem;
+  }
+
+  .flight-card-leg-label {
+    margin-bottom: 0;
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    letter-spacing: 0.12em;
+  }
+
+  .flight-card-leg-endpoint,
+  .flight-card-leg-center {
+    display: block;
+  }
+
+  .flight-card-leg-grid > .flight-card-leg-endpoint:first-child .flight-card-airport,
+  .flight-card-leg-grid > .flight-card-leg-endpoint:first-child .flight-card-departure-date {
+    margin-inline-start: 0;
+  }
+
+  .flight-card-leg-time-row {
+    margin-top: 0.25rem;
+    gap: 0.625rem;
+  }
+
+  .flight-card-airport {
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  .flight-card-duration {
+    margin-bottom: 0.5rem;
+    gap: 0.5rem;
+    font-size: 0.6875rem;
+    line-height: 1rem;
+  }
+
+  .flight-card-price {
+    font-size: clamp(1.125rem, 1.75cqi, 1.375rem);
+  }
+
+  .flight-card-provider-price,
+  .flight-card-details {
+    font-size: 0.75rem;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+  }
+
+  .flight-card-view-button {
+    font-size: 0.875rem;
+  }
+
+  .flight-card-departure-date {
+    display: none;
+  }
+
+  .flight-card-route-codes {
+    display: block;
   }
 
   .flight-card-leg-grid > div:nth-child(2) > div:first-child {

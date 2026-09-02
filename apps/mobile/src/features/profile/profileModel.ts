@@ -7,6 +7,21 @@ export type ProfileDestination =
 export type ProfileItem = { label: MobileTranslationKey; icon: FlowIconName; destination: ProfileDestination };
 export type ProfileSection = { title: MobileTranslationKey; items: ProfileItem[] };
 
+export function profileFirstName(name?: string | null, email?: string | null): string | null {
+  const normalized = name?.trim();
+  if (!normalized || normalized.includes("@")) return null;
+  const tokens = normalized.split(/\s+/).filter(Boolean);
+  if (!tokens.length) return null;
+
+  const emailLocal = email?.trim().toLowerCase().split("@")[0] || "";
+  const emailTokens = emailLocal.split(/[._+-]+/).filter(Boolean);
+  for (const emailToken of emailTokens) {
+    const matched = tokens.find(token => token.toLowerCase() === emailToken);
+    if (matched) return matched;
+  }
+  return tokens[0] || null;
+}
+
 export const authenticatedProfileSections: ProfileSection[] = [
   { title: "manageAccount", items: [
     { label: "personalDetails", icon: "person", destination: { kind: "native", href: "/personal-information" } },
@@ -18,9 +33,9 @@ export const authenticatedProfileSections: ProfileSection[] = [
     { label: "priceAlerts", icon: "bell", destination: { kind: "native", href: "/price-alerts" } },
   ] },
   { title: "preferences", items: [
-    { label: "emailPreferences", icon: "mail", destination: { kind: "native", href: "/email-preferences" } },
     { label: "customizationPreferences", icon: "palette", destination: { kind: "native", href: "/settings" } },
     { label: "travelPreferences", icon: "settings", destination: { kind: "native", href: "/travel-preferences" } },
+    { label: "emailPreferences", icon: "mail", destination: { kind: "native", href: "/email-preferences" } },
   ] },
   { title: "helpSupport", items: [
     { label: "contactSupport", icon: "headset", destination: { kind: "native", href: "/support" } },
