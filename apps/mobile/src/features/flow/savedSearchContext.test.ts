@@ -26,10 +26,12 @@ test("legacy round trip uses the provider return leg's actual date", () => {
   assert.equal(params.returnDate, "2030-03-10");
 });
 
-test("legacy hotel uses only legitimate destination and stay dates", () => {
+test("legacy hotel preserves legitimate stay context but requires form completion", () => {
   const params = legacyHotelSearchParams({ type: "hotel", destination: "Paris", checkIn: "2030-04-01T00:00:00Z", checkOut: "2030-04-03T00:00:00Z" } as unknown as MobileSavedItem);
   assert.deepEqual(params, { destination: "Paris", checkIn: "2030-04-01", checkOut: "2030-04-03" });
-  assert.ok(hasValidSearchPlan("hotel", params, now));
+  assert.equal("guests" in params, false);
+  assert.equal("rooms" in params, false);
+  assert.equal(hasValidSearchPlan("hotel", params, now), false);
 });
 
 test("incomplete Explore destination search cannot open flight results", () => {
