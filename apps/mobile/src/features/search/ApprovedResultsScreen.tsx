@@ -898,6 +898,8 @@ function FlightResultsHeader({
           >
             {route}
           </Text>
+        </View>
+        <View style={s0.flightHeaderSide}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Edit search"
@@ -1751,27 +1753,23 @@ const s0 = StyleSheet.create({
   flightRouteSummaryCard: {
     flex: 1,
     minWidth: 0,
-    height: 52,
+    height: 46,
     borderWidth: 1,
-    borderRadius: 12,
-    position: "relative",
-    alignItems: "center",
+    borderRadius: 10,
+    alignItems: "stretch",
     justifyContent: "center",
     overflow: "hidden",
   },
   flightRouteSummaryText: {
     width: "100%",
-    paddingHorizontal: 52,
-    fontSize: 18,
-    lineHeight: 22,
-    fontWeight: "800",
-    fontFamily: appFonts.extraBold,
-    textAlign: "center",
+    paddingHorizontal: 14,
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
+    textAlign: "left",
   },
   flightRouteSummaryEdit: {
-    position: "absolute",
-    right: 4,
-    top: 4,
     width: 44,
     height: 44,
     alignItems: "center",
