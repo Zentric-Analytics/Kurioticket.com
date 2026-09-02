@@ -3,6 +3,7 @@ import test from "node:test";
 import fs from "node:fs";
 
 const source = fs.readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
+const appTheme = fs.readFileSync("src/theme/AppTheme.tsx", "utf8");
 const flightAlert = source.slice(source.indexOf("function PriceAlert"), source.indexOf("export function BottomNav"));
 
 test("Flight Results price alert maps its existing weights to Inter faces", () => {
@@ -29,6 +30,14 @@ test("Flight Results price alert has the approved compact, content-driven footpr
 test("Flight Results price alert uses a neutral semantic surface and restrained border", () => {
   assert.match(flightAlert, /\{ backgroundColor: theme\.surface, borderColor: theme\.priceAlertBorder \}/);
   assert.doesNotMatch(flightAlert, /backgroundColor: theme\.priceAlertSurface/);
+});
+
+test("Flight Results switch uses a locally scoped, visible light-mode inactive track", () => {
+  assert.match(flightAlert, /const inactiveSwitchTrackColor = theme\.dark \? theme\.switchTrack : ui\.border;/);
+  assert.match(flightAlert, /trackColor=\{\{ false: inactiveSwitchTrackColor, true: theme\.switchTrackActive \}\}/);
+  assert.match(flightAlert, /ios_backgroundColor=\{inactiveSwitchTrackColor\}/);
+  assert.match(flightAlert, /thumbColor=\{theme\.surface\}/);
+  assert.match(appTheme, /switchTrack: "#FFFFFF"/);
 });
 
 test("Flight Results toggle manages alerts in place rather than opening Price Alerts", () => {
