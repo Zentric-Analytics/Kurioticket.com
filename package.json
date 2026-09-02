@@ -41,7 +41,8 @@
     "preview-release:recover-native": "node services/preview-release/recover-native-build.mjs",
     "audit:i18n": "cross-env JITI_TSCONFIG_PATHS=true node scripts/audit-i18n-coverage-v4.mjs",
     "audit:images": "node scripts/audit-images.mjs",
-    "audit:market-images": "node scripts/audit-market-images.mjs"
+    "audit:market-images": "node scripts/audit-market-images.mjs",
+    "travel:parity": "node scripts/run-travel-parity.mjs"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",

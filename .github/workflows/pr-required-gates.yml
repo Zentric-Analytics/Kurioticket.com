@@ -15,6 +15,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  travel-parity:
+    name: Travel platform parity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout proposed merge
+        uses: actions/checkout@v5
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            apps/mobile/package-lock.json
+      - name: Install web/server dependencies
+        run: npm ci
+      - name: Install native dependencies
+        run: npm --prefix apps/mobile ci
+      - name: Validate semantic web, iOS, and Android travel parity
+        run: npm run travel:parity
+
   validate-mobile-preview:
     name: Validate mobile preview
     runs-on: ubuntu-latest
