@@ -325,7 +325,11 @@ export async function confirmMobilePasswordChange(input: {
   try {
     event = await getPrisma().$transaction(async (tx) => {
       await tx.verificationToken.delete({ where: { token } });
-      await tx.user.update({ where: { id: user.id }, data: { passwordHash } });
+      const updated = await tx.user.updateMany({
+        where: { id: user.id, passwordHash: user.passwordHash },
+        data: { passwordHash },
+      });
+      if (updated.count !== 1) throw new Error("Password changed during verification.");
       await tx.accountSession.updateMany({
         where: { userId: user.id, id: { not: input.sessionId }, revokedAt: null },
         data: { revokedAt: now, revokeReason: "password_changed_other_device" },
