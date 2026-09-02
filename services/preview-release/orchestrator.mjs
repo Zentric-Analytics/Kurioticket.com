@@ -101,7 +101,7 @@ export class PreviewOrchestrator {
     return { action, submission };
   }
 
-  async recoverCanonicalNativeBuild({ sourceSha, platform }) {
+  async recoverCanonicalNativeBuild({ sourceSha, platform, artifactBackfill = false }) {
     if (!['ios', 'android'].includes(platform)) throw new Error("Canonical recovery platform is invalid.");
     if (await this.github.latestDevSha() !== sourceSha) throw new Error("Canonical recovery is restricted to the exact current dev SHA.");
     const release = await this.ledger.releaseBySha(sourceSha);
@@ -115,7 +115,24 @@ export class PreviewOrchestrator {
       const currentFingerprints = await this.fingerprintsFactory(checkout.directory);
       if (currentFingerprints[platform] !== plannedFingerprint) throw new Error(`Canonical ${platform} recovery fingerprint no longer matches the exact current dev release plan.`);
 
-      const reservation = await this.ledger.reserveNativeBuildRecovery({ sourceSha, platform, fingerprint: plannedFingerprint });
+      if (artifactBackfill) {
+        if (platform !== "android") throw new Error("Artifact-availability backfill is Android-only.");
+        const identityKey = nativeBuildIdentityKey(platform, plannedFingerprint);
+        const existing = await this.ledger.getAction("ANDROID_BUILD", identityKey);
+        const delivered = await this.ledger.currentDeliveredNative("android");
+        if (!existing?.remote_id || delivered?.native_build_id !== existing.remote_id || delivered?.native_fingerprint !== plannedFingerprint) {
+          throw new Error("Android artifact backfill requires the exact currently delivered canonical build identity.");
+        }
+        try {
+          await this.easFactory(join(checkout.directory, "apps/mobile")).viewBuild(existing.remote_id);
+          throw new Error("Canonical Android artifact is still retrievable; backfill is forbidden.");
+        } catch (error) {
+          if (!(error instanceof EasRemoteObjectUnavailableError)) throw error;
+          await this.ledger.markRemoteObjectUnavailable({ kind: "ANDROID_BUILD", identityKey, remoteId: existing.remote_id, reason: error.message });
+        }
+      }
+
+      const reservation = await this.ledger.reserveNativeBuildRecovery({ sourceSha, platform, fingerprint: plannedFingerprint, allowUnavailableDelivered: artifactBackfill });
       let action = reservation.action;
       const eas = this.easFactory(join(checkout.directory, "apps/mobile"));
       if (!action.remote_id) {
@@ -720,7 +737,7 @@ function throwDeliveryFailures(failures) {
 }
 
 function isTerminalNativeAction(action) {
-  return ["ERRORED", "FAILED", "CANCELED", "CANCELLED"].includes(String(action?.state ?? "").toUpperCase());
+  return ["ERRORED", "FAILED", "CANCELED", "CANCELLED", "REMOTE_OBJECT_UNAVAILABLE"].includes(String(action?.state ?? "").toUpperCase());
 }
 
 export const runNativeDeliveries = runDeliveries;
