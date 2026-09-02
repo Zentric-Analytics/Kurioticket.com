@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { addMultiCityLeg, adjustFlightDeparture, airportByCode, changeFlightTripType, changeTraveler, defaultFlightForm, flightEditSearchParams, FLIGHT_CABINS, FLIGHT_TRIP_TYPES, flightSearchParams, initializeFlightForm, removeMultiCityLeg, searchAirports, swapMultiCityLegAirports, totalTravelers, updateMultiCityLegDate, validateFlightForm } from "./flightSearchModel";
+import { buildSearchPlan } from "./travelSearchModel";
 const today = new Date(2026, 7, 1, 12);
 
 test("fresh Flight form defaults traveler and cabin while route and dates remain unselected", () => {
@@ -62,6 +63,36 @@ test("a valid route and dates submit untouched traveler and cabin defaults", () 
   assert.deepEqual(validateFlightForm(form, today), {});
   const params = flightSearchParams(form);
   assert.deepEqual({ adults: params.adults, children: params.children, infants: params.infants, travelers: params.travelers, cabin: params.cabin }, { adults: "1", children: "0", infants: "0", travelers: "1", cabin: "Economy" });
+});
+
+test("the reproduced LOS to LHR Business edit is valid and produces a valid canonical search plan", () => {
+  const form = {
+    ...defaultFlightForm(),
+    tripType: "round-trip" as const,
+    from: airportByCode("LOS"),
+    to: airportByCode("LHR"),
+    departureDate: "2026-10-01",
+    returnDate: "2026-10-02",
+    adults: 1,
+    children: 0,
+    infants: 0,
+    cabin: "Business" as const,
+  };
+  assert.deepEqual(validateFlightForm(form, today), {});
+  const params = flightSearchParams(form);
+  assert.deepEqual(params, {
+    tripType: "round-trip",
+    from: "LOS",
+    to: "LHR",
+    departureDate: "2026-10-01",
+    returnDate: "2026-10-02",
+    adults: "1",
+    children: "0",
+    infants: "0",
+    travelers: "1",
+    cabin: "Business",
+  });
+  assert.ok(buildSearchPlan("flight", params, today).plan);
 });
 
 test("edit-search params normalize result aliases and restore a round trip", () => {

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Animated, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
@@ -11,12 +12,21 @@ type Props = {
   visible: boolean;
   params: Record<string, RouteValue>;
   onClose: () => void;
+  onSubmit: (params: Record<string, string | undefined>) => void;
+  onAfterClose: () => void;
 };
 
-export function FlightEditSearchModal({ visible, params, onClose }: Props) {
+export function FlightEditSearchModal({ visible, params, onClose, onSubmit, onAfterClose }: Props) {
   const ft = useFlowTheme();
   const motion = useSearchPickerMotion(visible);
   const presentedParams = useRetainedPickerContext(visible, params);
+  const wasRendered = useRef(motion.rendered);
+  useEffect(() => {
+    if (wasRendered.current && !motion.rendered) {
+      onAfterClose();
+    }
+    wasRendered.current = motion.rendered;
+  }, [motion.rendered, onAfterClose]);
   if (!motion.rendered) return null;
 
   return (
@@ -33,7 +43,7 @@ export function FlightEditSearchModal({ visible, params, onClose }: Props) {
               </Pressable>
             </View>
             <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}>
-              <FlightSearchPanel embedded params={presentedParams} submitNavigation="replace" onBeforeNavigate={onClose} editAppearance />
+              <FlightSearchPanel embedded params={presentedParams} onValidatedSubmit={onSubmit} editAppearance />
             </ScrollView>
           </Animated.View>
         </SafeAreaView>
