@@ -84,3 +84,15 @@ test("Hotel editor keeps canonical fields and cancellation cannot mutate Results
   assert.match(panel, /validateHotelForm\(form\)/);
   assert.match(panel, /hotelSearchParams\(form\)/);
 });
+
+test("Hotel edit modal matches web content and safe-area geometry", () => {
+  const modal = modalSource();
+  assert.match(modal, /import \{ SafeAreaView \} from "react-native-safe-area-context"/);
+  assert.match(modal, /<SafeAreaView edges=\{\["top", "left", "right"\]\} style=\{styles\.backdrop\}>/);
+  assert.doesNotMatch(modal, /edges=\{\[[^\]]*"bottom"/);
+  assert.match(modal, /content: \{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 20 \}/);
+  assert.match(modal, /header: \{ minHeight: 60,[^\n]*paddingVertical: 8 \}/);
+  assert.match(modal, /title: \{[^\n]*fontSize: 20, lineHeight: 28, fontWeight: "700" \}/);
+  assert.match(modal, /close: \{ width: 44, height: 44/);
+  assert.match(modal, /<X accessible=\{false\} size=\{20\}/);
+});
