@@ -13,10 +13,10 @@ test("security success feedback stays scoped without weakening accessibility cop
 
   assert.doesNotMatch(security, /setLandingMessage\(shortFeedbackMessage\(resetCopy\.success\)\)/);
   assert.match(passwordResetFlow, /setSucceeded\(true\)/);
-  assert.match(passwordResetFlow, /AccessibilityInfo\.announceForAccessibility\(navigationCopy\.successButton\)/);
+  assert.match(passwordResetFlow, /AccessibilityInfo\.announceForAccessibility\(navigationCopy\.buttonSuccess\)/);
   assert.match(passwordResetFlow, /setTimeout\(resolve, 1200\)/);
-  assert.match(passwordResetFlow, /label=\{succeeded \? navigationCopy\.successButton : navigationCopy\.submit\}/);
-  assert.match(passwordResetFlow, /accessibilityLiveRegion="polite"/);
+  assert.match(passwordResetFlow, /label=\{succeeded \? `✓ \$\{navigationCopy\.buttonSuccess\}` : navigationCopy\.submit\}/);
+  assert.match(passwordResetFlow, /accessibilityLiveRegion=\{succeeded \? "polite" : undefined\}/);
 });
 
 test("security success toast is anchored below the header instead of above destructive actions", () => {
