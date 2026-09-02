@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { createHash, randomBytes, randomInt } from "node:crypto";
+import { createHmac, randomBytes, randomInt } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
 import { escapeHtml } from "@/services/emailDeliveryService";
 import { sendTransactionalEmail } from "@/services/emailService";
@@ -14,21 +14,45 @@ const codeTtlMs = PASSWORD_CHANGE_CODE_TTL_SECONDS * 1000;
 const resendCooldownMs = PASSWORD_CHANGE_RESEND_COOLDOWN_SECONDS * 1000;
 const failureWindowMs = PASSWORD_CHANGE_FAILURE_WINDOW_SECONDS * 1000;
 
-function digest(value: string) {
-  return createHash("sha256").update(value).digest("hex");
+function passwordChangeHmacKey() {
+  const configured =
+    process.env.ACCOUNT_SECURITY_ENCRYPTION_KEY?.trim() ||
+    process.env.AUTH_SECRET?.trim() ||
+    process.env.NEXTAUTH_SECRET?.trim();
+
+  if (configured) return configured;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Account security verification key is unavailable.");
+  }
+  return "development-mobile-password-change-hmac-key";
+}
+
+function keyedDigest(purpose: "password-intent" | "verification-code", value: string) {
+  return createHmac("sha256", passwordChangeHmacKey())
+    .update(`mobile-password-change:${purpose}:v1:${value}`)
+    .digest("hex");
+}
+
+function sessionChallengePrefix(userId: string, sessionId: string) {
+  return `mobile-password-change:${userId}:${sessionId}:`;
+}
+
+function challengePrefix(userId: string, sessionId: string, challengeId: string) {
+  return `${sessionChallengePrefix(userId, sessionId)}${challengeId}:`;
 }
 
 function challengeIdentifier(input: {
   userId: string;
   sessionId: string;
   challengeId: string;
+  passwordVersion: string;
   newPassword: string;
 }) {
-  return `mobile-password-change:${input.userId}:${input.sessionId}:${input.challengeId}:${digest(input.newPassword)}`;
-}
-
-function challengePrefix(userId: string, sessionId: string, challengeId: string) {
-  return `mobile-password-change:${userId}:${sessionId}:${challengeId}:`;
+  const intent = keyedDigest(
+    "password-intent",
+    `${input.userId}:${input.sessionId}:${input.challengeId}:${input.passwordVersion}:${input.newPassword}`,
+  );
+  return `${challengePrefix(input.userId, input.sessionId, input.challengeId)}${intent}`;
 }
 
 function failureIdentifier(userId: string) {
@@ -36,7 +60,10 @@ function failureIdentifier(userId: string) {
 }
 
 function hashCode(userId: string, sessionId: string, challengeId: string, code: string) {
-  return digest(`mobile-password-change:${userId}:${sessionId}:${challengeId}:${code}`);
+  return keyedDigest(
+    "verification-code",
+    `${userId}:${sessionId}:${challengeId}:${code}`,
+  );
 }
 
 export function maskPasswordChangeEmail(email: string) {
@@ -70,7 +97,7 @@ async function recordCurrentPasswordFailure(userId: string) {
   await getPrisma().verificationToken.create({
     data: {
       identifier,
-      token: digest(randomBytes(24).toString("hex")),
+      token: randomBytes(32).toString("hex"),
       expires: new Date(Date.now() + failureWindowMs),
     },
   });
@@ -80,6 +107,12 @@ async function recordCurrentPasswordFailure(userId: string) {
 async function clearCurrentPasswordFailures(userId: string) {
   await getPrisma().verificationToken.deleteMany({
     where: { identifier: failureIdentifier(userId) },
+  });
+}
+
+async function clearPasswordChangeChallenges(userId: string, sessionId: string) {
+  await getPrisma().verificationToken.deleteMany({
+    where: { identifier: { startsWith: sessionChallengePrefix(userId, sessionId) } },
   });
 }
 
@@ -96,10 +129,15 @@ function passwordChangeCodeEmail(code: string) {
 }
 
 async function findActiveChallenge(userId: string, sessionId: string, challengeId: string) {
+  const prefix = challengePrefix(userId, sessionId, challengeId);
+  const now = new Date();
+  await getPrisma().verificationToken.deleteMany({
+    where: { identifier: { startsWith: prefix }, expires: { lte: now } },
+  });
   return getPrisma().verificationToken.findFirst({
     where: {
-      identifier: { startsWith: challengePrefix(userId, sessionId, challengeId) },
-      expires: { gt: new Date() },
+      identifier: { startsWith: prefix },
+      expires: { gt: now },
     },
     orderBy: { expires: "desc" },
   });
@@ -109,6 +147,7 @@ async function issueCode(input: {
   userId: string;
   sessionId: string;
   challengeId: string;
+  passwordVersion: string;
   newPassword: string;
   email: string;
   enforceCooldown: boolean;
@@ -129,8 +168,12 @@ async function issueCode(input: {
     }
   }
 
-  const code = randomInt(100000, 1000000).toString();
-  const token = hashCode(input.userId, input.sessionId, input.challengeId, code);
+  let code = randomInt(100000, 1000000).toString();
+  let token = hashCode(input.userId, input.sessionId, input.challengeId, code);
+  while (active?.token === token) {
+    code = randomInt(100000, 1000000).toString();
+    token = hashCode(input.userId, input.sessionId, input.challengeId, code);
+  }
   const expires = new Date(now + codeTtlMs);
 
   await getPrisma().verificationToken.create({
@@ -205,11 +248,13 @@ export async function startMobilePasswordChange(input: {
   if (!user.emailVerified) return { kind: "email-unverified" as const };
 
   await clearCurrentPasswordFailures(input.userId);
+  await clearPasswordChangeChallenges(input.userId, input.sessionId);
   const challengeId = randomBytes(18).toString("base64url");
   return issueCode({
     userId: input.userId,
     sessionId: input.sessionId,
     challengeId,
+    passwordVersion: user.passwordHash,
     newPassword: input.newPassword,
     email: user.email,
     enforceCooldown: false,
@@ -234,6 +279,7 @@ export async function resendMobilePasswordChangeCode(input: {
     userId: input.userId,
     sessionId: input.sessionId,
     challengeId: input.challengeId,
+    passwordVersion: user.passwordHash,
     newPassword: input.newPassword,
     email: user.email,
     enforceCooldown: true,
@@ -248,7 +294,18 @@ export async function confirmMobilePasswordChange(input: {
   code: string;
   newPassword: string;
 }) {
-  const identifier = challengeIdentifier(input);
+  const user = await getPrisma().user.findUnique({
+    where: { id: input.userId },
+    select: { id: true, passwordHash: true, status: true, email: true },
+  });
+  if (!user || user.status !== "ACTIVE" || !user.passwordHash || user.email !== input.email) {
+    return { kind: "invalid" as const };
+  }
+
+  const identifier = challengeIdentifier({
+    ...input,
+    passwordVersion: user.passwordHash,
+  });
   const token = hashCode(input.userId, input.sessionId, input.challengeId, input.code);
   const challenge = await getPrisma().verificationToken.findUnique({ where: { token } });
   if (!challenge || challenge.identifier !== identifier || challenge.expires <= new Date()) {
@@ -258,13 +315,6 @@ export async function confirmMobilePasswordChange(input: {
     return { kind: "invalid-code" as const };
   }
 
-  const user = await getPrisma().user.findUnique({
-    where: { id: input.userId },
-    select: { id: true, passwordHash: true, status: true, email: true },
-  });
-  if (!user || user.status !== "ACTIVE" || !user.passwordHash || user.email !== input.email) {
-    return { kind: "invalid" as const };
-  }
   if (await bcrypt.compare(input.newPassword, user.passwordHash)) {
     return { kind: "same-password" as const };
   }
@@ -285,7 +335,7 @@ export async function confirmMobilePasswordChange(input: {
         data: { reauthenticatedAt: now },
       });
       await tx.verificationToken.deleteMany({
-        where: { identifier: { startsWith: challengePrefix(user.id, input.sessionId, input.challengeId) } },
+        where: { identifier: { startsWith: sessionChallengePrefix(user.id, input.sessionId) } },
       });
       await tx.verificationToken.deleteMany({ where: { identifier: failureIdentifier(user.id) } });
       return tx.securityEvent.create({
