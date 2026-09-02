@@ -666,27 +666,13 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   flightResults={flightResults}
                 />
               ) : null}
-              {status === "ready" && product === "hotel" ? (
-                <View style={s0.found}>
-                  <View style={s0.foundCopy}>
-                    <Text style={s0.foundTitle}>
-                      {sorted.length} properties found
-                    </Text>
-                    <Text style={s0.sub}>
-                      Prices include taxes and fees when reported by the provider
-                    </Text>
-                  </View>
-                  <Button
-                    label="Map view"
-                    outline
-                    onPress={() =>
-                      Alert.alert(
-                        "Map view",
-                        "Map inventory is not available from this provider response.",
-                      )
-                    }
-                  />
-                </View>
+              {status === "ready" && product === "hotel" && sorted.length > 0 ? (
+                <Text
+                  accessibilityRole="header"
+                  style={[s0.hotelResultCount, { color: theme.textPrimary }]}
+                >
+                  {sorted.length} properties found
+                </Text>
               ) : null}
               {status === "ready" && product === "hotel" && results.length > 0 && sorted.length === 0 ? (
                 <View style={s0.hotelFilteredEmpty}><Text accessibilityRole="header" style={[s0.foundTitle,{color:theme.textPrimary}]}>No stays match these filters.</Text><Pressable accessibilityRole="button" onPress={()=>setHotelFilters(emptyHotelFilters())}><Text style={s0.hotelClearFilters}>Clear filters</Text></Pressable></View>
@@ -1811,20 +1797,8 @@ const s0 = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
   },
-  found: {
-    borderWidth: 1,
-    borderColor: ui.border,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    backgroundColor: "#FAFCFF",
-    gap: 12,
-  },
-  foundCopy: { flex: 1, minWidth: 0, gap: 2 },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
+  hotelResultCount: { fontSize: 16, lineHeight: 21, fontWeight: "800", fontFamily: appFonts.extraBold },
   hotelFilteredEmpty: { alignItems: "center", gap: 10, paddingVertical: 28 },
   hotelClearFilters: { color: ui.blue, fontSize: 15, fontWeight: "800" },
   flightResultCount: { paddingHorizontal: 14, paddingTop: 4, paddingBottom: 5, fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
