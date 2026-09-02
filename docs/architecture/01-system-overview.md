@@ -12,7 +12,7 @@ This handbook captures the current delivery architecture for Zentric-Analytics/K
 
 | Surface | Identity | Runtime/Channel | Distribution | Delivery control | Evidence |
 |---|---|---|---|---|---|
-| Web staging | `kurioticket.com-staging` | N/A | Render auto-deploy from `dev` | Team merge to `dev` triggers deployment | EXTERNAL_VERIFIED |
+| Web staging | `Kurioticket-web-staging` | N/A | Render auto-deploy from `dev` | Team merge to `dev` triggers deployment | EXTERNAL_VERIFIED |
 | Web production | `kurioticket.com` | N/A | Render auto-deploy from `main` | Main changes deploy on push | REPOSITORY_VERIFIED |
 | Android Preview | `Kurioticket Preview` / `com.kurioticket.app.preview` | `preview-0.3.0` / `preview` | OTA + native build when required | PR workflow + preview classifier | HISTORICALLY_VERIFIED |
 | Android Production | `Kurioticket` / `com.kurioticket.app` | `production-0.3.0` / `production` | Google Play AAB | Owner-dispatched, manual step | EXTERNAL_VERIFIED |

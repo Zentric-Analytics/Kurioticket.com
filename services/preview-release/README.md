@@ -45,7 +45,9 @@ For an owner-approved historical native change that is already present in the cu
 
 `npm run preview-release:preflight` validates the GitHub dev ref, PostgreSQL connectivity, the exact approved Render staging service, the current Render deployment, the exact Expo Preview project, and readable Preview build/update history. Update readability is verified with one recent record rather than enumerating the append-only lifetime of the Preview branch. OTA replay reconciliation inspects a fixed recent-record window, so growth of legitimate historical updates cannot crash the worker. It remains strictly read-only in both `PREVIEW_RELEASE_MODE=dry-run` and `PREVIEW_RELEASE_MODE=active`, performs no delivery mutation, redacts configured credentials from errors, and exits non-zero on any authentication, schema, or identity mismatch.
 
-The worker runs this same preflight before beginning its polling loop. Active cutover must not be approved unless the preflight reports `PASS` for project `89f6fd88-c0d7-495a-9e2b-8301b09f407d` and Render service `srv-d86ulfgg4nts73bctt20`.
+The worker runs this same preflight before beginning its polling loop. Active cutover must not be approved unless the preflight reports `PASS` for project `89f6fd88-c0d7-495a-9e2b-8301b09f407d` and the `Kurioticket-web-staging` Render service `srv-dabmo50jo6nc73881d60`.
+
+The current supported Preview native baselines are iOS build 43 (`ca1fad8565f85523680869a10c338dab7d7441b5`) and Android build 41 (`ff675082dc4e1b556860fbd04ba4c2c95483f4b7`). Compatible JavaScript changes are delivered on channel `preview`; testers may need to force-quit and reopen the app for Expo's update lifecycle to activate a downloaded update. A changed platform fingerprint requires a new native build selected by the worker. Android build 45 is not a supported worker baseline: it was created outside the durable worker provenance with fingerprint `288acec1963a9fbeee9dd81da9e8f8729fa6ab86`.
 
 ## Accepted delivery evidence
 

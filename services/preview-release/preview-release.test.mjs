@@ -52,6 +52,7 @@ test("one native change plus four source advances coalesces to one build per pla
 });
 
 test("Preview identity is immutable", () => {
+  assert.equal(PREVIEW_IDENTITY.renderStagingServiceId, "srv-dabmo50jo6nc73881d60");
   assert.equal(assertPreviewIdentity({ appName: "Kurioticket Preview", bundleIdentifier: "com.kurioticket.app.preview", scheme: "kurioticket-preview", projectId: PREVIEW_IDENTITY.easProjectId, profile: "preview", channel: "preview", runtimePolicy: "fingerprint", apiOrigin: "https://staging.kurioticket.com" }), true);
   for (const [key, value] of [["bundleIdentifier", "com.kurioticket.app"], ["profile", "production"], ["channel", "production"], ["runtimePolicy", "appVersion"], ["apiOrigin", "https://kurioticket.com"]]) {
     const valid = { appName: "Kurioticket Preview", bundleIdentifier: "com.kurioticket.app.preview", scheme: "kurioticket-preview", projectId: PREVIEW_IDENTITY.easProjectId, profile: "preview", channel: "preview", runtimePolicy: "fingerprint", apiOrigin: "https://staging.kurioticket.com", [key]: value };
@@ -68,6 +69,7 @@ test("environment defaults to non-mutating dry-run and rejects missing secrets",
   assert.equal(config.pollIntervalMs, 60_000);
   assert.equal(config.leaseMs, 90_000);
   assert.throws(() => requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "x", RENDER_API_KEY: "y", RENDER_STAGING_SERVICE_ID: "srv-other", EXPO_TOKEN: "z", ...appleEnv }), /approved Preview staging service/);
+  assert.throws(() => requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "x", RENDER_API_KEY: "y", RENDER_STAGING_SERVICE_ID: "srv-d86ulfgg4nts73bctt20", EXPO_TOKEN: "z", ...appleEnv }), /approved Preview staging service/);
 });
 
 test("iOS native backfill is exact-SHA, active-only, and iOS-only", () => {
@@ -100,7 +102,7 @@ test("Render preflight reads only the approved staging service", async () => {
     serviceId: PREVIEW_IDENTITY.renderStagingServiceId,
     fetchImpl: async (url, options) => {
       requests.push({ url, method: options.method });
-      const body = url.includes("deploys") ? [{ deploy: { id: "dep-stage", status: "live" } }] : { id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket.com-staging" };
+      const body = url.includes("deploys") ? [{ deploy: { id: "dep-stage", status: "live" } }] : { id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket-web-staging" };
       return { ok: true, text: async () => JSON.stringify(body) };
     },
   });
@@ -204,7 +206,7 @@ test("provider preflight validates all read-only identities without mutation in 
       config: { mode },
       ledger: { healthCheck: async () => ({ connected: true }) },
       github: { latestDevSha: async () => sha },
-      render: { getService: async () => ({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket.com-staging" }), latestDeploy: async () => ({ id: "dep-stage", status: "live" }), createDeploy: async () => { mutations += 1; } },
+      render: { getService: async () => ({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket-web-staging" }), latestDeploy: async () => ({ id: "dep-stage", status: "live" }), createDeploy: async () => { mutations += 1; } },
       renderWorker: { getPreviewWorkerService: async () => ({ id: PREVIEW_IDENTITY.renderWorkerServiceId, autoDeployOnCommit: true, branch: "dev" }) },
       eas: { projectInfo: async () => ({ projectId: PREVIEW_IDENTITY.easProjectId }), previewBuildHistory: async () => [], previewUpdateHistoryProbe: async () => [], createIosBuild: async () => { mutations += 1; }, publishUpdate: async () => { mutations += 1; } },
       apple: { previewContext: async () => ({ app: { id: "6797447471" }, group: { id: "group-preview", attributes: { isInternalGroup: true } } }) },
