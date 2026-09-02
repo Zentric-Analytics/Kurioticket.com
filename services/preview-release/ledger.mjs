@@ -735,8 +735,15 @@ export class PreviewLedger {
          WHERE kind=$1 AND identity_key=$2 AND remote_id=$3 AND state='FINISHED' RETURNING *`,
         [kind, identityKey, remoteId, JSON.stringify({ remoteObjectUnavailable: true, reason, formerState: "FINISHED", operatorAction: "Verify provider retention and use strict adoption or an owner-approved replacement; never delete ledger evidence." })],
       );
-      if (finished.rowCount !== 1) throw new Error(`Remote-object-unavailable transition for ${kind}:${identityKey} was rejected.`);
-      return finished.rows[0];
+      if (finished.rowCount === 1) return finished.rows[0];
+      const existing = await this.pool.query(
+        `SELECT * FROM preview_release_action
+         WHERE kind=$1 AND identity_key=$2 AND remote_id=$3
+           AND state='REMOTE_OBJECT_UNAVAILABLE' LIMIT 2`,
+        [kind, identityKey, remoteId],
+      );
+      if (existing.rowCount !== 1) throw new Error(`Remote-object-unavailable transition for ${kind}:${identityKey} was rejected.`);
+      return existing.rows[0];
     }
     return result.rows[0];
   }

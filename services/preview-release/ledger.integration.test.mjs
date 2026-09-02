@@ -84,6 +84,9 @@ test("PostgreSQL reserves an Android artifact backfill from the delivered native
     await ledger.recordAction({ sourceSha, kind: "ANDROID_BUILD", identityKey, remoteId: buildId, state: "FINISHED", evidence: { nativeFingerprint: fingerprint } });
     await ledger.advanceDeliveredNative({ platform: "android", sourceSha, fingerprint, buildId, appVersion: "0.3.0", buildNumber: "41" });
     await ledger.markRemoteObjectUnavailable({ kind: "ANDROID_BUILD", identityKey, remoteId: buildId, reason: "provider confirmed exact object absence" });
+    const repeatedUnavailable = await ledger.markRemoteObjectUnavailable({ kind: "ANDROID_BUILD", identityKey, remoteId: buildId, reason: "provider confirmed exact object absence" });
+    assert.equal(repeatedUnavailable.state, "REMOTE_OBJECT_UNAVAILABLE");
+    assert.equal(repeatedUnavailable.remote_id, buildId);
 
     const reservation = await ledger.reserveNativeBuildRecovery({ sourceSha, platform: "android", fingerprint, allowUnavailableDelivered: true });
 
