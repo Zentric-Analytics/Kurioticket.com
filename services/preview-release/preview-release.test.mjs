@@ -9,7 +9,7 @@ import { classifyChangeSet } from "./classifier.mjs";
 import { PREVIEW_IDENTITY, PREVIEW_WORKER_BUILD_PATHS, assertExactSha, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmission, reconcileSubmissionHistory } from "./eas-state.mjs";
 import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, assertCoalescedOtaCompatibility, enforceDeliveredNativeBaseline, maintainLease, nativeBuildIdentityKey, nativeDriftTargets, retry, waitForOwnedNativeRemoteId } from "./orchestrator.mjs";
-import { createExactCheckoutDirectory, easCommandEnvironment, easCommandFailureMessage, EasClient, EasRemoteObjectUnavailableError, EasUpdateRuntimeMismatchError, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
+import { createExactCheckoutDirectory, easCommandEnvironment, easCommandFailureMessage, EasClient, EasRemoteObjectUnavailableError, EasUpdateRuntimeMismatchError, isExactEasObjectMissing, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
 import { PreviewLedger } from "./ledger.mjs";
@@ -1398,6 +1398,16 @@ test("EAS command failures preserve the actionable output tail and redact creden
   assert.match(message, /^EAS update failed:/);
   assert.match(message, /Metro export failed: Unable to resolve module MobileLocalization/);
   assert.doesNotMatch(message, new RegExp(secret));
+});
+
+test("missing EAS build classification survives the single-line failure envelope", () => {
+  const buildId = "45cd5871-2ab1-4ecf-83ef-f9a35d2c6d3c";
+  const error = new Error(
+    `EAS build:view failed: Fetching the build failed. Build with id '${buildId}' does not exist. Request ID: request-id Error: GraphQL request failed.`,
+  );
+
+  assert.equal(isExactEasObjectMissing(error, "build", buildId), true);
+  assert.equal(isExactEasObjectMissing(error, "build", "43f85cc7-4284-4d86-afed-0a9fe04884f1"), false);
 });
 
 test("OTA delivery publishes platforms sequentially and resumes only a missing platform", async () => {
