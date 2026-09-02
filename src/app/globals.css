@@ -558,12 +558,12 @@ textarea {
 }
 
 .flight-card-desktop {
-  padding: 1rem 1.25rem;
+  padding: 1.25rem 1.5rem 1rem;
 }
 
 .flight-card-desktop-header {
   gap: 1rem;
-  padding-bottom: 0.25rem;
+  padding-bottom: 0.75rem;
 }
 
 .flight-card-desktop-brand {
@@ -571,11 +571,18 @@ textarea {
 }
 
 .flight-card-airline-name {
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
+  line-height: 1.25rem;
 }
 
 .flight-card-header-logo {
-  display: none;
+  display: block;
+}
+
+.flight-card-flight-number {
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  line-height: 1rem;
 }
 
 .flight-card-logo-box {
@@ -598,7 +605,7 @@ textarea {
   grid-template-areas: "legs fare" "details details";
   column-gap: 1rem;
   row-gap: 0.75rem;
-  margin-top: 0.25rem;
+  margin-top: 0;
 }
 
 .flight-card-legs {
@@ -617,7 +624,7 @@ textarea {
 }
 
 .flight-card-leg-label {
-  margin-bottom: 0.375rem;
+  margin-bottom: 0.5rem;
   font-size: 0.625rem;
   line-height: 0.875rem;
   letter-spacing: 0.11em;
@@ -626,17 +633,12 @@ textarea {
 .flight-card-leg-endpoint,
 .flight-card-leg-center {
   display: grid;
-  grid-template-rows: 1.5rem 1.25rem 1.25rem;
+  grid-template-rows: 1.75rem 1.25rem 1.25rem;
   align-items: center;
 }
 
 .flight-card-leg-time-row {
   gap: 0.5rem;
-}
-
-.flight-card-leg-grid > .flight-card-leg-endpoint:first-child .flight-card-airport,
-.flight-card-leg-grid > .flight-card-leg-endpoint:first-child .flight-card-departure-date {
-  margin-inline-start: 1.875rem;
 }
 
 .flight-card-duration {
@@ -651,12 +653,13 @@ textarea {
 
 .flight-card-airport,
 .flight-card-leg-meta {
-  font-size: 0.75rem;
-  line-height: 1rem;
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
 }
 
 .flight-card-time {
-  font-size: 0.9375rem;
+  font-size: 1.375rem;
+  line-height: 1.75rem;
   white-space: nowrap;
 }
 
@@ -732,7 +735,7 @@ textarea {
   }
 
   .flight-card-airline-name {
-    font-size: 0.75rem;
+    font-size: 0.875rem;
   }
 
   .flight-card-logo-box {
@@ -764,7 +767,7 @@ textarea {
   }
 
   .flight-card-time {
-    font-size: 0.875rem;
+    font-size: 1.125rem;
   }
 
   .flight-card-price {
