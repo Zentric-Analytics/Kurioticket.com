@@ -110,11 +110,13 @@ function ReadOnlyRow({
   value,
   missing,
   onPress,
+  maxLines = 2,
 }: {
   label: string;
   value?: string | null;
   missing: string;
   onPress: () => void;
+  maxLines?: number;
 }) {
   const { theme } = useAppTheme();
   const shown = value || missing;
@@ -132,7 +134,7 @@ function ReadOnlyRow({
       <View style={s.readOnlyText}>
         <Text style={[s.readOnlyLabel, { color: theme.text }]}>{label}</Text>
         <Text
-          numberOfLines={label === "Address" ? 3 : 2}
+          numberOfLines={maxLines}
           style={[s.readOnlyValue, { color: value ? theme.text : theme.muted }]}
         >
           {shown}
@@ -251,20 +253,29 @@ function SelectorModal({
   const c = personalDetailsCopy(locale);
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState("");
+  const [draftSelection, setDraftSelection] = useState(selected);
   const searchable = kind === "phone" || kind === "nationality" || kind === "addressCountry";
   const shown = searchable ? filterSelectorOptions(options, query) : options;
 
   useEffect(() => {
     if (visible) {
       setQuery("");
+      setDraftSelection(selected);
       Keyboard.dismiss();
     }
-  }, [visible, kind]);
+  }, [visible, kind, selected]);
+
+  const commitSelection = () => {
+    if (!draftSelection) return;
+    Keyboard.dismiss();
+    onSelect(draftSelection);
+    onClose();
+  };
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={[s.modalSafe, { backgroundColor: theme.background }]} edges={["top", "bottom"]}>
-        <View style={[s.header, { borderBottomColor: theme.border }]}>
+        <View style={[s.header, { borderBottomColor: theme.border }]}> 
           <Pressable accessibilityRole="button" accessibilityLabel={c.back} onPress={onClose} style={s.iconButton}>
             <FlowIcon name="back" color={theme.icon} />
           </Pressable>
@@ -287,7 +298,7 @@ function SelectorModal({
           data={shown}
           keyExtractor={(item) => item.value}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
+          contentContainerStyle={{ paddingBottom: searchable ? 16 : insets.bottom + 16 }}
           renderItem={({ item }) => {
             const phoneOption = kind === "phone" ? PHONE_COUNTRY_OPTIONS.find((option) => option.isoCode === item.value) : null;
             const isoCode = kind === "nationality"
@@ -295,13 +306,17 @@ function SelectorModal({
               : kind === "phone" || kind === "addressCountry"
                 ? item.value
                 : undefined;
-            const active = item.value === selected;
+            const active = item.value === (searchable ? draftSelection : selected);
             return (
               <Pressable
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
                 onPress={() => {
                   Keyboard.dismiss();
+                  if (searchable) {
+                    setDraftSelection(item.value);
+                    return;
+                  }
                   onSelect(item.value);
                   onClose();
                 }}
@@ -315,6 +330,20 @@ function SelectorModal({
             );
           }}
         />
+        {searchable ? (
+          <View style={[s.modalCommit, { borderTopColor: theme.border, backgroundColor: theme.background }]}> 
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={c.selectorSave}
+              accessibilityState={{ disabled: !draftSelection }}
+              disabled={!draftSelection}
+              onPress={commitSelection}
+              style={[s.primary, !draftSelection && s.disabled]}
+            >
+              <Text style={s.primaryText}>{c.selectorSave}</Text>
+            </Pressable>
+          </View>
+        ) : null}
       </SafeAreaView>
     </Modal>
   );
@@ -325,9 +354,11 @@ export function AlignedPersonalDetailsScreen() {
   const { locale } = useMobileLocalization();
   const c = personalDetailsCopy(locale);
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const mounted = useRef(true);
   const submitting = useRef(false);
+  const successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [saved, setSaved] = useState<MobileProfile | null>(null);
   const [draft, setDraft] = useState<MobileProfile>({});
   const [dateDraft, setDateDraft] = useState<DateDraft>(() => dateDraftFromValue());
@@ -341,6 +372,23 @@ export function AlignedPersonalDetailsScreen() {
 
   const address = useMemo(() => parseAddress(draft.address || ""), [draft.address]);
   const dirty = !!saved && profilesDiffer(draft, saved);
+
+  const dismissSuccess = useCallback(() => {
+    if (successTimer.current) {
+      clearTimeout(successTimer.current);
+      successTimer.current = null;
+    }
+    setSuccess("");
+  }, []);
+
+  const showSuccess = useCallback((message: string) => {
+    if (successTimer.current) clearTimeout(successTimer.current);
+    setSuccess(message);
+    successTimer.current = setTimeout(() => {
+      successTimer.current = null;
+      setSuccess("");
+    }, 1500);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -368,7 +416,10 @@ export function AlignedPersonalDetailsScreen() {
 
   useEffect(() => {
     void load();
-    return () => { mounted.current = false; };
+    return () => {
+      mounted.current = false;
+      if (successTimer.current) clearTimeout(successTimer.current);
+    };
   }, [load]);
 
   const discard = useCallback((leave: boolean) => {
@@ -404,7 +455,7 @@ export function AlignedPersonalDetailsScreen() {
     setDraft(saved);
     setDateDraft(dateDraftFromValue(saved.dateOfBirth));
     setError("");
-    setSuccess("");
+    dismissSuccess();
     setEditing(true);
   };
 
@@ -439,7 +490,7 @@ export function AlignedPersonalDetailsScreen() {
     submitting.current = true;
     setSaving(true);
     setError("");
-    setSuccess("");
+    dismissSuccess();
     try {
       const phone = serializePhone(draft.phoneCountryCode || "", draft.phoneNumber || "");
       const payload = normalizeProfile({ ...draft, ...phone });
@@ -451,7 +502,7 @@ export function AlignedPersonalDetailsScreen() {
       setDateDraft(dateDraftFromValue(authoritative.dateOfBirth));
       await updateStoredSessionName(authoritative.fullName || null);
       setEditing(false);
-      setSuccess(c.saveSuccess);
+      showSuccess(c.saveSuccess);
       AccessibilityInfo.announceForAccessibility(c.saveSuccess);
     } catch (e) {
       const expired = (e instanceof TravelApiError && e.status === 401) || !(await readSession().catch(() => null));
@@ -523,8 +574,8 @@ export function AlignedPersonalDetailsScreen() {
   };
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} style={[s.safe, { backgroundColor: theme.background }]}>
-      <View style={[s.header, { borderBottomColor: theme.border }]}>
+    <SafeAreaView edges={["top", "bottom"]} style={[s.safe, { backgroundColor: theme.background }]}> 
+      <View style={[s.header, { borderBottomColor: theme.border }]}> 
         <Pressable accessibilityRole="button" accessibilityLabel={c.back} onPress={() => editing ? discard(true) : router.back()} style={s.iconButton}>
           <FlowIcon name="back" color={theme.icon} />
         </Pressable>
@@ -546,7 +597,6 @@ export function AlignedPersonalDetailsScreen() {
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
           <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={editing ? s.editScroll : s.readScroll}>
             {error ? <Text accessibilityRole="alert" style={[s.feedback, { color: "#D92D20" }]}>{error}</Text> : null}
-            {success ? <Text accessibilityRole="status" style={[s.feedback, { color: theme.text }]}>{success}</Text> : null}
 
             {!editing ? (
               <View>
@@ -558,7 +608,7 @@ export function AlignedPersonalDetailsScreen() {
                   <ReadOnlyRow label={c.nationality} value={saved.nationality} missing={c.missing} onPress={beginEditing} />
                   <ReadOnlyRow label={c.email} value={email} missing={c.missing} onPress={beginEditing} />
                   <ReadOnlyRow label={c.phone} value={displayPhone(saved.phoneCountryCode || "", saved.phoneNumber || "")} missing={c.missing} onPress={beginEditing} />
-                  <ReadOnlyRow label={c.address} value={displayAddress(saved.address || "")} missing={c.missing} onPress={beginEditing} />
+                  <ReadOnlyRow label={c.address} value={displayAddress(saved.address || "")} missing={c.missing} onPress={beginEditing} maxLines={3} />
                 </View>
               </View>
             ) : (
@@ -599,6 +649,15 @@ export function AlignedPersonalDetailsScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       )}
+
+      {success ? (
+        <View pointerEvents="none" style={[s.toastPosition, { bottom: insets.bottom + 16 }]}> 
+          <View style={[s.toast, { backgroundColor: theme.dark ? "#163B2A" : "#E9F8EF" }]}> 
+            <FlowIcon name="check" color={theme.dark ? "#86E3A7" : "#16803C"} size={18} />
+            <Text accessibilityLiveRegion="polite" style={[s.toastText, { color: theme.dark ? "#C6F6D5" : "#126B34" }]}>{success}</Text>
+          </View>
+        </View>
+      ) : null}
 
       <SelectorModal visible={!!selector} kind={selector} title={selectorTitle} options={selectOptions} selected={selected} onClose={() => setSelector(null)} onSelect={applySelection} />
     </SafeAreaView>
@@ -653,8 +712,12 @@ const s = StyleSheet.create({
   primaryText: { color: "#FFFFFF", fontWeight: "800" },
   disabled: { opacity: 0.45 },
   feedback: { fontSize: 14, lineHeight: 20, fontWeight: "700", marginHorizontal: 16, marginTop: 12 },
+  toastPosition: { position: "absolute", left: 16, right: 16, alignItems: "center", zIndex: 10 },
+  toast: { maxWidth: "100%", flexDirection: "row", alignItems: "center", gap: 7, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9 },
+  toastText: { fontSize: 14, lineHeight: 20, fontWeight: "700" },
   modalSafe: { flex: 1 },
   searchWrap: { padding: 16, paddingBottom: 8 },
   modalOption: { minHeight: 56, flexDirection: "row", alignItems: "center", gap: 12, marginHorizontal: 16, borderBottomWidth: StyleSheet.hairlineWidth },
   modalOptionText: { flex: 1, fontSize: 16, lineHeight: 23, fontWeight: "500" },
+  modalCommit: { borderTopWidth: StyleSheet.hairlineWidth, padding: 16, alignItems: "stretch" },
 });
