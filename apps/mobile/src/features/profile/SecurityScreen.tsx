@@ -126,6 +126,19 @@ export function SecurityScreen() {
   const reactivate = async () => { if(submitting)return;const request=deletionRequest.current;setSubmitting(true);setDeletionError("");try{await travelApi.reactivateDeletion();await clearSession();setDeletion(null);closeDeletion();router.replace(signInHref("/security"));}catch(e){if(!await unauth(e)&&request===deletionRequest.current)setDeletionError(e instanceof TravelApiError?e.message:c.deletionError);}finally{setSubmitting(false);} };
   const date = (value: string) => formatSecurityDate(value, locale);
   const eventLabel = (event: SecurityEvent) => localizedAccountActivityLabel(event.type, locale, c.unknown);
+  const twoFactorSetupFlow = <TwoFactorSetupFlow
+    active={twoFactorOpen && (!Boolean(overview?.twoFactorEnabled) || recoveryCodes.length > 0)}
+    copy={c}
+    setup={setup}
+    recoveryCodes={recoveryCodes}
+    authenticatorCode={authenticatorCode}
+    error={setup ? twoFactorError : ""}
+    submitting={submitting}
+    onStart={() => void startTwoFactor()}
+    onCodeChange={(value) => { setAuthenticatorCode(value); setTwoFactorError(""); }}
+    onConfirm={() => void confirmTwoFactor()}
+    onClose={closeTwoFactor}
+  />;
 
   return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top"]}>
     <Header title={c.title} backLabel={c.back} onBack={() => router.back()} />
@@ -188,23 +201,10 @@ export function SecurityScreen() {
       {events.length ? events.map((event) => <EventRow key={event.id} label={eventLabel(event)} date={date(event.occurredAt)} />) : <Text style={[styles.empty, { color: theme.muted }]}>{c.empty}</Text>}
     </ScreenModal>
     <ScreenModal visible={twoFactorOpen} title={c.twoFactor} closeLabel={c.close} onClose={closeTwoFactor}>
+      {!setup && !recoveryCodes.length && !overview?.twoFactorEnabled ? <Feedback error={twoFactorError} message="" /> : null}
       {overview?.twoFactorEnabled ? (
-        <TwoFactorEnabledFlow active={twoFactorOpen && Boolean(overview?.twoFactorEnabled)} hasPassword={Boolean(overview?.hasPassword)} copy={c} onUnauthorized={unauth} onDisabled={async () => { closeTwoFactor(); await load({showLandingFeedback:false,showLoading:false}); }} />
-      ) : (
-        <TwoFactorSetupFlow
-          active={twoFactorOpen && !Boolean(overview?.twoFactorEnabled)}
-          copy={c}
-          setup={setup}
-          recoveryCodes={recoveryCodes}
-          authenticatorCode={authenticatorCode}
-          error={twoFactorError}
-          submitting={submitting}
-          onStart={() => void startTwoFactor()}
-          onCodeChange={(value) => { setAuthenticatorCode(value); setTwoFactorError(""); }}
-          onConfirm={() => void confirmTwoFactor()}
-          onClose={closeTwoFactor}
-        />
-      )}
+        recoveryCodes.length ? twoFactorSetupFlow : <TwoFactorEnabledFlow active={twoFactorOpen && Boolean(overview?.twoFactorEnabled)} hasPassword={Boolean(overview?.hasPassword)} copy={c} onUnauthorized={unauth} onDisabled={async () => { closeTwoFactor(); await load({showLandingFeedback:false,showLoading:false}); }} />
+      ) : twoFactorSetupFlow}
     </ScreenModal>
     <ScreenModal visible={deletionOpen} title={c.deleteAccount} closeLabel={c.close} onClose={closeDeletion}>
       <Feedback error={deletionError} message=""/><Text style={{color:theme.muted}}>{c.deletionHelp}</Text>
