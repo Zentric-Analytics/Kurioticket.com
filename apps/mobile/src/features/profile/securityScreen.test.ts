@@ -90,14 +90,25 @@ test("password change requires a verification code before the password is commit
 
 test("password change resend countdown is server-aware and recovery is gated", () => {
   assert.match(passwordChangeFlow, /resendAfterSeconds \* 1000/);
-  assert.match(passwordChangeFlow, /Request new code in 00:/);
+  assert.match(passwordChangeFlow, /const mmss = \(seconds: number\) => `00:\$\{String\(seconds\)\.padStart\(2, "0"\)\}`/);
+  assert.match(passwordChangeFlow, /resendIn: \(s\) => `Request new code in \$\{mmss\(s\)\}`/);
   assert.match(passwordChangeFlow, /securityPasswordChangeApi\.resend\(/);
   assert.match(passwordChangeFlow, /retryAfterSeconds/);
   assert.match(passwordChangeFlow, /setResendUntil\(Date\.now\(\) \+ retryAfter \* 1000\)/);
   assert.match(passwordChangeFlow, /securityPasswordChangeApi\.status\(\)/);
   assert.match(passwordChangeFlow, /details\.recoveryAvailable === true/);
-  assert.match(passwordChangeFlow, /recoveryAvailable \? \(/);
+  assert.match(passwordChangeFlow, /recoveryAvailable \?/);
   assert.match(passwordChangeFlow, /onPress=\{onRecovery\}/);
+});
+
+test("password verification copy covers every supported mobile locale", async () => {
+  const { mobileLocaleCodes } = await import("../../localization/mobileLocalizationCatalog");
+  assert.match(passwordChangeFlow, /const flowCopies: Record<MobileLocale, FlowCopy> = \{/);
+  const copyBlock = passwordChangeFlow.slice(passwordChangeFlow.indexOf("const flowCopies"), passwordChangeFlow.indexOf("function EyeIcon"));
+  for (const locale of mobileLocaleCodes) {
+    const key = locale.includes("-") ? `"${locale}"` : locale;
+    assert.ok(copyBlock.includes(`${key}: {`), `${locale} must have password verification copy`);
+  }
 });
 
 test("password reset validates on submit while keeping the reset action pressable", () => {
