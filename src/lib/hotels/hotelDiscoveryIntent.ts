@@ -21,6 +21,16 @@ export function resolveHotelDiscoveryIntent(destinationName: string, source: Hot
 
 export function buildHotelDiscoveryHref(destinationName: string, source: HotelDiscoverySource) {
   const intent = resolveHotelDiscoveryIntent(destinationName, source);
-  if (!intent) return "/hotels";
-  return `/hotels?${new URLSearchParams({ destinationId: intent.canonicalDestinationId, destination: intent.destinationSearchValue, intentSource: intent.source }).toString()}`;
+  if (intent) {
+    return `/hotels?${new URLSearchParams({ destinationId: intent.canonicalDestinationId, destination: intent.destinationSearchValue, intentSource: intent.source }).toString()}`;
+  }
+  return "/hotels";
+}
+
+export function buildMaintainedHotelDiscoveryHref(destinationName: string, source: HotelDiscoverySource) {
+  const canonicalHref = buildHotelDiscoveryHref(destinationName, source);
+  if (canonicalHref !== "/hotels") return canonicalHref;
+  const destination = destinationName.trim().replace(/\s+/g, " ");
+  if (destination.length < 2 || destination.length > 120 || /[\u0000-\u001f\u007f]/.test(destination)) return "/hotels";
+  return `/hotels?${new URLSearchParams({ destination, intentSource: source }).toString()}`;
 }

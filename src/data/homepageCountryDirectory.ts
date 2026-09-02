@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 import type Link from "next/link";
 import { buildCarResultsHref } from "@/lib/cars/carsSearchUtils";
 import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
-import { buildHotelDiscoveryHref } from "@/lib/hotels/hotelDiscoveryIntent";
+import { buildMaintainedHotelDiscoveryHref } from "@/lib/hotels/hotelDiscoveryIntent";
 
 export const COUNTRY_FLAG_ASSET_BY_CODE = {
   AU: "/flags/au.svg",
@@ -44,7 +44,7 @@ export function buildCountryDirectoryFlightHref(origin: string, destination: str
 }
 
 export function buildCountryDirectoryHotelHref(destination: string) {
-  return buildHotelDiscoveryHref(destination, "home-country-directory") satisfies ComponentProps<typeof Link>["href"];
+  return buildMaintainedHotelDiscoveryHref(destination, "home-country-directory") satisfies ComponentProps<typeof Link>["href"];
 }
 
 export function buildCountryDirectoryCarsHref(pickupLocation: string) {

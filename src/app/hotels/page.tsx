@@ -260,6 +260,8 @@ hotelInspirationCategoryChips.forEach((category) => {
 export default function HotelsSearchPage() {
   const searchParams = useSearchParams();
   const discoveryDestination = searchParams.get("destination") ?? "";
+  const discoveryCheckIn = searchParams.get("checkIn") ?? "";
+  const discoveryCheckOut = searchParams.get("checkOut") ?? "";
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const translateHotelCard = <TCard extends HotelDestinationCard>(
@@ -354,8 +356,10 @@ export default function HotelsSearchPage() {
           <div className="page-shell absolute inset-x-0 bottom-[-18.05rem] z-30">
             <div className="mx-auto max-w-6xl">
               <HotelSearchBar
-                key={`mobile-hotel-discovery-${discoveryDestination}`}
+                key={`mobile-hotel-discovery-${discoveryDestination}-${discoveryCheckIn}-${discoveryCheckOut}`}
                 initialDestination={discoveryDestination}
+                initialCheckIn={discoveryCheckIn}
+                initialCheckOut={discoveryCheckOut}
                 introLabel={hotelSearchIntroLabel}
                 desktopIdentityLabel={t("hotels")}
                 mobileLandingPresentation
@@ -385,8 +389,10 @@ export default function HotelsSearchPage() {
             <div className="page-shell absolute inset-x-0 bottom-[-78px] z-30 lg:bottom-[-80px]">
               <div className="mx-auto max-w-6xl">
                 <HotelSearchBar
-                  key={`desktop-hotel-discovery-${discoveryDestination}`}
+                  key={`desktop-hotel-discovery-${discoveryDestination}-${discoveryCheckIn}-${discoveryCheckOut}`}
                   initialDestination={discoveryDestination}
+                  initialCheckIn={discoveryCheckIn}
+                  initialCheckOut={discoveryCheckOut}
                   introLabel={hotelSearchIntroLabel}
                   desktopIdentityLabel={t("hotels")}
                   className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[14px] [&>form>div]:!border-white/80 [&>form>div]:!bg-white/[0.97] [&>form>div]:!p-4 [&>form>div]:!shadow-[0_34px_86px_-30px_rgba(15,23,42,0.62)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] lg:[&>form>div]:!rounded-[16px] lg:[&>form>div]:!p-5 lg:[&>form>div>div:last-child]:!grid-cols-[minmax(0,2.1fr)_minmax(0,1.45fr)_minmax(0,1.18fr)_142px] lg:[&>form>div>div:last-child>*]:!min-h-[68px] lg:[&>form>div>div:last-child>div:last-child>button]:!min-h-[68px]"

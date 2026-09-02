@@ -123,3 +123,29 @@ test("country directory Hotel links create canonical form intent", () => {
   assert.equal(hotelUrl.searchParams.has("checkIn"), false);
   assert.match(buildCountryDirectoryCarsHref("Paris") as string, /^\/cars(\/results)?\?/);
 });
+
+test("every maintained country-directory Hotel destination retains its intent", () => {
+  for (const country of countryDirectoryCountries) {
+    for (const link of country.links.Hotels) {
+      const destination = link.label.replace(/ stays$/, "");
+      const url = new URL(link.href as string, "https://www.kurioticket.test");
+      assert.equal(url.pathname, "/hotels", destination);
+      assert.equal(url.searchParams.get("destination")?.length ? true : false, true, destination);
+      assert.notEqual(link.href, "/hotels", destination);
+      assert.equal(url.pathname.includes("hotel-results"), false, destination);
+      for (const hidden of ["checkIn", "checkOut", "guests", "rooms"]) {
+        assert.equal(url.searchParams.has(hidden), false, `${destination}:${hidden}`);
+      }
+    }
+  }
+
+  for (const destination of ["Liverpool", "Bath", "Ras Al Khaimah", "Sapporo", "Fukuoka"]) {
+    const url = new URL(buildCountryDirectoryHotelHref(destination) as string, "https://www.kurioticket.test");
+    assert.equal(url.searchParams.get("destination"), destination);
+    assert.equal(url.searchParams.get("intentSource"), "home-country-directory");
+    assert.equal(url.searchParams.has("destinationId"), false);
+  }
+
+  const canonical = new URL(buildCountryDirectoryHotelHref("Paris") as string, "https://www.kurioticket.test");
+  assert.equal(canonical.searchParams.get("destinationId"), "fr-paris");
+});

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildHotelDiscoveryHref, resolveHotelDiscoveryIntent } from "./hotelDiscoveryIntent";
+import { buildHotelDiscoveryHref, buildMaintainedHotelDiscoveryHref, resolveHotelDiscoveryIntent } from "./hotelDiscoveryIntent";
 
 const promoted = [
   ["Dubai", "ae-dubai"], ["London", "gb-london"], ["Johannesburg", "za-johannesburg"],
@@ -28,4 +28,14 @@ test("Hotel discovery href preserves canonical identity and contains no hidden s
 
 test("unresolved Hotel discovery fails closed at the form", () => {
   assert.equal(buildHotelDiscoveryHref("Not a canonical destination", "hotels-featured"), "/hotels");
+});
+
+test("maintained textual Hotel intent survives without a fabricated canonical ID", () => {
+  const href = buildMaintainedHotelDiscoveryHref("  Ras   Al Khaimah  ", "home-country-directory");
+  const url = new URL(href, "https://www.kurioticket.test");
+  assert.equal(url.pathname, "/hotels");
+  assert.equal(url.searchParams.get("destination"), "Ras Al Khaimah");
+  assert.equal(url.searchParams.get("intentSource"), "home-country-directory");
+  assert.equal(url.searchParams.has("destinationId"), false);
+  assert.equal(buildMaintainedHotelDiscoveryHref(" \u0000 ", "home-country-directory"), "/hotels");
 });
