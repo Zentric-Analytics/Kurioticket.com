@@ -227,12 +227,12 @@ function ResponsiveFlightLegRow({
 
   return (
     <section aria-label={legTitle} className="min-w-0">
-      <div className="flight-card-leg-grid grid min-w-0 items-center">
-        <div className="min-w-0 self-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#0057E7]">
-            {legTitle}
-          </p>
-          <div className="flight-card-leg-time-row mt-1 flex min-w-0 items-center gap-2.5">
+      <p className="flight-card-leg-label font-bold uppercase text-[#0057E7]">
+        {legTitle}
+      </p>
+      <div className="flight-card-leg-grid grid min-w-0">
+        <div className="flight-card-leg-endpoint min-w-0">
+          <div className="flight-card-leg-time-row flex min-w-0 items-center">
             <div className="flight-card-leg-logo hidden shrink-0 lg:block">
               <AirlineLogo flight={flight} inline />
             </div>
@@ -244,21 +244,21 @@ function ResponsiveFlightLegRow({
             </div>
           </div>
           <div
-            className="mt-1 text-sm font-bold leading-5 text-[#07133B]"
+            className="flight-card-airport font-bold text-[#07133B]"
             dir="ltr"
           >
             {leg.originAirport}
           </div>
           <div
-            className="flight-card-departure-date mt-0.5 text-sm font-medium leading-5 text-[#07133B]"
+            className="flight-card-departure-date flight-card-leg-meta font-medium text-[#07133B]"
             dir="auto"
           >
             {formatItineraryShortDate({ value: leg.departureTime, locale })}
           </div>
         </div>
 
-        <div className="min-w-0 self-center text-center">
-          <div className="mb-2 flex items-center justify-center gap-2 text-sm font-semibold text-[#07133B]">
+        <div className="flight-card-leg-center min-w-0 text-center">
+          <div className="flight-card-duration flex items-center justify-center font-semibold text-[#07133B]">
             <span dir="auto">{leg.duration}</span>
             <span
               className="h-1 w-1 rounded-full bg-[#07133B]"
@@ -266,7 +266,7 @@ function ResponsiveFlightLegRow({
             />
             <span>{formatStopsLabel(leg.stops, t)}</span>
           </div>
-          <div className="flex items-center text-[#7890B8]" aria-hidden="true">
+          <div className="flight-card-path flex items-center text-[#7890B8]" aria-hidden="true">
             <span className="h-2 w-2 rounded-full bg-[#7890B8]" />
             <span className="h-px flex-1 bg-[#B9C5D8]" />
             <PlaneTakeoff className="mx-2 h-3.5 w-3.5 text-[#0057E7]" />
@@ -275,19 +275,19 @@ function ResponsiveFlightLegRow({
           </div>
           {leg.layovers.length ? (
             <p
-              className="mt-2 truncate text-sm font-medium leading-5 text-[#536B92]"
+              className="flight-card-layover flight-card-leg-meta truncate font-medium text-[#536B92]"
               title={formatLayoverText(leg, t)}
             >
               {formatLayoverText(leg, t)}
             </p>
           ) : (
-            <p className="flight-card-route-codes mt-2 text-sm font-medium leading-5 text-[#536B92]">
+            <p className="flight-card-route-codes flight-card-leg-meta font-medium text-[#536B92]">
               {leg.originAirport} → {leg.destinationAirport}
             </p>
           )}
         </div>
 
-        <div className="min-w-0 self-center text-right">
+        <div className="flight-card-leg-endpoint min-w-0 text-right">
           <div
             className="flight-card-time font-semibold leading-6 tracking-[-0.025em] text-[#07133B]"
             dir="ltr"
@@ -295,13 +295,13 @@ function ResponsiveFlightLegRow({
             {formatTime(leg.arrivalTime, locale)}
           </div>
           <div
-            className="mt-1 truncate text-sm font-bold leading-5 text-[#07133B]"
+            className="flight-card-airport truncate font-bold text-[#07133B]"
             dir="ltr"
           >
             {leg.destinationAirport}
           </div>
           <div
-            className="flight-card-arrival-date mt-0.5 text-sm font-medium leading-5 text-[#07133B]"
+            className="flight-card-arrival-date flight-card-leg-meta font-medium text-[#07133B]"
             dir="auto"
           >
             {formatItineraryShortDate({ value: leg.arrivalTime, locale })}
