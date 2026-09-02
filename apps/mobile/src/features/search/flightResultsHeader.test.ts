@@ -151,7 +151,11 @@ test("Hotel Results replaces only its TopBar with a dynamic compact header", () 
   assert.match(searchUi, /export function TopBar/);
   assert.match(results, /flightResults \? \([\s\S]*?<FlightResultsHeader[\s\S]*?\) : \(\s*<HotelResultsHeader/);
   assert.match(hotelInvocation, /destination=\{String\(payload\.destination/);
+  for (const field of ["checkIn", "checkOut", "guests", "rooms"]) {
+    assert.match(hotelInvocation, new RegExp(`${field}=\\{String\\(payload\\.${field}`));
+  }
   assert.match(hotelHeader, /accessibilityLabel="Hotel search summary"/);
+  assert.match(hotelHeader, /\{checkIn\} – \{checkOut\} · \{guests\} guests · \{rooms\}/);
   assert.match(hotelHeader, /accessibilityLabel="Go back"[\s\S]*?router\.back\(\)/);
   assert.match(hotelHeader, /accessibilityLabel="Edit search"[\s\S]*?onPress=\{onEdit\}/);
   assert.match(hotelHeader, />Edit<\/Text>/);
@@ -171,10 +175,10 @@ test("Hotel Results shares Flight's balanced controls and truncates long destina
   assert.match(styles, /flightHeaderEdit: \{[\s\S]*?width: 52,[\s\S]*?height: 44/);
 });
 
-test("Hotel Results removes header metadata while Edit preserves canonical search state", () => {
-  assert.doesNotMatch(hotelInvocation, /metadata|checkIn|checkOut|rooms|guests|shortDate/);
+test("Hotel Results shows the complete stay summary while Edit preserves canonical search state", () => {
+  assert.doesNotMatch(hotelInvocation, /metadata|shortDate/);
   assert.doesNotMatch(hotelHeader, /metadata|hotelHeaderMeta/);
-  assert.match(hotelHeader, /destination: string;[\s\S]*?onEdit: \(\) => void;/);
+  assert.match(hotelHeader, /destination: string;[\s\S]*?checkIn: string;[\s\S]*?checkOut: string;[\s\S]*?guests: string;[\s\S]*?rooms: string;[\s\S]*?onEdit: \(\) => void;/);
   assert.match(results, /<HotelEditSearchModal[\s\S]*?params=\{params\}/);
   assert.doesNotMatch(results, /pathname: "\/hotels"/);
 });

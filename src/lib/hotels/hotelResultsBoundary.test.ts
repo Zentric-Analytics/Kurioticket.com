@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { hotelSearchSchema } from "../validation";
 import { resolveHotelResultsRoute } from "./hotelResultsRoute";
+import { buildHotelExplorationSearch } from "./hotelExplorationSearch";
 
 const resultsPage = readFileSync(new URL("../../app/hotels/results/page.tsx", import.meta.url), "utf8");
 const resultsClient = readFileSync(new URL("../../components/results/HotelResultsClient.tsx", import.meta.url), "utf8");
@@ -32,6 +33,12 @@ test("web Hotel results require explicit destination, dates, guests, and rooms",
     if (!route.resultsReady) assert.match(route.recoveryHref, /^\/hotels(?:\?|$)/);
   }
   assert.equal(resolveHotelResultsRoute(complete).resultsReady, true);
+});
+
+test("complete curated exploration crosses the same strict results boundary", () => {
+  const search = buildHotelExplorationSearch({ destination: "London", destinationId: "gb-london", source: "home-popular-stays", now: new Date("2030-01-01T00:00:00Z") });
+  assert.ok(search);
+  assert.equal(resolveHotelResultsRoute(search!).resultsReady, true);
 });
 
 test("web Hotel results reject malformed and out-of-range explicit occupancy", () => {

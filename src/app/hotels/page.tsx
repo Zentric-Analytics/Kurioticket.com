@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Building2, Calendar, ClipboardCheck } from "lucide-react";
 
@@ -20,7 +20,7 @@ import {
 } from "@/data/hotelDestinationCards";
 import { validateDestinationImages } from "@/data/destinationImageValidation";
 import { translations as enTranslations } from "@/lib/i18n/en";
-import { buildHotelDiscoveryHref } from "@/lib/hotels/hotelDiscoveryIntent";
+import { buildHotelDiscoveryResultsHref } from "@/lib/hotels/hotelDiscoveryIntent";
 
 // Hotel destination card source data now lives in src/data/hotelDestinationCards.ts.
 // Legacy source-inspection coverage expects these approved query literals on /hotels:
@@ -135,9 +135,17 @@ function DestinationCard({
   isFeatured = false,
   hasMobilePolish = false,
 }: DestinationCardProps) {
+  const router = useRouter();
   return (
     <Link
       href={card.href}
+      onClick={(event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        const freshHref = buildHotelDiscoveryResultsHref(card.destinationQuery, "hotels-featured", new Date());
+        if (!freshHref) return;
+        event.preventDefault();
+        router.push(freshHref);
+      }}
       aria-label={card.linkLabel}
       className={`group flex h-full min-w-0 flex-col overflow-hidden border bg-white transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-26px_rgba(15,23,42,0.38)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-4 focus-visible:ring-offset-white ${
         hasMobilePolish
@@ -208,9 +216,17 @@ type InspirationCardProps = {
 };
 
 function InspirationCard({ card }: InspirationCardProps) {
+  const router = useRouter();
   return (
     <Link
       href={card.href}
+      onClick={(event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        const freshHref = buildHotelDiscoveryResultsHref(card.destinationQuery, "hotels-featured", new Date());
+        if (!freshHref) return;
+        event.preventDefault();
+        router.push(freshHref);
+      }}
       aria-label={card.linkLabel}
       className="group flex h-full min-w-0 snap-start flex-col overflow-hidden rounded-[1.25rem] border border-slate-200/90 bg-white p-2 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.38)] transition duration-300 hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_14px_30px_-24px_rgba(15,23,42,0.42)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-50 sm:rounded-2xl sm:p-2.5"
     >
@@ -307,7 +323,7 @@ export default function HotelsSearchPage() {
     useState<HotelInspirationCategory>("Beach");
 
   const destinationCardHref = useMemo(() => {
-    return (destinationQuery: string) => buildHotelDiscoveryHref(destinationQuery, "hotels-featured");
+    return (destinationQuery: string) => buildHotelDiscoveryResultsHref(destinationQuery, "hotels-featured") ?? "/hotels";
   }, []);
 
   const hotelDestinationLinks = hotelDestinationCards.map((card) => ({

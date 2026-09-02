@@ -4,7 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ComponentProps, CSSProperties, ReactNode } from "react";
 import { hasFreshProviderPrice } from "@/lib/homepageFareDisplay";
-import { buildHotelDiscoveryHref } from "@/lib/hotels/hotelDiscoveryIntent";
+import { buildHotelDiscoveryResultsHref, buildMaintainedHotelDiscoveryResultsHref } from "@/lib/hotels/hotelDiscoveryIntent";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
@@ -406,6 +407,7 @@ type HomepageRecommendationOrder = Partial<Record<HomepageRecommendationSurface,
 // onboarding belongs on /auth/signin, /onboarding/security, /dashboard/security,
 // and passkey API routes only.
 export default function Home() {
+  const router = useRouter();
   const { locale, t: dictionary } = useLocale();
   const { mode: regionCode, selectedOption } = useRegion();
   const { status: sessionStatus } = useSession();
@@ -1184,6 +1186,7 @@ export default function Home() {
                         displayCurrency: selectedOption.currency,
                         market: regionCode,
                       })}
+                      navigationDestination={destination.city}
                       isPriceLoading={destinationPriceState.loading}
                       isSaved={savedItemIds.includes(destination.id)}
                       onHeartToggle={handleSavedItemToggle}
@@ -1512,7 +1515,15 @@ export default function Home() {
                                 <Link
                                   href={country.links[category][0].href}
                                   className="focus-ring rounded-sm hover:text-[#00327A]"
-                                  onClick={(event) => event.stopPropagation()}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    if (category !== "Hotels" || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                                    const destination = country.links.Hotels[0].label.replace(/ stays$/, "");
+                                    const freshHref = buildMaintainedHotelDiscoveryResultsHref(destination, "home-country-directory", new Date());
+                                    if (!freshHref) return;
+                                    event.preventDefault();
+                                    router.push(freshHref);
+                                  }}
                                 >
                                   {category.toUpperCase()}
                                 </Link>
@@ -1592,6 +1603,13 @@ export default function Home() {
                                         <Link
                                           key={link.label}
                                           href={link.href}
+                                          onClick={(event) => {
+                                            if (category !== "Hotels" || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                                            const freshHref = buildMaintainedHotelDiscoveryResultsHref(link.label.replace(/ stays$/, ""), "home-country-directory", new Date());
+                                            if (!freshHref) return;
+                                            event.preventDefault();
+                                            router.push(freshHref);
+                                          }}
                                           className="focus-ring group flex items-center justify-between gap-3 rounded-sm py-1.5 text-sm font-normal leading-5 text-slate-800 transition hover:text-[#004BB8] focus-visible:text-[#004BB8]"
                                         >
                                           <span>{link.label}</span>
@@ -1994,7 +2012,7 @@ function buildDestinationCardHref(
   void options.displayCurrency;
   void options.market;
 
-  return buildHotelDiscoveryHref(options.city, "home-popular-stays");
+  return buildHotelDiscoveryResultsHref(options.city, "home-popular-stays") ?? "/hotels";
 }
 
 function getRouteKey(originCode: string, destinationCode: string) {
@@ -2059,6 +2077,7 @@ function DestinationCard({
   originCode,
   destinationCode,
   href,
+  navigationDestination,
   isPriceLoading,
   isSaved,
   onHeartToggle,
@@ -2074,6 +2093,7 @@ function DestinationCard({
   originCode: string;
   destinationCode: string;
   href: ComponentProps<typeof Link>["href"];
+  navigationDestination: string;
   isPriceLoading: boolean;
   isSaved: boolean;
   onHeartToggle: (
@@ -2082,13 +2102,20 @@ function DestinationCard({
     display?: SavedDiscoveryDisplayDetails,
   ) => void;
 }) {
+  const router = useRouter();
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [imageSource, setImageSource] = useState(image);
 
   return (
     <article className="group min-w-[17.25rem] flex-[0_0_17.25rem] snap-start overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_32px_-24px_rgba(15,23,42,0.65)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(15,23,42,0.75)] sm:min-w-[20.5rem] sm:flex-[0_0_20.5rem]">
-      <Link href={href} className="focus-ring block">
+      <Link href={href} onClick={(event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        const freshHref = buildHotelDiscoveryResultsHref(navigationDestination, "home-popular-stays", new Date());
+        if (!freshHref) return;
+        event.preventDefault();
+        router.push(freshHref);
+      }} className="focus-ring block">
         <div className="relative h-72 sm:h-80">
           <Image
             src={imageSource}

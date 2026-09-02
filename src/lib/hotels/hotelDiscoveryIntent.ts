@@ -1,11 +1,30 @@
 import { hotelDestinations, normalizeHotelDestinationSearchValue } from "../../data/hotelDestinations";
+import { buildHotelExplorationHref, type HotelExplorationSource } from "./hotelExplorationSearch";
 
 export type HotelDiscoverySource =
   | "home-popular-stays"
+  | "home-promo"
   | "home-country-directory"
   | "hotels-featured"
   | "explore"
   | "saved-destination";
+
+export function buildHotelDiscoveryResultsHref(destinationName: string, source: HotelExplorationSource, now = new Date()) {
+  const intent = resolveHotelDiscoveryIntent(destinationName, source);
+  if (!intent) return null;
+  return buildHotelExplorationHref({
+    destination: intent.destinationSearchValue,
+    destinationId: intent.canonicalDestinationId,
+    source,
+    now,
+  });
+}
+
+export function buildMaintainedHotelDiscoveryResultsHref(destinationName: string, source: HotelExplorationSource, now = new Date()) {
+  const canonical = buildHotelDiscoveryResultsHref(destinationName, source, now);
+  if (canonical) return canonical;
+  return buildHotelExplorationHref({ destination: destinationName, source, now });
+}
 
 export function resolveHotelDiscoveryIntent(destinationName: string, source: HotelDiscoverySource) {
   const requested = destinationName.trim();

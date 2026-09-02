@@ -1,5 +1,7 @@
 import type { Href } from "expo-router";
 import { resolvePopularDestinationStay } from "./PopularDestinationStaysData";
+import { buildHotelExplorationSearch } from "../../../../../src/lib/hotels/hotelExplorationSearch";
+import { resolveHotelDiscoveryIntent } from "../../../../../src/lib/hotels/hotelDiscoveryIntent";
 
 export type HomepageAdventureCard = { originCode: string; destinationCode: string };
 export type HomepageHotelCard = { city: string };
@@ -9,13 +11,20 @@ const DEFAULT_ROUTE_CARD_MARKET = "NG";
 
 export const homepageHotelDestinationParams = (card: HomepageHotelCard) => {
   const destination = resolvePopularDestinationStay(card);
-  if (!destination) return null;
-  return { destinationId: destination.id, destination: destination.name, intentSource: "home-popular-stays" };
+  const hotelIntent = resolveHotelDiscoveryIntent(card.city, "home-popular-stays");
+  if (!destination || !hotelIntent || destination.id !== hotelIntent.canonicalDestinationId) return null;
+  return { destinationId: hotelIntent.canonicalDestinationId, destination: hotelIntent.destinationSearchValue, intentSource: hotelIntent.source };
 };
 
-export function popularDestinationStayNavigation(card: HomepageHotelCard): Href {
-  const params = homepageHotelDestinationParams(card);
-  return params ? { pathname: "/hotels", params } : "/hotels";
+export function popularDestinationStayNavigation(card: HomepageHotelCard, now = new Date()): Href {
+  const destination = homepageHotelDestinationParams(card);
+  const params = destination ? buildHotelExplorationSearch({
+    destination: destination.destination,
+    destinationId: destination.destinationId,
+    source: "home-popular-stays",
+    now,
+  }) : null;
+  return params ? { pathname: "/hotel-results", params } : "/hotels";
 }
 
 export const homepageAdventureRouteParams = (card: HomepageAdventureCard, now = new Date()) => ({

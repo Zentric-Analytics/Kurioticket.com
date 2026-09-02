@@ -729,6 +729,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       ) : (
         <HotelResultsHeader
           destination={String(payload.destination || "")}
+          checkIn={String(payload.checkIn || "")}
+          checkOut={String(payload.checkOut || "")}
+          guests={String(payload.guests || "")}
+          rooms={String(payload.rooms || "")}
           onEdit={edit}
         />
       )}
@@ -922,9 +926,17 @@ function FlightResultsHeader({
 }
 function HotelResultsHeader({
   destination,
+  checkIn,
+  checkOut,
+  guests,
+  rooms,
   onEdit,
 }: {
   destination: string;
+  checkIn: string;
+  checkOut: string;
+  guests: string;
+  rooms: string;
   onEdit: () => void;
 }) {
   const { theme } = useAppTheme();
@@ -951,6 +963,13 @@ function HotelResultsHeader({
             style={[s0.route, s0.flightHeaderRoute, { color: theme.textPrimary }]}
           >
             {destination}
+          </Text>
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={[s0.sub, { color: theme.textSecondary }]}
+          >
+            {checkIn} – {checkOut} · {guests} guests · {rooms} {rooms === "1" ? "room" : "rooms"}
           </Text>
         </View>
         <Pressable

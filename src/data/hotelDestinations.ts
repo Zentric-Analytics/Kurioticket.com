@@ -1,5 +1,5 @@
-import { getCountryDisplayNameForLocale } from "@/lib/region/countryDisplayNames";
-import type { CanonicalLocation } from "@/lib/locations/types";
+import { getCountryDisplayNameForLocale } from "../lib/region/countryDisplayNames";
+import type { CanonicalLocation } from "../lib/locations/types";
 
 export type HotelDestinationKind = "city" | "district" | "landmark" | "airport-area";
 

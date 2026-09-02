@@ -136,7 +136,7 @@ test("homepage country directory replaces the hotel mosaic between promo panels 
   const directoryIndex = pageSource.indexOf(
     'aria-labelledby="homepage-country-directory-heading"',
   );
-  const newsletterIndex = pageSource.indexOf("homeNewsletterTitle");
+  const newsletterIndex = pageSource.lastIndexOf("homeNewsletterTitle");
 
   assert.ok(promoIndex >= 0, "hotel promo panel should exist");
   assert.ok(
@@ -183,7 +183,7 @@ test("homepage country directory uses closed-first inline independent column acc
   assert.match(directorySource, /"Hotels",\s*"Flights",\s*"Cars"/);
   assert.match(
     directorySource,
-    /onClick=\{\(event\) => event\.stopPropagation\(\)\}/,
+    /onClick=\{\(event\) => \{\s*event\.stopPropagation\(\);/,
   );
   assert.match(directorySource, /<CountryFlag\s+countryCode=\{country\.countryCode\}/);
   assert.doesNotMatch(directorySource, /Apple_Color_Emoji|Segoe_UI_Emoji|Noto_Color_Emoji/);
@@ -219,7 +219,7 @@ test("hotels page source remains on the shared destination image catalog", () =>
   assert.doesNotMatch(hotelsPageSource, /homepageHotelCountryCards/);
 });
 
-test("homepage country directory hotel links use canonical Hotel discovery intent", () => {
+test("homepage country directory Hotel links use complete maintained exploration intent", () => {
   const directoryDataSource = readFileSync(
     new URL("../data/homepageCountryDirectory.ts", import.meta.url),
     "utf8",
@@ -233,9 +233,8 @@ test("homepage country directory hotel links use canonical Hotel discovery inten
     ),
   );
 
-  assert.match(hrefSource, /buildHotelDiscoveryHref/);
+  assert.match(hrefSource, /buildMaintainedHotelDiscoveryResultsHref/);
   assert.match(hrefSource, /destination/);
-  assert.doesNotMatch(hrefSource, /checkIn|checkOut|guests|rooms/);
 });
 
 test("homepage country directory flag, row, service, and dropdown typography are production-refined", () => {
@@ -310,10 +309,9 @@ test("homepage country directory links preserve exact search contracts", () => {
     for (const link of country.links.Hotels) {
       assert.equal(typeof link.href, "string");
       const hotelUrl = new URL(link.href, "https://www.kurioticket.test");
-      assert.equal(hotelUrl.pathname, "/hotels");
+      assert.equal(hotelUrl.pathname, "/hotels/results");
       assert.ok(hotelUrl.searchParams.get("destination"));
-      assert.ok(hotelUrl.searchParams.get("destinationId"));
-      assert.equal(hotelUrl.searchParams.has("checkIn"), false);
+      for (const required of ["checkIn", "checkOut", "guests", "rooms"]) assert.ok(hotelUrl.searchParams.get(required));
     }
 
     for (const link of country.links.Cars) {

@@ -109,7 +109,7 @@ test("mobile distribution can derive one continuous alphabetical list from the s
   );
 });
 
-test("country directory Hotel links create canonical form intent", () => {
+test("country directory Hotel links create complete canonical exploratory results", () => {
   const flightHref = buildCountryDirectoryFlightHref("JFK", "LAX");
   assert.equal(typeof flightHref, "object");
   assert.equal(flightHref.pathname, "/flights/results");
@@ -117,10 +117,10 @@ test("country directory Hotel links create canonical form intent", () => {
   assert.equal(flightHref.query.destination, "LAX");
   const hotelHref = buildCountryDirectoryHotelHref("Paris");
   const hotelUrl = new URL(hotelHref as string, "https://www.kurioticket.test");
-  assert.equal(hotelUrl.pathname, "/hotels");
+  assert.equal(hotelUrl.pathname, "/hotels/results");
   assert.equal(hotelUrl.searchParams.get("destination"), "Paris, France");
   assert.equal(hotelUrl.searchParams.get("destinationId"), "fr-paris");
-  assert.equal(hotelUrl.searchParams.has("checkIn"), false);
+  for (const field of ["checkIn", "checkOut", "guests", "rooms"]) assert.ok(hotelUrl.searchParams.get(field));
   assert.match(buildCountryDirectoryCarsHref("Paris") as string, /^\/cars(\/results)?\?/);
 });
 
@@ -129,12 +129,11 @@ test("every maintained country-directory Hotel destination retains its intent", 
     for (const link of country.links.Hotels) {
       const destination = link.label.replace(/ stays$/, "");
       const url = new URL(link.href as string, "https://www.kurioticket.test");
-      assert.equal(url.pathname, "/hotels", destination);
+      assert.equal(url.pathname, "/hotels/results", destination);
       assert.equal(url.searchParams.get("destination")?.length ? true : false, true, destination);
       assert.notEqual(link.href, "/hotels", destination);
-      assert.equal(url.pathname.includes("hotel-results"), false, destination);
       for (const hidden of ["checkIn", "checkOut", "guests", "rooms"]) {
-        assert.equal(url.searchParams.has(hidden), false, `${destination}:${hidden}`);
+        assert.equal(url.searchParams.has(hidden), true, `${destination}:${hidden}`);
       }
     }
   }

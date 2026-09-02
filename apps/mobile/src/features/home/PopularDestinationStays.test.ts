@@ -242,15 +242,15 @@ test("versions only the Johannesburg image to refresh the native cache", () => {
   );
 });
 
-test("Explore stays creates canonical Hotel form intent without inventing a search", () => {
+test("Explore stays creates a complete direct canonical Hotel exploration search", () => {
   assert.deepEqual(homepageHotelDestinationParams({ city: "London" }), {
     destinationId: "gb-london",
-    destination: "London",
+    destination: "London, United Kingdom",
     intentSource: "home-popular-stays",
   });
-  assert.deepEqual(popularDestinationStayNavigation({ city: "London" }), {
-    pathname: "/hotels",
-    params: { destinationId: "gb-london", destination: "London", intentSource: "home-popular-stays" },
+  assert.deepEqual(popularDestinationStayNavigation({ city: "London" }, new Date("2030-01-01T00:00:00Z")), {
+    pathname: "/hotel-results",
+    params: { destinationId: "gb-london", destination: "London, United Kingdom", checkIn: "2030-01-29", checkOut: "2030-02-05", guests: "2", rooms: "1", sort: "cheapest", intentSource: "home-popular-stays" },
   });
   assert.match(
     section,
