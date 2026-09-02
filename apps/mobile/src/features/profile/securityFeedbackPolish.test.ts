@@ -4,12 +4,19 @@ import test from "node:test";
 
 const security = readFileSync("src/features/profile/SecurityScreen.tsx", "utf8");
 const passwordChangeFlow = readFileSync("src/features/profile/PasswordChangeFlow.tsx", "utf8");
+const passwordResetFlow = readFileSync("src/features/profile/PasswordResetFlow.tsx", "utf8");
 
-test("security success feedback is concise without weakening accessibility copy", () => {
+test("security success feedback stays scoped without weakening accessibility copy", () => {
   assert.match(security, /function shortFeedbackMessage/);
   assert.match(security, /setLandingMessage\(shortFeedbackMessage\(c\.passwordSuccess\)\)/);
   assert.match(passwordChangeFlow, /AccessibilityInfo\.announceForAccessibility\(copy\.passwordSuccess\)/);
-  assert.match(security, /setLandingMessage\(shortFeedbackMessage\(resetCopy\.success\)\)/);
+
+  assert.doesNotMatch(security, /setLandingMessage\(shortFeedbackMessage\(resetCopy\.success\)\)/);
+  assert.match(passwordResetFlow, /setSucceeded\(true\)/);
+  assert.match(passwordResetFlow, /AccessibilityInfo\.announceForAccessibility\(navigationCopy\.successButton\)/);
+  assert.match(passwordResetFlow, /setTimeout\(resolve, 1200\)/);
+  assert.match(passwordResetFlow, /label=\{succeeded \? navigationCopy\.successButton : navigationCopy\.submit\}/);
+  assert.match(passwordResetFlow, /accessibilityLiveRegion="polite"/);
 });
 
 test("security success toast is anchored below the header instead of above destructive actions", () => {
