@@ -1,18 +1,19 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { travelApi } from "../../api/travelApi";
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
+import { profileWelcomeGreeting } from "../../localization/profileGreetingCopy";
+import { peekProfileName, readProfileName, writeProfileName } from "../../storage/profileNameCache";
 import { readSession } from "../../storage/sessionStorage";
+import { useAppTheme } from "../../theme/AppTheme";
 import { authApi } from "../auth/authApi";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
-import { useAppTheme } from "../../theme/AppTheme";
-import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
-import { profileWelcomeGreeting } from "../../localization/profileGreetingCopy";
+import { AppVersionFooter } from "./AppVersionFooter";
 import { ProfileCardSection } from "./ProfileCardSection";
 import { authenticatedProfileSections, profileFirstName } from "./profileModel";
-import { AppVersionFooter } from "./AppVersionFooter";
 
 function Header({ unreadCount }: { unreadCount: number }) {
   const { theme } = useAppTheme(); const { t } = useMobileLocalization();
@@ -36,15 +37,44 @@ function WelcomeCard({ name, email }: { name: string | null; email: string | nul
 }
 
 export function AuthenticatedProfileScreen() {
-  const { theme } = useAppTheme(); const { t } = useMobileLocalization(); const [unreadCount, setUnreadCount] = useState(0); const [authenticated, setAuthenticated] = useState(false); const [name, setName] = useState<string | null>(null); const [email, setEmail] = useState<string | null>(null); const [identityResolved, setIdentityResolved] = useState(false);
-  const load = useCallback(() => { void readSession().then(session => { setAuthenticated(Boolean(session)); setEmail(session?.user.email ?? null); if (!session) { setName(null); setIdentityResolved(false); return; } void travelApi.profile().then(({ profile, user }) => { setName(profile?.fullName ?? null); setEmail(user.email || session.user.email || null); setIdentityResolved(true); }).catch(() => undefined); }).catch(() => { setAuthenticated(false); setName(null); setEmail(null); setIdentityResolved(false); }); void travelApi.notificationUnreadCount().then(({ count }) => setUnreadCount(count)).catch(() => undefined); }, []);
-  useEffect(load, [load]); useFocusEffect(load);
+  const { theme } = useAppTheme(); const { t } = useMobileLocalization(); const [unreadCount, setUnreadCount] = useState(0); const [authenticated, setAuthenticated] = useState(false); const [name, setName] = useState<string | null>(null); const [email, setEmail] = useState<string | null>(null); const loadGeneration = useRef(0);
+  const load = useCallback(() => {
+    const generation = ++loadGeneration.current;
+    void readSession().then(session => {
+      if (generation !== loadGeneration.current) return;
+      setAuthenticated(Boolean(session));
+      setEmail(session?.user.email ?? null);
+      if (!session) { setName(null); return; }
+      const userId = session.user.id;
+      const memoryName = peekProfileName(userId);
+      if (memoryName !== undefined) setName(memoryName);
+      void readProfileName(userId).then(cachedName => {
+        if (generation === loadGeneration.current) setName(cachedName);
+      }).catch(() => undefined);
+      void travelApi.profile().then(({ profile, user }) => {
+        if (generation !== loadGeneration.current) return;
+        const authoritativeName = profile?.fullName?.trim() || null;
+        setName(authoritativeName);
+        setEmail(user.email || session.user.email || null);
+        void writeProfileName(userId, authoritativeName).catch(() => undefined);
+      }).catch(() => undefined);
+    }).catch(() => {
+      if (generation !== loadGeneration.current) return;
+      setAuthenticated(false);
+      setName(null);
+      setEmail(null);
+    });
+    void travelApi.notificationUnreadCount().then(({ count }) => {
+      if (generation === loadGeneration.current) setUnreadCount(count);
+    }).catch(() => undefined);
+  }, []);
+  useFocusEffect(load);
   const logout = () => Alert.alert(t("logoutConfirm"), t("logoutExplanation"), [{ text: t("cancel"), style: "cancel" }, { text: t("logout"), style: "destructive", onPress: () => void authApi.logout().catch(() => undefined).finally(() => router.replace("/(tabs)/profile")) }]);
   const [manageAccount, ...remainingSections] = authenticatedProfileSections;
   return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top"]}><ScrollView alwaysBounceVertical={false} bounces={false} overScrollMode="never" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
     <View style={[styles.hero, { backgroundColor: theme.dark ? "#102B4A" : "#F3F8FF" }]}>
       <Header unreadCount={unreadCount} />
-      {identityResolved ? <WelcomeCard name={name} email={email} /> : <View accessible={false} style={styles.welcomeCard} />}
+      <WelcomeCard name={name} email={email} />
     </View>
     <View style={styles.manageAccountOverlap}><ProfileCardSection section={manageAccount} /></View>
     <View style={styles.sections}>{remainingSections.map(section => <ProfileCardSection key={section.title} section={section} />)}</View>
