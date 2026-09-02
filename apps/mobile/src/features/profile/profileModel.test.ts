@@ -11,11 +11,9 @@ test("authenticated profile keeps its existing order and appends legal", () => {
   assert.deepEqual(authenticatedProfileSections.at(-1)?.items.map(item => [item.label, item.destination.href]), [["terms", "/terms"], ["privacy", "/privacy"]]);
 });
 
-test("profile greeting chooses a usable first name without assuming stored name order", () => {
+test("profile greeting uses only the name saved in Personal details", () => {
   assert.equal(profileFirstName("  Bisola Adeyemi "), "Bisola");
-  assert.equal(profileFirstName("Ogunlade Bisola", "bisola.ogunlade@zentricanalytics.com"), "Bisola");
-  assert.equal(profileFirstName("Bisola Ogunlade", "bisola.ogunlade@zentricanalytics.com"), "Bisola");
-  assert.equal(profileFirstName("Ogunlade Bisola", "unrelated@example.com"), "Ogunlade");
+  assert.equal(profileFirstName("Ogunlade Bisola"), "Ogunlade");
   assert.equal(profileFirstName("traveler@example.com"), null);
   assert.equal(profileFirstName("   "), null);
   assert.equal(profileFirstName(undefined), null);
