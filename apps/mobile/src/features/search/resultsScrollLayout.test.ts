@@ -14,14 +14,17 @@ function styleBlock(name: string, nextName: string) {
   return screen.slice(screen.indexOf(`${name}:`), screen.indexOf(`${nextName}:`, screen.indexOf(`${name}:`)));
 }
 
-test("the shared results root owns the semantic themed canvas", () => {
+test("Flight Results owns a stronger light canvas while Hotel Results keeps the semantic canvas", () => {
   const root = screen.slice(screen.indexOf("<SafeAreaView"), screen.indexOf("</SafeAreaView>"));
 
-  assert.match(root, /<SafeAreaView style=\{\[s0\.safe, \{ backgroundColor: theme\.background \}\]\} edges=\{\["top"\]\}>/);
-  assert.doesNotMatch(root, /flightResults\s*&&\s*\{ backgroundColor: theme\.background \}/);
-  assert.match(flightLayout, /<Animated\.SectionList[\s\S]*?style=\{\[s0\.resultsScroll, \{ backgroundColor: theme\.background \}\]\}/);
-  assert.match(flightLayout, /renderSectionHeader[\s\S]*?<View style=\{\{ backgroundColor: theme\.background \}\}>[\s\S]*?\{filterRail\}/);
+  assert.match(screen, /const flightResultsLightCanvas = "#F5F7FB"/);
+  assert.match(screen, /const flightCanvasColor = theme\.dark \? theme\.background : flightResultsLightCanvas/);
+  assert.match(root, /<SafeAreaView style=\{\[s0\.safe, \{ backgroundColor: flightResults \? flightCanvasColor : theme\.background \}\]\}/);
+  assert.match(flightLayout, /<Animated\.SectionList[\s\S]*?style=\{\[s0\.resultsScroll, \{ backgroundColor: flightCanvasColor \}\]\}/);
+  assert.match(flightLayout, /renderSectionHeader[\s\S]*?<View style=\{\[s0\.flightFilterSectionHeader, \{ backgroundColor: flightCanvasColor \}\]\}>[\s\S]*?\{filterRail\}/);
+  assert.match(screen, /function HotelResultsHeader[\s\S]*?backgroundColor: theme\.background/);
   assert.match(styleBlock("hotelCard", "hotelCardCompact"), /backgroundColor: "white"/);
+  assert.match(screen, /s0\.card,[\s\S]*?backgroundColor: theme\.surface/);
 });
 
 test("flight results put fading dates before a native sticky filter rail", () => {
@@ -30,7 +33,7 @@ test("flight results put fading dates before a native sticky filter rail", () =>
   const renderItem = flightLayout.slice(flightLayout.indexOf("renderItem="), flightLayout.indexOf("ListEmptyComponent="));
   assert.doesNotMatch(beforeList, /flightPersistentSearchControls|\{filterRail\}/);
   assert.match(listHeader, /ListHeaderComponent=\{status === "loading" \? \([\s\S]*?<FlightLoadingExperience[\s\S]*?\) : animatedFlightDateStrip\}/);
-  assert.match(listHeader, /renderSectionHeader[\s\S]*?backgroundColor: theme\.background[\s\S]*?\{filterRail\}/);
+  assert.match(listHeader, /renderSectionHeader[\s\S]*?backgroundColor: flightCanvasColor[\s\S]*?\{filterRail\}/);
   assert.match(listHeader, /stickySectionHeadersEnabled/);
   assert.ok(listHeader.indexOf("ListHeaderComponent=") < listHeader.indexOf("renderSectionHeader="));
   assert.match(renderItem, /<PriceAlert[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?<FlightCard/);
@@ -54,12 +57,21 @@ test("date and filter rails retain their horizontal interactions", () => {
 test("persistent flight controls and scrolling count keep compact spacing", () => {
   const count = styleBlock("flightResultCount", "card");
   const rail = styleBlock("filterRail", "resultsScroll");
+  const filterSection = styleBlock("flightFilterSectionHeader", "resultsScroll");
   const filters = styleBlock("filters", "modalBackdrop");
+  const priceAlert = styleBlock("flightPriceAlertItem", "flightCardItem");
   assert.match(rail, /height: 44/);
+  assert.match(filterSection, /paddingTop: 8/);
   assert.match(filters, /paddingHorizontal: 14/);
   assert.match(filters, /paddingVertical: 3/);
   assert.match(filters, /gap: 8/);
+  assert.match(filters, /alignItems: "center"/);
+  assert.match(priceAlert, /paddingHorizontal: 14/);
+  assert.match(priceAlert, /paddingTop: 8/);
+  assert.match(priceAlert, /paddingBottom: 6/);
+  assert.match(count, /paddingHorizontal: 14/);
   assert.match(count, /paddingTop: 4/);
+  assert.match(count, /paddingBottom: 5/);
   assert.doesNotMatch(screen, /stickyFilterSurface|flightPersistentSearchControls/);
 });
 
@@ -112,7 +124,7 @@ test("hotel surviving sections own moderate spacing without changing the shared 
   assert.match(headerSpacing, /marginBottom: 12/);
   assert.doesNotMatch(screen, /hotelHeaderMeta/);
   assert.match(resultSpacing, /paddingTop: 12/);
-  assert.doesNotMatch(styleBlock("filterRail", "resultsScroll"), /margin|paddingTop|paddingBottom/);
+  assert.doesNotMatch(styleBlock("filterRail", "flightFilterSectionHeader"), /margin|paddingTop|paddingBottom/);
   assert.doesNotMatch(flightLayout, /hotelHeader|hotelResultsContent/);
 });
 
