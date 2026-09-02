@@ -15,12 +15,11 @@ test("unresolved identity reserves the welcome space without generic avatar or g
   assert.match(screen, /identityResolved \? <WelcomeCard name=\{name\} email=\{email\} \/> : <View accessible=\{false\} style=\{styles\.welcomeCard\} \/>/);
 });
 
-test("authoritative server identity unlocks the welcome and scopes cache repair to the captured account", () => {
-  assert.match(screen, /const sessionUserId = session\.user\.id/);
-  assert.match(screen, /const authoritativeName = user\.name \?\? null/);
-  assert.match(screen, /setName\(authoritativeName\)/);
+test("authoritative Personal details profile unlocks the welcome without session-name fallback", () => {
+  assert.match(screen, /travelApi\.profile\(\)\.then\(\(\{ profile, user \}\) =>/);
+  assert.match(screen, /setName\(profile\?\.fullName \?\? null\)/);
   assert.match(screen, /setIdentityResolved\(true\)/);
-  assert.match(screen, /updateStoredSessionName\(authoritativeName, sessionUserId\)/);
+  assert.doesNotMatch(screen, /user\.name|updateStoredSessionName/);
 });
 
 test("cached session name updates cannot cross account boundaries or be mutated by unscoped callers", () => {
