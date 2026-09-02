@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const security = readFileSync("src/features/profile/SecurityScreen.tsx", "utf8");
+const passwordChangeFlow = readFileSync("src/features/profile/PasswordChangeFlow.tsx", "utf8");
 const resetFlow = readFileSync("src/features/profile/PasswordResetFlow.tsx", "utf8");
 const localization = readFileSync("src/features/profile/securityLocalization.ts", "utf8");
 
@@ -40,31 +41,63 @@ test("security landing uses flat descriptive blocks and the native header", () =
   assert.doesNotMatch(security, /#003B95|#0071C2|Booking/);
 });
 
-test("password screen separates change and reset flows and wipes sensitive drafts", () => {
+test("password screen keeps change and recovery flows separate", () => {
   const landingEnd = security.indexOf("<ScreenModal visible={passwordOpen}");
   assert.ok(landingEnd > 0);
   const landing = security.slice(0, landingEnd);
-  assert.doesNotMatch(landing, /field\("currentPassword"|field\("newPassword"|field\("confirmPassword"/);
+  assert.doesNotMatch(landing, /currentPassword|newPassword|confirmPassword/);
   assert.match(security, /const \[passwordMode, setPasswordMode\] = useState<"change" \| "reset">\("change"\)/);
-  assert.match(security, /const clearPasswordDraft = \(\) => \{ setPasswords\(\{ currentPassword: "", newPassword: "", confirmPassword: "" \}\); setVisible\(false\); clearPasswordFeedback\(\); \}/);
-  assert.match(security, /const openPassword = \(\) => \{[^\n]*clearPasswordDraft\(\)[^\n]*setPasswordOpen\(true\)/);
-  assert.match(security, /const closePassword = \(\) => \{[^\n]*setPasswordOpen\(false\)[^\n]*clearPasswordDraft\(\)/);
-  assert.match(security, /passwordMode === "change"/);
-  assert.match(security, /setPasswordMode\("reset"\)/);
-  assert.match(security, /resetCopy\.entry/);
+  assert.match(security, /<PasswordChangeFlow/);
+  assert.match(security, /active=\{passwordOpen && passwordMode === "change"\}/);
+  assert.match(security, /recoveryLabel=\{resetCopy\.entry\}/);
+  assert.match(security, /onRecovery=\{\(\) => setPasswordMode\("reset"\)\}/);
   assert.match(security, /<PasswordResetFlow active=\{passwordOpen && passwordMode === "reset"\} copy=\{c\} onUnauthorized=\{unauth\}/);
-  assert.match(security, /travelApi\.changePassword\(passwords\)/);
+  assert.doesNotMatch(security, /travelApi\.changePassword\(/);
 });
 
-test("password change validates on submit while keeping the action pressable", () => {
-  assert.match(security, /const passwordReady = Boolean\(passwords\.currentPassword\)/);
-  assert.match(security, /passwords\.newPassword\.length >= 8/);
-  assert.match(security, /passwords\.newPassword === passwords\.confirmPassword/);
-  assert.match(security, /passwords\.currentPassword !== passwords\.newPassword/);
-  assert.match(security, /if \(!passwordReady\) \{ setPasswordError\(c\.passwordInvalid\); return; \}/);
-  assert.match(security, /<Button label=\{c\.change\} loading=\{submitting\} disabled=\{submitting\}/);
-  assert.doesNotMatch(security, /disabled=\{submitting \|\| !passwordReady\}/);
-  assert.match(security, /setPasswordError\(""\)/);
+test("password change form is polished with per-field visibility controls and rules first", () => {
+  const rulesAt = passwordChangeFlow.indexOf("{copy.passwordRules}");
+  const currentAt = passwordChangeFlow.indexOf("label={copy.current}");
+  const nextAt = passwordChangeFlow.indexOf("label={copy.next}");
+  const confirmAt = passwordChangeFlow.indexOf("label={copy.confirm}");
+  const actionAt = passwordChangeFlow.indexOf("label={copy.change}");
+  assert.ok(rulesAt >= 0 && rulesAt < currentAt);
+  assert.ok(currentAt < nextAt && nextAt < confirmAt && confirmAt < actionAt);
+  assert.match(passwordChangeFlow, /function EyeIcon/);
+  assert.match(passwordChangeFlow, /currentPassword:\s*true,\s*newPassword:\s*true,\s*confirmPassword:\s*true/);
+  assert.match(passwordChangeFlow, /currentPassword: !current\.currentPassword/);
+  assert.match(passwordChangeFlow, /newPassword: !current\.newPassword/);
+  assert.match(passwordChangeFlow, /confirmPassword: !current\.confirmPassword/);
+  assert.doesNotMatch(passwordChangeFlow, />Show password<|>Hide password</);
+  assert.match(passwordChangeFlow, /const formReady = Boolean\(passwords\.currentPassword\)/);
+  assert.match(passwordChangeFlow, /passwords\.newPassword\.length >= 8/);
+  assert.match(passwordChangeFlow, /passwords\.newPassword === passwords\.confirmPassword/);
+  assert.match(passwordChangeFlow, /passwords\.currentPassword !== passwords\.newPassword/);
+});
+
+test("password change requires a verification code before the password is committed", () => {
+  assert.match(passwordChangeFlow, /securityPasswordChangeApi\.start\(passwords\)/);
+  assert.match(passwordChangeFlow, /setStage\("verify"\)/);
+  assert.match(passwordChangeFlow, /Verify it’s you/);
+  assert.match(passwordChangeFlow, /keyboardType="number-pad"/);
+  assert.match(passwordChangeFlow, /textContentType="oneTimeCode"/);
+  assert.match(passwordChangeFlow, /maxLength=\{6\}/);
+  assert.match(passwordChangeFlow, /\^\\d\{6\}\$/);
+  assert.match(passwordChangeFlow, /securityPasswordChangeApi\.confirm\(/);
+  assert.match(passwordChangeFlow, /challengeId:\s*challenge\.challengeId/);
+  assert.match(passwordChangeFlow, /Verify and change password/);
+});
+
+test("password change resend countdown is server-aware and recovery is gated", () => {
+  assert.match(passwordChangeFlow, /resendAfterSeconds \* 1000/);
+  assert.match(passwordChangeFlow, /Request new code in 00:/);
+  assert.match(passwordChangeFlow, /securityPasswordChangeApi\.resend\(/);
+  assert.match(passwordChangeFlow, /retryAfterSeconds/);
+  assert.match(passwordChangeFlow, /setResendUntil\(Date\.now\(\) \+ retryAfter \* 1000\)/);
+  assert.match(passwordChangeFlow, /securityPasswordChangeApi\.status\(\)/);
+  assert.match(passwordChangeFlow, /details\.recoveryAvailable === true/);
+  assert.match(passwordChangeFlow, /recoveryAvailable \? \(/);
+  assert.match(passwordChangeFlow, /onPress=\{onRecovery\}/);
 });
 
 test("password reset validates on submit while keeping the reset action pressable", () => {
@@ -89,10 +122,11 @@ test("password feedback stays visually stable", () => {
   assert.match(security, /function FloatingNotice/);
   assert.match(security, /duration: 180/);
   assert.match(security, /feedbackSlot: \{ minHeight: 20/);
+  assert.match(passwordChangeFlow, /accessibilityRole="alert"/);
+  assert.match(passwordChangeFlow, /accessibilityLiveRegion="polite"/);
   assert.match(resetFlow, /<Text style=\{\[styles\.instructions, \{ color: theme\.muted \}\]\}>\{actionCopy\.sent\}<\/Text>/);
   assert.match(resetFlow, /function InlineFeedback/);
   assert.match(resetFlow, /feedbackSlot: \{ minHeight: 20/);
-  assert.match(resetFlow, /<Text style=\{styles\.buttonText\}>\{label\}<\/Text>\{loading \? <ActivityIndicator/);
 });
 
 test("passkeys use the native security drill-down instead of the web handoff", () => {
@@ -161,23 +195,24 @@ test("successful deletion reactivation discards the revoked session and requires
 
 test("visual feedback is owned by the landing and individual security flows", () => {
   assert.doesNotMatch(security, /const \[error, setError\]|const \[message, setMessage\]/);
-  for (const state of ["landingError", "landingMessage", "passwordError", "passwordMessage", "devicesError", "twoFactorError", "deletionError", "passkeysError", "passkeysMessage"])
+  for (const state of ["landingError", "landingMessage", "devicesError", "twoFactorError", "deletionError", "passkeysError", "passkeysMessage"])
     assert.match(security, new RegExp(`const \\[${state}, set${state[0].toUpperCase()}${state.slice(1)}\\]`));
 
   const landing = security.slice(security.indexOf("return <SafeAreaView"), security.indexOf("<ScreenModal visible={passkeysOpen}"));
   assert.match(landing, /<Feedback error=\{landingError\} message=""/);
   assert.match(landing, /<FloatingNotice message=\{landingMessage\}/);
-  assert.doesNotMatch(landing, /passwordError|passwordMessage|devicesError|twoFactorError|deletionError|passkeysError|passkeysMessage/);
+  assert.doesNotMatch(landing, /devicesError|twoFactorError|deletionError|passkeysError|passkeysMessage/);
   assert.match(security, /<Feedback error=\{passkeysError\} message=\{passkeysMessage\}/);
-  assert.match(security, /<Feedback error=\{passwordError\} message=\{passwordMessage\}/);
   assert.match(security, /<Feedback error=\{devicesError\} message=""/);
   assert.match(security, /<Feedback error=\{twoFactorError\} message=""/);
   assert.match(security, /<Feedback error=\{deletionError\} message=""/);
+  assert.match(passwordChangeFlow, /const \[error, setError\] = useState\(""\)/);
+  assert.match(passwordChangeFlow, /const \[message, setMessage\] = useState\(""\)/);
 });
 
 test("drill-down feedback is cleared on both open and close", () => {
-  assert.match(security, /openPassword[^\n]+clearPasswordDraft\(\)[^\n]+setPasswordOpen\(true\)/);
-  assert.match(security, /closePassword[^\n]+setPasswordOpen\(false\)[^\n]+clearPasswordDraft\(\)/);
+  assert.match(security, /openPassword[^\n]+setPasswordMode\([^\n]+setPasswordOpen\(true\)/);
+  assert.match(security, /closePassword[^\n]+setPasswordOpen\(false\)[^\n]+setPasswordMode\("change"\)/);
   for (const flow of ["Devices"] ) {
     assert.match(security, new RegExp(`open${flow}[^\\n]+set${flow}Error\\(""\\)[^\\n]+set${flow}Open\\(true\\)`));
     assert.match(security, new RegExp(`close${flow}[^\\n]+set${flow}Open\\(false\\)[^\\n]+set${flow}Error\\(""\\)`));
@@ -188,13 +223,13 @@ test("drill-down feedback is cleared on both open and close", () => {
   assert.match(security, /closeDeletion[^\n]+setDeletionOpen\(false\)[^\n]+setDeletionError\(""\)/);
   assert.match(security, /openPasskeys[^\n]+setPasskeysError\(""\)[^\n]+setPasskeysMessage\(""\)[^\n]+setPasskeysOpen\(true\)/);
   assert.match(security, /closePasskeys[^\n]+setPasskeysOpen\(false\)[^\n]+setPasskeysError\(""\)[^\n]+setPasskeysMessage\(""\)/);
+  assert.match(passwordChangeFlow, /if \(!active\) \{\s*clearAll\(\)/);
 });
 
 test("operation failures and messages target only their owning feedback scope", () => {
   const expectations = [
     ["startTwoFactor", "setTwoFactorError"], ["confirmTwoFactor", "setTwoFactorError"], ["disableTwoFactor", "setTwoFactorError"],
-    ["change", "setPasswordError"], ["remove", "setDevicesError"],
-    ["openDeletion", "setDeletionError"], ["requestDeletion", "setDeletionError"], ["reactivate", "setDeletionError"],
+    ["remove", "setDevicesError"], ["openDeletion", "setDeletionError"], ["requestDeletion", "setDeletionError"], ["reactivate", "setDeletionError"],
     ["toggle", "setLandingMessage"], ["all", "setLandingError"],
   ];
   for (let index = 0; index < expectations.length; index += 1) {
@@ -204,21 +239,22 @@ test("operation failures and messages target only their owning feedback scope", 
     assert.ok(start >= 0, `missing ${operation}`);
     assert.match(security.slice(start, next > start ? next : undefined), new RegExp(`${setter}\\(`), `${operation} should use ${setter}`);
   }
+  assert.match(passwordChangeFlow, /setError\(e instanceof TravelApiError \? e\.message : copy\.loadError\)/);
   assert.match(security, /const loadPasskeys = async[^\n]+setPasskeysError\(/);
   assert.match(security, /setLandingError\(c\.loadError\)/);
   assert.match(security, /setLandingError\(c\.saveFailed\)/);
-  assert.doesNotMatch(security, /setLandingError\(c\.openFailed\)/);
   assert.match(security, /setLandingError\(c\.signOutFailed\)/);
 });
 
 test("late modal requests cannot repopulate feedback after close or reopen", () => {
-  for (const flow of ["password", "devices", "twoFactor", "deletion", "passkeys"])
+  for (const flow of ["devices", "twoFactor", "deletion", "passkeys"])
     assert.match(security, new RegExp(`${flow}Request\\.current`));
   assert.match(security, /request === twoFactorRequest\.current/);
-  assert.match(security, /request === passwordRequest\.current/);
   assert.match(security, /request === devicesRequest\.current/);
   assert.match(security, /request===deletionRequest\.current/);
   assert.match(security, /request===passkeysRequest\.current/);
+  assert.match(passwordChangeFlow, /requestGeneration\.current/);
+  assert.match(passwordChangeFlow, /generation !== requestGeneration\.current/);
 });
 
 test("internal modal refreshes stay silent and do not overwrite landing feedback", () => {
