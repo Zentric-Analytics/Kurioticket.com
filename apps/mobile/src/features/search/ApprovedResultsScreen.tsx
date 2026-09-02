@@ -1772,7 +1772,7 @@ const s0 = StyleSheet.create({
     lineHeight: 20,
     fontWeight: "700",
     fontFamily: appFonts.bold,
-    textAlign: "left",
+    textAlign: "center",
   },
   flightRouteSummaryEdit: {
     width: 44,
