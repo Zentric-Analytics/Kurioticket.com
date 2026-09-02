@@ -5,7 +5,6 @@ import {
   requireMobileSecurity,
   mobileUnauthorized,
 } from "@/lib/mobile-security-route";
-import { passwordChangeSchema } from "@/lib/security-service";
 import {
   confirmMobilePasswordChange,
   mobilePasswordChangeStatus,
@@ -22,18 +21,27 @@ type SecurityAuth = {
   user: { id: string; email: string | null };
 };
 
-const requestSchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("start"), ...passwordChangeSchema._def.schema.shape }),
-  z.object({ action: z.literal("resend") }),
-  z.object({
-    action: z.literal("confirm"),
-    code: z.string().trim().regex(/^\d{6}$/),
-    newPassword: z.string().min(8),
-    confirmPassword: z.string().min(8),
-  }).refine((value) => value.newPassword === value.confirmPassword, {
-    path: ["confirmPassword"],
-  }),
-]);
+const startSchema = z.object({
+  action: z.literal("start"),
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8),
+  confirmPassword: z.string().min(8),
+}).refine((value) => value.newPassword === value.confirmPassword, {
+  path: ["confirmPassword"],
+}).refine((value) => value.currentPassword !== value.newPassword, {
+  path: ["newPassword"],
+});
+
+const confirmSchema = z.object({
+  action: z.literal("confirm"),
+  code: z.string().trim().regex(/^\d{6}$/),
+  newPassword: z.string().min(8),
+  confirmPassword: z.string().min(8),
+}).refine((value) => value.newPassword === value.confirmPassword, {
+  path: ["confirmPassword"],
+});
+
+const resendSchema = z.object({ action: z.literal("resend") });
 
 type PasswordRouteDependencies = {
   requireSecurity: (request: Request) => Promise<SecurityAuth | null>;
@@ -76,7 +84,6 @@ export function createPasswordHandlers(
     async POST(request: Request) {
       const auth = await dependencies.requireSecurity(request);
       if (!auth) return mobileUnauthorized();
-
       const email = auth.user.email;
       if (!email) return mobileUnauthorized();
 
@@ -102,8 +109,14 @@ export function createPasswordHandlers(
       const email = auth.user.email;
       if (!email) return mobileUnauthorized();
 
-      const body = await request.json().catch(() => null);
-      const parsed = requestSchema.safeParse(body);
+      const body = await request.json().catch(() => null) as { action?: unknown } | null;
+      const parsed = body?.action === "start"
+        ? startSchema.safeParse(body)
+        : body?.action === "resend"
+          ? resendSchema.safeParse(body)
+          : body?.action === "confirm"
+            ? confirmSchema.safeParse(body)
+            : { success: false as const };
       if (!parsed.success) {
         return NextResponse.json(
           { error: "Please check the password details and try again." },
