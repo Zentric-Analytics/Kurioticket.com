@@ -41,7 +41,7 @@ function CarDetailContent({result,params}:{result:CarResult;params:Record<string
   const offers=useMemo(()=>sortedValidCarOffers(result.offers),[result.offers]);
   const [selectedId,setSelectedId]=useState(offers[0]?.id||""); const selected=offers.find((offer)=>offer.id===selectedId)||offers[0];
   useEffect(()=>setSelectedId(offers[0]?.id||""),[result.id]);
-  const [breakdown,setBreakdown]=useState(false); const saved=useSavedCar(result.id);
+  const [breakdown,setBreakdown]=useState(false); const saved=useSavedCar(result,params);
   const pickupDate=String(one(params.pickupDate)||""); const dropoffDate=String(one(params.dropoffDate)||""); const days=daysBetween(pickupDate,dropoffDate);
   const image=resolveImage(result.imageUrl); const bookable=canBookCarOffer(result.searchPolicy.bookable,selected);
   const go=async()=>{if(!bookable||!selected?.bookingUrl)return;await Linking.openURL(selected.bookingUrl);};

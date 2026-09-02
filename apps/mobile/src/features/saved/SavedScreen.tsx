@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import { Fragment, useState } from "react";
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import type { FlightResult, MobileSavedItem } from "../../api/travelApi";
+import type { CarResult, FlightResult, MobileSavedItem } from "../../api/travelApi";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { useAppTheme } from "../../theme/AppTheme";
@@ -53,6 +53,18 @@ export function canonicalSavedCards(items: readonly MobileSavedItem[]): SavedCar
       const resultsReady = hasValidSearchPlan("hotel", params);
       const title = text(item.hotelName) ?? text(item.label) ?? "Saved hotel";
       return { item, title, secondary: text(item.destination) ?? "Hotel", open: Object.keys(params).length ? () => router.push({ pathname: resultsReady ? "/hotel-results" : "/hotels", params }) : undefined };
+    }
+    if (item.type === "car") {
+      const result = record(payload?.result) as CarResult | undefined;
+      const params = sanitizeSearchParams("car", payload?.searchParams ?? item);
+      const resultsReady = hasValidSearchPlan("car", params);
+      const title = text(item.modelName) ?? result?.modelName ?? "Saved car";
+      const pickup = text(item.pickupLocation) ?? result?.pickupLocation;
+      const dropoff = text(item.dropoffLocation) ?? result?.returnLocation;
+      const open = result && resultsReady
+        ? () => router.push({ pathname: "/car-details", params: { ...params, resultId: result.id, result: JSON.stringify(result) } })
+        : Object.keys(params).length ? () => router.push({ pathname: resultsReady ? "/car-results" : "/cars", params }) : undefined;
+      return { item, title, secondary: pickup && dropoff && pickup !== dropoff ? `${pickup} → ${dropoff}` : pickup ?? "Car", supporting: text(item.categoryLabel) ?? result?.categoryLabel, open };
     }
     const destinationId = text(query?.destinationId);
     const canonicalDestination = destinationId
@@ -122,7 +134,7 @@ export function SavedScreen() {
       </View>
       <View style={[styles.illustrationGap, windowHeight < 760 && styles.illustrationGapShort]} />
       <Text style={[styles.emptyTitle, { color: theme.text }]}>Save what you like for later</Text>
-      <Text style={[styles.emptyText, { color: theme.muted }]}>Keep flights, hotels and searches you’re interested in so you can easily find them again.</Text>
+      <Text style={[styles.emptyText, { color: theme.muted }]}>Keep flights, hotels, cars and searches you’re interested in so you can easily find them again.</Text>
       <Pressable accessibilityRole="button" accessibilityLabel="Start your search" onPress={() => router.dismissTo("/(tabs)")} style={({ pressed }) => [styles.emptyPrimary, pressed && styles.pressed]}><Text style={styles.primaryText}>Start your search</Text></Pressable>
       <View style={styles.emptyBottomSpacer} />
     </ScrollView> : null}

@@ -5,7 +5,7 @@ import { savedRepositoryFor, type SavedSnapshot } from "./savedRepository";
 import { favoriteAction } from "./favoriteAccess";
 import { showFavoriteSignInPrompt } from "./favoriteSignInPrompt";
 
-const emptySnapshot = (): SavedSnapshot => ({ destinationIds: new Set(), flights: new Map(), pendingFlightKeys: new Set(), items: [], loading: true, error: "" });
+const emptySnapshot = (): SavedSnapshot => ({ destinationIds: new Set(), flights: new Map(), cars: new Map(), pendingFlightKeys: new Set(), items: [], loading: true, error: "" });
 
 export function useCanonicalSaved() {
   const [userId, setUserId] = useState<string | null>(null);
@@ -30,6 +30,13 @@ export function useCanonicalSaved() {
       }
       await savedRepositoryFor(userId).toggleHotel(hotel, params);
     },
-    remove: async (type: "flight" | "hotel" | "search", id: string) => { if (userId) await savedRepositoryFor(userId).remove(type, id); },
+    toggleCar: async (car: import("../api/travelApi").CarResult, params: Record<string, unknown>) => {
+      if (favoriteAction(userId) === "sign-in" || !userId) {
+        showFavoriteSignInPrompt("/saved");
+        return;
+      }
+      await savedRepositoryFor(userId).toggleCar(car, params);
+    },
+    remove: async (type: "flight" | "hotel" | "car" | "search", id: string) => { if (userId) await savedRepositoryFor(userId).remove(type, id); },
   };
 }

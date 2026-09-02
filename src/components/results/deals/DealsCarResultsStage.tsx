@@ -214,6 +214,15 @@ export function DealsCarResultsStage({
   return (
     <CarsResultsExperience
       results={results}
+      search={{
+        pickupLocation: search.carPickupLocation,
+        dropoffLocation: search.carReturnToDifferentLocation ? search.carReturnLocation : search.carPickupLocation,
+        pickupDate: search.carPickupDate,
+        pickupTime: search.carPickupTime,
+        dropoffDate: search.carReturnDate,
+        dropoffTime: search.carReturnTime,
+        driverAge: String(search.carDriverAge),
+      }}
       inventoryStatus="available"
       hasSearchContext
       resultHeadingId="guided-car-results-heading"

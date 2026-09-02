@@ -1823,6 +1823,7 @@ export function CarsResultsClient({
       <div ref={resultsGridRef} className="page-shell pb-6 pt-12 sm:pt-6">
         <CarsResultsExperience
           results={initialResults}
+          search={values}
           inventoryStatus={inventoryStatus}
           hasSearchContext={hasSearchContext}
           resultHeadingId="cars-results-heading"
@@ -1841,6 +1842,7 @@ export function CarsResultsClient({
 
 export function CarsResultsExperience({
   results,
+  search,
   inventoryStatus,
   hasSearchContext,
   resultHeadingId = "cars-results-experience-heading",
@@ -1859,6 +1861,7 @@ export function CarsResultsExperience({
   onMobileModifySearch,
 }: {
   results: NormalizedCarResult[];
+  search: CarSearchParams;
   inventoryStatus: CarInventoryStatus;
   hasSearchContext: boolean;
   resultHeadingId?: string;
@@ -2688,6 +2691,7 @@ export function CarsResultsExperience({
                     <CarResultCard
                       key={car.id}
                       car={car}
+                      search={search}
                       badge={badges.get(car.id)}
                       detailsHref={detailsHrefForCar(car)}
                       onSelect={

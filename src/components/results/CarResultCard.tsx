@@ -28,6 +28,7 @@ import {
 import type { CarResultBadge } from "@/lib/cars/carResults";
 import { getPrimaryCarOffer } from "@/lib/cars/carResults";
 import type { NormalizedCarResult } from "@/lib/cars/types";
+import type { CarSearchParams } from "@/lib/cars/types";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 
 const title = (value: string) =>
@@ -43,6 +44,7 @@ export function CarResultCard({
   car,
   badge,
   detailsHref,
+  search,
   onSelect,
   actionLabel = "View car",
   actionAriaLabel,
@@ -53,6 +55,7 @@ export function CarResultCard({
   car: NormalizedCarResult;
   badge?: CarResultBadge;
   detailsHref: string | null;
+  search: CarSearchParams;
   onSelect?: (car: NormalizedCarResult) => void;
   actionLabel?: string;
   actionAriaLabel?: string;
@@ -65,7 +68,7 @@ export function CarResultCard({
     orSimilar: string;
   };
 }) {
-  const { isSaved, toggleSavedCar } = useSavedCar(car.id);
+  const { isSaved, toggleSavedCar } = useSavedCar(car, search);
   const [shareConfirmation, setShareConfirmation] = useState("");
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();

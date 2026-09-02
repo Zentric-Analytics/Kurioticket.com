@@ -7,6 +7,7 @@ import { getApiBaseUrl } from "../../config/apiUrl";
 import { acceptCanonicalResults, canonicalResultsWereSilentlyLost } from "../flow/canonicalResultAcceptance";
 import { buildSearchPlan, safeCanonicalCarResult } from "../flow/travelSearchModel";
 import { FlowIcon } from "../flow/FlowIcon";
+import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recentSearch";
 import { BottomNav } from "./ApprovedResultsScreen";
 import { CarResultCard } from "./CarResultCard";
 import { Button, DateStrip, Empty, Pill, TopBar, money, shortDate, ui } from "./SearchUi";
@@ -31,7 +32,7 @@ export function ApprovedCarResultsScreen() {
   const load = useCallback(async()=>{
     if(!plan.plan){setStatus("error");setMessage(plan.error||"Invalid car search");return;}
     setStatus("loading");setMessage("");
-    try{const response=await travelApi.searchCars(plan.plan.payload);const acceptance=acceptCanonicalResults(response.results,safeCanonicalCarResult);if(acceptance.rejectedIds.length)console.warn("[travel-search] canonical car results failed client safety checks",{requestId:response.requestId,canonicalCount:acceptance.canonicalCount,acceptedCount:acceptance.accepted.length,rejectedIds:acceptance.rejectedIds});setResults(acceptance.accepted);if(canonicalResultsWereSilentlyLost(acceptance)){setStatus("error");setMessage("The canonical search returned inventory that this app could not render safely.");}else{setStatus(acceptance.accepted.length?"ready":"empty");setMessage(response.warnings?.[0]||"");}}
+    try{const response=await travelApi.searchCars(plan.plan.payload);const acceptance=acceptCanonicalResults(response.results,safeCanonicalCarResult);if(acceptance.rejectedIds.length)console.warn("[travel-search] canonical car results failed client safety checks",{requestId:response.requestId,canonicalCount:acceptance.canonicalCount,acceptedCount:acceptance.accepted.length,rejectedIds:acceptance.rejectedIds});setResults(acceptance.accepted);if(canonicalResultsWereSilentlyLost(acceptance)){setStatus("error");setMessage("The canonical search returned inventory that this app could not render safely.");}else{setStatus(acceptance.accepted.length?"ready":"empty");setMessage(response.warnings?.[0]||"");void recordRecentSearchBestEffort(buildRecentSearch("car",plan.plan.payload));}}
     catch(error){setStatus("error");setMessage(error instanceof Error?error.message:"Car search failed");}
   },[plan.plan?.key,retry]);
   useEffect(()=>{void load();},[load]);
@@ -62,7 +63,7 @@ export function ApprovedCarResultsScreen() {
       {status==="loading"?<CarSkeletons/>:null}
       {status==="empty"?<Empty title="No rental cars found" body="Try changing your dates, pickup location, or filters." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>:null}
       {status==="error"?<Empty title="Car search could not be completed" body={message||"Check your connection and try again."} retry={()=>setRetry((value)=>value+1)} edit={edit}/>:null}
-      {status==="ready"?<><View style={r.found}><View style={r.foundCopy}><Text style={r.foundTitle}>{filtered.length} cars found</Text><Text style={r.sub}>Prices include taxes & fees when reported</Text></View></View>{filtered.length?filtered.map((result,index)=><CarResultCard key={result.id} result={result} rank={index} imageUri={image(result.imageUrl)} days={days} onViewDeal={()=>openDeal(result)}/>):<Empty title="No cars match these filters" body="Clear filters to see the available rental cars." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>}<CarPriceAlert/></>:null}
+      {status==="ready"?<><View style={r.found}><View style={r.foundCopy}><Text style={r.foundTitle}>{filtered.length} cars found</Text><Text style={r.sub}>Prices include taxes & fees when reported</Text></View></View>{filtered.length?filtered.map((result,index)=><CarResultCard key={result.id} result={result} rank={index} imageUri={image(result.imageUrl)} days={days} searchParams={payload} onViewDeal={()=>openDeal(result)}/>):<Empty title="No cars match these filters" body="Clear filters to see the available rental cars." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>}<CarPriceAlert/></>:null}
     </ScrollView>
     <BottomNav />
   </SafeAreaView>;

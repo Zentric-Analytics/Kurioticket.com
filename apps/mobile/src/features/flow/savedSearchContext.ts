@@ -7,9 +7,10 @@ export type SafeSearchParams = Record<string, string>;
 const keys = {
   flight: ["tripType", "origin", "from", "destination", "to", "departureDate", "returnDate", "adults", "children", "infants", "travelers", "cabinClass", "cabin"],
   hotel: ["destination", "checkIn", "checkOut", "guests", "rooms"],
+  car: ["pickupLocation", "dropoffLocation", "pickupDate", "pickupTime", "dropoffDate", "dropoffTime", "driverAge"],
 } as const;
 
-export function sanitizeSearchParams(product: "flight" | "hotel", value: unknown): SafeSearchParams {
+export function sanitizeSearchParams(product: "flight" | "hotel" | "car", value: unknown): SafeSearchParams {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   const source = value as Record<string, RouteValue>;
   return Object.fromEntries(keys[product].flatMap((key) => {
@@ -43,6 +44,6 @@ export function legacyHotelSearchParams(item: MobileSavedItem): SafeSearchParams
   });
 }
 
-export function hasValidSearchPlan(product: Exclude<Product, "car">, params: SafeSearchParams, now = new Date()) {
+export function hasValidSearchPlan(product: Product, params: SafeSearchParams, now = new Date()) {
   return Boolean(buildSearchPlan(product, params, now).plan);
 }

@@ -1,18 +1,11 @@
-import { useSyncExternalStore } from "react";
+import type { CarResult } from "../../api/travelApi";
+import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 
-const saved = new Set<string>();
-const listeners = new Set<() => void>();
-const subscribe = (listener: () => void) => { listeners.add(listener); return () => listeners.delete(listener); };
-const snapshot = (id: string) => saved.has(id);
-
-export const isCarSaved = (id: string) => saved.has(id);
-export const setCarSaved = (id: string, value: boolean) => {
-  if (value) saved.add(id); else saved.delete(id);
-  listeners.forEach((listener) => listener());
-};
-
-export function useSavedCar(id: string) {
-  const selected = useSyncExternalStore(subscribe, () => snapshot(id), () => false);
-  const toggle = () => setCarSaved(id, !saved.has(id));
-  return { saved: selected, toggle };
+/** Account-backed canonical Car save state shared by iOS and Android. */
+export function useSavedCar(result: CarResult, searchParams: Record<string, unknown>) {
+  const savedState = useCanonicalSaved();
+  return {
+    saved: savedState.cars.has(result.id),
+    toggle: () => savedState.toggleCar(result, searchParams),
+  };
 }

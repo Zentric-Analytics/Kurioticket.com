@@ -256,7 +256,7 @@ const isRecentSearchEntry = (entry: unknown): entry is RecentSearchEntry => {
   const candidate = entry as Partial<RecentSearchEntry>;
   return Boolean(
     candidate.id &&
-    (candidate.type === "flight" || candidate.type === "hotel") &&
+    (candidate.type === "flight" || candidate.type === "hotel" || candidate.type === "car") &&
     candidate.createdAt &&
     candidate.label &&
     candidate.subtitle &&
@@ -377,8 +377,9 @@ export const clearRecentSearches = (): void => {
 };
 
 export const buildCarRecentSearch = (params: RecentCarParams): RecentSearchEntry => {
-  const id = buildId("car", params);
-  const dropoff = params.dropoffLocation?.trim();
+  const dropoff = params.dropoffLocation?.trim() || params.pickupLocation;
+  const canonicalParams = { ...params, dropoffLocation: dropoff };
+  const id = buildId("car", canonicalParams);
   const label = dropoff && dropoff !== params.pickupLocation
     ? `${params.pickupLocation} → ${dropoff}`
     : params.pickupLocation;
@@ -392,7 +393,7 @@ export const buildCarRecentSearch = (params: RecentCarParams): RecentSearchEntry
     driverAge: params.driverAge,
   });
   if (dropoff) query.set("dropoffLocation", dropoff);
-  return { id, type: "car", createdAt: new Date().toISOString(), label, subtitle, href: `/cars/results?${query.toString()}`, params };
+  return { id, type: "car", createdAt: new Date().toISOString(), label, subtitle, href: `/cars/results?${query.toString()}`, params: canonicalParams };
 };
 
 type SearchImageMeta = {

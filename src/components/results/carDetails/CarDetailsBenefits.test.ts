@@ -112,7 +112,7 @@ test("standalone details separate mobile model actions from the image while reta
   assert.match(heroSource, /absolute inset-x-0 top-0 z-10 hidden bg-gradient-to-b/);
   assert.match(heroSource, /md:block/);
   assert.match(heroSource, /{overlay}/);
-  assert.match(clientSource, /useSavedCar\(car\.id\)/);
+  assert.match(clientSource, /useSavedCar\(car, search\)/);
   assert.match(clientSource, /navigator\.share/);
   assert.match(clientSource, /text-\[#075EE8\] md:text-white\/85/);
   assert.match(

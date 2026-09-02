@@ -1,14 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isCarSaved, setCarSaved } from "./carSavedState";
+import { readFileSync } from "node:fs";
 
-test("car save state is shared without leaking between result ids", () => {
-  setCarSaved("car-a", false);
-  setCarSaved("car-b", false);
-  setCarSaved("car-a", true);
-  assert.equal(isCarSaved("car-a"), true);
-  assert.equal(isCarSaved("car-b"), false);
-  setCarSaved("car-a", false);
-  assert.equal(isCarSaved("car-a"), false);
-  assert.equal(isCarSaved("car-b"), false);
+test("car save state delegates to the account-backed canonical repository", () => {
+  const source = readFileSync("src/features/search/carSavedState.ts", "utf8");
+  assert.match(source, /useCanonicalSaved/);
+  assert.match(source, /savedState\.cars\.has\(result\.id\)/);
+  assert.match(source, /savedState\.toggleCar\(result, searchParams\)/);
+  assert.doesNotMatch(source, /new Set/);
 });

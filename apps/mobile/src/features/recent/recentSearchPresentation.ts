@@ -2,7 +2,7 @@ import type { MobileRecentSearch } from "../../api/travelApi";
 import { sanitizeSearchParams } from "../flow/savedSearchContext";
 
 export type RecentSearchPresentation = {
-  icon: "flight" | "hotel";
+  icon: "flight" | "hotel" | "car";
   title: string;
   metadata: string;
 };
@@ -49,6 +49,12 @@ export function recentSearchPresentation(item: MobileRecentSearch): RecentSearch
       formatCabinClass(params.cabinClass || params.cabin),
     ].filter(Boolean).join(" · ");
     return { icon: "flight", title, metadata: metadata || item.subtitle };
+  }
+
+  if (item.type === "car") {
+    const title = params.pickupLocation && params.dropoffLocation && params.pickupLocation !== params.dropoffLocation ? `${params.pickupLocation} → ${params.dropoffLocation}` : params.pickupLocation || item.label;
+    const metadata = [formatDateRange(params.pickupDate, params.dropoffDate), params.driverAge ? `Driver age ${params.driverAge}` : ""].filter(Boolean).join(" · ");
+    return { icon: "car", title, metadata: metadata || item.subtitle };
   }
 
   const metadata = [

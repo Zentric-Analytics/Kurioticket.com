@@ -10,12 +10,14 @@ export const RECENT_SEARCH_RETENTION_DAYS = 90;
 const recentSearchTypeToPrisma = {
   flight: "FLIGHT",
   hotel: "HOTEL",
-} as const satisfies Record<"flight" | "hotel", PrismaSearchType>;
+  car: "CAR",
+} as const satisfies Record<"flight" | "hotel" | "car", PrismaSearchType>;
 
 const prismaSearchTypeToPublic = {
   FLIGHT: "flight",
   HOTEL: "hotel",
-} as const satisfies Record<PrismaSearchType, "flight" | "hotel">;
+  CAR: "car",
+} as const satisfies Record<PrismaSearchType, "flight" | "hotel" | "car">;
 
 const nonNegativeIntegerSchema = z.number().int().min(0);
 const positiveIntegerSchema = z.number().int().min(1);
@@ -50,9 +52,21 @@ const recentHotelParamsSchema = z.object({
   rooms: positiveIntegerSchema,
 });
 
+const recentCarParamsSchema = z.object({
+  pickupLocation: z.string().trim().min(1).max(256),
+  dropoffLocation: z.string().trim().min(1).max(256),
+  pickupDate: z.string().trim().min(1).max(32),
+  pickupTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
+  dropoffDate: z.string().trim().min(1).max(32),
+  dropoffTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
+  driverAge: z.union([z.string().regex(/^\d{2}$/), z.number().int().min(18).max(70)]),
+  unverifiedLocation: z.boolean().optional(),
+});
+
 const recentSearchResultPathByType = {
   flight: "/flights/results",
   hotel: "/hotels/results",
+  car: "/cars/results",
 } as const;
 
 function isInternalResultHrefForType(
@@ -80,6 +94,10 @@ export const recentSearchInputSchema = z
       type: z.literal("hotel"),
       params: recentHotelParamsSchema,
     }),
+    recentSearchBaseInputSchema.extend({
+      type: z.literal("car"),
+      params: recentCarParamsSchema,
+    }),
   ])
   .superRefine((input, context) => {
     if (isInternalResultHrefForType(input.href, input.type)) return;
@@ -99,7 +117,7 @@ export type RecentSearchInput = z.infer<typeof recentSearchInputSchema>;
 
 export type PublicRecentSearch = {
   id: string;
-  type: "flight" | "hotel";
+  type: "flight" | "hotel" | "car";
   createdAt: string;
   updatedAt: string;
   label: string;

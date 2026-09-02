@@ -2261,7 +2261,7 @@ export function SearchTabs({
     }
 
     const href = `/cars/results?${params.toString()}`;
-    upsertRecentSearch(buildCarRecentSearch({
+    const recentSearch = buildCarRecentSearch({
       pickupLocation,
       dropoffLocation: carsValues.returnToDifferentLocation ? dropoffLocation : undefined,
       pickupDate: carsValues.pickupDate,
@@ -2269,7 +2269,9 @@ export function SearchTabs({
       pickupTime: carsValues.pickupTime,
       dropoffTime: carsValues.dropoffTime,
       driverAge: carsValues.driverAge,
-    }));
+    });
+    upsertRecentSearch(recentSearch);
+    void syncBackendRecentSearch(recentSearch);
     setIsCarsSubmitting(true);
     onCarsResultsNavigationStart?.();
     startRouteProgress();

@@ -2,7 +2,15 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
-type Item = { id: string; type?: string; label?: string | null; airlineName?: string; hotelName?: string; destination?: string | null; subtitle?: string; href?: string };
+type Item = { id: string; type?: string; label?: string | null; airlineName?: string; hotelName?: string; modelName?: string; pickupLocation?: string; destination?: string | null; subtitle?: string; href?: string; payload?: unknown };
+const savedHref = (item: Item) => {
+  if (item.href) return item.href;
+  if (item.type !== "car" || !item.payload || typeof item.payload !== "object") return undefined;
+  const payload = item.payload as { result?: { id?: unknown }; searchParams?: unknown };
+  if (!payload.result || typeof payload.result.id !== "string" || !payload.searchParams || typeof payload.searchParams !== "object") return undefined;
+  const params = new URLSearchParams(Object.entries(payload.searchParams as Record<string, unknown>).flatMap(([key, value]) => typeof value === "string" || typeof value === "number" ? [[key, String(value)]] : []));
+  return `/cars/details/${encodeURIComponent(payload.result.id)}?${params.toString()}`;
+};
 export function SavedRecentContent() {
   const [tab, setTab] = useState<"saved" | "recent">("saved");
   const [saved, setSaved] = useState<Item[]>([]);
@@ -32,6 +40,6 @@ export function SavedRecentContent() {
     </div>
     {error ? <p className="mt-6 rounded-lg bg-red-50 p-4 text-red-800">{error}</p> : null}
     {!error && items.length === 0 ? <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-8 text-center"><h2 className="text-xl font-bold text-navy">No {tab} travel yet</h2><p className="mt-2 text-slate-600">{tab === "saved" ? "Use Save on a flight, hotel, or search to keep it here." : "Your latest searches will appear here."}</p></div> : null}
-    <ul className="mt-6 grid gap-3">{items.map(item => <li key={`${item.type ?? "recent"}-${item.id}`} className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4"><div className="min-w-0 flex-1"><strong className="block truncate text-navy">{item.label || item.airlineName || item.hotelName || item.destination || "Saved search"}</strong><span className="text-sm capitalize text-slate-500">{item.type || item.subtitle || "Recent search"}</span></div>{item.href ? <Link className="font-semibold text-teal" href={item.href}>Search again</Link> : null}<button className="font-semibold text-red-700" onClick={() => void (tab === "saved" ? removeSaved(item) : removeRecent(item.id))}>Remove</button></li>)}</ul>
+    <ul className="mt-6 grid gap-3">{items.map(item => { const href = savedHref(item); return <li key={`${item.type ?? "recent"}-${item.id}`} className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4"><div className="min-w-0 flex-1"><strong className="block truncate text-navy">{item.label || item.airlineName || item.hotelName || item.modelName || item.destination || item.pickupLocation || "Saved search"}</strong><span className="text-sm capitalize text-slate-500">{item.type || item.subtitle || "Recent search"}</span></div>{href ? <Link className="font-semibold text-teal" href={href}>Search again</Link> : null}<button className="font-semibold text-red-700" onClick={() => void (tab === "saved" ? removeSaved(item) : removeRecent(item.id))}>Remove</button></li>; })}</ul>
   </section>;
 }

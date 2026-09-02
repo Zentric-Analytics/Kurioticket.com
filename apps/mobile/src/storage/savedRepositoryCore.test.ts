@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { CreateMobileSavedItem, FlightResult, MobileSavedItem } from "../api/travelApi";
+import type { CarResult, CreateMobileSavedItem, FlightResult, MobileSavedItem } from "../api/travelApi";
 import { flightSavedSignature, mapFlightToSaved } from "./savedMapping";
 import { SavedRepository, type SavedRepositoryDependencies } from "./savedRepositoryCore";
 
@@ -8,6 +8,8 @@ const flight = (id = "offer-old", provider = "duffel", departureTime = "2030-01-
   id, provider, airlineName: "Example Air", originAirport: "LOS", destinationAirport: "LHR",
   departureTime, arrivalTime: "2030-01-01T16:00:00Z", price: 500, currency: "USD",
 } as FlightResult);
+const car = { id: "car-1", modelName: "Toyota Corolla", categoryLabel: "Compact", pickupLocation: "Lagos Airport", returnLocation: "Lagos Airport", rentalCompanyName: "Acme Cars", offers: [{ id: "offer-1", bookingProviderName: "Provider", rentalCompanyName: "Acme Cars", totalPrice: 120, pricePerDay: 60, currency: "USD" }] } as unknown as CarResult;
+const carParams = { pickupLocation: "Lagos Airport", dropoffLocation: "Lagos Airport", pickupDate: "2030-01-01", pickupTime: "10:00", dropoffDate: "2030-01-03", dropoffTime: "10:00", driverAge: "30" };
 const serverItem = (value: FlightResult, id = "saved-1") => ({
   ...mapFlightToSaved(value), id, createdAt: "2030-01-01T00:00:00Z",
 } as MobileSavedItem);
@@ -47,6 +49,17 @@ test("save and remove publish optimistic and final canonical snapshots", async (
   await remove.repository.toggleFlight(flight("offer-new"));
   assert.equal(removeSnapshots.includes(false), true); assert.deepEqual(remove.removes, ["saved-1"]); assert.equal(remove.creates.length, 0);
   assert.equal(remove.repository.snapshot().flights.has(flightSavedSignature(flight())), false);
+});
+
+test("Car save and remove reconcile through the account repository", async () => {
+  const h = harness(); await h.repository.refresh();
+  await h.repository.toggleCar(car, carParams);
+  assert.equal(h.repository.snapshot().cars.has(car.id), true);
+  assert.equal(h.creates[0]?.type, "car");
+  assert.deepEqual((h.creates[0]?.payload as { searchParams?: unknown }).searchParams, carParams);
+  await h.repository.toggleCar(car, carParams);
+  assert.equal(h.repository.snapshot().cars.has(car.id), false);
+  assert.deepEqual(h.removes, ["saved-1"]);
 });
 
 test("rapid duplicate toggles allow one mutation while different flights remain concurrent", async () => {
