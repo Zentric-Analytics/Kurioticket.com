@@ -140,6 +140,11 @@ const flightSupportText = {
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 const sameStringArray = (left: readonly string[], right: readonly string[]) =>
   left.length === right.length && left.every((value, index) => value === right[index]);
+const hotelStayNightCount = (checkIn?: string, checkOut?: string) => {
+  const start = Date.parse(`${checkIn ?? ""}T00:00:00Z`);
+  const end = Date.parse(`${checkOut ?? ""}T00:00:00Z`);
+  return Number.isFinite(start) && Number.isFinite(end) ? Math.max(1, Math.round((end - start) / 86_400_000)) : 1;
+};
 export function ApprovedResultsScreen({ product }: { product: Product }) {
   const { theme } = useAppTheme();
   const { top: topSafeAreaInset } = useSafeAreaInsets();
@@ -828,7 +833,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         </>
       ) : (
         <>
-          <HotelFilterSheet visible={hotelFilterOpen} section={hotelFilterSection} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} onChange={setHotelFilters} onClose={()=>setHotelFilterOpen(false)}/>
+          <HotelFilterSheet visible={hotelFilterOpen} section={hotelFilterSection} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} totalCount={results.length} matchingCount={sorted.length} onChange={setHotelFilters} onClose={()=>setHotelFilterOpen(false)}/>
           {hotelShortcutMenu && hotelShortcutAnchor ? hotelShortcutMenu === "sort"
             ? <HotelResultsShortcutMenu kind="sort" anchor={hotelShortcutAnchor} sort={hotelSort} onSortChange={setHotelSort} onClose={closeHotelShortcutMenu} />
             : <HotelResultsShortcutMenu kind={hotelShortcutMenu} anchor={hotelShortcutAnchor} filters={hotelFilters} options={hotelOptions} onChange={setHotelFilters} onClose={closeHotelShortcutMenu} />
