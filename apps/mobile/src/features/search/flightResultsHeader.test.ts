@@ -100,8 +100,8 @@ test("Flight Results header separates Back, route summary, and Edit controls", (
   assert.match(header, /numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit[\s\S]*?minimumFontScale=\{0\.85\}/);
   assert.match(header, /backgroundColor: theme\.surface/);
   assert.match(header, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
-  assert.match(styles, /flightHeader: \{[\s\S]*?paddingTop: 12,[\s\S]*?paddingBottom: 2/);
-  assert.match(header, /backgroundColor: theme\.background/);
+  assert.match(styles, /flightHeader: \{[\s\S]*?paddingTop: 12,[\s\S]*?paddingBottom: 8/);
+  assert.match(header, /style=\{\[s0\.flightHeader, \{ backgroundColor \}\]\}/);
   assert.match(header, /color: theme\.textPrimary/);
 });
 
@@ -131,10 +131,10 @@ test("header and date rail use the structured Flight Results fare-calendar shell
   );
   const railHeight = Number(searchUi.match(/flightDateRail: \{ height: (\d+)/)?.[1]);
 
-  assert.ok(headerBottom <= 3, "header bottom padding remains compact");
+  assert.equal(headerBottom, 8, "header bottom padding separates the route summary and dates");
   assert.equal(navigatorHeight, 82, "navigator fits the 70px tile and compact vertical padding");
   assert.equal(railHeight, navigatorHeight);
-  assert.equal(headerBottom + navigatorHeight, 84);
+  assert.equal(headerBottom + navigatorHeight, 90);
 });
 
 test("canonical flight search data remains available after presentation metadata removal", () => {

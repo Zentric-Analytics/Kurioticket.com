@@ -341,7 +341,7 @@ test("flight journey applies the approved Step 5 hierarchy, colors, and accessib
   assert.match(source, /airportCode: \{ fontSize: 11, lineHeight: 14, fontWeight: "700", fontFamily: appFonts\.bold \}/);
   assert.match(source, /journeyDuration: \{[^}]*fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts\.semibold, textAlign: "center" \}/);
   assert.match(source, /stopLabel: \{[^}]*fontSize: 10, lineHeight: 13, fontWeight: "500", fontFamily: appFonts\.medium, textAlign: "center" \}/);
-  assert.match(source, /flightResultCount: \{ paddingHorizontal: 14, paddingTop: 4, fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts\.bold \}/);
+  assert.match(source, /flightResultCount: \{ paddingHorizontal: 14, paddingTop: 4, paddingBottom: 5, fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts\.bold \}/);
   assert.match(source, /bigPrice: \{ fontSize: 20, lineHeight: 25, fontWeight: "900"/);
 });
 
