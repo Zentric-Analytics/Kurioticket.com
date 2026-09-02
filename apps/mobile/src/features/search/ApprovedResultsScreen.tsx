@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -126,8 +126,8 @@ import { normalizePreferredAirlineFilterValues } from "./preferredAirlineDefault
 import { HotelFilterSheet, type HotelFilterSectionName } from "./HotelFilterSheet";
 import { activeHotelFilterCount, buildHotelFilterOptions, emptyHotelFilters, filterHotels, type HotelFilters } from "./hotelFilters";
 import { HotelCardAmenityList } from "./HotelCardAmenityList";
-import { defaultHotelSort, hotelSortLabel, sortHotelsForResults, type HotelSortMode } from "./hotelSort";
-import { HotelResultsShortcutMenu, type HotelResultsShortcutAnchor, type HotelResultsShortcutMenuKind } from "./HotelResultsShortcutMenu";
+import { defaultHotelSort, sortHotelsForResults } from "./hotelSort";
+import { HotelResultsQuickFilterSheet, type HotelResultsQuickFilterKind } from "./HotelResultsQuickFilterSheet";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -166,7 +166,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const resultsRef = useRef<(FlightResult | HotelResult)[]>([]);
   const [sort, setSort] = useState<FlightSort>("best");
   const [sortOpen, setSortOpen] = useState(false);
-  const [hotelSort, setHotelSort] = useState<HotelSortMode>(defaultHotelSort);
   const [filters, setFilters] = useState<FlightFilters>(emptyFlightFilters);
   const [filtersFlightSearchKey, setFiltersFlightSearchKey] = useState(() => flightResults ? plan.plan?.key : undefined);
   const [preferredAirlineCodes, setPreferredAirlineCodes] = useState<string[] | null>(null);
@@ -179,13 +178,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [hotelFilters, setHotelFilters] = useState<HotelFilters>(emptyHotelFilters);
   const [hotelFilterOpen, setHotelFilterOpen] = useState(false);
   const [hotelFilterSection, setHotelFilterSection] = useState<HotelFilterSectionName>("all");
-  const [hotelShortcutMenu, setHotelShortcutMenu] = useState<HotelResultsShortcutMenuKind | null>(null);
-  const [hotelShortcutAnchor, setHotelShortcutAnchor] = useState<HotelResultsShortcutAnchor | null>(null);
-  const sortShortcutRef = useRef<View>(null);
-  const starsShortcutRef = useRef<View>(null);
-  const amenitiesShortcutRef = useRef<View>(null);
+  const [hotelQuickFilter, setHotelQuickFilter] = useState<HotelResultsQuickFilterKind | null>(null);
   const windowDimensions = useWindowDimensions();
-  const previousWindowDimensions = useRef(`${windowDimensions.width}x${windowDimensions.height}`);
   const previousHotelSearchKey = useRef<string | undefined>(undefined);
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
   const [verifiedDateFareMemory, setVerifiedDateFareMemory] = useState<VerifiedDateFareMemory>();
@@ -218,19 +212,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     if (previousHotelSearchKey.current && previousHotelSearchKey.current !== plan.plan.key) {
       setHotelFilters(emptyHotelFilters());
       setHotelFilterOpen(false);
-      setHotelShortcutMenu(null);
-      setHotelShortcutAnchor(null);
+      setHotelQuickFilter(null);
     }
     previousHotelSearchKey.current = plan.plan.key;
   }, [flightResults, plan.plan?.key]);
-  useEffect(() => {
-    const identity = `${windowDimensions.width}x${windowDimensions.height}`;
-    if (previousWindowDimensions.current !== identity) {
-      setHotelShortcutMenu(null);
-      setHotelShortcutAnchor(null);
-      previousWindowDimensions.current = identity;
-    }
-  }, [windowDimensions.height, windowDimensions.width]);
   useEffect(() => {
     if (!flightResults) return;
     let active = true;
@@ -458,10 +443,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     }
     return sortHotelsForResults(
       filterHotels(results as HotelResult[], hotelFilters, hotelOptions),
-      hotelSort,
+      defaultHotelSort,
       currencyState?.rates,
     );
-  }, [results, filters, hotelFilters, hotelOptions, sort, hotelSort, product, flightPriceContext, normalizeFlightPrice, currencyState?.rates]);
+  }, [results, filters, hotelFilters, hotelOptions, sort, product, flightPriceContext, normalizeFlightPrice, currencyState?.rates]);
   const flightHighlights = useMemo(() => product === "flight"
     ? deriveFlightResultHighlights(sorted as FlightResult[], normalizeFlightPrice)
     : new Map<string, FlightResultHighlight>(), [normalizeFlightPrice, product, sorted]);
@@ -520,16 +505,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     setHotelFilterSection(section);
     setHotelFilterOpen(true);
   };
-  const openHotelShortcutMenu = (kind: HotelResultsShortcutMenuKind, ref: React.RefObject<View | null>) => {
-    ref.current?.measureInWindow((x, y, width, height) => {
-      setHotelShortcutAnchor({ x, y, width, height });
-      setHotelShortcutMenu(kind);
-    });
-  };
-  const closeHotelShortcutMenu = () => {
-    setHotelShortcutMenu(null);
-    setHotelShortcutAnchor(null);
-  };
+  const openHotelQuickFilter = (kind: HotelResultsQuickFilterKind) => setHotelQuickFilter(kind);
+  const closeHotelQuickFilter = () => setHotelQuickFilter(null);
   const handleFlightFiltersChange = useCallback((next: FlightFilters) => {
     const searchKey = plan.plan?.key;
     if (searchKey && !sameStringArray(filters.airlines, next.airlines)) {
@@ -642,9 +619,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               onPress={() => openFlightFilters("all")}
             /> : <>
               <HotelResultsShortcut label="Filter" count={activeHotelFilters || undefined} icon onPress={() => openHotelFilters("all")} />
-              <HotelResultsShortcut ref={sortShortcutRef} label={hotelSortLabel(hotelSort)} expanded={hotelShortcutMenu === "sort"} onPress={() => openHotelShortcutMenu("sort", sortShortcutRef)} />
-              <HotelResultsShortcut ref={starsShortcutRef} label={hotelFilters.starRating ? `${hotelFilters.starRating} ${hotelFilters.starRating === 1 ? "star" : "stars"}` : "Stars"} expanded={hotelShortcutMenu === "stars"} onPress={() => openHotelShortcutMenu("stars", starsShortcutRef)} />
-              <HotelResultsShortcut ref={amenitiesShortcutRef} label={hotelFilters.facilities.length ? `Amenities (${hotelFilters.facilities.length})` : "Amenities"} expanded={hotelShortcutMenu === "amenities"} onPress={() => openHotelShortcutMenu("amenities", amenitiesShortcutRef)} />
+              {hotelOptions.price ? <HotelResultsShortcut label="Price" count={((hotelFilters.minimumPrice !== null && hotelFilters.minimumPrice > hotelOptions.price.minimum) || (hotelFilters.maximumPrice !== null && hotelFilters.maximumPrice < hotelOptions.price.maximum)) ? 1 : undefined} expanded={hotelQuickFilter === "price"} onPress={() => openHotelQuickFilter("price")} /> : null}
+              <HotelResultsShortcut label="Stars" count={hotelFilters.starRatings.length || undefined} expanded={hotelQuickFilter === "stars"} onPress={() => openHotelQuickFilter("stars")} />
+              <HotelResultsShortcut label="Amenities" count={hotelFilters.facilities.length || undefined} expanded={hotelQuickFilter === "amenities"} onPress={() => openHotelQuickFilter("amenities")} />
             </>}
             {(product === "flight"
               ? ["Airlines", "Stops"]
@@ -837,10 +814,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       ) : (
         <>
           <HotelFilterSheet visible={hotelFilterOpen} section={hotelFilterSection} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} totalCount={results.length} matchingCount={sorted.length} onChange={setHotelFilters} onClose={()=>setHotelFilterOpen(false)}/>
-          {hotelShortcutMenu && hotelShortcutAnchor ? hotelShortcutMenu === "sort"
-            ? <HotelResultsShortcutMenu kind="sort" anchor={hotelShortcutAnchor} sort={hotelSort} onSortChange={setHotelSort} onClose={closeHotelShortcutMenu} />
-            : <HotelResultsShortcutMenu kind={hotelShortcutMenu} anchor={hotelShortcutAnchor} filters={hotelFilters} options={hotelOptions} onChange={setHotelFilters} onClose={closeHotelShortcutMenu} />
-            : null}
+          {hotelQuickFilter ? <HotelResultsQuickFilterSheet kind={hotelQuickFilter} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} onChange={setHotelFilters} onClose={closeHotelQuickFilter} /> : null}
         </>
       )}
       {!flightResults ? (
@@ -1031,18 +1005,13 @@ function FlightSortModal({
   );
 }
 
-const HotelResultsShortcut = forwardRef<View, {
-  label: string;
-  icon?: boolean;
-  count?: number;
-  expanded?: boolean;
-  onPress: () => void;
-}>(function HotelResultsShortcut({ label, icon = false, count, expanded = false, onPress }, ref) {
+const HotelResultsShortcut = ({ label, icon = false, count, expanded = false, onPress }: {
+  label: string; icon?: boolean; count?: number; expanded?: boolean; onPress: () => void;
+}) => {
   const { theme } = useAppTheme();
   const accessibilityLabel = icon && count ? `Filter, ${count} active filters` : label;
   return (
     <Pressable
-      ref={ref}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ expanded }}
@@ -1059,7 +1028,7 @@ const HotelResultsShortcut = forwardRef<View, {
       {!icon ? <ChevronDown size={14} color={theme.icon} style={expanded ? { transform: [{ rotate: "180deg" }] } : undefined} /> : null}
     </Pressable>
   );
-});
+};
 
 function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highlight, params, logInitialMount }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; highlight?: FlightResultHighlight; params: Record<string, string | string[]>; logInitialMount: boolean }) {
   const { theme } = useAppTheme();

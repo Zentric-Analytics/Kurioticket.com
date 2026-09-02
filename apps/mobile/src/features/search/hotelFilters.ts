@@ -7,14 +7,14 @@ export type HotelFilters = Record<HotelFilterGroup, string[]> & {
   propertyNameQuery: string;
   minimumPrice: number | null;
   maximumPrice: number | null;
-  starRating: HotelStarRating | null;
+  starRatings: HotelStarRating[];
 };
 export type HotelFilterOption = { value: string; label: string; count: number };
 export type HotelPriceContext = { currency: "USD"; minimum: number; maximum: number; valueForResult: (hotel: HotelResult) => number | null };
 export type HotelFilterOptions = Record<HotelFilterGroup, HotelFilterOption[]> & { starCounts: Record<0 | HotelStarRating, number>; price: HotelPriceContext | null };
 
 const groups: HotelFilterGroup[] = ["areas", "propertyTypes", "roomTypes", "bedTypes", "meals", "cancellationPolicies", "facilities", "travellerFeatures", "accessibility"];
-export const emptyHotelFilters = (): HotelFilters => ({ propertyNameQuery: "", minimumPrice: null, maximumPrice: null, starRating: null, areas: [], propertyTypes: [], roomTypes: [], bedTypes: [], meals: [], cancellationPolicies: [], facilities: [], travellerFeatures: [], accessibility: [] });
+export const emptyHotelFilters = (): HotelFilters => ({ propertyNameQuery: "", minimumPrice: null, maximumPrice: null, starRatings: [], areas: [], propertyTypes: [], roomTypes: [], bedTypes: [], meals: [], cancellationPolicies: [], facilities: [], travellerFeatures: [], accessibility: [] });
 
 const termGroups = {
   propertyTypes: [["hotel", "Hotel", ["hotel"]], ["apartment", "Apartment", ["apartment", "apartments", "aparthotel"]], ["resort", "Resort", ["resort"]], ["suite", "Suite", ["suite", "suites"]], ["inn", "Inn", ["inn"]], ["hostel", "Hostel", ["hostel"]], ["villa", "Villa", ["villa"]]],
@@ -64,7 +64,7 @@ const matchesStructured = (values:readonly string[]|undefined,selected:string[])
 export function hotelMatchesFilters(hotel: HotelResult, filters: HotelFilters, options: HotelFilterOptions): boolean {
   if(filters.propertyNameQuery.trim()&&!normalize(hotel.name).includes(normalize(filters.propertyNameQuery)))return false;
   if(filters.minimumPrice!==null||filters.maximumPrice!==null){const total=options.price?.valueForResult(hotel);if(total===null||total===undefined)return false;if(filters.minimumPrice!==null&&total<filters.minimumPrice)return false;if(filters.maximumPrice!==null&&total>filters.maximumPrice)return false;}
-  if(filters.starRating!==null&&hotel.classificationStars!==filters.starRating)return false;
+  if(filters.starRatings.length&&!filters.starRatings.includes(hotel.classificationStars as HotelStarRating))return false;
   if(filters.areas.length&&(!hotel.neighbourhood||!filters.areas.includes(normalize(hotel.neighbourhood))))return false;
   for(const group of ["propertyTypes","roomTypes","bedTypes"] as const)if(filters[group].length&&!matchesAuthoritative(hotel,group,filters[group]))return false;
   for(const group of ["meals","cancellationPolicies"] as const)if(filters[group].length&&!filters[group].some(value=>{const term=termGroups[group].find(x=>x[0]===value);return term?includesTerms(legacyText(hotel,group),term[2]):false;}))return false;
@@ -74,4 +74,4 @@ export function hotelMatchesFilters(hotel: HotelResult, filters: HotelFilters, o
   return true;
 }
 export const filterHotels=(hotels:readonly HotelResult[],filters:HotelFilters,options:HotelFilterOptions)=>hotels.filter(h=>hotelMatchesFilters(h,filters,options));
-export const activeHotelFilterCount=(filters:HotelFilters,options?:HotelFilterOptions)=>(filters.propertyNameQuery.trim()?1:0)+((filters.minimumPrice!==null&&filters.minimumPrice>(options?.price?.minimum??0))||(filters.maximumPrice!==null&&filters.maximumPrice<(options?.price?.maximum??Infinity))?1:0)+(filters.starRating===null?0:1)+groups.reduce((n,k)=>n+filters[k].length,0);
+export const activeHotelFilterCount=(filters:HotelFilters,options?:HotelFilterOptions)=>(filters.propertyNameQuery.trim()?1:0)+((filters.minimumPrice!==null&&filters.minimumPrice>(options?.price?.minimum??0))||(filters.maximumPrice!==null&&filters.maximumPrice<(options?.price?.maximum??Infinity))?1:0)+filters.starRatings.length+groups.reduce((n,k)=>n+filters[k].length,0);
