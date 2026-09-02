@@ -131,6 +131,8 @@ import { HotelCardAmenityList } from "./HotelCardAmenityList";
 import { defaultHotelSort, sortHotelsForResults } from "./hotelSort";
 import { HotelResultsQuickFilterSheet, type HotelResultsQuickFilterKind } from "./HotelResultsQuickFilterSheet";
 import { hasHotelPrice } from "@/lib/hotels/hotelResultAvailability";
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
+import { travelAccountMessage } from "../../localization/travelAccountMessages";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -1573,6 +1575,8 @@ function HotelLoadingSkeleton() {
 }
 function PriceAlert({ product, plan, results, hotelResults, available = true }: { product: Product; plan?: SearchPlan; results?: FlightResult[]; hotelResults?: HotelResult[]; available?: boolean }) {
   const { theme } = useAppTheme();
+  const { locale, t } = useMobileLocalization();
+  const message = useCallback((key: Parameters<typeof travelAccountMessage>[1]) => travelAccountMessage(locale, key), [locale]);
   const flight = product === "flight";
   const presentation = useMemo(() => flightAlertPresentation(product, Boolean(plan), results || []), [plan?.key, product, results]);
   const hotelPresentation = useMemo(() => hotelAlertPresentation(product, plan, hotelResults || []), [plan?.key, product, hotelResults]);
@@ -1588,10 +1592,10 @@ function PriceAlert({ product, plan, results, hotelResults, available = true }: 
   const isTracking = matchingAlert?.status === "ACTIVE";
   const unavailable = !activePresentation.enabled || (!available && !isTracking);
   const requireSignIn = useCallback(() => Alert.alert(
-    "Sign in required",
-    "Sign in to track prices for this route.",
-    [{ text: "Sign in", onPress: () => router.push(signInHref("/(tabs)/profile")) }, { text: "Cancel", style: "cancel" }],
-  ), []);
+    message("signInRequired"),
+    message("signInAlertBody"),
+    [{ text: t("signIn"), onPress: () => router.push(signInHref("/(tabs)/profile")) }, { text: t("cancel"), style: "cancel" }],
+  ), [message, t]);
   const reconcile = useCallback(async () => {
     if ((!flight && product !== "hotel") || !plan) return;
     setLoadingAlert(true);
@@ -1689,11 +1693,11 @@ function PriceAlert({ product, plan, results, hotelResults, available = true }: 
     );
   }
   if (product !== "hotel" || !plan) return null;
-  return <View accessibilityLabel="Hotel price alert" style={s0.alert}>
-    <View style={s0.alertCopy}><Text style={s0.foundTitle}>Track this stay price</Text><Text style={s0.sub}>Get notified when this complete stay search reaches your target.</Text></View>
+  return <View accessibilityLabel={message("hotelAlertTitle")} style={s0.alert}>
+    <View style={s0.alertCopy}><Text style={s0.foundTitle}>{message("hotelAlertTitle")}</Text><Text style={s0.sub}>{message("hotelAlertBody")}</Text></View>
     <Switch accessibilityLabel="Track hotel prices" accessibilityRole="switch" accessibilityState={{ checked: isTracking, disabled: pending || loadingAlert || unavailable }} value={isTracking} disabled={pending || loadingAlert || unavailable} onValueChange={(next) => void handleToggle(next)} />
-    {!activePresentation.enabled ? <Text accessibilityRole="alert" style={s0.sub}>A comparable Hotel result price is required.</Text> : null}
-    <Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel="Create hotel price alert"><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track stay prices</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Target total ({currency})</Text><TextInput autoFocus accessibilityLabel={`Target total in ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text> : null}<Button label={pending ? "Creating…" : "Create alert"} onPress={() => void createAlert()} /><Button label="Cancel" outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal>
+    {!activePresentation.enabled ? <Text accessibilityRole="alert" style={s0.sub}>{message("hotelAlertUnavailable")}</Text> : null}
+    <Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel={message("hotelAlertTitle")}><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>{message("targetTotal")} ({currency})</Text><TextInput autoFocus accessibilityLabel={`${message("targetTotal")} ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text> : null}<Button label={pending ? message("creating") : message("createAlert")} onPress={() => void createAlert()} /><Button label={t("cancel")} outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal>
   </View>;
 }
 export function BottomNav({ flightResults = false }: { flightResults?: boolean } = {}) {
