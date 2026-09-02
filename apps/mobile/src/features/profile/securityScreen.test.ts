@@ -234,7 +234,7 @@ test("drill-down feedback is cleared on both open and close", () => {
     assert.match(security, new RegExp(`close${flow}[^\\n]+set${flow}Open\\(false\\)[^\\n]+set${flow}Error\\(""\\)`));
   }
   assert.match(security, /openTwoFactor[^\n]+clearTwoFactorState\(\)[^\n]+setTwoFactorOpen\(true\)/);
-  assert.match(security, /closeTwoFactor[^\n]+setTwoFactorOpen\(false\)[^\n]+clearTwoFactorState\(\)/);
+  assert.match(security, /closeTwoFactor[^\n]+clearTwoFactorState\(\)[^\n]+setTwoFactorOpen\(false\)/);
   assert.match(security, /openDeletion[^\n]+setDeletionError\(""\)[^\n]+setDeletionOpen\(true\)/);
   assert.match(security, /closeDeletion[^\n]+setDeletionOpen\(false\)[^\n]+setDeletionError\(""\)/);
   assert.match(security, /openPasskeys[^\n]+setPasskeysError\(""\)[^\n]+setPasskeysMessage\(""\)[^\n]+setPasskeysOpen\(true\)/);

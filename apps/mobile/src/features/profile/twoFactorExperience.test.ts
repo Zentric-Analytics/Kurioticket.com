@@ -31,6 +31,10 @@ test("recovery codes are a dedicated completion step with selectable two-column 
   assert.match(setupFlow, /<Text selectable style=\{\[styles\.recoveryCodeText/);
   assert.match(setupFlow, /recoveryGrid: \{ flexDirection: "row", flexWrap: "wrap"/);
   assert.match(setupFlow, /width: "48%"/);
+  assert.match(setupFlow, /\{p\.saveRecoveryCodesTitle\}/);
+  assert.match(setupFlow, /\{p\.recoveryCodesLabel\}/);
+  assert.match(setupFlow, /\{p\.copyAllRecoveryCodes\}/);
+  assert.match(setupFlow, /Clipboard\.setString\(formatRecoveryCodesForClipboard\(recoveryCodes\)\)/);
   assert.match(setupFlow, /label=\{p\.savedCodesAction\}/);
   assert.match(polishCopy, /savedCodesAction: "I’ve saved these codes"/);
   assert.doesNotMatch(setupFlow, /SecureStore|AsyncStorage/);
@@ -43,6 +47,15 @@ test("recovery-code completion outranks the refreshed enabled overview until ack
   assert.match(setupFlow, /label=\{p\.savedCodesAction\} onPress=\{onClose\}/);
 });
 
+test("initial setup relies on the modal title without opening the keyboard", () => {
+  const start = setupFlow.indexOf("if (!setup)");
+  const initial = setupFlow.slice(start, setupFlow.indexOf("\n  return <View", start));
+  assert.doesNotMatch(initial, /\{c\.twoFactor\}/);
+  assert.match(setupFlow, /autoFocus=\{false\}/);
+  assert.match(security, /avoidKeyboard/);
+  assert.match(security, /<KeyboardAvoidingView/);
+});
+
 test("setup renders the server URI only into a local QR code and keeps the manual fallback", () => {
   assert.match(setupFlow, /import QRCode from "react-native-qrcode-svg"/);
   assert.match(setupFlow, /<QRCode value=\{setup\.otpauthUri\} size=\{200\} quietZone=\{12\} backgroundColor="#FFFFFF" \/>/);
@@ -50,7 +63,9 @@ test("setup renders the server URI only into a local QR code and keeps the manua
   assert.match(setupFlow, /\{c\.scanQrInstructions\}/);
   assert.match(setupFlow, /\{p\.cantScan\}/);
   assert.match(setupFlow, /\{c\.manualSetupInstructions\}/);
-  assert.match(setupFlow, /<Text selectable style=\{\[styles\.setupKey/);
+  assert.match(setupFlow, /<Text selectable numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.65\}/);
+  assert.match(setupFlow, /Clipboard\.setString\(setup\.manualSetupKey\)/);
+  assert.match(setupFlow, /\{p\.copy\}/);
   assert.match(setupFlow, /\{setup\.manualSetupKey\}<\/Text>/);
   assert.doesNotMatch(setupFlow, />\{setup\.otpauthUri\}</);
 });
@@ -61,7 +76,8 @@ test("setup remains ephemeral and preserves the existing verification contract",
   assert.match(security, /Keyboard\.dismiss\(\);setRecoveryCodes/);
   assert.match(security, /AccessibilityInfo\.announceForAccessibility\(c\.recoveryHelp\)/);
   assert.match(setupFlow, /textContentType="oneTimeCode"/);
-  assert.match(setupFlow, /maxLength=\{6\}/);
+  assert.match(setupFlow, /autoFocus=\{false\}/);
+  assert.match(setupFlow, /normalizeAuthenticatorCode\(value\)/);
   assert.doesNotMatch(security + setupFlow, /console\.(?:log|info|debug|warn|error)/);
   assert.doesNotMatch(security + setupFlow, /(?:SecureStore|AsyncStorage|persist|cache).*?(?:otpauthUri|manualSetupKey|authenticatorCode|recoveryCodes)/i);
 });

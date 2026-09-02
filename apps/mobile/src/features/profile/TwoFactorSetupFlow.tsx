@@ -1,10 +1,11 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Clipboard, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import type { TwoFactorSetup } from "../../api/travelApi";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { useAppTheme } from "../../theme/AppTheme";
 import type { SecurityCopy } from "./securityLocalization";
 import { twoFactorPolishCopy } from "./twoFactorPolishCopy";
+import { formatRecoveryCodesForClipboard, normalizeAuthenticatorCode } from "./twoFactorInput";
 
 type Props = {
   active: boolean;
@@ -29,22 +30,20 @@ export function TwoFactorSetupFlow({ active, copy: c, setup, recoveryCodes, auth
 
   if (recoveryCodes.length) {
     return <View style={styles.form}>
-      <View style={styles.statusHeading}>
-        <View style={styles.checkCircle}><Text style={styles.checkText}>✓</Text></View>
-        <Text accessibilityRole="header" style={[styles.stageTitle, { color: theme.text }]}>{p.enabledTitle}</Text>
-      </View>
+      <Text accessibilityRole="header" style={[styles.stageTitle, { color: theme.text }]}>{p.saveRecoveryCodesTitle}</Text>
+      <Text style={[styles.supporting, { color: theme.muted }]}>{p.recoveryCodesIntro}</Text>
       <Text style={[styles.supporting, { color: theme.muted }]}>{c.recoveryHelp}</Text>
+      <Text style={[styles.label, { color: theme.text }]}>{p.recoveryCodesLabel}</Text>
       <View style={styles.recoveryGrid}>
         {recoveryCodes.map((code) => <View key={code} style={[styles.recoveryCode, { borderColor: theme.border, backgroundColor: theme.surface }]}><Text selectable style={[styles.recoveryCodeText, { color: theme.text }]}>{code}</Text></View>)}
       </View>
-      <Text style={[styles.copyHint, { color: theme.muted }]}>{p.copyHint}</Text>
+      <Pressable accessibilityRole="button" onPress={() => { Clipboard.setString(formatRecoveryCodesForClipboard(recoveryCodes)); AccessibilityInfo.announceForAccessibility(p.copied); }} style={({ pressed }) => [styles.copyAllButton, { borderColor: theme.border }, pressed && styles.pressed]}><Text style={styles.copyAction}>{p.copyAllRecoveryCodes}</Text></Pressable>
       <PrimaryButton label={p.savedCodesAction} onPress={onClose} />
     </View>;
   }
 
   if (!setup) {
     return <View style={styles.form}>
-      <Text accessibilityRole="header" style={[styles.stageTitle, { color: theme.text }]}>{c.twoFactor}</Text>
       <Text style={[styles.supporting, { color: theme.muted }]}>{c.twoFactorSetupHelp}</Text>
       {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
       <PrimaryButton label={c.setupTwoFactor} loading={submitting} disabled={submitting} onPress={onStart} />
@@ -63,20 +62,20 @@ export function TwoFactorSetupFlow({ active, copy: c, setup, recoveryCodes, auth
       <Text style={[styles.supporting, { color: theme.muted }]}>{c.manualSetupInstructions}</Text>
       <Text style={[styles.label, { color: theme.text }]}>{p.setupKey}</Text>
       <View style={[styles.keyBox, { borderColor: theme.border, backgroundColor: theme.surface }]}>
-        <Text selectable style={[styles.setupKey, { color: theme.text }]}>{setup.manualSetupKey}</Text>
+        <Text selectable numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={[styles.setupKey, { color: theme.text }]}>{setup.manualSetupKey}</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel={`${p.copy} ${p.setupKey}`} onPress={() => { Clipboard.setString(setup.manualSetupKey); AccessibilityInfo.announceForAccessibility(p.copied); }} hitSlop={8} style={({ pressed }) => [styles.copyTouch, pressed && styles.pressed]}><Text style={styles.copyAction}>{p.copy}</Text></Pressable>
       </View>
-      <Text style={[styles.copyHint, { color: theme.muted }]}>{p.copyHint}</Text>
     </View>
 
     <View style={styles.fieldGroup}>
       <Text style={[styles.label, { color: theme.text }]}>{c.authenticatorCode}</Text>
       <TextInput
         accessibilityLabel={c.authenticatorCode}
+        autoFocus={false}
         keyboardType="number-pad"
         textContentType="oneTimeCode"
-        maxLength={6}
         value={authenticatorCode}
-        onChangeText={(value) => onCodeChange(value.replace(/\D/g, ""))}
+        onChangeText={(value) => onCodeChange(normalizeAuthenticatorCode(value))}
         placeholder={p.codePlaceholder}
         placeholderTextColor={theme.muted}
         style={[styles.input, { color: theme.text, borderColor: error ? "#B42318" : theme.border, backgroundColor: theme.surface }]}
@@ -96,17 +95,16 @@ const styles = StyleSheet.create({
   form: { gap: 14 },
   stageTitle: { fontSize: 20, lineHeight: 27, fontWeight: "800" },
   supporting: { fontSize: 15, lineHeight: 22 },
-  statusHeading: { flexDirection: "row", alignItems: "center", gap: 10 },
-  checkCircle: { width: 28, height: 28, borderRadius: 14, backgroundColor: "#E9F7EF", alignItems: "center", justifyContent: "center" },
-  checkText: { color: "#067647", fontSize: 17, fontWeight: "900" },
   qrCode: { alignSelf: "center", backgroundColor: "#FFFFFF", padding: 16, borderRadius: 12, marginVertical: 4 },
   manualBlock: { gap: 8, marginTop: 2 },
   manualTitle: { fontSize: 15, lineHeight: 21, fontWeight: "800" },
   label: { fontSize: 14, lineHeight: 20, fontWeight: "700" },
-  keyBox: { minHeight: 54, borderWidth: StyleSheet.hairlineWidth, borderRadius: 11, paddingHorizontal: 14, paddingVertical: 13, justifyContent: "center" },
-  setupKey: { fontSize: 16, lineHeight: 23, fontWeight: "700", letterSpacing: 0.7 },
-  copyHint: { fontSize: 12, lineHeight: 18 },
-  fieldGroup: { gap: 7, marginTop: 4 },
+  keyBox: { minHeight: 54, borderWidth: StyleSheet.hairlineWidth, borderRadius: 11, paddingLeft: 14, paddingRight: 8, flexDirection: "row", alignItems: "center", gap: 8 },
+  setupKey: { flex: 1, fontSize: 16, lineHeight: 23, fontWeight: "700", letterSpacing: 0.5 },
+  copyTouch: { minHeight: 44, paddingHorizontal: 6, justifyContent: "center" },
+  copyAction: { color: "#1769E0", fontSize: 14, lineHeight: 20, fontWeight: "800" },
+  copyAllButton: { minHeight: 48, borderWidth: 1, borderRadius: 11, alignItems: "center", justifyContent: "center", paddingHorizontal: 14 },
+  fieldGroup: { gap: 7 },
   input: { minHeight: 54, borderWidth: 1, borderRadius: 11, paddingHorizontal: 14, fontSize: 16 },
   feedbackSlot: { minHeight: 20, justifyContent: "center" },
   error: { color: "#B42318", fontSize: 14, lineHeight: 20, fontWeight: "600" },
