@@ -5885,124 +5885,44 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         <div className={cn("flex flex-col gap-0", placement === "desktop" && "gap-3")}>
           {placement === "desktop" ? (
             <div
-              ref={tripTypeMenuRef}
               data-desktop-trip-selector
-              className="relative hidden w-fit sm:block"
+              role="radiogroup"
+              aria-label={t("tripType")}
+              className="hidden min-h-11 items-center gap-8 px-2 sm:flex lg:gap-12"
             >
-              <button
-                type="button"
-                aria-label={t("tripType")}
-                aria-haspopup="listbox"
-                aria-expanded={tripTypeMenuOpen}
-                aria-controls="desktop-flight-trip-type-options"
-                onClick={() => setTripTypeMenuOpen((open) => !open)}
-                onKeyDown={(event) => {
-                  if (event.key !== "ArrowDown" && event.key !== "ArrowUp")
-                    return;
-                  event.preventDefault();
-                  setTripTypeMenuOpen(true);
-                  window.requestAnimationFrame(() => {
-                    const options =
-                      tripTypeMenuRef.current?.querySelectorAll<HTMLButtonElement>(
-                        '[role="option"]',
-                      );
-                    options?.[
-                      event.key === "ArrowUp" ? options.length - 1 : 0
-                    ]?.focus();
-                  });
-                }}
-                className="focus-ring inline-flex min-h-9 items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[13px] font-semibold text-slate-800 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-300 hover:bg-slate-50 focus-visible:border-[#075EE8]/60"
-              >
-                <span>
-                  {tripTypeInput === "multi-city"
-                    ? "Multi-city"
-                    : tripTypeInput === "one-way"
-                      ? "One-way"
-                      : "Round-trip"}
-                </span>
-                <ChevronDown
-                  className={cn(
-                    "h-3.5 w-3.5 text-slate-500 transition-transform",
-                    tripTypeMenuOpen && "rotate-180",
-                  )}
-                  aria-hidden="true"
-                />
-              </button>
-
-              {tripTypeMenuOpen ? (
-                <div
-                  id="desktop-flight-trip-type-options"
-                  role="listbox"
-                  aria-label={t("tripType")}
-                  className="absolute start-0 top-full z-50 mt-1.5 min-w-[176px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_14px_32px_-12px_rgba(15,23,42,0.28)]"
-                  onKeyDown={(event) => {
-                    const options = Array.from(
-                      event.currentTarget.querySelectorAll<HTMLButtonElement>(
-                        '[role="option"]',
-                      ),
-                    );
-                    const currentIndex = options.indexOf(
-                      document.activeElement as HTMLButtonElement,
-                    );
-                    if (event.key === "Escape") {
-                      event.preventDefault();
-                      setTripTypeMenuOpen(false);
-                      const trigger = event.currentTarget
-                        .previousElementSibling;
-                      if (trigger instanceof HTMLButtonElement) {
-                        trigger.focus();
-                      }
-                    } else if (
-                      event.key === "ArrowDown" ||
-                      event.key === "ArrowUp"
-                    ) {
-                      event.preventDefault();
-                      const direction = event.key === "ArrowDown" ? 1 : -1;
-                      options[
-                        (currentIndex + direction + options.length) %
-                          options.length
-                      ]?.focus();
-                    } else if (event.key === "Home" || event.key === "End") {
-                      event.preventDefault();
-                      options[
-                        event.key === "Home" ? 0 : options.length - 1
-                      ]?.focus();
-                    }
-                  }}
-                >
-                  {[
-                    { label: "Round-trip", value: "round-trip" },
-                    { label: "One-way", value: "one-way" },
-                    { label: "Multi-city", value: "multi-city" },
-                  ].map((option) => {
-                    const selected = tripTypeInput === option.value;
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        role="option"
-                        aria-selected={selected}
-                        onClick={() => handleTripTypeChange(option.value)}
+              {[
+                { label: "Round-trip", value: "round-trip" },
+                { label: "One-way", value: "one-way" },
+                { label: "Multi-city", value: "multi-city" },
+              ].map((option) => {
+                const selected = tripTypeInput === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => handleTripTypeChange(option.value)}
+                    className="focus-ring inline-flex min-h-11 items-center gap-2.5 rounded-md px-1 text-base font-medium text-slate-800 transition-colors hover:text-[#075EE8] focus-visible:ring-2 focus-visible:ring-[#075EE8]/30"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2",
+                        selected ? "border-[#075EE8]" : "border-slate-300",
+                      )}
+                    >
+                      <span
                         className={cn(
-                          "focus-ring flex min-h-9 w-full items-center justify-between gap-4 rounded-lg px-2.5 py-2 text-start text-sm font-medium transition-colors",
-                          selected
-                            ? "bg-[#075EE8]/[0.07] text-[#075EE8]"
-                            : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
+                          "h-2.5 w-2.5 rounded-full",
+                          selected ? "bg-[#075EE8]" : "bg-transparent",
                         )}
-                      >
-                        <span>{option.label}</span>
-                        {selected ? (
-                          <Check
-                            className="h-4 w-4 shrink-0"
-                            strokeWidth={2.4}
-                            aria-hidden="true"
-                          />
-                        ) : null}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : null}
+                      />
+                    </span>
+                    {option.label}
+                  </button>
+                );
+              })}
             </div>
           ) : null}
 
@@ -7137,7 +7057,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   className="hidden w-full sm:block"
                   aria-label="Nearby departure fares"
                 >
-                  <div data-desktop-nearby-fare-rail className="mx-auto grid w-full max-w-[860px] grid-cols-[44px_repeat(7,minmax(78px,1fr))_44px] items-center gap-1 rounded-xl border border-slate-200 bg-white px-2 py-2 shadow-[0_8px_24px_-20px_rgba(15,23,42,0.45)]">
+                  <div data-desktop-nearby-fare-rail className="mx-auto grid w-full max-w-[980px] grid-cols-[44px_repeat(7,minmax(88px,1fr))_44px] items-stretch gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-2.5 shadow-[0_10px_30px_-22px_rgba(15,23,42,0.5)]">
                     <button
                       type="button"
                       aria-label="Previous nearby fare date"
@@ -7195,8 +7115,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                           }
                           onClick={() => handleNearbyFareDateSelect(fare.date)}
                           className={cn(
-                            "focus-ring relative flex min-h-[72px] min-w-0 flex-col items-center justify-center rounded-lg px-1 py-2 text-center transition-colors after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:bg-[#075EE8] after:transition-transform hover:bg-slate-50 hover:text-[#075EE8] hover:after:scale-x-50",
-                            selected && "bg-blue-50/70 after:scale-x-100",
+                            "focus-ring relative flex min-h-[86px] min-w-0 flex-col items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-2.5 text-center shadow-sm transition duration-200 after:absolute after:inset-x-3 after:bottom-1.5 after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:bg-[#075EE8] after:transition-transform hover:-translate-y-0.5 hover:border-[#075EE8]/35 hover:shadow-md hover:after:scale-x-50",
+                            selected && "border-[#075EE8] bg-blue-50/80 shadow-[0_8px_20px_-14px_rgba(7,94,232,0.85)] after:scale-x-100",
                           )}
                         >
                           {fare.status === "loading" ? (
@@ -7209,7 +7129,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                             <>
                               <span
                                 className={cn(
-                                  "text-[11px] font-semibold uppercase leading-4 tracking-[0.04em]",
+                                  "text-[12px] font-bold uppercase leading-4 tracking-[0.04em]",
                                   selected
                                     ? "text-[#075EE8]"
                                     : "text-slate-800",
@@ -7222,7 +7142,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                               </span>
                               <span
                                 className={cn(
-                                  "text-[10px] font-medium uppercase leading-4 tracking-[0.08em]",
+                                  "mt-0.5 text-[10px] font-semibold uppercase leading-4 tracking-[0.12em]",
                                   selected
                                     ? "text-[#075EE8]"
                                     : "text-slate-500",
@@ -7235,7 +7155,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                               </span>
                               <span
                                 className={cn(
-                                  "flight-fare-strip-price mt-1.5 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-semibold leading-4",
+                                  "flight-fare-strip-price mt-2 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-bold leading-5",
                                   selected
                                     ? "font-semibold text-[#075EE8]"
                                     : "text-slate-900",
