@@ -7,19 +7,10 @@ export type ProfileDestination =
 export type ProfileItem = { label: MobileTranslationKey; icon: FlowIconName; destination: ProfileDestination };
 export type ProfileSection = { title: MobileTranslationKey; items: ProfileItem[] };
 
-export function profileFirstName(name?: string | null, email?: string | null): string | null {
+export function profileFirstName(name?: string | null): string | null {
   const normalized = name?.trim();
   if (!normalized || normalized.includes("@")) return null;
-  const tokens = normalized.split(/\s+/).filter(Boolean);
-  if (!tokens.length) return null;
-
-  const emailLocal = email?.trim().toLowerCase().split("@")[0] || "";
-  const emailTokens = emailLocal.split(/[._+-]+/).filter(Boolean);
-  for (const emailToken of emailTokens) {
-    const matched = tokens.find(token => token.toLowerCase() === emailToken);
-    if (matched) return matched;
-  }
-  return tokens[0] || null;
+  return normalized.split(/\s+/).filter(Boolean)[0] || null;
 }
 
 export const authenticatedProfileSections: ProfileSection[] = [
