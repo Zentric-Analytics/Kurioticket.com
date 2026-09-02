@@ -820,16 +820,17 @@ export function PersonalDetailsScreen() {
     patch("address", serializeAddress({ ...address, [key]: value }));
   const updateDateDraft = (part: keyof DateDraft, value: string) => {
     const next = { ...dateDraft, [part]: value };
-    if (next.year && next.month && next.day) {
-      const candidate = `${next.year}-${next.month}-${next.day}`;
-      const clamped = clampPersonalDetailsDateOfBirth(candidate);
-      if (clamped) {
-        setDateDraft(dateDraftFromValue(clamped));
-        patch("dateOfBirth", clamped);
-        return;
-      }
-    }
     setDateDraft(next);
+    if (!next.year || !next.month || !next.day) return;
+
+    const candidate = `${next.year}-${next.month}-${next.day}`;
+    const clamped = clampPersonalDetailsDateOfBirth(candidate);
+    if (!clamped) {
+      patch("dateOfBirth", candidate);
+      return;
+    }
+    if (clamped !== candidate) setDateDraft(dateDraftFromValue(clamped));
+    patch("dateOfBirth", clamped);
   };
   const saveCountrySelection = (
     kind: "phone" | "nationality" | "addressCountry",
@@ -858,7 +859,10 @@ export function PersonalDetailsScreen() {
       setError(c.invalidName);
       return;
     }
+    const dateOfBirthChanged =
+      (draft.dateOfBirth || "") !== (saved.dateOfBirth || "");
     if (
+      dateOfBirthChanged &&
       draft.dateOfBirth &&
       !isEligiblePersonalDetailsDateOfBirth(draft.dateOfBirth)
     ) {
