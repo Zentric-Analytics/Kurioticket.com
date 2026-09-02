@@ -12,7 +12,8 @@ test("car results route mounts the active approved car results surface", () => {
 test("approved car results use the live API contract and open the native detail route", () => {
   const screen = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
   assert.match(screen, /travelApi\.searchCars/);
-  assert.match(screen, /validBookableCar/);
+  assert.match(screen, /safeCanonicalCarResult/);
+  assert.match(screen, /canonicalResultsWereSilentlyLost/);
   assert.match(screen, /pathname:\s*"\/car-details"/);
   assert.match(screen, /result:\s*JSON\.stringify\(result\)/);
   assert.doesNotMatch(screen, /Linking\.openURL/);

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildSearchPlan, validBookableCar, validBookableHotel, validFlight } from "./travelSearchModel";
+import { buildSearchPlan, safeCanonicalCarResult, safeCanonicalHotelResult, validFlight } from "./travelSearchModel";
 
 const now = new Date("2026-07-30T12:00:00Z");
 test("flight plans preserve stable parameters and premium economy", () => {
@@ -33,8 +33,10 @@ test("shared result policy accepts website inventory and still rejects malformed
   assert.equal(validFlight(flight as never, plan), true);
   assert.equal(validFlight({ ...flight, destinationAirport: "SFO" } as never, plan), false);
   const staticCar = { id: "c", rentalCompanyName: "Kurioticket", inventorySource: "kurioticket-static-cars", offers: [{ bookingProviderName: "Kurioticket", totalPrice: 50, currency: "USD" }], searchPolicy: { source: "kurioticket-static-cars", bookable: false, action: { kind: "internal-detail", href: "/cars/details/c", enabled: true } } };
-  assert.equal(validBookableCar(staticCar as never), true);
-  assert.equal(validBookableCar({ ...staticCar, searchPolicy: { ...staticCar.searchPolicy, bookable: true } } as never), true);
+  assert.equal(safeCanonicalCarResult(staticCar as never), true);
+  assert.equal(safeCanonicalCarResult({ ...staticCar, searchPolicy: { ...staticCar.searchPolicy, bookable: true } } as never), true);
+  const staticHotel = { id: "h", provider: "Kurioticket static catalogue", name: "Hotel", totalPrice: 300, currency: "USD", imageUrl: "/images/hotel.webp", searchPolicy: { source: "kurioticket-static-hotels", bookable: false, action: { kind: "internal-detail", href: "/hotels/details/h", enabled: true } } };
+  assert.equal(safeCanonicalHotelResult(staticHotel as never), true);
 });
 test("multi-city plans and results validate every authoritative leg",()=>{
  const params={tripType:"multi-city",legCount:"3",origin1:"LAX",destination1:"JFK",departureDate1:"2026-08-10",origin2:"JFK",destination2:"LHR",departureDate2:"2026-08-10",origin3:"LHR",destination3:"CDG",departureDate3:"2026-08-14",adults:"2",children:"1",infants:"0",cabin:"Business"}; const plan=buildSearchPlan("flight",params,now).plan!; assert.equal(plan.payload.destination,"CDG"); assert.equal((plan.payload.legs as unknown[]).length,3); assert.equal("returnDate" in plan.payload,false);

@@ -45,9 +45,13 @@ import {
 } from "../../api/travelApi";
 import {
   buildSearchPlan,
-  validBookableHotel,
+  safeCanonicalHotelResult,
   validFlight,
 } from "../flow/travelSearchModel";
+import {
+  acceptCanonicalResults,
+  canonicalResultsWereSilentlyLost,
+} from "../flow/canonicalResultAcceptance";
 import { FlowIcon } from "../flow/FlowIcon";
 import {
   Badge,
@@ -334,16 +338,35 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           : await travelApi.searchHotels(plan.plan.payload, { signal: controller.signal, requestId });
       if (!isCurrent()) return;
       const validationStartedAt = performance.now();
-      const valid =
-        product === "flight"
-          ? (response.results as FlightResult[]).filter((x) =>
-              validFlight(x, plan.plan!),
+      const hotelAcceptance =
+        product === "hotel"
+          ? acceptCanonicalResults(
+              response.results as HotelResult[],
+              safeCanonicalHotelResult,
             )
-          : (response.results as HotelResult[]).filter(validBookableHotel);
+          : undefined;
+      const valid = product === "flight"
+        ? (response.results as FlightResult[]).filter((x) => validFlight(x, plan.plan!))
+        : hotelAcceptance!.accepted;
       const clientValidationMs = performance.now() - validationStartedAt;
       if (product === "flight") {
         logFlightSearchCheckpoint("flight-search:validated", { requestId, resultCount: valid.length, elapsedMs: performance.now() - clientStartedAt, platform: Platform.OS });
         logFlightSearchCheckpoint("flight-search:derived-ready", { requestId, resultCount: valid.length, elapsedMs: performance.now() - clientStartedAt, platform: Platform.OS });
+      }
+      if (hotelAcceptance?.rejectedIds.length) {
+        console.warn("[travel-search] canonical hotel results failed client safety checks", {
+          requestId,
+          canonicalCount: hotelAcceptance.canonicalCount,
+          acceptedCount: hotelAcceptance.accepted.length,
+          rejectedIds: hotelAcceptance.rejectedIds,
+        });
+      }
+      if (hotelAcceptance && canonicalResultsWereSilentlyLost(hotelAcceptance)) {
+        setResults([]);
+        resultsRef.current = [];
+        setStatus("error");
+        setMessage("The canonical search returned inventory that this app could not render safely.");
+        return;
       }
       setResults(valid);
       resultsRef.current = valid;

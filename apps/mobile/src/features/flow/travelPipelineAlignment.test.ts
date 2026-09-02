@@ -23,6 +23,7 @@ test("Android renders server-owned policy without restoring mobile inventory pol
   assert.match(mobileApi, /TravelSearchResponse<NormalizedCarResult>/);
   assert.match(mobileResults, /result\.searchPolicy\.action/);
   assert.match(mobileResults, /response\.status === "unavailable"/);
+  assert.match(mobileResults, /canonicalResultsWereSilentlyLost/);
   assert.doesNotMatch(mobileResults, /result\.isDemo/);
   assert.doesNotMatch(mobileResults, /provider response did not contain safe, bookable inventory/i);
 });
