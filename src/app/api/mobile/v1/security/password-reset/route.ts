@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { createHmac, randomBytes, randomInt } from "node:crypto";
+import { createHash, createHmac, randomBytes, randomInt } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
@@ -15,6 +15,7 @@ const codeTtlMs = 5 * 60 * 1000;
 const recoveryGrantTtlMs = 5 * 60 * 1000;
 const resendCooldownMs = 30 * 1000;
 const codeIdentifierFor = (userId: string, sessionId: string) => `mobile-password-reset:${userId}:${sessionId}`;
+const legacyCodeIdentifierFor = (userId: string) => `mobile-password-reset:${userId}`;
 const grantIdentifierFor = (userId: string, sessionId: string) => `mobile-password-reset-grant:${userId}:${sessionId}`;
 
 function passwordResetHmacKey() {
@@ -29,6 +30,7 @@ function keyedDigest(purpose: "code" | "grant", value: string) {
 }
 
 const hashCode = (userId: string, sessionId: string, code: string) => keyedDigest("code", `${userId}:${sessionId}:${code}`);
+const hashLegacyCode = (userId: string, code: string) => createHash("sha256").update(`mobile-password-reset:${userId}:${code}`).digest("hex");
 const hashGrant = (userId: string, sessionId: string, token: string) => keyedDigest("grant", `${userId}:${sessionId}:${token}`);
 
 function maskEmail(email: string) {
@@ -42,10 +44,13 @@ const schema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("verify-code"), code: z.string().trim().regex(/^\d{6}$/) }),
   z.object({
     action: z.literal("reset"),
-    recoveryToken: z.string().min(20).max(256),
+    code: z.string().trim().regex(/^\d{6}$/).optional(),
+    recoveryToken: z.string().min(20).max(256).optional(),
     newPassword: z.string().min(8),
     confirmPassword: z.string().min(8),
-  }).refine((value) => value.newPassword === value.confirmPassword, { path: ["confirmPassword"] }),
+  })
+    .refine((value) => Boolean(value.code || value.recoveryToken), { message: "A verification code or recovery token is required." })
+    .refine((value) => value.newPassword === value.confirmPassword, { path: ["confirmPassword"] }),
 ]);
 
 function passwordResetCodeEmail(input: { code: string; name?: string | null; expiresInMinutes: number }) {
@@ -128,7 +133,7 @@ export async function POST(request: Request) {
       await getPrisma().verificationToken.deleteMany({ where: { token } });
       return NextResponse.json({ error: "Unable to send the verification code. Try again." }, { status: 503 });
     }
-    return NextResponse.json({ ok: true, maskedEmail: maskEmail(user.email), expiresInSeconds: 300, resendAfterSeconds: 30 });
+    return NextResponse.json({ ok: true, expiresInMinutes: 5, maskedEmail: maskEmail(user.email), expiresInSeconds: 300, resendAfterSeconds: 30 });
   }
 
   if (parsed.data.action === "verify-code") {
@@ -150,11 +155,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, recoveryToken, expiresInSeconds: 300 });
   }
 
-  const grantHash = hashGrant(user.id, auth.id, parsed.data.recoveryToken);
-  const grant = await getPrisma().verificationToken.findUnique({ where: { token: grantHash } });
-  if (!grant || grant.identifier !== grantIdentifier || grant.expires <= new Date()) {
-    if (grant?.expires && grant.expires <= new Date()) await getPrisma().verificationToken.deleteMany({ where: { token: grantHash } });
-    return NextResponse.json({ error: "Your verification session expired. Verify your account again." }, { status: 410 });
+  let credentialToken = "";
+  if (parsed.data.recoveryToken) {
+    const grantHash = hashGrant(user.id, auth.id, parsed.data.recoveryToken);
+    const grant = await getPrisma().verificationToken.findUnique({ where: { token: grantHash } });
+    if (!grant || grant.identifier !== grantIdentifier || grant.expires <= new Date()) {
+      if (grant?.expires && grant.expires <= new Date()) await getPrisma().verificationToken.deleteMany({ where: { token: grantHash } });
+      return NextResponse.json({ error: "Your verification session expired. Verify your account again." }, { status: 410 });
+    }
+    credentialToken = grantHash;
+  } else if (parsed.data.code) {
+    const currentToken = hashCode(user.id, auth.id, parsed.data.code);
+    const legacyToken = hashLegacyCode(user.id, parsed.data.code);
+    const currentChallenge = await getPrisma().verificationToken.findUnique({ where: { token: currentToken } });
+    const legacyChallenge = currentChallenge ? null : await getPrisma().verificationToken.findUnique({ where: { token: legacyToken } });
+    const challenge = currentChallenge || legacyChallenge;
+    const expectedIdentifier = currentChallenge ? codeIdentifier : legacyCodeIdentifierFor(user.id);
+    if (!challenge || challenge.identifier !== expectedIdentifier || challenge.expires <= new Date()) {
+      if (challenge?.expires && challenge.expires <= new Date()) await getPrisma().verificationToken.deleteMany({ where: { token: challenge.token } });
+      return NextResponse.json({ error: "That verification code is incorrect or expired." }, { status: 400 });
+    }
+    credentialToken = challenge.token;
   }
 
   if (user.passwordHash && await bcrypt.compare(parsed.data.newPassword, user.passwordHash)) {
@@ -166,7 +187,7 @@ export async function POST(request: Request) {
   let event;
   try {
     event = await getPrisma().$transaction(async (tx) => {
-      await tx.verificationToken.delete({ where: { token: grantHash } });
+      await tx.verificationToken.delete({ where: { token: credentialToken } });
       await tx.user.update({ where: { id: user.id }, data: { passwordHash } });
       await tx.accountSession.updateMany({
         where: { userId: user.id, id: { not: auth.id }, revokedAt: null },
