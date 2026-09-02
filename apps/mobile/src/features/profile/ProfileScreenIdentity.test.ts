@@ -10,20 +10,23 @@ test("profile welcome never renders the persisted session name before server ver
   assert.match(screen, /setEmail\(session\?\.user\.email \?\? null\)/);
 });
 
-test("unresolved identity reserves the welcome space without generic avatar or greeting content", () => {
-  assert.match(screen, /const \[identityResolved, setIdentityResolved\] = useState\(false\)/);
-  assert.match(screen, /identityResolved \? <WelcomeCard name=\{name\} email=\{email\} \/> : <View accessible=\{false\} style=\{styles\.welcomeCard\} \/>/);
+test("unresolved or nameless identity shows Welcome instead of an empty hero or Hi without a name", () => {
+  assert.match(screen, /profileWelcomeCopy/);
+  assert.match(screen, /const greeting = firstName \? `\$\{t\("profileGreeting"\)\}, \$\{firstName\} 👋` : `\$\{profileWelcomeCopy\[locale\]\} 👋`/);
+  assert.match(screen, /<WelcomeCard name=\{identityResolved \? name : null\} email=\{email\} \/>/);
+  assert.doesNotMatch(screen, /<View accessible=\{false\} style=\{styles\.welcomeCard\} \/>/);
 });
 
-test("authoritative server identity unlocks the welcome and scopes cache repair to the captured account", () => {
-  assert.match(screen, /const sessionUserId = session\.user\.id/);
+test("authoritative server identity switches the welcome to Hi plus the resolved first name", () => {
   assert.match(screen, /const authoritativeName = user\.name \?\? null/);
   assert.match(screen, /setName\(authoritativeName\)/);
   assert.match(screen, /setIdentityResolved\(true\)/);
-  assert.match(screen, /updateStoredSessionName\(authoritativeName, sessionUserId\)/);
+  assert.match(screen, /profileFirstName\(name, email\)/);
 });
 
-test("cached session name updates cannot cross account boundaries or be mutated by unscoped callers", () => {
+test("cache repair remains scoped to the captured account", () => {
+  assert.match(screen, /const sessionUserId = session\.user\.id/);
+  assert.match(screen, /updateStoredSessionName\(authoritativeName, sessionUserId\)/);
   assert.match(storage, /updateStoredSessionName\(name: string \| null, expectedUserId\?: string\)/);
   assert.match(storage, /if \(!expectedUserId\) return/);
   assert.match(storage, /if \(!session \|\| session\.user\.id !== expectedUserId\) return/);
