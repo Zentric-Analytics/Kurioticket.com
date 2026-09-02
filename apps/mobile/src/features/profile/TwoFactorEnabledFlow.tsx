@@ -13,6 +13,7 @@ type Stage = "overview" | "verify";
 
 type Props = {
   active: boolean;
+  hasPassword: boolean;
   copy: SecurityCopy;
   onUnauthorized: (error: unknown) => Promise<boolean>;
   onDisabled: () => Promise<void>;
@@ -66,7 +67,7 @@ function EyeIcon({ hidden, color }: { hidden: boolean; color: string }) {
   return <Svg width={22} height={22} viewBox="0 0 24 24" accessible={false}><Path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" /><Circle cx="12" cy="12" r="2.7" fill="none" stroke={color} strokeWidth={1.8} />{hidden ? <Line x1="4" y1="4" x2="20" y2="20" stroke={color} strokeWidth={1.8} strokeLinecap="round" /> : null}</Svg>;
 }
 
-export function TwoFactorEnabledFlow({ active, copy: c, onUnauthorized, onDisabled }: Props) {
+export function TwoFactorEnabledFlow({ active, hasPassword, copy: c, onUnauthorized, onDisabled }: Props) {
   const { theme } = useAppTheme();
   const { locale } = useMobileLocalization();
   const f = flowCopy[locale];
@@ -93,6 +94,16 @@ export function TwoFactorEnabledFlow({ active, copy: c, onUnauthorized, onDisabl
   useEffect(() => {
     if (!active) reset();
   }, [active]);
+
+  useEffect(() => {
+    if (!hasPassword && method === "password") {
+      setMethod("authenticator");
+      setVerification("");
+      setFieldError("");
+      setGeneralError("");
+      setPasswordHidden(true);
+    }
+  }, [hasPassword, method]);
 
   const chooseMethod = (next: VerificationMethod) => {
     Keyboard.dismiss();
@@ -218,7 +229,7 @@ export function TwoFactorEnabledFlow({ active, copy: c, onUnauthorized, onDisabl
       <Text style={[styles.methodPickerTitle, { color: theme.text }]}>{f.chooseMethod}</Text>
       <MethodOption title={f.authenticatorApp} detail={f.authenticatorPlaceholder} selected={method === "authenticator"} onPress={() => chooseMethod("authenticator")} />
       <MethodOption title={f.recoveryCode} detail={f.recoveryHelp} selected={method === "recovery"} onPress={() => chooseMethod("recovery")} />
-      <MethodOption title={f.password} detail={f.passwordHelp} selected={method === "password"} onPress={() => chooseMethod("password")} />
+      {hasPassword ? <MethodOption title={f.password} detail={f.passwordHelp} selected={method === "password"} onPress={() => chooseMethod("password")} /> : null}
     </View> : null}
   </View>;
 }
