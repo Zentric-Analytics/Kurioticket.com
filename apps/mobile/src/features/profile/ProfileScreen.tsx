@@ -9,6 +9,7 @@ import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { useAppTheme } from "../../theme/AppTheme";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
+import { profileWelcomeGreeting } from "../../localization/profileGreetingCopy";
 import { ProfileCardSection } from "./ProfileCardSection";
 import { authenticatedProfileSections, profileFirstName } from "./profileModel";
 import { AppVersionFooter } from "./AppVersionFooter";
@@ -20,9 +21,9 @@ function Header({ unreadCount }: { unreadCount: number }) {
 }
 
 function WelcomeCard({ name, email }: { name: string | null; email: string | null }) {
-  const { theme } = useAppTheme(); const { t } = useMobileLocalization();
+  const { theme } = useAppTheme(); const { t, locale } = useMobileLocalization();
   const firstName = profileFirstName(name);
-  const greeting = firstName ? `${t("profileGreeting")}, ${firstName} 👋` : "Welcome 👋";
+  const greeting = firstName ? `${t("profileGreeting")}, ${firstName} 👋` : `${profileWelcomeGreeting(locale)} 👋`;
   const accessibilityCopy = [greeting, email, t("profileWelcomeLine")].filter(Boolean).join(". ");
   return <View accessibilityRole="summary" accessibilityLabel={accessibilityCopy} style={styles.welcomeCard}>
     <View style={[styles.avatar, { backgroundColor: theme.dark ? "#24699C" : "#1769AA" }]}>{firstName ? <Text style={styles.avatarText}>{firstName.slice(0, 1).toUpperCase()}</Text> : <FlowIcon name="person" size={25} color="#FFFFFF" />}</View>
