@@ -97,7 +97,7 @@ test("desktop nearby fares use a contained mobile-like hierarchy", async () => {
   const strip = source.slice(start, source.indexOf("Next nearby fare date", start) + 300);
 
   assert.match(strip, /rounded-xl border border-slate-200 bg-white/);
-  assert.match(strip, /min-h-\[72px\]/);
-  assert.match(strip, /rounded-lg/);
-  assert.match(strip, /selected && "bg-blue-50\/70 after:scale-x-100"/);
+  assert.match(strip, /min-h-\[86px\]/);
+  assert.match(strip, /rounded-xl border border-slate-200 bg-white/);
+  assert.match(strip, /selected && "border-\[#075EE8\] bg-blue-50\/80/);
 });

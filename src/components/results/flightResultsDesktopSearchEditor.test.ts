@@ -24,27 +24,22 @@ function fareStripSource() {
   return source.slice(start, end);
 }
 
-test("desktop results editor uses one compact accessible trip-type listbox", () => {
+test("desktop results editor uses one clean accessible trip-type radio row", () => {
   const editor = desktopEditorSource();
   const roundTrip = editor.indexOf('label: "Round-trip"');
   const oneWay = editor.indexOf('label: "One-way"');
   const multiCity = editor.indexOf('label: "Multi-city"');
 
   assert.ok(roundTrip >= 0 && roundTrip < oneWay && oneWay < multiCity);
-  assert.match(editor, /aria-haspopup="listbox"/);
-  assert.match(editor, /aria-expanded={tripTypeMenuOpen}/);
-  assert.match(editor, /role="listbox"/);
-  assert.match(editor, /role="option"/);
-  assert.match(editor, /aria-selected={selected}/);
-  assert.match(editor, /<Check\s/);
-  assert.match(editor, /event\.key === "ArrowDown"/);
-  assert.match(editor, /event\.key === "Escape"/);
-  assert.doesNotMatch(editor, /role="radio"|role="radiogroup"|aria-checked/);
+  assert.match(editor, /role="radiogroup"/);
+  assert.match(editor, /role="radio"/);
+  assert.match(editor, /aria-checked={selected}/);
+  assert.doesNotMatch(editor, /role="listbox"|role="option"|aria-haspopup/);
   assert.doesNotMatch(editor, /label: t\("oneWay"\)/);
   assert.doesNotMatch(editor, /label: t\("roundTrip"\)/);
   assert.match(editor, /data-desktop-trip-selector/);
-  assert.match(editor, /w-fit/);
-  assert.match(editor, /min-w-\[176px\]/);
+  assert.match(editor, /items-center gap-8/);
+  assert.match(editor, /rounded-full border-2/);
 });
 
 test("desktop populated airport inputs remain editable without clear controls", () => {
@@ -105,7 +100,7 @@ test("fare strip is one bounded seven-date grid with adjacent week controls", ()
   const strip = fareStripSource();
   assert.equal(source.match(/const nearbyFareVisibleCount = 7;/g)?.length, 1);
   assert.match(strip, /data-desktop-nearby-fare-rail/);
-  assert.match(strip, /repeat\(7,minmax\(78px,1fr\)\)/);
+  assert.match(strip, /repeat\(7,minmax\(88px,1fr\)\)/);
   assert.match(strip, /aria-label="Previous nearby fare date"/);
   assert.match(strip, /aria-label="Next nearby fare date"/);
   assert.match(strip, /navigateNearbyFareWindow\("previous"\)/);
@@ -115,11 +110,8 @@ test("fare strip is one bounded seven-date grid with adjacent week controls", ()
     strip.indexOf("data-desktop-nearby-fare-rail"),
   );
   assert.doesNotMatch(desktopRail, /overflow-x-auto/);
-  assert.match(desktopRail, /selected && "after:scale-x-100"/);
-  assert.doesNotMatch(
-    desktopRail,
-    /selected && "[^"]*(?:bg-blue|bg-\[#075EE8\]|border-\[#075EE8\])/,
-  );
+  assert.match(desktopRail, /rounded-xl border border-slate-200 bg-white/);
+  assert.match(desktopRail, /selected && "border-\[#075EE8\] bg-blue-50\/80/);
   assert.match(desktopRail, /h-10 w-10/);
 });
 
