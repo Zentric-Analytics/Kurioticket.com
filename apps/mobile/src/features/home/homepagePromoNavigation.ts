@@ -1,14 +1,14 @@
+import { buildHotelExplorationSearch } from "@/lib/hotels/hotelExplorationSearch";
+
 export const HOMEPAGE_HOTEL_PROMO_DEFAULTS = {
   destination: "Tokyo",
 } as const;
 
-export function buildHomepageHotelPromoRoute() {
+export function buildHomepageHotelPromoRoute(now = new Date()) {
+  const params = buildHotelExplorationSearch({ destination: HOMEPAGE_HOTEL_PROMO_DEFAULTS.destination, source: "home-promo", now });
   return {
-    pathname: "/hotels" as const,
-    params: {
-      ...HOMEPAGE_HOTEL_PROMO_DEFAULTS,
-      intentSource: "home-promo",
-    },
+    pathname: "/hotel-results" as const,
+    params: params!,
   };
 }
 

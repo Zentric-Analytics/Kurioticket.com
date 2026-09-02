@@ -1,6 +1,8 @@
 import type { Href } from "expo-router";
 import { getDefaultHomepageRouteCardDepartureDate } from "../home/homepageCardNavigation";
 import { fetchHomepageDefaultOrigin, type HomepageDefaultAirport } from "../home/homepageDefaultOrigin";
+import { buildHotelExplorationSearch } from "@/lib/hotels/hotelExplorationSearch";
+import { resolveHotelDiscoveryIntent } from "@/lib/hotels/hotelDiscoveryIntent";
 
 export type ExploreFlightDestinationHandoff = {
   id: string;
@@ -67,9 +69,14 @@ export async function exploreFlightDestinationNavigation(
 export function exploreHotelSearchNavigation(
   destination: { id: string; name: string },
   source: "explore" | "saved-destination" = "explore",
+  now = new Date(),
 ): Href | null {
   const destinationName = destination.name.trim();
   const destinationId = destination.id.trim();
   if (!destinationName || !destinationId) return null;
-  return { pathname: "/hotels", params: { destinationId, destination: destinationName, intentSource: source } };
+  if (source === "saved-destination") return { pathname: "/hotels", params: { destinationId, destination: destinationName, intentSource: source } };
+  const intent = resolveHotelDiscoveryIntent(destinationName, "explore");
+  if (!intent || intent.canonicalDestinationId !== destinationId) return null;
+  const params = buildHotelExplorationSearch({ destination: intent.destinationSearchValue, destinationId: intent.canonicalDestinationId, source, now });
+  return params ? { pathname: "/hotel-results", params } : null;
 }

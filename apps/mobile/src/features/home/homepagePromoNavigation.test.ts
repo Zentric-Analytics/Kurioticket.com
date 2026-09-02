@@ -7,11 +7,16 @@ import {
   HOMEPAGE_HOTEL_PROMO_DEFAULTS,
 } from "./homepagePromoNavigation";
 
-test("hotel promo creates visible destination intent without hidden stay defaults", () => {
-  assert.deepEqual(buildHomepageHotelPromoRoute(), {
-    pathname: "/hotels",
+test("hotel promo creates a complete direct exploratory search", () => {
+  assert.deepEqual(buildHomepageHotelPromoRoute(new Date("2030-01-01T00:00:00Z")), {
+    pathname: "/hotel-results",
     params: {
       destination: "Tokyo",
+      checkIn: "2030-01-29",
+      checkOut: "2030-02-05",
+      guests: "2",
+      rooms: "1",
+      sort: "cheapest",
       intentSource: "home-promo",
     },
   });

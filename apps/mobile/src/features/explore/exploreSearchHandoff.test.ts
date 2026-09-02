@@ -64,10 +64,10 @@ test("destination handoff prefills Flights when the homepage origin is unavailab
   assert.deepEqual(await exploreFlightDestinationNavigation(abidjan, async () => { throw new Error("offline"); }), fallback);
 });
 
-test("Explore hotel handoff creates canonical destination intent for the Hotel form", () => {
-  assert.deepEqual(exploreHotelSearchNavigation({ id: "fr-paris", name: "  Paris  " }), {
-    pathname: "/hotels",
-    params: { destinationId: "fr-paris", destination: "Paris", intentSource: "explore" },
+test("Explore Hotel handoff creates a complete direct exploratory search", () => {
+  assert.deepEqual(exploreHotelSearchNavigation({ id: "fr-paris", name: "  Paris  " }, "explore", new Date("2030-01-01T00:00:00Z")), {
+    pathname: "/hotel-results",
+    params: { destinationId: "fr-paris", destination: "Paris, France", checkIn: "2030-01-29", checkOut: "2030-02-05", guests: "2", rooms: "1", sort: "cheapest", intentSource: "explore" },
   });
   assert.deepEqual(
     exploreHotelSearchNavigation({ id: "gb-london", name: "London" }, "saved-destination"),
