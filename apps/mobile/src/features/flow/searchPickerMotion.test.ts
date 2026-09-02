@@ -96,15 +96,16 @@ test("every shared motion sheet reports its rendered height", () => {
   }
 });
 
-test("Flight Edit Search uses a local short top-origin reveal", () => {
+test("Flight Edit Search uses the shared bottom-sheet motion", () => {
   const editSearch = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
-  assert.doesNotMatch(editSearch, /useSearchPickerMotion/);
-  assert.match(editSearch, /EDIT_SEARCH_REVEAL_OFFSET = -36/);
-  assert.match(editSearch, /panelTranslateY, \{ toValue: 0, duration: EDIT_SEARCH_OPEN_DURATION_MS/);
-  assert.match(editSearch, /panelTranslateY, \{ toValue: EDIT_SEARCH_REVEAL_OFFSET, duration: EDIT_SEARCH_CLOSE_DURATION_MS/);
-  assert.match(editSearch, /backdrop: \{ flex: 1, justifyContent: "flex-start" \}/);
-  assert.doesNotMatch(editSearch, /justifyContent: "flex-end"|borderTopLeftRadius|borderTopRightRadius/);
-  assert.match(editSearch, /borderBottomLeftRadius: 24, borderBottomRightRadius: 24/);
+  assert.match(editSearch, /useSearchPickerMotion\(visible\)/);
+  assert.match(editSearch, /motion\.sheetStyle/);
+  assert.match(editSearch, /motion\.backdropStyle/);
+  assert.match(editSearch, /onLayout=\{motion\.onSheetLayout\}/);
+  assert.match(editSearch, /backdrop: \{ flex: 1, justifyContent: "flex-end" \}/);
+  assert.match(editSearch, /sheet: \{ maxHeight: "88%", borderTopLeftRadius: 24, borderTopRightRadius: 24/);
+  assert.doesNotMatch(editSearch, /EDIT_SEARCH_REVEAL_OFFSET|useFlightEditSearchMotion|justifyContent: "flex-start"/);
+  assert.doesNotMatch(editSearch, /borderBottomLeftRadius|borderBottomRightRadius/);
 });
 
 test("open settling belongs only to a successfully finished current generation", () => {

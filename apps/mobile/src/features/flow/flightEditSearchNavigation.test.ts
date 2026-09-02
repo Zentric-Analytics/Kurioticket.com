@@ -26,11 +26,11 @@ test("results edit modal reuses the shared panel and dismisses locally", () => {
   assert.match(modal, /<FlightSearchPanel embedded params=\{presentedParams\} submitNavigation="replace" onBeforeNavigate=\{onClose\} editAppearance \/>/);
   assert.doesNotMatch(modal, /router\.|flightSearchParams|travelApi/);
   assert.doesNotMatch(modal, /accessibilityLabel="Go back"|ArrowLeft/);
-  assert.doesNotMatch(modal, /bottomSafeAreaInset|paddingBottom: bottomSafeAreaInset/);
-  assert.match(modal, /safeAreaClearance, \{ height: topInset \}/);
+  assert.match(modal, /paddingBottom: motion\.bottomSafeAreaInset/);
+  assert.doesNotMatch(modal, /safeAreaClearance|topInset/);
   assert.doesNotMatch(modal, /headerAnchor|flightResultsHeaderHeight/);
-  assert.match(modal, /<View style=\{styles.backdrop\}>[\s\S]*StyleSheet.absoluteFill, styles.scrim/);
-  assert.match(modal, /panel: \{ maxHeight: "100%", borderBottomLeftRadius: 24, borderBottomRightRadius: 24/);
+  assert.match(modal, /<SafeAreaView[^>]*style=\{styles.backdrop\}>[\s\S]*StyleSheet.absoluteFill, styles.scrim/);
+  assert.match(modal, /sheet: \{ maxHeight: "88%", borderTopLeftRadius: 24, borderTopRightRadius: 24/);
   assert.match(modal, /content: \{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 20 \}/);
 });
 

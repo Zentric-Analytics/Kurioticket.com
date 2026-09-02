@@ -367,7 +367,7 @@ export function DateStrip({
         accessibilityRole="button"
         accessibilityLabel={`Cheaper nearby date, ${parseCalendarDate(nearbySuggestion.date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}, save ${currencyAccessibilityLabel(nearbySuggestion.savings, displayCurrency)}`}
         onPress={() => onSelect(nearbySuggestion.date)}
-        hitSlop={6}
+        hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
         style={({ pressed }) => [s.nearbyDateInsight, pressed && s.datePressed]}
       >
         <Text numberOfLines={1} ellipsizeMode="tail" style={[s.nearbyDateInsightText, { color: theme.textSecondary, fontFamily: appFonts.semibold }]}>
@@ -536,7 +536,7 @@ export const s = StyleSheet.create({
   dateRail: { height: 80, flex: 1 },
   dates: { gap: 9, alignItems: "center" },
   flightDateNavigator: { height: 82, paddingHorizontal: 0 },
-  nearbyDateInsight: { minHeight: 36, justifyContent: "center", paddingHorizontal: 14, marginTop: -4 },
+  nearbyDateInsight: { minHeight: 28, justifyContent: "center", paddingHorizontal: 14, marginTop: -2 },
   nearbyDateInsightText: { minWidth: 0, flexShrink: 1, fontSize: 12, lineHeight: 16, fontWeight: "600" },
   flightDateRail: { height: 82 },
   flightDates: { paddingHorizontal: 16, paddingVertical: 5 },

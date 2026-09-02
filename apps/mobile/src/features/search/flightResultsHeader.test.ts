@@ -42,7 +42,8 @@ test("Flight Results uses a route-only search-summary card with accessible contr
   assert.match(header, /<SquarePen[\s\S]*?accessible=\{false\}/);
   assert.doesNotMatch(header, />Edit<\/Text>/);
   assert.doesNotMatch(invocation, /onLayout=/);
-  assert.match(results, /topInset=\{topSafeAreaInset\}/);
+  const flightEditInvocation = results.slice(results.indexOf("<FlightEditSearchModal"), results.indexOf("/>", results.indexOf("<FlightEditSearchModal")) + 2);
+  assert.doesNotMatch(flightEditInvocation, /topInset=\{topSafeAreaInset\}/);
   assert.doesNotMatch(results, /flightResultsHeaderHeight|setFlightResultsHeaderHeight|LayoutChangeEvent/);
 });
 
