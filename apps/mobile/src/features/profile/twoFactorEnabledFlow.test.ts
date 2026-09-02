@@ -10,7 +10,7 @@ test("enabled two-factor opens on a status overview before verification", () => 
   assert.match(flow, /type Stage = "overview" \| "verify"/);
   assert.match(flow, /useState<Stage>\("overview"\)/);
   assert.match(flow, /setStage\("verify"\)/);
-  assert.match(flow, /Two-factor authentication is on/);
+  assert.doesNotMatch(flow, /Two-factor authentication is on/);
   assert.match(flow, /Your account is protected with an authenticator app\./);
   assert.match(flow, /Authenticator app/);
 });
@@ -54,11 +54,11 @@ test("alternate credential paste values remain editable and untransformed", () =
 });
 
 test("enabled landing keeps its structure with sub-page typography", () => {
-  assert.match(flow, /\{f\.onTitle\}/);
+  assert.doesNotMatch(flow, /\{f\.onTitle\}/);
   assert.match(flow, /\{f\.onBody\}/);
   assert.match(flow, /\{f\.authenticatorApp\}/);
   assert.match(flow, /\{f\.turnOff\}/);
-  assert.match(flow, /stageTitle: \{ flexShrink: 1, fontSize: 18, lineHeight: 24/);
+  assert.doesNotMatch(flow, /statusHeading:/);
 });
 
 test("password verification is available only when the account has a password", () => {

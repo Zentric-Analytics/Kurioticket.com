@@ -33,7 +33,7 @@ test("recovery codes are a dedicated completion step with selectable two-column 
   assert.match(setupFlow, /width: "48%"/);
   assert.match(setupFlow, /\{p\.saveRecoveryCodesTitle\}/);
   assert.match(setupFlow, /\{p\.recoveryCodesLabel\}/);
-  assert.match(setupFlow, /\{p\.copyAllRecoveryCodes\}/);
+  assert.match(setupFlow, /copiedAction === "recoveryCodes" \? p\.copied : p\.copyAllRecoveryCodes/);
   assert.match(setupFlow, /Clipboard\.setString\(formatRecoveryCodesForClipboard\(recoveryCodes\)\)/);
   assert.match(setupFlow, /label=\{p\.savedCodesAction\}/);
   assert.match(polishCopy, /savedCodesAction: "I’ve saved these codes"/);
@@ -65,9 +65,19 @@ test("setup renders the server URI only into a local QR code and keeps the manua
   assert.match(setupFlow, /\{c\.manualSetupInstructions\}/);
   assert.match(setupFlow, /<Text selectable numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.65\}/);
   assert.match(setupFlow, /Clipboard\.setString\(setup\.manualSetupKey\)/);
-  assert.match(setupFlow, /\{p\.copy\}/);
+  assert.match(setupFlow, /copiedAction === "setupKey" \? p\.copied : p\.copy/);
   assert.match(setupFlow, /\{setup\.manualSetupKey\}<\/Text>/);
   assert.doesNotMatch(setupFlow, />\{setup\.otpauthUri\}</);
+});
+
+test("copy actions show localized copied feedback for one second and safely reset", () => {
+  assert.match(setupFlow, /useState<"setupKey" \| "recoveryCodes" \| null>\(null\)/);
+  assert.match(setupFlow, /showCopiedFeedback\("setupKey"\)/);
+  assert.match(setupFlow, /showCopiedFeedback\("recoveryCodes"\)/);
+  assert.match(setupFlow, /setTimeout\(\(\) => \{[^]*setCopiedAction\(null\);[^]*\}, 1000\)/);
+  assert.match(setupFlow, /if \(copyResetTimer\.current\) clearTimeout\(copyResetTimer\.current\)/);
+  assert.match(setupFlow, /return \(\) => \{[^]*clearTimeout\(copyResetTimer\.current\)/);
+  assert.doesNotMatch(setupFlow, /Toast/);
 });
 
 test("setup remains ephemeral and preserves the existing verification contract", () => {
