@@ -13,6 +13,10 @@ const hotelInvocation = results.slice(results.indexOf("<HotelResultsHeader"), re
 const header = results.slice(results.indexOf("function FlightResultsHeader"), results.indexOf("function HotelResultsHeader"));
 const hotelHeader = results.slice(results.indexOf("function HotelResultsHeader"), results.indexOf("function FlightSortModal"));
 const styles = results.slice(results.indexOf("const s0 = StyleSheet.create"));
+const routeCardStart = header.indexOf("s0.flightRouteSummaryCard");
+const routeCardEnd = header.indexOf("</View>", routeCardStart) + "</View>".length;
+const routeCard = header.slice(routeCardStart, routeCardEnd);
+const rightActionRegion = header.slice(routeCardEnd);
 
 const payload = buildSearchPlan("flight", {
   tripType: "round-trip",
@@ -81,17 +85,36 @@ test("Back retains navigation while Edit opens the local results overlay", () =>
   assert.match(styles, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
 });
 
-test("route summary card centers its route and contains the icon-only Edit action", () => {
+test("Flight Results header separates Back, route summary, and Edit controls", () => {
+  assert.match(styles, /flightHeaderMainRow: \{[\s\S]*?flexDirection: "row"/);
   assert.match(styles, /flightHeaderSide: \{ width: 52/);
-  assert.match(styles, /flightRouteSummaryCard: \{[\s\S]*?flex: 1,[\s\S]*?minWidth: 0,[\s\S]*?height: 52,[\s\S]*?borderWidth: 1,[\s\S]*?borderRadius: 12,[\s\S]*?position: "relative",[\s\S]*?alignItems: "center",[\s\S]*?justifyContent: "center"/);
-  assert.match(styles, /flightRouteSummaryText: \{[\s\S]*?width: "100%",[\s\S]*?paddingHorizontal: 52,[\s\S]*?fontSize: 18,[\s\S]*?lineHeight: 22,[\s\S]*?fontWeight: "800",[\s\S]*?fontFamily: appFonts\.extraBold,[\s\S]*?textAlign: "center"/);
-  assert.match(styles, /flightRouteSummaryEdit: \{[\s\S]*?position: "absolute",[\s\S]*?right: 4,[\s\S]*?top: 4,[\s\S]*?width: 44,[\s\S]*?height: 44/);
+  assert.match(header, /<View style=\{s0\.flightHeaderSide\}>[\s\S]*?accessibilityLabel="Go back"[\s\S]*?<View[\s\S]*?s0\.flightRouteSummaryCard/);
+  assert.match(routeCard, /\{route\}/);
+  assert.doesNotMatch(routeCard, /accessibilityLabel="Edit search"|SquarePen/);
+  assert.match(rightActionRegion, /<View style=\{s0\.flightHeaderSide\}>[\s\S]*?accessibilityLabel="Edit search"[\s\S]*?<SquarePen/);
+  assert.match(styles, /flightRouteSummaryCard: \{[\s\S]*?flex: 1,[\s\S]*?minWidth: 0,[\s\S]*?height: 46,[\s\S]*?borderWidth: 1,[\s\S]*?borderRadius: 10,[\s\S]*?alignItems: "stretch",[\s\S]*?justifyContent: "center"/);
+  assert.match(styles, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
+  assert.match(styles, /flightRouteSummaryEdit: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
+  const flightEditStyle = styles.slice(styles.indexOf("flightRouteSummaryEdit:"), styles.indexOf("flightHeaderRouteBlock:"));
+  assert.doesNotMatch(flightEditStyle, /position: "absolute"|right: 4|top: 4/);
   assert.match(header, /numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit[\s\S]*?minimumFontScale=\{0\.85\}/);
   assert.match(header, /backgroundColor: theme\.surface/);
   assert.match(header, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
   assert.match(styles, /flightHeader: \{[\s\S]*?paddingTop: 12,[\s\S]*?paddingBottom: 2/);
   assert.match(header, /backgroundColor: theme\.background/);
   assert.match(header, /color: theme\.textPrimary/);
+});
+
+test("Flight Results route uses compact left-aligned typography", () => {
+  const routeTextStyle = styles.slice(styles.indexOf("flightRouteSummaryText:"), styles.indexOf("flightRouteSummaryEdit:"));
+  assert.match(routeTextStyle, /width: "100%"/);
+  assert.match(routeTextStyle, /paddingHorizontal: 14/);
+  assert.match(routeTextStyle, /fontSize: 16/);
+  assert.match(routeTextStyle, /lineHeight: 20/);
+  assert.match(routeTextStyle, /fontWeight: "700"/);
+  assert.match(routeTextStyle, /fontFamily: appFonts\.bold/);
+  assert.match(routeTextStyle, /textAlign: "left"/);
+  assert.doesNotMatch(routeTextStyle, /paddingHorizontal: 52|fontSize: 18|textAlign: "center"/);
 });
 
 test("visible Flight Results labels use scoped Inter families", () => {
