@@ -611,13 +611,13 @@ textarea {
 }
 
 .flight-card-time {
-  font-size: 1.125rem;
+  font-size: 1rem;
   white-space: nowrap;
 }
 
 .flight-card-inline-logo {
-  height: 1.75rem;
-  width: 1.75rem;
+  height: 1.5rem;
+  width: 1.5rem;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -625,13 +625,17 @@ textarea {
 }
 
 .flight-card-inline-logo-image {
-  height: 1.5rem;
-  width: 1.5rem;
+  height: 1.25rem;
+  width: 1.25rem;
 }
 
 .flight-card-inline-logo-icon {
-  height: 1rem;
-  width: 1rem;
+  height: 0.875rem;
+  width: 0.875rem;
+}
+
+.flight-card-route-codes {
+  display: none;
 }
 
 .flight-card-price {
@@ -704,7 +708,7 @@ textarea {
   }
 
   .flight-card-time {
-    font-size: 1.0625rem;
+    font-size: 0.9375rem;
   }
 
   .flight-card-price {
@@ -869,6 +873,14 @@ textarea {
 
   .flight-card-time {
     font-size: 1.0625rem;
+  }
+
+  .flight-card-departure-date {
+    display: none;
+  }
+
+  .flight-card-route-codes {
+    display: block;
   }
 
   .flight-card-leg-grid > div:nth-child(2) > div:first-child {

@@ -56,9 +56,20 @@ test("desktop cards pair each leg time with the airline logo while keeping one i
   assert.match(source, /visibleLegs\.map[\s\S]*flight=\{flight\}/);
   assert.match(styles, /\.flight-card-header-logo \{\s*display: none;/);
   assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-header-logo \{\s*display: block;/);
-  assert.match(styles, /\.flight-card-time \{\s*font-size: 1\.125rem;\s*white-space: nowrap;/);
+  assert.match(styles, /\.flight-card-time \{\s*font-size: 1rem;\s*white-space: nowrap;/);
   assert.match(styles, /\.flight-card-inline-logo \{[\s\S]*border: 0;[\s\S]*background: transparent;[\s\S]*box-shadow: none;/);
-  assert.match(styles, /\.flight-card-inline-logo-image \{\s*height: 1\.5rem;\s*width: 1\.5rem;/);
+  assert.match(styles, /\.flight-card-inline-logo-image \{\s*height: 1\.25rem;\s*width: 1\.25rem;/);
+});
+
+test("desktop legs place factual departure and arrival dates beneath their airport codes", async () => {
+  const source = await readFile(new URL("./FlightCard.tsx", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
+  const leg = source.slice(source.indexOf("function ResponsiveFlightLegRow"), source.indexOf("function AirlineLogo"));
+
+  assert.match(leg, /\{leg\.originAirport\}[\s\S]*flight-card-departure-date[\s\S]*formatItineraryShortDate\(\{ value: leg\.departureTime, locale \}\)/);
+  assert.match(leg, /\{leg\.destinationAirport\}[\s\S]*flight-card-arrival-date[\s\S]*formatItineraryShortDate\(\{ value: leg\.arrivalTime, locale \}\)/);
+  assert.match(styles, /\.flight-card-route-codes \{\s*display: none;/);
+  assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-departure-date \{\s*display: none;[\s\S]*\.flight-card-route-codes \{\s*display: block;/);
 });
 
 test("desktop nearby fares use a contained mobile-like hierarchy", async () => {

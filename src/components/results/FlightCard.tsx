@@ -249,6 +249,12 @@ function ResponsiveFlightLegRow({
           >
             {leg.originAirport}
           </div>
+          <div
+            className="flight-card-departure-date mt-0.5 text-sm font-medium leading-5 text-[#07133B]"
+            dir="auto"
+          >
+            {formatItineraryShortDate({ value: leg.departureTime, locale })}
+          </div>
         </div>
 
         <div className="min-w-0 self-center text-center">
@@ -275,7 +281,7 @@ function ResponsiveFlightLegRow({
               {formatLayoverText(leg, t)}
             </p>
           ) : (
-            <p className="mt-2 text-sm font-medium leading-5 text-[#536B92]">
+            <p className="flight-card-route-codes mt-2 text-sm font-medium leading-5 text-[#536B92]">
               {leg.originAirport} → {leg.destinationAirport}
             </p>
           )}
