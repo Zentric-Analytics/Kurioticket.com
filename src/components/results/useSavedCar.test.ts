@@ -15,8 +15,16 @@ test("web Cars use account-backed save state with authentication and rollback", 
 });
 
 test("saved Car payload preserves canonical result and complete search context", () => {
-  for (const field of ["pickupLocation", "dropoffLocation", "pickupDate", "pickupTime", "dropoffDate", "dropoffTime", "driverAge"]) {
+  for (const field of ["pickupLocation", "dropoffLocation", "pickupDate", "pickupTime", "dropoffDate", "dropoffTime"]) {
     assert.match(source, new RegExp(`${field}: search\\.${field}`));
   }
+  assert.match(source, /driverAge: search\.driverAge === "18-70" \? 18 : Number\(search\.driverAge\)/);
   assert.match(source, /payload: \{ result: car, searchParams: search \}/);
+});
+
+test("saved Car loading is shared across result cards and mutations publish the shared snapshot", () => {
+  assert.match(source, /let savedCarsRequest: Promise<SavedCarApiItem\[\]> \| null/);
+  assert.match(source, /if \(savedCarsRequest\) return savedCarsRequest/);
+  assert.match(source, /SAVED_CARS_CHANGED_EVENT/);
+  assert.match(source, /publishSavedCars/);
 });

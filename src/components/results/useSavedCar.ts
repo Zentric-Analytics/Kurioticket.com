@@ -5,6 +5,35 @@ import { signIn, useSession } from "next-auth/react";
 import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { deleteBackendCar, fetchBackendSavedCars, saveBackendCar, type SavedCarApiItem } from "@/lib/saved-items-api";
 
+const SAVED_CARS_CHANGED_EVENT = "kurioticket:saved-cars-changed";
+let savedCarsOwner = "";
+let savedCarsCache: SavedCarApiItem[] | null = null;
+let savedCarsRequest: Promise<SavedCarApiItem[]> | null = null;
+
+function clearSavedCarsCache(owner = "") {
+  savedCarsOwner = owner;
+  savedCarsCache = null;
+  savedCarsRequest = null;
+}
+
+function loadSavedCars(owner: string) {
+  if (savedCarsOwner !== owner) clearSavedCarsCache(owner);
+  if (savedCarsCache) return Promise.resolve(savedCarsCache);
+  if (savedCarsRequest) return savedCarsRequest;
+  savedCarsRequest = fetchBackendSavedCars()
+    .then((response) => {
+      if (response.ok) savedCarsCache = response.items ?? [];
+      return savedCarsCache ?? [];
+    })
+    .finally(() => { savedCarsRequest = null; });
+  return savedCarsRequest;
+}
+
+function publishSavedCars(items: SavedCarApiItem[]) {
+  savedCarsCache = items;
+  window.dispatchEvent(new Event(SAVED_CARS_CHANGED_EVENT));
+}
+
 const resultId = (item: SavedCarApiItem) => {
   if (typeof item.resultId === "string") return item.resultId;
   if (item.payload && typeof item.payload === "object" && "result" in item.payload) {
@@ -15,18 +44,18 @@ const resultId = (item: SavedCarApiItem) => {
 };
 
 export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams) {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
+  const owner = session?.user?.email ?? "authenticated-user";
   const [savedItem, setSavedItem] = useState<SavedCarApiItem | null>(null);
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
-    if (status !== "authenticated") { queueMicrotask(() => setSavedItem(null)); return; }
-    const controller = new AbortController();
-    void fetchBackendSavedCars(controller.signal).then((response) => {
-      if (response.ok) setSavedItem(response.items?.find((item) => resultId(item) === car.id) ?? null);
-    }).catch(() => undefined);
-    return () => controller.abort();
-  }, [car.id, status]);
+    if (status !== "authenticated") { clearSavedCarsCache(); queueMicrotask(() => setSavedItem(null)); return; }
+    const update = () => setSavedItem(savedCarsCache?.find((item) => resultId(item) === car.id) ?? null);
+    void loadSavedCars(owner).then(update).catch(() => undefined);
+    window.addEventListener(SAVED_CARS_CHANGED_EVENT, update);
+    return () => window.removeEventListener(SAVED_CARS_CHANGED_EVENT, update);
+  }, [car.id, owner, status]);
 
   async function toggleSavedCar() {
     if (pending) return;
@@ -37,7 +66,8 @@ export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams) {
     try {
       if (previous) {
         const response = await deleteBackendCar(previous.id);
-        if (!response.ok) setSavedItem(previous);
+        if (response.ok) publishSavedCars((savedCarsCache ?? []).filter((item) => item.id !== previous.id));
+        else setSavedItem(previous);
         return;
       }
       const offer = car.offers[0];
@@ -53,15 +83,19 @@ export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams) {
         pickupTime: search.pickupTime,
         dropoffDate: search.dropoffDate,
         dropoffTime: search.dropoffTime,
-        driverAge: Number(search.driverAge),
+        driverAge: search.driverAge === "18-70" ? 18 : Number(search.driverAge),
         totalPrice: offer.totalPrice,
         currency: offer.currency,
         payload: { result: car, searchParams: search },
       });
-      if (response.ok && response.item) setSavedItem({ ...response.item, type: "car", resultId: car.id });
+      if (response.ok && response.item) {
+        const item = { ...response.item, type: "car" as const, resultId: car.id };
+        publishSavedCars([...(savedCarsCache ?? []), item]);
+      }
       else if (response.duplicate) {
+        clearSavedCarsCache(owner);
         const refreshed = await fetchBackendSavedCars();
-        setSavedItem(refreshed.items?.find((item) => resultId(item) === car.id) ?? null);
+        if (refreshed.ok) publishSavedCars(refreshed.items ?? []);
       }
     } finally { setPending(false); }
   }

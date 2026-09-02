@@ -55,6 +55,13 @@ test("recentSearchInputSchema accepts valid internal flight, hotel and car resul
   assert.equal(recentSearchInputSchema.safeParse(validCarRecentSearch).success, true);
 });
 
+test("recentSearchInputSchema accepts the canonical any-age Car value", () => {
+  assert.equal(recentSearchInputSchema.safeParse({
+    ...validCarRecentSearch,
+    params: { ...validCarRecentSearch.params, driverAge: "18-70" },
+  }).success, true);
+});
+
 test("recentSearchInputSchema rejects car entries routed to another product", () => {
   assert.equal(recentSearchInputSchema.safeParse({ ...validCarRecentSearch, href: "/hotels/results" }).success, false);
 });

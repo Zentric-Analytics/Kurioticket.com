@@ -59,7 +59,7 @@ const recentCarParamsSchema = z.object({
   pickupTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
   dropoffDate: z.string().trim().min(1).max(32),
   dropoffTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
-  driverAge: z.union([z.string().regex(/^\d{2}$/), z.number().int().min(18).max(70)]),
+  driverAge: z.union([z.literal("18-70"), z.string().regex(/^\d{2}$/), z.number().int().min(18).max(70)]),
   unverifiedLocation: z.boolean().optional(),
 });
 
