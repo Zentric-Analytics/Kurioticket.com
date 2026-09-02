@@ -18,9 +18,15 @@ test("two-factor disable verification defaults to authenticator and offers expli
   assert.match(flow, /useState<VerificationMethod>\("authenticator"\)/);
   assert.match(flow, /Use another verification method/);
   assert.match(flow, /Recovery code/);
-  assert.match(flow, /Password/);
   assert.match(flow, /keyboardType=\{method === "authenticator" \? "number-pad" : "default"\}/);
   assert.match(flow, /secureTextEntry=\{method === "password" && passwordHidden\}/);
+});
+
+test("password verification is available only when the account has a password", () => {
+  assert.match(security, /hasPassword=\{Boolean\(overview\?\.hasPassword\)\}/);
+  assert.match(flow, /hasPassword: boolean/);
+  assert.match(flow, /if \(!hasPassword && method === "password"\)/);
+  assert.match(flow, /\{hasPassword \? <MethodOption title=\{f\.password\}/);
 });
 
 test("two-factor verification errors belong to the credential field", () => {
