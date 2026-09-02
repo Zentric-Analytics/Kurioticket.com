@@ -6,6 +6,7 @@ import { buildHotelAmenityPresentation } from "../../../../../src/components/res
 
 const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
 const card = source.slice(source.indexOf("function HotelCard"), source.indexOf("function Loading", source.indexOf("function HotelCard")));
+const hotelList = source.slice(source.indexOf("sorted.map((x, i)"), source.indexOf("<PriceAlert", source.indexOf("sorted.map((x, i)")));
 const amenities = readFileSync(resolve("src/features/search/HotelCardAmenityList.tsx"), "utf8");
 const api = readFileSync(resolve("src/api/travelApi.ts"), "utf8");
 const publicTypes = readFileSync(resolve("../../src/lib/types.ts"), "utf8");
@@ -58,11 +59,19 @@ test("hotel title matches mobile web typography without compromising actions", (
   assert.match(source, /hotelAction:\s*\{[^}]*width:\s*44[^}]*height:\s*44/s);
 });
 
-test("ranking, stars, and location follow the web-like hierarchy", () => {
-  for (const label of ["Best overall", "Great price", "Highly rated"]) assert.match(card, new RegExp(label));
+test("only the first priced hotel receives the green Cheapest sort badge", () => {
+  for (const label of ["Best overall", "Great price", "Highly rated"]) assert.doesNotMatch(card, new RegExp(label));
+  assert.doesNotMatch(card, /rankLabel|\brank\s*:/);
+  assert.match(card, /showCheapestBadge: boolean/);
   const image = card.slice(card.indexOf("s0.hotelImageWrap"), card.indexOf("s0.hotelCopy"));
   assert.doesNotMatch(image, /hotelBadge|rankLabel/);
-  assert.match(card, /<View style=\{s0\.hotelBadge\}><Badge>\{rankLabel\}<\/Badge><\/View>/);
+  assert.match(card, /\{showCheapestBadge \? \([\s\S]*<View style=\{s0\.hotelBadge\}><Badge green>Cheapest<\/Badge><\/View>[\s\S]*\) : null\}/);
+  assert.match(hotelList, /showCheapestBadge=\{i === 0 && hasHotelPrice\(x as HotelResult\)\}/);
+  assert.doesNotMatch(hotelList, /i === 1|rank === 1|rank=\{i\}/);
+  assert.doesNotMatch(card, /showCheapestBadge[^?]*\?[^:]*:[^n]*<Badge/s);
+  const badge = card.indexOf("{showCheapestBadge ? (");
+  const starsIndex = card.indexOf("accessibilityLabel={`${classificationStars}");
+  assert.ok(badge >= 0 && starsIndex > badge);
   assert.match(card, /<MapPin accessible=\{false\}/);
   assert.match(card, />\{result\.location\}<\/Text>/);
   assert.doesNotMatch(card, /⌾|distanceFromCenter|neighbourhood/);

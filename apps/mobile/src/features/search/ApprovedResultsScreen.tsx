@@ -128,6 +128,7 @@ import { activeHotelFilterCount, buildHotelFilterOptions, emptyHotelFilters, fil
 import { HotelCardAmenityList } from "./HotelCardAmenityList";
 import { defaultHotelSort, sortHotelsForResults } from "./hotelSort";
 import { HotelResultsQuickFilterSheet, type HotelResultsQuickFilterKind } from "./HotelResultsQuickFilterSheet";
+import { hasHotelPrice } from "@/lib/hotels/hotelResultAvailability";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -682,7 +683,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   <HotelCard
                     key={x.id}
                     result={x as HotelResult}
-                    rank={i}
+                    showCheapestBadge={i === 0 && hasHotelPrice(x as HotelResult)}
                     params={params}
                   />
                 ),
@@ -1210,11 +1211,11 @@ function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: F
 }
 function HotelCard({
   result,
-  rank,
+  showCheapestBadge,
   params,
 }: {
   result: HotelResult;
-  rank: number;
+  showCheapestBadge: boolean;
   params: Record<string, string | string[]>;
 }) {
   const canonical = useCanonicalSaved();
@@ -1224,11 +1225,6 @@ function HotelCard({
     ? null
     : result.reviewScore * (10 / (result.reviewScale || 10));
   const classificationStars = result.classificationStars || Math.round(result.rating);
-  const rankLabel = rank === 0
-    ? "Best overall"
-    : rank === 1
-      ? "Great price"
-      : "Highly rated";
   const shareHotel = () => {
     const message = `${result.name} — ${result.location} — ${money(result.currency, result.pricePerNight)}/night`;
     void Share.share({ message }).catch(() => undefined);
@@ -1272,7 +1268,9 @@ function HotelCard({
             </Pressable>
           </View>
         </View>
-        <View style={s0.hotelBadge}><Badge>{rankLabel}</Badge></View>
+        {showCheapestBadge ? (
+          <View style={s0.hotelBadge}><Badge green>Cheapest</Badge></View>
+        ) : null}
         <Text accessibilityLabel={`${classificationStars} star hotel`} style={s0.stars}>
           {"★".repeat(classificationStars)}
         </Text>
