@@ -33,6 +33,24 @@ export function flightEditSearchParams(params: Record<string, RouteValue>) {
   return Object.fromEntries(Object.entries({ ...common, ...(tripType === "round-trip" ? { returnDate: firstFlightParam(params.returnDate) } : {}), ...indexed }).filter(([, value]) => value !== ""));
 }
 
+export function flightSearchRouteParamPatch(nextParams: Record<string, string | undefined>): Record<string, string | undefined> {
+  const clearedParams: Record<string, string | undefined> = {
+    origin: undefined,
+    destination: undefined,
+    from: undefined,
+    to: undefined,
+    returnDate: undefined,
+    cabinClass: undefined,
+    legCount: undefined,
+  };
+  for (let index = 1; index <= MULTI_CITY_MAX_LEGS; index += 1) {
+    clearedParams[`origin${index}`] = undefined;
+    clearedParams[`destination${index}`] = undefined;
+    clearedParams[`departureDate${index}`] = undefined;
+  }
+  return { ...clearedParams, ...nextParams };
+}
+
 export function defaultFlightForm(): FlightForm { return { tripType: "round-trip", departureDate: "", returnDate: "", multiCityLegs: createDefaultMultiCityLegs(), adults: 1, children: 0, infants: 0, cabin: "Economy" }; }
 
 export function initializeFlightForm(raw: Record<string, RouteValue>, today = new Date(), initializeHomepageDates = false): { form: FlightForm; notice?: string } {

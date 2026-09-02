@@ -66,7 +66,7 @@ import {
 } from "./SearchUi";
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
-import { flightEditSearchParams } from "../flow/flightSearchModel";
+import { flightEditSearchParams, flightSearchRouteParamPatch } from "../flow/flightSearchModel";
 import { FlightEditSearchModal } from "./FlightEditSearchModal";
 import { HotelEditSearchModal } from "./HotelEditSearchModal";
 import {
@@ -176,7 +176,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [editSearchOpen, setEditSearchOpen] = useState(false);
   const pendingFlightEditSearchParams = useRef<Record<string, string | undefined> | null>(null);
-  const flightEditNavigationFrame = useRef<number | null>(null);
   const [hotelEditSearchOpen, setHotelEditSearchOpen] = useState(false);
   const [hotelEditPresentation, setHotelEditPresentation] = useState(0);
   const [filterSection, setFilterSection] = useState<FlightFilterSectionName>("all");
@@ -417,30 +416,15 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     searchSequence.current += 1;
     activeSearch.current?.abort("screen-blur");
   }, []));
-  useEffect(() => () => {
-    if (flightEditNavigationFrame.current !== null) {
-      cancelAnimationFrame(flightEditNavigationFrame.current);
-      flightEditNavigationFrame.current = null;
-    }
-  }, []);
   const submitFlightEditSearch = useCallback((nextParams: Record<string, string | undefined>) => {
     pendingFlightEditSearchParams.current = nextParams;
     setEditSearchOpen(false);
   }, []);
   const completeFlightEditSearch = useCallback(() => {
-    const pending = pendingFlightEditSearchParams.current;
-    if (!pending) return;
-    if (flightEditNavigationFrame.current !== null) return;
-    flightEditNavigationFrame.current = requestAnimationFrame(() => {
-      flightEditNavigationFrame.current = null;
-      const nextParams = pendingFlightEditSearchParams.current;
-      if (!nextParams) return;
-      pendingFlightEditSearchParams.current = null;
-      router.replace({
-        pathname: "/flight-results",
-        params: nextParams,
-      });
-    });
+    const nextParams = pendingFlightEditSearchParams.current;
+    if (!nextParams) return;
+    pendingFlightEditSearchParams.current = null;
+    router.setParams(flightSearchRouteParamPatch(nextParams));
   }, []);
   const edit = () => {
     if (product === "flight") {

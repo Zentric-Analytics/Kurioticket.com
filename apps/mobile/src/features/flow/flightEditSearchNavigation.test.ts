@@ -42,7 +42,7 @@ test("results edit modal reports submission and fully completed shared-sheet dis
   assert.match(modal, /content: \{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 20 \}/);
 });
 
-test("validated flight edits close first and replace only after dismissal plus one native frame", () => {
+test("validated flight edits close first and update the mounted route only after dismissal", () => {
   const source = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
   const submitStart = source.indexOf("  const submitFlightEditSearch = useCallback");
   const completeStart = source.indexOf("  const completeFlightEditSearch = useCallback", submitStart);
@@ -53,11 +53,10 @@ test("validated flight edits close first and replace only after dismissal plus o
   assert.ok(submitStart >= 0 && completeStart > submitStart && editStart > completeStart);
   assert.match(submitHandler, /pendingFlightEditSearchParams\.current = nextParams;\s*setEditSearchOpen\(false\);/);
   assert.doesNotMatch(submitHandler, /router\.(?:replace|push|setParams)|activeSearch\.current\?\.abort/);
-  assert.match(completeHandler, /const pending = pendingFlightEditSearchParams\.current;\s*if \(!pending\) return;/);
-  assert.match(completeHandler, /if \(flightEditNavigationFrame\.current !== null\) return;/);
-  assert.match(completeHandler, /flightEditNavigationFrame\.current = requestAnimationFrame\(\(\) => \{/);
-  assert.match(completeHandler, /pendingFlightEditSearchParams\.current = null;\s*router\.replace\(\{\s*pathname: "\/flight-results",\s*params: nextParams,/);
-  assert.match(source, /cancelAnimationFrame\(flightEditNavigationFrame\.current\)/);
+  assert.match(completeHandler, /const nextParams = pendingFlightEditSearchParams\.current;\s*if \(!nextParams\) return;/);
+  assert.match(completeHandler, /pendingFlightEditSearchParams\.current = null;\s*router\.setParams\(flightSearchRouteParamPatch\(nextParams\)\);/);
+  assert.doesNotMatch(submitHandler + completeHandler, /router\.(?:replace|push)|requestAnimationFrame|cancelAnimationFrame|flightEditNavigationFrame/);
+  assert.doesNotMatch(source, /flightEditNavigationFrame/);
 });
 
 test("FlightSearchPanel preserves validation and default navigation around its validated override", () => {
