@@ -44,6 +44,20 @@ test("flight and hotel result counts are unboxed accessible headings", () => {
   assert.match(source, /No stays match these filters\./);
 });
 
+test("hotel result count uses Inter Bold at the existing size and line height", () => {
+  const hotelResultCountStyle = source.slice(
+    source.indexOf("hotelResultCount:"),
+    source.indexOf("hotelFilteredEmpty:", source.indexOf("hotelResultCount:")),
+  );
+
+  assert.match(hotelResultCountStyle, /fontSize: 16/);
+  assert.match(hotelResultCountStyle, /lineHeight: 21/);
+  assert.match(hotelResultCountStyle, /fontWeight: "700"/);
+  assert.match(hotelResultCountStyle, /fontFamily: appFonts\.bold/);
+  assert.doesNotMatch(hotelResultCountStyle, /fontWeight: "800"/);
+  assert.doesNotMatch(hotelResultCountStyle, /appFonts\.extraBold/);
+});
+
 test("count follows the price alert and directly precedes rendered cards", () => {
   assert.doesNotMatch(persistentControls, /flightPersistentSearchControls|\{filterRail\}/);
   assert.doesNotMatch(persistentControls, /dateStrip|PriceAlert|flightResultCountLabel|FlightCard/);
