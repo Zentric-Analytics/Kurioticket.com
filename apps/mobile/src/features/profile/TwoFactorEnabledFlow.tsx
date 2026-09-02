@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, ActivityIndicator, Alert, Keyboard, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, Line, Path } from "react-native-svg";
@@ -9,6 +9,7 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { flowColors } from "../flow/flowStyles";
 import type { SecurityCopy } from "./securityLocalization";
 import { twoFactorPolishCopy } from "./twoFactorPolishCopy";
+import { normalizeAuthenticatorCode } from "./twoFactorInput";
 
 type VerificationMethod = "authenticator" | "recovery" | "password";
 type Stage = "overview" | "verify";
@@ -83,6 +84,7 @@ export function TwoFactorEnabledFlow({ active, hasPassword, copy: c, onUnauthori
   const [generalError, setGeneralError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [passwordHidden, setPasswordHidden] = useState(true);
+  const inputRef = useRef<TextInput>(null);
 
   const reset = () => {
     setStage("overview");
@@ -200,16 +202,18 @@ export function TwoFactorEnabledFlow({ active, hasPassword, copy: c, onUnauthori
       <Text style={[styles.label, { color: theme.text }]}>{fieldLabel}</Text>
       <View style={[styles.inputShell, { borderColor: fieldError ? flowColors.red : theme.border, backgroundColor: theme.surface }]}>
         <TextInput
+          key={method}
+          ref={inputRef}
           accessibilityLabel={fieldLabel}
+          editable={!submitting}
           keyboardType={method === "authenticator" ? "number-pad" : "default"}
-          maxLength={method === "authenticator" ? 6 : undefined}
           secureTextEntry={method === "password" && passwordHidden}
           autoCapitalize="none"
           autoCorrect={false}
-          textContentType={method === "password" ? "password" : "none"}
+          textContentType={method === "authenticator" ? "oneTimeCode" : method === "password" ? "password" : "none"}
           value={verification}
           onChangeText={(value) => {
-            setVerification(method === "authenticator" ? value.replace(/\D/g, "") : value);
+            setVerification(method === "authenticator" ? normalizeAuthenticatorCode(value) : value);
             setFieldError("");
             setGeneralError("");
           }}
@@ -258,7 +262,7 @@ const styles = StyleSheet.create({
   statusHeading: { flexDirection: "row", alignItems: "center", gap: 10 },
   checkCircle: { width: 28, height: 28, borderRadius: 14, backgroundColor: "#E9F7EF", alignItems: "center", justifyContent: "center" },
   checkText: { color: "#067647", fontSize: 17, fontWeight: "900" },
-  stageTitle: { flexShrink: 1, fontSize: 20, lineHeight: 27, fontWeight: "800" },
+  stageTitle: { flexShrink: 1, fontSize: 18, lineHeight: 24, fontWeight: "800" },
   supporting: { fontSize: 15, lineHeight: 22 },
   methodHelp: { fontSize: 14, lineHeight: 20, marginTop: -4 },
   methodStatus: { minHeight: 64, borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, paddingHorizontal: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },

@@ -21,6 +21,8 @@ test("two-factor disable verification defaults to one authenticator field", () =
   assert.match(flow, /keyboardType=\{method === "authenticator" \? "number-pad" : "default"\}/);
   assert.match(flow, /secureTextEntry=\{method === "password" && passwordHidden\}/);
   assert.match(flow, /placeholder=\{placeholder\}/);
+  assert.match(flow, /textContentType=\{method === "authenticator" \? "oneTimeCode"/);
+  assert.match(flow, /normalizeAuthenticatorCode\(value\)/);
 });
 
 test("alternate verification methods use a compact bottom sheet instead of expanding inline", () => {
@@ -38,8 +40,25 @@ test("selecting another method replaces the single credential field", () => {
   assert.match(flow, /setMethod\(next\)/);
   assert.match(flow, /setVerification\(""\)/);
   assert.match(flow, /setShowMethods\(false\)/);
+  assert.match(flow, /key=\{method\}/);
+  assert.match(flow, /ref=\{inputRef\}/);
   assert.match(flow, /method !== "recovery" \? <MethodOption title=\{f\.recoveryCode\}/);
   assert.match(flow, /method !== "authenticator" \? <MethodOption title=\{f\.authenticatorApp\}/);
+});
+
+test("alternate credential paste values remain editable and untransformed", () => {
+  assert.match(flow, /method === "authenticator" \? normalizeAuthenticatorCode\(value\) : value/);
+  assert.match(flow, /autoCapitalize="none"/);
+  assert.match(flow, /autoCorrect=\{false\}/);
+  assert.match(flow, /secureTextEntry=\{method === "password" && passwordHidden\}/);
+});
+
+test("enabled landing keeps its structure with sub-page typography", () => {
+  assert.match(flow, /\{f\.onTitle\}/);
+  assert.match(flow, /\{f\.onBody\}/);
+  assert.match(flow, /\{f\.authenticatorApp\}/);
+  assert.match(flow, /\{f\.turnOff\}/);
+  assert.match(flow, /stageTitle: \{ flexShrink: 1, fontSize: 18, lineHeight: 24/);
 });
 
 test("password verification is available only when the account has a password", () => {
