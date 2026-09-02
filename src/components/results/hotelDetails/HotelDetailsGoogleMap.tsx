@@ -7,11 +7,13 @@ import {
 type HotelDetailsGoogleMapProps = {
   hotelName: string;
   propertyDetails: PublicHotelPropertyDetails;
+  fillHeight?: boolean;
 };
 
 export function HotelDetailsGoogleMap({
   hotelName,
   propertyDetails,
+  fillHeight = false,
 }: HotelDetailsGoogleMapProps) {
   const mapUrl = buildGoogleHotelMapEmbedUrl({
     hotelName,
@@ -26,7 +28,7 @@ export function HotelDetailsGoogleMap({
 
   return (
     <section
-      className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.05)] lg:mt-8"
+      className={`min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.05)]${fillHeight ? " flex h-full flex-col" : " mt-6"}`}
       aria-labelledby="hotel-details-google-map-heading"
       data-hotel-details-google-map
     >
@@ -46,7 +48,9 @@ export function HotelDetailsGoogleMap({
         src={mapUrl}
         loading="lazy"
         referrerPolicy="strict-origin-when-cross-origin"
-        className="h-[280px] w-full border-0 bg-slate-100 sm:h-[360px] lg:h-[440px]"
+        className={fillHeight
+          ? "min-h-[320px] w-full flex-1 border-0 bg-slate-100"
+          : "h-[280px] w-full border-0 bg-slate-100 sm:h-[360px] lg:h-[320px]"}
         allowFullScreen
       />
     </section>
