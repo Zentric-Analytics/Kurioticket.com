@@ -381,7 +381,10 @@ export function isExactEasObjectMissing(error, kind, remoteId) {
   if (kind !== "build" || !/^[0-9a-f-]{36}$/i.test(String(remoteId ?? ""))) return false;
   const output = [error?.stderr, error?.stdout, error?.message].filter((value) => typeof value === "string").join("\n");
   const escaped = String(remoteId).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`^Build with id ['\"]${escaped}['\"] does not exist\\.$`, "mi").test(output);
+  // runText deliberately collapses provider stderr into a bounded, redacted
+  // single-line envelope. Match the provider's exact sentence wherever it
+  // appears in that envelope while still requiring the exact requested ID.
+  return new RegExp(`(?:^|\\s)Build with id ['\"]${escaped}['\"] does not exist\\.(?:\\s|$)`, "i").test(output);
 }
 
 export function createExactCheckoutDirectory(workspaceRoot = runtimeRoot) {
