@@ -3,27 +3,40 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const screen = readFileSync("src/features/profile/ProfileScreen.tsx", "utf8");
-const storage = readFileSync("src/storage/sessionStorage.ts", "utf8");
+const cache = readFileSync("src/storage/profileNameCache.ts", "utf8");
 
-test("profile welcome never renders the persisted session name before server verification", () => {
-  assert.doesNotMatch(screen, /setName\(session\?\.user\.name|setName\(session\.user\.name/);
+test("profile welcome renders immediately instead of waiting for the profile API", () => {
+  assert.match(screen, /<WelcomeCard name=\{name\} email=\{email\} \/>/);
+  assert.doesNotMatch(screen, /identityResolved|<View accessible=\{false\} style=\{styles\.welcomeCard\} \/>/);
+});
+
+test("profile welcome never reads the account or session name", () => {
+  assert.doesNotMatch(screen, /session\?\.user\.name|session\.user\.name|user\.name/);
   assert.match(screen, /setEmail\(session\?\.user\.email \?\? null\)/);
 });
 
-test("unresolved identity reserves the welcome space without generic avatar or greeting content", () => {
-  assert.match(screen, /const \[identityResolved, setIdentityResolved\] = useState\(false\)/);
-  assert.match(screen, /identityResolved \? <WelcomeCard name=\{name\} email=\{email\} \/> : <View accessible=\{false\} style=\{styles\.welcomeCard\} \/>/);
+test("cached Personal details name is shown before authoritative reconciliation", () => {
+  assert.match(screen, /peekProfileName\(userId\)/);
+  assert.match(screen, /readProfileName\(userId\)/);
+  assert.match(screen, /setName\(cachedName\)/);
+  assert.match(screen, /const authoritativeName = profile\?\.fullName\?\.trim\(\) \|\| null/);
+  assert.match(screen, /setName\(authoritativeName\)/);
+  assert.match(screen, /writeProfileName\(userId, authoritativeName\)/);
 });
 
-test("authoritative Personal details profile unlocks the welcome without session-name fallback", () => {
-  assert.match(screen, /travelApi\.profile\(\)\.then\(\(\{ profile, user \}\) =>/);
-  assert.match(screen, /setName\(profile\?\.fullName \?\? null\)/);
-  assert.match(screen, /setIdentityResolved\(true\)/);
-  assert.doesNotMatch(screen, /user\.name|updateStoredSessionName/);
+test("profile refresh is generation guarded against cross-account stale responses", () => {
+  assert.match(screen, /const loadGeneration = useRef\(0\)/);
+  assert.match(screen, /const generation = \+\+loadGeneration\.current/);
+  assert.match(screen, /generation !== loadGeneration\.current/);
 });
 
-test("cached session name updates cannot cross account boundaries or be mutated by unscoped callers", () => {
-  assert.match(storage, /updateStoredSessionName\(name: string \| null, expectedUserId\?: string\)/);
-  assert.match(storage, /if \(!expectedUserId\) return/);
-  assert.match(storage, /if \(!session \|\| session\.user\.id !== expectedUserId\) return/);
+test("profile uses one focus-owned load instead of duplicate mount fetches", () => {
+  assert.match(screen, /useFocusEffect\(load\)/);
+  assert.doesNotMatch(screen, /useEffect\(load/);
+});
+
+test("Personal details name cache is account scoped and never stores provider identity", () => {
+  assert.match(cache, /kurioticket\.profile-name\.v1\.\$\{encodeURIComponent\(userId\)\}/);
+  assert.match(cache, /writeProfileName\(userId: string, name: string \| null\)/);
+  assert.doesNotMatch(cache, /email|session|provider|oauth/i);
 });
