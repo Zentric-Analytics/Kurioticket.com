@@ -14,7 +14,6 @@ import { DealsJourneyBreadcrumbs } from "./DealsJourneyBreadcrumbs";
 import { useDealsStagedJourneyLifecycle } from "./useDealsStagedJourneyLifecycle";
 import {
   attemptGuidedHandoffActivation,
-  getDealsGuidedEstimatedTotal,
   getDealsGuidedOpenedCount,
   getDealsGuidedProducts,
   validateDealsGuidedHandoffPlan,
@@ -407,11 +406,6 @@ export function DealsGuidedHandoffClient({ search }: { search: DealsSearch }) {
                 product,
                 getDealsReviewChangeHref(product, search),
               ]),
-            )}
-            combinedTotal={getDealsGuidedEstimatedTotal(
-              plan,
-              selectedCurrency,
-              rates.rates,
             )}
           />
           <div className="mt-6 flex flex-wrap gap-3">

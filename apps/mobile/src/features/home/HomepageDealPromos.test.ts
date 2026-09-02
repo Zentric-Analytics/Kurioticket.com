@@ -13,7 +13,7 @@ test("both homepage deal cards render their complete promotional copy", () => {
   assert.match(promo, /Flight deals from top airlines/);
   assert.match(
     promo,
-    /Discover limited-time fares and compare options instantly\./,
+    /Search current fares from connected airlines and compare options\./,
   );
   assert.match(promo, /Explore flight deals/);
   assert.match(promo, /Hotel savings worldwide/);
@@ -22,6 +22,10 @@ test("both homepage deal cards render their complete promotional copy", () => {
     /Browse stays from boutique hotels to global chains with price transparency\./,
   );
   assert.match(promo, /Explore hotel deals/);
+});
+
+test("deal merchandising does not invent price, discount, or urgency claims", () => {
+  assert.doesNotMatch(promo, /limited-time|% off|discount|only \d|save \$/i);
 });
 
 test("light-mode homepage promo colors remain unchanged", () => {

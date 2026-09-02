@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { applyPackageDates, applyPackageDestination, createPackageSearch, includedProducts, packageModes, swapPackageAirports, transitionPackageMode, updatePackageParty } from "./packageSearchModel";
+import { applyPackageDates, applyPackageDestination, createPackageSearch, includedProducts, packageApiPayload, packageModes, packageRouteParams, swapPackageAirports, transitionPackageMode, updatePackageParty, validatePackageSearch } from "./packageSearchModel";
 
 test("package modes keep the exact customer order and internal mapping", () => {
   assert.deepEqual(packageModes, [
@@ -124,4 +124,19 @@ test("package party limits coordinate adults, children, infants, and rooms", () 
   search = transitionPackageMode(search, "hotel-car");
   search = updatePackageParty(search, { adults: 12, children: 3, infants: 0 });
   assert.ok(search.adults + search.children <= 12);
+});
+
+test("all four complete package modes serialize every included product", () => {
+  const base = { ...createPackageSearch(), origin: "Lagos (LOS)", originCode: "LOS", destination: "London (LHR)", destinationCode: "LHR", startDate: "2030-04-01", endDate: "2030-04-04", carPickupLocation: "London (LHR)", carPickupDate: "2030-04-01", carReturnDate: "2030-04-04" };
+  for (const mode of packageModes.map((item) => item.value)) {
+    const search = transitionPackageMode(base, mode);
+    assert.equal(validatePackageSearch(search, "2030-01-01"), true, mode);
+    const payload = packageApiPayload(search);
+    assert.equal(payload.mode, mode);
+    assert.equal(packageRouteParams(search).mode, mode);
+    const included = includedProducts(mode);
+    if (included.flight) assert.equal(payload.flightOriginCode, "LOS");
+    if (included.hotel) assert.equal(payload.hotelRooms, 1);
+    if (included.car) assert.equal(payload.carPickupLocation, "London (LHR)");
+  }
 });

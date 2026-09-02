@@ -37,7 +37,7 @@ test("generated combinations always use separate-provider booking without packag
   assert.ok(candidates.length > 0);
   assert.ok(candidates.every(candidate => candidate.bookingFlow === "separate-providers"));
   assert.equal(candidates[0].providerCount, 2);
-  assert.equal(candidates[0].estimatedTotal, 445);
+  assert.equal(candidates[0].estimatedTotal, null);
   for (const candidate of candidates) {
     assert.equal("packageOfferId" in candidate, false);
     assert.equal("packageCheckoutHref" in candidate, false);
@@ -54,8 +54,8 @@ test("decorated London static inventory creates bounded Hotel and Flight candida
   const candidates = buildDealsPackageCandidates({ mode: "hotel-flight", flights: [flight()], hotels, cars: [], displayCurrency: "USD", rates: { USD: 1 } });
   assert.ok(candidates.length > 0 && candidates.length <= DEALS_PACKAGE_CANDIDATE_LIMIT);
   assert.ok(candidates.every(candidate => candidate.mode === "hotel-flight" && candidate.bookingFlow === "separate-providers"));
-  assert.equal(candidates[0].estimatedTotal, candidates[0].flight!.price + candidates[0].hotel!.totalPrice!);
-  assert.deepEqual(candidates[0].priceBreakdown.find(component => component.product === "hotel"), { product: "hotel", sourceAmount: candidates[0].hotel!.totalPrice, sourceCurrency: "USD", displayAmount: candidates[0].hotel!.totalPrice, provider: "Kurioticket static catalogue" });
+  assert.equal(candidates[0].estimatedTotal, null);
+  assert.deepEqual(candidates[0].priceBreakdown.find(component => component.product === "hotel"), { product: "hotel", sourceAmount: candidates[0].hotel!.totalPrice, sourceCurrency: "USD", displayAmount: candidates[0].hotel!.totalPrice, provider: "Kurioticket catalogue" });
   assert.deepEqual(buildDealsPackageCandidates({ mode: "hotel-flight", flights: [flight()], hotels: classifyHotels(buildStaticHotelResults({ destination: "Lagos, Nigeria", checkIn: "2027-06-01", checkOut: "2027-06-04", guests: 2, rooms: 1 }), [], "static-lagos").results, cars: [], displayCurrency: "USD", rates: { USD: 1 } }), []);
 });
 
@@ -72,5 +72,5 @@ test("matching normalized provider names and providerCount one never imply a pac
   assert.ok(candidates.length > 0);
   assert.equal(candidates[0].providerCount, 1);
   assert.equal(candidates[0].bookingFlow, "separate-providers");
-  assert.equal(candidates[0].estimatedTotal, 445);
+  assert.equal(candidates[0].estimatedTotal, null);
 });
