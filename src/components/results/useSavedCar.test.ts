@@ -27,4 +27,6 @@ test("saved Car loading is shared across result cards and mutations publish the 
   assert.match(source, /if \(savedCarsRequest\) return savedCarsRequest/);
   assert.match(source, /SAVED_CARS_CHANGED_EVENT/);
   assert.match(source, /publishSavedCars/);
+  assert.match(source, /savedCarIdentity\(item\) === identity/);
+  assert.match(source, /SAVED_CARS_INVALIDATED_EVENT/);
 });

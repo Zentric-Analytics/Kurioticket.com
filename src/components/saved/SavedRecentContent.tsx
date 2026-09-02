@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { invalidateSavedCarsClientCache } from "@/lib/saved-car-events";
 
 type Item = { id: string; type?: string; label?: string | null; airlineName?: string; hotelName?: string; modelName?: string; pickupLocation?: string; destination?: string | null; subtitle?: string; href?: string; payload?: unknown };
 const savedHref = (item: Item) => {
@@ -26,7 +27,7 @@ export function SavedRecentContent() {
   // The initial request hydrates private account data after the client session is available.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void load(); }, [load]);
-  const removeSaved = async (item: Item) => { const response = await fetch("/api/dashboard/saved", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ type: item.type, id: item.id }) }); if (response.ok) setSaved(x => x.filter(y => y.id !== item.id)); };
+  const removeSaved = async (item: Item) => { const response = await fetch("/api/dashboard/saved", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ type: item.type, id: item.id }) }); if (response.ok) { setSaved(x => x.filter(y => y.id !== item.id)); if (item.type === "car") invalidateSavedCarsClientCache(); } };
   const removeRecent = async (id: string) => { const response = await fetch("/api/account/recent-searches", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ id }) }); if (response.ok) setRecent(x => x.filter(y => y.id !== id)); };
   const clearRecent = async () => { const response = await fetch("/api/account/recent-searches?clear=all", { method: "DELETE" }); if (response.ok) setRecent([]); };
   const items = tab === "saved" ? saved : recent;

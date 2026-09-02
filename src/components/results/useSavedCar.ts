@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
 import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { deleteBackendCar, fetchBackendSavedCars, saveBackendCar, type SavedCarApiItem } from "@/lib/saved-items-api";
+import { SAVED_CARS_INVALIDATED_EVENT } from "@/lib/saved-car-events";
 
 const SAVED_CARS_CHANGED_EVENT = "kurioticket:saved-cars-changed";
 let savedCarsOwner = "";
@@ -43,19 +44,38 @@ const resultId = (item: SavedCarApiItem) => {
   return null;
 };
 
+const carIdentity = (id: string, provider: string, modelName: string, search: CarSearchParams) => JSON.stringify([
+  id, provider.trim().toLowerCase(), modelName.trim().toLowerCase(), search.pickupLocation.trim().toLowerCase(),
+  search.dropoffLocation.trim().toLowerCase(), search.pickupDate, search.pickupTime, search.dropoffDate,
+  search.dropoffTime, search.driverAge,
+]);
+
+function savedCarIdentity(item: SavedCarApiItem) {
+  if (!item.payload || typeof item.payload !== "object" || !("searchParams" in item.payload)) return null;
+  const search = item.payload.searchParams;
+  if (!search || typeof search !== "object") return null;
+  const params = search as CarSearchParams;
+  const id = resultId(item);
+  return id ? carIdentity(id, item.provider, item.modelName, params) : null;
+}
+
 export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams) {
   const { data: session, status } = useSession();
   const owner = session?.user?.email ?? "authenticated-user";
+  const offer = car.offers[0];
+  const identity = offer ? carIdentity(car.id, offer.bookingProviderName || offer.rentalCompanyName || car.rentalCompanyName, car.modelName, search) : null;
   const [savedItem, setSavedItem] = useState<SavedCarApiItem | null>(null);
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
     if (status !== "authenticated") { clearSavedCarsCache(); queueMicrotask(() => setSavedItem(null)); return; }
-    const update = () => setSavedItem(savedCarsCache?.find((item) => resultId(item) === car.id) ?? null);
+    const update = () => setSavedItem(savedCarsCache?.find((item) => savedCarIdentity(item) === identity) ?? null);
+    const invalidate = () => { clearSavedCarsCache(owner); void loadSavedCars(owner).then(update).catch(() => undefined); };
     void loadSavedCars(owner).then(update).catch(() => undefined);
     window.addEventListener(SAVED_CARS_CHANGED_EVENT, update);
-    return () => window.removeEventListener(SAVED_CARS_CHANGED_EVENT, update);
-  }, [car.id, owner, status]);
+    window.addEventListener(SAVED_CARS_INVALIDATED_EVENT, invalidate);
+    return () => { window.removeEventListener(SAVED_CARS_CHANGED_EVENT, update); window.removeEventListener(SAVED_CARS_INVALIDATED_EVENT, invalidate); };
+  }, [identity, owner, status]);
 
   async function toggleSavedCar() {
     if (pending) return;
@@ -70,7 +90,6 @@ export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams) {
         else setSavedItem(previous);
         return;
       }
-      const offer = car.offers[0];
       if (!offer) return;
       const response = await saveBackendCar({
         resultId: car.id,
