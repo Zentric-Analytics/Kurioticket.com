@@ -42,7 +42,7 @@ test("setup renders the server URI only into a local QR code and keeps the manua
 });
 
 test("setup remains ephemeral and disappears whenever sensitive setup state is cleared", () => {
-  assert.match(security, /: setup \? <View[^]*<QRCode value=\{setup\.otpauthUri\}/);
+  assert.match(security, /\{setup \? <View[^]*<QRCode value=\{setup\.otpauthUri\}/);
   assert.match(security, /setRecoveryCodes\(result\.recoveryCodes\);setSetup\(null\);setAuthenticatorCode\(""\)/);
   assert.doesNotMatch(security, /console\.(?:log|info|debug|warn|error)/);
   assert.doesNotMatch(security, /(?:SecureStore|AsyncStorage|persist|cache).*?(?:otpauthUri|manualSetupKey|authenticatorCode|recoveryCodes)/i);
