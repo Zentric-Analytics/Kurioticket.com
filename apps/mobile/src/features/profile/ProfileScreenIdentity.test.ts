@@ -40,3 +40,11 @@ test("Personal details name cache is account scoped and never stores provider id
   assert.match(cache, /writeProfileName\(userId: string, name: string \| null\)/);
   assert.doesNotMatch(cache, /email|session|provider|oauth/i);
 });
+
+test("an older async cache read cannot overwrite a newer authoritative write", () => {
+  assert.match(cache, /const revisions = new Map<string, number>\(\)/);
+  assert.match(cache, /const readRevision = currentRevision\(userId\)/);
+  assert.match(cache, /if \(currentRevision\(userId\) !== readRevision\) return memory\.get\(userId\) \?\? null/);
+  assert.match(cache, /revisions\.set\(userId, currentRevision\(userId\) \+ 1\)/);
+  assert.match(cache, /if \(!memory\.has\(userId\)\) memory\.set\(userId, normalized\)/);
+});
