@@ -15,5 +15,6 @@ test("Packages owns one canonical surface instead of reusable product sections",
 });
 test("mode changes stay in place and preserve canonical state", () => {
   assert.match(form, /transitionPackageMode\(current, option\.value\)/);
-  assert.doesNotMatch(form, /packages\/results|package-results/);
+  assert.match(form, /pathname: "\/package-results"/);
+  assert.doesNotMatch(form, /pathname: "\/(?:car|hotel|flight)-results"/);
 });

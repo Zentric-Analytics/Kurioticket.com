@@ -14,6 +14,8 @@ export class TravelApiError extends Error {
 export type FlightResult = ContractResult<PublicFlightResult>;
 export type HotelResult = ContractResult<PublicHotelResult>;
 export type CarResult = ContractResult<NormalizedCarResult>;
+export type PackageComponent = { status: "success" | "empty" | "unavailable"; results: (FlightResult | HotelResult | CarResult)[]; warnings: string[]; source: string; requestId: string };
+export type PackageSearchResponse = { mode: string; status: "success" | "partial" | "empty" | "unavailable"; components: Partial<Record<"flight" | "hotel" | "car", PackageComponent>>; packageOffers: unknown[] };
 export type MobileTrip = { id: string; providerConfirmationCode: string; providerName: string; tripType: string; status: "upcoming" | "past" | "cancelled"; origin: string | null; destination: string; departureDate: string; returnDate: string | null; travelerCount: number; currency: string; totalAmount: number | null; providerAction: { url: string; label: string; external: true } | null };
 export type MobileProfile = { fullName?: string | null; phoneNumber?: string | null; phoneCountryCode?: string | null; dateOfBirth?: string | null; gender?: string | null; nationality?: string | null; address?: string | null };
 export type MobilePriceAlertStatus = "ACTIVE" | "PAUSED" | "TRIGGERED" | "EXPIRED";
@@ -157,6 +159,7 @@ export const travelApi = {
     return request<{ suggestions?: HotelDestinationSuggestion[] }>(`/api/hotels/destinations?${params.toString()}`, {}, { signal: options.signal });
   },
   searchCars: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<NormalizedCarResult>>("/api/cars/search", { method: "POST", body: JSON.stringify(body) }, options),
+  searchPackages: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<PackageSearchResponse>("/api/packages/search", { method: "POST", body: JSON.stringify(body) }, options),
   trips: (status?: "upcoming" | "past" | "cancelled") => request<{ trips: MobileTrip[]; summary: Record<string, number> }>(`/api/mobile/v1/trips${status ? `?status=${status}` : ""}`),
   profile: () => request<{ profile: MobileProfile | null; user: { id: string; email: string; name?: string | null } }>("/api/mobile/v1/profile"),
   securityOverview: () => request<{ overview: SecurityOverview }>("/api/mobile/v1/security/overview"),
