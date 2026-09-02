@@ -76,7 +76,11 @@ export function exploreHotelSearchNavigation(
   if (!destinationName || !destinationId) return null;
   if (source === "saved-destination") return { pathname: "/hotels", params: { destinationId, destination: destinationName, intentSource: source } };
   const intent = resolveHotelDiscoveryIntent(destinationName, "explore");
-  if (!intent || intent.canonicalDestinationId !== destinationId) return null;
-  const params = buildHotelExplorationSearch({ destination: intent.destinationSearchValue, destinationId: intent.canonicalDestinationId, source, now });
+  const params = buildHotelExplorationSearch({
+    destination: intent?.destinationSearchValue ?? destinationName,
+    ...(intent ? { destinationId: intent.canonicalDestinationId } : {}),
+    source,
+    now,
+  });
   return params ? { pathname: "/hotel-results", params } : null;
 }
