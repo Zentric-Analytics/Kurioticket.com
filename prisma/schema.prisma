@@ -66,6 +66,7 @@ enum SearchType {
   FLIGHT
   HOTEL
   CAR
+  PACKAGE
 }
 
 enum SearchStatus {

@@ -1,4 +1,4 @@
-export type RecentInput = { id: string; type: "flight" | "hotel" | "car"; label: string; subtitle: string; href: string; params: Record<string, unknown> };
+export type RecentInput = { id: string; type: "flight" | "hotel" | "car" | "package"; label: string; subtitle: string; href: string; params: Record<string, unknown> };
 
 function stable(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stable).join(",")}]`;
@@ -13,6 +13,12 @@ export function recentSearchId(type: RecentInput["type"], params: Record<string,
 }
 
 export function buildRecentSearch(type: RecentInput["type"], payload: Record<string, unknown>): RecentInput | null {
+  if (type === "package") {
+    const destination = String(payload.destination || ""); const startDate = String(payload.startDate || ""); const endDate = String(payload.endDate || "");
+    if (!destination || !startDate || !endDate || !payload.mode) return null;
+    const params = { ...payload };
+    return { id: recentSearchId(type, params), type, label: `Package to ${destination}`, subtitle: `${startDate} – ${endDate}`, href: "/packages/results", params };
+  }
   if (type === "flight") {
     const origin = String(payload.origin || ""); const destination = String(payload.destination || ""); const departureDate = String(payload.departureDate || "");
     if (!origin || !destination || !departureDate) return null;

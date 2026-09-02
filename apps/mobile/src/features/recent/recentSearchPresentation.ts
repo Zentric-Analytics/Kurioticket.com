@@ -2,7 +2,7 @@ import type { MobileRecentSearch } from "../../api/travelApi";
 import { sanitizeSearchParams } from "../flow/savedSearchContext";
 
 export type RecentSearchPresentation = {
-  icon: "flight" | "hotel" | "car";
+  icon: "flight" | "hotel" | "car" | "deal";
   title: string;
   metadata: string;
 };
@@ -55,6 +55,10 @@ export function recentSearchPresentation(item: MobileRecentSearch): RecentSearch
     const title = params.pickupLocation && params.dropoffLocation && params.pickupLocation !== params.dropoffLocation ? `${params.pickupLocation} → ${params.dropoffLocation}` : params.pickupLocation || item.label;
     const metadata = [formatDateRange(params.pickupDate, params.dropoffDate), params.driverAge ? `Driver age ${params.driverAge}` : ""].filter(Boolean).join(" · ");
     return { icon: "car", title, metadata: metadata || item.subtitle };
+  }
+
+  if (item.type === "package") {
+    return { icon: "deal", title: params.destination ? `Package to ${params.destination}` : item.label, metadata: formatDateRange(params.startDate, params.endDate) || item.subtitle };
   }
 
   const metadata = [

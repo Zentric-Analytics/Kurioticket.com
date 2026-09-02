@@ -1,6 +1,7 @@
 import { getOptionalPrisma, getPrisma } from "@/lib/prisma";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { flightPriceAlertDuplicateKey } from "@/lib/price-alerts/flightPriceAlerts";
+import { hotelPriceAlertDuplicateKey } from "@/lib/price-alerts/hotelPriceAlerts";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
 import type { SearchType } from "@/generated/prisma/enums";
 
@@ -167,6 +168,15 @@ export async function createPriceAlert(input: {
         const duplicate = existingAlerts.find((alert) => flightPriceAlertDuplicateKey(alert) === requestedKey);
         if (duplicate) throw new DuplicatePriceAlertError(serializePriceAlert(duplicate));
       }
+    }
+    if (input.type === "HOTEL" && mode === "TARGET") {
+      const requestedKey = hotelPriceAlertDuplicateKey(input);
+      const existingAlerts = await db.priceAlert.findMany({
+        where: { userId: input.userId, type: "HOTEL", status: { in: ["ACTIVE", "PAUSED"] }, destination: input.destination, currency: input.currency },
+        select: { id: true, type: true, origin: true, destination: true, targetPrice: true, mode: true, currency: true, status: true, query: true, createdAt: true, updatedAt: true },
+      });
+      const duplicate = requestedKey && existingAlerts.find((alert) => hotelPriceAlertDuplicateKey(alert) === requestedKey);
+      if (duplicate) throw new DuplicatePriceAlertError(serializePriceAlert(duplicate));
     }
 
     const alert = await db.priceAlert.create({

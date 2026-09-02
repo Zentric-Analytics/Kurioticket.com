@@ -21,6 +21,7 @@ export type MobileProfile = { fullName?: string | null; phoneNumber?: string | n
 export type MobilePriceAlertStatus = "ACTIVE" | "PAUSED" | "TRIGGERED" | "EXPIRED";
 export type MobilePriceAlert = { id: string; type: "FLIGHT" | "HOTEL"; origin: string | null; destination: string; targetPrice: string | null; currency: string | null; status: MobilePriceAlertStatus; createdAt: string; updatedAt: string; lastSeenPrice: string | null; lastCheckedAt: string | null; query: Record<string, unknown> };
 export type CreateFlightPriceAlert = { type: "FLIGHT"; origin: string; destination: string; targetPrice: number; currency: string; query: Record<string, unknown> };
+export type CreateHotelPriceAlert = { type: "HOTEL"; destination: string; targetPrice: number; mode: "TARGET"; currency: string; query: Record<string, unknown> };
 export type CurrencyRates = { base: string; rates: Record<string, number>; fetchedAt: string; source: string; stale?: boolean };
 export type MobileLocation = { source: "ipinfo-lite" | "fallback"; countryCode: string | null; country: string | null; continentCode: string | null; continent: string | null; ipDetected: boolean };
 export type MobileNotificationType = "PRICE_ALERT" | "SUPPORT_UPDATE" | "ACCOUNT_UPDATE" | "SECURITY_UPDATE" | "SYSTEM" | "TRAVEL_INSIGHT";
@@ -34,7 +35,7 @@ export type TravelPreferences = { homeAirport: string; preferredAirlines: string
 export type TravelPreferencesPatch = Partial<Pick<TravelPreferences, "homeAirport" | "preferredAirlines">>;
 export type MobileSavedItem = { id: string; type: "flight" | "hotel" | "car" | "search"; [key: string]: unknown };
 export type CreateMobileSavedItem = { type: "flight" | "hotel" | "car" | "search"; [key: string]: unknown };
-export type MobileRecentSearch = { id: string; type: "flight" | "hotel" | "car"; label: string; subtitle: string; href: string; params: unknown; createdAt: string; updatedAt: string };
+export type MobileRecentSearch = { id: string; type: "flight" | "hotel" | "car" | "package"; label: string; subtitle: string; href: string; params: unknown; createdAt: string; updatedAt: string };
 export type CreateMobileRecentSearch = Omit<MobileRecentSearch, "createdAt" | "updatedAt">;
 export type FeatureAvailability = { flightSearch: boolean; hotelSearch: boolean; carSearch: boolean; deals: boolean; priceAlerts: boolean };
 export type MobilePasskey = { id:string; name:string; createdAt:string; lastUsedAt:string|null; deviceType:string|null; backedUp:boolean|null; label:string };
@@ -198,7 +199,7 @@ export const travelApi = {
   deleteRecentSearch: (id: string) => request<{ success: true }>("/api/mobile/v1/recent-searches", { method: "DELETE", body: JSON.stringify({ id }) }),
   clearRecentSearches: () => request<{ success: true }>("/api/mobile/v1/recent-searches?clear=all", { method: "DELETE" }),
   priceAlerts: () => request<{ alerts: MobilePriceAlert[] }>("/api/mobile/v1/price-alerts"),
-  createPriceAlert: (body: CreateFlightPriceAlert) => request<{ alert: MobilePriceAlert }>("/api/mobile/v1/price-alerts", { method: "POST", body: JSON.stringify(body) }),
+  createPriceAlert: (body: CreateFlightPriceAlert | CreateHotelPriceAlert) => request<{ alert: MobilePriceAlert }>("/api/mobile/v1/price-alerts", { method: "POST", body: JSON.stringify(body) }),
   updatePriceAlertStatus: (id: string, status: "ACTIVE" | "PAUSED") => request<{ alert: MobilePriceAlert }>(`/api/mobile/v1/price-alerts/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ status }) }),
   deletePriceAlert: (id: string) => request<{ deleted: true; id: string }>(`/api/mobile/v1/price-alerts/${encodeURIComponent(id)}`, { method: "DELETE" }),
   notifications: (cursor?: string) => request<MobileNotificationPage>(`/api/mobile/v1/notifications${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`),
