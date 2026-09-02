@@ -84,7 +84,8 @@ export function savedSignature(input: CreateMobileSavedItem | MobileSavedItem) {
   if (input.type === "car") {
     const payload = input.payload && typeof input.payload === "object" ? input.payload as Record<string, unknown> : undefined;
     const search = payload?.searchParams && typeof payload.searchParams === "object" ? payload.searchParams as Record<string, unknown> : undefined;
-    return `car:${stable({ resultId: input.resultId, provider: input.provider, modelName: input.modelName, pickupLocation: search?.pickupLocation ?? input.pickupLocation, dropoffLocation: search?.dropoffLocation ?? input.dropoffLocation, pickupDate: search?.pickupDate ?? input.pickupDate, pickupTime: search?.pickupTime ?? input.pickupTime, dropoffDate: search?.dropoffDate ?? input.dropoffDate, dropoffTime: search?.dropoffTime ?? input.dropoffTime, driverAge: search?.driverAge ?? input.driverAge })}`;
+    const result = payload?.result && typeof payload.result === "object" ? payload.result as Record<string, unknown> : undefined;
+    return `car:${stable({ resultId: input.resultId ?? result?.id, provider: input.provider, modelName: input.modelName, pickupLocation: search?.pickupLocation ?? input.pickupLocation, dropoffLocation: search?.dropoffLocation ?? input.dropoffLocation, pickupDate: search?.pickupDate ?? input.pickupDate, pickupTime: search?.pickupTime ?? input.pickupTime, dropoffDate: search?.dropoffDate ?? input.dropoffDate, dropoffTime: search?.dropoffTime ?? input.dropoffTime, driverAge: search?.driverAge ?? input.driverAge })}`;
   }
   return `search:${String(input.searchType).toLowerCase()}:${stable(input.query)}`;
 }

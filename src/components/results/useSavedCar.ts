@@ -10,8 +10,10 @@ const SAVED_CARS_CHANGED_EVENT = "kurioticket:saved-cars-changed";
 let savedCarsOwner = "";
 let savedCarsCache: SavedCarApiItem[] | null = null;
 let savedCarsRequest: Promise<SavedCarApiItem[]> | null = null;
+let savedCarsRevision = 0;
 
 function clearSavedCarsCache(owner = "") {
+  savedCarsRevision += 1;
   savedCarsOwner = owner;
   savedCarsCache = null;
   savedCarsRequest = null;
@@ -21,16 +23,20 @@ function loadSavedCars(owner: string) {
   if (savedCarsOwner !== owner) clearSavedCarsCache(owner);
   if (savedCarsCache) return Promise.resolve(savedCarsCache);
   if (savedCarsRequest) return savedCarsRequest;
-  savedCarsRequest = fetchBackendSavedCars()
+  const requestRevision = savedCarsRevision;
+  let request: Promise<SavedCarApiItem[]>;
+  request = fetchBackendSavedCars()
     .then((response) => {
-      if (response.ok) savedCarsCache = response.items ?? [];
+      if (response.ok && savedCarsRevision === requestRevision) savedCarsCache = response.items ?? [];
       return savedCarsCache ?? [];
     })
-    .finally(() => { savedCarsRequest = null; });
-  return savedCarsRequest;
+    .finally(() => { if (savedCarsRequest === request) savedCarsRequest = null; });
+  savedCarsRequest = request;
+  return request;
 }
 
 function publishSavedCars(items: SavedCarApiItem[]) {
+  savedCarsRevision += 1;
   savedCarsCache = items;
   window.dispatchEvent(new Event(SAVED_CARS_CHANGED_EVENT));
 }

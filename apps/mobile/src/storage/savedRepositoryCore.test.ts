@@ -74,7 +74,8 @@ test("Car identity includes the complete rental context", async () => {
 });
 
 test("persisted server hashes do not replace the canonical Car identity", async () => {
-  const saved = { ...mapCarToSaved(car, carParams), signature: "server-sha256", id: "saved-car", createdAt: "2030-01-01T00:00:00Z" } as MobileSavedItem;
+  const { resultId: _omittedResultId, ...persisted } = mapCarToSaved(car, carParams)!;
+  const saved = { ...persisted, signature: "server-sha256", id: "saved-car", createdAt: "2030-01-01T00:00:00Z" } as MobileSavedItem;
   const h = harness([saved]); await h.repository.refresh();
   assert.equal(h.repository.snapshot().cars.has(carSavedSignature(car, carParams)!), true);
   await h.repository.toggleCar(car, carParams);
