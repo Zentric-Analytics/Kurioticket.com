@@ -7,6 +7,9 @@ import { createPackageSearch, includedProducts, packageApiPayload, packageRouteP
 import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recentSearch";
 import { ScreenHeader } from "./FlowPrimitives";
 import { useFlowTheme } from "./flowStyles";
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
+import { formatMobileDateOnly } from "../../localization/mobileLocalizationCatalog";
+import { travelAccountMessage } from "../../localization/travelAccountMessages";
 
 const one = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
 const number = (value: string | undefined, fallback: number) => /^\d+$/.test(value ?? "") ? Number(value) : fallback;
@@ -33,6 +36,7 @@ function readSearch(params: Record<string, string | string[] | undefined>): Pack
 
 export function PackageResultsScreen() {
   const ft = useFlowTheme();
+  const { locale } = useMobileLocalization();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const search = useMemo(() => readSearch(params), [JSON.stringify(params)]);
   const [response, setResponse] = useState<PackageSearchResponse>();
@@ -52,13 +56,13 @@ export function PackageResultsScreen() {
     setSavedMessage("");
     try {
       await travelApi.createSavedItem({ type: "search", searchType: "package", label: `Package to ${search.destination}`, destination: search.destination, checkIn: search.startDate, checkOut: search.endDate, query: packageRouteParams(search) });
-      setSavedMessage("Package search saved.");
+      setSavedMessage(travelAccountMessage(locale, "packageSaved"));
     } catch (reason) {
-      setSavedMessage(reason instanceof Error ? reason.message : "Sign in to save this package search.");
+      setSavedMessage(reason instanceof Error ? reason.message : travelAccountMessage(locale, "packageSaveError"));
     }
   };
   return <SafeAreaView style={ft.styles.safe}><ScreenHeader title="Package results" back /><ScrollView contentContainerStyle={styles.content}>
-    <Text style={ft.styles.meta}>{search.origin ? `${search.origin} → ` : ""}{search.destination} · {search.startDate} — {search.endDate}</Text>
+    <Text style={ft.styles.meta}>{search.origin ? `${search.origin} → ` : ""}{search.destination} · {formatMobileDateOnly(search.startDate, locale)} — {formatMobileDateOnly(search.endDate, locale)}</Text>
     {!response && !error ? <ActivityIndicator accessibilityLabel="Searching package components" /> : null}
     {error ? <Text accessibilityRole="alert" style={{ color: ft.colors.red }}>{error}</Text> : null}
     {response ? <>
@@ -69,7 +73,7 @@ export function PackageResultsScreen() {
       })}
       <Text style={ft.styles.meta}>{response.packageOffers.length ? `${response.packageOffers.length} provider-backed bundle offers` : "Bundle offers are shown only when supplied by a real package provider. No bundle provider is currently connected."}</Text>
     </> : null}
-    <Pressable accessibilityRole="button" onPress={() => void saveSearch()} style={[styles.button, { borderColor: ft.colors.blue, borderWidth: 1 }]}><Text style={[styles.buttonText, { color: ft.colors.blue }]}>Save package search</Text></Pressable>
+    <Pressable accessibilityRole="button" onPress={() => void saveSearch()} style={[styles.button, { borderColor: ft.colors.blue, borderWidth: 1 }]}><Text style={[styles.buttonText, { color: ft.colors.blue }]}>{travelAccountMessage(locale, "savePackageSearch")}</Text></Pressable>
     {savedMessage ? <Text accessibilityRole="alert" style={ft.styles.meta}>{savedMessage}</Text> : null}
     <Pressable accessibilityRole="button" onPress={() => router.back()} style={[styles.button, { backgroundColor: ft.colors.blue }]}><Text style={styles.buttonText}>Modify package search</Text></Pressable>
   </ScrollView></SafeAreaView>;
