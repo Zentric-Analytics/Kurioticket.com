@@ -47,9 +47,7 @@ const resetNavigationCopy: Record<MobileLocale, ResetNavigationCopy> = {
   vi: { title: "Đặt lại mật khẩu", entry: "Đặt lại mật khẩu theo cách khác", entryHelp: "Xác minh tài khoản qua email và chọn mật khẩu mới.", back: "Quay lại đổi mật khẩu", submit: "Đặt lại mật khẩu", success: "Đã đặt lại mật khẩu. Các thiết bị khác đã đăng xuất." },
 };
 
-export function passwordResetNavigationCopy(locale: MobileLocale) {
-  return resetNavigationCopy[locale];
-}
+export function passwordResetNavigationCopy(locale: MobileLocale) { return resetNavigationCopy[locale]; }
 
 function EyeIcon({ hidden, color }: { hidden: boolean; color: string }) {
   return <Svg width={22} height={22} viewBox="0 0 24 24" accessible={false}><Path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" /><Circle cx="12" cy="12" r="2.7" fill="none" stroke={color} strokeWidth={1.8} />{hidden ? <Line x1="4" y1="4" x2="20" y2="20" stroke={color} strokeWidth={1.8} strokeLinecap="round" /> : null}</Svg>;
@@ -65,117 +63,39 @@ function Button({ label, onPress, loading }: { label: string; onPress: () => voi
 }
 
 export function PasswordResetFlow({ active, copy: c, intro, onUnauthorized, onSuccess }: Props) {
-  const { theme } = useAppTheme();
-  const { locale } = useMobileLocalization();
-  const f = passwordFlowCopy[locale];
-  const navigationCopy = passwordResetNavigationCopy(locale);
-  const [stage, setStage] = useState<"sending" | "verify" | "create">("sending");
-  const [challenge, setChallenge] = useState<PasswordResetChallenge | null>(null);
-  const [code, setCode] = useState("");
-  const [codeError, setCodeError] = useState("");
-  const [recoveryToken, setRecoveryToken] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [newError, setNewError] = useState("");
-  const [confirmError, setConfirmError] = useState("");
-  const [generalError, setGeneralError] = useState("");
-  const [message, setMessage] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [hidden, setHidden] = useState({ newPassword: true, confirmPassword: true });
-  const [resendUntil, setResendUntil] = useState(0);
-  const [resendRemaining, setResendRemaining] = useState(0);
-  const activeRef = useRef(active);
-  const generationRef = useRef(0);
-  const inFlightRef = useRef(false);
+  const { theme } = useAppTheme(); const { locale } = useMobileLocalization(); const f = passwordFlowCopy[locale]; const navigationCopy = passwordResetNavigationCopy(locale);
+  const [stage, setStage] = useState<"sending" | "verify" | "create">("sending"); const [challenge, setChallenge] = useState<PasswordResetChallenge | null>(null); const [code, setCode] = useState(""); const [codeError, setCodeError] = useState(""); const [recoveryToken, setRecoveryToken] = useState(""); const [newPassword, setNewPassword] = useState(""); const [confirmPassword, setConfirmPassword] = useState(""); const [newError, setNewError] = useState(""); const [confirmError, setConfirmError] = useState(""); const [generalError, setGeneralError] = useState(""); const [message, setMessage] = useState(""); const [submitting, setSubmitting] = useState(false); const [hidden, setHidden] = useState({ newPassword: true, confirmPassword: true }); const [resendUntil, setResendUntil] = useState(0); const [resendRemaining, setResendRemaining] = useState(0); const activeRef = useRef(active); const generationRef = useRef(0); const inFlightRef = useRef(false);
 
-  const clearAll = () => {
-    generationRef.current += 1;
-    inFlightRef.current = false;
-    setStage("sending"); setChallenge(null); setCode(""); setCodeError(""); setRecoveryToken(""); setNewPassword(""); setConfirmPassword(""); setNewError(""); setConfirmError(""); setGeneralError(""); setMessage(""); setSubmitting(false); setHidden({ newPassword: true, confirmPassword: true }); setResendUntil(0); setResendRemaining(0);
-  };
+  const clearAll = () => { generationRef.current += 1; inFlightRef.current = false; setStage("sending"); setChallenge(null); setCode(""); setCodeError(""); setRecoveryToken(""); setNewPassword(""); setConfirmPassword(""); setNewError(""); setConfirmError(""); setGeneralError(""); setMessage(""); setSubmitting(false); setHidden({ newPassword: true, confirmPassword: true }); setResendUntil(0); setResendRemaining(0); };
 
   const sendCode = async () => {
-    if (inFlightRef.current) return;
-    const generation = generationRef.current;
-    inFlightRef.current = true; setSubmitting(true); setGeneralError(""); setCodeError(""); setMessage("");
-    try {
-      const result = await securityPasswordResetApi.sendCode();
-      if (!activeRef.current || generation !== generationRef.current) return;
-      setChallenge(result); setCode(""); setStage("verify"); setResendUntil(Date.now() + result.resendAfterSeconds * 1000); AccessibilityInfo.announceForAccessibility(f.verifyBody(result.maskedEmail));
-    } catch (e) {
-      if (!activeRef.current || generation !== generationRef.current) return;
-      if (!await onUnauthorized(e)) {
-        if (e instanceof TravelApiError) {
-          const retryAfter = (e as TravelApiError & { retryAfterSeconds?: number }).retryAfterSeconds;
-          if (e.status === 429 && retryAfter) setResendUntil(Date.now() + retryAfter * 1000);
-          setGeneralError(e.message);
-        } else setGeneralError(c.loadError);
-      }
-    } finally {
-      inFlightRef.current = false;
-      if (activeRef.current && generation === generationRef.current) setSubmitting(false);
-    }
+    if (inFlightRef.current) return; const generation = generationRef.current; inFlightRef.current = true; setSubmitting(true); setGeneralError(""); setCodeError(""); setMessage("");
+    try { const result = await securityPasswordResetApi.sendCode(); if (!activeRef.current || generation !== generationRef.current) return; setChallenge(result); setCode(""); setStage("verify"); setResendUntil(Date.now() + result.resendAfterSeconds * 1000); AccessibilityInfo.announceForAccessibility(f.verifyBody(result.maskedEmail)); }
+    catch (e) { if (!activeRef.current || generation !== generationRef.current) return; if (!await onUnauthorized(e)) { if (e instanceof TravelApiError) { const retryAfter = (e as TravelApiError & { retryAfterSeconds?: number }).retryAfterSeconds; if (e.status === 429 && retryAfter) setResendUntil(Date.now() + retryAfter * 1000); setGeneralError(e.message); } else setGeneralError(c.loadError); } }
+    finally { inFlightRef.current = false; if (activeRef.current && generation === generationRef.current) setSubmitting(false); }
   };
 
-  useEffect(() => {
-    activeRef.current = active;
-    if (!active) { clearAll(); return; }
-    generationRef.current += 1;
-    setStage("sending"); setGeneralError(""); setCodeError(""); setMessage("");
-    void sendCode();
-    return () => { generationRef.current += 1; };
-  }, [active]);
-
-  useEffect(() => {
-    if (!active || stage !== "verify" || !resendUntil) return;
-    const update = () => setResendRemaining(Math.max(0, Math.ceil((resendUntil - Date.now()) / 1000)));
-    update(); const timer = setInterval(update, 250); return () => clearInterval(timer);
-  }, [active, resendUntil, stage]);
+  useEffect(() => { activeRef.current = active; if (!active) { clearAll(); return; } generationRef.current += 1; setStage("sending"); setGeneralError(""); setCodeError(""); setMessage(""); void sendCode(); return () => { generationRef.current += 1; }; }, [active]);
+  useEffect(() => { if (!active || stage !== "verify" || !resendUntil) return; const update = () => setResendRemaining(Math.max(0, Math.ceil((resendUntil - Date.now()) / 1000))); update(); const timer = setInterval(update, 250); return () => clearInterval(timer); }, [active, resendUntil, stage]);
 
   const verifyCode = async () => {
-    if (inFlightRef.current) return;
-    if (!/^\d{6}$/.test(code)) { setCodeError(c.codeInvalid); return; }
-    const generation = generationRef.current; inFlightRef.current = true; setSubmitting(true); setCodeError(""); setGeneralError("");
-    try {
-      const result = await securityPasswordResetApi.verifyCode(code);
-      if (!activeRef.current || generation !== generationRef.current) return;
-      setRecoveryToken(result.recoveryToken); setStage("create"); setCode(""); setChallenge(null); setResendUntil(0); setResendRemaining(0); AccessibilityInfo.announceForAccessibility(f.createTitle);
-    } catch (e) {
-      if (!activeRef.current || generation !== generationRef.current) return;
-      if (!await onUnauthorized(e)) {
-        if (e instanceof TravelApiError && (e.details?.field === "verificationCode" || e.status === 400)) setCodeError(e.message);
-        else setGeneralError(e instanceof TravelApiError ? e.message : c.loadError);
-      }
-    } finally { inFlightRef.current = false; if (activeRef.current && generation === generationRef.current) setSubmitting(false); }
+    if (inFlightRef.current) return; if (!/^\d{6}$/.test(code)) { setCodeError(c.codeInvalid); return; } const generation = generationRef.current; inFlightRef.current = true; setSubmitting(true); setCodeError(""); setGeneralError("");
+    try { const result = await securityPasswordResetApi.verifyCode(code); if (!activeRef.current || generation !== generationRef.current) return; setRecoveryToken(result.recoveryToken); setStage("create"); setCode(""); setChallenge(null); setResendUntil(0); setResendRemaining(0); AccessibilityInfo.announceForAccessibility(f.createTitle); }
+    catch (e) { if (!activeRef.current || generation !== generationRef.current) return; if (!await onUnauthorized(e)) { if (e instanceof TravelApiError && (e.details?.field === "verificationCode" || e.status === 400)) setCodeError(e.message); else setGeneralError(e instanceof TravelApiError ? e.message : c.loadError); } }
+    finally { inFlightRef.current = false; if (activeRef.current && generation === generationRef.current) setSubmitting(false); }
   };
 
   const resetPassword = async () => {
-    if (inFlightRef.current) return;
-    const nextError = newPassword.length < 8 ? f.newTooShort : "";
-    const confirmationError = !confirmPassword ? f.confirmRequired : newPassword !== confirmPassword ? f.confirmMismatch : "";
-    setNewError(nextError); setConfirmError(confirmationError);
-    if (nextError || confirmationError) return;
-    const generation = generationRef.current; inFlightRef.current = true; setSubmitting(true); setGeneralError("");
-    try {
-      await securityPasswordResetApi.reset({ recoveryToken, newPassword, confirmPassword });
-      if (!activeRef.current || generation !== generationRef.current) return;
-      AccessibilityInfo.announceForAccessibility(navigationCopy.success); await onSuccess();
-    } catch (e) {
-      if (!activeRef.current || generation !== generationRef.current) return;
-      if (!await onUnauthorized(e)) {
-        if (e instanceof TravelApiError && (e.details?.field === "newPassword" || e.message.includes("different from your current"))) setNewError(f.newSame);
-        else setGeneralError(e instanceof TravelApiError ? e.message : c.loadError);
-      }
-    } finally { inFlightRef.current = false; if (activeRef.current && generation === generationRef.current) setSubmitting(false); }
+    if (inFlightRef.current) return; const nextError = newPassword.length < 8 ? f.newTooShort : ""; const confirmationError = !confirmPassword ? f.confirmRequired : newPassword !== confirmPassword ? f.confirmMismatch : ""; setNewError(nextError); setConfirmError(confirmationError); if (nextError || confirmationError) return;
+    const generation = generationRef.current; let restartVerification = false; inFlightRef.current = true; setSubmitting(true); setGeneralError("");
+    try { await securityPasswordResetApi.reset({ recoveryToken, newPassword, confirmPassword }); if (!activeRef.current || generation !== generationRef.current) return; AccessibilityInfo.announceForAccessibility(navigationCopy.success); await onSuccess(); }
+    catch (e) { if (!activeRef.current || generation !== generationRef.current) return; if (!await onUnauthorized(e)) { if (e instanceof TravelApiError && e.status === 410) { setRecoveryToken(""); setNewPassword(""); setConfirmPassword(""); setNewError(""); setConfirmError(""); setGeneralError(""); setStage("sending"); restartVerification = true; } else if (e instanceof TravelApiError && (e.details?.field === "newPassword" || e.message.includes("different from your current"))) setNewError(f.newSame); else setGeneralError(e instanceof TravelApiError ? e.message : c.loadError); } }
+    finally { inFlightRef.current = false; if (activeRef.current && generation === generationRef.current) { setSubmitting(false); if (restartVerification) void sendCode(); } }
   };
 
   if (stage === "sending") return <View style={styles.sending}>{intro ? <Text style={[styles.supporting, { color: theme.muted }]}>{intro}</Text> : null}<ActivityIndicator size="small" color="#1769E0" />{generalError ? <><Text accessibilityRole="alert" style={styles.error}>{generalError}</Text><Pressable accessibilityRole="button" onPress={() => void sendCode()} style={styles.retryAction}><Text style={styles.link}>{c.retry}</Text></Pressable></> : null}</View>;
-
   if (stage === "verify" && challenge) return <View style={styles.form}><Text accessibilityRole="header" style={[styles.stageTitle, { color: theme.text }]}>{f.verifyTitle}</Text><Text style={[styles.supporting, { color: theme.muted }]}>{f.verifyBody(challenge.maskedEmail)}</Text>{generalError ? <Text accessibilityRole="alert" style={styles.error}>{generalError}</Text> : null}{message ? <Text accessibilityLiveRegion="polite" style={styles.success}>{message}</Text> : null}<View style={styles.fieldGroup}><Text style={[styles.label, { color: theme.text }]}>{f.codeLabel}</Text><TextInput accessibilityLabel={f.codeLabel} keyboardType="number-pad" textContentType="oneTimeCode" maxLength={6} value={code} onChangeText={(value) => { setCode(value.replace(/\D/g, "")); setCodeError(""); setGeneralError(""); }} autoFocus style={[styles.codeInput, { color: theme.text, backgroundColor: theme.surface, borderColor: codeError ? "#B42318" : theme.border }]} /><View style={styles.fieldFeedback}>{codeError ? <Text accessibilityRole="alert" style={styles.error}>{codeError}</Text> : null}</View></View><Button label={f.continueAction} loading={submitting} onPress={() => void verifyCode()} /><Pressable accessibilityRole="button" accessibilityState={{ disabled: submitting || resendRemaining > 0 }} disabled={submitting || resendRemaining > 0} onPress={() => void sendCode()} style={styles.resendAction}><Text style={[styles.link, resendRemaining > 0 && { color: theme.muted }]}>{resendRemaining > 0 ? f.resendIn(resendRemaining) : f.resend}</Text></Pressable><Text style={[styles.expiry, { color: theme.muted }]}>{f.expiryHint}</Text></View>;
-
   return <View style={styles.form}><Text accessibilityRole="header" style={[styles.stageTitle, { color: theme.text }]}>{f.createTitle}</Text><Text style={[styles.supporting, { color: theme.muted }]}>{c.passwordRules}</Text>{generalError ? <Text accessibilityRole="alert" style={styles.error}>{generalError}</Text> : null}<PasswordField label={c.next} value={newPassword} hidden={hidden.newPassword} error={newError} showLabel={c.show} hideLabel={c.hide} onChange={(value) => { setNewPassword(value); setNewError(""); setGeneralError(""); }} onToggle={() => setHidden((current) => ({ ...current, newPassword: !current.newPassword }))} /><PasswordField label={c.confirm} value={confirmPassword} hidden={hidden.confirmPassword} error={confirmError} showLabel={c.show} hideLabel={c.hide} onChange={(value) => { setConfirmPassword(value); setConfirmError(""); setGeneralError(""); }} onToggle={() => setHidden((current) => ({ ...current, confirmPassword: !current.confirmPassword }))} /><Button label={navigationCopy.submit} loading={submitting} onPress={() => void resetPassword()} /></View>;
 }
 
-const styles = StyleSheet.create({
-  form: { gap: 12 }, sending: { gap: 16, alignItems: "center", paddingVertical: 18 }, stageTitle: { fontSize: 20, lineHeight: 27, fontWeight: "800" }, supporting: { fontSize: 14, lineHeight: 21 }, fieldGroup: { gap: 7 }, label: { fontSize: 14, lineHeight: 20, fontWeight: "700" }, fieldFeedback: { minHeight: 20, justifyContent: "center" }, codeInput: { minHeight: 56, borderWidth: 1, borderRadius: 11, paddingHorizontal: 16, fontSize: 22, fontWeight: "700", letterSpacing: 9, textAlign: "center" }, passwordShell: { minHeight: 52, borderWidth: 1, borderRadius: 11, flexDirection: "row", alignItems: "center" }, passwordInput: { minHeight: 50, flex: 1, fontSize: 16, paddingHorizontal: 13, paddingVertical: 0 }, eyeButton: { width: 48, minHeight: 50, alignItems: "center", justifyContent: "center" }, button: { minHeight: 52, borderRadius: 11, backgroundColor: "#1769E0", alignItems: "center", justifyContent: "center", marginTop: 2 }, buttonContent: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 }, buttonText: { color: "white", fontSize: 16, fontWeight: "800" }, disabled: { opacity: 0.55 }, pressed: { opacity: 0.68 }, error: { color: "#B42318", fontSize: 14, lineHeight: 20, fontWeight: "600" }, success: { color: "#067647", fontSize: 14, lineHeight: 20, fontWeight: "700" }, resendAction: { minHeight: 44, alignSelf: "center", justifyContent: "center", paddingHorizontal: 8 }, retryAction: { minHeight: 44, justifyContent: "center" }, link: { color: "#1769E0", fontSize: 15, fontWeight: "800" }, expiry: { fontSize: 12, lineHeight: 18, textAlign: "center", marginTop: -8 },
-});
+const styles = StyleSheet.create({ form: { gap: 12 }, sending: { gap: 16, alignItems: "center", paddingVertical: 18 }, stageTitle: { fontSize: 20, lineHeight: 27, fontWeight: "800" }, supporting: { fontSize: 14, lineHeight: 21 }, fieldGroup: { gap: 7 }, label: { fontSize: 14, lineHeight: 20, fontWeight: "700" }, fieldFeedback: { minHeight: 20, justifyContent: "center" }, codeInput: { minHeight: 56, borderWidth: 1, borderRadius: 11, paddingHorizontal: 16, fontSize: 22, fontWeight: "700", letterSpacing: 9, textAlign: "center" }, passwordShell: { minHeight: 52, borderWidth: 1, borderRadius: 11, flexDirection: "row", alignItems: "center" }, passwordInput: { minHeight: 50, flex: 1, fontSize: 16, paddingHorizontal: 13, paddingVertical: 0 }, eyeButton: { width: 48, minHeight: 50, alignItems: "center", justifyContent: "center" }, button: { minHeight: 52, borderRadius: 11, backgroundColor: "#1769E0", alignItems: "center", justifyContent: "center", marginTop: 2 }, buttonContent: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 }, buttonText: { color: "white", fontSize: 16, fontWeight: "800" }, disabled: { opacity: 0.55 }, pressed: { opacity: 0.68 }, error: { color: "#B42318", fontSize: 14, lineHeight: 20, fontWeight: "600" }, success: { color: "#067647", fontSize: 14, lineHeight: 20, fontWeight: "700" }, resendAction: { minHeight: 44, alignSelf: "center", justifyContent: "center", paddingHorizontal: 8 }, retryAction: { minHeight: 44, justifyContent: "center" }, link: { color: "#1769E0", fontSize: 15, fontWeight: "800" }, expiry: { fontSize: 12, lineHeight: 18, textAlign: "center", marginTop: -8 } });
