@@ -105,7 +105,7 @@ test("Flight Results header separates Back, route summary, and Edit controls", (
   assert.match(header, /color: theme\.textPrimary/);
 });
 
-test("Flight Results route uses compact left-aligned typography", () => {
+test("Flight Results route uses compact centered typography", () => {
   const routeTextStyle = styles.slice(styles.indexOf("flightRouteSummaryText:"), styles.indexOf("flightRouteSummaryEdit:"));
   assert.match(routeTextStyle, /width: "100%"/);
   assert.match(routeTextStyle, /paddingHorizontal: 14/);
@@ -113,8 +113,8 @@ test("Flight Results route uses compact left-aligned typography", () => {
   assert.match(routeTextStyle, /lineHeight: 20/);
   assert.match(routeTextStyle, /fontWeight: "700"/);
   assert.match(routeTextStyle, /fontFamily: appFonts\.bold/);
-  assert.match(routeTextStyle, /textAlign: "left"/);
-  assert.doesNotMatch(routeTextStyle, /paddingHorizontal: 52|fontSize: 18|textAlign: "center"/);
+  assert.match(routeTextStyle, /textAlign: "center"/);
+  assert.doesNotMatch(routeTextStyle, /paddingHorizontal: 52|fontSize: 18|textAlign: "left"/);
 });
 
 test("visible Flight Results labels use scoped Inter families", () => {
