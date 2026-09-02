@@ -70,7 +70,7 @@ test("wide and medium desktop cards retain their side fare columns", () => {
     ruleBody(globalsCss, ".flight-card-body", mediumQueryStart),
     /grid-template-columns:\s*minmax\(0, 1fr\) 180px/,
   );
-  assert.match(globalsCss, /\.flight-card-details \{\n  column-gap:\s*1rem/);
+  assert.match(globalsCss, /\.flight-card-details \{\r?\n  column-gap:\s*1rem/);
   assert.match(flightCardSource, /flight-card-details[^\n]*grid-cols-3/);
 });
 
@@ -86,7 +86,11 @@ test("phone and tablet lower card is a two-column decision area", () => {
   assert.match(bodyRule, /column-gap:\s*0/);
   assert.match(bodyRule, /row-gap:\s*0\.75rem/);
 
-  const detailsRule = ruleBody(mobileRules, ".flight-card-details");
+  const detailsRule = ruleBody(
+    mobileRules,
+    ".flight-card-details",
+    mobileRules.indexOf(".flight-card-view-button"),
+  );
   assert.match(detailsRule, /grid-template-columns:\s*minmax\(0, 1fr\)/);
   assert.match(detailsRule, /align-content:\s*start/);
   assert.match(mobileRules, /white-space:\s*normal/);
