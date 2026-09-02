@@ -1,3 +1,8 @@
+import {
+  clampPersonalDetailsDateOfBirth,
+  isEligiblePersonalDetailsDateOfBirth,
+  personalDetailsLatestDateOfBirth,
+} from "../../../../../src/lib/personalDetailsAge";
 import { personalDetailsCountryOptions } from "../../../../../src/lib/region/supportedRegions";
 import {
   defaultPhoneCountryOption,
@@ -211,3 +216,9 @@ export function canonicalDate(year: string, month: string, day: string) {
     return null;
   return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 }
+
+export {
+  clampPersonalDetailsDateOfBirth,
+  isEligiblePersonalDetailsDateOfBirth,
+  personalDetailsLatestDateOfBirth,
+};
