@@ -5,9 +5,7 @@ import {
   Animated,
   Alert,
   Keyboard,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -26,6 +24,7 @@ import { useMobileLocalization } from "../../localization/MobileLocalizationProv
 import { localizedAccountActivityLabel } from "../../localization/accountActivityLabels";
 import { formatSecurityDate, securityCopy } from "./securityLocalization";
 import { PasswordResetFlow, passwordResetNavigationCopy } from "./PasswordResetFlow";
+import { PasswordChangeFlow } from "./PasswordChangeFlow";
 import { PasskeysManager } from "./PasskeysManager";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
@@ -47,8 +46,6 @@ export function SecurityScreen() {
   const [loading, setLoading] = useState(true);
   const [landingError, setLandingError] = useState("");
   const [landingMessage, setLandingMessage] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [passwordMessage, setPasswordMessage] = useState("");
   const [devicesError, setDevicesError] = useState("");
   const [twoFactorError, setTwoFactorError] = useState("");
   const [deletionError, setDeletionError] = useState("");
@@ -67,12 +64,9 @@ export function SecurityScreen() {
   const [verification, setVerification] = useState("");
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const [deletion, setDeletion] = useState<AccountDeletionRequest | null>(null);
-  const [passwords, setPasswords] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
-  const [visible, setVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [saving, setSaving] = useState(false);
   const preferenceRequest = useRef(0);
-  const passwordRequest = useRef(0);
   const devicesRequest = useRef(0);
   const twoFactorRequest = useRef(0);
   const deletionRequest = useRef(0);
@@ -101,10 +95,8 @@ export function SecurityScreen() {
     return () => clearTimeout(timer);
   }, [landingMessage]);
 
-  const clearPasswordFeedback = () => { setPasswordError(""); setPasswordMessage(""); };
-  const clearPasswordDraft = () => { setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" }); setVisible(false); clearPasswordFeedback(); };
-  const openPassword = () => { passwordRequest.current += 1; clearPasswordDraft(); setPasswordMode(overview?.hasPassword ? "change" : "reset"); setPasswordOpen(true); };
-  const closePassword = () => { passwordRequest.current += 1; setPasswordOpen(false); setPasswordMode("change"); clearPasswordDraft(); };
+  const openPassword = () => { setPasswordMode(overview?.hasPassword ? "change" : "reset"); setPasswordOpen(true); };
+  const closePassword = () => { setPasswordOpen(false); setPasswordMode("change"); };
   const openDevices = () => { devicesRequest.current += 1; setDevicesError(""); setDevicesOpen(true); };
   const closeDevices = () => { devicesRequest.current += 1; setDevicesOpen(false); setDevicesError(""); };
   const clearTwoFactorState = () => { setSetup(null); setAuthenticatorCode(""); setVerification(""); setRecoveryCodes([]); setTwoFactorError(""); };
@@ -115,19 +107,6 @@ export function SecurityScreen() {
   const openPasskeys = () => { const request=++passkeysRequest.current;setPasskeysError("");setPasskeysMessage("");setPasskeysOpen(true);void loadPasskeys(request); };
   const closePasskeys = () => { passkeysRequest.current+=1;setPasskeysOpen(false);setPasskeysError("");setPasskeysMessage(""); };
 
-  const passwordReady = Boolean(passwords.currentPassword) && passwords.newPassword.length >= 8 && passwords.confirmPassword.length >= 8 && passwords.newPassword === passwords.confirmPassword && passwords.currentPassword !== passwords.newPassword;
-  const change = async () => {
-    if (submitting) return;
-    if (!passwordReady) { setPasswordError(c.passwordInvalid); return; }
-    const request = passwordRequest.current; setSubmitting(true); setPasswordError("");
-    try {
-      await travelApi.changePassword(passwords);
-      if (request !== passwordRequest.current) { await load({ showLandingFeedback: false, showLoading: false }); return; }
-      closePassword(); setLandingMessage(shortFeedbackMessage(c.passwordSuccess));
-      AccessibilityInfo.announceForAccessibility(c.passwordSuccess);
-      await load({ showLandingFeedback: false, showLoading: false });
-    } catch (e) { if (!await unauth(e) && request === passwordRequest.current) setPasswordError(e instanceof TravelApiError ? e.message : c.loadError); } finally { setSubmitting(false); }
-  };
   const toggle = async (value: boolean) => {
     if (!overview) return;
     const previous = overview.securityEmailAlerts; const id = ++preferenceRequest.current;
@@ -149,7 +128,6 @@ export function SecurityScreen() {
   const reactivate = async () => { if(submitting)return;const request=deletionRequest.current;setSubmitting(true);setDeletionError("");try{await travelApi.reactivateDeletion();await clearSession();setDeletion(null);closeDeletion();router.replace(signInHref("/security"));}catch(e){if(!await unauth(e)&&request===deletionRequest.current)setDeletionError(e instanceof TravelApiError?e.message:c.deletionError);}finally{setSubmitting(false);} };
   const date = (value: string) => formatSecurityDate(value, locale);
   const eventLabel = (event: SecurityEvent) => localizedAccountActivityLabel(event.type, locale, c.unknown);
-  const field = (key: keyof typeof passwords, label: string) => <TextInput accessibilityLabel={label} secureTextEntry={!visible} value={passwords[key]} onChangeText={(value) => { setPasswords((v) => ({ ...v, [key]: value })); setPasswordError(""); }} placeholder={label} placeholderTextColor={theme.muted} autoCapitalize="none" style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]} />;
 
   return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top"]}>
     <Header title={c.title} backLabel={c.back} onBack={() => router.back()} />
@@ -186,9 +164,24 @@ export function SecurityScreen() {
       />
     </ScreenModal>
     <ScreenModal visible={passwordOpen} title={passwordMode === "reset" ? resetCopy.title : c.change} closeLabel={c.close} onClose={closePassword}>
-      <Feedback error={passwordError} message={passwordMessage} />
-      {overview?.hasPassword && passwordMode === "change" ? <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}><View style={styles.form}>{field("currentPassword", c.current)}{field("newPassword", c.next)}{field("confirmPassword", c.confirm)}<Pressable accessibilityRole="button" accessibilityLabel={visible ? c.hide : c.show} onPress={() => setVisible((v) => !v)} style={styles.textAction}><Text style={styles.link}>{visible ? c.hide : c.show}</Text></Pressable><Text style={{ color: theme.muted }}>{c.passwordRules}</Text><Button label={c.change} loading={submitting} disabled={submitting} onPress={() => void change()} /><View style={[styles.resetAlternative, { borderTopColor: theme.border }]}><Pressable accessibilityRole="button" accessibilityLabel={resetCopy.entry} onPress={() => { clearPasswordDraft(); setPasswordMode("reset"); }} style={styles.textAction}><Text style={styles.link}>{resetCopy.entry}</Text></Pressable><Text style={[styles.rowDetail, { color: theme.muted }]}>{resetCopy.entryHelp}</Text></View></View></KeyboardAvoidingView> : <PasswordResetFlow active={passwordOpen && passwordMode === "reset"} copy={c} onUnauthorized={unauth} onSuccess={async () => { closePassword(); setLandingMessage(shortFeedbackMessage(resetCopy.success)); await load({ showLandingFeedback: false, showLoading: false }); }} />}
-      {overview?.hasPassword && passwordMode === "reset" ? <Pressable accessibilityRole="button" accessibilityLabel={resetCopy.back} onPress={() => { clearPasswordDraft(); setPasswordMode("change"); }} style={styles.textAction}><Text style={styles.link}>{resetCopy.back}</Text></Pressable> : null}
+      {overview?.hasPassword && passwordMode === "change" ? (
+        <PasswordChangeFlow
+          active={passwordOpen && passwordMode === "change"}
+          copy={c}
+          recoveryLabel={resetCopy.entry}
+          recoveryHelp={resetCopy.entryHelp}
+          onRecovery={() => setPasswordMode("reset")}
+          onUnauthorized={unauth}
+          onSuccess={async () => {
+            closePassword();
+            setLandingMessage(shortFeedbackMessage(c.passwordSuccess));
+            await load({ showLandingFeedback: false, showLoading: false });
+          }}
+        />
+      ) : (
+        <PasswordResetFlow active={passwordOpen && passwordMode === "reset"} copy={c} onUnauthorized={unauth} onSuccess={async () => { closePassword(); setLandingMessage(shortFeedbackMessage(resetCopy.success)); await load({ showLandingFeedback: false, showLoading: false }); }} />
+      )}
+      {overview?.hasPassword && passwordMode === "reset" ? <Pressable accessibilityRole="button" accessibilityLabel={resetCopy.back} onPress={() => setPasswordMode("change")} style={styles.textAction}><Text style={styles.link}>{resetCopy.back}</Text></Pressable> : null}
     </ScreenModal>
     <ScreenModal visible={devicesOpen} title={c.yourDevices} closeLabel={c.close} onClose={closeDevices}>
       <Text style={[styles.intro, { color: theme.muted }]}>{c.devicesHelp}</Text><Feedback error={devicesError} message="" />
