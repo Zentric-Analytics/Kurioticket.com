@@ -50,7 +50,7 @@ test("Hotel sort selector has exactly the three web modes and no navigation", ()
 });
 
 test("Price and Property Type remain in the full Filter sheet and facilities is focusable", () => {
-  for (const label of ["BUDGET / PRICE", "PROPERTY TYPE", "FACILITIES"]) assert.ok(sheet.includes(label));
+  for (const label of ["Budget / Price", "Property type", "Facilities"]) assert.ok(sheet.includes(label));
   assert.match(sheet, /HotelFilterSectionName = [^;]+\| "facilities"/);
   assert.match(sheet, /onLayout=\{anchor\(group\)\}/);
 });
