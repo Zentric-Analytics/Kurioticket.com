@@ -7,7 +7,7 @@ const screen = readFileSync(
   "utf8",
 );
 
-test("DOB picker keeps partial day month and year selections visible until complete", () => {
+test("DOB picker keeps partial selections visible and clamps completed under-18 dates", () => {
   assert.match(screen, /type DateDraft = \{/);
   assert.match(screen, /\[dateDraft, setDateDraft\] = useState<DateDraft>/);
   assert.match(screen, /value=\{dateDraft\.day \|\| c\.day\}/);
@@ -17,10 +17,16 @@ test("DOB picker keeps partial day month and year selections visible until compl
   );
   assert.match(screen, /value=\{dateDraft\.year \|\| c\.year\}/);
 
-  assert.match(
-    screen,
-    /const updateDateDraft = \(part: keyof DateDraft, value: string\) => \{[\s\S]*?setDateDraft\(next\)[\s\S]*?if \(next\.year && next\.month && next\.day\)[\s\S]*?patch\("dateOfBirth", `\$\{next\.year\}-\$\{next\.month\}-\$\{next\.day\}`\)/,
+  const update = screen.slice(
+    screen.indexOf("const updateDateDraft"),
+    screen.indexOf("const saveCountrySelection"),
   );
+  assert.match(update, /setDateDraft\(next\)/);
+  assert.match(update, /if \(!next\.year \|\| !next\.month \|\| !next\.day\) return/);
+  assert.match(update, /const candidate = `\$\{next\.year\}-\$\{next\.month\}-\$\{next\.day\}`/);
+  assert.match(update, /const clamped = clampPersonalDetailsDateOfBirth\(candidate\)/);
+  assert.match(update, /patch\("dateOfBirth", candidate\)/);
+  assert.match(update, /patch\("dateOfBirth", clamped\)/);
 
   assert.match(screen, /selector === "year"\) updateDateDraft\("year", value\)/);
   assert.match(screen, /selector === "month"\) updateDateDraft\("month", value\)/);
@@ -34,4 +40,11 @@ test("DOB draft is restored from authoritative profile values", () => {
     /setDateDraft\(dateDraftFromValue\(authoritative\.dateOfBirth\)\)/,
   );
   assert.match(screen, /setDateDraft\(dateDraftFromValue\(saved\.dateOfBirth\)\)/);
+});
+
+test("unchanged legacy DOB does not block unrelated mobile Personal details saves", () => {
+  const save = screen.slice(screen.indexOf("const save = async"), screen.indexOf("const goBack"));
+  assert.match(save, /const dateOfBirthChanged =/);
+  assert.match(save, /\(draft\.dateOfBirth \|\| ""\) !== \(saved\.dateOfBirth \|\| ""\)/);
+  assert.match(save, /dateOfBirthChanged &&[\s\S]*?!isEligiblePersonalDetailsDateOfBirth\(draft\.dateOfBirth\)/);
 });

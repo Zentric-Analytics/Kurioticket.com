@@ -40,6 +40,7 @@ import { flowColors } from "../flow/flowStyles";
 import { openSafeExternalUrl } from "../profile/safeExternalLink";
 import {
   canonicalDate,
+  clampPersonalDetailsDateOfBirth,
   COUNTRY_OPTIONS,
   displayAddress,
   displayPhone,
@@ -47,9 +48,11 @@ import {
   filterSelectorOptions,
   GENDER_VALUES,
   getCountryFlagUri,
+  isEligiblePersonalDetailsDateOfBirth,
   NATIONALITY_OPTIONS,
   normalizeProfile,
   parseAddress,
+  personalDetailsLatestDateOfBirth,
   PHONE_COUNTRY_OPTIONS,
   profilesDiffer,
   serializeAddress,
@@ -818,9 +821,16 @@ export function PersonalDetailsScreen() {
   const updateDateDraft = (part: keyof DateDraft, value: string) => {
     const next = { ...dateDraft, [part]: value };
     setDateDraft(next);
-    if (next.year && next.month && next.day) {
-      patch("dateOfBirth", `${next.year}-${next.month}-${next.day}`);
+    if (!next.year || !next.month || !next.day) return;
+
+    const candidate = `${next.year}-${next.month}-${next.day}`;
+    const clamped = clampPersonalDetailsDateOfBirth(candidate);
+    if (!clamped) {
+      patch("dateOfBirth", candidate);
+      return;
     }
+    if (clamped !== candidate) setDateDraft(dateDraftFromValue(clamped));
+    patch("dateOfBirth", clamped);
   };
   const saveCountrySelection = (
     kind: "phone" | "nationality" | "addressCountry",
@@ -849,9 +859,12 @@ export function PersonalDetailsScreen() {
       setError(c.invalidName);
       return;
     }
+    const dateOfBirthChanged =
+      (draft.dateOfBirth || "") !== (saved.dateOfBirth || "");
     if (
+      dateOfBirthChanged &&
       draft.dateOfBirth &&
-      !canonicalDate(date?.[1] || "", date?.[2] || "", date?.[3] || "")
+      !isEligiblePersonalDetailsDateOfBirth(draft.dateOfBirth)
     ) {
       setError(c.invalidDate);
       return;
@@ -932,6 +945,7 @@ export function PersonalDetailsScreen() {
     saved?.nationality,
     displayAddress(saved?.address || ""),
   ];
+  const latestBirthYear = Number(personalDetailsLatestDateOfBirth().slice(0, 4));
   const selectOptions =
     selector === "phone"
       ? PHONE_COUNTRY_OPTIONS.map((x) => ({
@@ -971,8 +985,8 @@ export function PersonalDetailsScreen() {
                   }))
                 : selector === "year"
                   ? Array.from({ length: 125 }, (_, i) => ({
-                      value: String(new Date().getUTCFullYear() - i),
-                      label: String(new Date().getUTCFullYear() - i),
+                      value: String(latestBirthYear - i),
+                      label: String(latestBirthYear - i),
                     }))
                   : [];
   const selected =

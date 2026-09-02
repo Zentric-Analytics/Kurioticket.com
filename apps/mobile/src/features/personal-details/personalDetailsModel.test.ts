@@ -2,17 +2,20 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   canonicalDate,
+  clampPersonalDetailsDateOfBirth,
   COUNTRY_OPTIONS,
   displayAddress,
   filterSelectorOptions,
   displayPhone,
   GENDER_VALUES,
   getCountryFlagUri,
+  isEligiblePersonalDetailsDateOfBirth,
   NATIONALITY_OPTIONS,
-  PHONE_COUNTRY_OPTIONS,
   normalizeProfile,
   parseAddress,
   PERSONAL_DETAIL_ORDER,
+  personalDetailsLatestDateOfBirth,
+  PHONE_COUNTRY_OPTIONS,
   profilesDiffer,
   serializeAddress,
   serializePhone,
@@ -74,6 +77,14 @@ test("date selection emits canonical dates and rejects impossible or future date
   assert.equal(canonicalDate("2000", "2", "29"), "2000-02-29");
   assert.equal(canonicalDate("2023", "2", "29"), null);
   assert.equal(canonicalDate("2999", "1", "1"), null);
+});
+test("Personal details DOB clamps to the exact 18th-birthday cutoff", () => {
+  const referenceDate = new Date("2026-09-02T12:00:00Z");
+  assert.equal(personalDetailsLatestDateOfBirth(referenceDate), "2008-09-02");
+  assert.equal(isEligiblePersonalDetailsDateOfBirth("2008-09-02", referenceDate), true);
+  assert.equal(isEligiblePersonalDetailsDateOfBirth("2008-09-03", referenceDate), false);
+  assert.equal(clampPersonalDetailsDateOfBirth("2008-09-03", referenceDate), "2008-09-02");
+  assert.equal(clampPersonalDetailsDateOfBirth("2000-02-29", referenceDate), "2000-02-29");
 });
 test("gender and nationality use canonical supported options", () => {
   assert.deepEqual(GENDER_VALUES, ["Male", "Female", "I prefer not to say"]);
