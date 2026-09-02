@@ -569,7 +569,7 @@ export class PreviewLedger {
     };
   }
 
-  async reserveNativeBuildRecovery({ sourceSha, platform, fingerprint }) {
+  async reserveNativeBuildRecovery({ sourceSha, platform, fingerprint, allowUnavailableDelivered = false }) {
     assertExactSha(sourceSha);
     const kind = platform === "ios" ? "IOS_BUILD" : platform === "android" ? "ANDROID_BUILD" : null;
     if (!kind || !/^[a-z0-9._-]{3,128}$/i.test(String(fingerprint ?? ""))) throw new Error("Native recovery identity is invalid.");
@@ -580,10 +580,17 @@ export class PreviewLedger {
       await client.query("BEGIN");
       await client.query("SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))", [kind, canonicalIdentity]);
       const delivered = await client.query(
-        "SELECT 1 FROM preview_delivered_native_state WHERE platform=$1 AND fingerprint=$2 LIMIT 1",
+        "SELECT build_id FROM preview_delivered_native_state WHERE platform=$1 AND fingerprint=$2 LIMIT 1",
         [platform, fingerprint],
       );
-      if (delivered.rowCount) throw new Error(`A compatible delivered ${platform} native baseline already exists; replacement is forbidden.`);
+      if (delivered.rowCount) {
+        const unavailable = allowUnavailableDelivered ? await client.query(
+          `SELECT 1 FROM preview_release_action
+           WHERE kind=$1 AND identity_key=$2 AND remote_id=$3 AND state='REMOTE_OBJECT_UNAVAILABLE' LIMIT 1`,
+          [kind, canonicalIdentity, delivered.rows[0].build_id],
+        ) : { rowCount: 0 };
+        if (!unavailable.rowCount) throw new Error(`A compatible delivered ${platform} native baseline already exists; replacement is forbidden.`);
+      }
       const failed = await client.query(
         `SELECT id,remote_id,state FROM preview_release_action
          WHERE kind=$1 AND (identity_key=$2 OR left(identity_key,length($3))=$3)
@@ -591,7 +598,7 @@ export class PreviewLedger {
          ORDER BY created_at DESC,id DESC LIMIT 1`,
         [kind, canonicalIdentity, recoveryPrefix],
       );
-      if (!failed.rowCount) throw new Error(`Owner-authorized ${platform} recovery requires a durable terminal failed native action.`);
+      if (!failed.rowCount && !allowUnavailableDelivered) throw new Error(`Owner-authorized ${platform} recovery requires a durable terminal failed native action.`);
       const active = await client.query(
         `SELECT * FROM preview_release_action
          WHERE kind=$1 AND left(identity_key,length($2))=$2
@@ -613,7 +620,7 @@ export class PreviewLedger {
       const inserted = await client.query(
         `INSERT INTO preview_release_action (source_sha,kind,identity_key,state,evidence)
          VALUES ($1,$2,$3,'RESERVED',$4::jsonb) RETURNING *`,
-        [sourceSha, kind, identityKey, JSON.stringify({ nativeFingerprint: fingerprint, nativeArtifactSourceSha: sourceSha, latestCompatibleSourceSha: sourceSha, ownershipSource: "OWNER_AUTHORIZED_TERMINAL_REPLACEMENT", recoveryAttempt, replacesTerminalActionId: failed.rows[0].id })],
+        [sourceSha, kind, identityKey, JSON.stringify({ nativeFingerprint: fingerprint, nativeArtifactSourceSha: sourceSha, latestCompatibleSourceSha: sourceSha, ownershipSource: allowUnavailableDelivered ? "OWNER_AUTHORIZED_ARTIFACT_BACKFILL" : "OWNER_AUTHORIZED_TERMINAL_REPLACEMENT", recoveryAttempt, replacesTerminalActionId: failed.rows[0]?.id ?? null, replacesUnavailableBuildId: allowUnavailableDelivered ? delivered.rows[0]?.build_id ?? null : null })],
       );
       await client.query("COMMIT");
       return { action: inserted.rows[0], created: true };
