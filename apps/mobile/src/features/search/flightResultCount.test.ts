@@ -26,11 +26,22 @@ test("flight count is derived from the collection rendered as FlightCards", () =
   assert.doesNotMatch(source, /sorted\.map\(\(x, i\) =>\s*product === "flight"/);
 });
 
-test("flight summary copy is removed while the hotel summary stays intact", () => {
+test("flight and hotel result counts are unboxed accessible headings", () => {
   const count = renderItem.slice(renderItem.indexOf('index === 0 && status === "ready" && !flightState ? ('), renderItem.indexOf("</Text>", renderItem.indexOf('index === 0 && status === "ready" && !flightState ? (')));
   assert.match(count, /accessibilityRole="header"/);
   assert.doesNotMatch(count, /s0\.found|Prices include taxes|Price may change|Book soon/);
-  assert.match(source, /\{sorted\.length\} properties found[\s\S]*?Prices include taxes and fees when reported by the provider/);
+
+  const hotelCount = source.slice(
+    source.indexOf('status === "ready" && product === "hotel" && sorted.length > 0'),
+    source.indexOf("sorted.map((x, i)", source.indexOf('status === "ready" && product === "hotel" && sorted.length > 0')),
+  );
+  assert.match(hotelCount, /accessibilityRole="header"/);
+  assert.match(hotelCount, /\{sorted\.length\} properties found/);
+  assert.equal(source.match(/\{sorted\.length\} properties found/g)?.length, 1);
+  assert.doesNotMatch(source, /s0\.found\b|s0\.foundCopy\b/);
+  assert.doesNotMatch(source, /Prices include taxes and fees when reported by the provider/);
+  assert.doesNotMatch(source, /label="Map view"|Map inventory is not available from this provider response/);
+  assert.match(source, /No stays match these filters\./);
 });
 
 test("count follows the price alert and directly precedes rendered cards", () => {
