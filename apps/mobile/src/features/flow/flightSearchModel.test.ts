@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { addMultiCityLeg, adjustFlightDeparture, airportByCode, changeFlightTripType, changeTraveler, defaultFlightForm, flightEditSearchParams, FLIGHT_CABINS, FLIGHT_TRIP_TYPES, flightSearchParams, initializeFlightForm, removeMultiCityLeg, searchAirports, swapMultiCityLegAirports, totalTravelers, updateMultiCityLegDate, validateFlightForm } from "./flightSearchModel";
+import { addMultiCityLeg, adjustFlightDeparture, airportByCode, changeFlightTripType, changeTraveler, defaultFlightForm, flightEditSearchParams, FLIGHT_CABINS, FLIGHT_TRIP_TYPES, flightSearchParams, flightSearchRouteParamPatch, initializeFlightForm, removeMultiCityLeg, searchAirports, swapMultiCityLegAirports, totalTravelers, updateMultiCityLegDate, validateFlightForm } from "./flightSearchModel";
 import { buildSearchPlan } from "./travelSearchModel";
 const today = new Date(2026, 7, 1, 12);
 
@@ -109,6 +109,52 @@ test("edit-search params do not introduce a return date for one-way searches", (
   assert.equal("returnDate" in params, false);
   const restored = initializeFlightForm(params, today).form;
   assert.equal(restored.tripType, "one-way"); assert.equal(restored.returnDate, ""); assert.equal(restored.adults, 3);
+});
+
+test("route patch makes a round-trip route behave as the new one-way search", () => {
+  const current = { tripType: "round-trip", origin: "LOS", destination: "JFK", departureDate: "2026-08-15", returnDate: "2026-08-22", cabinClass: "business" };
+  const next = { tripType: "one-way", from: "ABV", to: "DXB", departureDate: "2026-09-01", cabin: "economy" };
+  const merged = { ...current, ...flightSearchRouteParamPatch(next) };
+  const result = buildSearchPlan("flight", merged, today);
+
+  assert.equal(merged.origin, undefined); assert.equal(merged.destination, undefined); assert.equal(merged.returnDate, undefined);
+  assert.deepEqual(result.plan?.payload, { tripType: "one-way", origin: "ABV", destination: "DXB", departureDate: "2026-09-01", adults: 1, children: 0, infants: 0, travelers: 1, cabinClass: "economy" });
+});
+
+test("route patch prevents all stale multi-city fields from overriding a new one-way search", () => {
+  const current: Record<string, string | undefined> = { tripType: "multi-city", origin: "LOS", destination: "JFK", departureDate: "2026-08-15", legCount: "5" };
+  for (let index = 1; index <= 5; index += 1) {
+    current[`origin${index}`] = "LOS";
+    current[`destination${index}`] = "JFK";
+    current[`departureDate${index}`] = `2026-08-${14 + index}`;
+  }
+  const merged = { ...current, ...flightSearchRouteParamPatch({ tripType: "one-way", from: "ABV", to: "DXB", departureDate: "2026-09-01", cabin: "economy" }) };
+  const result = buildSearchPlan("flight", merged, today);
+
+  assert.deepEqual([merged.origin, merged.destination, merged.legCount], [undefined, undefined, undefined]);
+  for (let index = 1; index <= 5; index += 1) assert.deepEqual([merged[`origin${index}`], merged[`destination${index}`], merged[`departureDate${index}`]], [undefined, undefined, undefined]);
+  assert.deepEqual([result.plan?.payload.origin, result.plan?.payload.destination, result.plan?.payload.tripType], ["ABV", "DXB", "one-way"]);
+});
+
+test("route patch makes a one-way or round-trip route use only new multi-city legs", () => {
+  const current = { tripType: "round-trip", from: "LOS", to: "JFK", departureDate: "2026-08-15", returnDate: "2026-08-22", cabinClass: "business" };
+  const next = { tripType: "multi-city", origin: "ABV", destination: "LHR", departureDate: "2026-09-01", legCount: "2", origin1: "ABV", destination1: "DXB", departureDate1: "2026-09-01", origin2: "DXB", destination2: "LHR", departureDate2: "2026-09-03", cabin: "economy" };
+  const merged = { ...current, ...flightSearchRouteParamPatch(next) };
+  const result = buildSearchPlan("flight", merged, today);
+
+  assert.deepEqual([merged.from, merged.to, merged.returnDate, merged.cabinClass], [undefined, undefined, undefined, undefined]);
+  assert.deepEqual(result.plan?.payload.legs, [
+    { origin: "ABV", destination: "DXB", departureDate: "2026-09-01" },
+    { origin: "DXB", destination: "LHR", departureDate: "2026-09-03" },
+  ]);
+});
+
+test("route patch clears cabinClass so the new cabin alias wins", () => {
+  const merged = { tripType: "one-way", from: "LOS", to: "JFK", departureDate: "2026-08-15", cabinClass: "business", ...flightSearchRouteParamPatch({ tripType: "one-way", from: "ABV", to: "DXB", departureDate: "2026-09-01", cabin: "economy" }) };
+  const result = buildSearchPlan("flight", merged, today);
+
+  assert.equal(merged.cabinClass, undefined);
+  assert.equal(result.plan?.payload.cabinClass, "economy");
 });
 test("departure selection never invents a return date and traveler bounds preserve contract",()=>{ const form=defaultFlightForm(); const adjusted=adjustFlightDeparture(form,"2026-08-25"); assert.equal(adjusted.form.returnDate,""); let travelers={...form,adults:8,children:1}; travelers=changeTraveler(travelers,"infants",1); assert.equal(totalTravelers(travelers),9); assert.equal(changeTraveler({...form,adults:1},"adults",-1).adults,1); });
 
