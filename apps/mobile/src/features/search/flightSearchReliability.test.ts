@@ -47,7 +47,7 @@ test("loading decoration cannot intercept controls and route changes cannot loop
   assert.doesNotMatch(screen, /\[product, JSON\.stringify\(params\)\]/);
   assert.match(screen, /\[product, plan\.plan\?\.key, retry, visualTest\]/);
   assert.doesNotMatch(screen, /activeSearch\.current\?\.abort\("edit-search"\)/);
-  assert.match(screen, /if \(product === "flight"\) \{\s*setEditSearchOpen\(true\);/);
+  assert.match(screen, /if \(product === "flight"\) \{\s*pendingFlightEditSearchParams\.current = null;\s*setEditSearchOpen\(true\);/);
   assert.match(screen, /activeSearch\.current\?\.abort\("screen-blur"\)/);
 });
 

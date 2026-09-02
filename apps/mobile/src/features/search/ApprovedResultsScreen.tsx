@@ -172,6 +172,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [preferredAirlineSessionRevision, setPreferredAirlineSessionRevision] = useState(0);
   const [filterOpen, setFilterOpen] = useState(false);
   const [editSearchOpen, setEditSearchOpen] = useState(false);
+  const pendingFlightEditSearchParams = useRef<Record<string, string | undefined> | null>(null);
+  const flightEditNavigationFrame = useRef<number | null>(null);
   const [hotelEditSearchOpen, setHotelEditSearchOpen] = useState(false);
   const [hotelEditPresentation, setHotelEditPresentation] = useState(0);
   const [filterSection, setFilterSection] = useState<FlightFilterSectionName>("all");
@@ -412,8 +414,34 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     searchSequence.current += 1;
     activeSearch.current?.abort("screen-blur");
   }, []));
+  useEffect(() => () => {
+    if (flightEditNavigationFrame.current !== null) {
+      cancelAnimationFrame(flightEditNavigationFrame.current);
+      flightEditNavigationFrame.current = null;
+    }
+  }, []);
+  const submitFlightEditSearch = useCallback((nextParams: Record<string, string | undefined>) => {
+    pendingFlightEditSearchParams.current = nextParams;
+    setEditSearchOpen(false);
+  }, []);
+  const completeFlightEditSearch = useCallback(() => {
+    const pending = pendingFlightEditSearchParams.current;
+    if (!pending) return;
+    if (flightEditNavigationFrame.current !== null) return;
+    flightEditNavigationFrame.current = requestAnimationFrame(() => {
+      flightEditNavigationFrame.current = null;
+      const nextParams = pendingFlightEditSearchParams.current;
+      if (!nextParams) return;
+      pendingFlightEditSearchParams.current = null;
+      router.replace({
+        pathname: "/flight-results",
+        params: nextParams,
+      });
+    });
+  }, []);
   const edit = () => {
     if (product === "flight") {
+      pendingFlightEditSearchParams.current = null;
       setEditSearchOpen(true);
       return;
     }
@@ -816,6 +844,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           visible={editSearchOpen}
           params={flightEditSearchParams(params)}
           onClose={() => setEditSearchOpen(false)}
+          onSubmit={submitFlightEditSearch}
+          onAfterClose={completeFlightEditSearch}
         />
       ) : null}
       <BottomNav flightResults={flightResults} />
