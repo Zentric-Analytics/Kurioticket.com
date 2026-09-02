@@ -11,6 +11,8 @@ const accent = styles.slice(styles.indexOf("  flightDateSelectedAccent:"), style
 const weekday = styles.slice(styles.indexOf("  flightDateWeekday:"), styles.indexOf("  flightDateLabel:"));
 const dateLabel = styles.slice(styles.indexOf("  flightDateLabel:"), styles.indexOf("  flightDatePrice:"));
 const priceLabel = styles.slice(styles.indexOf("  flightDatePrice:"), styles.indexOf("  button:"));
+const nearbyInsight = styles.slice(styles.indexOf("  nearbyDateInsight:"), styles.indexOf("  nearbyDateInsightText:"));
+const nearbyInsightText = styles.slice(styles.indexOf("  nearbyDateInsightText:"), styles.indexOf("  flightDateRail:"));
 
 test("flight result tiles use bordered fare-calendar geometry without elevation", () => {
   for (const expected of [/minWidth: 76/, /maxWidth: 96/, /height: 70/, /borderRadius: 8/, /borderWidth: 1/, /position: "relative"/, /overflow: "hidden"/]) assert.match(baseCard, expected);
@@ -62,4 +64,19 @@ test("long prices remain one shrinkable line", () => {
   assert.match(component, /adjustsFontSizeToFit/);
   assert.match(component, /minimumFontScale=\{flightResults \? 0\.78 : 0\.85\}/);
   assert.match(priceLabel, /width: "100%"[\s\S]*?textAlign: "center"/);
+});
+
+test("optional cheaper-nearby insight stays compact, plain, and safely pressable", () => {
+  assert.match(component, /nearbySuggestion && displayCurrency \? \(/);
+  assert.match(component, /onPress=\{\(\) => onSelect\(nearbySuggestion\.date\)\}/);
+  assert.match(component, /hitSlop=\{\{ top: 8, bottom: 8, left: 6, right: 6 \}\}/);
+  for (const expected of [/minHeight: 28/, /justifyContent: "center"/, /paddingHorizontal: 14/, /marginTop: -2/]) {
+    assert.match(nearbyInsight, expected);
+  }
+  for (const expected of [/fontSize: 12/, /lineHeight: 16/, /fontWeight: "600"/]) {
+    assert.match(nearbyInsightText, expected);
+  }
+  assert.match(component, /fontFamily: appFonts\.semibold/);
+  assert.match(component, /numberOfLines=\{1\} ellipsizeMode="tail"/);
+  assert.doesNotMatch(nearbyInsight, /backgroundColor|borderWidth|shadow|elevation/);
 });

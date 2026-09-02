@@ -830,7 +830,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         <FlightEditSearchModal
           visible={editSearchOpen}
           params={flightEditSearchParams(params)}
-          topInset={topSafeAreaInset}
           onClose={() => setEditSearchOpen(false)}
         />
       ) : null}
