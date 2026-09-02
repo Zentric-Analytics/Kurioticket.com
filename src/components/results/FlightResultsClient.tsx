@@ -176,6 +176,13 @@ type NearbyFareRequest = {
 const nearbyFareRangeSize = 10;
 const nearbyFareVisibleCount = 7;
 const nearbyFareDaysBeforeAnchor = 4;
+const nearbyFareCenteredVisibleStart = Math.max(
+  0,
+  Math.min(
+    nearbyFareDaysBeforeAnchor - Math.floor(nearbyFareVisibleCount / 2),
+    nearbyFareRangeSize - nearbyFareVisibleCount,
+  ),
+);
 const nearbyFareRequestConcurrency = 4;
 const nearbyFareCacheTtlMs = 10 * 60 * 1000;
 
@@ -1057,7 +1064,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const mobileSelectedNearbyFareRef = useRef<HTMLButtonElement>(null);
   const alignedMobileNearbyFareSearchRef = useRef<string | null>(null);
   const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
-  const [nearbyFareVisibleStart, setNearbyFareVisibleStart] = useState(0);
+  const [nearbyFareVisibleStart, setNearbyFareVisibleStart] = useState(
+    nearbyFareCenteredVisibleStart,
+  );
   const [returnDateInput, setReturnDateInput] = useState(
     initialDateSafeParams.get("returnDate") || "",
   );
@@ -3404,7 +3413,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     if (!departureDate) return;
 
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset the window when the searched date changes.
-    setNearbyFareVisibleStart(0);
+    setNearbyFareVisibleStart(nearbyFareCenteredVisibleStart);
   }, [body?.departureDate]);
 
   const navigateNearbyFareWindow = useCallback(
@@ -7057,13 +7066,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   className="hidden w-full sm:block"
                   aria-label="Nearby departure fares"
                 >
-                  <div data-desktop-nearby-fare-rail className="mx-auto grid w-full max-w-[980px] grid-cols-[44px_repeat(7,minmax(88px,1fr))_44px] items-stretch gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-2.5 shadow-[0_10px_30px_-22px_rgba(15,23,42,0.5)]">
+                  <div data-desktop-nearby-fare-rail className="mx-auto grid w-full max-w-[980px] grid-cols-[48px_repeat(7,minmax(0,1fr))_48px] items-stretch gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-2.5 shadow-[0_10px_30px_-22px_rgba(15,23,42,0.5)]">
                     <button
                       type="button"
                       aria-label="Previous nearby fare date"
                       disabled={nearbyFareVisibleStart === 0}
                       onClick={() => navigateNearbyFareWindow("previous")}
-                      className="focus-ring mx-auto inline-flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-slate-500 transition hover:border-slate-200 hover:bg-slate-50 hover:text-[#075EE8] focus-visible:border-[#075EE8]/35 focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:border-transparent disabled:hover:bg-transparent"
+                      className="focus-ring inline-flex h-10 w-10 place-self-center items-center justify-center rounded-full border border-transparent text-slate-500 transition hover:border-slate-200 hover:bg-white hover:text-[#075EE8] hover:shadow-sm focus-visible:border-[#075EE8]/35 focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:border-transparent disabled:hover:bg-transparent disabled:hover:shadow-none"
                     >
                       <ChevronLeft className="h-5 w-5" aria-hidden="true" />
                     </button>
@@ -7185,7 +7194,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         nearbyFareRangeSize - nearbyFareVisibleCount
                       }
                       onClick={() => navigateNearbyFareWindow("next")}
-                      className="focus-ring mx-auto inline-flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-slate-500 transition hover:border-slate-200 hover:bg-slate-50 hover:text-[#075EE8] focus-visible:border-[#075EE8]/35 focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:border-transparent disabled:hover:bg-transparent"
+                      className="focus-ring inline-flex h-10 w-10 place-self-center items-center justify-center rounded-full border border-transparent text-slate-500 transition hover:border-slate-200 hover:bg-white hover:text-[#075EE8] hover:shadow-sm focus-visible:border-[#075EE8]/35 focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:border-transparent disabled:hover:bg-transparent disabled:hover:shadow-none"
                     >
                       <ChevronRight className="h-5 w-5" aria-hidden="true" />
                     </button>
