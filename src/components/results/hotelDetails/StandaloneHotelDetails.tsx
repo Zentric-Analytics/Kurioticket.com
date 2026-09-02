@@ -270,7 +270,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
       data-standalone-hotel-details
     >
       <div
-        className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_334px] lg:items-start lg:gap-7"
+        className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_334px] lg:items-stretch lg:gap-7"
         data-standalone-hotel-main-grid
       >
         <div className="min-w-0">
@@ -471,6 +471,14 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                     providerHandoffError={providerHandoffError}
                     onSelectOffer={setSelectedProviderOfferId}
                   />
+                  <div className="lg:hidden" data-hotel-mobile-map>
+                    {props.propertyDetails ? (
+                      <HotelDetailsGoogleMap
+                        hotelName={props.hotelName}
+                        propertyDetails={props.propertyDetails}
+                      />
+                    ) : null}
+                  </div>
                   <RelatedHotelsSection
                     hotels={props.relatedHotels}
                     city={props.propertyDetails?.city || ""}
@@ -535,7 +543,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
         </div>
 
         <aside
-          className="hidden min-w-0 self-start lg:block"
+          className="hidden min-w-0 lg:flex lg:flex-col"
           data-standalone-stay-summary
         >
           <section
@@ -623,15 +631,17 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
               {props.labels.continueBooking}
             </button>
           </section>
+          {activeTab === "compare" && props.propertyDetails ? (
+            <div className="min-h-0 flex-1 pt-6" data-hotel-desktop-map>
+              <HotelDetailsGoogleMap
+                hotelName={props.hotelName}
+                propertyDetails={props.propertyDetails}
+                fillHeight
+              />
+            </div>
+          ) : null}
         </aside>
       </div>
-
-      {props.propertyDetails ? (
-        <HotelDetailsGoogleMap
-          hotelName={props.hotelName}
-          propertyDetails={props.propertyDetails}
-        />
-      ) : null}
 
       <section
         className="fixed inset-x-0 bottom-0 z-[90] rounded-t-[22px] border-t border-slate-200 bg-white px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-8px_28px_rgba(15,23,42,0.14)] lg:hidden"

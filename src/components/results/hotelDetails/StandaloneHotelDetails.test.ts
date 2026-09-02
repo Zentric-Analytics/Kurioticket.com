@@ -18,6 +18,10 @@ const gallerySource = readFileSync(
   new URL("./HotelDetailsGallery.tsx", import.meta.url),
   "utf8",
 );
+const mapSource = readFileSync(
+  new URL("./HotelDetailsGoogleMap.tsx", import.meta.url),
+  "utf8",
+);
 
 test("mobile gallery uses a truthful hero, controls, counter, and five-slot thumbnail strip while desktop keeps mosaic", () => {
   for (const contract of [
@@ -42,7 +46,7 @@ test("mobile header owns stay metadata while the two-column dock owns price and 
   assert.match(source, /fixed inset-x-0 bottom-0/);
   assert.match(source, /env\(safe-area-inset-bottom\)/);
   assert.match(source, /pb-\[calc\(8\.5rem\+env\(safe-area-inset-bottom\)\)\]/);
-  assert.match(source, /hidden min-w-0 self-start lg:block/);
+  assert.match(source, /hidden min-w-0 lg:flex lg:flex-col/);
   const header = source.slice(
     source.indexOf("data-mobile-property-header"),
     source.indexOf("<HotelDetailsGallery"),
@@ -296,15 +300,25 @@ test("stay summary retains all functional data and pricing contracts", () => {
     assert.ok(source.includes(contract), contract);
 });
 
-test("Google map is a standalone wide section below the full booking grid", () => {
-  const desktopAside = source.slice(
-    source.indexOf("data-standalone-stay-summary"),
-    source.indexOf("</aside>", source.indexOf("data-standalone-stay-summary")),
+test("desktop Google map uses the outer stay-summary column without narrowing compare prices", () => {
+  const comparePanel = source.slice(
+    source.indexOf('{activeTab === "compare" ? ('),
+    source.indexOf('{activeTab === "about" ? ('),
   );
-  assert.doesNotMatch(desktopAside, /<HotelDetailsGoogleMap/);
-  assert.equal(source.match(/<HotelDetailsGoogleMap/g)?.length, 1);
-  assert.ok(source.indexOf("<HotelDetailsGoogleMap") > source.indexOf("</aside>"));
-  assert.ok(source.indexOf("<HotelDetailsGoogleMap") < source.indexOf("data-mobile-hotel-stay-dock"));
+  const stayAside = source.slice(
+    source.indexOf("<aside"),
+    source.indexOf("</aside>") + "</aside>".length,
+  );
+  assert.doesNotMatch(comparePanel, /data-hotel-compare-map-grid|lg:grid-cols/);
+  assert.match(comparePanel, /<HotelPriceComparisonSection/);
+  assert.match(comparePanel, /data-hotel-mobile-map/);
+  assert.match(comparePanel, /className="lg:hidden"/);
+  assert.match(stayAside, /data-hotel-desktop-map/);
+  assert.match(stayAside, /className="min-h-0 flex-1 pt-6"/);
+  assert.match(stayAside, /fillHeight/);
+  assert.match(stayAside, /activeTab === "compare"/);
+  assert.equal(source.match(/<HotelDetailsGoogleMap/g)?.length, 2);
+  assert.match(mapSource, /lg:h-\[320px\]/);
   assert.doesNotMatch(source, /Show directions|href=\{directionsUrl\}/);
 });
 
