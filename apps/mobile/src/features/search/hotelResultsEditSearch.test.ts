@@ -18,7 +18,36 @@ test("Hotel Results Edit opens an in-place Hotel editor with current committed p
   assert.match(source, /const \[hotelEditPresentation, setHotelEditPresentation\] = useState\(0\)/);
   assert.match(edit, /if \(product === "flight"\)[\s\S]*setEditSearchOpen\(true\)[\s\S]*return;[\s\S]*setHotelEditPresentation\(\(presentation\) => presentation \+ 1\);[\s\S]*setHotelEditSearchOpen\(true\)/);
   assert.doesNotMatch(edit, /router\.(?:push|replace)|pathname: "\/hotels"/);
-  assert.match(source, /<HotelEditSearchModal[\s\S]*key=\{hotelEditPresentation\}[\s\S]*visible=\{hotelEditSearchOpen\}[\s\S]*params=\{params\}[\s\S]*topInset=\{topSafeAreaInset\}[\s\S]*onClose=\{\(\) => setHotelEditSearchOpen\(false\)\}/);
+  assert.match(source, /<HotelEditSearchModal[\s\S]*key=\{hotelEditPresentation\}[\s\S]*visible=\{hotelEditSearchOpen\}[\s\S]*params=\{params\}[\s\S]*onClose=\{\(\) => setHotelEditSearchOpen\(false\)\}/);
+  assert.doesNotMatch(source, /topInset=\{topSafeAreaInset\}/);
+});
+
+test("Hotel edit modal uses the approved bottom-sheet presentation", () => {
+  const modal = modalSource();
+
+  assert.match(modal, /import \{ useSearchPickerMotion \} from "\.\.\/flow\/searchPickerPresentation"/);
+  assert.match(modal, /const motion = useSearchPickerMotion\(visible\)/);
+  assert.doesNotMatch(modal, /useHotelEditSearchMotion|REVEAL_OFFSET|OPEN_DURATION_MS|CLOSE_DURATION_MS/);
+  assert.match(modal, /<Modal transparent animationType="none" visible onRequestClose=\{onClose\} statusBarTranslucent>/);
+  assert.match(modal, /backdrop: \{ flex: 1, justifyContent: "flex-end" \}/);
+  assert.doesNotMatch(modal, /justifyContent: "flex-start"/);
+  assert.match(modal, /onLayout=\{motion\.onSheetLayout\}/);
+  assert.match(modal, /motion\.sheetStyle/);
+  assert.match(modal, /paddingBottom: motion\.bottomSafeAreaInset/);
+  assert.match(modal, /sheet: \{ maxHeight: "94%"/);
+  assert.match(modal, /borderTopLeftRadius: 22, borderTopRightRadius: 22/);
+  assert.doesNotMatch(modal, /borderBottomLeftRadius|borderBottomRightRadius/);
+  assert.match(modal, /borderWidth: 1, borderBottomWidth: 0/);
+  assert.match(modal, /backgroundColor: "rgba\(15, 23, 42, 0\.35\)"/);
+  assert.doesNotMatch(modal, /rgba\(8, 18, 35, 0\.52\)|BlurView/);
+  assert.match(modal, />Edit hotel search<\/Text>/);
+  assert.doesNotMatch(modal, />Change your search<\/Text>/);
+});
+
+test("Hotel edit modal has no obsolete top-drawer safe-area contract", () => {
+  const modal = modalSource();
+  assert.doesNotMatch(modal, /topInset: number|safeAreaClearance|height: topInset/);
+  assert.doesNotMatch(resultsSource(), /topInset=\{topSafeAreaInset\}/);
 });
 
 test("Hotel edit modal embeds the shared form and replaces only after closing", () => {

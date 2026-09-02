@@ -149,7 +149,6 @@ const hotelStayNightCount = (checkIn?: string, checkOut?: string) => {
 };
 export function ApprovedResultsScreen({ product }: { product: Product }) {
   const { theme } = useAppTheme();
-  const { top: topSafeAreaInset } = useSafeAreaInsets();
   const flightResults = product === "flight";
   const flightCanvasColor = theme.dark ? theme.background : flightResultsLightCanvas;
   const { availability } = useFeatureAvailability();
@@ -809,7 +808,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           key={hotelEditPresentation}
           visible={hotelEditSearchOpen}
           params={params}
-          topInset={topSafeAreaInset}
           onClose={() => setHotelEditSearchOpen(false)}
         />
       ) : null}
