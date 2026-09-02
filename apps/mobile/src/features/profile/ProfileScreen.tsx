@@ -9,9 +9,31 @@ import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { useAppTheme } from "../../theme/AppTheme";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
+import type { MobileLocale } from "../../localization/mobileLocalizationCatalog";
 import { ProfileCardSection } from "./ProfileCardSection";
 import { authenticatedProfileSections, profileFirstName } from "./profileModel";
 import { AppVersionFooter } from "./AppVersionFooter";
+
+const profileWelcomeCopy: Record<MobileLocale, string> = {
+  "en-us": "Welcome",
+  "es-es": "Te damos la bienvenida",
+  fr: "Bienvenue",
+  "de-de": "Willkommen",
+  "it-it": "Ti diamo il benvenuto",
+  "pt-br": "Boas-vindas",
+  nl: "Welkom",
+  ar: "مرحبًا",
+  "zh-cn": "欢迎",
+  ja: "ようこそ",
+  ko: "환영합니다",
+  hi: "स्वागत है",
+  tr: "Hoş geldiniz",
+  pl: "Witamy",
+  sv: "Välkommen",
+  id: "Selamat datang",
+  th: "ยินดีต้อนรับ",
+  vi: "Chào mừng",
+};
 
 function Header({ unreadCount }: { unreadCount: number }) {
   const { theme } = useAppTheme(); const { t } = useMobileLocalization();
@@ -20,9 +42,9 @@ function Header({ unreadCount }: { unreadCount: number }) {
 }
 
 function WelcomeCard({ name, email }: { name: string | null; email: string | null }) {
-  const { theme } = useAppTheme(); const { t } = useMobileLocalization();
+  const { theme } = useAppTheme(); const { t, locale } = useMobileLocalization();
   const firstName = profileFirstName(name, email);
-  const greeting = firstName ? `${t("profileGreeting")}, ${firstName} 👋` : `${t("profileGreeting")} 👋`;
+  const greeting = firstName ? `${t("profileGreeting")}, ${firstName} 👋` : `${profileWelcomeCopy[locale]} 👋`;
   const accessibilityCopy = [greeting, email, t("profileWelcomeLine")].filter(Boolean).join(". ");
   return <View accessibilityRole="summary" accessibilityLabel={accessibilityCopy} style={styles.welcomeCard}>
     <View style={[styles.avatar, { backgroundColor: theme.dark ? "#24699C" : "#1769AA" }]}>{firstName ? <Text style={styles.avatarText}>{firstName.slice(0, 1).toUpperCase()}</Text> : <FlowIcon name="person" size={25} color="#FFFFFF" />}</View>
@@ -43,7 +65,7 @@ export function AuthenticatedProfileScreen() {
   return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top"]}><ScrollView alwaysBounceVertical={false} bounces={false} overScrollMode="never" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
     <View style={[styles.hero, { backgroundColor: theme.dark ? "#102B4A" : "#F3F8FF" }]}>
       <Header unreadCount={unreadCount} />
-      {identityResolved ? <WelcomeCard name={name} email={email} /> : <View accessible={false} style={styles.welcomeCard} />}
+      <WelcomeCard name={identityResolved ? name : null} email={email} />
     </View>
     <View style={styles.manageAccountOverlap}><ProfileCardSection section={manageAccount} /></View>
     <View style={styles.sections}>{remainingSections.map(section => <ProfileCardSection key={section.title} section={section} />)}</View>
