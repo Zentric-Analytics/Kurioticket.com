@@ -1636,6 +1636,7 @@ function PriceAlert({ product, plan, results, available = true }: { product: Pro
   };
   if (flight) {
     const supportTextColor = theme.dark ? flightSupportText.dark : flightSupportText.light;
+    const inactiveSwitchTrackColor = theme.dark ? theme.switchTrack : ui.border;
     return (
       <View
         accessibilityLabel="Flight price alert"
@@ -1656,8 +1657,8 @@ function PriceAlert({ product, plan, results, available = true }: { product: Pro
             value={isTracking}
             disabled={pending || loadingAlert || unavailable}
             onValueChange={(next) => void handleToggle(next)}
-            trackColor={{ false: theme.switchTrack, true: theme.switchTrackActive }}
-            ios_backgroundColor={theme.switchTrack}
+            trackColor={{ false: inactiveSwitchTrackColor, true: theme.switchTrackActive }}
+            ios_backgroundColor={inactiveSwitchTrackColor}
             thumbColor={theme.surface}
           />
         </View>
