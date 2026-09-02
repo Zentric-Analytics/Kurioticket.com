@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, ActivityIndicator, Animated, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import Svg, { Circle, Line, Path } from "react-native-svg";
 import { TravelApiError } from "../../api/travelApi";
-import { securityPasswordResetApi } from "../../api/securityPasswordResetApi";
+import { securityPasswordResetApi, type PasswordResetChallenge } from "../../api/securityPasswordResetApi";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import type { MobileLocale } from "../../localization/mobileLocalizationCatalog";
 import { useAppTheme } from "../../theme/AppTheme";
 import type { SecurityCopy } from "./securityLocalization";
+import { passwordFlowCopy } from "./passwordFlowLocalization";
 
 type Props = {
   active: boolean;
@@ -22,27 +24,6 @@ type ResetNavigationCopy = {
   back: string;
   submit: string;
   success: string;
-};
-
-const codeActionCopy: Record<MobileLocale, { send: string; resend: string; sent: string; field: string }> = {
-  "en-us": { send: "Send verification code", resend: "Resend verification code", sent: "A 6-digit verification code was sent to your verified account email. It expires in 5 minutes.", field: "Verification code" },
-  "es-es": { send: "Enviar código de verificación", resend: "Reenviar código de verificación", sent: "Se envió un código de verificación de 6 dígitos al correo verificado de tu cuenta. Caduca en 5 minutos.", field: "Código de verificación" },
-  fr: { send: "Envoyer le code de vérification", resend: "Renvoyer le code de vérification", sent: "Un code de vérification à 6 chiffres a été envoyé à l’adresse e-mail vérifiée de votre compte. Il expire dans 5 minutes.", field: "Code de vérification" },
-  "de-de": { send: "Bestätigungscode senden", resend: "Bestätigungscode erneut senden", sent: "Ein 6-stelliger Bestätigungscode wurde an die bestätigte E-Mail-Adresse deines Kontos gesendet. Er läuft in 5 Minuten ab.", field: "Bestätigungscode" },
-  "it-it": { send: "Invia codice di verifica", resend: "Invia di nuovo il codice", sent: "Un codice di verifica di 6 cifre è stato inviato all'email verificata del tuo account. Scade tra 5 minuti.", field: "Codice di verifica" },
-  "pt-br": { send: "Enviar código de verificação", resend: "Reenviar código de verificação", sent: "Um código de verificação de 6 dígitos foi enviado para o e-mail verificado da sua conta. Ele expira em 5 minutos.", field: "Código de verificação" },
-  nl: { send: "Verificatiecode verzenden", resend: "Verificatiecode opnieuw verzenden", sent: "Er is een verificatiecode van 6 cijfers naar het geverifieerde e-mailadres van je account gestuurd. De code verloopt over 5 minuten.", field: "Verificatiecode" },
-  ar: { send: "إرسال رمز التحقق", resend: "إعادة إرسال رمز التحقق", sent: "تم إرسال رمز تحقق مكوّن من 6 أرقام إلى البريد الإلكتروني الموثق لحسابك. تنتهي صلاحيته خلال 5 دقائق.", field: "رمز التحقق" },
-  "zh-cn": { send: "发送验证码", resend: "重新发送验证码", sent: "6 位验证码已发送到您账户已验证的电子邮箱。验证码将在 5 分钟后过期。", field: "验证码" },
-  ja: { send: "確認コードを送信", resend: "確認コードを再送信", sent: "6桁の確認コードを、アカウントで確認済みのメールアドレスに送信しました。5分後に期限切れになります。", field: "確認コード" },
-  ko: { send: "인증 코드 보내기", resend: "인증 코드 다시 보내기", sent: "6자리 인증 코드를 계정의 인증된 이메일로 보냈습니다. 5분 후 만료됩니다.", field: "인증 코드" },
-  hi: { send: "सत्यापन कोड भेजें", resend: "सत्यापन कोड फिर भेजें", sent: "6 अंकों का सत्यापन कोड आपके खाते के सत्यापित ईमेल पर भेजा गया है। यह 5 मिनट में समाप्त हो जाएगा।", field: "सत्यापन कोड" },
-  tr: { send: "Doğrulama kodu gönder", resend: "Doğrulama kodunu yeniden gönder", sent: "6 haneli doğrulama kodu hesabınızın doğrulanmış e-posta adresine gönderildi. Kod 5 dakika içinde sona erer.", field: "Doğrulama kodu" },
-  pl: { send: "Wyślij kod weryfikacyjny", resend: "Wyślij kod ponownie", sent: "6-cyfrowy kod weryfikacyjny został wysłany na zweryfikowany adres e-mail konta. Kod wygaśnie za 5 minut.", field: "Kod weryfikacyjny" },
-  sv: { send: "Skicka verifieringskod", resend: "Skicka verifieringskoden igen", sent: "En 6-siffrig verifieringskod skickades till kontots verifierade e-postadress. Den upphör att gälla om 5 minuter.", field: "Verifieringskod" },
-  id: { send: "Kirim kode verifikasi", resend: "Kirim ulang kode verifikasi", sent: "Kode verifikasi 6 digit telah dikirim ke email akun Anda yang telah diverifikasi. Kode kedaluwarsa dalam 5 menit.", field: "Kode verifikasi" },
-  th: { send: "ส่งรหัสยืนยัน", resend: "ส่งรหัสยืนยันอีกครั้ง", sent: "ส่งรหัสยืนยัน 6 หลักไปยังอีเมลที่ยืนยันแล้วของบัญชีคุณ รหัสจะหมดอายุใน 5 นาที", field: "รหัสยืนยัน" },
-  vi: { send: "Gửi mã xác minh", resend: "Gửi lại mã xác minh", sent: "Mã xác minh gồm 6 chữ số đã được gửi đến email đã xác minh của tài khoản. Mã sẽ hết hạn sau 5 phút.", field: "Mã xác minh" },
 };
 
 const resetNavigationCopy: Record<MobileLocale, ResetNavigationCopy> = {
@@ -70,129 +51,131 @@ export function passwordResetNavigationCopy(locale: MobileLocale) {
   return resetNavigationCopy[locale];
 }
 
+function EyeIcon({ hidden, color }: { hidden: boolean; color: string }) {
+  return <Svg width={22} height={22} viewBox="0 0 24 24" accessible={false}><Path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" /><Circle cx="12" cy="12" r="2.7" fill="none" stroke={color} strokeWidth={1.8} />{hidden ? <Line x1="4" y1="4" x2="20" y2="20" stroke={color} strokeWidth={1.8} strokeLinecap="round" /> : null}</Svg>;
+}
+
+function PasswordField({ label, value, hidden, error, showLabel, hideLabel, onChange, onToggle }: { label: string; value: string; hidden: boolean; error?: string; showLabel: string; hideLabel: string; onChange: (value: string) => void; onToggle: () => void }) {
+  const { theme } = useAppTheme();
+  return <View style={styles.fieldGroup}><Text style={[styles.label, { color: theme.text }]}>{label}</Text><View style={[styles.passwordShell, { backgroundColor: theme.surface, borderColor: error ? "#B42318" : theme.border }]}><TextInput accessibilityLabel={label} secureTextEntry={hidden} value={value} onChangeText={onChange} autoCapitalize="none" autoCorrect={false} textContentType="newPassword" style={[styles.passwordInput, { color: theme.text }]} /><Pressable accessibilityRole="button" accessibilityLabel={hidden ? `${showLabel}: ${label}` : `${hideLabel}: ${label}`} onPress={onToggle} style={styles.eyeButton}><EyeIcon hidden={hidden} color={theme.muted} /></Pressable></View><View style={styles.fieldFeedback}>{error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}</View></View>;
+}
+
+function Button({ label, onPress, loading }: { label: string; onPress: () => void; loading: boolean }) {
+  return <Pressable accessibilityRole="button" accessibilityState={{ disabled: loading, busy: loading }} disabled={loading} onPress={onPress} style={({ pressed }) => [styles.button, loading && styles.disabled, pressed && !loading && styles.pressed]}><View style={styles.buttonContent}><Text style={styles.buttonText}>{label}</Text>{loading ? <ActivityIndicator size="small" color="white" /> : null}</View></Pressable>;
+}
+
 export function PasswordResetFlow({ active, copy: c, intro, onUnauthorized, onSuccess }: Props) {
   const { theme } = useAppTheme();
   const { locale } = useMobileLocalization();
-  const actionCopy = codeActionCopy[locale];
+  const f = passwordFlowCopy[locale];
   const navigationCopy = passwordResetNavigationCopy(locale);
-  const [stage, setStage] = useState<"request" | "verify">("request");
+  const [stage, setStage] = useState<"sending" | "verify" | "create">("sending");
+  const [challenge, setChallenge] = useState<PasswordResetChallenge | null>(null);
   const [code, setCode] = useState("");
+  const [codeError, setCodeError] = useState("");
+  const [recoveryToken, setRecoveryToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
+  const [newError, setNewError] = useState("");
+  const [confirmError, setConfirmError] = useState("");
+  const [generalError, setGeneralError] = useState("");
+  const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [visible, setVisible] = useState(false);
+  const [hidden, setHidden] = useState({ newPassword: true, confirmPassword: true });
+  const [resendUntil, setResendUntil] = useState(0);
+  const [resendRemaining, setResendRemaining] = useState(0);
   const activeRef = useRef(active);
   const generationRef = useRef(0);
   const inFlightRef = useRef(false);
 
-  useEffect(() => {
-    activeRef.current = active;
+  const clearAll = () => {
     generationRef.current += 1;
-    if (active) return;
-    setStage("request");
-    setCode("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setError("");
-    setVisible(false);
-  }, [active]);
+    inFlightRef.current = false;
+    setStage("sending"); setChallenge(null); setCode(""); setCodeError(""); setRecoveryToken(""); setNewPassword(""); setConfirmPassword(""); setNewError(""); setConfirmError(""); setGeneralError(""); setMessage(""); setSubmitting(false); setHidden({ newPassword: true, confirmPassword: true }); setResendUntil(0); setResendRemaining(0);
+  };
 
   const sendCode = async () => {
     if (inFlightRef.current) return;
     const generation = generationRef.current;
-    inFlightRef.current = true;
-    setSubmitting(true);
-    setError("");
+    inFlightRef.current = true; setSubmitting(true); setGeneralError(""); setCodeError(""); setMessage("");
     try {
-      await securityPasswordResetApi.sendCode();
+      const result = await securityPasswordResetApi.sendCode();
       if (!activeRef.current || generation !== generationRef.current) return;
-      setStage("verify");
-      AccessibilityInfo.announceForAccessibility(actionCopy.sent);
+      setChallenge(result); setCode(""); setStage("verify"); setResendUntil(Date.now() + result.resendAfterSeconds * 1000); AccessibilityInfo.announceForAccessibility(f.verifyBody(result.maskedEmail));
     } catch (e) {
       if (!activeRef.current || generation !== generationRef.current) return;
-      if (!await onUnauthorized(e)) setError(e instanceof TravelApiError ? e.message : c.loadError);
+      if (!await onUnauthorized(e)) {
+        if (e instanceof TravelApiError) {
+          const retryAfter = (e as TravelApiError & { retryAfterSeconds?: number }).retryAfterSeconds;
+          if (e.status === 429 && retryAfter) setResendUntil(Date.now() + retryAfter * 1000);
+          setGeneralError(e.message);
+        } else setGeneralError(c.loadError);
+      }
     } finally {
       inFlightRef.current = false;
-      setSubmitting(false);
+      if (activeRef.current && generation === generationRef.current) setSubmitting(false);
     }
+  };
+
+  useEffect(() => {
+    activeRef.current = active;
+    if (!active) { clearAll(); return; }
+    generationRef.current += 1;
+    setStage("sending"); setGeneralError(""); setCodeError(""); setMessage("");
+    void sendCode();
+    return () => { generationRef.current += 1; };
+  }, [active]);
+
+  useEffect(() => {
+    if (!active || stage !== "verify" || !resendUntil) return;
+    const update = () => setResendRemaining(Math.max(0, Math.ceil((resendUntil - Date.now()) / 1000)));
+    update(); const timer = setInterval(update, 250); return () => clearInterval(timer);
+  }, [active, resendUntil, stage]);
+
+  const verifyCode = async () => {
+    if (inFlightRef.current) return;
+    if (!/^\d{6}$/.test(code)) { setCodeError(c.codeInvalid); return; }
+    const generation = generationRef.current; inFlightRef.current = true; setSubmitting(true); setCodeError(""); setGeneralError("");
+    try {
+      const result = await securityPasswordResetApi.verifyCode(code);
+      if (!activeRef.current || generation !== generationRef.current) return;
+      setRecoveryToken(result.recoveryToken); setStage("create"); setCode(""); setChallenge(null); setResendUntil(0); setResendRemaining(0); AccessibilityInfo.announceForAccessibility(f.createTitle);
+    } catch (e) {
+      if (!activeRef.current || generation !== generationRef.current) return;
+      if (!await onUnauthorized(e)) {
+        if (e instanceof TravelApiError && (e.details?.field === "verificationCode" || e.status === 400)) setCodeError(e.message);
+        else setGeneralError(e instanceof TravelApiError ? e.message : c.loadError);
+      }
+    } finally { inFlightRef.current = false; if (activeRef.current && generation === generationRef.current) setSubmitting(false); }
   };
 
   const resetPassword = async () => {
     if (inFlightRef.current) return;
-    if (!/^\d{6}$/.test(code)) { setError(c.codeInvalid); return; }
-    if (newPassword.length < 8 || newPassword !== confirmPassword) { setError(c.passwordInvalid); return; }
-    const generation = generationRef.current;
-    inFlightRef.current = true;
-    setSubmitting(true);
-    setError("");
+    const nextError = newPassword.length < 8 ? f.newTooShort : "";
+    const confirmationError = !confirmPassword ? f.confirmRequired : newPassword !== confirmPassword ? f.confirmMismatch : "";
+    setNewError(nextError); setConfirmError(confirmationError);
+    if (nextError || confirmationError) return;
+    const generation = generationRef.current; inFlightRef.current = true; setSubmitting(true); setGeneralError("");
     try {
-      await securityPasswordResetApi.reset({ code, newPassword, confirmPassword });
+      await securityPasswordResetApi.reset({ recoveryToken, newPassword, confirmPassword });
       if (!activeRef.current || generation !== generationRef.current) return;
-      AccessibilityInfo.announceForAccessibility(navigationCopy.success);
-      await onSuccess();
+      AccessibilityInfo.announceForAccessibility(navigationCopy.success); await onSuccess();
     } catch (e) {
       if (!activeRef.current || generation !== generationRef.current) return;
-      if (!await onUnauthorized(e)) setError(e instanceof TravelApiError ? e.message : c.loadError);
-    } finally {
-      inFlightRef.current = false;
-      setSubmitting(false);
-    }
+      if (!await onUnauthorized(e)) {
+        if (e instanceof TravelApiError && (e.details?.field === "newPassword" || e.message.includes("different from your current"))) setNewError(f.newSame);
+        else setGeneralError(e instanceof TravelApiError ? e.message : c.loadError);
+      }
+    } finally { inFlightRef.current = false; if (activeRef.current && generation === generationRef.current) setSubmitting(false); }
   };
 
-  if (stage === "request") {
-    return <View style={styles.form}>
-      <Text style={{ color: theme.muted }}>{intro ?? navigationCopy.entryHelp}</Text>
-      <InlineFeedback error={error} />
-      <Button label={actionCopy.send} loading={submitting} onPress={() => void sendCode()} />
-    </View>;
-  }
+  if (stage === "sending") return <View style={styles.sending}>{intro ? <Text style={[styles.supporting, { color: theme.muted }]}>{intro}</Text> : null}<ActivityIndicator size="small" color="#1769E0" />{generalError ? <><Text accessibilityRole="alert" style={styles.error}>{generalError}</Text><Pressable accessibilityRole="button" onPress={() => void sendCode()} style={styles.retryAction}><Text style={styles.link}>{c.retry}</Text></Pressable></> : null}</View>;
 
-  return <View style={styles.form}>
-    <Text style={[styles.instructions, { color: theme.muted }]}>{actionCopy.sent}</Text>
-    <InlineFeedback error={error} />
-    <TextInput accessibilityLabel={actionCopy.field} keyboardType="number-pad" maxLength={6} value={code} onChangeText={(value) => { setCode(value.replace(/\D/g, "")); setError(""); }} placeholder={actionCopy.field} placeholderTextColor={theme.muted} style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]} />
-    <TextInput accessibilityLabel={c.next} secureTextEntry={!visible} value={newPassword} onChangeText={(value) => { setNewPassword(value); setError(""); }} placeholder={c.next} placeholderTextColor={theme.muted} autoCapitalize="none" style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]} />
-    <TextInput accessibilityLabel={c.confirm} secureTextEntry={!visible} value={confirmPassword} onChangeText={(value) => { setConfirmPassword(value); setError(""); }} placeholder={c.confirm} placeholderTextColor={theme.muted} autoCapitalize="none" style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]} />
-    <Pressable accessibilityRole="button" accessibilityLabel={visible ? c.hide : c.show} onPress={() => setVisible((value) => !value)} style={styles.textAction}><Text style={styles.link}>{visible ? c.hide : c.show}</Text></Pressable>
-    <Text style={{ color: theme.muted }}>{c.passwordRules}</Text>
-    <Button label={navigationCopy.submit} loading={submitting} onPress={() => void resetPassword()} />
-    <Pressable accessibilityRole="button" disabled={submitting} onPress={() => void sendCode()} style={styles.textAction}><Text style={styles.link}>{actionCopy.resend}</Text></Pressable>
-  </View>;
-}
+  if (stage === "verify" && challenge) return <View style={styles.form}><Text accessibilityRole="header" style={[styles.stageTitle, { color: theme.text }]}>{f.verifyTitle}</Text><Text style={[styles.supporting, { color: theme.muted }]}>{f.verifyBody(challenge.maskedEmail)}</Text>{generalError ? <Text accessibilityRole="alert" style={styles.error}>{generalError}</Text> : null}{message ? <Text accessibilityLiveRegion="polite" style={styles.success}>{message}</Text> : null}<View style={styles.fieldGroup}><Text style={[styles.label, { color: theme.text }]}>{f.codeLabel}</Text><TextInput accessibilityLabel={f.codeLabel} keyboardType="number-pad" textContentType="oneTimeCode" maxLength={6} value={code} onChangeText={(value) => { setCode(value.replace(/\D/g, "")); setCodeError(""); setGeneralError(""); }} autoFocus style={[styles.codeInput, { color: theme.text, backgroundColor: theme.surface, borderColor: codeError ? "#B42318" : theme.border }]} /><View style={styles.fieldFeedback}>{codeError ? <Text accessibilityRole="alert" style={styles.error}>{codeError}</Text> : null}</View></View><Button label={f.continueAction} loading={submitting} onPress={() => void verifyCode()} /><Pressable accessibilityRole="button" accessibilityState={{ disabled: submitting || resendRemaining > 0 }} disabled={submitting || resendRemaining > 0} onPress={() => void sendCode()} style={styles.resendAction}><Text style={[styles.link, resendRemaining > 0 && { color: theme.muted }]}>{resendRemaining > 0 ? f.resendIn(resendRemaining) : f.resend}</Text></Pressable><Text style={[styles.expiry, { color: theme.muted }]}>{f.expiryHint}</Text></View>;
 
-function InlineFeedback({ error }: { error: string }) {
-  const opacity = useRef(new Animated.Value(error ? 1 : 0)).current;
-  const [displayed, setDisplayed] = useState(error);
-  useEffect(() => {
-    opacity.stopAnimation();
-    if (error) {
-      setDisplayed(error);
-      Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true }).start();
-      return;
-    }
-    Animated.timing(opacity, { toValue: 0, duration: 180, useNativeDriver: true }).start(({ finished }) => {
-      if (finished) setDisplayed("");
-    });
-  }, [error, opacity]);
-  return <View style={styles.feedbackSlot}><Animated.Text accessibilityRole="alert" style={[styles.error, { opacity }]}>{displayed || " "}</Animated.Text></View>;
-}
-
-function Button({ label, onPress, loading }: { label: string; onPress: () => void; loading: boolean }) {
-  return <Pressable accessibilityRole="button" accessibilityState={{ disabled: loading, busy: loading }} disabled={loading} onPress={onPress} style={({ pressed }) => [styles.button, loading && styles.disabled, pressed && styles.pressed]}><View style={styles.buttonContent}><Text style={styles.buttonText}>{label}</Text>{loading ? <ActivityIndicator size="small" color="white" /> : null}</View></Pressable>;
+  return <View style={styles.form}><Text accessibilityRole="header" style={[styles.stageTitle, { color: theme.text }]}>{f.createTitle}</Text><Text style={[styles.supporting, { color: theme.muted }]}>{c.passwordRules}</Text>{generalError ? <Text accessibilityRole="alert" style={styles.error}>{generalError}</Text> : null}<PasswordField label={c.next} value={newPassword} hidden={hidden.newPassword} error={newError} showLabel={c.show} hideLabel={c.hide} onChange={(value) => { setNewPassword(value); setNewError(""); setGeneralError(""); }} onToggle={() => setHidden((current) => ({ ...current, newPassword: !current.newPassword }))} /><PasswordField label={c.confirm} value={confirmPassword} hidden={hidden.confirmPassword} error={confirmError} showLabel={c.show} hideLabel={c.hide} onChange={(value) => { setConfirmPassword(value); setConfirmError(""); setGeneralError(""); }} onToggle={() => setHidden((current) => ({ ...current, confirmPassword: !current.confirmPassword }))} /><Button label={navigationCopy.submit} loading={submitting} onPress={() => void resetPassword()} /></View>;
 }
 
 const styles = StyleSheet.create({
-  form: { gap: 12 },
-  instructions: { lineHeight: 20 },
-  feedbackSlot: { minHeight: 20, justifyContent: "center" },
-  input: { minHeight: 50, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, fontSize: 15 },
-  textAction: { minHeight: 44, alignSelf: "flex-start", justifyContent: "center" },
-  link: { color: "#1769E0", fontWeight: "700" },
-  button: { minHeight: 50, borderRadius: 10, backgroundColor: "#1769E0", alignItems: "center", justifyContent: "center", paddingHorizontal: 16, marginTop: 4 },
-  buttonContent: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
-  disabled: { opacity: 0.75 },
-  buttonText: { color: "white", fontWeight: "800" },
-  error: { color: "#B42318", fontWeight: "600", lineHeight: 20 },
-  pressed: { opacity: 0.65 },
+  form: { gap: 12 }, sending: { gap: 16, alignItems: "center", paddingVertical: 18 }, stageTitle: { fontSize: 20, lineHeight: 27, fontWeight: "800" }, supporting: { fontSize: 14, lineHeight: 21 }, fieldGroup: { gap: 7 }, label: { fontSize: 14, lineHeight: 20, fontWeight: "700" }, fieldFeedback: { minHeight: 20, justifyContent: "center" }, codeInput: { minHeight: 56, borderWidth: 1, borderRadius: 11, paddingHorizontal: 16, fontSize: 22, fontWeight: "700", letterSpacing: 9, textAlign: "center" }, passwordShell: { minHeight: 52, borderWidth: 1, borderRadius: 11, flexDirection: "row", alignItems: "center" }, passwordInput: { minHeight: 50, flex: 1, fontSize: 16, paddingHorizontal: 13, paddingVertical: 0 }, eyeButton: { width: 48, minHeight: 50, alignItems: "center", justifyContent: "center" }, button: { minHeight: 52, borderRadius: 11, backgroundColor: "#1769E0", alignItems: "center", justifyContent: "center", marginTop: 2 }, buttonContent: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 }, buttonText: { color: "white", fontSize: 16, fontWeight: "800" }, disabled: { opacity: 0.55 }, pressed: { opacity: 0.68 }, error: { color: "#B42318", fontSize: 14, lineHeight: 20, fontWeight: "600" }, success: { color: "#067647", fontSize: 14, lineHeight: 20, fontWeight: "700" }, resendAction: { minHeight: 44, alignSelf: "center", justifyContent: "center", paddingHorizontal: 8 }, retryAction: { minHeight: 44, justifyContent: "center" }, link: { color: "#1769E0", fontSize: 15, fontWeight: "800" }, expiry: { fontSize: 12, lineHeight: 18, textAlign: "center", marginTop: -8 },
 });
