@@ -117,16 +117,16 @@ export function FlightCard({
               </div>
               <div className="min-w-0">
                 <p
-                  className="flight-card-airline-name truncate whitespace-nowrap font-semibold leading-5 text-slate-800"
+                  className="flight-card-airline-name truncate whitespace-nowrap font-semibold text-slate-800"
                   dir="auto"
                 >
                   <span>{flight.airlineName}</span>
-                  {flight.flightNumber ? (
-                    <span className="ms-2 font-medium text-[#536B92]" dir="ltr">
-                      {flight.flightNumber}
-                    </span>
-                  ) : null}
                 </p>
+                {flight.flightNumber ? (
+                  <p className="flight-card-flight-number truncate font-medium text-[#536B92]" dir="ltr">
+                    {flight.flightNumber}
+                  </p>
+                ) : null}
               </div>
             </div>
             <ResultBadgePill badge={resultBadge} />
@@ -139,7 +139,6 @@ export function FlightCard({
                   key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${leg.departureTime}-${index}`}
                   leg={leg}
                   locale={locale}
-                  flight={flight}
                 />
               ))}
             </div>
@@ -215,11 +214,9 @@ function ResultBadgePill({ badge }: { badge?: ResultBadge }) {
 function ResponsiveFlightLegRow({
   leg,
   locale,
-  flight,
 }: {
   leg: FlightLeg;
   locale: string;
-  flight: PublicFlightResult;
 }) {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -231,11 +228,8 @@ function ResponsiveFlightLegRow({
         {legTitle}
       </p>
       <div className="flight-card-leg-grid grid min-w-0">
-        <div className="flight-card-leg-endpoint min-w-0">
+          <div className="flight-card-leg-endpoint min-w-0">
           <div className="flight-card-leg-time-row flex min-w-0 items-center">
-            <div className="flight-card-leg-logo hidden shrink-0 lg:block">
-              <AirlineLogo flight={flight} inline />
-            </div>
             <div
               className="flight-card-time min-w-0 font-semibold leading-6 tracking-[-0.025em] text-[#07133B]"
               dir="ltr"

@@ -46,19 +46,15 @@ test("pagination uses an occluding full-page transition with an accessible statu
   assert.match(source, /motion-reduce:animate-none/);
 });
 
-test("desktop cards pair each leg time with the airline logo while keeping one identity line", async () => {
+test("desktop cards use one prominent stacked airline identity", async () => {
   const source = await readFile(new URL("./FlightCard.tsx", import.meta.url), "utf8");
   const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
 
   assert.match(source, /flight-card-airline-name truncate whitespace-nowrap/);
-  assert.match(source, /flight\.airlineName[\s\S]*flight\.flightNumber/);
-  assert.match(source, /flight-card-leg-time-row[\s\S]*flight-card-leg-logo[\s\S]*<AirlineLogo flight=\{flight\} inline/);
-  assert.match(source, /visibleLegs\.map[\s\S]*flight=\{flight\}/);
-  assert.match(styles, /\.flight-card-header-logo \{\s*display: none;/);
-  assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-header-logo \{\s*display: block;/);
-  assert.match(styles, /\.flight-card-time \{\s*font-size: 0\.9375rem;\s*white-space: nowrap;/);
-  assert.match(styles, /\.flight-card-inline-logo \{[\s\S]*border: 0;[\s\S]*background: transparent;[\s\S]*box-shadow: none;/);
-  assert.match(styles, /\.flight-card-inline-logo-image \{\s*height: 1\.125rem;\s*width: 1\.125rem;/);
+  assert.match(source, /flight-card-flight-number[\s\S]*flight\.flightNumber/);
+  assert.doesNotMatch(source, /flight-card-leg-logo|<AirlineLogo flight=\{flight\} inline/);
+  assert.match(styles, /\.flight-card-header-logo \{\s*display: block;/);
+  assert.match(styles, /\.flight-card-time \{\s*font-size: 1\.375rem;[\s\S]*white-space: nowrap;/);
 });
 
 test("desktop legs place factual departure and arrival dates beneath their airport codes", async () => {
@@ -80,17 +76,16 @@ test("desktop leg columns share strict time airport and date row tracks", async 
   assert.match(leg, /flight-card-leg-endpoint[\s\S]*flight-card-time[\s\S]*leg\.originAirport[\s\S]*flight-card-departure-date/);
   assert.match(leg, /flight-card-leg-center[\s\S]*flight-card-duration[\s\S]*flight-card-path[\s\S]*flight-card-layover/);
   assert.match(leg, /flight-card-leg-endpoint[\s\S]*flight-card-time[\s\S]*leg\.destinationAirport[\s\S]*flight-card-arrival-date/);
-  assert.match(styles, /\.flight-card-leg-endpoint,\s*\.flight-card-leg-center \{\s*display: grid;\s*grid-template-rows: 1\.5rem 1\.25rem 1\.25rem;/);
+  assert.match(styles, /\.flight-card-leg-endpoint,\s*\.flight-card-leg-center \{\s*display: grid;\s*grid-template-rows: 1\.75rem 1\.25rem 1\.25rem;/);
   assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-leg-endpoint,[\s\S]*\.flight-card-leg-center \{\s*display: block;/);
 });
 
-test("desktop departure metadata aligns beneath time and card rhythm stays compact", async () => {
+test("desktop departure metadata aligns directly beneath time with generous card rhythm", async () => {
   const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
 
-  assert.match(styles, /\.flight-card-leg-grid > \.flight-card-leg-endpoint:first-child \.flight-card-airport,[\s\S]*\.flight-card-departure-date \{\s*margin-inline-start: 1\.875rem;/);
-  assert.match(styles, /\.flight-card-inline-logo \{\s*height: 1\.375rem;\s*width: 1\.375rem;/);
+  assert.doesNotMatch(styles, /\.flight-card-leg-grid > \.flight-card-leg-endpoint:first-child \.flight-card-airport,[\s\S]*margin-inline-start: 1\.875rem;/);
   assert.match(styles, /\.flight-card-leg-time-row \{\s*gap: 0\.5rem;/);
-  assert.match(styles, /\.flight-card-desktop-header \{[\s\S]*padding-bottom: 0\.25rem;/);
+  assert.match(styles, /\.flight-card-desktop-header \{[\s\S]*padding-bottom: 0\.75rem;/);
   assert.match(styles, /\.flight-card-legs \{\s*grid-area: legs;\s*gap: 0\.75rem;/);
   assert.match(styles, /\.flight-card-details \{\s*column-gap: 1rem;\s*margin-top: 0\.5rem;\s*padding-top: 0\.5rem;/);
   assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-departure-date \{\s*margin-inline-start: 0;/);
