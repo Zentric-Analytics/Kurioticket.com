@@ -179,9 +179,8 @@ export function SecurityScreen() {
           }}
         />
       ) : (
-        <PasswordResetFlow active={passwordOpen && passwordMode === "reset"} copy={c} onUnauthorized={unauth} onSuccess={async () => { closePassword(); setLandingMessage(shortFeedbackMessage(resetCopy.success)); await load({ showLandingFeedback: false, showLoading: false }); }} />
+        <PasswordResetFlow active={passwordOpen && passwordMode === "reset"} copy={c} onUnauthorized={unauth} onSuccess={async () => { closePassword(); await load({ showLandingFeedback: false, showLoading: false }); }} />
       )}
-      {overview?.hasPassword && passwordMode === "reset" ? <Pressable accessibilityRole="button" accessibilityLabel={resetCopy.back} onPress={() => setPasswordMode("change")} style={styles.textAction}><Text style={styles.link}>{resetCopy.back}</Text></Pressable> : null}
     </ScreenModal>
     <ScreenModal visible={devicesOpen} title={c.yourDevices} closeLabel={c.close} onClose={closeDevices}>
       <Text style={[styles.intro, { color: theme.muted }]}>{c.devicesHelp}</Text><Feedback error={devicesError} message="" />
