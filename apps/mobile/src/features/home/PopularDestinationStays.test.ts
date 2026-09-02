@@ -60,7 +60,7 @@ test("makes the complete card an accessible destination control", () => {
   );
   assert.match(section, /cardPressed: \{ opacity: 0\.96 \}/);
 
-  const cardStart = section.indexOf("<Pressable\n              key={destination.id}");
+  const cardStart = section.indexOf("key={destination.id}");
   const cardEnd = section.indexOf(
     "</Pressable>",
     section.indexOf("</Pressable>", cardStart) + 1,
@@ -242,13 +242,15 @@ test("versions only the Johannesburg image to refresh the native cache", () => {
   );
 });
 
-test("Explore stays preserves destination context in the existing hotel-results contract", () => {
+test("Explore stays creates canonical Hotel form intent without inventing a search", () => {
   assert.deepEqual(homepageHotelDestinationParams({ city: "London" }), {
+    destinationId: "gb-london",
     destination: "London",
+    intentSource: "home-popular-stays",
   });
   assert.deepEqual(popularDestinationStayNavigation({ city: "London" }), {
-    pathname: "/hotel-results",
-    params: { destination: "London" },
+    pathname: "/hotels",
+    params: { destinationId: "gb-london", destination: "London", intentSource: "home-popular-stays" },
   });
   assert.match(
     section,

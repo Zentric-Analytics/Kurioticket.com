@@ -75,10 +75,10 @@ test("hotel details count parsing respects integer limits", () => {
 
 test("hotel details results links preserve only valid search context", () => {
   assert.equal(buildHotelDetailsResultsHref({ destination: "New York", checkIn: "2026-08-01", checkOut: "2026-08-03", guests: "2", rooms: "1" }), "/hotels/results?destination=New+York&checkIn=2026-08-01&checkOut=2026-08-03&guests=2&rooms=1");
-  assert.equal(buildHotelDetailsResultsHref({ checkIn: "2026-08-01", checkOut: "2026-08-03", guests: "2", rooms: "1" }), "/hotels/results");
-  assert.equal(buildHotelDetailsResultsHref({ destination: "Paris", checkIn: "bad", checkOut: "2026-08-03", guests: "2", rooms: "1" }), "/hotels/results");
-  assert.equal(buildHotelDetailsResultsHref({ destination: "Paris", checkIn: "2026-08-03", checkOut: "2026-08-03", guests: "2", rooms: "1" }), "/hotels/results");
-  assert.equal(buildHotelDetailsResultsHref({ destination: "Paris", checkIn: "2026-08-01", checkOut: "2026-08-03", guests: "0", rooms: "1" }), "/hotels/results");
+  assert.equal(buildHotelDetailsResultsHref({ checkIn: "2026-08-01", checkOut: "2026-08-03", guests: "2", rooms: "1" }), "/hotels");
+  assert.equal(buildHotelDetailsResultsHref({ destination: "Paris", checkIn: "bad", checkOut: "2026-08-03", guests: "2", rooms: "1" }), "/hotels?destination=Paris");
+  assert.equal(buildHotelDetailsResultsHref({ destination: "Paris", checkIn: "2026-08-03", checkOut: "2026-08-03", guests: "2", rooms: "1" }), "/hotels?destination=Paris");
+  assert.equal(buildHotelDetailsResultsHref({ destination: "Paris", checkIn: "2026-08-01", checkOut: "2026-08-03", guests: "0", rooms: "1" }), "/hotels?destination=Paris");
 });
 
 test("related hotel detail links preserve validated stay context", () => {

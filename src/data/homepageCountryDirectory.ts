@@ -2,6 +2,7 @@ import type { ComponentProps } from "react";
 import type Link from "next/link";
 import { buildCarResultsHref } from "@/lib/cars/carsSearchUtils";
 import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
+import { buildHotelDiscoveryHref } from "@/lib/hotels/hotelDiscoveryIntent";
 
 export const COUNTRY_FLAG_ASSET_BY_CODE = {
   AU: "/flags/au.svg",
@@ -38,21 +39,12 @@ export type CountryDirectoryCountry = {
   links: Record<CountryDirectoryCategory, CountryDirectoryLink[]>;
 };
 
-const addDaysToIsoDate = (date: Date, days: number) => {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-${String(next.getDate()).padStart(2, "0")}`;
-};
-
 export function buildCountryDirectoryFlightHref(origin: string, destination: string, displayCurrency = "USD", market = "US") {
   return buildHomepageRouteCardFlightHref({ route: { originCode: origin, destinationCode: destination }, displayCurrency, market }) ?? "/flights";
 }
 
 export function buildCountryDirectoryHotelHref(destination: string) {
-  const baseDate = new Date();
-  const checkIn = addDaysToIsoDate(baseDate, 21);
-  const checkOut = addDaysToIsoDate(baseDate, 24);
-  return { pathname: "/hotels/results", query: { destination, checkIn, checkOut, guests: "2", rooms: "1" } } satisfies ComponentProps<typeof Link>["href"];
+  return buildHotelDiscoveryHref(destination, "home-country-directory") satisfies ComponentProps<typeof Link>["href"];
 }
 
 export function buildCountryDirectoryCarsHref(pickupLocation: string) {

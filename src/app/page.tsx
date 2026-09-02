@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ComponentProps, CSSProperties, ReactNode } from "react";
 import { hasFreshProviderPrice } from "@/lib/homepageFareDisplay";
+import { buildHotelDiscoveryHref } from "@/lib/hotels/hotelDiscoveryIntent";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
@@ -1993,12 +1994,7 @@ function buildDestinationCardHref(
   void options.displayCurrency;
   void options.market;
 
-  return {
-    pathname: "/hotels/results",
-    query: {
-      destination: options.city,
-    },
-  };
+  return buildHotelDiscoveryHref(options.city, "home-popular-stays");
 }
 
 function getRouteKey(originCode: string, destinationCode: string) {

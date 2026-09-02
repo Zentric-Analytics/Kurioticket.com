@@ -7,24 +7,15 @@ import {
   HOMEPAGE_HOTEL_PROMO_DEFAULTS,
 } from "./homepagePromoNavigation";
 
-test("hotel promo reproduces the website results defaults without visiting the form", () => {
-  assert.deepEqual(buildHomepageHotelPromoRoute(new Date(2026, 7, 6, 12)), {
-    pathname: "/hotel-results",
+test("hotel promo creates visible destination intent without hidden stay defaults", () => {
+  assert.deepEqual(buildHomepageHotelPromoRoute(), {
+    pathname: "/hotels",
     params: {
       destination: "Tokyo",
-      checkIn: "2026-09-03",
-      checkOut: "2026-09-10",
-      guests: "2",
-      rooms: "1",
-      sort: "cheapest",
+      intentSource: "home-promo",
     },
   });
-  assert.deepEqual(HOMEPAGE_HOTEL_PROMO_DEFAULTS, {
-    destination: "Tokyo",
-    guests: "2",
-    rooms: "1",
-    sort: "cheapest",
-  });
+  assert.deepEqual(HOMEPAGE_HOTEL_PROMO_DEFAULTS, { destination: "Tokyo" });
 });
 
 test("flight promo follows the website /deals contract without inventing search values", () => {

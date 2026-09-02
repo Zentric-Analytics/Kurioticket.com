@@ -33,7 +33,16 @@ function imageUri(value?: string) {
 }
 
 export function TravelResultsScreen({ product }: { product: Product }) {
+  const params = useLocalSearchParams<Record<string, string | string[]>>();
+  const hotelPlan = product === "hotel" ? buildSearchPlan("hotel", params) : undefined;
   const { availability, loading } = useFeatureAvailability();
+  useEffect(() => {
+    if (product !== "hotel" || hotelPlan?.plan) return;
+    const destination = one(params.destination)?.trim();
+    const destinationId = one(params.destinationId)?.trim();
+    router.replace({ pathname: "/hotels", params: { ...(destination ? { destination } : {}), ...(destinationId ? { destinationId } : {}) } });
+  }, [hotelPlan?.plan?.key, product, one(params.destination), one(params.destinationId)]);
+  if (product === "hotel" && !hotelPlan?.plan) return null;
   if (loading || !isMobileProductAvailable(availability, product)) return <LegacyTravelResultsScreen product={product} />;
   if (product === "flight" || product === "hotel") return <ApprovedResultsScreen product={product} />;
   if (product === "car") return <ApprovedCarResultsScreen />;

@@ -262,7 +262,7 @@ export function HotelSearchBar({
     detectedCountryCode,
     hasUserSelectedRegion,
   } = useRegion();
-  const [destination, setDestination] = useState(initialDestination);
+  const [destination, setDestination] = useState(initialDestination || searchParams.get("destination") || "");
   const destinationDisplay = getHotelLocationFieldDisplay(destination, locale);
   const [checkIn, setCheckIn] = useState(initialCheckIn);
   const [checkOut, setCheckOut] = useState(initialCheckOut);

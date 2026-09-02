@@ -109,18 +109,17 @@ test("mobile distribution can derive one continuous alphabetical list from the s
   );
 });
 
-test("country directory flight, hotel, and car links keep existing result contracts", () => {
+test("country directory Hotel links create canonical form intent", () => {
   const flightHref = buildCountryDirectoryFlightHref("JFK", "LAX");
   assert.equal(typeof flightHref, "object");
   assert.equal(flightHref.pathname, "/flights/results");
   assert.equal(flightHref.query.origin, "JFK");
   assert.equal(flightHref.query.destination, "LAX");
   const hotelHref = buildCountryDirectoryHotelHref("Paris");
-  assert.deepEqual(hotelHref.pathname, "/hotels/results");
-  assert.equal(hotelHref.query.destination, "Paris");
-  assert.match(hotelHref.query.checkIn, /\d{4}-\d{2}-\d{2}/);
-  assert.match(hotelHref.query.checkOut, /\d{4}-\d{2}-\d{2}/);
-  assert.equal(hotelHref.query.guests, "2");
-  assert.equal(hotelHref.query.rooms, "1");
+  const hotelUrl = new URL(hotelHref as string, "https://www.kurioticket.test");
+  assert.equal(hotelUrl.pathname, "/hotels");
+  assert.equal(hotelUrl.searchParams.get("destination"), "Paris, France");
+  assert.equal(hotelUrl.searchParams.get("destinationId"), "fr-paris");
+  assert.equal(hotelUrl.searchParams.has("checkIn"), false);
   assert.match(buildCountryDirectoryCarsHref("Paris") as string, /^\/cars(\/results)?\?/);
 });

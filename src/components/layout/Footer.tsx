@@ -53,7 +53,7 @@ export function Footer({ variant = "full" }: { variant?: FooterVariant }) {
         },
         {
           label: t.hotels,
-          href: "/hotels/results",
+          href: "/hotels",
         },
         {
           label: t.cars,

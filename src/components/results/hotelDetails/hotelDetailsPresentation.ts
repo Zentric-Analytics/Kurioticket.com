@@ -97,7 +97,7 @@ export function buildHotelDetailsResultsHref(searchContext?: HotelDetailsSearchC
   const checkOutDate = parseHotelDetailsSearchDate(searchContext?.checkOut);
   const guestCount = parseHotelDetailsSearchCount(searchContext?.guests, 1, 12);
   const roomCount = parseHotelDetailsSearchCount(searchContext?.rooms, 1, 6);
-  if (!destination || destination.length > 120 || checkInDate === null || checkOutDate === null || checkOutDate.getTime() <= checkInDate.getTime() || guestCount === null || roomCount === null) return "/hotels/results";
+  if (!destination || destination.length > 120 || checkInDate === null || checkOutDate === null || checkOutDate.getTime() <= checkInDate.getTime() || guestCount === null || roomCount === null) return destination ? `/hotels?${new URLSearchParams({ destination }).toString()}` : "/hotels";
   const params = new URLSearchParams({ destination, checkIn: searchContext?.checkIn || "", checkOut: searchContext?.checkOut || "", guests: String(guestCount), rooms: String(roomCount) });
   return `/hotels/results?${params.toString()}`;
 }

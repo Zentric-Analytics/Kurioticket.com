@@ -49,14 +49,9 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
     const destination = text(params.destination);
     const checkIn = text(params.checkIn); const checkOut = text(params.checkOut);
     const guestsValue = text(params.guests); const roomsValue = text(params.rooms);
-    const hasStayDates = Boolean(checkIn || checkOut);
-    const hasOccupancy = Boolean(guestsValue || roomsValue);
     const guests = integer(guestsValue, 2); const rooms = integer(roomsValue, 1);
     if (!destination) return { error: "Enter a hotel destination." };
-    if (!hasStayDates && !hasOccupancy) {
-      const payload = { destination };
-      return { plan: { payload, key: JSON.stringify(["hotel", destination]), summary: destination } };
-    }
+    if (!checkIn || !checkOut || !guestsValue || !roomsValue) return { error: "Complete your stay dates, guests, and rooms." };
     if (!future(checkIn, now) || !future(checkOut, now) || checkOut <= checkIn) return { error: "Choose valid check-in and check-out dates." };
     if (guests < 1 || guests > 20 || rooms < 1 || rooms > 9 || rooms > guests) return { error: "Choose valid guest and room counts." };
     const payload = { destination, checkIn, checkOut, guests, rooms };

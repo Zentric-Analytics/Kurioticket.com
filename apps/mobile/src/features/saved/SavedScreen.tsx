@@ -9,7 +9,7 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { destinationById } from "../explore/destinationCatalogue";
 import { destinationMedia, FALLBACK_SOURCE, type DestinationMedia } from "../explore/destinationMedia";
 import { formatFlightAccess } from "../explore/exploreModels";
-import { exploreFlightDestinationNavigation } from "../explore/exploreSearchHandoff";
+import { exploreHotelSearchNavigation } from "../explore/exploreSearchHandoff";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { hasValidSearchPlan, legacyFlightSearchParams, legacyHotelSearchParams, sanitizeSearchParams } from "../flow/savedSearchContext";
@@ -69,19 +69,13 @@ export function canonicalSavedCards(items: readonly MobileSavedItem[]): SavedCar
     const media = canonicalDestination
       ? destinationMedia(canonicalDestination.imageDestinationId) ?? destinationMedia(canonicalDestination.id)
       : undefined;
-    let exploreNavigationPending = false;
     const canonicalDestinationOpen = canonicalDestination
       ? () => {
-          if (exploreNavigationPending) return;
-          exploreNavigationPending = true;
-          void exploreFlightDestinationNavigation({
-            id: canonicalDestination.id,
-            name: canonicalDestination.name,
-            primaryAirportCode: canonicalDestination.primaryAirportCode,
-            airportCodes: canonicalDestination.airportCodes,
-          }).then((route) => router.push(route)).finally(() => {
-            exploreNavigationPending = false;
-          });
+          const hotelRoute = exploreHotelSearchNavigation(
+            { id: canonicalDestination.id, name: canonicalDestination.name },
+            "saved-destination",
+          );
+          if (hotelRoute) router.push(hotelRoute);
         }
       : undefined;
     const params = searchType === "hotel" ? sanitizeSearchParams("hotel", query) : sanitizeSearchParams("flight", query);

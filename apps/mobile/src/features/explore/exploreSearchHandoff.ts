@@ -64,8 +64,12 @@ export async function exploreFlightDestinationNavigation(
   };
 }
 
-export function exploreHotelResultsNavigation(destinationName: string): Href | null {
-  const destination = destinationName.trim();
-  if (!destination) return null;
-  return { pathname: "/hotel-results", params: { destination } };
+export function exploreHotelSearchNavigation(
+  destination: { id: string; name: string },
+  source: "explore" | "saved-destination" = "explore",
+): Href | null {
+  const destinationName = destination.name.trim();
+  const destinationId = destination.id.trim();
+  if (!destinationName || !destinationId) return null;
+  return { pathname: "/hotels", params: { destinationId, destination: destinationName, intentSource: source } };
 }

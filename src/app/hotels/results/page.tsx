@@ -1,11 +1,13 @@
 import { Suspense } from "react";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { HotelResultsClient } from "@/components/results/HotelResultsClient";
 import { LocalizedLoadingLabel } from "@/components/layout/LocalizedLoadingLabel";
 import { getTranslations } from "@/lib/i18n";
 import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
+import { hotelSearchSchema } from "@/lib/validation";
 
 export async function generateMetadata() {
   const cookieStore = await cookies();
@@ -17,7 +19,18 @@ export async function generateMetadata() {
   };
 }
 
-export default function HotelResultsPage() {
+type HotelResultsSearchParams = Promise<Record<string, string | string[] | undefined>>;
+const first = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
+
+export default async function HotelResultsPage({ searchParams }: { searchParams: HotelResultsSearchParams }) {
+  const query = await searchParams;
+  const input = { destination: first(query.destination), checkIn: first(query.checkIn), checkOut: first(query.checkOut), guests: first(query.guests), rooms: first(query.rooms), sort: first(query.sort) };
+  if (!hotelSearchSchema.safeParse(input).success) {
+    const destination = input.destination?.trim();
+    const destinationId = first(query.destinationId)?.trim();
+    const recoverable = { ...(destinationId ? { destinationId } : {}), ...(destination ? { destination } : {}) };
+    redirect(Object.keys(recoverable).length ? `/hotels?${new URLSearchParams(recoverable).toString()}` : "/hotels");
+  }
   return (
     <>
       <AppHeader
