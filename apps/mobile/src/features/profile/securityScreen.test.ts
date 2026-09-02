@@ -6,6 +6,7 @@ const security = readFileSync("src/features/profile/SecurityScreen.tsx", "utf8")
 const passwordChangeFlow = readFileSync("src/features/profile/PasswordChangeFlow.tsx", "utf8");
 const resetFlow = readFileSync("src/features/profile/PasswordResetFlow.tsx", "utf8");
 const passwordFlowLocalization = readFileSync("src/features/profile/passwordFlowLocalization.ts", "utf8");
+const twoFactorEnabledFlow = readFileSync("src/features/profile/TwoFactorEnabledFlow.tsx", "utf8");
 const localization = readFileSync("src/features/profile/securityLocalization.ts", "utf8");
 
 const screenModalStart = security.indexOf("function ScreenModal");
@@ -243,7 +244,7 @@ test("drill-down feedback is cleared on both open and close", () => {
 
 test("operation failures and messages target only their owning feedback scope", () => {
   const expectations = [
-    ["startTwoFactor", "setTwoFactorError"], ["confirmTwoFactor", "setTwoFactorError"], ["disableTwoFactor", "setTwoFactorError"],
+    ["startTwoFactor", "setTwoFactorError"], ["confirmTwoFactor", "setTwoFactorError"],
     ["remove", "setDevicesError"], ["openDeletion", "setDeletionError"], ["requestDeletion", "setDeletionError"], ["reactivate", "setDeletionError"],
     ["toggle", "setLandingMessage"], ["all", "setLandingError"],
   ];
@@ -254,6 +255,9 @@ test("operation failures and messages target only their owning feedback scope", 
     assert.ok(start >= 0, `missing ${operation}`);
     assert.match(security.slice(start, next > start ? next : undefined), new RegExp(`${setter}\\(`), `${operation} should use ${setter}`);
   }
+  assert.match(twoFactorEnabledFlow, /const performDisable = async/);
+  assert.match(twoFactorEnabledFlow, /setFieldError\(/);
+  assert.match(twoFactorEnabledFlow, /setGeneralError\(/);
   assert.match(passwordChangeFlow, /setFieldErrors\(\(current\) => \(\{ \.\.\.current, currentPassword: f\.currentIncorrect \}\)\)/);
   assert.match(passwordChangeFlow, /setGeneralError\(e\.message\)/);
   assert.match(security, /const loadPasskeys = async[^\n]+setPasskeysError\(/);
