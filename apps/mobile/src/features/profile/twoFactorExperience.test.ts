@@ -3,19 +3,23 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const security = readFileSync("src/features/profile/SecurityScreen.tsx", "utf8");
+const enabledFlow = readFileSync("src/features/profile/TwoFactorEnabledFlow.tsx", "utf8");
 
 test("security row visibly distinguishes enabled and disabled setup states", () => {
   assert.match(security, /status=\{overview\.twoFactorEnabled \? c\.enabled : undefined\}/);
-  assert.match(security, /overview\?\.twoFactorEnabled \? <View/);
+  assert.match(security, /overview\?\.twoFactorEnabled \? <TwoFactorEnabledFlow/);
   assert.match(security, /label=\{c\.setupTwoFactor\}/);
 });
 
 test("closing two-factor setup wipes every sensitive state and invalidates requests", () => {
   const cleanup = security.slice(security.indexOf("const clearTwoFactorState"), security.indexOf("const openTwoFactor"));
-  for (const setter of ["setSetup(null)", 'setAuthenticatorCode("")', 'setVerification("")', "setRecoveryCodes([])", 'setTwoFactorError("")'])
+  for (const setter of ["setSetup(null)", 'setAuthenticatorCode("")', "setRecoveryCodes([])", 'setTwoFactorError("")'])
     assert.ok(cleanup.includes(setter), `cleanup must include ${setter}`);
   assert.match(security, /closeTwoFactor = \(\) => \{ twoFactorRequest\.current \+= 1;/);
   assert.match(security, /openTwoFactor[^\n]+clearTwoFactorState\(\)/);
+  assert.match(enabledFlow, /if \(!active\) reset\(\)/);
+  for (const setter of ['setVerification("")', 'setFieldError("")', 'setGeneralError("")', 'setMethod("authenticator")', 'setStage("overview")'])
+    assert.ok(enabledFlow.includes(setter), `enabled flow cleanup must include ${setter}`);
 });
 
 test("recovery codes remain one-time selectable state and close through localized UI", () => {
@@ -50,7 +54,8 @@ test("setup keeps strict verification and dismisses the keyboard", () => {
   assert.match(security, /AccessibilityInfo\.announceForAccessibility\(c\.recoveryHelp\)/);
 });
 
-test("successful disable closes the sensitive flow and surfaces localized disabled feedback", () => {
-  assert.match(security, /const message=`\$\{c\.twoFactor\}: \$\{c\.disabled\}`/);
-  assert.match(security, /closeTwoFactor\(\);setLandingMessage\(message\);AccessibilityInfo\.announceForAccessibility\(message\)/);
+test("successful disable closes the sensitive flow without landing-page feedback", () => {
+  assert.match(security, /onDisabled=\{async \(\) => \{ closeTwoFactor\(\); await load\(\{showLandingFeedback:false,showLoading:false\}\); \}\}/);
+  assert.doesNotMatch(security, /const message=`\$\{c\.twoFactor\}: \$\{c\.disabled\}`/);
+  assert.match(enabledFlow, /AccessibilityInfo\.announceForAccessibility\(message\)/);
 });
