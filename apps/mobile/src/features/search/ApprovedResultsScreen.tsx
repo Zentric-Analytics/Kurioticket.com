@@ -1042,23 +1042,28 @@ const HotelResultsShortcut = ({ label, icon = false, count, expanded = false, on
   label: string; icon?: boolean; count?: number; expanded?: boolean; onPress: () => void;
 }) => {
   const { theme } = useAppTheme();
+  const active = Boolean(count);
+  const selectedColor = theme.dark ? "#8FB5FF" : ui.blue;
+  const contentColor = active ? selectedColor : theme.textSecondary;
   const accessibilityLabel = icon && count ? `Filter, ${count} active filters` : label;
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ expanded }}
+      accessibilityState={{ expanded, selected: active }}
       onPress={onPress}
+      hitSlop={{ top: 3, bottom: 3, left: 2, right: 2 }}
       style={({ pressed }) => [
         s0.hotelShortcut,
-        { borderColor: theme.border, backgroundColor: theme.surface },
+        { borderColor: theme.border, backgroundColor: theme.dark ? theme.surface : ui.pale },
+        active && { backgroundColor: theme.dark ? "#142B55" : "#EEF4FF", borderColor: ui.blue },
         pressed && s0.hotelShortcutPressed,
       ]}
     >
-      {icon ? <SlidersHorizontal size={15} color={theme.icon} /> : null}
-      <Text style={[s0.hotelShortcutLabel, { color: theme.textPrimary }]}>{label}</Text>
+      {icon ? <SlidersHorizontal size={17} strokeWidth={2} color={contentColor} /> : null}
+      <Text style={[s0.hotelShortcutLabel, { color: active ? selectedColor : theme.textPrimary }]}>{label}</Text>
       {count ? <View style={s0.hotelShortcutCount}><Text style={s0.hotelShortcutCountText}>{count}</Text></View> : null}
-      {!icon ? <ChevronDown size={14} color={theme.icon} style={expanded ? { transform: [{ rotate: "180deg" }] } : undefined} /> : null}
+      {!icon ? <ChevronDown size={15} strokeWidth={1.9} color={contentColor} style={expanded ? { transform: [{ rotate: "180deg" }] } : undefined} /> : null}
     </Pressable>
   );
 };
@@ -1802,9 +1807,9 @@ const s0 = StyleSheet.create({
   route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
   filters: { paddingHorizontal: 14, paddingVertical: 3, gap: 8, alignItems: "center" },
-  hotelShortcut: { height: 38, flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderRadius: 19, paddingHorizontal: 12 },
-  hotelShortcutPressed: { opacity: 0.72 },
-  hotelShortcutLabel: { fontSize: 13, fontWeight: "700", fontFamily: appFonts.bold },
+  hotelShortcut: { height: 38, flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderRadius: 8, paddingHorizontal: 10 },
+  hotelShortcutPressed: { opacity: 0.82, transform: [{ scale: 0.985 }] },
+  hotelShortcutLabel: { fontSize: 12, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
   hotelShortcutCount: { minWidth: 19, height: 19, borderRadius: 10, paddingHorizontal: 5, alignItems: "center", justifyContent: "center", backgroundColor: ui.blue },
   hotelShortcutCountText: { color: "white", fontSize: 11, fontWeight: "800", fontFamily: appFonts.extraBold },
   modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(10, 24, 48, 0.42)" },
