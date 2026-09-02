@@ -34,7 +34,7 @@ export function HotelResultsQuickFilterSheet({kind,filters,options,displayCurren
  const toggleFacility=(value:string)=>setFacilities(current=>current.includes(value)?current.filter(item=>item!==value):[...current,value]);
  return <Modal visible transparent animationType="slide" presentationStyle="overFullScreen" onRequestClose={onClose} accessibilityViewIsModal>
   <View style={styles.overlay} onAccessibilityEscape={onClose}>
-   <BlurView pointerEvents="none" intensity={10} tint="default" experimentalBlurMethod={Platform.OS==="android"?"dimezisBlurView":undefined} style={StyleSheet.absoluteFill}/>
+   <BlurView pointerEvents="none" intensity={1} tint="default" experimentalBlurMethod={Platform.OS==="android"?"dimezisBlurView":undefined} style={StyleSheet.absoluteFill}/>
    <Pressable accessible={false} onPress={onClose} style={[StyleSheet.absoluteFill,styles.backdropScrim]}/>
    <KeyboardAvoidingView behavior={Platform.OS==="ios"?"padding":"height"} style={styles.bottom} pointerEvents="box-none">
     <View style={[styles.sheet,{maxHeight:Math.min(height*.76,620),backgroundColor:theme.background}]}>
