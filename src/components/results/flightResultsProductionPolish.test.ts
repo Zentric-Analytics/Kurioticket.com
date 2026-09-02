@@ -56,9 +56,9 @@ test("desktop cards pair each leg time with the airline logo while keeping one i
   assert.match(source, /visibleLegs\.map[\s\S]*flight=\{flight\}/);
   assert.match(styles, /\.flight-card-header-logo \{\s*display: none;/);
   assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-header-logo \{\s*display: block;/);
-  assert.match(styles, /\.flight-card-time \{\s*font-size: 1rem;\s*white-space: nowrap;/);
+  assert.match(styles, /\.flight-card-time \{\s*font-size: 0\.9375rem;\s*white-space: nowrap;/);
   assert.match(styles, /\.flight-card-inline-logo \{[\s\S]*border: 0;[\s\S]*background: transparent;[\s\S]*box-shadow: none;/);
-  assert.match(styles, /\.flight-card-inline-logo-image \{\s*height: 1\.25rem;\s*width: 1\.25rem;/);
+  assert.match(styles, /\.flight-card-inline-logo-image \{\s*height: 1\.125rem;\s*width: 1\.125rem;/);
 });
 
 test("desktop legs place factual departure and arrival dates beneath their airport codes", async () => {
@@ -70,6 +70,18 @@ test("desktop legs place factual departure and arrival dates beneath their airpo
   assert.match(leg, /\{leg\.destinationAirport\}[\s\S]*flight-card-arrival-date[\s\S]*formatItineraryShortDate\(\{ value: leg\.arrivalTime, locale \}\)/);
   assert.match(styles, /\.flight-card-route-codes \{\s*display: none;/);
   assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-departure-date \{\s*display: none;[\s\S]*\.flight-card-route-codes \{\s*display: block;/);
+});
+
+test("desktop leg columns share strict time airport and date row tracks", async () => {
+  const source = await readFile(new URL("./FlightCard.tsx", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
+  const leg = source.slice(source.indexOf("function ResponsiveFlightLegRow"), source.indexOf("function AirlineLogo"));
+
+  assert.match(leg, /flight-card-leg-endpoint[\s\S]*flight-card-time[\s\S]*leg\.originAirport[\s\S]*flight-card-departure-date/);
+  assert.match(leg, /flight-card-leg-center[\s\S]*flight-card-duration[\s\S]*flight-card-path[\s\S]*flight-card-layover/);
+  assert.match(leg, /flight-card-leg-endpoint[\s\S]*flight-card-time[\s\S]*leg\.destinationAirport[\s\S]*flight-card-arrival-date/);
+  assert.match(styles, /\.flight-card-leg-endpoint,\s*\.flight-card-leg-center \{\s*display: grid;\s*grid-template-rows: 1\.5rem 1\.25rem 1\.25rem;/);
+  assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-leg-endpoint,[\s\S]*\.flight-card-leg-center \{\s*display: block;/);
 });
 
 test("desktop nearby fares use a contained mobile-like hierarchy", async () => {
