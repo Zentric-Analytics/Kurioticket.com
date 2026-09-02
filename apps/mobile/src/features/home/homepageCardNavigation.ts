@@ -1,7 +1,7 @@
 import type { Href } from "expo-router";
 import { resolvePopularDestinationStay } from "./PopularDestinationStaysData";
-import { buildHotelExplorationSearch } from "@/lib/hotels/hotelExplorationSearch";
-import { resolveHotelDiscoveryIntent } from "@/lib/hotels/hotelDiscoveryIntent";
+import { buildHotelExplorationSearch } from "../../../../../src/lib/hotels/hotelExplorationSearch";
+import { resolveHotelDiscoveryIntent } from "../../../../../src/lib/hotels/hotelDiscoveryIntent";
 
 export type HomepageAdventureCard = { originCode: string; destinationCode: string };
 export type HomepageHotelCard = { city: string };

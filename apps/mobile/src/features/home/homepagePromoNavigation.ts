@@ -1,4 +1,4 @@
-import { buildHotelExplorationSearch } from "@/lib/hotels/hotelExplorationSearch";
+import { buildHotelExplorationSearch } from "../../../../../src/lib/hotels/hotelExplorationSearch";
 
 export const HOMEPAGE_HOTEL_PROMO_DEFAULTS = {
   destination: "Tokyo",

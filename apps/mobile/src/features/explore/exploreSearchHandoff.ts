@@ -1,8 +1,8 @@
 import type { Href } from "expo-router";
 import { getDefaultHomepageRouteCardDepartureDate } from "../home/homepageCardNavigation";
 import { fetchHomepageDefaultOrigin, type HomepageDefaultAirport } from "../home/homepageDefaultOrigin";
-import { buildHotelExplorationSearch } from "@/lib/hotels/hotelExplorationSearch";
-import { resolveHotelDiscoveryIntent } from "@/lib/hotels/hotelDiscoveryIntent";
+import { buildHotelExplorationSearch } from "../../../../../src/lib/hotels/hotelExplorationSearch";
+import { resolveHotelDiscoveryIntent } from "../../../../../src/lib/hotels/hotelDiscoveryIntent";
 
 export type ExploreFlightDestinationHandoff = {
   id: string;
