@@ -65,6 +65,7 @@ enum PreviewTesterStatus {
 enum SearchType {
   FLIGHT
   HOTEL
+  CAR
 }
 
 enum SearchStatus {
@@ -212,6 +213,7 @@ model User {
   sessions                 Session[]
   savedFlights             SavedFlight[]
   savedHotels              SavedHotel[]
+  savedCars                SavedCar[]
   savedSearches            SavedSearch[]
   recentSearches           RecentSearch[]
   searchHistory            SearchHistory[]
@@ -484,6 +486,33 @@ model SavedHotel {
   @@index([userId])
   @@index([destination])
   @@index([checkIn, checkOut])
+  @@index([createdAt])
+}
+
+model SavedCar {
+  id                String   @id @default(cuid())
+  userId            String
+  signature         String
+  provider          String
+  modelName         String
+  categoryLabel     String
+  pickupLocation    String
+  dropoffLocation   String
+  pickupDate        String
+  pickupTime        String
+  dropoffDate       String
+  dropoffTime       String
+  driverAge         String
+  totalPrice        Decimal  @db.Decimal(12, 2)
+  currency          String   @default("USD")
+  payload           Json
+  createdAt         DateTime @default(now())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, signature])
+  @@index([userId])
+  @@index([pickupLocation, dropoffLocation])
+  @@index([pickupDate, dropoffDate])
   @@index([createdAt])
 }
 

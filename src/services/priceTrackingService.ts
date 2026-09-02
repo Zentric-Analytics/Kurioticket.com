@@ -2,6 +2,7 @@ import { getOptionalPrisma, getPrisma } from "@/lib/prisma";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { flightPriceAlertDuplicateKey } from "@/lib/price-alerts/flightPriceAlerts";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
+import type { SearchType } from "@/generated/prisma/enums";
 
 export type AccountPriceAlert = {
   id: string;
@@ -50,7 +51,7 @@ export function nextPriceAlertCheck(now = new Date()) {
 
 function serializePriceAlert(alert: {
   id: string;
-  type: "FLIGHT" | "HOTEL";
+  type: SearchType;
   origin: string | null;
   destination: string;
   targetPrice: { toString: () => string } | number | string | null;
@@ -63,6 +64,9 @@ function serializePriceAlert(alert: {
   lastCheckedAt?: Date | null;
   query?: unknown;
 }): AccountPriceAlert {
+  if (alert.type !== "FLIGHT" && alert.type !== "HOTEL") {
+    throw new PriceAlertUnavailableError("Unsupported price alert type.");
+  }
   return {
     id: alert.id,
     type: alert.type,

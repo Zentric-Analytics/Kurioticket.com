@@ -55,13 +55,14 @@ test("car details only enable external booking for a real HTTPS provider URL", (
   assert.match(detail, /Button external/);
 });
 
-test("car result and details share one synchronized save store", () => {
+test("car result and details share the account-backed canonical save store", () => {
   const card = readFileSync("src/features/search/CarResultCard.tsx", "utf8");
   const detail = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
   const store = readFileSync("src/features/search/carSavedState.ts", "utf8");
-  assert.match(card, /useSavedCar\(result\.id\)/);
-  assert.match(detail, /useSavedCar\(result\.id\)/);
-  assert.match(store, /useSyncExternalStore/);
+  assert.match(card, /useSavedCar\(result, searchParams\)/);
+  assert.match(detail, /useSavedCar\(result,params\)/);
+  assert.match(store, /useCanonicalSaved/);
+  assert.doesNotMatch(store, /new Set/);
 });
 
 test("car details preserve geometry for loading and stale-result states", () => {

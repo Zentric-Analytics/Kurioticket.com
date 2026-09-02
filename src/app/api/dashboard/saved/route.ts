@@ -28,7 +28,7 @@ export async function GET(request: Request) {
 
   if (type && !isSavedItemType(type)) {
     return NextResponse.json(
-      { error: "Invalid saved item type.", allowedTypes: ["flight", "hotel", "search"] },
+      { error: "Invalid saved item type.", allowedTypes: ["flight", "hotel", "car", "search"] },
       { status: 400 },
     );
   }

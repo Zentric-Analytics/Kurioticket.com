@@ -107,7 +107,7 @@ export function CarDetailsExperience({
   const { locale, t } = useLocale();
   const { selectedOption } = useRegion();
   const rates = useCurrencyRates();
-  const { isSaved, toggleSavedCar } = useSavedCar(car.id);
+  const { isSaved, toggleSavedCar } = useSavedCar(car, search);
   const [activeTab, setActiveTab] = useState<CarDetailsTab>("compare");
   const [shareConfirmation, setShareConfirmation] = useState("");
   const copy = (key: string) => t[key] || enTranslations[key] || key;

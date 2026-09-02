@@ -1,4 +1,4 @@
-import type { CreateMobileSavedItem, FlightResult, HotelResult, MobileSavedItem } from "../api/travelApi";
+import type { CarResult, CreateMobileSavedItem, FlightResult, HotelResult, MobileSavedItem } from "../api/travelApi";
 import { destinations } from "../features/explore/destinationCatalogue";
 import { sanitizeSearchParams } from "../features/flow/savedSearchContext";
 import { canonicalSavedFlightDateTime } from "./savedFlightDateTime";
@@ -81,6 +81,12 @@ export function savedSignature(input: CreateMobileSavedItem | MobileSavedItem) {
     return flightSavedSignature(input as unknown as FlightResult);
   }
   if (input.type === "hotel") return `hotel:${input.provider}:${input.hotelName}:${input.checkIn}:${input.checkOut}`;
+  if (input.type === "car") {
+    const payload = input.payload && typeof input.payload === "object" ? input.payload as Record<string, unknown> : undefined;
+    const search = payload?.searchParams && typeof payload.searchParams === "object" ? payload.searchParams as Record<string, unknown> : undefined;
+    const result = payload?.result && typeof payload.result === "object" ? payload.result as Record<string, unknown> : undefined;
+    return `car:${stable({ resultId: input.resultId ?? result?.id, provider: input.provider, modelName: input.modelName, pickupLocation: search?.pickupLocation ?? input.pickupLocation, dropoffLocation: search?.dropoffLocation ?? input.dropoffLocation, pickupDate: search?.pickupDate ?? input.pickupDate, pickupTime: search?.pickupTime ?? input.pickupTime, dropoffDate: search?.dropoffDate ?? input.dropoffDate, dropoffTime: search?.dropoffTime ?? input.dropoffTime, driverAge: search?.driverAge ?? input.driverAge })}`;
+  }
   return `search:${String(input.searchType).toLowerCase()}:${stable(input.query)}`;
 }
 
@@ -105,3 +111,26 @@ export function mapHotelToSaved(h: HotelResult, params: Record<string, unknown>)
   if (!checkIn || !checkOut || h.totalPrice == null || !h.currency) return null;
   return { type: "hotel", provider: h.provider, hotelName: h.name, destination: String(params.destination || h.location), checkIn: new Date(`${checkIn}T00:00:00Z`).toISOString(), checkOut: new Date(`${checkOut}T00:00:00Z`).toISOString(), totalPrice: h.totalPrice, currency: h.currency, payload: { nativeRoute: "/hotel-details", result: h, searchParams: sanitizeSearchParams("hotel", params) } };
 }
+
+export function mapCarToSaved(car: CarResult, params: Record<string, unknown>): CreateMobileSavedItem | null {
+  const searchParams = sanitizeSearchParams("car", params);
+  if (!hasCompleteCarSearch(searchParams)) return null;
+  const offer = car.offers[0];
+  if (!offer) return null;
+  return {
+    type: "car", resultId: car.id, provider: offer.bookingProviderName || offer.rentalCompanyName || car.rentalCompanyName,
+    modelName: car.modelName, categoryLabel: car.categoryLabel, pickupLocation: searchParams.pickupLocation,
+    dropoffLocation: searchParams.dropoffLocation, pickupDate: searchParams.pickupDate, pickupTime: searchParams.pickupTime,
+    dropoffDate: searchParams.dropoffDate, dropoffTime: searchParams.dropoffTime, driverAge: searchParams.driverAge,
+    totalPrice: offer.totalPrice, currency: offer.currency,
+    payload: { nativeRoute: "/car-details", result: car, searchParams },
+  };
+}
+
+export function carSavedSignature(car: CarResult, params: Record<string, unknown>) {
+  const payload = mapCarToSaved(car, params);
+  return payload ? savedSignature(payload) : null;
+}
+
+const hasCompleteCarSearch = (params: Record<string, string>) =>
+  ["pickupLocation", "dropoffLocation", "pickupDate", "pickupTime", "dropoffDate", "dropoffTime", "driverAge"].every((key) => Boolean(params[key]));

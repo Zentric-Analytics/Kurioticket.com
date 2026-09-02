@@ -32,7 +32,7 @@ test("authenticated empty Saved has a dedicated responsive landing state", () =>
   assert.match(screen, /: !canonical\.loading \? <ScrollView/);
   assert.match(screen, /SavedTravelIllustration/);
   assert.match(screen, />Save what you like for later<\/Text>/);
-  assert.match(screen, /Keep flights, hotels and searches you’re interested in so you can easily find them again\./);
+  assert.match(screen, /Keep flights, hotels, cars and searches you’re interested in so you can easily find them again\./);
   assert.match(screen, /accessibilityRole="button" accessibilityLabel="Start your search"/);
   assert.match(screen, /router\.dismissTo\("\/\(tabs\)"\)/);
   assert.doesNotMatch(screen, /router\.push\("\/\(tabs\)"\)/);

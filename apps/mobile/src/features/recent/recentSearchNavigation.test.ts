@@ -3,10 +3,25 @@ import test from "node:test";
 import type { MobileRecentSearch } from "../../api/travelApi";
 import { recentSearchNavigation } from "./recentSearchNavigation";
 
-const recent = (type: "flight" | "hotel", params: Record<string, unknown>): MobileRecentSearch => ({
+const recent = (type: "flight" | "hotel" | "car", params: Record<string, unknown>): MobileRecentSearch => ({
   id: "recent-1", type, label: "Previous search", subtitle: "Stored search",
-  href: type === "flight" ? "/flights/results" : "/hotels/results", params,
+  href: type === "flight" ? "/flights/results" : type === "hotel" ? "/hotels/results" : "/cars/results", params,
   createdAt: "2026-08-24T00:00:00.000Z", updatedAt: "2026-08-24T00:00:00.000Z",
+});
+
+test("complete car search reopens results while incomplete legacy context returns to the form", () => {
+  const complete = recentSearchNavigation(recent("car", { pickupLocation: "LOS", dropoffLocation: "LOS", pickupDate: "2099-08-30", pickupTime: "10:00", dropoffDate: "2099-09-01", dropoffTime: "10:00", driverAge: 30 }));
+  assert.equal(complete.pathname, "/car-results");
+  assert.equal(complete.params.driverAge, "30");
+  const incomplete = recentSearchNavigation(recent("car", { pickupLocation: "LOS", pickupDate: "2099-08-30" }));
+  assert.equal(incomplete.pathname, "/cars");
+  assert.equal("dropoffDate" in incomplete.params, false);
+});
+
+test("canonical any-age car searches reopen results without losing their range", () => {
+  const route = recentSearchNavigation(recent("car", { pickupLocation: "LOS", dropoffLocation: "LOS", pickupDate: "2099-08-30", pickupTime: "10:00", dropoffDate: "2099-09-01", dropoffTime: "10:00", driverAge: "18-70" }));
+  assert.equal(route.pathname, "/car-results");
+  assert.equal(route.params.driverAge, "18-70");
 });
 
 test("valid one-way flight reopens native results with numeric server params made route-safe", () => {

@@ -4,15 +4,16 @@ import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
 import { Badge, Button, money, ui } from "./SearchUi";
 import { useSavedCar } from "./carSavedState";
 
-export function CarResultCard({ result, rank, imageUri, days, onViewDeal }: {
+export function CarResultCard({ result, rank, imageUri, days, searchParams, onViewDeal }: {
   result: CarResult;
   rank: number;
   imageUri?: string;
   days: number;
+  searchParams: Record<string, unknown>;
   onViewDeal: () => void;
 }) {
   const compact = useWindowDimensions().width < 430;
-  const savedState = useSavedCar(result.id);
+  const savedState = useSavedCar(result, searchParams);
   const offer = result.offers[0];
   const benefits = [
     result.mileagePolicy === "unlimited" ? "Unlimited mileage" : result.limitedMileageKm ? `${result.limitedMileageKm} km included` : undefined,
