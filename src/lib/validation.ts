@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { buildFlightPriceAlertPayload } from "@/lib/price-alerts/flightPriceAlerts";
+import { buildHotelPriceAlertPayload } from "@/lib/price-alerts/hotelPriceAlerts";
 import { MULTI_CITY_MAX_LEGS, MULTI_CITY_MIN_LEGS, projectSearchLegs } from "@/lib/flights/flightSearchJourney";
 
 const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -237,6 +238,14 @@ const hotelPriceAlertSchema = z.object({
   mode: z.enum(["AUTOMATIC", "TARGET"]).default("TARGET"),
   currency: z.string().trim().length(3).transform((value) => value.toUpperCase()).default("USD"),
   query: z.record(z.string(), z.unknown()),
+}).transform((value, context) => {
+  const search = hotelSearchSchema.safeParse(value.query);
+  const explicitOccupancy = Number.isInteger(value.query.guests) && Number.isInteger(value.query.rooms);
+  if (!search.success || !explicitOccupancy || value.mode !== "TARGET" || value.targetPrice === undefined || search.data.destination.toLowerCase() !== value.destination.toLowerCase()) {
+    context.addIssue({ code: "custom", path: ["query"], message: "A complete matching Hotel search and target price are required." });
+    return z.NEVER;
+  }
+  return buildHotelPriceAlertPayload(search.data, value.targetPrice, value.currency);
 });
 
 const flightPriceAlertSchema = z.object({

@@ -3,7 +3,8 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import { travelApi, type PackageSearchResponse } from "../../api/travelApi";
-import { createPackageSearch, includedProducts, packageApiPayload, validatePackageSearch, type PackageSearch } from "./packageSearchModel";
+import { createPackageSearch, includedProducts, packageApiPayload, packageRouteParams, validatePackageSearch, type PackageSearch } from "./packageSearchModel";
+import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recentSearch";
 import { ScreenHeader } from "./FlowPrimitives";
 import { useFlowTheme } from "./flowStyles";
 
@@ -36,16 +37,26 @@ export function PackageResultsScreen() {
   const search = useMemo(() => readSearch(params), [JSON.stringify(params)]);
   const [response, setResponse] = useState<PackageSearchResponse>();
   const [error, setError] = useState("");
+  const [savedMessage, setSavedMessage] = useState("");
   useEffect(() => {
     if (!validatePackageSearch(search)) { router.replace({ pathname: "/packages", params: { destination: search.destination } }); return; }
     const controller = new AbortController();
     setError("");
-    void travelApi.searchPackages(packageApiPayload(search), { signal: controller.signal, requestId: `mobile-package-${Date.now().toString(36)}` }).then(setResponse).catch((reason: unknown) => {
+    void travelApi.searchPackages(packageApiPayload(search), { signal: controller.signal, requestId: `mobile-package-${Date.now().toString(36)}` }).then(value => { setResponse(value); void recordRecentSearchBestEffort(buildRecentSearch("package", search)); }).catch((reason: unknown) => {
       if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : "Package search failed.");
     });
     return () => controller.abort();
   }, [search]);
   const included = includedProducts(search.mode);
+  const saveSearch = async () => {
+    setSavedMessage("");
+    try {
+      await travelApi.createSavedItem({ type: "search", searchType: "package", label: `Package to ${search.destination}`, destination: search.destination, checkIn: search.startDate, checkOut: search.endDate, query: packageRouteParams(search) });
+      setSavedMessage("Package search saved.");
+    } catch (reason) {
+      setSavedMessage(reason instanceof Error ? reason.message : "Sign in to save this package search.");
+    }
+  };
   return <SafeAreaView style={ft.styles.safe}><ScreenHeader title="Package results" back /><ScrollView contentContainerStyle={styles.content}>
     <Text style={ft.styles.meta}>{search.origin ? `${search.origin} → ` : ""}{search.destination} · {search.startDate} — {search.endDate}</Text>
     {!response && !error ? <ActivityIndicator accessibilityLabel="Searching package components" /> : null}
@@ -58,6 +69,8 @@ export function PackageResultsScreen() {
       })}
       <Text style={ft.styles.meta}>{response.packageOffers.length ? `${response.packageOffers.length} provider-backed bundle offers` : "Bundle offers are shown only when supplied by a real package provider. No bundle provider is currently connected."}</Text>
     </> : null}
+    <Pressable accessibilityRole="button" onPress={() => void saveSearch()} style={[styles.button, { borderColor: ft.colors.blue, borderWidth: 1 }]}><Text style={[styles.buttonText, { color: ft.colors.blue }]}>Save package search</Text></Pressable>
+    {savedMessage ? <Text accessibilityRole="alert" style={ft.styles.meta}>{savedMessage}</Text> : null}
     <Pressable accessibilityRole="button" onPress={() => router.back()} style={[styles.button, { backgroundColor: ft.colors.blue }]}><Text style={styles.buttonText}>Modify package search</Text></Pressable>
   </ScrollView></SafeAreaView>;
 }

@@ -63,3 +63,14 @@ test("flight price alert schema hardens canonical creation payload", () => {
   });
   assert.equal(priceAlertSchema.safeParse({ ...parsed.data, query: { ...parsed.data.query, tripType: "multi-city" } }).success, false);
 });
+
+test("Hotel price alert schema requires and preserves complete matching stay context", () => {
+  const input = { type: "HOTEL", destination: "Paris", targetPrice: 800, mode: "TARGET", currency: "eur", query: { destination: "Paris", checkIn: "2099-04-01", checkOut: "2099-04-03", guests: 2, rooms: 1, unsafe: "ignored" } };
+  const parsed = priceAlertSchema.safeParse(input);
+  assert.equal(parsed.success, true);
+  if (!parsed.success) return;
+  assert.deepEqual(parsed.data.query, { destination: "Paris", checkIn: "2099-04-01", checkOut: "2099-04-03", guests: 2, rooms: 1 });
+  assert.equal(parsed.data.currency, "EUR");
+  assert.equal(priceAlertSchema.safeParse({ ...input, query: { ...input.query, rooms: undefined } }).success, false);
+  assert.equal(priceAlertSchema.safeParse({ ...input, destination: "London" }).success, false);
+});

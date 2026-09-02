@@ -219,7 +219,7 @@ async function scheduleRetry(db: PriceAlertDb, alertId: string, now: Date, retry
 }
 
 function emptyCounts(): PriceAlertProcessingCounts { return { processed: 0, eventsCreated: 0, sent: 0, skippedByPreferences: 0, notTriggered: 0, failed: 0 }; }
-function toFiniteNumber(value: PriceAlertRecord["targetPrice"]) { const n = value === null ? NaN : Number(value.toString()); return Number.isFinite(n) ? n : null; }
+function toFiniteNumber(value: PriceAlertRecord["targetPrice"] | undefined) { const n = value == null ? NaN : Number(value.toString()); return Number.isFinite(n) ? n : null; }
 export function buildPriceAlertIdempotencyKey(alert: Pick<PriceAlertRecord, "id" | "targetPrice" | "currency">) { return `price-alert:${alert.id}:${alert.targetPrice?.toString() ?? "none"}:${alert.currency}`; }
 function formatPrice(price: number, currency: string) { return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(price); }
 function safeError(error: unknown, alertId: string) { return { alertId, message: error instanceof Error ? error.message : "Unknown price alert processing error" }; }

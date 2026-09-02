@@ -44,7 +44,8 @@ test("Flight Results toggle manages alerts in place rather than opening Price Al
   assert.doesNotMatch(flightAlert.slice(0, flightAlert.indexOf("if (flight)")), /push\("\/price-alerts"\)/);
   assert.match(flightAlert, /updatePriceAlertStatus\(matchingAlert\.id, "ACTIVE"\)/);
   assert.match(flightAlert, /updatePriceAlertStatus\(matchingAlert\.id, "PAUSED"\)/);
-  assert.match(flightAlert, /createPriceAlert\(buildFlightPriceAlertPayload/);
+  assert.match(flightAlert, /createPriceAlert\(flight \? buildFlightPriceAlertPayload/);
+  assert.match(flightAlert, /: buildHotelPriceAlertPayload/);
 });
 
 test("Flight Results switch exposes real state and prevents duplicate pending taps", () => {

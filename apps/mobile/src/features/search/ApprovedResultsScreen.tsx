@@ -119,6 +119,7 @@ import {
   matchingFlightPriceAlert,
   parseTargetPrice,
 } from "../flow/flightPriceAlertModel";
+import { buildHotelPriceAlertPayload, hotelAlertPresentation, matchingHotelPriceAlert } from "../flow/hotelPriceAlertModel";
 import type { SearchPlan } from "../flow/travelSearchModel";
 import { FlightResultsState } from "./FlightResultsState";
 import { resolveFlightResultsState } from "./flightResultsStateModel";
@@ -702,7 +703,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   />
                 ),
               )}
-              {status === "ready" && product === "hotel" && availability.priceAlerts ? <PriceAlert product={product} /> : null}
+              {status === "ready" && product === "hotel" && plan.plan ? <PriceAlert product={product} plan={plan.plan} hotelResults={results as HotelResult[]} available={availability.priceAlerts} /> : null}
     </>
   );
   return (
@@ -1570,36 +1571,38 @@ function HotelLoadingSkeleton() {
     </View>
   );
 }
-function PriceAlert({ product, plan, results, available = true }: { product: Product; plan?: SearchPlan; results?: FlightResult[]; available?: boolean }) {
+function PriceAlert({ product, plan, results, hotelResults, available = true }: { product: Product; plan?: SearchPlan; results?: FlightResult[]; hotelResults?: HotelResult[]; available?: boolean }) {
   const { theme } = useAppTheme();
   const flight = product === "flight";
   const presentation = useMemo(() => flightAlertPresentation(product, Boolean(plan), results || []), [plan?.key, product, results]);
-  const currency = presentation.currencies[0] || "";
+  const hotelPresentation = useMemo(() => hotelAlertPresentation(product, plan, hotelResults || []), [plan?.key, product, hotelResults]);
+  const activePresentation = flight ? presentation : hotelPresentation;
+  const currency = activePresentation.currencies[0] || "";
   const [matchingAlert, setMatchingAlert] = useState<MobilePriceAlert | undefined>();
-  const [loadingAlert, setLoadingAlert] = useState(flight);
+  const [loadingAlert, setLoadingAlert] = useState(flight || product === "hotel");
   const [pending, setPending] = useState(false);
   const pendingRef = useRef(false);
   const [targetOpen, setTargetOpen] = useState(false);
   const [targetDraft, setTargetDraft] = useState("");
   const [targetError, setTargetError] = useState("");
   const isTracking = matchingAlert?.status === "ACTIVE";
-  const unavailable = !presentation.enabled || (!available && !isTracking);
+  const unavailable = !activePresentation.enabled || (!available && !isTracking);
   const requireSignIn = useCallback(() => Alert.alert(
     "Sign in required",
     "Sign in to track prices for this route.",
     [{ text: "Sign in", onPress: () => router.push(signInHref("/(tabs)/profile")) }, { text: "Cancel", style: "cancel" }],
   ), []);
   const reconcile = useCallback(async () => {
-    if (!flight || !plan) return;
+    if ((!flight && product !== "hotel") || !plan) return;
     setLoadingAlert(true);
     try {
       if (!await readSession().catch(() => null)) { setMatchingAlert(undefined); return; }
       const alerts = (await travelApi.priceAlerts()).alerts;
-      setMatchingAlert(matchingFlightPriceAlert(alerts, plan));
+      setMatchingAlert(flight ? matchingFlightPriceAlert(alerts, plan) : matchingHotelPriceAlert(alerts, plan));
     } catch (error) {
       if (error instanceof TravelApiError && error.status === 401) setMatchingAlert(undefined);
     } finally { setLoadingAlert(false); }
-  }, [flight, plan?.key]);
+  }, [flight, plan?.key, product]);
   useFocusEffect(useCallback(() => { void reconcile(); }, [reconcile]));
   const handleToggle = async (next: boolean) => {
     if (pendingRef.current || loadingAlert || !plan) return;
@@ -1632,7 +1635,7 @@ function PriceAlert({ product, plan, results, available = true }: { product: Pro
     try {
       const session = await readSession().catch(() => null);
       if (!session) { setTargetOpen(false); requireSignIn(); return; }
-      const created = await travelApi.createPriceAlert(buildFlightPriceAlertPayload(plan, parsed.value, currency));
+      const created = await travelApi.createPriceAlert(flight ? buildFlightPriceAlertPayload(plan, parsed.value, currency) : buildHotelPriceAlertPayload(plan, parsed.value, currency));
       setMatchingAlert(created.alert); setTargetOpen(false); setTargetDraft("");
     } catch (error) {
       if (error instanceof TravelApiError && error.status === 401) { setTargetOpen(false); requireSignIn(); }
@@ -1685,23 +1688,13 @@ function PriceAlert({ product, plan, results, available = true }: { product: Pro
       </View>
     );
   }
-  return (
-    <View style={s0.alert}>
-      <View style={s0.alertCopy}>
-        <Text style={s0.foundTitle}>Price alerts</Text>
-        <Text style={s0.sub}>Track this search and get notified when prices drop.</Text>
-      </View>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Track prices"
-        onPress={() => router.push("/price-alerts")}
-        style={({ pressed }) => [s0.alertButton, pressed && s0.alertButtonPressed]}
-      >
-        <Bell accessibilityElementsHidden accessible={false} color={ui.blue} size={18} strokeWidth={2.25} />
-        <Text style={s0.alertButtonText}>Track prices</Text>
-      </Pressable>
-    </View>
-  );
+  if (product !== "hotel" || !plan) return null;
+  return <View accessibilityLabel="Hotel price alert" style={s0.alert}>
+    <View style={s0.alertCopy}><Text style={s0.foundTitle}>Track this stay price</Text><Text style={s0.sub}>Get notified when this complete stay search reaches your target.</Text></View>
+    <Switch accessibilityLabel="Track hotel prices" accessibilityRole="switch" accessibilityState={{ checked: isTracking, disabled: pending || loadingAlert || unavailable }} value={isTracking} disabled={pending || loadingAlert || unavailable} onValueChange={(next) => void handleToggle(next)} />
+    {!activePresentation.enabled ? <Text accessibilityRole="alert" style={s0.sub}>A comparable Hotel result price is required.</Text> : null}
+    <Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel="Create hotel price alert"><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track stay prices</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Target total ({currency})</Text><TextInput autoFocus accessibilityLabel={`Target total in ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text> : null}<Button label={pending ? "Creating…" : "Create alert"} onPress={() => void createAlert()} /><Button label="Cancel" outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal>
+  </View>;
 }
 export function BottomNav({ flightResults = false }: { flightResults?: boolean } = {}) {
   const { theme } = useAppTheme();

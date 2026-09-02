@@ -14,6 +14,7 @@ import { HotelCardSkeleton } from "@/components/ui/Skeleton";
 import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
+import { HotelPriceAlertControl } from "@/components/results/HotelPriceAlertControl";
 import { buildHotelFacilityFilterOptions, hotelMatchesFacilityFilters } from "@/components/results/hotelFacilityFilter";
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
 import { MobileResultsEditSheet } from "@/components/search/MobileResultsEditSheet";
@@ -1953,6 +1954,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                       </span>
                     </p>
                   ) : null}
+
+                  {!guided && results.length > 0 ? <HotelPriceAlertControl search={{ destination: body.destination, checkIn: body.checkIn, checkOut: body.checkOut, guests: body.guests, rooms: body.rooms }} results={results} /> : null}
 
                   <div ref={paginationListRef} aria-busy={paginationPendingPage !== null} style={paginationMinHeight ? { minHeight: paginationMinHeight } : undefined} className={cn("space-y-4", paginationRevealing && "animate-[fadeIn_150ms_ease-out]")}>
                     {filterApplying || paginationTransitionPhase === "covering" ? (

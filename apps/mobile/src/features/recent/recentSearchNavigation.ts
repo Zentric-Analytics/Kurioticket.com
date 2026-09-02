@@ -2,7 +2,7 @@ import type { MobileRecentSearch } from "../../api/travelApi";
 import { hasValidSearchPlan, sanitizeSearchParams, type SafeSearchParams } from "../flow/savedSearchContext";
 
 export type RecentSearchRoute = {
-  pathname: "/flight-results" | "/flights" | "/hotel-results" | "/hotels" | "/car-results" | "/cars";
+  pathname: "/flight-results" | "/flights" | "/hotel-results" | "/hotels" | "/car-results" | "/cars" | "/package-results" | "/packages";
   params: SafeSearchParams;
 };
 
@@ -17,6 +17,10 @@ export function recentSearchNavigation(item: MobileRecentSearch): RecentSearchRo
   }
   if (item.type === "car") {
     return { pathname: hasValidSearchPlan("car", params) ? "/car-results" : "/cars", params };
+  }
+  if (item.type === "package") {
+    const complete = Boolean(params.mode && params.destination && params.startDate && params.endDate);
+    return { pathname: complete ? "/package-results" : "/packages", params };
   }
   return {
     pathname: hasValidSearchPlan("hotel", params) ? "/hotel-results" : "/hotels",

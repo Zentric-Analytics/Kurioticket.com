@@ -1,0 +1,1 @@
+ALTER TYPE "SearchType" ADD VALUE 'PACKAGE';
