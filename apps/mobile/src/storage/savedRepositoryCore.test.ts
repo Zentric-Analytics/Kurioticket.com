@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { CarResult, CreateMobileSavedItem, FlightResult, MobileSavedItem } from "../api/travelApi";
-import { carSavedSignature, flightSavedSignature, mapFlightToSaved } from "./savedMapping";
+import { carSavedSignature, flightSavedSignature, mapCarToSaved, mapFlightToSaved } from "./savedMapping";
 import { SavedRepository, type SavedRepositoryDependencies } from "./savedRepositoryCore";
 
 const flight = (id = "offer-old", provider = "duffel", departureTime = "2030-01-01T10:00:00Z") => ({
@@ -71,6 +71,15 @@ test("Car identity includes the complete rental context", async () => {
   await h.repository.toggleCar(car, laterTrip);
   assert.equal(h.creates.length, 2);
   assert.deepEqual(h.removes, []);
+});
+
+test("persisted server hashes do not replace the canonical Car identity", async () => {
+  const saved = { ...mapCarToSaved(car, carParams), signature: "server-sha256", id: "saved-car", createdAt: "2030-01-01T00:00:00Z" } as MobileSavedItem;
+  const h = harness([saved]); await h.repository.refresh();
+  assert.equal(h.repository.snapshot().cars.has(carSavedSignature(car, carParams)!), true);
+  await h.repository.toggleCar(car, carParams);
+  assert.deepEqual(h.removes, ["saved-car"]);
+  assert.equal(h.creates.length, 0);
 });
 
 test("rapid duplicate toggles allow one mutation while different flights remain concurrent", async () => {

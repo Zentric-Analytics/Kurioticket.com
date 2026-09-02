@@ -81,7 +81,11 @@ export function savedSignature(input: CreateMobileSavedItem | MobileSavedItem) {
     return flightSavedSignature(input as unknown as FlightResult);
   }
   if (input.type === "hotel") return `hotel:${input.provider}:${input.hotelName}:${input.checkIn}:${input.checkOut}`;
-  if (input.type === "car") return `car:${input.signature || stable({ resultId: input.resultId, provider: input.provider, modelName: input.modelName, pickupLocation: input.pickupLocation, dropoffLocation: input.dropoffLocation, pickupDate: input.pickupDate, pickupTime: input.pickupTime, dropoffDate: input.dropoffDate, dropoffTime: input.dropoffTime, driverAge: input.driverAge })}`;
+  if (input.type === "car") {
+    const payload = input.payload && typeof input.payload === "object" ? input.payload as Record<string, unknown> : undefined;
+    const search = payload?.searchParams && typeof payload.searchParams === "object" ? payload.searchParams as Record<string, unknown> : undefined;
+    return `car:${stable({ resultId: input.resultId, provider: input.provider, modelName: input.modelName, pickupLocation: search?.pickupLocation ?? input.pickupLocation, dropoffLocation: search?.dropoffLocation ?? input.dropoffLocation, pickupDate: search?.pickupDate ?? input.pickupDate, pickupTime: search?.pickupTime ?? input.pickupTime, dropoffDate: search?.dropoffDate ?? input.dropoffDate, dropoffTime: search?.dropoffTime ?? input.dropoffTime, driverAge: search?.driverAge ?? input.driverAge })}`;
+  }
   return `search:${String(input.searchType).toLowerCase()}:${stable(input.query)}`;
 }
 

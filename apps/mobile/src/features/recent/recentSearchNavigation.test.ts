@@ -18,6 +18,12 @@ test("complete car search reopens results while incomplete legacy context return
   assert.equal("dropoffDate" in incomplete.params, false);
 });
 
+test("canonical any-age car searches reopen results without losing their range", () => {
+  const route = recentSearchNavigation(recent("car", { pickupLocation: "LOS", dropoffLocation: "LOS", pickupDate: "2099-08-30", pickupTime: "10:00", dropoffDate: "2099-09-01", dropoffTime: "10:00", driverAge: "18-70" }));
+  assert.equal(route.pathname, "/car-results");
+  assert.equal(route.params.driverAge, "18-70");
+});
+
 test("valid one-way flight reopens native results with numeric server params made route-safe", () => {
   const route = recentSearchNavigation(recent("flight", {
     tripType: "one-way", origin: "LOS", destination: "LHR", departureDate: "2099-08-30",
