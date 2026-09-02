@@ -1,3 +1,4 @@
+import { personalDetailsLatestDateOfBirth } from "@/lib/personalDetailsAge";
 import { personalDetailsCountryOptions } from "@/lib/region/supportedRegions";
 
 const allowedGenders = new Set([
@@ -20,7 +21,7 @@ function changed(next: string | null | undefined, previous: string | null | unde
   return next !== undefined && (next ?? null) !== (previous ?? null);
 }
 
-export function isValidPersonalDetailsDateOfBirth(value: string) {
+export function isValidPersonalDetailsDateOfBirth(value: string, referenceDate = new Date()) {
   const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) return false;
 
@@ -33,7 +34,7 @@ export function isValidPersonalDetailsDateOfBirth(value: string) {
     date.getUTCFullYear() === year &&
     date.getUTCMonth() === month - 1 &&
     date.getUTCDate() === day &&
-    date.getTime() <= Date.now()
+    value <= personalDetailsLatestDateOfBirth(referenceDate)
   );
 }
 
