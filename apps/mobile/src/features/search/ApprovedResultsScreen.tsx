@@ -1798,7 +1798,7 @@ const s0 = StyleSheet.create({
     borderRadius: 8,
   },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
-  hotelResultCount: { fontSize: 16, lineHeight: 21, fontWeight: "800", fontFamily: appFonts.extraBold },
+  hotelResultCount: { fontSize: 16, lineHeight: 21, fontWeight: "700", fontFamily: appFonts.bold },
   hotelFilteredEmpty: { alignItems: "center", gap: 10, paddingVertical: 28 },
   hotelClearFilters: { color: ui.blue, fontSize: 15, fontWeight: "800" },
   flightResultCount: { paddingHorizontal: 14, paddingTop: 4, paddingBottom: 5, fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
