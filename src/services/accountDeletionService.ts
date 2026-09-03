@@ -45,7 +45,7 @@ export async function requestAccountDeletion(input: { userId: string; email: str
   });
   const { request } = mutation;
 
-  await recordAccountEventSafely({ userId: input.userId, email: null, eventKey: `account-deletion:${request.id}:requested`, type: "ACCOUNT_UPDATE", title: "Account deletion requested", body: "Your Kurioticket account deletion request was received. You can reactivate during the grace period.", actionPath: "/settings", metadata: { deletionRequestId: request.id, status: "PENDING" } });
+  await recordAccountEventSafely({ userId: input.userId, email: null, eventKey: `account-deletion:${request.id}:requested`, type: "ACCOUNT_UPDATE", title: "Account deletion requested", body: "Your Kurioticket account deletion request was received. You can reactivate during the grace period.", actionPath: "/security", metadata: { deletionRequestId: request.id, status: "PENDING" } });
 
   await sendTransactionalEmail({
     to: input.email,
@@ -75,7 +75,7 @@ export async function reactivateAccount(userId: string, email: string) {
       data: { status: "CANCELLED", cancelledAt: new Date(), cancellationMetadata: { source: "self-service-reactivation" } },
     });
   });
-  await recordAccountEventSafely({ userId, email: null, eventKey: `account-deletion:${request.id}:cancelled`, type: "ACCOUNT_UPDATE", title: "Account deletion cancelled", body: "Your Kurioticket account deletion request was cancelled and your account is active.", actionPath: "/settings", metadata: { deletionRequestId: request.id, status: "CANCELLED" } });
+  await recordAccountEventSafely({ userId, email: null, eventKey: `account-deletion:${request.id}:cancelled`, type: "ACCOUNT_UPDATE", title: "Account deletion cancelled", body: "Your Kurioticket account deletion request was cancelled and your account is active.", actionPath: "/security", metadata: { deletionRequestId: request.id, status: "CANCELLED" } });
   await sendTransactionalEmail({
     to: email,
     subject: "Kurioticket account deletion request cancelled",

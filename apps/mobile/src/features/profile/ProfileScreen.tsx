@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Alert, AppState, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { travelApi } from "../../api/travelApi";
@@ -14,6 +14,7 @@ import { flowColors } from "../flow/flowStyles";
 import { AppVersionFooter } from "./AppVersionFooter";
 import { ProfileCardSection } from "./ProfileCardSection";
 import { authenticatedProfileSections, profileFirstName } from "./profileModel";
+import { subscribeUnreadCountChanged } from "../notifications/notificationUnreadRefresh";
 
 function Header({ unreadCount }: { unreadCount: number }) {
   const { theme } = useAppTheme(); const { t } = useMobileLocalization();
@@ -69,6 +70,11 @@ export function AuthenticatedProfileScreen() {
     }).catch(() => undefined);
   }, []);
   useFocusEffect(load);
+  useEffect(() => {
+    const unsubscribe = subscribeUnreadCountChanged(load);
+    const appState = AppState.addEventListener("change", state => { if (state === "active") load(); });
+    return () => { unsubscribe(); appState.remove(); };
+  }, [load]);
   const logout = () => Alert.alert(t("logoutConfirm"), t("logoutExplanation"), [{ text: t("cancel"), style: "cancel" }, { text: t("logout"), style: "destructive", onPress: () => void authApi.logout().catch(() => undefined).finally(() => router.replace("/(tabs)/profile")) }]);
   const [manageAccount, ...remainingSections] = authenticatedProfileSections;
   return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top"]}><ScrollView alwaysBounceVertical={false} bounces={false} overScrollMode="never" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>

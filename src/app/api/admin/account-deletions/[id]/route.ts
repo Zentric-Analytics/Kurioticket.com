@@ -88,7 +88,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
   if (updated.status !== existing.status && (updated.status === "READY_FOR_REVIEW" || updated.status === "COMPLETED")) {
     const completed = updated.status === "COMPLETED";
-    await recordAccountEventSafely({ userId: updated.userId, email: updated.email || updated.user.email, eventKey: `account-deletion:${updated.id}:${completed ? "completed" : "ready-for-review"}`, type: "ACCOUNT_UPDATE", title: completed ? "Account deletion review completed" : "Account deletion under final review", body: completed ? "Your Kurioticket account deletion request was marked completed. Contact Support if you have questions." : "Your account deletion grace period ended and the request is under final review.", actionPath: "/settings", metadata: { deletionRequestId: updated.id, status: updated.status } });
+    await recordAccountEventSafely({ userId: updated.userId, email: updated.email || updated.user.email, eventKey: `account-deletion:${updated.id}:${completed ? "completed" : "ready-for-review"}`, type: "ACCOUNT_UPDATE", title: completed ? "Account deletion review completed" : "Account deletion under final review", body: completed ? "Your Kurioticket account deletion request was marked completed. Contact Support if you have questions." : "Your account deletion grace period ended and the request is under final review.", actionPath: "/security", metadata: { deletionRequestId: updated.id, status: updated.status } });
   }
 
   await writeAdminAuditLog({
