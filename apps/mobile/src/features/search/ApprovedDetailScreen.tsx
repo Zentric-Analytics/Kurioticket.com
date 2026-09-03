@@ -453,10 +453,20 @@ function HotelDetail({
   const reviewValue = result.reviewScore ?? result.rating;
   const classification = result.classificationStars || Math.round(result.rating);
   const profile = result.catalogueProfile;
+  const returnToHotelResults = () => router.replace({
+    pathname: "/hotel-results",
+    params: {
+      destination: String(params.destination || result.location),
+      checkIn: String(params.checkIn || ""),
+      checkOut: String(params.checkOut || ""),
+      guests: String(guestCount),
+      rooms: String(roomCount),
+    },
+  });
   return (
     <SafeAreaView style={d.safe} edges={["top"]}>
       <View style={d.hotelBackHeader}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Back to hotel results" onPress={() => router.back()} style={d.backToResults}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Back to hotel results" onPress={returnToHotelResults} style={d.backToResults}>
           <ArrowLeft size={17} strokeWidth={2} color={ui.blue}/><Text style={d.backToResultsText}>Back to hotel results</Text>
         </Pressable>
       </View>

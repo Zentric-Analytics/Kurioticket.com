@@ -8,6 +8,7 @@ const car = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf
 
 test("Hotel details follow the mobile Web identity, gallery, navigation, and compare hierarchy", () => {
   assert.match(hotel, />Back to hotel results</);
+  assert.match(hotel, /pathname: "\/hotel-results"/);
   assert.ok(hotel.indexOf("d.hotelIdentity") < hotel.indexOf("d.hotelGallery"));
   assert.ok(hotel.indexOf("d.hotelGallery") < hotel.indexOf("d.hotelTabs"));
   for (const tab of ["compare", "about", "location", "reviews"]) assert.match(hotel, new RegExp(`"${tab}"`));
@@ -27,6 +28,7 @@ test("Hotel details preserve unavailable inventory truth and canonical provider 
 
 test("Car details follow the mobile Web hero, specification, section navigation, and dock hierarchy", () => {
   assert.match(car, />Back to Cars results</);
+  assert.match(car, /pathname:"\/car-results"/);
   assert.ok(car.indexOf("d.titleRow") < car.indexOf("<CarGallery"));
   assert.ok(car.indexOf("<CarGallery") < car.indexOf("d.carSpecGrid"));
   assert.ok(car.indexOf("d.carSpecGrid") < car.indexOf("d.carTabs"));
