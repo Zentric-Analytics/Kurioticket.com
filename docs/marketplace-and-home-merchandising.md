@@ -28,3 +28,12 @@ Home Hotel destinations, adventure routes, and regional routes are selected by t
 Home actions carry `marketCountryCode` and `displayCurrency` from the active marketplace context. These fields provide presentation and provider-market context only; they cannot change route identity, destination identity, inventory eligibility, or provider truth.
 
 Static Hotel records remain planning inventory. A promoted Hotel destination requires verified property coverage; valid destinations without that coverage must produce a truthful unavailable/empty planning state rather than generated properties or prices.
+
+Hotel search prefers the canonical `destinationId` carried from discovery and
+uses text matching only for legacy/custom compatibility. Every maintained
+customer-selectable Hotel destination has at least one source-backed property.
+Coverage-only properties are explicitly unpriced discovery inventory: they do
+not imply availability, classification, amenities, room facts, or booking
+eligibility. Property identity and location provenance live with the coverage
+record in `verifiedHotelCoverage.ts`. CI checks both the complete maintained
+destination set and every destination selected by current Home merchandising.

@@ -1,5 +1,5 @@
 import type { HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
-import { normalizeHotelDestinationSearchValue } from "@/data/hotelDestinations";
+import { hotelDestinations, normalizeHotelDestinationSearchValue } from "@/data/hotelDestinations";
 import { scoreHotel } from "@/services/travel/scoring";
 import {
   staticHotelCatalogue,
@@ -24,9 +24,22 @@ export function getStaticHotelById(id: string) {
   );
 }
 
-export function searchStaticHotelCatalogue(destination: string) {
+export function searchStaticHotelCatalogue(destination: string, destinationId?: string) {
   const query = normalize(normalizeHotelDestinationSearchValue(destination));
   if (!query) return [];
+  const canonicalId = destinationId?.trim();
+  const canonicalDestination = canonicalId
+    ? hotelDestinations.find((candidate) => candidate.id === canonicalId)
+    : hotelDestinations.find((candidate) =>
+        [candidate.id, candidate.name, candidate.searchValue, ...(candidate.aliases ?? [])]
+          .some((value) => normalize(value) === query),
+      );
+  if (canonicalDestination) {
+    return staticHotelCatalogue.filter((hotel) =>
+      hotel.destinationId === canonicalDestination.id
+      || (!hotel.destinationId && normalize(hotel.city) === normalize(canonicalDestination.name)),
+    );
+  }
   return staticHotelCatalogue.filter((hotel) =>
     [hotel.city, hotel.country, hotel.region, ...hotel.aliases].some(
       (value) => normalize(value) === query,
@@ -38,12 +51,41 @@ export function buildStaticHotelResult(
   record: StaticHotelRecord,
   search: HotelSearchParams,
 ): NormalizedHotelResult {
+  if (record.inventoryKind === "discovery") {
+    const scores = scoreHotel({ totalPrice: 0, rating: 0, amenities: [], arrivalFriendly: false });
+    return {
+      id: record.id, provider: "Kurioticket verified destination coverage", name: record.name,
+      rating: 0,
+      neighbourhood: record.neighbourhood, location: `${record.city}, ${record.country}`,
+      distanceFromCenter: record.location, amenities: [], roomType: record.roomSummary,
+      cancellationInfo: "Live availability, room facts and booking terms are not currently offered.",
+      inventoryKind: "discovery", ...scores,
+      recommendationReasons: ["Source-backed property for destination discovery."], badges: [],
+      sourceUrl: record.officialSourceUrl,
+      sourceAttributions: [
+        { provider: "Property website", providerUri: record.officialSourceUrl },
+        { provider: "OpenStreetMap", providerUri: record.locationSourceUrl },
+      ],
+      catalogueProfile: {
+        propertyType: record.propertyType, neighbourhood: record.neighbourhood,
+        coordinates: { latitude: record.latitude, longitude: record.longitude },
+        amenities: [], accessibilityFeatures: [],
+        room: { name: record.roomSummary, bedConfiguration: record.bedSummary },
+        travellerFeatures: [],
+      },
+      rawProviderReference: {
+        catalogueId: record.id, destinationId: record.destinationId,
+        latitude: record.latitude, longitude: record.longitude, lastReviewed: record.lastReviewed,
+        pricingKind: "unpriced", realTimeAvailability: false,
+      },
+    };
+  }
   const stayNights = calculateHotelStayNights(search.checkIn, search.checkOut);
   const totalPrice =
-    record.indicativeNightlyPrice * stayNights * Math.max(search.rooms, 1);
+    record.indicativeNightlyPrice! * stayNights * Math.max(search.rooms, 1);
   const scores = scoreHotel({
     totalPrice,
-    rating: record.classificationStars,
+    rating: record.classificationStars!,
     amenities: [...record.amenities],
     arrivalFriendly: record.searchTags.some((tag) =>
       /central|transit/i.test(tag),
@@ -55,14 +97,14 @@ export function buildStaticHotelResult(
     name: record.name,
     imageUrl: record.imageUrl,
     imageUrls: [...record.imageUrls],
-    rating: record.classificationStars,
+    rating: record.classificationStars!,
     classificationStars: record.classificationStars,
     neighbourhood: record.neighbourhood,
     location: `${record.city}, ${record.country}`,
     distanceFromCenter: record.location,
-    pricePerNight: record.indicativeNightlyPrice,
+    pricePerNight: record.indicativeNightlyPrice!,
     totalPrice,
-    currency: record.currency,
+    currency: record.currency!,
     amenities: [...record.amenities],
     roomType: `${record.roomSummary}; ${record.bedSummary}`,
     cancellationInfo:
@@ -111,6 +153,7 @@ export function buildStaticHotelRoomOptions(
   record: StaticHotelRecord,
   search: HotelSearchParams,
 ): HotelRoomOption[] {
+  if (record.inventoryKind === "discovery") return [];
   const nights = calculateHotelStayNights(search.checkIn, search.checkOut);
   const rooms = Math.max(search.rooms, 1);
   return record.roomOptions.map((option) => ({
@@ -124,14 +167,14 @@ export function buildStaticHotelRoomOptions(
     taxesAndFeesIncluded: option.taxesAndFeesIncluded,
     pricePerNight: option.indicativeNightlyPrice,
     totalPrice: option.indicativeNightlyPrice * nights * rooms,
-    currency: record.currency,
+    currency: record.currency!,
     pricingKind: "indicative",
     availabilityKind: "planning",
   }));
 }
 
 export function buildStaticHotelResults(search: HotelSearchParams) {
-  return searchStaticHotelCatalogue(search.destination).map((record) =>
+  return searchStaticHotelCatalogue(search.destination, search.destinationId).map((record) =>
     buildStaticHotelResult(record, search),
   );
 }

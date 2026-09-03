@@ -182,7 +182,7 @@ test("Park Plaza details expose the matching Westminster address and coordinates
   );
 });
 
-test("every static hotel details response returns seven sanitized same-city alternatives", async () => {
+test("static hotel details return only available sanitized same-city alternatives", async () => {
   for (const selected of staticHotelCatalogue) {
     const response = GET(
       new Request(
@@ -201,10 +201,11 @@ test("every static hotel details response returns seven sanitized same-city alte
     };
     assert.equal(response.status, 200, selected.id);
     assert.equal(payload.hotel.id, selected.id);
-    assert.equal(payload.relatedHotels.length, 7, selected.id);
+    const expectedRelatedCount = selected.inventoryKind === "discovery" ? 0 : 7;
+    assert.equal(payload.relatedHotels.length, expectedRelatedCount, selected.id);
     assert.equal(
       new Set(payload.relatedHotels.map((hotel) => hotel.id)).size,
-      7,
+      expectedRelatedCount,
       selected.id,
     );
     assert.ok(

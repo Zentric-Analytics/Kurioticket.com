@@ -119,6 +119,7 @@ export const flightSearchSchema = z
 
 export const hotelSearchSchema = z
   .object({
+    destinationId: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(80).optional(),
     destination: z.string().trim().min(2, "Enter a destination.").max(120),
     checkIn: futureDate,
     checkOut: futureDate,
