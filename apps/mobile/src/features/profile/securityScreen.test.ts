@@ -210,14 +210,15 @@ test("successful deletion reactivation discards the revoked session and requires
 
 test("visual feedback is owned by the landing and individual security flows", () => {
   assert.doesNotMatch(security, /const \[error, setError\]|const \[message, setMessage\]/);
-  for (const state of ["landingError", "landingMessage", "devicesError", "twoFactorError", "deletionError", "passkeysError", "passkeysMessage"])
+  for (const state of ["landingError", "landingMessage", "devicesError", "twoFactorError", "deletionError", "passkeysError"])
     assert.match(security, new RegExp(`const \\[${state}, set${state[0].toUpperCase()}${state.slice(1)}\\]`));
 
   const landing = security.slice(security.indexOf("return <SafeAreaView"), security.indexOf("<ScreenModal visible={passkeysOpen}"));
   assert.match(landing, /<Feedback error=\{landingError\} message=""/);
   assert.match(landing, /<FloatingNotice message=\{landingMessage\}/);
-  assert.doesNotMatch(landing, /devicesError|twoFactorError|deletionError|passkeysError|passkeysMessage/);
-  assert.match(security, /<Feedback error=\{passkeysError\} message=\{passkeysMessage\}/);
+  assert.doesNotMatch(landing, /devicesError|twoFactorError|deletionError|passkeysError/);
+  assert.doesNotMatch(security, /<Feedback error=\{passkeysError\}/);
+  assert.match(security, /loadError=\{passkeysError\}/);
   assert.match(security, /<Feedback error=\{devicesError\} message=""/);
   assert.match(security, /<Feedback error=\{twoFactorError\} message=""/);
   assert.match(security, /<Feedback error=\{deletionError\} message=""/);
@@ -237,8 +238,8 @@ test("drill-down feedback is cleared on both open and close", () => {
   assert.match(security, /closeTwoFactor[^\n]+clearTwoFactorState\(\)[^\n]+setTwoFactorOpen\(false\)/);
   assert.match(security, /openDeletion[^\n]+setDeletionError\(""\)[^\n]+setDeletionOpen\(true\)/);
   assert.match(security, /closeDeletion[^\n]+setDeletionOpen\(false\)[^\n]+setDeletionError\(""\)/);
-  assert.match(security, /openPasskeys[^\n]+setPasskeysError\(""\)[^\n]+setPasskeysMessage\(""\)[^\n]+setPasskeysOpen\(true\)/);
-  assert.match(security, /closePasskeys[^\n]+setPasskeysOpen\(false\)[^\n]+setPasskeysError\(""\)[^\n]+setPasskeysMessage\(""\)/);
+  assert.match(security, /openPasskeys[^\n]+setPasskeysError\(""\)[^\n]+setPasskeysOpen\(true\)/);
+  assert.match(security, /closePasskeys[^\n]+setPasskeysOpen\(false\)[^\n]+setPasskeysError\(""\)/);
   assert.match(passwordChangeFlow, /if \(!active\) \{ clearAll\(\); return; \}/);
 });
 

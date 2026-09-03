@@ -52,7 +52,6 @@ export function SecurityScreen() {
   const [twoFactorError, setTwoFactorError] = useState("");
   const [deletionError, setDeletionError] = useState("");
   const [passkeysError, setPasskeysError] = useState("");
-  const [passkeysMessage, setPasskeysMessage] = useState("");
   const [passkeys, setPasskeys] = useState<MobilePasskey[]>([]);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [passwordMode, setPasswordMode] = useState<"change" | "reset">("change");
@@ -73,6 +72,7 @@ export function SecurityScreen() {
   const deletionRequest = useRef(0);
   const passkeysRequest = useRef(0);
   const passkeysManager = useRef<PasskeysManagerHandle>(null);
+  const clearPasskeysError = useCallback(() => setPasskeysError(""), []);
 
   const unauth = useCallback(async (e: unknown) => {
     if (e instanceof TravelApiError && e.status === 401) {
@@ -105,9 +105,9 @@ export function SecurityScreen() {
   const openTwoFactor = () => { twoFactorRequest.current += 1; clearTwoFactorState(); setTwoFactorOpen(true); };
   const closeTwoFactor = () => { twoFactorRequest.current += 1; clearTwoFactorState(); setTwoFactorOpen(false); };
   const closeDeletion = () => { deletionRequest.current += 1; setDeletionOpen(false); setDeletionError(""); };
-  const loadPasskeys = async (request = passkeysRequest.current) => { try { const result=await travelApi.passkeys(); if(request===passkeysRequest.current)setPasskeys(result.passkeys); } catch(e) { if(!await unauth(e)&&request===passkeysRequest.current)setPasskeysError(e instanceof TravelApiError?e.message:c.passkeysLoadError); } };
-  const openPasskeys = () => { const request=++passkeysRequest.current;setPasskeysError("");setPasskeysMessage("");setPasskeysOpen(true);void loadPasskeys(request); };
-  const closePasskeys = () => { passkeysRequest.current+=1;setPasskeysOpen(false);setPasskeysError("");setPasskeysMessage(""); };
+  const loadPasskeys = async (request = passkeysRequest.current) => { try { const result=await travelApi.passkeys(); if(request===passkeysRequest.current)setPasskeys(result.passkeys); } catch(e) { if(!await unauth(e)&&request===passkeysRequest.current)setPasskeysError(e instanceof TravelApiError&&e.status>0&&e.status<500&&e.code!=="invalid-response"?e.message:c.passkeysLoadError); } };
+  const openPasskeys = () => { const request=++passkeysRequest.current;setPasskeysError("");setPasskeysOpen(true);void loadPasskeys(request); };
+  const closePasskeys = () => { passkeysRequest.current+=1;setPasskeysOpen(false);setPasskeysError(""); };
 
   const toggle = async (value: boolean) => {
     if (!overview) return;
@@ -165,17 +165,17 @@ export function SecurityScreen() {
     <FloatingNotice message={landingMessage} />
 
     <ScreenModal visible={passkeysOpen} title={c.passkeys} closeLabel={c.close} avoidKeyboard onClose={() => { if (!passkeysManager.current?.cancelInternal()) closePasskeys(); }}>
-      <Text style={[styles.intro,{color:theme.muted}]}>{c.passkeysHelp}</Text><Feedback error={passkeysError} message={passkeysMessage}/>
+      <Text style={[styles.passkeysIntro,{color:theme.muted}]}>{c.passkeysHelp}</Text>
       <PasskeysManager
         ref={passkeysManager}
         active={passkeysOpen}
         passkeys={passkeys}
+        loadError={passkeysError}
         hasPassword={Boolean(overview?.hasPassword)}
         twoFactorEnabled={Boolean(overview?.twoFactorEnabled)}
         onReload={() => loadPasskeys()}
         onUnauthorized={unauth}
-        onError={setPasskeysError}
-        onMessage={setPasskeysMessage}
+        onClearLoadError={clearPasskeysError}
       />
     </ScreenModal>
     <ScreenModal visible={passwordOpen} title={passwordMode === "reset" ? resetCopy.title : c.change} closeLabel={c.close} onClose={closePassword}>
@@ -263,5 +263,5 @@ function FloatingNotice({ message }: { message: string }) {
 function Button({ label, onPress, disabled = false, loading = false }: { label: string; onPress: () => void; disabled?: boolean; loading?: boolean }) { const inactive = disabled || loading; return <Pressable accessibilityRole="button" accessibilityState={{ disabled: inactive, busy: loading }} disabled={inactive} onPress={onPress} style={({ pressed }) => [styles.button, inactive && styles.disabledButton, pressed && styles.pressed]}><View style={styles.buttonContent}><Text style={styles.buttonText}>{label}</Text>{loading ? <ActivityIndicator size="small" color="white" /> : null}</View></Pressable>; }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1 }, keyboardViewport: { flex: 1 }, header: { minHeight: 56, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 8 }, iconButton: { width: 48, height: 48, alignItems: "center", justifyContent: "center" }, title: { flex: 1, textAlign: "center", fontSize: 18, lineHeight: 24, fontWeight: "800" }, scroll: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 48 }, intro: { fontSize: 15, lineHeight: 22, marginBottom: 18 }, landingBlocks: {}, securityBlock: { minHeight: 88, flexDirection: "row", alignItems: "center", gap: 16, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 18 }, rowCopy: { flex: 1, gap: 7 }, rowHeading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }, rowLabel: { flexShrink: 1, fontSize: 16, lineHeight: 22, fontWeight: "700" }, status: { color: "#067647", fontSize: 14, fontWeight: "700" }, rowDetail: { fontSize: 14, lineHeight: 20 }, notificationRow: { minHeight: 88, flexDirection: "row", alignItems: "center", gap: 16, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 18 }, saving: { fontSize: 12 }, deleteButton: { minHeight: 50, borderRadius: 10, borderWidth: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, marginTop: 32 }, deleteButtonText: { color: flowColors.red, fontSize: 16, fontWeight: "800" }, event: { gap: 3, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 12 }, empty: { paddingVertical: 12 }, modalContent: { padding: 20, paddingBottom: 48, gap: 16 }, form: { gap: 12 }, feedbackSlot: { minHeight: 20, justifyContent: "center" }, resetAlternative: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 8, paddingTop: 12, gap: 2 }, textAction: { minHeight: 44, alignSelf: "flex-start", justifyContent: "center" }, link: { color: "#1769E0", fontWeight: "700" }, button: { minHeight: 50, borderRadius: 10, backgroundColor: "#1769E0", alignItems: "center", justifyContent: "center", paddingHorizontal: 16, marginTop: 4 }, buttonContent: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 }, disabledButton: { opacity: 0.55 }, buttonText: { color: "white", fontWeight: "800" }, error: { color: "#B42318", fontWeight: "600", lineHeight: 20 }, success: { color: "#067647", fontWeight: "600", lineHeight: 20 }, toastPosition: { position: "absolute", left: 16, right: 16, alignItems: "center", zIndex: 20 }, toast: { maxWidth: 560, borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12 }, toastText: { color: "#067647", fontWeight: "700", textAlign: "center" }, device: { borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 14, gap: 5 }, deviceHeading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }, current: { color: "#1769E0", fontSize: 12, fontWeight: "700" }, removeTouch: { minHeight: 44, alignSelf: "flex-start", justifyContent: "center", marginTop: 3 }, danger: { color: "#B42318", fontWeight: "700" }, pressed: { opacity: 0.65 },
+  safe: { flex: 1 }, keyboardViewport: { flex: 1 }, header: { minHeight: 56, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 8 }, iconButton: { width: 48, height: 48, alignItems: "center", justifyContent: "center" }, title: { flex: 1, textAlign: "center", fontSize: 18, lineHeight: 24, fontWeight: "800" }, scroll: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 48 }, intro: { fontSize: 15, lineHeight: 22, marginBottom: 18 }, passkeysIntro: { fontSize: 15, lineHeight: 22 }, landingBlocks: {}, securityBlock: { minHeight: 88, flexDirection: "row", alignItems: "center", gap: 16, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 18 }, rowCopy: { flex: 1, gap: 7 }, rowHeading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }, rowLabel: { flexShrink: 1, fontSize: 16, lineHeight: 22, fontWeight: "700" }, status: { color: "#067647", fontSize: 14, fontWeight: "700" }, rowDetail: { fontSize: 14, lineHeight: 20 }, notificationRow: { minHeight: 88, flexDirection: "row", alignItems: "center", gap: 16, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 18 }, saving: { fontSize: 12 }, deleteButton: { minHeight: 50, borderRadius: 10, borderWidth: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, marginTop: 32 }, deleteButtonText: { color: flowColors.red, fontSize: 16, fontWeight: "800" }, event: { gap: 3, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 12 }, empty: { paddingVertical: 12 }, modalContent: { padding: 20, paddingBottom: 48, gap: 16 }, form: { gap: 12 }, feedbackSlot: { minHeight: 20, justifyContent: "center" }, resetAlternative: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 8, paddingTop: 12, gap: 2 }, textAction: { minHeight: 44, alignSelf: "flex-start", justifyContent: "center" }, link: { color: "#1769E0", fontWeight: "700" }, button: { minHeight: 50, borderRadius: 10, backgroundColor: "#1769E0", alignItems: "center", justifyContent: "center", paddingHorizontal: 16, marginTop: 4 }, buttonContent: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 }, disabledButton: { opacity: 0.55 }, buttonText: { color: "white", fontWeight: "800" }, error: { color: "#B42318", fontWeight: "600", lineHeight: 20 }, success: { color: "#067647", fontWeight: "600", lineHeight: 20 }, toastPosition: { position: "absolute", left: 16, right: 16, alignItems: "center", zIndex: 20 }, toast: { maxWidth: 560, borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12 }, toastText: { color: "#067647", fontWeight: "700", textAlign: "center" }, device: { borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 14, gap: 5 }, deviceHeading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }, current: { color: "#1769E0", fontSize: 12, fontWeight: "700" }, removeTouch: { minHeight: 44, alignSelf: "flex-start", justifyContent: "center", marginTop: 3 }, danger: { color: "#B42318", fontWeight: "700" }, pressed: { opacity: 0.65 },
 });

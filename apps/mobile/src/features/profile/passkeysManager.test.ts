@@ -132,3 +132,46 @@ test("rename starts from the current name and keeps server maximum validation", 
   assert.match(manager, /maxLength=\{80\}/);
   assert.match(manager, /name\.length>80/);
 });
+
+test("passkey feedback is local, transient, replacement-safe, and leaves no reserved slot", () => {
+  assert.match(manager, /export const PASSKEY_FEEDBACK_DURATION_MS = 1000/);
+  assert.match(manager, /if\(feedbackTimer\.current\)clearTimeout\(feedbackTimer\.current\)/);
+  assert.match(manager, /generation!==feedbackGeneration\.current/);
+  assert.match(manager, /setTimeout\([^]*PASSKEY_FEEDBACK_DURATION_MS/);
+  assert.match(manager, /function LocalFeedback[^]*if\(!feedback\)return null/);
+  assert.match(manager, /stage==="rename"[^]*<LocalFeedback feedback=\{feedback\}\/>[^]*copy\.saveName/);
+  assert.match(manager, /stage==="verify"[^]*<LocalFeedback feedback=\{feedback\}\/>/);
+  assert.match(manager, /copy\.yourPasskeys[^]*<LocalFeedback feedback=\{feedback\}/);
+  assert.doesNotMatch(manager, /feedbackSlot|minHeight[^\n]*feedback/);
+});
+
+test("passkey feedback timers clear on edits, cancellation, flow changes, and unmount", () => {
+  assert.match(manager, /clearSensitive=useCallback\(\(\)=>\{ clearTimer\(\); clearFeedback\(\)/);
+  assert.match(manager, /return\(\)=>\{request\.current\+=1;clearSensitive\(\);\}/);
+  assert.match(manager, /cancelFlow[^]*clearSensitive\(\)/);
+  assert.match(manager, /setVerification\(value\);clearFeedback\(\)/);
+  assert.match(manager, /setRenameValue\(value\);clearFeedback\(\)/);
+});
+
+test("passkey failures preserve useful client errors but normalize low-level search wording", () => {
+  assert.match(manager, /error\.status>0&&error\.status<500&&error\.code!=="invalid-response"\?error\.message:fallback/);
+  assert.match(manager, /fail\(error,purpose==="setup"\?copy\.registrationFailed:copy\.operationFailed,current\)/);
+  assert.doesNotMatch(manager, /search provider|search service|Search cancelled|search took too long/i);
+});
+
+test("Security removes the global passkey feedback row and uses compact passkey-only intro spacing", () => {
+  const modalStart = security.indexOf('<ScreenModal visible={passkeysOpen}');
+  const modalEnd = security.indexOf('</ScreenModal>', modalStart);
+  const modal = security.slice(modalStart, modalEnd);
+  assert.match(modal, /styles\.passkeysIntro/);
+  assert.match(modal, /<PasskeysManager/);
+  assert.doesNotMatch(modal, /<Feedback|feedbackSlot|styles\.intro/);
+  assert.match(security, /passkeysIntro: \{ fontSize: 15, lineHeight: 22 \}/);
+});
+
+test("transient feedback does not own normal copy or duplicate button success", () => {
+  const localFeedback = manager.slice(manager.indexOf("function LocalFeedback"), manager.indexOf("function BottomSheet"));
+  for (const persistent of ["copy.yourPasskeys", "copy.noPasskeys", "copy.emptyHelp", "copy.renameHelp", "copy.verifyExtra"])
+    assert.doesNotMatch(localFeedback, new RegExp(persistent.replace(".", "\\.")));
+  assert.doesNotMatch(manager, /showFeedback\(copy\.(added|renamed|removed)/);
+});
