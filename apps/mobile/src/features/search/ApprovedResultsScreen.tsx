@@ -157,6 +157,7 @@ const flightSupportText = {
 const flightResultsLightCanvas = "#F5F7FB";
 const HOTEL_UTILITY_ICON_COLOR = "#334155";
 const HOTEL_SAVED_HEART_COLOR = "#E11D48";
+const HOTEL_GALLERY_CHEVRON_CONTRAST = "rgba(0,0,0,0.85)";
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 const hotelStayNightCount = (checkIn?: string, checkOut?: string) => {
   const start = Date.parse(`${checkIn ?? ""}T00:00:00Z`);
@@ -1197,7 +1198,20 @@ function HotelCard({
         ) : (
           <View accessibilityLabel="Hotel image unavailable" style={[s0.hotelImage,s0.hotelImageUnavailable]}><Text style={s0.hotelImageUnavailableText}>Image unavailable</Text></View>
         )}
-        {usableGallery.length>1?<><Pressable accessibilityRole="button" accessibilityLabel={`Previous photo of ${result.name}`} onPress={()=>setActiveImage(index=>(index-1+usableGallery.length)%usableGallery.length)} style={[s0.galleryControl,s0.galleryPrevious]}><ChevronLeft accessible={false} color="white" size={20} style={s0.galleryIconPrevious}/></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Next photo of ${result.name}`} onPress={()=>setActiveImage(index=>(index+1)%usableGallery.length)} style={[s0.galleryControl,s0.galleryNext]}><ChevronRight accessible={false} color="white" size={20} style={s0.galleryIconNext}/></Pressable></>:null}
+        {usableGallery.length>1?<>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Previous photo of ${result.name}`} onPress={()=>setActiveImage(index=>(index-1+usableGallery.length)%usableGallery.length)} style={[s0.galleryControl,s0.galleryPrevious]}>
+            <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[s0.galleryChevronStack,s0.galleryIconPrevious]}>
+              <ChevronLeft accessible={false} color={HOTEL_GALLERY_CHEVRON_CONTRAST} size={20} strokeWidth={4} style={s0.galleryChevronUnderlay}/>
+              <ChevronLeft accessible={false} color="white" size={20} strokeWidth={2.2}/>
+            </View>
+          </Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Next photo of ${result.name}`} onPress={()=>setActiveImage(index=>(index+1)%usableGallery.length)} style={[s0.galleryControl,s0.galleryNext]}>
+            <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[s0.galleryChevronStack,s0.galleryIconNext]}>
+              <ChevronRight accessible={false} color={HOTEL_GALLERY_CHEVRON_CONTRAST} size={20} strokeWidth={4} style={s0.galleryChevronUnderlay}/>
+              <ChevronRight accessible={false} color="white" size={20} strokeWidth={2.2}/>
+            </View>
+          </Pressable>
+        </>:null}
         {usableGallery.length ? <View style={s0.overlay}>
           <Text style={s0.overlayText}>
             {activeImage+1} / {usableGallery.length}
@@ -1874,8 +1888,10 @@ const s0 = StyleSheet.create({
   galleryControl:{position:"absolute",top:"50%",width:44,height:44,transform:[{translateY:-22}],alignItems:"center",justifyContent:"center"},
   galleryPrevious:{left:0},
   galleryNext:{right:0},
-  galleryIconPrevious:{transform:[{translateX:-10}]},
-  galleryIconNext:{transform:[{translateX:10}]},
+  galleryIconPrevious:{transform:[{translateX:-6}]},
+  galleryIconNext:{transform:[{translateX:6}]},
+  galleryChevronStack:{width:20,height:20},
+  galleryChevronUnderlay:{position:"absolute",left:0,top:0},
   overlay: {
     position: "absolute",
     bottom: 10,
