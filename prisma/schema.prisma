@@ -792,12 +792,15 @@ model Notification {
   eventKey   String?             @unique
   actionPath String?
   readAt     DateTime?
+  // Inbox tombstone. Keep the row/eventKey so canonical events cannot be recreated after dismissal.
+  deletedAt  DateTime?
   metadata   Json?
   createdAt  DateTime            @default(now())
   user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([userId, readAt, createdAt(sort: Desc)])
+  @@index([userId, deletedAt, createdAt(sort: Desc)])
   @@index([type])
   @@index([readAt])
   @@index([createdAt])
