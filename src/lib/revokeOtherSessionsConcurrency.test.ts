@@ -6,7 +6,10 @@ const source = readFileSync("src/lib/account-session.ts", "utf8");
 const operation = source.slice(source.indexOf("export async function revokeOtherSessions"), source.indexOf("export function hasRecentReauthentication"));
 
 test("bulk session revocation serializes per user and revalidates the preserved session", () => {
-  assert.match(operation, /pg_advisory_xact_lock\(hashtext\('account-session-revocation'\), hashtext\(\$\{userId\}\)\)/);
+  assert.match(source, /async function lockAccountSessionRevocation/);
+  assert.match(source, /\$executeRaw`SELECT pg_advisory_xact_lock\(hashtext\('account-session-revocation'\), hashtext\(\$\{userId\}\)\)`/);
+  assert.doesNotMatch(source, /\$queryRaw`SELECT pg_advisory_xact_lock\(hashtext\('account-session-revocation'\), hashtext\(\$\{userId\}\)\)`/);
+  assert.match(operation, /await lockAccountSessionRevocation\(tx, userId\)/);
   assert.match(operation, /id: currentSessionId, userId, client: "MOBILE", revokedAt: null/);
   assert.match(operation, /if \(!current\) throw new Error\("CurrentSessionUnavailable"\)/);
 });
