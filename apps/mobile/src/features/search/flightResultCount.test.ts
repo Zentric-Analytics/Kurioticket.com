@@ -35,9 +35,12 @@ test("flight and hotel result counts are unboxed accessible headings", () => {
     source.indexOf('status === "ready" && product === "hotel" && sorted.length > 0'),
     source.indexOf("sorted.map((x, i)", source.indexOf('status === "ready" && product === "hotel" && sorted.length > 0')),
   );
-  assert.match(hotelCount, /accessibilityRole="header"/);
-  assert.match(hotelCount, /\{sorted\.length\} properties found/);
-  assert.equal(source.match(/\{sorted\.length\} properties found/g)?.length, 1);
+  assert.match(hotelCount, /<View style=\{s0\.hotelResultsSummary\}>[\s\S]*?accessibilityRole="header"/);
+  assert.match(hotelCount, /\{sorted\.length\} \{sorted\.length === 1 \? "result" : "results"\} found/);
+  assert.match(hotelCount, /Showing 1–\{sorted\.length\}/);
+  assert.match(hotelCount, /Showing results 1 through \$\{sorted\.length\}/);
+  assert.equal(source.match(/Showing 1–\{sorted\.length\}/g)?.length, 1);
+  assert.doesNotMatch(hotelCount, /properties found/);
   assert.doesNotMatch(source, /s0\.found\b|s0\.foundCopy\b/);
   assert.doesNotMatch(source, /Prices include taxes and fees when reported by the provider/);
   assert.doesNotMatch(source, /label="Map view"|Map inventory is not available from this provider response/);
@@ -56,6 +59,15 @@ test("hotel result count uses Inter Bold at the existing size and line height", 
   assert.match(hotelResultCountStyle, /fontFamily: appFonts\.bold/);
   assert.doesNotMatch(hotelResultCountStyle, /fontWeight: "800"/);
   assert.doesNotMatch(hotelResultCountStyle, /appFonts\.extraBold/);
+});
+
+test("hotel result summary has correct singular and plural expressions in one unboxed group", () => {
+  const label = (count: number) => `${count} ${count === 1 ? "result" : "results"} found`;
+  assert.equal(label(1), "1 result found");
+  assert.equal(label(2), "2 results found");
+  const summaryStyle = source.slice(source.indexOf("hotelResultsSummary:"), source.indexOf("hotelResultsRange:"));
+  assert.match(summaryStyle, /gap: 2/);
+  assert.doesNotMatch(summaryStyle, /border|background|shadow|padding/);
 });
 
 test("count follows the price alert and directly precedes rendered cards", () => {
