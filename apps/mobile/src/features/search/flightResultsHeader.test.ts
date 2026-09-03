@@ -35,6 +35,7 @@ test("Flight Results uses the Web route-and-metadata summary with accessible con
   assert.match(invocation, /route=\{flightSummary\.route\}/);
   assert.match(invocation, /secondaryLine=\{flightSummary\.secondaryLine\}/);
   assert.match(results, /flightResultsSummary\(payload, locale\)/);
+  assert.ok(results.indexOf("const payload = plan.plan?.payload || {}") < results.indexOf("flightResultsSummary(payload, locale)"));
   assert.match(header, /accessibilityLabel="Flight search summary"/);
   assert.match(header, /accessibilityLabel="Go back"/);
   assert.match(header, /\{route\}/);

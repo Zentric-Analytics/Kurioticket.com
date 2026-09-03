@@ -173,6 +173,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const plan = buildSearchPlan(product, params);
+  const payload = plan.plan?.payload || {};
   const [results, setResults] = useState<(FlightResult | HotelResult)[]>([]);
   const [status, setStatus] = useState<Status>("loading");
   const [flightLoadingPhase, setFlightLoadingPhase] = useState<FlightLoadingPhase>("searching");
@@ -602,7 +603,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     }
     setFilters(emptyFlightFilters());
   }, [plan.plan?.key]);
-  const payload = plan.plan?.payload || {};
   const canonicalHotelDestination = String(payload.destination || "");
   const hotelDestinationDisplay = getHotelLocationFieldDisplay(canonicalHotelDestination, locale);
   const hotelSummary = buildHotelResultsSummary({

@@ -26,7 +26,7 @@ test("local sort and filters only derive displayed results and never set request
 });
 
 test("filtered empty clears only filters while preserving sort and canonical search params", () => {
-  const clearFiltersBlock = screen.slice(screen.indexOf("const clearFlightFilters"), screen.indexOf("const payload"));
+  const clearFiltersBlock = screen.slice(screen.indexOf("const clearFlightFilters"), screen.indexOf("const canonicalHotelDestination"));
   assert.match(screen, /onClearFilters=\{clearFlightFilters\}/);
   assert.match(clearFiltersBlock, /setFilters\(emptyFlightFilters\(\)\)/);
   assert.doesNotMatch(clearFiltersBlock, /setSort|router\.|setRetry|setStatus/);
