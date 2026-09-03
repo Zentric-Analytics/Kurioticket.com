@@ -1545,6 +1545,8 @@ function PriceAlert({ product, plan, results, hotelResults, available = true }: 
   const [targetError, setTargetError] = useState("");
   const isTracking = matchingAlert?.status === "ACTIVE";
   const unavailable = !activePresentation.enabled || (!available && !isTracking);
+  const supportTextColor = theme.dark ? flightSupportText.dark : flightSupportText.light;
+  const inactiveSwitchTrackColor = theme.dark ? theme.switchTrack : ui.border;
   const requireSignIn = useCallback(() => Alert.alert(
     message("signInRequired"),
     message("signInAlertBody"),
@@ -1604,8 +1606,6 @@ function PriceAlert({ product, plan, results, hotelResults, available = true }: 
     } finally { pendingRef.current = false; setPending(false); }
   };
   if (flight) {
-    const supportTextColor = theme.dark ? flightSupportText.dark : flightSupportText.light;
-    const inactiveSwitchTrackColor = theme.dark ? theme.switchTrack : ui.border;
     return (
       <View
         accessibilityLabel="Flight price alert"
@@ -1647,10 +1647,25 @@ function PriceAlert({ product, plan, results, hotelResults, available = true }: 
     );
   }
   if (product !== "hotel" || !plan) return null;
-  return <View accessibilityLabel={message("hotelAlertTitle")} style={[s0.hotelAlert, { backgroundColor: theme.surface, borderColor: theme.priceAlertBorder }]}>
-    <View style={s0.hotelAlertCopy}><Text style={[s0.hotelAlertTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Text style={[s0.hotelAlertBody, { color: theme.textSecondary }]}>{message("hotelAlertBody")}</Text></View>
-    {matchingAlert ? <Switch accessibilityLabel="Track hotel prices" accessibilityRole="switch" accessibilityState={{ checked: isTracking, disabled: pending || loadingAlert || unavailable }} value={isTracking} disabled={pending || loadingAlert || unavailable} onValueChange={(next) => void handleToggle(next)} /> : <Pressable accessibilityLabel={message("createAlert")} accessibilityRole="button" accessibilityState={{ disabled: pending || loadingAlert || unavailable }} disabled={pending || loadingAlert || unavailable} onPress={() => void handleToggle(true)} style={({ pressed }) => [s0.hotelAlertCreateButton, (pending || loadingAlert || unavailable) && s0.hotelAlertCreateButtonDisabled, pressed && s0.hotelAlertCreateButtonPressed]}><Text style={s0.hotelAlertCreateButtonText}>{message("createAlert")}</Text></Pressable>}
-    {!activePresentation.enabled ? <Text accessibilityRole="alert" style={s0.sub}>{message("hotelAlertUnavailable")}</Text> : null}
+  return <View accessibilityLabel={message("hotelAlertTitle")} style={[s0.flightAlert, { backgroundColor: theme.surface, borderColor: theme.priceAlertBorder }]}>
+    <View style={s0.flightAlertCopy}>
+      <Text style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text>
+      <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightAlertSubtitle, { color: supportTextColor }]}>{message("hotelAlertBody")}</Text>
+      {!activePresentation.enabled ? <Text accessibilityRole="alert" style={s0.sub}>{message("hotelAlertUnavailable")}</Text> : null}
+    </View>
+    <View style={s0.flightAlertSwitchTarget}>
+      <Switch
+        accessibilityLabel="Track hotel prices"
+        accessibilityRole="switch"
+        accessibilityState={{ checked: isTracking, disabled: pending || loadingAlert || unavailable }}
+        value={isTracking}
+        disabled={pending || loadingAlert || unavailable}
+        onValueChange={(next) => void handleToggle(next)}
+        trackColor={{ false: inactiveSwitchTrackColor, true: theme.switchTrackActive }}
+        ios_backgroundColor={inactiveSwitchTrackColor}
+        thumbColor={theme.surface}
+      />
+    </View>
     <Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel={message("hotelAlertTitle")}><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>{message("targetTotal")} ({currency})</Text><TextInput autoFocus accessibilityLabel={`${message("targetTotal")} ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text> : null}<Button label={pending ? message("creating") : message("createAlert")} onPress={() => void createAlert()} /><Button label={t("cancel")} outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal>
   </View>;
 }
@@ -2023,19 +2038,6 @@ const s0 = StyleSheet.create({
     gap: 8,
   },
   hotelSkeletonPrice: { width: 58, height: 16 },
-  hotelAlert: {
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 16,
-    gap: 12,
-  },
-  hotelAlertCopy: { gap: 4 },
-  hotelAlertTitle: { fontSize: 16, lineHeight: 21, fontWeight: "700", fontFamily: appFonts.bold },
-  hotelAlertBody: { fontSize: 14, lineHeight: 20, fontWeight: "500", fontFamily: appFonts.medium },
-  hotelAlertCreateButton: { alignSelf: "flex-start", minHeight: 44, justifyContent: "center", borderRadius: 12, paddingHorizontal: 16, backgroundColor: colors.blue },
-  hotelAlertCreateButtonPressed: { opacity: 0.82 },
-  hotelAlertCreateButtonDisabled: { opacity: 0.5 },
-  hotelAlertCreateButtonText: { color: "white", fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
   flightAlert: {
     borderRadius: 10,
     borderWidth: 1,
