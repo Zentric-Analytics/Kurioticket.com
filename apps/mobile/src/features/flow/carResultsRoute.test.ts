@@ -37,6 +37,9 @@ test("car results reproduce the rendered mobile Web summary, controls and count 
   assert.match(screen, /label=\{priceFilter\?"Lower total":"Total price"\}/);
   assert.match(screen, /label=\{category\|\|"Vehicle type"\}/);
   assert.match(screen, /\{filtered\.length\} results found/);
+  assert.match(screen, /const pageSize=20/);
+  assert.match(screen, /const visible=filtered\.slice/);
+  assert.match(screen, /Page \{page\} of \{totalPages\}/);
   assert.match(screen, /Sort by:/);
   assert.doesNotMatch(screen, /<DateStrip/);
   assert.doesNotMatch(screen, /Prices include taxes & fees when reported/);
