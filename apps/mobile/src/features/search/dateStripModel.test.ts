@@ -107,24 +107,29 @@ test("uses the lowest real fare for a date and extracts the provider departure d
 
 test("centers the date window on the actual selected date", () => {
   const selected = "2026-08-11";
-  const window = getDateWindow(initialDateWindowStart(selected));
+  const window = getDateWindow(initialDateWindowStart(selected, "2026-08-01"));
 
   assert.deepEqual(window, [
+    "2026-08-07",
+    "2026-08-08",
     "2026-08-09",
     "2026-08-10",
     selected,
     "2026-08-12",
     "2026-08-13",
+    "2026-08-14",
+    "2026-08-15",
+    "2026-08-16",
   ]);
   assert.equal(window.find((iso) => iso === selected), selected);
 });
 
 test("moves the visible window without changing the selected date", () => {
   const selected = "2026-08-11";
-  const start = initialDateWindowStart(selected);
+  const start = initialDateWindowStart(selected, "2026-08-01");
 
-  assert.equal(shiftCalendarDate(start, 1), "2026-08-10");
-  assert.equal(shiftCalendarDate(start, -1), "2026-08-08");
+  assert.equal(shiftCalendarDate(start, 1), "2026-08-08");
+  assert.equal(shiftCalendarDate(start, -1), "2026-08-06");
   assert.equal(selected, "2026-08-11");
 });
 

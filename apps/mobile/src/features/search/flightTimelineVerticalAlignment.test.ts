@@ -33,7 +33,7 @@ test("duration, timeline, and stop status share the flexible centered column", (
   assert.match(source, /stopLabel: \{[^}]*textAlign: "center" \}/);
   assert.match(source, /routeTrack: \{ width: "100%", minWidth: 46, flexDirection: "row", alignItems: "center", gap: 2 \}/);
   assert.match(source, /routeDot: \{ width: 7, height: 7, borderRadius: 3\.5, flexShrink: 0 \}/);
-  assert.match(source, /line: \{\s*flex: 1,\s*height: 1\.5,\s*backgroundColor: ui\.muted,\s*\}/);
+  assert.match(source, /line: \{[^}]*flex: 1[^}]*height: 1\.5[^}]*backgroundColor: ui\.muted[^}]*\}/);
   assert.match(source, /journeyDuration: \{[^}]*fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts\.semibold/);
   assert.match(source, /stopLabel: \{[^}]*fontSize: 10, lineHeight: 13, fontWeight: "500", fontFamily: appFonts\.medium/);
 });

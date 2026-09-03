@@ -22,7 +22,7 @@ test("flight details navigation is wired to the complete bordered card", () => {
   assert.doesNotMatch(flightCard, /detailsButton|detailsButtonText/);
   assert.equal((flightCard.match(/<Pressable/g) || []).length, 1);
   assert.doesNotMatch(flightCard, /stopPropagation|onToggleSaved|favoriteButton/);
-  const cardStyle = /card: \{([\s\S]*?)\n  \},/.exec(source)?.[1] ?? "";
+  const cardStyle = source.slice(source.indexOf("card: {"), source.indexOf("cardPressed:"));
   assert.match(cardStyle, /borderWidth: 1/);
   assert.match(flightCard, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
 });

@@ -1,4 +1,4 @@
-const DAY_COUNT = 5;
+const DAY_COUNT = 10;
 
 export type DateStripPrice = {
   amount: number;
@@ -106,8 +106,9 @@ export function shiftCalendarDate(iso: string, days: number) {
   return toCalendarIso(date);
 }
 
-export function initialDateWindowStart(selectedDate: string) {
-  return shiftCalendarDate(selectedDate, -Math.floor(DAY_COUNT / 2));
+export function initialDateWindowStart(selectedDate: string, today = toCalendarIso(new Date())) {
+  const preferredStart = shiftCalendarDate(selectedDate, -4);
+  return preferredStart < today ? today : preferredStart;
 }
 
 export function getDateWindow(startDate: string) {

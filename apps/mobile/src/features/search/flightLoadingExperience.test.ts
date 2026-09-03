@@ -62,7 +62,7 @@ test("the restrained skeleton uses a subtle native pulse that cleans up", () => 
 
 test("one-way uses one journey and round-trip conditionally adds the return journey", () => {
   assert.match(flightList, /roundTrip=\{payload\.tripType === "round-trip"\}/);
-  assert.match(flightSkeleton, /\{roundTrip \? \([\s\S]*?<View style=\{s0\.skeletonJourneyBlock\}>/);
+  assert.match(flightSkeleton, /\{roundTrip \?[\s\S]*?<View style=\{s0\.skeletonJourneyBlock\}>/);
   assert.equal(flightSkeleton.match(/<View style=\{s0\.skeletonJourneyBlock\}>/g)?.length, 2);
   const identityStart = flightSkeleton.indexOf('<View style={s0.skeletonIdentityLayout}>');
   const journeyStart = flightSkeleton.indexOf('<View style={s0.skeletonJourneyBlock}>');

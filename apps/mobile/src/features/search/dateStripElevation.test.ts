@@ -37,16 +37,19 @@ test("flight results order uppercase date, uppercase weekday, then fare", () => 
   assert.match(priceLabel, /fontFamily: appFonts\.semibold/);
 });
 
-test("missing fares use a truthful neutral row and dates remain pressable", () => {
+test("tiles distinguish progressive fare states and dates remain pressable", () => {
   assert.match(component, /: "—"/);
-  assert.doesNotMatch(component, /Unavailable/);
+  assert.match(component, /"No fare"/);
+  assert.match(component, /"Try later"/);
+  assert.match(component, /"•••"/);
   assert.match(component, /"fare not checked"/);
-  assert.match(component, /onPress=\{\(\) => onSelect\(iso\)\}/);
+  assert.match(component, /if \(!active\) onSelect\(iso\)/);
   assert.match(component, /hitSlop=\{flightResults \? 6 : undefined\}/);
 });
 
 test("horizontal rail remains swipeable with three full tiles and a fourth peek", () => {
-  assert.match(component, /<ScrollView\s+horizontal/);
+  assert.match(component, /<ScrollView[\s\S]*?horizontal/);
+  assert.match(component, /ref=\{railRef\}/);
   assert.match(styles, /flightDateNavigator: \{ height: 82, paddingHorizontal: 0 \}/);
   assert.match(styles, /flightDateRail: \{ height: 82 \}/);
   assert.match(styles, /flightDates: \{ paddingHorizontal: 16, paddingVertical: 5 \}/);
