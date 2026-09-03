@@ -45,6 +45,8 @@ test("shared result policy accepts website inventory and still rejects malformed
   const flight = { id: "f", provider: "Duffel", airlineName: "Air", originAirport: "JFK", destinationAirport: "LAX", departureTime: "2026-08-10T12:00:00Z", arrivalTime: "2026-08-10T15:00:00Z", price: 100, currency: "USD", bookingUrl: "", partnerRedirectUrl: "", searchPolicy: internalAction };
   assert.equal(validFlight(flight as never, plan), true);
   assert.equal(validFlight({ ...flight, destinationAirport: "SFO" } as never, plan), true);
+  assert.equal(validFlight({ ...flight, originAirport: { code: "JFK" } } as never, plan), false);
+  assert.equal(validFlight({ ...flight, destinationAirport: "LONDON" } as never, plan), false);
   assert.equal(validFlight({ ...flight, departureTime: "not-a-date" } as never, plan), false);
   const staticCar = { id: "c", rentalCompanyName: "Kurioticket", inventorySource: "kurioticket-static-cars", offers: [{ bookingProviderName: "Kurioticket", totalPrice: 50, currency: "USD" }], searchPolicy: { source: "kurioticket-static-cars", bookable: false, action: { kind: "internal-detail", href: "/cars/details/c", enabled: true } } };
   assert.equal(safeCanonicalCarResult(staticCar as never), true);
