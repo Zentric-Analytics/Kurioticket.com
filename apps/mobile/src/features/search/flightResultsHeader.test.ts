@@ -30,16 +30,17 @@ const payload = buildSearchPlan("flight", {
   cabin: "premium-economy",
 }, new Date("2030-01-01T00:00:00Z")).plan?.payload;
 
-test("Flight Results uses a route-only search-summary card with accessible controls", () => {
+test("Flight Results uses the Web route-and-metadata summary with accessible controls", () => {
   assert.match(results, /flightResults \? \(\s*<FlightResultsHeader/);
-  assert.match(invocation, /route=\{`\$\{String\(payload\.origin/);
-  assert.match(invocation, /payload\.tripType === "one-way" \? "→" : "⇄"/);
-  assert.match(invocation, /payload\.destination/);
+  assert.match(invocation, /route=\{flightSummary\.route\}/);
+  assert.match(invocation, /secondaryLine=\{flightSummary\.secondaryLine\}/);
+  assert.match(results, /flightResultsSummary\(payload, locale\)/);
+  assert.ok(results.indexOf("const payload = plan.plan?.payload || {}") < results.indexOf("flightResultsSummary(payload, locale)"));
   assert.match(header, /accessibilityLabel="Flight search summary"/);
   assert.match(header, /accessibilityLabel="Go back"/);
   assert.match(header, /\{route\}/);
-  assert.match(header, /accessibilityLabel="Edit search"[\s\S]*?onPress=\{onEdit\}/);
-  assert.match(header, /<SquarePen[\s\S]*?accessible=\{false\}/);
+  assert.match(header, /accessibilityLabel=\{`Edit flight search\. \$\{route\}\. \$\{secondaryLine\}`\}[\s\S]*?onPress=\{onEdit\}/);
+  assert.match(header, /<View accessible=\{false\} accessibilityElementsHidden style=\{s0\.flightRouteSummaryEdit\}><SquarePen/);
   assert.doesNotMatch(header, />Edit<\/Text>/);
   assert.doesNotMatch(invocation, /onLayout=/);
   const flightEditInvocation = results.slice(results.indexOf("<FlightEditSearchModal"), results.indexOf("/>", results.indexOf("<FlightEditSearchModal")) + 2);
@@ -47,22 +48,10 @@ test("Flight Results uses a route-only search-summary card with accessible contr
   assert.doesNotMatch(results, /flightResultsHeaderHeight|setFlightResultsHeaderHeight|LayoutChangeEvent/);
 });
 
-test("Flight Results header removes all secondary metadata and its component props", () => {
-  for (const obsolete of [
-    "Trip metadata row",
-    "tripTypeLabel",
-    "travelerCount",
-    "cabinClass",
-    "dateRange",
-    "Traveler",
-    "Travelers",
-    "flightHeaderMetadataSeparator",
-  ]) {
-    assert.doesNotMatch(header, new RegExp(obsolete));
-    assert.doesNotMatch(invocation, new RegExp(obsolete));
-  }
+test("Flight Results header receives one derived secondary line instead of rebuilding business context", () => {
+  assert.match(header, /\{secondaryLine\}/);
   assert.doesNotMatch(header, /<ScrollView|horizontal|metadata/i);
-  assert.match(header, /route: string;[\s\S]*?onEdit: \(\) => void;/);
+  assert.match(header, /route: string;[\s\S]*?secondaryLine: string;[\s\S]*?onEdit: \(\) => void;/);
 });
 
 test("obsolete Flight Results metadata styles are removed", () => {
@@ -80,25 +69,24 @@ test("obsolete Flight Results metadata styles are removed", () => {
 
 test("Back retains navigation while Edit opens the local results overlay", () => {
   assert.match(header, /accessibilityLabel="Go back"[\s\S]*?router\.back\(\)/);
-  assert.match(header, /accessibilityLabel="Edit search"[\s\S]*?onPress=\{onEdit\}/);
+  assert.match(header, /Edit flight search[\s\S]*?onPress=\{onEdit\}/);
   assert.match(results, /setEditSearchOpen\(true\)/);
   assert.doesNotMatch(results, /router\.push\(\{ pathname: "\/edit-flight-search"/);
   assert.match(styles, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
 });
 
-test("Flight Results header separates Back, route summary, and Edit controls", () => {
+test("Flight Results header separates Back from one Web-aligned editable summary", () => {
   assert.match(styles, /flightHeaderMainRow: \{[\s\S]*?flexDirection: "row"/);
   assert.match(styles, /flightHeaderSide: \{ width: 52/);
-  assert.match(header, /<View style=\{s0\.flightHeaderSide\}>[\s\S]*?accessibilityLabel="Go back"[\s\S]*?<View[\s\S]*?s0\.flightRouteSummaryCard/);
+  assert.match(header, /<View style=\{s0\.flightHeaderSide\}>[\s\S]*?accessibilityLabel="Go back"[\s\S]*?<Pressable[\s\S]*?s0\.flightRouteSummaryCard/);
   assert.match(routeCard, /\{route\}/);
-  assert.doesNotMatch(routeCard, /accessibilityLabel="Edit search"|SquarePen/);
-  assert.match(rightActionRegion, /<View style=\{s0\.flightHeaderSide\}>[\s\S]*?accessibilityLabel="Edit search"[\s\S]*?<SquarePen/);
-  assert.match(styles, /flightRouteSummaryCard: \{[\s\S]*?flex: 1,[\s\S]*?minWidth: 0,[\s\S]*?height: 46,[\s\S]*?borderWidth: 1,[\s\S]*?borderRadius: 10,[\s\S]*?alignItems: "stretch",[\s\S]*?justifyContent: "center"/);
+  assert.match(header, /accessibilityLabel=\{`Edit flight search[\s\S]*?<SquarePen/);
+  assert.match(styles, /flightRouteSummaryCard: \{[\s\S]*?flex: 1,[\s\S]*?minWidth: 0,[\s\S]*?minHeight: 62,[\s\S]*?borderWidth: 1,[\s\S]*?borderRadius: 13,[\s\S]*?flexDirection: "row"/);
   assert.match(styles, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
   assert.match(styles, /flightRouteSummaryEdit: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
   const flightEditStyle = styles.slice(styles.indexOf("flightRouteSummaryEdit:"), styles.indexOf("hotelIntroductoryControls:"));
   assert.doesNotMatch(flightEditStyle, /position: "absolute"|right: 4|top: 4/);
-  assert.match(header, /numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit[\s\S]*?minimumFontScale=\{0\.85\}/);
+  assert.match(header, /flightRouteSummaryText[\s\S]*?\{route\}[\s\S]*?flightRouteSummarySecondary[\s\S]*?\{secondaryLine\}/);
   assert.match(header, /backgroundColor: theme\.surface/);
   assert.match(header, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
   assert.match(styles, /flightHeader: \{[\s\S]*?paddingTop: 12,[\s\S]*?paddingBottom: 8/);
@@ -106,16 +94,14 @@ test("Flight Results header separates Back, route summary, and Edit controls", (
   assert.match(header, /color: theme\.textPrimary/);
 });
 
-test("Flight Results route uses compact centered typography", () => {
+test("Flight Results route uses the left-aligned two-line Web hierarchy", () => {
   const routeTextStyle = styles.slice(styles.indexOf("flightRouteSummaryText:"), styles.indexOf("flightRouteSummaryEdit:"));
-  assert.match(routeTextStyle, /width: "100%"/);
-  assert.match(routeTextStyle, /paddingHorizontal: 14/);
   assert.match(routeTextStyle, /fontSize: 14/);
-  assert.match(routeTextStyle, /lineHeight: 20/);
+  assert.match(routeTextStyle, /lineHeight: 18/);
   assert.match(routeTextStyle, /fontWeight: "700"/);
   assert.match(routeTextStyle, /fontFamily: appFonts\.bold/);
-  assert.match(routeTextStyle, /textAlign: "center"/);
-  assert.doesNotMatch(routeTextStyle, /paddingHorizontal: 52|fontSize: 18|textAlign: "left"/);
+  assert.match(routeTextStyle, /flightRouteSummarySecondary: \{ marginTop: 3, fontSize: 10\.5, lineHeight: 14/);
+  assert.doesNotMatch(routeTextStyle, /textAlign: "center"/);
 });
 
 test("visible Flight Results labels use scoped Inter families", () => {

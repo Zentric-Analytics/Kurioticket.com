@@ -5,19 +5,21 @@ import test from "node:test";
 
 const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
 const flightCard = source.slice(source.indexOf("function FlightCard"), source.indexOf("function FlightJourneyRow"));
-const footerStyles = source.slice(source.indexOf("  fareRow:"), source.indexOf("  hotelCard:"));
+const footerStyles = source.slice(source.indexOf("  flightCardFooter:"), source.indexOf("  hotelCard:"));
 
 test("the flight card has one subtle theme-aware horizontal metadata divider", () => {
-  assert.match(flightCard, /<View style=\{s0\.fareRow\}>[\s\S]*<View style=\{\[s0\.metadataDivider, \{ backgroundColor: theme\.border \}\]\} \/>[\s\S]*style=\{s0\.metadataRow\}/);
-  assert.equal(flightCard.match(/s0\.metadataDivider/g)?.length, 1);
-  assert.match(footerStyles, /metadataDivider: \{ width: "100%", height: StyleSheet\.hairlineWidth, marginTop: 6, marginBottom: 4 \}/);
+  assert.match(flightCard, /<View style=\{\[s0\.flightCardFooter, \{ borderTopColor: theme\.border \}\]\}>/);
+  assert.equal(flightCard.match(/s0\.flightCardFooter/g)?.length, 1);
+  assert.match(footerStyles, /flightCardFooter: \{[^\n]*borderTopWidth: StyleSheet\.hairlineWidth/);
   assert.doesNotMatch(footerStyles, /borderLeftWidth|borderRightWidth/);
 });
 
 test("flight details navigation is wired to the complete bordered card", () => {
-  assert.match(flightCard, /<Pressable[\s\S]*?accessibilityRole="button"[\s\S]*?onPress=\{\(\) =>[\s\S]*?router\.push\(\{/);
+  assert.match(flightCard, /const openDetails = \(\) => router\.push\(\{/);
+  assert.match(flightCard, /<Pressable[\s\S]*?accessibilityRole="button"[\s\S]*?onPress=\{openDetails\}/);
   assert.match(flightCard, /pathname: "\/flight-details"/);
-  assert.doesNotMatch(flightCard, /View details|detailsButton|detailsButtonText/);
+  assert.match(flightCard, /labels\.viewFlight/);
+  assert.doesNotMatch(flightCard, /detailsButton|detailsButtonText/);
   assert.equal((flightCard.match(/<Pressable/g) || []).length, 1);
   assert.doesNotMatch(flightCard, /stopPropagation|onToggleSaved|favoriteButton/);
   const cardStyle = /card: \{([\s\S]*?)\n  \},/.exec(source)?.[1] ?? "";
@@ -40,6 +42,6 @@ test("the flight card retains its light and dark mode theming", () => {
   assert.match(flightCard, /color: highlightTextColor/);
   assert.match(flightCard, /color: theme\.textPrimary/);
   assert.match(flightCard, /supportTextColor = theme\.dark \? flightSupportText\.dark : flightSupportText\.light/);
-  assert.match(flightCard, /s0\.metadataText, \{ color: supportTextColor \}/);
-  assert.match(flightCard, /backgroundColor: theme\.border/);
+  assert.match(flightCard, /s0\.flightMetadataValue,\{color:supportTextColor\}/);
+  assert.match(flightCard, /borderTopColor: theme\.border/);
 });
