@@ -17,7 +17,7 @@ function Control({ label, active, count, expanded, filterIcon, onPress }: { labe
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ expanded, selected: active }}
-      hitSlop={{ top: 3, bottom: 3, left: 2, right: 2 }}
+      hitSlop={{ top: 2, bottom: 2, left: 2, right: 2 }}
       onPress={onPress}
       style={({ pressed }) => [
         styles.control,
@@ -26,10 +26,10 @@ function Control({ label, active, count, expanded, filterIcon, onPress }: { labe
         pressed && styles.pressed,
       ]}
     >
-      {filterIcon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2} color={foreground} /> : null}
+      {filterIcon ? <SlidersHorizontal accessible={false} size={17} strokeWidth={2} color={foreground} /> : null}
       <Text numberOfLines={1} style={[styles.label, { color: foreground }, active && styles.activeLabel]}>{label}</Text>
       {count ? <View style={[styles.count, { backgroundColor: accent }]}><Text style={styles.countText}>{count}</Text></View> : null}
-      <ChevronDown accessible={false} size={15} strokeWidth={1.9} color={foreground} />
+      <ChevronDown accessible={false} size={16} strokeWidth={1.9} color={foreground} />
     </Pressable>
   );
 }
@@ -48,11 +48,11 @@ export function FlightResultsQuickControls({ sort, activeFilterCount, airlineCou
 }
 
 const styles = StyleSheet.create({
-  rail: { height: 44, flexGrow: 0 },
-  content: { paddingHorizontal: 14, paddingVertical: 3, gap: 8, alignItems: "center", flexWrap: "nowrap" },
-  control: { height: 38, minHeight: 38, flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderRadius: 9, paddingHorizontal: 10 },
+  rail: { height: 46, flexGrow: 0 },
+  content: { paddingHorizontal: 14, paddingVertical: 2, gap: 8, alignItems: "center", flexWrap: "nowrap" },
+  control: { height: 42, minHeight: 42, flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12 },
   pressed: { opacity: 0.82, transform: [{ scale: 0.985 }] },
-  label: { fontSize: 11.5, lineHeight: 15, fontWeight: "600", fontFamily: appFonts.semibold },
+  label: { fontSize: 13, lineHeight: 17, fontWeight: "600", fontFamily: appFonts.semibold },
   activeLabel: { fontWeight: "700", fontFamily: appFonts.bold },
   count: { minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 5, alignItems: "center", justifyContent: "center" },
   countText: { color: "white", fontSize: 10, lineHeight: 13, fontWeight: "800", fontFamily: appFonts.extraBold },

@@ -11,20 +11,16 @@ test("Flight Results price alert maps its existing weights to Inter faces", () =
   assert.match(source, /flightAlertSubtitle: \{ fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts\.medium \}/);
 });
 
-test("Flight Results price alert has the approved compact, content-driven footprint", () => {
-  const bannerStyle = source.slice(source.indexOf("flightAlert: {"), source.indexOf("flightAlertCopy: {"));
-  assert.match(bannerStyle, /borderRadius: 10/);
-  assert.match(bannerStyle, /borderWidth: 1/);
-  assert.match(bannerStyle, /paddingHorizontal: 10/);
-  assert.match(bannerStyle, /paddingVertical: 0/);
+test("Flight Results price alert uses a compact visual switch inside a 44-point target", () => {
+  const bannerStyle = source.slice(source.indexOf("flightAlertCompact: {"), source.indexOf("flightAlertCopy: {"));
+  assert.match(bannerStyle, /maxWidth: "58%"/);
+  assert.match(bannerStyle, /minHeight: 44/);
   assert.match(bannerStyle, /flexDirection: "row"/);
-  assert.match(bannerStyle, /gap: 4/);
-  assert.doesNotMatch(bannerStyle, /(?:minHeight|height):/);
-  assert.match(source, /flightPriceAlertItem: \{ paddingHorizontal: 14, paddingTop: 8, paddingBottom: 6 \}/);
+  assert.match(bannerStyle, /gap: 2/);
   assert.match(source, /flightAlertCopy: \{ flex: 1, minWidth: 0, gap: 1 \}/);
-  assert.match(source, /flightAlertSwitchTarget: \{ minWidth: 48, minHeight: 48/);
-  assert.match(source, /numberOfLines=\{1\} ellipsizeMode="tail">Get notified when fares change<\/Text>/);
-  assert.match(flightAlert, /flightAlertSubtitle, \{ color: supportTextColor \}/);
+  assert.match(source, /flightAlertSwitchTarget: \{ width: 44, height: 44/);
+  assert.match(source, /flightAlertSwitchVisual: \{ transform: \[\{ scaleX: 0\.78 \}, \{ scaleY: 0\.78 \}\] \}/);
+  assert.match(flightAlert, /compact \? null : <Text[\s\S]*Get notified when fares change<\/Text>/);
 });
 
 test("Flight Results price alert uses a neutral semantic surface and restrained border", () => {

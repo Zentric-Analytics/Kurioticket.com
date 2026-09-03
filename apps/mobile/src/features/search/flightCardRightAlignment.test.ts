@@ -24,10 +24,10 @@ test("arrival and price terminate on the shared right edge", () => {
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch"/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.doesNotMatch(source, /priceBox:/);
-  assert.match(source, /flightFareAction: \{ width: 116, minWidth: 0, alignItems: "flex-end"/);
+  assert.match(source, /flightFareAction: \{ maxWidth: "58%", minWidth: 116, alignItems: "flex-end"/);
   assert.match(source, /estimatedPrice: \{ fontSize: 10, lineHeight: 13, fontWeight: "700", fontFamily: appFonts\.bold, letterSpacing: 0\.7, textAlign: "right" \}/);
   assert.match(source, /providerPrice: \{[^}]*fontSize: 11, lineHeight: 14[^}]*textAlign: "right"/);
-  assert.match(source, /flightCardFooter: \{[^\n]*flexDirection: "row"/);
+  assert.match(source, /flightFareRow: \{[^\n]*flexDirection: "row"[^\n]*justifyContent: "flex-end"/);
   assert.doesNotMatch(source, /actionColumn:/);
   assert.doesNotMatch(card, /marginRight/);
   const fareRowStyle = /flightFareAction: \{([^}]*)\}/.exec(source)?.[1] ?? "";
@@ -67,7 +67,7 @@ test("long fares stay readable without changing details navigation or theme beha
   assert.match(card, /shadowColor: theme\.dark \?/);
 });
 
-test("the Web-aligned fare action contains the only displayed fare", () => {
+test("the compact fare action contains the only displayed fare and details control", () => {
   const fareRow = card.slice(card.indexOf('<View style={s0.flightFareAction}>'), card.indexOf('</Pressable>'));
 
   assert.equal(card.match(/\{fare\?\.formatted \?\? "—"\}/g)?.length, 1);
@@ -82,8 +82,9 @@ test("the Web-aligned fare action contains the only displayed fare", () => {
   assert.match(fareRow, /providerFare \? \([\s\S]*Provider price: \{providerFare\.formatted\}/);
   assert.doesNotMatch(fareRow, /Provider price: \{providerFare\.formatted\} \{providerFare\.currency\}/);
   assert.doesNotMatch(fareRow, /US\$|A\$|CA\$|Per traveler|Round trip|One way|Taxes included|From/);
-  assert.doesNotMatch(fareRow, /<Pressable|View details/);
-  assert.match(fareRow, /labels\.viewFlight/);
+  assert.match(fareRow, /<Pressable[\s\S]*accessibilityLabel=\{`View deal for \$\{result\.airlineName\}, \$\{fareAccessibility\}`\}/);
+  assert.match(fareRow, />View deal<\/Text>/);
+  assert.doesNotMatch(fareRow, /labels\.viewFlight|View details/);
   assert.ok(card.indexOf('<View style={s0.journeyList}>') < card.indexOf('<View style={s0.flightFareAction}>'));
   assert.match(card, /provider price \$\{providerFare\.accessibilityLabel\}/);
   assert.match(card, /pathname: "\/flight-details"/);
