@@ -15,7 +15,7 @@ import {
   FilePenLine,
   SlidersHorizontal,
 } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
@@ -27,6 +27,7 @@ import {
   shiftCalendarDate,
   type DateStripPrice,
 } from "./dateStripModel";
+import type { NearbyFareState } from "./nearbyFareModel";
 import { currencyAccessibilityLabel, formatCurrency } from "../currency/displayCurrency";
 
 export const ui = {
@@ -211,22 +212,28 @@ export function Pill({
 export function DateStrip({
   date,
   priceByDate,
+  fareStateByDate,
   currency = "USD",
   flightResults = false,
   nearbyIntelligence = false,
   displayCurrency,
+  searchIdentity,
   onSelect,
 }: {
   date: string;
   priceByDate: Record<string, DateStripPrice>;
+  fareStateByDate?: Record<string, NearbyFareState>;
   currency?: string;
   flightResults?: boolean;
   nearbyIntelligence?: boolean;
   displayCurrency?: string;
+  searchIdentity?: string;
   onSelect: (v: string) => void;
 }) {
   const { theme } = useAppTheme();
   const { width: windowWidth } = useWindowDimensions();
+  const railRef = useRef<ScrollView>(null);
+  const centeredIdentity = useRef<string | undefined>(undefined);
   // Keep three dates fully visible while letting the narrower fourth tile peek into view.
   const flightDateWidth = Math.min(96, Math.max(76, (windowWidth - 43) / 3.65));
   const [visibleStart, setVisibleStart] = useState(() =>
@@ -243,6 +250,22 @@ export function DateStrip({
     : null;
   const moveWindow = (days: number) =>
     setVisibleStart((current) => shiftCalendarDate(current, days));
+  const centerSelectedDate = () => {
+    if (!flightResults || !searchIdentity || centeredIdentity.current === searchIdentity) return;
+    const selectedIndex = visibleDates.indexOf(date);
+    if (selectedIndex < 0) return;
+    centeredIdentity.current = searchIdentity;
+    const tileStride = flightDateWidth + 9;
+    railRef.current?.scrollTo({
+      x: Math.max(0, selectedIndex * tileStride - (windowWidth - flightDateWidth) / 2 + 16),
+      animated: false,
+    });
+  };
+  useEffect(() => {
+    if (!flightResults || !searchIdentity) return;
+    const frame = requestAnimationFrame(centerSelectedDate);
+    return () => cancelAnimationFrame(frame);
+  }, [date, flightResults, searchIdentity, visibleStart, windowWidth]);
 
   return (
     <>
@@ -258,24 +281,33 @@ export function DateStrip({
         </Pressable>
       ) : null}
       <ScrollView
+        ref={railRef}
         horizontal
         style={[s.dateRail, flightResults && s.flightDateRail]}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={[s.dates, flightResults && s.flightDates]}
+        onContentSizeChange={centerSelectedDate}
       >
         {visibleDates.map((iso) => {
           const x = parseCalendarDate(iso);
           const active = iso === date;
           const price = priceByDate[iso];
+          const fareState = fareStateByDate?.[iso];
           const hasPrice = price != null;
+          const fareLabel = hasPrice
+            ? price.accessibilityLabel
+            : fareState?.status === "loading" ? "fare loading"
+            : fareState?.status === "unavailable" ? "fare unavailable"
+            : fareState?.status === "error" ? "fare could not be checked"
+            : "fare not checked";
           const fullDate = x.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
           return (
             <Pressable
               key={iso}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
-              accessibilityLabel={flightResults ? `${fullDate}, ${hasPrice ? price.accessibilityLabel : "fare not checked"}` : undefined}
-              onPress={() => onSelect(iso)}
+              accessibilityLabel={flightResults ? `${fullDate}, ${fareLabel}` : undefined}
+              onPress={() => { if (!active) onSelect(iso); }}
               hitSlop={flightResults ? 6 : undefined}
               style={({ pressed }) => [
                 s.date,
@@ -342,8 +374,10 @@ export function DateStrip({
                     flightResults && nearbySuggestion?.date === iso && !active && { color: ui.green },
                   ]}
                 >
-                  {hasPrice
-                    ? (price.formatted ?? money(currency, price.amount))
+                  {hasPrice ? (price.formatted ?? money(currency, price.amount))
+                    : fareState?.status === "loading" ? "•••"
+                    : fareState?.status === "unavailable" ? "No fare"
+                    : fareState?.status === "error" ? "Try later"
                     : "—"}
                 </Text>
               ) : null}
