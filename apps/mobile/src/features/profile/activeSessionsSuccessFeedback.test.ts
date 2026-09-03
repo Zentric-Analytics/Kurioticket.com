@@ -36,7 +36,7 @@ test("session success is transient, restartable, announced, and cleared on close
 
 test("session success is a viewport-anchored compact pill with theme-aware contrast", () => {
   const modalStart = source.indexOf('<ScreenModal visible={devicesOpen}');
-  const modalEnd = source.indexOf('<ScreenModal visible={activityOpen}', modalStart);
+  const modalEnd = source.indexOf('<ScreenModal visible={twoFactorOpen}', modalStart);
   const modal = source.slice(modalStart, modalEnd);
   const notice = source.slice(source.indexOf("function SessionSuccessNotice"), source.indexOf("function Button"));
   assert.match(modal, /overlay=\{<>\<SessionSuccessNotice message=\{devicesSuccess\} sequence=\{devicesSuccessSequence\} \/>\{sessionSheet\}<\/>\}/);
