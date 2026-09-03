@@ -134,7 +134,7 @@ test("Dubai reads and toggles the canonical identity shared with Explore", () =>
 });
 
 test("an unresolved Home card warns in development and never toggles its raw ID", () => {
-  assert.equal(resolvePopularDestinationStay({ canonicalDestinationId: "not-real" }), undefined);
+  assert.equal(resolvePopularDestinationStay({ savedDestinationId: "not-real" }), undefined);
   assert.match(section, /__DEV__ && !canonicalDestination/);
   assert.match(section, /Could not resolve \$\{destination\.id\}/);
   assert.match(section, /if \(canonicalDestination\) \{\s*toggle\(canonicalDestination\.id\)/);
@@ -279,4 +279,13 @@ test("promoted Home Hotel navigation cannot regress to city-only re-resolution o
   assert.doesNotMatch(dataSource, /destinationByUnambiguousName\(destination\.city\)/);
   assert.doesNotMatch(navigationSource, /return [^;]*["']\/hotels["']/);
   assert.match(navigationSource, /pathname: ["']\/hotel-results["']/);
+});
+
+test("Hotel search identity and Native saved-destination identity remain explicit when catalogues use different IDs", () => {
+  const rio = getPopularDestinationStays("BR", "https://kurioticket.com")
+    .find(({ city }) => city === "Rio de Janeiro");
+  assert.ok(rio);
+  assert.equal(rio.canonicalDestinationId, "br-rio");
+  assert.equal(rio.savedDestinationId, "br-rio-de-janeiro");
+  assert.equal(resolvePopularDestinationStay(rio), destinationById.get("br-rio-de-janeiro"));
 });
