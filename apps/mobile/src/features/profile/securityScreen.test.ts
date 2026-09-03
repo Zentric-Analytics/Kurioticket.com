@@ -192,9 +192,47 @@ test("session rows trust isCurrent and require menu plus confirmation before rev
   assert.match(row, /onPress=\{\(\)=>onManage\(item\)\}/);
   assert.doesNotMatch(row, /revokeSecuritySession/);
   assert.match(security, /visible=\{Boolean\(managedSession\)\}/);
-  assert.match(security, /if\(item\)remove\(item\)/);
+  assert.match(security, /setManagedSession\(null\);remove\(item\)/);
   assert.match(security, /Alert\.alert\(c\.removeTitle, c\.removeBody,[^;]+onPress: \(\) => void travelApi\.revokeSecuritySession\(item\.id\)/);
   assert.match(security, /revokeSecuritySession\(item\.id\)\.then\(\(\) => load\(\{ showLandingFeedback: false, showLoading: false \}\)\)/);
+});
+
+test("active sessions group the authoritative current device before sorted other sessions", () => {
+  assert.match(security, /sessions\.find\(item => item\.isCurrent === true\)/);
+  assert.match(security, /sessions\.filter\(item => item\.isCurrent === false\)\.sort\(\(a,b\) => new Date\(b\.lastSeenAt\)\.getTime\(\)-new Date\(a\.lastSeenAt\)\.getTime\(\)\)/);
+  assert.match(security, /\{c\.thisDevice\}.*<SessionRow item=\{currentSession\}/s);
+  assert.match(security, /otherSessions\.length \? .*\{c\.otherSessions\}/s);
+  assert.match(security, /item\.isCurrent\?copy\.activeNow/);
+});
+
+test("session cards open one safe details sheet and only other sessions can remove", () => {
+  const row = security.slice(security.indexOf("function SessionRow"), security.indexOf("function BottomSheet"));
+  assert.match(row, /return <Pressable accessibilityRole="button" accessibilityLabel=\{accessibilityLabel\} onPress=\{\(\)=>onManage\(item\)\}/);
+  assert.match(row, /event\.stopPropagation\(\);onManage\(item\)/);
+  assert.match(security, /managedSession && !managedSession\.isCurrent\?<Pressable/);
+  assert.match(security, /managedSession\.isCurrent\?`\$\{c\.currentDevice\} · \$\{c\.activeNow\}`/);
+  assert.doesNotMatch(row, /maskedIp|item\.id/);
+});
+
+test("signing out other sessions is confirmed, reconciles immediately, reloads, and never clears the current bearer", () => {
+  const action = security.slice(security.indexOf("const signOutOthers"), security.indexOf("const all"));
+  assert.match(action, /Alert\.alert\(c\.signOutOthersTitle,c\.signOutOthersBody/);
+  assert.match(action, /travelApi\.revokeOtherSecuritySessions\(\)\.then\(\(\)=>\{/);
+  assert.match(action, /setSessions\(current=>current\.filter\(item=>item\.isCurrent\)\)/);
+  assert.match(action, /setManagedSession\(null\)/);
+  assert.match(action, /setDevicesError\(""\)/);
+  assert.match(action, /void load\(\{showLandingFeedback:false,showLoading:false\}\)/);
+  assert.doesNotMatch(action, /clearSession|router\.replace|revokeAllSecuritySessions/);
+  assert.match(security, /otherSessions\.length \? .*\{c\.signOutOthers\}/s);
+});
+
+test("session presentation uses human labels and graceful legacy fallbacks", () => {
+  const formatter = security.slice(security.indexOf("export function sessionPresentation"), security.indexOf("function SessionRow"));
+  assert.match(formatter, /platform==="ios"\?copy\.iphone/);
+  assert.match(formatter, /platform==="android"\?copy\.android/);
+  assert.match(formatter, /copy\.mobileDevice/);
+  assert.match(formatter, /copy\.webBrowser/);
+  assert.doesNotMatch(formatter, /Unknown platform|"MOBILE"\)|"WEB"/);
 });
 
 test("session details localize canonical mobile platforms and omit legacy unknown metadata", () => {

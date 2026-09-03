@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { getPrisma } from "@/lib/prisma";
-import { revokeAllSessions, revokeSession } from "@/lib/account-session";
+import { revokeAllSessions, revokeOtherSessions, revokeSession } from "@/lib/account-session";
 import { deliverSecurityEvent } from "@/services/securityEventService";
 
 export const passwordChangeSchema = z.object({
@@ -24,7 +24,7 @@ export async function saveSecurityAlerts(userId: string, securityEmailAlerts: bo
 
 export async function activeSecuritySessions(userId: string, currentId: string) {
   const rows = await getPrisma().accountSession.findMany({ where: { userId, revokedAt: null, expiresAt: { gt: new Date() } }, orderBy: { lastSeenAt: "desc" }, select: { id:true, client:true, platform:true, deviceLabel:true, browser:true, os:true, maskedIp:true, lastSeenAt:true } });
-  return rows.map(row => ({ ...row, deviceLabel: row.deviceLabel || (row.client === "MOBILE" ? "Mobile device" : "Web browser"), browser: row.browser || (row.client === "MOBILE" ? "Kurioticket app" : "Browser"), os: row.os || row.platform || "Unknown platform", isCurrent: row.id === currentId }));
+  return rows.map(row => ({ ...row, deviceLabel: row.deviceLabel || (row.client === "MOBILE" ? "Mobile device" : "Web browser"), isCurrent: row.id === currentId }));
 }
 
 export async function securityActivity(userId: string) {
@@ -50,6 +50,7 @@ export async function changePassword(input: { userId: string; email: string; cur
 }
 
 export { revokeSession };
+export { revokeOtherSessions };
 export async function signOutEverywhere(userId: string, email: string) {
   const event = await revokeAllSessions(userId);
   await deliverSecurityEvent({ userId, email, securityEventId:event.id, title:"Signed out everywhere", body:"All devices were signed out of your Kurioticket account. If this wasn’t you, reset your password immediately." }).catch(() => undefined);

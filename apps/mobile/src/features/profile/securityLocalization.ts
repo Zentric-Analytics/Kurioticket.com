@@ -96,9 +96,9 @@ const englishSecurityCopy = {
   "iphone": "iPhone",
   "android": "Android"
 } as const;
-export type SecurityCopy = { [K in keyof typeof englishSecurityCopy]: string };
+type BaseSecurityCopy = { [K in keyof typeof englishSecurityCopy]: string };
 
-const es_es: SecurityCopy = {
+const es_es: BaseSecurityCopy = {
   "title": "Seguridad",
   "intro": "Gestiona el acceso y la seguridad de tu cuenta de Kurioticket.",
   "loading": "Cargando configuración de seguridad…",
@@ -195,7 +195,7 @@ const es_es: SecurityCopy = {
   "android": "Android"
 };
 
-const fr: SecurityCopy = {
+const fr: BaseSecurityCopy = {
   "title": "Sécurité",
   "intro": "Modifiez vos paramètres de sécurité, configurez une authentification sécurisée ou gérez l’accès au compte.",
   "loading": "Loading security settings…",
@@ -292,7 +292,7 @@ const fr: SecurityCopy = {
   "android": "Android"
 };
 
-const de_de: SecurityCopy = {
+const de_de: BaseSecurityCopy = {
   "title": "Sicherheit",
   "intro": "Ändern Sie Ihre Sicherheitseinstellungen, richten Sie sichere Authentifizierung ein oder verwalten Sie den Kontozugriff.",
   "loading": "Loading security settings…",
@@ -389,7 +389,7 @@ const de_de: SecurityCopy = {
   "android": "Android"
 };
 
-const it_it: SecurityCopy = {
+const it_it: BaseSecurityCopy = {
   "title": "Impostazioni di sicurezza",
   "intro": "Modifica le impostazioni di sicurezza, configura l’autenticazione sicura o gestisci l’accesso all’account.",
   "loading": "Loading security settings…",
@@ -486,7 +486,7 @@ const it_it: SecurityCopy = {
   "android": "Android"
 };
 
-const pt_br: SecurityCopy = {
+const pt_br: BaseSecurityCopy = {
   "title": "Segurança",
   "intro": "Atualize sua senha e gerencie a segurança da conta.",
   "loading": "Loading security settings…",
@@ -583,7 +583,7 @@ const pt_br: SecurityCopy = {
   "android": "Android"
 };
 
-const nl: SecurityCopy = {
+const nl: BaseSecurityCopy = {
   "title": "Beveiliging",
   "intro": "Werk je wachtwoord bij en beheer je accountbeveiliging.",
   "loading": "Loading security settings…",
@@ -680,7 +680,7 @@ const nl: SecurityCopy = {
   "android": "Android"
 };
 
-const ar: SecurityCopy = {
+const ar: BaseSecurityCopy = {
   "title": "Security",
   "intro": "حدّث كلمة المرور وأدر أمان الحساب.",
   "loading": "Loading security settings…",
@@ -777,7 +777,7 @@ const ar: SecurityCopy = {
   "android": "Android"
 };
 
-const zh_cn: SecurityCopy = {
+const zh_cn: BaseSecurityCopy = {
   "title": "Security",
   "intro": "更新你的密码并管理账户安全。",
   "loading": "Loading security settings…",
@@ -874,7 +874,7 @@ const zh_cn: SecurityCopy = {
   "android": "Android"
 };
 
-const ja: SecurityCopy = {
+const ja: BaseSecurityCopy = {
   "title": "Security",
   "intro": "パスワードを更新し、アカウントのセキュリティを管理します。",
   "loading": "Loading security settings…",
@@ -971,7 +971,7 @@ const ja: SecurityCopy = {
   "android": "Android"
 };
 
-const ko: SecurityCopy = {
+const ko: BaseSecurityCopy = {
   "title": "Security",
   "intro": "비밀번호를 업데이트하고 계정 보안을 관리하세요.",
   "loading": "Loading security settings…",
@@ -1068,7 +1068,7 @@ const ko: SecurityCopy = {
   "android": "Android"
 };
 
-const hi: SecurityCopy = {
+const hi: BaseSecurityCopy = {
   "title": "Security",
   "intro": "अपना पासवर्ड अपडेट करें और खाते की सुरक्षा प्रबंधित करें।",
   "loading": "Loading security settings…",
@@ -1165,7 +1165,7 @@ const hi: SecurityCopy = {
   "android": "Android"
 };
 
-const tr: SecurityCopy = {
+const tr: BaseSecurityCopy = {
   "title": "Security",
   "intro": "Şifrenizi güncelleyin ve hesap güvenliğinizi yönetin.",
   "loading": "Loading security settings…",
@@ -1262,7 +1262,7 @@ const tr: SecurityCopy = {
   "android": "Android"
 };
 
-const pl: SecurityCopy = {
+const pl: BaseSecurityCopy = {
   "title": "Security",
   "intro": "Zarządzaj logowaniem i bezpieczeństwem swojego konta Kurioticket.",
   "loading": "Loading security settings…",
@@ -1359,7 +1359,7 @@ const pl: SecurityCopy = {
   "android": "Android"
 };
 
-const sv: SecurityCopy = {
+const sv: BaseSecurityCopy = {
   "title": "Security",
   "intro": "Hantera inloggning och kontosäkerhet för ditt Kurioticket-konto.",
   "loading": "Loading security settings…",
@@ -1456,7 +1456,7 @@ const sv: SecurityCopy = {
   "android": "Android"
 };
 
-const id: SecurityCopy = {
+const id: BaseSecurityCopy = {
   "title": "Security",
   "intro": "Kelola masuk dan keamanan akun untuk akun Kurioticket Anda.",
   "loading": "Loading security settings…",
@@ -1553,7 +1553,7 @@ const id: SecurityCopy = {
   "android": "Android"
 };
 
-const th: SecurityCopy = {
+const th: BaseSecurityCopy = {
   "title": "Security",
   "intro": "จัดการการเข้าสู่ระบบและความปลอดภัยของบัญชี Kurioticket ของคุณ",
   "loading": "Loading security settings…",
@@ -1650,7 +1650,7 @@ const th: SecurityCopy = {
   "android": "Android"
 };
 
-const vi: SecurityCopy = {
+const vi: BaseSecurityCopy = {
   "title": "Security",
   "intro": "Quản lý đăng nhập và bảo mật tài khoản Kurioticket của bạn.",
   "loading": "Loading security settings…",
@@ -1747,7 +1747,31 @@ const vi: SecurityCopy = {
   "android": "Android"
 };
 
-export const securityCopy: Record<MobileLocale, SecurityCopy> = { "en-us": englishSecurityCopy, "es-es": es_es, "fr": fr, "de-de": de_de, "it-it": it_it, "pt-br": pt_br, "nl": nl, "ar": ar, "zh-cn": zh_cn, "ja": ja, "ko": ko, "hi": hi, "tr": tr, "pl": pl, "sv": sv, "id": id, "th": th, "vi": vi };
+const sessionCopy = {
+  "en-us": ["This device", "Other sessions", "Active now", "Session details", "Sign out all other sessions", "Sign out all other sessions?", "Every other device will be signed out of your Kurioticket account. This device will stay signed in.", "Sign out others", "Unable to sign out other devices. Try again.", "Mobile device", "Web browser", "Opens session details"],
+  "es-es": ["Este dispositivo", "Otras sesiones", "Activo ahora", "Detalles de la sesión", "Cerrar todas las demás sesiones", "¿Cerrar todas las demás sesiones?", "Se cerrará la sesión de los demás dispositivos en tu cuenta de Kurioticket. Este dispositivo seguirá conectado.", "Cerrar las demás", "No se pudieron cerrar las demás sesiones. Inténtalo de nuevo.", "Dispositivo móvil", "Navegador web", "Abre los detalles de la sesión"],
+  "fr": ["Cet appareil", "Autres sessions", "Actif maintenant", "Détails de la session", "Déconnecter toutes les autres sessions", "Déconnecter toutes les autres sessions ?", "Tous les autres appareils seront déconnectés de votre compte Kurioticket. Cet appareil restera connecté.", "Déconnecter les autres", "Impossible de déconnecter les autres appareils. Réessayez.", "Appareil mobile", "Navigateur web", "Ouvre les détails de la session"],
+  "de-de": ["Dieses Gerät", "Andere Sitzungen", "Jetzt aktiv", "Sitzungsdetails", "Alle anderen Sitzungen abmelden", "Alle anderen Sitzungen abmelden?", "Alle anderen Geräte werden von Ihrem Kurioticket-Konto abgemeldet. Dieses Gerät bleibt angemeldet.", "Andere abmelden", "Andere Geräte konnten nicht abgemeldet werden. Versuchen Sie es erneut.", "Mobilgerät", "Webbrowser", "Öffnet Sitzungsdetails"],
+  "it-it": ["Questo dispositivo", "Altre sessioni", "Attivo ora", "Dettagli sessione", "Disconnetti tutte le altre sessioni", "Disconnettere tutte le altre sessioni?", "Tutti gli altri dispositivi verranno disconnessi dal tuo account Kurioticket. Questo dispositivo resterà connesso.", "Disconnetti gli altri", "Impossibile disconnettere gli altri dispositivi. Riprova.", "Dispositivo mobile", "Browser web", "Apre i dettagli della sessione"],
+  "pt-br": ["Este dispositivo", "Outras sessões", "Ativo agora", "Detalhes da sessão", "Sair de todas as outras sessões", "Sair de todas as outras sessões?", "Todos os outros dispositivos serão desconectados da sua conta Kurioticket. Este dispositivo continuará conectado.", "Sair das outras", "Não foi possível desconectar os outros dispositivos. Tente novamente.", "Dispositivo móvel", "Navegador web", "Abre os detalhes da sessão"],
+  "nl": ["Dit apparaat", "Andere sessies", "Nu actief", "Sessiedetails", "Alle andere sessies afmelden", "Alle andere sessies afmelden?", "Elk ander apparaat wordt afgemeld bij je Kurioticket-account. Dit apparaat blijft aangemeld.", "Andere afmelden", "Andere apparaten konden niet worden afgemeld. Probeer opnieuw.", "Mobiel apparaat", "Webbrowser", "Opent sessiedetails"],
+  "ar": ["هذا الجهاز", "الجلسات الأخرى", "نشط الآن", "تفاصيل الجلسة", "تسجيل الخروج من جميع الجلسات الأخرى", "تسجيل الخروج من جميع الجلسات الأخرى؟", "سيتم تسجيل خروج كل جهاز آخر من حسابك في Kurioticket. سيظل هذا الجهاز مسجلاً.", "تسجيل خروج الآخرين", "تعذر تسجيل خروج الأجهزة الأخرى. حاول مرة أخرى.", "جهاز محمول", "متصفح ويب", "يفتح تفاصيل الجلسة"],
+  "zh-cn": ["此设备", "其他会话", "当前活跃", "会话详情", "退出所有其他会话", "退出所有其他会话？", "所有其他设备都将退出你的 Kurioticket 帐户。此设备将保持登录。", "退出其他设备", "无法退出其他设备，请重试。", "移动设备", "网页浏览器", "打开会话详情"],
+  "ja": ["このデバイス", "その他のセッション", "現在アクティブ", "セッションの詳細", "他のすべてのセッションからサインアウト", "他のすべてのセッションからサインアウトしますか？", "他のすべてのデバイスがKurioticketアカウントからサインアウトされます。このデバイスはサインインしたままです。", "他をサインアウト", "他のデバイスからサインアウトできませんでした。もう一度お試しください。", "モバイルデバイス", "ウェブブラウザ", "セッションの詳細を開きます"],
+  "ko": ["이 기기", "다른 세션", "현재 활성", "세션 세부정보", "다른 모든 세션에서 로그아웃", "다른 모든 세션에서 로그아웃할까요?", "다른 모든 기기가 Kurioticket 계정에서 로그아웃됩니다. 이 기기는 로그인 상태를 유지합니다.", "다른 기기 로그아웃", "다른 기기에서 로그아웃할 수 없습니다. 다시 시도하세요.", "모바일 기기", "웹 브라우저", "세션 세부정보 열기"],
+  "hi": ["यह डिवाइस", "अन्य सत्र", "अभी सक्रिय", "सत्र विवरण", "अन्य सभी सत्रों से साइन आउट करें", "अन्य सभी सत्रों से साइन आउट करें?", "हर अन्य डिवाइस आपके Kurioticket खाते से साइन आउट हो जाएगा। यह डिवाइस साइन इन रहेगा।", "अन्य से साइन आउट", "अन्य डिवाइस से साइन आउट नहीं हो सका। फिर कोशिश करें।", "मोबाइल डिवाइस", "वेब ब्राउज़र", "सत्र विवरण खोलता है"],
+  "tr": ["Bu cihaz", "Diğer oturumlar", "Şimdi etkin", "Oturum ayrıntıları", "Diğer tüm oturumları kapat", "Diğer tüm oturumlar kapatılsın mı?", "Diğer tüm cihazların Kurioticket hesabınızdaki oturumu kapatılacak. Bu cihazın oturumu açık kalacak.", "Diğerlerini kapat", "Diğer cihazların oturumu kapatılamadı. Tekrar deneyin.", "Mobil cihaz", "Web tarayıcısı", "Oturum ayrıntılarını açar"],
+  "pl": ["To urządzenie", "Inne sesje", "Aktywne teraz", "Szczegóły sesji", "Wyloguj wszystkie inne sesje", "Wylogować wszystkie inne sesje?", "Wszystkie inne urządzenia zostaną wylogowane z konta Kurioticket. To urządzenie pozostanie zalogowane.", "Wyloguj inne", "Nie udało się wylogować innych urządzeń. Spróbuj ponownie.", "Urządzenie mobilne", "Przeglądarka internetowa", "Otwiera szczegóły sesji"],
+  "sv": ["Den här enheten", "Andra sessioner", "Aktiv nu", "Sessionsinformation", "Logga ut alla andra sessioner", "Logga ut alla andra sessioner?", "Alla andra enheter loggas ut från ditt Kurioticket-konto. Den här enheten förblir inloggad.", "Logga ut andra", "Det gick inte att logga ut andra enheter. Försök igen.", "Mobil enhet", "Webbläsare", "Öppnar sessionsinformation"],
+  "id": ["Perangkat ini", "Sesi lain", "Aktif sekarang", "Detail sesi", "Keluar dari semua sesi lain", "Keluar dari semua sesi lain?", "Semua perangkat lain akan keluar dari akun Kurioticket Anda. Perangkat ini akan tetap masuk.", "Keluar dari yang lain", "Tidak dapat keluar dari perangkat lain. Coba lagi.", "Perangkat seluler", "Browser web", "Membuka detail sesi"],
+  "th": ["อุปกรณ์นี้", "เซสชันอื่น", "ใช้งานอยู่ขณะนี้", "รายละเอียดเซสชัน", "ออกจากระบบเซสชันอื่นทั้งหมด", "ออกจากระบบเซสชันอื่นทั้งหมดหรือไม่?", "อุปกรณ์อื่นทุกเครื่องจะออกจากบัญชี Kurioticket ของคุณ อุปกรณ์นี้จะยังคงเข้าสู่ระบบ", "ออกจากระบบอุปกรณ์อื่น", "ไม่สามารถออกจากระบบอุปกรณ์อื่นได้ โปรดลองอีกครั้ง", "อุปกรณ์มือถือ", "เว็บเบราว์เซอร์", "เปิดรายละเอียดเซสชัน"],
+  "vi": ["Thiết bị này", "Các phiên khác", "Đang hoạt động", "Chi tiết phiên", "Đăng xuất tất cả phiên khác", "Đăng xuất tất cả phiên khác?", "Mọi thiết bị khác sẽ đăng xuất khỏi tài khoản Kurioticket của bạn. Thiết bị này sẽ vẫn đăng nhập.", "Đăng xuất thiết bị khác", "Không thể đăng xuất các thiết bị khác. Vui lòng thử lại.", "Thiết bị di động", "Trình duyệt web", "Mở chi tiết phiên"]
+} satisfies Record<MobileLocale, readonly [string,string,string,string,string,string,string,string,string,string,string,string]>;
+const sessionKeys = ["thisDevice", "otherSessions", "activeNow", "sessionDetails", "signOutOthers", "signOutOthersTitle", "signOutOthersBody", "signOutOthersConfirm", "signOutOthersFailed", "mobileDevice", "webBrowser", "opensSessionDetails"] as const;
+type SessionCopy = Record<(typeof sessionKeys)[number], string>;
+export type SecurityCopy = BaseSecurityCopy & SessionCopy;
+const baseSecurityCopy: Record<MobileLocale, BaseSecurityCopy> = { "en-us": englishSecurityCopy, "es-es": es_es, "fr": fr, "de-de": de_de, "it-it": it_it, "pt-br": pt_br, "nl": nl, "ar": ar, "zh-cn": zh_cn, "ja": ja, "ko": ko, "hi": hi, "tr": tr, "pl": pl, "sv": sv, "id": id, "th": th, "vi": vi };
+export const securityCopy = Object.fromEntries(mobileLocaleCodes.map(locale => [locale, { ...baseSecurityCopy[locale], ...Object.fromEntries(sessionKeys.map((key, index) => [key, sessionCopy[locale][index]])) }])) as Record<MobileLocale, SecurityCopy>;
 export const securityEventTypes = ["PASSWORD_CHANGED","SIGN_IN","MOBILE_SESSION_CREATED","SESSION_REVOKED","ALL_SESSIONS_REVOKED"] as const;
 export type SecurityEventType = typeof securityEventTypes[number];
 export const securityEventLabels: Record<SecurityEventType, Record<MobileLocale,string>> = Object.fromEntries(securityEventTypes.map(type => [type, Object.fromEntries(mobileLocaleCodes.map(locale => [locale, {"en-us":{"PASSWORD_CHANGED":"Password changed","SIGN_IN":"Signed in","MOBILE_SESSION_CREATED":"Mobile session started","SESSION_REVOKED":"Device removed","ALL_SESSIONS_REVOKED":"Signed out everywhere"},"es-es":{"PASSWORD_CHANGED":"Contraseña cambiada","SIGN_IN":"Inicio de sesión","MOBILE_SESSION_CREATED":"Sesión móvil iniciada","SESSION_REVOKED":"Dispositivo eliminado","ALL_SESSIONS_REVOKED":"Sesión cerrada en todas partes"},"fr":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"de-de":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"it-it":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"pt-br":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"nl":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"ar":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"zh-cn":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"ja":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"ko":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"hi":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"tr":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"pl":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"sv":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"id":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"th":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"vi":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"}}[locale][type]]))])) as Record<SecurityEventType, Record<MobileLocale,string>>;
