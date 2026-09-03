@@ -6,6 +6,10 @@ const source = readFileSync(
   new URL("./FlightResultsClient.tsx", import.meta.url),
   "utf8",
 );
+const fareTileSource = readFileSync(
+  new URL("./NearbyFareDateTile.tsx", import.meta.url),
+  "utf8",
+);
 
 function desktopEditorSource() {
   const label = source.indexOf("data-desktop-trip-selector");
@@ -105,13 +109,13 @@ test("fare strip is one bounded seven-date grid with adjacent week controls", ()
   assert.match(strip, /aria-label="Next nearby fare date"/);
   assert.match(strip, /navigateNearbyFareWindow\("previous"\)/);
   assert.match(strip, /navigateNearbyFareWindow\("next"\)/);
-  assert.match(strip, /displayPrice \?\? "Unavailable"/);
+  assert.match(fareTileSource, /formattedPrice \?\? \(loading \? "" : "Unavailable"\)/);
   const desktopRail = strip.slice(
     strip.indexOf("data-desktop-nearby-fare-rail"),
   );
   assert.doesNotMatch(desktopRail, /overflow-x-auto/);
-  assert.match(desktopRail, /rounded-xl border border-slate-200 bg-white/);
-  assert.match(desktopRail, /selected && "border-\[#075EE8\] bg-blue-50\/80/);
+  assert.match(desktopRail, /rounded-2xl border border-slate-200 bg-slate-50\/80/);
+  assert.match(fareTileSource, /selected && "border-\[#075EE8\] bg-blue-50\/60/);
   assert.equal(desktopRail.match(/h-10 w-10 place-self-center/g)?.length, 2);
 });
 

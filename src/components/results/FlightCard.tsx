@@ -21,6 +21,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn, formatItineraryShortDate, formatTime } from "@/lib/utils";
 import { formatFlightCardPrice } from "@/components/results/flightCardPrice";
+import { formatFlightCardBaggage } from "@/components/results/flightCardBaggage";
 
 type DetailItem = {
   label: string;
@@ -403,9 +404,11 @@ function FlightFareAction({
         >
           {formattedPrice}
         </div>
-        <p className="mt-1.5 text-[10px] font-medium uppercase leading-none tracking-[0.08em] text-slate-600 sm:text-[11px] lg:mt-1">
-          {priceLabel}
-        </p>
+        {showConvertedProviderPrice ? (
+          <p className="mt-1.5 text-[10px] font-medium uppercase leading-none tracking-[0.08em] text-slate-600 sm:text-[11px] lg:mt-1">
+            {priceLabel}
+          </p>
+        ) : null}
         {showConvertedProviderPrice ? (
           <div className="flight-card-provider-price mt-1.5 space-y-0.5 text-xs font-medium leading-4 text-slate-600 lg:text-center">
             <p>
@@ -476,19 +479,21 @@ function FlightDetailLines({
           <p
             key={detail.label}
             className={cn(
-              "flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5",
-              "flight-card-detail-item flex-nowrap whitespace-nowrap border-r border-[#EEF2F7] last:border-r-0 last:pr-0",
+              "flex min-w-0 items-start gap-x-1.5",
+              "flight-card-detail-item border-r border-[#EEF2F7] last:border-r-0 last:pr-0",
             )}
           >
             <Icon
               className="h-3.5 w-3.5 shrink-0 text-[#004BB8]"
               aria-hidden="true"
             />
-            <span className="shrink-0 font-medium text-slate-700">
-              {detail.label}:
-            </span>
-            <span className="min-w-0 text-slate-600" title={detail.value}>
-              {detail.value}
+            <span className="flex min-w-0 flex-wrap gap-x-1 [overflow-wrap:anywhere]" dir="auto">
+              <span className="shrink-0 font-medium text-slate-700">
+                {detail.label}:
+              </span>
+              <span className="min-w-0 text-slate-600" title={detail.value}>
+                {detail.value}
+              </span>
             </span>
           </p>
         );
@@ -573,16 +578,10 @@ function formatBaggageValue(
   value: string | undefined,
   t: (key: string) => string,
 ) {
-  if (
-    !value ||
-    isProviderReviewCopy(value) ||
-    /rules vary|vary by fare/i.test(value)
-  ) {
-    return t("checkProvider");
-  }
-
-  if (/carry-on included/i.test(value)) return t("carryOnIncluded");
-  return value;
+  return formatFlightCardBaggage(value, {
+    checkProvider: t("checkProvider"),
+    carryOnIncluded: t("carryOnIncluded"),
+  });
 }
 
 function formatLayoverText(leg: FlightLeg, t: (key: string) => string) {
@@ -599,15 +598,4 @@ function formatLayoverText(leg: FlightLeg, t: (key: string) => string) {
         .replace("{{duration}}", firstLayover.duration)
     : `${t("layover")}: ${firstConnection}`;
   return `${baseText}${extraConnections}`;
-}
-
-function isProviderReviewCopy(value: string) {
-  const normalized = value.toLowerCase();
-  return (
-    normalized.includes("reviewed on the external provider") ||
-    normalized.includes("shown by the external provider") ||
-    normalized.includes("reviewed externally") ||
-    normalized.includes("rules vary") ||
-    normalized.includes("vary by fare")
-  );
 }

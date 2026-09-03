@@ -50,6 +50,7 @@ import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { Footer } from "@/components/layout/Footer";
 import { FlightCard } from "@/components/results/FlightCard";
+import { NearbyFareDateTile } from "@/components/results/NearbyFareDateTile";
 import { DesktopFlightFilters } from "@/components/results/DesktopFlightFilters";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { FlightEditSearchDrawer, type FlightEditSearchValue } from "@/components/search/FlightEditSearchDrawer";
@@ -7048,16 +7049,20 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         const accessibleFare = displayPrice ?? (fare.status === "loading" ? "Loading fare" : "Unavailable");
                         const accessibleDate = fare.date.startsWith("loading-") ? "Loading date" : `${formatFareStripWeekdayLabel(fare.date, calendarLocale)}, ${formatFareStripDateLabel(fare.date, calendarLocale)}`;
                         return (
-                          <button ref={selected ? mobileSelectedNearbyFareRef : undefined} key={fare.date} type="button" data-fare-date-cell aria-label={`${accessibleDate}: ${accessibleFare}`} aria-current={selected ? "date" : undefined} aria-pressed={selected} disabled={selected || loading || fare.status === "loading"} onClick={() => handleNearbyFareDateSelect(fare.date)} className={cn("focus-ring relative flex min-h-[76px] w-[clamp(92px,24vw,104px)] shrink-0 snap-center flex-col items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white px-1.5 py-2 text-center shadow-sm transition hover:border-[#075EE8]/40 hover:bg-slate-50", selected && "border-[#075EE8] bg-blue-50/60")}>
-                            {selected ? <span className="absolute inset-x-1.5 top-0 h-0.5 rounded-b bg-[#075EE8]" aria-hidden="true" /> : null}
-                            {fare.status === "loading" ? (<>
-                              <span className="h-3 w-12 animate-pulse rounded bg-slate-200" /><span className="mt-1.5 h-3 w-8 animate-pulse rounded bg-slate-200" /><span className="mt-1.5 h-3 w-14 animate-pulse rounded bg-slate-200" />
-                            </>) : (<>
-                              <span className={cn("text-[12px] font-semibold uppercase leading-4", selected ? "text-[#075EE8]" : "text-slate-800")}>{formatFareStripDateLabel(fare.date, calendarLocale).toUpperCase()}</span>
-                              <span className={cn("text-[11px] font-medium uppercase leading-4", selected ? "text-[#075EE8]" : "text-slate-500")}>{formatFareStripWeekdayLabel(fare.date, calendarLocale).toUpperCase()}</span>
-                              <span className={cn("flight-fare-strip-price mt-1 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-medium leading-4", selected ? "font-semibold text-[#075EE8]" : "text-slate-900")} data-price-size={((displayPrice ?? "Unavailable").replace(/\s/g, "").length) >= 13 ? "extra-long" : ((displayPrice ?? "Unavailable").replace(/\s/g, "").length) >= 10 ? "long" : "default"} dir="ltr">{displayPrice ?? "Unavailable"}</span>
-                            </>)}
-                          </button>
+                          <NearbyFareDateTile
+                            key={fare.date}
+                            buttonRef={selected ? mobileSelectedNearbyFareRef : undefined}
+                            dateLabel={formatFareStripDateLabel(fare.date, calendarLocale)}
+                            weekdayLabel={formatFareStripWeekdayLabel(fare.date, calendarLocale)}
+                            formattedPrice={displayPrice}
+                            accessibleLabel={`${accessibleDate}: ${accessibleFare}`}
+                            selected={selected}
+                            loading={fare.status === "loading"}
+                            unavailable={fare.status !== "success" && fare.status !== "loading"}
+                            disabled={selected || loading || fare.status === "loading"}
+                            presentation="mobile"
+                            onSelect={() => handleNearbyFareDateSelect(fare.date)}
+                          />
                         );
                       })}
                     </div>
@@ -7112,77 +7117,19 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         : `${formatFareStripWeekdayLabel(fare.date, calendarLocale)}, ${formatFareStripDateLabel(fare.date, calendarLocale)}`;
 
                       return (
-                        <button
+                        <NearbyFareDateTile
                           key={fare.date}
-                          type="button"
-                          data-fare-date-cell
-                          aria-label={`${accessibleDate}: ${accessibleFare}`}
-                          aria-current={selected ? "date" : undefined}
-                          aria-pressed={selected}
-                          disabled={
-                            selected || loading || fare.status === "loading"
-                          }
-                          onClick={() => handleNearbyFareDateSelect(fare.date)}
-                          className={cn(
-                            "focus-ring relative flex min-h-[86px] min-w-0 flex-col items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-2.5 text-center shadow-sm transition duration-200 after:absolute after:inset-x-3 after:bottom-1.5 after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:bg-[#075EE8] after:transition-transform hover:-translate-y-0.5 hover:border-[#075EE8]/35 hover:shadow-md hover:after:scale-x-50",
-                            selected && "border-[#075EE8] bg-blue-50/80 shadow-[0_8px_20px_-14px_rgba(7,94,232,0.85)] after:scale-x-100",
-                          )}
-                        >
-                          {fare.status === "loading" ? (
-                            <>
-                              <span className="h-3 w-12 animate-pulse rounded bg-slate-200" />
-                              <span className="mt-2 h-3 w-8 animate-pulse rounded bg-slate-200" />
-                              <span className="mt-2 h-3 w-14 animate-pulse rounded bg-slate-200" />
-                            </>
-                          ) : (
-                            <>
-                              <span
-                                className={cn(
-                                  "text-[12px] font-bold uppercase leading-4 tracking-[0.04em]",
-                                  selected
-                                    ? "text-[#075EE8]"
-                                    : "text-slate-800",
-                                )}
-                              >
-                                {formatFareStripDateLabel(
-                                  fare.date,
-                                  calendarLocale,
-                                ).toUpperCase()}
-                              </span>
-                              <span
-                                className={cn(
-                                  "mt-0.5 text-[10px] font-semibold uppercase leading-4 tracking-[0.12em]",
-                                  selected
-                                    ? "text-[#075EE8]"
-                                    : "text-slate-500",
-                                )}
-                              >
-                                {formatFareStripWeekdayLabel(
-                                  fare.date,
-                                  calendarLocale,
-                                ).toUpperCase()}
-                              </span>
-                              <span
-                                className={cn(
-                                  "flight-fare-strip-price mt-2 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-bold leading-5",
-                                  selected
-                                    ? "font-semibold text-[#075EE8]"
-                                    : "text-slate-900",
-                                )}
-                                data-price-size={
-                                  ((displayPrice ?? "Unavailable").replace(/\s/g, "").length) >= 13
-                                    ? "extra-long"
-                                    : ((displayPrice ?? "Unavailable").replace(/\s/g, "").length) >= 10
-                                      ? "long"
-                                      : "default"
-                                }
-                                dir="ltr"
-                              >
-                                {displayPrice ?? "Unavailable"}
-                              </span>
-                            </>
-                          )}
-                        </button>
+                          dateLabel={formatFareStripDateLabel(fare.date, calendarLocale)}
+                          weekdayLabel={formatFareStripWeekdayLabel(fare.date, calendarLocale)}
+                          formattedPrice={displayPrice}
+                          accessibleLabel={`${accessibleDate}: ${accessibleFare}`}
+                          selected={selected}
+                          loading={fare.status === "loading"}
+                          unavailable={fare.status !== "success" && fare.status !== "loading"}
+                          disabled={selected || loading || fare.status === "loading"}
+                          presentation="desktop"
+                          onSelect={() => handleNearbyFareDateSelect(fare.date)}
+                        />
                       );
                     })}
 

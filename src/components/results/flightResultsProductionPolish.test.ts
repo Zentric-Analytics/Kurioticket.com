@@ -93,11 +93,13 @@ test("desktop departure metadata aligns directly beneath time with generous card
 
 test("desktop nearby fares use a contained mobile-like hierarchy", async () => {
   const source = await readFile(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
+  const tile = await readFile(new URL("./NearbyFareDateTile.tsx", import.meta.url), "utf8");
   const start = source.indexOf("data-desktop-nearby-fare-rail");
   const strip = source.slice(start, source.indexOf("Next nearby fare date", start) + 300);
 
-  assert.match(strip, /rounded-xl border border-slate-200 bg-white/);
-  assert.match(strip, /min-h-\[86px\]/);
-  assert.match(strip, /rounded-xl border border-slate-200 bg-white/);
-  assert.match(strip, /selected && "border-\[#075EE8\] bg-blue-50\/80/);
+  assert.match(strip, /<NearbyFareDateTile/);
+  assert.match(strip, /presentation="desktop"/);
+  assert.match(tile, /min-h-\[76px\]/);
+  assert.match(tile, /rounded-lg border border-slate-200 bg-white/);
+  assert.match(tile, /selected && "border-\[#075EE8\] bg-blue-50\/60/);
 });

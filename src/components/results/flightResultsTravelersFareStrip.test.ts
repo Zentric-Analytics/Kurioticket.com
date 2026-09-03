@@ -10,6 +10,10 @@ const styles = readFileSync(
   new URL("../../app/globals.css", import.meta.url),
   "utf8",
 );
+const tileSource = readFileSync(
+  new URL("./NearbyFareDateTile.tsx", import.meta.url),
+  "utf8",
+);
 
 test("nearby fares stay inside one ten-day request window", () => {
   assert.match(source, /const nearbyFareRangeSize = 10;/);
@@ -32,7 +36,7 @@ test("desktop traveler rows use title-case labels and moderate controls", () => 
 });
 
 test("long nearby-fare currency values use adaptive sizing without wrapping", () => {
-  assert.match(source, /data-price-size=/);
+  assert.match(tileSource, /data-price-size=/);
   assert.match(styles, /flight-fare-strip-price\[data-price-size="long"\]/);
   assert.match(
     styles,
@@ -40,8 +44,8 @@ test("long nearby-fare currency values use adaptive sizing without wrapping", ()
   );
   assert.match(styles, /white-space: nowrap/);
   assert.match(styles, /max-width: 100%/);
-  assert.match(source, /displayPrice \?\? "Unavailable"/);
-  assert.match(source, /overflow-hidden text-ellipsis whitespace-nowrap/);
+  assert.match(tileSource, /formattedPrice \?\? \(loading \? "" : "Unavailable"\)/);
+  assert.match(tileSource, /overflow-hidden text-ellipsis whitespace-nowrap/);
 });
 
 test("mobile and desktop nearby fares share one truthful fare state and selection handler", () => {
@@ -66,16 +70,17 @@ test("mobile nearby fares scroll horizontally without widening the page", () => 
   assert.match(mobileStrip, /overflow-x-auto/);
   assert.doesNotMatch(mobileStrip, /touch-pan-x/);
   assert.doesNotMatch(mobileStrip, /overscroll-x-contain/);
-  assert.match(mobileStrip, /snap-center/);
+  assert.match(source, /presentation="mobile"/);
+  assert.match(tileSource, /snap-center/);
   assert.doesNotMatch(mobileStrip, /snap-start/);
   assert.match(mobileStrip, /px-3/);
   assert.match(mobileStrip, /scroll-padding-inline:0\.75rem/);
   assert.match(mobileStrip, /scrollbar-width:none/);
-  assert.match(mobileStrip, /data-fare-date-cell/);
-  assert.match(mobileStrip, /min-h-\[76px\]/);
-  assert.match(mobileStrip, /aria-current=\{selected \? "date"/);
-  assert.match(mobileStrip, /aria-pressed=\{selected\}/);
-  assert.match(mobileStrip, /disabled=\{selected \|\| loading \|\| fare\.status === "loading"\}/);
+  assert.match(tileSource, /data-fare-date-cell/);
+  assert.match(tileSource, /min-h-\[76px\]/);
+  assert.match(tileSource, /aria-current=\{selected \? "date"/);
+  assert.match(tileSource, /aria-pressed=\{selected\}/);
+  assert.match(source, /disabled=\{selected \|\| loading \|\| fare\.status === "loading"\}/);
   assert.doesNotMatch(mobileStrip, /onPointer|onTouch|preventDefault\(\)/);
 });
 
@@ -103,7 +108,7 @@ test("mobile nearby fares align once per flight search", () => {
   assert.match(source, /selectedRect\.left - railRect\.left \+ rail\.scrollLeft/);
   assert.match(source, /getCenteredRailScrollLeft\(/);
   assert.match(source, /ref=\{mobileNearbyFareRailRef\}/);
-  assert.match(source, /ref=\{selected \? mobileSelectedNearbyFareRef : undefined\}/);
+  assert.match(source, /buttonRef=\{selected \? mobileSelectedNearbyFareRef : undefined\}/);
   assert.match(source, /rail\.scrollTo\(\{ left: target, behavior: "auto" \}\)/);
   assert.ok(
     alignment.indexOf("rail.scrollTo({ left: target, behavior: \"auto\" })") <
@@ -168,10 +173,10 @@ test("mobile compact header freezes geometry and sentinel state while Edit Searc
 
 test("results pagination preserves the searched departure date and its blue selected state", () => {
   assert.match(source, /const selected = fare\.date === body\?\.departureDate/);
-  assert.match(source, /aria-current=\{selected \? "date" : undefined\}/);
-  assert.match(source, /aria-pressed=\{selected\}/);
-  assert.match(source, /selected && "border-\[#075EE8\] bg-blue-50\/60"/);
-  assert.match(source, /selected \? <span className="absolute[^\"]*bg-\[#075EE8\]"/);
+  assert.match(tileSource, /aria-current=\{selected \? "date" : undefined\}/);
+  assert.match(tileSource, /aria-pressed=\{selected\}/);
+  assert.match(tileSource, /selected && "border-\[#075EE8\] bg-blue-50\/60"/);
+  assert.match(tileSource, /selected \? \([\s\S]*absolute inset-x-1\.5 top-0[\s\S]*bg-\[#075EE8\]/);
 
   const pageChangeStart = source.indexOf("const changeResultsPage");
   const pageChangeEnd = source.indexOf("useEffect", pageChangeStart);
