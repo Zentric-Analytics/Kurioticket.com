@@ -67,3 +67,22 @@ test("new alerts validate target input through the shared helper before creation
   assert.match(flightAlert, /visible=\{targetOpen\}/);
   assert.match(flightAlert, /setMatchingAlert\(created\.alert\)/);
 });
+
+test("new Hotel alerts use a web-like localized create button and the existing activation flow", () => {
+  const hotelBranch = flightAlert.slice(flightAlert.indexOf('if (product !== "hotel"'));
+  assert.match(hotelBranch, /matchingAlert \? <Switch/);
+  assert.match(hotelBranch, /accessibilityLabel=\{message\("createAlert"\)\}/);
+  assert.match(hotelBranch, /accessibilityRole="button"/);
+  assert.match(hotelBranch, /onPress=\{\(\) => void handleToggle\(true\)\}/);
+  assert.match(source, /hotelAlertCreateButton: \{[^}]*alignSelf: "flex-start"[^}]*minHeight: 44[^}]*borderRadius: 12[^}]*paddingHorizontal: 16[^}]*backgroundColor: colors\.blue/);
+  assert.match(source, /hotelAlert: \{\s*borderWidth: 1,\s*borderRadius: 16,\s*padding: 16/);
+  assert.match(hotelBranch, /backgroundColor: theme\.surface, borderColor: theme\.priceAlertBorder/);
+});
+
+test("existing Hotel alerts retain active and paused switch management", () => {
+  assert.match(flightAlert, /matchingAlert \? <Switch[\s\S]*?onValueChange=\{\(next\) => void handleToggle\(next\)\}/);
+  assert.match(flightAlert, /updatePriceAlertStatus\(matchingAlert\.id, "ACTIVE"\)/);
+  assert.match(flightAlert, /updatePriceAlertStatus\(matchingAlert\.id, "PAUSED"\)/);
+  assert.match(flightAlert, /hotelAlertPresentation/);
+  assert.match(flightAlert, /matchingHotelPriceAlert/);
+});

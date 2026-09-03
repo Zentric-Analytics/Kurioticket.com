@@ -683,12 +683,17 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 />
               ) : null}
               {status === "ready" && product === "hotel" && sorted.length > 0 ? (
-                <Text
-                  accessibilityRole="header"
-                  style={[s0.hotelResultCount, { color: theme.textPrimary }]}
-                >
-                  {sorted.length} properties found
-                </Text>
+                <>
+                  <View style={s0.hotelResultsSummary}>
+                    <Text accessibilityRole="header" style={[s0.hotelResultCount, { color: theme.textPrimary }]}>
+                      {sorted.length} {sorted.length === 1 ? "result" : "results"} found
+                    </Text>
+                    <Text accessibilityLabel={`Showing results 1 through ${sorted.length}`} style={[s0.hotelResultsRange, { color: theme.textSecondary }]}>
+                      Showing 1–{sorted.length}
+                    </Text>
+                  </View>
+                  {plan.plan ? <PriceAlert product={product} plan={plan.plan} hotelResults={results as HotelResult[]} available={availability.priceAlerts} /> : null}
+                </>
               ) : null}
               {status === "ready" && product === "hotel" && results.length > 0 && sorted.length === 0 ? (
                 <View style={s0.hotelFilteredEmpty}><Text accessibilityRole="header" style={[s0.foundTitle,{color:theme.textPrimary}]}>No stays match these filters.</Text><Pressable accessibilityRole="button" onPress={()=>setHotelFilters(emptyHotelFilters())}><Text style={s0.hotelClearFilters}>Clear filters</Text></Pressable></View>
@@ -703,7 +708,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   />
                 ),
               )}
-              {status === "ready" && product === "hotel" && plan.plan ? <PriceAlert product={product} plan={plan.plan} hotelResults={results as HotelResult[]} available={availability.priceAlerts} /> : null}
     </>
   );
   return (
@@ -1643,9 +1647,9 @@ function PriceAlert({ product, plan, results, hotelResults, available = true }: 
     );
   }
   if (product !== "hotel" || !plan) return null;
-  return <View accessibilityLabel={message("hotelAlertTitle")} style={s0.alert}>
-    <View style={s0.alertCopy}><Text style={s0.foundTitle}>{message("hotelAlertTitle")}</Text><Text style={s0.sub}>{message("hotelAlertBody")}</Text></View>
-    <Switch accessibilityLabel="Track hotel prices" accessibilityRole="switch" accessibilityState={{ checked: isTracking, disabled: pending || loadingAlert || unavailable }} value={isTracking} disabled={pending || loadingAlert || unavailable} onValueChange={(next) => void handleToggle(next)} />
+  return <View accessibilityLabel={message("hotelAlertTitle")} style={[s0.hotelAlert, { backgroundColor: theme.surface, borderColor: theme.priceAlertBorder }]}>
+    <View style={s0.hotelAlertCopy}><Text style={[s0.hotelAlertTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Text style={[s0.hotelAlertBody, { color: theme.textSecondary }]}>{message("hotelAlertBody")}</Text></View>
+    {matchingAlert ? <Switch accessibilityLabel="Track hotel prices" accessibilityRole="switch" accessibilityState={{ checked: isTracking, disabled: pending || loadingAlert || unavailable }} value={isTracking} disabled={pending || loadingAlert || unavailable} onValueChange={(next) => void handleToggle(next)} /> : <Pressable accessibilityLabel={message("createAlert")} accessibilityRole="button" accessibilityState={{ disabled: pending || loadingAlert || unavailable }} disabled={pending || loadingAlert || unavailable} onPress={() => void handleToggle(true)} style={({ pressed }) => [s0.hotelAlertCreateButton, (pending || loadingAlert || unavailable) && s0.hotelAlertCreateButtonDisabled, pressed && s0.hotelAlertCreateButtonPressed]}><Text style={s0.hotelAlertCreateButtonText}>{message("createAlert")}</Text></Pressable>}
     {!activePresentation.enabled ? <Text accessibilityRole="alert" style={s0.sub}>{message("hotelAlertUnavailable")}</Text> : null}
     <Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel={message("hotelAlertTitle")}><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>{message("targetTotal")} ({currency})</Text><TextInput autoFocus accessibilityLabel={`${message("targetTotal")} ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text> : null}<Button label={pending ? message("creating") : message("createAlert")} onPress={() => void createAlert()} /><Button label={t("cancel")} outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal>
   </View>;
@@ -1788,6 +1792,8 @@ const s0 = StyleSheet.create({
   },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
   hotelResultCount: { fontSize: 16, lineHeight: 21, fontWeight: "700", fontFamily: appFonts.bold },
+  hotelResultsSummary: { gap: 2 },
+  hotelResultsRange: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
   hotelFilteredEmpty: { alignItems: "center", gap: 10, paddingVertical: 28 },
   hotelClearFilters: { color: ui.blue, fontSize: 15, fontWeight: "800" },
   flightResultCount: { paddingHorizontal: 14, paddingTop: 4, paddingBottom: 5, fontSize: 13, lineHeight: 17, fontWeight: "700", fontFamily: appFonts.bold },
@@ -2017,15 +2023,19 @@ const s0 = StyleSheet.create({
     gap: 8,
   },
   hotelSkeletonPrice: { width: 58, height: 16 },
-  alert: {
+  hotelAlert: {
     borderWidth: 1,
-    borderColor: ui.border,
-    borderRadius: 14,
-    padding: 15,
-    gap: 14,
-    backgroundColor: "#FAFCFF",
+    borderRadius: 16,
+    padding: 16,
+    gap: 12,
   },
-  alertCopy: { gap: 4 },
+  hotelAlertCopy: { gap: 4 },
+  hotelAlertTitle: { fontSize: 16, lineHeight: 21, fontWeight: "700", fontFamily: appFonts.bold },
+  hotelAlertBody: { fontSize: 14, lineHeight: 20, fontWeight: "500", fontFamily: appFonts.medium },
+  hotelAlertCreateButton: { alignSelf: "flex-start", minHeight: 44, justifyContent: "center", borderRadius: 12, paddingHorizontal: 16, backgroundColor: colors.blue },
+  hotelAlertCreateButtonPressed: { opacity: 0.82 },
+  hotelAlertCreateButtonDisabled: { opacity: 0.5 },
+  hotelAlertCreateButtonText: { color: "white", fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
   flightAlert: {
     borderRadius: 10,
     borderWidth: 1,

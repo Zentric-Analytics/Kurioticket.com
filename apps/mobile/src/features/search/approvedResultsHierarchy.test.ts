@@ -99,10 +99,29 @@ test("flight price-alert eligibility is route-level while the count stays filter
 
 test("feature-disabled flight results pass availability into the switch while retaining existing alert management", () => {
   assert.match(resultsBody, /<PriceAlert product=\{product\} plan=\{plan\.plan\} results=\{results as FlightResult\[\]\} available=\{availability\.priceAlerts\} \/>/);
-  assert.match(resultsBody, /product === "hotel" && plan\.plan \? <PriceAlert[\s\S]*?hotelResults=\{results as HotelResult\[\]\}[\s\S]*?available=\{availability\.priceAlerts\}/);
+  assert.match(resultsBody, /plan\.plan \? <PriceAlert product=\{product\} plan=\{plan\.plan\} hotelResults=\{results as HotelResult\[\]\} available=\{availability\.priceAlerts\}/);
 });
 
 test("loading and error states cannot expose the flight price alert", () => {
   assert.doesNotMatch(source, /status === "(?:loading|error)"[^\n]*<PriceAlert/);
   assert.match(source, /status === "ready" && !flightState && plan\.plan/);
+});
+
+test("ready non-empty Hotel results order summary, raw-results alert, then cards", () => {
+  const hotelStart = resultsBody.indexOf('status === "ready" && product === "hotel" && sorted.length > 0');
+  const hotelStack = resultsBody.slice(hotelStart, resultsBody.indexOf("</>", hotelStart) + 3);
+  assert.ok(hotelStack.indexOf("hotelResultsSummary") < hotelStack.indexOf("<PriceAlert"));
+  assert.ok(resultsBody.indexOf("<PriceAlert", hotelStart) < resultsBody.indexOf("sorted.map((x, i)", hotelStart));
+  assert.match(hotelStack, /hotelResults=\{results as HotelResult\[\]\}/);
+  assert.doesNotMatch(hotelStack, /hotelResults=\{sorted/);
+  const afterCards = resultsBody.slice(resultsBody.indexOf("sorted.map((x, i)", hotelStart), resultsBody.indexOf("return (", hotelStart));
+  assert.doesNotMatch(afterCards, /<PriceAlert/);
+});
+
+test("filtered-empty Hotel state remains isolated from summary, alert, and cards", () => {
+  const emptyStart = resultsBody.indexOf('status === "ready" && product === "hotel" && results.length > 0 && sorted.length === 0');
+  const emptyBranch = resultsBody.slice(emptyStart, resultsBody.indexOf(": null}", emptyStart));
+  assert.match(emptyBranch, /No stays match these filters\./);
+  assert.match(emptyBranch, /Clear filters/);
+  assert.doesNotMatch(emptyBranch, /results found|Showing 1–0|PriceAlert|HotelCard/);
 });
