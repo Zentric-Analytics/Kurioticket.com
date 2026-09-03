@@ -53,6 +53,8 @@ const englishSecurityCopy = {
   "activity": "Security activity",
   "activityHelp": "Review recent sign-ins and security changes.",
   "empty": "No recent security activity.",
+  "today": "Today",
+  "yesterday": "Yesterday",
   "deleteAccount": "Delete account",
   "openFailed": "Unable to open the secure web experience.",
   "unknown": "Security update",
@@ -151,6 +153,8 @@ const es_es: BaseSecurityCopy = {
   "activity": "Actividad de seguridad",
   "activityHelp": "Revisa los inicios de sesión y cambios de seguridad recientes.",
   "empty": "No hay actividad de seguridad reciente.",
+  "today": "Hoy",
+  "yesterday": "Ayer",
   "deleteAccount": "Eliminar cuenta",
   "openFailed": "No se pudo abrir la experiencia web segura.",
   "unknown": "Actualización de seguridad",
@@ -248,6 +252,8 @@ const fr: BaseSecurityCopy = {
   "activity": "Security activity",
   "activityHelp": "Review recent sign-ins and security changes.",
   "empty": "No recent security activity.",
+  "today": "Aujourd’hui",
+  "yesterday": "Hier",
   "deleteAccount": "Supprimer le compte",
   "openFailed": "Unable to open the secure web experience.",
   "unknown": "Security update",
@@ -345,6 +351,8 @@ const de_de: BaseSecurityCopy = {
   "activity": "Security activity",
   "activityHelp": "Review recent sign-ins and security changes.",
   "empty": "No recent security activity.",
+  "today": "Heute",
+  "yesterday": "Gestern",
   "deleteAccount": "Konto löschen",
   "openFailed": "Unable to open the secure web experience.",
   "unknown": "Security update",
@@ -442,6 +450,8 @@ const it_it: BaseSecurityCopy = {
   "activity": "Security activity",
   "activityHelp": "Review recent sign-ins and security changes.",
   "empty": "No recent security activity.",
+  "today": "Oggi",
+  "yesterday": "Ieri",
   "deleteAccount": "Elimina account",
   "openFailed": "Unable to open the secure web experience.",
   "unknown": "Security update",
@@ -539,6 +549,8 @@ const pt_br: BaseSecurityCopy = {
   "activity": "Security activity",
   "activityHelp": "Review recent sign-ins and security changes.",
   "empty": "No recent security activity.",
+  "today": "Hoje",
+  "yesterday": "Ontem",
   "deleteAccount": "Excluir conta",
   "openFailed": "Unable to open the secure web experience.",
   "unknown": "Security update",
@@ -636,6 +648,8 @@ const nl: BaseSecurityCopy = {
   "activity": "Security activity",
   "activityHelp": "Review recent sign-ins and security changes.",
   "empty": "No recent security activity.",
+  "today": "Vandaag",
+  "yesterday": "Gisteren",
   "deleteAccount": "Account verwijderen",
   "openFailed": "Unable to open the secure web experience.",
   "unknown": "Security update",
@@ -733,6 +747,8 @@ const ar: BaseSecurityCopy = {
   "activity": "Security activity",
   "activityHelp": "Review recent sign-ins and security changes.",
   "empty": "No recent security activity.",
+  "today": "اليوم",
+  "yesterday": "أمس",
   "deleteAccount": "حذف الحساب",
   "openFailed": "Unable to open the secure web experience.",
   "unknown": "Security update",
@@ -830,6 +846,8 @@ const zh_cn: BaseSecurityCopy = {
   "activity": "Security activity",
   "activityHelp": "Review recent sign-ins and security changes.",
   "empty": "No recent security activity.",
+  "today": "今天",
+  "yesterday": "昨天",
   "deleteAccount": "删除账户",
   "openFailed": "Unable to open the secure web experience.",
   "unknown": "Security update",
@@ -927,6 +945,8 @@ const ja: BaseSecurityCopy = {
   "activity": "Security activity",
   "activityHelp": "Review recent sign-ins and security changes.",
   "empty": "No recent security activity.",
+  "today": "今日",
+  "yesterday": "昨日",
   "deleteAccount": "アカウントを削除",
   "openFailed": "Unable to open the secure web experience.",
   "unknown": "Security update",
@@ -1024,6 +1044,8 @@ const ko: BaseSecurityCopy = {
   "activity": "Security activity",
   "activityHelp": "Review recent sign-ins and security changes.",
   "empty": "No recent security activity.",
+  "today": "오늘",
+  "yesterday": "어제",
   "deleteAccount": "계정 삭제",
   "openFailed": "Unable to open the secure web experience.",
   "unknown": "Security update",
@@ -1121,6 +1143,8 @@ const hi: BaseSecurityCopy = {
   "activity": "Security activity",
   "activityHelp": "Review recent sign-ins and security changes.",
   "empty": "No recent security activity.",
+  "today": "आज",
+  "yesterday": "कल",
   "deleteAccount": "खाता हटाएँ",
   "openFailed": "Unable to open the secure web experience.",
   "unknown": "Security update",
@@ -1218,6 +1242,8 @@ const tr: BaseSecurityCopy = {
   "activity": "Security activity",
   "activityHelp": "Review recent sign-ins and security changes.",
   "empty": "No recent security activity.",
+  "today": "Bugün",
+  "yesterday": "Dün",
   "deleteAccount": "Hesabı sil",
   "openFailed": "Unable to open the secure web experience.",
   "unknown": "Security update",
@@ -1315,6 +1341,8 @@ const pl: BaseSecurityCopy = {
   "activity": "Security activity",
   "activityHelp": "Review recent sign-ins and security changes.",
   "empty": "No recent security activity.",
+  "today": "Dzisiaj",
+  "yesterday": "Wczoraj",
   "deleteAccount": "Usuń konto",
   "openFailed": "Unable to open the secure web experience.",
   "unknown": "Security update",
@@ -1412,6 +1440,8 @@ const sv: BaseSecurityCopy = {
   "activity": "Security activity",
   "activityHelp": "Review recent sign-ins and security changes.",
   "empty": "No recent security activity.",
+  "today": "Idag",
+  "yesterday": "Igår",
   "deleteAccount": "Radera konto",
   "openFailed": "Unable to open the secure web experience.",
   "unknown": "Security update",
@@ -1509,6 +1539,8 @@ const id: BaseSecurityCopy = {
   "activity": "Security activity",
   "activityHelp": "Review recent sign-ins and security changes.",
   "empty": "No recent security activity.",
+  "today": "Hari ini",
+  "yesterday": "Kemarin",
   "deleteAccount": "Hapus akun",
   "openFailed": "Unable to open the secure web experience.",
   "unknown": "Security update",
@@ -1606,6 +1638,8 @@ const th: BaseSecurityCopy = {
   "activity": "Security activity",
   "activityHelp": "Review recent sign-ins and security changes.",
   "empty": "No recent security activity.",
+  "today": "วันนี้",
+  "yesterday": "เมื่อวาน",
   "deleteAccount": "ลบบัญชี",
   "openFailed": "Unable to open the secure web experience.",
   "unknown": "Security update",
@@ -1703,6 +1737,8 @@ const vi: BaseSecurityCopy = {
   "activity": "Security activity",
   "activityHelp": "Review recent sign-ins and security changes.",
   "empty": "No recent security activity.",
+  "today": "Hôm nay",
+  "yesterday": "Hôm qua",
   "deleteAccount": "Xóa tài khoản",
   "openFailed": "Unable to open the secure web experience.",
   "unknown": "Security update",
@@ -1776,4 +1812,15 @@ export const securityEventTypes = ["PASSWORD_CHANGED","SIGN_IN","MOBILE_SESSION_
 export type SecurityEventType = typeof securityEventTypes[number];
 export const securityEventLabels: Record<SecurityEventType, Record<MobileLocale,string>> = Object.fromEntries(securityEventTypes.map(type => [type, Object.fromEntries(mobileLocaleCodes.map(locale => [locale, {"en-us":{"PASSWORD_CHANGED":"Password changed","SIGN_IN":"Signed in","MOBILE_SESSION_CREATED":"Mobile session started","SESSION_REVOKED":"Device removed","ALL_SESSIONS_REVOKED":"Signed out everywhere"},"es-es":{"PASSWORD_CHANGED":"Contraseña cambiada","SIGN_IN":"Inicio de sesión","MOBILE_SESSION_CREATED":"Sesión móvil iniciada","SESSION_REVOKED":"Dispositivo eliminado","ALL_SESSIONS_REVOKED":"Sesión cerrada en todas partes"},"fr":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"de-de":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"it-it":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"pt-br":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"nl":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"ar":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"zh-cn":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"ja":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"ko":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"hi":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"tr":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"pl":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"sv":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"id":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"th":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"},"vi":{"PASSWORD_CHANGED":"Security update","SIGN_IN":"Security update","MOBILE_SESSION_CREATED":"Security update","SESSION_REVOKED":"Security update","ALL_SESSIONS_REVOKED":"Security update"}}[locale][type]]))])) as Record<SecurityEventType, Record<MobileLocale,string>>;
 export function securityEventLabel(type: string, locale: MobileLocale): string { return securityEventTypes.includes(type as SecurityEventType) ? securityEventLabels[type as SecurityEventType][locale] : securityCopy[locale].unknown; }
-export function formatSecurityDate(value: string, locale: MobileLocale): string { const intl = mobileLocales.find(option => option.code === locale)!.intl; return new Intl.DateTimeFormat(intl, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)); }
+function intlLocale(locale: MobileLocale) { return mobileLocales.find(option => option.code === locale)!.intl; }
+export function formatSecurityDate(value: string, locale: MobileLocale): string { return new Intl.DateTimeFormat(intlLocale(locale), { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)); }
+export function formatSecurityActivityTime(value: string, locale: MobileLocale): string { return new Intl.DateTimeFormat(intlLocale(locale), { hour: "numeric", minute: "2-digit" }).format(new Date(value)); }
+export function securityActivityDateKey(value: string): string { const date = new Date(value); return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`; }
+export function formatSecurityActivityHeading(value: string, locale: MobileLocale, now = new Date()): string {
+  const date = new Date(value);
+  const calendarDay = (item: Date) => Date.UTC(item.getFullYear(), item.getMonth(), item.getDate());
+  const calendarDays = Math.round((calendarDay(now) - calendarDay(date)) / 86_400_000);
+  if (calendarDays === 0) return securityCopy[locale].today;
+  if (calendarDays === 1) return securityCopy[locale].yesterday;
+  return new Intl.DateTimeFormat(intlLocale(locale), { month: "long", day: "numeric", ...(date.getFullYear() !== now.getFullYear() ? { year: "numeric" } : {}) }).format(date);
+}

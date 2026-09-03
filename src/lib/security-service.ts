@@ -27,8 +27,8 @@ export async function activeSecuritySessions(userId: string, currentId: string) 
   return rows.map(row => ({ ...row, deviceLabel: row.deviceLabel || (row.client === "MOBILE" ? "Mobile device" : "Web browser"), isCurrent: row.id === currentId }));
 }
 
-export async function securityActivity(userId: string) {
-  return getPrisma().securityEvent.findMany({ where: { userId }, orderBy: { occurredAt: "desc" }, take: 10, select: { id:true, type:true, occurredAt:true, deviceLabel:true } });
+export async function securityActivity(userId: string, options: { since?: Date; take?: number } = {}) {
+  return getPrisma().securityEvent.findMany({ where: { userId, ...(options.since ? { occurredAt: { gte: options.since } } : {}) }, orderBy: { occurredAt: "desc" }, take: options.take ?? 10, select: { id:true, type:true, occurredAt:true, deviceLabel:true } });
 }
 
 export async function changePassword(input: { userId: string; email: string; currentSessionId: string; currentPassword: string; newPassword: string }) {
