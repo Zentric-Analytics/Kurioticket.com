@@ -18,9 +18,9 @@ export function summarizeBaggage(baggageInfo?: string) {
   const checked = /checked (?:bag|baggage)|\b\d+\s*(?:x\s*)?(?:piece|pc)s?\b/i.test(value);
   const excluded = /no (?:bag|baggage)|not included|excluded/i.test(value);
 
-  if (carryOn && checked && !excluded) return "Bags included";
-  if (carryOn && !excluded) return "Carry-on";
-  if (checked && !excluded) return "Checked bag";
+  if (carryOn && checked && !excluded) return "Included";
+  if (carryOn && !excluded) return "Carry-on included";
+  if (checked && !excluded) return "Checked bag included";
   if (excluded) return "Not included";
   return null;
 }

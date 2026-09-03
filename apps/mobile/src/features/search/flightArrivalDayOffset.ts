@@ -29,6 +29,18 @@ function localCalendarDay(value: string | null | undefined): number | null {
   return calendarDay;
 }
 
+/** Formats the calendar date encoded by the provider without shifting it to the device timezone. */
+export function providerLocalFlightDate(value: string | null | undefined): string | null {
+  const calendarDay = localCalendarDay(value);
+  if (calendarDay === null) return null;
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(calendarDay));
+}
+
 /** Formats the provider-local arrival date when it differs from departure. */
 export function providerLocalArrivalDate(
   departureTime: string | null | undefined,

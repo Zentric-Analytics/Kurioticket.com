@@ -13,13 +13,15 @@ test("metadata uses one horizontal baggage, cabin, fare-rule row", () => {
   const fareRules = row.indexOf("labels.fareRule");
 
   assert.ok(baggage >= 0 && cabin > baggage && fareRules > cabin);
-  assert.equal(row.match(/style=\{s0\.flightMetadataItem\}/g)?.length, 3);
+  assert.equal(row.match(/style=\{s0\.flightMetadataItem\}/g)?.length, 2);
+  assert.match(row, /style=\{\[s0\.flightMetadataItem, s0\.flightMetadataItemWide\]\}/);
   assert.match(row, /<Luggage\b/);
   assert.match(row, /<Armchair\b/);
   assert.match(row, /<FileText\b/);
   assert.match(card, /style=\{s0\.flightFareAction\}[\s\S]*?style=\{s0\.flightMetadataRow\}/);
   assert.match(source, /flightMetadataRow: \{[^\n]*flexDirection: "row"/);
-  assert.match(source, /flightMetadataItem: \{ flex: 1, minWidth: 0, flexDirection: "row"/);
+  assert.match(source, /flightMetadataItem: \{ width: "50%", minWidth: 0, flexDirection: "row"/);
+  assert.match(source, /flightMetadataItemWide: \{ width: "100%" \}/);
   assert.doesNotMatch(source, /metadataSeparator:/);
   assert.doesNotMatch(source, /metadataRow: \{[^}]*justifyContent: "space-between"/);
   assert.doesNotMatch(source, /metadataRow: \{[^}]*flexWrap/);
@@ -67,8 +69,9 @@ test("metadata and full-width journey fit supported mobile widths", () => {
 });
 
 test("baggage summaries distinguish positive, negative, and unknown provider states", () => {
-  assert.equal(summarizeBaggage("Carry-on and 1 checked bag included"), "Bags included");
-  assert.equal(summarizeBaggage("Cabin baggage included"), "Carry-on");
+  assert.equal(summarizeBaggage("Carry-on and 1 checked bag included"), "Included");
+  assert.equal(summarizeBaggage("Cabin baggage included"), "Carry-on included");
+  assert.equal(summarizeBaggage("One checked bag included"), "Checked bag included");
   assert.equal(summarizeBaggage("No baggage included"), "Not included");
   assert.equal(summarizeBaggage("Baggage subject to airline policy"), null);
 });
@@ -77,7 +80,8 @@ test("fare summaries only claim refundable when provider copy supports it", () =
   assert.equal(summarizeFareRules("Refund available before departure"), "Refundable");
   assert.equal(summarizeFareRules("NON-REFUNDABLE"), null);
   assert.equal(summarizeFareRules(), null);
-  assert.match(card, /summarizeFareRules\(result\.refundInfo\) \?\? "Review before booking"/);
+  assert.match(card, /summarizeFareRules\(result\.refundInfo\) \?\? "Review booking rules"/);
+  assert.doesNotMatch(card, /Review before/);
 });
 
 test("cabin formatting handles canonical and provider capitalization safely", () => {

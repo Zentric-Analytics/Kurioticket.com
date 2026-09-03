@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { arrivalDayOffsetAccessibility, flightArrivalDayOffset, providerLocalArrivalDate } from "./flightArrivalDayOffset";
+import { arrivalDayOffsetAccessibility, flightArrivalDayOffset, providerLocalArrivalDate, providerLocalFlightDate } from "./flightArrivalDayOffset";
 
 test("derives positive offsets from provider-local calendar dates", () => {
   assert.equal(flightArrivalDayOffset("2026-09-10T18:00:00+01:00", "2026-09-10T23:00:00-04:00"), null);
@@ -35,4 +35,10 @@ test("formats only a different provider-local arrival calendar date", () => {
   assert.equal(providerLocalArrivalDate("2026-08-25T22:00:00Z", "2026-08-27T01:24:00Z"), "Thu, Aug 27");
   assert.equal(providerLocalArrivalDate("invalid", "2026-08-27T01:24:00Z"), null);
   assert.equal(providerLocalArrivalDate("2026-08-25T22:00:00Z", "invalid"), null);
+});
+
+test("formats each provider-local airport date without device-timezone shifts", () => {
+  assert.equal(providerLocalFlightDate("2026-10-23T23:50:00-07:00"), "Oct 23");
+  assert.equal(providerLocalFlightDate("2026-10-24T01:15:00-04:00"), "Oct 24");
+  assert.equal(providerLocalFlightDate("invalid"), null);
 });
