@@ -9,7 +9,7 @@ type Props = { visible: boolean; title: string; children: ReactNode; footer?: Re
 /** Opaque child-editor presentation used only by Hotel Results Edit. */
 export function HotelResultsEditPickerShell({ visible, title, children, footer, onBack, onShow }: Props) {
   const ft = useFlowTheme();
-  return <Modal visible={visible} transparent={false} animationType="slide" presentationStyle="fullScreen" statusBarTranslucent={false} onShow={onShow} onRequestClose={onBack}>
+  return <Modal visible={visible} transparent={false} animationType="none" presentationStyle="fullScreen" statusBarTranslucent={false} onShow={onShow} onRequestClose={onBack}>
     <SafeAreaView edges={["top", "bottom", "left", "right"]} accessibilityViewIsModal style={[styles.screen, { backgroundColor: ft.colors.surface }]}>
       <View style={[styles.header, { backgroundColor: ft.colors.surface, borderBottomColor: ft.colors.border }]}>
         <View style={styles.side}><Pressable accessibilityRole="button" accessibilityLabel="Back to edit hotel search" accessibilityHint="Discards uncommitted changes" onPress={onBack} style={({ pressed }) => [styles.back, pressed && ft.styles.pressed]}><ChevronLeft accessible={false} size={20} color={ft.colors.icon}/><Text style={[styles.backText, { color: ft.colors.text }]}>Back</Text></Pressable></View>
