@@ -19,7 +19,7 @@ import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { travelApi, type FlightResult, type HotelResult } from "../../api/travelApi";
 import { FlowIcon } from "../flow/FlowIcon";
 import { Armchair, ArrowLeft, FilePenLine, Heart, Luggage, Repeat2, ShieldX } from "lucide-react-native";
-import { Badge, Button, TopBar, clock, money, shortDate, ui } from "./SearchUi";
+import { Button, TopBar, clock, money, shortDate, ui } from "./SearchUi";
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { useAppTheme } from "../../theme/AppTheme";
 import { AirlineLogo } from "./AirlineLogo";
@@ -45,6 +45,7 @@ import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { providerLocalArrivalDate } from "./flightArrivalDayOffset";
 import { flightPriceBasis } from "./flightPriceBasis";
 import { HOTEL_LIMITS } from "../flow/hotelSearchModel";
+import { homepageAirports } from "../home/homepageAirports";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -215,39 +216,7 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
   };
   return (
     <SafeAreaView style={[d.safe, { backgroundColor: theme.background }]} edges={["top"]}>
-      <View accessibilityLabel="Flight details header" style={[d.flightHeader, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
-        <View accessibilityLabel="Flight route controls" style={d.flightHeaderTopRow}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={({ pressed }) => [d.headerAction, pressed && d.headerActionPressed]}>
-            <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
-          </Pressable>
-          <Text accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[d.headerRoute, { color: theme.textPrimary }]}>{header.route}</Text>
-          <View accessibilityLabel="Flight details actions" style={d.headerActions}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={saved ? `Remove ${result.airlineName} flight from saved` : `Save ${result.airlineName} flight`}
-              accessibilityState={{ selected: saved }}
-              onPress={() => toggleSavedFlight(result, params)}
-              style={({ pressed }) => [d.headerAction, pressed && d.headerActionPressed]}
-            >
-              <Heart
-                size={22}
-                strokeWidth={2}
-                fill={saved ? androidFavoriteColors.active : "transparent"}
-                color={saved ? androidFavoriteColors.active : theme.icon}
-              />
-            </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Edit search" onPress={() => router.push({ pathname: "/edit-flight-search", params: flightEditSearchParams(params) })} style={({ pressed }) => [d.headerAction, pressed && d.headerActionPressed]}>
-              <FilePenLine size={22} strokeWidth={2} color={theme.icon} />
-            </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Share flight" onPress={() => void handleShare()} style={({ pressed }) => [d.headerAction, pressed && d.headerActionPressed]}>
-              <FlowIcon name="share" color={theme.icon} />
-            </Pressable>
-          </View>
-        </View>
-        <ScrollView accessibilityLabel="Trip metadata row" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={d.headerMetadataRow}>
-          <Text numberOfLines={1} style={[d.headerMetadata, { color: theme.textSecondary }]}>{header.metadata}</Text>
-        </ScrollView>
-      </View>
+      <View accessibilityLabel="Flight details header" style={[d.flightBackHeader, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}><Pressable accessibilityRole="button" accessibilityLabel="Back to results" onPress={() => router.back()} style={({ pressed }) => [d.backToResults, pressed && d.headerActionPressed]}><ArrowLeft size={17} strokeWidth={2} color={ui.blue}/><Text style={d.backToResultsText}>Back to results</Text></Pressable></View>
       {/free|refund/i.test(result.refundInfo) ? (
         <View style={[d.reassure, theme.dark && { backgroundColor: "#153B2B" }]}>
           <FlowIcon name="shield" color={theme.dark ? "#72D69A" : ui.green} />
@@ -260,64 +229,26 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
       <ScrollView
         contentContainerStyle={[d.body, { paddingBottom: 110 + inset.bottom }]}
       >
-        <View style={[d.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <View style={d.sectionHead}>
-            <Text style={[d.h2, { color: theme.textPrimary }]}>Flight details</Text>
-            <Badge flightResults>★ Best overall</Badge>
+        <View style={d.flightSummary}>
+          <View style={d.flightSummaryCopy}>
+            <Text accessibilityRole="header" numberOfLines={1} style={[d.flightSummaryRoute, { color: theme.textPrimary }]}>{header.route}</Text>
+            <Text style={[d.headerMetadata, { color: theme.textSecondary }]}>{header.tripTypeLabel} · {priceBasis.travelerLabel.toLowerCase()}</Text>
           </View>
-          {legs.map((leg, i) => (
-            <View key={`${leg.departureTime}-${i}`} style={[d.leg, { backgroundColor: theme.dark ? "#17243A" : theme.surface, borderColor: theme.border }]}>
-              <Text style={d.blue}>
-                {leg.direction.toUpperCase()} ·{" "}
-                {new Date(leg.departureTime).toLocaleDateString("en-US", {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                })}
-              </Text>
-              <View style={d.carrierRow}>
-                <AirlineLogo
-                  airlineName={result.airlineName}
-                  logoUrl={result.airlineLogo}
-                />
-                <Text style={[d.provider, { color: theme.textPrimary }]}>
-                  {result.airlineName}
-                  {result.flightNumber ? `  ·  ${result.flightNumber}` : ""}
-                </Text>
-              </View>
-              <View style={d.legRoute}>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[d.time, { color: theme.textPrimary }]}>{clock(leg.departureTime)}</Text>
-                  <Text style={[d.airport, { color: theme.textSecondary }]}>{leg.originAirport}</Text>
-                </View>
-                <View style={d.middle}>
-                  <Text style={[d.meta, { color: theme.textSecondary }]}>{leg.duration}</Text>
-                  <View style={[d.line, { backgroundColor: theme.border }]} />
-                  <Text style={d.blue}>
-                    {leg.stops
-                      ? `${leg.stops} stop${leg.stops > 1 ? "s" : ""}`
-                      : "Nonstop"}
-                  </Text>
-                </View>
-                <View style={{ flex: 1, alignItems: "flex-end" }}>
-                  <Text style={[d.time, { color: theme.textPrimary }]}>{clock(leg.arrivalTime)}</Text>
-                  <Text style={[d.airport, { color: theme.textSecondary }]}>{leg.destinationAirport}</Text>
-                  {providerLocalArrivalDate(leg.departureTime, leg.arrivalTime) ? (
-                    <Text style={[d.arrivalDate, { color: theme.textSecondary }]}>
-                      {`Arrives ${providerLocalArrivalDate(leg.departureTime, leg.arrivalTime)}`}
-                    </Text>
-                  ) : null}
-                </View>
-              </View>
-              {leg.layovers?.length ? (
-                <Text style={[d.meta, { color: theme.textSecondary }]}>
-                  {leg.layovers
-                    .map((x) => `${x.airport} · ${x.duration}`)
-                    .join("  ·  ")}
-                </Text>
-              ) : null}
-            </View>
-          ))}
+          <View accessibilityLabel="Flight details actions" style={d.flightSummaryActions}>
+            <Pressable accessibilityRole="button" accessibilityLabel={saved ? `Remove ${result.airlineName} flight from saved` : `Save ${result.airlineName} flight`} accessibilityState={{ selected: saved }} onPress={() => toggleSavedFlight(result, params)} style={d.headerAction}>
+              <Heart size={20} strokeWidth={2} fill={saved ? androidFavoriteColors.active : "transparent"} color={saved ? androidFavoriteColors.active : theme.icon} />
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Share flight" onPress={() => void handleShare()} style={d.headerAction}>
+              <FlowIcon name="share" size={20} color={theme.icon} />
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Edit search" onPress={() => router.push({ pathname: "/edit-flight-search", params: flightEditSearchParams(params) })} style={[d.editSearch, { borderColor: ui.blue }]}>
+              <FilePenLine size={16} strokeWidth={2} color={ui.blue} />
+              <Text style={d.editSearchText}>Edit search</Text>
+            </Pressable>
+          </View>
+        </View>
+        <View style={d.itineraryList}>
+          {legs.map((leg, i) => <FlightItineraryLeg key={`${leg.departureTime}-${i}`} leg={leg} result={result} />)}
         </View>
         <View style={[d.tripDetails, { backgroundColor: theme.surface }, theme.dark && d.tripDetailsDark]}>
           <Text style={[d.h2, { color: theme.textPrimary }]}>Trip details</Text>
@@ -357,6 +288,121 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
         </View>
       </View>
     </SafeAreaView>
+  );
+}
+type FlightItineraryLegProps = {
+  leg: NonNullable<FlightResult["legs"]>[number];
+  result: FlightResult;
+};
+
+const airportFromCatalogue = (code: string) =>
+  homepageAirports.find((airport) => airport.code === code.toUpperCase());
+
+const itineraryDate = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? ""
+    : date.toLocaleDateString(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+};
+
+function FlightItineraryLeg({ leg, result }: FlightItineraryLegProps) {
+  const { theme } = useAppTheme();
+  const firstSegment = leg.segments[0];
+  const lastSegment = leg.segments[leg.segments.length - 1];
+  const originDetails = firstSegment?.originDetails;
+  const destinationDetails = lastSegment?.destinationDetails;
+  const origin = airportFromCatalogue(leg.originAirport);
+  const destination = airportFromCatalogue(leg.destinationAirport);
+  const segmentRows = leg.segments.length ? leg.segments : [undefined];
+  const arrivalDay = providerLocalArrivalDate(leg.departureTime, leg.arrivalTime);
+  const stopLabel = leg.stops === 0
+    ? "Nonstop"
+    : `${leg.stops} stop${leg.stops === 1 ? "" : "s"}`;
+  const endpoint = (
+    code: string,
+    value: string,
+    details: typeof originDetails,
+    catalogue: ReturnType<typeof airportFromCatalogue>,
+    arrival = false,
+  ) => (
+    <View style={d.itineraryEndpoint}>
+      <Text style={[d.itineraryTime, { color: theme.textPrimary }]}>{clock(value)}</Text>
+      <Text style={[d.itineraryCode, { color: theme.textPrimary }]}>{code}</Text>
+      <Text numberOfLines={2} style={[d.itineraryAirport, { color: theme.textSecondary }]}>
+        {details?.name ?? catalogue?.airport ?? code}
+      </Text>
+      <Text numberOfLines={1} style={[d.itineraryCity, { color: theme.textSecondary }]}>
+        {details?.cityName ?? catalogue?.city ?? ""}
+      </Text>
+      {details?.terminal ? (
+        <Text style={[d.itineraryFact, { color: theme.textSecondary }]}>Terminal {details.terminal}</Text>
+      ) : null}
+      {arrival && arrivalDay ? (
+        <Text style={[d.itineraryFact, { color: theme.textSecondary }]}>{`Arrives ${arrivalDay}`}</Text>
+      ) : null}
+    </View>
+  );
+
+  return (
+    <View style={[d.itineraryCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+      <View style={d.itineraryHeading}>
+        <Text style={d.itineraryDirection}>{leg.direction.toUpperCase()}</Text>
+        <Text style={[d.itineraryDate, { color: theme.textSecondary }]}>{itineraryDate(leg.departureTime)}</Text>
+      </View>
+      <View style={d.itineraryRoute}>
+        {endpoint(leg.originAirport, leg.departureTime, originDetails, origin)}
+        <View style={d.itineraryJourney}>
+          <Text style={[d.itineraryDuration, { color: theme.textSecondary }]}>{leg.duration}</Text>
+          <View style={d.itineraryLineRow}>
+            <View style={[d.itineraryDot, { backgroundColor: theme.textSecondary }]} />
+            <View style={[d.itineraryLine, { backgroundColor: theme.border }]} />
+            <FlowIcon name="flight" size={17} color={ui.blue} />
+            <View style={[d.itineraryLine, { backgroundColor: theme.border }]} />
+            <View style={[d.itineraryDot, { backgroundColor: theme.textSecondary }]} />
+          </View>
+          <Text style={[d.itineraryStops, { color: leg.stops === 0 ? ui.green : theme.textSecondary }]}>{stopLabel}</Text>
+        </View>
+        {endpoint(leg.destinationAirport, leg.arrivalTime, destinationDetails, destination, true)}
+      </View>
+      {leg.layovers.length ? (
+        <Text style={[d.itineraryLayovers, { color: theme.textSecondary }]}>
+          {leg.layovers.map((layover) => `${layover.duration} in ${layover.airport}`).join(" · ")}
+        </Text>
+      ) : null}
+      <View style={[d.segmentList, { borderTopColor: theme.border }]}>
+        {segmentRows.map((segment, index) => {
+          const airlineName = segment?.marketingCarrier?.name
+            ?? segment?.airlineName
+            ?? result.airlineName;
+          const flightNumber = segment?.marketingFlightNumber
+            ?? segment?.flightNumber
+            ?? (segmentRows.length === 1 ? result.flightNumber : undefined);
+          const matchingOfferCarrier = airlineName.trim().toLowerCase()
+            === result.airlineName.trim().toLowerCase();
+          return (
+            <View key={`${segment?.departureTime ?? leg.departureTime}-${index}`} style={d.segmentSummary}>
+              <AirlineLogo airlineName={airlineName} logoUrl={matchingOfferCarrier ? result.airlineLogo : null} />
+              <View style={d.segmentCopy}>
+                <Text style={[d.segmentRoute, { color: theme.textPrimary }]}>
+                  {segment?.originAirport ?? leg.originAirport} → {segment?.destinationAirport ?? leg.destinationAirport} · {clock(segment?.departureTime ?? leg.departureTime)}–{clock(segment?.arrivalTime ?? leg.arrivalTime)}
+                </Text>
+                <Text style={[d.segmentMeta, { color: theme.textSecondary }]}>
+                  {[airlineName, flightNumber].filter(Boolean).join(" · ")}
+                </Text>
+              </View>
+              {segment?.distanceKm ? (
+                <Text style={[d.segmentDistance, { color: theme.textSecondary }]}>{Math.round(segment.distanceKm).toLocaleString()} km</Text>
+              ) : null}
+            </View>
+          );
+        })}
+      </View>
+    </View>
   );
 }
 function HotelDetail({
@@ -766,6 +812,61 @@ const d = StyleSheet.create({
     lineHeight: 17,
     textAlign: "center",
   },
+  flightBackHeader: {
+    minHeight: 48,
+    paddingHorizontal: 14,
+    justifyContent: "center",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  backToResults: {
+    minHeight: 44,
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+  backToResultsText: { color: ui.blue, fontSize: 14, lineHeight: 19, fontWeight: "700" },
+  flightSummary: { gap: 12, paddingBottom: 2 },
+  flightSummaryCopy: { gap: 3 },
+  flightSummaryRoute: { fontSize: 25, lineHeight: 31, fontWeight: "900" },
+  flightSummaryActions: { flexDirection: "row", alignItems: "center", gap: 5 },
+  editSearch: {
+    minHeight: 44,
+    marginLeft: "auto",
+    paddingHorizontal: 13,
+    borderWidth: 1,
+    borderRadius: 9,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+  },
+  editSearchText: { color: ui.blue, fontSize: 13, fontWeight: "800" },
+  itineraryList: { gap: 12 },
+  itineraryCard: { borderWidth: 1, borderRadius: 12, padding: 14, gap: 13 },
+  itineraryHeading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  itineraryDirection: { color: ui.blue, fontSize: 11, lineHeight: 15, fontWeight: "900", letterSpacing: 0.7 },
+  itineraryDate: { fontSize: 11, lineHeight: 15, fontWeight: "700", textAlign: "right" },
+  itineraryRoute: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
+  itineraryEndpoint: { flex: 1, minWidth: 0, gap: 1 },
+  itineraryTime: { fontSize: 20, lineHeight: 25, fontWeight: "900" },
+  itineraryCode: { fontSize: 14, lineHeight: 19, fontWeight: "800" },
+  itineraryAirport: { fontSize: 10, lineHeight: 14, marginTop: 2 },
+  itineraryCity: { fontSize: 10, lineHeight: 14 },
+  itineraryFact: { fontSize: 9, lineHeight: 13, marginTop: 1 },
+  itineraryJourney: { width: 90, alignItems: "center", paddingTop: 4 },
+  itineraryDuration: { fontSize: 10, lineHeight: 14, fontWeight: "700" },
+  itineraryLineRow: { width: "100%", flexDirection: "row", alignItems: "center", marginVertical: 6 },
+  itineraryDot: { width: 4, height: 4, borderRadius: 2 },
+  itineraryLine: { flex: 1, height: 1 },
+  itineraryStops: { fontSize: 9, lineHeight: 13, fontWeight: "800" },
+  itineraryLayovers: { fontSize: 10, lineHeight: 14, textAlign: "center" },
+  segmentList: { paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, gap: 12 },
+  segmentSummary: { flexDirection: "row", alignItems: "center", gap: 9 },
+  segmentCopy: { flex: 1, minWidth: 0, gap: 2 },
+  segmentRoute: { fontSize: 11, lineHeight: 15, fontWeight: "800" },
+  segmentMeta: { fontSize: 10, lineHeight: 14 },
+  segmentDistance: { fontSize: 9, lineHeight: 13, flexShrink: 0 },
   h2: { fontSize: 18, fontWeight: "900", color: ui.navy },
   meta: { fontSize: 11, color: ui.muted, lineHeight: 16 },
   reassure: {
