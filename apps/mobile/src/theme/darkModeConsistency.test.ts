@@ -107,10 +107,12 @@ test("the active Flight results journey keeps its semantic surface and text hier
   assert.match(results, /backgroundColor: theme\.surface, borderColor: theme\.priceAlertBorder/);
   assert.match(read("src/theme/AppTheme.tsx"), /priceAlertBorder:/);
   assert.match(read("src/theme/AppTheme.tsx"), /priceAlertAccent:/);
-  assert.match(results, /s0\.sortSheet,[\s\S]*backgroundColor: theme\.surface/);
-  assert.match(results, /s0\.sortOptionLabel, \{ color: theme\.textPrimary \}/);
-  assert.match(results, /s0\.sortOptionDescription, \{ color: theme\.textSecondary \}/);
-  assert.match(results, /selected \? ui\.blue : theme\.border/);
+  const sortSheet = read("src/features/search/FlightSortSheet.tsx");
+  const shell = read("src/features/search/FlightResultsSheetShell.tsx");
+  assert.match(shell, /backgroundColor: theme\.surface/);
+  assert.match(sortSheet, /selected \? ui\.blue : theme\.textPrimary/);
+  assert.match(sortSheet, /color: theme\.textSecondary/);
+  assert.match(sortSheet, /selected \? ui\.blue : theme\.border/);
   assert.match(searchUi, /backgroundColor: flightResults \? theme\.background : theme\.surface/);
   assert.match(searchUi, /backgroundColor: theme\.surface/);
   assert.match(searchUi, /theme\.dark \? "#142B55" : "#F0F5FF"/);
@@ -130,7 +132,7 @@ test("Flight filters, slider, and inline edit sheet have no implicit light text 
   assert.match(filter, /s\.subhead,\{color:theme\.textPrimary\}/);
   assert.match(filter, /s\.rowText,\{color:theme\.textPrimary\}/);
   assert.match(filter, /s\.rowInsight,\{color:theme\.textSecondary\}/);
-  assert.match(filter, /borderTopColor:theme\.border,backgroundColor:theme\.surface/);
+  assert.match(filter, /<FlightResultsSheetShell/);
   assert.match(filter, /selected\?ui\.blue:theme\.border/);
   assert.match(slider, /backgroundColor: theme\.border/);
   assert.match(slider, /borderColor: theme\.surface/);

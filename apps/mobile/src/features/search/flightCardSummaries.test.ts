@@ -10,7 +10,7 @@ test("metadata uses three balanced full-width sections in baggage, cabin, fare-r
   const row = card.slice(card.indexOf('style={s0.metadataRow}'));
   const baggage = row.indexOf("baggageSummary");
   const cabin = row.indexOf("cabinSummary");
-  const fareRules = row.indexOf("Fare rules\n");
+  const fareRules = row.indexOf("Fare rules");
 
   assert.ok(baggage >= 0 && cabin > baggage && fareRules > cabin);
   assert.equal(row.match(/style=\{s0\.metadataItem\}/g)?.length, 3);
