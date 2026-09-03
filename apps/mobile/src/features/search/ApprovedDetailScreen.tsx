@@ -44,6 +44,7 @@ import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { providerLocalArrivalDate } from "./flightArrivalDayOffset";
 import { flightPriceBasis } from "./flightPriceBasis";
+import { HOTEL_LIMITS } from "../flow/hotelSearchModel";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -51,6 +52,12 @@ const parse = <T,>(v?: string | string[]) => {
   } catch {
     return undefined;
   }
+};
+const positiveCount = (value: string | string[] | undefined, fallback: number, maximum: number) => {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (!raw || !/^\d+$/.test(raw)) return fallback;
+  const parsed = Number(raw);
+  return parsed >= 1 && parsed <= maximum ? parsed : fallback;
 };
 export function ApprovedDetailScreen({
   product,
@@ -373,6 +380,8 @@ function HotelDetail({
   const bookable = result.searchPolicy.bookable && Boolean(redirectUrl);
   const hasPrice = result.pricePerNight != null && result.totalPrice != null;
   const discovery = result.inventoryKind === "discovery";
+  const guestCount = positiveCount(params.guests, 2, HOTEL_LIMITS.guests.max);
+  const roomCount = positiveCount(params.rooms, 1, HOTEL_LIMITS.rooms.max);
   const nights = (() => {
     const a = new Date(`${String(params.checkIn || "")}T12:00:00`),
       b = new Date(`${String(params.checkOut || "")}T12:00:00`);
@@ -432,7 +441,7 @@ function HotelDetail({
             <Text style={d.more}>+{images.length - 3}</Text>
           ) : null}
         </View>
-        <View style={d.hotelSummary}>
+        <View style={[d.hotelSummary, compact && d.hotelSummaryCompact]}>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={d.hotelName}>{result.name}</Text>
             {(result.classificationStars || Math.round(result.rating)) > 0 ? <Text style={d.stars}>
@@ -458,7 +467,7 @@ function HotelDetail({
               </Text>
             ) : null}
           </View>
-          <View style={{ alignItems: "flex-end" }}>
+          <View style={[d.hotelPriceSummary, compact && d.hotelPriceSummaryCompact]}>
             <Text style={d.price}>
               {hasPrice ? money(result.currency, result.pricePerNight) : "Price unavailable"}
               {hasPrice ? <Text style={d.meta}> /night</Text> : null}
@@ -467,22 +476,22 @@ function HotelDetail({
               {money(result.currency, result.totalPrice)} total
             </Text> : <Text style={d.meta}>No live rate</Text>}
             <Text style={d.meta}>
-              {nights ? `${nights} nights, ` : ""}${String(params.guests || 2)}{" "}
+              {nights ? `${nights} nights, ` : ""}{guestCount}{" "}
               guests
             </Text>
           </View>
         </View>
-        <View style={d.stay}>
+        <View style={[d.stay, compact && d.stayCompact]}>
           <Text style={d.stayItem}>
             ▣ {shortDate(String(params.checkIn || ""))} –{" "}
             {shortDate(String(params.checkOut || ""))}
             {nights ? `\n${nights} nights` : ""}
           </Text>
           <Text style={d.stayItem}>
-            ▤ {params.rooms || 1} Room{"\n"}
+            ▤ {roomCount} Room{"\n"}
             {result.roomType || "Room type unavailable"}
           </Text>
-          <Text style={d.stayItem}>♙ {params.guests || 2} Guests</Text>
+          <Text style={d.stayItem}>♙ {guestCount} Guests</Text>
         </View>
         {result.amenities.length ? <ScrollView
           horizontal
@@ -528,7 +537,7 @@ function HotelDetail({
             </View>
           </Pressable> : null}
           <View style={d.section}>
-            <Text style={d.h2}>Choose where to book</Text>
+            <Text style={d.h2}>{discovery ? "Inventory source" : "Choose where to book"}</Text>
             <Text style={d.meta}>
               Total price including taxes and fees when reported
             </Text>
@@ -540,7 +549,7 @@ function HotelDetail({
                   : "Planning inventory · no live checkout"
               }
               price={hasPrice ? money(result.currency, result.totalPrice) : "Price unavailable"}
-              selected
+              selected={!discovery}
             />
             <Text style={d.disclosure}>
               Only the provider offer returned by the current inventory source
@@ -552,16 +561,16 @@ function HotelDetail({
       <View
         style={[d.hotelSticky, { paddingBottom: Math.max(inset.bottom, 10) }]}
       >
-        <View>
-          <Text style={d.price}>
+        <View style={d.stickyTotal}>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={d.price}>
             {hasPrice ? <>{money(result.currency, result.totalPrice)}{" "}<Text style={d.meta}>total</Text></> : "Price unavailable"}
           </Text>
           <Text style={d.meta}>
-            {nights ? `${nights} nights, ` : ""}${params.guests || 2} guests
+            {nights ? `${nights} nights, ` : ""}{guestCount} guests
           </Text>
           <Text style={d.blue}>Price breakdown ⌄</Text>
         </View>
-        <View>
+        <View style={d.stickyCta}>
           <Button
             disabled={!bookable}
             external
@@ -695,7 +704,7 @@ function Offer({
       </View>
       <View style={[d.offerActions, compact && d.offerActionsCompact]}>
         <Text numberOfLines={1} style={d.priceSmall}>{price}</Text>
-        <Button label="Select" onPress={onSelect} />
+        {onSelect ? <Button label="Select" onPress={onSelect} /> : null}
       </View>
     </View>
   );
@@ -939,6 +948,9 @@ const d = StyleSheet.create({
     fontSize: 16,
   },
   hotelSummary: { padding: 20, flexDirection: "row", gap: 8 },
+  hotelSummaryCompact: { flexDirection: "column" },
+  hotelPriceSummary: { alignItems: "flex-end", flexShrink: 0 },
+  hotelPriceSummaryCompact: { alignItems: "flex-start" },
   hotelName: { fontSize: 20, fontWeight: "900", color: ui.navy },
   stars: { color: "#FFB800", fontSize: 15, marginVertical: 7 },
   score: { backgroundColor: ui.blue, color: "white", fontWeight: "900" },
@@ -952,6 +964,7 @@ const d = StyleSheet.create({
     justifyContent: "space-between",
     gap: 5,
   },
+  stayCompact: { flexDirection: "column", gap: 8 },
   stayItem: { fontSize: 11, color: ui.navy, fontWeight: "700", lineHeight: 17 },
   amenityStrip: {
     margin: 14,
