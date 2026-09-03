@@ -11,16 +11,16 @@ const flightDetail = detailSource.slice(detailSource.indexOf("function FlightDet
 const styles = detailSource.slice(detailSource.indexOf("const d = StyleSheet.create"));
 const result = { originAirport: "lax", destinationAirport: "los", cabinClass: "business" };
 
-test("Flight Details has a details-only two-row header without branding or a bell", () => {
+test("Flight Details has a web-aligned back row and route summary without branding or a bell", () => {
   assert.match(flightDetail, /accessibilityLabel="Flight details header"/);
-  assert.match(flightDetail, /accessibilityLabel="Flight route controls"[\s\S]*?accessibilityLabel="Trip metadata row"/);
+  assert.match(flightDetail, /accessibilityLabel="Back to results"[\s\S]*?d\.flightSummaryRoute[\s\S]*?header\.route/);
   assert.doesNotMatch(flightDetail, /<TopBar|<Logo|Kurioticket|name="bell"|Price alert/);
   assert.match(searchUiSource, /export function Logo/);
   assert.match(searchUiSource, /accessibilityLabel="Notifications"/);
 });
 
 test("Back, Edit search, and Share remain independent accessible 44px actions", () => {
-  assert.match(flightDetail, /accessibilityLabel="Go back" onPress=\{\(\) => router\.back\(\)\}/);
+  assert.match(flightDetail, /accessibilityLabel="Back to results" onPress=\{\(\) => router\.back\(\)\}/);
   assert.match(flightDetail, /accessibilityLabel="Edit search" onPress=\{\(\) => router\.push\(\{ pathname: "\/edit-flight-search", params: flightEditSearchParams\(params\) \}\)\}/);
   assert.match(flightDetail, /accessibilityLabel="Share flight" onPress=\{\(\) => void handleShare\(\)\}/);
   assert.match(flightDetail, /readSession,[\s\S]*?share: \(message\) => Share\.share\(\{ message \}\),[\s\S]*?message: flightShareMessage\(result, formattedFare\)/);
@@ -29,10 +29,10 @@ test("Back, Edit search, and Share remain independent accessible 44px actions", 
   assert.doesNotMatch(actionStyle, /backgroundColor|border|shadow|elevation/);
 });
 
-test("Edit search and Share form the right action group while the route is screen-centered", () => {
-  assert.match(flightDetail, /accessibilityLabel="Flight details actions" style=\{d\.headerActions\}[\s\S]*?Edit search[\s\S]*?Share flight/);
-  assert.match(styles, /headerActions: \{[\s\S]*?marginLeft: "auto"[\s\S]*?columnGap: 4/);
-  assert.match(styles, /headerRoute: \{[\s\S]*?position: "absolute"[\s\S]*?left: 96,[\s\S]*?right: 96,[\s\S]*?textAlign: "center"/);
+test("Save, Share, and Edit search form the accessible action row under the route", () => {
+  assert.match(flightDetail, /accessibilityLabel="Flight details actions" style=\{d\.flightSummaryActions\}[\s\S]*?Save \$\{result\.airlineName\}[\s\S]*?Share flight[\s\S]*?Edit search/);
+  assert.match(styles, /flightSummaryActions: \{ flexDirection: "row", alignItems: "center", gap: 5 \}/);
+  assert.match(styles, /flightSummaryRoute: \{ fontSize: 25,[\s\S]*?fontWeight: "900"/);
 });
 
 test("header model uses current airport codes, dates, passenger total, pluralization, and cabin", () => {
@@ -45,19 +45,19 @@ test("header model uses current airport codes, dates, passenger total, pluraliza
   }), { route: "LAX → LOS", tripTypeLabel: "One-way", metadata: "Aug 20 · 1 Traveler · Premium Economy" });
 });
 
-test("metadata is plain text, one line, horizontally scrollable, and themed", () => {
-  assert.match(flightDetail, /<ScrollView accessibilityLabel="Trip metadata row" horizontal showsHorizontalScrollIndicator=\{false\}/);
-  assert.match(flightDetail, /<Text numberOfLines=\{1\} style=\{\[d\.headerMetadata, \{ color: theme\.textSecondary \}]}>{header\.metadata}<\/Text>/);
-  assert.doesNotMatch(flightDetail.slice(flightDetail.indexOf('accessibilityLabel="Trip metadata row"')), /Calendar|User|Briefcase|emoji/);
+test("route and trip summary are plain, themed text matching the rendered web hierarchy", () => {
+  assert.match(flightDetail, /d\.flightSummaryRoute[\s\S]*?>\{header\.route\}<\/Text>/);
+  assert.match(flightDetail, /\{header\.tripTypeLabel\} · \{priceBasis\.travelerLabel\.toLowerCase\(\)\}/);
+  assert.doesNotMatch(flightDetail, /Calendar|User|Briefcase|emoji/);
   assert.match(flightDetail, /backgroundColor: theme\.surface, borderBottomColor: theme\.border/);
   assert.match(flightDetail, /color: theme\.textPrimary/);
   assert.match(flightDetail, /color=\{theme\.icon\}/);
 });
 
-test("Flight Results and Flight Details booking body remain structurally unchanged", () => {
+test("Flight Results and Flight Details canonical booking body remain in place", () => {
   assert.match(resultsSource, /function FlightResultsHeader/);
   assert.match(resultsSource, /<FlightResultsHeader/);
-  assert.match(flightDetail, />Flight details</);
+  assert.match(flightDetail, /<FlightItineraryLeg/);
   assert.match(flightDetail, />Trip details</);
   assert.match(flightDetail, />Booking provider</);
   assert.match(flightDetail, /Continue to \$\{provider\}/);

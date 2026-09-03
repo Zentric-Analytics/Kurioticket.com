@@ -68,7 +68,7 @@ test("new alerts validate target input through the shared helper before creation
   assert.match(flightAlert, /setMatchingAlert\(created\.alert\)/);
 });
 
-test("Hotel Results uses create-target alert presentation without a management switch", () => { assert.match(flightAlert, /accessibilityLabel="Create hotel price alert"/); assert.match(flightAlert, /setTargetOpen\(true\)/); assert.doesNotMatch(flightAlert.slice(flightAlert.indexOf('if (product !== "hotel"')), /<Switch/);
+test("Hotel Results uses create-target alert presentation without a management switch", () => { assert.match(flightAlert, /"Create hotel price alert"/); assert.match(flightAlert, /setTargetOpen\(true\)/); assert.doesNotMatch(flightAlert.slice(flightAlert.indexOf('if (product !== "hotel"')), /<Switch/);
 });
 
 test("Hotel alert creation retains canonical payload, validation, duplicate and sign-in handling", () => { assert.match(flightAlert, /buildHotelPriceAlertPayload/); assert.match(flightAlert, /parseTargetPrice\(targetDraft\)/); assert.match(flightAlert, /error.status === 409/); assert.match(flightAlert, /requireSignIn/);
@@ -81,4 +81,29 @@ test("obsolete large Hotel Results alert styles and create button stay removed",
   assert.doesNotMatch(styles, /\bhotelAlertTitle:/);
   assert.doesNotMatch(styles, /\bhotelAlertBody:/);
   assert.doesNotMatch(styles, /\bhotelAlertCreateButton(?:Pressed|Disabled|Text)?:/);
+});
+
+test("Hotel Results reuses the Flight banner with a bounded icon action", () => {
+  const hotelAlert = flightAlert.slice(flightAlert.indexOf('if (product !== "hotel"'));
+  const actionStyle = source.slice(source.indexOf("hotelAlertAction: {"), source.indexOf("hotelAlertActionPressed: {"));
+  assert.match(hotelAlert, /style=\{\[s0\.flightAlert,/);
+  assert.match(hotelAlert, /style=\{s0\.flightAlertCopy\}/);
+  assert.match(hotelAlert, /s0\.flightAlertTitle/);
+  assert.match(hotelAlert, /s0\.flightAlertSubtitle/);
+  assert.match(hotelAlert, /style=\{s0\.flightAlertSwitchTarget\}/);
+  assert.match(hotelAlert, /accessibilityRole="button"/);
+  assert.match(hotelAlert, /<Bell accessible=\{false\}/);
+  assert.match(actionStyle, /width: 44/);
+  assert.match(actionStyle, /height: 44/);
+  assert.doesNotMatch(hotelAlert, />\{message\("createAlert"\)\}<\/Text>/);
+  assert.match(hotelAlert, /setTargetOpen\(true\)/);
+  assert.doesNotMatch(hotelAlert, /updatePriceAlertStatus|<Switch/);
+});
+
+test("Hotel Results compact saved state prevents duplicate creation", () => {
+  const hotelAlert = flightAlert.slice(flightAlert.indexOf('if (product !== "hotel"'));
+  assert.match(hotelAlert, /matchingAlert \? "Hotel price alert saved" : "Create hotel price alert"/);
+  assert.match(hotelAlert, /disabled: pending \|\| unavailable \|\| Boolean\(matchingAlert\)/);
+  assert.match(hotelAlert, /disabled=\{pending \|\| unavailable \|\| Boolean\(matchingAlert\)\}/);
+  assert.doesNotMatch(hotelAlert, />Saved<|\{matchingAlert \? "Saved"/);
 });

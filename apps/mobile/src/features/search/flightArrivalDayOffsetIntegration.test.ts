@@ -14,6 +14,6 @@ test("results never calculate or present arrival calendar crossing information",
 
 test("details present the actual provider-local arrival date without an offset", () => {
   assert.match(detailSource, /providerLocalArrivalDate\(leg\.departureTime, leg\.arrivalTime\)/);
-  assert.match(detailSource, /`Arrives \$\{providerLocalArrivalDate/);
+  assert.match(detailSource, /const arrivalDay = providerLocalArrivalDate[\s\S]*?`Arrives \$\{arrivalDay\}`/);
   assert.doesNotMatch(detailSource, /`\+\$\{/);
 });

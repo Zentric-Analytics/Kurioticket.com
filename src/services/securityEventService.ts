@@ -18,7 +18,7 @@ export async function deliverSecurityEvent(input: SecurityNotice) {
     type: "SECURITY_UPDATE",
     title: input.title,
     body: input.body,
-    actionPath: "/settings",
+    actionPath: "/security",
     metadata: input.metadata,
   });
 }
