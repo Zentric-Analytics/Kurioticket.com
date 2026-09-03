@@ -1878,7 +1878,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                     {activeFilterCount ? ` (${activeFilterCount})` : ""}
                   </Button>
 
-                  <div role="group" aria-label={t("hotelResults.summaryAria")} className="flex w-full flex-nowrap items-center justify-between gap-2 py-0 sm:py-1">
+                  <div role="group" aria-label={t("hotelResults.summaryAria")} className={cn("flex w-full flex-nowrap items-center justify-between gap-2 py-0 sm:py-1", !guided && "hidden sm:flex")}>
                     <div>
                       {guided ? (
                         <h2 ref={guidedResultsHeadingRef} id="deals-guided-hotel-results-heading" tabIndex={-1} className="text-xl font-bold leading-7 tracking-[-0.015em] text-[#142033] sm:text-2xl">
@@ -1960,6 +1960,20 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                   ) : null}
 
                   {!guided && results.length > 0 ? <HotelPriceAlertControl search={{ destination: body.destination, checkIn: body.checkIn, checkOut: body.checkOut, guests: body.guests, rooms: body.rooms }} results={results} /> : null}
+
+                  {!guided ? (
+                    <div data-mobile-hotel-results-summary role="group" aria-label={t("hotelResults.summaryAria")} className="sm:hidden">
+                      <h1 tabIndex={-1} className="scroll-mt-20 text-xl font-bold leading-7 tracking-[-0.015em] text-[#142033]">
+                        {resultsHeading}
+                      </h1>
+                      {resultsDisplayRange ? (
+                        <p aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end}`} className="mt-0.5 text-xs font-medium leading-4 text-slate-500">
+                          Showing {resultsDisplayRange.start}&ndash;
+                          {resultsDisplayRange.end}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
 
                   <div ref={paginationListRef} aria-busy={paginationPendingPage !== null} style={paginationMinHeight ? { minHeight: paginationMinHeight } : undefined} className={cn("space-y-4", paginationRevealing && "animate-[fadeIn_150ms_ease-out]")}>
                     {filterApplying || paginationTransitionPhase === "covering" ? (

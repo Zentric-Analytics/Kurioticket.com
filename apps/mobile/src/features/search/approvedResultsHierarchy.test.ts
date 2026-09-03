@@ -107,11 +107,18 @@ test("loading and error states cannot expose the flight price alert", () => {
   assert.match(source, /status === "ready" && !flightState && plan\.plan/);
 });
 
-test("ready non-empty Hotel results order summary, raw-results alert, then cards", () => {
+test("ready non-empty Hotel results order raw-results alert, summary, then cards", () => {
   const hotelStart = resultsBody.indexOf('status === "ready" && product === "hotel" && sorted.length > 0');
   const hotelStack = resultsBody.slice(hotelStart, resultsBody.indexOf("</>", hotelStart) + 3);
-  assert.ok(hotelStack.indexOf("hotelResultsSummary") < hotelStack.indexOf("<PriceAlert"));
-  assert.ok(resultsBody.indexOf("<PriceAlert", hotelStart) < resultsBody.indexOf("sorted.map((x, i)", hotelStart));
+  const alert = hotelStack.indexOf("<PriceAlert");
+  const summary = hotelStack.indexOf("hotelResultsSummary");
+  const cards = resultsBody.indexOf("sorted.map((x, i)", hotelStart);
+  const absoluteSummary = hotelStart + summary;
+  assert.ok(alert >= 0 && alert < summary);
+  assert.ok(absoluteSummary < cards);
+  assert.equal(hotelStack.match(/<PriceAlert/g)?.length, 1);
+  assert.equal(hotelStack.match(/hotelResultsSummary/g)?.length, 1);
+  assert.doesNotMatch(resultsBody.slice(absoluteSummary, cards), /<PriceAlert/);
   assert.match(hotelStack, /hotelResults=\{results as HotelResult\[\]\}/);
   assert.doesNotMatch(hotelStack, /hotelResults=\{sorted/);
   const afterCards = resultsBody.slice(resultsBody.indexOf("sorted.map((x, i)", hotelStart), resultsBody.indexOf("return (", hotelStart));
