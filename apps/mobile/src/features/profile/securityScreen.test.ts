@@ -277,7 +277,46 @@ test("activity is a single landing block opening the full history", () => {
   assert.match(landing, /label=\{c\.activity\} description=\{c\.activityHelp\} onPress=\{\(\) => setActivityOpen\(true\)\}/);
   assert.doesNotMatch(landing, /events\.slice\(0, 3\)|c\.viewAll|<EventRow/);
   assert.match(security, /<ScreenModal visible=\{activityOpen\}/);
-  assert.match(security, /events\.map\(\(event\)/);
+  assert.match(security, /const activityGroups = groupSecurityEvents\(events\)/);
+  assert.match(security, /group\.events\.map\(\(event\)/);
+  assert.match(security, /onClose=\{\(\) => setActivityOpen\(false\)\}/);
+});
+
+
+test("activity groups local calendar dates once and sorts each group newest first", () => {
+  assert.match(security, /export function groupSecurityEvents/);
+  assert.match(security, /\[\.\.\.events\]\.sort\(\(a,b\) => new Date\(b\.occurredAt\)\.getTime\(\)-new Date\(a\.occurredAt\)\.getTime\(\)\)/);
+  assert.match(security, /const dateKey=securityActivityDateKey\(event\.occurredAt\)/);
+  assert.match(security, /current\?\.dateKey===dateKey/);
+  assert.match(security, /<View key=\{group\.dateKey\}/);
+});
+
+test("activity rows use localized headings and times with compact event icons", () => {
+  assert.match(security, /formatSecurityActivityHeading\(group\.events\[0\]\.occurredAt, locale\)/);
+  assert.match(security, /formatSecurityActivityTime\(event\.occurredAt, locale\)/);
+  for (const icon of ["LogOut", "Smartphone", "ShieldCheck", "Shield"]) assert.ok(security.includes(`<${icon} size={18}`));
+  assert.match(security, /event\.deviceLabel\?\.trim\(\)/);
+  assert.doesNotMatch(security.slice(security.indexOf("function EventRow"), security.indexOf("export function sessionDetails")), /location|ipAddress|browser|operating system/i);
+});
+
+test("activity date and time formatting follows the selected locale and local calendar", async () => {
+  const { formatSecurityActivityHeading, formatSecurityActivityTime, securityActivityDateKey, securityCopy } = await import("./securityLocalization");
+  const now = new Date(2026, 8, 3, 0, 15);
+  const today = new Date(2026, 8, 3, 23, 45).toISOString();
+  const yesterday = new Date(2026, 8, 2, 23, 45).toISOString();
+  const older = new Date(2026, 8, 1, 14, 5).toISOString();
+  assert.equal(formatSecurityActivityHeading(today, "en-us", now), "Today");
+  assert.equal(formatSecurityActivityHeading(yesterday, "en-us", now), "Yesterday");
+  assert.equal(formatSecurityActivityHeading(today, "es-es", now), securityCopy["es-es"].today);
+  assert.equal(formatSecurityActivityHeading(yesterday, "es-es", now), securityCopy["es-es"].yesterday);
+  assert.equal(formatSecurityActivityHeading(older, "en-us", now), "September 1");
+  assert.notEqual(formatSecurityActivityHeading(new Date(2025, 8, 1).toISOString(), "en-us", now), "September 1");
+  assert.equal(securityActivityDateKey(today), securityActivityDateKey(new Date(2026, 8, 3, 0, 1).toISOString()));
+  assert.equal(formatSecurityActivityTime(older, "es-es"), new Intl.DateTimeFormat("es-ES", { hour: "numeric", minute: "2-digit" }).format(new Date(older)));
+});
+
+test("activity retains its localized empty state", () => {
+  assert.match(security, /activityGroups\.length \?.*c\.empty/s);
 });
 
 test("security loading and mutations retain API and session-expiry contracts", () => {
