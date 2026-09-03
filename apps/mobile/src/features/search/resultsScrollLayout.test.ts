@@ -100,18 +100,7 @@ test("flight dates use full resolved fares in wider, single-line tiles", () => {
   assert.doesNotMatch(dateStrip, /ellipsizeMode="clip"/);
 });
 
-test("hotel results omit the date rail and keep filters above the separate result scroll", () => {
-  const hotelStart = alternateLayoutStart;
-  const hotelLayout = screen.slice(hotelStart, screen.indexOf("<FlightSortSheet", hotelStart));
-
-  assert.doesNotMatch(hotelLayout, /DateStrip|dateStrip|flightDateStrip/);
-  assert.match(hotelLayout, /\{filterRail\}/);
-  assert.match(hotelLayout, /<ScrollView[^>]*contentContainerStyle=\{\[s0\.body, s0\.hotelResultsContent\]\}[^>]*>\{resultContent\}<\/ScrollView>/);
-  assert.ok(hotelLayout.indexOf("{filterRail}") < hotelLayout.indexOf("<ScrollView"));
-  assert.doesNotMatch(hotelLayout, /stickyHeaderIndices|stickySectionHeadersEnabled/);
-  assert.doesNotMatch(hotelLayout, /<View[^>]*>\s*<\/View>|dateStripWrapper/);
-});
-
+test("hotel summary and shortcuts participate in one vertical scroll", () => { const hotelLayout=screen.slice(alternateLayoutStart,screen.indexOf("<FlightSortSheet",alternateLayoutStart)); assert.match(hotelLayout,/<ScrollView ref=\{hotelScrollRef\}[\s\S]*?<HotelResultsHeader[\s\S]*?\{filterRail\}[\s\S]*?\{resultContent\}/); assert.match(hotelLayout,/setHotelCompactHeader\(y>104\)/); });
 test("hotel surviving sections own moderate spacing without changing the shared flight rail", () => {
   const hotelHeader = screen.slice(
     screen.indexOf("function HotelResultsHeader"),

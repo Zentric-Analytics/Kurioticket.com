@@ -146,21 +146,7 @@ test("canonical flight search data remains available after presentation metadata
   assert.equal(payload?.cabinClass, "premium-economy");
 });
 
-test("Hotel Results replaces only its TopBar with a dynamic compact header", () => {
-  assert.doesNotMatch(results, /<TopBar \/>/);
-  assert.match(searchUi, /export function TopBar/);
-  assert.match(results, /flightResults \? \([\s\S]*?<FlightResultsHeader[\s\S]*?\) : \(\s*<HotelResultsHeader/);
-  assert.match(hotelInvocation, /destination=\{String\(payload\.destination/);
-  for (const field of ["checkIn", "checkOut", "guests", "rooms"]) {
-    assert.match(hotelInvocation, new RegExp(`${field}=\\{String\\(payload\\.${field}`));
-  }
-  assert.match(hotelHeader, /accessibilityLabel="Hotel search summary"/);
-  assert.match(hotelHeader, /\{checkIn\} – \{checkOut\} · \{guests\} guests · \{rooms\}/);
-  assert.match(hotelHeader, /accessibilityLabel="Go back"[\s\S]*?router\.back\(\)/);
-  assert.match(hotelHeader, /accessibilityLabel="Edit search"[\s\S]*?onPress=\{onEdit\}/);
-  assert.match(hotelHeader, />Edit<\/Text>/);
-});
-
+test("Hotel Results uses a scrolling summary and compact handoff header", () => { assert.match(results,/<ScrollView ref=\{hotelScrollRef\}[\s\S]*?<HotelResultsHeader[\s\S]*?\{filterRail\}/); assert.match(results,/hotelCompactHeader \?/); assert.match(results,/accessibilityLabel="Edit hotel search"/); });
 test("Hotel Results shares Flight's balanced controls and truncates long destinations", () => {
   assert.match(hotelHeader, /style=\{s0\.flightHeaderMainRow\}/);
   assert.match(hotelHeader, /style=\{s0\.flightHeaderSide\}/);

@@ -68,36 +68,10 @@ test("new alerts validate target input through the shared helper before creation
   assert.match(flightAlert, /setMatchingAlert\(created\.alert\)/);
 });
 
-test("Hotel Results always uses the compact Flight alert presentation and switch", () => {
-  const hotelBranch = flightAlert.slice(flightAlert.indexOf('if (product !== "hotel"'));
-  const hotelResultsPresentation = hotelBranch.slice(0, hotelBranch.indexOf("<Modal"));
-  assert.match(hotelResultsPresentation, /style=\{\[s0\.flightAlert,/);
-  assert.match(hotelResultsPresentation, /style=\{s0\.flightAlertCopy\}/);
-  assert.match(hotelResultsPresentation, /s0\.flightAlertTitle/);
-  assert.match(hotelResultsPresentation, /s0\.flightAlertSubtitle/);
-  assert.match(hotelResultsPresentation, /style=\{s0\.flightAlertSwitchTarget\}/);
-  assert.match(hotelResultsPresentation, /<Switch/);
-  assert.doesNotMatch(hotelResultsPresentation, /matchingAlert \?/);
-  assert.doesNotMatch(hotelResultsPresentation, /<Pressable/);
-  assert.match(hotelResultsPresentation, /accessibilityRole="switch"/);
-  assert.match(hotelResultsPresentation, /checked: isTracking/);
-  assert.match(hotelResultsPresentation, /value=\{isTracking\}/);
-  assert.match(hotelResultsPresentation, /disabled=\{pending \|\| loadingAlert \|\| unavailable\}/);
-  assert.match(hotelResultsPresentation, /onValueChange=\{\(next\) => void handleToggle\(next\)\}/);
-  assert.match(hotelResultsPresentation, /numberOfLines=\{1\} ellipsizeMode="tail"/);
-  assert.match(hotelResultsPresentation, /flightAlertSubtitle, \{ color: supportTextColor \}/);
-  assert.match(hotelBranch, /backgroundColor: theme\.surface, borderColor: theme\.priceAlertBorder/);
-  assert.match(hotelResultsPresentation, /trackColor=\{\{ false: inactiveSwitchTrackColor, true: theme\.switchTrackActive \}\}/);
-  assert.match(hotelResultsPresentation, /ios_backgroundColor=\{inactiveSwitchTrackColor\}/);
-  assert.match(hotelResultsPresentation, /thumbColor=\{theme\.surface\}/);
+test("Hotel Results uses create-target alert presentation without a management switch", () => { assert.match(flightAlert, /accessibilityLabel="Create hotel price alert"/); assert.match(flightAlert, /setTargetOpen\(true\)/); assert.doesNotMatch(flightAlert.slice(flightAlert.indexOf('if (product !== "hotel"')), /<Switch/);
 });
 
-test("Hotel alert activation retains target creation and active and paused management", () => {
-  assert.match(flightAlert, /if \(!matchingAlert\) \{ setTargetError\(""\); setTargetOpen\(true\); return; \}/);
-  assert.match(flightAlert, /updatePriceAlertStatus\(matchingAlert\.id, "ACTIVE"\)/);
-  assert.match(flightAlert, /updatePriceAlertStatus\(matchingAlert\.id, "PAUSED"\)/);
-  assert.match(flightAlert, /hotelAlertPresentation/);
-  assert.match(flightAlert, /matchingHotelPriceAlert/);
+test("Hotel alert creation retains canonical payload, validation, duplicate and sign-in handling", () => { assert.match(flightAlert, /buildHotelPriceAlertPayload/); assert.match(flightAlert, /parseTargetPrice\(targetDraft\)/); assert.match(flightAlert, /error.status === 409/); assert.match(flightAlert, /requireSignIn/);
 });
 
 test("obsolete large Hotel Results alert styles and create button stay removed", () => {

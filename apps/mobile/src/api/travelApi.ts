@@ -14,6 +14,9 @@ export class TravelApiError extends Error {
 
 export type FlightResult = ContractResult<PublicFlightResult>;
 export type HotelResult = ContractResult<PublicHotelResult>;
+export type HotelSearchResponse = TravelSearchResponse<PublicHotelResult> & {
+  warningCategory?: "provider_unavailable" | string;
+};
 export type CarResult = ContractResult<NormalizedCarResult>;
 export type PackageComponent = { status: "success" | "empty" | "unavailable"; results: (FlightResult | HotelResult | CarResult)[]; warnings: string[]; source: string; requestId: string };
 export type PackageSearchResponse = { mode: string; status: "success" | "partial" | "empty" | "unavailable"; components: Partial<Record<"flight" | "hotel" | "car", PackageComponent>>; packageOffers: unknown[] };
@@ -154,7 +157,7 @@ async function fetchExploreCatalogue(): Promise<MobileExploreCatalogue> {
 export const travelApi = {
   featureAvailability: () => request<FeatureAvailability>("/api/feature-availability"),
   searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<PublicFlightResult>>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: FLIGHT_SEARCH_REQUEST_TIMEOUT_MS }),
-  searchHotels: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<PublicHotelResult>>("/api/hotels/search", { method: "POST", body: JSON.stringify(body) }, options),
+  searchHotels: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<HotelSearchResponse>("/api/hotels/search", { method: "POST", body: JSON.stringify(body) }, options),
   searchHotelDestinations: (query: string, options: { signal?: AbortSignal; countryCode?: string; locale?: string; limit?: number } = {}) => {
     const params = new URLSearchParams({ q: query.trim(), limit: String(options.limit ?? 8) });
     if (options.countryCode) params.set("countryCode", options.countryCode);

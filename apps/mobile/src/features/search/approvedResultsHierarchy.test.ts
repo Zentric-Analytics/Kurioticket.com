@@ -107,24 +107,7 @@ test("loading and error states cannot expose the flight price alert", () => {
   assert.match(source, /status === "ready" && !flightState && plan\.plan/);
 });
 
-test("ready non-empty Hotel results order raw-results alert, summary, then cards", () => {
-  const hotelStart = resultsBody.indexOf('status === "ready" && product === "hotel" && sorted.length > 0');
-  const hotelStack = resultsBody.slice(hotelStart, resultsBody.indexOf("</>", hotelStart) + 3);
-  const alert = hotelStack.indexOf("<PriceAlert");
-  const summary = hotelStack.indexOf("hotelResultsSummary");
-  const cards = resultsBody.indexOf("sorted.map((x, i)", hotelStart);
-  const absoluteSummary = hotelStart + summary;
-  assert.ok(alert >= 0 && alert < summary);
-  assert.ok(absoluteSummary < cards);
-  assert.equal(hotelStack.match(/<PriceAlert/g)?.length, 1);
-  assert.equal(hotelStack.match(/hotelResultsSummary/g)?.length, 1);
-  assert.doesNotMatch(resultsBody.slice(absoluteSummary, cards), /<PriceAlert/);
-  assert.match(hotelStack, /hotelResults=\{results as HotelResult\[\]\}/);
-  assert.doesNotMatch(hotelStack, /hotelResults=\{sorted/);
-  const afterCards = resultsBody.slice(resultsBody.indexOf("sorted.map((x, i)", hotelStart), resultsBody.indexOf("return (", hotelStart));
-  assert.doesNotMatch(afterCards, /<PriceAlert/);
-});
-
+test("ready Hotel stack has parity sections and current-page cards", () => { assert.match(resultsBody,/hotelFilterChips/); assert.match(resultsBody,/hasGoogleMapsDiscovery/); assert.match(resultsBody,/hotelResults=\{results as HotelResult\[\]\}/); assert.match(resultsBody,/hotelResultsSummary/); assert.match(resultsBody,/hotelPageResults.map/); });
 test("filtered-empty Hotel state remains isolated from summary, alert, and cards", () => {
   const emptyStart = resultsBody.indexOf('status === "ready" && product === "hotel" && results.length > 0 && sorted.length === 0');
   const emptyBranch = resultsBody.slice(emptyStart, resultsBody.indexOf(": null}", emptyStart));
