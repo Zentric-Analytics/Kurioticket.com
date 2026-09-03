@@ -47,3 +47,16 @@ test("Car details retain canonical facts and never create a booking URL", () => 
   assert.match(car, /Linking\.openURL\(selected\.bookingUrl\)/);
   assert.match(car, /disabled=\{!bookable\}/);
 });
+
+test("Hotel and Car details use the shared semantic theme in dark mode", () => {
+  for (const source of [hotel, car]) {
+    assert.match(source, /useAppTheme\(\)/);
+    assert.match(source, /theme\.background/);
+    assert.match(source, /theme\.surface/);
+    assert.match(source, /theme\.textPrimary/);
+    assert.match(source, /theme\.textSecondary/);
+    assert.match(source, /theme\.border/);
+    assert.match(source, /theme\.icon/);
+  }
+  assert.match(hotel, /d\.hotelTabs, \{ backgroundColor: theme\.surface, borderBottomColor: theme\.border \}/);
+});
