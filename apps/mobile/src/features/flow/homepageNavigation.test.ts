@@ -47,6 +47,30 @@ test("homepage alone owns the logo and notification action", () => {
   assert.doesNotMatch(products, /<HomeTopNavigation/);
 });
 
+test("homepage notification badge is anchored to the bell without changing its action", () => {
+  const home = source("src/features/flow/HomeFlowScreen.tsx");
+
+  assert.equal(home.match(/accessibilityLabel="Notifications"/g)?.length, 1);
+  assert.match(
+    home,
+    /<Pressable\s+accessibilityRole="button"\s+accessibilityLabel="Notifications"\s+onPress=\{\(\) => router\.push\("\/notifications"\)\}\s+style=\{ft\.styles\.iconButton\}\s*>/,
+  );
+  assert.match(
+    home,
+    /<View pointerEvents="none" style=\{styles\.notificationIconWrap\}>\s*<FlowIcon name="bell" color=\{ft\.colors\.icon\} \/>\s*\{unreadCount > 0 \? <View[^>]*style=\{styles\.notificationBadge\}>/,
+  );
+  assert.match(
+    home,
+    /notificationIconWrap:\s*\{\s*width: 28,\s*height: 28,\s*alignItems: "center",\s*justifyContent: "center"\s*\}/,
+  );
+  assert.match(
+    home,
+    /notificationBadge:\s*\{[^}]*right: -4,\s*top: -4,\s*minWidth: 18,\s*height: 18,\s*paddingHorizontal: 4,\s*borderRadius: 9,/s,
+  );
+  assert.match(home, /unreadCount > 99 \? "99\+" : unreadCount/);
+  assert.equal(home.match(/router\.push\("\/notifications"\)/g)?.length, 1);
+});
+
 test("hero directly follows the complete header for guests and signed-in users", () => {
   const home = source("src/features/flow/HomeFlowScreen.tsx");
   assert.match(
