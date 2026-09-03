@@ -28,6 +28,8 @@ test("car card matches the mobile Web identity, four-spec and conversion hierarc
   }
   assert.match(card, />View car<\/Text>/);
   assert.match(card, /Share\.share/);
+  assert.match(card, /getPrimaryCarOffer\(result\)/);
+  assert.doesNotMatch(card, /result\.offers\[0\]/);
   assert.doesNotMatch(card, /supplierRating|supplierReviewCount|Unlimited mileage|Pay at pickup/);
 });
 

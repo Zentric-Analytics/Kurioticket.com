@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { carFilterGroups } from "../../../../../src/lib/cars/carFilterPresentation";
+import { carFilterCopy } from "./carFilterCopy";
 
 const sheet = readFileSync("src/features/search/CarFilterSheet.tsx", "utf8");
 const screen = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
@@ -45,4 +47,15 @@ test("English, Spanish and Arabic filter copy and RTL context remain supported",
   assert.match(copy, /es:/);
   assert.match(copy, /ar:/);
   assert.match(sheet, /useMobileLocalization\(\)/);
+});
+
+test("Spanish and Arabic localize every canonical Car option", () => {
+  const englishCopy = carFilterCopy("en-us");
+  for (const locale of ["es-es", "ar"] as const) {
+    const copy = carFilterCopy(locale);
+    for (const option of carFilterGroups.flatMap((group) => group.options)) {
+      assert.ok(copy.options[option.id]?.trim(), `${locale}: ${option.id}`);
+    }
+    assert.notEqual(copy.options.freeCancellation, englishCopy.options.freeCancellation, locale);
+  }
 });
