@@ -1235,7 +1235,7 @@ function HotelCard({
               accessibilityRole="button"
               accessibilityLabel={`Share ${result.name}`}
               onPress={shareHotel}
-              style={s0.hotelAction}
+              style={[s0.hotelAction, s0.hotelShareAction]}
             >
               <Share2 accessible={false} size={20} color={HOTEL_UTILITY_ICON_COLOR} />
             </Pressable>
