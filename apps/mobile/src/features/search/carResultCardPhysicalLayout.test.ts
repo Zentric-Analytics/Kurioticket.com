@@ -8,9 +8,9 @@ const styles = source.slice(source.indexOf("const c = StyleSheet.create"));
 
 test("compact Car result media cannot create a percentage-height layout loop", () => {
   assert.doesNotMatch(styles, /height:\s*"(?:100|68)%"/);
-  assert.match(styles, /visual:\{width:"38%",minHeight:250/);
-  assert.match(styles, /visualCompact:\{width:"36%",minHeight:294\}/);
-  assert.match(styles, /image:\{width:"100%",minHeight:250,flex:1\}/);
+  assert.match(styles, /main:\{minHeight:168,flexDirection:"row"\}/);
+  assert.match(styles, /visual:\{width:"40%",minHeight:168/);
+  assert.match(styles, /image:\{\.\.\.StyleSheet\.absoluteFillObject\}/);
 });
 
 test("a failed Car image reveals the truthful unavailable state", () => {
