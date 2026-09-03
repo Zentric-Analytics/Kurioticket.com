@@ -100,17 +100,29 @@ test("flight dates use full resolved fares in wider, single-line tiles", () => {
   assert.doesNotMatch(dateStrip, /ellipsizeMode="clip"/);
 });
 
-test("hotel summary and shortcuts participate in one vertical scroll", () => { const hotelLayout=screen.slice(alternateLayoutStart,screen.indexOf("<FlightSortSheet",alternateLayoutStart)); assert.match(hotelLayout,/<ScrollView ref=\{hotelScrollRef\}[\s\S]*?<HotelResultsHeader[\s\S]*?\{filterRail\}[\s\S]*?\{resultContent\}/); assert.match(hotelLayout,/setHotelCompactHeader\(y>104\)/); });
+test("hotel summary and shortcuts participate in one measured vertical scroll", () => {
+  const hotelLayout=screen.slice(alternateLayoutStart,screen.indexOf("<FlightSortSheet",alternateLayoutStart));
+  assert.equal(hotelLayout.match(/<ScrollView ref=\{hotelScrollRef\}/g)?.length, 1);
+  assert.match(hotelLayout,/<ScrollView ref=\{hotelScrollRef\}[\s\S]*?style=\{s0\.hotelIntroductoryControls\}[\s\S]*?<HotelResultsHeader[\s\S]*?\{filterRail\}[\s\S]*?<View style=\{s0\.body\}>\{resultContent\}/);
+  assert.match(hotelLayout,/nativeEvent\.layout\.y \+ nativeEvent\.layout\.height/);
+  assert.match(hotelLayout,/setHotelIntroBoundary\(boundary\)/);
+  assert.match(hotelLayout,/y > hotelIntroBoundary \+ \(visible \? -4 : 4\)/);
+  assert.doesNotMatch(hotelLayout,/y\s*>\s*104/);
+  assert.match(hotelLayout,/setHotelBackToTop\(y>600\)/);
+  assert.doesNotMatch(flightLayout, /hotelIntroBoundary|setHotelCompactHeader/);
+});
 test("hotel surviving sections own moderate spacing without changing the shared flight rail", () => {
   const hotelHeader = screen.slice(
     screen.indexOf("function HotelResultsHeader"),
     screen.indexOf("function FlightSortModal"),
   );
-  const headerSpacing = styleBlock("hotelHeader", "filterRail");
+  const introSpacing = styleBlock("hotelIntroductoryControls", "hotelHeader");
+  const headerSpacing = styleBlock("hotelHeader", "hotelHeaderBack");
   const resultSpacing = styleBlock("hotelResultsContent", "flightResultsBody");
 
-  assert.match(hotelHeader, /style=\{\[s0\.flightHeader, s0\.hotelHeader,/);
-  assert.match(headerSpacing, /marginBottom: 12/);
+  assert.match(hotelHeader, /style=\{\[s0\.hotelHeader,/);
+  assert.match(introSpacing, /marginBottom: 12/);
+  assert.match(headerSpacing, /paddingBottom: 12/);
   assert.doesNotMatch(screen, /hotelHeaderMeta/);
   assert.match(resultSpacing, /paddingTop: 12/);
   assert.doesNotMatch(styleBlock("filterRail", "flightFilterSectionHeader"), /margin|paddingTop|paddingBottom/);

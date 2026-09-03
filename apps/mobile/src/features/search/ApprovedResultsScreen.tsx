@@ -141,6 +141,7 @@ import { buildHotelFilterChips, hasGoogleMapsDiscovery } from "./hotelResultsPre
 import { HotelResultsPagination } from "./HotelResultsPagination";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { travelAccountMessage } from "../../localization/travelAccountMessages";
+import { buildHotelResultsSummary } from "./hotelResultsSummary";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -163,6 +164,7 @@ const hotelStayNightCount = (checkIn?: string, checkOut?: string) => {
 };
 export function ApprovedResultsScreen({ product }: { product: Product }) {
   const { theme } = useAppTheme();
+  const { locale } = useMobileLocalization();
   const flightResults = product === "flight";
   const flightCanvasColor = theme.dark ? theme.background : flightResultsLightCanvas;
   const { availability } = useFeatureAvailability();
@@ -198,6 +200,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [hotelPageChanging, setHotelPageChanging] = useState(false);
   const [hotelCompactHeader, setHotelCompactHeader] = useState(false);
   const [hotelBackToTop, setHotelBackToTop] = useState(false);
+  const [hotelIntroBoundary, setHotelIntroBoundary] = useState(0);
   const hotelScrollRef = useRef<ScrollView>(null);
   const hotelResultsOffset = useRef(0);
   const windowDimensions = useWindowDimensions();
@@ -596,6 +599,14 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     setFilters(emptyFlightFilters());
   }, [plan.plan?.key]);
   const payload = plan.plan?.payload || {};
+  const hotelSummary = buildHotelResultsSummary({
+    destination: String(payload.destination || ""),
+    checkIn: String(payload.checkIn || ""),
+    checkOut: String(payload.checkOut || ""),
+    guests: Number(payload.guests) || 1,
+    rooms: Number(payload.rooms) || 1,
+    locale,
+  });
   const currentFlightLoadingIdentity = `${plan.plan?.key || "invalid"}:${retry}`;
   const visibleFlightLoadingPhase = flightLoadingIdentity === currentFlightLoadingIdentity
     ? flightLoadingPhase
@@ -827,12 +838,20 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         />
       ) : (
         <>
-          <ScrollView ref={hotelScrollRef} alwaysBounceVertical={false} bounces={false} contentContainerStyle={s0.hotelResultsContent} overScrollMode="never" scrollEventThrottle={16} onScroll={({nativeEvent})=>{const y=nativeEvent.contentOffset.y;setHotelCompactHeader(y>104);setHotelBackToTop(y>600);}}>
-            <HotelResultsHeader destination={String(payload.destination || "")} checkIn={String(payload.checkIn || "")} checkOut={String(payload.checkOut || "")} guests={String(payload.guests || "")} rooms={String(payload.rooms || "")} onEdit={edit}/>
-            {filterRail}
+          <ScrollView ref={hotelScrollRef} alwaysBounceVertical={false} bounces={false} contentContainerStyle={s0.hotelResultsContent} overScrollMode="never" scrollEventThrottle={16} onScroll={({nativeEvent})=>{const y=nativeEvent.contentOffset.y;setHotelCompactHeader((visible)=>hotelIntroBoundary > 0 && y > hotelIntroBoundary + (visible ? -4 : 4));setHotelBackToTop(y>600);}}>
+            <View
+              onLayout={({ nativeEvent }) => {
+                const boundary = nativeEvent.layout.y + nativeEvent.layout.height;
+                if (boundary > 0 && boundary !== hotelIntroBoundary) setHotelIntroBoundary(boundary);
+              }}
+              style={s0.hotelIntroductoryControls}
+            >
+              <HotelResultsHeader destination={hotelSummary.destination} secondaryLine={hotelSummary.secondaryLine} onEdit={edit}/>
+              {filterRail}
+            </View>
             <View style={s0.body}>{resultContent}</View>
           </ScrollView>
-          {hotelCompactHeader ? <View style={[s0.hotelCompactHeader,{backgroundColor:theme.surface,borderColor:theme.border}]}><Pressable accessibilityRole="button" accessibilityLabel="Go back" style={s0.compactTarget} onPress={()=>router.back()}><ArrowLeft size={22} color={theme.icon}/></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Edit hotel search" style={s0.compactContext} onPress={edit}><Text numberOfLines={1} style={[s0.compactDestination,{color:theme.textPrimary}]}>{String(payload.destination||"")}</Text><Text numberOfLines={1} style={[s0.compactMeta,{color:theme.textSecondary}]}>{String(payload.checkIn||"")} – {String(payload.checkOut||"")} · {String(payload.guests||"")} guests</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Filters" style={s0.compactTarget} onPress={()=>openHotelFilters("all")}><SlidersHorizontal size={21} color={theme.icon}/></Pressable></View>:null}
+          {hotelCompactHeader ? <View style={[s0.hotelCompactHeader,{backgroundColor:theme.surface,borderColor:theme.border}]}><Pressable accessibilityRole="button" accessibilityLabel="Go back" style={s0.compactTarget} onPress={()=>router.back()}><ArrowLeft size={22} color={theme.icon}/></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Edit hotel search" style={s0.compactContext} onPress={edit}><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.compactDestination,{color:theme.textPrimary}]}>{hotelSummary.destination}</Text><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.compactMeta,{color:theme.textSecondary}]}>{hotelSummary.secondaryLine}</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Filters" style={s0.compactTarget} onPress={()=>openHotelFilters("all")}><SlidersHorizontal size={21} color={theme.icon}/></Pressable></View>:null}
           {hotelBackToTop ? <Pressable accessibilityRole="button" accessibilityLabel="Back to top" onPress={()=>hotelScrollRef.current?.scrollTo({y:0,animated:true})} style={[s0.hotelBackToTop,{backgroundColor:theme.surface,borderColor:theme.border}]}><ArrowUp size={21} color={theme.icon}/></Pressable>:null}
         </>
       )}
@@ -948,64 +967,65 @@ function FlightResultsHeader({
 }
 function HotelResultsHeader({
   destination,
-  checkIn,
-  checkOut,
-  guests,
-  rooms,
+  secondaryLine,
   onEdit,
 }: {
   destination: string;
-  checkIn: string;
-  checkOut: string;
-  guests: string;
-  rooms: string;
+  secondaryLine: string;
   onEdit: () => void;
 }) {
   const { theme } = useAppTheme();
   return (
     <View
       accessibilityLabel="Hotel search summary"
-      style={[s0.flightHeader, s0.hotelHeader, { backgroundColor: theme.background }]}
+      style={[s0.hotelHeader, { backgroundColor: theme.background }]}
     >
-      <View style={s0.flightHeaderMainRow}>
-        <View style={s0.flightHeaderSide}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            onPress={() => router.back()}
-            style={({ pressed }) => [s0.flightHeaderBack, pressed && s0.flightHeaderControlPressed]}
-          >
-            <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
-          </Pressable>
-        </View>
-        <View style={s0.flightHeaderRouteBlock}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Go back"
+        onPress={() => router.back()}
+        style={({ pressed }) => [s0.hotelHeaderBack, pressed && s0.flightHeaderControlPressed]}
+      >
+        <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
+      </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Edit hotel search. ${destination}. ${secondaryLine}`}
+        onPress={onEdit}
+        style={({ pressed }) => [
+          s0.hotelSummaryCard,
+          {
+            backgroundColor: theme.surface,
+            borderColor: theme.dark ? theme.border : "#D8E1EC",
+          },
+          pressed && s0.hotelSummaryCardPressed,
+        ]}
+      >
+        <View style={s0.hotelSummaryText}>
           <Text
             numberOfLines={1}
             ellipsizeMode="tail"
-            style={[s0.route, s0.flightHeaderRoute, { color: theme.textPrimary }]}
+            style={[s0.hotelSummaryDestination, { color: theme.textPrimary }]}
           >
             {destination}
           </Text>
           <Text
             numberOfLines={1}
             ellipsizeMode="tail"
-            style={[s0.sub, { color: theme.textSecondary }]}
+            style={[s0.hotelSummarySecondary, { color: theme.textSecondary }]}
           >
-            {checkIn} – {checkOut} · {guests} guests · {rooms} {rooms === "1" ? "room" : "rooms"}
+            {secondaryLine}
           </Text>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Edit search"
-          onPress={onEdit}
-          style={({ pressed }) => [
-            s0.flightHeaderEdit,
-            pressed && s0.flightHeaderControlPressed,
-          ]}
+        <View
+          accessible={false}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={s0.hotelSummaryEditSlot}
         >
-          <Text style={[s0.flightHeaderEditText, { color: theme.textPrimary }]}>Edit</Text>
-        </Pressable>
-      </View>
+          <SquarePen size={16} strokeWidth={2.2} color={theme.icon} />
+        </View>
+      </Pressable>
     </View>
   );
 }
@@ -1777,17 +1797,24 @@ const s0 = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  flightHeaderRouteBlock: { flex: 1, minWidth: 0, alignItems: "center" },
-  flightHeaderRoute: { minWidth: 0, textAlign: "center", fontFamily: appFonts.black },
-  flightHeaderEdit: {
-    width: 52,
-    height: 44,
-    flexShrink: 0,
+  hotelIntroductoryControls: { marginBottom: 12 },
+  hotelHeader: { paddingHorizontal: 16, paddingBottom: 12, gap: 8 },
+  hotelHeaderBack: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  hotelSummaryCard: {
+    width: "100%",
+    minHeight: 64,
+    borderWidth: 1,
+    borderRadius: 13,
+    paddingLeft: 16,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    overflow: "hidden",
   },
-  flightHeaderEditText: { fontSize: 13, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
-  hotelHeader: { marginBottom: 12 },
+  hotelSummaryCardPressed: { opacity: 0.76 },
+  hotelSummaryText: { flex: 1, minWidth: 0, justifyContent: "center" },
+  hotelSummaryDestination: { fontSize: 16, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
+  hotelSummarySecondary: { marginTop: 3, fontSize: 12.5, lineHeight: 17, fontWeight: "600", fontFamily: appFonts.semibold },
+  hotelSummaryEditSlot: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   hotelCompactHeader: { position:"absolute",top:0,left:0,right:0,height:58,borderBottomWidth:1,flexDirection:"row",alignItems:"center",paddingHorizontal:8,zIndex:20 },
   compactTarget:{width:44,height:44,alignItems:"center",justifyContent:"center"},
   compactContext:{flex:1,minWidth:0,alignItems:"center",justifyContent:"center"},

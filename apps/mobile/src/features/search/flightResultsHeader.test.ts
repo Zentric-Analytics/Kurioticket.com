@@ -96,7 +96,7 @@ test("Flight Results header separates Back, route summary, and Edit controls", (
   assert.match(styles, /flightRouteSummaryCard: \{[\s\S]*?flex: 1,[\s\S]*?minWidth: 0,[\s\S]*?height: 46,[\s\S]*?borderWidth: 1,[\s\S]*?borderRadius: 10,[\s\S]*?alignItems: "stretch",[\s\S]*?justifyContent: "center"/);
   assert.match(styles, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
   assert.match(styles, /flightRouteSummaryEdit: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
-  const flightEditStyle = styles.slice(styles.indexOf("flightRouteSummaryEdit:"), styles.indexOf("flightHeaderRouteBlock:"));
+  const flightEditStyle = styles.slice(styles.indexOf("flightRouteSummaryEdit:"), styles.indexOf("hotelIntroductoryControls:"));
   assert.doesNotMatch(flightEditStyle, /position: "absolute"|right: 4|top: 4/);
   assert.match(header, /numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit[\s\S]*?minimumFontScale=\{0\.85\}/);
   assert.match(header, /backgroundColor: theme\.surface/);
@@ -147,24 +147,32 @@ test("canonical flight search data remains available after presentation metadata
 });
 
 test("Hotel Results uses a scrolling summary and compact handoff header", () => { assert.match(results,/<ScrollView ref=\{hotelScrollRef\}[\s\S]*?<HotelResultsHeader[\s\S]*?\{filterRail\}/); assert.match(results,/hotelCompactHeader \?/); assert.match(results,/accessibilityLabel="Edit hotel search"/); });
-test("Hotel Results shares Flight's balanced controls and truncates long destinations", () => {
-  assert.match(hotelHeader, /style=\{s0\.flightHeaderMainRow\}/);
-  assert.match(hotelHeader, /style=\{s0\.flightHeaderSide\}/);
-  assert.match(hotelHeader, /s0\.flightHeaderBack/);
-  assert.match(hotelHeader, /style=\{s0\.flightHeaderRouteBlock\}/);
-  assert.match(hotelHeader, /s0\.flightHeaderRoute/);
-  assert.match(hotelHeader, /s0\.flightHeaderEdit/);
+test("Hotel Results owns a web-parity summary card without weakening Flight controls", () => {
+  assert.doesNotMatch(hotelHeader, /flightHeaderMainRow|flightHeaderSide|flightHeaderRouteBlock|flightHeaderEdit/);
+  assert.match(hotelHeader, /accessibilityLabel="Go back"[\s\S]*?onPress=\{\(\) => router\.back\(\)\}/);
+  assert.match(hotelHeader, /accessibilityLabel=\{`Edit hotel search\. \$\{destination\}\. \$\{secondaryLine\}`\}[\s\S]*?onPress=\{onEdit\}/);
+  assert.equal(hotelHeader.match(/<Pressable/g)?.length, 2, "Back and the whole summary are the only press targets");
   assert.match(hotelHeader, /numberOfLines=\{1\}[\s\S]*?ellipsizeMode="tail"[\s\S]*?\{destination\}/);
-  assert.match(styles, /flightHeaderSide: \{ width: 52/);
-  assert.match(styles, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
-  assert.match(styles, /flightHeaderRouteBlock: \{ flex: 1, minWidth: 0, alignItems: "center"/);
-  assert.match(styles, /flightHeaderEdit: \{[\s\S]*?width: 52,[\s\S]*?height: 44/);
+  assert.match(hotelHeader, /numberOfLines=\{1\}[\s\S]*?ellipsizeMode="tail"[\s\S]*?\{secondaryLine\}/);
+  assert.match(hotelHeader, /accessible=\{false\}[\s\S]*?importantForAccessibility="no-hide-descendants"[\s\S]*?<SquarePen size=\{16\} strokeWidth=\{2\.2\}/);
+  assert.doesNotMatch(hotelHeader, />Edit<|logo|profile|menu|Bell/);
+  assert.match(styles, /hotelHeader: \{ paddingHorizontal: 16,[\s\S]*?gap: 8/);
+  assert.match(styles, /hotelHeaderBack: \{ width: 44, height: 44/);
+  assert.match(styles, /hotelSummaryCard: \{[\s\S]*?width: "100%",[\s\S]*?minHeight: 64,[\s\S]*?borderWidth: 1,[\s\S]*?borderRadius: 13,[\s\S]*?paddingLeft: 16/);
+  assert.match(styles, /hotelSummaryText: \{ flex: 1, minWidth: 0/);
+  assert.match(styles, /hotelSummaryEditSlot: \{ width: 44, height: 44/);
+  assert.match(hotelHeader, /backgroundColor: theme\.surface/);
+  assert.match(hotelHeader, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
+  assert.match(styles, /hotelSummaryDestination: \{ fontSize: 16, lineHeight: 20, fontWeight: "700", fontFamily: appFonts\.bold/);
+  assert.match(styles, /hotelSummarySecondary: \{ marginTop: 3, fontSize: 12\.5, lineHeight: 17, fontWeight: "600", fontFamily: appFonts\.semibold/);
 });
 
-test("Hotel Results shows the complete stay summary while Edit preserves canonical search state", () => {
+test("Hotel Results receives presentation-only summary copy while Edit preserves canonical search state", () => {
   assert.doesNotMatch(hotelInvocation, /metadata|shortDate/);
   assert.doesNotMatch(hotelHeader, /metadata|hotelHeaderMeta/);
-  assert.match(hotelHeader, /destination: string;[\s\S]*?checkIn: string;[\s\S]*?checkOut: string;[\s\S]*?guests: string;[\s\S]*?rooms: string;[\s\S]*?onEdit: \(\) => void;/);
+  assert.match(hotelHeader, /destination: string;[\s\S]*?secondaryLine: string;[\s\S]*?onEdit: \(\) => void;/);
+  assert.match(hotelInvocation, /destination=\{hotelSummary\.destination\}[\s\S]*?secondaryLine=\{hotelSummary\.secondaryLine\}[\s\S]*?onEdit=\{edit\}/);
+  assert.match(results, /buildHotelResultsSummary\(\{[\s\S]*?destination: String\(payload\.destination[\s\S]*?locale,/);
   assert.match(results, /<HotelEditSearchModal[\s\S]*?params=\{params\}/);
   assert.doesNotMatch(results, /pathname: "\/hotels"/);
 });
