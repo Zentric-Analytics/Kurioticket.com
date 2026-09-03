@@ -166,7 +166,7 @@ test("Hotel Results receives presentation-only summary copy while Edit preserves
 
 test("Flight Details, result content, and product-specific bottom navigation contracts remain present", () => {
   assert.match(details, /accessibilityLabel="Flight details header"/);
-  assert.match(details, /accessibilityLabel="Trip metadata row"/);
+  assert.match(details, /style=\{d\.itineraryList\}/);
   assert.match(results, /<DateStrip/);
   assert.match(results, /<HotelCard/);
   assert.match(results, /\{flightResults \? <BottomNav flightResults \/> : null\}/);

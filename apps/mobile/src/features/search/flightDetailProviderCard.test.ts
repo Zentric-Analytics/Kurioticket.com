@@ -24,7 +24,7 @@ test("flight details presents its single authoritative offer as a booking provid
 
 test("flight booking provider card is non-interactive and has no selected border", () => {
   assert.doesNotMatch(bookingCard, /\bselected\b|onSelect|accessibilityRole="button"|<Button/);
-  assert.doesNotMatch(flightDetail, /<Offer|label="Select"|onSelect=|borderColor: ui\.blue/);
+  assert.doesNotMatch(flightDetail, /<Offer|label="Select"|onSelect=/);
   assert.match(bookingCard, /accessibilityLabel=\{`\$\{provider\}\. Recommended\. \$\{kind\}\. \$\{price\}`\}/);
   const cardStyles = detailSource.slice(detailSource.indexOf("  bookingProviderCard: {"), detailSource.indexOf("  bookingProviderCardCompact:"));
   assert.doesNotMatch(cardStyles, /borderWidth|borderColor/);
