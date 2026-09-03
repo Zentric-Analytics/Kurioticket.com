@@ -908,44 +908,56 @@ function HotelResultsHeader({
       accessibilityLabel="Hotel search summary"
       style={[s0.hotelHeader, { backgroundColor: theme.background }]}
     >
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Edit hotel search. ${destination}. ${secondaryLine}`}
-        onPress={onEdit}
-        style={({ pressed }) => [
-          s0.hotelSummaryCard,
-          {
-            backgroundColor: theme.surface,
-            borderColor: theme.dark ? theme.border : "#D8E1EC",
-          },
-          pressed && s0.hotelSummaryCardPressed,
-        ]}
-      >
-        <View style={s0.hotelSummaryText}>
-          <Text
-            numberOfLines={1}
-            ellipsizeMode="tail"
-            style={[s0.hotelSummaryDestination, { color: theme.textPrimary }]}
+      <View style={s0.hotelHeaderMainRow}>
+        <View style={s0.hotelHeaderSide}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            onPress={() => router.back()}
+            style={({ pressed }) => [s0.hotelHeaderBack, pressed && s0.hotelHeaderControlPressed]}
           >
-            {destination}
-          </Text>
-          <Text
-            numberOfLines={1}
-            ellipsizeMode="tail"
-            style={[s0.hotelSummarySecondary, { color: theme.textSecondary }]}
-          >
-            {secondaryLine}
-          </Text>
+            <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
+          </Pressable>
         </View>
-        <View
-          accessible={false}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={s0.hotelSummaryEditSlot}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Edit hotel search. ${destination}. ${secondaryLine}`}
+          onPress={onEdit}
+          style={({ pressed }) => [
+            s0.hotelSummaryCard,
+            {
+              backgroundColor: theme.surface,
+              borderColor: theme.dark ? theme.border : "#D8E1EC",
+            },
+            pressed && s0.hotelSummaryCardPressed,
+          ]}
         >
-          <SquarePen size={16} strokeWidth={2.2} color={theme.icon} />
-        </View>
-      </Pressable>
+          <View style={s0.hotelSummaryText}>
+            <Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[s0.hotelSummaryDestination, { color: theme.textPrimary }]}
+            >
+              {destination}
+            </Text>
+            <Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[s0.hotelSummarySecondary, { color: theme.textSecondary }]}
+            >
+              {secondaryLine}
+            </Text>
+          </View>
+          <View
+            accessible={false}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={s0.hotelSummaryEditSlot}
+          >
+            <SquarePen size={16} strokeWidth={2.2} color={theme.icon} />
+          </View>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -1724,9 +1736,14 @@ const s0 = StyleSheet.create({
     justifyContent: "center",
   },
   hotelIntroductoryControls: { marginBottom: 12 },
-  hotelHeader: { paddingHorizontal: 16, paddingBottom: 12 },
+  hotelHeader: { paddingHorizontal: 12, paddingBottom: 12 },
+  hotelHeaderMainRow: { width: "100%", flexDirection: "row", alignItems: "center" },
+  hotelHeaderSide: { width: 52, flexShrink: 0 },
+  hotelHeaderBack: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  hotelHeaderControlPressed: { opacity: 0.55 },
   hotelSummaryCard: {
-    width: "100%",
+    flex: 1,
+    minWidth: 0,
     minHeight: 64,
     borderWidth: 1,
     borderRadius: 13,
