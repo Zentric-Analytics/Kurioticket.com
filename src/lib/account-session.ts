@@ -97,6 +97,21 @@ export async function revokeAllSessions(userId: string, reason = "sign_out_every
   });
 }
 
+/** Revokes a user's other sessions without changing the global session version. */
+export async function revokeOtherSessions(userId: string, currentSessionId: string, reason = "sign_out_other_sessions") {
+  return getPrisma().$transaction(async tx => {
+    const revokedAt = new Date();
+    const result = await tx.accountSession.updateMany({
+      where: { userId, id: { not: currentSessionId }, revokedAt: null },
+      data: { revokedAt, revokeReason: reason },
+    });
+    await tx.securityEvent.create({
+      data: { userId, accountSessionId: currentSessionId, type: "SESSION_REVOKED", metadata: { reason, count: result.count } },
+    });
+    return result.count;
+  });
+}
+
 export function hasRecentReauthentication(session: { reauthenticatedAt: Date | null; assuranceLevel: string }) {
   return session.assuranceLevel !== "PRIMARY" && Boolean(session.reauthenticatedAt && Date.now() - session.reauthenticatedAt.getTime() <= RECENT_REAUTHENTICATION_MS);
 }

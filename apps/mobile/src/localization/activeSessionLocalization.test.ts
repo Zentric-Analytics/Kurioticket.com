@@ -8,7 +8,7 @@ test("active session management copy is localized across supported non-English l
   const english = securityCopy["en-us"];
   for (const locale of mobileLocaleCodes) {
     const copy = securityCopy[locale];
-    for (const key of ["manageSession", "removeSession", "noActiveSessions", "noActiveSessionsHelp", "removeTitle", "removeBody", "removeFailed"] as const) {
+    for (const key of ["manageSession", "removeSession", "noActiveSessions", "noActiveSessionsHelp", "removeTitle", "removeBody", "removeFailed", "thisDevice", "otherSessions", "activeNow", "sessionDetails", "signOutOthers", "signOutOthersTitle", "signOutOthersBody", "signOutOthersConfirm", "signOutOthersFailed", "mobileDevice", "webBrowser", "opensSessionDetails"] as const) {
       assert.ok(copy[key].trim(), `${locale}:${key} must not be empty`);
       if (locale !== "en-us") assert.notEqual(copy[key], english[key], `${locale}:${key} must not fall back to English`);
     }
