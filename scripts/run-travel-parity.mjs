@@ -41,6 +41,8 @@ const matrices = {
     "src/features/flow/savedSearchContext.test.ts",
     "src/features/recent/recentSearchNavigation.test.ts",
     "src/features/flow/hotelPriceAlertModel.test.ts",
+    "src/features/search/hotelCardWebParity.test.ts",
+    "src/features/search/hotelDiscoveryPresentation.test.ts",
   ],
 };
 

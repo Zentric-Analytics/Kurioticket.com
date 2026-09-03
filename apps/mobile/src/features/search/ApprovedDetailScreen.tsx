@@ -371,6 +371,8 @@ function HotelDetail({
   const [selectedRoom, setSelectedRoom] = useState(true);
   const redirectUrl = result.partnerRedirectUrl || result.bookingUrl;
   const bookable = result.searchPolicy.bookable && Boolean(redirectUrl);
+  const hasPrice = result.pricePerNight != null && result.totalPrice != null;
+  const discovery = result.inventoryKind === "discovery";
   const nights = (() => {
     const a = new Date(`${String(params.checkIn || "")}T12:00:00`),
       b = new Date(`${String(params.checkOut || "")}T12:00:00`);
@@ -433,7 +435,7 @@ function HotelDetail({
         <View style={d.hotelSummary}>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={d.hotelName}>{result.name}</Text>
-            <Text style={d.stars}>
+            {(result.classificationStars || Math.round(result.rating)) > 0 ? <Text style={d.stars}>
               {"★".repeat(
                 result.classificationStars || Math.round(result.rating),
               )}{" "}
@@ -441,15 +443,15 @@ function HotelDetail({
                 {" "}
                 · {result.neighbourhood || result.location}
               </Text>
-            </Text>
-            <Text style={d.provider}>
+            </Text> : null}
+            {(result.reviewScore ?? result.rating) > 0 ? <Text style={d.provider}>
               <Text style={d.score}>
                 {(result.reviewScore ?? result.rating).toFixed(1)}
               </Text>{" "}
               {result.reviewCount
                 ? `${result.reviewCount.toLocaleString()} reviews`
                 : "Reviews unavailable"}
-            </Text>
+            </Text> : null}
             {result.distanceFromCenter ? (
               <Text style={d.meta}>
                 ⌾ {result.distanceFromCenter} from city center
@@ -458,12 +460,12 @@ function HotelDetail({
           </View>
           <View style={{ alignItems: "flex-end" }}>
             <Text style={d.price}>
-              {money(result.currency, result.pricePerNight)}
-              <Text style={d.meta}> /night</Text>
+              {hasPrice ? money(result.currency, result.pricePerNight) : "Price unavailable"}
+              {hasPrice ? <Text style={d.meta}> /night</Text> : null}
             </Text>
-            <Text style={d.meta}>
+            {hasPrice ? <Text style={d.meta}>
               {money(result.currency, result.totalPrice)} total
-            </Text>
+            </Text> : <Text style={d.meta}>No live rate</Text>}
             <Text style={d.meta}>
               {nights ? `${nights} nights, ` : ""}${String(params.guests || 2)}{" "}
               guests
@@ -482,7 +484,7 @@ function HotelDetail({
           </Text>
           <Text style={d.stayItem}>♙ {params.guests || 2} Guests</Text>
         </View>
-        <ScrollView
+        {result.amenities.length ? <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={d.amenityStrip}
@@ -493,13 +495,13 @@ function HotelDetail({
               <Text style={d.amenityText}>{a}</Text>
             </View>
           ))}
-        </ScrollView>
+        </ScrollView> : null}
         <View style={[d.detailBody, compact && d.detailBodyCompact]}>
-          <Text style={d.h2}>Choose your room</Text>
+          <Text style={d.h2}>{discovery ? "Live room options unavailable" : "Choose your room"}</Text>
           <Text style={d.meta}>
-            Prices are per night, including taxes and fees when reported
+            {discovery ? "This source-backed property is shown for destination planning. No live room, price, or availability was supplied." : "Prices are per night, including taxes and fees when reported"}
           </Text>
-          <Pressable
+          {!discovery ? <Pressable
             onPress={() => setSelectedRoom(true)}
             style={[d.room, selectedRoom && { borderColor: ui.blue }]}
           >
@@ -524,7 +526,7 @@ function HotelDetail({
               </Text>
               <Button label="Select room" outline={!selectedRoom} />
             </View>
-          </Pressable>
+          </Pressable> : null}
           <View style={d.section}>
             <Text style={d.h2}>Choose where to book</Text>
             <Text style={d.meta}>
@@ -537,7 +539,7 @@ function HotelDetail({
                   ? result.cancellationInfo
                   : "Planning inventory · no live checkout"
               }
-              price={money(result.currency, result.totalPrice)}
+              price={hasPrice ? money(result.currency, result.totalPrice) : "Price unavailable"}
               selected
             />
             <Text style={d.disclosure}>
@@ -552,8 +554,7 @@ function HotelDetail({
       >
         <View>
           <Text style={d.price}>
-            {money(result.currency, result.totalPrice)}{" "}
-            <Text style={d.meta}>total</Text>
+            {hasPrice ? <>{money(result.currency, result.totalPrice)}{" "}<Text style={d.meta}>total</Text></> : "Price unavailable"}
           </Text>
           <Text style={d.meta}>
             {nights ? `${nights} nights, ` : ""}${params.guests || 2} guests
