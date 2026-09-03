@@ -140,8 +140,10 @@ import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
 import { buildHotelFilterChips, hasGoogleMapsDiscovery } from "./hotelResultsPresentation";
 import { HotelResultsPagination } from "./HotelResultsPagination";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
+import type { MobileLocale } from "../../localization/mobileLocalizationCatalog";
 import { travelAccountMessage } from "../../localization/travelAccountMessages";
 import { buildHotelResultsSummary } from "./hotelResultsSummary";
+import { flightResultsCopy, flightResultsSummary } from "./flightResultsSummary";
 import { getHotelLocationFieldDisplay } from "@/lib/search/hotelLocationFieldDisplay";
 
 type Product = "flight" | "hotel";
@@ -172,6 +174,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const plan = buildSearchPlan(product, params);
+  const payload = plan.plan?.payload || {};
   const [results, setResults] = useState<(FlightResult | HotelResult)[]>([]);
   const [status, setStatus] = useState<Status>("loading");
   const [flightLoadingPhase, setFlightLoadingPhase] = useState<FlightLoadingPhase>("searching");
@@ -182,7 +185,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const activeSearch = useRef<AbortController | null>(null);
   const requestInFlight = useRef(false);
   const resultsRef = useRef<(FlightResult | HotelResult)[]>([]);
-  const [sort, setSort] = useState<FlightSort>("best");
+  const [sort, setSort] = useState<FlightSort>("price");
   const [sortOpen, setSortOpen] = useState(false);
   const [filters, setFilters] = useState<FlightFilters>(emptyFlightFilters);
   const [filtersFlightSearchKey, setFiltersFlightSearchKey] = useState(() => flightResults ? plan.plan?.key : undefined);
@@ -223,7 +226,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   useEffect(() => {
     if (!flightResults || !plan.plan?.key) return;
     if (previousFlightSearchKey.current && previousFlightSearchKey.current !== plan.plan.key) {
-      setSort("best");
+      setSort("price");
       setFilters(emptyFlightFilters());
       setSortOpen(false);
       setFilterOpen(false);
@@ -505,6 +508,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     ? deriveFlightResultHighlights(sorted as FlightResult[], normalizeFlightPrice)
     : new Map<string, FlightResultHighlight>(), [normalizeFlightPrice, product, sorted]);
   const flightOptions = useMemo(() => flightFilterOptions(results as FlightResult[], flightPriceContext), [flightPriceContext, results]);
+  const flightSummary = useMemo(() => flightResultsSummary(payload, locale), [locale, plan.plan?.key]);
   useEffect(() => {
     const searchKey = plan.plan?.key;
     if (
@@ -600,7 +604,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     }
     setFilters(emptyFlightFilters());
   }, [plan.plan?.key]);
-  const payload = plan.plan?.payload || {};
   const canonicalHotelDestination = String(payload.destination || "");
   const hotelDestinationDisplay = getHotelLocationFieldDisplay(canonicalHotelDestination, locale);
   const hotelSummary = buildHotelResultsSummary({
@@ -689,6 +692,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       sort={sort}
       activeFilterCount={activeFilterCount}
       airlineCount={filters.airlines.length}
+      airportCount={filters.fromAirports.length + filters.toAirports.length}
       stopsActive={filters.maxStops != null}
       openSheetKind={sortOpen ? "sort" : filterOpen ? filterSection : null}
       openSheet={openFlightSheet}
@@ -764,7 +768,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     <SafeAreaView style={[s0.safe, { backgroundColor: flightResults ? flightCanvasColor : theme.background }]} edges={["top"]}>
       {flightResults ? (
         <FlightResultsHeader
-          route={`${String(payload.origin || "").toUpperCase()} ${payload.tripType === "one-way" ? "→" : "⇄"} ${String(payload.destination || "").toUpperCase()}`}
+          route={flightSummary.route}
+          secondaryLine={flightSummary.secondaryLine}
           onEdit={edit}
           backgroundColor={flightCanvasColor}
         />
@@ -798,9 +803,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 </View>
               ) : null}
               {index === 0 && status === "ready" && !flightState ? (
-                <Text accessibilityRole="header" style={[s0.flightResultCount, { color: theme.textPrimary }]}>
-                  {flightResultCountLabel(sorted.length)}
-                </Text>
+                <View style={s0.flightResultsRangeSummary}>
+                  <Text accessibilityRole="header" style={[s0.flightResultCount, { color: theme.textPrimary }]}>{flightResultCountLabel(sorted.length)}</Text>
+                  <Text style={[s0.flightResultRange, { color: theme.textSecondary }]}>1–{sorted.length}</Text>
+                </View>
               ) : null}
               <View style={s0.flightCardItem}>
                 <FlightCard
@@ -809,6 +815,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   displayCurrencyContext={currencyState?.resolution}
                   highlight={flightHighlights.get(item.id)}
                   params={params}
+                  locale={locale}
                   logInitialMount={index === 0}
                 />
               </View>
@@ -904,10 +911,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
 
 function FlightResultsHeader({
   route,
+  secondaryLine,
   onEdit,
   backgroundColor,
 }: {
   route: string;
+  secondaryLine: string;
   onEdit: () => void;
   backgroundColor: string;
 }) {
@@ -928,7 +937,10 @@ function FlightResultsHeader({
             <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
           </Pressable>
         </View>
-        <View
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Edit flight search. ${route}. ${secondaryLine}`}
+          onPress={onEdit}
           style={[
             s0.flightRouteSummaryCard,
             {
@@ -937,34 +949,9 @@ function FlightResultsHeader({
             },
           ]}
         >
-          <Text
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.85}
-            style={[s0.flightRouteSummaryText, { color: theme.textPrimary }]}
-          >
-            {route}
-          </Text>
-        </View>
-        <View style={s0.flightHeaderSide}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Edit search"
-            onPress={onEdit}
-            style={({ pressed }) => [
-              s0.flightRouteSummaryEdit,
-              pressed && s0.flightHeaderControlPressed,
-            ]}
-          >
-            <SquarePen
-              accessible={false}
-              accessibilityElementsHidden
-              size={18}
-              strokeWidth={2.1}
-              color={theme.icon}
-            />
-          </Pressable>
-        </View>
+          <View style={s0.flightRouteSummaryCopy}><Text numberOfLines={1} style={[s0.flightRouteSummaryText, { color: theme.textPrimary }]}>{route}</Text><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightRouteSummarySecondary, { color: theme.textSecondary }]}>{secondaryLine}</Text></View>
+          <View accessible={false} accessibilityElementsHidden style={s0.flightRouteSummaryEdit}><SquarePen size={16} strokeWidth={2.1} color={theme.icon} /></View>
+        </Pressable>
       </View>
     </View>
   );
@@ -1063,7 +1050,7 @@ const HotelResultsShortcut = ({ label, icon = false, count, expanded = false, on
   );
 };
 
-function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highlight, params, logInitialMount }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; highlight?: FlightResultHighlight; params: Record<string, string | string[]>; logInitialMount: boolean }) {
+function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highlight, params, locale, logInitialMount }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; highlight?: FlightResultHighlight; params: Record<string, string | string[]>; locale: MobileLocale; logInitialMount: boolean }) {
   const { theme } = useAppTheme();
   const supportTextColor = theme.dark ? flightSupportText.dark : flightSupportText.light;
   useEffect(() => {
@@ -1089,18 +1076,15 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
   const baggageAccessibility = result.baggageInfo?.trim() || baggageSummary;
   const fareRulesAccessibility = result.refundInfo?.trim() || fareRulesSummary;
   const providerFare = flightProviderFarePresentation(fare);
+  const labels = flightResultsCopy(locale);
   const fareAccessibility = `${fare?.accessibilityLabel ?? "price unavailable"}${fare?.converted === true ? ", estimated price" : ""}${providerFare ? `, provider price ${providerFare.accessibilityLabel}` : ""}`;
+  const openDetails = () => router.push({ pathname: "/flight-details", params: buildFlightDetailParams({ searchParams: params, result, fare, displayCurrencyContext }) });
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${result.airlineName}${flightNumber ? `, ${flightNumber}` : ""}${operatingCarrierPresentation ? `, ${operatingCarrierPresentation.accessibilityText}` : ""} flight, ${result.originAirport} to ${result.destinationAirport}, ${fareAccessibility}`}
       accessibilityHint="Opens flight details"
-      onPress={() =>
-        router.push({
-          pathname: "/flight-details",
-          params: buildFlightDetailParams({ searchParams: params, result, fare, displayCurrencyContext }),
-        })
-      }
+      onPress={openDetails}
       style={({ pressed }) => [
         s0.card,
         {
@@ -1160,8 +1144,25 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
           {returnLeg ? <FlightJourneyRow label="RETURN" leg={returnLeg} /> : null}
         </View>
       </View>
-      <View style={s0.fareRow}>
-        <View style={s0.fareCopy}>
+      <View style={[s0.flightCardFooter, { borderTopColor: theme.border }]}>
+        <View accessibilityLabel={`${labels.baggage}: ${baggageAccessibility}. ${labels.cabin}: ${cabinSummary}. ${labels.fareRule}: ${fareRulesAccessibility}.`} style={s0.flightMetadataColumn}>
+          <View style={s0.flightMetadataLine}>
+            <Luggage accessible={false} size={13} strokeWidth={2} color={supportTextColor}/>
+            <Text numberOfLines={1} style={[s0.flightMetadataLabel,{color:supportTextColor}]}>{labels.baggage}:</Text>
+            <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightMetadataValue,{color:supportTextColor}]}>{baggageSummary}</Text>
+          </View>
+          <View style={s0.flightMetadataLine}>
+            <Armchair accessible={false} size={13} strokeWidth={2} color={supportTextColor}/>
+            <Text numberOfLines={1} style={[s0.flightMetadataLabel,{color:supportTextColor}]}>{labels.cabin}:</Text>
+            <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightMetadataValue,{color:supportTextColor}]}>{cabinSummary}</Text>
+          </View>
+          <View style={s0.flightMetadataLine}>
+            <FileText accessible={false} size={13} strokeWidth={2} color={supportTextColor}/>
+            <Text numberOfLines={1} style={[s0.flightMetadataLabel,{color:supportTextColor}]}>{labels.fareRule}:</Text>
+            <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightMetadataValue,{color:supportTextColor}]}>{fareRulesSummary}</Text>
+          </View>
+        </View>
+        <View style={s0.flightFareAction}>
           <Text accessible={false} style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72}>
             {fare?.formatted ?? "—"}
           </Text>
@@ -1173,33 +1174,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
               Provider price: {providerFare.formatted}
             </Text>
           ) : null}
-        </View>
-      </View>
-      <View style={[s0.metadataDivider, { backgroundColor: theme.border }]} />
-      <View style={s0.metadataFooterContainer}>
-        <View
-          accessible
-          accessibilityLabel={`Baggage: ${baggageAccessibility}. Cabin: ${cabinSummary}. Fare rules: ${fareRulesAccessibility}.`}
-          style={s0.metadataRow}
-        >
-          <View accessible={false} style={s0.metadataItem}>
-            <Luggage accessible={false} size={13} strokeWidth={2} color={supportTextColor} />
-            <Text accessible={false} numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: supportTextColor }]}>
-              {baggageSummary}
-            </Text>
-          </View>
-          <View accessible={false} style={s0.metadataItem}>
-            <Armchair accessible={false} size={13} strokeWidth={2} color={supportTextColor} />
-            <Text accessible={false} numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: supportTextColor }]}>
-              {cabinSummary}
-            </Text>
-          </View>
-          <View accessible={false} style={s0.metadataItem}>
-            <FileText accessible={false} size={13} strokeWidth={2} color={supportTextColor} />
-            <Text accessible={false} numberOfLines={1} ellipsizeMode="tail" style={[s0.metadataText, { color: supportTextColor }]}>
-              Fare rules
-            </Text>
-          </View>
+          <View style={s0.viewFlightButton}><Text style={s0.viewFlightButtonText}>{labels.viewFlight}</Text></View>
         </View>
       </View>
     </Pressable>
@@ -1779,22 +1754,21 @@ const s0 = StyleSheet.create({
   flightRouteSummaryCard: {
     flex: 1,
     minWidth: 0,
-    height: 46,
+    minHeight: 62,
     borderWidth: 1,
-    borderRadius: 10,
-    alignItems: "stretch",
-    justifyContent: "center",
+    borderRadius: 13,
+    flexDirection: "row",
+    alignItems: "center",
     overflow: "hidden",
   },
+  flightRouteSummaryCopy: { flex: 1, minWidth: 0, justifyContent: "center", paddingLeft: 14, paddingVertical: 9 },
   flightRouteSummaryText: {
-    width: "100%",
-    paddingHorizontal: 14,
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 18,
     fontWeight: "700",
     fontFamily: appFonts.bold,
-    textAlign: "center",
   },
+  flightRouteSummarySecondary: { marginTop: 3, fontSize: 10.5, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
   flightRouteSummaryEdit: {
     width: 44,
     height: 44,
@@ -1882,6 +1856,8 @@ const s0 = StyleSheet.create({
   hotelFilteredEmpty: { alignItems: "center", gap: 10, paddingVertical: 28 },
   hotelClearFilters: { color: ui.blue, fontSize: 15, fontWeight: "800" },
   flightResultCount: { paddingHorizontal: 14, paddingTop: 4, paddingBottom: 5, fontSize: 13, lineHeight: 17, fontWeight: "700", fontFamily: appFonts.bold },
+  flightResultsRangeSummary: { paddingBottom: 2 },
+  flightResultRange: { paddingHorizontal: 14, marginTop: -4, paddingBottom: 5, fontSize: 10.5, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
   card: {
     width: "100%",
     borderWidth: 1,
@@ -1934,6 +1910,14 @@ const s0 = StyleSheet.create({
   fareCopy: { width: "100%", maxWidth: "100%", minWidth: 0, alignItems: "flex-end" },
   estimatedPrice: { fontSize: 10, lineHeight: 13, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: 0.7, textAlign: "right" },
   providerPrice: { maxWidth: "100%", minWidth: 0, flexShrink: 1, marginTop: 1, fontSize: 11, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "right", fontVariant: ["tabular-nums"] },
+  flightCardFooter: { width: "100%", marginTop: 5, paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "#D8E1EC", flexDirection: "row", alignItems: "flex-end", gap: 8 },
+  flightMetadataColumn: { flex: 1, minWidth: 0, gap: 5, paddingBottom: 2 },
+  flightMetadataLine: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4 },
+  flightMetadataLabel: { fontSize: 9.5, lineHeight: 13, fontWeight: "600", fontFamily: appFonts.semibold },
+  flightMetadataValue: { flex: 1, minWidth: 0, fontSize: 9.5, lineHeight: 13, fontWeight: "500", fontFamily: appFonts.medium },
+  flightFareAction: { width: 116, minWidth: 0, alignItems: "flex-end", gap: 1 },
+  viewFlightButton: { width: "100%", height: 44, marginTop: 5, borderRadius: 7, backgroundColor: ui.blue, alignItems: "center", justifyContent: "center" },
+  viewFlightButtonText: { color: "white", fontSize: 12, lineHeight: 16, fontWeight: "800", fontFamily: appFonts.extraBold },
   metadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 6, marginBottom: 4 },
   metadataFooterContainer: { width: "100%", alignItems: "center" },
   metadataRow: { width: "100%", flexDirection: "row", alignItems: "center", paddingTop: 1, paddingBottom: 2 },

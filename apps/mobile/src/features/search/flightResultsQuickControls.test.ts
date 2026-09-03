@@ -9,7 +9,7 @@ test("Flight Results rail keeps the required control order and horizontal behavi
   assert.match(controls, /<ScrollView horizontal/);
   assert.match(controls, /showsHorizontalScrollIndicator=\{false\}/);
   assert.match(controls, /flexWrap: "nowrap"/);
-  const order = ["sortLabels[safeSort]", 'label="Filters"', 'label="Airlines"', 'label="Stops"'].map((value) => controls.indexOf(value));
+  const order = ['label="Filters"', "sortLabels[safeSort]", 'label="Airlines"', 'label="Stops"', 'label="Airports"'].map((value) => controls.indexOf(value));
   assert.ok(order.every((value) => value >= 0));
   assert.deepEqual([...order].sort((a, b) => a - b), order);
 });
@@ -24,6 +24,7 @@ test("active controls use compact counts and accessible selected state", () => {
   assert.match(controls, /count \? <View style=\{\[styles\.count/);
   assert.match(screen, /activeFilterCount=\{activeFilterCount\}/);
   assert.match(screen, /airlineCount=\{filters\.airlines\.length\}/);
+  assert.match(screen, /airportCount=\{filters\.fromAirports\.length \+ filters\.toAirports\.length\}/);
   assert.match(screen, /stopsActive=\{filters\.maxStops != null\}/);
   assert.doesNotMatch(controls, /Filter ·/);
 });
