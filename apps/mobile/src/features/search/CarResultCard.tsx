@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import type { CarResult } from "../../api/travelApi";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
@@ -13,6 +14,8 @@ export function CarResultCard({ result, rank, imageUri, days, searchParams, onVi
   onViewDeal: () => void;
 }) {
   const compact = useWindowDimensions().width < 430;
+  const [imageFailed, setImageFailed] = useState(false);
+  useEffect(() => setImageFailed(false), [imageUri]);
   const savedState = useSavedCar(result, searchParams);
   const offer = result.offers[0];
   const benefits = [
@@ -25,7 +28,7 @@ export function CarResultCard({ result, rank, imageUri, days, searchParams, onVi
   return (
     <View style={[c.card, compact && c.cardCompact]}>
       <View style={[c.visual, compact && c.visualCompact]}>
-        {imageUri ? <Image source={{ uri: imageUri }} resizeMode="contain" style={[c.image, compact && c.imageCompact]} accessibilityLabel={result.imageAlt} /> : <View style={c.imageFallback}><FlowIcon name="car" size={48} color="#8792A7" /><Text style={c.fallbackText}>Vehicle image unavailable</Text></View>}
+        {imageUri && !imageFailed ? <Image source={{ uri: imageUri }} resizeMode="contain" style={[c.image, compact && c.imageCompact]} accessibilityLabel={result.imageAlt} onError={() => setImageFailed(true)} /> : <View style={c.imageFallback}><FlowIcon name="car" size={48} color="#8792A7" /><Text style={c.fallbackText}>Vehicle image unavailable</Text></View>}
         <View style={c.badge}><Badge green={rank === 1}>{rank === 0 ? "Best overall" : rank === 1 ? "Great price" : rank === 2 ? "Most spacious" : result.categoryLabel}</Badge></View>
       </View>
       <View style={[c.copy, compact && c.copyCompact]}>
@@ -60,7 +63,7 @@ function Spec({ icon, label }: { icon: FlowIconName; label: string }) {
 const capitalize = (value: string) => `${value.slice(0, 1).toUpperCase()}${value.slice(1)}`;
 const c = StyleSheet.create({
   card:{minHeight:250,borderWidth:1,borderColor:ui.border,borderRadius:13,overflow:"hidden",flexDirection:"row",backgroundColor:"white"},
-  cardCompact:{minHeight:294}, visual:{width:"38%",backgroundColor:"#F4F6F9"},visualCompact:{width:"36%"},image:{width:"100%",height:"100%"},imageCompact:{height:"68%",marginTop:28},imageFallback:{flex:1,alignItems:"center",justifyContent:"center",gap:8,padding:10},fallbackText:{fontSize:10,color:ui.muted,textAlign:"center"},badge:{position:"absolute",top:10,left:9},
+  cardCompact:{minHeight:294}, visual:{width:"38%",minHeight:250,backgroundColor:"#F4F6F9"},visualCompact:{width:"36%",minHeight:294},image:{width:"100%",minHeight:250,flex:1},imageCompact:{minHeight:200,marginTop:28},imageFallback:{flex:1,minHeight:250,alignItems:"center",justifyContent:"center",gap:8,padding:10},fallbackText:{fontSize:10,color:ui.muted,textAlign:"center"},badge:{position:"absolute",top:10,left:9},
   copy:{flex:1,minWidth:0,padding:12,gap:5},copyCompact:{padding:9},heart:{position:"absolute",right:8,top:7,zIndex:2,width:36,height:36,borderRadius:18,borderWidth:1,borderColor:ui.border,alignItems:"center",justifyContent:"center",backgroundColor:"white"},name:{fontSize:16,fontWeight:"900",color:ui.navy,paddingRight:39},meta:{fontSize:10,color:ui.muted,lineHeight:14},rating:{flexDirection:"row",alignItems:"center",gap:6},score:{backgroundColor:ui.blue,color:"white",fontSize:11,fontWeight:"900",paddingHorizontal:4,paddingVertical:2,borderRadius:3},ratingText:{fontSize:10,color:ui.navy},
   specs:{flexDirection:"row",flexWrap:"wrap",gap:7},spec:{flexDirection:"row",alignItems:"center",gap:3,minWidth:62},specText:{fontSize:9,color:ui.navy},benefits:{flexDirection:"row",flexWrap:"wrap",gap:5},benefit:{flexDirection:"row",alignItems:"center",gap:2,backgroundColor:"#EAF8ED",borderRadius:5,paddingHorizontal:5,paddingVertical:3},benefitText:{fontSize:9,color:ui.green,fontWeight:"700"},
   footer:{marginTop:"auto",borderTopWidth:1,borderTopColor:"#EDF0F5",paddingTop:8,flexDirection:"row",alignItems:"flex-end",justifyContent:"space-between",gap:7},supplier:{flex:1,minWidth:0,flexDirection:"row",gap:6,alignItems:"flex-start"},supplierTile:{width:31,height:27,borderRadius:5,backgroundColor:"#EEF3FF",alignItems:"center",justifyContent:"center"},supplierInitial:{color:ui.blue,fontWeight:"900"},supplierCopy:{flex:1,minWidth:0},supplierName:{fontSize:11,color:ui.navy,fontWeight:"800"},pickup:{fontSize:9,color:ui.green,fontWeight:"700",marginTop:2},priceColumn:{alignItems:"flex-end",gap:2,maxWidth:112},price:{fontSize:20,fontWeight:"900",color:ui.navy},per:{fontSize:10,fontWeight:"700"},
