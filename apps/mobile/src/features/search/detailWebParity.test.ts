@@ -58,4 +58,5 @@ test("Hotel and Car details use the shared semantic theme in dark mode", () => {
     assert.match(source, /theme\.border/);
     assert.match(source, /theme\.icon/);
   }
+  assert.match(hotel, /d\.hotelTabs, \{ backgroundColor: theme\.surface, borderBottomColor: theme\.border \}/);
 });

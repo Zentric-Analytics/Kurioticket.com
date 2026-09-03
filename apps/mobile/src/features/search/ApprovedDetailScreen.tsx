@@ -509,7 +509,7 @@ function HotelDetail({
             <Text style={d.more}>+{images.length - 3}</Text>
           ) : null}
         </View>
-        <View accessibilityRole="tablist" style={[d.hotelTabs, { borderBottomColor: theme.border }]}>
+        <View accessibilityRole="tablist" style={[d.hotelTabs, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
           {(["compare", "about", "location", "reviews"] as const).map((tab) => <Pressable key={tab} accessibilityRole="tab" accessibilityState={{selected:activeHotelTab===tab}} onPress={()=>setActiveHotelTab(tab)} style={[d.hotelTab,activeHotelTab===tab&&d.hotelTabActive]}><Text style={[d.hotelTabText,{color:theme.textSecondary},activeHotelTab===tab&&d.hotelTabTextActive]}>{tab === "compare" ? "Compare prices" : tab[0].toUpperCase()+tab.slice(1)}</Text></Pressable>)}
         </View>
         <View style={[d.detailBody, compact && d.detailBodyCompact]}>
