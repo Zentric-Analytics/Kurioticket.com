@@ -73,14 +73,14 @@ import {
   activeFlightFilterCount,
   emptyFlightFilters,
   filterAndSortFlights,
-  flightSortOptions,
-  flightSortQuickLabel,
   flightFilterOptions,
   resolveFlightPriceComparisonContext,
   type FlightSort,
   type FlightFilters,
 } from "./flightFilters";
 import { FlightFilterSheet, type FlightFilterSectionName } from "./FlightFilterSheet";
+import { FlightResultsQuickControls } from "./FlightResultsQuickControls";
+import { FlightSortSheet } from "./FlightSortSheet";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
 import {
   convertAmount,
@@ -516,8 +516,19 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     setRetry((x) => x + 1);
   }, []);
   const openFlightFilters = (section: FlightFilterSectionName) => {
+    if (filterOpen) return;
+    setSortOpen(false);
     setFilterSection(section);
     setFilterOpen(true);
+  };
+  const openFlightSheet = (sheet: "sort" | FlightFilterSectionName) => {
+    if (sheet === "sort") {
+      if (sortOpen) return;
+      setFilterOpen(false);
+      setSortOpen(true);
+      return;
+    }
+    openFlightFilters(sheet);
   };
   const openHotelFilters = (section: HotelFilterSectionName) => {
     setHotelFilterSection(section);
@@ -615,49 +626,25 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       {flightDateStrip}
     </Animated.View>
   );
-  const filterRail = (
-    <ScrollView
-            horizontal
-            style={s0.filterRail}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={s0.filters}
-          >
-            {product === "flight" ? (
-              <Pill
-                label={flightSortQuickLabel(sort)}
-                active={sort !== "best"}
-                flightResultsChevron
-                onPress={() => setSortOpen(true)}
-              />
-            ) : null}
-            {product === "flight" ? <Pill
-              label={activeFilterCount ? `Filter · ${activeFilterCount}` : "Filter"}
-              active={product === "flight" ? activeFilterCount > 0 : activeHotelFilters > 0}
-              flightResultsIcon="filters"
-              onPress={() => openFlightFilters("all")}
-            /> : <>
+  const filterRail = (product === "flight" ? (
+    <FlightResultsQuickControls
+      sort={sort}
+      activeFilterCount={activeFilterCount}
+      airlineCount={filters.airlines.length}
+      stopsActive={filters.maxStops != null}
+      openSheetKind={sortOpen ? "sort" : filterOpen ? filterSection : null}
+      openSheet={openFlightSheet}
+    />
+  ) : (
+    <ScrollView horizontal style={s0.filterRail} showsHorizontalScrollIndicator={false} contentContainerStyle={s0.filters}>
+            <>
               <HotelResultsShortcut label="Filter" count={activeHotelFilters || undefined} icon onPress={() => openHotelFilters("all")} />
               {hotelOptions.price ? <HotelResultsShortcut label="Price" count={((hotelFilters.minimumPrice !== null && hotelFilters.minimumPrice > hotelOptions.price.minimum) || (hotelFilters.maximumPrice !== null && hotelFilters.maximumPrice < hotelOptions.price.maximum)) ? 1 : undefined} expanded={hotelQuickFilter === "price"} onPress={() => openHotelQuickFilter("price")} /> : null}
               <HotelResultsShortcut label="Stars" count={hotelFilters.starRatings.length || undefined} expanded={hotelQuickFilter === "stars"} onPress={() => openHotelQuickFilter("stars")} />
               <HotelResultsShortcut label="Amenities" count={hotelFilters.facilities.length || undefined} expanded={hotelQuickFilter === "amenities"} onPress={() => openHotelQuickFilter("amenities")} />
-            </>}
-            {(product === "flight"
-              ? ["Airlines", "Stops"]
-              : []
-            ).map((x) => (
-              <Pill
-                key={x}
-                label={x}
-                active={product === "flight" && (
-                  x === "Stops" ? filters.maxStops != null :
-                  x === "Airlines" ? filters.airlines.length > 0 : false
-                )}
-                flightResultsChevron={product === "flight"}
-                onPress={() => openFlightFilters(x.toLowerCase() as "stops" | "airlines")}
-              />
-            ))}
-          </ScrollView>
-  );
+            </>
+    </ScrollView>
+  ));
   const resultContent = (
     <>
       {product === "hotel" && status === "loading" ? <Loading product={product} /> : null}
@@ -805,7 +792,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       )}
       {product === "flight" ? (
         <>
-          <FlightSortModal visible={sortOpen} sort={sort} onChange={setSort} onClose={() => setSortOpen(false)} />
+          <FlightSortSheet visible={sortOpen} sort={sort} onApply={(next) => { setSort(next); setSortOpen(false); }} onClose={() => setSortOpen(false)} />
           <FlightFilterSheet
             visible={filterOpen}
             section={filterSection}
@@ -977,57 +964,6 @@ function HotelResultsHeader({
     </View>
   );
 }
-function FlightSortModal({
-  visible,
-  sort,
-  onChange,
-  onClose,
-}: {
-  visible: boolean;
-  sort: FlightSort;
-  onChange: (sort: FlightSort) => void;
-  onClose: () => void;
-}) {
-  const { theme } = useAppTheme();
-  const inset = useSafeAreaInsets();
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} accessibilityViewIsModal>
-      <View style={s0.modalBackdrop}>
-        <View style={[s0.sortSheet, { paddingBottom: Math.max(inset.bottom, 18), backgroundColor: theme.surface }]} accessibilityLabel="Sort flights">
-          <View style={s0.sheetHead}>
-            <Text accessibilityRole="header" style={[s0.foundTitle, { color: theme.textPrimary }]}>Sort flights</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel="Close sort options" onPress={onClose} style={s0.closeButton}>
-              <FlowIcon name="close" color={theme.icon} />
-            </Pressable>
-          </View>
-          <View accessibilityRole="radiogroup" style={s0.sortOptions}>
-            {flightSortOptions.map((option) => {
-              const selected = sort === option.value;
-              return (
-                <Pressable
-                  key={option.value}
-                  accessibilityRole="radio"
-                  accessibilityState={{ checked: selected }}
-                  onPress={() => { onChange(option.value); onClose(); }}
-                  style={({ pressed }) => [s0.sortOption, pressed && s0.sortOptionPressed]}
-                >
-                  <View style={[s0.radio, { borderColor: selected ? ui.blue : theme.border }]}>
-                    {selected ? <View style={s0.radioDot} /> : null}
-                  </View>
-                  <View style={s0.sortOptionCopy}>
-                    <Text style={[s0.sortOptionLabel, { color: theme.textPrimary }, selected && { color: ui.blue }]}>{option.label}</Text>
-                    <Text style={[s0.sortOptionDescription, { color: theme.textSecondary }]}>{option.description}</Text>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
 const HotelResultsShortcut = ({ label, icon = false, count, expanded = false, onPress }: {
   label: string; icon?: boolean; count?: number; expanded?: boolean; onPress: () => void;
 }) => {
@@ -1157,14 +1093,14 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
       </View>
       <View style={s0.fareRow}>
         <View style={s0.fareCopy}>
-          <Text accessible={false} style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+          <Text accessible={false} style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72}>
             {fare?.formatted ?? "—"}
           </Text>
           {fare?.converted === true ? (
             <Text accessible={false} style={[s0.estimatedPrice, { color: supportTextColor }]}>ESTIMATED PRICE</Text>
           ) : null}
           {providerFare ? (
-            <Text accessible={false} style={[s0.providerPrice, { color: supportTextColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+            <Text accessible={false} style={[s0.providerPrice, { color: supportTextColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.76}>
               Provider price: {providerFare.formatted}
             </Text>
           ) : null}
@@ -1766,7 +1702,7 @@ const s0 = StyleSheet.create({
   flightRouteSummaryText: {
     width: "100%",
     paddingHorizontal: 14,
-    fontSize: 16,
+    fontSize: 14,
     lineHeight: 20,
     fontWeight: "700",
     fontFamily: appFonts.bold,
@@ -1840,7 +1776,7 @@ const s0 = StyleSheet.create({
   hotelResultCount: { fontSize: 16, lineHeight: 21, fontWeight: "700", fontFamily: appFonts.bold },
   hotelFilteredEmpty: { alignItems: "center", gap: 10, paddingVertical: 28 },
   hotelClearFilters: { color: ui.blue, fontSize: 15, fontWeight: "800" },
-  flightResultCount: { paddingHorizontal: 14, paddingTop: 4, paddingBottom: 5, fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
+  flightResultCount: { paddingHorizontal: 14, paddingTop: 4, paddingBottom: 5, fontSize: 13, lineHeight: 17, fontWeight: "700", fontFamily: appFonts.bold },
   card: {
     width: "100%",
     borderWidth: 1,
@@ -1864,7 +1800,7 @@ const s0 = StyleSheet.create({
   flightIdentityLayout: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 10 },
   airlineLogoColumn: { width: 42, flexShrink: 0, alignItems: "center" },
   flightDetails: { flex: 1, minWidth: 0 },
-  airlineName: { fontSize: 14, lineHeight: 18, color: ui.navy, fontWeight: "700", fontFamily: appFonts.bold },
+  airlineName: { fontSize: 13, lineHeight: 17, color: ui.navy, fontWeight: "700", fontFamily: appFonts.bold },
   flightNumber: { marginTop: 1, fontSize: 11, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
   operatingCarrierText: { fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
   journeyList: { width: "100%", marginTop: 10, gap: 10 },
@@ -1876,7 +1812,7 @@ const s0 = StyleSheet.create({
   departureColumn: { flexBasis: 72, minWidth: 72, flexShrink: 0 },
   arrivalColumn: { flexBasis: 72, minWidth: 72, flexShrink: 0 },
   rightColumnContract: { alignItems: "flex-end" },
-  time: { fontSize: 15, lineHeight: 19, fontWeight: "800", fontFamily: appFonts.extraBold, color: ui.navy },
+  time: { fontSize: 14, lineHeight: 18, fontWeight: "800", fontFamily: appFonts.extraBold, color: ui.navy },
   airportCode: { fontSize: 11, lineHeight: 14, fontWeight: "700", fontFamily: appFonts.bold },
   timelineColumn: { flex: 1, minWidth: 46, alignItems: "center" },
   journeyDuration: { maxWidth: "100%", fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts.semibold, textAlign: "center" },
@@ -1888,16 +1824,16 @@ const s0 = StyleSheet.create({
     height: 1.5,
     backgroundColor: ui.muted,
   },
-  bigPrice: { fontSize: 20, lineHeight: 25, fontWeight: "900", fontFamily: appFonts.black, color: ui.navy, textAlign: "right" },
+  bigPrice: { maxWidth: "100%", minWidth: 0, flexShrink: 1, fontSize: 18, lineHeight: 23, fontWeight: "900", fontFamily: appFonts.black, color: ui.navy, textAlign: "right", fontVariant: ["tabular-nums"] },
   fareRow: { width: "100%", paddingTop: 0, flexDirection: "row", justifyContent: "flex-end" },
-  fareCopy: { maxWidth: "100%", minWidth: 0, alignItems: "flex-end" },
+  fareCopy: { width: "100%", maxWidth: "100%", minWidth: 0, alignItems: "flex-end" },
   estimatedPrice: { fontSize: 10, lineHeight: 13, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: 0.7, textAlign: "right" },
-  providerPrice: { marginTop: 1, fontSize: 11, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "right" },
+  providerPrice: { maxWidth: "100%", minWidth: 0, flexShrink: 1, marginTop: 1, fontSize: 11, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "right", fontVariant: ["tabular-nums"] },
   metadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 6, marginBottom: 4 },
   metadataFooterContainer: { width: "100%", alignItems: "center" },
   metadataRow: { width: "100%", flexDirection: "row", alignItems: "center", paddingTop: 1, paddingBottom: 2 },
   metadataItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingHorizontal: 2 },
-  metadataText: { flexShrink: 1, minWidth: 0, fontSize: 13, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
+  metadataText: { flexShrink: 1, minWidth: 0, fontSize: 11.5, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
   hotelCard: {
     minHeight: 260,
     borderWidth: 1,
@@ -1995,13 +1931,13 @@ const s0 = StyleSheet.create({
   flightLoadingExperience: { width: "100%", gap: 14 },
   flightLoadingStatus: { width: "100%", paddingHorizontal: 16, paddingTop: 4, gap: 5 },
   flightLoadingRouteCodes: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  flightLoadingRouteCode: { fontSize: 15, lineHeight: 20, fontWeight: "800" },
+  flightLoadingRouteCode: { fontSize: 14, lineHeight: 18, fontWeight: "800" },
   flightLoadingRouteLine: { flexDirection: "row", alignItems: "center", paddingHorizontal: 3, gap: 7 },
   flightLoadingRouteDot: { width: 6, height: 6, borderRadius: 3 },
   flightLoadingRouteTrack: { flex: 1, height: 1 },
   flightLoadingCopy: { alignItems: "center", gap: 2, paddingTop: 5, minHeight: 48 },
-  flightLoadingTitle: { fontSize: 17, lineHeight: 22, fontWeight: "800", textAlign: "center" },
-  flightLoadingBody: { fontSize: 13, lineHeight: 19, textAlign: "center" },
+  flightLoadingTitle: { fontSize: 15, lineHeight: 20, fontWeight: "800", textAlign: "center" },
+  flightLoadingBody: { fontSize: 12, lineHeight: 17, textAlign: "center" },
   skeletonList: { width: "100%", gap: 14 },
   skeletonCard: {
     width: "100%",

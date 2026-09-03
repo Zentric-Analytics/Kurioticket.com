@@ -60,6 +60,6 @@ test("Flight Result structure and SectionList controls remain intact", () => {
   assert.match(screen, /<Animated\.SectionList[\s\S]*?ListHeaderComponent=\{status === "loading" \? \([\s\S]*?<FlightLoadingExperience[\s\S]*?\) : animatedFlightDateStrip\}[\s\S]*?<PriceAlert[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?<FlightCard/);
   assert.match(screen, /renderSectionHeader[\s\S]*?stickySectionHeadersEnabled/);
   assert.match(screen, /<PriceAlert/);
-  assert.match(screen, /<FlightSortModal/);
+  assert.match(screen, /<FlightSortSheet/);
   assert.match(screen, /<FlightFilterSheet/);
 });

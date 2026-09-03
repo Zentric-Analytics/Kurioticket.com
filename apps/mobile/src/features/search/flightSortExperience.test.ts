@@ -3,16 +3,25 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
+const sheet = readFileSync("src/features/search/FlightSortSheet.tsx", "utf8");
+const controls = readFileSync("src/features/search/FlightResultsQuickControls.tsx", "utf8");
 
-test("the existing Sort quick control opens one compact radio sheet", () => {
-  assert.match(screen, /label=\{flightSortQuickLabel\(sort\)\}[\s\S]*?onPress=\{\(\) => setSortOpen\(true\)\}/);
-  assert.match(screen, /function FlightSortModal[\s\S]*?accessibilityLabel="Sort flights"[\s\S]*?accessibilityRole="radiogroup"/);
-  assert.match(screen, /accessibilityRole="radio"[\s\S]*?accessibilityState=\{\{ checked: selected \}\}/);
+test("the sort control opens the shared draft-based sheet", () => {
+  assert.match(controls, /openSheet\("sort"\)/);
+  assert.match(screen, /<FlightSortSheet visible=\{sortOpen\}/);
+  assert.match(sheet, /<FlightResultsSheetShell/);
+  assert.match(sheet, /accessibilityRole="radiogroup"/);
+  assert.match(sheet, /accessibilityRole="radio" accessibilityState=\{\{ selected \}\}/);
 });
 
-test("selecting a sort updates shared state and dismisses without changing filters", () => {
-  const modal = screen.slice(screen.indexOf("function FlightSortModal"), screen.indexOf("function FlightCard"));
-  assert.match(modal, /onPress=\{\(\) => \{ onChange\(option\.value\); onClose\(\); \}\}/);
-  assert.doesNotMatch(modal, /setFilters|onChange\(emptyFlightFilters/);
-  assert.match(screen, /filterAndSortFlights\([\s\S]*?filters,[\s\S]*?sort,/);
+test("sort changes remain draft state until Apply", () => {
+  assert.match(sheet, /const \[draft, setDraft\] = useState\(sort\)/);
+  assert.match(sheet, /onPress=\{\(\) => setDraft\(option\.value\)\}/);
+  assert.match(sheet, /label="Apply sort"[\s\S]*?onApply\(draft\)/);
+  assert.match(screen, /onApply=\{\(next\) => \{ setSort\(next\); setSortOpen\(false\); \}\}/);
+});
+
+test("sort sheet presents only Best, Cheapest, and Fastest", () => {
+  for (const label of ["Best", "Cheapest", "Fastest"]) assert.match(sheet, new RegExp(`label: "${label}"`));
+  assert.doesNotMatch(sheet, /Earliest departure|Latest departure/);
 });

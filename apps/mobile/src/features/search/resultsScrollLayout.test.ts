@@ -6,9 +6,11 @@ import test from "node:test";
 const screen = readFileSync(
   resolve("src/features/search/ApprovedResultsScreen.tsx"),
   "utf8",
-);
-const layoutStart = screen.indexOf('<Animated.SectionList\n          style={[s0.resultsScroll');
-const flightLayout = screen.slice(layoutStart, screen.indexOf(') : (\n        <>', layoutStart));
+).replace(/\r\n/g, "\n");
+const quickControls = readFileSync(resolve("src/features/search/FlightResultsQuickControls.tsx"), "utf8");
+const layoutStart = screen.indexOf("<Animated.SectionList");
+const alternateLayoutStart = screen.indexOf(") : (\n        <>", layoutStart);
+const flightLayout = screen.slice(layoutStart, alternateLayoutStart);
 
 function styleBlock(name: string, nextName: string) {
   return screen.slice(screen.indexOf(`${name}:`), screen.indexOf(`${nextName}:`, screen.indexOf(`${name}:`)));
@@ -47,10 +49,10 @@ test("date and filter rails retain their horizontal interactions", () => {
 
   assert.match(dateStrip, /export function DateStrip[\s\S]*?<ScrollView\s+horizontal/);
   assert.match(dateStrip, /onPress=\{\(\) => onSelect\(iso\)\}/);
-  assert.match(screen, /const filterRail = \([\s\S]*?<ScrollView\s+horizontal[\s\S]*?openFlightFilters\("all"\)/);
-  assert.match(screen, /label=\{flightSortQuickLabel\(sort\)\}/);
-  for (const label of ["Filter", "Airlines", "Stops"]) {
-    assert.match(screen, new RegExp(`"${label}"`));
+  assert.match(screen, /const filterRail = \(product === "flight" \? \([\s\S]*?<FlightResultsQuickControls[\s\S]*?openSheet=\{openFlightSheet\}/);
+  assert.match(screen, /sort=\{sort\}/);
+  for (const label of ["Filters", "Airlines", "Stops"]) {
+    assert.match(quickControls, new RegExp(`"${label}"`));
   }
 });
 
@@ -76,11 +78,9 @@ test("persistent flight controls and scrolling count keep compact spacing", () =
 });
 
 test("the compact rail remains structurally safe at supported phone widths", () => {
-  const filterRail = screen.slice(screen.indexOf("const filterRail"), screen.indexOf("const resultContent"));
-
-  assert.match(filterRail, /<ScrollView\s+horizontal/);
-  assert.match(filterRail, /showsHorizontalScrollIndicator=\{false\}/);
-  assert.doesNotMatch(filterRail, /flexWrap|numColumns|width:\s*(?:320|360|375|390|412|430)/);
+  assert.match(quickControls, /<ScrollView horizontal/);
+  assert.match(quickControls, /showsHorizontalScrollIndicator=\{false\}/);
+  assert.doesNotMatch(quickControls, /numColumns|width:\s*(?:320|360|375|390|412|430)/);
   assert.match(styleBlock("filters", "modalBackdrop"), /paddingHorizontal: 14/);
 });
 
@@ -101,8 +101,8 @@ test("flight dates use full resolved fares in wider, single-line tiles", () => {
 });
 
 test("hotel results omit the date rail and keep filters above the separate result scroll", () => {
-  const hotelStart = screen.indexOf(') : (\n        <>', layoutStart);
-  const hotelLayout = screen.slice(hotelStart, screen.indexOf("<FlightSortModal", hotelStart));
+  const hotelStart = alternateLayoutStart;
+  const hotelLayout = screen.slice(hotelStart, screen.indexOf("<FlightSortSheet", hotelStart));
 
   assert.doesNotMatch(hotelLayout, /DateStrip|dateStrip|flightDateStrip/);
   assert.match(hotelLayout, /\{filterRail\}/);

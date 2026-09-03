@@ -29,7 +29,7 @@ test("selected tiles have a decorative two-pixel top accent", () => {
 test("flight results order uppercase date, uppercase weekday, then fare", () => {
   const flightMarkup = component.slice(component.indexOf("{flightResults ? ("), component.indexOf(") : (", component.indexOf("{flightResults ? (")));
   assert.ok(flightMarkup.indexOf("shortDate(iso).toUpperCase()") < flightMarkup.indexOf('weekday: "short" }).toUpperCase()'));
-  assert.match(dateLabel, /fontSize: 12[\s\S]*?fontWeight: "700"/);
+  assert.match(dateLabel, /fontSize: 11[\s\S]*?fontWeight: "700"/);
   assert.match(weekday, /fontSize: 10[\s\S]*?fontWeight: "600"/);
   assert.match(priceLabel, /fontSize: 11[\s\S]*?fontWeight: "600"/);
   assert.match(dateLabel, /fontFamily: appFonts\.bold/);
@@ -73,7 +73,7 @@ test("optional cheaper-nearby insight stays compact, plain, and safely pressable
   for (const expected of [/minHeight: 28/, /justifyContent: "center"/, /paddingHorizontal: 14/, /marginTop: -2/]) {
     assert.match(nearbyInsight, expected);
   }
-  for (const expected of [/fontSize: 12/, /lineHeight: 16/, /fontWeight: "600"/]) {
+  for (const expected of [/fontSize: 11/, /lineHeight: 15/, /fontWeight: "600"/]) {
     assert.match(nearbyInsightText, expected);
   }
   assert.match(component, /fontFamily: appFonts\.semibold/);

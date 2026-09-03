@@ -11,7 +11,7 @@ const details = read("src/features/search/ApprovedDetailScreen.tsx");
 const invocation = results.slice(results.indexOf("<FlightResultsHeader"), results.indexOf("/>", results.indexOf("<FlightResultsHeader")) + 2);
 const hotelInvocation = results.slice(results.indexOf("<HotelResultsHeader"), results.indexOf("/>", results.indexOf("<HotelResultsHeader")) + 2);
 const header = results.slice(results.indexOf("function FlightResultsHeader"), results.indexOf("function HotelResultsHeader"));
-const hotelHeader = results.slice(results.indexOf("function HotelResultsHeader"), results.indexOf("function FlightSortModal"));
+const hotelHeader = results.slice(results.indexOf("function HotelResultsHeader"), results.indexOf("const HotelResultsShortcut"));
 const styles = results.slice(results.indexOf("const s0 = StyleSheet.create"));
 const routeCardStart = header.indexOf("s0.flightRouteSummaryCard");
 const routeCardEnd = header.indexOf("</View>", routeCardStart) + "</View>".length;
@@ -110,7 +110,7 @@ test("Flight Results route uses compact centered typography", () => {
   const routeTextStyle = styles.slice(styles.indexOf("flightRouteSummaryText:"), styles.indexOf("flightRouteSummaryEdit:"));
   assert.match(routeTextStyle, /width: "100%"/);
   assert.match(routeTextStyle, /paddingHorizontal: 14/);
-  assert.match(routeTextStyle, /fontSize: 16/);
+  assert.match(routeTextStyle, /fontSize: 14/);
   assert.match(routeTextStyle, /lineHeight: 20/);
   assert.match(routeTextStyle, /fontWeight: "700"/);
   assert.match(routeTextStyle, /fontFamily: appFonts\.bold/);
