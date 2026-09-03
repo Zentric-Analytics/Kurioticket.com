@@ -34,14 +34,15 @@ function Control({ label, active, count, expanded, filterIcon, onPress }: { labe
   );
 }
 
-export function FlightResultsQuickControls({ sort, activeFilterCount, airlineCount, stopsActive, openSheetKind, openSheet }: { sort: FlightSort; activeFilterCount: number; airlineCount: number; stopsActive: boolean; openSheetKind: "sort" | "all" | "airlines" | "stops" | null; openSheet: (sheet: "sort" | "all" | "airlines" | "stops") => void }) {
+export function FlightResultsQuickControls({ sort, activeFilterCount, airlineCount, airportCount, stopsActive, openSheetKind, openSheet }: { sort: FlightSort; activeFilterCount: number; airlineCount: number; airportCount: number; stopsActive: boolean; openSheetKind: "sort" | "all" | "airlines" | "stops" | "airports" | null; openSheet: (sheet: "sort" | "all" | "airlines" | "stops" | "airports") => void }) {
   const safeSort = sort === "price" || sort === "duration" ? sort : "best";
   return (
     <ScrollView horizontal style={styles.rail} contentContainerStyle={styles.content} showsHorizontalScrollIndicator={false} alwaysBounceHorizontal={false}>
-      <Control label={sortLabels[safeSort]} active={safeSort !== "best"} expanded={openSheetKind === "sort"} onPress={() => openSheet("sort")} />
       <Control label="Filters" active={activeFilterCount > 0} count={activeFilterCount || undefined} expanded={openSheetKind === "all"} filterIcon onPress={() => openSheet("all")} />
+      <Control label={sortLabels[safeSort]} active={safeSort !== "best"} expanded={openSheetKind === "sort"} onPress={() => openSheet("sort")} />
       <Control label="Airlines" active={airlineCount > 0} count={airlineCount || undefined} expanded={openSheetKind === "airlines"} onPress={() => openSheet("airlines")} />
       <Control label="Stops" active={stopsActive} count={stopsActive ? 1 : undefined} expanded={openSheetKind === "stops"} onPress={() => openSheet("stops")} />
+      <Control label="Airports" active={airportCount > 0} count={airportCount || undefined} expanded={openSheetKind === "airports"} onPress={() => openSheet("airports")} />
     </ScrollView>
   );
 }
