@@ -21,11 +21,28 @@ test("approved car results use the live API contract and open the native detail 
   assert.doesNotMatch(screen, /Hertz|Enterprise|Toyota RAV4|Chevrolet Tahoe/);
 });
 
-test("car card retains truthful model, specification, benefit, supplier and price mappings", () => {
+test("car card matches the mobile Web identity, four-spec and conversion hierarchy", () => {
   const card = readFileSync("src/features/search/CarResultCard.tsx", "utf8");
-  for (const field of ["modelName", "categoryLabel", "passengers", "bags", "transmission", "airConditioning", "mileagePolicy", "freeCancellation", "payAtPickup", "rentalCompanyName", "pickupLocation", "pricePerDay", "totalPrice"]) {
+  for (const field of ["modelName", "categoryLabel", "passengers", "bags", "doors", "transmission", "freeCancellation", "pickupLocation", "pricePerDay", "totalPrice"]) {
     assert.match(card, new RegExp(`result\\.${field}|offer\\?\\.${field}|offer\\.${field}`));
   }
+  assert.match(card, />View car<\/Text>/);
+  assert.match(card, /Share\.share/);
+  assert.doesNotMatch(card, /supplierRating|supplierReviewCount|Unlimited mileage|Pay at pickup/);
+});
+
+test("car results reproduce the rendered mobile Web summary, controls and count hierarchy", () => {
+  const screen = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
+  assert.match(screen, /accessibilityLabel="Edit car search"/);
+  assert.match(screen, /label=\{priceFilter\?"Lower total":"Total price"\}/);
+  assert.match(screen, /label=\{category\|\|"Vehicle type"\}/);
+  assert.match(screen, /\{filtered\.length\} results found/);
+  assert.match(screen, /const pageSize=20/);
+  assert.match(screen, /const visible=filtered\.slice/);
+  assert.match(screen, /Page \{page\} of \{totalPages\}/);
+  assert.match(screen, /Sort by:/);
+  assert.doesNotMatch(screen, /<DateStrip/);
+  assert.doesNotMatch(screen, /Prices include taxes & fees when reported/);
 });
 
 test("native car details route mounts the approved detail surface", () => {
