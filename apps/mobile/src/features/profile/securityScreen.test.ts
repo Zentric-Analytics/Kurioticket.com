@@ -189,7 +189,7 @@ test("session rows trust isCurrent and require menu plus confirmation before rev
   const row = security.slice(security.indexOf("function SessionRow"), security.indexOf("function BottomSheet"));
   assert.match(row, /item\.isCurrent\?<Text/);
   assert.match(row, /!item\.isCurrent\?<Pressable/);
-  assert.match(row, /onPress=\{\(\)=>onManage\(item\)\}/);
+  assert.match(row, /onPress=\{\(\)=>onManage\(item\)\}/g);
   assert.doesNotMatch(row, /revokeSecuritySession/);
   assert.match(security, /visible=\{Boolean\(managedSession\)\}/);
   assert.match(security, /setManagedSession\(null\);remove\(item\)/);
@@ -205,10 +205,12 @@ test("active sessions group the authoritative current device before sorted other
   assert.match(security, /item\.isCurrent\?copy\.activeNow/);
 });
 
-test("session cards open one safe details sheet and only other sessions can remove", () => {
+test("session cards and menu are sibling press targets opening one safe details sheet", () => {
   const row = security.slice(security.indexOf("function SessionRow"), security.indexOf("function BottomSheet"));
-  assert.match(row, /return <Pressable accessibilityRole="button" accessibilityLabel=\{accessibilityLabel\} onPress=\{\(\)=>onManage\(item\)\}/);
-  assert.match(row, /event\.stopPropagation\(\);onManage\(item\)/);
+  assert.match(row, /return <View style=\{\[styles\.device/);
+  assert.match(row, /<Pressable accessibilityRole="button" accessibilityLabel=\{accessibilityLabel\} onPress=\{\(\)=>onManage\(item\)\} style=\{\(\{pressed\}\)=>\[styles\.deviceMain/);
+  assert.match(row, /hitSlop=\{6\} onPress=\{\(\)=>onManage\(item\)\} style=\{\(\{pressed\}\)=>\[styles\.manageSession/);
+  assert.doesNotMatch(row, /event\.stopPropagation/);
   assert.match(security, /managedSession && !managedSession\.isCurrent\?<Pressable/);
   assert.match(security, /managedSession\.isCurrent\?`\$\{c\.currentDevice\} · \$\{c\.activeNow\}`/);
   assert.doesNotMatch(row, /maskedIp|item\.id/);
