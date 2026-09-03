@@ -798,7 +798,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             </View>
             <View style={[s0.body, { paddingBottom: Math.max(insets.bottom + 16, 16) }]}>{resultContent}</View>
           </ScrollView>
-          {hotelCompactHeader ? <View style={[s0.hotelCompactHeader,{backgroundColor:theme.surface,borderColor:theme.border}]}><Pressable accessibilityRole="button" accessibilityLabel="Go back" style={s0.compactTarget} onPress={()=>router.back()}><ArrowLeft size={22} color={theme.icon}/></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Edit hotel search" style={s0.compactContext} onPress={edit}><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.compactDestination,{color:theme.textPrimary}]}>{hotelSummary.destination}</Text><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.compactMeta,{color:theme.textSecondary}]}>{hotelSummary.secondaryLine}</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Filters" style={s0.compactTarget} onPress={()=>openHotelFilters("all")}><SlidersHorizontal size={21} color={theme.icon}/></Pressable></View>:null}
+          {hotelCompactHeader ? <View style={[s0.hotelCompactHeader,{backgroundColor:theme.surface,borderColor:theme.border}]}><Pressable accessibilityRole="button" accessibilityLabel="Edit hotel search" style={s0.compactContext} onPress={edit}><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.compactDestination,{color:theme.textPrimary}]}>{hotelSummary.destination}</Text><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.compactMeta,{color:theme.textSecondary}]}>{hotelSummary.secondaryLine}</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Filters" style={s0.compactTarget} onPress={()=>openHotelFilters("all")}><SlidersHorizontal size={21} color={theme.icon}/></Pressable></View>:null}
           {hotelBackToTop ? <Pressable accessibilityRole="button" accessibilityLabel="Back to top" onPress={()=>hotelScrollRef.current?.scrollTo({y:0,animated:true})} style={[s0.hotelBackToTop,{bottom:Math.max(insets.bottom + 16,16),backgroundColor:theme.surface,borderColor:theme.border}]}><ArrowUp size={21} color={theme.icon}/></Pressable>:null}
         </>
       )}
@@ -907,14 +907,6 @@ function HotelResultsHeader({
       accessibilityLabel="Hotel search summary"
       style={[s0.hotelHeader, { backgroundColor: theme.background }]}
     >
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Go back"
-        onPress={() => router.back()}
-        style={({ pressed }) => [s0.hotelHeaderBack, pressed && s0.flightHeaderControlPressed]}
-      >
-        <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
-      </Pressable>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Edit hotel search. ${destination}. ${secondaryLine}`}
@@ -1718,8 +1710,7 @@ const s0 = StyleSheet.create({
     justifyContent: "center",
   },
   hotelIntroductoryControls: { marginBottom: 12 },
-  hotelHeader: { paddingHorizontal: 16, paddingBottom: 12, gap: 8 },
-  hotelHeaderBack: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  hotelHeader: { paddingHorizontal: 16, paddingBottom: 12 },
   hotelSummaryCard: {
     width: "100%",
     minHeight: 64,
