@@ -8,6 +8,7 @@ const isoDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.
 const clockTime = (value: string) => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value);
 const httpsUrl = (value?: string | null) => Boolean(value && /^https:\/\/[^/\s]+(?:\/|$)/i.test(value));
 const safeImage = (value?: string | null) => !value || httpsUrl(value) || /^\/(?!\/)[^\s]+/.test(value);
+const safeFlightAirportCode = (value: unknown) => typeof value === "string" && /^[A-Z0-9]{3}$/.test(value);
 const safeAction = (result: FlightResult | HotelResult | CarResult) => {
   const action = result.searchPolicy?.action;
   return Boolean(action && (!action.enabled || (action.kind === "internal-detail" ? /^\/(?:flights|hotels|cars)\/details\/[^/]/.test(action.href) : httpsUrl(action.href))));
@@ -83,8 +84,8 @@ export function validFlight(result: FlightResult, plan: SearchPlan) {
     result.id &&
     result.provider &&
     result.airlineName &&
-    result.originAirport &&
-    result.destinationAirport &&
+    safeFlightAirportCode(result.originAirport) &&
+    safeFlightAirportCode(result.destinationAirport) &&
     Number.isFinite(result.price) &&
     result.price >= 0 &&
     /^[A-Z]{3}$/.test(result.currency) &&
