@@ -34,6 +34,8 @@ const expectations: Record<string, (c: (typeof cars)[number]) => boolean> = {
   smallCars: (c) => ["mini", "economy", "compact"].includes(c.category),
   mediumCars: (c) => ["intermediate", "full-size"].includes(c.category),
   suvs: (c) => c.category === "suv",
+  luxuryCars: (c) => c.category === "luxury",
+  vans: (c) => c.category === "van",
   automatic: (c) => c.transmission === "automatic",
   manual: (c) => c.transmission === "manual",
   seats4Plus: (c) => c.passengers >= 4,

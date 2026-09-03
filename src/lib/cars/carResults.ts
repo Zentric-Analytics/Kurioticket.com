@@ -21,6 +21,8 @@ const optionMatches: Record<string, (car: NormalizedCarResult) => boolean> = {
   smallCars: (car) => ["mini", "economy", "compact"].includes(car.category),
   mediumCars: (car) => ["intermediate", "full-size"].includes(car.category),
   suvs: (car) => car.category === "suv",
+  luxuryCars: (car) => car.category === "luxury",
+  vans: (car) => car.category === "van",
   automatic: (car) => car.transmission === "automatic",
   manual: (car) => car.transmission === "manual",
   seats4Plus: (car) => car.passengers >= 4,
