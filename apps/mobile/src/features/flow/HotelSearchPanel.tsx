@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from "react";
 import { Animated, FlatList, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -102,7 +102,8 @@ export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function Ho
 export function HotelDestinationSheet({ visible, value, pickerPresentation = "sheet", suggestionIcons = HOTEL_DESTINATION_SUGGESTION_ICONS, onChoose, onCancel }: { visible: boolean; value: string; pickerPresentation?: "sheet" | "resultsEditFullScreen"; suggestionIcons?: readonly SearchResultProductIconName[]; onChoose: (destination: string) => void; onCancel: () => void }) {
   const ft = useFlowTheme();
   const { locale } = useMobileLocalization();
-  const motion = useSearchPickerMotion(visible, { controlledOpening: true });
+  const sheetVisible = pickerPresentation === "sheet" ? visible : false;
+  const motion = useSearchPickerMotion(sheetVisible, { controlledOpening: true });
   const presentation = useRetainedPickerContext(visible, { suggestionIcons });
   const inputRef = useRef<TextInput>(null);
   const requestSequence = useRef(0);
@@ -114,12 +115,12 @@ export function HotelDestinationSheet({ visible, value, pickerPresentation = "sh
   const [error, setError] = useState(false);
   const trimmedQuery = query.trim();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!visible) return;
     setQuery(pickerPresentation === "resultsEditFullScreen" ? value : ""); setDraft(undefined); setSuggestions([]); setLoading(false); setError(false); programmaticFilledQuery.current=undefined;
   }, [visible, value, pickerPresentation]);
 
-  const keyboardPresentation = useSearchPickerKeyboardPresentation(visible, motion.rendered, value, inputRef, motion);
+  const keyboardPresentation = useSearchPickerKeyboardPresentation(sheetVisible, motion.rendered, value, inputRef, motion);
 
   useEffect(() => {
     if (!visible) return;
@@ -171,9 +172,10 @@ export function HotelDestinationSheet({ visible, value, pickerPresentation = "sh
 type GuestsRoomsDraft = { adults: number; children: number; rooms: number; petFriendly: boolean };
 function HotelGuestsRoomsSheet({ visible, adults, children, rooms, petFriendly, presentation = "sheet", onDone, onCancel }: GuestsRoomsDraft & { visible: boolean; presentation?: "sheet" | "resultsEditFullScreen"; onDone: (draft: GuestsRoomsDraft) => void; onCancel: () => void }) {
   const ft = useFlowTheme();
-  const motion = useSearchPickerMotion(visible);
+  const sheetVisible = presentation === "sheet" ? visible : false;
+  const motion = useSearchPickerMotion(sheetVisible);
   const [draft, setDraft] = useState<GuestsRoomsDraft>({ adults, children, rooms, petFriendly });
-  useEffect(() => { if (visible) setDraft({ adults, children, rooms, petFriendly }); }, [visible, adults, children, rooms, petFriendly]);
+  useLayoutEffect(() => { if (visible) setDraft({ adults, children, rooms, petFriendly }); }, [visible, adults, children, rooms, petFriendly]);
   const setCount = (key: "adults" | "children" | "rooms", value: number) => setDraft((current) => ({ ...current, [key]: value }));
   const guestContent = <>
 <ScrollView style={styles.partyScroll} bounces={false} contentContainerStyle={styles.sheetContent}>
