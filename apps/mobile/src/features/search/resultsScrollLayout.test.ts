@@ -39,7 +39,9 @@ test("flight results put fading dates before a native sticky filter rail", () =>
   assert.match(listHeader, /renderSectionHeader[\s\S]*?backgroundColor: flightCanvasColor[\s\S]*?\{filterRail\}/);
   assert.match(listHeader, /stickySectionHeadersEnabled/);
   assert.ok(listHeader.indexOf("ListHeaderComponent=") < listHeader.indexOf("renderSectionHeader="));
-  assert.match(renderItem, /<PriceAlert[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?<FlightCard/);
+  assert.match(listHeader, /\{filterRail\}[\s\S]*?<FlightResultsSummaryRow/);
+  assert.doesNotMatch(renderItem, /PriceAlert|flightResultCountLabel/);
+  assert.match(renderItem, /<FlightCard/);
   assert.match(flightLayout, /initialNumToRender=\{6\}[\s\S]*?maxToRenderPerBatch=\{5\}[\s\S]*?updateCellsBatchingPeriod=\{50\}[\s\S]*?windowSize=\{7\}/);
   assert.match(readFileSync(resolve("src/features/search/SearchUi.tsx"), "utf8"), /numberOfLines=\{1\}[\s\S]*?nearbyDateInsightText[\s\S]*?Cheaper nearby:/);
   assert.doesNotMatch(flightLayout, /dateHeaderCollapsed|position:\s*"absolute"/);
@@ -63,19 +65,17 @@ test("persistent flight controls and scrolling count keep compact spacing", () =
   const rail = styleBlock("filterRail", "resultsScroll");
   const filterSection = styleBlock("flightFilterSectionHeader", "resultsScroll");
   const filters = styleBlock("filters", "modalBackdrop");
-  const priceAlert = styleBlock("flightPriceAlertItem", "flightCardItem");
+  const summary = styleBlock("flightResultsSummaryRow", "flightResultsCountColumn");
   assert.match(rail, /height: 44/);
   assert.match(filterSection, /paddingTop: 8/);
   assert.match(filters, /paddingHorizontal: 14/);
   assert.match(filters, /paddingVertical: 3/);
   assert.match(filters, /gap: 8/);
   assert.match(filters, /alignItems: "center"/);
-  assert.match(priceAlert, /paddingHorizontal: 14/);
-  assert.match(priceAlert, /paddingTop: 8/);
-  assert.match(priceAlert, /paddingBottom: 6/);
-  assert.match(count, /paddingHorizontal: 14/);
-  assert.match(count, /paddingTop: 4/);
-  assert.match(count, /paddingBottom: 5/);
+  assert.match(summary, /paddingHorizontal: 14/);
+  assert.match(summary, /flexDirection: "row"/);
+  assert.match(summary, /justifyContent: "space-between"/);
+  assert.match(count, /fontSize: 13/);
   assert.doesNotMatch(screen, /stickyFilterSurface|flightPersistentSearchControls/);
 });
 

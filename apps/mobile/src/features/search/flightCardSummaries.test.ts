@@ -6,38 +6,38 @@ import { formatCabinClass, summarizeBaggage, summarizeFareRules } from "./flight
 const source = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
 const card = source.slice(source.indexOf("function FlightCard"), source.indexOf("function FlightJourneyRow"));
 
-test("metadata uses the Web-aligned baggage, cabin, fare-rule column order", () => {
-  const row = card.slice(card.indexOf('style={s0.flightMetadataColumn}'), card.indexOf('<View style={s0.flightFareAction}>'));
+test("metadata uses one horizontal baggage, cabin, fare-rule row", () => {
+  const row = card.slice(card.indexOf('style={s0.flightMetadataRow}'));
   const baggage = row.indexOf("baggageSummary");
   const cabin = row.indexOf("cabinSummary");
   const fareRules = row.indexOf("labels.fareRule");
 
   assert.ok(baggage >= 0 && cabin > baggage && fareRules > cabin);
-  assert.equal(row.match(/style=\{s0\.flightMetadataLine\}/g)?.length, 3);
+  assert.equal(row.match(/style=\{s0\.flightMetadataItem\}/g)?.length, 3);
   assert.match(row, /<Luggage\b/);
   assert.match(row, /<Armchair\b/);
   assert.match(row, /<FileText\b/);
-  assert.match(card, /style=\{s0\.flightMetadataColumn\}[\s\S]*?style=\{s0\.flightFareAction\}/);
-  assert.match(source, /flightMetadataColumn: \{ flex: 1, minWidth: 0/);
-  assert.match(source, /flightMetadataLine: \{ minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4 \}/);
+  assert.match(card, /style=\{s0\.flightFareAction\}[\s\S]*?style=\{s0\.flightMetadataRow\}/);
+  assert.match(source, /flightMetadataRow: \{[^\n]*flexDirection: "row"/);
+  assert.match(source, /flightMetadataItem: \{ flex: 1, minWidth: 0, flexDirection: "row"/);
   assert.doesNotMatch(source, /metadataSeparator:/);
   assert.doesNotMatch(source, /metadataRow: \{[^}]*justifyContent: "space-between"/);
   assert.doesNotMatch(source, /metadataRow: \{[^}]*flexWrap/);
   assert.doesNotMatch(row, />·<\/Text>/);
 });
 
-test("metadata shows localized Web category labels and provider-derived values", () => {
-  const row = card.slice(card.indexOf('style={s0.flightMetadataColumn}'), card.indexOf('<View style={s0.flightFareAction}>'));
+test("metadata shows localized category labels and provider-derived values", () => {
+  const row = card.slice(card.indexOf('style={s0.flightMetadataRow}'));
   assert.match(row, /labels\.baggage/);
   assert.match(row, /labels\.cabin/);
   assert.match(row, /labels\.fareRule/);
   assert.match(row, /\{baggageSummary\}/);
   assert.match(row, /\{cabinSummary\}/);
   assert.match(row, /\{fareRulesSummary\}/);
-  assert.ok((row.match(/numberOfLines=\{1\}/g)?.length ?? 0) >= 6);
+  assert.equal(row.match(/numberOfLines=\{1\}/g)?.length, 3);
   assert.equal(row.match(/ellipsizeMode="tail"/g)?.length, 3);
   assert.doesNotMatch(row, /adjustsFontSizeToFit/);
-  assert.match(source, /flightMetadataLabel:/);
+  assert.match(source, /flightMetadataText:/);
 });
 
 test("metadata summaries use provider result fields exactly once", () => {
@@ -63,7 +63,7 @@ test("metadata and full-width journey fit supported mobile widths", () => {
     assert.ok(contentWidth >= 268, `${viewport}px retains a non-overflowing footer text region`);
   }
   assert.match(source, /journeyList: \{ width: "100%"/);
-  assert.match(card, /style=\{s0\.flightMetadataColumn\}[\s\S]*?style=\{s0\.flightFareAction\}/);
+  assert.match(card, /style=\{s0\.flightFareAction\}[\s\S]*?style=\{s0\.flightMetadataRow\}/);
 });
 
 test("baggage summaries distinguish positive, negative, and unknown provider states", () => {

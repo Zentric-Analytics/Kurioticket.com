@@ -30,9 +30,10 @@ test("active controls use compact counts and accessible selected state", () => {
 });
 
 test("controls retain compact visual geometry with effective 44dp targets", () => {
-  assert.match(controls, /rail: \{ height: 44/);
-  assert.match(controls, /control: \{ height: 38, minHeight: 38/);
-  assert.match(controls, /hitSlop=\{\{ top: 3, bottom: 3, left: 2, right: 2 \}\}/);
+  assert.match(controls, /rail: \{ height: 46/);
+  assert.match(controls, /control: \{ height: 42, minHeight: 42/);
+  assert.match(controls, /label: \{ fontSize: 13/);
+  assert.match(controls, /hitSlop=\{\{ top: 2, bottom: 2, left: 2, right: 2 \}\}/);
   assert.match(controls, /ChevronDown/);
 });
 
