@@ -50,11 +50,11 @@ test("booking provider card preserves semantic light and dark surfaces", () => {
   assert.match(bookingCard, /color: theme\.textSecondary/);
 });
 
-test("hotel Offer selection behavior remains unchanged", () => {
-  assert.match(hotelDetail, />Choose where to book</);
-  assert.match(hotelDetail, /<Offer[\s\S]*?selected/);
+test("hotel Offer selection remains available only for live inventory", () => {
+  assert.match(hotelDetail, /discovery \? "Inventory source" : "Choose where to book"/);
+  assert.match(hotelDetail, /<Offer[\s\S]*?selected=\{!discovery\}/);
   assert.match(offer, /selected && \{ borderColor: ui\.blue \}/);
-  assert.match(offer, /<Button label="Select" onPress=\{onSelect\} \/>/);
+  assert.match(offer, /\{onSelect \? <Button label="Select" onPress=\{onSelect\} \/> : null\}/);
 });
 
 test("provider booking redirect logic and sticky CTA remain unchanged", () => {

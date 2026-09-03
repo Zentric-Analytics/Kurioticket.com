@@ -32,6 +32,9 @@ test("source-backed discovery Hotel details remain planning-only", () => {
   assert.match(hotelDetail, /disabled=\{!bookable\}/);
   assert.match(hotelDetail, /"Live booking unavailable"/);
   assert.match(hotelDetail, /"No live provider redirect was supplied\."/);
+  assert.match(hotelDetail, /discovery \? "Inventory source" : "Choose where to book"/);
+  assert.match(hotelDetail, /selected=\{!discovery\}/);
+  assert.match(detailsSource, /\{onSelect \? <Button label="Select" onPress=\{onSelect\} \/> : null\}/);
 });
 
 test("Hotel details suppress absent stars, reviews, amenities, and fake room facts", () => {
@@ -40,4 +43,15 @@ test("Hotel details suppress absent stars, reviews, amenities, and fake room fac
   assert.match(hotelDetail, /\{result\.amenities\.length \? <ScrollView/);
   assert.match(hotelDetail, /result\.roomType \|\| "Room type unavailable"/);
   assert.doesNotMatch(hotelDetail, /result\.roomType \|\| "Standard Room"/);
+});
+
+test("compact Hotel details keep occupancy and sticky booking content within the viewport", () => {
+  assert.match(hotelDetail, /const guestCount = positiveCount\(params\.guests, 2, 20\)/);
+  assert.match(hotelDetail, /const roomCount = positiveCount\(params\.rooms, 1, 8\)/);
+  assert.match(hotelDetail, /d\.hotelSummaryCompact/);
+  assert.match(hotelDetail, /d\.hotelPriceSummaryCompact/);
+  assert.match(hotelDetail, /d\.stayCompact/);
+  assert.match(hotelDetail, /style=\{d\.stickyTotal\}/);
+  assert.match(hotelDetail, /style=\{d\.stickyCta\}/);
+  assert.match(hotelDetail, /adjustsFontSizeToFit minimumFontScale=\{0\.65\}/);
 });
