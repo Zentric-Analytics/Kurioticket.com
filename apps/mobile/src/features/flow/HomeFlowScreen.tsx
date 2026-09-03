@@ -111,8 +111,10 @@ export function HomeTopNavigation({ safeAreaTop }: { safeAreaTop: number }) {
           onPress={() => router.push("/notifications")}
           style={ft.styles.iconButton}
         >
-          <FlowIcon name="bell" color={ft.colors.icon} />
-          {unreadCount > 0 ? <View accessibilityLabel={`${unreadCount} unread notifications`} style={styles.notificationBadge}><Text style={styles.notificationBadgeText}>{unreadCount > 99 ? "99+" : unreadCount}</Text></View> : null}
+          <View pointerEvents="none" style={styles.notificationIconWrap}>
+            <FlowIcon name="bell" color={ft.colors.icon} />
+            {unreadCount > 0 ? <View accessibilityLabel={`${unreadCount} unread notifications`} style={styles.notificationBadge}><Text style={styles.notificationBadgeText}>{unreadCount > 99 ? "99+" : unreadCount}</Text></View> : null}
+          </View>
         </Pressable>
       </View>
     </View>
@@ -251,7 +253,8 @@ const styles = StyleSheet.create({
     width: 130,
     height: 32,
   },
-  notificationBadge: { position: "absolute", right: -5, top: -5, minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: "#D92D20" },
+  notificationIconWrap: { width: 28, height: 28, alignItems: "center", justifyContent: "center" },
+  notificationBadge: { position: "absolute", right: -4, top: -4, minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: "#D92D20" },
   notificationBadgeText: { color: "white", fontSize: 10, fontWeight: "800" },
   products: {
     marginTop: -34,
