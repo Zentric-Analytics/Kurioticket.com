@@ -33,6 +33,11 @@ export async function readGuestCurrency() {
   const value = Platform.OS === "web" ? webStorage()?.getItem(GUEST_CURRENCY_KEY) : await SecureStore.getItemAsync(GUEST_CURRENCY_KEY);
   return value || await readCurrency();
 }
+/** Returns null until the guest explicitly chooses a currency. */
+export async function readGuestCurrencyPreference() {
+  const value = Platform.OS === "web" ? webStorage()?.getItem(GUEST_CURRENCY_KEY) : await SecureStore.getItemAsync(GUEST_CURRENCY_KEY);
+  return value || null;
+}
 export async function writeGuestCurrency(currency: string) {
   if (Platform.OS === "web") webStorage()?.setItem(GUEST_CURRENCY_KEY, currency);
   else await SecureStore.setItemAsync(GUEST_CURRENCY_KEY, currency, { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY });

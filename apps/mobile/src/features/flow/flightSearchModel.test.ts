@@ -118,7 +118,7 @@ test("route patch makes a round-trip route behave as the new one-way search", ()
   const result = buildSearchPlan("flight", merged, today);
 
   assert.equal(merged.origin, undefined); assert.equal(merged.destination, undefined); assert.equal(merged.returnDate, undefined);
-  assert.deepEqual(result.plan?.payload, { tripType: "one-way", origin: "ABV", destination: "DXB", departureDate: "2026-09-01", adults: 1, children: 0, infants: 0, travelers: 1, cabinClass: "economy" });
+  assert.deepEqual(result.plan?.payload, { tripType: "one-way", origin: "ABV", destination: "DXB", departureDate: "2026-09-01", adults: 1, children: 0, infants: 0, travelers: 1, cabinClass: "economy", currency: "USD" });
 });
 
 test("route patch prevents all stale multi-city fields from overriding a new one-way search", () => {

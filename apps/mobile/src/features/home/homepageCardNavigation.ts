@@ -2,12 +2,10 @@ import type { Href } from "expo-router";
 import { resolvePopularDestinationStay } from "./PopularDestinationStaysData";
 import { buildHotelExplorationSearch } from "../../../../../src/lib/hotels/hotelExplorationSearch";
 import { resolveHotelDiscoveryIntent } from "../../../../../src/lib/hotels/hotelDiscoveryIntent";
+import type { MarketplaceContext } from "../../../../../src/shared/marketplace/marketplaceContext";
 
 export type HomepageAdventureCard = { originCode: string; destinationCode: string };
 export type HomepageHotelCard = { city: string };
-
-const DEFAULT_ROUTE_CARD_CURRENCY = "USD";
-const DEFAULT_ROUTE_CARD_MARKET = "NG";
 
 export const homepageHotelDestinationParams = (card: HomepageHotelCard) => {
   const destination = resolvePopularDestinationStay(card);
@@ -27,7 +25,7 @@ export function popularDestinationStayNavigation(card: HomepageHotelCard, now = 
   return params ? { pathname: "/hotel-results", params } : "/hotels";
 }
 
-export const homepageAdventureRouteParams = (card: HomepageAdventureCard, now = new Date()) => ({
+export const homepageAdventureRouteParams = (card: HomepageAdventureCard, marketplace: MarketplaceContext, now = new Date()) => ({
   tripType: "one-way",
   origin: card.originCode.trim().toUpperCase(),
   destination: card.destinationCode.trim().toUpperCase(),
@@ -37,11 +35,11 @@ export const homepageAdventureRouteParams = (card: HomepageAdventureCard, now = 
   children: "0",
   infants: "0",
   cabinClass: "economy",
-  currency: DEFAULT_ROUTE_CARD_CURRENCY,
-  market: DEFAULT_ROUTE_CARD_MARKET,
+  currency: marketplace.displayCurrency,
+  market: marketplace.marketCountryCode,
 });
 
-export function discoverAdventureNavigation(card: HomepageAdventureCard): Href {
+export function discoverAdventureNavigation(card: HomepageAdventureCard, marketplace: MarketplaceContext): Href {
   const origin = normalizeAirportOrCityCode(card.originCode);
   const destination = normalizeAirportOrCityCode(card.destinationCode);
 
@@ -51,7 +49,7 @@ export function discoverAdventureNavigation(card: HomepageAdventureCard): Href {
 
   return {
     pathname: "/flight-results",
-    params: homepageAdventureRouteParams({ originCode: origin, destinationCode: destination }),
+    params: homepageAdventureRouteParams({ originCode: origin, destinationCode: destination }, marketplace),
   };
 }
 
