@@ -1,4 +1,4 @@
-import { useCallback, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { ActivityIndicator, Animated, PanResponder, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
@@ -11,12 +11,13 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { signInHref } from "../auth/signInIntent";
 import { notificationDestination } from "./notificationAction";
 import { notifyUnreadCountChanged } from "./notificationUnreadRefresh";
-import { NOTIFICATION_DELETE_ACTION_WIDTH, shouldClaimNotificationSwipe, shouldRevealNotificationDelete } from "./notificationSwipe";
+import { notificationSwipePosition, NOTIFICATION_DELETE_ACTION_WIDTH, shouldClaimNotificationSwipe, shouldRevealNotificationDelete } from "./notificationSwipe";
 
 export function NotificationsScreen() {
   const { theme } = useAppTheme();
   const [state, dispatch] = useReducer(notificationPaginationReducer, initialNotificationPaginationState);
   const [pendingAll, setPendingAll] = useState(false);
+  const [openNotificationId, setOpenNotificationId] = useState<string | null>(null);
   const requestSequence = useRef(0);
   const loadingMoreRef = useRef(false);
 
@@ -90,29 +91,45 @@ export function NotificationsScreen() {
     {contentState === "loading" ? <View style={styles.center}><ActivityIndicator color={flowColors.blue} /><Text style={flowStyles.meta}>Loading notifications…</Text></View> : null}
     {contentState === "error" ? <View style={styles.center}><Text accessibilityRole="header" style={[flowStyles.value, { color: theme.text }]}>Couldn't load notifications</Text><Text style={[flowStyles.meta, styles.emptyCopy]}>Check your connection and try again.</Text><Pressable accessibilityRole="button" accessibilityLabel="Try again" onPress={() => void loadFirstPage()} style={styles.retryButton}><Text style={styles.link}>Try again</Text></Pressable></View> : null}
     {contentState === "empty" ? <ScrollView alwaysBounceVertical={false} bounces={false} overScrollMode="never" refreshControl={<RefreshControl refreshing={state.refreshing} onRefresh={() => void loadFirstPage(true)} />} contentContainerStyle={styles.list}><View style={styles.center}><FlowIcon name="bell" color={flowColors.blue} size={42} /><Text style={flowStyles.value}>You’re all caught up</Text><Text style={[flowStyles.meta, styles.emptyCopy]}>Important account and travel updates will appear here.</Text></View></ScrollView> : null}
-    {contentState === "list" ? <ScrollView alwaysBounceVertical={false} bounces={false} overScrollMode="never" refreshControl={<RefreshControl refreshing={state.refreshing} onRefresh={() => void loadFirstPage(true)} />} contentContainerStyle={styles.list}>
+    {contentState === "list" ? <ScrollView alwaysBounceVertical={false} bounces={false} overScrollMode="never" onScrollBeginDrag={() => setOpenNotificationId(null)} refreshControl={<RefreshControl refreshing={state.refreshing} onRefresh={() => void loadFirstPage(true)} />} contentContainerStyle={styles.list}>
       {state.error ? <View style={styles.feedback}><Text accessibilityRole="alert" style={styles.error}>{state.error}</Text><Pressable accessibilityRole="button" accessibilityLabel="Retry refreshing notifications" onPress={() => void loadFirstPage(true)}><Text style={styles.link}>Try again</Text></Pressable></View> : null}
-      {state.items.map((item) => <SwipeableNotificationRow key={item.id} item={item} dark={theme.dark} surface={theme.surface} border={theme.border} text={theme.text} onOpen={open} onDelete={remove} />)}
+      {state.items.map((item) => <SwipeableNotificationRow key={item.id} item={item} dark={theme.dark} surface={theme.surface} border={theme.border} text={theme.text} isOpen={openNotificationId === item.id} onSwipeStart={() => { if (openNotificationId !== item.id) setOpenNotificationId(null); }} onSetOpen={(open) => setOpenNotificationId(open ? item.id : null)} onOpen={open} onDelete={remove} />)}
       {state.loadMoreError ? <View style={styles.loadMoreFeedback}><Text accessibilityRole="alert" style={styles.error}>{state.loadMoreError}</Text><Pressable accessibilityRole="button" accessibilityLabel="Retry loading older notifications" onPress={() => void loadMore()}><Text style={styles.link}>Try again</Text></Pressable></View> : null}
       {state.nextCursor && !state.loadMoreError ? <Pressable accessibilityRole="button" accessibilityLabel="Load more notifications" disabled={state.loadingMore} onPress={() => void loadMore()} style={styles.loadMore}>{state.loadingMore ? <ActivityIndicator color={flowColors.blue} /> : <Text style={styles.link}>Load more</Text>}</Pressable> : null}
     </ScrollView> : null}
   </SafeAreaView>;
 }
-function SwipeableNotificationRow({ item, dark, surface, border, text, onOpen, onDelete }: { item: MobileNotification; dark: boolean; surface: string; border: string; text: string; onOpen: (item: MobileNotification) => Promise<void>; onDelete: (item: MobileNotification) => Promise<void> }) {
+function SwipeableNotificationRow({ item, dark, surface, border, text, isOpen, onSwipeStart, onSetOpen, onOpen, onDelete }: { item: MobileNotification; dark: boolean; surface: string; border: string; text: string; isOpen: boolean; onSwipeStart: () => void; onSetOpen: (open: boolean) => void; onOpen: (item: MobileNotification) => Promise<void>; onDelete: (item: MobileNotification) => Promise<void> }) {
   const translateX = useRef(new Animated.Value(0)).current;
+  const position = useRef(0);
+  const gestureStart = useRef(0);
   const [deleting, setDeleting] = useState(false);
-  const settle = (open: boolean) => Animated.spring(translateX, { toValue: open ? -NOTIFICATION_DELETE_ACTION_WIDTH : 0, useNativeDriver: true, bounciness: 0 }).start();
-  const panResponder = useRef(PanResponder.create({
-    onMoveShouldSetPanResponder: (_, gesture) => shouldClaimNotificationSwipe(gesture.dx, gesture.dy),
-    onPanResponderMove: (_, gesture) => translateX.setValue(Math.max(-NOTIFICATION_DELETE_ACTION_WIDTH, Math.min(0, gesture.dx))),
-    onPanResponderRelease: (_, gesture) => settle(shouldRevealNotificationDelete(gesture.dx)),
-    onPanResponderTerminate: () => settle(false),
-  })).current;
+  const settle = useCallback((open: boolean) => Animated.spring(translateX, { toValue: open ? -NOTIFICATION_DELETE_ACTION_WIDTH : 0, useNativeDriver: true, bounciness: 0 }).start(), [translateX]);
+  useEffect(() => {
+    const listener = translateX.addListener(({ value }) => { position.current = value; });
+    return () => translateX.removeListener(listener);
+  }, [translateX]);
+  useEffect(() => { settle(isOpen); }, [isOpen, settle]);
+  const panResponder = PanResponder.create({
+    onMoveShouldSetPanResponder: (_, gesture) => shouldClaimNotificationSwipe(gesture.dx, gesture.dy, position.current),
+    onPanResponderGrant: () => {
+      gestureStart.current = position.current;
+      translateX.stopAnimation((value) => { position.current = value; gestureStart.current = value; });
+      onSwipeStart();
+    },
+    onPanResponderMove: (_, gesture) => translateX.setValue(notificationSwipePosition(gestureStart.current, gesture.dx)),
+    onPanResponderRelease: (_, gesture) => {
+      const open = shouldRevealNotificationDelete(notificationSwipePosition(gestureStart.current, gesture.dx));
+      onSetOpen(open);
+      settle(open);
+    },
+    onPanResponderTerminate: () => { onSetOpen(false); settle(false); },
+  });
   const deleteItem = async () => {
     if (deleting) return;
     setDeleting(true);
-    try { await onDelete(item); }
-    catch { settle(false); setDeleting(false); }
+    try { await onDelete(item); onSetOpen(false); }
+    catch { onSetOpen(false); settle(false); setDeleting(false); }
   };
   return <View style={styles.swipeRow}>
     <Pressable accessibilityRole="button" accessibilityLabel={`Delete ${item.title}`} disabled={deleting} onPress={() => void deleteItem()} style={styles.deleteAction}>

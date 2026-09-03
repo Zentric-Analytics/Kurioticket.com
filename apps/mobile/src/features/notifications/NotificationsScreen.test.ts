@@ -6,7 +6,7 @@ import test from "node:test";
 import type { MobileNotification } from "../../api/travelApi";
 import { canLoadMore, initialNotificationPaginationState, notificationContentState, notificationPaginationReducer } from "./notificationPagination";
 import { notificationDestination } from "./notificationAction";
-import { shouldClaimNotificationSwipe, shouldRevealNotificationDelete } from "./notificationSwipe";
+import { notificationSwipePosition, NOTIFICATION_DELETE_ACTION_WIDTH, shouldClaimNotificationSwipe, shouldRevealNotificationDelete } from "./notificationSwipe";
 
 const item = (id: string, readAt: string | null = null): MobileNotification => ({ id, type: "SYSTEM", title: `Title ${id}`, body: `Body ${id}`, actionPath: null, metadata: null, readAt, createdAt: "2026-08-09T00:00:00.000Z" });
 const reduce = (actions: Parameters<typeof notificationPaginationReducer>[1][]) => actions.reduce(notificationPaginationReducer, initialNotificationPaginationState);
@@ -102,12 +102,31 @@ test("older rows can be marked read and mark-all updates every loaded row", () =
   assert.ok(all.items.every((notification) => notification.readAt));
 });
 
-test("left horizontal swipe reveals delete without treating vertical scroll as a swipe", () => {
+test("horizontal swipe is claimed without capturing vertical scrolling", () => {
   assert.equal(shouldClaimNotificationSwipe(-20, 4), true);
   assert.equal(shouldClaimNotificationSwipe(-20, 18), false);
   assert.equal(shouldClaimNotificationSwipe(20, 1), false);
-  assert.equal(shouldRevealNotificationDelete(-44), true);
-  assert.equal(shouldRevealNotificationDelete(-20), false);
+  assert.equal(shouldClaimNotificationSwipe(20, 1, -NOTIFICATION_DELETE_ACTION_WIDTH), true);
+  assert.equal(shouldClaimNotificationSwipe(10, 9, -NOTIFICATION_DELETE_ACTION_WIDTH), false);
+});
+
+test("swipe position follows partial left and right drags from the current position", () => {
+  assert.equal(notificationSwipePosition(0, -12), -12);
+  assert.equal(notificationSwipePosition(0, -31), -31);
+  assert.equal(notificationSwipePosition(-NOTIFICATION_DELETE_ACTION_WIDTH, 15), -73);
+  assert.equal(notificationSwipePosition(-NOTIFICATION_DELETE_ACTION_WIDTH, 40), -48);
+});
+
+test("swipe position is clamped to the delete width and fully closed position", () => {
+  assert.equal(notificationSwipePosition(0, -200), -NOTIFICATION_DELETE_ACTION_WIDTH);
+  assert.equal(notificationSwipePosition(-20, 200), 0);
+});
+
+test("release threshold opens or closes based on the resulting row position", () => {
+  assert.equal(shouldRevealNotificationDelete(notificationSwipePosition(0, -43)), false);
+  assert.equal(shouldRevealNotificationDelete(notificationSwipePosition(0, -44)), true);
+  assert.equal(shouldRevealNotificationDelete(notificationSwipePosition(-88, 43)), true);
+  assert.equal(shouldRevealNotificationDelete(notificationSwipePosition(-88, 45)), false);
 });
 
 test("deleting one read or unread notification removes only that row", () => {
@@ -147,4 +166,20 @@ test("notification taps persist reads before navigating and publish badge refres
   assert.match(screen, /onPanResponderRelease:[\s\S]*shouldRevealNotificationDelete/);
   assert.match(screen, /onPress=\{\(\) => void deleteItem\(\)\}/);
   assert.match(screen, /await travelApi\.deleteNotification\(item\.id\)[\s\S]*dispatch\(\{ type: "delete", id: item\.id \}\)[\s\S]*if \(!item\.readAt\) notifyUnreadCountChanged\(\)/);
+});
+
+test("the list controls one open row and scrolling closes it", () => {
+  const screen = readFileSync(resolve("src/features/notifications/NotificationsScreen.tsx"), "utf8");
+  assert.match(screen, /const \[openNotificationId, setOpenNotificationId\] = useState<string \| null>\(null\)/);
+  assert.match(screen, /onScrollBeginDrag=\{\(\) => setOpenNotificationId\(null\)\}/);
+  assert.match(screen, /isOpen=\{openNotificationId === item\.id\}/);
+  assert.match(screen, /onSetOpen=\{\(open\) => setOpenNotificationId\(open \? item\.id : null\)\}/);
+});
+
+test("swiping only settles the row while explicit Delete owns persistence and failure closes", () => {
+  const screen = readFileSync(resolve("src/features/notifications/NotificationsScreen.tsx"), "utf8");
+  const release = screen.match(/onPanResponderRelease:[\s\S]*?\n    \},/)?.[0] ?? "";
+  assert.doesNotMatch(release, /deleteItem|\bonDelete\(|deleteNotification/);
+  assert.match(screen, /onPress=\{\(\) => void deleteItem\(\)\}/);
+  assert.match(screen, /catch \{ onSetOpen\(false\); settle\(false\); setDeleting\(false\); \}/);
 });
