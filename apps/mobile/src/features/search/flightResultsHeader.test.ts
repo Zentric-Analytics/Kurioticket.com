@@ -172,9 +172,10 @@ test("Hotel Results receives presentation-only summary copy while Edit preserves
   assert.doesNotMatch(hotelHeader, /metadata|hotelHeaderMeta/);
   assert.match(hotelHeader, /destination: string;[\s\S]*?secondaryLine: string;[\s\S]*?onEdit: \(\) => void;/);
   assert.match(hotelInvocation, /destination=\{hotelSummary\.destination\}[\s\S]*?secondaryLine=\{hotelSummary\.secondaryLine\}[\s\S]*?onEdit=\{edit\}/);
-  assert.match(results, /buildHotelResultsSummary\(\{[\s\S]*?destination: String\(payload\.destination[\s\S]*?locale,/);
+  assert.match(results, /canonicalHotelDestination = String\(payload\.destination[\s\S]*?getHotelLocationFieldDisplay\(canonicalHotelDestination, locale\)[\s\S]*?buildHotelResultsSummary\(\{[\s\S]*?destination: hotelDestinationDisplay\.primary \|\| canonicalHotelDestination\.trim\(\)[\s\S]*?locale,/);
   assert.match(results, /<HotelEditSearchModal[\s\S]*?params=\{params\}/);
   assert.doesNotMatch(results, /pathname: "\/hotels"/);
+  assert.doesNotMatch(read("src/features/search/hotelResultsSummary.ts"), /\.formatRange/);
 });
 
 test("Flight Details, result content, and bottom navigation contracts remain present", () => {
