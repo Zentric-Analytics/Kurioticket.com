@@ -4,6 +4,7 @@ import {
   Alert,
   Animated,
   Image,
+  Linking,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -24,9 +25,12 @@ import {
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import {
   Armchair,
+  ArrowUp,
   ArrowLeft,
   Bell,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   FileText,
   Luggage,
   MapPin,
@@ -119,7 +123,7 @@ import {
   matchingFlightPriceAlert,
   parseTargetPrice,
 } from "../flow/flightPriceAlertModel";
-import { buildHotelPriceAlertPayload, hotelAlertPresentation, matchingHotelPriceAlert } from "../flow/hotelPriceAlertModel";
+import { buildHotelPriceAlertPayload, hotelAlertPresentation } from "../flow/hotelPriceAlertModel";
 import type { SearchPlan } from "../flow/travelSearchModel";
 import { FlightResultsState } from "./FlightResultsState";
 import { resolveFlightResultsState } from "./flightResultsStateModel";
@@ -131,6 +135,10 @@ import { HotelCardAmenityList } from "./HotelCardAmenityList";
 import { defaultHotelSort, sortHotelsForResults } from "./hotelSort";
 import { HotelResultsQuickFilterSheet, type HotelResultsQuickFilterKind } from "./HotelResultsQuickFilterSheet";
 import { hasHotelPrice } from "@/lib/hotels/hotelResultAvailability";
+import { HOTEL_RESULTS_PAGE_SIZE, clampHotelResultsPage, getHotelResultsPageCount, paginateHotelResults } from "@/lib/hotels/hotelResultsPagination";
+import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
+import { buildHotelFilterChips, hasGoogleMapsDiscovery } from "./hotelResultsPresentation";
+import { HotelResultsPagination } from "./HotelResultsPagination";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { travelAccountMessage } from "../../localization/travelAccountMessages";
 
@@ -186,6 +194,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [hotelFilterOpen, setHotelFilterOpen] = useState(false);
   const [hotelFilterSection, setHotelFilterSection] = useState<HotelFilterSectionName>("all");
   const [hotelQuickFilter, setHotelQuickFilter] = useState<HotelResultsQuickFilterKind | null>(null);
+  const [hotelPage, setHotelPage] = useState(1);
+  const [hotelPageChanging, setHotelPageChanging] = useState(false);
+  const [hotelCompactHeader, setHotelCompactHeader] = useState(false);
+  const [hotelBackToTop, setHotelBackToTop] = useState(false);
+  const hotelScrollRef = useRef<ScrollView>(null);
+  const hotelResultsOffset = useRef(0);
   const windowDimensions = useWindowDimensions();
   const previousHotelSearchKey = useRef<string | undefined>(undefined);
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
@@ -220,6 +234,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       setHotelFilters(emptyHotelFilters());
       setHotelFilterOpen(false);
       setHotelQuickFilter(null);
+      setHotelPage(1);
     }
     previousHotelSearchKey.current = plan.plan.key;
   }, [flightResults, plan.plan?.key]);
@@ -336,6 +351,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             )
           : await travelApi.searchHotels(plan.plan.payload, { signal: controller.signal, requestId });
       if (!isCurrent()) return;
+      if (product === "hotel" && "warningCategory" in response && response.warningCategory === "provider_unavailable") {
+        setResults([]); resultsRef.current = []; setStatus("error");
+        setMessage("Hotel search is temporarily unavailable. Please try again.");
+        return;
+      }
       const validationStartedAt = performance.now();
       const hotelAcceptance =
         product === "hotel"
@@ -515,6 +535,13 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   }, [currencyState, flightPriceContext?.identity]);
   const activeFilterCount = activeFlightFilterCount(filters, flightOptions);
   const activeHotelFilters = activeHotelFilterCount(hotelFilters, hotelOptions);
+  const hotelFilterChips = useMemo(() => buildHotelFilterChips(hotelFilters, hotelOptions), [hotelFilters, hotelOptions]);
+  const hotelPageCount = getHotelResultsPageCount(product === "hotel" ? sorted.length : 0);
+  const clampedHotelPage = clampHotelResultsPage(hotelPage, hotelPageCount);
+  const hotelPageResults = product === "hotel" ? paginateHotelResults(sorted as HotelResult[], clampedHotelPage) : [];
+  const hotelRange = getResultsDisplayRange({ currentPage: clampedHotelPage, pageSize: HOTEL_RESULTS_PAGE_SIZE, totalResults: product === "hotel" ? sorted.length : 0 });
+  useEffect(() => { if (product === "hotel") setHotelPage(1); }, [hotelFilters, plan.plan?.key, product]);
+  useEffect(() => { if (product === "hotel" && hotelPage !== clampedHotelPage) setHotelPage(clampedHotelPage); }, [clampedHotelPage, hotelPage, product]);
   const flightState = product === "flight" ? resolveFlightResultsState({
     status,
     rawResultCount: results.length,
@@ -547,6 +574,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   };
   const openHotelQuickFilter = (kind: HotelResultsQuickFilterKind) => setHotelQuickFilter(kind);
   const closeHotelQuickFilter = () => setHotelQuickFilter(null);
+  const changeHotelPage = (page: number) => {
+    if (hotelPageChanging || page === clampedHotelPage) return;
+    setHotelPageChanging(true); setHotelPage(clampHotelResultsPage(page, hotelPageCount));
+    requestAnimationFrame(() => { hotelScrollRef.current?.scrollTo({ y: hotelResultsOffset.current, animated: true }); setHotelPageChanging(false); });
+  };
   const handleFlightFiltersChange = useCallback((next: FlightFilters) => {
     const searchKey = plan.plan?.key;
     if (searchKey && !sameStringArray(filters.airlines, next.airlines)) {
@@ -684,30 +716,33 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               ) : null}
               {status === "ready" && product === "hotel" && sorted.length > 0 ? (
                 <>
+                  {hotelFilterChips.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s0.hotelFilterChips}>{hotelFilterChips.map(chip=><Pressable key={chip.key} accessibilityRole="button" accessibilityLabel={`Remove ${chip.label} filter`} onPress={()=>setHotelFilters(chip.remove(hotelFilters))} style={[s0.hotelFilterChip,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={{color:theme.textPrimary}}>{chip.label} ×</Text></Pressable>)}</ScrollView> : null}
+                  {hasGoogleMapsDiscovery(results as HotelResult[]) ? <View style={[s0.hotelAttribution,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={{color:theme.textSecondary}}>Hotel discovery data provided by Google Maps</Text></View> : null}
                   {plan.plan ? <PriceAlert product={product} plan={plan.plan} hotelResults={results as HotelResult[]} available={availability.priceAlerts} /> : null}
-                  <View style={s0.hotelResultsSummary}>
+                  <View onLayout={({nativeEvent})=>{hotelResultsOffset.current=nativeEvent.layout.y;}} style={s0.hotelResultsSummary}>
                     <Text accessibilityRole="header" style={[s0.hotelResultCount, { color: theme.textPrimary }]}>
                       {sorted.length} {sorted.length === 1 ? "result" : "results"} found
                     </Text>
-                    <Text accessibilityLabel={`Showing results 1 through ${sorted.length}`} style={[s0.hotelResultsRange, { color: theme.textSecondary }]}>
-                      Showing 1–{sorted.length}
+                    <Text accessibilityLabel={hotelRange ? `Showing results ${hotelRange.start} through ${hotelRange.end}` : undefined} style={[s0.hotelResultsRange, { color: theme.textSecondary }]}>
+                      {hotelRange ? `Showing ${hotelRange.start}–${hotelRange.end}` : ""}
                     </Text>
                   </View>
                 </>
               ) : null}
               {status === "ready" && product === "hotel" && results.length > 0 && sorted.length === 0 ? (
-                <View style={s0.hotelFilteredEmpty}><Text accessibilityRole="header" style={[s0.foundTitle,{color:theme.textPrimary}]}>No stays match these filters.</Text><Pressable accessibilityRole="button" onPress={()=>setHotelFilters(emptyHotelFilters())}><Text style={s0.hotelClearFilters}>Clear filters</Text></Pressable></View>
+                <View>{hotelFilterChips.length ? <ScrollView horizontal contentContainerStyle={s0.hotelFilterChips}>{hotelFilterChips.map(chip=><Pressable key={chip.key} accessibilityRole="button" accessibilityLabel={`Remove ${chip.label} filter`} onPress={()=>setHotelFilters(chip.remove(hotelFilters))} style={[s0.hotelFilterChip,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={{color:theme.textPrimary}}>{chip.label} ×</Text></Pressable>)}</ScrollView>:null}<View style={s0.hotelFilteredEmpty}><Text accessibilityRole="header" style={[s0.foundTitle,{color:theme.textPrimary}]}>No stays match these filters.</Text><Pressable accessibilityRole="button" onPress={()=>setHotelFilters(emptyHotelFilters())}><Text style={s0.hotelClearFilters}>Clear filters</Text></Pressable></View></View>
               ) : null}
-              {!flightState && product === "hotel" && sorted.map((x, i) =>
+              {!flightState && product === "hotel" && hotelPageResults.map((x, i) =>
                 (
                   <HotelCard
                     key={x.id}
                     result={x as HotelResult}
-                    showCheapestBadge={i === 0 && hasHotelPrice(x as HotelResult)}
+                    showCheapestBadge={(clampedHotelPage - 1) * HOTEL_RESULTS_PAGE_SIZE + i === 0 && hasHotelPrice(x as HotelResult)}
                     params={params}
                   />
                 ),
               )}
+              {product === "hotel" && sorted.length ? <HotelResultsPagination page={clampedHotelPage} pages={hotelPageCount} disabled={hotelPageChanging} onPage={changeHotelPage}/> : null}
     </>
   );
   return (
@@ -718,16 +753,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           onEdit={edit}
           backgroundColor={flightCanvasColor}
         />
-      ) : (
-        <HotelResultsHeader
-          destination={String(payload.destination || "")}
-          checkIn={String(payload.checkIn || "")}
-          checkOut={String(payload.checkOut || "")}
-          guests={String(payload.guests || "")}
-          rooms={String(payload.rooms || "")}
-          onEdit={edit}
-        />
-      )}
+      ) : null}
       {product === "flight" ? (
         <Animated.SectionList
           style={[s0.resultsScroll, { backgroundColor: flightCanvasColor }]}
@@ -801,8 +827,13 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         />
       ) : (
         <>
-          {filterRail}
-          <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={[s0.body, s0.hotelResultsContent]} overScrollMode="never">{resultContent}</ScrollView>
+          <ScrollView ref={hotelScrollRef} alwaysBounceVertical={false} bounces={false} contentContainerStyle={s0.hotelResultsContent} overScrollMode="never" scrollEventThrottle={16} onScroll={({nativeEvent})=>{const y=nativeEvent.contentOffset.y;setHotelCompactHeader(y>104);setHotelBackToTop(y>600);}}>
+            <HotelResultsHeader destination={String(payload.destination || "")} checkIn={String(payload.checkIn || "")} checkOut={String(payload.checkOut || "")} guests={String(payload.guests || "")} rooms={String(payload.rooms || "")} onEdit={edit}/>
+            {filterRail}
+            <View style={s0.body}>{resultContent}</View>
+          </ScrollView>
+          {hotelCompactHeader ? <View style={[s0.hotelCompactHeader,{backgroundColor:theme.surface,borderColor:theme.border}]}><Pressable accessibilityRole="button" accessibilityLabel="Go back" style={s0.compactTarget} onPress={()=>router.back()}><ArrowLeft size={22} color={theme.icon}/></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Edit hotel search" style={s0.compactContext} onPress={edit}><Text numberOfLines={1} style={[s0.compactDestination,{color:theme.textPrimary}]}>{String(payload.destination||"")}</Text><Text numberOfLines={1} style={[s0.compactMeta,{color:theme.textSecondary}]}>{String(payload.checkIn||"")} – {String(payload.checkOut||"")} · {String(payload.guests||"")} guests</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Filters" style={s0.compactTarget} onPress={()=>openHotelFilters("all")}><SlidersHorizontal size={21} color={theme.icon}/></Pressable></View>:null}
+          {hotelBackToTop ? <Pressable accessibilityRole="button" accessibilityLabel="Back to top" onPress={()=>hotelScrollRef.current?.scrollTo({y:0,animated:true})} style={[s0.hotelBackToTop,{backgroundColor:theme.surface,borderColor:theme.border}]}><ArrowUp size={21} color={theme.icon}/></Pressable>:null}
         </>
       )}
       {product === "flight" ? (
@@ -1213,12 +1244,18 @@ function HotelCard({
   const canonical = useCanonicalSaved();
   const saved = canonical.items.some(item => item.type === "hotel" && ((item.payload as Record<string, unknown> | undefined)?.result as { id?: string } | undefined)?.id === result.id);
   const compact = useWindowDimensions().width < 430;
+  const gallery = useMemo(() => [...new Set([...(result.imageUrls ?? []), result.imageUrl].filter((uri): uri is string => typeof uri === "string" && /^https?:\/\//i.test(uri)))], [result.imageUrl, result.imageUrls]);
+  const [failedImages,setFailedImages]=useState<string[]>([]);
+  const usableGallery=gallery.filter(uri=>!failedImages.includes(uri));
+  const [activeImage,setActiveImage]=useState(0);
+  useEffect(()=>{if(activeImage>=usableGallery.length)setActiveImage(0);},[activeImage,usableGallery.length]);
   const score = result.reviewScore == null
     ? null
     : result.reviewScore * (10 / (result.reviewScale || 10));
-  const classificationStars = result.classificationStars || Math.round(result.rating);
-  const hasPrice = result.pricePerNight != null && result.totalPrice != null;
-  const discovery = result.inventoryKind === "discovery";
+  const classificationStars = result.classificationStars || 0;
+  const hasPrice = hasHotelPrice(result);
+  const mealPlan=result.catalogueProfile?.mealPlan?.trim();
+  const policy=[result.catalogueProfile?.cancellationPolicy,result.catalogueProfile?.paymentPolicy].filter((value):value is string=>Boolean(value?.trim()));
   const shareHotel = () => {
     const message = hasPrice
       ? `${result.name} — ${result.location} — ${money(result.currency, result.pricePerNight)}/night`
@@ -1228,18 +1265,17 @@ function HotelCard({
   return (
     <View style={[s0.hotelCard, compact && s0.hotelCardCompact]}>
       <View style={[s0.hotelImageWrap, compact && s0.hotelImageWrapCompact]}>
-        {result.imageUrl ? (
-          <Image source={{ uri: result.imageUrl }} style={s0.hotelImage} />
+        {usableGallery[activeImage] ? (
+          <Image source={{ uri: usableGallery[activeImage] }} onError={()=>setFailedImages(values=>[...values,usableGallery[activeImage]])} style={s0.hotelImage} />
         ) : (
-          <View style={s0.hotelImage} />
+          <View accessibilityLabel="Hotel image unavailable" style={[s0.hotelImage,s0.hotelImageUnavailable]}><Text style={s0.hotelImageUnavailableText}>Image unavailable</Text></View>
         )}
-        <View style={s0.overlay}>
+        {usableGallery.length>1?<><Pressable accessibilityRole="button" accessibilityLabel={`Previous photo of ${result.name}`} onPress={()=>setActiveImage(index=>(index-1+usableGallery.length)%usableGallery.length)} style={[s0.galleryControl,s0.galleryPrevious]}><ChevronLeft color="white" size={20}/></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Next photo of ${result.name}`} onPress={()=>setActiveImage(index=>(index+1)%usableGallery.length)} style={[s0.galleryControl,s0.galleryNext]}><ChevronRight color="white" size={20}/></Pressable></>:null}
+        {usableGallery.length ? <View style={s0.overlay}>
           <Text style={s0.overlayText}>
-            {result.imageUrls?.length
-              ? `▧ 1 / ${result.imageUrls.length}`
-              : "Image unavailable"}
+            {activeImage+1} / {usableGallery.length}
           </Text>
-        </View>
+        </View>:null}
       </View>
       <View style={[s0.hotelCopy, compact && s0.hotelCopyCompact]}>
         <View style={s0.hotelTitleRow}>
@@ -1249,6 +1285,7 @@ function HotelCard({
               accessibilityRole="button"
               accessibilityLabel={saved ? `Remove ${result.name} from saved` : `Save ${result.name}`}
               accessibilityState={{ selected: saved }}
+              disabled={!hasPrice && !saved}
               onPress={() => void canonical.toggleHotel(result, params)}
               style={[s0.hotelAction, s0.hotelSaveAction]}
             >
@@ -1287,6 +1324,9 @@ function HotelCard({
           </Text>
         )}
         <HotelCardAmenityList amenities={result.amenities} />
+        {mealPlan && !(/^breakfast/i.test(mealPlan)&&result.amenities.some(item=>/breakfast/i.test(item)))?<Text numberOfLines={1} style={s0.hotelTerm}>{mealPlan.charAt(0).toUpperCase()+mealPlan.slice(1).toLowerCase()}</Text>:null}
+        {policy.map(item=><Text key={item} numberOfLines={1} style={s0.hotelTerm}>{item}</Text>)}
+        {result.sourceAttributions?.map(item=>{const safe=typeof item.providerUri==="string"&&/^https?:\/\//i.test(item.providerUri);return <Pressable key={`${item.provider}-${item.providerUri??""}`} disabled={!safe} onPress={()=>safe&&void Linking.openURL(item.providerUri!)}><Text numberOfLines={1} style={s0.hotelAttributionLink}>Source: {item.provider}</Text></Pressable>;})}
         <View style={s0.hotelPrice}>
           <View style={s0.hotelPriceCopy}>
             <Text style={s0.hotelNightlyPrice}>
@@ -1296,7 +1336,7 @@ function HotelCard({
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`${discovery ? "View hotel" : "View deal"} for ${result.name}`}
+            accessibilityLabel={`View hotel for ${result.name}`}
             style={s0.hotelDealButton}
             onPress={() =>
               router.push({
@@ -1310,7 +1350,7 @@ function HotelCard({
               })
             }
           >
-            <Text style={s0.hotelDealButtonText}>{discovery ? "View hotel" : "View deal"}</Text>
+            <Text style={s0.hotelDealButtonText}>View hotel</Text>
           </Pressable>
         </View>
       </View>
@@ -1537,7 +1577,7 @@ function PriceAlert({ product, plan, results, hotelResults, available = true }: 
   const activePresentation = flight ? presentation : hotelPresentation;
   const currency = activePresentation.currencies[0] || "";
   const [matchingAlert, setMatchingAlert] = useState<MobilePriceAlert | undefined>();
-  const [loadingAlert, setLoadingAlert] = useState(flight || product === "hotel");
+  const [loadingAlert, setLoadingAlert] = useState(flight);
   const [pending, setPending] = useState(false);
   const pendingRef = useRef(false);
   const [targetOpen, setTargetOpen] = useState(false);
@@ -1553,12 +1593,12 @@ function PriceAlert({ product, plan, results, hotelResults, available = true }: 
     [{ text: t("signIn"), onPress: () => router.push(signInHref("/(tabs)/profile")) }, { text: t("cancel"), style: "cancel" }],
   ), [message, t]);
   const reconcile = useCallback(async () => {
-    if ((!flight && product !== "hotel") || !plan) return;
+    if (!flight || !plan) return;
     setLoadingAlert(true);
     try {
       if (!await readSession().catch(() => null)) { setMatchingAlert(undefined); return; }
       const alerts = (await travelApi.priceAlerts()).alerts;
-      setMatchingAlert(flight ? matchingFlightPriceAlert(alerts, plan) : matchingHotelPriceAlert(alerts, plan));
+      setMatchingAlert(matchingFlightPriceAlert(alerts, plan));
     } catch (error) {
       if (error instanceof TravelApiError && error.status === 401) setMatchingAlert(undefined);
     } finally { setLoadingAlert(false); }
@@ -1600,8 +1640,8 @@ function PriceAlert({ product, plan, results, hotelResults, available = true }: 
     } catch (error) {
       if (error instanceof TravelApiError && error.status === 401) { setTargetOpen(false); requireSignIn(); }
       else if (error instanceof TravelApiError && error.status === 409) {
-        await reconcile();
-        setTargetError("An alert for this search already exists. Its current status has been refreshed.");
+        if (flight) await reconcile();
+        setTargetError("An alert for this search already exists.");
       } else setTargetError(error instanceof TravelApiError ? error.message : "Unable to create price alert. Try again.");
     } finally { pendingRef.current = false; setPending(false); }
   };
@@ -1647,24 +1687,14 @@ function PriceAlert({ product, plan, results, hotelResults, available = true }: 
     );
   }
   if (product !== "hotel" || !plan) return null;
+  if (!activePresentation.enabled) return null;
   return <View accessibilityLabel={message("hotelAlertTitle")} style={[s0.flightAlert, { backgroundColor: theme.surface, borderColor: theme.priceAlertBorder }]}>
     <View style={s0.flightAlertCopy}>
       <Text style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text>
       <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightAlertSubtitle, { color: supportTextColor }]}>{message("hotelAlertBody")}</Text>
-      {!activePresentation.enabled ? <Text accessibilityRole="alert" style={s0.sub}>{message("hotelAlertUnavailable")}</Text> : null}
     </View>
     <View style={s0.flightAlertSwitchTarget}>
-      <Switch
-        accessibilityLabel="Track hotel prices"
-        accessibilityRole="switch"
-        accessibilityState={{ checked: isTracking, disabled: pending || loadingAlert || unavailable }}
-        value={isTracking}
-        disabled={pending || loadingAlert || unavailable}
-        onValueChange={(next) => void handleToggle(next)}
-        trackColor={{ false: inactiveSwitchTrackColor, true: theme.switchTrackActive }}
-        ios_backgroundColor={inactiveSwitchTrackColor}
-        thumbColor={theme.surface}
-      />
+      <Pressable accessibilityRole="button" accessibilityLabel="Create hotel price alert" disabled={pending || unavailable || Boolean(matchingAlert)} onPress={async()=>{if(!await readSession().catch(()=>null)){requireSignIn();return;}setTargetError("");setTargetOpen(true);}} style={s0.hotelAlertCreate}><Text style={s0.hotelAlertCreateText}>{matchingAlert ? "Saved" : message("createAlert")}</Text></Pressable>
     </View>
     <Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel={message("hotelAlertTitle")}><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>{message("targetTotal")} ({currency})</Text><TextInput autoFocus accessibilityLabel={`${message("targetTotal")} ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text> : null}<Button label={pending ? message("creating") : message("createAlert")} onPress={() => void createAlert()} /><Button label={t("cancel")} outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal>
   </View>;
@@ -1758,6 +1788,12 @@ const s0 = StyleSheet.create({
   },
   flightHeaderEditText: { fontSize: 13, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
   hotelHeader: { marginBottom: 12 },
+  hotelCompactHeader: { position:"absolute",top:0,left:0,right:0,height:58,borderBottomWidth:1,flexDirection:"row",alignItems:"center",paddingHorizontal:8,zIndex:20 },
+  compactTarget:{width:44,height:44,alignItems:"center",justifyContent:"center"},
+  compactContext:{flex:1,minWidth:0,alignItems:"center",justifyContent:"center"},
+  compactDestination:{fontSize:14,lineHeight:18,fontWeight:"700",fontFamily:appFonts.bold},
+  compactMeta:{fontSize:11,lineHeight:15},
+  hotelBackToTop:{position:"absolute",right:16,bottom:86,width:44,height:44,borderRadius:22,borderWidth:1,alignItems:"center",justifyContent:"center",zIndex:19,elevation:4},
   filterRail: { height: 44, flexGrow: 0 },
   flightFilterSectionHeader: { paddingTop: 8 },
   resultsScroll: { flex: 1 },
@@ -1796,6 +1832,9 @@ const s0 = StyleSheet.create({
   sheetActions: { gap: 9 },
   body: { paddingHorizontal: 18, paddingBottom: 92, gap: 14 },
   hotelResultsContent: { paddingTop: 12 },
+  hotelFilterChips:{gap:8,paddingVertical:6},
+  hotelFilterChip:{minHeight:44,borderRadius:18,borderWidth:1,paddingHorizontal:12,alignItems:"center",justifyContent:"center"},
+  hotelAttribution:{borderWidth:1,borderRadius:10,padding:10},
   flightResultsBody: { paddingHorizontal: 14, gap: 8 },
   flightPriceAlertItem: { paddingHorizontal: 14, paddingTop: 8, paddingBottom: 6 },
   flightCardItem: { paddingHorizontal: 14, paddingBottom: 8 },
@@ -1882,6 +1921,11 @@ const s0 = StyleSheet.create({
   hotelImageWrap: { width: "39%", alignSelf: "stretch", position: "relative" },
   hotelImageWrapCompact: { width: "38%" },
   hotelImage: { ...StyleSheet.absoluteFillObject, backgroundColor: "#E9EDF3" },
+  hotelImageUnavailable:{alignItems:"center",justifyContent:"center",paddingHorizontal:8},
+  hotelImageUnavailableText:{fontSize:12,color:ui.muted,textAlign:"center"},
+  galleryControl:{position:"absolute",top:"42%",width:44,height:44,borderRadius:22,backgroundColor:"rgba(0,0,0,.48)",alignItems:"center",justifyContent:"center"},
+  galleryPrevious:{left:2},
+  galleryNext:{right:2},
   overlay: {
     position: "absolute",
     bottom: 10,
@@ -1913,6 +1957,10 @@ const s0 = StyleSheet.create({
   hotelLocationText: { color: colors.blue },
   review: { fontSize: 11, color: ui.navy },
   score: { backgroundColor: ui.blue, color: "white", fontWeight: "900" },
+  hotelTerm:{fontSize:11,lineHeight:15,color:ui.navy},
+  hotelAttributionLink:{fontSize:10,lineHeight:14,color:colors.blue,textDecorationLine:"underline"},
+  hotelAlertCreate:{minWidth:72,minHeight:44,borderRadius:8,backgroundColor:ui.blue,alignItems:"center",justifyContent:"center",paddingHorizontal:10},
+  hotelAlertCreateText:{color:"white",fontSize:12,fontWeight:"700"},
   hotelPrice: {
     marginTop: "auto",
     alignItems: "flex-end",

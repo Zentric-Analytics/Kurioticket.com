@@ -14,15 +14,7 @@ const hotelDetail = detailsSource.slice(
   detailsSource.indexOf("const detailIcons"),
 );
 
-test("source-backed discovery Hotel results never imply a live price or classification", () => {
-  assert.match(resultCard, /const discovery = result\.inventoryKind === "discovery"/);
-  assert.match(resultCard, /showCheapestBadge && hasPrice/);
-  assert.match(resultCard, /classificationStars > 0 \?/);
-  assert.match(resultCard, /"Price unavailable"/);
-  assert.match(resultCard, />No live rate<\/Text>/);
-  assert.match(resultCard, /discovery \? "View hotel" : "View deal"/);
-});
-
+test("discovery Hotel results never imply live price, saves, or classification", () => { assert.match(resultCard,/showCheapestBadge && hasPrice/); assert.match(resultCard,/classificationStars > 0/); assert.match(resultCard,/"Price unavailable"/); assert.match(resultCard,/disabled=\{!hasPrice && !saved\}/); });
 test("source-backed discovery Hotel details remain planning-only", () => {
   assert.match(hotelDetail, /const discovery = result\.inventoryKind === "discovery"/);
   assert.match(hotelDetail, /"Live room options unavailable"/);

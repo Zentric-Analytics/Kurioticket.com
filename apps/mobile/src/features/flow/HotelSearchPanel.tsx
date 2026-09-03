@@ -140,7 +140,7 @@ export function HotelDestinationSheet({ visible, value, pickerPresentation = "sh
   }, [trimmedQuery, visible]);
 
   const changeQuery = (next:string) => { programmaticFilledQuery.current=undefined; setQuery(next); if (draft && next !== draft.searchValue) setDraft(undefined); };
-  if (pickerPresentation === "resultsEditFullScreen") return <HotelResultsEditPickerShell visible={motion.rendered} title="Choose destination" onBack={onCancel} onShow={() => inputRef.current?.focus()}>
+  if (pickerPresentation === "resultsEditFullScreen") return <HotelResultsEditPickerShell visible={visible} title="Choose destination" onBack={onCancel} onShow={() => inputRef.current?.focus()}>
     <KeyboardAvoidingView style={styles.resultsDestinationKeyboard} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <View style={styles.resultsDestinationContent}>
 <View style={[styles.destinationSearch,{backgroundColor:ft.colors.input,borderColor:ft.colors.border}]}><FlowIcon name="location" size={20} color={ft.colors.icon}/><TextInput ref={inputRef} accessibilityLabel="Search hotel destinations" placeholder="City, area, or hotel" placeholderTextColor={ft.colors.placeholder} value={query} onChangeText={changeQuery} returnKeyType="search" style={[styles.destinationSearchInput,{color:ft.colors.text}]}/></View>
@@ -195,7 +195,7 @@ function HotelGuestsRoomsSheet({ visible, adults, children, rooms, petFriendly, 
             </View>
           </ScrollView>
   </>;
-    if (presentation === "resultsEditFullScreen") return <HotelResultsEditPickerShell visible={motion.rendered} title="Guests & Rooms" onBack={onCancel} footer={<PrimaryButton label="Done" icon={null} size="compact" onPress={() => onDone(draft)}/>}>
+    if (presentation === "resultsEditFullScreen") return <HotelResultsEditPickerShell visible={visible} title="Guests & Rooms" onBack={onCancel} footer={<PrimaryButton label="Done" icon={null} size="compact" onPress={() => onDone(draft)}/>}>
     <View style={styles.resultsGuestsContent}>
 {guestContent}
     </View>

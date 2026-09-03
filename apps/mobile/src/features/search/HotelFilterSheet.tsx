@@ -16,6 +16,7 @@ const postPriceSections:PostPriceSection[]=[
  {kind:"group",group:"travellerFeatures",title:"Good for your trip",limit:4},
  {kind:"hotelClass",title:"Hotel class"},
  {kind:"group",group:"areas",title:"Area",limit:5},
+ {kind:"group",group:"propertyTypes",title:"Property type",limit:5},
  {kind:"group",group:"facilities",title:"Facilities",limit:6},
  {kind:"group",group:"accessibility",title:"Accessibility",limit:5},
  {kind:"group",group:"roomTypes",title:"Room & bed",limit:5,minimum:2},
