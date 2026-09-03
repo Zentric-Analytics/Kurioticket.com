@@ -32,7 +32,7 @@ test("Flight Results price alert uses a neutral semantic surface and restrained 
   assert.doesNotMatch(flightAlert, /backgroundColor: theme\.priceAlertSurface/);
 });
 
-test("Flight Results switch uses a locally scoped, visible light-mode inactive track", () => {
+test("Flight Results switch uses the shared, visible light-mode inactive track", () => {
   assert.match(flightAlert, /const inactiveSwitchTrackColor = theme\.dark \? theme\.switchTrack : ui\.border;/);
   assert.match(flightAlert, /trackColor=\{\{ false: inactiveSwitchTrackColor, true: theme\.switchTrackActive \}\}/);
   assert.match(flightAlert, /ios_backgroundColor=\{inactiveSwitchTrackColor\}/);
@@ -68,21 +68,43 @@ test("new alerts validate target input through the shared helper before creation
   assert.match(flightAlert, /setMatchingAlert\(created\.alert\)/);
 });
 
-test("new Hotel alerts use a web-like localized create button and the existing activation flow", () => {
+test("Hotel Results always uses the compact Flight alert presentation and switch", () => {
   const hotelBranch = flightAlert.slice(flightAlert.indexOf('if (product !== "hotel"'));
-  assert.match(hotelBranch, /matchingAlert \? <Switch/);
-  assert.match(hotelBranch, /accessibilityLabel=\{message\("createAlert"\)\}/);
-  assert.match(hotelBranch, /accessibilityRole="button"/);
-  assert.match(hotelBranch, /onPress=\{\(\) => void handleToggle\(true\)\}/);
-  assert.match(source, /hotelAlertCreateButton: \{[^}]*alignSelf: "flex-start"[^}]*minHeight: 44[^}]*borderRadius: 12[^}]*paddingHorizontal: 16[^}]*backgroundColor: colors\.blue/);
-  assert.match(source, /hotelAlert: \{\s*borderWidth: 1,\s*borderRadius: 16,\s*padding: 16/);
+  const hotelResultsPresentation = hotelBranch.slice(0, hotelBranch.indexOf("<Modal"));
+  assert.match(hotelResultsPresentation, /style=\{\[s0\.flightAlert,/);
+  assert.match(hotelResultsPresentation, /style=\{s0\.flightAlertCopy\}/);
+  assert.match(hotelResultsPresentation, /s0\.flightAlertTitle/);
+  assert.match(hotelResultsPresentation, /s0\.flightAlertSubtitle/);
+  assert.match(hotelResultsPresentation, /style=\{s0\.flightAlertSwitchTarget\}/);
+  assert.match(hotelResultsPresentation, /<Switch/);
+  assert.doesNotMatch(hotelResultsPresentation, /matchingAlert \?/);
+  assert.doesNotMatch(hotelResultsPresentation, /<Pressable/);
+  assert.match(hotelResultsPresentation, /accessibilityRole="switch"/);
+  assert.match(hotelResultsPresentation, /checked: isTracking/);
+  assert.match(hotelResultsPresentation, /value=\{isTracking\}/);
+  assert.match(hotelResultsPresentation, /disabled=\{pending \|\| loadingAlert \|\| unavailable\}/);
+  assert.match(hotelResultsPresentation, /onValueChange=\{\(next\) => void handleToggle\(next\)\}/);
+  assert.match(hotelResultsPresentation, /numberOfLines=\{1\} ellipsizeMode="tail"/);
+  assert.match(hotelResultsPresentation, /flightAlertSubtitle, \{ color: supportTextColor \}/);
   assert.match(hotelBranch, /backgroundColor: theme\.surface, borderColor: theme\.priceAlertBorder/);
+  assert.match(hotelResultsPresentation, /trackColor=\{\{ false: inactiveSwitchTrackColor, true: theme\.switchTrackActive \}\}/);
+  assert.match(hotelResultsPresentation, /ios_backgroundColor=\{inactiveSwitchTrackColor\}/);
+  assert.match(hotelResultsPresentation, /thumbColor=\{theme\.surface\}/);
 });
 
-test("existing Hotel alerts retain active and paused switch management", () => {
-  assert.match(flightAlert, /matchingAlert \? <Switch[\s\S]*?onValueChange=\{\(next\) => void handleToggle\(next\)\}/);
+test("Hotel alert activation retains target creation and active and paused management", () => {
+  assert.match(flightAlert, /if \(!matchingAlert\) \{ setTargetError\(""\); setTargetOpen\(true\); return; \}/);
   assert.match(flightAlert, /updatePriceAlertStatus\(matchingAlert\.id, "ACTIVE"\)/);
   assert.match(flightAlert, /updatePriceAlertStatus\(matchingAlert\.id, "PAUSED"\)/);
   assert.match(flightAlert, /hotelAlertPresentation/);
   assert.match(flightAlert, /matchingHotelPriceAlert/);
+});
+
+test("obsolete large Hotel Results alert styles and create button stay removed", () => {
+  const styles = source.slice(source.indexOf("const s0 = StyleSheet.create"));
+  assert.doesNotMatch(styles, /\bhotelAlert:/);
+  assert.doesNotMatch(styles, /\bhotelAlertCopy:/);
+  assert.doesNotMatch(styles, /\bhotelAlertTitle:/);
+  assert.doesNotMatch(styles, /\bhotelAlertBody:/);
+  assert.doesNotMatch(styles, /\bhotelAlertCreateButton(?:Pressed|Disabled|Text)?:/);
 });
