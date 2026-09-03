@@ -17,7 +17,8 @@ test("ready flight results follow the approved sticky hierarchy", () => {
   const renderItem = sectionList.slice(sectionList.indexOf("renderItem="), sectionList.indexOf("ListEmptyComponent="));
 
   assert.ok(header >= 0 && header < list);
-  assert.match(listHeader, /ListHeaderComponent=\{status === "loading" \? \([\s\S]*?<FlightLoadingExperience[\s\S]*?\) : animatedFlightDateStrip\}/);
+  assert.match(resultsBody, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
+  assert.match(listHeader, /ListHeaderComponent=\{animatedFlightDateStrip\}/);
   assert.match(listHeader, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
   assert.ok(listHeader.indexOf("ListHeaderComponent=") < listHeader.indexOf("renderSectionHeader="));
   assert.match(listHeader, /\{filterRail\}[\s\S]*?<FlightResultsSummaryRow/);

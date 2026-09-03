@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { SEARCH_LOADING_ROTATION_MS, searchLoadingPresentation } from "@/shared/presentation/searchLoadingPresentation";
 
 type BrandedLoadingProps = {
   title?: string;
@@ -21,23 +22,6 @@ type BrandedLoadingProps = {
 };
 
 const searchLoadingCopy = {
-  flight: {
-    title: "Searching the best flights for you",
-    messages: [
-      "Checking airlines and fares...",
-      "Comparing routes and providers...",
-      "Finding the best available options...",
-      "Preparing your results...",
-    ],
-  },
-  car: {
-    title: "Looking for the best car rental options",
-    messages: [
-      "Checking vehicles, prices, and pickup options...",
-      "Comparing rental providers...",
-      "Preparing your car options...",
-    ],
-  },
   deals: {
     title: "Finding the best travel deals for you",
     messages: [
@@ -55,7 +39,7 @@ const searchLoadingCopy = {
     ],
   },
 } satisfies Record<
-  Exclude<NonNullable<BrandedLoadingProps["searchType"]>, "hotel">,
+  Extract<NonNullable<BrandedLoadingProps["searchType"]>, "deals" | "travel">,
   { title: string; messages: string[] }
 >;
 
@@ -95,7 +79,9 @@ export function BrandedLoading({
   const searchCopy = searchType
     ? searchType === "hotel"
       ? hotelSearchCopy
-      : searchLoadingCopy[searchType]
+      : searchType === "flight" || searchType === "car"
+        ? searchLoadingPresentation(searchType)
+        : searchLoadingCopy[searchType]
     : undefined;
   const defaultLoadingMessages = useMemo(
     () => [t["brandedLoading.default.preparingExperience"]],
@@ -115,7 +101,7 @@ export function BrandedLoading({
 
     const interval = window.setInterval(() => {
       setMessageIndex((current) => (current + 1) % loadingMessages.length);
-    }, 1800);
+    }, SEARCH_LOADING_ROTATION_MS);
 
     return () => window.clearInterval(interval);
   }, [loadingMessages.length]);
