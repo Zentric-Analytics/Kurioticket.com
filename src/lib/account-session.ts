@@ -83,6 +83,7 @@ export async function validateAccountSession(id: string, userId: string, options
 
 export async function revokeSession(userId: string, sessionId: string, reason = "user_revoked") {
   return getPrisma().$transaction(async tx => {
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext('account-session-revocation'), hashtext(${userId}))`;
     const result = await tx.accountSession.updateMany({ where: { id: sessionId, userId, revokedAt: null }, data: { revokedAt: new Date(), revokeReason: reason } });
     if (result.count) await tx.securityEvent.create({ data: { userId, accountSessionId: sessionId, type: "SESSION_REVOKED", metadata: { reason } } });
     return result.count === 1;
@@ -91,22 +92,38 @@ export async function revokeSession(userId: string, sessionId: string, reason = 
 
 export async function revokeAllSessions(userId: string, reason = "sign_out_everywhere") {
   return getPrisma().$transaction(async tx => {
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext('account-session-revocation'), hashtext(${userId}))`;
     await tx.user.update({ where: { id: userId }, data: { sessionVersion: { increment: 1 } } });
     await tx.accountSession.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date(), revokeReason: reason } });
     return tx.securityEvent.create({ data: { userId, type: "ALL_SESSIONS_REVOKED", metadata: { reason } } });
   });
 }
 
-/** Revokes a user's other sessions without changing the global session version. */
+/** Revokes a user's other sessions while preserving and revalidating the authoritative current mobile session. */
 export async function revokeOtherSessions(userId: string, currentSessionId: string, reason = "sign_out_other_sessions") {
   return getPrisma().$transaction(async tx => {
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext('account-session-revocation'), hashtext(${userId}))`;
+    const current = await tx.accountSession.findFirst({
+      where: { id: currentSessionId, userId, client: "MOBILE", revokedAt: null, expiresAt: { gt: new Date() } },
+      select: { id: true },
+    });
+    if (!current) throw new Error("CurrentSessionUnavailable");
+
+    const targets = await tx.accountSession.findMany({
+      where: { userId, id: { not: currentSessionId }, revokedAt: null },
+      select: { id: true },
+    });
+    if (!targets.length) return 0;
+
     const revokedAt = new Date();
     const result = await tx.accountSession.updateMany({
       where: { userId, id: { not: currentSessionId }, revokedAt: null },
       data: { revokedAt, revokeReason: reason },
     });
-    await tx.securityEvent.create({
-      data: { userId, accountSessionId: currentSessionId, type: "SESSION_REVOKED", metadata: { reason, count: result.count } },
+    if (result.count !== targets.length) throw new Error("SessionRevocationConflict");
+
+    await tx.securityEvent.createMany({
+      data: targets.map(({ id }) => ({ userId, accountSessionId: id, type: "SESSION_REVOKED", metadata: { reason, bulk: true } })),
     });
     return result.count;
   });
