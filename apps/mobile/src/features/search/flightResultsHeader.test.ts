@@ -177,10 +177,11 @@ test("Hotel Results receives presentation-only summary copy while Edit preserves
   assert.doesNotMatch(results, /pathname: "\/hotels"/);
 });
 
-test("Flight Details, result content, and bottom navigation contracts remain present", () => {
+test("Flight Details, result content, and product-specific bottom navigation contracts remain present", () => {
   assert.match(details, /accessibilityLabel="Flight details header"/);
   assert.match(details, /accessibilityLabel="Trip metadata row"/);
   assert.match(results, /<DateStrip/);
   assert.match(results, /<HotelCard/);
-  assert.match(results, /<BottomNav flightResults=\{flightResults\} \/>/);
+  assert.match(results, /\{flightResults \? <BottomNav flightResults \/> : null\}/);
+  assert.doesNotMatch(results, /<BottomNav flightResults=\{flightResults\} \/>/);
 });

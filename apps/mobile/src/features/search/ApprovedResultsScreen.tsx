@@ -165,6 +165,7 @@ const hotelStayNightCount = (checkIn?: string, checkOut?: string) => {
 export function ApprovedResultsScreen({ product }: { product: Product }) {
   const { theme } = useAppTheme();
   const { locale } = useMobileLocalization();
+  const insets = useSafeAreaInsets();
   const flightResults = product === "flight";
   const flightCanvasColor = theme.dark ? theme.background : flightResultsLightCanvas;
   const { availability } = useFeatureAvailability();
@@ -849,10 +850,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               <HotelResultsHeader destination={hotelSummary.destination} secondaryLine={hotelSummary.secondaryLine} onEdit={edit}/>
               {filterRail}
             </View>
-            <View style={s0.body}>{resultContent}</View>
+            <View style={[s0.body, { paddingBottom: Math.max(insets.bottom + 16, 16) }]}>{resultContent}</View>
           </ScrollView>
           {hotelCompactHeader ? <View style={[s0.hotelCompactHeader,{backgroundColor:theme.surface,borderColor:theme.border}]}><Pressable accessibilityRole="button" accessibilityLabel="Go back" style={s0.compactTarget} onPress={()=>router.back()}><ArrowLeft size={22} color={theme.icon}/></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Edit hotel search" style={s0.compactContext} onPress={edit}><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.compactDestination,{color:theme.textPrimary}]}>{hotelSummary.destination}</Text><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.compactMeta,{color:theme.textSecondary}]}>{hotelSummary.secondaryLine}</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Filters" style={s0.compactTarget} onPress={()=>openHotelFilters("all")}><SlidersHorizontal size={21} color={theme.icon}/></Pressable></View>:null}
-          {hotelBackToTop ? <Pressable accessibilityRole="button" accessibilityLabel="Back to top" onPress={()=>hotelScrollRef.current?.scrollTo({y:0,animated:true})} style={[s0.hotelBackToTop,{backgroundColor:theme.surface,borderColor:theme.border}]}><ArrowUp size={21} color={theme.icon}/></Pressable>:null}
+          {hotelBackToTop ? <Pressable accessibilityRole="button" accessibilityLabel="Back to top" onPress={()=>hotelScrollRef.current?.scrollTo({y:0,animated:true})} style={[s0.hotelBackToTop,{bottom:Math.max(insets.bottom + 16,16),backgroundColor:theme.surface,borderColor:theme.border}]}><ArrowUp size={21} color={theme.icon}/></Pressable>:null}
         </>
       )}
       {product === "flight" ? (
@@ -893,7 +894,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           onSubmit={submitFlightEditSearch}
         />
       ) : null}
-      <BottomNav flightResults={flightResults} />
+      {flightResults ? <BottomNav flightResults /> : null}
     </SafeAreaView>
   );
 }
@@ -1820,7 +1821,7 @@ const s0 = StyleSheet.create({
   compactContext:{flex:1,minWidth:0,alignItems:"center",justifyContent:"center"},
   compactDestination:{fontSize:14,lineHeight:18,fontWeight:"700",fontFamily:appFonts.bold},
   compactMeta:{fontSize:11,lineHeight:15},
-  hotelBackToTop:{position:"absolute",right:16,bottom:86,width:44,height:44,borderRadius:22,borderWidth:1,alignItems:"center",justifyContent:"center",zIndex:19,elevation:4},
+  hotelBackToTop:{position:"absolute",right:16,width:44,height:44,borderRadius:22,borderWidth:1,alignItems:"center",justifyContent:"center",zIndex:19,elevation:4},
   filterRail: { height: 44, flexGrow: 0 },
   flightFilterSectionHeader: { paddingTop: 8 },
   resultsScroll: { flex: 1 },
