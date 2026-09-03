@@ -1,3 +1,5 @@
+import Constants from "expo-constants";
+import { Platform } from "react-native";
 import { getApiBaseUrl } from "../../config/apiUrl";
 import { clearSession, readSession, writeSession } from "../../storage/sessionStorage";
 
@@ -19,7 +21,15 @@ async function request<T>(path: string, options: RequestInit = {}, externalSigna
   const timer = setTimeout(abort, 12000);
   try {
     const response = await fetch(`${base.baseUrl}/api/mobile/v1/auth/${path}`, {
-      ...options, signal: controller.signal, headers: { Accept: "application/json", "Content-Type": "application/json", ...options.headers },
+      ...options,
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "X-Mobile-Platform": Platform.OS,
+        ...(Constants.expoConfig?.version ? { "X-Mobile-App-Version": Constants.expoConfig.version } : {}),
+        ...options.headers,
+      },
     });
     const json = await response.json().catch(() => ({})) as { error?: string; code?: string };
     if (!response.ok) throw new AuthApiError(json.error || "Something went wrong. Please try again.", response.status, json.code || "");

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { emailSchema } from "@/lib/validation";
 import { getPrisma } from "@/lib/prisma";
-import { createMobileSession } from "@/lib/mobile-auth";
+import { createMobileSession, mobileSessionMetadata } from "@/lib/mobile-auth";
 import { canUseStagingCredentials } from "@/lib/previewTesterAccess";
 
 export const runtime = "nodejs";
@@ -22,6 +22,6 @@ export async function POST(request: Request) {
   if (existing) return NextResponse.json({ error: "Unable to create this account." }, { status: 409 });
   const user = await getPrisma().user.create({ data: { email: email.data, name, emailVerified: new Date(), profile: body?.phone ? { create: { phoneNumber: String(body.phone) } } : undefined } });
   await getPrisma().verificationToken.deleteMany({ where: { identifier } });
-  const session = await createMobileSession(user.id);
+  const session = await createMobileSession(user.id, "credentials", "PRIMARY", mobileSessionMetadata(request));
   return NextResponse.json({ session, user: { id: user.id, email: user.email, name: user.name } }, { status: 201 });
 }

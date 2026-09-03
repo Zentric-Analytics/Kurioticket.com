@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { getMobileGoogleClientId } from "@/lib/env";
 import { getPrisma } from "@/lib/prisma";
-import { createMobileSession } from "@/lib/mobile-auth";
+import { createMobileSession, mobileSessionMetadata } from "@/lib/mobile-auth";
 import { canUseStagingGoogle } from "@/lib/previewTesterAccess";
 import { createMobileTwoFactorChallenge } from "@/lib/mobile-two-factor";
 import {
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
     if (settings?.twoFactorEnabled) {
       return NextResponse.json(await createMobileTwoFactorChallenge(user.id, "GOOGLE"), { status: 202 });
     }
-    const session = await createMobileSession(user.id, "google");
+    const session = await createMobileSession(user.id, "google", "PRIMARY", mobileSessionMetadata(request));
     return NextResponse.json({
       session,
       user: { id: user.id, email: user.email, name: user.name, image: user.image },

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { BoundedJsonBodyError, MAX_PASSKEY_ASSERTION_BODY_BYTES, readBoundedJsonBody } from "@/lib/bounded-json-body";
 import { MOBILE_PASSKEY_GENERIC_ERROR, MobilePasskeyAuthenticationError, verifyMobilePasskeyAssertion } from "@/services/mobilePasskeyAuthentication";
+import { mobileSessionMetadata } from "@/lib/mobile-auth";
 
 export const runtime = "nodejs";
 
@@ -9,7 +10,7 @@ export async function POST(request: Request) {
   try {
     checkAuthRateLimit({ action: "mobile-passkey-verify", request, limit: 12, windowMs: 15 * 60_000 });
     const body = await readBoundedJsonBody(request, MAX_PASSKEY_ASSERTION_BODY_BYTES);
-    return NextResponse.json(await verifyMobilePasskeyAssertion(body));
+    return NextResponse.json(await verifyMobilePasskeyAssertion(body, {}, mobileSessionMetadata(request)));
   } catch (error) {
     if (error instanceof AuthRateLimitError) {
       return NextResponse.json(
