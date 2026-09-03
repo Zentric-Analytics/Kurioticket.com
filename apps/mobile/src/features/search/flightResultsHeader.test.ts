@@ -135,16 +135,19 @@ test("canonical flight search data remains available after presentation metadata
 test("Hotel Results uses a scrolling summary and compact handoff header", () => { assert.match(results,/<ScrollView ref=\{hotelScrollRef\}[\s\S]*?<HotelResultsHeader[\s\S]*?\{filterRail\}/); assert.match(results,/hotelCompactHeader \?/); assert.match(results,/accessibilityLabel="Edit hotel search"/); });
 test("Hotel Results owns a web-parity summary card without weakening Flight controls", () => {
   assert.doesNotMatch(hotelHeader, /flightHeaderMainRow|flightHeaderSide|flightHeaderRouteBlock|flightHeaderEdit/);
-  assert.doesNotMatch(hotelHeader, /accessibilityLabel="Go back"|router\.back\(\)|ArrowLeft/);
+  assert.match(hotelHeader, /accessibilityLabel="Go back"[\s\S]*?onPress=\{\(\) => router\.back\(\)\}[\s\S]*?<ArrowLeft/);
   assert.match(hotelHeader, /accessibilityLabel=\{`Edit hotel search\. \$\{destination\}\. \$\{secondaryLine\}`\}[\s\S]*?onPress=\{onEdit\}/);
-  assert.equal(hotelHeader.match(/<Pressable/g)?.length, 1, "the whole summary is the only press target");
+  assert.equal(hotelHeader.match(/<Pressable/g)?.length, 2, "Back and summary are independent press targets");
   assert.match(hotelHeader, /numberOfLines=\{1\}[\s\S]*?ellipsizeMode="tail"[\s\S]*?\{destination\}/);
   assert.match(hotelHeader, /numberOfLines=\{1\}[\s\S]*?ellipsizeMode="tail"[\s\S]*?\{secondaryLine\}/);
   assert.match(hotelHeader, /accessible=\{false\}[\s\S]*?importantForAccessibility="no-hide-descendants"[\s\S]*?<SquarePen size=\{16\} strokeWidth=\{2\.2\}/);
   assert.doesNotMatch(hotelHeader, />Edit<|logo|profile|menu|Bell/);
-  assert.match(styles, /hotelHeader: \{ paddingHorizontal: 16, paddingBottom: 12 \}/);
-  assert.doesNotMatch(styles, /hotelHeaderBack/);
-  assert.match(styles, /hotelSummaryCard: \{[\s\S]*?width: "100%",[\s\S]*?minHeight: 64,[\s\S]*?borderWidth: 1,[\s\S]*?borderRadius: 13,[\s\S]*?paddingLeft: 16/);
+  assert.match(styles, /hotelHeader: \{ paddingHorizontal: 12, paddingBottom: 12 \}/);
+  assert.match(styles, /hotelHeaderMainRow: \{ width: "100%", flexDirection: "row", alignItems: "center" \}/);
+  assert.match(styles, /hotelHeaderSide: \{ width: 52, flexShrink: 0 \}/);
+  assert.match(styles, /hotelHeaderBack: \{ width: 44, height: 44/);
+  assert.match(styles, /hotelSummaryCard: \{[\s\S]*?flex: 1,[\s\S]*?minWidth: 0,[\s\S]*?minHeight: 64,[\s\S]*?borderWidth: 1,[\s\S]*?borderRadius: 13,[\s\S]*?paddingLeft: 16/);
+  assert.doesNotMatch(styles.match(/hotelSummaryCard: \{[\s\S]*?\n  \},/)?.[0] ?? "", /width: "100%"/);
   assert.match(styles, /hotelSummaryText: \{ flex: 1, minWidth: 0/);
   assert.match(styles, /hotelSummaryEditSlot: \{ width: 44, height: 44/);
   assert.match(hotelHeader, /backgroundColor: theme\.surface/);

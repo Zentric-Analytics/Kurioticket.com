@@ -22,13 +22,12 @@ const hotelRoute = rootLayout.match(
   /<Stack\.Screen\s+name="hotel-results"[\s\S]*?\/>/,
 )?.[0] ?? "";
 
-test("Hotel Results renders no initial or compact Back navigation control", () => {
-  for (const hotelChrome of [hotelHeader, compactHotelHeader]) {
-    assert.doesNotMatch(hotelChrome, /accessibilityLabel="Go back"/);
-    assert.doesNotMatch(hotelChrome, /router\.back\(\)/);
-    assert.doesNotMatch(hotelChrome, /<ArrowLeft\b/);
-  }
+test("Hotel Results restores initial Back while the compact header remains gesture-only", () => {
+  assert.match(hotelHeader, /accessibilityLabel="Go back"/);
+  assert.match(hotelHeader, /router\.back\(\)/);
+  assert.match(hotelHeader, /<ArrowLeft\b/);
   assert.match(hotelHeader, /accessibilityLabel=\{`Edit hotel search/);
+  assert.doesNotMatch(compactHotelHeader, /accessibilityLabel="Go back"|router\.back\(\)|<ArrowLeft\b/);
   assert.match(compactHotelHeader, /accessibilityLabel="Edit hotel search"/);
   assert.match(compactHotelHeader, /accessibilityLabel="Filters"/);
 });
