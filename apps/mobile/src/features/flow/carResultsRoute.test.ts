@@ -34,8 +34,11 @@ test("car card matches the mobile Web identity, four-spec and conversion hierarc
 test("car results reproduce the rendered mobile Web summary, controls and count hierarchy", () => {
   const screen = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
   assert.match(screen, /accessibilityLabel="Edit car search"/);
-  assert.match(screen, /label=\{priceFilter\?"Lower total":"Total price"\}/);
-  assert.match(screen, /label=\{category\|\|"Vehicle type"\}/);
+  assert.match(screen, /<CarFilterSheet/);
+  assert.match(screen, /carQuickFilterGroupIds/);
+  assert.match(screen, /filterCarResults\(results,filters\)/);
+  assert.match(screen, /sortCarResults\(/);
+  assert.doesNotMatch(screen, /cycle\(|priceFilter|setCategory|setCompany|Rental company/);
   assert.match(screen, /\{filtered\.length\} results found/);
   assert.match(screen, /const pageSize=20/);
   assert.match(screen, /const visible=filtered\.slice/);
