@@ -26,6 +26,7 @@ export type FlightSearchParams = {
 };
 
 export type HotelSearchParams = {
+  destinationId?: string;
   destination: string;
   checkIn: string;
   checkOut: string;

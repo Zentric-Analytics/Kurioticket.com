@@ -48,6 +48,7 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
     return { plan: { payload, key: JSON.stringify(["flight", ...Object.values(payload)]), summary: `${origin} → ${destination} · ${departureDate}` } };
   }
   if (product === "hotel") {
+    const destinationId = text(params.destinationId);
     const destination = text(params.destination);
     const checkIn = text(params.checkIn); const checkOut = text(params.checkOut);
     const guestsValue = text(params.guests); const roomsValue = text(params.rooms);
@@ -56,7 +57,7 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
     if (!checkIn || !checkOut || !guestsValue || !roomsValue) return { error: "Complete your stay dates, guests, and rooms." };
     if (!future(checkIn, now) || !future(checkOut, now) || checkOut <= checkIn) return { error: "Choose valid check-in and check-out dates." };
     if (guests < 1 || guests > 20 || rooms < 1 || rooms > 9 || rooms > guests) return { error: "Choose valid guest and room counts." };
-    const payload = { destination, checkIn, checkOut, guests, rooms };
+    const payload = { ...(destinationId ? { destinationId } : {}), destination, checkIn, checkOut, guests, rooms };
     return { plan: { payload, key: JSON.stringify(["hotel", ...Object.values(payload)]), summary: `${destination} · ${checkIn} – ${checkOut}` } };
   }
   const pickupLocation = text(params.pickupLocation); const dropoffLocation = text(params.dropoffLocation) || pickupLocation;
@@ -80,7 +81,10 @@ export function validFlight(result: FlightResult, plan: SearchPlan) {
 }
 /** Transport and presentation safety only; result eligibility is server-owned. */
 export function safeCanonicalHotelResult(result: HotelResult) {
-  return Boolean(result.id && result.provider && result.name && Number.isFinite(result.totalPrice) && (result.totalPrice ?? -1) >= 0 && result.currency && /^[A-Z]{3}$/.test(result.currency) && safeImage(result.imageUrl) && safeAction(result));
+  const baseIsSafe = Boolean(result.id && result.provider && result.name && safeImage(result.imageUrl) && safeAction(result));
+  if (!baseIsSafe) return false;
+  if (result.inventoryKind === "discovery") return result.totalPrice === undefined && result.pricePerNight === undefined && result.currency === undefined;
+  return Boolean(Number.isFinite(result.totalPrice) && (result.totalPrice ?? -1) >= 0 && result.currency && /^[A-Z]{3}$/.test(result.currency));
 }
 /** Transport and presentation safety only; result eligibility is server-owned. */
 export function safeCanonicalCarResult(result: CarResult) {
