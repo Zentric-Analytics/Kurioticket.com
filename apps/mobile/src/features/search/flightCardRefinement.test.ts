@@ -51,7 +51,7 @@ test("flight card renders labeled provider legs only for the active trip type", 
 });
 
 test("main flight card uses a theme-aware bordered surface and restrained native depth", () => {
-  const cardStyle = /card: \{([\s\S]*?)\n  \},/.exec(source)?.[1] ?? "";
+  const cardStyle = source.slice(source.indexOf("card: {"), source.indexOf("cardPressed:"));
   assert.match(cardStyle, /borderWidth: 1/);
   assert.match(cardStyle, /borderRadius: 16/);
   assert.match(cardStyle, /shadowOffset: \{ width: 0, height: 2 \}/);

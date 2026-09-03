@@ -47,8 +47,9 @@ test("flight results put fading dates before a native sticky filter rail", () =>
 test("date and filter rails retain their horizontal interactions", () => {
   const dateStrip = readFileSync(resolve("src/features/search/SearchUi.tsx"), "utf8");
 
-  assert.match(dateStrip, /export function DateStrip[\s\S]*?<ScrollView\s+horizontal/);
-  assert.match(dateStrip, /onPress=\{\(\) => onSelect\(iso\)\}/);
+  assert.match(dateStrip, /export function DateStrip[\s\S]*?<ScrollView[\s\S]*?horizontal/);
+  assert.match(dateStrip, /onPress=\{\(\) => \{ if \(!active\) onSelect\(iso\); \}\}/);
+  assert.match(dateStrip, /centeredIdentity\.current === searchIdentity[\s\S]*?scrollTo/);
   assert.match(screen, /const filterRail = \(product === "flight" \? \([\s\S]*?<FlightResultsQuickControls[\s\S]*?openSheet=\{openFlightSheet\}/);
   assert.match(screen, /sort=\{sort\}/);
   for (const label of ["Filters", "Airlines", "Stops"]) {
@@ -136,6 +137,7 @@ test("Hotel Back-to-top keeps its geometry and scrolling behavior above the safe
   assert.match(backToTop, /height:44/);
   assert.match(backToTop, /borderRadius:22/);
 });
+
 test("hotel surviving sections own moderate spacing without changing the shared flight rail", () => {
   const hotelHeader = screen.slice(
     screen.indexOf("function HotelResultsHeader"),
@@ -165,7 +167,7 @@ test("hotel surviving sections own moderate spacing without changing the shared 
   assert.doesNotMatch(flightLayout, /hotelHeader|hotelResultsContent/);
 });
 
-test("the results date rail remains Flight-only and updates departure date", () => {
+test("the results date rail remains Flight-only, excludes multi-city, and uses safe date selection", () => {
   const flightDateStrip = screen.slice(
     screen.indexOf("const flightDateStrip ="),
     screen.indexOf("const flightDateStripOpacity"),
@@ -173,7 +175,8 @@ test("the results date rail remains Flight-only and updates departure date", () 
 
   assert.match(flightDateStrip, /<DateStrip/);
   assert.match(flightDateStrip, /date=\{flightDate\}/);
-  assert.match(flightDateStrip, /onSelect=\{\(v\) => router\.setParams\(\{ departureDate: v \}\)\}/);
+  assert.match(flightDateStrip, /payload\.tripType === "one-way" \|\| payload\.tripType === "round-trip"/);
+  assert.match(flightDateStrip, /onSelect=\{selectNearbyDate\}/);
   assert.doesNotMatch(flightDateStrip, /checkIn/);
   assert.match(screen, /const animatedFlightDateStrip = \([\s\S]*?\{flightDateStrip\}/);
 });
