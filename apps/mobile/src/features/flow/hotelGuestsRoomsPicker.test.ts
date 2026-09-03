@@ -4,14 +4,15 @@ import { readFileSync } from "node:fs";
 
 const source = readFileSync(new URL("./HotelSearchPanel.tsx", import.meta.url).pathname, "utf8");
 const sheet = source.slice(source.indexOf("function HotelGuestsRoomsSheet"));
+const guestContent = sheet.slice(sheet.indexOf("const guestContent"), sheet.indexOf("if (presentation ==="));
 const counterButton = source.slice(source.indexOf("function CounterButton"), source.indexOf("const styles = StyleSheet.create"));
 const model = readFileSync(new URL("./hotelSearchModel.ts", import.meta.url).pathname, "utf8");
 
 test("hotel picker exposes the complete website content in native order", () => {
-  const concepts = ["Guests &amp; Rooms", ">GUESTS<", 'label="Adults"', "Ages 18+", 'label="Children"', "Ages 0–17", ">ROOMS<", 'label="Rooms"', "Separate rooms", "Pet-friendly", "Only show stays that allow pets", 'label="Done"'];
+  const concepts = [">GUESTS<", 'label="Adults"', "Ages 18+", 'label="Children"', "Ages 0–17", ">ROOMS<", 'label="Rooms"', "Separate rooms", "Pet-friendly", "Only show stays that allow pets"];
   let previous = -1;
   for (const concept of concepts) {
-    const index = sheet.indexOf(concept);
+    const index = guestContent.indexOf(concept);
     assert.ok(index > previous, `${concept} should be present in order`);
     previous = index;
   }
@@ -48,9 +49,9 @@ test("picker uses the web icon family with decorative native icons", () => {
 });
 
 test("guests share one card while rooms and pet-friendly use separate cards", () => {
-  assert.match(sheet, /<View style=\{styles\.pickerSection\}>\s*<Text[^>]+>GUESTS<\/Text>\s*<View style=\{\[styles\.pickerCard[^>]+>\s*<PickerRow icon=\{UserRound\}[\s\S]*?<View style=\{\[styles\.pickerDivider[^>]+\/>\s*<PickerRow icon=\{Baby\}[\s\S]*?<\/View>\s*<\/View>/);
-  assert.match(sheet, /<Text[^>]+>ROOMS<\/Text>\s*<View style=\{\[styles\.pickerCard[^>]+>\s*<PickerRow icon=\{BedDouble\}[\s\S]*?<\/View>\s*<\/View>\s*<View style=\{\[styles\.pickerCard/);
-  assert.equal((sheet.match(/styles\.pickerDivider/g) ?? []).length, 1, "exactly one divider should render between the guest rows");
+  assert.match(guestContent, /<View style=\{styles\.pickerSection\}>\s*<Text[^>]+>GUESTS<\/Text>\s*<View style=\{\[styles\.pickerCard[^>]+>\s*<PickerRow icon=\{UserRound\}[\s\S]*?<View style=\{\[styles\.pickerDivider[^>]+\/>\s*<PickerRow icon=\{Baby\}[\s\S]*?<\/View>\s*<\/View>/);
+  assert.match(guestContent, /<Text[^>]+>ROOMS<\/Text>\s*<View style=\{\[styles\.pickerCard[^>]+>\s*<PickerRow icon=\{BedDouble\}[\s\S]*?<\/View>\s*<\/View>\s*<View style=\{\[styles\.pickerCard/);
+  assert.equal((guestContent.match(/styles\.pickerDivider/g) ?? []).length, 1, "exactly one divider should render between the guest rows");
 });
 
 test("pet switch has a flexible copy area and fixed trailing slot", () => {

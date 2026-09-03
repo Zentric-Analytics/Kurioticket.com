@@ -14,6 +14,7 @@ import { useSearchPickerKeyboardPresentation } from "./searchPickerKeyboardPrese
 import { hasMinimumLocationSearchLetters } from "./locationSearchQuery";
 import { useRetainedPickerContext } from "./retainedPickerContext";
 import { SearchResultProductIcons, type SearchResultProductIconName } from "./SearchResultProductIcons";
+import { HotelResultsEditPickerShell } from "./HotelResultsEditPickerShell";
 
 const HOTEL_DESTINATION_SUGGESTION_ICONS = ["hotel"] as const;
 
@@ -87,13 +88,13 @@ export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function Ho
     </View>
     {notice ? <UnavailableNotice text={notice}/> : null}
     {showSubmit ? editAppearance ? <PrimaryButton appearance="resultsEdit" label={submitLabel} icon={null} onPress={submit}/> : <View style={styles.pad}><PrimaryButton label={submitLabel} icon={null} onPress={submit}/></View> : null}
-    <DateRangeSheet visible={datesOpen} title="Travel dates" startLabel="Check-in date" endLabel="Check-out date" startDate={form.checkIn} endDate={form.checkOut} minimumStartDate={localIsoDate(new Date())} endMustBeAfterStart onDone={(checkIn, checkOut) => { update({ ...form, checkIn, checkOut }); setErrors(value => ({ ...value, checkIn: undefined, checkOut: undefined })); setDatesOpen(false); }} onCancel={() => setDatesOpen(false)}/>
-    <HotelDestinationSheet visible={destinationOpen} value={form.destination} onChoose={(destination) => { update({ ...form, destination }); if (destination.trim()) setErrors((current) => ({ ...current, destination: undefined })); setDestinationOpen(false); }} onCancel={() => setDestinationOpen(false)}/>
-    <HotelGuestsRoomsSheet visible={countsOpen} adults={adultCount} children={childCount} rooms={form.rooms} petFriendly={petFriendly} onDone={(draft) => { setAdultCount(draft.adults); setChildCount(draft.children); setPetFriendly(draft.petFriendly); update({ ...form, guests: draft.adults + draft.children, rooms: draft.rooms }); setErrors((value) => ({ ...value, guests: undefined, rooms: undefined })); setCountsOpen(false); }} onCancel={() => setCountsOpen(false)}/>
+    <DateRangeSheet visible={datesOpen} title="Travel dates" startLabel="Check-in date" endLabel="Check-out date" presentation={editAppearance ? "resultsEditFullScreen" : "sheet"} startDate={form.checkIn} endDate={form.checkOut} minimumStartDate={localIsoDate(new Date())} endMustBeAfterStart onDone={(checkIn, checkOut) => { update({ ...form, checkIn, checkOut }); setErrors(value => ({ ...value, checkIn: undefined, checkOut: undefined })); setDatesOpen(false); }} onCancel={() => setDatesOpen(false)}/>
+    <HotelDestinationSheet visible={destinationOpen} value={form.destination} pickerPresentation={editAppearance ? "resultsEditFullScreen" : "sheet"} onChoose={(destination) => { update({ ...form, destination }); if (destination.trim()) setErrors((current) => ({ ...current, destination: undefined })); setDestinationOpen(false); }} onCancel={() => setDestinationOpen(false)}/>
+    <HotelGuestsRoomsSheet visible={countsOpen} presentation={editAppearance ? "resultsEditFullScreen" : "sheet"} adults={adultCount} children={childCount} rooms={form.rooms} petFriendly={petFriendly} onDone={(draft) => { setAdultCount(draft.adults); setChildCount(draft.children); setPetFriendly(draft.petFriendly); update({ ...form, guests: draft.adults + draft.children, rooms: draft.rooms }); setErrors((value) => ({ ...value, guests: undefined, rooms: undefined })); setCountsOpen(false); }} onCancel={() => setCountsOpen(false)}/>
   </View>;
 });
 
-export function HotelDestinationSheet({ visible, value, suggestionIcons = HOTEL_DESTINATION_SUGGESTION_ICONS, onChoose, onCancel }: { visible: boolean; value: string; suggestionIcons?: readonly SearchResultProductIconName[]; onChoose: (destination: string) => void; onCancel: () => void }) {
+export function HotelDestinationSheet({ visible, value, pickerPresentation = "sheet", suggestionIcons = HOTEL_DESTINATION_SUGGESTION_ICONS, onChoose, onCancel }: { visible: boolean; value: string; pickerPresentation?: "sheet" | "resultsEditFullScreen"; suggestionIcons?: readonly SearchResultProductIconName[]; onChoose: (destination: string) => void; onCancel: () => void }) {
   const ft = useFlowTheme();
   const motion = useSearchPickerMotion(visible, { controlledOpening: true });
   const presentation = useRetainedPickerContext(visible, { suggestionIcons });
@@ -109,8 +110,8 @@ export function HotelDestinationSheet({ visible, value, suggestionIcons = HOTEL_
 
   useEffect(() => {
     if (!visible) return;
-    setQuery(""); setDraft(undefined); setSuggestions([]); setLoading(false); setError(false); programmaticFilledQuery.current=undefined;
-  }, [visible, value]);
+    setQuery(pickerPresentation === "resultsEditFullScreen" ? value : ""); setDraft(undefined); setSuggestions([]); setLoading(false); setError(false); programmaticFilledQuery.current=undefined;
+  }, [visible, value, pickerPresentation]);
 
   const keyboardPresentation = useSearchPickerKeyboardPresentation(visible, motion.rendered, value, inputRef, motion);
 
@@ -139,6 +140,14 @@ export function HotelDestinationSheet({ visible, value, suggestionIcons = HOTEL_
   }, [trimmedQuery, visible]);
 
   const changeQuery = (next:string) => { programmaticFilledQuery.current=undefined; setQuery(next); if (draft && next !== draft.searchValue) setDraft(undefined); };
+  if (pickerPresentation === "resultsEditFullScreen") return <HotelResultsEditPickerShell visible={motion.rendered} title="Choose destination" onBack={onCancel} onShow={() => inputRef.current?.focus()}>
+    <KeyboardAvoidingView style={styles.resultsDestinationKeyboard} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <View style={styles.resultsDestinationContent}>
+<View style={[styles.destinationSearch,{backgroundColor:ft.colors.input,borderColor:ft.colors.border}]}><FlowIcon name="location" size={20} color={ft.colors.icon}/><TextInput ref={inputRef} accessibilityLabel="Search hotel destinations" placeholder="City, area, or hotel" placeholderTextColor={ft.colors.placeholder} value={query} onChangeText={changeQuery} returnKeyType="search" style={[styles.destinationSearchInput,{color:ft.colors.text}]}/></View>
+            {loading ? <Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Finding destinations…</Text> : error ? <Text accessibilityRole="alert" style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Couldn’t load destinations. Please try again.</Text> : <FlatList style={styles.destinationResults} keyboardShouldPersistTaps="handled" data={suggestions} keyExtractor={(item) => item.id} contentContainerStyle={styles.destinationList} renderItem={({item}) => { const selected = draft?.id === item.id; const detail = item.region ? `${item.region} · ${item.country}` : item.country; return <Pressable accessibilityRole="button" accessibilityLabel={`${item.name}, ${detail}`} accessibilityState={{selected}} onPress={() => { requestSequence.current+=1; programmaticFilledQuery.current=item.searchValue.trim(); setDraft(item); setQuery(item.searchValue); setLoading(false); setError(false); onChoose(item.searchValue); }} style={[styles.destinationChoice,{borderBottomColor:ft.colors.border},selected&&{backgroundColor:ft.colors.selected}]}><SearchResultProductIcons icons={presentation.suggestionIcons}/><View style={styles.rowCopy}><Text numberOfLines={1} style={[ft.styles.value,selected&&{color:ft.colors.selectedPrimaryText}]}>{item.name}</Text><Text numberOfLines={1} style={[ft.styles.meta,selected&&{color:ft.colors.selectedSecondaryText}]}>{detail}</Text></View></Pressable>; }} ListEmptyComponent={draft?null:trimmedQuery.length===0?<Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Start typing to find a destination.</Text>:!hasMinimumLocationSearchLetters(query)?null:<Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>No matching destinations yet.</Text>} />}
+      </View>
+    </KeyboardAvoidingView>
+  </HotelResultsEditPickerShell>;
   return <Modal transparent animationType="none" visible={motion.rendered} onShow={keyboardPresentation.onModalShow} onRequestClose={onCancel}>
       <KeyboardAvoidingView pointerEvents={motion.pointerEvents} style={styles.keyboardViewport} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <SafeAreaView edges={["top"]} style={styles.destinationOverlay}><Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill,styles.scrim,motion.backdropStyle]}/>
@@ -155,19 +164,14 @@ export function HotelDestinationSheet({ visible, value, suggestionIcons = HOTEL_
 }
 
 type GuestsRoomsDraft = { adults: number; children: number; rooms: number; petFriendly: boolean };
-function HotelGuestsRoomsSheet({ visible, adults, children, rooms, petFriendly, onDone, onCancel }: GuestsRoomsDraft & { visible: boolean; onDone: (draft: GuestsRoomsDraft) => void; onCancel: () => void }) {
+function HotelGuestsRoomsSheet({ visible, adults, children, rooms, petFriendly, presentation = "sheet", onDone, onCancel }: GuestsRoomsDraft & { visible: boolean; presentation?: "sheet" | "resultsEditFullScreen"; onDone: (draft: GuestsRoomsDraft) => void; onCancel: () => void }) {
   const ft = useFlowTheme();
   const motion = useSearchPickerMotion(visible);
   const [draft, setDraft] = useState<GuestsRoomsDraft>({ adults, children, rooms, petFriendly });
   useEffect(() => { if (visible) setDraft({ adults, children, rooms, petFriendly }); }, [visible, adults, children, rooms, petFriendly]);
   const setCount = (key: "adults" | "children" | "rooms", value: number) => setDraft((current) => ({ ...current, [key]: value }));
-  return <Modal visible={motion.rendered} transparent animationType="none" onRequestClose={onCancel}>
-    <View pointerEvents={motion.pointerEvents} style={styles.modalRoot}><Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill,styles.scrim,motion.backdropStyle]}/>
-      <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Close Guests & Rooms picker" onPress={onCancel}/>
-      <View style={styles.sheetPosition} pointerEvents="box-none">
-        <Animated.View accessibilityViewIsModal onLayout={motion.onSheetLayout} style={[styles.sheet, { backgroundColor: ft.colors.surface, paddingBottom: 13 + motion.bottomSafeAreaInset },motion.sheetStyle]}>
-          <Text accessibilityRole="header" style={[styles.partyTitle,{color:ft.colors.text}]}>Guests &amp; Rooms</Text>
-          <ScrollView style={styles.partyScroll} bounces={false} contentContainerStyle={styles.sheetContent}>
+  const guestContent = <>
+<ScrollView style={styles.partyScroll} bounces={false} contentContainerStyle={styles.sheetContent}>
             <View style={styles.pickerSection}>
               <Text accessibilityRole="header" style={[styles.sectionLabel, { color: ft.colors.secondaryText }]}>GUESTS</Text>
               <View style={[styles.pickerCard, { backgroundColor: ft.colors.input, borderColor: ft.colors.border }]}>
@@ -190,6 +194,19 @@ function HotelGuestsRoomsSheet({ visible, adults, children, rooms, petFriendly, 
               </View>
             </View>
           </ScrollView>
+  </>;
+    if (presentation === "resultsEditFullScreen") return <HotelResultsEditPickerShell visible={motion.rendered} title="Guests & Rooms" onBack={onCancel} footer={<PrimaryButton label="Done" icon={null} size="compact" onPress={() => onDone(draft)}/>}>
+    <View style={styles.resultsGuestsContent}>
+{guestContent}
+    </View>
+  </HotelResultsEditPickerShell>;
+  return <Modal visible={motion.rendered} transparent animationType="none" onRequestClose={onCancel}>
+    <View pointerEvents={motion.pointerEvents} style={styles.modalRoot}><Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill,styles.scrim,motion.backdropStyle]}/>
+      <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Close Guests & Rooms picker" onPress={onCancel}/>
+      <View style={styles.sheetPosition} pointerEvents="box-none">
+        <Animated.View accessibilityViewIsModal onLayout={motion.onSheetLayout} style={[styles.sheet, { backgroundColor: ft.colors.surface, paddingBottom: 13 + motion.bottomSafeAreaInset },motion.sheetStyle]}>
+          <Text accessibilityRole="header" style={[styles.partyTitle,{color:ft.colors.text}]}>Guests &amp; Rooms</Text>
+          {guestContent}
           <PrimaryButton label="Done" icon={null} size="compact" onPress={() => onDone(draft)}/>
         </Animated.View>
       </View>
@@ -199,4 +216,4 @@ function HotelGuestsRoomsSheet({ visible, adults, children, rooms, petFriendly, 
 function PickerIcon({ icon: Icon }: { icon: LucideIcon }) { const ft = useFlowTheme(); return <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.pickerIcon, { backgroundColor: ft.colors.selected }]}><Icon size={18} color={ft.colors.selectedBorder}/></View>; }
 function PickerRow({ icon, label, description, value, minimum, maximum, onChange }: { icon: LucideIcon; label: string; description: string; value: number; minimum: number; maximum: number; onChange: (value: number) => void }) { const ft = useFlowTheme(); const minusDisabled = value <= minimum; const plusDisabled = value >= maximum; return <View style={styles.pickerRow}><PickerIcon icon={icon}/><View style={styles.rowCopy}><Text style={ft.styles.value}>{label}</Text><Text style={ft.styles.meta}>{description}</Text></View><View style={styles.counterActions}><CounterButton label={`Decrease ${label.toLowerCase()}`} disabled={minusDisabled} icon={Minus} onPress={() => onChange(Math.max(minimum, value - 1))}/><Text accessibilityLabel={`${value} ${label.toLowerCase()}`} style={[styles.count, { color: ft.colors.text }]}>{value}</Text><CounterButton label={`Increase ${label.toLowerCase()}`} disabled={plusDisabled} icon={Plus} onPress={() => onChange(Math.min(maximum, value + 1))}/></View></View>; }
 function CounterButton({ label, disabled, icon: Icon, onPress }: { label: string; disabled: boolean; icon: LucideIcon; onPress: () => void }) { const ft = useFlowTheme(); const color = disabled ? ft.colors.secondaryText : ft.colors.selectedBorder; return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }} disabled={disabled} onPress={onPress} style={styles.controlTarget}><View style={[styles.control, { borderColor: disabled ? ft.colors.border : ft.colors.selectedBorder }, disabled && styles.disabled]}><Icon accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" size={16} color={color}/></View></Pressable>; }
-const styles = StyleSheet.create({ pad:{padding:8},resultsEditForm:{gap:12},resultsEditFields:{borderWidth:1,borderRadius:16,overflow:"hidden"},resultsEditDivider:{height:1},resultsEditError:{paddingHorizontal:16,paddingTop:0,paddingBottom:8},error:{color:"#A21D25",fontSize:12,lineHeight:18,paddingHorizontal:12,paddingVertical:5},modalRoot:{flex:1,justifyContent:"flex-end"},scrim:{backgroundColor:SEARCH_PICKER_BACKDROP_COLOR},keyboardViewport:{flex:1},destinationOverlay:{flex:1,justifyContent:"flex-end"},destinationSheet:{borderTopLeftRadius:24,borderTopRightRadius:24,padding:20,gap:14,maxHeight:"90%"},destinationSearch:{minHeight:52,borderWidth:1,borderRadius:10,paddingHorizontal:14,flexDirection:"row",alignItems:"center",gap:10},destinationSearchInput:{flex:1,minWidth:0,fontSize:15},destinationResults:{flexShrink:1,minHeight:0},destinationList:{flexGrow:1},destinationChoice:{minHeight:76,flexDirection:"row",alignItems:"center",gap:12,borderBottomWidth:1,paddingVertical:10,paddingHorizontal:8},destinationStatus:{minHeight:120,textAlign:"center",paddingVertical:36,fontSize:14},link:{fontSize:14,fontWeight:"700",paddingVertical:10},sheetPosition:{justifyContent:"flex-end",maxHeight:"64%"},sheet:{borderTopLeftRadius:24,borderTopRightRadius:24,paddingHorizontal:15,paddingVertical:13,gap:8,maxHeight:"100%"},partyTitle:{fontSize:18,lineHeight:24,fontWeight:"800"},partyScroll:{flexShrink:1,minHeight:0},sheetContent:{paddingBottom:2,gap:9},pickerSection:{gap:5},sectionLabel:{fontSize:10,lineHeight:14,fontWeight:"700",letterSpacing:1.5},pickerCard:{borderWidth:1,borderRadius:14,overflow:"hidden"},pickerDivider:{height:1,marginHorizontal:14},pickerRow:{minHeight:62,flexDirection:"row",alignItems:"center",gap:8,paddingHorizontal:10,paddingVertical:6},pickerIcon:{width:36,height:36,borderRadius:18,flexShrink:0,alignItems:"center",justifyContent:"center"},rowCopy:{flex:1,minWidth:0,gap:2},counterActions:{flexShrink:0,flexDirection:"row",alignItems:"center",gap:2},controlTarget:{width:44,height:44,alignItems:"center",justifyContent:"center"},control:{width:34,height:34,borderRadius:17,borderWidth:1,alignItems:"center",justifyContent:"center"},disabled:{opacity:.4},count:{minWidth:20,textAlign:"center",fontSize:15,fontWeight:"800"},petRow:{minHeight:62,flexDirection:"row",alignItems:"center",gap:8,paddingHorizontal:10,paddingVertical:6},petCopy:{flex:1,minWidth:0,gap:2},petSwitchSlot:{width:52,flexShrink:0,alignItems:"flex-end",justifyContent:"center"} });
+const styles = StyleSheet.create({ pad:{padding:8},resultsEditForm:{gap:12},resultsEditFields:{borderWidth:1,borderRadius:16,overflow:"hidden"},resultsEditDivider:{height:1},resultsEditError:{paddingHorizontal:16,paddingTop:0,paddingBottom:8},error:{color:"#A21D25",fontSize:12,lineHeight:18,paddingHorizontal:12,paddingVertical:5},modalRoot:{flex:1,justifyContent:"flex-end"},scrim:{backgroundColor:SEARCH_PICKER_BACKDROP_COLOR},keyboardViewport:{flex:1},resultsDestinationKeyboard:{flex:1},resultsDestinationContent:{flex:1,paddingHorizontal:16,paddingTop:16,gap:14},resultsGuestsContent:{flex:1,paddingHorizontal:16,paddingTop:16},destinationOverlay:{flex:1,justifyContent:"flex-end"},destinationSheet:{borderTopLeftRadius:24,borderTopRightRadius:24,padding:20,gap:14,maxHeight:"90%"},destinationSearch:{minHeight:52,borderWidth:1,borderRadius:10,paddingHorizontal:14,flexDirection:"row",alignItems:"center",gap:10},destinationSearchInput:{flex:1,minWidth:0,fontSize:15},destinationResults:{flexShrink:1,minHeight:0},destinationList:{flexGrow:1},destinationChoice:{minHeight:76,flexDirection:"row",alignItems:"center",gap:12,borderBottomWidth:1,paddingVertical:10,paddingHorizontal:8},destinationStatus:{minHeight:120,textAlign:"center",paddingVertical:36,fontSize:14},link:{fontSize:14,fontWeight:"700",paddingVertical:10},sheetPosition:{justifyContent:"flex-end",maxHeight:"64%"},sheet:{borderTopLeftRadius:24,borderTopRightRadius:24,paddingHorizontal:15,paddingVertical:13,gap:8,maxHeight:"100%"},partyTitle:{fontSize:18,lineHeight:24,fontWeight:"800"},partyScroll:{flexShrink:1,minHeight:0},sheetContent:{paddingBottom:2,gap:9},pickerSection:{gap:5},sectionLabel:{fontSize:10,lineHeight:14,fontWeight:"700",letterSpacing:1.5},pickerCard:{borderWidth:1,borderRadius:14,overflow:"hidden"},pickerDivider:{height:1,marginHorizontal:14},pickerRow:{minHeight:62,flexDirection:"row",alignItems:"center",gap:8,paddingHorizontal:10,paddingVertical:6},pickerIcon:{width:36,height:36,borderRadius:18,flexShrink:0,alignItems:"center",justifyContent:"center"},rowCopy:{flex:1,minWidth:0,gap:2},counterActions:{flexShrink:0,flexDirection:"row",alignItems:"center",gap:2},controlTarget:{width:44,height:44,alignItems:"center",justifyContent:"center"},control:{width:34,height:34,borderRadius:17,borderWidth:1,alignItems:"center",justifyContent:"center"},disabled:{opacity:.4},count:{minWidth:20,textAlign:"center",fontSize:15,fontWeight:"800"},petRow:{minHeight:62,flexDirection:"row",alignItems:"center",gap:8,paddingHorizontal:10,paddingVertical:6},petCopy:{flex:1,minWidth:0,gap:2},petSwitchSlot:{width:52,flexShrink:0,alignItems:"flex-end",justifyContent:"center"} });
