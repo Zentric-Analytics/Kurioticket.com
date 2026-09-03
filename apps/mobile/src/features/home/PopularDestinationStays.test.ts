@@ -8,10 +8,12 @@ import {
 } from "./PopularDestinationStaysData";
 import { destinationById } from "../explore/destinationCatalogue";
 import { getMarketplaceHomeMerchandising } from "../../../../../src/shared/home/homeMerchandising";
+import { popularDestinationsByMarket } from "../../../../../src/data/marketHomeContent";
 import {
   homepageHotelDestinationParams,
   popularDestinationStayNavigation,
 } from "./homepageCardNavigation";
+import { buildSearchPlan } from "../flow/travelSearchModel";
 
 const popularDestinationStays = getPopularDestinationStays("NG", "https://staging.kurioticket.com");
 
@@ -21,6 +23,14 @@ const section = readFileSync(
 );
 const layout = readFileSync(
   join(process.cwd(), "src/features/home/popularStayCardLayout.ts"),
+  "utf8",
+);
+const navigationSource = readFileSync(
+  join(process.cwd(), "src/features/home/homepageCardNavigation.ts"),
+  "utf8",
+);
+const dataSource = readFileSync(
+  join(process.cwd(), "src/features/home/PopularDestinationStaysData.ts"),
   "utf8",
 );
 
@@ -124,7 +134,7 @@ test("Dubai reads and toggles the canonical identity shared with Explore", () =>
 });
 
 test("an unresolved Home card warns in development and never toggles its raw ID", () => {
-  assert.equal(resolvePopularDestinationStay({ city: "Not a real destination" }), undefined);
+  assert.equal(resolvePopularDestinationStay({ canonicalDestinationId: "not-real" }), undefined);
   assert.match(section, /__DEV__ && !canonicalDestination/);
   assert.match(section, /Could not resolve \$\{destination\.id\}/);
   assert.match(section, /if \(canonicalDestination\) \{\s*toggle\(canonicalDestination\.id\)/);
@@ -217,12 +227,14 @@ test("uses the authoritative web image values", () => {
 });
 
 test("Explore stays creates a complete direct canonical Hotel exploration search", () => {
-  assert.deepEqual(homepageHotelDestinationParams({ city: "London" }), {
+  const london = popularDestinationStays.find(({ city }) => city === "London");
+  assert.ok(london);
+  assert.deepEqual(homepageHotelDestinationParams(london), {
     destinationId: "gb-london",
     destination: "London, United Kingdom",
     intentSource: "home-popular-stays",
   });
-  assert.deepEqual(popularDestinationStayNavigation({ city: "London" }, new Date("2030-01-01T00:00:00Z")), {
+  assert.deepEqual(popularDestinationStayNavigation(london, new Date("2030-01-01T00:00:00Z")), {
     pathname: "/hotel-results",
     params: { destinationId: "gb-london", destination: "London, United Kingdom", checkIn: "2030-01-29", checkOut: "2030-02-05", guests: "2", rooms: "1", sort: "cheapest", intentSource: "home-popular-stays" },
   });
@@ -230,4 +242,41 @@ test("Explore stays creates a complete direct canonical Hotel exploration search
     section,
     /router\.push\(popularDestinationStayNavigation\(destination\)\)/,
   );
+});
+
+test("every supported marketplace Home Hotel card opens complete native results without a form fallback", () => {
+  const now = new Date("2030-01-01T00:00:00Z");
+  for (const market of Object.keys(popularDestinationsByMarket)) {
+    const cards = getPopularDestinationStays(market, "https://kurioticket.com");
+    assert.ok(cards.length > 0, `${market}:cards`);
+    for (const card of cards) {
+      const navigation = popularDestinationStayNavigation(card, now);
+      assert.notEqual(navigation, "/hotels", `${market}:${card.id}:no form fallback`);
+      assert.equal(typeof navigation, "object", `${market}:${card.id}:results object`);
+      if (typeof navigation === "object") {
+        assert.equal(navigation.pathname, "/hotel-results", `${market}:${card.id}:results route`);
+        assert.deepEqual(navigation.params, {
+          destinationId: card.canonicalDestinationId,
+          destination: card.destinationSearchValue,
+          checkIn: "2030-01-29",
+          checkOut: "2030-02-05",
+          guests: "2",
+          rooms: "1",
+          sort: "cheapest",
+          intentSource: "home-popular-stays",
+        });
+        assert.ok(
+          buildSearchPlan("hotel", navigation.params, now).plan,
+          `${market}:${card.id}:canonical Hotel search plan`,
+        );
+      }
+    }
+  }
+});
+
+test("promoted Home Hotel navigation cannot regress to city-only re-resolution or the manual Hotels form", () => {
+  assert.doesNotMatch(navigationSource, /destinationByUnambiguousName|resolveHotelDiscoveryIntent/);
+  assert.doesNotMatch(dataSource, /destinationByUnambiguousName\(destination\.city\)/);
+  assert.doesNotMatch(navigationSource, /return [^;]*["']\/hotels["']/);
+  assert.match(navigationSource, /pathname: ["']\/hotel-results["']/);
 });
