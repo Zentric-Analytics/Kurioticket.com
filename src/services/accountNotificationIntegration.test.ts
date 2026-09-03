@@ -16,10 +16,12 @@ test("security mutations use authoritative events and deterministic notification
   }
 });
 
-test("account deletion notifications open mobile Security rather than Customization", () => {
-  const service = source("./accountDeletionService.ts");
-  assert.match(service, /actionPath: "\/security"/);
-  assert.doesNotMatch(service, /actionPath: "\/settings"/);
+test("all account deletion notifications open mobile Security rather than Customization", () => {
+  for (const path of ["./accountDeletionService.ts", "../app/api/admin/account-deletions/[id]/route.ts"]) {
+    const text = source(path);
+    assert.match(text, /actionPath: "\/security"/);
+    assert.doesNotMatch(text, /actionPath: "\/settings"/);
+  }
 });
 
 test("device endpoints perform canonical credential revocation", () => {
