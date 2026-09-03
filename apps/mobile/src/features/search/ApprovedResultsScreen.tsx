@@ -1203,8 +1203,12 @@ function HotelCard({
     ? null
     : result.reviewScore * (10 / (result.reviewScale || 10));
   const classificationStars = result.classificationStars || Math.round(result.rating);
+  const hasPrice = result.pricePerNight != null && result.totalPrice != null;
+  const discovery = result.inventoryKind === "discovery";
   const shareHotel = () => {
-    const message = `${result.name} — ${result.location} — ${money(result.currency, result.pricePerNight)}/night`;
+    const message = hasPrice
+      ? `${result.name} — ${result.location} — ${money(result.currency, result.pricePerNight)}/night`
+      : `${result.name} — ${result.location} — Price unavailable`;
     void Share.share({ message }).catch(() => undefined);
   };
   return (
@@ -1251,12 +1255,12 @@ function HotelCard({
             </Pressable>
           </View>
         </View>
-        {showCheapestBadge ? (
+        {showCheapestBadge && hasPrice ? (
           <View style={s0.hotelBadge}><Badge green>Cheapest</Badge></View>
         ) : null}
-        <Text accessibilityLabel={`${classificationStars} star hotel`} style={s0.stars}>
+        {classificationStars > 0 ? <Text accessibilityLabel={`${classificationStars} star hotel`} style={s0.stars}>
           {"★".repeat(classificationStars)}
-        </Text>
+        </Text> : null}
         <View style={s0.hotelLocation}>
           <MapPin accessible={false} size={14} strokeWidth={2} color={colors.blue} />
           <Text numberOfLines={1} style={[s0.sub, s0.hotelLocationText]}>{result.location}</Text>
@@ -1272,13 +1276,13 @@ function HotelCard({
         <View style={s0.hotelPrice}>
           <View style={s0.hotelPriceCopy}>
             <Text style={s0.hotelNightlyPrice}>
-              {money(result.currency, result.pricePerNight)}
+              {hasPrice ? money(result.currency, result.pricePerNight) : "Price unavailable"}
             </Text>
-            <Text style={s0.hotelPerNight}>per night</Text>
+            {hasPrice ? <Text style={s0.hotelPerNight}>per night</Text> : <Text style={s0.hotelPerNight}>No live rate</Text>}
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`View deal for ${result.name}`}
+            accessibilityLabel={`${discovery ? "View hotel" : "View deal"} for ${result.name}`}
             style={s0.hotelDealButton}
             onPress={() =>
               router.push({
@@ -1292,7 +1296,7 @@ function HotelCard({
               })
             }
           >
-            <Text style={s0.hotelDealButtonText}>View deal</Text>
+            <Text style={s0.hotelDealButtonText}>{discovery ? "View hotel" : "View deal"}</Text>
           </Pressable>
         </View>
       </View>
