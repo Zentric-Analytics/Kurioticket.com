@@ -214,10 +214,14 @@ test("session cards open one safe details sheet and only other sessions can remo
   assert.doesNotMatch(row, /maskedIp|item\.id/);
 });
 
-test("signing out other sessions is confirmed, reloads, and never clears the current bearer", () => {
-  assert.match(security, /Alert\.alert\(c\.signOutOthersTitle,c\.signOutOthersBody/);
-  assert.match(security, /travelApi\.revokeOtherSecuritySessions\(\)\.then\(\(\)=>load/);
+test("signing out other sessions is confirmed, reconciles immediately, reloads, and never clears the current bearer", () => {
   const action = security.slice(security.indexOf("const signOutOthers"), security.indexOf("const all"));
+  assert.match(action, /Alert\.alert\(c\.signOutOthersTitle,c\.signOutOthersBody/);
+  assert.match(action, /travelApi\.revokeOtherSecuritySessions\(\)\.then\(\(\)=>\{/);
+  assert.match(action, /setSessions\(current=>current\.filter\(item=>item\.isCurrent\)\)/);
+  assert.match(action, /setManagedSession\(null\)/);
+  assert.match(action, /setDevicesError\(""\)/);
+  assert.match(action, /void load\(\{showLandingFeedback:false,showLoading:false\}\)/);
   assert.doesNotMatch(action, /clearSession|router\.replace|revokeAllSecuritySessions/);
   assert.match(security, /otherSessions\.length \? .*\{c\.signOutOthers\}/s);
 });
