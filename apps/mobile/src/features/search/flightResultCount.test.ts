@@ -53,7 +53,8 @@ test("hotel result summary has correct singular and plural expressions in one un
 test("count follows the price alert and directly precedes rendered cards", () => {
   assert.doesNotMatch(persistentControls, /flightPersistentSearchControls|\{filterRail\}/);
   assert.doesNotMatch(persistentControls, /dateStrip|PriceAlert|flightResultCountLabel|FlightCard/);
-  assert.match(listHeader, /ListHeaderComponent=\{status === "loading" \? \([\s\S]*?<FlightLoadingExperience[\s\S]*?\) : animatedFlightDateStrip\}/);
+  assert.match(source, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
+  assert.match(listHeader, /ListHeaderComponent=\{animatedFlightDateStrip\}/);
   assert.match(renderItem, /<PriceAlert[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?<FlightCard/);
   assert.match(sectionList, /renderSectionHeader[\s\S]*?stickySectionHeadersEnabled/);
   assert.doesNotMatch(renderItem, /filterRail/);

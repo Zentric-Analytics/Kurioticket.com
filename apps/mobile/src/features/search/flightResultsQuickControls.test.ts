@@ -37,7 +37,8 @@ test("controls retain compact visual geometry with effective 44dp targets", () =
 });
 
 test("sticky placement remains below the fading date strip", () => {
-  assert.match(screen, /ListHeaderComponent=\{status === "loading"[\s\S]*?: animatedFlightDateStrip\}/);
-  assert.match(screen, /renderSectionHeader=\{\(\) => status === "loading" \? null : \([\s\S]*?\{filterRail\}/);
+  assert.match(screen, /ListHeaderComponent=\{animatedFlightDateStrip\}/);
+  assert.match(screen, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
+  assert.match(screen, /renderSectionHeader=\{\(\) => \([\s\S]*?\{filterRail\}/);
   assert.match(screen, /stickySectionHeadersEnabled/);
 });
