@@ -37,7 +37,7 @@ test("filtered empty clears only filters while preserving sort and canonical sea
 
 test("a new canonical flight search clears stale local sort, filters, and open sheets", () => {
   assert.match(screen, /previousFlightSearchKey\.current !== plan\.plan\.key/);
-  assert.match(screen, /setSort\("best"\)/);
+  assert.match(screen, /setSort\("price"\)/);
   assert.match(screen, /setFilters\(emptyFlightFilters\(\)\)/);
   assert.match(screen, /setSortOpen\(false\)/);
   assert.match(screen, /setFilterOpen\(false\)/);

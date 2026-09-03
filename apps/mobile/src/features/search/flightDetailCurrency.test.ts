@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import test from "node:test";
 import { resolveDisplayCurrencyContext, type DisplayPrice } from "../currency/displayCurrency";
 import {
@@ -106,7 +107,7 @@ test("direct Saved-flight entry resolves Nigeria and explicit EUR normally", () 
 });
 
 test("both booking areas use the one shared formatted fare", () => {
-  const detailScreen = readFileSync(new URL("./ApprovedDetailScreen.tsx", import.meta.url).pathname, "utf8");
+  const detailScreen = readFileSync(resolve("src/features/search/ApprovedDetailScreen.tsx"), "utf8");
   const flightDetail = detailScreen.slice(
     detailScreen.indexOf("function FlightDetail"),
     detailScreen.indexOf("function HotelDetail"),
@@ -116,6 +117,6 @@ test("both booking areas use the one shared formatted fare", () => {
 });
 
 test("Results uses the collision-safe navigation contract", () => {
-  const resultsScreen = readFileSync(new URL("./ApprovedResultsScreen.tsx", import.meta.url).pathname, "utf8");
+  const resultsScreen = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
   assert.match(resultsScreen, /params: buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
 });
