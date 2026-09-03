@@ -1,4 +1,3 @@
-import { useEffect, useRef } from "react";
 import { Animated, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
@@ -13,20 +12,12 @@ type Props = {
   params: Record<string, RouteValue>;
   onClose: () => void;
   onSubmit: (params: Record<string, string | undefined>) => void;
-  onAfterClose: () => void;
 };
 
-export function FlightEditSearchModal({ visible, params, onClose, onSubmit, onAfterClose }: Props) {
+export function FlightEditSearchModal({ visible, params, onClose, onSubmit }: Props) {
   const ft = useFlowTheme();
   const motion = useSearchPickerMotion(visible);
   const presentedParams = useRetainedPickerContext(visible, params);
-  const wasRendered = useRef(motion.rendered);
-  useEffect(() => {
-    if (wasRendered.current && !motion.rendered) {
-      onAfterClose();
-    }
-    wasRendered.current = motion.rendered;
-  }, [motion.rendered, onAfterClose]);
   if (!motion.rendered) return null;
 
   return (

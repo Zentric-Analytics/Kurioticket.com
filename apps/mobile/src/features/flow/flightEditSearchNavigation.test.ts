@@ -10,28 +10,26 @@ test("approved flight Edit search opens a local modal with current canonical par
 
   assert.ok(editStart >= 0 && editEnd > editStart, "expected the ApprovedResultsScreen edit handler");
   assert.match(source, /const \[editSearchOpen, setEditSearchOpen\] = useState\(false\)/);
-  assert.match(source, /const pendingFlightEditSearchParams = useRef<Record<string, string \| undefined> \| null>\(null\)/);
-  assert.match(editHandler, /if \(product === "flight"\)[\s\S]*?pendingFlightEditSearchParams\.current = null;[\s\S]*?setEditSearchOpen\(true\)[\s\S]*?return;/);
-  assert.match(source, /<FlightEditSearchModal[\s\S]*?visible=\{editSearchOpen\}[\s\S]*?params=\{flightEditSearchParams\(params\)\}[\s\S]*?onClose=\{\(\) => setEditSearchOpen\(false\)\}[\s\S]*?onSubmit=\{submitFlightEditSearch\}[\s\S]*?onAfterClose=\{completeFlightEditSearch\}/);
+  assert.match(source, /const pendingFlightEditTargetKey = useRef<string \| null>\(null\)/);
+  assert.match(editHandler, /if \(product === "flight"\)[\s\S]*?pendingFlightEditTargetKey\.current = null;[\s\S]*?setEditSearchOpen\(true\)[\s\S]*?return;/);
+  assert.match(source, /<FlightEditSearchModal[\s\S]*?visible=\{editSearchOpen\}[\s\S]*?params=\{flightEditSearchParams\(params\)\}[\s\S]*?onClose=\{closeFlightEditSearch\}[\s\S]*?onSubmit=\{submitFlightEditSearch\}/);
+  assert.doesNotMatch(source, /onAfterClose|completeFlightEditSearch|pendingFlightEditSearchParams/);
   assert.doesNotMatch(editHandler, /\/edit-flight-search|activeSearch/);
   assert.doesNotMatch(editHandler.slice(0, editHandler.indexOf('router.push({\n      pathname: "/hotels"')), /router\.(?:push|replace|back)/);
   assert.doesNotMatch(editHandler, /pathname: "\/flights"/);
 });
 
-test("results edit modal reports submission and fully completed shared-sheet dismissal", () => {
+test("results edit modal owns presentation without a post-dismiss business callback", () => {
   const modal = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
   assert.match(modal, /<Modal transparent animationType="none" visible onRequestClose=\{onClose\}/);
   assert.match(modal, /accessibilityViewIsModal/);
   assert.match(modal, /accessibilityLabel="Close edit search"/);
   assert.match(modal, /keyboardShouldPersistTaps="handled"/);
+  assert.match(modal, /onClose: \(\) => void/);
   assert.match(modal, /onSubmit: \(params: Record<string, string \| undefined>\) => void/);
-  assert.match(modal, /onAfterClose: \(\) => void/);
   assert.match(modal, /<FlightSearchPanel embedded params=\{presentedParams\} onValidatedSubmit=\{onSubmit\} editAppearance \/>/);
   assert.doesNotMatch(modal, /submitNavigation="replace"|onBeforeNavigate=\{onClose\}/);
-  assert.doesNotMatch(modal, /router|flightSearchParams|travelApi/);
-  assert.match(modal, /const wasRendered = useRef\(motion\.rendered\)/);
-  assert.match(modal, /if \(wasRendered\.current && !motion\.rendered\) \{\s*onAfterClose\(\);/);
-  assert.match(modal, /wasRendered\.current = motion\.rendered/);
+  assert.doesNotMatch(modal, /router|flightSearchParams|travelApi|onAfterClose|wasRendered|useEffect|useRef/);
   assert.doesNotMatch(modal, /setTimeout|SEARCH_PICKER_CLOSE_DURATION_MS/);
   assert.doesNotMatch(modal, /accessibilityLabel="Go back"|ArrowLeft/);
   assert.match(modal, /paddingBottom: motion\.bottomSafeAreaInset/);
@@ -42,21 +40,25 @@ test("results edit modal reports submission and fully completed shared-sheet dis
   assert.match(modal, /content: \{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 20 \}/);
 });
 
-test("validated flight edits close first and update the mounted route only after dismissal", () => {
+test("changed flight edits update route params while open and close after observing the target key", () => {
   const source = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
   const submitStart = source.indexOf("  const submitFlightEditSearch = useCallback");
-  const completeStart = source.indexOf("  const completeFlightEditSearch = useCallback", submitStart);
-  const editStart = source.indexOf("  const edit = () => {", completeStart);
-  const submitHandler = source.slice(submitStart, completeStart);
-  const completeHandler = source.slice(completeStart, editStart);
+  const closeStart = source.indexOf("  const closeFlightEditSearch = useCallback", submitStart);
+  const effectStart = source.indexOf("  useEffect(() => {", closeStart);
+  const editStart = source.indexOf("  const edit = () => {", effectStart);
+  const submitHandler = source.slice(submitStart, closeStart);
+  const observedKeyEffect = source.slice(effectStart, editStart);
 
-  assert.ok(submitStart >= 0 && completeStart > submitStart && editStart > completeStart);
-  assert.match(submitHandler, /pendingFlightEditSearchParams\.current = nextParams;\s*setEditSearchOpen\(false\);/);
-  assert.doesNotMatch(submitHandler, /router\.(?:replace|push|setParams)|activeSearch\.current\?\.abort/);
-  assert.match(completeHandler, /const nextParams = pendingFlightEditSearchParams\.current;\s*if \(!nextParams\) return;/);
-  assert.match(completeHandler, /pendingFlightEditSearchParams\.current = null;\s*router\.setParams\(flightSearchRouteParamPatch\(nextParams\)\);/);
-  assert.doesNotMatch(submitHandler + completeHandler, /router\.(?:replace|push)|requestAnimationFrame|cancelAnimationFrame|flightEditNavigationFrame/);
-  assert.doesNotMatch(source, /flightEditNavigationFrame/);
+  assert.ok(submitStart >= 0 && closeStart > submitStart && effectStart > closeStart && editStart > effectStart);
+  assert.match(submitHandler, /const nextPlan = buildSearchPlan\("flight", nextParams\);\s*if \(!nextPlan\.plan\) return;/);
+  assert.match(submitHandler, /if \(nextPlan\.plan\.key === plan\.plan\?\.key\) \{\s*pendingFlightEditTargetKey\.current = null;\s*setEditSearchOpen\(false\);\s*return;\s*\}/);
+  assert.match(submitHandler, /pendingFlightEditTargetKey\.current = nextPlan\.plan\.key;\s*router\.setParams\(flightSearchRouteParamPatch\(nextParams\)\);/);
+  assert.equal(submitHandler.match(/setEditSearchOpen\(false\)/g)?.length, 1, "only the same-key branch closes from submit");
+  assert.ok(submitHandler.indexOf("setEditSearchOpen(false)") < submitHandler.indexOf("pendingFlightEditTargetKey.current = nextPlan.plan.key"));
+  assert.match(observedKeyEffect, /const targetKey = pendingFlightEditTargetKey\.current;\s*if \(!editSearchOpen \|\| !targetKey \|\| plan\.plan\?\.key !== targetKey\) return;\s*pendingFlightEditTargetKey\.current = null;\s*setEditSearchOpen\(false\);/);
+  assert.match(observedKeyEffect, /\}, \[editSearchOpen, plan\.plan\?\.key\]\);/);
+  assert.doesNotMatch(submitHandler + observedKeyEffect, /router\.(?:replace|push)|requestAnimationFrame|cancelAnimationFrame|setTimeout/);
+  assert.doesNotMatch(source, /flightEditNavigationFrame|completeFlightEditSearch|onAfterClose|pendingFlightEditSearchParams/);
 });
 
 test("FlightSearchPanel preserves validation and default navigation around its validated override", () => {
