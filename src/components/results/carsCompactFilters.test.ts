@@ -5,6 +5,7 @@ const source = readFileSync(
   new URL("./CarsResultsClient.tsx", import.meta.url),
   "utf8",
 );
+const presentation = readFileSync(new URL("../../lib/cars/carFilterPresentation.ts", import.meta.url), "utf8");
 
 test("source-contract: Cars compact shell and header match Flights styling", () => {
   assert.match(
@@ -168,7 +169,7 @@ test("source-contract: Cars filters use the Flights desktop lifecycle", () => {
   assert.match(source, /aria-hidden=\{layout === "compact" && !compactOpen\}/);
   assert.equal(
     (
-      source.match(
+      presentation.match(
         /id: "(?:vehicleType|transmission|seats|bags|fuelPolicy|mileagePolicy|cancellation|pickupLocationType)"/g,
       ) ?? []
     ).length,

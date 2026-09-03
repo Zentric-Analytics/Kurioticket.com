@@ -21,6 +21,8 @@ const optionMatches: Record<string, (car: NormalizedCarResult) => boolean> = {
   smallCars: (car) => ["mini", "economy", "compact"].includes(car.category),
   mediumCars: (car) => ["intermediate", "full-size"].includes(car.category),
   suvs: (car) => car.category === "suv",
+  luxuryCars: (car) => car.category === "luxury",
+  vans: (car) => car.category === "van",
   automatic: (car) => car.transmission === "automatic",
   manual: (car) => car.transmission === "manual",
   seats4Plus: (car) => car.passengers >= 4,
@@ -43,7 +45,7 @@ const optionMatches: Record<string, (car: NormalizedCarResult) => boolean> = {
 export const doesCarMatchFilterOption = (car: NormalizedCarResult, option: string) =>
   optionMatches[option]?.(car) ?? false;
 
-export function filterCarResults(results: NormalizedCarResult[], filters: SelectedCarFilters) {
+export function filterCarResults<T extends NormalizedCarResult>(results: T[], filters: SelectedCarFilters): T[] {
   const groups = Object.values(filters).filter((options) => options.length);
   return results.filter((car) => groups.every((options) => options.some((option) => optionMatches[option]?.(car))));
 }
@@ -56,7 +58,7 @@ function recommendedScore(car: NormalizedCarResult) {
     (car.pickupType === "airport-counter" ? 2 : car.pickupType === "city-location" ? 1 : 0);
 }
 
-export function sortCarResults(results: NormalizedCarResult[], sort: CarSort) {
+export function sortCarResults<T extends NormalizedCarResult>(results: T[], sort: CarSort): T[] {
   const indexed = results.map((car, index) => ({ car, index }));
   return indexed.sort((a, b) => {
     const aOffer = getPrimaryCarOffer(a.car);

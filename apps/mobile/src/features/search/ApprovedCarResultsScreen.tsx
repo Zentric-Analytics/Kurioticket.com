@@ -13,22 +13,27 @@ import { CarResultCard } from "./CarResultCard";
 import { Button, Empty, Pill, TopBar, shortDate, ui } from "./SearchUi";
 import { useAppTheme } from "../../theme/AppTheme";
 import { NativeBrandedSearchLoading } from "./NativeBrandedSearchLoading";
+import { carQuickFilterGroupIds } from "../../../../../src/lib/cars/carFilterPresentation";
+import { filterCarResults, sortCarResults, type CarSort, type SelectedCarFilters } from "../../../../../src/lib/cars/carResults";
+import { CarFilterSheet, activeCarFilterCount, visibleCarFilterGroups } from "./CarFilterSheet";
+import { carFilterCopy, carFilterGroupLabel } from "./carFilterCopy";
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 
 type Status = "loading" | "ready" | "empty" | "error";
 const one = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
 
 export function ApprovedCarResultsScreen() {
   const { theme } = useAppTheme();
+  const { locale } = useMobileLocalization();
   const params = useLocalSearchParams<Record<string,string|string[]>>();
   const plan = useMemo(() => buildSearchPlan("car",params),[JSON.stringify(params)]);
   const [results,setResults] = useState<CarResult[]>([]);
   const [status,setStatus] = useState<Status>("loading");
   const [message,setMessage] = useState("");
   const [retry,setRetry] = useState(0);
-  const [sort,setSort] = useState<"recommended"|"price">("recommended");
-  const [category,setCategory] = useState("");
-  const [company,setCompany] = useState("");
-  const [priceFilter,setPriceFilter] = useState(false);
+  const [sort,setSort] = useState<CarSort>("recommended");
+  const [filters,setFilters] = useState<SelectedCarFilters>({});
+  const [filterSheet,setFilterSheet] = useState<string|"all"|null>(null);
   const [page,setPage] = useState(1);
   const load = useCallback(async()=>{
     if(!plan.plan){setStatus("error");setMessage(plan.error||"Invalid car search");return;}
@@ -37,34 +42,32 @@ export function ApprovedCarResultsScreen() {
     catch(error){setStatus("error");setMessage(error instanceof Error?error.message:"Car search failed");}
   },[plan.plan?.key,retry]);
   useEffect(()=>{void load();},[load]);
-  const categories=useMemo(()=>[...new Set(results.map((result)=>result.categoryLabel))],[results]);
-  const companies=useMemo(()=>[...new Set(results.map((result)=>result.rentalCompanyName))],[results]);
-  const cheapest=results.length?Math.min(...results.map((result)=>result.offers[0]?.pricePerDay??Infinity)):0;
-  const filtered=useMemo(()=>results.filter((result)=>(!category||result.categoryLabel===category)&&(!company||result.rentalCompanyName===company)&&(!priceFilter||(result.offers[0]?.pricePerDay??Infinity)<=cheapest*1.5)).sort((a,b)=>sort==="price"?(a.offers[0]?.totalPrice??Infinity)-(b.offers[0]?.totalPrice??Infinity):b.recommendationScore-a.recommendationScore),[results,category,company,priceFilter,sort,cheapest]);
+  const filterGroups=useMemo(()=>visibleCarFilterGroups(results),[results]);
+  const quickGroups=useMemo(()=>carQuickFilterGroupIds.flatMap(id=>{const group=filterGroups.find(candidate=>candidate.id===id);return group?[group]:[];}),[filterGroups]);
+  const copy=useMemo(()=>carFilterCopy(locale),[locale]);
+  const filtered=useMemo(()=>sortCarResults(filterCarResults(results,filters),sort),[results,filters,sort]);
   const pageSize=20; const totalPages=Math.max(1,Math.ceil(filtered.length/pageSize)); const visible=filtered.slice((page-1)*pageSize,page*pageSize);
-  useEffect(()=>setPage(1),[category,company,priceFilter,sort]);
+  useEffect(()=>setPage(1),[filters,sort]);
   const payload=plan.plan?.payload||{}; const pickup=String(payload.pickupDate||""); const dropoff=String(payload.dropoffDate||"");
   const edit=()=>router.canGoBack()?router.back():router.replace({pathname:"/cars",params:Object.fromEntries(Object.entries(payload).map(([key,value])=>[key,String(value)]))});
-  const cycle=(values:string[],current:string,set:(value:string)=>void)=>{if(!values.length)return;const index=current?values.indexOf(current):-1;set(index>=values.length-1?"":values[index+1]);};
   const openDeal=(result:CarResult)=>router.push({pathname:"/car-details",params:{result:JSON.stringify(result),resultId:result.id,...Object.fromEntries(Object.entries(payload).map(([key,value])=>[key,String(value)]))}});
   const image=(value?:string)=>{if(!value)return undefined;if(/^https:\/\//i.test(value))return value;const base=getApiBaseUrl();return base.ok&&/^\/(?!\/)/.test(value)?new URL(value,`${base.baseUrl}/`).toString():undefined;};
-  const clearFilters=()=>{setCategory("");setCompany("");setPriceFilter(false);};
+  const clearFilters=()=>setFilters({});
   if(status==="loading") return <NativeBrandedSearchLoading product="car"/>;
   return <SafeAreaView style={[r.safe,{backgroundColor:theme.background}]} edges={["top"]}>
     <TopBar />
     <Pressable accessibilityRole="button" accessibilityLabel="Edit car search" onPress={edit} style={[r.summary,{backgroundColor:theme.surface}]}><View style={r.summaryCopy}><Text style={[r.route,{color:theme.textPrimary}]}>{String(payload.pickupLocation||"")}</Text><Text numberOfLines={1} style={[r.sub,{color:theme.textSecondary}]}>{shortDate(pickup)} — {shortDate(dropoff)} · {payload.driverAge === "18-70" ? "Any age" : `${String(payload.driverAge||"")} years old`}</Text></View><FlowIcon name="document" size={18} color={theme.icon} /></Pressable>
     <ScrollView horizontal style={r.filterRail} showsHorizontalScrollIndicator={false} contentContainerStyle={r.filters}>
-      <Pill label="Filters" icon="sliders" active={Boolean(category||company||priceFilter)} onPress={clearFilters}/>
-      <Pill label={priceFilter?"Lower total":"Total price"} active={priceFilter} onPress={()=>setPriceFilter((value)=>!value)}/>
-      <Pill label={category||"Vehicle type"} active={Boolean(category)} onPress={()=>cycle(categories,category,setCategory)}/>
-      <Pill label={company||"Rental company"} active={Boolean(company)} onPress={()=>cycle(companies,company,setCompany)}/>
+      <Pill label="Filters" icon="sliders" active={activeCarFilterCount(filters)>0} onPress={()=>setFilterSheet("all")}/>
+      {quickGroups.map(group=><Pill key={group.id} label={carFilterGroupLabel(copy,group)} active={(filters[group.id]?.length??0)>0} onPress={()=>setFilterSheet(group.id)}/>)}
     </ScrollView>
     <ScrollView contentContainerStyle={r.body}>
       {message?<Text accessibilityRole="alert" style={r.notice}>{message}</Text>:null}
       {status==="empty"?<Empty title="No rental cars found" body="Try changing your dates, pickup location, or filters." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>:null}
       {status==="error"?<Empty title="Car search could not be completed" body={message||"Check your connection and try again."} retry={()=>setRetry((value)=>value+1)} edit={edit}/>:null}
-      {status==="ready"?<><View style={r.found}><View><Text style={[r.foundTitle,{color:theme.textPrimary}]}>{filtered.length} results found</Text><Text style={[r.range,{color:theme.textSecondary}]}>{filtered.length ? `${(page-1)*pageSize+1}–${Math.min(page*pageSize,filtered.length)}` : "0"}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Sort by ${sort === "price" ? "Total price" : "Recommended"}`} onPress={()=>setSort((value)=>value==="price"?"recommended":"price")} style={r.sort}><Text style={[r.sortPrefix,{color:theme.textSecondary}]}>Sort by:</Text><Text style={[r.sortValue,{color:theme.textPrimary}]}>{sort==="price"?"Total price":"Recommended"}</Text><FlowIcon name="chevronDown" size={14} color={theme.icon}/></Pressable></View>{filtered.length?<>{visible.map((result,index)=><CarResultCard key={result.id} result={result} rank={(page-1)*pageSize+index} imageUri={image(result.imageUrl)} searchParams={payload} onViewDeal={()=>openDeal(result)}/>)}{totalPages>1?<View style={r.pagination}><Button label="Previous" outline disabled={page===1} onPress={()=>setPage((value)=>Math.max(1,value-1))}/><Text style={[r.pageLabel,{color:theme.textPrimary}]}>Page {page} of {totalPages}</Text><Button label="Next" outline disabled={page===totalPages} onPress={()=>setPage((value)=>Math.min(totalPages,value+1))}/></View>:null}</>:<Empty title="No cars match these filters" body="Clear filters to see the available rental cars." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>}<CarPriceAlert/></>:null}
+      {status==="ready"?<><View style={r.found}><View><Text style={[r.foundTitle,{color:theme.textPrimary}]}>{filtered.length} results found</Text><Text style={[r.range,{color:theme.textSecondary}]}>{filtered.length ? `${(page-1)*pageSize+1}–${Math.min(page*pageSize,filtered.length)}` : "0"}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Sort by ${sort === "lowestTotal" ? "Total price" : "Recommended"}`} onPress={()=>setSort((value)=>value==="lowestTotal"?"recommended":"lowestTotal")} style={r.sort}><Text style={[r.sortPrefix,{color:theme.textSecondary}]}>Sort by:</Text><Text style={[r.sortValue,{color:theme.textPrimary}]}>{sort==="lowestTotal"?"Total price":"Recommended"}</Text><FlowIcon name="chevronDown" size={14} color={theme.icon}/></Pressable></View>{filtered.length?<>{visible.map((result,index)=><CarResultCard key={result.id} result={result} rank={(page-1)*pageSize+index} imageUri={image(result.imageUrl)} searchParams={payload} onViewDeal={()=>openDeal(result)}/>)}{totalPages>1?<View style={r.pagination}><Button label="Previous" outline disabled={page===1} onPress={()=>setPage((value)=>Math.max(1,value-1))}/><Text style={[r.pageLabel,{color:theme.textPrimary}]}>Page {page} of {totalPages}</Text><Button label="Next" outline disabled={page===totalPages} onPress={()=>setPage((value)=>Math.min(totalPages,value+1))}/></View>:null}</>:<Empty title="No cars match these filters" body="Clear filters to see the available rental cars." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>}<CarPriceAlert/></>:null}
     </ScrollView>
+    <CarFilterSheet visible={filterSheet!==null} groupId={filterSheet==="all"?null:filterSheet} results={results} filters={filters} onChange={setFilters} onClose={()=>setFilterSheet(null)}/>
     <BottomNav />
   </SafeAreaView>;
 }
