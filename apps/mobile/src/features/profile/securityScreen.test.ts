@@ -27,7 +27,7 @@ test("shared security modals apply explicit safe-area insets", () => {
 });
 
 test("all native security drill-downs retain the shared modal shell", () => {
-  for (const state of ["passkeysOpen", "passwordOpen", "devicesOpen", "activityOpen", "twoFactorOpen", "deletionOpen"])
+  for (const state of ["passkeysOpen", "passwordOpen", "devicesOpen", "twoFactorOpen", "deletionOpen"])
     assert.match(security, new RegExp(`<ScreenModal\\s+visible=\\{${state}\\}`));
 });
 
@@ -35,9 +35,9 @@ test("security landing uses flat descriptive blocks and the native header", () =
   const landingEnd = security.indexOf("<ScreenModal visible={passwordOpen}");
   const landing = security.slice(0, landingEnd);
   assert.match(landing, /<Header title=\{c\.title\} backLabel=\{c\.back\}/);
-  for (const row of ["password", "twoFactor", "passkeys", "activeSessions", "activity", "signOutAll"])
+  for (const row of ["password", "twoFactor", "passkeys", "activeSessions", "signOutAll"])
     assert.match(landing, new RegExp(`<SecurityBlock label=\\{c\\.${row}\\}`));
-  for (const detail of ["passwordHelp", "twoFactorHelp", "passkeysHelp", "activeSessionsHelp", "alertsHelp", "activityHelp", "signOutAllHelp"])
+  for (const detail of ["passwordHelp", "twoFactorHelp", "passkeysHelp", "activeSessionsHelp", "alertsHelp", "signOutAllHelp"])
     assert.match(landing, new RegExp(`c\\.${detail}`));
   assert.doesNotMatch(landing, /<Section|shadow|elevation/);
   assert.doesNotMatch(security, /#003B95|#0071C2|Booking/);
@@ -171,7 +171,7 @@ test("devices remain off the landing page and preserve revocation behavior", () 
 
 test("active sessions use compact localized cards without raw client values or an empty feedback slot", () => {
   const start = security.indexOf('<ScreenModal visible={devicesOpen}');
-  const end = security.indexOf('<ScreenModal visible={activityOpen}', start);
+  const end = security.indexOf('<ScreenModal visible={twoFactorOpen}', start);
   const devices = security.slice(start, end);
   assert.match(devices, /title=\{c\.activeSessions\}/);
   assert.doesNotMatch(devices, /title=\{c\.yourDevices\}|<Feedback/);
@@ -264,7 +264,7 @@ test("notification preference keeps optimistic, race-safe rollback semantics", (
 });
 
 test("notification feedback remains in one stable row slot", () => {
-  const row = security.slice(security.indexOf('<View style={[styles.notificationRow'), security.indexOf('<SecurityBlock label={c.activity}'));
+  const row = security.slice(security.indexOf('<View style={[styles.notificationRow'), security.indexOf('<SecurityBlock label={c.signOutAll}'));
   assert.match(row, /\{c\.alertsHelp\}<\/Text><View style=\{styles\.preferenceFeedbackSlot\}>/);
   assert.match(row, /\{preferenceFeedback\}/);
   assert.match(row, /accessibilityRole=\{preferenceFeedbackIsError \? "alert" : undefined\}/);
@@ -272,55 +272,16 @@ test("notification feedback remains in one stable row slot", () => {
   assert.match(security, /preferenceFeedbackSlot: \{ minHeight: 15/);
 });
 
-test("activity is a single landing block opening the full history", () => {
+test("security activity is absent from the landing page, modal stack, and data load", () => {
   const landing = security.slice(0, security.indexOf("<ScreenModal visible={passwordOpen}"));
-  assert.match(landing, /label=\{c\.activity\} description=\{c\.activityHelp\} onPress=\{\(\) => setActivityOpen\(true\)\}/);
-  assert.doesNotMatch(landing, /events\.slice\(0, 3\)|c\.viewAll|<EventRow/);
-  assert.match(security, /<ScreenModal visible=\{activityOpen\}/);
-  assert.match(security, /const activityGroups = groupSecurityEvents\(events\)/);
-  assert.match(security, /group\.events\.map\(\(event\)/);
-  assert.match(security, /onClose=\{\(\) => setActivityOpen\(false\)\}/);
-});
-
-
-test("activity groups local calendar dates once and sorts each group newest first", () => {
-  assert.match(security, /export function groupSecurityEvents/);
-  assert.match(security, /\[\.\.\.events\]\.sort\(\(a,b\) => new Date\(b\.occurredAt\)\.getTime\(\)-new Date\(a\.occurredAt\)\.getTime\(\)\)/);
-  assert.match(security, /const dateKey=securityActivityDateKey\(event\.occurredAt\)/);
-  assert.match(security, /current\?\.dateKey===dateKey/);
-  assert.match(security, /<View key=\{group\.dateKey\}/);
-});
-
-test("activity rows use localized headings and times with compact event icons", () => {
-  assert.match(security, /formatSecurityActivityHeading\(group\.events\[0\]\.occurredAt, locale\)/);
-  assert.match(security, /formatSecurityActivityTime\(event\.occurredAt, locale\)/);
-  for (const icon of ["LogOut", "Smartphone", "ShieldCheck", "Shield"]) assert.ok(security.includes(`<${icon} size={18}`));
-  assert.match(security, /event\.deviceLabel\?\.trim\(\)/);
-  assert.doesNotMatch(security.slice(security.indexOf("function EventRow"), security.indexOf("export function sessionDetails")), /location|ipAddress|browser|operating system/i);
-});
-
-test("activity date and time formatting follows the selected locale and local calendar", async () => {
-  const { formatSecurityActivityHeading, formatSecurityActivityTime, securityActivityDateKey, securityCopy } = await import("./securityLocalization");
-  const now = new Date(2026, 8, 3, 0, 15);
-  const today = new Date(2026, 8, 3, 23, 45).toISOString();
-  const yesterday = new Date(2026, 8, 2, 23, 45).toISOString();
-  const older = new Date(2026, 8, 1, 14, 5).toISOString();
-  assert.equal(formatSecurityActivityHeading(today, "en-us", now), "Today");
-  assert.equal(formatSecurityActivityHeading(yesterday, "en-us", now), "Yesterday");
-  assert.equal(formatSecurityActivityHeading(today, "es-es", now), securityCopy["es-es"].today);
-  assert.equal(formatSecurityActivityHeading(yesterday, "es-es", now), securityCopy["es-es"].yesterday);
-  assert.equal(formatSecurityActivityHeading(older, "en-us", now), "September 1");
-  assert.notEqual(formatSecurityActivityHeading(new Date(2025, 8, 1).toISOString(), "en-us", now), "September 1");
-  assert.equal(securityActivityDateKey(today), securityActivityDateKey(new Date(2026, 8, 3, 0, 1).toISOString()));
-  assert.equal(formatSecurityActivityTime(older, "es-es"), new Intl.DateTimeFormat("es-ES", { hour: "numeric", minute: "2-digit" }).format(new Date(older)));
-});
-
-test("activity retains its localized empty state", () => {
-  assert.match(security, /activityGroups\.length \?.*c\.empty/s);
+  assert.doesNotMatch(landing, /c\.activity|c\.activityHelp|setActivityOpen/);
+  assert.doesNotMatch(security, /activityOpen|EventRow|EventIcon|groupSecurityEvents|formatSecurityActivity|securityActivityDateKey/);
+  assert.doesNotMatch(security, /travelApi\.securityActivity\(\)/);
+  assert.doesNotMatch(localization, /"activity"|"activityHelp"|"today"|"yesterday"|formatSecurityActivity|securityActivityDateKey/);
 });
 
 test("security loading and mutations retain API and session-expiry contracts", () => {
-  for (const call of ["securityOverview", "securitySessions", "securityActivity"])
+  for (const call of ["securityOverview", "securitySessions"])
     assert.match(security, new RegExp(`travelApi\\.${call}\\(\\)`));
   assert.match(security, /e instanceof TravelApiError && e\.status === 401/);
   assert.match(security, /signInHref\("\/security"\)/);
@@ -446,25 +407,20 @@ test("notification feedback copy is localized for every supported mobile locale"
   }
 });
 
-test("security uses selected-locale copy, event labels, and date metadata", () => {
+test("security uses selected-locale copy and date metadata", () => {
   assert.match(security, /const c = securityCopy\[locale\]/);
   assert.match(security, /formatSecurityDate\(value, locale\)/);
-  assert.match(security, /localizedAccountActivityLabel\(event\.type, locale, c\.unknown\)/);
   assert.doesNotMatch(security, /locale === "es-es"/);
   assert.doesNotMatch(security, /label="Add passkey"|>Created \{|A new Preview app binary/);
 });
 
-test("security dictionaries and activity labels cover all 18 locales", async () => {
+test("security dictionaries cover all 18 locales", async () => {
   const { mobileLocaleCodes } = await import("../../localization/mobileLocalizationCatalog");
   const { securityCopy } = await import("./securityLocalization");
-  const { accountActivityEventTypes, localizedAccountActivityLabel } = await import("../../localization/accountActivityLabels");
   assert.deepEqual(Object.keys(securityCopy).sort(), [...mobileLocaleCodes].sort());
   const englishKeys = Object.keys(securityCopy["en-us"]).sort();
   for (const locale of mobileLocaleCodes) {
     assert.deepEqual(Object.keys(securityCopy[locale]).sort(), englishKeys);
-    const resolved = accountActivityEventTypes.map((type) => localizedAccountActivityLabel(type, locale, securityCopy[locale].unknown));
-    assert.equal(new Set(resolved).size, accountActivityEventTypes.length, `${locale} must keep security event types distinguishable`);
-    assert.equal(localizedAccountActivityLabel("UNKNOWN_EVENT", locale, securityCopy[locale].unknown), securityCopy[locale].unknown);
   }
   assert.equal(securityCopy["es-es"].codeInvalid, "Introduce exactamente 6 dígitos.");
 });
