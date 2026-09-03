@@ -18,7 +18,32 @@ test("hotel card keeps provider data but never prints its internal label", () =>
   assert.match(api, /PublicHotelResult/);
 });
 
-test("hotel card gallery navigates and recovers failed images", () => { assert.match(card,/usableGallery\[activeImage\]/); assert.match(card,/Previous photo of/); assert.match(card,/Next photo of/); assert.match(card,/onError=/); assert.match(card,/Hotel image unavailable/); });
+test("hotel card gallery navigates, loops, and recovers failed images", () => {
+  assert.match(card, /usableGallery\[activeImage\]/);
+  assert.match(card, /usableGallery\.length>1/);
+  assert.match(card, /accessibilityRole="button" accessibilityLabel=\{`Previous photo of \$\{result\.name\}`\}/);
+  assert.match(card, /accessibilityRole="button" accessibilityLabel=\{`Next photo of \$\{result\.name\}`\}/);
+  assert.match(card, /setActiveImage\(index=>\(index-1\+usableGallery\.length\)%usableGallery\.length\)/);
+  assert.match(card, /setActiveImage\(index=>\(index\+1\)%usableGallery\.length\)/);
+  assert.match(card, /onError=/);
+  assert.match(card, /Hotel image unavailable/);
+});
+
+test("hotel card galleries use transparent 44dp edge controls matching mobile web", () => {
+  const galleryStyles = source.slice(source.indexOf("  galleryControl:"), source.indexOf("  overlay:"));
+
+  assert.match(galleryStyles, /galleryControl:\s*\{[^}]*position:\s*"absolute"[^}]*top:\s*"50%"[^}]*width:\s*44[^}]*height:\s*44/s);
+  assert.match(galleryStyles, /transform:\s*\[\{translateY:\s*-22\}\]/);
+  assert.match(galleryStyles, /galleryPrevious:\s*\{left:\s*0\}/);
+  assert.match(galleryStyles, /galleryNext:\s*\{right:\s*0\}/);
+  assert.match(galleryStyles, /galleryIconPrevious:\s*\{transform:\s*\[\{translateX:\s*-10\}\]\}/);
+  assert.match(galleryStyles, /galleryIconNext:\s*\{transform:\s*\[\{translateX:\s*10\}\]\}/);
+  assert.doesNotMatch(galleryStyles, /top:\s*"42%"|backgroundColor|borderRadius|left:\s*2|right:\s*2/);
+
+  assert.match(card, /<ChevronLeft accessible=\{false\} color="white" size=\{20\} style=\{s0\.galleryIconPrevious\}\/>/);
+  assert.match(card, /<ChevronRight accessible=\{false\} color="white" size=\{20\} style=\{s0\.galleryIconNext\}\/>/);
+  assert.doesNotMatch(galleryStyles, /rgba\(0,0,0,\.48\)/);
+});
 test("hotel actions independently save and share without share navigation", () => {
   assert.match(card, /<Heart\s/);
   assert.match(card, /canonical\.toggleHotel\(result, params\)/);
