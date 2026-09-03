@@ -100,16 +100,16 @@ test("flight dates use full resolved fares in wider, single-line tiles", () => {
   assert.doesNotMatch(dateStrip, /ellipsizeMode="clip"/);
 });
 
-test("hotel summary and shortcuts participate in one vertical scroll", () => { const hotelLayout=screen.slice(alternateLayoutStart,screen.indexOf("<FlightSortSheet",alternateLayoutStart)); assert.match(hotelLayout,/<ScrollView ref=\{hotelScrollRef\}[\s\S]*?<HotelResultsHeader[\s\S]*?\{filterRail\}[\s\S]*?\{resultContent\}/); assert.match(hotelLayout,/setHotelCompactHeader\(y>104\)/); });
+test("hotel summary and shortcuts participate in one vertical scroll", () => { const hotelLayout=screen.slice(alternateLayoutStart,screen.indexOf("<FlightSortSheet",alternateLayoutStart)); assert.match(hotelLayout,/<ScrollView ref=\{hotelScrollRef\}[\s\S]*?<HotelResultsHeader[\s\S]*?\{filterRail\}[\s\S]*?\{resultContent\}/); assert.match(hotelLayout,/setHotelCompactHeader\(y>hotelCompactHandoffY\.current\)/); assert.match(hotelLayout,/hotelCompactHandoffY\.current = nativeEvent\.layout\.y/); });
 test("hotel surviving sections own moderate spacing without changing the shared flight rail", () => {
   const hotelHeader = screen.slice(
     screen.indexOf("function HotelResultsHeader"),
     screen.indexOf("function FlightSortModal"),
   );
-  const headerSpacing = styleBlock("hotelHeader", "filterRail");
+  const headerSpacing = styleBlock("hotelInitialHeader", "hotelBackRow");
   const resultSpacing = styleBlock("hotelResultsContent", "flightResultsBody");
 
-  assert.match(hotelHeader, /style=\{\[s0\.flightHeader, s0\.hotelHeader,/);
+  assert.match(hotelHeader, /style=\{\[s0\.hotelInitialHeader,/);
   assert.match(headerSpacing, /marginBottom: 12/);
   assert.doesNotMatch(screen, /hotelHeaderMeta/);
   assert.match(resultSpacing, /paddingTop: 12/);

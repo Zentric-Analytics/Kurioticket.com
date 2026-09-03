@@ -148,17 +148,15 @@ test("canonical flight search data remains available after presentation metadata
 
 test("Hotel Results uses a scrolling summary and compact handoff header", () => { assert.match(results,/<ScrollView ref=\{hotelScrollRef\}[\s\S]*?<HotelResultsHeader[\s\S]*?\{filterRail\}/); assert.match(results,/hotelCompactHeader \?/); assert.match(results,/accessibilityLabel="Edit hotel search"/); });
 test("Hotel Results shares Flight's balanced controls and truncates long destinations", () => {
-  assert.match(hotelHeader, /style=\{s0\.flightHeaderMainRow\}/);
-  assert.match(hotelHeader, /style=\{s0\.flightHeaderSide\}/);
-  assert.match(hotelHeader, /s0\.flightHeaderBack/);
-  assert.match(hotelHeader, /style=\{s0\.flightHeaderRouteBlock\}/);
-  assert.match(hotelHeader, /s0\.flightHeaderRoute/);
-  assert.match(hotelHeader, /s0\.flightHeaderEdit/);
-  assert.match(hotelHeader, /numberOfLines=\{1\}[\s\S]*?ellipsizeMode="tail"[\s\S]*?\{destination\}/);
-  assert.match(styles, /flightHeaderSide: \{ width: 52/);
-  assert.match(styles, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
-  assert.match(styles, /flightHeaderRouteBlock: \{ flex: 1, minWidth: 0, alignItems: "center"/);
-  assert.match(styles, /flightHeaderEdit: \{[\s\S]*?width: 52,[\s\S]*?height: 44/);
+  assert.match(hotelHeader, /s0\.hotelBackRow/);
+  assert.match(hotelHeader, /s0\.hotelBackButton/);
+  assert.match(hotelHeader, /s0\.hotelSummaryBar/);
+  assert.match(hotelHeader, /s0\.hotelSummaryCopy/);
+  assert.match(hotelHeader, /s0\.hotelSummaryEditSlot/);
+  assert.match(hotelHeader, /numberOfLines=\{1\}[\s\S]*?ellipsizeMode="tail"[\s\S]*?summary\.primary/);
+  assert.match(styles, /hotelBackButton: \{ width: 44, height: 44/);
+  assert.match(styles, /hotelSummaryCopy: \{ flex: 1, minWidth: 0/);
+  assert.match(styles, /hotelSummaryEditSlot: \{ width: 44, minHeight: 44/);
 });
 
 test("Hotel Results shows the complete stay summary while Edit preserves canonical search state", () => {
