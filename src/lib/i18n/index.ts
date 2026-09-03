@@ -44,6 +44,7 @@ import { translations as vi } from "./vi";
 import { translations as yo } from "./yo";
 import { translations as zhCn } from "./zh-cn";
 import { translations as zhTw } from "./zh-tw";
+import { travelAccountTranslations } from "./travelAccount";
 
 export const dictionaries: Record<string, TranslationDictionary> = {
   "en-us": en, "en-gb": en, fr, de, "es-es": es, it, nl, "pt-br": ptBr, "pt-pt": ptPt,
@@ -98,10 +99,11 @@ const localeAliases: Record<string, string> = {
   "vi-vn": "vi",
 };
 export function getTranslations(locale?: string | null): TranslationDictionary {
-  if (!locale) return dictionaries[fallbackLocale];
+  if (!locale) return { ...dictionaries[fallbackLocale], ...travelAccountTranslations[fallbackLocale] };
   const normalized = locale.trim().toLowerCase();
   const resolvedLocale = localeAliases[normalized] ?? normalized;
-  return dictionaries[resolvedLocale] ?? dictionaries[fallbackLocale];
+  const selectedLocale = dictionaries[resolvedLocale] ? resolvedLocale : fallbackLocale;
+  return { ...dictionaries[selectedLocale], ...travelAccountTranslations[selectedLocale] };
 }
 
 export function getLocaleCountryCode(code: string): string {

@@ -3,10 +3,15 @@ import test from "node:test";
 import type { MobileRecentSearch } from "../../api/travelApi";
 import { recentSearchNavigation } from "./recentSearchNavigation";
 
-const recent = (type: "flight" | "hotel" | "car", params: Record<string, unknown>): MobileRecentSearch => ({
+const recent = (type: "flight" | "hotel" | "car" | "package", params: Record<string, unknown>): MobileRecentSearch => ({
   id: "recent-1", type, label: "Previous search", subtitle: "Stored search",
-  href: type === "flight" ? "/flights/results" : type === "hotel" ? "/hotels/results" : "/cars/results", params,
+  href: type === "flight" ? "/flights/results" : type === "hotel" ? "/hotels/results" : type === "car" ? "/cars/results" : "/packages/results", params,
   createdAt: "2026-08-24T00:00:00.000Z", updatedAt: "2026-08-24T00:00:00.000Z",
+});
+
+test("complete package search reopens native results while incomplete context returns to the form", () => {
+  assert.equal(recentSearchNavigation(recent("package", { mode: "hotel-flight", destination: "Paris", startDate: "2099-01-01", endDate: "2099-01-03" })).pathname, "/package-results");
+  assert.equal(recentSearchNavigation(recent("package", { mode: "hotel-flight", destination: "Paris" })).pathname, "/packages");
 });
 
 test("complete car search reopens results while incomplete legacy context returns to the form", () => {

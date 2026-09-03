@@ -99,7 +99,7 @@ test("flight price-alert eligibility is route-level while the count stays filter
 
 test("feature-disabled flight results pass availability into the switch while retaining existing alert management", () => {
   assert.match(resultsBody, /<PriceAlert product=\{product\} plan=\{plan\.plan\} results=\{results as FlightResult\[\]\} available=\{availability\.priceAlerts\} \/>/);
-  assert.match(resultsBody, /product === "hotel" && availability\.priceAlerts \? <PriceAlert/);
+  assert.match(resultsBody, /product === "hotel" && plan\.plan \? <PriceAlert[\s\S]*?hotelResults=\{results as HotelResult\[\]\}[\s\S]*?available=\{availability\.priceAlerts\}/);
 });
 
 test("loading and error states cannot expose the flight price alert", () => {

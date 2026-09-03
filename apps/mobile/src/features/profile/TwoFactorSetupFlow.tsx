@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, ActivityIndicator, Clipboard, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import type { TwoFactorSetup } from "../../api/travelApi";
@@ -25,6 +26,25 @@ export function TwoFactorSetupFlow({ active, copy: c, setup, recoveryCodes, auth
   const { theme } = useAppTheme();
   const { locale } = useMobileLocalization();
   const p = twoFactorPolishCopy[locale];
+  const [copiedAction, setCopiedAction] = useState<"setupKey" | "recoveryCodes" | null>(null);
+  const copyResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showCopiedFeedback = (action: "setupKey" | "recoveryCodes") => {
+    if (copyResetTimer.current) clearTimeout(copyResetTimer.current);
+    setCopiedAction(action);
+    copyResetTimer.current = setTimeout(() => {
+      setCopiedAction(null);
+      copyResetTimer.current = null;
+    }, 1000);
+  };
+
+  useEffect(() => {
+    if (!active) setCopiedAction(null);
+    return () => {
+      if (copyResetTimer.current) clearTimeout(copyResetTimer.current);
+      copyResetTimer.current = null;
+    };
+  }, [active]);
 
   if (!active) return null;
 
@@ -37,7 +57,7 @@ export function TwoFactorSetupFlow({ active, copy: c, setup, recoveryCodes, auth
       <View style={styles.recoveryGrid}>
         {recoveryCodes.map((code) => <View key={code} style={[styles.recoveryCode, { borderColor: theme.border, backgroundColor: theme.surface }]}><Text selectable style={[styles.recoveryCodeText, { color: theme.text }]}>{code}</Text></View>)}
       </View>
-      <Pressable accessibilityRole="button" onPress={() => { Clipboard.setString(formatRecoveryCodesForClipboard(recoveryCodes)); AccessibilityInfo.announceForAccessibility(p.copied); }} style={({ pressed }) => [styles.copyAllButton, { borderColor: theme.border }, pressed && styles.pressed]}><Text style={styles.copyAction}>{p.copyAllRecoveryCodes}</Text></Pressable>
+      <Pressable accessibilityRole="button" onPress={() => { Clipboard.setString(formatRecoveryCodesForClipboard(recoveryCodes)); showCopiedFeedback("recoveryCodes"); AccessibilityInfo.announceForAccessibility(p.copied); }} style={({ pressed }) => [styles.copyAllButton, { borderColor: theme.border }, pressed && styles.pressed]}><Text style={styles.copyAction}>{copiedAction === "recoveryCodes" ? p.copied : p.copyAllRecoveryCodes}</Text></Pressable>
       <PrimaryButton label={p.savedCodesAction} onPress={onClose} />
     </View>;
   }
@@ -63,7 +83,7 @@ export function TwoFactorSetupFlow({ active, copy: c, setup, recoveryCodes, auth
       <Text style={[styles.label, { color: theme.text }]}>{p.setupKey}</Text>
       <View style={[styles.keyBox, { borderColor: theme.border, backgroundColor: theme.surface }]}>
         <Text selectable numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={[styles.setupKey, { color: theme.text }]}>{setup.manualSetupKey}</Text>
-        <Pressable accessibilityRole="button" accessibilityLabel={`${p.copy} ${p.setupKey}`} onPress={() => { Clipboard.setString(setup.manualSetupKey); AccessibilityInfo.announceForAccessibility(p.copied); }} hitSlop={8} style={({ pressed }) => [styles.copyTouch, pressed && styles.pressed]}><Text style={styles.copyAction}>{p.copy}</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel={`${copiedAction === "setupKey" ? p.copied : p.copy} ${p.setupKey}`} onPress={() => { Clipboard.setString(setup.manualSetupKey); showCopiedFeedback("setupKey"); AccessibilityInfo.announceForAccessibility(p.copied); }} hitSlop={8} style={({ pressed }) => [styles.copyTouch, pressed && styles.pressed]}><Text style={styles.copyAction}>{copiedAction === "setupKey" ? p.copied : p.copy}</Text></Pressable>
       </View>
     </View>
 

@@ -1,74 +1,42 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import test from "node:test";
 
-const ui = readFileSync(resolve("src/features/search/SearchUi.tsx"), "utf8");
-const screen = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
-const pill = ui.slice(ui.indexOf("export function Pill"), ui.indexOf("export function DateStrip"));
-const styles = ui.slice(ui.indexOf("export const s = StyleSheet.create"));
-const rail = screen.slice(screen.indexOf("const filterRail"), screen.indexOf("const resultContent"));
+const controls = readFileSync("src/features/search/FlightResultsQuickControls.tsx", "utf8");
+const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
 
-function styleBlock(name: string, nextName: string) {
-  return styles.slice(styles.indexOf(`${name}:`), styles.indexOf(`${nextName}:`, styles.indexOf(`${name}:`)));
-}
-
-test("Flight Results quick controls retain their rail and behavior", () => {
-  assert.match(rail, /<ScrollView\s+horizontal/);
-  assert.match(rail, /showsHorizontalScrollIndicator=\{false\}/);
-  assert.match(rail, /label=\{flightSortQuickLabel\(sort\)\}[\s\S]*?setSortOpen\(true\)/);
-  assert.match(rail, /`Filter · \$\{activeFilterCount\}`[\s\S]*?openFlightFilters\("all"\)/);
-  assert.match(rail, /\["Airlines", "Stops"\][\s\S]*?filters\.maxStops[\s\S]*?filters\.airlines/);
-  assert.match(rail, /openFlightFilters\(x\.toLowerCase\(\) as "stops" \| "airlines"\)/);
-  for (const label of ["Filter", "Airlines", "Stops"]) assert.match(rail, new RegExp(`"${label}"`));
+test("Flight Results rail keeps the required control order and horizontal behavior", () => {
+  assert.match(controls, /<ScrollView horizontal/);
+  assert.match(controls, /showsHorizontalScrollIndicator=\{false\}/);
+  assert.match(controls, /flexWrap: "nowrap"/);
+  const order = ["sortLabels[safeSort]", 'label="Filters"', 'label="Airlines"', 'label="Stops"'].map((value) => controls.indexOf(value));
+  assert.ok(order.every((value) => value >= 0));
+  assert.deepEqual([...order].sort((a, b) => a - b), order);
 });
 
-test("Flight Results pills have compact dedicated geometry and press feedback", () => {
-  const flightPill = styleBlock("flightPill", "flightPillPressed");
-  assert.match(flightPill, /height: 38/);
-  assert.match(flightPill, /paddingHorizontal: 10/);
-  assert.match(flightPill, /borderRadius: 8/);
-  assert.match(flightPill, /borderWidth: 1/);
-  assert.match(flightPill, /gap: 6/);
-  assert.match(styleBlock("flightPillPressed", "flightPillText"), /opacity: 0\.82[\s\S]*?scale: 0\.985/);
-  assert.match(pill, /hitSlop=\{flightResults \? \{ top: 3, bottom: 3, left: 2, right: 2 \} : undefined\}/);
-  assert.match(pill, /style=\{\(\{ pressed \}\) => \[[\s\S]*?flightResults && pressed && s\.flightPillPressed/);
+test("sort labels are Best, Cheapest, and Fastest", () => {
+  assert.match(controls, /best: "Best", price: "Cheapest", duration: "Fastest"/);
+  assert.match(controls, /safeSort = sort === "price" \|\| sort === "duration" \? sort : "best"/);
 });
 
-test("Flight Results pills use theme-aware premium surfaces and typography", () => {
-  assert.equal(ui.match(/pale: "#F7F9FC"/)?.length, 1);
-  assert.match(pill, /theme\.dark \? theme\.surface : ui\.pale, borderColor: theme\.border/);
-  assert.match(pill, /theme\.dark \? "#142B55" : "#EEF4FF", borderColor: ui\.blue/);
-  assert.match(pill, /const selectedColor = theme\.dark \? "#8FB5FF" : ui\.blue/);
-  const text = styleBlock("flightPillText", "flightPillTextActive");
-  assert.match(text, /fontSize: 12/);
-  assert.match(text, /lineHeight: 16/);
-  assert.match(text, /fontWeight: "600"/);
-  assert.match(text, /fontFamily: appFonts\.semibold/);
-  assert.match(styleBlock("flightPillTextActive", "dateNavigator"), /fontWeight: "700"[\s\S]*?fontFamily: appFonts\.bold/);
+test("active controls use compact counts and accessible selected state", () => {
+  assert.match(controls, /accessibilityState=\{\{ expanded, selected: active \}\}/);
+  assert.match(controls, /count \? <View style=\{\[styles\.count/);
+  assert.match(screen, /activeFilterCount=\{activeFilterCount\}/);
+  assert.match(screen, /airlineCount=\{filters\.airlines\.length\}/);
+  assert.match(screen, /stopsActive=\{filters\.maxStops != null\}/);
+  assert.doesNotMatch(controls, /Filter ·/);
 });
 
-test("Flight Results decorative icons are quieter and correctly sized", () => {
-  assert.match(pill, /active \? selectedColor : theme\.textSecondary/);
-  assert.match(pill, /<SlidersHorizontal size=\{17\} strokeWidth=\{2\} color=\{iconColor\}/);
-  assert.match(pill, /<ChevronRight size=\{15\} strokeWidth=\{1\.9\} color=\{iconColor\}/);
+test("controls retain compact visual geometry with effective 44dp targets", () => {
+  assert.match(controls, /rail: \{ height: 44/);
+  assert.match(controls, /control: \{ height: 38, minHeight: 38/);
+  assert.match(controls, /hitSlop=\{\{ top: 3, bottom: 3, left: 2, right: 2 \}\}/);
+  assert.match(controls, /ChevronDown/);
 });
 
-test("generic Pills retain their existing contract and conditional overrides", () => {
-  const generic = styleBlock("pill", "pillActive");
-  assert.match(generic, /height: 38/);
-  assert.match(generic, /borderRadius: 10/);
-  assert.match(generic, /backgroundColor: "white"/);
-  assert.match(styleBlock("pillText", "flightPill"), /fontWeight: "700"/);
-  assert.match(pill, /flightResults && s\.flightPill/);
-  assert.match(pill, /active && !flightResults && s\.pillActive/);
-  assert.match(pill, /!icon && !flightResultsIcon[\s\S]*?<FlowIcon name="chevron" size=\{12\}/);
-  assert.match(pill, /icon \? \([\s\S]*?<FlowIcon name=\{icon\} size=\{15\}/);
-  assert.doesNotMatch(screen.slice(screen.indexOf('product === "hotel"'), screen.indexOf("<FlightSortModal")), /flightResultsIcon=\{"|flightResultsChevron=\{true\}/);
-});
-
-test("Flight Results pills preserve accessibility announcements", () => {
-  assert.match(pill, /accessibilityRole="button"/);
-  assert.match(pill, /accessibilityLabel=\{label\}/);
-  assert.match(pill, /accessibilityState=\{\{ selected: active \}\}/);
+test("sticky placement remains below the fading date strip", () => {
+  assert.match(screen, /ListHeaderComponent=\{status === "loading"[\s\S]*?: animatedFlightDateStrip\}/);
+  assert.match(screen, /renderSectionHeader=\{\(\) => status === "loading" \? null : \([\s\S]*?\{filterRail\}/);
+  assert.match(screen, /stickySectionHeadersEnabled/);
 });

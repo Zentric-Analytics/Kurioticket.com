@@ -142,8 +142,9 @@ test("desktop and guided contracts retain their responsive grid and owned disclo
   assert.match(source, /md:grid-cols-\[250px_minmax\(0,1fr\)\]/);
   assert.match(source, /lg:grid-cols-\[250px_minmax\(0,1fr\)_205px\]/);
   assert.match(source, /xl:grid-cols-\[270px_minmax\(0,1fr\)_205px\]/);
-  assert.match(source, /!guidedPlanning && offer\.freeCancellation/);
-  assert.match(source, /!guidedPlanning && offer\.payAtPickup/);
+  const desktop = source.slice(source.indexOf('data-region="heading"'));
+  assert.doesNotMatch(desktop, /offer\.freeCancellation|offer\.payAtPickup/);
+  assert.doesNotMatch(desktop, /Free cancellation|Pay at pickup/);
   assert.doesNotMatch(source, /Unlimited mileage|car\.limitedMileageKm/);
   assert.doesNotMatch(source, /<Fuel|title\(car\.fuelPolicy\)/);
   assert.doesNotMatch(source, /offer\.taxesAndFeesIncluded|Taxes and fees included/);

@@ -8,9 +8,10 @@ const keys = {
   flight: ["tripType", "origin", "from", "destination", "to", "departureDate", "returnDate", "adults", "children", "infants", "travelers", "cabinClass", "cabin"],
   hotel: ["destination", "checkIn", "checkOut", "guests", "rooms"],
   car: ["pickupLocation", "dropoffLocation", "pickupDate", "pickupTime", "dropoffDate", "dropoffTime", "driverAge"],
+  package: ["mode", "origin", "originCode", "destination", "destinationCode", "startDate", "endDate", "adults", "children", "infants", "rooms", "petFriendly", "cabin", "carPickupLocation", "carPickupDate", "carReturnDate", "carPickupTime", "carReturnTime", "carDriverAge", "stayDestinationLinked", "stayDatesLinked", "carPickupLinked", "carDatesLinked"],
 } as const;
 
-export function sanitizeSearchParams(product: "flight" | "hotel" | "car", value: unknown): SafeSearchParams {
+export function sanitizeSearchParams(product: "flight" | "hotel" | "car" | "package", value: unknown): SafeSearchParams {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   const source = value as Record<string, RouteValue>;
   return Object.fromEntries(keys[product].flatMap((key) => {

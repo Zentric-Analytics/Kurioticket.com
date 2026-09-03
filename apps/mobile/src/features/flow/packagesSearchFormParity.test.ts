@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 
 const form = readFileSync("src/features/flow/PackageSearchForm.tsx", "utf8");
+const model = readFileSync("src/features/flow/packageSearchModel.ts", "utf8");
 const primitives = readFileSync("src/features/flow/FlowPrimitives.tsx", "utf8");
 const screen = readFileSync("src/features/flow/ProductScreens.tsx", "utf8");
 
@@ -24,7 +25,8 @@ test("package fields expose one destination, date and coordinated party definiti
   assert.equal((form.match(/label="Destination"/g) ?? []).length, 1);
   assert.equal((form.match(/label="Travel dates"/g) ?? []).length, 1);
   assert.match(form, /"Travelers & Rooms"/);
-  assert.doesNotMatch(form, /Round-trip|One way-trip|Multi-city trip|packages\/results|package-results/);
+  assert.doesNotMatch(form, /Round-trip|One way-trip|Multi-city trip|packages\/results/);
+  assert.match(form, /pathname: "\/package-results"/);
 });
 
 test("package origin uses the shared default service without replacing user-controlled state", () => {
@@ -92,10 +94,11 @@ test("Packages shares the compact search field presentation", () => {
   assert.match(primitives, /export function CompactSearchField/);
 });
 
-test("Package form hides car-time presentation while retaining final Car handoff", () => {
+test("Package form hides car-time presentation while retaining times in canonical Package context", () => {
   assert.doesNotMatch(form, /label="Pick-up \/ Return time"|rentalTimesSummary|CarTimeRangeSheet|timesOpen|setTimesOpen/);
-  assert.match(form, /pickupTime: search\.carPickupTime/);
-  assert.match(form, /dropoffTime: search\.carReturnTime/);
+  assert.match(form, /params: packageRouteParams\(search\)/);
+  assert.match(model, /carPickupTime: search\.carPickupTime/);
+  assert.match(model, /carReturnTime: search\.carReturnTime/);
 });
 
 test("package suggestion presentation preserves shared destination architecture and linkage", () => {

@@ -44,7 +44,8 @@ test("Flight Results toggle manages alerts in place rather than opening Price Al
   assert.doesNotMatch(flightAlert.slice(0, flightAlert.indexOf("if (flight)")), /push\("\/price-alerts"\)/);
   assert.match(flightAlert, /updatePriceAlertStatus\(matchingAlert\.id, "ACTIVE"\)/);
   assert.match(flightAlert, /updatePriceAlertStatus\(matchingAlert\.id, "PAUSED"\)/);
-  assert.match(flightAlert, /createPriceAlert\(buildFlightPriceAlertPayload/);
+  assert.match(flightAlert, /createPriceAlert\(flight \? buildFlightPriceAlertPayload/);
+  assert.match(flightAlert, /: buildHotelPriceAlertPayload/);
 });
 
 test("Flight Results switch exposes real state and prevents duplicate pending taps", () => {
@@ -56,8 +57,8 @@ test("Flight Results switch exposes real state and prevents duplicate pending ta
 
 test("guest activation is gated by the canonical session and sign-in flow", () => {
   assert.match(flightAlert, /if \(!await readSession\(\)\.catch\(\(\) => null\)\)/);
-  assert.match(flightAlert, /"Sign in required"/);
-  assert.match(flightAlert, /"Sign in to track prices for this route\."/);
+  assert.match(flightAlert, /message\("signInRequired"\)/);
+  assert.match(flightAlert, /message\("signInAlertBody"\)/);
   assert.match(flightAlert, /router\.push\(signInHref\("\/\(tabs\)\/profile"\)\)/);
 });
 

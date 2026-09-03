@@ -322,7 +322,7 @@ test("loading and exceptional states use dedicated accessible presentations", ()
   assert.match(client, /DealsHandoffSkeleton/);
   assert.match(client, /<StatePanel/);
   assert.match(client, /progressUnsaved/);
-  assert.match(client, /getDealsTripPlanEstimatedTotal/);
+  assert.doesNotMatch(client + summary, /getDealsTripPlanEstimatedTotal|estimatedCombinedTotal|Estimated trip total/);
   assert.match(client, /packages\.handoff\.returnSearch/);
   assert.doesNotMatch(client + card, /line-clamp-|truncate|h-\[[^\]]+\]/);
 });
@@ -357,9 +357,8 @@ test("trip summary keeps its content without owning results navigation", () => {
   assert.match(summary, /aria-valuemin=\{0\}/);
   assert.match(summary, /aria-valuemax=\{total\}/);
   assert.match(summary, /aria-valuenow=\{opened\}/);
-  assert.match(summary, /packages\.handoff\.estimatedCombinedTotal/);
-  assert.match(summary, /packages\.handoff\.combinedEstimateUnavailable/);
-  assert.match(summary, /packages\.handoff\.estimateDisclosure/);
+  assert.match(summary, /Component prices remain separate/);
+  assert.match(summary, /No combined package price or discount is claimed/);
   assert.match(summary, /packages\.handoff\.openingDoesNotBook/);
   assert.match(summary, /packages\.handoff\.summaryRefreshRequired/);
   assert.doesNotMatch(summary, /\bnextId\b/);

@@ -1,6 +1,9 @@
 import type { StaticHotelRoomOption } from "@/lib/hotels/hotelRoomOptions";
+import { hotelDestinations } from "@/data/hotelDestinations";
+import { verifiedHotelCoverageProperties } from "./verifiedHotelCoverage";
 
 export type StaticHotelRecord = {
+  destinationId?: string;
   id: string;
   slug: string;
   name: string;
@@ -13,7 +16,7 @@ export type StaticHotelRecord = {
   longitude: number;
   neighbourhood: string;
   propertyType: string;
-  classificationStars: 1 | 2 | 3 | 4 | 5;
+  classificationStars?: 1 | 2 | 3 | 4 | 5;
   amenities: readonly string[];
   imageUrl: string;
   imageUrls: readonly string[];
@@ -21,8 +24,11 @@ export type StaticHotelRecord = {
   roomSummary: string;
   bedSummary: string;
   description: string;
-  indicativeNightlyPrice: number;
-  currency: "USD";
+  indicativeNightlyPrice?: number;
+  currency?: "USD";
+  inventoryKind?: "bookable" | "discovery";
+  officialSourceUrl?: string;
+  locationSourceUrl?: string;
   lastReviewed: string;
   searchTags: readonly string[];
   interestTags: readonly string[];
@@ -228,7 +234,7 @@ function verifiedCatalogueHotel(
       hotelId: input.id,
       roomSummary: input.roomSummary,
       bedSummary: input.bedSummary,
-      basePrice: input.indicativeNightlyPrice,
+    basePrice: input.indicativeNightlyPrice!,
     }),
   };
 }
@@ -1518,106 +1524,46 @@ const staticHotelProperties: readonly StaticHotelRecord[] = [
   ],
 ];
 
-type CatalogueExpansion = {
-  city: "London" | "Paris" | "New York" | "Tokyo";
-  country: string;
-  region: string;
-  aliases: readonly string[];
-  neighbourhoods: readonly string[];
-  names: readonly string[];
-  coordinateSeed: readonly [number, number];
-};
-
-const catalogueExpansions: readonly CatalogueExpansion[] = [
-  {
-    city: "London", country: "United Kingdom", region: "England",
-    aliases: ["london", "lon", "united kingdom", "uk", "england"],
-    neighbourhoods: ["Bloomsbury", "Marylebone", "Shoreditch", "Kensington", "Paddington", "Soho"],
-    names: ["Alder House Bloomsbury", "The Montague Lane", "Westbourne Court Hotel", "Limehouse & Co.", "The Arbour Marylebone", "Kensington Mews Hotel", "Thames Foundry Hotel", "The Borough Assembly", "Paddington Park Rooms", "The Sloane Atelier", "Clerkenwell House", "Regent Row Hotel", "The Camden Workshop", "Belgravia Terrace", "The Greenwich Chapter", "Mayfair Linen House", "The Hoxton Garden", "Victoria Gate Hotel", "The Chelsea Townhouse", "Southwark Social", "The Fitzrovia Edit", "Notting Hill House"],
-    coordinateSeed: [51.49, -0.19],
-  },
-  {
-    city: "Paris", country: "France", region: "Ile-de-France",
-    aliases: ["paris", "par", "france", "ile de france"],
-    neighbourhoods: ["Le Marais", "Saint-Germain", "Montmartre", "Opera", "Bastille", "Latin Quarter"],
-    names: ["Maison Rivoli", "Hotel Atelier Marais", "Le Jardin Saint-Paul", "Maison Odeon", "Hotel Lumiere Opera", "Le Faubourg Studio", "Maison des Arts", "Hotel Passage Bastille", "Le Cardinal Rive Gauche", "Maison Montorgueil", "Hotel du Canal", "Le Petit Trocadero", "Maison Voltaire", "Hotel Saint-Martin", "Le Jardin Pigalle", "Maison Madeleine", "Hotel des Archives", "Le Pavillon Latin", "Maison Batignolles", "Hotel Belleville", "Le Passage Montmartre", "Maison du Luxembourg"],
-    coordinateSeed: [48.84, 2.29],
-  },
-  {
-    city: "New York", country: "United States", region: "New York",
-    aliases: ["new york", "nyc", "new york city", "new york ny", "united states", "usa"],
-    neighbourhoods: ["Midtown", "Chelsea", "SoHo", "Tribeca", "Lower East Side", "Brooklyn Heights"],
-    names: ["The Mercer Row", "Hudson Assembly Hotel", "Bowery House & Co.", "The Lexington Edit", "West Chelsea Hotel", "The Tribeca Foundry", "Park Avenue House", "The Crosby Workshop", "Union Square Rooms", "The Franklin Court", "Orchard Street Hotel", "The Madison Atelier", "Canal House New York", "The Gramercy Chapter", "Riverside Social Hotel", "The Nolita Garden", "Broadway & Bryant", "The Fulton House", "Washington Square Hotel", "The High Line Studio", "Atlantic Avenue House", "The Brooklyn Promenade"],
-    coordinateSeed: [40.70, -74.02],
-  },
-  {
-    city: "Tokyo", country: "Japan", region: "Tokyo",
-    aliases: ["tokyo", "tyo", "japan"],
-    neighbourhoods: ["Shinjuku", "Ginza", "Shibuya", "Asakusa", "Marunouchi", "Roppongi"],
-    names: ["Kumo House Shinjuku", "Ginza Lantern Hotel", "Aoyama Garden Rooms", "Shibuya Canvas", "Asakusa Chapter", "Marunouchi Gate Hotel", "The Akasaka Edit", "Nihonbashi House", "Meguro Atelier", "Ueno Park Rooms", "Daikanyama Studio", "Kagurazaka Lane Hotel", "Harajuku Assembly", "Tsukiji Harbour House", "Roppongi Terrace", "Ebisu Garden Hotel", "Kanda Foundry", "Otemachi Social", "Yanaka House", "Ikebukuro Park Hotel", "Tokyo Bay Atelier", "Koenji Workshop Hotel"],
-    coordinateSeed: [35.65, 139.69],
-  },
-] as const;
-
 function slugifyHotelName(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
-const expandedStaticHotelProperties = catalogueExpansions.flatMap((destination) =>
-  destination.names.map((name, index) => {
-    const id = slugifyHotelName(`${name}-${destination.city}`);
-    const neighbourhood = destination.neighbourhoods[index % destination.neighbourhoods.length]!;
-    const price = 145 + ((index * 37 + destination.city.length * 11) % 330);
-    return verifiedCatalogueHotel({
-      ...common,
-      id,
-      name,
-      city: destination.city,
-      country: destination.country,
-      region: destination.region,
-      aliases: destination.aliases,
-      location: `${neighbourhood}, ${destination.city}`,
-      latitude: destination.coordinateSeed[0] + index * 0.0013,
-      longitude: destination.coordinateSeed[1] + index * 0.0017,
-      neighbourhood,
-      classificationStars: ((index % 3) + 3) as 3 | 4 | 5,
-      amenities: [
-        "Wi-Fi",
-        index % 2 ? "Breakfast" : "Restaurant",
-        index % 3 ? "Fitness centre" : "Concierge",
-        index % 4 ? "Air conditioning" : "Rooftop terrace",
-      ],
-      imageUrl: hotelImage,
-      imageProvenance: "Kurioticket curated static hotel fixture image",
-      roomSummary: index % 2 ? "Contemporary guest room options" : "Boutique room and suite options",
-      bedSummary: "Bed configuration varies by room",
-      description: `A curated planning property in ${neighbourhood}, with convenient access to ${destination.city}.`,
-      indicativeNightlyPrice: price,
-      lastReviewed: "2026-08-28",
-      searchTags: [neighbourhood.toLowerCase(), index % 2 ? "business" : "boutique", "central"],
-      interestTags: index % 2 ? ["dining", "business"] : ["culture", "shopping"],
-      familySuitable: index % 3 !== 0,
-      businessSuitable: index % 4 !== 0,
-      accessibility: common.accessibility,
-    });
-  }),
-);
+const verifiedCoverageHotelProperties: readonly StaticHotelRecord[] =
+  verifiedHotelCoverageProperties.map((property) => {
+    const destination = hotelDestinations.find((candidate) => candidate.id === property.destinationId);
+    if (!destination) throw new Error(`Unknown verified Hotel coverage destination: ${property.destinationId}`);
+    const id = slugifyHotelName(`${property.name}-${property.destinationId}-discovery`);
+    return {
+      id, slug: id, destinationId: destination.id, name: property.name,
+      city: destination.name, country: destination.country, region: destination.region ?? destination.country,
+      aliases: [destination.name, destination.searchValue, destination.country, ...(destination.aliases ?? [])],
+      location: property.streetAddress, latitude: property.latitude, longitude: property.longitude,
+      neighbourhood: destination.name, propertyType: "Hotel", amenities: [],
+      imageUrl: hotelImage, imageUrls: buildStaticHotelGallery(hotelImage, id),
+      imageProvenance: "Kurioticket approved neutral hotel fallback",
+      roomSummary: "Room details available from the property", bedSummary: "Bed configuration not supplied",
+      description: "A source-backed property included for destination discovery. Live availability, room facts, classification and prices are not supplied.",
+      lastReviewed: property.lastReviewed, searchTags: [destination.name.toLowerCase(), destination.country.toLowerCase()],
+      interestTags: [], familySuitable: false, businessSuitable: false, accessibility: [], roomOptions: [],
+      inventoryKind: "discovery", officialSourceUrl: property.officialSourceUrl, locationSourceUrl: property.locationSourceUrl,
+    };
+  });
 
 // Each property owns its planning facts and deterministic gallery. The result
 // layer can later be replaced by provider records without changing HotelCard.
 const hotelImageIndexByCity = new Map<string, number>();
+const curatedDestinationIdByCity = new Map<string, string>([
+  ["London", "gb-london"], ["Paris", "fr-paris"], ["New York", "us-new-york"], ["Tokyo", "jp-tokyo"],
+]);
 export const staticHotelCatalogue: readonly StaticHotelRecord[] = [
   ...staticHotelProperties,
-  ...expandedStaticHotelProperties,
+  ...verifiedCoverageHotelProperties,
 ].map((hotel) => {
   const destinationIndex = hotelImageIndexByCity.get(hotel.city) ?? 0;
   hotelImageIndexByCity.set(hotel.city, destinationIndex + 1);
-  return withCuratedResultGallery(hotel, destinationIndex);
+  return withCuratedResultGallery({ ...hotel, destinationId: hotel.destinationId ?? curatedDestinationIdByCity.get(hotel.city) }, destinationIndex);
 });
 
 export const supportedStaticHotelDestinations = [
-  "London",
-  "Paris",
-  "New York",
-  "Tokyo",
+  ...hotelDestinations.map((destination) => destination.name),
 ] as const;

@@ -1,6 +1,7 @@
 import { useMemo, useRef } from "react";
 import {
   Image,
+  type ImageSourcePropType,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -26,20 +27,29 @@ import { ResponsiveHero } from "./ResponsiveHero";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { PackageSearchForm } from "./PackageSearchForm";
 import { packageModes, type PackageMode } from "./packageSearchModel";
+import {
+  primaryHotelDestinationCards,
+  travelEntryPresentation,
+} from "../../../../../src/shared/presentation/travelEntryPresentation";
+import { buildHotelExplorationSearch } from "../../../../../src/lib/hotels/hotelExplorationSearch";
 
 function UnavailableProduct({ title, text }: { title: string; text: string }) {
   return <SafeAreaView style={flowStyles.safe}><View style={flowStyles.scroll}><Text accessibilityRole="header" style={flowStyles.title}>{title}</Text><UnavailableNotice text={text} /></View></SafeAreaView>;
 }
 
 function Page({
-  title,
+  productTitle,
+  heroTitle,
+  heroSubtitle,
   children,
   hero,
   heroWidth,
   heroHeight,
   focalY,
 }: {
-  title: string;
+  productTitle: string;
+  heroTitle: string;
+  heroSubtitle?: string;
   children: React.ReactNode;
   hero: number;
   heroWidth: number;
@@ -69,7 +79,7 @@ function Page({
             sourceHeight={heroHeight}
             height={290}
             focalY={focalY}
-            accessibilityLabel={`${title} hero image`}
+            accessibilityLabel={`${productTitle} hero image`}
           />
           <View style={[styles.heroHeader, { paddingTop: insets.top + 4 }]}>
             <View style={styles.heroActions}>
@@ -91,11 +101,15 @@ function Page({
               </Pressable>
             </View>
             <Text accessibilityRole="header" style={styles.heroTitle}>
-              {title}
+              {heroTitle}
             </Text>
+            {heroSubtitle ? <Text style={styles.heroSubtitle}>{heroSubtitle}</Text> : null}
           </View>
         </View>
-        <View style={styles.body}>{children}</View>
+        <View style={styles.body}>
+          <Text accessibilityRole="header" style={[ft.styles.sectionTitle, styles.productTitle]}>{productTitle}</Text>
+          {children}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -106,7 +120,7 @@ function Cards({
   onItemPress,
 }: {
   title: string;
-  items: { name: string; detail?: string; image?: number }[];
+  items: { name: string; detail?: string; image?: ImageSourcePropType; imageAlt?: string; accessibilityLabel?: string }[];
   onItemPress?: (name: string) => void;
 }) {
   const ft = useFlowTheme();
@@ -124,13 +138,7 @@ function Cards({
           <Pressable
             key={item.name}
             accessibilityRole={onItemPress ? "button" : undefined}
-            accessibilityLabel={
-              onItemPress
-                ? item.name === "JFK → LAX"
-                  ? "Use JFK to LAX as flight route"
-                  : `Use ${item.name} as hotel destination`
-                : undefined
-            }
+            accessibilityLabel={onItemPress ? item.accessibilityLabel ?? `Use ${item.name} as hotel destination` : undefined}
             disabled={!onItemPress}
             onPress={() => onItemPress?.(item.name)}
             style={({ pressed }) => [
@@ -144,7 +152,7 @@ function Cards({
             ]}
           >
             {item.image ? (
-              <Image source={item.image} style={styles.smallImage} />
+              <Image source={item.image} accessibilityLabel={item.imageAlt} style={styles.smallImage} />
             ) : null}
             <Text style={ft.styles.value}>{item.name}</Text>
             {item.detail ? (
@@ -164,18 +172,15 @@ export function FlightsScreen() {
   if (!loading && !availability.flightSearch) return <UnavailableProduct title="Flights" text="Flight search is temporarily unavailable. Your saved items and alerts are unchanged." />;
   return (
     <Page
-      title="Flights"
+      productTitle={travelEntryPresentation.flights.product}
+      heroTitle={travelEntryPresentation.flights.heroTitle}
+      heroSubtitle={travelEntryPresentation.flights.heroSubtitle}
       hero={require("../../../assets/heroes/flights-aircraft.png")}
       heroWidth={307}
       heroHeight={596}
       focalY={0.49}
     >
       <FlightSearchPanel ref={panel} params={params} />
-      <Cards
-        title="Routes"
-        items={[{ name: "JFK → LAX" }]}
-        onItemPress={() => panel.current?.useRouteShortcut()}
-      />
     </Page>
   );
 }
@@ -190,6 +195,18 @@ export function HotelsScreen() {
     rooms?: string | string[];
   }>();
   const panel = useRef<HotelSearchHandle>(null);
+  const openFeaturedDestination = (destinationQuery: string) => {
+    const destination = primaryHotelDestinationCards.find(
+      (card) => card.destinationQuery === destinationQuery,
+    );
+    if (!destination) return;
+    const params = buildHotelExplorationSearch({
+      destination: destination.destinationQuery,
+      destinationId: destination.canonicalDestinationId,
+      source: "hotels-featured",
+    });
+    if (params) router.push({ pathname: "/hotel-results", params });
+  };
   const { availability, loading } = useFeatureAvailability();
   if (loading) return <UnavailableProduct title="Hotels" text="Checking hotel search availability…" />;
   if (!loading && !availability.hotelSearch) return <UnavailableProduct title="Hotels" text="Hotel search is temporarily unavailable. Flights and cars remain available." />;
@@ -217,25 +234,21 @@ export function HotelsScreen() {
             accessibilityLabel="Hotels hero image"
           />
           <View pointerEvents="none" style={styles.hotelHeroOverlay} />
+          <Text accessibilityRole="header" style={styles.hotelHeroTitle}>{travelEntryPresentation.hotels.heroTitle}</Text>
         </View>
         <View style={styles.hotelBody}>
+          <Text accessibilityRole="header" style={[ft.styles.sectionTitle, styles.productTitle]}>{travelEntryPresentation.hotels.product}</Text>
           <HotelSearchPanel ref={panel} params={params} />
           <Cards
-            title="Featured destinations"
-            items={[
-              {
-                name: "New York",
-                image: require("../../../assets/destinations/new-york.jpg"),
-              },
-              {
-                name: "Paris",
-                image: require("../../../assets/destinations/paris.jpg"),
-              },
-              { name: "Bali" },
-            ]}
-            onItemPress={(destination) =>
-              panel.current?.useDestination(destination)
-            }
+            title="Explore hotel stays by destination"
+            items={primaryHotelDestinationCards.map((destination) => ({
+              name: destination.destinationQuery,
+              detail: destination.title,
+              image: { uri: destination.image },
+              imageAlt: destination.imageAlt,
+              accessibilityLabel: destination.linkLabel,
+            }))}
+            onItemPress={openFeaturedDestination}
           />
         </View>
       </ScrollView>
@@ -249,7 +262,6 @@ function ThemedHotelsRoot({ children }: { children: React.ReactNode }) {
 }
 
 export function CarsScreen() {
-  const ft = useFlowTheme();
   const params = useLocalSearchParams<{
     pickupLocation?: string | string[];
     dropoffLocation?: string | string[];
@@ -264,21 +276,14 @@ export function CarsScreen() {
   if (!loading && !availability.carSearch) return <UnavailableProduct title="Cars" text="Car search is temporarily unavailable. Flights and hotels remain available." />;
   return (
     <Page
-      title="Cars"
+      productTitle={travelEntryPresentation.cars.product}
+      heroTitle={travelEntryPresentation.cars.heroTitle}
       hero={require("../../../assets/heroes/cars-suv.png")}
       heroWidth={308}
       heroHeight={596}
       focalY={0.66}
     >
       <CarSearchPanel params={params} requireManualDetails />
-      <Cards
-        title="Vehicle types"
-        items={[{ name: "Economy" }, { name: "SUV" }, { name: "Luxury" }]}
-      />
-      <Text style={[styles.categoryNote, { color: ft.colors.secondaryText }]}>
-        Examples of common rental vehicle types. Availability is shown only
-        after a search.
-      </Text>
     </Page>
   );
 }
@@ -296,7 +301,8 @@ export function DealsScreen() {
   if (!availability.deals) return <UnavailableProduct title="Packages" text="Packages are temporarily unavailable. You can still search available flights, hotels, and cars separately." />;
   return (
     <Page
-      title="Packages"
+      productTitle="Packages"
+      heroTitle="Packages"
       hero={require("../../../assets/heroes/deals-balloons.png")}
       heroWidth={308}
       heroHeight={596}
@@ -379,13 +385,17 @@ const styles = StyleSheet.create({
   heroHeader: { ...StyleSheet.absoluteFillObject, paddingHorizontal: 5 },
   heroActions: { flexDirection: "row", justifyContent: "space-between" },
   heroTitle: {
-    color: flowColors.navy,
-    fontSize: 23,
-    lineHeight: 30,
+    color: "white",
+    fontSize: 25,
+    lineHeight: 31,
     fontWeight: "800",
     marginHorizontal: 9,
-    marginTop: 2,
+    marginTop: 8,
+    maxWidth: 330,
   },
+  heroSubtitle: { color: "white", fontSize: 14, lineHeight: 20, marginHorizontal: 9, marginTop: 6, maxWidth: 330 },
+  hotelHeroTitle: { position: "absolute", left: 14, right: 14, bottom: 38, color: "white", fontSize: 25, lineHeight: 31, fontWeight: "800" },
+  productTitle: { paddingHorizontal: 8, paddingTop: 4 },
   body: { marginTop: -22, gap: 12 },
   row: { flexDirection: "row" },
   half: { flex: 1 },

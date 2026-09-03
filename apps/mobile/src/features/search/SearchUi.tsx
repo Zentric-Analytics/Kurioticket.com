@@ -537,7 +537,7 @@ export const s = StyleSheet.create({
   dates: { gap: 9, alignItems: "center" },
   flightDateNavigator: { height: 82, paddingHorizontal: 0 },
   nearbyDateInsight: { minHeight: 28, justifyContent: "center", paddingHorizontal: 14, marginTop: -2 },
-  nearbyDateInsightText: { minWidth: 0, flexShrink: 1, fontSize: 12, lineHeight: 16, fontWeight: "600" },
+  nearbyDateInsightText: { minWidth: 0, flexShrink: 1, fontSize: 11, lineHeight: 15, fontWeight: "600" },
   flightDateRail: { height: 82 },
   flightDates: { paddingHorizontal: 16, paddingVertical: 5 },
   arrow: {
@@ -576,8 +576,8 @@ export const s = StyleSheet.create({
   day: { fontSize: 12, lineHeight: 16, color: ui.muted },
   datePrice: { maxWidth: "100%", fontSize: 16, fontWeight: "800", color: ui.navy, marginTop: 1 },
   flightDateWeekday: { width: "100%", fontSize: 10, fontWeight: "600", fontFamily: appFonts.semibold, lineHeight: 13, letterSpacing: 0.5, textAlign: "center" },
-  flightDateLabel: { width: "100%", fontSize: 12, fontWeight: "700", fontFamily: appFonts.bold, lineHeight: 15, letterSpacing: 0.2, textAlign: "center" },
-  flightDatePrice: { width: "100%", height: 14, marginTop: 3, fontSize: 11, fontWeight: "600", fontFamily: appFonts.semibold, textAlign: "center", lineHeight: 14, paddingHorizontal: 1 },
+  flightDateLabel: { width: "100%", fontSize: 11, fontWeight: "700", fontFamily: appFonts.bold, lineHeight: 14, letterSpacing: 0.2, textAlign: "center" },
+  flightDatePrice: { width: "100%", minWidth: 0, flexShrink: 1, height: 14, marginTop: 3, fontSize: 11, fontWeight: "600", fontFamily: appFonts.semibold, textAlign: "center", lineHeight: 14, paddingHorizontal: 1, fontVariant: ["tabular-nums"] },
   button: {
     height: 45,
     minWidth: 104,

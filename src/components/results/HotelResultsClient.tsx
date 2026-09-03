@@ -14,6 +14,7 @@ import { HotelCardSkeleton } from "@/components/ui/Skeleton";
 import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
+import { HotelPriceAlertControl } from "@/components/results/HotelPriceAlertControl";
 import { buildHotelFacilityFilterOptions, hotelMatchesFacilityFilters } from "@/components/results/hotelFacilityFilter";
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
 import { MobileResultsEditSheet } from "@/components/search/MobileResultsEditSheet";
@@ -241,6 +242,7 @@ const getResultMaxPrice = (hotels: PublicHotelResult[], rates?: ExchangeRates) =
 type HotelSummarySortMode = "cheapest" | "bestValue" | "topRated";
 
 type HotelMobileSearchDraft = {
+  destinationId?: string;
   destination: string;
   checkIn: string;
   checkOut: string;
@@ -256,6 +258,7 @@ export function HotelResultsClient() {
   const params = useSearchParams();
   const searchInput = useMemo<HotelResultsSearchInput>(
     () => ({
+      destinationId: params.get("destinationId") || undefined,
       destination: normalizeHotelDestinationSearchValue(params.get("destination") || ""),
       checkIn: params.get("checkIn") || "",
       checkOut: params.get("checkOut") || "",
@@ -354,23 +357,25 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const body = useMemo(() => ({ ...searchInput, sort: searchInput.sort || "cheapest" }), [searchInput]);
   const hotelDetailsSearchParams = useMemo(() => {
     return new URLSearchParams({
+      ...(body.destinationId ? { destinationId: body.destinationId } : {}),
       destination: body.destination,
       checkIn: body.checkIn,
       checkOut: body.checkOut,
       guests: String(body.guests),
       rooms: String(body.rooms),
     }).toString();
-  }, [body.checkIn, body.checkOut, body.destination, body.guests, body.rooms]);
-  const bodySearchKey = [body.destination, body.checkIn, body.checkOut, body.guests, body.rooms].join("-");
+  }, [body.checkIn, body.checkOut, body.destination, body.destinationId, body.guests, body.rooms]);
+  const bodySearchKey = [body.destinationId, body.destination, body.checkIn, body.checkOut, body.guests, body.rooms].join("-");
   const bodyMobileSearchDraft = useMemo<HotelMobileSearchDraft>(
     () => ({
+      destinationId: body.destinationId,
       destination: body.destination,
       checkIn: body.checkIn,
       checkOut: body.checkOut,
       guests: body.guests,
       rooms: body.rooms,
     }),
-    [body.checkIn, body.checkOut, body.destination, body.guests, body.rooms],
+    [body.checkIn, body.checkOut, body.destination, body.destinationId, body.guests, body.rooms],
   );
   const [mobileHotelSearchDraft, setMobileHotelSearchDraft] = useState<HotelMobileSearchDraft>(() => bodyMobileSearchDraft);
   const [mobileHotelSearchDraftKey, setMobileHotelSearchDraftKey] = useState(bodySearchKey);
@@ -1953,6 +1958,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                       </span>
                     </p>
                   ) : null}
+
+                  {!guided && results.length > 0 ? <HotelPriceAlertControl search={{ destination: body.destination, checkIn: body.checkIn, checkOut: body.checkOut, guests: body.guests, rooms: body.rooms }} results={results} /> : null}
 
                   <div ref={paginationListRef} aria-busy={paginationPendingPage !== null} style={paginationMinHeight ? { minHeight: paginationMinHeight } : undefined} className={cn("space-y-4", paginationRevealing && "animate-[fadeIn_150ms_ease-out]")}>
                     {filterApplying || paginationTransitionPhase === "covering" ? (

@@ -7,14 +7,10 @@ import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { DealsHandoffStepCard } from "./DealsHandoffStepCard";
 import { DealsHandoffSummary } from "./DealsHandoffSummary";
 import { DealsJourneyProgress } from "./DealsJourneyProgress";
-import {
-  formatCurrency,
-  formatDisplayPrice,
-} from "@/lib/currency/formatCurrency";
+import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { getDealsHandoffSteps } from "@/lib/deals/dealsHandoffPresentation";
 import { getHandoffReadyDealsJourneyProgress } from "@/lib/deals/dealsJourneyProgress";
 import {
-  getDealsTripPlanEstimatedTotal,
   getNextDealsProviderStep,
   type DealsTripPlan,
   type DealsTripPlanProduct,
@@ -39,7 +35,6 @@ type Props = {
   orderedProducts?: readonly DealsTripPlanProduct[];
   guided?: boolean;
   recoveryHrefs?: Partial<Record<DealsTripPlanProduct, string>>;
-  combinedTotal?: number | null;
 };
 
 export function DealsHandoffExperience({
@@ -55,7 +50,6 @@ export function DealsHandoffExperience({
   orderedProducts,
   guided = false,
   recoveryHrefs,
-  combinedTotal,
 }: Props) {
   const { start } = useRouteProgress();
   const steps = useMemo(
@@ -75,10 +69,6 @@ export function DealsHandoffExperience({
     actionable.length > 0 &&
     opened === actionable.length;
   const total = guided ? steps.length : actionable.length;
-  const combined =
-    combinedTotal === undefined
-      ? getDealsTripPlanEstimatedTotal(plan, selectedCurrency, rates.rates)
-      : combinedTotal;
   const progress = t("deals.handoff.progress")
     .replace("{{opened}}", String(opened))
     .replace("{{total}}", String(total));
@@ -110,11 +100,6 @@ export function DealsHandoffExperience({
           modeLabel={t(modeKeys[plan.mode])}
           opened={opened}
           total={total}
-          totalLabel={
-            combined === null
-              ? null
-              : formatCurrency(combined, selectedCurrency)
-          }
           progressLabel={progress}
           allOpened={guided ? allOpened : legacyNext.allOpened}
           hasExpired={hasExpired}
