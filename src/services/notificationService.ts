@@ -9,6 +9,7 @@ export type NotificationEmail = { kind: "none" } | { kind: "optional"; category:
 
 const allowedActionPaths = new Set<NotificationActionPath>(["/price-alerts", "/saved", "/settings", "/personal-information", "/security", "/support"]);
 const mobileNotificationSelect = { id: true, type: true, title: true, body: true, actionPath: true, metadata: true, readAt: true, createdAt: true } as const;
+const DAY_MS = 24 * 60 * 60 * 1_000;
 let notificationPrismaForTesting: ReturnType<typeof getPrisma> | null = null;
 function notificationDb() { return notificationPrismaForTesting ?? getPrisma(); }
 
@@ -58,23 +59,42 @@ export async function createNotificationEvent(input: CanonicalNotificationInput)
   }
 }
 
-export async function listNotifications(userId: string, input: { cursor?: string; limit?: number } = {}) {
+export async function listNotifications(userId: string, input: { cursor?: string; limit?: number; now?: Date } = {}) {
   const limit = Math.min(Math.max(input.limit ?? 20, 1), 50);
   if (input.cursor && !await notificationDb().notification.findFirst({ where: { id: input.cursor, userId }, select: { id: true } })) throw new InvalidNotificationCursorError();
-  const rows = await notificationDb().notification.findMany({ where: { userId }, select: mobileNotificationSelect, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: limit + 1, ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}) });
+  const rows = await notificationDb().notification.findMany({ where: mobileNotificationVisibilityWhere(userId, input.now), select: mobileNotificationSelect, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: limit + 1, ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}) });
   const hasMore = rows.length > limit;
   const items = (hasMore ? rows.slice(0, limit) : rows).map(serializeMobileNotification);
   return { items, nextCursor: hasMore ? items.at(-1)!.id : null };
 }
 
-export async function getUnreadNotificationCount(userId: string) { return notificationDb().notification.count({ where: { userId, readAt: null } }); }
+export async function getUnreadNotificationCount(userId: string, now?: Date) { return notificationDb().notification.count({ where: { ...mobileNotificationVisibilityWhere(userId, now), readAt: null } }); }
 export async function markNotificationRead(userId: string, id: string) {
-  const result = await notificationDb().notification.updateMany({ where: { id, userId, readAt: null }, data: { readAt: new Date() } });
-  const notification = await notificationDb().notification.findFirst({ where: { id, userId }, select: mobileNotificationSelect });
+  const visibility = mobileNotificationVisibilityWhere(userId);
+  const result = await notificationDb().notification.updateMany({ where: { ...visibility, id, readAt: null }, data: { readAt: new Date() } });
+  const notification = await notificationDb().notification.findFirst({ where: { ...visibility, id }, select: mobileNotificationSelect });
   return { notification: notification ? serializeMobileNotification(notification) : null, changed: result.count > 0 };
 }
-export async function markAllNotificationsRead(userId: string) { return notificationDb().notification.updateMany({ where: { userId, readAt: null }, data: { readAt: new Date() } }); }
+export async function markAllNotificationsRead(userId: string) { return notificationDb().notification.updateMany({ where: { ...mobileNotificationVisibilityWhere(userId), readAt: null }, data: { readAt: new Date() } }); }
+export async function deleteNotification(userId: string, id: string) {
+  const existing = await notificationDb().notification.findFirst({ where: { id, userId }, select: { id: true } });
+  if (!existing) return { found: false, deleted: false };
+  const result = await notificationDb().notification.updateMany({ where: { id, userId, deletedAt: null }, data: { deletedAt: new Date() } });
+  return { found: true, deleted: result.count > 0 };
+}
 export class InvalidNotificationCursorError extends Error {}
+export function mobileNotificationVisibilityWhere(userId: string, now = new Date()) {
+  const sevenDaysAgo = new Date(now.getTime() - 7 * DAY_MS);
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * DAY_MS);
+  return {
+    userId,
+    deletedAt: null,
+    OR: [
+      { type: { in: ["PRICE_ALERT", "TRAVEL_INSIGHT"] as CanonicalNotificationType[] }, createdAt: { gt: sevenDaysAgo } },
+      { type: { in: ["SUPPORT_UPDATE", "SECURITY_UPDATE", "ACCOUNT_UPDATE", "SYSTEM"] as CanonicalNotificationType[] }, createdAt: { gt: thirtyDaysAgo } },
+    ],
+  };
+}
 function serializeMobileNotification<T extends { type: string; actionPath: string | null; metadata?: unknown }>(notification: T) {
   let actionPath = validateNotificationActionPath(notification.actionPath);
   if (notification.actionPath === null) return { ...notification, actionPath };

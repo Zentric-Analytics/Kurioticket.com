@@ -210,6 +210,7 @@ export const travelApi = {
   notifications: (cursor?: string) => request<MobileNotificationPage>(`/api/mobile/v1/notifications${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`),
   notificationUnreadCount: () => request<{ count: number }>("/api/mobile/v1/notifications/unread-count"),
   markNotificationRead: (id: string) => request<{ notification: MobileNotification; changed: boolean }>(`/api/mobile/v1/notifications/${encodeURIComponent(id)}`, { method: "PATCH" }),
+  deleteNotification: (id: string) => request<{ deleted: true; changed: boolean }>(`/api/mobile/v1/notifications/${encodeURIComponent(id)}`, { method: "DELETE" }),
   markAllNotificationsRead: () => request<{ updated: number }>("/api/mobile/v1/notifications", { method: "PATCH" }),
   location: () => request<MobileLocation>("/api/location"),
   currencyRates: () => request<CurrencyRates>("/api/currency/rates"),
