@@ -242,6 +242,7 @@ const getResultMaxPrice = (hotels: PublicHotelResult[], rates?: ExchangeRates) =
 type HotelSummarySortMode = "cheapest" | "bestValue" | "topRated";
 
 type HotelMobileSearchDraft = {
+  destinationId?: string;
   destination: string;
   checkIn: string;
   checkOut: string;
@@ -257,6 +258,7 @@ export function HotelResultsClient() {
   const params = useSearchParams();
   const searchInput = useMemo<HotelResultsSearchInput>(
     () => ({
+      destinationId: params.get("destinationId") || undefined,
       destination: normalizeHotelDestinationSearchValue(params.get("destination") || ""),
       checkIn: params.get("checkIn") || "",
       checkOut: params.get("checkOut") || "",
@@ -355,23 +357,25 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const body = useMemo(() => ({ ...searchInput, sort: searchInput.sort || "cheapest" }), [searchInput]);
   const hotelDetailsSearchParams = useMemo(() => {
     return new URLSearchParams({
+      ...(body.destinationId ? { destinationId: body.destinationId } : {}),
       destination: body.destination,
       checkIn: body.checkIn,
       checkOut: body.checkOut,
       guests: String(body.guests),
       rooms: String(body.rooms),
     }).toString();
-  }, [body.checkIn, body.checkOut, body.destination, body.guests, body.rooms]);
-  const bodySearchKey = [body.destination, body.checkIn, body.checkOut, body.guests, body.rooms].join("-");
+  }, [body.checkIn, body.checkOut, body.destination, body.destinationId, body.guests, body.rooms]);
+  const bodySearchKey = [body.destinationId, body.destination, body.checkIn, body.checkOut, body.guests, body.rooms].join("-");
   const bodyMobileSearchDraft = useMemo<HotelMobileSearchDraft>(
     () => ({
+      destinationId: body.destinationId,
       destination: body.destination,
       checkIn: body.checkIn,
       checkOut: body.checkOut,
       guests: body.guests,
       rooms: body.rooms,
     }),
-    [body.checkIn, body.checkOut, body.destination, body.guests, body.rooms],
+    [body.checkIn, body.checkOut, body.destination, body.destinationId, body.guests, body.rooms],
   );
   const [mobileHotelSearchDraft, setMobileHotelSearchDraft] = useState<HotelMobileSearchDraft>(() => bodyMobileSearchDraft);
   const [mobileHotelSearchDraftKey, setMobileHotelSearchDraftKey] = useState(bodySearchKey);

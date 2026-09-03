@@ -7,6 +7,7 @@ import {
   getPopularDestinationsByRegion,
   type PopularDestination,
 } from "../../data/marketHomeContent";
+import { resolveHotelDiscoveryIntent } from "../../lib/hotels/hotelDiscoveryIntent";
 
 export const HOME_HOTEL_DESTINATION_LIMIT = 8;
 export const HOME_ADVENTURE_DESTINATION_LIMIT = 8;
@@ -20,10 +21,11 @@ export type MarketplaceHomeMerchandising = {
 export function getMarketplaceHomeMerchandising(
   marketCountryCode: string,
 ): MarketplaceHomeMerchandising {
-  const hotelDestinations = getPopularDestinationsByRegion(marketCountryCode).items.slice(
-    0,
-    HOME_HOTEL_DESTINATION_LIMIT,
-  );
+  const hotelDestinations = getPopularDestinationsByRegion(marketCountryCode)
+    .items.filter((destination) =>
+      Boolean(resolveHotelDiscoveryIntent(`${destination.city}, ${destination.country}`, "home-popular-stays")),
+    )
+    .slice(0, HOME_HOTEL_DESTINATION_LIMIT);
   const adventureRoutes = getHomeDiscoveryImageCardsByRegion(marketCountryCode).slice(
     0,
     HOME_ADVENTURE_DESTINATION_LIMIT,
