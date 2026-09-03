@@ -144,6 +144,7 @@ import type { MobileLocale } from "../../localization/mobileLocalizationCatalog"
 import { travelAccountMessage } from "../../localization/travelAccountMessages";
 import { buildHotelResultsSummary } from "./hotelResultsSummary";
 import { flightResultsCopy, flightResultsSummary } from "./flightResultsSummary";
+import { getHotelLocationFieldDisplay } from "@/lib/search/hotelLocationFieldDisplay";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -602,8 +603,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     setFilters(emptyFlightFilters());
   }, [plan.plan?.key]);
   const payload = plan.plan?.payload || {};
+  const canonicalHotelDestination = String(payload.destination || "");
+  const hotelDestinationDisplay = getHotelLocationFieldDisplay(canonicalHotelDestination, locale);
   const hotelSummary = buildHotelResultsSummary({
-    destination: String(payload.destination || ""),
+    destination: hotelDestinationDisplay.primary || canonicalHotelDestination.trim(),
     checkIn: String(payload.checkIn || ""),
     checkOut: String(payload.checkOut || ""),
     guests: Number(payload.guests) || 1,

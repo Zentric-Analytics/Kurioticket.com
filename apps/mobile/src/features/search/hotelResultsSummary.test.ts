@@ -14,20 +14,36 @@ test("English compact date ranges cover same month, cross month, and cross year"
 
 test("date-only parsing rejects malformed, impossible, and reversed ranges", () => {
   assert.equal(formatCompactHotelDateRange("not-a-date", "2026-09-05", "en-us"), null);
+  assert.equal(formatCompactHotelDateRange("09/03/2026", "2026-09-05", "en-us"), null);
   assert.equal(formatCompactHotelDateRange("2026-02-30", "2026-03-02", "en-us"), null);
   assert.equal(formatCompactHotelDateRange("2026-09-05", "2026-09-03", "en-us"), null);
 });
 
-test("date-only formatting is timezone safe and localized", () => {
+test("date-only formatting is timezone safe and localized without formatRange", () => {
   const originalTimezone = process.env.TZ;
   try {
     process.env.TZ = "Pacific/Honolulu";
     assert.equal(formatCompactHotelDateRange("2026-09-03", "2026-09-05", "en-us"), "Sep 3 – 5, 2026");
+    process.env.TZ = "Pacific/Kiritimati";
+    assert.equal(formatCompactHotelDateRange("2026-09-03", "2026-09-05", "en-us"), "Sep 3 – 5, 2026");
     assert.match(formatCompactHotelDateRange("2026-09-03", "2026-09-05", "de-de") ?? "", /3.*5.*Sept.*2026/);
-    assert.match(formatCompactHotelDateRange("2026-09-03", "2026-09-05", "ja") ?? "", /2026.*09.*03.*2026.*09.*05/);
+    assert.match(formatCompactHotelDateRange("2026-09-03", "2026-09-05", "ja") ?? "", /2026.*9.*3.*5/);
+    assert.match(formatCompactHotelDateRange("2026-09-03", "2026-09-05", "ko") ?? "", /2026.*9.*3.*5/);
+    assert.match(formatCompactHotelDateRange("2026-09-03", "2026-09-05", "ar") ?? "", /2026|٢٠٢٦/);
+    assert.match(formatCompactHotelDateRange("2026-09-03", "2026-09-05", "fr") ?? "", /3.*5.*sept.*2026/i);
   } finally {
     process.env.TZ = originalTimezone;
   }
+});
+
+test("same-day ranges render one complete date", () => {
+  assert.equal(formatCompactHotelDateRange("2026-09-03", "2026-09-03", "en-us"), "Sep 3, 2026");
+});
+
+test("Thai Hotel dates explicitly retain the Gregorian stay year", () => {
+  const result = formatCompactHotelDateRange("2026-09-03", "2026-09-05", "th") ?? "";
+  assert.match(result, /2026/);
+  assert.doesNotMatch(result, /2569/);
 });
 
 test("English occupancy uses current web singular and plural semantics", () => {
@@ -45,16 +61,16 @@ test("locale-specific occupancy templates preserve production web order and punc
   assert.equal(formatHotelOccupancy(2, 1, "es-es"), "2 huéspedes, 1 habitación");
 });
 
-test("results presentation retains the canonical destination and exact English summary", () => {
+test("results presentation uses its supplied customer-facing destination and exact English summary", () => {
   assert.deepEqual(buildHotelResultsSummary({
-    destination: " Paris, France ",
+    destination: " Paris ",
     checkIn: "2026-09-03",
     checkOut: "2026-09-05",
     guests: 1,
     rooms: 1,
     locale: "en-us",
   }), {
-    destination: "Paris, France",
+    destination: "Paris",
     secondaryLine: "Sep 3 – 5, 2026 · 1 guest, 1 room",
   });
 });

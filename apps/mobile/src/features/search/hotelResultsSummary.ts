@@ -27,7 +27,7 @@ const hotelSummaryCopy: Record<MobileLocale, HotelSummaryCopy> = {
   pl: { intlLocale: "pl-PL", resultsSummary: "{{dates}} · {{summary}}", guestsRoomsSummary: "{{guests}} {{guestLabel}}, {{rooms}} {{roomLabel}}", guestSingular: "gość", guestPlural: "gości", roomSingular: "pokój", roomPlural: "pokoje" },
   sv: { intlLocale: "sv-SE", resultsSummary: "{{dates}} · {{summary}}", guestsRoomsSummary: "{{guests}} {{guestLabel}}, {{rooms}} {{roomLabel}}", guestSingular: "gäst", guestPlural: "gäster", roomSingular: "rum", roomPlural: "rum" },
   id: { intlLocale: "id-ID", resultsSummary: "{{dates}} · {{summary}}", guestsRoomsSummary: "{{guests}} {{guestLabel}}, {{rooms}} {{roomLabel}}", guestSingular: "tamu", guestPlural: "tamu", roomSingular: "kamar", roomPlural: "kamar" },
-  th: { intlLocale: "th-TH", resultsSummary: "{{dates}} · {{summary}}", guestsRoomsSummary: "{{guests}} {{guestLabel}}, {{rooms}} {{roomLabel}}", guestSingular: "ผู้เข้าพัก", guestPlural: "ผู้เข้าพัก", roomSingular: "ห้อง", roomPlural: "ห้อง" },
+  th: { intlLocale: "th-TH-u-ca-gregory", resultsSummary: "{{dates}} · {{summary}}", guestsRoomsSummary: "{{guests}} {{guestLabel}}, {{rooms}} {{roomLabel}}", guestSingular: "ผู้เข้าพัก", guestPlural: "ผู้เข้าพัก", roomSingular: "ห้อง", roomPlural: "ห้อง" },
   vi: { intlLocale: "vi-VN", resultsSummary: "{{dates}} · {{summary}}", guestsRoomsSummary: "{{guests}} {{guestLabel}}, {{rooms}} {{roomLabel}}", guestSingular: "khách", guestPlural: "khách", roomSingular: "phòng", roomPlural: "phòng" },
 };
 
@@ -57,11 +57,42 @@ export function formatCompactHotelDateRange(startIso: string, endIso: string, lo
     year: "numeric",
     timeZone: "UTC",
   });
-  const rangeFormatter = formatter as Intl.DateTimeFormat & { formatRange?: (startDate: Date, endDate: Date) => string };
-  const formatted = typeof rangeFormatter.formatRange === "function"
-    ? rangeFormatter.formatRange(start, end)
-    : `${formatter.format(start)} – ${formatter.format(end)}`;
-  return formatted.replace(/[\u2009\u202f]*–[\u2009\u202f]*/g, " – ");
+  if (start.getTime() === end.getTime()) return formatter.format(start);
+
+  // Hermes does not consistently implement formatRange. Build the compact range
+  // from localized fields so native and Node use the exact same code path.
+  if (typeof formatter.formatToParts !== "function") {
+    return `${formatter.format(start)} – ${formatter.format(end)}`;
+  }
+  const startParts = formatter.formatToParts(start);
+  const endParts = formatter.formatToParts(end);
+  const startDay = startParts.find((part) => part.type === "day")?.value;
+  const endDay = endParts.find((part) => part.type === "day")?.value;
+  const sameYear = start.getUTCFullYear() === end.getUTCFullYear();
+  const sameMonth = sameYear && start.getUTCMonth() === end.getUTCMonth();
+  let formatted: string;
+  if (sameMonth && startDay && endDay) {
+    formatted = startParts.map((part) => part.type === "day" ? `${startDay} – ${endDay}` : part.value).join("");
+  } else if (sameYear) {
+    const monthDayFormatter = new Intl.DateTimeFormat(hotelSummaryCopy[locale].intlLocale, {
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    });
+    const startMonthDay = monthDayFormatter.format(start);
+    const endMonthDay = monthDayFormatter.format(end);
+    const yearIndex = startParts.findIndex((part) => part.type === "year");
+    const dateFieldIndexes = startParts
+      .map((part, index) => part.type === "month" || part.type === "day" ? index : -1)
+      .filter((index) => index >= 0);
+    const yearComesFirst = yearIndex >= 0 && yearIndex < Math.min(...dateFieldIndexes);
+    formatted = yearComesFirst
+      ? `${formatter.format(start)} – ${endMonthDay}`
+      : `${startMonthDay} – ${formatter.format(end)}`;
+  } else {
+    formatted = `${formatter.format(start)} – ${formatter.format(end)}`;
+  }
+  return formatted.replace(/\s*–\s*/g, " – ");
 }
 
 export function formatHotelOccupancy(guests: number, rooms: number, locale: MobileLocale): string {
