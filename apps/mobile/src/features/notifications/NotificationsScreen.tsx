@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { ActivityIndicator, Animated, PanResponder, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
@@ -103,6 +103,10 @@ function SwipeableNotificationRow({ item, dark, surface, border, text, isOpen, o
   const translateX = useRef(new Animated.Value(0)).current;
   const position = useRef(0);
   const gestureStart = useRef(0);
+  const onSwipeStartRef = useRef(onSwipeStart);
+  const onSetOpenRef = useRef(onSetOpen);
+  onSwipeStartRef.current = onSwipeStart;
+  onSetOpenRef.current = onSetOpen;
   const [deleting, setDeleting] = useState(false);
   const settle = useCallback((open: boolean) => Animated.spring(translateX, { toValue: open ? -NOTIFICATION_DELETE_ACTION_WIDTH : 0, useNativeDriver: true, bounciness: 0 }).start(), [translateX]);
   useEffect(() => {
@@ -110,21 +114,21 @@ function SwipeableNotificationRow({ item, dark, surface, border, text, isOpen, o
     return () => translateX.removeListener(listener);
   }, [translateX]);
   useEffect(() => { settle(isOpen); }, [isOpen, settle]);
-  const panResponder = PanResponder.create({
+  const panResponder = useMemo(() => PanResponder.create({
     onMoveShouldSetPanResponder: (_, gesture) => shouldClaimNotificationSwipe(gesture.dx, gesture.dy, position.current),
     onPanResponderGrant: () => {
       gestureStart.current = position.current;
       translateX.stopAnimation((value) => { position.current = value; gestureStart.current = value; });
-      onSwipeStart();
+      onSwipeStartRef.current();
     },
     onPanResponderMove: (_, gesture) => translateX.setValue(notificationSwipePosition(gestureStart.current, gesture.dx)),
     onPanResponderRelease: (_, gesture) => {
       const open = shouldRevealNotificationDelete(notificationSwipePosition(gestureStart.current, gesture.dx));
-      onSetOpen(open);
+      onSetOpenRef.current(open);
       settle(open);
     },
-    onPanResponderTerminate: () => { onSetOpen(false); settle(false); },
-  });
+    onPanResponderTerminate: () => { onSetOpenRef.current(false); settle(false); },
+  }), [settle, translateX]);
   const deleteItem = async () => {
     if (deleting) return;
     setDeleting(true);
