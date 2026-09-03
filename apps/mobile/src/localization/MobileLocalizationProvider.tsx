@@ -7,7 +7,7 @@ import { readGuestCurrencyPreference,writeCurrency,writeGuestCurrency } from "..
 import { readSession,subscribeSession } from "../storage/sessionStorage";
 import { dictionaries,mobileLocales,normalizeMobileLocale,type MobileLocale,type MobileTranslationKey } from "./mobileLocalizationCatalog";
 import { translatedMobileValue } from "./mobileTranslationCorrections";
-import { CustomizationCoordinator,type PreferenceValue } from "./customizationCoordinator";
+import { CustomizationCoordinator,normalizeCachedPreference,type PreferenceValue } from "./customizationCoordinator";
 
 const LOCALE_KEY="kurioticket.locale.guest.v1",MARKET_KEY="kurioticket.market.guest.v1";
 const accountKey=(userId:string)=>`kurioticket.customization.v1.${encodeURIComponent(userId)}`;
@@ -28,7 +28,14 @@ async function writeGuest(value:PreferenceValue){
   if(value.hasExplicitCurrency)writes.push(writeGuestCurrency(value.currency));
   await Promise.all(writes);
 }
-async function readCache(userId:string){try{const raw=await get(accountKey(userId));return raw?JSON.parse(raw) as PreferenceValue:null;}catch{return null;}}
+async function readCache(userId:string,guest:PreferenceValue){
+  try{
+    const stored=await get(accountKey(userId));
+    if(!stored)return null;
+    const raw=JSON.parse(stored) as Partial<PreferenceValue>;
+    return normalizeCachedPreference({...raw,locale:normalizeMobileLocale(raw.locale)},guest);
+  }catch{return null;}
+}
 
 type Value={locale:MobileLocale;currency:string;direction:"ltr"|"rtl";marketplace:MarketplaceContext;t:(key:MobileTranslationKey)=>string;setLocale:(value:MobileLocale)=>Promise<void>;setCurrency:(value:string)=>Promise<void>;setMarket:(value:string)=>Promise<void>;refresh:()=>Promise<void>};
 const Context=createContext<Value|null>(null);

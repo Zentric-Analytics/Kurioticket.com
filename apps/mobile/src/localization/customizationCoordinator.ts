@@ -6,7 +6,7 @@ export type ServerPreferences = { hasPreferences: boolean; preferences: Preferen
 export type CoordinatorDependencies = {
   readGuest: () => Promise<PreferenceValue>;
   writeGuest: (value: PreferenceValue) => Promise<void>;
-  readAccountCache: (userId: string) => Promise<PreferenceValue | null>;
+  readAccountCache: (userId: string, guest: PreferenceValue) => Promise<PreferenceValue | null>;
   writeAccountCache: (userId: string, value: PreferenceValue) => Promise<void>;
   fetchAccount: () => Promise<ServerPreferences>;
   patchAccount: (value: Partial<PreferenceValue>) => Promise<PreferenceValue>;
@@ -19,7 +19,7 @@ export class CustomizationCoordinator {
     const revision = ++this.revision; this.owner = owner;
     const guest = await this.dependencies.readGuest(); if (revision !== this.revision) return;
     if (!owner.userId) { this.set(guest); return; }
-    const cached = await this.dependencies.readAccountCache(owner.userId); if (revision !== this.revision) return;
+    const cached = await this.dependencies.readAccountCache(owner.userId, guest); if (revision !== this.revision) return;
     if (cached) this.set(cached);
     try {
       const server = await this.dependencies.fetchAccount(); if (revision !== this.revision || this.owner.userId !== owner.userId) return;
@@ -37,4 +37,17 @@ export class CustomizationCoordinator {
     catch (error) { if (revision === this.revision && this.owner.userId === userId) await this.dependencies.writeAccountCache(userId, next); throw error; }
   }
   private set(value: PreferenceValue) { this.value = value; this.publish({ ...value }); }
+}
+
+export function normalizeCachedPreference(raw: Partial<PreferenceValue>, guest: PreferenceValue): PreferenceValue {
+  const currency = typeof raw.currency === "string" && /^[A-Z]{3}$/.test(raw.currency.toUpperCase()) ? raw.currency.toUpperCase() : guest.currency;
+  return {
+    ...guest,
+    locale: raw.locale ?? guest.locale,
+    currency,
+    region: raw.region ?? guest.region,
+    marketplaceSource: raw.region ? "ACCOUNT" : guest.marketplaceSource,
+    hasExplicitMarket: Boolean(raw.region) || guest.hasExplicitMarket,
+    hasExplicitCurrency: raw.hasExplicitCurrency ?? Boolean(raw.currency),
+  };
 }
