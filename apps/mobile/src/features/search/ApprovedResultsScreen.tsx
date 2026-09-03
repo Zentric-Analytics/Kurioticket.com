@@ -178,7 +178,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [preferredAirlineSessionRevision, setPreferredAirlineSessionRevision] = useState(0);
   const [filterOpen, setFilterOpen] = useState(false);
   const [editSearchOpen, setEditSearchOpen] = useState(false);
-  const pendingFlightEditSearchParams = useRef<Record<string, string | undefined> | null>(null);
+  const pendingFlightEditTargetKey = useRef<string | null>(null);
   const [hotelEditSearchOpen, setHotelEditSearchOpen] = useState(false);
   const [hotelEditPresentation, setHotelEditPresentation] = useState(0);
   const [filterSection, setFilterSection] = useState<FlightFilterSectionName>("all");
@@ -420,18 +420,29 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     activeSearch.current?.abort("screen-blur");
   }, []));
   const submitFlightEditSearch = useCallback((nextParams: Record<string, string | undefined>) => {
-    pendingFlightEditSearchParams.current = nextParams;
+    const nextPlan = buildSearchPlan("flight", nextParams);
+    if (!nextPlan.plan) return;
+    if (nextPlan.plan.key === plan.plan?.key) {
+      pendingFlightEditTargetKey.current = null;
+      setEditSearchOpen(false);
+      return;
+    }
+    pendingFlightEditTargetKey.current = nextPlan.plan.key;
+    router.setParams(flightSearchRouteParamPatch(nextParams));
+  }, [plan.plan?.key]);
+  const closeFlightEditSearch = useCallback(() => {
+    pendingFlightEditTargetKey.current = null;
     setEditSearchOpen(false);
   }, []);
-  const completeFlightEditSearch = useCallback(() => {
-    const nextParams = pendingFlightEditSearchParams.current;
-    if (!nextParams) return;
-    pendingFlightEditSearchParams.current = null;
-    router.setParams(flightSearchRouteParamPatch(nextParams));
-  }, []);
+  useEffect(() => {
+    const targetKey = pendingFlightEditTargetKey.current;
+    if (!editSearchOpen || !targetKey || plan.plan?.key !== targetKey) return;
+    pendingFlightEditTargetKey.current = null;
+    setEditSearchOpen(false);
+  }, [editSearchOpen, plan.plan?.key]);
   const edit = () => {
     if (product === "flight") {
-      pendingFlightEditSearchParams.current = null;
+      pendingFlightEditTargetKey.current = null;
       setEditSearchOpen(true);
       return;
     }
@@ -824,9 +835,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         <FlightEditSearchModal
           visible={editSearchOpen}
           params={flightEditSearchParams(params)}
-          onClose={() => setEditSearchOpen(false)}
+          onClose={closeFlightEditSearch}
           onSubmit={submitFlightEditSearch}
-          onAfterClose={completeFlightEditSearch}
         />
       ) : null}
       <BottomNav flightResults={flightResults} />
