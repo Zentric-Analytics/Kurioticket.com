@@ -80,7 +80,6 @@ test("all new passkey UI copy is localized in English and Spanish", () => {
   assert.doesNotMatch(manager, />Add passkey</);
 });
 
-
 test("compact passkey list and empty state expose the agreed content", () => {
   assert.match(manager, /copy\.yourPasskeys/);
   assert.match(manager, /passkeys\.map/);
@@ -92,9 +91,9 @@ test("compact passkey list and empty state expose the agreed content", () => {
 });
 
 test("manage and removal use dismissible confirmation sheets before reauth", () => {
-  assert.match(manager, /<BottomSheet visible=\{Boolean\(managed\)\}/);
+  assert.match(manager, /<BottomSheet[^>]*visible=\{Boolean\(managed\)\}[^>]*>/);
   assert.match(manager, /copy\.rename/);
-  assert.match(manager, /<BottomSheet visible=\{Boolean\(confirming\)\}/);
+  assert.match(manager, /<BottomSheet[^>]*visible=\{Boolean\(confirming\)\}[^>]*>/);
   assert.ok(manager.indexOf('setConfirming(item)') < manager.indexOf('beginVerification("removal",item)'));
 });
 
@@ -110,6 +109,15 @@ test("rename, remove, and add own one-second button success feedback", () => {
   for (const state of ['success==="renamed"', 'success==="removed"', 'success==="added"']) assert.ok(manager.includes(state));
   assert.match(manager, /clearTimeout\(successTimer\.current\)/);
   assert.doesNotMatch(manager, /onMessage\(message\)/);
+});
+
+test("completed mutations refresh canonical passkeys before the visual success timer can be cancelled", () => {
+  const showSuccessStart = manager.indexOf("const showSuccess=");
+  const showSuccessEnd = manager.indexOf("const registerPasskey=", showSuccessStart);
+  assert.ok(showSuccessStart >= 0 && showSuccessEnd > showSuccessStart);
+  const showSuccessBody = manager.slice(showSuccessStart, showSuccessEnd);
+  assert.ok(showSuccessBody.indexOf("void onReload()") < showSuccessBody.indexOf("setTimeout("));
+  assert.doesNotMatch(showSuccessBody, /setTimeout\([^]*onReload\(\)/);
 });
 
 test("password verification preserves exact input and has a visibility toggle", () => {
