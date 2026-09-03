@@ -23,8 +23,8 @@ export const carFilterGroups: CarFilterGroup[] = [
     { id: "smallCars", labelKey: "carsResults.smallCars" },
     { id: "mediumCars", labelKey: "carsResults.mediumCars" },
     { id: "suvs", labelKey: "carsResults.suvs" },
-    { id: "luxuryCars", labelKey: "", label: "Luxury cars" },
-    { id: "vans", labelKey: "", label: "Vans" },
+    { id: "luxuryCars", labelKey: "carsTripStyle.luxury.title" },
+    { id: "vans", labelKey: "carsTripStyle.van.title" },
   ] },
   { id: "transmission", titleKey: "carsResults.transmission", options: [
     { id: "automatic", labelKey: "carsResults.automatic" },

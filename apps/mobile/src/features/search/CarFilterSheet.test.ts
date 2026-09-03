@@ -13,6 +13,8 @@ test("Web and Native consume one canonical Car filter presentation", () => {
   assert.match(web, /import \{ carFilterGroups, carQuickFilterGroupIds/);
   assert.match(sheet, /carFilterGroups/);
   for (const id of ["totalPrice", "vehicleType", "transmission", "seats", "bags", "fuelPolicy", "mileagePolicy", "cancellation", "pickupLocationType"]) assert.ok(presentation.includes(`id: "${id}"`), id);
+  assert.match(presentation, /id: "luxuryCars", labelKey: "carsTripStyle\.luxury\.title"/);
+  assert.match(presentation, /id: "vans", labelKey: "carsTripStyle\.van\.title"/);
 });
 
 test("Native derives available options and result counts from canonical results", () => {
