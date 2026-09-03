@@ -1290,7 +1290,7 @@ function HotelCard({
         ) : (
           <View accessibilityLabel="Hotel image unavailable" style={[s0.hotelImage,s0.hotelImageUnavailable]}><Text style={s0.hotelImageUnavailableText}>Image unavailable</Text></View>
         )}
-        {usableGallery.length>1?<><Pressable accessibilityRole="button" accessibilityLabel={`Previous photo of ${result.name}`} onPress={()=>setActiveImage(index=>(index-1+usableGallery.length)%usableGallery.length)} style={[s0.galleryControl,s0.galleryPrevious]}><ChevronLeft color="white" size={20}/></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Next photo of ${result.name}`} onPress={()=>setActiveImage(index=>(index+1)%usableGallery.length)} style={[s0.galleryControl,s0.galleryNext]}><ChevronRight color="white" size={20}/></Pressable></>:null}
+        {usableGallery.length>1?<><Pressable accessibilityRole="button" accessibilityLabel={`Previous photo of ${result.name}`} onPress={()=>setActiveImage(index=>(index-1+usableGallery.length)%usableGallery.length)} style={[s0.galleryControl,s0.galleryPrevious]}><ChevronLeft accessible={false} color="white" size={20} style={s0.galleryIconPrevious}/></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Next photo of ${result.name}`} onPress={()=>setActiveImage(index=>(index+1)%usableGallery.length)} style={[s0.galleryControl,s0.galleryNext]}><ChevronRight accessible={false} color="white" size={20} style={s0.galleryIconNext}/></Pressable></>:null}
         {usableGallery.length ? <View style={s0.overlay}>
           <Text style={s0.overlayText}>
             {activeImage+1} / {usableGallery.length}
@@ -1950,9 +1950,11 @@ const s0 = StyleSheet.create({
   hotelImage: { ...StyleSheet.absoluteFillObject, backgroundColor: "#E9EDF3" },
   hotelImageUnavailable:{alignItems:"center",justifyContent:"center",paddingHorizontal:8},
   hotelImageUnavailableText:{fontSize:12,color:ui.muted,textAlign:"center"},
-  galleryControl:{position:"absolute",top:"42%",width:44,height:44,borderRadius:22,backgroundColor:"rgba(0,0,0,.48)",alignItems:"center",justifyContent:"center"},
-  galleryPrevious:{left:2},
-  galleryNext:{right:2},
+  galleryControl:{position:"absolute",top:"50%",width:44,height:44,transform:[{translateY:-22}],alignItems:"center",justifyContent:"center"},
+  galleryPrevious:{left:0},
+  galleryNext:{right:0},
+  galleryIconPrevious:{transform:[{translateX:-10}]},
+  galleryIconNext:{transform:[{translateX:10}]},
   overlay: {
     position: "absolute",
     bottom: 10,
