@@ -318,12 +318,7 @@ function FlightItineraryLeg({ leg, result }: FlightItineraryLegProps) {
   const destinationDetails = lastSegment?.destinationDetails;
   const origin = airportFromCatalogue(leg.originAirport);
   const destination = airportFromCatalogue(leg.destinationAirport);
-  const airlineName = firstSegment?.marketingCarrier?.name
-    ?? firstSegment?.airlineName
-    ?? result.airlineName;
-  const flightNumber = firstSegment?.marketingFlightNumber
-    ?? firstSegment?.flightNumber
-    ?? result.flightNumber;
+  const segmentRows = leg.segments.length ? leg.segments : [undefined];
   const arrivalDay = providerLocalArrivalDate(leg.departureTime, leg.arrivalTime);
   const stopLabel = leg.stops === 0
     ? "Nonstop"
@@ -379,19 +374,33 @@ function FlightItineraryLeg({ leg, result }: FlightItineraryLegProps) {
           {leg.layovers.map((layover) => `${layover.duration} in ${layover.airport}`).join(" · ")}
         </Text>
       ) : null}
-      <View style={[d.segmentSummary, { borderTopColor: theme.border }]}>
-        <AirlineLogo airlineName={airlineName} logoUrl={result.airlineLogo} />
-        <View style={d.segmentCopy}>
-          <Text style={[d.segmentRoute, { color: theme.textPrimary }]}>
-            {leg.originAirport} → {leg.destinationAirport} · {clock(leg.departureTime)}–{clock(leg.arrivalTime)}
-          </Text>
-          <Text style={[d.segmentMeta, { color: theme.textSecondary }]}>
-            {[airlineName, flightNumber].filter(Boolean).join(" · ")}
-          </Text>
-        </View>
-        {firstSegment?.distanceKm ? (
-          <Text style={[d.segmentDistance, { color: theme.textSecondary }]}>{Math.round(firstSegment.distanceKm).toLocaleString()} km</Text>
-        ) : null}
+      <View style={[d.segmentList, { borderTopColor: theme.border }]}>
+        {segmentRows.map((segment, index) => {
+          const airlineName = segment?.marketingCarrier?.name
+            ?? segment?.airlineName
+            ?? result.airlineName;
+          const flightNumber = segment?.marketingFlightNumber
+            ?? segment?.flightNumber
+            ?? (segmentRows.length === 1 ? result.flightNumber : undefined);
+          const matchingOfferCarrier = airlineName.trim().toLowerCase()
+            === result.airlineName.trim().toLowerCase();
+          return (
+            <View key={`${segment?.departureTime ?? leg.departureTime}-${index}`} style={d.segmentSummary}>
+              <AirlineLogo airlineName={airlineName} logoUrl={matchingOfferCarrier ? result.airlineLogo : null} />
+              <View style={d.segmentCopy}>
+                <Text style={[d.segmentRoute, { color: theme.textPrimary }]}>
+                  {segment?.originAirport ?? leg.originAirport} → {segment?.destinationAirport ?? leg.destinationAirport} · {clock(segment?.departureTime ?? leg.departureTime)}–{clock(segment?.arrivalTime ?? leg.arrivalTime)}
+                </Text>
+                <Text style={[d.segmentMeta, { color: theme.textSecondary }]}>
+                  {[airlineName, flightNumber].filter(Boolean).join(" · ")}
+                </Text>
+              </View>
+              {segment?.distanceKm ? (
+                <Text style={[d.segmentDistance, { color: theme.textSecondary }]}>{Math.round(segment.distanceKm).toLocaleString()} km</Text>
+              ) : null}
+            </View>
+          );
+        })}
       </View>
     </View>
   );
@@ -852,7 +861,8 @@ const d = StyleSheet.create({
   itineraryLine: { flex: 1, height: 1 },
   itineraryStops: { fontSize: 9, lineHeight: 13, fontWeight: "800" },
   itineraryLayovers: { fontSize: 10, lineHeight: 14, textAlign: "center" },
-  segmentSummary: { paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: "row", alignItems: "center", gap: 9 },
+  segmentList: { paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, gap: 12 },
+  segmentSummary: { flexDirection: "row", alignItems: "center", gap: 9 },
   segmentCopy: { flex: 1, minWidth: 0, gap: 2 },
   segmentRoute: { fontSize: 11, lineHeight: 15, fontWeight: "800" },
   segmentMeta: { fontSize: 10, lineHeight: 14 },

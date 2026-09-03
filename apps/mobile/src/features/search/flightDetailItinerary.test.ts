@@ -16,8 +16,8 @@ test("the detail screen delegates every authoritative leg to the web-aligned iti
 });
 
 test("each itinerary card presents canonical route, timing, duration, stop, and layover truth", () => {
-  assert.match(itinerary, /clock\(leg\.departureTime\)/);
-  assert.match(itinerary, /clock\(leg\.arrivalTime\)/);
+  assert.match(itinerary, /endpoint\(leg\.originAirport, leg\.departureTime/);
+  assert.match(itinerary, /endpoint\(leg\.destinationAirport, leg\.arrivalTime/);
   assert.match(itinerary, /leg\.originAirport/);
   assert.match(itinerary, /leg\.destinationAirport/);
   assert.match(itinerary, /\{leg\.duration\}/);
@@ -31,7 +31,7 @@ test("airport and segment enrichment use provider data first and factual catalog
   assert.match(itinerary, /details\?\.name \?\? catalogue\?\.airport \?\? code/);
   assert.match(itinerary, /details\?\.cityName \?\? catalogue\?\.city \?\? ""/);
   assert.match(itinerary, /details\?\.terminal \?/);
-  assert.match(itinerary, /firstSegment\?\.distanceKm \?/);
+  assert.match(itinerary, /segment\?\.distanceKm \?/);
   assert.doesNotMatch(itinerary, /fake|fixture|Terminal [A-Z0-9]"/i);
 });
 
@@ -40,8 +40,9 @@ test("each leg uses the rendered-web endpoint, journey-line, and segment-summary
   assert.match(itinerary, /d\.itineraryJourney/);
   assert.match(itinerary, /d\.itineraryLineRow/);
   assert.match(itinerary, /<FlowIcon name="flight"/);
+  assert.match(itinerary, /segmentRows\.map\(\(segment, index\) =>/);
   assert.match(itinerary, /d\.segmentSummary/);
-  assert.match(itinerary, /<AirlineLogo airlineName=\{airlineName\} logoUrl=\{result\.airlineLogo\}/);
+  assert.match(itinerary, /<AirlineLogo airlineName=\{airlineName\} logoUrl=\{matchingOfferCarrier \? result\.airlineLogo : null\}/);
   assert.match(styles, /itineraryCard: \{ borderWidth: 1,[\s\S]*?borderRadius: 12,[\s\S]*?padding: 14/);
 });
 
