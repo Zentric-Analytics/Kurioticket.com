@@ -103,13 +103,38 @@ test("flight dates use full resolved fares in wider, single-line tiles", () => {
 test("hotel summary and shortcuts participate in one measured vertical scroll", () => {
   const hotelLayout=screen.slice(alternateLayoutStart,screen.indexOf("<FlightSortSheet",alternateLayoutStart));
   assert.equal(hotelLayout.match(/<ScrollView ref=\{hotelScrollRef\}/g)?.length, 1);
-  assert.match(hotelLayout,/<ScrollView ref=\{hotelScrollRef\}[\s\S]*?style=\{s0\.hotelIntroductoryControls\}[\s\S]*?<HotelResultsHeader[\s\S]*?\{filterRail\}[\s\S]*?<View style=\{s0\.body\}>\{resultContent\}/);
+  assert.match(hotelLayout,/<ScrollView ref=\{hotelScrollRef\}[\s\S]*?style=\{s0\.hotelIntroductoryControls\}[\s\S]*?<HotelResultsHeader[\s\S]*?\{filterRail\}[\s\S]*?<View style=\{\[s0\.body, \{ paddingBottom: Math\.max\(insets\.bottom \+ 16, 16\) \}\]\}>\{resultContent\}/);
   assert.match(hotelLayout,/nativeEvent\.layout\.y \+ nativeEvent\.layout\.height/);
   assert.match(hotelLayout,/setHotelIntroBoundary\(boundary\)/);
   assert.match(hotelLayout,/y > hotelIntroBoundary \+ \(visible \? -4 : 4\)/);
   assert.doesNotMatch(hotelLayout,/y\s*>\s*104/);
   assert.match(hotelLayout,/setHotelBackToTop\(y>600\)/);
   assert.doesNotMatch(flightLayout, /hotelIntroBoundary|setHotelCompactHeader/);
+});
+test("Hotel Results reclaims BottomNav space while retaining the native bottom safe area", () => {
+  const sharedBody = styleBlock("body", "hotelResultsContent");
+  const backToTop = styleBlock("hotelBackToTop", "filterRail");
+
+  assert.match(screen, /const insets = useSafeAreaInsets\(\)/);
+  assert.match(sharedBody, /paddingBottom: 92/);
+  assert.match(screen, /style=\{\[s0\.body, \{ paddingBottom: Math\.max\(insets\.bottom \+ 16, 16\) \}\]\}/);
+  assert.match(screen, /\{flightResults \? <BottomNav flightResults \/> : null\}/);
+  assert.doesNotMatch(screen, /<BottomNav flightResults=\{flightResults\} \/>/);
+  assert.doesNotMatch(backToTop, /bottom:/);
+  assert.match(screen, /s0\.hotelBackToTop,\{bottom:Math\.max\(insets\.bottom \+ 16,16\)/);
+  assert.doesNotMatch(screen, /hotelBackToTop[^\n]*bottom:(?:86|92)/);
+});
+
+test("Hotel Back-to-top keeps its geometry and scrolling behavior above the safe area", () => {
+  const backToTop = styleBlock("hotelBackToTop", "filterRail");
+
+  assert.match(screen, /setHotelBackToTop\(y>600\)/);
+  assert.match(screen, /accessibilityLabel="Back to top"[\s\S]*?scrollTo\(\{y:0,animated:true\}\)/);
+  assert.match(backToTop, /position:"absolute"/);
+  assert.match(backToTop, /right:16/);
+  assert.match(backToTop, /width:44/);
+  assert.match(backToTop, /height:44/);
+  assert.match(backToTop, /borderRadius:22/);
 });
 test("hotel surviving sections own moderate spacing without changing the shared flight rail", () => {
   const hotelHeader = screen.slice(
