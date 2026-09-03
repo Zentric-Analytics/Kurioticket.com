@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { ChevronLeft } from "lucide-react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useFlowTheme } from "./flowStyles";
 
 type Props = { visible: boolean; title: string; children: ReactNode; footer?: ReactNode; onBack: () => void; onShow?: () => void };
@@ -9,17 +9,18 @@ type Props = { visible: boolean; title: string; children: ReactNode; footer?: Re
 /** Opaque child-editor presentation used only by Hotel Results Edit. */
 export function HotelResultsEditPickerShell({ visible, title, children, footer, onBack, onShow }: Props) {
   const ft = useFlowTheme();
-  const insets = useSafeAreaInsets();
   return <Modal visible={visible} transparent={false} animationType="none" presentationStyle="fullScreen" statusBarTranslucent={false} onShow={onShow} onRequestClose={onBack}>
-    <SafeAreaView edges={["left", "right"]} accessibilityViewIsModal style={[styles.screen, { backgroundColor: ft.colors.surface, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      <View style={[styles.header, { backgroundColor: ft.colors.surface, borderBottomColor: ft.colors.border }]}>
-        <View style={styles.side}><Pressable accessibilityRole="button" accessibilityLabel="Back to edit hotel search" accessibilityHint="Discards uncommitted changes" onPress={onBack} style={({ pressed }) => [styles.back, pressed && ft.styles.pressed]}><ChevronLeft accessible={false} size={20} color={ft.colors.icon}/><Text style={[styles.backText, { color: ft.colors.text }]}>Back</Text></Pressable></View>
-        <Text accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} style={[styles.title, { color: ft.colors.text }]}>{title}</Text>
-        <View accessible={false} style={styles.side}/>
-      </View>
-      <View style={styles.body}>{children}</View>
-      {footer ? <View style={[styles.footer, { backgroundColor: ft.colors.surface, borderTopColor: ft.colors.border }]}>{footer}</View> : null}
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <SafeAreaView edges={["top", "bottom", "left", "right"]} accessibilityViewIsModal style={[styles.screen, { backgroundColor: ft.colors.surface }]}>
+        <View style={[styles.header, { backgroundColor: ft.colors.surface, borderBottomColor: ft.colors.border }]}>
+          <View style={styles.side}><Pressable accessibilityRole="button" accessibilityLabel="Back to edit hotel search" accessibilityHint="Discards uncommitted changes" onPress={onBack} style={({ pressed }) => [styles.back, pressed && ft.styles.pressed]}><ChevronLeft accessible={false} size={20} color={ft.colors.icon}/><Text style={[styles.backText, { color: ft.colors.text }]}>Back</Text></Pressable></View>
+          <Text accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} style={[styles.title, { color: ft.colors.text }]}>{title}</Text>
+          <View accessible={false} style={styles.side}/>
+        </View>
+        <View style={styles.body}>{children}</View>
+        {footer ? <View style={[styles.footer, { backgroundColor: ft.colors.surface, borderTopColor: ft.colors.border }]}>{footer}</View> : null}
+      </SafeAreaView>
+    </SafeAreaProvider>
   </Modal>;
 }
 
