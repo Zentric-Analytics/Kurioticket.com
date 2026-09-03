@@ -77,7 +77,8 @@ test("Back retains navigation while Edit opens the local results overlay", () =>
 
 test("Flight Results header separates Back from one Web-aligned editable summary", () => {
   assert.match(styles, /flightHeaderMainRow: \{[\s\S]*?flexDirection: "row"/);
-  assert.match(styles, /flightHeaderSide: \{ width: 52/);
+  assert.match(styles, /flightHeaderSide: \{ width: 44/);
+  assert.match(styles, /flightHeaderMainRow: \{[^\n]*gap: 6/);
   assert.match(header, /<View style=\{s0\.flightHeaderSide\}>[\s\S]*?accessibilityLabel="Go back"[\s\S]*?<Pressable[\s\S]*?s0\.flightRouteSummaryCard/);
   assert.match(routeCard, /\{route\}/);
   assert.match(header, /accessibilityLabel=\{`Edit flight search[\s\S]*?<SquarePen/);
@@ -90,7 +91,8 @@ test("Flight Results header separates Back from one Web-aligned editable summary
   assert.match(header, /backgroundColor: theme\.surface/);
   assert.match(header, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
   assert.match(styles, /flightHeader: \{[\s\S]*?paddingTop: 12,[\s\S]*?paddingBottom: 8/);
-  assert.match(header, /style=\{\[s0\.flightHeader, \{ backgroundColor \}\]\}/);
+  assert.match(header, /paddingLeft: Math\.max\(insets\.left \+ 6, 6\)/);
+  assert.match(header, /paddingRight: Math\.max\(insets\.right \+ 10, 10\)/);
   assert.match(header, /color: theme\.textPrimary/);
 });
 

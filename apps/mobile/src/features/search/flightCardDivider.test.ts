@@ -14,11 +14,12 @@ test("the flight card has one subtle theme-aware horizontal metadata divider", (
   assert.doesNotMatch(footerStyles, /borderLeftWidth|borderRightWidth/);
 });
 
-test("flight details navigation is wired to the complete bordered card", () => {
+test("flight details navigation is wired only to the compact View deal action", () => {
   assert.match(flightCard, /const openDetails = \(\) => router\.push\(\{/);
   assert.match(flightCard, /<Pressable[\s\S]*?accessibilityRole="button"[\s\S]*?onPress=\{openDetails\}/);
   assert.match(flightCard, /pathname: "\/flight-details"/);
-  assert.match(flightCard, /labels\.viewFlight/);
+  assert.match(flightCard, />View deal<\/Text>/);
+  assert.doesNotMatch(flightCard, /labels\.viewFlight|viewFlightButton/);
   assert.doesNotMatch(flightCard, /detailsButton|detailsButtonText/);
   assert.equal((flightCard.match(/<Pressable/g) || []).length, 1);
   assert.doesNotMatch(flightCard, /stopPropagation|onToggleSaved|favoriteButton/);
@@ -42,6 +43,6 @@ test("the flight card retains its light and dark mode theming", () => {
   assert.match(flightCard, /color: highlightTextColor/);
   assert.match(flightCard, /color: theme\.textPrimary/);
   assert.match(flightCard, /supportTextColor = theme\.dark \? flightSupportText\.dark : flightSupportText\.light/);
-  assert.match(flightCard, /s0\.flightMetadataValue,\{color:supportTextColor\}/);
+  assert.match(flightCard, /s0\.flightMetadataText,\{color:supportTextColor\}/);
   assert.match(flightCard, /borderTopColor: theme\.border/);
 });
