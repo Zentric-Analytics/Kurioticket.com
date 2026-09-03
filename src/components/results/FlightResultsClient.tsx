@@ -50,6 +50,7 @@ import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { Footer } from "@/components/layout/Footer";
 import { FlightCard } from "@/components/results/FlightCard";
+import { nearbyFarePrice } from "@/components/results/nearbyFarePrice";
 import { DesktopFlightFilters } from "@/components/results/DesktopFlightFilters";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { FlightEditSearchDrawer, type FlightEditSearchValue } from "@/components/search/FlightEditSearchDrawer";
@@ -7091,7 +7092,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         )
                     ).map((fare) => {
                       const selected = fare.date === body?.departureDate;
-                      const displayPrice =
+                      const displayPriceData =
                         fare.status === "success"
                           ? formatDisplayPrice({
                               amount: fare.amount,
@@ -7100,8 +7101,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                               convertUsdEstimate: true,
                               rates: currencyRates.rates,
                               isFallbackRate: currencyRates.isFallback,
-                            }).formatted
+                            })
                           : null;
+                      const displayPrice = displayPriceData?.formatted ?? null;
+                      const desktopPrice = displayPriceData ? nearbyFarePrice(displayPriceData, calendarLocale) : null;
                       const accessibleFare =
                         displayPrice ??
                         (fare.status === "loading"
@@ -7164,7 +7167,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                               </span>
                               <span
                                 className={cn(
-                                  "flight-fare-strip-price mt-2 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-bold leading-5",
+                                  "flight-fare-strip-price mt-2 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-bold leading-5 lg:hidden",
                                   selected
                                     ? "font-semibold text-[#075EE8]"
                                     : "text-slate-900",
@@ -7179,6 +7182,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                                 dir="ltr"
                               >
                                 {displayPrice ?? "Unavailable"}
+                              </span>
+                              <span
+                                className={cn("desktop-flight-fare-price hidden lg:block", selected ? "text-[#075EE8]" : "text-slate-900")}
+                                data-price-size={desktopPrice?.size ?? "long"}
+                                title={desktopPrice?.full}
+                                aria-label={desktopPrice?.full}
+                                dir="ltr"
+                              >
+                                {desktopPrice?.formatted ?? "Unavailable"}
                               </span>
                             </>
                           )}
