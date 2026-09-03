@@ -116,7 +116,7 @@ import { flightResultCountLabel } from "./flightResultCount";
 import { flightCardLegs, type FlightCardLeg } from "./flightCardLegs";
 import { flightOperatingCarrierPresentation } from "./flightOperatingCarrier";
 import { deriveFlightResultHighlights, type FlightResultHighlight } from "./flightResultHighlights";
-import { readSession, subscribeSession } from "../../storage/sessionStorage";
+import { readSession } from "../../storage/sessionStorage";
 import {
   buildFlightPriceAlertPayload,
   flightAlertPresentation,
@@ -128,7 +128,7 @@ import type { SearchPlan } from "../flow/travelSearchModel";
 import { FlightResultsState } from "./FlightResultsState";
 import { resolveFlightResultsState } from "./flightResultsStateModel";
 import { signInHref } from "../auth/signInIntent";
-import { normalizePreferredAirlineFilterValues } from "./preferredAirlineDefaults";
+import { flightInventoryCounts } from "./flightInventoryDiagnostics";
 import { HotelFilterSheet, type HotelFilterSectionName } from "./HotelFilterSheet";
 import { activeHotelFilterCount, buildHotelFilterOptions, emptyHotelFilters, filterHotels, type HotelFilters } from "./hotelFilters";
 import { HotelCardAmenityList } from "./HotelCardAmenityList";
@@ -158,8 +158,6 @@ const flightResultsLightCanvas = "#F5F7FB";
 const HOTEL_UTILITY_ICON_COLOR = "#334155";
 const HOTEL_SAVED_HEART_COLOR = "#E11D48";
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
-const sameStringArray = (left: readonly string[], right: readonly string[]) =>
-  left.length === right.length && left.every((value, index) => value === right[index]);
 const hotelStayNightCount = (checkIn?: string, checkOut?: string) => {
   const start = Date.parse(`${checkIn ?? ""}T00:00:00Z`);
   const end = Date.parse(`${checkOut ?? ""}T00:00:00Z`);
@@ -188,9 +186,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [sort, setSort] = useState<FlightSort>("price");
   const [sortOpen, setSortOpen] = useState(false);
   const [filters, setFilters] = useState<FlightFilters>(emptyFlightFilters);
-  const [filtersFlightSearchKey, setFiltersFlightSearchKey] = useState(() => flightResults ? plan.plan?.key : undefined);
-  const [preferredAirlineCodes, setPreferredAirlineCodes] = useState<string[] | null>(null);
-  const [preferredAirlineSessionRevision, setPreferredAirlineSessionRevision] = useState(0);
+  const [serverFlightResultCount, setServerFlightResultCount] = useState(0);
   const [filterOpen, setFilterOpen] = useState(false);
   const [editSearchOpen, setEditSearchOpen] = useState(false);
   const pendingFlightEditTargetKey = useRef<string | null>(null);
@@ -217,12 +213,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
   const previousComparisonCurrency = useRef<string | null>(null);
   const previousFlightSearchKey = useRef<string | undefined>(undefined);
-  const preferredAirlineDefaultAttemptedSearchKey = useRef<string | undefined>(undefined);
-  const preferredAirlineFilterTouchedSearchKey = useRef<string | undefined>(undefined);
-  const preferredAirlineSessionUserId = useRef<string | null | undefined>(undefined);
-  useEffect(() => subscribeSession(() => {
-    setPreferredAirlineSessionRevision((revision) => revision + 1);
-  }), []);
   useEffect(() => {
     if (!flightResults || !plan.plan?.key) return;
     if (previousFlightSearchKey.current && previousFlightSearchKey.current !== plan.plan.key) {
@@ -230,9 +220,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       setFilters(emptyFlightFilters());
       setSortOpen(false);
       setFilterOpen(false);
-      setFiltersFlightSearchKey(plan.plan.key);
-      preferredAirlineDefaultAttemptedSearchKey.current = undefined;
-      preferredAirlineFilterTouchedSearchKey.current = undefined;
     }
     previousFlightSearchKey.current = plan.plan.key;
   }, [flightResults, plan.plan?.key]);
@@ -246,35 +233,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     }
     previousHotelSearchKey.current = plan.plan.key;
   }, [flightResults, plan.plan?.key]);
-  useEffect(() => {
-    if (!flightResults) return;
-    let active = true;
-
-    void readSession().then((session) => {
-      if (!active) return;
-      const sessionUserId = session?.user.id ?? null;
-      if (preferredAirlineSessionUserId.current !== sessionUserId) {
-        preferredAirlineSessionUserId.current = sessionUserId;
-        preferredAirlineDefaultAttemptedSearchKey.current = undefined;
-      }
-      if (!session) {
-        setPreferredAirlineCodes([]);
-        return;
-      }
-      void travelApi.travelPreferences().then((response) => {
-        if (active) setPreferredAirlineCodes(
-          Array.isArray(response.preferences?.preferredAirlines) ? response.preferences.preferredAirlines : [],
-        );
-      }).catch(() => {
-        // Flight results keep today's behavior if travel preferences are unavailable.
-        if (active) setPreferredAirlineCodes([]);
-      });
-    }).catch(() => {
-      if (active) setPreferredAirlineCodes([]);
-    });
-
-    return () => { active = false; };
-  }, [flightResults, preferredAirlineSessionRevision]);
   useEffect(() => {
     if (!flightResults || status !== "loading") return;
     const presentationIdentity = `${plan.plan?.key || "invalid"}:${retry}`;
@@ -365,6 +323,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         return;
       }
       const validationStartedAt = performance.now();
+      const flightAcceptance = product === "flight"
+        ? acceptCanonicalResults(response.results as FlightResult[], (result) => validFlight(result, plan.plan!))
+        : undefined;
       const hotelAcceptance =
         product === "hotel"
           ? acceptCanonicalResults(
@@ -373,11 +334,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             )
           : undefined;
       const valid = product === "flight"
-        ? (response.results as FlightResult[]).filter((x) => validFlight(x, plan.plan!))
+        ? flightAcceptance!.accepted
         : hotelAcceptance!.accepted;
       const clientValidationMs = performance.now() - validationStartedAt;
       if (product === "flight") {
-        logFlightSearchCheckpoint("flight-search:validated", { requestId, resultCount: valid.length, elapsedMs: performance.now() - clientStartedAt, platform: Platform.OS });
+        setServerFlightResultCount(flightAcceptance!.canonicalCount);
+        logFlightSearchCheckpoint("flight-search:validated", { requestId, serverResultCount: flightAcceptance!.canonicalCount, acceptedResultCount: valid.length, rejectedResultIds: flightAcceptance!.rejectedIds, elapsedMs: performance.now() - clientStartedAt, platform: Platform.OS });
         logFlightSearchCheckpoint("flight-search:derived-ready", { requestId, resultCount: valid.length, elapsedMs: performance.now() - clientStartedAt, platform: Platform.OS });
       }
       if (hotelAcceptance?.rejectedIds.length) {
@@ -510,32 +472,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const flightOptions = useMemo(() => flightFilterOptions(results as FlightResult[], flightPriceContext), [flightPriceContext, results]);
   const flightSummary = useMemo(() => flightResultsSummary(payload, locale), [locale, plan.plan?.key]);
   useEffect(() => {
-    const searchKey = plan.plan?.key;
-    if (
-      !flightResults ||
-      status !== "ready" ||
-      !searchKey ||
-      filtersFlightSearchKey !== searchKey ||
-      preferredAirlineCodes === null ||
-      flightOptions.airlines.length === 0 ||
-      preferredAirlineFilterTouchedSearchKey.current === searchKey ||
-      preferredAirlineDefaultAttemptedSearchKey.current === searchKey
-    ) return;
-
-    preferredAirlineDefaultAttemptedSearchKey.current = searchKey;
-    if (filters.airlines.length > 0) return;
-    const preferredAirlines = normalizePreferredAirlineFilterValues(
-      preferredAirlineCodes,
-      flightOptions.airlines,
-    );
-    if (preferredAirlines.length === 0) return;
-    setFilters((current) => (
-      preferredAirlineFilterTouchedSearchKey.current === searchKey || current.airlines.length > 0
-        ? current
-        : { ...current, airlines: preferredAirlines }
-    ));
-  }, [filters.airlines.length, filtersFlightSearchKey, flightOptions.airlines, flightResults, plan.plan?.key, preferredAirlineCodes, status]);
-  useEffect(() => {
     const nextCurrency = currencyState ? flightPriceContext?.identity ?? "unavailable" : null;
     if (nextCurrency && previousComparisonCurrency.current && previousComparisonCurrency.current !== nextCurrency) {
       setFilters((current) => current.maximumPrice != null ? { ...current, maximumPrice: null } : current);
@@ -543,6 +479,16 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     if (nextCurrency) previousComparisonCurrency.current = nextCurrency;
   }, [currencyState, flightPriceContext?.identity]);
   const activeFilterCount = activeFlightFilterCount(filters, flightOptions);
+  useEffect(() => {
+    if (!__DEV__ || !flightResults || status !== "ready") return;
+    console.info("[flight-search:inventory]", flightInventoryCounts({
+      serverResultCount: serverFlightResultCount,
+      acceptedResultCount: results.length,
+      displayedResultCount: sorted.length,
+      activeFilterCount,
+      filters,
+    }));
+  }, [activeFilterCount, filters, flightResults, results.length, serverFlightResultCount, sorted.length, status]);
   const activeHotelFilters = activeHotelFilterCount(hotelFilters, hotelOptions);
   const hotelFilterChips = useMemo(() => buildHotelFilterChips(hotelFilters, hotelOptions), [hotelFilters, hotelOptions]);
   const hotelPageCount = getHotelResultsPageCount(product === "hotel" ? sorted.length : 0);
@@ -589,21 +535,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     requestAnimationFrame(() => { hotelScrollRef.current?.scrollTo({ y: hotelResultsOffset.current, animated: true }); setHotelPageChanging(false); });
   };
   const handleFlightFiltersChange = useCallback((next: FlightFilters) => {
-    const searchKey = plan.plan?.key;
-    if (searchKey && !sameStringArray(filters.airlines, next.airlines)) {
-      preferredAirlineFilterTouchedSearchKey.current = searchKey;
-      preferredAirlineDefaultAttemptedSearchKey.current = searchKey;
-    }
     setFilters(next);
-  }, [filters.airlines, plan.plan?.key]);
+  }, []);
   const clearFlightFilters = useCallback(() => {
-    const searchKey = plan.plan?.key;
-    if (searchKey) {
-      preferredAirlineFilterTouchedSearchKey.current = searchKey;
-      preferredAirlineDefaultAttemptedSearchKey.current = searchKey;
-    }
     setFilters(emptyFlightFilters());
-  }, [plan.plan?.key]);
+  }, []);
   const canonicalHotelDestination = String(payload.destination || "");
   const hotelDestinationDisplay = getHotelLocationFieldDisplay(canonicalHotelDestination, locale);
   const hotelSummary = buildHotelResultsSummary({
@@ -1427,7 +1363,6 @@ function FlightLoadingExperience({ phase, origin, destination, roundTrip }: {
 
   const searching = phase === "searching";
   const opacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0.72, 1] });
-  const planeTranslateX = progress.interpolate({ inputRange: [0, 1], outputRange: [-6, 6] });
   return (
     <View
       pointerEvents="none"
@@ -1437,25 +1372,19 @@ function FlightLoadingExperience({ phase, origin, destination, roundTrip }: {
       style={s0.flightLoadingExperience}
     >
       <View style={s0.flightLoadingStatus}>
-        <View style={s0.flightLoadingRouteCodes}>
-          <Text style={[s0.flightLoadingRouteCode, { color: theme.textPrimary }]}>{origin}</Text>
-          <Text style={[s0.flightLoadingRouteCode, { color: theme.textPrimary }]}>{destination}</Text>
-        </View>
-        <View style={s0.flightLoadingRouteLine}>
-          <View style={[s0.flightLoadingRouteDot, { backgroundColor: theme.textSecondary }]} />
-          <View style={[s0.flightLoadingRouteTrack, { backgroundColor: theme.border }]} />
-          <Animated.View style={{ transform: [{ translateX: planeTranslateX }] }}>
-            <PlaneTakeoff size={22} color={ui.blue} strokeWidth={1.8} />
-          </Animated.View>
-          <View style={[s0.flightLoadingRouteTrack, { backgroundColor: theme.border }]} />
-          <View style={[s0.flightLoadingRouteDot, { backgroundColor: theme.textSecondary }]} />
-        </View>
+        <Image
+          source={require("../../../assets/kurioticket-logo-primary-light-bg.png")}
+          accessibilityIgnoresInvertColors
+          style={s0.flightLoadingBrand}
+          resizeMode="contain"
+        />
         <View style={s0.flightLoadingCopy}>
           <Text accessibilityRole="header" style={[s0.flightLoadingTitle, { color: theme.textPrimary }]}>
-            {searching ? `Searching for flights to ${destination}…` : "Comparing the best options…"}
+            Searching the best flights for you
           </Text>
+          <Text style={[s0.flightLoadingRoute, { color: colors.blue }]}>{origin} → {destination}</Text>
           <Text style={[s0.flightLoadingBody, { color: theme.textSecondary }]}>
-            {searching ? "Checking airlines, schedules and fares…" : "Reviewing fares and journey times…"}
+            {searching ? "Checking airlines and fares..." : "Comparing routes and providers..."}
           </Text>
         </View>
       </View>
@@ -1464,7 +1393,7 @@ function FlightLoadingExperience({ phase, origin, destination, roundTrip }: {
         importantForAccessibility="no-hide-descendants"
         style={[s0.skeletonList, { opacity }]}
       >
-        {[0, 1, 2].map((item) => <FlightLoadingSkeleton key={item} roundTrip={roundTrip} />)}
+        <FlightLoadingSkeleton roundTrip={roundTrip} />
       </Animated.View>
     </View>
   );
@@ -2029,14 +1958,11 @@ const s0 = StyleSheet.create({
   },
   loadingText: { fontSize: 13, lineHeight: 18, color: ui.navy, fontWeight: "700" },
   flightLoadingExperience: { width: "100%", gap: 14 },
-  flightLoadingStatus: { width: "100%", paddingHorizontal: 16, paddingTop: 4, gap: 5 },
-  flightLoadingRouteCodes: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  flightLoadingRouteCode: { fontSize: 14, lineHeight: 18, fontWeight: "800" },
-  flightLoadingRouteLine: { flexDirection: "row", alignItems: "center", paddingHorizontal: 3, gap: 7 },
-  flightLoadingRouteDot: { width: 6, height: 6, borderRadius: 3 },
-  flightLoadingRouteTrack: { flex: 1, height: 1 },
-  flightLoadingCopy: { alignItems: "center", gap: 2, paddingTop: 5, minHeight: 48 },
-  flightLoadingTitle: { fontSize: 15, lineHeight: 20, fontWeight: "800", textAlign: "center" },
+  flightLoadingStatus: { width: "100%", alignItems: "center", paddingHorizontal: 16, paddingTop: 4, gap: 6 },
+  flightLoadingBrand: { width: 172, height: 44 },
+  flightLoadingCopy: { alignItems: "center", gap: 4, minHeight: 64 },
+  flightLoadingTitle: { fontSize: 17, lineHeight: 22, fontWeight: "800", textAlign: "center" },
+  flightLoadingRoute: { fontSize: 14, lineHeight: 18, fontWeight: "800", textAlign: "center" },
   flightLoadingBody: { fontSize: 12, lineHeight: 17, textAlign: "center" },
   skeletonList: { width: "100%", gap: 14 },
   skeletonCard: {

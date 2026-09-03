@@ -15,6 +15,9 @@ export type FlightSearchCheckpoint =
 type SafeCheckpointDetails = {
   requestId?: string;
   resultCount?: number;
+  serverResultCount?: number;
+  acceptedResultCount?: number;
+  rejectedResultIds?: string[];
   responseBytes?: string | null;
   elapsedMs?: number;
   origin?: string;
