@@ -412,6 +412,7 @@ function HotelDetail({
   result: HotelResult;
   params: Record<string, string | string[]>;
 }) {
+  const { theme } = useAppTheme();
   const inset = useSafeAreaInsets();
   const canonical = useCanonicalSaved();
   const saved = canonical.items.some(item => item.type === "hotel" && ((item.payload as Record<string, unknown> | undefined)?.result as { id?: string } | undefined)?.id === result.id);
@@ -464,8 +465,8 @@ function HotelDetail({
     },
   });
   return (
-    <SafeAreaView style={d.safe} edges={["top"]}>
-      <View style={d.hotelBackHeader}>
+    <SafeAreaView style={[d.safe, { backgroundColor: theme.background }]} edges={["top"]}>
+      <View style={[d.hotelBackHeader, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
         <Pressable accessibilityRole="button" accessibilityLabel="Back to hotel results" onPress={returnToHotelResults} style={d.backToResults}>
           <ArrowLeft size={17} strokeWidth={2} color={ui.blue}/><Text style={d.backToResultsText}>Back to hotel results</Text>
         </Pressable>
@@ -473,18 +474,18 @@ function HotelDetail({
       <ScrollView contentContainerStyle={{ paddingBottom: 120 + inset.bottom }}>
         <View style={d.hotelIdentity}>
           <View style={d.hotelIdentityCopy}>
-            <Text accessibilityRole="header" style={d.hotelName}>{result.name}</Text>
-            {nights ? <Text style={d.hotelFact}>▣ {shortDate(String(params.checkIn || ""))} – {shortDate(String(params.checkOut || ""))} · {nights} nights</Text> : null}
-            <Text style={d.hotelFact}>♙ {guestCount} guests, {roomCount} room{roomCount === 1 ? "" : "s"}</Text>
-            <Text style={d.hotelFact}>⌾ {result.location}</Text>
+            <Text accessibilityRole="header" style={[d.hotelName, { color: theme.textPrimary }]}>{result.name}</Text>
+            {nights ? <Text style={[d.hotelFact, { color: theme.textSecondary }]}>▣ {shortDate(String(params.checkIn || ""))} – {shortDate(String(params.checkOut || ""))} · {nights} nights</Text> : null}
+            <Text style={[d.hotelFact, { color: theme.textSecondary }]}>♙ {guestCount} guests, {roomCount} room{roomCount === 1 ? "" : "s"}</Text>
+            <Text style={[d.hotelFact, { color: theme.textSecondary }]}>⌾ {result.location}</Text>
             {classification > 0 ? <Text accessibilityLabel={`${classification} star hotel`} style={d.stars}>{"★".repeat(classification)}</Text> : null}
           </View>
           <View style={d.hotelHeaderActions}>
             <Pressable accessibilityRole="button" accessibilityLabel={saved ? `Remove ${result.name} hotel from saved` : `Save ${result.name} hotel`} accessibilityState={{ selected: saved }} onPress={() => void canonical.toggleHotel(result, params)} style={d.hotelHeaderAction}>
-              <Heart size={21} color={saved ? androidFavoriteColors.active : ui.navy} fill={saved ? androidFavoriteColors.active : "transparent"}/>
+              <Heart size={21} color={saved ? androidFavoriteColors.active : theme.icon} fill={saved ? androidFavoriteColors.active : "transparent"}/>
             </Pressable>
             <Pressable accessibilityRole="button" accessibilityLabel={`Share ${result.name}`} onPress={shareHotel} style={d.hotelHeaderAction}>
-              <FlowIcon name="share" size={20}/>
+              <FlowIcon name="share" size={20} color={theme.icon}/>
             </Pressable>
           </View>
         </View>
@@ -492,7 +493,7 @@ function HotelDetail({
           {images[0] ? (
             <Image source={{ uri: images[0] }} resizeMode="cover" style={d.hotelHero} accessibilityLabel={`${result.name} photo 1`} />
           ) : (
-            <View style={[d.hotelHero, d.hotelImageUnavailable]}><Text style={d.meta}>Property image unavailable</Text></View>
+            <View style={[d.hotelHero, d.hotelImageUnavailable, {backgroundColor:theme.surface}]}><Text style={[d.meta,{color:theme.textSecondary}]}>Property image unavailable</Text></View>
           )}
           <View style={d.hotelThumbs}>
             {[images[1], images[2]].map((x, i) =>
@@ -508,23 +509,23 @@ function HotelDetail({
             <Text style={d.more}>+{images.length - 3}</Text>
           ) : null}
         </View>
-        <View accessibilityRole="tablist" style={d.hotelTabs}>
-          {(["compare", "about", "location", "reviews"] as const).map((tab) => <Pressable key={tab} accessibilityRole="tab" accessibilityState={{selected:activeHotelTab===tab}} onPress={()=>setActiveHotelTab(tab)} style={[d.hotelTab,activeHotelTab===tab&&d.hotelTabActive]}><Text style={[d.hotelTabText,activeHotelTab===tab&&d.hotelTabTextActive]}>{tab === "compare" ? "Compare prices" : tab[0].toUpperCase()+tab.slice(1)}</Text></Pressable>)}
+        <View accessibilityRole="tablist" style={[d.hotelTabs, { borderBottomColor: theme.border }]}>
+          {(["compare", "about", "location", "reviews"] as const).map((tab) => <Pressable key={tab} accessibilityRole="tab" accessibilityState={{selected:activeHotelTab===tab}} onPress={()=>setActiveHotelTab(tab)} style={[d.hotelTab,activeHotelTab===tab&&d.hotelTabActive]}><Text style={[d.hotelTabText,{color:theme.textSecondary},activeHotelTab===tab&&d.hotelTabTextActive]}>{tab === "compare" ? "Compare prices" : tab[0].toUpperCase()+tab.slice(1)}</Text></Pressable>)}
         </View>
         <View style={[d.detailBody, compact && d.detailBodyCompact]}>
           {activeHotelTab === "compare" ? <>
-          <Text style={d.h2}>Compare prices</Text>
-          <Text style={d.hotelSectionLead}>{nights ? `${shortDate(String(params.checkIn || ""))} – ${shortDate(String(params.checkOut || ""))} · ${nights} nights` : "Stay dates unavailable"} · {guestCount} guests, {roomCount} room{roomCount === 1 ? "" : "s"}</Text>
-          {discovery ? <View style={d.hotelNotice}><Text style={d.h2}>Live room options unavailable</Text><Text style={d.meta}>This source-backed property is shown for destination planning. No live room, price, or availability was supplied.</Text></View> : <Pressable
+          <Text style={[d.h2,{color:theme.textPrimary}]}>Compare prices</Text>
+          <Text style={[d.hotelSectionLead,{color:theme.textSecondary}]}>{nights ? `${shortDate(String(params.checkIn || ""))} – ${shortDate(String(params.checkOut || ""))} · ${nights} nights` : "Stay dates unavailable"} · {guestCount} guests, {roomCount} room{roomCount === 1 ? "" : "s"}</Text>
+          {discovery ? <View style={[d.hotelNotice,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={[d.h2,{color:theme.textPrimary}]}>Live room options unavailable</Text><Text style={[d.meta,{color:theme.textSecondary}]}>This source-backed property is shown for destination planning. No live room, price, or availability was supplied.</Text></View> : <Pressable
             onPress={() => setSelectedRoom(true)}
-            style={[d.room, selectedRoom && { borderColor: ui.blue }]}
+            style={[d.room,{backgroundColor:theme.surface,borderColor:theme.border}, selectedRoom && { borderColor: ui.blue }]}
           >
             {result.imageUrl ? (
               <Image source={{ uri: result.imageUrl }} style={[d.roomImage, compact && d.roomImageCompact]} />
             ) : null}
             <View style={{ flex: 1, minWidth: 0, gap: 5 }}>
-              <Text style={d.provider}>{result.roomType || "Room option"}</Text>
-              <Text style={d.meta}>
+              <Text style={[d.provider,{color:theme.textPrimary}]}>{result.roomType || "Room option"}</Text>
+              <Text style={[d.meta,{color:theme.textSecondary}]}>
                 {result.cancellationInfo || "Cancellation terms unavailable"}
               </Text>
               <Text style={d.green}>
@@ -532,18 +533,18 @@ function HotelDetail({
               </Text>
             </View>
             <View style={{ width: compact ? 106 : 126, flexShrink: 0, alignItems: "flex-end" }}>
-              <Text style={d.price}>
+              <Text style={[d.price,{color:theme.textPrimary}]}>
                 {money(result.currency, result.pricePerNight)}
               </Text>
-              <Text style={d.meta}>
+              <Text style={[d.meta,{color:theme.textSecondary}]}>
                 {money(result.currency, result.totalPrice)} total
               </Text>
               <Button label="Select room" outline={!selectedRoom} />
             </View>
           </Pressable>}
-          <View style={d.section}>
-            <Text style={d.h2}>{discovery ? "Inventory source" : "Choose where to book"}</Text>
-            <Text style={d.meta}>
+          <View style={[d.section,{backgroundColor:theme.surface,borderColor:theme.border}]}>
+            <Text style={[d.h2,{color:theme.textPrimary}]}>{discovery ? "Inventory source" : "Choose where to book"}</Text>
+            <Text style={[d.meta,{color:theme.textSecondary}]}>
               Total price including taxes and fees when reported
             </Text>
             <Offer
@@ -556,25 +557,25 @@ function HotelDetail({
               price={hasPrice ? money(result.currency, result.totalPrice) : "Price unavailable"}
               selected={!discovery}
             />
-            <Text style={d.disclosure}>
+            <Text style={[d.disclosure,{color:theme.textSecondary}]}>
               Only the provider offer returned by the current inventory source
               is shown.
             </Text>
           </View>
           </> : null}
-          {activeHotelTab === "about" ? <View style={d.hotelPanel}><Text style={d.h2}>About this property</Text>{profile?.propertyType ? <Text style={d.hotelSectionLead}>{profile.propertyType}</Text> : null}{result.amenities.length ? <><Text style={d.provider}>Amenities</Text><View style={d.hotelFactGrid}>{result.amenities.map(a=><View key={a} style={d.hotelGridFact}><FlowIcon name="check" size={16} color={ui.green}/><Text style={d.hotelGridText}>{a}</Text></View>)}</View></> : <Text style={d.meta}>Verified property information is not available yet.</Text>}{profile?.accessibilityFeatures?.length ? <><Text style={d.provider}>Accessibility</Text>{profile.accessibilityFeatures.map(a=><Text key={a} style={d.hotelSectionLead}>• {a}</Text>)}</> : null}</View> : null}
-          {activeHotelTab === "location" ? <View style={d.hotelPanel}><Text style={d.h2}>Location & stay fit</Text><Text style={d.hotelSectionLead}>{result.location}</Text>{result.neighbourhood ? <Text style={d.hotelSectionLead}>{result.neighbourhood} neighborhood</Text> : null}{result.distanceFromCenter ? <Text style={d.meta}>{result.distanceFromCenter} from city center</Text> : null}{profile?.travellerFeatures?.map(f=><Text key={f} style={d.hotelSectionLead}>✓ {f}</Text>)}</View> : null}
-          {activeHotelTab === "reviews" ? <View style={d.hotelPanel}><Text style={d.h2}>Guest reviews</Text>{reviewValue > 0 ? <><Text style={d.hotelReviewScore}>{reviewValue.toFixed(1)}</Text><Text style={d.hotelSectionLead}>{result.reviewCount ? `${result.reviewCount.toLocaleString()} reviews` : "Review count unavailable"}</Text>{result.reviewSource ? <Text style={d.meta}>Source: {result.reviewSource}</Text> : null}</> : <Text style={d.meta}>Verified guest reviews are not available for this property yet.</Text>}</View> : null}
+          {activeHotelTab === "about" ? <View style={[d.hotelPanel,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={[d.h2,{color:theme.textPrimary}]}>About this property</Text>{profile?.propertyType ? <Text style={[d.hotelSectionLead,{color:theme.textSecondary}]}>{profile.propertyType}</Text> : null}{result.amenities.length ? <><Text style={[d.provider,{color:theme.textPrimary}]}>Amenities</Text><View style={d.hotelFactGrid}>{result.amenities.map(a=><View key={a} style={d.hotelGridFact}><FlowIcon name="check" size={16} color={ui.green}/><Text style={[d.hotelGridText,{color:theme.textPrimary}]}>{a}</Text></View>)}</View></> : <Text style={[d.meta,{color:theme.textSecondary}]}>Verified property information is not available yet.</Text>}{profile?.accessibilityFeatures?.length ? <><Text style={[d.provider,{color:theme.textPrimary}]}>Accessibility</Text>{profile.accessibilityFeatures.map(a=><Text key={a} style={[d.hotelSectionLead,{color:theme.textSecondary}]}>• {a}</Text>)}</> : null}</View> : null}
+          {activeHotelTab === "location" ? <View style={[d.hotelPanel,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={[d.h2,{color:theme.textPrimary}]}>Location & stay fit</Text><Text style={[d.hotelSectionLead,{color:theme.textSecondary}]}>{result.location}</Text>{result.neighbourhood ? <Text style={[d.hotelSectionLead,{color:theme.textSecondary}]}>{result.neighbourhood} neighborhood</Text> : null}{result.distanceFromCenter ? <Text style={[d.meta,{color:theme.textSecondary}]}>{result.distanceFromCenter} from city center</Text> : null}{profile?.travellerFeatures?.map(f=><Text key={f} style={[d.hotelSectionLead,{color:theme.textSecondary}]}>✓ {f}</Text>)}</View> : null}
+          {activeHotelTab === "reviews" ? <View style={[d.hotelPanel,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={[d.h2,{color:theme.textPrimary}]}>Guest reviews</Text>{reviewValue > 0 ? <><Text style={d.hotelReviewScore}>{reviewValue.toFixed(1)}</Text><Text style={[d.hotelSectionLead,{color:theme.textSecondary}]}>{result.reviewCount ? `${result.reviewCount.toLocaleString()} reviews` : "Review count unavailable"}</Text>{result.reviewSource ? <Text style={[d.meta,{color:theme.textSecondary}]}>Source: {result.reviewSource}</Text> : null}</> : <Text style={[d.meta,{color:theme.textSecondary}]}>Verified guest reviews are not available for this property yet.</Text>}</View> : null}
         </View>
       </ScrollView>
       <View
-        style={[d.hotelSticky, { paddingBottom: Math.max(inset.bottom, 10) }]}
+        style={[d.hotelSticky, { paddingBottom: Math.max(inset.bottom, 10), backgroundColor: theme.surface, borderTopColor: theme.border }]}
       >
         <View style={d.stickyTotal}>
-          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={d.price}>
-            {hasPrice ? <>{money(result.currency, result.totalPrice)}{" "}<Text style={d.meta}>total</Text></> : "Price unavailable"}
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={[d.price,{color:theme.textPrimary}]}>
+            {hasPrice ? <>{money(result.currency, result.totalPrice)}{" "}<Text style={[d.meta,{color:theme.textSecondary}]}>total</Text></> : "Price unavailable"}
           </Text>
-          <Text style={d.meta}>
+          <Text style={[d.meta,{color:theme.textSecondary}]}>
             {nights ? `${nights} nights, ` : ""}{guestCount} guests
           </Text>
           <Text style={d.blue}>Price breakdown ⌄</Text>
