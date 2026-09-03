@@ -1,6 +1,7 @@
 import { getApiBaseUrl } from "../config/apiUrl";
 import { readSession } from "../storage/sessionStorage";
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 import type { NormalizedCarResult } from "../../../../src/lib/cars/types";
 import type { PublicFlightResult, PublicHotelResult } from "../../../../src/lib/types";
 import type { ContractResult, TravelSearchResponse } from "../../../../src/lib/travel/searchContract";
@@ -80,6 +81,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
         Accept: "application/json",
         "Content-Type": "application/json",
         "X-Mobile-Platform": Platform.OS,
+        ...(Constants.expoConfig?.version ? { "X-Mobile-App-Version": Constants.expoConfig.version } : {}),
         ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
         ...(options.requestId ? { "X-Search-Request-Id": options.requestId } : {}),
         ...init.headers,

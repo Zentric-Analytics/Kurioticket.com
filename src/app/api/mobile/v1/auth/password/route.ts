@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { checkAuthRateLimit, AuthRateLimitError } from "@/lib/auth-rate-limit";
 import { signinSchema } from "@/lib/validation";
 import { getPrisma } from "@/lib/prisma";
-import { createMobileSession } from "@/lib/mobile-auth";
+import { createMobileSession, mobileSessionMetadata } from "@/lib/mobile-auth";
 import { canUseStagingCredentials } from "@/lib/previewTesterAccess";
 import { createMobileTwoFactorChallenge } from "@/lib/mobile-two-factor";
 
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     if (user.securitySettings?.twoFactorEnabled) {
       return NextResponse.json(await createMobileTwoFactorChallenge(user.id, "PASSWORD"), { status: 202 });
     }
-    const session = await createMobileSession(user.id);
+    const session = await createMobileSession(user.id, "credentials", "PRIMARY", mobileSessionMetadata(request));
     return NextResponse.json({ session, user: { id: user.id, email: user.email, name: user.name } });
   } catch (error) {
     if (error instanceof AuthRateLimitError) return NextResponse.json({ error: "Too many attempts. Please wait and try again." }, { status: 429 });

@@ -161,12 +161,49 @@ test("devices remain off the landing page and preserve revocation behavior", () 
   assert.doesNotMatch(landing, /sessions\.map/);
   assert.match(security, /const openDevices = \(\) => \{[^}]*setDevicesOpen\(true\)/);
   assert.match(security, /<ScreenModal visible=\{devicesOpen\}/);
-  assert.match(security, /!item\.isCurrent \? <Pressable/);
+  assert.match(security, /!item\.isCurrent\?<Pressable/);
   assert.match(security, /travelApi\.revokeSecuritySession\(item\.id\)/);
   assert.match(security, /Alert\.alert\(c\.removeTitle, c\.removeBody/);
   assert.match(security, /travelApi\.revokeAllSecuritySessions\(\)/);
   assert.match(security, /Alert\.alert\(c\.signOutTitle, c\.signOutBody/);
   assert.match(security, /label=\{c\.signOutAll\} description=\{c\.signOutAllHelp\} destructive chevron=\{false\} onPress=\{all\}/);
+});
+
+test("active sessions use compact localized cards without raw client values or an empty feedback slot", () => {
+  const start = security.indexOf('<ScreenModal visible={devicesOpen}');
+  const end = security.indexOf('<ScreenModal visible={activityOpen}', start);
+  const devices = security.slice(start, end);
+  assert.match(devices, /title=\{c\.activeSessions\}/);
+  assert.doesNotMatch(devices, /title=\{c\.yourDevices\}|<Feedback/);
+  assert.match(devices, /styles\.devicesContent/);
+  assert.match(devices, /<SessionRow/);
+  assert.match(devices, /devicesError \? <Text accessibilityRole="alert"/);
+  assert.match(devices, /sessions\.length \?/);
+  assert.match(devices, /c\.noActiveSessions/);
+  assert.match(security, /borderRadius: 12/);
+  assert.match(security, /<Smartphone size=\{20\}/);
+  assert.doesNotMatch(devices, /\{item\.client\}/);
+});
+
+test("session rows trust isCurrent and require menu plus confirmation before revocation", () => {
+  const row = security.slice(security.indexOf("function SessionRow"), security.indexOf("function BottomSheet"));
+  assert.match(row, /item\.isCurrent\?<Text/);
+  assert.match(row, /!item\.isCurrent\?<Pressable/);
+  assert.match(row, /onPress=\{\(\)=>onManage\(item\)\}/);
+  assert.doesNotMatch(row, /revokeSecuritySession/);
+  assert.match(security, /visible=\{Boolean\(managedSession\)\}/);
+  assert.match(security, /if\(item\)remove\(item\)/);
+  assert.match(security, /Alert\.alert\(c\.removeTitle, c\.removeBody,[^;]+onPress: \(\) => void travelApi\.revokeSecuritySession\(item\.id\)/);
+  assert.match(security, /revokeSecuritySession\(item\.id\)\.then\(\(\) => load\(\{ showLandingFeedback: false, showLoading: false \}\)\)/);
+});
+
+test("session details localize canonical mobile platforms and omit legacy unknown metadata", () => {
+  const formatter = security.slice(security.indexOf("export function sessionDetails"), security.indexOf("function SessionRow"));
+  assert.match(formatter, /=== "ios" \? copy\.iphone/);
+  assert.match(formatter, /=== "android" \? copy\.android/);
+  assert.match(formatter, /copy\.kurioticketApp/);
+  assert.match(formatter, /unknown\(\?: platform\)\?/);
+  assert.doesNotMatch(formatter, /Unknown platform|\[item\.client/);
 });
 
 test("notification preference keeps optimistic, race-safe rollback semantics", () => {
@@ -219,7 +256,8 @@ test("visual feedback is owned by the landing and individual security flows", ()
   assert.doesNotMatch(landing, /devicesError|twoFactorError|deletionError|passkeysError/);
   assert.doesNotMatch(security, /<Feedback error=\{passkeysError\}/);
   assert.match(security, /loadError=\{passkeysError\}/);
-  assert.match(security, /<Feedback error=\{devicesError\} message=""/);
+  assert.match(security, /devicesError \? <Text accessibilityRole="alert" style=\{styles\.error\}>\{devicesError\}<\/Text> : null/);
+  assert.doesNotMatch(security, /<Feedback error=\{devicesError\}/);
   assert.match(security, /<Feedback error=\{twoFactorError\} message=""/);
   assert.match(security, /<Feedback error=\{deletionError\} message=""/);
   assert.match(passwordChangeFlow, /const \[fieldErrors, setFieldErrors\] = useState<FieldErrors>\(\{\}\)/);

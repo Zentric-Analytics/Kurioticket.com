@@ -36,10 +36,10 @@ const englishSecurityCopy = {
   "currentDevice": "Current device",
   "lastActive": "Last active",
   "remove": "Remove device",
-  "removeTitle": "Remove this device?",
-  "removeBody": "This device will need to sign in again.",
+  "removeTitle": "Remove this session?",
+  "removeBody": "This device will be signed out of your Kurioticket account.",
   "cancel": "Cancel",
-  "removeFailed": "Unable to remove this device.",
+  "removeFailed": "Unable to remove this session.",
   "signOutAll": "Sign out everywhere",
   "signOutAllHelp": "End every web and mobile session connected to your account.",
   "signOutTitle": "Sign out everywhere?",
@@ -87,7 +87,14 @@ const englishSecurityCopy = {
   "addPasskey": "Add passkey",
   "passkeyPreviewRequired": "A new Preview app binary with native Passkey support is required to add credentials.",
   "created": "Created",
-  "passkeysLoadError": "Unable to load passkeys."
+  "passkeysLoadError": "Unable to load passkeys.",
+  "manageSession": "Manage session",
+  "removeSession": "Remove session",
+  "noActiveSessions": "No active sessions",
+  "noActiveSessionsHelp": "No devices are currently signed in to your account.",
+  "kurioticketApp": "Kurioticket app",
+  "iphone": "iPhone",
+  "android": "Android"
 } as const;
 export type SecurityCopy = { [K in keyof typeof englishSecurityCopy]: string };
 
@@ -127,8 +134,8 @@ const es_es: SecurityCopy = {
   "currentDevice": "Dispositivo actual",
   "lastActive": "Última actividad",
   "remove": "Eliminar dispositivo",
-  "removeTitle": "¿Eliminar este dispositivo?",
-  "removeBody": "Este dispositivo tendrá que iniciar sesión de nuevo.",
+  "removeTitle": "¿Eliminar esta sesión?",
+  "removeBody": "Este dispositivo cerrará sesión en tu cuenta de Kurioticket.",
   "cancel": "Cancelar",
   "removeFailed": "No se pudo eliminar el dispositivo.",
   "signOutAll": "Cerrar sesión en todas partes",
@@ -178,7 +185,14 @@ const es_es: SecurityCopy = {
   "addPasskey": "Añadir llave de acceso",
   "passkeyPreviewRequired": "Se necesita una nueva versión de la aplicación Preview con compatibilidad nativa con llaves de acceso para añadir credenciales.",
   "created": "Creada",
-  "passkeysLoadError": "No se pudieron cargar las llaves de acceso."
+  "passkeysLoadError": "No se pudieron cargar las llaves de acceso.",
+  "manageSession": "Gestionar sesión",
+  "removeSession": "Eliminar sesión",
+  "noActiveSessions": "No hay sesiones activas",
+  "noActiveSessionsHelp": "No hay dispositivos con sesión iniciada en tu cuenta.",
+  "kurioticketApp": "Aplicación Kurioticket",
+  "iphone": "iPhone",
+  "android": "Android"
 };
 
 const fr: SecurityCopy = {
@@ -268,7 +282,14 @@ const fr: SecurityCopy = {
   "addPasskey": "Add passkey",
   "passkeyPreviewRequired": "A new Preview app binary with native Passkey support is required to add credentials.",
   "created": "Créée",
-  "passkeysLoadError": "Unable to load passkeys."
+  "passkeysLoadError": "Unable to load passkeys.",
+  "manageSession": "Manage session",
+  "removeSession": "Remove session",
+  "noActiveSessions": "No active sessions",
+  "noActiveSessionsHelp": "No devices are currently signed in to your account.",
+  "kurioticketApp": "Kurioticket app",
+  "iphone": "iPhone",
+  "android": "Android"
 };
 
 const de_de: SecurityCopy = {
@@ -358,7 +379,14 @@ const de_de: SecurityCopy = {
   "addPasskey": "Add passkey",
   "passkeyPreviewRequired": "A new Preview app binary with native Passkey support is required to add credentials.",
   "created": "Erstellt",
-  "passkeysLoadError": "Unable to load passkeys."
+  "passkeysLoadError": "Unable to load passkeys.",
+  "manageSession": "Manage session",
+  "removeSession": "Remove session",
+  "noActiveSessions": "No active sessions",
+  "noActiveSessionsHelp": "No devices are currently signed in to your account.",
+  "kurioticketApp": "Kurioticket app",
+  "iphone": "iPhone",
+  "android": "Android"
 };
 
 const it_it: SecurityCopy = {
@@ -448,7 +476,14 @@ const it_it: SecurityCopy = {
   "addPasskey": "Add passkey",
   "passkeyPreviewRequired": "A new Preview app binary with native Passkey support is required to add credentials.",
   "created": "Creato",
-  "passkeysLoadError": "Unable to load passkeys."
+  "passkeysLoadError": "Unable to load passkeys.",
+  "manageSession": "Manage session",
+  "removeSession": "Remove session",
+  "noActiveSessions": "No active sessions",
+  "noActiveSessionsHelp": "No devices are currently signed in to your account.",
+  "kurioticketApp": "Kurioticket app",
+  "iphone": "iPhone",
+  "android": "Android"
 };
 
 const pt_br: SecurityCopy = {
@@ -538,7 +573,14 @@ const pt_br: SecurityCopy = {
   "addPasskey": "Add passkey",
   "passkeyPreviewRequired": "A new Preview app binary with native Passkey support is required to add credentials.",
   "created": "Criado",
-  "passkeysLoadError": "Unable to load passkeys."
+  "passkeysLoadError": "Unable to load passkeys.",
+  "manageSession": "Manage session",
+  "removeSession": "Remove session",
+  "noActiveSessions": "No active sessions",
+  "noActiveSessionsHelp": "No devices are currently signed in to your account.",
+  "kurioticketApp": "Kurioticket app",
+  "iphone": "iPhone",
+  "android": "Android"
 };
 
 const nl: SecurityCopy = {
@@ -628,7 +670,14 @@ const nl: SecurityCopy = {
   "addPasskey": "Add passkey",
   "passkeyPreviewRequired": "A new Preview app binary with native Passkey support is required to add credentials.",
   "created": "Aangemaakt",
-  "passkeysLoadError": "Unable to load passkeys."
+  "passkeysLoadError": "Unable to load passkeys.",
+  "manageSession": "Manage session",
+  "removeSession": "Remove session",
+  "noActiveSessions": "No active sessions",
+  "noActiveSessionsHelp": "No devices are currently signed in to your account.",
+  "kurioticketApp": "Kurioticket app",
+  "iphone": "iPhone",
+  "android": "Android"
 };
 
 const ar: SecurityCopy = {
@@ -718,7 +767,14 @@ const ar: SecurityCopy = {
   "addPasskey": "Add passkey",
   "passkeyPreviewRequired": "A new Preview app binary with native Passkey support is required to add credentials.",
   "created": "Created",
-  "passkeysLoadError": "Unable to load passkeys."
+  "passkeysLoadError": "Unable to load passkeys.",
+  "manageSession": "Manage session",
+  "removeSession": "Remove session",
+  "noActiveSessions": "No active sessions",
+  "noActiveSessionsHelp": "No devices are currently signed in to your account.",
+  "kurioticketApp": "Kurioticket app",
+  "iphone": "iPhone",
+  "android": "Android"
 };
 
 const zh_cn: SecurityCopy = {
@@ -808,7 +864,14 @@ const zh_cn: SecurityCopy = {
   "addPasskey": "Add passkey",
   "passkeyPreviewRequired": "A new Preview app binary with native Passkey support is required to add credentials.",
   "created": "Created",
-  "passkeysLoadError": "Unable to load passkeys."
+  "passkeysLoadError": "Unable to load passkeys.",
+  "manageSession": "Manage session",
+  "removeSession": "Remove session",
+  "noActiveSessions": "No active sessions",
+  "noActiveSessionsHelp": "No devices are currently signed in to your account.",
+  "kurioticketApp": "Kurioticket app",
+  "iphone": "iPhone",
+  "android": "Android"
 };
 
 const ja: SecurityCopy = {
@@ -898,7 +961,14 @@ const ja: SecurityCopy = {
   "addPasskey": "Add passkey",
   "passkeyPreviewRequired": "A new Preview app binary with native Passkey support is required to add credentials.",
   "created": "Created",
-  "passkeysLoadError": "Unable to load passkeys."
+  "passkeysLoadError": "Unable to load passkeys.",
+  "manageSession": "Manage session",
+  "removeSession": "Remove session",
+  "noActiveSessions": "No active sessions",
+  "noActiveSessionsHelp": "No devices are currently signed in to your account.",
+  "kurioticketApp": "Kurioticket app",
+  "iphone": "iPhone",
+  "android": "Android"
 };
 
 const ko: SecurityCopy = {
@@ -988,7 +1058,14 @@ const ko: SecurityCopy = {
   "addPasskey": "Add passkey",
   "passkeyPreviewRequired": "A new Preview app binary with native Passkey support is required to add credentials.",
   "created": "Created",
-  "passkeysLoadError": "Unable to load passkeys."
+  "passkeysLoadError": "Unable to load passkeys.",
+  "manageSession": "Manage session",
+  "removeSession": "Remove session",
+  "noActiveSessions": "No active sessions",
+  "noActiveSessionsHelp": "No devices are currently signed in to your account.",
+  "kurioticketApp": "Kurioticket app",
+  "iphone": "iPhone",
+  "android": "Android"
 };
 
 const hi: SecurityCopy = {
@@ -1078,7 +1155,14 @@ const hi: SecurityCopy = {
   "addPasskey": "Add passkey",
   "passkeyPreviewRequired": "A new Preview app binary with native Passkey support is required to add credentials.",
   "created": "बनाया गया",
-  "passkeysLoadError": "Unable to load passkeys."
+  "passkeysLoadError": "Unable to load passkeys.",
+  "manageSession": "Manage session",
+  "removeSession": "Remove session",
+  "noActiveSessions": "No active sessions",
+  "noActiveSessionsHelp": "No devices are currently signed in to your account.",
+  "kurioticketApp": "Kurioticket app",
+  "iphone": "iPhone",
+  "android": "Android"
 };
 
 const tr: SecurityCopy = {
@@ -1168,7 +1252,14 @@ const tr: SecurityCopy = {
   "addPasskey": "Add passkey",
   "passkeyPreviewRequired": "A new Preview app binary with native Passkey support is required to add credentials.",
   "created": "Oluşturuldu",
-  "passkeysLoadError": "Unable to load passkeys."
+  "passkeysLoadError": "Unable to load passkeys.",
+  "manageSession": "Manage session",
+  "removeSession": "Remove session",
+  "noActiveSessions": "No active sessions",
+  "noActiveSessionsHelp": "No devices are currently signed in to your account.",
+  "kurioticketApp": "Kurioticket app",
+  "iphone": "iPhone",
+  "android": "Android"
 };
 
 const pl: SecurityCopy = {
@@ -1258,7 +1349,14 @@ const pl: SecurityCopy = {
   "addPasskey": "Add passkey",
   "passkeyPreviewRequired": "A new Preview app binary with native Passkey support is required to add credentials.",
   "created": "Created",
-  "passkeysLoadError": "Unable to load passkeys."
+  "passkeysLoadError": "Unable to load passkeys.",
+  "manageSession": "Manage session",
+  "removeSession": "Remove session",
+  "noActiveSessions": "No active sessions",
+  "noActiveSessionsHelp": "No devices are currently signed in to your account.",
+  "kurioticketApp": "Kurioticket app",
+  "iphone": "iPhone",
+  "android": "Android"
 };
 
 const sv: SecurityCopy = {
@@ -1348,7 +1446,14 @@ const sv: SecurityCopy = {
   "addPasskey": "Add passkey",
   "passkeyPreviewRequired": "A new Preview app binary with native Passkey support is required to add credentials.",
   "created": "Created",
-  "passkeysLoadError": "Unable to load passkeys."
+  "passkeysLoadError": "Unable to load passkeys.",
+  "manageSession": "Manage session",
+  "removeSession": "Remove session",
+  "noActiveSessions": "No active sessions",
+  "noActiveSessionsHelp": "No devices are currently signed in to your account.",
+  "kurioticketApp": "Kurioticket app",
+  "iphone": "iPhone",
+  "android": "Android"
 };
 
 const id: SecurityCopy = {
@@ -1438,7 +1543,14 @@ const id: SecurityCopy = {
   "addPasskey": "Add passkey",
   "passkeyPreviewRequired": "A new Preview app binary with native Passkey support is required to add credentials.",
   "created": "Created",
-  "passkeysLoadError": "Unable to load passkeys."
+  "passkeysLoadError": "Unable to load passkeys.",
+  "manageSession": "Manage session",
+  "removeSession": "Remove session",
+  "noActiveSessions": "No active sessions",
+  "noActiveSessionsHelp": "No devices are currently signed in to your account.",
+  "kurioticketApp": "Kurioticket app",
+  "iphone": "iPhone",
+  "android": "Android"
 };
 
 const th: SecurityCopy = {
@@ -1528,7 +1640,14 @@ const th: SecurityCopy = {
   "addPasskey": "Add passkey",
   "passkeyPreviewRequired": "A new Preview app binary with native Passkey support is required to add credentials.",
   "created": "Created",
-  "passkeysLoadError": "Unable to load passkeys."
+  "passkeysLoadError": "Unable to load passkeys.",
+  "manageSession": "Manage session",
+  "removeSession": "Remove session",
+  "noActiveSessions": "No active sessions",
+  "noActiveSessionsHelp": "No devices are currently signed in to your account.",
+  "kurioticketApp": "Kurioticket app",
+  "iphone": "iPhone",
+  "android": "Android"
 };
 
 const vi: SecurityCopy = {
@@ -1618,7 +1737,14 @@ const vi: SecurityCopy = {
   "addPasskey": "Add passkey",
   "passkeyPreviewRequired": "A new Preview app binary with native Passkey support is required to add credentials.",
   "created": "Đã tạo",
-  "passkeysLoadError": "Unable to load passkeys."
+  "passkeysLoadError": "Unable to load passkeys.",
+  "manageSession": "Manage session",
+  "removeSession": "Remove session",
+  "noActiveSessions": "No active sessions",
+  "noActiveSessionsHelp": "No devices are currently signed in to your account.",
+  "kurioticketApp": "Kurioticket app",
+  "iphone": "iPhone",
+  "android": "Android"
 };
 
 export const securityCopy: Record<MobileLocale, SecurityCopy> = { "en-us": englishSecurityCopy, "es-es": es_es, "fr": fr, "de-de": de_de, "it-it": it_it, "pt-br": pt_br, "nl": nl, "ar": ar, "zh-cn": zh_cn, "ja": ja, "ko": ko, "hi": hi, "tr": tr, "pl": pl, "sv": sv, "id": id, "th": th, "vi": vi };

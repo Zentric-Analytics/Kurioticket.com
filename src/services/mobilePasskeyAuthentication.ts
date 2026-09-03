@@ -111,6 +111,7 @@ function resolveDependencies(overrides: MobilePasskeyAuthenticationOverrides): A
 export async function verifyMobilePasskeyAssertion(
   input: unknown,
   overrides: MobilePasskeyAuthenticationOverrides = {},
+  metadata?: { platform?: "ios" | "android"; appVersion?: string },
 ) {
   const parsed = assertionSchema.safeParse(input);
   if (!parsed.success || !sameBytes(parsed.data.id, parsed.data.rawId)) {
@@ -204,7 +205,7 @@ export async function verifyMobilePasskeyAssertion(
     throw new MobilePasskeyAuthenticationError("AUTHENTICATION_FAILED");
   }
 
-  const session = await dependencies.issueSession(passkey.userId, "PASSKEY", "PHISHING_RESISTANT");
+  const session = await dependencies.issueSession(passkey.userId, "PASSKEY", "PHISHING_RESISTANT", metadata);
   return {
     session,
     user: { id: passkey.user.id, email: passkey.user.email, name: passkey.user.name },
