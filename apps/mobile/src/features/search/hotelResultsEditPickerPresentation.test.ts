@@ -16,12 +16,20 @@ test("Hotel Results Edit keeps its outer sheet and routes every field to the sha
   assert.match(panel, /<HotelGuestsRoomsSheet[^>]+presentation=\{editAppearance \? "resultsEditFullScreen" : "sheet"\}/);
 });
 
-test("one opaque safe-area shell owns the three child editor presentations", () => {
+test("one opaque safe-area shell explicitly owns the three child editor safe-area insets", () => {
   assert.match(shell, /transparent=\{false\}/);
   assert.match(shell, /presentationStyle="fullScreen"/);
   assert.match(shell, /visible=\{visible\}/);
   assert.match(shell, /animationType="none"/);
-  assert.match(shell, /edges=\{\["top", "bottom", "left", "right"\]\}/);
+  assert.match(shell, /useSafeAreaInsets/);
+  assert.match(shell, /const insets = useSafeAreaInsets\(\)/);
+  assert.match(shell, /paddingTop: insets\.top/);
+  assert.match(shell, /paddingBottom: insets\.bottom/);
+  assert.match(shell, /edges=\{\["left", "right"\]\}/);
+  assert.doesNotMatch(shell, /edges=\{\[[^\]]*"top"/);
+  assert.doesNotMatch(shell, /edges=\{\[[^\]]*"bottom"/);
+  assert.doesNotMatch(shell, /styles\.screen,\s*\{[^}]*paddingTop:\s*\d+/);
+  assert.doesNotMatch(shell, /(?:header|title|back):\{[^}]*marginTop:/);
   assert.match(shell, /backgroundColor: ft\.colors\.surface/);
   assert.doesNotMatch(shell, /scrim|borderTopLeftRadius|borderTopRightRadius|SEARCH_PICKER_BACKDROP_COLOR/);
   assert.doesNotMatch(shell, /Animated|translateY|backdropStyle|sheetStyle|motion\./);
@@ -34,6 +42,7 @@ test("child headers are balanced and Android Back returns to Edit", () => {
   assert.match(shell, /<View accessible=\{false\} style=\{styles\.side\}\/\>/);
   assert.match(shell, /textAlign:"center"/);
   assert.match(shell, /minHeight:62/);
+  assert.match(shell, /back:\{minWidth:44,minHeight:44/);
   assert.match(shell, /onRequestClose=\{onBack\}/);
   assert.match(shell, /accessibilityLabel="Back to edit hotel search"/);
 });
