@@ -12,7 +12,7 @@ test("the authoritative parity runner covers every travel matrix", () => {
     "carSearchModel", "carResultsRoute", "carCanonicalCatalog", "carResults", "carSavedState",
     "packageSearchModel", "packagesNavigation", "packageOrchestrator", "api/packages/search",
     "accountCapabilityContract", "savedSearchContext", "recentSearchNavigation", "hotelPriceAlerts", "hotelPriceAlertModel",
-    "travelPipelineAlignment", "canonicalResultAcceptance",
+    "travelPipelineAlignment", "canonicalResultAcceptance", "travelEntryPresentation",
   ]) assert.match(runner, new RegExp(evidence.replaceAll("/", "\\/")), evidence);
 });
 

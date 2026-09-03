@@ -9,6 +9,7 @@ const matrices = {
   root: [
     "scripts/travel-parity-program.test.mjs",
     "src/lib/travel/searchContract.test.ts",
+    "src/shared/presentation/travelEntryPresentation.test.ts",
     "src/services/travel/providers/duffelProvider.searchContract.test.ts",
     "src/lib/hotels/hotelDiscoveryIntent.test.ts",
     "src/lib/hotels/hotelExplorationSearch.test.ts",

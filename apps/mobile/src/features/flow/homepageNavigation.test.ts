@@ -57,7 +57,7 @@ test("hero directly follows the complete header for guests and signed-in users",
   assert.doesNotMatch(home, /isAuthenticated\s*\?[^:]*HomeHero/s);
 });
 
-test("Hotels starts with its hero and overlaps it with search without marketing copy", () => {
+test("Hotels mirrors the mobile-web hero, product heading, search, and shared destinations", () => {
   const products = source("src/features/flow/ProductScreens.tsx");
   const hotelSearch = source("src/features/flow/HotelSearchPanel.tsx");
   const hotels = products.slice(
@@ -69,16 +69,18 @@ test("Hotels starts with its hero and overlaps it with search without marketing 
   assert.match(hotels, /assets\/heroes\/hotels-room\.png/);
   assert.match(hotels, /<View pointerEvents="none" style=\{styles\.hotelHeroOverlay\} \/>/);
   assert.match(hotels, /<HotelSearchPanel ref=\{panel\} params=\{params\} \/>/);
-  assert.match(hotels, /title="Featured destinations"/);
+  assert.match(hotels, /travelEntryPresentation\.hotels\.heroTitle/);
+  assert.match(hotels, /travelEntryPresentation\.hotels\.product/);
+  assert.match(hotels, /title="Explore hotel stays by destination"/);
+  assert.match(hotels, /primaryHotelDestinationCards\.map/);
   assert.match(products, /hotelBody:\s*\{\s*marginTop:\s*-22/);
   assert.match(hotelSearch, /<CompactSearchField label="Destination"/);
   assert.match(hotelSearch, /label="Travel dates"/);
   assert.match(hotelSearch, /label="Guests"/);
   assert.match(hotelSearch, /submitLabel = "Search hotels"/);
   assert.doesNotMatch(hotels, /HomeTopNavigation|accessibilityLabel="Notifications"/);
-  assert.doesNotMatch(hotels, /accessibilityRole="header"/);
-  assert.doesNotMatch(hotels, /Find the stays that start the right trip/);
-  assert.doesNotMatch(hotels, /Compare hotels in one place, from city breaks to luxury resorts\./);
+  assert.match(hotels, /accessibilityRole="header"/);
+  assert.doesNotMatch(hotels, /\{ name: "Bali" \}/);
 });
 
 test("bottom navigation remains owned by the fixed tabs layout", () => {
