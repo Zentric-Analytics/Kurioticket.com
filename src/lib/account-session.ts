@@ -81,9 +81,15 @@ export async function validateAccountSession(id: string, userId: string, options
   return session;
 }
 
+async function lockAccountSessionRevocation(tx: { $executeRaw: (query: TemplateStringsArray, ...values: unknown[]) => Promise<number> }, userId: string) {
+  // pg_advisory_xact_lock returns PostgreSQL void. Execute it as a statement so
+  // Prisma does not try to deserialize the void result through $queryRaw.
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('account-session-revocation'), hashtext(${userId}))`;
+}
+
 export async function revokeSession(userId: string, sessionId: string, reason = "user_revoked") {
   return getPrisma().$transaction(async tx => {
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext('account-session-revocation'), hashtext(${userId}))`;
+    await lockAccountSessionRevocation(tx, userId);
     const result = await tx.accountSession.updateMany({ where: { id: sessionId, userId, revokedAt: null }, data: { revokedAt: new Date(), revokeReason: reason } });
     if (result.count) await tx.securityEvent.create({ data: { userId, accountSessionId: sessionId, type: "SESSION_REVOKED", metadata: { reason } } });
     return result.count === 1;
@@ -92,7 +98,7 @@ export async function revokeSession(userId: string, sessionId: string, reason = 
 
 export async function revokeAllSessions(userId: string, reason = "sign_out_everywhere") {
   return getPrisma().$transaction(async tx => {
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext('account-session-revocation'), hashtext(${userId}))`;
+    await lockAccountSessionRevocation(tx, userId);
     await tx.user.update({ where: { id: userId }, data: { sessionVersion: { increment: 1 } } });
     await tx.accountSession.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date(), revokeReason: reason } });
     return tx.securityEvent.create({ data: { userId, type: "ALL_SESSIONS_REVOKED", metadata: { reason } } });
@@ -102,7 +108,7 @@ export async function revokeAllSessions(userId: string, reason = "sign_out_every
 /** Revokes a user's other sessions while preserving and revalidating the authoritative current mobile session. */
 export async function revokeOtherSessions(userId: string, currentSessionId: string, reason = "sign_out_other_sessions") {
   return getPrisma().$transaction(async tx => {
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext('account-session-revocation'), hashtext(${userId}))`;
+    await lockAccountSessionRevocation(tx, userId);
     const current = await tx.accountSession.findFirst({
       where: { id: currentSessionId, userId, client: "MOBILE", revokedAt: null, expiresAt: { gt: new Date() } },
       select: { id: true },
