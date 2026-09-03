@@ -1,13 +1,15 @@
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { getApiBaseUrl } from "../../config/apiUrl";
+import { useMobileMarketplace } from "../../localization/MobileLocalizationProvider";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowStyles, useFlowTheme } from "../flow/flowStyles";
 import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
 import { discoverAdventureNavigation } from "./homepageCardNavigation";
-import { homepageAdventureDiscoveryBottomRow, homepageAdventureDiscoveryItems, homepageAdventureDiscoveryTopRow, readFreshDiscoveryFare, type DiscoveryFare, type HomepageAdventureDiscoveryItem } from "./HomepageAdventureDiscoveryData";
+import { getHomepageAdventureDiscoveryItems, readFreshDiscoveryFare, splitAdventureDiscoveryRows, type DiscoveryFare, type HomepageAdventureDiscoveryItem } from "./HomepageAdventureDiscoveryData";
+import type { MarketplaceContext } from "../../../../../src/shared/marketplace/marketplaceContext";
 
 const ROW_GAP = 12;
 
@@ -15,22 +17,26 @@ export function HomepageAdventureDiscovery() {
   const ft = useFlowTheme();
   const { width } = useWindowDimensions();
   const { savedIds, toggle } = useSavedDestinations();
+  const marketplace = useMobileMarketplace();
   const [failedImages, setFailedImages] = useState<Set<string>>(() => new Set());
   const [fares, setFares] = useState<Record<string, DiscoveryFare>>({});
   const cardWidth = Math.min(210, Math.max(170, width * 0.44));
+  const api = getApiBaseUrl(undefined, __DEV__);
+  const assetOrigin = api.ok ? api.baseUrl : "https://staging.kurioticket.com";
+  const items = useMemo(() => getHomepageAdventureDiscoveryItems(marketplace.marketCountryCode, assetOrigin), [assetOrigin, marketplace.marketCountryCode]);
+  const rows = useMemo(() => splitAdventureDiscoveryRows(items), [items]);
 
   useEffect(() => {
-    const api = getApiBaseUrl(undefined, __DEV__);
     if (!api.ok) return;
     const controller = new AbortController();
-    void fetch(`${api.baseUrl}/api/flights/home-discovery-fares?regionCode=NG&currency=USD&limit=8`, { signal: controller.signal })
+    void fetch(`${api.baseUrl}/api/flights/home-discovery-fares?regionCode=${encodeURIComponent(marketplace.marketCountryCode)}&currency=${encodeURIComponent(marketplace.displayCurrency)}&limit=8`, { signal: controller.signal })
       .then((response) => response.ok ? response.json() : undefined)
       .then((payload: unknown) => {
         if (!payload || typeof payload !== "object") return;
         const cards = (payload as { cards?: unknown }).cards;
         if (!Array.isArray(cards)) return;
         const next: Record<string, DiscoveryFare> = {};
-        for (const item of homepageAdventureDiscoveryItems) {
+        for (const item of items) {
           const card = cards.find((candidate) => candidate && typeof candidate === "object" && (candidate as { item?: { id?: unknown } }).item?.id === item.id);
           const fare = readFreshDiscoveryFare(card, item);
           if (fare) next[item.id] = fare;
@@ -39,7 +45,7 @@ export function HomepageAdventureDiscovery() {
       })
       .catch(() => undefined);
     return () => controller.abort();
-  }, []);
+  }, [api.ok ? api.baseUrl : null, items, marketplace.displayCurrency, marketplace.marketCountryCode]);
 
   return (
     <View collapsable={false} testID="homepage-adventure-discovery" style={styles.section}>
@@ -56,8 +62,8 @@ export function HomepageAdventureDiscovery() {
         style={styles.rowViewport}
         contentContainerStyle={styles.rowContent}
       >
-        {homepageAdventureDiscoveryTopRow.map((item) => (
-          <AdventureCard key={item.id} item={item} width={cardWidth} fare={fares[item.id]} imageFailed={failedImages.has(item.id)} saved={savedIds.has(item.id)} onImageError={() => setFailedImages((current) => new Set(current).add(item.id))} onFavorite={() => toggle(item.id)} />
+        {rows.top.map((item) => (
+          <AdventureCard key={item.id} item={item} width={cardWidth} fare={fares[item.id]} marketplace={marketplace} imageFailed={failedImages.has(item.id)} saved={savedIds.has(item.id)} onImageError={() => setFailedImages((current) => new Set(current).add(item.id))} onFavorite={() => toggle(item.id)} />
         ))}
       </ScrollView>
       <ScrollView
@@ -69,19 +75,19 @@ export function HomepageAdventureDiscovery() {
         style={styles.rowViewport}
         contentContainerStyle={styles.rowContent}
       >
-        {homepageAdventureDiscoveryBottomRow.map((item) => (
-          <AdventureCard key={item.id} item={item} width={cardWidth} fare={fares[item.id]} imageFailed={failedImages.has(item.id)} saved={savedIds.has(item.id)} onImageError={() => setFailedImages((current) => new Set(current).add(item.id))} onFavorite={() => toggle(item.id)} />
+        {rows.bottom.map((item) => (
+          <AdventureCard key={item.id} item={item} width={cardWidth} fare={fares[item.id]} marketplace={marketplace} imageFailed={failedImages.has(item.id)} saved={savedIds.has(item.id)} onImageError={() => setFailedImages((current) => new Set(current).add(item.id))} onFavorite={() => toggle(item.id)} />
         ))}
       </ScrollView>
     </View>
   );
 }
 
-function AdventureCard({ item, width, fare, imageFailed, saved, onImageError, onFavorite }: { item: HomepageAdventureDiscoveryItem; width: number; fare?: DiscoveryFare; imageFailed: boolean; saved: boolean; onImageError: () => void; onFavorite: () => void }) {
+function AdventureCard({ item, width, fare, marketplace, imageFailed, saved, onImageError, onFavorite }: { item: HomepageAdventureDiscoveryItem; width: number; fare?: DiscoveryFare; marketplace: MarketplaceContext; imageFailed: boolean; saved: boolean; onImageError: () => void; onFavorite: () => void }) {
   const ft = useFlowTheme();
-  const formattedFare = fare ? new Intl.NumberFormat("en", { style: "currency", currency: fare.currency, maximumFractionDigits: 0 }).format(fare.price) : undefined;
+  const formattedFare = fare ? new Intl.NumberFormat(marketplace.locale, { style: "currency", currency: fare.currency, maximumFractionDigits: 0 }).format(fare.price) : undefined;
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={`${item.title}. ${item.originCode} to ${item.destinationCode}.${formattedFare ? ` From ${formattedFare}.` : ""}`} onPress={() => router.push(discoverAdventureNavigation(item))} style={({ pressed }) => [styles.card, { width, backgroundColor: ft.colors.card, borderColor: ft.colors.border }, ft.styles.shadow, pressed && flowStyles.pressed]}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`${item.title}. ${item.originCode} to ${item.destinationCode}.${formattedFare ? ` From ${formattedFare}.` : ""}`} onPress={() => router.push(discoverAdventureNavigation(item, marketplace))} style={({ pressed }) => [styles.card, { width, backgroundColor: ft.colors.card, borderColor: ft.colors.border }, ft.styles.shadow, pressed && flowStyles.pressed]}>
       <View style={styles.imageFrame}>
         {imageFailed ? <View accessibilityLabel={`Image unavailable for ${item.destinationCode}`} testID={`adventure-image-fallback-${item.id}`} style={[styles.imageFallback, { backgroundColor: ft.colors.neutralImage }]}><FlowIcon name="compass" color={ft.colors.icon} size={22} /><Text style={[styles.fallbackCode, { color: ft.colors.textPrimary }]}>{item.destinationCode}</Text></View> : <Image accessibilityIgnoresInvertColors accessibilityLabel={item.imageAlt} onError={onImageError} resizeMode="cover" source={item.image} style={styles.image} />}
         <AndroidFavoriteButton saved={saved} label={`${saved ? "Remove" : "Add"} ${item.title} ${saved ? "from" : "to"} favorites`} onPress={(event) => { event.stopPropagation(); onFavorite(); }} style={styles.heart} />

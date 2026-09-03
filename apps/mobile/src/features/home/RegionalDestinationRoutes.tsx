@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Image,
   Pressable,
@@ -10,12 +10,15 @@ import {
   View,
 } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
+import { getApiBaseUrl } from "../../config/apiUrl";
+import { useMobileMarketplace } from "../../localization/MobileLocalizationProvider";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowStyles, useFlowTheme } from "../flow/flowStyles";
 import { discoverAdventureNavigation } from "./homepageCardNavigation";
-import { regionalDestinationRoutes, type RegionalDestinationRoute } from "./RegionalDestinationRoutesData";
+import { getRegionalDestinationRoutes, type RegionalDestinationRoute } from "./RegionalDestinationRoutesData";
+import type { MarketplaceContext } from "../../../../../src/shared/marketplace/marketplaceContext";
 
-function RegionalRouteCard({ route, width }: { route: RegionalDestinationRoute; width: number }) {
+function RegionalRouteCard({ route, width, marketplace }: { route: RegionalDestinationRoute; width: number; marketplace: MarketplaceContext }) {
   const ft = useFlowTheme();
   const [imageFailed, setImageFailed] = useState(false);
   const routeLabel = `${route.originCity} → ${route.destinationCity}`;
@@ -24,7 +27,7 @@ function RegionalRouteCard({ route, width }: { route: RegionalDestinationRoute; 
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${route.originCity} to ${route.destinationCity} flight search.`}
-      onPress={() => router.push(discoverAdventureNavigation(route))}
+      onPress={() => router.push(discoverAdventureNavigation(route, marketplace))}
       style={({ pressed }) => [styles.card, { width, height: width * 0.75 }, ft.styles.shadow, pressed && flowStyles.pressed]}
     >
       {imageFailed ? (
@@ -55,12 +58,16 @@ export function RegionalDestinationRoutes() {
   const ft = useFlowTheme();
   const { width } = useWindowDimensions();
   const cardWidth = Math.min(width * 0.78, 250);
+  const marketplace = useMobileMarketplace();
+  const api = getApiBaseUrl(undefined, __DEV__);
+  const assetOrigin = api.ok ? api.baseUrl : "https://staging.kurioticket.com";
+  const regionalDestinationRoutes = useMemo(() => getRegionalDestinationRoutes(marketplace.marketCountryCode, assetOrigin), [assetOrigin, marketplace.marketCountryCode]);
 
   return (
     <View collapsable={false} testID="regional-destination-routes" style={styles.section}>
       <Text accessibilityRole="header" style={[styles.heading, { color: ft.colors.textPrimary }]}>Discover destinations from your region</Text>
       <ScrollView horizontal nestedScrollEnabled removeClippedSubviews={false} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carousel}>
-        {regionalDestinationRoutes.map((route) => <RegionalRouteCard key={route.id} route={route} width={cardWidth} />)}
+        {regionalDestinationRoutes.map((route) => <RegionalRouteCard key={route.id} route={route} width={cardWidth} marketplace={marketplace} />)}
       </ScrollView>
     </View>
   );

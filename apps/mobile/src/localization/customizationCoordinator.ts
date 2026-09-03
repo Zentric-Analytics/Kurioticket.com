@@ -1,6 +1,7 @@
 import type { MobileLocale } from "./mobileLocalizationCatalog";
+import type { MarketplaceSource } from "../../../../src/shared/marketplace/marketplaceContext";
 export type PreferenceOwner = { userId: string | null };
-export type PreferenceValue = { locale: MobileLocale; currency: string };
+export type PreferenceValue = { locale: MobileLocale; currency: string; region?: string; marketplaceSource?: MarketplaceSource; hasExplicitMarket?: boolean; hasExplicitCurrency?: boolean };
 export type ServerPreferences = { hasPreferences: boolean; preferences: PreferenceValue };
 export type CoordinatorDependencies = {
   readGuest: () => Promise<PreferenceValue>;
