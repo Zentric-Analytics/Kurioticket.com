@@ -44,8 +44,8 @@ export function NotificationsScreen() {
     try {
       const page = await travelApi.notifications(cursor);
       dispatch({ type: "more-success", requestId, items: page.items, nextCursor: page.nextCursor });
-    } catch (cause) {
-      dispatch({ type: "more-failure", requestId, message: cause instanceof TravelApiError ? cause.message : "Unable to load older notifications." });
+    } catch {
+      dispatch({ type: "more-failure", requestId, message: "Couldn't load older notifications. Try again." });
     } finally {
       if (requestSequence.current === requestId) loadingMoreRef.current = false;
     }
