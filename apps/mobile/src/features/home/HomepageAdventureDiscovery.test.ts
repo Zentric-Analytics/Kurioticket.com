@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
-import { homepageAdventureDiscoveryBottomRow, homepageAdventureDiscoveryItems, homepageAdventureDiscoveryTopRow, readFreshDiscoveryFare } from "./HomepageAdventureDiscoveryData";
+import { getHomepageAdventureDiscoveryItems, readFreshDiscoveryFare, splitAdventureDiscoveryRows } from "./HomepageAdventureDiscoveryData";
+
+const homepageAdventureDiscoveryItems = getHomepageAdventureDiscoveryItems("NG", "https://staging.kurioticket.com");
+const { top: homepageAdventureDiscoveryTopRow, bottom: homepageAdventureDiscoveryBottomRow } = splitAdventureDiscoveryRows(homepageAdventureDiscoveryItems);
 
 const source = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 const section = source("src/features/home/HomepageAdventureDiscovery.tsx");
@@ -28,7 +31,7 @@ test("discovery cards use the web route content and existing mobile contracts", 
     { title: "London business and weekend mix", originCode: "LOS", destinationCode: "LHR" },
     { title: "Dubai shopping stopover", originCode: "LOS", destinationCode: "DXB" },
   ]);
-  assert.match(section, /router\.push\(discoverAdventureNavigation\(item\)\)/);
+  assert.match(section, /router\.push\(discoverAdventureNavigation\(item, marketplace\)\)/);
   assert.match(section, /event\.stopPropagation\(\); onFavorite\(\);/);
   assert.match(section, /toggle\(item\.id\)/);
 });
@@ -42,12 +45,15 @@ test("only fresh, exact-route, provider-backed fares can be displayed", () => {
   assert.equal(readFreshDiscoveryFare({ ...fresh, fare: { ...fresh.fare, code: "DXB" } }, item), undefined);
   assert.equal(readFreshDiscoveryFare({ ...fresh, fare: { ...fresh.fare, expiresAt: "2020-01-01T00:00:00.000Z" } }, item), undefined);
   assert.doesNotMatch(section, /priceFromUsd/);
+  assert.match(section, /regionCode=\$\{encodeURIComponent\(marketplace\.marketCountryCode\)\}/);
+  assert.match(section, /currency=\$\{encodeURIComponent\(marketplace\.displayCurrency\)\}/);
+  assert.doesNotMatch(section, /regionCode=NG|currency=USD/);
 });
 
 test("every discovery card shows From while only valid fares show an amount", () => {
   assert.match(section, /<View style=\{styles\.fare\}><Text[^>]*>From<\/Text>\{formattedFare \? <Text[^>]*>\{formattedFare\}<\/Text> : null\}<\/View>/);
   assert.doesNotMatch(section, /formattedFare \? <View style=\{styles\.fare\}>/);
-  assert.match(section, /fare \? new Intl\.NumberFormat\("en", \{ style: "currency", currency: fare\.currency, maximumFractionDigits: 0 \}\)\.format\(fare\.price\) : undefined/);
+  assert.match(section, /fare \? new Intl\.NumberFormat\(marketplace\.locale, \{ style: "currency", currency: fare\.currency, maximumFractionDigits: 0 \}\)\.format\(fare\.price\) : undefined/);
   assert.doesNotMatch(section, />\s*(?:\$0|N\/A|--|Unavailable)\s*</i);
   assert.match(section, /accessibilityLabel=\{`\$\{item\.title\}\. \$\{item\.originCode\} to \$\{item\.destinationCode\}\.\$\{formattedFare \? ` From \$\{formattedFare\}\.` : ""\}`\}/);
 });
@@ -61,8 +67,8 @@ test("cards form two independent responsive horizontal rows with safe image fall
   assert.equal(section.match(/showsHorizontalScrollIndicator=\{false\}/g)?.length, 2);
   assert.match(section, /testID="homepage-adventure-row-top"/);
   assert.match(section, /testID="homepage-adventure-row-bottom"/);
-  assert.match(section, /homepageAdventureDiscoveryTopRow\.map/);
-  assert.match(section, /homepageAdventureDiscoveryBottomRow\.map/);
+  assert.match(section, /rows\.top\.map/);
+  assert.match(section, /rows\.bottom\.map/);
   assert.doesNotMatch(section, /\bref=|scrollTo|contentOffset|onScroll/);
   assert.notStrictEqual(homepageAdventureDiscoveryTopRow, homepageAdventureDiscoveryBottomRow);
   assert.deepEqual(homepageAdventureDiscoveryTopRow.map(({ id }) => id), homepageAdventureDiscoveryItems.filter((_, index) => index % 2 === 0).map(({ id }) => id));

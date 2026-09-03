@@ -25,6 +25,8 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
     const children = integer(text(params.children), 0);
     const infants = integer(text(params.infants), 0);
     const cabinClass = (text(params.cabinClass) || text(params.cabin) || "economy").toLowerCase().replace(/_/g, "-").replace(/\s+/g, "-");
+    const requestedCurrency = text(params.currency).toUpperCase();
+    const currency = /^[A-Z]{3}$/.test(requestedCurrency) ? requestedCurrency : "USD";
     if (!["round-trip", "one-way", "multi-city"].includes(tripType)) return { error: "Choose a supported trip type." };
     if (tripType === "multi-city") {
       const legCount = integer(text(params.legCount), -1);
@@ -34,7 +36,7 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
       for (const leg of legs) { if (!/^[A-Z0-9]{3}$/.test(leg.origin) || !/^[A-Z0-9]{3}$/.test(leg.destination) || leg.origin === leg.destination) return { error: "Choose different valid airports for every flight." }; if (!future(leg.departureDate, now)) return { error: "Choose valid future departure dates." }; if (previous && leg.departureDate < previous) return { error: "Choose chronological flight dates." }; previous = leg.departureDate; }
       if (adults < 1 || adults > 9 || children < 0 || infants < 0 || adults + children + infants > 9) return { error: "Choose valid traveler counts." };
       if (!["economy", "premium-economy", "business", "first"].includes(cabinClass)) return { error: "Choose a supported cabin class." };
-      const payload = { tripType, legs, origin: legs[0].origin, destination: legs.at(-1)!.destination, departureDate: legs[0].departureDate, adults, children, infants, travelers: adults + children + infants, cabinClass };
+      const payload = { tripType, legs, origin: legs[0].origin, destination: legs.at(-1)!.destination, departureDate: legs[0].departureDate, adults, children, infants, travelers: adults + children + infants, cabinClass, currency };
       return { plan: { payload, key: JSON.stringify(["flight", tripType, legs, adults, children, infants, cabinClass]), summary: `${legCount} flights · ${legs[0].origin} → ${legs.at(-1)!.destination} · ${legs[0].departureDate}` } };
     }
     if (!/^[A-Z]{3}$/.test(origin) || !/^[A-Z]{3}$/.test(destination) || origin === destination) return { error: "Choose different valid origin and destination airports." };
@@ -42,7 +44,7 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
     if (tripType === "round-trip" && (!future(returnDate, now) || returnDate <= departureDate)) return { error: "Choose a return date after departure." };
     if (adults < 1 || adults > 9 || children < 0 || infants < 0 || adults + children + infants > 9) return { error: "Choose valid traveler counts." };
     if (!["economy", "premium-economy", "business", "first"].includes(cabinClass)) return { error: "Choose a supported cabin class." };
-    const payload = { tripType, origin, destination, departureDate, ...(tripType === "round-trip" ? { returnDate } : {}), adults, children, infants, travelers: adults + children + infants, cabinClass };
+    const payload = { tripType, origin, destination, departureDate, ...(tripType === "round-trip" ? { returnDate } : {}), adults, children, infants, travelers: adults + children + infants, cabinClass, currency };
     return { plan: { payload, key: JSON.stringify(["flight", ...Object.values(payload)]), summary: `${origin} → ${destination} · ${departureDate}` } };
   }
   if (product === "hotel") {

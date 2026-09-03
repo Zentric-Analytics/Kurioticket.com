@@ -1,10 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import {
-  regionalDestinationRoutes,
-  regionalDestinationWebsiteContract,
-} from "./RegionalDestinationRoutesData";
+import { getRegionalDestinationRoutes } from "./RegionalDestinationRoutesData";
+
+const regionalDestinationRoutes = getRegionalDestinationRoutes("NG", "https://staging.kurioticket.com");
 
 const homeSource = readFileSync(
   `${import.meta.dirname}/../flow/HomeFlowScreen.tsx`,
@@ -15,15 +14,8 @@ const sectionSource = readFileSync(
   "utf8",
 );
 
-test("regional destination adapter identifies the website source and data contract", () => {
-  assert.deepEqual(regionalDestinationWebsiteContract, {
-    sourceFile: "src/app/page.tsx",
-    componentName: "RegionalRouteCard",
-    dataFile: "src/data/homeDiscovery.ts",
-    selectorName: "getHomepageRegionalRouteCards",
-    fallbackMarket: "NG",
-    collapsible: false,
-  });
+test("regional destination adapter consumes the shared market-scoped selector", () => {
+  assert.match(readFileSync(`${import.meta.dirname}/RegionalDestinationRoutesData.ts`, "utf8"), /getMarketplaceHomeMerchandising\(marketCountryCode\)\.regionalRoutes/);
 });
 
 test("complete website-defined NG fallback routes render in selector order", () => {
@@ -39,8 +31,8 @@ test("complete website-defined NG fallback routes render in selector order", () 
       "ng-abv-mad",
       "ng-los-cpt",
       "ng-abv-rob",
-      "fallback-nyc-lis",
-      "fallback-lhr-ist",
+      "ng-los-cdg-alt",
+      "ng-los-acc",
     ],
   );
   assert.ok(regionalDestinationRoutes.every((route) => route.originCity && route.destinationCity && route.image.uri));
@@ -62,7 +54,7 @@ test("shared Android and iOS homepage places the section after promos with only 
 });
 
 test("route actions use the existing flight-results navigation without requests or location APIs", () => {
-  assert.match(sectionSource, /discoverAdventureNavigation\(route\)/);
+  assert.match(sectionSource, /discoverAdventureNavigation\(route, marketplace\)/);
   assert.doesNotMatch(sectionSource, /\bfetch\s*\(|axios|mobileApi|travelApi/);
   assert.doesNotMatch(sectionSource, /Geolocation|Location|requestPermissions|GPS/);
 });

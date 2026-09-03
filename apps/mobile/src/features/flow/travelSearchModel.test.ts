@@ -11,6 +11,12 @@ test("flight plans preserve stable parameters and premium economy", () => {
   assert.equal(first.payload.cabinClass, "premium-economy");
   assert.equal(first.payload.adults, 1);
 });
+test("flight plans preserve a valid marketplace currency and safely default legacy routes", () => {
+  const base = { tripType: "one-way", from: "LHR", to: "CDG", departureDate: "2026-08-10", travelers: "1" };
+  assert.equal(buildSearchPlan("flight", { ...base, currency: "eur" }, now).plan?.payload.currency, "EUR");
+  assert.equal(buildSearchPlan("flight", base, now).plan?.payload.currency, "USD");
+  assert.equal(buildSearchPlan("flight", { ...base, currency: "not-money" }, now).plan?.payload.currency, "USD");
+});
 test("invalid flight, hotel, and car dates are blocked before requests", () => {
   assert.ok(buildSearchPlan("flight", { from: "JFK", to: "JFK", departureDate: "2026-08-10" }, now).error);
   assert.ok(buildSearchPlan("flight", { tripType: "one-way", from: "JFK", to: "LAX", departureDate: "2026-08-10", travelers: "many" }, now).error);
