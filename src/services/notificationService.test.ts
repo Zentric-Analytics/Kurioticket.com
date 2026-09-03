@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test, { afterEach } from "node:test";
 import { __notificationServiceTest, escapeNotificationHtml, getUnreadNotificationCount, InvalidNotificationCursorError, listNotifications, markAllNotificationsRead, markNotificationRead, validateNotificationActionPath } from "@/services/notificationService";
 
-type Row = { id: string; userId: string; type: "SYSTEM"; title: string; body: string; actionPath: string | null; metadata: null; readAt: Date | null; createdAt: Date };
+type Row = { id: string; userId: string; type: "SYSTEM" | "PRICE_ALERT" | "SUPPORT_UPDATE" | "ACCOUNT_UPDATE" | "SECURITY_UPDATE"; title: string; body: string; actionPath: string | null; metadata: Record<string, unknown> | null; readAt: Date | null; createdAt: Date };
 function fakeDb(rows: Row[]) {
   const visible = (row: Row) => ({ id: row.id, type: row.type, title: row.title, body: row.body, actionPath: row.actionPath, metadata: row.metadata, readAt: row.readAt, createdAt: row.createdAt });
   return { notification: {
@@ -17,6 +17,7 @@ afterEach(() => __notificationServiceTest.setPrisma(null));
 test("notification actions accept only known mobile destinations", () => {
   assert.equal(validateNotificationActionPath("/price-alerts"), "/price-alerts");
   assert.equal(validateNotificationActionPath("/saved"), "/saved");
+  assert.equal(validateNotificationActionPath("/security"), "/security");
   assert.equal(validateNotificationActionPath("https://evil.example/steal"), null);
   assert.equal(validateNotificationActionPath("//evil.example"), null);
   assert.equal(validateNotificationActionPath("/notifications/../../admin"), null);
@@ -58,4 +59,17 @@ test("read mutations are owned, idempotent, and update unread count", async () =
   assert.equal((await markAllNotificationsRead("user-1")).count, 1);
   assert.equal(await getUnreadNotificationCount("user-1"), 0);
   assert.equal(await getUnreadNotificationCount("user-2"), 1);
+});
+
+test("inbox normalizes legacy security destinations without making null actions actionable", async () => {
+  const rows: Row[] = [
+    { id: "notification01", userId: "user-1", type: "SECURITY_UPDATE", title: "Security", body: "Changed", actionPath: "/settings", metadata: null, readAt: null, createdAt: new Date("2026-01-04") },
+    { id: "notification02", userId: "user-1", type: "ACCOUNT_UPDATE", title: "Deletion", body: "Pending", actionPath: "/settings", metadata: { deletionRequestId: "delete-1" }, readAt: null, createdAt: new Date("2026-01-03") },
+    { id: "notification03", userId: "user-1", type: "PRICE_ALERT", title: "Price", body: "Dropped", actionPath: "/settings", metadata: null, readAt: null, createdAt: new Date("2026-01-02") },
+    { id: "notification04", userId: "user-1", type: "SUPPORT_UPDATE", title: "Reply", body: "Received", actionPath: "/support", metadata: { ticketId: "ticket-1" }, readAt: null, createdAt: new Date("2026-01-01") },
+    { id: "notification05", userId: "user-1", type: "SECURITY_UPDATE", title: "Informational", body: "No action", actionPath: null, metadata: null, readAt: null, createdAt: new Date("2025-12-31") },
+  ];
+  __notificationServiceTest.setPrisma(fakeDb(rows));
+  const page = await listNotifications("user-1");
+  assert.deepEqual(page.items.map(item => item.actionPath), ["/security", "/security", "/price-alerts", "/support", null]);
 });

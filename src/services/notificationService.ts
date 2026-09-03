@@ -4,10 +4,10 @@ import { sendOptionalEmail, sendTransactionalEmail } from "@/services/emailServi
 import type { OptionalEmailCategory } from "@/services/emailPreferencesService";
 
 export type CanonicalNotificationType = "PRICE_ALERT" | "SUPPORT_UPDATE" | "ACCOUNT_UPDATE" | "SECURITY_UPDATE" | "SYSTEM" | "TRAVEL_INSIGHT";
-export type NotificationActionPath = "/price-alerts"  | "/saved" | "/settings" | "/personal-information" | "/support";
+export type NotificationActionPath = "/price-alerts" | "/saved" | "/settings" | "/personal-information" | "/security" | "/support";
 export type NotificationEmail = { kind: "none" } | { kind: "optional"; category: OptionalEmailCategory; to: string } | { kind: "transactional"; to: string };
 
-const allowedActionPaths = new Set<NotificationActionPath>(["/price-alerts", "/saved", "/settings", "/personal-information", "/support"]);
+const allowedActionPaths = new Set<NotificationActionPath>(["/price-alerts", "/saved", "/settings", "/personal-information", "/security", "/support"]);
 const mobileNotificationSelect = { id: true, type: true, title: true, body: true, actionPath: true, metadata: true, readAt: true, createdAt: true } as const;
 let notificationPrismaForTesting: ReturnType<typeof getPrisma> | null = null;
 function notificationDb() { return notificationPrismaForTesting ?? getPrisma(); }
@@ -75,7 +75,18 @@ export async function markNotificationRead(userId: string, id: string) {
 }
 export async function markAllNotificationsRead(userId: string) { return notificationDb().notification.updateMany({ where: { userId, readAt: null }, data: { readAt: new Date() } }); }
 export class InvalidNotificationCursorError extends Error {}
-function serializeMobileNotification<T extends { actionPath: string | null }>(notification: T) { return { ...notification, actionPath: validateNotificationActionPath(notification.actionPath) }; }
+function serializeMobileNotification<T extends { type: string; actionPath: string | null; metadata?: unknown }>(notification: T) {
+  let actionPath = validateNotificationActionPath(notification.actionPath);
+  if (notification.actionPath === null) return { ...notification, actionPath };
+  if (notification.type === "PRICE_ALERT") actionPath = "/price-alerts";
+  if (notification.type === "SECURITY_UPDATE") actionPath = "/security";
+  if (notification.type === "SUPPORT_UPDATE") actionPath = "/support";
+  if (notification.type === "ACCOUNT_UPDATE" && isAccountDeletionMetadata(notification.metadata)) actionPath = "/security";
+  return { ...notification, actionPath };
+}
+function isAccountDeletionMetadata(metadata: unknown) {
+  return Boolean(metadata && typeof metadata === "object" && "deletionRequestId" in metadata);
+}
 
 /** @deprecated Use createNotificationEvent; retained only for callers being migrated. */
 export async function createNotification(input: { userId: string; title: string; body: string; type?: CanonicalNotificationType; eventKey?: string; actionPath?: NotificationActionPath; metadata?: Record<string, unknown> }) {

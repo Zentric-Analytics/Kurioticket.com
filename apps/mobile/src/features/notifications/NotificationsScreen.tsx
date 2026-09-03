@@ -9,6 +9,8 @@ import { flowColors, flowStyles } from "../flow/flowStyles";
 import { canLoadMore, initialNotificationPaginationState, notificationPaginationReducer } from "./notificationPagination";
 import { useAppTheme } from "../../theme/AppTheme";
 import { signInHref } from "../auth/signInIntent";
+import { notificationDestination } from "./notificationAction";
+import { notifyUnreadCountChanged } from "./notificationUnreadRefresh";
 
 export function NotificationsScreen() {
   const { theme } = useAppTheme();
@@ -50,15 +52,22 @@ export function NotificationsScreen() {
 
   const open = async (item: MobileNotification) => {
     if (!item.readAt) {
-      dispatch({ type: "mark-read", id: item.id, readAt: new Date().toISOString() });
-      await travelApi.markNotificationRead(item.id).catch(() => dispatch({ type: "message", message: "Unable to mark notification as read." }));
+      try {
+        const result = await travelApi.markNotificationRead(item.id);
+        dispatch({ type: "mark-read", id: item.id, readAt: result.notification.readAt ?? new Date().toISOString() });
+        notifyUnreadCountChanged();
+      } catch {
+        dispatch({ type: "message", message: "Unable to mark notification as read." });
+        return;
+      }
     }
-    if (item.actionPath) router.push(item.actionPath);
+    const destination = notificationDestination(item);
+    if (destination) router.push(destination);
   };
   const markAll = async () => {
     if (pendingAll) return;
     setPendingAll(true);
-    try { await travelApi.markAllNotificationsRead(); dispatch({ type: "mark-all", readAt: new Date().toISOString() }); }
+    try { await travelApi.markAllNotificationsRead(); dispatch({ type: "mark-all", readAt: new Date().toISOString() }); notifyUnreadCountChanged(); }
     catch { dispatch({ type: "message", message: "Unable to mark all notifications as read." }); }
     finally { setPendingAll(false); }
   };

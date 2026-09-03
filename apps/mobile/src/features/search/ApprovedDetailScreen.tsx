@@ -422,6 +422,7 @@ function HotelDetail({
       ? [result.imageUrl]
       : [];
   const [selectedRoom, setSelectedRoom] = useState(true);
+  const [activeHotelTab, setActiveHotelTab] = useState<"compare" | "about" | "location" | "reviews">("compare");
   const redirectUrl = result.partnerRedirectUrl || result.bookingUrl;
   const bookable = result.searchPolicy.bookable && Boolean(redirectUrl);
   const hasPrice = result.pricePerNight != null && result.totalPrice != null;
@@ -446,117 +447,75 @@ function HotelDetail({
       Alert.alert("Unable to open provider", "Please refresh and try again.");
     }
   };
+  const shareHotel = () => void Share.share({
+    message: `${result.name} — ${result.location}`,
+  });
+  const reviewValue = result.reviewScore ?? result.rating;
+  const classification = result.classificationStars || Math.round(result.rating);
+  const profile = result.catalogueProfile;
+  const returnToHotelResults = () => router.replace({
+    pathname: "/hotel-results",
+    params: {
+      destination: String(params.destination || result.location),
+      checkIn: String(params.checkIn || ""),
+      checkOut: String(params.checkOut || ""),
+      guests: String(guestCount),
+      rooms: String(roomCount),
+    },
+  });
   return (
-    <SafeAreaView style={d.safe} edges={[]}>
+    <SafeAreaView style={d.safe} edges={["top"]}>
+      <View style={d.hotelBackHeader}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Back to hotel results" onPress={returnToHotelResults} style={d.backToResults}>
+          <ArrowLeft size={17} strokeWidth={2} color={ui.blue}/><Text style={d.backToResultsText}>Back to hotel results</Text>
+        </Pressable>
+      </View>
       <ScrollView contentContainerStyle={{ paddingBottom: 120 + inset.bottom }}>
-        <View style={d.gallery}>
+        <View style={d.hotelIdentity}>
+          <View style={d.hotelIdentityCopy}>
+            <Text accessibilityRole="header" style={d.hotelName}>{result.name}</Text>
+            {nights ? <Text style={d.hotelFact}>▣ {shortDate(String(params.checkIn || ""))} – {shortDate(String(params.checkOut || ""))} · {nights} nights</Text> : null}
+            <Text style={d.hotelFact}>♙ {guestCount} guests, {roomCount} room{roomCount === 1 ? "" : "s"}</Text>
+            <Text style={d.hotelFact}>⌾ {result.location}</Text>
+            {classification > 0 ? <Text accessibilityLabel={`${classification} star hotel`} style={d.stars}>{"★".repeat(classification)}</Text> : null}
+          </View>
+          <View style={d.hotelHeaderActions}>
+            <Pressable accessibilityRole="button" accessibilityLabel={saved ? `Remove ${result.name} hotel from saved` : `Save ${result.name} hotel`} accessibilityState={{ selected: saved }} onPress={() => void canonical.toggleHotel(result, params)} style={d.hotelHeaderAction}>
+              <Heart size={21} color={saved ? androidFavoriteColors.active : ui.navy} fill={saved ? androidFavoriteColors.active : "transparent"}/>
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel={`Share ${result.name}`} onPress={shareHotel} style={d.hotelHeaderAction}>
+              <FlowIcon name="share" size={20}/>
+            </Pressable>
+          </View>
+        </View>
+        <View style={d.hotelGallery}>
           {images[0] ? (
-            <Image source={{ uri: images[0] }} style={d.hero} />
+            <Image source={{ uri: images[0] }} resizeMode="cover" style={d.hotelHero} accessibilityLabel={`${result.name} photo 1`} />
           ) : (
-            <View style={d.hero} />
+            <View style={[d.hotelHero, d.hotelImageUnavailable]}><Text style={d.meta}>Property image unavailable</Text></View>
           )}
-          <View style={d.thumbs}>
+          <View style={d.hotelThumbs}>
             {[images[1], images[2]].map((x, i) =>
               x ? (
-                <Image key={x} source={{ uri: x }} style={d.thumb} />
+                <Image key={x} source={{ uri: x }} resizeMode="cover" style={d.hotelThumb} accessibilityLabel={`${result.name} photo ${i + 2}`} />
               ) : (
-                <View key={i} style={d.thumb} />
+                <View key={i} style={[d.hotelThumb, d.hotelImageUnavailable]} />
               ),
             )}
           </View>
-          <Pressable
-            onPress={() => router.back()}
-            style={[d.floating, { left: 16 }]}
-          >
-            <FlowIcon name="back" />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={saved ? `Remove ${result.name} hotel from saved` : `Save ${result.name} hotel`}
-            accessibilityState={{ selected: saved }}
-            onPress={() => void canonical.toggleHotel(result, params)}
-            style={({ pressed }) => [d.floating, { right: 64 }, pressed && d.headerActionPressed]}
-          >
-            <FlowIcon name="heart" fill={saved ? ui.blue : "white"} />
-          </Pressable>
-          <View style={[d.floating, { right: 14 }]}>
-            <FlowIcon name="share" />
-          </View>
-          <Text style={d.count}>▧ 1 / {images.length || 1}</Text>
+          <Text style={d.count}>1 / {images.length || 1}</Text>
           {images.length > 3 ? (
             <Text style={d.more}>+{images.length - 3}</Text>
           ) : null}
         </View>
-        <View style={[d.hotelSummary, compact && d.hotelSummaryCompact]}>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={d.hotelName}>{result.name}</Text>
-            {(result.classificationStars || Math.round(result.rating)) > 0 ? <Text style={d.stars}>
-              {"★".repeat(
-                result.classificationStars || Math.round(result.rating),
-              )}{" "}
-              <Text style={d.meta}>
-                {" "}
-                · {result.neighbourhood || result.location}
-              </Text>
-            </Text> : null}
-            {(result.reviewScore ?? result.rating) > 0 ? <Text style={d.provider}>
-              <Text style={d.score}>
-                {(result.reviewScore ?? result.rating).toFixed(1)}
-              </Text>{" "}
-              {result.reviewCount
-                ? `${result.reviewCount.toLocaleString()} reviews`
-                : "Reviews unavailable"}
-            </Text> : null}
-            {result.distanceFromCenter ? (
-              <Text style={d.meta}>
-                ⌾ {result.distanceFromCenter} from city center
-              </Text>
-            ) : null}
-          </View>
-          <View style={[d.hotelPriceSummary, compact && d.hotelPriceSummaryCompact]}>
-            <Text style={d.price}>
-              {hasPrice ? money(result.currency, result.pricePerNight) : "Price unavailable"}
-              {hasPrice ? <Text style={d.meta}> /night</Text> : null}
-            </Text>
-            {hasPrice ? <Text style={d.meta}>
-              {money(result.currency, result.totalPrice)} total
-            </Text> : <Text style={d.meta}>No live rate</Text>}
-            <Text style={d.meta}>
-              {nights ? `${nights} nights, ` : ""}{guestCount}{" "}
-              guests
-            </Text>
-          </View>
+        <View accessibilityRole="tablist" style={d.hotelTabs}>
+          {(["compare", "about", "location", "reviews"] as const).map((tab) => <Pressable key={tab} accessibilityRole="tab" accessibilityState={{selected:activeHotelTab===tab}} onPress={()=>setActiveHotelTab(tab)} style={[d.hotelTab,activeHotelTab===tab&&d.hotelTabActive]}><Text style={[d.hotelTabText,activeHotelTab===tab&&d.hotelTabTextActive]}>{tab === "compare" ? "Compare prices" : tab[0].toUpperCase()+tab.slice(1)}</Text></Pressable>)}
         </View>
-        <View style={[d.stay, compact && d.stayCompact]}>
-          <Text style={d.stayItem}>
-            ▣ {shortDate(String(params.checkIn || ""))} –{" "}
-            {shortDate(String(params.checkOut || ""))}
-            {nights ? `\n${nights} nights` : ""}
-          </Text>
-          <Text style={d.stayItem}>
-            ▤ {roomCount} Room{"\n"}
-            {result.roomType || "Room type unavailable"}
-          </Text>
-          <Text style={d.stayItem}>♙ {guestCount} Guests</Text>
-        </View>
-        {result.amenities.length ? <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={d.amenityStrip}
-        >
-          {result.amenities.map((a) => (
-            <View key={a} style={d.amenity}>
-              <FlowIcon name="check" size={18} color={ui.green} />
-              <Text style={d.amenityText}>{a}</Text>
-            </View>
-          ))}
-        </ScrollView> : null}
         <View style={[d.detailBody, compact && d.detailBodyCompact]}>
-          <Text style={d.h2}>{discovery ? "Live room options unavailable" : "Choose your room"}</Text>
-          <Text style={d.meta}>
-            {discovery ? "This source-backed property is shown for destination planning. No live room, price, or availability was supplied." : "Prices are per night, including taxes and fees when reported"}
-          </Text>
-          {!discovery ? <Pressable
+          {activeHotelTab === "compare" ? <>
+          <Text style={d.h2}>Compare prices</Text>
+          <Text style={d.hotelSectionLead}>{nights ? `${shortDate(String(params.checkIn || ""))} – ${shortDate(String(params.checkOut || ""))} · ${nights} nights` : "Stay dates unavailable"} · {guestCount} guests, {roomCount} room{roomCount === 1 ? "" : "s"}</Text>
+          {discovery ? <View style={d.hotelNotice}><Text style={d.h2}>Live room options unavailable</Text><Text style={d.meta}>This source-backed property is shown for destination planning. No live room, price, or availability was supplied.</Text></View> : <Pressable
             onPress={() => setSelectedRoom(true)}
             style={[d.room, selectedRoom && { borderColor: ui.blue }]}
           >
@@ -581,7 +540,7 @@ function HotelDetail({
               </Text>
               <Button label="Select room" outline={!selectedRoom} />
             </View>
-          </Pressable> : null}
+          </Pressable>}
           <View style={d.section}>
             <Text style={d.h2}>{discovery ? "Inventory source" : "Choose where to book"}</Text>
             <Text style={d.meta}>
@@ -602,6 +561,10 @@ function HotelDetail({
               is shown.
             </Text>
           </View>
+          </> : null}
+          {activeHotelTab === "about" ? <View style={d.hotelPanel}><Text style={d.h2}>About this property</Text>{profile?.propertyType ? <Text style={d.hotelSectionLead}>{profile.propertyType}</Text> : null}{result.amenities.length ? <><Text style={d.provider}>Amenities</Text><View style={d.hotelFactGrid}>{result.amenities.map(a=><View key={a} style={d.hotelGridFact}><FlowIcon name="check" size={16} color={ui.green}/><Text style={d.hotelGridText}>{a}</Text></View>)}</View></> : <Text style={d.meta}>Verified property information is not available yet.</Text>}{profile?.accessibilityFeatures?.length ? <><Text style={d.provider}>Accessibility</Text>{profile.accessibilityFeatures.map(a=><Text key={a} style={d.hotelSectionLead}>• {a}</Text>)}</> : null}</View> : null}
+          {activeHotelTab === "location" ? <View style={d.hotelPanel}><Text style={d.h2}>Location & stay fit</Text><Text style={d.hotelSectionLead}>{result.location}</Text>{result.neighbourhood ? <Text style={d.hotelSectionLead}>{result.neighbourhood} neighborhood</Text> : null}{result.distanceFromCenter ? <Text style={d.meta}>{result.distanceFromCenter} from city center</Text> : null}{profile?.travellerFeatures?.map(f=><Text key={f} style={d.hotelSectionLead}>✓ {f}</Text>)}</View> : null}
+          {activeHotelTab === "reviews" ? <View style={d.hotelPanel}><Text style={d.h2}>Guest reviews</Text>{reviewValue > 0 ? <><Text style={d.hotelReviewScore}>{reviewValue.toFixed(1)}</Text><Text style={d.hotelSectionLead}>{result.reviewCount ? `${result.reviewCount.toLocaleString()} reviews` : "Review count unavailable"}</Text>{result.reviewSource ? <Text style={d.meta}>Source: {result.reviewSource}</Text> : null}</> : <Text style={d.meta}>Verified guest reviews are not available for this property yet.</Text>}</View> : null}
         </View>
       </ScrollView>
       <View
@@ -1016,6 +979,29 @@ const d = StyleSheet.create({
   stickyTotal: { flexShrink: 1, minWidth: 92, maxWidth: "42%", gap: 1 },
   stickyCta: { flex: 1, minWidth: 0, maxWidth: 250 },
   redirect: { fontSize: 9, lineHeight: 12, color: ui.muted, textAlign: "center", marginTop: 3 },
+  hotelBackHeader: { minHeight: 48, paddingHorizontal: 16, justifyContent: "center", borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: ui.border, backgroundColor: "white" },
+  hotelIdentity: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 13, flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  hotelIdentityCopy: { flex: 1, minWidth: 0, gap: 7 },
+  hotelHeaderActions: { flexDirection: "row", marginRight: -8 },
+  hotelHeaderAction: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  hotelFact: { color: "#334155", fontSize: 12, lineHeight: 17, fontWeight: "600" },
+  hotelGallery: { height: 244, marginHorizontal: 12, marginBottom: 6, flexDirection: "row", gap: 4, borderRadius: 12, overflow: "hidden", backgroundColor: "#E7EBF2" },
+  hotelHero: { width: "78%", height: "100%", backgroundColor: "#E7EBF2" },
+  hotelThumbs: { flex: 1, gap: 4 },
+  hotelThumb: { flex: 1, width: "100%", backgroundColor: "#DCE2EB" },
+  hotelImageUnavailable: { alignItems: "center", justifyContent: "center" },
+  hotelTabs: { minHeight: 51, marginTop: 1, paddingHorizontal: 8, flexDirection: "row", alignItems: "stretch", borderBottomWidth: 1, borderBottomColor: ui.border, backgroundColor: "white" },
+  hotelTab: { flex: 1, minHeight: 50, alignItems: "center", justifyContent: "center", borderBottomWidth: 2, borderBottomColor: "transparent" },
+  hotelTabActive: { borderBottomColor: ui.blue },
+  hotelTabText: { color: "#475569", fontSize: 11, fontWeight: "600" },
+  hotelTabTextActive: { color: ui.blue, fontWeight: "800" },
+  hotelSectionLead: { color: "#475569", fontSize: 12, lineHeight: 18 },
+  hotelNotice: { paddingVertical: 6, gap: 5 },
+  hotelPanel: { paddingTop: 9, paddingBottom: 24, gap: 11 },
+  hotelFactGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  hotelGridFact: { width: "48%", minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6 },
+  hotelGridText: { flex: 1, color: "#334155", fontSize: 11, lineHeight: 15 },
+  hotelReviewScore: { alignSelf: "flex-start", overflow: "hidden", borderRadius: 5, backgroundColor: ui.blue, color: "white", paddingHorizontal: 9, paddingVertical: 6, fontSize: 18, fontWeight: "900" },
   gallery: { height: 241, flexDirection: "row", backgroundColor: "#E7EBF2" },
   hero: { width: "77%", height: "100%", backgroundColor: "#E7EBF2" },
   thumbs: { width: "23%", gap: 3, paddingLeft: 3 },
