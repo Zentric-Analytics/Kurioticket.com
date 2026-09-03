@@ -99,17 +99,49 @@ test("hotel utility icons move inward without shrinking or overlapping touch tar
   assert.match(card, /style=\{\[s0\.hotelAction, s0\.hotelShareAction\]\}/);
 });
 
+test("Hotel utility actions do not inflate the hotel title row height", () => {
+  const titleRowStyle = source.slice(source.indexOf("  hotelTitleRow:"), source.indexOf("  hotelActions:"));
+  const actionsStyle = source.slice(source.indexOf("  hotelActions:"), source.indexOf("  hotelAction:"));
+  const actionStyle = source.slice(source.indexOf("  hotelAction:"), source.indexOf("  hotelSaveAction:"));
+
+  assert.match(titleRowStyle, /position:\s*"relative"/);
+  assert.match(titleRowStyle, /zIndex:\s*1/);
+  assert.match(titleRowStyle, /minWidth:\s*0/);
+  assert.doesNotMatch(titleRowStyle, /(?:minHeight|height|paddingBottom):\s*44/);
+
+  assert.match(actionsStyle, /position:\s*"absolute"/);
+  assert.match(actionsStyle, /zIndex:\s*2/);
+  assert.match(actionsStyle, /top:\s*-8/);
+  assert.match(actionsStyle, /right:\s*-8/);
+  assert.match(actionsStyle, /flexDirection:\s*"row"/);
+  assert.doesNotMatch(actionsStyle, /margin(?:Top|Right):/);
+  assert.match(actionStyle, /width:\s*44/);
+  assert.match(actionStyle, /height:\s*44/);
+});
+
 test("hotel title matches mobile web typography without compromising actions", () => {
   const hotelNameStyle = source.slice(source.indexOf("  hotelName: {"), source.indexOf("  stars:"));
   assert.match(card, /<Text numberOfLines=\{2\} style=\{s0\.hotelName\}>/);
   assert.match(hotelNameStyle, /flex:\s*1/);
   assert.match(hotelNameStyle, /minWidth:\s*0/);
+  assert.match(hotelNameStyle, /paddingRight:\s*80/);
   assert.match(hotelNameStyle, /fontSize:\s*15/);
   assert.match(hotelNameStyle, /lineHeight:\s*20/);
   assert.match(hotelNameStyle, /fontWeight:\s*"700"/);
   assert.match(hotelNameStyle, /fontFamily:\s*appFonts\.bold/);
   assert.doesNotMatch(hotelNameStyle, /fontWeight:\s*"900"|appFonts\.black/);
   assert.match(source, /hotelAction:\s*\{[^}]*width:\s*44[^}]*height:\s*44/s);
+});
+
+test("hotel stars are not pulled upward to compensate for title actions", () => {
+  const starsStyle = source.slice(source.indexOf("  stars:"), source.indexOf("  hotelLocation:"));
+  const titleAndMetadata = card.slice(card.indexOf("<View style={s0.hotelTitleRow}>"), card.indexOf("<View style={s0.hotelLocation}>"));
+
+  assert.doesNotMatch(starsStyle, /marginTop:\s*-|translateY|\btop:|position:\s*"absolute"/);
+  assert.match(
+    titleAndMetadata,
+    /<\/View>\s*\{showCheapestBadge && hasPrice \? \([\s\S]*?<View style=\{s0\.hotelBadge\}><Badge green>Cheapest<\/Badge><\/View>[\s\S]*?\) : null\}\s*\{classificationStars > 0 \? <Text/,
+  );
 });
 
 test("only the global first priced hotel receives the green Cheapest badge", () => { assert.match(card,/showCheapestBadge && hasPrice/); assert.match(source,/\(clampedHotelPage - 1\) \* HOTEL_RESULTS_PAGE_SIZE \+ i === 0/); });
