@@ -27,14 +27,13 @@ test("loading is the single guaranteed SectionList header presentation", () => {
   assert.doesNotMatch(stateUi, /ActivityIndicator|Searching the best flights for you/);
 });
 
-test("route status uses canonical endpoints and evolves only its copy", () => {
-  assert.match(loader, /\{origin\}[\s\S]*?\{destination\}/);
-  assert.match(loader, /Searching for flights to \$\{destination\}…/);
-  assert.match(loader, /Checking airlines, schedules and fares…/);
-  assert.match(loader, /Comparing the best options…/);
-  assert.match(loader, /Reviewing fares and journey times…/);
-  assert.match(loader, /<PlaneTakeoff/);
-  assert.doesNotMatch(loader, /Kurioticket|splash|PriceAlert|flightResultCountLabel/);
+test("brand leads while route context and supporting copy evolve", () => {
+  assert.match(loader, /kurioticket-logo-primary-light-bg\.png/);
+  assert.match(loader, /Searching the best flights for you/);
+  assert.match(loader, /\{origin\} → \{destination\}/);
+  assert.match(loader, /Checking airlines and fares\.\.\./);
+  assert.match(loader, /Comparing routes and providers\.\.\./);
+  assert.doesNotMatch(loader, /<PlaneTakeoff|PriceAlert|flightResultCountLabel/);
 });
 
 test("the presentation timer changes copy without gating skeletons", () => {
@@ -45,10 +44,10 @@ test("the presentation timer changes copy without gating skeletons", () => {
   const skeletonList = loader.indexOf("<Animated.View", conditionalCopy);
   assert.ok(conditionalCopy >= 0 && skeletonList > conditionalCopy);
   assert.doesNotMatch(loader.slice(conditionalCopy, skeletonList), /FlightLoadingSkeleton/);
-  assert.match(loader.slice(skeletonList), /\[0, 1, 2\]\.map\(\(item\) => <FlightLoadingSkeleton/);
+  assert.match(loader.slice(skeletonList), /<FlightLoadingSkeleton roundTrip=\{roundTrip\} \/>/);
 });
 
-test("three skeletons share a subtle native pulse that cleans up", () => {
+test("the restrained skeleton uses a subtle native pulse that cleans up", () => {
   assert.match(loader, /pointerEvents="none"/);
   assert.match(loader, /accessibilityRole="progressbar"/);
   assert.match(loader, /accessibilityLiveRegion="polite"/);

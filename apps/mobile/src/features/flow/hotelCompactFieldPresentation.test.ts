@@ -17,7 +17,7 @@ test("Hotel closed rows reuse the Packages CompactSearchField architecture", () 
 });
 
 test("Destination uses the Hotel wording and shared location row", () => {
-  assert.match(closedFields, /<CompactSearchField label="Destination"[^>]*value=\{editAppearance \? form\.destination \|\| "City or hotel" : destinationDisplay\.primary \|\| "City or hotel"\}[^>]*meta=\{editAppearance \? undefined : destinationDisplay\.secondary\}[^>]*trailing=\{false\}[^>]*appearance=\{editAppearance \? "resultsEdit" : "default"\}/);
+  assert.match(closedFields, /<CompactSearchField label="Destination"[^>]*value=\{destinationDisplay\.primary \|\| form\.destination\.trim\(\) \|\| "City or hotel"\}[^>]*meta=\{editAppearance \? undefined : destinationDisplay\.secondary\}[^>]*trailing=\{false\}[^>]*appearance=\{editAppearance \? "resultsEdit" : "default"\}/);
   assert.doesNotMatch(closedFields, /City, area, or hotel/);
 });
 
