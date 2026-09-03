@@ -1,4 +1,4 @@
-import { resolveMarket, type MarketFallbackLevel } from "@/lib/market/resolveMarket";
+import { resolveMarket, type MarketFallbackLevel } from "../lib/market/resolveMarket";
 
 import { validateDestinationImages } from "./destinationImageValidation";
 

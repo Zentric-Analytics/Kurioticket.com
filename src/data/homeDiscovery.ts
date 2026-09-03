@@ -1,5 +1,5 @@
-import { translations as enTranslations } from "@/lib/i18n/en";
-import { resolveMarket } from "@/lib/market/resolveMarket";
+import { translations as enTranslations } from "../lib/i18n/en";
+import { resolveMarket } from "../lib/market/resolveMarket";
 
 import { validateDestinationImages } from "./destinationImageValidation";
 
