@@ -44,6 +44,7 @@ import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { providerLocalArrivalDate } from "./flightArrivalDayOffset";
 import { flightPriceBasis } from "./flightPriceBasis";
+import { HOTEL_LIMITS } from "../flow/hotelSearchModel";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -379,8 +380,8 @@ function HotelDetail({
   const bookable = result.searchPolicy.bookable && Boolean(redirectUrl);
   const hasPrice = result.pricePerNight != null && result.totalPrice != null;
   const discovery = result.inventoryKind === "discovery";
-  const guestCount = positiveCount(params.guests, 2, 20);
-  const roomCount = positiveCount(params.rooms, 1, 8);
+  const guestCount = positiveCount(params.guests, 2, HOTEL_LIMITS.guests.max);
+  const roomCount = positiveCount(params.rooms, 1, HOTEL_LIMITS.rooms.max);
   const nights = (() => {
     const a = new Date(`${String(params.checkIn || "")}T12:00:00`),
       b = new Date(`${String(params.checkOut || "")}T12:00:00`);

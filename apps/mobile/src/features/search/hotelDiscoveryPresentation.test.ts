@@ -46,8 +46,9 @@ test("Hotel details suppress absent stars, reviews, amenities, and fake room fac
 });
 
 test("compact Hotel details keep occupancy and sticky booking content within the viewport", () => {
-  assert.match(hotelDetail, /const guestCount = positiveCount\(params\.guests, 2, 20\)/);
-  assert.match(hotelDetail, /const roomCount = positiveCount\(params\.rooms, 1, 8\)/);
+  assert.match(detailsSource, /import \{ HOTEL_LIMITS \} from "\.\.\/flow\/hotelSearchModel"/);
+  assert.match(hotelDetail, /const guestCount = positiveCount\(params\.guests, 2, HOTEL_LIMITS\.guests\.max\)/);
+  assert.match(hotelDetail, /const roomCount = positiveCount\(params\.rooms, 1, HOTEL_LIMITS\.rooms\.max\)/);
   assert.match(hotelDetail, /d\.hotelSummaryCompact/);
   assert.match(hotelDetail, /d\.hotelPriceSummaryCompact/);
   assert.match(hotelDetail, /d\.stayCompact/);
