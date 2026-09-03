@@ -6,7 +6,7 @@ const read = (file: string) => readFileSync(`src/features/flow/${file}`, "utf8")
 const hotel = read("HotelSearchPanel.tsx");
 const car = read("CarSearchPanel.tsx");
 test("Hotel Destination uses the shared compact location field", () => {
-  assert.match(hotel, /<CompactSearchField label="Destination" value=\{form\.destination \|\| "City or hotel"\} muted=\{!form\.destination\} icon="location"/);
+  assert.match(hotel, /<CompactSearchField label="Destination" value=\{editAppearance \? form\.destination \|\| "City or hotel" : destinationDisplay\.primary \|\| "City or hotel"\} meta=\{editAppearance \? undefined : destinationDisplay\.secondary\} metaNumberOfLines=\{1\} muted=\{!form\.destination\} icon="location"/);
   assert.doesNotMatch(hotel, /accessibilityLabel="Hotel destination"|locationFieldRow|locationFieldContent|destinationRef/);
 });
 

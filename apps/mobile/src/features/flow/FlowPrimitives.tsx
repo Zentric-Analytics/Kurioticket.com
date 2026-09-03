@@ -210,6 +210,7 @@ export function CompactSearchField({
   onPress,
   trailing,
   valueNumberOfLines = 1,
+  metaNumberOfLines,
   appearance = "default",
 }: {
   label: string;
@@ -220,6 +221,7 @@ export function CompactSearchField({
   onPress: () => void;
   trailing?: ReactNode;
   valueNumberOfLines?: number;
+  metaNumberOfLines?: number;
   appearance?: "default" | "resultsEdit";
 }) {
   const ft = useFlowTheme();
@@ -243,7 +245,7 @@ export function CompactSearchField({
         <FlowIcon name={icon} size={18} color={ft.colors.icon} />
         <View style={styles.compactTextColumn}>
           <Text numberOfLines={valueNumberOfLines} style={[styles.compactValue, appearance === "resultsEdit" && styles.resultsEditCompactValue, { color: muted ? ft.colors.placeholder : ft.colors.text }]}>{value}</Text>
-          {meta ? <Text style={[styles.compactMeta, { color: ft.colors.secondaryText }]}>{meta}</Text> : null}
+          {meta ? <Text numberOfLines={metaNumberOfLines} style={[styles.compactMeta, { color: ft.colors.secondaryText }]}>{meta}</Text> : null}
         </View>
         {trailing ?? <FlowIcon name="chevron" size={16} color={ft.colors.icon} />}
       </View>
