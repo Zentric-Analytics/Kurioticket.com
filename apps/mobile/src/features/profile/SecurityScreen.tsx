@@ -25,7 +25,7 @@ import { localizedAccountActivityLabel } from "../../localization/accountActivit
 import { formatSecurityDate, securityCopy } from "./securityLocalization";
 import { PasswordResetFlow, passwordResetNavigationCopy } from "./PasswordResetFlow";
 import { PasswordChangeFlow } from "./PasswordChangeFlow";
-import { PasskeysManager } from "./PasskeysManager";
+import { PasskeysManager, type PasskeysManagerHandle } from "./PasskeysManager";
 import { TwoFactorEnabledFlow } from "./TwoFactorEnabledFlow";
 import { TwoFactorSetupFlow } from "./TwoFactorSetupFlow";
 import { FlowIcon } from "../flow/FlowIcon";
@@ -72,6 +72,7 @@ export function SecurityScreen() {
   const twoFactorRequest = useRef(0);
   const deletionRequest = useRef(0);
   const passkeysRequest = useRef(0);
+  const passkeysManager = useRef<PasskeysManagerHandle>(null);
 
   const unauth = useCallback(async (e: unknown) => {
     if (e instanceof TravelApiError && e.status === 401) {
@@ -163,9 +164,10 @@ export function SecurityScreen() {
     </ScrollView>
     <FloatingNotice message={landingMessage} />
 
-    <ScreenModal visible={passkeysOpen} title={c.passkeys} closeLabel={c.close} onClose={closePasskeys}>
+    <ScreenModal visible={passkeysOpen} title={c.passkeys} closeLabel={c.close} avoidKeyboard onClose={() => { if (!passkeysManager.current?.cancelInternal()) closePasskeys(); }}>
       <Text style={[styles.intro,{color:theme.muted}]}>{c.passkeysHelp}</Text><Feedback error={passkeysError} message={passkeysMessage}/>
       <PasskeysManager
+        ref={passkeysManager}
         active={passkeysOpen}
         passkeys={passkeys}
         hasPassword={Boolean(overview?.hasPassword)}
