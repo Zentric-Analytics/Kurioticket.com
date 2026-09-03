@@ -99,6 +99,7 @@ import { formatCabinClass, summarizeBaggage, summarizeFareRules } from "./flight
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { AirlineLogo } from "./AirlineLogo";
 import { useAppTheme } from "../../theme/AppTheme";
+import { NativeBrandedSearchLoading } from "./NativeBrandedSearchLoading";
 import { appFonts } from "../../theme/typography";
 import { colors } from "../../theme/tokens";
 import { buildFlightDetailParams } from "./flightDetailNavigation";
@@ -161,8 +162,6 @@ import { getHotelLocationFieldDisplay } from "@/lib/search/hotelLocationFieldDis
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
-type FlightLoadingPhase = "searching" | "skeleton";
-export const FLIGHT_LOADING_SKELETON_DELAY_MS = 1000;
 const flightSupportText = {
   light: "#465675",
   dark: "#B8C3D8",
@@ -189,8 +188,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const payload = plan.plan?.payload || {};
   const [results, setResults] = useState<(FlightResult | HotelResult)[]>([]);
   const [status, setStatus] = useState<Status>("loading");
-  const [flightLoadingPhase, setFlightLoadingPhase] = useState<FlightLoadingPhase>("searching");
-  const [flightLoadingIdentity, setFlightLoadingIdentity] = useState("");
   const [message, setMessage] = useState("");
   const [retry, setRetry] = useState(0);
   const searchSequence = useRef(0);
@@ -254,16 +251,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     }
     previousHotelSearchKey.current = plan.plan.key;
   }, [flightResults, plan.plan?.key]);
-  useEffect(() => {
-    if (!flightResults || status !== "loading") return;
-    const presentationIdentity = `${plan.plan?.key || "invalid"}:${retry}`;
-    setFlightLoadingIdentity(presentationIdentity);
-    setFlightLoadingPhase("searching");
-    const skeletonTimer = setTimeout(() => {
-      setFlightLoadingPhase("skeleton");
-    }, FLIGHT_LOADING_SKELETON_DELAY_MS);
-    return () => clearTimeout(skeletonTimer);
-  }, [flightResults, plan.plan?.key, retry, status]);
   useFocusEffect(useCallback(() => {
     let active = true;
     const ratesRequest = currencyRatesRef.current
@@ -591,10 +578,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     rooms: Number(payload.rooms) || 1,
     locale,
   });
-  const currentFlightLoadingIdentity = `${plan.plan?.key || "invalid"}:${retry}`;
-  const visibleFlightLoadingPhase = flightLoadingIdentity === currentFlightLoadingIdentity
-    ? flightLoadingPhase
-    : "searching";
   const flightDate = String(payload.departureDate);
   const flightDisplayPrices = useMemo(() => {
     if (product !== "flight" || !currencyState) return new Map<string, DisplayPrice>();
@@ -828,6 +811,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               {product === "hotel" && sorted.length ? <HotelResultsPagination page={clampedHotelPage} pages={hotelPageCount} disabled={hotelPageChanging} onPage={changeHotelPage}/> : null}
     </>
   );
+  if (status === "loading") return <NativeBrandedSearchLoading product={product} />;
   return (
     <SafeAreaView style={[s0.safe, { backgroundColor: flightResults ? flightCanvasColor : theme.background }]} edges={["top"]}>
       {flightResults ? (
@@ -843,17 +827,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           style={[s0.resultsScroll, { backgroundColor: flightCanvasColor }]}
           sections={[{ data: !flightState ? sorted as FlightResult[] : [] }]}
           keyExtractor={(item) => item.id}
-          ListHeaderComponent={status === "loading" ? (
-            <View style={[s0.body, s0.flightResultsBody]}>
-              <FlightLoadingExperience
-                phase={visibleFlightLoadingPhase}
-                origin={String(payload.origin || "").toUpperCase()}
-                destination={String(payload.destination || "").toUpperCase()}
-                roundTrip={payload.tripType === "round-trip"}
-              />
-            </View>
-          ) : animatedFlightDateStrip}
-          renderSectionHeader={() => status === "loading" ? null : (
+          ListHeaderComponent={animatedFlightDateStrip}
+          renderSectionHeader={() => (
             <View style={[s0.flightFilterSectionHeader, { backgroundColor: flightCanvasColor }]}>
               {filterRail}
             </View>
@@ -1481,55 +1456,6 @@ function Loading({ product }: { product: Product }) {
           ),
         )}
       </Animated.View>
-    </View>
-  );
-}
-
-function FlightLoadingExperience({ phase, origin, destination, roundTrip }: {
-  phase: FlightLoadingPhase;
-  origin: string;
-  destination: string;
-  roundTrip: boolean;
-}) {
-  const { theme } = useAppTheme();
-  const progress = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    progress.setValue(0);
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(progress, { toValue: 1, duration: 900, useNativeDriver: true }),
-        Animated.timing(progress, { toValue: 0, duration: 900, useNativeDriver: true }),
-      ]),
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [progress]);
-
-  const searching = phase === "searching";
-  const opacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0.72, 1] });
-  return (
-    <View
-      pointerEvents="none"
-      accessibilityRole="progressbar"
-      accessibilityLabel={searching ? "Searching for flights" : "Almost done loading flights"}
-      accessibilityLiveRegion="polite"
-      style={s0.flightLoadingExperience}
-    >
-      <View style={s0.flightLoadingStatus}>
-        <Image
-          source={require("../../../assets/kurioticket-logo-primary-light-bg.png")}
-          accessibilityIgnoresInvertColors
-          style={s0.flightLoadingBrand}
-          resizeMode="contain"
-        />
-        <View style={s0.flightLoadingCopy}>
-          <Text accessibilityRole="header" style={[s0.flightLoadingTitle, { color: theme.textPrimary }]}>Searching the best flights for you</Text>
-          <Text style={[s0.flightLoadingRoute, { color: colors.blue }]}>{origin} → {destination}</Text>
-          <Text style={[s0.flightLoadingBody, { color: theme.textSecondary }]}>{searching ? "Checking airlines and fares..." : "Comparing routes and providers..."}</Text>
-        </View>
-      </View>
-      <Animated.View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[s0.skeletonList, { opacity }]}><FlightLoadingSkeleton roundTrip={roundTrip} /></Animated.View>
     </View>
   );
 }

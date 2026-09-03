@@ -12,6 +12,7 @@ import { BottomNav } from "./ApprovedResultsScreen";
 import { CarResultCard } from "./CarResultCard";
 import { Button, Empty, Pill, TopBar, shortDate, ui } from "./SearchUi";
 import { useAppTheme } from "../../theme/AppTheme";
+import { NativeBrandedSearchLoading } from "./NativeBrandedSearchLoading";
 
 type Status = "loading" | "ready" | "empty" | "error";
 const one = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
@@ -48,6 +49,7 @@ export function ApprovedCarResultsScreen() {
   const openDeal=(result:CarResult)=>router.push({pathname:"/car-details",params:{result:JSON.stringify(result),resultId:result.id,...Object.fromEntries(Object.entries(payload).map(([key,value])=>[key,String(value)]))}});
   const image=(value?:string)=>{if(!value)return undefined;if(/^https:\/\//i.test(value))return value;const base=getApiBaseUrl();return base.ok&&/^\/(?!\/)/.test(value)?new URL(value,`${base.baseUrl}/`).toString():undefined;};
   const clearFilters=()=>{setCategory("");setCompany("");setPriceFilter(false);};
+  if(status==="loading") return <NativeBrandedSearchLoading product="car"/>;
   return <SafeAreaView style={[r.safe,{backgroundColor:theme.background}]} edges={["top"]}>
     <TopBar />
     <Pressable accessibilityRole="button" accessibilityLabel="Edit car search" onPress={edit} style={[r.summary,{backgroundColor:theme.surface}]}><View style={r.summaryCopy}><Text style={[r.route,{color:theme.textPrimary}]}>{String(payload.pickupLocation||"")}</Text><Text numberOfLines={1} style={[r.sub,{color:theme.textSecondary}]}>{shortDate(pickup)} — {shortDate(dropoff)} · {payload.driverAge === "18-70" ? "Any age" : `${String(payload.driverAge||"")} years old`}</Text></View><FlowIcon name="document" size={18} color={theme.icon} /></Pressable>
@@ -59,7 +61,6 @@ export function ApprovedCarResultsScreen() {
     </ScrollView>
     <ScrollView contentContainerStyle={r.body}>
       {message?<Text accessibilityRole="alert" style={r.notice}>{message}</Text>:null}
-      {status==="loading"?<CarSkeletons/>:null}
       {status==="empty"?<Empty title="No rental cars found" body="Try changing your dates, pickup location, or filters." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>:null}
       {status==="error"?<Empty title="Car search could not be completed" body={message||"Check your connection and try again."} retry={()=>setRetry((value)=>value+1)} edit={edit}/>:null}
       {status==="ready"?<><View style={r.found}><View><Text style={[r.foundTitle,{color:theme.textPrimary}]}>{filtered.length} results found</Text><Text style={[r.range,{color:theme.textSecondary}]}>{filtered.length ? `${(page-1)*pageSize+1}–${Math.min(page*pageSize,filtered.length)}` : "0"}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Sort by ${sort === "price" ? "Total price" : "Recommended"}`} onPress={()=>setSort((value)=>value==="price"?"recommended":"price")} style={r.sort}><Text style={[r.sortPrefix,{color:theme.textSecondary}]}>Sort by:</Text><Text style={[r.sortValue,{color:theme.textPrimary}]}>{sort==="price"?"Total price":"Recommended"}</Text><FlowIcon name="chevronDown" size={14} color={theme.icon}/></Pressable></View>{filtered.length?<>{visible.map((result,index)=><CarResultCard key={result.id} result={result} rank={(page-1)*pageSize+index} imageUri={image(result.imageUrl)} searchParams={payload} onViewDeal={()=>openDeal(result)}/>)}{totalPages>1?<View style={r.pagination}><Button label="Previous" outline disabled={page===1} onPress={()=>setPage((value)=>Math.max(1,value-1))}/><Text style={[r.pageLabel,{color:theme.textPrimary}]}>Page {page} of {totalPages}</Text><Button label="Next" outline disabled={page===totalPages} onPress={()=>setPage((value)=>Math.min(totalPages,value+1))}/></View>:null}</>:<Empty title="No cars match these filters" body="Clear filters to see the available rental cars." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>}<CarPriceAlert/></>:null}
