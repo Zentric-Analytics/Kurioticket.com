@@ -68,6 +68,7 @@ function ThemedRootLayout() {
         <Stack.Screen name="home" />
         <Stack.Screen name="welcome" />
         <Stack.Screen name="connection-status" />
+        <Stack.Screen name="hotel-results" options={{ gestureEnabled: true }} />
       </Stack>
     </View>
   );
