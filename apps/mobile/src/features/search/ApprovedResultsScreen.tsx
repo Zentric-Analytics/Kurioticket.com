@@ -684,6 +684,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               ) : null}
               {status === "ready" && product === "hotel" && sorted.length > 0 ? (
                 <>
+                  {plan.plan ? <PriceAlert product={product} plan={plan.plan} hotelResults={results as HotelResult[]} available={availability.priceAlerts} /> : null}
                   <View style={s0.hotelResultsSummary}>
                     <Text accessibilityRole="header" style={[s0.hotelResultCount, { color: theme.textPrimary }]}>
                       {sorted.length} {sorted.length === 1 ? "result" : "results"} found
@@ -692,7 +693,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                       Showing 1–{sorted.length}
                     </Text>
                   </View>
-                  {plan.plan ? <PriceAlert product={product} plan={plan.plan} hotelResults={results as HotelResult[]} available={availability.priceAlerts} /> : null}
                 </>
               ) : null}
               {status === "ready" && product === "hotel" && results.length > 0 && sorted.length === 0 ? (

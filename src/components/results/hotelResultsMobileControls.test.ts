@@ -70,3 +70,29 @@ test("mobile Hotel shortcut rail reuses filter, price, stars, and amenities stat
   assert.doesNotMatch(resultsSource, /absolute inset-x-0 top-1\/2[\s\S]*?bg-slate-300/);
   assert.match(resultsSource, /hidden shrink-0 flex-nowrap[\s\S]*?sm:flex/);
 });
+
+test("standalone mobile Hotel summary sits between the price alert and card list", () => {
+  const desktopSummary = resultsSource.indexOf('ref={standaloneResultsHeadingRef}');
+  const priceAlert = resultsSource.indexOf("<HotelPriceAlertControl", desktopSummary);
+  const mobileSummary = resultsSource.indexOf("data-mobile-hotel-results-summary", priceAlert);
+  const cardList = resultsSource.indexOf("ref={paginationListRef}", mobileSummary);
+  const mobileMarkup = resultsSource.slice(mobileSummary, cardList);
+  const desktopGroupStart = resultsSource.lastIndexOf('<div role="group"', desktopSummary);
+  const desktopMarkup = resultsSource.slice(desktopGroupStart, priceAlert);
+
+  assert.ok(desktopSummary >= 0 && desktopSummary < priceAlert);
+  assert.ok(priceAlert < mobileSummary && mobileSummary < cardList);
+  assert.match(desktopMarkup, /!guided && "hidden sm:flex"/);
+  assert.equal(resultsSource.match(/ref=\{standaloneResultsHeadingRef\}/g)?.length, 1);
+  assert.match(mobileMarkup, /className="sm:hidden"/);
+  assert.doesNotMatch(mobileMarkup, /standaloneResultsHeadingRef|guidedResultsHeadingRef|HotelPriceAlertControl/);
+  assert.match(mobileMarkup, /\{resultsHeading\}/);
+  assert.match(mobileMarkup, /resultsDisplayRange\.start/);
+  assert.match(mobileMarkup, /resultsDisplayRange\.end/);
+  assert.match(mobileMarkup, /Showing results \$\{resultsDisplayRange\.start\} through \$\{resultsDisplayRange\.end\}/);
+  assert.equal(resultsSource.match(/data-mobile-hotel-results-summary/g)?.length, 1);
+
+  const guidedHeading = resultsSource.indexOf("ref={guidedResultsHeadingRef}");
+  assert.ok(guidedHeading >= 0 && guidedHeading < desktopSummary);
+  assert.match(resultsSource.slice(guidedHeading - 200, desktopSummary), /guided \? \([\s\S]*?deals-guided-hotel-results-heading/);
+});
