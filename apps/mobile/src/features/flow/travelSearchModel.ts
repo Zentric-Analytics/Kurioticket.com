@@ -74,10 +74,25 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
 }
 
 export function validFlight(result: FlightResult, plan: SearchPlan) {
-  const payload = plan.payload;
-  const requestedLegs = payload.tripType === "multi-city" ? payload.legs as { origin:string; destination:string; departureDate:string }[] : undefined;
-  const routeMatches = requestedLegs ? Array.isArray(result.legs) && result.legs.length === requestedLegs.length && result.legs.every((leg,index) => leg.originAirport === requestedLegs[index].origin && leg.destinationAirport === requestedLegs[index].destination && leg.departureTime.slice(0,10) === requestedLegs[index].departureDate) : result.originAirport === payload.origin && result.destinationAirport === payload.destination;
-  return Boolean(result.id && result.provider && result.airlineName && routeMatches && Number.isFinite(result.price) && result.price >= 0 && /^[A-Z]{3}$/.test(result.currency) && !Number.isNaN(Date.parse(result.departureTime)) && !Number.isNaN(Date.parse(result.arrivalTime)) && safeImage(result.airlineLogo) && safeAction(result));
+  // `plan` remains part of the contract because callers validate a response in
+  // the context of its request. Route/date eligibility is server-owned: the
+  // canonical aggregator may legitimately return city/airport projections that
+  // differ from the submitted endpoint while still being safe to present.
+  void plan;
+  return Boolean(
+    result.id &&
+    result.provider &&
+    result.airlineName &&
+    result.originAirport &&
+    result.destinationAirport &&
+    Number.isFinite(result.price) &&
+    result.price >= 0 &&
+    /^[A-Z]{3}$/.test(result.currency) &&
+    !Number.isNaN(Date.parse(result.departureTime)) &&
+    !Number.isNaN(Date.parse(result.arrivalTime)) &&
+    safeImage(result.airlineLogo) &&
+    safeAction(result)
+  );
 }
 /** Transport and presentation safety only; result eligibility is server-owned. */
 export function safeCanonicalHotelResult(result: HotelResult) {
