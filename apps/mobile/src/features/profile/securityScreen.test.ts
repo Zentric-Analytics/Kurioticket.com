@@ -247,12 +247,29 @@ test("session details localize canonical mobile platforms and omit legacy unknow
 });
 
 test("notification preference keeps optimistic, race-safe rollback semantics", () => {
+  const toggle = security.slice(security.indexOf("const toggle = async"), security.indexOf("const remove =", security.indexOf("const toggle = async")));
   assert.match(security, /const id = \+\+preferenceRequest\.current/);
   assert.match(security, /setOverview\(\{ \.\.\.overview, securityEmailAlerts: value \}\)/);
   assert.match(security, /travelApi\.updateSecurityPreference\(value\)/);
   assert.match(security, /securityEmailAlerts: previous/);
   assert.match(security, /id === preferenceRequest\.current/g);
   assert.match(security, /accessibilityState=\{\{ checked: overview\.securityEmailAlerts, busy: saving \}\}/);
+  assert.match(toggle, /setSaving\(true\); setPreferenceFeedbackIsError\(false\); setPreferenceFeedback\(c\.saving\)/);
+  assert.match(toggle, /setSaving\(false\); setPreferenceFeedback\(c\.saved\); AccessibilityInfo\.announceForAccessibility\(c\.saved\)/);
+  assert.match(toggle, /setTimeout\(\(\) => \{[\s\S]*id === preferenceRequest\.current[\s\S]*setPreferenceFeedback\(""\)[\s\S]*\}, 1000\)/);
+  assert.match(toggle, /if \(preferenceFeedbackTimer\.current\) clearTimeout\(preferenceFeedbackTimer\.current\)/);
+  assert.match(toggle, /setPreferenceFeedbackIsError\(true\); setPreferenceFeedback\(c\.saveFailed\)/);
+  assert.doesNotMatch(toggle, /setLandingMessage|setLandingError/);
+  assert.match(security, /if \(preferenceFeedbackTimer\.current\) clearTimeout\(preferenceFeedbackTimer\.current\)/);
+});
+
+test("notification feedback remains in one stable row slot", () => {
+  const row = security.slice(security.indexOf('<View style={[styles.notificationRow'), security.indexOf('<SecurityBlock label={c.activity}'));
+  assert.match(row, /\{c\.alertsHelp\}<\/Text><View style=\{styles\.preferenceFeedbackSlot\}>/);
+  assert.match(row, /\{preferenceFeedback\}/);
+  assert.match(row, /accessibilityRole=\{preferenceFeedbackIsError \? "alert" : undefined\}/);
+  assert.match(row, /accessibilityLiveRegion="polite"/);
+  assert.match(security, /preferenceFeedbackSlot: \{ minHeight: 15/);
 });
 
 test("activity is a single landing block opening the full history", () => {
@@ -325,7 +342,7 @@ test("operation failures and messages target only their owning feedback scope", 
   const expectations = [
     ["startTwoFactor", "setTwoFactorError"], ["confirmTwoFactor", "setTwoFactorError"],
     ["remove", "setDevicesError"], ["openDeletion", "setDeletionError"], ["requestDeletion", "setDeletionError"], ["reactivate", "setDeletionError"],
-    ["toggle", "setLandingMessage"], ["all", "setLandingError"],
+    ["toggle", "setPreferenceFeedback"], ["all", "setLandingError"],
   ];
   for (let index = 0; index < expectations.length; index += 1) {
     const [operation, setter] = expectations[index];
@@ -341,7 +358,7 @@ test("operation failures and messages target only their owning feedback scope", 
   assert.match(passwordChangeFlow, /setGeneralError\(e\.message\)/);
   assert.match(security, /const loadPasskeys = async[^\n]+setPasskeysError\(/);
   assert.match(security, /setLandingError\(c\.loadError\)/);
-  assert.match(security, /setLandingError\(c\.saveFailed\)/);
+  assert.match(security, /setPreferenceFeedback\(c\.saveFailed\)/);
   assert.match(security, /setLandingError\(c\.signOutFailed\)/);
 });
 
@@ -375,6 +392,19 @@ test("security localization covers the compact hierarchy", () => {
     "Scan this QR code with your authenticator app.", "Or enter this setup key manually.",
     "Escanea este código QR con tu aplicación de autenticación.", "O introduce esta clave de configuración manualmente.",
   ]) assert.ok(localization.includes(phrase), `missing copy: ${phrase}`);
+});
+
+test("notification feedback copy is localized for every supported mobile locale", () => {
+  assert.match(localization, /"alertsHelp": "Get email alerts about new sign-ins and devices\."/);
+  const localeBlocks = localization.match(/(?:const englishSecurityCopy =|const [a-z_]+: BaseSecurityCopy =) \{[\s\S]*?\n\}(?: as const)?;/g) ?? [];
+  assert.equal(localeBlocks.length, 18);
+  for (const block of localeBlocks) {
+    for (const key of ["notifications", "alertsHelp", "saving", "saved", "saveFailed"])
+      assert.match(block, new RegExp(`"${key}": "[^"]+"`), `missing ${key}`);
+    if (!block.startsWith("const englishSecurityCopy")) {
+      assert.doesNotMatch(block, /"alertsHelp": "Get email alerts|"saving": "Saving|"saved": "Saved"|"saveFailed": "Unable to save/);
+    }
+  }
 });
 
 test("security uses selected-locale copy, event labels, and date metadata", () => {
