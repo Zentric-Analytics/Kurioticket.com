@@ -194,7 +194,7 @@ test("session rows trust isCurrent and require menu plus confirmation before rev
   assert.match(security, /visible=\{Boolean\(managedSession\)\}/);
   assert.match(security, /setManagedSession\(null\);remove\(item\)/);
   assert.match(security, /Alert\.alert\(c\.removeTitle, c\.removeBody,[^;]+onPress: \(\) => void travelApi\.revokeSecuritySession\(item\.id\)/);
-  assert.match(security, /revokeSecuritySession\(item\.id\)\.then\(\(\) => load\(\{ showLandingFeedback: false, showLoading: false \}\)\)/);
+  assert.match(security, /revokeSecuritySession\(item\.id\)\.then\(\(\) => \{[^}]*setSessions\(current => current\.filter\(session => session\.id !== item\.id\)\)/);
 });
 
 test("active sessions group the authoritative current device before sorted other sessions", () => {
