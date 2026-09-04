@@ -12,5 +12,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
   const document = legalDocuments.find((candidate) => candidate.slug === slug);
   if (!document) return Response.json({ error: "Legal document not found" }, { status: 404 });
   const dictionary = getTranslations(requested);
-  return Response.json({ ...localizeLegalDocument(document, dictionary), lastUpdatedLabel: dictionary["legal.lastUpdated"] || getTranslations("en-us")["legal.lastUpdated"] });
+  const english = getTranslations("en-us");
+  return Response.json({
+    ...localizeLegalDocument(document, dictionary),
+    lastUpdatedLabel: dictionary["legal.lastUpdated"] || english["legal.lastUpdated"],
+    tableOfContentsLabel: dictionary["legal.tableOfContents"] || english["legal.tableOfContents"],
+  });
 }

@@ -7,7 +7,7 @@ export type FlowIconName =
   | "person" | "plus" | "search" | "settings" | "share" | "swap" | "trip"
   | "people" | "sliders" | "help" | "headset" | "document" | "shield"
   | "globe" | "currency" | "moon" | "logout" | "briefcase" | "bookmark" | "mail" | "palette"
-  | "external" | "snow" | "gauge" | "trash"
+  | "external" | "refresh" | "snow" | "gauge" | "trash"
   | "heart" | "trending" | "map" | "beach" | "city" | "adventure"
   | "nature" | "culture" | "family";
 
@@ -54,6 +54,7 @@ export function FlowIcon({ name, size = 24, color = "#071A48", fill = "none" }: 
     moon: <Path {...line} d="M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z" />,
     logout: <><Path {...line} d="M10 5H5v14h5M13 8l4 4-4 4M8 12h9" /></>,
     external: <><Path {...line} d="M14 4h6v6M20 4l-9 9" /><Path {...line} d="M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6" /></>,
+    refresh: <><Path {...line} d="M20 11a8 8 0 1 0-2.3 5.7" /><Path {...line} d="M20 5v6h-6" /></>,
     snow: <><Path {...line} d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9" /><Path {...line} d="m9 5 3 2 3-2M9 19l3-2 3 2M5.5 10.5l3-.2.7-2.8M18.5 13.5l-3 .2-.7 2.8M5.5 13.5l3 .2.7 2.8M18.5 10.5l-3-.2-.7-2.8" /></>,
     gauge: <><Path {...line} d="M4 17a8 8 0 1 1 16 0" /><Path {...line} d="m12 16 4-5M7 17h10" /></>,
     trash: <><Path {...line} d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6M14 11v6" /></>,
