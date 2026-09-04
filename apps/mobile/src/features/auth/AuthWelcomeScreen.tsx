@@ -3,12 +3,11 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import Svg, { Path } from "react-native-svg";
 import { AuthButton, authColors } from "./AuthPrimitives";
 import { AuthIcon } from "./AuthIcon";
+import { PRIVACY_URL as PRIVACY, TERMS_URL as TERMS } from "../../config/legalUrls";
 
 const hero = require("../../../assets/auth-mediterranean-hero.jpeg");
 const heroSource = Image.resolveAssetSource(hero);
 const logo = require("../../../assets/kurioticket-logo-primary-light-bg.png");
-const TERMS = "https://kurioticket.com/terms";
-const PRIVACY = "https://kurioticket.com/privacy";
 const COMPACT_SCREEN_HEIGHT = 800;
 const BASE_HERO_SHIFT = 18;
 const MAX_HERO_SHIFT = 84;

@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { loadReleaseFiles } from './release-policy.mjs';
 
-const EXPECTED = Object.freeze({ projectId: '89f6fd88-c0d7-495a-9e2b-8301b09f407d', package: 'com.kurioticket.app', profile: 'production', runtime: 'production-0.3.0', channel: 'production', api: 'https://kurioticket.com' });
+const EXPECTED = Object.freeze({ projectId: '89f6fd88-c0d7-495a-9e2b-8301b09f407d', package: 'com.kurioticket.app', profile: 'production', runtime: 'production-0.3.1', channel: 'production', api: 'https://kurioticket.com' });
 function args(values) { const out = {}; for (let i = 0; i < values.length; i += 2) { if (!values[i]?.startsWith('--') || values[i + 1] === undefined) throw new Error('Invalid Production dry-run arguments.'); out[values[i].slice(2)] = values[i + 1]; } return out; }
 
 function isPositiveSafeInteger(value) {
