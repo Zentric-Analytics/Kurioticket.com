@@ -1670,7 +1670,7 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   const hotelPresentation = useMemo(() => hotelAlertPresentation(product, plan, hotelResults || []), [plan?.key, product, hotelResults]);
   const activePresentation = flight ? presentation : hotelPresentation;
   const currency = activePresentation.currencies[0] || "";
-  const [matchingAlert, setMatchingAlert] = useState<MobilePriceAlert | undefined>();
+  const [matchingAlertState, setMatchingAlertState] = useState<{ planKey: string; alert: MobilePriceAlert }>();
   const [loadingAlert, setLoadingAlert] = useState(product === "flight" || product === "hotel");
   const reconciliationRef = useRef(0);
   const [pending, setPending] = useState(false);
@@ -1678,6 +1678,10 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   const [targetOpen, setTargetOpen] = useState(false);
   const [targetDraft, setTargetDraft] = useState("");
   const [targetError, setTargetError] = useState("");
+  const matchingAlert = matchingAlertState && matchingAlertState.planKey === plan?.key ? matchingAlertState.alert : undefined;
+  const setCurrentMatchingAlert = useCallback((alert: MobilePriceAlert | undefined) => {
+    setMatchingAlertState(alert && plan ? { planKey: plan.key, alert } : undefined);
+  }, [plan?.key]);
   const isTracking = matchingAlert?.status === "ACTIVE";
   const unavailable = !activePresentation.enabled || (!available && !isTracking);
   const requireSignIn = useCallback(() => Alert.alert(message("signInRequired"), message("signInAlertBody"), [{ text: t("signIn"), onPress: () => router.push(signInHref("/(tabs)/profile")) }, { text: t("cancel"), style: "cancel" }]), [message, t]);
@@ -1685,20 +1689,19 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
     if (!plan || (product !== "flight" && product !== "hotel")) return;
     const reconciliation = ++reconciliationRef.current;
     setLoadingAlert(true);
-    if (!flight) setMatchingAlert(undefined);
     try {
       if (!await readSession().catch(() => null)) {
-        if (reconciliation === reconciliationRef.current) setMatchingAlert(undefined);
+        if (reconciliation === reconciliationRef.current) setCurrentMatchingAlert(undefined);
         return;
       }
       const alerts = (await travelApi.priceAlerts()).alerts;
-      if (reconciliation === reconciliationRef.current) setMatchingAlert(flight ? matchingFlightPriceAlert(alerts, plan) : matchingHotelPriceAlert(alerts, plan));
+      if (reconciliation === reconciliationRef.current) setCurrentMatchingAlert(flight ? matchingFlightPriceAlert(alerts, plan) : matchingHotelPriceAlert(alerts, plan));
     } catch (error) {
-      if (reconciliation === reconciliationRef.current && error instanceof TravelApiError && error.status === 401) setMatchingAlert(undefined);
+      if (reconciliation === reconciliationRef.current && error instanceof TravelApiError && error.status === 401) setCurrentMatchingAlert(undefined);
     } finally {
       if (reconciliation === reconciliationRef.current) setLoadingAlert(false);
     }
-  }, [flight, plan?.key, product]);
+  }, [flight, plan?.key, product, setCurrentMatchingAlert]);
   useFocusEffect(useCallback(() => { void reconcile(); }, [reconcile]));
   const handleToggle = async (next: boolean) => {
     if (pendingRef.current || loadingAlert || !plan) return;
@@ -1708,15 +1711,15 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
       if (isTracking) return;
       if (!matchingAlert) { setTargetError(""); setTargetOpen(true); return; }
       pendingRef.current = true; setPending(true);
-      try { setMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id, "ACTIVE")).alert); }
-      catch (error) { if (error instanceof TravelApiError && error.status === 401) { if (!flight) setMatchingAlert(undefined); requireSignIn(); } else Alert.alert("Unable to track prices", error instanceof TravelApiError ? error.message : "Please try again."); }
+      try { setCurrentMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id, "ACTIVE")).alert); }
+      catch (error) { if (error instanceof TravelApiError && error.status === 401) { if (!flight) setCurrentMatchingAlert(undefined); requireSignIn(); } else Alert.alert("Unable to track prices", error instanceof TravelApiError ? error.message : "Please try again."); }
       finally { pendingRef.current = false; setPending(false); }
       return;
     }
     if (!isTracking || !matchingAlert) return;
     pendingRef.current = true; setPending(true);
-    try { setMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id, "PAUSED")).alert); }
-    catch (error) { if (error instanceof TravelApiError && error.status === 401) { if (!flight) setMatchingAlert(undefined); requireSignIn(); } else Alert.alert("Unable to pause price tracking", error instanceof TravelApiError ? error.message : "Please try again."); }
+    try { setCurrentMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id, "PAUSED")).alert); }
+    catch (error) { if (error instanceof TravelApiError && error.status === 401) { if (!flight) setCurrentMatchingAlert(undefined); requireSignIn(); } else Alert.alert("Unable to pause price tracking", error instanceof TravelApiError ? error.message : "Please try again."); }
     finally { pendingRef.current = false; setPending(false); }
   };
   const createAlert = async () => {
@@ -1728,7 +1731,7 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
       const session = await readSession().catch(() => null);
       if (!session) { setTargetOpen(false); requireSignIn(); return; }
       const created = await travelApi.createPriceAlert(flight ? buildFlightPriceAlertPayload(plan, parsed.value, currency) : buildHotelPriceAlertPayload(plan, parsed.value, currency));
-      setMatchingAlert(created.alert); setTargetOpen(false); setTargetDraft("");
+      setCurrentMatchingAlert(created.alert); setTargetOpen(false); setTargetDraft("");
     } catch (error) {
       if (error instanceof TravelApiError && error.status === 401) { setTargetOpen(false); requireSignIn(); }
       else if (error instanceof TravelApiError && error.status === 409) { await reconcile(); setTargetError("An alert for this search already exists."); }
@@ -1742,7 +1745,7 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   if (product !== "hotel" || !plan) return null;
   if (!activePresentation.enabled) return null;
   const toggleDisabled = pending || loadingAlert || unavailable;
-  return <View accessibilityLabel={message("hotelAlertTitle")} style={[s0.flightAlertCompact, { backgroundColor: theme.surface, borderColor: theme.priceAlertBorder }]}><Bell accessible={false} size={17} strokeWidth={2} color={theme.dark ? "#8FB5FF" : ui.blue}/><View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightAlertCompactTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text></View><View style={s0.flightAlertSwitchSlot}>{toggleDisabled && (pending || loadingAlert) ? <ActivityIndicator accessible={false} size="small" color={theme.dark ? "#8FB5FF" : ui.blue}/> : null}<Switch accessibilityRole="switch" accessibilityLabel="Track this stay price" accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending || loadingAlert }} disabled={toggleDisabled} value={isTracking} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"} ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}/></View><Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel={message("hotelAlertTitle")}><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>{message("targetTotal")} ({currency})</Text><TextInput autoFocus accessibilityLabel={`${message("targetTotal")} ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text> : null}<Button label={pending ? message("creating") : message("createAlert")} onPress={() => void createAlert()} /><Button label={t("cancel")} outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal></View>;
+  return <View accessibilityLabel={message("hotelAlertTitle")} style={[s0.flightAlertCompact, { backgroundColor: theme.surface, borderColor: theme.priceAlertBorder }]}><Bell accessible={false} size={17} strokeWidth={2} color={theme.dark ? "#8FB5FF" : ui.blue}/><View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightAlertCompactTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text></View><View style={s0.hotelAlertSwitchSlot}>{toggleDisabled && (pending || loadingAlert) ? <ActivityIndicator accessible={false} size="small" color={theme.dark ? "#8FB5FF" : ui.blue}/> : null}{/* Native UISwitch artwork sits high in its iOS layout box; offset only its Hotel rendering to optically align with the Bell and title. */}<Switch style={Platform.OS === "ios" ? s0.hotelAlertSwitchIos : undefined} accessibilityRole="switch" accessibilityLabel="Track this stay price" accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending || loadingAlert }} disabled={toggleDisabled} value={isTracking} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"} ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}/></View><Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel={message("hotelAlertTitle")}><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>{message("targetTotal")} ({currency})</Text><TextInput autoFocus accessibilityLabel={`${message("targetTotal")} ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text> : null}<Button label={pending ? message("creating") : message("createAlert")} onPress={() => void createAlert()} /><Button label={t("cancel")} outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal></View>;
 }
 export function BottomNav({ flightResults = false }: { flightResults?: boolean } = {}) {
   const { theme } = useAppTheme();
@@ -1994,6 +1997,8 @@ const s0 = StyleSheet.create({
   flightAlertTitle: { fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
   flightAlertSubtitle: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
   flightAlertSwitchSlot: { minWidth: 51, minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 },
+  hotelAlertSwitchSlot: { minWidth: 51, minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 },
+  hotelAlertSwitchIos: { transform: [{ translateY: 8 }] },
   alertModalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,.45)" },
   alertSheet: { padding: 20, gap: 12, borderTopWidth: 1, borderTopLeftRadius: 18, borderTopRightRadius: 18 },
   alertInput: { minHeight: 48, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, fontSize: 18 },
