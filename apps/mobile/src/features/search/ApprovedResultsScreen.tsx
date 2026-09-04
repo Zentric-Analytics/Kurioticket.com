@@ -94,6 +94,7 @@ import {
   type DisplayPrice,
   type ExchangeRates,
 } from "../currency/displayCurrency";
+import { createHotelDisplayPrices, type HotelDisplayPriceSnapshot } from "./hotelDetailCurrency";
 import { formatCabinClass, summarizeBaggage, summarizeFareRules } from "./flightCardSummaries";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { AirlineLogo } from "./AirlineLogo";
@@ -596,6 +597,14 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       displayPrice(result.price, result.currency, currencyState.resolution.resolvedCurrency, currencyState.rates),
     ]));
   }, [currencyState, product, results]);
+  const hotelDisplayPrices = useMemo(() => {
+    if (product !== "hotel" || !currencyState) return new Map<string, HotelDisplayPriceSnapshot>();
+    return new Map((results as HotelResult[]).flatMap((result) =>
+      Number.isFinite(result.pricePerNight) && Number.isFinite(result.totalPrice) && typeof result.currency === "string"
+        ? [[result.id, createHotelDisplayPrices(result.pricePerNight!, result.totalPrice!, result.currency, currencyState.resolution.resolvedCurrency, currencyState.rates)] as const]
+        : [],
+    ));
+  }, [currencyState, product, results]);
   const verifiedFareContextKey = useMemo(() => {
     if (product !== "flight" || !plan.plan || !currencyState) return undefined;
     return verifiedDateFareContextKey(plan.plan.payload, currencyState.resolution.resolvedCurrency);
@@ -815,6 +824,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                     result={x as HotelResult}
                     showCheapestBadge={(clampedHotelPage - 1) * HOTEL_RESULTS_PAGE_SIZE + i === 0 && hasHotelPrice(x as HotelResult)}
                     params={params}
+                    displayPrices={hotelDisplayPrices.get(x.id)}
+                    displayCurrencyContext={currencyState?.resolution}
                   />
                 ),
               )}
@@ -1313,10 +1324,14 @@ function HotelCard({
   result,
   showCheapestBadge,
   params,
+  displayPrices,
+  displayCurrencyContext,
 }: {
   result: HotelResult;
   showCheapestBadge: boolean;
   params: Record<string, string | string[]>;
+  displayPrices?: HotelDisplayPriceSnapshot;
+  displayCurrencyContext?: DisplayCurrencyResolution;
 }) {
   const canonical = useCanonicalSaved();
   const saved = canonical.items.some(item => item.type === "hotel" && ((item.payload as Record<string, unknown> | undefined)?.result as { id?: string } | undefined)?.id === result.id);
@@ -1335,7 +1350,7 @@ function HotelCard({
   const policy=[result.catalogueProfile?.cancellationPolicy,result.catalogueProfile?.paymentPolicy].filter((value):value is string=>Boolean(value?.trim()));
   const shareHotel = () => {
     const message = hasPrice
-      ? `${result.name} — ${result.location} — ${money(result.currency, result.pricePerNight)}/night`
+      ? `${result.name} — ${result.location} — ${displayPrices?.nightly?.formatted ?? money(result.currency, result.pricePerNight)}/night`
       : `${result.name} — ${result.location} — Price unavailable`;
     void Share.share({ message }).catch(() => undefined);
   };
@@ -1419,8 +1434,8 @@ function HotelCard({
         {result.sourceAttributions?.map(item=>{const safe=typeof item.providerUri==="string"&&/^https?:\/\//i.test(item.providerUri);return <Pressable key={`${item.provider}-${item.providerUri??""}`} disabled={!safe} onPress={()=>safe&&void Linking.openURL(item.providerUri!)}><Text numberOfLines={1} style={s0.hotelAttributionLink}>Source: {item.provider}</Text></Pressable>;})}
         <View style={s0.hotelPrice}>
           <View style={s0.hotelPriceCopy}>
-            <Text style={s0.hotelNightlyPrice}>
-              {hasPrice ? money(result.currency, result.pricePerNight) : "Price unavailable"}
+            <Text accessibilityLabel={displayPrices?.nightly?.accessibilityLabel} style={s0.hotelNightlyPrice}>
+              {hasPrice ? displayPrices?.nightly?.formatted ?? money(result.currency, result.pricePerNight) : "Price unavailable"}
             </Text>
             {hasPrice ? <Text style={s0.hotelPerNight}>per night</Text> : <Text style={s0.hotelPerNight}>No live rate</Text>}
           </View>
@@ -1436,6 +1451,8 @@ function HotelCard({
                   ...Object.fromEntries(
                     Object.entries(params).map(([k, v]) => [k, one(v) || ""]),
                   ),
+                  hotelDisplayPrices: displayPrices ? JSON.stringify(displayPrices) : "",
+                  displayCurrencyContext: displayCurrencyContext ? JSON.stringify(displayCurrencyContext) : "",
                 },
               })
             }

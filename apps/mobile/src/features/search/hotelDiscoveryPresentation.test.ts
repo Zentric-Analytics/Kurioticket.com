@@ -20,7 +20,7 @@ test("source-backed discovery Hotel details remain planning-only", () => {
   assert.match(hotelDetail, />Live room options unavailable</);
   assert.match(hotelDetail, /No live room, price, or availability was supplied/);
   assert.match(hotelDetail, /\{discovery \? <View[\s\S]*?: <Pressable/);
-  assert.match(hotelDetail, /price=\{hasPrice \? money\(result\.currency, result\.totalPrice\) : "Price unavailable"\}/);
+  assert.match(hotelDetail, /price=\{hasPrice \? totalPrice\?\.formatted \?\? "—" : "Price unavailable"\}/);
   assert.match(hotelDetail, /disabled=\{!bookable\}/);
   assert.match(hotelDetail, /"Live booking unavailable"/);
   assert.match(hotelDetail, /"No live provider redirect was supplied\."/);

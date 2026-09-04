@@ -1,4 +1,5 @@
 import { supportedRegions } from "../../../../../src/lib/region/supportedRegions";
+import { supportedCurrencies } from "../../config/supportedCurrencies";
 
 export type ExchangeRates = Record<string, number>;
 
@@ -13,6 +14,9 @@ const canonicalCurrencySymbols: Readonly<Record<string, string>> = {
 
 const regionCurrency = new Map(
   supportedRegions.map(({ code, currency }) => [code.toUpperCase(), currency]),
+);
+const marketCurrencySymbols = new Map(
+  supportedCurrencies.flatMap(({ code, symbol }) => symbol ? [[code.toUpperCase(), symbol] as const] : []),
 );
 
 export function currencyForCountry(countryCode?: string | null) {
@@ -164,6 +168,52 @@ function resolveIntlCurrencySymbol(currency: string) {
   } catch {
     return null;
   }
+}
+
+/** A conventional, market-distinct symbol for Hotel price presentation. */
+export function currencyMarketSymbol(currency: string) {
+  const normalizedCurrency = currency.trim().toUpperCase();
+  const catalogueSymbol = marketCurrencySymbols.get(normalizedCurrency);
+  if (catalogueSymbol) return catalogueSymbol;
+  const intlSymbol = resolveIntlMarketCurrencySymbol(normalizedCurrency);
+  return intlSymbol && intlSymbol.toUpperCase() !== normalizedCurrency ? intlSymbol : null;
+}
+
+function resolveIntlMarketCurrencySymbol(currency: string) {
+  try {
+    const formatter = new Intl.NumberFormat(undefined, {
+      style: "currency", currency, currencyDisplay: "narrowSymbol", maximumFractionDigits: 0,
+    });
+    if (typeof formatter.formatToParts !== "function") return null;
+    try {
+      const parts = formatter.formatToParts(0);
+      if (!Array.isArray(parts) || !parts.some(({ type }) => type === "integer" || type === "fraction")) return null;
+      return parts.find(({ type }) => type === "currency")?.value?.trim() || null;
+    } catch {
+      return null;
+    }
+  } catch {
+    return null;
+  }
+}
+
+export function formatMarketCurrency(amount: number, currency: string) {
+  const normalizedCurrency = currency.trim().toUpperCase();
+  const symbol = currencyMarketSymbol(normalizedCurrency);
+  const sign = amount < 0 ? "-" : "";
+  return symbol
+    ? `${sign}${symbol}${formatCurrencyNumber(amount)}`
+    : `${sign}${formatCurrencyNumber(amount)} ${normalizedCurrency}`;
+}
+
+export function displayMarketPrice(
+  amount: number,
+  providerCurrency: string,
+  displayCurrency: string,
+  rates: ExchangeRates,
+): DisplayPrice {
+  const price = displayPrice(amount, providerCurrency, displayCurrency, rates);
+  return { ...price, formatted: formatMarketCurrency(price.amount, price.currency) };
 }
 
 export function currencyAccessibilityLabel(amount: number, currency: string) {

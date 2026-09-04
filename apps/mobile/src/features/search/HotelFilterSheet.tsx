@@ -4,7 +4,7 @@ import { Check, ChevronDown, SlidersHorizontal, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
-import { convertAmount, formatCurrency, type ExchangeRates } from "../currency/displayCurrency";
+import { convertAmount, formatMarketCurrency, type ExchangeRates } from "../currency/displayCurrency";
 import { FlightRangeSlider } from "./FlightRangeSlider";
 import { ui } from "./SearchUi";
 import { activeHotelFilterCount, emptyHotelFilters, type HotelFilterGroup, type HotelFilterOptions, type HotelFilters, type HotelStarRating } from "./hotelFilters";
@@ -36,7 +36,7 @@ export function HotelFilterSheet({visible,section,filters,options,displayCurrenc
  useEffect(()=>{if(price){setMinimumDraft(String(Math.round(toDisplay(selectedMin))));setMaximumDraft(String(Math.round(toDisplay(selectedMax))));}},[displayCurrency,filters.minimumPrice,filters.maximumPrice,price?.minimum,price?.maximum,rates]);
  const update=(next:HotelFilters)=>onChange(next),toggle=(group:HotelFilterGroup,value:string)=>update({...filters,[group]:filters[group].includes(value)?filters[group].filter(v=>v!==value):[...filters[group],value]});
  const commitPrice=(edge:"min"|"max",draft:string)=>{if(!price)return;const parsed=Number(draft);if(!Number.isFinite(parsed))return;const usd=fromDisplay(parsed);if(usd===null)return;if(edge==="min"){const value=Math.min(Math.max(price.minimum,usd),selectedMax);update({...filters,minimumPrice:value<=price.minimum?null:value});}else{const value=Math.max(Math.min(price.maximum,usd),selectedMin);update({...filters,maximumPrice:value>=price.maximum?null:value});}};
- const formatPrice=(usd:number)=>formatCurrency(toDisplay(usd),visibleCurrency);
+ const formatPrice=(usd:number)=>formatMarketCurrency(toDisplay(usd),visibleCurrency);
  const anchor=(name:string)=>(event:{nativeEvent:{layout:{y:number}}})=>{if(visible&&section===name)scroll.current?.scrollTo({y:Math.max(0,event.nativeEvent.layout.y-12),animated:false});};
  const footerLabel=matchingCount===0?"No matching stays":activeCount===0?`View all ${totalCount} stays`:`View ${matchingCount} matching ${matchingCount===1?"stay":"stays"}`;
  return <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose} accessibilityViewIsModal>

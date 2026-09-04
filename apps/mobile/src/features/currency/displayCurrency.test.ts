@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { currencyAccessibilityLabel, currencyForCountry, displayPrice, formatCurrency, isDisplayPriceCurrent, resolveDisplayCurrency, resolveDisplayCurrencyContext } from "./displayCurrency";
+import { currencyAccessibilityLabel, currencyForCountry, displayMarketPrice, displayPrice, formatCurrency, formatMarketCurrency, isDisplayPriceCurrent, resolveDisplayCurrency, resolveDisplayCurrencyContext } from "./displayCurrency";
 
 function withoutFormatToParts(run: () => void) {
   const descriptor = Object.getOwnPropertyDescriptor(Intl.NumberFormat.prototype, "formatToParts");
@@ -213,4 +213,48 @@ test("a missing rate falls back accurately to the provider currency", () => {
   assert.equal(fare.currency, "USD");
   assert.equal(fare.formatted, "$604");
   assert.equal(fare.converted, false);
+});
+
+const marketSymbols = {
+  USD: "$", NGN: "₦", CAD: "CA$", AUD: "A$", GBP: "£", EUR: "€",
+  BRL: "R$", INR: "₹", JPY: "¥", CNY: "CN¥", HKD: "HK$", SGD: "S$",
+  NZD: "NZ$", MXN: "MX$", KRW: "₩", PLN: "zł",
+} as const;
+
+test("Hotel market formatting uses deterministic recognizable symbols", () => {
+  for (const [currency, symbol] of Object.entries(marketSymbols)) {
+    const formatted = formatMarketCurrency(420, currency);
+    assert.equal(formatted, `${symbol}420`);
+    assert.doesNotMatch(formatted, new RegExp(currency));
+  }
+});
+
+test("Hotel symbols remain available when formatToParts is unavailable", () => {
+  withoutFormatToParts(() => {
+    for (const [currency, symbol] of Object.entries(marketSymbols))
+      assert.equal(formatMarketCurrency(420, currency), `${symbol}420`);
+  });
+});
+
+test("Hotel conversion keeps provider truth and falls back when rates are missing", () => {
+  const provider = { pricePerNight: 210, currency: "USD" };
+  const rates = { USD: 1, CAD: 1.4, NGN: 1600, GBP: 0.8, EUR: 0.9 };
+  assert.equal(displayMarketPrice(210, provider.currency, "USD", rates).formatted, "$210");
+  assert.equal(displayMarketPrice(210, provider.currency, "CAD", rates).formatted, "CA$294");
+  assert.equal(displayMarketPrice(210, provider.currency, "NGN", rates).formatted, "₦336,000");
+  assert.equal(displayMarketPrice(210, provider.currency, "GBP", rates).formatted, "£168");
+  assert.equal(displayMarketPrice(210, provider.currency, "EUR", rates).formatted, "€189");
+  const fallback = displayMarketPrice(210, provider.currency, "NGN", { USD: 1 });
+  assert.deepEqual({ formatted: fallback.formatted, currency: fallback.currency, converted: fallback.converted },
+    { formatted: "$210", currency: "USD", converted: false });
+  assert.deepEqual(provider, { pricePerNight: 210, currency: "USD" });
+});
+
+test("Hotel auto-detected markets and explicit preference select market symbols", () => {
+  for (const [country, expected] of [["US","$"],["NG","₦"],["CA","CA$"],["GB","£"],["FR","€"],["JP","¥"],["IN","₹"]]) {
+    const currency = resolveDisplayCurrencyContext({ preferredCurrency: null, ipCountryCode: country, locale: "en-US" }).resolvedCurrency;
+    assert.ok(formatMarketCurrency(1, currency).startsWith(expected));
+  }
+  const manual = resolveDisplayCurrencyContext({ preferredCurrency: "EUR", ipCountryCode: "NG", locale: "en-NG" });
+  assert.equal(formatMarketCurrency(1, manual.resolvedCurrency), "€1");
 });
