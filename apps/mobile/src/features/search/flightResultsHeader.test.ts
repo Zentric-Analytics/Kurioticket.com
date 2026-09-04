@@ -85,7 +85,7 @@ test("Flight Results header separates Back from one Web-aligned editable summary
   assert.match(styles, /flightRouteSummaryCard: \{[\s\S]*?flex: 1,[\s\S]*?minWidth: 0,[\s\S]*?minHeight: 62,[\s\S]*?borderWidth: 1,[\s\S]*?borderRadius: 13,[\s\S]*?flexDirection: "row"/);
   assert.match(styles, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
   assert.match(styles, /flightRouteSummaryEdit: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
-  const flightEditStyle = styles.slice(styles.indexOf("flightRouteSummaryEdit:"), styles.indexOf("hotelIntroductoryControls:"));
+  const flightEditStyle = styles.slice(styles.indexOf("flightRouteSummaryEdit:"), styles.indexOf("hotelHeader:"));
   assert.doesNotMatch(flightEditStyle, /position: "absolute"|right: 4|top: 4/);
   assert.match(header, /flightRouteSummaryText[\s\S]*?\{route\}[\s\S]*?flightRouteSummarySecondary[\s\S]*?\{secondaryLine\}/);
   assert.match(header, /backgroundColor: theme\.surface/);
@@ -134,7 +134,12 @@ test("canonical flight search data remains available after presentation metadata
   assert.equal(payload?.cabinClass, "premium-economy");
 });
 
-test("Hotel Results uses a scrolling summary and compact handoff header", () => { assert.match(results,/<ScrollView ref=\{hotelScrollRef\}[\s\S]*?<HotelResultsHeader[\s\S]*?\{filterRail\}/); assert.match(results,/hotelCompactHeader \?/); assert.match(results,/accessibilityLabel="Edit hotel search"/); });
+test("Hotel Results uses a stable summary header and native sticky filter rail", () => {
+  const hotelLayout = results.slice(results.indexOf(") : (\n        <>", results.indexOf("<Animated.SectionList")), results.indexOf("<FlightSortSheet"));
+  assert.match(hotelLayout, /<HotelResultsHeader[\s\S]*?<ScrollView ref=\{hotelScrollRef\}[\s\S]*?stickyHeaderIndices=\{\[0\]\}[\s\S]*?\{filterRail\}/);
+  assert.equal(hotelLayout.match(/<HotelResultsHeader/g)?.length, 1);
+  assert.doesNotMatch(results, /hotelCompactHeader|setHotelCompactHeader|hotelIntroBoundary/);
+});
 test("Hotel Results owns a web-parity summary card without weakening Flight controls", () => {
   assert.doesNotMatch(hotelHeader, /flightHeaderMainRow|flightHeaderSide|flightHeaderRouteBlock|flightHeaderEdit/);
   assert.match(hotelHeader, /accessibilityLabel="Go back"[\s\S]*?onPress=\{\(\) => router\.back\(\)\}[\s\S]*?<ArrowLeft/);
@@ -144,7 +149,7 @@ test("Hotel Results owns a web-parity summary card without weakening Flight cont
   assert.match(hotelHeader, /numberOfLines=\{1\}[\s\S]*?ellipsizeMode="tail"[\s\S]*?\{secondaryLine\}/);
   assert.match(hotelHeader, /accessible=\{false\}[\s\S]*?importantForAccessibility="no-hide-descendants"[\s\S]*?<SquarePen size=\{16\} strokeWidth=\{2\.2\}/);
   assert.doesNotMatch(hotelHeader, />Edit<|logo|profile|menu|Bell/);
-  assert.match(styles, /hotelHeader: \{ paddingHorizontal: 12, paddingBottom: 12 \}/);
+  assert.match(styles, /hotelHeader: \{ paddingTop: 12, paddingHorizontal: 12, paddingBottom: 12 \}/);
   assert.match(styles, /hotelHeaderMainRow: \{ width: "100%", flexDirection: "row", alignItems: "center" \}/);
   assert.match(styles, /hotelHeaderSide: \{ width: 52, flexShrink: 0 \}/);
   assert.match(styles, /hotelHeaderBack: \{ width: 44, height: 44/);

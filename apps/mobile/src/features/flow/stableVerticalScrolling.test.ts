@@ -50,6 +50,19 @@ test("flight results use native sticky filters and an opacity-only animated scro
   assert.match(source, /const filterRail = \([\s\S]*?<ScrollView\s+horizontal/);
 });
 
+test("hotel results use one stable native scroll owner and threshold-guard Back to top updates", () => {
+  const source = read("src/features/search/ApprovedResultsScreen.tsx");
+  const start = source.indexOf('<ScrollView ref={hotelScrollRef}');
+  const owner = source.slice(start, source.indexOf("</ScrollView>", start) + "</ScrollView>".length);
+  for (const prop of stableProps) assert.match(owner, prop);
+  assert.equal(owner.match(/<ScrollView ref=\{hotelScrollRef\}/g)?.length, 1);
+  assert.match(owner, /stickyHeaderIndices=\{\[0\]\}/);
+  assert.match(owner, /hotelFilterSectionHeader[\s\S]*?\{filterRail\}/);
+  assert.match(owner, /onScroll=\{handleHotelScroll\}/);
+  assert.doesNotMatch(owner, /setHotelCompactHeader|hotelIntroBoundary/);
+  assert.match(source, /visible === hotelBackToTopVisibleRef\.current[\s\S]*?return;[\s\S]*?setHotelBackToTop\(visible\)/);
+});
+
 test("nested explore carousels remain horizontal without vertical stability overrides", () => {
   const source = read("src/features/explore/ExploreScreen.tsx");
   const horizontal = source.match(/<FlatList horizontal[^>]*>/)?.[0];
