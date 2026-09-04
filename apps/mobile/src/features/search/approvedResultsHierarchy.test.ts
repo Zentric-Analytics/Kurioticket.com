@@ -98,7 +98,7 @@ test("flight price-alert eligibility is route-level while the count stays filter
 
 test("feature-disabled flight results pass availability into the switch while retaining existing alert management", () => {
   assert.match(resultsBody, /<FlightResultsSummaryRow[\s\S]*?priceAlertsAvailable=\{availability\.priceAlerts\}/);
-  assert.match(resultsBody, /plan\.plan \? <PriceAlert product=\{product\} plan=\{plan\.plan\} hotelResults=\{results as HotelResult\[\]\} available=\{availability\.priceAlerts\}/);
+  assert.match(resultsBody, /<HotelResultsSummaryRow[\s\S]*?priceAlertsAvailable=\{availability\.priceAlerts\}/);
 });
 
 test("loading and error states cannot expose the flight price alert", () => {
@@ -106,7 +106,17 @@ test("loading and error states cannot expose the flight price alert", () => {
   assert.match(source, /status === "ready" && !flightState && plan\.plan/);
 });
 
-test("ready Hotel stack has parity sections and current-page cards", () => { assert.match(resultsBody,/hotelFilterChips/); assert.match(resultsBody,/hasGoogleMapsDiscovery/); assert.match(resultsBody,/hotelResults=\{results as HotelResult\[\]\}/); assert.match(resultsBody,/hotelResultsSummary/); assert.match(resultsBody,/hotelPageResults.map/); });
+test("ready Hotel stack puts summary and compact alert after chips and attribution before cards", () => {
+  const ready = resultsBody.slice(resultsBody.indexOf('status === "ready" && product === "hotel" && sorted.length > 0'), resultsBody.indexOf('status === "ready" && product === "hotel" && results.length > 0'));
+  const chips = ready.indexOf("hotelFilterChips");
+  const attribution = ready.indexOf("hasGoogleMapsDiscovery");
+  const summary = ready.indexOf("<HotelResultsSummaryRow");
+  assert.ok(chips >= 0 && chips < attribution && attribution < summary);
+  assert.doesNotMatch(ready.slice(0, summary), /<PriceAlert/);
+  assert.match(resultsBody, /hotelPageResults\.map/);
+  const component = source.slice(source.indexOf("function HotelResultsSummaryRow"), source.indexOf("function PriceAlert"));
+  assert.ok(component.indexOf("flightResultsCountColumn") < component.indexOf('<PriceAlert product="hotel"'));
+});
 test("filtered-empty Hotel state remains isolated from summary, alert, and cards", () => {
   const emptyStart = resultsBody.indexOf('status === "ready" && product === "hotel" && results.length > 0 && sorted.length === 0');
   const emptyBranch = resultsBody.slice(emptyStart, resultsBody.indexOf(": null}", emptyStart));

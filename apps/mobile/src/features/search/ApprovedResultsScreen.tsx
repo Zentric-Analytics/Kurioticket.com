@@ -764,9 +764,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       openSheet={openFlightSheet}
     />
   ) : (
-    <ScrollView horizontal style={s0.filterRail} showsHorizontalScrollIndicator={false} contentContainerStyle={s0.filters}>
+    <ScrollView horizontal style={[s0.hotelFilterRail, { backgroundColor: theme.dark ? theme.surface : "#FFFFFF" }]} showsHorizontalScrollIndicator={false} alwaysBounceHorizontal={false} contentContainerStyle={s0.hotelFilterContent}>
             <>
-              <HotelResultsShortcut label="Filter" count={activeHotelFilters || undefined} icon onPress={() => openHotelFilters("all")} />
+              <HotelResultsShortcut label="Filter" accessibilityLabel="Filters" count={activeHotelFilters || undefined} icon expanded={hotelFilterOpen} onPress={() => openHotelFilters("all")} />
               {hotelOptions.price ? <HotelResultsShortcut label="Price" count={((hotelFilters.minimumPrice !== null && hotelFilters.minimumPrice > hotelOptions.price.minimum) || (hotelFilters.maximumPrice !== null && hotelFilters.maximumPrice < hotelOptions.price.maximum)) ? 1 : undefined} expanded={hotelQuickFilter === "price"} onPress={() => openHotelQuickFilter("price")} /> : null}
               <HotelResultsShortcut label="Stars" count={hotelFilters.starRatings.length || undefined} expanded={hotelQuickFilter === "stars"} onPress={() => openHotelQuickFilter("stars")} />
               <HotelResultsShortcut label="Amenities" count={hotelFilters.facilities.length || undefined} expanded={hotelQuickFilter === "amenities"} onPress={() => openHotelQuickFilter("amenities")} />
@@ -803,15 +803,14 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 <>
                   {hotelFilterChips.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s0.hotelFilterChips}>{hotelFilterChips.map(chip=><Pressable key={chip.key} accessibilityRole="button" accessibilityLabel={`Remove ${chip.label} filter`} onPress={()=>setHotelFilters(chip.remove(hotelFilters))} style={[s0.hotelFilterChip,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={{color:theme.textPrimary}}>{chip.label} ×</Text></Pressable>)}</ScrollView> : null}
                   {hasGoogleMapsDiscovery(results as HotelResult[]) ? <View style={[s0.hotelAttribution,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={{color:theme.textSecondary}}>Hotel discovery data provided by Google Maps</Text></View> : null}
-                  {plan.plan ? <PriceAlert product={product} plan={plan.plan} hotelResults={results as HotelResult[]} available={availability.priceAlerts} /> : null}
-                  <View onLayout={({nativeEvent})=>{hotelResultsOffset.current=nativeEvent.layout.y;}} style={s0.hotelResultsSummary}>
-                    <Text accessibilityRole="header" style={[s0.hotelResultCount, { color: theme.textPrimary }]}>
-                      {sorted.length} {sorted.length === 1 ? "result" : "results"} found
-                    </Text>
-                    <Text accessibilityLabel={hotelRange ? `Showing results ${hotelRange.start} through ${hotelRange.end}` : undefined} style={[s0.hotelResultsRange, { color: theme.textSecondary }]}>
-                      {hotelRange ? `Showing ${hotelRange.start}–${hotelRange.end}` : ""}
-                    </Text>
-                  </View>
+                  {hotelRange ? <HotelResultsSummaryRow
+                    count={sorted.length}
+                    range={hotelRange}
+                    plan={plan.plan}
+                    results={results as HotelResult[]}
+                    priceAlertsAvailable={availability.priceAlerts}
+                    onLayout={({ nativeEvent }) => { hotelResultsOffset.current = nativeEvent.layout.y; }}
+                  /> : null}
                 </>
               ) : null}
               {status === "ready" && product === "hotel" && results.length > 0 && sorted.length === 0 ? (
@@ -1089,32 +1088,33 @@ function HotelResultsHeader({
     </View>
   );
 }
-const HotelResultsShortcut = ({ label, icon = false, count, expanded = false, onPress }: {
-  label: string; icon?: boolean; count?: number; expanded?: boolean; onPress: () => void;
+const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, count, expanded = false, onPress }: {
+  label: string; accessibilityLabel?: string; icon?: boolean; count?: number; expanded?: boolean; onPress: () => void;
 }) => {
   const { theme } = useAppTheme();
   const active = Boolean(count);
-  const selectedColor = theme.dark ? "#8FB5FF" : ui.blue;
-  const contentColor = active ? selectedColor : theme.textSecondary;
-  const accessibilityLabel = icon && count ? `Filter, ${count} active filters` : label;
+  const accent = theme.dark ? "#8FB5FF" : "#004BB8";
+  const foreground = theme.dark ? theme.textPrimary : "#142033";
+  const chevron = theme.dark ? theme.textSecondary : "#64748B";
+  const border = theme.dark ? theme.border : "#D8E1EC";
+  const surface = theme.dark ? theme.surface : "#FFFFFF";
+  const countBackground = theme.dark ? "#142B55" : "rgba(0,75,184,0.08)";
+  const controlAccessibilityLabel = `${accessibilityLabel ?? label}${active ? ", selected" : ""}${count ? `, ${count} active` : ""}`;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
+      accessibilityLabel={controlAccessibilityLabel}
       accessibilityState={{ expanded, selected: active }}
       onPress={onPress}
-      hitSlop={{ top: 3, bottom: 3, left: 2, right: 2 }}
       style={({ pressed }) => [
         s0.hotelShortcut,
-        { borderColor: theme.border, backgroundColor: theme.dark ? theme.surface : ui.pale },
-        active && { backgroundColor: theme.dark ? "#142B55" : "#EEF4FF", borderColor: ui.blue },
-        pressed && s0.hotelShortcutPressed,
+        { borderColor: border, backgroundColor: pressed && !theme.dark ? "#F8FAFC" : surface },
       ]}
     >
-      {icon ? <SlidersHorizontal size={17} strokeWidth={2} color={contentColor} /> : null}
-      <Text style={[s0.hotelShortcutLabel, { color: active ? selectedColor : theme.textPrimary }]}>{label}</Text>
-      {count ? <View style={s0.hotelShortcutCount}><Text style={s0.hotelShortcutCountText}>{count}</Text></View> : null}
-      {!icon ? <ChevronDown size={15} strokeWidth={1.9} color={contentColor} style={expanded ? { transform: [{ rotate: "180deg" }] } : undefined} /> : null}
+      {icon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={accent} /> : null}
+      <Text numberOfLines={1} style={[s0.hotelShortcutLabel, { color: foreground }]}>{label}</Text>
+      {count ? <View style={[s0.hotelShortcutCount, { backgroundColor: countBackground }]}><Text style={[s0.hotelShortcutCountText, { color: accent }]}>{count}</Text></View> : null}
+      <ChevronDown accessible={false} size={14} strokeWidth={1.9} color={chevron} style={expanded ? s0.hotelShortcutChevronExpanded : undefined} />
     </Pressable>
   );
 };
@@ -1549,6 +1549,28 @@ function FlightResultsSummaryRow({ count, plan, results, priceAlertsAvailable }:
   );
 }
 
+const hotelResultCountLabel = (count: number) => `${count} ${count === 1 ? "Result" : "Results"} found`;
+
+function HotelResultsSummaryRow({ count, range, plan, results, priceAlertsAvailable, onLayout }: {
+  count: number;
+  range: { start: number; end: number };
+  plan?: SearchPlan;
+  results: HotelResult[];
+  priceAlertsAvailable: boolean;
+  onLayout: (event: { nativeEvent: { layout: { y: number } } }) => void;
+}) {
+  const { theme } = useAppTheme();
+  return (
+    <View accessibilityLabel="Hotel results summary" onLayout={onLayout} style={s0.hotelResultsSummaryRow}>
+      <View style={s0.flightResultsCountColumn}>
+        <Text accessibilityRole="header" style={[s0.flightResultCount, { color: theme.textPrimary }]}>{hotelResultCountLabel(count)}</Text>
+        <Text accessibilityLabel={`Showing results ${range.start} through ${range.end}`} style={[s0.flightResultRange, { color: theme.textSecondary }]}>{range.start}–{range.end}</Text>
+      </View>
+      {plan ? <PriceAlert product="hotel" plan={plan} hotelResults={results} available={priceAlertsAvailable} compact /> : null}
+    </View>
+  );
+}
+
 function PriceAlert({ product, plan, results, hotelResults, available = true, compact = false }: { product: Product; plan?: SearchPlan; results?: FlightResult[]; hotelResults?: HotelResult[]; available?: boolean; compact?: boolean }) {
   const { theme } = useAppTheme();
   const { locale, t } = useMobileLocalization();
@@ -1568,7 +1590,6 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   const [targetError, setTargetError] = useState("");
   const isTracking = matchingAlert?.status === "ACTIVE";
   const unavailable = !activePresentation.enabled || (!available && !isTracking);
-  const supportTextColor = theme.dark ? flightSupportText.dark : flightSupportText.light;
   const requireSignIn = useCallback(() => Alert.alert(message("signInRequired"), message("signInAlertBody"), [{ text: t("signIn"), onPress: () => router.push(signInHref("/(tabs)/profile")) }, { text: t("cancel"), style: "cancel" }]), [message, t]);
   const reconcile = useCallback(async () => {
     if (!flight || !plan) return;
@@ -1624,7 +1645,10 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   }
   if (product !== "hotel" || !plan) return null;
   if (!activePresentation.enabled) return null;
-  return <View accessibilityLabel={message("hotelAlertTitle")} style={[s0.flightAlert, { backgroundColor: theme.surface, borderColor: theme.priceAlertBorder }]}><View style={s0.flightAlertCopy}><Text style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightAlertSubtitle, { color: supportTextColor }]}>{message("hotelAlertBody")}</Text></View><View style={s0.flightAlertSwitchTarget}><Pressable accessibilityRole="button" accessibilityLabel={matchingAlert ? "Hotel price alert saved" : "Create hotel price alert"} accessibilityState={{ disabled: pending || unavailable || Boolean(matchingAlert) }} disabled={pending || unavailable || Boolean(matchingAlert)} onPress={async()=>{if(!await readSession().catch(()=>null)){requireSignIn();return;}setTargetError("");setTargetOpen(true);}} style={({ pressed }) => [s0.hotelAlertAction,{ backgroundColor: matchingAlert ? theme.switchTrackActive : theme.surface, borderColor: matchingAlert ? theme.switchTrackActive : theme.priceAlertBorder },pressed && s0.hotelAlertActionPressed]}><Bell accessible={false} size={20} color={matchingAlert ? theme.surface : ui.blue} fill={matchingAlert ? theme.surface : "none"} /></Pressable></View><Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel={message("hotelAlertTitle")}><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>{message("targetTotal")} ({currency})</Text><TextInput autoFocus accessibilityLabel={`${message("targetTotal")} ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text> : null}<Button label={pending ? message("creating") : message("createAlert")} onPress={() => void createAlert()} /><Button label={t("cancel")} outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal></View>;
+  const hotelTracking = Boolean(matchingAlert);
+  const hotelActionLabel = hotelTracking ? `✓ ${flightCopy.tracking}` : flightCopy.trackAction;
+  const hotelActionDisabled = pending || unavailable || hotelTracking;
+  return <View accessibilityLabel={message("hotelAlertTitle")} style={[s0.flightAlertCompact, { backgroundColor: theme.surface, borderColor: theme.priceAlertBorder }]}><Bell accessible={false} size={17} strokeWidth={2} color={theme.dark ? "#8FB5FF" : ui.blue}/><View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightAlertCompactTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={hotelTracking ? "Hotel price alert saved" : "Create hotel price alert"} accessibilityState={{ selected: hotelTracking, disabled: hotelActionDisabled, busy: pending }} disabled={hotelActionDisabled} onPress={async()=>{if(!await readSession().catch(()=>null)){requireSignIn();return;}setTargetError("");setTargetOpen(true);}} style={({ pressed }) => [s0.flightAlertAction,{ backgroundColor: hotelTracking ? theme.dark ? "#173568" : "#EEF4FF" : theme.surface, borderColor: hotelTracking ? theme.switchTrackActive : theme.priceAlertBorder },pressed && s0.flightAlertActionPressed]}>{pending ? <ActivityIndicator size="small" color={theme.dark ? "#8FB5FF" : ui.blue}/> : <Text numberOfLines={1} style={[s0.flightAlertActionText,{ color: theme.dark ? "#8FB5FF" : ui.blue }]}>{hotelActionLabel}</Text>}</Pressable><Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel={message("hotelAlertTitle")}><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>{message("targetTotal")} ({currency})</Text><TextInput autoFocus accessibilityLabel={`${message("targetTotal")} ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text> : null}<Button label={pending ? message("creating") : message("createAlert")} onPress={() => void createAlert()} /><Button label={t("cancel")} outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal></View>;
 }
 export function BottomNav({ flightResults = false }: { flightResults?: boolean } = {}) {
   const { theme } = useAppTheme();
@@ -1669,17 +1693,19 @@ const s0 = StyleSheet.create({
   compactMeta:{fontSize:11,lineHeight:15},
   hotelBackToTop:{position:"absolute",right:16,width:44,height:44,borderRadius:22,borderWidth:1,alignItems:"center",justifyContent:"center",zIndex:19,elevation:4},
   filterRail: { height: 44, flexGrow: 0 },
+  hotelFilterRail: { height: 48, flexGrow: 0 },
+  hotelFilterContent: { paddingHorizontal: 16, paddingBottom: 4, gap: 8, alignItems: "center", flexWrap: "nowrap" },
   flightFilterSectionHeader: { paddingTop: 8 },
   resultsScroll: { flex: 1 },
   flightResultsContent: { flexGrow: 1 },
   route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
   filters: { paddingHorizontal: 14, paddingVertical: 3, gap: 8, alignItems: "center" },
-  hotelShortcut: { height: 38, flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderRadius: 8, paddingHorizontal: 10 },
-  hotelShortcutPressed: { opacity: 0.82, transform: [{ scale: 0.985 }] },
-  hotelShortcutLabel: { fontSize: 12, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
-  hotelShortcutCount: { minWidth: 19, height: 19, borderRadius: 10, paddingHorizontal: 5, alignItems: "center", justifyContent: "center", backgroundColor: ui.blue },
-  hotelShortcutCountText: { color: "white", fontSize: 11, fontWeight: "800", fontFamily: appFonts.extraBold },
+  hotelShortcut: { height: 44, minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderWidth: 1, borderRadius: 11, paddingHorizontal: 14 },
+  hotelShortcutLabel: { fontSize: 14, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
+  hotelShortcutCount: { minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 6, alignItems: "center", justifyContent: "center" },
+  hotelShortcutCountText: { fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts.semibold },
+  hotelShortcutChevronExpanded: { transform: [{ rotate: "180deg" }] },
   modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(10, 24, 48, 0.42)" },
   sheet: { maxHeight: "82%", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 18, gap: 14, backgroundColor: "white" },
   sortSheet: { borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingHorizontal: 18, paddingTop: 14, gap: 4, backgroundColor: "white" },
@@ -1713,9 +1739,7 @@ const s0 = StyleSheet.create({
   flightCardItem: { paddingHorizontal: 14, paddingBottom: 8 },
   notice: { backgroundColor: "#F2F6FF", color: ui.navy, padding: 10, borderRadius: 8 },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
-  hotelResultCount: { fontSize: 16, lineHeight: 21, fontWeight: "700", fontFamily: appFonts.bold },
-  hotelResultsSummary: { gap: 2 },
-  hotelResultsRange: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
+  hotelResultsSummaryRow: { gap: 8 },
   hotelFilteredEmpty: { alignItems: "center", gap: 10, paddingVertical: 28 },
   hotelClearFilters: { color: ui.blue, fontSize: 15, fontWeight: "800" },
   flightResultsSummaryRow: { paddingHorizontal: 14, paddingTop: 7, paddingBottom: 10, alignItems: "stretch", gap: 8 },
@@ -1809,8 +1833,6 @@ const s0 = StyleSheet.create({
   score: { backgroundColor: ui.blue, color: "white", fontWeight: "900" },
   hotelTerm:{fontSize:11,lineHeight:15,color:ui.navy},
   hotelAttributionLink:{fontSize:10,lineHeight:14,color:colors.blue,textDecorationLine:"underline"},
-  hotelAlertAction: { width: 44, height: 44, borderWidth: 1, borderRadius: 22, alignItems: "center", justifyContent: "center" },
-  hotelAlertActionPressed: { opacity: 0.7 },
   hotelPrice: { marginTop: "auto", alignItems: "flex-end", paddingTop: 8 },
   hotelPriceCopy: { minWidth: 0, alignItems: "flex-end" },
   hotelNightlyPrice: { fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold, color: ui.navy, textAlign: "right", fontVariant: ["tabular-nums"] },
@@ -1876,7 +1898,6 @@ const s0 = StyleSheet.create({
   flightAlertCompactTitle: { fontSize: 12.5, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold },
   flightAlertTitle: { fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
   flightAlertSubtitle: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
-  flightAlertSwitchTarget: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   flightAlertAction: { minWidth: 92, height: 38, flexShrink: 0, borderWidth: 1, borderRadius: 19, paddingHorizontal: 12, alignItems: "center", justifyContent: "center" },
   flightAlertActionPressed: { opacity: 0.62 },
   flightAlertActionText: { fontSize: 12, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold },

@@ -86,7 +86,7 @@ test("the compact rail remains structurally safe at supported phone widths", () 
   assert.match(quickControls, /<ScrollView horizontal/);
   assert.match(quickControls, /showsHorizontalScrollIndicator=\{false\}/);
   assert.doesNotMatch(quickControls, /numColumns|width:\s*(?:320|360|375|390|412|430)/);
-  assert.match(styleBlock("filters", "modalBackdrop"), /paddingHorizontal: 14/);
+  assert.match(styleBlock("hotelFilterContent", "flightFilterSectionHeader"), /paddingHorizontal: 16/);
 });
 
 test("flight dates use full resolved fares in wider, single-line tiles", () => {
@@ -167,7 +167,8 @@ test("hotel surviving sections own moderate spacing without changing the shared 
   assert.doesNotMatch(headerRow, /gap|height: 44/);
   assert.doesNotMatch(screen, /hotelHeaderMeta/);
   assert.match(resultSpacing, /paddingTop: 12/);
-  assert.doesNotMatch(styleBlock("filterRail", "flightFilterSectionHeader"), /margin|paddingTop|paddingBottom/);
+  assert.doesNotMatch(styleBlock("filterRail", "hotelFilterRail"), /margin|paddingTop|paddingBottom/);
+  assert.match(styleBlock("hotelFilterRail", "hotelFilterContent"), /height: 48/);
   assert.doesNotMatch(flightLayout, /hotelHeader|hotelResultsContent/);
 });
 
