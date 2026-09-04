@@ -28,7 +28,7 @@
     "distribution": "store",
     "androidBuildType": "app-bundle",
     "appVersion": "0.3.0",
-    "runtimeVersion": "production-0.3.3",
+    "runtimeVersion": "production-0.3.2",
     "googleIosClientId": "459496589401-b4npe68m8c358rqr79edi7igvi3sauao.apps.googleusercontent.com",
     "sourceBranch": "main"
   }
