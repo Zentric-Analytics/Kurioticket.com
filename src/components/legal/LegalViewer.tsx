@@ -6,6 +6,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { getTranslations } from "@/lib/i18n";
 import type { LegalDocument } from "@/lib/types";
 import type { TranslationDictionary } from "@/lib/i18n/types";
+import { getLegalDocumentTranslationNamespace, localizeLegalDocument } from "@/lib/legal/localizeLegalDocument";
 
 const englishTranslations = getTranslations("en-us");
 
@@ -25,62 +26,8 @@ function getLocaleTranslation(
   return t[key] || fallback;
 }
 
-const legalDocumentTranslationNamespaces: Record<string, string> = {
-  "terms-of-service": "legal.terms",
-  "acceptable-use-policy": "legal.acceptableUsePolicy",
-  "privacy-policy": "legal.privacy",
-  "cookie-policy": "legal.cookiePolicy",
-  "privacy-choices": "legal.privacyChoices",
-  "affiliate-disclosure": "legal.affiliateDisclosure",
-  "data-deletion-policy": "legal.dataDeletionPolicy",
-  "refund-booking-disclaimer": "legal.refundBookingDisclaimer",
-  "price-availability-disclaimer": "legal.priceAvailabilityDisclaimer",
-  "partner-redirect-disclaimer": "legal.partnerRedirectDisclaimer",
-  "california-seller-of-travel-notice": "legal.californiaSellerOfTravelNotice",
-  "legal-notice-company-information": "legal.legalNoticeCompanyInformation",
-  "security-statement": "legal.securityStatement",
-  "accessibility-statement": "legal.accessibilityStatement",
-};
-
-function getLegalDocumentTranslationNamespace(document: LegalDocument) {
-  return legalDocumentTranslationNamespaces[document.slug];
-}
-
-function getLegalDocumentTranslation(
-  document: LegalDocument,
-  t: TranslationDictionary,
-): LegalDocument {
-  const namespace = getLegalDocumentTranslationNamespace(document);
-
-  if (!namespace) {
-    return document;
-  }
-
-  return {
-    ...document,
-    title: getTranslation(t, `${namespace}.title`, document.title),
-    summary: getTranslation(t, `${namespace}.summary`, document.summary),
-    lastUpdated: getTranslation(
-      t,
-      `${namespace}.lastUpdatedDate`,
-      document.lastUpdated,
-    ),
-    sections: document.sections.map((section) => ({
-      ...section,
-      title: getTranslation(
-        t,
-        `${namespace}.sections.${section.id}.title`,
-        section.title,
-      ),
-      paragraphs: section.paragraphs.map((paragraph, index) =>
-        getTranslation(
-          t,
-          `${namespace}.sections.${section.id}.paragraph${index + 1}`,
-          paragraph,
-        ),
-      ),
-    })),
-  };
+function getLegalDocumentTranslation(document: LegalDocument, t: TranslationDictionary): LegalDocument {
+  return localizeLegalDocument(document, t);
 }
 
 function formatLegalDate(value: string, locale: string) {

@@ -2,8 +2,7 @@ import type { FlowIconName } from "../flow/FlowIcon";
 import type { MobileTranslationKey } from "../../localization/mobileLocalizationCatalog";
 
 export type ProfileDestination =
-  | { kind: "native"; href: "/personal-information" | "/security" | "/price-alerts" | "/settings" | "/saved" | "/recent" | "/faq" | "/support" | "/email-preferences" | "/travel-preferences" }
-  | { kind: "legal"; page: "terms" | "privacy" };
+  { kind: "native"; href: "/personal-information" | "/security" | "/price-alerts" | "/settings" | "/saved" | "/recent" | "/faq" | "/support" | "/email-preferences" | "/travel-preferences" | "/terms-of-service" | "/privacy-policy" };
 export type ProfileItem = { label: MobileTranslationKey; icon: FlowIconName; destination: ProfileDestination };
 export type ProfileSection = { title: MobileTranslationKey; items: ProfileItem[] };
 
@@ -33,7 +32,7 @@ export const authenticatedProfileSections: ProfileSection[] = [
     { label: "faq", icon: "help", destination: { kind: "native", href: "/faq" } },
   ] },
   { title: "aboutLegal", items: [
-    { label: "terms", icon: "document", destination: { kind: "legal", page: "terms" } },
-    { label: "privacy", icon: "shield", destination: { kind: "legal", page: "privacy" } },
+    { label: "terms", icon: "document", destination: { kind: "native", href: "/terms-of-service" } },
+    { label: "privacy", icon: "shield", destination: { kind: "native", href: "/privacy-policy" } },
   ] },
 ];
