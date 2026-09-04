@@ -5,13 +5,15 @@ import { AuthButton, authColors, ErrorText, Field, FormHeading, FormShell, Secur
 import { formatCountdown, isValidEmail, sanitizeCode } from "./authUtils";
 import { scheduleAuthCompletion } from "./authCompletion";
 
-export function EmailScreen({ initialEmail, onBack, onContinue, loading, error }: { initialEmail: string; onBack: () => void; onContinue: (email: string) => void; loading: boolean; error?: string }) {
+export function EmailScreen({ initialEmail, onBack, onContinue, onPasskey, loading, passkeyLoading, error }: { initialEmail: string; onBack: () => void; onContinue: (email: string) => void; onPasskey?: () => void; loading: boolean; passkeyLoading?: boolean; error?: string }) {
   const [email, setEmail] = useState(initialEmail);
   const [touched, setTouched] = useState(false);
   const valid = isValidEmail(email);
+  const busy = loading || passkeyLoading;
   return <FormShell onBack={onBack}><FormHeading icon="mail" title="Enter your email" body={"We’ll send you a secure link or code to\nsign in or create your account."} />
-    <Field autoFocus label="Email address" placeholder="you@example.com" value={email} onChangeText={setEmail} onBlur={() => setTouched(true)} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" textContentType="emailAddress" returnKeyType="go" onSubmitEditing={() => valid && onContinue(email)} error={touched && !valid ? "Enter a valid email address." : undefined} />
-    <ErrorText>{error}</ErrorText><AuthButton label="Continue" onPress={() => onContinue(email)} loading={loading} disabled={!valid} />
+    <Field autoFocus label="Email address" placeholder="you@example.com" value={email} onChangeText={setEmail} onBlur={() => setTouched(true)} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" textContentType="emailAddress" returnKeyType="go" onSubmitEditing={() => valid && !busy && onContinue(email)} error={touched && !valid ? "Enter a valid email address." : undefined} />
+    <ErrorText>{error}</ErrorText><AuthButton label="Continue" onPress={() => onContinue(email)} loading={loading} disabled={!valid || passkeyLoading} />
+    {onPasskey ? <View style={styles.passkeyOption}><Text style={styles.or}>or</Text><AuthButton label="Sign in with passkey" onPress={onPasskey} loading={passkeyLoading} disabled={loading} secondary icon={<AuthIcon name="key" color={authColors.navy} size={21} />} /></View> : null}
     <Text style={styles.legal}>By continuing, you agree to our <Text style={styles.link}>Terms of Service</Text> and <Text style={styles.link}>Privacy Policy</Text></Text>
   </FormShell>;
 }
@@ -96,6 +98,7 @@ export function SuccessScreen({ onDone }: { onDone: () => void }) {
 }
 const styles = StyleSheet.create({
   legal: { color: authColors.text, fontSize: 12, lineHeight: 18, textAlign: "center", marginTop: 12 }, link: { color: authColors.blue, textDecorationLine: "underline" }, email: { color: authColors.navy, fontWeight: "800" },
+  passkeyOption: { gap: 8, marginTop: 2 }, or: { color: authColors.text, fontSize: 13, lineHeight: 18, textAlign: "center" },
   codeRow: { height: 58, flexDirection: "row", justifyContent: "center", gap: 8, position: "relative" }, codeBox: { width: 45, height: 52, borderWidth: 1, borderColor: authColors.border, borderRadius: 8, alignItems: "center", justifyContent: "center" },
   codeFocused: { borderColor: authColors.blue, borderWidth: 2 }, codeDigit: { color: authColors.navy, fontSize: 22, fontWeight: "700" }, hiddenInput: { position: "absolute", opacity: 0, width: 1, height: 1 },
   resend: { alignItems: "center", gap: 11, marginTop: 14 }, muted: { color: authColors.text, fontSize: 14 }, action: { color: authColors.blue, fontSize: 14, fontWeight: "600" }, centerAction: { alignSelf: "center", minHeight: 44, justifyContent: "center" }, forgot: { alignSelf: "flex-end", marginTop: -8 },
