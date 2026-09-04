@@ -11,6 +11,7 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { signInHref } from "../auth/signInIntent";
 import { notificationDestination } from "./notificationAction";
 import { notifyUnreadCountChanged } from "./notificationUnreadRefresh";
+import { PageContentState } from "../../components/PageContentState";
 import { notificationSwipeDirection, notificationSwipePosition, NOTIFICATION_DELETE_ACTION_WIDTH, type NotificationSwipeDirection, shouldRevealNotificationDelete } from "./notificationSwipe";
 
 export function NotificationsScreen() {
@@ -99,8 +100,8 @@ export function NotificationsScreen() {
 
   return <SafeAreaView style={[flowStyles.safe, { backgroundColor: theme.background }]} edges={["top"]}>
     <View style={[styles.header, { borderBottomColor: theme.border }]}><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={flowStyles.iconButton}><FlowIcon name="back" color={theme.icon} /></Pressable><Text accessibilityRole="header" style={[flowStyles.title, { color: theme.text }]}>Notifications</Text>{unread ? <Pressable accessibilityRole="button" accessibilityLabel="Mark all notifications as read" disabled={pendingAll} onPress={() => void markAll()} style={styles.markAll}><Text style={styles.link}>Mark all read</Text></Pressable> : <View style={styles.markAll} />}</View>
-    {contentState === "loading" ? <View style={styles.center}><ActivityIndicator color={flowColors.blue} /><Text style={flowStyles.meta}>Loading notifications…</Text></View> : null}
-    {contentState === "error" ? <View style={styles.center}><Text accessibilityRole="header" style={[flowStyles.value, { color: theme.text }]}>Couldn't load notifications</Text><Text style={[flowStyles.meta, styles.emptyCopy]}>Check your connection and try again.</Text><Pressable accessibilityRole="button" accessibilityLabel="Try again" onPress={() => void loadFirstPage()} style={styles.retryButton}><Text style={styles.link}>Try again</Text></Pressable></View> : null}
+    {contentState === "loading" ? <PageContentState state="loading" pageName="notifications" /> : null}
+    {contentState === "error" ? <PageContentState state="error" pageName="notifications" onRetry={() => void loadFirstPage()} /> : null}
     {contentState === "empty" ? <ScrollView alwaysBounceVertical={false} bounces={false} overScrollMode="never" refreshControl={<RefreshControl refreshing={state.refreshing} onRefresh={() => void loadFirstPage(true)} />} contentContainerStyle={styles.list}><View style={styles.center}><FlowIcon name="bell" color={flowColors.blue} size={42} /><Text style={flowStyles.value}>You’re all caught up</Text><Text style={[flowStyles.meta, styles.emptyCopy]}>Important account and travel updates will appear here.</Text></View></ScrollView> : null}
     {contentState === "list" ? <ScrollView scrollEnabled={scrollEnabled} alwaysBounceVertical={false} bounces={false} overScrollMode="never" onScrollBeginDrag={() => setOpenNotificationId(null)} refreshControl={<RefreshControl refreshing={state.refreshing} onRefresh={() => void loadFirstPage(true)} />} contentContainerStyle={styles.list}>
       {state.error ? <View style={styles.feedback}><Text accessibilityRole="alert" style={styles.error}>{state.error}</Text><Pressable accessibilityRole="button" accessibilityLabel="Retry refreshing notifications" onPress={() => void loadFirstPage(true)}><Text style={styles.link}>Try again</Text></Pressable></View> : null}

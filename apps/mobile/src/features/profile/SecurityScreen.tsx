@@ -31,6 +31,7 @@ import { TwoFactorSetupFlow } from "./TwoFactorSetupFlow";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { signInHref } from "../auth/signInIntent";
+import { PageContentState } from "../../components/PageContentState";
 
 function shortFeedbackMessage(message: string) {
   const firstSentence = message.match(/^.*?[.!?。！？](?=\s|$)/u)?.[0] ?? message;
@@ -183,9 +184,8 @@ export function SecurityScreen() {
 
   return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top"]}>
     <Header title={c.title} backLabel={c.back} onBack={() => router.back()} />
-    <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+    {loading && !overview ? <PageContentState state="loading" pageName="security settings" /> : !overview && landingError ? <PageContentState state="error" pageName="security settings" onRetry={() => void load()} /> : <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
       <Text style={[styles.intro, { color: theme.muted }]}>{c.intro}</Text>
-      {loading ? <Text style={{ color: theme.muted }}>{c.loading}</Text> : null}
       <Feedback error={landingError} message="" retry={c.retry} onRetry={load} />
       {overview ? <>
         <View style={styles.landingBlocks}>
@@ -198,7 +198,7 @@ export function SecurityScreen() {
         </View>
         <Pressable accessibilityRole="button" accessibilityLabel={c.deleteAccount} onPress={() => void openDeletion()} style={({ pressed }) => [styles.deleteButton, { borderColor: flowColors.red }, pressed && styles.pressed]}><Text style={styles.deleteButtonText}>{c.deleteAccount}</Text></Pressable>
       </> : null}
-    </ScrollView>
+    </ScrollView>}
     <FloatingNotice message={landingMessage} />
 
     <ScreenModal visible={passkeysOpen} title={c.passkeys} closeLabel={c.close} avoidKeyboard onClose={() => { if (!passkeysManager.current?.cancelInternal()) closePasskeys(); }}>
