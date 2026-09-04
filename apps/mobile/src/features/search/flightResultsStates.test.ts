@@ -19,7 +19,7 @@ test("local sort and filters only derive displayed results and never set request
   const filterChangeBlock = screen.slice(screen.indexOf("const handleFlightFiltersChange"), screen.indexOf("const clearFlightFilters"));
   assert.match(sortedBlock, /filterAndSortFlights/);
   assert.doesNotMatch(sortedBlock, /setStatus|setRetry|load\(/);
-  assert.match(screen, /onApply=\{\(next\) => \{ setFlightPage\(1\); setSort\(next\); setSortOpen\(false\); \}\}/);
+  assert.match(screen, /onApply=\{\(next\) => \{ cancelFlightPagination\(\); setFlightPage\(1\); setSort\(next\); setSortOpen\(false\); \}\}/);
   assert.match(screen, /onChange=\{handleFlightFiltersChange\}/);
   assert.match(filterChangeBlock, /setFilters\(next\)/);
   assert.doesNotMatch(filterChangeBlock, /setStatus|setRetry|load\(/);

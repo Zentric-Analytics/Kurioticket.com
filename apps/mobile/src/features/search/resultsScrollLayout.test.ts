@@ -23,7 +23,7 @@ test("Flight Results owns a stronger light canvas while Hotel Results keeps the 
   assert.match(screen, /const flightCanvasColor = theme\.dark \? theme\.background : flightResultsLightCanvas/);
   assert.match(root, /<SafeAreaView style=\{\[s0\.safe, \{ backgroundColor: flightResults \? flightCanvasColor : theme\.background \}\]\}/);
   assert.match(flightLayout, /<Animated\.SectionList[\s\S]*?style=\{\[s0\.resultsScroll, \{ backgroundColor: flightCanvasColor \}\]\}/);
-  assert.match(flightLayout, /renderSectionHeader[\s\S]*?<View style=\{\[s0\.flightFilterSectionHeader, \{ backgroundColor: flightCanvasColor \}\]\}>[\s\S]*?\{filterRail\}/);
+  assert.match(flightLayout, /renderSectionHeader[\s\S]*?<View[\s\S]*?style=\{\[s0\.flightFilterSectionHeader, \{ backgroundColor: flightCanvasColor \}\]\}[\s\S]*?\{filterRail\}/);
   assert.match(screen, /function HotelResultsHeader[\s\S]*?backgroundColor: theme\.background/);
   assert.match(styleBlock("hotelCard", "hotelCardCompact"), /backgroundColor: "white"/);
   assert.match(screen, /s0\.card,[\s\S]*?backgroundColor: theme\.surface/);
