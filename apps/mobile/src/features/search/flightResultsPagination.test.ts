@@ -97,15 +97,16 @@ test("Date Strip navigation cancels pagination and resets page one without chang
   const selection = screen.slice(screen.indexOf("const selectNearbyDate"), screen.indexOf("const flightDateStrip ="));
   assert.match(selection, /cancelFlightPagination\(\);[\s\S]*?setFlightPage\(1\)/);
   assert.match(selection, /setSortOpen\(false\);[\s\S]*?setFilterOpen\(false\)/);
-  assert.match(selection, /pendingDateStripSelection\.current = \{ departureDate: nextDepartureDate, returnDate \};[\s\S]*?router\.setParams/);
+  assert.match(selection, /const expectedSearchPlan = buildSearchPlan\("flight", \{[\s\S]*?\.\.\.params,[\s\S]*?departureDate: nextDepartureDate,[\s\S]*?returnDate[\s\S]*?\}\)\.plan;[\s\S]*?pendingDateStripSelection\.current = expectedSearchPlan\?\.key \?\? null;[\s\S]*?router\.setParams/);
   assert.doesNotMatch(selection, /setSort\(|setFilters\(|emptyFlightFilters|setFlightPaginationPendingPage|setFlightPaginationPhase/);
 });
 
 test("only the matching Date Strip identity preserves preferences and its intent is consumed", () => {
   const identity = screen.slice(screen.indexOf("if (!flightResults || !plan.plan?.key) return;"), screen.indexOf("useEffect(() => {", screen.indexOf("if (!flightResults || !plan.plan?.key) return;") + 1));
-  assert.match(identity, /const pendingSelection = pendingDateStripSelection\.current;[\s\S]*?pendingDateStripSelection\.current = null/);
+  assert.match(identity, /const pendingSearchKey = pendingDateStripSelection\.current;[\s\S]*?pendingDateStripSelection\.current = null/);
   assert.match(identity, /clearTimeout\(pendingDateStripSelectionTimer\.current\)[\s\S]*?pendingDateStripSelectionTimer\.current = undefined/);
-  assert.match(identity, /pendingSelection != null[\s\S]*?pendingSelection\.departureDate === payload\.departureDate[\s\S]*?pendingSelection\.returnDate === payload\.returnDate/);
+  assert.match(identity, /const pendingSearchKey = pendingDateStripSelection\.current;[\s\S]*?pendingSearchKey != null[\s\S]*?pendingSearchKey === plan\.plan\.key/);
+  assert.doesNotMatch(identity, /pendingSearchKey[\s\S]*?payload\.(?:departureDate|returnDate)/);
   assert.match(identity, /cancelFlightPagination\(\);[\s\S]*?setFlightPage\(1\)/);
   assert.match(identity, /if \(!preserveDateStripPreferences\) \{[\s\S]*?setSort\("price"\);[\s\S]*?setFilters\(emptyFlightFilters\(\)\)/);
   assert.match(identity, /setSortOpen\(false\);[\s\S]*?setFilterOpen\(false\)/);
