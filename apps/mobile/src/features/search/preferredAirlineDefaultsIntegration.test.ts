@@ -11,8 +11,9 @@ test("saved airline preferences do not silently narrow canonical results", () =>
 });
 
 test("explicit airline filters and clear filters remain available", () => {
-  assert.match(screen, /onChange=\{handleFlightFiltersChange\}/);
-  assert.match(screen, /setFilters\(next\)/);
+  assert.match(screen, /onChange=\{filterSection === "all" \? handleFullFlightFiltersChange : handleQuickFlightFiltersChange\}/);
+  assert.match(screen, /handleFullFlightFiltersChange[\s\S]*?setFilters\(next\)/);
+  assert.match(screen, /handleQuickFlightFiltersChange[\s\S]*?setFilters\(next\)/);
   assert.match(screen, /setFilters\(emptyFlightFilters\(\)\)/);
   assert.match(screen, /onClearFilters=\{clearFlightFilters\}/);
 });
