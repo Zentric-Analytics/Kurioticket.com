@@ -56,13 +56,13 @@ test("homepage card navigation preserves favorites, auth-neutral taps, and loop-
 test("Android and iOS share the same card, results, loading, and back-stack implementation", () => {
   const flightRoute = source("app/flight-results.tsx");
   const hotelRoute = source("app/hotel-results.tsx");
-  const results = source("src/features/flow/TravelResultsScreen.tsx");
+  const results = source("src/features/search/ApprovedResultsScreen.tsx");
 
   assert.doesNotMatch(regional + helper, /Platform\.OS/);
   assert.match(flightRoute, /TravelResultsScreen product="flight"/);
   assert.match(hotelRoute, /TravelResultsScreen product="hotel"/);
   assert.match(results, /setStatus\("loading"\)/);
-  assert.match(results, /travelApi\.searchFlights\(payload/);
-  assert.match(results, /travelApi\.searchHotels\(payload/);
+  assert.match(results, /travelApi\.searchFlights\(plan\.plan\.payload/);
+  assert.match(results, /travelApi\.searchHotels\(plan\.plan\.payload/);
   assert.match(results, /accessibilityLabel="Go back"[\s\S]*router\.back\(\)/);
 });

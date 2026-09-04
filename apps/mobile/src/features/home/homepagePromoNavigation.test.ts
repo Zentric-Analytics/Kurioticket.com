@@ -34,11 +34,12 @@ test("promo-only defaults cannot leak into either normal product form", () => {
   assert.doesNotMatch(flights, /HOMEPAGE_(?:HOTEL|FLIGHT)_PROMO/);
 });
 
-test("both platforms share one promo implementation and existing results loading UI", () => {
+test("both platforms share one promo implementation and canonical results loading UI", () => {
   const promo = readFileSync("src/features/home/HomepageDealPromos.tsx", "utf8");
-  const results = readFileSync("src/features/flow/TravelResultsScreen.tsx", "utf8");
+  const results = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
+  const route = readFileSync("src/features/flow/TravelResultsScreen.tsx", "utf8");
   assert.doesNotMatch(promo, /Platform\.OS|android|ios/i);
   assert.match(results, /status === "loading"/);
-  assert.match(results, /<ActivityIndicator/);
-  assert.match(results, /onPress=\{\(\) => router\.back\(\)\}/);
+  assert.match(results, /<NativeBrandedSearchLoading/);
+  assert.doesNotMatch(route, /ActivityIndicator|LegacyTravelResultsScreen/);
 });

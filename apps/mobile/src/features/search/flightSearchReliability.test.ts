@@ -38,6 +38,8 @@ test("deadline, supersession, cleanup, and retry preserve latest-request ownersh
   assert.match(screen, /if \(!isLatest\(\)\) return/);
   assert.match(screen, /searchSequence\.current \+= 1/);
   assert.match(screen, /activeSearch\.current\?\.abort\("screen-cleanup"\)/);
+  assert.match(screen, /activeExecutionKey\.current !== executionKey/);
+  assert.match(screen, /searchAbortTimer\.current = setTimeout/);
   assert.match(screen, /setRetry\(\(x\) => x \+ 1\)/);
   assert.match(screen, /const controller = new AbortController\(\)/);
 });
@@ -48,7 +50,7 @@ test("loading decoration cannot intercept controls and route changes cannot loop
   assert.match(screen, /\[product, plan\.plan\?\.key, retry, visualTest\]/);
   assert.doesNotMatch(screen, /activeSearch\.current\?\.abort\("edit-search"\)/);
   assert.match(screen, /if \(product === "flight"\) \{\s*pendingFlightEditTargetKey\.current = null;\s*setEditSearchOpen\(true\);/);
-  assert.match(screen, /activeSearch\.current\?\.abort\("screen-blur"\)/);
+  assert.doesNotMatch(screen, /activeSearch\.current\?\.abort\("screen-blur"\)/);
 });
 
 test("production parsing uses one native JSON path and safe response metadata", () => {

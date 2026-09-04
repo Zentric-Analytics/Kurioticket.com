@@ -194,6 +194,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const searchSequence = useRef(0);
   const activeSearch = useRef<AbortController | null>(null);
   const requestInFlight = useRef(false);
+  const activeExecutionKey = useRef<string | undefined>(undefined);
+  const searchAbortTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const resultsRef = useRef<(FlightResult | HotelResult)[]>([]);
   const [sort, setSort] = useState<FlightSort>("price");
   const [sortOpen, setSortOpen] = useState(false);
@@ -405,17 +407,25 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     }
   }, [product, results.length, status]);
   useEffect(() => {
-    void load();
+    const executionKey = `${product}:${plan.plan?.key ?? "invalid"}:${retry}:${visualTest ? "visual" : "live"}`;
+    if (searchAbortTimer.current) clearTimeout(searchAbortTimer.current);
+    searchAbortTimer.current = undefined;
+    if (activeExecutionKey.current !== executionKey) {
+      activeExecutionKey.current = executionKey;
+      void load();
+    }
     return () => {
-      searchSequence.current += 1;
-      activeSearch.current?.abort("screen-cleanup");
+      searchAbortTimer.current = setTimeout(() => {
+        if (activeExecutionKey.current !== executionKey) return;
+        searchSequence.current += 1;
+        activeSearch.current?.abort("screen-cleanup");
+        activeExecutionKey.current = undefined;
+      }, 0);
     };
-  }, [load]);
+  }, [load, plan.plan?.key, product, retry, visualTest]);
   useFocusEffect(useCallback(() => {
     setNearbyFareResume((value) => value + 1);
     return () => {
-      searchSequence.current += 1;
-      activeSearch.current?.abort("screen-blur");
       nearbyFareGeneration.current += 1;
       nearbyFareRequests.current.forEach((controller) => controller.abort("screen-blur"));
       nearbyFareRequests.current.clear();

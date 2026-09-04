@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
-const loader = readFileSync("src/features/search/NativeBrandedSearchLoading.tsx", "utf8");
+const loader = readFileSync("src/features/search/NativeTravelSearchLoadingScreen.tsx", "utf8");
 const stateUi = readFileSync("src/features/search/FlightResultsState.tsx", "utf8");
 
 test("initial Flight search uses the one full-screen branded loader", () => {
@@ -12,14 +12,12 @@ test("initial Flight search uses the one full-screen branded loader", () => {
   assert.doesNotMatch(stateUi, /Searching the best flights for you/);
 });
 
-test("the branded loader owns accessibility, reduced motion, and cleanup", () => {
+test("the branded loader owns one calm, static and accessible status", () => {
   assert.match(loader, /kurioticket-logo-primary-light-bg\.png/);
   assert.match(loader, /accessibilityRole="progressbar"/);
   assert.match(loader, /accessibilityState=\{\{ busy: true \}\}/);
   assert.match(loader, /accessibilityLiveRegion="polite"/);
-  assert.match(loader, /isReduceMotionEnabled/);
-  assert.match(loader, /clearInterval\(timer\)/);
-  assert.match(loader, /logoAnimation\.stop\(\); progressAnimation\.stop\(\)/);
+  assert.doesNotMatch(loader, /Animated|setInterval|ActivityIndicator/);
 });
 
 test("results become ready without an artificial presentation delay", () => {
