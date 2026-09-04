@@ -5,12 +5,12 @@ import { AuthButton, authColors, ErrorText, Field, FormHeading, FormShell, Secur
 import { formatCountdown, isValidEmail, sanitizeCode } from "./authUtils";
 import { scheduleAuthCompletion } from "./authCompletion";
 
-export function EmailScreen({ initialEmail, onBack, onContinue, loading, error }: { initialEmail: string; onBack: () => void; onContinue: (email: string) => void; loading: boolean; error?: string }) {
+export function EmailScreen({ initialEmail, onBack, onContinue, onCredentialFocus, loading, error }: { initialEmail: string; onBack: () => void; onContinue: (email: string) => void; onCredentialFocus?: () => void; loading: boolean; error?: string }) {
   const [email, setEmail] = useState(initialEmail);
   const [touched, setTouched] = useState(false);
   const valid = isValidEmail(email);
   return <FormShell onBack={onBack}><FormHeading icon="mail" title="Enter your email" body={"We’ll send you a secure link or code to\nsign in or create your account."} />
-    <Field autoFocus label="Email address" placeholder="you@example.com" value={email} onChangeText={setEmail} onBlur={() => setTouched(true)} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="username" textContentType="username" returnKeyType="go" onSubmitEditing={() => valid && !loading && onContinue(email)} error={touched && !valid ? "Enter a valid email address." : undefined} />
+    <Field autoFocus label="Email address" placeholder="you@example.com" value={email} onChangeText={setEmail} onFocus={onCredentialFocus} onBlur={() => setTouched(true)} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="username" textContentType="username" returnKeyType="go" onSubmitEditing={() => valid && !loading && onContinue(email)} error={touched && !valid ? "Enter a valid email address." : undefined} />
     <ErrorText>{error}</ErrorText><AuthButton label="Continue" onPress={() => onContinue(email)} loading={loading} disabled={!valid} />
     <Text style={styles.legal}>By continuing, you agree to our <Text style={styles.link}>Terms of Service</Text> and <Text style={styles.link}>Privacy Policy</Text></Text>
   </FormShell>;
