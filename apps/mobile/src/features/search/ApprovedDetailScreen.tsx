@@ -33,6 +33,7 @@ import {
   type ExchangeRates,
 } from "../currency/displayCurrency";
 import { canReuseFlightDetailFare, createFlightDetailFare } from "./flightDetailCurrency";
+import { canReuseHotelDisplayPrices, createHotelDisplayPrices, type HotelDisplayPriceSnapshot } from "./hotelDetailCurrency";
 import { authoritativeProviderUrl } from "./providerBooking";
 import { flightShareMessage, shareFlightForAuthenticatedSession } from "./flightDetailInteractions";
 import { flightEditSearchParams } from "../flow/flightSearchModel";
@@ -427,6 +428,57 @@ function HotelDetail({
   const redirectUrl = result.partnerRedirectUrl || result.bookingUrl;
   const bookable = result.searchPolicy.bookable && Boolean(redirectUrl);
   const hasPrice = result.pricePerNight != null && result.totalPrice != null;
+  const passedDisplayPrices = parse<HotelDisplayPriceSnapshot>(params.hotelDisplayPrices);
+  const passedDisplayCurrencyContext = parse<DisplayCurrencyResolution>(params.displayCurrencyContext);
+  const initiallyValidDisplayPrices = hasPrice && canReuseHotelDisplayPrices({
+    snapshot: passedDisplayPrices,
+    providerNightly: result.pricePerNight!,
+    providerTotal: result.totalPrice!,
+    providerCurrency: result.currency,
+    displayCurrency: passedDisplayCurrencyContext?.resolvedCurrency,
+  }) ? passedDisplayPrices! : null;
+  const [displayPrices, setDisplayPrices] = useState<HotelDisplayPriceSnapshot | null>(initiallyValidDisplayPrices);
+  const hotelCurrencyRatesRef = useRef<ExchangeRates | null>(null);
+  useFocusEffect(useCallback(() => {
+    if (!hasPrice) return;
+    let active = true;
+    void readCurrencyPreference().catch(() => null).then(async (preferredCurrency) => {
+      if (!active) return;
+      if (canReuseHotelDisplayPrices({
+        snapshot: passedDisplayPrices,
+        providerNightly: result.pricePerNight!,
+        providerTotal: result.totalPrice!,
+        providerCurrency: result.currency,
+        displayCurrency: passedDisplayCurrencyContext?.resolvedCurrency,
+        preferredCurrency,
+      })) {
+        setDisplayPrices(passedDisplayPrices!);
+        return;
+      }
+      const [location, rates] = await Promise.all([
+        preferredCurrency ? Promise.resolve(null) : travelApi.location().catch(() => null),
+        hotelCurrencyRatesRef.current
+          ? Promise.resolve(hotelCurrencyRatesRef.current)
+          : travelApi.currencyRates().then(payload => payload.rates).catch(() => ({})),
+      ]);
+      if (!active) return;
+      if (Object.keys(rates).length) hotelCurrencyRatesRef.current = rates;
+      const resolution = resolveDisplayCurrencyContext({
+        preferredCurrency,
+        ipCountryCode: location?.countryCode,
+        locale: Intl.DateTimeFormat().resolvedOptions().locale,
+      });
+      setDisplayPrices(createHotelDisplayPrices(
+        result.pricePerNight!, result.totalPrice!, result.currency,
+        resolution.resolvedCurrency, rates,
+      ));
+    });
+    return () => { active = false; };
+  }, [hasPrice, passedDisplayCurrencyContext?.resolvedCurrency, passedDisplayPrices?.nightly?.currency,
+    passedDisplayPrices?.nightly?.providerAmount, passedDisplayPrices?.total?.providerAmount,
+    result.currency, result.id, result.pricePerNight, result.totalPrice]));
+  const nightlyPrice = displayPrices?.nightly;
+  const totalPrice = displayPrices?.total;
   const discovery = result.inventoryKind === "discovery";
   const guestCount = positiveCount(params.guests, 2, HOTEL_LIMITS.guests.max);
   const roomCount = positiveCount(params.rooms, 1, HOTEL_LIMITS.rooms.max);
@@ -449,7 +501,7 @@ function HotelDetail({
     }
   };
   const shareHotel = () => void Share.share({
-    message: `${result.name} — ${result.location}`,
+    message: `${result.name} — ${result.location}${nightlyPrice ? ` — ${nightlyPrice.formatted}/night` : ""}`,
   });
   const reviewValue = result.reviewScore ?? result.rating;
   const classification = result.classificationStars || Math.round(result.rating);
@@ -533,11 +585,11 @@ function HotelDetail({
               </Text>
             </View>
             <View style={{ width: compact ? 106 : 126, flexShrink: 0, alignItems: "flex-end" }}>
-              <Text style={[d.price,{color:theme.textPrimary}]}>
-                {money(result.currency, result.pricePerNight)}
+              <Text accessibilityLabel={nightlyPrice?.accessibilityLabel} style={[d.price,{color:theme.textPrimary}]}>
+                {nightlyPrice?.formatted ?? "—"}
               </Text>
-              <Text style={[d.meta,{color:theme.textSecondary}]}>
-                {money(result.currency, result.totalPrice)} total
+              <Text accessibilityLabel={totalPrice ? `${totalPrice.accessibilityLabel} total` : undefined} style={[d.meta,{color:theme.textSecondary}]}>
+                {totalPrice?.formatted ?? "—"} total
               </Text>
               <Button label="Select room" outline={!selectedRoom} />
             </View>
@@ -554,7 +606,7 @@ function HotelDetail({
                   ? result.cancellationInfo
                   : "Planning inventory · no live checkout"
               }
-              price={hasPrice ? money(result.currency, result.totalPrice) : "Price unavailable"}
+              price={hasPrice ? totalPrice?.formatted ?? "—" : "Price unavailable"}
               selected={!discovery}
             />
             <Text style={[d.disclosure,{color:theme.textSecondary}]}>
@@ -572,8 +624,8 @@ function HotelDetail({
         style={[d.hotelSticky, { paddingBottom: Math.max(inset.bottom, 10), backgroundColor: theme.surface, borderTopColor: theme.border }]}
       >
         <View style={d.stickyTotal}>
-          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={[d.price,{color:theme.textPrimary}]}>
-            {hasPrice ? <>{money(result.currency, result.totalPrice)}{" "}<Text style={[d.meta,{color:theme.textSecondary}]}>total</Text></> : "Price unavailable"}
+          <Text accessibilityLabel={totalPrice ? `${totalPrice.accessibilityLabel} total` : undefined} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={[d.price,{color:theme.textPrimary}]}>
+            {hasPrice ? <>{totalPrice?.formatted ?? "—"}{" "}<Text style={[d.meta,{color:theme.textSecondary}]}>total</Text></> : "Price unavailable"}
           </Text>
           <Text style={[d.meta,{color:theme.textSecondary}]}>
             {nights ? `${nights} nights, ` : ""}{guestCount} guests
