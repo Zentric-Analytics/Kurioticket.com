@@ -38,7 +38,33 @@ test("main fare stays full-size and single-line while secondary prices retain sa
   const fare = /<Text accessible=\{false\} style=\{\[s0\.bigPrice[\s\S]*?<\/Text>/.exec(screen)?.[0] ?? "";
   assert.match(fare, /numberOfLines=\{1\}/);
   assert.doesNotMatch(fare, /adjustsFontSizeToFit|minimumFontScale|ellipsizeMode/);
-  assert.match(screen, /s0\.providerPrice[\s\S]*?numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit/);
+  const provider = /<Text accessible=\{false\} style=\{\[s0\.providerPrice[\s\S]*?<\/Text>/.exec(screen)?.[0] ?? "";
+  assert.match(provider, /numberOfLines=\{1\}/);
+  assert.match(provider, /adjustsFontSizeToFit minimumFontScale=\{0\.9\}/);
+  assert.doesNotMatch(provider, /minimumFontScale=\{0\.76\}/);
+  assert.match(screen, /flightCommercialRegion: \{ width: "46%", minWidth: 104, flexShrink: 0/);
+  assert.doesNotMatch(screen, /flightCommercialRegion: \{[^}]*maxWidth/);
   assert.match(ui, /numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit[\s\S]*?s\.datePrice/);
   assert.doesNotMatch(screen + ui, /\d(?:\.\d)?[KM]`/);
+});
+
+test("provider fare strings retain readable footer space across supported phone widths", () => {
+  for (const providerPrice of [
+    "Provider price: $198",
+    "Provider price: $1,899",
+    "Provider price: ₦572,107",
+    "Provider price: Rp2,450,000",
+    "Provider price: ₫18,750,000",
+  ]) {
+    assert.doesNotMatch(providerPrice, /\d(?:\.\d)?[KM]\b/i);
+  }
+
+  for (const viewport of [320, 360, 375, 390, 412, 430]) {
+    const footerWidth = viewport - 28 - 24;
+    const commercialWidth = footerWidth * 0.46;
+    const metadataWidth = footerWidth - 8 - commercialWidth;
+    assert.ok(commercialWidth >= 104, `${viewport}px keeps the commercial minimum`);
+    assert.ok(metadataWidth > 0, `${viewport}px keeps a separate metadata column`);
+    assert.ok(commercialWidth + 8 + metadataWidth <= footerWidth, `${viewport}px footer does not overlap`);
+  }
 });

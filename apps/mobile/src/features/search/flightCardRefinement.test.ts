@@ -153,7 +153,7 @@ test("flight card uses a compact three-row metadata column while airline identit
   assert.match(source, /flightCardFooter: \{[^\n]*width: "100%"/);
   assert.match(source, /flightMetadataRegion: \{ flex: 1, minWidth: 0[^}]*gap: 4/);
   assert.match(source, /flightMetadataText: \{ flexShrink: 1, minWidth: 0/);
-  assert.match(source, /flightCommercialRegion: \{ width: "44%", minWidth: 104, maxWidth: 132, flexShrink: 0, alignItems: "flex-end"/);
+  assert.match(source, /flightCommercialRegion: \{ width: "46%", minWidth: 104, flexShrink: 0, alignItems: "flex-end"/);
   assert.equal(card.match(/s0\.flightMetadataText,\{color:supportTextColor\}/g)?.length, 3);
   assert.doesNotMatch(source, /metadataSeparator:/);
   assert.doesNotMatch(metadataBlock, />·<\/Text>/);
