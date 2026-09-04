@@ -12,12 +12,15 @@ test("initial Flight search uses the one full-screen branded loader", () => {
   assert.doesNotMatch(stateUi, /Searching the best flights for you/);
 });
 
-test("the branded loader owns one calm, static and accessible status", () => {
+test("the branded loader owns calm native progress and accessible rotating status", () => {
   assert.match(loader, /kurioticket-logo-primary-light-bg\.png/);
   assert.match(loader, /accessibilityRole="progressbar"/);
   assert.match(loader, /accessibilityState=\{\{ busy: true \}\}/);
   assert.match(loader, /accessibilityLiveRegion="polite"/);
-  assert.doesNotMatch(loader, /Animated|setInterval|ActivityIndicator/);
+  assert.match(loader, /Animated\.loop/);
+  assert.match(loader, /setInterval/);
+  assert.match(loader, /AccessibilityInfo\.isReduceMotionEnabled/);
+  assert.doesNotMatch(loader, /ActivityIndicator/);
 });
 
 test("results become ready without an artificial presentation delay", () => {

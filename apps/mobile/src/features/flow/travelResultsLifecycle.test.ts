@@ -47,3 +47,11 @@ test("car search uses canonical identity generations, abort, and stale-response 
   assert.match(cars, /activeExecutionKey\.current!==executionKey/);
   assert.doesNotMatch(cars, /AppState/);
 });
+
+test("every product leaves loading on timeout and exposes an explicit retry", () => {
+  assert.match(approved, /e instanceof TravelApiError && e\.code === "timeout"/);
+  assert.match(approved, /Flight search took too long\. Please try again\./);
+  assert.match(approved, /retry=\{\(\) => setRetry\(\(x\) => x \+ 1\)\}/);
+  assert.match(cars, /setStatus\("error"\)/);
+  assert.match(cars, /retry=\{\(\)=>setRetry\(\(value\)=>value\+1\)\}/);
+});

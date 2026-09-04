@@ -41,10 +41,8 @@ export default function RootLayout() {
     return () => subscription.remove();
   }, []);
   useEffect(() => {
-    if (!fontsLoaded && !fontError) return;
     if (fontError && __DEV__) console.warn("Inter fonts failed to load; continuing with system fonts.");
-    SplashScreen.hideAsync().catch(() => {});
-  }, [fontsLoaded, fontError]);
+  }, [fontError]);
 
   if (!fontsLoaded && !fontError) return null;
 

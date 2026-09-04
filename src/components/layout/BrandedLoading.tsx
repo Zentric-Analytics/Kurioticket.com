@@ -85,7 +85,7 @@ export function BrandedLoading({
       const presentation = searchLoadingPresentation(searchType);
       return {
         title: presentation.title,
-        messages: [presentation.supportingText],
+        messages: [...presentation.messages],
       };
     }
     return searchLoadingCopy[searchType];
