@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { DisplayPrice } from "../currency/displayCurrency";
-import { flightPriceBasis, flightProviderFarePresentation } from "./flightPriceBasis";
+import { flightMainPriceBasis, flightPriceBasis, flightProviderFarePresentation } from "./flightPriceBasis";
 
 const basis = (params: Record<string, string>, fare?: DisplayPrice) => flightPriceBasis(params, fare);
 
@@ -72,6 +72,17 @@ test("rejects unconverted and malformed provider fares", () => {
   assert.equal(flightProviderFarePresentation({ ...converted, providerAmount: Number.POSITIVE_INFINITY }), null);
   assert.equal(flightProviderFarePresentation({ ...converted, providerCurrency: "usd" }), null);
   assert.equal(flightProviderFarePresentation({ ...converted, providerCurrency: "US" }), null);
+});
+
+test("labels the main fare basis without creating a duplicate provider amount", () => {
+  const providerFare: DisplayPrice = { amount: 1250000, currency: "NGN", formatted: "₦1,250,000", accessibilityLabel: "1,250,000 Nigerian naira", providerAmount: 1250000, providerCurrency: "NGN", converted: false };
+  const convertedFare: DisplayPrice = { ...providerFare, providerAmount: 820, providerCurrency: "USD", converted: true };
+
+  assert.deepEqual(flightMainPriceBasis(providerFare), { label: "PROVIDER PRICE", accessibilityText: "provider price" });
+  assert.equal(flightProviderFarePresentation(providerFare), null);
+  assert.deepEqual(flightMainPriceBasis(convertedFare), { label: "ESTIMATED PRICE", accessibilityText: "estimated price" });
+  assert.equal(flightProviderFarePresentation(convertedFare)?.formatted, "$820");
+  assert.equal(flightMainPriceBasis(undefined), null);
 });
 
 test("preserves the provider offer total without per-traveler arithmetic", () => {

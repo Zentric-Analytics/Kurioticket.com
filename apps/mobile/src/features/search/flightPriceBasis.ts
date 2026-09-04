@@ -38,6 +38,14 @@ export function flightProviderFarePresentation(fare?: DisplayPrice | null) {
   };
 }
 
+export function flightMainPriceBasis(fare?: DisplayPrice | null) {
+  if (!fare) return null;
+
+  return fare.converted === true
+    ? { label: "ESTIMATED PRICE", accessibilityText: "estimated price" }
+    : { label: "PROVIDER PRICE", accessibilityText: "provider price" };
+}
+
 const nonNegativeInteger = (value: RouteValue) => {
   const raw = firstFlightParam(value);
   if (raw === "" || raw === undefined) return undefined;

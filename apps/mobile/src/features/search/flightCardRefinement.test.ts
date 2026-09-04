@@ -71,7 +71,7 @@ test("flight card preserves display pricing and provider data during details nav
 });
 
 test("flight card gives the compact visual fare one semantic spoken label", () => {
-  assert.match(card, /const fareAccessibility = `\$\{fare\?\.accessibilityLabel/);
+  assert.match(card, /const fareAccessibility = `\$\{fare\?\.accessibilityLabel[\s\S]*mainPriceBasis\.accessibilityText/);
   assert.match(card, /provider price \$\{providerFare\.accessibilityLabel\}/);
   assert.match(card, /<Text accessible=\{false\} style=\{\[s0\.bigPrice/);
   assert.equal(card.match(/fare\?\.accessibilityLabel/g)?.length, 1);
@@ -82,7 +82,8 @@ test("flight card gives the compact visual fare one semantic spoken label", () =
 test("converted fares add truthful provider context without duplicating same-currency fares", () => {
   const fareBlock = card.slice(card.indexOf('<View style={s0.flightCommercialRegion}>'));
   assert.match(card, /flightProviderFarePresentation\(fare\)/);
-  assert.match(fareBlock, /\{fare\?\.converted === true \? \([\s\S]*ESTIMATED PRICE[\s\S]*\) : null\}/);
+  assert.match(card, /flightMainPriceBasis\(fare\)/);
+  assert.match(fareBlock, /\{mainPriceBasis \? \([\s\S]*\{mainPriceBasis\.label\}[\s\S]*\) : null\}/);
   assert.match(fareBlock, /\{providerFare \? \([\s\S]*Provider price: \{providerFare\.formatted\}[\s\S]*\) : null\}/);
   assert.doesNotMatch(fareBlock, /Provider price: \{providerFare\.formatted\} \{providerFare\.currency\}/);
   assert.match(fareBlock, /estimatedPrice, \{ color: supportTextColor \}/);
