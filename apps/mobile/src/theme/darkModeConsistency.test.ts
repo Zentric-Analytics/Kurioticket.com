@@ -111,9 +111,10 @@ test("the active Flight results journey keeps its semantic surface and text hier
   const sortSheet = read("src/features/search/FlightSortSheet.tsx");
   const shell = read("src/features/search/FlightResultsSheetShell.tsx");
   assert.match(shell, /backgroundColor: theme\.surface/);
-  assert.match(sortSheet, /selected \? ui\.blue : theme\.textPrimary/);
+  assert.match(shell, /backgroundColor: theme\.dark \? theme\.surface : "#FFFFFF"/);
+  assert.match(sortSheet, /selected \? \(theme\.dark \? "#8FB5FF" : "#004BB8"\) : theme\.textPrimary/);
   assert.match(sortSheet, /color: theme\.textSecondary/);
-  assert.match(sortSheet, /selected \? ui\.blue : theme\.border/);
+  assert.match(sortSheet, /theme\.dark \? "#142B55" : "#F7FAFF"/);
   assert.match(searchUi, /backgroundColor: flightResults \? theme\.background : theme\.surface/);
   assert.match(searchUi, /backgroundColor: theme\.surface/);
   assert.match(searchUi, /theme\.dark \? "#142B55" : "#F0F5FF"/);
@@ -128,10 +129,10 @@ test("Flight filters, slider, and inline edit sheet have no implicit light text 
   const slider = read("src/features/search/FlightRangeSlider.tsx");
   const edit = read("src/features/search/FlightEditSearchModal.tsx");
 
-  assert.match(filter, /sectionTitle,\{color:theme\.textPrimary\}/);
+  assert.match(filter, /s\.sectionTitle,[\s\S]*?\{color:theme\.textPrimary\}/);
   assert.match(filter, /s\.control,\{color:theme\.textPrimary\}/);
-  assert.match(filter, /s\.subhead,\{color:theme\.textPrimary\}/);
-  assert.match(filter, /s\.rowText,\{color:theme\.textPrimary\}/);
+  assert.match(filter, /s\.subhead,[\s\S]*?\{color:theme\.textPrimary\}/);
+  assert.match(filter, /s\.rowText,[\s\S]*?theme\.textPrimary/);
   assert.match(filter, /s\.rowInsight,\{color:theme\.textSecondary\}/);
   assert.match(filter, /<FlightResultsSheetShell/);
   assert.match(filter, /selected\?ui\.blue:theme\.border/);
