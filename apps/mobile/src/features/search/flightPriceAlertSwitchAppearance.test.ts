@@ -8,13 +8,13 @@ const flightAlert = priceAlert.slice(priceAlert.indexOf("if (flight)"), priceAle
 const hotelAlert = priceAlert.slice(priceAlert.indexOf('if (product !== "hotel"'));
 
 test("Flight Track Price uses a dedicated compact native switch presentation", () => {
-  assert.match(flightAlert, /<Switch style=\{s0\.flightPriceAlertSwitch\} hitSlop=\{6\} accessibilityRole="switch" accessibilityLabel="Track this flight price"/);
-  assert.match(source, /flightPriceAlertSwitch: \{ transform: \[\{ scale: 0\.88 \}, \{ translateY: 1 \}\] \}/);
-  assert.match(source, /flightAlertSwitchSlot: \{ minWidth: 51, minHeight: 44/);
+  assert.match(flightAlert, /<Switch style=\{Platform\.OS === "ios" \? s0\.compactPriceAlertSwitchIos : undefined\} hitSlop=\{6\} accessibilityRole="switch" accessibilityLabel="Track this flight price"/);
+  assert.doesNotMatch(source, /flightPriceAlertSwitch|scale: 0\.88/);
+  assert.match(source, /compactPriceAlertSwitchSlot: \{ minWidth: 51, minHeight: 44/);
   assert.doesNotMatch(flightAlert, />On<|>Off</);
 });
 
 test("Hotel Track Price does not inherit the Flight-only transform", () => {
-  assert.match(hotelAlert, /<Switch style=\{Platform\.OS === "ios" \? s0\.hotelAlertSwitchIos : undefined\}/);
+  assert.match(hotelAlert, /<Switch style=\{Platform\.OS === "ios" \? s0\.compactPriceAlertSwitchIos : undefined\}/);
   assert.doesNotMatch(hotelAlert, /flightPriceAlertSwitch|hitSlop=\{6\}/);
 });

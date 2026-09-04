@@ -30,6 +30,6 @@ test("ready Flight content retains dates, sticky filters, alert, count and cards
   const list = screen.slice(screen.indexOf("<Animated.SectionList"), screen.indexOf(") : (", screen.indexOf("<Animated.SectionList")));
   assert.match(list, /ListHeaderComponent=\{animatedFlightDateStrip\}/);
   assert.match(list, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
-  assert.match(list, /renderSectionHeader[\s\S]*?<FlightResultsSummaryRow[\s\S]*?count=\{sorted\.length\}[\s\S]*?renderItem[\s\S]*?<FlightCard/);
+  assert.match(list, /renderSectionHeader[\s\S]*?renderItem[\s\S]*?<FlightResultsSummaryRow[\s\S]*?count=\{sorted\.length\}[\s\S]*?<FlightCard/);
   assert.doesNotMatch(list.slice(list.indexOf("renderItem=")), /PriceAlert|flightResultCountLabel/);
 });
