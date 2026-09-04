@@ -7,6 +7,18 @@ const hotel = source.slice(source.indexOf("function HotelDetail"), source.indexO
 const gallery = readFileSync("src/features/search/NativeHotelDetails.tsx", "utf8");
 const car = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
 const tokens = readFileSync("src/theme/tokens.ts", "utf8");
+const webSectionNav = readFileSync(
+  "../../src/components/results/hotelDetails/HotelDetailsSectionNav.tsx",
+  "utf8",
+);
+
+function styleRule(name: string, nextName: string) {
+  const start = source.indexOf(`  ${name}:`);
+  const end = source.indexOf(`  ${nextName}:`, start);
+  assert.notEqual(start, -1, `${name} style must exist`);
+  assert.notEqual(end, -1, `${nextName} style must follow ${name}`);
+  return source.slice(start, end);
+}
 
 test("Hotel details follow mobile-web identity, gallery, tabs, and offer hierarchy", () => {
   assert.match(hotel, />Back to hotel results</);
@@ -19,6 +31,51 @@ test("Hotel details follow mobile-web identity, gallery, tabs, and offer hierarc
   for (const tab of ["compare", "about", "location", "reviews"]) assert.match(hotel, new RegExp(`"${tab}"`));
   assert.match(hotel, /Kurioticket room options/);
   assert.doesNotMatch(hotel, /Select room|Choose where to book/);
+});
+
+test("Hotel section navigation is one deterministic, non-scrolling Yoga row", () => {
+  const tabList = hotel.slice(
+    hotel.indexOf('accessibilityRole="tablist"'),
+    hotel.indexOf("<View style={d.hotelDetailBody}"),
+  );
+  const tabs = styleRule("hotelTabs", "hotelTab");
+  const tab = styleRule("hotelTab", "hotelTabActive");
+  const wideTab = styleRule("hotelTabWide", "hotelTabTextCompact");
+
+  assert.match(tabs, /width: "100%"/);
+  assert.match(tabs, /alignSelf: "stretch"/);
+  assert.match(tabs, /flexDirection: "row"/);
+  assert.match(tabs, /flexWrap: "nowrap"/);
+  assert.doesNotMatch(tabs, /flexDirection: "column"|flexWrap: "wrap"/);
+
+  assert.match(tab, /flexGrow: 1/);
+  assert.match(tab, /flexShrink: 1/);
+  assert.match(tab, /flexBasis: 0/);
+  assert.match(tab, /minWidth: 0/);
+  assert.match(tab, /minHeight: (?:4[4-9]|[5-9]\d)/);
+  assert.match(wideTab, /flexGrow: 1\.65/);
+
+  assert.match(tabList, /^accessibilityRole="tablist"/);
+  assert.match(tabList, /accessibilityRole="tab"/);
+  assert.match(tabList, /accessibilityState=\{\{ selected: activeHotelTab === tab \}\}/);
+  assert.match(tabList, /numberOfLines=\{1\}/);
+  assert.deepEqual(
+    [...tabList.matchAll(/\["compare", "about", "location", "reviews"\]/g)].length,
+    1,
+  );
+  assert.doesNotMatch(tabList, /<ScrollView[^>]*horizontal/);
+  assert.match(hotel, /stickyHeaderIndices=\{\[2\]\}/);
+});
+
+test("Hotel section navigation retains the mobile-web grid contract", () => {
+  for (const tab of ["compare", "about", "location", "reviews"]) {
+    assert.match(webSectionNav, new RegExp(`id: "${tab}"`));
+  }
+  assert.match(webSectionNav, /grid-cols-\[minmax\(0,1\.65fr\)_repeat\(3,minmax\(0,1fr\)\)\]/);
+  assert.match(webSectionNav, /\bsticky\b/);
+  assert.match(webSectionNav, /\bgrid\b/);
+  assert.match(webSectionNav, /\bmin-w-0\b/);
+  assert.match(webSectionNav, /\bwhitespace-nowrap\b/);
 });
 
 test("Hotel classification and reviews never use legacy rating fallbacks", () => {
@@ -42,6 +99,32 @@ test("Native gallery is interactive, truthful, and limited to five thumbnails", 
   assert.match(gallery, /images\.length - 5/);
   assert.match(gallery, /Property image unavailable/);
   assert.match(gallery, /pagingEnabled/);
+  assert.match(gallery, /accentColor: string/);
+  assert.match(gallery, /borderColor: accentColor/);
+  assert.match(gallery, /s\.planning, \{ color: accentColor \}/);
+});
+
+test("Hotel detail owns theme-aware accents without changing filled brand controls", () => {
+  assert.match(hotel, /const hotelAccent = theme\.dark \? "#8FB5FF" : colors\.blue/);
+  assert.match(hotel, /<ArrowLeft size=\{17\} color=\{hotelAccent\}/);
+  assert.match(hotel, /hotelBackToResultsText, \{ color: hotelAccent \}/);
+  assert.match(hotel, /borderBottomColor: hotelAccent/);
+  assert.match(hotel, /color: hotelAccent,[\s\S]*?fontWeight: "800"/);
+  assert.match(hotel, /borderColor: selected \? hotelAccent : theme\.border/);
+  assert.match(hotel, /borderWidth: 6,[\s\S]*?borderColor: hotelAccent/);
+  assert.match(hotel, /<Check size=\{16\} color=\{hotelAccent\}/);
+  assert.equal((hotel.match(/accentColor=\{hotelAccent\}/g) ?? []).length, 2);
+  assert.match(source, /hotelContinue: \{[^\n]*backgroundColor: colors\.blue/);
+  assert.match(source, /hotelContinuePressed: \{ backgroundColor: "#003B91" \}/);
+  assert.match(source, /mapsButton: \{[^\n]*backgroundColor: colors\.blue/);
+  assert.match(source, /hotelReviewScore: \{[^\n]*backgroundColor: colors\.blue/);
+  assert.match(tokens, /blue: "#004BB8"/);
+});
+
+test("Hotel provider selection validates candidates before applying precedence", () => {
+  assert.match(hotel, /nativeHotelProviderUrl\([\s\S]*?result\.partnerRedirectUrl,[\s\S]*?result\.bookingUrl/);
+  assert.match(hotel, /result\.searchPolicy\.bookable && Boolean\(redirectUrl\)/);
+  assert.doesNotMatch(hotel, /result\.partnerRedirectUrl \|\| result\.bookingUrl/);
 });
 
 test("Hotel panels and dock expose web-aligned truthful information", () => {
@@ -80,9 +163,9 @@ test("Car detail parity remains protected", () => {
   for (const token of ["background", "surface", "textPrimary", "textSecondary", "border", "icon"]) assert.match(car, new RegExp(`theme\\.${token}`));
 });
 
-test("Hotel Details owns canonical brand accents and preserves pressed blue", () => {
+test("Hotel Details preserves canonical filled and pressed brand blue", () => {
   assert.match(tokens, /blue: "#004BB8"/);
-  for (const style of ["hotelTabActive", "hotelTabTextActive", "hotelReviewScore", "selectionControlSelected", "mapsButton", "hotelContinue"]) {
+  for (const style of ["hotelReviewScore", "mapsButton", "hotelContinue"]) {
     assert.match(source, new RegExp(`${style}[^\\n]*colors\\.blue`));
   }
   assert.match(source, /hotelContinuePressed: \{ backgroundColor: "#003B91" \}/);

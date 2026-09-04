@@ -170,7 +170,7 @@ test("flight card uses a compact three-row metadata column while airline identit
 
 test("flight result cards use the responsive list width with a safe reduced outer inset", () => {
   assert.match(source, /sections=\{\[\{ data: !flightState \? flightPageResults : \[\] \}\]\}/);
-  assert.match(source, /<View style=\{s0\.flightCardItem\}>[\s\S]*?<FlightCard/);
+  assert.match(source, /<View style=\{s0\.flightCardItem\}[^>]*>[\s\S]*?<FlightCard/);
   assert.match(source, /body: \{ paddingHorizontal: 18, paddingBottom: 92, gap: 14 \}/);
   assert.match(source, /flightResultsBody: \{ paddingHorizontal: 14, gap: 8 \}/);
   assert.match(source, /card: \{[\s\S]*?width: "100%",[\s\S]*?paddingHorizontal: 12,[\s\S]*?paddingVertical: 9,/);

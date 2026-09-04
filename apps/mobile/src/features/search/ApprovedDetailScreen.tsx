@@ -50,8 +50,10 @@ import { HOTEL_LIMITS } from "../flow/hotelSearchModel";
 import { homepageAirports } from "../home/homepageAirports";
 import type { MobileHotelDetailsResponse } from "../../api/travelApi";
 import { canonicalHotelAddress, HotelRoomOptionsModal, hotelStaySummary, meaningfulHotelCenterDistance, NativeHotelGallery } from "./NativeHotelDetails";
-import { isSafeNativeHotelProviderUrl, nativeHotelOffers, reconcileNativeHotelOfferSelection, type NativeHotelOffer } from "./nativeHotelDetailsModel";
+import { nativeHotelOffers, nativeHotelProviderUrl, reconcileNativeHotelOfferSelection, type NativeHotelOffer } from "./nativeHotelDetailsModel";
 import { colors } from "../../theme/tokens";
+import { NativeHotelPropertyLocationSection, NativeRelatedHotelsSection } from "./NativeHotelDecisionSections";
+import { prepareNativeRelatedHotels, type NativeRelatedHotel } from "./nativeHotelRelatedHotelsModel";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -419,6 +421,7 @@ function HotelDetail({
   params: Record<string, string | string[]>;
 }) {
   const { theme } = useAppTheme();
+  const hotelAccent = theme.dark ? "#8FB5FF" : colors.blue;
   const inset = useSafeAreaInsets();
   const canonical = useCanonicalSaved();
   const saved = canonical.items.some(
@@ -489,9 +492,12 @@ function HotelDetail({
     result.reviewScore > 0 &&
     typeof result.reviewScale === "number" &&
     result.reviewScale > 0;
-  const redirectUrl = result.partnerRedirectUrl || result.bookingUrl;
+  const redirectUrl = nativeHotelProviderUrl(
+    result.partnerRedirectUrl,
+    result.bookingUrl,
+  );
   const providerBookable =
-    result.searchPolicy.bookable && isSafeNativeHotelProviderUrl(redirectUrl);
+    result.searchPolicy.bookable && Boolean(redirectUrl);
   const internalRoomFlowAvailable = roomOptions.length > 0;
   const hotelOffers = nativeHotelOffers(internalRoomFlowAvailable, providerBookable);
   const offerKey = hotelOffers.map(({ id }) => id).join("\u0000");
@@ -598,6 +604,33 @@ function HotelDetail({
   );
   const nightlyPrice = displayPrices?.nightly;
   const totalPrice = displayPrices?.total;
+  const relatedHotels = prepareNativeRelatedHotels({
+    hotels: details?.relatedHotels ?? [],
+    currentHotelId: result.id,
+    displayCurrency: nightlyPrice?.currency,
+    rates: hotelCurrencyRates,
+  });
+  const viewRelatedHotel = (item: NativeRelatedHotel) => {
+    const snapshot = item.displayPrices;
+    const consistentContext = snapshot?.nightly?.currency
+      && snapshot.nightly.currency === snapshot.total?.currency
+      && snapshot.nightly.currency === passedDisplayCurrencyContext?.resolvedCurrency;
+    router.push({
+      pathname: "/hotel-details",
+      params: {
+        result: JSON.stringify(item.result),
+        destination: String(params.destination || property?.city || result.location),
+        checkIn,
+        checkOut,
+        guests: String(guestCount),
+        rooms: String(roomCount),
+        hotelDisplayPrices: snapshot ? JSON.stringify(snapshot) : "",
+        displayCurrencyContext: consistentContext
+          ? JSON.stringify(passedDisplayCurrencyContext)
+          : "",
+      },
+    });
+  };
   const presentedRoomOptions = roomOptions.map((option) => ({
     ...option,
     displayPrice: nightlyPrice
@@ -670,8 +703,8 @@ function HotelDetail({
           onPress={returnToHotelResults}
           style={d.backToResults}
         >
-          <ArrowLeft size={17} color={colors.blue} />
-          <Text style={d.hotelBackToResultsText}>Back to hotel results</Text>
+          <ArrowLeft size={17} color={hotelAccent} />
+          <Text style={[d.hotelBackToResultsText, { color: hotelAccent }]}>Back to hotel results</Text>
         </Pressable>
       </View>
       <ScrollView
@@ -734,6 +767,7 @@ function HotelDetail({
           name={result.name}
           initialImages={images}
           theme={theme}
+          accentColor={hotelAccent}
         />
         <View
           accessibilityRole="tablist"
@@ -751,7 +785,7 @@ function HotelDetail({
               style={[
                 d.hotelTab,
                 tab === "compare" && d.hotelTabWide,
-                activeHotelTab === tab && d.hotelTabActive,
+                activeHotelTab === tab && { borderBottomColor: hotelAccent },
               ]}
             >
               <Text
@@ -760,7 +794,10 @@ function HotelDetail({
                   d.hotelTabText,
                   width < 350 && d.hotelTabTextCompact,
                   { color: theme.textSecondary },
-                  activeHotelTab === tab && d.hotelTabTextActive,
+                  activeHotelTab === tab && {
+                    color: hotelAccent,
+                    fontWeight: "800",
+                  },
                 ]}
               >
                 {tab === "compare"
@@ -791,7 +828,7 @@ function HotelDetail({
                 accessibilityState={{ selected }}
                 style={[d.hotelOffer, {
                   backgroundColor: theme.surface,
-                  borderColor: selected ? colors.blue : theme.border,
+                  borderColor: selected ? hotelAccent : theme.border,
                 }]}
               >
                 <View style={d.hotelOfferTop}>
@@ -820,7 +857,10 @@ function HotelDetail({
                   <View
                     style={[
                       d.selectionControl,
-                      selected && d.selectionControlSelected,
+                      selected && {
+                        borderWidth: 6,
+                        borderColor: hotelAccent,
+                      },
                     ]}
                   />
                 </View>
@@ -866,6 +906,17 @@ function HotelDetail({
                     ? `Booking continues securely with ${result.provider}.`
                     : "No actionable provider offer was supplied for this property."}
               </Text>
+              <NativeHotelPropertyLocationSection
+                hotelName={result.name}
+                propertyDetails={property}
+                theme={theme}
+              />
+              <NativeRelatedHotelsSection
+                city={property?.city}
+                hotels={relatedHotels}
+                theme={theme}
+                onViewHotel={viewRelatedHotel}
+              />
             </>
           ) : null}
           {activeHotelTab === "about" ? (
@@ -895,7 +946,7 @@ function HotelDetail({
                         },
                       ]}
                     >
-                      <Check size={16} color={colors.blue} />
+                      <Check size={16} color={hotelAccent} />
                       <Text
                         style={[d.hotelGridText, { color: theme.textPrimary }]}
                       >
@@ -1136,6 +1187,7 @@ function HotelDetail({
         onClose={() => setRoomsOpen(false)}
         options={presentedRoomOptions}
         theme={theme}
+        accentColor={hotelAccent}
       />
     </SafeAreaView>
   );
@@ -1522,7 +1574,7 @@ const d = StyleSheet.create({
   hotelBackHeader: { minHeight: 48, paddingHorizontal: 16, justifyContent: "center", borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: ui.border, backgroundColor: "white" },
   hotelIdentity: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 13, flexDirection: "row", alignItems: "flex-start", gap: 10 },
   hotelIdentityCopy: { flex: 1, minWidth: 0, gap: 7 },
-  hotelBackToResultsText: { color: colors.blue, fontSize: 14, lineHeight: 19, fontWeight: "700" },
+  hotelBackToResultsText: { fontSize: 14, lineHeight: 19, fontWeight: "700" },
   hotelHeaderActions: { flexDirection: "row", marginRight: -8 },
   hotelHeaderAction: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   hotelFact: { color: "#334155", fontSize: 12, lineHeight: 17, fontWeight: "600" },
@@ -1532,11 +1584,32 @@ const d = StyleSheet.create({
   hotelThumbs: { flex: 1, gap: 4 },
   hotelThumb: { flex: 1, width: "100%", backgroundColor: "#DCE2EB" },
   hotelImageUnavailable: { alignItems: "center", justifyContent: "center" },
-  hotelTabs: { minHeight: 51, marginTop: 1, paddingHorizontal: 8, flexDirection: "row", alignItems: "stretch", borderBottomWidth: 1, borderBottomColor: ui.border, backgroundColor: "white" },
-  hotelTab: { flex: 1, minHeight: 50, alignItems: "center", justifyContent: "center", borderBottomWidth: 2, borderBottomColor: "transparent" },
+  hotelTabs: {
+    width: "100%",
+    alignSelf: "stretch",
+    minHeight: 51,
+    marginTop: 1,
+    paddingHorizontal: 8,
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    alignItems: "stretch",
+    borderBottomWidth: 1,
+    borderBottomColor: ui.border,
+    backgroundColor: "white",
+  },
+  hotelTab: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minWidth: 0,
+    minHeight: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    borderBottomWidth: 2,
+    borderBottomColor: "transparent",
+  },
   hotelTabActive: { borderBottomColor: colors.blue },
   hotelTabText: { color: "#475569", fontSize: 11, fontWeight: "600" },
-  hotelTabTextActive: { color: colors.blue, fontWeight: "800" },
   hotelSectionLead: { color: "#475569", fontSize: 12, lineHeight: 18 },
   hotelNotice: { paddingVertical: 6, gap: 5 },
   hotelPanel: { paddingTop: 9, paddingBottom: 24, gap: 11 },
@@ -1635,7 +1708,7 @@ const d = StyleSheet.create({
     justifyContent: "space-between",
   },
   hotelFactRow: { minHeight: 22, flexDirection: "row", alignItems: "flex-start", gap: 9 },
-  hotelTabWide: { flex: 1.62 },
+  hotelTabWide: { flexGrow: 1.65 },
   hotelTabTextCompact: { fontSize: 10 },
   hotelDetailBody: { paddingHorizontal: 16, paddingVertical: 20, gap: 12 },
   hotelHeading: { fontSize: 20, lineHeight: 26, fontWeight: "900" },
@@ -1644,7 +1717,6 @@ const d = StyleSheet.create({
   hotelOfferTop: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
   hotelOfferProvider: { fontSize: 15, lineHeight: 21, fontWeight: "900" },
   selectionControl: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: ui.border },
-  selectionControlSelected: { borderWidth: 6, borderColor: colors.blue },
   hotelOfferBottom: { flexDirection: "row", alignItems: "flex-end", gap: 12 },
   hotelOfferFacts: { flex: 1, minWidth: 0, fontSize: 11, lineHeight: 16 },
   hotelOfferPrice: { maxWidth: "52%", alignItems: "flex-end" },
