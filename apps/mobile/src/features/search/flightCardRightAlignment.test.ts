@@ -18,19 +18,19 @@ test("outbound and return share one structured journey component", () => {
 
 test("arrival and price terminate on the shared right edge", () => {
   assert.match(source, /rightColumnContract: \{ alignItems: "flex-end" \}/);
-  assert.match(card, /<View style=\{s0\.flightFareAction\}>\s*<Text[^>]*s0\.bigPrice/);
+  assert.match(card, /<View style=\{s0\.flightCommercialRegion\}>\s*<Text[^>]*s0\.bigPrice/);
   assert.doesNotMatch(card, /View details|detailsButton/);
   assert.doesNotMatch(card, />\{roundTrip \? "round trip" : "one way"\}<\/Text>/);
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch"/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.doesNotMatch(source, /priceBox:/);
-  assert.match(source, /flightFareAction: \{ width: "46%", minWidth: 128, flexShrink: 0, alignItems: "flex-end"/);
+  assert.match(source, /flightCommercialRegion: \{ minWidth: 100, maxWidth: "58%", flexShrink: 0, alignItems: "flex-end"/);
   assert.match(source, /estimatedPrice: \{ fontSize: 10, lineHeight: 13, fontWeight: "700", fontFamily: appFonts\.bold, letterSpacing: 0\.7, textAlign: "right" \}/);
   assert.match(source, /providerPrice: \{[^}]*fontSize: 11, lineHeight: 14[^}]*textAlign: "right"/);
-  assert.match(source, /flightFareRow: \{[^\n]*flexDirection: "row"[^\n]*justifyContent: "flex-end"/);
+  assert.match(source, /flightLowerSection: \{[^\n]*flexDirection: "row"[^\n]*alignItems: "flex-start"/);
   assert.doesNotMatch(source, /actionColumn:/);
   assert.doesNotMatch(card, /marginRight/);
-  const fareRowStyle = /flightFareAction: \{([^}]*)\}/.exec(source)?.[1] ?? "";
+  const fareRowStyle = /flightCommercialRegion: \{([^}]*)\}/.exec(source)?.[1] ?? "";
   assert.doesNotMatch(fareRowStyle, /position|top|bottom|marginRight/);
 });
 
@@ -55,12 +55,13 @@ test("one-way cards omit return while preserving the fare-action alignment", () 
   assert.match(card, /const roundTrip = one\(params\.tripType\) === "round-trip"/);
   assert.match(card, /\{returnLeg \? <FlightJourneyRow[^\n]+ : null\}/);
   assert.doesNotMatch(card, /"round trip" : "one way"/);
-  assert.match(card, /<View style=\{s0\.flightFareAction\}>\s*<Text/);
+  assert.match(card, /<View style=\{s0\.flightCommercialRegion\}>\s*<Text/);
 });
 
 test("long fares stay readable without changing details navigation or theme behavior", () => {
   assert.match(card, /\{fare\?\.formatted \?\? "—"\}/);
-  assert.match(card, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.72\}/);
+  assert.match(card, /s0\.bigPrice[^>]*numberOfLines=\{1\}/);
+  assert.doesNotMatch(card, /s0\.bigPrice[^>]*adjustsFontSizeToFit|s0\.bigPrice[^>]*minimumFontScale/);
   assert.match(card, /pathname: "\/flight-details"/);
   assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
   assert.match(card, /backgroundColor: theme\.surface/);
@@ -68,12 +69,13 @@ test("long fares stay readable without changing details navigation or theme beha
 });
 
 test("the compact fare action contains the only displayed fare and details control", () => {
-  const fareRow = card.slice(card.indexOf('<View style={s0.flightFareAction}>'), card.indexOf('<ScrollView'));
+  const fareRow = card.slice(card.indexOf('<View style={s0.flightCommercialRegion}>'), card.indexOf('</View>\n        </View>'));
 
   assert.equal(card.match(/\{fare\?\.formatted \?\? "—"\}/g)?.length, 1);
   assert.match(fareRow, /\{fare\?\.formatted \?\? "—"\}/);
   assert.match(fareRow, /accessible=\{false\}/);
-  assert.match(fareRow, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.72\}/);
+  assert.match(fareRow, /s0\.bigPrice[^>]*numberOfLines=\{1\}/);
+  assert.doesNotMatch(fareRow, /s0\.bigPrice[^>]*adjustsFontSizeToFit|s0\.bigPrice[^>]*minimumFontScale/);
   assert.match(source, /bigPrice: \{[^}]*fontSize: 19, lineHeight: 24[^}]*fontWeight: "700"[^}]*textAlign: "right"/);
   assert.match(fareRow, /color: theme\.textPrimary/);
   assert.doesNotMatch(fareRow, /marginRight|position:/);
@@ -85,7 +87,7 @@ test("the compact fare action contains the only displayed fare and details contr
   assert.match(card, /<Pressable[\s\S]*accessibilityLabel=\{cardAccessibilityLabel\}[\s\S]*onPress=\{openDetails\}/);
   assert.match(fareRow, />› \{labels\.viewDeal\}<\/Text>/);
   assert.doesNotMatch(fareRow, /labels\.viewFlight|View details/);
-  assert.ok(card.indexOf('<View style={s0.journeyList}>') < card.indexOf('<View style={s0.flightFareAction}>'));
+  assert.ok(card.indexOf('<View style={s0.journeyList}>') < card.indexOf('<View style={s0.flightCommercialRegion}>'));
   assert.match(card, /provider price \$\{providerFare\.accessibilityLabel\}/);
   assert.match(card, /pathname: "\/flight-details"/);
   assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);

@@ -16,8 +16,28 @@ test("required currencies keep complete currency identity and grouped digits", (
   }
 });
 
-test("main, nearby-date, and provider prices keep single-line fitting contracts", () => {
-  assert.match(screen, /s0\.bigPrice[\s\S]*?numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit[\s\S]*?minimumFontScale=\{0\.72\}/);
+test("wide supported display fares preserve every digit without lossy abbreviation", () => {
+  const samples: Array<[string, number, string]> = [
+    ["USD", 1899, "1,899"],
+    ["EUR", 1899, "1,899"],
+    ["GBP", 2350, "2,350"],
+    ["NGN", 1250000, "1,250,000"],
+    ["VND", 18750000, "18,750,000"],
+    ["IDR", 2450000, "2,450,000"],
+    ["INR", 125000, "125,000"],
+    ["CAD", 1899, "1,899"],
+  ];
+  for (const [currency, amount, digits] of samples) {
+    const formatted = formatCurrency(amount, currency);
+    assert.ok(formatted.includes(digits), `${currency} preserves ${digits}`);
+    assert.doesNotMatch(formatted, /\d(?:\.\d)?[KM]\b/i, currency);
+  }
+});
+
+test("main fare stays full-size and single-line while secondary prices retain safe fitting", () => {
+  const fare = /<Text accessible=\{false\} style=\{\[s0\.bigPrice[\s\S]*?<\/Text>/.exec(screen)?.[0] ?? "";
+  assert.match(fare, /numberOfLines=\{1\}/);
+  assert.doesNotMatch(fare, /adjustsFontSizeToFit|minimumFontScale|ellipsizeMode/);
   assert.match(screen, /s0\.providerPrice[\s\S]*?numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit/);
   assert.match(ui, /numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit[\s\S]*?s\.datePrice/);
   assert.doesNotMatch(screen + ui, /\d(?:\.\d)?[KM]`/);
