@@ -13,7 +13,7 @@ test("Profile Terms and Privacy use the native in-app browser with canonical URL
   assert.match(helper, /terms: TERMS_URL/);
   assert.match(helper, /privacy: PRIVACY_URL/);
   assert.match(helper, /WebBrowser\.openBrowserAsync\(LEGAL_URLS\[page\]\)/);
-  assert.match(card, /openLegalPage\(destination\.page\)/);
+  assert.match(card, /openLegalPage\(destination\.page, locale\)/);
 });
 
 test("legal pages do not use external Linking or app navigation", () => {
@@ -23,9 +23,18 @@ test("legal pages do not use external Linking or app navigation", () => {
   assert.match(card, /: router\.push\(destination\.href\)/);
 });
 
-test("legal browser failures show safe feedback and duplicate taps are ignored", () => {
+test("legal browser failures and accessibility hints use locale-aware copy", () => {
+  assert.match(helper, /LEGAL_BROWSER_COPY: Readonly<Record<MobileLocale, LegalBrowserCopy>>/);
+  assert.match(helper, /errorTitle: "Couldn't open this page"/);
+  assert.match(helper, /accessibilityHint: "Opens in an in-app browser"/);
+  assert.match(helper, /const copy = LEGAL_BROWSER_COPY\[locale\]/);
+  assert.match(helper, /Alert\.alert\(copy\.errorTitle, copy\.errorMessage\)/);
+  assert.match(card, /legalBrowserAccessibilityHint\(locale\)/);
+  assert.doesNotMatch(card, /externalLinkHint/);
+});
+
+test("duplicate legal browser taps are ignored and the guard is always released", () => {
   assert.match(helper, /if \(browserOpen\) return/);
-  assert.match(helper, /catch \{[\s\S]*Alert\.alert\("Couldn't open this page", "Please try again\."\)/);
   assert.match(helper, /finally \{[\s\S]*browserOpen = false/);
 });
 
