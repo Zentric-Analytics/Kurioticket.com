@@ -167,6 +167,7 @@ function SwipeableNotificationRow({ item, dark, surface, border, text, isOpen, o
       settle(open);
     },
     onPanResponderTerminationRequest: () => gestureDirection.current !== "horizontal",
+    onPanResponderReject: finishHorizontalSwipe,
     onPanResponderTerminate: () => { finishHorizontalSwipe(); onSetOpenRef.current(false); settle(false); },
   }), [finishHorizontalSwipe, settle, shouldCaptureSwipe, translateX]);
   const deleteItem = async () => {
