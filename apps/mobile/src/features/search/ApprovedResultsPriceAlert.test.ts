@@ -60,12 +60,12 @@ test("guest activation is gated by the canonical session and sign-in flow", () =
 test("new alerts validate target input through the shared helper before creation", () => {
   assert.match(flightAlert, /parseTargetPrice\(targetDraft\)/);
   assert.match(flightAlert, /visible=\{targetOpen\}/);
-  assert.match(flightAlert, /setMatchingAlert\(created\.alert\)/);
+  assert.match(flightAlert, /setCurrentMatchingAlert\(created\.alert\)/);
 });
 
 test("Hotel Results keeps first-time activation backend-honest while opening the target modal", () => {
   assert.match(flightAlert, /if \(!matchingAlert\) \{ setTargetError\(""\); setTargetOpen\(true\); return; \}/);
-  assert.match(flightAlert, /setMatchingAlert\(created\.alert\); setTargetOpen\(false\)/);
+  assert.match(flightAlert, /setCurrentMatchingAlert\(created\.alert\); setTargetOpen\(false\)/);
   assert.match(flightAlert, /<Button label=\{t\("cancel"\)\} outline onPress=\{\(\) => setTargetOpen\(false\)\}/);
 });
 
@@ -88,12 +88,24 @@ test("Hotel Results reuses the compact banner with a left Bell and native switch
   assert.match(hotelAlert, /<Bell accessible=\{false\} size=\{17\} strokeWidth=\{2\}/);
   assert.match(hotelAlert, /s0\.flightAlertCompactTitle/);
   assert.match(hotelAlert, /message\("hotelAlertTitle"\)/);
-  assert.match(compactBanner, /<Switch accessibilityRole="switch" accessibilityLabel="Track this stay price"/);
+  assert.match(compactBanner, /<Switch[^>]*accessibilityRole="switch" accessibilityLabel="Track this stay price"/);
   assert.match(compactBanner, /accessibilityState=\{\{ checked: isTracking, disabled: toggleDisabled, busy: pending \|\| loadingAlert \}\}/);
   assert.match(compactBanner, /value=\{isTracking\} onValueChange=\{\(next\) => void handleToggle\(next\)\}/);
   assert.match(compactBanner, /trackColor=\{\{ false: theme\.dark \? "#465269" : "#CBD5E1", true: theme\.switchTrackActive \}\}/);
   assert.doesNotMatch(compactBanner, /<Pressable|flightCopy\.trackAction|flightCopy\.tracking|>On<|>Off<|selected:/);
   assert.doesNotMatch(source, /flightAlertAction:|flightAlertActionPressed:|flightAlertActionText:|flightAlertSwitchTarget:/);
+});
+
+test("Hotel owns native switch alignment without changing the Flight slot", () => {
+  const hotelAlert = flightAlert.slice(flightAlert.indexOf('if (product !== "hotel"'));
+  const compactBanner = hotelAlert.slice(0, hotelAlert.indexOf("<Modal"));
+  assert.match(source, /flightAlertSwitchSlot: \{ minWidth: 51, minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
+  assert.match(source, /hotelAlertSwitchSlot: \{ minWidth: 51, minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
+  assert.match(compactBanner, /style=\{s0\.hotelAlertSwitchSlot\}/);
+  assert.doesNotMatch(compactBanner, /style=\{s0\.flightAlertSwitchSlot\}/);
+  assert.match(compactBanner, /style=\{Platform\.OS === "ios" \? s0\.hotelAlertSwitchIos : undefined\}/);
+  assert.match(source, /hotelAlertSwitchIos: \{ transform: \[\{ translateY: 8 \}\] \}/);
+  assert.doesNotMatch(compactBanner, /position: "absolute"|scaleX|scaleY/);
 });
 
 test("Hotel switch exposes ACTIVE state and disables while loading or mutating", () => {
@@ -109,6 +121,16 @@ test("Price Alert reconciliation selects the canonical matcher for Flight or Hot
   assert.doesNotMatch(flightAlert, /if \(!flight \|\| !plan\) return/);
   assert.match(flightAlert, /flight \? matchingFlightPriceAlert\(alerts, plan\) : matchingHotelPriceAlert\(alerts, plan\)/);
   assert.match(flightAlert, /reconciliation === reconciliationRef\.current/);
+});
+
+test("Hotel reconciliation retains same-search truth on transient failures and isolates search identity", () => {
+  assert.match(flightAlert, /matchingAlertState && matchingAlertState\.planKey === plan\?\.key \? matchingAlertState\.alert : undefined/);
+  assert.match(flightAlert, /setMatchingAlertState\(alert && plan \? \{ planKey: plan\.key, alert \} : undefined\)/);
+  assert.doesNotMatch(flightAlert, /if \(!flight\) setMatchingAlert(?:State)?\(undefined\)/);
+  assert.match(flightAlert, /error instanceof TravelApiError && error\.status === 401\) setCurrentMatchingAlert\(undefined\)/);
+  assert.match(flightAlert, /if \(!await readSession\(\)\.catch\(\(\) => null\)\) \{\s*if \(reconciliation === reconciliationRef\.current\) setCurrentMatchingAlert\(undefined\)/);
+  assert.match(flightAlert, /setCurrentMatchingAlert\(flight \? matchingFlightPriceAlert\(alerts, plan\) : matchingHotelPriceAlert\(alerts, plan\)\)/);
+  assert.match(flightAlert, /const reconciliation = \+\+reconciliationRef\.current/);
 });
 
 test("Hotel pause and resume mutate the existing alert without deletion", () => {
