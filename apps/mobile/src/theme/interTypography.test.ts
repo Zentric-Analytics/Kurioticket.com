@@ -30,8 +30,10 @@ test("root layout loads every Inter face while retaining the splash screen", () 
   assert.match(rootLayout, /if \(!fontsLoaded && !fontError\) return null/);
 });
 
-test("root layout keeps the native splash visible until bootstrap owns the handoff", () => {
+test("root layout keeps index bootstrap ownership while handing cold deep links off after readiness", () => {
   assert.match(rootLayout, /if \(fontError && __DEV__\) console\.warn/);
-  assert.doesNotMatch(rootLayout, /SplashScreen\.hideAsync\(\)\.catch/);
+  assert.match(rootLayout, /const pathname = usePathname\(\)/);
+  assert.match(rootLayout, /\(!fontsLoaded && !fontError\) \|\| pathname === "\/"/);
+  assert.match(rootLayout, /requestAnimationFrame\(\(\) => void SplashScreen\.hideAsync\(\)\.catch/);
   assert.doesNotMatch(rootLayout, /if \(fontError\) return null/);
 });
