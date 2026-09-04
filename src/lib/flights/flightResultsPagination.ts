@@ -28,7 +28,7 @@ export function buildFlightPaginationItems(
 ): FlightPaginationItem[] {
   if (totalPages <= 0) return [];
   if (compact) {
-    const windowSize = Math.min(5, totalPages);
+    const windowSize = Math.min(3, totalPages);
     const page = clampFlightResultsPage(currentPage, totalPages);
     const start = Math.min(
       Math.max(1, page - Math.floor(windowSize / 2)),

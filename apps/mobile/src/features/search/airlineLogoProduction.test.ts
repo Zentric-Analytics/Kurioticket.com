@@ -14,13 +14,8 @@ test("Flight Results use provider logos without a platform image policy", () => 
   assert.doesNotMatch(screen, /Platform\.OS\s*===\s*["']ios["'][\s\S]{0,120}(?:AirlineLogo|airline image)/i);
 });
 
-test("Flight Filter airline rows use the normal provider logo path", () => {
-  assert.match(filterSheet, /r\.airlineLogo/);
-  assert.match(
-    filterSheet,
-    /<AirlineLogo\s+airlineName=\{name\}\s+logoUrl=\{[A-Za-z_$][\w$]*\.get\(name\)\}\s*\/>/,
-  );
-  assert.doesNotMatch(filterSheet, /allowRemoteAirlineImages|allowRemoteImages|fallbackText|airlineInitials/);
+test("Flight Filter airline rows match the current Web text-only treatment", () => {
+  assert.doesNotMatch(filterSheet, /<AirlineLogo|r\.airlineLogo|logoUrl=/);
 });
 
 test("only Flight Results opt into the result-card logo presentation", () => {
