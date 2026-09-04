@@ -127,9 +127,9 @@ test("price and View Flight retain their semantic order without provider-price c
   const actionStart = flightCardSource.indexOf("function FlightFareAction");
   const action = flightCardSource.slice(actionStart, flightCardSource.indexOf("function FlightDetailLines", actionStart));
   const price = action.indexOf("{formattedPrice}");
-  const label = action.indexOf("{priceLabel}");
   const button = action.indexOf("{viewFlightLabel}");
-  assert.ok(price >= 0 && price < label && label < button);
+  assert.ok(price >= 0 && price < button);
+  assert.doesNotMatch(action, /\{priceLabel\}/);
   assert.doesNotMatch(action, /flight-card-provider-price/);
   assert.match(action, /min-h-11/);
   const priceRule = ruleBody(
@@ -175,4 +175,14 @@ test("FlightCard retains fare pricing inputs and LinkButton behavior", () => {
   assert.match(flightCardSource, /formattedPrice/);
   assert.match(flightCardSource, /providerPrice/);
   assert.match(flightCardSource, /<LinkButton/);
+});
+
+test("desktop fare action omits the visible provider price label", () => {
+  const fareAction = flightCardSource.slice(
+    flightCardSource.indexOf("function FlightFareAction"),
+    flightCardSource.indexOf("function FlightDetailLines"),
+  );
+
+  assert.doesNotMatch(fareAction, /priceLabel|providerPriceLabel|showConvertedProviderPrice/);
+  assert.doesNotMatch(fareAction, /<p[^>]*>\s*\{priceLabel\}\s*<\/p>/);
 });
