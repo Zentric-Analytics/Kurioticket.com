@@ -52,7 +52,7 @@ test("presents authoritative converted provider fares with explicit ISO identity
 test("compacts only long provider fare display strings without losing digits or currency identity", () => {
   const converted: DisplayPrice = { amount: 670000, currency: "NGN", formatted: "₦670,000", accessibilityLabel: "670,000 Nigerian naira", providerAmount: 420, providerCurrency: "USD", converted: true };
   const cases = [
-    { currency: "IDR", amount: 2450000, compact: "Rp2450000", digits: "2450000" },
+    { currency: "IDR", amount: 2450000, compact: "IDR2450000", digits: "2450000" },
     { currency: "VND", amount: 18750000, compact: "₫18750000", digits: "18750000" },
   ] as const;
 
