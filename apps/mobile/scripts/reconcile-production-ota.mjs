@@ -13,7 +13,7 @@ export function reconcileProductionOta({ view, list, expected, evidence, verifie
   if (!isRfcUuid(expected.updateId) || !isRfcUuid(expected.groupId)) throw new Error('Expected update or group ID is malformed.');
   if (!fullSha(expected.sourceSha) || !/^\d+$/.test(String(expected.originalWorkflowRunId ?? ''))) throw new Error('Expected publication provenance is malformed.');
   const expectedPlatform = normalizeEasPlatform(expected.platform);
-  if (expectedPlatform !== 'ANDROID' || expected.runtime !== 'production-0.3.1' || expected.branch !== 'production') throw new Error('Expected Production target is invalid.');
+  if (expectedPlatform !== 'ANDROID' || expected.runtime !== 'production-0.3.0' || expected.branch !== 'production') throw new Error('Expected Production target is invalid.');
   if (!Array.isArray(view)) throw new Error('EAS update:view result must be an array.');
   const candidates = view.filter((item) => {
     try { return normalizeEasPlatform(item?.platform) === expectedPlatform; }
