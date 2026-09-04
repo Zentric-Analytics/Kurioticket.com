@@ -99,6 +99,32 @@ test("Native gallery is interactive, truthful, and limited to five thumbnails", 
   assert.match(gallery, /images\.length - 5/);
   assert.match(gallery, /Property image unavailable/);
   assert.match(gallery, /pagingEnabled/);
+  assert.match(gallery, /accentColor: string/);
+  assert.match(gallery, /borderColor: accentColor/);
+  assert.match(gallery, /s\.planning, \{ color: accentColor \}/);
+});
+
+test("Hotel detail owns theme-aware accents without changing filled brand controls", () => {
+  assert.match(hotel, /const hotelAccent = theme\.dark \? "#8FB5FF" : colors\.blue/);
+  assert.match(hotel, /<ArrowLeft size=\{17\} color=\{hotelAccent\}/);
+  assert.match(hotel, /hotelBackToResultsText, \{ color: hotelAccent \}/);
+  assert.match(hotel, /borderBottomColor: hotelAccent/);
+  assert.match(hotel, /color: hotelAccent,[\s\S]*?fontWeight: "800"/);
+  assert.match(hotel, /borderColor: selected \? hotelAccent : theme\.border/);
+  assert.match(hotel, /borderWidth: 6,[\s\S]*?borderColor: hotelAccent/);
+  assert.match(hotel, /<Check size=\{16\} color=\{hotelAccent\}/);
+  assert.equal((hotel.match(/accentColor=\{hotelAccent\}/g) ?? []).length, 2);
+  assert.match(source, /hotelContinue: \{[^\n]*backgroundColor: colors\.blue/);
+  assert.match(source, /hotelContinuePressed: \{ backgroundColor: "#003B91" \}/);
+  assert.match(source, /mapsButton: \{[^\n]*backgroundColor: colors\.blue/);
+  assert.match(source, /hotelReviewScore: \{[^\n]*backgroundColor: colors\.blue/);
+  assert.match(tokens, /blue: "#004BB8"/);
+});
+
+test("Hotel provider selection validates candidates before applying precedence", () => {
+  assert.match(hotel, /nativeHotelProviderUrl\([\s\S]*?result\.partnerRedirectUrl,[\s\S]*?result\.bookingUrl/);
+  assert.match(hotel, /result\.searchPolicy\.bookable && Boolean\(redirectUrl\)/);
+  assert.doesNotMatch(hotel, /result\.partnerRedirectUrl \|\| result\.bookingUrl/);
 });
 
 test("Hotel panels and dock expose web-aligned truthful information", () => {
@@ -137,9 +163,9 @@ test("Car detail parity remains protected", () => {
   for (const token of ["background", "surface", "textPrimary", "textSecondary", "border", "icon"]) assert.match(car, new RegExp(`theme\\.${token}`));
 });
 
-test("Hotel Details owns canonical brand accents and preserves pressed blue", () => {
+test("Hotel Details preserves canonical filled and pressed brand blue", () => {
   assert.match(tokens, /blue: "#004BB8"/);
-  for (const style of ["hotelTabActive", "hotelTabTextActive", "hotelReviewScore", "selectionControlSelected", "mapsButton", "hotelContinue"]) {
+  for (const style of ["hotelReviewScore", "mapsButton", "hotelContinue"]) {
     assert.match(source, new RegExp(`${style}[^\\n]*colors\\.blue`));
   }
   assert.match(source, /hotelContinuePressed: \{ backgroundColor: "#003B91" \}/);
