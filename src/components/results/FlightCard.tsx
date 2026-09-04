@@ -356,9 +356,6 @@ function FlightFareAction({
   priceAriaLabel,
   priceTitle,
   priceLabel,
-  showConvertedProviderPrice,
-  providerPrice,
-  providerPriceLabel,
   viewFlightLabel,
   viewFlightAriaLabel,
   onAction,
@@ -406,14 +403,6 @@ function FlightFareAction({
         <p className="mt-1.5 text-[10px] font-medium uppercase leading-none tracking-[0.08em] text-slate-600 sm:text-[11px] lg:mt-1">
           {priceLabel}
         </p>
-        {showConvertedProviderPrice ? (
-          <div className="flight-card-provider-price mt-1.5 space-y-0.5 text-xs font-medium leading-4 text-slate-600 lg:text-center">
-            <p>
-              <span>{providerPriceLabel}:</span>{" "}
-              <span dir="ltr">{providerPrice}</span>
-            </p>
-          </div>
-        ) : null}
       </div>
       {onAction ? (
         <button
