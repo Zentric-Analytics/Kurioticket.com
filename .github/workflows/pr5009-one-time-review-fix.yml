@@ -1,0 +1,119 @@
+name: PR 5009 one-time review fix
+
+on:
+  push:
+    branches:
+      - codex/fix-flight-results-pagination-transition
+
+permissions:
+  contents: write
+
+jobs:
+  fix-review-blockers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/fix-flight-results-pagination-transition
+          fetch-depth: 0
+
+      - name: Restore clean PR implementation and address Codex review
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "aeb2862bc792f9df47cd72136f448e4f82af1808"
+          git cat-file -e ae95084c81bea82d0eaeb5b7d6c07c1d60c3443a^{commit}
+          git checkout ae95084c81bea82d0eaeb5b7d6c07c1d60c3443a -- apps/mobile/src/features/search/ApprovedResultsScreen.tsx
+          python - <<'PY'
+          from pathlib import Path
+
+          source_path = Path("apps/mobile/src/features/search/ApprovedResultsScreen.tsx")
+          test_path = Path("apps/mobile/src/features/search/flightResultsPagination.test.ts")
+          source = source_path.read_text()
+          test = test_path.read_text()
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected exactly one match, found {count}")
+              return text.replace(old, new, 1)
+
+          source = replace_once(
+              source,
+              "  const flightFilterSectionHeight = useRef(0);\n",
+              "",
+              "remove obsolete filter header height ref",
+          )
+          source = replace_once(
+              source,
+              '''      flightResultsListRef.current?.scrollToLocation({
+                sectionIndex: 0,
+                itemIndex: 0,
+                viewOffset: flightFilterSectionHeight.current,
+                viewPosition: 0,
+                animated: true,
+              });''',
+              '''      flightResultsListRef.current?.scrollToLocation({
+                sectionIndex: 0,
+                itemIndex: 0,
+                viewPosition: 0,
+                animated: true,
+              });''',
+              "remove extra SectionList viewOffset",
+          )
+          source = replace_once(
+              source,
+              '''          renderSectionHeader={() => (
+                <View
+                  onLayout={({ nativeEvent }) => { flightFilterSectionHeight.current = nativeEvent.layout.height; }}
+                  style={[s0.flightFilterSectionHeader, { backgroundColor: flightCanvasColor }]}
+                >''',
+              '''          renderSectionHeader={() => (
+                <View style={[s0.flightFilterSectionHeader, { backgroundColor: flightCanvasColor }]}>
+                ''',
+              "remove obsolete section header measurement",
+          )
+
+          test = replace_once(
+              test,
+              '''  assert.match(changePage, /viewOffset: flightFilterSectionHeight\\.current/);
+            assert.match(screen, /onLayout=\\{\\(\\{ nativeEvent \\}\\) => \\{ flightFilterSectionHeight\\.current = nativeEvent\\.layout\\.height; \\}\\}/);''',
+              '''  assert.match(changePage, /scrollToLocation\\(\\{[\\s\\S]*?sectionIndex: 0,[\\s\\S]*?itemIndex: 0,[\\s\\S]*?viewPosition: 0,[\\s\\S]*?animated: true/);
+            assert.doesNotMatch(changePage, /viewOffset:/);
+            assert.doesNotMatch(screen, /flightFilterSectionHeight/);''',
+              "update zero-offset pagination regression assertions",
+          )
+
+          source_path.write_text(source)
+          test_path.write_text(test)
+          PY
+          ! grep -q 'flightPaginationCommitting\|flightPaginationTargetRef\|flightPaginationSafetyTimer\|flightPaginationHiddenCard\|flightPaginationSkeletonCard' apps/mobile/src/features/search/ApprovedResultsScreen.tsx
+          ! grep -q 'flightFilterSectionHeight\|viewOffset:' apps/mobile/src/features/search/ApprovedResultsScreen.tsx
+          git diff --check
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Install mobile dependencies
+        working-directory: apps/mobile
+        run: npm ci
+
+      - name: Type-check mobile app
+        working-directory: apps/mobile
+        run: npm run typecheck
+
+      - name: Run focused pagination regressions
+        working-directory: apps/mobile
+        run: node --test --require ./testAssetSetup.cjs --import jiti/register src/features/search/flightResultsPagination.test.ts src/features/search/flightResultsStates.test.ts src/features/search/flightSortExperience.test.ts src/features/search/resultsScrollLayout.test.ts
+
+      - name: Commit fix and remove one-time workflow
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/pr5009-one-time-review-fix.yml
+          git add apps/mobile/src/features/search/ApprovedResultsScreen.tsx apps/mobile/src/features/search/flightResultsPagination.test.ts
+          git commit -m 'fix(mobile): resolve flight pagination review blockers'
+          git push origin HEAD:codex/fix-flight-results-pagination-transition
