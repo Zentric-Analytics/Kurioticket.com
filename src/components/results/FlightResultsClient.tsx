@@ -5478,7 +5478,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         aria-checked={selected}
                         onClick={() => handleTripTypeChange(option.value)}
                         className={cn(
-                          "focus-ring inline-flex min-h-7 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
+                          "focus-ring inline-flex min-h-6 items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold transition-colors",
                           selected
                             ? "bg-[#004BB8]/10 text-[#004BB8]"
                             : "text-slate-500 hover:bg-white hover:text-slate-800",
@@ -5487,7 +5487,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         <span
                           aria-hidden="true"
                           className={cn(
-                            "h-2 w-2 rounded-full",
+                            "h-1.5 w-1.5 rounded-full",
                             selected ? "bg-[#004BB8]" : "bg-slate-300",
                           )}
                         />
@@ -5898,7 +5898,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               data-desktop-trip-selector
               role="radiogroup"
               aria-label={t("tripType")}
-              className="hidden min-h-11 items-center gap-8 px-2 sm:flex lg:gap-12"
+              className="hidden min-h-9 items-center gap-7 px-2 sm:flex lg:gap-10"
             >
               {[
                 { label: "Round-trip", value: "round-trip" },
@@ -5913,18 +5913,18 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     role="radio"
                     aria-checked={selected}
                     onClick={() => handleTripTypeChange(option.value)}
-                    className="focus-ring inline-flex min-h-11 items-center gap-2.5 rounded-md px-1 text-base font-medium text-slate-800 transition-colors hover:text-[#075EE8] focus-visible:ring-2 focus-visible:ring-[#075EE8]/30"
+                    className="focus-ring inline-flex min-h-9 items-center gap-2 rounded-md px-1 text-sm font-medium text-slate-800 transition-colors hover:text-[#075EE8] focus-visible:ring-2 focus-visible:ring-[#075EE8]/30"
                   >
                     <span
                       aria-hidden="true"
                       className={cn(
-                        "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2",
+                        "inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-[1.5px]",
                         selected ? "border-[#075EE8]" : "border-slate-300",
                       )}
                     >
                       <span
                         className={cn(
-                          "h-2.5 w-2.5 rounded-full",
+                          "h-2 w-2 rounded-full",
                           selected ? "bg-[#075EE8]" : "bg-transparent",
                         )}
                       />
@@ -7067,13 +7067,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   className="hidden w-full sm:block"
                   aria-label="Nearby departure fares"
                 >
-                  <div data-desktop-nearby-fare-rail className="mx-auto grid w-full max-w-[980px] grid-cols-[48px_repeat(7,minmax(0,1fr))_48px] items-stretch gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-2.5 shadow-[0_10px_30px_-22px_rgba(15,23,42,0.5)]">
+                  <div data-desktop-nearby-fare-rail className="mx-auto grid w-full max-w-[980px] grid-cols-[42px_repeat(7,minmax(0,1fr))_42px] items-stretch overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-1.5 shadow-[0_10px_28px_-24px_rgba(15,23,42,0.42)]">
                     <button
                       type="button"
                       aria-label="Previous nearby fare date"
                       disabled={nearbyFareVisibleStart === 0}
                       onClick={() => navigateNearbyFareWindow("previous")}
-                      className="focus-ring inline-flex h-10 w-10 place-self-center items-center justify-center rounded-full border border-transparent text-slate-500 transition hover:border-slate-200 hover:bg-white hover:text-[#075EE8] hover:shadow-sm focus-visible:border-[#075EE8]/35 focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:border-transparent disabled:hover:bg-transparent disabled:hover:shadow-none"
+                      className="focus-ring inline-flex h-9 w-9 place-self-center items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-[#075EE8] focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
                     >
                       <ChevronLeft className="h-5 w-5" aria-hidden="true" />
                     </button>
@@ -7127,8 +7127,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                           }
                           onClick={() => handleNearbyFareDateSelect(fare.date)}
                           className={cn(
-                            "focus-ring relative flex min-h-[86px] min-w-0 flex-col items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-2.5 text-center shadow-sm transition duration-200 after:absolute after:inset-x-3 after:bottom-1.5 after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:bg-[#075EE8] after:transition-transform hover:-translate-y-0.5 hover:border-[#075EE8]/35 hover:shadow-md hover:after:scale-x-50",
-                            selected && "border-[#075EE8] bg-blue-50/80 shadow-[0_8px_20px_-14px_rgba(7,94,232,0.85)] after:scale-x-100",
+                            "focus-ring relative flex min-h-[76px] min-w-0 flex-col items-center justify-center border-l border-slate-100 bg-white px-2 py-2 text-center transition duration-200 first:border-l-0 after:absolute after:inset-x-4 after:bottom-0 after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:bg-[#075EE8] after:transition-transform hover:bg-slate-50/80 hover:text-[#075EE8] hover:after:scale-x-50",
+                            selected && "bg-blue-50/55 after:scale-x-100",
                           )}
                         >
                           {fare.status === "loading" ? (
@@ -7206,7 +7206,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         nearbyFareRangeSize - nearbyFareVisibleCount
                       }
                       onClick={() => navigateNearbyFareWindow("next")}
-                      className="focus-ring inline-flex h-10 w-10 place-self-center items-center justify-center rounded-full border border-transparent text-slate-500 transition hover:border-slate-200 hover:bg-white hover:text-[#075EE8] hover:shadow-sm focus-visible:border-[#075EE8]/35 focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:border-transparent disabled:hover:bg-transparent disabled:hover:shadow-none"
+                      className="focus-ring inline-flex h-9 w-9 place-self-center items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-[#075EE8] focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
                     >
                       <ChevronRight className="h-5 w-5" aria-hidden="true" />
                     </button>
