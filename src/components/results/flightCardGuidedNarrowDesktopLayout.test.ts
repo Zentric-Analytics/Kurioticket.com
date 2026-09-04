@@ -84,7 +84,7 @@ test("phone and tablet lower card is a two-column decision area", () => {
   assert.match(bodyRule, /grid-template-areas:\s*"legs legs" "details fare"/);
   assert.match(bodyRule, /minmax\(0, 1\.2fr\) minmax\(120px, 0\.8fr\)/);
   assert.match(bodyRule, /column-gap:\s*0/);
-  assert.match(bodyRule, /row-gap:\s*0\.75rem/);
+  assert.match(bodyRule, /row-gap:\s*0\.625rem/);
 
   const detailsRule = ruleBody(
     mobileRules,
@@ -123,13 +123,14 @@ test("phone and tablet lower card is a two-column decision area", () => {
   );
 });
 
-test("price, provider label, and View Flight retain their semantic order", () => {
+test("price and View Flight retain their semantic order without provider-price clutter", () => {
   const actionStart = flightCardSource.indexOf("function FlightFareAction");
   const action = flightCardSource.slice(actionStart, flightCardSource.indexOf("function FlightDetailLines", actionStart));
   const price = action.indexOf("{formattedPrice}");
   const label = action.indexOf("{priceLabel}");
   const button = action.indexOf("{viewFlightLabel}");
   assert.ok(price >= 0 && price < label && label < button);
+  assert.doesNotMatch(action, /flight-card-provider-price/);
   assert.match(action, /min-h-11/);
   const priceRule = ruleBody(
     globalsCss,
