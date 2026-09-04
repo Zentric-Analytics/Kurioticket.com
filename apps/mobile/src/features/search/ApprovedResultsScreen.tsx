@@ -809,7 +809,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   ) : (
     <ScrollView horizontal style={[s0.hotelFilterRail, { backgroundColor: theme.dark ? theme.surface : "#FFFFFF" }]} showsHorizontalScrollIndicator={false} alwaysBounceHorizontal={false} contentContainerStyle={s0.hotelFilterContent}>
             <>
-              <HotelResultsShortcut label="Filter" accessibilityLabel="Filters" count={activeHotelFilters || undefined} icon expanded={hotelFilterOpen} onPress={() => openHotelFilters("all")} />
+              <HotelResultsShortcut label="Filter" accessibilityLabel="Filters" count={activeHotelFilters || undefined} icon showChevron={false} expanded={hotelFilterOpen} onPress={() => openHotelFilters("all")} />
               {hotelOptions.price ? <HotelResultsShortcut label="Price" count={((hotelFilters.minimumPrice !== null && hotelFilters.minimumPrice > hotelOptions.price.minimum) || (hotelFilters.maximumPrice !== null && hotelFilters.maximumPrice < hotelOptions.price.maximum)) ? 1 : undefined} expanded={hotelQuickFilter === "price"} onPress={() => openHotelQuickFilter("price")} /> : null}
               <HotelResultsShortcut label="Stars" count={hotelFilters.starRatings.length || undefined} expanded={hotelQuickFilter === "stars"} onPress={() => openHotelQuickFilter("stars")} />
               <HotelResultsShortcut label="Facilities" count={hotelFilters.facilities.length || undefined} expanded={hotelQuickFilter === "facilities"} onPress={() => openHotelQuickFilter("facilities")} />
@@ -1152,8 +1152,8 @@ function HotelResultsHeader({
     </View>
   );
 }
-const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, count, expanded = false, onPress }: {
-  label: string; accessibilityLabel?: string; icon?: boolean; count?: number; expanded?: boolean; onPress: () => void;
+const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChevron = true, count, expanded = false, onPress }: {
+  label: string; accessibilityLabel?: string; icon?: boolean; showChevron?: boolean; count?: number; expanded?: boolean; onPress: () => void;
 }) => {
   const { theme } = useAppTheme();
   const active = Boolean(count);
@@ -1178,7 +1178,7 @@ const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, count, 
       {icon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={accent} /> : null}
       <Text numberOfLines={1} style={[s0.hotelShortcutLabel, { color: foreground }]}>{label}</Text>
       {count ? <View style={[s0.hotelShortcutCount, { backgroundColor: countBackground }]}><Text style={[s0.hotelShortcutCountText, { color: accent }]}>{count}</Text></View> : null}
-      <ChevronDown accessible={false} size={14} strokeWidth={1.9} color={chevron} style={expanded ? s0.hotelShortcutChevronExpanded : undefined} />
+      {showChevron ? <ChevronDown accessible={false} size={14} strokeWidth={1.9} color={chevron} style={expanded ? s0.hotelShortcutChevronExpanded : undefined} /> : null}
     </Pressable>
   );
 };
