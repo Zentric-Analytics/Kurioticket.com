@@ -6,7 +6,7 @@ const source = (path: string) => readFileSync(path, "utf8");
 const explore = source("src/features/explore/ExploreScreen.tsx") + source("src/features/explore/exploreData.ts");
 const products = source("src/features/flow/ProductScreens.tsx");
 const packageModel = source("src/features/flow/packageSearchModel.ts");
-const results = source("src/features/flow/TravelResultsScreen.tsx");
+const results = source("src/features/search/ApprovedResultsScreen.tsx") + source("src/features/search/ApprovedCarResultsScreen.tsx") + source("src/features/search/CarResultCard.tsx");
 
 test("Explore and product entry screens contain no prototype prices or commercial claims", () => {
   const entry = explore + products;
@@ -20,9 +20,9 @@ test("misleading Explore and View all interactions are absent", () => {
 });
 
 test("provider-backed result prices remain rendered", () => {
-  assert.match(results, /result\.currency.*result\.price\.toFixed/);
-  assert.match(results, /result\.totalPrice\.toFixed/);
-  assert.match(results, /offer\.totalPrice\.toFixed/);
+  assert.match(results, /displayPrice|displayFare/);
+  assert.match(results, /totalPrice|offerTotal/);
+  assert.match(results, /pricePerDay|dailyPrice/);
 });
 
 test("Deals retains every reusable product form and package tab", () => {

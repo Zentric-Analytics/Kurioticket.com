@@ -11,10 +11,35 @@ export function normalizeFeatureAvailability(value: unknown): FeatureAvailabilit
   if (!keys.every((key) => typeof record[key] === "boolean")) return null;
   return Object.fromEntries(keys.map((key) => [key, record[key]])) as FeatureAvailability;
 }
-export async function loadFeatureAvailability(fetcher: () => Promise<FeatureAvailability>, now = Date.now()) {
-  if (cached && cached.expiresAt > now) return { availability: cached.value, source: "cache" as const };
+export async function loadFeatureAvailability(fetcher: () => Promise<FeatureAvailability>, now = Date.now(), force = false) {
+  if (!force && cached && cached.expiresAt > now) return { availability: cached.value, source: "cache" as const };
   try { const normalized = normalizeFeatureAvailability(await fetcher()); if (!normalized) throw new Error("invalid availability response"); cached = { value: normalized, expiresAt: now + CACHE_TTL_MS }; return { availability: normalized, source: "network" as const }; }
   catch { return { availability: cached?.value ?? safeFeatureAvailability, source: cached ? "stale-cache" as const : "safe-default" as const }; }
+}
+
+export type AvailabilityLifecycleState = {
+  availability: FeatureAvailability;
+  initializing: boolean;
+  refreshing: boolean;
+};
+
+export function initialAvailabilityLifecycleState(value = getCachedFeatureAvailability()): AvailabilityLifecycleState {
+  return {
+    availability: value ?? safeFeatureAvailability,
+    initializing: !value,
+    refreshing: false,
+  };
+}
+
+export function beginAvailabilityRefresh(state: AvailabilityLifecycleState): AvailabilityLifecycleState {
+  return state.initializing ? state : { ...state, refreshing: true };
+}
+
+export function finishAvailabilityRefresh(
+  state: AvailabilityLifecycleState,
+  availability: FeatureAvailability,
+): AvailabilityLifecycleState {
+  return { availability, initializing: false, refreshing: false };
 }
 export function resetFeatureAvailabilityCacheForTests() { cached = undefined; }
 export type MobileProduct = "flight" | "hotel" | "car" | "deals";
