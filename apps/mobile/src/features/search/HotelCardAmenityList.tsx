@@ -5,6 +5,7 @@ import {
 } from "lucide-react-native";
 import { StyleSheet, Text, View } from "react-native";
 import { buildHotelAmenityPresentation, type HotelAmenityIconKey } from "../../../../../src/components/results/hotelAmenityPresentation";
+import { appFonts } from "../../theme/typography";
 import { ui } from "./SearchUi";
 
 const amenityIcons: Record<HotelAmenityIconKey, LucideIcon> = {
@@ -25,7 +26,7 @@ export function HotelCardAmenityList({ amenities }: { amenities: readonly unknow
         const Icon = amenityIcons[item.iconKey];
         return (
           <View key={item.key} style={styles.item}>
-            <Icon accessible={false} size={13} strokeWidth={1.8} color={ui.muted} />
+            <Icon accessible={false} size={14} strokeWidth={1.8} color={ui.muted} />
             <Text numberOfLines={1} style={styles.label}>{item.label}</Text>
           </View>
         );
@@ -36,6 +37,6 @@ export function HotelCardAmenityList({ amenities }: { amenities: readonly unknow
 
 const styles = StyleSheet.create({
   list: { gap: 3 },
-  item: { flexDirection: "row", alignItems: "center", gap: 6, minWidth: 0 },
-  label: { flexShrink: 1, color: ui.muted, fontSize: 10, lineHeight: 14 },
+  item: { flexDirection: "row", alignItems: "center", gap: 5, minWidth: 0 },
+  label: { flexShrink: 1, minWidth: 0, color: ui.muted, fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
 });
