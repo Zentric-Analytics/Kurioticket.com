@@ -1,0 +1,35 @@
+name: PR 5009 one-time conflict fix
+
+on:
+  push:
+    branches:
+      - codex/fix-flight-results-pagination-transition
+
+permissions:
+  contents: write
+
+jobs:
+  resolve-conflict:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/fix-flight-results-pagination-transition
+          fetch-depth: 0
+      - name: Merge current dev and resolve overlapping pagination hunks
+        run: |
+          set -euo pipefail
+          git fetch origin dev
+          test "$(git rev-parse HEAD^)" = "ae95084c81bea82d0eaeb5b7d6c07c1d60c3443a"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git merge --no-ff -X ours origin/dev -m "Merge branch 'dev' into codex/fix-flight-results-pagination-transition"
+          test -z "$(git diff --name-only --diff-filter=U)"
+          ! git grep -n -E '^(<<<<<<<|=======|>>>>>>>)' -- apps/mobile/src/features/search
+          git diff --check origin/dev...HEAD
+      - name: Remove one-time workflow and publish merge
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/pr5009-one-time-conflict-fix.yml
+          git commit --amend --no-edit
+          git push origin HEAD:codex/fix-flight-results-pagination-transition
