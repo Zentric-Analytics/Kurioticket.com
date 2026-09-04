@@ -28,12 +28,10 @@ public final class KurioticketPasskeyAutoFillModule: Module, ASAuthorizationCont
         self.controller = controller
         controller.performAutoFillAssistedRequests()
       }
-    }
+    }.runOnQueue(.main)
 
     Function("cancel") {
-      DispatchQueue.main.async {
-        self.cancelActive(resolveCancelled: true)
-      }
+      self.cancelActive(resolveCancelled: true)
     }
   }
 
@@ -42,7 +40,7 @@ public final class KurioticketPasskeyAutoFillModule: Module, ASAuthorizationCont
     if let window = scenes.flatMap({ $0.windows }).first(where: { $0.isKeyWindow }) {
       return window
     }
-    return ASPresentationAnchor()
+    return UIWindow(frame: UIScreen.main.bounds)
   }
 
   public func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
@@ -52,7 +50,8 @@ public final class KurioticketPasskeyAutoFillModule: Module, ASAuthorizationCont
     }
 
     let credentialId = Self.encodeBase64Url(assertion.credentialID)
-    let result: [String: Any?] = [
+    let userHandle: Any = assertion.userID.isEmpty ? NSNull() : Self.encodeBase64Url(assertion.userID)
+    let result: [String: Any] = [
       "id": credentialId,
       "rawId": credentialId,
       "type": "public-key",
@@ -60,10 +59,10 @@ public final class KurioticketPasskeyAutoFillModule: Module, ASAuthorizationCont
         "clientDataJSON": Self.encodeBase64Url(assertion.rawClientDataJSON),
         "authenticatorData": Self.encodeBase64Url(assertion.rawAuthenticatorData),
         "signature": Self.encodeBase64Url(assertion.signature),
-        "userHandle": assertion.userID.isEmpty ? nil : Self.encodeBase64Url(assertion.userID)
+        "userHandle": userHandle
       ],
-      "authenticatorAttachment": nil,
-      "clientExtensionResults": [:]
+      "authenticatorAttachment": NSNull(),
+      "clientExtensionResults": [String: Any]()
     ]
     finish(result: result)
   }
