@@ -4,9 +4,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
+import { getFlightResultsQuickMenuAnchor } from "./flightResultsQuickMenuAnchor";
 
 export type FlightResultsCompactMenuFrame = {
-  left: number;
   width: number;
 };
 
@@ -35,10 +35,17 @@ export function FlightResultsSheetShell({
 }) {
   const { theme } = useAppTheme();
   const inset = useSafeAreaInsets();
-  const { width: windowWidth } = useWindowDimensions();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const compactAnchor = compactMenu ? getFlightResultsQuickMenuAnchor() : undefined;
   const compactWidth = compactMenu ? Math.min(compactMenu.width, windowWidth - 24) : 0;
   const compactLeft = compactMenu
-    ? Math.max(12, Math.min(compactMenu.left, windowWidth - compactWidth - 12))
+    ? Math.max(12, Math.min(compactAnchor?.x ?? 12, windowWidth - compactWidth - 12))
+    : 0;
+  const compactTop = compactMenu
+    ? Math.max(inset.top + 8, Math.min(
+        compactAnchor ? compactAnchor.y + compactAnchor.height + 6 : inset.top + 116,
+        windowHeight - 300,
+      ))
     : 0;
 
   if (compactMenu) {
@@ -62,10 +69,10 @@ export function FlightResultsSheetShell({
             style={[
               styles.compactMenu,
               {
-                top: inset.top + 132,
+                top: compactTop,
                 left: compactLeft,
                 width: compactWidth,
-                backgroundColor: theme.surface,
+                backgroundColor: theme.dark ? theme.surface : "#FFFFFF",
                 borderColor: theme.dark ? theme.border : "#D8E1EC",
               },
             ]}
