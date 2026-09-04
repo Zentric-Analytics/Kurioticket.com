@@ -57,7 +57,7 @@ test("filter, price alert, and same-row count/range precede cards", () => {
   assert.doesNotMatch(persistentControls, /flightPersistentSearchControls|\{filterRail\}/);
   assert.doesNotMatch(persistentControls, /dateStrip|PriceAlert|flightResultCountLabel|FlightCard/);
   assert.match(source, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
-  assert.match(listHeader, /ListHeaderComponent=\{animatedFlightDateStrip\}/);
+  assert.match(listHeader, /ListHeaderComponent=\{flightDateStrip\}/);
   assert.match(listHeader, /\{filterRail\}[\s\S]*?<PriceAlert/);
   const summary = source.slice(source.indexOf("function FlightResultsSummaryRow"), source.indexOf("function FlightResultsPagination"));
   assert.match(summary, /flightResultCountLabel\(count\)[\s\S]*?\{range\.start\}–\{range\.end\}/);

@@ -293,6 +293,7 @@ export function DateStrip({
           const active = iso === date;
           const price = priceByDate[iso];
           const fareState = fareStateByDate?.[iso];
+          const disabled = active || (flightResults && fareState?.status === "loading");
           const hasPrice = price != null;
           const fareLabel = hasPrice
             ? price.accessibilityLabel
@@ -305,9 +306,10 @@ export function DateStrip({
             <Pressable
               key={iso}
               accessibilityRole="button"
-              accessibilityState={{ selected: active }}
+              accessibilityState={{ selected: active, disabled }}
               accessibilityLabel={flightResults ? `${fullDate}, ${fareLabel}` : undefined}
-              onPress={() => { if (!active) onSelect(iso); }}
+              disabled={disabled}
+              onPress={() => onSelect(iso)}
               hitSlop={flightResults ? 6 : undefined}
               style={({ pressed }) => [
                 s.date,

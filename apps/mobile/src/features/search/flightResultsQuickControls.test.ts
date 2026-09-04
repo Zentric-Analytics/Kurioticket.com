@@ -53,8 +53,8 @@ test("controls match web 44px geometry and retain horizontal compactness", () =>
   assert.match(controls, /ChevronDown/);
 });
 
-test("sticky placement remains below the fading date strip", () => {
-  assert.match(screen, /ListHeaderComponent=\{animatedFlightDateStrip\}/);
+test("sticky placement remains below the naturally scrolling date strip", () => {
+  assert.match(screen, /ListHeaderComponent=\{flightDateStrip\}/);
   assert.match(screen, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
   assert.match(screen, /renderSectionHeader=\{\(\) => \([\s\S]*?\{filterRail\}/);
   assert.match(screen, /stickySectionHeadersEnabled/);

@@ -37,19 +37,24 @@ test("flight results order uppercase date, uppercase weekday, then fare", () => 
   assert.match(priceLabel, /fontFamily: appFonts\.semibold/);
 });
 
-test("tiles distinguish progressive fare states and dates remain pressable", () => {
+test("tiles distinguish progressive fare states and disable only selected or loading dates", () => {
   assert.match(component, /: "—"/);
   assert.match(component, /"No fare"/);
   assert.match(component, /"Try later"/);
   assert.match(component, /"•••"/);
   assert.match(component, /"fare not checked"/);
-  assert.match(component, /if \(!active\) onSelect\(iso\)/);
+  assert.match(component, /const disabled = active \|\| \(flightResults && fareState\?\.status === "loading"\)/);
+  assert.match(component, /accessibilityState=\{\{ selected: active, disabled \}\}/);
+  assert.match(component, /disabled=\{disabled\}/);
+  assert.match(component, /onPress=\{\(\) => onSelect\(iso\)\}/);
   assert.match(component, /hitSlop=\{flightResults \? 6 : undefined\}/);
 });
 
 test("horizontal rail remains swipeable with three full tiles and a fourth peek", () => {
   assert.match(component, /<ScrollView[\s\S]*?horizontal/);
   assert.match(component, /ref=\{railRef\}/);
+  const scrollViewOpeningTag = component.slice(component.indexOf("<ScrollView"), component.indexOf(">", component.indexOf("<ScrollView")) + 1);
+  assert.doesNotMatch(scrollViewOpeningTag, /disabled=/);
   assert.match(styles, /flightDateNavigator: \{ height: 82, paddingHorizontal: 0 \}/);
   assert.match(styles, /flightDateRail: \{ height: 82 \}/);
   assert.match(styles, /flightDates: \{ paddingHorizontal: 16, paddingVertical: 5 \}/);

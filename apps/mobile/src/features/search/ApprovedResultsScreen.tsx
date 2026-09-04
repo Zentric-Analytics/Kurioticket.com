@@ -254,11 +254,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const nearbyFareRequests = useRef(new Map<string, AbortController>());
   const nearbyFareGeneration = useRef(0);
   const nearbyFareAppState = useRef(AppState.currentState);
-  const flightDateStripScrollY = useRef(new Animated.Value(0)).current;
-  const [flightDateStripHeaderHeight, setFlightDateStripHeaderHeight] = useState(88);
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
   const previousComparisonCurrency = useRef<string | null>(null);
   const previousFlightSearchKey = useRef<string | undefined>(undefined);
+  const pendingDateStripSelection = useRef<{ departureDate: string; returnDate?: string } | null>(null);
+  const pendingDateStripSelectionTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const clearFlightPaginationTimers = useCallback(() => {
     if (flightPaginationSettleTimer.current) clearTimeout(flightPaginationSettleTimer.current);
     if (flightPaginationFallbackTimer.current) clearTimeout(flightPaginationFallbackTimer.current);
@@ -286,15 +286,27 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   useEffect(() => {
     if (!flightResults || !plan.plan?.key) return;
     if (previousFlightSearchKey.current && previousFlightSearchKey.current !== plan.plan.key) {
+      const pendingSelection = pendingDateStripSelection.current;
+      pendingDateStripSelection.current = null;
+      if (pendingDateStripSelectionTimer.current) clearTimeout(pendingDateStripSelectionTimer.current);
+      pendingDateStripSelectionTimer.current = undefined;
+      const preserveDateStripPreferences = pendingSelection != null
+        && pendingSelection.departureDate === payload.departureDate
+        && pendingSelection.returnDate === payload.returnDate;
       cancelFlightPagination();
       setFlightPage(1);
-      setSort("price");
-      setFilters(emptyFlightFilters());
+      if (!preserveDateStripPreferences) {
+        setSort("price");
+        setFilters(emptyFlightFilters());
+      }
       setSortOpen(false);
       setFilterOpen(false);
     }
     previousFlightSearchKey.current = plan.plan.key;
-  }, [cancelFlightPagination, flightResults, plan.plan?.key]);
+  }, [cancelFlightPagination, flightResults, payload.departureDate, payload.returnDate, plan.plan?.key]);
+  useEffect(() => () => {
+    if (pendingDateStripSelectionTimer.current) clearTimeout(pendingDateStripSelectionTimer.current);
+  }, []);
   useEffect(() => {
     if (flightResults || !plan.plan?.key) return;
     if (previousHotelSearchKey.current && previousHotelSearchKey.current !== plan.plan.key) {
@@ -873,8 +885,18 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     const returnDate = payload.tripType === "round-trip" && typeof payload.returnDate === "string"
       ? preserveRoundTripDuration(flightDate, payload.returnDate, nextDepartureDate)
       : undefined;
+    cancelFlightPagination();
+    setFlightPage(1);
+    setSortOpen(false);
+    setFilterOpen(false);
+    if (pendingDateStripSelectionTimer.current) clearTimeout(pendingDateStripSelectionTimer.current);
+    pendingDateStripSelection.current = { departureDate: nextDepartureDate, returnDate };
+    pendingDateStripSelectionTimer.current = setTimeout(() => {
+      pendingDateStripSelection.current = null;
+      pendingDateStripSelectionTimer.current = undefined;
+    }, 10_000);
     router.setParams({ departureDate: nextDepartureDate, ...(returnDate ? { returnDate } : {}) });
-  }, [flightDate, payload.returnDate, payload.tripType]);
+  }, [cancelFlightPagination, flightDate, payload.returnDate, payload.tripType]);
   const flightDateStrip = (
     payload.tripType === "one-way" || payload.tripType === "round-trip" ? <DateStrip
             date={flightDate}
@@ -886,24 +908,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             searchIdentity={plan.plan?.key}
             onSelect={selectNearbyDate}
           /> : null
-  );
-  const flightDateStripOpacity = flightDateStripScrollY.interpolate({
-    inputRange: [0, flightDateStripHeaderHeight],
-    outputRange: [1, 0],
-    extrapolate: "clamp",
-  });
-  const animatedFlightDateStrip = (
-    <Animated.View
-      onLayout={({ nativeEvent }) => {
-        const measuredHeight = nativeEvent.layout.height;
-        if (measuredHeight > 0 && measuredHeight !== flightDateStripHeaderHeight) {
-          setFlightDateStripHeaderHeight(measuredHeight);
-        }
-      }}
-      style={{ opacity: flightDateStripOpacity }}
-    >
-      {flightDateStrip}
-    </Animated.View>
   );
   const filterRail = (product === "flight" ? (
     <FlightResultsQuickControls
@@ -1004,7 +1008,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           style={[s0.resultsScroll, { backgroundColor: flightCanvasColor }]}
           sections={[{ data: !flightState ? flightPageResults : [] }]}
           keyExtractor={(item) => item.id}
-          ListHeaderComponent={animatedFlightDateStrip}
+          ListHeaderComponent={flightDateStrip}
           renderSectionHeader={() => (
             <View
               style={[s0.flightFilterSectionHeader, { backgroundColor: flightCanvasColor }]}
@@ -1051,10 +1055,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           alwaysBounceVertical={false}
           bounces={false}
           overScrollMode="never"
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: flightDateStripScrollY } } }],
-            { useNativeDriver: true, listener: () => flightPaginationScheduleSettled.current?.() },
-          )}
+          onScroll={() => flightPaginationScheduleSettled.current?.()}
           onMomentumScrollEnd={() => flightPaginationFinishPositioning.current?.()}
           onScrollEndDrag={() => flightPaginationScheduleSettled.current?.()}
           onContentSizeChange={(_width, height) => { flightPaginationContentHeight.current = height; }}
