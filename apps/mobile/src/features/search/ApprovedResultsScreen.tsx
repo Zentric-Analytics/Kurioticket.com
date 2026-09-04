@@ -1298,7 +1298,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
             </View>
           </View>
           <View style={s0.flightCommercialRegion}>
-            <Text accessible={false} style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1}>
+            <Text accessible={false} style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>
               {fare?.formatted ?? "—"}
             </Text>
             {fare?.converted === true ? (
@@ -1457,7 +1457,7 @@ function HotelCard({
             accessibilityRole="button"
             accessibilityLabel={`Share ${result.name}`}
             onPress={shareHotel}
-            style={[s0.hotelAction, s0.hotelShareAction]}
+            style={s0.hotelAction}
           >
             <Share2 accessible={false} size={20} color={HOTEL_UTILITY_ICON_COLOR} />
           </Pressable>
