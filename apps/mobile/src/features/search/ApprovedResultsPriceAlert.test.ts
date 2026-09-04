@@ -24,6 +24,15 @@ test("Flight Results price alert uses a compact premium row and native switch", 
   assert.doesNotMatch(flightAlert, /Get notified when (?:this fare|fares) changes|>On<|>Off</);
 });
 
+test("Flight Results switch has compact Flight-only sizing without shrinking its control area", () => {
+  const flightBanner = flightAlert.slice(flightAlert.indexOf('if (flight)'), flightAlert.indexOf('if (product !== "hotel"'));
+  const hotelBanner = flightAlert.slice(flightAlert.indexOf('if (product !== "hotel"'));
+  assert.match(source, /flightPriceAlertSwitch: \{ transform: \[\{ scale: 0\.88 \}, \{ translateY: 1 \}\] \}/);
+  assert.match(flightBanner, /hitSlop=\{6\} style=\{s0\.flightPriceAlertSwitch\}/);
+  assert.match(source, /flightAlertSwitchSlot: \{ minWidth: 51, minHeight: 44/);
+  assert.doesNotMatch(hotelBanner, /flightPriceAlertSwitch|hitSlop=\{6\}/);
+});
+
 test("Flight Results price alert uses a neutral semantic surface and restrained border", () => {
   assert.match(flightAlert, /\{ backgroundColor: theme\.surface, borderColor: theme\.priceAlertBorder \}/);
   assert.doesNotMatch(flightAlert, /backgroundColor: theme\.priceAlertSurface/);
