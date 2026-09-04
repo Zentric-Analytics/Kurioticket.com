@@ -50,11 +50,12 @@ test("booking provider card preserves semantic light and dark surfaces", () => {
   assert.match(bookingCard, /color: theme\.textSecondary/);
 });
 
-test("hotel Offer selection remains available only for live inventory", () => {
-  assert.match(hotelDetail, /discovery \? "Inventory source" : "Choose where to book"/);
-  assert.match(hotelDetail, /<Offer[\s\S]*?selected=\{!discovery\}/);
+test("hotel continuation is available only for real internal rooms or provider truth", () => {
+  assert.match(hotelDetail, /const internalRoomFlowAvailable = roomOptions\.length > 0/);
+  assert.match(hotelDetail, /result\.searchPolicy\.bookable &&/);
+  assert.match(hotelDetail, /const canContinue = internalRoomFlowAvailable \|\| providerBookable/);
+  assert.match(hotelDetail, /disabled=\{!canContinue\}/);
   assert.match(offer, /selected && \{ borderColor: ui\.blue \}/);
-  assert.match(offer, /\{onSelect \? <Button label="Select" onPress=\{onSelect\} \/> : null\}/);
 });
 
 test("provider booking redirect logic and sticky CTA remain unchanged", () => {
