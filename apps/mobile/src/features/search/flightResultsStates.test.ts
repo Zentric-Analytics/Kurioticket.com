@@ -19,7 +19,7 @@ test("local sort and filters only derive displayed results and never set request
   const filterChangeBlock = screen.slice(screen.indexOf("const handleFlightFiltersChange"), screen.indexOf("const clearFlightFilters"));
   assert.match(sortedBlock, /filterAndSortFlights/);
   assert.doesNotMatch(sortedBlock, /setStatus|setRetry|load\(/);
-  assert.match(screen, /onApply=\{\(next\) => \{ setSort\(next\); setSortOpen\(false\); \}\}/);
+  assert.match(screen, /onApply=\{\(next\) => \{ setFlightPage\(1\); setSort\(next\); setSortOpen\(false\); \}\}/);
   assert.match(screen, /onChange=\{handleFlightFiltersChange\}/);
   assert.match(filterChangeBlock, /setFilters\(next\)/);
   assert.doesNotMatch(filterChangeBlock, /setStatus|setRetry|load\(/);
@@ -56,6 +56,6 @@ test("no-results and error recovery use edit and the guarded existing retry flow
 test("dedicated states avoid zero-count duplication and refresh errors retain usable results", () => {
   assert.match(screen, /status === "ready" && !flightState/);
   assert.match(screen, /setStatus\(resultsRef\.current\.length \? "ready" : "error"\)/);
-  assert.match(screen, /sections=\{\[\{ data: !flightState \? sorted as FlightResult\[\] : \[\] \}\]\}/);
+  assert.match(screen, /sections=\{\[\{ data: !flightState \? flightPageResults : \[\] \}\]\}/);
   assert.doesNotMatch(screen, /!flightState && sorted\.map/);
 });

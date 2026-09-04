@@ -20,9 +20,10 @@ test("flight result count uses correct singular and plural grammar", () => {
   assert.equal(flightResultCountLabel(31), "31 Results found");
 });
 
-test("flight count is derived from the collection rendered as FlightCards", () => {
+test("flight count stays total while FlightCards receive only the paginated slice", () => {
   assert.match(listHeader, /<FlightResultsSummaryRow[\s\S]*?count=\{sorted\.length\}/);
-  assert.match(sectionList, /sections=\{\[\{ data: !flightState \? sorted as FlightResult\[\] : \[\] \}\]\}/);
+  assert.match(source, /paginateFlightResults\(sorted as FlightResult\[\], clampedFlightPage\)/);
+  assert.match(sectionList, /sections=\{\[\{ data: !flightState \? flightPageResults : \[\] \}\]\}/);
   assert.match(renderItem, /renderItem=\{\(\{ item, index \}\) => \([\s\S]*?<FlightCard/);
   assert.doesNotMatch(source, /sorted\.map\(\(x, i\) =>\s*product === "flight"/);
 });
@@ -31,6 +32,7 @@ test("flight and paginated Hotel result counts are accessible headings", () => {
   assert.match(source, /function FlightResultsSummaryRow[\s\S]*?accessibilityRole="header"/);
   assert.match(source, /function HotelResultsSummaryRow[\s\S]*?accessibilityRole="header"/);
   assert.match(source, /accessibilityLabel=\{`Showing results \$\{range\.start\} through \$\{range\.end\}`\}/);
+  assert.match(source, /Showing results \$\{range\.start\} through \$\{range\.end\} of \$\{count\}/);
 });
 
 test("Hotel result summary matches Flight typography and horizontal hierarchy", () => {
@@ -50,13 +52,15 @@ test("Hotel summary retains the page-aware range supplied by pagination", () => 
   assert.match(source, /range=\{hotelRange\}/);
 });
 
-test("count and price alert share stable section-header content before cards", () => {
+test("filter, price alert, and same-row count/range precede cards", () => {
   assert.doesNotMatch(persistentControls, /flightPersistentSearchControls|\{filterRail\}/);
   assert.doesNotMatch(persistentControls, /dateStrip|PriceAlert|flightResultCountLabel|FlightCard/);
   assert.match(source, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
   assert.match(listHeader, /ListHeaderComponent=\{animatedFlightDateStrip\}/);
-  assert.match(listHeader, /\{filterRail\}[\s\S]*?<FlightResultsSummaryRow/);
-  assert.match(source, /function FlightResultsSummaryRow[\s\S]*?flightResultCountLabel\(count\)[\s\S]*?<PriceAlert/);
+  assert.match(listHeader, /\{filterRail\}[\s\S]*?<PriceAlert[\s\S]*?<FlightResultsSummaryRow/);
+  const summary = source.slice(source.indexOf("function FlightResultsSummaryRow"), source.indexOf("function FlightResultsPagination"));
+  assert.match(summary, /flightResultCountLabel\(count\)[\s\S]*?\{range\.start\}–\{range\.end\}/);
+  assert.doesNotMatch(summary, /<PriceAlert/);
   assert.doesNotMatch(renderItem, /PriceAlert|flightResultCountLabel/);
   assert.match(sectionList, /renderSectionHeader[\s\S]*?stickySectionHeadersEnabled/);
   assert.doesNotMatch(renderItem, /filterRail/);
