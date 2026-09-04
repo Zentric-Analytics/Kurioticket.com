@@ -1,0 +1,54 @@
+name: PR 5009 fix
+
+on:
+  push:
+    branches:
+      - codex/fix-flight-results-pagination-transition
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/fix-flight-results-pagination-transition
+          fetch-depth: 0
+      - name: Apply repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout ae95084c81bea82d0eaeb5b7d6c07c1d60c3443a -- apps/mobile/src/features/search/ApprovedResultsScreen.tsx
+          sed -i '/const flightFilterSectionHeight = useRef(0);/d' apps/mobile/src/features/search/ApprovedResultsScreen.tsx
+          sed -i '/viewOffset: flightFilterSectionHeight.current,/d' apps/mobile/src/features/search/ApprovedResultsScreen.tsx
+          sed -i '/onLayout={({ nativeEvent }) => { flightFilterSectionHeight.current = nativeEvent.layout.height; }}/d' apps/mobile/src/features/search/ApprovedResultsScreen.tsx
+          python -c 'from pathlib import Path; p=Path("apps/mobile/src/features/search/flightResultsPagination.test.ts"); s=p.read_text(); old="  assert.match(changePage, /viewOffset: flightFilterSectionHeight\\.current/);\n  assert.match(screen, /onLayout=\\{\\(\\{ nativeEvent \\}\\) => \\{ flightFilterSectionHeight\\.current = nativeEvent\\.layout\\.height; \\}\\}/);"; new="  assert.match(changePage, /scrollToLocation\\(\\{[\\s\\S]*?sectionIndex: 0,[\\s\\S]*?itemIndex: 0,[\\s\\S]*?viewPosition: 0,[\\s\\S]*?animated: true/);\n  assert.doesNotMatch(changePage, /viewOffset:/);\n  assert.doesNotMatch(screen, /flightFilterSectionHeight/);"; assert s.count(old)==1, s.count(old); p.write_text(s.replace(old,new,1))'
+          ! grep -q 'flightPaginationCommitting\|flightPaginationTargetRef\|flightPaginationSafetyTimer\|flightPaginationHiddenCard\|flightPaginationSkeletonCard' apps/mobile/src/features/search/ApprovedResultsScreen.tsx
+          ! grep -q 'flightFilterSectionHeight\|viewOffset:' apps/mobile/src/features/search/ApprovedResultsScreen.tsx
+          git diff --check
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+      - name: Install
+        working-directory: apps/mobile
+        run: npm ci
+      - name: Typecheck
+        working-directory: apps/mobile
+        run: npm run typecheck
+      - name: Focused tests
+        working-directory: apps/mobile
+        run: node --test --require ./testAssetSetup.cjs --import jiti/register src/features/search/flightResultsPagination.test.ts src/features/search/flightResultsStates.test.ts src/features/search/flightSortExperience.test.ts src/features/search/resultsScrollLayout.test.ts
+      - name: Publish repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/pr5009-fix.yml
+          git add apps/mobile/src/features/search/ApprovedResultsScreen.tsx apps/mobile/src/features/search/flightResultsPagination.test.ts
+          git commit -m 'fix(mobile): resolve flight pagination review blockers'
+          git push origin HEAD:codex/fix-flight-results-pagination-transition
