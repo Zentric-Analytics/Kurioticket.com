@@ -1,5 +1,8 @@
 import { Platform } from "react-native";
 import type { PasskeyRegistrationOptions } from "../../api/travelApi";
+import { normalizeNativePasskeyCreationError } from "./nativePasskeyDiagnostics";
+
+export { normalizeNativePasskeyCreationError } from "./nativePasskeyDiagnostics";
 
 type PasskeyModule = typeof import("react-native-passkeys");
 type NativeCreationResponse = NonNullable<Awaited<ReturnType<PasskeyModule["create"]>>>;
@@ -66,10 +69,7 @@ export async function createNativePasskey(
 }
 
 export function isPasskeyCancellation(error: unknown): boolean {
-  if (!error || typeof error !== "object") return false;
-  const value = error as { name?: unknown; message?: unknown; code?: unknown };
-  const text = `${String(value.name ?? "")} ${String(value.message ?? "")} ${String(value.code ?? "")}`.toLowerCase();
-  return text.includes("usercancelled") || text.includes("user canceled") || text.includes("user cancelled") || text.includes("aborterror") || text.includes("cancellation");
+  return normalizeNativePasskeyCreationError(error).category === "USER_CANCELLED";
 }
 
 export function defaultPasskeyName(copy: { ios: string; android: string }): string {

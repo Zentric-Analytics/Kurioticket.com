@@ -67,7 +67,7 @@ test("closing and cancellation clear sensitive state and invalidate stale work",
   ]) assert.ok(manager.includes(setter), `cleanup must include ${setter}`);
   assert.match(manager, /isPasskeyCancellation\(error\)/);
   assert.doesNotMatch(manager + adapter, /SecureStore|AsyncStorage/);
-  assert.doesNotMatch(manager + adapter, /console\.(?:log|info|debug|warn|error)/);
+  assert.match(manager, /if\(__DEV__\)console\.warn\("Android passkey creation diagnostic",\{platform:Platform\.OS,category:diagnostic\.category,code:diagnostic\.safeNativeCode\}\)/);
 });
 
 test("all new passkey UI copy is localized in English and Spanish", () => {
@@ -155,8 +155,18 @@ test("passkey feedback timers clear on edits, cancellation, flow changes, and un
 
 test("passkey failures preserve useful client errors but normalize low-level search wording", () => {
   assert.match(manager, /error\.status>0&&error\.status<500&&error\.code!=="invalid-response"\?error\.message:fallback/);
-  assert.match(manager, /fail\(error,purpose==="setup"\?copy\.registrationFailed:copy\.operationFailed,current\)/);
+  assert.match(manager, /diagnostic\.category==="UNKNOWN_NATIVE"&&diagnostic\.safeNativeCode/);
+  assert.match(manager, /await fail\(error,`\$\{fallback\}\$\{suffix\}`,current\)/);
   assert.doesNotMatch(manager, /search provider|search service|Search cancelled|search took too long/i);
+});
+
+test("Android creation diagnostics do not alter iOS or the registration API sequence", () => {
+  assert.match(manager, /if\(Platform\.OS!=="android"\|\|isPasskeyCancellation\(error\)\)throw error/);
+  const options = manager.indexOf("travelApi.passkeyRegistrationOptions(reauthToken)");
+  const create = manager.indexOf("createNativePasskey(result.options,controller.signal)");
+  const verify = manager.indexOf("travelApi.verifyPasskeyRegistration(");
+  assert.ok(options >= 0 && create > options && verify > create);
+  assert.doesNotMatch(manager, /challenge|credentialId|attestationObject|publicKey/);
 });
 
 test("Security removes the global passkey feedback row and uses compact passkey-only intro spacing", () => {
