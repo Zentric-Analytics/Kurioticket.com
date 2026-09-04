@@ -19,6 +19,12 @@ const marketCurrencySymbols = new Map(
   supportedCurrencies.flatMap(({ code, symbol }) => symbol ? [[code.toUpperCase(), symbol] as const] : []),
 );
 
+// Keep aligned with src/lib/currency/formatCurrency.ts for Hotel web/native precision parity.
+const hotelZeroDecimalCurrencies = new Set([
+  "BIF", "CLP", "COP", "DJF", "GNF", "HUF", "IDR", "ISK", "JPY", "KMF", "KPW",
+  "KRW", "MGA", "PYG", "RWF", "UGX", "VND", "VUV", "XAF", "XOF", "XPF",
+]);
+
 export function currencyForCountry(countryCode?: string | null) {
   return countryCode ? regionCurrency.get(countryCode.trim().toUpperCase()) ?? null : null;
 }
@@ -142,6 +148,24 @@ function formatCurrencyNumber(amount: number) {
   }
 }
 
+function hotelMarketFractionDigits(currency: string) {
+  return hotelZeroDecimalCurrencies.has(currency.toUpperCase()) ? 0 : 2;
+}
+
+function formatMarketCurrencyNumber(amount: number, currency: string) {
+  const fractionDigits = hotelMarketFractionDigits(currency);
+  try {
+    return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    }).format(Math.abs(amount));
+  } catch {
+    return Number.isFinite(amount)
+      ? Math.abs(amount).toFixed(fractionDigits)
+      : String(Math.abs(amount));
+  }
+}
+
 function resolveIntlCurrencySymbol(currency: string) {
   try {
     const formatter = new Intl.NumberFormat(undefined, {
@@ -202,8 +226,8 @@ export function formatMarketCurrency(amount: number, currency: string) {
   const symbol = currencyMarketSymbol(normalizedCurrency);
   const sign = amount < 0 ? "-" : "";
   return symbol
-    ? `${sign}${symbol}${formatCurrencyNumber(amount)}`
-    : `${sign}${formatCurrencyNumber(amount)} ${normalizedCurrency}`;
+    ? `${sign}${symbol}${formatMarketCurrencyNumber(amount, normalizedCurrency)}`
+    : `${sign}${formatMarketCurrencyNumber(amount, normalizedCurrency)} ${normalizedCurrency}`;
 }
 
 export function displayMarketPrice(
@@ -213,7 +237,28 @@ export function displayMarketPrice(
   rates: ExchangeRates,
 ): DisplayPrice {
   const price = displayPrice(amount, providerCurrency, displayCurrency, rates);
-  return { ...price, formatted: formatMarketCurrency(price.amount, price.currency) };
+  return {
+    ...price,
+    formatted: formatMarketCurrency(price.amount, price.currency),
+    accessibilityLabel: hotelMarketCurrencyAccessibilityLabel(price.amount, price.currency),
+  };
+}
+
+function hotelMarketCurrencyAccessibilityLabel(amount: number, currency: string) {
+  const normalizedCurrency = currency.toUpperCase();
+  const fractionDigits = hotelMarketFractionDigits(normalizedCurrency);
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: normalizedCurrency,
+      currencyDisplay: "name",
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    }).format(amount);
+  } catch {
+    const readableAmount = Number.isFinite(amount) ? amount.toFixed(fractionDigits) : String(amount);
+    return `${readableAmount} ${normalizedCurrency}`;
+  }
 }
 
 export function currencyAccessibilityLabel(amount: number, currency: string) {
