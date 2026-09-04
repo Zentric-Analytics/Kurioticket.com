@@ -19,6 +19,16 @@ test("Recent keeps canonical loading and false-empty protection", () => {
   assert.match(screen, /Unable to synchronize recent searches/);
 });
 
+test("Recent initial loading and error states sit outside the ScrollView", () => {
+  const firstState = screen.indexOf('<PageContentState state="loading" pageName="recent searches"');
+  const initialError = screen.indexOf('<PageContentState state="error" pageName="recent searches"');
+  const scroll = screen.indexOf('<ScrollView alwaysBounceVertical={false}');
+  assert.ok(firstState >= 0 && initialError >= 0 && scroll >= 0);
+  assert.ok(firstState < scroll);
+  assert.ok(initialError < scroll);
+  assert.match(screen, /recentError && !recentLoaded \? <PageContentState state="error" pageName="recent searches" onRetry=/);
+});
+
 test("Recent keeps local remove and clear behavior", () => {
   assert.match(screen, /travelApi\.deleteRecentSearch\(item\.id\)/);
   assert.match(screen, /setRecent\(\(current\) => current\.filter\(\(row\) => row\.id !== item\.id\)\)/);
