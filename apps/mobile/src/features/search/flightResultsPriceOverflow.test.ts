@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import type { DisplayPrice } from "../currency/displayCurrency";
 import { formatCurrency } from "../currency/displayCurrency";
+import { flightProviderFarePresentation } from "./flightPriceBasis";
 
 const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
 const ui = readFileSync("src/features/search/SearchUi.tsx", "utf8");
@@ -48,16 +50,36 @@ test("main fare stays full-size and single-line while secondary prices retain sa
   assert.doesNotMatch(screen + ui, /\d(?:\.\d)?[KM]`/);
 });
 
-test("provider fare strings retain readable footer space across supported phone widths", () => {
-  for (const providerPrice of [
-    "Provider price: $198",
-    "Provider price: $1,899",
-    "Provider price: ₦572,107",
-    "Provider price: Rp2,450,000",
-    "Provider price: ₫18,750,000",
-  ]) {
-    assert.doesNotMatch(providerPrice, /\d(?:\.\d)?[KM]\b/i);
+test("long provider fares use a non-lossy compact card string instead of microscopic text", () => {
+  const base: DisplayPrice = {
+    amount: 670000,
+    currency: "NGN",
+    formatted: "₦670,000",
+    accessibilityLabel: "670,000 Nigerian naira",
+    providerAmount: 420,
+    providerCurrency: "USD",
+    converted: true,
+  };
+  const cases = [
+    ["USD", 198, "$198"],
+    ["USD", 1899, "$1,899"],
+    ["NGN", 572107, "₦572,107"],
+    ["IDR", 2450000, "Rp2450000"],
+    ["VND", 18750000, "₫18750000"],
+  ] as const;
+
+  for (const [currency, amount, expected] of cases) {
+    const presentation = flightProviderFarePresentation({ ...base, providerCurrency: currency, providerAmount: amount });
+    assert.equal(presentation?.formatted, expected);
+    assert.equal(presentation?.formatted.replace(/\D/g, ""), String(amount));
+    assert.equal(presentation?.currency, currency);
+    assert.doesNotMatch(presentation?.formatted ?? "", /\d(?:\.\d)?[KM]\b/i);
   }
+});
+
+test("provider fare strings retain readable footer space across supported phone widths", () => {
+  const longestCardLabel = "Provider price: ₫18750000";
+  assert.ok(longestCardLabel.length < "Provider price: ₫18,750,000".length);
 
   for (const viewport of [320, 360, 375, 390, 412, 430]) {
     const footerWidth = viewport - 28 - 24;
