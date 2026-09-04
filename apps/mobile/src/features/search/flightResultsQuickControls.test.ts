@@ -28,8 +28,8 @@ test("web mobile filter colors are carried into native light mode", () => {
   assert.match(controls, /const webFilterPressed = "#F8FAFC"/);
   assert.match(controls, /const webFilterSurface = "#FFFFFF"/);
   assert.match(controls, /const surface = light \? webFilterSurface : theme\.surface/);
-  assert.match(controls, /const railSurface = theme\.dark \? theme\.surface : webFilterSurface/);
-  assert.match(controls, /backgroundColor: railSurface/);
+  assert.match(controls, /const railSurface = theme\.background/);
+  assert.match(controls, /backgroundColor: railSurface/); assert.doesNotMatch(controls, /const railSurface = theme\.dark \? theme\.surface : webFilterSurface/);
   assert.doesNotMatch(controls, /ui\.pale|#EEF4FF/);
 });
 

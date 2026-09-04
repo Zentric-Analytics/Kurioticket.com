@@ -50,6 +50,6 @@ test("compact menu light surface matches web white while dark mode stays semanti
 
 test("filter dismissal retains Web-style live edits while Done closes once", () => {
   assert.doesNotMatch(filter, /setDraft|onChange\(draft\)/);
-  assert.match(filter, /footer=\{full\?[\s\S]*?<Button label="Done"/);
+  assert.match(filter, /label=\{`\$\{count\} \$\{count===1\?"result":"results"\} found`\}/);
   assert.match(filter, /const close=\(\)=>\{setDragging\(false\);onClose\(\)\}/);
 });
