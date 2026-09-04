@@ -154,10 +154,11 @@ import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
 import { buildHotelFilterChips, hasGoogleMapsDiscovery } from "./hotelResultsPresentation";
 import { HotelResultsPagination } from "./HotelResultsPagination";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
-import type { MobileLocale } from "../../localization/mobileLocalizationCatalog";
+import { mobileLocales, type MobileLocale } from "../../localization/mobileLocalizationCatalog";
 import { travelAccountMessage } from "../../localization/travelAccountMessages";
 import { buildHotelResultsSummary } from "./hotelResultsSummary";
 import { flightResultsCopy, flightResultsSummary } from "./flightResultsSummary";
+import { providerLocalFlightDate } from "./flightArrivalDayOffset";
 import { getHotelLocationFieldDisplay } from "@/lib/search/hotelLocationFieldDisplay";
 
 type Product = "flight" | "hotel";
@@ -1120,7 +1121,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
     : theme.dark ? "#8FB5FF" : ui.blue;
   const baggageSummary = summarizeBaggage(result.baggageInfo) ?? "Review policy";
   const cabinSummary = formatCabinClass(result.cabinClass);
-  const fareRulesSummary = summarizeFareRules(result.refundInfo) ?? "Review before booking";
+  const fareRulesSummary = summarizeFareRules(result.refundInfo) ?? "Review booking rules";
   const baggageAccessibility = result.baggageInfo?.trim() || baggageSummary;
   const fareRulesAccessibility = result.refundInfo?.trim() || fareRulesSummary;
   const providerFare = flightProviderFarePresentation(fare);
@@ -1183,8 +1184,8 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
           </View>
         </View>
         <View style={s0.journeyList}>
-          <FlightJourneyRow label="OUTBOUND" leg={outbound} />
-          {returnLeg ? <FlightJourneyRow label="RETURN" leg={returnLeg} /> : null}
+          <FlightJourneyRow label="OUTBOUND" leg={outbound} locale={locale} />
+          {returnLeg ? <FlightJourneyRow label="RETURN" leg={returnLeg} locale={locale} /> : null}
         </View>
       </View>
       <View style={[s0.flightCardFooter, { borderTopColor: theme.border }]}>
@@ -1227,7 +1228,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
             <Armchair accessible={false} size={13} strokeWidth={2} color={supportTextColor}/>
             <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightMetadataText,{color:supportTextColor}]}>{labels.cabin}: {cabinSummary}</Text>
           </View>
-          <View style={s0.flightMetadataItem}>
+          <View style={[s0.flightMetadataItem, s0.flightMetadataItemWide]}>
             <FileText accessible={false} size={13} strokeWidth={2} color={supportTextColor}/>
             <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightMetadataText,{color:supportTextColor}]}>{labels.fareRule}: {fareRulesSummary}</Text>
           </View>
@@ -1236,17 +1237,20 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
     </View>
   );
 }
-function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: FlightCardLeg }) {
+function FlightJourneyRow({ label, leg, locale }: { label: "OUTBOUND" | "RETURN"; leg: FlightCardLeg; locale: MobileLocale }) {
   const { theme } = useAppTheme();
   const supportTextColor = theme.dark ? flightSupportText.dark : flightSupportText.light;
   const stopLabel = leg.stops
     ? `${leg.stops} stop${leg.stops === 1 ? "" : "s"}`
     : "Nonstop";
+  const intlLocale = mobileLocales.find((option) => option.code === locale)?.intl ?? "en-US";
+  const departureDate = providerLocalFlightDate(leg.departureTime, intlLocale);
+  const arrivalDate = providerLocalFlightDate(leg.arrivalTime, intlLocale);
   return (
     <View
       style={s0.journeyBlock}
       accessible
-      accessibilityLabel={`${label.toLowerCase()}: ${clock(leg.departureTime)} ${leg.originAirport} to ${clock(leg.arrivalTime)} ${leg.destinationAirport}, ${leg.duration}, ${stopLabel}`}
+      accessibilityLabel={`${label.toLowerCase()}: ${clock(leg.departureTime)} ${leg.originAirport}${departureDate ? `, ${departureDate}` : ""} to ${clock(leg.arrivalTime)} ${leg.destinationAirport}${arrivalDate ? `, ${arrivalDate}` : ""}, ${leg.duration}, ${stopLabel}`}
     >
       <Text style={[s0.journeyLabel, { color: theme.dark ? "#8FB5FF" : ui.blue }]}>{label}</Text>
       <View style={s0.journeyPrimaryRow}>
@@ -1263,6 +1267,7 @@ function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: F
       <View style={s0.journeyRouteRow}>
         <View style={s0.departureColumn}>
           <Text style={[s0.airportCode, { color: theme.textPrimary }]} numberOfLines={1}>{leg.originAirport}</Text>
+          {departureDate ? <Text style={[s0.airportDate, { color: supportTextColor }]} numberOfLines={1}>{departureDate}</Text> : null}
         </View>
         <View style={s0.timelineColumn} accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <View style={s0.routeTrack}>
@@ -1275,6 +1280,7 @@ function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: F
         </View>
         <View style={[s0.arrivalColumn, s0.rightColumnContract]}>
           <Text style={[s0.airportCode, { color: theme.textPrimary }]} numberOfLines={1}>{leg.destinationAirport}</Text>
+          {arrivalDate ? <Text style={[s0.airportDate, { color: supportTextColor }]} numberOfLines={1}>{arrivalDate}</Text> : null}
         </View>
       </View>
       <View style={s0.journeyStopRow}>
@@ -1579,7 +1585,7 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
     } finally { pendingRef.current = false; setPending(false); }
   };
   if (flight) {
-    return <View accessibilityLabel="Flight price alert" style={[compact ? s0.flightAlertCompact : s0.flightAlert,{ backgroundColor: theme.surface, borderColor: theme.priceAlertBorder }]}><View style={s0.flightAlertCopy}><Text numberOfLines={2} ellipsizeMode="tail" style={[compact ? s0.flightAlertCompactTitle : s0.flightAlertTitle, { color: theme.textPrimary }]}>Track this flight price</Text>{compact ? null : <Text style={[s0.flightAlertSubtitle, { color: supportTextColor }]} numberOfLines={1} ellipsizeMode="tail">Get notified when fares change</Text>}</View><View style={s0.flightAlertSwitchTarget}><Switch style={s0.flightAlertSwitchVisual} accessibilityLabel="Track this flight price" accessibilityRole="switch" accessibilityState={{ checked: isTracking, disabled: pending || loadingAlert || unavailable }} value={isTracking} disabled={pending || loadingAlert || unavailable} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: inactiveSwitchTrackColor, true: theme.switchTrackActive }} ios_backgroundColor={inactiveSwitchTrackColor} thumbColor={theme.surface}/></View><Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel="Create flight price alert"><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track prices</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Target price ({currency})</Text><TextInput autoFocus accessibilityLabel={`Target price in ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} placeholderTextColor={theme.textSecondary} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={[s0.alertError, theme.dark && { color: "#FF9C9C" }]}>{targetError}</Text> : null}<Button label={pending ? "Creating…" : "Create alert"} onPress={() => void createAlert()} /><Button label="Cancel" outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal></View>;
+    return <View accessibilityLabel="Flight price alert" style={[compact ? s0.flightAlertCompact : s0.flightAlert,{ backgroundColor: theme.surface, borderColor: theme.priceAlertBorder }]}>{compact ? <View style={[s0.flightAlertIcon, { backgroundColor: theme.dark ? "#173568" : "#EEF4FF" }]}><Bell accessible={false} size={18} strokeWidth={2} color={theme.dark ? "#8FB5FF" : ui.blue}/></View> : null}<View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[compact ? s0.flightAlertCompactTitle : s0.flightAlertTitle, { color: theme.textPrimary }]}>Track this flight price</Text><Text style={[s0.flightAlertSubtitle, { color: supportTextColor }]} numberOfLines={1} ellipsizeMode="tail">Get notified when fares change</Text></View><View style={s0.flightAlertSwitchTarget}><Switch style={s0.flightAlertSwitchVisual} accessibilityLabel="Track this flight price" accessibilityRole="switch" accessibilityState={{ checked: isTracking, disabled: pending || loadingAlert || unavailable }} value={isTracking} disabled={pending || loadingAlert || unavailable} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: inactiveSwitchTrackColor, true: theme.switchTrackActive }} ios_backgroundColor={inactiveSwitchTrackColor} thumbColor={theme.surface}/></View><Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel="Create flight price alert"><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track prices</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Target price ({currency})</Text><TextInput autoFocus accessibilityLabel={`Target price in ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} placeholderTextColor={theme.textSecondary} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={[s0.alertError, theme.dark && { color: "#FF9C9C" }]}>{targetError}</Text> : null}<Button label={pending ? "Creating…" : "Create alert"} onPress={() => void createAlert()} /><Button label="Cancel" outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal></View>;
   }
   if (product !== "hotel" || !plan) return null;
   if (!activePresentation.enabled) return null;
@@ -1677,8 +1683,8 @@ const s0 = StyleSheet.create({
   hotelResultsRange: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
   hotelFilteredEmpty: { alignItems: "center", gap: 10, paddingVertical: 28 },
   hotelClearFilters: { color: ui.blue, fontSize: 15, fontWeight: "800" },
-  flightResultsSummaryRow: { minHeight: 58, paddingHorizontal: 14, paddingVertical: 5, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-  flightResultsCountColumn: { flex: 1, minWidth: 0 },
+  flightResultsSummaryRow: { paddingHorizontal: 14, paddingTop: 7, paddingBottom: 10, alignItems: "stretch", gap: 8 },
+  flightResultsCountColumn: { minWidth: 0, flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 8 },
   flightResultCount: { fontSize: 13, lineHeight: 17, fontWeight: "700", fontFamily: appFonts.bold },
   flightResultRange: { marginTop: 1, fontSize: 10.5, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
   card: { width: "100%", borderWidth: 1, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 9, gap: 5, shadowColor: "#18305B", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 2 },
@@ -1706,25 +1712,27 @@ const s0 = StyleSheet.create({
   rightColumnContract: { alignItems: "flex-end" },
   time: { fontSize: 14, lineHeight: 18, fontWeight: "800", fontFamily: appFonts.extraBold, color: ui.navy },
   airportCode: { fontSize: 11, lineHeight: 14, fontWeight: "700", fontFamily: appFonts.bold },
+  airportDate: { marginTop: 1, fontSize: 9.5, lineHeight: 12, fontWeight: "500", fontFamily: appFonts.medium },
   timelineColumn: { flex: 1, minWidth: 46, alignItems: "center" },
   journeyDuration: { maxWidth: "100%", fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts.semibold, textAlign: "center" },
   stopLabel: { maxWidth: "100%", fontSize: 10, lineHeight: 13, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "center" },
   routeTrack: { width: "100%", minWidth: 46, flexDirection: "row", alignItems: "center", gap: 2 },
   routeDot: { width: 7, height: 7, borderRadius: 3.5, flexShrink: 0 },
   line: { flex: 1, height: 1.5, backgroundColor: ui.muted },
-  bigPrice: { maxWidth: "100%", minWidth: 0, flexShrink: 1, fontSize: 18, lineHeight: 23, fontWeight: "900", fontFamily: appFonts.black, color: ui.navy, textAlign: "right", fontVariant: ["tabular-nums"] },
+  bigPrice: { maxWidth: "100%", minWidth: 0, flexShrink: 1, fontSize: 17, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold, color: ui.navy, textAlign: "right", fontVariant: ["tabular-nums"] },
   fareRow: { width: "100%", paddingTop: 0, flexDirection: "row", justifyContent: "flex-end" },
   fareCopy: { width: "100%", maxWidth: "100%", minWidth: 0, alignItems: "flex-end" },
   estimatedPrice: { fontSize: 10, lineHeight: 13, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: 0.7, textAlign: "right" },
   providerPrice: { maxWidth: "100%", minWidth: 0, flexShrink: 1, marginTop: 1, fontSize: 11, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "right", fontVariant: ["tabular-nums"] },
   flightCardFooter: { width: "100%", marginTop: 5, paddingTop: 6, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "#D8E1EC", gap: 5 },
   flightFareRow: { width: "100%", flexDirection: "row", justifyContent: "flex-end" },
-  flightFareAction: { maxWidth: "58%", minWidth: 116, alignItems: "flex-end", gap: 1 },
+  flightFareAction: { width: "46%", minWidth: 128, flexShrink: 0, alignItems: "flex-end", gap: 1 },
   flightDealAction: { minHeight: 44, minWidth: 100, marginTop: 1, paddingHorizontal: 2, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 5 },
   flightDealActionPressed: { opacity: 0.58 },
   flightDealActionText: { fontSize: 13, lineHeight: 17, fontWeight: "700", fontFamily: appFonts.bold },
-  flightMetadataRow: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "center" },
-  flightMetadataItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 2 },
+  flightMetadataRow: { width: "100%", minWidth: 0, flexDirection: "row", flexWrap: "wrap", alignItems: "center", rowGap: 2 },
+  flightMetadataItem: { width: "50%", minWidth: 0, flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 2 },
+  flightMetadataItemWide: { width: "100%" },
   flightMetadataText: { flex: 1, minWidth: 0, fontSize: 9.5, lineHeight: 13, fontWeight: "500", fontFamily: appFonts.medium },
   metadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 6, marginBottom: 4 },
   metadataFooterContainer: { width: "100%", alignItems: "center" },
@@ -1825,9 +1833,10 @@ const s0 = StyleSheet.create({
   hotelSkeletonFooter: { marginTop: "auto", flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   hotelSkeletonPrice: { width: 58, height: 16 },
   flightAlert: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 0, flexDirection: "row", alignItems: "center", gap: 4, overflow: "hidden" },
-  flightAlertCompact: { maxWidth: "58%", minWidth: 166, minHeight: 44, flexDirection: "row", alignItems: "center", gap: 2 },
+  flightAlertCompact: { width: "100%", minHeight: 62, borderRadius: 13, borderWidth: 1, paddingHorizontal: 11, paddingVertical: 8, flexDirection: "row", alignItems: "center", gap: 9 },
+  flightAlertIcon: { width: 36, height: 36, borderRadius: 18, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   flightAlertCopy: { flex: 1, minWidth: 0, gap: 1 },
-  flightAlertCompactTitle: { fontSize: 11.5, lineHeight: 15, fontWeight: "700", fontFamily: appFonts.bold, textAlign: "right" },
+  flightAlertCompactTitle: { fontSize: 13, lineHeight: 17, fontWeight: "700", fontFamily: appFonts.bold },
   flightAlertTitle: { fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
   flightAlertSubtitle: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
   flightAlertSwitchTarget: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },

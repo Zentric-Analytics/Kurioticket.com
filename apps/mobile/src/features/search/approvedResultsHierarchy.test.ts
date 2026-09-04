@@ -37,7 +37,7 @@ test("the compact flight alert keeps its copy while replacing the management red
   assert.match(component, /Get notified when fares change/);
   assert.doesNotMatch(component, /Get the best deals/);
   assert.doesNotMatch(component, /Prices may change\. Book now and save\./);
-  assert.doesNotMatch(component, /flight-price-alert-bell|flightAlertIcon/);
+  assert.match(component, /flightAlertIcon/);
   assert.doesNotMatch(component, /flights-aircraft|flightAlertSky|flightAlertAircraft/);
   assert.match(component, /Create flight price alert/);
   assert.doesNotMatch(component, /Create a one-time email alert/);
@@ -60,12 +60,12 @@ test("the compact alert stays horizontal and readable on narrow screens", () => 
   assert.doesNotMatch(source, /flightAlertNarrow|flightAlertSkyNarrow/);
 });
 
-test("the flight alert uses content-driven compact vertical spacing", () => {
+test("the flight alert uses intentional panel spacing", () => {
   const bannerStyle = source.slice(source.indexOf("flightAlertCompact: {"), source.indexOf("flightAlertCopy: {"));
   const copyStyles = source.slice(source.indexOf("flightAlertCopy: {"), source.indexOf("flightAlertSwitchTarget: {"));
 
-  assert.match(bannerStyle, /minHeight: 44/);
-  assert.doesNotMatch(source, /flightAlertIcon:/);
+  assert.match(bannerStyle, /minHeight: 62/);
+  assert.match(source, /flightAlertIcon:/);
   assert.match(copyStyles, /flightAlertCopy: \{[^}]*gap: 1/);
   assert.match(copyStyles, /flightAlertTitle: \{ fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts\.bold/);
   assert.match(copyStyles, /flightAlertSubtitle: \{ fontSize: 12, lineHeight: 16/);
@@ -79,7 +79,7 @@ test("the flight alert is a neutral utility row without decoration or elevation"
   assert.doesNotMatch(component, /<FlowIcon/);
   assert.match(component, /backgroundColor: theme\.surface, borderColor: theme\.priceAlertBorder/);
   assert.doesNotMatch(bannerStyle, /shadowColor|shadowOpacity|shadowRadius|elevation/);
-  assert.match(bannerStyle, /minHeight: 44/);
+  assert.match(bannerStyle, /minHeight: 62/);
 });
 
 test("the flight alert uses semantic light and dark theme values", () => {

@@ -60,12 +60,13 @@ test("date and filter rails retain their horizontal interactions", () => {
   }
 });
 
-test("persistent flight controls and scrolling count keep compact spacing", () => {
+test("persistent flight controls and the polished summary panel keep compact spacing", () => {
   const count = styleBlock("flightResultCount", "card");
   const rail = styleBlock("filterRail", "resultsScroll");
   const filterSection = styleBlock("flightFilterSectionHeader", "resultsScroll");
   const filters = styleBlock("filters", "modalBackdrop");
   const summary = styleBlock("flightResultsSummaryRow", "flightResultsCountColumn");
+  const countColumn = styleBlock("flightResultsCountColumn", "flightResultCount");
   assert.match(rail, /height: 44/);
   assert.match(filterSection, /paddingTop: 8/);
   assert.match(filters, /paddingHorizontal: 14/);
@@ -73,8 +74,10 @@ test("persistent flight controls and scrolling count keep compact spacing", () =
   assert.match(filters, /gap: 8/);
   assert.match(filters, /alignItems: "center"/);
   assert.match(summary, /paddingHorizontal: 14/);
-  assert.match(summary, /flexDirection: "row"/);
-  assert.match(summary, /justifyContent: "space-between"/);
+  assert.match(summary, /alignItems: "stretch"/);
+  assert.match(summary, /gap: 8/);
+  assert.match(countColumn, /flexDirection: "row"/);
+  assert.match(countColumn, /justifyContent: "space-between"/);
   assert.match(count, /fontSize: 13/);
   assert.doesNotMatch(screen, /stickyFilterSurface|flightPersistentSearchControls/);
 });

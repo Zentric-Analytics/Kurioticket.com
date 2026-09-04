@@ -11,16 +11,18 @@ test("Flight Results price alert maps its existing weights to Inter faces", () =
   assert.match(source, /flightAlertSubtitle: \{ fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts\.medium \}/);
 });
 
-test("Flight Results price alert uses a compact visual switch inside a 44-point target", () => {
+test("Flight Results price alert uses a polished full-width panel and a 44-point switch target", () => {
   const bannerStyle = source.slice(source.indexOf("flightAlertCompact: {"), source.indexOf("flightAlertCopy: {"));
-  assert.match(bannerStyle, /maxWidth: "58%"/);
-  assert.match(bannerStyle, /minHeight: 44/);
+  assert.match(bannerStyle, /width: "100%"/);
+  assert.match(bannerStyle, /minHeight: 62/);
+  assert.match(bannerStyle, /borderRadius: 13/);
   assert.match(bannerStyle, /flexDirection: "row"/);
-  assert.match(bannerStyle, /gap: 2/);
+  assert.match(bannerStyle, /gap: 9/);
+  assert.match(source, /flightAlertIcon: \{ width: 36, height: 36, borderRadius: 18/);
   assert.match(source, /flightAlertCopy: \{ flex: 1, minWidth: 0, gap: 1 \}/);
   assert.match(source, /flightAlertSwitchTarget: \{ width: 44, height: 44/);
   assert.match(source, /flightAlertSwitchVisual: \{ transform: \[\{ scaleX: 0\.78 \}, \{ scaleY: 0\.78 \}\] \}/);
-  assert.match(flightAlert, /compact \? null : <Text[\s\S]*Get notified when fares change<\/Text>/);
+  assert.match(flightAlert, /Get notified when fares change<\/Text>/);
 });
 
 test("Flight Results price alert uses a neutral semantic surface and restrained border", () => {

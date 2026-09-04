@@ -7,8 +7,8 @@ const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.t
 const card = source.slice(source.indexOf("function FlightCard"), source.indexOf("function HotelCard"));
 
 test("outbound and return share one structured journey component", () => {
-  assert.match(card, /<FlightJourneyRow label="OUTBOUND" leg=\{outbound\} \/>/);
-  assert.match(card, /\{returnLeg \? <FlightJourneyRow label="RETURN" leg=\{returnLeg\} \/> : null\}/);
+  assert.match(card, /<FlightJourneyRow label="OUTBOUND" leg=\{outbound\} locale=\{locale\} \/>/);
+  assert.match(card, /\{returnLeg \? <FlightJourneyRow label="RETURN" leg=\{returnLeg\} locale=\{locale\} \/> : null\}/);
   assert.equal(card.match(/<View style=\{\[s0\.arrivalColumn, s0\.rightColumnContract\]\}>/g)?.length, 2);
   assert.match(source, /journeyPrimaryRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 \}/);
   assert.match(source, /departureColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);
@@ -24,7 +24,7 @@ test("arrival and price terminate on the shared right edge", () => {
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch"/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.doesNotMatch(source, /priceBox:/);
-  assert.match(source, /flightFareAction: \{ maxWidth: "58%", minWidth: 116, alignItems: "flex-end"/);
+  assert.match(source, /flightFareAction: \{ width: "46%", minWidth: 128, flexShrink: 0, alignItems: "flex-end"/);
   assert.match(source, /estimatedPrice: \{ fontSize: 10, lineHeight: 13, fontWeight: "700", fontFamily: appFonts\.bold, letterSpacing: 0\.7, textAlign: "right" \}/);
   assert.match(source, /providerPrice: \{[^}]*fontSize: 11, lineHeight: 14[^}]*textAlign: "right"/);
   assert.match(source, /flightFareRow: \{[^\n]*flexDirection: "row"[^\n]*justifyContent: "flex-end"/);
@@ -74,7 +74,7 @@ test("the compact fare action contains the only displayed fare and details contr
   assert.match(fareRow, /\{fare\?\.formatted \?\? "—"\}/);
   assert.match(fareRow, /accessible=\{false\}/);
   assert.match(fareRow, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.72\}/);
-  assert.match(source, /bigPrice: \{[^}]*fontSize: 18, lineHeight: 23[^}]*textAlign: "right"/);
+  assert.match(source, /bigPrice: \{[^}]*fontSize: 17, lineHeight: 22[^}]*fontWeight: "700"[^}]*textAlign: "right"/);
   assert.match(fareRow, /color: theme\.textPrimary/);
   assert.doesNotMatch(fareRow, /marginRight|position:/);
   assert.doesNotMatch(fareRow, /baggageSummary|fareRulesSummary|metadataItem/);
