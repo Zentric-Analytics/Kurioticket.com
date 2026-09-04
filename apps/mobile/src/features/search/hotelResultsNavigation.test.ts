@@ -14,22 +14,17 @@ const flightHeader = results.slice(
   results.indexOf("function FlightResultsHeader"),
   results.indexOf("function HotelResultsHeader"),
 );
-const compactHotelHeader = results.slice(
-  results.indexOf("{hotelCompactHeader ?"),
-  results.indexOf("{hotelBackToTop ?"),
-);
 const hotelRoute = rootLayout.match(
   /<Stack\.Screen\s+name="hotel-results"[\s\S]*?\/>/,
 )?.[0] ?? "";
 
-test("Hotel Results restores initial Back while the compact header remains gesture-only", () => {
+test("Hotel Results keeps one stable header with Back and Edit", () => {
   assert.match(hotelHeader, /accessibilityLabel="Go back"/);
   assert.match(hotelHeader, /router\.back\(\)/);
   assert.match(hotelHeader, /<ArrowLeft\b/);
   assert.match(hotelHeader, /accessibilityLabel=\{`Edit hotel search/);
-  assert.doesNotMatch(compactHotelHeader, /accessibilityLabel="Go back"|router\.back\(\)|<ArrowLeft\b/);
-  assert.match(compactHotelHeader, /accessibilityLabel="Edit hotel search"/);
-  assert.match(compactHotelHeader, /accessibilityLabel="Filters"/);
+  assert.equal(results.match(/<HotelResultsHeader/g)?.length, 1);
+  assert.doesNotMatch(results, /hotelCompactHeader|setHotelCompactHeader|compactDestination|compactMeta/);
 });
 
 test("Flight Results retains its visible Back navigation control", () => {
