@@ -444,6 +444,16 @@ test("native splash change remains native when its complete merge range includes
   assert.equal(classifyChangeSet(["apps/mobile/src/a.test.ts"]).classification, "NO_DELIVERY");
 });
 
+test("mobile test asset setup is tooling and cannot fail a release range closed", () => {
+  const result = classifyChangeSet([
+    "apps/mobile/testAssetSetup.cjs",
+    "apps/mobile/src/features/search/SearchUi.tsx",
+  ]);
+  assert.equal(result.classification, "OTA");
+  assert.deepEqual(result.mobileTooling, ["apps/mobile/testAssetSetup.cjs"]);
+  assert.deepEqual(result.uncertainMobile, undefined);
+});
+
 test("reviewed Production release evidence does not block an OTA-safe Preview progression", () => {
   const result = classifyChangeSet([
     "apps/mobile/release-baselines/ios/production-credential.json",
