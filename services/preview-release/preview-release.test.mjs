@@ -102,13 +102,14 @@ test("Render preflight reads only the approved staging service", async () => {
     serviceId: PREVIEW_IDENTITY.renderStagingServiceId,
     fetchImpl: async (url, options) => {
       requests.push({ url, method: options.method });
-      const body = url.includes("deploys") ? [{ deploy: { id: "dep-stage", status: "live" } }] : { id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket-web-staging" };
+      const body = url.includes("deploys") ? [{ deploy: { id: "dep-stage", status: "live" } }] : { id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket-web-staging", autoDeployTrigger: "off" };
       return { ok: true, text: async () => JSON.stringify(body) };
     },
   });
   assert.equal((await client.getService()).id, PREVIEW_IDENTITY.renderStagingServiceId);
+  assert.equal((await client.getService()).autoDeployOff, true);
   assert.equal((await client.latestDeploy()).id, "dep-stage");
-  assert.deepEqual(requests.map(({ method }) => method), ["GET", "GET"]);
+  assert.deepEqual(requests.map(({ method }) => method), ["GET", "GET", "GET"]);
   assert.equal(requests.every(({ url }) => url.includes(PREVIEW_IDENTITY.renderStagingServiceId)), true);
 });
 
@@ -119,6 +120,25 @@ test("Render preflight rejects wrong identity, authentication failure, and malfo
   await assert.rejects(unauthorized.getService(), /HTTP 401/);
   const malformed = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({ ok: true, text: async () => JSON.stringify({ id: "wrong" }) }) });
   await assert.rejects(malformed.getService(), /malformed or mismatched/);
+  for (const service of [
+    { autoDeployTrigger: "commit" },
+    { autoDeployTrigger: "checksPass" },
+    { autoDeploy: true },
+    { autoDeploy: "yes" },
+  ]) {
+    const drifted = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({
+      ok: true,
+      text: async () => JSON.stringify({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket-web-staging", ...service }),
+    }) });
+    await assert.rejects(drifted.getService(), /staging auto-deploy must be Off/);
+  }
+  for (const service of [{ autoDeployTrigger: "off" }, { autoDeploy: false }, { autoDeploy: "no" }]) {
+    const orchestrated = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({
+      ok: true,
+      text: async () => JSON.stringify({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket-web-staging", ...service }),
+    }) });
+    assert.equal((await orchestrated.getService()).autoDeployOff, true);
+  }
 });
 
 test("Render deploy creation reconciles an accepted mutation after an empty response", async () => {
@@ -206,7 +226,7 @@ test("provider preflight validates all read-only identities without mutation in 
       config: { mode },
       ledger: { healthCheck: async () => ({ connected: true }) },
       github: { latestDevSha: async () => sha },
-      render: { getService: async () => ({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket-web-staging" }), latestDeploy: async () => ({ id: "dep-stage", status: "live" }), createDeploy: async () => { mutations += 1; } },
+      render: { getService: async () => ({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket-web-staging", autoDeployOff: true }), latestDeploy: async () => ({ id: "dep-stage", status: "live" }), createDeploy: async () => { mutations += 1; } },
       renderWorker: { getPreviewWorkerService: async () => ({ id: PREVIEW_IDENTITY.renderWorkerServiceId, autoDeployOnCommit: true, branch: "dev" }) },
       eas: { projectInfo: async () => ({ projectId: PREVIEW_IDENTITY.easProjectId }), previewBuildHistory: async () => [], previewUpdateHistoryProbe: async () => [], createIosBuild: async () => { mutations += 1; }, publishUpdate: async () => { mutations += 1; } },
       apple: { previewContext: async () => ({ app: { id: "6797447471" }, group: { id: "group-preview", attributes: { isInternalGroup: true } } }) },
@@ -215,6 +235,7 @@ test("provider preflight validates all read-only identities without mutation in 
     assert.equal(result.mode, mode);
     assert.equal(result.submissionPerformed, false);
     assert.equal(result.renderWorkerAutoDeploy, true);
+    assert.equal(result.renderStagingAutoDeployOff, true);
     assert.equal(mutations, 0);
   }
 });
@@ -1298,7 +1319,7 @@ test("Render blueprint matches the active auto-deployed worker and keeps staging
   assert.match(render, /PREVIEW_POLL_INTERVAL_MS\s+value: 60000/);
   assert.match(render, /PREVIEW_LEASE_MS\s+value: 90000/);
   assert.match(render, /name: kurioticket-preview-release-db/);
-  assert.match(render, /name: kurioticket-web-staging[\s\S]*?autoDeploy: false/);
+  assert.match(render, /name: kurioticket-web-staging[\s\S]*?autoDeployTrigger: off/);
   for (const path of PREVIEW_WORKER_BUILD_PATHS) assert.match(render, new RegExp(`- ${path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
 });
 

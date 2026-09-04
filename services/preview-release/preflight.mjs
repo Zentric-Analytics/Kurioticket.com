@@ -28,6 +28,7 @@ export async function runPreviewPreflight({ config, ledger, github, render, rend
     databaseConnected: database.connected === true,
     renderServiceId: service.id,
     renderServiceName: service.name,
+    renderStagingAutoDeployOff: service.autoDeployOff === true,
     renderDeployId: deploy?.id ?? null,
     renderDeployStatus: deploy?.status ?? "none",
     renderWorkerServiceId: workerService.id,
