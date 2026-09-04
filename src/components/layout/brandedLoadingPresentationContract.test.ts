@@ -11,20 +11,22 @@ const presentationSource = readFileSync(
   "utf8",
 );
 
-test("web loading adapts the canonical single-message search presentation", () => {
+test("web loading adapts the canonical rotating search presentation", () => {
   assert.doesNotMatch(
     brandedLoadingSource,
     /import\s*\{[^}]*SEARCH_LOADING_ROTATION_MS[^}]*\}\s*from/,
   );
   assert.match(brandedLoadingSource, /const WEB_LOADING_MESSAGE_ROTATION_MS = 1_800/);
   assert.match(brandedLoadingSource, /title: presentation\.title/);
-  assert.match(brandedLoadingSource, /messages: \[presentation\.supportingText\]/);
+  assert.match(brandedLoadingSource, /messages: \[\.\.\.presentation\.messages\]/);
 });
 
-test("shared flight and car loading copy remains a canonical supporting message", () => {
-  assert.match(presentationSource, /supportingText: string/);
+test("shared travel loading copy remains a canonical message sequence", () => {
+  assert.match(presentationSource, /messages: readonly string\[\]/);
   assert.doesNotMatch(presentationSource, /SEARCH_LOADING_ROTATION_MS/);
-  assert.doesNotMatch(presentationSource, /messages: readonly string\[\]/);
+  for (const product of ["flight", "hotel", "car"]) {
+    assert.match(presentationSource, new RegExp(`${product}: \\{[\\s\\S]*?messages: \\[`));
+  }
 });
 
 test("web-only multi-message loaders retain local rotation support", () => {

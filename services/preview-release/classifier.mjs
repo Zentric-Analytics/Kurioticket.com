@@ -33,6 +33,7 @@ const MOBILE_SHARED_RUNTIME = [
   /^src\/lib\/geo\/(?:context|distance)\.ts$/,
   /^src\/lib\/region\/countryDisplayNames\.ts$/,
   /^src\/lib\/supportedLocales\.ts$/,
+  /^src\/shared\/presentation\/searchLoadingPresentation\.ts$/,
   /^src\/(?:data\/(?:airports|carRentalAreas)|shared\/airports)\.ts$/,
 ];
 const MOBILE_TOOLING = [

@@ -290,6 +290,7 @@ const classifications = [
   [["src/lib/geo/context.ts"], "OTA+WEB"],
   [["src/lib/cars/carLocationSuggestions.ts"], "OTA+WEB"],
   [["src/data/airports.ts"], "OTA+WEB"],
+  [["src/shared/presentation/searchLoadingPresentation.ts"], "OTA+WEB"],
   [["src/lib/deals/dealsState.ts"], "WEB"],
   [["apps/mobile/src/screens/Explore.tsx"], "OTA"],
   [["apps/mobile/assets/kurioticket-icon-ios.png"], "ANDROID_NATIVE+IOS_NATIVE"],
