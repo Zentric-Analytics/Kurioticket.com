@@ -16,17 +16,22 @@ test("state priority distinguishes async loading, failure, raw empty, filtered e
 
 test("local sort and filters only derive displayed results and never set request loading", () => {
   const sortedBlock = screen.slice(screen.indexOf("const sorted = useMemo"), screen.indexOf("const flightOptions"));
-  const filterChangeBlock = screen.slice(screen.indexOf("const handleFlightFiltersChange"), screen.indexOf("const clearFlightFilters"));
+  const fullFilterChangeBlock = screen.slice(screen.indexOf("const handleFullFlightFiltersChange"), screen.indexOf("const handleQuickFlightFiltersChange"));
+  const quickFilterChangeBlock = screen.slice(screen.indexOf("const handleQuickFlightFiltersChange"), screen.indexOf("const clearFlightFilters"));
+  const sortBinding = screen.slice(screen.indexOf("<FlightSortSheet"), screen.indexOf("<FlightFilterSheet"));
   assert.match(sortedBlock, /filterAndSortFlights/);
   assert.doesNotMatch(sortedBlock, /setStatus|setRetry|load\(/);
-  assert.match(screen, /onApply=\{\(next\) => \{ cancelFlightPagination\(\); setFlightPage\(1\); setSort\(next\); setSortOpen\(false\); \}\}/);
-  assert.match(screen, /onChange=\{handleFlightFiltersChange\}/);
-  assert.match(filterChangeBlock, /setFilters\(next\)/);
-  assert.doesNotMatch(filterChangeBlock, /setStatus|setRetry|load\(/);
+  assert.match(sortBinding, /onApply=\{\(next\) => \{ cancelFlightPagination\(\); setSort\(next\); setSortOpen\(false\); \}\}/);
+  assert.doesNotMatch(sortBinding, /setFlightPage\(1\)|setStatus|setRetry|load\(/);
+  assert.match(screen, /onChange=\{filterSection === "all" \? handleFullFlightFiltersChange : handleQuickFlightFiltersChange\}/);
+  assert.match(fullFilterChangeBlock, /setFilters\(next\)/);
+  assert.match(quickFilterChangeBlock, /setFilters\(next\)/);
+  assert.doesNotMatch(fullFilterChangeBlock, /setStatus|setRetry|load\(/);
+  assert.doesNotMatch(quickFilterChangeBlock, /setStatus|setRetry|load\(/);
 });
 
 test("filtered empty clears only filters while preserving sort and canonical search params", () => {
-  const clearFiltersBlock = screen.slice(screen.indexOf("const clearFlightFilters"), screen.indexOf("const canonicalHotelDestination"));
+  const clearFiltersBlock = screen.slice(screen.indexOf("const clearFlightFilters"), screen.indexOf("const scrollToFlightResultsBeginning"));
   assert.match(screen, /onClearFilters=\{clearFlightFilters\}/);
   assert.match(clearFiltersBlock, /setFilters\(emptyFlightFilters\(\)\)/);
   assert.doesNotMatch(clearFiltersBlock, /setSort|router\.|setRetry|setStatus/);
