@@ -41,14 +41,34 @@ test("loading covers API and first WebView render, while render failure safely r
   assert.match(screen, /onRetry=\{loadInitial\}/);
 });
 
-test("Share/Open offers explicit native Share and browser actions only after user action", () => {
-  assert.ok(screen.indexOf("<WebView") < screen.indexOf('testID="legal-action-toolbar"'));
-  assert.match(screen, /Alert\.alert\(title, undefined,/);
+test("legal controls are icon-only, right aligned above the real Profile tab bar", () => {
+  assert.match(screen, /testID="legal-action-dock"/);
+  assert.match(screen, /testID="legal-action-toolbar"/);
+  assert.match(screen, /toolbarDock: \{ minHeight: 66, alignItems: "flex-end"/);
+  assert.match(screen, /toolbarPill: \{ width: 112, height: 52/);
+  assert.match(screen, /<LegalShareIcon color=\{theme\.icon\} size=\{22\} \/>/);
+  assert.match(screen, /<FlowIcon name="refresh" color=\{theme\.icon\} size=\{22\} \/>/);
+  assert.doesNotMatch(screen, /<Text style=\{styles\.actionText\}>/);
+  assert.doesNotMatch(screen, /Share or open<|Refresh</);
+});
+
+test("Share/Open uses a compact anchored menu and only opens external actions after a tap", () => {
+  assert.match(screen, /testID="legal-action-menu"/);
+  assert.match(screen, /setActionMenuOpen\(\(open\) => !open\)/);
   assert.match(screen, /Share\.share\(\{ title, message:/);
   assert.match(screen, /Linking\.openURL\(publicUrl\)/);
-  assert.match(screen, /text: copy\.share/);
-  assert.match(screen, /text: copy\.openBrowser/);
-  assert.match(screen, /onPress=\{shareOrOpen\}/);
+  assert.match(screen, /accessibilityLabel=\{copy\.share\}/);
+  assert.match(screen, /accessibilityLabel=\{copy\.openBrowser\}/);
+  assert.doesNotMatch(screen, /Alert\.alert/);
+});
+
+test("refresh always remounts the WebView so identical legal content really reloads", () => {
+  assert.match(screen, /const \[webViewRevision, setWebViewRevision\] = useState\(0\)/);
+  assert.match(screen, /setWebViewRevision\(\(revision\) => revision \+ 1\)/);
+  assert.match(screen, /key=\{`\$\{slug\}-\$\{locale\}-\$\{webViewRevision\}`\}/);
+  assert.match(screen, /setRefreshing\(true\)/);
+  assert.match(screen, /disabled=\{refreshing\}/);
+  assert.match(screen, /ActivityIndicator size="small" color=\{theme\.icon\}/);
 });
 
 test("refresh preserves the previous rendered document on fetch or WebView-render failure", () => {
