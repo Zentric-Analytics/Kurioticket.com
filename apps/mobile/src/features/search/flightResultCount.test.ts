@@ -42,6 +42,7 @@ test("Hotel result summary matches Flight typography and horizontal hierarchy", 
   assert.match(component, /style=\{\[s0\.flightResultCount/);
   assert.match(component, /style=\{\[s0\.flightResultRange/);
   assert.match(component, />\{range\.start\}–\{range\.end\}<\/Text>/);
+  assert.doesNotMatch(component, /<PriceAlert|\bplan\??:|\bresults: HotelResult|priceAlertsAvailable/);
   assert.doesNotMatch(component, />Showing \{range\.start\}|s0\.hotelResultCount|s0\.hotelResultsRange/);
 });
 
