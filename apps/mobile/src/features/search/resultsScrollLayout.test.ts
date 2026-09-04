@@ -105,15 +105,14 @@ test("flight dates use full resolved fares in wider, single-line tiles", () => {
   assert.doesNotMatch(dateStrip, /ellipsizeMode="clip"/);
 });
 
-test("hotel summary and shortcuts participate in one measured vertical scroll", () => {
+test("hotel uses one stable summary above a native sticky filter rail", () => {
   const hotelLayout=screen.slice(alternateLayoutStart,screen.indexOf("<FlightSortSheet",alternateLayoutStart));
-  assert.equal(hotelLayout.match(/<ScrollView ref=\{hotelScrollRef\}/g)?.length, 1);
-  assert.match(hotelLayout,/<ScrollView ref=\{hotelScrollRef\}[\s\S]*?style=\{s0\.hotelIntroductoryControls\}[\s\S]*?<HotelResultsHeader[\s\S]*?\{filterRail\}[\s\S]*?<View style=\{\[s0\.body, \{ paddingBottom: Math\.max\(insets\.bottom \+ 16, 16\) \}\]\}>\{resultContent\}/);
-  assert.match(hotelLayout,/nativeEvent\.layout\.y \+ nativeEvent\.layout\.height/);
-  assert.match(hotelLayout,/setHotelIntroBoundary\(boundary\)/);
-  assert.match(hotelLayout,/y > hotelIntroBoundary \+ \(visible \? -4 : 4\)/);
-  assert.doesNotMatch(hotelLayout,/y\s*>\s*104/);
-  assert.match(hotelLayout,/setHotelBackToTop\(y>600\)/);
+  assert.equal(hotelLayout.match(/<ScrollView\s+[\s\S]*?ref=\{hotelScrollRef\}/g)?.length, 1);
+  assert.match(hotelLayout,/<HotelResultsHeader[\s\S]*?<ScrollView[\s\S]*?ref=\{hotelScrollRef\}[\s\S]*?stickyHeaderIndices=\{\[0\]\}[\s\S]*?style=\{\[s0\.hotelFilterSectionHeader,[\s\S]*?\{filterRail\}[\s\S]*?s0\.body[\s\S]*?\{resultContent\}/);
+  assert.equal(hotelLayout.match(/<HotelResultsHeader/g)?.length, 1);
+  assert.doesNotMatch(hotelLayout,/hotelIntroBoundary|setHotelIntroBoundary|hotelCompactHeader|setHotelCompactHeader|visible \? -4 : 4/);
+  assert.match(screen,/contentOffset\.y > 600/);
+  assert.match(screen,/visible === hotelBackToTopVisibleRef\.current/);
   assert.doesNotMatch(flightLayout, /hotelIntroBoundary|setHotelCompactHeader/);
 });
 test("Hotel Results reclaims BottomNav space while retaining the native bottom safe area", () => {
@@ -133,7 +132,8 @@ test("Hotel Results reclaims BottomNav space while retaining the native bottom s
 test("Hotel Back-to-top keeps its geometry and scrolling behavior above the safe area", () => {
   const backToTop = styleBlock("hotelBackToTop", "filterRail");
 
-  assert.match(screen, /setHotelBackToTop\(y>600\)/);
+  assert.match(screen, /contentOffset\.y > 600/);
+  assert.match(screen, /hotelBackToTopVisibleRef\.current = visible;[\s\S]*?setHotelBackToTop\(visible\)/);
   assert.match(screen, /accessibilityLabel="Back to top"[\s\S]*?scrollTo\(\{y:0,animated:true\}\)/);
   assert.match(backToTop, /position:"absolute"/);
   assert.match(backToTop, /right:16/);
@@ -147,7 +147,6 @@ test("hotel surviving sections own moderate spacing without changing the shared 
     screen.indexOf("function HotelResultsHeader"),
     screen.indexOf("function FlightSortModal"),
   );
-  const introSpacing = styleBlock("hotelIntroductoryControls", "hotelHeader");
   const headerSpacing = styleBlock("hotelHeader", "hotelHeaderMainRow");
   const headerRow = styleBlock("hotelHeaderMainRow", "hotelHeaderSide");
   const headerSide = styleBlock("hotelHeaderSide", "hotelHeaderBack");
@@ -155,9 +154,11 @@ test("hotel surviving sections own moderate spacing without changing the shared 
   const resultSpacing = styleBlock("hotelResultsContent", "flightResultsBody");
 
   assert.match(hotelHeader, /style=\{\[s0\.hotelHeader,/);
-  assert.match(introSpacing, /marginBottom: 12/);
+  const filterSpacing = styleBlock("hotelFilterSectionHeader", "flightFilterSectionHeader");
+  assert.match(filterSpacing, /paddingBottom: 12/);
+  assert.match(headerSpacing, /paddingTop: 12/);
   assert.match(headerSpacing, /paddingBottom: 12/);
-  assert.doesNotMatch(headerSpacing, /gap|height: 44|paddingTop|marginTop/);
+  assert.doesNotMatch(headerSpacing, /gap|height: 44|marginTop/);
   assert.match(headerRow, /width: "100%"/);
   assert.match(headerRow, /flexDirection: "row"/);
   assert.match(headerRow, /alignItems: "center"/);
@@ -166,7 +167,7 @@ test("hotel surviving sections own moderate spacing without changing the shared 
   assert.match(headerBack, /height: 44/);
   assert.doesNotMatch(headerRow, /gap|height: 44/);
   assert.doesNotMatch(screen, /hotelHeaderMeta/);
-  assert.match(resultSpacing, /paddingTop: 12/);
+  assert.doesNotMatch(resultSpacing, /paddingTop/);
   assert.doesNotMatch(styleBlock("filterRail", "hotelFilterRail"), /margin|paddingTop|paddingBottom/);
   assert.match(styleBlock("hotelFilterRail", "hotelFilterContent"), /height: 48/);
   assert.doesNotMatch(flightLayout, /hotelHeader|hotelResultsContent/);
