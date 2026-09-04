@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { router } from "expo-router";
-import { ActivityIndicator, Pressable, Share, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Linking, Pressable, Share, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import { fetchLegalDocument, type MobileLegalDocument } from "../../api/legalApi";
@@ -24,6 +24,8 @@ export function LegalScreen({ slug }: LegalScreenProps) {
   const [loadState, setLoadState] = useState<LoadState>("api-loading");
   const [refreshing, setRefreshing] = useState(false);
   const [refreshFailed, setRefreshFailed] = useState(false);
+  const refreshPreviousDocument = useRef<MobileLegalDocument | null>(null);
+  const refreshRenderPending = useRef(false);
   const title = t(slug === "terms-of-service" ? "terms" : "privacy");
   const pageName = slug === "terms-of-service" ? "terms of service" : "privacy policy";
   const publicUrl = slug === "terms-of-service" ? TERMS_URL : PRIVACY_URL;
@@ -36,7 +38,10 @@ export function LegalScreen({ slug }: LegalScreenProps) {
   }) : null, [document, localePresentation.direction, localePresentation.intl, theme.dark]);
 
   const loadInitial = useCallback(() => {
+    refreshPreviousDocument.current = null;
+    refreshRenderPending.current = false;
     setDocument(null);
+    setRefreshing(false);
     setRefreshFailed(false);
     setLoadState("api-loading");
     void fetchLegalDocument(slug, locale)
@@ -45,22 +50,62 @@ export function LegalScreen({ slug }: LegalScreenProps) {
   }, [locale, slug]);
 
   const refresh = useCallback(() => {
-    if (refreshing) return;
+    if (refreshing || !document) return;
+    refreshPreviousDocument.current = document;
+    refreshRenderPending.current = false;
     setRefreshing(true);
     setRefreshFailed(false);
     void fetchLegalDocument(slug, locale)
-      .then((value) => setDocument(value))
-      .catch(() => setRefreshFailed(true))
-      .finally(() => setRefreshing(false));
-  }, [locale, refreshing, slug]);
+      .then((value) => {
+        refreshRenderPending.current = true;
+        setDocument(value);
+      })
+      .catch(() => {
+        refreshPreviousDocument.current = null;
+        setRefreshFailed(true);
+        setRefreshing(false);
+      });
+  }, [document, locale, refreshing, slug]);
 
   useEffect(loadInitial, [loadInitial]);
 
-  const shareOrOpen = useCallback(() => {
+  const share = useCallback(() => {
     void Share.share({ title, message: `${title}\n${publicUrl}`, url: publicUrl });
   }, [publicUrl, title]);
 
+  const openInBrowser = useCallback(() => {
+    void Linking.openURL(publicUrl);
+  }, [publicUrl]);
+
+  const shareOrOpen = useCallback(() => {
+    Alert.alert(title, undefined, [
+      { text: copy.share, onPress: share },
+      { text: copy.openBrowser, onPress: openInBrowser },
+      { text: t("cancel"), style: "cancel" },
+    ]);
+  }, [copy.openBrowser, copy.share, openInBrowser, share, t, title]);
+
+  const handleWebViewLoad = useCallback(() => {
+    if (refreshRenderPending.current) {
+      refreshRenderPending.current = false;
+      refreshPreviousDocument.current = null;
+      setRefreshing(false);
+      setRefreshFailed(false);
+      return;
+    }
+    setLoadState("ready");
+  }, []);
+
   const handleWebViewError = useCallback(() => {
+    if (refreshRenderPending.current && refreshPreviousDocument.current) {
+      const previous = refreshPreviousDocument.current;
+      refreshRenderPending.current = false;
+      refreshPreviousDocument.current = null;
+      setDocument(previous);
+      setRefreshFailed(true);
+      setRefreshing(false);
+      return;
+    }
     setDocument(null);
     setLoadState("error");
   }, []);
@@ -85,7 +130,7 @@ export function LegalScreen({ slug }: LegalScreenProps) {
         incognito
         originWhitelist={["about:blank"]}
         onShouldStartLoadWithRequest={({ url }) => url.startsWith("about:blank")}
-        onLoad={() => setLoadState("ready")}
+        onLoad={handleWebViewLoad}
         onError={handleWebViewError}
         style={{ backgroundColor: theme.background }}
       /> : null}
