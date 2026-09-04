@@ -23,6 +23,8 @@ const PAGE_NAME_KEYS: Readonly<Record<string, MobileTranslationKey>> = {
   "price alerts": "priceAlerts",
   "recent searches": "recentSearches",
   "saved items": "savedItems",
+  "terms of service": "terms",
+  "privacy policy": "privacy",
 };
 
 const PAGE_STATE_COPY: Readonly<Record<MobileLocale, PageStateCopy>> = {

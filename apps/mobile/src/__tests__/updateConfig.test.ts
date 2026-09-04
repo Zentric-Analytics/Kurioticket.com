@@ -10,7 +10,7 @@ test("production uses the current native runtime epoch and waits for launch upda
     process.env.EXPO_PUBLIC_API_BASE_URL = "https://kurioticket.com";
     const appConfig = createAppConfig({ config: {} } as never);
     assert.equal(appConfig.version, "0.3.0");
-    assert.equal(appConfig.runtimeVersion, "production-0.3.1");
+    assert.equal(appConfig.runtimeVersion, "production-0.3.2");
     assert.equal(appConfig.updates?.checkAutomatically, "ON_LOAD");
     assert.equal(appConfig.updates?.fallbackToCacheTimeout, 10_000);
   } finally {
