@@ -77,7 +77,7 @@ test("independent Preview service is identity-locked, frozen, and TestFlight-int
   assert.match(client, /"build", "--platform", "ios", "--profile", "preview"/);
   assert.match(client, /"--freeze-credentials", "--no-wait", "--auto-submit-with-profile", "preview"/);
   assert.equal(eas.submit.preview.ios.ascAppId, "6797447471");
-  assert.doesNotMatch(client, /production-0\.3\.0|com\.kurioticket\.app["']/i);
+  assert.doesNotMatch(client, /production-0\.3\.1|com\.kurioticket\.app["']/i);
 });
 
 test("iOS Production shell bodies never interpolate dispatch inputs directly", () => {
@@ -172,7 +172,7 @@ test("Production iOS configuration selects its own OAuth plugin and identity", a
   assert.equal(config.name, "Kurioticket");
   assert.equal(config.ios?.bundleIdentifier, "com.kurioticket.app");
   assert.equal(config.scheme, "kurioticket");
-  assert.equal(config.runtimeVersion, "production-0.3.0");
+  assert.equal(config.runtimeVersion, "production-0.3.1");
   assert.equal(config.extra?.environment?.apiBaseUrl, "https://kurioticket.com");
   assert.deepEqual(config.splash, {
     image: "./assets/kurioticket-logo-primary-light-bg.png",

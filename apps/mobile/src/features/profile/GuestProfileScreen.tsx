@@ -24,8 +24,8 @@ export function GuestProfileScreen() {
       { label: "faq", icon: "help", destination: { kind: "native", href: "/faq" } },
     ] },
     { title: "aboutLegal", items: [
-      { label: "terms", icon: "document", destination: { kind: "external", href: "/terms" } },
-      { label: "privacy", icon: "shield", destination: { kind: "external", href: "/privacy" } },
+      { label: "terms", icon: "document", destination: { kind: "legal", page: "terms" } },
+      { label: "privacy", icon: "shield", destination: { kind: "legal", page: "privacy" } },
     ] },
   ];
   return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top"]}><ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}><View style={styles.header}><Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>{t("profile")}</Text></View><View style={styles.illustration}><TravelIllustration /></View><Text accessibilityRole="header" style={[styles.heroTitle, { color: theme.text }]}>{t("guestHeroTitle")}</Text><Text style={[styles.heroBody, { color: theme.muted }]}>{t("guestHeroBody")}</Text><Pressable accessibilityRole="button" accessibilityLabel={t("signIn")} accessibilityHint={t("signInHint")} onPress={() => router.push(signInHref("/(tabs)/profile"))} style={({ pressed }) => [styles.signIn, pressed && styles.pressed]}><FlowIcon name="person" color="white" size={24} /><Text style={styles.signInText}>{t("signIn")}</Text><View style={styles.signInArrow}><FlowIcon name="chevron" color="white" size={22} /></View></Pressable><View style={styles.sections}>{sections.map(section => <ProfileCardSection key={section.title} section={section} />)}</View><AppVersionFooter /></ScrollView></SafeAreaView>;
