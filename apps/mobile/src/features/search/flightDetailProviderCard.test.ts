@@ -53,7 +53,8 @@ test("booking provider card preserves semantic light and dark surfaces", () => {
 test("hotel continuation is available only for real internal rooms or provider truth", () => {
   assert.match(hotelDetail, /const internalRoomFlowAvailable = roomOptions\.length > 0/);
   assert.match(hotelDetail, /result\.searchPolicy\.bookable &&/);
-  assert.match(hotelDetail, /const canContinue = internalRoomFlowAvailable \|\| providerBookable/);
+  assert.match(hotelDetail, /nativeHotelOffers\(internalRoomFlowAvailable, providerBookable\)/);
+  assert.match(hotelDetail, /const canContinue = selectedOffer !== null/);
   assert.match(hotelDetail, /disabled=\{!canContinue\}/);
   assert.match(offer, /selected && \{ borderColor: ui\.blue \}/);
 });

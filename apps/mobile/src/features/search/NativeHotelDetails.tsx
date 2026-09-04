@@ -11,7 +11,8 @@ import {
 } from "react-native";
 import { ChevronLeft, ChevronRight, X } from "lucide-react-native";
 import type { HotelRoomOption } from "../../../../../src/lib/hotels/hotelRoomOptions";
-import { ui } from "./SearchUi";
+import type { HotelRoomDisplayPrice } from "./hotelDetailCurrency";
+import { colors } from "../../theme/tokens";
 
 type HotelTheme = {
   surface: string;
@@ -21,7 +22,11 @@ type HotelTheme = {
   icon: string;
 };
 
-export { canonicalHotelAddress, hotelStaySummary } from "./nativeHotelDetailsModel";
+export { canonicalHotelAddress, hotelStaySummary, meaningfulHotelCenterDistance } from "./nativeHotelDetailsModel";
+
+export type PresentedHotelRoomOption = HotelRoomOption & {
+  displayPrice: HotelRoomDisplayPrice | null;
+};
 
 export function NativeHotelGallery({
   name,
@@ -159,7 +164,7 @@ export function HotelRoomOptionsModal({
 }: {
   visible: boolean;
   onClose: () => void;
-  options: HotelRoomOption[];
+  options: PresentedHotelRoomOption[];
   theme: HotelTheme;
 }) {
   return (
@@ -204,19 +209,17 @@ export function HotelRoomOptionsModal({
                     .filter(Boolean)
                     .join(" · ")}
                 </Text>
-                <Text style={[s.optionPrice, { color: theme.textPrimary }]}>
-                  {new Intl.NumberFormat(undefined, {
-                    style: "currency",
-                    currency: option.currency,
-                  }).format(option.totalPrice)}{" "}
-                  total
+                <Text
+                  accessibilityLabel={option.displayPrice ? `${option.displayPrice.total.accessibilityLabel} total` : "Price unavailable"}
+                  style={[s.optionPrice, { color: theme.textPrimary }]}
+                >
+                  {option.displayPrice ? `${option.displayPrice.total.formatted} total` : "Price unavailable"}
                 </Text>
-                <Text style={[s.copy, { color: theme.textSecondary }]}>
-                  {new Intl.NumberFormat(undefined, {
-                    style: "currency",
-                    currency: option.currency,
-                  }).format(option.pricePerNight)}{" "}
-                  per night · {option.cancellationInfo}
+                <Text
+                  accessibilityLabel={option.displayPrice ? `${option.displayPrice.nightly.accessibilityLabel} per night. ${option.cancellationInfo}` : `Price unavailable. ${option.cancellationInfo}`}
+                  style={[s.copy, { color: theme.textSecondary }]}
+                >
+                  {option.displayPrice ? `${option.displayPrice.nightly.formatted} per night` : "Price unavailable"} · {option.cancellationInfo}
                 </Text>
                 <Text style={s.planning}>
                   Planning option · indicative price
@@ -272,7 +275,7 @@ const s = StyleSheet.create({
     borderWidth: 2,
     borderColor: "transparent",
   },
-  thumbnailSelected: { borderColor: ui.blue },
+  thumbnailSelected: { borderColor: colors.blue },
   thumbnail: { width: "100%", height: "100%" },
   remaining: {
     ...StyleSheet.absoluteFillObject,
@@ -318,5 +321,5 @@ const s = StyleSheet.create({
   optionName: { fontSize: 15, fontWeight: "900" },
   optionPrice: { fontSize: 18, fontWeight: "900", marginTop: 4 },
   copy: { fontSize: 12, lineHeight: 18 },
-  planning: { color: ui.blue, fontSize: 11, fontWeight: "800" },
+  planning: { color: colors.blue, fontSize: 11, fontWeight: "800" },
 });
