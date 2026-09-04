@@ -297,6 +297,7 @@ const classifications = [
   [["apps/mobile/ios/Podfile"], "IOS_NATIVE"],
   [["apps/mobile/android/app/build.gradle"], "ANDROID_NATIVE"],
   [["package-lock.json"], "ANDROID_NATIVE+IOS_NATIVE+WEB"],
+  [["render.yaml"], "WEB"],
   [["src/app/page.tsx", "apps/mobile/src/a.ts"], "OTA+WEB"],
   [["src/app/page.tsx", "apps/mobile/ios/a.swift"], "IOS_NATIVE+WEB"],
   [["docs/readme.md"], "NO_DELIVERY"],
