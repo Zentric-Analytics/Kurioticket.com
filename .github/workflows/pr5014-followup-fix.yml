@@ -110,6 +110,7 @@ jobs:
           git config user.name "Adekunlea917"
           git config user.email "adetunji.kaseem@zentricanalytics.com"
           rm .github/workflows/pr5014-followup-fix.yml
-          git add apps/mobile/src/features/search/ApprovedResultsScreen.tsx apps/mobile/src/features/search/flightResultsPagination.test.ts .github/workflows/pr5014-followup-fix.yml
+          rm -f .github/pr5014-trigger.txt
+          git add apps/mobile/src/features/search/ApprovedResultsScreen.tsx apps/mobile/src/features/search/flightResultsPagination.test.ts .github/workflows/pr5014-followup-fix.yml .github/pr5014-trigger.txt
           git commit -m "fix(mobile): validate complete date-strip search identity"
           git push origin HEAD:fix/date-strip-complete-search-identity
