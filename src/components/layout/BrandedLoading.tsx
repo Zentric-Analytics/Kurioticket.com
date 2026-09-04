@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { SEARCH_LOADING_ROTATION_MS, searchLoadingPresentation } from "@/shared/presentation/searchLoadingPresentation";
+import { searchLoadingPresentation } from "@/shared/presentation/searchLoadingPresentation";
 
 type BrandedLoadingProps = {
   title?: string;
@@ -43,6 +43,8 @@ const searchLoadingCopy = {
   { title: string; messages: string[] }
 >;
 
+const WEB_LOADING_MESSAGE_ROTATION_MS = 1_800;
+
 const variantClasses = {
   fullscreen: "min-h-screen items-center justify-center px-6 py-12 text-center",
   page: "py-6 text-left sm:py-8",
@@ -76,13 +78,18 @@ export function BrandedLoading({
     }),
     [t],
   );
-  const searchCopy = searchType
-    ? searchType === "hotel"
-      ? hotelSearchCopy
-      : searchType === "flight" || searchType === "car"
-        ? searchLoadingPresentation(searchType)
-        : searchLoadingCopy[searchType]
-    : undefined;
+  const searchCopy = useMemo(() => {
+    if (!searchType) return undefined;
+    if (searchType === "hotel") return hotelSearchCopy;
+    if (searchType === "flight" || searchType === "car") {
+      const presentation = searchLoadingPresentation(searchType);
+      return {
+        title: presentation.title,
+        messages: [presentation.supportingText],
+      };
+    }
+    return searchLoadingCopy[searchType];
+  }, [hotelSearchCopy, searchType]);
   const defaultLoadingMessages = useMemo(
     () => [t["brandedLoading.default.preparingExperience"]],
     [t],
@@ -101,7 +108,7 @@ export function BrandedLoading({
 
     const interval = window.setInterval(() => {
       setMessageIndex((current) => (current + 1) % loadingMessages.length);
-    }, SEARCH_LOADING_ROTATION_MS);
+    }, WEB_LOADING_MESSAGE_ROTATION_MS);
 
     return () => window.clearInterval(interval);
   }, [loadingMessages.length]);
