@@ -53,7 +53,7 @@ jobs:
         run: |
           npm run release:validate
           npx expo config --type public --json > "$RUNNER_TEMP/production-config.json"
-          node -e "const c=require(process.env.RUNNER_TEMP+'/production-config.json');if(c.android.package!=='com.kurioticket.app'||c.runtimeVersion!=='production-0.3.1'||c.extra.environment.channel!=='production'||c.extra.environment.apiBaseUrl!=='https://kurioticket.com')throw Error('Production configuration mismatch')"
+          node -e "const c=require(process.env.RUNNER_TEMP+'/production-config.json');if(c.android.package!=='com.kurioticket.app'||c.runtimeVersion!=='production-0.3.2'||c.extra.environment.channel!=='production'||c.extra.environment.apiBaseUrl!=='https://kurioticket.com')throw Error('Production configuration mismatch')"
       - name: Resolve approved binary baseline
         if: inputs.action == 'update'
         working-directory: apps/mobile
@@ -72,7 +72,7 @@ jobs:
           if [ "$DELIVERY_ACTION" = update ]; then BASE=$(node -e "const x=require(process.env.RUNNER_TEMP+'/baseline-evidence.json');process.stdout.write(x.commitSha)"); BASE_FP=$(node -e "const x=require(process.env.RUNNER_TEMP+'/baseline-evidence.json');process.stdout.write(x.nativeFingerprint)"); CLASSIFIER_ACTION=update; else BASE="$APPROVED_SHA"; BASE_FP=BUILD_ACTION; CLASSIFIER_ACTION=build; fi
           CURRENT_FP=$(node -e "const x=require(process.env.RUNNER_TEMP+'/current-fingerprint.json');process.stdout.write(x.hash)")
           set +e
-          node scripts/classify-release.mjs --variant production --base "$BASE" --head "$APPROVED_SHA" --baseline-fingerprint "$BASE_FP" --current-fingerprint "$CURRENT_FP" --runtime production-0.3.1 --channel production --action "$CLASSIFIER_ACTION" | tee "$RUNNER_TEMP/release-classification.json"
+          node scripts/classify-release.mjs --variant production --base "$BASE" --head "$APPROVED_SHA" --baseline-fingerprint "$BASE_FP" --current-fingerprint "$CURRENT_FP" --runtime production-0.3.2 --channel production --action "$CLASSIFIER_ACTION" | tee "$RUNNER_TEMP/release-classification.json"
           CLASSIFIER_PIPE_STATUS=("${PIPESTATUS[@]}")
           set -e
           if [ "${CLASSIFIER_PIPE_STATUS[0]}" -ne 0 ]; then exit "${CLASSIFIER_PIPE_STATUS[0]}"; fi
@@ -113,7 +113,7 @@ jobs:
             --play-history release-baselines/android/production-play-history.json \
             --package com.kurioticket.app \
             --profile production \
-            --runtime production-0.3.1 \
+            --runtime production-0.3.2 \
             "${PREVIOUS_HISTORY_ARGS[@]}" \
             --output "$RUNNER_TEMP/version-evidence.json"
       - name: Complete non-mutating Production dry run
@@ -136,7 +136,7 @@ jobs:
           EXPECTED_BUILT_VERSION=$(node -e "const x=require(process.env.RUNNER_TEMP+'/version-evidence.json');process.stdout.write(String(x.remoteVersionStatus==='uninitialized'?x.proposedVersionCode+1:x.proposedVersionCode))")
           BUILD_ID=$(node -e "const x=require(process.env.RUNNER_TEMP+'/delivery-result.raw.json');if(!Array.isArray(x)||x.length!==1||typeof x[0]?.id!=='string')throw Error('Build submission result is missing one exact ID');process.stdout.write(x[0].id)")
           export BUILD_ID
-          npx eas-cli@16.17.4 build:list --platform android --build-profile production --app-identifier com.kurioticket.app --app-version 0.3.0 --app-build-version "$EXPECTED_BUILT_VERSION" --runtime-version production-0.3.1 --channel production --git-commit-hash "$CHECKED_OUT_SHA" --status finished --limit 2 --json --non-interactive > "$RUNNER_TEMP/production-built-history.json"
+          npx eas-cli@16.17.4 build:list --platform android --build-profile production --app-identifier com.kurioticket.app --app-version 0.3.0 --app-build-version "$EXPECTED_BUILT_VERSION" --runtime-version production-0.3.2 --channel production --git-commit-hash "$CHECKED_OUT_SHA" --status finished --limit 2 --json --non-interactive > "$RUNNER_TEMP/production-built-history.json"
           AAB_URL=$(node -e "const x=require(process.env.RUNNER_TEMP+'/production-built-history.json');if(!Array.isArray(x)||x.length!==1||x[0]?.id!==process.env.BUILD_ID)throw Error('Filtered build history is missing or ambiguous');const u=x[0].artifacts?.applicationArchiveUrl??x[0].artifacts?.buildUrl;if(typeof u!=='string'||!/^https:\/\//.test(u)||!/.aab(?:\?|$)/i.test(u))throw Error('AAB URL is missing');process.stdout.write(u)")
           curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --output "$RUNNER_TEMP/production.aab" "$AAB_URL"
           curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --output "$RUNNER_TEMP/bundletool.jar" https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar
@@ -171,7 +171,7 @@ jobs:
           RELEASE_COMMIT: "${{ inputs.commit_sha }}"
           RELEASE_PACKAGE: com.kurioticket.app
           RELEASE_PROFILE: production
-          RELEASE_RUNTIME: production-0.3.1
+          RELEASE_RUNTIME: production-0.3.2
           RELEASE_CHANNEL: production
           BASELINE_EAS_BUILD_ID: "${{ inputs.baseline_eas_build_id }}"
           BASELINE_EVIDENCE_PATH: "${{ runner.temp }}/baseline-evidence.json"

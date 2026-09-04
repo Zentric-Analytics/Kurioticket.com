@@ -31,7 +31,7 @@ export function assertReleasePolicy(policy, eas) {
   require(preview.apiBaseUrl === "https://staging.kurioticket.com", "Preview API origin is crossed.");
   require(production.apiBaseUrl === "https://kurioticket.com", "Production API origin is crossed.");
   require(preview.runtimeVersion === "preview-0.3.0", "Preview runtime is not isolated.");
-  require(production.runtimeVersion === "production-0.3.1", "Production runtime is not isolated.");
+  require(production.runtimeVersion === "production-0.3.2", "Production runtime is not isolated.");
   require(![preview.runtimeVersion, production.runtimeVersion].includes(legacyRuntime), "Legacy runtime is forbidden.");
   require(preview.runtimeVersion !== production.runtimeVersion, "Preview and Production runtimes must differ.");
   require(preview.googleIosClientId === "459496589401-gi52kj4fscgf092pasrelkth2mal0mph.apps.googleusercontent.com", "Preview iOS OAuth client is not approved.");
