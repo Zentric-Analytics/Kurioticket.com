@@ -75,7 +75,7 @@ test("persistent flight controls and the polished summary panel keep compact spa
   assert.match(filters, /alignItems: "center"/);
   assert.match(summary, /paddingHorizontal: 14/);
   assert.match(summary, /alignItems: "stretch"/);
-  assert.match(summary, /gap: 8/);
+  assert.doesNotMatch(summary, /flexDirection: "column"/);
   assert.match(countColumn, /flexDirection: "row"/);
   assert.match(countColumn, /justifyContent: "space-between"/);
   assert.match(count, /fontSize: 13/);

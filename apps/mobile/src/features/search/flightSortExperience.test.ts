@@ -21,7 +21,7 @@ test("the sort control opens a compact web-parity menu", () => {
 test("sort changes apply immediately like web mobile", () => {
   assert.doesNotMatch(sheet, /draft|setDraft|Apply sort/);
   assert.match(sheet, /onPress=\{\(\) => onApply\(option\.value\)\}/);
-  assert.match(screen, /onApply=\{\(next\) => \{ setSort\(next\); setSortOpen\(false\); \}\}/);
+  assert.match(screen, /onApply=\{\(next\) => \{ setFlightPage\(1\); setSort\(next\); setSortOpen\(false\); \}\}/);
 });
 
 test("sort quick menu presents only Best, Cheapest, and Fastest", () => {

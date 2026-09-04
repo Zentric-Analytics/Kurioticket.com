@@ -21,7 +21,7 @@ test("ready flight results follow the approved sticky hierarchy", () => {
   assert.match(listHeader, /ListHeaderComponent=\{animatedFlightDateStrip\}/);
   assert.match(listHeader, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
   assert.ok(listHeader.indexOf("ListHeaderComponent=") < listHeader.indexOf("renderSectionHeader="));
-  assert.match(listHeader, /\{filterRail\}[\s\S]*?<FlightResultsSummaryRow/);
+  assert.match(listHeader, /\{filterRail\}[\s\S]*?<PriceAlert[\s\S]*?<FlightResultsSummaryRow/);
   assert.doesNotMatch(renderItem, /PriceAlert|flightResultCountLabel/);
   assert.match(renderItem, /<FlightCard/);
   assert.doesNotMatch(resultsBody.slice(header, list), /flightPersistentSearchControls|\{filterRail\}/);
@@ -44,12 +44,12 @@ test("the compact flight alert removes the large subtitle and management redirec
   assert.doesNotMatch(component, /<FlowIcon name="bell"/);
 });
 
-test("the flight price action is an accessible, backend-honest action chip", () => {
+test("the flight price action is an accessible, backend-honest native switch", () => {
   const component = source.slice(source.indexOf("function PriceAlert"), source.indexOf("export function BottomNav"));
-  assert.match(component, /<Pressable accessibilityRole="button" accessibilityLabel=\{actionAccessibilityLabel\}/);
-  assert.match(component, /accessibilityState=\{\{ selected: isTracking, disabled:/);
-  assert.match(component, /onPress=\{\(\) => void handleToggle\(!isTracking\)\}/);
-  assert.doesNotMatch(component, /<Switch|accessibilityRole="switch"/);
+  assert.match(component, /<Switch accessibilityRole="switch" accessibilityLabel="Track this flight price"/);
+  assert.match(component, /accessibilityState=\{\{ checked: isTracking, disabled: toggleDisabled, busy:/);
+  assert.match(component, /value=\{isTracking\} onValueChange=\{\(next\) => void handleToggle\(next\)\}/);
+  assert.doesNotMatch(component.slice(component.indexOf("if (flight)"), component.indexOf("if (product !==")), />On<|>Off<|actionAccessibilityLabel/);
 });
 
 test("the compact alert stays horizontal and readable on narrow screens", () => {
@@ -97,7 +97,7 @@ test("flight price-alert eligibility is route-level while the count stays filter
 });
 
 test("feature-disabled flight results pass availability into the switch while retaining existing alert management", () => {
-  assert.match(resultsBody, /<FlightResultsSummaryRow[\s\S]*?priceAlertsAvailable=\{availability\.priceAlerts\}/);
+  assert.match(resultsBody, /<PriceAlert product="flight"[\s\S]*?available=\{availability\.priceAlerts\}/);
   assert.match(resultsBody, /<HotelResultsSummaryRow[\s\S]*?priceAlertsAvailable=\{availability\.priceAlerts\}/);
 });
 
