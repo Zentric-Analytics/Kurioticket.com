@@ -982,7 +982,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                     logInitialMount={index === 0}
                   />
                 </View>
-                {flightPaginationPendingPage !== null && index < 3 ? <View style={s0.flightPaginationSkeletonCard} pointerEvents="none"><FlightLoadingSkeleton /></View> : null}
+                {flightPaginationPendingPage !== null ? <View style={s0.flightPaginationSkeletonCard} pointerEvents="none"><FlightLoadingSkeleton /></View> : null}
               </View>
             </>
           )}

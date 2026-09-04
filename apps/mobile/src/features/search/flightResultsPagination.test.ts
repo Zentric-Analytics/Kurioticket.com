@@ -51,7 +51,7 @@ test("pending Flight pagination disables controls and reuses the themed card ske
   assert.match(screen, /disabled=\{flightPaginationPendingPage !== null\}/);
   assert.match(screen, /accessibilityState=\{\{ busy: flightPaginationPendingPage !== null \}\}/);
   assert.match(screen, /accessibilityLabel=\{flightPaginationPendingPage !== null \? "Loading flight results page"/);
-  assert.match(screen, /flightPaginationPendingPage !== null && index < 3 \? <View[^>]*><FlightLoadingSkeleton \/><\/View>/);
+  assert.match(screen, /flightPaginationPendingPage !== null \? <View[^>]*><FlightLoadingSkeleton \/><\/View>/);
   assert.match(screen, /flightPaginationHiddenCard/);
   assert.match(screen, /importantForAccessibility=\{flightPaginationPendingPage !== null \? "no-hide-descendants" : "auto"\}/);
   assert.equal(source.match(/function FlightLoadingSkeleton\(/g)?.length, 1);
