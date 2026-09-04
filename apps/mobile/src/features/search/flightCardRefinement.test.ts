@@ -92,11 +92,11 @@ test("converted fares add truthful provider context without duplicating same-cur
   assert.ok(card.indexOf('style={s0.flightMetadataRegion}') < card.indexOf('<View style={s0.flightCommercialRegion}>'));
 });
 
-test("the whole card is the sole details action and View deal is a lightweight affordance", () => {
+test("the whole card is the sole details action with no visible CTA", () => {
   assert.match(card, /const openDetails = \(\) => router\.push\(\{ pathname: "\/flight-details"/);
   assert.match(card, /return \(\s*<Pressable[\s\S]*accessibilityRole="button"[\s\S]*accessibilityLabel=\{cardAccessibilityLabel\}[\s\S]*onPress=\{openDetails\}/);
   assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
-  assert.match(card, />› \{labels\.viewDeal\}<\/Text>/);
+  assert.doesNotMatch(card, /View deal|labels\.viewDeal|flightDealAction/);
   assert.doesNotMatch(card, /<PlaneTakeoff[^>]*>[\s\S]*?View deal/);
   assert.doesNotMatch(card, /labels\.viewFlight|viewFlightButton/);
   assert.doesNotMatch(card, /detailsButton|detailsButtonText/);
@@ -142,18 +142,18 @@ test("fare-rule summary classifies varied provider language without exact matchi
   assert.equal(summarizeFareRules(), null);
 });
 
-test("flight card uses a compact horizontal metadata row while airline identity may grow", () => {
+test("flight card uses a compact three-row metadata column while airline identity may grow", () => {
   const metadataBlock = card.slice(card.indexOf('style={s0.flightMetadataRegion}'));
   assert.match(card, /style=\{\[s0\.bigPrice, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\}/);
   assert.doesNotMatch(card, /s0\.bigPrice[^>]*(?:adjustsFontSizeToFit|minimumFontScale)/);
   assert.match(card, /style=\{\[s0\.airlineName, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{2\} ellipsizeMode="tail">/);
-  assert.equal(card.match(/style=\{s0\.flightMetadataItem\}/g)?.length, 2);
-  assert.match(card, /<ScrollView[\s\S]*horizontal[\s\S]*contentContainerStyle=\{s0\.flightMetadataPrimaryContent\}/);
-  assert.match(card, /style=\{s0\.flightFareRulesItem\}/);
+  assert.equal(card.match(/style=\{s0\.flightMetadataItem\}/g)?.length, 3);
+  assert.doesNotMatch(metadataBlock, /<ScrollView|horizontal/);
   assert.match(source, /card: \{[\s\S]*?paddingHorizontal: 12,[\s\S]*?paddingVertical: 9,[\s\S]*?gap: 5,/);
   assert.match(source, /flightCardFooter: \{[^\n]*width: "100%"/);
-  assert.match(source, /flightMetadataPrimaryContent: \{[^\n]*flexDirection: "row"/);
-  assert.match(source, /flightCommercialRegion: \{ minWidth: 100, maxWidth: "58%", flexShrink: 0, alignItems: "flex-end"/);
+  assert.match(source, /flightMetadataRegion: \{ flex: 1, minWidth: 0[^}]*gap: 4/);
+  assert.match(source, /flightMetadataText: \{ flexShrink: 1, minWidth: 0/);
+  assert.match(source, /flightCommercialRegion: \{ width: "44%", minWidth: 104, maxWidth: 132, flexShrink: 0, alignItems: "flex-end"/);
   assert.equal(card.match(/s0\.flightMetadataText,\{color:supportTextColor\}/g)?.length, 3);
   assert.doesNotMatch(source, /metadataSeparator:/);
   assert.doesNotMatch(metadataBlock, />·<\/Text>/);
@@ -161,8 +161,7 @@ test("flight card uses a compact horizontal metadata row while airline identity 
     assert.match(card, new RegExp(`<${icon} accessible=\\{false\\} size=\\{13\\} strokeWidth=\\{2\\} color=\\{supportTextColor\\}/>`));
   }
   assert.doesNotMatch(source, /benefitList:|benefitItem:/);
-  assert.match(source, /flightDealAction: \{[^\n]*minHeight: 28/);
-  assert.match(source, /flightDealActionText: \{ fontSize: 11, lineHeight: 14, fontWeight: "500"/);
+  assert.doesNotMatch(source, /flightDealAction(?:Text)?:/);
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
     const cardContentWidth = viewport - 28 - 24;
     assert.ok(cardContentWidth >= 258, `${viewport}px reserves at least 258px for the journey row`);
@@ -253,7 +252,7 @@ test("flight identity actions use a normal horizontal row without changing journ
   assert.match(source, /identityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 0, transform: \[\{ translateY: -3 \}\] \}/);
   assert.doesNotMatch(source, /identityActions: \{[^}]*position: "absolute"/);
   assert.doesNotMatch(source, /airlineHeader: \{[^}]*paddingRight: 68/);
-  assert.match(source, /journeyList: \{ width: "100%", marginTop: 10, gap: 10 \}/);
+  assert.match(source, /journeyList: \{ width: "100%", marginTop: 8, gap: 10 \}/);
 });
 
 test("operating-carrier clarity stays conditional beneath the primary airline identity", () => {
@@ -284,7 +283,7 @@ test("narrow flight cards reserve deterministic space for every journey section"
   assert.match(card, /<AirlineLogo[\s\S]*?variant="result-card"/);
   assert.match(airlineLogo, /logo: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
   assert.match(airlineLogo, /tile: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
-  assert.match(source, /airlineLogoColumn: \{ width: 42, flexShrink: 0, alignItems: "center" \}/);
+  assert.match(source, /airlineLogoColumn: \{ width: 38, flexShrink: 0, alignItems: "center" \}/);
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46/);
   assert.match(source, /departureColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);
   assert.match(source, /arrivalColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);
@@ -339,7 +338,7 @@ test("flight journey applies the approved Step 5 hierarchy, colors, and accessib
   assert.equal(card.match(/s0\.routeDot, \{ backgroundColor: theme\.textSecondary \}/g)?.length, 2);
   assert.equal(card.match(/s0\.line, \{ backgroundColor: theme\.border \}/g)?.length, 2);
   assert.match(card, /<PlaneTakeoff accessible=\{false\} size=\{14\} strokeWidth=\{2\} color=\{theme\.dark \? "#8FB5FF" : ui\.blue\} \/>/);
-  assert.equal(card.match(/accessible=\{false\} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"/g)?.length, 4);
+  assert.equal(card.match(/accessible=\{false\} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"/g)?.length, 3);
   assert.match(card, /const intlLocale = mobileLocales\.find/);
   assert.match(card, /const departureDate = providerLocalFlightDate\(leg\.departureTime, intlLocale\)/);
   assert.match(card, /const arrivalDate = providerLocalFlightDate\(leg\.arrivalTime, intlLocale\)/);
@@ -381,7 +380,7 @@ test("highlight is the only conditional identity action and uses the released ri
   assert.match(card, /theme\.dark \? "#8FB5FF" : ui\.blue/);
   assert.match(source, /resultBadge: \{ height: 24,[^}]*paddingHorizontal: 9, borderRadius: 12 \}/);
   assert.match(source, /resultBadgeText: \{ fontSize: 10, lineHeight: 13, fontWeight: "800", fontFamily: appFonts\.extraBold \}/);
-  assert.match(source, /journeyList: \{ width: "100%", marginTop: 10, gap: 10 \}/);
+  assert.match(source, /journeyList: \{ width: "100%", marginTop: 8, gap: 10 \}/);
 });
 
 test("saved flights remain visible through the canonical Saved source", () => {

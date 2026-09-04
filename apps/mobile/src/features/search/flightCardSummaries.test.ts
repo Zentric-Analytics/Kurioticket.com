@@ -6,22 +6,22 @@ import { formatCabinClass, summarizeBaggage, summarizeFareRules } from "./flight
 const source = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
 const card = source.slice(source.indexOf("function FlightCard"), source.indexOf("function FlightJourneyRow"));
 
-test("metadata uses baggage and cabin above a separate fare-rules row", () => {
+test("metadata groups baggage, cabin, and fare rules in one left footer column", () => {
   const row = card.slice(card.indexOf('style={s0.flightMetadataRegion}'));
   const baggage = row.indexOf("baggageSummary");
   const cabin = row.indexOf("cabinSummary");
   const fareRules = row.indexOf("labels.fareRules");
 
   assert.ok(baggage >= 0 && cabin > baggage && fareRules > cabin);
-  assert.equal(row.match(/style=\{s0\.flightMetadataItem\}/g)?.length, 2);
-  assert.match(row, /style=\{s0\.flightFareRulesItem\}/);
-  assert.match(card, /<ScrollView[\s\S]*horizontal[\s\S]*showsHorizontalScrollIndicator=\{false\}/);
+  assert.equal(row.match(/style=\{s0\.flightMetadataItem\}/g)?.length, 3);
+  assert.doesNotMatch(row, /<ScrollView|horizontal/);
   assert.match(row, /<Luggage\b/);
   assert.match(row, /<Armchair\b/);
   assert.match(row, /<FileText\b/);
   assert.match(card, /style=\{s0\.flightMetadataRegion\}[\s\S]*?style=\{s0\.flightCommercialRegion\}/);
-  assert.match(source, /flightMetadataPrimaryContent: \{[^\n]*flexDirection: "row"/);
-  assert.match(source, /flightMetadataItem: \{ flexShrink: 0, minWidth: 0, flexDirection: "row"/);
+  assert.match(source, /flightMetadataRegion: \{ flex: 1, minWidth: 0/);
+  assert.match(source, /flightMetadataItem: \{ minWidth: 0, flexDirection: "row"/);
+  assert.match(source, /flightMetadataText: \{ flexShrink: 1, minWidth: 0/);
   assert.doesNotMatch(source, /metadataSeparator:/);
   assert.doesNotMatch(source, /metadataRow: \{[^}]*justifyContent: "space-between"/);
   assert.doesNotMatch(source, /metadataRow: \{[^}]*flexWrap/);
@@ -65,6 +65,7 @@ test("metadata and full-width journey fit supported mobile widths", () => {
     const contentWidth = cardWidth - 24;
     assert.ok(contentWidth > 0, `${viewport}px card remains inside its viewport`);
     assert.ok(contentWidth >= 268, `${viewport}px retains a non-overflowing footer text region`);
+    assert.ok(contentWidth - 8 - 104 >= 156, `${viewport}px keeps separate metadata and price columns`);
   }
   assert.match(source, /journeyList: \{ width: "100%"/);
   assert.match(card, /style=\{s0\.flightMetadataRegion\}[\s\S]*?style=\{s0\.flightCommercialRegion\}/);
