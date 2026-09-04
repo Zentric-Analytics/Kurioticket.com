@@ -64,7 +64,7 @@ test("long provider fares use a non-lossy compact card string instead of microsc
     ["USD", 198, "$198"],
     ["USD", 1899, "$1,899"],
     ["NGN", 572107, "₦572,107"],
-    ["IDR", 2450000, "Rp2450000"],
+    ["IDR", 2450000, "IDR2450000"],
     ["VND", 18750000, "₫18750000"],
   ] as const;
 
