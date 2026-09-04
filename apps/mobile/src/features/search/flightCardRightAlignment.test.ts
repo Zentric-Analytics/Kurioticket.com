@@ -80,7 +80,7 @@ test("the coherent price column contains the only displayed fare and no CTA", ()
   assert.match(fareRow, /color: theme\.textPrimary/);
   assert.doesNotMatch(fareRow, /marginRight|position:/);
   assert.doesNotMatch(fareRow, /baggageSummary|fareRulesSummary|metadataItem/);
-  assert.match(fareRow, /fare\?\.converted === true[\s\S]*ESTIMATED PRICE/);
+  assert.match(fareRow, /mainPriceBasis \?[\s\S]*mainPriceBasis\.label/);
   assert.match(fareRow, /providerFare \? \([\s\S]*Provider price: \{providerFare\.formatted\}/);
   assert.doesNotMatch(fareRow, /Provider price: \{providerFare\.formatted\} \{providerFare\.currency\}/);
   assert.doesNotMatch(fareRow, /US\$|A\$|CA\$|Per traveler|Round trip|One way|Taxes included|From/);

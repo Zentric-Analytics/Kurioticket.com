@@ -109,7 +109,7 @@ import { colors } from "../../theme/tokens";
 import { buildFlightDetailParams } from "./flightDetailNavigation";
 import { withinFlightLoadingDeadline } from "./flightLoadingDeadline";
 import { logFlightSearchCheckpoint, startFlightSearchEventLoopMonitor } from "./flightSearchDiagnostics";
-import { flightProviderFarePresentation } from "./flightPriceBasis";
+import { flightMainPriceBasis, flightProviderFarePresentation } from "./flightPriceBasis";
 import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recentSearch";
 import {
   calendarIsoFromTimestamp,
@@ -1345,7 +1345,8 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
   const fareRulesAccessibility = result.refundInfo?.trim() || fareRulesSummary;
   const providerFare = flightProviderFarePresentation(fare);
   const labels = flightResultsCopy(locale);
-  const fareAccessibility = `${fare?.accessibilityLabel ?? "price unavailable"}${fare?.converted === true ? ", estimated price" : ""}${providerFare ? `, provider price ${providerFare.accessibilityLabel}` : ""}`;
+  const mainPriceBasis = flightMainPriceBasis(fare, labels);
+  const fareAccessibility = `${fare?.accessibilityLabel ?? "price unavailable"}${mainPriceBasis ? `, ${mainPriceBasis.accessibilityText}` : ""}${providerFare ? `, provider price ${providerFare.accessibilityLabel}` : ""}`;
   const openDetails = () => router.push({ pathname: "/flight-details", params: buildFlightDetailParams({ searchParams: params, result, fare, displayCurrencyContext }) });
   const accessibleLeg = (direction: "outbound" | "return", leg: FlightCardLeg) => `${direction}, ${clock(leg.departureTime)} ${leg.originAirport} to ${clock(leg.arrivalTime)} ${leg.destinationAirport}, ${leg.duration}, ${leg.stops ? `${leg.stops} stop${leg.stops === 1 ? "" : "s"}` : "nonstop"}`;
   const cardAccessibilityLabel = `View flight details for ${result.airlineName}, ${accessibleLeg("outbound", outbound)}${returnLeg ? `, ${accessibleLeg("return", returnLeg)}` : ""}, ${fareAccessibility}`;
@@ -1438,8 +1439,8 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
             <Text accessible={false} style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1}>
               {fare?.formatted ?? "—"}
             </Text>
-            {fare?.converted === true ? (
-              <Text accessible={false} style={[s0.estimatedPrice, { color: supportTextColor }]}>ESTIMATED PRICE</Text>
+            {mainPriceBasis ? (
+              <Text accessible={false} style={[s0.estimatedPrice, { color: supportTextColor }]}>{mainPriceBasis.label}</Text>
             ) : null}
             {providerFare ? (
               <Text accessible={false} style={[s0.providerPrice, { color: supportTextColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.9}>
