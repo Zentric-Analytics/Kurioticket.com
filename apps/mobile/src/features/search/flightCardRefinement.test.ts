@@ -80,7 +80,7 @@ test("flight card gives the compact visual fare one semantic spoken label", () =
 });
 
 test("converted fares add truthful provider context without duplicating same-currency fares", () => {
-  const fareBlock = card.slice(card.indexOf('<View style={s0.flightFareAction}>'), card.indexOf('<View\n          accessible'));
+  const fareBlock = card.slice(card.indexOf('<View style={s0.flightCommercialRegion}>'));
   assert.match(card, /flightProviderFarePresentation\(fare\)/);
   assert.match(fareBlock, /\{fare\?\.converted === true \? \([\s\S]*ESTIMATED PRICE[\s\S]*\) : null\}/);
   assert.match(fareBlock, /\{providerFare \? \([\s\S]*Provider price: \{providerFare\.formatted\}[\s\S]*\) : null\}/);
@@ -89,7 +89,7 @@ test("converted fares add truthful provider context without duplicating same-cur
   assert.match(fareBlock, /providerPrice, \{ color: supportTextColor \}/);
   assert.equal(card.match(/\{fare\?\.formatted \?\? "—"\}/g)?.length, 1);
   assert.doesNotMatch(fareBlock, /US\$|A\$|CA\$/);
-  assert.ok(card.indexOf('<View style={s0.flightFareAction}>') < card.indexOf('style={s0.flightMetadataRow}'));
+  assert.ok(card.indexOf('style={s0.flightMetadataRegion}') < card.indexOf('<View style={s0.flightCommercialRegion}>'));
 });
 
 test("the whole card is the sole details action and View deal is a lightweight affordance", () => {
@@ -143,15 +143,17 @@ test("fare-rule summary classifies varied provider language without exact matchi
 });
 
 test("flight card uses a compact horizontal metadata row while airline identity may grow", () => {
-  const metadataBlock = card.slice(card.indexOf('style={s0.flightMetadataRow}'));
-  assert.match(card, /style=\{\[s0\.bigPrice, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.72\}/);
+  const metadataBlock = card.slice(card.indexOf('style={s0.flightMetadataRegion}'));
+  assert.match(card, /style=\{\[s0\.bigPrice, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\}/);
+  assert.doesNotMatch(card, /s0\.bigPrice[^>]*(?:adjustsFontSizeToFit|minimumFontScale)/);
   assert.match(card, /style=\{\[s0\.airlineName, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{2\} ellipsizeMode="tail">/);
-  assert.equal(card.match(/style=\{s0\.flightMetadataItem\}/g)?.length, 3);
-  assert.match(card, /<ScrollView[\s\S]*horizontal[\s\S]*contentContainerStyle=\{s0\.flightMetadataContent\}/);
+  assert.equal(card.match(/style=\{s0\.flightMetadataItem\}/g)?.length, 2);
+  assert.match(card, /<ScrollView[\s\S]*horizontal[\s\S]*contentContainerStyle=\{s0\.flightMetadataPrimaryContent\}/);
+  assert.match(card, /style=\{s0\.flightFareRulesItem\}/);
   assert.match(source, /card: \{[\s\S]*?paddingHorizontal: 12,[\s\S]*?paddingVertical: 9,[\s\S]*?gap: 5,/);
-  assert.match(source, /flightCardFooter: \{[^\n]*gap: 5/);
-  assert.match(source, /flightMetadataContent: \{[^\n]*flexDirection: "row"/);
-  assert.match(source, /flightFareAction: \{ width: "46%", minWidth: 128, flexShrink: 0, alignItems: "flex-end"/);
+  assert.match(source, /flightCardFooter: \{[^\n]*width: "100%"/);
+  assert.match(source, /flightMetadataPrimaryContent: \{[^\n]*flexDirection: "row"/);
+  assert.match(source, /flightCommercialRegion: \{ minWidth: 100, maxWidth: "58%", flexShrink: 0, alignItems: "flex-end"/);
   assert.equal(card.match(/s0\.flightMetadataText,\{color:supportTextColor\}/g)?.length, 3);
   assert.doesNotMatch(source, /metadataSeparator:/);
   assert.doesNotMatch(metadataBlock, />·<\/Text>/);
@@ -159,7 +161,8 @@ test("flight card uses a compact horizontal metadata row while airline identity 
     assert.match(card, new RegExp(`<${icon} accessible=\\{false\\} size=\\{13\\} strokeWidth=\\{2\\} color=\\{supportTextColor\\}/>`));
   }
   assert.doesNotMatch(source, /benefitList:|benefitItem:/);
-  assert.match(source, /flightDealAction: \{[^\n]*minHeight: 44/);
+  assert.match(source, /flightDealAction: \{[^\n]*minHeight: 28/);
+  assert.match(source, /flightDealActionText: \{ fontSize: 11, lineHeight: 14, fontWeight: "500"/);
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
     const cardContentWidth = viewport - 28 - 24;
     assert.ok(cardContentWidth >= 258, `${viewport}px reserves at least 258px for the journey row`);
@@ -204,11 +207,12 @@ test("flight card keeps long prices single-line in the full-width fare row", () 
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center" \}/);
   assert.match(source, /metadataItem: \{ flex: 1, minWidth: 0, flexDirection: "row"/);
-  assert.match(source, /fareRow: \{ width: "100%", paddingTop: 0, flexDirection: "row", justifyContent: "flex-end" \}/);
+  assert.match(source, /flightLowerSection: \{[^\n]*flexDirection: "row"/);
   assert.match(source, /estimatedPrice: \{ fontSize: 10, lineHeight: 13, fontWeight: "700", fontFamily: appFonts\.bold, letterSpacing: 0\.7, textAlign: "right" \}/);
   assert.match(source, /providerPrice: \{[^}]*fontSize: 11, lineHeight: 14[^}]*textAlign: "right"/);
   assert.doesNotMatch(source, /actionColumn:/);
   assert.doesNotMatch(source, /priceBox:/);
+  assert.doesNotMatch(card, /s0\.bigPrice[^>]*(?:adjustsFontSizeToFit|minimumFontScale|ellipsizeMode)/);
 
   for (const formattedPrice of ["₦89,482", "₦837,706", "₦12,450,000", "$1,850", "$2,310", "$2,310", "£1,250", "€1,099"]) {
     assert.ok(formattedPrice.length > 0, `${formattedPrice} remains a single Text value`);
