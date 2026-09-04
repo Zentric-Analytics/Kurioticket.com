@@ -12,21 +12,25 @@ test("welcome keeps passkeys out of the top-level auth choices", () => {
   assert.doesNotMatch(welcome, /Continue with passkey|Sign in with passkey|onPasskey/);
 });
 
-test("email screen has no visible passkey UI and marks the identifier as username", () => {
+test("email screen has no visible passkey UI, marks the identifier as username, and starts discovery from focus", () => {
   const screens = source("src/features/auth/AuthFormScreens.tsx");
   assert.doesNotMatch(screens, /Sign in with passkey|passkeyOption|onPasskey|passkeyLoading/);
   assert.match(screens, /autoComplete="username"/);
   assert.match(screens, /textContentType="username"/);
+  assert.match(screens, /onFocus=\{onCredentialFocus\}/);
 });
 
-test("email step starts silent AutoFill-assisted passkey discovery", () => {
+test("email focus starts silent AutoFill-assisted passkey discovery", () => {
   const flow = source("src/features/auth/AuthFlow.tsx");
   const bridge = source("src/features/passkeys/passkeyAutoFill.ts");
   const swift = source("modules/kurioticket-passkey-autofill/ios/KurioticketPasskeyAutoFillModule.swift");
+  const options = flow.indexOf("authApi.passkeyOptions(controller.signal)");
+  const autoFill = flow.indexOf("startPasskeyAutoFill({ rpId: options.rpId, challenge: options.challenge })");
+  const verify = flow.indexOf("authApi.passkeyVerify(assertion, controller.signal)");
+  assert.ok(options > 0 && autoFill > options && verify > autoFill);
+  assert.match(flow, /const startSilentPasskeyAutoFill = useCallback/);
   assert.match(flow, /step !== "email" \|\| !isPasskeyAutoFillAvailable\(\)/);
-  assert.match(flow, /authApi\.passkeyOptions\(controller\.signal\)/);
-  assert.match(flow, /startPasskeyAutoFill\(\{ rpId: options\.rpId, challenge: options\.challenge \}\)/);
-  assert.match(flow, /authApi\.passkeyVerify\(assertion, controller\.signal\)/);
+  assert.match(flow, /onCredentialFocus=\{startSilentPasskeyAutoFill\}/);
   assert.doesNotMatch(flow, /getNativePasskey|continuePasskey|passkeyLoading/);
   assert.match(bridge, /Platform\.OS === "ios"/);
   assert.match(swift, /performAutoFillAssistedRequests\(\)/);
@@ -34,9 +38,12 @@ test("email step starts silent AutoFill-assisted passkey discovery", () => {
   assert.match(swift, /controller\?\.cancel\(\)/);
 });
 
-test("AutoFill discovery stays silent when no matching credential is available", () => {
+test("AutoFill discovery stays silent and is cancelled when the email flow is left", () => {
   const flow = source("src/features/auth/AuthFlow.tsx");
   assert.match(flow, /AutoFill-assisted discovery is intentionally silent/);
+  assert.match(flow, /const stopPasskeyAutoFill = useCallback/);
+  assert.match(flow, /if \(step === "email"\) return;\s*stopPasskeyAutoFill\(\)/);
+  assert.match(flow, /useEffect\(\(\) => \(\) => stopPasskeyAutoFill\(\)/);
   assert.doesNotMatch(flow, /No Kurioticket passkey was found|Too many passkey attempts|Passkey sign-in could not be completed/);
 });
 
