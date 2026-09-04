@@ -1246,23 +1246,15 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
             accessibilityLabel={`${labels.baggage}: ${baggageAccessibility}. ${labels.cabin}: ${cabinSummary}. ${labels.fareRule}: ${fareRulesAccessibility}.`}
             style={s0.flightMetadataRegion}
           >
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              directionalLockEnabled
-              style={s0.flightMetadataPrimaryRow}
-              contentContainerStyle={s0.flightMetadataPrimaryContent}
-            >
-              <View style={s0.flightMetadataItem}>
-                <Luggage accessible={false} size={13} strokeWidth={2} color={supportTextColor}/>
-                <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightMetadataText,{color:supportTextColor}]}>{labels.baggage}: {baggageSummary}</Text>
-              </View>
-              <View style={s0.flightMetadataItem}>
-                <Armchair accessible={false} size={13} strokeWidth={2} color={supportTextColor}/>
-                <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightMetadataText,{color:supportTextColor}]}>{labels.cabin}: {cabinSummary}</Text>
-              </View>
-            </ScrollView>
-            <View style={s0.flightFareRulesItem}>
+            <View style={s0.flightMetadataItem}>
+              <Luggage accessible={false} size={13} strokeWidth={2} color={supportTextColor}/>
+              <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightMetadataText,{color:supportTextColor}]}>{labels.baggage}: {baggageSummary}</Text>
+            </View>
+            <View style={s0.flightMetadataItem}>
+              <Armchair accessible={false} size={13} strokeWidth={2} color={supportTextColor}/>
+              <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightMetadataText,{color:supportTextColor}]}>{labels.cabin}: {cabinSummary}</Text>
+            </View>
+            <View style={s0.flightMetadataItem}>
               <FileText accessible={false} size={13} strokeWidth={2} color={supportTextColor}/>
               <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightMetadataText,{color:supportTextColor}]}>{labels.fareRules}: {labels.review}</Text>
             </View>
@@ -1279,9 +1271,6 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
                 Provider price: {providerFare.formatted}
               </Text>
             ) : null}
-            <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={s0.flightDealAction}>
-              <Text style={[s0.flightDealActionText, { color: theme.dark ? "#8FB5FF" : ui.blue }]}>› {labels.viewDeal}</Text>
-            </View>
           </View>
         </View>
       </View>
@@ -1827,13 +1816,13 @@ const s0 = StyleSheet.create({
   resultBadge: { height: 24, flexDirection: "row", alignItems: "center", paddingHorizontal: 9, borderRadius: 12 },
   resultBadgeText: { fontSize: 10, lineHeight: 13, fontWeight: "800", fontFamily: appFonts.extraBold },
   flightMain: { width: "100%", alignItems: "stretch" },
-  flightIdentityLayout: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 10 },
-  airlineLogoColumn: { width: 42, flexShrink: 0, alignItems: "center" },
+  flightIdentityLayout: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 8 },
+  airlineLogoColumn: { width: 38, flexShrink: 0, alignItems: "center" },
   flightDetails: { flex: 1, minWidth: 0 },
   airlineName: { fontSize: 13, lineHeight: 17, color: ui.navy, fontWeight: "700", fontFamily: appFonts.bold },
   flightNumber: { marginTop: 1, fontSize: 11, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
   operatingCarrierText: { fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
-  journeyList: { width: "100%", marginTop: 10, gap: 10 },
+  journeyList: { width: "100%", marginTop: 8, gap: 10 },
   journeyBlock: { width: "100%" },
   journeyLabel: { fontSize: 10, lineHeight: 12, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: 0.8 },
   journeyPrimaryRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 },
@@ -1859,15 +1848,10 @@ const s0 = StyleSheet.create({
   flightCardPressed: { opacity: 0.78, transform: [{ scale: 0.995 }] },
   flightCardFooter: { width: "100%", marginTop: 5, paddingTop: 7, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "#D8E1EC" },
   flightLowerSection: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 8 },
-  flightMetadataRegion: { flex: 1, minWidth: 0, paddingTop: 1, gap: 5 },
-  flightMetadataPrimaryRow: { width: "100%", minWidth: 0 },
-  flightMetadataPrimaryContent: { minWidth: "100%", flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 2 },
-  flightMetadataItem: { flexShrink: 0, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 3 },
-  flightFareRulesItem: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 3, paddingVertical: 2 },
-  flightMetadataText: { fontSize: 9.5, lineHeight: 13, fontWeight: "500", fontFamily: appFonts.medium },
-  flightCommercialRegion: { minWidth: 100, maxWidth: "58%", flexShrink: 0, alignItems: "flex-end", gap: 1 },
-  flightDealAction: { minHeight: 28, minWidth: 76, paddingHorizontal: 1, alignItems: "flex-end", justifyContent: "center" },
-  flightDealActionText: { fontSize: 11, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
+  flightMetadataRegion: { flex: 1, minWidth: 0, paddingTop: 1, gap: 4 },
+  flightMetadataItem: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 3 },
+  flightMetadataText: { flexShrink: 1, minWidth: 0, fontSize: 9.5, lineHeight: 13, fontWeight: "500", fontFamily: appFonts.medium },
+  flightCommercialRegion: { width: "44%", minWidth: 104, maxWidth: 132, flexShrink: 0, alignItems: "flex-end", gap: 1 },
   metadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 6, marginBottom: 4 },
   metadataFooterContainer: { width: "100%", alignItems: "center" },
   metadataRow: { width: "100%", flexDirection: "row", alignItems: "center", paddingTop: 1, paddingBottom: 2 },

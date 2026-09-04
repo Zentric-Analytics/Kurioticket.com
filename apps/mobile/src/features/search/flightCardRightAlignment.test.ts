@@ -24,7 +24,7 @@ test("arrival and price terminate on the shared right edge", () => {
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch"/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.doesNotMatch(source, /priceBox:/);
-  assert.match(source, /flightCommercialRegion: \{ minWidth: 100, maxWidth: "58%", flexShrink: 0, alignItems: "flex-end"/);
+  assert.match(source, /flightCommercialRegion: \{ width: "44%", minWidth: 104, maxWidth: 132, flexShrink: 0, alignItems: "flex-end"/);
   assert.match(source, /estimatedPrice: \{ fontSize: 10, lineHeight: 13, fontWeight: "700", fontFamily: appFonts\.bold, letterSpacing: 0\.7, textAlign: "right" \}/);
   assert.match(source, /providerPrice: \{[^}]*fontSize: 11, lineHeight: 14[^}]*textAlign: "right"/);
   assert.match(source, /flightLowerSection: \{[^\n]*flexDirection: "row"[^\n]*alignItems: "flex-start"/);
@@ -45,10 +45,10 @@ test("journeys follow the compact identity row at the full card content width", 
   assert.match(identityLayout, /airlineLogoColumn[\s\S]*?<AirlineLogo[\s\S]*?flightDetails[\s\S]*?airlineHeader/);
   assert.doesNotMatch(flightDetails, /journeyList|FlightJourneyRow/);
   assert.match(flightMain.slice(journeyStart), /journeyList[\s\S]*?<FlightJourneyRow label="OUTBOUND"[\s\S]*?returnLeg \? <FlightJourneyRow label="RETURN"/);
-  assert.match(source, /flightIdentityLayout: \{[^}]*flexDirection: "row"[^}]*gap: 10/);
-  assert.match(source, /airlineLogoColumn: \{ width: 42, flexShrink: 0/);
+  assert.match(source, /flightIdentityLayout: \{[^}]*flexDirection: "row"[^}]*gap: 8/);
+  assert.match(source, /airlineLogoColumn: \{ width: 38, flexShrink: 0/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
-  assert.match(source, /journeyList: \{ width: "100%", marginTop: 10, gap: 10 \}/);
+  assert.match(source, /journeyList: \{ width: "100%", marginTop: 8, gap: 10 \}/);
 });
 
 test("one-way cards omit return while preserving the fare-action alignment", () => {
@@ -68,7 +68,7 @@ test("long fares stay readable without changing details navigation or theme beha
   assert.match(card, /shadowColor: theme\.dark \?/);
 });
 
-test("the compact fare action contains the only displayed fare and details control", () => {
+test("the coherent price column contains the only displayed fare and no CTA", () => {
   const fareRow = card.slice(card.indexOf('<View style={s0.flightCommercialRegion}>'));
 
   assert.equal(card.match(/\{fare\?\.formatted \?\? "—"\}/g)?.length, 1);
@@ -85,7 +85,7 @@ test("the compact fare action contains the only displayed fare and details contr
   assert.doesNotMatch(fareRow, /Provider price: \{providerFare\.formatted\} \{providerFare\.currency\}/);
   assert.doesNotMatch(fareRow, /US\$|A\$|CA\$|Per traveler|Round trip|One way|Taxes included|From/);
   assert.match(card, /<Pressable[\s\S]*accessibilityLabel=\{cardAccessibilityLabel\}[\s\S]*onPress=\{openDetails\}/);
-  assert.match(fareRow, />› \{labels\.viewDeal\}<\/Text>/);
+  assert.doesNotMatch(fareRow, /View deal|labels\.viewDeal|flightDealAction/);
   assert.doesNotMatch(fareRow, /labels\.viewFlight|View details/);
   assert.ok(card.indexOf('<View style={s0.journeyList}>') < card.indexOf('<View style={s0.flightCommercialRegion}>'));
   assert.match(card, /provider price \$\{providerFare\.accessibilityLabel\}/);

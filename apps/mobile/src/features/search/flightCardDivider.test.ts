@@ -14,13 +14,13 @@ test("the flight card has one subtle theme-aware horizontal metadata divider", (
   assert.doesNotMatch(footerStyles, /borderLeftWidth|borderRightWidth/);
 });
 
-test("the whole flight card owns details navigation and exposes one visual deal affordance", () => {
+test("the whole flight card owns details navigation without a separate visual CTA", () => {
   assert.match(flightCard, /const openDetails = \(\) => router\.push\(\{/);
   assert.match(flightCard, /<Pressable[\s\S]*?accessibilityRole="button"[\s\S]*?onPress=\{openDetails\}/);
   assert.match(flightCard, /pathname: "\/flight-details"/);
   assert.match(flightCard, /accessibilityLabel=\{cardAccessibilityLabel\}/);
   assert.match(flightCard, /returnLeg \? `, \$\{accessibleLeg\("return", returnLeg\)\}` : ""/);
-  assert.match(flightCard, />› \{labels\.viewDeal\}<\/Text>/);
+  assert.doesNotMatch(flightCard, /View deal|labels\.viewDeal|flightDealAction/);
   assert.doesNotMatch(flightCard, /<PlaneTakeoff[^>]*>[\s\S]*?View deal/);
   assert.doesNotMatch(flightCard, /labels\.viewFlight|viewFlightButton/);
   assert.doesNotMatch(flightCard, /detailsButton|detailsButtonText/);
