@@ -1511,6 +1511,38 @@ test("OTA publication and normalized history replay use one durable identity wit
   assert.deepEqual(published, ["ios", "android"]);
 });
 
+test("full OTA and a later platform overlay reuse the one per-SHA ledger action", async () => {
+  const durable = new Map();
+  let history = [];
+  const ledger = {
+    getAction: async (_kind, identityKey) => durable.get(identityKey) ?? null,
+    recordAction: async (action) => {
+      const sourceAction = [...durable.values()].find((candidate) => candidate.sourceSha === action.sourceSha);
+      if (sourceAction && sourceAction.identityKey !== action.identityKey) throw new Error("duplicate OTA source SHA");
+      durable.set(action.identityKey, action);
+      return action;
+    },
+  };
+  const orchestrator = new PreviewOrchestrator({
+    config: {}, ledger, github: {}, render: {},
+    easFactory: () => ({
+      listUpdates: async () => history,
+      publishUpdate: async (message, platform, expectedRuntime) => [{ id: `${platform}-update`, group: `${platform}-group`, branch: "preview", runtimeVersion: expectedRuntime, platforms: [platform], message }],
+    }),
+  });
+
+  await orchestrator.deliverOta(sha, repositoryRoot, { checkpoint: async () => {} });
+  history = normalizePreviewUpdatePage({ name: "preview", currentPage: [
+    { branch: "preview", runtimeVersion: "preview-0.3.0", group: "ios-group", platforms: "ios", message: `Automatic Preview iOS OTA for ${sha}; audit run 0` },
+    { branch: "preview", runtimeVersion: "preview-0.3.0", group: "android-group", platforms: "android", message: `Automatic Preview Android OTA for ${sha}; audit run 0` },
+  ] });
+  await orchestrator.deliverOta(sha, repositoryRoot, { checkpoint: async () => {} }, ["ios"]);
+
+  assert.equal(durable.size, 1);
+  assert.equal([...durable.keys()][0], `${sha}:preview`);
+  assert.equal([...durable.values()][0].remoteId, "ios=ios-group,android=android-group");
+});
+
 test("coalesced native delivery can publish an OTA overlay only to affected platforms", async () => {
   const published = [];
   const orchestrator = new PreviewOrchestrator({

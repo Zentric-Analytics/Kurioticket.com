@@ -433,7 +433,10 @@ export class PreviewOrchestrator {
   async deliverOta(sha, cwd, lease, platforms = ["ios", "android"], runtimeByPlatform = null) {
     const eas = this.easFactory(join(cwd, "apps/mobile"));
     const runtimes = Object.fromEntries(platforms.map((platform) => [platform, runtimeByPlatform?.[platform] ?? PREVIEW_IDENTITY.runtime]));
-    const identityKey = `${sha}:${platforms.map((platform) => `${platform}=${runtimes[platform]}`).join(",")}:${PREVIEW_IDENTITY.channel}`;
+    // A release owns one OTA action even when native reconciliation later asks
+    // for a platform-only overlay. Keep the durable identity independent of the
+    // requested subset so the per-SHA ledger constraint and replay agree.
+    const identityKey = `${sha}:${PREVIEW_IDENTITY.channel}`;
     const recorded = typeof this.ledger.getAction === "function" ? await this.ledger.getAction("OTA", identityKey) : null;
     const recordedEvidence = parseActionEvidence(recorded?.evidence);
     const correctingLegacyMismatch = recorded?.state === "RUNTIME_MISMATCH" && recordedEvidence?.runtimeContextVersion !== OTA_RUNTIME_CONTEXT_VERSION;
@@ -441,15 +444,19 @@ export class PreviewOrchestrator {
       throw new Error(`EAS Update runtime mismatch is already recorded for ${sha}; automatic republication is blocked.`);
     }
     const history = await eas.listUpdates();
-    const updates = [];
+    const recordedUpdates = Array.isArray(recordedEvidence?.updates) ? recordedEvidence.updates : [];
     const updatesByPlatform = {};
+    for (const update of recordedUpdates) {
+      for (const platform of Array.isArray(update?.platforms) ? update.platforms : []) {
+        if (platform === "ios" || platform === "android") (updatesByPlatform[platform] ??= []).push(update);
+      }
+    }
     for (const platform of platforms) {
       const expectedRuntime = runtimeByPlatform?.[platform] ?? PREVIEW_IDENTITY.runtime;
       const replay = inspectPreviewUpdateHistory(history, sha, platform, expectedRuntime);
       if (replay.matchingUpdates > 1) throw new Error(`EAS update history contains conflicting exact-SHA ${platform} groups.`);
       if (replay.alreadyPublished) {
         const replayed = history.filter((entry) => entry.message.includes(sha) && entry.runtimeVersion === expectedRuntime && entry.platforms.includes(platform));
-        updates.push(...replayed);
         updatesByPlatform[platform] = replayed;
         continue;
       }
@@ -470,7 +477,8 @@ export class PreviewOrchestrator {
           throw error;
         }
         if (!(error instanceof EasUpdateRuntimeMismatchError)) throw error;
-        const mutatedUpdates = [...updates, ...error.updates];
+        const retainedUpdates = Object.values(updatesByPlatform).flat();
+        const mutatedUpdates = [...retainedUpdates, ...error.updates];
         const mismatchUpdatesByPlatform = { ...updatesByPlatform, [platform]: error.updates };
         await this.ledger.recordAction({
           sourceSha: sha,
@@ -482,9 +490,9 @@ export class PreviewOrchestrator {
         });
         throw error;
       }
-      updates.push(...published);
       updatesByPlatform[platform] = published;
     }
+    const updates = Object.values(updatesByPlatform).flat();
     const ids = updates.map((entry) => entry.id ?? entry.group);
     const correctedRemoteId = canonicalPreviewOtaRemoteIdentity(updatesByPlatform);
     const evidence = { updates, runtimeContextVersion: OTA_RUNTIME_CONTEXT_VERSION };
