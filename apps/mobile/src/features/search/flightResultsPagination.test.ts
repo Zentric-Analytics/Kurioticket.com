@@ -17,14 +17,16 @@ test("native Flight pagination derives a local page after filter and sort", () =
 
 test("full filters and search identity reset while quick filters and sort preserve then clamp the page", () => {
   assert.match(screen, /previousFlightSearchKey\.current !== plan\.plan\.key[\s\S]*?setFlightPage\(1\)/);
-  assert.match(screen, /handleFullFlightFiltersChange[\s\S]*?setFlightPage\(1\)[\s\S]*?setFilters\(next\)/);
-  assert.match(screen, /handleQuickFlightFiltersChange[\s\S]*?setFilters\(next\)/);
-  assert.doesNotMatch(screen.slice(screen.indexOf("const handleQuickFlightFiltersChange"),screen.indexOf("const clearFlightFilters")),/setFlightPage/);
-  assert.match(screen, /clearFlightFilters[\s\S]*?setFlightPage\(1\)[\s\S]*?setFilters\(emptyFlightFilters\(\)\)/);
-  assert.match(screen, /<FlightSortSheet[\s\S]*?onApply=\{\(next\) => \{ setSort\(next\); setSortOpen\(false\); \}\}/);
+  assert.match(screen, /handleFullFlightFiltersChange[\s\S]*?cancelFlightPagination\(\)[\s\S]*?setFlightPage\(1\)[\s\S]*?setFilters\(next\)/);
+  assert.match(screen, /handleQuickFlightFiltersChange[\s\S]*?cancelFlightPagination\(\)[\s\S]*?setFilters\(next\)/);
+  const quickFilter = screen.slice(screen.indexOf("const handleQuickFlightFiltersChange"), screen.indexOf("const clearFlightFilters"));
+  assert.doesNotMatch(quickFilter, /setFlightPage/);
+  assert.match(screen, /clearFlightFilters[\s\S]*?cancelFlightPagination\(\)[\s\S]*?setFlightPage\(1\)[\s\S]*?setFilters\(emptyFlightFilters\(\)\)/);
+  assert.match(screen, /<FlightSortSheet[\s\S]*?onApply=\{\(next\) => \{ cancelFlightPagination\(\); setSort\(next\); setSortOpen\(false\); \}\}/);
+  const sortBinding = screen.slice(screen.indexOf("<FlightSortSheet"), screen.indexOf("<FlightFilterSheet"));
+  assert.doesNotMatch(sortBinding, /setFlightPage\(1\)/);
   assert.match(screen, /onChange=\{filterSection === "all" \? handleFullFlightFiltersChange : handleQuickFlightFiltersChange\}/);
-  assert.match(screen, /flightPage !== clampedFlightPage\) setFlightPage\(clampedFlightPage\)/);
-  assert.match(screen, /setFlightPaginationPendingPage\(null\)[\s\S]*?\}, \[clearFlightPaginationTimers, filters, plan\.plan\?\.key, sort\]\)/);
+  assert.match(screen, /flightPage === clampedFlightPage\) return;[\s\S]*?cancelFlightPagination\(\);[\s\S]*?setFlightPage\(clampedFlightPage\)/);
 });
 
 test("Flight page controls are compact, accessible, bounded, and after cards", () => {
@@ -35,30 +37,62 @@ test("Flight page controls are compact, accessible, bounded, and after cards", (
   assert.match(pagination, /accessibilityLabel=\{`Flight results page \$\{item\}`\}/);
   assert.match(pagination, /accessibilityState=\{\{ selected: item === page, disabled \}\}/);
   assert.match(screen, /renderItem=[\s\S]*?ListFooterComponent=[\s\S]*?<FlightResultsPagination/);
-});
-
-test("page changes show a pending skeleton and reposition before committing local state", () => {
-  const changePage = screen.slice(screen.indexOf("const clearFlightPaginationTimers"), screen.indexOf("const handleFullFlightFiltersChange"));
-  const request = changePage.indexOf("setFlightPaginationPendingPage(targetPage)");
-  const scroll = changePage.indexOf("scrollToLocation({ sectionIndex: 0, itemIndex: 0, viewPosition: 0, animated: true })");
-  const commit = changePage.indexOf("setFlightPage(targetPage)");
-  const clear = changePage.indexOf("setFlightPaginationPendingPage(null)");
-  assert.ok(request >= 0 && scroll > request && commit >= 0 && commit < scroll && clear > scroll);
-  assert.match(changePage, /flightPaginationTargetRef\.current !== null/);
-  assert.match(changePage, /setTimeout\(commitFlightPaginationTarget, 1400\)/);
-  assert.match(screen, /onMomentumScrollEnd=\{commitFlightPaginationTarget\}/);
-  assert.doesNotMatch(changePage.slice(changePage.indexOf("const changeFlightPage")), /travelApi\.searchFlights|setRetry|router\.(?:setParams|replace|push)/);
-});
-
-test("pending Flight pagination disables controls and reuses the themed card skeleton", () => {
   assert.match(screen, /disabled=\{flightPaginationPendingPage !== null\}/);
-  assert.match(screen, /accessibilityState=\{\{ busy: flightPaginationPendingPage !== null \}\}/);
-  assert.match(screen, /accessibilityLabel=\{flightPaginationPendingPage !== null \? "Loading flight results page"/);
-  assert.match(screen, /flightPaginationPendingPage !== null \? <View[^>]*><FlightLoadingSkeleton \/><\/View>/);
-  assert.match(screen, /flightPaginationHiddenCard/);
-  assert.match(screen, /importantForAccessibility=\{flightPaginationPendingPage !== null \? "no-hide-descendants" : "auto"\}/);
-  assert.equal(source.match(/function FlightLoadingSkeleton\(/g)?.length, 1);
 });
+
+test("Flight page transition establishes a pending target and keeps the committed page while positioning", () => {
+  const changePage = screen.slice(screen.indexOf("const changeFlightPage"), screen.indexOf("const handleFullFlightFiltersChange"));
+  assert.match(changePage, /flightPaginationPendingPageRef\.current !== null \|\| nextPage === clampedFlightPage/);
+  assert.match(changePage, /flightPaginationPendingPageRef\.current = nextPage;[\s\S]*setFlightPaginationPendingPage\(nextPage\)[\s\S]*setFlightPaginationPhase\("positioning"\)/);
+  assert.match(changePage, /const finishPositioning[\s\S]*setFlightPaginationPhase\("committing"\);[\s\S]*setFlightPage\(nextPage\)/);
+  assert.match(changePage, /flightPaginationFinishPositioning\.current = finishPositioning[\s\S]*scrollToLocation/);
+  assert.match(screen, /paginateFlightResults\(sorted as FlightResult\[\], clampedFlightPage\)/);
+  assert.doesNotMatch(changePage, /travelApi\.searchFlights|setRetry|router\.setParams/);
+});
+
+test("Flight pagination preserves measured list geometry without guessing card heights", () => {
+  assert.match(screen, /onContentSizeChange=\{\(_width, height\) => \{ flightPaginationContentHeight\.current = height; \}\}/);
+  assert.match(screen, /setFlightPaginationMinHeight\(flightPaginationContentHeight\.current \|\| null\)/);
+  assert.match(screen, /flightPaginationMinHeight !== null && \{ minHeight: flightPaginationMinHeight \}/);
+  assert.doesNotMatch(screen, /FLIGHT_CARD_HEIGHT|20\s*\*\s*(?:CARD|FLIGHT)|flightPaginationMinHeight[^\n]*(?:Dimensions|windowDimensions)/);
+});
+
+test("Flight pagination waits for native scroll settlement with a bounded fallback", () => {
+  const changePage = screen.slice(screen.indexOf("const changeFlightPage"), screen.indexOf("const handleFullFlightFiltersChange"));
+  assert.match(changePage, /scrollToLocation\(\{[\s\S]*?sectionIndex: 0,[\s\S]*?itemIndex: 0,[\s\S]*?viewPosition: 0,[\s\S]*?animated: true/);
+  assert.doesNotMatch(changePage, /viewOffset:/);
+  assert.doesNotMatch(screen, /flightFilterSectionHeight/);
+  assert.match(screen, /listener: \(\) => flightPaginationScheduleSettled\.current\?\.\(\)/);
+  assert.match(screen, /onMomentumScrollEnd=\{\(\) => flightPaginationFinishPositioning\.current\?\.\(\)\}/);
+  assert.match(changePage, /FLIGHT_PAGINATION_SCROLL_SETTLE_MS/);
+  assert.match(changePage, /FLIGHT_PAGINATION_SCROLL_FALLBACK_MS/);
+  assert.doesNotMatch(changePage, /setInterval|while\s*\(/);
+});
+
+test("Flight pagination reuses the theme-aware skeleton through commit and reveal", () => {
+  const transition = screen.slice(screen.indexOf("flightPaginationPendingPage !== null ?"), screen.indexOf("</Animated.View>", screen.indexOf("flightPaginationPendingPage !== null ?")));
+  const changePage = screen.slice(screen.indexOf("const changeFlightPage"), screen.indexOf("const handleFullFlightFiltersChange"));
+  assert.match(transition, /accessibilityLabel="Updating flight results"/);
+  assert.match(transition, /accessibilityState=\{\{ busy: true \}\}/);
+  assert.match(transition, /pointerEvents="auto"/);
+  assert.match(transition, /<FlightLoadingSkeleton/);
+  assert.match(changePage, /setFlightPage\(nextPage\)[\s\S]*requestAnimationFrame\(\(\) => requestAnimationFrame[\s\S]*setFlightPaginationPhase\("revealing"\)[\s\S]*Animated\.timing/);
+  assert.match(changePage, /finished[\s\S]*setFlightPaginationPendingPage\(null\)[\s\S]*setFlightPaginationMinHeight\(null\)/);
+  assert.match(source, /function FlightLoadingSkeleton[\s\S]*backgroundColor: theme\.surface[\s\S]*borderColor: theme\.border/);
+  assert.doesNotMatch(transition, /NativeBrandedSearchLoading|Searching available/);
+});
+
+test("Flight pagination resets cancel an active transition and do not route or search", () => {
+  const cancellation = screen.slice(screen.indexOf("const cancelFlightPagination"), screen.indexOf("useEffect(() => () =>", screen.indexOf("const cancelFlightPagination")));
+  assert.match(cancellation, /flightPaginationTransitionRef\.current \+= 1/);
+  assert.match(cancellation, /clearFlightPaginationTimers\(\)/);
+  assert.match(cancellation, /setFlightPaginationPendingPage\(null\)/);
+  assert.match(screen, /handleFullFlightFiltersChange[\s\S]*cancelFlightPagination\(\)[\s\S]*setFlightPage\(1\)/);
+  assert.match(screen, /clearFlightFilters[\s\S]*cancelFlightPagination\(\)[\s\S]*setFlightPage\(1\)/);
+  assert.match(screen, /onApply=\{\(next\) => \{ cancelFlightPagination\(\); setSort/);
+  assert.doesNotMatch(screen.slice(screen.indexOf("const changeFlightPage"), screen.indexOf("const handleFullFlightFiltersChange")), /searchFlights|setRetry|router\.(?:setParams|push|replace)/);
+});
+
 
 test("only completing the full Filter closes and scrolls to the results item geometry", () => {
   assert.match(screen, /completeFullFlightFilters[\s\S]*?setFilterOpen\(false\)[\s\S]*?scrollToFlightResultsBeginning\(\)/);

@@ -4,6 +4,7 @@ import { ArrowRight, ImageOff, MapPin } from "lucide-react-native";
 import { WebView } from "react-native-webview";
 import type { PublicHotelPropertyDetails } from "../../../../../src/lib/types";
 import { buildHotelAddress, buildHotelDirectionsUrl, buildOpenStreetMapHotelMapEmbedUrl } from "../../../../../src/lib/hotels/hotelMap";
+import { colors } from "../../theme/tokens";
 import type { NativeRelatedHotel } from "./nativeHotelRelatedHotelsModel";
 
 type Theme = { surface: string; border: string; textPrimary: string; textSecondary: string; icon: string };
@@ -68,7 +69,7 @@ export function NativeRelatedHotelsSection({ city, hotels, theme, onViewHotel }:
   const cardWidth = Math.min(300, Math.max(240, width * 0.82));
   return <View style={styles.relatedSection}>
     <Text accessibilityRole="header" style={[styles.heading, { color: theme.textPrimary }]}>{city?.trim() ? `More hotels in ${city.trim()}` : "More hotels nearby"}</Text>
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carousel} directionalLockEnabled>
+    <ScrollView horizontal style={styles.carouselViewport} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carousel} directionalLockEnabled>
       {hotels.map((item) => <View key={item.hotel.id} style={{ width: cardWidth }}><RelatedHotelCard item={item} theme={theme} onView={onViewHotel} /></View>)}
     </ScrollView>
   </View>;
@@ -78,12 +79,13 @@ const styles = StyleSheet.create({
   heading: { fontSize: 20, lineHeight: 26, fontWeight: "900" },
   locationCard: { marginTop: 10, borderWidth: StyleSheet.hairlineWidth, borderRadius: 16, padding: 16, gap: 11, overflow: "hidden" },
   address: { fontSize: 13, lineHeight: 19 },
-  mapsButton: { minHeight: 44, alignSelf: "flex-start", paddingHorizontal: 15, borderRadius: 8, backgroundColor: "#004BB8", flexDirection: "row", alignItems: "center", gap: 8 },
+  mapsButton: { minHeight: 44, alignSelf: "flex-start", paddingHorizontal: 15, borderRadius: 8, backgroundColor: colors.blue, flexDirection: "row", alignItems: "center", gap: 8 },
   mapsButtonText: { color: "white", fontSize: 13, fontWeight: "800" },
   mapClip: { height: 250, width: "100%", borderRadius: 11, overflow: "hidden" },
   map: { flex: 1 },
   mapFallback: { height: 250, borderWidth: StyleSheet.hairlineWidth, borderRadius: 11, alignItems: "center", justifyContent: "center", gap: 8 },
-  relatedSection: { marginTop: 10, gap: 14, marginHorizontal: -16 },
+  relatedSection: { marginTop: 10, gap: 14 },
+  carouselViewport: { marginHorizontal: -16 },
   carousel: { gap: 14, paddingHorizontal: 16, paddingBottom: 6 },
   relatedCard: { overflow: "hidden", borderWidth: StyleSheet.hairlineWidth, borderRadius: 15 },
   imageFrame: { aspectRatio: 16 / 9, backgroundColor: "#E7EBF2" },

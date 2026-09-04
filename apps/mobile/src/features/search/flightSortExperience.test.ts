@@ -21,7 +21,9 @@ test("the sort control opens a compact web-parity menu", () => {
 test("sort changes apply immediately without resetting the current results page", () => {
   assert.doesNotMatch(sheet, /draft|setDraft|Apply sort/);
   assert.match(sheet, /onPress=\{\(\) => onApply\(option\.value\)\}/);
-  assert.match(screen, /onApply=\{\(next\) => \{ setSort\(next\); setSortOpen\(false\); \}\}/);
+  assert.match(screen, /onApply=\{\(next\) => \{ cancelFlightPagination\(\); setSort\(next\); setSortOpen\(false\); \}\}/);
+  const sortBinding = screen.slice(screen.indexOf("<FlightSortSheet"), screen.indexOf("<FlightFilterSheet"));
+  assert.doesNotMatch(sortBinding, /setFlightPage\(1\)/);
 });
 
 test("sort quick menu presents only Best, Cheapest, and Fastest", () => {
