@@ -12,7 +12,6 @@ import {
 import { ChevronLeft, ChevronRight, X } from "lucide-react-native";
 import type { HotelRoomOption } from "../../../../../src/lib/hotels/hotelRoomOptions";
 import type { HotelRoomDisplayPrice } from "./hotelDetailCurrency";
-import { colors } from "../../theme/tokens";
 
 type HotelTheme = {
   surface: string;
@@ -32,10 +31,12 @@ export function NativeHotelGallery({
   name,
   initialImages,
   theme,
+  accentColor,
 }: {
   name: string;
   initialImages: string[];
   theme: HotelTheme;
+  accentColor: string;
 }) {
   const [failed, setFailed] = useState<Set<string>>(() => new Set());
   const heroWidth = useWindowDimensions().width - 32;
@@ -135,7 +136,7 @@ export function NativeHotelGallery({
               onPress={() => choose(index)}
               style={[
                 s.thumbnailFrame,
-                activeIndex === index && s.thumbnailSelected,
+                activeIndex === index && { borderColor: accentColor },
               ]}
             >
               <Image
@@ -161,11 +162,13 @@ export function HotelRoomOptionsModal({
   onClose,
   options,
   theme,
+  accentColor,
 }: {
   visible: boolean;
   onClose: () => void;
   options: PresentedHotelRoomOption[];
   theme: HotelTheme;
+  accentColor: string;
 }) {
   return (
     <Modal
@@ -221,7 +224,7 @@ export function HotelRoomOptionsModal({
                 >
                   {option.displayPrice ? `${option.displayPrice.nightly.formatted} per night` : "Price unavailable"} · {option.cancellationInfo}
                 </Text>
-                <Text style={s.planning}>
+                <Text style={[s.planning, { color: accentColor }]}>
                   Planning option · indicative price
                 </Text>
               </View>
@@ -275,7 +278,6 @@ const s = StyleSheet.create({
     borderWidth: 2,
     borderColor: "transparent",
   },
-  thumbnailSelected: { borderColor: colors.blue },
   thumbnail: { width: "100%", height: "100%" },
   remaining: {
     ...StyleSheet.absoluteFillObject,
@@ -321,5 +323,5 @@ const s = StyleSheet.create({
   optionName: { fontSize: 15, fontWeight: "900" },
   optionPrice: { fontSize: 18, fontWeight: "900", marginTop: 4 },
   copy: { fontSize: 12, lineHeight: 18 },
-  planning: { color: colors.blue, fontSize: 11, fontWeight: "800" },
+  planning: { fontSize: 11, fontWeight: "800" },
 });

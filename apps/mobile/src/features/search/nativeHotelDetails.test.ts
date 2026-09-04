@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { canonicalHotelAddress, hotelStaySummary, isSafeNativeHotelProviderUrl, meaningfulHotelCenterDistance, nativeHotelOffers, reconcileNativeHotelOfferSelection } from "./nativeHotelDetailsModel";
+import { canonicalHotelAddress, hotelStaySummary, isSafeNativeHotelProviderUrl, meaningfulHotelCenterDistance, nativeHotelOffers, nativeHotelProviderUrl, reconcileNativeHotelOfferSelection } from "./nativeHotelDetailsModel";
 
 test("stay summary uses full dates and correct count grammar", () => {
   assert.match(hotelStaySummary("2026-09-04", "2026-09-05", 1, 1).dates!, /2026.*1 night/);
@@ -33,6 +33,19 @@ test("Hotel provider offers require a complete canonical HTTP destination", () =
   assert.equal(isSafeNativeHotelProviderUrl("https://"), false);
   assert.equal(isSafeNativeHotelProviderUrl("javascript:alert(1)"), false);
   assert.equal(isSafeNativeHotelProviderUrl(), false);
+});
+
+test("Hotel provider URL selects the first safe canonical candidate", () => {
+  const partner = "https://partner.example/hotel";
+  const booking = "https://booking.example/hotel";
+  assert.equal(nativeHotelProviderUrl(partner, booking), partner);
+  assert.equal(nativeHotelProviderUrl("not-a-url", booking), booking);
+  assert.equal(nativeHotelProviderUrl("javascript:alert(1)", booking), booking);
+  assert.equal(nativeHotelProviderUrl("", booking), booking);
+  assert.equal(nativeHotelProviderUrl(partner, "mailto:test@example.com"), partner);
+  assert.equal(nativeHotelProviderUrl("https://", "not-a-url"), "");
+  assert.equal(nativeHotelProviderUrl(), "");
+  assert.equal(nativeHotelProviderUrl("http://partner.example/hotel"), "http://partner.example/hotel");
 });
 
 test("Hotel offer selection stays valid and deterministically reconciles enrichment", () => {

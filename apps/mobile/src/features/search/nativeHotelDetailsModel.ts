@@ -39,6 +39,16 @@ export function isSafeNativeHotelProviderUrl(value?: string | null) {
   }
 }
 
+export function nativeHotelProviderUrl(
+  partnerRedirectUrl?: string | null,
+  bookingUrl?: string | null,
+) {
+  for (const candidate of [partnerRedirectUrl, bookingUrl]) {
+    if (isSafeNativeHotelProviderUrl(candidate)) return candidate!.trim();
+  }
+  return "";
+}
+
 export function nativeHotelOffers(internalAvailable: boolean, providerAvailable: boolean) {
   const offers: NativeHotelOffer[] = [];
   if (internalAvailable) offers.push({ id: "internal-rooms", kind: "internal-room-flow" });
