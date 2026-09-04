@@ -7,6 +7,18 @@ const hotel = source.slice(source.indexOf("function HotelDetail"), source.indexO
 const gallery = readFileSync("src/features/search/NativeHotelDetails.tsx", "utf8");
 const car = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
 const tokens = readFileSync("src/theme/tokens.ts", "utf8");
+const webSectionNav = readFileSync(
+  "../../src/components/results/hotelDetails/HotelDetailsSectionNav.tsx",
+  "utf8",
+);
+
+function styleRule(name: string, nextName: string) {
+  const start = source.indexOf(`  ${name}:`);
+  const end = source.indexOf(`  ${nextName}:`, start);
+  assert.notEqual(start, -1, `${name} style must exist`);
+  assert.notEqual(end, -1, `${nextName} style must follow ${name}`);
+  return source.slice(start, end);
+}
 
 test("Hotel details follow mobile-web identity, gallery, tabs, and offer hierarchy", () => {
   assert.match(hotel, />Back to hotel results</);
@@ -19,6 +31,51 @@ test("Hotel details follow mobile-web identity, gallery, tabs, and offer hierarc
   for (const tab of ["compare", "about", "location", "reviews"]) assert.match(hotel, new RegExp(`"${tab}"`));
   assert.match(hotel, /Kurioticket room options/);
   assert.doesNotMatch(hotel, /Select room|Choose where to book/);
+});
+
+test("Hotel section navigation is one deterministic, non-scrolling Yoga row", () => {
+  const tabList = hotel.slice(
+    hotel.indexOf('accessibilityRole="tablist"'),
+    hotel.indexOf("<View style={d.hotelDetailBody}"),
+  );
+  const tabs = styleRule("hotelTabs", "hotelTab");
+  const tab = styleRule("hotelTab", "hotelTabActive");
+  const wideTab = styleRule("hotelTabWide", "hotelTabTextCompact");
+
+  assert.match(tabs, /width: "100%"/);
+  assert.match(tabs, /alignSelf: "stretch"/);
+  assert.match(tabs, /flexDirection: "row"/);
+  assert.match(tabs, /flexWrap: "nowrap"/);
+  assert.doesNotMatch(tabs, /flexDirection: "column"|flexWrap: "wrap"/);
+
+  assert.match(tab, /flexGrow: 1/);
+  assert.match(tab, /flexShrink: 1/);
+  assert.match(tab, /flexBasis: 0/);
+  assert.match(tab, /minWidth: 0/);
+  assert.match(tab, /minHeight: (?:4[4-9]|[5-9]\d)/);
+  assert.match(wideTab, /flexGrow: 1\.65/);
+
+  assert.match(tabList, /^accessibilityRole="tablist"/);
+  assert.match(tabList, /accessibilityRole="tab"/);
+  assert.match(tabList, /accessibilityState=\{\{ selected: activeHotelTab === tab \}\}/);
+  assert.match(tabList, /numberOfLines=\{1\}/);
+  assert.deepEqual(
+    [...tabList.matchAll(/\["compare", "about", "location", "reviews"\]/g)].length,
+    1,
+  );
+  assert.doesNotMatch(tabList, /<ScrollView[^>]*horizontal/);
+  assert.match(hotel, /stickyHeaderIndices=\{\[2\]\}/);
+});
+
+test("Hotel section navigation retains the mobile-web grid contract", () => {
+  for (const tab of ["compare", "about", "location", "reviews"]) {
+    assert.match(webSectionNav, new RegExp(`id: "${tab}"`));
+  }
+  assert.match(webSectionNav, /grid-cols-\[minmax\(0,1\.65fr\)_repeat\(3,minmax\(0,1fr\)\)\]/);
+  assert.match(webSectionNav, /\bsticky\b/);
+  assert.match(webSectionNav, /\bgrid\b/);
+  assert.match(webSectionNav, /\bmin-w-0\b/);
+  assert.match(webSectionNav, /\bwhitespace-nowrap\b/);
 });
 
 test("Hotel classification and reviews never use legacy rating fallbacks", () => {
