@@ -41,14 +41,34 @@ test("loading covers API and first WebView render, while render failure safely r
   assert.match(screen, /onRetry=\{loadInitial\}/);
 });
 
-test("Share/Open offers explicit native Share and browser actions only after user action", () => {
-  assert.ok(screen.indexOf("<WebView") < screen.indexOf('testID="legal-action-toolbar"'));
-  assert.match(screen, /Alert\.alert\(title, undefined,/);
+test("legal controls are icon-only, right aligned above the real Profile tab bar", () => {
+  assert.match(screen, /testID="legal-action-dock"/);
+  assert.match(screen, /testID="legal-action-toolbar"/);
+  assert.match(screen, /toolbarDock: \{ minHeight: 66, alignItems: "flex-end"/);
+  assert.match(screen, /toolbarPill: \{ width: 112, height: 52/);
+  assert.match(screen, /<LegalShareIcon color=\{theme\.icon\} size=\{22\} \/>/);
+  assert.match(screen, /<FlowIcon name="refresh" color=\{theme\.icon\} size=\{22\} \/>/);
+  assert.doesNotMatch(screen, /<Text style=\{styles\.actionText\}>/);
+  assert.doesNotMatch(screen, /Share or open<|Refresh</);
+});
+
+test("Share/Open uses a compact anchored menu and only opens external actions after a tap", () => {
+  assert.match(screen, /testID="legal-action-menu"/);
+  assert.match(screen, /setActionMenuOpen\(\(open\) => !open\)/);
   assert.match(screen, /Share\.share\(\{ title, message:/);
   assert.match(screen, /Linking\.openURL\(publicUrl\)/);
-  assert.match(screen, /text: copy\.share/);
-  assert.match(screen, /text: copy\.openBrowser/);
-  assert.match(screen, /onPress=\{shareOrOpen\}/);
+  assert.match(screen, /accessibilityLabel=\{copy\.share\}/);
+  assert.match(screen, /accessibilityLabel=\{copy\.openBrowser\}/);
+  assert.doesNotMatch(screen, /Alert\.alert/);
+});
+
+test("refresh always remounts the WebView so identical legal content really reloads", () => {
+  assert.match(screen, /const \[webViewRevision, setWebViewRevision\] = useState\(0\)/);
+  assert.match(screen, /setWebViewRevision\(\(revision\) => revision \+ 1\)/);
+  assert.match(screen, /key=\{`\$\{slug\}-\$\{locale\}-\$\{webViewRevision\}`\}/);
+  assert.match(screen, /setRefreshing\(true\)/);
+  assert.match(screen, /disabled=\{refreshing\}/);
+  assert.match(screen, /ActivityIndicator size="small" color=\{theme\.icon\}/);
 });
 
 test("refresh preserves the previous rendered document on fetch or WebView-render failure", () => {
@@ -61,31 +81,39 @@ test("refresh preserves the previous rendered document on fetch or WebView-rende
   assert.match(screen, /onPress=\{refresh\}/);
 });
 
-test("controlled HTML escapes fields, uses Kurioticket Inter, and preserves canonical hierarchy and accessible scaling", () => {
+test("controlled HTML mirrors website LegalViewer structure while staying responsive for mobile", () => {
   assert.equal(escapeLegalText(`<>&"'`), "&lt;&gt;&amp;&quot;&#39;");
-  const html = buildLegalHtml({ slug: "terms-of-service", title: "ignored", summary: "<summary>", lastUpdated: "<date>", lastUpdatedLabel: "<updated>", tableOfContentsLabel: "<contents>", sections: [{ id: "ignored", title: "<heading>", paragraphs: ["<paragraph>"] }] }, { dark: false, lang: "en-US", direction: "ltr", tableOfContentsFallback: "Fallback contents" });
-  for (const value of ["summary", "date", "updated", "contents", "heading", "paragraph"]) assert.ok(html.includes(`&lt;${value}&gt;`));
+  const html = buildLegalHtml({ slug: "terms-of-service", title: "<title>", summary: "<summary>", lastUpdated: "<date>", lastUpdatedLabel: "<updated>", legalCenterLabel: "<legal-center>", tableOfContentsLabel: "<contents>", sections: [{ id: "ignored", title: "<heading>", paragraphs: ["<paragraph>"] }] }, { dark: false, lang: "en-US", direction: "ltr", tableOfContentsFallback: "Fallback contents" });
+  for (const value of ["title", "summary", "date", "updated", "legal-center", "contents", "heading", "paragraph"]) assert.ok(html.includes(`&lt;${value}&gt;`));
   assert.doesNotMatch(html, /<summary>|<paragraph>/);
   assert.match(html, /<html lang="en-US" dir="ltr">/);
   assert.match(html, /@font-face\{font-family:Inter/);
   assert.match(html, /kurioticket\.com\/brand\/fonts\/inter\/Inter-VariableFont\.ttf/);
-  assert.match(html, /font-family:Inter/);
-  assert.match(html, /<nav class="contents"/);
+  assert.match(html, /class="legal-paper"/);
+  assert.match(html, /class="document-head"/);
+  assert.match(html, /class="legal-center"/);
+  assert.match(html, /class="document-title"/);
+  assert.match(html, /class="document-grid"/);
+  assert.match(html, /class="contents-nav"/);
+  assert.match(html, /class="article"/);
+  assert.match(html, /linear-gradient\(180deg,rgba\(15,159,154,.42\),rgba\(37,99,235,.18\)\)/);
+  assert.match(html, /\.contents-nav a\{display:flex;align-items:center;min-height:44px/);
+  assert.doesNotMatch(html, /<ol>|<li>/);
   assert.match(html, /<section id=/);
   assert.match(html, /<h2>/);
   assert.match(html, /overflow-x:auto/);
-  assert.match(html, /\.contents a\{display:flex;align-items:center;min-height:44px;padding:8px 0\}/);
   assert.doesNotMatch(html, /maximum-scale|navbar|footer|print/);
 });
 
-test("controlled HTML falls back safely when an older API response omits the TOC label", () => {
+test("controlled HTML falls back safely when an older API response omits optional presentation labels", () => {
   const html = buildLegalHtml({ slug: "privacy-policy", title: "ignored", summary: "summary", lastUpdated: "date", lastUpdatedLabel: "updated", sections: [{ id: "section", title: "Heading", paragraphs: ["Paragraph"] }] }, { dark: false, lang: "en-US", direction: "ltr", tableOfContentsFallback: "Fallback contents" });
   assert.match(html, /aria-label="Fallback contents"/);
-  assert.match(html, />Fallback contents<\/p>/);
+  assert.match(html, />Fallback contents<\/h2>/);
+  assert.match(html, />Legal Center<\/span>/);
 });
 
 test("Arabic legal HTML is explicitly RTL", () => {
-  const html = buildLegalHtml({ slug: "privacy-policy", title: "ignored", summary: "ملخص", lastUpdated: "2026-09-04", lastUpdatedLabel: "آخر تحديث", tableOfContentsLabel: "المحتويات", sections: [{ id: "section", title: "العنوان", paragraphs: ["النص"] }] }, { dark: true, lang: "ar", direction: "rtl", tableOfContentsFallback: "المحتويات" });
+  const html = buildLegalHtml({ slug: "privacy-policy", title: "ignored", summary: "ملخص", lastUpdated: "2026-09-04", lastUpdatedLabel: "آخر تحديث", legalCenterLabel: "المركز القانوني", tableOfContentsLabel: "المحتويات", sections: [{ id: "section", title: "العنوان", paragraphs: ["النص"] }] }, { dark: true, lang: "ar", direction: "rtl", tableOfContentsFallback: "المحتويات" });
   assert.match(html, /<html lang="ar" dir="rtl">/);
   assert.match(html, /direction:rtl/);
   assert.match(html, /text-align:right/);
