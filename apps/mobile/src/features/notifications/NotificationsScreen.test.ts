@@ -42,8 +42,8 @@ test("refresh failure preserves loaded rows as a non-blocking list error", () =>
 
 test("Notifications renders notification-specific loading and error copy only", () => {
   const screen = readFileSync(resolve("src/features/notifications/NotificationsScreen.tsx"), "utf8");
-  assert.match(screen, /contentState === "loading"[\s\S]*Loading notifications…/);
-  assert.match(screen, /contentState === "error"[\s\S]*Couldn't load notifications[\s\S]*Check your connection and try again\.[\s\S]*Try again/);
+  assert.match(screen, /contentState === "loading"[\s\S]*PageContentState state="loading" pageName="notifications"/);
+  assert.match(screen, /contentState === "error"[\s\S]*PageContentState state="error" pageName="notifications" onRetry=/);
   assert.match(screen, /contentState === "empty"[\s\S]*You’re all caught up[\s\S]*Important account and travel updates will appear here\./);
   assert.match(screen, /contentState === "list"[\s\S]*state\.items\.map/);
   assert.match(screen, /more-failure[\s\S]*Couldn't load older notifications\. Try again\./);

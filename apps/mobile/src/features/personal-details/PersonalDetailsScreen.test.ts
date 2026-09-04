@@ -116,9 +116,11 @@ test("theme semantics cover shell card inputs and selectors", () => {
 test("no avatar identity hero or introductory card is introduced", () => {
   assert.doesNotMatch(screen, /Avatar|initials|identityHero|welcomeCard/);
 });
-test("screen has loading retry feedback and discard confirmation", () => {
-  assert.match(screen, /c\.loading/);
-  assert.match(screen, /c\.retry/);
+test("header stays visible while shared initial loading and retry states replace content", () => {
+  const header = screen.indexOf("<View\n        style={[\n          s.header");
+  const state = screen.indexOf('<PageContentState state="loading" pageName="personal details"');
+  assert.ok(header >= 0 && header < state);
+  assert.match(screen, /PageContentState state="error" pageName="personal details" onRetry=/);
   assert.match(screen, /Alert\.alert\(c\.discardTitle/);
 });
 test("read-only and edit content have no outer card treatment", () => {

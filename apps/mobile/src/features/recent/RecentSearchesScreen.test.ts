@@ -14,7 +14,7 @@ test("Recent route renders an independent Recent searches screen", () => {
 
 test("Recent keeps canonical loading and false-empty protection", () => {
   assert.match(screen, /travelApi\.recentSearches\(\)/);
-  assert.match(screen, /!recentLoaded \? \(recentLoading && !recentError/);
+  assert.match(screen, /!recentLoaded \? \(recentLoading \? <PageContentState state="loading" pageName="recent searches"/);
   assert.match(screen, /setRecent\(searches\.items\);[\s\S]*setRecentLoaded\(true\)/);
   assert.match(screen, /Unable to synchronize recent searches/);
 });
@@ -59,7 +59,7 @@ test("authenticated empty Recent uses the travel-history landing state", () => {
 test("Recent keeps populated, loading, and signed-out branches intact", () => {
   assert.match(screen, />Recent<\/Text>[\s\S]*>Clear all<\/Text>/);
   assert.match(screen, /recent\.length \?/);
-  assert.match(screen, /!recentLoaded \? \(recentLoading && !recentError/);
+  assert.match(screen, /!recentLoaded \? \(recentLoading \? <PageContentState state="loading" pageName="recent searches"/);
   assert.match(screen, /FlowIcon name="clock"[\s\S]*>Sign in to view recent searches<\/Text>/);
   assert.match(screen, />Your recent searches are private to your account\.<\/Text>/);
   assert.match(screen, /signInHref\("\/recent"\)/);
