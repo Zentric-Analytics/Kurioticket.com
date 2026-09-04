@@ -77,7 +77,7 @@ export function classifyChangeSet(files) {
 
   const mobile = unique.filter((file) => file.startsWith(MOBILE_PREFIX));
   const docsOnly = unique.every((file) => DOC_PATTERNS.some((pattern) => pattern.test(file)));
-  const web = unique.filter((file) => WEB_PREFIXES.some((prefix) => file.startsWith(prefix)) || ["package.json", "package-lock.json", "next.config.ts"].includes(file));
+  const web = unique.filter((file) => WEB_PREFIXES.some((prefix) => file.startsWith(prefix)) || ["package.json", "package-lock.json", "next.config.ts", "render.yaml"].includes(file));
   const mobileTooling = mobile.filter((file) => MOBILE_TOOLING.some((pattern) => pattern.test(file)));
   const otaCandidates = [
     ...mobile.filter((file) => !mobileTooling.includes(file) && OTA_SAFE.some((pattern) => pattern.test(file))),
