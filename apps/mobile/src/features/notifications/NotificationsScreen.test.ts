@@ -176,10 +176,29 @@ test("the list controls one open row and scrolling closes it", () => {
   assert.match(screen, /onSetOpen=\{\(open\) => setOpenNotificationId\(open \? item\.id : null\)\}/);
 });
 
+test("a horizontal row gesture locks out the ScrollView until release, rejection, or cancellation", () => {
+  const screen = readFileSync(resolve("src/features/notifications/NotificationsScreen.tsx"), "utf8");
+  assert.match(screen, /<ScrollView scrollEnabled=\{scrollEnabled\}/);
+  assert.match(screen, /onMoveShouldSetPanResponderCapture:[\s\S]*shouldCaptureSwipe/);
+  assert.match(screen, /nextDirection === "horizontal"[\s\S]*onHorizontalLockRef\.current\(\)/);
+  assert.match(screen, /onPanResponderTerminationRequest: \(\) => gestureDirection\.current !== "horizontal"/);
+  assert.match(screen, /onPanResponderRelease:[\s\S]*finishHorizontalSwipe\(\)/);
+  assert.match(screen, /onPanResponderReject: finishHorizontalSwipe/);
+  assert.match(screen, /onPanResponderTerminate:[\s\S]*finishHorizontalSwipe\(\)/);
+  assert.match(screen, /useEffect\(\(\) => \(\) => onHorizontalReleaseRef\.current\(\), \[\]\)/);
+});
+
+test("swiping a row never performs notification deletion", () => {
+  const screen = readFileSync(resolve("src/features/notifications/NotificationsScreen.tsx"), "utf8");
+  const responder = screen.match(/const panResponder = useMemo\([\s\S]*?\n  \}\), \[/)?.[0] ?? "";
+  assert.doesNotMatch(responder, /deleteItem|deleteNotification/);
+  assert.match(screen, /onPress=\{\(\) => void deleteItem\(\)\}/);
+});
+
 test("swiping only settles the row while explicit Delete owns persistence and failure closes", () => {
   const screen = readFileSync(resolve("src/features/notifications/NotificationsScreen.tsx"), "utf8");
   const release = screen.match(/onPanResponderRelease:[\s\S]*?\n    \},/)?.[0] ?? "";
   assert.doesNotMatch(release, /deleteItem|\bonDelete\(|deleteNotification/);
   assert.match(screen, /onPress=\{\(\) => void deleteItem\(\)\}/);
-  assert.match(screen, /catch \{ onSetOpen\(false\); settle\(false\); setDeleting\(false\); \}/);
+  assert.match(screen, /catch \{ onHorizontalReleaseRef\.current\(\); onSetOpen\(false\); settle\(false\); setDeleting\(false\); \}/);
 });
