@@ -63,7 +63,7 @@ test("refresh preserves the previous rendered document on fetch or WebView-rende
 
 test("controlled HTML escapes fields, uses Kurioticket Inter, and preserves canonical hierarchy and accessible scaling", () => {
   assert.equal(escapeLegalText(`<>&"'`), "&lt;&gt;&amp;&quot;&#39;");
-  const html = buildLegalHtml({ slug: "terms-of-service", title: "ignored", summary: "<summary>", lastUpdated: "<date>", lastUpdatedLabel: "<updated>", tableOfContentsLabel: "<contents>", sections: [{ id: "ignored", title: "<heading>", paragraphs: ["<paragraph>"] }] }, { dark: false, lang: "en-US", direction: "ltr" });
+  const html = buildLegalHtml({ slug: "terms-of-service", title: "ignored", summary: "<summary>", lastUpdated: "<date>", lastUpdatedLabel: "<updated>", tableOfContentsLabel: "<contents>", sections: [{ id: "ignored", title: "<heading>", paragraphs: ["<paragraph>"] }] }, { dark: false, lang: "en-US", direction: "ltr", tableOfContentsFallback: "Fallback contents" });
   for (const value of ["summary", "date", "updated", "contents", "heading", "paragraph"]) assert.ok(html.includes(`&lt;${value}&gt;`));
   assert.doesNotMatch(html, /<summary>|<paragraph>/);
   assert.match(html, /<html lang="en-US" dir="ltr">/);
@@ -74,11 +74,18 @@ test("controlled HTML escapes fields, uses Kurioticket Inter, and preserves cano
   assert.match(html, /<section id=/);
   assert.match(html, /<h2>/);
   assert.match(html, /overflow-x:auto/);
+  assert.match(html, /\.contents a\{display:flex;align-items:center;min-height:44px;padding:8px 0\}/);
   assert.doesNotMatch(html, /maximum-scale|navbar|footer|print/);
 });
 
+test("controlled HTML falls back safely when an older API response omits the TOC label", () => {
+  const html = buildLegalHtml({ slug: "privacy-policy", title: "ignored", summary: "summary", lastUpdated: "date", lastUpdatedLabel: "updated", sections: [{ id: "section", title: "Heading", paragraphs: ["Paragraph"] }] }, { dark: false, lang: "en-US", direction: "ltr", tableOfContentsFallback: "Fallback contents" });
+  assert.match(html, /aria-label="Fallback contents"/);
+  assert.match(html, />Fallback contents<\/p>/);
+});
+
 test("Arabic legal HTML is explicitly RTL", () => {
-  const html = buildLegalHtml({ slug: "privacy-policy", title: "ignored", summary: "ملخص", lastUpdated: "2026-09-04", lastUpdatedLabel: "آخر تحديث", tableOfContentsLabel: "المحتويات", sections: [{ id: "section", title: "العنوان", paragraphs: ["النص"] }] }, { dark: true, lang: "ar", direction: "rtl" });
+  const html = buildLegalHtml({ slug: "privacy-policy", title: "ignored", summary: "ملخص", lastUpdated: "2026-09-04", lastUpdatedLabel: "آخر تحديث", tableOfContentsLabel: "المحتويات", sections: [{ id: "section", title: "العنوان", paragraphs: ["النص"] }] }, { dark: true, lang: "ar", direction: "rtl", tableOfContentsFallback: "المحتويات" });
   assert.match(html, /<html lang="ar" dir="rtl">/);
   assert.match(html, /direction:rtl/);
   assert.match(html, /text-align:right/);
