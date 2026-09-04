@@ -39,7 +39,7 @@ test("flight results put fading dates before a native sticky filter rail", () =>
   assert.match(listHeader, /renderSectionHeader[\s\S]*?backgroundColor: flightCanvasColor[\s\S]*?\{filterRail\}/);
   assert.match(listHeader, /stickySectionHeadersEnabled/);
   assert.ok(listHeader.indexOf("ListHeaderComponent=") < listHeader.indexOf("renderSectionHeader="));
-  assert.match(listHeader, /\{filterRail\}[\s\S]*?<FlightResultsSummaryRow/);
+  assert.match(listHeader, /\{filterRail\}[\s\S]*?<PriceAlert/);
   assert.doesNotMatch(renderItem, /PriceAlert|flightResultCountLabel/);
   assert.match(renderItem, /<FlightCard/);
   assert.match(flightLayout, /initialNumToRender=\{6\}[\s\S]*?maxToRenderPerBatch=\{5\}[\s\S]*?updateCellsBatchingPeriod=\{50\}[\s\S]*?windowSize=\{7\}/);

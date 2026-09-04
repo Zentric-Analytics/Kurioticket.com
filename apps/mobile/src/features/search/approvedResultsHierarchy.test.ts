@@ -21,7 +21,10 @@ test("ready flight results follow the approved sticky hierarchy", () => {
   assert.match(listHeader, /ListHeaderComponent=\{animatedFlightDateStrip\}/);
   assert.match(listHeader, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
   assert.ok(listHeader.indexOf("ListHeaderComponent=") < listHeader.indexOf("renderSectionHeader="));
-  assert.match(listHeader, /\{filterRail\}[\s\S]*?<PriceAlert[\s\S]*?<FlightResultsSummaryRow/);
+  assert.match(listHeader, /\{filterRail\}[\s\S]*?<PriceAlert/);
+  assert.doesNotMatch(listHeader, /FlightResultsSummaryRow/);
+  assert.match(renderItem, /index === 0 && flightRange[\s\S]*?<FlightResultsSummaryRow count=\{sorted\.length\} range=\{flightRange\}/);
+  assert.ok(renderItem.indexOf("<FlightResultsSummaryRow") < renderItem.indexOf("<FlightCard"));
   assert.doesNotMatch(renderItem, /PriceAlert|flightResultCountLabel/);
   assert.match(renderItem, /<FlightCard/);
   assert.doesNotMatch(resultsBody.slice(header, list), /flightPersistentSearchControls|\{filterRail\}/);
@@ -81,13 +84,13 @@ test("the flight price action is an accessible, backend-honest native switch", (
 test("the compact alert stays horizontal and readable on narrow screens", () => {
   assert.match(source, /flightAlert: \{[\s\S]*?flexDirection: "row"/);
   assert.match(source, /flightAlertCopy: \{ flex: 1, minWidth: 0/);
-  assert.match(source, /flightAlertSwitchSlot: \{ minWidth: 51, minHeight: 44/);
+  assert.match(source, /compactPriceAlertSwitchSlot: \{ minWidth: 51, minHeight: 44/);
   assert.doesNotMatch(source, /flightAlertNarrow|flightAlertSkyNarrow/);
 });
 
 test("the flight alert uses intentional panel spacing", () => {
-  const bannerStyle = source.slice(source.indexOf("flightAlertCompact: {"), source.indexOf("flightAlertCopy: {"));
-  const copyStyles = source.slice(source.indexOf("flightAlertCopy: {"), source.indexOf("flightAlertSwitchSlot: {"));
+  const bannerStyle = source.slice(source.indexOf("compactPriceAlert: {"), source.indexOf("flightAlertCopy: {"));
+  const copyStyles = source.slice(source.indexOf("flightAlertCopy: {"), source.indexOf("compactPriceAlertSwitchSlot: {"));
 
   assert.match(bannerStyle, /minHeight: 48/);
   assert.doesNotMatch(source, /flightAlertIcon:/);

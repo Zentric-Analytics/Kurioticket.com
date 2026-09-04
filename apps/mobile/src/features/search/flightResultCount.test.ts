@@ -21,7 +21,7 @@ test("flight result count uses correct singular and plural grammar", () => {
 });
 
 test("flight count stays total while FlightCards receive only the paginated slice", () => {
-  assert.match(listHeader, /<FlightResultsSummaryRow[\s\S]*?count=\{sorted\.length\}/);
+  assert.match(renderItem, /index === 0 && flightRange[\s\S]*?<FlightResultsSummaryRow count=\{sorted\.length\} range=\{flightRange\}/);
   assert.match(source, /paginateFlightResults\(sorted as FlightResult\[\], clampedFlightPage\)/);
   assert.match(sectionList, /sections=\{\[\{ data: !flightState \? flightPageResults : \[\] \}\]\}/);
   assert.match(renderItem, /renderItem=\{\(\{ item, index \}\) => \([\s\S]*?<FlightCard/);
@@ -58,7 +58,7 @@ test("filter, price alert, and same-row count/range precede cards", () => {
   assert.doesNotMatch(persistentControls, /dateStrip|PriceAlert|flightResultCountLabel|FlightCard/);
   assert.match(source, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
   assert.match(listHeader, /ListHeaderComponent=\{animatedFlightDateStrip\}/);
-  assert.match(listHeader, /\{filterRail\}[\s\S]*?<PriceAlert[\s\S]*?<FlightResultsSummaryRow/);
+  assert.match(listHeader, /\{filterRail\}[\s\S]*?<PriceAlert/);
   const summary = source.slice(source.indexOf("function FlightResultsSummaryRow"), source.indexOf("function FlightResultsPagination"));
   assert.match(summary, /flightResultCountLabel\(count\)[\s\S]*?\{range\.start\}–\{range\.end\}/);
   assert.doesNotMatch(summary, /<PriceAlert/);
