@@ -457,6 +457,11 @@ export class PreviewOrchestrator {
       if (replay.matchingUpdates > 1) throw new Error(`EAS update history contains conflicting exact-SHA ${platform} groups.`);
       if (replay.alreadyPublished) {
         const replayed = history.filter((entry) => entry.message.includes(sha) && entry.runtimeVersion === expectedRuntime && entry.platforms.includes(platform));
+        const previouslyRecorded = updatesByPlatform[platform];
+        if (previouslyRecorded?.length
+          && canonicalPreviewOtaRemoteIdentity({ [platform]: previouslyRecorded }) !== canonicalPreviewOtaRemoteIdentity({ [platform]: replayed })) {
+          throw new Error(`Conflicting remote identity in EAS update history for OTA:${identityKey}:${platform}.`);
+        }
         updatesByPlatform[platform] = replayed;
         continue;
       }
@@ -484,7 +489,7 @@ export class PreviewOrchestrator {
           sourceSha: sha,
           kind: "OTA",
           identityKey,
-          remoteId: canonicalPreviewOtaRemoteIdentity(mismatchUpdatesByPlatform),
+          remoteId: recorded?.remote_id ?? canonicalPreviewOtaRemoteIdentity(mismatchUpdatesByPlatform),
           state: "RUNTIME_MISMATCH",
           evidence: { updates: mutatedUpdates, mismatchPlatform: error.platform, expectedRuntime: error.expectedRuntime, runtimeContextVersion: OTA_RUNTIME_CONTEXT_VERSION },
         });
@@ -515,7 +520,10 @@ export class PreviewOrchestrator {
         },
       });
     } else {
-      await this.ledger.recordAction({ sourceSha: sha, kind: "OTA", identityKey, remoteId: correctedRemoteId, state: "PUBLISHED", evidence });
+      // One OTA ledger action can accumulate platform-specific update groups
+      // across reconciliation passes. Its original remote id is the durable
+      // action identity; the complete, evolving group set lives in evidence.
+      await this.ledger.recordAction({ sourceSha: sha, kind: "OTA", identityKey, remoteId: recorded?.remote_id ?? correctedRemoteId, state: "PUBLISHED", evidence });
     }
     return { updateIds: ids, runtimes, channel: PREVIEW_IDENTITY.channel };
   }
