@@ -172,7 +172,7 @@ test("Production iOS configuration selects its own OAuth plugin and identity", a
   assert.equal(config.name, "Kurioticket");
   assert.equal(config.ios?.bundleIdentifier, "com.kurioticket.app");
   assert.equal(config.scheme, "kurioticket");
-  assert.equal(config.runtimeVersion, "production-0.3.1");
+  assert.equal(config.runtimeVersion, "production-0.3.2");
   assert.equal(config.extra?.environment?.apiBaseUrl, "https://kurioticket.com");
   assert.deepEqual(config.splash, {
     image: "./assets/kurioticket-logo-primary-light-bg.png",

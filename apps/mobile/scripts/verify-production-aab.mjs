@@ -6,7 +6,7 @@ const EXPECTED = Object.freeze({
   packageName: 'com.kurioticket.app',
   scheme: 'kurioticket',
   versionName: '0.3.0',
-  runtime: 'production-0.3.1',
+  runtime: 'production-0.3.2',
   projectId: '89f6fd88-c0d7-495a-9e2b-8301b09f407d',
   api: 'https://kurioticket.com',
   channel: 'production',
