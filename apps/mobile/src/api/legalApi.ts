@@ -7,7 +7,7 @@ export type MobileLegalDocument = {
   summary: string;
   lastUpdated: string;
   lastUpdatedLabel: string;
-  tableOfContentsLabel: string;
+  tableOfContentsLabel?: string;
   sections: { id: string; title: string; paragraphs: string[] }[];
 };
 
