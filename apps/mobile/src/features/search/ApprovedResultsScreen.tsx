@@ -1137,7 +1137,8 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
   const labels = flightResultsCopy(locale);
   const fareAccessibility = `${fare?.accessibilityLabel ?? "price unavailable"}${fare?.converted === true ? ", estimated price" : ""}${providerFare ? `, provider price ${providerFare.accessibilityLabel}` : ""}`;
   const openDetails = () => router.push({ pathname: "/flight-details", params: buildFlightDetailParams({ searchParams: params, result, fare, displayCurrencyContext }) });
-  const cardAccessibilityLabel = `View flight details for ${result.airlineName}, ${clock(outbound.departureTime)} ${outbound.originAirport} to ${clock(outbound.arrivalTime)} ${outbound.destinationAirport}, ${fareAccessibility}`;
+  const accessibleLeg = (direction: "outbound" | "return", leg: FlightCardLeg) => `${direction}, ${clock(leg.departureTime)} ${leg.originAirport} to ${clock(leg.arrivalTime)} ${leg.destinationAirport}, ${leg.duration}, ${leg.stops ? `${leg.stops} stop${leg.stops === 1 ? "" : "s"}` : "nonstop"}`;
+  const cardAccessibilityLabel = `View flight details for ${result.airlineName}, ${accessibleLeg("outbound", outbound)}${returnLeg ? `, ${accessibleLeg("return", returnLeg)}` : ""}, ${fareAccessibility}`;
   return (
     <Pressable
       accessibilityRole="button"

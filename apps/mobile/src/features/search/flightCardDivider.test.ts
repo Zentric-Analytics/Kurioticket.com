@@ -19,6 +19,7 @@ test("the whole flight card owns details navigation and exposes one visual deal 
   assert.match(flightCard, /<Pressable[\s\S]*?accessibilityRole="button"[\s\S]*?onPress=\{openDetails\}/);
   assert.match(flightCard, /pathname: "\/flight-details"/);
   assert.match(flightCard, /accessibilityLabel=\{cardAccessibilityLabel\}/);
+  assert.match(flightCard, /returnLeg \? `, \$\{accessibleLeg\("return", returnLeg\)\}` : ""/);
   assert.match(flightCard, />› \{labels\.viewDeal\}<\/Text>/);
   assert.doesNotMatch(flightCard, /<PlaneTakeoff[^>]*>[\s\S]*?View deal/);
   assert.doesNotMatch(flightCard, /labels\.viewFlight|viewFlightButton/);
