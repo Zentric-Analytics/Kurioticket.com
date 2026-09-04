@@ -120,7 +120,7 @@ export function FlightResultsQuickControls({
 }) {
   const { theme } = useAppTheme();
   const safeSort = sort === "price" || sort === "duration" ? sort : "best";
-  const railSurface = theme.dark ? theme.surface : webFilterSurface;
+  const railSurface = theme.background;
 
   return (
     <ScrollView horizontal
