@@ -12,13 +12,20 @@ type Step = "welcome" | "email" | "verify" | "password" | "forgotPassword" | "tw
 type TwoFactorOrigin = "password" | "google";
 export function isTerminalTwoFactorError(error: unknown) { return error instanceof AuthApiError && (error.status === 410 || error.status === 429); }
 export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { initialStep?: "welcome" | "email"; successRoute?: "/" | import("./signInIntent").ProtectedRoute } = {}) {
-  const [step, setStep] = useState<Step>(initialStep); const [passkeySupported, setPasskeySupported] = useState(false); const passkeyAttempt = useRef(0); const passkeyController = useRef<AbortController | null>(null); const passkeyBusy = useRef(false); const [email, setEmail] = useState(""); const [challengeToken, setChallengeToken] = useState(""); const [twoFactorOrigin, setTwoFactorOrigin] = useState<TwoFactorOrigin>("password"); const [proof, setProof] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState(""); const [cooldown, setCooldown] = useState(28); const [forceGoogleAccountSelection, setForceGoogleAccountSelection] = useState(false); const [resetNotice, setResetNotice] = useState("");
+  const [step, setStep] = useState<Step>(initialStep); const [passkeySupported, setPasskeySupported] = useState(false); const [passkeyLoading, setPasskeyLoading] = useState(false); const passkeyAttempt = useRef(0); const passkeyController = useRef<AbortController | null>(null); const passkeyBusy = useRef(false); const [email, setEmail] = useState(""); const [challengeToken, setChallengeToken] = useState(""); const [twoFactorOrigin, setTwoFactorOrigin] = useState<TwoFactorOrigin>("password"); const [proof, setProof] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState(""); const [cooldown, setCooldown] = useState(28); const [forceGoogleAccountSelection, setForceGoogleAccountSelection] = useState(false); const [resetNotice, setResetNotice] = useState("");
   useEffect(() => {
     let current = true;
     void isNativePasskeySupported().then((supported) => { if (current) setPasskeySupported(supported); });
     return () => { current = false; passkeyAttempt.current += 1; passkeyController.current?.abort(); };
   }, []);
-  useEffect(() => { if (step !== "welcome") { passkeyAttempt.current += 1; passkeyController.current?.abort(); passkeyBusy.current = false; } }, [step]);
+  useEffect(() => {
+    if (step === "email") return;
+    passkeyAttempt.current += 1;
+    passkeyController.current?.abort();
+    passkeyController.current = null;
+    passkeyBusy.current = false;
+    setPasskeyLoading(false);
+  }, [step]);
   useEffect(() => { if (!resetNotice) return; const timer = setTimeout(() => setResetNotice(""), 2000); return () => clearTimeout(timer); }, [resetNotice]);
   const run = async (task: () => Promise<void>) => { if (loading) return; setLoading(true); setError(""); try { await task(); } catch (e) { setError(e instanceof AuthApiError || (e instanceof Error && e.name === "NativeGoogleSignInError") ? e.message : "Something went wrong. Please try again."); } finally { setLoading(false); } };
   const requestCode = (value: string) => void run(async () => { const normalized = normalizeEmail(value); const result = await authApi.requestCode(normalized); setEmail(normalized); setCooldown(result.cooldownSeconds || 28); setStep("verify"); });
@@ -27,13 +34,13 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     void writeOnboardingCompleted().finally(() => router.dismissTo(successRoute));
   }, [successRoute]);
   const continuePasskey = () => {
-    if (passkeyBusy.current) return;
+    if (passkeyBusy.current || step !== "email") return;
     passkeyBusy.current = true;
     const generation = ++passkeyAttempt.current;
     const controller = new AbortController();
     passkeyController.current?.abort();
     passkeyController.current = controller;
-    setLoading(true); setError("");
+    setPasskeyLoading(true); setError("");
     void (async () => {
       try {
         const { options } = await authApi.passkeyOptions(controller.signal);
@@ -44,11 +51,11 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
         if (generation === passkeyAttempt.current) setStep("success");
       } catch (passkeyError) {
         if (generation !== passkeyAttempt.current || isPasskeyCancellation(passkeyError)) return;
-        if (isPasskeyNoCredential(passkeyError)) setError("No Kurioticket passkey was found on this device. Use Email or Google to sign in.");
+        if (isPasskeyNoCredential(passkeyError)) setError("No Kurioticket passkey was found on this device. Continue with email instead.");
         else if (passkeyError instanceof AuthApiError && passkeyError.status === 429) setError("Too many passkey attempts. Please wait and try again.");
-        else setError(passkeyError instanceof AuthApiError ? passkeyError.message : "Passkey sign-in could not be completed. Use Email or Google to sign in.");
+        else setError(passkeyError instanceof AuthApiError ? passkeyError.message : "Passkey sign-in could not be completed. Continue with email instead.");
       } finally {
-        if (generation === passkeyAttempt.current) { passkeyBusy.current = false; passkeyController.current = null; setLoading(false); }
+        if (generation === passkeyAttempt.current) { passkeyBusy.current = false; passkeyController.current = null; setPasskeyLoading(false); }
       }
     })();
   };
@@ -70,8 +77,8 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     setForceGoogleAccountSelection(false);
     setStep("success");
   });
-  if (step === "welcome") return <AuthWelcomeScreen busy={loading} error={error} onEmail={() => setStep("email")} onGoogle={continueGoogle} onPasskey={passkeySupported ? continuePasskey : undefined} onGuest={() => void writeOnboardingCompleted().then(() => router.replace("/"))} />;
-  if (step === "email") return <EmailScreen initialEmail={email} onBack={() => initialStep === "email" ? router.back() : setStep("welcome")} onContinue={requestCode} loading={loading} error={error} />;
+  if (step === "welcome") return <AuthWelcomeScreen busy={loading} error={error} onEmail={() => setStep("email")} onGoogle={continueGoogle} onGuest={() => void writeOnboardingCompleted().then(() => router.replace("/"))} />;
+  if (step === "email") return <EmailScreen initialEmail={email} onBack={() => initialStep === "email" ? router.back() : setStep("welcome")} onContinue={requestCode} onPasskey={passkeySupported ? continuePasskey : undefined} loading={loading} passkeyLoading={passkeyLoading} error={error} />;
   if (step === "verify") return <VerificationScreen email={email} onBack={() => setStep("email")} onDifferentEmail={() => setStep("email")} onVerify={verify} onResend={() => requestCode(email)} loading={loading} error={error} initialCooldown={cooldown} />;
   if (step === "password") return <PasswordScreen notice={resetNotice} onBack={() => { setProof(""); setResetNotice(""); setStep("verify"); }} onSubmit={(password) => void run(async () => { setResetNotice(""); const result = await authApi.password(email, password); if ("requiresTwoFactor" in result) { setTwoFactorOrigin("password"); setChallengeToken(result.challengeToken); setStep("twoFactor"); } else setStep("success"); })} onForgot={() => void run(async () => { setResetNotice(""); await authApi.sendForgotPasswordCode(email, proof); setStep("forgotPassword"); })} loading={loading} error={error} />;
   if (step === "forgotPassword") return <ForgotPasswordScreen email={email} onBack={() => setStep("password")} onResend={() => void run(async () => { await authApi.sendForgotPasswordCode(email, proof); })} onReset={(input) => void run(async () => { await authApi.resetForgotPassword({ email, ...input }); setProof(""); setResetNotice("Password reset. Sign in again."); setStep("password"); })} loading={loading} error={error} />;
