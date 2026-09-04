@@ -2,58 +2,178 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ChevronDown, SlidersHorizontal } from "lucide-react-native";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
-import { ui } from "./SearchUi";
 import type { FlightSort } from "./flightFilters";
 
-const sortLabels: Record<"best" | "price" | "duration", string> = { best: "Best", price: "Cheapest", duration: "Fastest" };
+const sortLabels: Record<"best" | "price" | "duration", string> = {
+  best: "Best",
+  price: "Cheapest",
+  duration: "Fastest",
+};
 
-function Control({ label, active, count, expanded, filterIcon, onPress }: { label: string; active: boolean; count?: number; expanded: boolean; filterIcon?: boolean; onPress: () => void }) {
+const webFilterBorder = "#D8E1EC";
+const webFilterText = "#142033";
+const webFilterAccent = "#004BB8";
+const webFilterChevron = "#64748B";
+const webFilterPressed = "#F8FAFC";
+const webFilterCountBackground = "rgba(0,75,184,0.08)";
+
+type ControlProps = {
+  label: string;
+  active: boolean;
+  count?: number;
+  expanded: boolean;
+  filterIcon?: boolean;
+  onPress: () => void;
+};
+
+function Control({ label, active, count, expanded, filterIcon, onPress }: ControlProps) {
   const { theme } = useAppTheme();
-  const accent = theme.dark ? "#8FB5FF" : ui.blue;
-  const foreground = active ? accent : theme.textPrimary;
+  const light = !theme.dark;
+  const accent = light ? webFilterAccent : "#8FB5FF";
+  const foreground = light ? webFilterText : theme.textPrimary;
+  const chevron = light ? webFilterChevron : theme.textSecondary;
+  const border = light ? webFilterBorder : theme.border;
+  const surface = theme.surface;
+  const countBackground = light ? webFilterCountBackground : "#142B55";
   const accessibilityLabel = `${label}${active ? ", selected" : ""}${count ? `, ${count} active` : ""}`;
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ expanded, selected: active }}
-      hitSlop={{ top: 2, bottom: 2, left: 2, right: 2 }}
       onPress={onPress}
       style={({ pressed }) => [
         styles.control,
-        { backgroundColor: theme.dark ? theme.surface : ui.pale, borderColor: theme.border },
-        active && { backgroundColor: theme.dark ? "#142B55" : "#EEF4FF", borderColor: accent },
-        pressed && styles.pressed,
+        { backgroundColor: pressed && light ? webFilterPressed : surface, borderColor: border },
       ]}
     >
-      {filterIcon ? <SlidersHorizontal accessible={false} size={17} strokeWidth={2} color={foreground} /> : null}
-      <Text numberOfLines={1} style={[styles.label, { color: foreground }, active && styles.activeLabel]}>{label}</Text>
-      {count ? <View style={[styles.count, { backgroundColor: accent }]}><Text style={styles.countText}>{count}</Text></View> : null}
-      <ChevronDown accessible={false} size={16} strokeWidth={1.9} color={foreground} />
+      {filterIcon ? (
+        <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={accent} />
+      ) : null}
+      <Text numberOfLines={1} style={[styles.label, { color: foreground }]}>{label}</Text>
+      {count ? (
+        <View style={[styles.count, { backgroundColor: countBackground }]}> 
+          <Text style={[styles.countText, { color: accent }]}>{count}</Text>
+        </View>
+      ) : null}
+      <ChevronDown
+        accessible={false}
+        size={14}
+        strokeWidth={1.9}
+        color={chevron}
+        style={expanded ? styles.chevronExpanded : undefined}
+      />
     </Pressable>
   );
 }
 
-export function FlightResultsQuickControls({ sort, activeFilterCount, airlineCount, airportCount, stopsActive, openSheetKind, openSheet }: { sort: FlightSort; activeFilterCount: number; airlineCount: number; airportCount: number; stopsActive: boolean; openSheetKind: "sort" | "all" | "airlines" | "stops" | "airports" | null; openSheet: (sheet: "sort" | "all" | "airlines" | "stops" | "airports") => void }) {
+export function FlightResultsQuickControls({
+  sort,
+  activeFilterCount,
+  airlineCount,
+  airportCount,
+  stopsActive,
+  openSheetKind,
+  openSheet,
+}: {
+  sort: FlightSort;
+  activeFilterCount: number;
+  airlineCount: number;
+  airportCount: number;
+  stopsActive: boolean;
+  openSheetKind: "sort" | "all" | "airlines" | "stops" | "airports" | null;
+  openSheet: (sheet: "sort" | "all" | "airlines" | "stops" | "airports") => void;
+}) {
+  const { theme } = useAppTheme();
   const safeSort = sort === "price" || sort === "duration" ? sort : "best";
+
   return (
-    <ScrollView horizontal style={styles.rail} contentContainerStyle={styles.content} showsHorizontalScrollIndicator={false} alwaysBounceHorizontal={false}>
-      <Control label="Filters" active={activeFilterCount > 0} count={activeFilterCount || undefined} expanded={openSheetKind === "all"} filterIcon onPress={() => openSheet("all")} />
-      <Control label={sortLabels[safeSort]} active={safeSort !== "best"} expanded={openSheetKind === "sort"} onPress={() => openSheet("sort")} />
-      <Control label="Airlines" active={airlineCount > 0} count={airlineCount || undefined} expanded={openSheetKind === "airlines"} onPress={() => openSheet("airlines")} />
-      <Control label="Stops" active={stopsActive} count={stopsActive ? 1 : undefined} expanded={openSheetKind === "stops"} onPress={() => openSheet("stops")} />
-      <Control label="Airports" active={airportCount > 0} count={airportCount || undefined} expanded={openSheetKind === "airports"} onPress={() => openSheet("airports")} />
+    <ScrollView
+      horizontal
+      style={[styles.rail, { backgroundColor: theme.surface }]}
+      contentContainerStyle={styles.content}
+      showsHorizontalScrollIndicator={false}
+      alwaysBounceHorizontal={false}
+    >
+      <Control
+        label="Filter"
+        active={activeFilterCount > 0}
+        count={activeFilterCount || undefined}
+        expanded={openSheetKind === "all"}
+        filterIcon
+        onPress={() => openSheet("all")}
+      />
+      <Control
+        label={sortLabels[safeSort]}
+        active={safeSort !== "best"}
+        expanded={openSheetKind === "sort"}
+        onPress={() => openSheet("sort")}
+      />
+      <Control
+        label="Airlines"
+        active={airlineCount > 0}
+        count={airlineCount || undefined}
+        expanded={openSheetKind === "airlines"}
+        onPress={() => openSheet("airlines")}
+      />
+      <Control
+        label="Stops"
+        active={stopsActive}
+        count={stopsActive ? 1 : undefined}
+        expanded={openSheetKind === "stops"}
+        onPress={() => openSheet("stops")}
+      />
+      <Control
+        label="Airports"
+        active={airportCount > 0}
+        count={airportCount || undefined}
+        expanded={openSheetKind === "airports"}
+        onPress={() => openSheet("airports")}
+      />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  rail: { height: 46, flexGrow: 0 },
-  content: { paddingHorizontal: 14, paddingVertical: 2, gap: 8, alignItems: "center", flexWrap: "nowrap" },
-  control: { height: 42, minHeight: 42, flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12 },
-  pressed: { opacity: 0.82, transform: [{ scale: 0.985 }] },
-  label: { fontSize: 13, lineHeight: 17, fontWeight: "600", fontFamily: appFonts.semibold },
-  activeLabel: { fontWeight: "700", fontFamily: appFonts.bold },
-  count: { minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 5, alignItems: "center", justifyContent: "center" },
-  countText: { color: "white", fontSize: 10, lineHeight: 13, fontWeight: "800", fontFamily: appFonts.extraBold },
+  rail: { height: 48, flexGrow: 0 },
+  content: {
+    paddingHorizontal: 16,
+    paddingBottom: 4,
+    gap: 8,
+    alignItems: "center",
+    flexWrap: "nowrap",
+  },
+  control: {
+    height: 44,
+    minHeight: 44,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 11,
+    paddingHorizontal: 14,
+  },
+  label: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: "600",
+    fontFamily: appFonts.semibold,
+  },
+  count: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  countText: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: "600",
+    fontFamily: appFonts.semibold,
+  },
+  chevronExpanded: { transform: [{ rotate: "180deg" }] },
 });
