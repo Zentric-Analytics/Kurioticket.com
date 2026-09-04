@@ -53,8 +53,9 @@ test("Flight pagination preserves measured list geometry without guessing card h
 
 test("Flight pagination waits for native scroll settlement with a bounded fallback", () => {
   const changePage = screen.slice(screen.indexOf("const changeFlightPage"), screen.indexOf("const handleFlightFiltersChange"));
-  assert.match(changePage, /viewOffset: flightFilterSectionHeight\.current/);
-  assert.match(screen, /onLayout=\{\(\{ nativeEvent \}\) => \{ flightFilterSectionHeight\.current = nativeEvent\.layout\.height; \}\}/);
+  assert.match(changePage, /scrollToLocation\(\{[\s\S]*?sectionIndex: 0,[\s\S]*?itemIndex: 0,[\s\S]*?viewPosition: 0,[\s\S]*?animated: true/);
+  assert.doesNotMatch(changePage, /viewOffset:/);
+  assert.doesNotMatch(screen, /flightFilterSectionHeight/);
   assert.match(screen, /listener: \(\) => flightPaginationScheduleSettled\.current\?\.\(\)/);
   assert.match(screen, /onMomentumScrollEnd=\{\(\) => flightPaginationFinishPositioning\.current\?\.\(\)\}/);
   assert.match(changePage, /FLIGHT_PAGINATION_SCROLL_SETTLE_MS/);

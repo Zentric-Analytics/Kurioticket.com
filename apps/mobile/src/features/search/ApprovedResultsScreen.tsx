@@ -242,7 +242,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const flightPaginationFallbackTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const flightPaginationScheduleSettled = useRef<(() => void) | null>(null);
   const flightPaginationFinishPositioning = useRef<(() => void) | null>(null);
-  const flightFilterSectionHeight = useRef(0);
   const flightPaginationOpacity = useRef(new Animated.Value(1)).current;
   const windowDimensions = useWindowDimensions();
   const previousHotelSearchKey = useRef<string | undefined>(undefined);
@@ -648,25 +647,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     setHotelPageChanging(true); setHotelPage(clampHotelResultsPage(page, hotelPageCount));
     requestAnimationFrame(() => { hotelScrollRef.current?.scrollTo({ y: hotelResultsOffset.current, animated: true }); setHotelPageChanging(false); });
   };
-  const clearFlightPaginationTimers = useCallback(() => {
-    if (flightPaginationSettleTimer.current) clearTimeout(flightPaginationSettleTimer.current);
-    if (flightPaginationSafetyTimer.current) clearTimeout(flightPaginationSafetyTimer.current);
-    flightPaginationSettleTimer.current = undefined;
-    flightPaginationSafetyTimer.current = undefined;
-  }, []);
-  const commitFlightPaginationTarget = useCallback(() => {
-    const targetPage = flightPaginationTargetRef.current;
-    if (targetPage === null || flightPaginationCommittingRef.current) return;
-    flightPaginationCommittingRef.current = true;
-    clearFlightPaginationTimers();
-    setFlightPaginationCommitting(true);
-    setFlightPage(targetPage);
-  }, [clearFlightPaginationTimers]);
-  const scheduleFlightPaginationSettle = useCallback(() => {
-    if (flightPaginationTargetRef.current === null || flightPaginationCommitting) return;
-    if (flightPaginationSettleTimer.current) clearTimeout(flightPaginationSettleTimer.current);
-    flightPaginationSettleTimer.current = setTimeout(commitFlightPaginationTarget, 90);
-  }, [commitFlightPaginationTarget, flightPaginationCommitting]);
   const changeFlightPage = (page: number) => {
     const nextPage = clampFlightResultsPage(page, flightPageCount);
     if (flightPaginationPendingPageRef.current !== null || nextPage === clampedFlightPage) return;
@@ -712,7 +692,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       flightResultsListRef.current?.scrollToLocation({
         sectionIndex: 0,
         itemIndex: 0,
-        viewOffset: flightFilterSectionHeight.current,
         viewPosition: 0,
         animated: true,
       });
@@ -720,45 +699,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       flightPaginationFallbackTimer.current = setTimeout(finishPositioning, FLIGHT_PAGINATION_SCROLL_FALLBACK_MS);
     });
   };
-  useEffect(() => {
-    if (flightPaginationPendingPage === null || flightPaginationCommitting) return;
-    // Waiting for this effect guarantees the card skeleton surface has committed before movement begins.
-    const frame = requestAnimationFrame(() => {
-      try {
-        flightResultsListRef.current?.scrollToLocation({ sectionIndex: 0, itemIndex: 0, viewPosition: 0, animated: true });
-      } catch (error) {
-        if (__DEV__) console.warn("[flight-results:pagination-scroll]", error);
-        try {
-          flightResultsListRef.current?.scrollToLocation({ sectionIndex: 0, itemIndex: 0, viewPosition: 0, animated: false });
-        } catch (fallbackError) {
-          if (__DEV__) console.warn("[flight-results:pagination-scroll-fallback]", fallbackError);
-        }
-        commitFlightPaginationTarget();
-        return;
-      }
-      // Scroll events normally settle the transition. This bounded fallback covers no-op/native failures.
-      flightPaginationSafetyTimer.current = setTimeout(commitFlightPaginationTarget, 1400);
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [commitFlightPaginationTarget, flightPaginationCommitting, flightPaginationPendingPage]);
-  useEffect(() => {
-    if (!flightPaginationCommitting || flightPaginationPendingPage !== clampedFlightPage) return;
-    const frame = requestAnimationFrame(() => {
-      flightPaginationTargetRef.current = null;
-      flightPaginationCommittingRef.current = false;
-      setFlightPaginationCommitting(false);
-      setFlightPaginationPendingPage(null);
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [clampedFlightPage, flightPaginationCommitting, flightPaginationPendingPage]);
-  useEffect(() => {
-    clearFlightPaginationTimers();
-    flightPaginationTargetRef.current = null;
-    flightPaginationCommittingRef.current = false;
-    setFlightPaginationPendingPage(null);
-    setFlightPaginationCommitting(false);
-  }, [clearFlightPaginationTimers, filters, plan.plan?.key, sort]);
-  useEffect(() => () => clearFlightPaginationTimers(), [clearFlightPaginationTimers]);
   const handleFlightFiltersChange = useCallback((next: FlightFilters) => {
     cancelFlightPagination();
     setFlightPage(1);
@@ -1045,7 +985,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           ListHeaderComponent={animatedFlightDateStrip}
           renderSectionHeader={() => (
             <View
-              onLayout={({ nativeEvent }) => { flightFilterSectionHeight.current = nativeEvent.layout.height; }}
               style={[s0.flightFilterSectionHeader, { backgroundColor: flightCanvasColor }]}
             >
               {filterRail}
@@ -1062,19 +1001,16 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           renderItem={({ item, index }) => (
             <>
               {index === 0 && flightRange ? <FlightResultsSummaryRow count={sorted.length} range={flightRange} /> : null}
-              <View style={s0.flightCardItem} accessibilityElementsHidden={flightPaginationPendingPage !== null} importantForAccessibility={flightPaginationPendingPage !== null ? "no-hide-descendants" : "auto"}>
-                <View style={flightPaginationPendingPage !== null ? s0.flightPaginationHiddenCard : undefined} pointerEvents={flightPaginationPendingPage !== null ? "none" : "auto"}>
-                  <FlightCard
-                    result={item}
-                    displayPrice={flightDisplayPrices.get(item.id)}
-                    displayCurrencyContext={currencyState?.resolution}
-                    highlight={flightHighlights.get(item.id)}
-                    params={params}
-                    locale={locale}
-                    logInitialMount={index === 0}
-                  />
-                </View>
-                {flightPaginationPendingPage !== null ? <View style={s0.flightPaginationSkeletonCard} pointerEvents="none"><FlightLoadingSkeleton /></View> : null}
+              <View style={s0.flightCardItem}>
+                <FlightCard
+                  result={item}
+                  displayPrice={flightDisplayPrices.get(item.id)}
+                  displayCurrencyContext={currencyState?.resolution}
+                  highlight={flightHighlights.get(item.id)}
+                  params={params}
+                  locale={locale}
+                  logInitialMount={index === 0}
+                />
               </View>
             </>
           )}
