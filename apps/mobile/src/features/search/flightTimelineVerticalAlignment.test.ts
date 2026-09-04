@@ -52,6 +52,6 @@ test("equal side columns preserve centered flexible rows at every supported widt
 test("alignment is structural rather than absolute and shared by every leg", () => {
   assert.doesNotMatch(journey, /translateY|\btop:|position:\s*"absolute"/);
   assert.match(source, /rightColumnContract: \{ alignItems: "flex-end" \}/);
-  assert.match(card, /<FlightJourneyRow label="OUTBOUND" leg=\{outbound\} \/>/);
-  assert.match(card, /\{returnLeg \? <FlightJourneyRow label="RETURN" leg=\{returnLeg\} \/> : null\}/);
+  assert.match(card, /<FlightJourneyRow label="OUTBOUND" leg=\{outbound\} locale=\{locale\} \/>/);
+  assert.match(card, /\{returnLeg \? <FlightJourneyRow label="RETURN" leg=\{returnLeg\} locale=\{locale\} \/> : null\}/);
 });

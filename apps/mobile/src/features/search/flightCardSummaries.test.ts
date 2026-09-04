@@ -70,6 +70,8 @@ test("metadata and full-width journey fit supported mobile widths", () => {
 
 test("baggage summaries distinguish positive, negative, and unknown provider states", () => {
   assert.equal(summarizeBaggage("Carry-on and 1 checked bag included"), "Included");
+  assert.equal(summarizeBaggage("Outbound: 1 carry-on included. Return: baggage allowance not supplied."), null);
+  assert.equal(summarizeBaggage("Checked bag available for a fee"), null);
   assert.equal(summarizeBaggage("Cabin baggage included"), "Carry-on included");
   assert.equal(summarizeBaggage("One checked bag included"), "Checked bag included");
   assert.equal(summarizeBaggage("No baggage included"), "Not included");

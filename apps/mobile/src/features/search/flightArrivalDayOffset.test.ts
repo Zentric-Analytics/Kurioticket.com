@@ -40,5 +40,6 @@ test("formats only a different provider-local arrival calendar date", () => {
 test("formats each provider-local airport date without device-timezone shifts", () => {
   assert.equal(providerLocalFlightDate("2026-10-23T23:50:00-07:00"), "Oct 23");
   assert.equal(providerLocalFlightDate("2026-10-24T01:15:00-04:00"), "Oct 24");
+  assert.equal(providerLocalFlightDate("2026-10-23T23:50:00-07:00", "fr-FR"), "23 oct.");
   assert.equal(providerLocalFlightDate("invalid"), null);
 });

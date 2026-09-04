@@ -7,8 +7,8 @@ const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.t
 const card = source.slice(source.indexOf("function FlightCard"), source.indexOf("function HotelCard"));
 
 test("outbound and return share one structured journey component", () => {
-  assert.match(card, /<FlightJourneyRow label="OUTBOUND" leg=\{outbound\} \/>/);
-  assert.match(card, /\{returnLeg \? <FlightJourneyRow label="RETURN" leg=\{returnLeg\} \/> : null\}/);
+  assert.match(card, /<FlightJourneyRow label="OUTBOUND" leg=\{outbound\} locale=\{locale\} \/>/);
+  assert.match(card, /\{returnLeg \? <FlightJourneyRow label="RETURN" leg=\{returnLeg\} locale=\{locale\} \/> : null\}/);
   assert.equal(card.match(/<View style=\{\[s0\.arrivalColumn, s0\.rightColumnContract\]\}>/g)?.length, 2);
   assert.match(source, /journeyPrimaryRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 \}/);
   assert.match(source, /departureColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);

@@ -154,7 +154,7 @@ import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
 import { buildHotelFilterChips, hasGoogleMapsDiscovery } from "./hotelResultsPresentation";
 import { HotelResultsPagination } from "./HotelResultsPagination";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
-import type { MobileLocale } from "../../localization/mobileLocalizationCatalog";
+import { mobileLocales, type MobileLocale } from "../../localization/mobileLocalizationCatalog";
 import { travelAccountMessage } from "../../localization/travelAccountMessages";
 import { buildHotelResultsSummary } from "./hotelResultsSummary";
 import { flightResultsCopy, flightResultsSummary } from "./flightResultsSummary";
@@ -1184,8 +1184,8 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
           </View>
         </View>
         <View style={s0.journeyList}>
-          <FlightJourneyRow label="OUTBOUND" leg={outbound} />
-          {returnLeg ? <FlightJourneyRow label="RETURN" leg={returnLeg} /> : null}
+          <FlightJourneyRow label="OUTBOUND" leg={outbound} locale={locale} />
+          {returnLeg ? <FlightJourneyRow label="RETURN" leg={returnLeg} locale={locale} /> : null}
         </View>
       </View>
       <View style={[s0.flightCardFooter, { borderTopColor: theme.border }]}>
@@ -1237,14 +1237,15 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
     </View>
   );
 }
-function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: FlightCardLeg }) {
+function FlightJourneyRow({ label, leg, locale }: { label: "OUTBOUND" | "RETURN"; leg: FlightCardLeg; locale: MobileLocale }) {
   const { theme } = useAppTheme();
   const supportTextColor = theme.dark ? flightSupportText.dark : flightSupportText.light;
   const stopLabel = leg.stops
     ? `${leg.stops} stop${leg.stops === 1 ? "" : "s"}`
     : "Nonstop";
-  const departureDate = providerLocalFlightDate(leg.departureTime);
-  const arrivalDate = providerLocalFlightDate(leg.arrivalTime);
+  const intlLocale = mobileLocales.find((option) => option.code === locale)?.intl ?? "en-US";
+  const departureDate = providerLocalFlightDate(leg.departureTime, intlLocale);
+  const arrivalDate = providerLocalFlightDate(leg.arrivalTime, intlLocale);
   return (
     <View
       style={s0.journeyBlock}

@@ -45,8 +45,8 @@ test("flight card maps every approved semantic weight to its matching Inter face
 test("flight card renders labeled provider legs only for the active trip type", () => {
   assert.match(card, /const roundTrip = one\(params\.tripType\) === "round-trip"/);
   assert.match(card, /flightCardLegs\(result, roundTrip\)/);
-  assert.match(card, /<FlightJourneyRow label="OUTBOUND" leg=\{outbound\} \/>/);
-  assert.match(card, /\{returnLeg \? <FlightJourneyRow label="RETURN" leg=\{returnLeg\} \/> : null\}/);
+  assert.match(card, /<FlightJourneyRow label="OUTBOUND" leg=\{outbound\} locale=\{locale\} \/>/);
+  assert.match(card, /\{returnLeg \? <FlightJourneyRow label="RETURN" leg=\{returnLeg\} locale=\{locale\} \/> : null\}/);
 });
 
 test("main flight card uses a theme-aware bordered surface and restrained native depth", () => {
@@ -334,8 +334,9 @@ test("flight journey applies the approved Step 5 hierarchy, colors, and accessib
   assert.equal(card.match(/s0\.line, \{ backgroundColor: theme\.border \}/g)?.length, 2);
   assert.match(card, /<PlaneTakeoff accessible=\{false\} size=\{14\} strokeWidth=\{2\} color=\{theme\.dark \? "#8FB5FF" : ui\.blue\} \/>/);
   assert.equal(card.match(/accessible=\{false\} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"/g)?.length, 3);
-  assert.match(card, /const departureDate = providerLocalFlightDate\(leg\.departureTime\)/);
-  assert.match(card, /const arrivalDate = providerLocalFlightDate\(leg\.arrivalTime\)/);
+  assert.match(card, /const intlLocale = mobileLocales\.find/);
+  assert.match(card, /const departureDate = providerLocalFlightDate\(leg\.departureTime, intlLocale\)/);
+  assert.match(card, /const arrivalDate = providerLocalFlightDate\(leg\.arrivalTime, intlLocale\)/);
   assert.equal(card.match(/s0\.airportDate, \{ color: supportTextColor \}/g)?.length, 2);
   assert.match(card, /accessibilityLabel=\{`\$\{label\.toLowerCase\(\)\}: \$\{clock\(leg\.departureTime\)\} \$\{leg\.originAirport\}\$\{departureDate/);
   assert.match(source, /journeyLabel: \{ fontSize: 10, lineHeight: 12, fontWeight: "700", fontFamily: appFonts\.bold, letterSpacing: 0\.8 \}/);

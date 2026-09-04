@@ -30,11 +30,11 @@ function localCalendarDay(value: string | null | undefined): number | null {
 }
 
 /** Formats the calendar date encoded by the provider without shifting it to the device timezone. */
-export function providerLocalFlightDate(value: string | null | undefined): string | null {
+export function providerLocalFlightDate(value: string | null | undefined, locale = "en-US"): string | null {
   const calendarDay = localCalendarDay(value);
   if (calendarDay === null) return null;
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(locale, {
     month: "short",
     day: "numeric",
     timeZone: "UTC",
