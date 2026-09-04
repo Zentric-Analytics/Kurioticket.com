@@ -62,5 +62,29 @@ test("native location uses shared map helpers and a non-interactive existing Web
   assert.match(component, /scrollEnabled=\{false\}/);
   assert.doesNotMatch(component, /react-native-maps/);
   assert.match(component, /minHeight: 44/);
-  assert.match(component, /horizontal showsHorizontalScrollIndicator=\{false\}/);
+  assert.match(component, /<ScrollView horizontal[^>]*showsHorizontalScrollIndicator=\{false\}/);
+});
+
+test("native related hotel heading stays inset while only the horizontal carousel breaks out", () => {
+  const component = readFileSync("src/features/search/NativeHotelDecisionSections.tsx", "utf8");
+  const section = component.slice(
+    component.indexOf("export function NativeRelatedHotelsSection"),
+    component.indexOf("const styles = StyleSheet.create"),
+  );
+  const relatedSectionStyle = component.match(/relatedSection:\s*\{([^}]*)\}/)?.[1] ?? "";
+
+  assert.ok(section.indexOf('accessibilityRole="header"') < section.indexOf("<ScrollView"));
+  assert.match(section, /<ScrollView horizontal style=\{styles\.carouselViewport\} showsHorizontalScrollIndicator=\{false\}/);
+  assert.doesNotMatch(relatedSectionStyle, /marginHorizontal/);
+  assert.match(component, /carouselViewport:\s*\{\s*marginHorizontal:\s*-16\s*\}/);
+  assert.match(component, /carousel:\s*\{[^}]*paddingHorizontal:\s*16/);
+  assert.match(component, /Math\.min\(300, Math\.max\(240, width \* 0\.82\)\)/);
+});
+
+test("native Open in Maps background uses the canonical native blue token", () => {
+  const component = readFileSync("src/features/search/NativeHotelDecisionSections.tsx", "utf8");
+
+  assert.match(component, /import \{ colors \} from "\.\.\/\.\.\/theme\/tokens";/);
+  assert.match(component, /mapsButton:\s*\{[^}]*backgroundColor:\s*colors\.blue/);
+  assert.doesNotMatch(component, /#004BB8/i);
 });
