@@ -4,11 +4,13 @@ export type TimeBucket = "overnight" | "morning" | "afternoon" | "evening" | "ni
 export type StopBucket = "nonstop" | "one" | "twoPlus";
 export type NumericRange = { min: number; max: number };
 export type JourneyTimeSelection = { departure: TimeBucket[]; arrival: TimeBucket[] };
+export type JourneyTimeMaximum = { departure: number | null; arrival: number | null };
 export type FlightPriceComparisonContext = { currency: string; identity: string; mode: "raw" | "normalized"; valueForResult: (result: FlightResult) => number | null };
 export type FlightFilters = {
   maxStops: null | 0 | 1 | 2;
   airlines: string[];
   journeyTimes: Record<string, JourneyTimeSelection>;
+  journeyTimeMaximums?: Record<string, JourneyTimeMaximum>;
   maximumPrice: number | null;
   maximumDuration: number | null;
   maximumLayover: number | null;
@@ -26,7 +28,7 @@ export const flightSortOptions = [
   { value: "departure-desc", label: "Latest departure", description: "Leaves latest" },
 ] as const;
 export function flightSortQuickLabel(sort: FlightSort) { return sort === "best" ? "Sort" : flightSortOptions.find((x) => x.value === sort)?.label ?? "Sort"; }
-export const emptyFlightFilters = (): FlightFilters => ({ maxStops: null, airlines: [], journeyTimes: {}, maximumPrice: null, maximumDuration: null, maximumLayover: null, fromAirports: [], toAirports: [], baggageIncluded: false, refundable: false });
+export const emptyFlightFilters = (): FlightFilters => ({ maxStops: null, airlines: [], journeyTimes: {}, journeyTimeMaximums: {}, maximumPrice: null, maximumDuration: null, maximumLayover: null, fromAirports: [], toAirports: [], baggageIncluded: false, refundable: false });
 const finite = (value: number | null | undefined) => typeof value === "number" && Number.isFinite(value) ? value : null;
 const authoritativeLegs = (result: FlightResult) => result.legs?.filter((leg) => leg && (leg.direction === "outbound" || leg.direction === "return" || leg.direction === "leg")) ?? [];
 export const journeyKey = (leg: NonNullable<FlightResult["legs"]>[number], index: number) => leg.direction === "leg" ? `leg:${leg.legIndex ?? index}` : leg.direction;
@@ -58,11 +60,25 @@ export const timeBucket = (value: string | undefined): TimeBucket | undefined =>
 const fallbackLeg = (result: FlightResult) => ({ direction: "outbound" as const, originAirport: result.originAirport, destinationAirport: result.destinationAirport, departureTime: result.departureTime, arrivalTime: result.arrivalTime, duration: result.duration, durationMinutes: result.durationMinutes, stops: result.stops, layovers: result.layovers , segments: [] });
 const matchesTimes = (result: FlightResult, selections: FlightFilters["journeyTimes"]) => {
   const legs = authoritativeLegs(result); const actual = legs.length ? legs : [fallbackLeg(result)];
-  return Object.entries(selections).every(([key, group]) => {
+  return Object.entries(selections ?? {}).every(([key, group]) => {
     if (!group.departure.length && !group.arrival.length) return true;
     const leg = actual.find((candidate, index) => journeyKey(candidate, index) === key); if (!leg) return false;
     const departure = timeBucket(leg.departureTime); const arrival = timeBucket(leg.arrivalTime);
     return (!group.departure.length || Boolean(departure && group.departure.includes(departure))) && (!group.arrival.length || Boolean(arrival && group.arrival.includes(arrival)));
+  });
+};
+export const flightTimeMinutes = (value: string | undefined): number | null => {
+  const match = value?.match(/T(\d{2}):(\d{2})/);
+  if (!match) return null;
+  const minutes = Number(match[1]) * 60 + Number(match[2]);
+  return minutes >= 0 && minutes < 1440 ? minutes : null;
+};
+const matchesTimeMaximums = (result: FlightResult, selections: FlightFilters["journeyTimeMaximums"]) => {
+  const legs = authoritativeLegs(result); const actual = legs.length ? legs : [fallbackLeg(result)];
+  return Object.entries(selections ?? {}).every(([key, maximum]) => {
+    const leg = actual.find((candidate, index) => journeyKey(candidate, index) === key); if (!leg) return false;
+    const departure = flightTimeMinutes(leg.departureTime), arrival = flightTimeMinutes(leg.arrivalTime);
+    return (maximum.departure == null || (departure != null && departure <= maximum.departure)) && (maximum.arrival == null || (arrival != null && arrival <= maximum.arrival));
   });
 };
 const hasPositiveTerm = (result: FlightResult, category: "baggage" | "refund") => result.fareTerms?.some((x) => x.category === category && x.semantic === "positive") === true;
@@ -80,7 +96,7 @@ export function resolveFlightPriceComparisonContext(results: readonly FlightResu
 export function flightMatchesFilters(result: FlightResult, filters: FlightFilters, priceValue?: (result: FlightResult) => number | null) {
   const price = finite(priceValue ? priceValue(result) : result.price); const duration = flightFilterDurationMinutes(result); const layover = flightMaximumLayoverMinutes(result);
   const legacyTime = filters.times?.length ? timeBucket(filters.timeField === "landing" ? result.arrivalTime : result.departureTime) : undefined;
-  return (filters.maxStops == null || flightMaximumStops(result) <= filters.maxStops) && (!filters.stops?.length || filters.stops.includes(flightStopBucket(result))) && (!filters.airlines.length || filters.airlines.includes(result.airlineName)) && matchesTimes(result, filters.journeyTimes) && (!filters.times?.length || Boolean(legacyTime && filters.times.includes(legacyTime))) &&
+  return (filters.maxStops == null || flightMaximumStops(result) <= filters.maxStops) && (!filters.stops?.length || filters.stops.includes(flightStopBucket(result))) && (!filters.airlines.length || filters.airlines.includes(result.airlineName)) && matchesTimes(result, filters.journeyTimes) && matchesTimeMaximums(result, filters.journeyTimeMaximums ?? {}) && (!filters.times?.length || Boolean(legacyTime && filters.times.includes(legacyTime))) &&
     (filters.maximumPrice == null || (price != null && price <= filters.maximumPrice)) && (!filters.price || (price != null && price >= filters.price.min && price <= filters.price.max)) && (filters.maximumDuration == null || (duration != null && duration <= filters.maximumDuration)) && (!filters.duration || (duration != null && duration >= filters.duration.min && duration <= filters.duration.max)) &&
     (filters.maximumLayover == null || layover <= filters.maximumLayover) && (!filters.fromAirports.length || filters.fromAirports.includes(result.originAirport)) && (!filters.toAirports.length || filters.toAirports.includes(result.destinationAirport)) &&
     (!filters.baggageIncluded || hasPositiveTerm(result, "baggage")) && (!filters.refundable || hasPositiveTerm(result, "refund"));
@@ -119,7 +135,7 @@ export type FlightFilterOptions = ReturnType<typeof flightFilterOptions>;
 export const isPriceFilteringAvailable = (options: FlightFilterOptions, ready: boolean) => ready && options.price != null;
 export function activeFlightFilterCount(filters: FlightFilters, options?: FlightFilterOptions) {
   const airlineRestricted = filters.airlines.length > 0 && (!options || filters.airlines.length < options.airlines.length);
-  const groups = Object.values(filters.journeyTimes).reduce((n, x) => n + Number(x.departure.length > 0) + Number(x.arrival.length > 0), 0);
+  const groups = Object.values(filters.journeyTimes).reduce((n, x) => n + Number(x.departure.length > 0) + Number(x.arrival.length > 0), 0) + Object.values(filters.journeyTimeMaximums ?? {}).reduce((n,x)=>n+Number(x.departure!=null)+Number(x.arrival!=null),0);
   return Number(filters.maxStops != null) + Number(airlineRestricted) + groups + Number(filters.maximumPrice != null && (!options?.price || filters.maximumPrice < options.price.max)) + Number(filters.maximumDuration != null && (!options?.duration || filters.maximumDuration < options.duration.max)) + Number(filters.maximumLayover != null && (!options?.layover || filters.maximumLayover < options.layover.max)) + filters.fromAirports.length + filters.toAirports.length + Number(filters.baggageIncluded) + Number(filters.refundable);
 }
 export function filterAndSortFlights(results: readonly FlightResult[], filters: FlightFilters, sort: FlightSort, priceValue?: (result: FlightResult) => number | null, sortPriceValue = priceValue) {
