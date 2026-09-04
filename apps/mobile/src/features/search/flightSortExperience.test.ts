@@ -9,8 +9,10 @@ const controls = readFileSync("src/features/search/FlightResultsQuickControls.ts
 
 test("the sort control opens a compact web-parity menu", () => {
   assert.match(controls, /openSheet\("sort"\)/);
+  assert.match(controls, /anchored[\s\S]*?onPress=\{\(\) => openSheet\("sort"\)\}/);
   assert.match(screen, /<FlightSortSheet visible=\{sortOpen\}/);
-  assert.match(sheet, /compactMenu=\{\{ left: 96, width: 190 \}\}/);
+  assert.match(sheet, /compactMenu=\{\{ width: 190 \}\}/);
+  assert.doesNotMatch(sheet, /compactMenu=\{\{[^}]*left:/);
   assert.match(shell, /animationType="fade"/);
   assert.match(shell, /styles\.compactMenu/);
   assert.match(shell, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
