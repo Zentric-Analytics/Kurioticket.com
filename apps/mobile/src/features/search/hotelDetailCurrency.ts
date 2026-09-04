@@ -9,6 +9,41 @@ export type HotelDisplayPriceSnapshot = {
   total: DisplayPrice | null;
 };
 
+export type HotelRoomDisplayPrice = {
+  nightly: DisplayPrice;
+  total: DisplayPrice;
+};
+
+/** Keeps room choices in the Hotel page's effective currency or marks them unavailable. */
+export function createHotelRoomDisplayPrice(
+  providerNightly: number,
+  providerTotal: number,
+  providerCurrency: string,
+  displayCurrency: string,
+  rates: ExchangeRates,
+): HotelRoomDisplayPrice | null {
+  const nightly = displayMarketPrice(
+    providerNightly,
+    providerCurrency,
+    displayCurrency,
+    rates,
+  );
+  const total = displayMarketPrice(
+    providerTotal,
+    providerCurrency,
+    displayCurrency,
+    rates,
+  );
+  const effectiveCurrency = displayCurrency.trim().toUpperCase();
+  if (
+    nightly.currency !== effectiveCurrency ||
+    total.currency !== effectiveCurrency
+  ) {
+    return null;
+  }
+  return { nightly, total };
+}
+
 export function canReuseHotelDisplayPrices({
   snapshot, providerNightly, providerTotal, providerCurrency, displayCurrency, preferredCurrency,
 }: {
