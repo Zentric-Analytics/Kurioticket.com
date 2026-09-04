@@ -29,6 +29,32 @@ test("ready flight results follow the approved sticky hierarchy", () => {
   assert.equal(source.match(/flightResultCountLabel\(count\)/g)?.length, 1);
 });
 
+test("Hotel Results keeps its header, sticky rail, and result body in stable ownership order", () => {
+  const hotelHeader = resultsBody.indexOf("<HotelResultsHeader destination=");
+  const hotelScroll = resultsBody.indexOf("<ScrollView", hotelHeader);
+  const hotelEnd = resultsBody.indexOf("<FlightSortSheet", hotelScroll);
+  const layout = resultsBody.slice(hotelHeader, hotelEnd);
+  const stickyRail = layout.indexOf("hotelFilterSectionHeader");
+  const filterRail = layout.indexOf("{filterRail}", stickyRail);
+  const body = layout.indexOf("s0.body", filterRail);
+
+  assert.ok(hotelHeader >= 0 && hotelHeader < hotelScroll);
+  assert.match(layout, /stickyHeaderIndices=\{\[0\]\}/);
+  assert.ok(stickyRail >= 0 && stickyRail < filterRail && filterRail < body);
+  assert.equal(layout.match(/<HotelResultsHeader/g)?.length, 1);
+  assert.doesNotMatch(layout, /hotelCompactHeader|hotelIntroBoundary/);
+});
+
+test("Hotel pagination scrolls to a measured content coordinate below the sticky rail", () => {
+  const pagination = resultsBody.slice(
+    resultsBody.indexOf("const updateHotelResultsOffset"),
+    resultsBody.indexOf("const changeFlightPage"),
+  );
+  assert.match(pagination, /hotelResultsBodyOffset\.current[\s\S]*?hotelResultsSummaryOffset\.current[\s\S]*?- hotelFilterHeaderHeight\.current/);
+  assert.match(pagination, /scrollTo\(\{ y: hotelResultsOffset\.current, animated: true \}\)/);
+  assert.doesNotMatch(pagination, /(?:58|64|104|120)/);
+});
+
 test("the compact flight alert removes the large subtitle and management redirect", () => {
   const component = source.slice(source.indexOf("function PriceAlert"), source.indexOf("export function BottomNav"));
   const flightBranch = component.slice(0, component.indexOf("  return (", component.indexOf("if (flight)")));
