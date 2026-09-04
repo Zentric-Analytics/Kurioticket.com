@@ -12,14 +12,14 @@ test("Flight Results price alert maps its existing weights to Inter faces", () =
 });
 
 test("Flight Results price alert uses a compact premium row and native switch", () => {
-  const bannerStyle = source.slice(source.indexOf("flightAlertToggleCard: {"), source.indexOf("flightAlertCopy: {"));
+  const bannerStyle = source.slice(source.indexOf("compactPriceAlert: {"), source.indexOf("flightAlertCopy: {"));
   assert.match(bannerStyle, /minHeight: 48/);
-  assert.match(bannerStyle, /borderRadius: 12/);
+  assert.match(bannerStyle, /borderRadius: 11/);
   assert.match(bannerStyle, /flexDirection: "row"/);
-  assert.match(bannerStyle, /gap: 9/);
+  assert.match(bannerStyle, /gap: 8/);
   assert.match(flightAlert, /<Bell accessible=\{false\} size=\{17\}/);
   assert.match(source, /flightAlertCopy: \{ flex: 1, minWidth: 0, gap: 1 \}/);
-  assert.match(source, /flightAlertSwitchSlot: \{ minWidth: 51, minHeight: 44/);
+  assert.match(source, /compactPriceAlertSwitchSlot: \{ minWidth: 51, minHeight: 44/);
   assert.match(flightAlert, /<Switch[^>]*accessibilityRole="switch"/);
   assert.doesNotMatch(flightAlert, /Get notified when (?:this fare|fares) changes|>On<|>Off</);
 });
@@ -84,7 +84,7 @@ test("obsolete large Hotel Results alert styles and create button stay removed",
 test("Hotel Results reuses the compact banner with a left Bell and native switch", () => {
   const hotelAlert = flightAlert.slice(flightAlert.indexOf('if (product !== "hotel"'));
   const compactBanner = hotelAlert.slice(0, hotelAlert.indexOf("<Modal"));
-  assert.match(hotelAlert, /style=\{\[s0\.flightAlertCompact,/);
+  assert.match(hotelAlert, /style=\{\[s0\.compactPriceAlert,/);
   assert.match(hotelAlert, /<Bell accessible=\{false\} size=\{17\} strokeWidth=\{2\}/);
   assert.match(hotelAlert, /s0\.flightAlertCompactTitle/);
   assert.match(hotelAlert, /message\("hotelAlertTitle"\)/);
@@ -96,15 +96,14 @@ test("Hotel Results reuses the compact banner with a left Bell and native switch
   assert.doesNotMatch(source, /flightAlertAction:|flightAlertActionPressed:|flightAlertActionText:|flightAlertSwitchTarget:/);
 });
 
-test("Hotel owns native switch alignment without changing the Flight slot", () => {
+test("Flight and Hotel share native switch alignment", () => {
   const hotelAlert = flightAlert.slice(flightAlert.indexOf('if (product !== "hotel"'));
   const compactBanner = hotelAlert.slice(0, hotelAlert.indexOf("<Modal"));
-  assert.match(source, /flightAlertSwitchSlot: \{ minWidth: 51, minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
-  assert.match(source, /hotelAlertSwitchSlot: \{ minWidth: 51, minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
-  assert.match(compactBanner, /style=\{s0\.hotelAlertSwitchSlot\}/);
-  assert.doesNotMatch(compactBanner, /style=\{s0\.flightAlertSwitchSlot\}/);
-  assert.match(compactBanner, /style=\{Platform\.OS === "ios" \? s0\.hotelAlertSwitchIos : undefined\}/);
-  assert.match(source, /hotelAlertSwitchIos: \{ transform: \[\{ translateY: 8 \}\] \}/);
+  assert.match(source, /compactPriceAlertSwitchSlot: \{ minWidth: 51, minHeight: 44, flexShrink: 0/);
+  assert.match(compactBanner, /style=\{s0\.compactPriceAlertSwitchSlot\}/);
+  assert.match(compactBanner, /style=\{Platform\.OS === "ios" \? s0\.compactPriceAlertSwitchIos : undefined\}/);
+  assert.match(source, /compactPriceAlertSwitchIos: \{ transform: \[\{ translateY: 8 \}\] \}/);
+  assert.doesNotMatch(source, /flightPriceAlertSwitch|scale: 0\.88/);
   assert.doesNotMatch(compactBanner, /position: "absolute"|scaleX|scaleY/);
 });
 
