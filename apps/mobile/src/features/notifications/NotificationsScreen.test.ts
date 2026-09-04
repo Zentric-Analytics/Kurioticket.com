@@ -176,13 +176,14 @@ test("the list controls one open row and scrolling closes it", () => {
   assert.match(screen, /onSetOpen=\{\(open\) => setOpenNotificationId\(open \? item\.id : null\)\}/);
 });
 
-test("a horizontal row gesture locks out the ScrollView until release or cancellation", () => {
+test("a horizontal row gesture locks out the ScrollView until release, rejection, or cancellation", () => {
   const screen = readFileSync(resolve("src/features/notifications/NotificationsScreen.tsx"), "utf8");
   assert.match(screen, /<ScrollView scrollEnabled=\{scrollEnabled\}/);
   assert.match(screen, /onMoveShouldSetPanResponderCapture:[\s\S]*shouldCaptureSwipe/);
   assert.match(screen, /nextDirection === "horizontal"[\s\S]*onHorizontalLockRef\.current\(\)/);
   assert.match(screen, /onPanResponderTerminationRequest: \(\) => gestureDirection\.current !== "horizontal"/);
   assert.match(screen, /onPanResponderRelease:[\s\S]*finishHorizontalSwipe\(\)/);
+  assert.match(screen, /onPanResponderReject: finishHorizontalSwipe/);
   assert.match(screen, /onPanResponderTerminate:[\s\S]*finishHorizontalSwipe\(\)/);
   assert.match(screen, /useEffect\(\(\) => \(\) => onHorizontalReleaseRef\.current\(\), \[\]\)/);
 });
