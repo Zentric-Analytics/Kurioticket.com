@@ -10,7 +10,7 @@
     "applicationIdentifier": "com.kurioticket.app",
     "appVersion": "0.3.0",
     "appBuildVersion": "1",
-    "runtimeVersion": "production-0.3.2",
+    "runtimeVersion": "production-0.3.3",
     "gitCommitHash": "d97d8e01245a1b77c77d3499d02d5f355b885025",
     "artifacts": { "applicationArchiveUrl": "https://expo.dev/artifacts/eas/sanitized.aab" }
   }
