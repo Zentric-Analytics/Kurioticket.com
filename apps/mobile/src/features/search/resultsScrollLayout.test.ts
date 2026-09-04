@@ -122,7 +122,7 @@ test("Hotel Results reclaims BottomNav space while retaining the native bottom s
 
   assert.match(screen, /const insets = useSafeAreaInsets\(\)/);
   assert.match(sharedBody, /paddingBottom: 92/);
-  assert.match(screen, /style=\{\[s0\.body, \{ paddingBottom: Math\.max\(insets\.bottom \+ 16, 16\) \}\]\}/);
+  assert.match(screen, /style=\{\[s0\.body, \{ paddingBottom: Math\.max\(insets\.bottom \+ 72, 72\) \}\]\}/);
   assert.match(screen, /\{flightResults \? <BottomNav flightResults \/> : null\}/);
   assert.doesNotMatch(screen, /<BottomNav flightResults=\{flightResults\} \/>/);
   assert.doesNotMatch(backToTop, /bottom:/);
