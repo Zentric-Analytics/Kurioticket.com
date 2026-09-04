@@ -80,12 +80,20 @@ test("Seller notice mirrors explicit web localizations and otherwise uses canoni
   assert.match(footer, /textAlign: direction === "rtl" \? "right" : "left", writingDirection: direction/);
 });
 
-test("footer is ordinary wrapping content with accessible links and no back-to-top", () => {
+test("footer owns compact visual spacing without duplicating the screen safe area", () => {
   assert.match(footer, /StyleSheet\.hairlineWidth/);
-  assert.match(footer, /flexDirection: "row", flexWrap: "wrap"/);
+  assert.doesNotMatch(footer, /useSafeAreaInsets|\binsets\b/);
+  assert.doesNotMatch(footer, /Math\.max|paddingBottom:\s*(?:6[4-9]|[7-9]\d|\d{3,})/);
+  assert.match(footer, /footer: \{[\s\S]*?paddingBottom: 16/);
+  assert.match(footer, /links: \{ flexDirection: "row", flexWrap: "wrap", columnGap: 16, paddingRight: 60 \}/);
   assert.match(footer, /minHeight: 44/);
   assert.equal(footer.match(/accessibilityRole="link"/g)?.length, 1);
-  assert.match(footer, /paddingBottom: Math\.max\(insets\.bottom \+ 72, 88\)/);
   assert.doesNotMatch(footer, /ArrowUp|scrollTo|ScrollView|FlatList|SectionList|position:\s*"absolute"/);
+});
+
+test("screen remains the sole safe-area and Back-to-top owner", () => {
+  assert.match(screen, /style=\{\[s0\.body, \{ paddingBottom: Math\.max\(insets\.bottom \+ 16, 16\) \}\]\}/);
   assert.equal(screen.match(/accessibilityLabel="Back to top"/g)?.length, 1);
+  assert.match(screen, /s0\.hotelBackToTop,\{bottom:Math\.max\(insets\.bottom \+ 16,16\)/);
+  assert.match(screen, /hotelBackToTop:\s*\{[^}]*position:"absolute"[^}]*right:16[^}]*width:44[^}]*height:44[^}]*borderRadius:22/);
 });

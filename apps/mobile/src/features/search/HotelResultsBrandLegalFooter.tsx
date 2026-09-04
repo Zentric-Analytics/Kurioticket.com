@@ -1,6 +1,5 @@
 import { router } from "expo-router";
 import { Image, Linking, Pressable, StyleSheet, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { getCaliforniaSellerOfTravelNotice, legalProfile } from "@/data/legalProfile";
 import { COOKIE_POLICY_URL } from "../../config/legalUrls";
@@ -18,7 +17,6 @@ const termsRoute = "/(tabs)/profile/terms-of-service" as const;
 export function HotelResultsBrandLegalFooter() {
   const { theme } = useAppTheme();
   const { locale, direction } = useMobileLocalization();
-  const insets = useSafeAreaInsets();
   const currentYear = new Date().getFullYear();
   const copy = hotelResultsFooterCopy[locale];
   const sellerNotice = copy.sellerNotice?.({
@@ -36,7 +34,6 @@ export function HotelResultsBrandLegalFooter() {
         {
           backgroundColor: theme.surface,
           borderTopColor: theme.border,
-          paddingBottom: Math.max(insets.bottom + 72, 88),
         },
       ]}
     >
@@ -70,6 +67,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     paddingHorizontal: 16,
     paddingTop: 26,
+    paddingBottom: 16,
   },
   logoFrame: { alignSelf: "flex-start", marginBottom: 8 },
   logoFrameDark: { backgroundColor: "#FFFFFF", borderRadius: 4, paddingHorizontal: 6, paddingVertical: 4 },
@@ -77,7 +75,7 @@ const styles = StyleSheet.create({
   tagline: { fontSize: 13, lineHeight: 19, marginBottom: 14 },
   sellerNotice: { fontSize: 12, lineHeight: 19, marginBottom: 22 },
   copyright: { fontSize: 12, lineHeight: 19, marginBottom: 4 },
-  links: { flexDirection: "row", flexWrap: "wrap", columnGap: 16 },
+  links: { flexDirection: "row", flexWrap: "wrap", columnGap: 16, paddingRight: 60 },
   linkTarget: { minHeight: 44, justifyContent: "center" },
   linkText: { fontFamily: appFonts.semibold, fontSize: 12, lineHeight: 18 },
 });
