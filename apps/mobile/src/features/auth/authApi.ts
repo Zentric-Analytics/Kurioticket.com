@@ -43,7 +43,12 @@ export const authApi = {
   passkeyOptions: (signal?: AbortSignal) => request<{ options: PasskeyAuthenticationOptions }>("passkey/options", { method: "POST", body: "{}" }, signal),
   passkeyVerify: async (assertion: PasskeyAssertion, signal?: AbortSignal) => {
     const result = await request<{ session: { token: string; expires: string }; user: { id: string; email: string; name?: string | null } }>("passkey/verify", { method: "POST", body: JSON.stringify(assertion) }, signal);
+    if (signal?.aborted) throw new AuthApiError("Passkey sign-in cancelled.", 0, "ABORTED");
     await writeSession({ ...result.session, user: result.user });
+    if (signal?.aborted) {
+      await clearSession();
+      throw new AuthApiError("Passkey sign-in cancelled.", 0, "ABORTED");
+    }
     return result;
   },
   requestCode: (email: string) => request<{ cooldownSeconds: number }>("request-code", { method: "POST", body: JSON.stringify({ email }) }),
