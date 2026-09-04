@@ -22,6 +22,7 @@ const webFilterChevron = "#64748B";
 const webFilterPressed = "#F8FAFC";
 const webFilterCountBackground = "rgba(0,75,184,0.08)";
 const webFilterSurface = "#FFFFFF";
+const fullFilterAccessibilityLabel = "Filters";
 
 type ControlProps = {
   label: string;
@@ -30,10 +31,11 @@ type ControlProps = {
   expanded: boolean;
   filterIcon?: boolean;
   anchored?: boolean;
+  accessibilityLabelOverride?: string;
   onPress: () => void;
 };
 
-function Control({ label, active, count, expanded, filterIcon, anchored = false, onPress }: ControlProps) {
+function Control({ label, active, count, expanded, filterIcon, anchored = false, accessibilityLabelOverride, onPress }: ControlProps) {
   const { theme } = useAppTheme();
   const triggerRef = useRef<View>(null);
   const light = !theme.dark;
@@ -43,7 +45,7 @@ function Control({ label, active, count, expanded, filterIcon, anchored = false,
   const border = light ? webFilterBorder : theme.border;
   const surface = light ? webFilterSurface : theme.surface;
   const countBackground = light ? webFilterCountBackground : "#142B55";
-  const accessibilityLabel = `${label}${active ? ", selected" : ""}${count ? `, ${count} active` : ""}`;
+  const accessibilityLabel = `${accessibilityLabelOverride ?? label}${active ? ", selected" : ""}${count ? `, ${count} active` : ""}`;
 
   const handlePress = () => {
     if (!anchored) {
@@ -121,8 +123,7 @@ export function FlightResultsQuickControls({
   const railSurface = theme.dark ? theme.surface : webFilterSurface;
 
   return (
-    <ScrollView
-      horizontal
+    <ScrollView horizontal
       style={[styles.rail, { backgroundColor: railSurface }]}
       contentContainerStyle={styles.content}
       showsHorizontalScrollIndicator={false}
@@ -130,6 +131,7 @@ export function FlightResultsQuickControls({
     >
       <Control
         label="Filter"
+        accessibilityLabelOverride={fullFilterAccessibilityLabel}
         active={activeFilterCount > 0}
         count={activeFilterCount || undefined}
         expanded={openSheetKind === "all"}
