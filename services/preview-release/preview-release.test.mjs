@@ -1474,9 +1474,10 @@ test("OTA publication and normalized history replay use one durable identity wit
     getAction: async (_kind, identityKey) => durable.get(identityKey) ?? null,
     recordAction: async (action) => {
       const existing = durable.get(action.identityKey);
-      if (existing?.remoteId && existing.remoteId !== action.remoteId) throw new Error(`Conflicting remote identity for OTA:${action.identityKey}.`);
-      durable.set(action.identityKey, action);
-      return action;
+      if (existing?.remote_id && existing.remote_id !== action.remoteId) throw new Error(`Conflicting remote identity for OTA:${action.identityKey}.`);
+      const stored = { ...action, remote_id: action.remoteId };
+      durable.set(action.identityKey, stored);
+      return stored;
     },
   };
   const orchestrator = new PreviewOrchestrator({
@@ -1498,7 +1499,7 @@ test("OTA publication and normalized history replay use one durable identity wit
   await orchestrator.deliverOta(sha, repositoryRoot, { checkpoint: async () => {} });
 
   assert.deepEqual(published, ["ios", "android"]);
-  assert.equal([...durable.values()][0].remoteId, "ios=ios-group,android=android-group");
+  assert.equal([...durable.values()][0].remote_id, "ios=ios-group,android=android-group");
 
   history = [
     { ...history[0], group: "different-ios-group" },
@@ -1519,8 +1520,10 @@ test("full OTA and a later platform overlay reuse the one per-SHA ledger action"
     recordAction: async (action) => {
       const sourceAction = [...durable.values()].find((candidate) => candidate.sourceSha === action.sourceSha);
       if (sourceAction && sourceAction.identityKey !== action.identityKey) throw new Error("duplicate OTA source SHA");
-      durable.set(action.identityKey, action);
-      return action;
+      if (sourceAction?.remote_id && sourceAction.remote_id !== action.remoteId) throw new Error(`Conflicting remote identity for OTA:${action.identityKey}.`);
+      const stored = { ...action, remote_id: action.remoteId };
+      durable.set(action.identityKey, stored);
+      return stored;
     },
   };
   const orchestrator = new PreviewOrchestrator({
@@ -1540,7 +1543,8 @@ test("full OTA and a later platform overlay reuse the one per-SHA ledger action"
 
   assert.equal(durable.size, 1);
   assert.equal([...durable.keys()][0], `${sha}:preview`);
-  assert.equal([...durable.values()][0].remoteId, "ios=ios-group,android=android-group");
+  assert.equal([...durable.values()][0].remote_id, "ios=ios-group,android=android-group");
+  assert.deepEqual([...durable.values()][0].evidence.updates.map(({ group }) => group).sort(), ["android-group", "ios-group"]);
 });
 
 test("coalesced native delivery can publish an OTA overlay only to affected platforms", async () => {
