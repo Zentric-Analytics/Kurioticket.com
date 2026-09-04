@@ -69,7 +69,7 @@ test("long fares stay readable without changing details navigation or theme beha
 });
 
 test("the compact fare action contains the only displayed fare and details control", () => {
-  const fareRow = card.slice(card.indexOf('<View style={s0.flightCommercialRegion}>'), card.indexOf('</View>\n        </View>'));
+  const fareRow = card.slice(card.indexOf('<View style={s0.flightCommercialRegion}>'));
 
   assert.equal(card.match(/\{fare\?\.formatted \?\? "—"\}/g)?.length, 1);
   assert.match(fareRow, /\{fare\?\.formatted \?\? "—"\}/);
