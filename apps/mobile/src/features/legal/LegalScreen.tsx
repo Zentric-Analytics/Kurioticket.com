@@ -35,7 +35,8 @@ export function LegalScreen({ slug }: LegalScreenProps) {
     dark: theme.dark,
     lang: localePresentation.intl,
     direction: localePresentation.direction,
-  }) : null, [document, localePresentation.direction, localePresentation.intl, theme.dark]);
+    tableOfContentsFallback: copy.tableOfContents,
+  }) : null, [copy.tableOfContents, document, localePresentation.direction, localePresentation.intl, theme.dark]);
 
   const loadInitial = useCallback(() => {
     refreshPreviousDocument.current = null;
