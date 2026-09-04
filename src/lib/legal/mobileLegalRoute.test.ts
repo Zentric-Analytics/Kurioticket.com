@@ -16,7 +16,18 @@ test("mobile legal API validates locale and localizes canonical data", async () 
   const body = await (await call("privacy-policy", "es-es")).json();
   assert.equal(body.slug, "privacy-policy");
   assert.notEqual(body.title, legalDocuments.find(({ slug }) => slug === "privacy-policy")?.title);
-  assert.deepEqual(Object.keys(body).sort(), ["lastUpdated", "lastUpdatedLabel", "sections", "slug", "summary", "title"]);
+  assert.deepEqual(Object.keys(body).sort(), ["lastUpdated", "lastUpdatedLabel", "sections", "slug", "summary", "tableOfContentsLabel", "title"]);
+  assert.equal(body.tableOfContentsLabel, "ÍNDICE");
+  const canonical = legalDocuments.find(({ slug }) => slug === "privacy-policy");
+  assert.deepEqual(body.sections.map((section: { id: string }) => section.id), canonical?.sections.map(({ id }) => id));
+  assert.deepEqual(body.sections.map((section: { paragraphs: string[] }) => section.paragraphs.length), canonical?.sections.map(({ paragraphs }) => paragraphs.length));
+});
+
+test("mobile legal API uses the same document-specific table-of-contents copy as the website presenter", async () => {
+  const terms = await (await call("terms-of-service", "en-us")).json();
+  const privacy = await (await call("privacy-policy", "en-us")).json();
+  assert.equal(terms.tableOfContentsLabel, "TABLE OF CONTENTS");
+  assert.equal(privacy.tableOfContentsLabel, "TABLE OF CONTENTS");
 });
 
 test("mobile legal API accepts the exact German and Italian mobile locale codes", async () => {
