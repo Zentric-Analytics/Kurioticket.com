@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { router } from "expo-router";
-import { ActivityIndicator, Alert, Linking, Pressable, Share, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Linking, Pressable, Share, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Svg, { Path } from "react-native-svg";
 import { WebView } from "react-native-webview";
 import { fetchLegalDocument, type MobileLegalDocument } from "../../api/legalApi";
 import { PageContentState } from "../../components/PageContentState";
@@ -17,6 +18,13 @@ import { legalScreenCopy } from "./legalScreenCopy";
 type LegalScreenProps = { slug: MobileLegalDocument["slug"] };
 type LoadState = "api-loading" | "webview-loading" | "ready" | "error";
 
+function LegalShareIcon({ color, size = 22 }: { color: string; size?: number }) {
+  return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <Path d="M12 15V3m0 0L8 7m4-4 4 4" stroke={color} strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M8 10H6.5A2.5 2.5 0 0 0 4 12.5v6A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5v-6a2.5 2.5 0 0 0-2.5-2.5H16" stroke={color} strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>;
+}
+
 export function LegalScreen({ slug }: LegalScreenProps) {
   const { theme } = useAppTheme();
   const { locale, t } = useMobileLocalization();
@@ -24,6 +32,8 @@ export function LegalScreen({ slug }: LegalScreenProps) {
   const [loadState, setLoadState] = useState<LoadState>("api-loading");
   const [refreshing, setRefreshing] = useState(false);
   const [refreshFailed, setRefreshFailed] = useState(false);
+  const [actionMenuOpen, setActionMenuOpen] = useState(false);
+  const [webViewRevision, setWebViewRevision] = useState(0);
   const refreshPreviousDocument = useRef<MobileLegalDocument | null>(null);
   const refreshRenderPending = useRef(false);
   const title = t(slug === "terms-of-service" ? "terms" : "privacy");
@@ -44,6 +54,7 @@ export function LegalScreen({ slug }: LegalScreenProps) {
     setDocument(null);
     setRefreshing(false);
     setRefreshFailed(false);
+    setActionMenuOpen(false);
     setLoadState("api-loading");
     void fetchLegalDocument(slug, locale)
       .then((value) => { setDocument(value); setLoadState("webview-loading"); })
@@ -51,40 +62,38 @@ export function LegalScreen({ slug }: LegalScreenProps) {
   }, [locale, slug]);
 
   const refresh = useCallback(() => {
-    if (refreshing || !document) return;
+    if (refreshing || !document || loadState !== "ready") return;
     refreshPreviousDocument.current = document;
     refreshRenderPending.current = false;
+    setActionMenuOpen(false);
     setRefreshing(true);
     setRefreshFailed(false);
     void fetchLegalDocument(slug, locale)
       .then((value) => {
         refreshRenderPending.current = true;
         setDocument(value);
+        // A fresh key guarantees the controlled HTML is rendered again even when
+        // the API returns byte-for-byte identical legal content.
+        setWebViewRevision((revision) => revision + 1);
       })
       .catch(() => {
         refreshPreviousDocument.current = null;
         setRefreshFailed(true);
         setRefreshing(false);
       });
-  }, [document, locale, refreshing, slug]);
+  }, [document, loadState, locale, refreshing, slug]);
 
   useEffect(loadInitial, [loadInitial]);
 
   const share = useCallback(() => {
+    setActionMenuOpen(false);
     void Share.share({ title, message: `${title}\n${publicUrl}`, url: publicUrl });
   }, [publicUrl, title]);
 
   const openInBrowser = useCallback(() => {
+    setActionMenuOpen(false);
     void Linking.openURL(publicUrl);
   }, [publicUrl]);
-
-  const shareOrOpen = useCallback(() => {
-    Alert.alert(title, undefined, [
-      { text: copy.share, onPress: share },
-      { text: copy.openBrowser, onPress: openInBrowser },
-      { text: t("cancel"), style: "cancel" },
-    ]);
-  }, [copy.openBrowser, copy.share, openInBrowser, share, t, title]);
 
   const handleWebViewLoad = useCallback(() => {
     if (refreshRenderPending.current) {
@@ -103,6 +112,7 @@ export function LegalScreen({ slug }: LegalScreenProps) {
       refreshRenderPending.current = false;
       refreshPreviousDocument.current = null;
       setDocument(previous);
+      setWebViewRevision((revision) => revision + 1);
       setRefreshFailed(true);
       setRefreshing(false);
       return;
@@ -122,6 +132,7 @@ export function LegalScreen({ slug }: LegalScreenProps) {
 
     <View style={styles.documentArea}>
       {html ? <WebView
+        key={`${slug}-${locale}-${webViewRevision}`}
         testID="legal-document-webview"
         source={{ html, baseUrl: "about:blank" }}
         javaScriptEnabled={false}
@@ -141,16 +152,39 @@ export function LegalScreen({ slug }: LegalScreenProps) {
       {loadState === "error" ? <PageContentState state="error" pageName={pageName} onRetry={loadInitial} /> : null}
     </View>
 
-    {document && loadState !== "error" ? <View testID="legal-action-toolbar" style={[styles.toolbar, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
-      <Pressable accessibilityRole="button" accessibilityLabel={copy.shareOpen} onPress={shareOrOpen} style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
-        <FlowIcon name="share" color={flowColors.blue} size={19} />
-        <Text style={styles.actionText}>{copy.shareOpen}</Text>
-      </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel={copy.refresh} onPress={refresh} disabled={refreshing} style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
-        {refreshing ? <ActivityIndicator size="small" color={flowColors.blue} /> : <FlowIcon name="refresh" color={flowColors.blue} size={19} />}
-        <Text style={styles.actionText}>{copy.refresh}</Text>
-      </Pressable>
-      {refreshFailed ? <View style={styles.refreshError} accessibilityRole="alert" accessibilityLiveRegion="polite">
+    {document && loadState === "ready" ? <View testID="legal-action-dock" style={[styles.toolbarDock, { backgroundColor: theme.background }]}>
+      {actionMenuOpen ? <View testID="legal-action-menu" style={[styles.actionMenu, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <Pressable accessibilityRole="button" accessibilityLabel={copy.share} onPress={share} style={({ pressed }) => [styles.menuItem, pressed && styles.pressed]}>
+          <Text style={[styles.menuText, { color: theme.text }]}>{copy.share}</Text>
+        </Pressable>
+        <View style={[styles.menuDivider, { backgroundColor: theme.border }]} />
+        <Pressable accessibilityRole="button" accessibilityLabel={copy.openBrowser} onPress={openInBrowser} style={({ pressed }) => [styles.menuItem, pressed && styles.pressed]}>
+          <Text style={[styles.menuText, { color: theme.text }]}>{copy.openBrowser}</Text>
+        </Pressable>
+      </View> : null}
+
+      <View testID="legal-action-toolbar" style={[styles.toolbarPill, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={copy.shareOpen}
+          onPress={() => setActionMenuOpen((open) => !open)}
+          style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}
+        >
+          <LegalShareIcon color={theme.icon} size={22} />
+        </Pressable>
+        <View style={[styles.pillDivider, { backgroundColor: theme.border }]} />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={copy.refresh}
+          onPress={refresh}
+          disabled={refreshing}
+          style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}
+        >
+          {refreshing ? <ActivityIndicator size="small" color={theme.icon} /> : <FlowIcon name="refresh" color={theme.icon} size={22} />}
+        </Pressable>
+      </View>
+
+      {refreshFailed ? <View style={[styles.refreshError, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityRole="alert" accessibilityLiveRegion="polite">
         <Text style={[styles.refreshErrorText, { color: theme.muted }]}>{copy.refreshFailed}</Text>
         <Pressable accessibilityRole="button" accessibilityLabel={t("retry")} onPress={refresh}><Text style={styles.retryText}>{t("retry")}</Text></Pressable>
       </View> : null}
@@ -163,11 +197,16 @@ const styles = StyleSheet.create({
   title: { flex: 1, textAlign: "center" },
   documentArea: { flex: 1 },
   stateOverlay: { zIndex: 2 },
-  toolbar: { minHeight: 54, flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: 8, paddingHorizontal: 12, paddingVertical: 5, borderTopWidth: StyleSheet.hairlineWidth },
-  action: { minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, borderRadius: 12, paddingHorizontal: 14 },
-  actionText: { color: flowColors.blue, fontSize: 14, lineHeight: 19, fontWeight: "700" },
-  pressed: { opacity: 0.65 },
-  refreshError: { width: "100%", minHeight: 32, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
+  toolbarDock: { minHeight: 66, alignItems: "flex-end", justifyContent: "center", paddingHorizontal: 14, paddingVertical: 6 },
+  toolbarPill: { width: 112, height: 52, flexDirection: "row", alignItems: "center", borderWidth: StyleSheet.hairlineWidth, borderRadius: 26, overflow: "hidden" },
+  iconAction: { flex: 1, height: "100%", alignItems: "center", justifyContent: "center" },
+  pillDivider: { width: StyleSheet.hairlineWidth, height: 24 },
+  actionMenu: { position: "absolute", right: 14, bottom: 64, width: 188, borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, overflow: "hidden", shadowColor: "#000", shadowOpacity: 0.14, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 5, zIndex: 4 },
+  menuItem: { minHeight: 48, justifyContent: "center", paddingHorizontal: 16 },
+  menuText: { fontSize: 14, lineHeight: 19, fontWeight: "600" },
+  menuDivider: { height: StyleSheet.hairlineWidth, marginHorizontal: 12 },
+  pressed: { opacity: 0.62 },
+  refreshError: { position: "absolute", right: 14, bottom: 64, maxWidth: 260, minHeight: 42, flexDirection: "row", alignItems: "center", gap: 10, borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 7 },
   refreshErrorText: { flexShrink: 1, fontSize: 12, lineHeight: 17 },
   retryText: { color: flowColors.blue, fontSize: 12, lineHeight: 17, fontWeight: "800" },
 });

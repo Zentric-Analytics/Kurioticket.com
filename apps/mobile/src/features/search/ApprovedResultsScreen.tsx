@@ -846,12 +846,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 <>
                   {hotelFilterChips.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s0.hotelFilterChips}>{hotelFilterChips.map(chip=><Pressable key={chip.key} accessibilityRole="button" accessibilityLabel={`Remove ${chip.label} filter`} onPress={()=>setHotelFilters(chip.remove(hotelFilters))} style={[s0.hotelFilterChip,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={{color:theme.textPrimary}}>{chip.label} ×</Text></Pressable>)}</ScrollView> : null}
                   {hasGoogleMapsDiscovery(results as HotelResult[]) ? <View style={[s0.hotelAttribution,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={{color:theme.textSecondary}}>Hotel discovery data provided by Google Maps</Text></View> : null}
+                  {plan.plan ? <PriceAlert product="hotel" plan={plan.plan} hotelResults={results as HotelResult[]} available={availability.priceAlerts} compact /> : null}
                   {hotelRange ? <HotelResultsSummaryRow
                     count={sorted.length}
                     range={hotelRange}
-                    plan={plan.plan}
-                    results={results as HotelResult[]}
-                    priceAlertsAvailable={availability.priceAlerts}
                     onLayout={({ nativeEvent }) => {
                       hotelResultsSummaryOffset.current = nativeEvent.layout.y;
                       updateHotelResultsOffset();
@@ -1641,12 +1639,9 @@ function FlightResultsPagination({ page, pages, disabled, onPage }: { page: numb
 
 const hotelResultCountLabel = (count: number) => `${count} ${count === 1 ? "Result" : "Results"} found`;
 
-function HotelResultsSummaryRow({ count, range, plan, results, priceAlertsAvailable, onLayout }: {
+function HotelResultsSummaryRow({ count, range, onLayout }: {
   count: number;
   range: { start: number; end: number };
-  plan?: SearchPlan;
-  results: HotelResult[];
-  priceAlertsAvailable: boolean;
   onLayout: (event: { nativeEvent: { layout: { y: number } } }) => void;
 }) {
   const { theme } = useAppTheme();
@@ -1656,7 +1651,6 @@ function HotelResultsSummaryRow({ count, range, plan, results, priceAlertsAvaila
         <Text accessibilityRole="header" style={[s0.flightResultCount, { color: theme.textPrimary }]}>{hotelResultCountLabel(count)}</Text>
         <Text accessibilityLabel={`Showing results ${range.start} through ${range.end}`} style={[s0.flightResultRange, { color: theme.textSecondary }]}>{range.start}–{range.end}</Text>
       </View>
-      {plan ? <PriceAlert product="hotel" plan={plan} hotelResults={results} available={priceAlertsAvailable} compact /> : null}
     </View>
   );
 }
