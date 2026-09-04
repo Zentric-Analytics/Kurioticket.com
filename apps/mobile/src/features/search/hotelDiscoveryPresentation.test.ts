@@ -11,8 +11,9 @@ test("discovery Hotel results never imply live price, saves, or classification",
 });
 test("native Hotel continuation distinguishes planning rooms and provider truth", () => {
   assert.match(hotel, /const internalRoomFlowAvailable = roomOptions\.length > 0/);
-  assert.match(hotel, /result\.searchPolicy\.bookable &&/);
-  assert.match(hotel, /isSafeNativeHotelProviderUrl\(redirectUrl\)/);
+  assert.match(hotel, /nativeHotelProviderUrl\([\s\S]*?result\.partnerRedirectUrl,[\s\S]*?result\.bookingUrl/);
+  assert.match(hotel, /result\.searchPolicy\.bookable && Boolean\(redirectUrl\)/);
+  assert.doesNotMatch(hotel, /result\.partnerRedirectUrl \|\| result\.bookingUrl/);
   assert.match(hotel, /selectedOffer\?\.kind === "internal-room-flow"/);
   assert.match(hotel, /indicative planning/);
   assert.match(hotel, /Planning inventory · no live checkout/);
