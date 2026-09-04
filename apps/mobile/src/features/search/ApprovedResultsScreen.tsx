@@ -256,7 +256,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
   const previousComparisonCurrency = useRef<string | null>(null);
   const previousFlightSearchKey = useRef<string | undefined>(undefined);
-  const pendingDateStripSelection = useRef<{ departureDate: string; returnDate?: string } | null>(null);
+  const pendingDateStripSelection = useRef<string | null>(null);
   const pendingDateStripSelectionTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const clearFlightPaginationTimers = useCallback(() => {
     if (flightPaginationSettleTimer.current) clearTimeout(flightPaginationSettleTimer.current);
@@ -285,13 +285,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   useEffect(() => {
     if (!flightResults || !plan.plan?.key) return;
     if (previousFlightSearchKey.current && previousFlightSearchKey.current !== plan.plan.key) {
-      const pendingSelection = pendingDateStripSelection.current;
+      const pendingSearchKey = pendingDateStripSelection.current;
       pendingDateStripSelection.current = null;
       if (pendingDateStripSelectionTimer.current) clearTimeout(pendingDateStripSelectionTimer.current);
       pendingDateStripSelectionTimer.current = undefined;
-      const preserveDateStripPreferences = pendingSelection != null
-        && pendingSelection.departureDate === payload.departureDate
-        && pendingSelection.returnDate === payload.returnDate;
+      const preserveDateStripPreferences = pendingSearchKey != null
+        && pendingSearchKey === plan.plan.key;
       cancelFlightPagination();
       setFlightPage(1);
       if (!preserveDateStripPreferences) {
@@ -302,7 +301,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       setFilterOpen(false);
     }
     previousFlightSearchKey.current = plan.plan.key;
-  }, [cancelFlightPagination, flightResults, payload.departureDate, payload.returnDate, plan.plan?.key]);
+  }, [cancelFlightPagination, flightResults, plan.plan?.key]);
   useEffect(() => () => {
     if (pendingDateStripSelectionTimer.current) clearTimeout(pendingDateStripSelectionTimer.current);
   }, []);
@@ -888,14 +887,19 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     setFlightPage(1);
     setSortOpen(false);
     setFilterOpen(false);
+    const expectedSearchPlan = buildSearchPlan("flight", {
+      ...params,
+      departureDate: nextDepartureDate,
+      ...(returnDate ? { returnDate } : {}),
+    }).plan;
     if (pendingDateStripSelectionTimer.current) clearTimeout(pendingDateStripSelectionTimer.current);
-    pendingDateStripSelection.current = { departureDate: nextDepartureDate, returnDate };
+    pendingDateStripSelection.current = expectedSearchPlan?.key ?? null;
     pendingDateStripSelectionTimer.current = setTimeout(() => {
       pendingDateStripSelection.current = null;
       pendingDateStripSelectionTimer.current = undefined;
     }, 10_000);
     router.setParams({ departureDate: nextDepartureDate, ...(returnDate ? { returnDate } : {}) });
-  }, [cancelFlightPagination, flightDate, payload.returnDate, payload.tripType]);
+  }, [cancelFlightPagination, flightDate, params, payload.returnDate, payload.tripType]);
   const flightDateStrip = (
     payload.tripType === "one-way" || payload.tripType === "round-trip" ? <DateStrip
             date={flightDate}
