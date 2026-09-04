@@ -24,7 +24,7 @@ test("authenticated and guest profiles each own one guest-accessible legal secti
     assert.equal(profile.match(/title: "aboutLegal"/g)?.length, 1);
     assert.equal(profile.match(/label: "terms"/g)?.length, 1);
     assert.equal(profile.match(/label: "privacy"/g)?.length, 1);
-    assert.match(profile, /href: "\/terms"/); assert.match(profile, /href: "\/privacy"/);
+    assert.match(profile, /page: "terms"/); assert.match(profile, /page: "privacy"/);
   }
 });
 
