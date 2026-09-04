@@ -5,7 +5,7 @@
     "group": "33333333-3333-4333-8333-333333333333",
     "branch": "production",
     "message": "sanitized fixture",
-    "runtimeVersion": "production-0.3.2",
+    "runtimeVersion": "production-0.3.3",
     "platform": "ANDROID",
     "manifestPermalink": "https://u.expo.dev/sanitized",
     "isRollBackToEmbedded": false,
