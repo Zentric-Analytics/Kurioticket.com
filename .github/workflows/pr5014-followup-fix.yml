@@ -72,6 +72,10 @@ jobs:
                   '  assert.match(selection, /const expectedSearchPlan = buildSearchPlan\\("flight", \\{[\\s\\S]*?\\.\\.\\.params,[\\s\\S]*?departureDate: nextDepartureDate,[\\s\\S]*?returnDate[\\s\\S]*?\\}\\)\\.plan;[\\s\\S]*?pendingDateStripSelection\\.current = expectedSearchPlan\\?\\.key \\?\\? null;[\\s\\S]*?router\\.setParams/);',
               ),
               (
+                  '  assert.match(identity, /const pendingSelection = pendingDateStripSelection\\.current;[\\s\\S]*?pendingDateStripSelection\\.current = null/);',
+                  '  assert.match(identity, /const pendingSearchKey = pendingDateStripSelection\\.current;[\\s\\S]*?pendingDateStripSelection\\.current = null/);',
+              ),
+              (
                   '  assert.match(identity, /pendingSelection != null[\\s\\S]*?pendingSelection\\.departureDate === payload\\.departureDate[\\s\\S]*?pendingSelection\\.returnDate === payload\\.returnDate/);',
                   '  assert.match(identity, /const pendingSearchKey = pendingDateStripSelection\\.current;[\\s\\S]*?pendingSearchKey != null[\\s\\S]*?pendingSearchKey === plan\\.plan\\.key/);\n  assert.doesNotMatch(identity, /pendingSearchKey[\\s\\S]*?payload\\.(?:departureDate|returnDate)/);',
               ),
