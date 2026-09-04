@@ -1,4 +1,4 @@
-import { Stack } from "expo-router";
+import { Stack, usePathname } from "expo-router";
 import { useFonts } from "expo-font";
 import {
   Inter_400Regular,
@@ -23,6 +23,7 @@ import { createForegroundUpdateHandler, ensureLatestUpdate } from "../src/update
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
+  const pathname = usePathname();
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -43,6 +44,11 @@ export default function RootLayout() {
   useEffect(() => {
     if (fontError && __DEV__) console.warn("Inter fonts failed to load; continuing with system fonts.");
   }, [fontError]);
+  useEffect(() => {
+    if ((!fontsLoaded && !fontError) || pathname === "/") return;
+    const frame = requestAnimationFrame(() => void SplashScreen.hideAsync().catch(() => undefined));
+    return () => cancelAnimationFrame(frame);
+  }, [fontError, fontsLoaded, pathname]);
 
   if (!fontsLoaded && !fontError) return null;
 
