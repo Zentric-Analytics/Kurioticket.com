@@ -72,7 +72,7 @@ test("the compact flight alert removes the large subtitle and management redirec
 
 test("the flight price action is an accessible, backend-honest native switch", () => {
   const component = source.slice(source.indexOf("function PriceAlert"), source.indexOf("export function BottomNav"));
-  assert.match(component, /<Switch accessibilityRole="switch" accessibilityLabel="Track this flight price"/);
+  assert.match(component, /<Switch[^>]*accessibilityRole="switch" accessibilityLabel="Track this flight price"/);
   assert.match(component, /accessibilityState=\{\{ checked: isTracking, disabled: toggleDisabled, busy:/);
   assert.match(component, /value=\{isTracking\} onValueChange=\{\(next\) => void handleToggle\(next\)\}/);
   assert.doesNotMatch(component.slice(component.indexOf("if (flight)"), component.indexOf("if (product !==")), />On<|>Off<|actionAccessibilityLabel/);
