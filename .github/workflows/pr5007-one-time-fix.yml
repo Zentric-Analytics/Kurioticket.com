@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   apply-fix:
-    if: github.event.head_commit.message == 'chore: apply PR 5007 pagination fix'
+    if: "github.event.head_commit.message == 'chore: run PR 5007 pagination fix'"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,8 +32,8 @@ jobs:
 
           test_path = Path('apps/mobile/src/features/search/flightResultsPagination.test.ts')
           test = test_path.read_text()
-          old_test = r'/flightPaginationPendingPage !== null && index < 3 \\? <View[^>]*><FlightLoadingSkeleton \\/><\\/View>/'
-          new_test = r'/flightPaginationPendingPage !== null \\? <View[^>]*><FlightLoadingSkeleton \\/><\\/View>/'
+          old_test = r'/flightPaginationPendingPage !== null && index < 3 \? <View[^>]*><FlightLoadingSkeleton \/><\/View>/'
+          new_test = r'/flightPaginationPendingPage !== null \? <View[^>]*><FlightLoadingSkeleton \/><\/View>/'
           if test.count(old_test) != 1:
               raise SystemExit(f'Expected exactly one pagination skeleton assertion, found {test.count(old_test)}')
           test_path.write_text(test.replace(old_test, new_test, 1))
