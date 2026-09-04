@@ -44,8 +44,9 @@ public final class KurioticketPasskeyAutoFillModule: Module, ASAuthorizationCont
   }
 
   public func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+    guard self.controller === controller else { return }
     guard #available(iOS 16.0, *), let assertion = authorization.credential as? ASAuthorizationPlatformPublicKeyCredentialAssertion else {
-      finish(result: nil)
+      finish(controller: controller, result: nil)
       return
     }
 
@@ -64,14 +65,15 @@ public final class KurioticketPasskeyAutoFillModule: Module, ASAuthorizationCont
       "authenticatorAttachment": NSNull(),
       "clientExtensionResults": [String: Any]()
     ]
-    finish(result: result)
+    finish(controller: controller, result: result)
   }
 
   public func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
-    finish(result: nil)
+    finish(controller: controller, result: nil)
   }
 
-  private func finish(result: Any?) {
+  private func finish(controller completedController: ASAuthorizationController, result: Any?) {
+    guard controller === completedController else { return }
     let pending = promise
     promise = nil
     controller = nil
@@ -79,14 +81,13 @@ public final class KurioticketPasskeyAutoFillModule: Module, ASAuthorizationCont
   }
 
   private func cancelActive(resolveCancelled: Bool) {
-    controller?.cancel()
+    let activeController = controller
+    let pending = promise
     controller = nil
+    promise = nil
+    activeController?.cancel()
     if resolveCancelled {
-      let pending = promise
-      promise = nil
       pending?.resolve(nil)
-    } else {
-      promise = nil
     }
   }
 
