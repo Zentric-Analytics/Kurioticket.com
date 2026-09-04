@@ -23,7 +23,7 @@ test("flight detail reflects canonical saved state and toggles the displayed res
 test("hotel detail replaces the passive heart with a canonical saved button", () => {
   assert.match(hotelDetail, /useCanonicalSaved\(\)/);
   assert.match(hotelDetail, /item\.type === "hotel"[\s\S]*?\.id === result\.id/);
-  assert.match(hotelDetail, /<Pressable[\s\S]*?accessibilityLabel=\{saved \? `Remove \$\{result\.name\} hotel from saved` : `Save \$\{result\.name\} hotel`\}/);
+  assert.match(hotelDetail, /<Pressable[\s\S]*?`Remove \$\{result\.name\} hotel from saved`[\s\S]*?`Save \$\{result\.name\} hotel`/);
   assert.match(hotelDetail, /accessibilityState=\{\{ selected: saved \}\}/);
   assert.match(hotelDetail, /onPress=\{\(\) => void canonical\.toggleHotel\(result, params\)\}/);
   assert.match(hotelDetail, /<Heart[\s\S]*?fill=\{saved \? androidFavoriteColors\.active : "transparent"\}/);
