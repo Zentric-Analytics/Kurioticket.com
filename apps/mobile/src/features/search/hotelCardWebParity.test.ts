@@ -11,6 +11,8 @@ const hotelList = source.slice(source.indexOf("sorted.map((x, i)"), source.index
 const amenities = readFileSync(resolve("src/features/search/HotelCardAmenityList.tsx"), "utf8");
 const api = readFileSync(resolve("src/api/travelApi.ts"), "utf8");
 const publicTypes = readFileSync(resolve("../../src/lib/types.ts"), "utf8");
+const searchUi = readFileSync(resolve("src/features/search/SearchUi.tsx"), "utf8");
+const webHotelCard = readFileSync(resolve("../../src/components/results/HotelCard.tsx"), "utf8");
 
 test("hotel card keeps provider data but never prints its internal label", () => {
   assert.doesNotMatch(card, /result\.provider|s0\.providers/);
@@ -195,6 +197,20 @@ test("hotel cards use a natural 260dp minimum and preserve bottom-aligned price 
   assert.match(priceStyles, /hotelPerNight:\s*\{[^}]*marginTop:\s*1/s);
   assert.match(priceStyles, /hotelDealButton:\s*\{[^}]*marginTop:\s*6/s);
   assert.doesNotMatch(amenities, /position:\s*"absolute"|translateY/);
+});
+
+test("View hotel uses the web brand blue and matching pressed treatment", () => {
+  const dealButtonStyle = source.match(/\n  hotelDealButton:\s*\{[^}]*\}/s)?.[0] ?? "";
+  const dealButtonPressedStyle = source.match(/\n  hotelDealButtonPressed:\s*\{[^}]*\}/s)?.[0] ?? "";
+
+  assert.equal(colors.blue, "#004BB8");
+  assert.match(dealButtonStyle, /backgroundColor:\s*colors\.blue/);
+  assert.doesNotMatch(dealButtonStyle, /backgroundColor:\s*ui\.blue/);
+  assert.match(dealButtonPressedStyle, /backgroundColor:\s*"#003B91"/);
+  assert.match(card, /style=\{\(\{ pressed \}\) => \[s0\.hotelDealButton, pressed && s0\.hotelDealButtonPressed\]\}/);
+  assert.match(searchUi, /blue:\s*"#0754F7"/);
+  assert.match(webHotelCard, /bg-\[#004BB8\]/);
+  assert.match(webHotelCard, /hover:bg-\[#003B91\]/);
 });
 
 test("Hotel cards preserve truthful price and use View hotel", () => { assert.match(card,/const hasPrice = hasHotelPrice\(result\)/); assert.match(card,/"Price unavailable"/); assert.match(card,/`View hotel for/); assert.match(card,/>View hotel<\/Text>/); });
