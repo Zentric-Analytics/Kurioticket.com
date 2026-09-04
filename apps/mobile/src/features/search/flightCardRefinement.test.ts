@@ -82,7 +82,7 @@ test("flight card gives the compact visual fare one semantic spoken label", () =
 test("converted fares add truthful provider context without duplicating same-currency fares", () => {
   const fareBlock = card.slice(card.indexOf('<View style={s0.flightCommercialRegion}>'));
   assert.match(card, /flightProviderFarePresentation\(fare\)/);
-  assert.match(card, /flightMainPriceBasis\(fare\)/);
+  assert.match(card, /const labels = flightResultsCopy\(locale\);[\s\S]*flightMainPriceBasis\(fare, labels\)/);
   assert.match(fareBlock, /\{mainPriceBasis \? \([\s\S]*\{mainPriceBasis\.label\}[\s\S]*\) : null\}/);
   assert.match(fareBlock, /\{providerFare \? \([\s\S]*Provider price: \{providerFare\.formatted\}[\s\S]*\) : null\}/);
   assert.doesNotMatch(fareBlock, /Provider price: \{providerFare\.formatted\} \{providerFare\.currency\}/);

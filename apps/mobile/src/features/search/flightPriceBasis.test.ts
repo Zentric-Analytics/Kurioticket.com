@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { DisplayPrice } from "../currency/displayCurrency";
 import { flightMainPriceBasis, flightPriceBasis, flightProviderFarePresentation } from "./flightPriceBasis";
+import { flightResultsCopy } from "./flightResultsSummary";
 
 const basis = (params: Record<string, string>, fare?: DisplayPrice) => flightPriceBasis(params, fare);
 
@@ -78,11 +79,22 @@ test("labels the main fare basis without creating a duplicate provider amount", 
   const providerFare: DisplayPrice = { amount: 1250000, currency: "NGN", formatted: "₦1,250,000", accessibilityLabel: "1,250,000 Nigerian naira", providerAmount: 1250000, providerCurrency: "NGN", converted: false };
   const convertedFare: DisplayPrice = { ...providerFare, providerAmount: 820, providerCurrency: "USD", converted: true };
 
-  assert.deepEqual(flightMainPriceBasis(providerFare), { label: "PROVIDER PRICE", accessibilityText: "provider price" });
+  const english = flightResultsCopy("en-us");
+  assert.deepEqual(flightMainPriceBasis(providerFare, english), { label: "PROVIDER PRICE", accessibilityText: "PROVIDER PRICE" });
   assert.equal(flightProviderFarePresentation(providerFare), null);
-  assert.deepEqual(flightMainPriceBasis(convertedFare), { label: "ESTIMATED PRICE", accessibilityText: "estimated price" });
+  assert.deepEqual(flightMainPriceBasis(convertedFare, english), { label: "ESTIMATED PRICE", accessibilityText: "ESTIMATED PRICE" });
   assert.equal(flightProviderFarePresentation(convertedFare)?.formatted, "$820");
-  assert.equal(flightMainPriceBasis(undefined), null);
+  assert.equal(flightMainPriceBasis(undefined, english), null);
+});
+
+test("localizes the main fare basis instead of falling back to English", () => {
+  const providerFare: DisplayPrice = { amount: 420, currency: "EUR", formatted: "€420", accessibilityLabel: "420 euros", providerAmount: 420, providerCurrency: "EUR", converted: false };
+  const convertedFare: DisplayPrice = { ...providerFare, amount: 650000, currency: "NGN", formatted: "₦650,000", providerAmount: 420, converted: true };
+  const spanish = flightResultsCopy("es-es");
+
+  assert.deepEqual(flightMainPriceBasis(providerFare, spanish), { label: "PRECIO DEL PROVEEDOR", accessibilityText: "PRECIO DEL PROVEEDOR" });
+  assert.deepEqual(flightMainPriceBasis(convertedFare, spanish), { label: "PRECIO ESTIMADO", accessibilityText: "PRECIO ESTIMADO" });
+  assert.doesNotMatch(flightMainPriceBasis(providerFare, spanish)?.label ?? "", /PROVIDER PRICE/);
 });
 
 test("preserves the provider offer total without per-traveler arithmetic", () => {
