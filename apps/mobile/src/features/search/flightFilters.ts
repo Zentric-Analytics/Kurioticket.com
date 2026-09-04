@@ -76,6 +76,7 @@ export const flightTimeMinutes = (value: string | undefined): number | null => {
 const matchesTimeMaximums = (result: FlightResult, selections: FlightFilters["journeyTimeMaximums"]) => {
   const legs = authoritativeLegs(result); const actual = legs.length ? legs : [fallbackLeg(result)];
   return Object.entries(selections ?? {}).every(([key, maximum]) => {
+    if (maximum.departure == null && maximum.arrival == null) return true;
     const leg = actual.find((candidate, index) => journeyKey(candidate, index) === key); if (!leg) return false;
     const departure = flightTimeMinutes(leg.departureTime), arrival = flightTimeMinutes(leg.arrivalTime);
     return (maximum.departure == null || (departure != null && departure <= maximum.departure)) && (maximum.arrival == null || (arrival != null && arrival <= maximum.arrival));
