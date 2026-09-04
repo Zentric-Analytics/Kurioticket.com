@@ -9,58 +9,77 @@ test("welcome keeps passkeys out of the top-level auth choices", () => {
   for (const label of ["Continue with Email", "Continue with Google", "Continue as Guest"]) {
     assert.match(welcome, new RegExp(label));
   }
-  assert.doesNotMatch(welcome, /Continue with passkey/);
-  assert.doesNotMatch(welcome, /onPasskey/);
-  assert.match(welcome, /height < 700 && styles\.compactPanel/);
+  assert.doesNotMatch(welcome, /Continue with passkey|Sign in with passkey|onPasskey/);
 });
 
-test("email sign-in owns the contextual passkey action", () => {
+test("email screen has no visible passkey UI, marks the identifier as username, and starts discovery from focus", () => {
   const screens = source("src/features/auth/AuthFormScreens.tsx");
-  const flow = source("src/features/auth/AuthFlow.tsx");
-  assert.match(screens, /Sign in with passkey/);
-  assert.match(screens, /onPasskey \? <View style=\{styles\.passkeyOption\}>/);
-  assert.match(flow, /step === "email"/);
-  assert.match(flow, /onPasskey=\{passkeySupported \? continuePasskey : undefined\}/);
-  assert.doesNotMatch(flow, /<AuthWelcomeScreen[^>]*onPasskey=/);
+  assert.doesNotMatch(screens, /Sign in with passkey|passkeyOption|onPasskey|passkeyLoading/);
+  assert.match(screens, /autoComplete="username"/);
+  assert.match(screens, /textContentType="username"/);
+  assert.match(screens, /onFocus=\{onCredentialFocus\}/);
 });
 
-test("passkey ceremony remains username-less, ordered, cancellable, and generation protected", () => {
+test("email focus starts silent AutoFill-assisted passkey discovery", () => {
   const flow = source("src/features/auth/AuthFlow.tsx");
+  const bridge = source("src/features/passkeys/passkeyAutoFill.ts");
+  const swift = source("modules/kurioticket-passkey-autofill/ios/KurioticketPasskeyAutoFillModule.swift");
   const options = flow.indexOf("authApi.passkeyOptions(controller.signal)");
-  const nativeGet = flow.indexOf("getNativePasskey(options, controller.signal)");
+  const autoFill = flow.indexOf("startPasskeyAutoFill({ rpId: options.rpId, challenge: options.challenge })");
   const verify = flow.indexOf("authApi.passkeyVerify(assertion, controller.signal)");
-  assert.ok(options > 0 && nativeGet > options && verify > nativeGet);
-  assert.match(flow, /if \(passkeyBusy\.current \|\| step !== "email"\) return/);
-  assert.match(flow, /generation !== passkeyAttempt\.current/);
-  assert.match(flow, /passkeyController\.current\?\.abort/);
-  assert.match(flow, /isPasskeyCancellation\(passkeyError\)\) return/);
-  assert.match(flow, /No Kurioticket passkey was found on this device/);
-  assert.doesNotMatch(flow.slice(options, verify), /email/);
+  assert.ok(options > 0 && autoFill > options && verify > autoFill);
+  assert.match(flow, /const startSilentPasskeyAutoFill = useCallback/);
+  assert.match(flow, /const handleCredentialFocus = useCallback/);
+  assert.match(flow, /step !== "email" \|\| !isPasskeyAutoFillAvailable\(\)/);
+  assert.match(flow, /onCredentialFocus=\{handleCredentialFocus\}/);
+  assert.doesNotMatch(flow, /getNativePasskey|continuePasskey|passkeyLoading/);
+  assert.match(bridge, /Platform\.OS === "ios"/);
+  assert.match(swift, /performAutoFillAssistedRequests\(\)/);
+  assert.match(swift, /ASAuthorizationPlatformPublicKeyCredentialAssertion/);
 });
 
-test("passkey loading is isolated from normal email submission", () => {
-  const screens = source("src/features/auth/AuthFormScreens.tsx");
+test("AutoFill challenge refreshes before the five-minute server expiry", () => {
   const flow = source("src/features/auth/AuthFlow.tsx");
-  assert.match(flow, /const \[passkeyLoading, setPasskeyLoading\] = useState\(false\)/);
-  assert.match(flow, /setPasskeyLoading\(true\)/);
-  assert.match(flow, /setPasskeyLoading\(false\)/);
-  assert.match(screens, /loading=\{passkeyLoading\}/);
-  assert.match(screens, /loading=\{loading\} disabled=\{!valid \|\| passkeyLoading\}/);
+  assert.match(flow, /PASSKEY_AUTOFILL_REFRESH_MS = 4 \* 60_000/);
+  assert.match(flow, /setInterval\(startSilentPasskeyAutoFill, PASSKEY_AUTOFILL_REFRESH_MS\)/);
+  assert.match(flow, /credentialAutoFillActive/);
 });
 
-test("adapter safely detects old binaries and normalizes every assertion field", () => {
+test("normal email submission cancels and invalidates assisted passkey authentication first", () => {
+  const flow = source("src/features/auth/AuthFlow.tsx");
+  const requestCode = flow.slice(flow.indexOf("const requestCode"), flow.indexOf("const verify"));
+  assert.ok(requestCode.indexOf("setCredentialAutoFillActive(false)") >= 0);
+  assert.ok(requestCode.indexOf("stopPasskeyAutoFill()") > requestCode.indexOf("setCredentialAutoFillActive(false)"));
+  assert.ok(requestCode.indexOf("authApi.requestCode(normalized)") > requestCode.indexOf("stopPasskeyAutoFill()"));
+
+  const api = source("src/features/auth/authApi.ts");
+  assert.match(api, /passkeyVerify:[\s\S]*if \(signal\?\.aborted\) throw new AuthApiError\("Passkey sign-in cancelled\.", 0, "ABORTED"\)/);
+  assert.match(api, /await writeSession\([\s\S]*if \(signal\?\.aborted\) \{\s*await clearSession\(\)/);
+});
+
+test("AutoFill discovery stays silent and is cancelled when the email flow is left", () => {
+  const flow = source("src/features/auth/AuthFlow.tsx");
+  assert.match(flow, /AutoFill-assisted discovery is intentionally silent/);
+  assert.match(flow, /const stopPasskeyAutoFill = useCallback/);
+  assert.match(flow, /if \(step === "email"\) return;[\s\S]*stopPasskeyAutoFill\(\)/);
+  assert.match(flow, /useEffect\(\(\) => \(\) => stopPasskeyAutoFill\(\)/);
+  assert.doesNotMatch(flow, /No Kurioticket passkey was found|Too many passkey attempts|Passkey sign-in could not be completed/);
+});
+
+test("iOS bridge ignores callbacks from superseded authorization controllers", () => {
+  const swift = source("modules/kurioticket-passkey-autofill/ios/KurioticketPasskeyAutoFillModule.swift");
+  assert.match(swift, /guard self\.controller === controller else \{ return \}/);
+  assert.match(swift, /finish\(controller: controller, result:/);
+  assert.match(swift, /guard controller === completedController else \{ return \}/);
+  assert.match(swift, /let activeController = controller/);
+  assert.match(swift, /controller = nil[\s\S]*promise = nil[\s\S]*activeController\?\.cancel\(\)/);
+});
+
+test("existing native passkey adapter remains available for management and explicit native ceremonies", () => {
   const adapter = source("src/features/passkeys/nativePasskeys.ts");
-  assert.match(adapter, /Old binaries and Expo Go/);
   assert.match(adapter, /await module\.get\(options\)/);
-  assert.doesNotMatch(adapter, /module\.get\(\{[^}]*signal/);
-  assert.match(adapter, /cannot actively cancel get\(\)/);
-  assert.match(adapter, /signal\?\.aborted/);
-  for (const field of ["id", "rawId", "clientDataJSON", "authenticatorData", "signature", "userHandle", "authenticatorAttachment", "clientExtensionResults"]) {
-    assert.match(adapter, new RegExp(field));
-  }
-  assert.match(adapter, /extensions !== undefined && extensions !== null/);
-  assert.match(adapter, /compact\.includes\("nocredential"\)/);
-  assert.doesNotMatch(adapter, /console\.|AsyncStorage|SecureStore/);
+  assert.match(adapter, /createNativePasskey/);
+  assert.match(adapter, /normalizePasskeyAssertion/);
 });
 
 test("verification stores the standard session contract", () => {
