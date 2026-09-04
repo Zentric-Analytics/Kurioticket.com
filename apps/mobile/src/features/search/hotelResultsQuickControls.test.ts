@@ -44,12 +44,21 @@ test("Hotel controls use Flight light tokens and semantic dark tokens", () => {
   assert.match(component, /#8FB5FF/);
 });
 
-test("every Hotel control has a rotating down chevron and Filter has the Flight icon", () => {
+test("Hotel Filter launcher has sliders without a chevron while quick filters keep rotating chevrons", () => {
   const rail = screen.slice(screen.indexOf("const filterRail"), screen.indexOf("const resultContent"));
   const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
-  assert.match(rail, /label="Filter"[^>]*icon[^>]*expanded=\{hotelFilterOpen\}/);
+  const shortcut = (label: string) => rail.slice(rail.indexOf(`label="${label}"`), rail.indexOf("/>", rail.indexOf(`label="${label}"`)) + 2);
+  const filter = shortcut("Filter");
+  assert.match(filter, /accessibilityLabel="Filters"/);
+  assert.match(filter, /count=\{activeHotelFilters \|\| undefined\}/);
+  assert.match(filter, /\bicon\b/);
+  assert.match(filter, /showChevron=\{false\}/);
+  assert.match(filter, /expanded=\{hotelFilterOpen\}/);
+  assert.match(filter, /onPress=\{\(\) => openHotelFilters\("all"\)\}/);
+  for (const label of ["Price", "Stars", "Facilities", "Room & bed"]) assert.doesNotMatch(shortcut(label), /showChevron=\{false\}/);
+  assert.match(component, /showChevron = true/);
   assert.match(component, /<SlidersHorizontal accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\}/);
-  assert.match(component, /<ChevronDown accessible=\{false\} size=\{14\} strokeWidth=\{1\.9\}/);
+  assert.match(component, /\{showChevron \? <ChevronDown accessible=\{false\} size=\{14\} strokeWidth=\{1\.9\}/);
   assert.match(component, /style=\{expanded \? s0\.hotelShortcutChevronExpanded : undefined\}/);
   assert.match(screen, /hotelShortcutChevronExpanded: \{ transform: \[\{ rotate: "180deg" \}\] \}/);
   assert.doesNotMatch(component, /ChevronRight|measureInWindow|Anchor/);

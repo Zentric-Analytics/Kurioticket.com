@@ -1,6 +1,14 @@
 import type { MobileLocale } from "../../localization/mobileLocalizationCatalog";
 
-type FooterCopy = { tagline: string; rights: string; privacy: string; terms: string; cookies: string };
+type SellerNoticeValues = { companyName: string; registrationNumber: string };
+type FooterCopy = {
+  tagline: string;
+  rights: string;
+  privacy: string;
+  terms: string;
+  cookies: string;
+  sellerNotice?: (values: SellerNoticeValues) => string;
+};
 
 // Compact native projection of the current canonical web footer translations.
 export const hotelResultsFooterCopy: Record<MobileLocale, FooterCopy> = {
@@ -19,7 +27,23 @@ export const hotelResultsFooterCopy: Record<MobileLocale, FooterCopy> = {
   tr: { tagline: "Uçuşları, otelleri ve seyahat fırsatlarını güvenle arayın.", rights: "Tüm hakları saklıdır.", privacy: "Gizlilik", terms: "Şartlar", cookies: "Çerezler" },
   pl: { tagline: "Wyszukuj loty, hotele i oferty podróży z pewnością.", rights: "All rights reserved.", privacy: "Prywatność", terms: "Warunki", cookies: "Pliki cookie" },
   sv: { tagline: "Sök flyg, hotell och reseerbjudanden med trygghet.", rights: "Alla rättigheter förbehållna.", privacy: "Integritet", terms: "Villkor", cookies: "Cookies" },
-  id: { tagline: "Cari penerbangan, hotel, dan promo perjalanan dengan percaya diri.", rights: "Semua hak dilindungi.", privacy: "Privasi", terms: "Ketentuan", cookies: "Cookie" },
+  id: {
+    tagline: "Cari penerbangan, hotel, dan promo perjalanan dengan percaya diri.",
+    rights: "Semua hak dilindungi.",
+    privacy: "Privasi",
+    terms: "Ketentuan",
+    cookies: "Cookie",
+    sellerNotice: ({ companyName, registrationNumber }) =>
+      `${companyName} — Nomor Pendaftaran Penjual Perjalanan California ${registrationNumber}. Pendaftaran sebagai penjual perjalanan tidak berarti persetujuan dari Negara Bagian California.`,
+  },
   th: { tagline: "ค้นหาเที่ยวบิน โรงแรม และดีลการเดินทางได้อย่างมั่นใจ", rights: "All rights reserved.", privacy: "ความเป็นส่วนตัว", terms: "ข้อกำหนด", cookies: "คุกกี้" },
-  vi: { tagline: "Tìm kiếm chuyến bay, khách sạn và ưu đãi du lịch một cách tự tin.", rights: "Bảo lưu mọi quyền.", privacy: "Quyền riêng tư", terms: "Điều khoản", cookies: "Cookie" },
+  vi: {
+    tagline: "Tìm kiếm chuyến bay, khách sạn và ưu đãi du lịch một cách tự tin.",
+    rights: "Bảo lưu mọi quyền.",
+    privacy: "Quyền riêng tư",
+    terms: "Điều khoản",
+    cookies: "Cookie",
+    sellerNotice: ({ companyName, registrationNumber }) =>
+      `${companyName} — Số đăng ký Người bán dịch vụ du lịch California ${registrationNumber}. Việc đăng ký là người bán dịch vụ du lịch không đồng nghĩa với sự chấp thuận của Tiểu bang California.`,
+  },
 };

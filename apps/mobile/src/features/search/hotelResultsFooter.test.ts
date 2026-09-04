@@ -8,7 +8,11 @@ const screen = read("src/features/search/ApprovedResultsScreen.tsx");
 const footer = read("src/features/search/HotelResultsBrandLegalFooter.tsx");
 const copy = read("src/features/search/hotelResultsFooterCopy.ts");
 const legalUrls = read("src/config/legalUrls.ts");
+const appTheme = read("src/theme/AppTheme.tsx");
+const tokens = read("src/theme/tokens.ts");
 const webFooter = read("../../src/components/layout/Footer.tsx");
+const webIndonesian = read("../../src/lib/i18n/id.ts");
+const webVietnamese = read("../../src/lib/i18n/vi.ts");
 const webHotelResults = read("../../src/components/results/HotelResultsClient.tsx");
 const rootLayout = read("app/_layout.tsx");
 
@@ -46,6 +50,34 @@ test("footer uses canonical legal data, a dynamic year, and supported destinatio
   assert.match(footer, /Linking\.openURL\(COOKIE_POLICY_URL\)/);
   assert.match(legalUrls, /COOKIE_POLICY_URL = "https:\/\/kurioticket\.com\/legal\/cookie-policy"/);
   assert.doesNotMatch(footer, /LegalScreen|cookie-policy" as const/);
+  assert.doesNotMatch(copy, /2172630-70/);
+});
+
+test("footer protects the canonical light-background logo and resolves link contrast locally", () => {
+  assert.match(footer, /kurioticket-logo-primary-light-bg\.png/);
+  assert.match(footer, /theme\.dark && styles\.logoFrameDark/);
+  assert.match(footer, /logoFrameDark: \{ backgroundColor: "#FFFFFF", borderRadius: 4, paddingHorizontal: 6, paddingVertical: 4 \}/);
+  assert.match(footer, /logo: \{ width: 150, height: 30 \}/);
+  assert.match(footer, /const linkColor = theme\.dark \? "#8FB5FF" : colors\.blue/);
+  assert.match(footer, /<LegalLink label=\{copy\.privacy\} color=\{linkColor\}/);
+  assert.match(tokens, /blue: "#004BB8"/);
+  assert.match(appTheme, /surface: "#FFFFFF"/);
+  assert.match(appTheme, /surface: "#121E33"/);
+  assert.doesNotMatch(appTheme, /#8FB5FF/);
+  assert.doesNotMatch(tokens, /#8FB5FF/);
+});
+
+test("Seller notice mirrors explicit web localizations and otherwise uses canonical fallback", () => {
+  assert.match(webFooter, /t\.footerSellerOfTravelNotice \|\|/);
+  assert.match(webIndonesian, /footerSellerOfTravelNotice:/);
+  assert.match(webVietnamese, /footerSellerOfTravelNotice:/);
+  assert.match(copy, /id: \{[\s\S]*?Nomor Pendaftaran Penjual Perjalanan California \$\{registrationNumber\}/);
+  assert.match(copy, /vi: \{[\s\S]*?Số đăng ký Người bán dịch vụ du lịch California \$\{registrationNumber\}/);
+  assert.equal(copy.match(/sellerNotice:/g)?.length, 2);
+  assert.match(footer, /companyName: legalProfile\.company\.legalName/);
+  assert.match(footer, /registrationNumber: legalProfile\.californiaSellerOfTravel\.registrationNumber/);
+  assert.match(footer, /\?\? `\$\{legalProfile\.company\.legalName\} — \$\{getCaliforniaSellerOfTravelNotice\(\)\}`/);
+  assert.match(footer, /textAlign: direction === "rtl" \? "right" : "left", writingDirection: direction/);
 });
 
 test("footer is ordinary wrapping content with accessible links and no back-to-top", () => {
