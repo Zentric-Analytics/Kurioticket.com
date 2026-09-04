@@ -18,7 +18,7 @@ export function GuestProfileScreen() {
       { label: "savedItems", icon: "bookmark", destination: { kind: "native", href: "/saved" } },
       { label: "recentSearches", icon: "clock", destination: { kind: "native", href: "/recent" } },
     ] },
-    { title: "preferences", items: [{ label: "customizationPreferences", icon: "palette", destination: { kind: "native", href: "/settings" } }] },
+    { title: "preferences", items: [{ label: "customizationPreferences", icon: "sliders", destination: { kind: "native", href: "/settings" } }] },
     { title: "helpSupport", items: [
       { label: "contactSupport", icon: "headset", destination: { kind: "native", href: "/support" } },
       { label: "faq", icon: "help", destination: { kind: "native", href: "/faq" } },
