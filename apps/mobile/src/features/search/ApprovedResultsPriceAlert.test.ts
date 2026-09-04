@@ -78,27 +78,26 @@ test("obsolete large Hotel Results alert styles and create button stay removed",
   assert.doesNotMatch(styles, /\bhotelAlertCreateButton(?:Pressed|Disabled|Text)?:/);
 });
 
-test("Hotel Results reuses the Flight banner with a bounded icon action", () => {
+test("Hotel Results reuses the compact Flight banner with a left Bell and action pill", () => {
   const hotelAlert = flightAlert.slice(flightAlert.indexOf('if (product !== "hotel"'));
-  const actionStyle = source.slice(source.indexOf("hotelAlertAction: {"), source.indexOf("hotelAlertActionPressed: {"));
-  assert.match(hotelAlert, /style=\{\[s0\.flightAlert,/);
-  assert.match(hotelAlert, /style=\{s0\.flightAlertCopy\}/);
-  assert.match(hotelAlert, /s0\.flightAlertTitle/);
-  assert.match(hotelAlert, /s0\.flightAlertSubtitle/);
-  assert.match(hotelAlert, /style=\{s0\.flightAlertSwitchTarget\}/);
-  assert.match(hotelAlert, /accessibilityRole="button"/);
-  assert.match(hotelAlert, /<Bell accessible=\{false\}/);
-  assert.match(actionStyle, /width: 44/);
-  assert.match(actionStyle, /height: 44/);
-  assert.doesNotMatch(hotelAlert, />\{message\("createAlert"\)\}<\/Text>/);
-  assert.match(hotelAlert, /setTargetOpen\(true\)/);
-  assert.doesNotMatch(hotelAlert, /updatePriceAlertStatus|<Switch/);
+  assert.match(hotelAlert, /style=\{\[s0\.flightAlertCompact,/);
+  assert.match(hotelAlert, /<Bell accessible=\{false\} size=\{17\} strokeWidth=\{2\}/);
+  assert.match(hotelAlert, /s0\.flightAlertCompactTitle/);
+  assert.match(hotelAlert, /message\("hotelAlertTitle"\)/);
+  assert.match(hotelAlert, /flightCopy\.trackAction/);
+  assert.match(hotelAlert, /s0\.flightAlertAction/);
+  const compactBanner = hotelAlert.slice(0, hotelAlert.indexOf("<Modal"));
+  assert.doesNotMatch(compactBanner, /hotelAlertBody|flightAlertSubtitle|flightAlertSwitchTarget|hotelAlertAction|<Switch/);
+  assert.doesNotMatch(source, /hotelAlertAction:|hotelAlertActionPressed:|flightAlertSwitchTarget:/);
 });
 
-test("Hotel Results compact saved state prevents duplicate creation", () => {
+test("Hotel compact saved state is selected and prevents duplicate creation", () => {
   const hotelAlert = flightAlert.slice(flightAlert.indexOf('if (product !== "hotel"'));
-  assert.match(hotelAlert, /matchingAlert \? "Hotel price alert saved" : "Create hotel price alert"/);
-  assert.match(hotelAlert, /disabled: pending \|\| unavailable \|\| Boolean\(matchingAlert\)/);
-  assert.match(hotelAlert, /disabled=\{pending \|\| unavailable \|\| Boolean\(matchingAlert\)\}/);
-  assert.doesNotMatch(hotelAlert, />Saved<|\{matchingAlert \? "Saved"/);
+  assert.match(hotelAlert, /const hotelTracking = Boolean\(matchingAlert\)/);
+  assert.match(hotelAlert, /`✓ \$\{flightCopy\.tracking\}`/);
+  assert.match(hotelAlert, /selected: hotelTracking/);
+  assert.match(hotelAlert, /const hotelActionDisabled = pending \|\| unavailable \|\| hotelTracking/);
+  assert.match(hotelAlert, /disabled=\{hotelActionDisabled\}/);
+  assert.match(hotelAlert, /busy: pending/);
+  assert.doesNotMatch(hotelAlert, /updatePriceAlertStatus|<Switch/);
 });
