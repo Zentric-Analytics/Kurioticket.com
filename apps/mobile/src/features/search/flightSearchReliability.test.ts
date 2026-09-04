@@ -73,7 +73,7 @@ test("flight results virtualize cards, keep controls persistent, and do not own 
   assert.match(screen, /<Animated\.SectionList/);
   assert.match(screen, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
   assert.match(screen, /renderSectionHeader=\{\(\) => \([\s\S]*?\{filterRail\}/);
-  assert.match(screen, /<Animated\.SectionList[\s\S]*?ListHeaderComponent=\{animatedFlightDateStrip\}/);
+  assert.match(screen, /<Animated\.SectionList[\s\S]*?ListHeaderComponent=\{flightDateStrip\}/);
   assert.match(screen, /renderSectionHeader[\s\S]*?stickySectionHeadersEnabled/);
   assert.match(screen, /initialNumToRender=\{6\}/);
   assert.doesNotMatch(screen, /sorted\.map\(\(x, i\) =>\s*product === "flight"/);

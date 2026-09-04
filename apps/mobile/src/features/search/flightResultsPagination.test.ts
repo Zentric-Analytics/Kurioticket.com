@@ -62,7 +62,7 @@ test("Flight pagination waits for native scroll settlement with a bounded fallba
   assert.match(changePage, /scrollToLocation\(\{[\s\S]*?sectionIndex: 0,[\s\S]*?itemIndex: 0,[\s\S]*?viewPosition: 0,[\s\S]*?animated: true/);
   assert.doesNotMatch(changePage, /viewOffset:/);
   assert.doesNotMatch(screen, /flightFilterSectionHeight/);
-  assert.match(screen, /listener: \(\) => flightPaginationScheduleSettled\.current\?\.\(\)/);
+  assert.match(screen, /onScroll=\{\(\) => flightPaginationScheduleSettled\.current\?\.\(\)\}/);
   assert.match(screen, /onMomentumScrollEnd=\{\(\) => flightPaginationFinishPositioning\.current\?\.\(\)\}/);
   assert.match(changePage, /FLIGHT_PAGINATION_SCROLL_SETTLE_MS/);
   assert.match(changePage, /FLIGHT_PAGINATION_SCROLL_FALLBACK_MS/);
@@ -91,6 +91,29 @@ test("Flight pagination resets cancel an active transition and do not route or s
   assert.match(screen, /clearFlightFilters[\s\S]*cancelFlightPagination\(\)[\s\S]*setFlightPage\(1\)/);
   assert.match(screen, /onApply=\{\(next\) => \{ cancelFlightPagination\(\); setSort/);
   assert.doesNotMatch(screen.slice(screen.indexOf("const changeFlightPage"), screen.indexOf("const handleFullFlightFiltersChange")), /searchFlights|setRetry|router\.(?:setParams|push|replace)/);
+});
+
+test("Date Strip navigation cancels pagination and resets page one without changing filter or sort values", () => {
+  const selection = screen.slice(screen.indexOf("const selectNearbyDate"), screen.indexOf("const flightDateStrip ="));
+  assert.match(selection, /cancelFlightPagination\(\);[\s\S]*?setFlightPage\(1\)/);
+  assert.match(selection, /setSortOpen\(false\);[\s\S]*?setFilterOpen\(false\)/);
+  assert.match(selection, /pendingDateStripSelection\.current = \{ departureDate: nextDepartureDate, returnDate \};[\s\S]*?router\.setParams/);
+  assert.doesNotMatch(selection, /setSort\(|setFilters\(|emptyFlightFilters|setFlightPaginationPendingPage|setFlightPaginationPhase/);
+});
+
+test("only the matching Date Strip identity preserves preferences and its intent is consumed", () => {
+  const identity = screen.slice(screen.indexOf("if (!flightResults || !plan.plan?.key) return;"), screen.indexOf("useEffect(() => {", screen.indexOf("if (!flightResults || !plan.plan?.key) return;") + 1));
+  assert.match(identity, /const pendingSelection = pendingDateStripSelection\.current;[\s\S]*?pendingDateStripSelection\.current = null/);
+  assert.match(identity, /clearTimeout\(pendingDateStripSelectionTimer\.current\)[\s\S]*?pendingDateStripSelectionTimer\.current = undefined/);
+  assert.match(identity, /pendingSelection != null[\s\S]*?pendingSelection\.departureDate === payload\.departureDate[\s\S]*?pendingSelection\.returnDate === payload\.returnDate/);
+  assert.match(identity, /cancelFlightPagination\(\);[\s\S]*?setFlightPage\(1\)/);
+  assert.match(identity, /if \(!preserveDateStripPreferences\) \{[\s\S]*?setSort\("price"\);[\s\S]*?setFilters\(emptyFlightFilters\(\)\)/);
+  assert.match(identity, /setSortOpen\(false\);[\s\S]*?setFilterOpen\(false\)/);
+});
+
+test("stale Date Strip intent expires instead of leaking into a later search", () => {
+  const selection = screen.slice(screen.indexOf("const selectNearbyDate"), screen.indexOf("const flightDateStrip ="));
+  assert.match(selection, /pendingDateStripSelectionTimer\.current = setTimeout\(\(\) => \{[\s\S]*?pendingDateStripSelection\.current = null;[\s\S]*?pendingDateStripSelectionTimer\.current = undefined;[\s\S]*?\}, 10_000\)/);
 });
 
 

@@ -29,13 +29,13 @@ test("Flight Results owns a stronger light canvas while Hotel Results keeps the 
   assert.match(screen, /s0\.card,[\s\S]*?backgroundColor: theme\.surface/);
 });
 
-test("flight results put fading dates before a native sticky filter rail", () => {
+test("flight results put naturally scrolling dates before a native sticky filter rail", () => {
   const beforeList = screen.slice(screen.indexOf("<FlightResultsHeader"), layoutStart);
   const listHeader = flightLayout.slice(flightLayout.indexOf("ListHeaderComponent="), flightLayout.indexOf("renderItem="));
   const renderItem = flightLayout.slice(flightLayout.indexOf("renderItem="), flightLayout.indexOf("ListEmptyComponent="));
   assert.doesNotMatch(beforeList, /flightPersistentSearchControls|\{filterRail\}/);
   assert.match(screen, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
-  assert.match(listHeader, /ListHeaderComponent=\{animatedFlightDateStrip\}/);
+  assert.match(listHeader, /ListHeaderComponent=\{flightDateStrip\}/);
   assert.match(listHeader, /renderSectionHeader[\s\S]*?backgroundColor: flightCanvasColor[\s\S]*?\{filterRail\}/);
   assert.match(listHeader, /stickySectionHeadersEnabled/);
   assert.ok(listHeader.indexOf("ListHeaderComponent=") < listHeader.indexOf("renderSectionHeader="));
@@ -51,7 +51,8 @@ test("date and filter rails retain their horizontal interactions", () => {
   const dateStrip = readFileSync(resolve("src/features/search/SearchUi.tsx"), "utf8");
 
   assert.match(dateStrip, /export function DateStrip[\s\S]*?<ScrollView[\s\S]*?horizontal/);
-  assert.match(dateStrip, /onPress=\{\(\) => \{ if \(!active\) onSelect\(iso\); \}\}/);
+  assert.match(dateStrip, /const disabled = active \|\| \(flightResults && fareState\?\.status === "loading"\)/);
+  assert.match(dateStrip, /disabled=\{disabled\}[\s\S]*?onPress=\{\(\) => onSelect\(iso\)\}/);
   assert.match(dateStrip, /centeredIdentity\.current === searchIdentity[\s\S]*?scrollTo/);
   assert.match(screen, /const filterRail = \(product === "flight" \? \([\s\S]*?<FlightResultsQuickControls[\s\S]*?openSheet=\{openFlightSheet\}/);
   assert.match(screen, /sort=\{sort\}/);
@@ -176,7 +177,7 @@ test("hotel surviving sections own moderate spacing without changing the shared 
 test("the results date rail remains Flight-only, excludes multi-city, and uses safe date selection", () => {
   const flightDateStrip = screen.slice(
     screen.indexOf("const flightDateStrip ="),
-    screen.indexOf("const flightDateStripOpacity"),
+    screen.indexOf("const filterRail"),
   );
 
   assert.match(flightDateStrip, /<DateStrip/);
@@ -184,7 +185,7 @@ test("the results date rail remains Flight-only, excludes multi-city, and uses s
   assert.match(flightDateStrip, /payload\.tripType === "one-way" \|\| payload\.tripType === "round-trip"/);
   assert.match(flightDateStrip, /onSelect=\{selectNearbyDate\}/);
   assert.doesNotMatch(flightDateStrip, /checkIn/);
-  assert.match(screen, /const animatedFlightDateStrip = \([\s\S]*?\{flightDateStrip\}/);
+  assert.doesNotMatch(screen, /animatedFlightDateStrip|flightDateStripOpacity/);
 });
 
 test("Flight Results removes bell work without changing the shared notification implementation", () => {
