@@ -18,10 +18,10 @@ test("the sort control opens a compact web-parity menu", () => {
   assert.match(shell, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
 });
 
-test("sort changes apply immediately like web mobile", () => {
+test("sort changes apply immediately without resetting the current results page", () => {
   assert.doesNotMatch(sheet, /draft|setDraft|Apply sort/);
   assert.match(sheet, /onPress=\{\(\) => onApply\(option\.value\)\}/);
-  assert.match(screen, /onApply=\{\(next\) => \{ setFlightPage\(1\); setSort\(next\); setSortOpen\(false\); \}\}/);
+  assert.match(screen, /onApply=\{\(next\) => \{ setSort\(next\); setSortOpen\(false\); \}\}/);
 });
 
 test("sort quick menu presents only Best, Cheapest, and Fastest", () => {
