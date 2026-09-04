@@ -52,6 +52,8 @@ import type { MobileHotelDetailsResponse } from "../../api/travelApi";
 import { canonicalHotelAddress, HotelRoomOptionsModal, hotelStaySummary, meaningfulHotelCenterDistance, NativeHotelGallery } from "./NativeHotelDetails";
 import { nativeHotelOffers, nativeHotelProviderUrl, reconcileNativeHotelOfferSelection, type NativeHotelOffer } from "./nativeHotelDetailsModel";
 import { colors } from "../../theme/tokens";
+import { NativeHotelPropertyLocationSection, NativeRelatedHotelsSection } from "./NativeHotelDecisionSections";
+import { prepareNativeRelatedHotels, type NativeRelatedHotel } from "./nativeHotelRelatedHotelsModel";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -602,6 +604,33 @@ function HotelDetail({
   );
   const nightlyPrice = displayPrices?.nightly;
   const totalPrice = displayPrices?.total;
+  const relatedHotels = prepareNativeRelatedHotels({
+    hotels: details?.relatedHotels ?? [],
+    currentHotelId: result.id,
+    displayCurrency: nightlyPrice?.currency,
+    rates: hotelCurrencyRates,
+  });
+  const viewRelatedHotel = (item: NativeRelatedHotel) => {
+    const snapshot = item.displayPrices;
+    const consistentContext = snapshot?.nightly?.currency
+      && snapshot.nightly.currency === snapshot.total?.currency
+      && snapshot.nightly.currency === passedDisplayCurrencyContext?.resolvedCurrency;
+    router.push({
+      pathname: "/hotel-details",
+      params: {
+        result: JSON.stringify(item.result),
+        destination: String(params.destination || property?.city || result.location),
+        checkIn,
+        checkOut,
+        guests: String(guestCount),
+        rooms: String(roomCount),
+        hotelDisplayPrices: snapshot ? JSON.stringify(snapshot) : "",
+        displayCurrencyContext: consistentContext
+          ? JSON.stringify(passedDisplayCurrencyContext)
+          : "",
+      },
+    });
+  };
   const presentedRoomOptions = roomOptions.map((option) => ({
     ...option,
     displayPrice: nightlyPrice
@@ -877,6 +906,17 @@ function HotelDetail({
                     ? `Booking continues securely with ${result.provider}.`
                     : "No actionable provider offer was supplied for this property."}
               </Text>
+              <NativeHotelPropertyLocationSection
+                hotelName={result.name}
+                propertyDetails={property}
+                theme={theme}
+              />
+              <NativeRelatedHotelsSection
+                city={property?.city}
+                hotels={relatedHotels}
+                theme={theme}
+                onViewHotel={viewRelatedHotel}
+              />
             </>
           ) : null}
           {activeHotelTab === "about" ? (
