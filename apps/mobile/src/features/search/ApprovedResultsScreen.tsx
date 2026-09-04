@@ -158,7 +158,6 @@ import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
 import { FLIGHT_RESULTS_PAGE_SIZE, buildFlightPaginationItems, clampFlightResultsPage, getFlightResultsPageCount, paginateFlightResults } from "@/lib/flights/flightResultsPagination";
 import { buildHotelFilterChips, hasGoogleMapsDiscovery } from "./hotelResultsPresentation";
 import { HotelResultsPagination } from "./HotelResultsPagination";
-import { HotelResultsBrandLegalFooter } from "./HotelResultsBrandLegalFooter";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { mobileLocales, type MobileLocale } from "../../localization/mobileLocalizationCatalog";
 import { travelAccountMessage } from "../../localization/travelAccountMessages";
@@ -991,7 +990,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 ),
               )}
               {product === "hotel" && sorted.length ? <HotelResultsPagination page={clampedHotelPage} pages={hotelPageCount} disabled={hotelPageChanging} onPage={changeHotelPage}/> : null}
-              {product === "hotel" ? <HotelResultsBrandLegalFooter /> : null}
     </>
   );
   if (status === "loading") return <NativeBrandedSearchLoading product={product} />;
@@ -1114,7 +1112,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 hotelResultsBodyOffset.current = nativeEvent.layout.y;
                 updateHotelResultsOffset();
               }}
-              style={[s0.body, { paddingBottom: Math.max(insets.bottom + 16, 16) }]}
+              style={[s0.body, { paddingBottom: Math.max(insets.bottom + 72, 72) }]}
             >
               {resultContent}
             </View>
