@@ -1,0 +1,155 @@
+name: PR 5016 Codex localization fix
+
+on:
+  push:
+    branches:
+      - codex/refine-flight-results-card-price-labeling
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Apply localized price-basis fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          summary_path = Path("apps/mobile/src/features/search/flightResultsSummary.ts")
+          summary = summary_path.read_text()
+
+          old_type = '''  fareRule: string;\n  fareRules?: string; review?: string; viewDeal?: string; trackTitle?: string; trackAction?: string; tracking?: string; checking?: string;'''
+          new_type = '''  fareRule: string;\n  estimatedPrice: string;\n  providerPrice: string;\n  fareRules?: string; review?: string; viewDeal?: string; trackTitle?: string; trackAction?: string; tracking?: string; checking?: string;'''
+          if summary.count(old_type) != 1:
+              raise SystemExit("Unexpected FlightResultsCopy type shape")
+          summary = summary.replace(old_type, new_type)
+
+          replacements = {
+            '"en-us": { oneWay:"One-way",roundTrip:"Round-trip",multiCity:"Multi-city",traveler:"traveler",travelers:"travelers",viewFlight:"View Flight",baggage:"Baggage",cabin:"Cabin",fareRule:"Fare rule",fareRules:"Fare rules",review:"Review",viewDeal:"View deal",trackTitle:"Track this flight price",trackAction:"Track price",tracking:"Tracking",checking:"Checking…" },':
+            '"en-us": { oneWay:"One-way",roundTrip:"Round-trip",multiCity:"Multi-city",traveler:"traveler",travelers:"travelers",viewFlight:"View Flight",baggage:"Baggage",cabin:"Cabin",fareRule:"Fare rule",estimatedPrice:"ESTIMATED PRICE",providerPrice:"PROVIDER PRICE",fareRules:"Fare rules",review:"Review",viewDeal:"View deal",trackTitle:"Track this flight price",trackAction:"Track price",tracking:"Tracking",checking:"Checking…" },',
+            '"es-es": { oneWay:"Solo ida",roundTrip:"Ida y vuelta",multiCity:"Varias ciudades",traveler:"viajero",travelers:"viajeros",viewFlight:"Ver vuelo",baggage:"Equipaje",cabin:"Cabina",fareRule:"Regla tarifaria" },':
+            '"es-es": { oneWay:"Solo ida",roundTrip:"Ida y vuelta",multiCity:"Varias ciudades",traveler:"viajero",travelers:"viajeros",viewFlight:"Ver vuelo",baggage:"Equipaje",cabin:"Cabina",fareRule:"Regla tarifaria",estimatedPrice:"PRECIO ESTIMADO",providerPrice:"PRECIO DEL PROVEEDOR" },',
+            'fr: { oneWay:"Aller simple",roundTrip:"Aller-retour",multiCity:"Multi-destinations",traveler:"voyageur",travelers:"voyageurs",viewFlight:"Voir le vol",baggage:"Bagages",cabin:"Cabine",fareRule:"Règle tarifaire",fareRules:"Règles",review:"Consulter",viewDeal:"Voir l’offre",trackTitle:"Suivre le prix du vol",trackAction:"Suivre le prix",tracking:"Suivi actif",checking:"Vérification…" },':
+            'fr: { oneWay:"Aller simple",roundTrip:"Aller-retour",multiCity:"Multi-destinations",traveler:"voyageur",travelers:"voyageurs",viewFlight:"Voir le vol",baggage:"Bagages",cabin:"Cabine",fareRule:"Règle tarifaire",estimatedPrice:"PRIX ESTIMÉ",providerPrice:"PRIX DU FOURNISSEUR",fareRules:"Règles",review:"Consulter",viewDeal:"Voir l’offre",trackTitle:"Suivre le prix du vol",trackAction:"Suivre le prix",tracking:"Suivi actif",checking:"Vérification…" },',
+            '"de-de": { oneWay:"Hinflug",roundTrip:"Hin- und Rückflug",multiCity:"Mehrere Städte",traveler:"Reisender",travelers:"Reisende",viewFlight:"Flug ansehen",baggage:"Gepäck",cabin:"Kabine",fareRule:"Tarifregel",fareRules:"Tarifregeln",review:"Prüfen",viewDeal:"Angebot ansehen",trackTitle:"Flugpreis verfolgen",trackAction:"Preis verfolgen",tracking:"Wird verfolgt",checking:"Prüfen…" },':
+            '"de-de": { oneWay:"Hinflug",roundTrip:"Hin- und Rückflug",multiCity:"Mehrere Städte",traveler:"Reisender",travelers:"Reisende",viewFlight:"Flug ansehen",baggage:"Gepäck",cabin:"Kabine",fareRule:"Tarifregel",estimatedPrice:"GESCHÄTZTER PREIS",providerPrice:"ANBIETERPREIS",fareRules:"Tarifregeln",review:"Prüfen",viewDeal:"Angebot ansehen",trackTitle:"Flugpreis verfolgen",trackAction:"Preis verfolgen",tracking:"Wird verfolgt",checking:"Prüfen…" },',
+            '"it-it": { oneWay:"Solo andata",roundTrip:"Andata e ritorno",multiCity:"Più città",traveler:"viaggiatore",travelers:"viaggiatori",viewFlight:"Vedi volo",baggage:"Bagaglio",cabin:"Cabina",fareRule:"Regola tariffaria" },':
+            '"it-it": { oneWay:"Solo andata",roundTrip:"Andata e ritorno",multiCity:"Più città",traveler:"viaggiatore",travelers:"viaggiatori",viewFlight:"Vedi volo",baggage:"Bagaglio",cabin:"Cabina",fareRule:"Regola tariffaria",estimatedPrice:"PREZZO STIMATO",providerPrice:"PREZZO DEL FORNITORE" },',
+            '"pt-br": { oneWay:"Só ida",roundTrip:"Ida e volta",multiCity:"Várias cidades",traveler:"viajante",travelers:"viajantes",viewFlight:"Ver voo",baggage:"Bagagem",cabin:"Cabine",fareRule:"Regra tarifária" },':
+            '"pt-br": { oneWay:"Só ida",roundTrip:"Ida e volta",multiCity:"Várias cidades",traveler:"viajante",travelers:"viajantes",viewFlight:"Ver voo",baggage:"Bagagem",cabin:"Cabine",fareRule:"Regra tarifária",estimatedPrice:"PREÇO ESTIMADO",providerPrice:"PREÇO DO FORNECEDOR" },',
+            'nl: { oneWay:"Enkele reis",roundTrip:"Retour",multiCity:"Meerdere steden",traveler:"reiziger",travelers:"reizigers",viewFlight:"Vlucht bekijken",baggage:"Bagage",cabin:"Cabine",fareRule:"Tariefregel" },':
+            'nl: { oneWay:"Enkele reis",roundTrip:"Retour",multiCity:"Meerdere steden",traveler:"reiziger",travelers:"reizigers",viewFlight:"Vlucht bekijken",baggage:"Bagage",cabin:"Cabine",fareRule:"Tariefregel",estimatedPrice:"GESCHATTE PRIJS",providerPrice:"PRIJS VAN AANBIEDER" },',
+            'ar: { oneWay:"ذهاب فقط",roundTrip:"ذهاب وعودة",multiCity:"وجهات متعددة",traveler:"مسافر",travelers:"مسافرون",viewFlight:"عرض الرحلة",baggage:"الأمتعة",cabin:"المقصورة",fareRule:"قاعدة السعر",fareRules:"قواعد السعر",review:"مراجعة",viewDeal:"عرض الصفقة",trackTitle:"تتبّع سعر الرحلة",trackAction:"تتبّع السعر",tracking:"قيد التتبّع",checking:"جارٍ التحقق…" },':
+            'ar: { oneWay:"ذهاب فقط",roundTrip:"ذهاب وعودة",multiCity:"وجهات متعددة",traveler:"مسافر",travelers:"مسافرون",viewFlight:"عرض الرحلة",baggage:"الأمتعة",cabin:"المقصورة",fareRule:"قاعدة السعر",estimatedPrice:"السعر التقديري",providerPrice:"سعر المزوّد",fareRules:"قواعد السعر",review:"مراجعة",viewDeal:"عرض الصفقة",trackTitle:"تتبّع سعر الرحلة",trackAction:"تتبّع السعر",tracking:"قيد التتبّع",checking:"جارٍ التحقق…" },',
+            '"zh-cn": { oneWay:"单程",roundTrip:"往返",multiCity:"多城市",traveler:"位旅客",travelers:"位旅客",viewFlight:"查看航班",baggage:"行李",cabin:"舱位",fareRule:"票价规则" },':
+            '"zh-cn": { oneWay:"单程",roundTrip:"往返",multiCity:"多城市",traveler:"位旅客",travelers:"位旅客",viewFlight:"查看航班",baggage:"行李",cabin:"舱位",fareRule:"票价规则",estimatedPrice:"预估价格",providerPrice:"供应商价格" },',
+            'ja: { oneWay:"片道",roundTrip:"往復",multiCity:"複数都市",traveler:"名",travelers:"名",viewFlight:"フライトを見る",baggage:"手荷物",cabin:"座席クラス",fareRule:"運賃規則" },':
+            'ja: { oneWay:"片道",roundTrip:"往復",multiCity:"複数都市",traveler:"名",travelers:"名",viewFlight:"フライトを見る",baggage:"手荷物",cabin:"座席クラス",fareRule:"運賃規則",estimatedPrice:"推定価格",providerPrice:"プロバイダー価格" },',
+            'ko: { oneWay:"편도",roundTrip:"왕복",multiCity:"다구간",traveler:"명",travelers:"명",viewFlight:"항공편 보기",baggage:"수하물",cabin:"좌석 등급",fareRule:"운임 규정" },':
+            'ko: { oneWay:"편도",roundTrip:"왕복",multiCity:"다구간",traveler:"명",travelers:"명",viewFlight:"항공편 보기",baggage:"수하물",cabin:"좌석 등급",fareRule:"운임 규정",estimatedPrice:"예상 가격",providerPrice:"제공업체 가격" },',
+            'hi: { oneWay:"एकतरफ़ा",roundTrip:"आना-जाना",multiCity:"कई शहर",traveler:"यात्री",travelers:"यात्री",viewFlight:"उड़ान देखें",baggage:"सामान",cabin:"केबिन",fareRule:"किराया नियम" },':
+            'hi: { oneWay:"एकतरफ़ा",roundTrip:"आना-जाना",multiCity:"कई शहर",traveler:"यात्री",travelers:"यात्री",viewFlight:"उड़ान देखें",baggage:"सामान",cabin:"केबिन",fareRule:"किराया नियम",estimatedPrice:"अनुमानित कीमत",providerPrice:"प्रदाता कीमत" },',
+            'tr: { oneWay:"Tek yön",roundTrip:"Gidiş-dönüş",multiCity:"Çoklu şehir",traveler:"yolcu",travelers:"yolcu",viewFlight:"Uçuşu görüntüle",baggage:"Bagaj",cabin:"Kabin",fareRule:"Ücret kuralı" },':
+            'tr: { oneWay:"Tek yön",roundTrip:"Gidiş-dönüş",multiCity:"Çoklu şehir",traveler:"yolcu",travelers:"yolcu",viewFlight:"Uçuşu görüntüle",baggage:"Bagaj",cabin:"Kabin",fareRule:"Ücret kuralı",estimatedPrice:"TAHMİNİ FİYAT",providerPrice:"SAĞLAYICI FİYATI" },',
+            'pl: { oneWay:"W jedną stronę",roundTrip:"W obie strony",multiCity:"Wiele miast",traveler:"podróżny",travelers:"podróżnych",viewFlight:"Zobacz lot",baggage:"Bagaż",cabin:"Kabina",fareRule:"Zasady taryfy" },':
+            'pl: { oneWay:"W jedną stronę",roundTrip:"W obie strony",multiCity:"Wiele miast",traveler:"podróżny",travelers:"podróżnych",viewFlight:"Zobacz lot",baggage:"Bagaż",cabin:"Kabina",fareRule:"Zasady taryfy",estimatedPrice:"SZACOWANA CENA",providerPrice:"CENA DOSTAWCY" },',
+            'sv: { oneWay:"Enkel resa",roundTrip:"Tur och retur",multiCity:"Flera städer",traveler:"resenär",travelers:"resenärer",viewFlight:"Visa flyg",baggage:"Bagage",cabin:"Kabin",fareRule:"Prisregel" },':
+            'sv: { oneWay:"Enkel resa",roundTrip:"Tur och retur",multiCity:"Flera städer",traveler:"resenär",travelers:"resenärer",viewFlight:"Visa flyg",baggage:"Bagage",cabin:"Kabin",fareRule:"Prisregel",estimatedPrice:"UPPSKATTAT PRIS",providerPrice:"LEVERANTÖRSPRIS" },',
+            'id: { oneWay:"Sekali jalan",roundTrip:"Pulang-pergi",multiCity:"Multi-kota",traveler:"wisatawan",travelers:"wisatawan",viewFlight:"Lihat penerbangan",baggage:"Bagasi",cabin:"Kabin",fareRule:"Aturan tarif" },':
+            'id: { oneWay:"Sekali jalan",roundTrip:"Pulang-pergi",multiCity:"Multi-kota",traveler:"wisatawan",travelers:"wisatawan",viewFlight:"Lihat penerbangan",baggage:"Bagasi",cabin:"Kabin",fareRule:"Aturan tarif",estimatedPrice:"HARGA PERKIRAAN",providerPrice:"HARGA PENYEDIA" },',
+            'th: { oneWay:"เที่ยวเดียว",roundTrip:"ไป-กลับ",multiCity:"หลายเมือง",traveler:"ผู้เดินทาง",travelers:"ผู้เดินทาง",viewFlight:"ดูเที่ยวบิน",baggage:"สัมภาระ",cabin:"ชั้นโดยสาร",fareRule:"กฎค่าโดยสาร" },':
+            'th: { oneWay:"เที่ยวเดียว",roundTrip:"ไป-กลับ",multiCity:"หลายเมือง",traveler:"ผู้เดินทาง",travelers:"ผู้เดินทาง",viewFlight:"ดูเที่ยวบิน",baggage:"สัมภาระ",cabin:"ชั้นโดยสาร",fareRule:"กฎค่าโดยสาร",estimatedPrice:"ราคาโดยประมาณ",providerPrice:"ราคาจากผู้ให้บริการ" },',
+            'vi: { oneWay:"Một chiều",roundTrip:"Khứ hồi",multiCity:"Nhiều thành phố",traveler:"hành khách",travelers:"hành khách",viewFlight:"Xem chuyến bay",baggage:"Hành lý",cabin:"Hạng ghế",fareRule:"Quy định giá vé" },':
+            'vi: { oneWay:"Một chiều",roundTrip:"Khứ hồi",multiCity:"Nhiều thành phố",traveler:"hành khách",travelers:"hành khách",viewFlight:"Xem chuyến bay",baggage:"Hành lý",cabin:"Hạng ghế",fareRule:"Quy định giá vé",estimatedPrice:"GIÁ ƯỚC TÍNH",providerPrice:"GIÁ NHÀ CUNG CẤP" },',
+          }
+          for old, new in replacements.items():
+              if summary.count(old) != 1:
+                  raise SystemExit(f"Expected one locale row, got {summary.count(old)}: {old[:60]}")
+              summary = summary.replace(old, new)
+          summary_path.write_text(summary)
+
+          basis_path = Path("apps/mobile/src/features/search/flightPriceBasis.ts")
+          basis = basis_path.read_text()
+          old_basis = '''export function flightMainPriceBasis(fare?: DisplayPrice | null) {\n  if (!fare) return null;\n\n  return fare.converted === true\n    ? { label: "ESTIMATED PRICE", accessibilityText: "estimated price" }\n    : { label: "PROVIDER PRICE", accessibilityText: "provider price" };\n}'''
+          new_basis = '''export function flightMainPriceBasis(\n  fare: DisplayPrice | null | undefined,\n  labels: { estimatedPrice: string; providerPrice: string },\n) {\n  if (!fare) return null;\n\n  const label = fare.converted === true ? labels.estimatedPrice : labels.providerPrice;\n  return { label, accessibilityText: label };\n}'''
+          if basis.count(old_basis) != 1:
+              raise SystemExit("Unexpected flightMainPriceBasis implementation")
+          basis_path.write_text(basis.replace(old_basis, new_basis))
+
+          screen_path = Path("apps/mobile/src/features/search/ApprovedResultsScreen.tsx")
+          screen = screen_path.read_text()
+          old_screen = '''  const providerFare = flightProviderFarePresentation(fare);\n  const mainPriceBasis = flightMainPriceBasis(fare);\n  const labels = flightResultsCopy(locale);'''
+          new_screen = '''  const providerFare = flightProviderFarePresentation(fare);\n  const labels = flightResultsCopy(locale);\n  const mainPriceBasis = flightMainPriceBasis(fare, labels);'''
+          if screen.count(old_screen) != 1:
+              raise SystemExit("Unexpected FlightCard price-basis wiring")
+          screen_path.write_text(screen.replace(old_screen, new_screen))
+
+          test_path = Path("apps/mobile/src/features/search/flightPriceBasis.test.ts")
+          test = test_path.read_text()
+          old_import = 'import { flightMainPriceBasis, flightPriceBasis, flightProviderFarePresentation } from "./flightPriceBasis";'
+          new_import = old_import + '\nimport { flightResultsCopy } from "./flightResultsSummary";'
+          if test.count(old_import) != 1:
+              raise SystemExit("Unexpected flightPriceBasis test import")
+          test = test.replace(old_import, new_import)
+          old_asserts = '''  assert.deepEqual(flightMainPriceBasis(providerFare), { label: "PROVIDER PRICE", accessibilityText: "provider price" });\n  assert.equal(flightProviderFarePresentation(providerFare), null);\n  assert.deepEqual(flightMainPriceBasis(convertedFare), { label: "ESTIMATED PRICE", accessibilityText: "estimated price" });\n  assert.equal(flightProviderFarePresentation(convertedFare)?.formatted, "$820");\n  assert.equal(flightMainPriceBasis(undefined), null);'''
+          new_asserts = '''  const english = flightResultsCopy("en-us");\n  assert.deepEqual(flightMainPriceBasis(providerFare, english), { label: "PROVIDER PRICE", accessibilityText: "PROVIDER PRICE" });\n  assert.equal(flightProviderFarePresentation(providerFare), null);\n  assert.deepEqual(flightMainPriceBasis(convertedFare, english), { label: "ESTIMATED PRICE", accessibilityText: "ESTIMATED PRICE" });\n  assert.equal(flightProviderFarePresentation(convertedFare)?.formatted, "$820");\n  assert.equal(flightMainPriceBasis(undefined, english), null);'''
+          if test.count(old_asserts) != 1:
+              raise SystemExit("Unexpected main price basis assertions")
+          test = test.replace(old_asserts, new_asserts)
+          marker = '''test("preserves the provider offer total without per-traveler arithmetic", () => {'''
+          localized_test = '''test("localizes the main fare basis instead of falling back to English", () => {\n  const providerFare: DisplayPrice = { amount: 420, currency: "EUR", formatted: "€420", accessibilityLabel: "420 euros", providerAmount: 420, providerCurrency: "EUR", converted: false };\n  const convertedFare: DisplayPrice = { ...providerFare, amount: 650000, currency: "NGN", formatted: "₦650,000", providerAmount: 420, converted: true };\n  const spanish = flightResultsCopy("es-es");\n\n  assert.deepEqual(flightMainPriceBasis(providerFare, spanish), { label: "PRECIO DEL PROVEEDOR", accessibilityText: "PRECIO DEL PROVEEDOR" });\n  assert.deepEqual(flightMainPriceBasis(convertedFare, spanish), { label: "PRECIO ESTIMADO", accessibilityText: "PRECIO ESTIMADO" });\n  assert.doesNotMatch(flightMainPriceBasis(providerFare, spanish)?.label ?? "", /PROVIDER PRICE/);\n});\n\n'''
+          if test.count(marker) != 1:
+              raise SystemExit("Unexpected test insertion marker")
+          test = test.replace(marker, localized_test + marker)
+          test_path.write_text(test)
+
+          card_test_path = Path("apps/mobile/src/features/search/flightCardRefinement.test.ts")
+          card_test = card_test_path.read_text()
+          old_call = '  assert.match(card, /flightMainPriceBasis\\(fare\\)/);'
+          new_call = '  assert.match(card, /const labels = flightResultsCopy\\(locale\\);[\\s\\S]*flightMainPriceBasis\\(fare, labels\\)/);'
+          if card_test.count(old_call) != 1:
+              raise SystemExit("Unexpected FlightCard helper-call assertion")
+          card_test_path.write_text(card_test.replace(old_call, new_call))
+          PY
+
+      - name: Install mobile dependencies
+        working-directory: apps/mobile
+        run: npm ci
+
+      - name: Type-check mobile
+        working-directory: apps/mobile
+        run: npm run typecheck
+
+      - name: Run focused regressions
+        working-directory: apps/mobile
+        run: node --test --require ./testAssetSetup.cjs --import jiti/register src/features/search/flightPriceBasis.test.ts src/features/search/flightCardRefinement.test.ts src/features/search/flightCardRightAlignment.test.ts src/features/search/flightResultsPriceOverflow.test.ts
+
+      - name: Run full mobile tests
+        working-directory: apps/mobile
+        run: npm test
+
+      - name: Publish clean fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git config user.name "Adekunlea917"
+          git config user.email "adetunji.kaseem@zentricanalytics.com"
+          rm .github/workflows/pr5016-codex-fix.yml
+          git add apps/mobile/src/features/search/ApprovedResultsScreen.tsx apps/mobile/src/features/search/flightPriceBasis.ts apps/mobile/src/features/search/flightPriceBasis.test.ts apps/mobile/src/features/search/flightCardRefinement.test.ts apps/mobile/src/features/search/flightResultsSummary.ts .github/workflows/pr5016-codex-fix.yml
+          git commit -m "fix(mobile): localize flight card price basis"
+          git push origin HEAD:codex/refine-flight-results-card-price-labeling
