@@ -17,124 +17,18 @@ jobs:
           ref: codex/align-flight-results-filter-behavior
           fetch-depth: 0
 
-      - name: Merge latest dev and resolve overlapping flight changes
+      - name: Merge latest dev
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch origin dev
-          set +e
-          git merge --no-commit --no-ff origin/dev
-          merge_status=$?
-          set -e
-          if [ "$merge_status" -ne 0 ]; then
-            conflicts="$(git diff --name-only --diff-filter=U | sort)"
-            printf 'Merge conflicts:\n%s\n' "$conflicts"
-            unexpected="$(printf '%s\n' "$conflicts" | grep -Ev '^(apps/mobile/src/features/search/ApprovedResultsScreen.tsx|apps/mobile/src/features/search/flightResultsPagination.test.ts|apps/mobile/src/features/search/flightSortExperience.test.ts)$' || true)"
-            test -z "$unexpected"
-          fi
-
+          git merge --no-commit --no-ff origin/dev || true
+          conflicts="$(git diff --name-only --diff-filter=U | sort)"
+          unexpected="$(printf '%s\n' "$conflicts" | grep -Ev '^(apps/mobile/src/features/search/ApprovedResultsScreen.tsx|apps/mobile/src/features/search/flightResultsPagination.test.ts|apps/mobile/src/features/search/flightSortExperience.test.ts)$' || true)"
+          test -z "$unexpected"
           git checkout origin/dev -- apps/mobile/src/features/search/ApprovedResultsScreen.tsx apps/mobile/src/features/search/flightResultsPagination.test.ts apps/mobile/src/features/search/flightSortExperience.test.ts
-
-          python - <<'PY'
-          from pathlib import Path
-          import re
-
-          def sub_once(text, pattern, replacement, label, flags=0):
-              out, count = re.subn(pattern, replacement, text, count=1, flags=flags)
-              if count != 1:
-                  raise SystemExit(f"{label}: expected one match, found {count}")
-              return out
-
-          screen_path = Path('apps/mobile/src/features/search/ApprovedResultsScreen.tsx')
-          screen = screen_path.read_text()
-          screen = sub_once(
-              screen,
-              r'  const handleFlightFiltersChange = useCallback\(\(next: FlightFilters\) => \{\n    cancelFlightPagination\(\);\n    setFlightPage\(1\);\n    setFilters\(next\);\n  \}, \[cancelFlightPagination\]\);',
-              '''  const handleFullFlightFiltersChange = useCallback((next: FlightFilters) => {
-    cancelFlightPagination();
-    setFlightPage(1);
-    setFilters(next);
-  }, [cancelFlightPagination]);
-  const handleQuickFlightFiltersChange = useCallback((next: FlightFilters) => {
-    cancelFlightPagination();
-    setFilters(next);
-  }, [cancelFlightPagination]);''',
-              'split filter handlers',
-          )
-          screen = sub_once(
-              screen,
-              r'(  const clearFlightFilters = useCallback\(\(\) => \{\n    cancelFlightPagination\(\);\n    setFlightPage\(1\);\n    setFilters\(emptyFlightFilters\(\)\);\n  \}, \[cancelFlightPagination\]\);)',
-              r'''\1
-  const scrollToFlightResultsBeginning = useCallback(() => {
-    requestAnimationFrame(() => {
-      try {
-        flightResultsListRef.current?.scrollToLocation({ sectionIndex: 0, itemIndex: 0, viewPosition: 0, animated: true });
-      } catch (error) {
-        if (__DEV__) console.warn("[flight-results:filter-complete-scroll]", error);
-        try {
-          flightResultsListRef.current?.scrollToLocation({ sectionIndex: 0, itemIndex: 0, viewPosition: 0, animated: false });
-        } catch (fallbackError) {
-          if (__DEV__) console.warn("[flight-results:filter-complete-scroll-fallback]", fallbackError);
-        }
-      }
-    });
-  }, []);
-  const completeFullFlightFilters = useCallback(() => {
-    setFilterOpen(false);
-    scrollToFlightResultsBeginning();
-  }, [scrollToFlightResultsBeginning]);''',
-              'add completion scroll',
-          )
-          screen = screen.replace('      stopsActive={filters.maxStops != null}', '      stopsCount={filters.stops?.length || Number(filters.maxStops != null)}', 1)
-          screen = screen.replace(
-              '<FlightSortSheet visible={sortOpen} sort={sort} onApply={(next) => { cancelFlightPagination(); setFlightPage(1); setSort(next); setSortOpen(false); }} onClose={() => setSortOpen(false)} />',
-              '<FlightSortSheet visible={sortOpen} sort={sort} onApply={(next) => { cancelFlightPagination(); setSort(next); setSortOpen(false); }} onClose={() => setSortOpen(false)} />',
-              1,
-          )
-          screen = screen.replace(
-              '            onChange={handleFlightFiltersChange}\n            onClose={() => setFilterOpen(false)}',
-              '            onChange={filterSection === "all" ? handleFullFlightFiltersChange : handleQuickFlightFiltersChange}\n            onClose={() => setFilterOpen(false)}\n            onComplete={completeFullFlightFilters}',
-              1,
-          )
-          for needle in ['handleFullFlightFiltersChange', 'handleQuickFlightFiltersChange', 'stopsCount={filters.stops?.length', 'onComplete={completeFullFlightFilters}']:
-              if needle not in screen:
-                  raise SystemExit(f'missing expected screen change: {needle}')
-          screen_path.write_text(screen)
-
-          pagination_path = Path('apps/mobile/src/features/search/flightResultsPagination.test.ts')
-          pagination = pagination_path.read_text()
-          pagination = sub_once(
-              pagination,
-              r'test\("Flight page resets are scoped to filters, clear, sort, and search identity", \(\) => \{[\s\S]*?\n\}\);',
-              '''test("full filters and search identity reset while quick filters and sort preserve then clamp the page", () => {
-  assert.match(screen, /previousFlightSearchKey\\.current !== plan\\.plan\\.key[\\s\\S]*?setFlightPage\\(1\\)/);
-  assert.match(screen, /handleFullFlightFiltersChange[\\s\\S]*?cancelFlightPagination\\(\\)[\\s\\S]*?setFlightPage\\(1\\)[\\s\\S]*?setFilters\\(next\\)/);
-  assert.match(screen, /handleQuickFlightFiltersChange[\\s\\S]*?cancelFlightPagination\\(\\)[\\s\\S]*?setFilters\\(next\\)/);
-  const quickFilter = screen.slice(screen.indexOf("const handleQuickFlightFiltersChange"), screen.indexOf("const clearFlightFilters"));
-  assert.doesNotMatch(quickFilter, /setFlightPage/);
-  assert.match(screen, /clearFlightFilters[\\s\\S]*?cancelFlightPagination\\(\\)[\\s\\S]*?setFlightPage\\(1\\)[\\s\\S]*?setFilters\\(emptyFlightFilters\\(\\)\\)/);
-  assert.match(screen, /<FlightSortSheet[\\s\\S]*?onApply=\\{\\(next\\) => \\{ cancelFlightPagination\\(\\); setSort\\(next\\); setSortOpen\\(false\\); \\}\\}/);
-  const sortBinding = screen.slice(screen.indexOf("<FlightSortSheet"), screen.indexOf("<FlightFilterSheet"));
-  assert.doesNotMatch(sortBinding, /setFlightPage\\(1\\)/);
-  assert.match(screen, /onChange=\\{filterSection === "all" \\? handleFullFlightFiltersChange : handleQuickFlightFiltersChange\\}/);
-  assert.match(screen, /flightPage === clampedFlightPage\\) return;[\\s\\S]*?cancelFlightPagination\\(\\);[\\s\\S]*?setFlightPage\\(clampedFlightPage\\)/);
-});''',
-              'replace reset behavior test',
-          )
-          pagination = pagination.replace('screen.indexOf("const handleFlightFiltersChange")', 'screen.indexOf("const handleFullFlightFiltersChange")')
-          pagination = pagination.replace('handleFlightFiltersChange[\\s\\S]*cancelFlightPagination\\(\\)[\\s\\S]*setFlightPage\\(1\\)', 'handleFullFlightFiltersChange[\\s\\S]*cancelFlightPagination\\(\\)[\\s\\S]*setFlightPage\\(1\\)')
-          pagination = pagination.replace('onApply=\\{\\(next\\) => \\{ cancelFlightPagination\\(\\); setFlightPage\\(1\\); setSort', 'onApply=\\{\\(next\\) => \\{ cancelFlightPagination\\(\\); setSort')
-          pagination += '''\n\ntest("only completing the full Filter closes and scrolls to the results item geometry", () => {\n  assert.match(screen, /completeFullFlightFilters[\\s\\S]*?setFilterOpen\\(false\\)[\\s\\S]*?scrollToFlightResultsBeginning\\(\\)/);\n  assert.match(screen, /scrollToFlightResultsBeginning[\\s\\S]*?scrollToLocation\\(\\{ sectionIndex: 0, itemIndex: 0, viewPosition: 0, animated: true \\}\\)/);\n  assert.match(screen, /onClose=\\{\\(\\) => setFilterOpen\\(false\\)\\}[\\s\\S]*?onComplete=\\{completeFullFlightFilters\\}/);\n  const completion = screen.slice(screen.indexOf("const scrollToFlightResultsBeginning"), screen.indexOf("const canonicalHotelDestination"));\n  assert.doesNotMatch(completion, /setFlightPaginationPendingPage|setFlightPage|travelApi\\.searchFlights|setRetry/);\n});\n'''
-          pagination_path.write_text(pagination)
-
-          sort_path = Path('apps/mobile/src/features/search/flightSortExperience.test.ts')
-          sort_test = sort_path.read_text()
-          sort_test = sort_test.replace('test("sort changes apply immediately like web mobile", () => {', 'test("sort changes apply immediately without resetting the current results page", () => {', 1)
-          sort_test = sort_test.replace('assert.match(screen, /onApply=\\{\\(next\\) => \\{ cancelFlightPagination\\(\\); setFlightPage\\(1\\); setSort\\(next\\); setSortOpen\\(false\\); \\}\\}/);', 'assert.match(screen, /onApply=\\{\\(next\\) => \\{ cancelFlightPagination\\(\\); setSort\\(next\\); setSortOpen\\(false\\); \\}\\}/);\n  const sortBinding = screen.slice(screen.indexOf("<FlightSortSheet"), screen.indexOf("<FlightFilterSheet"));\n  assert.doesNotMatch(sortBinding, /setFlightPage\\(1\\)/);', 1)
-          sort_path.write_text(sort_test)
-          PY
-
+          python .github/pr5012_resolve.py
           git add apps/mobile/src/features/search/ApprovedResultsScreen.tsx apps/mobile/src/features/search/flightResultsPagination.test.ts apps/mobile/src/features/search/flightSortExperience.test.ts
           test -z "$(git diff --name-only --diff-filter=U)"
           git diff --check
@@ -157,10 +51,10 @@ jobs:
         working-directory: apps/mobile
         run: node --test --require ./testAssetSetup.cjs --import jiti/register src/features/search/FlightFilterSheet.test.ts src/features/search/flightFilters.test.ts src/features/search/flightResultsPagination.test.ts src/features/search/flightResultsQuickControls.test.ts src/features/search/flightSortExperience.test.ts
 
-      - name: Commit resolved merge and remove helper
+      - name: Publish resolved merge
         run: |
           set -euo pipefail
-          git rm .github/workflows/pr5012-conflict-fix.yml
+          git rm .github/workflows/pr5012-conflict-fix.yml .github/pr5012_resolve.py
           git add -A
           git commit -m 'Merge dev into codex/align-flight-results-filter-behavior'
           git push origin HEAD:codex/align-flight-results-filter-behavior
