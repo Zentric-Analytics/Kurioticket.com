@@ -43,8 +43,26 @@ test("presents authoritative converted provider fares with explicit ISO identity
   ] as const) {
     const presentation = flightProviderFarePresentation({ ...converted, providerCurrency: currency });
     assert.equal(presentation?.formatted, formatted);
+    assert.equal(presentation?.fullFormatted, formatted);
     assert.equal(presentation?.currency, currency);
     assert.match(presentation?.accessibilityLabel ?? "", accessibilityCurrency);
+  }
+});
+
+test("compacts only long provider fare display strings without losing digits or currency identity", () => {
+  const converted: DisplayPrice = { amount: 670000, currency: "NGN", formatted: "₦670,000", accessibilityLabel: "670,000 Nigerian naira", providerAmount: 420, providerCurrency: "USD", converted: true };
+  const cases = [
+    { currency: "IDR", amount: 2450000, compact: "IDR2450000", digits: "2450000" },
+    { currency: "VND", amount: 18750000, compact: "₫18750000", digits: "18750000" },
+  ] as const;
+
+  for (const { currency, amount, compact, digits } of cases) {
+    const presentation = flightProviderFarePresentation({ ...converted, providerCurrency: currency, providerAmount: amount });
+    assert.equal(presentation?.formatted, compact);
+    assert.ok(presentation?.fullFormatted.includes(digits.replace(/(?<=\d)(?=(\d{3})+$)/g, ",")) || presentation?.fullFormatted.replace(/\D/g, "") === digits);
+    assert.equal(presentation?.formatted.replace(/\D/g, ""), digits);
+    assert.equal(presentation?.currency, currency);
+    assert.doesNotMatch(presentation?.formatted ?? "", /\d(?:\.\d)?[KM]\b/i);
   }
 });
 

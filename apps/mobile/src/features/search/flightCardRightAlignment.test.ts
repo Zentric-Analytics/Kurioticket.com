@@ -24,7 +24,7 @@ test("arrival and price terminate on the shared right edge", () => {
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch"/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.doesNotMatch(source, /priceBox:/);
-  assert.match(source, /flightCommercialRegion: \{ width: "44%", minWidth: 104, maxWidth: 132, flexShrink: 0, alignItems: "flex-end"/);
+  assert.match(source, /flightCommercialRegion: \{ width: "46%", minWidth: 104, flexShrink: 0, alignItems: "flex-end"/);
   assert.match(source, /estimatedPrice: \{ fontSize: 10, lineHeight: 13, fontWeight: "700", fontFamily: appFonts\.bold, letterSpacing: 0\.7, textAlign: "right" \}/);
   assert.match(source, /providerPrice: \{[^}]*fontSize: 11, lineHeight: 14[^}]*textAlign: "right"/);
   assert.match(source, /flightLowerSection: \{[^\n]*flexDirection: "row"[^\n]*alignItems: "flex-start"/);

@@ -23,7 +23,7 @@ export const authenticatedProfileSections: ProfileSection[] = [
     { label: "priceAlerts", icon: "bell", destination: { kind: "native", href: "/price-alerts" } },
   ] },
   { title: "preferences", items: [
-    { label: "customizationPreferences", icon: "palette", destination: { kind: "native", href: "/settings" } },
+    { label: "customizationPreferences", icon: "sliders", destination: { kind: "native", href: "/settings" } },
     { label: "travelPreferences", icon: "settings", destination: { kind: "native", href: "/travel-preferences" } },
     { label: "emailPreferences", icon: "mail", destination: { kind: "native", href: "/email-preferences" } },
   ] },

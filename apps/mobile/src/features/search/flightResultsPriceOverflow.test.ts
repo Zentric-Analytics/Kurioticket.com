@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import type { DisplayPrice } from "../currency/displayCurrency";
 import { formatCurrency } from "../currency/displayCurrency";
+import { flightProviderFarePresentation } from "./flightPriceBasis";
 
 const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
 const ui = readFileSync("src/features/search/SearchUi.tsx", "utf8");
@@ -38,7 +40,53 @@ test("main fare stays full-size and single-line while secondary prices retain sa
   const fare = /<Text accessible=\{false\} style=\{\[s0\.bigPrice[\s\S]*?<\/Text>/.exec(screen)?.[0] ?? "";
   assert.match(fare, /numberOfLines=\{1\}/);
   assert.doesNotMatch(fare, /adjustsFontSizeToFit|minimumFontScale|ellipsizeMode/);
-  assert.match(screen, /s0\.providerPrice[\s\S]*?numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit/);
+  const provider = /<Text accessible=\{false\} style=\{\[s0\.providerPrice[\s\S]*?<\/Text>/.exec(screen)?.[0] ?? "";
+  assert.match(provider, /numberOfLines=\{1\}/);
+  assert.match(provider, /adjustsFontSizeToFit minimumFontScale=\{0\.9\}/);
+  assert.doesNotMatch(provider, /minimumFontScale=\{0\.76\}/);
+  assert.match(screen, /flightCommercialRegion: \{ width: "46%", minWidth: 104, flexShrink: 0/);
+  assert.doesNotMatch(screen, /flightCommercialRegion: \{[^}]*maxWidth/);
   assert.match(ui, /numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit[\s\S]*?s\.datePrice/);
   assert.doesNotMatch(screen + ui, /\d(?:\.\d)?[KM]`/);
+});
+
+test("long provider fares use a non-lossy compact card string instead of microscopic text", () => {
+  const base: DisplayPrice = {
+    amount: 670000,
+    currency: "NGN",
+    formatted: "₦670,000",
+    accessibilityLabel: "670,000 Nigerian naira",
+    providerAmount: 420,
+    providerCurrency: "USD",
+    converted: true,
+  };
+  const cases = [
+    ["USD", 198, "$198"],
+    ["USD", 1899, "$1,899"],
+    ["NGN", 572107, "₦572,107"],
+    ["IDR", 2450000, "IDR2450000"],
+    ["VND", 18750000, "₫18750000"],
+  ] as const;
+
+  for (const [currency, amount, expected] of cases) {
+    const presentation = flightProviderFarePresentation({ ...base, providerCurrency: currency, providerAmount: amount });
+    assert.equal(presentation?.formatted, expected);
+    assert.equal(presentation?.formatted.replace(/\D/g, ""), String(amount));
+    assert.equal(presentation?.currency, currency);
+    assert.doesNotMatch(presentation?.formatted ?? "", /\d(?:\.\d)?[KM]\b/i);
+  }
+});
+
+test("provider fare strings retain readable footer space across supported phone widths", () => {
+  const longestCardLabel = "Provider price: ₫18750000";
+  assert.ok(longestCardLabel.length < "Provider price: ₫18,750,000".length);
+
+  for (const viewport of [320, 360, 375, 390, 412, 430]) {
+    const footerWidth = viewport - 28 - 24;
+    const commercialWidth = footerWidth * 0.46;
+    const metadataWidth = footerWidth - 8 - commercialWidth;
+    assert.ok(commercialWidth >= 104, `${viewport}px keeps the commercial minimum`);
+    assert.ok(metadataWidth > 0, `${viewport}px keeps a separate metadata column`);
+    assert.ok(commercialWidth + 8 + metadataWidth <= footerWidth, `${viewport}px footer does not overlap`);
+  }
 });
