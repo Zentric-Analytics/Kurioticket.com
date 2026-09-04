@@ -6,34 +6,46 @@ const controls = readFileSync("src/features/search/FlightResultsQuickControls.ts
 const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
 
 test("Flight Results rail keeps the required control order and horizontal behavior", () => {
-  assert.match(controls, /<ScrollView horizontal/);
+  assert.match(controls, /<ScrollView[\s\S]*?horizontal/);
   assert.match(controls, /showsHorizontalScrollIndicator=\{false\}/);
   assert.match(controls, /flexWrap: "nowrap"/);
-  const order = ['label="Filters"', "sortLabels[safeSort]", 'label="Airlines"', 'label="Stops"', 'label="Airports"'].map((value) => controls.indexOf(value));
+  const order = ['label="Filter"', "sortLabels[safeSort]", 'label="Airlines"', 'label="Stops"', 'label="Airports"'].map((value) => controls.indexOf(value));
   assert.ok(order.every((value) => value >= 0));
   assert.deepEqual([...order].sort((a, b) => a - b), order);
 });
 
 test("sort labels are Best, Cheapest, and Fastest", () => {
-  assert.match(controls, /best: "Best", price: "Cheapest", duration: "Fastest"/);
+  assert.match(controls, /best: "Best"/);
+  assert.match(controls, /price: "Cheapest"/);
+  assert.match(controls, /duration: "Fastest"/);
   assert.match(controls, /safeSort = sort === "price" \|\| sort === "duration" \? sort : "best"/);
 });
 
-test("active controls use compact counts and accessible selected state", () => {
+test("web mobile filter colors are carried into native light mode", () => {
+  assert.match(controls, /const webFilterBorder = "#D8E1EC"/);
+  assert.match(controls, /const webFilterText = "#142033"/);
+  assert.match(controls, /const webFilterAccent = "#004BB8"/);
+  assert.match(controls, /const webFilterPressed = "#F8FAFC"/);
+  assert.match(controls, /backgroundColor: theme\.surface/);
+  assert.doesNotMatch(controls, /ui\.pale|#EEF4FF/);
+});
+
+test("active controls use subtle count badges without filling the whole chip", () => {
   assert.match(controls, /accessibilityState=\{\{ expanded, selected: active \}\}/);
-  assert.match(controls, /count \? <View style=\{\[styles\.count/);
+  assert.match(controls, /webFilterCountBackground = "rgba\(0,75,184,0\.08\)"/);
+  assert.match(controls, /count \? \([\s\S]*?styles\.count/);
   assert.match(screen, /activeFilterCount=\{activeFilterCount\}/);
   assert.match(screen, /airlineCount=\{filters\.airlines\.length\}/);
   assert.match(screen, /airportCount=\{filters\.fromAirports\.length \+ filters\.toAirports\.length\}/);
   assert.match(screen, /stopsActive=\{filters\.maxStops != null\}/);
-  assert.doesNotMatch(controls, /Filter ·/);
 });
 
-test("controls retain compact visual geometry with effective 44dp targets", () => {
-  assert.match(controls, /rail: \{ height: 46/);
-  assert.match(controls, /control: \{ height: 42, minHeight: 42/);
-  assert.match(controls, /label: \{ fontSize: 13/);
-  assert.match(controls, /hitSlop=\{\{ top: 2, bottom: 2, left: 2, right: 2 \}\}/);
+test("controls match web 44px geometry and retain horizontal compactness", () => {
+  assert.match(controls, /rail: \{ height: 48/);
+  assert.match(controls, /control: \{[\s\S]*?height: 44,[\s\S]*?minHeight: 44/);
+  assert.match(controls, /borderRadius: 11/);
+  assert.match(controls, /paddingHorizontal: 14/);
+  assert.match(controls, /label: \{[\s\S]*?fontSize: 14/);
   assert.match(controls, /ChevronDown/);
 });
 
