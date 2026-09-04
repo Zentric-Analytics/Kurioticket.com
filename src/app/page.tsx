@@ -4,7 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ComponentProps, CSSProperties, ReactNode } from "react";
 import { hasFreshProviderPrice } from "@/lib/homepageFareDisplay";
-import { buildHotelDiscoveryResultsHref, buildMaintainedHotelDiscoveryResultsHref } from "@/lib/hotels/hotelDiscoveryIntent";
+import { buildMaintainedHotelDiscoveryResultsHref } from "@/lib/hotels/hotelDiscoveryIntent";
+import { buildHotelExplorationHref } from "@/lib/hotels/hotelExplorationSearch";
+import { resolveHomeHotelDestination, type HomeHotelDestination } from "@/shared/home/homeMerchandising";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -618,7 +620,12 @@ export default function Home() {
       homepageOrderedDestinations,
       effectiveHomepageRecommendationOrder.popular,
       (destination) => destination.id,
-    ).slice(0, POPULAR_DESTINATION_VISIBLE_CARD_COUNT);
+    )
+      .flatMap((destination) => {
+        const resolved = resolveHomeHotelDestination(destination);
+        return resolved ? [resolved] : [];
+      })
+      .slice(0, POPULAR_DESTINATION_VISIBLE_CARD_COUNT);
   }, [
     destinationPriceState.loading,
     destinationPriceState.prices,
@@ -1180,13 +1187,13 @@ export default function Home() {
                       originCode={destination.originCode}
                       destinationCode={destination.code}
                       href={buildDestinationCardHref(price, {
-                        city: destination.city,
+                        destination,
                         originCode: destination.originCode,
                         destinationCode: destination.code,
                         displayCurrency: selectedOption.currency,
                         market: regionCode,
                       })}
-                      navigationDestination={destination.city}
+                      navigationDestination={destination}
                       isPriceLoading={destinationPriceState.loading}
                       isSaved={savedItemIds.includes(destination.id)}
                       onHeartToggle={handleSavedItemToggle}
@@ -1999,7 +2006,7 @@ function DiscoverySuggestionCard({
 function buildDestinationCardHref(
   price: HomepageFare | undefined,
   options: {
-    city: string;
+    destination: HomeHotelDestination;
     originCode: string;
     destinationCode: string;
     displayCurrency: string;
@@ -2012,7 +2019,13 @@ function buildDestinationCardHref(
   void options.displayCurrency;
   void options.market;
 
-  return buildHotelDiscoveryResultsHref(options.city, "home-popular-stays") ?? "/hotels";
+  const href = buildHotelExplorationHref({
+    destination: options.destination.destinationSearchValue,
+    destinationId: options.destination.canonicalDestinationId,
+    source: "home-popular-stays",
+  });
+  if (!href) throw new Error("Invalid canonical Home Hotel destination");
+  return href;
 }
 
 function getRouteKey(originCode: string, destinationCode: string) {
@@ -2093,7 +2106,7 @@ function DestinationCard({
   originCode: string;
   destinationCode: string;
   href: ComponentProps<typeof Link>["href"];
-  navigationDestination: string;
+  navigationDestination: HomeHotelDestination;
   isPriceLoading: boolean;
   isSaved: boolean;
   onHeartToggle: (
@@ -2111,8 +2124,13 @@ function DestinationCard({
     <article className="group min-w-[17.25rem] flex-[0_0_17.25rem] snap-start overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_32px_-24px_rgba(15,23,42,0.65)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(15,23,42,0.75)] sm:min-w-[20.5rem] sm:flex-[0_0_20.5rem]">
       <Link href={href} onClick={(event) => {
         if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-        const freshHref = buildHotelDiscoveryResultsHref(navigationDestination, "home-popular-stays", new Date());
-        if (!freshHref) return;
+        const freshHref = buildHotelExplorationHref({
+          destination: navigationDestination.destinationSearchValue,
+          destinationId: navigationDestination.canonicalDestinationId,
+          source: "home-popular-stays",
+          now: new Date(),
+        });
+        if (!freshHref) throw new Error("Invalid canonical Home Hotel destination");
         event.preventDefault();
         router.push(freshHref);
       }} className="focus-ring block">

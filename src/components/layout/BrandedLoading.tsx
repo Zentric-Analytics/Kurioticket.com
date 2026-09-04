@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { searchLoadingPresentation } from "@/shared/presentation/searchLoadingPresentation";
 
 type BrandedLoadingProps = {
   title?: string;
@@ -21,23 +22,6 @@ type BrandedLoadingProps = {
 };
 
 const searchLoadingCopy = {
-  flight: {
-    title: "Searching the best flights for you",
-    messages: [
-      "Checking airlines and fares...",
-      "Comparing routes and providers...",
-      "Finding the best available options...",
-      "Preparing your results...",
-    ],
-  },
-  car: {
-    title: "Looking for the best car rental options",
-    messages: [
-      "Checking vehicles, prices, and pickup options...",
-      "Comparing rental providers...",
-      "Preparing your car options...",
-    ],
-  },
   deals: {
     title: "Finding the best travel deals for you",
     messages: [
@@ -55,9 +39,11 @@ const searchLoadingCopy = {
     ],
   },
 } satisfies Record<
-  Exclude<NonNullable<BrandedLoadingProps["searchType"]>, "hotel">,
+  Extract<NonNullable<BrandedLoadingProps["searchType"]>, "deals" | "travel">,
   { title: string; messages: string[] }
 >;
+
+const WEB_LOADING_MESSAGE_ROTATION_MS = 1_800;
 
 const variantClasses = {
   fullscreen: "min-h-screen items-center justify-center px-6 py-12 text-center",
@@ -92,11 +78,18 @@ export function BrandedLoading({
     }),
     [t],
   );
-  const searchCopy = searchType
-    ? searchType === "hotel"
-      ? hotelSearchCopy
-      : searchLoadingCopy[searchType]
-    : undefined;
+  const searchCopy = useMemo(() => {
+    if (!searchType) return undefined;
+    if (searchType === "hotel") return hotelSearchCopy;
+    if (searchType === "flight" || searchType === "car") {
+      const presentation = searchLoadingPresentation(searchType);
+      return {
+        title: presentation.title,
+        messages: [presentation.supportingText],
+      };
+    }
+    return searchLoadingCopy[searchType];
+  }, [hotelSearchCopy, searchType]);
   const defaultLoadingMessages = useMemo(
     () => [t["brandedLoading.default.preparingExperience"]],
     [t],
@@ -115,7 +108,7 @@ export function BrandedLoading({
 
     const interval = window.setInterval(() => {
       setMessageIndex((current) => (current + 1) % loadingMessages.length);
-    }, 1800);
+    }, WEB_LOADING_MESSAGE_ROTATION_MS);
 
     return () => window.clearInterval(interval);
   }, [loadingMessages.length]);

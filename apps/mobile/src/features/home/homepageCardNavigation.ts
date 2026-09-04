@@ -1,28 +1,31 @@
 import type { Href } from "expo-router";
-import { resolvePopularDestinationStay } from "./PopularDestinationStaysData";
 import { buildHotelExplorationSearch } from "../../../../../src/lib/hotels/hotelExplorationSearch";
-import { resolveHotelDiscoveryIntent } from "../../../../../src/lib/hotels/hotelDiscoveryIntent";
 import type { MarketplaceContext } from "../../../../../src/shared/marketplace/marketplaceContext";
 
 export type HomepageAdventureCard = { originCode: string; destinationCode: string };
-export type HomepageHotelCard = { city: string };
+export type HomepageHotelCard = {
+  canonicalDestinationId: string;
+  destinationSearchValue: string;
+};
 
 export const homepageHotelDestinationParams = (card: HomepageHotelCard) => {
-  const destination = resolvePopularDestinationStay(card);
-  const hotelIntent = resolveHotelDiscoveryIntent(card.city, "home-popular-stays");
-  if (!destination || !hotelIntent || destination.id !== hotelIntent.canonicalDestinationId) return null;
-  return { destinationId: hotelIntent.canonicalDestinationId, destination: hotelIntent.destinationSearchValue, intentSource: hotelIntent.source };
+  return {
+    destinationId: card.canonicalDestinationId,
+    destination: card.destinationSearchValue,
+    intentSource: "home-popular-stays" as const,
+  };
 };
 
 export function popularDestinationStayNavigation(card: HomepageHotelCard, now = new Date()): Href {
   const destination = homepageHotelDestinationParams(card);
-  const params = destination ? buildHotelExplorationSearch({
+  const params = buildHotelExplorationSearch({
     destination: destination.destination,
     destinationId: destination.destinationId,
     source: "home-popular-stays",
     now,
-  }) : null;
-  return params ? { pathname: "/hotel-results", params } : "/hotels";
+  });
+  if (!params) throw new Error("Invalid canonical Home Hotel destination");
+  return { pathname: "/hotel-results", params };
 }
 
 export const homepageAdventureRouteParams = (card: HomepageAdventureCard, marketplace: MarketplaceContext, now = new Date()) => ({

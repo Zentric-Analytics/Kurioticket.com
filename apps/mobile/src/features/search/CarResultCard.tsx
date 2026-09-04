@@ -6,6 +6,7 @@ import { FlowIcon } from "../flow/FlowIcon";
 import { money, ui } from "./SearchUi";
 import { useSavedCar } from "./carSavedState";
 import { useAppTheme } from "../../theme/AppTheme";
+import { getPrimaryCarOffer } from "../../../../../src/lib/cars/carResults";
 
 export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal }: {
   result: CarResult; rank: number; imageUri?: string;
@@ -14,7 +15,7 @@ export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal
   const [imageFailed, setImageFailed] = useState(false);
   useEffect(() => setImageFailed(false), [imageUri]);
   const savedState = useSavedCar(result, searchParams);
-  const offer = result.offers[0];
+  const offer = getPrimaryCarOffer(result);
   const { theme } = useAppTheme();
   const share = () => void Share.share({ message: result.modelName, title: result.modelName });
   return <View style={[c.card,{backgroundColor:theme.surface,borderColor:theme.border}]}>

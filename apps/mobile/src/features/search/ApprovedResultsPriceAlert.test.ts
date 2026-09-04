@@ -11,20 +11,17 @@ test("Flight Results price alert maps its existing weights to Inter faces", () =
   assert.match(source, /flightAlertSubtitle: \{ fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts\.medium \}/);
 });
 
-test("Flight Results price alert has the approved compact, content-driven footprint", () => {
-  const bannerStyle = source.slice(source.indexOf("flightAlert: {"), source.indexOf("flightAlertCopy: {"));
-  assert.match(bannerStyle, /borderRadius: 10/);
-  assert.match(bannerStyle, /borderWidth: 1/);
-  assert.match(bannerStyle, /paddingHorizontal: 10/);
-  assert.match(bannerStyle, /paddingVertical: 0/);
+test("Flight Results price alert uses a compact full-width row and action chip", () => {
+  const bannerStyle = source.slice(source.indexOf("flightAlertCompact: {"), source.indexOf("flightAlertCopy: {"));
+  assert.match(bannerStyle, /width: "100%"/);
+  assert.match(bannerStyle, /minHeight: 48/);
+  assert.match(bannerStyle, /borderRadius: 11/);
   assert.match(bannerStyle, /flexDirection: "row"/);
-  assert.match(bannerStyle, /gap: 4/);
-  assert.doesNotMatch(bannerStyle, /(?:minHeight|height):/);
-  assert.match(source, /flightPriceAlertItem: \{ paddingHorizontal: 14, paddingTop: 8, paddingBottom: 6 \}/);
+  assert.match(bannerStyle, /gap: 8/);
+  assert.match(flightAlert, /<Bell accessible=\{false\} size=\{17\}/);
   assert.match(source, /flightAlertCopy: \{ flex: 1, minWidth: 0, gap: 1 \}/);
-  assert.match(source, /flightAlertSwitchTarget: \{ minWidth: 48, minHeight: 48/);
-  assert.match(source, /numberOfLines=\{1\} ellipsizeMode="tail">Get notified when fares change<\/Text>/);
-  assert.match(flightAlert, /flightAlertSubtitle, \{ color: supportTextColor \}/);
+  assert.match(source, /flightAlertAction: \{ minWidth: 92, height: 38/);
+  assert.doesNotMatch(flightAlert, /<Switch|Get notified when fares change/);
 });
 
 test("Flight Results price alert uses a neutral semantic surface and restrained border", () => {
@@ -32,12 +29,10 @@ test("Flight Results price alert uses a neutral semantic surface and restrained 
   assert.doesNotMatch(flightAlert, /backgroundColor: theme\.priceAlertSurface/);
 });
 
-test("Flight Results switch uses the shared, visible light-mode inactive track", () => {
-  assert.match(flightAlert, /const inactiveSwitchTrackColor = theme\.dark \? theme\.switchTrack : ui\.border;/);
-  assert.match(flightAlert, /trackColor=\{\{ false: inactiveSwitchTrackColor, true: theme\.switchTrackActive \}\}/);
-  assert.match(flightAlert, /ios_backgroundColor=\{inactiveSwitchTrackColor\}/);
-  assert.match(flightAlert, /thumbColor=\{theme\.surface\}/);
-  assert.match(appTheme, /switchTrack: "#FFFFFF"/);
+test("Flight Results chip uses semantic inactive and active surfaces", () => {
+  assert.match(flightAlert, /backgroundColor: isTracking \? theme\.dark \? "#173568" : "#EEF4FF" : theme\.surface/);
+  assert.match(flightAlert, /borderColor: isTracking \? theme\.switchTrackActive : theme\.priceAlertBorder/);
+  assert.match(appTheme, /switchTrackActive:/);
 });
 
 test("Flight Results toggle manages alerts in place rather than opening Price Alerts", () => {
@@ -48,11 +43,11 @@ test("Flight Results toggle manages alerts in place rather than opening Price Al
   assert.match(flightAlert, /: buildHotelPriceAlertPayload/);
 });
 
-test("Flight Results switch exposes real state and prevents duplicate pending taps", () => {
-  assert.match(flightAlert, /value=\{isTracking\}/);
-  assert.match(flightAlert, /checked: isTracking/);
+test("Flight Results action chip exposes real state and prevents duplicate pending taps", () => {
+  assert.match(flightAlert, /selected: isTracking/);
   assert.match(flightAlert, /disabled=\{pending \|\| loadingAlert \|\| unavailable\}/);
   assert.match(flightAlert, /if \(pendingRef\.current \|\| loadingAlert/);
+  assert.match(flightAlert, /onPress=\{\(\) => void handleToggle\(!isTracking\)\}/);
 });
 
 test("guest activation is gated by the canonical session and sign-in flow", () => {

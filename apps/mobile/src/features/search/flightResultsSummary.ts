@@ -29,17 +29,18 @@ type FlightResultsCopy = {
   baggage: string;
   cabin: string;
   fareRule: string;
+  fareRules?: string; review?: string; viewDeal?: string; trackTitle?: string; trackAction?: string; tracking?: string; checking?: string;
 };
 
 const copy: Record<MobileLocale, FlightResultsCopy> = {
-  "en-us": { oneWay:"One-way",roundTrip:"Round-trip",multiCity:"Multi-city",traveler:"traveler",travelers:"travelers",viewFlight:"View Flight",baggage:"Baggage",cabin:"Cabin",fareRule:"Fare rule" },
+  "en-us": { oneWay:"One-way",roundTrip:"Round-trip",multiCity:"Multi-city",traveler:"traveler",travelers:"travelers",viewFlight:"View Flight",baggage:"Baggage",cabin:"Cabin",fareRule:"Fare rule",fareRules:"Fare rules",review:"Review",viewDeal:"View deal",trackTitle:"Track this flight price",trackAction:"Track price",tracking:"Tracking",checking:"Checking…" },
   "es-es": { oneWay:"Solo ida",roundTrip:"Ida y vuelta",multiCity:"Varias ciudades",traveler:"viajero",travelers:"viajeros",viewFlight:"Ver vuelo",baggage:"Equipaje",cabin:"Cabina",fareRule:"Regla tarifaria" },
-  fr: { oneWay:"Aller simple",roundTrip:"Aller-retour",multiCity:"Multi-destinations",traveler:"voyageur",travelers:"voyageurs",viewFlight:"Voir le vol",baggage:"Bagages",cabin:"Cabine",fareRule:"Règle tarifaire" },
-  "de-de": { oneWay:"Hinflug",roundTrip:"Hin- und Rückflug",multiCity:"Mehrere Städte",traveler:"Reisender",travelers:"Reisende",viewFlight:"Flug ansehen",baggage:"Gepäck",cabin:"Kabine",fareRule:"Tarifregel" },
+  fr: { oneWay:"Aller simple",roundTrip:"Aller-retour",multiCity:"Multi-destinations",traveler:"voyageur",travelers:"voyageurs",viewFlight:"Voir le vol",baggage:"Bagages",cabin:"Cabine",fareRule:"Règle tarifaire",fareRules:"Règles",review:"Consulter",viewDeal:"Voir l’offre",trackTitle:"Suivre le prix du vol",trackAction:"Suivre le prix",tracking:"Suivi actif",checking:"Vérification…" },
+  "de-de": { oneWay:"Hinflug",roundTrip:"Hin- und Rückflug",multiCity:"Mehrere Städte",traveler:"Reisender",travelers:"Reisende",viewFlight:"Flug ansehen",baggage:"Gepäck",cabin:"Kabine",fareRule:"Tarifregel",fareRules:"Tarifregeln",review:"Prüfen",viewDeal:"Angebot ansehen",trackTitle:"Flugpreis verfolgen",trackAction:"Preis verfolgen",tracking:"Wird verfolgt",checking:"Prüfen…" },
   "it-it": { oneWay:"Solo andata",roundTrip:"Andata e ritorno",multiCity:"Più città",traveler:"viaggiatore",travelers:"viaggiatori",viewFlight:"Vedi volo",baggage:"Bagaglio",cabin:"Cabina",fareRule:"Regola tariffaria" },
   "pt-br": { oneWay:"Só ida",roundTrip:"Ida e volta",multiCity:"Várias cidades",traveler:"viajante",travelers:"viajantes",viewFlight:"Ver voo",baggage:"Bagagem",cabin:"Cabine",fareRule:"Regra tarifária" },
   nl: { oneWay:"Enkele reis",roundTrip:"Retour",multiCity:"Meerdere steden",traveler:"reiziger",travelers:"reizigers",viewFlight:"Vlucht bekijken",baggage:"Bagage",cabin:"Cabine",fareRule:"Tariefregel" },
-  ar: { oneWay:"ذهاب فقط",roundTrip:"ذهاب وعودة",multiCity:"وجهات متعددة",traveler:"مسافر",travelers:"مسافرون",viewFlight:"عرض الرحلة",baggage:"الأمتعة",cabin:"المقصورة",fareRule:"قاعدة السعر" },
+  ar: { oneWay:"ذهاب فقط",roundTrip:"ذهاب وعودة",multiCity:"وجهات متعددة",traveler:"مسافر",travelers:"مسافرون",viewFlight:"عرض الرحلة",baggage:"الأمتعة",cabin:"المقصورة",fareRule:"قاعدة السعر",fareRules:"قواعد السعر",review:"مراجعة",viewDeal:"عرض الصفقة",trackTitle:"تتبّع سعر الرحلة",trackAction:"تتبّع السعر",tracking:"قيد التتبّع",checking:"جارٍ التحقق…" },
   "zh-cn": { oneWay:"单程",roundTrip:"往返",multiCity:"多城市",traveler:"位旅客",travelers:"位旅客",viewFlight:"查看航班",baggage:"行李",cabin:"舱位",fareRule:"票价规则" },
   ja: { oneWay:"片道",roundTrip:"往復",multiCity:"複数都市",traveler:"名",travelers:"名",viewFlight:"フライトを見る",baggage:"手荷物",cabin:"座席クラス",fareRule:"運賃規則" },
   ko: { oneWay:"편도",roundTrip:"왕복",multiCity:"다구간",traveler:"명",travelers:"명",viewFlight:"항공편 보기",baggage:"수하물",cabin:"좌석 등급",fareRule:"운임 규정" },
@@ -52,7 +53,10 @@ const copy: Record<MobileLocale, FlightResultsCopy> = {
   vi: { oneWay:"Một chiều",roundTrip:"Khứ hồi",multiCity:"Nhiều thành phố",traveler:"hành khách",travelers:"hành khách",viewFlight:"Xem chuyến bay",baggage:"Hành lý",cabin:"Hạng ghế",fareRule:"Quy định giá vé" },
 };
 
-export const flightResultsCopy = (locale: MobileLocale) => copy[locale];
+export const flightResultsCopy = (locale: MobileLocale) => {
+  const localized = copy[locale];
+  return { ...copy["en-us"], ...localized, fareRules: localized.fareRules ?? localized.fareRule, viewDeal: localized.viewDeal ?? localized.viewFlight } as Required<FlightResultsCopy>;
+};
 
 const dateLabel = (value: unknown, locale: MobileLocale) => {
   const iso = String(value ?? "");
