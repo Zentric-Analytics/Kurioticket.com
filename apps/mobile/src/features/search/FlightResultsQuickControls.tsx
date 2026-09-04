@@ -106,7 +106,7 @@ export function FlightResultsQuickControls({
   activeFilterCount,
   airlineCount,
   airportCount,
-  stopsActive,
+  stopsCount,
   openSheetKind,
   openSheet,
 }: {
@@ -114,7 +114,7 @@ export function FlightResultsQuickControls({
   activeFilterCount: number;
   airlineCount: number;
   airportCount: number;
-  stopsActive: boolean;
+  stopsCount: number;
   openSheetKind: "sort" | "all" | "airlines" | "stops" | "airports" | null;
   openSheet: (sheet: "sort" | "all" | "airlines" | "stops" | "airports") => void;
 }) {
@@ -155,8 +155,8 @@ export function FlightResultsQuickControls({
       />
       <Control
         label="Stops"
-        active={stopsActive}
-        count={stopsActive ? 1 : undefined}
+        active={stopsCount > 0}
+        count={stopsCount || undefined}
         expanded={openSheetKind === "stops"}
         anchored
         onPress={() => openSheet("stops")}

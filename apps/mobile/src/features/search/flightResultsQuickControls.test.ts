@@ -40,7 +40,8 @@ test("active controls use subtle count badges without filling the whole chip", (
   assert.match(screen, /activeFilterCount=\{activeFilterCount\}/);
   assert.match(screen, /airlineCount=\{filters\.airlines\.length\}/);
   assert.match(screen, /airportCount=\{filters\.fromAirports\.length \+ filters\.toAirports\.length\}/);
-  assert.match(screen, /stopsActive=\{filters\.maxStops != null\}/);
+  assert.match(screen, /stopsCount=\{filters\.stops\?\.length \|\| Number\(filters\.maxStops != null\)\}/);
+  assert.match(controls, /count=\{stopsCount \|\| undefined\}/);
 });
 
 test("controls match web 44px geometry and retain horizontal compactness", () => {

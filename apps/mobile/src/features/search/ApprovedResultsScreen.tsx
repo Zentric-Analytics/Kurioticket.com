@@ -699,9 +699,13 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       flightPaginationFallbackTimer.current = setTimeout(finishPositioning, FLIGHT_PAGINATION_SCROLL_FALLBACK_MS);
     });
   };
-  const handleFlightFiltersChange = useCallback((next: FlightFilters) => {
+  const handleFullFlightFiltersChange = useCallback((next: FlightFilters) => {
     cancelFlightPagination();
     setFlightPage(1);
+    setFilters(next);
+  }, [cancelFlightPagination]);
+  const handleQuickFlightFiltersChange = useCallback((next: FlightFilters) => {
+    cancelFlightPagination();
     setFilters(next);
   }, [cancelFlightPagination]);
   const clearFlightFilters = useCallback(() => {
@@ -709,6 +713,24 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     setFlightPage(1);
     setFilters(emptyFlightFilters());
   }, [cancelFlightPagination]);
+  const scrollToFlightResultsBeginning = useCallback(() => {
+    requestAnimationFrame(() => {
+      try {
+        flightResultsListRef.current?.scrollToLocation({ sectionIndex: 0, itemIndex: 0, viewPosition: 0, animated: true });
+      } catch (error) {
+        if (__DEV__) console.warn("[flight-results:filter-complete-scroll]", error);
+        try {
+          flightResultsListRef.current?.scrollToLocation({ sectionIndex: 0, itemIndex: 0, viewPosition: 0, animated: false });
+        } catch (fallbackError) {
+          if (__DEV__) console.warn("[flight-results:filter-complete-scroll-fallback]", fallbackError);
+        }
+      }
+    });
+  }, []);
+  const completeFullFlightFilters = useCallback(() => {
+    setFilterOpen(false);
+    scrollToFlightResultsBeginning();
+  }, [scrollToFlightResultsBeginning]);
   const canonicalHotelDestination = String(payload.destination || "");
   const hotelDestinationDisplay = getHotelLocationFieldDisplay(canonicalHotelDestination, locale);
   const hotelSummary = buildHotelResultsSummary({
@@ -889,7 +911,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       activeFilterCount={activeFilterCount}
       airlineCount={filters.airlines.length}
       airportCount={filters.fromAirports.length + filters.toAirports.length}
-      stopsActive={filters.maxStops != null}
+      stopsCount={filters.stops?.length || Number(filters.maxStops != null)}
       openSheetKind={sortOpen ? "sort" : filterOpen ? filterSection : null}
       openSheet={openFlightSheet}
     />
@@ -1097,7 +1119,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       )}
       {product === "flight" ? (
         <>
-          <FlightSortSheet visible={sortOpen} sort={sort} onApply={(next) => { cancelFlightPagination(); setFlightPage(1); setSort(next); setSortOpen(false); }} onClose={() => setSortOpen(false)} />
+          <FlightSortSheet visible={sortOpen} sort={sort} onApply={(next) => { cancelFlightPagination(); setSort(next); setSortOpen(false); }} onClose={() => setSortOpen(false)} />
           <FlightFilterSheet
             visible={filterOpen}
             section={filterSection}
@@ -1107,8 +1129,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             priceValue={flightPriceContext?.valueForResult}
             currency={flightPriceContext?.currency ?? currencyState?.resolution.resolvedCurrency ?? "USD"}
             priceFilteringReady={flightPriceContext != null}
-            onChange={handleFlightFiltersChange}
+            onChange={filterSection === "all" ? handleFullFlightFiltersChange : handleQuickFlightFiltersChange}
             onClose={() => setFilterOpen(false)}
+            onComplete={completeFullFlightFilters}
           />
         </>
       ) : (
