@@ -55,13 +55,13 @@ test("the flight price action is an accessible, backend-honest native switch", (
 test("the compact alert stays horizontal and readable on narrow screens", () => {
   assert.match(source, /flightAlert: \{[\s\S]*?flexDirection: "row"/);
   assert.match(source, /flightAlertCopy: \{ flex: 1, minWidth: 0/);
-  assert.match(source, /flightAlertAction: \{ minWidth: 92, height: 38/);
+  assert.match(source, /flightAlertSwitchSlot: \{ minWidth: 51, minHeight: 44/);
   assert.doesNotMatch(source, /flightAlertNarrow|flightAlertSkyNarrow/);
 });
 
 test("the flight alert uses intentional panel spacing", () => {
   const bannerStyle = source.slice(source.indexOf("flightAlertCompact: {"), source.indexOf("flightAlertCopy: {"));
-  const copyStyles = source.slice(source.indexOf("flightAlertCopy: {"), source.indexOf("flightAlertAction: {"));
+  const copyStyles = source.slice(source.indexOf("flightAlertCopy: {"), source.indexOf("flightAlertSwitchSlot: {"));
 
   assert.match(bannerStyle, /minHeight: 48/);
   assert.doesNotMatch(source, /flightAlertIcon:/);

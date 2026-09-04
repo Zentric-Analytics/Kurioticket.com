@@ -63,7 +63,10 @@ test("new alerts validate target input through the shared helper before creation
   assert.match(flightAlert, /setMatchingAlert\(created\.alert\)/);
 });
 
-test("Hotel Results uses create-target alert presentation without a management switch", () => { assert.match(flightAlert, /"Create hotel price alert"/); assert.match(flightAlert, /setTargetOpen\(true\)/); assert.doesNotMatch(flightAlert.slice(flightAlert.indexOf('if (product !== "hotel"')), /<Switch/);
+test("Hotel Results keeps first-time activation backend-honest while opening the target modal", () => {
+  assert.match(flightAlert, /if \(!matchingAlert\) \{ setTargetError\(""\); setTargetOpen\(true\); return; \}/);
+  assert.match(flightAlert, /setMatchingAlert\(created\.alert\); setTargetOpen\(false\)/);
+  assert.match(flightAlert, /<Button label=\{t\("cancel"\)\} outline onPress=\{\(\) => setTargetOpen\(false\)\}/);
 });
 
 test("Hotel alert creation retains canonical payload, validation, duplicate and sign-in handling", () => { assert.match(flightAlert, /buildHotelPriceAlertPayload/); assert.match(flightAlert, /parseTargetPrice\(targetDraft\)/); assert.match(flightAlert, /error.status === 409/); assert.match(flightAlert, /requireSignIn/);
@@ -78,26 +81,44 @@ test("obsolete large Hotel Results alert styles and create button stay removed",
   assert.doesNotMatch(styles, /\bhotelAlertCreateButton(?:Pressed|Disabled|Text)?:/);
 });
 
-test("Hotel Results reuses the compact Flight banner with a left Bell and action pill", () => {
+test("Hotel Results reuses the compact banner with a left Bell and native switch", () => {
   const hotelAlert = flightAlert.slice(flightAlert.indexOf('if (product !== "hotel"'));
+  const compactBanner = hotelAlert.slice(0, hotelAlert.indexOf("<Modal"));
   assert.match(hotelAlert, /style=\{\[s0\.flightAlertCompact,/);
   assert.match(hotelAlert, /<Bell accessible=\{false\} size=\{17\} strokeWidth=\{2\}/);
   assert.match(hotelAlert, /s0\.flightAlertCompactTitle/);
   assert.match(hotelAlert, /message\("hotelAlertTitle"\)/);
-  assert.match(hotelAlert, /flightCopy\.trackAction/);
-  assert.match(hotelAlert, /s0\.flightAlertAction/);
-  const compactBanner = hotelAlert.slice(0, hotelAlert.indexOf("<Modal"));
-  assert.doesNotMatch(compactBanner, /hotelAlertBody|flightAlertSubtitle|flightAlertSwitchTarget|hotelAlertAction|<Switch/);
-  assert.doesNotMatch(source, /hotelAlertAction:|hotelAlertActionPressed:|flightAlertSwitchTarget:/);
+  assert.match(compactBanner, /<Switch accessibilityRole="switch" accessibilityLabel="Track this stay price"/);
+  assert.match(compactBanner, /accessibilityState=\{\{ checked: isTracking, disabled: toggleDisabled, busy: pending \|\| loadingAlert \}\}/);
+  assert.match(compactBanner, /value=\{isTracking\} onValueChange=\{\(next\) => void handleToggle\(next\)\}/);
+  assert.match(compactBanner, /trackColor=\{\{ false: theme\.dark \? "#465269" : "#CBD5E1", true: theme\.switchTrackActive \}\}/);
+  assert.doesNotMatch(compactBanner, /<Pressable|flightCopy\.trackAction|flightCopy\.tracking|>On<|>Off<|selected:/);
+  assert.doesNotMatch(source, /flightAlertAction:|flightAlertActionPressed:|flightAlertActionText:|flightAlertSwitchTarget:/);
 });
 
-test("Hotel compact saved state is selected and prevents duplicate creation", () => {
+test("Hotel switch exposes ACTIVE state and disables while loading or mutating", () => {
   const hotelAlert = flightAlert.slice(flightAlert.indexOf('if (product !== "hotel"'));
-  assert.match(hotelAlert, /const hotelTracking = Boolean\(matchingAlert\)/);
-  assert.match(hotelAlert, /`✓ \$\{flightCopy\.tracking\}`/);
-  assert.match(hotelAlert, /selected: hotelTracking/);
-  assert.match(hotelAlert, /const hotelActionDisabled = pending \|\| unavailable \|\| hotelTracking/);
-  assert.match(hotelAlert, /disabled=\{hotelActionDisabled\}/);
-  assert.match(hotelAlert, /busy: pending/);
-  assert.doesNotMatch(hotelAlert, /updatePriceAlertStatus|<Switch/);
+  assert.match(flightAlert, /const isTracking = matchingAlert\?\.status === "ACTIVE"/);
+  assert.match(hotelAlert, /const toggleDisabled = pending \|\| loadingAlert \|\| unavailable/);
+  assert.match(hotelAlert, /disabled=\{toggleDisabled\}/);
+  assert.doesNotMatch(hotelAlert, /hotelTracking|hotelActionLabel|hotelActionDisabled/);
+});
+
+test("Price Alert reconciliation selects the canonical matcher for Flight or Hotel", () => {
+  assert.match(source, /hotelAlertPresentation, matchingHotelPriceAlert/);
+  assert.doesNotMatch(flightAlert, /if \(!flight \|\| !plan\) return/);
+  assert.match(flightAlert, /flight \? matchingFlightPriceAlert\(alerts, plan\) : matchingHotelPriceAlert\(alerts, plan\)/);
+  assert.match(flightAlert, /reconciliation === reconciliationRef\.current/);
+});
+
+test("Hotel pause and resume mutate the existing alert without deletion", () => {
+  assert.match(flightAlert, /if \(!matchingAlert\) \{ setTargetError\(""\); setTargetOpen\(true\); return; \}/);
+  assert.match(flightAlert, /updatePriceAlertStatus\(matchingAlert\.id, "ACTIVE"\)/);
+  assert.match(flightAlert, /updatePriceAlertStatus\(matchingAlert\.id, "PAUSED"\)/);
+  assert.doesNotMatch(flightAlert, /deletePriceAlert/);
+});
+
+test("duplicate Hotel creation reconciles server truth", () => {
+  assert.match(flightAlert, /error\.status === 409\) \{ await reconcile\(\);/);
+  assert.doesNotMatch(flightAlert, /error\.status === 409\) \{ if \(flight\)/);
 });
