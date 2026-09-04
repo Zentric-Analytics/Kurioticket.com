@@ -1355,7 +1355,7 @@ function HotelCard({
     void Share.share({ message }).catch(() => undefined);
   };
   return (
-    <View style={[s0.hotelCard, compact && s0.hotelCardCompact]}>
+    <View style={s0.hotelCard}>
       <View style={[s0.hotelImageWrap, compact && s0.hotelImageWrapCompact]}>
         {usableGallery[activeImage] ? (
           <Image source={{ uri: usableGallery[activeImage] }} onError={()=>setFailedImages(values=>[...values,usableGallery[activeImage]])} style={s0.hotelImage} />
@@ -1419,7 +1419,7 @@ function HotelCard({
         </Text> : null}
         <View style={s0.hotelLocation}>
           <MapPin accessible={false} size={14} strokeWidth={2} color={colors.blue} />
-          <Text numberOfLines={1} style={[s0.sub, s0.hotelLocationText]}>{result.location}</Text>
+          <Text numberOfLines={1} ellipsizeMode="tail" style={s0.hotelLocationText}>{result.location}</Text>
         </View>
         {score == null ? null : (
           <Text style={s0.review}>
@@ -1777,7 +1777,6 @@ const s0 = StyleSheet.create({
   metadataItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingHorizontal: 2 },
   metadataText: { flexShrink: 1, minWidth: 0, fontSize: 11.5, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
   hotelCard: { minHeight: 260, borderWidth: 1, borderColor: ui.border, borderRadius: 13, overflow: "hidden", flexDirection: "row", backgroundColor: "white" },
-  hotelCardCompact: { minHeight: 292 },
   hotelImageWrap: { width: "39%", alignSelf: "stretch", position: "relative" },
   hotelImageWrapCompact: { width: "38%" },
   hotelImage: { ...StyleSheet.absoluteFillObject, backgroundColor: "#E9EDF3" },
@@ -1803,8 +1802,8 @@ const s0 = StyleSheet.create({
   hotelShareAction: { alignItems: "flex-start", paddingLeft: 4 },
   hotelName: { flex: 1, minWidth: 0, fontSize: 15, fontWeight: "700", fontFamily: appFonts.bold, color: ui.navy, lineHeight: 20 },
   stars: { color: "#FFB800", fontSize: 14 },
-  hotelLocation: { flexDirection: "row", alignItems: "center", gap: 5, minWidth: 0 },
-  hotelLocationText: { color: colors.blue },
+  hotelLocation: { flexDirection: "row", alignItems: "center", gap: 4, minWidth: 0 },
+  hotelLocationText: { flexShrink: 1, minWidth: 0, color: colors.blue, fontSize: 12, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
   review: { fontSize: 11, color: ui.navy },
   score: { backgroundColor: ui.blue, color: "white", fontWeight: "900" },
   hotelTerm:{fontSize:11,lineHeight:15,color:ui.navy},
