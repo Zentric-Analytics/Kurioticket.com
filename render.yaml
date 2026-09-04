@@ -161,7 +161,7 @@ services:
     plan: free
     branch: dev
     # Preview delivery is owned exclusively by kurioticket-preview-release.
-    autoDeploy: false
+    autoDeployTrigger: off
     buildCommand: npm ci && npm run build
     startCommand: npm run start
     preDeployCommand: npm run db:deploy:render
