@@ -10,7 +10,7 @@ import { FlightRangeSlider } from "./FlightRangeSlider";
 import { ui } from "./SearchUi";
 import type { HotelFilterOptions, HotelFilters, HotelStarRating } from "./hotelFilters";
 
-export type HotelResultsQuickFilterKind = "price" | "stars" | "amenities";
+export type HotelResultsQuickFilterKind = "price" | "stars" | "facilities" | "roomTypes";
 type Props={kind:HotelResultsQuickFilterKind;filters:HotelFilters;options:HotelFilterOptions;displayCurrency:string;rates:ExchangeRates;stayNights:number;onChange:Dispatch<SetStateAction<HotelFilters>>;onClose:()=>void};
 
 export function HotelResultsQuickFilterSheet({kind,filters,options,displayCurrency,rates,stayNights,onChange,onClose}:Props){
@@ -24,14 +24,16 @@ export function HotelResultsQuickFilterSheet({kind,filters,options,displayCurren
  const [maximumText,setMaximumText]=useState(String(Math.round(toDisplay(initialMax))));
  const [stars,setStars]=useState<HotelStarRating[]>([...filters.starRatings]);
  const [facilities,setFacilities]=useState<string[]>([...filters.facilities]);
- const title=kind==="price"?"Total price":kind==="stars"?"Hotel class":"Amenities";
+ const [roomTypes,setRoomTypes]=useState<string[]>([...filters.roomTypes]);
+ const title=kind==="price"?"Total price":kind==="stars"?"Hotel class":kind==="facilities"?"Facilities":"Room & bed";
  const subtitle=kind==="price"?`Estimated total for ${stayNights} ${stayNights===1?"night":"nights"}`:"Choose one or more options";
  const syncText=(next:{min:number;max:number})=>{setRange(next);setMinimumText(String(Math.round(toDisplay(next.min))));setMaximumText(String(Math.round(toDisplay(next.max))));};
  const commitText=(edge:"min"|"max",text:string)=>{if(!price||!text.trim())return syncText(range);const parsed=Number(text);if(!Number.isFinite(parsed))return syncText(range);const usd=fromDisplay(parsed);if(usd===null||!Number.isFinite(usd))return syncText(range);syncText(edge==="min"?{min:Math.min(Math.max(price.minimum,usd),range.max),max:range.max}:{min:range.min,max:Math.max(Math.min(price.maximum,usd),range.min)});};
- const reset=()=>{if(kind==="price"&&price)syncText({min:price.minimum,max:price.maximum});else if(kind==="stars")setStars([]);else setFacilities([]);};
- const apply=()=>{onChange(current=>kind==="price"&&price?{...current,minimumPrice:range.min<=price.minimum?null:range.min,maximumPrice:range.max>=price.maximum?null:range.max}:kind==="stars"?{...current,starRatings:stars}:{...current,facilities});onClose();};
+ const reset=()=>{switch(kind){case "price":if(price)syncText({min:price.minimum,max:price.maximum});break;case "stars":setStars([]);break;case "facilities":setFacilities([]);break;case "roomTypes":setRoomTypes([]);break;}};
+ const apply=()=>{onChange(current=>{switch(kind){case "price":return price?{...current,minimumPrice:range.min<=price.minimum?null:range.min,maximumPrice:range.max>=price.maximum?null:range.max}:current;case "stars":return {...current,starRatings:stars};case "facilities":return {...current,facilities};case "roomTypes":return {...current,roomTypes};}});onClose();};
  const toggleStar=(star:HotelStarRating)=>setStars(current=>(current.includes(star)?current.filter(value=>value!==star):[...current,star]).sort((a,b)=>b-a) as HotelStarRating[]);
  const toggleFacility=(value:string)=>setFacilities(current=>current.includes(value)?current.filter(item=>item!==value):[...current,value]);
+ const toggleRoomType=(value:string)=>setRoomTypes(current=>current.includes(value)?current.filter(item=>item!==value):[...current,value]);
  return <Modal visible transparent animationType="slide" presentationStyle="overFullScreen" onRequestClose={onClose} accessibilityViewIsModal>
   <View style={styles.overlay} onAccessibilityEscape={onClose}>
    <BlurView pointerEvents="none" intensity={1} tint="default" experimentalBlurMethod={Platform.OS==="android"?"dimezisBlurView":undefined} style={StyleSheet.absoluteFill}/>
@@ -39,10 +41,11 @@ export function HotelResultsQuickFilterSheet({kind,filters,options,displayCurren
    <KeyboardAvoidingView behavior={Platform.OS==="ios"?"padding":"height"} style={styles.bottom} pointerEvents="box-none">
     <View style={[styles.sheet,{maxHeight:Math.min(height*.76,620),backgroundColor:theme.background}]}>
      <View style={[styles.header,{backgroundColor:theme.surface,borderBottomColor:theme.border}]}><View style={styles.copy}><Text accessibilityRole="header" style={[styles.title,{color:theme.textPrimary}]}>{title}</Text><Text style={[styles.subtitle,{color:theme.textSecondary}]}>{subtitle}</Text></View><Pressable accessibilityRole="button" accessibilityLabel="Close filters" onPress={onClose} style={styles.close}><X size={22} color={theme.icon}/></Pressable></View>
-     <ScrollView style={styles.body} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={kind==="amenities"}>
+     <ScrollView style={styles.body} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={kind==="facilities"||kind==="roomTypes"}>
       {kind==="price"&&price?<View style={[styles.priceCard,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={[styles.help,{color:theme.textSecondary}]}>Estimated total for {stayNights} {stayNights===1?"night":"nights"}.</Text><View style={styles.inputs}><PriceInput label="Minimum" value={minimumText} onChange={setMinimumText} onEnd={()=>commitText("min",minimumText)}/><PriceInput label="Maximum" value={maximumText} onChange={setMaximumText} onEnd={()=>commitText("max",maximumText)}/></View><FlightRangeSlider available={{min:price.minimum,max:price.maximum}} selected={range} step={25} accessibilityLabel="Estimated stay total range" formatValue={value=>formatMarketCurrency(toDisplay(value),visibleCurrency)} onChange={syncText}/><View style={styles.endpoints}><Text style={{color:theme.textSecondary}}>{formatMarketCurrency(toDisplay(range.min),visibleCurrency)}</Text><Text style={{color:theme.textSecondary}}>{formatMarketCurrency(toDisplay(range.max),visibleCurrency)}</Text></View></View>:null}
       {kind==="stars"?([5,4,3,2,1] as HotelStarRating[]).filter(star=>options.starCounts[star]>0).map(star=><Choice key={star} label={`${star}-star hotel`} count={options.starCounts[star]} selected={stars.includes(star)} onPress={()=>toggleStar(star)}/>):null}
-      {kind==="amenities"?(options.facilities.length?options.facilities.map(option=><Choice key={option.value} label={option.label} count={option.count} selected={facilities.includes(option.value)} onPress={()=>toggleFacility(option.value)}/>):<Text style={[styles.empty,{color:theme.textSecondary}]}>No amenities available for this search.</Text>):null}
+      {kind==="facilities"?(options.facilities.length?options.facilities.map(option=><Choice key={option.value} label={option.label} count={option.count} selected={facilities.includes(option.value)} onPress={()=>toggleFacility(option.value)}/>):<Text style={[styles.empty,{color:theme.textSecondary}]}>No facilities available for this search.</Text>):null}
+      {kind==="roomTypes"?(options.roomTypes.length?options.roomTypes.map(option=><Choice key={option.value} label={option.label} count={option.count} selected={roomTypes.includes(option.value)} onPress={()=>toggleRoomType(option.value)}/>):<Text style={[styles.empty,{color:theme.textSecondary}]}>No room types available for this search.</Text>):null}
      </ScrollView>
      <View style={[styles.footer,{backgroundColor:theme.surface,borderTopColor:theme.border,paddingBottom:Math.max(inset.bottom,12)}]}><Pressable accessibilityRole="button" onPress={reset} style={[styles.reset,{borderColor:theme.border}]}><Text style={[styles.buttonText,{color:theme.textPrimary}]}>Reset</Text></Pressable><Pressable accessibilityRole="button" onPress={apply} style={styles.apply}><Text style={[styles.buttonText,{color:"white"}]}>Apply</Text></Pressable></View>
     </View>

@@ -7,15 +7,22 @@ const flight = readFileSync("src/features/search/FlightResultsQuickControls.tsx"
 
 const block = (source: string, name: string, next: string) => source.slice(source.indexOf(`${name}:`), source.indexOf(`${next}:`, source.indexOf(`${name}:`)));
 
-test("Hotel rail keeps Filter Price Stars Amenities without Flight business controls", () => {
+test("Hotel rail keeps Filter Price Stars Facilities Room & bed without Flight business controls", () => {
   const wholeRail = screen.slice(screen.indexOf("const filterRail"), screen.indexOf("const resultContent"));
   const rail = wholeRail.slice(wholeRail.indexOf(") : ("));
-  const labels = ["Filter", "Price", "Stars", "Amenities"].map((label) => rail.indexOf(`label="${label}"`));
+  const labels = ["Filter", "Price", "Stars", "Facilities", "Room & bed"].map((label) => rail.indexOf(`label="${label}"`));
   assert.ok(labels.every((index) => index >= 0) && labels.every((index, i) => i === 0 || labels[i - 1] < index));
   assert.match(rail, /hotelOptions\.price \?/);
   assert.match(rail, /openHotelQuickFilter\("price"\)/);
   assert.match(rail, /starRatings\.length \|\| undefined/);
   assert.match(rail, /facilities\.length \|\| undefined/);
+  assert.match(rail, /roomTypes\.length \|\| undefined/);
+  assert.match(rail, /hotelQuickFilter === "facilities"/);
+  assert.match(rail, /openHotelQuickFilter\("facilities"\)/);
+  assert.match(rail, /hotelQuickFilter === "roomTypes"/);
+  assert.match(rail, /openHotelQuickFilter\("roomTypes"\)/);
+  assert.match(rail, /hotelOptions\.roomTypes\.length >= 2/);
+  assert.doesNotMatch(rail, /label="Amenities"|openHotelQuickFilter\("amenities"\)/);
   assert.doesNotMatch(rail, /hotelSortLabel|Cheapest|Airlines|Stops|Airports/);
 });
 
