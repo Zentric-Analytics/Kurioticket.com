@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 const PRODUCTION = Object.freeze({
   packageName: 'com.kurioticket.app',
   profile: 'production',
-  runtime: 'production-0.3.2',
+  runtime: 'production-0.3.3',
 });
 const MAX_HISTORY_AGE_MS = 24 * 60 * 60 * 1000;
 
