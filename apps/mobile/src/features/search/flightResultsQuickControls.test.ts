@@ -26,7 +26,10 @@ test("web mobile filter colors are carried into native light mode", () => {
   assert.match(controls, /const webFilterText = "#142033"/);
   assert.match(controls, /const webFilterAccent = "#004BB8"/);
   assert.match(controls, /const webFilterPressed = "#F8FAFC"/);
-  assert.match(controls, /backgroundColor: theme\.surface/);
+  assert.match(controls, /const webFilterSurface = "#FFFFFF"/);
+  assert.match(controls, /const surface = light \? webFilterSurface : theme\.surface/);
+  assert.match(controls, /const railSurface = theme\.dark \? theme\.surface : webFilterSurface/);
+  assert.match(controls, /backgroundColor: railSurface/);
   assert.doesNotMatch(controls, /ui\.pale|#EEF4FF/);
 });
 
