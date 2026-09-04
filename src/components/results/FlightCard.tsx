@@ -80,9 +80,6 @@ export function FlightCard({
         providerPrice,
       )
     : undefined;
-  const priceLabel = displayPrice.isConvertedEstimate
-    ? t("estimatedPrice")
-    : t("providerPrice");
   const resolvedDetailsHref =
     detailsHref === undefined
       ? `/flights/details/${encodeURIComponent(flight.id)}`
@@ -150,10 +147,6 @@ export function FlightCard({
               priceSize={cardPrice.size}
               priceAriaLabel={priceAriaLabel}
               priceTitle={priceTitle}
-              priceLabel={priceLabel}
-              showConvertedProviderPrice={displayPrice.isConvertedEstimate}
-              providerPrice={providerPrice}
-              providerPriceLabel={t("providerPrice")}
               viewFlightLabel={resolvedActionLabel}
               viewFlightAriaLabel={actionAriaLabel}
               onAction={onAction ? () => onAction(flight) : undefined}
@@ -355,7 +348,6 @@ function FlightFareAction({
   priceSize,
   priceAriaLabel,
   priceTitle,
-  priceLabel,
   viewFlightLabel,
   viewFlightAriaLabel,
   onAction,
@@ -366,10 +358,6 @@ function FlightFareAction({
   priceSize: "normal" | "large" | "compact";
   priceAriaLabel: string;
   priceTitle: string | undefined;
-  priceLabel: string;
-  showConvertedProviderPrice: boolean;
-  providerPrice: string;
-  providerPriceLabel: string;
   viewFlightLabel: string;
   viewFlightAriaLabel?: string;
   onAction?: () => void;
@@ -400,9 +388,6 @@ function FlightFareAction({
         >
           {formattedPrice}
         </div>
-        <p className="mt-1.5 text-[10px] font-medium uppercase leading-none tracking-[0.08em] text-slate-600 sm:text-[11px] lg:mt-1">
-          {priceLabel}
-        </p>
       </div>
       {onAction ? (
         <button
