@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { supportedCurrencies } from "../../config/supportedCurrencies";
 import { currencyAccessibilityLabel, currencyForCountry, displayMarketPrice, displayPrice, formatCurrency, formatMarketCurrency, isDisplayPriceCurrent, resolveDisplayCurrency, resolveDisplayCurrencyContext } from "./displayCurrency";
 
 function withoutFormatToParts(run: () => void) {
@@ -131,6 +132,9 @@ test("Intl failures retain truthful visual and accessible currency fallbacks", (
     });
     assert.equal(formatCurrency(420, "usd"), "$420");
     assert.equal(currencyAccessibilityLabel(420, "usd"), "420 USD");
+    const hotelPrice = displayMarketPrice(210.5, "USD", "USD", { USD: 1 });
+    assert.equal(hotelPrice.formatted, "$210.50");
+    assert.equal(hotelPrice.accessibilityLabel, "210.50 USD");
   } finally {
     Object.defineProperty(Intl, "NumberFormat", { value: OriginalNumberFormat, configurable: true });
   }
@@ -224,29 +228,64 @@ const marketSymbols = {
 test("Hotel market formatting uses deterministic recognizable symbols", () => {
   for (const [currency, symbol] of Object.entries(marketSymbols)) {
     const formatted = formatMarketCurrency(420, currency);
-    assert.equal(formatted, `${symbol}420`);
+    const suffix = currency === "JPY" || currency === "KRW" ? "420" : "420.00";
+    assert.equal(formatted, `${symbol}${suffix}`);
     assert.doesNotMatch(formatted, new RegExp(currency));
   }
+  assert.equal(formatCurrency(420, "USD"), "$420");
+  assert.equal(formatMarketCurrency(420, "USD"), "$420.00");
 });
 
 test("Hotel symbols remain available when formatToParts is unavailable", () => {
   withoutFormatToParts(() => {
-    for (const [currency, symbol] of Object.entries(marketSymbols))
-      assert.equal(formatMarketCurrency(420, currency), `${symbol}420`);
+    assert.equal(formatMarketCurrency(420, "USD"), "$420.00");
+    assert.equal(formatMarketCurrency(420, "CAD"), "CA$420.00");
+    assert.equal(formatMarketCurrency(420, "NGN"), "₦420.00");
+    assert.equal(formatMarketCurrency(420, "JPY"), "¥420");
   });
+});
+
+const webZeroDecimalCurrencies = new Set([
+  "BIF", "CLP", "COP", "DJF", "GNF", "HUF", "IDR", "ISK", "JPY", "KMF", "KPW",
+  "KRW", "MGA", "PYG", "RWF", "UGX", "VND", "VUV", "XAF", "XOF", "XPF",
+]);
+
+test("Hotel formatting applies the web fraction policy to every supported currency", () => {
+  for (const { code } of supportedCurrencies) {
+    const formatted = formatMarketCurrency(12345, code);
+    assert.equal(formatted.includes(".00"), !webZeroDecimalCurrencies.has(code), `${code}: ${formatted}`);
+    assert.doesNotMatch(formatted, /undefined|NaN/);
+  }
+});
+
+test("Hotel formatting retains cents, rounds normally, and preserves sign placement", () => {
+  assert.equal(formatMarketCurrency(210.5, "USD"), "$210.50");
+  assert.equal(formatMarketCurrency(210.567, "USD"), "$210.57");
+  assert.equal(formatMarketCurrency(-210, "USD"), "-$210.00");
+  assert.equal(formatMarketCurrency(1000, "XYZ"), "1,000.00 XYZ");
+  assert.equal(formatMarketCurrency(-1000, "XYZ"), "-1,000.00 XYZ");
+});
+
+test("Hotel web-zero-decimal currencies never display fake cents", () => {
+  for (const currency of webZeroDecimalCurrencies)
+    assert.doesNotMatch(formatMarketCurrency(12345.67, currency), /\./, currency);
+  assert.equal(formatMarketCurrency(12345, "JPY"), "¥12,345");
+  assert.equal(formatMarketCurrency(420, "KRW"), "₩420");
+  assert.equal(formatMarketCurrency(10000, "VND"), "₫10,000");
 });
 
 test("Hotel conversion keeps provider truth and falls back when rates are missing", () => {
   const provider = { pricePerNight: 210, currency: "USD" };
   const rates = { USD: 1, CAD: 1.4, NGN: 1600, GBP: 0.8, EUR: 0.9 };
-  assert.equal(displayMarketPrice(210, provider.currency, "USD", rates).formatted, "$210");
-  assert.equal(displayMarketPrice(210, provider.currency, "CAD", rates).formatted, "CA$294");
-  assert.equal(displayMarketPrice(210, provider.currency, "NGN", rates).formatted, "₦336,000");
-  assert.equal(displayMarketPrice(210, provider.currency, "GBP", rates).formatted, "£168");
-  assert.equal(displayMarketPrice(210, provider.currency, "EUR", rates).formatted, "€189");
+  assert.equal(displayMarketPrice(210, provider.currency, "USD", rates).formatted, "$210.00");
+  assert.equal(displayMarketPrice(210, provider.currency, "CAD", rates).formatted, "CA$294.00");
+  assert.equal(displayMarketPrice(210, provider.currency, "NGN", rates).formatted, "₦336,000.00");
+  assert.equal(displayMarketPrice(210, provider.currency, "GBP", rates).formatted, "£168.00");
+  assert.equal(displayMarketPrice(210, provider.currency, "EUR", rates).formatted, "€189.00");
+  assert.equal(displayMarketPrice(211, provider.currency, "EUR", rates).formatted, "€189.90");
   const fallback = displayMarketPrice(210, provider.currency, "NGN", { USD: 1 });
   assert.deepEqual({ formatted: fallback.formatted, currency: fallback.currency, converted: fallback.converted },
-    { formatted: "$210", currency: "USD", converted: false });
+    { formatted: "$210.00", currency: "USD", converted: false });
   assert.deepEqual(provider, { pricePerNight: 210, currency: "USD" });
 });
 
@@ -256,5 +295,17 @@ test("Hotel auto-detected markets and explicit preference select market symbols"
     assert.ok(formatMarketCurrency(1, currency).startsWith(expected));
   }
   const manual = resolveDisplayCurrencyContext({ preferredCurrency: "EUR", ipCountryCode: "NG", locale: "en-NG" });
-  assert.equal(formatMarketCurrency(1, manual.resolvedCurrency), "€1");
+  assert.equal(formatMarketCurrency(1, manual.resolvedCurrency), "€1.00");
+});
+
+test("Hotel accessibility retains ordinary cents and zero-decimal semantics", () => {
+  const usd = displayMarketPrice(210.5, "USD", "USD", { USD: 1 });
+  assert.equal(usd.formatted, "$210.50");
+  assert.match(usd.accessibilityLabel, /210[.,]50|210 dollars? and 50 cents?/i);
+  assert.match(usd.accessibilityLabel, /US dollars?/i);
+
+  const jpy = displayMarketPrice(210.5, "JPY", "JPY", { JPY: 1 });
+  assert.equal(jpy.formatted, "¥211");
+  assert.doesNotMatch(jpy.accessibilityLabel, /[.,]50/);
+  assert.match(jpy.accessibilityLabel, /Japanese yen/i);
 });
