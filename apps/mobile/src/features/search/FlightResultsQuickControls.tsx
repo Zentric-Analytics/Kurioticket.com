@@ -1,8 +1,13 @@
+import { useRef } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ChevronDown, SlidersHorizontal } from "lucide-react-native";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import type { FlightSort } from "./flightFilters";
+import {
+  clearFlightResultsQuickMenuAnchor,
+  setFlightResultsQuickMenuAnchor,
+} from "./flightResultsQuickMenuAnchor";
 
 const sortLabels: Record<"best" | "price" | "duration", string> = {
   best: "Best",
@@ -16,6 +21,7 @@ const webFilterAccent = "#004BB8";
 const webFilterChevron = "#64748B";
 const webFilterPressed = "#F8FAFC";
 const webFilterCountBackground = "rgba(0,75,184,0.08)";
+const webFilterSurface = "#FFFFFF";
 
 type ControlProps = {
   label: string;
@@ -23,26 +29,51 @@ type ControlProps = {
   count?: number;
   expanded: boolean;
   filterIcon?: boolean;
+  anchored?: boolean;
   onPress: () => void;
 };
 
-function Control({ label, active, count, expanded, filterIcon, onPress }: ControlProps) {
+function Control({ label, active, count, expanded, filterIcon, anchored = false, onPress }: ControlProps) {
   const { theme } = useAppTheme();
+  const triggerRef = useRef<View>(null);
   const light = !theme.dark;
   const accent = light ? webFilterAccent : "#8FB5FF";
   const foreground = light ? webFilterText : theme.textPrimary;
   const chevron = light ? webFilterChevron : theme.textSecondary;
   const border = light ? webFilterBorder : theme.border;
-  const surface = theme.surface;
+  const surface = light ? webFilterSurface : theme.surface;
   const countBackground = light ? webFilterCountBackground : "#142B55";
   const accessibilityLabel = `${label}${active ? ", selected" : ""}${count ? `, ${count} active` : ""}`;
 
+  const handlePress = () => {
+    if (!anchored) {
+      clearFlightResultsQuickMenuAnchor();
+      onPress();
+      return;
+    }
+    const trigger = triggerRef.current;
+    if (!trigger) {
+      clearFlightResultsQuickMenuAnchor();
+      onPress();
+      return;
+    }
+    trigger.measureInWindow((x, y, width, height) => {
+      if (width > 0 && height > 0) {
+        setFlightResultsQuickMenuAnchor({ x, y, width, height });
+      } else {
+        clearFlightResultsQuickMenuAnchor();
+      }
+      onPress();
+    });
+  };
+
   return (
     <Pressable
+      ref={triggerRef}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ expanded, selected: active }}
-      onPress={onPress}
+      onPress={handlePress}
       style={({ pressed }) => [
         styles.control,
         { backgroundColor: pressed && light ? webFilterPressed : surface, borderColor: border },
@@ -87,11 +118,12 @@ export function FlightResultsQuickControls({
 }) {
   const { theme } = useAppTheme();
   const safeSort = sort === "price" || sort === "duration" ? sort : "best";
+  const railSurface = theme.dark ? theme.surface : webFilterSurface;
 
   return (
     <ScrollView
       horizontal
-      style={[styles.rail, { backgroundColor: theme.surface }]}
+      style={[styles.rail, { backgroundColor: railSurface }]}
       contentContainerStyle={styles.content}
       showsHorizontalScrollIndicator={false}
       alwaysBounceHorizontal={false}
@@ -108,6 +140,7 @@ export function FlightResultsQuickControls({
         label={sortLabels[safeSort]}
         active={safeSort !== "best"}
         expanded={openSheetKind === "sort"}
+        anchored
         onPress={() => openSheet("sort")}
       />
       <Control
@@ -115,6 +148,7 @@ export function FlightResultsQuickControls({
         active={airlineCount > 0}
         count={airlineCount || undefined}
         expanded={openSheetKind === "airlines"}
+        anchored
         onPress={() => openSheet("airlines")}
       />
       <Control
@@ -122,6 +156,7 @@ export function FlightResultsQuickControls({
         active={stopsActive}
         count={stopsActive ? 1 : undefined}
         expanded={openSheetKind === "stops"}
+        anchored
         onPress={() => openSheet("stops")}
       />
       <Control
@@ -129,6 +164,7 @@ export function FlightResultsQuickControls({
         active={airportCount > 0}
         count={airportCount || undefined}
         expanded={openSheetKind === "airports"}
+        anchored
         onPress={() => openSheet("airports")}
       />
     </ScrollView>
