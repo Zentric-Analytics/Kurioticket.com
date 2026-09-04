@@ -92,11 +92,12 @@ test("converted fares add truthful provider context without duplicating same-cur
   assert.ok(card.indexOf('<View style={s0.flightFareAction}>') < card.indexOf('style={s0.flightMetadataRow}'));
 });
 
-test("the compact View deal control is the sole details action", () => {
+test("the whole card is the sole details action and View deal is a lightweight affordance", () => {
   assert.match(card, /const openDetails = \(\) => router\.push\(\{ pathname: "\/flight-details"/);
-  assert.match(card, /return \(\s*<View[\s\S]*?<Pressable[\s\S]*accessibilityRole="button"[\s\S]*accessibilityLabel=\{`View deal for \$\{result\.airlineName\}, \$\{fareAccessibility\}`\}[\s\S]*onPress=\{openDetails\}/);
+  assert.match(card, /return \(\s*<Pressable[\s\S]*accessibilityRole="button"[\s\S]*accessibilityLabel=\{cardAccessibilityLabel\}[\s\S]*onPress=\{openDetails\}/);
   assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
-  assert.match(card, /<PlaneTakeoff[\s\S]*>View deal<\/Text>/);
+  assert.match(card, />› \{labels\.viewDeal\}<\/Text>/);
+  assert.doesNotMatch(card, /<PlaneTakeoff[^>]*>[\s\S]*?View deal/);
   assert.doesNotMatch(card, /labels\.viewFlight|viewFlightButton/);
   assert.doesNotMatch(card, /detailsButton|detailsButtonText/);
   assert.equal((card.match(/<Pressable/g) || []).length, 1);
@@ -145,11 +146,11 @@ test("flight card uses a compact horizontal metadata row while airline identity 
   const metadataBlock = card.slice(card.indexOf('style={s0.flightMetadataRow}'));
   assert.match(card, /style=\{\[s0\.bigPrice, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.72\}/);
   assert.match(card, /style=\{\[s0\.airlineName, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{2\} ellipsizeMode="tail">/);
-  assert.equal(card.match(/style=\{s0\.flightMetadataItem\}/g)?.length, 2);
-  assert.match(card, /style=\{\[s0\.flightMetadataItem, s0\.flightMetadataItemWide\]\}/);
+  assert.equal(card.match(/style=\{s0\.flightMetadataItem\}/g)?.length, 3);
+  assert.match(card, /<ScrollView[\s\S]*horizontal[\s\S]*contentContainerStyle=\{s0\.flightMetadataContent\}/);
   assert.match(source, /card: \{[\s\S]*?paddingHorizontal: 12,[\s\S]*?paddingVertical: 9,[\s\S]*?gap: 5,/);
   assert.match(source, /flightCardFooter: \{[^\n]*gap: 5/);
-  assert.match(source, /flightMetadataRow: \{[^\n]*flexDirection: "row"/);
+  assert.match(source, /flightMetadataContent: \{[^\n]*flexDirection: "row"/);
   assert.match(source, /flightFareAction: \{ width: "46%", minWidth: 128, flexShrink: 0, alignItems: "flex-end"/);
   assert.equal(card.match(/s0\.flightMetadataText,\{color:supportTextColor\}/g)?.length, 3);
   assert.doesNotMatch(source, /metadataSeparator:/);
@@ -333,7 +334,7 @@ test("flight journey applies the approved Step 5 hierarchy, colors, and accessib
   assert.equal(card.match(/s0\.routeDot, \{ backgroundColor: theme\.textSecondary \}/g)?.length, 2);
   assert.equal(card.match(/s0\.line, \{ backgroundColor: theme\.border \}/g)?.length, 2);
   assert.match(card, /<PlaneTakeoff accessible=\{false\} size=\{14\} strokeWidth=\{2\} color=\{theme\.dark \? "#8FB5FF" : ui\.blue\} \/>/);
-  assert.equal(card.match(/accessible=\{false\} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"/g)?.length, 3);
+  assert.equal(card.match(/accessible=\{false\} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"/g)?.length, 4);
   assert.match(card, /const intlLocale = mobileLocales\.find/);
   assert.match(card, /const departureDate = providerLocalFlightDate\(leg\.departureTime, intlLocale\)/);
   assert.match(card, /const arrivalDate = providerLocalFlightDate\(leg\.arrivalTime, intlLocale\)/);
@@ -345,7 +346,7 @@ test("flight journey applies the approved Step 5 hierarchy, colors, and accessib
   assert.match(source, /journeyDuration: \{[^}]*fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts\.semibold, textAlign: "center" \}/);
   assert.match(source, /stopLabel: \{[^}]*fontSize: 10, lineHeight: 13, fontWeight: "500", fontFamily: appFonts\.medium, textAlign: "center" \}/);
   assert.match(source, /flightResultCount: \{ fontSize: 13, lineHeight: 17, fontWeight: "700", fontFamily: appFonts\.bold \}/);
-  assert.match(source, /bigPrice: \{[^}]*fontSize: 17, lineHeight: 22, fontWeight: "700"/);
+  assert.match(source, /bigPrice: \{[^}]*fontSize: 19, lineHeight: 24, fontWeight: "700"/);
 });
 
 test("flight result card removes favorite UI while retaining approved travel icons", () => {

@@ -68,13 +68,13 @@ test("long fares stay readable without changing details navigation or theme beha
 });
 
 test("the compact fare action contains the only displayed fare and details control", () => {
-  const fareRow = card.slice(card.indexOf('<View style={s0.flightFareAction}>'), card.indexOf('</Pressable>'));
+  const fareRow = card.slice(card.indexOf('<View style={s0.flightFareAction}>'), card.indexOf('<ScrollView'));
 
   assert.equal(card.match(/\{fare\?\.formatted \?\? "—"\}/g)?.length, 1);
   assert.match(fareRow, /\{fare\?\.formatted \?\? "—"\}/);
   assert.match(fareRow, /accessible=\{false\}/);
   assert.match(fareRow, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.72\}/);
-  assert.match(source, /bigPrice: \{[^}]*fontSize: 17, lineHeight: 22[^}]*fontWeight: "700"[^}]*textAlign: "right"/);
+  assert.match(source, /bigPrice: \{[^}]*fontSize: 19, lineHeight: 24[^}]*fontWeight: "700"[^}]*textAlign: "right"/);
   assert.match(fareRow, /color: theme\.textPrimary/);
   assert.doesNotMatch(fareRow, /marginRight|position:/);
   assert.doesNotMatch(fareRow, /baggageSummary|fareRulesSummary|metadataItem/);
@@ -82,8 +82,8 @@ test("the compact fare action contains the only displayed fare and details contr
   assert.match(fareRow, /providerFare \? \([\s\S]*Provider price: \{providerFare\.formatted\}/);
   assert.doesNotMatch(fareRow, /Provider price: \{providerFare\.formatted\} \{providerFare\.currency\}/);
   assert.doesNotMatch(fareRow, /US\$|A\$|CA\$|Per traveler|Round trip|One way|Taxes included|From/);
-  assert.match(fareRow, /<Pressable[\s\S]*accessibilityLabel=\{`View deal for \$\{result\.airlineName\}, \$\{fareAccessibility\}`\}/);
-  assert.match(fareRow, />View deal<\/Text>/);
+  assert.match(card, /<Pressable[\s\S]*accessibilityLabel=\{cardAccessibilityLabel\}[\s\S]*onPress=\{openDetails\}/);
+  assert.match(fareRow, />› \{labels\.viewDeal\}<\/Text>/);
   assert.doesNotMatch(fareRow, /labels\.viewFlight|View details/);
   assert.ok(card.indexOf('<View style={s0.journeyList}>') < card.indexOf('<View style={s0.flightFareAction}>'));
   assert.match(card, /provider price \$\{providerFare\.accessibilityLabel\}/);
