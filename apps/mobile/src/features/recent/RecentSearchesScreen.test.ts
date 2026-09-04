@@ -14,9 +14,19 @@ test("Recent route renders an independent Recent searches screen", () => {
 
 test("Recent keeps canonical loading and false-empty protection", () => {
   assert.match(screen, /travelApi\.recentSearches\(\)/);
-  assert.match(screen, /!recentLoaded \? \(recentLoading && !recentError/);
+  assert.match(screen, /!recentLoaded \? \(recentLoading \? <PageContentState state="loading" pageName="recent searches"/);
   assert.match(screen, /setRecent\(searches\.items\);[\s\S]*setRecentLoaded\(true\)/);
   assert.match(screen, /Unable to synchronize recent searches/);
+});
+
+test("Recent initial loading and error states sit outside the ScrollView", () => {
+  const firstState = screen.indexOf('<PageContentState state="loading" pageName="recent searches"');
+  const initialError = screen.indexOf('<PageContentState state="error" pageName="recent searches"');
+  const scroll = screen.indexOf('<ScrollView alwaysBounceVertical={false}');
+  assert.ok(firstState >= 0 && initialError >= 0 && scroll >= 0);
+  assert.ok(firstState < scroll);
+  assert.ok(initialError < scroll);
+  assert.match(screen, /recentError && !recentLoaded \? <PageContentState state="error" pageName="recent searches" onRetry=/);
 });
 
 test("Recent keeps local remove and clear behavior", () => {
@@ -59,7 +69,7 @@ test("authenticated empty Recent uses the travel-history landing state", () => {
 test("Recent keeps populated, loading, and signed-out branches intact", () => {
   assert.match(screen, />Recent<\/Text>[\s\S]*>Clear all<\/Text>/);
   assert.match(screen, /recent\.length \?/);
-  assert.match(screen, /!recentLoaded \? \(recentLoading && !recentError/);
+  assert.match(screen, /!recentLoaded \? \(recentLoading \? <PageContentState state="loading" pageName="recent searches"/);
   assert.match(screen, /FlowIcon name="clock"[\s\S]*>Sign in to view recent searches<\/Text>/);
   assert.match(screen, />Your recent searches are private to your account\.<\/Text>/);
   assert.match(screen, /signInHref\("\/recent"\)/);

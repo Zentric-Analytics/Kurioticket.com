@@ -36,7 +36,7 @@ test("availability warning remains exclusive to populated alerts", () => {
 });
 
 test("loading and initial errors cannot masquerade as an empty landing", () => {
-  assert.match(screen, /loading && !alerts\.length \? <State loading/);
+  assert.match(screen, /loading && !alerts\.length \? <PageContentState state="loading" pageName="price alerts"/);
   assert.match(screen, /const initialError = Boolean\(error && !alerts\.length\)/);
   assert.match(screen, /\(!loading \|\| alerts\.length\) && !initialError \? <ScrollView/);
 });

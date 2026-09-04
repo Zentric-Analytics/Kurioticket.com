@@ -62,6 +62,7 @@ import {
 } from "./personalDetailsModel";
 import { personalDetailsCopy } from "./translations";
 import { signInHref } from "../auth/signInIntent";
+import { PageContentState } from "../../components/PageContentState";
 
 type DateDraft = {
   year: string;
@@ -1036,23 +1037,9 @@ export function PersonalDetailsScreen() {
         <View style={s.iconButton} />
       </View>
       {loading && !saved ? (
-        <View style={s.center}>
-          <ActivityIndicator color={flowColors.blue} />
-          <Text style={{ color: theme.muted }}>{c.loading}</Text>
-        </View>
+        <PageContentState state="loading" pageName="personal details" />
       ) : !saved ? (
-        <View style={s.center}>
-          <Text accessibilityRole="alert" style={{ color: theme.text }}>
-            {error || c.loadFailure}
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => void load()}
-            style={s.primary}
-          >
-            <Text style={s.primaryText}>{c.retry}</Text>
-          </Pressable>
-        </View>
+        <PageContentState state="error" pageName="personal details" onRetry={() => void load()} />
       ) : (
         <KeyboardAvoidingView
           style={{ flex: 1 }}

@@ -11,14 +11,10 @@ import { formatLastChecked, formatPriceAlertAmount, priceAlertTripSummary, price
 import { signInHref } from "../auth/signInIntent";
 import { useAppTheme } from "../../theme/AppTheme";
 import { PriceAlertIllustration } from "./PriceAlertIllustration";
+import { PageContentState } from "../../components/PageContentState";
 
 function Shell({ title, children }: { title: string; children: React.ReactNode }) {
   return <SafeAreaView style={flowStyles.safe} edges={["top"]}><View style={styles.header}><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={flowStyles.iconButton}><FlowIcon name="back" /></Pressable><Text accessibilityRole="header" style={flowStyles.title}>{title}</Text></View>{children}</SafeAreaView>;
-}
-function State({ loading, error, retry }: { loading: boolean; error: string; retry: () => void }) {
-  if (loading) return <View style={styles.center}><ActivityIndicator color={flowColors.blue} /><Text style={flowStyles.meta}>Loading…</Text></View>;
-  if (error) return <View style={styles.center}><Text accessibilityRole="alert" style={flowStyles.meta}>{error}</Text><Pressable onPress={retry} style={flowStyles.primary}><Text style={flowStyles.primaryText}>Try again</Text></Pressable></View>;
-  return null;
 }
 export function PriceAlertsScreen() {
   const { theme } = useAppTheme();
@@ -43,7 +39,7 @@ export function PriceAlertsScreen() {
   };
   const confirmDelete = (alert: MobilePriceAlert) => Alert.alert("Delete price alert?", `You will stop tracking ${routeLabel(alert)} for this alert.`, [{ text: "Cancel", style: "cancel" }, { text: "Delete", style: "destructive", onPress: () => void deleteAlert(alert) }]);
   const initialError = Boolean(error && !alerts.length);
-  return <Shell title="Price alerts">{!availability.priceAlerts && alerts.length ? <View style={styles.feedback}><Text accessibilityRole="alert" style={styles.error}>New and reactivated price alerts are temporarily unavailable. Existing alerts remain available to pause or delete.</Text></View> : null}{loading && !alerts.length ? <State loading error="" retry={() => void load()} /> : null}{error ? <View style={styles.feedback}><Text accessibilityRole="alert" style={styles.error}>{error}</Text><Pressable accessibilityRole="button" onPress={() => void load()}><Text style={styles.link}>Try again</Text></Pressable></View> : null}{(!loading || alerts.length) && !initialError ? <ScrollView style={!alerts.length ? { backgroundColor: theme.background } : undefined} contentContainerStyle={alerts.length ? flowStyles.scroll : styles.emptyContent}>{alerts.length ? alerts.map((alert) => {
+  return <Shell title="Price alerts">{!availability.priceAlerts && alerts.length ? <View style={styles.feedback}><Text accessibilityRole="alert" style={styles.error}>New and reactivated price alerts are temporarily unavailable. Existing alerts remain available to pause or delete.</Text></View> : null}{loading && !alerts.length ? <PageContentState state="loading" pageName="price alerts" /> : null}{initialError ? <PageContentState state="error" pageName="price alerts" onRetry={() => void load()} /> : error ? <View style={styles.feedback}><Text accessibilityRole="alert" style={styles.error}>{error}</Text><Pressable accessibilityRole="button" onPress={() => void load()}><Text style={styles.link}>Try again</Text></Pressable></View> : null}{(!loading || alerts.length) && !initialError ? <ScrollView style={!alerts.length ? { backgroundColor: theme.background } : undefined} contentContainerStyle={alerts.length ? flowStyles.scroll : styles.emptyContent}>{alerts.length ? alerts.map((alert) => {
   const route = routeLabel(alert);
   const trip = priceAlertTripSummary(alert);
   const target = formatPriceAlertAmount(alert.currency, alert.targetPrice);

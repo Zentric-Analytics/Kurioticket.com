@@ -38,5 +38,6 @@ export function useCanonicalSaved() {
       await savedRepositoryFor(userId).toggleCar(car, params);
     },
     remove: async (type: "flight" | "hotel" | "car" | "search", id: string) => { if (userId) await savedRepositoryFor(userId).remove(type, id); },
+    refresh: async () => { if (userId) await savedRepositoryFor(userId).refresh(); },
   };
 }
