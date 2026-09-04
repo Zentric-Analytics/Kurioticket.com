@@ -5,6 +5,21 @@ import { FLIGHT_TRIP_TYPE_LABELS } from "../flow/flightTripTypeLabels";
 
 type PriceBasisParams = Record<string, RouteValue>;
 
+const compactProviderFare = (formatted: string, currency: string) => {
+  if (formatted.length <= 9) return formatted;
+
+  const sign = formatted.startsWith("-") ? "-" : "";
+  const unsigned = sign ? formatted.slice(1) : formatted;
+  const currencySuffix = ` ${currency}`;
+
+  if (unsigned.endsWith(currencySuffix)) {
+    const amount = unsigned.slice(0, -currencySuffix.length).replace(/,/g, "");
+    return `${sign}${currency}${amount}`;
+  }
+
+  return `${sign}${unsigned.replace(/,/g, "")}`;
+};
+
 export function flightProviderFarePresentation(fare?: DisplayPrice | null) {
   if (
     fare?.converted !== true
@@ -13,8 +28,11 @@ export function flightProviderFarePresentation(fare?: DisplayPrice | null) {
     || !/^[A-Z]{3}$/.test(fare.providerCurrency)
   ) return null;
 
+  const fullFormatted = formatCurrency(fare.providerAmount, fare.providerCurrency);
+
   return {
-    formatted: formatCurrency(fare.providerAmount, fare.providerCurrency),
+    formatted: compactProviderFare(fullFormatted, fare.providerCurrency),
+    fullFormatted,
     currency: fare.providerCurrency,
     accessibilityLabel: currencyAccessibilityLabel(fare.providerAmount, fare.providerCurrency),
   };
@@ -37,7 +55,7 @@ export function flightTravelerCount(params: PriceBasisParams) {
 
   const legacyCount = nonNegativeInteger(params.travelers);
   return legacyCount && legacyCount > 0 ? legacyCount : 1;
-}
+};
 
 export function flightPriceBasis(params: PriceBasisParams, fare?: DisplayPrice | null) {
   const travelerCount = flightTravelerCount(params);
@@ -54,7 +72,7 @@ export function flightPriceBasis(params: PriceBasisParams, fare?: DisplayPrice |
     travelerLabel,
     tripTypeLabel,
     summary: `${travelerLabel} · ${tripTypeLabel}`,
-    providerFareText: providerFare ? `Provider fare ${providerFare.formatted}` : null,
+    providerFareText: providerFare ? `Provider fare ${providerFare.fullFormatted}` : null,
     providerFareAccessibilityText: providerFare
       ? `Provider fare ${providerFare.accessibilityLabel}`
       : null,

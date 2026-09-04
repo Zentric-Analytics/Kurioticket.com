@@ -20,7 +20,7 @@ test("Flight Results price alert uses a compact premium row and native switch", 
   assert.match(flightAlert, /<Bell accessible=\{false\} size=\{17\}/);
   assert.match(source, /flightAlertCopy: \{ flex: 1, minWidth: 0, gap: 1 \}/);
   assert.match(source, /flightAlertSwitchSlot: \{ minWidth: 51, minHeight: 44/);
-  assert.match(flightAlert, /<Switch accessibilityRole="switch"/);
+  assert.match(flightAlert, /<Switch[^>]*accessibilityRole="switch"/);
   assert.doesNotMatch(flightAlert, /Get notified when (?:this fare|fares) changes|>On<|>Off</);
 });
 
