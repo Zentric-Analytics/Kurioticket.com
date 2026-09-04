@@ -11,13 +11,15 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { signInHref } from "../auth/signInIntent";
 import { notificationDestination } from "./notificationAction";
 import { notifyUnreadCountChanged } from "./notificationUnreadRefresh";
-import { notificationSwipePosition, NOTIFICATION_DELETE_ACTION_WIDTH, shouldClaimNotificationSwipe, shouldRevealNotificationDelete } from "./notificationSwipe";
+import { notificationSwipeDirection, notificationSwipePosition, NOTIFICATION_DELETE_ACTION_WIDTH, type NotificationSwipeDirection, shouldRevealNotificationDelete } from "./notificationSwipe";
 
 export function NotificationsScreen() {
   const { theme } = useAppTheme();
   const [state, dispatch] = useReducer(notificationPaginationReducer, initialNotificationPaginationState);
   const [pendingAll, setPendingAll] = useState(false);
   const [openNotificationId, setOpenNotificationId] = useState<string | null>(null);
+  const [scrollEnabled, setScrollEnabled] = useState(true);
+  const horizontalSwipeId = useRef<string | null>(null);
   const requestSequence = useRef(0);
   const loadingMoreRef = useRef(false);
 
@@ -85,28 +87,42 @@ export function NotificationsScreen() {
   };
   const unread = state.items.some((item) => !item.readAt);
   const contentState = notificationContentState(state);
+  const lockHorizontalSwipe = useCallback((id: string) => {
+    horizontalSwipeId.current = id;
+    setScrollEnabled(false);
+  }, []);
+  const releaseHorizontalSwipe = useCallback((id: string) => {
+    if (horizontalSwipeId.current !== id) return;
+    horizontalSwipeId.current = null;
+    setScrollEnabled(true);
+  }, []);
 
   return <SafeAreaView style={[flowStyles.safe, { backgroundColor: theme.background }]} edges={["top"]}>
     <View style={[styles.header, { borderBottomColor: theme.border }]}><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={flowStyles.iconButton}><FlowIcon name="back" color={theme.icon} /></Pressable><Text accessibilityRole="header" style={[flowStyles.title, { color: theme.text }]}>Notifications</Text>{unread ? <Pressable accessibilityRole="button" accessibilityLabel="Mark all notifications as read" disabled={pendingAll} onPress={() => void markAll()} style={styles.markAll}><Text style={styles.link}>Mark all read</Text></Pressable> : <View style={styles.markAll} />}</View>
     {contentState === "loading" ? <View style={styles.center}><ActivityIndicator color={flowColors.blue} /><Text style={flowStyles.meta}>Loading notifications…</Text></View> : null}
     {contentState === "error" ? <View style={styles.center}><Text accessibilityRole="header" style={[flowStyles.value, { color: theme.text }]}>Couldn't load notifications</Text><Text style={[flowStyles.meta, styles.emptyCopy]}>Check your connection and try again.</Text><Pressable accessibilityRole="button" accessibilityLabel="Try again" onPress={() => void loadFirstPage()} style={styles.retryButton}><Text style={styles.link}>Try again</Text></Pressable></View> : null}
     {contentState === "empty" ? <ScrollView alwaysBounceVertical={false} bounces={false} overScrollMode="never" refreshControl={<RefreshControl refreshing={state.refreshing} onRefresh={() => void loadFirstPage(true)} />} contentContainerStyle={styles.list}><View style={styles.center}><FlowIcon name="bell" color={flowColors.blue} size={42} /><Text style={flowStyles.value}>You’re all caught up</Text><Text style={[flowStyles.meta, styles.emptyCopy]}>Important account and travel updates will appear here.</Text></View></ScrollView> : null}
-    {contentState === "list" ? <ScrollView alwaysBounceVertical={false} bounces={false} overScrollMode="never" onScrollBeginDrag={() => setOpenNotificationId(null)} refreshControl={<RefreshControl refreshing={state.refreshing} onRefresh={() => void loadFirstPage(true)} />} contentContainerStyle={styles.list}>
+    {contentState === "list" ? <ScrollView scrollEnabled={scrollEnabled} alwaysBounceVertical={false} bounces={false} overScrollMode="never" onScrollBeginDrag={() => setOpenNotificationId(null)} refreshControl={<RefreshControl refreshing={state.refreshing} onRefresh={() => void loadFirstPage(true)} />} contentContainerStyle={styles.list}>
       {state.error ? <View style={styles.feedback}><Text accessibilityRole="alert" style={styles.error}>{state.error}</Text><Pressable accessibilityRole="button" accessibilityLabel="Retry refreshing notifications" onPress={() => void loadFirstPage(true)}><Text style={styles.link}>Try again</Text></Pressable></View> : null}
-      {state.items.map((item) => <SwipeableNotificationRow key={item.id} item={item} dark={theme.dark} surface={theme.surface} border={theme.border} text={theme.text} isOpen={openNotificationId === item.id} onSwipeStart={() => { if (openNotificationId !== item.id) setOpenNotificationId(null); }} onSetOpen={(open) => setOpenNotificationId(open ? item.id : null)} onOpen={open} onDelete={remove} />)}
+      {state.items.map((item) => <SwipeableNotificationRow key={item.id} item={item} dark={theme.dark} surface={theme.surface} border={theme.border} text={theme.text} isOpen={openNotificationId === item.id} onHorizontalLock={() => lockHorizontalSwipe(item.id)} onHorizontalRelease={() => releaseHorizontalSwipe(item.id)} onSwipeStart={() => { if (openNotificationId !== item.id) setOpenNotificationId(null); }} onSetOpen={(open) => setOpenNotificationId(open ? item.id : null)} onOpen={open} onDelete={remove} />)}
       {state.loadMoreError ? <View style={styles.loadMoreFeedback}><Text accessibilityRole="alert" style={styles.error}>{state.loadMoreError}</Text><Pressable accessibilityRole="button" accessibilityLabel="Retry loading older notifications" onPress={() => void loadMore()}><Text style={styles.link}>Try again</Text></Pressable></View> : null}
       {state.nextCursor && !state.loadMoreError ? <Pressable accessibilityRole="button" accessibilityLabel="Load more notifications" disabled={state.loadingMore} onPress={() => void loadMore()} style={styles.loadMore}>{state.loadingMore ? <ActivityIndicator color={flowColors.blue} /> : <Text style={styles.link}>Load more</Text>}</Pressable> : null}
     </ScrollView> : null}
   </SafeAreaView>;
 }
-function SwipeableNotificationRow({ item, dark, surface, border, text, isOpen, onSwipeStart, onSetOpen, onOpen, onDelete }: { item: MobileNotification; dark: boolean; surface: string; border: string; text: string; isOpen: boolean; onSwipeStart: () => void; onSetOpen: (open: boolean) => void; onOpen: (item: MobileNotification) => Promise<void>; onDelete: (item: MobileNotification) => Promise<void> }) {
+function SwipeableNotificationRow({ item, dark, surface, border, text, isOpen, onHorizontalLock, onHorizontalRelease, onSwipeStart, onSetOpen, onOpen, onDelete }: { item: MobileNotification; dark: boolean; surface: string; border: string; text: string; isOpen: boolean; onHorizontalLock: () => void; onHorizontalRelease: () => void; onSwipeStart: () => void; onSetOpen: (open: boolean) => void; onOpen: (item: MobileNotification) => Promise<void>; onDelete: (item: MobileNotification) => Promise<void> }) {
   const translateX = useRef(new Animated.Value(0)).current;
   const position = useRef(0);
   const gestureStart = useRef(0);
+  const gestureDirection = useRef<NotificationSwipeDirection>("undecided");
+  const onHorizontalLockRef = useRef(onHorizontalLock);
+  const onHorizontalReleaseRef = useRef(onHorizontalRelease);
   const onSwipeStartRef = useRef(onSwipeStart);
   const onSetOpenRef = useRef(onSetOpen);
   onSwipeStartRef.current = onSwipeStart;
   onSetOpenRef.current = onSetOpen;
+  onHorizontalLockRef.current = onHorizontalLock;
+  onHorizontalReleaseRef.current = onHorizontalRelease;
   const [deleting, setDeleting] = useState(false);
   const settle = useCallback((open: boolean) => Animated.spring(translateX, { toValue: open ? -NOTIFICATION_DELETE_ACTION_WIDTH : 0, useNativeDriver: true, bounciness: 0 }).start(), [translateX]);
   useEffect(() => {
@@ -114,26 +130,50 @@ function SwipeableNotificationRow({ item, dark, surface, border, text, isOpen, o
     return () => translateX.removeListener(listener);
   }, [translateX]);
   useEffect(() => { settle(isOpen); }, [isOpen, settle]);
+  useEffect(() => () => onHorizontalReleaseRef.current(), []);
+  const shouldCaptureSwipe = useCallback((dx: number, dy: number) => {
+    const nextDirection = notificationSwipeDirection(gestureDirection.current, dx, dy, position.current);
+    if (nextDirection !== gestureDirection.current) {
+      gestureDirection.current = nextDirection;
+      if (nextDirection === "horizontal") onHorizontalLockRef.current();
+    }
+    return nextDirection === "horizontal";
+  }, []);
+  const finishHorizontalSwipe = useCallback(() => {
+    gestureDirection.current = "undecided";
+    onHorizontalReleaseRef.current();
+  }, []);
   const panResponder = useMemo(() => PanResponder.create({
-    onMoveShouldSetPanResponder: (_, gesture) => shouldClaimNotificationSwipe(gesture.dx, gesture.dy, position.current),
+    onStartShouldSetPanResponderCapture: () => {
+      if (gestureDirection.current !== "horizontal") gestureDirection.current = "undecided";
+      return false;
+    },
+    onMoveShouldSetPanResponderCapture: (_, gesture) => shouldCaptureSwipe(gesture.dx, gesture.dy),
+    onMoveShouldSetPanResponder: (_, gesture) => shouldCaptureSwipe(gesture.dx, gesture.dy),
     onPanResponderGrant: () => {
+      gestureDirection.current = "horizontal";
+      onHorizontalLockRef.current();
       gestureStart.current = position.current;
       translateX.stopAnimation((value) => { position.current = value; gestureStart.current = value; });
       onSwipeStartRef.current();
     },
-    onPanResponderMove: (_, gesture) => translateX.setValue(notificationSwipePosition(gestureStart.current, gesture.dx)),
+    onPanResponderMove: (_, gesture) => {
+      if (gestureDirection.current === "horizontal") translateX.setValue(notificationSwipePosition(gestureStart.current, gesture.dx));
+    },
     onPanResponderRelease: (_, gesture) => {
       const open = shouldRevealNotificationDelete(notificationSwipePosition(gestureStart.current, gesture.dx));
+      finishHorizontalSwipe();
       onSetOpenRef.current(open);
       settle(open);
     },
-    onPanResponderTerminate: () => { onSetOpenRef.current(false); settle(false); },
-  }), [settle, translateX]);
+    onPanResponderTerminationRequest: () => gestureDirection.current !== "horizontal",
+    onPanResponderTerminate: () => { finishHorizontalSwipe(); onSetOpenRef.current(false); settle(false); },
+  }), [finishHorizontalSwipe, settle, shouldCaptureSwipe, translateX]);
   const deleteItem = async () => {
     if (deleting) return;
     setDeleting(true);
-    try { await onDelete(item); onSetOpen(false); }
-    catch { onSetOpen(false); settle(false); setDeleting(false); }
+    try { await onDelete(item); onHorizontalReleaseRef.current(); onSetOpen(false); }
+    catch { onHorizontalReleaseRef.current(); onSetOpen(false); settle(false); setDeleting(false); }
   };
   return <View style={styles.swipeRow}>
     <Pressable accessibilityRole="button" accessibilityLabel={`Delete ${item.title}`} disabled={deleting} onPress={() => void deleteItem()} style={styles.deleteAction}>
