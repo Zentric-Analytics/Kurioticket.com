@@ -75,15 +75,16 @@ test("hotel utility colors match mobile web while saved and share states stay in
   assert.doesNotMatch(card, /<Heart[^>]*color=\{ui\.blue\}|<Share2[^>]*color=\{ui\.blue\}|fill=\{saved \? ui\.blue : "none"\}/s);
 });
 
-test("hotel location alone uses the exact web blue without changing typography", () => {
+test("hotel location uses compact dedicated native typography", () => {
   const location = card.slice(card.indexOf("<View style={s0.hotelLocation}>"), card.indexOf("{score == null"));
-  const locationTextStyle = source.slice(source.indexOf("  hotelLocationText:"), source.indexOf("\n", source.indexOf("  hotelLocationText:")));
+  const locationStyles = source.slice(source.indexOf("  hotelLocation:"), source.indexOf("  starsMeta:"));
 
   assert.equal(colors.blue, "#004BB8");
   assert.match(location, /<MapPin accessible=\{false\} size=\{14\} strokeWidth=\{2\} color=\{colors\.blue\} \/>/);
-  assert.match(location, /<Text numberOfLines=\{1\} style=\{\[s0\.sub, s0\.hotelLocationText\]\}>\{result\.location\}<\/Text>/);
-  assert.match(locationTextStyle, /color:\s*colors\.blue/);
-  assert.doesNotMatch(location, /color=\{ui\.muted\}|style=\{s0\.sub\}/);
+  assert.match(location, /<Text numberOfLines=\{1\} ellipsizeMode="tail" style=\{s0\.hotelLocationText\}>\{result\.location\}<\/Text>/);
+  assert.match(locationStyles, /hotelLocation:\s*\{[^}]*flexDirection:\s*"row"[^}]*alignItems:\s*"center"[^}]*gap:\s*4[^}]*minWidth:\s*0/s);
+  assert.match(locationStyles, /hotelLocationText:\s*\{[^}]*flexShrink:\s*1[^}]*minWidth:\s*0[^}]*color:\s*colors\.blue[^}]*fontSize:\s*12[^}]*lineHeight:\s*16[^}]*fontWeight:\s*"600"[^}]*fontFamily:\s*appFonts\.semibold/s);
+  assert.doesNotMatch(location, /s0\.sub|color=\{ui\.muted\}/);
 });
 
 test("hotel utility icons move inward without shrinking or overlapping touch targets", () => {
@@ -169,6 +170,31 @@ test("amenities use the shared semantic presentation and four neutral icon rows"
   assert.deepEqual(presented.map((item) => item.iconKey), ["pool", "fitness", "wifi", "breakfast", "restaurant", "generic"]);
   assert.equal(buildHotelAmenityPresentation(["Wi-Fi", "Free Wi-Fi"], 4).length, 1);
   assert.deepEqual(buildHotelAmenityPresentation(["Free cancellation", "Pay later"], 4), []);
+});
+
+test("amenities use readable compact native metadata typography", () => {
+  assert.match(amenities, /<Icon accessible=\{false\} size=\{14\} strokeWidth=\{1\.8\} color=\{ui\.muted\} \/>/);
+  assert.match(amenities, /list:\s*\{[^}]*gap:\s*3[^}]*\}/s);
+  assert.match(amenities, /item:\s*\{[^}]*flexDirection:\s*"row"[^}]*alignItems:\s*"center"[^}]*gap:\s*5[^}]*minWidth:\s*0[^}]*\}/s);
+  assert.match(amenities, /label:\s*\{[^}]*flexShrink:\s*1[^}]*minWidth:\s*0[^}]*color:\s*ui\.muted[^}]*fontSize:\s*11[^}]*lineHeight:\s*15[^}]*fontWeight:\s*"500"[^}]*fontFamily:\s*appFonts\.medium[^}]*\}/s);
+  assert.match(amenities, /import \{ appFonts \} from "\.\.\/\.\.\/theme\/typography"/);
+});
+
+test("hotel cards use a natural 260dp minimum and preserve bottom-aligned price rhythm", () => {
+  const cardStyle = source.match(/\n  hotelCard:\s*\{[^}]*\}/s)?.[0] ?? "";
+  const priceStyles = source.slice(source.indexOf("  hotelPrice:"), source.indexOf("\n", source.indexOf("  hotelDealButtonText:")));
+  const priceStyle = source.match(/\n  hotelPrice:\s*\{[^}]*\}/s)?.[0] ?? "";
+
+  assert.match(card, /<View style=\{s0\.hotelCard\}>/);
+  assert.match(cardStyle, /minHeight:\s*260/);
+  assert.doesNotMatch(cardStyle, /(?:^|[,\s])height:\s*260/);
+  assert.doesNotMatch(source, /hotelCardCompact|(?:minHeight|height):\s*292/);
+  assert.match(priceStyle, /marginTop:\s*"auto"/);
+  assert.match(priceStyle, /paddingTop:\s*8/);
+  assert.doesNotMatch(priceStyle, /marginTop:\s*-|translateY|position:\s*"absolute"|\bbottom:/);
+  assert.match(priceStyles, /hotelPerNight:\s*\{[^}]*marginTop:\s*1/s);
+  assert.match(priceStyles, /hotelDealButton:\s*\{[^}]*marginTop:\s*6/s);
+  assert.doesNotMatch(amenities, /position:\s*"absolute"|translateY/);
 });
 
 test("Hotel cards preserve truthful price and use View hotel", () => { assert.match(card,/const hasPrice = hasHotelPrice\(result\)/); assert.match(card,/"Price unavailable"/); assert.match(card,/`View hotel for/); assert.match(card,/>View hotel<\/Text>/); });
