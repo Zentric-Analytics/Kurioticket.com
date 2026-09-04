@@ -30,7 +30,7 @@ export function FlightSortSheet({
       title="Sort flights"
       closeLabel="Close sort options"
       onClose={onClose}
-      compactMenu={{ left: 96, width: 190 }}
+      compactMenu={{ width: 190 }}
     >
       <View accessibilityRole="radiogroup" style={styles.options}>
         {options.map((option) => {
