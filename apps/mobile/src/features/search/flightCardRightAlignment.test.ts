@@ -60,7 +60,8 @@ test("one-way cards omit return while preserving the fare-action alignment", () 
 
 test("long fares stay readable without changing details navigation or theme behavior", () => {
   assert.match(card, /\{fare\?\.formatted \?\? "—"\}/);
-  assert.match(card, /s0\.bigPrice[^>]*numberOfLines=\{1\}[^>]*adjustsFontSizeToFit[^>]*minimumFontScale=\{0\.65\}/);
+  assert.match(card, /s0\.bigPrice[^>]*numberOfLines=\{1\}/);
+  assert.doesNotMatch(card, /s0\.bigPrice[^>]*adjustsFontSizeToFit|s0\.bigPrice[^>]*minimumFontScale/);
   assert.match(card, /pathname: "\/flight-details"/);
   assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
   assert.match(card, /backgroundColor: theme\.surface/);
@@ -73,7 +74,8 @@ test("the coherent price column contains the only displayed fare and no CTA", ()
   assert.equal(card.match(/\{fare\?\.formatted \?\? "—"\}/g)?.length, 1);
   assert.match(fareRow, /\{fare\?\.formatted \?\? "—"\}/);
   assert.match(fareRow, /accessible=\{false\}/);
-  assert.match(fareRow, /s0\.bigPrice[^>]*numberOfLines=\{1\}[^>]*adjustsFontSizeToFit[^>]*minimumFontScale=\{0\.65\}/);
+  assert.match(fareRow, /s0\.bigPrice[^>]*numberOfLines=\{1\}/);
+  assert.doesNotMatch(fareRow, /s0\.bigPrice[^>]*adjustsFontSizeToFit|s0\.bigPrice[^>]*minimumFontScale/);
   assert.match(source, /bigPrice: \{[^}]*fontSize: 19, lineHeight: 24[^}]*fontWeight: "700"[^}]*textAlign: "right"/);
   assert.match(fareRow, /color: theme\.textPrimary/);
   assert.doesNotMatch(fareRow, /marginRight|position:/);
