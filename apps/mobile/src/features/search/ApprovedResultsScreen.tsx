@@ -1360,31 +1360,31 @@ function HotelCard({
       <View style={[s0.hotelCopy, compact && s0.hotelCopyCompact]}>
         <View style={s0.hotelTitleRow}>
           <Text numberOfLines={2} style={s0.hotelName}>{result.name}</Text>
-          <View style={s0.hotelActions}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={saved ? `Remove ${result.name} from saved` : `Save ${result.name}`}
-              accessibilityState={{ selected: saved }}
-              disabled={!hasPrice && !saved}
-              onPress={() => void canonical.toggleHotel(result, params)}
-              style={[s0.hotelAction, s0.hotelSaveAction]}
-            >
-              <Heart
-                accessible={false}
-                size={20}
-                color={saved ? HOTEL_SAVED_HEART_COLOR : HOTEL_UTILITY_ICON_COLOR}
-                fill={saved ? HOTEL_SAVED_HEART_COLOR : "none"}
-              />
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Share ${result.name}`}
-              onPress={shareHotel}
-              style={[s0.hotelAction, s0.hotelShareAction]}
-            >
-              <Share2 accessible={false} size={20} color={HOTEL_UTILITY_ICON_COLOR} />
-            </Pressable>
-          </View>
+        </View>
+        <View style={[s0.hotelActions, compact && s0.hotelActionsCompact]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={saved ? `Remove ${result.name} from saved` : `Save ${result.name}`}
+            accessibilityState={{ selected: saved }}
+            disabled={!hasPrice && !saved}
+            onPress={() => void canonical.toggleHotel(result, params)}
+            style={[s0.hotelAction, s0.hotelSaveAction]}
+          >
+            <Heart
+              accessible={false}
+              size={20}
+              color={saved ? HOTEL_SAVED_HEART_COLOR : HOTEL_UTILITY_ICON_COLOR}
+              fill={saved ? HOTEL_SAVED_HEART_COLOR : "none"}
+            />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Share ${result.name}`}
+            onPress={shareHotel}
+            style={[s0.hotelAction, s0.hotelShareAction]}
+          >
+            <Share2 accessible={false} size={20} color={HOTEL_UTILITY_ICON_COLOR} />
+          </Pressable>
         </View>
         {showCheapestBadge && hasPrice ? (
           <View style={s0.hotelBadge}><Badge green>Cheapest</Badge></View>
@@ -1795,10 +1795,11 @@ const s0 = StyleSheet.create({
   overlay: { position: "absolute", bottom: 10, left: 10, backgroundColor: "rgba(0,0,0,.72)", padding: 6, borderRadius: 5 },
   overlayText: { color: "white", fontSize: 10, fontWeight: "700" },
   hotelBadge: { alignSelf: "flex-start" },
-  hotelCopy: { flex: 1, minWidth: 0, padding: 12, gap: 4 },
+  hotelCopy: { position: "relative", flex: 1, minWidth: 0, padding: 12, gap: 4 },
   hotelCopyCompact: { padding: 10 },
-  hotelTitleRow: { flexDirection: "row", alignItems: "flex-start", minWidth: 0 },
-  hotelActions: { flexDirection: "row", flexShrink: 0, gap: 0, marginRight: -8, marginTop: -8 },
+  hotelTitleRow: { minWidth: 0, paddingRight: 80 },
+  hotelActions: { position: "absolute", zIndex: 2, top: 4, right: 4, flexDirection: "row", flexShrink: 0, gap: 0 },
+  hotelActionsCompact: { top: 2, right: 2 },
   hotelAction: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   hotelSaveAction: { alignItems: "flex-end", paddingRight: 4 },
   hotelShareAction: { alignItems: "flex-start", paddingLeft: 4 },

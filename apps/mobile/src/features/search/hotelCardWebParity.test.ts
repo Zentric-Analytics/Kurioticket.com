@@ -99,6 +99,41 @@ test("hotel utility icons move inward without shrinking or overlapping touch tar
   assert.match(card, /style=\{\[s0\.hotelAction, s0\.hotelShareAction\]\}/);
 });
 
+test("Hotel utility actions leave title flow while retaining full parent-owned hit targets", () => {
+  const copyStart = card.indexOf('<View style={[s0.hotelCopy, compact && s0.hotelCopyCompact]}>');
+  const cheapestStart = card.indexOf("{showCheapestBadge && hasPrice", copyStart);
+  const copyHeading = card.slice(copyStart, cheapestStart);
+  const titleStart = copyHeading.indexOf('<View style={s0.hotelTitleRow}>');
+  const titleEnd = copyHeading.indexOf("</View>", titleStart) + "</View>".length;
+  const titleRow = copyHeading.slice(titleStart, titleEnd);
+  const actionsStart = copyHeading.indexOf('<View style={[s0.hotelActions, compact && s0.hotelActionsCompact]}>');
+
+  assert.ok(copyStart >= 0 && cheapestStart > copyStart);
+  assert.ok(titleStart >= 0 && titleEnd > titleStart);
+  assert.match(titleRow, /<Text numberOfLines=\{2\} style=\{s0\.hotelName\}>\{result\.name\}<\/Text>/);
+  assert.doesNotMatch(titleRow, /hotelActions|<Pressable/);
+  assert.ok(actionsStart > titleEnd, "actions must be a sibling after the closed title row");
+  assert.ok(actionsStart < cheapestStart, "actions must precede Cheapest and star metadata");
+
+  const copyStyles = source.slice(source.indexOf("  hotelCopy:"), source.indexOf("  hotelAction:"));
+  assert.match(copyStyles, /hotelCopy:\s*\{[^}]*position:\s*"relative"[^}]*flex:\s*1[^}]*minWidth:\s*0[^}]*padding:\s*12[^}]*gap:\s*4/s);
+  assert.match(copyStyles, /hotelCopyCompact:\s*\{[^}]*padding:\s*10/s);
+  assert.match(copyStyles, /hotelTitleRow:\s*\{[^}]*minWidth:\s*0[^}]*paddingRight:\s*80/s);
+  assert.doesNotMatch(copyStyles.match(/hotelTitleRow:\s*\{[^}]*\}/s)?.[0] ?? "", /\b(?:height|minHeight):\s*44|paddingBottom:\s*(?:20|24)/);
+  assert.match(copyStyles, /hotelActions:\s*\{[^}]*position:\s*"absolute"[^}]*zIndex:\s*2[^}]*top:\s*4[^}]*right:\s*4[^}]*flexDirection:\s*"row"/s);
+  assert.match(copyStyles, /hotelActionsCompact:\s*\{[^}]*top:\s*2[^}]*right:\s*2/s);
+  const actionsStyle = copyStyles.match(/hotelActions:\s*\{[^}]*\}/s)?.[0] ?? "";
+  assert.doesNotMatch(actionsStyle, /marginTop|marginRight/);
+});
+
+test("Hotel spacing has no star or Cheapest position compensation", () => {
+  const starsStyle = source.match(/\n  stars:\s*\{[^}]*\}/s)?.[0] ?? "";
+  const badgeStyle = source.match(/\n  hotelBadge:\s*\{[^}]*\}/s)?.[0] ?? "";
+
+  assert.doesNotMatch(starsStyle, /marginTop:\s*-|translateY|\btop:|position:\s*"absolute"/);
+  assert.doesNotMatch(badgeStyle, /marginTop:\s*-|translateY|\btop:|position:\s*"absolute"/);
+});
+
 test("hotel title matches mobile web typography without compromising actions", () => {
   const hotelNameStyle = source.slice(source.indexOf("  hotelName: {"), source.indexOf("  stars:"));
   assert.match(card, /<Text numberOfLines=\{2\} style=\{s0\.hotelName\}>/);
