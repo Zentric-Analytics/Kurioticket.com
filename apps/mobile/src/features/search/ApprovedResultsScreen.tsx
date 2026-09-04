@@ -141,7 +141,7 @@ import {
   matchingFlightPriceAlert,
   parseTargetPrice,
 } from "../flow/flightPriceAlertModel";
-import { buildHotelPriceAlertPayload, hotelAlertPresentation } from "../flow/hotelPriceAlertModel";
+import { buildHotelPriceAlertPayload, hotelAlertPresentation, matchingHotelPriceAlert } from "../flow/hotelPriceAlertModel";
 import type { SearchPlan } from "../flow/travelSearchModel";
 import { FlightResultsState } from "./FlightResultsState";
 import { resolveFlightResultsState } from "./flightResultsStateModel";
@@ -1675,7 +1675,6 @@ function HotelResultsSummaryRow({ count, range, plan, results, priceAlertsAvaila
 function PriceAlert({ product, plan, results, hotelResults, available = true, compact = false }: { product: Product; plan?: SearchPlan; results?: FlightResult[]; hotelResults?: HotelResult[]; available?: boolean; compact?: boolean }) {
   const { theme } = useAppTheme();
   const { locale, t } = useMobileLocalization();
-  const flightCopy = flightResultsCopy(locale);
   const message = useCallback((key: Parameters<typeof travelAccountMessage>[1]) => travelAccountMessage(locale, key), [locale]);
   const flight = product === "flight";
   const presentation = useMemo(() => flightAlertPresentation(product, Boolean(plan), results || []), [plan?.key, product, results]);
@@ -1683,7 +1682,8 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   const activePresentation = flight ? presentation : hotelPresentation;
   const currency = activePresentation.currencies[0] || "";
   const [matchingAlert, setMatchingAlert] = useState<MobilePriceAlert | undefined>();
-  const [loadingAlert, setLoadingAlert] = useState(flight);
+  const [loadingAlert, setLoadingAlert] = useState(product === "flight" || product === "hotel");
+  const reconciliationRef = useRef(0);
   const [pending, setPending] = useState(false);
   const pendingRef = useRef(false);
   const [targetOpen, setTargetOpen] = useState(false);
@@ -1693,15 +1693,22 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   const unavailable = !activePresentation.enabled || (!available && !isTracking);
   const requireSignIn = useCallback(() => Alert.alert(message("signInRequired"), message("signInAlertBody"), [{ text: t("signIn"), onPress: () => router.push(signInHref("/(tabs)/profile")) }, { text: t("cancel"), style: "cancel" }]), [message, t]);
   const reconcile = useCallback(async () => {
-    if (!flight || !plan) return;
+    if (!plan || (product !== "flight" && product !== "hotel")) return;
+    const reconciliation = ++reconciliationRef.current;
     setLoadingAlert(true);
+    if (!flight) setMatchingAlert(undefined);
     try {
-      if (!await readSession().catch(() => null)) { setMatchingAlert(undefined); return; }
+      if (!await readSession().catch(() => null)) {
+        if (reconciliation === reconciliationRef.current) setMatchingAlert(undefined);
+        return;
+      }
       const alerts = (await travelApi.priceAlerts()).alerts;
-      setMatchingAlert(matchingFlightPriceAlert(alerts, plan));
+      if (reconciliation === reconciliationRef.current) setMatchingAlert(flight ? matchingFlightPriceAlert(alerts, plan) : matchingHotelPriceAlert(alerts, plan));
     } catch (error) {
-      if (error instanceof TravelApiError && error.status === 401) setMatchingAlert(undefined);
-    } finally { setLoadingAlert(false); }
+      if (reconciliation === reconciliationRef.current && error instanceof TravelApiError && error.status === 401) setMatchingAlert(undefined);
+    } finally {
+      if (reconciliation === reconciliationRef.current) setLoadingAlert(false);
+    }
   }, [flight, plan?.key, product]);
   useFocusEffect(useCallback(() => { void reconcile(); }, [reconcile]));
   const handleToggle = async (next: boolean) => {
@@ -1713,14 +1720,14 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
       if (!matchingAlert) { setTargetError(""); setTargetOpen(true); return; }
       pendingRef.current = true; setPending(true);
       try { setMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id, "ACTIVE")).alert); }
-      catch (error) { if (error instanceof TravelApiError && error.status === 401) requireSignIn(); else Alert.alert("Unable to track prices", error instanceof TravelApiError ? error.message : "Please try again."); }
+      catch (error) { if (error instanceof TravelApiError && error.status === 401) { if (!flight) setMatchingAlert(undefined); requireSignIn(); } else Alert.alert("Unable to track prices", error instanceof TravelApiError ? error.message : "Please try again."); }
       finally { pendingRef.current = false; setPending(false); }
       return;
     }
     if (!isTracking || !matchingAlert) return;
     pendingRef.current = true; setPending(true);
     try { setMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id, "PAUSED")).alert); }
-    catch (error) { if (error instanceof TravelApiError && error.status === 401) requireSignIn(); else Alert.alert("Unable to pause price tracking", error instanceof TravelApiError ? error.message : "Please try again."); }
+    catch (error) { if (error instanceof TravelApiError && error.status === 401) { if (!flight) setMatchingAlert(undefined); requireSignIn(); } else Alert.alert("Unable to pause price tracking", error instanceof TravelApiError ? error.message : "Please try again."); }
     finally { pendingRef.current = false; setPending(false); }
   };
   const createAlert = async () => {
@@ -1735,7 +1742,7 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
       setMatchingAlert(created.alert); setTargetOpen(false); setTargetDraft("");
     } catch (error) {
       if (error instanceof TravelApiError && error.status === 401) { setTargetOpen(false); requireSignIn(); }
-      else if (error instanceof TravelApiError && error.status === 409) { if (flight) await reconcile(); setTargetError("An alert for this search already exists."); }
+      else if (error instanceof TravelApiError && error.status === 409) { await reconcile(); setTargetError("An alert for this search already exists."); }
       else setTargetError(error instanceof TravelApiError ? error.message : "Unable to create price alert. Try again.");
     } finally { pendingRef.current = false; setPending(false); }
   };
@@ -1745,10 +1752,8 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   }
   if (product !== "hotel" || !plan) return null;
   if (!activePresentation.enabled) return null;
-  const hotelTracking = Boolean(matchingAlert);
-  const hotelActionLabel = hotelTracking ? `✓ ${flightCopy.tracking}` : flightCopy.trackAction;
-  const hotelActionDisabled = pending || unavailable || hotelTracking;
-  return <View accessibilityLabel={message("hotelAlertTitle")} style={[s0.flightAlertCompact, { backgroundColor: theme.surface, borderColor: theme.priceAlertBorder }]}><Bell accessible={false} size={17} strokeWidth={2} color={theme.dark ? "#8FB5FF" : ui.blue}/><View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightAlertCompactTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={hotelTracking ? "Hotel price alert saved" : "Create hotel price alert"} accessibilityState={{ selected: hotelTracking, disabled: hotelActionDisabled, busy: pending }} disabled={hotelActionDisabled} onPress={async()=>{if(!await readSession().catch(()=>null)){requireSignIn();return;}setTargetError("");setTargetOpen(true);}} style={({ pressed }) => [s0.flightAlertAction,{ backgroundColor: hotelTracking ? theme.dark ? "#173568" : "#EEF4FF" : theme.surface, borderColor: hotelTracking ? theme.switchTrackActive : theme.priceAlertBorder },pressed && s0.flightAlertActionPressed]}>{pending ? <ActivityIndicator size="small" color={theme.dark ? "#8FB5FF" : ui.blue}/> : <Text numberOfLines={1} style={[s0.flightAlertActionText,{ color: theme.dark ? "#8FB5FF" : ui.blue }]}>{hotelActionLabel}</Text>}</Pressable><Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel={message("hotelAlertTitle")}><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>{message("targetTotal")} ({currency})</Text><TextInput autoFocus accessibilityLabel={`${message("targetTotal")} ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text> : null}<Button label={pending ? message("creating") : message("createAlert")} onPress={() => void createAlert()} /><Button label={t("cancel")} outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal></View>;
+  const toggleDisabled = pending || loadingAlert || unavailable;
+  return <View accessibilityLabel={message("hotelAlertTitle")} style={[s0.flightAlertCompact, { backgroundColor: theme.surface, borderColor: theme.priceAlertBorder }]}><Bell accessible={false} size={17} strokeWidth={2} color={theme.dark ? "#8FB5FF" : ui.blue}/><View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightAlertCompactTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text></View><View style={s0.flightAlertSwitchSlot}>{toggleDisabled && (pending || loadingAlert) ? <ActivityIndicator accessible={false} size="small" color={theme.dark ? "#8FB5FF" : ui.blue}/> : null}<Switch accessibilityRole="switch" accessibilityLabel="Track this stay price" accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending || loadingAlert }} disabled={toggleDisabled} value={isTracking} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"} ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}/></View><Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel={message("hotelAlertTitle")}><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>{message("targetTotal")} ({currency})</Text><TextInput autoFocus accessibilityLabel={`${message("targetTotal")} ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text> : null}<Button label={pending ? message("creating") : message("createAlert")} onPress={() => void createAlert()} /><Button label={t("cancel")} outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal></View>;
 }
 export function BottomNav({ flightResults = false }: { flightResults?: boolean } = {}) {
   const { theme } = useAppTheme();
@@ -2004,9 +2009,6 @@ const s0 = StyleSheet.create({
   flightAlertCompactTitle: { fontSize: 12.5, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold },
   flightAlertTitle: { fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
   flightAlertSubtitle: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
-  flightAlertAction: { minWidth: 92, height: 38, flexShrink: 0, borderWidth: 1, borderRadius: 19, paddingHorizontal: 12, alignItems: "center", justifyContent: "center" },
-  flightAlertActionPressed: { opacity: 0.62 },
-  flightAlertActionText: { fontSize: 12, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold },
   flightAlertSwitchSlot: { minWidth: 51, minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 },
   alertModalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,.45)" },
   alertSheet: { padding: 20, gap: 12, borderTopWidth: 1, borderTopLeftRadius: 18, borderTopRightRadius: 18 },

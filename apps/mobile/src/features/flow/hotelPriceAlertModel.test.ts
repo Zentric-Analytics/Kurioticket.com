@@ -18,3 +18,10 @@ test("Hotel alert reconciliation is bound to the complete search identity", () =
   assert.equal(matchingHotelPriceAlert([alert as never], plan), alert);
   assert.equal(matchingHotelPriceAlert([{ ...alert, query: { ...plan.payload, rooms: 2 } } as never], plan), undefined);
 });
+
+test("Hotel alert reconciliation prefers ACTIVE but retains a PAUSED match for resuming", () => {
+  const paused = { id: "paused", type: "HOTEL", status: "PAUSED", query: plan.payload };
+  const active = { id: "active", type: "HOTEL", status: "ACTIVE", query: plan.payload };
+  assert.equal(matchingHotelPriceAlert([paused as never], plan), paused);
+  assert.equal(matchingHotelPriceAlert([paused as never, active as never], plan), active);
+});
