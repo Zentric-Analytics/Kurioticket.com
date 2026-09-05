@@ -1,127 +1,59 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ChevronDown } from "lucide-react-native";
 import type { FlightResult } from "../../api/travelApi";
 import { useAppTheme } from "../../theme/AppTheme";
+import { appFonts } from "../../theme/typography";
 import { formatCurrency } from "../currency/displayCurrency";
 import { FlightRangeSlider } from "./FlightRangeSlider";
-import { Button, ui } from "./SearchUi";
-import {
-  activeFlightFilterCount,
-  emptyFlightFilters,
-  flightFilterInsight,
-  flightTimeMinutes,
-  isPriceFilteringAvailable,
-  journeyKey,
-  matchingFlightCount,
-  withAirlinePreview,
-  withAirportPreview,
-  withStopsPreview,
-  type FlightFilterInsight,
-  type FlightFilterOptions,
-  type FlightFilters,
-  type NumericRange,
-  type StopBucket,
-} from "./flightFilters";
-import { clampNumericRange, priceRangeStep } from "./flightRange";
-import { FlightResultsSheetShell, type FlightResultsCompactMenuFrame } from "./FlightResultsSheetShell";
+import { ui } from "./SearchUi";
+import { activeFlightFilterCount,emptyFlightFilters,flightFilterInsight,flightTimeMinutes,isPriceFilteringAvailable,journeyKey,matchingFlightCount,withAirlinePreview,withAirportPreview,withStopsPreview,type FlightFilterInsight,type FlightFilterOptions,type FlightFilters,type NumericRange,type StopBucket } from "./flightFilters";
+import { clampNumericRange,priceRangeStep } from "./flightRange";
+import { FlightResultsSheetShell } from "./FlightResultsSheetShell";
 
-export type FlightFilterSectionName = "all" | "stops" | "airlines" | "airports";
+export type FlightFilterSectionName="all"|"stops"|"airlines"|"airports";
 export const formatFlightTime=(minutes:number)=>{const value=Math.max(0,Math.min(1439,Math.round(minutes))),hours=Math.floor(value/60),mins=value%60,suffix=hours>=12?"PM":"AM",clock=hours%12||12;return `${clock}:${String(mins).padStart(2,"0")} ${suffix}`};
 export const formatFlightDuration=(v:number)=>{const n=Math.max(0,Math.round(v)),h=Math.floor(n/60),m=n%60;return h?(m?`${h}h ${m}m`:`${h}h`):`${m}m`};
-export const formatFlightFilterInsight=(insight:FlightFilterInsight,currency:string)=>insight.count===0?"No matching flights":`${insight.lowestPrice==null?"":`From ${formatCurrency(insight.lowestPrice,currency)} · `}${insight.count} ${insight.count===1?"flight":"flights"}`;
-
-export function FlightFilterSection({title,actions,children,compact=false}:{title:string;actions?:React.ReactNode;children:React.ReactNode;compact?:boolean}){
- const {theme}=useAppTheme();
- return <View style={[s.section,compact&&s.compactSection]}><View style={[s.sectionHead,compact&&s.compactSectionHead]}><Text style={[s.sectionTitle,compact&&s.compactSectionTitle,{color:theme.textPrimary}]}>{title}</Text>{actions}</View>{children}</View>;
-}
-
+export const formatFlightFilterInsight=(insight:FlightFilterInsight,currency:string)=>insight.count===0?"No matching flights":`${insight.count} ${insight.count===1?"flight":"flights"}${insight.lowestPrice==null?"":` · From ${formatCurrency(insight.lowestPrice,currency)}`}`;
+const stopRows=[{v:"nonstop",l:"Nonstop"},{v:"one",l:"1 stop"},{v:"twoPlus",l:"2+ stops"}] as const;
 type Props={visible:boolean;section:FlightFilterSectionName;filters:FlightFilters;options:FlightFilterOptions;results:readonly FlightResult[];priceValue?:(r:FlightResult)=>number|null;currency:string;priceFilteringReady:boolean;onChange:(f:FlightFilters)=>void;onClose:()=>void;onComplete:()=>void};
 
 export function FlightFilterSheet({visible,section,filters,options,results,priceValue,currency,priceFilteringReady,onChange,onClose,onComplete}:Props){
- const {theme}=useAppTheme();const [dragging,setDragging]=useState(false),[tab,setTab]=useState(0),[timeMode,setTimeMode]=useState<"departure"|"arrival">("departure");
- useEffect(()=>{if(visible){setDragging(false);setTab(0);setTimeMode("departure")}},[visible]);
- const count=useMemo(()=>matchingFlightCount(results,filters,priceValue),[results,filters,priceValue]);
+ const {theme}=useAppTheme(),full=section==="all";
+ const [dragging,setDragging]=useState(false),[tab,setTab]=useState(0),[timeMode,setTimeMode]=useState<"departure"|"arrival">("departure"),[draft,setDraft]=useState(filters),[airlineSearch,setAirlineSearch]=useState(""),[showAllAirlines,setShowAllAirlines]=useState(false),[airportsOpen,setAirportsOpen]=useState(false),[fareOpen,setFareOpen]=useState(false);
+ useEffect(()=>{if(visible){setDragging(false);setTab(0);setTimeMode("departure");setDraft(filters);setAirlineSearch("");setShowAllAirlines(false)}},[visible]);
+ const working=full?filters:draft,update=(next:FlightFilters)=>full?onChange(next):setDraft(next);
+ const count=useMemo(()=>matchingFlightCount(results,working,priceValue),[results,working,priceValue]);
  const legs=useMemo(()=>{const sample=results.find(r=>r.legs?.length),structured=sample?.legs?.filter(l=>["outbound","return","leg"].includes(l.direction))??[],first=results[0];return structured.length?structured:(first?[{direction:"outbound" as const,originAirport:first.originAirport,destinationAirport:first.destinationAirport,departureTime:first.departureTime,arrivalTime:first.arrivalTime,duration:first.duration,durationMinutes:first.durationMinutes,stops:first.stops,layovers:first.layovers,segments:[]}]:[])},[results]);
  const leg=legs[tab],key=leg?journeyKey(leg,tab):"outbound";
  const timeBounds=useMemo(()=>{const values:{departure:number[];arrival:number[]}={departure:[],arrival:[]};for(const result of results){const candidates=result.legs?.filter(l=>["outbound","return","leg"].includes(l.direction))??[];const candidate=candidates.find((l,i)=>journeyKey(l,i)===key)??(key==="outbound"?result:undefined);if(!candidate)continue;const departure=flightTimeMinutes(candidate.departureTime),arrival=flightTimeMinutes(candidate.arrivalTime);if(departure!=null)values.departure.push(departure);if(arrival!=null)values.arrival.push(arrival)}const range=(v:number[])=>v.length?{min:Math.min(...v),max:Math.max(...v)}:null;return {departure:range(values.departure),arrival:range(values.arrival)}},[results,key]);
- const selectedTime=filters.journeyTimeMaximums?.[key]?.[timeMode]??timeBounds[timeMode]?.max??null;
- const full=section==="all";
- const compactFrame:FlightResultsCompactMenuFrame|undefined=full?undefined:section==="airlines"?{width:244}:section==="stops"?{width:220}:{width:268};
- const toggle=(field:"airlines"|"fromAirports"|"toAirports",value:string)=>onChange({...filters,[field]:filters[field].includes(value)?filters[field].filter(v=>v!==value):[...filters[field],value]});
- const toggleStop=(value:StopBucket)=>{const selected=filters.stops??[];onChange({...filters,maxStops:null,stops:selected.includes(value)?selected.filter(v=>v!==value):[...selected,value]})};
- const slider=(field:"maximumPrice"|"maximumDuration",range:NumericRange,label:string,format:(v:number)=>string,step:number)=>{const selected=clampNumericRange({min:range.min,max:filters[field]??range.max},range);return <><Text style={[s.value,{color:theme.textPrimary}]}>{field==="maximumPrice"?`Up to ${format(selected.max)}`:format(selected.max)}</Text><FlightRangeSlider available={range} selected={selected} step={step} singleMaximum accessibilityLabel={label} formatValue={format} onDragStateChange={setDragging} onChange={v=>onChange({...filters,[field]:v.max})}/></>};
+ const selectedTime=working.journeyTimeMaximums?.[key]?.[timeMode]??timeBounds[timeMode]?.max??null;
+ const toggle=(field:"airlines"|"fromAirports"|"toAirports",value:string)=>update({...working,[field]:working[field].includes(value)?working[field].filter(v=>v!==value):[...working[field],value]});
+ const toggleStop=(value:StopBucket)=>update({...working,maxStops:null,stops:working.stops.includes(value)?working.stops.filter(v=>v!==value):[...working.stops,value]});
  const insightPriceValue=priceFilteringReady?priceValue:undefined,insightCurrency=options.priceCurrency??currency;
- const insights=useMemo(()=>{const get=(candidate:FlightFilters)=>formatFlightFilterInsight(flightFilterInsight(results,candidate,insightPriceValue),insightCurrency);return {
-  stops:new Map<StopBucket,string>((["nonstop","one","twoPlus"] as const).map(value=>[value,get(withStopsPreview(filters,value))])),
-  airlines:new Map(options.airlines.map(name=>[name,get(withAirlinePreview(filters,name))])),
-  fromAirports:new Map(options.fromAirports.map(airport=>[airport,get(withAirportPreview(filters,"fromAirports",airport))])),
-  toAirports:new Map(options.toAirports.map(airport=>[airport,get(withAirportPreview(filters,"toAirports",airport))])),
-  baggage:get({...filters,baggageIncluded:true}),refundable:get({...filters,refundable:true})
- }},[results,filters,insightPriceValue,insightCurrency,options.airlines,options.fromAirports,options.toAirports,legs]);
- const close=()=>{setDragging(false);onClose()};
- const row=(field:"fromAirports"|"toAirports",v:string)=><Check key={field+v} label={v} detail={insights[field].get(v)} selected={filters[field].includes(v)} compact={!full} onPress={()=>toggle(field,v)}/>;
- const title=section==="airlines"?"Airlines":section==="stops"?"Stops":section==="airports"?"Airports":"Filter flights";
- const activeCount=activeFlightFilterCount(filters,options);
-
- return <FlightResultsSheetShell
-  visible={visible}
-  title={full?"Filters":title}
-  subtitle={full&&activeCount?`${activeCount} applied`:undefined}
-  fullScreen={full}
-  compactMenu={compactFrame}
-  closeLabel="Close flight filters"
-  onClose={close}
-  footer={full?<View style={s.footerActions}>{activeCount>0?<Pressable accessibilityRole="button" accessibilityLabel="Clear all flight filters" onPress={()=>onChange(emptyFlightFilters())} style={s.footerClear}><Text style={s.footerClearText}>Clear all</Text></Pressable>:null}<View style={s.footerPrimary}><Button label={`${count} ${count===1?"result":"results"} found`} flightResults onPress={()=>{setDragging(false);onComplete()}}/></View></View>:undefined}
- >
- <ScrollView style={s.scroll} scrollEnabled={!dragging} contentContainerStyle={full?s.content:s.compactContent} showsVerticalScrollIndicator={false}>
- {full&&isPriceFilteringAvailable(options,priceFilteringReady)&&<FlightFilterSection title="Price">{slider("maximumPrice",options.price!,"Maximum price",v=>formatCurrency(v,options.priceCurrency??currency),priceRangeStep(options.price!.min,options.price!.max))}</FlightFilterSection>}
- {full&&legs.length>0&&<FlightFilterSection title="Flight times">{legs.length>1&&<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.tabs}>{legs.map((l,i)=><Text accessibilityRole="tab" key={journeyKey(l,i)} onPress={()=>setTab(i)} style={[s.tab,{color:tab===i?ui.blue:theme.textSecondary,borderBottomColor:tab===i?ui.blue:"transparent"}]}>{l.direction==="outbound"?"Departing flight":l.direction==="return"?"Return flight":`Flight ${(l.legIndex??i)+1}`}</Text>)}</ScrollView>}<View style={[s.timeSwitch,{backgroundColor:theme.dark?theme.background:"#F1F5F9"}]}>{(["departure","arrival"] as const).map(mode=><Pressable key={mode} onPress={()=>setTimeMode(mode)} style={[s.timeSwitchButton,timeMode===mode&&{backgroundColor:theme.surface}]}><Text style={[s.timeSwitchText,{color:timeMode===mode?ui.blue:theme.textSecondary}]}>{mode==="departure"?"Takeoff":"Landing"}</Text></Pressable>)}</View>{timeBounds[timeMode]?<View><View style={s.timeLabel}><Text style={[s.control,{color:theme.textSecondary}]}>{timeMode==="departure"?`Takeoff time from ${leg.originAirport}`:`Landing time at ${leg.destinationAirport}`}</Text><Text style={[s.value,{color:theme.textPrimary}]}>{formatFlightTime(selectedTime ?? timeBounds[timeMode]!.max)}</Text></View><FlightRangeSlider available={timeBounds[timeMode]!} selected={{min:timeBounds[timeMode]!.min,max:selectedTime!}} step={15} singleMaximum accessibilityLabel={timeMode==="departure"?"Takeoff":"Landing"} formatValue={formatFlightTime} onDragStateChange={setDragging} onChange={value=>{const current=filters.journeyTimeMaximums?.[key]??{departure:null,arrival:null};onChange({...filters,journeyTimeMaximums:{...(filters.journeyTimeMaximums??{}),[key]:{...current,[timeMode]:value.max===timeBounds[timeMode]!.max?null:value.max}}})}}/></View>:null}</FlightFilterSection>}
- {full&&options.duration&&<FlightFilterSection title="Duration"><View><Text style={[s.control,{color:theme.textPrimary}]}>Maximum travel time</Text>{slider("maximumDuration",options.duration,"Maximum travel time",formatFlightDuration,5)}</View></FlightFilterSection>}
- {(full||section==="stops")&&<FlightFilterSection title="Stops" compact={!full}>{([{v:"nonstop",l:"Nonstop"},{v:"one",l:"1 stop"},{v:"twoPlus",l:"2+ stops"}] as const).map(x=><Check key={x.v} label={x.l} detail={insights.stops.get(x.v)} selected={filters.stops?.includes(x.v)??false} compact={!full} onPress={()=>toggleStop(x.v)}/>)}</FlightFilterSection>}
- {(full||section==="airlines")&&<FlightFilterSection title="Airlines" compact={!full}>{options.airlines.map(name=><Check key={name} label={name} detail={insights.airlines.get(name)} selected={filters.airlines.includes(name)} compact={!full} onPress={()=>toggle("airlines",name)}/>)}</FlightFilterSection>}
- {(full||section==="airports")&&(options.fromAirports.length>0||options.toAirports.length>0)&&<FlightFilterSection title="Airports" compact={!full}>{options.fromAirports.length>0&&<><Text style={[s.subhead,compactFrame&&s.compactSubhead,{color:theme.textPrimary}]}>From</Text>{options.fromAirports.map(v=>row("fromAirports",v))}</>}{options.toAirports.length>0&&<><Text style={[s.subhead,compactFrame&&s.compactSubhead,{color:theme.textPrimary}]}>To</Text>{options.toAirports.map(v=>row("toAirports",v))}</>}</FlightFilterSection>}
- {full&&(options.baggage||options.refundable)&&<FlightFilterSection title="Amenities">{options.baggage&&<Check label="Baggage included" detail={insights.baggage} selected={filters.baggageIncluded} onPress={()=>onChange({...filters,baggageIncluded:!filters.baggageIncluded})}/>} {options.refundable&&<Check label="Flexible / refundable" detail={insights.refundable} selected={filters.refundable} onPress={()=>onChange({...filters,refundable:!filters.refundable})}/>}</FlightFilterSection>}
- </ScrollView>
+ const insights=useMemo(()=>{const get=(candidate:FlightFilters)=>formatFlightFilterInsight(flightFilterInsight(results,candidate,insightPriceValue),insightCurrency);return {stops:new Map<StopBucket,string>(stopRows.map(x=>[x.v,get(withStopsPreview(working,x.v))])),airlines:new Map(options.airlines.map(name=>[name,get(withAirlinePreview(working,name))])),fromAirports:new Map(options.fromAirports.map(a=>[a,get(withAirportPreview(working,"fromAirports",a))])),toAirports:new Map(options.toAirports.map(a=>[a,get(withAirportPreview(working,"toAirports",a))])),baggage:get({...working,baggageIncluded:true}),refundable:get({...working,refundable:true})}},[results,working,insightPriceValue,insightCurrency,options.airlines,options.fromAirports,options.toAirports]);
+ const filteredAirlines=options.airlines.filter(name=>!airlineSearch.trim()||name.toLowerCase().includes(airlineSearch.trim().toLowerCase())||working.airlines.includes(name));
+ const visibleAirlines=airlineSearch.trim()||showAllAirlines?filteredAirlines:filteredAirlines.slice(0,5);
+ const activeCount=activeFlightFilterCount(working,options),title=section==="airlines"?"Airlines":section==="stops"?"Stops":section==="airports"?"Airports":"Filters",subtitle=full?(activeCount?`${activeCount} applied`:"All flights shown"):section==="airlines"?"Choose one or more airlines":section==="stops"?"Choose allowed stop counts":"Choose departure or arrival airports";
+ const resetQuick=()=>setDraft(section==="airlines"?{...working,airlines:[]}:section==="stops"?{...working,maxStops:null,stops:[]}:{...working,fromAirports:[],toAirports:[]});
+ const quickFooter=<View style={s.actions}><Pressable accessibilityRole="button" onPress={resetQuick} style={[s.reset,{borderColor:theme.border}]}><Text style={[s.buttonText,{color:theme.textPrimary}]}>Reset</Text></Pressable><Pressable accessibilityRole="button" onPress={()=>{onChange(draft);onClose()}} style={s.apply}><Text style={[s.buttonText,{color:"white"}]}>Apply</Text></Pressable></View>;
+ const fullFooter=<View style={s.actions}><Pressable accessibilityRole="button" disabled={activeCount===0} onPress={()=>onChange(emptyFlightFilters())} style={[s.reset,{borderColor:theme.border,opacity:activeCount?1:.45}]}><Text style={[s.buttonText,{color:theme.textPrimary}]}>Reset</Text></Pressable><Pressable accessibilityRole="button" disabled={count===0} onPress={()=>{setDragging(false);onComplete()}} style={[s.apply,count===0&&s.disabled]}><Text style={[s.buttonText,{color:"white"}]}>{count===0?"No matching flights":`View ${count} ${count===1?"flight":"flights"}`}</Text></Pressable></View>;
+ const headerAction=full&&activeCount?<Pressable accessibilityRole="button" accessibilityLabel="Clear all flight filters" onPress={()=>onChange(emptyFlightFilters())} style={s.clear}><Text style={s.clearText}>Clear all</Text></Pressable>:undefined;
+ const slider=(field:"maximumPrice"|"maximumDuration",range:NumericRange,label:string,format:(v:number)=>string,step:number)=>{const selected=clampNumericRange({min:range.min,max:working[field]??range.max},range);return <><View style={s.endpoints}><Text style={[s.endpoint,{color:theme.textSecondary}]}>{format(range.min)}</Text><Text style={[s.endpoint,{color:theme.textSecondary}]}>{format(range.max)}</Text></View><FlightRangeSlider available={range} selected={selected} step={step} singleMaximum accessibilityLabel={label} formatValue={format} onDragStateChange={setDragging} onChange={v=>update({...working,[field]:v.max===range.max?null:v.max})}/><Text style={[s.selection,{color:theme.textPrimary}]}>{field==="maximumPrice"?`Up to ${format(selected.max)}`:`Up to ${format(selected.max)}`}</Text></>};
+ const row=(field:"fromAirports"|"toAirports",v:string)=><Check key={field+v} label={v} detail={insights[field].get(v)} selected={working[field].includes(v)} onPress={()=>toggle(field,v)}/>;
+ return <FlightResultsSheetShell visible={visible} title={title} subtitle={subtitle} fullScreen={full} closeLabel="Close flight filters" onClose={()=>{setDragging(false);onClose()}} headerAction={headerAction} footer={full?fullFooter:quickFooter}>
+  <ScrollView style={s.scroll} scrollEnabled={!dragging} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+   {full&&isPriceFilteringAvailable(options,priceFilteringReady)?<Section title="Price">{slider("maximumPrice",options.price!,"Maximum price",v=>formatCurrency(v,insightCurrency),priceRangeStep(options.price!.min,options.price!.max))}</Section>:null}
+   {full&&legs.length?<Section title="Flight times">{legs.length>1?<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.tabs}>{legs.map((l,i)=><Pressable accessibilityRole="tab" accessibilityState={{selected:tab===i}} key={journeyKey(l,i)} onPress={()=>setTab(i)} style={[s.tab,{borderBottomColor:tab===i?ui.blue:"transparent"}]}><Text style={{color:tab===i?ui.blue:theme.textSecondary}}>{l.direction==="outbound"?"Departing flight":l.direction==="return"?"Return flight":`Flight ${(l.legIndex??i)+1}`}</Text></Pressable>)}</ScrollView>:null}<View style={[s.segment,{backgroundColor:theme.background}]}>{(["departure","arrival"] as const).map(mode=><Pressable key={mode} onPress={()=>setTimeMode(mode)} style={[s.segmentButton,timeMode===mode&&{backgroundColor:theme.surface}]}><Text style={{color:timeMode===mode?ui.blue:theme.textSecondary}}>{mode==="departure"?"Takeoff":"Landing"}</Text></Pressable>)}</View>{timeBounds[timeMode]?<><Text style={[s.context,{color:theme.textPrimary}]}>{timeMode==="departure"?`Takeoff time from ${leg.originAirport}`:`Landing time at ${leg.destinationAirport}`}</Text><View style={s.endpoints}><Text style={{color:theme.textSecondary}}>{formatFlightTime(timeBounds[timeMode]!.min)}</Text><Text style={{color:theme.textSecondary}}>{formatFlightTime(timeBounds[timeMode]!.max)}</Text></View><FlightRangeSlider available={timeBounds[timeMode]!} selected={{min:timeBounds[timeMode]!.min,max:selectedTime!}} step={15} singleMaximum accessibilityLabel={timeMode==="departure"?"Takeoff time":"Landing time"} formatValue={formatFlightTime} onDragStateChange={setDragging} onChange={value=>{const current=working.journeyTimeMaximums?.[key]??{departure:null,arrival:null};update({...working,journeyTimeMaximums:{...(working.journeyTimeMaximums??{}),[key]:{...current,[timeMode]:value.max===timeBounds[timeMode]!.max?null:value.max}}})}}/></>:null}</Section>:null}
+   {full&&options.duration?<Section title="Duration">{slider("maximumDuration",options.duration,"Maximum travel time",formatFlightDuration,5)}</Section>:null}
+   {(full||section==="stops")?<Section title="Stops">{stopRows.map(x=><Check key={x.v} label={x.l} detail={insights.stops.get(x.v)} selected={working.stops.includes(x.v)} onPress={()=>toggleStop(x.v)}/>)}</Section>:null}
+   {(full||section==="airlines")?<Section title="Airlines">{options.airlines.length?<TextInput accessibilityLabel="Search airlines" placeholder="Search airlines" placeholderTextColor={theme.textSecondary} value={airlineSearch} onChangeText={setAirlineSearch} style={[s.search,{color:theme.textPrimary,backgroundColor:theme.background,borderColor:theme.border}]}/>:null}{visibleAirlines.map(name=><Check key={name} label={name} detail={insights.airlines.get(name)} selected={working.airlines.includes(name)} onPress={()=>toggle("airlines",name)}/>)}{!airlineSearch.trim()&&options.airlines.length>5?<Pressable accessibilityRole="button" onPress={()=>setShowAllAirlines(v=>!v)} style={s.showMore}><Text style={s.showMoreText}>{showAllAirlines?"Show less":"Show more"}</Text><ChevronDown size={16} color={ui.blue} style={showAllAirlines?s.chevron:undefined}/></Pressable>:null}</Section>:null}
+   {(full?options.showAirports:section==="airports")&&(options.fromAirports.length||options.toAirports.length)?<Collapsible title="Airports" collapsible={full} open={!full||airportsOpen} onToggle={()=>setAirportsOpen(v=>!v)}>{options.fromAirports.length?<><Text style={[s.subhead,{color:theme.textSecondary}]}>FROM</Text>{options.fromAirports.map(v=>row("fromAirports",v))}</>:null}{options.toAirports.length?<><Text style={[s.subhead,{color:theme.textSecondary}]}>TO</Text>{options.toAirports.map(v=>row("toAirports",v))}</>:null}</Collapsible>:null}
+   {full&&(options.baggage||options.refundable)?<Collapsible title="Fare preferences" collapsible open={fareOpen} onToggle={()=>setFareOpen(v=>!v)}>{options.baggage?<Check label="Baggage included" detail={insights.baggage} selected={working.baggageIncluded} onPress={()=>update({...working,baggageIncluded:!working.baggageIncluded})}/>:null}{options.refundable?<Check label="Flexible / refundable" detail={insights.refundable} selected={working.refundable} onPress={()=>update({...working,refundable:!working.refundable})}/>:null}</Collapsible>:null}
+  </ScrollView>
  </FlightResultsSheetShell>;
 }
-
-function Check({label,detail,selected,logo,compact=false,onPress}:{label:string;detail?:string;selected:boolean;logo?:React.ReactNode;compact?:boolean;onPress:()=>void}){
- const {theme}=useAppTheme();
- return <Pressable accessibilityLabel={detail?`${label}, ${detail}`:label} accessibilityRole="checkbox" accessibilityState={{checked:selected}} onPress={onPress} style={({pressed})=>[s.row,compact&&s.compactRow,compact&&selected&&{backgroundColor:theme.dark?"#142B55":"#F7FAFF"},pressed&&s.pressed]}>{logo}<View style={s.rowCopy}><Text style={[s.rowText,compact&&s.compactRowText,{color:compact&&selected?(theme.dark?"#8FB5FF":"#004BB8"):theme.textPrimary}]}>{label}</Text>{detail&&<Text numberOfLines={1} style={[s.rowInsight,{color:theme.textSecondary}]}>{detail}</Text>}</View><View style={[s.box,{borderColor:selected?ui.blue:theme.border,backgroundColor:selected?ui.blue:"transparent"}]}>{selected&&<Text style={s.check}>✓</Text>}</View></Pressable>;
-}
-
-const s=StyleSheet.create({
- pressed:{opacity:.7},
- scroll:{flexShrink:1},
- content:{paddingHorizontal:20,paddingVertical:16,gap:24},
- compactContent:{padding:0,gap:0},
- section:{gap:5},
- compactSection:{gap:2},
- sectionHead:{minHeight:28,flexDirection:"row",alignItems:"center",justifyContent:"space-between"},
- compactSectionHead:{minHeight:34,paddingHorizontal:10},
- sectionTitle:{fontSize:15,fontWeight:"800"},
- compactSectionTitle:{fontSize:13,fontWeight:"700"},
- row:{minHeight:46,flexDirection:"row",alignItems:"center",gap:10},
- compactRow:{minHeight:44,borderRadius:9,paddingHorizontal:10,gap:8},
- rowCopy:{flex:1,minWidth:0},
- rowText:{fontSize:13,fontWeight:"500"},
- compactRowText:{fontSize:14,fontWeight:"600"},
- rowInsight:{fontSize:11,lineHeight:14,marginTop:1},
- box:{width:20,height:20,borderWidth:1.5,borderRadius:4,alignItems:"center",justifyContent:"center"},
- check:{color:"white",fontWeight:"900"},
- timeSwitch:{flexDirection:"row",padding:4,borderRadius:999,marginTop:3},
- timeSwitchButton:{flex:1,minHeight:34,borderRadius:999,alignItems:"center",justifyContent:"center"},
- timeSwitchText:{fontSize:12,fontWeight:"800"},
- timeLabel:{marginTop:9,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8},
- tabs:{gap:16},
- tab:{paddingVertical:9,borderBottomWidth:2,fontSize:12,fontWeight:"700"},
- subhead:{fontSize:13,fontWeight:"700",marginTop:7},
- compactSubhead:{paddingHorizontal:10,marginTop:4,marginBottom:2,fontSize:11},
- control:{fontSize:12,fontWeight:"600",marginTop:3},
- value:{fontSize:14,fontWeight:"800",marginTop:3},
- footerActions:{flexDirection:"row",alignItems:"center",gap:14},
- footerClear:{minWidth:88,minHeight:50,alignItems:"center",justifyContent:"center"},
- footerClearText:{color:ui.blue,fontSize:14,fontWeight:"700"},
- disabled:{opacity:.4},
- footerPrimary:{flex:1},
-});
+function Section({title,children}:{title:string;children:React.ReactNode}){const {theme}=useAppTheme();return <View style={s.section}><Text style={[s.sectionTitle,{color:theme.textPrimary}]}>{title}</Text>{children}</View>}
+function Collapsible({title,children,collapsible,open,onToggle}:{title:string;children:React.ReactNode;collapsible:boolean;open:boolean;onToggle:()=>void}){const {theme}=useAppTheme();return <View style={[s.section,s.secondary,{borderTopColor:theme.border}]}><Pressable accessibilityRole="button" accessibilityState={{expanded:open}} disabled={!collapsible} onPress={onToggle} style={s.collapseHead}><Text style={[s.sectionTitle,{color:theme.textPrimary}]}>{title}</Text>{collapsible?<ChevronDown size={18} color={theme.icon} style={open?s.chevron:undefined}/>:null}</Pressable>{open?children:null}</View>}
+function Check({label,detail,selected,onPress}:{label:string;detail?:string;selected:boolean;onPress:()=>void}){const {theme}=useAppTheme();return <Pressable accessibilityLabel={detail?`${label}, ${detail}`:label} accessibilityRole="checkbox" accessibilityState={{checked:selected}} onPress={onPress} style={s.row}><View style={[s.box,{borderColor:selected?ui.blue:theme.border,backgroundColor:selected?ui.blue:"transparent"}]}>{selected?<Text style={s.check}>✓</Text>:null}</View><View style={s.rowCopy}><Text style={[s.rowText,{color:theme.textPrimary}]}>{label}</Text>{detail?<Text style={[s.rowInsight,{color:theme.textSecondary}]}>{detail}</Text>:null}</View></Pressable>}
+const s=StyleSheet.create({scroll:{flex:1},content:{padding:16,paddingBottom:24,gap:18},section:{gap:6},sectionTitle:{fontSize:15,lineHeight:22,fontFamily:appFonts.bold,fontWeight:"700",marginBottom:4},secondary:{borderTopWidth:StyleSheet.hairlineWidth,paddingTop:8},collapseHead:{minHeight:44,flexDirection:"row",alignItems:"center",justifyContent:"space-between"},row:{minHeight:52,flexDirection:"row",alignItems:"center",gap:12,paddingHorizontal:2},box:{width:20,height:20,borderWidth:1.5,borderRadius:4,alignItems:"center",justifyContent:"center"},check:{color:"white",fontWeight:"900"},rowCopy:{flex:1,minWidth:0},rowText:{fontSize:14,fontFamily:appFonts.medium,fontWeight:"500"},rowInsight:{fontSize:12,lineHeight:17,marginTop:2,fontFamily:appFonts.medium},search:{height:44,borderWidth:1,borderRadius:10,paddingHorizontal:12,fontFamily:appFonts.medium,marginBottom:4},showMore:{minHeight:44,flexDirection:"row",alignItems:"center",justifyContent:"center",gap:5},showMoreText:{color:ui.blue,fontFamily:appFonts.semibold,fontWeight:"600"},chevron:{transform:[{rotate:"180deg"}]},subhead:{fontSize:11,fontFamily:appFonts.bold,fontWeight:"700",letterSpacing:.8,marginTop:8},endpoints:{flexDirection:"row",justifyContent:"space-between",gap:12,marginBottom:4},endpoint:{fontSize:12,fontFamily:appFonts.medium},selection:{fontSize:13,fontFamily:appFonts.semibold,fontWeight:"600",marginTop:2},tabs:{gap:14},tab:{minHeight:44,justifyContent:"center",borderBottomWidth:2},segment:{flexDirection:"row",padding:4,borderRadius:10},segmentButton:{flex:1,minHeight:36,borderRadius:8,alignItems:"center",justifyContent:"center"},context:{fontSize:13,fontFamily:appFonts.semibold,marginTop:4},actions:{flex:1,flexDirection:"row",gap:10},reset:{minWidth:116,height:49,borderWidth:1,borderRadius:12,alignItems:"center",justifyContent:"center"},apply:{flex:1,height:49,borderRadius:12,backgroundColor:ui.blue,alignItems:"center",justifyContent:"center"},disabled:{opacity:.45},buttonText:{fontSize:15,fontFamily:appFonts.bold,fontWeight:"700"},clear:{minHeight:44,paddingHorizontal:10,alignItems:"center",justifyContent:"center"},clearText:{color:ui.blue,fontSize:13,fontFamily:appFonts.semibold,fontWeight:"600"}});

@@ -1,13 +1,8 @@
-import { useRef } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ChevronDown, SlidersHorizontal } from "lucide-react-native";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import type { FlightSort } from "./flightFilters";
-import {
-  clearFlightResultsQuickMenuAnchor,
-  setFlightResultsQuickMenuAnchor,
-} from "./flightResultsQuickMenuAnchor";
 
 const sortLabels: Record<"best" | "price" | "duration", string> = {
   best: "Best",
@@ -30,14 +25,12 @@ type ControlProps = {
   count?: number;
   expanded: boolean;
   filterIcon?: boolean;
-  anchored?: boolean;
   accessibilityLabelOverride?: string;
   onPress: () => void;
 };
 
-function Control({ label, active, count, expanded, filterIcon, anchored = false, accessibilityLabelOverride, onPress }: ControlProps) {
+function Control({ label, active, count, expanded, filterIcon, accessibilityLabelOverride, onPress }: ControlProps) {
   const { theme } = useAppTheme();
-  const triggerRef = useRef<View>(null);
   const light = !theme.dark;
   const accent = light ? webFilterAccent : "#8FB5FF";
   const foreground = light ? webFilterText : theme.textPrimary;
@@ -47,35 +40,12 @@ function Control({ label, active, count, expanded, filterIcon, anchored = false,
   const countBackground = light ? webFilterCountBackground : "#142B55";
   const accessibilityLabel = `${accessibilityLabelOverride ?? label}${active ? ", selected" : ""}${count ? `, ${count} active` : ""}`;
 
-  const handlePress = () => {
-    if (!anchored) {
-      clearFlightResultsQuickMenuAnchor();
-      onPress();
-      return;
-    }
-    const trigger = triggerRef.current;
-    if (!trigger) {
-      clearFlightResultsQuickMenuAnchor();
-      onPress();
-      return;
-    }
-    trigger.measureInWindow((x, y, width, height) => {
-      if (width > 0 && height > 0) {
-        setFlightResultsQuickMenuAnchor({ x, y, width, height });
-      } else {
-        clearFlightResultsQuickMenuAnchor();
-      }
-      onPress();
-    });
-  };
-
   return (
     <Pressable
-      ref={triggerRef}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ expanded, selected: active }}
-      onPress={handlePress}
+      onPress={onPress}
       style={({ pressed }) => [
         styles.control,
         { backgroundColor: pressed && light ? webFilterPressed : surface, borderColor: border },
@@ -142,7 +112,6 @@ export function FlightResultsQuickControls({
         label={sortLabels[safeSort]}
         active={safeSort !== "best"}
         expanded={openSheetKind === "sort"}
-        anchored
         onPress={() => openSheet("sort")}
       />
       <Control
@@ -150,7 +119,6 @@ export function FlightResultsQuickControls({
         active={airlineCount > 0}
         count={airlineCount || undefined}
         expanded={openSheetKind === "airlines"}
-        anchored
         onPress={() => openSheet("airlines")}
       />
       <Control
@@ -158,7 +126,6 @@ export function FlightResultsQuickControls({
         active={stopsCount > 0}
         count={stopsCount || undefined}
         expanded={openSheetKind === "stops"}
-        anchored
         onPress={() => openSheet("stops")}
       />
       <Control
@@ -166,7 +133,6 @@ export function FlightResultsQuickControls({
         active={airportCount > 0}
         count={airportCount || undefined}
         expanded={openSheetKind === "airports"}
-        anchored
         onPress={() => openSheet("airports")}
       />
     </ScrollView>
