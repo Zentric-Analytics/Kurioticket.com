@@ -46,6 +46,6 @@ test("the flight card retains its light and dark mode theming", () => {
   assert.match(flightCard, /color: highlightTextColor/);
   assert.match(flightCard, /color: theme\.textPrimary/);
   assert.match(flightCard, /supportTextColor = theme\.dark \? flightSupportText\.dark : flightSupportText\.light/);
-  assert.match(flightCard, /s0\.flightMetadataText,\{color:supportTextColor\}/);
+  assert.match(flightCard, /s0\.flightMetadataLabel, \{ color: supportTextColor \}/);
   assert.match(flightCard, /borderTopColor: theme\.border/);
 });

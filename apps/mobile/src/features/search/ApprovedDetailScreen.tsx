@@ -421,6 +421,7 @@ function HotelDetail({
   params: Record<string, string | string[]>;
 }) {
   const { theme } = useAppTheme();
+  const hotelCanvasColor = theme.dark ? theme.background : theme.surface;
   const hotelAccent = theme.dark ? "#8FB5FF" : colors.blue;
   const inset = useSafeAreaInsets();
   const canonical = useCanonicalSaved();
@@ -688,7 +689,7 @@ function HotelDetail({
   );
   return (
     <SafeAreaView
-      style={[d.safe, { backgroundColor: theme.background }]}
+      style={[d.safe, { backgroundColor: hotelCanvasColor }]}
       edges={["top"]}
     >
       <View

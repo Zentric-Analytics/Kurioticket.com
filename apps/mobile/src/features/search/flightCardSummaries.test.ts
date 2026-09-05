@@ -20,8 +20,11 @@ test("metadata groups baggage, cabin, and fare rules in one left footer column",
   assert.match(row, /<FileText\b/);
   assert.match(card, /style=\{s0\.flightMetadataRegion\}[\s\S]*?style=\{s0\.flightCommercialRegion\}/);
   assert.match(source, /flightMetadataRegion: \{ flex: 1, minWidth: 0/);
-  assert.match(source, /flightMetadataItem: \{ minWidth: 0, flexDirection: "row"/);
-  assert.match(source, /flightMetadataText: \{ flexShrink: 1, minWidth: 0/);
+  assert.match(source, /flightMetadataItem: \{ width: "100%", minWidth: 0, flexDirection: "row"/);
+  assert.match(source, /flightMetadataIconTile: \{ width: 28, height: 28, borderRadius: 8/);
+  assert.match(source, /flightMetadataCopy: \{ flex: 1, minWidth: 0, flexDirection: "row"/);
+  assert.match(source, /flightMetadataLabel: \{ width: 46, flexShrink: 0/);
+  assert.match(source, /flightMetadataValue: \{ flex: 1, minWidth: 0/);
   assert.doesNotMatch(source, /metadataSeparator:/);
   assert.doesNotMatch(source, /metadataRow: \{[^}]*justifyContent: "space-between"/);
   assert.doesNotMatch(source, /metadataRow: \{[^}]*flexWrap/);
@@ -38,10 +41,35 @@ test("metadata shows localized category labels and provider-derived values", () 
   assert.match(row, /\{baggageSummary\}/);
   assert.match(row, /\{cabinSummary\}/);
   assert.doesNotMatch(row, /\{fareRulesSummary\}/);
-  assert.equal(metadata.match(/numberOfLines=\{1\}/g)?.length, 3);
+  assert.equal(metadata.match(/numberOfLines=\{1\}/g)?.length, 6);
   assert.equal(metadata.match(/ellipsizeMode="tail"/g)?.length, 3);
   assert.doesNotMatch(metadata, /adjustsFontSizeToFit/);
-  assert.match(source, /flightMetadataText:/);
+  assert.equal(metadata.match(/s0\.flightMetadataLabel/g)?.length, 3);
+  assert.equal(metadata.match(/s0\.flightMetadataValue/g)?.length, 3);
+  assert.doesNotMatch(metadata, /\{labels\.(?:baggage|cabin|fareRules)\}: /);
+  assert.doesNotMatch(metadata, /Baggage:|Cabin:|Fare rules:/);
+});
+
+test("metadata icon tiles, typography, and spacing establish a restrained hierarchy", () => {
+  const metadata = card.slice(card.indexOf('style={s0.flightMetadataRegion}'), card.indexOf('<View style={s0.flightCommercialRegion}>'));
+  assert.equal(metadata.match(/accessible=\{false\} style=\{\[s0\.flightMetadataIconTile/g)?.length, 3);
+  assert.match(source, /flightMetadataIconTile: \{ width: 28, height: 28, borderRadius: 8[^}]*alignItems: "center", justifyContent: "center" \}/);
+  assert.match(metadata, /backgroundColor: theme\.dark \? "#253147" : "#F0F2F5"/);
+  assert.doesNotMatch(metadata, /ui\.blue|#(?:[0-9A-Fa-f]{2})?2563EB|border(?:Left|Right)|shadow|elevation|Chevron/);
+  assert.match(source, /flightMetadataRegion: \{[^}]*alignItems: "flex-start"[^}]*gap: 6/);
+  assert.match(source, /flightMetadataLabel: \{[^}]*fontSize: 9[^}]*fontWeight: "500"[^}]*appFonts\.medium/);
+  assert.match(source, /flightMetadataValue: \{[^}]*fontSize: 10\.5[^}]*fontWeight: "600"[^}]*appFonts\.semibold/);
+  assert.equal(metadata.match(/flightMetadataLabel, \{ color: supportTextColor \}/g)?.length, 3);
+  assert.equal(metadata.match(/flightMetadataValue, \{ color: theme\.textPrimary \}/g)?.length, 3);
+  assert.doesNotMatch(source, /flightMetadata(?:Region|Item): \{[^}]*backgroundColor/);
+});
+
+test("metadata stays non-actionable beside the unchanged right-aligned price region", () => {
+  const metadata = card.slice(card.indexOf('style={s0.flightMetadataRegion}'), card.indexOf('<View style={s0.flightCommercialRegion}>'));
+  assert.doesNotMatch(metadata, /Pressable|Chevron|borderLeft|borderRight/);
+  assert.equal((card.match(/<Pressable/g) || []).length, 1);
+  assert.match(source, /flightCommercialRegion: \{ width: "46%", minWidth: 104, flexShrink: 0, alignItems: "flex-end"/);
+  assert.match(source, /bigPrice: \{[^}]*flexShrink: 1[^}]*textAlign: "right"/);
 });
 
 test("metadata summaries use provider result fields exactly once", () => {
@@ -55,7 +83,7 @@ test("metadata has one complete accessibility label with decorative icons", () =
   assert.match(card, /const baggageAccessibility = result\.baggageInfo\?\.trim\(\) \|\| baggageSummary/);
   assert.match(card, /const fareRulesAccessibility = result\.refundInfo\?\.trim\(\) \|\| fareRulesSummary/);
   assert.match(card, /accessibilityLabel=\{`\$\{labels\.baggage\}: \$\{baggageAccessibility\}\. \$\{labels\.cabin\}: \$\{cabinSummary\}\. \$\{labels\.fareRule\}: \$\{fareRulesAccessibility\}\.`\}/);
-  assert.equal(card.match(/<(?:Luggage|Armchair|FileText) accessible=\{false\} size=\{13\} strokeWidth=\{2\} color=\{supportTextColor\}\/>/g)?.length, 3);
+  assert.equal(card.match(/<(?:Luggage|Armchair|FileText) accessible=\{false\} size=\{14\} strokeWidth=\{2\} color=\{supportTextColor\}\/>/g)?.length, 3);
   assert.equal(card.match(/<(?:Luggage|Armchair|FileText) accessible=\{false\}/g)?.length, 3);
 });
 
