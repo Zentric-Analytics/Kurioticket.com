@@ -1715,7 +1715,7 @@ function Loading({ product }: { product: Product }) {
           Searching available {product === "flight" ? "flights" : "stays"}…
         </Text>
       </View>
-      <Animated.View style={[s0.skeletonList, { opacity }]}>
+      <Animated.View style={[s0.skeletonList, { opacity }]}> 
         {[0, 1, 2].map((x) =>
           product === "flight" ? (
             <FlightLoadingSkeleton key={x} />
@@ -2062,7 +2062,7 @@ const s0 = StyleSheet.create({
   flightMetadataItem: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "center", gap: 6 },
   flightMetadataIconTile: { width: 28, height: 28, borderRadius: 8, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   flightMetadataCopy: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4 },
-  flightMetadataLabel: { width: 46, flexShrink: 0, fontSize: 9, lineHeight: 12, fontWeight: "500", fontFamily: appFonts.medium },
+  flightMetadataLabel: { width: 46, flexShrink: 0, flexGrow: 1, fontSize: 9, lineHeight: 12, fontWeight: "500", fontFamily: appFonts.medium },
   flightMetadataValue: { flex: 1, minWidth: 0, fontSize: 10.5, lineHeight: 14, fontWeight: "600", fontFamily: appFonts.semibold },
   flightCommercialRegion: { width: "46%", minWidth: 104, flexShrink: 0, alignItems: "flex-end", gap: 1 },
   metadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 6, marginBottom: 4 },
