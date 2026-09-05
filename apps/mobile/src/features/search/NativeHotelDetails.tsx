@@ -9,8 +9,9 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { ChevronLeft, ChevronRight, X } from "lucide-react-native";
+import { ChevronLeft, ChevronRight, Images, X } from "lucide-react-native";
 import type { HotelRoomOption } from "../../../../../src/lib/hotels/hotelRoomOptions";
+import { appFonts } from "../../theme/typography";
 import type { HotelRoomDisplayPrice } from "./hotelDetailCurrency";
 
 type HotelTheme = {
@@ -109,7 +110,7 @@ export function NativeHotelGallery({
               onPress={() => move(-1)}
               style={[s.arrow, s.left]}
             >
-              <ChevronLeft color="white" size={24} />
+              <ChevronLeft color="white" size={20} />
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -117,7 +118,7 @@ export function NativeHotelGallery({
               onPress={() => move(1)}
               style={[s.arrow, s.right]}
             >
-              <ChevronRight color="white" size={24} />
+              <ChevronRight color="white" size={20} />
             </Pressable>
           </>
         ) : null}
@@ -146,7 +147,10 @@ export function NativeHotelGallery({
               />
               {remaining > 0 ? (
                 <View style={s.remaining}>
-                  <Text style={s.remainingText}>+{remaining}</Text>
+                  <View style={s.remainingContent}>
+                    <Images accessible={false} size={16} color="white" />
+                    <Text style={s.remainingText}>+{remaining}</Text>
+                  </View>
                 </View>
               ) : null}
             </Pressable>
@@ -251,13 +255,11 @@ const s = StyleSheet.create({
     marginTop: -22,
     width: 44,
     height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(0,0,0,.48)",
-    alignItems: "center",
+    backgroundColor: "transparent",
     justifyContent: "center",
   },
-  left: { left: 8 },
-  right: { right: 8 },
+  left: { left: 0, alignItems: "flex-start", paddingLeft: 8 },
+  right: { right: 0, alignItems: "flex-end", paddingRight: 8 },
   counter: {
     position: "absolute",
     right: 10,
@@ -285,7 +287,8 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  remainingText: { color: "white", fontSize: 16, fontWeight: "900" },
+  remainingContent: { flexDirection: "row", alignItems: "center", gap: 4 },
+  remainingText: { color: "white", fontSize: 12, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold },
   unavailable: {
     marginHorizontal: 16,
     aspectRatio: 16 / 10,
