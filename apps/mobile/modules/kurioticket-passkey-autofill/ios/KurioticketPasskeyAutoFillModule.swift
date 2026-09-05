@@ -43,6 +43,32 @@ public final class KurioticketPasskeyAutoFillModule: Module, ASAuthorizationCont
     Function("cancel") {
       self.cancelActive(resolveCancelled: true)
     }
+
+    View(KurioticketPasskeyUsernameView.self) {
+      Events("onChangeText", "onFocus", "onBlur", "onSubmit", "onPasskey", "onDiagnostic")
+
+      Prop("value") { (view: KurioticketPasskeyUsernameView, value: String?) in
+        view.setValue(value)
+      }
+      Prop("placeholder") { (view: KurioticketPasskeyUsernameView, value: String?) in
+        view.setPlaceholder(value)
+      }
+      Prop("enabled") { (view: KurioticketPasskeyUsernameView, value: Bool) in
+        view.setEnabled(value)
+      }
+      Prop("autoFocus") { (view: KurioticketPasskeyUsernameView, value: Bool) in
+        view.setAutoFocus(value)
+      }
+      Prop("diagnosticsEnabled") { (view: KurioticketPasskeyUsernameView, value: Bool) in
+        view.setDiagnosticsEnabled(value)
+      }
+      Prop("relyingPartyIdentifier") { (view: KurioticketPasskeyUsernameView, value: String?) in
+        view.setRelyingPartyIdentifier(value)
+      }
+      Prop("challenge") { (view: KurioticketPasskeyUsernameView, value: String?) in
+        view.setChallenge(value)
+      }
+    }
   }
 
   public func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
