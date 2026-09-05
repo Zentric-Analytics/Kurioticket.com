@@ -1316,7 +1316,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
             </Text>
             <View accessible={false} style={s0.flightDetailsAffordance}>
               <Text accessible={false} style={[s0.flightDetailsAffordanceText, { color: theme.dark ? "#8FB5FF" : ui.blue }]} numberOfLines={1}>
-                View details
+                {labels.viewDetails}
               </Text>
               <ChevronRight accessible={false} size={16} strokeWidth={2.2} color={theme.dark ? "#8FB5FF" : ui.blue}/>
             </View>

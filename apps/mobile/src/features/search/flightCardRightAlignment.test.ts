@@ -19,7 +19,8 @@ test("outbound and return share one structured journey component", () => {
 test("arrival and price terminate on the shared right edge", () => {
   assert.match(source, /rightColumnContract: \{ alignItems: "flex-end" \}/);
   assert.match(card, /<View style=\{s0\.flightCommercialRegion\}>\s*<Text[^>]*s0\.bigPrice/);
-  assert.match(card, /View details[\s\S]*?<ChevronRight/);
+  assert.match(card, /\{labels\.viewDetails\}[\s\S]*?<ChevronRight/);
+  assert.doesNotMatch(card, />\s*View details\s*</);
   assert.doesNotMatch(card, />\{roundTrip \? "round trip" : "one way"\}<\/Text>/);
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch"/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
@@ -82,7 +83,8 @@ test("the coherent price column contains one fare and a bottom-aligned details a
   assert.doesNotMatch(fareRow, /US\$|A\$|CA\$|Per traveler|Round trip|One way|Taxes included|From/);
   assert.match(card, /<Pressable[\s\S]*accessibilityLabel=\{cardAccessibilityLabel\}[\s\S]*onPress=\{openDetails\}/);
   assert.doesNotMatch(fareRow, /View deal|labels\.viewDeal|flightDealAction/);
-  assert.match(fareRow, /<Text[^>]*flightDetailsAffordanceText[^>]*numberOfLines=\{1\}>\s*View details\s*<\/Text>\s*<ChevronRight/);
+  assert.match(fareRow, /<Text[^>]*flightDetailsAffordanceText[^>]*numberOfLines=\{1\}>\s*\{labels\.viewDetails\}\s*<\/Text>\s*<ChevronRight/);
+  assert.doesNotMatch(fareRow, />\s*View details\s*</);
   assert.ok(card.indexOf('<View style={s0.journeyList}>') < card.indexOf('<View style={s0.flightCommercialRegion}>'));
   assert.match(card, /provider price \$\{providerFare\.accessibilityLabel\}/);
   assert.match(card, /pathname: "\/flight-details"/);
