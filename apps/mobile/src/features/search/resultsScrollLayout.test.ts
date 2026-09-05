@@ -117,13 +117,20 @@ test("hotel uses one stable summary above a native sticky filter rail", () => {
   assert.match(screen,/visible === hotelBackToTopVisibleRef\.current/);
   assert.doesNotMatch(flightLayout, /hotelIntroBoundary|setHotelCompactHeader/);
 });
-test("Flight Results scroll content clears the native bottom safe area without a navigation-sized spacer", () => {
+test("Flight Results scroll content clears the native bottom safe area without navigation-sized footer padding", () => {
+  const paginationFooter = styleBlock("flightPagination", "flightPaginationPages");
+  const terminalFooter = styleBlock("flightResultsBody", "flightCardItem");
+
   assert.match(screen, /const insets = useSafeAreaInsets\(\)/);
   assert.match(
     flightLayout,
     /contentContainerStyle=\{\[[\s\S]*?s0\.flightResultsContent,[\s\S]*?\{ paddingBottom: Math\.max\(insets\.bottom \+ 16, 16\) \},[\s\S]*?minHeight: flightPaginationMinHeight/,
   );
-  assert.doesNotMatch(flightLayout, /paddingBottom[^\n]*(?:72|92)/);
+  assert.match(paginationFooter, /paddingBottom: 6/);
+  assert.doesNotMatch(paginationFooter, /paddingBottom:\s*(?:92|104)/);
+  assert.match(terminalFooter, /paddingBottom: 0/);
+  assert.doesNotMatch(terminalFooter, /paddingBottom:\s*(?:92|104)/);
+  assert.doesNotMatch(flightLayout, /paddingBottom[^\n]*(?:72|92|104)/);
   assert.doesNotMatch(flightLayout, /position:\s*["']absolute["']/);
 });
 
