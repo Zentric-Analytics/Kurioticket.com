@@ -10,6 +10,10 @@ export const localDateFromIso = (iso: string) => {
   return localIsoDate(date) === iso ? date : undefined;
 };
 
+/** Validates a Hotel calendar date against an explicit device-local baseline. */
+export const isHotelTodayOrFutureLocalDate = (value: string, minimumLocalIso: string) =>
+  Boolean(localDateFromIso(value) && localDateFromIso(minimumLocalIso) && value >= minimumLocalIso);
+
 export const addCalendarDays = (iso: string, days: number) => {
   const date = localDateFromIso(iso);
   if (!date) return "";

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { hotelSearchSchema } from "../validation";
+import { earliestCurrentHotelCalendarDate, hotelSearchSchema, isHotelTodayOrFutureDate } from "../validation";
 import { resolveHotelResultsRoute } from "./hotelResultsRoute";
 import { buildHotelExplorationSearch } from "./hotelExplorationSearch";
 
@@ -15,6 +15,27 @@ test("server and native Hotel readiness require the same material search context
   assert.equal(hotelSearchSchema.safeParse({ destination: "London", checkIn: "2030-10-12", checkOut: "2030-10-16", guests: 2, rooms: 1 }).success, true);
   const nativeModel = readFileSync(new URL("../../../apps/mobile/src/features/flow/travelSearchModel.ts", import.meta.url), "utf8");
   assert.match(nativeModel, /!checkIn \|\| !checkOut \|\| !guestsValue \|\| !roomsValue/);
+});
+
+test("Hotel server dates remain eligible only while current in a global civil timezone", () => {
+  const beforeGlobalBoundary = new Date("2026-09-05T06:30:00Z");
+  assert.equal(earliestCurrentHotelCalendarDate(beforeGlobalBoundary), "2026-09-04");
+  assert.equal(isHotelTodayOrFutureDate("2026-09-04", beforeGlobalBoundary), true);
+  assert.equal(isHotelTodayOrFutureDate("2026-09-03", beforeGlobalBoundary), false);
+  assert.equal(isHotelTodayOrFutureDate("2026-09-05", beforeGlobalBoundary), true);
+  assert.equal(isHotelTodayOrFutureDate("2026-02-30", beforeGlobalBoundary), false);
+  assert.equal(isHotelTodayOrFutureDate("not-a-date", beforeGlobalBoundary), false);
+
+  const afterGlobalBoundary = new Date("2026-09-05T12:30:00Z");
+  assert.equal(earliestCurrentHotelCalendarDate(afterGlobalBoundary), "2026-09-05");
+  assert.equal(isHotelTodayOrFutureDate("2026-09-04", afterGlobalBoundary), false);
+});
+
+test("Hotel owns its timezone-safe schema refinement without changing Flight date validation", () => {
+  const validation = readFileSync(new URL("../validation.ts", import.meta.url), "utf8");
+  assert.match(validation, /checkIn: hotelFutureDate/);
+  assert.match(validation, /checkOut: hotelFutureDate/);
+  assert.match(validation, /departureDate: futureDate\.optional\(\)/);
 });
 
 test("incomplete web Hotel results redirect before the API-owning client mounts", () => {
@@ -68,6 +89,9 @@ test("incomplete web Hotel recovery preserves visible legitimate destination and
 test("incomplete native Hotel results replace history before ApprovedResultsScreen mounts", () => {
   const nativeBoundary = readFileSync(new URL("../../../apps/mobile/src/features/flow/TravelResultsScreen.tsx", import.meta.url), "utf8");
   assert.match(nativeBoundary, /router\.replace\(\{ pathname: "\/hotels"/);
+  for (const field of ["destinationId", "destination", "checkIn", "checkOut", "guests", "rooms"]) {
+    assert.match(nativeBoundary, new RegExp(`${field}: one\\(params\\.${field}\\)`));
+  }
   assert.ok(nativeBoundary.indexOf('if (product === "hotel" && !hotelPlan?.plan) return null') < nativeBoundary.indexOf("<ApprovedResultsScreen product={product}"));
 });
 
