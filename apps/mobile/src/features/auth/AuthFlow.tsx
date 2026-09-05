@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { router } from "expo-router";
 import { writeOnboardingCompleted } from "../../storage/onboardingStorage";
-import { authApi, AuthApiError } from "./authApi";
+import { authApi, AuthApiError, isPreviewPasskeySignIn, tracePreviewPasskey } from "./authApi";
 import type { PasskeyAuthenticationOptions, PasskeyAssertion } from "./authApi";
 import { normalizeEmail } from "./authUtils";
 import { AuthWelcomeScreen } from "./AuthWelcomeScreen";
 import { CreateAccountScreen, EmailScreen, ForgotPasswordScreen, PasswordScreen, SuccessScreen, TwoFactorLoginScreen, VerificationScreen } from "./AuthFormScreens";
 import { requireGoogleWebClientId } from "./googleConfig";
 import { isNativePasskeyUsernameFieldAvailable } from "../passkeys/NativePasskeyUsernameField";
+import { previewPasskeyErrorMessage } from "./previewPasskeySignIn";
 
 const PASSKEY_OPTIONS_REFRESH_MS = 4 * 60_000;
 const PASSKEY_EMAIL_REFRESH_AGE_MS = 3 * 60_000;
@@ -69,6 +70,7 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     : null;
 
   const stopPasskeyVerification = useCallback(() => {
+    if (passkeyVerifyController.current && isPreviewPasskeySignIn()) setLoading(false);
     passkeyVerifyGeneration.current += 1;
     passkeyVerifyController.current?.abort();
     passkeyVerifyController.current = null;
@@ -80,15 +82,26 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     const controller = new AbortController();
     passkeyVerifyController.current?.abort();
     passkeyVerifyController.current = controller;
+    if (isPreviewPasskeySignIn()) { setLoading(true); setError(""); }
     void authApi.passkeyVerify(assertion, controller.signal).then(() => {
-      if (generation === passkeyVerifyGeneration.current) setStep("success");
-    }).catch(() => {
-      // Selection/cancellation/verification failures stay silent. The credential
-      // field remains an ordinary email field when no usable passkey is returned.
+      if (generation === passkeyVerifyGeneration.current) {
+        tracePreviewPasskey("auth_success_screen");
+        setStep("success");
+      }
+    }).catch((error: unknown) => {
+      if (generation !== passkeyVerifyGeneration.current || controller.signal.aborted) return;
+      tracePreviewPasskey("sign_in_failed", error);
+      if (isPreviewPasskeySignIn()) {
+        setError(previewPasskeyErrorMessage(error instanceof AuthApiError ? error.status : undefined));
+        void refreshPasskeyOptions();
+      }
     }).finally(() => {
-      if (generation === passkeyVerifyGeneration.current) passkeyVerifyController.current = null;
+      if (generation === passkeyVerifyGeneration.current) {
+        passkeyVerifyController.current = null;
+        if (isPreviewPasskeySignIn()) setLoading(false);
+      }
     });
-  }, [step]);
+  }, [step, refreshPasskeyOptions]);
 
   useEffect(() => {
     if (step === "email") return;
@@ -107,7 +120,10 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
   };
   const verify = useCallback((code: string) => { void run(async () => { const result = await authApi.verifyCode(email, code); setProof(result.verificationToken); setStep(result.accountType === "existing" ? "password" : "create"); }); }, [email, loading]);
   const done = useCallback(() => {
-    void writeOnboardingCompleted().finally(() => router.dismissTo(successRoute));
+    void writeOnboardingCompleted().finally(() => {
+      tracePreviewPasskey("navigation_requested");
+      router.dismissTo(successRoute);
+    });
   }, [successRoute]);
   const continueGoogle = () => void run(async () => {
     requireGoogleWebClientId();
