@@ -8,18 +8,16 @@ import { AuthWelcomeScreen } from "./AuthWelcomeScreen";
 import { CreateAccountScreen, EmailScreen, ForgotPasswordScreen, PasswordScreen, SuccessScreen, TwoFactorLoginScreen, VerificationScreen } from "./AuthFormScreens";
 import { requireGoogleWebClientId } from "./googleConfig";
 import { isNativePasskeyUsernameFieldAvailable } from "../passkeys/NativePasskeyUsernameField";
-import { cancelPasskeyAutoFill, isPasskeyAutoFillAvailable, startPasskeyAutoFill, waitForPasskeyAutoFillStart } from "../passkeys/passkeyAutoFill";
 
 const PASSKEY_OPTIONS_REFRESH_MS = 4 * 60_000;
 const PASSKEY_EMAIL_REFRESH_AGE_MS = 3 * 60_000;
 const PASSKEY_OPTIONS_RETRY_MS = 30_000;
-const LEGACY_PASSKEY_FOCUS_FALLBACK_MS = 350;
 
 type Step = "welcome" | "email" | "verify" | "password" | "forgotPassword" | "twoFactor" | "create" | "success";
 type TwoFactorOrigin = "password" | "google";
 export function isTerminalTwoFactorError(error: unknown) { return error instanceof AuthApiError && (error.status === 410 || error.status === 429); }
 export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { initialStep?: "welcome" | "email"; successRoute?: "/" | import("./signInIntent").ProtectedRoute } = {}) {
-  const [step, setStep] = useState<Step>(initialStep); const [passkeyOptions, setPasskeyOptions] = useState<PasskeyAuthenticationOptions | null>(null); const [passkeyOptionsAcquiredAt, setPasskeyOptionsAcquiredAt] = useState(0); const passkeyOptionsGeneration = useRef(0); const passkeyOptionsController = useRef<AbortController | null>(null); const passkeyVerifyGeneration = useRef(0); const passkeyVerifyController = useRef<AbortController | null>(null); const [legacyPasskeyAutoFillActive, setLegacyPasskeyAutoFillActive] = useState(false); const legacyPasskeyAttempt = useRef(0); const legacyPasskeyController = useRef<AbortController | null>(null); const legacyPasskeyPriming = useRef(false); const [email, setEmail] = useState(""); const [challengeToken, setChallengeToken] = useState(""); const [twoFactorOrigin, setTwoFactorOrigin] = useState<TwoFactorOrigin>("password"); const [proof, setProof] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState(""); const [cooldown, setCooldown] = useState(28); const [forceGoogleAccountSelection, setForceGoogleAccountSelection] = useState(false); const [resetNotice, setResetNotice] = useState("");
+  const [step, setStep] = useState<Step>(initialStep); const [passkeyOptions, setPasskeyOptions] = useState<PasskeyAuthenticationOptions | null>(null); const [passkeyOptionsAcquiredAt, setPasskeyOptionsAcquiredAt] = useState(0); const passkeyOptionsGeneration = useRef(0); const passkeyOptionsController = useRef<AbortController | null>(null); const passkeyVerifyGeneration = useRef(0); const passkeyVerifyController = useRef<AbortController | null>(null); const [email, setEmail] = useState(""); const [challengeToken, setChallengeToken] = useState(""); const [twoFactorOrigin, setTwoFactorOrigin] = useState<TwoFactorOrigin>("password"); const [proof, setProof] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState(""); const [cooldown, setCooldown] = useState(28); const [forceGoogleAccountSelection, setForceGoogleAccountSelection] = useState(false); const [resetNotice, setResetNotice] = useState("");
 
   const refreshPasskeyOptions = useCallback(async () => {
     if (!isNativePasskeyUsernameFieldAvailable()) return;
@@ -41,8 +39,9 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     }
   }, []);
 
-  // Newer binaries let the native username field own the challenge and AutoFill
-  // lifecycle. Keep that path unchanged and refresh before the five-minute expiry.
+  // The passkey suggestion depends on the native username view shipped in the iOS
+  // binary. Prefetch the username-less challenge while Welcome is visible so the
+  // native field can start AutoFill-assisted discovery before it becomes first responder.
   useEffect(() => {
     if ((step !== "welcome" && step !== "email") || !isNativePasskeyUsernameFieldAvailable()) return;
 
@@ -94,88 +93,18 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     });
   }, [step]);
 
-  const stopLegacyPasskeyAutoFill = useCallback(() => {
-    legacyPasskeyAttempt.current += 1;
-    legacyPasskeyPriming.current = false;
-    legacyPasskeyController.current?.abort();
-    legacyPasskeyController.current = null;
-    cancelPasskeyAutoFill();
-    setLegacyPasskeyAutoFillActive(false);
-  }, []);
-
-  const startLegacyPasskeyAutoFill = useCallback(async () => {
-    // PR #5034 moved this lifecycle into a native username view. Installed binaries
-    // from before that native change do not contain the view, but they do contain
-    // the older KurioticketPasskeyAutoFill module. Reuse it instead of degrading to
-    // browser/password AutoFill and an email OTP.
-    if (step !== "email" || isNativePasskeyUsernameFieldAvailable() || !isPasskeyAutoFillAvailable() || legacyPasskeyPriming.current) return false;
-
-    const generation = ++legacyPasskeyAttempt.current;
-    const controller = new AbortController();
-    legacyPasskeyController.current?.abort();
-    cancelPasskeyAutoFill();
-    legacyPasskeyController.current = controller;
-    legacyPasskeyPriming.current = true;
-
-    try {
-      const { options } = await authApi.passkeyOptions(controller.signal);
-      if (generation !== legacyPasskeyAttempt.current) return false;
-      const assertionPromise = startPasskeyAutoFill({ rpId: options.rpId, challenge: options.challenge });
-      const started = await waitForPasskeyAutoFillStart();
-      if (generation !== legacyPasskeyAttempt.current) return false;
-      setLegacyPasskeyAutoFillActive(true);
-      void assertionPromise.then((assertion) => {
-        if (!assertion || generation !== legacyPasskeyAttempt.current) return;
-        continuePasskeyAssertion(assertion);
-      }).catch(() => {
-        // Assisted discovery is intentionally silent. Email remains the fallback.
-      }).finally(() => {
-        if (generation === legacyPasskeyAttempt.current) setLegacyPasskeyAutoFillActive(false);
-      });
-      return started;
-    } catch {
-      // A compatibility failure must never block ordinary email sign-in.
-      return false;
-    } finally {
-      if (generation === legacyPasskeyAttempt.current) legacyPasskeyPriming.current = false;
-    }
-  }, [continuePasskeyAssertion, step]);
-
-  const prepareLegacyCredentialAutoFill = useCallback(async () => {
-    if (step !== "email" || isNativePasskeyUsernameFieldAvailable() || !isPasskeyAutoFillAvailable()) return;
-    await Promise.race([
-      startLegacyPasskeyAutoFill(),
-      new Promise<void>((resolve) => setTimeout(resolve, LEGACY_PASSKEY_FOCUS_FALLBACK_MS)),
-    ]);
-  }, [startLegacyPasskeyAutoFill, step]);
-
-  const handleLegacyCredentialFocus = useCallback(() => {
-    if (step !== "email" || isNativePasskeyUsernameFieldAvailable() || legacyPasskeyAutoFillActive || legacyPasskeyPriming.current || !isPasskeyAutoFillAvailable()) return;
-    void startLegacyPasskeyAutoFill();
-  }, [legacyPasskeyAutoFillActive, startLegacyPasskeyAutoFill, step]);
-
   useEffect(() => {
     if (step === "email") return;
-    stopLegacyPasskeyAutoFill();
     stopPasskeyVerification();
-  }, [step, stopLegacyPasskeyAutoFill, stopPasskeyVerification]);
-  useEffect(() => {
-    if (step !== "email" || isNativePasskeyUsernameFieldAvailable() || !legacyPasskeyAutoFillActive || !isPasskeyAutoFillAvailable()) return;
-    const timer = setInterval(() => { void startLegacyPasskeyAutoFill(); }, PASSKEY_OPTIONS_REFRESH_MS);
-    return () => clearInterval(timer);
-  }, [legacyPasskeyAutoFillActive, startLegacyPasskeyAutoFill, step]);
+  }, [step, stopPasskeyVerification]);
   useEffect(() => () => {
     passkeyOptionsGeneration.current += 1;
     passkeyOptionsController.current?.abort();
-    legacyPasskeyAttempt.current += 1;
-    legacyPasskeyController.current?.abort();
-    cancelPasskeyAutoFill();
     stopPasskeyVerification();
   }, [stopPasskeyVerification]);
-  useEffect(() => { if (!resetNotice) return; const timer = setTimeout(() => setResetNotice(""), 2000); return () => clearTimeout(timer); }, [resetNotice]);
+  useEffect(() => { if (!resetNotice) return; const timer = setTimeout(() => setResetNotice("");, 2000); return () => clearTimeout(timer); }, [resetNotice]);
   const run = async (task: () => Promise<void>) => { if (loading) return; setLoading(true); setError(""); try { await task(); } catch (e) { setError(e instanceof AuthApiError || (e instanceof Error && e.name === "NativeGoogleSignInError") ? e.message : "Something went wrong. Please try again."); } finally { setLoading(false); } };
   const requestCode = (value: string) => {
-    stopLegacyPasskeyAutoFill();
     stopPasskeyVerification();
     void run(async () => { const normalized = normalizeEmail(value); const result = await authApi.requestCode(normalized); setEmail(normalized); setCooldown(result.cooldownSeconds || 28); setStep("verify"); });
   };
@@ -202,7 +131,7 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     setStep("success");
   });
   if (step === "welcome") return <AuthWelcomeScreen busy={loading} error={error} onEmail={() => setStep("email")} onGoogle={continueGoogle} onGuest={() => void writeOnboardingCompleted().then(() => router.replace("/"))} />;
-  if (step === "email") return <EmailScreen initialEmail={email} passkeyOptions={emailPasskeyOptions} onPasskey={continuePasskeyAssertion} onCredentialReady={prepareLegacyCredentialAutoFill} onCredentialFocus={handleLegacyCredentialFocus} onBack={() => initialStep === "email" ? router.back() : setStep("welcome")} onContinue={requestCode} loading={loading} error={error} />;
+  if (step === "email") return <EmailScreen initialEmail={email} passkeyOptions={emailPasskeyOptions} onPasskey={continuePasskeyAssertion} onBack={() => initialStep === "email" ? router.back() : setStep("welcome")} onContinue={requestCode} loading={loading} error={error} />;
   if (step === "verify") return <VerificationScreen email={email} onBack={() => setStep("email")} onDifferentEmail={() => setStep("email")} onVerify={verify} onResend={() => requestCode(email)} loading={loading} error={error} initialCooldown={cooldown} />;
   if (step === "password") return <PasswordScreen notice={resetNotice} onBack={() => { setProof(""); setResetNotice(""); setStep("verify"); }} onSubmit={(password) => void run(async () => { setResetNotice(""); const result = await authApi.password(email, password); if ("requiresTwoFactor" in result) { setTwoFactorOrigin("password"); setChallengeToken(result.challengeToken); setStep("twoFactor"); } else setStep("success"); })} onForgot={() => void run(async () => { setResetNotice(""); await authApi.sendForgotPasswordCode(email, proof); setStep("forgotPassword"); })} loading={loading} error={error} />;
   if (step === "forgotPassword") return <ForgotPasswordScreen email={email} onBack={() => setStep("password")} onResend={() => void run(async () => { await authApi.sendForgotPasswordCode(email, proof); })} onReset={(input) => void run(async () => { await authApi.resetForgotPassword({ email, ...input }); setProof(""); setResetNotice("Password reset. Sign in again."); setStep("password"); })} loading={loading} error={error} />;
