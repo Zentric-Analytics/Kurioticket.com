@@ -79,7 +79,7 @@ test("mobile nearby fares scroll horizontally without widening the page", () => 
   assert.doesNotMatch(mobileStrip, /onPointer|onTouch|preventDefault\(\)/);
 });
 
-test("mobile nearby fares align once per flight search", () => {
+test("mobile nearby fares align per search and recover visibility after layout or page resume", () => {
   assert.match(source, /mobileNearbyFareRailRef = useRef<HTMLDivElement>/);
   assert.match(source, /mobileSelectedNearbyFareRef = useRef<HTMLButtonElement>/);
   assert.match(source, /alignedMobileNearbyFareSearchRef = useRef<string \| null>/);
@@ -93,10 +93,10 @@ test("mobile nearby fares align once per flight search", () => {
   assert.doesNotMatch(alignment, /validResultsPage|page=/);
   assert.match(source, /nearbyFares\.length === 0/);
   assert.match(alignment, /selectedCell\?\.isConnected/);
-  assert.match(alignment, /rail\.clientWidth > 0/);
-  assert.match(alignment, /rail\.scrollWidth > 0/);
-  assert.match(alignment, /selectedCell\.offsetWidth > 0/);
-  assert.match(alignment, /requestAnimationFrame\(alignSelectedFare\)/);
+  assert.match(alignment, /rail\.clientWidth <= 0/);
+  assert.match(alignment, /rail\.scrollWidth <= 0/);
+  assert.match(alignment, /selectedCell\.offsetWidth <= 0/);
+  assert.match(alignment, /requestAnimationFrame\(attemptAlignment\)/);
   assert.match(alignment, /cancelAnimationFrame\(frame\)/);
   assert.match(source, /rail\.getBoundingClientRect\(\)/);
   assert.match(source, /selectedCell\.getBoundingClientRect\(\)/);
@@ -104,12 +104,15 @@ test("mobile nearby fares align once per flight search", () => {
   assert.match(source, /getCenteredRailScrollLeft\(/);
   assert.match(source, /ref=\{mobileNearbyFareRailRef\}/);
   assert.match(source, /ref=\{selected \? mobileSelectedNearbyFareRef : undefined\}/);
-  assert.match(source, /rail\.scrollTo\(\{ left: target, behavior: "auto" \}\)/);
-  assert.ok(
-    alignment.indexOf("rail.scrollTo({ left: target, behavior: \"auto\" })") <
-      alignment.indexOf("alignedMobileNearbyFareSearchRef.current = alignmentIdentity"),
+  assert.match(source, /rail\.scrollTo\(\{[\s\S]*getCenteredRailScrollLeft/);
+  assert.match(
+    alignment,
+    /rail\.scrollTo\(\{[\s\S]*?alignedMobileNearbyFareSearchRef\.current = alignmentIdentity/,
   );
-  assert.match(alignment, /\[body, nearbyFares\]/);
+  assert.match(alignment, /new ResizeObserver\(refreshAlignment\)/);
+  assert.match(alignment, /window\.addEventListener\("pageshow", refreshAlignment\)/);
+  assert.match(alignment, /document\.addEventListener\("visibilitychange", handleVisibilityChange\)/);
+  assert.match(alignment, /alignSelectedMobileFare\(true\)/);
   assert.doesNotMatch(source, /scrollIntoView\(/);
 });
 
@@ -181,7 +184,9 @@ test("results pagination preserves the searched departure date and its blue sele
 });
 
 test("desktop nearby-fare window resets for departure-date changes, not pagination", () => {
-  const resetMarker = source.indexOf("setNearbyFareVisibleStart(0)");
+  const resetMarker = source.indexOf(
+    "setNearbyFareVisibleStart(nearbyFareCenteredVisibleStart)",
+  );
   const resetEffectStart = source.lastIndexOf("useEffect", resetMarker);
   const resetEffectEnd = source.indexOf("useEffect", resetMarker + 1);
   const resetEffect = source.slice(resetEffectStart, resetEffectEnd);

@@ -8,7 +8,7 @@ const detailsClientPath = new URL("./FlightDetailsClient.tsx", import.meta.url);
 test("FlightResultsClient restores a matching snapshot before its no-cache request path", async () => {
   const source = await readFile(resultsClientPath, "utf8");
   const keyIndex = source.indexOf("buildFlightResultsSearchKey(body)");
-  const readIndex = source.indexOf("readFlightResultsSessionSnapshot(searchKey)");
+  const readIndex = source.indexOf("readFlightResultsSessionSnapshotForRefresh(searchKey)");
   const clearIndex = source.indexOf("setResults([]);", readIndex);
   const fetchIndex = source.indexOf('fetch("/api/flights/search"', readIndex);
   const restoreBlock = source.slice(readIndex, clearIndex);
@@ -22,8 +22,27 @@ test("FlightResultsClient restores a matching snapshot before its no-cache reque
   assert.match(restoreBlock, /setWarnings\(snapshot\.warnings\)/);
   assert.match(restoreBlock, /setError\(""\)/);
   assert.match(restoreBlock, /setLoading\(false\)/);
+  assert.match(restoreBlock, /setBackgroundRefreshing\(refreshingStaleSnapshot\)/);
+  assert.match(restoreBlock, /if \(!refreshingStaleSnapshot\) return/);
   assert.match(restoreBlock, /activeFlightSearchKeyRef\.current !== searchKey/);
   assert.match(restoreBlock, /return;/);
+});
+
+test("stale results refresh in place without clearing cards or surfacing a blocking error", async () => {
+  const source = await readFile(resultsClientPath, "utf8");
+  const staleIndex = source.indexOf("const refreshingStaleSnapshot");
+  const emptySnapshotIndex = source.indexOf("} else {", staleIndex);
+  const fetchIndex = source.indexOf('fetch("/api/flights/search"', staleIndex);
+  const catchIndex = source.indexOf(".catch((searchError)", fetchIndex);
+  const finallyIndex = source.indexOf(".finally(()", catchIndex);
+  const staleRestore = source.slice(staleIndex, emptySnapshotIndex);
+  const failure = source.slice(catchIndex, finallyIndex);
+
+  assert.ok(staleIndex >= 0 && staleIndex < emptySnapshotIndex && emptySnapshotIndex < fetchIndex);
+  assert.doesNotMatch(staleRestore, /setResults\(\[\]\)/);
+  assert.doesNotMatch(staleRestore, /setLoading\(true\)/);
+  assert.match(failure, /if \(!refreshingStaleSnapshot\)/);
+  assert.match(source, /backgroundRefreshing \? t\("updatingResults"\) : ""/);
 });
 
 test("successful date-filtered responses are cached while errors retain existing handling", async () => {

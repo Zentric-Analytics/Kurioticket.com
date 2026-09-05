@@ -46,7 +46,7 @@ async function waitForStableResultsGeometry(page: Page) {
 export async function prepareResults(page: Page, product: ResultsProduct, scrollY: number) {
   const config = resultsProducts[product];
   await page.goto(config.path, { waitUntil: "domcontentloaded" });
-  await expect(page.getByText(config.ready).first()).toBeVisible();
+  await expect(page.getByText(config.ready).filter({ visible: true }).first()).toBeVisible();
   await waitForStableResultsGeometry(page);
   await page.evaluate((target) => window.scrollTo(0, Math.min(target, document.body.scrollHeight - innerHeight)), scrollY);
   await waitForStableResultsGeometry(page);

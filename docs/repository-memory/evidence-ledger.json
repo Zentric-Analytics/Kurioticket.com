@@ -1,0 +1,31 @@
+{
+  "$schema": "./evidence-ledger.schema.json",
+  "schemaVersion": 1,
+  "records": [
+    {
+      "id": "RM-2026-001",
+      "status": "active",
+      "claim": "The native travel-search loader, stable Preview OTA ledger identity, durable OTA remote identity, and cold deep-link splash handoff are merged into dev through e7a472588.",
+      "scope": "Preview mobile implementation; no production release claim",
+      "evidence": [
+        { "kind": "pull-request", "reference": "https://github.com/Zentric-Analytics/Kurioticket.com/pull/5022" },
+        { "kind": "pull-request", "reference": "https://github.com/Zentric-Analytics/Kurioticket.com/pull/5023" },
+        { "kind": "pull-request", "reference": "https://github.com/Zentric-Analytics/Kurioticket.com/pull/5024" },
+        { "kind": "pull-request", "reference": "https://github.com/Zentric-Analytics/Kurioticket.com/pull/5025" },
+        { "kind": "commit", "reference": "e7a472588" },
+        { "kind": "report", "reference": "docs/codex-active-progress.md" }
+      ],
+      "verification": {
+        "completed": [
+          "Preview worker reported COMPLETE for the final Android and iOS OTA and the follow-up iOS reconciliation.",
+          "Android Preview build 49 displayed the branded flight loader and live flight results before ADB transport was lost."
+        ],
+        "pending": [
+          "Physical Android hotel and car loading checks.",
+          "Physical Android final cold deep-link, reduced-motion, and retry checks."
+        ]
+      },
+      "approval": { "state": "not-recorded" }
+    }
+  ]
+}

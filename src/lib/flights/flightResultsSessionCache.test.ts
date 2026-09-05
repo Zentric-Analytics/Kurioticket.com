@@ -7,6 +7,7 @@ import {
   FLIGHT_RESULTS_SESSION_CACHE_KEY,
   FLIGHT_RESULTS_SESSION_CACHE_TTL_MS,
   readFlightResultsSessionSnapshot,
+  readFlightResultsSessionSnapshotForRefresh,
   writeFlightResultsSessionSnapshot,
 } from "./flightResultsSessionCache";
 
@@ -190,6 +191,40 @@ test("provider-bounded server validity shortens the browser snapshot lifetime", 
 
   assert.ok(readFlightResultsSessionSnapshot("search", storage, 100 + twelveMinutes - 1));
   assert.equal(readFlightResultsSessionSnapshot("search", storage, 100 + twelveMinutes), null);
+});
+
+test("refresh reader retains provider-expired results for a background refresh", () => {
+  const storage = new MemoryStorage();
+  const serverExpiry = 10_000;
+  writeFlightResultsSessionSnapshot("search", [result], ["limited"], serverExpiry, storage, 9_000);
+
+  assert.deepEqual(readFlightResultsSessionSnapshotForRefresh("search", storage, 10_001), {
+    snapshot: {
+      version: 3,
+      searchKey: "search",
+      savedAt: 9_000,
+      validUntil: serverExpiry,
+      results: [result],
+      warnings: ["limited"],
+    },
+    isFresh: false,
+  });
+  assert.ok(storage.getItem(FLIGHT_RESULTS_SESSION_CACHE_KEY));
+});
+
+test("refresh reader removes stale results at the session retention boundary", () => {
+  const storage = new MemoryStorage();
+  writeFlightResultsSessionSnapshot("search", [result], [], 200, storage, 100);
+
+  assert.equal(
+    readFlightResultsSessionSnapshotForRefresh(
+      "search",
+      storage,
+      100 + FLIGHT_RESULTS_SESSION_CACHE_TTL_MS,
+    ),
+    null,
+  );
+  assert.equal(storage.getItem(FLIGHT_RESULTS_SESSION_CACHE_KEY), null);
 });
 
 test("response delay does not extend the server-owned snapshot expiry", () => {
