@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { router } from "expo-router";
 import { writeOnboardingCompleted } from "../../storage/onboardingStorage";
-import { authApi, AuthApiError, PasskeyAuthenticationOptions, PasskeyAssertion } from "./authApi";
+import { authApi, AuthApiError } from "./authApi";
+import type { PasskeyAuthenticationOptions, PasskeyAssertion } from "./authApi";
 import { normalizeEmail } from "./authUtils";
 import { AuthWelcomeScreen } from "./AuthWelcomeScreen";
 import { CreateAccountScreen, EmailScreen, ForgotPasswordScreen, PasswordScreen, SuccessScreen, TwoFactorLoginScreen, VerificationScreen } from "./AuthFormScreens";
@@ -93,7 +94,7 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     if (result.status === "cancelled") return;
     try {
       const authResult = await authApi.google(result.idToken, result.nonce);
-      if ("requiresTwoFactor" in authResult) { setTwoFactorOrigin("google"); setChallengeToken(authResult.challengeToken); setStep("twoFactor"); return; }
+      if ("requiresTwoFactor" in authResult) { setTwoFactorOrigin("google"); setChallengeToken(result.challengeToken); setStep("twoFactor"); return; }
     } catch (googleError) {
       if (googleError instanceof AuthApiError && googleError.code === "PREVIEW_ACCESS_REQUIRED") {
         await resetNativeGoogleSignInSelection().catch(() => {});
