@@ -35,8 +35,8 @@ test("flight card maps every approved semantic weight to its matching Inter face
     bigPrice: "bold",
     estimatedPrice: "bold",
     providerPrice: "medium",
-    flightMetadataLabel: "medium",
-    flightMetadataValue: "semibold",
+    flightMetadataText: "medium",
+    flightMetadataLabel: "semibold",
   } as const;
   for (const [style, family] of Object.entries(mappings)) {
     assert.match(source, new RegExp(`${style}: \\{[^\\n]*fontFamily: appFonts\\.${family}`));
@@ -153,15 +153,16 @@ test("flight card uses a compact three-row metadata column while airline identit
   assert.doesNotMatch(metadataBlock, /<ScrollView|horizontal/);
   assert.match(source, /card: \{[\s\S]*?paddingHorizontal: 12,[\s\S]*?paddingVertical: 9,[\s\S]*?gap: 5,/);
   assert.match(source, /flightCardFooter: \{[^\n]*width: "100%"/);
-  assert.match(source, /flightMetadataRegion: \{ flex: 1, minWidth: 0[^}]*alignItems: "flex-start"[^}]*gap: 6/);
-  assert.match(source, /flightMetadataValue: \{ flex: 1, minWidth: 0/);
+  assert.match(source, /flightMetadataRegion: \{ flex: 1, minWidth: 0[^}]*alignItems: "flex-start"[^}]*gap: 5/);
+  assert.match(source, /flightMetadataText: \{ flex: 1, minWidth: 0/);
   assert.match(source, /flightCommercialRegion: \{ width: "46%", minWidth: 104, flexShrink: 0, alignItems: "flex-end"/);
   assert.equal(card.match(/s0\.flightMetadataLabel, \{ color: supportTextColor \}/g)?.length, 3);
-  assert.equal(card.match(/s0\.flightMetadataValue, \{ color: theme\.textPrimary \}/g)?.length, 3);
+  assert.equal(card.match(/s0\.flightMetadataText, \{ color: theme\.textPrimary \}/g)?.length, 3);
+  assert.doesNotMatch(source, /flightMetadataIconTile|flightMetadataCopy|flightMetadataValue|flightMetadataLabel: \{[^}]*width/);
   assert.doesNotMatch(source, /metadataSeparator:/);
   assert.doesNotMatch(metadataBlock, />·<\/Text>/);
   for (const icon of ["Luggage", "Armchair", "FileText"]) {
-    assert.match(card, new RegExp(`<${icon} accessible=\\{false\\} size=\\{14\\} strokeWidth=\\{2\\} color=\\{supportTextColor\\}/>`));
+    assert.match(card, new RegExp(`<${icon} accessible=\\{false\\} size=\\{15\\} strokeWidth=\\{2\\.4\\} color=\\{supportTextColor\\}/>`));
   }
   assert.doesNotMatch(source, /benefitList:|benefitItem:/);
   assert.doesNotMatch(source, /flightDealAction(?:Text)?:/);
