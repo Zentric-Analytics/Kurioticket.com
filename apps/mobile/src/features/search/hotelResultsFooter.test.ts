@@ -64,7 +64,7 @@ test("Back-to-top geometry, safe-area position, and action remain unchanged", ()
   );
 });
 
-test("BottomNav ownership remains Flight-only", () => {
-  assert.match(screen, /\{flightResults \? <BottomNav flightResults \/> : null\}/);
-  assert.doesNotMatch(screen, /<BottomNav flightResults=\{flightResults\} \/>/);
+test("Hotel Results remains without BottomNav", () => {
+  const resultsScreen = screen.slice(screen.indexOf("export function ApprovedResultsScreen"), screen.indexOf("export function BottomNav"));
+  assert.doesNotMatch(resultsScreen, /<BottomNav(?:\s|\/|>)/);
 });
