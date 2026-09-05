@@ -5,6 +5,17 @@ export type HotelForm = { destination: string; checkIn: string; checkOut: string
 export type HotelFormErrors = Partial<Record<keyof HotelForm, string>>;
 
 export const HOTEL_LIMITS = { guests: { min: 1, max: 12 }, rooms: { min: 1, max: 6 } } as const;
+export function isValidHotelOccupancy(guests: number, rooms: number) {
+  return (
+    Number.isInteger(guests)
+    && guests >= HOTEL_LIMITS.guests.min
+    && guests <= HOTEL_LIMITS.guests.max
+    && Number.isInteger(rooms)
+    && rooms >= HOTEL_LIMITS.rooms.min
+    && rooms <= HOTEL_LIMITS.rooms.max
+    && rooms <= guests
+  );
+}
 export const firstParam = (value: RouteValue) => (Array.isArray(value) ? value[0] : value) ?? "";
 export const defaultHotelDates = (today = new Date()) => {
   const todayIso = localIsoDate(today);
@@ -20,7 +31,7 @@ export function initializeHotelForm(params: Record<string, RouteValue>, today = 
   const validDates = Boolean(localDateFromIso(incomingCheckIn) && localDateFromIso(incomingCheckOut) && incomingCheckIn >= todayIso && incomingCheckOut > incomingCheckIn);
   const guests = integer(params.guests);
   const rooms = integer(params.rooms);
-  const validCounts = guests !== undefined && rooms !== undefined && guests >= HOTEL_LIMITS.guests.min && guests <= HOTEL_LIMITS.guests.max && rooms >= HOTEL_LIMITS.rooms.min && rooms <= HOTEL_LIMITS.rooms.max;
+  const validCounts = guests !== undefined && rooms !== undefined && isValidHotelOccupancy(guests, rooms);
   const hadInvalid = Boolean((incomingCheckIn || incomingCheckOut) && !validDates) || Boolean((firstParam(params.guests) || firstParam(params.rooms)) && !validCounts);
   return {
     form: { destination: firstParam(params.destination), ...(validDates ? { checkIn: incomingCheckIn, checkOut: incomingCheckOut } : defaults), guests: validCounts ? guests! : 2, rooms: validCounts ? rooms! : 1 },
@@ -33,8 +44,11 @@ export function validateHotelForm(form: HotelForm, today = new Date()): HotelFor
   if (!form.destination.trim()) errors.destination = "Enter a hotel destination.";
   if (!localDateFromIso(form.checkIn) || form.checkIn < localIsoDate(today)) errors.checkIn = "Choose a valid current or future check-in date.";
   if (!localDateFromIso(form.checkOut) || form.checkOut <= form.checkIn) errors.checkOut = "Choose a check-out date after check-in.";
-  if (!Number.isInteger(form.guests) || form.guests < HOTEL_LIMITS.guests.min || form.guests > HOTEL_LIMITS.guests.max) errors.guests = "Choose between 1 and 12 guests.";
-  if (!Number.isInteger(form.rooms) || form.rooms < HOTEL_LIMITS.rooms.min || form.rooms > HOTEL_LIMITS.rooms.max) errors.rooms = "Choose between 1 and 6 rooms.";
+  const validGuests = Number.isInteger(form.guests) && form.guests >= HOTEL_LIMITS.guests.min && form.guests <= HOTEL_LIMITS.guests.max;
+  const validRooms = Number.isInteger(form.rooms) && form.rooms >= HOTEL_LIMITS.rooms.min && form.rooms <= HOTEL_LIMITS.rooms.max;
+  if (!validGuests) errors.guests = "Choose between 1 and 12 guests.";
+  if (!validRooms) errors.rooms = "Choose between 1 and 6 rooms.";
+  if (validGuests && validRooms && !isValidHotelOccupancy(form.guests, form.rooms)) errors.rooms = "Choose no more rooms than guests.";
   return errors;
 }
 export const changeGuests = (form: HotelForm, delta: number): HotelForm => {
