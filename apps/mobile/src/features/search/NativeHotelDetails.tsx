@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { ChevronLeft, ChevronRight, Images, X } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { HotelRoomOption } from "../../../../../src/lib/hotels/hotelRoomOptions";
 import { appFonts } from "../../theme/typography";
 import type { HotelRoomDisplayPrice } from "./hotelDetailCurrency";
@@ -40,26 +41,69 @@ export function NativeHotelGallery({
   accentColor: string;
 }) {
   const [failed, setFailed] = useState<Set<string>>(() => new Set());
-  const heroWidth = useWindowDimensions().width - 32;
+  const { width: viewportWidth } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const heroWidth = viewportWidth - 32;
+  const viewerWidth = viewportWidth - insets.left - insets.right;
   const images = initialImages.filter(
     (url, index) =>
       Boolean(url) && initialImages.indexOf(url) === index && !failed.has(url),
   );
   const [activeUrl, setActiveUrl] = useState<string | null>(images[0] ?? null);
+  const [viewerOpen, setViewerOpen] = useState(false);
   const scroll = useRef<ScrollView>(null);
+  const viewerScroll = useRef<ScrollView>(null);
+  const viewerThumbnails = useRef<ScrollView>(null);
   const activeIndex = Math.max(0, images.indexOf(activeUrl ?? ""));
   useEffect(() => {
     if (!activeUrl || !images.includes(activeUrl))
       setActiveUrl(images[0] ?? null);
   }, [activeUrl, images]);
-  const choose = (index: number) => {
+  useEffect(() => {
+    if (!viewerOpen) return;
+    viewerScroll.current?.scrollTo({
+      x: activeIndex * viewerWidth,
+      animated: false,
+    });
+  }, [viewerOpen, viewerWidth]);
+  const setActiveImage = (index: number) => {
     const next = images[index];
-    if (!next) return;
+    if (!next) return false;
     setActiveUrl(next);
-    scroll.current?.scrollTo({ x: index * heroWidth, animated: true });
+    return true;
+  };
+  const scrollInlineTo = (index: number, animated: boolean) =>
+    scroll.current?.scrollTo({ x: index * heroWidth, animated });
+  const scrollViewerTo = (index: number, animated: boolean) =>
+    viewerScroll.current?.scrollTo({
+      x: index * viewerWidth,
+      animated,
+    });
+  const keepViewerThumbnailVisible = (index: number) =>
+    viewerThumbnails.current?.scrollTo({
+      x: Math.max(0, index * 104 - viewportWidth / 2 + 48),
+      animated: true,
+    });
+  const choose = (index: number) => {
+    if (!setActiveImage(index)) return;
+    scrollInlineTo(index, true);
   };
   const move = (delta: number) =>
     choose((activeIndex + delta + images.length) % images.length);
+  const chooseInViewer = (index: number) => {
+    if (!setActiveImage(index)) return;
+    scrollViewerTo(index, true);
+    scrollInlineTo(index, false);
+    keepViewerThumbnailVisible(index);
+  };
+  const moveInViewer = (delta: number) =>
+    chooseInViewer((activeIndex + delta + images.length) % images.length);
+  const openViewer = (index: number) => {
+    if (!setActiveImage(index)) return;
+    scrollInlineTo(index, false);
+    setViewerOpen(true);
+  };
+  const closeViewer = () => setViewerOpen(false);
   const fail = (url: string) =>
     setFailed((current) => new Set(current).add(url));
   if (!images.length)
@@ -80,7 +124,7 @@ export function NativeHotelGallery({
           showsHorizontalScrollIndicator={false}
           onMomentumScrollEnd={(event) => {
             const width = event.nativeEvent.layoutMeasurement.width;
-            choose(
+            setActiveImage(
               Math.max(
                 0,
                 Math.min(
@@ -91,15 +135,22 @@ export function NativeHotelGallery({
             );
           }}
         >
-          {images.map((url) => (
-            <Image
+          {images.map((url, index) => (
+            <Pressable
               key={url}
-              source={{ uri: url }}
-              resizeMode="cover"
               style={[s.hero, { width: heroWidth }]}
-              accessibilityLabel={`${name} photo ${images.indexOf(url) + 1}`}
-              onError={() => fail(url)}
-            />
+              accessibilityRole="button"
+              accessibilityLabel={`Open photo ${index + 1} of ${images.length} for ${name}`}
+              onPress={() => openViewer(index)}
+            >
+              <Image
+                source={{ uri: url }}
+                resizeMode="cover"
+                style={s.heroImage}
+                accessible={false}
+                onError={() => fail(url)}
+              />
+            </Pressable>
           ))}
         </ScrollView>
         {images.length > 1 ? (
@@ -133,8 +184,12 @@ export function NativeHotelGallery({
             <Pressable
               key={url}
               accessibilityRole="button"
-              accessibilityLabel={`Show photo ${index + 1}`}
-              onPress={() => choose(index)}
+              accessibilityLabel={
+                remaining > 0 ? "View all photos" : `Show photo ${index + 1}`
+              }
+              onPress={() =>
+                remaining > 0 ? openViewer(index) : choose(index)
+              }
               style={[
                 s.thumbnailFrame,
                 activeIndex === index && { borderColor: accentColor },
@@ -157,6 +212,133 @@ export function NativeHotelGallery({
           );
         })}
       </View>
+      <Modal
+        visible={viewerOpen}
+        animationType="fade"
+        presentationStyle="fullScreen"
+        onRequestClose={closeViewer}
+        onShow={() => {
+          scrollViewerTo(activeIndex, false);
+          keepViewerThumbnailVisible(activeIndex);
+        }}
+      >
+        <View
+          accessibilityViewIsModal
+          style={[
+            s.viewer,
+            {
+              paddingTop: Math.max(insets.top, 12),
+              paddingBottom: Math.max(insets.bottom, 12),
+              paddingLeft: insets.left,
+              paddingRight: insets.right,
+            },
+          ]}
+        >
+          <View style={s.viewerHeader}>
+            <Text
+              accessibilityRole="header"
+              numberOfLines={1}
+              style={s.viewerTitle}
+            >
+              Photos for {name}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Close photo viewer"
+              onPress={closeViewer}
+              style={s.viewerClose}
+            >
+              <X color="#0F172A" size={20} />
+            </Pressable>
+          </View>
+          <View style={s.viewerStage}>
+            <ScrollView
+              ref={viewerScroll}
+              style={s.viewerPager}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={(event) => {
+                const width = event.nativeEvent.layoutMeasurement.width;
+                const index = Math.max(
+                  0,
+                  Math.min(
+                    images.length - 1,
+                    Math.round(event.nativeEvent.contentOffset.x / width),
+                  ),
+                );
+                if (!setActiveImage(index)) return;
+                scrollInlineTo(index, false);
+                keepViewerThumbnailVisible(index);
+              }}
+            >
+              {images.map((url) => (
+                <View key={url} style={[s.viewerPage, { width: viewerWidth }]}>
+                  <Image
+                    source={{ uri: url }}
+                    resizeMode="contain"
+                    style={s.viewerImage}
+                    accessibilityLabel={`${name} photo ${images.indexOf(url) + 1}`}
+                    onError={() => fail(url)}
+                  />
+                </View>
+              ))}
+            </ScrollView>
+            {images.length > 1 ? (
+              <>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Previous photo"
+                  onPress={() => moveInViewer(-1)}
+                  style={[s.viewerArrow, s.viewerLeft]}
+                >
+                  <ChevronLeft color="#0F172A" size={24} />
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Next photo"
+                  onPress={() => moveInViewer(1)}
+                  style={[s.viewerArrow, s.viewerRight]}
+                >
+                  <ChevronRight color="#0F172A" size={24} />
+                </Pressable>
+              </>
+            ) : null}
+            <Text style={s.viewerCounter}>
+              {activeIndex + 1} of {images.length} photos
+            </Text>
+          </View>
+          {images.length > 1 ? (
+            <ScrollView
+              ref={viewerThumbnails}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={s.viewerThumbnailStrip}
+            >
+              {images.map((url, index) => (
+                <Pressable
+                  key={url}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Show photo ${index + 1}`}
+                  accessibilityState={{ selected: activeIndex === index }}
+                  onPress={() => chooseInViewer(index)}
+                  style={[
+                    s.viewerThumbnailFrame,
+                    activeIndex === index && s.viewerThumbnailActive,
+                  ]}
+                >
+                  <Image
+                    source={{ uri: url }}
+                    resizeMode="cover"
+                    style={s.viewerThumbnail}
+                    onError={() => fail(url)}
+                  />
+                </Pressable>
+              ))}
+            </ScrollView>
+          ) : null}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -248,7 +430,8 @@ const s = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "#DCE2EB",
   },
-  hero: { width: "100%", aspectRatio: 16 / 10 },
+  hero: { aspectRatio: 16 / 10 },
+  heroImage: { width: "100%", height: "100%" },
   arrow: {
     position: "absolute",
     top: "50%",
@@ -296,6 +479,77 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  viewer: { flex: 1, backgroundColor: "#020617" },
+  viewerHeader: {
+    minHeight: 56,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 12,
+  },
+  viewerTitle: {
+    flex: 1,
+    minWidth: 0,
+    color: "white",
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "600",
+    fontFamily: appFonts.semibold,
+  },
+  viewerClose: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+  },
+  viewerStage: { flex: 1, position: "relative" },
+  viewerPager: { flex: 1 },
+  viewerPage: { flex: 1, height: "100%" },
+  viewerImage: { width: "100%", height: "100%" },
+  viewerArrow: {
+    position: "absolute",
+    top: "50%",
+    marginTop: -24,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,.9)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,.55)",
+  },
+  viewerLeft: { left: 12 },
+  viewerRight: { right: 12 },
+  viewerCounter: {
+    position: "absolute",
+    alignSelf: "center",
+    bottom: 8,
+    color: "white",
+    backgroundColor: "rgba(2,6,23,.8)",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 999,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "600",
+    fontFamily: appFonts.semibold,
+  },
+  viewerThumbnailStrip: { gap: 8, paddingHorizontal: 12, paddingVertical: 12 },
+  viewerThumbnailFrame: {
+    width: 96,
+    height: 64,
+    borderRadius: 8,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,.4)",
+  },
+  viewerThumbnailActive: { borderWidth: 3, borderColor: "white" },
+  viewerThumbnail: { width: "100%", height: "100%" },
   modalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,.45)",
