@@ -527,7 +527,7 @@ export class PreviewOrchestrator {
       // action identity; the complete, evolving group set lives in evidence.
       await this.ledger.recordAction({ sourceSha: sha, kind: "OTA", identityKey, remoteId: recorded?.remote_id ?? correctedRemoteId, state: "PUBLISHED", evidence });
     }
-    return { updateIds: ids, runtimes, channel: PREVIEW_IDENTITY.channel };
+    return { updateIds: ids, updates, runtimes, channel: PREVIEW_IDENTITY.channel };
   }
 
   async deliverIos(sha, cwd, lease, fingerprint) {

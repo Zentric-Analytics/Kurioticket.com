@@ -9,6 +9,7 @@ export function pendingOtaPlatforms(previous) {
   return platforms.filter((platform) => {
     if (!needsJs && !carried.includes(platform)) return false;
     if (evidence[platform]?.buildId) return false;
+    if (evidence.ota?.updateIds?.length && evidence.ota?.runtimes?.[platform]) return false;
     return !evidence.ota?.updates?.some((update) => update.platform === platform);
   });
 }
