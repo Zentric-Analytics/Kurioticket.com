@@ -138,6 +138,7 @@ const styles = StyleSheet.create({
     flexWrap: "nowrap",
   },
   touchTarget: {
+    minWidth: 44,
     minHeight: 44,
     justifyContent: "center",
   },
