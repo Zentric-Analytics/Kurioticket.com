@@ -38,7 +38,14 @@ test("mobile Hotel search uses the Flight-parity data-driven summary shell", () 
   assert.match(searchBarSource, /onClick=\{openMobileSearchPanel\}/);
   assert.match(searchBarSource, /h-16[\s\S]*?rounded-\[13px\][\s\S]*?border-\[#D8E1EC\]/);
   assert.match(searchBarSource, /h-11 w-11[\s\S]*?bg-transparent[\s\S]*?text-slate-700/);
-  assert.match(searchBarSource, /formatCompactHotelDateRange/);
+  assert.match(
+    searchBarSource,
+    /import \{[\s\S]*?formatCompactHotelDateRange,[\s\S]*?\} from "@\/lib\/hotelsDateFormatting"/,
+  );
+  assert.match(
+    searchBarSource,
+    /formatCompactHotelDateRange\(checkIn, checkOut, calendarLocale\) \?\?\s+dateSummary/,
+  );
   assert.doesNotMatch(searchBarSource, /SquarePen[\s\S]{0,300}bg-\[#004BB8\]\/8/);
   assert.doesNotMatch(
     searchBarSource.slice(controlsStart, controlsEnd),
