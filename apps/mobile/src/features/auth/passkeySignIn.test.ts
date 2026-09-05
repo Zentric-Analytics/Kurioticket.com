@@ -12,7 +12,7 @@ test("welcome keeps passkeys out of the top-level auth choices", () => {
   assert.doesNotMatch(welcome, /Continue with passkey|Sign in with passkey|onPasskey/);
 });
 
-test("email screen has no visible passkey UI, marks the identifier as username, and focuses only after discovery is primed", () => {
+test("email screen has no visible passkey UI, marks the identifier as username, and focuses only after preparation settles", () => {
   const screens = source("src/features/auth/AuthFormScreens.tsx");
   assert.doesNotMatch(screens, /Sign in with passkey|passkeyOption|onPasskey|passkeyLoading/);
   assert.match(screens, /autoComplete="username"/);
@@ -25,24 +25,33 @@ test("email screen has no visible passkey UI, marks the identifier as username, 
   assert.doesNotMatch(emailScreen, /autoFocus/);
 });
 
-test("email entry primes silent AutoFill-assisted passkey discovery before the username field is focused", () => {
+test("email entry waits for native AutoFill startup acknowledgement before considering discovery primed", () => {
   const flow = source("src/features/auth/AuthFlow.tsx");
   const bridge = source("src/features/passkeys/passkeyAutoFill.ts");
   const swift = source("modules/kurioticket-passkey-autofill/ios/KurioticketPasskeyAutoFillModule.swift");
   const options = flow.indexOf("authApi.passkeyOptions(controller.signal)");
   const autoFill = flow.indexOf("startPasskeyAutoFill({ rpId: options.rpId, challenge: options.challenge })");
-  const active = flow.indexOf("setCredentialAutoFillActive(true)", autoFill);
+  const acknowledgement = flow.indexOf("await waitForPasskeyAutoFillStart()", autoFill);
+  const active = flow.indexOf("setCredentialAutoFillActive(true)", acknowledgement);
   const verify = flow.indexOf("authApi.passkeyVerify(assertion, controller.signal)");
-  assert.ok(options > 0 && autoFill > options && active > autoFill && verify > active);
+  assert.ok(options > 0 && autoFill > options && acknowledgement > autoFill && active > acknowledgement && verify > active);
   assert.match(flow, /const startSilentPasskeyAutoFill = useCallback\(async/);
   assert.match(flow, /const prepareCredentialAutoFill = useCallback\(async/);
-  assert.match(flow, /await startSilentPasskeyAutoFill\(\)/);
   assert.match(flow, /onCredentialReady=\{prepareCredentialAutoFill\}/);
-  assert.match(flow, /const handleCredentialFocus = useCallback/);
+  assert.match(flow, /passkeyPriming\.current/);
   assert.doesNotMatch(flow, /getNativePasskey|continuePasskey|passkeyLoading/);
-  assert.match(bridge, /Platform\.OS === "ios"/);
-  assert.match(swift, /performAutoFillAssistedRequests\(\)/);
+  assert.match(bridge, /waitUntilStarted: \(\) => Promise<boolean>/);
+  assert.match(bridge, /return module\.waitUntilStarted\(\)/);
+  assert.match(swift, /AsyncFunction\("waitUntilStarted"\)/);
+  assert.match(swift, /controller\.performAutoFillAssistedRequests\(\)[\s\S]*self\.started = true[\s\S]*self\.resolveStartWaiters\(true\)/);
   assert.match(swift, /ASAuthorizationPlatformPublicKeyCredentialAssertion/);
+});
+
+test("email focus fallback is bounded while passkey priming continues silently", () => {
+  const flow = source("src/features/auth/AuthFlow.tsx");
+  assert.match(flow, /PASSKEY_AUTOFILL_FOCUS_FALLBACK_MS = 350/);
+  assert.match(flow, /Promise\.race\(\[[\s\S]*startSilentPasskeyAutoFill\(\)[\s\S]*setTimeout\(resolve, PASSKEY_AUTOFILL_FOCUS_FALLBACK_MS\)/);
+  assert.match(flow, /credentialAutoFillActive \|\| passkeyPriming\.current/);
 });
 
 test("AutoFill challenge refreshes before the five-minute server expiry", () => {
@@ -74,13 +83,14 @@ test("AutoFill discovery stays silent and is cancelled when the email flow is le
   assert.doesNotMatch(flow, /No Kurioticket passkey was found|Too many passkey attempts|Passkey sign-in could not be completed/);
 });
 
-test("iOS bridge ignores callbacks from superseded authorization controllers", () => {
+test("iOS bridge ignores callbacks from superseded authorization controllers and clears startup waiters", () => {
   const swift = source("modules/kurioticket-passkey-autofill/ios/KurioticketPasskeyAutoFillModule.swift");
   assert.match(swift, /guard self\.controller === controller else \{ return \}/);
   assert.match(swift, /finish\(controller: controller, result:/);
   assert.match(swift, /guard controller === completedController else \{ return \}/);
   assert.match(swift, /let activeController = controller/);
-  assert.match(swift, /controller = nil[\s\S]*promise = nil[\s\S]*activeController\?\.cancel\(\)/);
+  assert.match(swift, /controller = nil[\s\S]*promise = nil[\s\S]*started = false[\s\S]*activeController\?\.cancel\(\)/);
+  assert.match(swift, /resolveStartWaiters\(false\)/);
 });
 
 test("existing native passkey adapter remains available for management and explicit native ceremonies", () => {
