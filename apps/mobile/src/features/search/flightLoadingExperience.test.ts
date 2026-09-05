@@ -34,5 +34,5 @@ test("ready Flight content retains dates, sticky filters, alert, count and cards
   assert.match(list, /ListHeaderComponent=\{flightDateStrip\}/);
   assert.match(list, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
   assert.match(list, /renderSectionHeader[\s\S]*?renderItem[\s\S]*?<FlightResultsSummaryRow[\s\S]*?count=\{sorted\.length\}[\s\S]*?<FlightCard/);
-  assert.doesNotMatch(list.slice(list.indexOf("renderItem=")), /PriceAlert|flightResultCountLabel/);
+  assert.match(list.slice(list.indexOf("renderItem=")), /PriceAlert[\s\S]*FlightResultsSummaryRow[\s\S]*FlightCard/);
 });

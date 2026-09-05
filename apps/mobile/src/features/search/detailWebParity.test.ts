@@ -17,6 +17,10 @@ const webSectionNav = readFileSync(
   "../../src/components/results/hotelDetails/HotelDetailsSectionNav.tsx",
   "utf8",
 );
+const nativeLocation = readFileSync(
+  "src/features/search/NativeHotelLocationSection.tsx",
+  "utf8",
+);
 
 function styleRule(name: string, nextName: string) {
   const start = source.indexOf(`  ${name}:`);
@@ -181,8 +185,8 @@ test("Hotel provider selection validates candidates before applying precedence",
 });
 
 test("Hotel panels and dock expose web-aligned truthful information", () => {
-  for (const heading of ["Compare prices", "About this hotel", "Property highlights", "All amenities", "Room &amp; comfort", "Hotel information", "Accessibility", "Location &amp; stay fit"]) assert.match(hotel, new RegExp(heading));
-  assert.match(reviews, /Guest reviews/);
+  for (const heading of ["Compare prices", "About this hotel", "Property highlights", "All amenities", "Room &amp; comfort", "Hotel information", "Accessibility", "Guest reviews"]) assert.match(hotel, new RegExp(heading));
+  assert.match(nativeLocation, /Location &amp; stay fit/);
   assert.match(hotel, /estimated stay total/);
   assert.match(hotel, /per night/);
   assert.match(hotel, />Continue booking</);
