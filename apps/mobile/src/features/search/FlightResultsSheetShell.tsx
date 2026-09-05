@@ -6,14 +6,16 @@ import { X } from "lucide-react-native";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 
-export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, children, footer, fullScreen = false, subtitle, headerAction }: {
+export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, children, footer, fullScreen = false, subtitle, headerAction, fullScreenFooterExtraBottomPadding }: {
   visible: boolean; title: string; closeLabel: string; onClose: () => void; children: ReactNode; footer?: ReactNode;
-  fullScreen?: boolean; subtitle?: string; headerAction?: ReactNode;
+  fullScreen?: boolean; subtitle?: string; headerAction?: ReactNode; fullScreenFooterExtraBottomPadding?: number;
 }) {
   const { theme } = useAppTheme();
   const inset = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const footerBottomPadding = fullScreen ? inset.bottom + 16 : Math.max(inset.bottom, 12);
+  const footerBottomPadding = fullScreen && fullScreenFooterExtraBottomPadding != null
+    ? inset.bottom + fullScreenFooterExtraBottomPadding
+    : Math.max(inset.bottom, fullScreen ? 16 : 12);
   const quickBackdropOpacity = useRef(new Animated.Value(0)).current;
   const quickSheetTranslateY = useRef(new Animated.Value(28)).current;
 
