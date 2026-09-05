@@ -21,14 +21,15 @@ test("sort labels are Best, Cheapest, and Fastest", () => {
   assert.match(controls, /safeSort = sort === "price" \|\| sort === "duration" \? sort : "best"/);
 });
 
-test("web mobile filter colors are carried into native light mode", () => {
+test("Flight rail inherits the results canvas while chips keep their neutral surfaces", () => {
   assert.match(controls, /const webFilterBorder = "#D8E1EC"/);
   assert.match(controls, /const webFilterText = "#142033"/);
   assert.match(controls, /const webFilterPressed = "#F8FAFC"/);
   assert.match(controls, /const webFilterSurface = "#FFFFFF"/);
   assert.match(controls, /const surface = light \? webFilterSurface : theme\.surface/);
-  assert.match(controls, /const railSurface = theme\.background/);
-  assert.match(controls, /backgroundColor: railSurface/);
+  assert.match(controls, /style=\{styles\.rail\}/);
+  assert.doesNotMatch(controls, /const railSurface = theme\.background/);
+  assert.doesNotMatch(controls, /backgroundColor: railSurface/);
   assert.doesNotMatch(controls, /ui\.pale|#EEF4FF/);
 });
 
@@ -46,14 +47,14 @@ test("quick controls stay visually neutral even when selected or expanded", () =
   assert.match(screen, /stopsCount=\{filters\.stops\?\.length \|\| Number\(filters\.maxStops != null\)\}/);
 });
 
-test("controls use compact capsules inside accessible 44 by 44 touch targets", () => {
+test("controls use compact capsules inside accessible 44 by 44 touch targets with a 20px rail inset", () => {
   assert.match(controls, /rail: \{ height: 44/);
   assert.match(controls, /touchTarget: \{[\s\S]*?minWidth: 44,[\s\S]*?minHeight: 44/);
   assert.match(controls, /capsule: \{[\s\S]*?height: 36/);
   assert.match(controls, /borderRadius: 9/);
   assert.match(controls, /paddingHorizontal: 10/);
   assert.match(controls, /label: \{[\s\S]*?fontSize: 13/);
-  assert.match(controls, /content: \{[\s\S]*?gap: 6/);
+  assert.match(controls, /content: \{[\s\S]*?paddingHorizontal: 20,[\s\S]*?gap: 6/);
 });
 
 test("full Filter launcher shows its label with the filter icon and keeps its accessible contract", () => {
