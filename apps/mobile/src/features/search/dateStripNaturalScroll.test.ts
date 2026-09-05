@@ -12,8 +12,7 @@ test("the date strip stays fully opaque in normal list-header flow", () => {
   assert.doesNotMatch(list, /ListHeaderComponent=\{[^}]*Animated|position:\s*"absolute"|stickyHeaderIndices/);
 });
 
-test("the filter rail remains sticky and normal scrolling settles pagination", () => {
+test("the filter rail remains sticky without pagination settlement plumbing", () => {
   assert.match(list, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
-  assert.match(list, /onScroll=\{\(\) => flightPaginationScheduleSettled\.current\?\.\(\)\}/);
-  assert.match(list, /onMomentumScrollEnd=\{\(\) => flightPaginationFinishPositioning\.current\?\.\(\)\}/);
+  assert.doesNotMatch(list, /flightPagination|onMomentumScrollEnd|onScrollEndDrag/);
 });

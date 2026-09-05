@@ -154,8 +154,6 @@ import { defaultHotelSort, sortHotelsForResults } from "./hotelSort";
 import { HotelResultsQuickFilterSheet, type HotelResultsQuickFilterKind } from "./HotelResultsQuickFilterSheet";
 import { hasHotelPrice } from "@/lib/hotels/hotelResultAvailability";
 import { HOTEL_RESULTS_PAGE_SIZE, clampHotelResultsPage, getHotelResultsPageCount, paginateHotelResults } from "@/lib/hotels/hotelResultsPagination";
-import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
-import { FLIGHT_RESULTS_PAGE_SIZE, buildFlightPaginationItems, clampFlightResultsPage, getFlightResultsPageCount, paginateFlightResults } from "@/lib/flights/flightResultsPagination";
 import { buildHotelFilterChips, hasGoogleMapsDiscovery } from "./hotelResultsPresentation";
 import { HotelResultsPagination } from "./HotelResultsPagination";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
@@ -168,10 +166,6 @@ import { getHotelLocationFieldDisplay } from "@/lib/search/hotelLocationFieldDis
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
-type FlightPaginationPhase = "idle" | "positioning" | "committing" | "revealing";
-const FLIGHT_PAGINATION_SCROLL_FALLBACK_MS = 800;
-const FLIGHT_PAGINATION_SCROLL_SETTLE_MS = 90;
-const FLIGHT_PAGINATION_REVEAL_MS = 120;
 const flightSupportText = {
   light: "#465675",
   dark: "#B8C3D8",
@@ -230,19 +224,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const hotelResultsBodyOffset = useRef(0);
   const hotelResultsSummaryOffset = useRef(0);
   const hotelFilterHeaderHeight = useRef(0);
-  const [flightPage, setFlightPage] = useState(1);
-  const [flightPaginationPendingPage, setFlightPaginationPendingPage] = useState<number | null>(null);
-  const [flightPaginationPhase, setFlightPaginationPhase] = useState<FlightPaginationPhase>("idle");
-  const [flightPaginationMinHeight, setFlightPaginationMinHeight] = useState<number | null>(null);
   const flightResultsListRef = useRef<SectionList<FlightResult>>(null);
-  const flightPaginationPendingPageRef = useRef<number | null>(null);
-  const flightPaginationTransitionRef = useRef(0);
-  const flightPaginationContentHeight = useRef(0);
-  const flightPaginationSettleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const flightPaginationFallbackTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const flightPaginationScheduleSettled = useRef<(() => void) | null>(null);
-  const flightPaginationFinishPositioning = useRef<(() => void) | null>(null);
-  const flightPaginationOpacity = useRef(new Animated.Value(1)).current;
   const windowDimensions = useWindowDimensions();
   const previousHotelSearchKey = useRef<string | undefined>(undefined);
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
@@ -259,30 +241,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const previousFlightSearchKey = useRef<string | undefined>(undefined);
   const pendingDateStripSelection = useRef<string | null>(null);
   const pendingDateStripSelectionTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const clearFlightPaginationTimers = useCallback(() => {
-    if (flightPaginationSettleTimer.current) clearTimeout(flightPaginationSettleTimer.current);
-    if (flightPaginationFallbackTimer.current) clearTimeout(flightPaginationFallbackTimer.current);
-    flightPaginationSettleTimer.current = undefined;
-    flightPaginationFallbackTimer.current = undefined;
-    flightPaginationScheduleSettled.current = null;
-    flightPaginationFinishPositioning.current = null;
-  }, []);
-  const cancelFlightPagination = useCallback(() => {
-    flightPaginationTransitionRef.current += 1;
-    clearFlightPaginationTimers();
-    flightPaginationOpacity.stopAnimation();
-    flightPaginationOpacity.setValue(1);
-    flightPaginationPendingPageRef.current = null;
-    setFlightPaginationPendingPage(null);
-    setFlightPaginationPhase("idle");
-    setFlightPaginationMinHeight(null);
-  }, [clearFlightPaginationTimers, flightPaginationOpacity]);
-  useEffect(() => () => {
-    flightPaginationTransitionRef.current += 1;
-    clearFlightPaginationTimers();
-    flightPaginationOpacity.stopAnimation();
-    flightPaginationPendingPageRef.current = null;
-  }, [clearFlightPaginationTimers, flightPaginationOpacity]);
   useEffect(() => {
     if (!flightResults || !plan.plan?.key) return;
     if (previousFlightSearchKey.current && previousFlightSearchKey.current !== plan.plan.key) {
@@ -292,8 +250,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       pendingDateStripSelectionTimer.current = undefined;
       const preserveDateStripPreferences = pendingSearchKey != null
         && pendingSearchKey === plan.plan.key;
-      cancelFlightPagination();
-      setFlightPage(1);
       if (!preserveDateStripPreferences) {
         setSort("price");
         setFilters(emptyFlightFilters());
@@ -302,7 +258,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       setFilterOpen(false);
     }
     previousFlightSearchKey.current = plan.plan.key;
-  }, [cancelFlightPagination, flightResults, plan.plan?.key]);
+  }, [flightResults, plan.plan?.key]);
   useEffect(() => () => {
     if (pendingDateStripSelectionTimer.current) clearTimeout(pendingDateStripSelectionTimer.current);
   }, []);
@@ -595,17 +551,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const hotelPageCount = getHotelResultsPageCount(product === "hotel" ? sorted.length : 0);
   const clampedHotelPage = clampHotelResultsPage(hotelPage, hotelPageCount);
   const hotelPageResults = product === "hotel" ? paginateHotelResults(sorted as HotelResult[], clampedHotelPage) : [];
-  const flightPageCount = getFlightResultsPageCount(product === "flight" ? sorted.length : 0);
-  const clampedFlightPage = clampFlightResultsPage(flightPage, flightPageCount);
-  const flightPageResults = product === "flight" ? paginateFlightResults(sorted as FlightResult[], clampedFlightPage) : [];
-  const flightRange = getResultsDisplayRange({ currentPage: clampedFlightPage, pageSize: FLIGHT_RESULTS_PAGE_SIZE, totalResults: product === "flight" ? sorted.length : 0 });
   useEffect(() => { if (product === "hotel") setHotelPage(1); }, [hotelFilters, plan.plan?.key, product]);
   useEffect(() => { if (product === "hotel" && hotelPage !== clampedHotelPage) setHotelPage(clampedHotelPage); }, [clampedHotelPage, hotelPage, product]);
-  useEffect(() => {
-    if (product !== "flight" || flightPage === clampedFlightPage) return;
-    cancelFlightPagination();
-    setFlightPage(clampedFlightPage);
-  }, [cancelFlightPagination, clampedFlightPage, flightPage, product]);
   const flightState = product === "flight" ? resolveFlightResultsState({
     status,
     rawResultCount: results.length,
@@ -665,72 +612,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     setHotelPageChanging(true); setHotelPage(clampHotelResultsPage(page, hotelPageCount));
     requestAnimationFrame(() => { hotelScrollRef.current?.scrollTo({ y: hotelResultsOffset.current, animated: true }); setHotelPageChanging(false); });
   };
-  const changeFlightPage = (page: number) => {
-    const nextPage = clampFlightResultsPage(page, flightPageCount);
-    if (flightPaginationPendingPageRef.current !== null || nextPage === clampedFlightPage) return;
-    const transition = flightPaginationTransitionRef.current + 1;
-    flightPaginationTransitionRef.current = transition;
-    flightPaginationPendingPageRef.current = nextPage;
-    setFlightPaginationMinHeight(flightPaginationContentHeight.current || null);
-    setFlightPaginationPendingPage(nextPage);
-    setFlightPaginationPhase("positioning");
-    flightPaginationOpacity.setValue(1);
-
-    const finishPositioning = () => {
-      if (flightPaginationTransitionRef.current !== transition || flightPaginationPendingPageRef.current !== nextPage) return;
-      clearFlightPaginationTimers();
-      setFlightPaginationPhase("committing");
-      setFlightPage(nextPage);
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        if (flightPaginationTransitionRef.current !== transition || flightPaginationPendingPageRef.current !== nextPage) return;
-        setFlightPaginationPhase("revealing");
-        Animated.timing(flightPaginationOpacity, {
-          toValue: 0,
-          duration: FLIGHT_PAGINATION_REVEAL_MS,
-          useNativeDriver: true,
-        }).start(({ finished }) => {
-          if (!finished || flightPaginationTransitionRef.current !== transition) return;
-          flightPaginationPendingPageRef.current = null;
-          setFlightPaginationPendingPage(null);
-          setFlightPaginationPhase("idle");
-          setFlightPaginationMinHeight(null);
-          flightPaginationOpacity.setValue(1);
-        });
-      }));
-    };
-    const scheduleSettled = () => {
-      if (flightPaginationTransitionRef.current !== transition) return;
-      if (flightPaginationSettleTimer.current) clearTimeout(flightPaginationSettleTimer.current);
-      flightPaginationSettleTimer.current = setTimeout(finishPositioning, FLIGHT_PAGINATION_SCROLL_SETTLE_MS);
-    };
-    flightPaginationFinishPositioning.current = finishPositioning;
-    flightPaginationScheduleSettled.current = scheduleSettled;
-    requestAnimationFrame(() => {
-      if (flightPaginationTransitionRef.current !== transition) return;
-      flightResultsListRef.current?.scrollToLocation({
-        sectionIndex: 0,
-        itemIndex: 0,
-        viewPosition: 0,
-        animated: true,
-      });
-      scheduleSettled();
-      flightPaginationFallbackTimer.current = setTimeout(finishPositioning, FLIGHT_PAGINATION_SCROLL_FALLBACK_MS);
-    });
-  };
-  const handleFullFlightFiltersChange = useCallback((next: FlightFilters) => {
-    cancelFlightPagination();
-    setFlightPage(1);
-    setFilters(next);
-  }, [cancelFlightPagination]);
-  const handleQuickFlightFiltersChange = useCallback((next: FlightFilters) => {
-    cancelFlightPagination();
-    setFilters(next);
-  }, [cancelFlightPagination]);
-  const clearFlightFilters = useCallback(() => {
-    cancelFlightPagination();
-    setFlightPage(1);
-    setFilters(emptyFlightFilters());
-  }, [cancelFlightPagination]);
+  const handleFullFlightFiltersChange = useCallback((next: FlightFilters) => setFilters(next), []);
+  const handleQuickFlightFiltersChange = useCallback((next: FlightFilters) => setFilters(next), []);
+  const clearFlightFilters = useCallback(() => setFilters(emptyFlightFilters()), []);
   const scrollToFlightResultsBeginning = useCallback(() => {
     requestAnimationFrame(() => {
       try {
@@ -891,8 +775,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     const returnDate = payload.tripType === "round-trip" && typeof payload.returnDate === "string"
       ? preserveRoundTripDuration(flightDate, payload.returnDate, nextDepartureDate)
       : undefined;
-    cancelFlightPagination();
-    setFlightPage(1);
     setSortOpen(false);
     setFilterOpen(false);
     const expectedSearchPlan = buildSearchPlan("flight", {
@@ -907,7 +789,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       pendingDateStripSelectionTimer.current = undefined;
     }, 10_000);
     router.setParams({ departureDate: nextDepartureDate, ...(returnDate ? { returnDate } : {}) });
-  }, [cancelFlightPagination, flightDate, params, payload.returnDate, payload.tripType]);
+  }, [flightDate, params, payload.returnDate, payload.tripType]);
   const flightDateStrip = (
     payload.tripType === "one-way" || payload.tripType === "round-trip" ? <DateStrip
             date={flightDate}
@@ -1015,7 +897,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         <Animated.SectionList
           ref={flightResultsListRef}
           style={[s0.resultsScroll, { backgroundColor: flightCanvasColor }]}
-          sections={[{ data: !flightState ? flightPageResults : [] }]}
+          sections={[{ data: !flightState ? sorted as FlightResult[] : [] }]}
           keyExtractor={(item) => item.id}
           ListHeaderComponent={flightDateStrip}
           renderSectionHeader={() => (
@@ -1023,19 +905,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               style={[s0.flightFilterSectionHeader, { backgroundColor: flightCanvasColor }]}
             >
               {filterRail}
-              {status === "ready" && !flightState && plan.plan ? (
-                <View style={s0.flightResultsIntro}>
-                  <View style={s0.flightAlertOuter}>
-                    <PriceAlert product="flight" plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} compact />
-                  </View>
-                </View>
-              ) : null}
             </View>
           )}
           stickySectionHeadersEnabled
           renderItem={({ item, index }) => (
             <>
-              {index === 0 && flightRange ? <FlightResultsSummaryRow count={sorted.length} range={flightRange} /> : null}
+              {index === 0 ? <><View style={s0.flightResultsIntro}>{status === "ready" && plan.plan ? <View style={s0.flightAlertOuter}><PriceAlert product="flight" plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} compact /></View> : null}</View><FlightResultsSummaryRow count={sorted.length} /></> : null}
               <View style={s0.flightCardItem}>
                 <FlightCard
                   result={item}
@@ -1060,40 +935,21 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 onAdjustFilters={() => openFlightFilters("all")}
               />
             </View>
-          ) : !flightState && sorted.length ? <FlightResultsPagination page={clampedFlightPage} pages={flightPageCount} disabled={flightPaginationPendingPage !== null} onPage={changeFlightPage} /> : null}
+          ) : null}
           alwaysBounceVertical={false}
           bounces={false}
           overScrollMode="never"
-          onScroll={() => flightPaginationScheduleSettled.current?.()}
-          onMomentumScrollEnd={() => flightPaginationFinishPositioning.current?.()}
-          onScrollEndDrag={() => flightPaginationScheduleSettled.current?.()}
-          onContentSizeChange={(_width, height) => { flightPaginationContentHeight.current = height; }}
           scrollEventThrottle={16}
           contentContainerStyle={[
             s0.flightResultsContent,
             { paddingBottom: Math.max(insets.bottom + 16, 16) },
-            flightPaginationMinHeight !== null && { minHeight: flightPaginationMinHeight },
           ]}
           initialNumToRender={6}
           maxToRenderPerBatch={5}
           updateCellsBatchingPeriod={50}
           windowSize={7}
         />
-        {flightPaginationPendingPage !== null ? (
-          <Animated.View
-            accessibilityLabel="Updating flight results"
-            accessibilityLiveRegion="polite"
-            accessibilityRole="progressbar"
-            accessibilityState={{ busy: true }}
-            pointerEvents="auto"
-            testID={`flight-pagination-${flightPaginationPhase}`}
-            style={[s0.flightPaginationLoading, { backgroundColor: flightCanvasColor, opacity: flightPaginationOpacity }]}
-          >
-            <View style={s0.flightPaginationSkeletonList}>
-              {[0, 1, 2].map((item) => <FlightLoadingSkeleton key={item} />)}
-            </View>
-          </Animated.View>
-        ) : null}
+
         </View>
       ) : (
         <>
@@ -1133,7 +989,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       )}
       {product === "flight" ? (
         <>
-          <FlightSortSheet visible={sortOpen} sort={sort} onApply={(next) => { cancelFlightPagination(); setSort(next); setSortOpen(false); }} onClose={() => setSortOpen(false)} />
+          <FlightSortSheet visible={sortOpen} sort={sort} onApply={(next) => { setSort(next); setSortOpen(false); }} onClose={() => setSortOpen(false)} />
           <FlightFilterSheet
             visible={filterOpen}
             section={filterSection}
@@ -1744,56 +1600,9 @@ function FlightLoadingSkeleton({ roundTrip = false }: { roundTrip?: boolean }) {
 function HotelLoadingSkeleton() {
   return <View style={s0.hotelSkeletonCard} accessibilityElementsHidden><View style={s0.hotelSkeletonImage} /><View style={s0.hotelSkeletonCopy}><SkeletonLine style={s0.hotelSkeletonTitle} /><SkeletonLine style={s0.hotelSkeletonMeta} /><SkeletonLine style={s0.hotelSkeletonReview} /><SkeletonLine style={s0.hotelSkeletonDetail} /><View style={s0.hotelSkeletonFooter}><SkeletonLine style={s0.hotelSkeletonPrice} /><View style={s0.skeletonButton} /></View></View></View>;
 }
-function FlightResultsSummaryRow({ count, range }: { count: number; range: { start: number; end: number } }) {
+function FlightResultsSummaryRow({ count }: { count: number }) {
   const { theme } = useAppTheme();
-  return (
-    <View accessibilityLabel="Flight results summary" style={s0.flightResultsSummaryRow}>
-      <View style={s0.flightResultsCountColumn}>
-        <Text accessibilityRole="header" style={[s0.flightResultCount, { color: theme.textPrimary }]}>{flightResultCountLabel(count)}</Text>
-        <Text accessibilityLabel={`Showing results ${range.start} through ${range.end} of ${count}`} style={[s0.flightResultRange, { color: theme.textSecondary }]}>{range.start}–{range.end}</Text>
-      </View>
-    </View>
-  );
-}
-
-function FlightResultsPagination({ page, pages, disabled, onPage }: { page: number; pages: number; disabled: boolean; onPage: (page: number) => void }) {
-  const { theme } = useAppTheme();
-  if (pages <= 1) return null;
-  const items = buildFlightPaginationItems(page, pages, true);
-  const target = (label: string, accessibilityLabel: string, targetPage: number, targetDisabled: boolean) => (
-    <Pressable
-      key={label}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ disabled: targetDisabled }}
-      disabled={targetDisabled}
-      onPress={() => onPage(targetPage)}
-      style={({ pressed }) => [s0.flightPaginationDirection, pressed && !targetDisabled && s0.flightPaginationPressed]}
-    >
-      <Text style={[s0.flightPaginationDirectionText, { color: targetDisabled ? theme.textSecondary : theme.textPrimary }, targetDisabled && s0.flightPaginationDisabled]}>{label}</Text>
-    </Pressable>
-  );
-  return (
-    <View accessibilityLabel="Flight results pages" style={s0.flightPagination}>
-      {target("Previous", "Previous flight results page", page - 1, disabled || page === 1)}
-      <View style={s0.flightPaginationPages}>
-        {items.map((item, index) => item === "ellipsis" ? <Text key={`ellipsis-${index}`} style={[s0.flightPaginationEllipsis, { color: theme.textSecondary }]}>…</Text> : (
-          <Pressable
-            key={item}
-            accessibilityRole="button"
-            accessibilityLabel={`Flight results page ${item}`}
-            accessibilityState={{ selected: item === page, disabled }}
-            disabled={disabled}
-            onPress={() => onPage(item)}
-            style={({ pressed }) => [s0.flightPaginationPage, item === page && s0.flightPaginationPageCurrent, pressed && !disabled && s0.flightPaginationPressed]}
-          >
-            <Text style={[s0.flightPaginationPageText, { color: item === page ? "#FFFFFF" : theme.textPrimary }]}>{item}</Text>
-          </Pressable>
-        ))}
-      </View>
-      {target("Next", "Next flight results page", page + 1, disabled || page === pages)}
-    </View>
-  );
+  return <View accessibilityLabel="Flight results summary" style={s0.flightResultsSummaryRow}><Text accessibilityRole="header" style={[s0.flightResultCount, { color: theme.textPrimary }]}>{flightResultCountLabel(count)}</Text></View>;
 }
 
 const hotelResultCountLabel = (count: number) => `${count} ${count === 1 ? "Result" : "Results"} found`;
@@ -1891,7 +1700,7 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   };
   if (flight) {
     const toggleDisabled = pending || loadingAlert || unavailable;
-    return <View accessibilityLabel="Flight price alert" style={[compact ? s0.compactPriceAlert : s0.flightAlert,{ backgroundColor: theme.surface, borderColor: theme.priceAlertBorder }]}>{compact ? <Bell accessible={false} size={17} strokeWidth={2} color={theme.dark ? "#8FB5FF" : ui.blue}/> : null}<View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[compact ? s0.flightAlertCompactTitle : s0.flightAlertTitle, { color: theme.textPrimary }]}>Track this flight price</Text></View><View style={s0.compactPriceAlertSwitchSlot}>{toggleDisabled && (pending || loadingAlert) ? <ActivityIndicator accessible={false} size="small" color={theme.dark ? "#8FB5FF" : ui.blue}/> : null}<Switch style={Platform.OS === "ios" ? s0.compactPriceAlertSwitchIos : undefined} hitSlop={6} accessibilityRole="switch" accessibilityLabel="Track this flight price" accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending || loadingAlert }} disabled={toggleDisabled} value={isTracking} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"} ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}/></View><Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel="Create flight price alert"><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track prices</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Target price ({currency})</Text><TextInput autoFocus accessibilityLabel={`Target price in ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} placeholderTextColor={theme.textSecondary} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={[s0.alertError, theme.dark && { color: "#FF9C9C" }]}>{targetError}</Text> : null}<Button label={pending ? "Creating…" : "Create alert"} onPress={() => void createAlert()} /><Button label="Cancel" outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal></View>;
+    return <View accessibilityLabel="Flight price alert" style={[compact ? s0.compactPriceAlert : s0.flightAlert,{ backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}>{compact ? <Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/> : null}<View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[compact ? s0.flightAlertCompactTitle : s0.flightAlertTitle, { color: theme.textPrimary }]}>Track this flight price</Text></View><View style={s0.compactPriceAlertSwitchSlot}>{toggleDisabled && (pending || loadingAlert) ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent}/> : null}<Switch style={Platform.OS === "ios" ? s0.compactPriceAlertSwitchIos : undefined} hitSlop={6} accessibilityRole="switch" accessibilityLabel="Track this flight price" accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending || loadingAlert }} disabled={toggleDisabled} value={isTracking} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"} ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}/></View><Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel="Create flight price alert"><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track prices</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Target price ({currency})</Text><TextInput autoFocus accessibilityLabel={`Target price in ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} placeholderTextColor={theme.textSecondary} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={[s0.alertError, theme.dark && { color: "#FF9C9C" }]}>{targetError}</Text> : null}<Button label={pending ? "Creating…" : "Create alert"} onPress={() => void createAlert()} /><Button label="Cancel" outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal></View>;
   }
   if (product !== "hotel" || !plan) return null;
   if (!activePresentation.enabled) return null;
@@ -1942,13 +1751,6 @@ const s0 = StyleSheet.create({
   resultsScroll: { flex: 1 },
   flightResultsListContainer: { flex: 1 },
   flightResultsContent: { flexGrow: 1 },
-  flightPaginationLoading: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 3,
-    paddingHorizontal: 14,
-    paddingTop: 12,
-  },
-  flightPaginationSkeletonList: { width: "100%", gap: 14 },
   route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
   filters: { paddingHorizontal: 14, paddingVertical: 3, gap: 8, alignItems: "center" },
@@ -1988,7 +1790,7 @@ const s0 = StyleSheet.create({
   hotelAttribution:{borderWidth:1,borderRadius:10,padding:10},
   flightResultsBody: { paddingHorizontal: 14, gap: 8 },
   flightCardItem: { paddingHorizontal: 14, paddingBottom: 8 },
-  flightResultsIntro: { gap: 2 },
+  flightResultsIntro: { paddingTop: 16, paddingBottom: 12 },
   notice: { backgroundColor: "#F2F6FF", color: ui.navy, padding: 10, borderRadius: 8 },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
   hotelResultsSummaryRow: { gap: 8 },
@@ -1997,17 +1799,6 @@ const s0 = StyleSheet.create({
   flightResultsSummaryRow: { paddingHorizontal: 14, paddingTop: 6, paddingBottom: 10, alignItems: "stretch" },
   flightResultsCountColumn: { minWidth: 0, flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 8 },
   flightResultCount: { fontSize: 13, lineHeight: 17, fontWeight: "700", fontFamily: appFonts.bold },
-  flightResultRange: { marginTop: 1, fontSize: 10.5, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
-  flightPagination: { paddingHorizontal: 14, paddingTop: 6, paddingBottom: 6, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 4 },
-  flightPaginationPages: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 2 },
-  flightPaginationDirection: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center", paddingHorizontal: 6 },
-  flightPaginationDirectionText: { fontSize: 12, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
-  flightPaginationDisabled: { opacity: 0.48 },
-  flightPaginationPage: { minWidth: 44, minHeight: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
-  flightPaginationPageCurrent: { backgroundColor: ui.blue },
-  flightPaginationPageText: { fontSize: 13, lineHeight: 17, fontWeight: "700", fontFamily: appFonts.bold },
-  flightPaginationEllipsis: { minWidth: 18, textAlign: "center", fontSize: 14 },
-  flightPaginationPressed: { opacity: 0.58 },
   card: { width: "100%", borderWidth: 1, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 9, gap: 5, shadowColor: "#18305B", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 2 },
   cardPressed: { opacity: 0.94 },
   airlineHeader: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start" },
@@ -2151,7 +1942,7 @@ const s0 = StyleSheet.create({
   hotelSkeletonFooter: { marginTop: "auto", flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   hotelSkeletonPrice: { width: 58, height: 16 },
   flightAlert: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 0, flexDirection: "row", alignItems: "center", gap: 4, overflow: "hidden" },
-  compactPriceAlert: { width: "100%", minHeight: 48, borderRadius: 11, borderWidth: 1, paddingHorizontal: 11, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 8 },
+  compactPriceAlert: { width: "100%", minHeight: 52, borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 8 },
   flightAlertOuter: { marginHorizontal: 14 },
   flightAlertCopy: { flex: 1, minWidth: 0, gap: 1 },
   flightAlertCompactTitle: { fontSize: 12.5, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold },
