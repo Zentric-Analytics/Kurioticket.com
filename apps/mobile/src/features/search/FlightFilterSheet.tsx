@@ -69,6 +69,7 @@ export function FlightFilterSheet({visible,section,filters,options,results,price
   title={full?"Filters":title}
   subtitle={full?(activeCount?`${activeCount} applied`:"All flights shown"):quickSubtitle}
   fullScreen={full}
+  fullScreenFooterExtraBottomPadding={16}
   closeLabel="Close flight filters"
   onClose={close}
   headerAction={full&&activeCount?<Pressable accessibilityRole="button" accessibilityLabel="Clear all flight filters" onPress={()=>onChange(emptyFlightFilters())} style={s.headerClear}><Text style={s.footerClearText}>Clear all</Text></Pressable>:undefined}
