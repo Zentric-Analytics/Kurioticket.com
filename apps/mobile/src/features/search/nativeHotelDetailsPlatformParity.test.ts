@@ -17,6 +17,7 @@ function styleRule(name: string, nextName: string) {
 }
 
 test("iOS and Android share one Hotel Details tablist with the exact web tab order", () => {
+  const shellStart = hotel.indexOf("d.hotelTabsShell");
   const tablistStart = hotel.indexOf('accessibilityRole="tablist"');
   const tablistEnd = hotel.indexOf("<View style={d.hotelDetailBody}", tablistStart);
   assert.notEqual(tablistStart, -1, "the shared Hotel Details tablist must exist");
@@ -42,7 +43,10 @@ test("iOS and Android share one Hotel Details tablist with the exact web tab ord
   assert.doesNotMatch(tablist, /<ScrollView[^>]*horizontal/);
   assert.doesNotMatch(tablist, /Platform\.OS|\b(?:IOS|Android)HotelTabs?\b/);
 
-  assert.match(tablist, /style=\{\[\s*d\.hotelTabs,/);
+  assert.notEqual(shellStart, -1, "the outer sticky shell must exist");
+  assert.ok(hotel.indexOf("<NativeHotelGallery") < shellStart);
+  assert.ok(shellStart < tablistStart);
+  assert.match(tablist, /style=\{d\.hotelTabsRow\}/);
   assert.match(tablist, /d\.hotelTab,/);
   assert.match(tablist, /tab === "compare" && d\.hotelTabWide/);
   assert.match(tablist, /accessibilityState=\{\{ selected: activeHotelTab === tab \}\}/);
@@ -51,29 +55,47 @@ test("iOS and Android share one Hotel Details tablist with the exact web tab ord
 });
 
 test("the shared native tab geometry cannot stack or fork by platform", () => {
-  const tabs = styleRule("hotelTabs", "hotelTab");
-  const tab = styleRule("hotelTab", "hotelTabActive");
-  const wideTab = styleRule("hotelTabWide", "hotelTabTextCompact");
-  const ownedGeometry = `${tabs}\n${tab}\n${wideTab}`;
+  const shell = styleRule("hotelTabsShell", "hotelTabsRow");
+  const row = styleRule("hotelTabsRow", "hotelTab");
+  const tab = styleRule("hotelTab", "hotelTabWide");
+  const wideTab = styleRule("hotelTabWide", "hotelTabActive");
+  const ownedGeometry = `${shell}\n${row}\n${tab}\n${wideTab}`;
 
-  assert.match(tabs, /width: "100%"/);
-  assert.match(tabs, /alignSelf: "stretch"/);
-  assert.match(tabs, /flexDirection: "row"/);
-  assert.match(tabs, /flexWrap: "nowrap"/);
-  assert.doesNotMatch(tabs, /flexDirection: "column"|flexWrap: "wrap"/);
+  assert.match(shell, /width: "100%"/);
+  assert.match(shell, /alignSelf: "stretch"/);
+  assert.doesNotMatch(shell, /flexDirection:/);
+  assert.match(row, /alignSelf: "stretch"/);
+  assert.match(row, /flexDirection: "row"/);
+  assert.match(row, /flexWrap: "nowrap"/);
+  assert.doesNotMatch(row, /flexDirection: "column"|flexWrap: "wrap"/);
 
-  assert.match(tab, /flexGrow: 1/);
-  assert.match(tab, /flexShrink: 1/);
-  assert.match(tab, /flexBasis: 0/);
+  assert.match(tab, /width: "21\.5%"/);
+  assert.doesNotMatch(tab, /flexGrow: 1(?:\D|$)|flexShrink: 1|flexBasis: 0/);
   assert.match(tab, /minWidth: 0/);
   const minimumHeight = /minHeight: (\d+)/.exec(tab);
   assert.ok(minimumHeight, "hotelTab must declare a minimum touch height");
   assert.ok(Number(minimumHeight[1]) >= 44, "hotelTab touch height must be at least 44dp");
-  assert.match(wideTab, /flexGrow: 1\.65/);
+  assert.match(wideTab, /width: "35\.5%"/);
+  assert.doesNotMatch(wideTab, /flexGrow: 1\.65/);
 
   assert.doesNotMatch(ownedGeometry, /Platform\.OS|\bios\b|\bandroid\b/i);
-  assert.equal((hotel.match(/d\.hotelTabs/g) ?? []).length, 1);
+  assert.equal((hotel.match(/d\.hotelTabsShell/g) ?? []).length, 1);
+  assert.equal((hotel.match(/d\.hotelTabsRow/g) ?? []).length, 1);
   assert.equal((hotel.match(/d\.hotelTabWide/g) ?? []).length, 1);
   assert.match(hotel, /stickyHeaderIndices=\{\[2\]\}/);
   assert.match(hotel, /const \[activeHotelTab, setActiveHotelTab\] = useState</);
+});
+
+test("Hotel selected underline is tab-scoped and separate from the sticky shell divider", () => {
+  const shell = styleRule("hotelTabsShell", "hotelTabsRow");
+  const tab = styleRule("hotelTab", "hotelTabWide");
+
+  assert.match(shell, /borderBottomWidth: 1/);
+  assert.match(shell, /borderBottomColor: ui\.border/);
+  assert.doesNotMatch(shell, /hotelAccent|borderBottomWidth: 2/);
+  assert.match(tab, /width: "21\.5%"/);
+  assert.match(tab, /borderBottomWidth: 2/);
+  assert.match(tab, /borderBottomColor: "transparent"/);
+  assert.match(hotel, /activeHotelTab === tab && \{ borderBottomColor: hotelAccent \}/);
+  assert.doesNotMatch(hotel, /d\.hotelTabsShell,[\s\S]{0,160}activeHotelTab === tab/);
 });
