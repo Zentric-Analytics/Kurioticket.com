@@ -595,7 +595,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const hotelPageCount = getHotelResultsPageCount(product === "hotel" ? sorted.length : 0);
   const clampedHotelPage = clampHotelResultsPage(hotelPage, hotelPageCount);
   const hotelPageResults = product === "hotel" ? paginateHotelResults(sorted as HotelResult[], clampedHotelPage) : [];
-  const hotelRange = getResultsDisplayRange({ currentPage: clampedHotelPage, pageSize: HOTEL_RESULTS_PAGE_SIZE, totalResults: product === "hotel" ? sorted.length : 0 });
   const flightPageCount = getFlightResultsPageCount(product === "flight" ? sorted.length : 0);
   const clampedFlightPage = clampFlightResultsPage(flightPage, flightPageCount);
   const flightPageResults = product === "flight" ? paginateFlightResults(sorted as FlightResult[], clampedFlightPage) : [];
@@ -973,14 +972,13 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   {hotelFilterChips.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s0.hotelFilterChips}>{hotelFilterChips.map(chip=><Pressable key={chip.key} accessibilityRole="button" accessibilityLabel={`Remove ${chip.label} filter`} onPress={()=>setHotelFilters(chip.remove(hotelFilters))} style={[s0.hotelFilterChip,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={{color:theme.textPrimary}}>{chip.label} ×</Text></Pressable>)}</ScrollView> : null}
                   {hasGoogleMapsDiscovery(results as HotelResult[]) ? <View style={[s0.hotelAttribution,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={{color:theme.textSecondary}}>Hotel discovery data provided by Google Maps</Text></View> : null}
                   {plan.plan ? <PriceAlert product="hotel" plan={plan.plan} hotelResults={results as HotelResult[]} available={availability.priceAlerts} compact /> : null}
-                  {hotelRange ? <HotelResultsSummaryRow
+                  <HotelResultsSummaryRow
                     count={sorted.length}
-                    range={hotelRange}
                     onLayout={({ nativeEvent }) => {
                       hotelResultsSummaryOffset.current = nativeEvent.layout.y;
                       updateHotelResultsOffset();
                     }}
-                  /> : null}
+                  />
                 </>
               ) : null}
               {status === "ready" && product === "hotel" && results.length > 0 && sorted.length === 0 ? (
@@ -1800,9 +1798,8 @@ function FlightResultsPagination({ page, pages, disabled, onPage }: { page: numb
 
 const hotelResultCountLabel = (count: number) => `${count} ${count === 1 ? "Result" : "Results"} found`;
 
-function HotelResultsSummaryRow({ count, range, onLayout }: {
+function HotelResultsSummaryRow({ count, onLayout }: {
   count: number;
-  range: { start: number; end: number };
   onLayout: (event: { nativeEvent: { layout: { y: number } } }) => void;
 }) {
   const { theme } = useAppTheme();
@@ -1810,7 +1807,6 @@ function HotelResultsSummaryRow({ count, range, onLayout }: {
     <View accessibilityLabel="Hotel results summary" onLayout={onLayout} style={s0.hotelResultsSummaryRow}>
       <View style={s0.flightResultsCountColumn}>
         <Text accessibilityRole="header" style={[s0.flightResultCount, { color: theme.textPrimary }]}>{hotelResultCountLabel(count)}</Text>
-        <Text accessibilityLabel={`Showing results ${range.start} through ${range.end}`} style={[s0.flightResultRange, { color: theme.textSecondary }]}>{range.start}–{range.end}</Text>
       </View>
     </View>
   );
