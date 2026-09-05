@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
+import { buildHotelAmenityPresentation } from "../../../../../src/components/results/hotelAmenityPresentation";
 
 const detailSource = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
 const hotel = detailSource.slice(
@@ -33,14 +34,50 @@ test("native internal offer uses the accessible bundled Kurioticket wordmark", (
 });
 
 test("native provider offer uses canonical inline amenity icons and web-like price rows", () => {
-  assert.match(hotel, /<HotelOfferAmenityList amenities=\{result\.amenities\} color=\{theme\.textSecondary\} \/>/);
+  assert.match(hotel, /<HotelOfferAmenityList[\s\S]*?amenities=\{result\.amenities\}[\s\S]*?color=\{theme\.textSecondary\}[\s\S]*?compact=\{width < 350\}/);
   assert.doesNotMatch(hotel, /result\.amenities\.slice\(0, 3\)\.join\(" · "\)/);
   assert.match(amenitySource, /buildHotelAmenityPresentation\(amenities, 3\)/);
   assert.match(amenitySource, /wifi: Wifi/);
   assert.match(amenitySource, /restaurant: UtensilsCrossed/);
   assert.match(amenitySource, /bar: Wine/);
   assert.match(styleRule(amenitySource, "offerList", "offerItem"), /flexDirection: "row"/);
+  assert.match(styleRule(amenitySource, "offerList", "offerListCompact"), /gap: 16/);
+  assert.match(styleRule(amenitySource, "offerListCompact", "offerItem"), /gap: 10/);
+  assert.match(styleRule(amenitySource, "offerItem", "offerLabel"), /gap: 6/);
+  assert.match(amenitySource, /offerLabel: \{[^}]*fontSize: 12[^}]*lineHeight: 16[^}]*fontWeight: "500"[^}]*fontFamily: appFonts\.medium[^}]*\}/);
+  assert.match(amenitySource, /<Icon accessible=\{false\} size=\{16\} strokeWidth=\{1\.8\} color=\{color\} \/>/);
   assert.match(hotel, /d\.hotelOfferPriceRow[\s\S]*?nightlyPrice\?\.formatted[\s\S]*?d\.hotelOfferBottom[\s\S]*?per night/);
+});
+
+test("native provider offer resolves only canonical Wi-Fi semantics to the English web label", () => {
+  const [wifi, restaurant, bar] = buildHotelAmenityPresentation(["Wi-Fi", "Restaurant", "Bar"], 3);
+  assert.ok(wifi && restaurant && bar);
+  assert.equal(wifi.translationKey, "hotelResults.filter.freeWifi");
+  assert.equal(restaurant.label, "Restaurant");
+  assert.equal(bar.label, "Bar");
+  assert.match(amenitySource, /item\.translationKey === "hotelResults\.filter\.freeWifi"/);
+  assert.match(amenitySource, /\? "Free Wi-Fi"[\s\S]*?: item\.label/);
+
+  const resultsList = amenitySource.slice(
+    amenitySource.indexOf("export function HotelCardAmenityList"),
+    amenitySource.indexOf("export function HotelOfferAmenityList"),
+  );
+  assert.match(resultsList, /\{item\.label\}/);
+  assert.doesNotMatch(resultsList, /hotelOfferAmenityLabel|Free Wi-Fi/);
+});
+
+test("native selected offer uses the web-like thin ring and separate centered dot", () => {
+  assert.match(styleRule(detailSource, "selectionControl", "selectionControlDot"), /width: 22[\s\S]*height: 22[\s\S]*borderRadius: 11[\s\S]*borderWidth: 2[\s\S]*alignItems: "center"[\s\S]*justifyContent: "center"/);
+  assert.match(styleRule(detailSource, "selectionControlDot", "hotelOfferBottom"), /width: 10[\s\S]*height: 10[\s\S]*borderRadius: 5/);
+  assert.match(hotel, /backgroundColor: theme\.surface,[\s\S]*?borderColor: selected \? hotelAccent : theme\.textSecondary/);
+  assert.match(hotel, /selected \? \([\s\S]*?d\.selectionControlDot[\s\S]*?backgroundColor: hotelAccent/);
+  assert.doesNotMatch(hotel, /selected && \{[\s\S]{0,100}borderWidth: 6/);
+});
+
+test("native provider per-night label uses the compact Hotel accent hierarchy", () => {
+  assert.match(styleRule(detailSource, "hotelPerNight", "hotelHighlight"), /flexShrink: 0[\s\S]*fontSize: 12[\s\S]*lineHeight: 16[\s\S]*fontWeight: "500"[\s\S]*fontFamily: appFonts\.medium[\s\S]*textAlign: "right"/);
+  assert.match(hotel, /<Text numberOfLines=\{1\} style=\{\[d\.hotelPerNight, \{ color: hotelAccent \}\]\}>per night<\/Text>/);
+  assert.doesNotMatch(hotel, /<Text[^>]*d\.hotelPerNight[^>]*color: theme\.textSecondary[^>]*>per night<\/Text>/);
 });
 
 test("native selection and booking behavior remain intact", () => {
@@ -57,6 +94,10 @@ test("web reference retains logo, canonical amenities, nightly price, and intern
   assert.match(webCompare, /<HotelAmenityList[\s\S]*?items=\{offer\.amenities \?\? \[\]\}/);
   assert.match(webCompare, /offer\.nightlyPrice/);
   assert.match(webCompare, /data-nightly-supporting-label/);
+  assert.match(webCompare, /h-\[22px\] w-\[22px\][^"\n]*border-2 bg-white/);
+  assert.match(webCompare, /h-2\.5 w-2\.5 rounded-full bg-\[#075EE8\]/);
+  assert.match(webCompare, /flex min-w-0 flex-nowrap items-center gap-x-4/);
+  assert.match(webCompare, /shrink-0 whitespace-nowrap text-right text-xs font-medium leading-4 text-\[#075EE8\]/);
   assert.match(webContinuation, /providerLogoUrl: "\/brand\/kurioticket-logo-primary-light-bg\.svg"/);
   assert.match(webContinuation, /amenities: amenities\.slice\(0, 3\)/);
   assert.match(webContinuation, /action: \{ kind: "internal-room-flow" \}/);
