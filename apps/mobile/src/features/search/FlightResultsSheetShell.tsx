@@ -6,15 +6,15 @@ import { X } from "lucide-react-native";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 
-export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, children, footer, fullScreen = false, subtitle, headerAction, fullScreenFooterExtraBottomPadding }: {
+export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, children, footer, fullScreen = false, subtitle, headerAction, fullScreenFooterMinimumBottomPadding }: {
   visible: boolean; title: string; closeLabel: string; onClose: () => void; children: ReactNode; footer?: ReactNode;
-  fullScreen?: boolean; subtitle?: string; headerAction?: ReactNode; fullScreenFooterExtraBottomPadding?: number;
+  fullScreen?: boolean; subtitle?: string; headerAction?: ReactNode; fullScreenFooterMinimumBottomPadding?: number;
 }) {
   const { theme } = useAppTheme();
   const inset = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const footerBottomPadding = fullScreen && fullScreenFooterExtraBottomPadding != null
-    ? inset.bottom + fullScreenFooterExtraBottomPadding
+  const footerBottomPadding = fullScreen && fullScreenFooterMinimumBottomPadding != null
+    ? Math.max(inset.bottom, fullScreenFooterMinimumBottomPadding)
     : Math.max(inset.bottom, fullScreen ? 16 : 12);
   const quickBackdropOpacity = useRef(new Animated.Value(0)).current;
   const quickSheetTranslateY = useRef(new Animated.Value(28)).current;

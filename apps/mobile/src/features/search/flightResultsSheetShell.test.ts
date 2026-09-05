@@ -14,14 +14,15 @@ test("full and quick sheet bodies have distinct sizing contracts",()=>{
   assert.match(shell,/fullScreen: \{ flex: 1, minHeight: 0/);
   assert.doesNotMatch(shell,/quickContent: \{[^}]*flex: 1/);
 });
-test("footer preserves default safe-area behavior while allowing opt-in additive full-screen spacing",()=>{
+test("footer preserves default safe-area behavior while allowing opt-in minimum full-screen spacing",()=>{
   assert.ok(shell.indexOf("styles.quickContent") < shell.indexOf("styles.footer"));
   const footerStyle=/footer: \{([^}]*)\}/.exec(shell)?.[1] ?? "";
   assert.doesNotMatch(footerStyle,/position:\s*["']absolute["']/);
   assert.match(footerStyle,/flexShrink: 0/);
-  assert.match(shell,/fullScreenFooterExtraBottomPadding\?: number/);
-  assert.match(shell,/fullScreen && fullScreenFooterExtraBottomPadding != null/);
-  assert.match(shell,/inset\.bottom \+ fullScreenFooterExtraBottomPadding/);
+  assert.match(shell,/fullScreenFooterMinimumBottomPadding\?: number/);
+  assert.match(shell,/fullScreen && fullScreenFooterMinimumBottomPadding != null/);
+  assert.match(shell,/Math\.max\(inset\.bottom, fullScreenFooterMinimumBottomPadding\)/);
   assert.match(shell,/Math\.max\(inset\.bottom, fullScreen \? 16 : 12\)/);
   assert.match(shell,/paddingBottom: footerBottomPadding/);
+  assert.doesNotMatch(shell,/inset\.bottom \+ fullScreenFooter/);
 });

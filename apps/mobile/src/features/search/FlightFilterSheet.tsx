@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import type { FlightResult } from "../../api/travelApi";
 import { useAppTheme } from "../../theme/AppTheme";
+import { appFonts } from "../../theme/typography";
 import { formatCurrency } from "../currency/displayCurrency";
 import { FlightRangeSlider } from "./FlightRangeSlider";
-import { Button, ui } from "./SearchUi";
+import { ui } from "./SearchUi";
 import {
   activeFlightFilterCount,
   emptyFlightFilters,
@@ -63,17 +64,18 @@ export function FlightFilterSheet({visible,section,filters,options,results,price
  const visibleAirlines=airlineSearch.trim()||showAllAirlines?searchedAirlines:searchedAirlines.slice(0,5);
  const quickSubtitle=section==="airlines"?"Choose one or more airlines":section==="stops"?"Choose allowed stop counts":"Choose departure or arrival airports";
  const resetQuick=()=>setDraft(section==="airlines"?{...working,airlines:[]}:section==="stops"?{...working,maxStops:null,stops:[]}:{...working,fromAirports:[],toAirports:[]});
+ const footerLabel=count===0?"No matching flights":`View ${count} ${count===1?"flight":"flights"}`;
 
  return <FlightResultsSheetShell
   visible={visible}
   title={full?"Filters":title}
   subtitle={full?(activeCount?`${activeCount} applied`:"All flights shown"):quickSubtitle}
   fullScreen={full}
-  fullScreenFooterExtraBottomPadding={16}
+  fullScreenFooterMinimumBottomPadding={12}
   closeLabel="Close flight filters"
   onClose={close}
   headerAction={full&&activeCount?<Pressable accessibilityRole="button" accessibilityLabel="Clear all flight filters" onPress={()=>onChange(emptyFlightFilters())} style={s.headerClear}><Text style={s.footerClearText}>Clear all</Text></Pressable>:undefined}
-  footer={full?<View style={s.footerPrimary}><Button disabled={count===0} label={count===0?"No matching flights":`View ${count} ${count===1?"flight":"flights"}`} flightResults onPress={()=>{setDragging(false);onComplete()}}/></View>:<View style={s.footerActions}><Pressable accessibilityRole="button" onPress={resetQuick} style={[s.reset,{borderColor:theme.border}]}><Text style={[s.buttonText,{color:theme.textPrimary}]}>Reset</Text></Pressable><Pressable accessibilityRole="button" onPress={()=>{onChange(draft);onClose()}} style={s.apply}><Text style={[s.buttonText,{color:"white"}]}>Apply</Text></Pressable></View>}
+  footer={full?<View style={s.footerPrimary}><Pressable accessibilityRole="button" accessibilityState={{disabled:count===0}} disabled={count===0} onPress={()=>{setDragging(false);onComplete()}} style={[s.viewButton,count===0&&s.viewButtonDisabled]}><Text style={s.viewText}>{footerLabel}</Text></Pressable></View>:<View style={s.footerActions}><Pressable accessibilityRole="button" onPress={resetQuick} style={[s.reset,{borderColor:theme.border}]}><Text style={[s.buttonText,{color:theme.textPrimary}]}>Reset</Text></Pressable><Pressable accessibilityRole="button" onPress={()=>{onChange(draft);onClose()}} style={s.apply}><Text style={[s.buttonText,{color:"white"}]}>Apply</Text></Pressable></View>}
  >
  <ScrollView style={full?s.fullScroll:s.quickScroll} scrollEnabled={!dragging} contentContainerStyle={full?s.content:s.compactContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
  {full&&isPriceFilteringAvailable(options,priceFilteringReady)&&<FlightFilterSection title="Price">{slider("maximumPrice",options.price!,"Maximum price",v=>formatCurrency(v,options.priceCurrency??currency),priceRangeStep(options.price!.min,options.price!.max))}</FlightFilterSection>}
@@ -129,5 +131,8 @@ const s=StyleSheet.create({
  footerClearText:{color:ui.blue,fontSize:14,fontWeight:"700"},
  disabled:{opacity:.4},
  footerPrimary:{flex:1},
+ viewButton:{width:"100%",minHeight:50,borderRadius:10,backgroundColor:ui.blue,alignItems:"center",justifyContent:"center"},
+ viewButtonDisabled:{opacity:.45},
+ viewText:{color:"white",fontSize:16,lineHeight:22,fontWeight:"700",fontFamily:appFonts.bold},
  endpoints:{flexDirection:"row",justifyContent:"space-between"}, search:{height:44,borderWidth:1,borderRadius:10,paddingHorizontal:12,marginVertical:6}, showMore:{minHeight:44,justifyContent:"center",alignSelf:"flex-start"}, headerClear:{minHeight:44,justifyContent:"center",paddingHorizontal:8}, reset:{minWidth:116,height:49,borderWidth:1,borderRadius:12,alignItems:"center",justifyContent:"center"}, apply:{flex:1,height:49,borderRadius:12,backgroundColor:ui.blue,alignItems:"center",justifyContent:"center"}, buttonText:{fontSize:15,fontWeight:"700"},
 });
