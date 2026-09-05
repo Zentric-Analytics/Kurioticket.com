@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { buildSearchPlan, safeCanonicalCarResult, safeCanonicalHotelResult, validFlight } from "./travelSearchModel";
+import { isHotelTodayOrFutureLocalDate } from "./localDateModel";
 
 const now = new Date("2026-07-30T12:00:00Z");
 test("flight plans preserve stable parameters and premium economy", () => {
@@ -27,6 +28,14 @@ test("invalid flight, hotel, and car dates are blocked before requests", () => {
 test("hotel guests, rooms and car driver age are preserved", () => {
   assert.deepEqual(buildSearchPlan("hotel", { destination: "Paris", checkIn: "2026-08-10", checkOut: "2026-08-12", guests: "4", rooms: "2" }, now).plan?.payload, { destination: "Paris", checkIn: "2026-08-10", checkOut: "2026-08-12", guests: 4, rooms: 2 });
   assert.equal(buildSearchPlan("car", { pickupLocation: "LAX", dropoffLocation: "SFO", pickupDate: "2026-08-10", pickupTime: "10:00", dropoffDate: "2026-08-12", dropoffTime: "10:00", driverAge: "42" }, now).plan?.payload.driverAge, "42");
+});
+test("Hotel plans use the device-local calendar baseline across the UTC midnight boundary", () => {
+  const params = { destination: "Paris", checkIn: "2026-09-04", checkOut: "2026-09-07", guests: "1", rooms: "1" };
+  assert.equal(isHotelTodayOrFutureLocalDate("2026-09-04", "2026-09-04"), true);
+  assert.equal(isHotelTodayOrFutureLocalDate("2026-09-03", "2026-09-04"), false);
+  assert.ok(buildSearchPlan("hotel", params, new Date(2026, 8, 4, 23, 30)).plan);
+  assert.ok(buildSearchPlan("hotel", { ...params, checkIn: "2026-09-03" }, new Date(2026, 8, 4, 23, 30)).error);
+  assert.ok(buildSearchPlan("hotel", { ...params, checkOut: "2026-09-04" }, new Date(2026, 8, 4, 23, 30)).error);
 });
 test("Hotel plans preserve canonical destination identity when provided", () => {
   assert.equal(buildSearchPlan("hotel", { destinationId: "fr-paris", destination: "Paris, France", checkIn: "2026-08-10", checkOut: "2026-08-12", guests: "2", rooms: "1" }, now).plan?.payload.destinationId, "fr-paris");

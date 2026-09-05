@@ -18,10 +18,16 @@ export function TravelResultsScreen({ product }: { product: Product }) {
 
   useEffect(() => {
     if (product !== "hotel" || hotelPlan?.plan) return;
-    const destination = one(params.destination)?.trim();
-    const destinationId = one(params.destinationId)?.trim();
-    router.replace({ pathname: "/hotels", params: { ...(destination ? { destination } : {}), ...(destinationId ? { destinationId } : {}) } });
-  }, [hotelPlan?.plan?.key, product, one(params.destination), one(params.destinationId)]);
+    const recoveryParams = {
+      destinationId: one(params.destinationId),
+      destination: one(params.destination),
+      checkIn: one(params.checkIn),
+      checkOut: one(params.checkOut),
+      guests: one(params.guests),
+      rooms: one(params.rooms),
+    };
+    router.replace({ pathname: "/hotels", params: recoveryParams });
+  }, [hotelPlan?.plan?.key, product, one(params.destinationId), one(params.destination), one(params.checkIn), one(params.checkOut), one(params.guests), one(params.rooms)]);
 
   if (product === "hotel" && !hotelPlan?.plan) return null;
   if (initializing) return <NativeTravelSearchLoadingScreen product={product} />;
