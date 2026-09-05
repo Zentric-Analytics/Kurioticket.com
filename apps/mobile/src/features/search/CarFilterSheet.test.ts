@@ -25,6 +25,7 @@ test("Native derives available options and result counts from canonical results"
 
 test("main Car filters are full screen and quick filters are real scoped sheets", () => {
   assert.match(sheet, /fullScreen=\{full\}/);
+  assert.match(sheet, /quickBackdropVariant="legacy"/);
   assert.doesNotMatch(sheet, /fullScreenFooterExtraBottomPadding/);
   assert.match(screen, /setFilterSheet\("all"\)/);
   assert.match(screen, /setFilterSheet\(group\.id\)/);
