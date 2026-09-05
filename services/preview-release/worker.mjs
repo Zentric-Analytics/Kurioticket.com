@@ -41,7 +41,8 @@ const orchestrator = new PreviewOrchestrator({
 try {
   const authorization = parseAuthorizedAbandonedAndroidRecovery();
   if (authorization) {
-    const recovery = await runAuthorizedAbandonedAndroidRecovery({ authorization, ledger, github, eas, orchestrator });
+    if (config.mode !== "active") throw new Error("Android abandoned-reservation recovery authorization is configured while Preview release mode is not active.");
+    const recovery = await runAuthorizedAbandonedAndroidRecovery({ authorization, mode: config.mode, ledger, github, eas, orchestrator });
     console.log(JSON.stringify({ event: "authorized-android-recovery-result", ...recovery }));
   }
 } catch (error) {
