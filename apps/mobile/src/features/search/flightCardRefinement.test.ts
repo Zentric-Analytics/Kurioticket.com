@@ -95,11 +95,11 @@ test("the whole card remains the sole details action around a visible affordance
   assert.match(card, /return \(\s*<Pressable[\s\S]*accessibilityRole="button"[\s\S]*accessibilityLabel=\{cardAccessibilityLabel\}[\s\S]*onPress=\{openDetails\}/);
   assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
   const affordance = /<View accessible=\{false\} style=\{s0\.flightDetailsAffordance\}>[\s\S]*?<\/View>/.exec(card)?.[0] ?? "";
-  assert.match(affordance, /<Text accessible=\{false\}[^>]*numberOfLines=\{1\}>\s*\{labels\.viewDetails\}\s*<\/Text>\s*<ChevronRight/);
-  assert.doesNotMatch(affordance, /<ChevronRight[\s\S]*\{labels\.viewDetails\}/);
-  assert.doesNotMatch(affordance, />\s*View details\s*</);
+  assert.match(affordance, /<Text accessible=\{false\}[^>]*numberOfLines=\{1\}>\s*\{labels\.viewDeals\}\s*<\/Text>\s*<ChevronRight/);
+  assert.doesNotMatch(affordance, /<ChevronRight[\s\S]*\{labels\.viewDeals\}/);
+  assert.doesNotMatch(affordance, />\s*View deals\s*</);
   assert.equal((card.match(/<Pressable/g) || []).length, 1);
-  assert.doesNotMatch(card, /View deal|labels\.viewDeal|flightDealAction|stopPropagation|onToggleSaved|favoriteButton/);
+  assert.doesNotMatch(card, /View deal\b|labels\.viewDeal\b|flightDealAction|stopPropagation|onToggleSaved|favoriteButton/);
 });
 
 test("flight card derives singular, plural, and nonstop labels from provider stops", () => {

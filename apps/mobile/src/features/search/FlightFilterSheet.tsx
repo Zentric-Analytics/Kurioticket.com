@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { SlidersHorizontal } from "lucide-react-native";
 import type { FlightResult } from "../../api/travelApi";
 import { useAppTheme } from "../../theme/AppTheme";
 import { formatCurrency } from "../currency/displayCurrency";
@@ -71,10 +70,10 @@ export function FlightFilterSheet({visible,section,filters,options,results,price
   fullScreen={full}
   closeLabel="Close flight filters"
   onClose={close}
-  headerAction={full&&activeCount?<Pressable accessibilityRole="button" accessibilityLabel="Clear all flight filters" onPress={()=>onChange(emptyFlightFilters())} style={s.headerClear}><Text style={s.footerClearText}>Clear all</Text></Pressable>:full?<SlidersHorizontal accessible={false} size={18} color={theme.icon}/>:undefined}
+  headerAction={full&&activeCount?<Pressable accessibilityRole="button" accessibilityLabel="Clear all flight filters" onPress={()=>onChange(emptyFlightFilters())} style={s.headerClear}><Text style={s.footerClearText}>Clear all</Text></Pressable>:undefined}
   footer={full?<View style={s.footerPrimary}><Button disabled={count===0} label={count===0?"No matching flights":`View ${count} ${count===1?"flight":"flights"}`} flightResults onPress={()=>{setDragging(false);onComplete()}}/></View>:<View style={s.footerActions}><Pressable accessibilityRole="button" onPress={resetQuick} style={[s.reset,{borderColor:theme.border}]}><Text style={[s.buttonText,{color:theme.textPrimary}]}>Reset</Text></Pressable><Pressable accessibilityRole="button" onPress={()=>{onChange(draft);onClose()}} style={s.apply}><Text style={[s.buttonText,{color:"white"}]}>Apply</Text></Pressable></View>}
  >
- <ScrollView style={s.scroll} scrollEnabled={!dragging} contentContainerStyle={full?s.content:s.compactContent} showsVerticalScrollIndicator={false}>
+ <ScrollView style={full?s.fullScroll:s.quickScroll} scrollEnabled={!dragging} contentContainerStyle={full?s.content:s.compactContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
  {full&&isPriceFilteringAvailable(options,priceFilteringReady)&&<FlightFilterSection title="Price">{slider("maximumPrice",options.price!,"Maximum price",v=>formatCurrency(v,options.priceCurrency??currency),priceRangeStep(options.price!.min,options.price!.max))}</FlightFilterSection>}
  {full&&legs.length>0&&<FlightFilterSection title="Flight times">{legs.length>1&&<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.tabs}>{legs.map((l,i)=><Text accessibilityRole="tab" key={journeyKey(l,i)} onPress={()=>setTab(i)} style={[s.tab,{color:tab===i?ui.blue:theme.textSecondary,borderBottomColor:tab===i?ui.blue:"transparent"}]}>{l.direction==="outbound"?"Departing flight":l.direction==="return"?"Return flight":`Flight ${(l.legIndex??i)+1}`}</Text>)}</ScrollView>}<View style={[s.timeSwitch,{backgroundColor:theme.dark?theme.background:"#F1F5F9"}]}>{(["departure","arrival"] as const).map(mode=><Pressable key={mode} onPress={()=>setTimeMode(mode)} style={[s.timeSwitchButton,timeMode===mode&&{backgroundColor:theme.surface}]}><Text style={[s.timeSwitchText,{color:timeMode===mode?ui.blue:theme.textSecondary}]}>{mode==="departure"?"Takeoff":"Landing"}</Text></Pressable>)}</View>{timeBounds[timeMode]?<View><View style={s.timeLabel}><Text style={[s.control,{color:theme.textSecondary}]}>{timeMode==="departure"?`Takeoff time from ${leg.originAirport}`:`Landing time at ${leg.destinationAirport}`}</Text><Text style={[s.value,{color:theme.textPrimary}]}>{formatFlightTime(selectedTime ?? timeBounds[timeMode]!.max)}</Text></View><FlightRangeSlider available={timeBounds[timeMode]!} selected={{min:timeBounds[timeMode]!.min,max:selectedTime!}} step={15} singleMaximum accessibilityLabel={timeMode==="departure"?"Takeoff":"Landing"} formatValue={formatFlightTime} onDragStateChange={setDragging} onChange={value=>{const current=working.journeyTimeMaximums?.[key]??{departure:null,arrival:null};update({...working,journeyTimeMaximums:{...(working.journeyTimeMaximums??{}),[key]:{...current,[timeMode]:value.max===timeBounds[timeMode]!.max?null:value.max}}})}}/></View>:null}</FlightFilterSection>}
  {full&&options.duration&&<FlightFilterSection title="Duration"><View><Text style={[s.control,{color:theme.textPrimary}]}>Maximum travel time</Text>{slider("maximumDuration",options.duration,"Maximum travel time",formatFlightDuration,5)}</View></FlightFilterSection>}
@@ -93,8 +92,9 @@ function Check({label,detail,selected,logo,compact=false,onPress}:{label:string;
 
 const s=StyleSheet.create({
  pressed:{opacity:.7},
- scroll:{flexShrink:1},
- content:{paddingHorizontal:20,paddingVertical:16,gap:24},
+ fullScroll:{flex:1},
+ quickScroll:{flexShrink:1},
+ content:{paddingHorizontal:24,paddingTop:16,paddingBottom:32,gap:24},
  compactContent:{padding:16,gap:10},
  section:{gap:5},
  compactSection:{gap:2},
