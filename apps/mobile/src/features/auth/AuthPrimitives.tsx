@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, Ref, useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, ActivityIndicator, Animated, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TextInputProps, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AuthIcon, IconName } from "./AuthIcon";
@@ -22,9 +22,9 @@ export function FormHeading({ icon, title, body, green }: { icon: IconName; titl
   return <View style={styles.heading}><View style={[styles.iconCircle, green && styles.greenCircle]}><AuthIcon name={icon} color={green ? authColors.green : authColors.blue} size={28} /></View><Text accessibilityRole="header" style={styles.title}>{title}</Text><Text style={styles.body}>{body}</Text></View>;
 }
 
-export function Field({ label, error, right, ...props }: TextInputProps & { label: string; error?: string; right?: ReactNode }) {
+export function Field({ label, error, right, inputRef, ...props }: TextInputProps & { label: string; error?: string; right?: ReactNode; inputRef?: Ref<TextInput> }) {
   const [focused, setFocused] = useState(false);
-  return <View style={styles.fieldWrap}><Text style={styles.label}>{label}</Text><View style={[styles.fieldBox, focused && styles.focused, error && styles.fieldError]}><TextInput {...props} accessibilityLabel={label} onFocus={(e) => { setFocused(true); props.onFocus?.(e); }} onBlur={(e) => { setFocused(false); props.onBlur?.(e); }} placeholderTextColor="#8A93A6" style={styles.input} />{right}</View><Text accessibilityLiveRegion="polite" style={styles.error}>{error || " "}</Text></View>;
+  return <View style={styles.fieldWrap}><Text style={styles.label}>{label}</Text><View style={[styles.fieldBox, focused && styles.focused, error && styles.fieldError]}><TextInput ref={inputRef} {...props} accessibilityLabel={label} onFocus={(e) => { setFocused(true); props.onFocus?.(e); }} onBlur={(e) => { setFocused(false); props.onBlur?.(e); }} placeholderTextColor="#8A93A6" style={styles.input} />{right}</View><Text accessibilityLiveRegion="polite" style={styles.error}>{error || " "}</Text></View>;
 }
 
 export function StatusText({ children, success = false }: { children?: string; success?: boolean }) {
