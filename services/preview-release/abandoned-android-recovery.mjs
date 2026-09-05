@@ -31,6 +31,7 @@ export function parseAuthorizedAbandonedAndroidRecovery(env = process.env) {
 
 export async function runAuthorizedAbandonedAndroidRecovery({
   authorization,
+  mode,
   ledger,
   github,
   eas,
@@ -39,6 +40,9 @@ export async function runAuthorizedAbandonedAndroidRecovery({
   sleep = delay,
 }) {
   if (!authorization) return { state: "DISABLED" };
+  if (mode !== "active") {
+    throw new Error("Android abandoned-reservation recovery is forbidden unless Preview release mode is active.");
+  }
   const { actionId, sourceSha, fingerprint } = authorization;
   const canonicalIdentity = `native-build:android:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}`;
 
@@ -95,64 +99,51 @@ export async function runAuthorizedAbandonedAndroidRecovery({
     fingerprint,
   });
   let recovery = reservation.action;
-  const easHistory = reconcileBuilds(await eas.listAndroidBuilds(currentDevSha), currentDevSha, "android", fingerprint);
+  let easHistory = reconcileBuilds(await eas.listAndroidBuilds(currentDevSha), currentDevSha, "android", fingerprint);
   if (["CONFLICT", "MALFORMED_RESPONSE", "FAILED_MATCH", "CANCELED_MATCH"].includes(easHistory.decision)) {
     throw new Error(`Authorized Android recovery history failed closed: ${easHistory.decision}.`);
   }
 
   if (!recovery.remote_id && ["ACTIVE_MATCH", "FINISHED_MATCH"].includes(easHistory.decision)) {
-    const build = easHistory.build;
-    recovery = await ledger.recordAction({
+    const attached = await attachAuthorizedAndroidRecoveryBuild({
+      ledger,
+      recovery,
       sourceSha: currentDevSha,
-      kind: "ANDROID_BUILD",
-      identityKey: recovery.identity_key,
-      remoteId: build.id,
-      state: String(build.status).toUpperCase(),
-      evidence: {
-        ...build,
-        nativeFingerprint: fingerprint,
-        nativeArtifactSourceSha: currentDevSha,
-        latestCompatibleSourceSha: currentDevSha,
-        ownershipSource: "OWNER_AUTHORIZED_ABANDONED_RESERVATION_HISTORY_RECONCILIATION",
-        replacesAbandonedActionId: actionId,
-      },
+      fingerprint,
+      actionId,
+      build: easHistory.build,
     });
+    if (!attached.claimed) {
+      throw new Error("Android recovery action changed while attaching an existing provider build; automatic replacement creation is blocked.");
+    }
+    recovery = attached.action;
     console.log(JSON.stringify({
       event: "authorized-android-recovery-existing-build-attached",
       actionId,
       sourceSha: currentDevSha,
       fingerprint,
-      buildId: build.id,
-      status: String(build.status).toUpperCase(),
+      buildId: recovery.remote_id,
+      status: String(recovery.state).toUpperCase(),
     }));
   }
 
   if (!recovery.remote_id) {
-    const recoveryEvidence = actionEvidence(recovery);
-    if (String(recovery.state).toUpperCase() === "CREATING" || recoveryEvidence?.providerCreationAttempt === "STARTED") {
-      throw new Error("An authorized Android replacement creation attempt already started without a durable EAS build ID; a second paid build is blocked pending separate operator review.");
-    }
-    if (!reservation.created && String(recovery.state).toUpperCase() !== "RESERVED") {
-      throw new Error("Existing Android recovery action is not safe for a first provider creation attempt.");
-    }
-
-    recovery = await ledger.recordAction({
+    const claimed = await claimAuthorizedAndroidRecoveryCreation({
+      ledger,
+      recovery,
       sourceSha: currentDevSha,
-      kind: "ANDROID_BUILD",
-      identityKey: recovery.identity_key,
-      remoteId: null,
-      state: "CREATING",
-      evidence: {
-        ...recoveryEvidence,
-        nativeFingerprint: fingerprint,
-        nativeArtifactSourceSha: currentDevSha,
-        latestCompatibleSourceSha: currentDevSha,
-        ownershipSource: "OWNER_AUTHORIZED_ABANDONED_RESERVATION_REPLACEMENT",
-        replacesAbandonedActionId: actionId,
-        providerCreationAttempt: "STARTED",
-        providerCreationAttemptStartedAt: new Date(now()).toISOString(),
-      },
+      fingerprint,
+      actionId,
+      now: now(),
     });
+    if (!claimed.claimed) {
+      const state = String(claimed.action?.state ?? "UNKNOWN").toUpperCase();
+      if (state === "CREATING" || actionEvidence(claimed.action)?.providerCreationAttempt === "STARTED") {
+        throw new Error("An authorized Android replacement creation attempt already started without a durable EAS build ID; a second paid build is blocked pending separate operator review.");
+      }
+      throw new Error("Another worker changed the Android recovery reservation before provider creation; automatic creation is blocked.");
+    }
+    recovery = claimed.action;
     console.log(JSON.stringify({
       event: "authorized-android-recovery-create-started",
       actionId,
@@ -161,31 +152,68 @@ export async function runAuthorizedAbandonedAndroidRecovery({
       recoveryIdentity: recovery.identity_key,
     }));
 
-    const created = await eas.createAndroidBuild();
-    if (!created?.id) throw new Error("EAS accepted Android recovery creation without returning a durable build ID.");
-    recovery = await ledger.recordAction({
-      sourceSha: currentDevSha,
-      kind: "ANDROID_BUILD",
-      identityKey: recovery.identity_key,
-      remoteId: created.id,
-      state: "CREATED",
-      evidence: {
-        ...created,
-        nativeFingerprint: fingerprint,
-        nativeArtifactSourceSha: currentDevSha,
-        latestCompatibleSourceSha: currentDevSha,
-        ownershipSource: "OWNER_AUTHORIZED_ABANDONED_RESERVATION_REPLACEMENT",
-        replacesAbandonedActionId: actionId,
-        providerCreationAttempt: "ACCEPTED",
-      },
-    });
-    console.log(JSON.stringify({
-      event: "authorized-android-recovery-create-accepted",
-      actionId,
-      sourceSha: currentDevSha,
-      fingerprint,
-      buildId: recovery.remote_id,
-    }));
+    // One last provider-history read after winning the atomic CREATING claim.
+    // If a matching build became visible during the race window, attach it and
+    // do not submit a second paid build.
+    easHistory = reconcileBuilds(await eas.listAndroidBuilds(currentDevSha), currentDevSha, "android", fingerprint);
+    if (["CONFLICT", "MALFORMED_RESPONSE", "FAILED_MATCH", "CANCELED_MATCH"].includes(easHistory.decision)) {
+      throw new Error(`Authorized Android recovery final history check failed closed: ${easHistory.decision}.`);
+    }
+    if (["ACTIVE_MATCH", "FINISHED_MATCH"].includes(easHistory.decision)) {
+      const build = easHistory.build;
+      recovery = await ledger.recordAction({
+        sourceSha: currentDevSha,
+        kind: "ANDROID_BUILD",
+        identityKey: recovery.identity_key,
+        remoteId: build.id,
+        state: String(build.status).toUpperCase(),
+        evidence: {
+          ...build,
+          ...actionEvidence(recovery),
+          nativeFingerprint: fingerprint,
+          nativeArtifactSourceSha: currentDevSha,
+          latestCompatibleSourceSha: currentDevSha,
+          ownershipSource: "OWNER_AUTHORIZED_ABANDONED_RESERVATION_HISTORY_RECONCILIATION",
+          replacesAbandonedActionId: actionId,
+          providerCreationAttempt: "AVOIDED_EXISTING_MATCH",
+        },
+      });
+      console.log(JSON.stringify({
+        event: "authorized-android-recovery-existing-build-attached-after-claim",
+        actionId,
+        sourceSha: currentDevSha,
+        fingerprint,
+        buildId: recovery.remote_id,
+        status: String(recovery.state).toUpperCase(),
+      }));
+    } else {
+      const created = await eas.createAndroidBuild();
+      if (!created?.id) throw new Error("EAS accepted Android recovery creation without returning a durable build ID.");
+      recovery = await ledger.recordAction({
+        sourceSha: currentDevSha,
+        kind: "ANDROID_BUILD",
+        identityKey: recovery.identity_key,
+        remoteId: created.id,
+        state: "CREATED",
+        evidence: {
+          ...created,
+          ...actionEvidence(recovery),
+          nativeFingerprint: fingerprint,
+          nativeArtifactSourceSha: currentDevSha,
+          latestCompatibleSourceSha: currentDevSha,
+          ownershipSource: "OWNER_AUTHORIZED_ABANDONED_RESERVATION_REPLACEMENT",
+          replacesAbandonedActionId: actionId,
+          providerCreationAttempt: "ACCEPTED",
+        },
+      });
+      console.log(JSON.stringify({
+        event: "authorized-android-recovery-create-accepted",
+        actionId,
+        sourceSha: currentDevSha,
+        fingerprint,
+        buildId: recovery.remote_id,
+      }));
+    }
   }
 
   const result = await orchestrator.recoverCanonicalNativeBuild({
@@ -193,6 +221,96 @@ export async function runAuthorizedAbandonedAndroidRecovery({
     platform: "android",
   });
   return { state: "RECOVERY_COMPLETE", sourceSha: currentDevSha, fingerprint, ...result };
+}
+
+export async function claimAuthorizedAndroidRecoveryCreation({ ledger, recovery, sourceSha, fingerprint, actionId, now = Date.now() }) {
+  assertExactRecoveryIdentity({ recovery, sourceSha, fingerprint });
+  const kind = "ANDROID_BUILD";
+  const canonicalIdentity = `native-build:android:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}`;
+  const client = await ledger.pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))", [kind, canonicalIdentity]);
+    const evidence = {
+      ...actionEvidence(recovery),
+      nativeFingerprint: fingerprint,
+      nativeArtifactSourceSha: sourceSha,
+      latestCompatibleSourceSha: sourceSha,
+      ownershipSource: "OWNER_AUTHORIZED_ABANDONED_RESERVATION_REPLACEMENT",
+      replacesAbandonedActionId: actionId,
+      providerCreationAttempt: "STARTED",
+      providerCreationAttemptStartedAt: new Date(now).toISOString(),
+    };
+    const updated = await client.query(
+      `UPDATE preview_release_action
+       SET state='CREATING', evidence=$4::jsonb, updated_at=now()
+       WHERE id=$1 AND source_sha=$2 AND identity_key=$3
+         AND kind='ANDROID_BUILD' AND state='RESERVED' AND remote_id IS NULL
+       RETURNING *`,
+      [recovery.id, sourceSha, recovery.identity_key, JSON.stringify(evidence)],
+    );
+    if (updated.rowCount === 1) {
+      await client.query("COMMIT");
+      return { claimed: true, action: updated.rows[0] };
+    }
+    const current = await client.query(
+      "SELECT * FROM preview_release_action WHERE id=$1 AND kind='ANDROID_BUILD' AND identity_key=$2 LIMIT 2",
+      [recovery.id, recovery.identity_key],
+    );
+    if (current.rowCount !== 1) throw new Error("Android recovery creation claim lost its durable action identity.");
+    await client.query("COMMIT");
+    return { claimed: false, action: current.rows[0] };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function attachAuthorizedAndroidRecoveryBuild({ ledger, recovery, sourceSha, fingerprint, actionId, build }) {
+  assertExactRecoveryIdentity({ recovery, sourceSha, fingerprint });
+  if (!build?.id) throw new Error("Existing Android provider build has no durable ID.");
+  const kind = "ANDROID_BUILD";
+  const canonicalIdentity = `native-build:android:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}`;
+  const client = await ledger.pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))", [kind, canonicalIdentity]);
+    const evidence = {
+      ...build,
+      ...actionEvidence(recovery),
+      nativeFingerprint: fingerprint,
+      nativeArtifactSourceSha: sourceSha,
+      latestCompatibleSourceSha: sourceSha,
+      ownershipSource: "OWNER_AUTHORIZED_ABANDONED_RESERVATION_HISTORY_RECONCILIATION",
+      replacesAbandonedActionId: actionId,
+    };
+    const updated = await client.query(
+      `UPDATE preview_release_action
+       SET remote_id=$4, state=$5, evidence=$6::jsonb, updated_at=now()
+       WHERE id=$1 AND source_sha=$2 AND identity_key=$3
+         AND kind='ANDROID_BUILD' AND state='RESERVED' AND remote_id IS NULL
+       RETURNING *`,
+      [recovery.id, sourceSha, recovery.identity_key, build.id, String(build.status).toUpperCase(), JSON.stringify(evidence)],
+    );
+    if (updated.rowCount === 1) {
+      await client.query("COMMIT");
+      return { claimed: true, action: updated.rows[0] };
+    }
+    const current = await client.query(
+      "SELECT * FROM preview_release_action WHERE id=$1 AND kind='ANDROID_BUILD' AND identity_key=$2 LIMIT 2",
+      [recovery.id, recovery.identity_key],
+    );
+    if (current.rowCount !== 1) throw new Error("Android recovery attachment lost its durable action identity.");
+    await client.query("COMMIT");
+    return { claimed: false, action: current.rows[0] };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 async function inspectOriginalHistory(eas, action) {
@@ -221,6 +339,17 @@ function assertOriginalReservation(action, { actionId, sourceSha, fingerprint, c
   const evidence = actionEvidence(action);
   const evidenceFingerprint = evidence?.nativeFingerprint ?? action.identity_key.split(":").at(-1);
   if (evidenceFingerprint !== fingerprint) throw new Error("Android abandoned reservation fingerprint evidence is inconsistent.");
+}
+
+function assertExactRecoveryIdentity({ recovery, sourceSha, fingerprint }) {
+  if (!EXACT_SHA.test(sourceSha) || !EXACT_FINGERPRINT.test(fingerprint)) {
+    throw new Error("Android recovery creation identity is malformed.");
+  }
+  const prefix = `native-build-recovery:android:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}:`;
+  if (!recovery?.id || recovery?.kind !== "ANDROID_BUILD" || recovery?.source_sha !== sourceSha
+    || !String(recovery?.identity_key ?? "").startsWith(prefix) || recovery?.remote_id != null) {
+    throw new Error("Android recovery creation claim does not match the exact reserved recovery action.");
+  }
 }
 
 async function finalizeAbandonedReservation({ ledger, original, authorization, now }) {
