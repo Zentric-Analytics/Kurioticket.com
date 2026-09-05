@@ -11,6 +11,7 @@ const NATIVE_COMMON = [
 const IOS_NATIVE = [
   /^apps\/mobile\/ios\//,
   /^apps\/mobile\/modules\/[^/]+\/ios\//,
+  /^apps\/mobile\/fingerprint\.config\.js$/,
   /(?:^|\/)Podfile(?:\.lock)?$/,
   /\.entitlements$/,
 ];
