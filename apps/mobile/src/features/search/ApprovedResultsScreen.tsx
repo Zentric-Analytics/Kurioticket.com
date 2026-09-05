@@ -1981,7 +1981,7 @@ const s0 = StyleSheet.create({
   hotelFilterChips:{gap:8,paddingVertical:6},
   hotelFilterChip:{minHeight:44,borderRadius:18,borderWidth:1,paddingHorizontal:12,alignItems:"center",justifyContent:"center"},
   hotelAttribution:{borderWidth:1,borderRadius:10,padding:10},
-  flightResultsBody: { paddingHorizontal: 14, paddingBottom: 0, gap: 8 },
+  flightResultsBody: { paddingHorizontal: 14, gap: 8 },
   flightCardItem: { paddingHorizontal: 14, paddingBottom: 8 },
   flightResultsIntro: { gap: 2 },
   notice: { backgroundColor: "#F2F6FF", color: ui.navy, padding: 10, borderRadius: 8 },

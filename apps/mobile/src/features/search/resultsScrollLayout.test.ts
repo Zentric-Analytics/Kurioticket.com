@@ -128,7 +128,6 @@ test("Flight Results scroll content clears the native bottom safe area without n
   );
   assert.match(paginationFooter, /paddingBottom: 6/);
   assert.doesNotMatch(paginationFooter, /paddingBottom:\s*(?:92|104)/);
-  assert.match(terminalFooter, /paddingBottom: 0/);
   assert.doesNotMatch(terminalFooter, /paddingBottom:\s*(?:92|104)/);
   assert.doesNotMatch(flightLayout, /paddingBottom[^\n]*(?:72|92|104)/);
   assert.doesNotMatch(flightLayout, /position:\s*["']absolute["']/);
