@@ -150,6 +150,7 @@ test("flight card uses a compact three-row metadata column while airline identit
   assert.match(source, /card: \{[\s\S]*?paddingHorizontal: 12,[\s\S]*?paddingVertical: 9,[\s\S]*?gap: 5,/);
   assert.match(source, /flightCardFooter: \{[^\n]*width: "100%"/);
   assert.match(source, /flightMetadataRegion: \{ flex: 1, minWidth: 0[^}]*alignItems: "flex-start"[^}]*gap: 5/);
+  assert.match(source, /flightMetadataItem: \{ width: "100%", minWidth: 0, minHeight: 16, flexDirection: "row", alignItems: "center", gap: 6 \}/);
   assert.match(source, /flightMetadataText: \{ flex: 1, minWidth: 0/);
   assert.match(source, /flightCommercialRegion: \{ width: "46%", minWidth: 104, flexShrink: 0, alignSelf: "stretch", alignItems: "flex-end", justifyContent: "space-between"/);
   assert.equal(card.match(/s0\.flightMetadataLabel, \{ color: supportTextColor \}/g)?.length, 3);
@@ -209,7 +210,7 @@ test("flight card keeps long prices single-line in the full-width fare row", () 
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center" \}/);
   assert.match(source, /metadataItem: \{ flex: 1, minWidth: 0, flexDirection: "row"/);
   assert.match(source, /flightLowerSection: \{[^\n]*flexDirection: "row"/);
-  assert.match(source, /flightDetailsAffordance: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
+  assert.match(source, /flightDetailsAffordance: \{ width: "100%", minHeight: 16, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
   assert.match(source, /flightDetailsAffordanceText: \{ fontSize: 13, lineHeight: 15, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
   assert.doesNotMatch(source, /actionColumn:/);
   assert.doesNotMatch(source, /priceBox:/);

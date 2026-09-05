@@ -14,7 +14,8 @@ test("metadata keeps three compact inline rows beside the price region", () => {
     assert.match(metadata, new RegExp(`<${icon} accessible=\\{false\\} size=\\{15\\} strokeWidth=\\{2\.4\\} color=\\{supportTextColor\\}/>`));
   }
   assert.match(source, /flightMetadataRegion: \{ flex: 1, minWidth: 0[^}]*gap: 5/);
-  assert.match(source, /flightMetadataItem: \{ width: "100%", minWidth: 0, flexDirection: "row"/);
+  assert.match(source, /flightMetadataItem: \{ width: "100%", minWidth: 0, minHeight: 16, flexDirection: "row", alignItems: "center", gap: 6 \}/);
+  assert.match(source, /flightDetailsAffordance: \{ width: "100%", minHeight: 16, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
   assert.match(source, /flightMetadataText: \{ flex: 1, minWidth: 0/);
   assert.doesNotMatch(source, /flightMetadataIconTile|flightMetadataCopy|flightMetadataValue/);
   assert.doesNotMatch(metadata, /backgroundColor|border(?:Left|Right)|shadow|elevation|Chevron|Pressable/);
