@@ -98,6 +98,46 @@ test("native related hotel heading stays inset while only the horizontal carouse
   assert.match(component, /Math\.min\(300, Math\.max\(240, width \* 0\.82\)\)/);
 });
 
+test("native related Hotel cards mirror the web text hierarchy and action treatment", () => {
+  const component = readFileSync("src/features/search/NativeHotelDecisionSections.tsx", "utf8");
+  const web = readFileSync("../../src/components/results/hotelDetails/RelatedHotelsSection.tsx", "utf8");
+  const card = component.slice(
+    component.indexOf("function RelatedHotelCard"),
+    component.indexOf("export function NativeRelatedHotelsSection"),
+  );
+
+  for (const contract of [
+    "w-[82vw]", "max-w-[300px]", "aspect-video", "min-h-[174px]", "p-3",
+    "text-xs tracking-[0.08em] text-amber-500",
+    "text-[15px] font-bold leading-5", "text-xs leading-5", "text-sm font-bold",
+    "mt-1 text-xs", "mt-2.5", "min-h-11", "border-t", "pt-2.5",
+    "text-sm font-bold text-blue", 'className="h-4 w-4"',
+  ]) assert.ok(web.includes(contract), contract);
+
+  assert.match(component, /import \{ appFonts \} from "\.\.\/\.\.\/theme\/typography";/);
+  assert.match(component, /cardBody:\s*\{\s*minHeight:\s*174,\s*padding:\s*12\s*\}/);
+  assert.doesNotMatch(component, /cardBody:\s*\{[^}]*minHeight:\s*190|cardBody:\s*\{[^}]*padding:\s*13/);
+  assert.match(component, /stars:\s*\{[^}]*color:\s*"#F59E0B"[^}]*fontSize:\s*12[^}]*lineHeight:\s*16[^}]*letterSpacing:\s*0\.96[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
+  assert.match(component, /hotelName:\s*\{[^}]*marginTop:\s*4[^}]*fontSize:\s*15[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"700"[^}]*fontFamily:\s*appFonts\.bold/);
+  assert.match(component, /location:\s*\{[^}]*marginTop:\s*4[^}]*fontSize:\s*12[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
+  assert.match(component, /priceBlock:\s*\{[^}]*marginTop:\s*"auto"[^}]*paddingTop:\s*12[^}]*gap:\s*4/);
+  assert.match(component, /nightly:\s*\{[^}]*fontSize:\s*14[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"700"[^}]*fontFamily:\s*appFonts\.bold/);
+  assert.match(component, /total:\s*\{[^}]*fontSize:\s*12[^}]*lineHeight:\s*16[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
+  assert.match(component, /priceUnavailable:\s*\{[^}]*fontSize:\s*14[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"600"[^}]*fontFamily:\s*appFonts\.semibold/);
+  assert.match(component, /viewText:\s*\{[^}]*fontSize:\s*14[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"700"[^}]*fontFamily:\s*appFonts\.bold/);
+  assert.match(component, /viewRow:\s*\{[^}]*minHeight:\s*44[^}]*marginTop:\s*10[^}]*paddingTop:\s*10[^}]*borderTopWidth:\s*StyleSheet\.hairlineWidth[^}]*flexDirection:\s*"row"[^}]*alignItems:\s*"center"[^}]*justifyContent:\s*"space-between"/);
+
+  assert.match(card, /const relatedActionColor = theme\.dark \? "#8FB5FF" : colors\.blue;/);
+  assert.match(card, /styles\.viewText, \{ color: relatedActionColor \}/);
+  assert.match(card, /<ArrowRight accessible=\{false\} size=\{16\} color=\{relatedActionColor\} \/>/);
+  assert.doesNotMatch(card, /styles\.viewText, \{ color: theme\.textPrimary \}/);
+  assert.doesNotMatch(card, /<ArrowRight[^>]*(?:size=\{17\}|color=\{theme\.icon\})/);
+  assert.match(card, /item\.classificationStars/);
+  assert.doesNotMatch(card, /item\.hotel\.(?:rating|reviewScore)/);
+  assert.equal(card.match(/<Pressable\b/g)?.length, 1);
+  assert.match(card, /<Pressable accessibilityRole="button" accessibilityLabel=\{`View hotel \$\{item\.hotel\.name\}`\} onPress=\{\(\) => onView\(item\)\}/);
+});
+
 test("native Open in Maps is a compact accessible overlay instead of a filled CTA", () => {
   const component = readFileSync("src/features/search/NativeHotelDecisionSections.tsx", "utf8");
   const mapsControl = component.match(/mapsControl:\s*\{([^}]*)\}/)?.[1] ?? "";
