@@ -3,6 +3,7 @@ import { generateKeyPairSync, randomBytes, sign as signData } from "node:crypto"
 import { readFileSync } from "node:fs";
 import test, { afterEach } from "node:test";
 import type { getPrisma } from "@/lib/prisma";
+import { normalizePasskeyAssertion } from "../../apps/mobile/src/features/passkeys/passkeyAssertion";
 import { b64url, sha256, userHandle } from "@/lib/passkeys";
 import {
   createMobilePasskeyOptions,
@@ -189,6 +190,20 @@ test("a valid signed assertion updates usage and creates a phishing-resistant pa
   assert.equal(state.challenge.consumedAt?.toISOString(), NOW.toISOString());
   assert.equal((state.passkey as typeof state.passkey & { lastUsedAt?: Date }).lastUsedAt?.toISOString(), NOW.toISOString());
   assert.deepEqual(state.issued, [{ userId: fixture.passkey.userId, method: "PASSKEY", assurance: "PHISHING_RESISTANT" }]);
+});
+
+test("Preview Fabric payload fails strict verification until event metadata is stripped without changing signed bytes", async () => {
+  const fixture = assertionFixture();
+  const state = harness(fixture);
+  const nativeEvent = { ...fixture.assertion, target: 73 };
+  await expectFailure(verifyMobilePasskeyAssertion(nativeEvent, state.overrides), "INVALID_ASSERTION");
+  assert.equal(state.issued.length, 0);
+  assert.equal(state.challenge.consumedAt, null);
+  const normalized = normalizePasskeyAssertion(nativeEvent);
+  assert.deepEqual(normalized, fixture.assertion);
+  const result = await verifyMobilePasskeyAssertion(JSON.parse(JSON.stringify(normalized)), state.overrides);
+  assert.equal(result.user.id, fixture.passkey.userId);
+  assert.equal(state.issued.length, 1);
 });
 
 test("valid zero counters and increasing non-zero counters succeed", async () => {
