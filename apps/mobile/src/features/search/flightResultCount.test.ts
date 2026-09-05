@@ -28,32 +28,40 @@ test("flight count stays total while FlightCards receive only the paginated slic
   assert.doesNotMatch(source, /sorted\.map\(\(x, i\) =>\s*product === "flight"/);
 });
 
-test("flight and paginated Hotel result counts are accessible headings", () => {
+test("flight and Hotel result counts are accessible headings while only Flight exposes a range", () => {
   assert.match(source, /function FlightResultsSummaryRow[\s\S]*?accessibilityRole="header"/);
-  assert.match(source, /function HotelResultsSummaryRow[\s\S]*?accessibilityRole="header"/);
-  assert.match(source, /accessibilityLabel=\{`Showing results \$\{range\.start\} through \$\{range\.end\}`\}/);
+  const hotelSummary = source.slice(source.indexOf("function HotelResultsSummaryRow"), source.indexOf("function PriceAlert"));
+  assert.match(hotelSummary, /accessibilityRole="header"/);
+  assert.doesNotMatch(hotelSummary, /Showing results|range\.start|range\.end/);
   assert.match(source, /Showing results \$\{range\.start\} through \$\{range\.end\} of \$\{count\}/);
 });
 
-test("Hotel result summary matches Flight typography and horizontal hierarchy", () => {
+test("Hotel result summary keeps the dynamic count without a page range", () => {
   const component = source.slice(source.indexOf("function HotelResultsSummaryRow"), source.indexOf("function PriceAlert"));
   assert.match(source, /const hotelResultCountLabel = \(count: number\) => `\$\{count\} \$\{count === 1 \? "Result" : "Results"\} found`/);
   assert.match(component, /style=\{s0\.flightResultsCountColumn\}/);
   assert.match(component, /style=\{\[s0\.flightResultCount/);
-  assert.match(component, /style=\{\[s0\.flightResultRange/);
-  assert.match(component, />\{range\.start\}–\{range\.end\}<\/Text>/);
+  assert.doesNotMatch(component, /flightResultRange|range\.start|range\.end|Showing results/);
   assert.doesNotMatch(component, /<PriceAlert|\bplan\??:|\bresults: HotelResult|priceAlertsAvailable/);
-  assert.doesNotMatch(component, />Showing \{range\.start\}|s0\.hotelResultCount|s0\.hotelResultsRange/);
+  assert.doesNotMatch(component, /s0\.hotelResultCount|s0\.hotelResultsRange/);
 });
 
-test("Hotel summary retains the page-aware range supplied by pagination", () => {
+test("Flight summary retains its page-aware range while Hotel pagination stays page-aware without range plumbing", () => {
   assert.deepEqual(getResultsDisplayRange({ currentPage: 1, pageSize: 20, totalResults: 53 }), { start: 1, end: 20 });
   assert.deepEqual(getResultsDisplayRange({ currentPage: 2, pageSize: 20, totalResults: 53 }), { start: 21, end: 40 });
   assert.deepEqual(getResultsDisplayRange({ currentPage: 3, pageSize: 20, totalResults: 53 }), { start: 41, end: 53 });
-  assert.match(source, /range=\{hotelRange\}/);
+  assert.match(source, /<FlightResultsSummaryRow count=\{sorted\.length\} range=\{flightRange\}/);
+  const hotelSummary = source.slice(source.indexOf("function HotelResultsSummaryRow"), source.indexOf("function PriceAlert"));
+  const hotelSummaryUsageStart = source.indexOf("<HotelResultsSummaryRow");
+  const hotelSummaryUsage = source.slice(hotelSummaryUsageStart, source.indexOf("/>", hotelSummaryUsageStart));
+  assert.doesNotMatch(source, /hotelRange/);
+  assert.doesNotMatch(hotelSummary, /\brange\b/);
+  assert.doesNotMatch(hotelSummaryUsage, /\brange=/);
+  assert.match(source, /paginateHotelResults\(sorted as HotelResult\[\], clampedHotelPage\)/);
+  assert.match(source, /<HotelResultsPagination page=\{clampedHotelPage\} pages=\{hotelPageCount\}/);
 });
 
-test("filter, price alert, and same-row count/range precede cards", () => {
+test("filter and price alert precede the Flight count/range and cards", () => {
   assert.doesNotMatch(persistentControls, /flightPersistentSearchControls|\{filterRail\}/);
   assert.doesNotMatch(persistentControls, /dateStrip|PriceAlert|flightResultCountLabel|FlightCard/);
   assert.match(source, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
