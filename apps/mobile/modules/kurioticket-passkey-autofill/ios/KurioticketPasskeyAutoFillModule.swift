@@ -2,7 +2,30 @@ import AuthenticationServices
 import ExpoModulesCore
 import UIKit
 
-public final class KurioticketPasskeyAutoFillModule: Module, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
+// Expo Module is not an NSObject. AuthenticationServices delegates must be.
+private final class PasskeyAuthorizationDelegate: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
+  weak var owner: KurioticketPasskeyAutoFillModule?
+
+  init(owner: KurioticketPasskeyAutoFillModule) {
+    self.owner = owner
+    super.init()
+  }
+
+  func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+    owner?.presentationAnchor(for: controller) ?? UIWindow(frame: UIScreen.main.bounds)
+  }
+
+  func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+    owner?.authorizationController(controller: controller, didCompleteWithAuthorization: authorization)
+  }
+
+  func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+    owner?.authorizationController(controller: controller, didCompleteWithError: error)
+  }
+}
+
+public final class KurioticketPasskeyAutoFillModule: Module {
+  private lazy var authorizationDelegate = PasskeyAuthorizationDelegate(owner: self)
   private var controller: ASAuthorizationController?
   private var promise: Promise?
   private var started = false
@@ -23,8 +46,8 @@ public final class KurioticketPasskeyAutoFillModule: Module, ASAuthorizationCont
       let request = provider.createCredentialAssertionRequest(challenge: challengeData)
       request.userVerificationPreference = .required
       let controller = ASAuthorizationController(authorizationRequests: [request])
-      controller.delegate = self
-      controller.presentationContextProvider = self
+      controller.delegate = self.authorizationDelegate
+      controller.presentationContextProvider = self.authorizationDelegate
 
       self.promise = promise
       self.controller = controller
@@ -109,7 +132,9 @@ public final class KurioticketPasskeyAutoFillModule: Module, ASAuthorizationCont
     controller = nil
     promise = nil
     started = false
-    activeController?.cancel()
+    if #available(iOS 16.0, *) {
+      activeController?.cancel()
+    }
     resolveStartWaiters(false)
     if resolveCancelled { pending?.resolve(nil) }
   }
