@@ -1028,51 +1028,55 @@ function HotelDetail({
         style={[
           d.hotelSticky,
           {
-            paddingBottom: Math.max(inset.bottom, 10),
+            paddingBottom: 12 + inset.bottom,
             backgroundColor: theme.surface,
             borderTopColor: theme.border,
           },
         ]}
       >
-        <View style={d.hotelDockPrice}>
-          <View style={d.hotelDockLabel}>
-            <Text style={[d.hotelDockEyebrow, { color: theme.textSecondary }]}>
-              estimated stay total
+        <View style={d.hotelDockContent}>
+          <View style={d.hotelDockPrice}>
+            <View style={d.hotelDockLabel}>
+              <Text style={[d.hotelDockEyebrow, { color: theme.textSecondary }]}>
+                estimated stay total
+              </Text>
+              <Info accessible={false} size={12} color={theme.textSecondary} />
+            </View>
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.83}
+              style={[d.hotelDockTotal, { color: theme.textPrimary }]}
+            >
+              {hasPrice ? (totalPrice?.formatted ?? "—") : "Price unavailable"}
             </Text>
-            <Info size={14} color={theme.icon} />
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.72}
+              style={[d.hotelDockPerNight, { color: theme.textSecondary }]}
+            >
+              {hasPrice
+                ? `${nightlyPrice?.formatted ?? "—"} per night`
+                : "No live price supplied"}
+            </Text>
           </View>
-          <Text
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.65}
-            style={[d.hotelDockTotal, { color: theme.textPrimary }]}
-          >
-            {hasPrice ? (totalPrice?.formatted ?? "—") : "Price unavailable"}
-          </Text>
-          <Text
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.72}
-            style={[d.hotelPerNight, { color: theme.textSecondary }]}
-          >
-            {hasPrice
-              ? `${nightlyPrice?.formatted ?? "—"} per night`
-              : "No live price supplied"}
-          </Text>
+          <View style={d.hotelDockAction}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !canContinue }}
+              disabled={!canContinue}
+              onPress={() => void continueBooking()}
+              style={({ pressed }) => [
+                d.hotelContinue,
+                !canContinue && d.hotelContinueDisabled,
+                pressed && canContinue && d.hotelContinuePressed,
+              ]}
+            >
+              <Text style={d.hotelContinueText}>Continue booking</Text>
+            </Pressable>
+          </View>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !canContinue }}
-          disabled={!canContinue}
-          onPress={() => void continueBooking()}
-          style={({ pressed }) => [
-            d.hotelContinue,
-            !canContinue && d.hotelContinueDisabled,
-            pressed && canContinue && d.hotelContinuePressed,
-          ]}
-        >
-          <Text style={d.hotelContinueText}>Continue booking</Text>
-        </Pressable>
       </View>
       <HotelRoomOptionsModal
         visible={roomsOpen}
@@ -1597,14 +1601,18 @@ const d = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    minHeight: 92,
     borderTopWidth: 1,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
     borderTopColor: ui.border,
     backgroundColor: "white",
-    padding: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    elevation: 12,
   },
   hotelFactRow: { minHeight: 20, flexDirection: "row", alignItems: "flex-start", gap: 6 },
   hotelTabTextCompact: { fontSize: 10 },
@@ -1642,13 +1650,16 @@ const d = StyleSheet.create({
   hotelAboutAccessibilityText: { flex: 1, fontSize: 14, lineHeight: 24, fontWeight: "400", fontFamily: appFonts.regular },
   mapsButton: { alignSelf: "flex-start", minHeight: 44, borderRadius: 8, paddingHorizontal: 15, backgroundColor: colors.blue, flexDirection: "row", alignItems: "center", gap: 8 },
   mapsButtonText: { color: "white", fontSize: 13, fontWeight: "800" },
+  hotelDockContent: { width: "100%", flexDirection: "row", alignItems: "center", gap: 12 },
   hotelDockPrice: { flex: 1, minWidth: 0, gap: 1 },
-  hotelDockLabel: { flexDirection: "row", alignItems: "center", gap: 5 },
-  hotelDockEyebrow: { fontSize: 10, lineHeight: 14 },
-  hotelDockTotal: { fontSize: 22, lineHeight: 27, fontWeight: "900" },
-  hotelContinue: { minWidth: 142, minHeight: 48, paddingHorizontal: 14, borderRadius: 8, backgroundColor: colors.blue, alignItems: "center", justifyContent: "center" },
+  hotelDockLabel: { flexDirection: "row", alignItems: "center", gap: 4 },
+  hotelDockEyebrow: { fontSize: 11, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
+  hotelDockTotal: { fontSize: 24, lineHeight: 30, fontWeight: "800", fontFamily: appFonts.extraBold, textAlign: "left" },
+  hotelDockPerNight: { fontSize: 11, lineHeight: 16, fontWeight: "400", fontFamily: appFonts.regular, textAlign: "left" },
+  hotelDockAction: { flex: 0.9, minWidth: 132 },
+  hotelContinue: { width: "100%", minHeight: 48, borderRadius: 8, backgroundColor: colors.blue, paddingHorizontal: 12, alignItems: "center", justifyContent: "center" },
   hotelContinuePressed: { backgroundColor: "#003B91" },
-  hotelContinueDisabled: { opacity: 0.45 },
-  hotelContinueText: { color: "white", fontSize: 14, fontWeight: "900", textAlign: "center" },
+  hotelContinueDisabled: { opacity: 0.5 },
+  hotelContinueText: { color: "white", fontSize: 12, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold, textAlign: "center" },
 
 });
