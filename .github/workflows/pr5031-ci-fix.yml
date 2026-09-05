@@ -1,0 +1,79 @@
+name: PR 5031 CI repair
+
+on:
+  push:
+    branches:
+      - codex/remove-bottomnav-from-flight-results
+    paths:
+      - .github/workflows/pr5031-ci-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: codex/remove-bottomnav-from-flight-results
+          fetch-depth: 0
+
+      - name: Repair stale Flight Results footer assertion
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          screen_path = Path("apps/mobile/src/features/search/ApprovedResultsScreen.tsx")
+          screen = screen_path.read_text()
+          old_style = '  flightResultsBody: { paddingHorizontal: 14, paddingBottom: 0, gap: 8 },'
+          new_style = '  flightResultsBody: { paddingHorizontal: 14, gap: 8 },'
+          if screen.count(old_style) != 1:
+              raise SystemExit(f"expected one flightResultsBody repair target, got {screen.count(old_style)}")
+          screen_path.write_text(screen.replace(old_style, new_style, 1))
+
+          test_path = Path("apps/mobile/src/features/search/resultsScrollLayout.test.ts")
+          test = test_path.read_text()
+          stale_assertion = '  assert.match(terminalFooter, /paddingBottom: 0/);\n'
+          if test.count(stale_assertion) != 1:
+              raise SystemExit(f"expected one stale terminal-footer assertion, got {test.count(stale_assertion)}")
+          test_path.write_text(test.replace(stale_assertion, '', 1))
+          PY
+
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            apps/mobile/src/features/search/ApprovedResultsScreen.tsx \
+            apps/mobile/src/features/search/resultsScrollLayout.test.ts
+          git diff --cached --check
+          git commit -m "test(mobile): align flight footer regression with safe-area layout"
+          git push origin HEAD:codex/remove-bottomnav-from-flight-results
+
+      - name: Install mobile dependencies
+        working-directory: apps/mobile
+        run: npm ci
+
+      - name: Typecheck mobile
+        working-directory: apps/mobile
+        run: npm run typecheck
+
+      - name: Run focused regressions
+        working-directory: apps/mobile
+        run: >-
+          node --test --require ./testAssetSetup.cjs --import jiti/register
+          src/features/search/flightCardRefinement.test.ts
+          src/features/search/resultsScrollLayout.test.ts
+          src/features/search/flightResultsPagination.test.ts
+          src/features/search/bottomNavNavigation.test.ts
+          src/features/search/flightResultsHeader.test.ts
+          src/features/search/hotelResultsFooter.test.ts
+
+      - name: Run full mobile suite
+        working-directory: apps/mobile
+        run: npm test
+
+      - name: Validate diff
+        run: git diff --check
