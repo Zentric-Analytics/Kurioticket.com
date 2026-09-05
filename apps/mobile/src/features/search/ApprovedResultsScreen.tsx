@@ -1071,7 +1071,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           onScrollEndDrag={() => flightPaginationScheduleSettled.current?.()}
           onContentSizeChange={(_width, height) => { flightPaginationContentHeight.current = height; }}
           scrollEventThrottle={16}
-          contentContainerStyle={[s0.flightResultsContent, flightPaginationMinHeight !== null && { minHeight: flightPaginationMinHeight }]}
+          contentContainerStyle={[
+            s0.flightResultsContent,
+            { paddingBottom: Math.max(insets.bottom + 16, 16) },
+            flightPaginationMinHeight !== null && { minHeight: flightPaginationMinHeight },
+          ]}
           initialNumToRender={6}
           maxToRenderPerBatch={5}
           updateCellsBatchingPeriod={50}
@@ -1168,7 +1172,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           onSubmit={submitFlightEditSearch}
         />
       ) : null}
-      {flightResults ? <BottomNav flightResults /> : null}
     </SafeAreaView>
   );
 }
@@ -1990,7 +1993,7 @@ const s0 = StyleSheet.create({
   flightResultsCountColumn: { minWidth: 0, flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 8 },
   flightResultCount: { fontSize: 13, lineHeight: 17, fontWeight: "700", fontFamily: appFonts.bold },
   flightResultRange: { marginTop: 1, fontSize: 10.5, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
-  flightPagination: { paddingHorizontal: 14, paddingTop: 6, paddingBottom: 104, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 4 },
+  flightPagination: { paddingHorizontal: 14, paddingTop: 6, paddingBottom: 6, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 4 },
   flightPaginationPages: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 2 },
   flightPaginationDirection: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center", paddingHorizontal: 6 },
   flightPaginationDirectionText: { fontSize: 12, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },

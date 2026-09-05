@@ -176,11 +176,10 @@ test("Hotel Results receives presentation-only summary copy while Edit preserves
   assert.doesNotMatch(read("src/features/search/hotelResultsSummary.ts"), /\.formatRange/);
 });
 
-test("Flight Details, result content, and product-specific bottom navigation contracts remain present", () => {
+test("Flight Details and result content remain present without a results-screen BottomNav", () => {
   assert.match(details, /accessibilityLabel="Flight details header"/);
   assert.match(details, /style=\{d\.itineraryList\}/);
   assert.match(results, /<DateStrip/);
   assert.match(results, /<HotelCard/);
-  assert.match(results, /\{flightResults \? <BottomNav flightResults \/> : null\}/);
-  assert.doesNotMatch(results, /<BottomNav flightResults=\{flightResults\} \/>/);
+  assert.doesNotMatch(results.slice(results.indexOf("export function ApprovedResultsScreen"), results.indexOf("export function BottomNav")), /<BottomNav(?:\s|\/|>)/);
 });
