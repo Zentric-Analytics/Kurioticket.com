@@ -4,6 +4,20 @@ import test from "node:test";
 
 const source = (path: string) => readFileSync(path, "utf8");
 
+test("AuthenticationServices delegates use NSObject and cancellation is iOS-version guarded", () => {
+  const module = source("modules/kurioticket-passkey-autofill/ios/KurioticketPasskeyAutoFillModule.swift");
+  const view = source("modules/kurioticket-passkey-autofill/ios/KurioticketPasskeyUsernameView.swift");
+  assert.match(module, /class PasskeyAuthorizationDelegate: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding/);
+  assert.match(module, /class KurioticketPasskeyAutoFillModule: Module \{/);
+  assert.match(module, /weak var owner: KurioticketPasskeyAutoFillModule\?/);
+  assert.match(module, /private lazy var authorizationDelegate/);
+  assert.match(module, /controller\.delegate = self\.authorizationDelegate/);
+  assert.match(module, /controller\.presentationContextProvider = self\.authorizationDelegate/);
+  for (const [text, receiver] of [[module, "activeController"], [view, "authorizationController"], [view, "active"]]) {
+    assert.match(text, new RegExp(`if #available\\(iOS 16\\.0, \\*\\) \\{\\s*${receiver}\\?\\.cancel\\(\\)\\s*\\}`));
+  }
+});
+
 test("welcome keeps passkeys out of the top-level auth choices", () => {
   const welcome = source("src/features/auth/AuthWelcomeScreen.tsx");
   for (const label of ["Continue with Email", "Continue with Google", "Continue as Guest"]) {

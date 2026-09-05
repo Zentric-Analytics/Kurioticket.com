@@ -60,7 +60,9 @@ final class KurioticketPasskeyUsernameView: ExpoView, UITextFieldDelegate, ASAut
 
   deinit {
     focusFallbackWorkItem?.cancel()
-    authorizationController?.cancel()
+    if #available(iOS 16.0, *) {
+      authorizationController?.cancel()
+    }
   }
 
   func setValue(_ value: String?) {
@@ -186,7 +188,9 @@ final class KurioticketPasskeyUsernameView: ExpoView, UITextFieldDelegate, ASAut
     let active = authorizationController
     authorizationController = nil
     activeChallenge = nil
-    active?.cancel()
+    if #available(iOS 16.0, *) {
+      active?.cancel()
+    }
   }
 
   private func finishAuthorization(_ completedController: ASAuthorizationController) {
