@@ -1,0 +1,113 @@
+name: PR 5031 Codex footer repair
+
+on:
+  push:
+    branches:
+      - codex/remove-bottomnav-from-flight-results
+    paths:
+      - .github/workflows/pr5031-codex-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/remove-bottomnav-from-flight-results
+          fetch-depth: 0
+
+      - name: Apply footer spacing repair
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          screen_path = Path("apps/mobile/src/features/search/ApprovedResultsScreen.tsx")
+          screen = screen_path.read_text()
+          replacements = [
+              (
+                  '  flightResultsBody: { paddingHorizontal: 14, gap: 8 },',
+                  '  flightResultsBody: { paddingHorizontal: 14, paddingBottom: 0, gap: 8 },',
+              ),
+              (
+                  '  flightPagination: { paddingHorizontal: 14, paddingTop: 6, paddingBottom: 104, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 4 },',
+                  '  flightPagination: { paddingHorizontal: 14, paddingTop: 6, paddingBottom: 6, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 4 },',
+              ),
+          ]
+          for old, new in replacements:
+              count = screen.count(old)
+              if count != 1:
+                  raise SystemExit(f"Expected exactly one occurrence, found {count}: {old}")
+              screen = screen.replace(old, new)
+          screen_path.write_text(screen)
+
+          test_path = Path("apps/mobile/src/features/search/resultsScrollLayout.test.ts")
+          test = test_path.read_text()
+          old = '''test("Flight Results scroll content clears the native bottom safe area without a navigation-sized spacer", () => {
+            assert.match(screen, /const insets = useSafeAreaInsets\\(\\)/);
+            assert.match(
+              flightLayout,
+              /contentContainerStyle=\\{\\[[\\s\\S]*?s0\\.flightResultsContent,[\\s\\S]*?\\{ paddingBottom: Math\\.max\\(insets\\.bottom \\+ 16, 16\\) \\},[\\s\\S]*?minHeight: flightPaginationMinHeight/,
+            );
+            assert.doesNotMatch(flightLayout, /paddingBottom[^\\n]*(?:72|92)/);
+            assert.doesNotMatch(flightLayout, /position:\\s*["']absolute["']/);
+          });'''
+          new = '''test("Flight Results scroll content clears the native bottom safe area without navigation-sized footer padding", () => {
+            const paginationFooter = styleBlock("flightPagination", "flightPaginationPages");
+            const terminalFooter = styleBlock("flightResultsBody", "flightCardItem");
+
+            assert.match(screen, /const insets = useSafeAreaInsets\\(\\)/);
+            assert.match(
+              flightLayout,
+              /contentContainerStyle=\\{\\[[\\s\\S]*?s0\\.flightResultsContent,[\\s\\S]*?\\{ paddingBottom: Math\\.max\\(insets\\.bottom \\+ 16, 16\\) \\},[\\s\\S]*?minHeight: flightPaginationMinHeight/,
+            );
+            assert.match(paginationFooter, /paddingBottom: 6/);
+            assert.doesNotMatch(paginationFooter, /paddingBottom:\\s*(?:92|104)/);
+            assert.match(terminalFooter, /paddingBottom: 0/);
+            assert.doesNotMatch(terminalFooter, /paddingBottom:\\s*(?:92|104)/);
+            assert.doesNotMatch(flightLayout, /paddingBottom[^\\n]*(?:72|92)/);
+            assert.doesNotMatch(flightLayout, /position:\\s*["']absolute["']/);
+          });'''
+          count = test.count(old)
+          if count != 1:
+              raise SystemExit(f"Expected exactly one Flight Results safe-area test block, found {count}")
+          test_path.write_text(test.replace(old, new))
+          PY
+
+      - name: Install mobile dependencies
+        working-directory: apps/mobile
+        run: npm ci
+
+      - name: Typecheck mobile
+        working-directory: apps/mobile
+        run: npm run typecheck
+
+      - name: Run focused regressions
+        working-directory: apps/mobile
+        run: >-
+          node --test --require ./testAssetSetup.cjs --import jiti/register
+          src/features/search/resultsScrollLayout.test.ts
+          src/features/search/flightResultsPagination.test.ts
+          src/features/search/bottomNavNavigation.test.ts
+          src/features/search/flightResultsHeader.test.ts
+          src/features/search/hotelResultsFooter.test.ts
+
+      - name: Run full mobile test suite
+        working-directory: apps/mobile
+        run: npm test
+
+      - name: Validate diff
+        run: git diff --check
+
+      - name: Commit repair
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/mobile/src/features/search/ApprovedResultsScreen.tsx apps/mobile/src/features/search/resultsScrollLayout.test.ts
+          git diff --cached --check
+          git commit -m "fix(mobile): remove stale flight footer nav spacing"
+          git push origin HEAD:codex/remove-bottomnav-from-flight-results
