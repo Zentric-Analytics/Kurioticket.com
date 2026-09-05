@@ -39,9 +39,6 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     }
   }, []);
 
-  // The passkey suggestion depends on the native username view shipped in the iOS
-  // binary. Prefetch the username-less challenge while Welcome is visible so the
-  // native field can start AutoFill-assisted discovery before it becomes first responder.
   useEffect(() => {
     if ((step !== "welcome" && step !== "email") || !isNativePasskeyUsernameFieldAvailable()) return;
 
@@ -102,7 +99,7 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     passkeyOptionsController.current?.abort();
     stopPasskeyVerification();
   }, [stopPasskeyVerification]);
-  useEffect(() => { if (!resetNotice) return; const timer = setTimeout(() => setResetNotice("");, 2000); return () => clearTimeout(timer); }, [resetNotice]);
+  useEffect(() => { if (!resetNotice) return; const timer = setTimeout(() => setResetNotice(""), 2000); return () => clearTimeout(timer); }, [resetNotice]);
   const run = async (task: () => Promise<void>) => { if (loading) return; setLoading(true); setError(""); try { await task(); } catch (e) { setError(e instanceof AuthApiError || (e instanceof Error && e.name === "NativeGoogleSignInError") ? e.message : "Something went wrong. Please try again."); } finally { setLoading(false); } };
   const requestCode = (value: string) => {
     stopPasskeyVerification();
