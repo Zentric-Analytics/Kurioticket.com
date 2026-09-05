@@ -36,14 +36,12 @@ test("wide supported display fares preserve every digit without lossy abbreviati
   }
 });
 
-test("main fare stays full-size and single-line while secondary prices retain safe fitting", () => {
+test("main fare stays full-size and single-line without a duplicated provider price", () => {
   const fare = /<Text accessible=\{false\} style=\{\[s0\.bigPrice[\s\S]*?<\/Text>/.exec(screen)?.[0] ?? "";
   assert.match(fare, /numberOfLines=\{1\}/);
   assert.doesNotMatch(fare, /adjustsFontSizeToFit|minimumFontScale|ellipsizeMode/);
-  const provider = /<Text accessible=\{false\} style=\{\[s0\.providerPrice[\s\S]*?<\/Text>/.exec(screen)?.[0] ?? "";
-  assert.match(provider, /numberOfLines=\{1\}/);
-  assert.match(provider, /adjustsFontSizeToFit minimumFontScale=\{0\.9\}/);
-  assert.doesNotMatch(provider, /minimumFontScale=\{0\.76\}/);
+  const card = screen.slice(screen.indexOf("function FlightCard"), screen.indexOf("function HotelCard"));
+  assert.doesNotMatch(card.slice(card.indexOf('<View style={s0.flightCommercialRegion}>')), /Provider price:|providerPrice|estimatedPrice/);
   assert.match(screen, /flightCommercialRegion: \{ width: "46%", minWidth: 104, flexShrink: 0/);
   assert.doesNotMatch(screen, /flightCommercialRegion: \{[^}]*maxWidth/);
   assert.match(ui, /numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit[\s\S]*?s\.datePrice/);

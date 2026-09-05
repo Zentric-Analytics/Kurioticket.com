@@ -1314,14 +1314,12 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
             <Text accessible={false} style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1}>
               {fare?.formatted ?? "—"}
             </Text>
-            {mainPriceBasis ? (
-              <Text accessible={false} style={[s0.estimatedPrice, { color: supportTextColor }]}>{mainPriceBasis.label}</Text>
-            ) : null}
-            {providerFare ? (
-              <Text accessible={false} style={[s0.providerPrice, { color: supportTextColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.9}>
-                Provider price: {providerFare.formatted}
+            <View accessible={false} style={s0.flightDetailsAffordance}>
+              <Text accessible={false} style={[s0.flightDetailsAffordanceText, { color: theme.dark ? "#8FB5FF" : ui.blue }]} numberOfLines={1}>
+                View details
               </Text>
-            ) : null}
+              <ChevronRight accessible={false} size={16} strokeWidth={2.2} color={theme.dark ? "#8FB5FF" : ui.blue}/>
+            </View>
           </View>
         </View>
       </View>
@@ -1591,7 +1589,7 @@ function FlightLoadingSkeleton({ roundTrip = false }: { roundTrip?: boolean }) {
         <View style={s0.skeletonJourneyBlock}><SkeletonLine flightResults style={s0.skeletonJourneyLabel} /><View style={s0.skeletonJourneyPrimaryRow}><SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} /><View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonDuration} /></View><SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} /></View><View style={s0.skeletonJourneyRouteRow}><SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} /><View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonRouteLine} /></View><SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} /></View><View style={s0.skeletonJourneyStopRow}><View style={s0.skeletonSideColumn} /><View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonStop} /></View><View style={s0.skeletonSideColumn} /></View></View>
         {roundTrip ? <View style={s0.skeletonJourneyBlock}><SkeletonLine flightResults style={s0.skeletonJourneyLabel} /><View style={s0.skeletonJourneyPrimaryRow}><SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} /><View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonDuration} /></View><SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} /></View><View style={s0.skeletonJourneyRouteRow}><SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} /><View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonRouteLine} /></View><SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} /></View><View style={s0.skeletonJourneyStopRow}><View style={s0.skeletonSideColumn} /><View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonStop} /></View><View style={s0.skeletonSideColumn} /></View></View> : null}
       </View>
-      <View style={s0.skeletonFareRow}><View style={s0.skeletonFareCopy}><SkeletonLine flightResults style={s0.skeletonPriceLine} /><SkeletonLine flightResults style={s0.skeletonEstimatedPriceLine} /><SkeletonLine flightResults style={s0.skeletonProviderPriceLine} /></View></View>
+      <View style={s0.skeletonFareRow}><View style={s0.skeletonFareCopy}><SkeletonLine flightResults style={s0.skeletonPriceLine} /><SkeletonLine flightResults style={s0.skeletonDetailsActionLine} /></View></View>
       <View style={[s0.skeletonMetadataDivider, { backgroundColor: theme.border }]} /><View style={s0.skeletonMetadataRow}><SkeletonLine flightResults style={s0.skeletonMetadataLine} /></View>
     </View>
   );
@@ -1834,8 +1832,6 @@ const s0 = StyleSheet.create({
   bigPrice: { maxWidth: "100%", minWidth: 0, flexShrink: 1, fontSize: 19, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold, color: ui.navy, textAlign: "right", fontVariant: ["tabular-nums"] },
   fareRow: { width: "100%", paddingTop: 0, flexDirection: "row", justifyContent: "flex-end" },
   fareCopy: { width: "100%", maxWidth: "100%", minWidth: 0, alignItems: "flex-end" },
-  estimatedPrice: { fontSize: 10, lineHeight: 13, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: 0.7, textAlign: "right" },
-  providerPrice: { maxWidth: "100%", minWidth: 0, flexShrink: 1, marginTop: 1, fontSize: 11, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "right", fontVariant: ["tabular-nums"] },
   flightCardPressed: { opacity: 0.78, transform: [{ scale: 0.995 }] },
   flightCardFooter: { width: "100%", marginTop: 5, paddingTop: 7, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "#D8E1EC" },
   flightLowerSection: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 8 },
@@ -1843,7 +1839,9 @@ const s0 = StyleSheet.create({
   flightMetadataItem: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "center", gap: 6 },
   flightMetadataText: { flex: 1, minWidth: 0, fontSize: 10.5, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
   flightMetadataLabel: { fontWeight: "600", fontFamily: appFonts.semibold },
-  flightCommercialRegion: { width: "46%", minWidth: 104, flexShrink: 0, alignItems: "flex-end", gap: 1 },
+  flightCommercialRegion: { width: "46%", minWidth: 104, flexShrink: 0, alignSelf: "stretch", alignItems: "flex-end", justifyContent: "space-between" },
+  flightDetailsAffordance: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 },
+  flightDetailsAffordanceText: { fontSize: 13, lineHeight: 15, fontWeight: "600", fontFamily: appFonts.semibold },
   metadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 6, marginBottom: 4 },
   metadataFooterContainer: { width: "100%", alignItems: "center" },
   metadataRow: { width: "100%", flexDirection: "row", alignItems: "center", paddingTop: 1, paddingBottom: 2 },
@@ -1924,10 +1922,9 @@ const s0 = StyleSheet.create({
   skeletonRouteLine: { width: "100%", height: 2 },
   skeletonStop: { width: "52%", height: 6 },
   skeletonPriceLine: { width: 100, height: 16 },
-  skeletonEstimatedPriceLine: { width: 54, height: 7, marginTop: 3 },
-  skeletonProviderPriceLine: { width: 82, height: 8, marginTop: 2 },
+  skeletonDetailsActionLine: { width: 82, height: 8 },
   skeletonFareRow: { width: "100%", paddingTop: 10, flexDirection: "row", justifyContent: "flex-end" },
-  skeletonFareCopy: { alignItems: "flex-end" },
+  skeletonFareCopy: { minHeight: 45, alignItems: "flex-end", justifyContent: "space-between" },
   skeletonMetadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 6, marginBottom: 4 },
   skeletonMetadataRow: { width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start" },
   skeletonMetadataLine: { width: "68%", height: 7 },
