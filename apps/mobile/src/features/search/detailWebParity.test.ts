@@ -7,6 +7,11 @@ const hotel = source.slice(source.indexOf("function HotelDetail"), source.indexO
 const gallery = readFileSync("src/features/search/NativeHotelDetails.tsx", "utf8");
 const car = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
 const tokens = readFileSync("src/theme/tokens.ts", "utf8");
+const appTheme = readFileSync("src/theme/AppTheme.tsx", "utf8");
+const webHotelDetails = readFileSync(
+  "../../src/components/results/hotelDetails/StandaloneHotelDetails.tsx",
+  "utf8",
+);
 const webSectionNav = readFileSync(
   "../../src/components/results/hotelDetails/HotelDetailsSectionNav.tsx",
   "utf8",
@@ -31,6 +36,21 @@ test("Hotel details follow mobile-web identity, gallery, tabs, and offer hierarc
   for (const tab of ["compare", "about", "location", "reviews"]) assert.match(hotel, new RegExp(`"${tab}"`));
   assert.match(hotel, /Kurioticket room options/);
   assert.doesNotMatch(hotel, /Select room|Choose where to book/);
+});
+
+test("Hotel Details light canvas matches the web white article without flattening dark mode", () => {
+  assert.match(appTheme, /lightTheme = \{[\s\S]*?background: "#FAFBFF",[\s\S]*?surface: "#FFFFFF",/);
+  assert.match(appTheme, /darkTheme = \{[\s\S]*?background: "#091224",[\s\S]*?surface: "#121E33",/);
+  assert.match(webHotelDetails, /<article className="[^"]*\bbg-white\b[^"]*">/);
+
+  assert.match(
+    hotel,
+    /const hotelCanvasColor = theme\.dark \? theme\.background : theme\.surface;/,
+  );
+  const hotelRoot = hotel.slice(hotel.indexOf("return ("), hotel.indexOf("<ScrollView"));
+  assert.match(hotelRoot, /<SafeAreaView[\s\S]*?backgroundColor: hotelCanvasColor/);
+  assert.doesNotMatch(hotelRoot, /backgroundColor: theme\.background/);
+  assert.doesNotMatch(hotel, /Platform\.OS/);
 });
 
 test("Hotel section navigation is one deterministic, non-scrolling Yoga row", () => {
