@@ -44,7 +44,7 @@ test("iOS email uses a native username field that owns AutoFill and focus", () =
   assert.match(screens, /rpId=\{passkeyOptions\?\.rpId\}/);
   assert.match(screens, /challenge=\{passkeyOptions\?\.challenge\}/);
   assert.match(screens, /onPasskey=\{onPasskey\}/);
-  assert.doesNotMatch(screens, /Sign in with passkey|passkeyOption|passkeyLoading/);
+  assert.doesNotMatch(screens, /Continue with passkey|Sign in with passkey|passkeyLoading/);
 
   assert.match(wrapper, /requireNativeViewManager<NativeProps>\("KurioticketPasskeyAutoFill"\)/);
   assert.match(wrapper, /diagnosticsEnabled=\{diagnosticsEnabled\}/);
@@ -90,9 +90,13 @@ test("passkey assertion verification remains silent and session-safe", () => {
 
 test("Google two-factor flow stores the API challenge token", () => {
   const flow = source("src/features/auth/AuthFlow.tsx");
-  assert.match(flow, /const authResult = await authApi\.google\(result\.idToken, result\.nonce\)/);
-  assert.match(flow, /setChallengeToken\(authResult\.challengeToken\)/);
-  assert.doesNotMatch(flow, /setChallengeToken\(result\.challengeToken\)/);
+  const start = flow.indexOf("const continueGoogle");
+  const end = flow.indexOf('if (step === "welcome")');
+  assert.ok(start >= 0 && end > start);
+  const googleFlow = flow.slice(start, end);
+  assert.match(googleFlow, /const authResult = await authApi\.google\(result\.idToken, result\.nonce\)/);
+  assert.match(googleFlow, /setChallengeToken\(authResult\.challengeToken\)/);
+  assert.doesNotMatch(googleFlow, /setChallengeToken\(result\.challengeToken\)/);
 });
 
 test("existing native passkey adapter remains available for registration and management", () => {
