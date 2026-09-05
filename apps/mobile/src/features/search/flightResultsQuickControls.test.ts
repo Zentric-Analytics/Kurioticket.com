@@ -24,24 +24,26 @@ test("sort labels are Best, Cheapest, and Fastest", () => {
 test("web mobile filter colors are carried into native light mode", () => {
   assert.match(controls, /const webFilterBorder = "#D8E1EC"/);
   assert.match(controls, /const webFilterText = "#142033"/);
-  assert.match(controls, /const webFilterAccent = "#004BB8"/);
   assert.match(controls, /const webFilterPressed = "#F8FAFC"/);
   assert.match(controls, /const webFilterSurface = "#FFFFFF"/);
   assert.match(controls, /const surface = light \? webFilterSurface : theme\.surface/);
   assert.match(controls, /const railSurface = theme\.background/);
-  assert.match(controls, /backgroundColor: railSurface/); assert.doesNotMatch(controls, /const railSurface = theme\.dark \? theme\.surface : webFilterSurface/);
+  assert.match(controls, /backgroundColor: railSurface/);
   assert.doesNotMatch(controls, /ui\.pale|#EEF4FF/);
 });
 
-test("active controls use subtle count badges without filling the whole chip", () => {
+test("quick controls stay visually neutral even when selected or expanded", () => {
   assert.match(controls, /accessibilityState=\{\{ expanded, selected: active \}\}/);
-  assert.match(controls, /webFilterCountBackground = "rgba\(0,75,184,0\.08\)"/);
-  assert.match(controls, /count \? <View style=\{\[styles\.count/);
+  assert.match(controls, /backgroundColor: pressed && light \? webFilterPressed : surface/);
+  assert.match(controls, /borderColor: border/);
+  assert.doesNotMatch(controls, /backgroundColor: active \?/);
+  assert.doesNotMatch(controls, /borderColor: active \?/);
+  assert.doesNotMatch(controls, /webFilterAccent/);
+  assert.match(controls, /const webFilterCountBackground = "#F1F5F9"/);
   assert.match(screen, /activeFilterCount=\{activeFilterCount\}/);
   assert.match(screen, /airlineCount=\{filters\.airlines\.length\}/);
   assert.match(screen, /airportCount=\{filters\.fromAirports\.length \+ filters\.toAirports\.length\}/);
   assert.match(screen, /stopsCount=\{filters\.stops\?\.length \|\| Number\(filters\.maxStops != null\)\}/);
-  assert.match(controls, /count=\{stopsCount \|\| undefined\}/);
 });
 
 test("controls use compact capsules inside accessible 44 by 44 touch targets", () => {
@@ -54,11 +56,12 @@ test("controls use compact capsules inside accessible 44 by 44 touch targets", (
   assert.match(controls, /content: \{[\s\S]*?gap: 6/);
 });
 
-test("full Filter launcher is icon-only while preserving its accessible contract", () => {
+test("full Filter launcher shows its label with the filter icon and keeps its accessible contract", () => {
   assert.match(controls, /<SlidersHorizontal accessible=\{false\}/);
   assert.match(controls, /accessibilityLabelOverride=\{fullFilterAccessibilityLabel\}/);
   assert.match(controls, /const fullFilterAccessibilityLabel = "Filters"/);
-  assert.match(controls, /filterIcon \? <SlidersHorizontal[\s\S]*?: <Text/);
+  assert.match(controls, /filterIcon \? <SlidersHorizontal[\s\S]*?<Text numberOfLines=\{1\}[\s\S]*?>\{label\}<\/Text>/);
+  assert.match(controls, /label="Filter"/);
   assert.match(controls, /!filterIcon \? <ChevronDown/);
   assert.match(controls, /onPress=\{\(\) => openSheet\("all"\)\}/);
 });
