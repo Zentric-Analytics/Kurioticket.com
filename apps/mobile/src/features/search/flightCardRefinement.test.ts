@@ -10,7 +10,7 @@ const card = source.slice(source.indexOf("function FlightCard"), source.indexOf(
 test("Flight Results uses its narrow support palette only for approved supporting copy", () => {
   assert.match(source, /const flightSupportText = \{\s*light: "#465675",\s*dark: "#B8C3D8",\s*\} as const/);
   assert.match(card, /const supportTextColor = theme\.dark \? flightSupportText\.dark : flightSupportText\.light/);
-  for (const style of ["flightNumber", "operatingCarrierText", "stopLabel", "estimatedPrice", "providerPrice", "flightMetadataText"]) {
+  for (const style of ["flightNumber", "operatingCarrierText", "stopLabel", "estimatedPrice", "providerPrice", "flightMetadataLabel"]) {
     assert.match(card, new RegExp(`s0\\.${style},\\s*\\{\\s*color:\\s*supportTextColor\\s*\\}`));
   }
   for (const style of ["airlineName", "time", "airportCode", "journeyDuration", "bigPrice"]) {
@@ -35,7 +35,8 @@ test("flight card maps every approved semantic weight to its matching Inter face
     bigPrice: "bold",
     estimatedPrice: "bold",
     providerPrice: "medium",
-    flightMetadataText: "medium",
+    flightMetadataLabel: "medium",
+    flightMetadataValue: "semibold",
   } as const;
   for (const [style, family] of Object.entries(mappings)) {
     assert.match(source, new RegExp(`${style}: \\{[^\\n]*fontFamily: appFonts\\.${family}`));
@@ -152,14 +153,15 @@ test("flight card uses a compact three-row metadata column while airline identit
   assert.doesNotMatch(metadataBlock, /<ScrollView|horizontal/);
   assert.match(source, /card: \{[\s\S]*?paddingHorizontal: 12,[\s\S]*?paddingVertical: 9,[\s\S]*?gap: 5,/);
   assert.match(source, /flightCardFooter: \{[^\n]*width: "100%"/);
-  assert.match(source, /flightMetadataRegion: \{ flex: 1, minWidth: 0[^}]*gap: 4/);
-  assert.match(source, /flightMetadataText: \{ flexShrink: 1, minWidth: 0/);
+  assert.match(source, /flightMetadataRegion: \{ flex: 1, minWidth: 0[^}]*alignItems: "flex-start"[^}]*gap: 6/);
+  assert.match(source, /flightMetadataValue: \{ flex: 1, minWidth: 0/);
   assert.match(source, /flightCommercialRegion: \{ width: "46%", minWidth: 104, flexShrink: 0, alignItems: "flex-end"/);
-  assert.equal(card.match(/s0\.flightMetadataText,\{color:supportTextColor\}/g)?.length, 3);
+  assert.equal(card.match(/s0\.flightMetadataLabel, \{ color: supportTextColor \}/g)?.length, 3);
+  assert.equal(card.match(/s0\.flightMetadataValue, \{ color: theme\.textPrimary \}/g)?.length, 3);
   assert.doesNotMatch(source, /metadataSeparator:/);
   assert.doesNotMatch(metadataBlock, />·<\/Text>/);
   for (const icon of ["Luggage", "Armchair", "FileText"]) {
-    assert.match(card, new RegExp(`<${icon} accessible=\\{false\\} size=\\{13\\} strokeWidth=\\{2\\} color=\\{supportTextColor\\}/>`));
+    assert.match(card, new RegExp(`<${icon} accessible=\\{false\\} size=\\{14\\} strokeWidth=\\{2\\} color=\\{supportTextColor\\}/>`));
   }
   assert.doesNotMatch(source, /benefitList:|benefitItem:/);
   assert.doesNotMatch(source, /flightDealAction(?:Text)?:/);
