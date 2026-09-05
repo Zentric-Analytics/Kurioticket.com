@@ -105,13 +105,13 @@ test("the active Flight results journey keeps its semantic surface and text hier
   assert.match(results, /s0\.time, \{ color: theme\.textPrimary \}/);
   assert.match(results, /s0\.flightMetadataLabel, \{ color: supportTextColor \}/);
   assert.match(results, /borderTopColor: theme\.border/);
-  assert.match(results, /backgroundColor: theme\.surface, borderColor: theme\.priceAlertBorder/);
+  assert.match(results, /backgroundColor: theme\.priceAlertSurface, borderColor: theme\.priceAlertBorder/);
   assert.match(read("src/theme/AppTheme.tsx"), /priceAlertBorder:/);
   assert.match(read("src/theme/AppTheme.tsx"), /priceAlertAccent:/);
   const sortSheet = read("src/features/search/FlightSortSheet.tsx");
   const shell = read("src/features/search/FlightResultsSheetShell.tsx");
   assert.match(shell, /backgroundColor: theme\.surface/);
-  assert.match(shell, /backgroundColor: theme\.dark \? theme\.surface : "#FFFFFF"/);
+  assert.match(shell, /backgroundColor: theme\.background/);
   assert.match(sortSheet, /selected \? \(theme\.dark \? "#8FB5FF" : "#004BB8"\) : theme\.textPrimary/);
   assert.match(sortSheet, /color: theme\.textSecondary/);
   assert.match(sortSheet, /theme\.dark \? "#142B55" : "#F7FAFF"/);
