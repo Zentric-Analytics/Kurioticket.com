@@ -6,36 +6,41 @@ import { normalizeEmail } from "./authUtils";
 import { AuthWelcomeScreen } from "./AuthWelcomeScreen";
 import { CreateAccountScreen, EmailScreen, ForgotPasswordScreen, PasswordScreen, SuccessScreen, TwoFactorLoginScreen, VerificationScreen } from "./AuthFormScreens";
 import { requireGoogleWebClientId } from "./googleConfig";
-import { cancelPasskeyAutoFill, isPasskeyAutoFillAvailable, startPasskeyAutoFill } from "../passkeys/passkeyAutoFill";
+import { cancelPasskeyAutoFill, isPasskeyAutoFillAvailable, startPasskeyAutoFill, waitForPasskeyAutoFillStart } from "../passkeys/passkeyAutoFill";
 
 const PASSKEY_AUTOFILL_REFRESH_MS = 4 * 60_000;
+const PASSKEY_AUTOFILL_FOCUS_FALLBACK_MS = 350;
 
 type Step = "welcome" | "email" | "verify" | "password" | "forgotPassword" | "twoFactor" | "create" | "success";
 type TwoFactorOrigin = "password" | "google";
 export function isTerminalTwoFactorError(error: unknown) { return error instanceof AuthApiError && (error.status === 410 || error.status === 429); }
 export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { initialStep?: "welcome" | "email"; successRoute?: "/" | import("./signInIntent").ProtectedRoute } = {}) {
-  const [step, setStep] = useState<Step>(initialStep); const [credentialAutoFillActive, setCredentialAutoFillActive] = useState(false); const passkeyAttempt = useRef(0); const passkeyController = useRef<AbortController | null>(null); const [email, setEmail] = useState(""); const [challengeToken, setChallengeToken] = useState(""); const [twoFactorOrigin, setTwoFactorOrigin] = useState<TwoFactorOrigin>("password"); const [proof, setProof] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState(""); const [cooldown, setCooldown] = useState(28); const [forceGoogleAccountSelection, setForceGoogleAccountSelection] = useState(false); const [resetNotice, setResetNotice] = useState("");
+  const [step, setStep] = useState<Step>(initialStep); const [credentialAutoFillActive, setCredentialAutoFillActive] = useState(false); const passkeyAttempt = useRef(0); const passkeyController = useRef<AbortController | null>(null); const passkeyPriming = useRef(false); const [email, setEmail] = useState(""); const [challengeToken, setChallengeToken] = useState(""); const [twoFactorOrigin, setTwoFactorOrigin] = useState<TwoFactorOrigin>("password"); const [proof, setProof] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState(""); const [cooldown, setCooldown] = useState(28); const [forceGoogleAccountSelection, setForceGoogleAccountSelection] = useState(false); const [resetNotice, setResetNotice] = useState("");
 
   const stopPasskeyAutoFill = useCallback(() => {
     passkeyAttempt.current += 1;
+    passkeyPriming.current = false;
     passkeyController.current?.abort();
     passkeyController.current = null;
     cancelPasskeyAutoFill();
   }, []);
 
   const startSilentPasskeyAutoFill = useCallback(async () => {
-    if (step !== "email" || !isPasskeyAutoFillAvailable()) return;
+    if (step !== "email" || !isPasskeyAutoFillAvailable() || passkeyPriming.current) return false;
 
     const generation = ++passkeyAttempt.current;
     const controller = new AbortController();
     passkeyController.current?.abort();
     cancelPasskeyAutoFill();
     passkeyController.current = controller;
+    passkeyPriming.current = true;
 
     try {
       const { options } = await authApi.passkeyOptions(controller.signal);
-      if (generation !== passkeyAttempt.current) return;
+      if (generation !== passkeyAttempt.current) return false;
       const assertionPromise = startPasskeyAutoFill({ rpId: options.rpId, challenge: options.challenge });
+      const started = await waitForPasskeyAutoFillStart();
+      if (!started || generation !== passkeyAttempt.current) return false;
       setCredentialAutoFillActive(true);
       void assertionPromise.then(async (assertion) => {
         if (!assertion || generation !== passkeyAttempt.current) return;
@@ -45,22 +50,25 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
         // AutoFill-assisted discovery is intentionally silent. If there is no matching
         // passkey, the user simply continues with the normal email flow.
       });
+      return true;
     } catch {
       // Failing to prime AutoFill must not block or alter the normal email flow.
+      return false;
+    } finally {
+      passkeyPriming.current = false;
     }
   }, [step]);
 
   const prepareCredentialAutoFill = useCallback(async () => {
-    if (step !== "email") return;
-    if (!isPasskeyAutoFillAvailable()) {
-      setCredentialAutoFillActive(false);
-      return;
-    }
-    await startSilentPasskeyAutoFill();
+    if (step !== "email" || !isPasskeyAutoFillAvailable()) return;
+    await Promise.race([
+      startSilentPasskeyAutoFill(),
+      new Promise<void>((resolve) => setTimeout(resolve, PASSKEY_AUTOFILL_FOCUS_FALLBACK_MS)),
+    ]);
   }, [startSilentPasskeyAutoFill, step]);
 
   const handleCredentialFocus = useCallback(() => {
-    if (step !== "email" || credentialAutoFillActive || !isPasskeyAutoFillAvailable()) return;
+    if (step !== "email" || credentialAutoFillActive || passkeyPriming.current || !isPasskeyAutoFillAvailable()) return;
     void startSilentPasskeyAutoFill();
   }, [credentialAutoFillActive, startSilentPasskeyAutoFill, step]);
 
