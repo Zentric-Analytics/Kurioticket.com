@@ -140,6 +140,23 @@ export class EasClient {
   async listAndroidBuilds(targetSha) {
     return this.listBuilds("android", targetSha);
   }
+  async historicalAndroidHistory(action) {
+    if (action?.remote_id != null || action?.state !== "RESERVED"
+      || !new RegExp(`^native-build:android:${PREVIEW_IDENTITY.easProjectId}:[a-f0-9]{40}$`).test(action?.identity_key ?? "")) {
+      throw new Error("Historical inspection requires an unresolved canonical Android reservation.");
+    }
+    const project = await this.projectInfo();
+    const builds = await this.listAndroidBuilds(action.source_sha);
+    // Bound extra provider reads; an oversized result is not complete proof.
+    if (builds.length > 20) throw new Error("Historical inspection candidate limit exceeded.");
+    const expected = action.identity_key.split(":").at(-1);
+    for (const build of builds) {
+      if (build.gitCommitHash !== action.source_sha || build.fingerprint?.hash) continue;
+      const comparison = await this.compareBuildFingerprint(build.id, expected);
+      build.historicalProviderFingerprint = comparison.buildHash;
+    }
+    return { builds, projectId: project.projectId };
+  }
   async projectInfo() {
     const raw = await this.runText(["eas-cli@16.17.4", "project:info"]);
     const text = raw.replace(/\u001b\[[0-9;]*m/g, "");
