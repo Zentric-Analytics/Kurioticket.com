@@ -26,7 +26,7 @@ test("Hotel rail keeps Filter Price Stars Facilities Room & bed without Flight b
   assert.doesNotMatch(rail, /hotelSortLabel|Cheapest|Airlines|Stops|Airports/);
 });
 
-test("Hotel controls mirror current Flight geometry and typography", () => {
+test("Hotel controls retain their approved geometry while Flight uses its compact toolbar", () => {
   const styles = screen.slice(screen.indexOf("const s0 = StyleSheet.create"));
   assert.match(styles, /hotelFilterRail: \{ height: 48, flexGrow: 0 \}/);
   assert.match(styles, /hotelFilterContent: \{ paddingHorizontal: 16, paddingBottom: 4, gap: 8, alignItems: "center", flexWrap: "nowrap" \}/);
@@ -34,7 +34,7 @@ test("Hotel controls mirror current Flight geometry and typography", () => {
   assert.match(styles, /hotelShortcutLabel: \{ fontSize: 14, lineHeight: 18, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
   assert.match(styles, /hotelShortcutCount: \{ minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 6/);
   assert.match(styles, /hotelShortcutCountText: \{ fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
-  for (const contract of [/rail: \{ height: 48/, /control: \{[\s\S]*?height: 44,[\s\S]*?borderRadius: 11,[\s\S]*?paddingHorizontal: 14/, /label: \{[\s\S]*?fontSize: 14,[\s\S]*?lineHeight: 18/, /count: \{[\s\S]*?minWidth: 20,[\s\S]*?height: 20/]) assert.match(flight, contract);
+  for (const contract of [/rail: \{ height: 44/, /touchTarget: \{[\s\S]*?minHeight: 44/, /capsule: \{[\s\S]*?height: 36[\s\S]*?borderRadius: 9[\s\S]*?paddingHorizontal: 10/, /label: \{[\s\S]*?fontSize: 13[\s\S]*?lineHeight: 16/, /count: \{[\s\S]*?minWidth: 20[\s\S]*?height: 20/]) assert.match(flight, contract);
 });
 
 test("Hotel controls use Flight light tokens and semantic dark tokens", () => {

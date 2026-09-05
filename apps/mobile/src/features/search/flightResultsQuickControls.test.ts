@@ -36,7 +36,7 @@ test("web mobile filter colors are carried into native light mode", () => {
 test("active controls use subtle count badges without filling the whole chip", () => {
   assert.match(controls, /accessibilityState=\{\{ expanded, selected: active \}\}/);
   assert.match(controls, /webFilterCountBackground = "rgba\(0,75,184,0\.08\)"/);
-  assert.match(controls, /count \? \([\s\S]*?styles\.count/);
+  assert.match(controls, /count \? <View style=\{\[styles\.count/);
   assert.match(screen, /activeFilterCount=\{activeFilterCount\}/);
   assert.match(screen, /airlineCount=\{filters\.airlines\.length\}/);
   assert.match(screen, /airportCount=\{filters\.fromAirports\.length \+ filters\.toAirports\.length\}/);
@@ -44,13 +44,23 @@ test("active controls use subtle count badges without filling the whole chip", (
   assert.match(controls, /count=\{stopsCount \|\| undefined\}/);
 });
 
-test("controls match web 44px geometry and retain horizontal compactness", () => {
-  assert.match(controls, /rail: \{ height: 48/);
-  assert.match(controls, /control: \{[\s\S]*?height: 44,[\s\S]*?minHeight: 44/);
-  assert.match(controls, /borderRadius: 11/);
-  assert.match(controls, /paddingHorizontal: 14/);
-  assert.match(controls, /label: \{[\s\S]*?fontSize: 14/);
-  assert.match(controls, /ChevronDown/);
+test("controls use compact capsules inside accessible 44 by 44 touch targets", () => {
+  assert.match(controls, /rail: \{ height: 44/);
+  assert.match(controls, /touchTarget: \{[\s\S]*?minWidth: 44,[\s\S]*?minHeight: 44/);
+  assert.match(controls, /capsule: \{[\s\S]*?height: 36/);
+  assert.match(controls, /borderRadius: 9/);
+  assert.match(controls, /paddingHorizontal: 10/);
+  assert.match(controls, /label: \{[\s\S]*?fontSize: 13/);
+  assert.match(controls, /content: \{[\s\S]*?gap: 6/);
+});
+
+test("full Filter launcher is icon-only while preserving its accessible contract", () => {
+  assert.match(controls, /<SlidersHorizontal accessible=\{false\}/);
+  assert.match(controls, /accessibilityLabelOverride=\{fullFilterAccessibilityLabel\}/);
+  assert.match(controls, /const fullFilterAccessibilityLabel = "Filters"/);
+  assert.match(controls, /filterIcon \? <SlidersHorizontal[\s\S]*?: <Text/);
+  assert.match(controls, /!filterIcon \? <ChevronDown/);
+  assert.match(controls, /onPress=\{\(\) => openSheet\("all"\)\}/);
 });
 
 test("sticky placement remains below the naturally scrolling date strip", () => {

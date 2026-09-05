@@ -46,27 +46,17 @@ function Control({ label, active, count, expanded, filterIcon, accessibilityLabe
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ expanded, selected: active }}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.control,
-        { backgroundColor: pressed && light ? webFilterPressed : surface, borderColor: border },
-      ]}
+      style={styles.touchTarget}
     >
-      {filterIcon ? (
-        <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={accent} />
-      ) : null}
-      <Text numberOfLines={1} style={[styles.label, { color: foreground }]}>{label}</Text>
-      {count ? (
-        <View style={[styles.count, { backgroundColor: countBackground }]}> 
-          <Text style={[styles.countText, { color: accent }]}>{count}</Text>
-        </View>
-      ) : null}
-      <ChevronDown
-        accessible={false}
-        size={14}
-        strokeWidth={1.9}
-        color={chevron}
-        style={expanded ? styles.chevronExpanded : undefined}
-      />
+      {({ pressed }) => <View style={[
+        styles.capsule,
+        filterIcon && styles.iconCapsule,
+        { backgroundColor: active ? countBackground : pressed && light ? webFilterPressed : surface, borderColor: active ? accent : border },
+      ]}>
+        {filterIcon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={accent} /> : <Text numberOfLines={1} style={[styles.label, { color: foreground }]}>{label}</Text>}
+        {count ? <View style={[styles.count, { backgroundColor: countBackground }]}><Text style={[styles.countText, { color: accent }]}>{count}</Text></View> : null}
+        {!filterIcon ? <ChevronDown accessible={false} size={13} strokeWidth={1.9} color={chevron} style={expanded ? styles.chevronExpanded : undefined} /> : null}
+      </View>}
     </Pressable>
   );
 }
@@ -140,28 +130,32 @@ export function FlightResultsQuickControls({
 }
 
 const styles = StyleSheet.create({
-  rail: { height: 48, flexGrow: 0 },
+  rail: { height: 44, flexGrow: 0 },
   content: {
     paddingHorizontal: 16,
-    paddingBottom: 4,
-    gap: 8,
+    gap: 6,
     alignItems: "center",
     flexWrap: "nowrap",
   },
-  control: {
-    height: 44,
+  touchTarget: {
+    minWidth: 44,
     minHeight: 44,
+    justifyContent: "center",
+  },
+  capsule: {
+    height: 36,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
+    gap: 4,
     borderWidth: 1,
-    borderRadius: 11,
-    paddingHorizontal: 14,
+    borderRadius: 9,
+    paddingHorizontal: 10,
   },
+  iconCapsule: { paddingHorizontal: 10 },
   label: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 16,
     fontWeight: "600",
     fontFamily: appFonts.semibold,
   },
