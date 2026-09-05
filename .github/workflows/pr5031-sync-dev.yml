@@ -1,0 +1,151 @@
+name: PR 5031 semantic dev sync
+
+on:
+  push:
+    branches:
+      - codex/remove-bottomnav-from-flight-results
+    paths:
+      - .github/workflows/pr5031-sync-dev.yml
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/remove-bottomnav-from-flight-results
+          fetch-depth: 0
+
+      - name: Merge latest dev and resolve overlapping result files semantically
+        shell: bash
+        run: |
+          git fetch origin dev
+          git merge --no-commit --no-ff origin/dev || true
+
+          # Start the overlapping files from latest dev, then reapply only PR #5031 semantics.
+          git checkout origin/dev -- \
+            apps/mobile/src/features/search/ApprovedResultsScreen.tsx \
+            apps/mobile/src/features/search/resultsScrollLayout.test.ts \
+            apps/mobile/src/features/search/hotelResultsFooter.test.ts
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          screen_path = Path('apps/mobile/src/features/search/ApprovedResultsScreen.tsx')
+          screen = screen_path.read_text()
+          old = '          contentContainerStyle={[s0.flightResultsContent, flightPaginationMinHeight !== null && { minHeight: flightPaginationMinHeight }]}\n'
+          new = '''          contentContainerStyle={[\n            s0.flightResultsContent,\n            { paddingBottom: Math.max(insets.bottom + 16, 16) },\n            flightPaginationMinHeight !== null && { minHeight: flightPaginationMinHeight },\n          ]}\n'''
+          if old not in screen:
+              raise SystemExit('Flight contentContainerStyle contract changed on dev')
+          screen = screen.replace(old, new, 1)
+          mount = '      {flightResults ? <BottomNav flightResults /> : null}\n'
+          if mount not in screen:
+              raise SystemExit('Flight BottomNav mount contract changed on dev')
+          screen = screen.replace(mount, '', 1)
+          old_body = '  flightResultsBody: { paddingHorizontal: 14, gap: 8 },'
+          if old_body not in screen:
+              raise SystemExit('flightResultsBody style changed on dev')
+          screen = screen.replace(old_body, '  flightResultsBody: { paddingHorizontal: 14, paddingBottom: 0, gap: 8 },', 1)
+          old_pagination = '  flightPagination: { paddingHorizontal: 14, paddingTop: 6, paddingBottom: 104, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 4 },'
+          if old_pagination not in screen:
+              raise SystemExit('flightPagination style changed on dev')
+          screen = screen.replace(old_pagination, '  flightPagination: { paddingHorizontal: 14, paddingTop: 6, paddingBottom: 6, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 4 },', 1)
+          screen_path.write_text(screen)
+
+          layout_path = Path('apps/mobile/src/features/search/resultsScrollLayout.test.ts')
+          layout = layout_path.read_text()
+          quick = 'const quickControls = readFileSync(resolve("src/features/search/FlightResultsQuickControls.tsx"), "utf8");\n'
+          if quick not in layout:
+              raise SystemExit('resultsScrollLayout quickControls anchor changed')
+          layout = layout.replace(quick, quick + 'const carScreen = readFileSync(resolve("src/features/search/ApprovedCarResultsScreen.tsx"), "utf8");\n', 1)
+          start = layout.index('test("Hotel Results reclaims BottomNav space while retaining the native bottom safe area"')
+          end = layout.index('\n\ntest("Hotel Back-to-top keeps its geometry', start)
+          replacement = '''test("Flight Results scroll content clears the native bottom safe area without navigation-sized footer padding", () => {
+            const paginationFooter = styleBlock("flightPagination", "flightPaginationPages");
+            const terminalFooter = styleBlock("flightResultsBody", "flightCardItem");
+
+            assert.match(screen, /const insets = useSafeAreaInsets\\(\\)/);
+            assert.match(
+              flightLayout,
+              /contentContainerStyle=\\{\\[[\\s\\S]*?s0\\.flightResultsContent,[\\s\\S]*?\\{ paddingBottom: Math\\.max\\(insets\\.bottom \\+ 16, 16\\) \\},[\\s\\S]*?minHeight: flightPaginationMinHeight/,
+            );
+            assert.match(paginationFooter, /paddingBottom: 6/);
+            assert.doesNotMatch(paginationFooter, /paddingBottom:\\s*(?:92|104)/);
+            assert.match(terminalFooter, /paddingBottom: 0/);
+            assert.doesNotMatch(terminalFooter, /paddingBottom:\\s*(?:92|104)/);
+            assert.doesNotMatch(flightLayout, /paddingBottom[^\\n]*(?:72|92|104)/);
+            assert.doesNotMatch(flightLayout, /position:\\s*["']absolute["']/);
+          });
+
+          test("results screens retain their product-specific BottomNav ownership", () => {
+            const sharedBody = styleBlock("body", "hotelResultsContent");
+            const backToTop = styleBlock("hotelBackToTop", "filterRail");
+
+            assert.match(sharedBody, /paddingBottom: 92/);
+            assert.match(screen, /style=\\{\\[s0\\.body, \\{ paddingBottom: Math\\.max\\(insets\\.bottom \\+ 16, 16\\) \\}\\]\\}/);
+            assert.doesNotMatch(screen.slice(screen.indexOf("export function ApprovedResultsScreen"), screen.indexOf("export function BottomNav")), /<BottomNav(?:\\s|\\/|>)/);
+            assert.match(carScreen, /import \\{ BottomNav \\} from "\\.\\/ApprovedResultsScreen"/);
+            assert.match(carScreen, /<BottomNav \\/>/);
+            assert.doesNotMatch(backToTop, /bottom:/);
+            assert.match(screen, /s0\\.hotelBackToTop,\\{bottom:Math\\.max\\(insets\\.bottom \\+ 16,16\\)/);
+            assert.doesNotMatch(screen, /hotelBackToTop[^\\n]*bottom:(?:86|92)/);
+          });'''
+          layout_path.write_text(layout[:start] + replacement + layout[end:])
+
+          footer_path = Path('apps/mobile/src/features/search/hotelResultsFooter.test.ts')
+          footer = footer_path.read_text()
+          old_footer_test = '''test("BottomNav ownership remains Flight-only", () => {
+            assert.match(screen, /\\{flightResults \\? <BottomNav flightResults \\/> : null\\}/);
+            assert.doesNotMatch(screen, /<BottomNav flightResults=\\{flightResults\\} \\/>/);
+          });'''
+          if old_footer_test not in footer:
+              raise SystemExit('hotelResultsFooter BottomNav test changed on dev')
+          new_footer_test = '''test("Hotel Results remains without BottomNav", () => {
+            const resultsScreen = screen.slice(screen.indexOf("export function ApprovedResultsScreen"), screen.indexOf("export function BottomNav"));
+            assert.doesNotMatch(resultsScreen, /<BottomNav(?:\\s|\\/|>)/);
+          });'''
+          footer_path.write_text(footer.replace(old_footer_test, new_footer_test, 1))
+          PY
+
+          git add apps/mobile/src/features/search/ApprovedResultsScreen.tsx \
+            apps/mobile/src/features/search/resultsScrollLayout.test.ts \
+            apps/mobile/src/features/search/hotelResultsFooter.test.ts
+
+          unresolved=$(git diff --name-only --diff-filter=U)
+          if [ -n "$unresolved" ]; then
+            echo "Unresolved merge conflicts:"
+            echo "$unresolved"
+            exit 1
+          fi
+
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "merge dev into PR 5031 with flight results layout semantics"
+          git push origin HEAD:codex/remove-bottomnav-from-flight-results
+
+      - name: Install mobile dependencies
+        working-directory: apps/mobile
+        run: npm ci
+
+      - name: Typecheck mobile
+        working-directory: apps/mobile
+        run: npm run typecheck
+
+      - name: Run focused regressions
+        working-directory: apps/mobile
+        run: >-
+          node --test --require ./testAssetSetup.cjs --import jiti/register
+          src/features/search/resultsScrollLayout.test.ts
+          src/features/search/flightResultsPagination.test.ts
+          src/features/search/bottomNavNavigation.test.ts
+          src/features/search/flightResultsHeader.test.ts
+          src/features/search/hotelResultsFooter.test.ts
+          src/features/search/nativeHotelDetailsPlatformParity.test.ts
+          src/features/flow/stableVerticalScrolling.test.ts
+
+      - name: Validate diff
+        run: git diff --check
