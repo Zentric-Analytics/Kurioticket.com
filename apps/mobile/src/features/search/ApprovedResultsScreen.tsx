@@ -177,6 +177,7 @@ const flightSupportText = {
   dark: "#B8C3D8",
 } as const;
 const flightResultsLightCanvas = "#F5F7FB";
+const HOTEL_BACK_TO_TOP_HIDE_NEAR_END = 120;
 const HOTEL_UTILITY_ICON_COLOR = "#334155";
 const HOTEL_SAVED_HEART_COLOR = "#E11D48";
 const HOTEL_GALLERY_CHEVRON_CONTRAST = "rgba(0,0,0,0.85)";
@@ -647,7 +648,15 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     );
   }, []);
   const handleHotelScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const visible = event.nativeEvent.contentOffset.y > 600;
+    const scrollY = Math.max(0, event.nativeEvent.contentOffset.y);
+    const distanceFromEnd = Math.max(
+      0,
+      event.nativeEvent.contentSize.height
+        - event.nativeEvent.layoutMeasurement.height
+        - scrollY,
+    );
+    const visible = scrollY > 600
+      && distanceFromEnd > HOTEL_BACK_TO_TOP_HIDE_NEAR_END;
     if (visible === hotelBackToTopVisibleRef.current) return;
     hotelBackToTopVisibleRef.current = visible;
     setHotelBackToTop(visible);
@@ -1112,7 +1121,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 hotelResultsBodyOffset.current = nativeEvent.layout.y;
                 updateHotelResultsOffset();
               }}
-              style={[s0.body, { paddingBottom: Math.max(insets.bottom + 72, 72) }]}
+              style={[s0.body, { paddingBottom: Math.max(insets.bottom + 16, 16) }]}
             >
               {resultContent}
             </View>
