@@ -6,9 +6,11 @@ import { X } from "lucide-react-native";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 
-export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, children, footer, fullScreen = false, subtitle, headerAction }: {
+type QuickBackdropVariant = "flight" | "legacy";
+
+export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, children, footer, fullScreen = false, subtitle, headerAction, quickBackdropVariant = "flight" }: {
   visible: boolean; title: string; closeLabel: string; onClose: () => void; children: ReactNode; footer?: ReactNode;
-  fullScreen?: boolean; subtitle?: string; headerAction?: ReactNode;
+  fullScreen?: boolean; subtitle?: string; headerAction?: ReactNode; quickBackdropVariant?: QuickBackdropVariant;
 }) {
   const { theme } = useAppTheme();
   const inset = useSafeAreaInsets();
@@ -19,6 +21,9 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
   const footerBottomPadding = fullScreen ? 12 : Math.max(inset.bottom, 12);
   const quickBackdropOpacity = useRef(new Animated.Value(0)).current;
   const quickSheetTranslateY = useRef(new Animated.Value(28)).current;
+  const flightQuickBackdrop = quickBackdropVariant === "flight";
+  const quickBackdropIntensity = flightQuickBackdrop ? 4 : 12;
+  const quickBackdropTint = flightQuickBackdrop ? "default" : "dark";
 
   useEffect(() => {
     if (!visible || fullScreen) {
@@ -64,8 +69,8 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
     {fullScreen ? <SafeAreaProvider><SafeAreaView edges={["top", "bottom", "left", "right"]} style={[styles.fullBackdrop, { backgroundColor: theme.background }]} onAccessibilityEscape={onClose}>{sheet}</SafeAreaView></SafeAreaProvider> :
       <View style={styles.overlay} onAccessibilityEscape={onClose}>
         <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: quickBackdropOpacity }]}>
-          <BlurView intensity={4} tint="default" experimentalBlurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined} style={StyleSheet.absoluteFill}/>
-          <View style={[StyleSheet.absoluteFill, styles.quickBackdropScrim]}/>
+          <BlurView intensity={quickBackdropIntensity} tint={quickBackdropTint} experimentalBlurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined} style={StyleSheet.absoluteFill}/>
+          {flightQuickBackdrop ? <View style={[StyleSheet.absoluteFill, styles.quickBackdropScrim]}/> : null}
         </Animated.View>
         <Pressable accessible={false} onPress={onClose} style={StyleSheet.absoluteFill}/>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.bottom} pointerEvents="box-none">
