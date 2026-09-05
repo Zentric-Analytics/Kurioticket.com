@@ -1,0 +1,117 @@
+name: PR 5069 scoped footer repair
+
+on:
+  push:
+    branches:
+      - fix/flight-filter-bottom-cta-safe-area
+    paths:
+      - .github/workflows/pr5069-codex-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: fix/flight-filter-bottom-cta-safe-area
+          fetch-depth: 0
+
+      - name: Scope additive footer spacing to Flight filters
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          shell_path = Path("apps/mobile/src/features/search/FlightResultsSheetShell.tsx")
+          shell = shell_path.read_text()
+          old_sig = 'export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, children, footer, fullScreen = false, subtitle, headerAction }: {'
+          new_sig = 'export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, children, footer, fullScreen = false, subtitle, headerAction, fullScreenFooterExtraBottomPadding }: {'
+          if shell.count(old_sig) != 1:
+              raise SystemExit(f"expected one shell signature anchor, got {shell.count(old_sig)}")
+          shell = shell.replace(old_sig, new_sig, 1)
+
+          old_type = '  fullScreen?: boolean; subtitle?: string; headerAction?: ReactNode;\n'
+          new_type = '  fullScreen?: boolean; subtitle?: string; headerAction?: ReactNode; fullScreenFooterExtraBottomPadding?: number;\n'
+          if shell.count(old_type) != 1:
+              raise SystemExit(f"expected one shell prop type anchor, got {shell.count(old_type)}")
+          shell = shell.replace(old_type, new_type, 1)
+
+          old_padding = '  const footerBottomPadding = fullScreen ? inset.bottom + 16 : Math.max(inset.bottom, 12);\n'
+          new_padding = '  const footerBottomPadding = fullScreen && fullScreenFooterExtraBottomPadding != null\n    ? inset.bottom + fullScreenFooterExtraBottomPadding\n    : Math.max(inset.bottom, fullScreen ? 16 : 12);\n'
+          if shell.count(old_padding) != 1:
+              raise SystemExit(f"expected one footer padding anchor, got {shell.count(old_padding)}")
+          shell = shell.replace(old_padding, new_padding, 1)
+          shell_path.write_text(shell)
+
+          flight_path = Path("apps/mobile/src/features/search/FlightFilterSheet.tsx")
+          flight = flight_path.read_text()
+          old_flight = '  fullScreen={full}\n  closeLabel="Close flight filters"\n'
+          new_flight = '  fullScreen={full}\n  fullScreenFooterExtraBottomPadding={16}\n  closeLabel="Close flight filters"\n'
+          if flight.count(old_flight) != 1:
+              raise SystemExit(f"expected one FlightFilterSheet caller anchor, got {flight.count(old_flight)}")
+          flight_path.write_text(flight.replace(old_flight, new_flight, 1))
+
+          shell_test_path = Path("apps/mobile/src/features/search/flightResultsSheetShell.test.ts")
+          shell_test = shell_test_path.read_text()
+          old_test = '''test("footer remains a normal sibling below the body and reserves safe area plus breathing room",()=>{\n  assert.ok(shell.indexOf("styles.quickContent") < shell.indexOf("styles.footer"));\n  const footerStyle=/footer: \\{([^}]*)\\}/.exec(shell)?.[1] ?? "";\n  assert.doesNotMatch(footerStyle,/position:\\s*["']absolute["']/);\n  assert.match(footerStyle,/flexShrink: 0/);\n  assert.match(shell,/const footerBottomPadding = fullScreen \\? inset\\.bottom \\+ 16 : Math\\.max\\(inset\\.bottom, 12\\)/);\n  assert.match(shell,/paddingBottom: footerBottomPadding/);\n  assert.doesNotMatch(shell,/Math\\.max\\(inset\\.bottom, fullScreen \\? 16 : 12\\)/);\n});'''
+          new_test = '''test("footer preserves default safe-area behavior while allowing opt-in additive full-screen spacing",()=>{\n  assert.ok(shell.indexOf("styles.quickContent") < shell.indexOf("styles.footer"));\n  const footerStyle=/footer: \\{([^}]*)\\}/.exec(shell)?.[1] ?? "";\n  assert.doesNotMatch(footerStyle,/position:\\s*["']absolute["']/);\n  assert.match(footerStyle,/flexShrink: 0/);\n  assert.match(shell,/fullScreenFooterExtraBottomPadding\\?: number/);\n  assert.match(shell,/fullScreen && fullScreenFooterExtraBottomPadding != null/);\n  assert.match(shell,/inset\\.bottom \\+ fullScreenFooterExtraBottomPadding/);\n  assert.match(shell,/Math\\.max\\(inset\\.bottom, fullScreen \\? 16 : 12\\)/);\n  assert.match(shell,/paddingBottom: footerBottomPadding/);\n});'''
+          if shell_test.count(old_test) != 1:
+              raise SystemExit(f"expected one shell footer test anchor, got {shell_test.count(old_test)}")
+          shell_test_path.write_text(shell_test.replace(old_test, new_test, 1))
+
+          flight_test_path = Path("apps/mobile/src/features/search/FlightFilterSheet.test.ts")
+          flight_test = flight_test_path.read_text()
+          old_flight_test = 'test("main Filter retains full-screen live editing and a live result action",()=>{assert.match(sheet,/fullScreen=\\{full\\}/);'
+          new_flight_test = 'test("main Filter retains full-screen live editing and a live result action",()=>{assert.match(sheet,/fullScreen=\\{full\\}/);assert.match(sheet,/fullScreenFooterExtraBottomPadding=\\{16\\}/);'
+          if flight_test.count(old_flight_test) != 1:
+              raise SystemExit(f"expected one FlightFilterSheet test anchor, got {flight_test.count(old_flight_test)}")
+          flight_test_path.write_text(flight_test.replace(old_flight_test, new_flight_test, 1))
+
+          car_test_path = Path("apps/mobile/src/features/search/CarFilterSheet.test.ts")
+          car_test = car_test_path.read_text()
+          old_car_test = '''test("main Car filters are full screen and quick filters are real scoped sheets", () => {\n  assert.match(sheet, /fullScreen=\\{full\\}/);\n  assert.match(screen, /setFilterSheet\\("all"\\)/);'''
+          new_car_test = '''test("main Car filters are full screen and quick filters are real scoped sheets", () => {\n  assert.match(sheet, /fullScreen=\\{full\\}/);\n  assert.doesNotMatch(sheet, /fullScreenFooterExtraBottomPadding/);\n  assert.match(screen, /setFilterSheet\\("all"\\)/);'''
+          if car_test.count(old_car_test) != 1:
+              raise SystemExit(f"expected one CarFilterSheet test anchor, got {car_test.count(old_car_test)}")
+          car_test_path.write_text(car_test.replace(old_car_test, new_car_test, 1))
+          PY
+
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            apps/mobile/src/features/search/FlightResultsSheetShell.tsx \
+            apps/mobile/src/features/search/FlightFilterSheet.tsx \
+            apps/mobile/src/features/search/flightResultsSheetShell.test.ts \
+            apps/mobile/src/features/search/FlightFilterSheet.test.ts \
+            apps/mobile/src/features/search/CarFilterSheet.test.ts
+          git diff --cached --check
+          git commit -m "fix(mobile): scope additive filter footer padding to flights"
+          git push origin HEAD:fix/flight-filter-bottom-cta-safe-area
+
+      - name: Install mobile dependencies
+        working-directory: apps/mobile
+        run: npm ci
+
+      - name: Typecheck mobile
+        working-directory: apps/mobile
+        run: npm run typecheck
+
+      - name: Run focused filter regressions
+        working-directory: apps/mobile
+        run: >-
+          node --test --require ./testAssetSetup.cjs --import jiti/register
+          src/features/search/flightResultsSheetShell.test.ts
+          src/features/search/FlightFilterSheet.test.ts
+          src/features/search/CarFilterSheet.test.ts
+
+      - name: Run full mobile suite
+        working-directory: apps/mobile
+        run: npm test
+
+      - name: Validate diff
+        run: git diff --check
