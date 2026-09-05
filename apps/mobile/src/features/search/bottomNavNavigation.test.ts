@@ -4,9 +4,10 @@ import { resolve } from "node:path";
 import test from "node:test";
 
 const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
+const carScreen = readFileSync(resolve("src/features/search/ApprovedCarResultsScreen.tsx"), "utf8");
 const bottomNav = source.slice(source.indexOf("export function BottomNav"), source.indexOf("const s0 = StyleSheet.create"));
 
-test("Flight Results bottom navigation uses the existing app routes", () => {
+test("the shared Car Results bottom navigation uses the existing app routes", () => {
   assert.match(bottomNav, /label: "Explore"[^\n]+route: "\/\(tabs\)\/explore"/);
   assert.match(bottomNav, /label: "Trips"[^\n]+accessibilityLabel: "My Trips"[^\n]+route: "\/\(tabs\)\/trips"/);
   assert.match(bottomNav, /label: "Search"[^\n]+route: "\/flights"/);
@@ -22,21 +23,21 @@ const routes = Object.fromEntries(
 );
 
 function expectBottomNavBackSequence(labels: string[]) {
-  const flightResults = "/flights?from=JFK&to=LAX&departureDate=2026-09-01";
-  const history = ["/(tabs)", flightResults];
+  const carResults = "/cars?pickupLocation=LAX&pickupDate=2026-09-01";
+  const history = ["/(tabs)", carResults];
 
   for (const label of labels) {
     const destination = routes[label];
     assert.ok(destination, `missing BottomNav route for ${label}`);
     history.push(destination);
     assert.equal(history.pop(), destination);
-    assert.equal(history.at(-1), flightResults);
+    assert.equal(history.at(-1), carResults);
   }
 
-  assert.deepEqual(history, ["/(tabs)", flightResults]);
+  assert.deepEqual(history, ["/(tabs)", carResults]);
 }
 
-test("each Flight Results destination preserves Flight Results for Back", () => {
+test("each BottomNav destination preserves Car Results for Back", () => {
   expectBottomNavBackSequence(["Explore"]);
   expectBottomNavBackSequence(["Trips"]);
   expectBottomNavBackSequence(["Search"]);
@@ -44,8 +45,18 @@ test("each Flight Results destination preserves Flight Results for Back", () => 
   expectBottomNavBackSequence(["Profile"]);
 });
 
-test("repeated BottomNav navigation does not duplicate Flight Results", () => {
+test("repeated BottomNav navigation does not duplicate Car Results", () => {
   expectBottomNavBackSequence(["Explore", "Saved"]);
+});
+
+test("BottomNav remains exported and mounted by Car Results only", () => {
+  const resultsScreen = source.slice(source.indexOf("export function ApprovedResultsScreen"), source.indexOf("export function BottomNav"));
+
+  assert.match(source, /export function BottomNav/);
+  assert.match(carScreen, /import \{ BottomNav \} from "\.\/ApprovedResultsScreen"/);
+  assert.match(carScreen, /<BottomNav \/>/);
+  assert.doesNotMatch(resultsScreen, /<BottomNav(?:\s|\/|>)/);
+  assert.doesNotMatch(resultsScreen, /style=\{[^}]*s0\.nav/);
 });
 
 test("all bottom navigation items are accessible press targets and Search stays selected", () => {

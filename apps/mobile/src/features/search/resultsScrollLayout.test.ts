@@ -8,6 +8,7 @@ const screen = readFileSync(
   "utf8",
 ).replace(/\r\n/g, "\n");
 const quickControls = readFileSync(resolve("src/features/search/FlightResultsQuickControls.tsx"), "utf8");
+const carScreen = readFileSync(resolve("src/features/search/ApprovedCarResultsScreen.tsx"), "utf8");
 const layoutStart = screen.indexOf("<Animated.SectionList");
 const alternateLayoutStart = screen.indexOf(") : (\n        <>", layoutStart);
 const flightLayout = screen.slice(layoutStart, alternateLayoutStart);
@@ -116,15 +117,25 @@ test("hotel uses one stable summary above a native sticky filter rail", () => {
   assert.match(screen,/visible === hotelBackToTopVisibleRef\.current/);
   assert.doesNotMatch(flightLayout, /hotelIntroBoundary|setHotelCompactHeader/);
 });
-test("Hotel Results reclaims BottomNav space while retaining the native bottom safe area", () => {
+test("Flight Results scroll content clears the native bottom safe area without a navigation-sized spacer", () => {
+  assert.match(screen, /const insets = useSafeAreaInsets\(\)/);
+  assert.match(
+    flightLayout,
+    /contentContainerStyle=\{\[[\s\S]*?s0\.flightResultsContent,[\s\S]*?\{ paddingBottom: Math\.max\(insets\.bottom \+ 16, 16\) \},[\s\S]*?minHeight: flightPaginationMinHeight/,
+  );
+  assert.doesNotMatch(flightLayout, /paddingBottom[^\n]*(?:72|92)/);
+  assert.doesNotMatch(flightLayout, /position:\s*["']absolute["']/);
+});
+
+test("results screens retain their product-specific BottomNav ownership", () => {
   const sharedBody = styleBlock("body", "hotelResultsContent");
   const backToTop = styleBlock("hotelBackToTop", "filterRail");
 
-  assert.match(screen, /const insets = useSafeAreaInsets\(\)/);
   assert.match(sharedBody, /paddingBottom: 92/);
   assert.match(screen, /style=\{\[s0\.body, \{ paddingBottom: Math\.max\(insets\.bottom \+ 72, 72\) \}\]\}/);
-  assert.match(screen, /\{flightResults \? <BottomNav flightResults \/> : null\}/);
-  assert.doesNotMatch(screen, /<BottomNav flightResults=\{flightResults\} \/>/);
+  assert.doesNotMatch(screen, /<BottomNav(?:\s|\/|>)/);
+  assert.match(carScreen, /import \{ BottomNav \} from "\.\/ApprovedResultsScreen"/);
+  assert.match(carScreen, /<BottomNav \/>/);
   assert.doesNotMatch(backToTop, /bottom:/);
   assert.match(screen, /s0\.hotelBackToTop,\{bottom:Math\.max\(insets\.bottom \+ 16,16\)/);
   assert.doesNotMatch(screen, /hotelBackToTop[^\n]*bottom:(?:86|92)/);

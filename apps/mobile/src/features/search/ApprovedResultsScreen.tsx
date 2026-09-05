@@ -1062,7 +1062,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           onScrollEndDrag={() => flightPaginationScheduleSettled.current?.()}
           onContentSizeChange={(_width, height) => { flightPaginationContentHeight.current = height; }}
           scrollEventThrottle={16}
-          contentContainerStyle={[s0.flightResultsContent, flightPaginationMinHeight !== null && { minHeight: flightPaginationMinHeight }]}
+          contentContainerStyle={[
+            s0.flightResultsContent,
+            { paddingBottom: Math.max(insets.bottom + 16, 16) },
+            flightPaginationMinHeight !== null && { minHeight: flightPaginationMinHeight },
+          ]}
           initialNumToRender={6}
           maxToRenderPerBatch={5}
           updateCellsBatchingPeriod={50}
@@ -1159,7 +1163,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           onSubmit={submitFlightEditSearch}
         />
       ) : null}
-      {flightResults ? <BottomNav flightResults /> : null}
     </SafeAreaView>
   );
 }
