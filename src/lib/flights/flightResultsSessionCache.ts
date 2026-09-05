@@ -13,6 +13,11 @@ export type FlightResultsSessionSnapshot = {
   warnings: string[];
 };
 
+export type FlightResultsSessionSnapshotState = {
+  snapshot: FlightResultsSessionSnapshot;
+  isFresh: boolean;
+};
+
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 export function buildFlightResultsSearchKey(body: {
@@ -72,11 +77,11 @@ function removeSnapshot(storage: StorageLike) {
   }
 }
 
-export function readFlightResultsSessionSnapshot(
+export function readFlightResultsSessionSnapshotForRefresh(
   searchKey: string,
   storage: StorageLike | null = browserSessionStorage(),
   now = Date.now(),
-): FlightResultsSessionSnapshot | null {
+): FlightResultsSessionSnapshotState | null {
   if (!storage) return null;
 
   let serialized: string | null;
@@ -109,17 +114,34 @@ export function readFlightResultsSessionSnapshot(
       return null;
     }
 
-    if (now >= value.validUntil! || now - value.savedAt! >= FLIGHT_RESULTS_SESSION_CACHE_TTL_MS) {
+    if (now - value.savedAt! >= FLIGHT_RESULTS_SESSION_CACHE_TTL_MS) {
       removeSnapshot(storage);
       return null;
     }
 
     if (value.searchKey !== searchKey) return null;
-    return value as FlightResultsSessionSnapshot;
+    return {
+      snapshot: value as FlightResultsSessionSnapshot,
+      isFresh: now < value.validUntil!,
+    };
   } catch {
     removeSnapshot(storage);
     return null;
   }
+}
+
+export function readFlightResultsSessionSnapshot(
+  searchKey: string,
+  storage: StorageLike | null = browserSessionStorage(),
+  now = Date.now(),
+): FlightResultsSessionSnapshot | null {
+  const state = readFlightResultsSessionSnapshotForRefresh(searchKey, storage, now);
+  if (!state) return null;
+  if (!state.isFresh) {
+    if (storage) removeSnapshot(storage);
+    return null;
+  }
+  return state.snapshot;
 }
 
 export function writeFlightResultsSessionSnapshot(

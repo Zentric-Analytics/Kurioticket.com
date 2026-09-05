@@ -100,7 +100,7 @@ import {
 } from "@/lib/flights/preferredAirlineFilters";
 import {
   buildFlightResultsSearchKey,
-  readFlightResultsSessionSnapshot,
+  readFlightResultsSessionSnapshotForRefresh,
   writeFlightResultsSessionSnapshot,
 } from "@/lib/flights/flightResultsSessionCache";
 import {
@@ -994,6 +994,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [error, setError] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [backgroundRefreshing, setBackgroundRefreshing] = useState(false);
   const [filtersReadySearchKey, setFiltersReadySearchKey] = useState<
     string | null
   >(null);
@@ -2635,6 +2636,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       const resetTimer = window.setTimeout(() => {
         setResults([]);
         setWarnings([]);
+        setBackgroundRefreshing(false);
       }, 0);
       return () => window.clearTimeout(resetTimer);
     }
@@ -2649,7 +2651,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setFiltersReadySearchKey(null);
 
       const shouldBypassSnapshot = userInitiatedRetryRef.current && guidedMode;
-      const snapshot = shouldBypassSnapshot ? null : readFlightResultsSessionSnapshot(searchKey);
+      const snapshotState = shouldBypassSnapshot
+        ? null
+        : readFlightResultsSessionSnapshotForRefresh(searchKey);
+      const snapshot = snapshotState?.snapshot;
+      const refreshingStaleSnapshot = Boolean(snapshot && !snapshotState?.isFresh);
       if (snapshot) {
         if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
         setResults(
@@ -2661,16 +2667,18 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         setWarnings(snapshot.warnings);
         setError("");
         setLoading(false);
-        return;
+        setBackgroundRefreshing(refreshingStaleSnapshot);
+        if (!refreshingStaleSnapshot) return;
+      } else {
+        setResults([]);
+        setLoading(true);
+        setBackgroundRefreshing(false);
+        if (userInitiatedRetryRef.current) {
+          window.setTimeout(() => loadingFocusRef.current?.focus({ preventScroll: true }), 0);
+        }
+        setError("");
+        setWarnings([]);
       }
-
-      setResults([]);
-      setLoading(true);
-      if (userInitiatedRetryRef.current) {
-        window.setTimeout(() => loadingFocusRef.current?.focus({ preventScroll: true }), 0);
-      }
-      setError("");
-      setWarnings([]);
 
       controller = new AbortController();
       fetch("/api/flights/search", {
@@ -2715,17 +2723,20 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         .catch((searchError) => {
           if (controller?.signal.aborted || !active || activeFlightSearchKeyRef.current !== searchKey) return;
 
-          setError(
-            searchError instanceof Error
-              ? t(searchError.message) || searchError.message
-              : dictionary.unableToSearchFlights ||
-                  enTranslations.unableToSearchFlights ||
-                  "Unable to search flights.",
-          );
+          if (!refreshingStaleSnapshot) {
+            setError(
+              searchError instanceof Error
+                ? t(searchError.message) || searchError.message
+                : dictionary.unableToSearchFlights ||
+                    enTranslations.unableToSearchFlights ||
+                    "Unable to search flights.",
+            );
+          }
         })
         .finally(() => {
           if (active && activeFlightSearchKeyRef.current === searchKey) {
             setLoading(false);
+            setBackgroundRefreshing(false);
           }
         });
     }, 0);
@@ -2743,6 +2754,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setWarnings([]);
     setResults([]);
     setLoading(true);
+    setBackgroundRefreshing(false);
     setFiltersReadySearchKey(null);
     setMainInventoryRetryGeneration((generation) => generation + 1);
   }, []);
@@ -4404,62 +4416,79 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     return () => window.cancelAnimationFrame(frame);
   }, [guidedMode, urlParams]);
 
-  useLayoutEffect(() => {
-    if (!body?.departureDate || nearbyFares.length === 0) return;
-
+  const alignSelectedMobileFare = useCallback((forceVisibilityCheck = false) => {
+    if (!body?.departureDate) return false;
     const alignmentIdentity = `${buildFlightResultsSearchKey(body)}:${body.departureDate}`;
-    if (alignedMobileNearbyFareSearchRef.current === alignmentIdentity) return;
+    if (!forceVisibilityCheck && alignedMobileNearbyFareSearchRef.current === alignmentIdentity) return true;
 
-    let frame: number | null = null;
-    let attemptsRemaining = 2;
-    const alignSelectedFare = () => {
-      const rail = mobileNearbyFareRailRef.current;
-      const selectedCell = mobileSelectedNearbyFareRef.current;
-      const hasUsableGeometry = Boolean(
-        rail &&
-        selectedCell?.isConnected &&
-        rail.clientWidth > 0 &&
-        rail.scrollWidth > 0 &&
-        selectedCell.offsetWidth > 0,
-      );
+    const rail = mobileNearbyFareRailRef.current;
+    const selectedCell = mobileSelectedNearbyFareRef.current;
+    if (!rail || !selectedCell?.isConnected || rail.clientWidth <= 0 || rail.scrollWidth <= 0 || selectedCell.offsetWidth <= 0) return false;
 
-      if (!rail || !selectedCell || !hasUsableGeometry) {
-        if (attemptsRemaining > 0) {
-          attemptsRemaining -= 1;
-          frame = window.requestAnimationFrame(alignSelectedFare);
-        }
-        return;
-      }
-
-      const railRect = rail.getBoundingClientRect();
-      const selectedRect = selectedCell.getBoundingClientRect();
-      const selectedLeftWithinRail =
-        selectedRect.left - railRect.left + rail.scrollLeft;
-      const target = getCenteredRailScrollLeft({
+    const railRect = rail.getBoundingClientRect();
+    const selectedRect = selectedCell.getBoundingClientRect();
+    if (forceVisibilityCheck && isHorizontallyVisibleWithinContainer(selectedRect, railRect)) {
+      alignedMobileNearbyFareSearchRef.current = alignmentIdentity;
+      return true;
+    }
+    const selectedLeftWithinRail = selectedRect.left - railRect.left + rail.scrollLeft;
+    rail.scrollTo({
+      left: getCenteredRailScrollLeft({
         selectedLeftWithinRail,
         selectedWidth: selectedCell.offsetWidth,
         railWidth: rail.clientWidth,
         scrollWidth: rail.scrollWidth,
-      });
+      }),
+      behavior: "auto",
+    });
+    alignedMobileNearbyFareSearchRef.current = alignmentIdentity;
+    return true;
+  }, [body]);
 
-      rail.scrollTo({ left: target, behavior: "auto" });
-      const updatedRailRect = rail.getBoundingClientRect();
-      const updatedSelectedRect = selectedCell.getBoundingClientRect();
-      if (
-        isHorizontallyVisibleWithinContainer(updatedSelectedRect, updatedRailRect)
-      ) {
-        alignedMobileNearbyFareSearchRef.current = alignmentIdentity;
-      } else if (attemptsRemaining > 0) {
-        attemptsRemaining -= 1;
-        frame = window.requestAnimationFrame(alignSelectedFare);
-      }
+  useLayoutEffect(() => {
+    if (!body?.departureDate || nearbyFares.length === 0) return;
+    let frame: number | null = null;
+    let attemptsRemaining = 6;
+    const attemptAlignment = () => {
+      if (alignSelectedMobileFare()) return;
+      if (attemptsRemaining <= 0) return;
+      attemptsRemaining -= 1;
+      frame = window.requestAnimationFrame(attemptAlignment);
     };
-
-    alignSelectedFare();
+    attemptAlignment();
     return () => {
       if (frame !== null) window.cancelAnimationFrame(frame);
     };
-  }, [body, nearbyFares]);
+  }, [alignSelectedMobileFare, body?.departureDate, nearbyFares]);
+
+  useEffect(() => {
+    if (!body?.departureDate || nearbyFares.length === 0) return;
+    let frame: number | null = null;
+    const refreshAlignment = () => {
+      if (document.visibilityState === "hidden") return;
+      if (frame !== null) window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        frame = null;
+        alignSelectedMobileFare(true);
+      });
+    };
+    const handleVisibilityChange = () => refreshAlignment();
+    const rail = mobileNearbyFareRailRef.current;
+    const observer = typeof ResizeObserver === "undefined"
+      ? null
+      : new ResizeObserver(refreshAlignment);
+    if (rail) observer?.observe(rail);
+    window.addEventListener("pageshow", refreshAlignment);
+    window.addEventListener("resize", refreshAlignment);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      if (frame !== null) window.cancelAnimationFrame(frame);
+      observer?.disconnect();
+      window.removeEventListener("pageshow", refreshAlignment);
+      window.removeEventListener("resize", refreshAlignment);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [alignSelectedMobileFare, body?.departureDate, nearbyFares.length]);
 
   const changeResultsPage = useCallback(async (nextPage: number) => {
     const page = clampFlightResultsPage(nextPage, totalResultPages);
@@ -6607,14 +6636,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <header
         data-flight-results-compact-header
         className={cn(
-          "fixed inset-x-0 top-0 z-[90] border-b border-slate-200/80 bg-white/95 px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-[0_10px_26px_-20px_rgba(15,23,42,0.55)] backdrop-blur-xl transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none sm:hidden",
-          mobileCompactHeaderVisible ? "translate-y-0 opacity-100" : "-translate-y-1 opacity-0",
-          mobileCompactHeaderVisible
+          "fixed inset-x-0 top-0 z-[90] border-b border-slate-200/80 bg-white/95 px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-[0_10px_26px_-20px_rgba(15,23,42,0.55)] backdrop-blur-xl transition-opacity duration-200 ease-out motion-reduce:transition-none sm:hidden",
+          mobileCompactHeaderVisible ? "opacity-100" : "opacity-0",
+          mobileCompactHeaderVisible && !mobileSearchOpen
             ? "pointer-events-auto"
             : "pointer-events-none",
         )}
         inert={mobileSearchOpen ? true : undefined}
-        aria-hidden={!mobileCompactHeaderVisible}
+        aria-hidden={!mobileCompactHeaderVisible || mobileSearchOpen}
       >
         <div className="mx-auto grid h-12 w-full max-w-3xl grid-cols-[44px_minmax(0,1fr)_82px] items-center gap-2">
           <button
@@ -7028,6 +7057,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         <section className="min-w-0 space-y-4 lg:space-y-0">
           <p className="sr-only" aria-live="polite">
             {savedItemError}
+          </p>
+          <p className="sr-only" role="status" aria-live="polite">
+            {backgroundRefreshing ? t("updatingResults") : ""}
           </p>
           <div ref={flightResultsTopRef} aria-hidden="true" />
           <h2 ref={resultsHeadingRef} tabIndex={-1} className="sr-only">
