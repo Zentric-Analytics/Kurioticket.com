@@ -7,13 +7,22 @@ import { AuthButton, authColors, ErrorText, Field, FormHeading, FormShell, Secur
 import { formatCountdown, isValidEmail, sanitizeCode } from "./authUtils";
 import { scheduleAuthCompletion } from "./authCompletion";
 
-export function EmailScreen({ initialEmail, passkeyOptions, onPasskey, onBack, onContinue, loading, error }: { initialEmail: string; passkeyOptions?: PasskeyAuthenticationOptions | null; onPasskey: (assertion: PasskeyAssertion) => void; onBack: () => void; onContinue: (email: string) => void; loading: boolean; error?: string }) {
+export function EmailScreen({ initialEmail, passkeyOptions, onPasskey, onCredentialReady, onCredentialFocus, onBack, onContinue, loading, error }: { initialEmail: string; passkeyOptions?: PasskeyAuthenticationOptions | null; onPasskey: (assertion: PasskeyAssertion) => void; onCredentialReady?: () => Promise<void> | void; onCredentialFocus?: () => void; onBack: () => void; onContinue: (email: string) => void; loading: boolean; error?: string }) {
   const [email, setEmail] = useState(initialEmail);
   const [touched, setTouched] = useState(false);
   const [credentialFocused, setCredentialFocused] = useState(false);
+  const legacyInput = useRef<TextInput>(null);
   const valid = isValidEmail(email);
   const nativePasskeyField = isNativePasskeyUsernameFieldAvailable();
   const fieldError = touched && !valid ? "Enter a valid email address." : undefined;
+  useEffect(() => {
+    if (nativePasskeyField) return;
+    let cancelled = false;
+    void Promise.resolve(onCredentialReady?.()).finally(() => {
+      if (!cancelled) legacyInput.current?.focus();
+    });
+    return () => { cancelled = true; };
+  }, [nativePasskeyField, onCredentialReady]);
   return <FormShell onBack={onBack}><FormHeading icon="mail" title="Enter your email" body={"We’ll send you a secure link or code to\nsign in or create your account."} />
     {nativePasskeyField ? <View style={styles.credentialWrap}>
       <Text style={styles.credentialLabel}>Email address</Text>
@@ -33,7 +42,7 @@ export function EmailScreen({ initialEmail, passkeyOptions, onPasskey, onBack, o
         />
       </View>
       <Text accessibilityLiveRegion="polite" style={styles.credentialErrorText}>{fieldError || " "}</Text>
-    </View> : <Field autoFocus label="Email address" placeholder="you@example.com" value={email} onChangeText={setEmail} onBlur={() => setTouched(true)} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="username" textContentType="username" returnKeyType="go" onSubmitEditing={() => valid && !loading && onContinue(email)} error={fieldError} />}
+    </View> : <Field inputRef={legacyInput} label="Email address" placeholder="you@example.com" value={email} onChangeText={setEmail} onFocus={onCredentialFocus} onBlur={() => setTouched(true)} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="username" textContentType="username" returnKeyType="go" onSubmitEditing={() => valid && !loading && onContinue(email)} error={fieldError} />}
     <ErrorText>{error}</ErrorText><AuthButton label="Continue" onPress={() => onContinue(email)} loading={loading} disabled={!valid} />
     <Text style={styles.legal}>By continuing, you agree to our <Text style={styles.link}>Terms of Service</Text> and <Text style={styles.link}>Privacy Policy</Text></Text>
   </FormShell>;
