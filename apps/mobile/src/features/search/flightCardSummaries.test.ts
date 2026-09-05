@@ -46,7 +46,7 @@ test("metadata stays non-actionable beside the unchanged right-aligned price reg
   const metadata = card.slice(card.indexOf('style={s0.flightMetadataRegion}'), card.indexOf('<View style={s0.flightCommercialRegion}>'));
   assert.doesNotMatch(metadata, /Pressable|Chevron|borderLeft|borderRight/);
   assert.equal((card.match(/<Pressable/g) || []).length, 1);
-  assert.match(source, /flightCommercialRegion: \{ width: "46%", minWidth: 104, flexShrink: 0, alignItems: "flex-end"/);
+  assert.match(source, /flightCommercialRegion: \{ width: "46%", minWidth: 104, flexShrink: 0, alignSelf: "stretch", alignItems: "flex-end"/);
   assert.match(source, /bigPrice: \{[^}]*flexShrink: 1[^}]*textAlign: "right"/);
 });
 

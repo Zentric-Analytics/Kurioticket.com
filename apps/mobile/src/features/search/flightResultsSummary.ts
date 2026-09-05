@@ -26,6 +26,7 @@ type FlightResultsCopy = {
   traveler: string;
   travelers: string;
   viewFlight: string;
+  viewDetails?: string;
   baggage: string;
   cabin: string;
   fareRule: string;
@@ -35,7 +36,7 @@ type FlightResultsCopy = {
 };
 
 const copy: Record<MobileLocale, FlightResultsCopy> = {
-  "en-us": { oneWay:"One-way",roundTrip:"Round-trip",multiCity:"Multi-city",traveler:"traveler",travelers:"travelers",viewFlight:"View Flight",baggage:"Baggage",cabin:"Cabin",fareRule:"Fare rule",estimatedPrice:"ESTIMATED PRICE",providerPrice:"PROVIDER PRICE",fareRules:"Fare rules",review:"Review",viewDeal:"View deal",trackTitle:"Track this flight price",trackAction:"Track price",tracking:"Tracking",checking:"Checking…" },
+  "en-us": { oneWay:"One-way",roundTrip:"Round-trip",multiCity:"Multi-city",traveler:"traveler",travelers:"travelers",viewFlight:"View Flight",viewDetails:"View details",baggage:"Baggage",cabin:"Cabin",fareRule:"Fare rule",estimatedPrice:"ESTIMATED PRICE",providerPrice:"PROVIDER PRICE",fareRules:"Fare rules",review:"Review",viewDeal:"View deal",trackTitle:"Track this flight price",trackAction:"Track price",tracking:"Tracking",checking:"Checking…" },
   "es-es": { oneWay:"Solo ida",roundTrip:"Ida y vuelta",multiCity:"Varias ciudades",traveler:"viajero",travelers:"viajeros",viewFlight:"Ver vuelo",baggage:"Equipaje",cabin:"Cabina",fareRule:"Regla tarifaria",estimatedPrice:"PRECIO ESTIMADO",providerPrice:"PRECIO DEL PROVEEDOR" },
   fr: { oneWay:"Aller simple",roundTrip:"Aller-retour",multiCity:"Multi-destinations",traveler:"voyageur",travelers:"voyageurs",viewFlight:"Voir le vol",baggage:"Bagages",cabin:"Cabine",fareRule:"Règle tarifaire",estimatedPrice:"PRIX ESTIMÉ",providerPrice:"PRIX DU FOURNISSEUR",fareRules:"Règles",review:"Consulter",viewDeal:"Voir l’offre",trackTitle:"Suivre le prix du vol",trackAction:"Suivre le prix",tracking:"Suivi actif",checking:"Vérification…" },
   "de-de": { oneWay:"Hinflug",roundTrip:"Hin- und Rückflug",multiCity:"Mehrere Städte",traveler:"Reisender",travelers:"Reisende",viewFlight:"Flug ansehen",baggage:"Gepäck",cabin:"Kabine",fareRule:"Tarifregel",estimatedPrice:"GESCHÄTZTER PREIS",providerPrice:"ANBIETERPREIS",fareRules:"Tarifregeln",review:"Prüfen",viewDeal:"Angebot ansehen",trackTitle:"Flugpreis verfolgen",trackAction:"Preis verfolgen",tracking:"Wird verfolgt",checking:"Prüfen…" },
@@ -57,7 +58,13 @@ const copy: Record<MobileLocale, FlightResultsCopy> = {
 
 export const flightResultsCopy = (locale: MobileLocale) => {
   const localized = copy[locale];
-  return { ...copy["en-us"], ...localized, fareRules: localized.fareRules ?? localized.fareRule, viewDeal: localized.viewDeal ?? localized.viewFlight } as Required<FlightResultsCopy>;
+  return {
+    ...copy["en-us"],
+    ...localized,
+    fareRules: localized.fareRules ?? localized.fareRule,
+    viewDeal: localized.viewDeal ?? localized.viewFlight,
+    viewDetails: localized.viewDetails ?? localized.viewFlight,
+  } as Required<FlightResultsCopy>;
 };
 
 const dateLabel = (value: unknown, locale: MobileLocale) => {
