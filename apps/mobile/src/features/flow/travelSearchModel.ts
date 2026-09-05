@@ -1,4 +1,5 @@
 import type { CarResult, FlightResult, HotelResult } from "../../api/travelApi";
+import { isHotelTodayOrFutureLocalDate, localIsoDate } from "./localDateModel";
 
 export type Product = "flight" | "hotel" | "car";
 export type SearchPlan = { key: string; payload: Record<string, unknown>; summary: string };
@@ -56,7 +57,8 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
     const guests = integer(guestsValue, 2); const rooms = integer(roomsValue, 1);
     if (!destination) return { error: "Enter a hotel destination." };
     if (!checkIn || !checkOut || !guestsValue || !roomsValue) return { error: "Complete your stay dates, guests, and rooms." };
-    if (!future(checkIn, now) || !future(checkOut, now) || checkOut <= checkIn) return { error: "Choose valid check-in and check-out dates." };
+    const minimumLocalIso = localIsoDate(now);
+    if (!isHotelTodayOrFutureLocalDate(checkIn, minimumLocalIso) || !isHotelTodayOrFutureLocalDate(checkOut, minimumLocalIso) || checkOut <= checkIn) return { error: "Choose valid check-in and check-out dates." };
     if (guests < 1 || guests > 20 || rooms < 1 || rooms > 9 || rooms > guests) return { error: "Choose valid guest and room counts." };
     const payload = { ...(destinationId ? { destinationId } : {}), destination, checkIn, checkOut, guests, rooms };
     return { plan: { payload, key: JSON.stringify(["hotel", ...Object.values(payload)]), summary: `${destination} · ${checkIn} – ${checkOut}` } };

@@ -41,6 +41,26 @@ const futureDate = z
   .min(1)
   .refine(isTodayOrFutureDate, "Choose today or a future date.");
 
+const HOTEL_EARLIEST_TIMEZONE_OFFSET_HOURS = -12;
+
+export function earliestCurrentHotelCalendarDate(now = new Date()) {
+  return new Date(
+    now.getTime() + HOTEL_EARLIEST_TIMEZONE_OFFSET_HOURS * 60 * 60 * 1000,
+  ).toISOString().slice(0, 10);
+}
+
+export function isHotelTodayOrFutureDate(value: string, now = new Date()) {
+  return Boolean(
+    parseIsoDateValue(value)
+      && value >= earliestCurrentHotelCalendarDate(now),
+  );
+}
+
+const hotelFutureDate = z
+  .string()
+  .min(1)
+  .refine(isHotelTodayOrFutureDate, "Choose today or a future date.");
+
 const flightLegSchema = z.object({
   origin: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{3}$/, "Choose a valid departure airport."),
   destination: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{3}$/, "Choose a valid arrival airport."),
@@ -121,13 +141,13 @@ export const hotelSearchSchema = z
   .object({
     destinationId: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(80).optional(),
     destination: z.string().trim().min(2, "Enter a destination.").max(120),
-    checkIn: futureDate,
-    checkOut: futureDate,
+    checkIn: hotelFutureDate,
+    checkOut: hotelFutureDate,
     guests: z.coerce.number().int().min(1).max(12).default(2),
     rooms: z.coerce.number().int().min(1).max(6).default(1),
     sort: z.enum(["cheapest", "best", "rating", "location"]).optional(),
   })
-  .refine((data) => new Date(data.checkOut) > new Date(data.checkIn), {
+  .refine((data) => data.checkOut > data.checkIn, {
     message: "Check-out must be after check-in.",
     path: ["checkOut"],
   });
