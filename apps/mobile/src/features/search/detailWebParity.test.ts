@@ -34,7 +34,8 @@ test("Hotel details follow mobile-web identity, gallery, tabs, and offer hierarc
   assert.ok(hotel.indexOf("<NativeHotelGallery") < hotel.indexOf('accessibilityRole="tablist"'));
   assert.match(hotel, /stickyHeaderIndices=\{\[2\]\}/);
   for (const tab of ["compare", "about", "location", "reviews"]) assert.match(hotel, new RegExp(`"${tab}"`));
-  assert.match(hotel, /Kurioticket room options/);
+  assert.match(hotel, /kurioticket-logo-primary-light-bg\.png/);
+  assert.doesNotMatch(hotel, /Kurioticket room options|indicative planning choice|Room choices are planning inventory/);
   assert.doesNotMatch(hotel, /Select room|Choose where to book/);
 });
 

@@ -35,8 +35,38 @@ export function HotelCardAmenityList({ amenities }: { amenities: readonly unknow
   );
 }
 
+export function HotelOfferAmenityList({
+  amenities,
+  color,
+}: {
+  amenities: readonly unknown[];
+  color: string;
+}) {
+  const items = buildHotelAmenityPresentation(amenities, 3);
+  if (!items.length) return null;
+
+  return (
+    <View style={styles.offerList}>
+      {items.map((item) => {
+        const Icon = amenityIcons[item.iconKey];
+        return (
+          <View key={item.key} style={styles.offerItem}>
+            <Icon accessible={false} size={14} strokeWidth={1.8} color={color} />
+            <Text numberOfLines={1} style={[styles.offerLabel, { color }]}>
+              {item.label}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   list: { gap: 3 },
   item: { flexDirection: "row", alignItems: "center", gap: 5, minWidth: 0 },
   label: { flexShrink: 1, minWidth: 0, color: ui.muted, fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
+  offerList: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 12 },
+  offerItem: { flexDirection: "row", alignItems: "center", flexShrink: 0, gap: 4 },
+  offerLabel: { fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
 });
