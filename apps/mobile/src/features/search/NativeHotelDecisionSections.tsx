@@ -5,9 +5,10 @@ import { WebView } from "react-native-webview";
 import type { PublicHotelPropertyDetails } from "../../../../../src/lib/types";
 import { buildHotelAddress, buildHotelDirectionsUrl, buildOpenStreetMapHotelMapEmbedUrl } from "../../../../../src/lib/hotels/hotelMap";
 import { colors } from "../../theme/tokens";
+import { appFonts } from "../../theme/typography";
 import type { NativeRelatedHotel } from "./nativeHotelRelatedHotelsModel";
 
-type Theme = { surface: string; border: string; textPrimary: string; textSecondary: string; icon: string };
+type Theme = { dark: boolean; surface: string; border: string; textPrimary: string; textSecondary: string; icon: string };
 
 export function NativeHotelPropertyLocationSection({ hotelName, propertyDetails, theme }: {
   hotelName: string;
@@ -50,11 +51,12 @@ export function NativeHotelPropertyLocationSection({ hotelName, propertyDetails,
 
 function RelatedHotelCard({ item, theme, onView }: { item: NativeRelatedHotel; theme: Theme; onView: (item: NativeRelatedHotel) => void }) {
   const [imageFailed, setImageFailed] = useState(false);
+  const relatedActionColor = theme.dark ? "#8FB5FF" : colors.blue;
   return <Pressable accessibilityRole="button" accessibilityLabel={`View hotel ${item.hotel.name}`} onPress={() => onView(item)} style={[styles.relatedCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
     <View style={styles.imageFrame}>
       {item.hotel.imageUrl && !imageFailed
         ? <Image source={{ uri: item.hotel.imageUrl }} resizeMode="cover" onError={() => setImageFailed(true)} style={styles.image} />
-        : <View style={styles.imageFallback}><ImageOff accessible={false} size={22} color={theme.icon} /><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Image unavailable</Text></View>}
+        : <View style={styles.imageFallback}><ImageOff accessible={false} size={20} color={theme.icon} /><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Image unavailable</Text></View>}
     </View>
     <View style={styles.cardBody}>
       {item.classificationStars ? <Text accessible accessibilityLabel={`${item.classificationStars} star hotel`} style={styles.stars}>{"★".repeat(item.classificationStars)}</Text> : null}
@@ -64,9 +66,9 @@ function RelatedHotelCard({ item, theme, onView }: { item: NativeRelatedHotel; t
         {item.displayPrices?.nightly && item.displayPrices.total ? <>
           <Text accessibilityLabel={`${item.displayPrices.nightly.accessibilityLabel} per night`} style={[styles.nightly, { color: theme.textPrimary }]}>{item.displayPrices.nightly.formatted} per night</Text>
           <Text accessibilityLabel={`${item.displayPrices.total.accessibilityLabel} estimated stay total`} style={[styles.total, { color: theme.textSecondary }]}>{item.displayPrices.total.formatted} estimated stay total</Text>
-        </> : <Text style={[styles.nightly, { color: theme.textSecondary }]}>Price unavailable</Text>}
+        </> : <Text style={[styles.priceUnavailable, { color: theme.textSecondary }]}>Price unavailable</Text>}
       </View>
-      <View style={[styles.viewRow, { borderTopColor: theme.border }]}><Text style={[styles.viewText, { color: theme.textPrimary }]}>View hotel</Text><ArrowRight accessible={false} size={17} color={theme.icon} /></View>
+      <View style={[styles.viewRow, { borderTopColor: theme.border }]}><Text style={[styles.viewText, { color: relatedActionColor }]}>View hotel</Text><ArrowRight accessible={false} size={16} color={relatedActionColor} /></View>
     </View>
   </Pressable>;
 }
@@ -103,14 +105,15 @@ const styles = StyleSheet.create({
   imageFrame: { aspectRatio: 16 / 9, backgroundColor: "#E7EBF2" },
   image: { width: "100%", height: "100%" },
   imageFallback: { flex: 1, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8 },
-  fallbackText: { fontSize: 12, fontWeight: "600" },
-  cardBody: { minHeight: 190, padding: 13 },
-  stars: { color: "#F5A623", fontSize: 13, lineHeight: 18, letterSpacing: 1 },
-  hotelName: { marginTop: 3, fontSize: 15, lineHeight: 20, fontWeight: "800" },
-  location: { marginTop: 3, fontSize: 12, lineHeight: 18 },
-  priceBlock: { marginTop: "auto", paddingTop: 12, gap: 3 },
-  nightly: { fontSize: 14, lineHeight: 19, fontWeight: "800" },
-  total: { fontSize: 12, lineHeight: 17 },
-  viewRow: { minHeight: 44, marginTop: 10, paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  viewText: { fontSize: 14, fontWeight: "800" },
+  fallbackText: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
+  cardBody: { minHeight: 174, padding: 12 },
+  stars: { color: "#F59E0B", fontSize: 12, lineHeight: 16, letterSpacing: 0.96, fontWeight: "400", fontFamily: appFonts.regular },
+  hotelName: { marginTop: 4, fontSize: 15, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
+  location: { marginTop: 4, fontSize: 12, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
+  priceBlock: { marginTop: "auto", paddingTop: 12, gap: 4 },
+  nightly: { fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
+  total: { fontSize: 12, lineHeight: 16, fontWeight: "400", fontFamily: appFonts.regular },
+  priceUnavailable: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
+  viewRow: { minHeight: 44, marginTop: 10, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  viewText: { fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
 });
