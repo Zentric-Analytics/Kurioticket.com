@@ -11,7 +11,7 @@ const icons = readFileSync("src/features/flow/FlowIcon.tsx", "utf8");
 test("Cars closed selectors share the compact field contract without custom chevrons", () => {
   const closedForm = panel.slice(0, panel.indexOf("export function CarLocationSheet"));
   const fields = [
-    ["Pick-up location", "location"],
+    ["Pickup location", "location"],
     ["Drop-off location", "location"],
     ["Rental dates", "calendar"],
     ["Pick-up / Return time", "clock"],
@@ -22,8 +22,8 @@ test("Cars closed selectors share the compact field contract without custom chev
   for (const [label, icon] of fields) {
     assert.match(closedForm, new RegExp(`<CompactSearchField label="${label.replace("/", "\\/")}"[^\\n]*icon="${icon}"`));
   }
-  assert.match(closedForm, /label="Pick-up location"[^\n]*value=\{form\.pickupLocation \|\| "Airport, city, or address"\}/);
-  assert.match(closedForm, /label="Drop-off location"[^\n]*value=\{form\.dropoffLocation \|\| "Enter city or airport"\}/);
+  assert.match(closedForm, /label="Pickup location"[^\n]*value=\{pickupLocationDisplay\.primary \|\| form\.pickupLocation\.trim\(\) \|\| "Airport, city, or address"\}[^\n]*meta=\{pickupLocationDisplay\.secondary\}[^\n]*metaNumberOfLines=\{1\}/);
+  assert.match(closedForm, /label="Drop-off location"[^\n]*value=\{dropoffLocationDisplay\.primary \|\| form\.dropoffLocation\.trim\(\) \|\| "Enter city or airport"\}[^\n]*meta=\{dropoffLocationDisplay\.secondary\}[^\n]*metaNumberOfLines=\{1\}/);
   for (const copy of ["Pickup date", "Return date", "Select driver age", "Search cars"]) {
     assert.match(closedForm, new RegExp(copy));
   }
@@ -45,7 +45,7 @@ test("Cars presents one unified date field and one unified time field in form or
   assert.doesNotMatch(panel, /<Field label="(?:Pick-up|Drop-off) (?:date|time)"/);
   assert.match(panel, /label="Rental dates"[\s\S]*icon="calendar"/);
   assert.match(panel, /label="Pick-up \/ Return time"[\s\S]*icon="clock"/);
-  const order = ["Pick-up location", "Drop-off location", "Rental dates", "Pick-up / Return time", "Driver age", "PrimaryButton", "Return to a different location"];
+  const order = ["Pickup location", "Drop-off location", "Rental dates", "Pick-up / Return time", "Driver age", "PrimaryButton", "Return to a different location"];
   let cursor = -1; for (const marker of order) { const next=panel.indexOf(marker,cursor+1); assert.ok(next>cursor,`${marker} must follow the preceding control`); cursor=next; }
 });
 

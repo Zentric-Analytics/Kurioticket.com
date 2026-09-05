@@ -35,7 +35,8 @@ test("native entry pages expose the mobile-web product hierarchy", () => {
     for (const field of product.fields) {
       const target = product.product === "Flights" ? flight : product.product === "Hotels" ? hotel : car;
       if (field === "Drop-off location") continue;
-      assert.match(target, new RegExp(`label=["']${field.replace(/[&]/g, "&amp;|&")}`));
+      const nativeLabel = product.product === "Cars" && field === "Pick-up location" ? "Pickup location" : field;
+      assert.match(target, new RegExp(`label=["']${nativeLabel.replace(/[&]/g, "&amp;|&")}`));
     }
   }
   assert.doesNotMatch(screens, /title="Routes"|title="Vehicle types"/);

@@ -59,8 +59,8 @@ test("Cars initializer contains no generated date, time, age, or location defaul
 test("Cars page renders the manual-selection placeholders", () => {
   const panel = readFileSync(`${process.cwd()}/src/features/flow/CarSearchPanel.tsx`, "utf8");
   const model = readFileSync(`${process.cwd()}/src/features/flow/carSearchModel.ts`, "utf8");
-  assert.match(panel, /label="Pick-up location"[^\n]*value=\{form\.pickupLocation \|\| "Airport, city, or address"\}/);
-  assert.match(panel, /label="Drop-off location"[^\n]*value=\{form\.dropoffLocation \|\| "Enter city or airport"\}/);
+  assert.match(panel, /label="Pickup location"[^\n]*value=\{pickupLocationDisplay\.primary \|\| form\.pickupLocation\.trim\(\) \|\| "Airport, city, or address"\}/);
+  assert.match(panel, /label="Drop-off location"[^\n]*value=\{dropoffLocationDisplay\.primary \|\| form\.dropoffLocation\.trim\(\) \|\| "Enter city or airport"\}/);
   for (const placeholder of ["Pickup date", "Return date", "Select pick-up time", "Select return time", "Select driver age"]) assert.match(panel + model, new RegExp(placeholder));
 });
 test("Cars page preserves valid restored and route-provided values", () => {

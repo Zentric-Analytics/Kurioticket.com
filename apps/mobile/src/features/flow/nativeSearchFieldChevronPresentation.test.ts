@@ -18,7 +18,7 @@ test("native search-form location fields suppress only their trailing affordance
   for (const [source, labels] of [
     [flight, ["Origin", "Destination"]],
     [hotel, ["Destination"]],
-    [car, ["Pick-up location", "Drop-off location"]],
+    [car, ["Pickup location", "Drop-off location"]],
     [packages, ["Origin", "Destination"]],
   ] as const) {
     for (const label of labels) {
