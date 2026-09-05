@@ -1,7 +1,7 @@
 import Constants from "expo-constants";
 import { requireNativeViewManager, requireOptionalNativeModule } from "expo-modules-core";
-import { Platform, StyleProp, ViewStyle } from "react-native";
-import type { NativeSyntheticEvent } from "react-native";
+import { Platform } from "react-native";
+import type { NativeSyntheticEvent, StyleProp, ViewStyle } from "react-native";
 import type { NormalizedPasskeyAssertion } from "./nativePasskeys";
 
 type TextEvent = { text: string };
