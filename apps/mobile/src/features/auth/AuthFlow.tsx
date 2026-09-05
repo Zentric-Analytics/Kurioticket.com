@@ -23,7 +23,7 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     cancelPasskeyAutoFill();
   }, []);
 
-  const startSilentPasskeyAutoFill = useCallback(() => {
+  const startSilentPasskeyAutoFill = useCallback(async () => {
     if (step !== "email" || !isPasskeyAutoFillAvailable()) return;
 
     const generation = ++passkeyAttempt.current;
@@ -32,26 +32,34 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     cancelPasskeyAutoFill();
     passkeyController.current = controller;
 
-    void (async () => {
-      try {
-        const { options } = await authApi.passkeyOptions(controller.signal);
-        if (generation !== passkeyAttempt.current) return;
-        const assertion = await startPasskeyAutoFill({ rpId: options.rpId, challenge: options.challenge });
-        if (!assertion || generation !== passkeyAttempt.current) return;
-        await authApi.passkeyVerify(assertion, controller.signal);
-        if (generation === passkeyAttempt.current) setStep("success");
-      } catch {
-        // AutoFill-assisted discovery is intentionally silent. If there is no matching
-        // passkey, the user simply continues with the normal email flow.
-      }
-    })();
+    try {
+      const { options } = await authApi.passkeyOptions(controller.signal);
+      if (generation !== passkeyAttempt.current) return;
+      const assertionPromise = startPasskeyAutoFill({ rpId: options.rpId, challenge: options.challenge });
+      setCredentialAutoFillActive(true);
+      const assertion = await assertionPromise;
+      if (!assertion || generation !== passkeyAttempt.current) return;
+      await authApi.passkeyVerify(assertion, controller.signal);
+      if (generation === passkeyAttempt.current) setStep("success");
+    } catch {
+      // AutoFill-assisted discovery is intentionally silent. If there is no matching
+      // passkey, the user simply continues with the normal email flow.
+    }
   }, [step]);
 
-  const handleCredentialFocus = useCallback(() => {
+  const prepareCredentialAutoFill = useCallback(async () => {
     if (step !== "email") return;
-    setCredentialAutoFillActive(true);
-    startSilentPasskeyAutoFill();
+    if (!isPasskeyAutoFillAvailable()) {
+      setCredentialAutoFillActive(false);
+      return;
+    }
+    await startSilentPasskeyAutoFill();
   }, [startSilentPasskeyAutoFill, step]);
+
+  const handleCredentialFocus = useCallback(() => {
+    if (step !== "email" || credentialAutoFillActive || !isPasskeyAutoFillAvailable()) return;
+    void startSilentPasskeyAutoFill();
+  }, [credentialAutoFillActive, startSilentPasskeyAutoFill, step]);
 
   useEffect(() => {
     if (step === "email") return;
@@ -60,7 +68,7 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
   }, [step, stopPasskeyAutoFill]);
   useEffect(() => {
     if (step !== "email" || !credentialAutoFillActive || !isPasskeyAutoFillAvailable()) return;
-    const timer = setInterval(startSilentPasskeyAutoFill, PASSKEY_AUTOFILL_REFRESH_MS);
+    const timer = setInterval(() => { void startSilentPasskeyAutoFill(); }, PASSKEY_AUTOFILL_REFRESH_MS);
     return () => clearInterval(timer);
   }, [credentialAutoFillActive, startSilentPasskeyAutoFill, step]);
   useEffect(() => () => stopPasskeyAutoFill(), [stopPasskeyAutoFill]);
@@ -94,7 +102,7 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     setStep("success");
   });
   if (step === "welcome") return <AuthWelcomeScreen busy={loading} error={error} onEmail={() => setStep("email")} onGoogle={continueGoogle} onGuest={() => void writeOnboardingCompleted().then(() => router.replace("/"))} />;
-  if (step === "email") return <EmailScreen initialEmail={email} onBack={() => initialStep === "email" ? router.back() : setStep("welcome")} onContinue={requestCode} onCredentialFocus={handleCredentialFocus} loading={loading} error={error} />;
+  if (step === "email") return <EmailScreen initialEmail={email} onBack={() => initialStep === "email" ? router.back() : setStep("welcome")} onContinue={requestCode} onCredentialReady={prepareCredentialAutoFill} onCredentialFocus={handleCredentialFocus} loading={loading} error={error} />;
   if (step === "verify") return <VerificationScreen email={email} onBack={() => setStep("email")} onDifferentEmail={() => setStep("email")} onVerify={verify} onResend={() => requestCode(email)} loading={loading} error={error} initialCooldown={cooldown} />;
   if (step === "password") return <PasswordScreen notice={resetNotice} onBack={() => { setProof(""); setResetNotice(""); setStep("verify"); }} onSubmit={(password) => void run(async () => { setResetNotice(""); const result = await authApi.password(email, password); if ("requiresTwoFactor" in result) { setTwoFactorOrigin("password"); setChallengeToken(result.challengeToken); setStep("twoFactor"); } else setStep("success"); })} onForgot={() => void run(async () => { setResetNotice(""); await authApi.sendForgotPasswordCode(email, proof); setStep("forgotPassword"); })} loading={loading} error={error} />;
   if (step === "forgotPassword") return <ForgotPasswordScreen email={email} onBack={() => setStep("password")} onResend={() => void run(async () => { await authApi.sendForgotPasswordCode(email, proof); })} onReset={(input) => void run(async () => { await authApi.resetForgotPassword({ email, ...input }); setProof(""); setResetNotice("Password reset. Sign in again."); setStep("password"); })} loading={loading} error={error} />;
