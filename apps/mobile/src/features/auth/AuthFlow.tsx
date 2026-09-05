@@ -10,12 +10,14 @@ import { requireGoogleWebClientId } from "./googleConfig";
 import { isNativePasskeyUsernameFieldAvailable } from "../passkeys/NativePasskeyUsernameField";
 
 const PASSKEY_OPTIONS_REFRESH_MS = 4 * 60_000;
+const PASSKEY_EMAIL_REFRESH_AGE_MS = 3 * 60_000;
+const PASSKEY_OPTIONS_RETRY_MS = 30_000;
 
 type Step = "welcome" | "email" | "verify" | "password" | "forgotPassword" | "twoFactor" | "create" | "success";
 type TwoFactorOrigin = "password" | "google";
 export function isTerminalTwoFactorError(error: unknown) { return error instanceof AuthApiError && (error.status === 410 || error.status === 429); }
 export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { initialStep?: "welcome" | "email"; successRoute?: "/" | import("./signInIntent").ProtectedRoute } = {}) {
-  const [step, setStep] = useState<Step>(initialStep); const [passkeyOptions, setPasskeyOptions] = useState<PasskeyAuthenticationOptions | null>(null); const passkeyOptionsGeneration = useRef(0); const passkeyOptionsController = useRef<AbortController | null>(null); const passkeyVerifyGeneration = useRef(0); const passkeyVerifyController = useRef<AbortController | null>(null); const [email, setEmail] = useState(""); const [challengeToken, setChallengeToken] = useState(""); const [twoFactorOrigin, setTwoFactorOrigin] = useState<TwoFactorOrigin>("password"); const [proof, setProof] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState(""); const [cooldown, setCooldown] = useState(28); const [forceGoogleAccountSelection, setForceGoogleAccountSelection] = useState(false); const [resetNotice, setResetNotice] = useState("");
+  const [step, setStep] = useState<Step>(initialStep); const [passkeyOptions, setPasskeyOptions] = useState<PasskeyAuthenticationOptions | null>(null); const [passkeyOptionsAcquiredAt, setPasskeyOptionsAcquiredAt] = useState(0); const passkeyOptionsGeneration = useRef(0); const passkeyOptionsController = useRef<AbortController | null>(null); const passkeyVerifyGeneration = useRef(0); const passkeyVerifyController = useRef<AbortController | null>(null); const [email, setEmail] = useState(""); const [challengeToken, setChallengeToken] = useState(""); const [twoFactorOrigin, setTwoFactorOrigin] = useState<TwoFactorOrigin>("password"); const [proof, setProof] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState(""); const [cooldown, setCooldown] = useState(28); const [forceGoogleAccountSelection, setForceGoogleAccountSelection] = useState(false); const [resetNotice, setResetNotice] = useState("");
 
   const refreshPasskeyOptions = useCallback(async () => {
     if (!isNativePasskeyUsernameFieldAvailable()) return;
@@ -25,7 +27,10 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     passkeyOptionsController.current = controller;
     try {
       const { options } = await authApi.passkeyOptions(controller.signal);
-      if (generation === passkeyOptionsGeneration.current) setPasskeyOptions(options);
+      if (generation === passkeyOptionsGeneration.current) {
+        setPasskeyOptions(options);
+        setPasskeyOptionsAcquiredAt(Date.now());
+      }
     } catch {
       // Passkey AutoFill is optional. A failed background prefetch must never alter
       // the ordinary email sign-in path or display a passkey-specific error.
@@ -34,17 +39,42 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     }
   }, []);
 
-  // Prepare a username-less passkey challenge while Welcome is already visible. The
-  // native iOS username control can therefore start AuthenticationServices before it
-  // becomes first responder instead of waiting on network work after Email opens.
+  // Prepare a username-less passkey challenge while Welcome is already visible.
+  // Refresh scheduling is anchored to the time the challenge was acquired rather
+  // than to screen transitions, so moving between Welcome and Email cannot extend
+  // a server challenge past its five-minute lifetime. Email requests an early
+  // refresh at three minutes while a still-valid challenge can remain usable.
   useEffect(() => {
-    if ((step === "welcome" || step === "email") && !passkeyOptions) void refreshPasskeyOptions();
-  }, [passkeyOptions, refreshPasskeyOptions, step]);
-  useEffect(() => {
-    if (step !== "welcome" && step !== "email") return;
-    const timer = setInterval(() => { void refreshPasskeyOptions(); }, PASSKEY_OPTIONS_REFRESH_MS);
-    return () => clearInterval(timer);
-  }, [refreshPasskeyOptions, step]);
+    if ((step !== "welcome" && step !== "email") || !isNativePasskeyUsernameFieldAvailable()) return;
+
+    const age = passkeyOptions && passkeyOptionsAcquiredAt
+      ? Math.max(0, Date.now() - passkeyOptionsAcquiredAt)
+      : Number.POSITIVE_INFINITY;
+    const needsRefresh = !passkeyOptions
+      || !passkeyOptionsAcquiredAt
+      || age >= PASSKEY_OPTIONS_REFRESH_MS
+      || (step === "email" && age >= PASSKEY_EMAIL_REFRESH_AGE_MS);
+
+    if (needsRefresh) {
+      void refreshPasskeyOptions();
+      const retryTimer = setTimeout(() => { void refreshPasskeyOptions(); }, PASSKEY_OPTIONS_RETRY_MS);
+      return () => clearTimeout(retryTimer);
+    }
+
+    const delay = Math.max(0, PASSKEY_OPTIONS_REFRESH_MS - age);
+    const timer = setTimeout(() => { void refreshPasskeyOptions(); }, delay);
+    return () => clearTimeout(timer);
+  }, [passkeyOptions, passkeyOptionsAcquiredAt, refreshPasskeyOptions, step]);
+
+  // Never hand a challenge that has reached the refresh boundary to the native
+  // authorization controller. This leaves at least the server-side safety margin
+  // before its five-minute expiry even if the app was suspended in the background.
+  const emailPasskeyOptions = step === "email"
+    && passkeyOptions
+    && passkeyOptionsAcquiredAt
+    && Date.now() - passkeyOptionsAcquiredAt < PASSKEY_OPTIONS_REFRESH_MS
+    ? passkeyOptions
+    : null;
 
   const stopPasskeyVerification = useCallback(() => {
     passkeyVerifyGeneration.current += 1;
@@ -94,7 +124,7 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     if (result.status === "cancelled") return;
     try {
       const authResult = await authApi.google(result.idToken, result.nonce);
-      if ("requiresTwoFactor" in authResult) { setTwoFactorOrigin("google"); setChallengeToken(result.challengeToken); setStep("twoFactor"); return; }
+      if ("requiresTwoFactor" in authResult) { setTwoFactorOrigin("google"); setChallengeToken(authResult.challengeToken); setStep("twoFactor"); return; }
     } catch (googleError) {
       if (googleError instanceof AuthApiError && googleError.code === "PREVIEW_ACCESS_REQUIRED") {
         await resetNativeGoogleSignInSelection().catch(() => {});
@@ -106,7 +136,7 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     setStep("success");
   });
   if (step === "welcome") return <AuthWelcomeScreen busy={loading} error={error} onEmail={() => setStep("email")} onGoogle={continueGoogle} onGuest={() => void writeOnboardingCompleted().then(() => router.replace("/"))} />;
-  if (step === "email") return <EmailScreen initialEmail={email} passkeyOptions={passkeyOptions} onPasskey={continuePasskeyAssertion} onBack={() => initialStep === "email" ? router.back() : setStep("welcome")} onContinue={requestCode} loading={loading} error={error} />;
+  if (step === "email") return <EmailScreen initialEmail={email} passkeyOptions={emailPasskeyOptions} onPasskey={continuePasskeyAssertion} onBack={() => initialStep === "email" ? router.back() : setStep("welcome")} onContinue={requestCode} loading={loading} error={error} />;
   if (step === "verify") return <VerificationScreen email={email} onBack={() => setStep("email")} onDifferentEmail={() => setStep("email")} onVerify={verify} onResend={() => requestCode(email)} loading={loading} error={error} initialCooldown={cooldown} />;
   if (step === "password") return <PasswordScreen notice={resetNotice} onBack={() => { setProof(""); setResetNotice(""); setStep("verify"); }} onSubmit={(password) => void run(async () => { setResetNotice(""); const result = await authApi.password(email, password); if ("requiresTwoFactor" in result) { setTwoFactorOrigin("password"); setChallengeToken(result.challengeToken); setStep("twoFactor"); } else setStep("success"); })} onForgot={() => void run(async () => { setResetNotice(""); await authApi.sendForgotPasswordCode(email, proof); setStep("forgotPassword"); })} loading={loading} error={error} />;
   if (step === "forgotPassword") return <ForgotPasswordScreen email={email} onBack={() => setStep("password")} onResend={() => void run(async () => { await authApi.sendForgotPasswordCode(email, proof); })} onReset={(input) => void run(async () => { await authApi.resetForgotPassword({ email, ...input }); setProof(""); setResetNotice("Password reset. Sign in again."); setStep("password"); })} loading={loading} error={error} />;
