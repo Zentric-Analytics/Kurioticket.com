@@ -112,7 +112,7 @@ test("hotel uses one stable summary above a native sticky filter rail", () => {
   assert.match(hotelLayout,/<HotelResultsHeader[\s\S]*?<ScrollView[\s\S]*?ref=\{hotelScrollRef\}[\s\S]*?stickyHeaderIndices=\{\[0\]\}[\s\S]*?style=\{\[s0\.hotelFilterSectionHeader,[\s\S]*?\{filterRail\}[\s\S]*?s0\.body[\s\S]*?\{resultContent\}/);
   assert.equal(hotelLayout.match(/<HotelResultsHeader/g)?.length, 1);
   assert.doesNotMatch(hotelLayout,/hotelIntroBoundary|setHotelIntroBoundary|hotelCompactHeader|setHotelCompactHeader|visible \? -4 : 4/);
-  assert.match(screen,/contentOffset\.y > 600/);
+  assert.match(screen,/scrollY > 600/);
   assert.match(screen,/visible === hotelBackToTopVisibleRef\.current/);
   assert.doesNotMatch(flightLayout, /hotelIntroBoundary|setHotelCompactHeader/);
 });
@@ -122,7 +122,7 @@ test("Hotel Results reclaims BottomNav space while retaining the native bottom s
 
   assert.match(screen, /const insets = useSafeAreaInsets\(\)/);
   assert.match(sharedBody, /paddingBottom: 92/);
-  assert.match(screen, /style=\{\[s0\.body, \{ paddingBottom: Math\.max\(insets\.bottom \+ 72, 72\) \}\]\}/);
+  assert.match(screen, /style=\{\[s0\.body, \{ paddingBottom: Math\.max\(insets\.bottom \+ 16, 16\) \}\]\}/);
   assert.match(screen, /\{flightResults \? <BottomNav flightResults \/> : null\}/);
   assert.doesNotMatch(screen, /<BottomNav flightResults=\{flightResults\} \/>/);
   assert.doesNotMatch(backToTop, /bottom:/);
@@ -133,7 +133,10 @@ test("Hotel Results reclaims BottomNav space while retaining the native bottom s
 test("Hotel Back-to-top keeps its geometry and scrolling behavior above the safe area", () => {
   const backToTop = styleBlock("hotelBackToTop", "filterRail");
 
-  assert.match(screen, /contentOffset\.y > 600/);
+  assert.match(screen, /const HOTEL_BACK_TO_TOP_HIDE_NEAR_END = 120/);
+  assert.match(screen, /const scrollY = Math\.max\(0, event\.nativeEvent\.contentOffset\.y\)/);
+  assert.match(screen, /const distanceFromEnd = Math\.max\([\s\S]*?event\.nativeEvent\.contentSize\.height[\s\S]*?- event\.nativeEvent\.layoutMeasurement\.height[\s\S]*?- scrollY/);
+  assert.match(screen, /scrollY > 600[\s\S]*?&& distanceFromEnd > HOTEL_BACK_TO_TOP_HIDE_NEAR_END/);
   assert.match(screen, /hotelBackToTopVisibleRef\.current = visible;[\s\S]*?setHotelBackToTop\(visible\)/);
   assert.match(screen, /accessibilityLabel="Back to top"[\s\S]*?scrollTo\(\{y:0,animated:true\}\)/);
   assert.match(backToTop, /position:"absolute"/);
