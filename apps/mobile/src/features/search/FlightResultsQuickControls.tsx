@@ -76,13 +76,11 @@ export function FlightResultsQuickControls({
   openSheetKind: "sort" | "all" | "airlines" | "stops" | "airports" | null;
   openSheet: (sheet: "sort" | "all" | "airlines" | "stops" | "airports") => void;
 }) {
-  const { theme } = useAppTheme();
   const safeSort = sort === "price" || sort === "duration" ? sort : "best";
-  const railSurface = theme.background;
 
   return (
     <ScrollView horizontal
-      style={[styles.rail, { backgroundColor: railSurface }]}
+      style={styles.rail}
       contentContainerStyle={styles.content}
       showsHorizontalScrollIndicator={false}
       alwaysBounceHorizontal={false}
@@ -130,7 +128,7 @@ export function FlightResultsQuickControls({
 const styles = StyleSheet.create({
   rail: { height: 44, flexGrow: 0 },
   content: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     gap: 6,
     alignItems: "center",
     flexWrap: "nowrap",
