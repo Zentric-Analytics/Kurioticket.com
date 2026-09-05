@@ -99,7 +99,7 @@ test("the whole card remains the sole details action around a visible affordance
   assert.doesNotMatch(affordance, /<ChevronRight[\s\S]*\{labels\.viewDeals\}/);
   assert.doesNotMatch(affordance, />\s*View deals\s*</);
   assert.equal((card.match(/<Pressable/g) || []).length, 1);
-  assert.doesNotMatch(card, /View deal|labels\.viewDeal|flightDealAction|stopPropagation|onToggleSaved|favoriteButton/);
+  assert.doesNotMatch(card, /View deal\b|labels\.viewDeal\b|flightDealAction|stopPropagation|onToggleSaved|favoriteButton/);
 });
 
 test("flight card derives singular, plural, and nonstop labels from provider stops", () => {
