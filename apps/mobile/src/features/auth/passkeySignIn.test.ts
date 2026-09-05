@@ -15,11 +15,22 @@ test("welcome keeps passkeys out of the top-level auth choices", () => {
 test("passkey challenge is prefetched while Welcome is visible", () => {
   const flow = source("src/features/auth/AuthFlow.tsx");
   assert.match(flow, /PASSKEY_OPTIONS_REFRESH_MS = 4 \* 60_000/);
-  assert.match(flow, /step === "welcome" \|\| step === "email"/);
   assert.match(flow, /authApi\.passkeyOptions\(controller\.signal\)/);
   assert.match(flow, /setPasskeyOptions\(options\)/);
+  assert.match(flow, /setPasskeyOptionsAcquiredAt\(Date\.now\(\)\)/);
   assert.match(flow, /if \(step === "welcome"\) return <AuthWelcomeScreen/);
   assert.doesNotMatch(flow, /PASSKEY_AUTOFILL_FOCUS_FALLBACK_MS|startSilentPasskeyAutoFill|waitForPasskeyAutoFillStart/);
+});
+
+test("passkey challenge freshness is anchored to acquisition time across Welcome and Email", () => {
+  const flow = source("src/features/auth/AuthFlow.tsx");
+  assert.match(flow, /PASSKEY_EMAIL_REFRESH_AGE_MS = 3 \* 60_000/);
+  assert.match(flow, /PASSKEY_OPTIONS_RETRY_MS = 30_000/);
+  assert.match(flow, /Date\.now\(\) - passkeyOptionsAcquiredAt/);
+  assert.match(flow, /step === "email" && age >= PASSKEY_EMAIL_REFRESH_AGE_MS/);
+  assert.match(flow, /PASSKEY_OPTIONS_REFRESH_MS - age/);
+  assert.match(flow, /Date\.now\(\) - passkeyOptionsAcquiredAt < PASSKEY_OPTIONS_REFRESH_MS/);
+  assert.match(flow, /passkeyOptions=\{emailPasskeyOptions\}/);
 });
 
 test("iOS email uses a native username field that owns AutoFill and focus", () => {
@@ -75,6 +86,13 @@ test("passkey assertion verification remains silent and session-safe", () => {
   assert.doesNotMatch(flow, /No Kurioticket passkey was found|Too many passkey attempts|Passkey sign-in could not be completed/);
   assert.match(api, /passkeyVerify:[\s\S]*if \(signal\?\.aborted\) throw new AuthApiError\("Passkey sign-in cancelled\.", 0, "ABORTED"\)/);
   assert.match(api, /await writeSession\([\s\S]*if \(signal\?\.aborted\) \{\s*await clearSession\(\)/);
+});
+
+test("Google two-factor flow stores the API challenge token", () => {
+  const flow = source("src/features/auth/AuthFlow.tsx");
+  assert.match(flow, /const authResult = await authApi\.google\(result\.idToken, result\.nonce\)/);
+  assert.match(flow, /setChallengeToken\(authResult\.challengeToken\)/);
+  assert.doesNotMatch(flow, /setChallengeToken\(result\.challengeToken\)/);
 });
 
 test("existing native passkey adapter remains available for registration and management", () => {
