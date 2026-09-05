@@ -47,7 +47,10 @@ import {
 } from "@/components/search/useHotelDestinationAutocomplete";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { formatTravelDateDisplay, formatTravelDateRangeDisplay } from "@/lib/dateFormatting/travelDateDisplay";
-import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
+import {
+  formatCompactHotelDateRange,
+  normalizeHotelCalendarLocale,
+} from "@/lib/hotelsDateFormatting";
 import {
   buildHotelRecentSearch,
   syncBackendRecentSearch,
@@ -81,29 +84,6 @@ const todayLocal = () => startOfLocalDay(new Date());
 
 const isBeforeToday = (date: Date) =>
   startOfLocalDay(date).getTime() < todayLocal().getTime();
-
-function formatCompactHotelDateRange(
-  startIso: string,
-  endIso: string,
-  locale: string,
-) {
-  const start = parseIsoDate(startIso);
-  const end = parseIsoDate(endIso);
-  if (!start || !end) return null;
-
-  const sameYear = start.getFullYear() === end.getFullYear();
-  const sameMonth = sameYear && start.getMonth() === end.getMonth();
-  const formatter = (date: Date, includeMonth: boolean, includeYear: boolean) =>
-    new Intl.DateTimeFormat(locale, {
-      ...(includeMonth ? { month: "short" as const } : {}),
-      day: "numeric",
-      ...(includeYear ? { year: "numeric" as const } : {}),
-    }).format(date);
-
-  const startLabel = formatter(start, true, !sameYear);
-  const endLabel = formatter(end, !sameMonth, true);
-  return `${startLabel} – ${endLabel}`;
-}
 
 const addMonths = (date: Date, offset: number) =>
   new Date(date.getFullYear(), date.getMonth() + offset, 1);
