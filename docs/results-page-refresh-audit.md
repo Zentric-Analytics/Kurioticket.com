@@ -16,6 +16,7 @@ Scope: flight results refresh behavior, flight/hotel/car results presentation, a
 - Targeted Node tests: 38 passed, 0 failed.
 - Mobile TypeScript and case-insensitive path validation: passed.
 - Staging Chromium at 393 px: repeated Edit Search, overlay geometry, overflow, and scroll restoration passed for cars, flights, and hotels. Cars and flights passed the initial combined run; hotels passed after the audit selector was corrected.
+- After PR #5026 merged, the Preview worker reported `COMPLETE` for merge `108ece645`, staging rendered that build identity, and the complete three-product Chromium 393 px audit passed again (3/3).
 - Physical Moto g play (2023), Preview build 49, runtime `e7f1fa95934875ebe882fde5453fc924ca1846d1`, OTA `01a06ed2-6805-7566-b499-57d3cddd953c`:
   - cold direct flight results showed the branded loader and reached 10 live IAH–LAX results;
   - cold direct hotel results showed the branded stay loader and reached a live Los Angeles result;

@@ -23,9 +23,12 @@ Last updated: 2026-09-04
 - Staging Chromium 393 px repeated Edit Search/geometry/scroll checks pass for flights, hotels, and cars.
 - Evidence-only repository memory rules, schema, template, and initial ledger record are present under `docs/repository-memory/`; Zentric approval remains `not-recorded`.
 
-## Remaining delivery work
+## Delivery status
 
-- Commit the verified branch, open the required pull request, satisfy scoped checks, merge to `dev`, and verify the Preview/staging deployment. Do not deploy Production.
+- PR #5026 passed every required check and merged to `dev` as `108ece645`.
+- The Preview release worker reported `COMPLETE` for `108ece645`; no native build was required.
+- Staging rendered build identity `108ece645`, remained healthy, and passed the post-deployment Chromium 393 px results audit for flights, hotels, and cars (3/3).
+- Production was not deployed or exercised.
 
 ## Known repository-wide failures
 
