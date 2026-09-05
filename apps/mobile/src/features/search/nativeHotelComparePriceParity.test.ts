@@ -49,6 +49,14 @@ test("native provider offer uses canonical inline amenity icons and web-like pri
   assert.match(hotel, /d\.hotelOfferPriceRow[\s\S]*?nightlyPrice\?\.formatted[\s\S]*?d\.hotelOfferBottom[\s\S]*?per night/);
 });
 
+test("native actionable provider offer follows the web card's compact vertical rhythm", () => {
+  assert.match(hotel, /style=\{\[d\.hotelOffer, \{[\s\S]*?borderColor: selected \? hotelAccent : theme\.border,[\s\S]*?gap: 0,[\s\S]*?\}\]\}/);
+  assert.match(styleRule(detailSource, "hotelOffer", "hotelOfferTop"), /padding: 16[\s\S]*gap: 16/);
+  assert.match(styleRule(detailSource, "hotelOfferPriceRow", "hotelNightly"), /minWidth: 0[\s\S]*marginTop: 12[\s\S]*alignItems: "flex-end"/);
+  assert.match(styleRule(detailSource, "hotelOfferBottom", "hotelOfferPriceRow"), /marginTop: 2[\s\S]*flexDirection: "row"[\s\S]*alignItems: "center"[\s\S]*justifyContent: "space-between"[\s\S]*gap: 6/);
+  assert.match(hotel, /d\.hotelOfferPriceRow[\s\S]*?d\.hotelOfferBottom/);
+});
+
 test("native provider offer resolves only canonical Wi-Fi semantics to the English web label", () => {
   const [wifi, restaurant, bar] = buildHotelAmenityPresentation(["Wi-Fi", "Restaurant", "Bar"], 3);
   assert.ok(wifi && restaurant && bar);
@@ -94,6 +102,11 @@ test("web reference retains logo, canonical amenities, nightly price, and intern
   assert.match(webCompare, /<HotelAmenityList[\s\S]*?items=\{offer\.amenities \?\? \[\]\}/);
   assert.match(webCompare, /offer\.nightlyPrice/);
   assert.match(webCompare, /data-nightly-supporting-label/);
+  assert.match(webCompare, /py-4/);
+  assert.match(webCompare, /mt-3/);
+  assert.match(webCompare, /mt-0\.5/);
+  assert.match(webCompare, /data-provider-price/);
+  assert.match(webCompare, /data-provider-bottom-row/);
   assert.match(webCompare, /h-\[22px\] w-\[22px\][^"\n]*border-2 bg-white/);
   assert.match(webCompare, /h-2\.5 w-2\.5 rounded-full bg-\[#075EE8\]/);
   assert.match(webCompare, /flex min-w-0 flex-nowrap items-center gap-x-4/);
