@@ -14,15 +14,14 @@ test("full and quick sheet bodies have distinct sizing contracts",()=>{
   assert.match(shell,/fullScreen: \{ flex: 1, minHeight: 0/);
   assert.doesNotMatch(shell,/quickContent: \{[^}]*flex: 1/);
 });
-test("footer preserves default safe-area behavior while allowing opt-in minimum full-screen spacing",()=>{
+test("full-screen Flight filters use the modal viewport's native safe area",()=>{
   assert.ok(shell.indexOf("styles.quickContent") < shell.indexOf("styles.footer"));
   const footerStyle=/footer: \{([^}]*)\}/.exec(shell)?.[1] ?? "";
   assert.doesNotMatch(footerStyle,/position:\s*["']absolute["']/);
   assert.match(footerStyle,/flexShrink: 0/);
-  assert.match(shell,/fullScreenFooterMinimumBottomPadding\?: number/);
-  assert.match(shell,/fullScreen && fullScreenFooterMinimumBottomPadding != null/);
-  assert.match(shell,/Math\.max\(inset\.bottom, fullScreenFooterMinimumBottomPadding\)/);
-  assert.match(shell,/Math\.max\(inset\.bottom, fullScreen \? 16 : 12\)/);
+  assert.match(shell,/import \{ SafeAreaProvider, SafeAreaView, useSafeAreaInsets \}/);
+  assert.match(shell,/<Modal[\s\S]*?<SafeAreaProvider><SafeAreaView edges=\{\["top", "bottom", "left", "right"\]\}/);
+  assert.match(shell,/fullScreen \? 12 : Math\.max\(inset\.bottom, 12\)/);
   assert.match(shell,/paddingBottom: footerBottomPadding/);
-  assert.doesNotMatch(shell,/inset\.bottom \+ fullScreenFooter/);
+  assert.doesNotMatch(shell,/paddingTop: fullScreen \? inset\.top|fullScreenFooter(?:Minimum|Extra)BottomPadding/);
 });

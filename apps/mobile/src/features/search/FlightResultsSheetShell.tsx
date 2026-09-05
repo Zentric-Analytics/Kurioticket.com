@@ -1,21 +1,22 @@
 import { type ReactNode, useEffect, useRef } from "react";
 import { BlurView } from "expo-blur";
 import { Animated, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 
-export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, children, footer, fullScreen = false, subtitle, headerAction, fullScreenFooterMinimumBottomPadding }: {
+export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, children, footer, fullScreen = false, subtitle, headerAction }: {
   visible: boolean; title: string; closeLabel: string; onClose: () => void; children: ReactNode; footer?: ReactNode;
-  fullScreen?: boolean; subtitle?: string; headerAction?: ReactNode; fullScreenFooterMinimumBottomPadding?: number;
+  fullScreen?: boolean; subtitle?: string; headerAction?: ReactNode;
 }) {
   const { theme } = useAppTheme();
   const inset = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const footerBottomPadding = fullScreen && fullScreenFooterMinimumBottomPadding != null
-    ? Math.max(inset.bottom, fullScreenFooterMinimumBottomPadding)
-    : Math.max(inset.bottom, fullScreen ? 16 : 12);
+  // Full-screen content is placed inside a native SafeAreaView below. Its
+  // footer padding is visual spacing *within* that safe area, not a guessed
+  // replacement for the device inset.
+  const footerBottomPadding = fullScreen ? 12 : Math.max(inset.bottom, 12);
   const quickBackdropOpacity = useRef(new Animated.Value(0)).current;
   const quickSheetTranslateY = useRef(new Animated.Value(28)).current;
 
@@ -43,7 +44,7 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
   }, [fullScreen, quickBackdropOpacity, quickSheetTranslateY, visible]);
 
   const sheet = (
-    <View accessibilityLabel={title} style={[styles.sheet, fullScreen ? styles.fullScreen : { maxHeight: Math.min(height * .76, 620) }, { backgroundColor: theme.background, paddingTop: fullScreen ? inset.top : 0 }]}>
+    <View accessibilityLabel={title} style={[styles.sheet, fullScreen ? styles.fullScreen : { maxHeight: Math.min(height * .76, 620) }, { backgroundColor: theme.background }]}>
       <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
         <View style={styles.headerCopy}>
           <Text accessibilityRole="header" style={[styles.title, { color: theme.textPrimary }]}>{title}</Text>
@@ -60,7 +61,7 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
   );
 
   return <Modal visible={visible} transparent={!fullScreen} animationType={fullScreen ? "slide" : "none"} presentationStyle={fullScreen ? "fullScreen" : "overFullScreen"} onRequestClose={onClose} accessibilityViewIsModal>
-    {fullScreen ? <View style={[styles.fullBackdrop, { backgroundColor: theme.background }]} onAccessibilityEscape={onClose}>{sheet}</View> :
+    {fullScreen ? <SafeAreaProvider><SafeAreaView edges={["top", "bottom", "left", "right"]} style={[styles.fullBackdrop, { backgroundColor: theme.background }]} onAccessibilityEscape={onClose}>{sheet}</SafeAreaView></SafeAreaProvider> :
       <View style={styles.overlay} onAccessibilityEscape={onClose}>
         <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: quickBackdropOpacity }]}>
           <BlurView intensity={18} tint={theme.dark ? "dark" : "light"} experimentalBlurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined} style={StyleSheet.absoluteFill}/>
