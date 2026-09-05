@@ -37,13 +37,16 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
       if (generation !== passkeyAttempt.current) return;
       const assertionPromise = startPasskeyAutoFill({ rpId: options.rpId, challenge: options.challenge });
       setCredentialAutoFillActive(true);
-      const assertion = await assertionPromise;
-      if (!assertion || generation !== passkeyAttempt.current) return;
-      await authApi.passkeyVerify(assertion, controller.signal);
-      if (generation === passkeyAttempt.current) setStep("success");
+      void assertionPromise.then(async (assertion) => {
+        if (!assertion || generation !== passkeyAttempt.current) return;
+        await authApi.passkeyVerify(assertion, controller.signal);
+        if (generation === passkeyAttempt.current) setStep("success");
+      }).catch(() => {
+        // AutoFill-assisted discovery is intentionally silent. If there is no matching
+        // passkey, the user simply continues with the normal email flow.
+      });
     } catch {
-      // AutoFill-assisted discovery is intentionally silent. If there is no matching
-      // passkey, the user simply continues with the normal email flow.
+      // Failing to prime AutoFill must not block or alter the normal email flow.
     }
   }, [step]);
 
