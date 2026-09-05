@@ -44,9 +44,9 @@ test("active controls use subtle count badges without filling the whole chip", (
   assert.match(controls, /count=\{stopsCount \|\| undefined\}/);
 });
 
-test("controls use compact capsules inside accessible touch targets", () => {
+test("controls use compact capsules inside accessible 44 by 44 touch targets", () => {
   assert.match(controls, /rail: \{ height: 44/);
-  assert.match(controls, /touchTarget: \{[\s\S]*?minHeight: 44/);
+  assert.match(controls, /touchTarget: \{[\s\S]*?minWidth: 44,[\s\S]*?minHeight: 44/);
   assert.match(controls, /capsule: \{[\s\S]*?height: 36/);
   assert.match(controls, /borderRadius: 9/);
   assert.match(controls, /paddingHorizontal: 10/);
