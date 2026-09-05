@@ -149,6 +149,7 @@ final class KurioticketPasskeyUsernameView: ExpoView, UITextFieldDelegate, ASAut
 
     let provider = ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: rpId)
     let request = provider.createCredentialAssertionRequest(challenge: challengeData)
+    request.userVerificationPreference = .required
     let controller = ASAuthorizationController(authorizationRequests: [request])
     controller.delegate = self
     controller.presentationContextProvider = self
@@ -156,9 +157,9 @@ final class KurioticketPasskeyUsernameView: ExpoView, UITextFieldDelegate, ASAut
     authorizationController = controller
     activeChallenge = challenge
 
-    // Keep the AutoFill-assisted request and the username field on the same native
-    // lifecycle. The request is started first, then the same native control becomes
-    // first responder, so JavaScript/network scheduling cannot race QuickType setup.
+    // Start conditional passkey discovery before the username field becomes first
+    // responder. Requiring user verification makes a selected Kurioticket passkey
+    // complete through Face ID/Touch ID rather than degrading to password AutoFill.
     controller.performAutoFillAssistedRequests()
     emitDiagnostic(stage: "autofill_started")
     focusIfNeeded()
@@ -167,9 +168,6 @@ final class KurioticketPasskeyUsernameView: ExpoView, UITextFieldDelegate, ASAut
   private func scheduleFocusFallback() {
     guard !textField.isFirstResponder, focusFallbackWorkItem == nil else { return }
 
-    // The challenge is normally prefetched on the Welcome screen. This grace period
-    // only protects ordinary email sign-in when that background request is unusually
-    // slow or unavailable; it is not used to sequence AuthenticationServices startup.
     let workItem = DispatchWorkItem { [weak self] in
       guard let self else { return }
       self.focusFallbackWorkItem = nil
@@ -215,13 +213,9 @@ final class KurioticketPasskeyUsernameView: ExpoView, UITextFieldDelegate, ASAut
   }
 
   func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
-    if let window = window {
-      return window
-    }
+    if let window = window { return window }
     let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-    if let keyWindow = scenes.flatMap({ $0.windows }).first(where: { $0.isKeyWindow }) {
-      return keyWindow
-    }
+    if let keyWindow = scenes.flatMap({ $0.windows }).first(where: { $0.isKeyWindow }) { return keyWindow }
     return UIWindow(frame: UIScreen.main.bounds)
   }
 
@@ -255,17 +249,14 @@ final class KurioticketPasskeyUsernameView: ExpoView, UITextFieldDelegate, ASAut
 
   func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
     guard authorizationController === controller else { return }
-    let nativeError = error as NSError
-    emitDiagnostic(stage: "authorization_error", error: nativeError)
+    emitDiagnostic(stage: "authorization_error", error: error as NSError)
     finishAuthorization(controller)
   }
 
   private func emitDiagnostic(stage: String, error: NSError? = nil) {
     guard diagnosticsEnabled else { return }
     var payload: [String: Any] = ["stage": stage]
-    if let rpId = relyingPartyIdentifier {
-      payload["rpId"] = rpId
-    }
+    if let rpId = relyingPartyIdentifier { payload["rpId"] = rpId }
     if let error {
       payload["domain"] = error.domain
       payload["code"] = error.code
@@ -276,9 +267,7 @@ final class KurioticketPasskeyUsernameView: ExpoView, UITextFieldDelegate, ASAut
   private static func decodeBase64Url(_ value: String) -> Data? {
     var normalized = value.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
     let remainder = normalized.count % 4
-    if remainder != 0 {
-      normalized.append(String(repeating: "=", count: 4 - remainder))
-    }
+    if remainder != 0 { normalized.append(String(repeating: "=", count: 4 - remainder)) }
     return Data(base64Encoded: normalized)
   }
 
