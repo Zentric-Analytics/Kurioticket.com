@@ -74,7 +74,7 @@ export function FlightFilterSheet({visible,section,filters,options,results,price
   closeLabel="Close flight filters"
   onClose={close}
   headerAction={full&&activeCount?<Pressable accessibilityRole="button" accessibilityLabel="Clear all flight filters" onPress={()=>onChange(emptyFlightFilters())} style={s.headerClear}><Text style={s.footerClearText}>Clear all</Text></Pressable>:undefined}
-  footer={full?<View style={s.footerPrimary}><Pressable accessibilityRole="button" accessibilityState={{disabled:count===0}} disabled={count===0} onPress={()=>{setDragging(false);onComplete()}} style={[s.viewButton,count===0&&s.viewButtonDisabled]}><Text style={s.viewText}>{footerLabel}</Text></Pressable></View>:<View style={s.footerActions}><Pressable accessibilityRole="button" onPress={resetQuick} style={[s.reset,{borderColor:theme.border}]}><Text style={[s.buttonText,{color:theme.textPrimary}]}>Reset</Text></Pressable><Pressable accessibilityRole="button" onPress={()=>{onChange(draft);onClose()}} style={s.apply}><Text style={[s.buttonText,{color:"white"}]}>Apply</Text></Pressable></View>}
+  footer={full?<Pressable accessibilityRole="button" accessibilityState={{disabled:count===0}} disabled={count===0} onPress={()=>{setDragging(false);onComplete()}} style={[s.viewButton,count===0&&s.viewButtonDisabled]}><Text style={s.viewText}>{footerLabel}</Text></Pressable>:<View style={s.footerActions}><Pressable accessibilityRole="button" onPress={resetQuick} style={[s.reset,{borderColor:theme.border}]}><Text style={[s.buttonText,{color:theme.textPrimary}]}>Reset</Text></Pressable><Pressable accessibilityRole="button" onPress={()=>{onChange(draft);onClose()}} style={s.apply}><Text style={[s.buttonText,{color:"white"}]}>Apply</Text></Pressable></View>}
  >
  <ScrollView style={full?s.fullScroll:s.quickScroll} scrollEnabled={!dragging} contentContainerStyle={full?s.content:s.compactContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
  {full&&isPriceFilteringAvailable(options,priceFilteringReady)&&<FlightFilterSection title="Price">{slider("maximumPrice",options.price!,"Maximum price",v=>formatCurrency(v,options.priceCurrency??currency),priceRangeStep(options.price!.min,options.price!.max))}</FlightFilterSection>}
@@ -129,7 +129,6 @@ const s=StyleSheet.create({
  footerClear:{minWidth:88,minHeight:50,alignItems:"center",justifyContent:"center"},
  footerClearText:{color:ui.blue,fontSize:14,fontWeight:"700"},
  disabled:{opacity:.4},
- footerPrimary:{flex:1},
  viewButton:{width:"100%",minHeight:50,borderRadius:10,backgroundColor:ui.blue,alignItems:"center",justifyContent:"center"},
  viewButtonDisabled:{opacity:.45},
  viewText:{color:"white",fontSize:16,lineHeight:22,fontWeight:"700",fontFamily:appFonts.bold},
