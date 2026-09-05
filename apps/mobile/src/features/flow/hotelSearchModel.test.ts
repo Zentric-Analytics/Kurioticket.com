@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { addCalendarDays, changeGuests, changeRooms, countLabel, defaultHotelDates, HOTEL_LIMITS, hotelSearchParams, initializeHotelForm, localDateFromIso, localIsoDate, validateHotelForm } from "./hotelSearchModel";
+import { buildSearchPlan } from "./travelSearchModel";
 
 const now = new Date(2028, 0, 10, 23, 30);
 test("empty and Explore route parameters initialize safely", () => {
@@ -11,6 +12,11 @@ test("valid route state restores every field", () => assert.deepEqual(initialize
 test("invalid incoming dates and counts use defaults without crashing", () => {
   const result = initializeHotelForm({ checkIn: "bad", checkOut: "2020-01-01", guests: "0", rooms: "10" }, now);
   assert.equal(result.form.guests, 2); assert.equal(result.form.rooms, 1); assert.ok(result.notice);
+});
+test("invalid recovered occupancy keeps valid Hotel context and uses safe count defaults", () => {
+  const result = initializeHotelForm({ destination: "Paris", checkIn: "2028-02-01", checkOut: "2028-02-05", guests: "1", rooms: "2" }, now);
+  assert.deepEqual(result.form, { destination: "Paris", checkIn: "2028-02-01", checkOut: "2028-02-05", guests: 2, rooms: 1 });
+  assert.equal(result.notice, "Some search details were invalid, so safe defaults were used.");
 });
 test("local calendar helpers handle month, year and leap boundaries", () => {
   assert.equal(addCalendarDays("2028-02-28", 1), "2028-02-29");
@@ -25,9 +31,21 @@ test("validation covers destination, date, guest and room contract", () => {
   assert.ok(validateHotelForm({ ...valid, destination: "  " }, now).destination);
   assert.ok(validateHotelForm({ ...valid, checkIn: "2028-01-09" }, now).checkIn);
   assert.ok(validateHotelForm({ ...valid, checkOut: "2028-01-10" }, now).checkOut);
-  assert.ok(validateHotelForm({ ...valid, guests: 13 }, now).guests);
-  assert.ok(validateHotelForm({ ...valid, rooms: 0 }, now).rooms);
-  assert.deepEqual(validateHotelForm({ ...valid, guests: 1, rooms: 6 }, now), {});
+  assert.equal(validateHotelForm({ ...valid, guests: 0, rooms: 2 }, now).guests, "Choose between 1 and 12 guests.");
+  assert.equal(validateHotelForm({ ...valid, guests: 13 }, now).guests, "Choose between 1 and 12 guests.");
+  assert.equal(validateHotelForm({ ...valid, rooms: 7 }, now).rooms, "Choose between 1 and 6 rooms.");
+  assert.equal(validateHotelForm({ ...valid, guests: 1, rooms: 2 }, now).rooms, "Choose no more rooms than guests.");
+  assert.deepEqual(validateHotelForm({ ...valid, guests: 1, rooms: 1 }, now), {});
+  assert.deepEqual(validateHotelForm({ ...valid, guests: 2, rooms: 2 }, now), {});
+  assert.deepEqual(validateHotelForm({ ...valid, guests: 6, rooms: 6 }, now), {});
+});
+test("recovered invalid occupancy cannot reproduce the rejected Hotel results plan", () => {
+  const recovered = { destination: "Paris", checkIn: "2028-02-01", checkOut: "2028-02-05", guests: "1", rooms: "2" };
+  assert.ok(buildSearchPlan("hotel", recovered, now).error);
+  const initialized = initializeHotelForm(recovered, now);
+  assert.deepEqual(initialized.form, { destination: "Paris", checkIn: "2028-02-01", checkOut: "2028-02-05", guests: 2, rooms: 1 });
+  assert.ok(initialized.notice);
+  assert.deepEqual(validateHotelForm(initialized.form, now), {});
 });
 test("guest and room counters clamp independently to website limits", () => {
   const form = { destination: "Paris", checkIn: "2028-02-01", checkOut: "2028-02-02", guests: 3, rooms: 3 };
