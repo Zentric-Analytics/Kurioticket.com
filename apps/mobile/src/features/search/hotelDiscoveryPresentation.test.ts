@@ -15,7 +15,7 @@ test("native Hotel continuation distinguishes planning rooms and provider truth"
   assert.match(hotel, /result\.searchPolicy\.bookable && Boolean\(redirectUrl\)/);
   assert.doesNotMatch(hotel, /result\.partnerRedirectUrl \|\| result\.bookingUrl/);
   assert.match(hotel, /selectedOffer\?\.kind === "internal-room-flow"/);
-  assert.match(hotel, /indicative planning/);
+  assert.doesNotMatch(hotel, /indicative planning/);
   assert.match(hotel, /Planning inventory · no live checkout/);
   assert.match(hotel, /disabled=\{!canContinue\}/);
   assert.doesNotMatch(hotel, /Booked|Reserved|Available now/);

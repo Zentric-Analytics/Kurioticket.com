@@ -54,6 +54,7 @@ import { nativeHotelOffers, nativeHotelProviderUrl, reconcileNativeHotelOfferSel
 import { colors } from "../../theme/tokens";
 import { NativeHotelPropertyLocationSection, NativeRelatedHotelsSection } from "./NativeHotelDecisionSections";
 import { prepareNativeRelatedHotels, type NativeRelatedHotel } from "./nativeHotelRelatedHotelsModel";
+import { HotelOfferAmenityList } from "./HotelCardAmenityList";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -833,28 +834,25 @@ function HotelDetail({
                 }]}
               >
                 <View style={d.hotelOfferTop}>
-                  <View style={{ flex: 1, minWidth: 0 }}>
+                  {internal ? (
+                    <Image
+                      accessible
+                      accessibilityLabel="Kurioticket"
+                      accessibilityIgnoresInvertColors
+                      source={require("../../../assets/kurioticket-logo-primary-light-bg.png")}
+                      resizeMode="contain"
+                      style={d.hotelOfferBrandLogo}
+                    />
+                  ) : (
                     <Text
                       style={[
                         d.hotelOfferProvider,
                         { color: theme.textPrimary },
                       ]}
                     >
-                      {internal
-                        ? "Kurioticket room options"
-                        : result.provider}
+                      {result.provider}
                     </Text>
-                    <Text
-                      style={[
-                        d.hotelSectionLead,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
-                      {internal
-                        ? `${roomOptions.length} indicative planning ${roomOptions.length === 1 ? "choice" : "choices"}`
-                        : result.cancellationInfo || "Provider terms apply"}
-                    </Text>
-                  </View>
+                  )}
                   <View
                     style={[
                       d.selectionControl,
@@ -865,30 +863,21 @@ function HotelDetail({
                     ]}
                   />
                 </View>
-                <View style={d.hotelOfferBottom}>
+                <View style={d.hotelOfferPriceRow}>
                   <Text
-                    style={[d.hotelOfferFacts, { color: theme.textSecondary }]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.65}
+                    style={[d.hotelNightly, { color: theme.textPrimary }]}
                   >
-                    {result.amenities.slice(0, 3).join(" · ") ||
-                      "Amenities confirmed with the property"}
+                    {hasPrice
+                      ? (nightlyPrice?.formatted ?? "—")
+                      : "Price unavailable"}
                   </Text>
-                  <View style={d.hotelOfferPrice}>
-                    <Text
-                      numberOfLines={1}
-                      adjustsFontSizeToFit
-                      minimumFontScale={0.65}
-                      style={[d.hotelNightly, { color: theme.textPrimary }]}
-                    >
-                      {hasPrice
-                        ? (nightlyPrice?.formatted ?? "—")
-                        : "Price unavailable"}
-                    </Text>
-                    <Text
-                      style={[d.hotelPerNight, { color: theme.textSecondary }]}
-                    >
-                      per night
-                    </Text>
-                  </View>
+                </View>
+                <View style={d.hotelOfferBottom}>
+                  <HotelOfferAmenityList amenities={result.amenities} color={theme.textSecondary} />
+                  <Text style={[d.hotelPerNight, { color: theme.textSecondary }]}>per night</Text>
                 </View>
               </Pressable>;
               })}
@@ -898,15 +887,6 @@ function HotelDetail({
                   <Text style={[d.hotelSectionLead, { color: theme.textSecondary }]}>Planning inventory · no live checkout</Text>
                 </View>
               ) : null}
-              <Text style={[d.disclosure, { color: theme.textSecondary }]}>
-                {internalRoomFlowAvailable && providerBookable
-                  ? "Choose Kurioticket planning rooms or continue securely with the provider."
-                  : internalRoomFlowAvailable
-                  ? "Room choices are planning inventory; final availability and terms are confirmed before booking."
-                  : providerBookable
-                    ? `Booking continues securely with ${result.provider}.`
-                    : "No actionable provider offer was supplied for this property."}
-              </Text>
               <NativeHotelPropertyLocationSection
                 hotelName={result.name}
                 propertyDetails={property}
@@ -1715,12 +1695,12 @@ const d = StyleSheet.create({
   hotelHeading: { fontSize: 20, lineHeight: 26, fontWeight: "900" },
   hotelSubheading: { fontSize: 15, lineHeight: 20, fontWeight: "900", marginTop: 6 },
   hotelOffer: { borderWidth: 1.5, borderRadius: 13, padding: 16, gap: 16 },
-  hotelOfferTop: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  hotelOfferTop: { minWidth: 0, flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12 },
+  hotelOfferBrandLogo: { width: 136, height: 30, flexShrink: 0 },
   hotelOfferProvider: { fontSize: 15, lineHeight: 21, fontWeight: "900" },
   selectionControl: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: ui.border },
   hotelOfferBottom: { flexDirection: "row", alignItems: "flex-end", gap: 12 },
-  hotelOfferFacts: { flex: 1, minWidth: 0, fontSize: 11, lineHeight: 16 },
-  hotelOfferPrice: { maxWidth: "52%", alignItems: "flex-end" },
+  hotelOfferPriceRow: { minWidth: 0, alignItems: "flex-end" },
   hotelNightly: { fontSize: 22, lineHeight: 27, fontWeight: "900", textAlign: "right" },
   hotelPerNight: { fontSize: 11, lineHeight: 16 },
   hotelHighlight: { width: "48%", minHeight: 48, padding: 9, borderWidth: 1, borderRadius: 9, flexDirection: "row", alignItems: "center", gap: 7 },
