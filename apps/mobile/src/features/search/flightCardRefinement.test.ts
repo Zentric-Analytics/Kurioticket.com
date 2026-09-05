@@ -10,7 +10,7 @@ const card = source.slice(source.indexOf("function FlightCard"), source.indexOf(
 test("Flight Results uses its narrow support palette only for approved supporting copy", () => {
   assert.match(source, /const flightSupportText = \{\s*light: "#465675",\s*dark: "#B8C3D8",\s*\} as const/);
   assert.match(card, /const supportTextColor = theme\.dark \? flightSupportText\.dark : flightSupportText\.light/);
-  for (const style of ["flightNumber", "operatingCarrierText", "stopLabel", "estimatedPrice", "providerPrice", "flightMetadataLabel"]) {
+  for (const style of ["flightNumber", "operatingCarrierText", "stopLabel", "flightMetadataLabel"]) {
     assert.match(card, new RegExp(`s0\\.${style},\\s*\\{\\s*color:\\s*supportTextColor\\s*\\}`));
   }
   for (const style of ["airlineName", "time", "airportCode", "journeyDuration", "bigPrice"]) {
@@ -33,8 +33,7 @@ test("flight card maps every approved semantic weight to its matching Inter face
     journeyDuration: "semibold",
     stopLabel: "medium",
     bigPrice: "bold",
-    estimatedPrice: "bold",
-    providerPrice: "medium",
+    flightDetailsAffordanceText: "semibold",
     flightMetadataText: "medium",
     flightMetadataLabel: "semibold",
   } as const;
@@ -80,30 +79,27 @@ test("flight card gives the compact visual fare one semantic spoken label", () =
   assert.doesNotMatch(card, /Total for \d|Per traveler|Round trip|One way/);
 });
 
-test("converted fares add truthful provider context without duplicating same-currency fares", () => {
+test("converted fares keep truthful accessibility context without visible secondary price copy", () => {
   const fareBlock = card.slice(card.indexOf('<View style={s0.flightCommercialRegion}>'));
   assert.match(card, /flightProviderFarePresentation\(fare\)/);
   assert.match(card, /const labels = flightResultsCopy\(locale\);[\s\S]*flightMainPriceBasis\(fare, labels\)/);
-  assert.match(fareBlock, /\{mainPriceBasis \? \([\s\S]*\{mainPriceBasis\.label\}[\s\S]*\) : null\}/);
-  assert.match(fareBlock, /\{providerFare \? \([\s\S]*Provider price: \{providerFare\.formatted\}[\s\S]*\) : null\}/);
-  assert.doesNotMatch(fareBlock, /Provider price: \{providerFare\.formatted\} \{providerFare\.currency\}/);
-  assert.match(fareBlock, /estimatedPrice, \{ color: supportTextColor \}/);
-  assert.match(fareBlock, /providerPrice, \{ color: supportTextColor \}/);
+  assert.match(card, /mainPriceBasis\.accessibilityText/);
+  assert.match(card, /provider price \$\{providerFare\.accessibilityLabel\}/);
+  assert.doesNotMatch(fareBlock, /mainPriceBasis\.label|Provider price:|s0\.estimatedPrice|s0\.providerPrice/);
   assert.equal(card.match(/\{fare\?\.formatted \?\? "—"\}/g)?.length, 1);
-  assert.doesNotMatch(fareBlock, /US\$|A\$|CA\$/);
   assert.ok(card.indexOf('style={s0.flightMetadataRegion}') < card.indexOf('<View style={s0.flightCommercialRegion}>'));
 });
 
-test("the whole card is the sole details action with no visible CTA", () => {
+test("the whole card remains the sole details action around a visible affordance", () => {
   assert.match(card, /const openDetails = \(\) => router\.push\(\{ pathname: "\/flight-details"/);
   assert.match(card, /return \(\s*<Pressable[\s\S]*accessibilityRole="button"[\s\S]*accessibilityLabel=\{cardAccessibilityLabel\}[\s\S]*onPress=\{openDetails\}/);
   assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
-  assert.doesNotMatch(card, /View deal|labels\.viewDeal|flightDealAction/);
-  assert.doesNotMatch(card, /<PlaneTakeoff[^>]*>[\s\S]*?View deal/);
-  assert.doesNotMatch(card, /labels\.viewFlight|viewFlightButton/);
-  assert.doesNotMatch(card, /detailsButton|detailsButtonText/);
+  const affordance = /<View accessible=\{false\} style=\{s0\.flightDetailsAffordance\}>[\s\S]*?<\/View>/.exec(card)?.[0] ?? "";
+  assert.match(affordance, /<Text accessible=\{false\}[^>]*numberOfLines=\{1\}>\s*\{labels\.viewDetails\}\s*<\/Text>\s*<ChevronRight/);
+  assert.doesNotMatch(affordance, /<ChevronRight[\s\S]*\{labels\.viewDetails\}/);
+  assert.doesNotMatch(affordance, />\s*View details\s*</);
   assert.equal((card.match(/<Pressable/g) || []).length, 1);
-  assert.doesNotMatch(card, /stopPropagation|onToggleSaved|favoriteButton/);
+  assert.doesNotMatch(card, /View deal|labels\.viewDeal|flightDealAction|stopPropagation|onToggleSaved|favoriteButton/);
 });
 
 test("flight card derives singular, plural, and nonstop labels from provider stops", () => {
@@ -155,7 +151,7 @@ test("flight card uses a compact three-row metadata column while airline identit
   assert.match(source, /flightCardFooter: \{[^\n]*width: "100%"/);
   assert.match(source, /flightMetadataRegion: \{ flex: 1, minWidth: 0[^}]*alignItems: "flex-start"[^}]*gap: 5/);
   assert.match(source, /flightMetadataText: \{ flex: 1, minWidth: 0/);
-  assert.match(source, /flightCommercialRegion: \{ width: "46%", minWidth: 104, flexShrink: 0, alignItems: "flex-end"/);
+  assert.match(source, /flightCommercialRegion: \{ width: "46%", minWidth: 104, flexShrink: 0, alignSelf: "stretch", alignItems: "flex-end", justifyContent: "space-between"/);
   assert.equal(card.match(/s0\.flightMetadataLabel, \{ color: supportTextColor \}/g)?.length, 3);
   assert.equal(card.match(/s0\.flightMetadataText, \{ color: theme\.textPrimary \}/g)?.length, 3);
   assert.doesNotMatch(source, /flightMetadataIconTile|flightMetadataCopy|flightMetadataValue|flightMetadataLabel: \{[^}]*width/);
@@ -202,7 +198,8 @@ test("flight loading skeleton mirrors the horizontal metadata footer", () => {
   assert.match(flightSkeleton, /skeletonMetadataDivider[\s\S]*skeletonMetadataRow[\s\S]*skeletonMetadataLine/);
   assert.match(source, /skeletonMetadataRow: \{ width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start" \}/);
   assert.doesNotMatch(source, /skeletonMetadataItem|skeletonMetadataIcon/);
-  assert.doesNotMatch(flightSkeleton, /skeletonButton/);
+  assert.match(flightSkeleton, /skeletonPriceLine[\s\S]*skeletonDetailsActionLine/);
+  assert.doesNotMatch(flightSkeleton, /skeletonEstimatedPriceLine|skeletonProviderPriceLine|skeletonButton/);
 });
 
 test("flight card keeps long prices single-line in the full-width fare row", () => {
@@ -212,8 +209,8 @@ test("flight card keeps long prices single-line in the full-width fare row", () 
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center" \}/);
   assert.match(source, /metadataItem: \{ flex: 1, minWidth: 0, flexDirection: "row"/);
   assert.match(source, /flightLowerSection: \{[^\n]*flexDirection: "row"/);
-  assert.match(source, /estimatedPrice: \{ fontSize: 10, lineHeight: 13, fontWeight: "700", fontFamily: appFonts\.bold, letterSpacing: 0\.7, textAlign: "right" \}/);
-  assert.match(source, /providerPrice: \{[^}]*fontSize: 11, lineHeight: 14[^}]*textAlign: "right"/);
+  assert.match(source, /flightDetailsAffordance: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
+  assert.match(source, /flightDetailsAffordanceText: \{ fontSize: 13, lineHeight: 15, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
   assert.doesNotMatch(source, /actionColumn:/);
   assert.doesNotMatch(source, /priceBox:/);
   assert.doesNotMatch(card, /s0\.bigPrice[^>]*(?:adjustsFontSizeToFit|minimumFontScale|ellipsizeMode)/);

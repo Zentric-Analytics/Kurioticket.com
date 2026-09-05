@@ -19,14 +19,13 @@ test("outbound and return share one structured journey component", () => {
 test("arrival and price terminate on the shared right edge", () => {
   assert.match(source, /rightColumnContract: \{ alignItems: "flex-end" \}/);
   assert.match(card, /<View style=\{s0\.flightCommercialRegion\}>\s*<Text[^>]*s0\.bigPrice/);
-  assert.doesNotMatch(card, /View details|detailsButton/);
+  assert.match(card, /\{labels\.viewDetails\}[\s\S]*?<ChevronRight/);
+  assert.doesNotMatch(card, />\s*View details\s*</);
   assert.doesNotMatch(card, />\{roundTrip \? "round trip" : "one way"\}<\/Text>/);
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch"/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.doesNotMatch(source, /priceBox:/);
-  assert.match(source, /flightCommercialRegion: \{ width: "46%", minWidth: 104, flexShrink: 0, alignItems: "flex-end"/);
-  assert.match(source, /estimatedPrice: \{ fontSize: 10, lineHeight: 13, fontWeight: "700", fontFamily: appFonts\.bold, letterSpacing: 0\.7, textAlign: "right" \}/);
-  assert.match(source, /providerPrice: \{[^}]*fontSize: 11, lineHeight: 14[^}]*textAlign: "right"/);
+  assert.match(source, /flightCommercialRegion: \{ width: "46%", minWidth: 104, flexShrink: 0, alignSelf: "stretch", alignItems: "flex-end", justifyContent: "space-between"/);
   assert.match(source, /flightLowerSection: \{[^\n]*flexDirection: "row"[^\n]*alignItems: "flex-start"/);
   assert.doesNotMatch(source, /actionColumn:/);
   assert.doesNotMatch(card, /marginRight/);
@@ -68,7 +67,7 @@ test("long fares stay readable without changing details navigation or theme beha
   assert.match(card, /shadowColor: theme\.dark \?/);
 });
 
-test("the coherent price column contains the only displayed fare and no CTA", () => {
+test("the coherent price column contains one fare and a bottom-aligned details affordance", () => {
   const fareRow = card.slice(card.indexOf('<View style={s0.flightCommercialRegion}>'));
 
   assert.equal(card.match(/\{fare\?\.formatted \?\? "—"\}/g)?.length, 1);
@@ -80,13 +79,12 @@ test("the coherent price column contains the only displayed fare and no CTA", ()
   assert.match(fareRow, /color: theme\.textPrimary/);
   assert.doesNotMatch(fareRow, /marginRight|position:/);
   assert.doesNotMatch(fareRow, /baggageSummary|fareRulesSummary|metadataItem/);
-  assert.match(fareRow, /mainPriceBasis \?[\s\S]*mainPriceBasis\.label/);
-  assert.match(fareRow, /providerFare \? \([\s\S]*Provider price: \{providerFare\.formatted\}/);
-  assert.doesNotMatch(fareRow, /Provider price: \{providerFare\.formatted\} \{providerFare\.currency\}/);
+  assert.doesNotMatch(fareRow, /mainPriceBasis\.label|Provider price:|s0\.estimatedPrice|s0\.providerPrice/);
   assert.doesNotMatch(fareRow, /US\$|A\$|CA\$|Per traveler|Round trip|One way|Taxes included|From/);
   assert.match(card, /<Pressable[\s\S]*accessibilityLabel=\{cardAccessibilityLabel\}[\s\S]*onPress=\{openDetails\}/);
   assert.doesNotMatch(fareRow, /View deal|labels\.viewDeal|flightDealAction/);
-  assert.doesNotMatch(fareRow, /labels\.viewFlight|View details/);
+  assert.match(fareRow, /<Text[^>]*flightDetailsAffordanceText[^>]*numberOfLines=\{1\}>\s*\{labels\.viewDetails\}\s*<\/Text>\s*<ChevronRight/);
+  assert.doesNotMatch(fareRow, />\s*View details\s*</);
   assert.ok(card.indexOf('<View style={s0.journeyList}>') < card.indexOf('<View style={s0.flightCommercialRegion}>'));
   assert.match(card, /provider price \$\{providerFare\.accessibilityLabel\}/);
   assert.match(card, /pathname: "\/flight-details"/);
