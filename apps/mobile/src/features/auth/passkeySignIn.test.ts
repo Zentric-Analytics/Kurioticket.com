@@ -12,26 +12,33 @@ test("welcome keeps passkeys out of the top-level auth choices", () => {
   assert.doesNotMatch(welcome, /Continue with passkey|Sign in with passkey|onPasskey/);
 });
 
-test("email screen has no visible passkey UI, marks the identifier as username, and starts discovery from focus", () => {
+test("email screen has no visible passkey UI, marks the identifier as username, and focuses only after discovery is primed", () => {
   const screens = source("src/features/auth/AuthFormScreens.tsx");
   assert.doesNotMatch(screens, /Sign in with passkey|passkeyOption|onPasskey|passkeyLoading/);
   assert.match(screens, /autoComplete="username"/);
   assert.match(screens, /textContentType="username"/);
+  assert.match(screens, /inputRef=\{input\}/);
+  assert.match(screens, /Promise\.resolve\(onCredentialReady\?\.\(\)\)\.finally/);
+  assert.match(screens, /input\.current\?\.focus\(\)/);
   assert.match(screens, /onFocus=\{onCredentialFocus\}/);
+  const emailScreen = screens.slice(screens.indexOf("export function EmailScreen"), screens.indexOf("export function VerificationScreen"));
+  assert.doesNotMatch(emailScreen, /autoFocus/);
 });
 
-test("email focus starts silent AutoFill-assisted passkey discovery", () => {
+test("email entry primes silent AutoFill-assisted passkey discovery before the username field is focused", () => {
   const flow = source("src/features/auth/AuthFlow.tsx");
   const bridge = source("src/features/passkeys/passkeyAutoFill.ts");
   const swift = source("modules/kurioticket-passkey-autofill/ios/KurioticketPasskeyAutoFillModule.swift");
   const options = flow.indexOf("authApi.passkeyOptions(controller.signal)");
   const autoFill = flow.indexOf("startPasskeyAutoFill({ rpId: options.rpId, challenge: options.challenge })");
+  const active = flow.indexOf("setCredentialAutoFillActive(true)", autoFill);
   const verify = flow.indexOf("authApi.passkeyVerify(assertion, controller.signal)");
-  assert.ok(options > 0 && autoFill > options && verify > autoFill);
-  assert.match(flow, /const startSilentPasskeyAutoFill = useCallback/);
+  assert.ok(options > 0 && autoFill > options && active > autoFill && verify > active);
+  assert.match(flow, /const startSilentPasskeyAutoFill = useCallback\(async/);
+  assert.match(flow, /const prepareCredentialAutoFill = useCallback\(async/);
+  assert.match(flow, /await startSilentPasskeyAutoFill\(\)/);
+  assert.match(flow, /onCredentialReady=\{prepareCredentialAutoFill\}/);
   assert.match(flow, /const handleCredentialFocus = useCallback/);
-  assert.match(flow, /step !== "email" \|\| !isPasskeyAutoFillAvailable\(\)/);
-  assert.match(flow, /onCredentialFocus=\{handleCredentialFocus\}/);
   assert.doesNotMatch(flow, /getNativePasskey|continuePasskey|passkeyLoading/);
   assert.match(bridge, /Platform\.OS === "ios"/);
   assert.match(swift, /performAutoFillAssistedRequests\(\)/);
@@ -41,7 +48,7 @@ test("email focus starts silent AutoFill-assisted passkey discovery", () => {
 test("AutoFill challenge refreshes before the five-minute server expiry", () => {
   const flow = source("src/features/auth/AuthFlow.tsx");
   assert.match(flow, /PASSKEY_AUTOFILL_REFRESH_MS = 4 \* 60_000/);
-  assert.match(flow, /setInterval\(startSilentPasskeyAutoFill, PASSKEY_AUTOFILL_REFRESH_MS\)/);
+  assert.match(flow, /setInterval\(\(\) => \{ void startSilentPasskeyAutoFill\(\); \}, PASSKEY_AUTOFILL_REFRESH_MS\)/);
   assert.match(flow, /credentialAutoFillActive/);
 });
 
@@ -60,6 +67,7 @@ test("normal email submission cancels and invalidates assisted passkey authentic
 test("AutoFill discovery stays silent and is cancelled when the email flow is left", () => {
   const flow = source("src/features/auth/AuthFlow.tsx");
   assert.match(flow, /AutoFill-assisted discovery is intentionally silent/);
+  assert.match(flow, /Failing to prime AutoFill must not block or alter the normal email flow/);
   assert.match(flow, /const stopPasskeyAutoFill = useCallback/);
   assert.match(flow, /if \(step === "email"\) return;[\s\S]*stopPasskeyAutoFill\(\)/);
   assert.match(flow, /useEffect\(\(\) => \(\) => stopPasskeyAutoFill\(\)/);
