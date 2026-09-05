@@ -9,6 +9,7 @@ import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
 import { notifyFailedNativeBuilds, notifySuccessfulNativeBuilds } from "./build-notifications.mjs";
 import { runWorkerCycle } from "./worker-cycle.mjs";
+import { parseAuthorizedAbandonedAndroidRecovery, runAuthorizedAbandonedAndroidRecovery } from "./abandoned-android-recovery.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const config = requirePreviewEnvironment();
@@ -36,6 +37,19 @@ const orchestrator = new PreviewOrchestrator({
   render,
   appleFactory: () => apple,
 });
+
+try {
+  const authorization = parseAuthorizedAbandonedAndroidRecovery();
+  if (authorization) {
+    if (config.mode !== "active") throw new Error("Android abandoned-reservation recovery authorization is configured while Preview release mode is not active.");
+    const recovery = await runAuthorizedAbandonedAndroidRecovery({ authorization, mode: config.mode, ledger, github, eas, orchestrator });
+    console.log(JSON.stringify({ event: "authorized-android-recovery-result", ...recovery }));
+  }
+} catch (error) {
+  console.error(JSON.stringify({ event: "authorized-android-recovery-failed", error: String(error?.message ?? error).slice(0, 500) }));
+  await ledger.close();
+  process.exit(1);
+}
 
 let stopping = false;
 for (const signal of ["SIGTERM", "SIGINT"]) process.on(signal, () => { stopping = true; });
