@@ -15,6 +15,7 @@ import type { RouteValue } from "./hotelSearchModel";
 import { searchCarLocations, type CarLocationSuggestion } from "../../api/locationSuggestions";
 import { hasMinimumLocationSearchLetters } from "./locationSearchQuery";
 import { SearchResultProductIcons } from "./SearchResultProductIcons";
+import { getLocationFieldDisplay } from "../../../../../src/lib/search/locationFieldDisplay";
 
 type Props = { params: Record<string, RouteValue>; embedded?: boolean; showSubmit?: boolean; submitLabel?: string; requireManualDetails?: boolean; startWithEmptyRentalDates?: boolean };
 const displayDate = (iso: string) => localDateFromIso(iso)?.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }) ?? iso;
@@ -35,6 +36,8 @@ export function CarSearchPanel({ params, embedded = false, showSubmit = true, su
   const [locationPicker, setLocationPicker] = useState<CarLocationPickerMode>();
   const routeIntent = JSON.stringify(params);
   const previousIntent = useRef(routeIntent);
+  const pickupLocationDisplay = getLocationFieldDisplay(form.pickupLocation);
+  const dropoffLocationDisplay = getLocationFieldDisplay(form.dropoffLocation);
   useEffect(() => {
     if (routeIntent !== previousIntent.current && Object.values(params).some(Boolean)) {
       const next = initialize(params); setForm(next.form); setErrors({}); setNotice(next.notice);
@@ -50,8 +53,8 @@ export function CarSearchPanel({ params, embedded = false, showSubmit = true, su
   const commitDates = (pickupDate: string, dropoffDate: string) => { const next={...form,pickupDate,dropoffDate}; const adjusted=next.pickupTime&&next.dropoffTime?adjustDropoff(next):{form:next,adjusted:false}; setForm(adjusted.form); if(adjusted.adjusted)setNotice("Return was adjusted to remain later than pick-up."); clear("pickupDate","dropoffDate","dropoffTime"); setDatesOpen(false); };
   const commitTimes = (pickupTime: string, dropoffTime: string) => { const next={...form,pickupTime,dropoffTime}; const adjusted=next.pickupDate&&next.dropoffDate?adjustDropoff(next):{form:next,adjusted:false}; setForm(adjusted.form); if(adjusted.adjusted)setNotice("Return was adjusted to remain later than pick-up."); clear("pickupTime","dropoffTime"); setTimesOpen(false); };
   return <View style={[!embedded && ft.styles.card, !embedded && ft.styles.shadow]}>
-    <FieldError errors={[errors.pickupLocation]}><CompactSearchField label="Pick-up location" value={form.pickupLocation || "Airport, city, or address"} muted={!form.pickupLocation} icon="location" trailing={false} onPress={() => setLocationPicker("pickup")}/></FieldError>
-    {form.separateDropoff ? <FieldError errors={[errors.dropoffLocation]}><CompactSearchField label="Drop-off location" value={form.dropoffLocation || "Enter city or airport"} muted={!form.dropoffLocation} icon="location" trailing={false} onPress={() => setLocationPicker("return")}/></FieldError> : null}
+    <FieldError errors={[errors.pickupLocation]}><CompactSearchField label="Pickup location" value={pickupLocationDisplay.primary || form.pickupLocation.trim() || "Airport, city, or address"} meta={pickupLocationDisplay.secondary} metaNumberOfLines={1} muted={!form.pickupLocation} icon="location" trailing={false} onPress={() => setLocationPicker("pickup")}/></FieldError>
+    {form.separateDropoff ? <FieldError errors={[errors.dropoffLocation]}><CompactSearchField label="Drop-off location" value={dropoffLocationDisplay.primary || form.dropoffLocation.trim() || "Enter city or airport"} meta={dropoffLocationDisplay.secondary} metaNumberOfLines={1} muted={!form.dropoffLocation} icon="location" trailing={false} onPress={() => setLocationPicker("return")}/></FieldError> : null}
     <FieldError errors={[errors.pickupDate,errors.dropoffDate]}><CompactSearchField label="Rental dates" value={rentalDatesSummary(form.pickupDate,form.dropoffDate)} muted={!form.pickupDate || !form.dropoffDate} icon="calendar" valueNumberOfLines={0} onPress={() => setDatesOpen(true)}/></FieldError>
     <FieldError errors={[errors.pickupTime,errors.dropoffTime]}><CompactSearchField label="Pick-up / Return time" value={rentalTimesSummary(form.pickupTime,form.dropoffTime)} muted={!form.pickupTime || !form.dropoffTime} icon="clock" valueNumberOfLines={0} onPress={() => setTimesOpen(true)}/></FieldError>
     <CompactSearchField label="Driver age" value={form.driverAge === undefined ? "Select driver age" : `${form.driverAge} years old`} muted={form.driverAge === undefined} icon="person" onPress={() => setAgeOpen(true)}/>{errors.driverAge ? <Text accessibilityRole="alert" style={styles.error}>{errors.driverAge}</Text> : null}
