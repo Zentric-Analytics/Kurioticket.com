@@ -24,16 +24,31 @@ type NativeProps = {
   onDiagnostic?: (event: NativeSyntheticEvent<DiagnosticEvent>) => void;
 };
 
+type ExpoViewRegistry = {
+  getViewConfig?: (moduleName: string, viewName?: string) => unknown | null;
+};
+
 const nativeModule = Platform.OS === "ios"
   ? requireOptionalNativeModule("KurioticketPasskeyAutoFill")
   : null;
 
-const NativeView = nativeModule
+function hasNativePasskeyUsernameView(): boolean {
+  if (Platform.OS !== "ios" || !nativeModule) return false;
+  try {
+    const expoRuntime = (globalThis as typeof globalThis & { expo?: ExpoViewRegistry }).expo;
+    return Boolean(expoRuntime?.getViewConfig?.("KurioticketPasskeyAutoFill"));
+  } catch {
+    return false;
+  }
+}
+
+const nativeViewRegistered = hasNativePasskeyUsernameView();
+const NativeView = nativeViewRegistered
   ? requireNativeViewManager<NativeProps>("KurioticketPasskeyAutoFill")
   : null;
 
 export function isNativePasskeyUsernameFieldAvailable() {
-  return Platform.OS === "ios" && Boolean(NativeView);
+  return nativeViewRegistered;
 }
 
 export function NativePasskeyUsernameField({
