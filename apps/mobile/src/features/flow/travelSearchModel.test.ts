@@ -29,6 +29,14 @@ test("hotel guests, rooms and car driver age are preserved", () => {
   assert.deepEqual(buildSearchPlan("hotel", { destination: "Paris", checkIn: "2026-08-10", checkOut: "2026-08-12", guests: "4", rooms: "2" }, now).plan?.payload, { destination: "Paris", checkIn: "2026-08-10", checkOut: "2026-08-12", guests: 4, rooms: 2 });
   assert.equal(buildSearchPlan("car", { pickupLocation: "LAX", dropoffLocation: "SFO", pickupDate: "2026-08-10", pickupTime: "10:00", dropoffDate: "2026-08-12", dropoffTime: "10:00", driverAge: "42" }, now).plan?.payload.driverAge, "42");
 });
+test("Hotel plans enforce the native 12 guest, 6 room occupancy contract", () => {
+  const params = { destination: "Paris", checkIn: "2026-08-10", checkOut: "2026-08-12" };
+  assert.ok(buildSearchPlan("hotel", { ...params, guests: "1", rooms: "2" }, now).error);
+  assert.ok(buildSearchPlan("hotel", { ...params, guests: "2", rooms: "2" }, now).plan);
+  assert.ok(buildSearchPlan("hotel", { ...params, guests: "12", rooms: "6" }, now).plan);
+  assert.ok(buildSearchPlan("hotel", { ...params, guests: "13", rooms: "6" }, now).error);
+  assert.ok(buildSearchPlan("hotel", { ...params, guests: "12", rooms: "7" }, now).error);
+});
 test("Hotel plans use the device-local calendar baseline across the UTC midnight boundary", () => {
   const params = { destination: "Paris", checkIn: "2026-09-04", checkOut: "2026-09-07", guests: "1", rooms: "1" };
   assert.equal(isHotelTodayOrFutureLocalDate("2026-09-04", "2026-09-04"), true);

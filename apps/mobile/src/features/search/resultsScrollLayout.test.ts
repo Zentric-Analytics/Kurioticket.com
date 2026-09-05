@@ -120,8 +120,12 @@ test("hotel uses one stable summary above a native sticky filter rail", () => {
 test("Flight Results scroll content clears the native bottom safe area without navigation-sized footer padding", () => {
   const paginationFooter = styleBlock("flightPagination", "flightPaginationPages");
   const terminalFooter = styleBlock("flightResultsBody", "flightCardItem");
+
   assert.match(screen, /const insets = useSafeAreaInsets\(\)/);
-  assert.match(flightLayout, /contentContainerStyle=\{\[[\s\S]*?s0\.flightResultsContent,[\s\S]*?\{ paddingBottom: Math\.max\(insets\.bottom \+ 16, 16\) \},[\s\S]*?minHeight: flightPaginationMinHeight/);
+  assert.match(
+    flightLayout,
+    /contentContainerStyle=\{\[[\s\S]*?s0\.flightResultsContent,[\s\S]*?\{ paddingBottom: Math\.max\(insets\.bottom \+ 16, 16\) \},[\s\S]*?minHeight: flightPaginationMinHeight/,
+  );
   assert.match(paginationFooter, /paddingBottom: 6/);
   assert.doesNotMatch(paginationFooter, /paddingBottom:\s*(?:92|104)/);
   assert.match(terminalFooter, /paddingBottom: 0/);
@@ -133,6 +137,7 @@ test("Flight Results scroll content clears the native bottom safe area without n
 test("results screens retain their product-specific BottomNav ownership", () => {
   const sharedBody = styleBlock("body", "hotelResultsContent");
   const backToTop = styleBlock("hotelBackToTop", "filterRail");
+
   assert.match(sharedBody, /paddingBottom: 92/);
   assert.match(screen, /style=\{\[s0\.body, \{ paddingBottom: Math\.max\(insets\.bottom \+ 16, 16\) \}\]\}/);
   assert.doesNotMatch(screen.slice(screen.indexOf("export function ApprovedResultsScreen"), screen.indexOf("export function BottomNav")), /<BottomNav(?:\s|\/|>)/);
@@ -140,6 +145,7 @@ test("results screens retain their product-specific BottomNav ownership", () => 
   assert.match(carScreen, /<BottomNav \/>/);
   assert.doesNotMatch(backToTop, /bottom:/);
   assert.match(screen, /s0\.hotelBackToTop,\{bottom:Math\.max\(insets\.bottom \+ 16,16\)/);
+  assert.doesNotMatch(screen, /hotelBackToTop[^\n]*bottom:(?:86|92)/);
 });
 
 test("Hotel Back-to-top keeps its geometry and scrolling behavior above the safe area", () => {

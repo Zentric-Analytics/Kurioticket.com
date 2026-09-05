@@ -58,7 +58,7 @@ test("hotel results use one stable native scroll owner and threshold-guard only 
   assertStableOwner(hotelLayout, /<ScrollView[\s\S]*?onScroll=\{handleHotelScroll\}[\s\S]*?>/);
   assert.match(hotelLayout, /stickyHeaderIndices=\{\[0\]\}/);
   assert.doesNotMatch(hotelLayout, /hotelCompactHeader|setHotelCompactHeader|hotelIntroBoundary/);
-  assert.match(source, /contentOffset\.y > 600[\s\S]*?visible === hotelBackToTopVisibleRef\.current[\s\S]*?setHotelBackToTop\(visible\)/);
+  assert.match(source, /scrollY > 600[\s\S]*?visible === hotelBackToTopVisibleRef\.current[\s\S]*?setHotelBackToTop\(visible\)/);
 });
 
 test("nested explore carousels remain horizontal without vertical stability overrides", () => {
