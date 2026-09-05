@@ -12,96 +12,74 @@ test("welcome keeps passkeys out of the top-level auth choices", () => {
   assert.doesNotMatch(welcome, /Continue with passkey|Sign in with passkey|onPasskey/);
 });
 
-test("email screen has no visible passkey UI, marks the identifier as username, and focuses only after preparation settles", () => {
+test("passkey challenge is prefetched while Welcome is visible", () => {
+  const flow = source("src/features/auth/AuthFlow.tsx");
+  assert.match(flow, /PASSKEY_OPTIONS_REFRESH_MS = 4 \* 60_000/);
+  assert.match(flow, /step === "welcome" \|\| step === "email"/);
+  assert.match(flow, /authApi\.passkeyOptions\(controller\.signal\)/);
+  assert.match(flow, /setPasskeyOptions\(options\)/);
+  assert.match(flow, /if \(step === "welcome"\) return <AuthWelcomeScreen/);
+  assert.doesNotMatch(flow, /PASSKEY_AUTOFILL_FOCUS_FALLBACK_MS|startSilentPasskeyAutoFill|waitForPasskeyAutoFillStart/);
+});
+
+test("iOS email uses a native username field that owns AutoFill and focus", () => {
   const screens = source("src/features/auth/AuthFormScreens.tsx");
-  assert.doesNotMatch(screens, /Sign in with passkey|passkeyOption|onPasskey|passkeyLoading/);
-  assert.match(screens, /autoComplete="username"/);
-  assert.match(screens, /textContentType="username"/);
-  assert.match(screens, /inputRef=\{input\}/);
-  assert.match(screens, /Promise\.resolve\(onCredentialReady\?\.\(\)\)\.finally/);
-  assert.match(screens, /input\.current\?\.focus\(\)/);
-  assert.match(screens, /onFocus=\{onCredentialFocus\}/);
-  const emailScreen = screens.slice(screens.indexOf("export function EmailScreen"), screens.indexOf("export function VerificationScreen"));
-  assert.doesNotMatch(emailScreen, /autoFocus/);
+  const wrapper = source("src/features/passkeys/NativePasskeyUsernameField.tsx");
+  const swiftView = source("modules/kurioticket-passkey-autofill/ios/KurioticketPasskeyUsernameView.swift");
+  const module = source("modules/kurioticket-passkey-autofill/ios/KurioticketPasskeyAutoFillModule.swift");
+
+  assert.match(screens, /isNativePasskeyUsernameFieldAvailable\(\)/);
+  assert.match(screens, /<NativePasskeyUsernameField/);
+  assert.match(screens, /rpId=\{passkeyOptions\?\.rpId\}/);
+  assert.match(screens, /challenge=\{passkeyOptions\?\.challenge\}/);
+  assert.match(screens, /onPasskey=\{onPasskey\}/);
+  assert.doesNotMatch(screens, /Sign in with passkey|passkeyOption|passkeyLoading/);
+
+  assert.match(wrapper, /requireNativeViewManager<NativeProps>\("KurioticketPasskeyAutoFill"\)/);
+  assert.match(wrapper, /diagnosticsEnabled=\{diagnosticsEnabled\}/);
+  assert.match(wrapper, /\[passkey-autofill\]/);
+
+  assert.match(module, /View\(KurioticketPasskeyUsernameView\.self\)/);
+  assert.match(module, /Events\("onChangeText", "onFocus", "onBlur", "onSubmit", "onPasskey", "onDiagnostic"\)/);
+  assert.match(swiftView, /textField\.textContentType = \.username/);
+  assert.match(swiftView, /controller\.performAutoFillAssistedRequests\(\)[\s\S]*focusIfNeeded\(\)/);
+  assert.doesNotMatch(swiftView, /DispatchQueue\.main\.asyncAfter\(deadline: \.now\(\) \+ 0\.35/);
 });
 
-test("email entry waits for native AutoFill startup acknowledgement before considering discovery primed", () => {
-  const flow = source("src/features/auth/AuthFlow.tsx");
-  const bridge = source("src/features/passkeys/passkeyAutoFill.ts");
-  const swift = source("modules/kurioticket-passkey-autofill/ios/KurioticketPasskeyAutoFillModule.swift");
-  const options = flow.indexOf("authApi.passkeyOptions(controller.signal)");
-  const autoFill = flow.indexOf("startPasskeyAutoFill({ rpId: options.rpId, challenge: options.challenge })");
-  const acknowledgement = flow.indexOf("await waitForPasskeyAutoFillStart()", autoFill);
-  const active = flow.indexOf("setCredentialAutoFillActive(true)", acknowledgement);
-  const verify = flow.indexOf("authApi.passkeyVerify(assertion, controller.signal)");
-  assert.ok(options > 0 && autoFill > options && acknowledgement > autoFill && active > acknowledgement && verify > active);
-  assert.match(flow, /const startSilentPasskeyAutoFill = useCallback\(async/);
-  assert.match(flow, /const prepareCredentialAutoFill = useCallback\(async/);
-  assert.match(flow, /onCredentialReady=\{prepareCredentialAutoFill\}/);
-  assert.match(flow, /passkeyPriming\.current/);
-  assert.doesNotMatch(flow, /getNativePasskey|continuePasskey|passkeyLoading/);
-  assert.match(bridge, /waitUntilStarted: \(\) => Promise<boolean>/);
-  assert.match(bridge, /return module\.waitUntilStarted\(\)/);
-  assert.match(swift, /AsyncFunction\("waitUntilStarted"\)/);
-  assert.match(swift, /controller\.performAutoFillAssistedRequests\(\)[\s\S]*self\.started = true[\s\S]*self\.resolveStartWaiters\(true\)/);
-  assert.match(swift, /ASAuthorizationPlatformPublicKeyCredentialAssertion/);
+test("native username view keeps AuthenticationServices controller alive and returns the assertion", () => {
+  const swiftView = source("modules/kurioticket-passkey-autofill/ios/KurioticketPasskeyUsernameView.swift");
+  assert.match(swiftView, /private var authorizationController: ASAuthorizationController\?/);
+  assert.match(swiftView, /authorizationController = controller/);
+  assert.match(swiftView, /guard authorizationController === controller else \{ return \}/);
+  assert.match(swiftView, /ASAuthorizationPlatformPublicKeyCredentialAssertion/);
+  assert.match(swiftView, /onPasskey\(result\)/);
+  assert.match(swiftView, /active\?\.cancel\(\)/);
 });
 
-test("email focus fallback is bounded while passkey priming continues silently", () => {
-  const flow = source("src/features/auth/AuthFlow.tsx");
-  assert.match(flow, /PASSKEY_AUTOFILL_FOCUS_FALLBACK_MS = 350/);
-  assert.match(flow, /Promise\.race\(\[[\s\S]*startSilentPasskeyAutoFill\(\)[\s\S]*setTimeout\(resolve, PASSKEY_AUTOFILL_FOCUS_FALLBACK_MS\)/);
-  assert.match(flow, /credentialAutoFillActive \|\| passkeyPriming\.current/);
+test("Preview diagnostics expose only safe AuthenticationServices metadata", () => {
+  const wrapper = source("src/features/passkeys/NativePasskeyUsernameField.tsx");
+  const swiftView = source("modules/kurioticket-passkey-autofill/ios/KurioticketPasskeyUsernameView.swift");
+  assert.match(wrapper, /Constants\.expoConfig\?\.extra\?\.environment\?\.isPreview === true/);
+  assert.match(swiftView, /payload\["domain"\] = error\.domain/);
+  assert.match(swiftView, /payload\["code"\] = error\.code/);
+  assert.match(swiftView, /payload\["rpId"\] = rpId/);
+  assert.doesNotMatch(swiftView, /payload\["challenge"\]|payload\["credentialId"\]|payload\["signature"\]/);
 });
 
-test("AutoFill challenge refreshes before the five-minute server expiry", () => {
+test("passkey assertion verification remains silent and session-safe", () => {
   const flow = source("src/features/auth/AuthFlow.tsx");
-  assert.match(flow, /PASSKEY_AUTOFILL_REFRESH_MS = 4 \* 60_000/);
-  assert.match(flow, /setInterval\(\(\) => \{ void startSilentPasskeyAutoFill\(\); \}, PASSKEY_AUTOFILL_REFRESH_MS\)/);
-  assert.match(flow, /credentialAutoFillActive/);
-});
-
-test("normal email submission cancels and invalidates assisted passkey authentication first", () => {
-  const flow = source("src/features/auth/AuthFlow.tsx");
-  const requestCode = flow.slice(flow.indexOf("const requestCode"), flow.indexOf("const verify"));
-  assert.ok(requestCode.indexOf("setCredentialAutoFillActive(false)") >= 0);
-  assert.ok(requestCode.indexOf("stopPasskeyAutoFill()") > requestCode.indexOf("setCredentialAutoFillActive(false)"));
-  assert.ok(requestCode.indexOf("authApi.requestCode(normalized)") > requestCode.indexOf("stopPasskeyAutoFill()"));
-
   const api = source("src/features/auth/authApi.ts");
+  assert.match(flow, /const continuePasskeyAssertion = useCallback/);
+  assert.match(flow, /authApi\.passkeyVerify\(assertion, controller\.signal\)/);
+  assert.match(flow, /Selection\/cancellation\/verification failures stay silent/);
+  assert.doesNotMatch(flow, /No Kurioticket passkey was found|Too many passkey attempts|Passkey sign-in could not be completed/);
   assert.match(api, /passkeyVerify:[\s\S]*if \(signal\?\.aborted\) throw new AuthApiError\("Passkey sign-in cancelled\.", 0, "ABORTED"\)/);
   assert.match(api, /await writeSession\([\s\S]*if \(signal\?\.aborted\) \{\s*await clearSession\(\)/);
 });
 
-test("AutoFill discovery stays silent and is cancelled when the email flow is left", () => {
-  const flow = source("src/features/auth/AuthFlow.tsx");
-  assert.match(flow, /AutoFill-assisted discovery is intentionally silent/);
-  assert.match(flow, /Failing to prime AutoFill must not block or alter the normal email flow/);
-  assert.match(flow, /const stopPasskeyAutoFill = useCallback/);
-  assert.match(flow, /if \(step === "email"\) return;[\s\S]*stopPasskeyAutoFill\(\)/);
-  assert.match(flow, /useEffect\(\(\) => \(\) => stopPasskeyAutoFill\(\)/);
-  assert.doesNotMatch(flow, /No Kurioticket passkey was found|Too many passkey attempts|Passkey sign-in could not be completed/);
-});
-
-test("iOS bridge ignores callbacks from superseded authorization controllers and clears startup waiters", () => {
-  const swift = source("modules/kurioticket-passkey-autofill/ios/KurioticketPasskeyAutoFillModule.swift");
-  assert.match(swift, /guard self\.controller === controller else \{ return \}/);
-  assert.match(swift, /finish\(controller: controller, result:/);
-  assert.match(swift, /guard controller === completedController else \{ return \}/);
-  assert.match(swift, /let activeController = controller/);
-  assert.match(swift, /controller = nil[\s\S]*promise = nil[\s\S]*started = false[\s\S]*activeController\?\.cancel\(\)/);
-  assert.match(swift, /resolveStartWaiters\(false\)/);
-});
-
-test("existing native passkey adapter remains available for management and explicit native ceremonies", () => {
+test("existing native passkey adapter remains available for registration and management", () => {
   const adapter = source("src/features/passkeys/nativePasskeys.ts");
   assert.match(adapter, /await module\.get\(options\)/);
   assert.match(adapter, /createNativePasskey/);
   assert.match(adapter, /normalizePasskeyAssertion/);
-});
-
-test("verification stores the standard session contract", () => {
-  const api = source("src/features/auth/authApi.ts");
-  assert.match(api, /passkeyVerify:[\s\S]*await writeSession\(\{ \.\.\.result\.session, user: result\.user \}\)/);
-  assert.doesNotMatch(api, /passkeySession|passkeyStorage/);
 });
