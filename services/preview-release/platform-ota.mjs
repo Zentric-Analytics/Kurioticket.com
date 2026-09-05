@@ -9,12 +9,13 @@ export function pendingOtaPlatforms(previous) {
   return platforms.filter((platform) => {
     if (!needsJs && !carried.includes(platform)) return false;
     if (evidence[platform]?.buildId) return false;
-    return !evidence.ota?.updates?.some((update) => update.platform === platform);
+    if (evidence.ota?.updateIds?.length && evidence.ota?.runtimes?.[platform]) return false;
+    return !evidence.ota?.updates?.some((update) => update.platform === platform || update.platforms?.includes(platform));
   });
 }
 
-export function planPlatformOta({ classification, fingerprints, deliveredNative, previous }) {
-  const pending = pendingOtaPlatforms(previous);
+export function planPlatformOta({ classification, fingerprints, deliveredNative, previous, pendingOta = [] }) {
+  const pending = [...new Set([...pendingOtaPlatforms(previous), ...pendingOta])];
   const wantsJs = classification.otaCandidates?.length > 0 || classification.classification.split("+").includes("OTA");
   const targets = new Set(classification.classification.split("+").filter((target) => target !== "NO_DELIVERY" && target !== "OTA"));
   const otaPlatforms = [];

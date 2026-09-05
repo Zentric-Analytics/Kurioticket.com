@@ -131,6 +131,38 @@ export class PreviewLedger {
     return result.rows[0] ?? null;
   }
 
+  async pendingPlatformOta() {
+    // Compare JS requirements with per-platform delivery, not aggregate COMPLETE.
+    // A web-only completion during a worker rollout must not erase an older gap.
+    const result = await this.pool.query(`
+      WITH requirement AS (
+        SELECT max(progression_order) AS position FROM preview_release
+        WHERE state='COMPLETE' AND jsonb_array_length(coalesce(evidence->'classification'->'otaCandidates','[]'::jsonb)) > 0
+      ), platforms AS (SELECT unnest(ARRAY['ios','android']) AS platform)
+      SELECT platform FROM platforms CROSS JOIN requirement
+      WHERE requirement.position IS NOT NULL AND requirement.position > coalesce((
+        SELECT max(r.progression_order) FROM preview_release r
+        WHERE r.state='COMPLETE' AND (
+          r.evidence->platform->>'buildId' IS NOT NULL OR EXISTS (
+            SELECT 1 FROM preview_release_action a,
+              jsonb_array_elements(coalesce(a.evidence->'updates','[]'::jsonb)) u
+            WHERE a.source_sha=r.source_sha AND a.kind='OTA' AND a.state='PUBLISHED'
+              AND (u->>'platform'=platform OR coalesce(u->'platforms','[]'::jsonb) ? platform)
+          )
+        )
+      ), -1)
+      ORDER BY platform`);
+    return result.rows.map((row) => row.platform);
+  }
+
+  async claimOtaGap(args) {
+    const pending = await this.pendingPlatformOta();
+    if (!pending.length) return null;
+    // Reuse the same lease-protected completed-release transition as native
+    // reconciliation; publication still goes through durable OTA actions.
+    return await this.claimNativeDrift(args);
+  }
+
   async completedCurrentDevProgressionCandidate(sourceSha) {
     assertExactSha(sourceSha);
     const result = await this.pool.query(
@@ -241,7 +273,7 @@ export class PreviewLedger {
     );
     const row = result.rows[0] ?? null;
     if (!row) return { eligible: operation === "CURRENT_RELEASE_EVALUATION", reason: "row-not-created" };
-    const stateEligible = operation === "CURRENT_NATIVE_RECONCILIATION"
+    const stateEligible = ["CURRENT_NATIVE_RECONCILIATION", "CURRENT_OTA_RECONCILIATION"].includes(operation)
       ? row.state === "COMPLETE"
       : operation === "IOS_DISTRIBUTION_RECONCILIATION"
         ? ["COMPLETE","FAILED","DETECTED","VALIDATING","PLANNED","DELIVERING"].includes(row.state)
