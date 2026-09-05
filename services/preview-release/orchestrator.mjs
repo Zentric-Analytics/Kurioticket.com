@@ -20,7 +20,7 @@ export class PreviewOrchestrator {
     const decision = await this.deriveDecision();
     console.log(JSON.stringify({ event: "PREVIEW_DECISION", ...decision.trace }));
     if (decision.noChange) return { state: "NO_CHANGE", sourceSha: decision.sourceSha };
-    const { sourceSha, previous, deliveredNative, pendingNative, iosNativeBackfill, iosDistributionPending } = decision;
+    const { sourceSha, previous, deliveredNative, pendingNative, pendingOta, iosNativeBackfill, iosDistributionPending } = decision;
     const claim = { sourceSha, previousSha: previous?.source_sha ?? null, workerId: this.config.workerId, leaseMs: this.config.leaseMs, mode: this.config.mode };
     const record = iosNativeBackfill
       ? await this.ledger.claimIosNativeBackfill({ ...claim, identityKey: `${sourceSha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview` })
@@ -28,13 +28,15 @@ export class PreviewOrchestrator {
         ? await this.ledger.claimIosDistribution(claim)
       : pendingNative.length
         ? await this.ledger.claimNativeDrift(claim)
+      : pendingOta.length && previous?.source_sha === sourceSha
+        ? await this.ledger.claimOtaGap(claim)
       : await this.ledger.claim(claim);
     if (!record) return { state: "LOCKED_OR_COMPLETE", sourceSha };
     const lease = maintainLease({ ledger: this.ledger, sourceSha, workerId: this.config.workerId, leaseMs: this.config.leaseMs, maxDurationMs: this.config.cycleDeadlineMs });
     try {
       await this.github.report(sourceSha, "pending", `Preview release ${this.config.mode} evaluation started`);
       if (iosDistributionPending) return await this.reconcileIosDistribution(record, lease);
-      return await this.process(record, iosNativeBackfill ? null : previous, lease, deliveredNative, pendingNative);
+      return await this.process(record, iosNativeBackfill ? null : previous, lease, deliveredNative, pendingNative, pendingOta);
     } catch (error) {
       const safe = redact(error instanceof Error ? error.message : String(error));
       await this.ledger.transition(sourceSha, this.config.workerId, [record.state, "VALIDATING", "PLANNED", "DELIVERING"], "FAILED", { failure_reason: safe, recovery_action: "Retry the same ledger record after correcting the reported cause." }).catch(() => {});
@@ -156,6 +158,7 @@ export class PreviewOrchestrator {
   async deriveDecision() {
     const currentDevSha = await retry(() => this.github.latestDevSha(), { attempts: 4, sleep: this.sleep });
     let previous = await this.ledger.lastSuccessful();
+    const pendingOta = typeof this.ledger.pendingPlatformOta === "function" ? await this.ledger.pendingPlatformOta() : [];
     if (previous?.source_sha !== currentDevSha
       && typeof this.ledger.completedCurrentDevProgressionCandidate === "function"
       && typeof this.ledger.reconcileCompletedCurrentDevProgression === "function") {
@@ -196,16 +199,16 @@ export class PreviewOrchestrator {
     // outrank delayed historical side effects. Historical distribution recovery
     // is selected only when current dev is fully evaluated against both canonical
     // delivered-platform pointers.
-    const currentDevHasPriority = currentDevNeedsEvaluation || pendingNative.length > 0;
+    const currentDevHasPriority = currentDevNeedsEvaluation || pendingNative.length > 0 || pendingOta.length > 0;
     const sourceSha = this.config.iosNativeBackfillSha ?? (!currentDevHasPriority ? pendingDistribution?.source_sha : null) ?? currentDevSha;
     if (sourceSha !== currentDevSha) await this.github.compare(sourceSha, currentDevSha);
     const iosNativeBackfill = Boolean(this.config.iosNativeBackfillSha);
     const iosDistributionPending = !iosNativeBackfill && (pendingDistribution?.source_sha === sourceSha || (typeof this.ledger.requiresIosDistribution === "function" && await this.ledger.requiresIosDistribution(sourceSha)));
-    const noChange = previous?.source_sha === sourceSha && !iosNativeBackfill && !pendingNative.length && !iosDistributionPending;
-    const selectedOperation = noChange ? "NO_CHANGE" : iosDistributionPending ? "IOS_DISTRIBUTION_RECONCILIATION" : pendingNative.length ? "CURRENT_NATIVE_RECONCILIATION" : "CURRENT_RELEASE_EVALUATION";
+    const noChange = previous?.source_sha === sourceSha && !iosNativeBackfill && !pendingNative.length && !pendingOta.length && !iosDistributionPending;
+    const selectedOperation = noChange ? "NO_CHANGE" : iosDistributionPending ? "IOS_DISTRIBUTION_RECONCILIATION" : pendingNative.length ? "CURRENT_NATIVE_RECONCILIATION" : pendingOta.length && previous?.source_sha === sourceSha ? "CURRENT_OTA_RECONCILIATION" : "CURRENT_RELEASE_EVALUATION";
     const claimEligibility = !noChange && typeof this.ledger.claimEligibility === "function" ? await this.ledger.claimEligibility(sourceSha, selectedOperation) : null;
     return {
-      sourceSha, previous, deliveredNative, pendingNative, iosNativeBackfill, iosDistributionPending, noChange,
+      sourceSha, previous, deliveredNative, pendingNative, pendingOta, iosNativeBackfill, iosDistributionPending, noChange,
       trace: {
         currentDevSha,
         ordinaryProgressionSha: previous?.source_sha ?? null,
@@ -222,6 +225,7 @@ export class PreviewOrchestrator {
         sourceRangeNativeTargets: deliveredChangeTargets,
         fingerprintNativeTargets: nativeDriftTargets(currentFingerprints, deliveredNative),
         requiredNativeTargets: pendingNative,
+        pendingOtaPlatforms: pendingOta,
         pendingHistoricalDistributionSha: pendingDistribution?.source_sha ?? null,
         selectedSourceSha: sourceSha,
         selectedOperation,
@@ -230,7 +234,7 @@ export class PreviewOrchestrator {
     };
   }
 
-  async process(record, previous, lease, deliveredNative = null, requiredNativeTargets = []) {
+  async process(record, previous, lease, deliveredNative = null, requiredNativeTargets = [], pendingOta = []) {
     const sha = record.source_sha;
     await this.ledger.transition(sha, this.config.workerId, [record.state], "VALIDATING", { validation_state: "IN_PROGRESS" });
     const checkout = await this.checkoutFactory({ repository: this.config.repository, token: this.config.githubReadToken, sha });
@@ -247,7 +251,7 @@ export class PreviewOrchestrator {
       await lease.checkpoint();
       const nativeBaselines = deliveredNative ?? await this.deliveredNativeBaselines();
       classification = enforceDeliveredNativeBaseline({ classification, fingerprints, deliveredNative: nativeBaselines, requiredNativeTargets });
-      const otaPlan = planPlatformOta({ classification, fingerprints, deliveredNative: nativeBaselines, previous });
+      const otaPlan = planPlatformOta({ classification, fingerprints, deliveredNative: nativeBaselines, previous, pendingOta });
       classification = otaPlan.classification;
       const planned = await this.ledger.transition(sha, this.config.workerId, ["VALIDATING"], "PLANNED", { classification: classification.classification, validation_state: "PASSED", evidence: { files, identity, fingerprints } });
       if (this.config.mode === "dry-run" || classification.classification === "NO_DELIVERY") {

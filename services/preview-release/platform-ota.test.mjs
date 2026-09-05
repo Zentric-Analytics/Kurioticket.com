@@ -41,6 +41,26 @@ test("ordinary OTA uses each canonical native baseline", () => {
   assert.deepEqual(plan({ classification: "OTA" }).otaPlatforms, ["ios", "android"]);
 });
 
+test("historical ledger gap survives an intervening web-only completion", () => {
+  const result = plan({ classification: "NO_DELIVERY" }, { previous: { evidence: {} }, pendingOta: ["android"] });
+  assert.deepEqual(result.otaPlatforms, ["android"]);
+});
+
+test("current completed SHA is not NO_CHANGE when Android publication is missing", async () => {
+  const { PreviewOrchestrator } = await import("./orchestrator.mjs");
+  const sha = "a".repeat(40);
+  const worker = new PreviewOrchestrator({
+    config: {}, github: { latestDevSha: async () => sha }, render: {},
+    ledger: { lastSuccessful: async () => ({ source_sha: sha, evidence: { fingerprints } }), pendingPlatformOta: async () => ["android"] },
+  });
+  worker.deliveredNativeBaselines = async () => ({});
+  worker.nativeChangeTargets = async () => [];
+  const result = await worker.deriveDecision();
+  assert.equal(result.noChange, false);
+  assert.equal(result.trace.selectedOperation, "CURRENT_OTA_RECONCILIATION");
+  assert.deepEqual(result.pendingOta, ["android"]);
+});
+
 test("historical mixed release is repaired through the real orchestrator without native builds", async () => {
   const { PreviewOrchestrator } = await import("./orchestrator.mjs");
   const { PREVIEW_IDENTITY: identity } = await import("./config.mjs");

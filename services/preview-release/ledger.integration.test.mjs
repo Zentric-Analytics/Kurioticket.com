@@ -7,6 +7,23 @@ import { PREVIEW_IDENTITY } from "./config.mjs";
 
 const connectionString = process.env.PREVIEW_RELEASE_TEST_DATABASE_URL;
 
+test("PostgreSQL preserves Android OTA gaps across later aggregate completions", { skip: !connectionString }, async () => {
+  const ledger = new PreviewLedger(connectionString);
+  const first = "1".repeat(40), latest = "2".repeat(40);
+  try {
+    await resetLedger(ledger);
+    await ledger.pool.query("INSERT INTO preview_release(source_sha,mode,state,progression_order,evidence) VALUES($1,'active','COMPLETE',1,$2),($3,'active','COMPLETE',2,'{}')", [first, JSON.stringify({ classification: { otaCandidates: ["apps/mobile/src/screen.tsx"] }, ios: { buildId: "ios-finished" } }), latest]);
+    assert.deepEqual(await ledger.pendingPlatformOta(), ["android"]);
+    const claim = await ledger.claimOtaGap({ sourceSha: latest, workerId: "owner", leaseMs: 60000, mode: "active" });
+    assert.equal(claim.state, "DETECTED");
+    assert.equal(await ledger.claimOtaGap({ sourceSha: latest, workerId: "other", leaseMs: 60000, mode: "active" }), null);
+    await ledger.recordAction({ sourceSha: latest, kind: "OTA", identityKey: "android-catch-up", remoteId: "update", state: "PUBLISHED", evidence: { updates: [{ platform: "android", runtimeVersion: "compatible" }] } });
+    await ledger.transition(latest, "owner", ["DETECTED"], "COMPLETE", { evidence: {} });
+    assert.deepEqual(await ledger.pendingPlatformOta(), []);
+    assert.equal(await ledger.claimOtaGap({ sourceSha: latest, workerId: "owner", leaseMs: 60000, mode: "active" }), null);
+  } finally { await ledger.close(); }
+});
+
 async function resetLedger(ledger) {
   await ledger.pool.query("DROP TABLE IF EXISTS preview_native_ownership_incident, preview_native_notification, preview_delivered_native_state, preview_release_action, preview_release CASCADE; DROP SEQUENCE IF EXISTS preview_release_progression_order_seq CASCADE");
   for (const file of (await readdir(resolve(import.meta.dirname, "sql"))).filter((name) => /^\d+_.+\.sql$/.test(name)).sort()) {

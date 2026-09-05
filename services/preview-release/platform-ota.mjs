@@ -13,8 +13,8 @@ export function pendingOtaPlatforms(previous) {
   });
 }
 
-export function planPlatformOta({ classification, fingerprints, deliveredNative, previous }) {
-  const pending = pendingOtaPlatforms(previous);
+export function planPlatformOta({ classification, fingerprints, deliveredNative, previous, pendingOta = [] }) {
+  const pending = [...new Set([...pendingOtaPlatforms(previous), ...pendingOta])];
   const wantsJs = classification.otaCandidates?.length > 0 || classification.classification.split("+").includes("OTA");
   const targets = new Set(classification.classification.split("+").filter((target) => target !== "NO_DELIVERY" && target !== "OTA"));
   const otaPlatforms = [];
