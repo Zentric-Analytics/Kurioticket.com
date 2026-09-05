@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { classifyChangeSet } from "./classifier.mjs";
+import { planPlatformOta } from "./platform-ota.mjs";
 import { PREVIEW_IDENTITY, assertPreviewIdentity } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmissionHistory } from "./eas-state.mjs";
 import { exactChangeSet, exactCheckout, EasClient, EasRemoteObjectUnavailableError, EasUpdateRuntimeMismatchError, nativeFingerprints, prepareCheckout } from "./remote-clients.mjs";
@@ -246,12 +247,8 @@ export class PreviewOrchestrator {
       await lease.checkpoint();
       const nativeBaselines = deliveredNative ?? await this.deliveredNativeBaselines();
       classification = enforceDeliveredNativeBaseline({ classification, fingerprints, deliveredNative: nativeBaselines, requiredNativeTargets });
-      if (classification.classification.includes("OTA")) {
-        const prior = previous?.evidence?.fingerprints;
-        if (!prior || prior.ios !== fingerprints.ios || prior.android !== fingerprints.android) {
-          classification = { ...classification, classification: classification.classification.replace("OTA", "ANDROID_NATIVE+IOS_NATIVE"), reason: prior ? "native-fingerprint-changed" : "native-fingerprint-baseline-missing" };
-        }
-      }
+      const otaPlan = planPlatformOta({ classification, fingerprints, deliveredNative: nativeBaselines, previous });
+      classification = otaPlan.classification;
       const planned = await this.ledger.transition(sha, this.config.workerId, ["VALIDATING"], "PLANNED", { classification: classification.classification, validation_state: "PASSED", evidence: { files, identity, fingerprints } });
       if (this.config.mode === "dry-run" || classification.classification === "NO_DELIVERY") {
         const complete = await this.ledger.transition(sha, this.config.workerId, [planned.state], "COMPLETE", { evidence: { files, identity, fingerprints, plan: classification, submissionPerformed: false } });
@@ -259,10 +256,10 @@ export class PreviewOrchestrator {
         return complete;
       }
       await this.ledger.transition(sha, this.config.workerId, [planned.state], "DELIVERING");
-      const evidence = { files, identity, fingerprints, classification };
+      const evidence = { files, identity, fingerprints, classification, pendingOtaPlatforms: otaPlan.pendingOtaPlatforms };
       const deliveries = {};
       if (classification.classification.includes("WEB")) deliveries.web = () => this.deliverWeb(sha, lease);
-      if (classification.classification.includes("OTA")) deliveries.ota = () => this.deliverOta(sha, checkout.directory, lease, ["ios", "android"], fingerprints);
+      if (otaPlan.otaPlatforms.length) deliveries.ota = () => this.deliverOta(sha, checkout.directory, lease, otaPlan.otaPlatforms, fingerprints);
       if (classification.classification.includes("IOS_NATIVE")) deliveries.ios = () => this.deliverIos(sha, checkout.directory, lease, fingerprints.ios);
       if (classification.classification.includes("ANDROID_NATIVE")) deliveries.android = () => this.deliverAndroid(sha, checkout.directory, lease, fingerprints.android);
       const { results: deliveryResults, failures: deliveryFailures } = await settleDeliveries(deliveries);
@@ -271,7 +268,7 @@ export class PreviewOrchestrator {
         const result = deliveryResults[platform];
         return result?.nativeArtifactSourceSha && result.nativeArtifactSourceSha !== sha;
       });
-      if (!classification.classification.includes("OTA") && coalescedPlatforms.length) {
+      if (coalescedPlatforms.length) {
         const coalescedOtaPlatforms = [];
         const coalescedNoDeliveryPlatforms = [];
         const coalescedOverlayEvidence = {};
@@ -304,7 +301,8 @@ export class PreviewOrchestrator {
           else coalescedNoDeliveryPlatforms.push(platform);
         }
         if (coalescedOtaPlatforms.length) {
-          evidence.ota = await this.deliverOta(sha, checkout.directory, lease, coalescedOtaPlatforms, fingerprints);
+          const overlay = await this.deliverOta(sha, checkout.directory, lease, coalescedOtaPlatforms, fingerprints);
+          evidence.ota = { ...overlay, updates: [...(evidence.ota?.updates ?? []), ...(overlay.updates ?? [])] };
           evidence.coalescedOtaPlatforms = coalescedOtaPlatforms;
         }
         if (coalescedNoDeliveryPlatforms.length) evidence.coalescedNoDeliveryPlatforms = coalescedNoDeliveryPlatforms;
