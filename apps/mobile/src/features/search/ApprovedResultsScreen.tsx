@@ -1435,16 +1435,31 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
             style={s0.flightMetadataRegion}
           >
             <View style={s0.flightMetadataItem}>
-              <Luggage accessible={false} size={13} strokeWidth={2} color={supportTextColor}/>
-              <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightMetadataText,{color:supportTextColor}]}>{labels.baggage}: {baggageSummary}</Text>
+              <View accessible={false} style={[s0.flightMetadataIconTile, { backgroundColor: theme.dark ? "#253147" : "#F0F2F5" }]}>
+                <Luggage accessible={false} size={14} strokeWidth={2} color={supportTextColor}/>
+              </View>
+              <View style={s0.flightMetadataCopy}>
+                <Text numberOfLines={1} style={[s0.flightMetadataLabel, { color: supportTextColor }]}>{labels.baggage}</Text>
+                <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightMetadataValue, { color: theme.textPrimary }]}>{baggageSummary}</Text>
+              </View>
             </View>
             <View style={s0.flightMetadataItem}>
-              <Armchair accessible={false} size={13} strokeWidth={2} color={supportTextColor}/>
-              <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightMetadataText,{color:supportTextColor}]}>{labels.cabin}: {cabinSummary}</Text>
+              <View accessible={false} style={[s0.flightMetadataIconTile, { backgroundColor: theme.dark ? "#253147" : "#F0F2F5" }]}>
+                <Armchair accessible={false} size={14} strokeWidth={2} color={supportTextColor}/>
+              </View>
+              <View style={s0.flightMetadataCopy}>
+                <Text numberOfLines={1} style={[s0.flightMetadataLabel, { color: supportTextColor }]}>{labels.cabin}</Text>
+                <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightMetadataValue, { color: theme.textPrimary }]}>{cabinSummary}</Text>
+              </View>
             </View>
             <View style={s0.flightMetadataItem}>
-              <FileText accessible={false} size={13} strokeWidth={2} color={supportTextColor}/>
-              <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightMetadataText,{color:supportTextColor}]}>{labels.fareRules}: {labels.review}</Text>
+              <View accessible={false} style={[s0.flightMetadataIconTile, { backgroundColor: theme.dark ? "#253147" : "#F0F2F5" }]}>
+                <FileText accessible={false} size={14} strokeWidth={2} color={supportTextColor}/>
+              </View>
+              <View style={s0.flightMetadataCopy}>
+                <Text numberOfLines={1} style={[s0.flightMetadataLabel, { color: supportTextColor }]}>{labels.fareRules}</Text>
+                <Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightMetadataValue, { color: theme.textPrimary }]}>{labels.review}</Text>
+              </View>
             </View>
           </View>
           <View style={s0.flightCommercialRegion}>
@@ -2043,9 +2058,12 @@ const s0 = StyleSheet.create({
   flightCardPressed: { opacity: 0.78, transform: [{ scale: 0.995 }] },
   flightCardFooter: { width: "100%", marginTop: 5, paddingTop: 7, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "#D8E1EC" },
   flightLowerSection: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 8 },
-  flightMetadataRegion: { flex: 1, minWidth: 0, paddingTop: 1, gap: 4 },
-  flightMetadataItem: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 3 },
-  flightMetadataText: { flexShrink: 1, minWidth: 0, fontSize: 9.5, lineHeight: 13, fontWeight: "500", fontFamily: appFonts.medium },
+  flightMetadataRegion: { flex: 1, minWidth: 0, paddingTop: 1, alignItems: "flex-start", gap: 6 },
+  flightMetadataItem: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "center", gap: 6 },
+  flightMetadataIconTile: { width: 28, height: 28, borderRadius: 8, flexShrink: 0, alignItems: "center", justifyContent: "center" },
+  flightMetadataCopy: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4 },
+  flightMetadataLabel: { width: 46, flexShrink: 0, fontSize: 9, lineHeight: 12, fontWeight: "500", fontFamily: appFonts.medium },
+  flightMetadataValue: { flex: 1, minWidth: 0, fontSize: 10.5, lineHeight: 14, fontWeight: "600", fontFamily: appFonts.semibold },
   flightCommercialRegion: { width: "46%", minWidth: 104, flexShrink: 0, alignItems: "flex-end", gap: 1 },
   metadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 6, marginBottom: 4 },
   metadataFooterContainer: { width: "100%", alignItems: "center" },
