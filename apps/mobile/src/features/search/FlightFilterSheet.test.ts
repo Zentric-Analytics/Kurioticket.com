@@ -8,6 +8,12 @@ test("main hierarchy includes supported native sections but omits fake quality",
 test("journey-aware time and safe insight logic remain",()=>{assert.match(sheet,/journeyKey/);assert.match(sheet,/journeyTimeMaximums/);assert.match(sheet,/Takeoff time from/);assert.match(sheet,/Landing time at/);assert.match(sheet,/flightFilterInsight/);assert.match(sheet,/priceFilteringReady\?priceValue:undefined/);});
 test("full filter scroll is constrained and quick facets remain naturally scrollable",()=>{assert.match(sheet,/style=\{full\?s\.fullScroll:s\.quickScroll\}/);assert.match(sheet,/fullScroll:\{flex:1\}/);assert.match(sheet,/quickScroll:\{flexShrink:1\}/);assert.match(sheet,/paddingHorizontal:24/);assert.match(sheet,/paddingBottom:32/);assert.match(sheet,/keyboardShouldPersistTaps="handled"/);assert.match(sheet,/keyboardDismissMode="on-drag"/);});
 test("footer stays outside the scroll body and zero-state header has no decorative slider",()=>{assert.ok(sheet.indexOf("<ScrollView")>sheet.indexOf("footer={"));assert.doesNotMatch(sheet,/import \{ SlidersHorizontal \}/);assert.match(sheet,/headerAction=\{full&&activeCount\?<Pressable/);});
+test("full Flight CTA is a direct footer child and cannot flex-collapse below the viewport",()=>{
+ assert.match(sheet,/footer=\{full\?<Pressable accessibilityRole="button"/);
+ assert.doesNotMatch(sheet,/footer=\{full\?<View style=\{s\.footerPrimary\}/);
+ assert.doesNotMatch(sheet,/footerPrimary:\{flex:1\}/);
+ assert.match(sheet,/viewButton:\{width:"100%",minHeight:50,borderRadius:10/);
+});
 test("Web-style option rows put the checkbox before flexible copy and trailing data",()=>{
  const check=sheet.slice(sheet.indexOf("function Check("),sheet.indexOf("const s=StyleSheet.create"));
  assert.ok(check.indexOf("s.box")<check.indexOf("s.rowCopy"));
