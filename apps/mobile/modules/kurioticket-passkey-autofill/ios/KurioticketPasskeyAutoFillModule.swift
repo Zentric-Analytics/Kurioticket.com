@@ -5,28 +5,38 @@ import UIKit
 public final class KurioticketPasskeyAutoFillModule: Module, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
   private var controller: ASAuthorizationController?
   private var promise: Promise?
+  private var started = false
+  private var startWaiters: [Promise] = []
 
   public func definition() -> ModuleDefinition {
     Name("KurioticketPasskeyAutoFill")
 
     AsyncFunction("start") { (relyingPartyIdentifier: String, challenge: String, promise: Promise) in
-      DispatchQueue.main.async {
-        self.cancelActive(resolveCancelled: true)
+      self.cancelActive(resolveCancelled: true)
 
-        guard #available(iOS 16.0, *), let challengeData = Self.decodeBase64Url(challenge) else {
-          promise.resolve(nil)
-          return
-        }
+      guard #available(iOS 16.0, *), let challengeData = Self.decodeBase64Url(challenge) else {
+        promise.resolve(nil)
+        return
+      }
 
-        let provider = ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: relyingPartyIdentifier)
-        let request = provider.createCredentialAssertionRequest(challenge: challengeData)
-        let controller = ASAuthorizationController(authorizationRequests: [request])
-        controller.delegate = self
-        controller.presentationContextProvider = self
+      let provider = ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: relyingPartyIdentifier)
+      let request = provider.createCredentialAssertionRequest(challenge: challengeData)
+      let controller = ASAuthorizationController(authorizationRequests: [request])
+      controller.delegate = self
+      controller.presentationContextProvider = self
 
-        self.promise = promise
-        self.controller = controller
-        controller.performAutoFillAssistedRequests()
+      self.promise = promise
+      self.controller = controller
+      controller.performAutoFillAssistedRequests()
+      self.started = true
+      self.resolveStartWaiters(true)
+    }.runOnQueue(.main)
+
+    AsyncFunction("waitUntilStarted") { (promise: Promise) in
+      if self.started && self.controller != nil {
+        promise.resolve(true)
+      } else {
+        self.startWaiters.append(promise)
       }
     }.runOnQueue(.main)
 
@@ -77,6 +87,8 @@ public final class KurioticketPasskeyAutoFillModule: Module, ASAuthorizationCont
     let pending = promise
     promise = nil
     controller = nil
+    started = false
+    resolveStartWaiters(false)
     pending?.resolve(result)
   }
 
@@ -85,10 +97,18 @@ public final class KurioticketPasskeyAutoFillModule: Module, ASAuthorizationCont
     let pending = promise
     controller = nil
     promise = nil
+    started = false
     activeController?.cancel()
+    resolveStartWaiters(false)
     if resolveCancelled {
       pending?.resolve(nil)
     }
+  }
+
+  private func resolveStartWaiters(_ value: Bool) {
+    let waiters = startWaiters
+    startWaiters.removeAll()
+    waiters.forEach { $0.resolve(value) }
   }
 
   private static func decodeBase64Url(_ value: String) -> Data? {
