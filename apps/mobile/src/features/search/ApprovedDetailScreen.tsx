@@ -683,7 +683,7 @@ function HotelDetail({
     children: string;
   }) => (
     <View style={d.hotelFactRow}>
-      <Icon accessible={false} size={17} color={theme.icon} />
+      <Icon accessible={false} size={16} color={theme.icon} />
       <Text style={[d.hotelFact, { color: theme.textSecondary }]}>
         {children}
       </Text>
@@ -722,21 +722,23 @@ function HotelDetail({
             >
               {result.name}
             </Text>
-            {stay.dates ? <Fact icon={CalendarDays}>{stay.dates}</Fact> : null}
-            <Fact icon={Users}>{stay.occupancy}</Fact>
-            <Fact icon={MapPin}>{address}</Fact>
-            {classification ? (
-              <View
-                accessible
-                accessibilityLabel={`${classification} star hotel`}
-                style={d.hotelFactRow}
-              >
-                <Award accessible={false} size={17} color={theme.icon} />
-                <Text accessible={false} style={d.hotelClassificationStars}>
-                  {"★".repeat(classification)}
-                </Text>
-              </View>
-            ) : null}
+            <View style={d.hotelIdentityMeta}>
+              {stay.dates ? <Fact icon={CalendarDays}>{stay.dates}</Fact> : null}
+              <Fact icon={Users}>{stay.occupancy}</Fact>
+              <Fact icon={MapPin}>{address}</Fact>
+              {classification ? (
+                <View
+                  accessible
+                  accessibilityLabel={`${classification} star hotel`}
+                  style={d.hotelFactRow}
+                >
+                  <Award accessible={false} size={16} color={theme.icon} />
+                  <Text accessible={false} style={d.hotelClassificationStars}>
+                    {"★".repeat(classification)}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
           </View>
           <View style={d.hotelHeaderActions}>
             <Pressable
@@ -748,10 +750,11 @@ function HotelDetail({
               }
               accessibilityState={{ selected: saved }}
               onPress={() => void canonical.toggleHotel(result, params)}
-              style={d.hotelHeaderAction}
+              style={[d.hotelHeaderAction, d.hotelHeaderActionSave]}
             >
               <Heart
-                size={21}
+                size={20}
+                strokeWidth={2}
                 color={saved ? androidFavoriteColors.active : theme.icon}
                 fill={saved ? androidFavoriteColors.active : "transparent"}
               />
@@ -760,7 +763,7 @@ function HotelDetail({
               accessibilityRole="button"
               accessibilityLabel={`Share ${result.name}`}
               onPress={shareHotel}
-              style={d.hotelHeaderAction}
+              style={[d.hotelHeaderAction, d.hotelHeaderActionShare]}
             >
               <FlowIcon name="share" size={20} color={theme.icon} />
             </Pressable>
@@ -1563,13 +1566,16 @@ const d = StyleSheet.create({
   stickyCta: { flex: 1, minWidth: 0, maxWidth: 250 },
   redirect: { fontSize: 9, lineHeight: 12, color: ui.muted, textAlign: "center", marginTop: 3 },
   hotelBackHeader: { minHeight: 48, paddingHorizontal: 16, justifyContent: "center", borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: ui.border, backgroundColor: "white" },
-  hotelIdentity: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 13, flexDirection: "row", alignItems: "flex-start", gap: 10 },
-  hotelIdentityCopy: { flex: 1, minWidth: 0, gap: 7 },
+  hotelIdentity: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 13, flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  hotelIdentityCopy: { flex: 1, minWidth: 0 },
+  hotelIdentityMeta: { marginTop: 8, gap: 4 },
   hotelBackToResultsText: { fontSize: 14, lineHeight: 19, fontWeight: "700" },
-  hotelHeaderActions: { flexDirection: "row", marginRight: -8 },
+  hotelHeaderActions: { flexDirection: "row", flexShrink: 0, gap: 0 },
   hotelHeaderAction: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  hotelFact: { color: "#334155", fontSize: 12, lineHeight: 17, fontWeight: "600" },
-  hotelClassificationStars: { color: "#F5A623", fontSize: 15, lineHeight: 19, letterSpacing: 1 },
+  hotelHeaderActionSave: { alignItems: "flex-end", paddingRight: 4 },
+  hotelHeaderActionShare: { alignItems: "flex-start", paddingLeft: 4 },
+  hotelFact: { color: "#334155", fontSize: 12, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
+  hotelClassificationStars: { color: "#F59E0B", fontSize: 15, lineHeight: 20, letterSpacing: 1.2, fontWeight: "400", fontFamily: appFonts.regular },
   hotelGallery: { height: 244, marginHorizontal: 12, marginBottom: 6, flexDirection: "row", gap: 4, borderRadius: 12, overflow: "hidden", backgroundColor: "#E7EBF2" },
   hotelHero: { width: "78%", height: "100%", backgroundColor: "#E7EBF2" },
   hotelThumbs: { flex: 1, gap: 4 },
@@ -1649,7 +1655,7 @@ const d = StyleSheet.create({
   hotelSummaryCompact: { flexDirection: "column" },
   hotelPriceSummary: { alignItems: "flex-end", flexShrink: 0 },
   hotelPriceSummaryCompact: { alignItems: "flex-start" },
-  hotelName: { fontSize: 22, lineHeight: 28, fontWeight: "900", color: ui.navy },
+  hotelName: { fontSize: 22, lineHeight: 28, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.55, color: ui.navy },
   stars: { color: "#FFB800", fontSize: 15, marginVertical: 7 },
   score: { backgroundColor: ui.blue, color: "white", fontWeight: "900" },
   stay: {
@@ -1703,7 +1709,7 @@ const d = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  hotelFactRow: { minHeight: 22, flexDirection: "row", alignItems: "flex-start", gap: 9 },
+  hotelFactRow: { minHeight: 20, flexDirection: "row", alignItems: "flex-start", gap: 6 },
   hotelTabTextCompact: { fontSize: 10 },
   hotelDetailBody: { paddingHorizontal: 16, paddingVertical: 20, gap: 12 },
   hotelHeading: { fontSize: 20, lineHeight: 26, fontWeight: "900" },
