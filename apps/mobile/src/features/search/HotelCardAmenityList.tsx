@@ -7,10 +7,10 @@ import { StyleSheet, Text, View } from "react-native";
 import {
   buildHotelAmenityPresentation,
   type HotelAmenityIconKey,
-  type HotelAmenityPresentationItem,
 } from "../../../../../src/components/results/hotelAmenityPresentation";
 import { appFonts } from "../../theme/typography";
 import { ui } from "./SearchUi";
+import { nativeHotelAmenityLabel } from "./hotelAmenityLabel";
 
 const amenityIcons: Record<HotelAmenityIconKey, LucideIcon> = {
   wifi: Wifi, breakfast: Coffee, pool: Waves, spa: Flower2,
@@ -59,19 +59,13 @@ export function HotelOfferAmenityList({
           <View key={item.key} style={styles.offerItem}>
             <Icon accessible={false} size={16} strokeWidth={1.8} color={color} />
             <Text numberOfLines={1} style={[styles.offerLabel, { color }]}>
-              {hotelOfferAmenityLabel(item)}
+              {nativeHotelAmenityLabel(item)}
             </Text>
           </View>
         );
       })}
     </View>
   );
-}
-
-function hotelOfferAmenityLabel(item: HotelAmenityPresentationItem) {
-  return item.translationKey === "hotelResults.filter.freeWifi"
-    ? "Free Wi-Fi"
-    : item.label;
 }
 
 const styles = StyleSheet.create({
