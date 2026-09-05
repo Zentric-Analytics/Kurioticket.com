@@ -48,11 +48,11 @@ test("compact responsive styling preserves safe area, touch target, long fare, a
   assert.match(searchUi, /minimumFontScale=\{0\.78\}[\s\S]*?numberOfLines=\{1\}/);
 });
 
-test("scroll clearance follows the slimmer footprint and hotel sticky styling is untouched", () => {
+test("flight scroll clearance follows the slimmer footprint independently of the Hotel dock", () => {
   assert.match(flightDetail, /paddingBottom: 110 \+ inset\.bottom/);
   assert.match(flightDetail, />Booking provider<[\s\S]*?<View style=\{\[d\.sticky/);
-  assert.match(hotelStickyStyles, /minHeight: 92/);
-  assert.match(hotelStickyStyles, /padding: 10/);
+  assert.match(hotelStickyStyles, /borderTopLeftRadius: 22/);
+  assert.match(hotelStickyStyles, /paddingHorizontal: 16/);
 });
 
 test("sticky surface and text retain semantic light and dark theme colors", () => {
