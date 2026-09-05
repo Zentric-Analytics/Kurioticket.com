@@ -1,4 +1,5 @@
-import { ReactNode, Ref, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
+import type { Ref } from "react";
 import { AccessibilityInfo, ActivityIndicator, Animated, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TextInputProps, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AuthIcon, IconName } from "./AuthIcon";
