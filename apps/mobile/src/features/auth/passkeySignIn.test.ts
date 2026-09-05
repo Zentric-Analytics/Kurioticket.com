@@ -85,12 +85,17 @@ test("Preview diagnostics expose only safe AuthenticationServices metadata", () 
   assert.doesNotMatch(swiftView, /payload\["challenge"\]|payload\["credentialId"\]|payload\["signature"\]/);
 });
 
-test("passkey assertion verification remains silent and session-safe", () => {
+test("Preview passkey verification exposes failures and remains session-safe", () => {
   const flow = source("src/features/auth/AuthFlow.tsx");
   const api = source("src/features/auth/authApi.ts");
   assert.match(flow, /const continuePasskeyAssertion = useCallback/);
   assert.match(flow, /authApi\.passkeyVerify\(assertion, controller\.signal\)/);
-  assert.match(flow, /Selection\/cancellation\/verification failures stay silent/);
+  assert.match(flow, /tracePreviewPasskey\("sign_in_failed", error\)/);
+  assert.match(flow, /controller.signal.aborted\) return/);
+  assert.match(flow, /if \(passkeyVerifyController.current && isPreviewPasskeySignIn\(\)\) setLoading\(false\)/);
+  assert.match(flow, /setError\(previewPasskeyErrorMessage\(error instanceof AuthApiError/);
+  assert.match(api, /isIOSPreviewPasskeyEnabled\(Platform.OS, Constants.expoConfig\?\.extra\?\.environment\?\.isPreview\)/);
+  assert.match(api, /if \(isPreviewPasskeySignIn\(\)\) \{\s*return completePreviewPasskeySignIn/);
   assert.match(api, /passkeyVerify:[\s\S]*if \(signal\?\.aborted\) throw new AuthApiError\("Passkey sign-in cancelled\.", 0, "ABORTED"\)/);
   assert.match(api, /await writeSession\([\s\S]*if \(signal\?\.aborted\) \{\s*await clearSession\(\)/);
 });
