@@ -49,7 +49,7 @@ import { flightPriceBasis } from "./flightPriceBasis";
 import { HOTEL_LIMITS } from "../flow/hotelSearchModel";
 import { homepageAirports } from "../home/homepageAirports";
 import type { MobileHotelDetailsResponse } from "../../api/travelApi";
-import { canonicalHotelAddress, HotelRoomOptionsModal, hotelStaySummary, meaningfulHotelCenterDistance, NativeHotelGallery } from "./NativeHotelDetails";
+import { canonicalHotelAddress, HotelRoomOptionsModal, hotelStaySummary, NativeHotelGallery } from "./NativeHotelDetails";
 import { nativeHotelOffers, nativeHotelProviderUrl, reconcileNativeHotelOfferSelection, type NativeHotelOffer } from "./nativeHotelDetailsModel";
 import { colors } from "../../theme/tokens";
 import { NativeHotelPropertyLocationSection, NativeRelatedHotelsSection } from "./NativeHotelDecisionSections";
@@ -58,6 +58,7 @@ import { HotelOfferAmenityList } from "./HotelCardAmenityList";
 import { nativeHotelAmenityLabel } from "./hotelAmenityLabel";
 import { appFonts } from "../../theme/typography";
 import { buildHotelAmenityPresentation, type HotelAmenityPresentationItem } from "../../../../../src/components/results/hotelAmenityPresentation";
+import { NativeHotelLocationSection } from "./NativeHotelLocationSection";
 
 function hotelAboutIconFor(item: HotelAmenityPresentationItem): LucideIcon {
   if (item.iconKey === "wifi") return Wifi;
@@ -1016,66 +1017,11 @@ function HotelDetail({
             </View>
           ) : null}
           {activeHotelTab === "location" ? (
-            <View style={d.hotelPanel}>
-              <Text style={[d.hotelHeading, { color: theme.textPrimary }]}>
-                Location &amp; stay fit
-              </Text>
-              <Fact icon={MapPin}>{address}</Fact>
-              {property?.neighbourhood || result.neighbourhood ? (
-                <Text
-                  style={[d.hotelSectionLead, { color: theme.textSecondary }]}
-                >
-                  {property?.neighbourhood || result.neighbourhood}{" "}
-                  neighbourhood
-                </Text>
-              ) : null}
-              {meaningfulHotelCenterDistance(result.distanceFromCenter) ? (
-                <Text
-                  style={[d.hotelSectionLead, { color: theme.textSecondary }]}
-                >
-                  {meaningfulHotelCenterDistance(result.distanceFromCenter)}
-                </Text>
-              ) : null}
-              {property?.interestTags?.map((tag) => (
-                <Text
-                  key={tag}
-                  style={[d.hotelSectionLead, { color: theme.textSecondary }]}
-                >
-                  ✓ {tag}
-                </Text>
-              ))}
-              {property?.businessSuitable ? (
-                <Text
-                  style={[d.hotelSectionLead, { color: theme.textSecondary }]}
-                >
-                  ✓ Suited to business stays
-                </Text>
-              ) : null}
-              {property?.familySuitable ? (
-                <Text
-                  style={[d.hotelSectionLead, { color: theme.textSecondary }]}
-                >
-                  ✓ Suited to family stays
-                </Text>
-              ) : null}
-              {property &&
-              Number.isFinite(property.latitude) &&
-              Number.isFinite(property.longitude) ? (
-                <Pressable
-                  accessibilityRole="link"
-                  accessibilityLabel="Open hotel location in Maps"
-                  onPress={() =>
-                    void Linking.openURL(
-                      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${property.latitude},${property.longitude}`)}`,
-                    )
-                  }
-                  style={d.mapsButton}
-                >
-                  <MapPin size={17} color="white" />
-                  <Text style={d.mapsButtonText}>Open in Maps</Text>
-                </Pressable>
-              ) : null}
-            </View>
+            <NativeHotelLocationSection
+              hotelName={result.name}
+              propertyDetails={property}
+              theme={theme}
+            />
           ) : null}
           {activeHotelTab === "reviews" ? (
             <View style={d.hotelPanel}>
