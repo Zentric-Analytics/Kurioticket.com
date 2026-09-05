@@ -13,6 +13,7 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
   const { theme } = useAppTheme();
   const inset = useSafeAreaInsets();
   const { height } = useWindowDimensions();
+  const footerBottomPadding = fullScreen ? inset.bottom + 16 : Math.max(inset.bottom, 12);
   const sheet = (
     <View accessibilityLabel={title} style={[styles.sheet, fullScreen ? styles.fullScreen : { maxHeight: Math.min(height * .76, 620) }, { backgroundColor: theme.background, paddingTop: fullScreen ? inset.top : 0 }]}>
       <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
@@ -26,7 +27,7 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
         </Pressable>
       </View>
       <View style={fullScreen ? styles.fullScreenContent : styles.quickContent}>{children}</View>
-      {footer ? <View style={[styles.footer, { backgroundColor: theme.surface, borderTopColor: theme.border, paddingBottom: Math.max(inset.bottom, fullScreen ? 16 : 12) }]}>{footer}</View> : null}
+      {footer ? <View style={[styles.footer, { backgroundColor: theme.surface, borderTopColor: theme.border, paddingBottom: footerBottomPadding }]}>{footer}</View> : null}
     </View>
   );
   return <Modal visible={visible} transparent={!fullScreen} animationType="slide" presentationStyle={fullScreen ? "fullScreen" : "overFullScreen"} onRequestClose={onClose} accessibilityViewIsModal>
