@@ -9,6 +9,7 @@ const hotel = detailSource.slice(
   detailSource.indexOf("const detailIcons"),
 );
 const amenitySource = readFileSync("src/features/search/HotelCardAmenityList.tsx", "utf8");
+const amenityLabelSource = readFileSync("src/features/search/hotelAmenityLabel.ts", "utf8");
 const webCompare = readFileSync(
   "../../src/components/results/hotelDetails/HotelPriceComparisonSection.tsx",
   "utf8",
@@ -63,8 +64,9 @@ test("native provider offer resolves only canonical Wi-Fi semantics to the Engli
   assert.equal(wifi.translationKey, "hotelResults.filter.freeWifi");
   assert.equal(restaurant.label, "Restaurant");
   assert.equal(bar.label, "Bar");
-  assert.match(amenitySource, /item\.translationKey === "hotelResults\.filter\.freeWifi"/);
-  assert.match(amenitySource, /\? "Free Wi-Fi"[\s\S]*?: item\.label/);
+  assert.match(amenitySource, /nativeHotelAmenityLabel\(item\)/);
+  assert.match(amenityLabelSource, /item\.translationKey === "hotelResults\.filter\.freeWifi"/);
+  assert.match(amenityLabelSource, /\? "Free Wi-Fi"[\s\S]*?: item\.label/);
 
   const resultsList = amenitySource.slice(
     amenitySource.indexOf("export function HotelCardAmenityList"),
@@ -83,7 +85,7 @@ test("native selected offer uses the web-like thin ring and separate centered do
 });
 
 test("native provider per-night label uses the compact Hotel accent hierarchy", () => {
-  assert.match(styleRule(detailSource, "hotelPerNight", "hotelHighlight"), /flexShrink: 0[\s\S]*fontSize: 12[\s\S]*lineHeight: 16[\s\S]*fontWeight: "500"[\s\S]*fontFamily: appFonts\.medium[\s\S]*textAlign: "right"/);
+  assert.match(styleRule(detailSource, "hotelPerNight", "hotelAboutPanel"), /flexShrink: 0[\s\S]*fontSize: 12[\s\S]*lineHeight: 16[\s\S]*fontWeight: "500"[\s\S]*fontFamily: appFonts\.medium[\s\S]*textAlign: "right"/);
   assert.match(hotel, /<Text numberOfLines=\{1\} style=\{\[d\.hotelPerNight, \{ color: hotelAccent \}\]\}>per night<\/Text>/);
   assert.doesNotMatch(hotel, /<Text[^>]*d\.hotelPerNight[^>]*color: theme\.textSecondary[^>]*>per night<\/Text>/);
 });
