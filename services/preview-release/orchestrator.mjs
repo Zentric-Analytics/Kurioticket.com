@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { classifyChangeSet } from "./classifier.mjs";
 import { planPlatformOta } from "./platform-ota.mjs";
 import { PREVIEW_IDENTITY, assertPreviewIdentity } from "./config.mjs";
-import { reconcileBuilds, reconcileSubmissionHistory } from "./eas-state.mjs";
+import { reconcileBuilds, reconcileSubmissionHistory, inspectHistoricalAndroidBuilds } from "./eas-state.mjs";
 import { exactChangeSet, exactCheckout, EasClient, EasRemoteObjectUnavailableError, EasUpdateRuntimeMismatchError, nativeFingerprints, prepareCheckout } from "./remote-clients.mjs";
 import { canonicalPreviewOtaRemoteIdentity, inspectPreviewUpdateHistory, waitForStaging } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
 
@@ -12,6 +12,23 @@ import { AppStoreConnectClient } from "./app-store-connect.mjs";
 import { unexpectedBuilds, validateAdoptableBuild, validateAdoptableIosSubmission } from "./native-ownership.mjs";
 
 export class PreviewOrchestrator {
+  historicalReportTimes = new Map();
+
+  async reportHistoricalAndroidReservation(action, eas) {
+    const key = action.identity_key;
+    const now = Date.now();
+    if (now - (this.historicalReportTimes.get(key) ?? -Infinity) < 30 * 60_000) return;
+    // Set before awaiting, so errors and overlapping calls also observe cooldown.
+    if (this.historicalReportTimes.size >= 100) this.historicalReportTimes.clear();
+    this.historicalReportTimes.set(key, now);
+    let report = { outcome: "INSUFFICIENT_EVIDENCE", candidates: [] };
+    try {
+      const history = await eas.historicalAndroidHistory(action);
+      report = inspectHistoricalAndroidBuilds(history.builds, action, history.projectId);
+    } catch { /* Never log raw provider errors, tokens or artifact URLs. */ }
+    console.log(JSON.stringify({ event: "historical-android-reservation-report", actionId: action.id,
+      sourceSha: action.source_sha, ...report, decision: "WAIT_FOR_DURABLE_OWNER", reportOnly: true }));
+  }
   constructor({ config, ledger, github, render, easFactory = (cwd) => new EasClient({ expoToken: config.expoToken, cwd }), appleFactory = () => new AppStoreConnectClient(config.appStoreConnect), checkoutFactory = exactCheckout, changeSetFactory = exactChangeSet, prepareCheckoutFactory = prepareCheckout, identityFactory = resolvedIdentity, fingerprintsFactory = (directory) => nativeFingerprints(directory, { expoToken: config.expoToken }), stagingWait = waitForStaging, sleep = delay }) {
     this.config = config; this.ledger = ledger; this.github = github; this.render = render; this.easFactory = easFactory; this.appleFactory = appleFactory; this.checkoutFactory = checkoutFactory; this.changeSetFactory = changeSetFactory; this.prepareCheckoutFactory = prepareCheckoutFactory; this.identityFactory = identityFactory; this.fingerprintsFactory = fingerprintsFactory; this.stagingWait = stagingWait; this.sleep = sleep;
   }
@@ -644,6 +661,7 @@ export class PreviewOrchestrator {
     if (selectedExistingOwner) {
       recordedBuildAction = await waitForOwnedNativeRemoteId({
         action: recordedBuildAction, platform: "android", ledger: this.ledger, lease, sleep: this.sleep,
+        reportPending: (action) => this.reportHistoricalAndroidReservation(action, eas),
       });
     }
     let decision = recordedBuildAction?.remote_id
@@ -703,7 +721,7 @@ export async function runDeliveries(deliveries) {
   return results;
 }
 
-export async function waitForOwnedNativeRemoteId({ action, platform, ledger, lease, sleep, attempts = 120 }) {
+export async function waitForOwnedNativeRemoteId({ action, platform, ledger, lease, sleep, attempts = 120, reportPending }) {
   if (!action || action.remote_id) return action;
   if (!['ios', 'android'].includes(platform)) throw new Error("Owned native build platform is invalid.");
   if (!action.identity_key) throw new Error(`Owned ${platform} native build action has no durable identity.`);
@@ -723,6 +741,7 @@ export async function waitForOwnedNativeRemoteId({ action, platform, ledger, lea
     }
   }
   if (!refreshed?.remote_id) {
+    if (platform === "android" && refreshed) await reportPending?.(refreshed);
     throw new Error(`Owned ${platform} native build action has not published its durable EAS build ID yet; automatic build creation is blocked.`);
   }
   return refreshed;

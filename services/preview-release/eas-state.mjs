@@ -2,6 +2,57 @@ import { PREVIEW_IDENTITY, assertExactSha } from "./config.mjs";
 
 const ACTIVE = new Set(["NEW", "IN_QUEUE", "IN_PROGRESS", "PENDING_CANCEL"]);
 
+// Historical identification is not adoption: failed and artifact-less builds
+// remain candidates. Never use sourceAttested* defaults as provider evidence.
+export function inspectHistoricalAndroidBuilds(builds, action, projectId) {
+  const insufficient = { outcome: "INSUFFICIENT_EVIDENCE", candidates: [] };
+  const prefix = `native-build:android:${PREVIEW_IDENTITY.easProjectId}:`;
+  if (projectId !== PREVIEW_IDENTITY.easProjectId || !Array.isArray(builds)
+    || !/^[a-f0-9]{40}$/.test(action?.source_sha ?? "")
+    || !action?.identity_key?.startsWith(prefix)) return insufficient;
+  const fingerprint = action.identity_key.slice(prefix.length);
+  if (!/^[a-f0-9]{40}$/.test(fingerprint)) return insufficient;
+  const candidates = [];
+  let incomplete = false;
+  for (const build of builds) {
+    if (!build || typeof build !== "object" || !/^[a-f0-9-]{36}$/i.test(build.id ?? "")) return insufficient;
+    const supplied = {
+      project: build.project?.id ?? build.projectId,
+      platform: typeof build.platform === "string" ? build.platform.toLowerCase() : undefined,
+      profile: build.buildProfile,
+      package: build.applicationIdentifier ?? build.appIdentifier,
+      sha: build.gitCommitHash ?? build.gitCommit?.hash,
+      fingerprint: build.fingerprint?.hash ?? build.historicalProviderFingerprint,
+    };
+    const expected = { project: projectId, platform: "android", profile: "preview", package: PREVIEW_IDENTITY.bundleIdentifier, sha: action.source_sha, fingerprint };
+    if (Object.keys(expected).some((key) => supplied[key] != null && supplied[key] !== expected[key])
+      || (build.channel != null && build.channel !== "preview")
+      || (build.runtimeVersion != null && build.runtimeVersion !== fingerprint)) continue;
+    const status = String(build.status ?? "").toUpperCase();
+    const timestamp = (value) => typeof value === "string" && Number.isFinite(Date.parse(value)) ? new Date(value).toISOString() : null;
+    const createdAt = timestamp(build.createdAt);
+    const knownStatus = ["NEW", "IN_QUEUE", "IN_PROGRESS", "PENDING_CANCEL", "FINISHED", "ERRORED", "FAILED", "CANCELED", "CANCELLED"].includes(status);
+    const complete = Object.keys(expected).every((key) => supplied[key] === expected[key])
+      && knownStatus
+      && createdAt !== null;
+    incomplete ||= !complete;
+    candidates.push({
+      id: build.id, status: knownStatus ? status : "UNKNOWN",
+      createdAt, startedAt: timestamp(build.startedAt), finishedAt: timestamp(build.completedAt),
+      sourceSha: supplied.sha ?? null, profile: supplied.profile ?? null,
+      platform: supplied.platform ?? null, package: supplied.package ?? null,
+      fingerprintMatches: supplied.fingerprint === fingerprint,
+      artifactAvailable: Boolean(build.artifacts?.buildUrl || build.artifacts?.applicationArchiveUrl),
+      creationNearReservation: createdAt !== null && Number.isFinite(Date.parse(action.created_at))
+        ? Math.abs(Date.parse(createdAt) - Date.parse(action.created_at)) <= 120_000 : null,
+      providerEvidenceFields: Object.keys(supplied).filter((key) => supplied[key] != null),
+    });
+  }
+  // Duplicate IDs or partial candidates cannot establish unique ownership.
+  if (new Set(candidates.map((item) => item.id)).size !== candidates.length) return insufficient;
+  return { outcome: candidates.length > 1 ? "AMBIGUOUS" : incomplete ? "INSUFFICIENT_EVIDENCE" : candidates.length === 1 ? "ONE_MATCH" : "NO_MATCH", candidates };
+}
+
 export function reconcileBuilds(builds, targetSha, platform = "ios", expectedRuntime = PREVIEW_IDENTITY.runtime) {
   assertExactSha(targetSha, "EAS target SHA");
   if (!Array.isArray(builds)) return { decision: "MALFORMED_RESPONSE", matches: [] };
