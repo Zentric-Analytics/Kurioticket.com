@@ -3,9 +3,10 @@ import { requireNativeViewManager, requireOptionalNativeModule } from "expo-modu
 import { Platform } from "react-native";
 import type { NativeSyntheticEvent, StyleProp, ViewStyle } from "react-native";
 import type { NormalizedPasskeyAssertion } from "./nativePasskeys";
+import type { PasskeyDiagnostic } from "../auth/passkeyFieldRecovery";
 
 type TextEvent = { text: string };
-type DiagnosticEvent = { stage: string; rpId?: string; domain?: string; code?: number };
+type DiagnosticEvent = PasskeyDiagnostic;
 
 type NativeProps = {
   style?: StyleProp<ViewStyle>;
@@ -63,6 +64,7 @@ export function NativePasskeyUsernameField({
   onBlur,
   onSubmit,
   onPasskey,
+  onDiagnostic,
 }: {
   style?: StyleProp<ViewStyle>;
   value: string;
@@ -75,6 +77,7 @@ export function NativePasskeyUsernameField({
   onBlur?: () => void;
   onSubmit?: () => void;
   onPasskey: (assertion: NormalizedPasskeyAssertion) => void;
+  onDiagnostic?: (event: PasskeyDiagnostic) => void;
 }) {
   if (!NativeView) return null;
 
@@ -97,6 +100,7 @@ export function NativePasskeyUsernameField({
       if (!diagnosticsEnabled) return;
       const { stage, rpId: diagnosticRpId, domain, code } = event.nativeEvent;
       console.info("[passkey-autofill]", { stage, rpId: diagnosticRpId, domain, code });
+      onDiagnostic?.({ stage, rpId: diagnosticRpId, domain, code });
     }}
   />;
 }

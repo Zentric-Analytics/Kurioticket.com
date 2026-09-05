@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { router } from "expo-router";
 import { writeOnboardingCompleted } from "../../storage/onboardingStorage";
 import { authApi, AuthApiError, isPreviewPasskeySignIn, tracePreviewPasskey } from "./authApi";
@@ -9,6 +9,7 @@ import { CreateAccountScreen, EmailScreen, ForgotPasswordScreen, PasswordScreen,
 import { requireGoogleWebClientId } from "./googleConfig";
 import { isNativePasskeyUsernameFieldAvailable } from "../passkeys/NativePasskeyUsernameField";
 import { previewPasskeyErrorMessage } from "./previewPasskeySignIn";
+import { createPasskeyFieldRecovery } from "./passkeyFieldRecovery";
 
 const PASSKEY_OPTIONS_REFRESH_MS = 4 * 60_000;
 const PASSKEY_EMAIL_REFRESH_AGE_MS = 3 * 60_000;
@@ -39,6 +40,20 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
       if (generation === passkeyOptionsGeneration.current) passkeyOptionsController.current = null;
     }
   }, []);
+
+  const recoveryContext = useRef({ step, loading, challenge: passkeyOptions?.challenge });
+  recoveryContext.current = { step, loading, challenge: passkeyOptions?.challenge };
+  const passkeyRecovery = useMemo(() => createPasskeyFieldRecovery({
+    currentChallenge: () => recoveryContext.current.challenge,
+    canRearm: () => isPreviewPasskeySignIn() && recoveryContext.current.step === "email"
+      && !recoveryContext.current.loading && !passkeyVerifyController.current && !passkeyOptionsController.current,
+    refresh: refreshPasskeyOptions,
+    schedule: (callback, delay) => { const timer = setTimeout(callback, delay); return () => clearTimeout(timer); },
+  }), [refreshPasskeyOptions]);
+  useEffect(() => {
+    if (step !== "email" || loading) passkeyRecovery.cancel();
+    return () => passkeyRecovery.cancel();
+  }, [step, loading, passkeyRecovery]);
 
   useEffect(() => {
     if ((step !== "welcome" && step !== "email") || !isNativePasskeyUsernameFieldAvailable()) return;
@@ -78,6 +93,7 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
 
   const continuePasskeyAssertion = useCallback((assertion: PasskeyAssertion) => {
     if (step !== "email") return;
+    passkeyRecovery.cancel();
     const generation = ++passkeyVerifyGeneration.current;
     const controller = new AbortController();
     passkeyVerifyController.current?.abort();
@@ -101,7 +117,7 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
         if (isPreviewPasskeySignIn()) setLoading(false);
       }
     });
-  }, [step, refreshPasskeyOptions]);
+  }, [step, refreshPasskeyOptions, passkeyRecovery]);
 
   useEffect(() => {
     if (step === "email") return;
@@ -115,6 +131,7 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
   useEffect(() => { if (!resetNotice) return; const timer = setTimeout(() => setResetNotice(""), 2000); return () => clearTimeout(timer); }, [resetNotice]);
   const run = async (task: () => Promise<void>) => { if (loading) return; setLoading(true); setError(""); try { await task(); } catch (e) { setError(e instanceof AuthApiError || (e instanceof Error && e.name === "NativeGoogleSignInError") ? e.message : "Something went wrong. Please try again."); } finally { setLoading(false); } };
   const requestCode = (value: string) => {
+    passkeyRecovery.cancel();
     stopPasskeyVerification();
     void run(async () => { const normalized = normalizeEmail(value); const result = await authApi.requestCode(normalized); setEmail(normalized); setCooldown(result.cooldownSeconds || 28); setStep("verify"); });
   };
@@ -144,7 +161,7 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     setStep("success");
   });
   if (step === "welcome") return <AuthWelcomeScreen busy={loading} error={error} onEmail={() => setStep("email")} onGoogle={continueGoogle} onGuest={() => void writeOnboardingCompleted().then(() => router.replace("/"))} />;
-  if (step === "email") return <EmailScreen initialEmail={email} passkeyOptions={emailPasskeyOptions} onPasskey={continuePasskeyAssertion} onBack={() => initialStep === "email" ? router.back() : setStep("welcome")} onContinue={requestCode} loading={loading} error={error} />;
+  if (step === "email") return <EmailScreen initialEmail={email} passkeyOptions={emailPasskeyOptions} onPasskey={continuePasskeyAssertion} onPasskeyDiagnostic={passkeyRecovery.diagnostic} onCredentialInteraction={passkeyRecovery.interact} onBack={() => { passkeyRecovery.cancel(); if (initialStep === "email") router.back(); else setStep("welcome"); }} onContinue={requestCode} loading={loading} error={error} />;
   if (step === "verify") return <VerificationScreen email={email} onBack={() => setStep("email")} onDifferentEmail={() => setStep("email")} onVerify={verify} onResend={() => requestCode(email)} loading={loading} error={error} initialCooldown={cooldown} />;
   if (step === "password") return <PasswordScreen notice={resetNotice} onBack={() => { setProof(""); setResetNotice(""); setStep("verify"); }} onSubmit={(password) => void run(async () => { setResetNotice(""); const result = await authApi.password(email, password); if ("requiresTwoFactor" in result) { setTwoFactorOrigin("password"); setChallengeToken(result.challengeToken); setStep("twoFactor"); } else setStep("success"); })} onForgot={() => void run(async () => { setResetNotice(""); await authApi.sendForgotPasswordCode(email, proof); setStep("forgotPassword"); })} loading={loading} error={error} />;
   if (step === "forgotPassword") return <ForgotPasswordScreen email={email} onBack={() => setStep("password")} onResend={() => void run(async () => { await authApi.sendForgotPasswordCode(email, proof); })} onReset={(input) => void run(async () => { await authApi.resetForgotPassword({ email, ...input }); setProof(""); setResetNotice("Password reset. Sign in again."); setStep("password"); })} loading={loading} error={error} />;

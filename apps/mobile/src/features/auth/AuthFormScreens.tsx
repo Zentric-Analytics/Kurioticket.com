@@ -6,15 +6,19 @@ import { AuthIcon } from "./AuthIcon";
 import { AuthButton, authColors, ErrorText, Field, FormHeading, FormShell, SecurityMessage, StatusText } from "./AuthPrimitives";
 import { formatCountdown, isValidEmail, sanitizeCode } from "./authUtils";
 import { scheduleAuthCompletion } from "./authCompletion";
+import { isPreviewPasskeySignIn } from "./authApi";
+import { emailFieldError, type PasskeyDiagnostic } from "./passkeyFieldRecovery";
 
-export function EmailScreen({ initialEmail, passkeyOptions, onPasskey, onCredentialReady, onCredentialFocus, onBack, onContinue, loading, error }: { initialEmail: string; passkeyOptions?: PasskeyAuthenticationOptions | null; onPasskey: (assertion: PasskeyAssertion) => void; onCredentialReady?: () => Promise<void> | void; onCredentialFocus?: () => void; onBack: () => void; onContinue: (email: string) => void; loading: boolean; error?: string }) {
+export function EmailScreen({ initialEmail, passkeyOptions, onPasskey, onPasskeyDiagnostic, onCredentialInteraction, onCredentialReady, onCredentialFocus, onBack, onContinue, loading, error }: { initialEmail: string; passkeyOptions?: PasskeyAuthenticationOptions | null; onPasskey: (assertion: PasskeyAssertion) => void; onPasskeyDiagnostic?: (event: PasskeyDiagnostic) => void; onCredentialInteraction?: () => void; onCredentialReady?: () => Promise<void> | void; onCredentialFocus?: () => void; onBack: () => void; onContinue: (email: string) => void; loading: boolean; error?: string }) {
   const [email, setEmail] = useState(initialEmail);
   const [touched, setTouched] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [credentialFocused, setCredentialFocused] = useState(false);
   const legacyInput = useRef<TextInput>(null);
   const valid = isValidEmail(email);
   const nativePasskeyField = isNativePasskeyUsernameFieldAvailable();
-  const fieldError = touched && !valid ? "Enter a valid email address." : undefined;
+  const previewNative = nativePasskeyField && isPreviewPasskeySignIn();
+  const fieldError = emailFieldError(email, touched, previewNative, submitted);
   useEffect(() => {
     if (nativePasskeyField) return;
     let cancelled = false;
@@ -26,7 +30,7 @@ export function EmailScreen({ initialEmail, passkeyOptions, onPasskey, onCredent
   return <FormShell onBack={onBack}><FormHeading icon="mail" title="Enter your email" body={"We’ll send you a secure link or code to\nsign in or create your account."} />
     {nativePasskeyField ? <View style={styles.credentialWrap}>
       <Text style={styles.credentialLabel}>Email address</Text>
-      <View style={[styles.credentialBox, credentialFocused && styles.credentialFocused, fieldError && styles.credentialError]}>
+      <View onTouchStart={previewNative ? onCredentialInteraction : undefined} style={[styles.credentialBox, credentialFocused && styles.credentialFocused, fieldError && styles.credentialError]}>
         <NativePasskeyUsernameField
           style={styles.nativeCredentialInput}
           value={email}
@@ -36,9 +40,10 @@ export function EmailScreen({ initialEmail, passkeyOptions, onPasskey, onCredent
           challenge={passkeyOptions?.challenge}
           onChangeText={setEmail}
           onFocus={() => setCredentialFocused(true)}
-          onBlur={() => { setCredentialFocused(false); setTouched(true); }}
-          onSubmit={() => { if (valid && !loading) onContinue(email); }}
+          onBlur={() => { setCredentialFocused(false); if (!previewNative || email.trim()) setTouched(true); }}
+          onSubmit={() => { if (previewNative) { setTouched(true); setSubmitted(true); } if (valid && !loading) onContinue(email); }}
           onPasskey={onPasskey}
+          onDiagnostic={previewNative ? onPasskeyDiagnostic : undefined}
         />
       </View>
       <Text accessibilityLiveRegion="polite" style={styles.credentialErrorText}>{fieldError || " "}</Text>
