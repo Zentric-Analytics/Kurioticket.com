@@ -33,6 +33,12 @@ test("arrival and price terminate on the shared right edge", () => {
   assert.doesNotMatch(fareRowStyle, /position|top|bottom|marginRight/);
 });
 
+test("View deals shares the Fare rules row geometry and price right edge", () => {
+  assert.match(source, /flightMetadataItem: \{ width: "100%", minWidth: 0, minHeight: 16, flexDirection: "row", alignItems: "center", gap: 6 \}/);
+  assert.match(source, /flightDetailsAffordance: \{ width: "100%", minHeight: 16, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
+  assert.match(card, /\{labels\.viewDeals\}\s*<\/Text>\s*<ChevronRight/);
+});
+
 test("journeys follow the compact identity row at the full card content width", () => {
   const flightMain = card.slice(card.indexOf('<View style={s0.flightMain}>'), card.indexOf('<View style={[s0.flightCardFooter'));
   const identityStart = flightMain.indexOf('<View style={s0.flightIdentityLayout}>');
