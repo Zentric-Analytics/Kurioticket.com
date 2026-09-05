@@ -772,42 +772,43 @@ function HotelDetail({
           accentColor={hotelAccent}
         />
         <View
-          accessibilityRole="tablist"
           style={[
-            d.hotelTabs,
+            d.hotelTabsShell,
             { backgroundColor: theme.surface, borderBottomColor: theme.border },
           ]}
         >
-          {(["compare", "about", "location", "reviews"] as const).map((tab) => (
-            <Pressable
-              key={tab}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: activeHotelTab === tab }}
-              onPress={() => setActiveHotelTab(tab)}
-              style={[
-                d.hotelTab,
-                tab === "compare" && d.hotelTabWide,
-                activeHotelTab === tab && { borderBottomColor: hotelAccent },
-              ]}
-            >
-              <Text
-                numberOfLines={1}
+          <View accessibilityRole="tablist" style={d.hotelTabsRow}>
+            {(["compare", "about", "location", "reviews"] as const).map((tab) => (
+              <Pressable
+                key={tab}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: activeHotelTab === tab }}
+                onPress={() => setActiveHotelTab(tab)}
                 style={[
-                  d.hotelTabText,
-                  width < 350 && d.hotelTabTextCompact,
-                  { color: theme.textSecondary },
-                  activeHotelTab === tab && {
-                    color: hotelAccent,
-                    fontWeight: "800",
-                  },
+                  d.hotelTab,
+                  tab === "compare" && d.hotelTabWide,
+                  activeHotelTab === tab && { borderBottomColor: hotelAccent },
                 ]}
               >
-                {tab === "compare"
-                  ? "Compare prices"
-                  : tab[0].toUpperCase() + tab.slice(1)}
-              </Text>
-            </Pressable>
-          ))}
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    d.hotelTabText,
+                    width < 350 && d.hotelTabTextCompact,
+                    { color: theme.textSecondary },
+                    activeHotelTab === tab && {
+                      color: hotelAccent,
+                      fontWeight: "800",
+                    },
+                  ]}
+                >
+                  {tab === "compare"
+                    ? "Compare prices"
+                    : tab[0].toUpperCase() + tab.slice(1)}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
         <View style={d.hotelDetailBody}>
           {activeHotelTab === "compare" ? (
@@ -1565,23 +1566,27 @@ const d = StyleSheet.create({
   hotelThumbs: { flex: 1, gap: 4 },
   hotelThumb: { flex: 1, width: "100%", backgroundColor: "#DCE2EB" },
   hotelImageUnavailable: { alignItems: "center", justifyContent: "center" },
-  hotelTabs: {
+  hotelTabsShell: {
     width: "100%",
     alignSelf: "stretch",
     minHeight: 51,
     marginTop: 1,
     paddingHorizontal: 8,
-    flexDirection: "row",
-    flexWrap: "nowrap",
-    alignItems: "stretch",
     borderBottomWidth: 1,
     borderBottomColor: ui.border,
     backgroundColor: "white",
   },
+  hotelTabsRow: {
+    alignSelf: "stretch",
+    minHeight: 50,
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    alignItems: "stretch",
+  },
   hotelTab: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 0,
+    width: "21.5%",
+    flexGrow: 0,
+    flexShrink: 0,
     minWidth: 0,
     minHeight: 50,
     alignItems: "center",
@@ -1589,6 +1594,7 @@ const d = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: "transparent",
   },
+  hotelTabWide: { width: "35.5%" },
   hotelTabActive: { borderBottomColor: colors.blue },
   hotelTabText: { color: "#475569", fontSize: 11, fontWeight: "600" },
   hotelSectionLead: { color: "#475569", fontSize: 12, lineHeight: 18 },
@@ -1689,7 +1695,6 @@ const d = StyleSheet.create({
     justifyContent: "space-between",
   },
   hotelFactRow: { minHeight: 22, flexDirection: "row", alignItems: "flex-start", gap: 9 },
-  hotelTabWide: { flexGrow: 1.65 },
   hotelTabTextCompact: { fontSize: 10 },
   hotelDetailBody: { paddingHorizontal: 16, paddingVertical: 20, gap: 12 },
   hotelHeading: { fontSize: 20, lineHeight: 26, fontWeight: "900" },
