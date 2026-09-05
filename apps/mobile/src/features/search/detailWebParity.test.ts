@@ -53,29 +53,43 @@ test("Hotel Details light canvas matches the web white article without flattenin
   assert.doesNotMatch(hotel, /Platform\.OS/);
 });
 
-test("Hotel section navigation is one deterministic, non-scrolling Yoga row", () => {
-  const tabList = hotel.slice(
-    hotel.indexOf('accessibilityRole="tablist"'),
-    hotel.indexOf("<View style={d.hotelDetailBody}"),
-  );
-  const tabs = styleRule("hotelTabs", "hotelTab");
-  const tab = styleRule("hotelTab", "hotelTabActive");
-  const wideTab = styleRule("hotelTabWide", "hotelTabTextCompact");
+test("Hotel section navigation separates its sticky shell from one deterministic tab row", () => {
+  const shellStart = hotel.indexOf("d.hotelTabsShell");
+  const bodyStart = hotel.indexOf("<View style={d.hotelDetailBody}");
+  const shell = hotel.slice(shellStart, bodyStart);
+  const tabListStart = shell.indexOf('accessibilityRole="tablist"');
+  const tabList = shell.slice(tabListStart);
+  const shellStyle = styleRule("hotelTabsShell", "hotelTabsRow");
+  const row = styleRule("hotelTabsRow", "hotelTab");
+  const tab = styleRule("hotelTab", "hotelTabWide");
+  const wideTab = styleRule("hotelTabWide", "hotelTabActive");
 
-  assert.match(tabs, /width: "100%"/);
-  assert.match(tabs, /alignSelf: "stretch"/);
-  assert.match(tabs, /flexDirection: "row"/);
-  assert.match(tabs, /flexWrap: "nowrap"/);
-  assert.doesNotMatch(tabs, /flexDirection: "column"|flexWrap: "wrap"/);
+  assert.notEqual(shellStart, -1);
+  assert.notEqual(bodyStart, -1);
+  assert.ok(hotel.indexOf("<NativeHotelGallery") < shellStart);
+  assert.ok(shellStart < bodyStart);
+  assert.equal((hotel.match(/d\.hotelTabsShell/g) ?? []).length, 1);
+  assert.equal((hotel.match(/accessibilityRole="tablist"/g) ?? []).length, 1);
 
-  assert.match(tab, /flexGrow: 1/);
-  assert.match(tab, /flexShrink: 1/);
-  assert.match(tab, /flexBasis: 0/);
+  assert.match(shellStyle, /width: "100%"/);
+  assert.match(shellStyle, /alignSelf: "stretch"/);
+  assert.doesNotMatch(shellStyle, /flexDirection:/);
+
+  assert.match(row, /alignSelf: "stretch"/);
+  assert.match(row, /flexDirection: "row"/);
+  assert.match(row, /flexWrap: "nowrap"/);
+  assert.doesNotMatch(row, /flexDirection: "column"|flexWrap: "wrap"/);
+
+  assert.match(tab, /width: "21\.5%"/);
+  assert.match(tab, /flexGrow: 0/);
+  assert.match(tab, /flexShrink: 0/);
+  assert.doesNotMatch(tab, /flexGrow: 1(?:\D|$)|flexBasis: 0/);
   assert.match(tab, /minWidth: 0/);
   assert.match(tab, /minHeight: (?:4[4-9]|[5-9]\d)/);
-  assert.match(wideTab, /flexGrow: 1\.65/);
+  assert.match(wideTab, /width: "35\.5%"/);
+  assert.doesNotMatch(wideTab, /flexGrow: 1\.65/);
 
-  assert.match(tabList, /^accessibilityRole="tablist"/);
+  assert.notEqual(tabListStart, -1, "inner tablist must exist inside sticky shell");
   assert.match(tabList, /accessibilityRole="tab"/);
   assert.match(tabList, /accessibilityState=\{\{ selected: activeHotelTab === tab \}\}/);
   assert.match(tabList, /numberOfLines=\{1\}/);
@@ -85,6 +99,19 @@ test("Hotel section navigation is one deterministic, non-scrolling Yoga row", ()
   );
   assert.doesNotMatch(tabList, /<ScrollView[^>]*horizontal/);
   assert.match(hotel, /stickyHeaderIndices=\{\[2\]\}/);
+});
+
+test("Hotel selected underline cannot become a full-width sticky-shell underline", () => {
+  const shell = styleRule("hotelTabsShell", "hotelTabsRow");
+  const tab = styleRule("hotelTab", "hotelTabWide");
+
+  assert.match(shell, /borderBottomWidth: 1/);
+  assert.doesNotMatch(shell, /hotelAccent|borderBottomWidth: 2/);
+  assert.match(tab, /width: "21\.5%"/);
+  assert.match(tab, /borderBottomWidth: 2/);
+  assert.match(tab, /borderBottomColor: "transparent"/);
+  assert.match(hotel, /activeHotelTab === tab && \{ borderBottomColor: hotelAccent \}/);
+  assert.doesNotMatch(hotel, /d\.hotelTabsShell,[\s\S]{0,160}activeHotelTab === tab/);
 });
 
 test("Hotel section navigation retains the mobile-web grid contract", () => {
