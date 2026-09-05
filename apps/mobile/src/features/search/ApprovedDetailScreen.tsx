@@ -836,6 +836,7 @@ function HotelDetail({
                 style={[d.hotelOffer, {
                   backgroundColor: theme.surface,
                   borderColor: selected ? hotelAccent : theme.border,
+                  gap: 0,
                 }]}
               >
                 <View style={d.hotelOfferTop}>
@@ -1720,8 +1721,8 @@ const d = StyleSheet.create({
   hotelOfferProvider: { fontSize: 15, lineHeight: 21, fontWeight: "900" },
   selectionControl: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, alignItems: "center", justifyContent: "center" },
   selectionControlDot: { width: 10, height: 10, borderRadius: 5 },
-  hotelOfferBottom: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
-  hotelOfferPriceRow: { minWidth: 0, alignItems: "flex-end" },
+  hotelOfferBottom: { marginTop: 2, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
+  hotelOfferPriceRow: { minWidth: 0, marginTop: 12, alignItems: "flex-end" },
   hotelNightly: { fontSize: 22, lineHeight: 27, fontWeight: "900", textAlign: "right" },
   hotelPerNight: { flexShrink: 0, fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "right" },
   hotelHighlight: { width: "48%", minHeight: 48, padding: 9, borderWidth: 1, borderRadius: 9, flexDirection: "row", alignItems: "center", gap: 7 },
