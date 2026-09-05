@@ -147,7 +147,7 @@ export class PreviewLedger {
             SELECT 1 FROM preview_release_action a,
               jsonb_array_elements(coalesce(a.evidence->'updates','[]'::jsonb)) u
             WHERE a.source_sha=r.source_sha AND a.kind='OTA' AND a.state='PUBLISHED'
-              AND u->>'platform'=platform
+              AND (u->>'platform'=platform OR coalesce(u->'platforms','[]'::jsonb) ? platform)
           )
         )
       ), -1)

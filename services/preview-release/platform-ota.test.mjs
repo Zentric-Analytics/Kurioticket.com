@@ -41,6 +41,10 @@ test("published catch-up is not repeated on the next release", () => {
 test("legacy successful OTA evidence with runtime and IDs is already covered", () => {
   assert.deepEqual(pendingOtaPlatforms({ evidence: { classification: mixed, ios: { buildId: "ios" }, ota: { updateIds: ["android-update"], runtimes: { android: "same-android" } } } }), []);
 });
+
+test("adopted normalized update history is already covered", () => {
+  assert.deepEqual(pendingOtaPlatforms({ evidence: { classification: mixed, ios: { buildId: "ios" }, ota: { updates: [{ platforms: ["android"] }] } } }), []);
+});
 test("ordinary OTA uses each canonical native baseline", () => {
   assert.deepEqual(plan({ classification: "OTA" }).otaPlatforms, ["ios", "android"]);
 });

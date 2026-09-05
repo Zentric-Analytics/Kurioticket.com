@@ -17,7 +17,7 @@ test("PostgreSQL preserves Android OTA gaps across later aggregate completions",
     const claim = await ledger.claimOtaGap({ sourceSha: latest, workerId: "owner", leaseMs: 60000, mode: "active" });
     assert.equal(claim.state, "DETECTED");
     assert.equal(await ledger.claimOtaGap({ sourceSha: latest, workerId: "other", leaseMs: 60000, mode: "active" }), null);
-    await ledger.recordAction({ sourceSha: latest, kind: "OTA", identityKey: "android-catch-up", remoteId: "update", state: "PUBLISHED", evidence: { updates: [{ platform: "android", runtimeVersion: "compatible" }] } });
+    await ledger.recordAction({ sourceSha: latest, kind: "OTA", identityKey: "android-catch-up", remoteId: "update", state: "PUBLISHED", evidence: { updates: [{ platforms: ["android"], runtimeVersion: "compatible" }] } });
     await ledger.transition(latest, "owner", ["DETECTED"], "COMPLETE", { evidence: {} });
     assert.deepEqual(await ledger.pendingPlatformOta(), []);
     assert.equal(await ledger.claimOtaGap({ sourceSha: latest, workerId: "owner", leaseMs: 60000, mode: "active" }), null);

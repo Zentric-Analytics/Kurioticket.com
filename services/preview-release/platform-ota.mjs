@@ -10,7 +10,7 @@ export function pendingOtaPlatforms(previous) {
     if (!needsJs && !carried.includes(platform)) return false;
     if (evidence[platform]?.buildId) return false;
     if (evidence.ota?.updateIds?.length && evidence.ota?.runtimes?.[platform]) return false;
-    return !evidence.ota?.updates?.some((update) => update.platform === platform);
+    return !evidence.ota?.updates?.some((update) => update.platform === platform || update.platforms?.includes(platform));
   });
 }
 
