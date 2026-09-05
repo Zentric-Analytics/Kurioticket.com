@@ -55,6 +55,7 @@ import { colors } from "../../theme/tokens";
 import { NativeHotelPropertyLocationSection, NativeRelatedHotelsSection } from "./NativeHotelDecisionSections";
 import { prepareNativeRelatedHotels, type NativeRelatedHotel } from "./nativeHotelRelatedHotelsModel";
 import { HotelOfferAmenityList } from "./HotelCardAmenityList";
+import { appFonts } from "../../theme/typography";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -857,12 +858,16 @@ function HotelDetail({
                   <View
                     style={[
                       d.selectionControl,
-                      selected && {
-                        borderWidth: 6,
-                        borderColor: hotelAccent,
+                      {
+                        backgroundColor: theme.surface,
+                        borderColor: selected ? hotelAccent : theme.textSecondary,
                       },
                     ]}
-                  />
+                  >
+                    {selected ? (
+                      <View style={[d.selectionControlDot, { backgroundColor: hotelAccent }]} />
+                    ) : null}
+                  </View>
                 </View>
                 <View style={d.hotelOfferPriceRow}>
                   <Text
@@ -877,8 +882,12 @@ function HotelDetail({
                   </Text>
                 </View>
                 <View style={d.hotelOfferBottom}>
-                  <HotelOfferAmenityList amenities={result.amenities} color={theme.textSecondary} />
-                  <Text style={[d.hotelPerNight, { color: theme.textSecondary }]}>per night</Text>
+                  <HotelOfferAmenityList
+                    amenities={result.amenities}
+                    color={theme.textSecondary}
+                    compact={width < 350}
+                  />
+                  <Text numberOfLines={1} style={[d.hotelPerNight, { color: hotelAccent }]}>per night</Text>
                 </View>
               </Pressable>;
               })}
@@ -1703,11 +1712,12 @@ const d = StyleSheet.create({
   hotelOfferTop: { minWidth: 0, flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12 },
   hotelOfferBrandLogo: { width: 136, height: 30, flexShrink: 0 },
   hotelOfferProvider: { fontSize: 15, lineHeight: 21, fontWeight: "900" },
-  selectionControl: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: ui.border },
-  hotelOfferBottom: { flexDirection: "row", alignItems: "flex-end", gap: 12 },
+  selectionControl: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, alignItems: "center", justifyContent: "center" },
+  selectionControlDot: { width: 10, height: 10, borderRadius: 5 },
+  hotelOfferBottom: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
   hotelOfferPriceRow: { minWidth: 0, alignItems: "flex-end" },
   hotelNightly: { fontSize: 22, lineHeight: 27, fontWeight: "900", textAlign: "right" },
-  hotelPerNight: { fontSize: 11, lineHeight: 16 },
+  hotelPerNight: { flexShrink: 0, fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "right" },
   hotelHighlight: { width: "48%", minHeight: 48, padding: 9, borderWidth: 1, borderRadius: 9, flexDirection: "row", alignItems: "center", gap: 7 },
   hotelAmenity: { width: "48%", fontSize: 12, lineHeight: 18 },
   mapsButton: { alignSelf: "flex-start", minHeight: 44, borderRadius: 8, paddingHorizontal: 15, backgroundColor: colors.blue, flexDirection: "row", alignItems: "center", gap: 8 },
