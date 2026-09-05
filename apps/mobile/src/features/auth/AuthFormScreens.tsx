@@ -1,24 +1,39 @@
 import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import type { PasskeyAssertion, PasskeyAuthenticationOptions } from "./authApi";
+import { NativePasskeyUsernameField, isNativePasskeyUsernameFieldAvailable } from "../passkeys/NativePasskeyUsernameField";
 import { AuthIcon } from "./AuthIcon";
 import { AuthButton, authColors, ErrorText, Field, FormHeading, FormShell, SecurityMessage, StatusText } from "./AuthPrimitives";
 import { formatCountdown, isValidEmail, sanitizeCode } from "./authUtils";
 import { scheduleAuthCompletion } from "./authCompletion";
 
-export function EmailScreen({ initialEmail, onBack, onContinue, onCredentialReady, onCredentialFocus, loading, error }: { initialEmail: string; onBack: () => void; onContinue: (email: string) => void; onCredentialReady?: () => Promise<void> | void; onCredentialFocus?: () => void; loading: boolean; error?: string }) {
+export function EmailScreen({ initialEmail, passkeyOptions, onPasskey, onBack, onContinue, loading, error }: { initialEmail: string; passkeyOptions?: PasskeyAuthenticationOptions | null; onPasskey: (assertion: PasskeyAssertion) => void; onBack: () => void; onContinue: (email: string) => void; loading: boolean; error?: string }) {
   const [email, setEmail] = useState(initialEmail);
   const [touched, setTouched] = useState(false);
-  const input = useRef<TextInput>(null);
+  const [credentialFocused, setCredentialFocused] = useState(false);
   const valid = isValidEmail(email);
-  useEffect(() => {
-    let cancelled = false;
-    void Promise.resolve(onCredentialReady?.()).finally(() => {
-      if (!cancelled) input.current?.focus();
-    });
-    return () => { cancelled = true; };
-  }, [onCredentialReady]);
+  const nativePasskeyField = isNativePasskeyUsernameFieldAvailable();
+  const fieldError = touched && !valid ? "Enter a valid email address." : undefined;
   return <FormShell onBack={onBack}><FormHeading icon="mail" title="Enter your email" body={"We’ll send you a secure link or code to\nsign in or create your account."} />
-    <Field inputRef={input} label="Email address" placeholder="you@example.com" value={email} onChangeText={setEmail} onFocus={onCredentialFocus} onBlur={() => setTouched(true)} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="username" textContentType="username" returnKeyType="go" onSubmitEditing={() => valid && !loading && onContinue(email)} error={touched && !valid ? "Enter a valid email address." : undefined} />
+    {nativePasskeyField ? <View style={styles.credentialWrap}>
+      <Text style={styles.credentialLabel}>Email address</Text>
+      <View style={[styles.credentialBox, credentialFocused && styles.credentialFocused, fieldError && styles.credentialError]}>
+        <NativePasskeyUsernameField
+          style={styles.nativeCredentialInput}
+          value={email}
+          placeholder="you@example.com"
+          enabled={!loading}
+          rpId={passkeyOptions?.rpId}
+          challenge={passkeyOptions?.challenge}
+          onChangeText={setEmail}
+          onFocus={() => setCredentialFocused(true)}
+          onBlur={() => { setCredentialFocused(false); setTouched(true); }}
+          onSubmit={() => { if (valid && !loading) onContinue(email); }}
+          onPasskey={onPasskey}
+        />
+      </View>
+      <Text accessibilityLiveRegion="polite" style={styles.credentialErrorText}>{fieldError || " "}</Text>
+    </View> : <Field autoFocus label="Email address" placeholder="you@example.com" value={email} onChangeText={setEmail} onBlur={() => setTouched(true)} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="username" textContentType="username" returnKeyType="go" onSubmitEditing={() => valid && !loading && onContinue(email)} error={fieldError} />}
     <ErrorText>{error}</ErrorText><AuthButton label="Continue" onPress={() => onContinue(email)} loading={loading} disabled={!valid} />
     <Text style={styles.legal}>By continuing, you agree to our <Text style={styles.link}>Terms of Service</Text> and <Text style={styles.link}>Privacy Policy</Text></Text>
   </FormShell>;
@@ -104,6 +119,7 @@ export function SuccessScreen({ onDone }: { onDone: () => void }) {
 }
 const styles = StyleSheet.create({
   legal: { color: authColors.text, fontSize: 12, lineHeight: 18, textAlign: "center", marginTop: 12 }, link: { color: authColors.blue, textDecorationLine: "underline" }, email: { color: authColors.navy, fontWeight: "800" },
+  credentialWrap: { gap: 6 }, credentialLabel: { color: authColors.navy, fontSize: 14, fontWeight: "700" }, credentialBox: { height: 54, borderWidth: 1, borderColor: authColors.border, borderRadius: 10, paddingHorizontal: 14, overflow: "hidden" }, credentialFocused: { borderColor: authColors.blue, borderWidth: 2 }, credentialError: { borderColor: authColors.danger }, nativeCredentialInput: { flex: 1 }, credentialErrorText: { minHeight: 17, color: authColors.danger, fontSize: 12 },
   codeRow: { height: 58, flexDirection: "row", justifyContent: "center", gap: 8, position: "relative" }, codeBox: { width: 45, height: 52, borderWidth: 1, borderColor: authColors.border, borderRadius: 8, alignItems: "center", justifyContent: "center" },
   codeFocused: { borderColor: authColors.blue, borderWidth: 2 }, codeDigit: { color: authColors.navy, fontSize: 22, fontWeight: "700" }, hiddenInput: { position: "absolute", opacity: 0, width: 1, height: 1 },
   resend: { alignItems: "center", gap: 11, marginTop: 14 }, muted: { color: authColors.text, fontSize: 14 }, action: { color: authColors.blue, fontSize: 14, fontWeight: "600" }, centerAction: { alignSelf: "center", minHeight: 44, justifyContent: "center" }, forgot: { alignSelf: "flex-end", marginTop: -8 },
