@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
-import { ArrowRight, ImageOff, MapPin } from "lucide-react-native";
+import { ArrowRight, ExternalLink, ImageOff, MapPin } from "lucide-react-native";
 import { WebView } from "react-native-webview";
 import type { PublicHotelPropertyDetails } from "../../../../../src/lib/types";
 import { buildHotelAddress, buildHotelDirectionsUrl, buildOpenStreetMapHotelMapEmbedUrl } from "../../../../../src/lib/hotels/hotelMap";
@@ -25,17 +25,25 @@ export function NativeHotelPropertyLocationSection({ hotelName, propertyDetails,
     try { await Linking.openURL(directionsUrl); } catch { /* Fail softly; the location remains visible. */ }
   };
   return <View style={[styles.locationCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-    <Text accessibilityRole="header" style={[styles.heading, { color: theme.textPrimary }]}>Property location</Text>
-    {address ? <Text style={[styles.address, { color: theme.textSecondary }]}>{address}</Text> : null}
-    {directionsUrl ? <Pressable accessibilityRole="link" accessibilityLabel={`Open ${hotelName} in Maps`} onPress={() => void openMaps()} style={styles.mapsButton}>
-      <MapPin accessible={false} size={17} color="white" />
-      <Text style={styles.mapsButtonText}>Open in Maps</Text>
-    </Pressable> : null}
-    {mapUrl && !mapFailed ? <View pointerEvents="none" style={styles.mapClip}>
-      <WebView source={{ uri: mapUrl }} scrollEnabled={false} onError={() => setMapFailed(true)} style={styles.map} />
-    </View> : mapUrl ? <View style={[styles.mapFallback, { borderColor: theme.border }]}>
-      <MapPin accessible={false} size={25} color={theme.icon} />
-      <Text style={[styles.address, { color: theme.textSecondary }]}>Map preview unavailable</Text>
+    <View style={styles.locationHeader}>
+      <Text accessibilityRole="header" style={[styles.locationHeading, { color: theme.textPrimary }]}>Property location</Text>
+      {address ? <Text style={[styles.address, { color: theme.textSecondary }]}>{address}</Text> : null}
+      {directionsUrl && !mapUrl ? <Pressable accessibilityRole="link" accessibilityLabel={`Open ${hotelName} in Maps`} onPress={() => void openMaps()} style={[styles.mapsControl, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <Text style={styles.mapsControlText}>Open in Maps</Text>
+        <ExternalLink accessible={false} size={16} color={colors.blue} />
+      </Pressable> : null}
+    </View>
+    {mapUrl ? <View style={styles.mapFrame}>
+      <View pointerEvents="none" style={styles.mapViewport}>
+        {!mapFailed ? <WebView source={{ uri: mapUrl }} scrollEnabled={false} onError={() => setMapFailed(true)} style={styles.map} /> : <View style={styles.mapFallback}>
+          <MapPin accessible={false} size={25} color={theme.icon} />
+          <Text style={[styles.address, { color: theme.textSecondary }]}>Map preview unavailable</Text>
+        </View>}
+      </View>
+      {directionsUrl ? <Pressable accessibilityRole="link" accessibilityLabel={`Open ${hotelName} in Maps`} onPress={() => void openMaps()} style={[styles.mapsControl, styles.mapsOverlay, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <Text style={styles.mapsControlText}>Open in Maps</Text>
+        <ExternalLink accessible={false} size={16} color={colors.blue} />
+      </Pressable> : null}
     </View> : null}
   </View>;
 }
@@ -77,13 +85,17 @@ export function NativeRelatedHotelsSection({ city, hotels, theme, onViewHotel }:
 
 const styles = StyleSheet.create({
   heading: { fontSize: 20, lineHeight: 26, fontWeight: "900" },
-  locationCard: { marginTop: 10, borderWidth: StyleSheet.hairlineWidth, borderRadius: 16, padding: 16, gap: 11, overflow: "hidden" },
-  address: { fontSize: 13, lineHeight: 19 },
-  mapsButton: { minHeight: 44, alignSelf: "flex-start", paddingHorizontal: 15, borderRadius: 8, backgroundColor: colors.blue, flexDirection: "row", alignItems: "center", gap: 8 },
-  mapsButtonText: { color: "white", fontSize: 13, fontWeight: "800" },
-  mapClip: { height: 250, width: "100%", borderRadius: 11, overflow: "hidden" },
+  locationCard: { marginTop: 10, borderWidth: StyleSheet.hairlineWidth, borderRadius: 16, overflow: "hidden" },
+  locationHeader: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14, gap: 4 },
+  locationHeading: { fontSize: 18, lineHeight: 24, fontWeight: "800" },
+  address: { fontSize: 14, lineHeight: 20 },
+  mapsControl: { minHeight: 44, alignSelf: "flex-start", paddingHorizontal: 12, borderWidth: StyleSheet.hairlineWidth, borderRadius: 8, flexDirection: "row", alignItems: "center", gap: 7, shadowColor: "#000", shadowOpacity: 0.12, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  mapsControlText: { color: colors.blue, fontSize: 13, fontWeight: "800" },
+  mapsOverlay: { position: "absolute", top: 12, left: 12, zIndex: 2 },
+  mapFrame: { position: "relative", height: 280, width: "100%" },
+  mapViewport: { flex: 1, width: "100%" },
   map: { flex: 1 },
-  mapFallback: { height: 250, borderWidth: StyleSheet.hairlineWidth, borderRadius: 11, alignItems: "center", justifyContent: "center", gap: 8 },
+  mapFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8 },
   relatedSection: { marginTop: 10, gap: 14 },
   carouselViewport: { marginHorizontal: -16 },
   carousel: { gap: 14, paddingHorizontal: 16, paddingBottom: 6 },
