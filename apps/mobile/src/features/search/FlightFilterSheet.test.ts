@@ -25,9 +25,10 @@ test("stop insights remain structured into count and safe trailing price",()=>{
  assert.match(sheet,/flightFilterInsight\(results,candidate,insightPriceValue\)/);
  assert.match(sheet,/priceFilteringReady\?priceValue:undefined/);
 });
-test("full airline and airport rows use count-only trailing columns",()=>{
- assert.match(sheet,/label=\{name\} trailing=\{insight\?String\(insight.count\):undefined\}/);
- assert.match(sheet,/label=\{v\} trailing=\{insight\?String\(insight.count\):undefined\}/);
+test("full airline and airport rows use count-only trailing columns with unit-qualified accessibility",()=>{
+ assert.match(sheet,/label=\{name\} trailing=\{insight\?String\(insight.count\):undefined\} accessibilityDetail=\{insight\?countLabel\(insight.count\):undefined\}/);
+ assert.match(sheet,/label=\{v\} trailing=\{insight\?String\(insight.count\):undefined\} accessibilityDetail=\{insight\?countLabel\(insight.count\):undefined\}/);
+ assert.match(sheet,/const detail=accessibilityDetail\?\?\[secondary,trailing\]\.filter\(Boolean\)\.join\(", "\)/);
 });
 test("fare preference rows keep their checkbox directly before their label",()=>{
  assert.match(sheet,/<Check label="Baggage included" selected=/);
