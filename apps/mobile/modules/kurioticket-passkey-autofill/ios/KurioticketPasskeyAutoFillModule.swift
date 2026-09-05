@@ -21,6 +21,7 @@ public final class KurioticketPasskeyAutoFillModule: Module, ASAuthorizationCont
 
       let provider = ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: relyingPartyIdentifier)
       let request = provider.createCredentialAssertionRequest(challenge: challengeData)
+      request.userVerificationPreference = .required
       let controller = ASAuthorizationController(authorizationRequests: [request])
       controller.delegate = self
       controller.presentationContextProvider = self
@@ -47,35 +48,19 @@ public final class KurioticketPasskeyAutoFillModule: Module, ASAuthorizationCont
     View(KurioticketPasskeyUsernameView.self) {
       Events("onChangeText", "onFocus", "onBlur", "onSubmit", "onPasskey", "onDiagnostic")
 
-      Prop("value") { (view: KurioticketPasskeyUsernameView, value: String?) in
-        view.setValue(value)
-      }
-      Prop("placeholder") { (view: KurioticketPasskeyUsernameView, value: String?) in
-        view.setPlaceholder(value)
-      }
-      Prop("enabled") { (view: KurioticketPasskeyUsernameView, value: Bool) in
-        view.setEnabled(value)
-      }
-      Prop("autoFocus") { (view: KurioticketPasskeyUsernameView, value: Bool) in
-        view.setAutoFocus(value)
-      }
-      Prop("diagnosticsEnabled") { (view: KurioticketPasskeyUsernameView, value: Bool) in
-        view.setDiagnosticsEnabled(value)
-      }
-      Prop("relyingPartyIdentifier") { (view: KurioticketPasskeyUsernameView, value: String?) in
-        view.setRelyingPartyIdentifier(value)
-      }
-      Prop("challenge") { (view: KurioticketPasskeyUsernameView, value: String?) in
-        view.setChallenge(value)
-      }
+      Prop("value") { (view: KurioticketPasskeyUsernameView, value: String?) in view.setValue(value) }
+      Prop("placeholder") { (view: KurioticketPasskeyUsernameView, value: String?) in view.setPlaceholder(value) }
+      Prop("enabled") { (view: KurioticketPasskeyUsernameView, value: Bool) in view.setEnabled(value) }
+      Prop("autoFocus") { (view: KurioticketPasskeyUsernameView, value: Bool) in view.setAutoFocus(value) }
+      Prop("diagnosticsEnabled") { (view: KurioticketPasskeyUsernameView, value: Bool) in view.setDiagnosticsEnabled(value) }
+      Prop("relyingPartyIdentifier") { (view: KurioticketPasskeyUsernameView, value: String?) in view.setRelyingPartyIdentifier(value) }
+      Prop("challenge") { (view: KurioticketPasskeyUsernameView, value: String?) in view.setChallenge(value) }
     }
   }
 
   public func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
     let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-    if let window = scenes.flatMap({ $0.windows }).first(where: { $0.isKeyWindow }) {
-      return window
-    }
+    if let window = scenes.flatMap({ $0.windows }).first(where: { $0.isKeyWindow }) { return window }
     return UIWindow(frame: UIScreen.main.bounds)
   }
 
@@ -98,7 +83,7 @@ public final class KurioticketPasskeyAutoFillModule: Module, ASAuthorizationCont
         "signature": Self.encodeBase64Url(assertion.signature),
         "userHandle": userHandle
       ],
-      "authenticatorAttachment": NSNull(),
+      "authenticatorAttachment": "platform",
       "clientExtensionResults": [String: Any]()
     ]
     finish(controller: controller, result: result)
@@ -126,9 +111,7 @@ public final class KurioticketPasskeyAutoFillModule: Module, ASAuthorizationCont
     started = false
     activeController?.cancel()
     resolveStartWaiters(false)
-    if resolveCancelled {
-      pending?.resolve(nil)
-    }
+    if resolveCancelled { pending?.resolve(nil) }
   }
 
   private func resolveStartWaiters(_ value: Bool) {
@@ -140,9 +123,7 @@ public final class KurioticketPasskeyAutoFillModule: Module, ASAuthorizationCont
   private static func decodeBase64Url(_ value: String) -> Data? {
     var normalized = value.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
     let remainder = normalized.count % 4
-    if remainder != 0 {
-      normalized.append(String(repeating: "=", count: 4 - remainder))
-    }
+    if remainder != 0 { normalized.append(String(repeating: "=", count: 4 - remainder)) }
     return Data(base64Encoded: normalized)
   }
 
