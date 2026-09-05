@@ -162,7 +162,8 @@ test("Hotel detail owns theme-aware accents without changing filled brand contro
   assert.match(hotel, /borderColor: selected \? hotelAccent : theme\.textSecondary/);
   assert.match(hotel, /d\.selectionControlDot, \{ backgroundColor: hotelAccent \}/);
   assert.doesNotMatch(hotel, /borderWidth: 6/);
-  assert.match(hotel, /<Check size=\{16\} color=\{hotelAccent\}/);
+  assert.doesNotMatch(hotel, /<Check\b/);
+  for (const icon of ["Wifi", "UtensilsCrossed", "Laptop", "Wine", "Bed", "Sparkles"]) assert.match(source, new RegExp(`return ${icon}`));
   assert.equal((hotel.match(/accentColor=\{hotelAccent\}/g) ?? []).length, 2);
   assert.match(source, /hotelContinue: \{[^\n]*backgroundColor: colors\.blue/);
   assert.match(source, /hotelContinuePressed: \{ backgroundColor: "#003B91" \}/);

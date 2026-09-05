@@ -18,7 +18,7 @@ import {
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { travelApi, type FlightResult, type HotelResult } from "../../api/travelApi";
 import { FlowIcon } from "../flow/FlowIcon";
-import { Armchair, ArrowLeft, Award, CalendarDays, Check, FilePenLine, Heart, Info, Luggage, MapPin, Repeat2, ShieldX, Users } from "lucide-react-native";
+import { Armchair, ArrowLeft, Award, Bed, CalendarDays, FilePenLine, Heart, Info, Laptop, Luggage, MapPin, Repeat2, ShieldX, Sparkles, Users, UtensilsCrossed, Wifi, Wine, type LucideIcon } from "lucide-react-native";
 import { Button, TopBar, clock, money, shortDate, ui } from "./SearchUi";
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { useAppTheme } from "../../theme/AppTheme";
@@ -55,7 +55,18 @@ import { colors } from "../../theme/tokens";
 import { NativeHotelPropertyLocationSection, NativeRelatedHotelsSection } from "./NativeHotelDecisionSections";
 import { prepareNativeRelatedHotels, type NativeRelatedHotel } from "./nativeHotelRelatedHotelsModel";
 import { HotelOfferAmenityList } from "./HotelCardAmenityList";
+import { nativeHotelAmenityLabel } from "./hotelAmenityLabel";
 import { appFonts } from "../../theme/typography";
+import { buildHotelAmenityPresentation, type HotelAmenityPresentationItem } from "../../../../../src/components/results/hotelAmenityPresentation";
+
+function hotelAboutIconFor(item: HotelAmenityPresentationItem): LucideIcon {
+  if (item.iconKey === "wifi") return Wifi;
+  if (item.iconKey === "restaurant") return UtensilsCrossed;
+  if (item.iconKey === "workspace") return Laptop;
+  if (/bar|lounge/i.test(item.label)) return Wine;
+  if (/bed|room/i.test(item.label)) return Bed;
+  return Sparkles;
+}
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -673,8 +684,12 @@ function HotelDetail({
         rooms: String(roomCount),
       },
     });
-  const highlights = result.amenities.slice(0, 6);
-  const remainingAmenities = result.amenities.slice(6);
+  const amenityItems = buildHotelAmenityPresentation(
+    result.amenities,
+    result.amenities.length,
+  ).map((item) => ({ ...item, label: nativeHotelAmenityLabel(item) }));
+  const highlights = amenityItems.slice(0, 6);
+  const remainingAmenities = amenityItems.slice(6);
   const Fact = ({
     icon: Icon,
     children,
@@ -836,6 +851,7 @@ function HotelDetail({
                 style={[d.hotelOffer, {
                   backgroundColor: theme.surface,
                   borderColor: selected ? hotelAccent : theme.border,
+                  gap: 0,
                 }]}
               >
                 <View style={d.hotelOfferTop}>
@@ -914,105 +930,89 @@ function HotelDetail({
             </>
           ) : null}
           {activeHotelTab === "about" ? (
-            <View style={d.hotelPanel}>
-              <Text style={[d.hotelHeading, { color: theme.textPrimary }]}>
+            <View style={d.hotelAboutPanel}>
+              <Text style={[d.hotelAboutHeading, { color: theme.dark ? theme.textPrimary : "#020617" }]}>
                 About this hotel
               </Text>
               <Text
-                style={[d.hotelSectionLead, { color: theme.textSecondary }]}
+                style={[d.hotelAboutDescription, { color: theme.dark ? theme.textSecondary : "#475569" }]}
               >
                 {property?.description ||
                   "A property description is not available yet."}
               </Text>
-              <Text style={[d.hotelSubheading, { color: theme.textPrimary }]}>
+              <Text style={[d.hotelAboutSubheading, { color: theme.dark ? theme.textPrimary : "#020617" }]}>
                 Property highlights
               </Text>
               {highlights.length ? (
-                <View style={d.hotelFactGrid}>
-                  {highlights.map((item) => (
+                <View style={d.hotelAboutHighlightGrid}>
+                  {highlights.map((item) => {
+                    const Icon = hotelAboutIconFor(item);
+                    return (
                     <View
-                      key={item}
+                      key={item.key}
                       style={[
-                        d.hotelHighlight,
+                        d.hotelAboutHighlight,
                         {
-                          backgroundColor: theme.surface,
-                          borderColor: theme.border,
+                          backgroundColor: theme.dark ? theme.surface : "#F8FAFC",
+                          borderColor: theme.dark ? theme.border : "#E2E8F0",
                         },
                       ]}
                     >
-                      <Check size={16} color={hotelAccent} />
+                      <Icon accessible={false} size={18} color={theme.dark ? hotelAccent : colors.blue} />
                       <Text
-                        style={[d.hotelGridText, { color: theme.textPrimary }]}
+                        style={[d.hotelAboutHighlightText, { color: theme.dark ? theme.textPrimary : "#1E293B" }]}
                       >
-                        {item}
+                        {item.label}
                       </Text>
+                    </View>
+                  );})}
+                </View>
+              ) : (
+                <Text
+                  style={[d.hotelAboutFallback, { color: theme.textSecondary }]}
+                >
+                  Property highlights are not available yet.
+                </Text>
+              )}
+              <Text style={[d.hotelAboutSubheading, { color: theme.dark ? theme.textPrimary : "#020617" }]}>
+                All amenities
+              </Text>
+              {remainingAmenities.length ? (
+                <View style={d.hotelAboutList}>
+                  {remainingAmenities.map((item) => (
+                    <View key={item.key} style={d.hotelAboutListItem}>
+                      <View accessible={false} style={[d.hotelAboutBullet, { backgroundColor: hotelAccent }]} />
+                      <Text style={[d.hotelAboutListText, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{item.label}</Text>
                     </View>
                   ))}
                 </View>
               ) : (
                 <Text
-                  style={[d.hotelSectionLead, { color: theme.textSecondary }]}
+                  style={[d.hotelAboutFallback, { color: theme.textSecondary }]}
                 >
-                  Verified property highlights are not available yet.
+                  All available amenities are shown in Property highlights.
                 </Text>
               )}
-              <Text style={[d.hotelSubheading, { color: theme.textPrimary }]}>
-                All amenities
-              </Text>
-              {remainingAmenities.length ? (
-                <View style={d.hotelFactGrid}>
-                  {remainingAmenities.map((item) => (
-                    <Text
-                      key={item}
-                      style={[d.hotelAmenity, { color: theme.textSecondary }]}
-                    >
-                      • {item}
-                    </Text>
-                  ))}
-                </View>
-              ) : (
-                <Text
-                  style={[d.hotelSectionLead, { color: theme.textSecondary }]}
-                >
-                  No additional verified amenities are listed.
-                </Text>
-              )}
-              <Text style={[d.hotelSubheading, { color: theme.textPrimary }]}>
+              <Text style={[d.hotelAboutSubheading, { color: theme.dark ? theme.textPrimary : "#020617" }]}>
                 Room &amp; comfort
               </Text>
-              <Text
-                style={[d.hotelSectionLead, { color: theme.textSecondary }]}
-              >
-                {[property?.roomSummary, property?.bedSummary]
-                  .filter(Boolean)
-                  .join(" · ") ||
-                  "Room details are confirmed when you choose a room."}
-              </Text>
-              <Text style={[d.hotelSubheading, { color: theme.textPrimary }]}>
+              <View style={d.hotelAboutInfoList}>
+                {[property?.roomSummary, property?.bedSummary].filter((value): value is string => Boolean(value)).map((value) => (
+                  <View key={value} style={d.hotelAboutInfoRow}><Bed accessible={false} size={18} color={theme.icon} /><Text style={[d.hotelAboutInfoText, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{value}</Text></View>
+                ))}
+                {!property?.roomSummary && !property?.bedSummary ? <Text style={[d.hotelAboutInfoText, { color: theme.textSecondary }]}>Room details are confirmed when you choose a room.</Text> : null}
+              </View>
+              <Text style={[d.hotelAboutSubheading, { color: theme.dark ? theme.textPrimary : "#020617" }]}>
                 Hotel information
               </Text>
-              <Text
-                style={[d.hotelSectionLead, { color: theme.textSecondary }]}
-              >
-                {[
-                  property?.propertyType,
-                  classification
-                    ? `${classification}-star classification`
-                    : null,
-                ]
-                  .filter(Boolean)
-                  .join(" · ") ||
-                  "Property type and classification are not available."}
-              </Text>
-              <Text style={[d.hotelSubheading, { color: theme.textPrimary }]}>
+              <View style={d.hotelAboutInfoList}>
+                {property?.propertyType ? <View style={d.hotelAboutInfoRow}><Award accessible={false} size={18} color={theme.icon} /><Text style={[d.hotelAboutInfoText, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{property.propertyType}</Text></View> : null}
+                <View style={d.hotelAboutInfoRow}><Award accessible={false} size={18} color={theme.icon} /><Text style={[d.hotelAboutInfoText, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{classification ? `${classification}-star classification` : "Hotel classification is not available."}</Text></View>
+              </View>
+              <Text style={[d.hotelAboutSubheading, { color: theme.dark ? theme.textPrimary : "#020617" }]}>
                 Accessibility
               </Text>
-              <Text
-                style={[d.hotelSectionLead, { color: theme.textSecondary }]}
-              >
-                {property?.accessibility?.join(" · ") ||
-                  "Specific accessibility features should be confirmed before booking."}
-              </Text>
+              {property?.accessibility?.length ? <View style={d.hotelAboutAccessibilityList}>{property.accessibility.map((detail) => <View key={detail} style={d.hotelAboutAccessibilityItem}><Text accessible={false} style={[d.hotelAboutAccessibilityBullet, { color: theme.dark ? hotelAccent : colors.blue }]}>•</Text><Text style={[d.hotelAboutAccessibilityText, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{detail}</Text></View>)}</View> : <Text style={[d.hotelAboutDescription, { color: theme.textSecondary }]}>Specific accessibility features should be confirmed before booking.</Text>}
             </View>
           ) : null}
           {activeHotelTab === "location" ? (
@@ -1720,12 +1720,29 @@ const d = StyleSheet.create({
   hotelOfferProvider: { fontSize: 15, lineHeight: 21, fontWeight: "900" },
   selectionControl: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, alignItems: "center", justifyContent: "center" },
   selectionControlDot: { width: 10, height: 10, borderRadius: 5 },
-  hotelOfferBottom: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
-  hotelOfferPriceRow: { minWidth: 0, alignItems: "flex-end" },
+  hotelOfferBottom: { marginTop: 2, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
+  hotelOfferPriceRow: { minWidth: 0, marginTop: 12, alignItems: "flex-end" },
   hotelNightly: { fontSize: 22, lineHeight: 27, fontWeight: "900", textAlign: "right" },
   hotelPerNight: { flexShrink: 0, fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "right" },
-  hotelHighlight: { width: "48%", minHeight: 48, padding: 9, borderWidth: 1, borderRadius: 9, flexDirection: "row", alignItems: "center", gap: 7 },
-  hotelAmenity: { width: "48%", fontSize: 12, lineHeight: 18 },
+  hotelAboutPanel: {},
+  hotelAboutHeading: { fontSize: 20, lineHeight: 28, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.5 },
+  hotelAboutDescription: { marginTop: 12, fontSize: 14, lineHeight: 24, fontWeight: "400", fontFamily: appFonts.regular },
+  hotelAboutSubheading: { marginTop: 28, fontSize: 16, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold },
+  hotelAboutFallback: { marginTop: 8, fontSize: 14, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
+  hotelAboutHighlightGrid: { marginTop: 12, flexDirection: "row", flexWrap: "wrap", columnGap: 10, rowGap: 10 },
+  hotelAboutHighlight: { width: "48%", minHeight: 56, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, borderRadius: 12, flexDirection: "row", alignItems: "center", gap: 12 },
+  hotelAboutHighlightText: { flex: 1, minWidth: 0, fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
+  hotelAboutList: { marginTop: 12, flexDirection: "row", flexWrap: "wrap", columnGap: 24, rowGap: 12 },
+  hotelAboutListItem: { width: "45%", flexDirection: "row", alignItems: "flex-start", gap: 8 },
+  hotelAboutBullet: { width: 6, height: 6, borderRadius: 3, marginTop: 7, flexShrink: 0 },
+  hotelAboutListText: { flex: 1, fontSize: 14, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
+  hotelAboutInfoList: { marginTop: 12, gap: 12 },
+  hotelAboutInfoRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  hotelAboutInfoText: { flex: 1, fontSize: 14, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
+  hotelAboutAccessibilityList: { marginTop: 12, gap: 8 },
+  hotelAboutAccessibilityItem: { flexDirection: "row", alignItems: "flex-start" },
+  hotelAboutAccessibilityBullet: { width: 20, fontSize: 14, lineHeight: 24 },
+  hotelAboutAccessibilityText: { flex: 1, fontSize: 14, lineHeight: 24, fontWeight: "400", fontFamily: appFonts.regular },
   mapsButton: { alignSelf: "flex-start", minHeight: 44, borderRadius: 8, paddingHorizontal: 15, backgroundColor: colors.blue, flexDirection: "row", alignItems: "center", gap: 8 },
   mapsButtonText: { color: "white", fontSize: 13, fontWeight: "800" },
   reviewRow: { flexDirection: "row", alignItems: "center", gap: 12 },
