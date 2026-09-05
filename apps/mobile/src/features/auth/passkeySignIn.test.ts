@@ -33,6 +33,16 @@ test("passkey challenge freshness is anchored to acquisition time across Welcome
   assert.match(flow, /passkeyOptions=\{emailPasskeyOptions\}/);
 });
 
+test("native username field availability checks registered view metadata, not only the module", () => {
+  const wrapper = source("src/features/passkeys/NativePasskeyUsernameField.tsx");
+  assert.match(wrapper, /getViewConfig\?: \(moduleName: string, viewName\?: string\) => unknown \| null/);
+  assert.match(wrapper, /expoRuntime\?\.getViewConfig\?\.\("KurioticketPasskeyAutoFill"\)/);
+  assert.match(wrapper, /const nativeViewRegistered = hasNativePasskeyUsernameView\(\)/);
+  assert.match(wrapper, /const NativeView = nativeViewRegistered/);
+  assert.match(wrapper, /return nativeViewRegistered;/);
+  assert.doesNotMatch(wrapper, /return Platform\.OS === "ios" && Boolean\(NativeView\)/);
+});
+
 test("newer iOS binaries keep the native username field as the primary AutoFill path", () => {
   const screens = source("src/features/auth/AuthFormScreens.tsx");
   const wrapper = source("src/features/passkeys/NativePasskeyUsernameField.tsx");
