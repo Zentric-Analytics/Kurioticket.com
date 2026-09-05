@@ -12,10 +12,9 @@ const sortLabels: Record<"best" | "price" | "duration", string> = {
 
 const webFilterBorder = "#D8E1EC";
 const webFilterText = "#142033";
-const webFilterAccent = "#004BB8";
 const webFilterChevron = "#64748B";
 const webFilterPressed = "#F8FAFC";
-const webFilterCountBackground = "rgba(0,75,184,0.08)";
+const webFilterCountBackground = "#F1F5F9";
 const webFilterSurface = "#FFFFFF";
 const fullFilterAccessibilityLabel = "Filters";
 
@@ -32,12 +31,11 @@ type ControlProps = {
 function Control({ label, active, count, expanded, filterIcon, accessibilityLabelOverride, onPress }: ControlProps) {
   const { theme } = useAppTheme();
   const light = !theme.dark;
-  const accent = light ? webFilterAccent : "#8FB5FF";
   const foreground = light ? webFilterText : theme.textPrimary;
   const chevron = light ? webFilterChevron : theme.textSecondary;
   const border = light ? webFilterBorder : theme.border;
   const surface = light ? webFilterSurface : theme.surface;
-  const countBackground = light ? webFilterCountBackground : "#142B55";
+  const countBackground = light ? webFilterCountBackground : theme.background;
   const accessibilityLabel = `${accessibilityLabelOverride ?? label}${active ? ", selected" : ""}${count ? `, ${count} active` : ""}`;
 
   return (
@@ -50,11 +48,11 @@ function Control({ label, active, count, expanded, filterIcon, accessibilityLabe
     >
       {({ pressed }) => <View style={[
         styles.capsule,
-        filterIcon && styles.iconCapsule,
-        { backgroundColor: active ? countBackground : pressed && light ? webFilterPressed : surface, borderColor: active ? accent : border },
+        { backgroundColor: pressed && light ? webFilterPressed : surface, borderColor: border },
       ]}>
-        {filterIcon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={accent} /> : <Text numberOfLines={1} style={[styles.label, { color: foreground }]}>{label}</Text>}
-        {count ? <View style={[styles.count, { backgroundColor: countBackground }]}><Text style={[styles.countText, { color: accent }]}>{count}</Text></View> : null}
+        {filterIcon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={foreground} /> : null}
+        <Text numberOfLines={1} style={[styles.label, { color: foreground }]}>{label}</Text>
+        {count ? <View style={[styles.count, { backgroundColor: countBackground }]}><Text style={[styles.countText, { color: foreground }]}>{count}</Text></View> : null}
         {!filterIcon ? <ChevronDown accessible={false} size={13} strokeWidth={1.9} color={chevron} style={expanded ? styles.chevronExpanded : undefined} /> : null}
       </View>}
     </Pressable>
@@ -152,7 +150,6 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     paddingHorizontal: 10,
   },
-  iconCapsule: { paddingHorizontal: 10 },
   label: {
     fontSize: 13,
     lineHeight: 16,
