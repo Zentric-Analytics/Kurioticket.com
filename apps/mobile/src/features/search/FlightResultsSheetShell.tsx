@@ -14,7 +14,7 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
   const inset = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const sheet = (
-    <View accessibilityLabel={title} style={[styles.sheet, fullScreen && styles.fullScreen, { maxHeight: fullScreen ? "100%" : Math.min(height * .82, 680), backgroundColor: theme.background, paddingTop: fullScreen ? inset.top : 0 }]}>
+    <View accessibilityLabel={title} style={[styles.sheet, fullScreen && styles.fullScreen, { maxHeight: fullScreen ? "100%" : Math.min(height * .76, 620), backgroundColor: theme.background, paddingTop: fullScreen ? inset.top : 0 }]}>
       <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
         <View style={styles.headerCopy}>
           <Text accessibilityRole="header" style={[styles.title, { color: theme.textPrimary }]}>{title}</Text>
@@ -25,7 +25,7 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
           <X accessible={false} size={22} color={theme.icon} />
         </Pressable>
       </View>
-      <View style={styles.content}>{children}</View>
+      <View style={fullScreen ? styles.fullScreenContent : styles.quickContent}>{children}</View>
       {footer ? <View style={[styles.footer, { backgroundColor: theme.surface, borderTopColor: theme.border, paddingBottom: Math.max(inset.bottom, 12) }]}>{footer}</View> : null}
     </View>
   );
@@ -44,5 +44,8 @@ const styles = StyleSheet.create({
   sheet: { width: "100%", minHeight: 240, borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden", shadowColor: "#0F172A", shadowOpacity: .2, shadowRadius: 18, elevation: 16 },
   fullScreen: { flex: 1, borderRadius: 0 }, header: { minHeight: 76, paddingLeft: 20, paddingRight: 10, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth },
   headerCopy: { flex: 1, minWidth: 0 }, title: { fontSize: 18, lineHeight: 23, fontWeight: "700", fontFamily: appFonts.bold }, subtitle: { fontSize: 12, lineHeight: 18, fontFamily: appFonts.medium },
-  close: { width: 44, height: 44, alignItems: "center", justifyContent: "center" }, content: { flex: 1, minHeight: 0 }, footer: { borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingTop: 12 },
+  close: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  fullScreenContent: { flex: 1, minHeight: 0 },
+  quickContent: { flexShrink: 1, minHeight: 0 },
+  footer: { borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingTop: 12 },
 });
