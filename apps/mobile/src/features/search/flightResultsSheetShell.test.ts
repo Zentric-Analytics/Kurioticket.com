@@ -14,10 +14,12 @@ test("full and quick sheet bodies have distinct sizing contracts",()=>{
   assert.match(shell,/fullScreen: \{ flex: 1, minHeight: 0/);
   assert.doesNotMatch(shell,/quickContent: \{[^}]*flex: 1/);
 });
-test("footer remains a normal sibling below the body",()=>{
+test("footer remains a normal sibling below the body and reserves safe area plus breathing room",()=>{
   assert.ok(shell.indexOf("styles.quickContent") < shell.indexOf("styles.footer"));
   const footerStyle=/footer: \{([^}]*)\}/.exec(shell)?.[1] ?? "";
   assert.doesNotMatch(footerStyle,/position:\s*["']absolute["']/);
   assert.match(footerStyle,/flexShrink: 0/);
-  assert.match(shell,/Math\.max\(inset\.bottom, fullScreen \? 16 : 12\)/);
+  assert.match(shell,/const footerBottomPadding = fullScreen \? inset\.bottom \+ 16 : Math\.max\(inset\.bottom, 12\)/);
+  assert.match(shell,/paddingBottom: footerBottomPadding/);
+  assert.doesNotMatch(shell,/Math\.max\(inset\.bottom, fullScreen \? 16 : 12\)/);
 });
