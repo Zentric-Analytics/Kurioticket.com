@@ -5,6 +5,7 @@ import test from "node:test";
 const source = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
 const hotel = source.slice(source.indexOf("function HotelDetail"), source.indexOf("const detailIcons"));
 const gallery = readFileSync("src/features/search/NativeHotelDetails.tsx", "utf8");
+const reviews = readFileSync("src/features/search/NativeHotelReviewsSection.tsx", "utf8");
 const car = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
 const tokens = readFileSync("src/theme/tokens.ts", "utf8");
 const appTheme = readFileSync("src/theme/AppTheme.tsx", "utf8");
@@ -129,8 +130,8 @@ test("Hotel section navigation retains the mobile-web grid contract", () => {
 test("Hotel classification and reviews never use legacy rating fallbacks", () => {
   assert.match(hotel, /Number\.isInteger\(result\.classificationStars\)/);
   assert.doesNotMatch(hotel, /Math\.round\(result\.rating\)/);
-  assert.match(hotel, /typeof result\.reviewScore === "number"/);
-  assert.match(hotel, /typeof result\.reviewScale === "number"/);
+  assert.match(reviews, /typeof result\.reviewScore === "number"/);
+  assert.match(reviews, /result\.reviewScale === 5 \|\| result\.reviewScale === 10/);
   assert.doesNotMatch(hotel, /reviewScore \?\? result\.rating/);
   assert.match(hotel, /accessibilityLabel=\{`\$\{classification\} star hotel`\}/);
   assert.match(hotel, /\{"★"\.repeat\(classification\)\}/);
@@ -167,7 +168,7 @@ test("Hotel detail owns theme-aware accents without changing filled brand contro
   assert.match(source, /hotelContinue: \{[^\n]*backgroundColor: colors\.blue/);
   assert.match(source, /hotelContinuePressed: \{ backgroundColor: "#003B91" \}/);
   assert.match(source, /mapsButton: \{[^\n]*backgroundColor: colors\.blue/);
-  assert.match(source, /hotelReviewScore: \{[^\n]*backgroundColor: colors\.blue/);
+  assert.match(reviews, /reviewsScoreBadge: \{[\s\S]*?backgroundColor: colors\.blue/);
   assert.match(tokens, /blue: "#004BB8"/);
 });
 
@@ -178,7 +179,8 @@ test("Hotel provider selection validates candidates before applying precedence",
 });
 
 test("Hotel panels and dock expose web-aligned truthful information", () => {
-  for (const heading of ["Compare prices", "About this hotel", "Property highlights", "All amenities", "Room &amp; comfort", "Hotel information", "Accessibility", "Location &amp; stay fit", "Guest reviews"]) assert.match(hotel, new RegExp(heading));
+  for (const heading of ["Compare prices", "About this hotel", "Property highlights", "All amenities", "Room &amp; comfort", "Hotel information", "Accessibility", "Location &amp; stay fit"]) assert.match(hotel, new RegExp(heading));
+  assert.match(reviews, /Guest reviews/);
   assert.match(hotel, /estimated stay total/);
   assert.match(hotel, /per night/);
   assert.match(hotel, />Continue booking</);
@@ -215,9 +217,10 @@ test("Car detail parity remains protected", () => {
 
 test("Hotel Details preserves canonical filled and pressed brand blue", () => {
   assert.match(tokens, /blue: "#004BB8"/);
-  for (const style of ["hotelReviewScore", "mapsButton", "hotelContinue"]) {
+  for (const style of ["mapsButton", "hotelContinue"]) {
     assert.match(source, new RegExp(`${style}[^\\n]*colors\\.blue`));
   }
+  assert.match(reviews, /reviewsScoreBadge[\s\S]*?colors\.blue/);
   assert.match(source, /hotelContinuePressed: \{ backgroundColor: "#003B91" \}/);
 });
 
