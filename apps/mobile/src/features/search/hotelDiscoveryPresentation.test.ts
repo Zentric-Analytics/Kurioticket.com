@@ -5,6 +5,7 @@ const results = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "u
 const resultCard = results.slice(results.indexOf("function HotelCard"), results.indexOf("function Loading", results.indexOf("function HotelCard")));
 const details = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
 const hotel = details.slice(details.indexOf("function HotelDetail"), details.indexOf("const detailIcons"));
+const reviews = readFileSync("src/features/search/NativeHotelReviewsSection.tsx", "utf8");
 
 test("discovery Hotel results never imply live price, saves, or classification", () => {
   assert.match(resultCard, /showCheapestBadge && hasPrice/); assert.match(resultCard, /classificationStars > 0/); assert.match(resultCard, /"Price unavailable"/);
@@ -25,7 +26,8 @@ test("Hotel details do not fabricate classification, reviews, rooms, or price", 
   assert.match(hotel, /roomOptions\.length > 0/);
   assert.match(hotel, /hasPrice \?/);
   assert.match(hotel, /Price unavailable/);
-  assert.match(hotel, /Verified guest reviews are not connected/);
+  assert.match(hotel, /<NativeHotelReviewsSection result=\{result\} \/>/);
+  assert.match(reviews, /Verified guest reviews are not connected/);
 });
 test("narrow Hotel layout uses flexible price ownership", () => {
   assert.match(hotel, /useWindowDimensions\(\)\.width/);

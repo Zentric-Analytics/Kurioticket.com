@@ -58,6 +58,7 @@ import { HotelOfferAmenityList } from "./HotelCardAmenityList";
 import { nativeHotelAmenityLabel } from "./hotelAmenityLabel";
 import { appFonts } from "../../theme/typography";
 import { buildHotelAmenityPresentation, type HotelAmenityPresentationItem } from "../../../../../src/components/results/hotelAmenityPresentation";
+import { NativeHotelReviewsSection } from "./NativeHotelReviewsSection";
 
 function hotelAboutIconFor(item: HotelAmenityPresentationItem): LucideIcon {
   if (item.iconKey === "wifi") return Wifi;
@@ -501,11 +502,6 @@ function HotelDetail({
     result.classificationStars! <= 5
       ? result.classificationStars!
       : null;
-  const hasVerifiedReview =
-    typeof result.reviewScore === "number" &&
-    result.reviewScore > 0 &&
-    typeof result.reviewScale === "number" &&
-    result.reviewScale > 0;
   const redirectUrl = nativeHotelProviderUrl(
     result.partnerRedirectUrl,
     result.bookingUrl,
@@ -1078,51 +1074,7 @@ function HotelDetail({
             </View>
           ) : null}
           {activeHotelTab === "reviews" ? (
-            <View style={d.hotelPanel}>
-              <Text style={[d.hotelHeading, { color: theme.textPrimary }]}>
-                Guest reviews
-              </Text>
-              {hasVerifiedReview ? (
-                <View style={d.reviewRow}>
-                  <Text style={d.hotelReviewScore}>
-                    {result.reviewScore!.toFixed(1)}
-                  </Text>
-                  <View style={{ gap: 3 }}>
-                    <Text
-                      style={[d.hotelSubheading, { color: theme.textPrimary }]}
-                    >
-                      {result.reviewScore! / result.reviewScale! >= 0.9
-                        ? "Excellent"
-                        : result.reviewScore! / result.reviewScale! >= 0.8
-                          ? "Very good"
-                          : "Guest rating"}
-                    </Text>
-                    <Text
-                      style={[
-                        d.hotelSectionLead,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
-                      {result.reviewCount
-                        ? `${result.reviewCount.toLocaleString()} reviews`
-                        : "Review count unavailable"}
-                    </Text>
-                    {result.reviewSource ? (
-                      <Text style={[d.meta, { color: theme.textSecondary }]}>
-                        Source: {result.reviewSource}
-                      </Text>
-                    ) : null}
-                  </View>
-                </View>
-              ) : (
-                <Text
-                  style={[d.hotelSectionLead, { color: theme.textSecondary }]}
-                >
-                  Verified guest reviews are not connected for this property
-                  yet.
-                </Text>
-              )}
-            </View>
+            <NativeHotelReviewsSection result={result} />
           ) : null}
         </View>
       </ScrollView>
@@ -1618,7 +1570,6 @@ const d = StyleSheet.create({
   hotelFactGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   hotelGridFact: { width: "48%", minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6 },
   hotelGridText: { flex: 1, color: "#334155", fontSize: 11, lineHeight: 15 },
-  hotelReviewScore: { alignSelf: "flex-start", overflow: "hidden", borderRadius: 5, backgroundColor: colors.blue, color: "white", paddingHorizontal: 9, paddingVertical: 6, fontSize: 18, fontWeight: "900" },
   gallery: { height: 241, flexDirection: "row", backgroundColor: "#E7EBF2" },
   hero: { width: "77%", height: "100%", backgroundColor: "#E7EBF2" },
   thumbs: { width: "23%", gap: 3, paddingLeft: 3 },
@@ -1745,7 +1696,6 @@ const d = StyleSheet.create({
   hotelAboutAccessibilityText: { flex: 1, fontSize: 14, lineHeight: 24, fontWeight: "400", fontFamily: appFonts.regular },
   mapsButton: { alignSelf: "flex-start", minHeight: 44, borderRadius: 8, paddingHorizontal: 15, backgroundColor: colors.blue, flexDirection: "row", alignItems: "center", gap: 8 },
   mapsButtonText: { color: "white", fontSize: 13, fontWeight: "800" },
-  reviewRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   hotelDockPrice: { flex: 1, minWidth: 0, gap: 1 },
   hotelDockLabel: { flexDirection: "row", alignItems: "center", gap: 5 },
   hotelDockEyebrow: { fontSize: 10, lineHeight: 14 },
