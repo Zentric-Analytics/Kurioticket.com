@@ -4,6 +4,7 @@ import { isStagingEnvironment } from "@/lib/stagingSafety";
 import { getLegalDocument } from "@/services/legalDocumentService";
 
 const APP_LEGAL_SLUGS = new Set(["terms-of-service", "privacy-policy"]);
+const HIDE_STAGING_BADGE_CSS = '[data-staging-build="current"] { display: none !important; }';
 
 export const metadata = {
   robots: { index: false, follow: false },
@@ -19,10 +20,16 @@ export default async function MobileLegalDocumentPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  if (!isStagingEnvironment() || !APP_LEGAL_SLUGS.has(slug)) notFound();
+  const localDevelopment = process.env.NODE_ENV === "development";
+  if ((!isStagingEnvironment() && !localDevelopment) || !APP_LEGAL_SLUGS.has(slug)) notFound();
 
   const document = getLegalDocument(slug);
   if (!document) notFound();
 
-  return <LegalViewer document={document} appBrowser />;
+  return (
+    <>
+      <style>{HIDE_STAGING_BADGE_CSS}</style>
+      <LegalViewer document={document} appBrowser />
+    </>
+  );
 }
