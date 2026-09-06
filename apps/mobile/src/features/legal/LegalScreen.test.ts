@@ -8,12 +8,13 @@ const screen = source("src/features/legal/LegalScreen.tsx");
 const profile = source("src/features/profile/ProfileCardSection.tsx");
 const model = source("src/features/profile/profileModel.ts");
 
-test("legal routes live in the Profile stack so the real tab bar stays mounted", () => {
+test("legal routes stay available in the Profile stack as Preview browser fallbacks", () => {
   const tabs = source("app/(tabs)/_layout.tsx");
   const profileLayout = source("app/(tabs)/profile/_layout.tsx");
-  assert.match(model, /href: "\/(?:\(tabs\))\/profile\/terms-of-service"/);
-  assert.match(model, /href: "\/(?:\(tabs\))\/profile\/privacy-policy"/);
-  assert.match(profile, /router\.push\(destination\.href\)/);
+  assert.match(model, /path: "\/terms"[\s\S]*?fallbackHref: "\/(?:\(tabs\))\/profile\/terms-of-service"/);
+  assert.match(model, /path: "\/privacy"[\s\S]*?fallbackHref: "\/(?:\(tabs\))\/profile\/privacy-policy"/);
+  assert.match(profile, /navigateProfileDestination\(destination, getRuntimeEnvironment\(\)/);
+  assert.match(profile, /openBrowser: \(url\) => WebBrowser\.openBrowserAsync\(url\)/);
   assert.match(tabs, /KurioticketTabBar/);
   assert.match(tabs, /<Tabs\.Screen name="profile"/);
   assert.doesNotMatch(tabs, /terms-of-service|privacy-policy/);
