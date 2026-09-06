@@ -26,7 +26,7 @@ test("clean app-browser route is Preview-safe and contains no site chrome", () =
   assert.match(appRoute, /process\.env\.NODE_ENV === "development"/);
   assert.match(appRoute, /APP_LEGAL_SLUGS/);
   assert.match(appRoute, /HIDE_STAGING_BADGE_CSS/);
-  assert.match(appRoute, /data-staging-build=\\"current\\"/);
+  assert.match(appRoute, /data-staging-build="current"/);
   assert.match(appRoute, /<LegalViewer document=\{document\} appBrowser \/>/);
   assert.doesNotMatch(appRoute, /AppHeader|Footer|PrivacyPageClient/);
   assert.match(appRoute, /robots: \{ index: false, follow: false \}/);
