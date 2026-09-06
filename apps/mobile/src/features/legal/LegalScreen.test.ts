@@ -41,6 +41,20 @@ test("loading covers API and first WebView render, while render failure safely r
   assert.match(screen, /onRetry=\{loadInitial\}/);
 });
 
+test("Preview legal WebView stays on the expected legal route and treats main-document HTTP failures as retryable errors", () => {
+  assert.match(screen, /const previewAllowedNavigationUrls = useMemo/);
+  assert.match(screen, /if \(slug === "terms-of-service"\) urls\.push\(`\$\{previewWebOrigin\}\/legal\/terms-of-service`\)/);
+  assert.match(screen, /originWhitelist=\{\[previewWebOrigin\]\}/);
+  assert.doesNotMatch(screen, /originWhitelist=\{\[`\$\{previewWebOrigin\}\/\*`\]\}/);
+  assert.match(screen, /onShouldStartLoadWithRequest=\{\(\{ url \}\) => isAllowedPreviewNavigation\(url\)\}/);
+  assert.match(screen, /onHttpError=\{\(\{ nativeEvent \}\) => \{/);
+  assert.match(screen, /nativeEvent\.statusCode < 400/);
+  assert.match(screen, /!isAllowedPreviewNavigation\(nativeEvent\.url\)/);
+  assert.match(screen, /previewLoadFailed\.current = true/);
+  assert.match(screen, /if \(previewLoadFailed\.current\) return/);
+  assert.match(screen, /setLoadState\("error"\)/);
+});
+
 test("legal controls are icon-only, right aligned above the real Profile tab bar", () => {
   assert.match(screen, /testID="legal-action-dock"/);
   assert.match(screen, /testID="legal-action-toolbar"/);
