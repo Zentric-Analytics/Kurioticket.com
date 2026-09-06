@@ -9,8 +9,8 @@ test("authenticated profile keeps its existing order and appends legal", () => {
   assert.deepEqual(authenticatedProfileSections.find(section => section.title === "travelActivity")?.items.map(item => [item.label, "href" in item.destination ? item.destination.href : null]), [["savedItems", "/saved"], ["recentSearches", "/recent"], ["priceAlerts", "/price-alerts"]]);
   assert.deepEqual(authenticatedProfileSections.find(section => section.title === "preferences")?.items.map(item => item.label), ["customizationPreferences", "travelPreferences", "emailPreferences"]);
   assert.deepEqual(authenticatedProfileSections.at(-1)?.items.map(item => [item.label, item.destination.kind, "path" in item.destination ? item.destination.path : null, "productionHref" in item.destination ? item.destination.productionHref : null]), [
-    ["terms", "preview-browser", "/terms", "/(tabs)/profile/terms-of-service"],
-    ["privacy", "preview-browser", "/privacy", "/(tabs)/profile/privacy-policy"],
+    ["terms", "preview-browser", "/mobile/legal/terms-of-service", "/(tabs)/profile/terms-of-service"],
+    ["privacy", "preview-browser", "/mobile/legal/privacy-policy", "/(tabs)/profile/privacy-policy"],
   ]);
 });
 
