@@ -6,12 +6,8 @@ import { appFonts } from "../../theme/typography";
 import { ui } from "./SearchUi";
 import { FlightResultsSheetShell } from "./FlightResultsSheetShell";
 import type { FlightSort } from "./flightFilters";
-
-const options: { value: FlightSort; label: string; description: string }[] = [
-  { value: "best", label: "Best", description: "Best balance of price and journey time" },
-  { value: "price", label: "Cheapest", description: "Lowest total price" },
-  { value: "duration", label: "Fastest", description: "Shortest journey time" },
-];
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
+import { flightResultsUiCopy } from "./flightResultsSummary";
 
 export function FlightSortSheet({
   visible,
@@ -25,16 +21,23 @@ export function FlightSortSheet({
   onClose: () => void;
 }) {
   const { theme } = useAppTheme();
+  const { locale } = useMobileLocalization();
+  const copy = flightResultsUiCopy(locale);
+  const options: { value: FlightSort; label: string; description: string }[] = [
+    { value: "best", label: copy.best, description: copy.bestHelp },
+    { value: "price", label: copy.cheapest, description: copy.cheapestHelp },
+    { value: "duration", label: copy.fastest, description: copy.fastestHelp },
+  ];
   const [draft, setDraft] = useState<FlightSort>(sort);
   useEffect(() => { if (visible) setDraft(sort); }, [sort, visible]);
   return (
     <FlightResultsSheetShell
       visible={visible}
-      title="Sort flights"
-      subtitle="Choose how results are ordered"
-      closeLabel="Close sort options"
+      title={copy.sortFlights}
+      subtitle={copy.sortHelp}
+      closeLabel={copy.closeSort}
       onClose={onClose}
-      footer={<View style={styles.actions}><Pressable accessibilityRole="button" onPress={() => setDraft("best")} style={[styles.reset, { borderColor: theme.border }]}><Text style={[styles.buttonText, { color: theme.textPrimary }]}>Reset</Text></Pressable><Pressable accessibilityRole="button" onPress={() => onApply(draft)} style={styles.apply}><Text style={[styles.buttonText, styles.applyText]}>Apply</Text></Pressable></View>}
+      footer={<View style={styles.actions}><Pressable accessibilityRole="button" onPress={() => setDraft("best")} style={[styles.reset, { borderColor: theme.border }]}><Text style={[styles.buttonText, { color: theme.textPrimary }]}>{copy.reset}</Text></Pressable><Pressable accessibilityRole="button" onPress={() => onApply(draft)} style={styles.apply}><Text style={[styles.buttonText, styles.applyText]}>{copy.apply}</Text></Pressable></View>}
     >
       <View accessibilityRole="radiogroup" style={styles.options}>
         {options.map((option) => {

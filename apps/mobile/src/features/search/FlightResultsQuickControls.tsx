@@ -3,12 +3,8 @@ import { ChevronDown, SlidersHorizontal } from "lucide-react-native";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import type { FlightSort } from "./flightFilters";
-
-const sortLabels: Record<"best" | "price" | "duration", string> = {
-  best: "Best",
-  price: "Cheapest",
-  duration: "Fastest",
-};
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
+import { flightResultsUiCopy } from "./flightResultsSummary";
 
 const webFilterBorder = "#D8E1EC";
 const webFilterText = "#142033";
@@ -16,7 +12,6 @@ const webFilterChevron = "#64748B";
 const webFilterPressed = "#F8FAFC";
 const webFilterCountBackground = "#F1F5F9";
 const webFilterSurface = "#FFFFFF";
-const fullFilterAccessibilityLabel = "Filters";
 
 type ControlProps = {
   label: string;
@@ -36,7 +31,9 @@ function Control({ label, active, count, expanded, filterIcon, accessibilityLabe
   const border = light ? webFilterBorder : theme.border;
   const surface = light ? webFilterSurface : theme.surface;
   const countBackground = light ? webFilterCountBackground : theme.background;
-  const accessibilityLabel = `${accessibilityLabelOverride ?? label}${active ? ", selected" : ""}${count ? `, ${count} active` : ""}`;
+  const { locale } = useMobileLocalization();
+  const copy = flightResultsUiCopy(locale);
+  const accessibilityLabel = `${accessibilityLabelOverride ?? label}${active ? `, ${copy.selected}` : ""}${count ? `, ${count} ${copy.active}` : ""}`;
 
   return (
     <Pressable
@@ -76,6 +73,9 @@ export function FlightResultsQuickControls({
   openSheetKind: "sort" | "all" | "airlines" | "stops" | "airports" | null;
   openSheet: (sheet: "sort" | "all" | "airlines" | "stops" | "airports") => void;
 }) {
+  const { locale } = useMobileLocalization();
+  const copy = flightResultsUiCopy(locale);
+  const sortLabels = { best: copy.best, price: copy.cheapest, duration: copy.fastest };
   const safeSort = sort === "price" || sort === "duration" ? sort : "best";
 
   return (
@@ -86,8 +86,8 @@ export function FlightResultsQuickControls({
       alwaysBounceHorizontal={false}
     >
       <Control
-        label="Filter"
-        accessibilityLabelOverride={fullFilterAccessibilityLabel}
+        label={copy.filters}
+        accessibilityLabelOverride={copy.filters}
         active={activeFilterCount > 0}
         count={activeFilterCount || undefined}
         expanded={openSheetKind === "all"}
@@ -101,21 +101,21 @@ export function FlightResultsQuickControls({
         onPress={() => openSheet("sort")}
       />
       <Control
-        label="Airlines"
+        label={copy.airlines}
         active={airlineCount > 0}
         count={airlineCount || undefined}
         expanded={openSheetKind === "airlines"}
         onPress={() => openSheet("airlines")}
       />
       <Control
-        label="Stops"
+        label={copy.stops}
         active={stopsCount > 0}
         count={stopsCount || undefined}
         expanded={openSheetKind === "stops"}
         onPress={() => openSheet("stops")}
       />
       <Control
-        label="Airports"
+        label={copy.airports}
         active={airportCount > 0}
         count={airportCount || undefined}
         expanded={openSheetKind === "airports"}
