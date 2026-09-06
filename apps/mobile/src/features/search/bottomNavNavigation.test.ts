@@ -7,7 +7,7 @@ const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.t
 const carScreen = readFileSync(resolve("src/features/search/ApprovedCarResultsScreen.tsx"), "utf8");
 const bottomNav = source.slice(source.indexOf("export function BottomNav"), source.indexOf("const s0 = StyleSheet.create"));
 
-test("the shared Car Results bottom navigation uses the existing app routes", () => {
+test("the shared bottom navigation keeps its existing app routes", () => {
   assert.match(bottomNav, /label: "Explore"[^\n]+route: "\/\(tabs\)\/explore"/);
   assert.match(bottomNav, /label: "Trips"[^\n]+accessibilityLabel: "My Trips"[^\n]+route: "\/\(tabs\)\/trips"/);
   assert.match(bottomNav, /label: "Search"[^\n]+route: "\/flights"/);
@@ -37,7 +37,7 @@ function expectBottomNavBackSequence(labels: string[]) {
   assert.deepEqual(history, ["/(tabs)", carResults]);
 }
 
-test("each BottomNav destination preserves Car Results for Back", () => {
+test("each BottomNav destination uses push navigation", () => {
   expectBottomNavBackSequence(["Explore"]);
   expectBottomNavBackSequence(["Trips"]);
   expectBottomNavBackSequence(["Search"]);
@@ -45,16 +45,16 @@ test("each BottomNav destination preserves Car Results for Back", () => {
   expectBottomNavBackSequence(["Profile"]);
 });
 
-test("repeated BottomNav navigation does not duplicate Car Results", () => {
+test("repeated BottomNav route pushes preserve the prior screen", () => {
   expectBottomNavBackSequence(["Explore", "Saved"]);
 });
 
-test("BottomNav remains exported and mounted by Car Results only", () => {
+test("BottomNav remains exported but is not mounted by results screens", () => {
   const resultsScreen = source.slice(source.indexOf("export function ApprovedResultsScreen"), source.indexOf("export function BottomNav"));
 
   assert.match(source, /export function BottomNav/);
-  assert.match(carScreen, /import \{ BottomNav \} from "\.\/ApprovedResultsScreen"/);
-  assert.match(carScreen, /<BottomNav \/>/);
+  assert.doesNotMatch(carScreen, /import \{ BottomNav \} from "\.\/ApprovedResultsScreen"/);
+  assert.doesNotMatch(carScreen, /<BottomNav(?:\s|\/|>)/);
   assert.doesNotMatch(resultsScreen, /<BottomNav(?:\s|\/|>)/);
   assert.doesNotMatch(resultsScreen, /style=\{[^}]*s0\.nav/);
 });
