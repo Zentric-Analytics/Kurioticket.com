@@ -27,8 +27,13 @@ test("main Car filters are full screen and quick filters are real scoped sheets"
   assert.match(sheet, /fullScreen=\{full\}/);
   assert.match(sheet, /quickBackdropVariant="legacy"/);
   assert.doesNotMatch(sheet, /fullScreenFooterExtraBottomPadding/);
-  assert.match(screen, /setFilterSheet\("all"\)/);
-  assert.match(screen, /setFilterSheet\(group\.id\)/);
+  assert.match(screen, /filterSheetVisible/);
+  assert.match(screen, /filterSheetGroupId/);
+  assert.match(screen, /setFilterSheetGroupId\(null\);setFilterSheetVisible\(true\)/);
+  assert.match(screen, /setFilterSheetGroupId\(groupId\);setFilterSheetVisible\(true\)/);
+  assert.match(screen, /closeFilterSheet=\(\)=>setFilterSheetVisible\(false\)/);
+  assert.doesNotMatch(screen, /closeFilterSheet[^;]*setFilterSheetGroupId/);
+  assert.doesNotMatch(screen, /useState<string\|"all"\|null>/);
   assert.doesNotMatch(screen, /cycle\(|Lower total|Rental company/);
 });
 

@@ -48,21 +48,18 @@ test("Cars summary remains derived from canonical search data", () => {
   assert.doesNotMatch(cars, /Paris, France|Sep 6|20 years old/);
 });
 
-test("visible range and bottom navigation are removed without removing pagination", () => {
+test("Cars render the full filtered result set without pagination", () => {
   assert.match(cars, /\{filtered\.length\} results found/);
-  assert.doesNotMatch(cars, /style=\{r\.range\}|range:\{|Math\.min\(page\*pageSize,filtered\.length\)/);
-  assert.match(cars, /const pageSize=20/);
-  assert.match(cars, /totalPages/);
-  assert.match(cars, /filtered\.slice\(\(page-1\)\*pageSize,page\*pageSize\)/);
-  assert.match(cars, /Page \{page\} of \{totalPages\}/);
-  assert.match(cars, /label="Previous"/);
-  assert.match(cars, /label="Next"/);
-  assert.match(cars, /edges=\{\["top","bottom"\]\}/);
-  assert.match(cars, /body:\{paddingHorizontal:10,paddingBottom:24/);
+  assert.match(cars, /filtered\.map\(\(result,index\)/);
+  assert.match(cars, /rank=\{index\}/);
+  assert.doesNotMatch(cars, /const \[page|pageSize|totalPages|filtered\.slice|Page \{page\}|label="Previous"|label="Next"/);
 });
 
-test("content price alerts remain independent from removed header notifications", () => {
+test("Cars use one truthful compact price alert before the result count", () => {
+  assert.equal((cars.match(/<CarPriceAlert\/>/g) ?? []).length, 1);
+  assert.ok(cars.indexOf("<CarPriceAlert/>") < cars.indexOf("results found"));
   const alert = cars.slice(cars.indexOf("function CarPriceAlert"));
-  assert.match(alert, /Rental car price alerts/);
-  assert.match(alert, /FlowIcon name="bell"/);
+  assert.match(alert, /<Bell/); assert.match(alert, /<Switch/); assert.match(alert, /Track rental car prices/);
+  assert.match(alert, /disabled value=\{false\}/);
+  assert.doesNotMatch(alert, /Rental car price alerts<|label="Track prices"|alertIcon/);
 });
