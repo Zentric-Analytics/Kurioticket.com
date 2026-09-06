@@ -18,13 +18,13 @@ export const authenticatedProfileSections: ProfileSection[] = [
     { label: "securitySettings", icon: "shield", destination: { kind: "native", href: "/security" } },
   ] },
   { title: "travelActivity", items: [
-    { label: "savedItems", icon: "bookmark", destination: { kind: "native", href: "/saved" } },
+    { label: "savedItems", icon: "heart", destination: { kind: "native", href: "/saved" } },
     { label: "recentSearches", icon: "clock", destination: { kind: "native", href: "/recent" } },
     { label: "priceAlerts", icon: "bell", destination: { kind: "native", href: "/price-alerts" } },
   ] },
   { title: "preferences", items: [
     { label: "customizationPreferences", icon: "sliders", destination: { kind: "native", href: "/settings" } },
-    { label: "travelPreferences", icon: "settings", destination: { kind: "native", href: "/travel-preferences" } },
+    { label: "travelPreferences", icon: "flight", destination: { kind: "native", href: "/travel-preferences" } },
     { label: "emailPreferences", icon: "mail", destination: { kind: "native", href: "/email-preferences" } },
   ] },
   { title: "helpSupport", items: [
