@@ -47,39 +47,53 @@ test("decision sections are compare-only, ordered, and use the enriched details 
   const compare = detail.slice(detail.indexOf('activeHotelTab === "compare"'), detail.indexOf('activeHotelTab === "about"'));
   assert.ok(compare.indexOf("NativeHotelPropertyLocationSection") < compare.indexOf("NativeRelatedHotelsSection"));
   assert.match(detail, /hotels: details\?\.relatedHotels \?\? \[\]/);
-  assert.match(detail, /propertyDetails=\{property\}/);
+  assert.match(detail, /<NativeHotelPropertyLocationSection[\s\S]*?hotelId=\{result\.id\}[\s\S]*?hotelName=\{result\.name\}[\s\S]*?propertyDetails=\{property\}[\s\S]*?theme=\{theme\}/);
   assert.doesNotMatch(detail, /travelApi\.hotels?Search/);
 });
 
-test("native location matches the web card geometry while retaining the existing non-interactive map", () => {
+test("native Compare location reuses the secure interactive Google embed with web card geometry", () => {
   const component = readFileSync("src/features/search/NativeHotelDecisionSections.tsx", "utf8");
+  const section = component.slice(
+    component.indexOf("export function NativeHotelPropertyLocationSection"),
+    component.indexOf("function RelatedHotelCard"),
+  );
   const webMap = readFileSync("../../src/components/results/hotelDetails/HotelDetailsGoogleMap.tsx", "utf8");
-  const locationCard = component.match(/locationCard:\s*\{([^}]*)\}/)?.[1] ?? "";
+  const locationCard = component.slice(component.indexOf("  locationCard:"), component.indexOf("  locationHeader:"));
   const locationHeader = component.match(/locationHeader:\s*\{([^}]*)\}/)?.[1] ?? "";
   const mapFrame = component.match(/mapFrame:\s*\{([^}]*)\}/)?.[1] ?? "";
-  const mapViewport = component.match(/mapViewport:\s*\{([^}]*)\}/)?.[1] ?? "";
 
-  assert.match(component, /buildHotelAddress/);
-  assert.match(component, /buildHotelDirectionsUrl/);
-  assert.match(component, /buildOpenStreetMapHotelMapEmbedUrl/);
-  assert.match(component, /from "react-native-webview"/);
-  assert.match(component, /pointerEvents="none"/);
-  assert.match(component, /scrollEnabled=\{false\}/);
-  assert.doesNotMatch(component, /react-native-maps/);
+  assert.match(section, /hotelId:\s*string/);
+  assert.match(component, /Platform/);
+  assert.match(component, /getApiBaseUrl/);
+  assert.match(component, /nativeHotelLocationEmbedUrl/);
+  assert.match(section, /getApiBaseUrl\(Platform\.OS, __DEV__\)/);
+  assert.match(section, /nativeHotelLocationEmbedUrl\(api\.baseUrl, hotelId, "map"\)/);
+  assert.match(section, /<WebView/);
+  assert.match(section, /key=\{`\$\{hotelId\}:compare-map`\}/);
+  assert.match(section, /scrollEnabled=\{false\}/);
+  assert.match(section, /onError=/);
+  assert.match(section, /onHttpError=/);
+  assert.match(section, /Map preview unavailable/);
+  for (const forbidden of ["buildOpenStreetMapHotelMapEmbedUrl", 'pointerEvents="none"', ">Open in Maps</Text>", "Linking.openURL", "ExternalLink", "EXPO_PUBLIC_GOOGLE", "NEXT_PUBLIC_GOOGLE", "google.com/maps/embed"]) {
+    assert.doesNotMatch(section, new RegExp(forbidden));
+  }
+  assert.match(locationCard, /marginTop:\s*24/);
+  assert.match(locationCard, /marginHorizontal:\s*-16/);
+  assert.match(locationCard, /borderWidth:\s*1/);
   assert.match(locationCard, /borderRadius:\s*16/);
   assert.match(locationCard, /overflow:\s*"hidden"/);
-  assert.doesNotMatch(locationCard, /padding:\s*16|gap:/);
+  assert.match(locationCard, /shadowColor:\s*"#0F172A"/);
+  assert.match(locationCard, /shadowOffset:\s*\{ width:\s*0, height:\s*8/);
+  assert.match(locationCard, /shadowOpacity:\s*0\.05/);
+  assert.match(locationCard, /shadowRadius:\s*15/);
+  assert.match(locationCard, /elevation:\s*2/);
   assert.match(locationHeader, /paddingHorizontal:\s*16/);
-  assert.match(locationHeader, /paddingTop:\s*16/);
+  assert.match(locationHeader, /paddingVertical:\s*16/);
   assert.match(mapFrame, /height:\s*280/);
   assert.match(mapFrame, /width:\s*"100%"/);
-  assert.doesNotMatch(mapViewport, /borderRadius|margin/);
-  assert.match(component, /locationHeading:\s*\{[^}]*fontSize:\s*18[^}]*fontWeight:\s*"800"/);
-  assert.match(component, /address:\s*\{[^}]*fontSize:\s*14[^}]*lineHeight:\s*20/);
-  assert.match(webMap, /overflow-hidden[^"`]*rounded-2xl|rounded-2xl[^"`]*overflow-hidden/);
-  assert.match(webMap, /className="px-4 py-4 sm:px-5"/);
-  assert.match(webMap, /"h-\[280px\] w-full border-0/);
-  assert.match(component, /<ScrollView horizontal[^>]*showsHorizontalScrollIndicator=\{false\}/);
+  assert.match(component, /locationHeading:\s*\{[^}]*fontSize:\s*18[^}]*lineHeight:\s*24[^}]*fontWeight:\s*"800"[^}]*fontFamily:\s*appFonts\.extraBold/);
+  assert.match(component, /address:\s*\{[^}]*marginTop:\s*4[^}]*fontSize:\s*14[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
+  for (const contract of ["rounded-2xl", "border-slate-200", "bg-white", "shadow-[0_8px_30px_rgba(15,23,42,0.05)]", "px-4 py-4", "h-[280px]", "buildGoogleHotelMapEmbedUrl"]) assert.ok(webMap.includes(contract), contract);
 });
 
 test("native related hotel heading stays inset while only the horizontal carousel breaks out", () => {
@@ -136,24 +150,4 @@ test("native related Hotel cards mirror the web text hierarchy and action treatm
   assert.doesNotMatch(card, /item\.hotel\.(?:rating|reviewScore)/);
   assert.equal(card.match(/<Pressable\b/g)?.length, 1);
   assert.match(card, /<Pressable accessibilityRole="button" accessibilityLabel=\{`View hotel \$\{item\.hotel\.name\}`\} onPress=\{\(\) => onView\(item\)\}/);
-});
-
-test("native Open in Maps is a compact accessible overlay instead of a filled CTA", () => {
-  const component = readFileSync("src/features/search/NativeHotelDecisionSections.tsx", "utf8");
-  const mapsControl = component.match(/mapsControl:\s*\{([^}]*)\}/)?.[1] ?? "";
-  const mapsOverlay = component.match(/mapsOverlay:\s*\{([^}]*)\}/)?.[1] ?? "";
-
-  assert.match(component, /import \{ colors \} from "\.\.\/\.\.\/theme\/tokens";/);
-  assert.match(component, /ExternalLink/);
-  assert.match(component, /accessibilityRole="link" accessibilityLabel=\{`Open \$\{hotelName\} in Maps`\}/);
-  assert.match(component, /buildHotelDirectionsUrl/);
-  assert.match(component, /Linking\.openURL\(directionsUrl\)/);
-  assert.match(component, />Open in Maps<\/Text>/);
-  assert.match(mapsControl, /minHeight:\s*44/);
-  assert.doesNotMatch(mapsControl, /backgroundColor:\s*colors\.blue/);
-  assert.match(mapsOverlay, /position:\s*"absolute"/);
-  assert.match(mapsOverlay, /top:\s*12/);
-  assert.match(mapsOverlay, /left:\s*12/);
-  assert.doesNotMatch(component, /mapsButton|mapsButtonText/);
-  assert.doesNotMatch(component, /#004BB8/i);
 });
