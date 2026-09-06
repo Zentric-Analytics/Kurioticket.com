@@ -12,6 +12,6 @@ test("Android passkey registration requests a platform authenticator without cha
 });
 
 test("Android platform preference preserves the server authenticator selection", () => {
+  assert.match(adapter, /const authenticatorSelection = currentSelection/);
   assert.match(adapter, /\.\.\.authenticatorSelection,/);
-  assert.match(adapter, /residentKey/); // existing selection is spread rather than replaced
 });
