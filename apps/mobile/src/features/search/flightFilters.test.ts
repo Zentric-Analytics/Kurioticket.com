@@ -1,4 +1,4 @@
-import assert from "node:assert/strict";import test from "node:test";import type {FlightResult} from "../../api/travelApi";import {activeFlightFilterCount,emptyFlightFilters,filterAndSortFlights,flightFacetCounts,flightFilterDurationMinutes,flightFilterInsight,flightFilterOptions,flightMaximumLayoverMinutes,flightMaximumStops,flightStopBucket,matchingFlightCount,timeBucket,withAirlinePreview,withAirportPreview,withStopsPreview,withTimePreview} from "./flightFilters";
+import assert from "node:assert/strict";import test from "node:test";import type {FlightResult} from "../../api/travelApi";import {activeFlightFilterCount,emptyFlightFilters,filterAndSortFlights,flightFacetCounts,flightFilterDurationMinutes,flightFilterInsight,flightFilterOptions,flightMaximumLayoverMinutes,flightMaximumStops,flightStopBucket,hasPositiveFareFlexibility,matchingFlightCount,timeBucket,withAirlinePreview,withAirportPreview,withStopsPreview,withTimePreview} from "./flightFilters";
 const result=(id:string,legs:any[]=[],extra:any={})=>({id,provider:"p",airlineName:extra.airlineName??"Air",originAirport:"LOS",destinationAirport:"ABV",departureTime:"2026-01-01T06:00:00+01:00",arrivalTime:"2026-01-01T07:00:00+01:00",duration:"1h",durationMinutes:60,stops:0,layovers:[],price:extra.price??100,currency:extra.currency??"NGN",valueScore:1,...extra,legs}) as FlightResult;
 const leg=(direction:"outbound"|"return"|"leg",index:number,stops:number,departure="2026-01-01T06:00:00+01:00",arrival="2026-01-01T07:00:00+01:00",durationMinutes=60,layovers:any[]=[])=>({direction,legIndex:index,originAirport:index?"ABV":"LOS",destinationAirport:index?"LHR":"ABV",departureTime:departure,arrivalTime:arrival,duration:"1h",durationMinutes,stops,layovers,segments:[]});
 test("exact stop buckets use the worst authoritative itinerary leg",()=>{const flights=[0,1,2,3].map(n=>result(String(n),[leg("outbound",0,n)]));assert.equal(matchingFlightCount(flights,emptyFlightFilters()),4);assert.deepEqual(flights.map(flightStopBucket),["nonstop","one","twoPlus","twoPlus"]);assert.deepEqual(filterAndSortFlights(flights,{...emptyFlightFilters(),stops:["nonstop","one"]},"best").map(x=>x.id),["0","1"]);assert.deepEqual(filterAndSortFlights(flights,{...emptyFlightFilters(),stops:["one","twoPlus"]},"best").map(x=>x.id),["1","2","3"]);assert.equal(flightMaximumStops(result("rt",[leg("outbound",0,0),leg("return",1,2)])),2);assert.equal(flightStopBucket(result("rt",[leg("outbound",0,0),leg("return",1,2)])),"twoPlus");assert.equal(flightMaximumStops(result("mc",[leg("leg",0,1),leg("leg",1,3)])),3)});
@@ -31,3 +31,72 @@ test("multi-city airport options contain every journey endpoint but no segment c
 test("multi-city airport matching uses ANY within a facet and AND between facets",()=>{const legs=[leg("leg",0,0),leg("leg",1,0),leg("leg",2,0)];Object.assign(legs[0],{originAirport:"LOS",destinationAirport:"LHR"});Object.assign(legs[1],{originAirport:"LHR",destinationAirport:"JFK"});Object.assign(legs[2],{originAirport:"JFK",destinationAirport:"LAX"});const flight=result("mc",legs),all=emptyFlightFilters();assert.equal(matchingFlightCount([flight],{...all,fromAirports:["JFK"]}),1);assert.equal(matchingFlightCount([flight],{...all,toAirports:["LAX"]}),1);assert.equal(matchingFlightCount([flight],{...all,fromAirports:["ABV"]}),0);assert.equal(matchingFlightCount([flight],{...all,toAirports:["ABV"]}),0);assert.equal(matchingFlightCount([flight],{...all,fromAirports:["ABV","JFK"],toAirports:["LAX"]}),1);assert.equal(matchingFlightCount([flight],{...all,fromAirports:["JFK"],toAirports:["ABV"]}),0)});
 test("airport preview and facet counts use the same multi-city predicate",()=>{const legs=[leg("leg",0,0),leg("leg",1,0)];Object.assign(legs[0],{originAirport:"LOS",destinationAirport:"LHR"});Object.assign(legs[1],{originAirport:"LHR",destinationAirport:"JFK"});const flights=[result("mc",legs),result("ow")],filters=emptyFlightFilters();assert.equal(flightFilterInsight(flights,withAirportPreview(filters,"fromAirports","LHR")).count,1);assert.equal(flightFacetCounts(flights,filters).fromAirports.LHR,1)});
 test("one-way and round-trip airport facets retain top-level endpoint semantics",()=>{const roundTrip=result("rt",[leg("outbound",0,0),leg("return",1,0)]);assert.deepEqual(flightFilterOptions([roundTrip]).fromAirports,["LOS"]);assert.deepEqual(flightFilterOptions([roundTrip]).toAirports,["ABV"]);assert.equal(matchingFlightCount([roundTrip],{...emptyFlightFilters(),fromAirports:["ABV"]}),0);assert.equal(matchingFlightCount([result("ow")],{...emptyFlightFilters(),fromAirports:["LOS"],toAirports:["ABV"]}),1)});
+
+test("authoritative journey duration drives one-way, round-trip, and multi-city filtering and sorting", () => {
+  const oneWay = result("one-way", [leg("outbound", 0, 0, undefined, undefined, 120)], { durationMinutes: 10 });
+  const oneWaySlower = result("one-way-slower", [leg("outbound", 0, 0, undefined, undefined, 180)], { durationMinutes: 5 });
+  assert.equal(flightFilterDurationMinutes(oneWay), 120);
+  assert.deepEqual(filterAndSortFlights([oneWaySlower, oneWay], { ...emptyFlightFilters(), maximumDuration: 150 }, "duration").map(({ id }) => id), ["one-way"]);
+  assert.deepEqual(filterAndSortFlights([oneWaySlower, oneWay], emptyFlightFilters(), "duration").map(({ id }) => id), ["one-way", "one-way-slower"]);
+
+  const roundTripA = result("round-trip-a", [leg("outbound", 0, 0, undefined, undefined, 60), leg("return", 1, 0, undefined, undefined, 300)], { durationMinutes: 60 });
+  const roundTripB = result("round-trip-b", [leg("outbound", 0, 0, undefined, undefined, 180), leg("return", 1, 0, undefined, undefined, 180)], { durationMinutes: 180 });
+  assert.deepEqual([roundTripA, roundTripB].map(flightFilterDurationMinutes), [300, 180]);
+  assert.deepEqual(filterAndSortFlights([roundTripA, roundTripB], { ...emptyFlightFilters(), maximumDuration: 200 }, "duration").map(({ id }) => id), ["round-trip-b"]);
+  assert.deepEqual(filterAndSortFlights([roundTripA, roundTripB], emptyFlightFilters(), "duration").map(({ id }) => id), ["round-trip-b", "round-trip-a"]);
+
+  const multiCityAggregateShorter = result("multi-city-aggregate-shorter", [leg("leg", 0, 0, undefined, undefined, 60), leg("leg", 1, 0, undefined, undefined, 300), leg("leg", 2, 0, undefined, undefined, 60)], { durationMinutes: 420 });
+  const multiCityLongestShorter = result("multi-city-longest-shorter", [leg("leg", 0, 0, undefined, undefined, 180), leg("leg", 1, 0, undefined, undefined, 180), leg("leg", 2, 0, undefined, undefined, 180)], { durationMinutes: 540 });
+  assert.deepEqual([multiCityAggregateShorter, multiCityLongestShorter].map(flightFilterDurationMinutes), [300, 180]);
+  assert.deepEqual(filterAndSortFlights([multiCityAggregateShorter, multiCityLongestShorter], { ...emptyFlightFilters(), maximumDuration: 200 }, "duration").map(({ id }) => id), ["multi-city-longest-shorter"]);
+  assert.deepEqual(filterAndSortFlights([multiCityAggregateShorter, multiCityLongestShorter], emptyFlightFilters(), "duration").map(({ id }) => id), ["multi-city-longest-shorter", "multi-city-aggregate-shorter"]);
+});
+
+test("duration fallback, invalid safety, stable ties, and immutable sorting are preserved", () => {
+  const legacy = result("legacy", [], { durationMinutes: 75 });
+  const invalid = result("invalid", [], { durationMinutes: Number.NaN });
+  const negative = result("negative", [], { durationMinutes: -1 });
+  const tiedFirst = result("tied-first", [leg("outbound", 0, 0, undefined, undefined, 90)], { durationMinutes: 1 });
+  const tiedSecond = result("tied-second", [leg("outbound", 0, 0, undefined, undefined, 90)], { durationMinutes: 999 });
+  const input = [invalid, tiedFirst, tiedSecond, legacy, negative];
+  const before = input.slice();
+  assert.equal(flightFilterDurationMinutes(legacy), 75);
+  assert.equal(flightFilterDurationMinutes(invalid), null);
+  assert.equal(flightFilterDurationMinutes(negative), null);
+  assert.deepEqual(filterAndSortFlights(input, emptyFlightFilters(), "duration").map(({ id }) => id), ["legacy", "tied-first", "tied-second", "invalid", "negative"]);
+  assert.deepEqual(input, before);
+});
+
+test("Flexible / refundable uses only positive structured refund or change terms", () => {
+  const fare = (id: string, fareTerms?: FlightResult["fareTerms"], refundInfo = "") => result(id, [], { fareTerms, refundInfo });
+  const positive = (category: "refund" | "change") => ({ category, semantic: "positive" as const, text: "provider term" });
+  const negative = (category: "refund" | "change") => ({ category, semantic: "negative" as const, text: "provider term" });
+  const informational = (category: "refund" | "change") => ({ category, semantic: "informational" as const, text: "provider term" });
+  const fares = [
+    fare("refund-positive", [positive("refund"), negative("change")]),
+    fare("change-positive", [negative("refund"), positive("change")]),
+    fare("both-positive", [positive("refund"), positive("change")]),
+    fare("both-negative", [negative("refund"), negative("change")]),
+    fare("informational", [informational("refund"), informational("change")]),
+    fare("missing"),
+    fare("misleading-text", undefined, "Not refundable before departure"),
+  ];
+  assert.deepEqual(fares.map(hasPositiveFareFlexibility), [true, true, true, false, false, false, false]);
+  const filters = { ...emptyFlightFilters(), refundable: true };
+  const filtered = filterAndSortFlights(fares, filters, "best");
+  assert.deepEqual(filtered.map(({ id }) => id), ["refund-positive", "change-positive", "both-positive"]);
+  assert.equal(matchingFlightCount(fares, filters), filtered.length);
+  assert.equal(flightFilterInsight(fares, filters, (flight) => flight.price).count, filtered.length);
+});
+
+test("Flexible / refundable availability shares the matching predicate and baggage stays separate", () => {
+  const changeable = result("changeable", [], { fareTerms: [
+    { category: "refund", semantic: "negative", text: "Not refundable" },
+    { category: "change", semantic: "positive", text: "Changes allowed" },
+  ] });
+  const baggageOnly = result("bag", [], { fareTerms: [{ category: "baggage", semantic: "positive", text: "Bag included" }] });
+  assert.equal(flightFilterOptions([changeable]).refundable, true);
+  assert.equal(flightFilterOptions([changeable]).baggage, false);
+  assert.equal(flightFilterOptions([baggageOnly]).refundable, false);
+  assert.equal(flightFilterOptions([baggageOnly]).baggage, true);
+});

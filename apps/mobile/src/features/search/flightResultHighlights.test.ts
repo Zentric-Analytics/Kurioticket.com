@@ -38,3 +38,34 @@ test("classification composes with the currently displayed filtered subset", () 
   assert.equal(labels.get("visible-b"), "Cheapest");
   assert.equal(labels.has("hidden"), false);
 });
+
+const journey = (direction: "outbound" | "return" | "leg", legIndex: number, durationMinutes: number) => ({
+  direction, legIndex, durationMinutes, originAirport: "AAA", destinationAirport: "BBB",
+  departureTime: "2027-01-01T10:00:00Z", arrivalTime: "2027-01-01T12:00:00Z",
+  duration: `${durationMinutes}m`, stops: 0, layovers: [], segments: [],
+});
+const itinerary = (id: string, durationMinutes: number, legs: ReturnType<typeof journey>[], valueScore: number) =>
+  ({ id, price: 100, durationMinutes, legs, valueScore }) as unknown as FlightResult;
+
+test("Fastest highlight uses the same longest structured journey metric for one-way and round-trip", () => {
+  const oneWayAuthoritative = itinerary("one-way-authoritative", 10, [journey("outbound", 0, 120)], 1);
+  const oneWayTopLevel = itinerary("one-way-top-level", 20, [journey("outbound", 0, 180)], 100);
+  assert.equal(deriveFlightResultHighlights([oneWayTopLevel, oneWayAuthoritative], () => 100).get("one-way-authoritative"), "Fastest");
+
+  const a = itinerary("round-trip-a", 60, [journey("outbound", 0, 60), journey("return", 1, 300)], 100);
+  const b = itinerary("round-trip-b", 180, [journey("outbound", 0, 180), journey("return", 1, 180)], 1);
+  assert.equal(deriveFlightResultHighlights([a, b], () => 100).get("round-trip-b"), "Fastest");
+});
+
+test("Fastest highlight uses longest individual multi-city journey rather than aggregate top-level order", () => {
+  const aggregateShorter = itinerary("aggregate-shorter", 420, [journey("leg", 0, 60), journey("leg", 1, 300), journey("leg", 2, 60)], 100);
+  const longestShorter = itinerary("longest-shorter", 540, [journey("leg", 0, 180), journey("leg", 1, 180), journey("leg", 2, 180)], 1);
+  assert.equal(deriveFlightResultHighlights([aggregateShorter, longestShorter], () => 100).get("longest-shorter"), "Fastest");
+});
+
+test("Fastest highlight falls back to valid top-level duration and ignores invalid duration", () => {
+  const invalid = flight("invalid", 100, Number.NaN, 100);
+  const legacy = flight("legacy", 100, 75, 1);
+  assert.equal(deriveFlightResultHighlights([invalid, legacy], () => 100).get("legacy"), "Fastest");
+  assert.notEqual(deriveFlightResultHighlights([invalid], () => null).get("invalid"), "Fastest");
+});
