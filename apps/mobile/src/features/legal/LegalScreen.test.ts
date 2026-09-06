@@ -11,8 +11,8 @@ const model = source("src/features/profile/profileModel.ts");
 test("Profile legal destinations use the Preview system browser while retaining non-Preview native routes", () => {
   const tabs = source("app/(tabs)/_layout.tsx");
   const profileLayout = source("app/(tabs)/profile/_layout.tsx");
-  assert.match(model, /path: "\/terms"[\s\S]*?productionHref: "\/(?:\(tabs\))\/profile\/terms-of-service"/);
-  assert.match(model, /path: "\/privacy"[\s\S]*?productionHref: "\/(?:\(tabs\))\/profile\/privacy-policy"/);
+  assert.match(model, /path: "\/mobile\/legal\/terms-of-service"[\s\S]*?productionHref: "\/(?:\(tabs\))\/profile\/terms-of-service"/);
+  assert.match(model, /path: "\/mobile\/legal\/privacy-policy"[\s\S]*?productionHref: "\/(?:\(tabs\))\/profile\/privacy-policy"/);
   assert.doesNotMatch(model, /fallbackHref/);
   assert.match(profile, /navigateProfileDestination\(destination, getRuntimeEnvironment\(\)/);
   assert.doesNotMatch(profile, /^import .*expo-web-browser/m);

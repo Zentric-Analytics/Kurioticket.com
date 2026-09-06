@@ -24,8 +24,8 @@ test("authenticated and guest profiles each own one guest-accessible Preview bro
     assert.equal(profile.match(/title: "aboutLegal"/g)?.length, 1);
     assert.equal(profile.match(/label: "terms"/g)?.length, 1);
     assert.equal(profile.match(/label: "privacy"/g)?.length, 1);
-    assert.match(profile, /kind: "preview-browser"[\s\S]*?path: "\/terms"[\s\S]*?productionHref: "\/\(tabs\)\/profile\/terms-of-service"/);
-    assert.match(profile, /kind: "preview-browser"[\s\S]*?path: "\/privacy"[\s\S]*?productionHref: "\/\(tabs\)\/profile\/privacy-policy"/);
+    assert.match(profile, /kind: "preview-browser"[\s\S]*?path: "\/mobile\/legal\/terms-of-service"[\s\S]*?productionHref: "\/\(tabs\)\/profile\/terms-of-service"/);
+    assert.match(profile, /kind: "preview-browser"[\s\S]*?path: "\/mobile\/legal\/privacy-policy"[\s\S]*?productionHref: "\/\(tabs\)\/profile\/privacy-policy"/);
     assert.doesNotMatch(profile, /fallbackHref/);
   }
   const card = source("src/features/profile/ProfileCardSection.tsx");

@@ -19,12 +19,12 @@ test("native profile destinations keep using app navigation", async () => {
   assert.deepEqual(opened, []);
 });
 
-test("Preview legal destinations open the staging page in the system in-app browser", async () => {
+test("Preview legal destinations open the clean staging document in the system in-app browser", async () => {
   const pushed: string[] = [];
   const opened: string[] = [];
 
   await navigateProfileDestination(
-    { kind: "preview-browser", path: "/terms", productionHref: "/(tabs)/profile/terms-of-service" },
+    { kind: "preview-browser", path: "/mobile/legal/terms-of-service", productionHref: "/(tabs)/profile/terms-of-service" },
     { isPreview: true, apiBaseUrl: "https://staging.kurioticket.com/" },
     {
       push: (href) => pushed.push(href),
@@ -32,7 +32,7 @@ test("Preview legal destinations open the staging page in the system in-app brow
     },
   );
 
-  assert.deepEqual(opened, ["https://staging.kurioticket.com/terms"]);
+  assert.deepEqual(opened, ["https://staging.kurioticket.com/mobile/legal/terms-of-service"]);
   assert.deepEqual(pushed, []);
 });
 
@@ -41,7 +41,7 @@ test("Production keeps the existing native legal route and never opens a browser
   const opened: string[] = [];
 
   await navigateProfileDestination(
-    { kind: "preview-browser", path: "/privacy", productionHref: "/(tabs)/profile/privacy-policy" },
+    { kind: "preview-browser", path: "/mobile/legal/privacy-policy", productionHref: "/(tabs)/profile/privacy-policy" },
     { isPreview: false, apiBaseUrl: "https://www.kurioticket.com" },
     {
       push: (href) => pushed.push(href),
@@ -57,7 +57,7 @@ test("Preview legal browser failure does not redirect to the old native legal sc
   const pushed: string[] = [];
 
   await navigateProfileDestination(
-    { kind: "preview-browser", path: "/privacy", productionHref: "/(tabs)/profile/privacy-policy" },
+    { kind: "preview-browser", path: "/mobile/legal/privacy-policy", productionHref: "/(tabs)/profile/privacy-policy" },
     { isPreview: true, apiBaseUrl: "https://staging.kurioticket.com" },
     {
       push: (href) => pushed.push(href),
