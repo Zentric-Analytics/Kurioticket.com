@@ -1,8 +1,10 @@
 import type { FlowIconName } from "../flow/FlowIcon";
 import type { MobileTranslationKey } from "../../localization/mobileLocalizationCatalog";
 
+export type ProfileNativeHref = "/personal-information" | "/security" | "/price-alerts" | "/settings" | "/saved" | "/recent" | "/faq" | "/support" | "/email-preferences" | "/travel-preferences" | "/(tabs)/profile/terms-of-service" | "/(tabs)/profile/privacy-policy";
 export type ProfileDestination =
-  { kind: "native"; href: "/personal-information" | "/security" | "/price-alerts" | "/settings" | "/saved" | "/recent" | "/faq" | "/support" | "/email-preferences" | "/travel-preferences" | "/(tabs)/profile/terms-of-service" | "/(tabs)/profile/privacy-policy" };
+  | { kind: "native"; href: ProfileNativeHref }
+  | { kind: "preview-browser"; path: "/terms" | "/privacy"; fallbackHref: "/(tabs)/profile/terms-of-service" | "/(tabs)/profile/privacy-policy" };
 export type ProfileItem = { label: MobileTranslationKey; icon: FlowIconName; destination: ProfileDestination };
 export type ProfileSection = { title: MobileTranslationKey; items: ProfileItem[] };
 
@@ -32,7 +34,7 @@ export const authenticatedProfileSections: ProfileSection[] = [
     { label: "faq", icon: "help", destination: { kind: "native", href: "/faq" } },
   ] },
   { title: "aboutLegal", items: [
-    { label: "terms", icon: "document", destination: { kind: "native", href: "/(tabs)/profile/terms-of-service" } },
-    { label: "privacy", icon: "shield", destination: { kind: "native", href: "/(tabs)/profile/privacy-policy" } },
+    { label: "terms", icon: "document", destination: { kind: "preview-browser", path: "/terms", fallbackHref: "/(tabs)/profile/terms-of-service" } },
+    { label: "privacy", icon: "shield", destination: { kind: "preview-browser", path: "/privacy", fallbackHref: "/(tabs)/profile/privacy-policy" } },
   ] },
 ];
