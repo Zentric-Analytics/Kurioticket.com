@@ -42,11 +42,11 @@ test("flight card maps every approved semantic weight to its matching Inter face
   }
 });
 
-test("flight card renders labeled provider legs only for the active trip type", () => {
-  assert.match(card, /const roundTrip = one\(params\.tripType\) === "round-trip"/);
-  assert.match(card, /flightCardLegs\(result, roundTrip\)/);
-  assert.match(card, /<FlightJourneyRow label="OUTBOUND" leg=\{outbound\} locale=\{locale\} \/>/);
-  assert.match(card, /\{returnLeg \? <FlightJourneyRow label="RETURN" leg=\{returnLeg\} locale=\{locale\} \/> : null\}/);
+test("flight card renders every ordered journey descriptor", () => {
+  assert.match(card, /const journeys = flightCardJourneys\(result, tripType\)/);
+  assert.match(card, /journeys\.map\(\(journey, index\) => \(/);
+  assert.match(card, /<FlightJourneyRow key=\{`\$\{journey\.label\}-\$\{index\}`\} label=\{journey\.label\} leg=\{journey\.leg\}/);
+  assert.match(card, /journeys\.map\(\(journey\) => flightCardJourneyAccessibility\(journey, clock\)\)/);
 });
 
 test("main flight card uses a theme-aware bordered surface and restrained native depth", () => {

@@ -19,7 +19,7 @@ test("the whole flight card owns details navigation without a separate visual CT
   assert.match(flightCard, /<Pressable[\s\S]*?accessibilityRole="button"[\s\S]*?onPress=\{openDetails\}/);
   assert.match(flightCard, /pathname: "\/flight-details"/);
   assert.match(flightCard, /accessibilityLabel=\{cardAccessibilityLabel\}/);
-  assert.match(flightCard, /returnLeg \? `, \$\{accessibleLeg\("return", returnLeg\)\}` : ""/);
+  assert.match(flightCard, /journeys\.map\(\(journey\) => flightCardJourneyAccessibility\(journey, clock\)\)\.join\(", "\)/);
   assert.doesNotMatch(flightCard, /View deal\b|labels\.viewDeal\b|flightDealAction/);
   assert.doesNotMatch(flightCard, /<PlaneTakeoff[^>]*>[\s\S]*?View deal\b/);
   assert.doesNotMatch(flightCard, /labels\.viewFlight|viewFlightButton/);

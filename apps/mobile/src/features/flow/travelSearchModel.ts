@@ -40,7 +40,7 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
       if (adults < 1 || adults > 9 || children < 0 || infants < 0 || adults + children + infants > 9) return { error: "Choose valid traveler counts." };
       if (!["economy", "premium-economy", "business", "first"].includes(cabinClass)) return { error: "Choose a supported cabin class." };
       const payload = { tripType, legs, origin: legs[0].origin, destination: legs.at(-1)!.destination, departureDate: legs[0].departureDate, adults, children, infants, travelers: adults + children + infants, cabinClass, currency };
-      return { plan: { payload, key: JSON.stringify(["flight", tripType, legs, adults, children, infants, cabinClass]), summary: `${legCount} flights · ${legs[0].origin} → ${legs.at(-1)!.destination} · ${legs[0].departureDate}` } };
+      return { plan: { payload, key: JSON.stringify(["flight", tripType, legs, adults, children, infants, cabinClass, currency]), summary: `${legCount} flights · ${legs[0].origin} → ${legs.at(-1)!.destination} · ${legs[0].departureDate}` } };
     }
     if (!/^[A-Z]{3}$/.test(origin) || !/^[A-Z]{3}$/.test(destination) || origin === destination) return { error: "Choose different valid origin and destination airports." };
     if (!future(departureDate, now)) return { error: "Choose a valid future departure date." };

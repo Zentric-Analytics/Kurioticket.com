@@ -79,3 +79,9 @@ test("multi-city plans and results validate every authoritative leg",()=>{
  const action={source:"duffel",bookable:true,action:{kind:"internal-detail",href:"/flights/details/f",enabled:true}}; const legs=[{originAirport:"LAX",destinationAirport:"JFK",departureTime:"2026-08-10T10:00:00Z"},{originAirport:"JFK",destinationAirport:"LHR",departureTime:"2026-08-10T20:00:00Z"},{originAirport:"LHR",destinationAirport:"CDG",departureTime:"2026-08-14T10:00:00Z"}]; const result={id:"f",provider:"Duffel",airlineName:"Air",originAirport:"LAX",destinationAirport:"JFK",departureTime:legs[0].departureTime,arrivalTime:"2026-08-14T12:00:00Z",price:100,currency:"USD",searchPolicy:action,legs}; assert.equal(validFlight(result as never,plan),true); assert.equal(validFlight({...result,legs:legs.slice(0,2)} as never,plan),true); assert.equal(validFlight({...result,currency:"US"} as never,plan),false);
  assert.ok(buildSearchPlan("flight",{...params,legCount:"6"},now).error); assert.ok(buildSearchPlan("flight",{...params,destination2:"JFK"},now).error); assert.ok(buildSearchPlan("flight",{...params,departureDate2:"2026-08-09"},now).error);
 });
+
+test("multi-city search identity includes normalized requested currency", () => {
+ const params={tripType:"multi-city",legCount:"2",origin1:"LOS",destination1:"LHR",departureDate1:"2026-08-10",origin2:"LHR",destination2:"JFK",departureDate2:"2026-08-12",adults:"1",cabin:"Economy"};
+ const usd=buildSearchPlan("flight",{...params,currency:"usd"},now).plan!; const sameUsd=buildSearchPlan("flight",{...params,currency:"USD"},now).plan!; const ngn=buildSearchPlan("flight",{...params,currency:"NGN"},now).plan!;
+ assert.equal(usd.payload.currency,"USD"); assert.equal(ngn.payload.currency,"NGN"); assert.equal(usd.key,sameUsd.key); assert.notEqual(usd.key,ngn.key);
+});
