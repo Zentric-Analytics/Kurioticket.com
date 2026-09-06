@@ -1,4 +1,5 @@
 import type { FlightResult } from "../../api/travelApi";
+import { flightFilterDurationMinutes } from "./flightFilters";
 
 export type FlightResultHighlight = "Best" | "Cheapest" | "Fastest";
 
@@ -26,7 +27,7 @@ export function deriveFlightResultHighlights(
 
   const best = firstBy((result) => finite(result.valueScore), "max");
   const cheapest = firstBy(normalizePrice, "min");
-  const fastest = firstBy((result) => finite(result.durationMinutes), "min");
+  const fastest = firstBy(flightFilterDurationMinutes, "min");
 
   // Priority is authoritative value ranking, normalized fare, then duration.
   if (best) highlights.set(best.id, "Best");

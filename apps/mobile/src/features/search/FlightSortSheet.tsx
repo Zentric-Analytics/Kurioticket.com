@@ -10,7 +10,7 @@ import type { FlightSort } from "./flightFilters";
 const options: { value: FlightSort; label: string; description: string }[] = [
   { value: "best", label: "Best", description: "Best balance of price and journey time" },
   { value: "price", label: "Cheapest", description: "Lowest total price" },
-  { value: "duration", label: "Fastest", description: "Shortest total journey" },
+  { value: "duration", label: "Fastest", description: "Shortest journey time" },
 ];
 
 export function FlightSortSheet({
