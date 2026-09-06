@@ -24,7 +24,7 @@ test("Preview legal destinations open the staging page in the system in-app brow
   const opened: string[] = [];
 
   await navigateProfileDestination(
-    { kind: "preview-browser", path: "/terms", fallbackHref: "/(tabs)/profile/terms-of-service" },
+    { kind: "preview-browser", path: "/terms", productionHref: "/(tabs)/profile/terms-of-service" },
     { isPreview: true, apiBaseUrl: "https://staging.kurioticket.com/" },
     {
       push: (href) => pushed.push(href),
@@ -41,7 +41,7 @@ test("Production keeps the existing native legal route and never opens a browser
   const opened: string[] = [];
 
   await navigateProfileDestination(
-    { kind: "preview-browser", path: "/privacy", fallbackHref: "/(tabs)/profile/privacy-policy" },
+    { kind: "preview-browser", path: "/privacy", productionHref: "/(tabs)/profile/privacy-policy" },
     { isPreview: false, apiBaseUrl: "https://www.kurioticket.com" },
     {
       push: (href) => pushed.push(href),
@@ -53,11 +53,11 @@ test("Production keeps the existing native legal route and never opens a browser
   assert.deepEqual(opened, []);
 });
 
-test("Preview falls back to the existing native legal screen if the system browser cannot open", async () => {
+test("Preview legal browser failure does not redirect to the old native legal screen", async () => {
   const pushed: string[] = [];
 
   await navigateProfileDestination(
-    { kind: "preview-browser", path: "/privacy", fallbackHref: "/(tabs)/profile/privacy-policy" },
+    { kind: "preview-browser", path: "/privacy", productionHref: "/(tabs)/profile/privacy-policy" },
     { isPreview: true, apiBaseUrl: "https://staging.kurioticket.com" },
     {
       push: (href) => pushed.push(href),
@@ -65,5 +65,5 @@ test("Preview falls back to the existing native legal screen if the system brows
     },
   );
 
-  assert.deepEqual(pushed, ["/(tabs)/profile/privacy-policy"]);
+  assert.deepEqual(pushed, []);
 });
