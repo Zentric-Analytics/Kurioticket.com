@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { CarResult } from "../../api/travelApi";
-import { canBookCarOffer, sortedValidCarOffers, validHttpsBookingUrl } from "./carDetailState";
+import { canBookCarOffer, primaryValidCarOffer, sortedValidCarOffers, validHttpsBookingUrl } from "./carDetailState";
 
 type Offer = CarResult["offers"][number];
 const offer = (values: Partial<Offer> = {}): Offer => ({
@@ -32,4 +32,14 @@ test("offers select deterministically and invalid totals never become selectable
     offer({ id: "offer-a", totalPrice: 120 }), offer({ id: "offer-invalid", totalPrice: Number.NaN }),
   ]);
   assert.deepEqual(sorted.map((item) => item.id), ["offer-a", "offer-b", "offer-z"]);
+});
+
+
+test("primary offer mirrors web total, daily price, then id precedence", () => {
+  const selected = primaryValidCarOffer([
+    offer({ id: "z", totalPrice: 120, pricePerDay: 41 }),
+    offer({ id: "b", totalPrice: 120, pricePerDay: 40 }),
+    offer({ id: "a", totalPrice: 120, pricePerDay: 40 }),
+  ]);
+  assert.equal(selected?.id, "a");
 });
