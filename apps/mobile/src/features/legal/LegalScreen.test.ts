@@ -15,7 +15,10 @@ test("Profile legal destinations use the Preview system browser while retaining 
   assert.match(model, /path: "\/privacy"[\s\S]*?productionHref: "\/(?:\(tabs\))\/profile\/privacy-policy"/);
   assert.doesNotMatch(model, /fallbackHref/);
   assert.match(profile, /navigateProfileDestination\(destination, getRuntimeEnvironment\(\)/);
-  assert.match(profile, /openBrowser: \(url\) => WebBrowser\.openBrowserAsync\(url\)/);
+  assert.doesNotMatch(profile, /^import .*expo-web-browser/m);
+  assert.match(profile, /await import\("expo-web-browser"\)/);
+  assert.match(profile, /WebBrowser\.openBrowserAsync\(url\)/);
+  assert.match(profile, /openBrowser: openPreviewBrowser/);
   assert.match(tabs, /KurioticketTabBar/);
   assert.match(tabs, /<Tabs\.Screen name="profile"/);
   assert.doesNotMatch(tabs, /terms-of-service|privacy-policy/);
