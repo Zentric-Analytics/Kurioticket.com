@@ -18,3 +18,14 @@ test("a canonical zero-result response remains a genuine empty state", () => {
   assert.equal(empty.canonicalCount, 0);
   assert.equal(canonicalResultsWereSilentlyLost(empty), false);
 });
+
+test("partial rejection preserves accepted inventory and rejected diagnostics", () => {
+  const acceptance = acceptCanonicalResults(
+    [{ id: "safe-a" }, { id: "unsafe" }, { id: "safe-b" }],
+    (result) => result.id !== "unsafe",
+  );
+  assert.equal(acceptance.canonicalCount, 3);
+  assert.deepEqual(acceptance.accepted, [{ id: "safe-a" }, { id: "safe-b" }]);
+  assert.deepEqual(acceptance.rejectedIds, ["unsafe"]);
+  assert.equal(canonicalResultsWereSilentlyLost(acceptance), false);
+});
