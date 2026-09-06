@@ -5,6 +5,7 @@ import type { PublicHotelPropertyDetails } from "../../../../../src/lib/types";
 import {
   nativeHotelSecondaryLocation,
   nativeHotelStayFitFacts,
+  nativeHotelLocationEmbedUrl,
 } from "./nativeHotelLocationModel";
 
 const screen = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
@@ -37,6 +38,7 @@ function styleRule(source: string, name: string, nextName: string) {
 test("Location component is explicitly imported and rendered by Hotel Details", () => {
   assert.match(screen, /import \{ NativeHotelLocationSection \} from "\.\/NativeHotelLocationSection";/);
   assert.match(screen, /activeHotelTab === "location"[\s\S]*?<NativeHotelLocationSection/);
+  assert.match(screen, /hotelId=\{result\.id\}/);
 });
 
 test("Location uses one horizontal padding owner", () => {
@@ -63,16 +65,18 @@ test("stay-fit facts follow the web factual contract", () => {
 });
 
 test("Location owns exact parity and fallback copy without legacy presentation", () => {
-  for (const copy of ["Location &amp; stay fit", "Why this location works", "Accessibility and location details", "Location fit details are limited to the verified address and map.", "Confirm specific accessibility requirements with the property before travel.", "Open in Maps", "Map preview unavailable"]) assert.match(component, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  for (const copy of ["Location &amp; stay fit", "Why this location works", "Accessibility and location details", "Location fit details are limited to the verified address and map.", "Confirm specific accessibility requirements with the property before travel.", "Map preview unavailable", "Street View"]) assert.match(component, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   for (const legacy of ["✓ city break", "✓ business", "Suited to business stays", "Suited to family stays", "interestTags?.map"]) assert.doesNotMatch(component, new RegExp(legacy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 });
 
-test("Location uses trusted map builders without credentials or fake Street View", () => {
-  assert.match(component, /buildOpenStreetMapHotelMapEmbedUrl\(propertyDetails\)/);
-  assert.match(component, /buildHotelDirectionsUrl\(\{ hotelName, propertyDetails \}\)/);
-  for (const forbidden of ["EXPO_PUBLIC_GOOGLE", "GOOGLE_MAPS_API_KEY", "google.com/maps/search", "google.com/maps/dir", "Street View"]) assert.doesNotMatch(component, new RegExp(forbidden));
-  assert.match(component, /onError=\{\(\) => setMapFailed\(true\)\}/);
-  assert.match(component, /onHttpError=\{\(\) => setMapFailed\(true\)\}/);
+test("Location uses a credential-free first-party Map and Street View wrapper", () => {
+  assert.equal(nativeHotelLocationEmbedUrl("https://staging.example.test/base", "hotel id", "streetview"), "https://staging.example.test/api/mobile/v1/hotels/location-embed?id=hotel+id&view=streetview");
+  assert.match(component, /getApiBaseUrl\(Platform\.OS, __DEV__\)/);
+  assert.match(model, /NativeHotelLocationView = "map" \| "streetview"/);
+  assert.match(model, /\/api\/mobile\/v1\/hotels\/location-embed/);
+  for (const forbidden of ["EXPO_PUBLIC_GOOGLE", "NEXT_PUBLIC_GOOGLE", "google.com/maps/embed", "buildOpenStreetMapHotelMapEmbedUrl"]) assert.doesNotMatch(component + model, new RegExp(forbidden));
+  assert.match(component, /onError=\{\(\) => setFailedView\(view\)\}/);
+  assert.match(component, /onHttpError=\{\(\) => setFailedView\(view\)\}/);
 });
 
 test("Location visual contracts match mobile web", () => {
@@ -81,7 +85,7 @@ test("Location visual contracts match mobile web", () => {
   assert.match(component, /<MapPin accessible=\{false\} size=\{18\}/);
   for (const rule of [/fontSize: 13/, /lineHeight: 20/, /appFonts\.semibold/]) assert.match(styleRule(component, "primaryAddress", "secondaryAddress"), rule);
   for (const rule of [/fontSize: 12/, /lineHeight: 20/, /appFonts\.regular/]) assert.match(styleRule(component, "secondaryAddress", "mapCard"), rule);
-  for (const rule of [/marginTop: 16/, /borderRadius: 14/, /borderWidth: 1/]) assert.match(styleRule(component, "mapCard", "mapViewport"), rule);
+  for (const rule of [/marginTop: 16/, /borderRadius: 14/, /borderWidth: 1/]) assert.match(styleRule(component, "mapCard", "mapTabs"), rule);
   assert.match(styleRule(component, "mapViewport", "map"), /height: 200/);
   for (const rule of [/fontSize: 16/, /lineHeight: 24/, /appFonts\.bold/]) assert.match(styleRule(component, "subheading", "factList"), rule);
   for (const rule of [/borderRadius: 8/, /paddingHorizontal: 12/, /paddingVertical: 8/]) assert.match(styleRule(component, "factChip", "factText"), rule);

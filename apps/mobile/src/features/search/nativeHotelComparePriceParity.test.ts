@@ -27,6 +27,21 @@ function styleRule(source: string, name: string, nextName: string) {
   return source.slice(start, end);
 }
 
+test("Compare section mirrors web heading, stay context, and offer rhythm", () => {
+  assert.match(webCompare, /px-4 py-7/);
+  assert.match(webCompare, /text-xl font-extrabold tracking-tight text-slate-950/);
+  assert.match(webCompare, /mt-1 text-sm font-medium text-slate-600/);
+  assert.match(webCompare, /mt-5 space-y-3/);
+  assert.match(styleRule(detailSource, "hotelCompareSection", "hotelCompareHeading"), /paddingVertical: 8/);
+  assert.match(styleRule(detailSource, "hotelCompareHeading", "hotelCompareLead"), /fontSize: 20[^}]*lineHeight: 28[^}]*fontWeight: "800"[^}]*appFonts\.extraBold[^}]*letterSpacing: -0\.5/);
+  assert.match(styleRule(detailSource, "hotelCompareLead", "hotelCompareOffers"), /marginTop: 4[^}]*fontSize: 14[^}]*lineHeight: 20[^}]*fontWeight: "500"[^}]*appFonts\.medium/);
+  assert.match(styleRule(detailSource, "hotelCompareOffers", "hotelHeading"), /marginTop: 20[^}]*gap: 12/);
+  assert.match(hotel, /stay\.dateText \?\? "Stay dates unavailable"\} · \{stay\.occupancy\}/);
+  assert.doesNotMatch(hotel, /stay\.dates \?\? "Stay dates unavailable"\} · \{stay\.occupancy\}/);
+  assert.match(hotel, /theme\.dark \? theme\.textPrimary : "#020617"/);
+  assert.match(hotel, /theme\.dark \? theme\.textSecondary : "#475569"/);
+});
+
 test("native internal offer uses the accessible bundled Kurioticket wordmark", () => {
   assert.ok(existsSync("assets/kurioticket-logo-primary-light-bg.png"));
   assert.match(hotel, /internal \? \([\s\S]*?<Image[\s\S]*?accessible[\s\S]*?accessibilityLabel="Kurioticket"[\s\S]*?accessibilityIgnoresInvertColors[\s\S]*?require\("\.\.\/\.\.\/\.\.\/assets\/kurioticket-logo-primary-light-bg\.png"\)/);

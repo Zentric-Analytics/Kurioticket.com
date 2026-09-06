@@ -43,13 +43,19 @@ test("native Hotel identity matches web typography without changing its facts", 
 
   assert.match(name, /fontSize: 22[^}]*lineHeight: 28[^}]*fontWeight: "800"[^}]*fontFamily: appFonts\.extraBold[^}]*letterSpacing: -0\.55/);
   assert.doesNotMatch(name, /fontWeight: "900"/);
-  assert.match(detailSource, /hotelIdentity: \{[^}]*gap: 12/);
-  assert.match(detailSource, /hotelIdentityCopy: \{ flex: 1, minWidth: 0 \}/);
+  assert.match(detailSource, /hotelIdentity: \{[^}]*paddingHorizontal: 16[^}]*paddingBottom: 16/);
+  assert.match(detailSource, /hotelIdentityTopRow: \{[^}]*gap: 12/);
+  assert.match(name, /flex: 1[^}]*minWidth: 0/);
   assert.match(detailSource, /hotelIdentityMeta: \{ marginTop: 8, gap: 4 \}/);
   assert.match(fact, /fontSize: 12[^}]*lineHeight: 20[^}]*fontWeight: "600"[^}]*fontFamily: appFonts\.semibold/);
   assert.match(row, /minHeight: 20[^}]*alignItems: "flex-start"[^}]*gap: 6/);
-  assert.match(hotel, /<Icon accessible=\{false\} size=\{16\} color=\{theme\.icon\} \/>/);
-  assert.match(hotel, /<Award accessible=\{false\} size=\{16\} color=\{theme\.icon\} \/>/);
+  assert.match(hotel, /hotelIdentityTitleColor = theme\.dark \? theme\.textPrimary : "#020617"/);
+  assert.match(hotel, /hotelIdentityMetaColor = theme\.dark \? theme\.textSecondary : "#334155"/);
+  assert.match(hotel, /hotelIdentityIconColor = theme\.dark \? theme\.icon : "#334155"/);
+  assert.match(hotel, /hotelIdentityClassificationIconColor = theme\.dark \? theme\.icon : "#64748B"/);
+  assert.match(hotel, /hotelIdentityActionColor = theme\.dark \? theme\.icon : "#0F172A"/);
+  assert.match(hotel, /<Icon accessible=\{false\} size=\{16\} color=\{hotelIdentityIconColor\} \/>/);
+  assert.match(hotel, /<Award accessible=\{false\} size=\{16\} color=\{hotelIdentityClassificationIconColor\} \/>/);
   assert.match(classification, /color: "#F59E0B"[^}]*fontSize: 15[^}]*lineHeight: 20[^}]*letterSpacing: 1\.2[^}]*fontWeight: "400"[^}]*fontFamily: appFonts\.regular/);
   assert.match(hotel, /accessibilityLabel=\{`\$\{classification\} star hotel`\}/);
   assert.match(hotel, /\{"★"\.repeat\(classification\)\}/);
