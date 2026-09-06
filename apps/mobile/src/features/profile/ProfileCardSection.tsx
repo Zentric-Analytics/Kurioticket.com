@@ -7,25 +7,13 @@ import { useMobileLocalization } from "../../localization/MobileLocalizationProv
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import type { ProfileDestination, ProfileSection } from "./profileModel";
+import { navigateProfileDestination } from "./profileNavigation";
 
-export async function openProfileDestination(destination: ProfileDestination) {
-  if (destination.kind === "native") {
-    router.push(destination.href);
-    return;
-  }
-
-  const environment = getRuntimeEnvironment();
-  if (!environment.isPreview) {
-    router.push(destination.fallbackHref);
-    return;
-  }
-
-  const previewOrigin = environment.apiBaseUrl.replace(/\/$/, "");
-  try {
-    await WebBrowser.openBrowserAsync(`${previewOrigin}${destination.path}`);
-  } catch {
-    router.push(destination.fallbackHref);
-  }
+async function openProfileDestination(destination: ProfileDestination) {
+  await navigateProfileDestination(destination, getRuntimeEnvironment(), {
+    push: (href) => router.push(href),
+    openBrowser: (url) => WebBrowser.openBrowserAsync(url),
+  });
 }
 
 export function ProfileCardSection({ section }: { section: ProfileSection }) {
