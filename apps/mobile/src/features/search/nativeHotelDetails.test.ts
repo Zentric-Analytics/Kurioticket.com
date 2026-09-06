@@ -4,6 +4,12 @@ import test from "node:test";
 import { canonicalHotelAddress, hotelStaySummary, isSafeNativeHotelProviderUrl, meaningfulHotelCenterDistance, nativeHotelOffers, nativeHotelProviderUrl, reconcileNativeHotelOfferSelection } from "./nativeHotelDetailsModel";
 
 test("stay summary uses full dates and correct count grammar", () => {
+  assert.deepEqual(hotelStaySummary("2026-09-06", "2026-09-09", 1, 1), {
+    dateText: "Sep 6, 2026 – Sep 9, 2026",
+    nightText: "3 nights",
+    dates: "Sep 6, 2026 – Sep 9, 2026 · 3 nights",
+    occupancy: "1 guest, 1 room",
+  });
   assert.match(hotelStaySummary("2026-09-04", "2026-09-05", 1, 1).dates!, /2026.*1 night/);
   assert.equal(hotelStaySummary("2026-09-04", "2026-09-07", 2, 1).occupancy, "2 guests, 1 room");
   assert.equal(hotelStaySummary("2026-09-04", "2026-09-07", 1, 2).occupancy, "1 guest, 2 rooms");
