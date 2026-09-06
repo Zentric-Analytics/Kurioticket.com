@@ -18,14 +18,19 @@ test("customization owns only language, currency, and dark mode", () => {
   for (const duplicate of ["dashboard/security", "dashboard/preferences/email", "dashboard/preferences/travel"] as const) assert.doesNotMatch(settings, new RegExp(duplicate));
 });
 
-test("authenticated and guest profiles each own one guest-accessible legal section", () => {
+test("authenticated and guest profiles each own one guest-accessible Preview browser legal section with native fallbacks", () => {
   const model = source("src/features/profile/profileModel.ts"); const guest = source("src/features/profile/GuestProfileScreen.tsx");
   for (const profile of [model, guest]) {
     assert.equal(profile.match(/title: "aboutLegal"/g)?.length, 1);
     assert.equal(profile.match(/label: "terms"/g)?.length, 1);
     assert.equal(profile.match(/label: "privacy"/g)?.length, 1);
-    assert.match(profile, /href: "\/\(tabs\)\/profile\/terms-of-service"/); assert.match(profile, /href: "\/\(tabs\)\/profile\/privacy-policy"/);
+    assert.match(profile, /kind: "preview-browser"[\s\S]*?path: "\/terms"[\s\S]*?fallbackHref: "\/\(tabs\)\/profile\/terms-of-service"/);
+    assert.match(profile, /kind: "preview-browser"[\s\S]*?path: "\/privacy"[\s\S]*?fallbackHref: "\/\(tabs\)\/profile\/privacy-policy"/);
   }
+  const card = source("src/features/profile/ProfileCardSection.tsx");
+  assert.match(card, /from "expo-web-browser"/);
+  assert.match(card, /WebBrowser\.openBrowserAsync\(url\)/);
+  assert.match(card, /getRuntimeEnvironment\(\)/);
 });
 
 test("version is a configured non-interactive footer on both profile states", () => {
