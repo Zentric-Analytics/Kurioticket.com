@@ -47,14 +47,15 @@ test("quick controls stay visually neutral even when selected or expanded", () =
   assert.match(screen, /stopsCount=\{filters\.stops\?\.length \|\| Number\(filters\.maxStops != null\)\}/);
 });
 
-test("controls use compact capsules and the rail is shifted slightly right", () => {
+test("Flight rail starts left of result cards while retaining screen-edge breathing room", () => {
   assert.match(controls, /rail: \{ height: 44/);
   assert.match(controls, /touchTarget: \{[\s\S]*?minWidth: 44,[\s\S]*?minHeight: 44/);
   assert.match(controls, /capsule: \{[\s\S]*?height: 36/);
   assert.match(controls, /borderRadius: 9/);
   assert.match(controls, /paddingHorizontal: 10/);
   assert.match(controls, /label: \{[\s\S]*?fontSize: 13/);
-  assert.match(controls, /content: \{[\s\S]*?paddingLeft: 24,[\s\S]*?paddingRight: 16,[\s\S]*?gap: 6/);
+  assert.match(controls, /content: \{[\s\S]*?paddingLeft: 8,[\s\S]*?paddingRight: 16,[\s\S]*?gap: 6/);
+  assert.doesNotMatch(controls, /paddingLeft: (?:24|0)/);
   assert.doesNotMatch(controls, /paddingHorizontal: 20/);
 });
 

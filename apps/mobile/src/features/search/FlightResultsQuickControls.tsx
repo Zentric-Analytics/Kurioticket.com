@@ -128,7 +128,7 @@ export function FlightResultsQuickControls({
 const styles = StyleSheet.create({
   rail: { height: 44, flexGrow: 0 },
   content: {
-    paddingLeft: 24,
+    paddingLeft: 8,
     paddingRight: 16,
     gap: 6,
     alignItems: "center",

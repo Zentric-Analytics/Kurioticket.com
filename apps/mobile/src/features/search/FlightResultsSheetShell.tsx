@@ -22,8 +22,6 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
   const quickBackdropOpacity = useRef(new Animated.Value(0)).current;
   const quickSheetTranslateY = useRef(new Animated.Value(28)).current;
   const flightQuickBackdrop = quickBackdropVariant === "flight";
-  const quickBackdropIntensity = flightQuickBackdrop ? 4 : 12;
-  const quickBackdropTint = flightQuickBackdrop ? "default" : "dark";
 
   useEffect(() => {
     if (!visible || fullScreen) {
@@ -69,8 +67,7 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
     {fullScreen ? <SafeAreaProvider><SafeAreaView edges={["top", "bottom", "left", "right"]} style={[styles.fullBackdrop, { backgroundColor: theme.background }]} onAccessibilityEscape={onClose}>{sheet}</SafeAreaView></SafeAreaProvider> :
       <View style={styles.overlay} onAccessibilityEscape={onClose}>
         <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: quickBackdropOpacity }]}>
-          <BlurView intensity={quickBackdropIntensity} tint={quickBackdropTint} experimentalBlurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined} style={StyleSheet.absoluteFill}/>
-          {flightQuickBackdrop ? <View style={[StyleSheet.absoluteFill, styles.quickBackdropScrim]}/> : null}
+          {flightQuickBackdrop ? <View style={[StyleSheet.absoluteFill, styles.quickBackdropScrim]}/> : <BlurView intensity={12} tint="dark" experimentalBlurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined} style={StyleSheet.absoluteFill}/>}
         </Animated.View>
         <Pressable accessible={false} onPress={onClose} style={StyleSheet.absoluteFill}/>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.bottom} pointerEvents="box-none">
@@ -82,7 +79,7 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: "flex-end" },
-  quickBackdropScrim: { backgroundColor: "rgba(15, 23, 42, 0.18)" },
+  quickBackdropScrim: { backgroundColor: "rgba(15, 23, 42, 0.35)" },
   fullBackdrop: { flex: 1 }, bottom: { justifyContent: "flex-end" },
   sheet: { width: "100%", minHeight: 240, borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden", shadowColor: "#0F172A", shadowOpacity: .2, shadowRadius: 18, elevation: 16 },
   fullScreen: { flex: 1, minHeight: 0, borderRadius: 0 }, header: { minHeight: 76, flexShrink: 0, paddingLeft: 20, paddingRight: 10, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth },
