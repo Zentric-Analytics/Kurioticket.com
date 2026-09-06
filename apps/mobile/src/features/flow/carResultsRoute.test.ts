@@ -33,15 +33,19 @@ test("car card matches the mobile Web identity, four-spec and conversion hierarc
   assert.doesNotMatch(card, /supplierRating|supplierReviewCount|Unlimited mileage|Pay at pickup/);
 });
 
-test("car results reproduce the rendered mobile Web summary, controls and count hierarchy", () => {
+test("car results preserve controls, count, and pagination beneath the native header", () => {
   const screen = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
-  assert.match(screen, /accessibilityLabel="Edit car search"/);
+  assert.match(screen, /<CarResultsHeader/);
+  assert.match(screen, /accessibilityLabel=\{`Edit car search\./);
+  assert.doesNotMatch(screen, /\bTopBar\b/);
+  assert.doesNotMatch(screen, /\bBottomNav\b/);
   assert.match(screen, /<CarFilterSheet/);
   assert.match(screen, /carQuickFilterGroupIds/);
   assert.match(screen, /filterCarResults\(results,filters\)/);
   assert.match(screen, /sortCarResults\(/);
   assert.doesNotMatch(screen, /cycle\(|priceFilter|setCategory|setCompany|Rental company/);
   assert.match(screen, /\{filtered\.length\} results found/);
+  assert.doesNotMatch(screen, /style=\{r\.range\}|range:\{/);
   assert.match(screen, /const pageSize=20/);
   assert.match(screen, /const visible=filtered\.slice/);
   assert.match(screen, /Page \{page\} of \{totalPages\}/);
