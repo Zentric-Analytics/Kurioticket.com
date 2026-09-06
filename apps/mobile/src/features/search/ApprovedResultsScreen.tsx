@@ -88,6 +88,7 @@ import {
 } from "./flightFilters";
 import { FlightFilterSheet, type FlightFilterSectionName } from "./FlightFilterSheet";
 import { FlightResultsQuickControls } from "./FlightResultsQuickControls";
+import { flightQuickControlsPinStateChanged, shouldPinFlightQuickControls } from "./flightQuickControlsPinning";
 import { FlightSortSheet } from "./FlightSortSheet";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
 import {
@@ -229,6 +230,14 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const hotelResultsSummaryOffset = useRef(0);
   const hotelFilterHeaderHeight = useRef(0);
   const flightResultsListRef = useRef<SectionList<FlightResult>>(null);
+  const hasFlightDateStrip = payload.tripType === "one-way" || payload.tripType === "round-trip";
+  const flightFilterAnchor = useRef(0);
+  const flightScrollOffset = useRef(0);
+  const flightRailHorizontalOffset = useRef(0);
+  const inlineFlightRailRef = useRef<ScrollView>(null);
+  const pinnedFlightRailRef = useRef<ScrollView>(null);
+  const [flightRailPinned, setFlightRailPinned] = useState(Platform.OS === "android" && !hasFlightDateStrip);
+  const flightRailPinnedRef = useRef(flightRailPinned);
   const windowDimensions = useWindowDimensions();
   const previousHotelSearchKey = useRef<string | undefined>(undefined);
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
@@ -849,7 +858,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     router.setParams({ departureDate: nextDepartureDate, ...(returnDate ? { returnDate } : {}) });
   }, [flightDate, params, payload.returnDate, payload.tripType]);
   const flightDateStrip = (
-    payload.tripType === "one-way" || payload.tripType === "round-trip" ? <DateStrip
+    hasFlightDateStrip ? <DateStrip
             date={flightDate}
             priceByDate={flightDateStripPriceByDate}
             fareStateByDate={nearbyFareStateByDate}
@@ -860,15 +869,20 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             onSelect={selectNearbyDate}
           /> : null
   );
+  const flightRailProps = {
+      sort,
+      activeFilterCount,
+      airlineCount: filters.airlines.length,
+      airportCount: filters.fromAirports.length + filters.toAirports.length,
+      stopsCount: filters.stops?.length || Number(filters.maxStops != null),
+      openSheetKind: sortOpen ? "sort" as const : filterOpen ? filterSection : null,
+      openSheet: openFlightSheet,
+  };
   const filterRail = (product === "flight" ? (
     <FlightResultsQuickControls
-      sort={sort}
-      activeFilterCount={activeFilterCount}
-      airlineCount={filters.airlines.length}
-      airportCount={filters.fromAirports.length + filters.toAirports.length}
-      stopsCount={filters.stops?.length || Number(filters.maxStops != null)}
-      openSheetKind={sortOpen ? "sort" : filterOpen ? filterSection : null}
-      openSheet={openFlightSheet}
+      {...flightRailProps}
+      scrollViewRef={inlineFlightRailRef}
+      onHorizontalScroll={({ nativeEvent }) => { flightRailHorizontalOffset.current = nativeEvent.contentOffset.x; }}
     />
   ) : (
     <ScrollView horizontal style={[s0.hotelFilterRail, { backgroundColor: theme.dark ? theme.surface : "#FFFFFF" }]} showsHorizontalScrollIndicator={false} alwaysBounceHorizontal={false} contentContainerStyle={s0.hotelFilterContent}>
@@ -957,15 +971,23 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           style={[s0.resultsScroll, { backgroundColor: flightCanvasColor }]}
           sections={[{ data: !flightState ? sorted as FlightResult[] : [] }]}
           keyExtractor={(item) => item.id}
-          ListHeaderComponent={flightDateStrip}
+          ListHeaderComponent={hasFlightDateStrip ? (
+            <View onLayout={({ nativeEvent }) => { flightFilterAnchor.current = nativeEvent.layout.height; }}>
+              {flightDateStrip}
+            </View>
+          ) : null}
           renderSectionHeader={() => (
             <View
               style={[s0.flightFilterSectionHeader, { backgroundColor: flightCanvasColor }]}
             >
-              {filterRail}
+              <View
+                pointerEvents={flightRailPinned ? "none" : "auto"}
+                accessibilityElementsHidden={flightRailPinned}
+                importantForAccessibility={flightRailPinned ? "no-hide-descendants" : "auto"}
+              >{filterRail}</View>
             </View>
           )}
-          stickySectionHeadersEnabled
+          stickySectionHeadersEnabled={Platform.OS !== "android"}
           renderItem={({ item, index }) => (
             <>
               {index === 0 ? <><View style={s0.flightResultsIntro}>{status === "ready" && plan.plan ? <View style={s0.flightAlertOuter}><PriceAlert product="flight" plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} compact /></View> : null}</View><FlightResultsSummaryRow count={sorted.length} /></> : null}
@@ -998,6 +1020,17 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           bounces={false}
           overScrollMode="never"
           scrollEventThrottle={16}
+          onScroll={({ nativeEvent }) => {
+            if (Platform.OS !== "android") return;
+            flightScrollOffset.current = nativeEvent.contentOffset.y;
+            const next = shouldPinFlightQuickControls(flightScrollOffset.current, flightFilterAnchor.current);
+            if (!flightQuickControlsPinStateChanged(flightRailPinnedRef.current, next)) return;
+            flightRailPinnedRef.current = next;
+            setFlightRailPinned(next);
+            requestAnimationFrame(() => (next ? pinnedFlightRailRef : inlineFlightRailRef).current?.scrollTo({
+              x: flightRailHorizontalOffset.current, animated: false,
+            }));
+          }}
           contentContainerStyle={[
             s0.flightResultsContent,
             { paddingBottom: Math.max(insets.bottom + 16, 16) },
@@ -1007,6 +1040,16 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           updateCellsBatchingPeriod={50}
           windowSize={7}
         />
+
+        {Platform.OS === "android" && flightRailPinned ? (
+          <View style={[s0.flightPinnedFilterRail, { backgroundColor: flightCanvasColor }]}>
+            <FlightResultsQuickControls
+              {...flightRailProps}
+              scrollViewRef={pinnedFlightRailRef}
+              onHorizontalScroll={({ nativeEvent }) => { flightRailHorizontalOffset.current = nativeEvent.contentOffset.x; }}
+            />
+          </View>
+        ) : null}
 
         </View>
       ) : (
@@ -1809,6 +1852,7 @@ const s0 = StyleSheet.create({
   flightFilterSectionHeader: { paddingTop: 8 },
   resultsScroll: { flex: 1 },
   flightResultsListContainer: { flex: 1 },
+  flightPinnedFilterRail: { position: "absolute", top: 0, left: 0, right: 0, zIndex: 1 },
   flightResultsContent: { flexGrow: 1 },
   route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
