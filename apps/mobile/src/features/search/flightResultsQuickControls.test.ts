@@ -9,15 +9,15 @@ test("Flight Results rail keeps the required control order and horizontal behavi
   assert.match(controls, /<ScrollView[\s\S]*?horizontal/);
   assert.match(controls, /showsHorizontalScrollIndicator=\{false\}/);
   assert.match(controls, /flexWrap: "nowrap"/);
-  const order = ['label="Filter"', "sortLabels[safeSort]", 'label="Airlines"', 'label="Stops"', 'label="Airports"'].map((value) => controls.indexOf(value));
+  const order = ['label={copy.filters}', "sortLabels[safeSort]", 'label={copy.airlines}', 'label={copy.stops}', 'label={copy.airports}'].map((value) => controls.indexOf(value));
   assert.ok(order.every((value) => value >= 0));
   assert.deepEqual([...order].sort((a, b) => a - b), order);
 });
 
 test("sort labels are Best, Cheapest, and Fastest", () => {
-  assert.match(controls, /best: "Best"/);
-  assert.match(controls, /price: "Cheapest"/);
-  assert.match(controls, /duration: "Fastest"/);
+  assert.match(controls, /best: copy\.best/);
+  assert.match(controls, /price: copy\.cheapest/);
+  assert.match(controls, /duration: copy\.fastest/);
   assert.match(controls, /safeSort = sort === "price" \|\| sort === "duration" \? sort : "best"/);
 });
 
@@ -61,10 +61,9 @@ test("Flight rail starts left of result cards while retaining screen-edge breath
 
 test("full Filter launcher shows its label with the filter icon and keeps its accessible contract", () => {
   assert.match(controls, /<SlidersHorizontal accessible=\{false\}/);
-  assert.match(controls, /accessibilityLabelOverride=\{fullFilterAccessibilityLabel\}/);
-  assert.match(controls, /const fullFilterAccessibilityLabel = "Filters"/);
+  assert.match(controls, /accessibilityLabelOverride=\{copy\.filters\}/);
   assert.match(controls, /filterIcon \? <SlidersHorizontal[\s\S]*?<Text numberOfLines=\{1\}[\s\S]*?>\{label\}<\/Text>/);
-  assert.match(controls, /label="Filter"/);
+  assert.match(controls, /label=\{copy\.filters\}/);
   assert.match(controls, /!filterIcon \? <ChevronDown/);
   assert.match(controls, /onPress=\{\(\) => openSheet\("all"\)\}/);
 });
