@@ -144,7 +144,7 @@ import {
 import { buildHotelPriceAlertPayload, hotelAlertPresentation, matchingHotelPriceAlert } from "../flow/hotelPriceAlertModel";
 import type { SearchPlan } from "../flow/travelSearchModel";
 import { FlightResultsState } from "./FlightResultsState";
-import { resolveFlightResultsState } from "./flightResultsStateModel";
+import { flightResultsOwnedBy, resolveFlightResultsState, resolveFlightSearchFailure } from "./flightResultsStateModel";
 import { signInHref } from "../auth/signInIntent";
 import { flightInventoryCounts } from "./flightInventoryDiagnostics";
 import { HotelFilterSheet, type HotelFilterSectionName } from "./HotelFilterSheet";
@@ -199,8 +199,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const activeSearch = useRef<AbortController | null>(null);
   const requestInFlight = useRef(false);
   const activeExecutionKey = useRef<string | undefined>(undefined);
+  const currentFlightSearchKey = useRef<string | undefined>(plan.plan?.key);
+  currentFlightSearchKey.current = plan.plan?.key;
   const searchAbortTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const resultsRef = useRef<(FlightResult | HotelResult)[]>([]);
+  const flightResultsOwnerKey = useRef<string | undefined>(undefined);
+  const [flightResultsOwner, setFlightResultsOwner] = useState<string | undefined>(undefined);
   const [sort, setSort] = useState<FlightSort>("price");
   const [sortOpen, setSortOpen] = useState(false);
   const [filters, setFilters] = useState<FlightFilters>(emptyFlightFilters);
@@ -305,12 +309,23 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     const clientStartedAt = performance.now();
     let deadlineExpired = false;
     const isLatest = () => sequence === searchSequence.current;
-    const isCurrent = () => !controller.signal.aborted && isLatest();
+    const requestedSearchKey = plan.plan?.key;
+    const isCurrent = () => !controller.signal.aborted
+      && isLatest()
+      && (product !== "flight" || currentFlightSearchKey.current === requestedSearchKey);
     if (!plan.plan) {
       requestInFlight.current = false;
       setStatus("error");
       setMessage(plan.error || "Invalid search");
       return;
+    }
+    const searchKey = plan.plan.key;
+    if (product === "flight" && flightResultsOwnerKey.current !== searchKey) {
+      setResults([]);
+      resultsRef.current = [];
+      flightResultsOwnerKey.current = undefined;
+      setFlightResultsOwner(undefined);
+      setServerFlightResultCount(0);
     }
     if (product === "flight") {
       logFlightSearchCheckpoint("flight-search:start", {
@@ -327,6 +342,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     if (visualTest) {
       setResults(product === "flight" ? visualFlights : visualHotels);
       resultsRef.current = product === "flight" ? visualFlights : visualHotels;
+      if (product === "flight") {
+        flightResultsOwnerKey.current = searchKey;
+        setFlightResultsOwner(searchKey);
+      }
       setStatus("ready");
       requestInFlight.current = false;
       return;
@@ -370,6 +389,14 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         setServerFlightResultCount(flightAcceptance!.canonicalCount);
         logFlightSearchCheckpoint("flight-search:validated", { requestId, serverResultCount: flightAcceptance!.canonicalCount, acceptedResultCount: valid.length, rejectedResultIds: flightAcceptance!.rejectedIds, elapsedMs: performance.now() - clientStartedAt, platform: Platform.OS });
         logFlightSearchCheckpoint("flight-search:derived-ready", { requestId, resultCount: valid.length, elapsedMs: performance.now() - clientStartedAt, platform: Platform.OS });
+        if (flightAcceptance!.rejectedIds.length) {
+          console.warn("[travel-search] canonical flight results failed client safety checks", {
+            requestId,
+            canonicalCount: flightAcceptance!.canonicalCount,
+            acceptedCount: flightAcceptance!.accepted.length,
+            rejectedIds: flightAcceptance!.rejectedIds,
+          });
+        }
       }
       if (hotelAcceptance?.rejectedIds.length) {
         console.warn("[travel-search] canonical hotel results failed client safety checks", {
@@ -386,8 +413,21 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         setMessage("The canonical search returned inventory that this app could not render safely.");
         return;
       }
+      if (flightAcceptance && canonicalResultsWereSilentlyLost(flightAcceptance)) {
+        setResults([]);
+        resultsRef.current = [];
+        flightResultsOwnerKey.current = undefined;
+        setFlightResultsOwner(undefined);
+        setStatus("error");
+        setMessage("The canonical search returned inventory that this app could not render safely.");
+        return;
+      }
       setResults(valid);
       resultsRef.current = valid;
+      if (product === "flight") {
+        flightResultsOwnerKey.current = searchKey;
+        setFlightResultsOwner(searchKey);
+      }
       setStatus(valid.length ? "ready" : "empty");
       setMessage(response.warnings?.[0] || "");
       void recordRecentSearchBestEffort(buildRecentSearch(product, plan.plan.payload));
@@ -401,7 +441,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         });
       }
     } catch (e) {
-      if (!isLatest()) return;
+      if (!isLatest() || (product === "flight" && currentFlightSearchKey.current !== requestedSearchKey)) return;
       if (!deadlineExpired && (controller.signal.aborted || (e instanceof TravelApiError && e.code === "cancelled"))) return;
       const failureMessage =
         deadlineExpired ||
@@ -409,7 +449,22 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         (e instanceof Error && e.message === "flight_loading_deadline")
           ? "Flight search took too long. Please try again."
           : e instanceof Error ? e.message : "Search failed";
-      setStatus(resultsRef.current.length ? "ready" : "error");
+      if (product === "flight") {
+        const failure = resolveFlightSearchFailure({
+          searchKey: flightResultsOwnerKey.current,
+          results: resultsRef.current,
+        }, searchKey);
+        if (!failure.results.length) {
+          setResults([]);
+          resultsRef.current = [];
+          flightResultsOwnerKey.current = undefined;
+          setFlightResultsOwner(undefined);
+          setServerFlightResultCount(0);
+        }
+        setStatus(failure.status);
+      } else {
+        setStatus(resultsRef.current.length ? "ready" : "error");
+      }
       setMessage(failureMessage);
     } finally {
       if (isLatest()) requestInFlight.current = false;
@@ -499,9 +554,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const normalizeFlightPrice = useCallback((result: FlightResult) => currencyState
     ? convertAmount(result.price, result.currency, currencyState.resolution.resolvedCurrency, currencyState.rates)
     : result.price, [currencyState]);
+  const ownedFlightResults = useMemo(() => product === "flight" && plan.plan?.key
+    ? flightResultsOwnedBy({ searchKey: flightResultsOwner, results: results as FlightResult[] }, plan.plan.key)
+    : [], [flightResultsOwner, plan.plan?.key, product, results]);
   const flightPriceContext = useMemo(() => product === "flight" && currencyState
-    ? resolveFlightPriceComparisonContext(results as FlightResult[], currencyState.resolution.resolvedCurrency, normalizeFlightPrice)
-    : null, [currencyState, normalizeFlightPrice, product, results]);
+    ? resolveFlightPriceComparisonContext(ownedFlightResults, currencyState.resolution.resolvedCurrency, normalizeFlightPrice)
+    : null, [currencyState, normalizeFlightPrice, ownedFlightResults, product]);
   const hotelOptions = useMemo(() => buildHotelFilterOptions(
     product === "hotel" ? results as HotelResult[] : [],
     String(plan.plan?.payload.destination || ""),
@@ -510,7 +568,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const sorted = useMemo(() => {
     if (product === "flight") {
       return filterAndSortFlights(
-        results as FlightResult[],
+        ownedFlightResults,
         filters,
         sort,
         flightPriceContext?.valueForResult,
@@ -522,11 +580,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       defaultHotelSort,
       currencyState?.rates,
     );
-  }, [results, filters, hotelFilters, hotelOptions, sort, product, flightPriceContext, normalizeFlightPrice, currencyState?.rates]);
+  }, [results, ownedFlightResults, filters, hotelFilters, hotelOptions, sort, product, flightPriceContext, normalizeFlightPrice, currencyState?.rates]);
   const flightHighlights = useMemo(() => product === "flight"
     ? deriveFlightResultHighlights(sorted as FlightResult[], normalizeFlightPrice)
     : new Map<string, FlightResultHighlight>(), [normalizeFlightPrice, product, sorted]);
-  const flightOptions = useMemo(() => flightFilterOptions(results as FlightResult[], flightPriceContext), [flightPriceContext, results]);
+  const flightOptions = useMemo(() => flightFilterOptions(ownedFlightResults, flightPriceContext), [flightPriceContext, ownedFlightResults]);
   const flightSummary = useMemo(() => flightResultsSummary(payload, locale), [locale, plan.plan?.key]);
   useEffect(() => {
     const nextCurrency = currencyState ? flightPriceContext?.identity ?? "unavailable" : null;
@@ -555,7 +613,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   useEffect(() => { if (product === "hotel" && hotelPage !== clampedHotelPage) setHotelPage(clampedHotelPage); }, [clampedHotelPage, hotelPage, product]);
   const flightState = product === "flight" ? resolveFlightResultsState({
     status,
-    rawResultCount: results.length,
+    rawResultCount: ownedFlightResults.length,
     displayedResultCount: sorted.length,
   }) : null;
   const terminalFlightState = flightState === "loading" ? null : flightState;

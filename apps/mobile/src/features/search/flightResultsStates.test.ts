@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { resolveFlightResultsState } from "./flightResultsStateModel";
+import { flightResultsOwnedBy, resolveFlightResultsState, resolveFlightSearchFailure } from "./flightResultsStateModel";
 
 const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
 const stateUi = readFileSync("src/features/search/FlightResultsState.tsx", "utf8");
@@ -58,9 +58,38 @@ test("no-results and error recovery use edit and the guarded existing retry flow
   assert.match(screen, /setStatus\("loading"\)/);
 });
 
-test("dedicated states avoid zero-count duplication and refresh errors retain usable results", () => {
+test("replacement failure cannot restore inventory owned by the previous search", () => {
+  const snapshot = { searchKey: "LOS-LHR", results: [{ id: "flight-a" }] };
+  assert.deepEqual(flightResultsOwnedBy(snapshot, "LOS-JFK"), []);
+  assert.deepEqual(resolveFlightSearchFailure(snapshot, "LOS-JFK"), { status: "error", results: [] });
+});
+
+test("same-search refresh failure retains usable inventory", () => {
+  const results = [{ id: "flight-a" }];
+  assert.deepEqual(resolveFlightSearchFailure({ searchKey: "LOS-LHR", results }, "LOS-LHR"), {
+    status: "ready",
+    results,
+  });
+});
+
+test("a superseded search cannot pass both sequence and canonical identity guards", () => {
+  assert.match(screen, /sequence === searchSequence\.current/);
+  assert.match(screen, /currentFlightSearchKey\.current === requestedSearchKey/);
+  assert.match(screen, /if \(!isCurrent\(\)\) return/);
+});
+
+test("all-rejected canonical flight inventory becomes a recoverable error, not no-results", () => {
+  const flightBranch = screen.slice(screen.indexOf("if (flightAcceptance && canonicalResultsWereSilentlyLost"), screen.indexOf("setResults(valid)", screen.indexOf("if (flightAcceptance && canonicalResultsWereSilentlyLost")));
+  assert.match(flightBranch, /setResults\(\[\]\)/);
+  assert.match(flightBranch, /setStatus\("error"\)/);
+  assert.match(flightBranch, /could not render safely/);
+  assert.doesNotMatch(flightBranch, /setStatus\("empty"\)/);
+});
+
+test("dedicated states avoid zero-count duplication and ownership guards card navigation", () => {
   assert.match(screen, /status === "ready" && plan\.plan/);
-  assert.match(screen, /setStatus\(resultsRef\.current\.length \? "ready" : "error"\)/);
+  assert.match(screen, /resolveFlightSearchFailure/);
+  assert.match(screen, /flightResultsOwnedBy/);
   assert.match(screen, /sections=\{\[\{ data: !flightState \? sorted as FlightResult\[\] : \[\] \}\]\}/);
   assert.doesNotMatch(screen, /!flightState && sorted\.map/);
 });
