@@ -36,8 +36,8 @@ test("filtered empty clears only filters while preserving sort and canonical sea
   assert.match(clearFiltersBlock, /setFilters\(emptyFlightFilters\(\)\)/);
   assert.doesNotMatch(clearFiltersBlock, /setSort|router\.|setRetry|setStatus/);
   assert.match(screen, /params=\{flightEditSearchParams\(params\)\}/);
-  assert.match(stateUi, /No flights match your filters/);
-  assert.match(stateUi, /filtered \? "Clear flight filters"/);
+  assert.match(stateUi, /copy\.noFilterTitle/);
+  assert.match(stateUi, /filtered \? copy\.clearFilters/);
 });
 
 test("a new canonical flight search clears stale local sort, filters, and open sheets", () => {
@@ -49,9 +49,9 @@ test("a new canonical flight search clears stale local sort, filters, and open s
 });
 
 test("no-results and error recovery use edit and the guarded existing retry flow", () => {
-  assert.match(stateUi, /No flights found/);
-  assert.match(stateUi, /Couldn't load flights/);
-  assert.match(stateUi, /Retry loading flights/);
+  assert.match(stateUi, /copy\.noResultsTitle/);
+  assert.match(stateUi, /copy\.loadErrorTitle/);
+  assert.match(stateUi, /copy\.tryAgain/);
   assert.match(screen, /if \(requestInFlight\.current\) return/);
   assert.match(screen, /setRetry\(\(x\) => x \+ 1\)/);
   assert.match(screen, /searchFlights\(plan\.plan\.payload/);
