@@ -56,14 +56,33 @@ export function normalizePasskeyRegistration(credential: NativeCreationResponse)
   };
 }
 
+function androidPlatformRegistrationOptions(options: PasskeyRegistrationOptions): PasskeyRegistrationOptions {
+  if (Platform.OS !== "android") return options;
+  const currentSelection = options.authenticatorSelection;
+  const authenticatorSelection = currentSelection && typeof currentSelection === "object" && !Array.isArray(currentSelection)
+    ? currentSelection as Record<string, unknown>
+    : {};
+  return {
+    ...options,
+    authenticatorSelection: {
+      ...authenticatorSelection,
+      // Android passkeys should be created with the platform credential provider.
+      // This avoids offering roaming USB/hybrid authenticators for this explicit
+      // in-app passkey setup flow and keeps Google Password Manager eligible.
+      authenticatorAttachment: "platform",
+    },
+  };
+}
+
 export async function createNativePasskey(
   options: PasskeyRegistrationOptions,
   signal?: AbortSignal,
 ): Promise<NormalizedPasskeyRegistration | null> {
   const module = await loadPasskeyModule();
   if (!module.isSupported()) return null;
+  const requestOptions = androidPlatformRegistrationOptions(options);
   const credential = await module.create({
-    ...(options as Parameters<PasskeyModule["create"]>[0]),
+    ...(requestOptions as Parameters<PasskeyModule["create"]>[0]),
     signal,
   });
   return credential ? normalizePasskeyRegistration(credential) : null;
