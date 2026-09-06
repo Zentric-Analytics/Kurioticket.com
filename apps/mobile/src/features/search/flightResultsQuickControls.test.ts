@@ -41,10 +41,10 @@ test("quick controls stay visually neutral even when selected or expanded", () =
   assert.doesNotMatch(controls, /borderColor: active \?/);
   assert.doesNotMatch(controls, /webFilterAccent/);
   assert.match(controls, /const webFilterCountBackground = "#F1F5F9"/);
-  assert.match(screen, /activeFilterCount=\{activeFilterCount\}/);
-  assert.match(screen, /airlineCount=\{filters\.airlines\.length\}/);
-  assert.match(screen, /airportCount=\{filters\.fromAirports\.length \+ filters\.toAirports\.length\}/);
-  assert.match(screen, /stopsCount=\{filters\.stops\?\.length \|\| Number\(filters\.maxStops != null\)\}/);
+  assert.match(screen, /activeFilterCount,/);
+  assert.match(screen, /airlineCount: filters\.airlines\.length/);
+  assert.match(screen, /airportCount: filters\.fromAirports\.length \+ filters\.toAirports\.length/);
+  assert.match(screen, /stopsCount: filters\.stops\?\.length \|\| Number\(filters\.maxStops != null\)/);
 });
 
 test("Flight rail starts left of result cards while retaining screen-edge breathing room", () => {
@@ -69,8 +69,17 @@ test("full Filter launcher shows its label with the filter icon and keeps its ac
 });
 
 test("sticky placement remains below the naturally scrolling date strip", () => {
-  assert.match(screen, /ListHeaderComponent=\{flightDateStrip\}/);
+  assert.match(screen, /ListHeaderComponent=\{hasFlightDateStrip \?/);
   assert.match(screen, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
   assert.match(screen, /renderSectionHeader=\{\(\) => \([\s\S]*?\{filterRail\}/);
-  assert.match(screen, /stickySectionHeadersEnabled/);
+  assert.match(screen, /stickySectionHeadersEnabled=\{Platform\.OS !== "android"\}/);
+});
+
+test("Android uses one accessible app-owned pinned copy with shared actions and horizontal position", () => {
+  assert.match(screen, /flightPinnedFilterRail[\s\S]*<FlightResultsQuickControls[\s\S]*\.\.\.flightRailProps/);
+  assert.match(screen, /pointerEvents=\{flightRailPinned \? "none" : "auto"\}/);
+  assert.match(screen, /importantForAccessibility=\{flightRailPinned \? "no-hide-descendants" : "auto"\}/);
+  assert.match(screen, /flightRailHorizontalOffset[\s\S]*scrollTo/);
+  assert.match(screen, /position: "absolute", top: 0, left: 0, right: 0/);
+  assert.doesNotMatch(screen, /flightPinnedFilterRail:[^\n]*transform/);
 });

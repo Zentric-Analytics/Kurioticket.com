@@ -41,10 +41,10 @@ test("flight results naturally scroll the date strip while keeping native sticky
   const owner = source.slice(listStart, source.indexOf("/>", source.indexOf("windowSize", listStart)) + 2);
   for (const prop of stableProps) assert.match(owner, prop);
   assert.match(source, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
-  assert.match(owner, /ListHeaderComponent=\{flightDateStrip\}/);
-  assert.match(owner, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
+  assert.match(owner, /ListHeaderComponent=\{hasFlightDateStrip \?/);
+  assert.match(owner, /stickySectionHeadersEnabled=\{Platform\.OS !== "android"\}/);
   assert.doesNotMatch(owner, /flightPagination|onMomentumScrollEnd|onScrollEndDrag/);
-  assert.doesNotMatch(owner, /set[A-Z][A-Za-z]*\(/);
+  assert.match(owner, /flightQuickControlsPinStateChanged[\s\S]*?return;[\s\S]*?setFlightRailPinned/);
   assert.doesNotMatch(source, /dateHeaderCollapsed|flightDateStripOpacity|flightDateStripHeaderHeight|flightDateStripScrollY/);
   assert.match(source, /const filterRail = \([\s\S]*?<ScrollView\s+horizontal/);
 });

@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
 import { ChevronDown, SlidersHorizontal } from "lucide-react-native";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
@@ -64,6 +64,8 @@ export function FlightResultsQuickControls({
   stopsCount,
   openSheetKind,
   openSheet,
+  scrollViewRef,
+  onHorizontalScroll,
 }: {
   sort: FlightSort;
   activeFilterCount: number;
@@ -72,6 +74,8 @@ export function FlightResultsQuickControls({
   stopsCount: number;
   openSheetKind: "sort" | "all" | "airlines" | "stops" | "airports" | null;
   openSheet: (sheet: "sort" | "all" | "airlines" | "stops" | "airports") => void;
+  scrollViewRef?: React.RefObject<ScrollView | null>;
+  onHorizontalScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 }) {
   const { locale } = useMobileLocalization();
   const copy = flightResultsUiCopy(locale);
@@ -80,10 +84,13 @@ export function FlightResultsQuickControls({
 
   return (
     <ScrollView horizontal
+      ref={scrollViewRef}
       style={styles.rail}
       contentContainerStyle={styles.content}
       showsHorizontalScrollIndicator={false}
       alwaysBounceHorizontal={false}
+      scrollEventThrottle={16}
+      onScroll={onHorizontalScroll}
     >
       <Control
         label={copy.filters}

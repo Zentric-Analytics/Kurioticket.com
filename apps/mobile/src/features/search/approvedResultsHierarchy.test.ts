@@ -1,4 +1,4 @@
 import assert from "node:assert/strict";import{readFileSync}from"node:fs";import test from"node:test";
 const source=readFileSync("src/features/search/ApprovedResultsScreen.tsx","utf8");
-test("only the Flight filter rail is sticky",()=>{const section=source.slice(source.indexOf("ListHeaderComponent={flightDateStrip}"),source.indexOf("stickySectionHeadersEnabled")+30);assert.match(section,/renderSectionHeader[\s\S]*\{filterRail\}/);assert.doesNotMatch(section,/PriceAlert|FlightResultsSummaryRow/);});
+test("only the Flight filter rail is pinned",()=>{const section=source.slice(source.indexOf("ListHeaderComponent={hasFlightDateStrip"),source.indexOf("renderItem={({ item, index })"));assert.match(section,/renderSectionHeader[\s\S]*\{filterRail\}/);assert.doesNotMatch(section,/PriceAlert|FlightResultsSummaryRow/);});
 test("Track Price scrolls before count and cards",()=>{const item=source.slice(source.indexOf("renderItem={({ item, index })"),source.indexOf("ListEmptyComponent"));assert.ok(item.indexOf("PriceAlert")<item.indexOf("FlightResultsSummaryRow"));assert.ok(item.indexOf("FlightResultsSummaryRow")<item.indexOf("FlightCard"));});
