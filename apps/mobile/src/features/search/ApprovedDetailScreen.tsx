@@ -687,6 +687,11 @@ function HotelDetail({
   ).map((item) => ({ ...item, label: nativeHotelAmenityLabel(item) }));
   const highlights = amenityItems.slice(0, 6);
   const remainingAmenities = amenityItems.slice(6);
+  const hotelIdentityTitleColor = theme.dark ? theme.textPrimary : "#020617";
+  const hotelIdentityMetaColor = theme.dark ? theme.textSecondary : "#334155";
+  const hotelIdentityIconColor = theme.dark ? theme.icon : "#334155";
+  const hotelIdentityClassificationIconColor = theme.dark ? theme.icon : "#64748B";
+  const hotelIdentityActionColor = theme.dark ? theme.icon : "#0F172A";
   const Fact = ({
     icon: Icon,
     children,
@@ -695,8 +700,8 @@ function HotelDetail({
     children: string;
   }) => (
     <View style={d.hotelFactRow}>
-      <Icon accessible={false} size={16} color={theme.icon} />
-      <Text style={[d.hotelFact, { color: theme.textSecondary }]}>
+      <Icon accessible={false} size={16} color={hotelIdentityIconColor} />
+      <Text style={[d.hotelFact, { color: hotelIdentityMetaColor }]}>
         {children}
       </Text>
     </View>
@@ -727,14 +732,29 @@ function HotelDetail({
         contentContainerStyle={{ paddingBottom: 126 + inset.bottom }}
       >
         <View style={d.hotelIdentity}>
-          <View style={d.hotelIdentityCopy}>
+          <View style={d.hotelIdentityTopRow}>
             <Text
               accessibilityRole="header"
-              style={[d.hotelName, { color: theme.textPrimary }]}
+              style={[d.hotelName, { color: hotelIdentityTitleColor }]}
             >
               {result.name}
             </Text>
-            <View style={d.hotelIdentityMeta}>
+            <View style={d.hotelHeaderActions}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={saved ? `Remove ${result.name} hotel from saved` : `Save ${result.name} hotel`}
+                accessibilityState={{ selected: saved }}
+                onPress={() => void canonical.toggleHotel(result, params)}
+                style={[d.hotelHeaderAction, d.hotelHeaderActionSave]}
+              >
+                <Heart size={20} strokeWidth={2} color={saved ? androidFavoriteColors.active : hotelIdentityActionColor} fill={saved ? androidFavoriteColors.active : "transparent"} />
+              </Pressable>
+              <Pressable accessibilityRole="button" accessibilityLabel={`Share ${result.name}`} onPress={shareHotel} style={[d.hotelHeaderAction, d.hotelHeaderActionShare]}>
+                <FlowIcon name="share" size={20} color={hotelIdentityActionColor} />
+              </Pressable>
+            </View>
+          </View>
+          <View style={d.hotelIdentityMeta}>
               {stay.dates ? <Fact icon={CalendarDays}>{stay.dates}</Fact> : null}
               <Fact icon={Users}>{stay.occupancy}</Fact>
               <Fact icon={MapPin}>{address}</Fact>
@@ -744,41 +764,12 @@ function HotelDetail({
                   accessibilityLabel={`${classification} star hotel`}
                   style={d.hotelFactRow}
                 >
-                  <Award accessible={false} size={16} color={theme.icon} />
+                  <Award accessible={false} size={16} color={hotelIdentityClassificationIconColor} />
                   <Text accessible={false} style={d.hotelClassificationStars}>
                     {"★".repeat(classification)}
                   </Text>
                 </View>
               ) : null}
-            </View>
-          </View>
-          <View style={d.hotelHeaderActions}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={
-                saved
-                  ? `Remove ${result.name} hotel from saved`
-                  : `Save ${result.name} hotel`
-              }
-              accessibilityState={{ selected: saved }}
-              onPress={() => void canonical.toggleHotel(result, params)}
-              style={[d.hotelHeaderAction, d.hotelHeaderActionSave]}
-            >
-              <Heart
-                size={20}
-                strokeWidth={2}
-                color={saved ? androidFavoriteColors.active : theme.icon}
-                fill={saved ? androidFavoriteColors.active : "transparent"}
-              />
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Share ${result.name}`}
-              onPress={shareHotel}
-              style={[d.hotelHeaderAction, d.hotelHeaderActionShare]}
-            >
-              <FlowIcon name="share" size={20} color={theme.icon} />
-            </Pressable>
           </View>
         </View>
         <NativeHotelGallery
@@ -829,15 +820,13 @@ function HotelDetail({
         <View style={d.hotelDetailBody}>
           {activeHotelTab === "compare" ? (
             <>
-              <Text style={[d.hotelHeading, { color: theme.textPrimary }]}>
-                Compare prices
-              </Text>
-              <Text
-                style={[d.hotelSectionLead, { color: theme.textSecondary }]}
-              >
-                {stay.dates ?? "Stay dates unavailable"} · {stay.occupancy}
-              </Text>
-              {hotelOffers.map((offer) => {
+              <View style={d.hotelCompareSection}>
+                <Text style={[d.hotelCompareHeading, { color: theme.dark ? theme.textPrimary : "#020617" }]}>Compare prices</Text>
+                <Text style={[d.hotelCompareLead, { color: theme.dark ? theme.textSecondary : "#475569" }]}>
+                  {stay.dateText ?? "Stay dates unavailable"} · {stay.occupancy}
+                </Text>
+                <View style={d.hotelCompareOffers}>
+                {hotelOffers.map((offer) => {
                 const selected = offer.id === selectedOffer?.id;
                 const internal = offer.kind === "internal-room-flow";
                 return <Pressable
@@ -907,12 +896,14 @@ function HotelDetail({
                 </View>
               </Pressable>;
               })}
-              {!hotelOffers.length ? (
+                {!hotelOffers.length ? (
                 <View style={[d.hotelOffer, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                   <Text style={[d.hotelOfferProvider, { color: theme.textPrimary }]}>{result.provider}</Text>
                   <Text style={[d.hotelSectionLead, { color: theme.textSecondary }]}>Planning inventory · no live checkout</Text>
                 </View>
-              ) : null}
+                ) : null}
+                </View>
+              </View>
               <NativeHotelPropertyLocationSection
                 hotelName={result.name}
                 propertyDetails={property}
@@ -1014,6 +1005,7 @@ function HotelDetail({
           ) : null}
           {activeHotelTab === "location" ? (
             <NativeHotelLocationSection
+              hotelId={result.id}
               hotelName={result.name}
               propertyDetails={property}
               theme={theme}
@@ -1468,8 +1460,8 @@ const d = StyleSheet.create({
   stickyCta: { flex: 1, minWidth: 0, maxWidth: 250 },
   redirect: { fontSize: 9, lineHeight: 12, color: ui.muted, textAlign: "center", marginTop: 3 },
   hotelBackHeader: { minHeight: 48, paddingHorizontal: 16, justifyContent: "center", borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: ui.border, backgroundColor: "white" },
-  hotelIdentity: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 13, flexDirection: "row", alignItems: "flex-start", gap: 12 },
-  hotelIdentityCopy: { flex: 1, minWidth: 0 },
+  hotelIdentity: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 16 },
+  hotelIdentityTopRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
   hotelIdentityMeta: { marginTop: 8, gap: 4 },
   hotelBackToResultsText: { fontSize: 14, lineHeight: 19, fontWeight: "700" },
   hotelHeaderActions: { flexDirection: "row", flexShrink: 0, gap: 0 },
@@ -1556,7 +1548,7 @@ const d = StyleSheet.create({
   hotelSummaryCompact: { flexDirection: "column" },
   hotelPriceSummary: { alignItems: "flex-end", flexShrink: 0 },
   hotelPriceSummaryCompact: { alignItems: "flex-start" },
-  hotelName: { fontSize: 22, lineHeight: 28, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.55, color: ui.navy },
+  hotelName: { flex: 1, minWidth: 0, fontSize: 22, lineHeight: 28, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.55, color: ui.navy },
   stars: { color: "#FFB800", fontSize: 15, marginVertical: 7 },
   score: { backgroundColor: ui.blue, color: "white", fontWeight: "900" },
   stay: {
@@ -1617,6 +1609,10 @@ const d = StyleSheet.create({
   hotelFactRow: { minHeight: 20, flexDirection: "row", alignItems: "flex-start", gap: 6 },
   hotelTabTextCompact: { fontSize: 10 },
   hotelDetailBody: { paddingHorizontal: 16, paddingVertical: 20, gap: 12 },
+  hotelCompareSection: { paddingVertical: 8 },
+  hotelCompareHeading: { fontSize: 20, lineHeight: 28, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.5 },
+  hotelCompareLead: { marginTop: 4, fontSize: 14, lineHeight: 20, fontWeight: "500", fontFamily: appFonts.medium },
+  hotelCompareOffers: { marginTop: 20, gap: 12 },
   hotelHeading: { fontSize: 20, lineHeight: 26, fontWeight: "900" },
   hotelSubheading: { fontSize: 15, lineHeight: 20, fontWeight: "900", marginTop: 6 },
   hotelOffer: { borderWidth: 1.5, borderRadius: 13, padding: 16, gap: 16 },

@@ -5,7 +5,14 @@ export function hotelStaySummary(checkIn: string, checkOut: string, guests: numb
   const start = parseDate(checkIn); const end = parseDate(checkOut);
   const nights = start && end ? Math.round((end.getTime() - start.getTime()) / 86_400_000) : 0;
   const format = (date: Date) => new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(date);
-  return { dates: start && end && nights > 0 ? `${format(start)} – ${format(end)} · ${nights} ${nights === 1 ? "night" : "nights"}` : null, occupancy: `${guests} ${guests === 1 ? "guest" : "guests"}, ${rooms} ${rooms === 1 ? "room" : "rooms"}` };
+  const dateText = start && end && nights > 0 ? `${format(start)} – ${format(end)}` : null;
+  const nightText = nights > 0 ? `${nights} ${nights === 1 ? "night" : "nights"}` : null;
+  return {
+    dateText,
+    nightText,
+    dates: dateText && nightText ? `${dateText} · ${nightText}` : null,
+    occupancy: `${guests} ${guests === 1 ? "guest" : "guests"}, ${rooms} ${rooms === 1 ? "room" : "rooms"}`,
+  };
 }
 export function canonicalHotelAddress(details: PublicHotelPropertyDetails | null, fallback: string) {
   if (!details) return fallback;
