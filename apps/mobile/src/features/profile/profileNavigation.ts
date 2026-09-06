@@ -21,7 +21,7 @@ export async function navigateProfileDestination(
   }
 
   if (!runtime.isPreview) {
-    actions.push(destination.fallbackHref);
+    actions.push(destination.productionHref);
     return;
   }
 
@@ -29,6 +29,8 @@ export async function navigateProfileDestination(
   try {
     await actions.openBrowser(`${previewOrigin}${destination.path}`);
   } catch {
-    actions.push(destination.fallbackHref);
+    // Do not redirect legal links to the old native screen when the
+    // system in-app browser fails to open. Preview should use one
+    // consistent browser experience rather than silently changing UI.
   }
 }
