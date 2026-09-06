@@ -47,6 +47,10 @@ export function LegalScreen({ slug }: LegalScreenProps) {
   const publicUrl = previewWebMode ? previewPublicUrl : productionPublicUrl;
   const copy = legalScreenCopy[locale];
   const localePresentation = mobileLocales.find((option) => option.code === locale) ?? mobileLocales[0];
+  const previewLocaleBootstrap = useMemo(() => {
+    const serializedLocale = JSON.stringify(locale);
+    return `try{window.localStorage.setItem("kurioticket_locale",${serializedLocale});window.localStorage.setItem("ct_language",${serializedLocale});document.cookie="kurioticket_locale="+encodeURIComponent(${serializedLocale})+"; path=/; samesite=lax";}catch(_error){}true;`;
+  }, [locale]);
   const html = useMemo(() => document ? buildLegalHtml(document, {
     dark: theme.dark,
     lang: localePresentation.intl,
@@ -161,21 +165,22 @@ export function LegalScreen({ slug }: LegalScreenProps) {
     </View>
 
     <View style={styles.documentArea}>
-      {previewWebMode ? <WebView
-        key={`${slug}-preview-web-${webViewRevision}`}
+      {previewWebMode ? loadState !== "error" ? <WebView
+        key={`${slug}-preview-web-${locale}-${webViewRevision}`}
         testID="legal-document-webview"
-        source={{ uri: publicUrl }}
+        source={{ uri: publicUrl, headers: { Cookie: `kurioticket_locale=${encodeURIComponent(locale)}` } }}
         javaScriptEnabled
         domStorageEnabled
         sharedCookiesEnabled={false}
         thirdPartyCookiesEnabled={false}
         incognito
+        injectedJavaScriptBeforeContentLoaded={previewLocaleBootstrap}
         originWhitelist={[`${previewWebOrigin}/*`]}
         onShouldStartLoadWithRequest={({ url }) => url === previewWebOrigin || url.startsWith(`${previewWebOrigin}/`)}
         onLoad={handleWebViewLoad}
         onError={handleWebViewError}
         style={{ backgroundColor: theme.background }}
-      /> : html ? <WebView
+      /> : null : html ? <WebView
         key={`${slug}-${locale}-${webViewRevision}`}
         testID="legal-document-webview"
         source={{ html, baseUrl: "about:blank" }}
