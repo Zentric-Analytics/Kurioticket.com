@@ -1,0 +1,8 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { readFileSync } from "node:fs";
+import { nativeCarDetailDate, nativeCarPickupTypeLabel, nativeCarRentalDays } from "./nativeCarDetailsModel";
+const native=readFileSync("src/features/search/ApprovedCarDetailScreen.tsx","utf8");
+test("ready car detail uses the web hero, sticky navigation, panels, and dock hierarchy",()=>{for(const contract of ['Back to Cars results','{result.modelName}','resizeMode="cover"','aspectRatio:16/10','stickyHeaderIndices={[2]}','Compare prices','Pickup and return','Location','Estimated Rental Total','Continue deal','accessibilityState={{disabled:true}}','WebView','Get directions','Pickup and location details'])assert.ok(native.includes(contract),contract);for(const retired of ['No additional photo','1 / 1','ratingWord','Rental conditions','Price breakdown','Price alert','Booking unavailable','Continue to ${'])assert.ok(!native.includes(retired),retired);assert.match(native,/width:"48%"/);assert.match(native,/height:200/);assert.match(native,/borderTopLeftRadius:22/);});
+test("native date and pickup labels match web",()=>{assert.equal(nativeCarDetailDate("2026-09-06"),"Sun, Sep 6, 2026");assert.equal(nativeCarDetailDate("2026-09-09"),"Wed, Sep 9, 2026");assert.equal(nativeCarRentalDays("2026-09-06","2026-09-09"),3);assert.equal(nativeCarPickupTypeLabel("meet-and-greet"),"Meet and greet");assert.equal(nativeCarPickupTypeLabel("shuttle"),"Shuttle pickup");});
+test("mobile source contains no Google credential",()=>{assert.doesNotMatch(native,/EXPO_PUBLIC_GOOGLE_MAPS|googleKey|iframeUrl/);assert.match(native,/getApiBaseUrl\(Platform\.OS,__DEV__\)/);});

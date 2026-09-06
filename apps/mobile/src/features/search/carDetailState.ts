@@ -21,3 +21,10 @@ export function sortedValidCarOffers(offers: CarOffer[]): CarOffer[] {
     .filter((offer) => Number.isFinite(offer.totalPrice) && offer.totalPrice >= 0)
     .sort((a, b) => a.totalPrice - b.totalPrice || a.id.localeCompare(b.id));
 }
+
+/** Mirrors the standalone web detail page's authoritative offer selection. */
+export function primaryValidCarOffer(offers: CarOffer[]): CarOffer | undefined {
+  return [...offers]
+    .filter((offer) => Number.isFinite(offer.totalPrice) && offer.totalPrice >= 0)
+    .sort((a, b) => a.totalPrice - b.totalPrice || a.pricePerDay - b.pricePerDay || a.id.localeCompare(b.id))[0];
+}

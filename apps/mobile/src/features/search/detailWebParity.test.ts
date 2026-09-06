@@ -210,19 +210,15 @@ test("Hotel compare offers preserve each actionable continuation", () => {
 test("Car detail parity remains protected", () => {
   assert.match(car, />Back to Cars results</);
   assert.match(car, /pathname:"\/car-results"/);
-  assert.ok(car.indexOf("d.titleRow") < car.indexOf("<CarGallery"));
-  assert.ok(car.indexOf("<CarGallery") < car.indexOf("d.carSpecGrid"));
-  assert.ok(car.indexOf("d.carSpecGrid") < car.indexOf("d.carTabs"));
+  assert.ok(car.indexOf("s.backRow") < car.indexOf("s.hero"));
+  assert.ok(car.indexOf("s.hero") < car.indexOf("s.tabs"));
+  assert.match(car, /stickyHeaderIndices=\{\[2\]\}/);
   for (const tab of ["compare", "pickup", "location"]) assert.match(car, new RegExp(`"${tab}"`));
-  assert.match(car, />Compare prices</);
-  assert.match(car, /activeTab==="pickup"/);
-  assert.match(car, /activeTab==="location"/);
-  assert.match(car, /d\.sticky/);
-  for (const field of ["passengers", "bags", "doors", "transmission", "airConditioning", "mileagePolicy", "fuelPolicy", "pickupLocation", "returnLocation"]) assert.match(car, new RegExp(`result\\.${field}`));
-  assert.match(car, /canBookCarOffer\(result\.searchPolicy\.bookable,selected\)/);
-  assert.match(car, /Linking\.openURL\(selected\.bookingUrl\)/);
-  assert.match(car, /disabled=\{!bookable\}/);
-  for (const token of ["background", "surface", "textPrimary", "textSecondary", "border", "icon"]) assert.match(car, new RegExp(`theme\\.${token}`));
+  for (const section of ["Compare prices", "Pickup and return", "Location", "Estimated Rental Total", "Continue deal"]) assert.match(car, new RegExp(section));
+  for (const field of ["passengers", "bags", "doors", "transmission", "airConditioning", "fuelPolicy", "pickupLocation", "returnLocation"]) assert.match(car, new RegExp(`result\.${field}`));
+  assert.match(car, /primaryValidCarOffer\(result\.offers\)/);
+  assert.match(car, /accessibilityState=\{\{disabled:true\}\}/);
+  for (const token of ["background", "surface", "textPrimary", "textSecondary", "border", "icon"]) assert.match(car, new RegExp(`theme\.${token}`));
 });
 
 test("Hotel Details preserves canonical filled and pressed brand blue", () => {
