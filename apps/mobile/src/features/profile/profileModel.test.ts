@@ -8,7 +8,10 @@ test("authenticated profile keeps its existing order and appends legal", () => {
   assert.deepEqual(authenticatedProfileSections.map(section => section.title), ["manageAccount", "travelActivity", "preferences", "helpSupport", "aboutLegal"]);
   assert.deepEqual(authenticatedProfileSections.find(section => section.title === "travelActivity")?.items.map(item => [item.label, "href" in item.destination ? item.destination.href : null]), [["savedItems", "/saved"], ["recentSearches", "/recent"], ["priceAlerts", "/price-alerts"]]);
   assert.deepEqual(authenticatedProfileSections.find(section => section.title === "preferences")?.items.map(item => item.label), ["customizationPreferences", "travelPreferences", "emailPreferences"]);
-  assert.deepEqual(authenticatedProfileSections.at(-1)?.items.map(item => [item.label, item.destination.href]), [["terms", "/(tabs)/profile/terms-of-service"], ["privacy", "/(tabs)/profile/privacy-policy"]]);
+  assert.deepEqual(authenticatedProfileSections.at(-1)?.items.map(item => [item.label, item.destination.kind, "path" in item.destination ? item.destination.path : null, "fallbackHref" in item.destination ? item.destination.fallbackHref : null]), [
+    ["terms", "preview-browser", "/terms", "/(tabs)/profile/terms-of-service"],
+    ["privacy", "preview-browser", "/privacy", "/(tabs)/profile/privacy-policy"],
+  ]);
 });
 
 test("profile greeting uses only the name saved in Personal details", () => {
