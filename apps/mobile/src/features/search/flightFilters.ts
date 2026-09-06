@@ -95,9 +95,22 @@ const matchesTimeMaximums = (result: FlightResult, selections: FlightFilters["jo
   });
 };
 const hasPositiveBaggage = (result: FlightResult) => result.fareTerms?.some((term) => term.category === "baggage" && term.semantic === "positive") === true;
-export const hasPositiveFareFlexibility = (result: FlightResult) => result.fareTerms?.some((term) =>
-  (term.category === "refund" || term.category === "change") && term.semantic === "positive",
-) === true;
+const isPositiveFareFlexibilityTerm = (term: NonNullable<FlightResult["fareTerms"]>[number]) =>
+  (term.category === "refund" || term.category === "change") && term.semantic === "positive";
+export const hasPositiveFareFlexibility = (result: FlightResult) => {
+  const terms = result.fareTerms ?? [];
+  if (terms.some((term) => isPositiveFareFlexibilityTerm(term) && term.legDirection == null && term.legIndex == null)) return true;
+  const legs = authoritativeLegs(result);
+  if (!legs.length) return terms.some(isPositiveFareFlexibilityTerm);
+  return legs.every((leg, index) => {
+    const legIndex = leg.legIndex ?? index;
+    return terms.some((term) => {
+      if (!isPositiveFareFlexibilityTerm(term)) return false;
+      if (term.legIndex != null) return term.legIndex === legIndex;
+      return term.legDirection != null && term.legDirection !== "leg" && term.legDirection === leg.direction;
+    });
+  });
+};
 export function resolveFlightPriceComparisonContext(results: readonly FlightResult[], displayCurrency: string, normalizePrice: (result: FlightResult) => number | null): FlightPriceComparisonContext | null {
   const priced = results.filter((x) => finite(x.price) != null); if (!priced.length) return null;
   const currencies = new Set(priced.map((x) => x.currency?.trim().toUpperCase()).filter((x): x is string => Boolean(x && /^[A-Z]{3}$/.test(x))));
