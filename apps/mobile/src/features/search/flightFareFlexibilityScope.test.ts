@@ -33,7 +33,7 @@ const result = (legs: ReturnType<typeof leg>[], fareTerms: FlightResult["fareTer
   currency: "USD",
   legs,
   fareTerms,
-}) as FlightResult;
+}) as unknown as FlightResult;
 
 const positive = (category: "refund" | "change", legDirection?: "outbound" | "return" | "leg", legIndex?: number) => ({
   category,
