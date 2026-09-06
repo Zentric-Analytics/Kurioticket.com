@@ -36,8 +36,16 @@ test("results edit modal owns presentation without a post-dismiss business callb
   assert.doesNotMatch(modal, /safeAreaClearance|topInset/);
   assert.doesNotMatch(modal, /headerAnchor|flightResultsHeaderHeight/);
   assert.match(modal, /<SafeAreaView[^>]*style=\{styles.backdrop\}>[\s\S]*StyleSheet.absoluteFill, styles.scrim/);
-  assert.match(modal, /sheet: \{ maxHeight: "88%", borderTopLeftRadius: 24, borderTopRightRadius: 24/);
+  assert.match(modal, /sheet: \{ maxHeight: "88%", marginHorizontal: FLIGHT_QUICK_SHEET_HORIZONTAL_INSET, borderTopLeftRadius: 24, borderTopRightRadius: 24/);
   assert.match(modal, /content: \{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 20 \}/);
+});
+
+test("Flight Edit Search shares the Flight quick-sheet outer inset without changing content padding", () => {
+  const modal = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
+  assert.match(modal, /import \{ FLIGHT_QUICK_SHEET_HORIZONTAL_INSET \} from "\.\/FlightResultsSheetShell"/);
+  assert.match(modal, /sheet: \{ maxHeight: "88%", marginHorizontal: FLIGHT_QUICK_SHEET_HORIZONTAL_INSET/);
+  assert.match(modal, /content: \{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 20 \}/);
+  assert.doesNotMatch(modal, /content: \{[^}]*FLIGHT_QUICK_SHEET_HORIZONTAL_INSET/);
 });
 
 test("changed flight edits update route params while open and close after observing the target key", () => {

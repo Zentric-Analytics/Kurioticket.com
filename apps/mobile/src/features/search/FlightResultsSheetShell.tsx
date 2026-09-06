@@ -7,10 +7,11 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 
 type QuickBackdropVariant = "flight" | "legacy";
+export const FLIGHT_QUICK_SHEET_HORIZONTAL_INSET = 12;
 
-export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, children, footer, fullScreen = false, subtitle, headerAction, quickBackdropVariant = "flight" }: {
+export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, children, footer, fullScreen = false, subtitle, headerAction, quickBackdropVariant = "flight", insetFlightQuickSheet = false }: {
   visible: boolean; title: string; closeLabel: string; onClose: () => void; children: ReactNode; footer?: ReactNode;
-  fullScreen?: boolean; subtitle?: string; headerAction?: ReactNode; quickBackdropVariant?: QuickBackdropVariant;
+  fullScreen?: boolean; subtitle?: string; headerAction?: ReactNode; quickBackdropVariant?: QuickBackdropVariant; insetFlightQuickSheet?: boolean;
 }) {
   const { theme } = useAppTheme();
   const inset = useSafeAreaInsets();
@@ -62,6 +63,7 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
       {footer ? <View style={[styles.footer, { backgroundColor: theme.surface, borderTopColor: theme.border, paddingBottom: footerBottomPadding }]}>{footer}</View> : null}
     </View>
   );
+  const animatedQuickSheet = <Animated.View style={[styles.quickSheetFrame, insetFlightQuickSheet && styles.insetFlightQuickSheet, { transform: [{ translateY: quickSheetTranslateY }] }]}>{sheet}</Animated.View>;
 
   return <Modal visible={visible} transparent={!fullScreen} animationType={fullScreen ? "slide" : "none"} presentationStyle={fullScreen ? "fullScreen" : "overFullScreen"} onRequestClose={onClose} accessibilityViewIsModal>
     {fullScreen ? <SafeAreaProvider><SafeAreaView edges={["top", "bottom", "left", "right"]} style={[styles.fullBackdrop, { backgroundColor: theme.background }]} onAccessibilityEscape={onClose}>{sheet}</SafeAreaView></SafeAreaProvider> :
@@ -71,7 +73,7 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
         </Animated.View>
         <Pressable accessible={false} onPress={onClose} style={StyleSheet.absoluteFill}/>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.bottom} pointerEvents="box-none">
-          <Animated.View style={{ transform: [{ translateY: quickSheetTranslateY }] }}>{sheet}</Animated.View>
+          {insetFlightQuickSheet ? <SafeAreaView edges={["left", "right"]}>{animatedQuickSheet}</SafeAreaView> : animatedQuickSheet}
         </KeyboardAvoidingView>
       </View>}
   </Modal>;
@@ -81,6 +83,8 @@ const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: "flex-end" },
   quickBackdropScrim: { backgroundColor: "rgba(15, 23, 42, 0.35)" },
   fullBackdrop: { flex: 1 }, bottom: { justifyContent: "flex-end" },
+  quickSheetFrame: { width: "100%" },
+  insetFlightQuickSheet: { width: "auto", marginHorizontal: FLIGHT_QUICK_SHEET_HORIZONTAL_INSET },
   sheet: { width: "100%", minHeight: 240, borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden", shadowColor: "#0F172A", shadowOpacity: .2, shadowRadius: 18, elevation: 16 },
   fullScreen: { flex: 1, minHeight: 0, borderRadius: 0 }, header: { minHeight: 76, flexShrink: 0, paddingLeft: 20, paddingRight: 10, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth },
   headerCopy: { flex: 1, minWidth: 0 }, title: { fontSize: 18, lineHeight: 23, fontWeight: "700", fontFamily: appFonts.bold }, subtitle: { fontSize: 12, lineHeight: 18, fontFamily: appFonts.medium },

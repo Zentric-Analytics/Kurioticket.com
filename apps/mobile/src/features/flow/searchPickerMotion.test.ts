@@ -103,7 +103,7 @@ test("Flight Edit Search uses the shared bottom-sheet motion", () => {
   assert.match(editSearch, /motion\.backdropStyle/);
   assert.match(editSearch, /onLayout=\{motion\.onSheetLayout\}/);
   assert.match(editSearch, /backdrop: \{ flex: 1, justifyContent: "flex-end" \}/);
-  assert.match(editSearch, /sheet: \{ maxHeight: "88%", borderTopLeftRadius: 24, borderTopRightRadius: 24/);
+  assert.match(editSearch, /sheet: \{ maxHeight: "88%", marginHorizontal: FLIGHT_QUICK_SHEET_HORIZONTAL_INSET, borderTopLeftRadius: 24, borderTopRightRadius: 24/);
   assert.doesNotMatch(editSearch, /EDIT_SEARCH_REVEAL_OFFSET|useFlightEditSearchMotion|justifyContent: "flex-start"/);
   assert.doesNotMatch(editSearch, /borderBottomLeftRadius|borderBottomRightRadius/);
 });

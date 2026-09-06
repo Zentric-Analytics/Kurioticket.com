@@ -6,6 +6,7 @@ import type { RouteValue } from "../flow/flightSearchModel";
 import { useFlowTheme } from "../flow/flowStyles";
 import { useRetainedPickerContext } from "../flow/retainedPickerContext";
 import { useSearchPickerMotion } from "../flow/searchPickerPresentation";
+import { FLIGHT_QUICK_SHEET_HORIZONTAL_INSET } from "./FlightResultsSheetShell";
 
 type Props = {
   visible: boolean;
@@ -47,7 +48,7 @@ const styles = StyleSheet.create({
   viewport: { flex: 1 },
   backdrop: { flex: 1, justifyContent: "flex-end" },
   scrim: { backgroundColor: "rgba(8, 18, 35, 0.52)" },
-  sheet: { maxHeight: "88%", borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden" },
+  sheet: { maxHeight: "88%", marginHorizontal: FLIGHT_QUICK_SHEET_HORIZONTAL_INSET, borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden" },
   header: { minHeight: 52, flexDirection: "row", alignItems: "center", borderBottomWidth: 1, paddingLeft: 16, paddingRight: 8 },
   close: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   title: { flex: 1, textAlign: "left", fontSize: 19, lineHeight: 24 },

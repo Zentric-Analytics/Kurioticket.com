@@ -71,6 +71,7 @@ export function FlightFilterSheet({visible,section,filters,options,results,price
   title={full?copy.filters:title}
   subtitle={full?(activeCount?copy.appliedCount(activeCount):copy.allFlightsShown):quickSubtitle}
   fullScreen={full}
+  insetFlightQuickSheet={!full}
   closeLabel={copy.closeFilters}
   onClose={close}
   headerAction={full&&activeCount?<Pressable accessibilityRole="button" accessibilityLabel={copy.clearAll} onPress={()=>onChange(emptyFlightFilters())} style={s.headerClear}><Text style={s.footerClearText}>{copy.clearAll}</Text></Pressable>:undefined}
