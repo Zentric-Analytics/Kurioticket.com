@@ -131,7 +131,7 @@ import {
   type NearbyFareState,
 } from "./nearbyFareModel";
 import { flightResultCountLabel } from "./flightResultCount";
-import { flightCardLegs, type FlightCardLeg } from "./flightCardLegs";
+import { flightCardJourneys, flightCardJourneyAccessibility, type FlightCardLeg } from "./flightCardLegs";
 import { flightOperatingCarrierPresentation } from "./flightOperatingCarrier";
 import { deriveFlightResultHighlights, type FlightResultHighlight } from "./flightResultHighlights";
 import { readSession } from "../../storage/sessionStorage";
@@ -1250,8 +1250,11 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
       logFlightSearchCheckpoint("flight-search:initial-card-mounted", { platform: Platform.OS });
     }
   }, [logInitialMount]);
-  const roundTrip = one(params.tripType) === "round-trip";
-  const { outbound, returnLeg } = flightCardLegs(result, roundTrip);
+  const requestedTripType = one(params.tripType);
+  const tripType = requestedTripType === "round-trip" || requestedTripType === "multi-city"
+    ? requestedTripType
+    : "one-way";
+  const journeys = flightCardJourneys(result, tripType);
   const operatingCarrierPresentation = flightOperatingCarrierPresentation(result);
   const flightNumber = result.flightNumber?.trim();
   const highlightLabel = highlight === "Best" ? "Best value" : highlight;
@@ -1272,8 +1275,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
   const mainPriceBasis = flightMainPriceBasis(fare, labels);
   const fareAccessibility = `${fare?.accessibilityLabel ?? "price unavailable"}${mainPriceBasis ? `, ${mainPriceBasis.accessibilityText}` : ""}${providerFare ? `, provider price ${providerFare.accessibilityLabel}` : ""}`;
   const openDetails = () => router.push({ pathname: "/flight-details", params: buildFlightDetailParams({ searchParams: params, result, fare, displayCurrencyContext }) });
-  const accessibleLeg = (direction: "outbound" | "return", leg: FlightCardLeg) => `${direction}, ${clock(leg.departureTime)} ${leg.originAirport} to ${clock(leg.arrivalTime)} ${leg.destinationAirport}, ${leg.duration}, ${leg.stops ? `${leg.stops} stop${leg.stops === 1 ? "" : "s"}` : "nonstop"}`;
-  const cardAccessibilityLabel = `View flight details for ${result.airlineName}, ${accessibleLeg("outbound", outbound)}${returnLeg ? `, ${accessibleLeg("return", returnLeg)}` : ""}, ${fareAccessibility}`;
+  const cardAccessibilityLabel = `View flight details for ${result.airlineName}, ${journeys.map((journey) => flightCardJourneyAccessibility(journey, clock)).join(", ")}, ${fareAccessibility}`;
   return (
     <Pressable
       accessibilityRole="button"
@@ -1335,8 +1337,9 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
           </View>
         </View>
         <View style={s0.journeyList}>
-          <FlightJourneyRow label="OUTBOUND" leg={outbound} locale={locale} />
-          {returnLeg ? <FlightJourneyRow label="RETURN" leg={returnLeg} locale={locale} /> : null}
+          {journeys.map((journey, index) => (
+            <FlightJourneyRow key={`${journey.label}-${index}`} label={journey.label} leg={journey.leg} locale={locale} />
+          ))}
         </View>
       </View>
       <View style={[s0.flightCardFooter, { borderTopColor: theme.border }]}>
@@ -1384,7 +1387,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
     </Pressable>
   );
 }
-function FlightJourneyRow({ label, leg, locale }: { label: "OUTBOUND" | "RETURN"; leg: FlightCardLeg; locale: MobileLocale }) {
+function FlightJourneyRow({ label, leg, locale }: { label: string; leg: FlightCardLeg; locale: MobileLocale }) {
   const { theme } = useAppTheme();
   const supportTextColor = theme.dark ? flightSupportText.dark : flightSupportText.light;
   const stopLabel = leg.stops

@@ -61,3 +61,5 @@ test("fresh NGN handoff fields win over stale inherited USD snapshots", () => {
     ["departureDate", "displayCurrencyContext", "displayFare", "result", "travelers"].sort(),
   );
 });
+
+test("multi-city handoff retains every canonical structured leg",()=>{const legs=[{direction:"leg",legIndex:0,originAirport:"LOS",destinationAirport:"LHR"},{direction:"leg",legIndex:1,originAirport:"LHR",destinationAirport:"JFK"},{direction:"leg",legIndex:2,originAirport:"JFK",destinationAirport:"LAX"}];const params=buildFlightDetailParams({searchParams:{tripType:"multi-city"},result:{...result,legs} as FlightResult});assert.deepEqual((JSON.parse(params.result) as FlightResult).legs,legs)});

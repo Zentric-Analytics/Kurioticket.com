@@ -6,9 +6,9 @@ import test from "node:test";
 const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
 const card = source.slice(source.indexOf("function FlightCard"), source.indexOf("function HotelCard"));
 
-test("outbound and return share one structured journey component", () => {
-  assert.match(card, /<FlightJourneyRow label="OUTBOUND" leg=\{outbound\} locale=\{locale\} \/>/);
-  assert.match(card, /\{returnLeg \? <FlightJourneyRow label="RETURN" leg=\{returnLeg\} locale=\{locale\} \/> : null\}/);
+test("all descriptors share one structured journey component", () => {
+  assert.match(card, /journeys\.map\(\(journey, index\) => \(/);
+  assert.match(card, /<FlightJourneyRow[^>]*label=\{journey\.label\} leg=\{journey\.leg\}/);
   assert.equal(card.match(/<View style=\{\[s0\.arrivalColumn, s0\.rightColumnContract\]\}>/g)?.length, 2);
   assert.match(source, /journeyPrimaryRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 \}/);
   assert.match(source, /departureColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);
@@ -49,7 +49,7 @@ test("journeys follow the compact identity row at the full card content width", 
   assert.ok(identityStart >= 0 && journeyStart > identityStart, "journey list follows the identity row");
   assert.match(identityLayout, /airlineLogoColumn[\s\S]*?<AirlineLogo[\s\S]*?flightDetails[\s\S]*?airlineHeader/);
   assert.doesNotMatch(flightDetails, /journeyList|FlightJourneyRow/);
-  assert.match(flightMain.slice(journeyStart), /journeyList[\s\S]*?<FlightJourneyRow label="OUTBOUND"[\s\S]*?returnLeg \? <FlightJourneyRow label="RETURN"/);
+  assert.match(flightMain.slice(journeyStart), /journeyList[\s\S]*?journeys\.map[\s\S]*?<FlightJourneyRow/);
   assert.match(source, /flightIdentityLayout: \{[^}]*flexDirection: "row"[^}]*gap: 8/);
   assert.match(source, /airlineLogoColumn: \{ width: 38, flexShrink: 0/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
@@ -57,8 +57,8 @@ test("journeys follow the compact identity row at the full card content width", 
 });
 
 test("one-way cards omit return while preserving the fare-action alignment", () => {
-  assert.match(card, /const roundTrip = one\(params\.tripType\) === "round-trip"/);
-  assert.match(card, /\{returnLeg \? <FlightJourneyRow[^\n]+ : null\}/);
+  assert.match(card, /const journeys = flightCardJourneys\(result, tripType\)/);
+  assert.match(card, /requestedTripType === "round-trip" \|\| requestedTripType === "multi-city"/);
   assert.doesNotMatch(card, /"round trip" : "one way"/);
   assert.match(card, /<View style=\{s0\.flightCommercialRegion\}>\s*<Text/);
 });
