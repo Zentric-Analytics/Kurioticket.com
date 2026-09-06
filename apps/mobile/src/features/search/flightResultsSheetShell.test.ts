@@ -23,6 +23,23 @@ test("Flight quick filters use only the Hotel backdrop color while shared consum
   assert.doesNotMatch(shell,/animationType="fade"|compactMenu|measureInWindow/);
 });
 test("main Flight Filter remains full screen",()=>{assert.match(shell,/presentationStyle=\{fullScreen \? "fullScreen"/);assert.match(shell,/styles\.fullScreen/);});
+test("Flight quick sheets use a symmetric outer inset without changing shared legacy sheets",()=>{
+  const filter=readFileSync("src/features/search/FlightFilterSheet.tsx","utf8");
+  const sort=readFileSync("src/features/search/FlightSortSheet.tsx","utf8");
+  const cars=readFileSync("src/features/search/CarFilterSheet.tsx","utf8");
+  assert.match(shell,/FLIGHT_QUICK_SHEET_HORIZONTAL_INSET = 12/);
+  assert.match(shell,/insetFlightQuickSheet = false/);
+  assert.match(shell,/insetFlightQuickSheet: \{ width: "auto", marginHorizontal: FLIGHT_QUICK_SHEET_HORIZONTAL_INSET \}/);
+  assert.match(shell,/insetFlightQuickSheet \? <SafeAreaView edges=\{\["left", "right"\]\}>/);
+  assert.match(filter,/insetFlightQuickSheet=\{!full\}/);
+  assert.match(sort,/insetFlightQuickSheet/);
+  assert.doesNotMatch(cars,/insetFlightQuickSheet/);
+});
+test("full-screen Flight filters bypass the quick-sheet inset frame",()=>{
+  assert.match(shell,/\{fullScreen \? <SafeAreaProvider><SafeAreaView edges=\{\["top", "bottom", "left", "right"\]\}/);
+  assert.match(shell,/fullScreen: \{ flex: 1, minHeight: 0, borderRadius: 0 \}/);
+  assert.match(shell,/insetFlightQuickSheet \? <SafeAreaView/);
+});
 test("anchor positioning module is deleted",()=>assert.equal(existsSync("src/features/search/flightResultsQuickMenuAnchor.ts"),false));
 test("full and quick sheet bodies have distinct sizing contracts",()=>{
   assert.match(shell,/fullScreen \? styles\.fullScreenContent : styles\.quickContent/);

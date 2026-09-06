@@ -35,6 +35,7 @@ export function FlightSortSheet({
       visible={visible}
       title={copy.sortFlights}
       subtitle={copy.sortHelp}
+      insetFlightQuickSheet
       closeLabel={copy.closeSort}
       onClose={onClose}
       footer={<View style={styles.actions}><Pressable accessibilityRole="button" onPress={() => setDraft("best")} style={[styles.reset, { borderColor: theme.border }]}><Text style={[styles.buttonText, { color: theme.textPrimary }]}>{copy.reset}</Text></Pressable><Pressable accessibilityRole="button" onPress={() => onApply(draft)} style={styles.apply}><Text style={[styles.buttonText, styles.applyText]}>{copy.apply}</Text></Pressable></View>}
