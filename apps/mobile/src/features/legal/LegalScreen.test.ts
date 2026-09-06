@@ -44,6 +44,8 @@ test("loading covers API and first WebView render, while render failure safely r
 test("Preview legal WebView stays on the expected legal route and treats main-document HTTP failures as retryable errors", () => {
   assert.match(screen, /const previewAllowedNavigationUrls = useMemo/);
   assert.match(screen, /if \(slug === "terms-of-service"\) urls\.push\(`\$\{previewWebOrigin\}\/legal\/terms-of-service`\)/);
+  assert.match(screen, /originWhitelist=\{\[previewWebOrigin\]\}/);
+  assert.doesNotMatch(screen, /originWhitelist=\{\[`\$\{previewWebOrigin\}\/\*`\]\}/);
   assert.match(screen, /onShouldStartLoadWithRequest=\{\(\{ url \}\) => isAllowedPreviewNavigation\(url\)\}/);
   assert.match(screen, /onHttpError=\{\(\{ nativeEvent \}\) => \{/);
   assert.match(screen, /nativeEvent\.statusCode < 400/);
