@@ -26,6 +26,10 @@ function LegalShareIcon({ color, size = 22 }: { color: string; size?: number }) 
   </Svg>;
 }
 
+function normalizePreviewNavigationUrl(url: string) {
+  return url.split("#", 1)[0].split("?", 1)[0].replace(/\/+$/, "");
+}
+
 export function LegalScreen({ slug }: LegalScreenProps) {
   const { theme } = useAppTheme();
   const { locale, t } = useMobileLocalization();
@@ -40,11 +44,21 @@ export function LegalScreen({ slug }: LegalScreenProps) {
   const [webViewRevision, setWebViewRevision] = useState(0);
   const refreshPreviousDocument = useRef<MobileLegalDocument | null>(null);
   const refreshRenderPending = useRef(false);
+  const previewLoadFailed = useRef(false);
   const title = t(slug === "terms-of-service" ? "terms" : "privacy");
   const pageName = slug === "terms-of-service" ? "terms of service" : "privacy policy";
   const productionPublicUrl = slug === "terms-of-service" ? TERMS_URL : PRIVACY_URL;
   const previewPublicUrl = `${previewWebOrigin}${slug === "terms-of-service" ? "/terms" : "/privacy"}`;
   const publicUrl = previewWebMode ? previewPublicUrl : productionPublicUrl;
+  const previewAllowedNavigationUrls = useMemo(() => {
+    const urls = [previewPublicUrl];
+    if (slug === "terms-of-service") urls.push(`${previewWebOrigin}/legal/terms-of-service`);
+    return urls.map(normalizePreviewNavigationUrl);
+  }, [previewPublicUrl, previewWebOrigin, slug]);
+  const isAllowedPreviewNavigation = useCallback((url: string) => {
+    if (url === "about:blank") return true;
+    return previewAllowedNavigationUrls.includes(normalizePreviewNavigationUrl(url));
+  }, [previewAllowedNavigationUrls]);
   const copy = legalScreenCopy[locale];
   const localePresentation = mobileLocales.find((option) => option.code === locale) ?? mobileLocales[0];
   const previewLocaleBootstrap = useMemo(() => {
@@ -61,6 +75,7 @@ export function LegalScreen({ slug }: LegalScreenProps) {
   const loadInitial = useCallback(() => {
     refreshPreviousDocument.current = null;
     refreshRenderPending.current = false;
+    previewLoadFailed.current = false;
     setDocument(null);
     setRefreshing(false);
     setRefreshFailed(false);
@@ -81,6 +96,7 @@ export function LegalScreen({ slug }: LegalScreenProps) {
     setRefreshing(true);
     setRefreshFailed(false);
     if (previewWebMode) {
+      previewLoadFailed.current = false;
       setLoadState("webview-loading");
       setWebViewRevision((revision) => revision + 1);
       return;
@@ -120,6 +136,7 @@ export function LegalScreen({ slug }: LegalScreenProps) {
 
   const handleWebViewLoad = useCallback(() => {
     if (previewWebMode) {
+      if (previewLoadFailed.current) return;
       setRefreshing(false);
       setRefreshFailed(false);
       setLoadState("ready");
@@ -137,6 +154,7 @@ export function LegalScreen({ slug }: LegalScreenProps) {
 
   const handleWebViewError = useCallback(() => {
     if (previewWebMode) {
+      previewLoadFailed.current = true;
       setRefreshing(false);
       setLoadState("error");
       return;
@@ -176,9 +194,15 @@ export function LegalScreen({ slug }: LegalScreenProps) {
         incognito
         injectedJavaScriptBeforeContentLoaded={previewLocaleBootstrap}
         originWhitelist={[`${previewWebOrigin}/*`]}
-        onShouldStartLoadWithRequest={({ url }) => url === previewWebOrigin || url.startsWith(`${previewWebOrigin}/`)}
+        onShouldStartLoadWithRequest={({ url }) => isAllowedPreviewNavigation(url)}
         onLoad={handleWebViewLoad}
         onError={handleWebViewError}
+        onHttpError={({ nativeEvent }) => {
+          if (nativeEvent.statusCode < 400 || !isAllowedPreviewNavigation(nativeEvent.url)) return;
+          previewLoadFailed.current = true;
+          setRefreshing(false);
+          setLoadState("error");
+        }}
         style={{ backgroundColor: theme.background }}
       /> : null : html ? <WebView
         key={`${slug}-${locale}-${webViewRevision}`}
