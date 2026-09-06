@@ -1,6 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
 import { getRuntimeEnvironment } from "../../config/environment";
 import { useAppTheme } from "../../theme/AppTheme";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
@@ -9,10 +8,15 @@ import { flowColors } from "../flow/flowStyles";
 import type { ProfileDestination, ProfileSection } from "./profileModel";
 import { navigateProfileDestination } from "./profileNavigation";
 
+async function openPreviewBrowser(url: string) {
+  const WebBrowser = await import("expo-web-browser");
+  return WebBrowser.openBrowserAsync(url);
+}
+
 async function openProfileDestination(destination: ProfileDestination) {
   await navigateProfileDestination(destination, getRuntimeEnvironment(), {
     push: (href) => router.push(href),
-    openBrowser: (url) => WebBrowser.openBrowserAsync(url),
+    openBrowser: openPreviewBrowser,
   });
 }
 
