@@ -193,7 +193,7 @@ export function LegalScreen({ slug }: LegalScreenProps) {
         thirdPartyCookiesEnabled={false}
         incognito
         injectedJavaScriptBeforeContentLoaded={previewLocaleBootstrap}
-        originWhitelist={[`${previewWebOrigin}/*`]}
+        originWhitelist={[previewWebOrigin]}
         onShouldStartLoadWithRequest={({ url }) => isAllowedPreviewNavigation(url)}
         onLoad={handleWebViewLoad}
         onError={handleWebViewError}
