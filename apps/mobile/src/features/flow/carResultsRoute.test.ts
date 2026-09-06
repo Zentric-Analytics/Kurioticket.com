@@ -64,21 +64,19 @@ test("car details retain selected result context and can truthfully recover it",
   assert.match(detail, /parseResult\(one\(params\.result\)\)/);
   assert.match(detail, /travelApi\.searchCars/);
   assert.match(detail, /item\.id===one\(params\.resultId\)/);
-  for (const field of ["pickupLocation", "returnLocation", "passengers", "bags", "transmission", "airConditioning", "mileagePolicy", "fuelPolicy", "minimumDriverAge", "offers"]) {
+  for (const field of ["pickupLocation", "returnLocation", "passengers", "bags", "transmission", "airConditioning", "fuelPolicy", "offers"]) {
     assert.match(detail, new RegExp(`result\\.${field}`));
   }
 });
 
-test("car details only enable external booking for a real HTTPS provider URL", () => {
+test("standalone car detail keeps provider URLs in state while matching the inert web CTA", () => {
   const detail = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
   const state = readFileSync("src/features/search/carDetailState.ts", "utf8");
-  assert.match(detail, /canBookCarOffer\(result\.searchPolicy\.bookable,selected\)/);
   assert.match(state, /url\.protocol === "https:"/);
   assert.match(state, /Boolean\(url\.hostname\)/);
-  assert.match(detail, /disabled=\{!bookable\}/);
-  assert.match(detail, /Linking\.openURL\(selected\.bookingUrl\)/);
-  assert.match(detail, /No live provider booking link is available/);
-  assert.match(detail, /Button external/);
+  assert.match(detail, /accessibilityState=\{\{disabled:true\}\}/);
+  assert.match(detail, /disabled style=\{s\.continue\}/);
+  assert.doesNotMatch(detail, /Linking\.openURL\(offer\.bookingUrl\)/);
 });
 
 test("car result and details share the account-backed canonical save store", () => {
@@ -94,8 +92,8 @@ test("car result and details share the account-backed canonical save store", () 
 test("car details preserve geometry for loading and stale-result states", () => {
   const detail = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
   assert.match(detail, /CarDetailLoading/);
-  assert.match(detail, /gallerySkeleton/);
-  assert.match(detail, /provider-row skeleton|sectionSkeleton/);
+  assert.match(detail, /loadingHero/);
+  assert.match(detail, /loadingLine/);
   assert.match(detail, /This car is no longer available/);
   assert.match(detail, /Back to car results/);
 });

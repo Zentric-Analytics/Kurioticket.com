@@ -35,7 +35,7 @@ test("request identity and the flight-specific hard timeout reach the backend", 
 
 test("deadline, supersession, cleanup, and retry preserve latest-request ownership", () => {
   assert.match(screen, /const sequence = \+\+searchSequence\.current/);
-  assert.match(screen, /if \(!isLatest\(\)\) return/);
+  assert.match(screen, /if \(!isLatest\(\) \|\| \(product === "flight" && currentFlightSearchKey\.current !== requestedSearchKey\)\) return/);
   assert.match(screen, /searchSequence\.current \+= 1/);
   assert.match(screen, /activeSearch\.current\?\.abort\("screen-cleanup"\)/);
   assert.match(screen, /activeExecutionKey\.current !== executionKey/);
