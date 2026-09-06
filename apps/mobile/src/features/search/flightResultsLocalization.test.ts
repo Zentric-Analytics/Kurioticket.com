@@ -53,6 +53,42 @@ test("flight counts use locale-aware plural categories", () => {
   assert.match(ar.flightCount(3), /رحلات/);
 });
 
+test("every supported locale renders common result counts without Intl.PluralRules", () => {
+  const original = Object.getOwnPropertyDescriptor(Intl, "PluralRules");
+  try {
+    Object.defineProperty(Intl, "PluralRules", { value: undefined, configurable: true });
+    for (const locale of mobileLocaleCodes) {
+      const copy = flightResultsUiCopy(locale);
+      for (const count of [0, 1, 2, 3, 5, 12]) {
+        assert.match(copy.flightCount(count), new RegExp(`^${count}`), `${locale} count ${count}`);
+      }
+    }
+    assert.equal(flightResultsUiCopy("fr").flightCount(0), "0 vol");
+    assert.equal(flightResultsUiCopy("ar").flightCount(2), "2 رحلتان");
+    assert.equal(flightResultsUiCopy("pl").flightCount(3), "3 loty");
+    assert.equal(flightResultsUiCopy("pl").flightCount(12), "12 lotów");
+  } finally {
+    if (original) Object.defineProperty(Intl, "PluralRules", original);
+  }
+});
+
+test("result counts fall back when the native Intl.PluralRules constructor throws", () => {
+  const original = Object.getOwnPropertyDescriptor(Intl, "PluralRules");
+  try {
+    Object.defineProperty(Intl, "PluralRules", {
+      configurable: true,
+      value: class UnsupportedPluralRules {
+        constructor() { throw new RangeError("unsupported locale"); }
+      },
+    });
+    assert.equal(flightResultsUiCopy("en-us").flightCount(1), "1 flight");
+    assert.equal(flightResultsUiCopy("es-es").flightCount(2), "2 vuelos");
+    assert.equal(flightResultsUiCopy("ar").flightCount(5), "5 رحلات");
+  } finally {
+    if (original) Object.defineProperty(Intl, "PluralRules", original);
+  }
+});
+
 test("migrated Results components do not own core English UI copy", () => {
   const files = ["FlightResultsState.tsx", "FlightSortSheet.tsx", "FlightFilterSheet.tsx", "FlightResultsQuickControls.tsx"];
   const forbidden = ["No flights found", "Sort flights", "Choose how results are ordered", "Maximum travel time", "Search airlines", "Flexible / refundable"];

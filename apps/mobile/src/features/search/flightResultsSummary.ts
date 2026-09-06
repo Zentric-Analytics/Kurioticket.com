@@ -96,6 +96,39 @@ const resultUiCopy: Record<MobileLocale, Record<UiKey, string>> = {
 type PluralCategory = "zero" | "one" | "two" | "few" | "many" | "other";
 type CountTemplates = { other: string } & Partial<Record<Exclude<PluralCategory, "other">, string>>;
 
+function fallbackPluralCategory(locale: MobileLocale, value: number): PluralCategory {
+  if (!Number.isInteger(value)) return "other";
+  const absolute = Math.abs(value);
+  if (locale === "ar") {
+    if (absolute === 0) return "zero";
+    if (absolute === 1) return "one";
+    if (absolute === 2) return "two";
+    const modulo100 = absolute % 100;
+    if (modulo100 >= 3 && modulo100 <= 10) return "few";
+    if (modulo100 >= 11 && modulo100 <= 99) return "many";
+    return "other";
+  }
+  if ((locale === "fr" || locale === "pt-br" || locale === "hi") && (absolute === 0 || absolute === 1)) return "one";
+  if (locale === "pl") {
+    if (absolute === 1) return "one";
+    const modulo10 = absolute % 10;
+    const modulo100 = absolute % 100;
+    if (modulo10 >= 2 && modulo10 <= 4 && (modulo100 < 12 || modulo100 > 14)) return "few";
+    return "many";
+  }
+  return absolute === 1 ? "one" : "other";
+}
+
+function pluralCategory(locale: MobileLocale, intl: string, value: number): PluralCategory {
+  try {
+    const PluralRules = Intl?.PluralRules;
+    if (typeof PluralRules === "function") return new PluralRules(intl).select(value) as PluralCategory;
+  } catch {
+    // Some native runtimes expose Intl.PluralRules but cannot construct it for every locale.
+  }
+  return fallbackPluralCategory(locale, value);
+}
+
 const countTemplates: Record<MobileLocale, CountTemplates> = {
   "en-us": { one:"{count} flight", other:"{count} flights" },
   "es-es": { one:"{count} vuelo", other:"{count} vuelos" },
@@ -141,9 +174,8 @@ const uiForms: Record<MobileLocale, { view: string; applied: string; priceFrom: 
 export const flightResultsUiCopy = (locale: MobileLocale) => {
   const labels = resultUiCopy[locale];
   const intl = mobileLocales.find((option) => option.code === locale)?.intl ?? "en-US";
-  const pluralRules = new Intl.PluralRules(intl);
   const countLabel = (value: number) => {
-    const category = pluralRules.select(value) as PluralCategory;
+    const category = pluralCategory(locale, intl, value);
     const template = countTemplates[locale][category] ?? countTemplates[locale].other;
     return template.replace("{count}", String(value));
   };
