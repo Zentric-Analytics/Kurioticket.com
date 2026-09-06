@@ -29,8 +29,10 @@ test("authenticated and guest profiles each own one guest-accessible Preview bro
     assert.doesNotMatch(profile, /fallbackHref/);
   }
   const card = source("src/features/profile/ProfileCardSection.tsx");
-  assert.match(card, /from "expo-web-browser"/);
+  assert.doesNotMatch(card, /^import .*expo-web-browser/m);
+  assert.match(card, /await import\("expo-web-browser"\)/);
   assert.match(card, /WebBrowser\.openBrowserAsync\(url\)/);
+  assert.match(card, /openBrowser: openPreviewBrowser/);
   assert.match(card, /getRuntimeEnvironment\(\)/);
 });
 
