@@ -42,6 +42,10 @@ test("native Hotel identity matches web typography without changing its facts", 
   const row = styleRule(detailSource, "hotelFactRow", "hotelDetailBody");
 
   assert.match(name, /fontSize: 22[^}]*lineHeight: 28[^}]*fontWeight: "800"[^}]*fontFamily: appFonts\.extraBold[^}]*letterSpacing: -0\.55/);
+  assert.match(detailSource, /hotelNamePhoneFit: \{ letterSpacing: -0\.8 \}/);
+  assert.match(hotel, /style=\{\[d\.hotelName, width <= 430 && d\.hotelNamePhoneFit, \{ color: hotelIdentityTitleColor \}\]\}/);
+  const hotelNameElement = hotel.slice(hotel.indexOf("style={[d.hotelName"), hotel.indexOf("</Text>", hotel.indexOf("style={[d.hotelName")));
+  assert.doesNotMatch(hotelNameElement, /numberOfLines=\{1\}|ellipsizeMode="tail"|adjustsFontSizeToFit/);
   assert.doesNotMatch(name, /fontWeight: "900"/);
   assert.match(detailSource, /hotelIdentity: \{[^}]*paddingHorizontal: 16[^}]*paddingBottom: 16/);
   assert.match(detailSource, /hotelIdentityTopRow: \{[^}]*gap: 12/);

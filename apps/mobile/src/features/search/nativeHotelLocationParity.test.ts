@@ -95,7 +95,7 @@ test("Location visual contracts match mobile web", () => {
   assert.match(styleRule(component, "accessibilityText", "accessibilityFallback"), /fontSize: 14[\s\S]*lineHeight: 24/);
 });
 
-test("Compare Property location remains independently unchanged", () => {
+test("Compare Property location remains distinct from the 200dp Location-tab map", () => {
   assert.match(compare, /export function NativeHotelPropertyLocationSection/);
-  assert.match(styleRule(compare, "mapFrame", "mapViewport"), /height: 280/);
+  assert.match(styleRule(compare, "mapFrame", "map"), /height: 280/);
 });

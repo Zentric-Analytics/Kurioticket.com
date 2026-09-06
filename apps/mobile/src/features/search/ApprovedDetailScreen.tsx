@@ -735,7 +735,7 @@ function HotelDetail({
           <View style={d.hotelIdentityTopRow}>
             <Text
               accessibilityRole="header"
-              style={[d.hotelName, { color: hotelIdentityTitleColor }]}
+              style={[d.hotelName, width <= 430 && d.hotelNamePhoneFit, { color: hotelIdentityTitleColor }]}
             >
               {result.name}
             </Text>
@@ -905,6 +905,7 @@ function HotelDetail({
                 </View>
               </View>
               <NativeHotelPropertyLocationSection
+                hotelId={result.id}
                 hotelName={result.name}
                 propertyDetails={property}
                 theme={theme}
@@ -1549,6 +1550,7 @@ const d = StyleSheet.create({
   hotelPriceSummary: { alignItems: "flex-end", flexShrink: 0 },
   hotelPriceSummaryCompact: { alignItems: "flex-start" },
   hotelName: { flex: 1, minWidth: 0, fontSize: 22, lineHeight: 28, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.55, color: ui.navy },
+  hotelNamePhoneFit: { letterSpacing: -0.8 },
   stars: { color: "#FFB800", fontSize: 15, marginVertical: 7 },
   score: { backgroundColor: ui.blue, color: "white", fontWeight: "900" },
   stay: {
