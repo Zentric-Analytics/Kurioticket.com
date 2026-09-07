@@ -465,6 +465,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 12,
     fontFamily: appFonts.regular,
     fontSize: 16,
+    letterSpacing: 0,
   },
   footer: { paddingHorizontal: 20, paddingVertical: 12 },
   error: {

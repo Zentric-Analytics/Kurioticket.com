@@ -1278,6 +1278,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 12,
     fontFamily: appFonts.regular,
     fontSize: 16,
+    letterSpacing: 0,
   },
   phone: { height: 50, flexDirection: "row", alignItems: "stretch" },
   countrySegment: {
@@ -1314,6 +1315,7 @@ const s = StyleSheet.create({
     padding: 0,
     fontFamily: appFonts.regular,
     fontSize: 16,
+    letterSpacing: 0,
   },
   selectField: { flex: 1 },
   select: { flexDirection: "row", alignItems: "center", gap: 6 },
