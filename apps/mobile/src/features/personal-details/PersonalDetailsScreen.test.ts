@@ -5,8 +5,16 @@ const screen = readFileSync(
   "src/features/personal-details/PersonalDetailsScreen.tsx",
   "utf8",
 ).replace(/\r\n/g, "\n");
+const quick = readFileSync(
+  "src/features/personal-details/PersonalDetailsQuickEditor.tsx",
+  "utf8",
+).replace(/\r\n/g, "\n");
+const saveButton = readFileSync(
+  "src/features/personal-details/PersonalDetailsSaveButton.tsx",
+  "utf8",
+).replace(/\r\n/g, "\n");
 test("overview keeps a continuous list in the agreed field order", () => {
-  assert.match(screen, /!editing\s*\?\s*\(/);
+  assert.match(screen, /!pageEditing\s*\?\s*\(/);
   assert.match(
     screen,
     /const detailOrder: DetailKey\[\] = \[\s*"fullName",\s*"email",\s*"phone",\s*"birth",\s*"gender",\s*"nationality",\s*"address",?\s*\]/,
@@ -33,7 +41,7 @@ test("Cancel restores authoritative saved values", () => {
   assert.match(screen, /setEditing\(false\)/);
 });
 test("Save is disabled until dirty and while saving", () =>
-  assert.match(screen, /disabled=\{!dirty\s*\|\|\s*saving\}/));
+  assert.match(saveButton, /disabled=\{!dirty\s*\|\|\s*saving\}/));
 test("duplicate submission is prevented and failed save retains draft", () => {
   assert.match(screen, /submitting\.current/);
   assert.doesNotMatch(screen, /catch\{[^}]*setDraft/s);
@@ -111,7 +119,6 @@ test("authentication expiry preserves protected return intent", () =>
 test("theme semantics cover shell card inputs and selectors", () => {
   for (const token of [
     "theme.background",
-    "theme.surface",
     "theme.border",
     "theme.text",
     "theme.muted",
@@ -135,7 +142,7 @@ test("header stays visible while shared initial loading and retry states replace
 });
 test("overview has no background cards or section headings", () => {
   const overview = screen.slice(
-    screen.indexOf("{!editing ? ("),
+    screen.indexOf("{!pageEditing ? ("),
     screen.indexOf("style={s.formContent}"),
   );
   assert.doesNotMatch(
@@ -179,9 +186,9 @@ test("phone, nationality, and address searches have independent aliases", () => 
     screen,
     /PHONE_COUNTRY_OPTIONS\.map[\s\S]*?x\.isoCode[\s\S]*?x\.dialCode[\s\S]*?replace\("\+", ""\)/,
   );
-  assert.match(screen, /addressCountry"[\s\S]*?searchTerms: \[x\.code\]/);
+  assert.match(screen, /COUNTRY_OPTIONS\.map[\s\S]*?searchTerms: \[x\.code\]/);
   assert.match(
-    screen,
+    quick,
     /NATIONALITY_OPTIONS\.map[\s\S]*?searchTerms: \[COUNTRY_OPTIONS\[index\]\.code\]/,
   );
 });
@@ -252,13 +259,9 @@ test("picker mode and dataset survive native close and rapid reopen", () => {
     /const finishSelectorDismiss = \(\) => \{[\s\S]*?if \(!selectorVisibleRef\.current\) setSelector\(null\)/,
   );
   assert.ok(
-    (screen.match(/onDismiss=\{finishSelectorDismiss\}/g) ?? []).length >= 2,
+    (screen.match(/onDismiss=\{finishSelectorDismiss\}/g) ?? []).length === 1,
   );
-  assert.match(
-    screen,
-    /selector === "year"[\s\S]*?Array\.from\(\{ length: 125 \}/,
-  );
-  assert.match(screen, /selector === "year"[\s\S]*?: \[\];/);
+  assert.match(quick, /Array\.from\(\{ length: 125 \}/);
 });
 test("dial codes are exclusive to the phone-country selector", () => {
   const selector = screen.slice(
@@ -329,18 +332,18 @@ test("selector Save stays in Edit mode and merges only its committed value", () 
     /address: serializeAddress\(\{[\s\S]*?\.\.\.parseAddress\(current\.address \|\| ""\),[\s\S]*?countryCode: value/,
   );
 });
-test("only country controls use the full-screen selector", () => {
-  assert.match(
-    screen,
-    /selector !== "phone" &&\s*selector !== "nationality" &&\s*selector !== "addressCountry"/,
-  );
-  assert.match(
-    screen,
-    /selectorVisible &&[\s\S]*?selector === "phone" \|\|\s*selector === "nationality" \|\|\s*selector === "addressCountry"/,
-  );
-  assert.match(screen, /onPress=\{\(\) => openSelector\("day"\)\}/);
-  assert.match(screen, /onPress=\{\(\) => openSelector\("gender"\)\}/);
+test("quick fields open directly over the overview without an intermediate page", () => {
+  for (const key of ["gender", "nationality", "birth"])
+    assert.ok(screen.includes('activeDetail === "' + key + '"'));
+  assert.match(screen, /const pageEditing = editing && !quickDetail/);
+  assert.match(screen, /quickDetail && \(/);
+  assert.match(screen, /detail=\{quickDetail\}/);
+  assert.match(screen, /onClose=\{\(\) => discard\(false\)\}/);
+  assert.match(quick, /const fullScreen = detail === "nationality"/);
+  assert.match(quick, /onRequestClose=\{onClose\}/);
+  assert.doesNotMatch(quick, /travelApi|router\./);
 });
+
 test("address opens without keyboard and Next moves through fields", () => {
   const address = screen.slice(
     screen.indexOf('activeDetail === "address" &&'),
@@ -358,14 +361,9 @@ test("edit controls follow the web responsive alignment contract", () => {
   assert.match(screen, /testID="personal-details-phone-row"/);
   assert.match(screen, /countrySegment:\s*\{\s*width:\s*82/);
   assert.match(screen, /phoneInput:\s*\{[\s\S]*?flex:\s*1/);
-  assert.match(
-    screen,
-    /dayControl:\s*\{\s*flex:\s*3[\s\S]*monthControl:\s*\{\s*flex:\s*6[\s\S]*yearControl:\s*\{\s*flex:\s*4/,
-  );
   assert.match(screen, /localityRow:[\s\S]*flexDirection:\s*"row"/);
   assert.match(screen, /width\s*<\s*340\s*&&\s*s\.localityStack/);
   assert.match(screen, /postalField:\s*\{\s*width:\s*"50%"/);
-  assert.match(screen, /actions:\s*\{[^}]*alignItems:\s*"stretch"/);
 });
 test("dynamic flag is decorative, validated and has a safe ISO fallback", () => {
   assert.match(screen, /getCountryFlagUri\(option\?\.isoCode\)/);
@@ -431,7 +429,6 @@ test("address fields retain web order and canonical serializer", () => {
 test("editable controls keep stable component identity across draft updates", () => {
   const screenStart = screen.indexOf("export function PersonalDetailsScreen");
   for (const component of [
-    "Selector",
     "CountrySelector",
     "CountryFlag",
     "Field",
@@ -451,10 +448,7 @@ test("Save and validation feedback stay outside the scrolling form", () => {
   const footer = screen.indexOf("s.editorFooter");
   const scrollEnd = screen.lastIndexOf("</ScrollView>", footer);
   assert.ok(scrollEnd > screen.indexOf("ref={scrollRef}"));
-  assert.ok(
-    screen.indexOf("accessibilityLabel={saving ? c.saving : c.save}", footer) >
-      footer,
-  );
+  assert.ok(screen.indexOf("<PersonalDetailsSaveButton", footer) > footer);
   assert.match(screen.slice(footer), /accessibilityLiveRegion="assertive"/);
 });
 test("back returns to the overview and restores its scroll position", () => {
@@ -462,7 +456,7 @@ test("back returns to the overview and restores its scroll position", () => {
   assert.match(screen, /BackHandler\.addEventListener\(\s*"hardwareBackPress"/);
   assert.match(
     screen,
-    /contentOffset=\{\{ x: 0, y: editing \? 0 : overviewOffset\.current \}\}/,
+    /contentOffset=\{\{\s*x: 0,\s*y: pageEditing \? 0 : overviewOffset\.current,?\s*\}\}/,
   );
 });
 test("text inputs have a visible focus border without remounting", () => {
@@ -505,21 +499,15 @@ test("main editor avoids the keyboard on Android as well as iOS", () => {
   assert.ok(main.indexOf("s.editorFooter") > main.indexOf("</ScrollView>"));
 });
 
-test("editor actions share equal sizing and aligned labels", () => {
+test("editors have one shared full-width Save action and back handles discard", () => {
   const footer = screen.slice(
     screen.indexOf("s.editorFooter"),
     screen.indexOf("</KeyboardAvoidingView>", screen.indexOf("s.editorFooter")),
   );
-  assert.equal((footer.match(/s\.actionButton/g) || []).length, 2);
-  assert.match(
-    screen,
-    /actionButton:\s*\{[^}]*flex: 1,[^}]*minWidth: 0,[^}]*minHeight: 50,/,
-  );
-  assert.doesNotMatch(
-    screen.slice(
-      screen.indexOf("  actions: {"),
-      screen.indexOf("  buttonText:"),
-    ),
-    /flexWrap|minWidth: (72|142)/,
-  );
+  assert.equal((footer.match(/<PersonalDetailsSaveButton/g) || []).length, 1);
+  assert.doesNotMatch(footer, /c\.cancel/);
+  assert.match(saveButton, /width: "100%"/);
+  assert.match(saveButton, /busy: saving/);
+  assert.match(quick, /<PersonalDetailsSaveButton/);
+  assert.match(screen, /editing \? discard\(false\) : router\.back\(\)/);
 });

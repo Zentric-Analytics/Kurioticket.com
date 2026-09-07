@@ -50,10 +50,8 @@ import {
   GENDER_VALUES,
   getCountryFlagUri,
   isEligiblePersonalDetailsDateOfBirth,
-  NATIONALITY_OPTIONS,
   normalizeProfile,
   parseAddress,
-  personalDetailsLatestDateOfBirth,
   PHONE_COUNTRY_OPTIONS,
   profilesDiffer,
   serializeAddress,
@@ -62,14 +60,15 @@ import {
   type PersonalDetailsSelectorOption,
 } from "./personalDetailsModel";
 import { personalDetailsCopy } from "./translations";
+import {
+  PersonalDetailsQuickEditor,
+  type DateDraft,
+  type QuickDetail,
+} from "./PersonalDetailsQuickEditor";
+import { PersonalDetailsCountryFlag } from "./PersonalDetailsCountryFlag";
+import { PersonalDetailsSaveButton } from "./PersonalDetailsSaveButton";
 import { signInHref } from "../auth/signInIntent";
 import { PageContentState } from "../../components/PageContentState";
-
-type DateDraft = {
-  year: string;
-  month: string;
-  day: string;
-};
 
 function dateDraftFromValue(value?: string | null): DateDraft {
   const match = (value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -78,16 +77,6 @@ function dateDraftFromValue(value?: string | null): DateDraft {
     month: match?.[2] || "",
     day: match?.[3] || "",
   };
-}
-
-function dateMonthLabel(value: string, locale: string) {
-  if (!/^\d{2}$/.test(value)) return "";
-  const monthIndex = Number(value) - 1;
-  if (monthIndex < 0 || monthIndex > 11) return "";
-  return new Intl.DateTimeFormat(locale === "es-es" ? "es-ES" : "en-US", {
-    month: "long",
-    timeZone: "UTC",
-  }).format(new Date(Date.UTC(2020, monthIndex, 1)));
 }
 
 type SelectorProps = {
@@ -101,124 +90,6 @@ type SelectorProps = {
   onDismiss: () => void;
   onSelect: (value: string) => void;
 };
-function Selector({
-  visible,
-  title,
-  selectorType,
-  options,
-  selected,
-  searchable,
-  onClose,
-  onDismiss,
-  onSelect,
-}: SelectorProps) {
-  const { theme } = useAppTheme();
-  const { locale } = useMobileLocalization();
-  const c = personalDetailsCopy(locale);
-  const [q, setQ] = useState("");
-  const { height } = useWindowDimensions();
-  const shown = filterSelectorOptions(options, q);
-  useEffect(() => {
-    setQ("");
-    if (visible) Keyboard.dismiss();
-  }, [selectorType, visible]);
-  const close = () => {
-    Keyboard.dismiss();
-    setQ("");
-    onClose();
-  };
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={close}
-      onDismiss={onDismiss}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={s.modalRoot}
-      >
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={c.cancel}
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: "rgba(0,0,0,.45)" },
-          ]}
-          onPress={close}
-        />
-        <SafeAreaView
-          edges={["bottom"]}
-          style={[
-            s.sheet,
-            { backgroundColor: theme.surface, maxHeight: height * 0.82 },
-          ]}
-        >
-          <Text
-            accessibilityRole="header"
-            style={[s.sectionTitle, { color: theme.text }]}
-          >
-            {title}
-          </Text>
-          {searchable ? (
-            <TextInput
-              accessibilityLabel={c.searchCountry}
-              placeholder={c.searchCountry}
-              placeholderTextColor={theme.muted}
-              value={q}
-              onChangeText={setQ}
-              style={[
-                s.input,
-                {
-                  color: theme.text,
-                  borderColor: theme.border,
-                  backgroundColor: theme.background,
-                },
-              ]}
-            />
-          ) : null}
-          <ScrollView keyboardShouldPersistTaps="handled">
-            {shown.map((item) => (
-              <Pressable
-                key={item.value}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: item.value === selected }}
-                onPress={() => {
-                  Keyboard.dismiss();
-                  onSelect(item.value);
-                  setQ("");
-                  onClose();
-                }}
-                style={[s.option, { borderBottomColor: theme.border }]}
-              >
-                <Text
-                  style={{
-                    color: theme.text,
-                    fontFamily:
-                      item.value === selected
-                        ? appFonts.semibold
-                        : appFonts.regular,
-                  }}
-                >
-                  {item.label}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-          <Pressable
-            accessibilityRole="button"
-            onPress={close}
-            style={s.modalCancel}
-          >
-            <Text style={s.blue}>{c.cancel}</Text>
-          </Pressable>
-        </SafeAreaView>
-      </KeyboardAvoidingView>
-    </Modal>
-  );
-}
-
 type CountrySelectorProps = Omit<SelectorProps, "searchable" | "onSelect"> & {
   kind: "phone" | "nationality" | "addressCountry";
   onSave: (value: string) => boolean;
@@ -452,28 +323,7 @@ function CountrySelector({
 }
 
 function CountryFlag({ isoCode }: { isoCode?: string }) {
-  const { theme } = useAppTheme();
-  const [failed, setFailed] = useState(false);
-  const uri = getCountryFlagUri(isoCode);
-  useEffect(() => setFailed(false), [uri]);
-  return uri && !failed ? (
-    <Image
-      accessible={false}
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      source={{ uri }}
-      onError={() => setFailed(true)}
-      style={s.flag}
-    />
-  ) : (
-    <Text
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      style={[s.flagFallback, { color: theme.text }]}
-    >
-      {isoCode || "--"}
-    </Text>
-  );
+  return <PersonalDetailsCountryFlag isoCode={isoCode} />;
 }
 
 function Field({
@@ -678,17 +528,16 @@ export function PersonalDetailsScreen() {
     [saving, setSaving] = useState(false),
     [error, setError] = useState(""),
     [success, setSuccess] = useState(""),
-    [selector, setSelector] = useState<
-      | "phone"
-      | "gender"
-      | "nationality"
-      | "addressCountry"
-      | "day"
-      | "month"
-      | "year"
-      | null
-    >(null),
+    [selector, setSelector] = useState<"phone" | "addressCountry" | null>(null),
     [selectorVisible, setSelectorVisible] = useState(false);
+  const quickDetail: QuickDetail | null =
+    editing &&
+    (activeDetail === "gender" ||
+      activeDetail === "nationality" ||
+      activeDetail === "birth")
+      ? activeDetail
+      : null;
+  const pageEditing = editing && !quickDetail;
   const dismissSuccess = useCallback(() => {
     if (successTimer.current) {
       clearTimeout(successTimer.current);
@@ -982,9 +831,6 @@ export function PersonalDetailsScreen() {
     "nationality",
     "address",
   ];
-  const latestBirthYear = Number(
-    personalDetailsLatestDateOfBirth().slice(0, 4),
-  );
   const selectOptions =
     selector === "phone"
       ? PHONE_COUNTRY_OPTIONS.map((x) => ({
@@ -992,58 +838,13 @@ export function PersonalDetailsScreen() {
           value: x.isoCode,
           searchTerms: [x.isoCode, x.dialCode, x.dialCode.replace("+", "")],
         }))
-      : selector === "addressCountry"
-        ? COUNTRY_OPTIONS.map((x) => ({
-            label: x.label,
-            value: x.code,
-            searchTerms: [x.code],
-          }))
-        : selector === "gender"
-          ? GENDER_VALUES.map((value, index) => ({
-              value,
-              label: [c.male, c.female, c.prefer][index],
-            }))
-          : selector === "nationality"
-            ? NATIONALITY_OPTIONS.map((value, index) => ({
-                value,
-                label: value,
-                searchTerms: [COUNTRY_OPTIONS[index].code],
-              }))
-            : selector === "day"
-              ? Array.from({ length: 31 }, (_, i) => ({
-                  value: String(i + 1).padStart(2, "0"),
-                  label: String(i + 1),
-                }))
-              : selector === "month"
-                ? Array.from({ length: 12 }, (_, i) => ({
-                    value: String(i + 1).padStart(2, "0"),
-                    label: new Intl.DateTimeFormat(
-                      locale === "es-es" ? "es-ES" : "en-US",
-                      { month: "long", timeZone: "UTC" },
-                    ).format(new Date(Date.UTC(2020, i, 1))),
-                  }))
-                : selector === "year"
-                  ? Array.from({ length: 125 }, (_, i) => ({
-                      value: String(latestBirthYear - i),
-                      label: String(latestBirthYear - i),
-                    }))
-                  : [];
+      : COUNTRY_OPTIONS.map((x) => ({
+          label: x.label,
+          value: x.code,
+          searchTerms: [x.code],
+        }));
   const selected =
-    selector === "phone"
-      ? draft.phoneCountryCode || ""
-      : selector === "addressCountry"
-        ? address.countryCode
-        : selector === "gender"
-          ? draft.gender || ""
-          : selector === "nationality"
-            ? draft.nationality || ""
-            : selector === "day"
-              ? dateDraft.day
-              : selector === "month"
-                ? dateDraft.month
-                : selector === "year"
-                  ? dateDraft.year
-                  : "";
+    selector === "phone" ? draft.phoneCountryCode || "" : address.countryCode;
   return (
     <SafeAreaView
       edges={["top", "bottom"]}
@@ -1071,7 +872,7 @@ export function PersonalDetailsScreen() {
           accessibilityRole="header"
           style={[s.title, { color: theme.text }]}
         >
-          {editing ? details[activeDetail].label : c.title}
+          {pageEditing ? details[activeDetail].label : c.title}
         </Text>
         <View style={s.iconButton} />
       </View>
@@ -1090,10 +891,13 @@ export function PersonalDetailsScreen() {
         >
           <ScrollView
             ref={scrollRef}
-            key={editing ? activeDetail : "overview"}
-            contentOffset={{ x: 0, y: editing ? 0 : overviewOffset.current }}
+            key={pageEditing ? activeDetail : "overview"}
+            contentOffset={{
+              x: 0,
+              y: pageEditing ? 0 : overviewOffset.current,
+            }}
             onScroll={(event) => {
-              if (!editing)
+              if (!pageEditing)
                 overviewOffset.current = event.nativeEvent.contentOffset.y;
             }}
             scrollEventThrottle={16}
@@ -1110,7 +914,7 @@ export function PersonalDetailsScreen() {
                 {error}
               </Text>
             ) : null}
-            {!editing ? (
+            {!pageEditing ? (
               <View>
                 <Text style={[s.description, { color: theme.muted }]}>
                   {c.description}
@@ -1214,58 +1018,6 @@ export function PersonalDetailsScreen() {
                     />
                   </>
                 )}
-                {activeDetail === "birth" && (
-                  <>
-                    <Text style={[s.label, { color: theme.muted }]}>
-                      {c.birth}
-                    </Text>
-                    <View style={[s.date, width < 340 && s.compactGap]}>
-                      <View style={s.dayControl}>
-                        <SelectButton
-                          hideLabel
-                          label={c.day}
-                          value={dateDraft.day || c.day}
-                          onPress={() => openSelector("day")}
-                        />
-                      </View>
-                      <View style={s.monthControl}>
-                        <SelectButton
-                          hideLabel
-                          label={c.month}
-                          value={
-                            dateMonthLabel(dateDraft.month, locale) || c.month
-                          }
-                          onPress={() => openSelector("month")}
-                        />
-                      </View>
-                      <View style={s.yearControl}>
-                        <SelectButton
-                          hideLabel
-                          label={c.year}
-                          value={dateDraft.year || c.year}
-                          onPress={() => openSelector("year")}
-                        />
-                      </View>
-                    </View>
-                  </>
-                )}
-                {activeDetail === "gender" && (
-                  <SelectButton
-                    label={c.gender}
-                    value={draft.gender || c.select}
-                    onPress={() => openSelector("gender")}
-                  />
-                )}
-                {activeDetail === "nationality" && (
-                  <SelectButton
-                    label={c.nationality}
-                    value={draft.nationality || c.select}
-                    onPress={() => {
-                      Keyboard.dismiss();
-                      openSelector("nationality");
-                    }}
-                  />
-                )}
                 {activeDetail === "address" && (
                   <>
                     <Text
@@ -1355,7 +1107,7 @@ export function PersonalDetailsScreen() {
               </View>
             )}
           </ScrollView>
-          {editing && activeDetail !== "email" ? (
+          {pageEditing && activeDetail !== "email" ? (
             <View
               style={[
                 s.editorFooter,
@@ -1374,54 +1126,11 @@ export function PersonalDetailsScreen() {
                   {error}
                 </Text>
               ) : null}
-              <View style={s.actions}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={c.cancel}
-                  disabled={saving}
-                  onPress={() => discard(false)}
-                  accessibilityState={{ disabled: saving }}
-                  style={({ pressed }) => [
-                    s.actionButton,
-                    {
-                      borderColor: theme.border,
-                      opacity: saving ? 0.45 : pressed ? 0.6 : 1,
-                    },
-                  ]}
-                >
-                  <Text style={[s.buttonText, { color: theme.text }]}>
-                    {c.cancel}
-                  </Text>
-                </Pressable>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={saving ? c.saving : c.save}
-                  accessibilityState={{
-                    disabled: !dirty || saving,
-                    busy: saving,
-                  }}
-                  disabled={!dirty || saving}
-                  onPress={() => void save()}
-                  style={({ pressed }) => [
-                    s.actionButton,
-                    {
-                      borderColor: "transparent",
-                      backgroundColor:
-                        !dirty && !saving ? theme.border : flowColors.blue,
-                      opacity: pressed ? 0.8 : 1,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      s.primaryText,
-                      !dirty && !saving && { color: theme.muted },
-                    ]}
-                  >
-                    {saving ? c.saving : c.save}
-                  </Text>
-                </Pressable>
-              </View>
+              <PersonalDetailsSaveButton
+                dirty={dirty}
+                saving={saving}
+                onSave={() => void save()}
+              />
             </View>
           ) : null}
         </KeyboardAvoidingView>
@@ -1460,80 +1169,32 @@ export function PersonalDetailsScreen() {
           </View>
         </View>
       ) : null}
-      <Selector
-        visible={
-          selectorVisible &&
-          !!selector &&
-          selector !== "phone" &&
-          selector !== "nationality" &&
-          selector !== "addressCountry"
-        }
-        selectorType={selector}
-        title={
-          selector
-            ? {
-                phone: c.country,
-                gender: c.gender,
-                nationality: c.nationality,
-                addressCountry: c.country,
-                day: c.day,
-                month: c.month,
-                year: c.year,
-              }[selector]
-            : ""
-        }
-        options={selectOptions}
-        selected={selected}
-        searchable={
-          selector === "phone" ||
-          selector === "nationality" ||
-          selector === "addressCountry"
-        }
-        onClose={closeSelector}
-        onSelect={(value) => {
-          if (selector === "phone") patch("phoneCountryCode", value);
-          else if (selector === "gender") patch("gender", value);
-          else if (selector === "nationality") patch("nationality", value);
-          else if (selector === "addressCountry")
-            patchAddress("countryCode", value);
-          else if (selector === "year") updateDateDraft("year", value);
-          else if (selector === "month") updateDateDraft("month", value);
-          else if (selector === "day") updateDateDraft("day", value);
-        }}
-        onDismiss={finishSelectorDismiss}
-      />
+      {quickDetail && (
+        <PersonalDetailsQuickEditor
+          detail={quickDetail}
+          dateDraft={dateDraft}
+          gender={draft.gender || ""}
+          nationality={draft.nationality || ""}
+          dirty={dirty}
+          saving={saving}
+          error={error}
+          onDateChange={updateDateDraft}
+          onGenderChange={(value) => patch("gender", value)}
+          onNationalityChange={(value) => patch("nationality", value)}
+          onClose={() => discard(false)}
+          onSave={() => void save()}
+        />
+      )}
       <CountrySelector
-        visible={
-          selectorVisible &&
-          (selector === "phone" ||
-            selector === "nationality" ||
-            selector === "addressCountry")
-        }
+        visible={selectorVisible}
         selectorType={selector}
-        kind={
-          selector === "nationality"
-            ? "nationality"
-            : selector === "addressCountry"
-              ? "addressCountry"
-              : "phone"
-        }
-        title={
-          selector === "nationality"
-            ? c.nationality
-            : selector === "phone" || selector === "addressCountry"
-              ? c.country
-              : ""
-        }
+        kind={selector === "phone" ? "phone" : "addressCountry"}
+        title={c.country}
         options={selectOptions}
         selected={selected}
         onClose={closeSelector}
         onSave={(value) => {
-          const kind =
-            selector === "nationality"
-              ? "nationality"
-              : selector === "addressCountry"
-                ? "addressCountry"
-                : "phone";
+          const kind = selector === "phone" ? "phone" : "addressCountry";
           return saveCountrySelection(kind, value);
         }}
         onDismiss={finishSelectorDismiss}
@@ -1609,7 +1270,6 @@ const s = StyleSheet.create({
   value: { fontSize: 16, lineHeight: 23, fontFamily: appFonts.medium },
   blue: { color: flowColors.blue, fontFamily: appFonts.semibold },
   formContent: { gap: 20, paddingTop: 8 },
-  sectionTitle: { fontSize: 17, lineHeight: 23, fontFamily: appFonts.semibold },
   addressDescription: {
     fontFamily: appFonts.regular,
     fontSize: 14,
@@ -1660,11 +1320,6 @@ const s = StyleSheet.create({
     fontFamily: appFonts.regular,
     fontSize: 16,
   },
-  date: { flexDirection: "row", gap: 8 },
-  compactGap: { gap: 4 },
-  dayControl: { flex: 3 },
-  monthControl: { flex: 6 },
-  yearControl: { flex: 4 },
   selectField: { flex: 1 },
   select: { flexDirection: "row", alignItems: "center", gap: 6 },
   linkHit: { minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
@@ -1672,35 +1327,6 @@ const s = StyleSheet.create({
   localityStack: { flexDirection: "column", gap: 12 },
   localityField: { flex: 1, minWidth: 0 },
   postalField: { width: "50%" },
-  actions: {
-    flexDirection: "row",
-    alignItems: "stretch",
-    gap: 12,
-  },
-  actionButton: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: 50,
-    borderRadius: 10,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-  },
-  buttonText: {
-    fontSize: 15,
-    lineHeight: 20,
-    textAlign: "center",
-    fontFamily: appFonts.semibold,
-  },
-  primaryText: {
-    fontSize: 15,
-    lineHeight: 20,
-    textAlign: "center",
-    color: "#FFFFFF",
-    fontFamily: appFonts.semibold,
-  },
   feedback: {
     fontSize: 14,
     lineHeight: 20,
@@ -1724,24 +1350,6 @@ const s = StyleSheet.create({
     paddingVertical: 9,
   },
   toastText: { fontSize: 14, lineHeight: 20, fontFamily: appFonts.semibold },
-  modalRoot: { flex: 1, justifyContent: "flex-end" },
-  sheet: {
-    maxHeight: "82%",
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    padding: 16,
-    gap: 10,
-  },
-  option: {
-    minHeight: 50,
-    justifyContent: "center",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  modalCancel: {
-    minHeight: 48,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   countryModalSafe: { flex: 1 },
   countryModalLayout: { flex: 1 },
   countrySearchArea: { paddingHorizontal: 16, paddingVertical: 12 },

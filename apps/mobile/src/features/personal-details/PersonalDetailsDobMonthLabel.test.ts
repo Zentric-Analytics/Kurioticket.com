@@ -8,18 +8,13 @@ const screen = readFileSync(
 );
 
 test("DOB month edit field shows a readable month name while preserving numeric draft storage", () => {
-  assert.match(
-    screen,
-    /function dateMonthLabel\(value: string, locale: string\)/,
+  const quick = readFileSync(
+    "src/features/personal-details/PersonalDetailsQuickEditor.tsx",
+    "utf8",
   );
-  assert.match(
-    screen,
-    /value=\{\s*dateMonthLabel\(dateDraft\.month, locale\) \|\| c\.month\s*\}/,
-  );
-  assert.match(
-    screen,
-    /value: String\(i \+ 1\)\.padStart\(2, "0"\)/,
-  );
+  assert.match(quick, /month: "short"/);
+  assert.match(quick, /locale === "es-es" \? "es-ES" : "en-US"/);
+  assert.match(quick, /value: String\(i \+ 1\)\.padStart\(2, "0"\)/);
   assert.match(
     screen,
     /const candidate = `\$\{next\.year\}-\$\{next\.month\}-\$\{next\.day\}`/,
