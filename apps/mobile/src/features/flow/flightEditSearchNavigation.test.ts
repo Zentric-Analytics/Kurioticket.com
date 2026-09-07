@@ -72,14 +72,12 @@ test("results modal cards preserve the flight form hierarchy and controls", () =
   assert.match(panel, /\{notice \? <UnavailableNotice text=\{notice\}\/> : null\}\{showSubmit \? <View style=\{styles\.button\}><PrimaryButton label=\{submitLabel\}/);
 });
 
-test("results modal appearance leaves multi-city and compact field geometry unchanged", () => {
+test("results modal appearance is isolated from shared compact field geometry", () => {
   const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
   const primitives = readFileSync("src/features/flow/FlowPrimitives.tsx", "utf8");
-  const multiCityStart = panel.indexOf("function MultiCityEditor");
-  const multiCityEnd = panel.indexOf("function ErrorText", multiCityStart);
   const compactStyles = primitives.slice(primitives.indexOf("compactField:"), primitives.indexOf("overlay:"));
 
-  assert.doesNotMatch(panel.slice(multiCityStart, multiCityEnd), /resultsModalAppearance|resultsModalCard/);
+  assert.match(panel, /function MultiCityEditor\([^\n]*resultsModalAppearance/);
   assert.match(compactStyles, /compactField: \{ minHeight: 66, paddingHorizontal: 12, paddingVertical: 9, borderBottomWidth: 1/);
   assert.match(compactStyles, /compactLabel: \{ fontSize: 10, fontWeight: "800", letterSpacing: 0\.5 \}/);
   assert.match(compactStyles, /compactValueRow: \{ flexDirection: "row", alignItems: "center", gap: 9 \}/);
