@@ -31,9 +31,11 @@ test("authenticated and guest profiles each own one guest-accessible Preview bro
   const card = source("src/features/profile/ProfileCardSection.tsx");
   assert.doesNotMatch(card, /^import .*expo-web-browser/m);
   assert.match(card, /await import\("expo-web-browser"\)/);
-  assert.match(card, /WebBrowser\.openBrowserAsync\(url\)/);
+  assert.match(card, /openPreviewLegalBrowser\(url, Platform\.OS, WebBrowser\)/);
   assert.match(card, /openBrowser: openPreviewBrowser/);
   assert.match(card, /getRuntimeEnvironment\(\)/);
+  const navigation = source("src/features/profile/profileNavigation.ts");
+  assert.doesNotMatch(card + navigation, /WebView|Linking\.openURL|SFSafariViewController|browserHeader|BrowserHeader/);
 });
 
 test("version is a configured non-interactive footer on both profile states", () => {

@@ -6,6 +6,7 @@ import type { NormalizedCarResult } from "../../../../src/lib/cars/types";
 import type { PublicFlightResult, PublicHotelPropertyDetails, PublicHotelResult } from "../../../../src/lib/types";
 import type { HotelRoomOption } from "../../../../src/lib/hotels/hotelRoomOptions";
 import type { ContractResult, TravelSearchResponse } from "../../../../src/lib/travel/searchContract";
+import type { FlightDetailsResponse } from "../../../../src/lib/flights/flightDetailsContract";
 import { parseMobileExploreCatalogue, type MobileExploreCatalogue } from "./exploreCatalogueContract";
 import { logFlightSearchCheckpoint } from "../features/search/flightSearchDiagnostics";
 
@@ -14,6 +15,8 @@ export class TravelApiError extends Error {
 }
 
 export type FlightResult = ContractResult<PublicFlightResult>;
+export type MobileFlightDetailsResponse = FlightDetailsResponse;
+export type FlightRedirectResponse = { url: string };
 export type HotelResult = ContractResult<PublicHotelResult>;
 export type HotelSearchResponse = TravelSearchResponse<PublicHotelResult> & {
   warningCategory?: "provider_unavailable" | string;
@@ -160,6 +163,8 @@ async function fetchExploreCatalogue(): Promise<MobileExploreCatalogue> {
 export const travelApi = {
   featureAvailability: () => request<FeatureAvailability>("/api/feature-availability"),
   searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<PublicFlightResult>>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: FLIGHT_SEARCH_REQUEST_TIMEOUT_MS }),
+  flightDetails: (id: string, options: { signal?: AbortSignal } = {}) => request<FlightDetailsResponse>(`/api/flights/details?id=${encodeURIComponent(id)}`, {}, options),
+  flightRedirect: (id: string, options: { signal?: AbortSignal; sourcePage?: string } = {}) => request<FlightRedirectResponse>("/api/redirect", { method: "POST", body: JSON.stringify({ id, type: "flight", sourcePage: options.sourcePage ?? "native_flight_details" }) }, { signal: options.signal }),
   searchHotels: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<HotelSearchResponse>("/api/hotels/search", { method: "POST", body: JSON.stringify(body) }, options),
   hotelDetails: (input: MobileHotelDetailsRequest, options: { signal?: AbortSignal } = {}) => {
     const params = new URLSearchParams({ id: input.id, checkIn: input.checkIn, checkOut: input.checkOut, guests: String(input.guests), rooms: String(input.rooms) });

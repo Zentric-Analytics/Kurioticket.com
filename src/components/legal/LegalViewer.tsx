@@ -84,18 +84,10 @@ export function LegalViewer({
       }
     >
       <div
-        className={
-          appBrowser
-            ? "mx-auto max-w-3xl"
-            : "legal-paper rounded-lg border p-4 shadow-sm md:p-8"
-        }
+        className={`legal-paper rounded-lg border p-4 shadow-sm md:p-8${appBrowser ? " mx-auto max-w-3xl" : ""}`}
       >
         <div
-          className={
-            appBrowser
-              ? "border-b border-border pb-5"
-              : "flex flex-col gap-4 border-b border-border pb-6 md:flex-row md:items-start md:justify-between"
-          }
+          className="flex flex-col gap-4 border-b border-border pb-6 md:flex-row md:items-start md:justify-between"
         >
           <div>
             {!appBrowser && (
@@ -106,13 +98,7 @@ export function LegalViewer({
                 {t.legalCenter}
               </Link>
             )}
-            <h1
-              className={
-                appBrowser
-                  ? "text-2xl font-bold tracking-tight text-navy sm:text-3xl"
-                  : "mt-3 text-3xl font-bold text-navy"
-              }
-            >
+            <h1 className="mt-3 text-3xl font-bold text-navy">
               {localizedDocument.title}
             </h1>
             <p className="mt-2 max-w-3xl text-muted">
@@ -160,14 +146,14 @@ export function LegalViewer({
             </aside>
           )}
 
-          <article className={appBrowser ? "min-w-0 space-y-7" : "min-w-0 space-y-8"}>
+          <article className="min-w-0 space-y-8">
             {localizedDocument.sections.map((section) => (
               <section
                 key={section.id}
                 id={section.id}
                 className={appBrowser ? "scroll-mt-6" : "scroll-mt-24"}
               >
-                <h2 className={appBrowser ? "text-lg font-bold text-navy" : "text-xl font-bold text-navy"}>
+                <h2 className="text-xl font-bold text-navy">
                   {section.title}
                 </h2>
                 <div className="mt-3 space-y-3 text-base leading-7 text-slate-700">

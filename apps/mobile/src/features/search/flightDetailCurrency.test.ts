@@ -21,7 +21,6 @@ const passedNgnFare: DisplayPrice = {
 const rates = { USD: 1, NGN: 1383.8806, EUR: 0.9 };
 
 test("keeps the Results NGN snapshot when Details location fails with en-US locale", () => {
-  // Automatic location is deliberately absent. A new automatic resolution would be USD.
   const freshResolution = resolveDisplayCurrencyContext({
     preferredCurrency: null,
     ipCountryCode: null,
@@ -116,7 +115,8 @@ test("both booking areas use the one shared formatted fare", () => {
   assert.doesNotMatch(flightDetail, /money\(result\.currency, result\.price\)/);
 });
 
-test("Results uses the collision-safe navigation contract", () => {
+test("Results uses the authoritative ID-only navigation contract", () => {
   const resultsScreen = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
-  assert.match(resultsScreen, /params: buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
+  assert.match(resultsScreen, /params: buildFlightDetailParams\(\{ searchParams: params, result \}\)/);
+  assert.doesNotMatch(resultsScreen, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
 });

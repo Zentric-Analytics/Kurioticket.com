@@ -63,11 +63,12 @@ test("main flight card uses a theme-aware bordered surface and restrained native
   assert.doesNotMatch(cardStyle, /backgroundColor: ["']white["']/);
 });
 
-test("flight card preserves display pricing and provider data during details navigation", () => {
+test("flight card preserves display pricing while details navigation uses authoritative identity", () => {
   assert.match(card, /fare\?\.formatted \?\? "—"/);
   assert.doesNotMatch(card, /money\(result\.currency, result\.price\)/);
   assert.match(card, /pathname: "\/flight-details"/);
-  assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
+  assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result \}\)/);
+  assert.doesNotMatch(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
 });
 
 test("flight card gives the compact visual fare one semantic spoken label", () => {
@@ -93,7 +94,8 @@ test("converted fares keep truthful accessibility context without visible second
 test("the whole card remains the sole details action around a visible affordance", () => {
   assert.match(card, /const openDetails = \(\) => router\.push\(\{ pathname: "\/flight-details"/);
   assert.match(card, /return \(\s*<Pressable[\s\S]*accessibilityRole="button"[\s\S]*accessibilityLabel=\{cardAccessibilityLabel\}[\s\S]*onPress=\{openDetails\}/);
-  assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
+  assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result \}\)/);
+  assert.doesNotMatch(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
   const affordance = /<View accessible=\{false\} style=\{s0\.flightDetailsAffordance\}>[\s\S]*?<\/View>/.exec(card)?.[0] ?? "";
   assert.match(affordance, /<Text accessible=\{false\}[^>]*numberOfLines=\{1\}>\s*\{labels\.viewDeals\}\s*<\/Text>\s*<ChevronRight/);
   assert.doesNotMatch(affordance, /<ChevronRight[\s\S]*\{labels\.viewDeals\}/);
