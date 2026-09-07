@@ -1380,7 +1380,11 @@ export function PersonalDetailsScreen() {
                   accessibilityLabel={c.cancel}
                   disabled={saving}
                   onPress={() => discard(false)}
-                  style={[s.secondary, { borderColor: theme.border }]}
+                  accessibilityState={{ disabled: saving }}
+                  style={({ pressed }) => [
+                    s.secondary,
+                    { opacity: saving ? 0.45 : pressed ? 0.6 : 1 },
+                  ]}
                 >
                   <Text style={[s.buttonText, { color: theme.text }]}>
                     {c.cancel}
@@ -1395,9 +1399,21 @@ export function PersonalDetailsScreen() {
                   }}
                   disabled={!dirty || saving}
                   onPress={() => void save()}
-                  style={[s.primary, (!dirty || saving) && s.disabled]}
+                  style={({ pressed }) => [
+                    s.primary,
+                    {
+                      backgroundColor:
+                        !dirty && !saving ? theme.border : flowColors.blue,
+                      opacity: pressed ? 0.8 : 1,
+                    },
+                  ]}
                 >
-                  <Text style={s.primaryText}>
+                  <Text
+                    style={[
+                      s.primaryText,
+                      !dirty && !saving && { color: theme.muted },
+                    ]}
+                  >
                     {saving ? c.saving : c.save}
                   </Text>
                 </Pressable>
@@ -1570,7 +1586,7 @@ const s = StyleSheet.create({
     paddingBottom: 16,
   },
   detailText: { flex: 1, gap: 4 },
-  editorFooter: { padding: 16, borderTopWidth: StyleSheet.hairlineWidth },
+  editorFooter: { paddingHorizontal: 20, paddingVertical: 12 },
   detailRow: {
     minHeight: 78,
     paddingHorizontal: 0,
@@ -1655,13 +1671,13 @@ const s = StyleSheet.create({
   actions: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    gap: 10,
-    marginTop: 2,
+    gap: 16,
+    marginTop: 0,
     flexWrap: "wrap",
   },
   primary: {
     flex: 1,
-    minHeight: 48,
+    minHeight: 50,
     minWidth: 142,
     borderRadius: 10,
     backgroundColor: flowColors.blue,
@@ -1671,9 +1687,7 @@ const s = StyleSheet.create({
   },
   secondary: {
     minHeight: 48,
-    minWidth: 94,
-    borderRadius: 10,
-    borderWidth: 1,
+    minWidth: 72,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 18,
@@ -1684,7 +1698,6 @@ const s = StyleSheet.create({
     color: "#FFFFFF",
     fontFamily: appFonts.semibold,
   },
-  disabled: { opacity: 0.45 },
   feedback: {
     fontSize: 14,
     lineHeight: 20,
