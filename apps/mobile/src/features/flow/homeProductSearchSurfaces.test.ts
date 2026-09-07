@@ -5,10 +5,17 @@ import test from "node:test";
 const home = readFileSync("src/features/flow/HomeFlowScreen.tsx", "utf8");
 const products = readFileSync("src/features/flow/ProductScreens.tsx", "utf8");
 
-test("Home preserves Flights as the existing card reference", () => {
+test("Home preserves the structured Flight search configuration", () => {
   assert.match(home, /<FlightSearchPanel compact structuredSearchAppearance enableHomepageDefaultOrigin homepageAirportPicker \/>/);
   assert.doesNotMatch(home, /<FlightSearchPanel embedded compact/);
   assert.doesNotMatch(home, /resultsModalAppearance/);
+});
+
+test("Home finishes only its Flight search with a semantic lower surface", () => {
+  assert.match(home, /function HomeFlightSearchSurface[\s\S]*?backgroundColor: ft\.colors\.page, borderColor: ft\.colors\.border[\s\S]*?ft\.styles\.shadow/);
+  assert.match(home, /homeFlightSearchSurface: \{[\s\S]*?borderLeftWidth: 1,[\s\S]*?borderRightWidth: 1,[\s\S]*?borderBottomWidth: 1,[\s\S]*?borderTopWidth: 0,[\s\S]*?borderBottomLeftRadius: 16,[\s\S]*?borderBottomRightRadius: 16,[\s\S]*?paddingBottom: 4/);
+  assert.match(home, /flights: availability\.flightSearch\s*\? <HomeFlightSearchSurface>\s*<FlightSearchPanel compact structuredSearchAppearance enableHomepageDefaultOrigin homepageAirportPicker \/>\s*<\/HomeFlightSearchSurface>/);
+  assert.equal(home.match(/<HomeFlightSearchSurface>/g)?.length, 1);
 });
 
 test("Home opts into generic structured Flight cards without changing other product surfaces", () => {

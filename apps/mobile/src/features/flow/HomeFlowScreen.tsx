@@ -128,6 +128,21 @@ function HomeSearchSurface({ children }: { children: React.ReactNode }) {
   return <View style={[ft.styles.card, ft.styles.shadow]}>{children}</View>;
 }
 
+function HomeFlightSearchSurface({ children }: { children: React.ReactNode }) {
+  const ft = useFlowTheme();
+  return (
+    <View
+      style={[
+        styles.homeFlightSearchSurface,
+        { backgroundColor: ft.colors.page, borderColor: ft.colors.border },
+        ft.styles.shadow,
+      ]}
+    >
+      {children}
+    </View>
+  );
+}
+
 const products: {
   id: HomeProduct;
   label: string;
@@ -147,7 +162,9 @@ export function SharedHomePage() {
 
   const searchPanel = {
     flights: availability.flightSearch
-      ? <FlightSearchPanel compact structuredSearchAppearance enableHomepageDefaultOrigin homepageAirportPicker />
+      ? <HomeFlightSearchSurface>
+          <FlightSearchPanel compact structuredSearchAppearance enableHomepageDefaultOrigin homepageAirportPicker />
+        </HomeFlightSearchSurface>
       : <UnavailableNotice text="Flight search is temporarily unavailable. Hotels and cars remain available." />,
     hotels: availability.hotelSearch
       ? <HomeSearchSurface>
@@ -256,6 +273,16 @@ const styles = StyleSheet.create({
   notificationIconWrap: { width: 28, height: 28, alignItems: "center", justifyContent: "center" },
   notificationBadge: { position: "absolute", right: -4, top: -4, minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: "#D92D20" },
   notificationBadgeText: { color: "white", fontSize: 10, fontWeight: "800" },
+  homeFlightSearchSurface: {
+    backgroundColor: "transparent",
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    paddingBottom: 4,
+  },
   products: {
     marginTop: -34,
     minHeight: 78,
