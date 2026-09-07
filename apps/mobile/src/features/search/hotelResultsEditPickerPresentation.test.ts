@@ -44,7 +44,7 @@ test("child headers are balanced and Android Back returns to Edit", () => {
   assert.match(shell, /minHeight:62/);
   assert.match(shell, /back:\{minWidth:44,minHeight:44/);
   assert.match(shell, /onRequestClose=\{onBack\}/);
-  assert.match(shell, /accessibilityLabel="Back to edit hotel search"/);
+  assert.match(shell, /backAccessibilityLabel = "Back to edit hotel search"/);
 });
 
 test("Results Edit destination retains current context and selection stays immediate", () => {
