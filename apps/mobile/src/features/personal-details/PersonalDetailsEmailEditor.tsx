@@ -445,6 +445,7 @@ const s = StyleSheet.create({
     borderRadius: 10,
     fontFamily: appFonts.regular,
     fontSize: 16,
+    letterSpacing: 0,
   },
   verificationField: {
     minHeight: 52,
@@ -462,7 +463,7 @@ const s = StyleSheet.create({
     paddingRight: 8,
     fontFamily: appFonts.regular,
     fontSize: 20,
-    letterSpacing: 3,
+    letterSpacing: 0,
   },
   resendHit: {
     minHeight: 44,
