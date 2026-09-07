@@ -22,6 +22,7 @@ import { useMobileLocalization } from "../../localization/MobileLocalizationProv
 import { CarEditSearchModal } from "./CarEditSearchModal";
 import { NativeCarPriceAlert } from "./NativeCarPriceAlert";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
+import { getLocationFieldDisplay } from "../../../../../src/lib/search/locationFieldDisplay";
 
 type Status = "loading" | "ready" | "empty" | "error";
 const CAR_BACK_TO_TOP_HIDE_NEAR_END = 120;
@@ -67,7 +68,8 @@ export function ApprovedCarResultsScreen() {
   const copy=useMemo(()=>carFilterCopy(locale),[locale]);
   const filtered=useMemo(()=>sortCarResults(filterCarResults(results,filters),sort),[results,filters,sort]);
   const payload=plan.plan?.payload||{}; const pickup=String(payload.pickupDate||""); const dropoff=String(payload.dropoffDate||"");
-  const carSummaryDestination=String(payload.pickupLocation||"");
+  const canonicalPickupLocation=String(payload.pickupLocation||"");
+  const carSummaryDestination=getLocationFieldDisplay(canonicalPickupLocation).primary;
   const carSummarySecondary=`${shortDate(pickup)} — ${shortDate(dropoff)} · ${payload.driverAge === "18-70" ? "Any age" : `${String(payload.driverAge||"")} years old`}`;
   const edit=()=>setCarEditSearchOpen(true);
   const openAllFilters=()=>{setFilterSheetGroupId(null);setFilterSheetVisible(true);};

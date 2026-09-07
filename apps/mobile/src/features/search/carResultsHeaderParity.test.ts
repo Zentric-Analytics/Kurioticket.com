@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { getLocationFieldDisplay } from "../../../../../src/lib/search/locationFieldDisplay";
 
 const cars = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
 const carAlert = readFileSync("src/features/search/NativeCarPriceAlert.tsx", "utf8");
@@ -41,12 +42,21 @@ test("Cars summary typography and pencil match Hotel Results", () => {
 });
 
 test("Cars summary remains derived from canonical search data", () => {
-  assert.match(cars, /payload\.pickupLocation/);
+  assert.match(cars, /canonicalPickupLocation=String\(payload\.pickupLocation\|\|""\)/);
+  assert.match(cars, /carSummaryDestination=getLocationFieldDisplay\(canonicalPickupLocation\)\.primary/);
   assert.match(cars, /payload\.pickupDate/);
   assert.match(cars, /payload\.dropoffDate/);
   assert.match(cars, /payload\.driverAge/);
   assert.match(cars, /driverAge === "18-70" \? "Any age"/);
   assert.doesNotMatch(cars, /Paris, France|Sep 6|20 years old/);
+  assert.match(cars, /<CarEditSearchModal visible=\{carEditSearchOpen\} params=\{params\}/);
+});
+
+test("Cars summary compacts the displayed city without mutating its canonical value", () => {
+  const canonical = "Paris, France";
+  const destination = getLocationFieldDisplay(canonical).primary;
+  assert.equal(destination, "Paris");
+  assert.equal(canonical, "Paris, France");
 });
 
 test("Cars render the full filtered result set without pagination", () => {
@@ -60,6 +70,10 @@ test("Cars use one truthful compact price alert before the result count", () => 
   assert.equal((cars.match(/<NativeCarPriceAlert/g) ?? []).length, 1);
   assert.ok(cars.indexOf("<NativeCarPriceAlert") < cars.indexOf("results found"));
   assert.match(carAlert, /<Bell/); assert.match(carAlert, /<Switch/); assert.match(carAlert, /Track rental car prices/);
+  assert.doesNotMatch(carAlert, /numberOfLines=\{1\}/);
+  assert.match(carAlert, /accessibilityLabel="Track rental car prices"/);
+  assert.match(carAlert, /switch: \{ minWidth: 51, minHeight: 44, flexShrink: 0/);
+  assert.match(carAlert, /pending \|\| loading \? <ActivityIndicator[\s\S]*?<Switch/);
   assert.match(carAlert, /travelApi\.priceAlerts\(\)/); assert.match(carAlert, /updatePriceAlertStatus/); assert.match(carAlert, /createPriceAlert/);
   assert.match(carAlert, /accessibilityState=\{\{ checked: tracking, disabled, busy: pending \|\| loading \}\}/);
   assert.doesNotMatch(carAlert, /not available yet/);
