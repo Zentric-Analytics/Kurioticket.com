@@ -1,0 +1,10 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+const screen=readFileSync("src/features/search/ApprovedResultsScreen.tsx","utf8");
+const full=readFileSync("src/features/search/HotelFilterSheet.tsx","utf8");
+const quick=readFileSync("src/features/search/HotelResultsQuickFilterSheet.tsx","utf8");
+const timing=readFileSync("src/features/search/filterResultsTransition.ts","utf8");
+test("hotel filter feedback and result transition use shared bounded timing",()=>{assert.match(timing,/SELECTION_FEEDBACK_MS = 400/);assert.match(timing,/RESULTS_TRANSITION_MS = 700/);assert.match(full,/filterUpdating/);assert.match(quick,/filterUpdating/);assert.match(full,/Updating filters…/);assert.match(quick,/Updating filters…/);});
+test("hotel result transition is local, accessible, cleaned up and reuses three skeleton cards",()=>{assert.match(screen,/hotelResultsApplying/);assert.match(screen,/hotelFilterSessionDirtyRef/);assert.match(screen,/NATIVE_FILTER_RESULTS_TRANSITION_MS/);assert.match(screen,/accessibilityLabel="Updating hotel results"/);assert.match(screen,/\[0, 1, 2\][\s\S]*HotelLoadingSkeleton/);assert.match(screen,/clearTimeout\(hotelResultsApplyingTimer\.current\)/);assert.match(screen,/!hotelResultsApplying[\s\S]*No stays match these filters/);assert.match(screen,/transitionHotelFilters\(emptyHotelFilters\(\)\)/);});
+test("hotel transition does not manufacture a canonical load",()=>{const transition=screen.slice(screen.indexOf("const startHotelResultsTransition"),screen.indexOf("const changeHotelFilters"));assert.doesNotMatch(transition,/travelApi|setStatus|setRetry|router\.|NativeBrandedSearchLoading/);});

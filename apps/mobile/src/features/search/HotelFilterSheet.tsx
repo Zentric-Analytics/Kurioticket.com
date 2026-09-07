@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Check, ChevronDown, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppTheme } from "../../theme/AppTheme";
@@ -7,60 +7,521 @@ import { appFonts } from "../../theme/typography";
 import { convertAmount, formatMarketCurrency, type ExchangeRates } from "../currency/displayCurrency";
 import { FlightRangeSlider } from "./FlightRangeSlider";
 import { ui } from "./SearchUi";
+import { NATIVE_FILTER_SELECTION_FEEDBACK_MS } from "./filterResultsTransition";
 import { activeHotelFilterCount, emptyHotelFilters, type HotelFilterGroup, type HotelFilterOptions, type HotelFilters, type HotelStarRating } from "./hotelFilters";
 
 export type HotelFilterSectionName = "all" | "price" | "rating" | "facilities";
-type Props={visible:boolean;section:HotelFilterSectionName;filters:HotelFilters;options:HotelFilterOptions;displayCurrency:string;rates:ExchangeRates;stayNights:number;totalCount:number;matchingCount:number;onChange:(filters:HotelFilters)=>void;onClose:()=>void};
-type PostPriceSection={kind:"group";group:HotelFilterGroup;title:string;limit:number;minimum?:number}|{kind:"hotelClass";title:"Hotel class"};
-const postPriceSections:PostPriceSection[]=[
- {kind:"group",group:"travellerFeatures",title:"Good for your trip",limit:4},
- {kind:"hotelClass",title:"Hotel class"},
- {kind:"group",group:"areas",title:"Area",limit:5},
- {kind:"group",group:"propertyTypes",title:"Property type",limit:5},
- {kind:"group",group:"facilities",title:"Facilities",limit:6},
- {kind:"group",group:"accessibility",title:"Accessibility",limit:5},
- {kind:"group",group:"roomTypes",title:"Room & bed",limit:5,minimum:2},
- {kind:"group",group:"bedTypes",title:"Bed options",limit:5,minimum:2},
+type Props = {
+  visible: boolean;
+  section: HotelFilterSectionName;
+  filters: HotelFilters;
+  options: HotelFilterOptions;
+  displayCurrency: string;
+  rates: ExchangeRates;
+  stayNights: number;
+  totalCount: number;
+  matchingCount: number;
+  onChange: (filters: HotelFilters) => void;
+  onClose: () => void;
+};
+type PostPriceSection =
+  | {
+      kind: "group";
+      group: HotelFilterGroup;
+      title: string;
+      limit: number;
+      minimum?: number;
+    }
+  | { kind: "hotelClass"; title: "Hotel class" };
+const postPriceSections: PostPriceSection[] = [
+  {
+    kind: "group",
+    group: "travellerFeatures",
+    title: "Good for your trip",
+    limit: 4,
+  },
+  { kind: "hotelClass", title: "Hotel class" },
+  { kind: "group", group: "areas", title: "Area", limit: 5 },
+  { kind: "group", group: "propertyTypes", title: "Property type", limit: 5 },
+  { kind: "group", group: "facilities", title: "Facilities", limit: 6 },
+  { kind: "group", group: "accessibility", title: "Accessibility", limit: 5 },
+  {
+    kind: "group",
+    group: "roomTypes",
+    title: "Room & bed",
+    limit: 5,
+    minimum: 2,
+  },
+  {
+    kind: "group",
+    group: "bedTypes",
+    title: "Bed options",
+    limit: 5,
+    minimum: 2,
+  },
 ];
 
-export function HotelFilterSheet({visible,section,filters,options,displayCurrency,rates,stayNights,totalCount,matchingCount,onChange,onClose}:Props){
- const {theme}=useAppTheme(),inset=useSafeAreaInsets(),scroll=useRef<ScrollView>(null),price=options.price;
- const [expanded,setExpanded]=useState<Record<string,boolean>>({}),[showAll,setShowAll]=useState<Record<string,boolean>>({});
- const selectedMin=filters.minimumPrice??price?.minimum??0,selectedMax=filters.maximumPrice??price?.maximum??0;
- const visibleCurrency=displayCurrency==="USD"||convertAmount(1,"USD",displayCurrency,rates)!==null?displayCurrency:"USD";
- const toDisplay=(usd:number)=>convertAmount(usd,"USD",visibleCurrency,rates)??usd;
- const fromDisplay=(amount:number)=>convertAmount(amount,visibleCurrency,"USD",rates);
- const [minimumDraft,setMinimumDraft]=useState(""),[maximumDraft,setMaximumDraft]=useState("");
- const activeCount=activeHotelFilterCount(filters,options);
- useEffect(()=>{if(visible){setExpanded({price:true,rating:true,travellerFeatures:true,areas:true,facilities:true,accessibility:true,roomTypes:true,bedTypes:true});setShowAll({});}},[visible]);
- useEffect(()=>{if(price){setMinimumDraft(String(Math.round(toDisplay(selectedMin))));setMaximumDraft(String(Math.round(toDisplay(selectedMax))));}},[displayCurrency,filters.minimumPrice,filters.maximumPrice,price?.minimum,price?.maximum,rates]);
- const update=(next:HotelFilters)=>onChange(next),toggle=(group:HotelFilterGroup,value:string)=>update({...filters,[group]:filters[group].includes(value)?filters[group].filter(v=>v!==value):[...filters[group],value]});
- const commitPrice=(edge:"min"|"max",draft:string)=>{if(!price)return;const parsed=Number(draft);if(!Number.isFinite(parsed))return;const usd=fromDisplay(parsed);if(usd===null)return;if(edge==="min"){const value=Math.min(Math.max(price.minimum,usd),selectedMax);update({...filters,minimumPrice:value<=price.minimum?null:value});}else{const value=Math.max(Math.min(price.maximum,usd),selectedMin);update({...filters,maximumPrice:value>=price.maximum?null:value});}};
- const formatPrice=(usd:number)=>formatMarketCurrency(toDisplay(usd),visibleCurrency);
- const anchor=(name:string)=>(event:{nativeEvent:{layout:{y:number}}})=>{if(visible&&section===name)scroll.current?.scrollTo({y:Math.max(0,event.nativeEvent.layout.y-12),animated:false});};
- const footerLabel=matchingCount===0?"No matching stays":activeCount===0?`View all ${totalCount} stays`:`View ${matchingCount} matching ${matchingCount===1?"stay":"stays"}`;
- return <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose} accessibilityViewIsModal>
-  <KeyboardAvoidingView behavior={Platform.OS==="ios"?"padding":"height"} style={[styles.screen,{backgroundColor:theme.background,paddingTop:inset.top}]}>
-   <View accessibilityLabel="Hotel filters" style={[styles.header,{backgroundColor:theme.surface,borderBottomColor:theme.border}]}>
-    <View style={styles.headerCopy}><Text accessibilityRole="header" style={[styles.title,{color:theme.textPrimary}]}>Filters</Text><Text style={[styles.subtitle,{color:theme.textSecondary}]}>{activeCount?`${activeCount} applied`:"All stays shown"}</Text></View>
-    {activeCount>0?<Pressable accessibilityRole="button" accessibilityLabel="Clear all hotel filters" onPress={()=>update(emptyHotelFilters())} style={styles.clear}><Text style={styles.clearText}>Clear all</Text></Pressable>:null}
-    <Pressable accessibilityRole="button" accessibilityLabel="Close filters" onPress={onClose} style={styles.close}><X size={21} color={theme.icon}/></Pressable>
-   </View>
-   <ScrollView ref={scroll} style={styles.scroll} contentContainerStyle={[styles.content,{paddingBottom:24}]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
-    <View style={[styles.card,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={[styles.propertyTitle,{color:theme.textPrimary}]}>Property name</Text><View style={[styles.searchWrap,{borderColor:theme.border,backgroundColor:theme.background}]}><TextInput accessibilityLabel="Search properties by name" placeholder="Search properties" placeholderTextColor={theme.textMuted} value={filters.propertyNameQuery} onChangeText={value=>update({...filters,propertyNameQuery:value})} returnKeyType="search" style={[styles.searchInput,{color:theme.textPrimary,fontFamily:appFonts.regular}]}/>{filters.propertyNameQuery?<Pressable accessibilityRole="button" accessibilityLabel="Clear property search" onPress={()=>update({...filters,propertyNameQuery:""})} style={styles.inputClear}><X size={16} color={theme.icon}/></Pressable>:null}</View></View>
-    {price?<Section title="Budget / Price" expanded={expanded.price!==false} onToggle={()=>setExpanded(x=>({...x,price:x.price===false}))} onLayout={anchor("price")}>
-      <Text style={[styles.help,{color:theme.textSecondary}]}>Estimated total for {stayNights} {stayNights===1?"night":"nights"}.</Text>
-      <View style={styles.priceInputs}><PriceInput label="Minimum" accessibilityLabel="Minimum estimated stay total" value={minimumDraft} onChange={setMinimumDraft} onEnd={()=>commitPrice("min",minimumDraft)}/><PriceInput label="Maximum" accessibilityLabel="Maximum estimated stay total" value={maximumDraft} onChange={setMaximumDraft} onEnd={()=>commitPrice("max",maximumDraft)}/></View>
-      <FlightRangeSlider available={{min:price.minimum,max:price.maximum}} selected={{min:selectedMin,max:selectedMax}} step={25} accessibilityLabel="Estimated stay total range" formatValue={formatPrice} onChange={range=>update({...filters,minimumPrice:range.min<=price.minimum?null:range.min,maximumPrice:range.max>=price.maximum?null:range.max})}/>
-      <View style={styles.endpoints}><Text style={[styles.endpoint,{color:theme.textSecondary}]}>{formatPrice(selectedMin)}</Text><Text style={[styles.endpoint,{color:theme.textSecondary}]}>{formatPrice(selectedMax)}</Text></View>
-    </Section>:null}
-    {postPriceSections.map(section=>{if(section.kind==="hotelClass")return <Section key={section.kind} title={section.title} expanded={expanded.rating!==false} onToggle={()=>setExpanded(x=>({...x,rating:x.rating===false}))} onLayout={anchor("rating")}>{([5,4,3,2,1] as HotelStarRating[]).filter(star=>options.starCounts[star]>0).map(star=><OptionRow key={star} label={"★".repeat(star)} gold count={options.starCounts[star]} selected={filters.starRatings.includes(star)} onPress={()=>update({...filters,starRatings:filters.starRatings.includes(star)?filters.starRatings.filter(value=>value!==star):[...filters.starRatings,star].sort((a,b)=>b-a) as HotelStarRating[]})}/>)}</Section>;const {group,title,limit,minimum=1}=section,values=options[group];if(values.length<minimum)return null;const isExpanded=expanded[group]!==false,all=showAll[group],shown=all?values:values.slice(0,limit);return <Section key={group} title={title} expanded={isExpanded} onToggle={()=>setExpanded(x=>({...x,[group]:x[group]===false}))} onLayout={anchor(group)}>{shown.map(option=><OptionRow key={option.value} label={option.label} count={option.count} selected={filters[group].includes(option.value)} onPress={()=>toggle(group,option.value)}/>)}{values.length>limit?<Pressable accessibilityRole="button" onPress={()=>setShowAll(x=>({...x,[group]:!all}))} style={styles.more}><Text style={styles.moreText}>{all?"Show less":`Show more (${values.length-limit})`}</Text></Pressable>:null}</Section>})}
-   </ScrollView>
-   <View style={[styles.footer,{backgroundColor:theme.surface,borderTopColor:theme.border,paddingBottom:Math.max(inset.bottom,12)}]}><Pressable accessibilityRole="button" accessibilityState={{disabled:matchingCount===0}} disabled={matchingCount===0} onPress={onClose} style={[styles.viewButton,matchingCount===0&&styles.viewButtonDisabled]}><Text style={styles.viewText}>{footerLabel}</Text></Pressable></View>
-  </KeyboardAvoidingView>
- </Modal>;
+export function HotelFilterSheet({ visible, section, filters, options, displayCurrency, rates, stayNights, totalCount, matchingCount, onChange, onClose }: Props) {
+  const { theme } = useAppTheme(),
+    inset = useSafeAreaInsets(),
+    scroll = useRef<ScrollView>(null),
+    price = options.price;
+  const [filterUpdating, setFilterUpdating] = useState(false);
+  const filterUpdatingTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({}),
+    [showAll, setShowAll] = useState<Record<string, boolean>>({});
+  const selectedMin = filters.minimumPrice ?? price?.minimum ?? 0,
+    selectedMax = filters.maximumPrice ?? price?.maximum ?? 0;
+  const visibleCurrency = displayCurrency === "USD" || convertAmount(1, "USD", displayCurrency, rates) !== null ? displayCurrency : "USD";
+  const toDisplay = (usd: number) => convertAmount(usd, "USD", visibleCurrency, rates) ?? usd;
+  const fromDisplay = (amount: number) => convertAmount(amount, visibleCurrency, "USD", rates);
+  const [minimumDraft, setMinimumDraft] = useState(""),
+    [maximumDraft, setMaximumDraft] = useState("");
+  const activeCount = activeHotelFilterCount(filters, options);
+  useEffect(() => {
+    if (visible) {
+      setExpanded({
+        price: true,
+        rating: true,
+        travellerFeatures: true,
+        areas: true,
+        facilities: true,
+        accessibility: true,
+        roomTypes: true,
+        bedTypes: true,
+      });
+      setShowAll({});
+    } else {
+      if (filterUpdatingTimer.current) clearTimeout(filterUpdatingTimer.current);
+      filterUpdatingTimer.current = undefined;
+      setFilterUpdating(false);
+    }
+  }, [visible]);
+  useEffect(
+    () => () => {
+      if (filterUpdatingTimer.current) clearTimeout(filterUpdatingTimer.current);
+    },
+    [],
+  );
+  useEffect(() => {
+    if (price) {
+      setMinimumDraft(String(Math.round(toDisplay(selectedMin))));
+      setMaximumDraft(String(Math.round(toDisplay(selectedMax))));
+    }
+  }, [displayCurrency, filters.minimumPrice, filters.maximumPrice, price?.minimum, price?.maximum, rates]);
+  const update = (next: HotelFilters) => {
+      onChange(next);
+      setFilterUpdating(true);
+      if (filterUpdatingTimer.current) clearTimeout(filterUpdatingTimer.current);
+      filterUpdatingTimer.current = setTimeout(() => {
+        filterUpdatingTimer.current = undefined;
+        setFilterUpdating(false);
+      }, NATIVE_FILTER_SELECTION_FEEDBACK_MS);
+    },
+    toggle = (group: HotelFilterGroup, value: string) =>
+      update({
+        ...filters,
+        [group]: filters[group].includes(value) ? filters[group].filter((v) => v !== value) : [...filters[group], value],
+      });
+  const commitPrice = (edge: "min" | "max", draft: string) => {
+    if (!price) return;
+    const parsed = Number(draft);
+    if (!Number.isFinite(parsed)) return;
+    const usd = fromDisplay(parsed);
+    if (usd === null) return;
+    if (edge === "min") {
+      const value = Math.min(Math.max(price.minimum, usd), selectedMax);
+      update({
+        ...filters,
+        minimumPrice: value <= price.minimum ? null : value,
+      });
+    } else {
+      const value = Math.max(Math.min(price.maximum, usd), selectedMin);
+      update({
+        ...filters,
+        maximumPrice: value >= price.maximum ? null : value,
+      });
+    }
+  };
+  const formatPrice = (usd: number) => formatMarketCurrency(toDisplay(usd), visibleCurrency);
+  const anchor = (name: string) => (event: { nativeEvent: { layout: { y: number } } }) => {
+    if (visible && section === name)
+      scroll.current?.scrollTo({
+        y: Math.max(0, event.nativeEvent.layout.y - 12),
+        animated: false,
+      });
+  };
+  const footerLabel = matchingCount === 0 ? "No matching stays" : activeCount === 0 ? `View all ${totalCount} stays` : `View ${matchingCount} matching ${matchingCount === 1 ? "stay" : "stays"}`;
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose} accessibilityViewIsModal>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={[styles.screen, { backgroundColor: theme.background, paddingTop: inset.top }]}>
+        <View accessibilityLabel="Hotel filters" style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
+          <View style={styles.headerCopy}>
+            <Text accessibilityRole="header" style={[styles.title, { color: theme.textPrimary }]}>
+              Filters
+            </Text>
+            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{activeCount ? `${activeCount} applied` : "All stays shown"}</Text>
+          </View>
+          {activeCount > 0 ? (
+            <Pressable accessibilityRole="button" accessibilityLabel="Clear all hotel filters" onPress={() => update(emptyHotelFilters())} style={styles.clear}>
+              <Text style={styles.clearText}>Clear all</Text>
+            </Pressable>
+          ) : null}
+          <Pressable accessibilityRole="button" accessibilityLabel="Close filters" onPress={onClose} style={styles.close}>
+            <X size={21} color={theme.icon} />
+          </Pressable>
+        </View>
+        <ScrollView ref={scroll} style={styles.scroll} contentContainerStyle={[styles.content, { paddingBottom: 24 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
+          <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Text style={[styles.propertyTitle, { color: theme.textPrimary }]}>Property name</Text>
+            <View
+              style={[
+                styles.searchWrap,
+                {
+                  borderColor: theme.border,
+                  backgroundColor: theme.background,
+                },
+              ]}
+            >
+              <TextInput accessibilityLabel="Search properties by name" placeholder="Search properties" placeholderTextColor={theme.textMuted} value={filters.propertyNameQuery} onChangeText={(value) => update({ ...filters, propertyNameQuery: value })} returnKeyType="search" style={[styles.searchInput, { color: theme.textPrimary, fontFamily: appFonts.regular }]} />
+              {filters.propertyNameQuery ? (
+                <Pressable accessibilityRole="button" accessibilityLabel="Clear property search" onPress={() => update({ ...filters, propertyNameQuery: "" })} style={styles.inputClear}>
+                  <X size={16} color={theme.icon} />
+                </Pressable>
+              ) : null}
+            </View>
+          </View>
+          {price ? (
+            <Section title="Budget / Price" expanded={expanded.price !== false} onToggle={() => setExpanded((x) => ({ ...x, price: x.price === false }))} onLayout={anchor("price")}>
+              <Text style={[styles.help, { color: theme.textSecondary }]}>
+                Estimated total for {stayNights} {stayNights === 1 ? "night" : "nights"}.
+              </Text>
+              <View style={styles.priceInputs}>
+                <PriceInput label="Minimum" accessibilityLabel="Minimum estimated stay total" value={minimumDraft} onChange={setMinimumDraft} onEnd={() => commitPrice("min", minimumDraft)} />
+                <PriceInput label="Maximum" accessibilityLabel="Maximum estimated stay total" value={maximumDraft} onChange={setMaximumDraft} onEnd={() => commitPrice("max", maximumDraft)} />
+              </View>
+              <FlightRangeSlider
+                available={{ min: price.minimum, max: price.maximum }}
+                selected={{ min: selectedMin, max: selectedMax }}
+                step={25}
+                accessibilityLabel="Estimated stay total range"
+                formatValue={formatPrice}
+                onChange={(range) =>
+                  update({
+                    ...filters,
+                    minimumPrice: range.min <= price.minimum ? null : range.min,
+                    maximumPrice: range.max >= price.maximum ? null : range.max,
+                  })
+                }
+              />
+              <View style={styles.endpoints}>
+                <Text style={[styles.endpoint, { color: theme.textSecondary }]}>{formatPrice(selectedMin)}</Text>
+                <Text style={[styles.endpoint, { color: theme.textSecondary }]}>{formatPrice(selectedMax)}</Text>
+              </View>
+            </Section>
+          ) : null}
+          {postPriceSections.map((section) => {
+            if (section.kind === "hotelClass")
+              return (
+                <Section key={section.kind} title={section.title} expanded={expanded.rating !== false} onToggle={() => setExpanded((x) => ({ ...x, rating: x.rating === false }))} onLayout={anchor("rating")}>
+                  {([5, 4, 3, 2, 1] as HotelStarRating[])
+                    .filter((star) => options.starCounts[star] > 0)
+                    .map((star) => (
+                      <OptionRow
+                        key={star}
+                        label={"★".repeat(star)}
+                        gold
+                        count={options.starCounts[star]}
+                        selected={filters.starRatings.includes(star)}
+                        onPress={() =>
+                          update({
+                            ...filters,
+                            starRatings: filters.starRatings.includes(star) ? filters.starRatings.filter((value) => value !== star) : ([...filters.starRatings, star].sort((a, b) => b - a) as HotelStarRating[]),
+                          })
+                        }
+                      />
+                    ))}
+                </Section>
+              );
+            const { group, title, limit, minimum = 1 } = section,
+              values = options[group];
+            if (values.length < minimum) return null;
+            const isExpanded = expanded[group] !== false,
+              all = showAll[group],
+              shown = all ? values : values.slice(0, limit);
+            return (
+              <Section key={group} title={title} expanded={isExpanded} onToggle={() => setExpanded((x) => ({ ...x, [group]: x[group] === false }))} onLayout={anchor(group)}>
+                {shown.map((option) => (
+                  <OptionRow key={option.value} label={option.label} count={option.count} selected={filters[group].includes(option.value)} onPress={() => toggle(group, option.value)} />
+                ))}
+                {values.length > limit ? (
+                  <Pressable accessibilityRole="button" onPress={() => setShowAll((x) => ({ ...x, [group]: !all }))} style={styles.more}>
+                    <Text style={styles.moreText}>{all ? "Show less" : `Show more (${values.length - limit})`}</Text>
+                  </Pressable>
+                ) : null}
+              </Section>
+            );
+          })}
+        </ScrollView>
+        <View
+          style={[
+            styles.footer,
+            {
+              backgroundColor: theme.surface,
+              borderTopColor: theme.border,
+              paddingBottom: Math.max(inset.bottom, 12),
+            },
+          ]}
+        >
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{
+              disabled: matchingCount === 0 || filterUpdating,
+              busy: filterUpdating,
+            }}
+            disabled={matchingCount === 0 || filterUpdating}
+            onPress={onClose}
+            style={[styles.viewButton, matchingCount === 0 && styles.viewButtonDisabled]}
+          >
+            <View accessibilityLiveRegion="polite" style={styles.updating}>
+              {filterUpdating ? (
+                <>
+                  <ActivityIndicator size="small" color="white" />
+                  <Text style={styles.viewText}>Updating filters…</Text>
+                </>
+              ) : (
+                <Text style={styles.viewText}>{footerLabel}</Text>
+              )}
+            </View>
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
 }
-function Section({title,expanded,onToggle,onLayout,children}:{title:string;expanded:boolean;onToggle:()=>void;onLayout?:(event:any)=>void;children:React.ReactNode}){const {theme}=useAppTheme();return <View onLayout={onLayout} style={[styles.card,{backgroundColor:theme.surface,borderColor:theme.border}]}><Pressable accessibilityRole="button" accessibilityState={{expanded}} onPress={onToggle} style={styles.sectionHeader}><Text style={[styles.sectionTitle,{color:theme.textPrimary}]}>{title}</Text><ChevronDown size={20} color={theme.icon} style={{transform:[{rotate:expanded?"180deg":"0deg"}]}}/></Pressable>{expanded?<View style={styles.sectionBody}>{children}</View>:null}</View>}
-function PriceInput({label,accessibilityLabel,value,onChange,onEnd}:{label:string;accessibilityLabel:string;value:string;onChange:(value:string)=>void;onEnd:()=>void}){const {theme}=useAppTheme();return <View style={styles.priceInputColumn}><Text style={[styles.inputLabel,{color:theme.textSecondary}]}>{label}</Text><TextInput accessibilityLabel={accessibilityLabel} keyboardType="decimal-pad" value={value} onChangeText={onChange} onBlur={onEnd} onSubmitEditing={onEnd} style={[styles.numberInput,{borderColor:theme.border,backgroundColor:theme.background,color:theme.textPrimary}]}/></View>}
-function OptionRow({label,count,selected,onPress,radio=false,gold=false}:{label:string;count:number;selected:boolean;onPress:()=>void;radio?:boolean;gold?:boolean}){const {theme}=useAppTheme();return <Pressable accessibilityRole={radio?"radio":"checkbox"} accessibilityLabel={`${label}, ${count}`} accessibilityState={radio?{selected}:{checked:selected}} onPress={onPress} style={styles.row}><View style={[styles.box,{borderColor:selected?ui.blue:theme.border,backgroundColor:selected?ui.blue:"transparent"}]}>{selected?<Check size={14} strokeWidth={3} color="white"/>:null}</View><Text style={[styles.rowLabel,{color:gold?"#E3A008":theme.textPrimary}]}>{label}</Text><Text style={[styles.count,{color:theme.textSecondary}]}>{count}</Text></Pressable>}
-const styles=StyleSheet.create({screen:{flex:1},header:{minHeight:68,paddingHorizontal:16,flexDirection:"row",alignItems:"center",gap:11,borderBottomWidth:StyleSheet.hairlineWidth},headerCopy:{flex:1,minWidth:0},title:{fontSize:18,lineHeight:24,fontWeight:"700",fontFamily:appFonts.bold},subtitle:{fontSize:12,lineHeight:16,fontWeight:"500",fontFamily:appFonts.medium},clear:{minHeight:44,justifyContent:"center",paddingHorizontal:5},clearText:{color:ui.blue,fontSize:13,fontWeight:"700",fontFamily:appFonts.bold},close:{width:44,height:44,alignItems:"center",justifyContent:"center"},scroll:{flex:1},content:{paddingHorizontal:16,paddingTop:16,gap:12},card:{borderWidth:StyleSheet.hairlineWidth,borderRadius:12,padding:16},propertyTitle:{fontSize:14,lineHeight:20,fontWeight:"700",fontFamily:appFonts.bold},searchWrap:{height:44,marginTop:8,borderWidth:1,borderRadius:8,flexDirection:"row",alignItems:"center"},searchInput:{flex:1,height:44,paddingHorizontal:12,fontSize:14},inputClear:{width:42,height:42,alignItems:"center",justifyContent:"center"},sectionHeader:{minHeight:28,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8},sectionTitle:{fontSize:15,lineHeight:20,fontWeight:"700",fontFamily:appFonts.bold,flex:1},sectionBody:{marginTop:12},help:{fontSize:12,lineHeight:18,fontFamily:appFonts.medium,marginBottom:10},priceInputs:{flexDirection:"row",gap:10,marginBottom:12},priceInputColumn:{flex:1,minWidth:0},inputLabel:{fontSize:12,lineHeight:16,fontWeight:"600",fontFamily:appFonts.semibold,marginBottom:5},numberInput:{height:44,borderWidth:1,borderRadius:8,paddingHorizontal:10,fontSize:14,fontFamily:appFonts.medium},endpoints:{flexDirection:"row",justifyContent:"space-between",marginTop:4},endpoint:{fontSize:12,lineHeight:16,fontFamily:appFonts.medium},row:{minHeight:44,flexDirection:"row",alignItems:"center",gap:11},box:{width:21,height:21,borderWidth:1.5,borderRadius:4,alignItems:"center",justifyContent:"center"},rowLabel:{fontSize:14,lineHeight:19,fontWeight:"500",fontFamily:appFonts.medium,flex:1},count:{fontSize:13,minWidth:28,textAlign:"right",fontFamily:appFonts.medium},more:{minHeight:40,justifyContent:"center"},moreText:{color:ui.blue,fontSize:13,fontWeight:"700",fontFamily:appFonts.bold},footer:{borderTopWidth:StyleSheet.hairlineWidth,paddingHorizontal:16,paddingTop:12,shadowColor:"#000",shadowOpacity:.08,shadowRadius:8,shadowOffset:{width:0,height:-2},elevation:8},viewButton:{width:"100%",minHeight:50,borderRadius:10,backgroundColor:ui.blue,alignItems:"center",justifyContent:"center"},viewButtonDisabled:{opacity:.45},viewText:{color:"white",fontSize:16,lineHeight:22,fontWeight:"700",fontFamily:appFonts.bold}});
+function Section({ title, expanded, onToggle, onLayout, children }: { title: string; expanded: boolean; onToggle: () => void; onLayout?: (event: any) => void; children: React.ReactNode }) {
+  const { theme } = useAppTheme();
+  return (
+    <View onLayout={onLayout} style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded }} onPress={onToggle} style={styles.sectionHeader}>
+        <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>{title}</Text>
+        <ChevronDown size={20} color={theme.icon} style={{ transform: [{ rotate: expanded ? "180deg" : "0deg" }] }} />
+      </Pressable>
+      {expanded ? <View style={styles.sectionBody}>{children}</View> : null}
+    </View>
+  );
+}
+function PriceInput({ label, accessibilityLabel, value, onChange, onEnd }: { label: string; accessibilityLabel: string; value: string; onChange: (value: string) => void; onEnd: () => void }) {
+  const { theme } = useAppTheme();
+  return (
+    <View style={styles.priceInputColumn}>
+      <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>{label}</Text>
+      <TextInput
+        accessibilityLabel={accessibilityLabel}
+        keyboardType="decimal-pad"
+        value={value}
+        onChangeText={onChange}
+        onBlur={onEnd}
+        onSubmitEditing={onEnd}
+        style={[
+          styles.numberInput,
+          {
+            borderColor: theme.border,
+            backgroundColor: theme.background,
+            color: theme.textPrimary,
+          },
+        ]}
+      />
+    </View>
+  );
+}
+function OptionRow({ label, count, selected, onPress, radio = false, gold = false }: { label: string; count: number; selected: boolean; onPress: () => void; radio?: boolean; gold?: boolean }) {
+  const { theme } = useAppTheme();
+  return (
+    <Pressable accessibilityRole={radio ? "radio" : "checkbox"} accessibilityLabel={`${label}, ${count}`} accessibilityState={radio ? { selected } : { checked: selected }} onPress={onPress} style={styles.row}>
+      <View
+        style={[
+          styles.box,
+          {
+            borderColor: selected ? ui.blue : theme.border,
+            backgroundColor: selected ? ui.blue : "transparent",
+          },
+        ]}
+      >
+        {selected ? <Check size={14} strokeWidth={3} color="white" /> : null}
+      </View>
+      <Text style={[styles.rowLabel, { color: gold ? "#E3A008" : theme.textPrimary }]}>{label}</Text>
+      <Text style={[styles.count, { color: theme.textSecondary }]}>{count}</Text>
+    </Pressable>
+  );
+}
+const styles = StyleSheet.create({
+  screen: { flex: 1 },
+  header: {
+    minHeight: 68,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 11,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  headerCopy: { flex: 1, minWidth: 0 },
+  title: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
+  },
+  subtitle: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "500",
+    fontFamily: appFonts.medium,
+  },
+  clear: { minHeight: 44, justifyContent: "center", paddingHorizontal: 5 },
+  clearText: {
+    color: ui.blue,
+    fontSize: 13,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
+  },
+  close: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scroll: { flex: 1 },
+  content: { paddingHorizontal: 16, paddingTop: 16, gap: 12 },
+  card: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 12,
+    padding: 16,
+  },
+  propertyTitle: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
+  },
+  searchWrap: {
+    height: 44,
+    marginTop: 8,
+    borderWidth: 1,
+    borderRadius: 8,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  searchInput: { flex: 1, height: 44, paddingHorizontal: 12, fontSize: 14 },
+  inputClear: {
+    width: 42,
+    height: 42,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sectionHeader: {
+    minHeight: 28,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
+    flex: 1,
+  },
+  sectionBody: { marginTop: 12 },
+  help: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontFamily: appFonts.medium,
+    marginBottom: 10,
+  },
+  priceInputs: { flexDirection: "row", gap: 10, marginBottom: 12 },
+  priceInputColumn: { flex: 1, minWidth: 0 },
+  inputLabel: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "600",
+    fontFamily: appFonts.semibold,
+    marginBottom: 5,
+  },
+  numberInput: {
+    height: 44,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    fontSize: 14,
+    fontFamily: appFonts.medium,
+  },
+  endpoints: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 4,
+  },
+  endpoint: { fontSize: 12, lineHeight: 16, fontFamily: appFonts.medium },
+  row: { minHeight: 44, flexDirection: "row", alignItems: "center", gap: 11 },
+  box: {
+    width: 21,
+    height: 21,
+    borderWidth: 1.5,
+    borderRadius: 4,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  rowLabel: {
+    fontSize: 14,
+    lineHeight: 19,
+    fontWeight: "500",
+    fontFamily: appFonts.medium,
+    flex: 1,
+  },
+  count: {
+    fontSize: 13,
+    minWidth: 28,
+    textAlign: "right",
+    fontFamily: appFonts.medium,
+  },
+  more: { minHeight: 40, justifyContent: "center" },
+  moreText: {
+    color: ui.blue,
+    fontSize: 13,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
+  },
+  footer: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: -2 },
+    elevation: 8,
+  },
+  viewButton: {
+    width: "100%",
+    minHeight: 50,
+    borderRadius: 10,
+    backgroundColor: ui.blue,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  viewButtonDisabled: { opacity: 0.45 },
+  updating: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  viewText: {
+    color: "white",
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
+  },
+});
