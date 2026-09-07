@@ -86,7 +86,11 @@ test("email editor starts with current ownership, then a blank address and new-e
   assert.match(editor, /travelApi.verifyCurrentEmailCode\(code\)/);
   assert.match(editor, /setOwnershipProof\(result.ownershipProof\)/);
   assert.match(editor, /maxLength=\{6\}/);
-  assert.match(editor, /s.input, s.verificationInput/);
+  assert.match(editor, /s.verificationField/);
+  assert.match(editor, /s.verificationInput/);
+  const fieldStart = editor.indexOf("s.verificationField");
+  const fieldEnd = editor.indexOf("</View>", fieldStart);
+  assert.ok(editor.indexOf("s.resendHit", fieldStart) < fieldEnd);
   assert.doesNotMatch(editor, /c.emailStep|s.boxes|caretHidden/);
   assert.match(editor, /label=\{c.emailContinue\}/);
   assert.match(editor, /OWNERSHIP_REQUIRED/);

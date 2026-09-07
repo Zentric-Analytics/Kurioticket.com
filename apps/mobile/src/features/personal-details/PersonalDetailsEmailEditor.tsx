@@ -215,6 +215,7 @@ export function PersonalDetailsEmailEditor({
         {isCodeStep ? (
           <>
             <Text style={[s.label, { color: theme.text }]}>{c.emailCode}</Text>
+            <View style={[s.verificationField, { backgroundColor: theme.surface, borderColor: focused ? flowColors.blue : borderColor }]} >
             <TextInput
               key={String(step) + String(codeSent)}
               autoFocus
@@ -234,8 +235,31 @@ export function PersonalDetailsEmailEditor({
               onSubmitEditing={() => void run("confirm")}
               placeholder="000000"
               placeholderTextColor={theme.muted}
-              style={[s.input, s.verificationInput, { color: theme.text, backgroundColor: theme.surface, borderColor: focused ? flowColors.blue : borderColor }]}
+              style={[s.verificationInput, { color: theme.text }]}
             />
+            <Pressable
+              disabled={submissionDisabled || busy || remaining > 0}
+              accessibilityRole="button"
+              accessibilityState={{
+                disabled: submissionDisabled || busy || remaining > 0,
+              }}
+              onPress={() => void run("request")}
+              style={s.resendHit}
+            >
+              <Text
+                style={[
+                  s.resendLabel,
+                  { color: remaining > 0 ? theme.muted : flowColors.blue },
+                ]}
+              >
+                {remaining > 0
+                  ? c.emailResendIn + " " + remaining + "s"
+                  : codeSent
+                    ? c.emailResend
+                    : c.emailSendCode}
+              </Text>
+            </Pressable>
+            </View>
           </>
         ) : (
           <>
@@ -281,28 +305,7 @@ export function PersonalDetailsEmailEditor({
             <Text style={[s.note, { color: theme.text }]}>
               {c.emailDeliveryHelp}
             </Text>
-            <Pressable
-              disabled={submissionDisabled || busy || remaining > 0}
-              accessibilityRole="button"
-              accessibilityState={{
-                disabled: submissionDisabled || busy || remaining > 0,
-              }}
-              onPress={() => void run("request")}
-              style={s.linkHit}
-            >
-              <Text
-                style={[
-                  s.link,
-                  { color: remaining > 0 ? theme.muted : flowColors.blue },
-                ]}
-              >
-                {remaining > 0
-                  ? c.emailResendIn + " " + remaining + "s"
-                  : codeSent
-                    ? c.emailResend
-                    : c.emailSendCode}
-              </Text>
-            </Pressable>
+
             {step === 3 && (
               <Pressable
                 disabled={busy}
@@ -368,7 +371,10 @@ const s = StyleSheet.create({
     fontFamily: appFonts.regular,
     fontSize: 16,
   },
-  verificationInput: { fontSize: 20, letterSpacing: 6 },
+  verificationField: { minHeight: 52, borderWidth: 1, borderRadius: 10, paddingLeft: 12, paddingRight: 6, flexDirection: "row", alignItems: "center" },
+  verificationInput: { flex: 1, minWidth: 0, paddingVertical: 12, paddingRight: 8, fontFamily: appFonts.regular, fontSize: 20, letterSpacing: 3 },
+  resendHit: { minHeight: 44, paddingHorizontal: 6, maxWidth: "48%", justifyContent: "center" },
+  resendLabel: { fontFamily: appFonts.medium, fontSize: 13, textAlign: "right" },
   note: {
     fontFamily: appFonts.regular,
     fontSize: 13,
