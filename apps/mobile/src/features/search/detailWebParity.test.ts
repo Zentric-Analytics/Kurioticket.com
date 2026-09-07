@@ -123,6 +123,14 @@ test("Hotel selected underline cannot become a full-width sticky-shell underline
   assert.doesNotMatch(hotel, /d\.hotelTabsShell,[\s\S]{0,160}activeHotelTab === tab/);
 });
 
+test("Hotel selected tab text and underline share one active-color contract with web", () => {
+  assert.match(hotel, /activeHotelTab === tab && \{ borderBottomColor: hotelAccent \}/);
+  assert.match(hotel, /activeHotelTab === tab && \{[\s\S]*?color: hotelAccent,[\s\S]*?fontWeight: "700",[\s\S]*?fontFamily: appFonts\.bold/);
+  assert.match(webSectionNav, /selected[\s\S]*?"text-blue"/);
+  assert.match(webSectionNav, /bg-blue[\s\S]*?selected \? "opacity-100"/);
+  assert.match(webSectionNav, /font-bold/);
+});
+
 test("Hotel section navigation retains the mobile-web grid contract", () => {
   for (const tab of ["compare", "about", "location", "reviews"]) {
     assert.match(webSectionNav, new RegExp(`id: "${tab}"`));
@@ -166,7 +174,7 @@ test("Hotel detail owns theme-aware accents without changing filled brand contro
   assert.match(hotel, /<ArrowLeft size=\{17\} color=\{hotelAccent\}/);
   assert.match(hotel, /hotelBackToResultsText, \{ color: hotelAccent \}/);
   assert.match(hotel, /borderBottomColor: hotelAccent/);
-  assert.match(hotel, /color: hotelAccent,[\s\S]*?fontWeight: "800"/);
+  assert.match(hotel, /color: hotelAccent,[\s\S]*?fontWeight: "700",[\s\S]*?fontFamily: appFonts\.bold/);
   assert.match(hotel, /borderColor: selected \? hotelAccent : theme\.border/);
   assert.match(hotel, /borderColor: selected \? hotelAccent : theme\.textSecondary/);
   assert.match(hotel, /d\.selectionControlDot, \{ backgroundColor: hotelAccent \}/);

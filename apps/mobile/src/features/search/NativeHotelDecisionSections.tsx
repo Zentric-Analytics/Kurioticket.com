@@ -74,7 +74,7 @@ export function NativeRelatedHotelsSection({ city, hotels, theme, onViewHotel }:
 }
 
 const styles = StyleSheet.create({
-  heading: { fontSize: 20, lineHeight: 26, fontWeight: "900" },
+  heading: { fontSize: 20, lineHeight: 26, fontWeight: "800", fontFamily: appFonts.extraBold },
   locationCard: { marginTop: 24, marginHorizontal: -16, borderWidth: 1, borderRadius: 16, overflow: "hidden", shadowColor: "#0F172A", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.05, shadowRadius: 15, elevation: 2 },
   locationHeader: { paddingHorizontal: 16, paddingVertical: 16 },
   locationHeading: { fontSize: 18, lineHeight: 24, fontWeight: "800", fontFamily: appFonts.extraBold },
@@ -92,12 +92,12 @@ const styles = StyleSheet.create({
   fallbackText: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
   cardBody: { minHeight: 174, padding: 12 },
   stars: { color: "#F59E0B", fontSize: 12, lineHeight: 16, letterSpacing: 0.96, fontWeight: "400", fontFamily: appFonts.regular },
-  hotelName: { marginTop: 4, fontSize: 15, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
+  hotelName: { marginTop: 4, fontSize: 15, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
   location: { marginTop: 4, fontSize: 12, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
   priceBlock: { marginTop: "auto", paddingTop: 12, gap: 4 },
-  nightly: { fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
+  nightly: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
   total: { fontSize: 12, lineHeight: 16, fontWeight: "400", fontFamily: appFonts.regular },
   priceUnavailable: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
   viewRow: { minHeight: 44, marginTop: 10, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  viewText: { fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
+  viewText: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
 });
