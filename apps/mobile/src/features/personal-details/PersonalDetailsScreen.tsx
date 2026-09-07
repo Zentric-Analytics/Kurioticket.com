@@ -227,6 +227,9 @@ function CountrySelector({
             >
               {title}
             </Text>
+            {kind === "addressCountry" ? (
+              <View style={s.iconButton} />
+            ) : (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={c.cancel}
@@ -236,6 +239,7 @@ function CountrySelector({
             >
               <FlowIcon name="close" color={theme.icon} />
             </Pressable>
+            )}
           </View>
           <View style={s.countrySearchArea}>
             <TextInput
