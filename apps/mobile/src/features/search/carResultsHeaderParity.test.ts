@@ -60,6 +60,10 @@ test("Cars use one truthful compact price alert before the result count", () => 
   assert.ok(cars.indexOf("<CarPriceAlert/>") < cars.indexOf("results found"));
   const alert = cars.slice(cars.indexOf("function CarPriceAlert"));
   assert.match(alert, /<Bell/); assert.match(alert, /<Switch/); assert.match(alert, /Track rental car prices/);
-  assert.match(alert, /disabled value=\{false\}/);
+  assert.match(alert, /carPriceAlertSwitchSlot:\{minWidth:51,minHeight:44,flexShrink:0,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4\}/);
+  assert.match(alert, /style=\{Platform\.OS==="ios"\?r\.carPriceAlertSwitchIos:undefined\} hitSlop=\{6\}/);
+  assert.match(alert, /accessibilityHint="Rental car price alerts are not available yet\." accessibilityState=\{\{checked:false,disabled:true\}\} disabled value=\{false\}/);
+  assert.match(alert, /carPriceAlertSwitchIos:\{transform:\[\{translateY:8\}\]\}/);
   assert.doesNotMatch(alert, /Rental car price alerts<|label="Track prices"|alertIcon/);
+  assert.match(hotels, /compactPriceAlertSwitchSlot: \{ minWidth: 51, minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
 });

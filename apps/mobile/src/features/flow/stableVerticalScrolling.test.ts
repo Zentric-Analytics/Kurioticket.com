@@ -61,6 +61,19 @@ test("hotel results use one stable native scroll owner and threshold-guard only 
   assert.match(source, /scrollY > 600[\s\S]*?visible === hotelBackToTopVisibleRef\.current[\s\S]*?setHotelBackToTop\(visible\)/);
 });
 
+test("car results use one stable vertical results owner without changing the horizontal filters", () => {
+  const source = read("src/features/search/ApprovedCarResultsScreen.tsx");
+  const horizontalEnd = source.indexOf("</ScrollView>", source.indexOf("<ScrollView horizontal"));
+  const verticalStart = source.indexOf("<ScrollView ref={carScrollRef}", horizontalEnd);
+  const verticalOwner = source.slice(verticalStart, source.indexOf(">", verticalStart) + 1);
+  const layout = source.slice(source.indexOf("return <SafeAreaView"), source.indexOf("function CarResultsHeader"));
+  assert.equal(layout.match(/<ScrollView/g)?.length, 2);
+  for (const prop of stableProps) assert.match(verticalOwner, prop);
+  assert.match(verticalOwner, /onScroll=\{handleCarScroll\}/);
+  const horizontalOwner = source.slice(source.indexOf("<ScrollView horizontal"), horizontalEnd);
+  for (const prop of stableProps) assert.doesNotMatch(horizontalOwner, prop);
+});
+
 test("nested explore carousels remain horizontal without vertical stability overrides", () => {
   const source = read("src/features/explore/ExploreScreen.tsx");
   const horizontal = source.match(/<FlatList horizontal[^>]*>/)?.[0];
