@@ -40,6 +40,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 import { CarResultCard } from "@/components/results/CarResultCard";
+import { CarPriceAlertControl } from "@/components/results/CarPriceAlertControl";
 import { CarCardSkeleton } from "@/components/ui/Skeleton";
 import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
 import {
@@ -2392,6 +2393,7 @@ export function CarsResultsExperience({
         <div className="min-w-0 space-y-4">
           {results.length > 0 ? (
             <>
+              {!embedded ? <CarPriceAlertControl search={search} results={results} /> : null}
               <div
                 ref={resultsStartRef}
                 className="flex w-full min-w-0 flex-col items-start gap-2 pt-1 sm:gap-3 lg:py-1"

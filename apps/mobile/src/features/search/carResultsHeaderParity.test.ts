@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const cars = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
+const carAlert = readFileSync("src/features/search/NativeCarPriceAlert.tsx", "utf8");
 const hotels = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
 const carHeader = cars.slice(cars.indexOf("function CarResultsHeader"), cars.indexOf("function CarSkeletons"));
 const hotelHeader = hotels.slice(hotels.indexOf("function HotelResultsHeader"), hotels.indexOf("const HotelResultsShortcut"));
@@ -56,14 +57,11 @@ test("Cars render the full filtered result set without pagination", () => {
 });
 
 test("Cars use one truthful compact price alert before the result count", () => {
-  assert.equal((cars.match(/<CarPriceAlert\/>/g) ?? []).length, 1);
-  assert.ok(cars.indexOf("<CarPriceAlert/>") < cars.indexOf("results found"));
-  const alert = cars.slice(cars.indexOf("function CarPriceAlert"));
-  assert.match(alert, /<Bell/); assert.match(alert, /<Switch/); assert.match(alert, /Track rental car prices/);
-  assert.match(alert, /carPriceAlertSwitchSlot:\{minWidth:51,minHeight:44,flexShrink:0,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4\}/);
-  assert.match(alert, /style=\{Platform\.OS==="ios"\?r\.carPriceAlertSwitchIos:undefined\} hitSlop=\{6\}/);
-  assert.match(alert, /accessibilityHint="Rental car price alerts are not available yet\." accessibilityState=\{\{checked:false,disabled:true\}\} disabled value=\{false\}/);
-  assert.match(alert, /carPriceAlertSwitchIos:\{transform:\[\{translateY:8\}\]\}/);
-  assert.doesNotMatch(alert, /Rental car price alerts<|label="Track prices"|alertIcon/);
+  assert.equal((cars.match(/<NativeCarPriceAlert/g) ?? []).length, 1);
+  assert.ok(cars.indexOf("<NativeCarPriceAlert") < cars.indexOf("results found"));
+  assert.match(carAlert, /<Bell/); assert.match(carAlert, /<Switch/); assert.match(carAlert, /Track rental car prices/);
+  assert.match(carAlert, /travelApi\.priceAlerts\(\)/); assert.match(carAlert, /updatePriceAlertStatus/); assert.match(carAlert, /createPriceAlert/);
+  assert.match(carAlert, /accessibilityState=\{\{ checked: tracking, disabled, busy: pending \|\| loading \}\}/);
+  assert.doesNotMatch(carAlert, /not available yet/);
   assert.match(hotels, /compactPriceAlertSwitchSlot: \{ minWidth: 51, minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
 });
