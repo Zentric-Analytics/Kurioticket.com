@@ -12,12 +12,13 @@ type Props = {
   startDate: string; endDate: string; minimumStartDate: string;
   endMustBeAfterStart?: boolean;
   presentation?: "sheet" | "resultsEditFullScreen";
+  backAccessibilityLabel?: string;
   onDone: (startDate: string, endDate: string) => void; onCancel: () => void;
 };
 
 const FLIGHT_DATE_LOCALE = "en-US";
 
-export function DateRangeSheet({ visible, title, startLabel, endLabel, startDate, endDate, minimumStartDate, endMustBeAfterStart = false, presentation = "sheet", onDone, onCancel }: Props) {
+export function DateRangeSheet({ visible, title, startLabel, endLabel, startDate, endDate, minimumStartDate, endMustBeAfterStart = false, presentation = "sheet", backAccessibilityLabel, onDone, onCancel }: Props) {
   const ft = useFlowTheme();
   const sheetVisible = presentation === "sheet" ? visible : false;
   const motion = useSearchPickerMotion(sheetVisible);
@@ -41,7 +42,7 @@ export function DateRangeSheet({ visible, title, startLabel, endLabel, startDate
     <View style={styles.week}>{["S","M","T","W","T","F","S"].map((day,index) => <Text key={`${day}-${index}`} style={[styles.weekday, { color: ft.colors.secondaryText }]}>{day}</Text>)}</View>
     <View style={styles.grid}>{cells.map((date,index) => { if (!date) return <View key={`blank-${index}`} style={styles.day}/>; const iso=localIsoDate(date); const disabled=iso<minimumStartDate; const start=iso===draftStart; const end=iso===draftEnd; const inRange=Boolean(draftStart&&draftEnd&&iso>draftStart&&iso<draftEnd); const selected=start||end; const isToday=iso===localIsoDate(new Date()); return <Pressable key={iso} accessibilityRole="button" accessibilityLabel={date.toLocaleDateString(FLIGHT_DATE_LOCALE,{dateStyle:"full"})} accessibilityState={{disabled,selected}} disabled={disabled} onPress={() => choose(iso)} style={[styles.day,inRange&&{backgroundColor:ft.colors.selected},selected&&{backgroundColor:ft.colors.selectedBorder},isToday&&!selected&&{borderColor:ft.colors.selectedBorder,borderWidth:1},disabled&&styles.disabled]}><Text style={[styles.dayText,{color:selected?ft.colors.surface:ft.colors.text},selected&&styles.selectedText]}>{date.getDate()}</Text></Pressable>; })}</View>
   </>;
-  if (presentation === "resultsEditFullScreen") return <HotelResultsEditPickerShell visible={visible} title={`Choose ${title.toLowerCase()}`} onBack={onCancel} footer={<PrimaryButton label="Done" icon={null} disabled={!valid} onPress={() => onDone(draftStart,draftEnd)}/>}>
+  if (presentation === "resultsEditFullScreen") return <HotelResultsEditPickerShell visible={visible} title={`Choose ${title.toLowerCase()}`} onBack={onCancel} backAccessibilityLabel={backAccessibilityLabel} footer={<PrimaryButton label="Done" icon={null} disabled={!valid} onPress={() => onDone(draftStart,draftEnd)}/>}>
     <View style={styles.fullScreenContent}>{content}</View>
   </HotelResultsEditPickerShell>;
   if (!motion.rendered) return null;
