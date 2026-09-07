@@ -112,9 +112,9 @@ test("the active Flight results journey keeps its semantic surface and text hier
   const shell = read("src/features/search/FlightResultsSheetShell.tsx");
   assert.match(shell, /backgroundColor: theme\.surface/);
   assert.match(shell, /backgroundColor: theme\.background/);
-  assert.match(sortSheet, /selected \? \(theme\.dark \? "#8FB5FF" : "#004BB8"\) : theme\.textPrimary/);
+  assert.match(sortSheet, /color: theme\.textPrimary/);
   assert.match(sortSheet, /color: theme\.textSecondary/);
-  assert.match(sortSheet, /theme\.dark \? "#142B55" : "#F7FAFF"/);
+  assert.doesNotMatch(sortSheet, /#142B55|#F7FAFF/);
   assert.match(searchUi, /backgroundColor: flightResults \? theme\.background : theme\.surface/);
   assert.match(searchUi, /backgroundColor: theme\.surface/);
   assert.match(searchUi, /theme\.dark \? "#142B55" : "#F0F5FF"/);

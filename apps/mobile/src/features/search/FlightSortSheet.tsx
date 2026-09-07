@@ -51,12 +51,11 @@ export function FlightSortSheet({
               onPress={() => setDraft(option.value)}
               style={({ pressed }) => [
                 styles.option,
-                selected && { backgroundColor: theme.dark ? "#142B55" : "#F7FAFF" },
                 pressed && styles.pressed,
               ]}
             >
               <View style={styles.copy}>
-                <Text style={[styles.label, { color: selected ? (theme.dark ? "#8FB5FF" : "#004BB8") : theme.textPrimary }]}>
+                <Text style={[styles.label, { color: theme.textPrimary }]}>
                   {option.label}
                 </Text>
                 <Text numberOfLines={1} style={[styles.description, { color: theme.textSecondary }]}>{option.description}</Text>
@@ -73,13 +72,12 @@ export function FlightSortSheet({
 const styles = StyleSheet.create({
   options: { padding: 16 },
   option: {
-    minHeight: 44,
+    minHeight: 52,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    borderRadius: 9,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 7,
   },
   pressed: { opacity: 0.72 },
   copy: { flex: 1, minWidth: 0 },

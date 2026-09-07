@@ -35,6 +35,18 @@ test("Flight quick sheets use a symmetric outer inset without changing shared le
   assert.match(sort,/insetFlightQuickSheet/);
   assert.doesNotMatch(cars,/insetFlightQuickSheet/);
 });
+test("only inset Flight quick sheets use a balanced centered header with the close control on the left",()=>{
+  const cars=readFileSync("src/features/search/CarFilterSheet.tsx","utf8");
+  assert.match(shell,/const flightQuickHeader = insetFlightQuickSheet/);
+  assert.match(shell,/flightQuickHeader \? <>[\s\S]*?<Pressable[\s\S]*?style=\{styles\.headerSlot\}[\s\S]*?<View style=\{\[styles\.headerCopy, styles\.quickHeaderCopy\]\}/);
+  assert.match(shell,/<View accessible=\{false\} importantForAccessibility="no-hide-descendants" style=\{styles\.headerSlot\} \/>/);
+  assert.match(shell,/headerSlot: \{ width: 44, height: 44/);
+  assert.match(shell,/quickHeader: \{ paddingHorizontal: 10 \}/);
+  assert.match(shell,/quickTitle: \{ textAlign: "center" \}/);
+  assert.match(shell,/quickSubtitle: \{ textAlign: "center" \}/);
+  assert.match(shell,/flightQuickHeader \? <>[\s\S]*?subtitle \? <Text style=\{\[styles\.subtitle, styles\.quickSubtitle/);
+  assert.doesNotMatch(cars,/insetFlightQuickSheet|quickHeaderCopy|headerSlot/);
+});
 test("full-screen Flight filters bypass the quick-sheet inset frame",()=>{
   assert.match(shell,/\{fullScreen \? <SafeAreaProvider><SafeAreaView edges=\{\["top", "bottom", "left", "right"\]\}/);
   assert.match(shell,/fullScreen: \{ flex: 1, minHeight: 0, borderRadius: 0 \}/);

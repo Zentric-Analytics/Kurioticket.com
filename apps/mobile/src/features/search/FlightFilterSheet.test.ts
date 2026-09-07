@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";import{readFileSync}from"node:fs";import test from"node:test";
 const sheet=readFileSync("src/features/search/FlightFilterSheet.tsx","utf8");
 test("main Filter retains full-screen live editing and a localized live result action",()=>{assert.match(sheet,/fullScreen=\{full\}/);assert.match(sheet,/const working=full\?filters:draft/);assert.match(sheet,/matchingFlightCount\(results,working/);assert.match(sheet,/copy\.viewFlights\(count\)/);assert.match(sheet,/copy\.noFilterTitle/);assert.match(sheet,/emptyFlightFilters\(\)/);});
-test("quick filters use isolated drafts with Reset and Apply",()=>{assert.match(sheet,/setDraft\(filters\)/);assert.match(sheet,/full\?onChange\(next\):setDraft\(next\)/);assert.match(sheet,/onChange\(draft\);onClose\(\)/);assert.match(sheet,/resetQuick/);assert.match(sheet,/copy\.reset/);assert.match(sheet,/copy\.apply/);});
+test("quick filters use isolated drafts with Reset and a localized result action",()=>{assert.match(sheet,/setDraft\(filters\)/);assert.match(sheet,/full\?onChange\(next\):setDraft\(next\)/);assert.match(sheet,/onChange\(draft\);onClose\(\)/);assert.match(sheet,/resetQuick/);assert.match(sheet,/copy\.reset/);assert.match(sheet,/const footerLabel=count===0\?copy\.noFilterTitle:copy\.viewFlights\(count\)/);assert.match(sheet,/\{footerLabel\}<\/Text><\/Pressable><\/View>\}/);});
 test("Airlines supports complete-list search and shortlist expansion",()=>{assert.match(sheet,/accessibilityLabel=\{copy\.searchAirlines\}/);assert.match(sheet,/slice\(0,5\)/);assert.match(sheet,/copy\.showLess/);assert.match(sheet,/copy\.showMore/);assert.match(sheet,/withAirlinePreview/);});
 test("Stops and airports retain authoritative distinct facets",()=>{for(const x of ["nonstop","oneStop","twoStops","from","to"])assert.match(sheet,new RegExp(`copy\\.${x}`));assert.match(sheet,/maxStops:null/);assert.match(sheet,/fromAirports/);assert.match(sheet,/toAirports/);assert.match(sheet,/withStopsPreview/);assert.match(sheet,/withAirportPreview/);});
 test("main hierarchy includes supported native sections but omits fake quality",()=>{const order=["price","flightTimes","duration","stops","airlines","airports","farePreferences"].map(x=>sheet.indexOf(`title={copy.${x}}`));assert.ok(order.every((x,i)=>x>=0&&(i===0||x>order[i-1])));assert.doesNotMatch(sheet,/title="Flight quality"/);});
@@ -39,4 +39,18 @@ test("full airline and airport rows use count-only trailing columns with unit-qu
 test("fare preference rows keep their checkbox directly before their label",()=>{
  assert.match(sheet,/<Check label=\{copy\.baggageIncluded\} selected=/);
  assert.match(sheet,/<Check label=\{copy\.flexibleRefundable\} selected=/);
+});
+test("quick facets omit only their redundant top-level titles while full Filters keeps every section title",()=>{
+ assert.match(sheet,/showTitle=true/);
+ for(const section of ["stops","airlines","airports"]) assert.match(sheet,new RegExp(`title=\\{copy\\.${section}\\} compact=\\{!full\\} showTitle=\\{full\\}`));
+ assert.match(sheet,/!full&&s\.compactSubhead/);
+ for(const subgroup of ["from","to"]) assert.match(sheet,new RegExp(`\\{copy\\.${subgroup}\\}`));
+});
+test("quick rows use one neutral surface while checked controls and accessibility expose selection",()=>{
+ const check=sheet.slice(sheet.indexOf("function Check("),sheet.indexOf("const s=StyleSheet.create"));
+ assert.match(check,/accessibilityRole="checkbox" accessibilityState=\{\{checked:selected\}\}/);
+ assert.match(check,/backgroundColor:selected\?ui\.blue:"transparent"/);
+ assert.match(check,/color:theme\.textPrimary/);
+ assert.doesNotMatch(check,/#F7FAFF|#142B55|#8FB5FF|#004BB8|compact&&selected&&\{backgroundColor/);
+ assert.match(sheet,/compactRow:\{minHeight:48/);
 });
