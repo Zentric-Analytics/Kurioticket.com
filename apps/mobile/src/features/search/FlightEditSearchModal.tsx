@@ -6,7 +6,7 @@ import type { RouteValue } from "../flow/flightSearchModel";
 import { useFlowTheme } from "../flow/flowStyles";
 import { useRetainedPickerContext } from "../flow/retainedPickerContext";
 import { useSearchPickerMotion } from "../flow/searchPickerPresentation";
-import { FLIGHT_FLOATING_SHEET_BOTTOM_GAP, FLIGHT_QUICK_SHEET_HORIZONTAL_INSET } from "./FlightResultsSheetShell";
+import { FLIGHT_FLOATING_SHEET_BOTTOM_GAP, FLIGHT_QUICK_SHEET_HORIZONTAL_INSET, FLIGHT_RESULTS_LIGHT_CANVAS } from "./FlightResultsSheetShell";
 
 type Props = {
   visible: boolean;
@@ -17,6 +17,7 @@ type Props = {
 
 export function FlightEditSearchModal({ visible, params, onClose, onSubmit }: Props) {
   const ft = useFlowTheme();
+  const resultsCanvas = ft.theme.dark ? ft.colors.page : FLIGHT_RESULTS_LIGHT_CANVAS;
   const { bottom: bottomSafeAreaInset } = useSafeAreaInsets();
   const floatingBottomGap = FLIGHT_FLOATING_SHEET_BOTTOM_GAP;
   const internalBottomPadding = Math.max(20, bottomSafeAreaInset - floatingBottomGap);
@@ -30,14 +31,14 @@ export function FlightEditSearchModal({ visible, params, onClose, onSubmit }: Pr
         <SafeAreaView edges={["top", "left", "right"]} style={styles.backdrop}>
           <Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill, styles.scrim, motion.backdropStyle]} />
           <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Close edit search" onPress={onClose} />
-          <Animated.View accessibilityViewIsModal onLayout={motion.onSheetLayout} style={[styles.sheet, { backgroundColor: ft.colors.surface, marginBottom: floatingBottomGap }, motion.sheetStyle]}>
-            <View style={[styles.header, { borderBottomColor: ft.colors.border }]}>
+          <Animated.View accessibilityViewIsModal onLayout={motion.onSheetLayout} style={[styles.sheet, { backgroundColor: resultsCanvas, marginBottom: floatingBottomGap }, motion.sheetStyle]}>
+            <View style={styles.header}>
               <Text accessibilityRole="header" style={[ft.styles.title, styles.title]}>Change your search</Text>
               <Pressable accessibilityRole="button" accessibilityLabel="Close edit search" hitSlop={8} onPress={onClose} style={({ pressed }) => [styles.close, pressed && ft.styles.pressed]}>
                 <X accessible={false} size={23} color={ft.colors.icon} />
               </Pressable>
             </View>
-            <ScrollView style={{ backgroundColor: ft.colors.page }} contentContainerStyle={[styles.content, { paddingBottom: internalBottomPadding }]} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}>
+            <ScrollView style={{ backgroundColor: resultsCanvas }} contentContainerStyle={[styles.content, { paddingBottom: internalBottomPadding }]} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}>
               <FlightSearchPanel embedded params={presentedParams} onValidatedSubmit={onSubmit} editAppearance resultsModalAppearance />
             </ScrollView>
           </Animated.View>
@@ -52,8 +53,8 @@ const styles = StyleSheet.create({
   backdrop: { flex: 1, justifyContent: "flex-end" },
   scrim: { backgroundColor: "rgba(8, 18, 35, 0.52)" },
   sheet: { maxHeight: "88%", marginHorizontal: FLIGHT_QUICK_SHEET_HORIZONTAL_INSET, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderBottomLeftRadius: 24, borderBottomRightRadius: 24, overflow: "hidden" },
-  header: { minHeight: 52, flexDirection: "row", alignItems: "center", borderBottomWidth: 1, paddingLeft: 16, paddingRight: 8 },
+  header: { minHeight: 52, flexDirection: "row", alignItems: "center", paddingLeft: 16, paddingRight: 8 },
   close: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  title: { flex: 1, textAlign: "left", fontSize: 19, lineHeight: 24 },
+  title: { flex: 1, textAlign: "left", fontSize: 19, lineHeight: 24, fontWeight: "600" },
   content: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 20 },
 });

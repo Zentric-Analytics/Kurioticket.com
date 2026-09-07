@@ -35,6 +35,16 @@ test("results modal uses underline tabs while dedicated edit keeps filled tabs",
   const panel = read("FlightSearchPanel.tsx");
 
   assert.match(panel, /appearance=\{editAppearance && !resultsModalAppearance \? "filled" : "default"\}/);
+  assert.match(panel, /showBaseline=\{!resultsModalAppearance\}/);
+});
+
+test("only the results modal suppresses the neutral Segments baseline", () => {
+  const primitives = read("FlowPrimitives.tsx");
+  assert.match(primitives, /showBaseline = true/);
+  assert.match(primitives, /showBaseline\?: boolean/);
+  assert.match(primitives, /!showBaseline && styles\.segmentsWithoutBaseline/);
+  assert.match(primitives, /segmentsWithoutBaseline: \{ borderBottomWidth: 0 \}/);
+  assert.match(primitives, /segmentActive: \{ borderBottomColor: flowColors\.blue, borderBottomWidth: 2 \}/);
 });
 
 test("Segments keeps one horizontal row and disables options accessibly without changing enabled defaults", () => {
