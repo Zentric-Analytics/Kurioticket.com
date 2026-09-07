@@ -4,8 +4,8 @@ import { router } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, FilePenLine, Heart } from "lucide-react-native";
 import type { FlightDetailsFareChoice, FlightDetailsSuccess } from "../../../../../src/lib/flights/flightDetailsContract";
-import type { FlightLeg, PublicFlightResult } from "../../../../../src/lib/types";
-import { TravelApiError, travelApi } from "../../api/travelApi";
+import type { FlightLeg } from "../../../../../src/lib/types";
+import { TravelApiError, travelApi, type FlightResult } from "../../api/travelApi";
 import { useAppTheme } from "../../theme/AppTheme";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
 import { readSession } from "../../storage/sessionStorage";
@@ -29,6 +29,22 @@ function searchParams(details: FlightDetailsSuccess) {
   if (search.returnDate) result.returnDate = search.returnDate;
   if (search.tripType === "multi-city") { result.legCount = String(search.legs.length); search.legs.forEach((leg, index) => { const n=index+1; result[`origin${n}`]=leg.origin; result[`destination${n}`]=leg.destination; result[`departureDate${n}`]=leg.departureDate; }); }
   return result;
+}
+
+function savedFlightOffer(details: FlightDetailsSuccess, choice: FlightDetailsFareChoice): FlightResult {
+  const offer = choice.offer;
+  return {
+    ...offer,
+    searchPolicy: {
+      source: "duffel",
+      bookable: choice.handoff.available,
+      action: {
+        kind: "internal-detail",
+        href: `/flights/details/${encodeURIComponent(offer.id)}`,
+        enabled: true,
+      },
+    },
+  };
 }
 
 export function NativeFlightDetails({ params }: { params: Params }) {
@@ -69,13 +85,14 @@ export function NativeFlightDetails({ params }: { params: Params }) {
   if (state !== "available" || !details || !selected) return <SafeAreaView edges={["top"]} style={[s.safe,{backgroundColor:theme.background}]}><Back/><View style={s.center}><Text accessibilityRole="header" style={[s.title,{color:theme.textPrimary}]}>{state === "loading" ? "Checking current flight details…" : state === "unavailable" ? "This flight is no longer available" : "We couldn’t load this flight"}</Text>{state!=="loading"?<><Text style={[s.bodyText,{color:theme.textSecondary}]}>{message}</Text><Button label="Retry" onPress={reload}/><Button label="Back to results" onPress={()=>router.back()}/></>:null}</View></SafeAreaView>;
 
   const offer=selected.offer; const provider=selected.handoff.available ? selected.handoff.providerName : "provider";
-  const saved=savedFlights.savedFlights.has(flightSavedSignature(offer as PublicFlightResult));
+  const savedOffer=savedFlightOffer(details, selected);
+  const saved=savedFlights.savedFlights.has(flightSavedSignature(savedOffer));
   const handoff=async(offerId:string) => { if(booking)return; setBooking(true); setMessage(""); try { const response=await travelApi.flightRedirect(offerId); await Linking.openURL(response.url); } catch(error) { if(error instanceof TravelApiError && error.status===409 && error.details?.code==="offer_changed") { setMessage("The provider updated this offer. Review the refreshed price and terms before continuing."); reload(); } else setMessage(error instanceof Error?error.message:"Booking is currently unavailable."); } finally { setBooking(false); } };
-  const share=async()=>{if(sharePending.current)return;sharePending.current=true;try{const outcome=await shareFlightForAuthenticatedSession({readSession,share:(message)=>Share.share({message}),message:flightShareMessage(offer as PublicFlightResult,fare?.formatted??"price unavailable")});if(outcome==="sign-in-required")Alert.alert("Sign in required","Sign in to share this flight.",[{text:"Sign in",onPress:()=>router.push("/email-auth")},{text:"Cancel",style:"cancel"}]);}finally{sharePending.current=false;}};
+  const share=async()=>{if(sharePending.current)return;sharePending.current=true;try{const outcome=await shareFlightForAuthenticatedSession({readSession,share:(message)=>Share.share({message}),message:flightShareMessage(offer,fare?.formatted??"price unavailable")});if(outcome==="sign-in-required")Alert.alert("Sign in required","Sign in to share this flight.",[{text:"Sign in",onPress:()=>router.push("/email-auth")},{text:"Cancel",style:"cancel"}]);}finally{sharePending.current=false;}};
   return <SafeAreaView edges={["top"]} style={[s.safe,{backgroundColor:theme.background}]}><Back/><ScrollView contentContainerStyle={[s.content,{paddingBottom:120+inset.bottom}]}>
     {message?<View accessibilityRole="alert" style={s.notice}><Text style={s.noticeText}>{message}</Text></View>:null}
     <Text accessibilityRole="header" style={[s.route,{color:theme.textPrimary}]}>{offer.originAirport} → {offer.destinationAirport}</Text><Text style={[s.bodyText,{color:theme.textSecondary}]}>{details.search.tripType} · {details.search.travelers} traveler{details.search.travelers===1?"":"s"}</Text>
-    <View style={s.actions}><IconButton label={saved?"Remove saved flight":"Save flight"} onPress={()=>savedFlights.toggle(offer as PublicFlightResult,searchParams(details))}><Heart size={20} color={saved?androidFavoriteColors.active:theme.icon} fill={saved?androidFavoriteColors.active:"transparent"}/></IconButton><IconButton label="Share flight" onPress={()=>void share()}><FlowIcon name="share" size={20} color={theme.icon}/></IconButton><Pressable accessibilityRole="button" accessibilityLabel="Edit search" onPress={()=>router.push({pathname:"/edit-flight-search",params:searchParams(details)})} style={s.edit}><FilePenLine size={17} color={ui.blue}/><Text style={s.editText}>Edit search</Text></Pressable></View>
+    <View style={s.actions}><IconButton label={saved?"Remove saved flight":"Save flight"} onPress={()=>savedFlights.toggle(savedOffer,searchParams(details))}><Heart size={20} color={saved?androidFavoriteColors.active:theme.icon} fill={saved?androidFavoriteColors.active:"transparent"}/></IconButton><IconButton label="Share flight" onPress={()=>void share()}><FlowIcon name="share" size={20} color={theme.icon}/></IconButton><Pressable accessibilityRole="button" accessibilityLabel="Edit search" onPress={()=>router.push({pathname:"/edit-flight-search",params:searchParams(details)})} style={s.edit}><FilePenLine size={17} color={ui.blue}/><Text style={s.editText}>Edit search</Text></Pressable></View>
     <Text style={[s.sectionTitle,{color:theme.textPrimary}]}>Full itinerary</Text>{(offer.legs?.length?offer.legs:[]).map((leg,index)=><Itinerary key={`${leg.departureTime}-${index}`} leg={leg} index={index} theme={theme}/>) }
     <Text style={[s.sectionTitle,{color:theme.textPrimary}]}>Pick your fare</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.fares}>{details.fareChoices.map((choice)=><Pressable accessibilityRole="radio" accessibilityState={{selected:choice.key===selected.key}} key={choice.key} onPress={()=>setSelectedKey(choice.key)} style={[s.fareCard,{backgroundColor:theme.surface,borderColor:choice.key===selected.key?ui.blue:theme.border}]}><Text style={[s.fareLabel,{color:theme.textPrimary}]}>{choice.label}</Text><Text style={s.farePrice}>{choice.key===selected.key?(fare?.formatted??"—"):`${choice.offer.currency} ${choice.offer.price.toFixed(2)}`}</Text>{choice.distinguishingTerms.slice(0,3).map((term,i)=><Text key={i} style={[s.small,{color:theme.textSecondary}]}>• {term.text}</Text>)}</Pressable>)}</ScrollView>
     <View accessibilityRole="tablist" style={s.tabs}>{([['deals','Compare deals'],['details','Fare details'],['conditions','Fare conditions'],['extras','Optional extras']] as const).map(([key,label])=><Pressable accessibilityRole="tab" accessibilityState={{selected:tab===key}} key={key} onPress={()=>setTab(key)} style={[s.tab,tab===key&&s.activeTab]}><Text style={[s.tabText,{color:tab===key?ui.blue:theme.textSecondary}]}>{label}</Text></Pressable>)}</View>
