@@ -8,7 +8,7 @@ import { appFonts } from "../../theme/typography";
 
 type QuickBackdropVariant = "flight" | "legacy";
 export const FLIGHT_QUICK_SHEET_HORIZONTAL_INSET = 12;
-export const FLIGHT_FLOATING_SHEET_MIN_BOTTOM_GAP = 12;
+export const FLIGHT_FLOATING_SHEET_BOTTOM_GAP = 12;
 
 export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, children, footer, fullScreen = false, subtitle, headerAction, quickBackdropVariant = "flight", insetFlightQuickSheet = false }: {
   visible: boolean; title: string; closeLabel: string; onClose: () => void; children: ReactNode; footer?: ReactNode;
@@ -20,8 +20,12 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
   // Full-screen content is placed inside a native SafeAreaView below. Its
   // footer padding is visual spacing *within* that safe area, not a guessed
   // replacement for the device inset.
-  const floatingBottomGap = Math.max(inset.bottom, FLIGHT_FLOATING_SHEET_MIN_BOTTOM_GAP);
-  const footerBottomPadding = fullScreen || insetFlightQuickSheet ? 12 : Math.max(inset.bottom, 12);
+  const floatingBottomGap = FLIGHT_FLOATING_SHEET_BOTTOM_GAP;
+  const footerBottomPadding = fullScreen
+    ? 12
+    : insetFlightQuickSheet
+      ? Math.max(12, inset.bottom - floatingBottomGap)
+      : Math.max(inset.bottom, 12);
   const quickBackdropOpacity = useRef(new Animated.Value(0)).current;
   const quickSheetTranslateY = useRef(new Animated.Value(28)).current;
   const flightQuickBackdrop = quickBackdropVariant === "flight";
