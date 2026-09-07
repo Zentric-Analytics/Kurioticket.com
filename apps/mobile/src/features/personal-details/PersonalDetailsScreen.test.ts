@@ -5,14 +5,13 @@ const screen = readFileSync(
   "src/features/personal-details/PersonalDetailsScreen.tsx",
   "utf8",
 ).replace(/\r\n/g, "\n");
-test("overview groups details and each row opens its own editor", () => {
+test("overview keeps a continuous list in the agreed field order", () => {
   assert.match(screen, /!editing\s*\?\s*\(/);
   assert.match(
     screen,
-    /keys: \["fullName", "birth", "gender", "nationality"\]/,
+    /const detailOrder: DetailKey\[\] = \[\s*"fullName",\s*"email",\s*"phone",\s*"birth",\s*"gender",\s*"nationality",\s*"address",?\s*\]/,
   );
-  assert.match(screen, /keys: \["email", "phone"\]/);
-  assert.match(screen, /keys: \["address"\]/);
+  assert.match(screen, /detailOrder\.map\(\(key, index\)/);
   assert.match(screen, /onPress=\{\(\) => beginEditing\(key\)\}/);
   assert.match(screen, /setActiveDetail\(detail\)/);
   for (const key of [
@@ -134,9 +133,16 @@ test("header stays visible while shared initial loading and retry states replace
   );
   assert.match(screen, /Alert\.alert\(c\.discardTitle/);
 });
-test("overview uses themed groups and editor remains a plain focused form", () => {
-  assert.match(screen, /s\.detailCard/);
-  assert.match(screen, /backgroundColor: theme\.surface/);
+test("overview has no background cards or section headings", () => {
+  const overview = screen.slice(
+    screen.indexOf("{!editing ? ("),
+    screen.indexOf("style={s.formContent}"),
+  );
+  assert.doesNotMatch(
+    overview,
+    /backgroundColor|borderRadius|accessibilityRole="header"/,
+  );
+  assert.doesNotMatch(screen, /detailCard|detailGroup|groupTitle|groups\.map/);
   assert.match(screen, /s\.formContent/);
   assert.doesNotMatch(screen, /formCard|identityHero/);
 });

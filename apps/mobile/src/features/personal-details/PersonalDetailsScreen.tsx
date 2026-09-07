@@ -969,10 +969,14 @@ export function PersonalDetailsScreen() {
     nationality: { label: c.nationality, value: saved?.nationality },
     address: { label: c.address, value: displayAddress(saved?.address || "") },
   };
-  const groups: { title: string; keys: DetailKey[] }[] = [
-    { title: c.basic, keys: ["fullName", "birth", "gender", "nationality"] },
-    { title: c.contact, keys: ["email", "phone"] },
-    { title: c.addressSection, keys: ["address"] },
+  const detailOrder: DetailKey[] = [
+    "fullName",
+    "email",
+    "phone",
+    "birth",
+    "gender",
+    "nationality",
+    "address",
   ];
   const latestBirthYear = Number(
     personalDetailsLatestDateOfBirth().slice(0, 4),
@@ -1107,69 +1111,43 @@ export function PersonalDetailsScreen() {
                 <Text style={[s.description, { color: theme.muted }]}>
                   {c.description}
                 </Text>
-                {groups.map((group) => (
-                  <View key={group.title} style={s.detailGroup}>
-                    <Text
-                      accessibilityRole="header"
-                      style={[s.groupTitle, { color: theme.text }]}
-                    >
-                      {group.title}
-                    </Text>
-                    <View
-                      style={[
-                        s.detailCard,
-                        {
-                          backgroundColor: theme.surface,
-                          borderColor: theme.border,
+                {detailOrder.map((key, index) => {
+                  const { label, value } = details[key];
+                  return (
+                    <Pressable
+                      key={key}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${label}: ${value || c.missing}`}
+                      accessibilityHint={c.edit}
+                      onPress={() => beginEditing(key)}
+                      style={({ pressed }) => [
+                        s.detailRow,
+                        { opacity: pressed ? 0.65 : 1 },
+                        index > 0 && {
+                          borderTopColor: theme.border,
+                          borderTopWidth: StyleSheet.hairlineWidth,
                         },
                       ]}
                     >
-                      {group.keys.map((key, index) => {
-                        const { label, value } = details[key];
-                        return (
-                          <Pressable
-                            key={key}
-                            accessibilityRole="button"
-                            accessibilityLabel={`${label}: ${value || c.missing}`}
-                            accessibilityHint={c.edit}
-                            onPress={() => beginEditing(key)}
-                            style={({ pressed }) => [
-                              s.detailRow,
-                              { opacity: pressed ? 0.65 : 1 },
-                              index > 0 && {
-                                borderTopColor: theme.border,
-                                borderTopWidth: StyleSheet.hairlineWidth,
-                              },
-                            ]}
-                          >
-                            <View style={s.detailText}>
-                              <Text
-                                style={[s.detailLabel, { color: theme.muted }]}
-                              >
-                                {label}
-                              </Text>
-                              <Text
-                                style={[
-                                  s.value,
-                                  {
-                                    color: value ? theme.text : flowColors.blue,
-                                  },
-                                ]}
-                              >
-                                {value || c.add}
-                              </Text>
-                            </View>
-                            <FlowIcon
-                              name="chevron"
-                              color={theme.muted}
-                              size={18}
-                            />
-                          </Pressable>
-                        );
-                      })}
-                    </View>
-                  </View>
-                ))}
+                      <View style={s.detailText}>
+                        <Text style={[s.detailLabel, { color: theme.muted }]}>
+                          {label}
+                        </Text>
+                        <Text
+                          style={[
+                            s.value,
+                            {
+                              color: value ? theme.text : flowColors.blue,
+                            },
+                          ]}
+                        >
+                          {value || c.add}
+                        </Text>
+                      </View>
+                      <FlowIcon name="chevron" color={theme.muted} size={18} />
+                    </Pressable>
+                  );
+                })}
               </View>
             ) : (
               <View
@@ -1586,29 +1564,17 @@ const s = StyleSheet.create({
     paddingTop: 4,
     paddingBottom: 24,
   },
-  detailGroup: { marginBottom: 24 },
-  groupTitle: {
-    fontSize: 17,
-    lineHeight: 24,
-    fontWeight: "700",
-    marginBottom: 10,
-  },
-  detailCard: {
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: "hidden",
-  },
   detailText: { flex: 1, gap: 4 },
   editorFooter: { padding: 16, borderTopWidth: StyleSheet.hairlineWidth },
   detailRow: {
     minHeight: 78,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: 0,
+    paddingVertical: 18,
     gap: 16,
     flexDirection: "row",
     alignItems: "center",
   },
-  detailLabel: { fontSize: 13, lineHeight: 18, fontWeight: "600" },
+  detailLabel: { fontSize: 13, lineHeight: 18, fontWeight: "400" },
   label: { fontSize: 13, lineHeight: 18, fontWeight: "700", marginBottom: 5 },
   value: { fontSize: 16, lineHeight: 23, fontWeight: "500" },
   blue: { color: flowColors.blue, fontWeight: "800" },
