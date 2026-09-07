@@ -155,7 +155,7 @@ test("edit flight search uses the unified responsive editor hierarchy", () => {
   const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
   assert.match(screen, /Update your trip details/);
   assert.match(screen, /content: \{ flexGrow: 1/);
-  assert.match(panel, /appearance=\{editAppearance \? "filled" : "default"\}/);
+  assert.match(panel, /appearance=\{editAppearance && !resultsModalAppearance \? "filled" : "default"\}/);
   assert.match(panel, /label: FLIGHT_TRIP_TYPE_LABELS\["one-way"\]/);
   assert.match(panel, /label: FLIGHT_TRIP_TYPE_LABELS\["multi-city"\] }/);
   assert.match(panel, /accessibilityLabel="Swap origin and destination"/);
