@@ -41,7 +41,10 @@ test("Cancel restores authoritative saved values", () => {
   assert.match(screen, /setEditing\(false\)/);
 });
 test("Save is disabled until dirty and while saving", () =>
-  assert.match(saveButton, /disabled=\{!dirty\s*\|\|\s*saving\}/));
+  assert.match(
+    saveButton,
+    /disabled=\{!dirty\s*\|\|\s*saving\s*\|\|\s*blocked\}/,
+  ));
 test("duplicate submission is prevented and failed save retains draft", () => {
   assert.match(screen, /submitting\.current/);
   assert.doesNotMatch(screen, /catch\{[^}]*setDraft/s);
@@ -482,7 +485,7 @@ test("main editor avoids the keyboard on Android as well as iOS", () => {
   );
   assert.match(
     container.slice(container.lastIndexOf("<KeyboardAvoidingView")),
-    /behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/,
+    /behavior="padding"/,
   );
   assert.ok(main.indexOf("s.editorFooter") > main.indexOf("</ScrollView>"));
 });
@@ -498,4 +501,14 @@ test("editors have one shared full-width Save action and back handles discard", 
   assert.match(saveButton, /busy: saving/);
   assert.match(quick, /<PersonalDetailsSaveButton/);
   assert.match(screen, /editing \? discard\(false\) : router\.back\(\)/);
+});
+
+test("official name editor separates fields with the correct autofill and Next behavior", () => {
+  assert.match(screen, /autoComplete="given-name"/);
+  assert.match(screen, /autoComplete="family-name"/);
+  assert.match(screen, /label=\{c.firstName\}/);
+  assert.match(screen, /label=\{c.lastName\}/);
+  assert.match(screen, /lastNameRef.current\?\.focus\(\)/);
+  assert.match(screen, /joinProfileName\(next\)/);
+  assert.match(screen, /c.officialNameHint/);
 });

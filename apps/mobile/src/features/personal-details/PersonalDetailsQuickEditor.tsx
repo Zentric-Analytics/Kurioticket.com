@@ -1,5 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
+  Animated,
+  PanResponder,
   FlatList,
   Keyboard,
   KeyboardAvoidingView,
@@ -24,80 +26,15 @@ import {
   filterSelectorOptions,
   GENDER_VALUES,
   NATIONALITY_OPTIONS,
-  personalDetailsLatestDateOfBirth,
 } from "./personalDetailsModel";
 import { personalDetailsCopy } from "./translations";
 import { PersonalDetailsCountryFlag } from "./PersonalDetailsCountryFlag";
 import { PersonalDetailsSaveButton } from "./PersonalDetailsSaveButton";
+import { PersonalDetailsDateWheel } from "./PersonalDetailsDateWheel";
+import { birthDateOptions, type DateDraft } from "./personalDetailsEditorModel";
+export type { DateDraft } from "./personalDetailsEditorModel";
 
 export type QuickDetail = "gender" | "nationality" | "birth";
-export type DateDraft = { year: string; month: string; day: string };
-
-// Each column is independently scrollable; tapping a value commits only to the draft.
-function DateColumn({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: { value: string; label: string }[];
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const { theme } = useAppTheme();
-  const { fontScale } = useWindowDimensions();
-  const rowHeight = Math.max(48, Math.ceil(28 * fontScale));
-  const initialIndex = Math.max(
-    0,
-    options.findIndex((option) => option.value === value) - 1,
-  );
-  return (
-    <View style={s.dateColumn}>
-      <Text style={[s.columnLabel, { color: theme.muted }]}>{label}</Text>
-      <FlatList
-        data={options}
-        extraData={value}
-        style={{ height: rowHeight * 3 }}
-        initialScrollIndex={initialIndex}
-        getItemLayout={(_, index) => ({
-          length: rowHeight,
-          offset: rowHeight * index,
-          index,
-        })}
-        keyExtractor={(item) => item.value}
-        showsVerticalScrollIndicator
-        renderItem={({ item }) => (
-          <Pressable
-            accessibilityRole="radio"
-            accessibilityLabel={`${label}: ${item.label}`}
-            accessibilityState={{ selected: value === item.value }}
-            onPress={() => onChange(item.value)}
-            style={({ pressed }) => [
-              s.dateOption,
-              {
-                height: rowHeight,
-                borderColor:
-                  value === item.value ? flowColors.blue : "transparent",
-                opacity: pressed ? 0.6 : 1,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                s.optionText,
-                { color: value === item.value ? flowColors.blue : theme.text },
-              ]}
-            >
-              {item.label}
-            </Text>
-          </Pressable>
-        )}
-      />
-    </View>
-  );
-}
-
 export function PersonalDetailsQuickEditor({
   detail,
   dateDraft,
@@ -129,7 +66,7 @@ export function PersonalDetailsQuickEditor({
   const { locale } = useMobileLocalization();
   const c = personalDetailsCopy(locale);
   const insets = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
+  const { height, width } = useWindowDimensions();
   const [query, setQuery] = useState("");
   const countries = useMemo(
     () =>
@@ -141,7 +78,32 @@ export function PersonalDetailsQuickEditor({
     [],
   );
   const shown = filterSelectorOptions(countries, query);
-  const latestYear = Number(personalDetailsLatestDateOfBirth().slice(0, 4));
+  const { latestYear, monthCount, dayCount } = birthDateOptions(dateDraft);
+  const [scrolling, setScrolling] = useState({
+    month: false,
+    day: false,
+    year: false,
+  });
+  const wheelsMoving = Object.values(scrolling).some(Boolean);
+  const translateY = useRef(new Animated.Value(0)).current;
+  const sheetGesture = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => !saving,
+        onMoveShouldSetPanResponder: (_, gesture) =>
+          !saving &&
+          gesture.dy > 6 &&
+          Math.abs(gesture.dy) > Math.abs(gesture.dx),
+        onPanResponderMove: (_, gesture) =>
+          translateY.setValue(Math.max(0, gesture.dy)),
+        onPanResponderRelease: (_, gesture) => {
+          translateY.setValue(0);
+          if (gesture.dy > 60 || gesture.vy > 0.7) onClose();
+        },
+        onPanResponderTerminate: () => translateY.setValue(0),
+      }),
+    [saving, onClose, translateY],
+  );
   const fullScreen = detail === "nationality";
   const title =
     detail === "birth"
@@ -173,9 +135,10 @@ export function PersonalDetailsQuickEditor({
             ]}
           />
         )}
-        <View
+        <Animated.View
           style={[
             s.panel,
+            detail === "birth" && { transform: [{ translateY }] },
             fullScreen
               ? { flex: 1, paddingTop: insets.top }
               : {
@@ -186,24 +149,38 @@ export function PersonalDetailsQuickEditor({
             { backgroundColor: theme.background, paddingBottom: insets.bottom },
           ]}
         >
-          <View style={s.header}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={c.back}
-              disabled={saving}
-              onPress={onClose}
-              style={s.back}
-            >
-              <FlowIcon name="back" color={theme.icon} />
-            </Pressable>
-            <Text
-              accessibilityRole="header"
-              style={[s.title, { color: theme.text }]}
-            >
-              {title}
-            </Text>
-            <View style={s.back} />
-          </View>
+          {detail === "birth" ? (
+            <View {...sheetGesture.panHandlers}>
+              <View style={s.handleArea}>
+                <View style={[s.handle, { backgroundColor: theme.muted }]} />
+              </View>
+              <Text
+                accessibilityRole="header"
+                style={[s.birthTitle, { color: theme.text }]}
+              >
+                {title}
+              </Text>
+            </View>
+          ) : (
+            <View style={s.header}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={c.back}
+                disabled={saving}
+                onPress={onClose}
+                style={s.back}
+              >
+                <FlowIcon name="back" color={theme.icon} />
+              </Pressable>
+              <Text
+                accessibilityRole="header"
+                style={[s.title, { color: theme.text }]}
+              >
+                {title}
+              </Text>
+              <View style={s.back} />
+            </View>
+          )}
           {fullScreen ? (
             <>
               <View style={s.searchArea}>
@@ -329,22 +306,25 @@ export function PersonalDetailsQuickEditor({
           ) : (
             <View
               pointerEvents={saving ? "none" : "auto"}
-              style={[s.dateColumns, s.options]}
+              style={[
+                s.dateColumns,
+                {
+                  paddingHorizontal: Math.max(
+                    20,
+                    Math.min(90, (width - 232) / 2),
+                  ),
+                },
+              ]}
             >
-              <DateColumn
-                label={c.day}
-                value={dateDraft.day}
-                onChange={(value) => onDateChange("day", value)}
-                options={Array.from({ length: 31 }, (_, i) => ({
-                  value: String(i + 1).padStart(2, "0"),
-                  label: String(i + 1),
-                }))}
-              />
-              <DateColumn
+              <PersonalDetailsDateWheel
                 label={c.month}
                 value={dateDraft.month}
+                disabled={saving}
+                onScrollingChange={(value) =>
+                  setScrolling((current) => ({ ...current, month: value }))
+                }
                 onChange={(value) => onDateChange("month", value)}
-                options={Array.from({ length: 12 }, (_, i) => ({
+                options={Array.from({ length: monthCount }, (_, i) => ({
                   value: String(i + 1).padStart(2, "0"),
                   label: new Intl.DateTimeFormat(
                     locale === "es-es" ? "es-ES" : "en-US",
@@ -352,18 +332,44 @@ export function PersonalDetailsQuickEditor({
                   ).format(new Date(Date.UTC(2020, i, 1))),
                 }))}
               />
-              <DateColumn
+              <PersonalDetailsDateWheel
+                label={c.day}
+                value={dateDraft.day}
+                disabled={saving}
+                onScrollingChange={(value) =>
+                  setScrolling((current) => ({ ...current, day: value }))
+                }
+                onChange={(value) => onDateChange("day", value)}
+                options={Array.from({ length: dayCount }, (_, i) => ({
+                  value: String(i + 1).padStart(2, "0"),
+                  label: String(i + 1).padStart(2, "0"),
+                }))}
+              />
+              <PersonalDetailsDateWheel
                 label={c.year}
                 value={dateDraft.year}
+                disabled={saving}
+                onScrollingChange={(value) =>
+                  setScrolling((current) => ({ ...current, year: value }))
+                }
                 onChange={(value) => onDateChange("year", value)}
                 options={Array.from({ length: 125 }, (_, i) => ({
-                  value: String(latestYear - i),
-                  label: String(latestYear - i),
+                  value: String(latestYear - 124 + i),
+                  label: String(latestYear - 124 + i),
                 }))}
               />
             </View>
           )}
-          <View style={s.footer}>
+          <View
+            style={[
+              s.footer,
+              detail === "birth" && {
+                borderTopWidth: StyleSheet.hairlineWidth,
+                borderTopColor: theme.border,
+                paddingVertical: 16,
+              },
+            ]}
+          >
             {!!error && (
               <Text
                 accessibilityRole="alert"
@@ -375,11 +381,12 @@ export function PersonalDetailsQuickEditor({
             )}
             <PersonalDetailsSaveButton
               dirty={dirty}
+              blocked={detail === "birth" && wheelsMoving}
               saving={saving}
               onSave={onSave}
             />
           </View>
-        </View>
+        </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -448,18 +455,21 @@ const s = StyleSheet.create({
     color: "#D92D20",
     marginBottom: 12,
   },
-  dateColumns: { flexDirection: "row", gap: 12, paddingBottom: 16 },
-  dateColumn: { flex: 1, minWidth: 0 },
-  columnLabel: {
-    fontFamily: appFonts.medium,
-    fontSize: 13,
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  dateOption: {
-    justifyContent: "center",
+  dateColumns: {
+    flexDirection: "row",
+    gap: 16,
+    paddingVertical: 44,
+    minHeight: 250,
     alignItems: "center",
-    borderWidth: 1,
-    borderRadius: 8,
+  },
+  handleArea: { height: 26, alignItems: "center", justifyContent: "center" },
+  handle: { width: 48, height: 4, borderRadius: 2, opacity: 0.5 },
+  birthTitle: {
+    fontFamily: appFonts.semibold,
+    fontSize: 22,
+    lineHeight: 30,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
 });

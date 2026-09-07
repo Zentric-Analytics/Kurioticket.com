@@ -3,6 +3,10 @@ const en = {
   title: "Personal details",
   description: "Manage the information Kurioticket uses for your account",
   fullName: "Full name",
+  firstName: "First name",
+  lastName: "Last name",
+  officialNameHint:
+    "Enter your name as it appears on your passport or official ID.",
   email: "Email address",
   phone: "Phone number",
   birth: "Date of birth",
@@ -60,6 +64,10 @@ const es: typeof en = {
   title: "Datos personales",
   description: "Gestiona la información que Kurioticket usa para tu cuenta",
   fullName: "Nombre completo",
+  firstName: "Nombre",
+  lastName: "Apellidos",
+  officialNameHint:
+    "Introduce tu nombre tal como aparece en tu pasaporte o documento de identidad.",
   email: "Correo electrónico",
   phone: "Número de teléfono",
   birth: "Fecha de nacimiento",

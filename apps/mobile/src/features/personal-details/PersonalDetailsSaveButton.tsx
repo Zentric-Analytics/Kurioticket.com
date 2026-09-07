@@ -8,10 +8,12 @@ import { personalDetailsCopy } from "./translations";
 export function PersonalDetailsSaveButton({
   dirty,
   saving,
+  blocked = false,
   onSave,
 }: {
   dirty: boolean;
   saving: boolean;
+  blocked?: boolean;
   onSave: () => void;
 }) {
   const { theme } = useAppTheme();
@@ -21,8 +23,11 @@ export function PersonalDetailsSaveButton({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={saving ? c.saving : c.save}
-      accessibilityState={{ disabled: !dirty || saving, busy: saving }}
-      disabled={!dirty || saving}
+      accessibilityState={{
+        disabled: !dirty || saving || blocked,
+        busy: saving,
+      }}
+      disabled={!dirty || saving || blocked}
       onPress={onSave}
       style={({ pressed }) => [
         s.button,

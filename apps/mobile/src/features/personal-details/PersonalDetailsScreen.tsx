@@ -42,7 +42,6 @@ import { flowColors } from "../flow/flowStyles";
 import { openSafeExternalUrl } from "../profile/safeExternalLink";
 import {
   canonicalDate,
-  clampPersonalDetailsDateOfBirth,
   COUNTRY_OPTIONS,
   displayAddress,
   displayPhone,
@@ -61,6 +60,14 @@ import {
 } from "./personalDetailsModel";
 import { personalDetailsCopy } from "./translations";
 import {
+  dateDraftFromValue,
+  dateDraftValue,
+  normalizeBirthDate,
+  splitProfileName,
+  joinProfileName,
+  type NameDraft,
+} from "./personalDetailsEditorModel";
+import {
   PersonalDetailsQuickEditor,
   type DateDraft,
   type QuickDetail,
@@ -69,15 +76,6 @@ import { PersonalDetailsCountryFlag } from "./PersonalDetailsCountryFlag";
 import { PersonalDetailsSaveButton } from "./PersonalDetailsSaveButton";
 import { signInHref } from "../auth/signInIntent";
 import { PageContentState } from "../../components/PageContentState";
-
-function dateDraftFromValue(value?: string | null): DateDraft {
-  const match = (value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  return {
-    year: match?.[1] || "",
-    month: match?.[2] || "",
-    day: match?.[3] || "",
-  };
-}
 
 type SelectorProps = {
   visible: boolean;
@@ -510,6 +508,11 @@ export function PersonalDetailsScreen() {
   const [showApartment, setShowApartment] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const overviewOffset = useRef(0);
+  const lastNameRef = useRef<TextInput>(null);
+  const [nameDraft, setNameDraft] = useState<NameDraft>(() =>
+    splitProfileName(),
+  );
+  const dateDraftRef = useRef<DateDraft>(dateDraftFromValue());
   const apartmentRef = useRef<TextInput>(null);
   const cityRef = useRef<TextInput>(null);
   const stateRef = useRef<TextInput>(null);
@@ -527,6 +530,7 @@ export function PersonalDetailsScreen() {
     [error, setError] = useState(""),
     [selector, setSelector] = useState<"phone" | "addressCountry" | null>(null),
     [selectorVisible, setSelectorVisible] = useState(false);
+  dateDraftRef.current = dateDraft;
   const quickDetail: QuickDetail | null =
     editing &&
     (activeDetail === "gender" ||
@@ -568,6 +572,7 @@ export function PersonalDetailsScreen() {
       const next = normalizeProfile(data.profile || {});
       setSaved(next);
       setDraft(next);
+      setNameDraft(splitProfileName(next.fullName));
       setDateDraft(dateDraftFromValue(next.dateOfBirth));
       setEmail(data.user.email);
       setEditing(false);
@@ -600,6 +605,7 @@ export function PersonalDetailsScreen() {
       setError("");
       if (!dirty) {
         setDraft(saved || {});
+        setNameDraft(splitProfileName(saved?.fullName));
         resetDateDraft(saved);
         setEditing(false);
         if (leave) router.back();
@@ -612,6 +618,7 @@ export function PersonalDetailsScreen() {
           style: "destructive",
           onPress: () => {
             setDraft(saved || {});
+            setNameDraft(splitProfileName(saved?.fullName));
             resetDateDraft(saved);
             setEditing(false);
             if (leave) router.back();
@@ -645,19 +652,18 @@ export function PersonalDetailsScreen() {
     setDraft((current) => ({ ...current, [key]: value }));
   const patchAddress = (key: keyof AddressParts, value: string) =>
     patch("address", serializeAddress({ ...address, [key]: value }));
+  const patchName = (part: keyof NameDraft, value: string) => {
+    const next = { ...nameDraft, [part]: value };
+    setNameDraft(next);
+    patch("fullName", joinProfileName(next));
+    setError("");
+  };
   const updateDateDraft = (part: keyof DateDraft, value: string) => {
-    const next = { ...dateDraft, [part]: value };
+    const next = normalizeBirthDate({ ...dateDraftRef.current, [part]: value });
+    dateDraftRef.current = next;
     setDateDraft(next);
-    if (!next.year || !next.month || !next.day) return;
-
-    const candidate = `${next.year}-${next.month}-${next.day}`;
-    const clamped = clampPersonalDetailsDateOfBirth(candidate);
-    if (!clamped) {
-      patch("dateOfBirth", candidate);
-      return;
-    }
-    if (clamped !== candidate) setDateDraft(dateDraftFromValue(clamped));
-    patch("dateOfBirth", clamped);
+    patch("dateOfBirth", dateDraftValue(next));
+    setError("");
   };
   const saveCountrySelection = (
     kind: "phone" | "nationality" | "addressCountry",
@@ -715,6 +721,7 @@ export function PersonalDetailsScreen() {
       const authoritative = normalizeProfile(result.profile);
       setSaved(authoritative);
       setDraft(authoritative);
+      setNameDraft(splitProfileName(authoritative.fullName));
       setDateDraft(dateDraftFromValue(authoritative.dateOfBirth));
       await updateStoredSessionName(authoritative.fullName || null);
       Keyboard.dismiss();
@@ -753,8 +760,18 @@ export function PersonalDetailsScreen() {
     if (!saved) return;
     setActiveDetail(detail);
     setShowApartment(!!parseAddress(saved.address || "").apartmentOrSuite);
-    setDraft(saved);
-    setDateDraft(dateDraftFromValue(saved.dateOfBirth));
+    setNameDraft(splitProfileName(saved.fullName));
+    const nextDate =
+      detail === "birth"
+        ? normalizeBirthDate(dateDraftFromValue(saved.dateOfBirth))
+        : dateDraftFromValue(saved.dateOfBirth);
+    dateDraftRef.current = nextDate;
+    setDraft(
+      detail === "birth"
+        ? { ...saved, dateOfBirth: dateDraftValue(nextDate) }
+        : saved,
+    );
+    setDateDraft(nextDate);
     setError("");
     setEditing(true);
   };
@@ -858,10 +875,7 @@ export function PersonalDetailsScreen() {
           onRetry={() => void load()}
         />
       ) : (
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
           <ScrollView
             ref={scrollRef}
             key={pageEditing ? activeDetail : "overview"}
@@ -936,13 +950,29 @@ export function PersonalDetailsScreen() {
                 pointerEvents={saving ? "none" : "auto"}
               >
                 {activeDetail === "fullName" && (
-                  <Field
-                    autoComplete="name"
-                    autoCapitalize="words"
-                    label={c.fullName}
-                    value={draft.fullName || ""}
-                    onChange={(v) => patch("fullName", v)}
-                  />
+                  <>
+                    <Field
+                      autoComplete="given-name"
+                      autoCapitalize="words"
+                      label={c.firstName}
+                      value={nameDraft.firstName}
+                      onChange={(value) => patchName("firstName", value)}
+                      returnKeyType="next"
+                      submitBehavior="submit"
+                      onSubmitEditing={() => lastNameRef.current?.focus()}
+                    />
+                    <Field
+                      inputRef={lastNameRef}
+                      autoComplete="family-name"
+                      autoCapitalize="words"
+                      label={c.lastName}
+                      value={nameDraft.lastName}
+                      onChange={(value) => patchName("lastName", value)}
+                    />
+                    <Text style={[s.description, { color: theme.muted }]}>
+                      {c.officialNameHint}
+                    </Text>
+                  </>
                 )}
                 {activeDetail === "email" && (
                   <>

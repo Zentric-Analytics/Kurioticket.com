@@ -15,11 +15,5 @@ test("DOB month edit field shows a readable month name while preserving numeric 
   assert.match(quick, /month: "short"/);
   assert.match(quick, /locale === "es-es" \? "es-ES" : "en-US"/);
   assert.match(quick, /value: String\(i \+ 1\)\.padStart\(2, "0"\)/);
-  assert.match(
-    screen,
-    /const candidate = `\$\{next\.year\}-\$\{next\.month\}-\$\{next\.day\}`/,
-  );
-  assert.match(screen, /clampPersonalDetailsDateOfBirth\(candidate\)/);
-  assert.match(screen, /patch\("dateOfBirth", candidate\)/);
-  assert.match(screen, /patch\("dateOfBirth", clamped\)/);
+  assert.match(screen, /patch\("dateOfBirth", dateDraftValue\(next\)\)/);
 });

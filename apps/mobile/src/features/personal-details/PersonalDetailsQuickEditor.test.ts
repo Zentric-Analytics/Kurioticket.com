@@ -18,7 +18,7 @@ test("quick selections remain drafts and only the explicit shared Save persists"
 
 test("nationality results take remaining space while Save stays outside the list", () => {
   const results = quick.indexOf("data={shown}");
-  const footer = quick.indexOf("style={s.footer}");
+  const footer = quick.indexOf("s.footer", quick.indexOf("data={shown}"));
   assert.ok(results > 0 && footer > results);
   assert.match(
     quick.slice(quick.lastIndexOf("<FlatList", results), results),
@@ -32,20 +32,31 @@ test("nationality results take remaining space while Save stays outside the list
   assert.match(quick, /accessibilityLiveRegion="assertive"/);
 });
 
-test("DOB columns expose selected values accessibly and preserve scrollable years", () => {
-  assert.match(quick, /accessibilityRole="radio"/);
-  assert.match(quick, /selected: value === item.value/);
-  assert.match(quick, /initialScrollIndex=\{initialIndex\}/);
-  assert.match(quick, /extraData=\{value\}/);
+test("DOB uses accessible snapping wheels in month/day/year order", () => {
+  const wheel = readFileSync(
+    "src/features/personal-details/PersonalDetailsDateWheel.tsx",
+    "utf8",
+  );
+  assert.match(wheel, /accessibilityRole="adjustable"/);
+  assert.match(wheel, /snapToInterval=\{rowHeight\}/);
+  assert.match(wheel, /onMomentumScrollEnd/);
+  assert.match(wheel, /latest.current.onChange/);
+  assert.match(wheel, /clearTimeout/);
   assert.match(quick, /Array\.from\(\{ length: 125 \}/);
-  assert.ok(quick.indexOf("</ScrollView>") < quick.indexOf("<DateColumn"));
+  assert.ok(quick.indexOf("label={c.month}") < quick.indexOf("label={c.day}"));
+  assert.ok(quick.indexOf("label={c.day}") < quick.indexOf("label={c.year}"));
+  assert.match(quick, /blocked=\{detail === "birth" && wheelsMoving\}/);
+  assert.match(quick, /sheetGesture.panHandlers/);
+  assert.doesNotMatch(quick, /columnLabel|dateOption|<DateColumn/);
 });
-
 
 test("nationality retains shared flags with validated image loading and fallback", () => {
   assert.match(quick, /<PersonalDetailsCountryFlag/);
   assert.match(quick, /country.label === item.value/);
-  const flag = readFileSync("src/features/personal-details/PersonalDetailsCountryFlag.tsx", "utf8");
+  const flag = readFileSync(
+    "src/features/personal-details/PersonalDetailsCountryFlag.tsx",
+    "utf8",
+  );
   assert.match(flag, /getCountryFlagUri\(isoCode\)/);
   assert.match(flag, /onError=\{\(\) => setFailed\(true\)\}/);
   assert.match(flag, /isoCode \|\| "--"/);

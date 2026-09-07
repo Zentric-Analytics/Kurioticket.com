@@ -7,37 +7,17 @@ const screen = readFileSync(
   "utf8",
 );
 
-test("DOB picker keeps partial selections visible and clamps completed under-18 dates", () => {
-  const quick = readFileSync(
-    "src/features/personal-details/PersonalDetailsQuickEditor.tsx",
-    "utf8",
-  );
-  assert.match(quick, /type DateDraft = \{/);
-  assert.match(screen, /\[dateDraft, setDateDraft\] = useState<DateDraft>/);
-  for (const part of ["day", "month", "year"]) {
-    assert.ok(quick.includes("value={dateDraft." + part + "}"));
-    assert.ok(quick.includes('onDateChange("' + part + '", value)'));
-  }
-  assert.match(screen, /onDateChange=\{updateDateDraft\}/);
+test("DOB wheels update a complete clamped draft without saving it", () => {
   const update = screen.slice(
     screen.indexOf("const updateDateDraft"),
     screen.indexOf("const saveCountrySelection"),
   );
+  assert.match(update, /normalizeBirthDate/);
+  assert.match(update, /dateDraftRef.current/);
   assert.match(update, /setDateDraft\(next\)/);
-  assert.match(
-    update,
-    /if \(!next\.year \|\| !next\.month \|\| !next\.day\) return/,
-  );
-  assert.match(
-    update,
-    /const candidate = `\$\{next\.year\}-\$\{next\.month\}-\$\{next\.day\}`/,
-  );
-  assert.match(
-    update,
-    /const clamped = clampPersonalDetailsDateOfBirth\(candidate\)/,
-  );
-  assert.match(update, /patch\("dateOfBirth", candidate\)/);
-  assert.match(update, /patch\("dateOfBirth", clamped\)/);
+  assert.match(update, /patch\("dateOfBirth", dateDraftValue\(next\)\)/);
+  assert.doesNotMatch(update, /updateProfile/);
+  assert.match(screen, /onDateChange=\{updateDateDraft\}/);
 });
 
 test("DOB draft is restored from authoritative profile values", () => {
@@ -49,10 +29,7 @@ test("DOB draft is restored from authoritative profile values", () => {
     screen,
     /setDateDraft\(dateDraftFromValue\(authoritative\.dateOfBirth\)\)/,
   );
-  assert.match(
-    screen,
-    /setDateDraft\(dateDraftFromValue\(saved\.dateOfBirth\)\)/,
-  );
+  assert.match(screen, /setDateDraft\(nextDate\)/);
 });
 
 test("unchanged legacy DOB does not block unrelated mobile Personal details saves", () => {
