@@ -68,7 +68,8 @@ test("long fares stay readable without changing details navigation or theme beha
   assert.match(card, /s0\.bigPrice[^>]*numberOfLines=\{1\}/);
   assert.doesNotMatch(card, /s0\.bigPrice[^>]*adjustsFontSizeToFit|s0\.bigPrice[^>]*minimumFontScale/);
   assert.match(card, /pathname: "\/flight-details"/);
-  assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
+  assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result \}\)/);
+  assert.doesNotMatch(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
   assert.match(card, /backgroundColor: theme\.surface/);
   assert.match(card, /shadowColor: theme\.dark \?/);
 });
@@ -94,5 +95,6 @@ test("the coherent price column contains one fare and a bottom-aligned details a
   assert.ok(card.indexOf('<View style={s0.journeyList}>') < card.indexOf('<View style={s0.flightCommercialRegion}>'));
   assert.match(card, /provider price \$\{providerFare\.accessibilityLabel\}/);
   assert.match(card, /pathname: "\/flight-details"/);
-  assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
+  assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result \}\)/);
+  assert.doesNotMatch(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
 });

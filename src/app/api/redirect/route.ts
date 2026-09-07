@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
+import { getMobileSession } from "@/lib/mobile-auth";
 import { getFlightFromCache, getHotelFromCache } from "@/lib/searchCache";
 import { withOptionalDb } from "@/lib/prisma";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
@@ -90,7 +91,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unsafe redirect target." }, { status: 400 });
   }
 
-  const session = (await resolveOptionalWebApiSession())?.session;
+  // Preserve the web session boundary while allowing an optional, independently
+  // validated native bearer to attribute the same guest-capable handoff.
+  const webSession = (await resolveOptionalWebApiSession())?.session;
+  const mobileSession = request.headers.get("authorization") ? await getMobileSession(request) : null;
+  const user = webSession?.user ?? (mobileSession?.user.status === "ACTIVE" ? mobileSession.user : undefined);
   const route =
     body.type === "flight" && "originAirport" in target
       ? `${target.originAirport}-${target.destinationAirport}`
@@ -103,14 +108,14 @@ export async function POST(request: Request) {
       async (db) => {
         await db.redirectLog.create({
           data: {
-            userId: session?.user?.id,
+            userId: user?.id,
             type: body.type === "flight" ? "FLIGHT" : "HOTEL",
             provider: body.type === "flight" ? verifiedFlightHandoff!.providerName : target.provider,
             route,
             price: "price" in target ? target.price : hotelPriceDetails?.totalPrice,
             currency: "price" in target ? target.currency : hotelPriceDetails?.currency,
             destinationUrl: url.toString(),
-            userType: session?.user ? "user" : "guest",
+            userType: user ? "user" : "guest",
             sourcePage: body.sourcePage || "unknown",
             metadata: { resultId: body.id } as never,
           },
@@ -120,7 +125,7 @@ export async function POST(request: Request) {
       false,
     ),
     trackAnalyticsEvent({
-      userId: session?.user?.id,
+      userId: user?.id,
       type: "REDIRECT",
       name: `${body.type}_partner_redirect`,
       metadata: { provider: body.type === "flight" ? verifiedFlightHandoff!.providerName : target.provider, route },
