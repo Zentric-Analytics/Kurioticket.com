@@ -107,16 +107,22 @@ test("country selector hides its save action while the keyboard is visible", () 
   assert.match(selector, /!keyboardVisible \? \(/);
 });
 
-test("row selection updates the draft and dismisses only the keyboard", () => {
-  const selector = screen.slice(
-    screen.indexOf("function CountrySelector("),
-    screen.indexOf("function CountryFlag("),
-  );
-  const rowHandler = selector.slice(
-    selector.indexOf("onPress={() => {", selector.indexOf("renderItem=")),
-    selector.indexOf("style={[s.countryOption", selector.indexOf("renderItem=")),
-  );
+test("phone and address selects apply the draft immediately and close without picker actions", () => {
+  const dialog = screen.slice(screen.indexOf('  if (["phone", "addressCountry"].includes(kind)) {'), screen.indexOf('      animationType="none"', screen.indexOf('  if (["phone", "addressCountry"].includes(kind)) {')));
+  assert.match(dialog, /if \(onSave\(item.value\)\) onClose\(\)/);
+  assert.match(dialog, /initialScrollIndex/);
+  assert.match(dialog, /accessibilityRole="menuitem"/);
+  assert.doesNotMatch(dialog, /TextInput|selectorSave|name="close"/);
+});
 
-  assert.match(rowHandler, /Keyboard\.dismiss\(\);\s*setDraftSelection\(item\.value\)/);
-  assert.doesNotMatch(rowHandler, /onClose|closeWithPushAnimation|onSave/);
+test("Both platforms country menus anchor to the field and use leading checks without a dimmed dialog", () => {
+  const menu = screen.slice(screen.indexOf('  if (["phone", "addressCountry"].includes(kind))'), screen.indexOf('      animationType="none"', screen.indexOf('  if (["phone", "addressCountry"].includes(kind))')));
+  assert.match(menu, /anchor\?\.y/);
+  assert.match(menu, /anchor\?\.x/);
+  assert.match(menu, /s.floatingCountryCheck/);
+  assert.match(menu, /name="check"/);
+  assert.doesNotMatch(menu, /genderRadio|rgba\(|countrySelectTitle/);
+  assert.match(screen, /measureInWindow/);
+  assert.match(screen, /openSelector\("phone", anchor\)/);
+  assert.match(screen, /openSelector\("addressCountry", anchor\)/);
 });
