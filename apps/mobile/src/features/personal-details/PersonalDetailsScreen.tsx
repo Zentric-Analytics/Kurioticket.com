@@ -767,6 +767,7 @@ export function PersonalDetailsScreen() {
     }
   }, [c.loadFailure]);
   useEffect(() => {
+    mounted.current = true;
     void load();
     return () => {
       mounted.current = false;
