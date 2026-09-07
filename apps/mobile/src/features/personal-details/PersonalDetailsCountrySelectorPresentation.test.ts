@@ -16,7 +16,10 @@ test("country selector pushes horizontally like a native detail screen", () => {
   assert.match(selector, /transparent/);
   assert.match(selector, /animationType="none"/);
   assert.match(selector, /presentationStyle="overFullScreen"/);
-  assert.match(selector, /const translateX = useRef\(new Animated\.Value\(width\)\)\.current/);
+  assert.match(
+    selector,
+    /const translateX = useRef\(new Animated\.Value\(width\)\)\.current/,
+  );
   assert.match(selector, /Animated\.timing\(translateX,[\s\S]*?toValue: 0/);
   assert.match(selector, /Animated\.timing\(translateX,[\s\S]*?toValue: width/);
   assert.match(selector, /transform: \[\{ translateX \}\]/);
@@ -45,9 +48,18 @@ test("a selected prop update cannot restart enter or interrupt exit", () => {
     screen.indexOf("function CountryFlag("),
   );
 
-  assert.match(selector, /\[selected, selectorType, translateX, visible, width\]/);
-  assert.equal((selector.match(/translateX\.setValue\(width\)/g) ?? []).length, 1);
-  assert.match(selector, /if \(!isOpening\) return;[\s\S]*?translateX\.stopAnimation\(\)/);
+  assert.match(
+    selector,
+    /\[selected, selectorType, translateX, visible, width\]/,
+  );
+  assert.equal(
+    (selector.match(/translateX\.setValue\(width\)/g) ?? []).length,
+    1,
+  );
+  assert.match(
+    selector,
+    /if \(!isOpening\) return;[\s\S]*?translateX\.stopAnimation\(\)/,
+  );
 });
 
 test("country selector keeps first-open controls below the device status bar", () => {
@@ -85,7 +97,10 @@ test("country selector dismisses the keyboard on choice and keeps the native Don
     screen.indexOf("function CountryFlag("),
   );
 
-  assert.match(selector, /onPress=\{\(\) => \{\s*Keyboard\.dismiss\(\);\s*setDraftSelection\(item\.value\)/);
+  assert.match(
+    selector,
+    /onPress=\{\(\) => \{\s*Keyboard\.dismiss\(\);\s*saveSelection\(item\.value\)/,
+  );
   assert.match(selector, /returnKeyType="done"/);
   assert.match(selector, /blurOnSubmit/);
   assert.match(selector, /onSubmitEditing=\{Keyboard\.dismiss\}/);
@@ -93,30 +108,33 @@ test("country selector dismisses the keyboard on choice and keeps the native Don
   assert.doesNotMatch(screen, /COUNTRY_SEARCH_ACCESSORY/);
 });
 
-test("country selector hides its save action while the keyboard is visible", () => {
+test("country choice has no redundant Save step", () => {
   const selector = screen.slice(
     screen.indexOf("function CountrySelector("),
     screen.indexOf("function CountryFlag("),
   );
-
-  assert.match(selector, /const \[keyboardVisible, setKeyboardVisible\] = useState\(false\)/);
-  assert.match(selector, /Keyboard\.addListener\("keyboardDidShow"/);
-  assert.match(selector, /Keyboard\.addListener\("keyboardWillShow"/);
-  assert.match(selector, /Keyboard\.addListener\("keyboardDidHide"/);
-  assert.match(selector, /onFocus=\{\(\) => setKeyboardVisible\(true\)\}/);
-  assert.match(selector, /!keyboardVisible \? \(/);
+  assert.doesNotMatch(selector, /c\.selectorSave|s\.countryAction/);
+  assert.match(selector, /onSave\(value\)/);
+  assert.match(selector, /closeWithPushAnimation\(onClose\)/);
+  assert.match(selector, /if \(committing\.current \|\| !value\) return/);
 });
 
-test("row selection updates the draft and dismisses only the keyboard", () => {
+test("row selection applies to the editor draft and returns without persistence", () => {
   const selector = screen.slice(
     screen.indexOf("function CountrySelector("),
     screen.indexOf("function CountryFlag("),
   );
   const rowHandler = selector.slice(
     selector.indexOf("onPress={() => {", selector.indexOf("renderItem=")),
-    selector.indexOf("style={[s.countryOption", selector.indexOf("renderItem=")),
+    selector.indexOf(
+      "style={[s.countryOption",
+      selector.indexOf("renderItem="),
+    ),
   );
 
-  assert.match(rowHandler, /Keyboard\.dismiss\(\);\s*setDraftSelection\(item\.value\)/);
-  assert.doesNotMatch(rowHandler, /onClose|closeWithPushAnimation|onSave/);
+  assert.match(
+    rowHandler,
+    /Keyboard\.dismiss\(\);\s*saveSelection\(item\.value\)/,
+  );
+  assert.doesNotMatch(selector, /travelApi\.updateProfile|setSaved/);
 });

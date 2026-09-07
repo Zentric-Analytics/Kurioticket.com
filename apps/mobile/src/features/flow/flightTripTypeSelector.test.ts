@@ -31,6 +31,12 @@ test("multi-city is a real selectable Flight trip type", () => {
   assert.match(model, /FLIGHT_TRIP_TYPES: FlightTripType\[\] = \["round-trip", "one-way", "multi-city"\]/);
 });
 
+test("results modal uses underline tabs while dedicated edit keeps filled tabs", () => {
+  const panel = read("FlightSearchPanel.tsx");
+
+  assert.match(panel, /appearance=\{editAppearance && !resultsModalAppearance \? "filled" : "default"\}/);
+});
+
 test("Segments keeps one horizontal row and disables options accessibly without changing enabled defaults", () => {
   const primitives = read("FlowPrimitives.tsx");
 

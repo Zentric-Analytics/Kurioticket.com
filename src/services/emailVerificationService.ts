@@ -233,6 +233,17 @@ export async function consumeAccountEmailChangeCode(input: { userId: string; new
   await getPrisma().verificationToken.deleteMany({ where: { identifier } });
 }
 
+/** Claim the exact unexpired code inside the email-update transaction. */
+export async function claimAccountEmailChangeCode(
+  tx: Pick<ReturnType<typeof getPrisma>, "verificationToken">,
+  input: { userId: string; newEmail: string; code: string },
+) {
+  const identifier = getAccountEmailChangeIdentifier(input.userId, input.newEmail);
+  const token = hashVerificationCode(identifier, input.code.trim());
+  const result = await tx.verificationToken.deleteMany({ where: { identifier, token, expires: { gt: new Date() } } });
+  return result.count === 1;
+}
+
 function reserveResendCooldown(key: string, cooldownMs = resendCooldownMs) {
   const retryAfterSeconds = getRemainingCooldownSeconds(key, cooldownMs);
 
