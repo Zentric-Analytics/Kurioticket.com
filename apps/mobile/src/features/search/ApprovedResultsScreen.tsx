@@ -1274,7 +1274,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
   const labels = flightResultsCopy(locale);
   const mainPriceBasis = flightMainPriceBasis(fare, labels);
   const fareAccessibility = `${fare?.accessibilityLabel ?? "price unavailable"}${mainPriceBasis ? `, ${mainPriceBasis.accessibilityText}` : ""}${providerFare ? `, provider price ${providerFare.accessibilityLabel}` : ""}`;
-  const openDetails = () => router.push({ pathname: "/flight-details", params: buildFlightDetailParams({ searchParams: params, result, fare, displayCurrencyContext }) });
+  const openDetails = () => router.push({ pathname: "/flight-details", params: buildFlightDetailParams({ searchParams: params, result }) });
   const cardAccessibilityLabel = `View flight details for ${result.airlineName}, ${journeys.map((journey) => flightCardJourneyAccessibility(journey, clock)).join(", ")}, ${fareAccessibility}`;
   return (
     <Pressable

@@ -60,6 +60,7 @@ import { appFonts } from "../../theme/typography";
 import { buildHotelAmenityPresentation, type HotelAmenityPresentationItem } from "../../../../../src/components/results/hotelAmenityPresentation";
 import { NativeHotelLocationSection } from "./NativeHotelLocationSection";
 import { NativeHotelReviewsSection } from "./NativeHotelReviewsSection";
+import { NativeFlightDetails } from "./NativeFlightDetails";
 
 function hotelAboutIconFor(item: HotelAmenityPresentationItem): LucideIcon {
   if (item.iconKey === "wifi") return Wifi;
@@ -99,6 +100,7 @@ export function ApprovedDetailScreen({
         ? visualFlights[0]
         : visualHotels[0]
       : undefined);
+  if (product === "flight" && params.id) return <NativeFlightDetails params={params} />;
   if (!value)
     return (
       <SafeAreaView style={[d.safe, { backgroundColor: theme.background }]}>
