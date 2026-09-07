@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type SetStateAction } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -152,6 +152,7 @@ import { activeHotelFilterCount, buildHotelFilterOptions, emptyHotelFilters, fil
 import { HotelCardAmenityList } from "./HotelCardAmenityList";
 import { defaultHotelSort, hotelSortLabel, sortHotelsForResults, type HotelSortMode } from "./hotelSort";
 import { HotelResultsQuickFilterSheet, type HotelResultsQuickFilterKind } from "./HotelResultsQuickFilterSheet";
+import { NATIVE_FILTER_RESULTS_TRANSITION_MS } from "./filterResultsTransition";
 import { hasHotelPrice } from "@/lib/hotels/hotelResultAvailability";
 import { HOTEL_RESULTS_PAGE_SIZE, clampHotelResultsPage, getHotelResultsPageCount, paginateHotelResults } from "@/lib/hotels/hotelResultsPagination";
 import { buildHotelFilterChips, hasGoogleMapsDiscovery } from "./hotelResultsPresentation";
@@ -222,6 +223,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [hotelQuickFilter, setHotelQuickFilter] = useState<HotelResultsQuickFilterKind | null>(null);
   const [hotelPage, setHotelPage] = useState(1);
   const [hotelPageChanging, setHotelPageChanging] = useState(false);
+  const [hotelResultsApplying, setHotelResultsApplying] = useState(false);
+  const hotelResultsApplyingTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const hotelFilterSessionDirtyRef = useRef(false);
   const [hotelBackToTop, setHotelBackToTop] = useState(false);
   const hotelBackToTopVisibleRef = useRef(false);
   const hotelScrollRef = useRef<ScrollView>(null);
@@ -267,6 +271,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   useEffect(() => () => {
     if (pendingDateStripSelectionTimer.current) clearTimeout(pendingDateStripSelectionTimer.current);
   }, []);
+  useEffect(() => () => { if(hotelResultsApplyingTimer.current)clearTimeout(hotelResultsApplyingTimer.current); }, []);
   useEffect(() => {
     if (flightResults || !plan.plan?.key) return;
     if (previousHotelSearchKey.current && previousHotelSearchKey.current !== plan.plan.key) {
@@ -275,6 +280,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       setHotelFilterOpen(false);
       setHotelQuickFilter(null);
       setHotelPage(1);
+      if (hotelResultsApplyingTimer.current) clearTimeout(hotelResultsApplyingTimer.current);
+      hotelResultsApplyingTimer.current = undefined;
+      setHotelResultsApplying(false);
     }
     previousHotelSearchKey.current = plan.plan.key;
   }, [flightResults, plan.plan?.key]);
@@ -639,12 +647,22 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     }
     openFlightFilters(sheet);
   };
+  const startHotelResultsTransition = () => {
+    if (hotelResultsApplyingTimer.current) clearTimeout(hotelResultsApplyingTimer.current);
+    setHotelPage(1); setHotelResultsApplying(true);
+    requestAnimationFrame(() => hotelScrollRef.current?.scrollTo({ y: hotelResultsOffset.current, animated: true }));
+    hotelResultsApplyingTimer.current=setTimeout(()=>setHotelResultsApplying(false),NATIVE_FILTER_RESULTS_TRANSITION_MS);
+  };
+  const changeHotelFilters = (next: SetStateAction<HotelFilters>) => { hotelFilterSessionDirtyRef.current=true; setHotelFilters(next); };
+  const transitionHotelFilters = (next: HotelFilters) => { setHotelFilters(next); startHotelResultsTransition(); };
+  const completeHotelFilterSession = () => { setHotelFilterOpen(false); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;startHotelResultsTransition();} };
   const openHotelFilters = (section: HotelFilterSectionName) => {
+    hotelFilterSessionDirtyRef.current=false;
     setHotelFilterSection(section);
     setHotelFilterOpen(true);
   };
-  const openHotelQuickFilter = (kind: HotelResultsQuickFilterKind) => setHotelQuickFilter(kind);
-  const closeHotelQuickFilter = () => setHotelQuickFilter(null);
+  const openHotelQuickFilter = (kind: HotelResultsQuickFilterKind) => { hotelFilterSessionDirtyRef.current=false; setHotelQuickFilter(kind); };
+  const closeHotelQuickFilter = () => { setHotelQuickFilter(null); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;startHotelResultsTransition();} };
   const updateHotelResultsOffset = useCallback(() => {
     hotelResultsOffset.current = Math.max(
       0,
@@ -910,9 +928,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   flightResults={flightResults}
                 />
               ) : null}
-              {status === "ready" && product === "hotel" && sorted.length > 0 ? (
+              {status === "ready" && product === "hotel" && hotelResultsApplying ? <View accessibilityRole="progressbar" accessibilityState={{busy:true}} accessibilityLabel="Updating hotel results">{[0,1,2].map(x=><HotelLoadingSkeleton key={x}/>)}</View> : null}
+              {status === "ready" && product === "hotel" && !hotelResultsApplying && sorted.length > 0 ? (
                 <>
-                  {hotelFilterChips.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s0.hotelFilterChips}>{hotelFilterChips.map(chip=><Pressable key={chip.key} accessibilityRole="button" accessibilityLabel={`Remove ${chip.label} filter`} onPress={()=>setHotelFilters(chip.remove(hotelFilters))} style={[s0.hotelFilterChip,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={{color:theme.textPrimary}}>{chip.label} ×</Text></Pressable>)}</ScrollView> : null}
+                  {hotelFilterChips.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s0.hotelFilterChips}>{hotelFilterChips.map(chip=><Pressable key={chip.key} accessibilityRole="button" accessibilityLabel={`Remove ${chip.label} filter`} onPress={()=>transitionHotelFilters(chip.remove(hotelFilters))} style={[s0.hotelFilterChip,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={{color:theme.textPrimary}}>{chip.label} ×</Text></Pressable>)}</ScrollView> : null}
                   {hasGoogleMapsDiscovery(results as HotelResult[]) ? <View style={[s0.hotelAttribution,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={{color:theme.textSecondary}}>Hotel discovery data provided by Google Maps</Text></View> : null}
                   {plan.plan ? <PriceAlert product="hotel" plan={plan.plan} hotelResults={results as HotelResult[]} available={availability.priceAlerts} compact /> : null}
                   <HotelResultsSummaryRow
@@ -924,10 +943,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   />
                 </>
               ) : null}
-              {status === "ready" && product === "hotel" && results.length > 0 && sorted.length === 0 ? (
-                <View>{hotelFilterChips.length ? <ScrollView horizontal contentContainerStyle={s0.hotelFilterChips}>{hotelFilterChips.map(chip=><Pressable key={chip.key} accessibilityRole="button" accessibilityLabel={`Remove ${chip.label} filter`} onPress={()=>setHotelFilters(chip.remove(hotelFilters))} style={[s0.hotelFilterChip,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={{color:theme.textPrimary}}>{chip.label} ×</Text></Pressable>)}</ScrollView>:null}<View style={s0.hotelFilteredEmpty}><Text accessibilityRole="header" style={[s0.foundTitle,{color:theme.textPrimary}]}>No stays match these filters.</Text><Pressable accessibilityRole="button" onPress={()=>setHotelFilters(emptyHotelFilters())}><Text style={s0.hotelClearFilters}>Clear filters</Text></Pressable></View></View>
+              {status === "ready" && product === "hotel" && !hotelResultsApplying && results.length > 0 && sorted.length === 0 ? (
+                <View>{hotelFilterChips.length ? <ScrollView horizontal contentContainerStyle={s0.hotelFilterChips}>{hotelFilterChips.map(chip=><Pressable key={chip.key} accessibilityRole="button" accessibilityLabel={`Remove ${chip.label} filter`} onPress={()=>transitionHotelFilters(chip.remove(hotelFilters))} style={[s0.hotelFilterChip,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={{color:theme.textPrimary}}>{chip.label} ×</Text></Pressable>)}</ScrollView>:null}<View style={s0.hotelFilteredEmpty}><Text accessibilityRole="header" style={[s0.foundTitle,{color:theme.textPrimary}]}>No stays match these filters.</Text><Pressable accessibilityRole="button" onPress={()=>transitionHotelFilters(emptyHotelFilters())}><Text style={s0.hotelClearFilters}>Clear filters</Text></Pressable></View></View>
               ) : null}
-              {!flightState && product === "hotel" && hotelPageResults.map((x, i) =>
+              {!flightState && product === "hotel" && !hotelResultsApplying && hotelPageResults.map((x, i) =>
                 (
                   <HotelCard
                     key={x.id}
@@ -939,7 +958,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   />
                 ),
               )}
-              {product === "hotel" && sorted.length ? <HotelResultsPagination page={clampedHotelPage} pages={hotelPageCount} disabled={hotelPageChanging} onPage={changeHotelPage}/> : null}
+              {!hotelResultsApplying ? <>{product === "hotel" && sorted.length ? <HotelResultsPagination page={clampedHotelPage} pages={hotelPageCount} disabled={hotelPageChanging} onPage={changeHotelPage}/> : null}</> : null}
     </>
   );
   if (status === "loading") return <NativeBrandedSearchLoading product={product} />;
@@ -1067,8 +1086,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         </>
       ) : (
         <>
-          <HotelFilterSheet visible={hotelFilterOpen} section={hotelFilterSection} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} totalCount={results.length} matchingCount={sorted.length} onChange={setHotelFilters} onClose={()=>setHotelFilterOpen(false)}/>
-          {hotelQuickFilter ? <HotelResultsQuickFilterSheet kind={hotelQuickFilter} sort={hotelSort} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} onSortChange={(next) => { setHotelSort(next); setHotelPage(1); }} onChange={setHotelFilters} onClose={closeHotelQuickFilter} /> : null}
+          <HotelFilterSheet visible={hotelFilterOpen} section={hotelFilterSection} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} totalCount={results.length} matchingCount={sorted.length} onChange={changeHotelFilters} onClose={completeHotelFilterSession}/>
+          {hotelQuickFilter ? <HotelResultsQuickFilterSheet kind={hotelQuickFilter} sort={hotelSort} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} onSortChange={(next) => { setHotelSort(next); setHotelPage(1); }} onChange={changeHotelFilters} onClose={closeHotelQuickFilter} /> : null}
         </>
       )}
       {!flightResults ? (
