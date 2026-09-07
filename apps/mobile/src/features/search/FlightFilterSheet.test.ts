@@ -7,12 +7,21 @@ test("Stops and airports retain authoritative distinct facets",()=>{for(const x 
 test("main hierarchy includes supported native sections but omits fake quality",()=>{const order=["price","flightTimes","duration","stops","airlines","airports","farePreferences"].map(x=>sheet.indexOf(`title={copy.${x}}`));assert.ok(order.every((x,i)=>x>=0&&(i===0||x>order[i-1])));assert.doesNotMatch(sheet,/title="Flight quality"/);});
 test("journey-aware time and safe insight logic remain",()=>{assert.match(sheet,/journeyKey/);assert.match(sheet,/journeyTimeMaximums/);assert.match(sheet,/copy\.takeoffFrom/);assert.match(sheet,/copy\.landingAt/);assert.match(sheet,/flightFilterInsight/);assert.match(sheet,/priceFilteringReady\?priceValue:undefined/);});
 test("full filter scroll is constrained and quick facets remain naturally scrollable",()=>{assert.match(sheet,/style=\{full\?s\.fullScroll:s\.quickScroll\}/);assert.match(sheet,/fullScroll:\{flex:1\}/);assert.match(sheet,/quickScroll:\{flexShrink:1\}/);assert.match(sheet,/paddingHorizontal:24/);assert.match(sheet,/paddingBottom:32/);assert.match(sheet,/keyboardShouldPersistTaps="handled"/);assert.match(sheet,/keyboardDismissMode="on-drag"/);});
-test("footer stays outside the scroll body and zero-state header has no decorative slider",()=>{assert.ok(sheet.indexOf("<ScrollView")>sheet.indexOf("footer={"));assert.doesNotMatch(sheet,/import \{ SlidersHorizontal \}/);assert.match(sheet,/headerAction=\{full&&activeCount\?<Pressable/);});
-test("full Flight CTA is a direct footer child and cannot flex-collapse below the viewport",()=>{
- assert.match(sheet,/footer=\{full\?<Pressable accessibilityRole="button"/);
+test("footer stays outside the scroll body and the full header has no Clear all action",()=>{assert.ok(sheet.indexOf("<ScrollView")>sheet.indexOf("footer={"));assert.doesNotMatch(sheet,/import \{ SlidersHorizontal \}/);assert.doesNotMatch(sheet,/headerAction=|copy\.clearAll|headerClear/);});
+test("full Flight CTA stays full width without filters and flexes beside Reset with active filters",()=>{
+ assert.match(sheet,/footer=\{full\?\(activeCount>0\?<View style=\{s\.footerActions\}>/);
  assert.doesNotMatch(sheet,/footer=\{full\?<View style=\{s\.footerPrimary\}/);
  assert.doesNotMatch(sheet,/footerPrimary:\{flex:1\}/);
  assert.match(sheet,/viewButton:\{width:"100%",minHeight:50,borderRadius:10/);
+ assert.match(sheet,/viewButtonFlexible:\{width:"auto",flex:1\}/);
+ assert.match(sheet,/style=\{\[s\.viewButton,activeCount>0&&s\.viewButtonFlexible,count===0&&s\.viewButtonDisabled\]\}/);
+});
+test("active full Filters move localized Reset to the footer without closing the sheet",()=>{
+ assert.match(sheet,/activeCount>0\?<View style=\{s\.footerActions\}><Pressable accessibilityRole="button" accessibilityLabel=\{copy\.reset\} onPress=\{\(\)=>onChange\(emptyFlightFilters\(\)\)\}/);
+ const fullFooter=sheet.slice(sheet.indexOf("footer={full?"),sheet.indexOf(":<View style={s.footerActions}",sheet.indexOf("footer={full?")));
+ assert.match(fullFooter,/\{copy\.reset\}/);
+ assert.match(fullFooter,/\{viewAction\}/);
+ assert.doesNotMatch(fullFooter,/onClose\(\)|onComplete\(\)/);
 });
 test("Web-style option rows put the checkbox before flexible copy and trailing data",()=>{
  const check=sheet.slice(sheet.indexOf("function Check("),sheet.indexOf("const s=StyleSheet.create"));
@@ -73,8 +82,7 @@ test("Flight filter outlines are stronger in light mode without changing border 
  assert.match(sheet,/borderColor:selected\?ui\.blue:filterOutline/);
  assert.match(sheet,/box:\{[^}]*borderWidth:1\.5/);
  assert.match(sheet,/reset:\{[^}]*borderWidth:1/);
- assert.match(sheet,/headerClear:\{[^}]*borderWidth:1/);
- assert.match(sheet,/headerAction=\{full&&activeCount\?<Pressable[\s\S]*?onChange\(emptyFlightFilters\(\)\)[\s\S]*?borderColor:filterOutline/);
+ assert.match(sheet,/accessibilityLabel=\{copy\.reset\} onPress=\{\(\)=>onChange\(emptyFlightFilters\(\)\)\} style=\{\[s\.reset,\{borderColor:filterOutline\}\]\}/);
  assert.match(sort,/const filterOutline = theme\.dark \? theme\.border : FLIGHT_FILTER_LIGHT_OUTLINE/);
  assert.match(sort,/reset: \{[^}]*borderWidth: 1/);
  assert.match(sort,/borderColor: filterOutline/);
