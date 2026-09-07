@@ -56,16 +56,16 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
 
   const sheet = (
     <View accessibilityLabel={title} style={[styles.sheet, insetFlightQuickSheet && styles.floatingFlightSheet, fullScreen ? styles.fullScreen : { maxHeight: Math.min(height * .76, 620) }, { backgroundColor: theme.background }]}>
-      <View style={[styles.header, flightQuickHeader && styles.quickHeader, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
+      <View style={[styles.header, flightQuickHeader && styles.quickHeader, { backgroundColor: flightQuickHeader ? theme.background : theme.surface, borderBottomColor: theme.border }]}>
         {flightQuickHeader ? <>
-          <Pressable accessibilityRole="button" accessibilityLabel={closeLabel} onPress={onClose} style={styles.headerSlot}>
-            <X accessible={false} size={22} color={theme.icon} />
-          </Pressable>
+          <View accessible={false} importantForAccessibility="no-hide-descendants" style={styles.headerSlot} />
           <View style={[styles.headerCopy, styles.quickHeaderCopy]}>
             <Text accessibilityRole="header" style={[styles.title, styles.quickTitle, { color: theme.textPrimary }]}>{title}</Text>
             {subtitle ? <Text style={[styles.subtitle, styles.quickSubtitle, { color: theme.textSecondary }]}>{subtitle}</Text> : null}
           </View>
-          <View accessible={false} importantForAccessibility="no-hide-descendants" style={styles.headerSlot} />
+          <Pressable accessibilityRole="button" accessibilityLabel={closeLabel} onPress={onClose} style={styles.headerSlot}>
+            <X accessible={false} size={22} color={theme.icon} />
+          </Pressable>
         </> : <>
           <View style={styles.headerCopy}>
             <Text accessibilityRole="header" style={[styles.title, { color: theme.textPrimary }]}>{title}</Text>
@@ -78,7 +78,7 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
         </>}
       </View>
       <View style={fullScreen ? styles.fullScreenContent : styles.quickContent}>{children}</View>
-      {footer ? <View style={[styles.footer, { backgroundColor: theme.surface, borderTopColor: theme.border, paddingBottom: footerBottomPadding }]}>{footer}</View> : null}
+      {footer ? <View style={[styles.footer, insetFlightQuickSheet && styles.quickFooter, { backgroundColor: insetFlightQuickSheet ? theme.background : theme.surface, borderTopColor: theme.border, paddingBottom: footerBottomPadding }]}>{footer}</View> : null}
     </View>
   );
   const animatedQuickSheet = <Animated.View style={[styles.quickSheetFrame, insetFlightQuickSheet && styles.insetFlightQuickSheet, insetFlightQuickSheet && { marginBottom: floatingBottomGap }, { transform: [{ translateY: quickSheetTranslateY }] }]}>{sheet}</Animated.View>;
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   sheet: { width: "100%", minHeight: 240, borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden", shadowColor: "#0F172A", shadowOpacity: .2, shadowRadius: 18, elevation: 16 },
   floatingFlightSheet: { borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
   fullScreen: { flex: 1, minHeight: 0, borderRadius: 0 }, header: { minHeight: 76, flexShrink: 0, paddingLeft: 20, paddingRight: 10, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth },
-  quickHeader: { paddingHorizontal: 10 },
+  quickHeader: { paddingHorizontal: 10, borderBottomWidth: 0 },
   headerCopy: { flex: 1, minWidth: 0 }, title: { fontSize: 18, lineHeight: 23, fontWeight: "700", fontFamily: appFonts.bold }, subtitle: { fontSize: 12, lineHeight: 18, fontFamily: appFonts.medium },
   headerSlot: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   quickHeaderCopy: { alignItems: "center" },
@@ -116,4 +116,5 @@ const styles = StyleSheet.create({
   fullScreenContent: { flex: 1, minHeight: 0 },
   quickContent: { flexShrink: 1, minHeight: 0 },
   footer: { flexShrink: 0, borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingTop: 12 },
+  quickFooter: { borderTopWidth: 0 },
 });

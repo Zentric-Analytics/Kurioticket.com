@@ -44,17 +44,25 @@ test("only inset Flight quick sheets float above the safe area with four matchin
   assert.match(shell,/floatingFlightSheet: \{ borderBottomLeftRadius: 24, borderBottomRightRadius: 24 \}/);
   assert.doesNotMatch(cars,/floatingFlightSheet|FLIGHT_FLOATING_SHEET_BOTTOM_GAP/);
 });
-test("only inset Flight quick sheets use a balanced centered header with the close control on the left",()=>{
+test("only inset Flight quick sheets use a balanced centered header with the close control on the right",()=>{
   const cars=readFileSync("src/features/search/CarFilterSheet.tsx","utf8");
   assert.match(shell,/const flightQuickHeader = insetFlightQuickSheet/);
-  assert.match(shell,/flightQuickHeader \? <>[\s\S]*?<Pressable[\s\S]*?style=\{styles\.headerSlot\}[\s\S]*?<View style=\{\[styles\.headerCopy, styles\.quickHeaderCopy\]\}/);
-  assert.match(shell,/<View accessible=\{false\} importantForAccessibility="no-hide-descendants" style=\{styles\.headerSlot\} \/>/);
+  assert.match(shell,/flightQuickHeader \? <>[\s\S]*?<View accessible=\{false\} importantForAccessibility="no-hide-descendants" style=\{styles\.headerSlot\} \/>[\s\S]*?<View style=\{\[styles\.headerCopy, styles\.quickHeaderCopy\]\}[\s\S]*?<Pressable accessibilityRole="button" accessibilityLabel=\{closeLabel\} onPress=\{onClose\} style=\{styles\.headerSlot\}>/);
   assert.match(shell,/headerSlot: \{ width: 44, height: 44/);
-  assert.match(shell,/quickHeader: \{ paddingHorizontal: 10 \}/);
+  assert.match(shell,/quickHeader: \{ paddingHorizontal: 10, borderBottomWidth: 0 \}/);
   assert.match(shell,/quickTitle: \{ textAlign: "center" \}/);
   assert.match(shell,/quickSubtitle: \{ textAlign: "center" \}/);
   assert.match(shell,/flightQuickHeader \? <>[\s\S]*?subtitle \? <Text style=\{\[styles\.subtitle, styles\.quickSubtitle/);
   assert.doesNotMatch(cars,/insetFlightQuickSheet|quickHeaderCopy|headerSlot/);
+});
+test("inset Flight quick sheets alone remove dividers and share the body surface",()=>{
+  assert.match(shell,/backgroundColor: flightQuickHeader \? theme\.background : theme\.surface/);
+  assert.match(shell,/quickHeader: \{ paddingHorizontal: 10, borderBottomWidth: 0 \}/);
+  assert.match(shell,/insetFlightQuickSheet && styles\.quickFooter/);
+  assert.match(shell,/backgroundColor: insetFlightQuickSheet \? theme\.background : theme\.surface/);
+  assert.match(shell,/quickFooter: \{ borderTopWidth: 0 \}/);
+  assert.match(shell,/header: \{[^}]*borderBottomWidth: StyleSheet\.hairlineWidth/);
+  assert.match(shell,/footer: \{[^}]*borderTopWidth: StyleSheet\.hairlineWidth/);
 });
 test("full-screen Flight filters bypass the quick-sheet inset frame",()=>{
   assert.match(shell,/\{fullScreen \? <SafeAreaProvider><SafeAreaView edges=\{\["top", "bottom", "left", "right"\]\}/);
