@@ -33,8 +33,10 @@ test("results edit modal owns presentation without a post-dismiss business callb
   assert.doesNotMatch(modal, /setTimeout|SEARCH_PICKER_CLOSE_DURATION_MS/);
   assert.doesNotMatch(modal, /accessibilityLabel="Go back"|ArrowLeft/);
   assert.doesNotMatch(modal, /paddingBottom: motion\.bottomSafeAreaInset/);
-  assert.match(modal, /const floatingBottomGap = Math\.max\(bottomSafeAreaInset, FLIGHT_FLOATING_SHEET_MIN_BOTTOM_GAP\)/);
+  assert.match(modal, /const floatingBottomGap = FLIGHT_FLOATING_SHEET_BOTTOM_GAP/);
   assert.match(modal, /marginBottom: floatingBottomGap/);
+  assert.match(modal, /const internalBottomPadding = Math\.max\(20, bottomSafeAreaInset - floatingBottomGap\)/);
+  assert.match(modal, /contentContainerStyle=\{\[styles\.content, \{ paddingBottom: internalBottomPadding \}\]\}/);
   assert.doesNotMatch(modal, /headerAnchor|flightResultsHeaderHeight/);
   assert.match(modal, /<SafeAreaView[^>]*style=\{styles.backdrop\}>[\s\S]*StyleSheet.absoluteFill, styles.scrim/);
   assert.match(modal, /sheet: \{ maxHeight: "88%", marginHorizontal: FLIGHT_QUICK_SHEET_HORIZONTAL_INSET, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderBottomLeftRadius: 24, borderBottomRightRadius: 24/);
@@ -87,7 +89,7 @@ test("results modal appearance is isolated from shared compact field geometry", 
 
 test("Flight Edit Search shares the Flight quick-sheet outer inset without changing content padding", () => {
   const modal = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
-  assert.match(modal, /import \{ FLIGHT_FLOATING_SHEET_MIN_BOTTOM_GAP, FLIGHT_QUICK_SHEET_HORIZONTAL_INSET \} from "\.\/FlightResultsSheetShell"/);
+  assert.match(modal, /import \{ FLIGHT_FLOATING_SHEET_BOTTOM_GAP, FLIGHT_QUICK_SHEET_HORIZONTAL_INSET \} from "\.\/FlightResultsSheetShell"/);
   assert.match(modal, /sheet: \{ maxHeight: "88%", marginHorizontal: FLIGHT_QUICK_SHEET_HORIZONTAL_INSET/);
   assert.match(modal, /content: \{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 20 \}/);
   assert.doesNotMatch(modal, /content: \{[^}]*FLIGHT_QUICK_SHEET_HORIZONTAL_INSET/);
