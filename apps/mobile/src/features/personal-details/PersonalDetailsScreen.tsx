@@ -1382,8 +1382,11 @@ export function PersonalDetailsScreen() {
                   onPress={() => discard(false)}
                   accessibilityState={{ disabled: saving }}
                   style={({ pressed }) => [
-                    s.secondary,
-                    { opacity: saving ? 0.45 : pressed ? 0.6 : 1 },
+                    s.actionButton,
+                    {
+                      borderColor: theme.border,
+                      opacity: saving ? 0.45 : pressed ? 0.6 : 1,
+                    },
                   ]}
                 >
                   <Text style={[s.buttonText, { color: theme.text }]}>
@@ -1400,8 +1403,9 @@ export function PersonalDetailsScreen() {
                   disabled={!dirty || saving}
                   onPress={() => void save()}
                   style={({ pressed }) => [
-                    s.primary,
+                    s.actionButton,
                     {
+                      borderColor: "transparent",
                       backgroundColor:
                         !dirty && !saving ? theme.border : flowColors.blue,
                       opacity: pressed ? 0.8 : 1,
@@ -1670,31 +1674,30 @@ const s = StyleSheet.create({
   postalField: { width: "50%" },
   actions: {
     flexDirection: "row",
-    justifyContent: "flex-end",
-    gap: 16,
-    marginTop: 0,
-    flexWrap: "wrap",
+    alignItems: "stretch",
+    gap: 12,
   },
-  primary: {
+  actionButton: {
     flex: 1,
+    minWidth: 0,
     minHeight: 50,
-    minWidth: 142,
     borderRadius: 10,
-    backgroundColor: flowColors.blue,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
   },
-  secondary: {
-    minHeight: 48,
-    minWidth: 72,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 18,
+  buttonText: {
+    fontSize: 15,
+    lineHeight: 20,
+    textAlign: "center",
+    fontFamily: appFonts.semibold,
   },
-  buttonText: { fontSize: 15, fontFamily: appFonts.semibold },
   primaryText: {
     fontSize: 15,
+    lineHeight: 20,
+    textAlign: "center",
     color: "#FFFFFF",
     fontFamily: appFonts.semibold,
   },

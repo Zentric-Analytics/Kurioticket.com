@@ -365,7 +365,7 @@ test("edit controls follow the web responsive alignment contract", () => {
   assert.match(screen, /localityRow:[\s\S]*flexDirection:\s*"row"/);
   assert.match(screen, /width\s*<\s*340\s*&&\s*s\.localityStack/);
   assert.match(screen, /postalField:\s*\{\s*width:\s*"50%"/);
-  assert.match(screen, /actions:[\s\S]*justifyContent:\s*"flex-end"/);
+  assert.match(screen, /actions:\s*\{[^}]*alignItems:\s*"stretch"/);
 });
 test("dynamic flag is decorative, validated and has a safe ISO fallback", () => {
   assert.match(screen, /getCountryFlagUri\(option\?\.isoCode\)/);
@@ -503,4 +503,23 @@ test("main editor avoids the keyboard on Android as well as iOS", () => {
     /behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/,
   );
   assert.ok(main.indexOf("s.editorFooter") > main.indexOf("</ScrollView>"));
+});
+
+test("editor actions share equal sizing and aligned labels", () => {
+  const footer = screen.slice(
+    screen.indexOf("s.editorFooter"),
+    screen.indexOf("</KeyboardAvoidingView>", screen.indexOf("s.editorFooter")),
+  );
+  assert.equal((footer.match(/s\.actionButton/g) || []).length, 2);
+  assert.match(
+    screen,
+    /actionButton:\s*\{[^}]*flex: 1,[^}]*minWidth: 0,[^}]*minHeight: 50,/,
+  );
+  assert.doesNotMatch(
+    screen.slice(
+      screen.indexOf("  actions: {"),
+      screen.indexOf("  buttonText:"),
+    ),
+    /flexWrap|minWidth: (72|142)/,
+  );
 });
