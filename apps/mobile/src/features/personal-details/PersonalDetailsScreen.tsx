@@ -1498,7 +1498,7 @@ export function PersonalDetailsScreen() {
         </KeyboardAvoidingView>
       )}
       <Modal visible={emailOpen} animationType="slide" presentationStyle="fullScreen" onRequestClose={closeEmail}>
-        <SafeAreaView edges={["top", "bottom"]} style={[s.safe, { backgroundColor: theme.background }]}>
+        <View style={[s.safe, { backgroundColor: theme.background, paddingTop: insets.top, paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
           <View style={[s.header, { borderBottomColor: theme.border }]}>
             <Pressable accessibilityRole="button" accessibilityLabel={c.back} onPress={closeEmail} disabled={emailBusy} style={s.iconButton}>
               <FlowIcon name="back" color={theme.icon} />
@@ -1511,7 +1511,7 @@ export function PersonalDetailsScreen() {
               {emailOpen && <PersonalDetailsEmailEditor onSessionExpired={handleEmailSessionExpired} email={email} onDirtyChange={setEmailDirty} onBusyChange={setEmailBusy} onSaved={(nextEmail) => { setEmail(nextEmail); setEmailDirty(false); setEmailOpen(false); }} />}
             </ScrollView>
           </KeyboardAvoidingView>
-        </SafeAreaView>
+        </View>
       </Modal>
       {success ? (
         <View
