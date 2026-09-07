@@ -24,3 +24,11 @@ export function nativeCarLocationEmbedUrl(baseUrl: string, id: string, search: R
   url.search = new URLSearchParams({ id, ...search }).toString();
   return url.toString();
 }
+
+export function nativeCarDirectionsUrl(location: string): string | null {
+  const destination = location.trim().replace(/\s+/g, " ");
+  if (!destination) return null;
+  const url = new URL("https://www.google.com/maps/dir/");
+  url.search = new URLSearchParams({ api: "1", destination }).toString();
+  return url.toString();
+}
