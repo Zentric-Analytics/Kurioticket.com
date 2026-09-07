@@ -6,7 +6,9 @@ export function openPreviewLegalBrowser(url: string, platform: string, browser: 
   if (platform === "ios") {
     // Use the native authentication-session presentation only for Preview legal
     // links. There is no completion redirect; the reader closes the session.
-    return browser.openAuthSessionAsync(url, null);
+    // Public documents need no shared Safari cookies. An ephemeral session
+    // avoids the shared-session sign-in consent prompt for these legal pages.
+    return browser.openAuthSessionAsync(url, null, { preferEphemeralSession: true });
   }
   return browser.openBrowserAsync(url);
 }

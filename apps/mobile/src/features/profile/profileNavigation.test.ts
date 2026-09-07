@@ -78,7 +78,7 @@ for (const { label, destination } of legalItems) {
 
   for (const platform of ["ios", "android"]) {
     for (const outcome of ["cancel", "dismiss", "error"] as const) {
-      test(`${platform} Preview ${label}: correct native browser API and silent ${outcome}`, async () => {
+      test(`${platform} Preview ${label}: isolated iOS session or unchanged Android browser and silent ${outcome}`, async () => {
         const calls: unknown[][] = [];
         const pushed: string[] = [];
         const finish = async () => {
@@ -95,7 +95,9 @@ for (const { label, destination } of legalItems) {
           }),
         });
         const url = `https://staging.kurioticket.com/mobile/legal/${label === "terms" ? "terms-of-service" : "privacy-policy"}`;
-        assert.deepEqual(calls, [platform === "ios" ? ["auth", url, null] : ["browser", url]]);
+        assert.deepEqual(calls, [platform === "ios"
+          ? ["auth", url, null, { preferEphemeralSession: true }]
+          : ["browser", url]]);
         assert.deepEqual(pushed, []);
       });
     }
