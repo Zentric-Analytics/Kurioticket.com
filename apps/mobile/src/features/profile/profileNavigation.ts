@@ -1,5 +1,16 @@
 import type { ProfileDestination, ProfileNativeHref } from "./profileModel";
 
+type LegalBrowser = Pick<typeof import("expo-web-browser"), "openAuthSessionAsync" | "openBrowserAsync">;
+
+export function openPreviewLegalBrowser(url: string, platform: string, browser: LegalBrowser) {
+  if (platform === "ios") {
+    // Use the native authentication-session presentation only for Preview legal
+    // links. There is no completion redirect; the reader closes the session.
+    return browser.openAuthSessionAsync(url, null);
+  }
+  return browser.openBrowserAsync(url);
+}
+
 type ProfileNavigationRuntime = {
   isPreview: boolean;
   apiBaseUrl: string;
