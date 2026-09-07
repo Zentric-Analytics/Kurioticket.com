@@ -76,3 +76,12 @@ test("new email entry shares the introduction styles and interactive field behav
  assert.match(field, /borderColor: focused \? flowColors.blue : borderColor/);
  assert.doesNotMatch(editor, /\{c.emailNextHelp\}/);
 });
+
+
+test("full-screen email header uses measured safe insets from its first frame", () => {
+ const screen = readFileSync("src/features/personal-details/PersonalDetailsScreen.tsx", "utf8");
+ const page = screen.slice(screen.indexOf("<Modal visible={emailOpen}"), screen.indexOf("{success ? ("));
+ assert.match(page, /paddingTop: insets.top, paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right/);
+ assert.ok(page.indexOf("paddingTop: insets.top") < page.indexOf("s.header"));
+ assert.doesNotMatch(page, /<SafeAreaView/);
+});
