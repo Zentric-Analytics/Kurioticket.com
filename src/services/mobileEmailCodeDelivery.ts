@@ -1,4 +1,4 @@
-import { createHash, randomInt } from "node:crypto";
+import { createHash, randomBytes, randomInt } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
 import { getBaseUrl } from "@/lib/env";
 import { sendTransactionalEmail, verificationCodeEmail } from "./emailService";
@@ -46,11 +46,15 @@ export async function sendMobileEmailCode(
         await tx.verificationToken.deleteMany({
           where: { identifier: { in: [limitId, input.identifier] } },
         });
+        const rateToken = JSON.stringify({
+          ...state,
+          scope: limitId,
+          reservation: randomBytes(16).toString("hex"),
+        });
         await tx.verificationToken.create({
           data: {
             identifier: limitId,
-            // Rate tokens are globally unique; include the account/purpose scope.
-            token: JSON.stringify({ ...state, scope: limitId }),
+            token: rateToken,
             expires: new Date(now + 24 * 60 * 60_000),
           },
         });
@@ -61,7 +65,7 @@ export async function sendMobileEmailCode(
             expires: new Date(now + MOBILE_EMAIL_CODE_TTL_MS),
           },
         });
-        return { code, token, state };
+        return { code, token, state, rateToken, previousRate: row };
       },
       { isolationLevel: "Serializable" },
     );
@@ -100,9 +104,21 @@ export async function sendMobileEmailCode(
       idempotencyKey: input.identifier + ":" + reservation.token.slice(0, 16),
     });
   } catch (error) {
-    await db.verificationToken.deleteMany({
-      where: { identifier: input.identifier, token: reservation.token },
-    });
+    await db.$transaction(
+      async (tx) => {
+        await tx.verificationToken.deleteMany({
+          where: { identifier: input.identifier, token: reservation.token },
+        });
+        // A late delivery failure must not roll back a newer send's allowance.
+        const released = await tx.verificationToken.deleteMany({
+          where: { identifier: limitId, token: reservation.rateToken },
+        });
+        if (released.count === 1 && reservation.previousRate) {
+          await tx.verificationToken.create({ data: reservation.previousRate });
+        }
+      },
+      { isolationLevel: "Serializable" },
+    );
     throw error;
   }
   return {
