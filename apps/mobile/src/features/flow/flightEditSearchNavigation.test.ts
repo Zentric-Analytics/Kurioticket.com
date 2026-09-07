@@ -50,6 +50,7 @@ test("only the results modal opts into theme-aware structured flight cards", () 
   assert.doesNotMatch(dedicatedEdit, /resultsModalAppearance/);
   assert.doesNotMatch(homepage, /resultsModalAppearance/);
   assert.match(modal, /style=\{\{ backgroundColor: ft\.colors\.page \}\}/);
+  assert.match(panel, /backgroundColor: resultsModalAppearance \? ft\.colors\.page : ft\.colors\.surface/);
   assert.match(panel, /resultsModalCard:\{borderWidth:1,borderRadius:13,overflow:"hidden",marginTop:10\}/);
   assert.match(panel, /backgroundColor: ft\.colors\.card, borderColor: ft\.colors\.border/);
 });
