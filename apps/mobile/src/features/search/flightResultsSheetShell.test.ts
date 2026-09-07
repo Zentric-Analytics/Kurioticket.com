@@ -56,13 +56,25 @@ test("only inset Flight quick sheets use a balanced centered header with the clo
   assert.doesNotMatch(cars,/insetFlightQuickSheet|quickHeaderCopy|headerSlot/);
 });
 test("inset Flight quick sheets alone remove dividers and share the body surface",()=>{
-  assert.match(shell,/backgroundColor: flightQuickHeader \? theme\.background : theme\.surface/);
+  assert.match(shell,/FLIGHT_RESULTS_LIGHT_CANVAS = "#F5F7FB"/);
+  assert.match(shell,/const usesFlightResultsCanvas = insetFlightQuickSheet \|\| flightFilterAppearance/);
+  assert.match(shell,/const flightResultsCanvas = theme\.dark \? theme\.background : FLIGHT_RESULTS_LIGHT_CANVAS/);
+  assert.match(shell,/backgroundColor: usesFlightResultsCanvas \? flightResultsCanvas : theme\.surface/);
   assert.match(shell,/quickHeader: \{ paddingHorizontal: 10, borderBottomWidth: 0 \}/);
   assert.match(shell,/insetFlightQuickSheet && styles\.quickFooter/);
-  assert.match(shell,/backgroundColor: insetFlightQuickSheet \? theme\.background : theme\.surface/);
+  assert.match(shell,/backgroundColor: sheetBackground/);
   assert.match(shell,/quickFooter: \{ borderTopWidth: 0 \}/);
   assert.match(shell,/header: \{[^}]*borderBottomWidth: StyleSheet\.hairlineWidth/);
   assert.match(shell,/footer: \{[^}]*borderTopWidth: StyleSheet\.hairlineWidth/);
+});
+test("the full Flight filter opts into the Results canvas without changing Cars",()=>{
+  const filter=readFileSync("src/features/search/FlightFilterSheet.tsx","utf8");
+  const cars=readFileSync("src/features/search/CarFilterSheet.tsx","utf8");
+  assert.match(shell,/flightFilterAppearance = false/);
+  assert.match(shell,/flightFilterAppearance && styles\.flightFilterHeader/);
+  assert.match(shell,/flightFilterHeader: \{ borderBottomWidth: 0 \}/);
+  assert.match(filter,/flightFilterAppearance=\{full\}/);
+  assert.doesNotMatch(cars,/flightFilterAppearance|FLIGHT_RESULTS_LIGHT_CANVAS/);
 });
 test("full-screen Flight filters bypass the quick-sheet inset frame",()=>{
   assert.match(shell,/\{fullScreen \? <SafeAreaProvider><SafeAreaView edges=\{\["top", "bottom", "left", "right"\]\}/);

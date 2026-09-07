@@ -70,8 +70,9 @@ export function FlightFilterSheet({visible,section,filters,options,results,price
  return <FlightResultsSheetShell
   visible={visible}
   title={full?copy.filters:title}
-  subtitle={full?(activeCount?copy.appliedCount(activeCount):copy.allFlightsShown):undefined}
+  subtitle={full&&activeCount?copy.appliedCount(activeCount):undefined}
   fullScreen={full}
+  flightFilterAppearance={full}
   insetFlightQuickSheet={!full}
   closeLabel={copy.closeFilters}
   onClose={close}
