@@ -5,6 +5,10 @@ import {
   getCarPaginationItems,
   paginateCarResults,
 } from "./carResultsPagination";
+import type { CarPaginationItem } from "./carResultsPagination";
+
+const compactCars: number[] = getCarPaginationItems(7, 13, true);
+const desktopCars: CarPaginationItem[] = getCarPaginationItems(7, 13);
 
 test("cars results use a production page size of twenty", () => {
   assert.equal(CAR_RESULTS_PAGE_SIZE, 20);
@@ -32,6 +36,8 @@ test("two-page pagination exposes both pages without truncation", () => {
 });
 
 test("compact Cars pagination uses a clamped three-page mobile window", () => {
+  assert.deepEqual(compactCars, [6, 7, 8]);
+  assert.deepEqual(desktopCars, [1, "ellipsis", 6, 7, 8, "ellipsis", 13]);
   assert.deepEqual(getCarPaginationItems(2, 3, true), [1, 2, 3]);
   assert.deepEqual(getCarPaginationItems(1, 13, true), [1, 2, 3]);
   assert.deepEqual(getCarPaginationItems(7, 13, true), [6, 7, 8]);
