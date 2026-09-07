@@ -5,6 +5,8 @@ import { getPrisma } from "@/lib/prisma";
 import type { FlightSearchParams, HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
 import { searchFlights } from "@/services/travel/flightAggregator";
 import { searchHotels } from "@/services/travel/hotelAggregator";
+import { searchCars } from "@/services/travel/carAggregator";
+import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { priceAlertEmail, sendOptionalEmail } from "@/services/emailService";
 import { persistCanonicalNotificationEvent, type NotificationPersistenceClient } from "@/services/notificationService";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
@@ -24,7 +26,7 @@ export type ResolvedPrice = {
 type PriceAlertRecord = {
   id: string;
   userId: string;
-  type: "FLIGHT" | "HOTEL";
+  type: "FLIGHT" | "HOTEL" | "CAR";
   origin: string | null;
   destination: string;
   targetPrice: { toString(): string } | number | string | null;
@@ -88,6 +90,15 @@ export function selectHotelPriceAlertResult(
   return null;
 }
 
+export function selectCarPriceAlertResult(cars: readonly NormalizedCarResult[], requestedCurrency: string): ResolvedPrice | null {
+  const currency = requestedCurrency.trim().toUpperCase();
+  const candidates = cars.flatMap((car) => car.offers.map((offer) => ({ car, offer })))
+    .filter(({ offer }) => Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 && offer.currency.trim().toUpperCase() === currency)
+    .sort((left, right) => left.offer.totalPrice - right.offer.totalPrice || left.car.id.localeCompare(right.car.id) || left.offer.id.localeCompare(right.offer.id));
+  const selected = candidates[0];
+  return selected ? { provider: selected.offer.bookingProviderName, price: selected.offer.totalPrice, currency, url: selected.offer.bookingUrl, payload: { resultId: selected.car.id, offerId: selected.offer.id } } : null;
+}
+
 export async function processDuePriceAlerts(options: {
   now?: Date;
   batchSize?: number;
@@ -145,7 +156,7 @@ export async function processDuePriceAlerts(options: {
         continue;
       }
 
-      const route = alert.type === "FLIGHT" && alert.origin ? `${alert.origin} to ${alert.destination}` : alert.destination;
+      const route = alert.type !== "HOTEL" && alert.origin && alert.origin.toLowerCase() !== alert.destination.toLowerCase() ? `${alert.origin} to ${alert.destination}` : alert.destination;
       const eventKey = isAutomatic ? `price-alert:${alert.id}:automatic:${resolved.currency}:${resolved.price.toFixed(2)}` : buildPriceAlertIdempotencyKey(alert);
       const event = await db.$transaction(async (tx) => {
         const triggered = await tx.priceAlert.updateMany({ where: { id: alert.id, status: "ACTIVE", nextCheckAt: alert.nextCheckAt }, data: isAutomatic ? { lastSeenPrice: resolved.price, lastNotifiedPrice: resolved.price, lastNotifiedAt: now, lastCheckedAt: now, nextCheckAt: new Date(now.getTime() + checkDelayMs), consecutiveFailures: 0, lastErrorCode: null } : { status: "TRIGGERED", lastSeenPrice: resolved.price, lastCheckedAt: now, nextCheckAt: null } });
@@ -198,6 +209,12 @@ export async function resolveAlertPrice(alert: PriceAlertRecord): Promise<Resolv
     if (result.results.length === 0) throw new Error("live_flight_price_unavailable");
     const best = result.results[0];
     return { provider: best.provider, price: best.price, currency: best.currency, url: best.partnerRedirectUrl || best.bookingUrl, payload: { resultId: best.id } };
+  }
+  if (alert.type === "CAR") {
+    const result = await searchCars(alert.query as CarSearchParams);
+    const selected = selectCarPriceAlertResult(result.results, alert.currency);
+    if (!selected) throw new Error("live_car_price_unavailable");
+    return selected;
   }
   const search = alert.query as Partial<HotelSearchParams>;
   const result = await searchHotels(search as HotelSearchParams);

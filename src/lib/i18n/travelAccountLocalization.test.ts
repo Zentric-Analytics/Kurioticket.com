@@ -5,7 +5,7 @@ import { travelAccountMessageKeys, travelAccountMessages } from "../../../apps/m
 import { mobileLocales } from "../../../apps/mobile/src/localization/mobileLocalizationCatalog";
 import { travelAccountTranslations, travelAccountTranslationKeys } from "./travelAccount";
 
-const webKeys = ["travel.account.hotelAlert.title", "travel.account.hotelAlert.body", "travel.account.hotelAlert.create", "travel.account.hotelAlert.target", "travel.account.hotelAlert.save", "travel.account.hotelAlert.saved", "travel.account.hotelAlert.duplicate", "travel.account.hotelAlert.error", "travel.account.package.save", "travel.account.package.saved", "travel.account.package.duplicate", "travel.account.package.error"];
+const webKeys = ["travel.account.hotelAlert.title", "travel.account.hotelAlert.body", "travel.account.hotelAlert.create", "travel.account.hotelAlert.target", "travel.account.hotelAlert.save", "travel.account.hotelAlert.saved", "travel.account.hotelAlert.duplicate", "travel.account.hotelAlert.error", "travel.account.package.save", "travel.account.package.saved", "travel.account.package.duplicate", "travel.account.package.error", "travel.account.carAlert.title", "travel.account.carAlert.body", "travel.account.carAlert.create", "travel.account.carAlert.target", "travel.account.carAlert.save", "travel.account.carAlert.saved", "travel.account.carAlert.duplicate", "travel.account.carAlert.error"];
 
 test("every selectable web locale resolves every new travel account key without placeholders", () => {
   assert.deepEqual([...travelAccountTranslationKeys], webKeys);
