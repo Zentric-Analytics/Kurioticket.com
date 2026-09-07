@@ -12,26 +12,20 @@ export class MobileEmailResendError extends Error {
     super("Email resend is temporarily unavailable.");
   }
 }
-// The automatic first send is not a resend. The third resend starts a one-minute lock.
+// Every send uses the same cooldown; resend count does not trigger a lockout.
 export function reserveMobileEmailSend(
   previous: ResendState | null,
   now: number,
 ): ResendState {
-  if (previous?.lockedUntil && previous.lockedUntil > now)
+  // Older reservations stored a 60-second third-resend lock. Honor only
+  // the ordinary 30-second cooldown when reading those reservations.
+  const nextAt = previous?.lockedUntil
+    ? previous.lockedUntil - 30_000
+    : previous?.nextAt ?? 0;
+  if (nextAt > now)
     throw new MobileEmailResendError(
-      Math.ceil((previous.lockedUntil - now) / 1000),
-      true,
-    );
-  if (previous && previous.nextAt > now)
-    throw new MobileEmailResendError(
-      Math.ceil((previous.nextAt - now) / 1000),
+      Math.ceil((nextAt - now) / 1000),
       false,
     );
-  const resends = previous
-    ? previous.lockedUntil
-      ? 1
-      : previous.resends + 1
-    : 0;
-  const lockedUntil = resends >= 3 ? now + 60_000 : 0;
-  return { resends, nextAt: lockedUntil || now + 30_000, lockedUntil };
+  return { resends: (previous?.resends ?? -1) + 1, nextAt: now + 30_000, lockedUntil: 0 };
 }
