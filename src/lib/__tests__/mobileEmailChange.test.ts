@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   createMobileEmailChangeHandler,
   type EmailChangeDependencies,
+  type EmailChangeMode,
 } from "@/lib/mobileEmailChange";
 import { EmailVerificationCooldownError } from "@/services/emailVerificationService";
 import { claimAccountEmailChangeCode } from "@/services/emailVerificationService";
@@ -11,7 +12,10 @@ import { createHash } from "node:crypto";
 function setup(overrides: Partial<EmailChangeDependencies> = {}) {
   const calls: string[] = [];
   const dependencies: EmailChangeDependencies = {
-    authenticate: async () => ({ id: "signed-in-user" }),
+    authenticate: async () => ({
+      id: "signed-in-user",
+      sessionKey: "session-1",
+    }),
     user: async (id) => ({
       id,
       email: "old@example.com",
@@ -22,6 +26,15 @@ function setup(overrides: Partial<EmailChangeDependencies> = {}) {
     rateLimit: () => {
       calls.push("rate-limit");
     },
+    sendCurrentCode: async () => {
+      calls.push("send-current");
+      return { cooldownSeconds: 60 };
+    },
+    verifyCurrentCode: async () => {
+      calls.push("verify-current");
+      return "a".repeat(64);
+    },
+    hasOwnershipProof: async () => true,
     sendCode: async (input) => {
       assert.equal(input.userId, "signed-in-user");
       assert.equal(input.enforceCooldown, true);
@@ -45,9 +58,10 @@ function setup(overrides: Partial<EmailChangeDependencies> = {}) {
     ...overrides,
   };
   const run = (
-    mode: "request" | "confirm",
+    mode: EmailChangeMode,
     body: unknown = {
       newEmail: "NEW@example.com",
+      ownershipProof: "a".repeat(64),
       code: "123456",
       userId: "attacker-supplied-id",
     },
@@ -65,7 +79,12 @@ function setup(overrides: Partial<EmailChangeDependencies> = {}) {
 }
 
 test("both endpoints reject missing sessions before issuing codes or changing accounts", async () => {
-  for (const mode of ["request", "confirm"] as const) {
+  for (const mode of [
+    "current-request",
+    "current-confirm",
+    "request",
+    "confirm",
+  ] as const) {
     const { run, calls } = setup({ authenticate: async () => null });
     assert.equal((await run(mode)).status, 401);
     assert.deepEqual(calls, []);
@@ -89,7 +108,15 @@ test("request normalizes email, binds the code to the session user, and never co
 test("invalid, unchanged, and already-used emails do not send codes", async () => {
   for (const email of ["bad", "old@example.com"]) {
     const { run, calls } = setup();
-    assert.equal((await run("request", { newEmail: email })).status, 400);
+    assert.equal(
+      (
+        await run("request", {
+          newEmail: email,
+          ownershipProof: "a".repeat(64),
+        })
+      ).status,
+      400,
+    );
     assert.ok(!calls.includes("send"));
   }
   const { run, calls } = setup({ owner: async () => ({ id: "other-user" }) });
@@ -207,9 +234,73 @@ test("inactive users and malformed codes never reach confirmation", async () => 
   assert.equal((await inactive.run("confirm")).status, 401);
   const invalid = setup();
   assert.equal(
-    (await invalid.run("confirm", { newEmail: "new@example.com", code: "12" }))
-      .status,
+    (
+      await invalid.run("confirm", {
+        newEmail: "new@example.com",
+        code: "12",
+        ownershipProof: "a".repeat(64),
+      })
+    ).status,
     400,
   );
   assert.deepEqual(invalid.calls, []);
+});
+
+test("new-address endpoints reject missing, expired or wrong-session ownership proofs", async () => {
+  for (const mode of ["request", "confirm"] as const) {
+    const missing = setup();
+    assert.equal(
+      (await missing.run(mode, { newEmail: "new@example.com", code: "123456" }))
+        .status,
+      403,
+    );
+    assert.ok(
+      !missing.calls.includes("send") && !missing.calls.includes("commit"),
+    );
+    const invalid = setup({
+      hasOwnershipProof: async (context, proof) => {
+        assert.equal(context.sessionKey, "session-1");
+        assert.equal(context.email, "old@example.com");
+        assert.equal(proof, "a".repeat(64));
+        return false;
+      },
+    });
+    assert.equal((await invalid.run(mode)).status, 403);
+    assert.ok(
+      !invalid.calls.includes("send") && !invalid.calls.includes("commit"),
+    );
+  }
+});
+
+test("step one sends only to the authenticated current address, never a supplied replacement or phone", async () => {
+  const { run, calls } = setup({
+    sendCurrentCode: async (context) => {
+      assert.deepEqual(context, {
+        userId: "signed-in-user",
+        email: "old@example.com",
+        sessionKey: "session-1",
+      });
+      return { cooldownSeconds: 60 };
+    },
+  });
+  const response = await run("current-request", {
+    email: "attacker@example.com",
+    phoneNumber: "+1234567890",
+  });
+  assert.equal(response.status, 200);
+  assert.deepEqual(calls, ["rate-limit"]);
+});
+
+test("only a correct current-email code issues proof and does not mutate the account", async () => {
+  const invalid = setup({ verifyCurrentCode: async () => null });
+  assert.equal(
+    (await invalid.run("current-confirm", { code: "123456" })).status,
+    400,
+  );
+  const valid = setup();
+  assert.deepEqual(
+    await (await valid.run("current-confirm", { code: "123456" })).json(),
+    { ownershipProof: "a".repeat(64) },
+  );
+  assert.deepEqual(valid.calls, ["rate-limit", "verify-current"]);
 });

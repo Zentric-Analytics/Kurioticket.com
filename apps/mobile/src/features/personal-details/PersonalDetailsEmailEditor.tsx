@@ -41,10 +41,12 @@ export function PersonalDetailsEmailEditor({
   const { theme } = useAppTheme();
   const { locale } = useMobileLocalization();
   const c = personalDetailsCopy(locale);
-  const [newEmail, setNewEmail] = useState(email);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [newEmail, setNewEmail] = useState("");
   const [requestedEmail, setRequestedEmail] = useState("");
+  const [ownershipProof, setOwnershipProof] = useState("");
   const [code, setCode] = useState("");
-  const [verifying, setVerifying] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [focused, setFocused] = useState(false);
   const [error, setError] = useState("");
@@ -53,29 +55,35 @@ export function PersonalDetailsEmailEditor({
   const [now, setNow] = useState(Date.now());
   const pending = useRef(false);
   const mounted = useRef(true);
+  const started = useRef(false);
   const remaining = Math.max(0, Math.ceil((retryAt - now) / 1000));
-  const changed = normalizedEmail(newEmail) !== normalizedEmail(email);
+  const isCodeStep = step !== 2;
   useEffect(
-    () => onDirtyChange(changed || verifying),
-    [changed, verifying, onDirtyChange],
+    () => onDirtyChange(step > 1 || code.length > 0),
+    [step, code, onDirtyChange],
   );
   useEffect(() => {
     mounted.current = true;
+    if (!started.current && !submissionDisabled) {
+      started.current = true;
+      void run("request");
+    }
     return () => {
       mounted.current = false;
     };
-  }, []);
+  }, [submissionDisabled]);
   useEffect(() => {
     if (!retryAt && !confirmRetryAt) return;
     const timer = setInterval(() => {
-      setNow(Date.now());
-      if (retryAt && Date.now() >= retryAt) setRetryAt(0);
-      if (confirmRetryAt && Date.now() >= confirmRetryAt) setConfirmRetryAt(0);
+      const time = Date.now();
+      setNow(time);
+      if (retryAt && time >= retryAt) setRetryAt(0);
+      if (confirmRetryAt && time >= confirmRetryAt) setConfirmRetryAt(0);
     }, 1000);
     return () => clearInterval(timer);
   }, [retryAt, confirmRetryAt]);
 
-  const run = async (action: "request" | "confirm") => {
+  async function run(action: "request" | "confirm") {
     if (
       submissionDisabled ||
       pending.current ||
@@ -83,35 +91,57 @@ export function PersonalDetailsEmailEditor({
       (action === "confirm" && confirmRetryAt > Date.now())
     )
       return;
-    const target = verifying ? requestedEmail : normalizedEmail(newEmail);
-    if (action === "request" && !canRequestEmailChange(target, email)) return;
+    const target = step === 3 ? requestedEmail : normalizedEmail(newEmail);
+    if (
+      action === "request" &&
+      step !== 1 &&
+      !canRequestEmailChange(target, email)
+    )
+      return;
     if (action === "confirm" && !/^\d{6}$/.test(code)) return;
     pending.current = true;
     setBusy(true);
     onBusyChange(true);
     setError("");
-    Keyboard.dismiss();
     try {
       if (action === "request") {
-        const result = await travelApi.requestEmailChange(target);
+        const result =
+          step === 1
+            ? await travelApi.requestCurrentEmailCode()
+            : await travelApi.requestEmailChange(target, ownershipProof);
         if (!mounted.current) return;
-        setRequestedEmail(target);
-        setVerifying(true);
-        setFocused(false);
+        if (step !== 1) {
+          setRequestedEmail(target);
+          setStep(3);
+        }
+        setCodeSent(true);
         setCode("");
         setNow(Date.now());
         setRetryAt(
           Date.now() + Math.max(30, result.cooldownSeconds || 30) * 1000,
         );
         AccessibilityInfo.announceForAccessibility(c.emailCodeSent);
+      } else if (step === 1) {
+        const result = await travelApi.verifyCurrentEmailCode(code);
+        if (!mounted.current) return;
+        setOwnershipProof(result.ownershipProof);
+        setStep(2);
+        setCode("");
+        setCodeSent(false);
+        setRetryAt(0);
+        setConfirmRetryAt(0);
+        AccessibilityInfo.announceForAccessibility(c.emailEnterNew);
       } else {
-        const result = await travelApi.confirmEmailChange(requestedEmail, code);
-        // The server is authoritative; a storage write failure must not invite
-        // another change after the address was already confirmed.
+        const result = await travelApi.confirmEmailChange(
+          requestedEmail,
+          code,
+          ownershipProof,
+        );
         await updateStoredSessionEmail(result.email, result.userId).catch(
           () => {},
         );
         if (!mounted.current) return;
+        Keyboard.dismiss();
         onSaved(result.email);
         AccessibilityInfo.announceForAccessibility(c.emailSaved);
       }
@@ -122,13 +152,26 @@ export function PersonalDetailsEmailEditor({
         return;
       }
       const apiError = failure instanceof TravelApiError ? failure : null;
+      if (apiError?.details?.code === "OWNERSHIP_REQUIRED") {
+        setStep(1);
+        setOwnershipProof("");
+        setCode("");
+        setCodeSent(false);
+        setRetryAt(0);
+        setConfirmRetryAt(0);
+        setError(c.emailRestart);
+        AccessibilityInfo.announceForAccessibility(c.emailRestart);
+        return;
+      }
       if (apiError?.status === 429) {
         const seconds = Number(apiError.details?.retryAfterSeconds);
         setNow(Date.now());
         (action === "confirm" ? setConfirmRetryAt : setRetryAt)(
           Date.now() +
-            (Number.isFinite(seconds) && seconds > 0 ? seconds : 30) * 1000,
+            (Number.isFinite(seconds) && seconds > 0 ? seconds : 60) * 1000,
         );
+        // A code from a prior opening can still be entered during resend cooldown.
+        if (step === 1 && action === "request") setCodeSent(true);
       }
       const message =
         c[emailChangeErrorKey(apiError?.status || 0, apiError?.details?.code)];
@@ -141,7 +184,8 @@ export function PersonalDetailsEmailEditor({
         onBusyChange(false);
       }
     }
-  };
+  }
+  const borderColor = theme.dark ? "#75839B" : "#818A99";
   return (
     <View style={s.layout}>
       <ScrollView
@@ -149,49 +193,119 @@ export function PersonalDetailsEmailEditor({
         keyboardDismissMode="on-drag"
         contentContainerStyle={s.content}
       >
-        <Text style={[s.help, { color: theme.muted }]}>
-          {verifying
-            ? `${c.emailCodeSent} ${requestedEmail}`
-            : c.emailExplanation}
+        <Text style={[s.step, { color: theme.muted }]}>
+          {c.emailStep.replace("{step}", String(step))}
         </Text>
-        <Text style={[s.label, { color: theme.muted }]}>
-          {verifying ? c.emailCode : c.email}
+        <Text
+          accessibilityRole="header"
+          style={[s.title, { color: theme.text }]}
+        >
+          {step === 1
+            ? c.emailVerifyCurrent
+            : step === 2
+              ? c.emailEnterNew
+              : c.emailVerifyNew}
         </Text>
-        <TextInput
-          key={verifying ? "code" : "email"}
-          accessibilityLabel={verifying ? c.emailCode : c.email}
-          value={verifying ? code : newEmail}
-          editable={!busy}
-          autoCapitalize="none"
-          autoCorrect={false}
-          autoComplete={verifying ? "one-time-code" : "email"}
-          textContentType={verifying ? "oneTimeCode" : "emailAddress"}
-          keyboardType={verifying ? "number-pad" : "email-address"}
-          maxLength={verifying ? 6 : 254}
-          returnKeyType="done"
-          onSubmitEditing={() => void run(verifying ? "confirm" : "request")}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          onChangeText={(value) => {
-            setError("");
-            if (verifying) setCode(value.replace(/\D/g, "").slice(0, 6));
-            else setNewEmail(value);
-          }}
-          style={[
-            s.input,
-            {
-              color: theme.text,
-              backgroundColor: theme.surface,
-              borderColor: focused
-                ? flowColors.blue
-                : theme.dark
-                  ? "#75839B"
-                  : "#818A99",
-            },
-          ]}
-        />
-        {verifying && (
+        <Text style={[s.help, { color: theme.text }]}>
+          {isCodeStep
+            ? codeSent
+              ? c.emailCodeSent + " " + (step === 1 ? email : requestedEmail)
+              : busy
+                ? c.emailSending
+                : c.emailVerifyCurrent
+            : c.emailNewHelp}
+        </Text>
+        {isCodeStep ? (
+          <View style={s.codeArea}>
+            <View pointerEvents="none" accessible={false} style={s.boxes}>
+              {Array.from({ length: 6 }, (_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    s.box,
+                    {
+                      backgroundColor: theme.surface,
+                      borderColor:
+                        focused && index === Math.min(code.length, 5)
+                          ? flowColors.blue
+                          : borderColor,
+                      borderWidth:
+                        focused && index === Math.min(code.length, 5) ? 2 : 1,
+                    },
+                  ]}
+                >
+                  <Text style={[s.digit, { color: theme.text }]}>
+                    {code[index] || ""}
+                  </Text>
+                </View>
+              ))}
+            </View>
+            <TextInput
+              key={String(step) + String(codeSent)}
+              autoFocus
+              accessibilityLabel={c.emailCode}
+              value={code}
+              editable={!busy}
+              autoComplete="one-time-code"
+              textContentType="oneTimeCode"
+              keyboardType="number-pad"
+              maxLength={6}
+              caretHidden
+              selectionColor="transparent"
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              onChangeText={(value) => {
+                setCode(value.replace(/\D/g, "").slice(0, 6));
+                setError("");
+              }}
+              onSubmitEditing={() => void run("confirm")}
+              style={s.codeInput}
+            />
+          </View>
+        ) : (
+          <>
+            <Text style={[s.label, { color: theme.text }]}>{c.email}</Text>
+            <TextInput
+              key="new-email"
+              autoFocus
+              accessibilityLabel={c.email}
+              value={newEmail}
+              placeholder={c.emailNewPlaceholder}
+              placeholderTextColor={theme.muted}
+              editable={!busy}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="email"
+              textContentType="emailAddress"
+              keyboardType="email-address"
+              maxLength={254}
+              returnKeyType="done"
+              onSubmitEditing={() => void run("request")}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              onChangeText={(value) => {
+                setNewEmail(value);
+                setError("");
+              }}
+              style={[
+                s.input,
+                {
+                  color: theme.text,
+                  backgroundColor: theme.surface,
+                  borderColor: focused ? flowColors.blue : borderColor,
+                },
+              ]}
+            />
+            <Text style={[s.note, { color: theme.muted }]}>
+              {c.emailNextHelp}
+            </Text>
+          </>
+        )}
+        {isCodeStep && (
           <View style={s.links}>
+            <Text style={[s.note, { color: theme.text }]}>
+              {c.emailDeliveryHelp}
+            </Text>
             <Pressable
               disabled={submissionDisabled || busy || remaining > 0}
               accessibilityRole="button"
@@ -208,22 +322,26 @@ export function PersonalDetailsEmailEditor({
                 ]}
               >
                 {remaining > 0
-                  ? `${c.emailResendIn} ${remaining}s`
-                  : c.emailResend}
+                  ? c.emailResendIn + " " + remaining + "s"
+                  : codeSent
+                    ? c.emailResend
+                    : c.emailSendCode}
               </Text>
             </Pressable>
-            <Pressable
-              disabled={busy}
-              accessibilityRole="button"
-              onPress={() => {
-                setVerifying(false);
-                setCode("");
-                setError("");
-              }}
-              style={s.linkHit}
-            >
-              <Text style={s.link}>{c.emailEditAddress}</Text>
-            </Pressable>
+            {step === 3 && (
+              <Pressable
+                disabled={busy}
+                accessibilityRole="button"
+                onPress={() => {
+                  setStep(2);
+                  setCode("");
+                  setError("");
+                }}
+                style={s.linkHit}
+              >
+                <Text style={s.link}>{c.emailEditAddress}</Text>
+              </Pressable>
+            )}
           </View>
         )}
       </ScrollView>
@@ -232,33 +350,39 @@ export function PersonalDetailsEmailEditor({
           <Text
             accessibilityRole="alert"
             accessibilityLiveRegion="polite"
-            style={[s.help, { color: theme.text, marginBottom: 12 }]}
+            style={[s.note, { color: theme.text, marginBottom: 12 }]}
           >
             {error}
           </Text>
         )}
         <PersonalDetailsSaveButton
-          label={verifying ? c.save : c.emailSendCode}
+          label={c.emailContinue}
           dirty={
-            verifying
-              ? /^\d{6}$/.test(code)
+            isCodeStep
+              ? codeSent && /^\d{6}$/.test(code)
               : canRequestEmailChange(newEmail, email)
           }
           saving={busy}
           blocked={
             submissionDisabled ||
-            (verifying ? confirmRetryAt > now : remaining > 0)
+            (isCodeStep ? confirmRetryAt > now : remaining > 0)
           }
-          onSave={() => void run(verifying ? "confirm" : "request")}
+          onSave={() => void run(isCodeStep ? "confirm" : "request")}
         />
       </View>
     </View>
   );
 }
-
 const s = StyleSheet.create({
   layout: { flex: 1 },
-  content: { padding: 20 },
+  content: { padding: 20, paddingTop: 28 },
+  step: { fontFamily: appFonts.medium, fontSize: 13, marginBottom: 16 },
+  title: {
+    fontFamily: appFonts.semibold,
+    fontSize: 22,
+    lineHeight: 29,
+    marginBottom: 20,
+  },
   help: {
     fontFamily: appFonts.regular,
     fontSize: 14,
@@ -275,8 +399,29 @@ const s = StyleSheet.create({
     fontFamily: appFonts.regular,
     fontSize: 16,
   },
-  links: { marginTop: 12, alignItems: "flex-start" },
-  linkHit: { minHeight: 44, justifyContent: "center" },
+  codeArea: { height: 52 },
+  boxes: { flexDirection: "row", gap: 10, height: 52 },
+  box: {
+    flex: 1,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  digit: { fontFamily: appFonts.medium, fontSize: 22 },
+  codeInput: {
+    ...StyleSheet.absoluteFillObject,
+    color: "transparent",
+    backgroundColor: "transparent",
+    fontSize: 1,
+  },
+  note: {
+    fontFamily: appFonts.regular,
+    fontSize: 13,
+    lineHeight: 21,
+    marginTop: 16,
+  },
+  links: { marginTop: 8 },
+  linkHit: { minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
   link: { fontFamily: appFonts.medium, fontSize: 14, color: flowColors.blue },
   footer: { padding: 20, paddingTop: 12 },
 });

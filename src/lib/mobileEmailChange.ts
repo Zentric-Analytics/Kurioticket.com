@@ -4,6 +4,13 @@ import { emailSchema } from "@/lib/validation";
 import { AuthRateLimitError } from "@/lib/auth-rate-limit";
 import { EmailVerificationCooldownError } from "@/services/emailVerificationService";
 
+export type EmailChangeMode =
+  "current-request" | "current-confirm" | "request" | "confirm";
+export type OwnershipContext = {
+  userId: string;
+  email: string;
+  sessionKey: string;
+};
 export type EmailChangeUser = {
   id: string;
   email: string | null;
@@ -11,14 +18,24 @@ export type EmailChangeUser = {
   status: string;
 };
 export type EmailChangeDependencies = {
-  authenticate: (request: Request) => Promise<{ id: string } | null>;
+  authenticate: (
+    request: Request,
+  ) => Promise<{ id: string; sessionKey: string } | null>;
   user: (id: string) => Promise<EmailChangeUser | null>;
   owner: (email: string) => Promise<{ id: string } | null>;
-  rateLimit: (
-    request: Request,
-    email: string,
-    mode: "request" | "confirm",
-  ) => void;
+  rateLimit: (request: Request, email: string, mode: EmailChangeMode) => void;
+  sendCurrentCode: (
+    context: OwnershipContext,
+    name: string | null,
+  ) => Promise<{ cooldownSeconds: number }>;
+  verifyCurrentCode: (
+    context: OwnershipContext,
+    code: string,
+  ) => Promise<string | null>;
+  hasOwnershipProof: (
+    context: OwnershipContext,
+    proof: string,
+  ) => Promise<boolean>;
   sendCode: (input: {
     userId: string;
     newEmail: string;
@@ -32,16 +49,27 @@ export type EmailChangeDependencies = {
   }) => Promise<"valid" | "invalid" | "expired">;
   commit: (input: {
     userId: string;
-    previousEmail: string | null;
+    previousEmail: string;
+    sessionKey: string;
+    ownershipProof: string;
     newEmail: string;
     code: string;
   }) => Promise<boolean>;
   notify: (user: EmailChangeUser, newEmail: string) => Promise<void>;
 };
 
+const proofSchema = z.string().regex(/^[a-f0-9]{64}$/);
 const schemas = {
-  request: z.object({ newEmail: emailSchema }),
+  "current-request": z.object({}),
+  "current-confirm": z.object({
+    code: z
+      .string()
+      .trim()
+      .regex(/^\d{6}$/),
+  }),
+  request: z.object({ newEmail: emailSchema, ownershipProof: proofSchema }),
   confirm: z.object({
+    ownershipProof: proofSchema,
     newEmail: emailSchema,
     code: z
       .string()
@@ -68,7 +96,7 @@ function failure(
 }
 
 export function createMobileEmailChangeHandler(
-  mode: "request" | "confirm",
+  mode: EmailChangeMode,
   dependencies: EmailChangeDependencies,
 ) {
   return async (request: Request) => {
@@ -80,6 +108,16 @@ export function createMobileEmailChangeHandler(
         await request.json().catch(() => null),
       );
       if (!parsed.success) {
+        if (
+          parsed.error.issues.some((issue) =>
+            issue.path.includes("ownershipProof"),
+          )
+        )
+          return failure(
+            403,
+            "OWNERSHIP_REQUIRED",
+            "Verify your current email address first.",
+          );
         const codeInvalid = parsed.error.issues.some((issue) =>
           issue.path.includes("code"),
         );
@@ -94,8 +132,41 @@ export function createMobileEmailChangeHandler(
       const user = await dependencies.user(session.id);
       if (!user || user.status !== "ACTIVE")
         return failure(401, "SESSION_EXPIRED", "Authentication required.");
-      const { newEmail } = parsed.data;
-      dependencies.rateLimit(request, user.email || newEmail, mode);
+      if (!user.email)
+        return failure(
+          403,
+          "OWNERSHIP_REQUIRED",
+          "Contact Support to recover access to your account.",
+        );
+      const context = {
+        userId: user.id,
+        email: user.email,
+        sessionKey: session.sessionKey,
+      };
+      dependencies.rateLimit(request, user.email, mode);
+      if (mode === "current-request")
+        return NextResponse.json(
+          await dependencies.sendCurrentCode(context, user.name),
+        );
+      if (mode === "current-confirm") {
+        const { code } = parsed.data as z.infer<
+          (typeof schemas)["current-confirm"]
+        >;
+        const ownershipProof = await dependencies.verifyCurrentCode(
+          context,
+          code,
+        );
+        return ownershipProof
+          ? NextResponse.json({ ownershipProof })
+          : failure(
+              400,
+              "INVALID_CODE",
+              "The verification code is invalid or expired.",
+            );
+      }
+      const { newEmail, ownershipProof } = parsed.data as z.infer<
+        typeof schemas.request
+      >;
       if (user.email?.toLowerCase().trim() === newEmail) {
         // A response can be lost after a successful confirmation. Retrying the
         // authenticated user's current address requires no second mutation.
@@ -107,6 +178,12 @@ export function createMobileEmailChangeHandler(
           "Enter a different email address.",
         );
       }
+      if (!(await dependencies.hasOwnershipProof(context, ownershipProof)))
+        return failure(
+          403,
+          "OWNERSHIP_REQUIRED",
+          "Verify your current email address again.",
+        );
       const owner = await dependencies.owner(newEmail);
       if (owner && owner.id !== user.id)
         return failure(
@@ -138,6 +215,8 @@ export function createMobileEmailChangeHandler(
       const committed = await dependencies.commit({
         userId: user.id,
         previousEmail: user.email,
+        sessionKey: session.sessionKey,
+        ownershipProof,
         newEmail,
         code,
       });

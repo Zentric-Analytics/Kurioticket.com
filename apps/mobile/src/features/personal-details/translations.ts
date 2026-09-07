@@ -6,6 +6,19 @@ const en = {
   firstName: "First name",
   lastName: "Last name",
   email: "Email address",
+  emailStep: "Step {step} of 3",
+  emailVerifyCurrent: "Verify your current email address",
+  emailEnterNew: "Enter your new email address",
+  emailVerifyNew: "Verify your new email address",
+  emailNewPlaceholder: "Enter your new email",
+  emailNewHelp: "Enter the email address you want to use for your account.",
+  emailNextHelp: "You’ll verify your new email address in the next step.",
+  emailContinue: "Continue",
+  emailSending: "Sending your verification code…",
+  emailDeliveryHelp:
+    "Didn’t get an email? Check your spam folder or request another code.",
+  emailRestart:
+    "Your verification has expired. Verify your current email again to continue.",
   emailExplanation:
     "We’ll send a verification code to confirm your new email address.",
   emailSendCode: "Send verification code",
@@ -81,6 +94,19 @@ const es: typeof en = {
   firstName: "Nombre",
   lastName: "Apellidos",
   email: "Correo electrónico",
+  emailStep: "Paso {step} de 3",
+  emailVerifyCurrent: "Verifica tu correo electrónico actual",
+  emailEnterNew: "Introduce tu nuevo correo electrónico",
+  emailVerifyNew: "Verifica tu nuevo correo electrónico",
+  emailNewPlaceholder: "Introduce tu nuevo correo",
+  emailNewHelp: "Introduce el correo que quieres usar para tu cuenta.",
+  emailNextHelp: "Verificarás tu nuevo correo en el siguiente paso.",
+  emailContinue: "Continuar",
+  emailSending: "Enviando tu código de verificación…",
+  emailDeliveryHelp:
+    "¿No recibiste el correo? Revisa tu carpeta de spam o solicita otro código.",
+  emailRestart:
+    "La verificación ha caducado. Verifica tu correo actual para continuar.",
   emailExplanation:
     "Te enviaremos un código de verificación para confirmar tu nuevo correo electrónico.",
   emailSendCode: "Enviar código de verificación",

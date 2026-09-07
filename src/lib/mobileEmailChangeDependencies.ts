@@ -1,5 +1,11 @@
 import { createHash } from "node:crypto";
-import { getMobileSession } from "@/lib/mobile-auth";
+import {
+  sendCurrentEmailCode,
+  verifyCurrentEmailCode,
+  hasEmailOwnershipProof,
+  claimEmailOwnershipProof,
+} from "@/services/mobileEmailOwnershipService";
+import { getMobileSession, mobileSessionFingerprint } from "@/lib/mobile-auth";
 import { getPrisma } from "@/lib/prisma";
 import { checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import {
@@ -16,7 +22,14 @@ class StaleEmailChange extends Error {}
 export const mobileEmailChangeDependencies: EmailChangeDependencies = {
   authenticate: async (request) => {
     const session = await getMobileSession(request);
-    return session?.user.status === "ACTIVE" ? { id: session.user.id } : null;
+    return session?.user.status === "ACTIVE"
+      ? {
+          id: session.user.id,
+          sessionKey: mobileSessionFingerprint(
+            request.headers.get("authorization") || "",
+          ),
+        }
+      : null;
   },
   user: (id) =>
     getPrisma().user.findUnique({
@@ -30,14 +43,29 @@ export const mobileEmailChangeDependencies: EmailChangeDependencies = {
       request,
       email,
       action: `account-email-change-${mode}`,
-      limit: mode === "request" ? 30 : 10,
+      limit: mode.endsWith("request") ? 30 : 10,
       windowMs: 15 * 60_000,
     }),
+  sendCurrentCode: sendCurrentEmailCode,
+  verifyCurrentCode: verifyCurrentEmailCode,
+  hasOwnershipProof: hasEmailOwnershipProof,
   sendCode: sendAccountEmailChangeCode,
   verifyCode: verifyAccountEmailChangeCode,
   commit: async (input) => {
     try {
       return await getPrisma().$transaction(async (tx) => {
+        if (
+          !(await claimEmailOwnershipProof(
+            tx,
+            {
+              userId: input.userId,
+              email: input.previousEmail,
+              sessionKey: input.sessionKey,
+            },
+            input.ownershipProof,
+          ))
+        )
+          throw new StaleEmailChange();
         if (!(await claimAccountEmailChangeCode(tx, input)))
           throw new StaleEmailChange();
         const changed = await tx.user.updateMany({
