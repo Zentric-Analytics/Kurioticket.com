@@ -27,7 +27,7 @@ test("results edit modal owns presentation without a post-dismiss business callb
   assert.match(modal, /keyboardShouldPersistTaps="handled"/);
   assert.match(modal, /onClose: \(\) => void/);
   assert.match(modal, /onSubmit: \(params: Record<string, string \| undefined>\) => void/);
-  assert.match(modal, /<FlightSearchPanel embedded params=\{presentedParams\} onValidatedSubmit=\{onSubmit\} editAppearance \/>/);
+  assert.match(modal, /<FlightSearchPanel embedded params=\{presentedParams\} onValidatedSubmit=\{onSubmit\} editAppearance resultsModalAppearance \/>/);
   assert.doesNotMatch(modal, /submitNavigation="replace"|onBeforeNavigate=\{onClose\}/);
   assert.doesNotMatch(modal, /router|flightSearchParams|travelApi|onAfterClose|wasRendered|useEffect|useRef/);
   assert.doesNotMatch(modal, /setTimeout|SEARCH_PICKER_CLOSE_DURATION_MS/);
@@ -38,6 +38,51 @@ test("results edit modal owns presentation without a post-dismiss business callb
   assert.match(modal, /<SafeAreaView[^>]*style=\{styles.backdrop\}>[\s\S]*StyleSheet.absoluteFill, styles.scrim/);
   assert.match(modal, /sheet: \{ maxHeight: "88%", marginHorizontal: FLIGHT_QUICK_SHEET_HORIZONTAL_INSET, borderTopLeftRadius: 24, borderTopRightRadius: 24/);
   assert.match(modal, /content: \{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 20 \}/);
+});
+
+test("only the results modal opts into theme-aware structured flight cards", () => {
+  const modal = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
+  const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
+  const dedicatedEdit = readFileSync("src/features/flow/EditFlightSearchScreen.tsx", "utf8");
+  const homepage = readFileSync("src/features/flow/HomeFlowScreen.tsx", "utf8");
+
+  assert.equal(modal.match(/resultsModalAppearance/g)?.length, 1);
+  assert.doesNotMatch(dedicatedEdit, /resultsModalAppearance/);
+  assert.doesNotMatch(homepage, /resultsModalAppearance/);
+  assert.match(modal, /style=\{\{ backgroundColor: ft\.colors\.page \}\}/);
+  assert.match(panel, /resultsModalCard:\{borderWidth:1,borderRadius:13,overflow:"hidden",marginTop:10\}/);
+  assert.match(panel, /backgroundColor: ft\.colors\.card, borderColor: ft\.colors\.border/);
+});
+
+test("results modal cards preserve the flight form hierarchy and controls", () => {
+  const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
+  const segments = panel.indexOf('<Segments<FlightForm["tripType"]>');
+  const route = panel.indexOf('testID={resultsModalAppearance ? "results-modal-route-card"');
+  const dates = panel.indexOf('testID={resultsModalAppearance ? "results-modal-dates-card"');
+  const travelers = panel.indexOf('testID={resultsModalAppearance ? "results-modal-travelers-card"');
+  const button = panel.indexOf('<PrimaryButton label={submitLabel}', travelers);
+
+  assert.ok(segments >= 0 && segments < route && route < dates && dates < travelers && travelers < button);
+  const routeCard = panel.slice(route, dates);
+  assert.match(routeCard, /label="Origin"[\s\S]*label="Destination"[\s\S]*accessibilityLabel="Swap origin and destination"/);
+  assert.match(routeCard, /modalCardDivider=\{resultsModalAppearance\}/);
+  assert.match(panel.slice(dates, travelers), /label="Travel dates"/);
+  assert.match(panel.slice(travelers, button), /label="Travelers & Cabin Class"/);
+  assert.match(panel, /\{notice \? <UnavailableNotice text=\{notice\}\/> : null\}\{showSubmit \? <View style=\{styles\.button\}><PrimaryButton label=\{submitLabel\}/);
+});
+
+test("results modal appearance leaves multi-city and compact field geometry unchanged", () => {
+  const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
+  const primitives = readFileSync("src/features/flow/FlowPrimitives.tsx", "utf8");
+  const multiCityStart = panel.indexOf("function MultiCityEditor");
+  const multiCityEnd = panel.indexOf("function ErrorText", multiCityStart);
+  const compactStyles = primitives.slice(primitives.indexOf("compactField:"), primitives.indexOf("overlay:"));
+
+  assert.doesNotMatch(panel.slice(multiCityStart, multiCityEnd), /resultsModalAppearance|resultsModalCard/);
+  assert.match(compactStyles, /compactField: \{ minHeight: 66, paddingHorizontal: 12, paddingVertical: 9, borderBottomWidth: 1/);
+  assert.match(compactStyles, /compactLabel: \{ fontSize: 10, fontWeight: "800", letterSpacing: 0\.5 \}/);
+  assert.match(compactStyles, /compactValueRow: \{ flexDirection: "row", alignItems: "center", gap: 9 \}/);
+  assert.match(compactStyles, /compactValue: \{ fontSize: 15, fontWeight: "600", flexShrink: 1 \}/);
 });
 
 test("Flight Edit Search shares the Flight quick-sheet outer inset without changing content padding", () => {

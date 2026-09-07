@@ -212,6 +212,7 @@ export function CompactSearchField({
   valueNumberOfLines = 1,
   metaNumberOfLines,
   appearance = "default",
+  modalCardDivider = false,
 }: {
   label: string;
   value: string;
@@ -222,7 +223,8 @@ export function CompactSearchField({
   trailing?: ReactNode;
   valueNumberOfLines?: number;
   metaNumberOfLines?: number;
-  appearance?: "default" | "resultsEdit";
+  appearance?: "default" | "resultsEdit" | "resultsModalCard";
+  modalCardDivider?: boolean;
 }) {
   const ft = useFlowTheme();
   return (
@@ -235,6 +237,7 @@ export function CompactSearchField({
         appearance === "resultsEdit" && styles.resultsEditCompactField,
         { backgroundColor: ft.colors.input, borderBottomColor: ft.colors.border },
         appearance === "resultsEdit" && { backgroundColor: "transparent" },
+        appearance === "resultsModalCard" && { backgroundColor: "transparent", borderBottomWidth: modalCardDivider ? 1 : 0 },
         pressed && ft.styles.pressed,
       ]}
     >
