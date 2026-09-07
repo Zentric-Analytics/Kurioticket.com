@@ -69,6 +69,10 @@ test("Cars use one truthful compact price alert before the result count", () => 
   assert.match(carAlert, /<Bell/); assert.match(carAlert, /<Switch/); assert.match(carAlert, /Track rental car prices/);
   assert.doesNotMatch(carAlert, /numberOfLines=\{1\}/);
   assert.match(carAlert, /accessibilityLabel="Track rental car prices"/);
+  assert.match(carAlert, /backgroundColor: theme\.priceAlertSurface, borderColor: theme\.priceAlertBorder/);
+  assert.match(carAlert, /<Bell[^>]*color=\{theme\.priceAlertAccent\}/);
+  assert.match(carAlert, /<ActivityIndicator[^>]*color=\{theme\.priceAlertAccent\}/);
+  assert.match(carAlert, /styles\.title, \{ color: theme\.textPrimary \}/);
   assert.match(carAlert, /switch: \{ minWidth: 51, minHeight: 44, flexShrink: 0/);
   assert.match(carAlert, /pending \|\| loading \? <ActivityIndicator[\s\S]*?<Switch/);
   assert.match(carAlert, /travelApi\.priceAlerts\(\)/); assert.match(carAlert, /updatePriceAlertStatus/); assert.match(carAlert, /createPriceAlert/);
