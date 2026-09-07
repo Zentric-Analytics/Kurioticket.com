@@ -22,8 +22,18 @@ export function paginateHotelResults<T>(results: readonly T[], page: number): T[
 export function buildHotelResultsPaginationItems(
   currentPage: number,
   totalPages: number,
+  compact = false,
 ): HotelPaginationItem[] {
   if (totalPages <= 0) return [];
+  if (compact) {
+    const windowSize = Math.min(3, totalPages);
+    const page = clampHotelResultsPage(currentPage, totalPages);
+    const start = Math.min(
+      Math.max(1, page - Math.floor(windowSize / 2)),
+      totalPages - windowSize + 1,
+    );
+    return Array.from({ length: windowSize }, (_, index) => start + index);
+  }
   if (totalPages <= 7) {
     return Array.from({ length: totalPages }, (_, index) => index + 1);
   }

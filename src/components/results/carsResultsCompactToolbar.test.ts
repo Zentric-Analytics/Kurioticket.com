@@ -33,10 +33,10 @@ test("source-contract: phone and tablet filter launchers remain responsive", () 
     source.indexOf("export function CarsResultsExperience"),
     source.indexOf("function SearchInputCell"),
   );
-  assert.match(source, /backdrop-blur[^"\n]*sm:hidden/);
+  assert.match(source, /fixed inset-x-0 top-0[^"\n]*sm:hidden/);
   assert.match(
     mobileControls,
-    /onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget\)\}/,
+    /onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)\}/,
   );
 
   const resultsToolbar = source.slice(
@@ -52,7 +52,7 @@ test("source-contract: phone and tablet filter launchers remain responsive", () 
   assert.equal(tabletFilterClass.split(" ").includes("hidden"), false);
   assert.match(
     resultsToolbar,
-    /onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget\)\}/,
+    /onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)\}/,
   );
 });
 
@@ -84,11 +84,13 @@ test("source-contract: Cars result count and Sort share a shrink-safe row", () =
       "<div",
       resultsToolbar.indexOf("data-cars-results-summary-row"),
     ),
-    resultsToolbar.length,
+    resultsToolbar.indexOf("{appliedCarFilters.length"),
   );
 
   assert.match(resultsToolbar, /flex w-full min-w-0 flex-col items-start/);
-  assert.doesNotMatch(resultsToolbar, /flex-wrap/);
+  const toolbarClass = resultsToolbar.match(/className="([^"]+)"\s+data-cars-results-toolbar/)?.[1];
+  assert.ok(toolbarClass);
+  assert.equal(toolbarClass.split(" ").includes("flex-wrap"), false);
   assert.match(
     summaryRow,
     /flex w-full min-w-0 flex-nowrap items-center justify-between gap-2/,
@@ -96,7 +98,7 @@ test("source-contract: Cars result count and Sort share a shrink-safe row", () =
 
   assert.match(
     summaryRow,
-    /<h2[^>]*className="[^"]*min-w-0[^"]*flex-1[^"]*truncate[^"]*whitespace-nowrap/,
+    /<div className="min-w-0 flex-1">[\s\S]*<h2[^>]*className="[^"]*truncate[^"]*whitespace-nowrap/,
   );
   assert.doesNotMatch(summaryRow, /sr-only/);
   assert.match(resultsToolbar, /visibleResults\.length === 1/);
@@ -138,11 +140,11 @@ test("source-contract: mobile Filter precedes the final count and Sort row", () 
   assert.ok(summaryStart < resultsToolbar.indexOf("ref={carsSortRef}"));
   assert.match(
     resultsToolbar.slice(filterStart, summaryStart),
-    /lg:hidden[\s\S]*onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget\)\}/,
+    /lg:hidden[\s\S]*onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)\}/,
   );
   assert.match(
     resultsToolbar.slice(summaryStart),
-    /data-cars-results-summary-row[\s\S]*<h2[\s\S]*ref=\{carsSortRef\}[\s\S]*<\/div>\s*<\/div>\s*$/,
+    /data-cars-results-summary-row[\s\S]*<h2[\s\S]*ref=\{carsSortRef\}/,
   );
 });
 
