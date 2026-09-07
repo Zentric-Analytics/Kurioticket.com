@@ -28,14 +28,12 @@ export function PersonalDetailsEmailEditor({
   onSaved,
   onDirtyChange,
   onBusyChange,
-  onCancel,
   onSessionExpired,
 }: {
   email: string;
   onSaved: (email: string) => void;
   onDirtyChange: (dirty: boolean) => void;
   onBusyChange: (busy: boolean) => void;
-  onCancel: () => void;
   onSessionExpired: () => void;
 }) {
   const { theme } = useAppTheme();
@@ -253,15 +251,12 @@ export function PersonalDetailsEmailEditor({
       {error}
     </Text>
   ) : null;
-  const cancelAction = (
-    <Pressable accessibilityRole="button" accessibilityLabel={c.cancel} accessibilityState={{ disabled: busy }} disabled={busy} onPress={onCancel} style={({ pressed }) => [s.cancelButton, { borderColor: theme.border, opacity: pressed || busy ? 0.6 : 1 }]}>
-      <Text style={[s.cancelLabel, { color: theme.text }]}>{c.cancel}</Text>
-    </Pressable>
-  );
   if (step === 1 && currentEntry) {
     const sendDisabled = busy || remaining > 0 || !currentEmail.trim();
     return (
       <View style={[s.layout, { borderTopColor: theme.border }]}>
+        <Text accessibilityRole="header" style={[s.title, { color: theme.text }]}>{c.changeEmail}</Text>
+        <Text style={[s.help, { color: theme.muted }]}>{c.emailCurrentHelp}</Text>
         <Text style={[s.label, { color: theme.muted }]}>{c.emailCurrentLabel}</Text>
         <View style={[s.verificationField, { backgroundColor: theme.surface, borderColor: focused ? flowColors.blue : borderColor }]}>
           <TextInput autoFocus accessibilityLabel={c.emailCurrentLabel} value={currentEmail} editable={!busy} autoCapitalize="none" autoCorrect={false} autoComplete="email" textContentType="emailAddress" keyboardType="email-address" returnKeyType="done" maxLength={254} onSubmitEditing={() => void run("request")} onChangeText={value => { setCurrentEmail(value); setError(""); }} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} style={[s.inlineEmailInput, { color: theme.text }]} />
@@ -271,7 +266,6 @@ export function PersonalDetailsEmailEditor({
           <View style={s.primaryAction}>
             <PersonalDetailsSaveButton label={remaining > 0 ? c.emailResendIn + " " + remaining + "s" : c.emailSendInitial} dirty={!sendDisabled} saving={busy} blocked={remaining > 0} onSave={() => void run("request")} />
           </View>
-          {cancelAction}
         </View>
       </View>
     );
@@ -349,7 +343,8 @@ export function PersonalDetailsEmailEditor({
           </>
         ) : (
           <>
-            <Text style={[s.label, { color: theme.muted }]}>{c.emailNewLabel}</Text>
+            <Text accessibilityRole="header" style={[s.title, { color: theme.text }]}>{c.emailEnterNew}</Text>
+            <Text style={[s.help, { color: theme.muted }]}>{c.emailNewHelp}</Text>
             <TextInput
               key="new-email"
               autoFocus
@@ -423,27 +418,26 @@ export function PersonalDetailsEmailEditor({
           onSave={() => void run(isCodeStep ? "confirm" : "request")}
         />
         </View>
-        {cancelAction}
       </View>
     </View>
   );
 }
 const s = StyleSheet.create({
-  layout: { marginTop: 16, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 16, paddingBottom: 4 },
+  layout: { flexGrow: 1, paddingBottom: 4 },
   content: { gap: 0 },
   inlineEmailInput: { flex: 1, minWidth: 0, fontFamily: appFonts.regular, fontSize: 16, letterSpacing: 0, paddingVertical: 12, paddingRight: 8 },
   compactHelp: { fontFamily: appFonts.regular, fontSize: 13, lineHeight: 20, marginBottom: 10 },
   title: {
     fontFamily: appFonts.semibold,
-    fontSize: 16,
-    lineHeight: 23,
-    marginBottom: 8,
+    fontSize: 22,
+    lineHeight: 29,
+    marginBottom: 12,
   },
   help: {
     fontFamily: appFonts.regular,
     fontSize: 14,
     lineHeight: 22,
-    marginBottom: 16,
+    marginBottom: 24,
   },
   label: { fontFamily: appFonts.medium, fontSize: 13, marginBottom: 8 },
   input: {
@@ -500,8 +494,6 @@ const s = StyleSheet.create({
   links: { marginTop: 8 },
   linkHit: { minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
   link: { fontFamily: appFonts.medium, fontSize: 14, color: flowColors.blue },
-  footer: { paddingTop: 16, flexDirection: "row", alignItems: "stretch", gap: 12 },
+  footer: { marginTop: "auto", paddingTop: 24, flexDirection: "row", alignItems: "stretch", gap: 12 },
   primaryAction: { flex: 1 },
-  cancelButton: { minHeight: 50, borderWidth: 1, borderRadius: 10, paddingHorizontal: 18, justifyContent: "center", alignItems: "center" },
-  cancelLabel: { fontFamily: appFonts.semibold, fontSize: 15, lineHeight: 20 },
 });

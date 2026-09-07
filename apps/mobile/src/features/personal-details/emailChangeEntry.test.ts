@@ -19,12 +19,12 @@ test("explicit Send code validates current email before the request", () => {
  assert.match(editor, /if \(step === 1\) setCurrentEntry\(false\)/);
 });
 
-test("email verification expands in the form with a right-aligned app-font action", () => {
+test("email verification opens a separate page from the pen inside the email field", () => {
  const screen = readFileSync("src/features/personal-details/PersonalDetailsScreen.tsx", "utf8");
- assert.doesNotMatch(screen, /<Modal visible=\{emailOpen\}/);
+ assert.match(screen, /<Modal visible=\{emailOpen\} animationType="slide" presentationStyle="fullScreen" onRequestClose=\{closeEmail\}/);
  assert.match(screen, /accessibilityState=\{\{ expanded: emailOpen, disabled: emailBusy \}\}/);
- assert.match(screen, /changeEmailHit: \{[^}]*alignSelf: "flex-end"/);
- assert.match(screen, /changeEmailText: \{[^}]*fontFamily: appFonts.semibold/);
+ assert.match(screen, /emailBox: \{[^}]*flexDirection: "row"/);
+ assert.match(screen, /<Pencil size=\{18\}/);
  assert.doesNotMatch(editor, /ScrollView|layout: \{ flex: 1/);
 });
 
@@ -44,4 +44,35 @@ test("profile Save preserves an idle unfinished email change", () => {
  assert.match(screen, /disabled=\{!dirty \|\| saving \|\| emailBusy \|\| emailDirty\}/);
  assert.match(screen, /disabled: !dirty \|\| saving \|\| emailBusy \|\| emailDirty/);
  assert.match(screen, /\(!dirty \|\| saving \|\| emailBusy \|\| emailDirty\) && s.disabled/);
+});
+
+
+test("email page uses a full-width primary action and the header back control", () => {
+ const screen = readFileSync("src/features/personal-details/PersonalDetailsScreen.tsx", "utf8");
+ assert.doesNotMatch(editor, /cancelAction|cancelButton|onCancel/);
+ assert.match(editor, /primaryAction: \{ flex: 1 \}/);
+ assert.match(screen, /onPress=\{closeEmail\} disabled=\{emailBusy\}/);
+});
+
+
+test("email primary actions sit at the bottom with scrollable keyboard-aware content", () => {
+ const screen = readFileSync("src/features/personal-details/PersonalDetailsScreen.tsx", "utf8");
+ assert.match(screen, /emailScroll: \{ flexGrow: 1, padding: 16, paddingBottom: 16 \}/);
+ assert.match(editor, /layout: \{ flexGrow: 1/);
+ assert.match(editor, /footer: \{ marginTop: "auto", paddingTop: 24/);
+ const page = screen.slice(screen.indexOf("<Modal visible={emailOpen}"), screen.indexOf("{success ? ("));
+ assert.match(page, /behavior=\{Platform.OS === "ios" \? "padding" : "height"\}/);
+ assert.match(page, /contentContainerStyle=\{s.emailScroll\}/);
+});
+
+
+test("new email entry shares the introduction styles and interactive field behavior", () => {
+ assert.match(editor, /style=\{\[s.title, \{ color: theme.text \}\]\}>\{c.emailEnterNew\}/);
+ assert.match(editor, /style=\{\[s.help, \{ color: theme.muted \}\]\}>\{c.emailNewHelp\}/);
+ const field = editor.slice(editor.indexOf('key="new-email"'), editor.indexOf('{isCodeStep && ('));
+ assert.match(field, /autoFocus/);
+ assert.match(field, /onSubmitEditing=\{\(\) => void run\("request"\)\}/);
+ assert.match(field, /setNewEmail\(value\);\s*setError\(""\)/);
+ assert.match(field, /borderColor: focused \? flowColors.blue : borderColor/);
+ assert.doesNotMatch(editor, /\{c.emailNextHelp\}/);
 });
