@@ -502,7 +502,6 @@ type DetailKey =
 
 export function PersonalDetailsScreen() {
   const { theme } = useAppTheme();
-  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { locale } = useMobileLocalization();
   const c = personalDetailsCopy(locale);
@@ -517,8 +516,7 @@ export function PersonalDetailsScreen() {
   const postalRef = useRef<TextInput>(null);
   const mounted = useRef(true),
     submitting = useRef(false),
-    selectorVisibleRef = useRef(false),
-    successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    selectorVisibleRef = useRef(false);
   const [saved, setSaved] = useState<MobileProfile | null>(null),
     [draft, setDraft] = useState<MobileProfile>({}),
     [dateDraft, setDateDraft] = useState<DateDraft>(() => dateDraftFromValue()),
@@ -527,7 +525,6 @@ export function PersonalDetailsScreen() {
     [loading, setLoading] = useState(true),
     [saving, setSaving] = useState(false),
     [error, setError] = useState(""),
-    [success, setSuccess] = useState(""),
     [selector, setSelector] = useState<"phone" | "addressCountry" | null>(null),
     [selectorVisible, setSelectorVisible] = useState(false);
   const quickDetail: QuickDetail | null =
@@ -538,27 +535,6 @@ export function PersonalDetailsScreen() {
       ? activeDetail
       : null;
   const pageEditing = editing && !quickDetail;
-  const dismissSuccess = useCallback(() => {
-    if (successTimer.current) {
-      clearTimeout(successTimer.current);
-      successTimer.current = null;
-    }
-    setSuccess("");
-  }, []);
-  const showSuccess = useCallback((message: string) => {
-    if (successTimer.current) clearTimeout(successTimer.current);
-    setSuccess(message);
-    successTimer.current = setTimeout(() => {
-      successTimer.current = null;
-      setSuccess("");
-    }, 1500);
-  }, []);
-  useEffect(
-    () => () => {
-      if (successTimer.current) clearTimeout(successTimer.current);
-    },
-    [],
-  );
   const openSelector = (type: Exclude<typeof selector, null>) => {
     selectorVisibleRef.current = true;
     setSelector(type);
@@ -728,7 +704,6 @@ export function PersonalDetailsScreen() {
     Keyboard.dismiss();
     setSaving(true);
     setError("");
-    dismissSuccess();
     try {
       const phone = serializePhone(
         draft.phoneCountryCode || "",
@@ -744,7 +719,6 @@ export function PersonalDetailsScreen() {
       await updateStoredSessionName(authoritative.fullName || null);
       Keyboard.dismiss();
       setEditing(false);
-      showSuccess(c.saveSuccess);
       AccessibilityInfo.announceForAccessibility(c.saveSuccess);
     } catch (e) {
       const expired =
@@ -782,7 +756,6 @@ export function PersonalDetailsScreen() {
     setDraft(saved);
     setDateDraft(dateDraftFromValue(saved.dateOfBirth));
     setError("");
-    dismissSuccess();
     setEditing(true);
   };
   const openWeb = async () => {
@@ -1135,40 +1108,6 @@ export function PersonalDetailsScreen() {
           ) : null}
         </KeyboardAvoidingView>
       )}
-      {success ? (
-        <View
-          accessible={false}
-          pointerEvents="none"
-          testID="personal-details-success-toast"
-          style={[
-            s.toastPosition,
-            {
-              bottom: insets.bottom + 16,
-            },
-          ]}
-        >
-          <View
-            style={[
-              s.toast,
-              { backgroundColor: theme.dark ? "#163B2A" : "#E9F8EF" },
-            ]}
-          >
-            <FlowIcon
-              name="check"
-              color={theme.dark ? "#86E3A7" : "#16803C"}
-              size={18}
-            />
-            <Text
-              style={[
-                s.toastText,
-                { color: theme.dark ? "#C6F6D5" : "#126B34" },
-              ]}
-            >
-              {success}
-            </Text>
-          </View>
-        </View>
-      ) : null}
       {quickDetail && (
         <PersonalDetailsQuickEditor
           detail={quickDetail}
@@ -1333,23 +1272,6 @@ const s = StyleSheet.create({
     fontFamily: appFonts.semibold,
     marginBottom: 12,
   },
-  toastPosition: {
-    position: "absolute",
-    left: 16,
-    right: 16,
-    alignItems: "center",
-    zIndex: 10,
-  },
-  toast: {
-    maxWidth: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-  },
-  toastText: { fontSize: 14, lineHeight: 20, fontFamily: appFonts.semibold },
   countryModalSafe: { flex: 1 },
   countryModalLayout: { flex: 1 },
   countrySearchArea: { paddingHorizontal: 16, paddingVertical: 12 },

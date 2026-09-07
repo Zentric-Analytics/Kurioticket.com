@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
@@ -35,11 +35,19 @@ export function PersonalDetailsSaveButton({
       <Text
         style={[
           s.label,
+          saving && { opacity: 0 },
           { color: !dirty && !saving ? theme.muted : "#FFFFFF" },
         ]}
       >
-        {saving ? c.saving : c.save}
+        {c.save}
       </Text>
+      {saving && (
+        <ActivityIndicator
+          accessible={false}
+          color="#FFFFFF"
+          style={StyleSheet.absoluteFill}
+        />
+      )}
     </Pressable>
   );
 }
