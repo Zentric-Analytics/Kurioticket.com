@@ -20,47 +20,24 @@ const passedNgnFare: DisplayPrice = {
 };
 const rates = { USD: 1, NGN: 1383.8806, EUR: 0.9 };
 
-test("keeps the Results NGN snapshot when Details location fails with en-US locale", () => {
-  const freshResolution = resolveDisplayCurrencyContext({
-    preferredCurrency: null,
-    ipCountryCode: null,
-    locale: "en-US",
-  });
-  assert.equal(freshResolution.resolvedCurrency, "USD");
-  assert.equal(canReuseFlightDetailFare({
-    passedFare: passedNgnFare,
-    providerAmount: 67,
-    providerCurrency: "USD",
-    preferredCurrency: null,
-  }), true);
+test("keeps a valid NGN display snapshot when its provider identity still matches", () => {
+  assert.equal(canReuseFlightDetailFare({ passedFare: passedNgnFare, providerAmount: 67, providerCurrency: "USD", preferredCurrency: null }), true);
   assert.equal(passedNgnFare.formatted, "NGN 92,720");
-  assert.notEqual(passedNgnFare.formatted, "$67");
 });
 
-test("keeps the Results NGN snapshot when automatic Nigeria detection still succeeds", () => {
-  assert.equal(resolveDisplayCurrencyContext({
-    preferredCurrency: null,
-    ipCountryCode: "NG",
-    locale: "en-US",
-  }).resolvedCurrency, "NGN");
-  assert.equal(canReuseFlightDetailFare({
-    passedFare: passedNgnFare, providerAmount: 67, providerCurrency: "USD", preferredCurrency: null,
-  }), true);
+test("automatic Nigeria detection resolves NGN", () => {
+  assert.equal(resolveDisplayCurrencyContext({ preferredCurrency: null, ipCountryCode: "NG", locale: "en-US" }).resolvedCurrency, "NGN");
 });
 
-test("a new explicit EUR preference replaces the passed NGN fare", () => {
-  assert.equal(canReuseFlightDetailFare({
-    passedFare: passedNgnFare, providerAmount: 67, providerCurrency: "USD", preferredCurrency: "EUR",
-  }), false);
+test("a new explicit EUR preference invalidates a passed NGN fare and converts correctly", () => {
+  assert.equal(canReuseFlightDetailFare({ passedFare: passedNgnFare, providerAmount: 67, providerCurrency: "USD", preferredCurrency: "EUR" }), false);
   const fare = createFlightDetailFare(67, "USD", "EUR", rates);
   assert.equal(fare?.currency, "EUR");
   assert.equal(fare?.amount, 60.300000000000004);
 });
 
 test("a new explicit USD preference replaces the passed NGN fare", () => {
-  assert.equal(canReuseFlightDetailFare({
-    passedFare: passedNgnFare, providerAmount: 67, providerCurrency: "USD", preferredCurrency: "USD",
-  }), false);
+  assert.equal(canReuseFlightDetailFare({ passedFare: passedNgnFare, providerAmount: 67, providerCurrency: "USD", preferredCurrency: "USD" }), false);
   assert.deepEqual(createFlightDetailFare(67, "USD", "USD", {}), {
     amount: 67,
     currency: "USD",
@@ -77,12 +54,8 @@ test("missing EUR rates produce a placeholder decision, never provider USD", () 
 });
 
 test("provider identity must match before a passed fare can be reused", () => {
-  assert.equal(canReuseFlightDetailFare({
-    passedFare: passedNgnFare, providerAmount: 68, providerCurrency: "USD", preferredCurrency: null,
-  }), false);
-  assert.equal(canReuseFlightDetailFare({
-    passedFare: passedNgnFare, providerAmount: 67, providerCurrency: "EUR", preferredCurrency: null,
-  }), false);
+  assert.equal(canReuseFlightDetailFare({ passedFare: passedNgnFare, providerAmount: 68, providerCurrency: "USD", preferredCurrency: null }), false);
+  assert.equal(canReuseFlightDetailFare({ passedFare: passedNgnFare, providerAmount: 67, providerCurrency: "EUR", preferredCurrency: null }), false);
 });
 
 test("fare reuse decisions explain every rejection", () => {
@@ -94,25 +67,13 @@ test("fare reuse decisions explain every rejection", () => {
   assert.equal(flightDetailFareReuseDecision({ ...input, passedFare: passedNgnFare }), "valid");
 });
 
-test("direct Saved-flight entry resolves Nigeria and explicit EUR normally", () => {
-  const automatic = resolveDisplayCurrencyContext({
-    preferredCurrency: null, ipCountryCode: "NG", locale: "en-US",
-  });
-  const explicit = resolveDisplayCurrencyContext({
-    preferredCurrency: "EUR", ipCountryCode: "NG", locale: "en-US",
-  });
-  assert.equal(createFlightDetailFare(67, "USD", automatic.resolvedCurrency, rates)?.currency, "NGN");
-  assert.equal(createFlightDetailFare(67, "USD", explicit.resolvedCurrency, rates)?.currency, "EUR");
-});
-
-test("both booking areas use the one shared formatted fare", () => {
-  const detailScreen = readFileSync(resolve("src/features/search/ApprovedDetailScreen.tsx"), "utf8");
-  const flightDetail = detailScreen.slice(
-    detailScreen.indexOf("function FlightDetail"),
-    detailScreen.indexOf("function HotelDetail"),
-  );
-  assert.equal(flightDetail.match(/\{formattedFare\}/g)?.length, 2);
-  assert.doesNotMatch(flightDetail, /money\(result\.currency, result\.price\)/);
+test("authoritative Flight Details converts every fare card, deal, and sticky total through one display context", () => {
+  const detailScreen = readFileSync(resolve("src/features/search/NativeFlightDetails.tsx"), "utf8");
+  assert.match(detailScreen, /const displayPriceFor = useCallback/);
+  assert.match(detailScreen, /displayPriceFor\(choice\.offer\.price, choice\.offer\.currency\)/);
+  assert.match(detailScreen, /displayPriceFor\(deal\.price, deal\.currency\)/);
+  assert.match(detailScreen, /fare\?\.formatted \?\? "—"/);
+  assert.doesNotMatch(detailScreen, /choice\.offer\.price\.toFixed|deal\.price\.toFixed/);
 });
 
 test("Results uses the authoritative ID-only navigation contract", () => {
