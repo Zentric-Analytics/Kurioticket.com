@@ -50,9 +50,9 @@ test("Cars presents one unified date field and one unified time field in form or
 });
 
 test("Cars keeps the return-location checkbox after and outside the optional submit CTA", () => {
-  const submitStart = panel.indexOf("{showSubmit ? <View style={styles.pad}>");
-  const submitEnd = panel.indexOf("</View> : null}", submitStart) + "</View> : null}".length;
-  const checkboxStart = panel.indexOf('<Pressable accessibilityRole="checkbox"');
+  const submitStart = panel.indexOf('<View style={styles.pad}><PrimaryButton');
+  const submitEnd = panel.indexOf("</View>", submitStart) + "</View>".length;
+  const checkboxStart = panel.indexOf('<Pressable accessibilityRole="checkbox"', submitEnd);
   const checkboxEnd = panel.indexOf("</Pressable>", checkboxStart) + "</Pressable>".length;
   const dropoffField = panel.indexOf('label="Drop-off location"');
   const rentalDatesField = panel.indexOf('label="Rental dates"');
@@ -132,4 +132,13 @@ test("Cars Search and time Done CTAs are iconless while selection checks remain"
 
 test("Cars keeps the separate-return checkbox selection check", () => {
   assert.match(panel, /form\.separateDropoff \? <FlowIcon name="check" color="white" size=\{15\}\/> : null/);
+});
+
+test("Cars Results edit appearance is isolated from the default compact form", () => {
+  assert.match(panel, /editAppearance = false/);
+  assert.match(panel, /\{editAppearance \? editRows : <>/);
+  assert.match(panel, /\{!editAppearance \? <Pressable accessibilityRole="checkbox"/);
+  assert.match(panel, /editAppearance \? <Pressable[\s\S]*styles\.resultsEditSubmit/);
+  assert.equal((panel.match(/<CompactSearchField /g) ?? []).length, 5);
+  assert.match(panel, /const displayDate = [^\n]*weekday: "short"/);
 });
