@@ -1,10 +1,12 @@
-import { Pressable, ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
+import { useRef, useState, type ReactNode } from "react";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View, type GestureResponderEvent } from "react-native";
 import { ChevronDown, SlidersHorizontal } from "lucide-react-native";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import type { FlightSort } from "./flightFilters";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { flightResultsUiCopy } from "./flightResultsSummary";
+import { isFlightQuickControlTap, type FlightQuickControlTouch } from "./flightQuickControlActivation";
 
 const webFilterBorder = "#D8E1EC";
 const webFilterText = "#142033";
@@ -34,6 +36,49 @@ function Control({ label, active, count, expanded, filterIcon, accessibilityLabe
   const { locale } = useMobileLocalization();
   const copy = flightResultsUiCopy(locale);
   const accessibilityLabel = `${accessibilityLabelOverride ?? label}${active ? `, ${copy.selected}` : ""}${count ? `, ${count} ${copy.active}` : ""}`;
+  const [androidPressed, setAndroidPressed] = useState(false);
+  const touchStart = useRef<FlightQuickControlTouch | null>(null);
+  const capsule = (pressed: boolean): ReactNode => <View style={[
+    styles.capsule,
+    { backgroundColor: pressed && light ? webFilterPressed : surface, borderColor: border },
+  ]}>
+    {filterIcon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={foreground} /> : null}
+    <Text numberOfLines={1} style={[styles.label, { color: foreground }]}>{label}</Text>
+    {count ? <View style={[styles.count, { backgroundColor: countBackground }]}><Text style={[styles.countText, { color: foreground }]}>{count}</Text></View> : null}
+    {!filterIcon ? <ChevronDown accessible={false} size={13} strokeWidth={1.9} color={chevron} style={expanded ? styles.chevronExpanded : undefined} /> : null}
+  </View>;
+
+  if (Platform.OS === "android") {
+    const touch = ({ nativeEvent }: GestureResponderEvent): FlightQuickControlTouch => ({
+      pageX: nativeEvent.pageX,
+      pageY: nativeEvent.pageY,
+      timestamp: nativeEvent.timestamp,
+    });
+    return (
+      <View
+        accessible
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ expanded, selected: active }}
+        accessibilityActions={[{ name: "activate" }]}
+        onAccessibilityAction={({ nativeEvent }) => { if (nativeEvent.actionName === "activate") onPress(); }}
+        onTouchStart={(event) => { touchStart.current = touch(event); setAndroidPressed(true); }}
+        onTouchMove={(event) => {
+          if (touchStart.current && !isFlightQuickControlTap(touchStart.current, touch(event))) setAndroidPressed(false);
+        }}
+        onTouchCancel={() => { touchStart.current = null; setAndroidPressed(false); }}
+        onTouchEnd={(event) => {
+          const start = touchStart.current;
+          touchStart.current = null;
+          setAndroidPressed(false);
+          if (start && isFlightQuickControlTap(start, touch(event))) onPress();
+        }}
+        style={styles.touchTarget}
+      >
+        {capsule(androidPressed)}
+      </View>
+    );
+  }
 
   return (
     <Pressable
@@ -43,15 +88,7 @@ function Control({ label, active, count, expanded, filterIcon, accessibilityLabe
       onPress={onPress}
       style={styles.touchTarget}
     >
-      {({ pressed }) => <View style={[
-        styles.capsule,
-        { backgroundColor: pressed && light ? webFilterPressed : surface, borderColor: border },
-      ]}>
-        {filterIcon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={foreground} /> : null}
-        <Text numberOfLines={1} style={[styles.label, { color: foreground }]}>{label}</Text>
-        {count ? <View style={[styles.count, { backgroundColor: countBackground }]}><Text style={[styles.countText, { color: foreground }]}>{count}</Text></View> : null}
-        {!filterIcon ? <ChevronDown accessible={false} size={13} strokeWidth={1.9} color={chevron} style={expanded ? styles.chevronExpanded : undefined} /> : null}
-      </View>}
+      {({ pressed }) => capsule(pressed)}
     </Pressable>
   );
 }
@@ -64,8 +101,6 @@ export function FlightResultsQuickControls({
   stopsCount,
   openSheetKind,
   openSheet,
-  scrollViewRef,
-  onHorizontalScroll,
 }: {
   sort: FlightSort;
   activeFilterCount: number;
@@ -74,8 +109,6 @@ export function FlightResultsQuickControls({
   stopsCount: number;
   openSheetKind: "sort" | "all" | "airlines" | "stops" | "airports" | null;
   openSheet: (sheet: "sort" | "all" | "airlines" | "stops" | "airports") => void;
-  scrollViewRef?: React.RefObject<ScrollView | null>;
-  onHorizontalScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 }) {
   const { locale } = useMobileLocalization();
   const copy = flightResultsUiCopy(locale);
@@ -84,13 +117,10 @@ export function FlightResultsQuickControls({
 
   return (
     <ScrollView horizontal
-      ref={scrollViewRef}
       style={styles.rail}
       contentContainerStyle={styles.content}
       showsHorizontalScrollIndicator={false}
       alwaysBounceHorizontal={false}
-      scrollEventThrottle={16}
-      onScroll={onHorizontalScroll}
     >
       <Control
         label={copy.filters}
