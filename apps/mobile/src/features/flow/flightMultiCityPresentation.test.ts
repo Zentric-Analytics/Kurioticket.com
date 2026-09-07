@@ -32,7 +32,7 @@ test("each leg uses compact Round-trip field rows without legacy rounded fields"
 });
 
 test("every mapped leg owns an accessible Round-trip-style swap", () => {
-  assert.match(editor, /form\.multiCityLegs\.map[\s\S]*?<View style=\{styles\.routeFields\}>/);
+  assert.match(editor, /form\.multiCityLegs\.map[\s\S]*?<View testID=\{resultsModalAppearance \? `results-modal-multi-city-route-card-/);
   assert.match(editor, /accessibilityLabel=\{`Swap Flight \$\{index\+1\} origin and destination`\}/);
   assert.match(editor, /accessibilityState=\{\{disabled:!leg\.from\|\|!leg\.to\}\} disabled=\{!leg\.from\|\|!leg\.to\}/);
   assert.match(editor, /onPress=\{\(\)=>onSwap\(index\)\}/);
@@ -41,6 +41,30 @@ test("every mapped leg owns an accessible Round-trip-style swap", () => {
   assert.match(editor, /<ArrowRightLeft accessible=\{false\} size=\{17\}/);
   assert.match(styles, /swapTarget:\{[^\n]*width:44,height:44/);
   assert.match(styles, /swapCircle:\{width:36,height:36,borderRadius:18/);
+});
+
+test("results modal appearance gives every leg one route card and one date card", () => {
+  assert.match(panel, /<MultiCityEditor[^>]*resultsModalAppearance=\{resultsModalAppearance\}/);
+  assert.match(editor, /resultsModalAppearance: boolean/);
+  assert.match(editor, /testID=\{resultsModalAppearance \? `results-modal-multi-city-route-card-\$\{index\+1\}` : undefined\}/);
+  assert.match(editor, /style=\{\[styles\.routeFields,resultsModalAppearance&&\[styles\.resultsModalCard,styles\.multiCityResultsModalCard,\{backgroundColor:ft\.colors\.card,borderColor:ft\.colors\.border\}\]\]\}/);
+  assert.match(editor, /label="Origin"[\s\S]*?appearance=\{resultsModalAppearance\?"resultsModalCard":"default"\} modalCardDivider=\{resultsModalAppearance\}/);
+  assert.match(editor, /label="Destination"[\s\S]*?appearance=\{resultsModalAppearance\?"resultsModalCard":"default"\} onPress=/);
+  assert.match(editor, /testID=\{resultsModalAppearance \? `results-modal-multi-city-date-card-\$\{index\+1\}` : undefined\}/);
+  assert.match(editor, /label="Departure date"[\s\S]*?appearance=\{resultsModalAppearance\?"resultsModalCard":"default"\}/);
+  assert.match(styles, /resultsModalCard:\{borderWidth:1,borderRadius:13,overflow:"hidden",marginTop:10\},multiCityResultsModalCard:\{marginTop:0\}/);
+});
+
+test("modal cards do not absorb leg headings or actions", () => {
+  const title = editor.indexOf(">Flight {index+1}</Text>");
+  const route = editor.indexOf("results-modal-multi-city-route-card-");
+  const date = editor.indexOf("results-modal-multi-city-date-card-");
+  const remove = editor.indexOf("accessibilityLabel={`Remove Flight");
+  const add = editor.indexOf('accessibilityLabel="Add flight"');
+
+  assert.ok(title >= 0 && title < route && route < date && date < remove && remove < add);
+  assert.doesNotMatch(editor.slice(route, date), /Remove Flight|Add flight/);
+  assert.doesNotMatch(editor.slice(date, remove), /Remove Flight|Add flight/);
 });
 
 test("Travelers and Cabin uses the shared compact field", () => {
