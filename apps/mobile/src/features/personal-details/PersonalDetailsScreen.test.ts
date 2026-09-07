@@ -489,3 +489,18 @@ test("partial date changes participate in discard protection and cannot be saved
       save.indexOf("travelApi.updateProfile"),
   );
 });
+
+test("main editor avoids the keyboard on Android as well as iOS", () => {
+  const main = screen.slice(
+    screen.indexOf("<ScrollView\n            ref={scrollRef}"),
+  );
+  const container = screen.slice(
+    0,
+    screen.indexOf("<ScrollView\n            ref={scrollRef}"),
+  );
+  assert.match(
+    container.slice(container.lastIndexOf("<KeyboardAvoidingView")),
+    /behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/,
+  );
+  assert.ok(main.indexOf("s.editorFooter") > main.indexOf("</ScrollView>"));
+});

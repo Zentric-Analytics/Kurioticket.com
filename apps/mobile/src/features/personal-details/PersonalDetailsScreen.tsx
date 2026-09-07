@@ -36,6 +36,7 @@ import {
   updateStoredSessionName,
 } from "../../storage/sessionStorage";
 import { useAppTheme } from "../../theme/AppTheme";
+import { appFonts } from "../../theme/typography";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { openSafeExternalUrl } from "../profile/safeExternalLink";
@@ -194,7 +195,10 @@ function Selector({
                 <Text
                   style={{
                     color: theme.text,
-                    fontWeight: item.value === selected ? "800" : "500",
+                    fontFamily:
+                      item.value === selected
+                        ? appFonts.semibold
+                        : appFonts.regular,
                   }}
                 >
                   {item.label}
@@ -507,7 +511,7 @@ function Field({
           {
             color: theme.text,
             borderColor: focused ? flowColors.blue : theme.border,
-            borderWidth: focused ? 2 : 1,
+            borderWidth: 1,
             backgroundColor: theme.background,
           },
         ]}
@@ -615,7 +619,7 @@ function PhoneControl({
           s.phoneInput,
           {
             borderColor: focused ? flowColors.blue : theme.border,
-            borderWidth: focused ? 2 : 1,
+            borderWidth: 1,
             backgroundColor: theme.background,
           },
         ]}
@@ -1082,7 +1086,7 @@ export function PersonalDetailsScreen() {
       ) : (
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           <ScrollView
             ref={scrollRef}
@@ -1546,9 +1550,9 @@ const s = StyleSheet.create({
   title: {
     flex: 1,
     textAlign: "center",
-    fontSize: 22,
-    lineHeight: 28,
-    fontWeight: "800",
+    fontSize: 18,
+    lineHeight: 26,
+    fontFamily: appFonts.semibold,
   },
   center: {
     flex: 1,
@@ -1557,35 +1561,47 @@ const s = StyleSheet.create({
     gap: 16,
     padding: 24,
   },
-  scroll: { padding: 16, paddingBottom: 40 },
+  scroll: { padding: 20, paddingBottom: 40 },
   description: {
-    fontSize: 15,
+    fontFamily: appFonts.regular,
+    fontSize: 14,
     lineHeight: 22,
     paddingTop: 4,
-    paddingBottom: 24,
+    paddingBottom: 16,
   },
   detailText: { flex: 1, gap: 4 },
   editorFooter: { padding: 16, borderTopWidth: StyleSheet.hairlineWidth },
   detailRow: {
     minHeight: 78,
     paddingHorizontal: 0,
-    paddingVertical: 18,
+    paddingVertical: 16,
     gap: 16,
     flexDirection: "row",
     alignItems: "center",
   },
-  detailLabel: { fontSize: 13, lineHeight: 18, fontWeight: "400" },
-  label: { fontSize: 13, lineHeight: 18, fontWeight: "700", marginBottom: 5 },
-  value: { fontSize: 16, lineHeight: 23, fontWeight: "500" },
-  blue: { color: flowColors.blue, fontWeight: "800" },
+  detailLabel: { fontSize: 13, lineHeight: 18, fontFamily: appFonts.regular },
+  label: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontFamily: appFonts.semibold,
+    marginBottom: 5,
+  },
+  value: { fontSize: 16, lineHeight: 23, fontFamily: appFonts.medium },
+  blue: { color: flowColors.blue, fontFamily: appFonts.semibold },
   formContent: { gap: 20, paddingTop: 8 },
-  sectionTitle: { fontSize: 17, lineHeight: 23, fontWeight: "800" },
-  addressDescription: { fontSize: 14, lineHeight: 20, marginBottom: 2 },
+  sectionTitle: { fontSize: 17, lineHeight: 23, fontFamily: appFonts.semibold },
+  addressDescription: {
+    fontFamily: appFonts.regular,
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 2,
+  },
   input: {
     height: 50,
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 12,
+    fontFamily: appFonts.regular,
     fontSize: 16,
   },
   phone: { height: 50, flexDirection: "row", alignItems: "stretch" },
@@ -1604,7 +1620,7 @@ const s = StyleSheet.create({
     width: 28,
     textAlign: "center",
     fontSize: 13,
-    fontWeight: "700",
+    fontFamily: appFonts.semibold,
   },
   phoneInput: {
     minWidth: 0,
@@ -1621,6 +1637,7 @@ const s = StyleSheet.create({
     flex: 1,
     height: 48,
     padding: 0,
+    fontFamily: appFonts.regular,
     fontSize: 16,
   },
   date: { flexDirection: "row", gap: 8 },
@@ -1661,13 +1678,17 @@ const s = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 18,
   },
-  buttonText: { fontWeight: "800" },
-  primaryText: { color: "#FFFFFF", fontWeight: "800" },
+  buttonText: { fontSize: 15, fontFamily: appFonts.semibold },
+  primaryText: {
+    fontSize: 15,
+    color: "#FFFFFF",
+    fontFamily: appFonts.semibold,
+  },
   disabled: { opacity: 0.45 },
   feedback: {
     fontSize: 14,
     lineHeight: 20,
-    fontWeight: "700",
+    fontFamily: appFonts.semibold,
     marginBottom: 12,
   },
   toastPosition: {
@@ -1686,7 +1707,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 9,
   },
-  toastText: { fontSize: 14, lineHeight: 20, fontWeight: "700" },
+  toastText: { fontSize: 14, lineHeight: 20, fontFamily: appFonts.semibold },
   modalRoot: { flex: 1, justifyContent: "flex-end" },
   sheet: {
     maxHeight: "82%",
@@ -1721,7 +1742,11 @@ const s = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     lineHeight: 23,
-    fontWeight: "500",
+    fontFamily: appFonts.medium,
   },
-  countryDialCode: { fontSize: 16, lineHeight: 23 },
+  countryDialCode: {
+    fontFamily: appFonts.regular,
+    fontSize: 16,
+    lineHeight: 23,
+  },
 });
