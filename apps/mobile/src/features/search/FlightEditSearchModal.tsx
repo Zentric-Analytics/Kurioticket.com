@@ -34,8 +34,8 @@ export function FlightEditSearchModal({ visible, params, onClose, onSubmit }: Pr
                 <X accessible={false} size={23} color={ft.colors.icon} />
               </Pressable>
             </View>
-            <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}>
-              <FlightSearchPanel embedded params={presentedParams} onValidatedSubmit={onSubmit} editAppearance />
+            <ScrollView style={{ backgroundColor: ft.colors.page }} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}>
+              <FlightSearchPanel embedded params={presentedParams} onValidatedSubmit={onSubmit} editAppearance resultsModalAppearance />
             </ScrollView>
           </Animated.View>
         </SafeAreaView>
