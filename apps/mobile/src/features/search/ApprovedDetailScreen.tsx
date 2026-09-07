@@ -486,7 +486,8 @@ function HotelDetail({
                     { color: theme.textSecondary },
                     activeHotelTab === tab && {
                       color: hotelAccent,
-                      fontWeight: "800",
+                      fontWeight: "700",
+                      fontFamily: appFonts.bold,
                     },
                   ]}
                 >

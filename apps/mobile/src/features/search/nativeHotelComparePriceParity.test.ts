@@ -35,7 +35,7 @@ test("Compare section mirrors web heading, stay context, and offer rhythm", () =
   assert.match(styleRule(detailSource, "hotelCompareSection", "hotelCompareHeading"), /paddingVertical: 8/);
   assert.match(styleRule(detailSource, "hotelCompareHeading", "hotelCompareLead"), /fontSize: 20[^}]*lineHeight: 28[^}]*fontWeight: "700"[^}]*fontFamily: appFonts\.bold[^}]*letterSpacing: -0\.5/);
   assert.match(styleRule(detailSource, "hotelTabText", "hotelSectionLead"), /fontSize: 11[^}]*fontWeight: "600"/);
-  assert.match(hotel, /activeHotelTab === tab && \{[\s\S]*?color: hotelAccent,[\s\S]*?fontWeight: "800"/);
+  assert.match(hotel, /activeHotelTab === tab && \{[\s\S]*?color: hotelAccent,[\s\S]*?fontWeight: "700",[\s\S]*?fontFamily: appFonts\.bold/);
   assert.match(styleRule(detailSource, "hotelCompareLead", "hotelCompareOffers"), /marginTop: 4[^}]*fontSize: 14[^}]*lineHeight: 20[^}]*fontWeight: "500"[^}]*appFonts\.medium/);
   assert.match(styleRule(detailSource, "hotelCompareOffers", "hotelHeading"), /marginTop: 20[^}]*gap: 12/);
   assert.match(hotel, /stay\.dateText \?\? "Stay dates unavailable"\} · \{stay\.occupancy\}/);

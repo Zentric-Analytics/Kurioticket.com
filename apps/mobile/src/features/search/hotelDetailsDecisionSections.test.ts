@@ -131,14 +131,15 @@ test("native related Hotel cards mirror the web text hierarchy and action treatm
   assert.match(component, /import \{ appFonts \} from "\.\.\/\.\.\/theme\/typography";/);
   assert.match(component, /cardBody:\s*\{\s*minHeight:\s*174,\s*padding:\s*12\s*\}/);
   assert.doesNotMatch(component, /cardBody:\s*\{[^}]*minHeight:\s*190|cardBody:\s*\{[^}]*padding:\s*13/);
+  assert.match(component, /heading:\s*\{[^}]*fontSize:\s*20[^}]*lineHeight:\s*26[^}]*fontWeight:\s*"800"[^}]*fontFamily:\s*appFonts\.extraBold/);
   assert.match(component, /stars:\s*\{[^}]*color:\s*"#F59E0B"[^}]*fontSize:\s*12[^}]*lineHeight:\s*16[^}]*letterSpacing:\s*0\.96[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
-  assert.match(component, /hotelName:\s*\{[^}]*marginTop:\s*4[^}]*fontSize:\s*15[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"700"[^}]*fontFamily:\s*appFonts\.bold/);
+  assert.match(component, /hotelName:\s*\{[^}]*marginTop:\s*4[^}]*fontSize:\s*15[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"600"[^}]*fontFamily:\s*appFonts\.semibold/);
   assert.match(component, /location:\s*\{[^}]*marginTop:\s*4[^}]*fontSize:\s*12[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
   assert.match(component, /priceBlock:\s*\{[^}]*marginTop:\s*"auto"[^}]*paddingTop:\s*12[^}]*gap:\s*4/);
-  assert.match(component, /nightly:\s*\{[^}]*fontSize:\s*14[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"700"[^}]*fontFamily:\s*appFonts\.bold/);
+  assert.match(component, /nightly:\s*\{[^}]*fontSize:\s*14[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"600"[^}]*fontFamily:\s*appFonts\.semibold/);
   assert.match(component, /total:\s*\{[^}]*fontSize:\s*12[^}]*lineHeight:\s*16[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
   assert.match(component, /priceUnavailable:\s*\{[^}]*fontSize:\s*14[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"600"[^}]*fontFamily:\s*appFonts\.semibold/);
-  assert.match(component, /viewText:\s*\{[^}]*fontSize:\s*14[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"700"[^}]*fontFamily:\s*appFonts\.bold/);
+  assert.match(component, /viewText:\s*\{[^}]*fontSize:\s*14[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"600"[^}]*fontFamily:\s*appFonts\.semibold/);
   assert.match(component, /viewRow:\s*\{[^}]*minHeight:\s*44[^}]*marginTop:\s*10[^}]*paddingTop:\s*10[^}]*borderTopWidth:\s*StyleSheet\.hairlineWidth[^}]*flexDirection:\s*"row"[^}]*alignItems:\s*"center"[^}]*justifyContent:\s*"space-between"/);
 
   assert.match(card, /const relatedActionColor = theme\.dark \? "#8FB5FF" : colors\.blue;/);
