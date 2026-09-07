@@ -454,7 +454,7 @@ test("back returns to the overview and restores its scroll position", () => {
 test("text inputs have a visible focus border without remounting", () => {
   assert.match(
     screen,
-    /borderColor: focused \? flowColors\.blue : theme\.border/,
+    /borderColor: focused \? flowColors\.blue : inputBorderColor\(theme.dark\)/,
   );
   assert.match(screen, /onFocus=\{\(\) => setFocused\(true\)\}/);
   assert.match(screen, /onBlur=\{\(\) => setFocused\(false\)\}/);

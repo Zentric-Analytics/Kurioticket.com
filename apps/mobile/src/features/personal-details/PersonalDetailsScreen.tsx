@@ -325,6 +325,10 @@ function CountryFlag({ isoCode }: { isoCode?: string }) {
   return <PersonalDetailsCountryFlag isoCode={isoCode} />;
 }
 
+function inputBorderColor(dark: boolean) {
+  return dark ? "#75839B" : "#818A99";
+}
+
 function Field({
   label,
   value,
@@ -359,9 +363,9 @@ function Field({
           s.input,
           {
             color: theme.text,
-            borderColor: focused ? flowColors.blue : theme.border,
+            borderColor: focused ? flowColors.blue : inputBorderColor(theme.dark),
             borderWidth: 1,
-            backgroundColor: theme.background,
+            backgroundColor: theme.surface,
           },
         ]}
       />
@@ -393,7 +397,7 @@ function SelectButton({
         style={[
           s.input,
           s.select,
-          { borderColor: theme.border, backgroundColor: theme.background },
+          { borderColor: inputBorderColor(theme.dark), backgroundColor: theme.surface },
         ]}
       >
         <Text numberOfLines={1} style={{ color: theme.text, flex: 1 }}>
@@ -439,7 +443,7 @@ function PhoneControl({
         style={[
           s.input,
           s.countrySegment,
-          { borderColor: theme.border, backgroundColor: theme.background },
+          { borderColor: inputBorderColor(theme.dark), backgroundColor: theme.surface },
         ]}
       >
         {uri && !failed ? (
@@ -467,9 +471,9 @@ function PhoneControl({
           s.input,
           s.phoneInput,
           {
-            borderColor: focused ? flowColors.blue : theme.border,
+            borderColor: focused ? flowColors.blue : inputBorderColor(theme.dark),
             borderWidth: 1,
-            backgroundColor: theme.background,
+            backgroundColor: theme.surface,
           },
         ]}
       >
