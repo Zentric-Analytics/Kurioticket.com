@@ -67,6 +67,7 @@ export function FlightFilterSheet({visible,section,filters,options,results,price
  const resetQuick=()=>setDraft(section==="airlines"?{...working,airlines:[]}:section==="stops"?{...working,maxStops:null,stops:[]}:{...working,fromAirports:[],toAirports:[]});
  const footerLabel=count===0?copy.noFilterTitle:copy.viewFlights(count);
  const filterOutline=theme.dark?theme.border:FLIGHT_FILTER_LIGHT_OUTLINE;
+ const viewAction=<Pressable accessibilityRole="button" accessibilityState={{disabled:count===0}} disabled={count===0} onPress={()=>{setDragging(false);onComplete()}} style={[s.viewButton,activeCount>0&&s.viewButtonFlexible,count===0&&s.viewButtonDisabled]}><Text style={s.viewText}>{footerLabel}</Text></Pressable>;
 
  return <FlightResultsSheetShell
   visible={visible}
@@ -77,8 +78,7 @@ export function FlightFilterSheet({visible,section,filters,options,results,price
   insetFlightQuickSheet={!full}
   closeLabel={copy.closeFilters}
   onClose={close}
-  headerAction={full&&activeCount?<Pressable accessibilityRole="button" accessibilityLabel={copy.clearAll} onPress={()=>onChange(emptyFlightFilters())} style={[s.headerClear,{borderColor:filterOutline}]}><Text style={s.footerClearText}>{copy.clearAll}</Text></Pressable>:undefined}
-  footer={full?<Pressable accessibilityRole="button" accessibilityState={{disabled:count===0}} disabled={count===0} onPress={()=>{setDragging(false);onComplete()}} style={[s.viewButton,count===0&&s.viewButtonDisabled]}><Text style={s.viewText}>{footerLabel}</Text></Pressable>:<View style={s.footerActions}><Pressable accessibilityRole="button" onPress={resetQuick} style={[s.reset,{borderColor:filterOutline}]}><Text style={[s.buttonText,{color:theme.textPrimary}]}>{copy.reset}</Text></Pressable><Pressable accessibilityRole="button" accessibilityState={{disabled:count===0}} disabled={count===0} onPress={()=>{onChange(draft);onClose()}} style={[s.apply,count===0&&s.viewButtonDisabled]}><Text style={[s.buttonText,{color:"white"}]}>{footerLabel}</Text></Pressable></View>}
+  footer={full?(activeCount>0?<View style={s.footerActions}><Pressable accessibilityRole="button" accessibilityLabel={copy.reset} onPress={()=>onChange(emptyFlightFilters())} style={[s.reset,{borderColor:filterOutline}]}><Text style={[s.buttonText,{color:theme.textPrimary}]}>{copy.reset}</Text></Pressable>{viewAction}</View>:viewAction):<View style={s.footerActions}><Pressable accessibilityRole="button" onPress={resetQuick} style={[s.reset,{borderColor:filterOutline}]}><Text style={[s.buttonText,{color:theme.textPrimary}]}>{copy.reset}</Text></Pressable><Pressable accessibilityRole="button" accessibilityState={{disabled:count===0}} disabled={count===0} onPress={()=>{onChange(draft);onClose()}} style={[s.apply,count===0&&s.viewButtonDisabled]}><Text style={[s.buttonText,{color:"white"}]}>{footerLabel}</Text></Pressable></View>}
  >
  <ScrollView style={full?s.fullScroll:s.quickScroll} scrollEnabled={!dragging} contentContainerStyle={full?s.content:s.compactContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
  {full&&isPriceFilteringAvailable(options,priceFilteringReady)&&<FlightFilterSection title={copy.price}>{slider("maximumPrice",options.price!,copy.maximumPrice,v=>formatCurrency(v,options.priceCurrency??currency),priceRangeStep(options.price!.min,options.price!.max))}</FlightFilterSection>}
@@ -135,7 +135,8 @@ const s=StyleSheet.create({
  footerClearText:{color:ui.blue,fontSize:14,fontWeight:"700"},
  disabled:{opacity:.4},
  viewButton:{width:"100%",minHeight:50,borderRadius:10,backgroundColor:ui.blue,alignItems:"center",justifyContent:"center"},
+ viewButtonFlexible:{width:"auto",flex:1},
  viewButtonDisabled:{opacity:.45},
  viewText:{color:"white",fontSize:16,lineHeight:22,fontWeight:"700",fontFamily:appFonts.bold},
- endpoints:{flexDirection:"row",justifyContent:"space-between"}, search:{height:44,borderWidth:1,borderRadius:10,paddingHorizontal:12,marginVertical:6}, showMore:{minHeight:44,justifyContent:"center",alignSelf:"flex-start"}, headerClear:{minHeight:44,justifyContent:"center",paddingHorizontal:10,borderWidth:1,borderRadius:12}, reset:{minWidth:116,height:49,borderWidth:1,borderRadius:12,alignItems:"center",justifyContent:"center"}, apply:{flex:1,height:49,borderRadius:12,backgroundColor:ui.blue,alignItems:"center",justifyContent:"center"}, buttonText:{fontSize:15,fontWeight:"700"},
+ endpoints:{flexDirection:"row",justifyContent:"space-between"}, search:{height:44,borderWidth:1,borderRadius:10,paddingHorizontal:12,marginVertical:6}, showMore:{minHeight:44,justifyContent:"center",alignSelf:"flex-start"}, reset:{minWidth:116,height:49,borderWidth:1,borderRadius:12,alignItems:"center",justifyContent:"center"}, apply:{flex:1,height:49,borderRadius:12,backgroundColor:ui.blue,alignItems:"center",justifyContent:"center"}, buttonText:{fontSize:15,fontWeight:"700"},
 });
