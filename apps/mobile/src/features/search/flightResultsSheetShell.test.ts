@@ -35,6 +35,15 @@ test("Flight quick sheets use a symmetric outer inset without changing shared le
   assert.match(sort,/insetFlightQuickSheet/);
   assert.doesNotMatch(cars,/insetFlightQuickSheet/);
 });
+test("only inset Flight quick sheets float above the safe area with four matching corners",()=>{
+  const cars=readFileSync("src/features/search/CarFilterSheet.tsx","utf8");
+  assert.match(shell,/FLIGHT_FLOATING_SHEET_MIN_BOTTOM_GAP = 12/);
+  assert.match(shell,/const floatingBottomGap = Math\.max\(inset\.bottom, FLIGHT_FLOATING_SHEET_MIN_BOTTOM_GAP\)/);
+  assert.match(shell,/insetFlightQuickSheet && \{ marginBottom: floatingBottomGap \}/);
+  assert.match(shell,/insetFlightQuickSheet && styles\.floatingFlightSheet/);
+  assert.match(shell,/floatingFlightSheet: \{ borderBottomLeftRadius: 24, borderBottomRightRadius: 24 \}/);
+  assert.doesNotMatch(cars,/floatingFlightSheet|FLIGHT_FLOATING_SHEET_MIN_BOTTOM_GAP/);
+});
 test("only inset Flight quick sheets use a balanced centered header with the close control on the left",()=>{
   const cars=readFileSync("src/features/search/CarFilterSheet.tsx","utf8");
   assert.match(shell,/const flightQuickHeader = insetFlightQuickSheet/);
@@ -69,7 +78,7 @@ test("full-screen Flight filters use the modal viewport's native safe area",()=>
   assert.match(footerStyle,/flexShrink: 0/);
   assert.match(shell,/import \{ SafeAreaProvider, SafeAreaView, useSafeAreaInsets \}/);
   assert.match(shell,/<Modal[\s\S]*?<SafeAreaProvider><SafeAreaView edges=\{\["top", "bottom", "left", "right"\]\}/);
-  assert.match(shell,/fullScreen \? 12 : Math\.max\(inset\.bottom, 12\)/);
+  assert.match(shell,/fullScreen \|\| insetFlightQuickSheet \? 12 : Math\.max\(inset\.bottom, 12\)/);
   assert.match(shell,/paddingBottom: footerBottomPadding/);
   assert.doesNotMatch(shell,/paddingTop: fullScreen \? inset\.top|fullScreenFooter(?:Minimum|Extra)BottomPadding/);
 });
