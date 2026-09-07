@@ -151,18 +151,23 @@ test("Hotel Results owns a web-parity summary card without weakening Flight cont
   assert.match(hotelHeader, /numberOfLines=\{1\}[\s\S]*?ellipsizeMode="tail"[\s\S]*?\{secondaryLine\}/);
   assert.match(hotelHeader, /accessible=\{false\}[\s\S]*?importantForAccessibility="no-hide-descendants"[\s\S]*?<SquarePen size=\{16\} strokeWidth=\{2\.2\}/);
   assert.doesNotMatch(hotelHeader, />Edit<|logo|profile|menu|Bell/);
-  assert.match(styles, /hotelHeader: \{ paddingTop: 12, paddingHorizontal: 12, paddingBottom: 12 \}/);
-  assert.match(styles, /hotelHeaderMainRow: \{ width: "100%", flexDirection: "row", alignItems: "center" \}/);
-  assert.match(styles, /hotelHeaderSide: \{ width: 52, flexShrink: 0 \}/);
+  assert.match(hotelHeader, /paddingLeft: Math\.max\(insets\.left \+ 6, 6\)/);
+  assert.match(hotelHeader, /paddingRight: Math\.max\(insets\.right \+ 10, 10\)/);
+  assert.match(styles, /hotelHeader: \{ paddingTop: 12, paddingBottom: 8 \}/);
+  assert.match(styles, /hotelHeaderMainRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6 \}/);
+  assert.match(styles, /hotelHeaderSide: \{ width: 44, flexShrink: 0 \}/);
   assert.match(styles, /hotelHeaderBack: \{ width: 44, height: 44/);
-  assert.match(styles, /hotelSummaryCard: \{[\s\S]*?flex: 1,[\s\S]*?minWidth: 0,[\s\S]*?minHeight: 64,[\s\S]*?borderWidth: 1,[\s\S]*?borderRadius: 13,[\s\S]*?paddingLeft: 16/);
+  assert.match(styles, /hotelSummaryCard: \{ flex: 1, minWidth: 0, minHeight: 62, borderWidth: 1, borderRadius: 13, flexDirection: "row", alignItems: "center", overflow: "hidden" \}/);
   assert.doesNotMatch(styles.match(/hotelSummaryCard: \{[\s\S]*?\n  \},/)?.[0] ?? "", /width: "100%"/);
-  assert.match(styles, /hotelSummaryText: \{ flex: 1, minWidth: 0/);
-  assert.match(styles, /hotelSummaryEditSlot: \{ width: 44, height: 44/);
+  assert.match(styles, /hotelSummaryText: \{ flex: 1, minWidth: 0, justifyContent: "center", paddingLeft: 14, paddingVertical: 9 \}/);
+  assert.match(styles, /hotelSummaryEditSlot: \{ width: 44, height: 44, flexShrink: 0/);
   assert.match(hotelHeader, /backgroundColor: theme\.surface/);
   assert.match(hotelHeader, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
-  assert.match(styles, /hotelSummaryDestination: \{ fontSize: 16, lineHeight: 20, fontWeight: "700", fontFamily: appFonts\.bold/);
-  assert.match(styles, /hotelSummarySecondary: \{ marginTop: 3, fontSize: 12\.5, lineHeight: 17, fontWeight: "600", fontFamily: appFonts\.semibold/);
+  assert.match(styles, /hotelSummaryDestination: \{ fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts\.bold/);
+  assert.match(styles, /hotelSummarySecondary: \{ marginTop: 3, fontSize: 10\.5, lineHeight: 14, fontWeight: "500", fontFamily: appFonts\.medium/);
+  const hotelEditSlotStyle = styles.match(/hotelSummaryEditSlot: \{[^\n]+/)?.[0] ?? "";
+  assert.doesNotMatch(hotelEditSlotStyle, /position: "absolute"|margin(?:Left|Right|Start|End): -/);
+  assert.doesNotMatch(hotelHeader, /position:\s*"absolute"|margin(?:Left|Right|Start|End):\s*-/);
 });
 
 test("Hotel Results receives presentation-only summary copy while Edit preserves canonical search state", () => {
