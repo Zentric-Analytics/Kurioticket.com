@@ -33,7 +33,9 @@ test("Compare section mirrors web heading, stay context, and offer rhythm", () =
   assert.match(webCompare, /mt-1 text-sm font-medium text-slate-600/);
   assert.match(webCompare, /mt-5 space-y-3/);
   assert.match(styleRule(detailSource, "hotelCompareSection", "hotelCompareHeading"), /paddingVertical: 8/);
-  assert.match(styleRule(detailSource, "hotelCompareHeading", "hotelCompareLead"), /fontSize: 20[^}]*lineHeight: 28[^}]*fontWeight: "800"[^}]*appFonts\.extraBold[^}]*letterSpacing: -0\.5/);
+  assert.match(styleRule(detailSource, "hotelCompareHeading", "hotelCompareLead"), /fontSize: 20[^}]*lineHeight: 28[^}]*fontWeight: "700"[^}]*fontFamily: appFonts\.bold[^}]*letterSpacing: -0\.5/);
+  assert.match(styleRule(detailSource, "hotelTabText", "hotelSectionLead"), /fontSize: 11[^}]*fontWeight: "600"/);
+  assert.match(hotel, /activeHotelTab === tab && \{[\s\S]*?color: hotelAccent,[\s\S]*?fontWeight: "800"/);
   assert.match(styleRule(detailSource, "hotelCompareLead", "hotelCompareOffers"), /marginTop: 4[^}]*fontSize: 14[^}]*lineHeight: 20[^}]*fontWeight: "500"[^}]*appFonts\.medium/);
   assert.match(styleRule(detailSource, "hotelCompareOffers", "hotelHeading"), /marginTop: 20[^}]*gap: 12/);
   assert.match(hotel, /stay\.dateText \?\? "Stay dates unavailable"\} · \{stay\.occupancy\}/);
@@ -45,7 +47,8 @@ test("Compare section mirrors web heading, stay context, and offer rhythm", () =
 test("native internal offer uses the accessible bundled Kurioticket wordmark", () => {
   assert.ok(existsSync("assets/kurioticket-logo-primary-light-bg.png"));
   assert.match(hotel, /internal \? \([\s\S]*?<Image[\s\S]*?accessible[\s\S]*?accessibilityLabel="Kurioticket"[\s\S]*?accessibilityIgnoresInvertColors[\s\S]*?require\("\.\.\/\.\.\/\.\.\/assets\/kurioticket-logo-primary-light-bg\.png"\)/);
-  assert.match(styleRule(detailSource, "hotelOfferBrandLogo", "hotelOfferProvider"), /width: 136[\s\S]*height: 30/);
+  assert.match(styleRule(detailSource, "hotelOfferBrandLogo", "hotelOfferProvider"), /width: 128[\s\S]*height: 28[\s\S]*flexShrink: 0/);
+  assert.match(hotel, /accessibilityIgnoresInvertColors[\s\S]*?source=\{require\("\.\.\/\.\.\/\.\.\/assets\/kurioticket-logo-primary-light-bg\.png"\)\}[\s\S]*?resizeMode="contain"[\s\S]*?style=\{d\.hotelOfferBrandLogo\}/);
   assert.doesNotMatch(hotel, /Kurioticket room options|indicative planning choice|Room choices are planning inventory/);
 });
 
@@ -100,9 +103,16 @@ test("native selected offer uses the web-like thin ring and separate centered do
 });
 
 test("native provider per-night label uses the compact Hotel accent hierarchy", () => {
+  assert.match(styleRule(detailSource, "hotelNightly", "hotelPerNight"), /fontSize: 22[\s\S]*lineHeight: 27[\s\S]*fontWeight: "800"[\s\S]*fontFamily: appFonts\.extraBold[\s\S]*textAlign: "right"/);
+  assert.match(hotel, /numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit[\s\S]*?minimumFontScale=\{0\.65\}[\s\S]*?d\.hotelNightly/);
   assert.match(styleRule(detailSource, "hotelPerNight", "hotelAboutPanel"), /flexShrink: 0[\s\S]*fontSize: 12[\s\S]*lineHeight: 16[\s\S]*fontWeight: "500"[\s\S]*fontFamily: appFonts\.medium[\s\S]*textAlign: "right"/);
   assert.match(hotel, /<Text numberOfLines=\{1\} style=\{\[d\.hotelPerNight, \{ color: hotelAccent \}\]\}>per night<\/Text>/);
   assert.doesNotMatch(hotel, /<Text[^>]*d\.hotelPerNight[^>]*color: theme\.textSecondary[^>]*>per night<\/Text>/);
+});
+
+test("native sticky estimated total typography remains unchanged", () => {
+  assert.match(styleRule(detailSource, "hotelDockTotal", "hotelDockPerNight"), /fontSize: 24[\s\S]*lineHeight: 30[\s\S]*fontWeight: "800"[\s\S]*fontFamily: appFonts\.extraBold[\s\S]*textAlign: "left"/);
+  assert.match(hotel, /estimated stay total[\s\S]*?d\.hotelDockTotal/);
 });
 
 test("native selection and booking behavior remain intact", () => {
