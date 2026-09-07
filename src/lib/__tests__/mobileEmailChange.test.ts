@@ -1,3 +1,4 @@
+import { MobileEmailResendError } from "@/services/mobileEmailResendPolicy";
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
@@ -303,4 +304,14 @@ test("only a correct current-email code issues proof and does not mutate the acc
     { ownershipProof: "a".repeat(64) },
   );
   assert.deepEqual(valid.calls, ["rate-limit", "verify-current"]);
+});
+
+
+test("resend maximum is returned to the app and resets through the advertised delay", async () => {
+  const limited = setup({ sendCode: async () => { throw new MobileEmailResendError(60, true); } });
+  const response = await limited.run("request");
+  assert.equal(response.status, 429);
+  assert.equal((await response.json()).code, "MAX_RESENDS");
+  const third = setup({ sendCode: async () => ({ cooldownSeconds: 60, resendLimitReached: true }) });
+  assert.deepEqual(await (await third.run("request")).json(), { cooldownSeconds: 60, resendLimitReached: true });
 });

@@ -48,10 +48,14 @@ export function PersonalDetailsEmailEditor({
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [requesting, setRequesting] = useState(false);
   const [focused, setFocused] = useState(false);
   const [error, setError] = useState("");
   const [retryAt, setRetryAt] = useState(0);
   const [confirmRetryAt, setConfirmRetryAt] = useState(0);
+  const [sendingUntil, setSendingUntil] = useState(0);
+  const [sentUntil, setSentUntil] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState(0);
   const [now, setNow] = useState(Date.now());
   const pending = useRef(false);
   const mounted = useRef(true);
@@ -73,21 +77,31 @@ export function PersonalDetailsEmailEditor({
     };
   }, [submissionDisabled]);
   useEffect(() => {
-    if (!retryAt && !confirmRetryAt) return;
+    if (
+      !retryAt &&
+      !confirmRetryAt &&
+      !sendingUntil &&
+      !sentUntil &&
+      !lockedUntil
+    )
+      return;
     const timer = setInterval(() => {
       const time = Date.now();
       setNow(time);
+      if (sendingUntil && time >= sendingUntil) setSendingUntil(0);
+      if (sentUntil && time >= sentUntil) setSentUntil(0);
+      if (lockedUntil && time >= lockedUntil) setLockedUntil(0);
       if (retryAt && time >= retryAt) setRetryAt(0);
       if (confirmRetryAt && time >= confirmRetryAt) setConfirmRetryAt(0);
-    }, 1000);
+    }, 250);
     return () => clearInterval(timer);
-  }, [retryAt, confirmRetryAt]);
+  }, [retryAt, confirmRetryAt, sendingUntil, sentUntil, lockedUntil]);
 
   async function run(action: "request" | "confirm") {
     if (
       submissionDisabled ||
       pending.current ||
-      (action === "request" && remaining > 0) ||
+      (action === "request" && (remaining > 0 || lockedUntil > Date.now())) ||
       (action === "confirm" && confirmRetryAt > Date.now())
     )
       return;
@@ -101,31 +115,41 @@ export function PersonalDetailsEmailEditor({
     if (action === "confirm" && !/^\d{6}$/.test(code)) return;
     pending.current = true;
     setBusy(true);
+    setRequesting(action === "request");
     onBusyChange(true);
     setError("");
     try {
       if (action === "request") {
-        const result =
-          step === 1
-            ? await travelApi.requestCurrentEmailCode()
-            : await travelApi.requestEmailChange(target, ownershipProof);
+        setNow(Date.now());
+        setSendingUntil(Date.now() + 3000);
+        setSentUntil(0);
+        const [result] = await Promise.all([
+          (async () =>
+            step === 1
+              ? await travelApi.requestCurrentEmailCode()
+              : await travelApi.requestEmailChange(target, ownershipProof))(),
+          new Promise<void>((resolve) => setTimeout(resolve, 3000)),
+        ]);
         if (!mounted.current) return;
         if (step !== 1) {
           setRequestedEmail(target);
           setStep(3);
         }
+        setSendingUntil(0);
+        setSentUntil(Date.now() + 1000);
+        setLockedUntil(result.resendLimitReached ? Date.now() + 60_000 : 0);
         setCodeSent(true);
         setCode("");
         setNow(Date.now());
-        setRetryAt(
-          Date.now() + Math.max(30, result.cooldownSeconds || 30) * 1000,
-        );
+        setRetryAt(Date.now() + (result.resendLimitReached ? 60_000 : 31_000));
         AccessibilityInfo.announceForAccessibility(c.emailCodeSent);
       } else if (step === 1) {
         const result = await travelApi.verifyCurrentEmailCode(code);
         if (!mounted.current) return;
         setOwnershipProof(result.ownershipProof);
         setStep(2);
+        setLockedUntil(0);
+        setSentUntil(0);
         setCode("");
         setCodeSent(false);
         setRetryAt(0);
@@ -165,6 +189,15 @@ export function PersonalDetailsEmailEditor({
       }
       if (apiError?.status === 429) {
         const seconds = Number(apiError.details?.retryAfterSeconds);
+        if (apiError.details?.code === "MAX_RESENDS") {
+          setLockedUntil(
+            Date.now() +
+              (Number.isFinite(seconds) && seconds > 0 ? seconds : 60) * 1000,
+          );
+          setNow(Date.now());
+          setError("");
+          return;
+        }
         setNow(Date.now());
         (action === "confirm" ? setConfirmRetryAt : setRetryAt)(
           Date.now() +
@@ -180,7 +213,9 @@ export function PersonalDetailsEmailEditor({
     } finally {
       pending.current = false;
       if (mounted.current) {
+        setSendingUntil(0);
         setBusy(false);
+        setRequesting(false);
         onBusyChange(false);
       }
     }
@@ -207,7 +242,7 @@ export function PersonalDetailsEmailEditor({
           {isCodeStep
             ? codeSent
               ? c.emailCodeSent + " " + (step === 1 ? email : requestedEmail)
-              : busy
+              : requesting
                 ? c.emailSending
                 : c.emailVerifyCurrent
             : c.emailNewHelp}
@@ -215,50 +250,74 @@ export function PersonalDetailsEmailEditor({
         {isCodeStep ? (
           <>
             <Text style={[s.label, { color: theme.text }]}>{c.emailCode}</Text>
-            <View style={[s.verificationField, { backgroundColor: theme.surface, borderColor: focused ? flowColors.blue : borderColor }]} >
-            <TextInput
-              key={String(step) + String(codeSent)}
-              autoFocus
-              accessibilityLabel={c.emailCode}
-              value={code}
-              editable={!busy}
-              autoComplete="one-time-code"
-              textContentType="oneTimeCode"
-              keyboardType="number-pad"
-              maxLength={6}
-              onFocus={() => setFocused(true)}
-              onBlur={() => setFocused(false)}
-              onChangeText={(value) => {
-                setCode(value.replace(/\D/g, "").slice(0, 6));
-                setError("");
-              }}
-              onSubmitEditing={() => void run("confirm")}
-              placeholder="000000"
-              placeholderTextColor={theme.muted}
-              style={[s.verificationInput, { color: theme.text }]}
-            />
-            <Pressable
-              disabled={submissionDisabled || busy || remaining > 0}
-              accessibilityRole="button"
-              accessibilityState={{
-                disabled: submissionDisabled || busy || remaining > 0,
-              }}
-              onPress={() => void run("request")}
-              style={s.resendHit}
+            <View
+              style={[
+                s.verificationField,
+                {
+                  backgroundColor: theme.surface,
+                  borderColor: focused ? flowColors.blue : borderColor,
+                },
+              ]}
             >
-              <Text
-                style={[
-                  s.resendLabel,
-                  { color: remaining > 0 ? theme.muted : flowColors.blue },
-                ]}
+              <TextInput
+                key={String(step) + String(codeSent)}
+                autoFocus
+                accessibilityLabel={c.emailCode}
+                value={code}
+                editable={!busy}
+                autoComplete="one-time-code"
+                textContentType="oneTimeCode"
+                keyboardType="number-pad"
+                maxLength={6}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                onChangeText={(value) => {
+                  setCode(value.replace(/\D/g, "").slice(0, 6));
+                  setError("");
+                }}
+                onSubmitEditing={() => void run("confirm")}
+                placeholder="000000"
+                placeholderTextColor={theme.muted}
+                style={[s.verificationInput, { color: theme.text }]}
+              />
+              <Pressable
+                disabled={
+                  submissionDisabled ||
+                  busy ||
+                  remaining > 0 ||
+                  lockedUntil > now
+                }
+                accessibilityRole="button"
+                accessibilityState={{
+                  disabled: submissionDisabled || busy || remaining > 0 || lockedUntil > now,
+                }}
+                onPress={() => void run("request")}
+                style={s.resendHit}
               >
-                {remaining > 0
-                  ? c.emailResendIn + " " + remaining + "s"
-                  : codeSent
-                    ? c.emailResend
-                    : c.emailSendCode}
-              </Text>
-            </Pressable>
+                <Text
+                  style={[
+                    s.resendLabel,
+                    { color: remaining > 0 ? theme.muted : flowColors.blue },
+                  ]}
+                >
+                  {requesting && sendingUntil > now
+                    ? c.emailSendingShort +
+                      " " +
+                      Math.ceil((sendingUntil - now) / 1000) +
+                      "s"
+                    : busy
+                      ? c.emailSendingShort
+                      : sentUntil > now
+                        ? c.emailSentShort
+                        : lockedUntil > now
+                          ? c.emailTryLater
+                          : remaining > 0
+                            ? c.emailResendIn + " " + remaining + "s"
+                            : codeSent
+                              ? c.emailResend
+                              : c.emailSendCode}
+                </Text>
+              </Pressable>
             </View>
           </>
         ) : (
@@ -324,6 +383,15 @@ export function PersonalDetailsEmailEditor({
         )}
       </ScrollView>
       <View style={s.footer}>
+        {lockedUntil > now && (
+          <Text
+            accessibilityRole="alert"
+            accessibilityLiveRegion="polite"
+            style={[s.note, { color: theme.text, marginBottom: 12 }]}
+          >
+            {c.emailMaxResends}
+          </Text>
+        )}
         {!!error && (
           <Text
             accessibilityRole="alert"
@@ -343,7 +411,7 @@ export function PersonalDetailsEmailEditor({
           saving={busy}
           blocked={
             submissionDisabled ||
-            (isCodeStep ? confirmRetryAt > now : remaining > 0)
+            (isCodeStep ? confirmRetryAt > now : remaining > 0 || lockedUntil > now)
           }
           onSave={() => void run(isCodeStep ? "confirm" : "request")}
         />
@@ -354,7 +422,12 @@ export function PersonalDetailsEmailEditor({
 const s = StyleSheet.create({
   layout: { flex: 1 },
   content: { padding: 20, paddingTop: 28 },
-  title: { fontFamily: appFonts.semibold, fontSize: 22, lineHeight: 29, marginBottom: 20 },
+  title: {
+    fontFamily: appFonts.semibold,
+    fontSize: 22,
+    lineHeight: 29,
+    marginBottom: 20,
+  },
   help: {
     fontFamily: appFonts.regular,
     fontSize: 14,
@@ -371,10 +444,35 @@ const s = StyleSheet.create({
     fontFamily: appFonts.regular,
     fontSize: 16,
   },
-  verificationField: { minHeight: 52, borderWidth: 1, borderRadius: 10, paddingLeft: 12, paddingRight: 6, flexDirection: "row", alignItems: "center" },
-  verificationInput: { flex: 1, minWidth: 0, paddingVertical: 12, paddingRight: 8, fontFamily: appFonts.regular, fontSize: 20, letterSpacing: 3 },
-  resendHit: { minHeight: 44, paddingHorizontal: 6, maxWidth: "48%", justifyContent: "center" },
-  resendLabel: { fontFamily: appFonts.medium, fontSize: 13, textAlign: "right" },
+  verificationField: {
+    minHeight: 52,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingLeft: 12,
+    paddingRight: 6,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  verificationInput: {
+    flex: 1,
+    minWidth: 0,
+    paddingVertical: 12,
+    paddingRight: 8,
+    fontFamily: appFonts.regular,
+    fontSize: 20,
+    letterSpacing: 3,
+  },
+  resendHit: {
+    minHeight: 44,
+    paddingHorizontal: 6,
+    maxWidth: "48%",
+    justifyContent: "center",
+  },
+  resendLabel: {
+    fontFamily: appFonts.medium,
+    fontSize: 13,
+    textAlign: "right",
+  },
   note: {
     fontFamily: appFonts.regular,
     fontSize: 13,

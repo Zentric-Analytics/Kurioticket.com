@@ -1,8 +1,6 @@
-import { createHash, randomBytes, randomInt } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
-import { getBaseUrl } from "@/lib/env";
-import { EmailVerificationCooldownError } from "./emailVerificationService";
-import { sendTransactionalEmail, verificationCodeEmail } from "./emailService";
+import { sendMobileEmailCode } from "./mobileEmailCodeDelivery";
 
 export type EmailOwnershipContext = {
   userId: string;
@@ -10,7 +8,6 @@ export type EmailOwnershipContext = {
   sessionKey: string;
 };
 const ttl = 15 * 60_000;
-const cooldown = 60_000;
 const hash = (value: string) =>
   createHash("sha256").update(value).digest("hex");
 export function ownershipIdentifier(
@@ -27,43 +24,13 @@ export async function sendCurrentEmailCode(
   context: EmailOwnershipContext,
   name: string | null,
 ) {
-  const identifier = ownershipIdentifier(context, "code");
-  const db = getPrisma();
-  const existing = await db.verificationToken.findFirst({
-    where: { identifier },
-    orderBy: { expires: "desc" },
+  return sendMobileEmailCode({
+    userId: context.userId,
+    identifier: ownershipIdentifier(context, "code"),
+    purpose: "current",
+    email: context.email,
+    name,
   });
-  const remaining = existing
-    ? existing.expires.getTime() - ttl + cooldown - Date.now()
-    : 0;
-  if (remaining > 0)
-    throw new EmailVerificationCooldownError(Math.ceil(remaining / 1000));
-  const code = randomInt(100000, 1000000).toString();
-  const token = ownershipToken(identifier, code);
-  await db.$transaction(async (tx) => {
-    await tx.verificationToken.deleteMany({ where: { identifier } });
-    await tx.verificationToken.create({
-      data: { identifier, token, expires: new Date(Date.now() + ttl) },
-    });
-  });
-  try {
-    await sendTransactionalEmail({
-      to: context.email,
-      subject: "Verify your current Kurioticket email address",
-      html: verificationCodeEmail({
-        code,
-        name,
-        expiresInMinutes: 15,
-        verifyUrl: getBaseUrl() + "/personal-information",
-      }),
-      requireConfigured: true,
-      idempotencyKey: identifier + ":" + token.slice(0, 16),
-    });
-  } catch (error) {
-    await db.verificationToken.deleteMany({ where: { identifier, token } });
-    throw error;
-  }
-  return { cooldownSeconds: 60 };
 }
 
 export async function verifyCurrentEmailCode(

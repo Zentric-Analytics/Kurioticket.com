@@ -1,3 +1,4 @@
+import { sendMobileEmailCode } from "@/services/mobileEmailCodeDelivery";
 import { createHash } from "node:crypto";
 import {
   sendCurrentEmailCode,
@@ -10,7 +11,7 @@ import { getPrisma } from "@/lib/prisma";
 import { checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import {
   claimAccountEmailChangeCode,
-  sendAccountEmailChangeCode,
+  getAccountEmailChangeIdentifier,
   verifyAccountEmailChangeCode,
 } from "@/services/emailVerificationService";
 import { recordAccountEventSafely } from "@/services/accountNotificationService";
@@ -43,13 +44,20 @@ export const mobileEmailChangeDependencies: EmailChangeDependencies = {
       request,
       email,
       action: `account-email-change-${mode}`,
-      limit: mode.endsWith("request") ? 30 : 10,
+      limit: mode.endsWith("request") ? 120 : 10,
       windowMs: 15 * 60_000,
     }),
   sendCurrentCode: sendCurrentEmailCode,
   verifyCurrentCode: verifyCurrentEmailCode,
   hasOwnershipProof: hasEmailOwnershipProof,
-  sendCode: sendAccountEmailChangeCode,
+  sendCode: (input) =>
+    sendMobileEmailCode({
+      userId: input.userId,
+      identifier: getAccountEmailChangeIdentifier(input.userId, input.newEmail),
+      purpose: "new",
+      email: input.newEmail,
+      name: input.name,
+    }),
   verifyCode: verifyAccountEmailChangeCode,
   commit: async (input) => {
     try {

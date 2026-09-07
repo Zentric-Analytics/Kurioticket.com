@@ -1,3 +1,4 @@
+import { MobileEmailResendError } from "@/services/mobileEmailResendPolicy";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { emailSchema } from "@/lib/validation";
@@ -27,7 +28,7 @@ export type EmailChangeDependencies = {
   sendCurrentCode: (
     context: OwnershipContext,
     name: string | null,
-  ) => Promise<{ cooldownSeconds: number }>;
+  ) => Promise<{ cooldownSeconds: number; resendLimitReached?: boolean }>;
   verifyCurrentCode: (
     context: OwnershipContext,
     code: string,
@@ -41,7 +42,7 @@ export type EmailChangeDependencies = {
     newEmail: string;
     name: string | null;
     enforceCooldown: true;
-  }) => Promise<{ cooldownSeconds: number }>;
+  }) => Promise<{ cooldownSeconds: number; resendLimitReached?: boolean }>;
   verifyCode: (input: {
     userId: string;
     newEmail: string;
@@ -198,7 +199,7 @@ export function createMobileEmailChangeHandler(
           name: user.name,
           enforceCooldown: true,
         });
-        return NextResponse.json({ cooldownSeconds: result.cooldownSeconds });
+        return NextResponse.json(result);
       }
       const code = (parsed.data as z.infer<typeof schemas.confirm>).code;
       const verification = await dependencies.verifyCode({
@@ -230,6 +231,15 @@ export function createMobileEmailChangeHandler(
         );
       return NextResponse.json({ email: newEmail, userId: user.id });
     } catch (error) {
+      if (error instanceof MobileEmailResendError)
+        return failure(
+          429,
+          error.maximumReached ? "MAX_RESENDS" : "RATE_LIMITED",
+          error.maximumReached
+            ? "Maximum resend attempts reached. Try again in one minute."
+            : "Please wait before requesting another code.",
+          error.retryAfterSeconds,
+        );
       if (
         error instanceof AuthRateLimitError ||
         error instanceof EmailVerificationCooldownError
