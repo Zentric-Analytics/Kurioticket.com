@@ -22,6 +22,8 @@ test("Hotel rail keeps Filter Sort Price Stars Facilities Room & bed without Fli
   assert.match(rail, /hotelQuickFilter === "roomTypes"/);
   assert.match(rail, /openHotelQuickFilter\("roomTypes"\)/);
   assert.match(rail, /hotelOptions\.roomTypes\.length >= 2/);
+  assert.match(rail, /<ScrollView horizontal[\s\S]*?showsHorizontalScrollIndicator=\{false\}[\s\S]*?contentContainerStyle=\{s0\.hotelFilterContent\}>/);
+  assert.doesNotMatch(rail, /contentOffset|scrollTo\(|negativeMargin|translateX|position: "absolute"/);
   assert.doesNotMatch(rail, /label="Amenities"|openHotelQuickFilter\("amenities"\)/);
   assert.match(rail, /hotelSort === defaultHotelSort \? "Sort" : hotelSortLabel\(hotelSort\)/);
   assert.doesNotMatch(rail, /Cheapest|Airlines|Stops|Airports/);
@@ -30,10 +32,10 @@ test("Hotel rail keeps Filter Sort Price Stars Facilities Room & bed without Fli
 test("Hotel controls use compact capsules inside accessible touch targets like Flight", () => {
   const styles = screen.slice(screen.indexOf("const s0 = StyleSheet.create"));
   assert.match(styles, /hotelFilterRail: \{ height: 44, flexGrow: 0 \}/);
-  assert.match(styles, /hotelFilterContent: \{ paddingLeft: 8, paddingRight: 16, gap: 6, alignItems: "center", flexWrap: "nowrap" \}/);
+  assert.match(styles, /hotelFilterContent: \{ paddingLeft: 8, paddingRight: 16, gap: 4, alignItems: "center", flexWrap: "nowrap" \}/);
   assert.doesNotMatch(block(styles, "hotelFilterContent", "hotelFilterSectionHeader"), /paddingBottom/);
   assert.match(styles, /hotelShortcutTouchTarget: \{ minWidth: 44, minHeight: 44, justifyContent: "center" \}/);
-  assert.match(styles, /hotelShortcut: \{ height: 36,[^}]*gap: 4,[^}]*borderWidth: 1, borderRadius: 9, paddingHorizontal: 10 \}/);
+  assert.match(styles, /hotelShortcut: \{ height: 36,[^}]*gap: 4,[^}]*borderWidth: 1, borderRadius: 9, paddingHorizontal: 8 \}/);
   const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
   assert.match(component, /<Pressable[\s\S]*?style=\{s0\.hotelShortcutTouchTarget\}[\s\S]*?\{\(\{ pressed \}\) => <View style=\{\[[\s\S]*?s0\.hotelShortcut,/);
   assert.match(styles, /hotelShortcutLabel: \{ fontSize: 13, lineHeight: 16, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
