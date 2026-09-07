@@ -6,7 +6,7 @@ import type { RouteValue } from "../flow/flightSearchModel";
 import { useFlowTheme } from "../flow/flowStyles";
 import { useRetainedPickerContext } from "../flow/retainedPickerContext";
 import { useSearchPickerMotion } from "../flow/searchPickerPresentation";
-import { FLIGHT_FLOATING_SHEET_BOTTOM_GAP, FLIGHT_QUICK_SHEET_HORIZONTAL_INSET } from "./FlightResultsSheetShell";
+import { FLIGHT_FLOATING_SHEET_MIN_BOTTOM_GAP, FLIGHT_QUICK_SHEET_HORIZONTAL_INSET } from "./FlightResultsSheetShell";
 
 type Props = {
   visible: boolean;
@@ -18,8 +18,7 @@ type Props = {
 export function FlightEditSearchModal({ visible, params, onClose, onSubmit }: Props) {
   const ft = useFlowTheme();
   const { bottom: bottomSafeAreaInset } = useSafeAreaInsets();
-  const floatingBottomGap = FLIGHT_FLOATING_SHEET_BOTTOM_GAP;
-  const internalBottomPadding = Math.max(20, bottomSafeAreaInset - floatingBottomGap);
+  const floatingBottomGap = Math.max(bottomSafeAreaInset, FLIGHT_FLOATING_SHEET_MIN_BOTTOM_GAP);
   const motion = useSearchPickerMotion(visible, { additionalTravelDistance: floatingBottomGap });
   const presentedParams = useRetainedPickerContext(visible, params);
   if (!motion.rendered) return null;
@@ -37,7 +36,7 @@ export function FlightEditSearchModal({ visible, params, onClose, onSubmit }: Pr
                 <X accessible={false} size={23} color={ft.colors.icon} />
               </Pressable>
             </View>
-            <ScrollView style={{ backgroundColor: ft.colors.page }} contentContainerStyle={[styles.content, { paddingBottom: internalBottomPadding }]} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}>
+            <ScrollView style={{ backgroundColor: ft.colors.page }} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}>
               <FlightSearchPanel embedded params={presentedParams} onValidatedSubmit={onSubmit} editAppearance resultsModalAppearance />
             </ScrollView>
           </Animated.View>

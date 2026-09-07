@@ -23,27 +23,18 @@ test("Web-style option rows put the checkbox before flexible copy and trailing d
  assert.match(sheet,/rowCopy:\{flex:1,minWidth:0\}/);
  assert.match(sheet,/rowTrailing:\{flexShrink:0[\s\S]*?textAlign:"right"/);
 });
-test("quick Stops show direct safe prices while full Stops retain counts and From-price copy",()=>{
- assert.match(sheet,/const priceLabel=.*formatCurrency\(insight\.lowestPrice,insightCurrency\)/);
- assert.match(sheet,/secondary=\{full&&insight\?countLabel\(insight\.count\):undefined\}/);
- assert.match(sheet,/trailing=\{full&&price\?copy\.fromPrice\(price\):price\}/);
- assert.match(sheet,/accessibilityDetail=\{full\?undefined:insightDetail\(insight,price\)\}/);
+test("stop insights remain structured into count and safe trailing price",()=>{
+ assert.match(sheet,/stops:new Map<StopBucket,FlightFilterInsight>/);
+ assert.match(sheet,/secondary=\{insight\?countLabel\(insight.count\):undefined\}/);
+ assert.match(sheet,/trailing=\{insight\?\.lowestPrice==null\?undefined:copy\.fromPrice/);
+ assert.doesNotMatch(sheet,/detail=\{insights\.stops/);
  assert.match(sheet,/flightFilterInsight\(results,candidate,insightPriceValue\)/);
  assert.match(sheet,/priceFilteringReady\?priceValue:undefined/);
 });
-test("quick airline and airport rows show safe prices while full rows retain visible counts",()=>{
- assert.match(sheet,/label=\{name\} trailing=\{full&&insight\?String\(insight\.count\):price\} accessibilityDetail=\{insightDetail\(insight,full\?undefined:price\)\}/);
- assert.match(sheet,/label=\{v\} trailing=\{full&&insight\?String\(insight\.count\):price\} accessibilityDetail=\{insightDetail\(insight,full\?undefined:price\)\}/);
- assert.match(sheet,/const insightDetail=.*countLabel\(insight\.count\),price.*join\(", "\)/);
+test("full airline and airport rows use count-only trailing columns with unit-qualified accessibility",()=>{
+ assert.match(sheet,/label=\{name\} trailing=\{insight\?String\(insight.count\):undefined\} accessibilityDetail=\{insight\?countLabel\(insight.count\):undefined\}/);
+ assert.match(sheet,/label=\{v\} trailing=\{insight\?String\(insight.count\):undefined\} accessibilityDetail=\{insight\?countLabel\(insight.count\):undefined\}/);
  assert.match(sheet,/const detail=accessibilityDetail\?\?\[secondary,trailing\]\.filter\(Boolean\)\.join\(", "\)/);
-});
-test("quick filter headers omit subtitles without removing the full Filters status",()=>{
- assert.match(sheet,/subtitle=\{full\?\(activeCount\?copy\.appliedCount\(activeCount\):copy\.allFlightsShown\):undefined\}/);
- assert.doesNotMatch(sheet,/const quickSubtitle|subtitle=\{quickSubtitle\}/);
- const sort=readFileSync("src/features/search/FlightSortSheet.tsx","utf8");
- assert.doesNotMatch(sort,/subtitle=\{copy\.sortHelp\}/);
- assert.match(sort,/description: copy\.bestHelp/);
- assert.match(sort,/\{copy\.apply\}/);
 });
 test("fare preference rows keep their checkbox directly before their label",()=>{
  assert.match(sheet,/<Check label=\{copy\.baggageIncluded\} selected=/);

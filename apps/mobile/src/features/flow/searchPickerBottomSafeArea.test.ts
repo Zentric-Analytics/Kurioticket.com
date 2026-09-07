@@ -51,14 +51,13 @@ test("top safe-area positioning remains on full-height search overlays", () => {
   assert.match(editSearchSource, /content: \{[^}]*paddingBottom: 20/);
 });
 
-test("Flight Edit Search splits its safe area between a fixed external gap and internal clearance", () => {
+test("Flight Edit Search keeps its bottom safe area outside the floating sheet", () => {
   assert.match(editSearchSource, /onLayout=\{motion\.onSheetLayout\}/);
   assert.match(
     editSearchSource,
     /backgroundColor: ft\.colors\.surface, marginBottom: floatingBottomGap/,
   );
-  assert.match(editSearchSource, /const floatingBottomGap = FLIGHT_FLOATING_SHEET_BOTTOM_GAP/);
-  assert.match(editSearchSource, /const internalBottomPadding = Math\.max\(20, bottomSafeAreaInset - floatingBottomGap\)/);
+  assert.match(editSearchSource, /Math\.max\(bottomSafeAreaInset, FLIGHT_FLOATING_SHEET_MIN_BOTTOM_GAP\)/);
   assert.doesNotMatch(editSearchSource, /paddingBottom: motion\.bottomSafeAreaInset/);
 });
 
