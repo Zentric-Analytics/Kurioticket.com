@@ -52,10 +52,22 @@ test("only the results modal opts into theme-aware structured flight cards", () 
   assert.equal(modal.match(/resultsModalAppearance/g)?.length, 1);
   assert.doesNotMatch(dedicatedEdit, /resultsModalAppearance/);
   assert.doesNotMatch(homepage, /resultsModalAppearance/);
-  assert.match(modal, /style=\{\{ backgroundColor: ft\.colors\.page \}\}/);
-  assert.match(panel, /backgroundColor: resultsModalAppearance \? ft\.colors\.page : ft\.colors\.surface/);
+  assert.match(modal, /style=\{\{ backgroundColor: ft\.colors\.surface \}\}/);
+  assert.match(panel, /backgroundColor: ft\.colors\.surface/);
   assert.match(panel, /resultsModalCard:\{borderWidth:1,borderRadius:13,overflow:"hidden",marginTop:10\}/);
   assert.match(panel, /backgroundColor: ft\.colors\.card, borderColor: ft\.colors\.border/);
+});
+
+test("results edit modal blends its surface and locally refines its header", () => {
+  const modal = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
+  const flowStyles = readFileSync("src/features/flow/flowStyles.ts", "utf8");
+  assert.match(modal, /style=\{styles\.header\}/);
+  assert.doesNotMatch(modal, /borderBottomColor: ft\.colors\.border|header: \{[^}]*borderBottomWidth/);
+  assert.match(modal, /sheet, \{ backgroundColor: ft\.colors\.surface/);
+  assert.match(modal, /style=\{\{ backgroundColor: ft\.colors\.surface \}\}/);
+  assert.match(modal, /title: \{[^}]*fontWeight: "600"/);
+  assert.match(flowStyles, /title: \{[^}]*fontWeight: "800"/);
+  assert.ok(modal.indexOf("Change your search") < modal.indexOf('accessibilityLabel="Close edit search"', modal.indexOf("Change your search")));
 });
 
 test("results modal cards preserve the flight form hierarchy and controls", () => {

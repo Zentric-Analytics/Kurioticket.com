@@ -84,6 +84,7 @@ export function Segments<T extends string>({
   options,
   onChange,
   appearance = "default",
+  showBaseline = true,
 }: {
   value: T;
   options: readonly {
@@ -95,12 +96,13 @@ export function Segments<T extends string>({
   }[];
   onChange: (value: T) => void;
   appearance?: "default" | "filled";
+  showBaseline?: boolean;
 }) {
   const ft = useFlowTheme();
   return (
     <View
       accessibilityRole="tablist"
-      style={[styles.segments, { borderBottomColor: ft.colors.border }]}
+      style={[styles.segments, !showBaseline && styles.segmentsWithoutBaseline, { borderBottomColor: ft.colors.border }]}
     >
       {options.map((item) => {
         const selected = !item.disabled && value === item.value;
@@ -376,6 +378,7 @@ const styles = StyleSheet.create({
     borderBottomColor: flowColors.border,
     borderBottomWidth: 1,
   },
+  segmentsWithoutBaseline: { borderBottomWidth: 0 },
   segment: {
     flex: 1,
     minHeight: 50,

@@ -110,7 +110,8 @@ test("the active Flight results journey keeps its semantic surface and text hier
   assert.match(read("src/theme/AppTheme.tsx"), /priceAlertAccent:/);
   const sortSheet = read("src/features/search/FlightSortSheet.tsx");
   const shell = read("src/features/search/FlightResultsSheetShell.tsx");
-  assert.match(shell, /backgroundColor: theme\.surface/);
+  assert.match(shell, /backgroundColor: flightQuickHeader \? theme\.background : theme\.surface/);
+  assert.match(shell, /backgroundColor: insetFlightQuickSheet \? theme\.background : theme\.surface/);
   assert.match(shell, /backgroundColor: theme\.background/);
   assert.match(sortSheet, /color: theme\.textPrimary/);
   assert.match(sortSheet, /color: theme\.textSecondary/);
@@ -140,7 +141,7 @@ test("Flight filters, slider, and inline edit sheet have no implicit light text 
   assert.match(slider, /borderColor: theme\.surface/);
   assert.match(edit, /useFlowTheme/);
   assert.match(edit, /backgroundColor: ft\.colors\.surface/);
-  assert.match(edit, /borderBottomColor: ft\.colors\.border/);
+  assert.doesNotMatch(edit, /borderBottomColor: ft\.colors\.border/);
   assert.match(edit, /color=\{ft\.colors\.icon\}/);
 });
 
