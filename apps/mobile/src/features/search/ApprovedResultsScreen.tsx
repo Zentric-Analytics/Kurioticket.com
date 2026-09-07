@@ -1153,10 +1153,18 @@ function HotelResultsHeader({
   onEdit: () => void;
 }) {
   const { theme } = useAppTheme();
+  const insets = useSafeAreaInsets();
   return (
     <View
       accessibilityLabel="Hotel search summary"
-      style={[s0.hotelHeader, { backgroundColor: theme.background }]}
+      style={[
+        s0.hotelHeader,
+        {
+          backgroundColor: theme.background,
+          paddingLeft: Math.max(insets.left + 6, 6),
+          paddingRight: Math.max(insets.right + 10, 10),
+        },
+      ]}
     >
       <View style={s0.hotelHeaderMainRow}>
         <View style={s0.hotelHeaderSide}>
@@ -1792,16 +1800,16 @@ const s0 = StyleSheet.create({
   flightRouteSummaryText: { fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
   flightRouteSummarySecondary: { marginTop: 3, fontSize: 10.5, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
   flightRouteSummaryEdit: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  hotelHeader: { paddingTop: 12, paddingHorizontal: 12, paddingBottom: 12 },
-  hotelHeaderMainRow: { width: "100%", flexDirection: "row", alignItems: "center" },
-  hotelHeaderSide: { width: 52, flexShrink: 0 },
+  hotelHeader: { paddingTop: 12, paddingBottom: 8 },
+  hotelHeaderMainRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
+  hotelHeaderSide: { width: 44, flexShrink: 0 },
   hotelHeaderBack: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   hotelHeaderControlPressed: { opacity: 0.55 },
-  hotelSummaryCard: { flex: 1, minWidth: 0, minHeight: 64, borderWidth: 1, borderRadius: 13, paddingLeft: 16, flexDirection: "row", alignItems: "center", overflow: "hidden" },
+  hotelSummaryCard: { flex: 1, minWidth: 0, minHeight: 62, borderWidth: 1, borderRadius: 13, flexDirection: "row", alignItems: "center", overflow: "hidden" },
   hotelSummaryCardPressed: { opacity: 0.76 },
-  hotelSummaryText: { flex: 1, minWidth: 0, justifyContent: "center" },
-  hotelSummaryDestination: { fontSize: 16, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
-  hotelSummarySecondary: { marginTop: 3, fontSize: 12.5, lineHeight: 17, fontWeight: "600", fontFamily: appFonts.semibold },
+  hotelSummaryText: { flex: 1, minWidth: 0, justifyContent: "center", paddingLeft: 14, paddingVertical: 9 },
+  hotelSummaryDestination: { fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
+  hotelSummarySecondary: { marginTop: 3, fontSize: 10.5, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
   hotelSummaryEditSlot: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   hotelBackToTop:{position:"absolute",right:16,width:44,height:44,borderRadius:22,borderWidth:1,alignItems:"center",justifyContent:"center",zIndex:19,elevation:4},
   filterRail: { height: 44, flexGrow: 0 },

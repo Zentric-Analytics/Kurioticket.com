@@ -18,7 +18,7 @@ test("Cars Results replaces branded chrome with two Hotel-style header targets",
   assert.equal((carHeader.match(/<Pressable/g) ?? []).length, 2);
 });
 
-test("Cars header copies the current Hotel header geometry", () => {
+test("Cars header retains its existing geometry independently of Hotel presentation", () => {
   for (const contract of [
     /carHeader:\{paddingTop:12,paddingHorizontal:12,paddingBottom:12\}/,
     /carHeaderMainRow:\{width:"100%",flexDirection:"row",alignItems:"center"\}/,
@@ -27,12 +27,9 @@ test("Cars header copies the current Hotel header geometry", () => {
     /carSummaryCard:\{flex:1,minWidth:0,minHeight:64,borderWidth:1,borderRadius:13,paddingLeft:16,flexDirection:"row",alignItems:"center",overflow:"hidden"\}/,
     /carSummaryEditSlot:\{width:44,height:44,flexShrink:0,alignItems:"center",justifyContent:"center"\}/,
   ]) assert.match(cars, contract);
-  for (const hotelStyle of ["paddingTop: 12", "paddingHorizontal: 12", "paddingBottom: 12", "width: 52", "minHeight: 64", "borderRadius: 13"]) {
-    assert.ok(hotels.includes(hotelStyle), `Hotel reference no longer contains ${hotelStyle}`);
-  }
 });
 
-test("Cars summary typography and pencil match Hotel Results", () => {
+test("Cars summary retains its existing typography and pencil", () => {
   assert.match(cars, /carSummaryDestination:\{fontSize:16,lineHeight:20,fontWeight:"700",fontFamily:appFonts\.bold\}/);
   assert.match(cars, /carSummarySecondary:\{marginTop:3,fontSize:12\.5,lineHeight:17,fontWeight:"600",fontFamily:appFonts\.semibold\}/);
   assert.equal((carHeader.match(/numberOfLines=\{1\} ellipsizeMode="tail"/g) ?? []).length, 2);
