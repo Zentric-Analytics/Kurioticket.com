@@ -733,12 +733,31 @@ function HotelDetail({
       >
         <View style={d.hotelIdentity}>
           <View style={d.hotelIdentityTopRow}>
-            <Text
-              accessibilityRole="header"
-              style={[d.hotelName, width <= 430 && d.hotelNamePhoneFit, { color: hotelIdentityTitleColor }]}
-            >
-              {result.name}
-            </Text>
+            <View style={d.hotelIdentityCopy}>
+              <Text
+                accessibilityRole="header"
+                style={[d.hotelName, width <= 430 && d.hotelNamePhoneFit, { color: hotelIdentityTitleColor }]}
+              >
+                {result.name}
+              </Text>
+              <View style={d.hotelIdentityMeta}>
+                {stay.dates ? <Fact icon={CalendarDays}>{stay.dates}</Fact> : null}
+                <Fact icon={Users}>{stay.occupancy}</Fact>
+                <Fact icon={MapPin}>{address}</Fact>
+                {classification ? (
+                  <View
+                    accessible
+                    accessibilityLabel={`${classification} star hotel`}
+                    style={d.hotelFactRow}
+                  >
+                    <Award accessible={false} size={16} color={hotelIdentityClassificationIconColor} />
+                    <Text accessible={false} style={d.hotelClassificationStars}>
+                      {"★".repeat(classification)}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            </View>
             <View style={d.hotelHeaderActions}>
               <Pressable
                 accessibilityRole="button"
@@ -753,23 +772,6 @@ function HotelDetail({
                 <FlowIcon name="share" size={20} color={hotelIdentityActionColor} />
               </Pressable>
             </View>
-          </View>
-          <View style={d.hotelIdentityMeta}>
-              {stay.dates ? <Fact icon={CalendarDays}>{stay.dates}</Fact> : null}
-              <Fact icon={Users}>{stay.occupancy}</Fact>
-              <Fact icon={MapPin}>{address}</Fact>
-              {classification ? (
-                <View
-                  accessible
-                  accessibilityLabel={`${classification} star hotel`}
-                  style={d.hotelFactRow}
-                >
-                  <Award accessible={false} size={16} color={hotelIdentityClassificationIconColor} />
-                  <Text accessible={false} style={d.hotelClassificationStars}>
-                    {"★".repeat(classification)}
-                  </Text>
-                </View>
-              ) : null}
           </View>
         </View>
         <NativeHotelGallery
@@ -1463,6 +1465,7 @@ const d = StyleSheet.create({
   hotelBackHeader: { minHeight: 48, paddingHorizontal: 16, justifyContent: "center", borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: ui.border, backgroundColor: "white" },
   hotelIdentity: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 16 },
   hotelIdentityTopRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  hotelIdentityCopy: { flex: 1, minWidth: 0 },
   hotelIdentityMeta: { marginTop: 8, gap: 4 },
   hotelBackToResultsText: { fontSize: 14, lineHeight: 19, fontWeight: "700" },
   hotelHeaderActions: { flexDirection: "row", flexShrink: 0, gap: 0 },
@@ -1549,7 +1552,7 @@ const d = StyleSheet.create({
   hotelSummaryCompact: { flexDirection: "column" },
   hotelPriceSummary: { alignItems: "flex-end", flexShrink: 0 },
   hotelPriceSummaryCompact: { alignItems: "flex-start" },
-  hotelName: { flex: 1, minWidth: 0, fontSize: 22, lineHeight: 28, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.55, color: ui.navy },
+  hotelName: { minWidth: 0, fontSize: 22, lineHeight: 28, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.55, color: ui.navy },
   hotelNamePhoneFit: { letterSpacing: -0.8 },
   stars: { color: "#FFB800", fontSize: 15, marginVertical: 7 },
   score: { backgroundColor: ui.blue, color: "white", fontWeight: "900" },
