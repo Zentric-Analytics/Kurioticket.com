@@ -569,13 +569,18 @@ export function CarsResultsClient({
     trimmedDropoffLocation,
     t,
   );
+  // Results chrome is intentionally compact. Keep the complete curated labels
+  // in state and in every search value, and only select their primary display
+  // line for the summary surfaces below.
+  const pickupSummaryDisplay = getLocationFieldDisplay(pickupLocationLabel).primary;
+  const returnSummaryDisplay = getLocationFieldDisplay(dropoffLocationLabel).primary;
   const showCompactSearchSummary =
     isSearchBarCompact && desktopStickySearchSection === null;
   const desktopStickySearchOpen = desktopStickySearchSection !== null;
-  const pickupSummary = pickupLocationLabel || t("carsResults.pickupLocation");
+  const pickupSummary = pickupSummaryDisplay || t("carsResults.pickupLocation");
   const returnSummary =
-    dropoffLocationLabel ||
-    pickupLocationLabel ||
+    returnSummaryDisplay ||
+    pickupSummaryDisplay ||
     t("carsResults.returnLocation");
   const rentalDateSummary = pickupDate
     ? dropoffDate

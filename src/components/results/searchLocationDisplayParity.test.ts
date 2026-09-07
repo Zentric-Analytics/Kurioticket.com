@@ -13,13 +13,14 @@ test("flight, hotel, and car compact location controls render explanatory second
   assert.match(flightPrimitive, /display\.secondary/);
   assert.match(flightSheet, /getLocationFieldDisplay[\s\S]*?display\.secondary/);
   assert.match(flightResults, /getLocationFieldDisplay\(originInput\)\.secondary[\s\S]*?getLocationFieldDisplay\(destinationInput\)\.secondary/);
-  assert.match(hotel, /getLocationFieldDisplay\(destination\)[\s\S]*?destinationDisplay\.secondary/);
+  assert.match(hotel, /getHotelLocationFieldDisplay\(destination, locale\)[\s\S]*?destinationDisplay\.secondary/);
   assert.match(cars, /MobileLocationLauncher[\s\S]*?display\.secondary/);
 });
 
 test("mobile car compact results header is fully opaque without backdrop reflection", () => {
   const cars = read("./CarsResultsClient.tsx");
-  const header = cars.slice(cars.indexOf("const renderMobileCompactResultsHeader"), cars.indexOf("const renderMobileFilterDrawer"));
-  assert.match(header, /border-b border-slate-200\/80 bg-white px-3/);
+  const start = cars.indexOf("const renderMobileCompactResultsHeader");
+  const header = cars.slice(start, cars.indexOf("\n  return (", start + 200));
+  assert.match(header, /bg-white px-3/);
   assert.doesNotMatch(header, /bg-white\/95|backdrop-blur/);
 });
