@@ -28,7 +28,7 @@ test("Cancel restores authoritative saved values", () => {
   assert.match(screen, /setEditing\(false\)/);
 });
 test("Save is disabled until dirty and while saving", () =>
-  assert.match(screen, /disabled=\{!dirty\s*\|\|\s*saving\s*\|\|\s*emailBusy\}/));
+  assert.match(screen, /disabled=\{!dirty\s*\|\|\s*saving\s*\|\|\s*emailBusy\s*\|\|\s*emailDirty\}/));
 test("duplicate submission is prevented and failed save retains draft", () => {
   assert.match(screen, /submitting\.current/);
   assert.doesNotMatch(screen, /catch\{[^}]*setDraft/s);

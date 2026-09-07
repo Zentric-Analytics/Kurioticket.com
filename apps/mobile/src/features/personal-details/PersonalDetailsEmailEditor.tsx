@@ -9,13 +9,11 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { router } from "expo-router";
 import { travelApi, TravelApiError } from "../../api/travelApi";
 import { updateStoredSessionEmail } from "../../storage/sessionStorage";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
-import { signInHref } from "../auth/signInIntent";
 import { flowColors } from "../flow/flowStyles";
 import { personalDetailsCopy } from "./translations";
 import { PersonalDetailsSaveButton } from "./PersonalDetailsSaveButton";
@@ -31,12 +29,14 @@ export function PersonalDetailsEmailEditor({
   onDirtyChange,
   onBusyChange,
   onCancel,
+  onSessionExpired,
 }: {
   email: string;
   onSaved: (email: string) => void;
   onDirtyChange: (dirty: boolean) => void;
   onBusyChange: (busy: boolean) => void;
   onCancel: () => void;
+  onSessionExpired: () => void;
 }) {
   const { theme } = useAppTheme();
   const { locale } = useMobileLocalization();
@@ -190,7 +190,7 @@ export function PersonalDetailsEmailEditor({
     } catch (failure) {
       if (!mounted.current) return;
       if (failure instanceof TravelApiError && failure.status === 401) {
-        router.replace(signInHref("/personal-information"));
+        onSessionExpired();
         return;
       }
       const apiError = failure instanceof TravelApiError ? failure : null;

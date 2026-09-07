@@ -843,6 +843,7 @@ export function PersonalDetailsScreen() {
   const [emailOpen, setEmailOpen] = useState(false);
   const [emailDirty, setEmailDirty] = useState(false);
   const [emailBusy, setEmailBusy] = useState(false);
+  const sessionExpired = useRef(false);
   const { theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -980,6 +981,7 @@ export function PersonalDetailsScreen() {
   useEffect(
     () =>
       navigation.addListener("beforeRemove", (event) => {
+        if (sessionExpired.current) return;
         if (emailBusy) { event.preventDefault(); return; }
         if (!editing || (!dirty && !emailDirty)) return;
         event.preventDefault();
@@ -1049,7 +1051,7 @@ export function PersonalDetailsScreen() {
     return true;
   };
   const save = async () => {
-    if (!saved || !dirty || submitting.current) return;
+    if (!saved || !dirty || submitting.current || emailBusy || emailDirty) return;
     if ((draft.fullName || "").trim().length > 120) {
       setError(c.invalidName);
       return;
@@ -1115,6 +1117,12 @@ export function PersonalDetailsScreen() {
     setError("");
     dismissSuccess();
     setEditing(true);
+  };
+  const handleEmailSessionExpired = () => {
+    // A ref bypasses the listener synchronously, before React commits state.
+    sessionExpired.current = true;
+    setEmailBusy(false);
+    router.replace(signInHref("/personal-information"));
   };
   const closeEmail = () => {
     if (emailBusy) return;
@@ -1342,7 +1350,7 @@ export function PersonalDetailsScreen() {
                     <Text style={s.changeEmailText}>{c.changeEmail}</Text>
                   </Pressable>
                   )}
-                  {emailOpen && <PersonalDetailsEmailEditor onCancel={closeEmail} email={email} onDirtyChange={setEmailDirty} onBusyChange={setEmailBusy} onSaved={(nextEmail) => { setEmail(nextEmail); setEmailDirty(false); setEmailOpen(false); }} />}
+                  {emailOpen && <PersonalDetailsEmailEditor onSessionExpired={handleEmailSessionExpired} onCancel={closeEmail} email={email} onDirtyChange={setEmailDirty} onBusyChange={setEmailBusy} onSaved={(nextEmail) => { setEmail(nextEmail); setEmailDirty(false); setEmailOpen(false); }} />}
                 </View>
                 <View>
                   <Text style={[s.label, { color: theme.muted }]}>
@@ -1476,12 +1484,12 @@ export function PersonalDetailsScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={saving ? c.saving : c.save}
                     accessibilityState={{
-                      disabled: !dirty || saving || emailBusy,
+                      disabled: !dirty || saving || emailBusy || emailDirty,
                       busy: saving,
                     }}
-                    disabled={!dirty || saving || emailBusy}
+                    disabled={!dirty || saving || emailBusy || emailDirty}
                     onPress={() => void save()}
-                    style={[s.primary, (!dirty || saving) && s.disabled]}
+                    style={[s.primary, (!dirty || saving || emailBusy || emailDirty) && s.disabled]}
                   >
                     <Text style={s.primaryText}>
                       {saving ? c.saving : c.save}

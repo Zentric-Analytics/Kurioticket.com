@@ -27,3 +27,21 @@ test("email verification expands in the form with a right-aligned app-font actio
  assert.match(screen, /changeEmailText: \{[^}]*fontFamily: appFonts.semibold/);
  assert.doesNotMatch(editor, /ScrollView|layout: \{ flex: 1/);
 });
+
+test("email session expiry bypasses navigation guards synchronously", () => {
+ const screen = readFileSync("src/features/personal-details/PersonalDetailsScreen.tsx", "utf8");
+ assert.match(editor, /failure.status === 401\) \{\s*onSessionExpired\(\);\s*return;/);
+ assert.match(screen, /onSessionExpired=\{handleEmailSessionExpired\}/);
+ const redirect = screen.slice(screen.indexOf("const handleEmailSessionExpired"), screen.indexOf("const closeEmail"));
+ assert.ok(redirect.indexOf("sessionExpired.current = true") < redirect.indexOf("router.replace"));
+ const guard = screen.slice(screen.indexOf('navigation.addListener("beforeRemove"'));
+ assert.ok(guard.indexOf("if (sessionExpired.current) return") < guard.indexOf("if (emailBusy)"));
+});
+
+test("profile Save preserves an idle unfinished email change", () => {
+ const screen = readFileSync("src/features/personal-details/PersonalDetailsScreen.tsx", "utf8");
+ assert.match(screen, /if \(!saved \|\| !dirty \|\| submitting.current \|\| emailBusy \|\| emailDirty\) return;/);
+ assert.match(screen, /disabled=\{!dirty \|\| saving \|\| emailBusy \|\| emailDirty\}/);
+ assert.match(screen, /disabled: !dirty \|\| saving \|\| emailBusy \|\| emailDirty/);
+ assert.match(screen, /\(!dirty \|\| saving \|\| emailBusy \|\| emailDirty\) && s.disabled/);
+});
