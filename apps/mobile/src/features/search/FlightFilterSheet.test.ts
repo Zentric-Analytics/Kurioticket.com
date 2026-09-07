@@ -38,7 +38,9 @@ test("quick airline and airport rows show safe prices while full rows retain vis
  assert.match(sheet,/const detail=accessibilityDetail\?\?\[secondary,trailing\]\.filter\(Boolean\)\.join\(", "\)/);
 });
 test("quick filter headers omit subtitles without removing the full Filters status",()=>{
- assert.match(sheet,/subtitle=\{full\?\(activeCount\?copy\.appliedCount\(activeCount\):copy\.allFlightsShown\):undefined\}/);
+ assert.match(sheet,/subtitle=\{full&&activeCount\?copy\.appliedCount\(activeCount\):undefined\}/);
+ assert.doesNotMatch(sheet,/copy\.allFlightsShown/);
+ assert.match(sheet,/flightFilterAppearance=\{full\}/);
  assert.doesNotMatch(sheet,/const quickSubtitle|subtitle=\{quickSubtitle\}/);
  const sort=readFileSync("src/features/search/FlightSortSheet.tsx","utf8");
  assert.doesNotMatch(sort,/subtitle=\{copy\.sortHelp\}/);

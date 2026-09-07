@@ -55,7 +55,7 @@ test("Flight Edit Search splits its safe area between a fixed external gap and i
   assert.match(editSearchSource, /onLayout=\{motion\.onSheetLayout\}/);
   assert.match(
     editSearchSource,
-    /backgroundColor: ft\.colors\.surface, marginBottom: floatingBottomGap/,
+    /backgroundColor: resultsCanvas, marginBottom: floatingBottomGap/,
   );
   assert.match(editSearchSource, /const floatingBottomGap = FLIGHT_FLOATING_SHEET_BOTTOM_GAP/);
   assert.match(editSearchSource, /const internalBottomPadding = Math\.max\(20, bottomSafeAreaInset - floatingBottomGap\)/);
