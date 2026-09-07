@@ -21,6 +21,16 @@ export function paginateCarResults<T>(
 export function getCarPaginationItems(
   currentPage: number,
   totalPages: number,
+  compact: true,
+): number[];
+export function getCarPaginationItems(
+  currentPage: number,
+  totalPages: number,
+  compact?: false,
+): CarPaginationItem[];
+export function getCarPaginationItems(
+  currentPage: number,
+  totalPages: number,
   compact = false,
 ): CarPaginationItem[] {
   if (compact) {
