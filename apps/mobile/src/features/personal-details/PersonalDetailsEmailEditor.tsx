@@ -97,7 +97,7 @@ export function PersonalDetailsEmailEditor({
     return () => clearInterval(timer);
   }, [retryAt, confirmRetryAt, sendingUntil, sentUntil, lockedUntil]);
 
-  async function run(action: "request" | "confirm") {
+  async function run(action: "request" | "confirm", isResend = false) {
     if (
       submissionDisabled ||
       pending.current ||
@@ -121,14 +121,14 @@ export function PersonalDetailsEmailEditor({
     try {
       if (action === "request") {
         setNow(Date.now());
-        setSendingUntil(Date.now() + 3000);
+        setSendingUntil(isResend ? Date.now() + 3000 : 0);
         setSentUntil(0);
         const [result] = await Promise.all([
           (async () =>
             step === 1
               ? await travelApi.requestCurrentEmailCode()
               : await travelApi.requestEmailChange(target, ownershipProof))(),
-          new Promise<void>((resolve) => setTimeout(resolve, 3000)),
+          isResend ? new Promise<void>((resolve) => setTimeout(resolve, 3000)) : Promise.resolve(),
         ]);
         if (!mounted.current) return;
         if (step !== 1) {
@@ -136,12 +136,12 @@ export function PersonalDetailsEmailEditor({
           setStep(3);
         }
         setSendingUntil(0);
-        setSentUntil(Date.now() + 1000);
+        setSentUntil(isResend ? Date.now() + 1000 : 0);
         setLockedUntil(result.resendLimitReached ? Date.now() + 60_000 : 0);
         setCodeSent(true);
         setCode("");
         setNow(Date.now());
-        setRetryAt(Date.now() + (result.resendLimitReached ? 60_000 : 31_000));
+        setRetryAt(Date.now() + (result.resendLimitReached ? 60_000 : isResend ? 31_000 : 30_000));
         AccessibilityInfo.announceForAccessibility(c.emailCodeSent);
       } else if (step === 1) {
         const result = await travelApi.verifyCurrentEmailCode(code);
@@ -291,7 +291,7 @@ export function PersonalDetailsEmailEditor({
                 accessibilityState={{
                   disabled: submissionDisabled || busy || remaining > 0 || lockedUntil > now,
                 }}
-                onPress={() => void run("request")}
+                onPress={() => void run("request", codeSent)}
                 style={s.resendHit}
               >
                 <Text
