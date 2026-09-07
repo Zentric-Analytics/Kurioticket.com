@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
+  Easing,
   FlatList,
   Image,
   Keyboard,
@@ -23,6 +24,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { router, useNavigation } from "expo-router";
+import { Pencil } from "lucide-react-native";
 import {
   travelApi,
   TravelApiError,
@@ -284,7 +286,7 @@ type CountrySelectorProps = Omit<SelectorProps, "searchable" | "onSelect"> & {
   anchor: SelectorAnchor | null;
 };
 
-/** Full-screen country picker. Draft state intentionally lives inside the modal. */
+/** Country picker. Draft state intentionally lives inside the modal. */
 function CountrySelector({
   visible,
   title,
@@ -316,7 +318,7 @@ function CountrySelector({
   const committing = useRef(false);
   const visibleRef = useRef(visible);
   const wasVisibleRef = useRef(false);
-  const translateX = useRef(new Animated.Value(width)).current;
+  const translateY = useRef(new Animated.Value(height)).current;
   const shown = filterSelectorOptions(options, q);
 
   useEffect(() => {
@@ -348,20 +350,26 @@ function CountrySelector({
     setSavingSelection(false);
     setKeyboardVisible(false);
     Keyboard.dismiss();
-    translateX.stopAnimation();
-    translateX.setValue(width);
-    Animated.timing(translateX, {
+    translateY.stopAnimation();
+    translateY.setValue(height);
+  }, [selected, selectorType, translateY, visible, height]);
+
+  // Wait for the native modal to be visible so mounting cannot consume the animation.
+  const showSheet = () => {
+    if (!visibleRef.current) return;
+    Animated.timing(translateY, {
       toValue: 0,
-      duration: 240,
+      duration: 300,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
-  }, [selected, selectorType, translateX, visible, width]);
+  };
 
-  const closeWithPushAnimation = (afterClose: () => void) => {
+  const closeWithSheetAnimation = (afterClose: () => void) => {
     Keyboard.dismiss();
-    translateX.stopAnimation();
-    Animated.timing(translateX, {
-      toValue: width,
+    translateY.stopAnimation();
+    Animated.timing(translateY, {
+      toValue: height,
       duration: 220,
       useNativeDriver: true,
     }).start(({ finished }) => {
@@ -370,7 +378,7 @@ function CountrySelector({
   };
   const cancel = () => {
     if (savingSelection) return;
-    closeWithPushAnimation(onClose);
+    closeWithSheetAnimation(onClose);
   };
   const saveSelection = () => {
     if (committing.current || !draftSelection) return;
@@ -383,7 +391,7 @@ function CountrySelector({
       setSavingSelection(false);
       return;
     }
-    closeWithPushAnimation(onClose);
+    closeWithSheetAnimation(onClose);
   };
   const selectNationality = async (value: string) => {
     if (committing.current) return;
@@ -391,7 +399,7 @@ function CountrySelector({
     setSavingSelection(true);
     setSelectionError("");
     const succeeded = await onAutoSave(value).catch(() => false);
-    if (succeeded) closeWithPushAnimation(onClose);
+    if (succeeded) closeWithSheetAnimation(onClose);
     else {
       setDraftSelection(selected);
       setSelectionError(c.saveFailure);
@@ -453,17 +461,25 @@ function CountrySelector({
       transparent
       animationType="none"
       presentationStyle="overFullScreen"
+      onShow={showSheet}
       onRequestClose={cancel}
       onDismiss={handleDismiss}
     >
+      <View style={s.modalRoot}>
+        <Animated.View style={[StyleSheet.absoluteFill, {
+          backgroundColor: "rgba(0,0,0,0.4)",
+          opacity: translateY.interpolate({ inputRange: [0, height], outputRange: [1, 0], extrapolate: "clamp" }),
+        }]}>
+          <Pressable accessibilityRole="button" accessibilityLabel={c.cancel} disabled={savingSelection} onPress={cancel} style={StyleSheet.absoluteFill} />
+        </Animated.View>
       <Animated.View
         style={[
-          s.countryModalSafe,
+          s.genderSheet,
           {
             backgroundColor: theme.background,
-            paddingTop: insets.top,
+            height: height * 0.82,
             paddingBottom: insets.bottom,
-            transform: [{ translateX }],
+            transform: [{ translateY }],
           },
         ]}
       >
@@ -480,15 +496,7 @@ function CountrySelector({
               },
             ]}
           >
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={c.back}
-              onPress={cancel}
-              disabled={savingSelection}
-              style={s.iconButton}
-            >
-              <FlowIcon name="back" color={theme.icon} />
-            </Pressable>
+            <View style={s.iconButton} />
             <Text
               accessibilityRole="header"
               style={[s.title, { color: theme.text }]}
@@ -624,6 +632,7 @@ function CountrySelector({
           ) : null}
         </KeyboardAvoidingView>
       </Animated.View>
+      </View>
     </Modal>
   );
 }
@@ -1325,32 +1334,22 @@ export function PersonalDetailsScreen() {
                   <Text style={[s.label, { color: theme.muted }]}>
                     {c.email}
                   </Text>
-                  <TextInput
-                    editable={false}
-                    accessibilityLabel={`${c.email}, ${email}`}
-                    value={email}
-                    style={[
-                      s.input,
-                      {
-                        color: theme.muted,
-                        borderColor: theme.border,
-                        backgroundColor: theme.background,
-                      },
-                    ]}
-                  />
-                  {!emailOpen && (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={c.changeEmail}
-                    onPress={() => { Keyboard.dismiss(); setEmailDirty(false); setEmailOpen(true); }}
-                    disabled={emailBusy}
-                    accessibilityState={{ expanded: emailOpen, disabled: emailBusy }}
-                    style={s.changeEmailHit}
-                  >
-                    <Text style={s.changeEmailText}>{c.changeEmail}</Text>
-                  </Pressable>
-                  )}
-                  {emailOpen && <PersonalDetailsEmailEditor onSessionExpired={handleEmailSessionExpired} onCancel={closeEmail} email={email} onDirtyChange={setEmailDirty} onBusyChange={setEmailBusy} onSaved={(nextEmail) => { setEmail(nextEmail); setEmailDirty(false); setEmailOpen(false); }} />}
+                  <View style={[s.input, s.emailBox, { borderColor: theme.border, backgroundColor: theme.background }]}>
+                    <Text numberOfLines={1} style={[s.emailValue, { color: theme.muted }]}>{email}</Text>
+                    {!emailOpen && (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={c.changeEmail}
+                        onPress={() => { Keyboard.dismiss(); setEmailDirty(false); setEmailOpen(true); }}
+                        disabled={emailBusy}
+                        accessibilityState={{ expanded: emailOpen, disabled: emailBusy }}
+                        style={s.changeEmailHit}
+                      >
+                        <Pencil size={18} color={flowColors.blue} />
+                      </Pressable>
+                    )}
+                  </View>
+
                 </View>
                 <View>
                   <Text style={[s.label, { color: theme.muted }]}>
@@ -1420,9 +1419,6 @@ export function PersonalDetailsScreen() {
                   style={[s.sectionTitle, { color: theme.text }]}
                 >
                   {c.addressSection}
-                </Text>
-                <Text style={[s.addressDescription, { color: theme.muted }]}>
-                  {c.addressDescription}
                 </Text>
                 <SelectButton
                   label={c.country}
@@ -1501,6 +1497,22 @@ export function PersonalDetailsScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       )}
+      <Modal visible={emailOpen} animationType="slide" presentationStyle="fullScreen" onRequestClose={closeEmail}>
+        <SafeAreaView edges={["top", "bottom"]} style={[s.safe, { backgroundColor: theme.background }]}>
+          <View style={[s.header, { borderBottomColor: theme.border }]}>
+            <Pressable accessibilityRole="button" accessibilityLabel={c.back} onPress={closeEmail} disabled={emailBusy} style={s.iconButton}>
+              <FlowIcon name="back" color={theme.icon} />
+            </Pressable>
+            <Text accessibilityRole="header" style={[s.title, { color: theme.text }]}>{c.email}</Text>
+            <View style={s.iconButton} />
+          </View>
+          <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+            <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={s.emailScroll}>
+              {emailOpen && <PersonalDetailsEmailEditor onSessionExpired={handleEmailSessionExpired} email={email} onDirtyChange={setEmailDirty} onBusyChange={setEmailBusy} onSaved={(nextEmail) => { setEmail(nextEmail); setEmailDirty(false); setEmailOpen(false); }} />}
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </Modal>
       {success ? (
         <View
           accessible={false}
@@ -1660,6 +1672,7 @@ const s = StyleSheet.create({
     padding: 24,
   },
   scroll: { padding: 16, paddingBottom: 40 },
+  emailScroll: { flexGrow: 1, padding: 16, paddingBottom: 16 },
   description: {
     fontSize: 14,
     lineHeight: 20,
@@ -1746,8 +1759,9 @@ const s = StyleSheet.create({
   yearControl: { flex: 4 },
   selectField: { flex: 1 },
   select: { flexDirection: "row", alignItems: "center", gap: 6 },
-  changeEmailHit: { minHeight: 44, justifyContent: "center", alignSelf: "flex-end" },
-  changeEmailText: { fontFamily: appFonts.semibold, fontSize: 13, lineHeight: 18, color: flowColors.blue, textAlign: "right" },
+  emailBox: { flexDirection: "row", alignItems: "center", paddingRight: 2 },
+  emailValue: { flex: 1, fontFamily: appFonts.regular, fontSize: 16 },
+  changeEmailHit: { width: 44, minHeight: 44, justifyContent: "center", alignItems: "center" },
   linkHit: { minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
   sectionDivider: {
     borderTopWidth: StyleSheet.hairlineWidth,

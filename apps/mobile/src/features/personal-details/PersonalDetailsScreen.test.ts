@@ -98,7 +98,7 @@ test("failed and selector draft-only Saves never show the success toast", () => 
   assert.doesNotMatch(selectorSave, /showSuccess|setSuccess/);
 });
 test("email stays read-only and opens an accessible in-app editor", () => {
-  assert.match(screen, /editable=\{false\}/);
+  assert.match(screen, /<Text numberOfLines=\{1\}[^\n]*>\{email\}<\/Text>/);
   assert.match(screen, /accessibilityLabel=\{c\.changeEmail\}/);
   assert.match(screen, /<PersonalDetailsEmailEditor/);
 });
@@ -149,7 +149,7 @@ test("country query stays stable through native dismissal and resets after dismi
   assert.match(selector, /const \[q, setQ\] = useState\(""\)/);
   assert.match(
     selector,
-    /useEffect\(\(\) => \{[\s\S]*?if \(!isOpening\) return;[\s\S]*?setQ\(""\)[\s\S]*?\[selected, selectorType, translateX, visible, width\]\)/,
+    /useEffect\(\(\) => \{[\s\S]*?if \(!isOpening\) return;[\s\S]*?setQ\(""\)[\s\S]*?\[selected, selectorType, translateY, visible, height\]\)/,
   );
   assert.match(
     selector,
@@ -168,7 +168,7 @@ test("phone, nationality, and address searches have independent aliases", () => 
     /NATIONALITY_OPTIONS\.map[\s\S]*?searchTerms: \[COUNTRY_OPTIONS\[index\]\.code\]/,
   );
 });
-test("country selector is full-screen, keyboard-aware, and only results virtualize", () => {
+test("country selector is a keyboard-aware bottom sheet and only results virtualize", () => {
   const selector = screen.slice(
     screen.indexOf("function CountrySelector("),
     screen.indexOf("function CountryFlag("),
@@ -182,7 +182,8 @@ test("country selector is full-screen, keyboard-aware, and only results virtuali
   );
   assert.ok(selector.indexOf("{title}") < selector.lastIndexOf("<FlatList"));
   assert.ok(selector.indexOf("<TextInput") < selector.lastIndexOf("<FlatList"));
-  assert.doesNotMatch(selector, /maxHeight|0\.82/);
+  assert.match(selector, /s.genderSheet/);
+  assert.match(selector, /height: height \* 0\.82/);
   assert.match(selector, /keyboardShouldPersistTaps="handled"/);
   assert.match(selector, /style=\{s\.countryResults\}/);
   assert.match(selector, /data=\{shown\}/);
@@ -213,7 +214,7 @@ test("all country-selector dismissal paths preserve visible content until onDism
   assert.match(selector, /onRequestClose=\{cancel\}/);
   assert.match(selector, /onDismiss=\{handleDismiss\}/);
   assert.ok((selector.match(/onPress=\{cancel\}/g) ?? []).length >= 2);
-  assert.match(selector, /closeWithPushAnimation\(onClose\)/);
+  assert.match(selector, /closeWithSheetAnimation\(onClose\)/);
   assert.match(
     selector,
     /const handleDismiss = \(\) => \{[\s\S]*?setDraftSelection\(selected\)[\s\S]*?onDismiss\(\)/,
@@ -410,6 +411,6 @@ test("nationality tap persists only nationality before closing and keeps other e
   assert.match(screen, /kind === "nationality" \? <View style=\{s.iconButton\}/);
   assert.match(screen, /await travelApi.updateProfile\(\{ nationality: value \}\)/);
   assert.match(screen, /setDraft\(current => \(\{ \.\.\.current, nationality \}\)\)/);
-  assert.match(screen, /if \(succeeded\) closeWithPushAnimation\(onClose\)/);
+  assert.match(screen, /if \(succeeded\) closeWithSheetAnimation\(onClose\)/);
   assert.match(screen, /setSelectionError\(c.saveFailure\)/);
 });
