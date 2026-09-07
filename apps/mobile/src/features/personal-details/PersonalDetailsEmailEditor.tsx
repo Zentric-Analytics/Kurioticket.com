@@ -193,9 +193,6 @@ export function PersonalDetailsEmailEditor({
         keyboardDismissMode="on-drag"
         contentContainerStyle={s.content}
       >
-        <Text style={[s.step, { color: theme.muted }]}>
-          {c.emailStep.replace("{step}", String(step))}
-        </Text>
         <Text
           accessibilityRole="header"
           style={[s.title, { color: theme.text }]}
@@ -216,30 +213,8 @@ export function PersonalDetailsEmailEditor({
             : c.emailNewHelp}
         </Text>
         {isCodeStep ? (
-          <View style={s.codeArea}>
-            <View pointerEvents="none" accessible={false} style={s.boxes}>
-              {Array.from({ length: 6 }, (_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    s.box,
-                    {
-                      backgroundColor: theme.surface,
-                      borderColor:
-                        focused && index === Math.min(code.length, 5)
-                          ? flowColors.blue
-                          : borderColor,
-                      borderWidth:
-                        focused && index === Math.min(code.length, 5) ? 2 : 1,
-                    },
-                  ]}
-                >
-                  <Text style={[s.digit, { color: theme.text }]}>
-                    {code[index] || ""}
-                  </Text>
-                </View>
-              ))}
-            </View>
+          <>
+            <Text style={[s.label, { color: theme.text }]}>{c.emailCode}</Text>
             <TextInput
               key={String(step) + String(codeSent)}
               autoFocus
@@ -250,8 +225,6 @@ export function PersonalDetailsEmailEditor({
               textContentType="oneTimeCode"
               keyboardType="number-pad"
               maxLength={6}
-              caretHidden
-              selectionColor="transparent"
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
               onChangeText={(value) => {
@@ -259,9 +232,11 @@ export function PersonalDetailsEmailEditor({
                 setError("");
               }}
               onSubmitEditing={() => void run("confirm")}
-              style={s.codeInput}
+              placeholder="000000"
+              placeholderTextColor={theme.muted}
+              style={[s.input, s.verificationInput, { color: theme.text, backgroundColor: theme.surface, borderColor: focused ? flowColors.blue : borderColor }]}
             />
-          </View>
+          </>
         ) : (
           <>
             <Text style={[s.label, { color: theme.text }]}>{c.email}</Text>
@@ -376,13 +351,7 @@ export function PersonalDetailsEmailEditor({
 const s = StyleSheet.create({
   layout: { flex: 1 },
   content: { padding: 20, paddingTop: 28 },
-  step: { fontFamily: appFonts.medium, fontSize: 13, marginBottom: 16 },
-  title: {
-    fontFamily: appFonts.semibold,
-    fontSize: 22,
-    lineHeight: 29,
-    marginBottom: 20,
-  },
+  title: { fontFamily: appFonts.semibold, fontSize: 22, lineHeight: 29, marginBottom: 20 },
   help: {
     fontFamily: appFonts.regular,
     fontSize: 14,
@@ -399,21 +368,7 @@ const s = StyleSheet.create({
     fontFamily: appFonts.regular,
     fontSize: 16,
   },
-  codeArea: { height: 52 },
-  boxes: { flexDirection: "row", gap: 10, height: 52 },
-  box: {
-    flex: 1,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  digit: { fontFamily: appFonts.medium, fontSize: 22 },
-  codeInput: {
-    ...StyleSheet.absoluteFillObject,
-    color: "transparent",
-    backgroundColor: "transparent",
-    fontSize: 1,
-  },
+  verificationInput: { fontSize: 20, letterSpacing: 6 },
   note: {
     fontFamily: appFonts.regular,
     fontSize: 13,
