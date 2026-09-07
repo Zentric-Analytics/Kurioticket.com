@@ -17,9 +17,11 @@ test("filtered Hotel results use selected sort without provider refresh", () => 
   assert.match(derivation, /hotelSort/);
 });
 
-test("Sort Apply updates ordering state and returns pagination to page one", () => {
+test("changed Sort Apply updates ordering state and resets pagination through the results transition", () => {
   const sheet = source.slice(source.indexOf("<HotelResultsQuickFilterSheet"), source.indexOf("/> : null", source.indexOf("<HotelResultsQuickFilterSheet")));
   assert.match(sheet, /sort=\{hotelSort\}/);
-  assert.match(sheet, /onSortChange=\{\(next\) => \{ setHotelSort\(next\); setHotelPage\(1\); \}\}/);
-  assert.doesNotMatch(sheet, /travelApi|retry|setResults/);
+  assert.match(sheet, /onSortChange=\{\(next\) => \{ if\(next===hotelSort\)return;setHotelSort\(next\);startHotelResultsTransition\(\); \}\}/);
+  assert.doesNotMatch(sheet, /setHotelPage|setHotelFilters|travelApi|retry|setResults/);
+  const transition = source.slice(source.indexOf("const startHotelResultsTransition"), source.indexOf("const transitionHotelFilters"));
+  assert.match(transition, /setHotelPage\(1\)/);
 });

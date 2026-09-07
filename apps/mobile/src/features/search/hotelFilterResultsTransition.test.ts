@@ -27,6 +27,13 @@ test("Hotel result transitions are local, accessible, and reuse skeletons", () =
   assert.match(screen, /\[0,1,2\]\.map\(x=><HotelLoadingSkeleton/);
   assert.doesNotMatch(helper, /travelApi|setStatus|setRetry|router|load\(/);
   assert.match(screen, /hotelResultsApplyingTimer\.current.*clearTimeout/s);
+  assert.match(helper, /NATIVE_FILTER_RESULTS_TRANSITION_MS/);
   assert.match(screen, /transitionHotelFilters\(chip\.remove/);
   assert.match(screen, /transitionHotelFilters\(emptyHotelFilters\(\)\)/);
+});
+
+test("changed Hotel Sort Apply uses the existing local result transition", () => {
+  const sheet = screen.slice(screen.indexOf("<HotelResultsQuickFilterSheet"), screen.indexOf("/> : null", screen.indexOf("<HotelResultsQuickFilterSheet")));
+  assert.match(sheet, /onSortChange=\{\(next\) => \{ if\(next===hotelSort\)return;setHotelSort\(next\);startHotelResultsTransition\(\); \}\}/);
+  assert.doesNotMatch(sheet, /setHotelFilters|travelApi|setStatus|setRetry|router|load\(/);
 });
