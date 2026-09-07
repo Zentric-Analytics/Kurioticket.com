@@ -105,16 +105,6 @@ test("direct Saved-flight entry resolves Nigeria and explicit EUR normally", () 
   assert.equal(createFlightDetailFare(67, "USD", explicit.resolvedCurrency, rates)?.currency, "EUR");
 });
 
-test("both booking areas use the one shared formatted fare", () => {
-  const detailScreen = readFileSync(resolve("src/features/search/ApprovedDetailScreen.tsx"), "utf8");
-  const flightDetail = detailScreen.slice(
-    detailScreen.indexOf("function FlightDetail"),
-    detailScreen.indexOf("function HotelDetail"),
-  );
-  assert.equal(flightDetail.match(/\{formattedFare\}/g)?.length, 2);
-  assert.doesNotMatch(flightDetail, /money\(result\.currency, result\.price\)/);
-});
-
 test("Results uses the authoritative ID-only navigation contract", () => {
   const resultsScreen = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
   assert.match(resultsScreen, /params: buildFlightDetailParams\(\{ searchParams: params, result \}\)/);

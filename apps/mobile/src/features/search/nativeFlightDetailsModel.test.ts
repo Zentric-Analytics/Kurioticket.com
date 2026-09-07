@@ -1,0 +1,11 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+import { flightDetailsRouteLabel } from "../../../../../src/lib/flights/flightDetailsContract";
+import { compactFareTerms } from "../../../../../src/lib/flights/flightDetailsPresentation";
+const source=readFileSync("src/features/search/NativeFlightDetails.tsx","utf8");
+const legs=(pairs:string[][])=>pairs.map(([originAirport,destinationAirport])=>({originAirport,destinationAirport}));
+test("route summaries represent one-way, round-trip, continuous and discontinuous trips",()=>{assert.equal(flightDetailsRouteLabel("one-way",legs([["LOS","LHR"]]),"LOS","LHR"),"LOS → LHR");assert.equal(flightDetailsRouteLabel("round-trip",legs([["LOS","LHR"],["LHR","LOS"]]),"LOS","LHR"),"LOS → LHR");assert.equal(flightDetailsRouteLabel("multi-city",legs([["LOS","LHR"],["LHR","JFK"],["JFK","LAX"]]),"",""),"LOS → LHR → JFK → LAX");assert.equal(flightDetailsRouteLabel("multi-city",legs([["LOS","LHR"],["JFK","LAX"]]),"",""),"LOS → LHR · JFK → LAX");});
+test("compact terms prioritize restrictions and consolidate round-trip baggage",()=>{const terms=[{category:"fare",semantic:"informational",text:"Basic"},{category:"baggage",semantic:"positive",text:"Outbound: 1 carry-on included"},{category:"baggage",semantic:"positive",text:"Return: 1 carry-on included"},{category:"refund",semantic:"negative",text:"Refund not allowed"}] as const;assert.deepEqual(compactFareTerms([...terms],"round-trip").map(x=>x.text),["1 carry-on included each way","Refund not allowed","Basic"]);});
+test("selection, currency, all-leg edit state and safe legal links are encoded",()=>{assert.match(source,/current && fares\.some/);assert.match(source,/selectedOffer/);assert.match(source,/\^\[A-Za-z\]\{3\}\$/);assert.match(source,/result\[`origin\$\{n\}`\]/);assert.match(source,/result\[`destination\$\{n\}`\]/);assert.match(source,/result\[`departureDate\$\{n\}`\]/);assert.match(source,/\^https:\\\/\\\//);assert.match(source,/new Map\(entries\.map/);});
+test("all fares and every independently-priced deal share one rates resolution",()=>{assert.match(source,/Object\.fromEntries\(details\.fareChoices\.map/);assert.match(source,/choice\.deals\.map\(deal=>\[`deal:/);assert.equal((source.match(/travelApi\.currencyRates\(\)/g)??[]).length,1);});

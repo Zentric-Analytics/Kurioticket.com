@@ -71,20 +71,20 @@ test("Explore region browse, search results, and invalid state use semantic them
 test("flight details themes every booking surface without changing its route or layout", () => {
   const route = read("app/flight-details.tsx");
   const results = read("src/features/search/ApprovedResultsScreen.tsx");
-  const details = read("src/features/search/ApprovedDetailScreen.tsx");
+  const details = read("src/features/search/NativeFlightDetails.tsx");
   const searchUi = read("src/features/search/SearchUi.tsx");
 
   assert.match(route, /ApprovedDetailScreen product="flight"/);
   assert.match(results, /pathname: "\/flight-details"/);
   assert.match(details, /useAppTheme/);
-  assert.match(details, /backgroundColor: theme\.background/);
-  assert.match(details, /backgroundColor: theme\.surface/);
-  assert.match(details, /borderColor: theme\.border/);
-  assert.match(details, /borderTopColor: theme\.border/);
-  assert.match(details, /color: theme\.textPrimary/);
-  assert.match(details, /color: theme\.textSecondary/);
+  assert.match(details, /backgroundColor:\s*theme\.background/);
+  assert.match(details, /backgroundColor:\s*theme\.surface/);
+  assert.match(details, /borderColor:\s*theme\.border/);
+  assert.match(details, /borderTopColor:\s*theme\.border/);
+  assert.match(details, /color:\s*theme\.textPrimary/);
+  assert.match(details, /color:\s*theme\.textSecondary/);
   assert.match(searchUi, /name="bell" color=\{theme\.icon\}/);
-  assert.match(details, /theme\.dark && \{ backgroundColor: "#153B2B" \}/);
+  assert.match(details, /backgroundColor:theme\.surface/);
   assert.match(searchUi, /backgroundColor: flightResults \? theme\.background : theme\.surface/);
   assert.match(searchUi, /<FlowIcon name="(?:heart|share)" color=\{theme\.icon\}/);
 });
