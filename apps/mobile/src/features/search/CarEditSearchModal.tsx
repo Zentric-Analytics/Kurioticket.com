@@ -79,7 +79,7 @@ export function CarEditSearchModal({ visible, params, onClose }: Props) {
                 accessibilityRole="header"
                 style={[ft.styles.title, styles.title]}
               >
-                Edit car search
+                Edit search
               </Text>
               <Pressable
                 accessibilityRole="button"
@@ -104,6 +104,7 @@ export function CarEditSearchModal({ visible, params, onClose }: Props) {
             >
               <CarSearchPanel
                 embedded
+                editAppearance
                 params={presentedParams}
                 submitNavigation="replace"
                 onBeforeNavigate={onClose}
