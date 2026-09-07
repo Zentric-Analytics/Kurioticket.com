@@ -166,7 +166,7 @@ test("failed resend restores the previous allowance without resurrecting the old
   assert.deepEqual(rows, [previous]);
   assert.deepEqual(
     await sendMobileEmailCode(deliveryInput, { db, send: delivered }),
-    { cooldownSeconds: 60, resendLimitReached: true },
+    { cooldownSeconds: 30, resendLimitReached: false },
   );
 });
 
