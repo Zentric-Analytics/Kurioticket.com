@@ -92,13 +92,20 @@ export function savedSignature(input: CreateMobileSavedItem | MobileSavedItem) {
   return `search:${String(input.searchType).toLowerCase()}:${stable(input.query)}`;
 }
 
+function urlFreeSavedFlight(flight: SavableFlight): SavableFlight {
+  const source = flight as SavableFlight & { bookingUrl?: unknown; partnerRedirectUrl?: unknown };
+  const { bookingUrl: _bookingUrl, partnerRedirectUrl: _partnerRedirectUrl, ...savedFlight } = source;
+  return savedFlight;
+}
+
 export function mapFlightToSaved(f: SavableFlight, params?: Record<string, unknown>): CreateMobileSavedItem {
+  const savedFlight = urlFreeSavedFlight(f);
   return {
     type: "flight", provider: f.provider, airlineName: f.airlineName, flightNumber: f.flightNumber ?? null,
     originAirport: f.originAirport, destinationAirport: f.destinationAirport,
     departureTime: canonicalSavedFlightDateTime(f.departureTime), arrivalTime: canonicalSavedFlightDateTime(f.arrivalTime),
     price: f.price, currency: f.currency,
-    payload: { nativeRoute: "/flight-details", result: f, ...(params ? { searchParams: sanitizeSearchParams("flight", params) } : {}) },
+    payload: { nativeRoute: "/flight-details", result: savedFlight, ...(params ? { searchParams: sanitizeSearchParams("flight", params) } : {}) },
   };
 }
 
