@@ -89,42 +89,35 @@ test("display prefix removal is leg-specific and preserves provider wording", ()
   assert.equal(stripLegPrefix("The Return: fare is restricted", "return"), "The Return: fare is restricted");
 });
 
-const source = readFileSync(resolve("src/features/search/ApprovedDetailScreen.tsx"), "utf8");
-const flightDetail = source.slice(source.indexOf("function FlightDetail"), source.indexOf("function HotelDetail"));
-const tripCard = flightDetail.slice(flightDetail.indexOf(">Trip details<"), flightDetail.indexOf(">Booking provider<"));
-const detailsRow = source.slice(source.indexOf("function DetailsRow"), source.indexOf("function BookingProviderCard"));
-const styles = source.slice(source.indexOf("const d = StyleSheet.create"));
+const authoritativeDetail = readFileSync(resolve("src/features/search/NativeFlightDetails.tsx"), "utf8");
+const presentation = readFileSync(resolve("src/features/search/nativeFlightDetailsPresentation.ts"), "utf8");
 
-test("Trip details removes its duplicate total while both booking prices remain", () => {
-  assert.doesNotMatch(flightDetail, />Fare summary</);
-  assert.match(tripCard, />Trip details</);
-  assert.doesNotMatch(tripCard, /formattedFare|Total \(1 traveler\)|Taxes and fees per provider/);
-  assert.match(flightDetail, /<BookingProviderCard[\s\S]*?price=\{formattedFare\}/);
-  assert.match(flightDetail, /d\.stickyTotal[\s\S]*?\{formattedFare\}/);
-  assert.equal(flightDetail.match(/\{formattedFare\}/g)?.length, 2);
+test("authoritative Flight Details exposes fare rules in the dedicated Fare conditions surface", () => {
+  assert.match(authoritativeDetail, /Fare conditions/);
+  assert.match(authoritativeDetail, /provider\?\.conditions\?\.length/);
+  assert.match(authoritativeDetail, /nativeConditionLabel\(condition\)/);
+  assert.match(authoritativeDetail, /Penalty: \{nativeFormatSourceMoney/);
+  assert.match(presentation, /Whole trip/);
+  assert.match(presentation, /Outbound only/);
+  assert.match(presentation, /Return only/);
+  assert.match(presentation, /Flight \$\{condition\.legIndex \+ 1\}/);
 });
 
-test("details values stack, wrap naturally, and remain accessible", () => {
-  assert.match(tripCard, /flightTripDetails\(result\)\.map/);
-  assert.match(detailsRow, /accessibilityLabel=\{`\$\{label\}\. \$\{accessibilityValue\}`\}/);
-  assert.match(detailsRow, /<LegSpecificDetail legs=\{legs\}/);
-  assert.match(source, /function LegSpecificDetail[\s\S]*?legs\?\.map[\s\S]*?d\.detailLegLabel[\s\S]*?d\.detailValue/);
-  assert.doesNotMatch(detailsRow, /numberOfLines/);
-  assert.match(styles, /detailValue: \{[^}]*flexShrink: 1,[^}]*minWidth: 0/);
+test("fare-card term selection preserves baggage priority and negative change/refund truth", () => {
+  assert.match(authoritativeDetail, /nativeCompactFareTerms\(choice\.distinguishingTerms, details\.search\.tripType\)/);
+  assert.match(presentation, /fareTermSelectionPriority/);
+  assert.match(presentation, /term\.semantic === "negative"/);
+  assert.match(presentation, /term\.category === "baggage"/);
+  assert.match(presentation, /each way/);
 });
 
-test("category headings use small non-focusable repository Lucide icons without emoji", () => {
-  assert.match(source, /import \{[^}]*Armchair[^}]*Luggage[^}]*Repeat2[^}]*ShieldX[^}]*\} from "lucide-react-native"/);
-  assert.match(detailsRow, /<DetailIcon accessible=\{false\} color=\{ui\.blue\} size=\{17\}/);
-  assert.doesNotMatch(tripCard, /[\p{Extended_Pictographic}]/u);
-});
-
-test("the single themed card uses elevation and spacing rather than borders", () => {
-  assert.match(flightDetail, /d\.tripDetails, \{ backgroundColor: theme\.surface \}, theme\.dark && d\.tripDetailsDark/);
-  assert.match(styles, /tripDetails: \{[\s\S]*?borderRadius: 13,[\s\S]*?shadowOpacity: 0\.1,[\s\S]*?elevation: 3/);
-  const rowStyle = styles.slice(styles.indexOf("detailRow:"), styles.indexOf("detailLabel:"));
-  assert.doesNotMatch(rowStyle, /border|justifyContent/);
-  const legStyles = styles.slice(styles.indexOf("detailLegs:"), styles.indexOf("detailGenericValue:"));
-  assert.doesNotMatch(legStyles, /border|height: 1/);
-  assert.doesNotMatch(tripCard, /View fare rules/);
+test("Fare details shows segment context, provider price breakdown, emissions, and missing-data truth", () => {
+  assert.match(authoritativeDetail, /segment\.originAirport} → \{segment\.destinationAirport/);
+  assert.match(authoritativeDetail, /Fare brand/);
+  assert.match(authoritativeDetail, /Cabin class/);
+  assert.match(authoritativeDetail, /Cabin product/);
+  assert.match(authoritativeDetail, /Fare basis/);
+  assert.match(authoritativeDetail, /Price breakdown/);
+  assert.match(authoritativeDetail, /Price breakdown was not supplied by the provider/);
+  assert.match(authoritativeDetail, /Estimated CO₂/);
 });
