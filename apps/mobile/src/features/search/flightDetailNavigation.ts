@@ -28,8 +28,8 @@ export function buildFlightDetailParams({
 }: {
   searchParams: Record<string, RouteValue>;
   result: FlightResult;
-}) {
-  const safeSearchParams = Object.fromEntries(inheritedFlightDetailKeys.flatMap((key) => {
+}): Record<string, string> {
+  const safeSearchParams: Record<string, string> = Object.fromEntries(inheritedFlightDetailKeys.flatMap((key) => {
     const raw = searchParams[key];
     const value = Array.isArray(raw) ? raw[0] : raw;
     return value ? [[key, value]] : [];
