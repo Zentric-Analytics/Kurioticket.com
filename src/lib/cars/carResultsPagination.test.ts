@@ -30,3 +30,11 @@ test("two-page pagination exposes both pages without truncation", () => {
   assert.deepEqual(getCarPaginationItems(1, 2), [1, 2]);
   assert.deepEqual(getCarPaginationItems(2, 2), [1, 2]);
 });
+
+test("compact Cars pagination uses a clamped three-page mobile window", () => {
+  assert.deepEqual(getCarPaginationItems(2, 3, true), [1, 2, 3]);
+  assert.deepEqual(getCarPaginationItems(1, 13, true), [1, 2, 3]);
+  assert.deepEqual(getCarPaginationItems(7, 13, true), [6, 7, 8]);
+  assert.deepEqual(getCarPaginationItems(13, 13, true), [11, 12, 13]);
+  assert.deepEqual(getCarPaginationItems(99, 13, true), [11, 12, 13]);
+});

@@ -26,3 +26,11 @@ test("builds complete and condensed numbered pagination", () => {
   assert.deepEqual(buildHotelResultsPaginationItems(7, 13), [1, "ellipsis", 6, 7, 8, "ellipsis", 13]);
   assert.deepEqual(buildHotelResultsPaginationItems(13, 13), [1, "ellipsis", 9, 10, 11, 12, 13]);
 });
+
+test("builds a clamped three-page compact mobile window without ellipses", () => {
+  assert.deepEqual(buildHotelResultsPaginationItems(2, 3, true), [1, 2, 3]);
+  assert.deepEqual(buildHotelResultsPaginationItems(1, 13, true), [1, 2, 3]);
+  assert.deepEqual(buildHotelResultsPaginationItems(7, 13, true), [6, 7, 8]);
+  assert.deepEqual(buildHotelResultsPaginationItems(13, 13, true), [11, 12, 13]);
+  assert.deepEqual(buildHotelResultsPaginationItems(99, 13, true), [11, 12, 13]);
+});
