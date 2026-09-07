@@ -14,6 +14,7 @@ const en = {
   emailNewHelp: "Enter the email address you want to use for your account.",
   emailNextHelp: "You’ll verify your new email address in the next step.",
   emailContinue: "Continue",
+  emailContinueIn: "Continue in",
   emailSending: "Sending your verification code…",
   emailDeliveryHelp:
     "Didn’t get an email? Check your spam folder or request another code.",
@@ -106,6 +107,7 @@ const es: typeof en = {
   emailNewHelp: "Introduce el correo que quieres usar para tu cuenta.",
   emailNextHelp: "Verificarás tu nuevo correo en el siguiente paso.",
   emailContinue: "Continuar",
+  emailContinueIn: "Continuar en",
   emailSending: "Enviando tu código de verificación…",
   emailDeliveryHelp:
     "¿No recibiste el correo? Revisa tu carpeta de spam o solicita otro código.",

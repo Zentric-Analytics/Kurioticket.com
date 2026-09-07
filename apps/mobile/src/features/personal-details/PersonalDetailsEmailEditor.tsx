@@ -63,6 +63,9 @@ export function PersonalDetailsEmailEditor({
     Math.ceil((Math.max(retryAt, lockedUntil) - now) / 1000),
   );
   const isCodeStep = step !== 2;
+  const continueRemaining = isCodeStep
+    ? Math.max(0, Math.ceil((confirmRetryAt - now) / 1000))
+    : remaining;
   useEffect(
     () => onDirtyChange(step > 1 || code.length > 0),
     [step, code, onDirtyChange],
@@ -403,18 +406,18 @@ export function PersonalDetailsEmailEditor({
       </ScrollView>
       <View style={s.footer}>
         <PersonalDetailsSaveButton
-          label={c.emailContinue}
+          label={
+            continueRemaining > 0
+              ? c.emailContinueIn + " " + continueRemaining + "s"
+              : c.emailContinue
+          }
           dirty={
             isCodeStep
               ? codeSent && /^\d{6}$/.test(code)
               : canRequestEmailChange(newEmail, email)
           }
           saving={busy}
-          blocked={
-            isCodeStep
-              ? confirmRetryAt > now
-              : remaining > 0 || lockedUntil > now
-          }
+          blocked={continueRemaining > 0}
           onSave={() => void run(isCodeStep ? "confirm" : "request")}
         />
       </View>

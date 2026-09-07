@@ -92,38 +92,79 @@ test("email editor starts with current ownership, then a blank address and new-e
   const fieldEnd = editor.indexOf("</View>", fieldStart);
   assert.ok(editor.indexOf("s.resendHit", fieldStart) < fieldEnd);
   assert.doesNotMatch(editor, /c.emailStep|s.boxes|caretHidden/);
-  assert.match(editor, /label=\{c.emailContinue\}/);
+  assert.match(editor, /: c.emailContinue\s*\}/);
   assert.match(editor, /OWNERSHIP_REQUIRED/);
   assert.doesNotMatch(editor, /phoneNumber.*ownershipProof/);
 });
 
 test("a resend lock on reopening still allows the delivered current-email code", () => {
-  const editor = readFileSync("src/features/personal-details/PersonalDetailsEmailEditor.tsx", "utf8");
-  const lock = editor.slice(editor.indexOf('if (apiError.details?.code === "MAX_RESENDS")'), editor.indexOf('// A code from a prior opening'));
+  const editor = readFileSync(
+    "src/features/personal-details/PersonalDetailsEmailEditor.tsx",
+    "utf8",
+  );
+  const lock = editor.slice(
+    editor.indexOf('if (apiError.details?.code === "MAX_RESENDS")'),
+    editor.indexOf("// A code from a prior opening"),
+  );
   assert.match(lock, /setCodeSent\(true\)/);
-  const restart = editor.slice(editor.indexOf('if (apiError?.details?.code === "OWNERSHIP_REQUIRED")'), editor.indexOf('if (apiError?.status === 429)'));
+  const restart = editor.slice(
+    editor.indexOf('if (apiError?.details?.code === "OWNERSHIP_REQUIRED")'),
+    editor.indexOf("if (apiError?.status === 429)"),
+  );
   assert.match(restart, /setLockedUntil\(0\)/);
   assert.match(restart, /setSentUntil\(0\)/);
 });
 
 test("resending keeps the code input focused and ships no visual-review bypass", () => {
- const editor = readFileSync("src/features/personal-details/PersonalDetailsEmailEditor.tsx", "utf8");
- assert.match(editor, /editable=\{!busy \|\| requesting\}/);
- assert.doesNotMatch(editor, /previewSend|LOCAL TEST|visual-review-only|submissionDisabled|__DEV__/);
+  const editor = readFileSync(
+    "src/features/personal-details/PersonalDetailsEmailEditor.tsx",
+    "utf8",
+  );
+  assert.match(editor, /editable=\{!busy \|\| requesting\}/);
+  assert.doesNotMatch(
+    editor,
+    /previewSend|LOCAL TEST|visual-review-only|submissionDisabled|__DEV__/,
+  );
 });
 
 test("temporary red feedback belongs to each input, never the sticky action footer", () => {
-  const editor = readFileSync("src/features/personal-details/PersonalDetailsEmailEditor.tsx", "utf8");
+  const editor = readFileSync(
+    "src/features/personal-details/PersonalDetailsEmailEditor.tsx",
+    "utf8",
+  );
   assert.match(editor, /setTimeout\(\(\) => setError\(""\), 5000\)/);
   assert.match(editor, /clearTimeout\(timeout\)/);
   assert.match(editor, /#FF8A80/);
   assert.match(editor, /#D92D20/);
   assert.equal((editor.match(/\{feedback\}/g) || []).length, 2);
-  const footer = editor.slice(editor.indexOf("<View style={s.footer}>"), editor.indexOf("const s ="));
+  const footer = editor.slice(
+    editor.indexOf("<View style={s.footer}>"),
+    editor.indexOf("const s ="),
+  );
   assert.doesNotMatch(footer, /\{error\}|emailMaxResends|s.feedback/);
   assert.match(editor, /Math.max\(retryAt, lockedUntil\)/);
   assert.doesNotMatch(editor, /c.emailTryLater/);
   assert.match(editor, /setError\(c.emailMaxResends\)/);
-  const translations = readFileSync("src/features/personal-details/translations.ts", "utf8");
+  const translations = readFileSync(
+    "src/features/personal-details/translations.ts",
+    "utf8",
+  );
   assert.match(translations, /Too many attempts, try again in one minute\./);
+});
+
+test("Continue retains its own cooldown label after transient feedback expires", () => {
+  const editor = readFileSync(
+    "src/features/personal-details/PersonalDetailsEmailEditor.tsx",
+    "utf8",
+  );
+  assert.match(
+    editor,
+    /const continueRemaining = isCodeStep\s*\? Math.max\(0, Math.ceil\(\(confirmRetryAt - now\) \/ 1000\)\)\s*: remaining/,
+  );
+  assert.match(editor, /continueRemaining > 0\s*\? c.emailContinueIn/);
+  assert.match(editor, /blocked=\{continueRemaining > 0\}/);
+  assert.match(
+    editor,
+    /if \(confirmRetryAt && time >= confirmRetryAt\) setConfirmRetryAt\(0\)/,
+  );
 });
