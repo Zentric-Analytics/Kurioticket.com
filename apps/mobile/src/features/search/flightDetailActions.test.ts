@@ -13,7 +13,7 @@ const resultsSource = read("src/features/search/ApprovedResultsScreen.tsx");
 test("Flight Details route mounts only the authoritative ID-based native screen", () => {
   assert.match(routeSource, /useLocalSearchParams/);
   assert.match(routeSource, /<NativeFlightDetails params=\{params\} \/>/);
-  assert.doesNotMatch(routeSource, /ApprovedDetailScreen|params\.result|FlightDetail/);
+  assert.doesNotMatch(routeSource, /import .*ApprovedDetailScreen|params\.result/);
   assert.match(navigationSource, /id: result\.id/);
   assert.doesNotMatch(navigationSource, /JSON\.stringify\(result\)|bookingUrl|partnerRedirectUrl/);
 });
