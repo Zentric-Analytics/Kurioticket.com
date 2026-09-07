@@ -52,19 +52,20 @@ test("only the results modal opts into theme-aware structured flight cards", () 
   assert.equal(modal.match(/resultsModalAppearance/g)?.length, 1);
   assert.doesNotMatch(dedicatedEdit, /resultsModalAppearance/);
   assert.doesNotMatch(homepage, /resultsModalAppearance/);
-  assert.match(modal, /style=\{\{ backgroundColor: ft\.colors\.surface \}\}/);
-  assert.match(panel, /backgroundColor: ft\.colors\.surface/);
+  assert.match(modal, /const resultsCanvas = ft\.theme\.dark \? ft\.colors\.page : FLIGHT_RESULTS_LIGHT_CANVAS/);
+  assert.match(panel, /backgroundColor: resultsModalAppearance \? "transparent" : ft\.colors\.surface/);
   assert.match(panel, /resultsModalCard:\{borderWidth:1,borderRadius:13,overflow:"hidden",marginTop:10\}/);
   assert.match(panel, /backgroundColor: ft\.colors\.card, borderColor: ft\.colors\.border/);
 });
 
-test("results edit modal blends its surface and locally refines its header", () => {
+test("results edit modal uses the Flight Results canvas and locally refines its header", () => {
   const modal = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
   const flowStyles = readFileSync("src/features/flow/flowStyles.ts", "utf8");
   assert.match(modal, /style=\{styles\.header\}/);
   assert.doesNotMatch(modal, /borderBottomColor: ft\.colors\.border|header: \{[^}]*borderBottomWidth/);
-  assert.match(modal, /sheet, \{ backgroundColor: ft\.colors\.surface/);
-  assert.match(modal, /style=\{\{ backgroundColor: ft\.colors\.surface \}\}/);
+  assert.match(modal, /FLIGHT_RESULTS_LIGHT_CANVAS/);
+  assert.match(modal, /sheet, \{ backgroundColor: resultsCanvas/);
+  assert.match(modal, /style=\{\{ backgroundColor: resultsCanvas \}\}/);
   assert.match(modal, /title: \{[^}]*fontWeight: "600"/);
   assert.match(flowStyles, /title: \{[^}]*fontWeight: "800"/);
   assert.ok(modal.indexOf("Change your search") < modal.indexOf('accessibilityLabel="Close edit search"', modal.indexOf("Change your search")));
@@ -101,7 +102,7 @@ test("results modal appearance is isolated from shared compact field geometry", 
 
 test("Flight Edit Search shares the Flight quick-sheet outer inset without changing content padding", () => {
   const modal = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
-  assert.match(modal, /import \{ FLIGHT_FLOATING_SHEET_BOTTOM_GAP, FLIGHT_QUICK_SHEET_HORIZONTAL_INSET \} from "\.\/FlightResultsSheetShell"/);
+  assert.match(modal, /import \{ FLIGHT_FLOATING_SHEET_BOTTOM_GAP, FLIGHT_QUICK_SHEET_HORIZONTAL_INSET, FLIGHT_RESULTS_LIGHT_CANVAS \} from "\.\/FlightResultsSheetShell"/);
   assert.match(modal, /sheet: \{ maxHeight: "88%", marginHorizontal: FLIGHT_QUICK_SHEET_HORIZONTAL_INSET/);
   assert.match(modal, /content: \{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 20 \}/);
   assert.doesNotMatch(modal, /content: \{[^}]*FLIGHT_QUICK_SHEET_HORIZONTAL_INSET/);
