@@ -51,13 +51,15 @@ test("top safe-area positioning remains on full-height search overlays", () => {
   assert.match(editSearchSource, /content: \{[^}]*paddingBottom: 20/);
 });
 
-test("Flight Edit Search moving sheet owns its bottom safe area", () => {
+test("Flight Edit Search splits its safe area between a fixed external gap and internal clearance", () => {
   assert.match(editSearchSource, /onLayout=\{motion\.onSheetLayout\}/);
   assert.match(
     editSearchSource,
-    /backgroundColor: ft\.colors\.surface, paddingBottom: motion\.bottomSafeAreaInset/,
+    /backgroundColor: ft\.colors\.surface, marginBottom: floatingBottomGap/,
   );
-  assert.doesNotMatch(editSearchSource, /safeAreaClearance|topInset/);
+  assert.match(editSearchSource, /const floatingBottomGap = FLIGHT_FLOATING_SHEET_BOTTOM_GAP/);
+  assert.match(editSearchSource, /const internalBottomPadding = Math\.max\(20, bottomSafeAreaInset - floatingBottomGap\)/);
+  assert.doesNotMatch(editSearchSource, /paddingBottom: motion\.bottomSafeAreaInset/);
 });
 
 test("local calendar preserves lateral safe areas while its moving surface owns the bottom inset", () => {

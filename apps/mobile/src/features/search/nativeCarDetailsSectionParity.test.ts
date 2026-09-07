@@ -15,29 +15,52 @@ function style(name: string): string {
   return match[1];
 }
 
-test("the live route owns one explicit, non-wrapping three-tab row", () => {
+test("the live route owns one sticky shell and one deterministic horizontal tab row", () => {
   assert.match(route, /ApprovedCarDetailScreen/);
   assert.match(native, /\(\["compare","pickup","location"\] as const\)/);
   assert.equal((native.match(/accessibilityRole="tablist"/g) ?? []).length, 1);
   assert.match(native, /<Text numberOfLines=\{1\}/);
+  assert.match(native, /stickyHeaderIndices=\{\[2\]\}/);
 
-  const tabs = style("tabs");
-  for (const contract of [
-    'width:"100%"', "minHeight:48", 'flexDirection:"row"',
-    'flexWrap:"nowrap"', 'alignItems:"stretch"', 'justifyContent:"space-between"',
-  ]) assert.ok(tabs.includes(contract), contract);
-  assert.ok(!tabs.includes('flexDirection:"column"'));
+  const shell = style("carsTabsShell");
+  for (const contract of ['width:"100%"', 'alignSelf:"stretch"', "minHeight:48", "borderBottomWidth:1"])
+    assert.ok(shell.includes(contract), contract);
+  assert.doesNotMatch(shell, /flexDirection|flexGrow|flexShrink|flexBasis|#075EE8/);
 
-  const tab = style("tab");
-  for (const contract of ["flexGrow:1", "flexShrink:1", "flexBasis:0", "minWidth:0", "minHeight:48"])
-    assert.ok(tab.includes(contract), contract);
-  assert.ok(!tab.includes('width:"100%"'));
-  assert.ok(!tab.includes('flexBasis:"100%"'));
+  const row = style("carsTabsRow");
+  for (const contract of ['width:"100%"', 'alignSelf:"stretch"', 'flexDirection:"row"', 'flexWrap:"nowrap"', 'alignItems:"stretch"'])
+    assert.ok(row.includes(contract), contract);
+  assert.doesNotMatch(row, /flexDirection:"column"|flexWrap:"wrap"|#075EE8/);
+
+  const tab = style("carTab");
+  assert.match(tab, /minWidth:0/);
+  const minimumHeight = /minHeight:(\d+)/.exec(tab);
+  assert.ok(minimumHeight);
+  assert.ok(Number(minimumHeight[1]) >= 44);
+  assert.doesNotMatch(tab, /flexGrow:1|flexShrink:1|flexBasis:0|width:"100%"|flexBasis:"100%"/);
+
+  const widths = [style("carTabCompare"), style("carTabPickup"), style("carTabLocation")]
+    .map(rule => Number(/width:"([\d.]+)%"/.exec(rule)?.[1]));
+  assert.deepEqual(widths, [32, 43, 25]);
+  assert.equal(widths.reduce((total, width) => total + width, 0), 100);
+
+  const shellStart = native.indexOf("<View style={[s.carsTabsShell");
+  const rowStart = native.indexOf('<View accessibilityRole="tablist" style={s.carsTabsRow}', shellStart);
+  const pageStart = native.indexOf("<View style={s.page}", rowStart);
+  assert.ok(shellStart > native.indexOf("<View style={[s.hero"));
+  assert.ok(rowStart > shellStart && pageStart > rowStart);
+  const tablist = native.slice(rowStart, pageStart);
+  assert.doesNotMatch(tablist, /<ScrollView[^>]*horizontal/);
+  assert.doesNotMatch(tablist, /Platform\.OS/);
+  assert.equal((native.match(/s\.carsTabsShell/g) ?? []).length, 1);
+  assert.equal((native.match(/s\.carsTabsRow/g) ?? []).length, 1);
 
   const underline = style("underline");
   for (const contract of ["left:8", "right:8", "bottom:0", "height:2"])
     assert.ok(underline.includes(contract), contract);
   assert.match(native, /backgroundColor:selected\?"#075EE8":"transparent"/);
+  assert.match(tablist, /onPress=\{\(\)=>setActiveTab\(tab\)\}/);
+  assert.match(tablist, /accessibilityState=\{\{selected\}\}/);
 });
 
 test("the web tab reference remains the mobile parity contract", () => {

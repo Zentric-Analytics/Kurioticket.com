@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { getLocationFieldDisplay } from "../../../../../src/lib/search/locationFieldDisplay";
 
 const cars = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
+const carAlert = readFileSync("src/features/search/NativeCarPriceAlert.tsx", "utf8");
 const hotels = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
 const carHeader = cars.slice(cars.indexOf("function CarResultsHeader"), cars.indexOf("function CarSkeletons"));
 const hotelHeader = hotels.slice(hotels.indexOf("function HotelResultsHeader"), hotels.indexOf("const HotelResultsShortcut"));
@@ -40,12 +42,21 @@ test("Cars summary typography and pencil match Hotel Results", () => {
 });
 
 test("Cars summary remains derived from canonical search data", () => {
-  assert.match(cars, /payload\.pickupLocation/);
+  assert.match(cars, /canonicalPickupLocation=String\(payload\.pickupLocation\|\|""\)/);
+  assert.match(cars, /carSummaryDestination=getLocationFieldDisplay\(canonicalPickupLocation\)\.primary/);
   assert.match(cars, /payload\.pickupDate/);
   assert.match(cars, /payload\.dropoffDate/);
   assert.match(cars, /payload\.driverAge/);
   assert.match(cars, /driverAge === "18-70" \? "Any age"/);
   assert.doesNotMatch(cars, /Paris, France|Sep 6|20 years old/);
+  assert.match(cars, /<CarEditSearchModal visible=\{carEditSearchOpen\} params=\{params\}/);
+});
+
+test("Cars summary compacts the displayed city without mutating its canonical value", () => {
+  const canonical = "Paris, France";
+  const destination = getLocationFieldDisplay(canonical).primary;
+  assert.equal(destination, "Paris");
+  assert.equal(canonical, "Paris, France");
 });
 
 test("Cars render the full filtered result set without pagination", () => {
@@ -56,14 +67,15 @@ test("Cars render the full filtered result set without pagination", () => {
 });
 
 test("Cars use one truthful compact price alert before the result count", () => {
-  assert.equal((cars.match(/<CarPriceAlert\/>/g) ?? []).length, 1);
-  assert.ok(cars.indexOf("<CarPriceAlert/>") < cars.indexOf("results found"));
-  const alert = cars.slice(cars.indexOf("function CarPriceAlert"));
-  assert.match(alert, /<Bell/); assert.match(alert, /<Switch/); assert.match(alert, /Track rental car prices/);
-  assert.match(alert, /carPriceAlertSwitchSlot:\{minWidth:51,minHeight:44,flexShrink:0,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4\}/);
-  assert.match(alert, /style=\{Platform\.OS==="ios"\?r\.carPriceAlertSwitchIos:undefined\} hitSlop=\{6\}/);
-  assert.match(alert, /accessibilityHint="Rental car price alerts are not available yet\." accessibilityState=\{\{checked:false,disabled:true\}\} disabled value=\{false\}/);
-  assert.match(alert, /carPriceAlertSwitchIos:\{transform:\[\{translateY:8\}\]\}/);
-  assert.doesNotMatch(alert, /Rental car price alerts<|label="Track prices"|alertIcon/);
+  assert.equal((cars.match(/<NativeCarPriceAlert/g) ?? []).length, 1);
+  assert.ok(cars.indexOf("<NativeCarPriceAlert") < cars.indexOf("results found"));
+  assert.match(carAlert, /<Bell/); assert.match(carAlert, /<Switch/); assert.match(carAlert, /Track rental car prices/);
+  assert.doesNotMatch(carAlert, /numberOfLines=\{1\}/);
+  assert.match(carAlert, /accessibilityLabel="Track rental car prices"/);
+  assert.match(carAlert, /switch: \{ minWidth: 51, minHeight: 44, flexShrink: 0/);
+  assert.match(carAlert, /pending \|\| loading \? <ActivityIndicator[\s\S]*?<Switch/);
+  assert.match(carAlert, /travelApi\.priceAlerts\(\)/); assert.match(carAlert, /updatePriceAlertStatus/); assert.match(carAlert, /createPriceAlert/);
+  assert.match(carAlert, /accessibilityState=\{\{ checked: tracking, disabled, busy: pending \|\| loading \}\}/);
+  assert.doesNotMatch(carAlert, /not available yet/);
   assert.match(hotels, /compactPriceAlertSwitchSlot: \{ minWidth: 51, minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
 });

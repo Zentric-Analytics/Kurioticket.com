@@ -40,6 +40,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 import { CarResultCard } from "@/components/results/CarResultCard";
+import { CarPriceAlertControl } from "@/components/results/CarPriceAlertControl";
 import { CarCardSkeleton } from "@/components/ui/Skeleton";
 import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
 import {
@@ -568,13 +569,18 @@ export function CarsResultsClient({
     trimmedDropoffLocation,
     t,
   );
+  // Results chrome is intentionally compact. Keep the complete curated labels
+  // in state and in every search value, and only select their primary display
+  // line for the summary surfaces below.
+  const pickupSummaryDisplay = getLocationFieldDisplay(pickupLocationLabel).primary;
+  const returnSummaryDisplay = getLocationFieldDisplay(dropoffLocationLabel).primary;
   const showCompactSearchSummary =
     isSearchBarCompact && desktopStickySearchSection === null;
   const desktopStickySearchOpen = desktopStickySearchSection !== null;
-  const pickupSummary = pickupLocationLabel || t("carsResults.pickupLocation");
+  const pickupSummary = pickupSummaryDisplay || t("carsResults.pickupLocation");
   const returnSummary =
-    dropoffLocationLabel ||
-    pickupLocationLabel ||
+    returnSummaryDisplay ||
+    pickupSummaryDisplay ||
     t("carsResults.returnLocation");
   const rentalDateSummary = pickupDate
     ? dropoffDate
@@ -2447,6 +2453,7 @@ export function CarsResultsExperience({
                     {t("filters")}
                   </button>
                 )}
+                {!embedded ? <CarPriceAlertControl search={search} results={results} /> : null}
                 <div
                   className="flex w-full min-w-0 flex-nowrap items-center justify-between gap-2"
                   data-cars-results-summary-row
@@ -2569,9 +2576,9 @@ export function CarsResultsExperience({
                   ))}
                   {paginationPendingPage !== null && pagination.totalPages > 1 ? (
                     <nav aria-label="Car results pagination" className="flex flex-wrap items-center justify-center gap-1.5 pt-4">
-                      <button type="button" disabled className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-slate-300 opacity-40"><ChevronLeft className="h-4 w-4" /></button>
-                      <button type="button" disabled className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-[#004BB8] bg-[#004BB8] text-white">{pagination.currentPage}</button>
-                      <button type="button" disabled className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-slate-300 opacity-40"><ChevronRight className="h-4 w-4" /></button>
+                      <button type="button" aria-label="Previous page" disabled className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-transparent bg-transparent text-slate-400 sm:border-slate-300 sm:opacity-40"><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
+                      <button type="button" aria-label={`Page ${pagination.currentPage}`} aria-current="page" disabled className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-transparent bg-transparent font-bold text-[#004BB8] sm:border-[#004BB8] sm:bg-[#004BB8] sm:text-white">{pagination.currentPage}</button>
+                      <button type="button" aria-label="Next page" disabled className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-transparent bg-transparent text-slate-400 sm:border-slate-300 sm:opacity-40"><ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
                     </nav>
                   ) : null}
                 </div>
@@ -2632,7 +2639,7 @@ export function CarsResultsExperience({
                         onClick={() => changePage(pagination.currentPage - 1)}
                         className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-[#07133B] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
                       ><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
-                      {getCarPaginationItems(pagination.currentPage, pagination.totalPages).map((item, index) =>
+                      <span className="hidden items-center gap-1.5 sm:flex">{getCarPaginationItems(pagination.currentPage, pagination.totalPages).map((item, index) =>
                         item === "ellipsis" ? (
                           <span key={`ellipsis-${index}`} aria-hidden="true" className="inline-flex h-11 min-w-6 items-center justify-center text-[#536B92]">…</span>
                         ) : (
@@ -2651,14 +2658,28 @@ export function CarsResultsExperience({
                             )}
                           >{item}</button>
                         ),
-                      )}
+                      )}</span>
+                      <span className="flex items-center sm:hidden">{getCarPaginationItems(pagination.currentPage, pagination.totalPages, true).map((item) => (
+                        <button
+                          key={item}
+                          type="button"
+                          aria-label={`Page ${item}`}
+                          aria-current={item === pagination.currentPage ? "page" : undefined}
+                          onClick={() => changePage(item)}
+                          disabled={paginationPendingPage !== null}
+                          className={cn(
+                            "inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-transparent bg-transparent text-sm font-semibold text-[#07133B] transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
+                            item === pagination.currentPage && "font-bold text-[#004BB8]",
+                          )}
+                        >{item}</button>
+                      ))}</span>
                       <button
                         type="button"
                         aria-label="Next page"
                         disabled={pagination.currentPage === pagination.totalPages || paginationPendingPage !== null}
                         onClick={() => changePage(pagination.currentPage + 1)}
-                        className="inline-flex min-h-11 items-center justify-center gap-1 rounded-md px-2.5 text-sm font-semibold text-[#07133B] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
-                      ><span>Next</span><ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-md px-0 text-sm font-semibold text-[#07133B] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent sm:px-2.5"
+                      ><span className="hidden sm:inline">Next</span><ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
                     </nav>
                   ) : null}
                 </div>

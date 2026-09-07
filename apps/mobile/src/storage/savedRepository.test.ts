@@ -1,17 +1,45 @@
-import assert from "node:assert/strict";import test from "node:test";import type { FlightResult } from "../api/travelApi";import { mapDestinationToSaved,mapFlightToSaved,savedSignature } from "./savedMapping";
-const flight={id:"f",provider:"p",airlineName:"Air",originAirport:"LOS",destinationAirport:"LHR",departureTime:"2027-01-01T00:00:00Z",arrivalTime:"2027-01-01T06:00:00Z",price:10,currency:"USD",flightNumber:"1",duration:"6h",durationMinutes:360,stops:0,layovers:[],segments:[],cabinClass:"economy",baggageInfo:"",refundInfo:"",bookingUrl:"https://x",partnerRedirectUrl:"https://x",valueScore:1,riskScore:1,comfortScore:1,travelConfidenceScore:1,travelEffortScore:1,recommendationReasons:[],badges:[]} as unknown as FlightResult;
-test("flight mapping retains canonical and native replay data",()=>{const mapped=mapFlightToSaved(flight);assert.equal(mapped.type,"flight");assert.deepEqual((mapped.payload as Record<string,unknown>).result,flight);});test("destination mapping uses canonical search",()=>assert.equal(mapDestinationToSaved("fr-paris")?.type,"search"));test("signatures deduplicate records independent of database id",()=>{const mapped=mapFlightToSaved(flight);assert.equal(savedSignature(mapped),savedSignature({...mapped,id:"server",createdAt:"now"} as never));});
-test("flight mapping retains sanitized search context without changing identity",()=>{const before=mapFlightToSaved(flight);const mapped=mapFlightToSaved(flight,{tripType:"one-way",origin:"LOS",destination:"LHR",departureDate:"2030-01-01",travelers:"2",result:"excluded",visual:"1"});assert.deepEqual((mapped.payload as Record<string,unknown>).searchParams,{tripType:"one-way",origin:"LOS",destination:"LHR",departureDate:"2030-01-01",travelers:"2"});assert.equal(savedSignature(mapped),savedSignature(before));});
+import assert from "node:assert/strict";
+import test from "node:test";
+import type { FlightResult } from "../api/travelApi";
+import { mapDestinationToSaved, mapFlightToSaved, savedSignature } from "./savedMapping";
+
+const flight = { id:"f",provider:"p",airlineName:"Air",originAirport:"LOS",destinationAirport:"LHR",departureTime:"2027-01-01T00:00:00Z",arrivalTime:"2027-01-01T06:00:00Z",price:10,currency:"USD",flightNumber:"1",duration:"6h",durationMinutes:360,stops:0,layovers:[],segments:[],cabinClass:"economy",baggageInfo:"",refundInfo:"",bookingUrl:"https://x",partnerRedirectUrl:"https://x",valueScore:1,riskScore:1,comfortScore:1,travelConfidenceScore:1,travelEffortScore:1,recommendationReasons:[],badges:[] } as unknown as FlightResult;
+const urlFree = (value: FlightResult) => {
+  const { bookingUrl: _bookingUrl, partnerRedirectUrl: _partnerRedirectUrl, ...rest } = value;
+  return rest;
+};
+
+test("flight mapping retains canonical replay data without persisting provider URLs", () => {
+  const mapped = mapFlightToSaved(flight);
+  assert.equal(mapped.type, "flight");
+  assert.deepEqual((mapped.payload as Record<string, unknown>).result, urlFree(flight));
+  assert.equal("bookingUrl" in ((mapped.payload as Record<string, unknown>).result as object), false);
+  assert.equal("partnerRedirectUrl" in ((mapped.payload as Record<string, unknown>).result as object), false);
+});
+
+test("destination mapping uses canonical search", () => assert.equal(mapDestinationToSaved("fr-paris")?.type, "search"));
+
+test("signatures deduplicate records independent of database id", () => {
+  const mapped = mapFlightToSaved(flight);
+  assert.equal(savedSignature(mapped), savedSignature({ ...mapped, id:"server", createdAt:"now" } as never));
+});
+
+test("flight mapping retains sanitized search context without changing identity", () => {
+  const before = mapFlightToSaved(flight);
+  const mapped = mapFlightToSaved(flight, { tripType:"one-way",origin:"LOS",destination:"LHR",departureDate:"2030-01-01",travelers:"2",result:"excluded",visual:"1" });
+  assert.deepEqual((mapped.payload as Record<string, unknown>).searchParams, { tripType:"one-way",origin:"LOS",destination:"LHR",departureDate:"2030-01-01",travelers:"2" });
+  assert.equal(savedSignature(mapped), savedSignature(before));
+});
 
 test("normalized Duffel local and offset flight mappings satisfy the Saved API contract", () => {
-  const duffel = { ...flight, id: "off_0001", provider: "duffel", airlineName: "British Airways", flightNumber: "BA75", originAirport: "LOS", destinationAirport: "LHR", departureTime: "2026-08-27T20:07:00", arrivalTime: "2026-08-28T03:43:00", price: 824.45, currency: "USD" };
+  const duffel = { ...flight, id:"off_0001",provider:"duffel",airlineName:"British Airways",flightNumber:"BA75",originAirport:"LOS",destinationAirport:"LHR",departureTime:"2026-08-27T20:07:00",arrivalTime:"2026-08-28T03:43:00",price:824.45,currency:"USD" };
   const mapped = mapFlightToSaved(duffel);
   assert.equal(mapped.departureTime, "2026-08-27T20:07:00.000Z");
   assert.equal(mapped.arrivalTime, "2026-08-28T03:43:00.000Z");
   assert.equal(typeof mapped.departureTime === "string" && !Number.isNaN(Date.parse(mapped.departureTime)), true);
   assert.equal(typeof mapped.arrivalTime === "string" && !Number.isNaN(Date.parse(mapped.arrivalTime)), true);
-  assert.deepEqual((mapped.payload as Record<string, unknown>).result, duffel);
-  const offset = mapFlightToSaved({ ...duffel, departureTime: "2030-04-12T23:10:00+01:00", arrivalTime: "2030-04-13T05:30:00+01:00" });
+  assert.deepEqual((mapped.payload as Record<string, unknown>).result, urlFree(duffel));
+  const offset = mapFlightToSaved({ ...duffel, departureTime:"2030-04-12T23:10:00+01:00", arrivalTime:"2030-04-13T05:30:00+01:00" });
   assert.equal(offset.departureTime, "2030-04-12T22:10:00.000Z");
   assert.equal(offset.arrivalTime, "2030-04-13T04:30:00.000Z");
 });

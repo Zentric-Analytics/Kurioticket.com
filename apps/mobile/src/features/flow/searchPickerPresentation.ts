@@ -13,13 +13,16 @@ export const SEARCH_PICKER_BACKDROP_COLOR = "rgba(8, 18, 35, 0.20)";
 export const SEARCH_PICKER_OPEN_DURATION_MS = 280;
 export const SEARCH_PICKER_CLOSE_DURATION_MS = 240;
 
-type SearchPickerMotionOptions = { controlledOpening?: boolean };
+type SearchPickerMotionOptions = {
+  controlledOpening?: boolean;
+  additionalTravelDistance?: number;
+};
 
 export function useSearchPickerMotion(
   visible: boolean,
   options: SearchPickerMotionOptions = {},
 ) {
-  const { controlledOpening = false } = options;
+  const { controlledOpening = false, additionalTravelDistance = 0 } = options;
   const { height: windowHeight } = useWindowDimensions();
   const { bottom: bottomSafeAreaInset } = useSafeAreaInsets();
   const fallbackTravelDistance = searchPickerSheetTravelDistance(
@@ -48,8 +51,8 @@ export function useSearchPickerMotion(
         fallbackTravelDistanceRef.current,
         measuredSheetHeight.current,
         fallbackTravelDistanceRef.current,
-      ),
-    [],
+      ) + additionalTravelDistance,
+    [additionalTravelDistance],
   );
 
   const onSheetLayout = useCallback(

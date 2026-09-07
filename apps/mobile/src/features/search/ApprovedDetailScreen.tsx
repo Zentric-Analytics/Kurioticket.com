@@ -16,13 +16,12 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { travelApi, type FlightResult, type HotelResult } from "../../api/travelApi";
+import { travelApi, type HotelResult } from "../../api/travelApi";
 import { FlowIcon } from "../flow/FlowIcon";
 import { Armchair, ArrowLeft, Award, Bed, CalendarDays, FilePenLine, Heart, Info, Laptop, Luggage, MapPin, Repeat2, ShieldX, Sparkles, Users, UtensilsCrossed, Wifi, Wine, type LucideIcon } from "lucide-react-native";
 import { Button, TopBar, clock, money, shortDate, ui } from "./SearchUi";
-import { visualFlights, visualHotels } from "./visualFixtures";
+import { visualHotels } from "./visualFixtures";
 import { useAppTheme } from "../../theme/AppTheme";
-import { AirlineLogo } from "./AirlineLogo";
 import { ProviderLogo } from "./ProviderLogo";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
 import { readSession } from "../../storage/sessionStorage";
@@ -32,20 +31,10 @@ import {
   type DisplayPrice,
   type ExchangeRates,
 } from "../currency/displayCurrency";
-import { canReuseFlightDetailFare, createFlightDetailFare } from "./flightDetailCurrency";
 import { canReuseHotelDisplayPrices, createHotelDisplayPrices, type HotelDisplayPriceSnapshot } from "./hotelDetailCurrency";
 import { createHotelRoomDisplayPrice } from "./hotelDetailCurrency";
-import { authoritativeProviderUrl } from "./providerBooking";
-import { flightShareMessage, shareFlightForAuthenticatedSession } from "./flightDetailInteractions";
-import { flightEditSearchParams } from "../flow/flightSearchModel";
-import { flightDetailHeaderModel } from "./flightDetailHeaderModel";
-import { flightTripDetails, type FlightTripDetail, type FlightTripDetailIcon } from "./flightTripDetails";
-import { useSavedFlights } from "../../storage/useSavedFlights";
-import { flightSavedSignature } from "../../storage/savedMapping";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
-import { providerLocalArrivalDate } from "./flightArrivalDayOffset";
-import { flightPriceBasis } from "./flightPriceBasis";
 import { HOTEL_LIMITS } from "../flow/hotelSearchModel";
 import { homepageAirports } from "../home/homepageAirports";
 import type { MobileHotelDetailsResponse } from "../../api/travelApi";
@@ -61,6 +50,7 @@ import { buildHotelAmenityPresentation, type HotelAmenityPresentationItem } from
 import { NativeHotelLocationSection } from "./NativeHotelLocationSection";
 import { NativeHotelReviewsSection } from "./NativeHotelReviewsSection";
 import { NativeFlightDetails } from "./NativeFlightDetails";
+import type { FlightTripDetail, FlightTripDetailIcon } from "./flightTripDetails";
 
 function hotelAboutIconFor(item: HotelAmenityPresentationItem): LucideIcon {
   if (item.iconKey === "wifi") return Wifi;
@@ -94,11 +84,11 @@ export function ApprovedDetailScreen({
   const visualTest =
     process.env.EXPO_PUBLIC_VISUAL_TEST === "1" && params.visual === "1";
   const value =
-    parse<FlightResult | HotelResult>(params.result) ??
+    parse<HotelResult>(params.result) ??
     (visualTest
-      ? product === "flight"
-        ? visualFlights[0]
-        : visualHotels[0]
+      ? product === "hotel"
+        ? visualHotels[0]
+        : undefined
       : undefined);
   if (product === "flight" && params.id) return <NativeFlightDetails params={params} />;
   if (!value)
@@ -115,320 +105,7 @@ export function ApprovedDetailScreen({
         </View>
       </SafeAreaView>
     );
-  return product === "flight" ? (
-    <FlightDetail result={value as FlightResult} params={params} />
-  ) : (
-    <HotelDetail result={value as HotelResult} params={params} />
-  );
-}
-function FlightDetail({ result, params }: { result: FlightResult; params: Record<string, string | string[]> }) {
-  const inset = useSafeAreaInsets();
-  const { theme } = useAppTheme();
-  const { savedFlights, toggle: toggleSavedFlight } = useSavedFlights();
-  const saved = savedFlights.has(flightSavedSignature(result));
-  const header = flightDetailHeaderModel(result, params);
-  const passedFare = parse<DisplayPrice>(params.displayFare);
-  const parsedDisplayCurrencyContext = parse<DisplayCurrencyResolution>(params.displayCurrencyContext);
-  const passedDisplayCurrencyContext = typeof parsedDisplayCurrencyContext?.resolvedCurrency === "string"
-    ? parsedDisplayCurrencyContext
-    : undefined;
-  const contextMatchesPassedFare = !passedDisplayCurrencyContext
-    || passedDisplayCurrencyContext.resolvedCurrency.toUpperCase() === passedFare?.currency.toUpperCase();
-  const initiallyValidPassedFare = canReuseFlightDetailFare({
-    passedFare,
-    providerAmount: result.price,
-    providerCurrency: result.currency,
-  }) && contextMatchesPassedFare ? passedFare! : null;
-  const [fare, setFare] = useState<DisplayPrice | null>(initiallyValidPassedFare);
-  const currencyRatesRef = useRef<ExchangeRates | null>(null);
-  const sharePendingRef = useRef(false);
-  useFocusEffect(useCallback(() => {
-    let active = true;
-    void readCurrencyPreference().catch(() => null).then(async (preferredCurrency) => {
-      if (!active) return;
-      if (contextMatchesPassedFare && canReuseFlightDetailFare({
-        passedFare,
-        providerAmount: result.price,
-        providerCurrency: result.currency,
-        preferredCurrency,
-      })) {
-        setFare(passedFare!);
-        return;
-      }
-
-      // A changed explicit preference invalidates the snapshot immediately.
-      // Never show the provider currency while the requested conversion loads.
-      setFare(null);
-      const [location, rates] = await Promise.all([
-        passedFare || preferredCurrency
-          ? Promise.resolve(null)
-          : travelApi.location().catch(() => null),
-        currencyRatesRef.current
-          ? Promise.resolve(currencyRatesRef.current)
-          : travelApi.currencyRates().then((payload) => payload.rates).catch(() => ({})),
-      ]);
-      if (!active) return;
-      const resolution = resolveDisplayCurrencyContext({
-        preferredCurrency,
-        ipCountryCode: location?.countryCode,
-        locale: Intl.DateTimeFormat().resolvedOptions().locale,
-      });
-      if (Object.keys(rates).length) currencyRatesRef.current = rates;
-      setFare(createFlightDetailFare(
-        result.price,
-        result.currency,
-        resolution.resolvedCurrency,
-        rates,
-      ));
-    });
-    return () => { active = false; };
-  }, [contextMatchesPassedFare, passedDisplayCurrencyContext?.resolvedCurrency,
-    passedFare?.amount, passedFare?.currency, passedFare?.providerAmount,
-    passedFare?.providerCurrency, result.currency, result.id, result.price]));
-  const formattedFare = fare?.formatted ?? "—";
-  const priceBasis = flightPriceBasis(params, fare);
-  const legs = result.legs?.length
-    ? result.legs
-    : [
-        {
-          direction: "outbound" as const,
-          originAirport: result.originAirport,
-          destinationAirport: result.destinationAirport,
-          departureTime: result.departureTime,
-          arrivalTime: result.arrivalTime,
-          duration: result.duration,
-          durationMinutes: result.durationMinutes,
-          stops: result.stops,
-          layovers: result.layovers,
-          segments: [],
-        },
-      ];
-  const provider = result.provider || result.airlineName;
-  const handleProviderBooking = async () => {
-    const url = authoritativeProviderUrl(result);
-    if (!/^https:\/\//.test(url))
-      return Alert.alert(
-        "Offer unavailable",
-        "The provider did not return a valid booking link.",
-      );
-    try {
-      await Linking.openURL(url);
-    } catch {
-      Alert.alert(
-        "Unable to open provider",
-        "Please refresh the search and try again.",
-      );
-    }
-  };
-  const handleShare = async () => {
-    if (sharePendingRef.current) return;
-    sharePendingRef.current = true;
-    try {
-      const outcome = await shareFlightForAuthenticatedSession({
-        readSession,
-        share: (message) => Share.share({ message }),
-        message: flightShareMessage(result, formattedFare),
-      });
-      if (outcome === "sign-in-required") {
-        Alert.alert("Sign in required", "Sign in to share this flight.", [
-          { text: "Sign in", onPress: () => router.push("/email-auth") },
-          { text: "Cancel", style: "cancel" },
-        ]);
-      }
-    }
-    catch { Alert.alert("Unable to share", "Please try again."); }
-    finally { sharePendingRef.current = false; }
-  };
-  return (
-    <SafeAreaView style={[d.safe, { backgroundColor: theme.background }]} edges={["top"]}>
-      <View accessibilityLabel="Flight details header" style={[d.flightBackHeader, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}><Pressable accessibilityRole="button" accessibilityLabel="Back to results" onPress={() => router.back()} style={({ pressed }) => [d.backToResults, pressed && d.headerActionPressed]}><ArrowLeft size={17} strokeWidth={2} color={ui.blue}/><Text style={d.backToResultsText}>Back to results</Text></Pressable></View>
-      {/free|refund/i.test(result.refundInfo) ? (
-        <View style={[d.reassure, theme.dark && { backgroundColor: "#153B2B" }]}>
-          <FlowIcon name="shield" color={theme.dark ? "#72D69A" : ui.green} />
-          <View>
-            <Text style={[d.green, theme.dark && { color: "#72D69A" }]}>{result.refundInfo}</Text>
-            <Text style={[d.meta, { color: theme.textSecondary }]}>Book with confidence</Text>
-          </View>
-        </View>
-      ) : null}
-      <ScrollView
-        contentContainerStyle={[d.body, { paddingBottom: 110 + inset.bottom }]}
-      >
-        <View style={d.flightSummary}>
-          <View style={d.flightSummaryCopy}>
-            <Text accessibilityRole="header" numberOfLines={1} style={[d.flightSummaryRoute, { color: theme.textPrimary }]}>{header.route}</Text>
-            <Text style={[d.headerMetadata, { color: theme.textSecondary }]}>{header.tripTypeLabel} · {priceBasis.travelerLabel.toLowerCase()}</Text>
-          </View>
-          <View accessibilityLabel="Flight details actions" style={d.flightSummaryActions}>
-            <Pressable accessibilityRole="button" accessibilityLabel={saved ? `Remove ${result.airlineName} flight from saved` : `Save ${result.airlineName} flight`} accessibilityState={{ selected: saved }} onPress={() => toggleSavedFlight(result, params)} style={d.headerAction}>
-              <Heart size={20} strokeWidth={2} fill={saved ? androidFavoriteColors.active : "transparent"} color={saved ? androidFavoriteColors.active : theme.icon} />
-            </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Share flight" onPress={() => void handleShare()} style={d.headerAction}>
-              <FlowIcon name="share" size={20} color={theme.icon} />
-            </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Edit search" onPress={() => router.push({ pathname: "/edit-flight-search", params: flightEditSearchParams(params) })} style={[d.editSearch, { borderColor: ui.blue }]}>
-              <FilePenLine size={16} strokeWidth={2} color={ui.blue} />
-              <Text style={d.editSearchText}>Edit search</Text>
-            </Pressable>
-          </View>
-        </View>
-        <View style={d.itineraryList}>
-          {legs.map((leg, i) => <FlightItineraryLeg key={`${leg.departureTime}-${i}`} leg={leg} result={result} />)}
-        </View>
-        <View style={[d.tripDetails, { backgroundColor: theme.surface }, theme.dark && d.tripDetailsDark]}>
-          <Text style={[d.h2, { color: theme.textPrimary }]}>Trip details</Text>
-          {flightTripDetails(result).map((detail) => (
-            <DetailsRow key={detail.label} {...detail} />
-          ))}
-        </View>
-        <View style={d.bookingProviderSection}>
-          <Text style={[d.h2, { color: theme.textPrimary }]}>Booking provider</Text>
-          <BookingProviderCard
-            provider={provider}
-            logoUrl={result.airlineLogo}
-            kind={
-              provider === result.airlineName
-                ? "Airline direct"
-                : "Travel provider"
-            }
-            price={formattedFare}
-          />
-          {priceBasis.providerFareText ? (
-            <Text accessibilityLabel={priceBasis.providerFareAccessibilityText ?? undefined} style={[d.disclosure, { color: theme.textSecondary }]}>
-              {priceBasis.providerFareText}
-            </Text>
-          ) : null}
-          <Text style={[d.disclosure, { color: theme.textSecondary }]}>Final price is confirmed by {provider} before booking.</Text>
-        </View>
-      </ScrollView>
-      <View style={[d.sticky, { paddingBottom: Math.max(inset.bottom, 10), backgroundColor: theme.surface, borderTopColor: theme.border }]}>
-        <View accessible accessibilityLabel={`Total ${fare?.accessibilityLabel ?? formattedFare} for ${priceBasis.travelerLabel}, ${priceBasis.tripTypeLabel.toLowerCase()}.`} style={d.stickyTotal}>
-          <Text style={[d.meta, { color: theme.textSecondary }]}>Total</Text>
-          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[d.price, { color: theme.textPrimary }]}>{formattedFare}</Text>
-          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[d.meta, { color: theme.textSecondary }]}>{priceBasis.summary}</Text>
-        </View>
-        <View style={d.stickyCta}>
-          <Button label={`Continue to ${provider}`} onPress={handleProviderBooking} />
-          <Text numberOfLines={2} style={[d.redirect, { color: theme.textSecondary }]}>You’ll continue on {provider}’s site</Text>
-        </View>
-      </View>
-    </SafeAreaView>
-  );
-}
-type FlightItineraryLegProps = {
-  leg: NonNullable<FlightResult["legs"]>[number];
-  result: FlightResult;
-};
-
-const airportFromCatalogue = (code: string) =>
-  homepageAirports.find((airport) => airport.code === code.toUpperCase());
-
-const itineraryDate = (value: string) => {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? ""
-    : date.toLocaleDateString(undefined, {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-};
-
-function FlightItineraryLeg({ leg, result }: FlightItineraryLegProps) {
-  const { theme } = useAppTheme();
-  const firstSegment = leg.segments[0];
-  const lastSegment = leg.segments[leg.segments.length - 1];
-  const originDetails = firstSegment?.originDetails;
-  const destinationDetails = lastSegment?.destinationDetails;
-  const origin = airportFromCatalogue(leg.originAirport);
-  const destination = airportFromCatalogue(leg.destinationAirport);
-  const segmentRows = leg.segments.length ? leg.segments : [undefined];
-  const arrivalDay = providerLocalArrivalDate(leg.departureTime, leg.arrivalTime);
-  const stopLabel = leg.stops === 0
-    ? "Nonstop"
-    : `${leg.stops} stop${leg.stops === 1 ? "" : "s"}`;
-  const endpoint = (
-    code: string,
-    value: string,
-    details: typeof originDetails,
-    catalogue: ReturnType<typeof airportFromCatalogue>,
-    arrival = false,
-  ) => (
-    <View style={d.itineraryEndpoint}>
-      <Text style={[d.itineraryTime, { color: theme.textPrimary }]}>{clock(value)}</Text>
-      <Text style={[d.itineraryCode, { color: theme.textPrimary }]}>{code}</Text>
-      <Text numberOfLines={2} style={[d.itineraryAirport, { color: theme.textSecondary }]}>
-        {details?.name ?? catalogue?.airport ?? code}
-      </Text>
-      <Text numberOfLines={1} style={[d.itineraryCity, { color: theme.textSecondary }]}>
-        {details?.cityName ?? catalogue?.city ?? ""}
-      </Text>
-      {details?.terminal ? (
-        <Text style={[d.itineraryFact, { color: theme.textSecondary }]}>Terminal {details.terminal}</Text>
-      ) : null}
-      {arrival && arrivalDay ? (
-        <Text style={[d.itineraryFact, { color: theme.textSecondary }]}>{`Arrives ${arrivalDay}`}</Text>
-      ) : null}
-    </View>
-  );
-
-  return (
-    <View style={[d.itineraryCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-      <View style={d.itineraryHeading}>
-        <Text style={d.itineraryDirection}>{leg.direction.toUpperCase()}</Text>
-        <Text style={[d.itineraryDate, { color: theme.textSecondary }]}>{itineraryDate(leg.departureTime)}</Text>
-      </View>
-      <View style={d.itineraryRoute}>
-        {endpoint(leg.originAirport, leg.departureTime, originDetails, origin)}
-        <View style={d.itineraryJourney}>
-          <Text style={[d.itineraryDuration, { color: theme.textSecondary }]}>{leg.duration}</Text>
-          <View style={d.itineraryLineRow}>
-            <View style={[d.itineraryDot, { backgroundColor: theme.textSecondary }]} />
-            <View style={[d.itineraryLine, { backgroundColor: theme.border }]} />
-            <FlowIcon name="flight" size={17} color={ui.blue} />
-            <View style={[d.itineraryLine, { backgroundColor: theme.border }]} />
-            <View style={[d.itineraryDot, { backgroundColor: theme.textSecondary }]} />
-          </View>
-          <Text style={[d.itineraryStops, { color: leg.stops === 0 ? ui.green : theme.textSecondary }]}>{stopLabel}</Text>
-        </View>
-        {endpoint(leg.destinationAirport, leg.arrivalTime, destinationDetails, destination, true)}
-      </View>
-      {leg.layovers.length ? (
-        <Text style={[d.itineraryLayovers, { color: theme.textSecondary }]}>
-          {leg.layovers.map((layover) => `${layover.duration} in ${layover.airport}`).join(" · ")}
-        </Text>
-      ) : null}
-      <View style={[d.segmentList, { borderTopColor: theme.border }]}>
-        {segmentRows.map((segment, index) => {
-          const airlineName = segment?.marketingCarrier?.name
-            ?? segment?.airlineName
-            ?? result.airlineName;
-          const flightNumber = segment?.marketingFlightNumber
-            ?? segment?.flightNumber
-            ?? (segmentRows.length === 1 ? result.flightNumber : undefined);
-          const matchingOfferCarrier = airlineName.trim().toLowerCase()
-            === result.airlineName.trim().toLowerCase();
-          return (
-            <View key={`${segment?.departureTime ?? leg.departureTime}-${index}`} style={d.segmentSummary}>
-              <AirlineLogo airlineName={airlineName} logoUrl={matchingOfferCarrier ? result.airlineLogo : null} />
-              <View style={d.segmentCopy}>
-                <Text style={[d.segmentRoute, { color: theme.textPrimary }]}>
-                  {segment?.originAirport ?? leg.originAirport} → {segment?.destinationAirport ?? leg.destinationAirport} · {clock(segment?.departureTime ?? leg.departureTime)}–{clock(segment?.arrivalTime ?? leg.arrivalTime)}
-                </Text>
-                <Text style={[d.segmentMeta, { color: theme.textSecondary }]}>
-                  {[airlineName, flightNumber].filter(Boolean).join(" · ")}
-                </Text>
-              </View>
-              {segment?.distanceKm ? (
-                <Text style={[d.segmentDistance, { color: theme.textSecondary }]}>{Math.round(segment.distanceKm).toLocaleString()} km</Text>
-              ) : null}
-            </View>
-          );
-        })}
-      </View>
-    </View>
-  );
+  return <HotelDetail result={value as HotelResult} params={params} />;
 }
 function HotelDetail({
   result,
@@ -1617,20 +1294,20 @@ const d = StyleSheet.create({
   hotelTabTextCompact: { fontSize: 10 },
   hotelDetailBody: { paddingHorizontal: 16, paddingVertical: 20, gap: 12 },
   hotelCompareSection: { paddingVertical: 8 },
-  hotelCompareHeading: { fontSize: 20, lineHeight: 28, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.5 },
+  hotelCompareHeading: { fontSize: 20, lineHeight: 28, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.5 },
   hotelCompareLead: { marginTop: 4, fontSize: 14, lineHeight: 20, fontWeight: "500", fontFamily: appFonts.medium },
   hotelCompareOffers: { marginTop: 20, gap: 12 },
   hotelHeading: { fontSize: 20, lineHeight: 26, fontWeight: "900" },
   hotelSubheading: { fontSize: 15, lineHeight: 20, fontWeight: "900", marginTop: 6 },
   hotelOffer: { borderWidth: 1.5, borderRadius: 13, padding: 16, gap: 16 },
   hotelOfferTop: { minWidth: 0, flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12 },
-  hotelOfferBrandLogo: { width: 136, height: 30, flexShrink: 0 },
+  hotelOfferBrandLogo: { width: 128, height: 28, flexShrink: 0 },
   hotelOfferProvider: { fontSize: 15, lineHeight: 21, fontWeight: "900" },
   selectionControl: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, alignItems: "center", justifyContent: "center" },
   selectionControlDot: { width: 10, height: 10, borderRadius: 5 },
   hotelOfferBottom: { marginTop: 2, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
   hotelOfferPriceRow: { minWidth: 0, marginTop: 12, alignItems: "flex-end" },
-  hotelNightly: { fontSize: 22, lineHeight: 27, fontWeight: "900", textAlign: "right" },
+  hotelNightly: { fontSize: 22, lineHeight: 27, fontWeight: "800", fontFamily: appFonts.extraBold, textAlign: "right" },
   hotelPerNight: { flexShrink: 0, fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "right" },
   hotelAboutPanel: {},
   hotelAboutHeading: { fontSize: 20, lineHeight: 28, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.5 },

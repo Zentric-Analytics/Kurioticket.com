@@ -98,14 +98,13 @@ test("every shared motion sheet reports its rendered height", () => {
 
 test("Flight Edit Search uses the shared bottom-sheet motion", () => {
   const editSearch = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
-  assert.match(editSearch, /useSearchPickerMotion\(visible\)/);
+  assert.match(editSearch, /useSearchPickerMotion\(visible, \{ additionalTravelDistance: floatingBottomGap \}\)/);
   assert.match(editSearch, /motion\.sheetStyle/);
   assert.match(editSearch, /motion\.backdropStyle/);
   assert.match(editSearch, /onLayout=\{motion\.onSheetLayout\}/);
   assert.match(editSearch, /backdrop: \{ flex: 1, justifyContent: "flex-end" \}/);
-  assert.match(editSearch, /sheet: \{ maxHeight: "88%", marginHorizontal: FLIGHT_QUICK_SHEET_HORIZONTAL_INSET, borderTopLeftRadius: 24, borderTopRightRadius: 24/);
+  assert.match(editSearch, /sheet: \{ maxHeight: "88%", marginHorizontal: FLIGHT_QUICK_SHEET_HORIZONTAL_INSET, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderBottomLeftRadius: 24, borderBottomRightRadius: 24/);
   assert.doesNotMatch(editSearch, /EDIT_SEARCH_REVEAL_OFFSET|useFlightEditSearchMotion|justifyContent: "flex-start"/);
-  assert.doesNotMatch(editSearch, /borderBottomLeftRadius|borderBottomRightRadius/);
 });
 
 test("open settling belongs only to a successfully finished current generation", () => {

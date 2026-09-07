@@ -26,12 +26,16 @@ test("Hotel rail keeps Filter Price Stars Facilities Room & bed without Flight b
   assert.doesNotMatch(rail, /hotelSortLabel|Cheapest|Airlines|Stops|Airports/);
 });
 
-test("Hotel controls retain their approved geometry while Flight uses its compact toolbar", () => {
+test("Hotel controls use compact capsules inside accessible touch targets like Flight", () => {
   const styles = screen.slice(screen.indexOf("const s0 = StyleSheet.create"));
-  assert.match(styles, /hotelFilterRail: \{ height: 48, flexGrow: 0 \}/);
-  assert.match(styles, /hotelFilterContent: \{ paddingHorizontal: 16, paddingBottom: 4, gap: 8, alignItems: "center", flexWrap: "nowrap" \}/);
-  assert.match(styles, /hotelShortcut: \{ height: 44, minHeight: 44,[^}]*gap: 6,[^}]*borderWidth: 1, borderRadius: 11, paddingHorizontal: 14 \}/);
-  assert.match(styles, /hotelShortcutLabel: \{ fontSize: 14, lineHeight: 18, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
+  assert.match(styles, /hotelFilterRail: \{ height: 44, flexGrow: 0 \}/);
+  assert.match(styles, /hotelFilterContent: \{ paddingLeft: 8, paddingRight: 16, gap: 6, alignItems: "center", flexWrap: "nowrap" \}/);
+  assert.doesNotMatch(block(styles, "hotelFilterContent", "hotelFilterSectionHeader"), /paddingBottom/);
+  assert.match(styles, /hotelShortcutTouchTarget: \{ minWidth: 44, minHeight: 44, justifyContent: "center" \}/);
+  assert.match(styles, /hotelShortcut: \{ height: 36,[^}]*gap: 4,[^}]*borderWidth: 1, borderRadius: 9, paddingHorizontal: 10 \}/);
+  const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
+  assert.match(component, /<Pressable[\s\S]*?style=\{s0\.hotelShortcutTouchTarget\}[\s\S]*?\{\(\{ pressed \}\) => <View style=\{\[[\s\S]*?s0\.hotelShortcut,/);
+  assert.match(styles, /hotelShortcutLabel: \{ fontSize: 13, lineHeight: 16, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
   assert.match(styles, /hotelShortcutCount: \{ minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 6/);
   assert.match(styles, /hotelShortcutCountText: \{ fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
   for (const contract of [/rail: \{ height: 44/, /touchTarget: \{[\s\S]*?minHeight: 44/, /capsule: \{[\s\S]*?height: 36[\s\S]*?borderRadius: 9[\s\S]*?paddingHorizontal: 10/, /label: \{[\s\S]*?fontSize: 13[\s\S]*?lineHeight: 16/, /count: \{[\s\S]*?minWidth: 20[\s\S]*?height: 20/]) assert.match(flight, contract);
@@ -58,7 +62,7 @@ test("Hotel Filter launcher has sliders without a chevron while quick filters ke
   for (const label of ["Price", "Stars", "Facilities", "Room & bed"]) assert.doesNotMatch(shortcut(label), /showChevron=\{false\}/);
   assert.match(component, /showChevron = true/);
   assert.match(component, /<SlidersHorizontal accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\}/);
-  assert.match(component, /\{showChevron \? <ChevronDown accessible=\{false\} size=\{14\} strokeWidth=\{1\.9\}/);
+  assert.match(component, /\{showChevron \? <ChevronDown accessible=\{false\} size=\{13\} strokeWidth=\{1\.9\}/);
   assert.match(component, /style=\{expanded \? s0\.hotelShortcutChevronExpanded : undefined\}/);
   assert.match(screen, /hotelShortcutChevronExpanded: \{ transform: \[\{ rotate: "180deg" \}\] \}/);
   assert.doesNotMatch(component, /ChevronRight|measureInWindow|Anchor/);
