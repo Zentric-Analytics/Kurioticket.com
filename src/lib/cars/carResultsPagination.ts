@@ -21,7 +21,18 @@ export function paginateCarResults<T>(
 export function getCarPaginationItems(
   currentPage: number,
   totalPages: number,
+  compact = false,
 ): CarPaginationItem[] {
+  if (compact) {
+    if (totalPages <= 0) return [];
+    const windowSize = Math.min(3, totalPages);
+    const page = Math.min(Math.max(Math.trunc(currentPage) || 1, 1), totalPages);
+    const start = Math.min(
+      Math.max(1, page - Math.floor(windowSize / 2)),
+      totalPages - windowSize + 1,
+    );
+    return Array.from({ length: windowSize }, (_, index) => start + index);
+  }
   if (totalPages <= 7) {
     return Array.from({ length: Math.max(0, totalPages) }, (_, index) => index + 1);
   }

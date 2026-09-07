@@ -783,6 +783,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const totalHotelResultPages = guided ? 0 : getHotelResultsPageCount(sortedVisibleHotels.length);
   const paginatedVisibleHotels = useMemo(() => (guided ? sortedVisibleHotels : paginateHotelResults(sortedVisibleHotels, currentResultsPage)), [currentResultsPage, guided, sortedVisibleHotels]);
   const paginationItems = useMemo(() => buildHotelResultsPaginationItems(currentResultsPage, totalHotelResultPages), [currentResultsPage, totalHotelResultPages]);
+  const mobilePaginationItems = useMemo(() => buildHotelResultsPaginationItems(currentResultsPage, totalHotelResultPages, true), [currentResultsPage, totalHotelResultPages]);
   const hotelSortOptions = useMemo(
     () =>
       [
@@ -2004,10 +2005,10 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                     )}
                     {!guided && totalHotelResultPages > 1 && !filterApplying ? (
                       <nav aria-label="Hotel results pages" className="flex flex-wrap items-center justify-center gap-1.5 pt-4">
-                        <button type="button" aria-label="Previous page" disabled={currentResultsPage === 1 || paginationPendingPage !== null} onClick={() => changeResultsPage(currentResultsPage - 1)} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 disabled:cursor-not-allowed disabled:opacity-40">
+                        <button type="button" aria-label="Previous page" disabled={currentResultsPage === 1 || paginationPendingPage !== null} onClick={() => changeResultsPage(currentResultsPage - 1)} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-transparent bg-transparent text-[#07133B] transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent sm:border-slate-200 sm:bg-white sm:text-slate-700 sm:disabled:opacity-40">
                           <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                         </button>
-                        {paginationItems.map((item, index) =>
+                        <span className="hidden items-center gap-1.5 sm:flex">{paginationItems.map((item, index) =>
                           item === "ellipsis" ? (
                             <span key={`ellipsis-${index}`} className="inline-flex min-h-11 min-w-8 items-center justify-center text-slate-500" aria-hidden="true">
                               …
@@ -2017,9 +2018,14 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                               {item}
                             </button>
                           ),
-                        )}
-                        <button type="button" aria-label="Next page" disabled={currentResultsPage === totalHotelResultPages || paginationPendingPage !== null} onClick={() => changeResultsPage(currentResultsPage + 1)} className="inline-flex min-h-11 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 disabled:cursor-not-allowed disabled:opacity-40">
-                          Next <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                        )}</span>
+                        <span className="flex items-center sm:hidden">{mobilePaginationItems.map((item) => (
+                          <button key={item} type="button" disabled={paginationPendingPage !== null} aria-label={`Page ${item}`} aria-current={item === currentResultsPage ? "page" : undefined} onClick={() => changeResultsPage(item)} className={cn("inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-transparent bg-transparent text-sm font-semibold text-[#07133B] transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35", item === currentResultsPage && "font-bold text-[#004BB8]")}>
+                            {item}
+                          </button>
+                        ))}</span>
+                        <button type="button" aria-label="Next page" disabled={currentResultsPage === totalHotelResultPages || paginationPendingPage !== null} onClick={() => changeResultsPage(currentResultsPage + 1)} className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg border border-transparent bg-transparent text-sm font-bold text-[#07133B] transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent sm:border-slate-200 sm:bg-white sm:px-3 sm:text-slate-700 sm:disabled:opacity-40">
+                          <span className="hidden sm:inline">Next</span><ChevronRight className="h-4 w-4" aria-hidden="true" />
                         </button>
                       </nav>
                     ) : null}
