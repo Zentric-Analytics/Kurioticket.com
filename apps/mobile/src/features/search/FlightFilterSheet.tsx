@@ -24,7 +24,7 @@ import {
   type StopBucket,
 } from "./flightFilters";
 import { clampNumericRange, priceRangeStep } from "./flightRange";
-import { FlightResultsSheetShell } from "./FlightResultsSheetShell";
+import { FLIGHT_FILTER_LIGHT_OUTLINE, FlightResultsSheetShell } from "./FlightResultsSheetShell";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { flightResultsUiCopy } from "./flightResultsSummary";
 
@@ -66,6 +66,7 @@ export function FlightFilterSheet({visible,section,filters,options,results,price
  const visibleAirlines=airlineSearch.trim()||showAllAirlines?searchedAirlines:searchedAirlines.slice(0,5);
  const resetQuick=()=>setDraft(section==="airlines"?{...working,airlines:[]}:section==="stops"?{...working,maxStops:null,stops:[]}:{...working,fromAirports:[],toAirports:[]});
  const footerLabel=count===0?copy.noFilterTitle:copy.viewFlights(count);
+ const filterOutline=theme.dark?theme.border:FLIGHT_FILTER_LIGHT_OUTLINE;
 
  return <FlightResultsSheetShell
   visible={visible}
@@ -76,8 +77,8 @@ export function FlightFilterSheet({visible,section,filters,options,results,price
   insetFlightQuickSheet={!full}
   closeLabel={copy.closeFilters}
   onClose={close}
-  headerAction={full&&activeCount?<Pressable accessibilityRole="button" accessibilityLabel={copy.clearAll} onPress={()=>onChange(emptyFlightFilters())} style={s.headerClear}><Text style={s.footerClearText}>{copy.clearAll}</Text></Pressable>:undefined}
-  footer={full?<Pressable accessibilityRole="button" accessibilityState={{disabled:count===0}} disabled={count===0} onPress={()=>{setDragging(false);onComplete()}} style={[s.viewButton,count===0&&s.viewButtonDisabled]}><Text style={s.viewText}>{footerLabel}</Text></Pressable>:<View style={s.footerActions}><Pressable accessibilityRole="button" onPress={resetQuick} style={[s.reset,{borderColor:theme.border}]}><Text style={[s.buttonText,{color:theme.textPrimary}]}>{copy.reset}</Text></Pressable><Pressable accessibilityRole="button" accessibilityState={{disabled:count===0}} disabled={count===0} onPress={()=>{onChange(draft);onClose()}} style={[s.apply,count===0&&s.viewButtonDisabled]}><Text style={[s.buttonText,{color:"white"}]}>{footerLabel}</Text></Pressable></View>}
+  headerAction={full&&activeCount?<Pressable accessibilityRole="button" accessibilityLabel={copy.clearAll} onPress={()=>onChange(emptyFlightFilters())} style={[s.headerClear,{borderColor:filterOutline}]}><Text style={s.footerClearText}>{copy.clearAll}</Text></Pressable>:undefined}
+  footer={full?<Pressable accessibilityRole="button" accessibilityState={{disabled:count===0}} disabled={count===0} onPress={()=>{setDragging(false);onComplete()}} style={[s.viewButton,count===0&&s.viewButtonDisabled]}><Text style={s.viewText}>{footerLabel}</Text></Pressable>:<View style={s.footerActions}><Pressable accessibilityRole="button" onPress={resetQuick} style={[s.reset,{borderColor:filterOutline}]}><Text style={[s.buttonText,{color:theme.textPrimary}]}>{copy.reset}</Text></Pressable><Pressable accessibilityRole="button" accessibilityState={{disabled:count===0}} disabled={count===0} onPress={()=>{onChange(draft);onClose()}} style={[s.apply,count===0&&s.viewButtonDisabled]}><Text style={[s.buttonText,{color:"white"}]}>{footerLabel}</Text></Pressable></View>}
  >
  <ScrollView style={full?s.fullScroll:s.quickScroll} scrollEnabled={!dragging} contentContainerStyle={full?s.content:s.compactContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
  {full&&isPriceFilteringAvailable(options,priceFilteringReady)&&<FlightFilterSection title={copy.price}>{slider("maximumPrice",options.price!,copy.maximumPrice,v=>formatCurrency(v,options.priceCurrency??currency),priceRangeStep(options.price!.min,options.price!.max))}</FlightFilterSection>}
@@ -94,7 +95,8 @@ export function FlightFilterSheet({visible,section,filters,options,results,price
 function Check({label,secondary,trailing,accessibilityDetail,selected,logo,compact=false,onPress}:{label:string;secondary?:string;trailing?:string;accessibilityDetail?:string;selected:boolean;logo?:React.ReactNode;compact?:boolean;onPress:()=>void}){
  const {theme}=useAppTheme();
  const detail=accessibilityDetail??[secondary,trailing].filter(Boolean).join(", ");
- return <Pressable accessibilityLabel={detail?`${label}, ${detail}`:label} accessibilityRole="checkbox" accessibilityState={{checked:selected}} onPress={onPress} style={({pressed})=>[s.row,compact&&s.compactRow,pressed&&s.pressed]}><View style={[s.box,{borderColor:selected?ui.blue:theme.border,backgroundColor:selected?ui.blue:"transparent"}]}>{selected&&<Text style={s.check}>✓</Text>}</View>{logo}<View style={s.rowCopy}><Text style={[s.rowText,compact&&s.compactRowText,{color:theme.textPrimary}]}>{label}</Text>{secondary&&<Text style={[s.rowInsight,{color:theme.textSecondary}]}>{secondary}</Text>}</View>{trailing&&<Text numberOfLines={1} style={[s.rowTrailing,{color:theme.textSecondary}]}>{trailing}</Text>}</Pressable>;
+ const filterOutline=theme.dark?theme.border:FLIGHT_FILTER_LIGHT_OUTLINE;
+ return <Pressable accessibilityLabel={detail?`${label}, ${detail}`:label} accessibilityRole="checkbox" accessibilityState={{checked:selected}} onPress={onPress} style={({pressed})=>[s.row,compact&&s.compactRow,pressed&&s.pressed]}><View style={[s.box,{borderColor:selected?ui.blue:filterOutline,backgroundColor:selected?ui.blue:"transparent"}]}>{selected&&<Text style={s.check}>✓</Text>}</View>{logo}<View style={s.rowCopy}><Text style={[s.rowText,compact&&s.compactRowText,{color:theme.textPrimary}]}>{label}</Text>{secondary&&<Text style={[s.rowInsight,{color:theme.textSecondary}]}>{secondary}</Text>}</View>{trailing&&<Text numberOfLines={1} style={[s.rowTrailing,{color:theme.textSecondary}]}>{trailing}</Text>}</Pressable>;
 }
 
 const s=StyleSheet.create({
@@ -135,5 +137,5 @@ const s=StyleSheet.create({
  viewButton:{width:"100%",minHeight:50,borderRadius:10,backgroundColor:ui.blue,alignItems:"center",justifyContent:"center"},
  viewButtonDisabled:{opacity:.45},
  viewText:{color:"white",fontSize:16,lineHeight:22,fontWeight:"700",fontFamily:appFonts.bold},
- endpoints:{flexDirection:"row",justifyContent:"space-between"}, search:{height:44,borderWidth:1,borderRadius:10,paddingHorizontal:12,marginVertical:6}, showMore:{minHeight:44,justifyContent:"center",alignSelf:"flex-start"}, headerClear:{minHeight:44,justifyContent:"center",paddingHorizontal:8}, reset:{minWidth:116,height:49,borderWidth:1,borderRadius:12,alignItems:"center",justifyContent:"center"}, apply:{flex:1,height:49,borderRadius:12,backgroundColor:ui.blue,alignItems:"center",justifyContent:"center"}, buttonText:{fontSize:15,fontWeight:"700"},
+ endpoints:{flexDirection:"row",justifyContent:"space-between"}, search:{height:44,borderWidth:1,borderRadius:10,paddingHorizontal:12,marginVertical:6}, showMore:{minHeight:44,justifyContent:"center",alignSelf:"flex-start"}, headerClear:{minHeight:44,justifyContent:"center",paddingHorizontal:10,borderWidth:1,borderRadius:12}, reset:{minWidth:116,height:49,borderWidth:1,borderRadius:12,alignItems:"center",justifyContent:"center"}, apply:{flex:1,height:49,borderRadius:12,backgroundColor:ui.blue,alignItems:"center",justifyContent:"center"}, buttonText:{fontSize:15,fontWeight:"700"},
 });

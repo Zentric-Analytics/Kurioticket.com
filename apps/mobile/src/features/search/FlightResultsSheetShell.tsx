@@ -10,6 +10,8 @@ type QuickBackdropVariant = "flight" | "legacy";
 export const FLIGHT_QUICK_SHEET_HORIZONTAL_INSET = 12;
 export const FLIGHT_FLOATING_SHEET_BOTTOM_GAP = 12;
 export const FLIGHT_RESULTS_LIGHT_CANVAS = "#F5F7FB";
+export const FLIGHT_FILTER_LIGHT_CANVAS = "#F2F4F8";
+export const FLIGHT_FILTER_LIGHT_OUTLINE = "#D8DEE8";
 
 export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, children, footer, fullScreen = false, subtitle, headerAction, quickBackdropVariant = "flight", insetFlightQuickSheet = false, flightFilterAppearance = false }: {
   visible: boolean; title: string; closeLabel: string; onClose: () => void; children: ReactNode; footer?: ReactNode;
@@ -31,9 +33,9 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
   const quickSheetTranslateY = useRef(new Animated.Value(28)).current;
   const flightQuickBackdrop = quickBackdropVariant === "flight";
   const flightQuickHeader = insetFlightQuickSheet;
-  const usesFlightResultsCanvas = insetFlightQuickSheet || flightFilterAppearance;
-  const flightResultsCanvas = theme.dark ? theme.background : FLIGHT_RESULTS_LIGHT_CANVAS;
-  const sheetBackground = usesFlightResultsCanvas ? flightResultsCanvas : theme.background;
+  const usesFlightFilterCanvas = insetFlightQuickSheet || flightFilterAppearance;
+  const flightFilterCanvas = theme.dark ? theme.background : FLIGHT_FILTER_LIGHT_CANVAS;
+  const sheetBackground = usesFlightFilterCanvas ? flightFilterCanvas : theme.background;
 
   useEffect(() => {
     if (!visible || fullScreen) {
@@ -60,7 +62,7 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
 
   const sheet = (
     <View accessibilityLabel={title} style={[styles.sheet, insetFlightQuickSheet && styles.floatingFlightSheet, fullScreen ? styles.fullScreen : { maxHeight: Math.min(height * .76, 620) }, { backgroundColor: sheetBackground }]}>
-      <View style={[styles.header, flightQuickHeader && styles.quickHeader, flightFilterAppearance && styles.flightFilterHeader, { backgroundColor: usesFlightResultsCanvas ? flightResultsCanvas : theme.surface, borderBottomColor: theme.border }]}>
+      <View style={[styles.header, flightQuickHeader && styles.quickHeader, flightFilterAppearance && styles.flightFilterHeader, { backgroundColor: usesFlightFilterCanvas ? flightFilterCanvas : theme.surface, borderBottomColor: theme.border }]}>
         {flightQuickHeader ? <>
           <View accessible={false} importantForAccessibility="no-hide-descendants" style={styles.headerSlot} />
           <View style={[styles.headerCopy, styles.quickHeaderCopy]}>
@@ -82,7 +84,7 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
         </>}
       </View>
       <View style={fullScreen ? styles.fullScreenContent : styles.quickContent}>{children}</View>
-      {footer ? <View style={[styles.footer, insetFlightQuickSheet && styles.quickFooter, { backgroundColor: usesFlightResultsCanvas ? flightResultsCanvas : theme.surface, borderTopColor: theme.border, paddingBottom: footerBottomPadding }]}>{footer}</View> : null}
+      {footer ? <View style={[styles.footer, insetFlightQuickSheet && styles.quickFooter, { backgroundColor: usesFlightFilterCanvas ? flightFilterCanvas : theme.surface, borderTopColor: theme.border, paddingBottom: footerBottomPadding }]}>{footer}</View> : null}
     </View>
   );
   const animatedQuickSheet = <Animated.View style={[styles.quickSheetFrame, insetFlightQuickSheet && styles.insetFlightQuickSheet, insetFlightQuickSheet && { marginBottom: floatingBottomGap }, { transform: [{ translateY: quickSheetTranslateY }] }]}>{sheet}</Animated.View>;

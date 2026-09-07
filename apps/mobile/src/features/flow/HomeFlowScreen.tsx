@@ -147,7 +147,7 @@ export function SharedHomePage() {
 
   const searchPanel = {
     flights: availability.flightSearch
-      ? <FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker />
+      ? <FlightSearchPanel compact structuredSearchAppearance enableHomepageDefaultOrigin homepageAirportPicker />
       : <UnavailableNotice text="Flight search is temporarily unavailable. Hotels and cars remain available." />,
     hotels: availability.hotelSearch
       ? <HomeSearchSurface>

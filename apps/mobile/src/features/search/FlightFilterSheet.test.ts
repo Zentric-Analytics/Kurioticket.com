@@ -65,3 +65,17 @@ test("quick rows use one neutral surface while checked controls and accessibilit
  assert.doesNotMatch(check,/#F7FAFF|#142B55|#8FB5FF|#004BB8|compact&&selected&&\{backgroundColor/);
  assert.match(sheet,/compactRow:\{minHeight:48/);
 });
+test("Flight filter outlines are stronger in light mode without changing border geometry",()=>{
+ const sort=readFileSync("src/features/search/FlightSortSheet.tsx","utf8");
+ const shell=readFileSync("src/features/search/FlightResultsSheetShell.tsx","utf8");
+ assert.match(shell,/FLIGHT_FILTER_LIGHT_OUTLINE = "#D8DEE8"/);
+ assert.match(sheet,/const filterOutline=theme\.dark\?theme\.border:FLIGHT_FILTER_LIGHT_OUTLINE/);
+ assert.match(sheet,/borderColor:selected\?ui\.blue:filterOutline/);
+ assert.match(sheet,/box:\{[^}]*borderWidth:1\.5/);
+ assert.match(sheet,/reset:\{[^}]*borderWidth:1/);
+ assert.match(sheet,/headerClear:\{[^}]*borderWidth:1/);
+ assert.match(sheet,/headerAction=\{full&&activeCount\?<Pressable[\s\S]*?onChange\(emptyFlightFilters\(\)\)[\s\S]*?borderColor:filterOutline/);
+ assert.match(sort,/const filterOutline = theme\.dark \? theme\.border : FLIGHT_FILTER_LIGHT_OUTLINE/);
+ assert.match(sort,/reset: \{[^}]*borderWidth: 1/);
+ assert.match(sort,/borderColor: filterOutline/);
+});

@@ -6,8 +6,20 @@ const home = readFileSync("src/features/flow/HomeFlowScreen.tsx", "utf8");
 const products = readFileSync("src/features/flow/ProductScreens.tsx", "utf8");
 
 test("Home preserves Flights as the existing card reference", () => {
-  assert.match(home, /<FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker \/>/);
+  assert.match(home, /<FlightSearchPanel compact structuredSearchAppearance enableHomepageDefaultOrigin homepageAirportPicker \/>/);
   assert.doesNotMatch(home, /<FlightSearchPanel embedded compact/);
+  assert.doesNotMatch(home, /resultsModalAppearance/);
+});
+
+test("Home opts into generic structured Flight cards without changing other product surfaces", () => {
+  const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
+  assert.match(panel, /const usesStructuredCards = resultsModalAppearance \|\| structuredSearchAppearance/);
+  assert.match(panel, /showBaseline=\{!usesStructuredCards\}/);
+  assert.match(panel, /styles\.routeFields, usesStructuredCards && \[styles\.resultsModalCard/);
+  assert.match(panel, /label="Travel dates"[\s\S]*?appearance=\{usesStructuredCards \? "resultsModalCard" : "default"\}/);
+  assert.match(panel, /label="Travelers & Cabin Class"[\s\S]*?appearance=\{usesStructuredCards \? "resultsModalCard" : "default"\}/);
+  assert.match(panel, /structuredCardAppearance=\{usesStructuredCards\}/);
+  assert.match(panel, /!embedded && !usesStructuredCards && ft\.styles\.card/);
 });
 
 test("Home contains embedded Hotel and Car forms in its themed search surface", () => {
