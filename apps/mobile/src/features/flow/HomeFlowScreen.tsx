@@ -134,8 +134,7 @@ function HomeFlightSearchSurface({ children }: { children: React.ReactNode }) {
     <View
       style={[
         styles.homeFlightSearchSurface,
-        { backgroundColor: ft.colors.page, borderColor: ft.colors.border },
-        ft.styles.shadow,
+        { borderColor: ft.colors.border },
       ]}
     >
       {children}
@@ -275,8 +274,8 @@ const styles = StyleSheet.create({
   notificationBadgeText: { color: "white", fontSize: 10, fontWeight: "800" },
   homeFlightSearchSurface: {
     backgroundColor: "transparent",
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
     borderBottomWidth: 1,
     borderTopWidth: 0,
     borderBottomLeftRadius: 16,

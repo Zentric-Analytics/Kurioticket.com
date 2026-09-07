@@ -12,10 +12,13 @@ test("Home preserves the structured Flight search configuration", () => {
 });
 
 test("Home finishes only its Flight search with a semantic lower surface", () => {
-  assert.match(home, /function HomeFlightSearchSurface[\s\S]*?backgroundColor: ft\.colors\.page, borderColor: ft\.colors\.border[\s\S]*?ft\.styles\.shadow/);
-  assert.match(home, /homeFlightSearchSurface: \{[\s\S]*?borderLeftWidth: 1,[\s\S]*?borderRightWidth: 1,[\s\S]*?borderBottomWidth: 1,[\s\S]*?borderTopWidth: 0,[\s\S]*?borderBottomLeftRadius: 16,[\s\S]*?borderBottomRightRadius: 16,[\s\S]*?paddingBottom: 4/);
+  const wrapper = home.slice(home.indexOf("function HomeFlightSearchSurface"), home.indexOf("const products"));
+  assert.match(wrapper, /\{ borderColor: ft\.colors\.border \}/);
+  assert.doesNotMatch(wrapper, /backgroundColor: ft\.colors\.(?:page|surface|card)|ft\.styles\.shadow/);
+  assert.match(home, /homeFlightSearchSurface: \{[\s\S]*?backgroundColor: "transparent",[\s\S]*?borderLeftWidth: 0,[\s\S]*?borderRightWidth: 0,[\s\S]*?borderBottomWidth: 1,[\s\S]*?borderTopWidth: 0,[\s\S]*?borderBottomLeftRadius: 16,[\s\S]*?borderBottomRightRadius: 16,[\s\S]*?paddingBottom: 4/);
   assert.match(home, /flights: availability\.flightSearch\s*\? <HomeFlightSearchSurface>\s*<FlightSearchPanel compact structuredSearchAppearance enableHomepageDefaultOrigin homepageAirportPicker \/>\s*<\/HomeFlightSearchSurface>/);
   assert.equal(home.match(/<HomeFlightSearchSurface>/g)?.length, 1);
+  assert.match(home, /\{searchPanel\[activeProduct\]\}[\s\S]*?<PopularDestinationStays/);
 });
 
 test("Home opts into generic structured Flight cards without changing other product surfaces", () => {
