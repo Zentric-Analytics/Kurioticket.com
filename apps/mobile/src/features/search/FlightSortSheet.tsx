@@ -34,6 +34,7 @@ export function FlightSortSheet({
     <FlightResultsSheetShell
       visible={visible}
       title={copy.sortFlights}
+      subtitle={copy.sortHelp}
       insetFlightQuickSheet
       closeLabel={copy.closeSort}
       onClose={onClose}
