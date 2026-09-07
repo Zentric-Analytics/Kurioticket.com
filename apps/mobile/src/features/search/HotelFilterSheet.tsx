@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { Check, ChevronDown, SlidersHorizontal, X } from "lucide-react-native";
+import { Check, ChevronDown, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
@@ -42,7 +42,7 @@ export function HotelFilterSheet({visible,section,filters,options,displayCurrenc
  return <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose} accessibilityViewIsModal>
   <KeyboardAvoidingView behavior={Platform.OS==="ios"?"padding":"height"} style={[styles.screen,{backgroundColor:theme.background,paddingTop:inset.top}]}>
    <View accessibilityLabel="Hotel filters" style={[styles.header,{backgroundColor:theme.surface,borderBottomColor:theme.border}]}>
-    <SlidersHorizontal size={20} strokeWidth={2.2} color={ui.blue}/><View style={styles.headerCopy}><Text accessibilityRole="header" style={[styles.title,{color:theme.textPrimary}]}>Filters</Text><Text style={[styles.subtitle,{color:theme.textSecondary}]}>{activeCount?`${activeCount} applied`:"All stays shown"}</Text></View>
+    <View style={styles.headerCopy}><Text accessibilityRole="header" style={[styles.title,{color:theme.textPrimary}]}>Filters</Text><Text style={[styles.subtitle,{color:theme.textSecondary}]}>{activeCount?`${activeCount} applied`:"All stays shown"}</Text></View>
     {activeCount>0?<Pressable accessibilityRole="button" accessibilityLabel="Clear all hotel filters" onPress={()=>update(emptyHotelFilters())} style={styles.clear}><Text style={styles.clearText}>Clear all</Text></Pressable>:null}
     <Pressable accessibilityRole="button" accessibilityLabel="Close filters" onPress={onClose} style={styles.close}><X size={21} color={theme.icon}/></Pressable>
    </View>
