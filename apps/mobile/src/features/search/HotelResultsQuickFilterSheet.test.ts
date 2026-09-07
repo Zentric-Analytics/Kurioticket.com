@@ -25,3 +25,17 @@ test("Sort uses a separate radio draft and corrected early-return Apply flow",()
   assert.deepEqual([...postGuardSwitch.matchAll(/case "([^"]+)"/g)].map(match=>match[1]),["price","stars","facilities","roomTypes"]);
   assert.doesNotMatch(postGuardSwitch,/case "sort"/);
 });
+test("Sort reuses selection feedback only for real draft changes",()=>{
+  assert.match(source,/const selectSortMode=\(next:HotelSortMode\)=>\{if\(next===sortMode\)return;markUpdating\(\);setSortMode\(next\);\};/);
+  assert.match(source,/onPress=\{\(\)=>selectSortMode\(option\.value\)\}/);
+  assert.doesNotMatch(source,/onPress=\{\(\)=>setSortMode\(option\.value\)\}/);
+  const reset=source.slice(source.indexOf("const reset="),source.indexOf("const apply="));
+  assert.match(reset,/case "sort":if\(sortMode!==defaultHotelSort\)markUpdating\(\);setSortMode\(defaultHotelSort\);break;/);
+});
+test("shared updating footer remains timed, busy, and disabled",()=>{
+  assert.match(source,/setTimeout\(\(\)=>setFilterUpdating\(false\),NATIVE_FILTER_SELECTION_FEEDBACK_MS\)/);
+  assert.match(source,/accessibilityState=\{\{disabled:filterUpdating,busy:filterUpdating\}\}/);
+  assert.match(source,/disabled=\{filterUpdating\}/);
+  assert.match(source,/<ActivityIndicator size="small" color="white"\/>/);
+  assert.match(source,/Updating filters…/);
+});
