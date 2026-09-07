@@ -41,10 +41,10 @@ test("quick controls stay visually neutral even when selected or expanded", () =
   assert.doesNotMatch(controls, /borderColor: active \?/);
   assert.doesNotMatch(controls, /webFilterAccent/);
   assert.match(controls, /const webFilterCountBackground = "#F1F5F9"/);
-  assert.match(screen, /activeFilterCount,/);
-  assert.match(screen, /airlineCount: filters\.airlines\.length/);
-  assert.match(screen, /airportCount: filters\.fromAirports\.length \+ filters\.toAirports\.length/);
-  assert.match(screen, /stopsCount: filters\.stops\?\.length \|\| Number\(filters\.maxStops != null\)/);
+  assert.match(screen, /activeFilterCount=\{activeFilterCount\}/);
+  assert.match(screen, /airlineCount=\{filters\.airlines\.length\}/);
+  assert.match(screen, /airportCount=\{filters\.fromAirports\.length \+ filters\.toAirports\.length\}/);
+  assert.match(screen, /stopsCount=\{filters\.stops\?\.length \|\| Number\(filters\.maxStops != null\)\}/);
 });
 
 test("Flight rail starts left of result cards while retaining screen-edge breathing room", () => {
@@ -69,17 +69,32 @@ test("full Filter launcher shows its label with the filter icon and keeps its ac
 });
 
 test("sticky placement remains below the naturally scrolling date strip", () => {
-  assert.match(screen, /ListHeaderComponent=\{hasFlightDateStrip \?/);
+  assert.match(screen, /ListHeaderComponent=\{flightDateStrip\}/);
   assert.match(screen, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
   assert.match(screen, /renderSectionHeader=\{\(\) => \([\s\S]*?\{filterRail\}/);
-  assert.match(screen, /stickySectionHeadersEnabled=\{Platform\.OS !== "android"\}/);
+  assert.match(screen, /stickySectionHeadersEnabled/);
 });
 
-test("Android uses one accessible app-owned pinned copy with shared actions and horizontal position", () => {
-  assert.match(screen, /flightPinnedFilterRail[\s\S]*<FlightResultsQuickControls[\s\S]*\.\.\.flightRailProps/);
-  assert.match(screen, /pointerEvents=\{flightRailPinned \? "none" : "auto"\}/);
-  assert.match(screen, /importantForAccessibility=\{flightRailPinned \? "no-hide-descendants" : "auto"\}/);
-  assert.match(screen, /flightRailHorizontalOffset[\s\S]*scrollTo/);
-  assert.match(screen, /position: "absolute", top: 0, left: 0, right: 0/);
-  assert.doesNotMatch(screen, /flightPinnedFilterRail:[^\n]*transform/);
+test("native sticky layout owns one rail without the Android pinned-copy workaround", () => {
+  const flightList = screen.slice(screen.indexOf("<Animated.SectionList"), screen.indexOf(") : (", screen.indexOf("<Animated.SectionList")));
+  assert.equal(screen.match(/<FlightResultsQuickControls/g)?.length, 1);
+  assert.doesNotMatch(screen, /flightFilterAnchor|flightScrollOffset|flightRailHorizontalOffset|inlineFlightRailRef|pinnedFlightRailRef|flightRailPinned|shouldPinFlightQuickControls|flightPinnedFilterRail/);
+  assert.doesNotMatch(screen, /stickySectionHeadersEnabled=/);
+  assert.doesNotMatch(flightList, /pointerEvents=|importantForAccessibility=|accessibilityElementsHidden=/);
+});
+
+test("Android bypasses Pressability with non-responder touch observation", () => {
+  const androidBranch = controls.slice(controls.indexOf('if (Platform.OS === "android")'), controls.indexOf("return (", controls.indexOf('if (Platform.OS === "android")') + 20));
+  assert.match(controls, /if \(Platform\.OS === "android"\)[\s\S]*onTouchStart=[\s\S]*onTouchMove=[\s\S]*onTouchCancel=[\s\S]*onTouchEnd=/);
+  assert.doesNotMatch(androidBranch, /Pressable|onStartShouldSetResponder|onMoveShouldSetResponder/);
+  assert.match(controls, /const touchRejected = useRef\(false\)/);
+  assert.match(controls, /touchRejected\.current = true/);
+  assert.match(controls, /const rejected = touchRejected\.current/);
+  assert.match(controls, /if \(start && !rejected && isFlightQuickControlTap\(start, touch\(event\)\)\) onPress\(\)/);
+});
+
+test("iOS keeps ordinary Pressable behavior and both paths preserve accessibility", () => {
+  assert.match(controls, /<Pressable[\s\S]*accessibilityRole="button"[\s\S]*onPress=\{onPress\}/);
+  assert.match(controls, /accessible[\s\S]*accessibilityRole="button"[\s\S]*accessibilityLabel=\{accessibilityLabel\}[\s\S]*accessibilityState=\{\{ expanded, selected: active \}\}/);
+  assert.match(controls, /accessibilityActions=\{\[\{ name: "activate" \}\]\}[\s\S]*onAccessibilityAction=/);
 });
