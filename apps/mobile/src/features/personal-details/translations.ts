@@ -5,8 +5,6 @@ const en = {
   fullName: "Full name",
   firstName: "First name",
   lastName: "Last name",
-  officialNameHint:
-    "Enter your name as it appears on your passport or official ID.",
   email: "Email address",
   phone: "Phone number",
   birth: "Date of birth",
@@ -18,7 +16,6 @@ const en = {
   basic: "Personal information",
   contact: "Contact details",
   add: "Add details",
-  addApartment: "Add apartment, suite or building (optional)",
   addressSection: "Address",
   addressDescription:
     "Used for billing, booking records, and travel communication.",
@@ -53,6 +50,7 @@ const en = {
   postal: "Postcode or ZIP code",
   invalidDate: "Choose a valid birth date that is not in the future.",
   invalidName: "Full name must be 120 characters or fewer.",
+  requiredAddressFields: "Please complete:",
   back: "Go back",
   searchCountry: "Search countries",
   searchCountryHint: "Type a country name or code",
@@ -66,8 +64,6 @@ const es: typeof en = {
   fullName: "Nombre completo",
   firstName: "Nombre",
   lastName: "Apellidos",
-  officialNameHint:
-    "Introduce tu nombre tal como aparece en tu pasaporte o documento de identidad.",
   email: "Correo electrónico",
   phone: "Número de teléfono",
   birth: "Fecha de nacimiento",
@@ -79,7 +75,6 @@ const es: typeof en = {
   basic: "Información personal",
   contact: "Datos de contacto",
   add: "Añadir datos",
-  addApartment: "Añadir apartamento, suite o edificio (opcional)",
   addressSection: "Dirección",
   addressDescription:
     "Se usa para facturación, reservas y comunicaciones de viaje.",
@@ -114,6 +109,7 @@ const es: typeof en = {
   postal: "Código postal",
   invalidDate: "Elige una fecha de nacimiento válida que no sea futura.",
   invalidName: "El nombre completo debe tener 120 caracteres o menos.",
+  requiredAddressFields: "Completa estos campos:",
   back: "Volver",
   searchCountry: "Buscar países",
   searchCountryHint: "Escribe un país o código",

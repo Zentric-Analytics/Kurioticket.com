@@ -62,3 +62,17 @@ test("nationality retains shared flags with validated image loading and fallback
   assert.match(flag, /isoCode \|\| "--"/);
   assert.match(flag, /accessible=\{false\}/);
 });
+
+test("gender has no back arrow while nationality keeps its navigation control", () => {
+  const header = quick.slice(
+    quick.indexOf("<View style={s.header}>"),
+    quick.indexOf(
+      "{fullScreen ? (",
+      quick.indexOf("<View style={s.header}>") + 100,
+    ),
+  );
+  assert.match(header, /fullScreen \? \(/);
+  assert.match(header, /<FlowIcon name="back"/);
+  assert.match(header, /<View style=\{s.back\} \/>/);
+  assert.match(quick, /onPress=\{onClose\}/);
+});

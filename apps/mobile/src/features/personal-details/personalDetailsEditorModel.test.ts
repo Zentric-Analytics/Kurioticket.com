@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   birthDateOptions,
+  missingAddressFields,
   dateDraftFromValue,
   dateDraftValue,
   joinProfileName,
@@ -88,4 +89,29 @@ test("wheel offsets snap to the nearest available item, including over-scroll bo
   assert.equal(wheelIndex(29, 56, 12), 1);
   assert.equal(wheelIndex(-100, 56, 12), 0);
   assert.equal(wheelIndex(9999, 56, 12), 11);
+});
+
+test("all address fields except postcode are required, including whitespace-only input", () => {
+  const complete = {
+    countryCode: "NG",
+    addressLine1: "12 Example Street",
+    apartmentOrSuite: "Building A",
+    city: "Lagos",
+    stateOrRegion: "Lagos",
+    postalCode: "",
+  };
+  assert.deepEqual(missingAddressFields(complete), []);
+  for (const key of [
+    "countryCode",
+    "addressLine1",
+    "apartmentOrSuite",
+    "city",
+    "stateOrRegion",
+  ] as const) {
+    assert.deepEqual(missingAddressFields({ ...complete, [key]: "  " }), [key]);
+  }
+  assert.deepEqual(
+    missingAddressFields({ ...complete, postalCode: "100001" }),
+    [],
+  );
 });

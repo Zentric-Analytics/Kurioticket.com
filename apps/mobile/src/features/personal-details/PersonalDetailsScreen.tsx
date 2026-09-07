@@ -65,6 +65,7 @@ import {
   normalizeBirthDate,
   splitProfileName,
   joinProfileName,
+  missingAddressFields,
   type NameDraft,
 } from "./personalDetailsEditorModel";
 import {
@@ -505,7 +506,6 @@ export function PersonalDetailsScreen() {
   const c = personalDetailsCopy(locale);
   const navigation = useNavigation();
   const [activeDetail, setActiveDetail] = useState<DetailKey>("fullName");
-  const [showApartment, setShowApartment] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const overviewOffset = useRef(0);
   const lastNameRef = useRef<TextInput>(null);
@@ -706,6 +706,26 @@ export function PersonalDetailsScreen() {
       setError(c.invalidDate);
       return;
     }
+    if (activeDetail === "address") {
+      const labels = {
+        countryCode: c.country,
+        addressLine1: c.street,
+        apartmentOrSuite: c.apartment,
+        city: c.city,
+        stateOrRegion: c.state,
+      };
+      const missing = missingAddressFields(address);
+      if (missing.length) {
+        const message =
+          c.requiredAddressFields +
+          " " +
+          missing.map((key) => labels[key]).join(", ") +
+          ".";
+        setError(message);
+        AccessibilityInfo.announceForAccessibility(message);
+        return;
+      }
+    }
     submitting.current = true;
     Keyboard.dismiss();
     setSaving(true);
@@ -759,7 +779,6 @@ export function PersonalDetailsScreen() {
   const beginEditing = (detail: DetailKey) => {
     if (!saved) return;
     setActiveDetail(detail);
-    setShowApartment(!!parseAddress(saved.address || "").apartmentOrSuite);
     setNameDraft(splitProfileName(saved.fullName));
     const nextDate =
       detail === "birth"
@@ -969,9 +988,6 @@ export function PersonalDetailsScreen() {
                       value={nameDraft.lastName}
                       onChange={(value) => patchName("lastName", value)}
                     />
-                    <Text style={[s.description, { color: theme.muted }]}>
-                      {c.officialNameHint}
-                    </Text>
                   </>
                 )}
                 {activeDetail === "email" && (
@@ -1044,35 +1060,20 @@ export function PersonalDetailsScreen() {
                       autoComplete="street-address"
                       returnKeyType="next"
                       submitBehavior="submit"
-                      onSubmitEditing={() =>
-                        (showApartment
-                          ? apartmentRef
-                          : cityRef
-                        ).current?.focus()
-                      }
+                      onSubmitEditing={() => apartmentRef.current?.focus()}
                       label={c.street}
                       value={address.addressLine1}
                       onChange={(v) => patchAddress("addressLine1", v)}
                     />
-                    {showApartment ? (
-                      <Field
-                        inputRef={apartmentRef}
-                        returnKeyType="next"
-                        submitBehavior="submit"
-                        onSubmitEditing={() => cityRef.current?.focus()}
-                        label={c.apartment}
-                        value={address.apartmentOrSuite}
-                        onChange={(v) => patchAddress("apartmentOrSuite", v)}
-                      />
-                    ) : (
-                      <Pressable
-                        accessibilityRole="button"
-                        onPress={() => setShowApartment(true)}
-                        style={s.linkHit}
-                      >
-                        <Text style={s.blue}>{c.addApartment}</Text>
-                      </Pressable>
-                    )}
+                    <Field
+                      inputRef={apartmentRef}
+                      returnKeyType="next"
+                      submitBehavior="submit"
+                      onSubmitEditing={() => cityRef.current?.focus()}
+                      label={c.apartment}
+                      value={address.apartmentOrSuite}
+                      onChange={(v) => patchAddress("apartmentOrSuite", v)}
+                    />
                     <View
                       style={[s.localityRow, width < 340 && s.localityStack]}
                     >

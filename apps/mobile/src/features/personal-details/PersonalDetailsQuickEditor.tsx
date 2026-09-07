@@ -163,15 +163,19 @@ export function PersonalDetailsQuickEditor({
             </View>
           ) : (
             <View style={s.header}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={c.back}
-                disabled={saving}
-                onPress={onClose}
-                style={s.back}
-              >
-                <FlowIcon name="back" color={theme.icon} />
-              </Pressable>
+              {fullScreen ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={c.back}
+                  disabled={saving}
+                  onPress={onClose}
+                  style={s.back}
+                >
+                  <FlowIcon name="back" color={theme.icon} />
+                </Pressable>
+              ) : (
+                <View style={s.back} />
+              )}
               <Text
                 accessibilityRole="header"
                 style={[s.title, { color: theme.text }]}

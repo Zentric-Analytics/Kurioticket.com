@@ -345,7 +345,8 @@ test("address opens without keyboard and Next moves through fields", () => {
   assert.match(address, /returnKeyType="next"/);
   for (const ref of ["cityRef", "stateRef", "postalRef"])
     assert.ok(address.includes(`${ref}.current?.focus()`));
-  assert.match(address, /showApartment/);
+  assert.doesNotMatch(address, /showApartment|addApartment/);
+  assert.match(address, /apartmentRef.current\?\.focus\(\)/);
 });
 
 test("edit controls follow the web responsive alignment contract", () => {
@@ -510,5 +511,19 @@ test("official name editor separates fields with the correct autofill and Next b
   assert.match(screen, /label=\{c.lastName\}/);
   assert.match(screen, /lastNameRef.current\?\.focus\(\)/);
   assert.match(screen, /joinProfileName\(next\)/);
-  assert.match(screen, /c.officialNameHint/);
+  assert.doesNotMatch(screen, /c.officialNameHint/);
+});
+
+test("address validation runs only in the address editor before persistence", () => {
+  const save = screen.slice(
+    screen.indexOf("const save = async"),
+    screen.indexOf("const goBack"),
+  );
+  assert.match(save, /if \(activeDetail === "address"\)/);
+  assert.match(save, /missingAddressFields\(address\)/);
+  assert.ok(
+    save.indexOf("missingAddressFields") <
+      save.indexOf("travelApi.updateProfile"),
+  );
+  assert.match(save, /setError\(message\)/);
 });

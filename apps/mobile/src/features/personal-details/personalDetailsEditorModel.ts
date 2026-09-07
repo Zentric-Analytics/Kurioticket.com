@@ -1,4 +1,17 @@
 import { personalDetailsLatestDateOfBirth } from "./personalDetailsModel";
+import type { AddressParts } from "./personalDetailsModel";
+
+const requiredAddressFields = [
+  "countryCode",
+  "addressLine1",
+  "apartmentOrSuite",
+  "city",
+  "stateOrRegion",
+] as const;
+
+export function missingAddressFields(address: AddressParts) {
+  return requiredAddressFields.filter((key) => !address[key].trim());
+}
 
 export type DateDraft = { year: string; month: string; day: string };
 export type NameDraft = { firstName: string; lastName: string };
