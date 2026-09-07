@@ -53,7 +53,7 @@ test("mobile Hotel search uses the Flight-parity data-driven summary shell", () 
   );
 });
 
-test("mobile Hotel shortcut rail reuses filter, price, stars, and amenities state", () => {
+test("mobile Hotel shortcut rail reuses sort, filter, price, stars, and amenities state", () => {
   const toolbarStart = resultsSource.indexOf(
     "data-mobile-hotel-shortcuts",
   );
@@ -64,7 +64,13 @@ test("mobile Hotel shortcut rail reuses filter, price, stars, and amenities stat
   assert.match(resultsSource, /setFiltersOpen\(true\)/);
   assert.match(resultsSource, /activeFilterCount/);
   assert.match(resultsSource, /trigger\("price", "Price"/);
-  assert.doesNotMatch(toolbar, /trigger\("sort"|>\s*Sort\s*</);
+  assert.match(toolbar, /trigger\("sort", mobileSortLabel, 0, `Sort, \$\{currentSortLabel\}`\)/);
+  assert.match(resultsSource, /type MobileHotelShortcutMenu = "sort" \| "price" \| "stars" \| "amenities"/);
+  assert.match(resultsSource, /mobileShortcutDraftSort/);
+  assert.match(resultsSource, /hotelSummarySortMode === "cheapest" \? "Sort" : currentSortLabel/);
+  assert.match(resultsSource, /role="radio" aria-checked=\{selected\}/);
+  assert.match(resultsSource, /setMobileShortcutDraftSort\("cheapest"\)/);
+  assert.match(resultsSource, /updateHotelSummarySortMode\(mobileShortcutDraftSort\)/);
   assert.match(resultsSource, /selectedHotelClasses/);
   assert.match(resultsSource, /toggleHotelClass/);
   assert.match(resultsSource, /selectedFilters\.facilities/);

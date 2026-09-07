@@ -72,8 +72,8 @@ test("mobile results expose one filter toolbar and one in-sheet clear action", (
   assert.doesNotMatch(source, /mobileQuickFacilities = \["wifi", "breakfast", "pool"\]/);
   assert.match(source, /overflow-x-auto overscroll-x-contain/);
   assert.match(source, /\[&::-webkit-scrollbar\]:hidden/);
-  assert.match(source, /<span>Filter<\/span>[\s\S]*trigger\("price", "Price"[\s\S]*trigger\(\s*"stars",\s*"Stars"[\s\S]*trigger\(\s*"amenities",\s*"Amenities"/);
-  assert.match(source, /type MobileHotelShortcutMenu = "price" \| "stars" \| "amenities"/);
+  assert.match(source, /<span>Filter<\/span>[\s\S]*trigger\("sort", mobileSortLabel[\s\S]*trigger\("price", "Price"[\s\S]*trigger\(\s*"stars",\s*"Stars"[\s\S]*trigger\(\s*"amenities",\s*"Amenities"/);
+  assert.match(source, /type MobileHotelShortcutMenu = "sort" \| "price" \| "stars" \| "amenities"/);
   assert.match(source, /trigger\("price", "Price", priceFilterActive \? 1 : 0\)/);
   assert.match(source, /mobileShortcutDraftMinPrice/);
   assert.match(source, /setMinPrice\(mobileShortcutDraftMinPrice\)/);
@@ -82,7 +82,7 @@ test("mobile results expose one filter toolbar and one in-sheet clear action", (
   assert.match(source, /facilities: mobileShortcutDraftFacilities/);
   assert.match(source, /fixed inset-y-0 right-0[^\n]*h-\[100dvh\][^\n]*w-full/);
   assert.match(source, /!guided && showMobileCompactHotelSearch/);
-  assert.doesNotMatch(source, /openMobileShortcutMenu\("sort", event\.currentTarget\)/);
+  assert.match(source, /updateHotelSummarySortMode\(mobileShortcutDraftSort\)/);
   assert.doesNotMatch(source, /transition-all duration-200 sm:hidden/);
   assert.match(source, /mt-10 bg-\[#f6f8fb\] px-1 pb-0 pt-1 sm:hidden/);
   assert.match(source, /page-shell grid gap-y-5 pb-6 pt-3 sm:pt-6/);

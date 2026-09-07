@@ -7,10 +7,10 @@ const flight = readFileSync("src/features/search/FlightResultsQuickControls.tsx"
 
 const block = (source: string, name: string, next: string) => source.slice(source.indexOf(`${name}:`), source.indexOf(`${next}:`, source.indexOf(`${name}:`)));
 
-test("Hotel rail keeps Filter Price Stars Facilities Room & bed without Flight business controls", () => {
+test("Hotel rail keeps Filter Sort Price Stars Facilities Room & bed without Flight business controls", () => {
   const wholeRail = screen.slice(screen.indexOf("const filterRail"), screen.indexOf("const resultContent"));
   const rail = wholeRail.slice(wholeRail.indexOf(") : ("));
-  const labels = ["Filter", "Price", "Stars", "Facilities", "Room & bed"].map((label) => rail.indexOf(`label="${label}"`));
+  const labels = [rail.indexOf('label="Filter"'), rail.indexOf('label={hotelSort === defaultHotelSort ? "Sort" : hotelSortLabel(hotelSort)}'), ...["Price", "Stars", "Facilities", "Room & bed"].map((label) => rail.indexOf(`label="${label}"`))];
   assert.ok(labels.every((index) => index >= 0) && labels.every((index, i) => i === 0 || labels[i - 1] < index));
   assert.match(rail, /hotelOptions\.price \?/);
   assert.match(rail, /openHotelQuickFilter\("price"\)/);
@@ -23,7 +23,8 @@ test("Hotel rail keeps Filter Price Stars Facilities Room & bed without Flight b
   assert.match(rail, /openHotelQuickFilter\("roomTypes"\)/);
   assert.match(rail, /hotelOptions\.roomTypes\.length >= 2/);
   assert.doesNotMatch(rail, /label="Amenities"|openHotelQuickFilter\("amenities"\)/);
-  assert.doesNotMatch(rail, /hotelSortLabel|Cheapest|Airlines|Stops|Airports/);
+  assert.match(rail, /accessibilityLabel=\{`Sort, \$\{hotelSortLabel\(hotelSort\)\}`\}/);
+  assert.doesNotMatch(rail, /Cheapest|Airlines|Stops|Airports/);
 });
 
 test("Hotel controls use compact capsules inside accessible touch targets like Flight", () => {
@@ -60,6 +61,9 @@ test("Hotel Filter launcher has sliders without a chevron while quick filters ke
   assert.match(filter, /expanded=\{hotelFilterOpen\}/);
   assert.match(filter, /onPress=\{\(\) => openHotelFilters\("all"\)\}/);
   for (const label of ["Price", "Stars", "Facilities", "Room & bed"]) assert.doesNotMatch(shortcut(label), /showChevron=\{false\}/);
+  const sort = rail.slice(rail.indexOf('label={hotelSort === defaultHotelSort'), rail.indexOf('/>', rail.indexOf('label={hotelSort === defaultHotelSort')) + 2);
+  assert.doesNotMatch(sort, /\bicon\b|showChevron=\{false\}/);
+  assert.match(sort, /expanded=\{hotelQuickFilter === "sort"\}/);
   assert.match(component, /showChevron = true/);
   assert.match(component, /<SlidersHorizontal accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\}/);
   assert.match(component, /\{showChevron \? <ChevronDown accessible=\{false\} size=\{13\} strokeWidth=\{1\.9\}/);
