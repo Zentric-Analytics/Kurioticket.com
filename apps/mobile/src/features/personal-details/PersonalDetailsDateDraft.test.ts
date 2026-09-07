@@ -13,7 +13,7 @@ test("DOB picker keeps partial selections visible and clamps completed under-18 
   assert.match(screen, /value=\{dateDraft\.day \|\| c\.day\}/);
   assert.match(
     screen,
-    /value=\{dateMonthLabel\(dateDraft\.month, locale\) \|\| c\.month\}/,
+    /value=\{\s*dateMonthLabel\(dateDraft\.month, locale\) \|\| c\.month\s*\}/,
   );
   assert.match(screen, /value=\{dateDraft\.year \|\| c\.year\}/);
 

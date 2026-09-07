@@ -4,23 +4,29 @@ import test from "node:test";
 const screen = readFileSync(
   "src/features/personal-details/PersonalDetailsScreen.tsx",
   "utf8",
-);
-test("screen opens read-only and Edit below the details switches the same screen to editing", () => {
+).replace(/\r\n/g, "\n");
+test("overview groups details and each row opens its own editor", () => {
   assert.match(screen, /!editing\s*\?\s*\(/);
-  const header = screen.slice(screen.indexOf("<SafeAreaView"), screen.indexOf("{loading"));
-  assert.doesNotMatch(header, /accessibilityLabel=\{c\.edit\}|onPress=\{beginEditing\}/);
-  const readOnly = screen.slice(
-    screen.indexOf("{!editing ? ("),
-    screen.indexOf(") : (", screen.indexOf("{!editing ? (")),
+  assert.match(
+    screen,
+    /keys: \["fullName", "birth", "gender", "nationality"\]/,
   );
-  assert.match(readOnly, /accessibilityLabel=\{c\.edit\}/);
-  assert.match(readOnly, /onPress=\{beginEditing\}/);
-  assert.ok(
-    readOnly.indexOf("labels.map") <
-      readOnly.indexOf("accessibilityLabel={c.edit}"),
-  );
-  assert.match(screen, /setEditing\(true\)/);
+  assert.match(screen, /keys: \["email", "phone"\]/);
+  assert.match(screen, /keys: \["address"\]/);
+  assert.match(screen, /onPress=\{\(\) => beginEditing\(key\)\}/);
+  assert.match(screen, /setActiveDetail\(detail\)/);
+  for (const key of [
+    "fullName",
+    "email",
+    "phone",
+    "birth",
+    "gender",
+    "nationality",
+    "address",
+  ])
+    assert.ok(screen.includes(`activeDetail === "${key}"`));
 });
+
 test("missing values use localized fallback", () =>
   assert.match(screen, /value\s*\|\|\s*c\.missing/));
 test("Cancel restores authoritative saved values", () => {
@@ -51,7 +57,7 @@ test("successful main Save shows a floating toast and preserves its announcement
 });
 test("success toast is an overlay anchored inside the bottom safe area", () => {
   const contentScrollStart = screen.indexOf(
-    '<ScrollView\n            keyboardShouldPersistTaps="handled"',
+    "<ScrollView\n            ref={scrollRef}",
   );
   const contentScrollEnd = screen.indexOf("</ScrollView>", contentScrollStart);
   const toast = screen.indexOf('testID="personal-details-success-toast"');
@@ -118,27 +124,33 @@ test("no avatar identity hero or introductory card is introduced", () => {
 });
 test("header stays visible while shared initial loading and retry states replace content", () => {
   const header = screen.indexOf("<View\n        style={[\n          s.header");
-  const state = screen.indexOf('<PageContentState state="loading" pageName="personal details"');
+  const state = screen.indexOf(
+    '<PageContentState state="loading" pageName="personal details"',
+  );
   assert.ok(header >= 0 && header < state);
-  assert.match(screen, /PageContentState state="error" pageName="personal details" onRetry=/);
+  assert.match(
+    screen,
+    /PageContentState\s+state="error"\s+pageName="personal details"\s+onRetry=/,
+  );
   assert.match(screen, /Alert\.alert\(c\.discardTitle/);
 });
-test("read-only and edit content have no outer card treatment", () => {
-  assert.doesNotMatch(screen, /\bs\.card\b|\bcard:\s*\{|formCard/);
-  assert.doesNotMatch(
-    screen,
-    /backgroundColor:theme\.surface,borderColor:theme\.border/,
-  );
-  assert.match(screen, /<View>\s*<Text style=\{\[s\.description/);
-  assert.match(screen, /<View style=\{s\.formContent\}>/);
+test("overview uses themed groups and editor remains a plain focused form", () => {
+  assert.match(screen, /s\.detailCard/);
+  assert.match(screen, /backgroundColor: theme\.surface/);
+  assert.match(screen, /s\.formContent/);
+  assert.doesNotMatch(screen, /formCard|identityHero/);
 });
+
 test("country and nationality search selectors wait for an explicit search-field tap", () => {
   assert.doesNotMatch(
     screen,
     /<TextInput autoFocus accessibilityLabel=\{c\.searchCountry\}/,
   );
   assert.doesNotMatch(screen, /autoFocus/);
-  assert.match(screen, /if \(!isOpening\) return;[\s\S]*?Keyboard\.dismiss\(\)/);
+  assert.match(
+    screen,
+    /if \(!isOpening\) return;[\s\S]*?Keyboard\.dismiss\(\)/,
+  );
 });
 test("country query stays stable through native dismissal and resets after dismissal", () => {
   const selector = screen.slice(
@@ -189,10 +201,7 @@ test("country selector is full-screen, keyboard-aware, and only results virtuali
   assert.match(selector, /initialNumToRender=\{12\}/);
   assert.doesNotMatch(selector, /shown\.map\(/);
   assert.match(selector, /keyboardDismissMode="interactive"/);
-  assert.match(selector, /keyboardVisible/);
-  assert.ok(
-    selector.indexOf("s.countryAction") > selector.indexOf("<FlatList"),
-  );
+  assert.doesNotMatch(selector, /s\.countryAction|c\.selectorSave/);
 });
 test("country search accessibility hints match the available filters", () => {
   const selector = screen.slice(
@@ -236,7 +245,9 @@ test("picker mode and dataset survive native close and rapid reopen", () => {
     screen,
     /const finishSelectorDismiss = \(\) => \{[\s\S]*?if \(!selectorVisibleRef\.current\) setSelector\(null\)/,
   );
-  assert.ok((screen.match(/onDismiss=\{finishSelectorDismiss\}/g) ?? []).length >= 2);
+  assert.ok(
+    (screen.match(/onDismiss=\{finishSelectorDismiss\}/g) ?? []).length >= 2,
+  );
   assert.match(
     screen,
     /selector === "year"[\s\S]*?Array\.from\(\{ length: 125 \}/,
@@ -261,11 +272,11 @@ test("country selection has an explicit committed-versus-draft lifecycle", () =>
   );
   assert.match(selector, /useState\(selected\)/);
   assert.match(selector, /setDraftSelection\(selected\)/);
-  assert.match(selector, /setDraftSelection\(item\.value\)/);
-  assert.match(selector, /onSave\(draftSelection\)/);
+  assert.match(selector, /saveSelection\(item\.value\)/);
+  assert.match(selector, /onSave\(value\)/);
   assert.doesNotMatch(selector, /await onSave/);
   assert.doesNotMatch(selector, /onSave\(item\.value\)/);
-  assert.match(selector, /if \(committing\.current \|\| !draftSelection\) return/);
+  assert.match(selector, /if \(committing\.current \|\| !value\) return/);
   assert.match(selector, /accessibilityState=\{\{ selected: isSelected \}\}/);
 });
 test("country selector Save applies only to the current local draft", () => {
@@ -274,10 +285,22 @@ test("country selector Save applies only to the current local draft", () => {
     screen.indexOf("const save = async"),
   );
   assert.match(saveSelector, /setDraft\(\(current\) => \{/);
-  assert.doesNotMatch(saveSelector, /travelApi\.updateProfile|setSaved|setSuccess|announceForAccessibility/);
-  assert.match(saveSelector, /kind === "phone"[\s\S]*?\{ \.\.\.current, phoneCountryCode: value \}/);
-  assert.match(saveSelector, /kind === "nationality"[\s\S]*?\{ \.\.\.current, nationality: value \}/);
-  assert.match(saveSelector, /parseAddress\(current\.address \|\| ""\)[\s\S]*?countryCode: value/);
+  assert.doesNotMatch(
+    saveSelector,
+    /travelApi\.updateProfile|setSaved|setSuccess|announceForAccessibility/,
+  );
+  assert.match(
+    saveSelector,
+    /kind === "phone"[\s\S]*?\{ \.\.\.current, phoneCountryCode: value \}/,
+  );
+  assert.match(
+    saveSelector,
+    /kind === "nationality"[\s\S]*?\{ \.\.\.current, nationality: value \}/,
+  );
+  assert.match(
+    saveSelector,
+    /parseAddress\(current\.address \|\| ""\)[\s\S]*?countryCode: value/,
+  );
   assert.match(screen, /return saveCountrySelection\(kind, value\)/);
 });
 test("selector Save stays in Edit mode and merges only its committed value", () => {
@@ -312,15 +335,19 @@ test("only country controls use the full-screen selector", () => {
   assert.match(screen, /onPress=\{\(\) => openSelector\("day"\)\}/);
   assert.match(screen, /onPress=\{\(\) => openSelector\("gender"\)\}/);
 });
-test("opening Address does not programmatically focus its fields", () => {
-  const addressSection = screen.slice(
-    screen.indexOf("{c.addressSection}"),
-    screen.indexOf("<View style={s.actions}>"),
+test("address opens without keyboard and Next moves through fields", () => {
+  const address = screen.slice(
+    screen.indexOf('activeDetail === "address" &&'),
+    screen.indexOf("s.editorFooter"),
   );
-  assert.ok(addressSection.length > 0);
-  assert.doesNotMatch(addressSection, /autoFocus|\.focus\(/);
-  assert.match(addressSection, /<Field[\s\S]*?label=\{c\.street\}/);
+  assert.doesNotMatch(address, /autoFocus/);
+  assert.match(address, /label=\{c\.street\}/);
+  assert.match(address, /returnKeyType="next"/);
+  for (const ref of ["cityRef", "stateRef", "postalRef"])
+    assert.ok(address.includes(`${ref}.current?.focus()`));
+  assert.match(address, /showApartment/);
 });
+
 test("edit controls follow the web responsive alignment contract", () => {
   assert.match(screen, /testID="personal-details-phone-row"/);
   assert.match(screen, /countrySegment:\s*\{\s*width:\s*82/);
@@ -345,7 +372,10 @@ test("phone country changes preserve the local-number draft", () => {
     screen.indexOf("const saveCountrySelection"),
     screen.indexOf("const save = async"),
   );
-  assert.match(saveSelector, /return \{ \.\.\.current, phoneCountryCode: value \}/);
+  assert.match(
+    saveSelector,
+    /return \{ \.\.\.current, phoneCountryCode: value \}/,
+  );
   assert.doesNotMatch(saveSelector, /phoneNumber:/);
 });
 
@@ -364,8 +394,8 @@ test("main Save remains the only persistence point and main Cancel restores save
 });
 test("address fields retain web order and canonical serializer", () => {
   const address = screen.slice(
-    screen.indexOf("{c.addressSection}"),
-    screen.indexOf("s.actionDivider"),
+    screen.indexOf('activeDetail === "address" &&'),
+    screen.indexOf("s.editorFooter"),
   );
   for (const key of [
     "addressLine1",
@@ -378,9 +408,17 @@ test("address fields retain web order and canonical serializer", () => {
   assert.ok(
     address.indexOf("addressLine1") < address.indexOf("apartmentOrSuite"),
   );
-  assert.ok(address.indexOf("apartmentOrSuite") < address.indexOf("city"));
-  assert.ok(address.indexOf("city") < address.indexOf("stateOrRegion"));
-  assert.ok(address.indexOf("stateOrRegion") < address.indexOf("postalCode"));
+  assert.ok(
+    address.indexOf("address.apartmentOrSuite") <
+      address.indexOf("address.city"),
+  );
+  assert.ok(
+    address.indexOf("address.city") < address.indexOf("address.stateOrRegion"),
+  );
+  assert.ok(
+    address.indexOf("address.stateOrRegion") <
+      address.indexOf("address.postalCode"),
+  );
   assert.match(screen, /serializeAddress/);
 });
 
@@ -401,4 +439,47 @@ test("editable controls keep stable component identity across draft updates", ()
       `${component} must be module-scoped so draft updates do not remount focused inputs`,
     );
   }
+});
+
+test("Save and validation feedback stay outside the scrolling form", () => {
+  const footer = screen.indexOf("s.editorFooter");
+  const scrollEnd = screen.lastIndexOf("</ScrollView>", footer);
+  assert.ok(scrollEnd > screen.indexOf("ref={scrollRef}"));
+  assert.ok(
+    screen.indexOf("accessibilityLabel={saving ? c.saving : c.save}", footer) >
+      footer,
+  );
+  assert.match(screen.slice(footer), /accessibilityLiveRegion="assertive"/);
+});
+test("back returns to the overview and restores its scroll position", () => {
+  assert.match(screen, /editing \? discard\(false\) : router\.back\(\)/);
+  assert.match(screen, /BackHandler\.addEventListener\(\s*"hardwareBackPress"/);
+  assert.match(
+    screen,
+    /contentOffset=\{\{ x: 0, y: editing \? 0 : overviewOffset\.current \}\}/,
+  );
+});
+test("text inputs have a visible focus border without remounting", () => {
+  assert.match(
+    screen,
+    /borderColor: focused \? flowColors\.blue : theme\.border/,
+  );
+  assert.match(screen, /onFocus=\{\(\) => setFocused\(true\)\}/);
+  assert.match(screen, /onBlur=\{\(\) => setFocused\(false\)\}/);
+});
+
+test("partial date changes participate in discard protection and cannot be saved", () => {
+  assert.match(screen, /profilesDiffer\(draft, saved\) \|\| dateDirty/);
+  const save = screen.slice(
+    screen.indexOf("const save = async"),
+    screen.indexOf("const goBack"),
+  );
+  assert.match(
+    save,
+    /dateDirty && \(!dateDraft.year \|\| !dateDraft.month \|\| !dateDraft.day\)/,
+  );
+  assert.ok(
+    save.indexOf("setError(c.invalidDate)") <
+      save.indexOf("travelApi.updateProfile"),
+  );
 });

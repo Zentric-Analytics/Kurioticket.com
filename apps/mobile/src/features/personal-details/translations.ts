@@ -11,7 +11,10 @@ const en = {
   address: "Address",
   missing: "Not provided",
   edit: "Edit",
-  basic: "Basic information",
+  basic: "Personal information",
+  contact: "Contact details",
+  add: "Add details",
+  addApartment: "Add apartment, suite or building (optional)",
   addressSection: "Address",
   addressDescription:
     "Used for billing, booking records, and travel communication.",
@@ -65,7 +68,10 @@ const es: typeof en = {
   address: "Dirección",
   missing: "No proporcionado",
   edit: "Editar",
-  basic: "Información básica",
+  basic: "Información personal",
+  contact: "Datos de contacto",
+  add: "Añadir datos",
+  addApartment: "Añadir apartamento, suite o edificio (opcional)",
   addressSection: "Dirección",
   addressDescription:
     "Se usa para facturación, reservas y comunicaciones de viaje.",

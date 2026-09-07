@@ -14,7 +14,7 @@ test("DOB month edit field shows a readable month name while preserving numeric 
   );
   assert.match(
     screen,
-    /value=\{dateMonthLabel\(dateDraft\.month, locale\) \|\| c\.month\}/,
+    /value=\{\s*dateMonthLabel\(dateDraft\.month, locale\) \|\| c\.month\s*\}/,
   );
   assert.match(
     screen,
