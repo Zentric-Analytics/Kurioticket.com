@@ -38,6 +38,7 @@ function Control({ label, active, count, expanded, filterIcon, accessibilityLabe
   const accessibilityLabel = `${accessibilityLabelOverride ?? label}${active ? `, ${copy.selected}` : ""}${count ? `, ${count} ${copy.active}` : ""}`;
   const [androidPressed, setAndroidPressed] = useState(false);
   const touchStart = useRef<FlightQuickControlTouch | null>(null);
+  const touchRejected = useRef(false);
   const capsule = (pressed: boolean): ReactNode => <View style={[
     styles.capsule,
     { backgroundColor: pressed && light ? webFilterPressed : surface, borderColor: border },
@@ -62,16 +63,29 @@ function Control({ label, active, count, expanded, filterIcon, accessibilityLabe
         accessibilityState={{ expanded, selected: active }}
         accessibilityActions={[{ name: "activate" }]}
         onAccessibilityAction={({ nativeEvent }) => { if (nativeEvent.actionName === "activate") onPress(); }}
-        onTouchStart={(event) => { touchStart.current = touch(event); setAndroidPressed(true); }}
-        onTouchMove={(event) => {
-          if (touchStart.current && !isFlightQuickControlTap(touchStart.current, touch(event))) setAndroidPressed(false);
+        onTouchStart={(event) => {
+          touchStart.current = touch(event);
+          touchRejected.current = false;
+          setAndroidPressed(true);
         }}
-        onTouchCancel={() => { touchStart.current = null; setAndroidPressed(false); }}
+        onTouchMove={(event) => {
+          if (touchStart.current && !isFlightQuickControlTap(touchStart.current, touch(event))) {
+            touchRejected.current = true;
+            setAndroidPressed(false);
+          }
+        }}
+        onTouchCancel={() => {
+          touchStart.current = null;
+          touchRejected.current = false;
+          setAndroidPressed(false);
+        }}
         onTouchEnd={(event) => {
           const start = touchStart.current;
+          const rejected = touchRejected.current;
           touchStart.current = null;
+          touchRejected.current = false;
           setAndroidPressed(false);
-          if (start && isFlightQuickControlTap(start, touch(event))) onPress();
+          if (start && !rejected && isFlightQuickControlTap(start, touch(event))) onPress();
         }}
         style={styles.touchTarget}
       >
