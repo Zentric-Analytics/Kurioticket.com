@@ -111,3 +111,19 @@ test("resending keeps the code input focused and ships no visual-review bypass",
  assert.match(editor, /editable=\{!busy \|\| requesting\}/);
  assert.doesNotMatch(editor, /previewSend|LOCAL TEST|visual-review-only|submissionDisabled|__DEV__/);
 });
+
+test("temporary red feedback belongs to each input, never the sticky action footer", () => {
+  const editor = readFileSync("src/features/personal-details/PersonalDetailsEmailEditor.tsx", "utf8");
+  assert.match(editor, /setTimeout\(\(\) => setError\(""\), 5000\)/);
+  assert.match(editor, /clearTimeout\(timeout\)/);
+  assert.match(editor, /#FF8A80/);
+  assert.match(editor, /#D92D20/);
+  assert.equal((editor.match(/\{feedback\}/g) || []).length, 2);
+  const footer = editor.slice(editor.indexOf("<View style={s.footer}>"), editor.indexOf("const s ="));
+  assert.doesNotMatch(footer, /\{error\}|emailMaxResends|s.feedback/);
+  assert.match(editor, /Math.max\(retryAt, lockedUntil\)/);
+  assert.doesNotMatch(editor, /c.emailTryLater/);
+  assert.match(editor, /setError\(c.emailMaxResends\)/);
+  const translations = readFileSync("src/features/personal-details/translations.ts", "utf8");
+  assert.match(translations, /Too many attempts, try again in one minute\./);
+});

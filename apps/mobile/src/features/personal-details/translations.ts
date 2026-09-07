@@ -27,7 +27,7 @@ const en = {
   emailResend: "Resend code",
   emailSendingShort: "Sending",
   emailSentShort: "Code sent",
-  emailMaxResends: "Maximum resend attempts reached. Try again in one minute.",
+  emailMaxResends: "Too many attempts, try again in one minute.",
   emailTryLater: "Try later",
   emailResendIn: "Resend in",
   emailEditAddress: "Edit email address",

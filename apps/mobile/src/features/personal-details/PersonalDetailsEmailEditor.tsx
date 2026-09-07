@@ -58,12 +58,20 @@ export function PersonalDetailsEmailEditor({
   const pending = useRef(false);
   const mounted = useRef(true);
   const started = useRef(false);
-  const remaining = Math.max(0, Math.ceil((retryAt - now) / 1000));
+  const remaining = Math.max(
+    0,
+    Math.ceil((Math.max(retryAt, lockedUntil) - now) / 1000),
+  );
   const isCodeStep = step !== 2;
   useEffect(
     () => onDirtyChange(step > 1 || code.length > 0),
     [step, code, onDirtyChange],
   );
+  useEffect(() => {
+    if (!error) return;
+    const timeout = setTimeout(() => setError(""), 5000);
+    return () => clearTimeout(timeout);
+  }, [error]);
   useEffect(() => {
     mounted.current = true;
     if (!started.current) {
@@ -139,6 +147,7 @@ export function PersonalDetailsEmailEditor({
         setSentUntil(isResend ? Date.now() + 1000 : 0);
         setLockedUntil(result.resendLimitReached ? Date.now() + 60_000 : 0);
         setCodeSent(true);
+        if (result.resendLimitReached) setError(c.emailMaxResends);
         setNow(Date.now());
         setRetryAt(
           Date.now() +
@@ -201,7 +210,7 @@ export function PersonalDetailsEmailEditor({
               (Number.isFinite(seconds) && seconds > 0 ? seconds : 60) * 1000,
           );
           setNow(Date.now());
-          setError("");
+          setError(c.emailMaxResends);
           return;
         }
         setNow(Date.now());
@@ -227,6 +236,15 @@ export function PersonalDetailsEmailEditor({
     }
   }
   const borderColor = theme.dark ? "#75839B" : "#818A99";
+  const feedback = error ? (
+    <Text
+      accessibilityRole="alert"
+      accessibilityLiveRegion="polite"
+      style={[s.feedback, { color: theme.dark ? "#FF8A80" : "#D92D20" }]}
+    >
+      {error}
+    </Text>
+  ) : null;
   return (
     <View style={s.layout}>
       <ScrollView
@@ -310,16 +328,15 @@ export function PersonalDetailsEmailEditor({
                       ? c.emailSendingShort
                       : sentUntil > now
                         ? c.emailSentShort
-                        : lockedUntil > now
-                          ? c.emailTryLater
-                          : remaining > 0
-                            ? c.emailResendIn + " " + remaining + "s"
-                            : codeSent
-                              ? c.emailResend
-                              : c.emailSendCode}
+                        : remaining > 0
+                          ? c.emailResendIn + " " + remaining + "s"
+                          : codeSent
+                            ? c.emailResend
+                            : c.emailSendCode}
                 </Text>
               </Pressable>
             </View>
+            {feedback}
           </>
         ) : (
           <>
@@ -355,6 +372,7 @@ export function PersonalDetailsEmailEditor({
                 },
               ]}
             />
+            {feedback}
             <Text style={[s.note, { color: theme.muted }]}>
               {c.emailNextHelp}
             </Text>
@@ -384,24 +402,6 @@ export function PersonalDetailsEmailEditor({
         )}
       </ScrollView>
       <View style={s.footer}>
-        {lockedUntil > now && (
-          <Text
-            accessibilityRole="alert"
-            accessibilityLiveRegion="polite"
-            style={[s.note, { color: theme.text, marginBottom: 12 }]}
-          >
-            {c.emailMaxResends}
-          </Text>
-        )}
-        {!!error && (
-          <Text
-            accessibilityRole="alert"
-            accessibilityLiveRegion="polite"
-            style={[s.note, { color: theme.text, marginBottom: 12 }]}
-          >
-            {error}
-          </Text>
-        )}
         <PersonalDetailsSaveButton
           label={c.emailContinue}
           dirty={
@@ -480,6 +480,12 @@ const s = StyleSheet.create({
     fontSize: 13,
     lineHeight: 21,
     marginTop: 16,
+  },
+  feedback: {
+    fontFamily: appFonts.regular,
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 8,
   },
   links: { marginTop: 8 },
   linkHit: { minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
