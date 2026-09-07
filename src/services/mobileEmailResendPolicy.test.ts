@@ -2,18 +2,21 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { MOBILE_EMAIL_CODE_TTL_MS, MobileEmailResendError, reserveMobileEmailSend } from "./mobileEmailResendPolicy";
 
-test("initial send does not count toward three resends, with 30 seconds between sends", () => {
-  const initial = reserveMobileEmailSend(null, 0);
-  assert.deepEqual(initial, { resends: 0, nextAt: 30_000, lockedUntil: 0 });
-  assert.throws(() => reserveMobileEmailSend(initial, 29_000), (e: unknown) => e instanceof MobileEmailResendError && e.retryAfterSeconds === 1 && !e.maximumReached);
-  const first = reserveMobileEmailSend(initial, 30_000);
-  const second = reserveMobileEmailSend(first, 60_000);
-  const third = reserveMobileEmailSend(second, 90_000);
-  assert.equal(first.resends, 1);
-  assert.equal(second.resends, 2);
-  assert.deepEqual(third, { resends: 3, nextAt: 150_000, lockedUntil: 150_000 });
-  assert.throws(() => reserveMobileEmailSend(third, 149_999), (e: unknown) => e instanceof MobileEmailResendError && e.maximumReached && e.retryAfterSeconds === 1);
-  assert.deepEqual(reserveMobileEmailSend(third, 150_000), { resends: 1, nextAt: 180_000, lockedUntil: 0 });
+test("every resend retains the 30-second cooldown without an attempt cap", () => {
+  let state = reserveMobileEmailSend(null, 0);
+  assert.deepEqual(state, { resends: 0, nextAt: 30_000, lockedUntil: 0 });
+  for (let resend = 1; resend <= 10; resend++) {
+    const now = resend * 30_000;
+    assert.throws(() => reserveMobileEmailSend(state, now - 1), (e: unknown) => e instanceof MobileEmailResendError && e.retryAfterSeconds === 1 && !e.maximumReached);
+    state = reserveMobileEmailSend(state, now);
+    assert.deepEqual(state, { resends: resend, nextAt: now + 30_000, lockedUntil: 0 });
+  }
+});
+
+test("existing one-minute locks reduce to the ordinary cooldown", () => {
+  const previous = { resends: 3, nextAt: 150_000, lockedUntil: 150_000 };
+  assert.throws(() => reserveMobileEmailSend(previous, 119_000), (e: unknown) => e instanceof MobileEmailResendError && e.retryAfterSeconds === 1 && !e.maximumReached);
+  assert.deepEqual(reserveMobileEmailSend(previous, 120_000), { resends: 4, nextAt: 150_000, lockedUntil: 0 });
 });
 
 test("mobile verification codes have exactly five minutes of validity", () => {

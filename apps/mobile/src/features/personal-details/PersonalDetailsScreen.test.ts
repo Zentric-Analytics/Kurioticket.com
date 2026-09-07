@@ -28,7 +28,7 @@ test("Cancel restores authoritative saved values", () => {
   assert.match(screen, /setEditing\(false\)/);
 });
 test("Save is disabled until dirty and while saving", () =>
-  assert.match(screen, /disabled=\{!dirty\s*\|\|\s*saving\}/));
+  assert.match(screen, /disabled=\{!dirty\s*\|\|\s*saving\s*\|\|\s*emailBusy\}/));
 test("duplicate submission is prevented and failed save retains draft", () => {
   assert.match(screen, /submitting\.current/);
   assert.doesNotMatch(screen, /catch\{[^}]*setDraft/s);
@@ -59,7 +59,7 @@ test("success toast is an overlay anchored inside the bottom safe area", () => {
   assert.ok(toast > contentScrollEnd);
   assert.match(screen, /toastPosition:\s*\{[\s\S]*?position:\s*"absolute"/);
   assert.match(screen, /bottom: insets\.bottom \+ 16/);
-  assert.doesNotMatch(screen, /measureInWindow|updateToastPosition/);
+  assert.doesNotMatch(screen.slice(screen.indexOf("export function PersonalDetailsScreen")), /measureInWindow|updateToastPosition/);
 });
 test("success toast clears after exactly 1500ms and Edit dismisses it", () => {
   assert.match(
@@ -68,7 +68,7 @@ test("success toast clears after exactly 1500ms and Edit dismisses it", () => {
   );
   const editAction = screen.slice(
     screen.indexOf("const beginEditing"),
-    screen.indexOf("const openWeb"),
+    screen.indexOf("const closeEmail"),
   );
   assert.match(editAction, /dismissSuccess\(\)/);
 });
@@ -97,9 +97,10 @@ test("failed and selector draft-only Saves never show the success toast", () => 
   assert.doesNotMatch(failedSave, /showSuccess|setSuccess/);
   assert.doesNotMatch(selectorSave, /showSuccess|setSuccess/);
 });
-test("email is read-only and external handoff is accessible", () => {
+test("email stays read-only and opens an accessible in-app editor", () => {
   assert.match(screen, /editable=\{false\}/);
-  assert.match(screen, /accessibilityHint=\{c\.externalHint\}/);
+  assert.match(screen, /accessibilityLabel=\{c\.changeEmail\}/);
+  assert.match(screen, /<PersonalDetailsEmailEditor/);
 });
 test("authentication expiry preserves protected return intent", () =>
   assert.match(screen, /signInHref\("\/personal-information"\)/));
@@ -179,8 +180,8 @@ test("country selector is full-screen, keyboard-aware, and only results virtuali
     selector,
     /<KeyboardAvoidingView[\s\S]*?behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/,
   );
-  assert.ok(selector.indexOf("{title}") < selector.indexOf("<FlatList"));
-  assert.ok(selector.indexOf("<TextInput") < selector.indexOf("<FlatList"));
+  assert.ok(selector.indexOf("{title}") < selector.lastIndexOf("<FlatList"));
+  assert.ok(selector.indexOf("<TextInput") < selector.lastIndexOf("<FlatList"));
   assert.doesNotMatch(selector, /maxHeight|0\.82/);
   assert.match(selector, /keyboardShouldPersistTaps="handled"/);
   assert.match(selector, /style=\{s\.countryResults\}/);
@@ -264,9 +265,9 @@ test("country selection has an explicit committed-versus-draft lifecycle", () =>
   assert.match(selector, /setDraftSelection\(item\.value\)/);
   assert.match(selector, /onSave\(draftSelection\)/);
   assert.doesNotMatch(selector, /await onSave/);
-  assert.doesNotMatch(selector, /onSave\(item\.value\)/);
+  assert.match(selector, /if \(onSave\(item.value\)\) onClose\(\)/);
   assert.match(selector, /if \(committing\.current \|\| !draftSelection\) return/);
-  assert.match(selector, /accessibilityState=\{\{ selected: isSelected \}\}/);
+  assert.match(selector, /accessibilityState=\{\{ selected: isSelected, disabled: savingSelection/);
 });
 test("country selector Save applies only to the current local draft", () => {
   const saveSelector = screen.slice(
@@ -309,7 +310,7 @@ test("only country controls use the full-screen selector", () => {
     screen,
     /selectorVisible &&[\s\S]*?selector === "phone" \|\|\s*selector === "nationality" \|\|\s*selector === "addressCountry"/,
   );
-  assert.match(screen, /onPress=\{\(\) => openSelector\("day"\)\}/);
+  assert.match(screen, /onPress=\{\(anchor\) => openSelector\("day", anchor\)\}/);
   assert.match(screen, /onPress=\{\(\) => openSelector\("gender"\)\}/);
 });
 test("opening Address does not programmatically focus its fields", () => {
@@ -401,4 +402,14 @@ test("editable controls keep stable component identity across draft updates", ()
       `${component} must be module-scoped so draft updates do not remount focused inputs`,
     );
   }
+});
+
+test("nationality tap persists only nationality before closing and keeps other edits", () => {
+  assert.match(screen, /kind === "nationality"\) void selectNationality\(item.value\)/);
+  assert.match(screen, /kind !== "nationality" && !keyboardVisible/);
+  assert.match(screen, /kind === "nationality" \? <View style=\{s.iconButton\}/);
+  assert.match(screen, /await travelApi.updateProfile\(\{ nationality: value \}\)/);
+  assert.match(screen, /setDraft\(current => \(\{ \.\.\.current, nationality \}\)\)/);
+  assert.match(screen, /if \(succeeded\) closeWithPushAnimation\(onClose\)/);
+  assert.match(screen, /setSelectionError\(c.saveFailure\)/);
 });
