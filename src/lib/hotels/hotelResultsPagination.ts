@@ -22,6 +22,16 @@ export function paginateHotelResults<T>(results: readonly T[], page: number): T[
 export function buildHotelResultsPaginationItems(
   currentPage: number,
   totalPages: number,
+  compact: true,
+): number[];
+export function buildHotelResultsPaginationItems(
+  currentPage: number,
+  totalPages: number,
+  compact?: false,
+): HotelPaginationItem[];
+export function buildHotelResultsPaginationItems(
+  currentPage: number,
+  totalPages: number,
   compact = false,
 ): HotelPaginationItem[] {
   if (totalPages <= 0) return [];
