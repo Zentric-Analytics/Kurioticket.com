@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { getRuntimeEnvironment } from "../../config/environment";
 import { useAppTheme } from "../../theme/AppTheme";
@@ -6,11 +6,11 @@ import { useMobileLocalization } from "../../localization/MobileLocalizationProv
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import type { ProfileDestination, ProfileSection } from "./profileModel";
-import { navigateProfileDestination } from "./profileNavigation";
+import { navigateProfileDestination, openPreviewLegalBrowser } from "./profileNavigation";
 
 async function openPreviewBrowser(url: string) {
   const WebBrowser = await import("expo-web-browser");
-  return WebBrowser.openBrowserAsync(url);
+  return openPreviewLegalBrowser(url, Platform.OS, WebBrowser);
 }
 
 async function openProfileDestination(destination: ProfileDestination) {

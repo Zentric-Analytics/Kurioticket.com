@@ -17,7 +17,7 @@ test("Profile legal destinations use the Preview system browser while retaining 
   assert.match(profile, /navigateProfileDestination\(destination, getRuntimeEnvironment\(\)/);
   assert.doesNotMatch(profile, /^import .*expo-web-browser/m);
   assert.match(profile, /await import\("expo-web-browser"\)/);
-  assert.match(profile, /WebBrowser\.openBrowserAsync\(url\)/);
+  assert.match(profile, /openPreviewLegalBrowser\(url, Platform\.OS, WebBrowser\)/);
   assert.match(profile, /openBrowser: openPreviewBrowser/);
   assert.match(tabs, /KurioticketTabBar/);
   assert.match(tabs, /<Tabs\.Screen name="profile"/);
