@@ -34,8 +34,8 @@ test("multi-city is a real selectable Flight trip type", () => {
 test("results modal uses underline tabs while dedicated edit keeps filled tabs", () => {
   const panel = read("FlightSearchPanel.tsx");
 
-  assert.match(panel, /appearance=\{editAppearance && !resultsModalAppearance \? "filled" : "default"\}/);
-  assert.match(panel, /showBaseline=\{!resultsModalAppearance\}/);
+  assert.match(panel, /appearance=\{editAppearance && !usesStructuredCards \? "filled" : "default"\}/);
+  assert.match(panel, /showBaseline=\{!usesStructuredCards\}/);
 });
 
 test("only the results modal suppresses the neutral Segments baseline", () => {

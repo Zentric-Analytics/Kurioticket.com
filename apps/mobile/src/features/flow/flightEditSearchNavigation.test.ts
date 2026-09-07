@@ -82,7 +82,7 @@ test("results modal cards preserve the flight form hierarchy and controls", () =
   assert.ok(segments >= 0 && segments < route && route < dates && dates < travelers && travelers < button);
   const routeCard = panel.slice(route, dates);
   assert.match(routeCard, /label="Origin"[\s\S]*label="Destination"[\s\S]*accessibilityLabel="Swap origin and destination"/);
-  assert.match(routeCard, /modalCardDivider=\{resultsModalAppearance\}/);
+  assert.match(routeCard, /modalCardDivider=\{usesStructuredCards\}/);
   assert.match(panel.slice(dates, travelers), /label="Travel dates"/);
   assert.match(panel.slice(travelers, button), /label="Travelers & Cabin Class"/);
   assert.match(panel, /\{notice \? <UnavailableNotice text=\{notice\}\/> : null\}\{showSubmit \? <View style=\{styles\.button\}><PrimaryButton label=\{submitLabel\}/);
@@ -168,14 +168,14 @@ test("edit flight search uses the unified responsive editor hierarchy", () => {
   const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
   assert.match(screen, /Update your trip details/);
   assert.match(screen, /content: \{ flexGrow: 1/);
-  assert.match(panel, /appearance=\{editAppearance && !resultsModalAppearance \? "filled" : "default"\}/);
+  assert.match(panel, /appearance=\{editAppearance && !usesStructuredCards \? "filled" : "default"\}/);
   assert.match(panel, /label: FLIGHT_TRIP_TYPE_LABELS\["one-way"\]/);
   assert.match(panel, /label: FLIGHT_TRIP_TYPE_LABELS\["multi-city"\] }/);
   assert.match(panel, /accessibilityLabel="Swap origin and destination"/);
   assert.match(panel, /editCard:\{borderWidth:0,borderRadius:22/);
   assert.match(panel, /embedded \? styles\.embeddedEdit : styles\.editCard/);
   assert.match(panel, /embeddedEdit:\{borderWidth:0,padding:8\}/);
-  assert.match(panel, /!embedded && ft\.styles\.card, !embedded && ft\.styles\.shadow/);
+  assert.match(panel, /!embedded && !usesStructuredCards && ft\.styles\.card, !embedded && !usesStructuredCards && ft\.styles\.shadow/);
   assert.match(panel, /form\.departureDate && form\.returnDate \? `\$\{displayDate\(form\.departureDate\)\} — \$\{displayDate\(form\.returnDate\)\}` : "Travel dates"/);
   assert.match(panel, /formatTravelerCabinSummary\(form\)/);
 });

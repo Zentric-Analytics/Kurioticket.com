@@ -4,7 +4,7 @@ import { Check } from "lucide-react-native";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import { ui } from "./SearchUi";
-import { FlightResultsSheetShell } from "./FlightResultsSheetShell";
+import { FLIGHT_FILTER_LIGHT_OUTLINE, FlightResultsSheetShell } from "./FlightResultsSheetShell";
 import type { FlightSort } from "./flightFilters";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { flightResultsUiCopy } from "./flightResultsSummary";
@@ -23,6 +23,7 @@ export function FlightSortSheet({
   const { theme } = useAppTheme();
   const { locale } = useMobileLocalization();
   const copy = flightResultsUiCopy(locale);
+  const filterOutline = theme.dark ? theme.border : FLIGHT_FILTER_LIGHT_OUTLINE;
   const options: { value: FlightSort; label: string; description: string }[] = [
     { value: "best", label: copy.best, description: copy.bestHelp },
     { value: "price", label: copy.cheapest, description: copy.cheapestHelp },
@@ -37,7 +38,7 @@ export function FlightSortSheet({
       insetFlightQuickSheet
       closeLabel={copy.closeSort}
       onClose={onClose}
-      footer={<View style={styles.actions}><Pressable accessibilityRole="button" onPress={() => setDraft("best")} style={[styles.reset, { borderColor: theme.border }]}><Text style={[styles.buttonText, { color: theme.textPrimary }]}>{copy.reset}</Text></Pressable><Pressable accessibilityRole="button" onPress={() => onApply(draft)} style={styles.apply}><Text style={[styles.buttonText, styles.applyText]}>{copy.apply}</Text></Pressable></View>}
+      footer={<View style={styles.actions}><Pressable accessibilityRole="button" onPress={() => setDraft("best")} style={[styles.reset, { borderColor: filterOutline }]}><Text style={[styles.buttonText, { color: theme.textPrimary }]}>{copy.reset}</Text></Pressable><Pressable accessibilityRole="button" onPress={() => onApply(draft)} style={styles.apply}><Text style={[styles.buttonText, styles.applyText]}>{copy.apply}</Text></Pressable></View>}
     >
       <View accessibilityRole="radiogroup" style={styles.options}>
         {options.map((option) => {

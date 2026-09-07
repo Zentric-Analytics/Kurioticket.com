@@ -47,11 +47,11 @@ test("results modal appearance gives every leg one route card and one date card"
   assert.match(panel, /<MultiCityEditor[^>]*resultsModalAppearance=\{resultsModalAppearance\}/);
   assert.match(editor, /resultsModalAppearance: boolean/);
   assert.match(editor, /testID=\{resultsModalAppearance \? `results-modal-multi-city-route-card-\$\{index\+1\}` : undefined\}/);
-  assert.match(editor, /style=\{\[styles\.routeFields,resultsModalAppearance&&\[styles\.resultsModalCard,styles\.multiCityResultsModalCard,\{backgroundColor:ft\.colors\.card,borderColor:ft\.colors\.border\}\]\]\}/);
-  assert.match(editor, /label="Origin"[\s\S]*?appearance=\{resultsModalAppearance\?"resultsModalCard":"default"\} modalCardDivider=\{resultsModalAppearance\}/);
-  assert.match(editor, /label="Destination"[\s\S]*?appearance=\{resultsModalAppearance\?"resultsModalCard":"default"\} onPress=/);
+  assert.match(editor, /style=\{\[styles\.routeFields,structuredCardAppearance&&\[styles\.resultsModalCard,styles\.multiCityResultsModalCard,\{backgroundColor:ft\.colors\.card,borderColor:ft\.colors\.border\}\]\]\}/);
+  assert.match(editor, /label="Origin"[\s\S]*?appearance=\{structuredCardAppearance\?"resultsModalCard":"default"\} modalCardDivider=\{structuredCardAppearance\}/);
+  assert.match(editor, /label="Destination"[\s\S]*?appearance=\{structuredCardAppearance\?"resultsModalCard":"default"\} onPress=/);
   assert.match(editor, /testID=\{resultsModalAppearance \? `results-modal-multi-city-date-card-\$\{index\+1\}` : undefined\}/);
-  assert.match(editor, /label="Departure date"[\s\S]*?appearance=\{resultsModalAppearance\?"resultsModalCard":"default"\}/);
+  assert.match(editor, /label="Departure date"[\s\S]*?appearance=\{structuredCardAppearance\?"resultsModalCard":"default"\}/);
   assert.match(styles, /resultsModalCard:\{borderWidth:1,borderRadius:13,overflow:"hidden",marginTop:10\},multiCityResultsModalCard:\{marginTop:0\}/);
 });
 

@@ -19,7 +19,7 @@ test("fresh homepage dates are empty with a manual-selection placeholder for eve
   const panel = source("src/features/flow/FlightSearchPanel.tsx");
   const fresh = initializeFlightForm({}, today).form;
 
-  assert.match(home, /<FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker \/>/);
+  assert.match(home, /<FlightSearchPanel compact structuredSearchAppearance enableHomepageDefaultOrigin homepageAirportPicker \/>/);
   assert.doesNotMatch(home, /initializeHomepageDates/);
   assert.doesNotMatch(home, /isAuthenticated\s*\?[^:]*FlightSearchPanel/s);
   assert.equal(fresh.departureDate, "");

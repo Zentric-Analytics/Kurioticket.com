@@ -13,7 +13,7 @@ const home = source("src/features/flow/HomeFlowScreen.tsx");
 const regional = source("src/features/home/RegionalDestinationRoutes.tsx");
 
 test("new adventure discovery is independently inserted in the required Home order", () => {
-  const flightSearch = home.indexOf('{availability.flightSearch ? <FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker /> : <UnavailableNotice text="Flight search is temporarily unavailable. Hotels and cars remain available." />}');
+  const flightSearch = home.indexOf('{availability.flightSearch ? <FlightSearchPanel compact structuredSearchAppearance enableHomepageDefaultOrigin homepageAirportPicker /> : <UnavailableNotice text="Flight search is temporarily unavailable. Hotels and cars remain available." />}');
   const adventure = home.indexOf("<HomepageAdventureDiscovery />");
   const promos = home.indexOf("<HomepageDealPromos />");
   const regionalSection = home.indexOf("<RegionalDestinationRoutes />");
