@@ -39,6 +39,7 @@ import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
+import { CarPriceAlertControl } from "@/components/results/CarPriceAlertControl";
 import { CarResultCard } from "@/components/results/CarResultCard";
 import { CarCardSkeleton } from "@/components/ui/Skeleton";
 import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
@@ -2447,6 +2448,7 @@ export function CarsResultsExperience({
                     {t("filters")}
                   </button>
                 )}
+                <CarPriceAlertControl search={search} results={results} />
                 <div
                   className="flex w-full min-w-0 flex-nowrap items-center justify-between gap-2"
                   data-cars-results-summary-row

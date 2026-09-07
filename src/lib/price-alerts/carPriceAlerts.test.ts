@@ -1,0 +1,8 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { buildCarPriceAlertPayload, carPriceAlertDuplicateKey } from "./carPriceAlerts";
+const search={pickupLocation:" Paris ",dropoffLocation:"",pickupDate:"2030-04-01",pickupTime:"10:00",dropoffDate:"2030-04-03",dropoffTime:"10:30",driverAge:"20"};
+test("Cars payload stores only canonical complete search",()=>{const payload=buildCarPriceAlertPayload({...search,unsafe:"x"} as typeof search,250,"usd");assert.deepEqual(payload.query,{pickupLocation:"Paris",dropoffLocation:"Paris",pickupDate:"2030-04-01",pickupTime:"10:00",dropoffDate:"2030-04-03",dropoffTime:"10:30",driverAge:"20"});assert.equal(payload.currency,"USD");});
+test("Cars duplicate identity includes the complete search currency and target",()=>{const payload=buildCarPriceAlertPayload(search,250,"usd");const base=carPriceAlertDuplicateKey(payload);assert.equal(base,carPriceAlertDuplicateKey({...payload,query:{...payload.query,pickupLocation:" PARIS "}}));assert.notEqual(base,carPriceAlertDuplicateKey({...payload,query:{...payload.query,dropoffTime:"11:00"}}));assert.notEqual(base,carPriceAlertDuplicateKey({...payload,targetPrice:251}));});
+
+test("CAR schema strips hostile result and price authority", async()=>{const {priceAlertSchema}=await import("@/lib/validation");const payload={...buildCarPriceAlertPayload(search,250,"usd"),query:{...search,resultId:"evil",offerId:"evil",bookingUrl:"javascript:evil",currentPrice:1,provider:"evil",unsafe:true}};const parsed=priceAlertSchema.parse(payload);assert.deepEqual(Object.keys(parsed.query),["pickupLocation","dropoffLocation","pickupDate","pickupTime","dropoffDate","dropoffTime","driverAge"]);});

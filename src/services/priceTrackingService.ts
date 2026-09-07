@@ -2,12 +2,13 @@ import { getOptionalPrisma, getPrisma } from "@/lib/prisma";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { flightPriceAlertDuplicateKey } from "@/lib/price-alerts/flightPriceAlerts";
 import { hotelPriceAlertDuplicateKey } from "@/lib/price-alerts/hotelPriceAlerts";
+import { carPriceAlertDuplicateKey } from "@/lib/price-alerts/carPriceAlerts";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
 import type { SearchType } from "@/generated/prisma/enums";
 
 export type AccountPriceAlert = {
   id: string;
-  type: "FLIGHT" | "HOTEL";
+  type: "FLIGHT" | "HOTEL" | "CAR";
   origin: string | null;
   destination: string;
   targetPrice: string | null;
@@ -65,7 +66,7 @@ function serializePriceAlert(alert: {
   lastCheckedAt?: Date | null;
   query?: unknown;
 }): AccountPriceAlert {
-  if (alert.type !== "FLIGHT" && alert.type !== "HOTEL") {
+  if (alert.type !== "FLIGHT" && alert.type !== "HOTEL" && alert.type !== "CAR") {
     throw new PriceAlertUnavailableError("Unsupported price alert type.");
   }
   return {
@@ -129,7 +130,7 @@ export async function listUserPriceAlerts(userId: string): Promise<AccountPriceA
 
 export async function createPriceAlert(input: {
   userId: string;
-  type: "FLIGHT" | "HOTEL";
+  type: "FLIGHT" | "HOTEL" | "CAR";
   origin?: string;
   destination: string;
   targetPrice?: number;
@@ -176,6 +177,15 @@ export async function createPriceAlert(input: {
         select: { id: true, type: true, origin: true, destination: true, targetPrice: true, mode: true, currency: true, status: true, query: true, createdAt: true, updatedAt: true },
       });
       const duplicate = requestedKey && existingAlerts.find((alert) => hotelPriceAlertDuplicateKey(alert) === requestedKey);
+      if (duplicate) throw new DuplicatePriceAlertError(serializePriceAlert(duplicate));
+    }
+    if (input.type === "CAR" && mode === "TARGET") {
+      const requestedKey = carPriceAlertDuplicateKey(input);
+      const existingAlerts = await db.priceAlert.findMany({
+        where: { userId: input.userId, type: "CAR", status: { in: ["ACTIVE", "PAUSED"] } },
+        select: { id: true, type: true, origin: true, destination: true, targetPrice: true, mode: true, currency: true, status: true, query: true, createdAt: true, updatedAt: true },
+      });
+      const duplicate = requestedKey && existingAlerts.find((alert) => carPriceAlertDuplicateKey({ ...alert, currency: alert.currency ?? "" }) === requestedKey);
       if (duplicate) throw new DuplicatePriceAlertError(serializePriceAlert(duplicate));
     }
 

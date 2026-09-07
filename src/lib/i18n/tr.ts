@@ -574,6 +574,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.error.cta": "Panoya dön",
   "accountDashboard.priceAlerts.alertType.flight": "Uçuş",
   "accountDashboard.priceAlerts.alertType.hotel": "Otel",
+  "accountDashboard.priceAlerts.alertType.car": "Kiralık araç",
   "accountDashboard.priceAlerts.alert.targetPrice": "Hedef fiyat",
   "accountDashboard.priceAlerts.alert.noTargetPrice": "Kaydedilmiş hedef fiyat yok",
   "accountDashboard.priceAlerts.alert.created": "Oluşturuldu",

@@ -32,6 +32,10 @@ function cabinLabel(value: unknown) {
 }
 
 export function priceAlertTripSummary(alert: MobilePriceAlert) {
+  if (alert.type === "CAR") {
+    const query=alert.query||{}; const dates=formatPriceAlertDateRange(query.pickupDate,query.dropoffDate); const age=query.driverAge==="18-70"?"Any driver age 18–70":query.driverAge?`Driver age ${query.driverAge}`:null;
+    return { primary:["Rental",dates].filter(Boolean).join(" · "), secondary:[query.pickupTime&&query.dropoffTime?`${query.pickupTime} – ${query.dropoffTime}`:null,age].filter(Boolean).join(" · ")||null };
+  }
   if (alert.type !== "FLIGHT") return { primary: "Hotel alert", secondary: null };
   const query = alert.query || {};
   const tripType = query.tripType === "one-way" ? "one-way" : "round-trip";

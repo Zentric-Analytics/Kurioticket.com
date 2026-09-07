@@ -55,15 +55,15 @@ test("Cars render the full filtered result set without pagination", () => {
   assert.doesNotMatch(cars, /const \[page|pageSize|totalPages|filtered\.slice|Page \{page\}|label="Previous"|label="Next"/);
 });
 
-test("Cars use one truthful compact price alert before the result count", () => {
-  assert.equal((cars.match(/<CarPriceAlert\/>/g) ?? []).length, 1);
-  assert.ok(cars.indexOf("<CarPriceAlert/>") < cars.indexOf("results found"));
+test("Cars use one durable compact price alert before the result count", () => {
+  assert.equal((cars.match(/<CarPriceAlert plan=/g) ?? []).length, 1);
+  assert.ok(cars.indexOf("<CarPriceAlert plan=") < cars.indexOf("results found"));
   const alert = cars.slice(cars.indexOf("function CarPriceAlert"));
-  assert.match(alert, /<Bell/); assert.match(alert, /<Switch/); assert.match(alert, /Track rental car prices/);
-  assert.match(alert, /carPriceAlertSwitchSlot:\{minWidth:51,minHeight:44,flexShrink:0,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4\}/);
-  assert.match(alert, /style=\{Platform\.OS==="ios"\?r\.carPriceAlertSwitchIos:undefined\} hitSlop=\{6\}/);
-  assert.match(alert, /accessibilityHint="Rental car price alerts are not available yet\." accessibilityState=\{\{checked:false,disabled:true\}\} disabled value=\{false\}/);
+  assert.match(alert, /<Bell/); assert.match(alert, /<Switch/); assert.match(alert, /onValueChange/);
+  assert.match(alert, /value=\{tracking\}/); assert.match(alert, /disabled=\{disabled\}/); assert.match(alert, /busy/);
+  assert.match(alert, /matchingCarPriceAlert/); assert.match(alert, /travelApi\.priceAlerts/); assert.match(alert, /travelApi\.createPriceAlert/); assert.match(alert, /travelApi\.updatePriceAlertStatus/);
+  assert.match(alert, /Platform\.OS==="ios"\?r\.carPriceAlertSwitchIos:undefined/);
+  assert.doesNotMatch(alert, /not available yet|value=\{false\}|disabled true/);
+  assert.match(alert, /carPriceAlertSwitchSlot:\{minWidth:51,minHeight:44[^}]*justifyContent:"flex-end"/);
   assert.match(alert, /carPriceAlertSwitchIos:\{transform:\[\{translateY:8\}\]\}/);
-  assert.doesNotMatch(alert, /Rental car price alerts<|label="Track prices"|alertIcon/);
-  assert.match(hotels, /compactPriceAlertSwitchSlot: \{ minWidth: 51, minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
 });

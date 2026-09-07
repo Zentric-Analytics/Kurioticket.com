@@ -323,6 +323,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.error.cta": "Torna alla dashboard",
   "accountDashboard.priceAlerts.alertType.flight": "Volo",
   "accountDashboard.priceAlerts.alertType.hotel": "Hotel",
+  "accountDashboard.priceAlerts.alertType.car": "Auto a noleggio",
   "accountDashboard.priceAlerts.alert.targetPrice": "Prezzo obiettivo",
   "accountDashboard.priceAlerts.alert.noTargetPrice": "Nessun prezzo obiettivo salvato",
   "accountDashboard.priceAlerts.alert.created": "Creato",

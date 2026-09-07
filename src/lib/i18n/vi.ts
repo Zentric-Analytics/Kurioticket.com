@@ -403,6 +403,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.error.cta": "Quay lại bảng điều khiển",
   "accountDashboard.priceAlerts.alertType.flight": "Chuyến bay",
   "accountDashboard.priceAlerts.alertType.hotel": "Khách sạn",
+  "accountDashboard.priceAlerts.alertType.car": "Xe thuê",
   "accountDashboard.priceAlerts.alert.targetPrice": "Giá mục tiêu",
   "accountDashboard.priceAlerts.alert.noTargetPrice": "Chưa lưu giá mục tiêu",
   "accountDashboard.priceAlerts.alert.created": "Đã tạo",

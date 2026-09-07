@@ -284,6 +284,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.error.cta": "Zurück zum Dashboard",
   "accountDashboard.priceAlerts.alertType.flight": "Flug",
   "accountDashboard.priceAlerts.alertType.hotel": "Unterkunft",
+  "accountDashboard.priceAlerts.alertType.car": "Mietwagen",
   "accountDashboard.priceAlerts.alert.targetPrice": "Zielpreis",
   "accountDashboard.priceAlerts.alert.noTargetPrice": "Kein Zielpreis gespeichert",
   "accountDashboard.priceAlerts.alert.created": "Erstellt",

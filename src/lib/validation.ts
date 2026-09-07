@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { buildFlightPriceAlertPayload } from "@/lib/price-alerts/flightPriceAlerts";
 import { buildHotelPriceAlertPayload } from "@/lib/price-alerts/hotelPriceAlerts";
+import { buildCarPriceAlertPayload } from "@/lib/price-alerts/carPriceAlerts";
 import { MULTI_CITY_MAX_LEGS, MULTI_CITY_MIN_LEGS, projectSearchLegs } from "@/lib/flights/flightSearchJourney";
 
 const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -295,7 +296,32 @@ const flightPriceAlertSchema = z.object({
   }
 });
 
+const carQuerySchema = z.object({
+  pickupLocation: z.string().trim().min(1).max(120),
+  dropoffLocation: z.string().trim().max(120).optional(),
+  pickupDate: futureDate,
+  pickupTime: z.string().regex(/^(?:[01]\d|2[0-3]):(?:00|30)$/),
+  dropoffDate: futureDate,
+  dropoffTime: z.string().regex(/^(?:[01]\d|2[0-3]):(?:00|30)$/),
+  driverAge: z.union([z.literal("18-70"), z.coerce.number().int().min(18).max(70).transform(String)]),
+}).strip().superRefine((value, context) => {
+  if (value.dropoffDate < value.pickupDate || (value.dropoffDate === value.pickupDate && value.dropoffTime <= value.pickupTime)) context.addIssue({ code: "custom", path: ["dropoffDate"], message: "Return must be after pickup." });
+});
+
+const carPriceAlertSchema = z.object({
+  type: z.literal("CAR"), origin: z.string().trim().min(1).max(120), destination: z.string().trim().min(1).max(120),
+  targetPrice: z.coerce.number().positive(), mode: z.literal("TARGET").default("TARGET"),
+  currency: z.string().trim().regex(/^[A-Za-z]{3}$/).transform((value) => value.toUpperCase()), query: z.record(z.string(), z.unknown()),
+}).transform((value, context) => {
+  const parsed = carQuerySchema.safeParse(value.query);
+  if (!parsed.success) { context.addIssue({ code: "custom", path: ["query"], message: "A complete valid Cars search is required." }); return z.NEVER; }
+  const search = { ...parsed.data, dropoffLocation: parsed.data.dropoffLocation || parsed.data.pickupLocation };
+  if (search.pickupLocation.toLowerCase() !== value.origin.toLowerCase() || search.dropoffLocation.toLowerCase() !== value.destination.toLowerCase()) { context.addIssue({ code: "custom", path: ["query"], message: "Cars alert locations must match the search." }); return z.NEVER; }
+  return buildCarPriceAlertPayload(search, value.targetPrice, value.currency);
+});
+
 export const priceAlertSchema = z.discriminatedUnion("type", [
   flightPriceAlertSchema,
   hotelPriceAlertSchema,
+  carPriceAlertSchema,
 ]);

@@ -2121,6 +2121,7 @@ flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}
   "accountDashboard.priceAlerts.error.cta": "Terug naar dashboard",
   "accountDashboard.priceAlerts.alertType.flight": "Vlucht",
   "accountDashboard.priceAlerts.alertType.hotel": "Hotel",
+  "accountDashboard.priceAlerts.alertType.car": "Huurauto",
   "accountDashboard.priceAlerts.alert.targetPrice": "Richtprijs",
   "accountDashboard.priceAlerts.alert.noTargetPrice": "Geen richtprijs opgeslagen",
   "accountDashboard.priceAlerts.alert.created": "Aangemaakt",

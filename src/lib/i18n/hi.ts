@@ -334,6 +334,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.error.cta": "डैशबोर्ड पर लौटें",
   "accountDashboard.priceAlerts.alertType.flight": "उड़ान",
   "accountDashboard.priceAlerts.alertType.hotel": "होटल",
+  "accountDashboard.priceAlerts.alertType.car": "किराये की कार",
   "accountDashboard.priceAlerts.alert.targetPrice": "लक्षित मूल्य",
   "accountDashboard.priceAlerts.alert.noTargetPrice":
     "कोई लक्षित मूल्य सहेजा नहीं गया",

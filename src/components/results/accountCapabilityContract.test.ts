@@ -16,4 +16,7 @@ test("Hotel alert creation is real and Package persistence stores searches rathe
   assert.doesNotMatch(packageActions, /packageOffer|saved offer/i);
   assert.match(matrix, /NOT_SUPPORTED_BY_CURRENT_PRODUCT_CONTRACT/);
   assert.match(matrix, /no canonical package-offer identity exists/);
+  assert.match(matrix, /Car alerts persist the complete canonical/);
+  assert.match(matrix, /processor re-runs `searchCars`/);
+  assert.match(matrix, /Package alerts remain unsupported/);
 });

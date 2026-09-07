@@ -378,3 +378,10 @@ test("processing control disabled returns zero work before touching candidates",
   const result = await processDuePriceAlerts({ db, featureEnabled: async () => false });
   assert.deepEqual(result, { disabled: true, processed: 0, eventsCreated: 0, sent: 0, skippedByPreferences: 0, notTriggered: 0, failed: 0 });
 });
+
+test("car alert selector chooses lowest positive total in requested currency deterministically", async () => {
+  const { selectCarPriceAlertResult } = await import("@/services/priceAlertProcessor");
+  const car=(id:string,offers:any[])=>({id,offers} as any);
+  const selected=selectCarPriceAlertResult([car("b",[{id:"z",bookingProviderName:"P",currency:"USD",totalPrice:0,pricePerDay:0},{id:"b",bookingProviderName:"P",currency:"EUR",totalPrice:50,pricePerDay:10},{id:"a",bookingProviderName:"P",currency:"USD",totalPrice:100,pricePerDay:20}]),car("a",[{id:"c",bookingProviderName:"Q",currency:"USD",totalPrice:100,pricePerDay:10}])],"usd");
+  assert.deepEqual(selected?.payload,{resultId:"a",offerId:"c"}); assert.equal(selected?.price,100);
+});

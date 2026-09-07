@@ -415,6 +415,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.error.cta": "Return to dashboard",
   "accountDashboard.priceAlerts.alertType.flight": "Flight",
   "accountDashboard.priceAlerts.alertType.hotel": "Hotel",
+  "accountDashboard.priceAlerts.alertType.car": "Rental car",
   "accountDashboard.priceAlerts.alert.targetPrice": "Target price",
   "accountDashboard.priceAlerts.alert.noTargetPrice": "No target price saved",
   "accountDashboard.priceAlerts.alert.created": "Created",
