@@ -35,6 +35,11 @@ function savedFlightOffer(details: FlightDetailsSuccess, choice: FlightDetailsFa
   const offer = choice.offer;
   return {
     ...offer,
+    // Authoritative native Details never receives provider URLs. These legacy
+    // fields remain empty in the Saved snapshot; checkout continues through
+    // the server-owned ID-based redirect handoff.
+    bookingUrl: "",
+    partnerRedirectUrl: "",
     searchPolicy: {
       source: "duffel",
       bookable: choice.handoff.available,
