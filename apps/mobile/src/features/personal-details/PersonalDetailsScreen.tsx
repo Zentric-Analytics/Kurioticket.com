@@ -29,7 +29,6 @@ import {
   TravelApiError,
   type MobileProfile,
 } from "../../api/travelApi";
-import { getApiBaseUrl } from "../../config/apiUrl";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import {
   readSession,
@@ -39,7 +38,6 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
-import { openSafeExternalUrl } from "../profile/safeExternalLink";
 import {
   canonicalDate,
   COUNTRY_OPTIONS,
@@ -75,6 +73,7 @@ import {
 } from "./PersonalDetailsQuickEditor";
 import { PersonalDetailsCountryFlag } from "./PersonalDetailsCountryFlag";
 import { PersonalDetailsSaveButton } from "./PersonalDetailsSaveButton";
+import { PersonalDetailsEmailEditor } from "./PersonalDetailsEmailEditor";
 import { signInHref } from "../auth/signInIntent";
 import { PageContentState } from "../../components/PageContentState";
 
@@ -516,6 +515,7 @@ export function PersonalDetailsScreen() {
   const [activeDetail, setActiveDetail] = useState<DetailKey>("fullName");
   const scrollRef = useRef<ScrollView>(null);
   const overviewOffset = useRef(0);
+  const [emailDirty, setEmailDirty] = useState(false);
   const lastNameRef = useRef<TextInput>(null);
   const [nameDraft, setNameDraft] = useState<NameDraft>(() =>
     splitProfileName(),
@@ -570,7 +570,8 @@ export function PersonalDetailsScreen() {
     (dateDraft.year !== savedDateDraft.year ||
       dateDraft.month !== savedDateDraft.month ||
       dateDraft.day !== savedDateDraft.day);
-  const dirty = !!saved && (profilesDiffer(draft, saved) || dateDirty);
+  const dirty =
+    !!saved && (profilesDiffer(draft, saved) || dateDirty || emailDirty);
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -787,6 +788,7 @@ export function PersonalDetailsScreen() {
   const beginEditing = (detail: DetailKey) => {
     if (!saved) return;
     setActiveDetail(detail);
+    setEmailDirty(false);
     setNameDraft(splitProfileName(saved.fullName));
     const nextDate =
       detail === "birth"
@@ -801,18 +803,6 @@ export function PersonalDetailsScreen() {
     setDateDraft(nextDate);
     setError("");
     setEditing(true);
-  };
-  const openWeb = async () => {
-    const base = getApiBaseUrl(Platform.OS, __DEV__);
-    if (
-      !base.ok ||
-      !(await openSafeExternalUrl(
-        new URL("/dashboard", `${base.baseUrl}/`).toString(),
-      ))
-    ) {
-      setError(c.openFailure);
-      AccessibilityInfo.announceForAccessibility(c.openFailure);
-    }
   };
   const details = {
     fullName: { label: c.fullName, value: saved?.fullName },
@@ -901,6 +891,24 @@ export function PersonalDetailsScreen() {
           pageName="personal details"
           onRetry={() => void load()}
         />
+      ) : pageEditing && activeDetail === "email" ? (
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
+          <PersonalDetailsEmailEditor
+            email={email}
+            onDirtyChange={setEmailDirty}
+            onBusyChange={(busy) => {
+              submitting.current = busy;
+              setSaving(busy);
+            }}
+            onSaved={(nextEmail) => {
+              setEmail(nextEmail);
+              setEmailDirty(false);
+              submitting.current = false;
+              setSaving(false);
+              setEditing(false);
+            }}
+          />
+        </KeyboardAvoidingView>
       ) : (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
           <ScrollView
@@ -996,35 +1004,6 @@ export function PersonalDetailsScreen() {
                       value={nameDraft.lastName}
                       onChange={(value) => patchName("lastName", value)}
                     />
-                  </>
-                )}
-                {activeDetail === "email" && (
-                  <>
-                    <Text style={[s.label, { color: theme.muted }]}>
-                      {c.email}
-                    </Text>
-                    <TextInput
-                      editable={false}
-                      accessibilityLabel={`${c.email}, ${email}`}
-                      value={email}
-                      style={[
-                        s.input,
-                        {
-                          color: theme.muted,
-                          borderColor: theme.border,
-                          backgroundColor: theme.background,
-                        },
-                      ]}
-                    />
-                    <Pressable
-                      accessibilityRole="link"
-                      accessibilityLabel={c.changeEmail}
-                      accessibilityHint={c.externalHint}
-                      onPress={() => void openWeb()}
-                      style={s.linkHit}
-                    >
-                      <Text style={s.blue}>{c.changeEmail}</Text>
-                    </Pressable>
                   </>
                 )}
                 {activeDetail === "phone" && (

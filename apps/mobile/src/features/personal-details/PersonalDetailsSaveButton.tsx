@@ -9,11 +9,13 @@ export function PersonalDetailsSaveButton({
   dirty,
   saving,
   blocked = false,
+  label,
   onSave,
 }: {
   dirty: boolean;
   saving: boolean;
   blocked?: boolean;
+  label?: string;
   onSave: () => void;
 }) {
   const { theme } = useAppTheme();
@@ -22,7 +24,7 @@ export function PersonalDetailsSaveButton({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={saving ? c.saving : c.save}
+      accessibilityLabel={saving ? c.saving : label || c.save}
       accessibilityState={{
         disabled: !dirty || saving || blocked,
         busy: saving,
@@ -44,7 +46,7 @@ export function PersonalDetailsSaveButton({
           { color: !dirty && !saving ? theme.muted : "#FFFFFF" },
         ]}
       >
-        {c.save}
+        {label || c.save}
       </Text>
       {saving && (
         <ActivityIndicator

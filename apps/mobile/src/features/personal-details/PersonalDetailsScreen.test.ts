@@ -78,7 +78,7 @@ test("Save shows progress inside the button and retains its accessible busy labe
   assert.match(saveButton, /saving && \([\s\S]*?<ActivityIndicator/);
   assert.match(
     saveButton,
-    /accessibilityLabel=\{saving \? c.saving : c.save\}/,
+    /accessibilityLabel=\{saving \? c.saving : label \|\| c.save\}/,
   );
   assert.match(saveButton, /busy: saving/);
   assert.match(saveButton, /saving && \{ opacity: 0 \}/);
@@ -101,9 +101,11 @@ test("failed saves keep the editor open and show actionable error feedback", () 
   assert.match(screen, /accessibilityLiveRegion="assertive"/);
 });
 
-test("email is read-only and external handoff is accessible", () => {
-  assert.match(screen, /editable=\{false\}/);
-  assert.match(screen, /accessibilityHint=\{c\.externalHint\}/);
+test("email opens the native verified editor without a web handoff", () => {
+  assert.match(screen, /<PersonalDetailsEmailEditor/);
+  assert.match(screen, /onDirtyChange=\{setEmailDirty\}/);
+  assert.match(screen, /setEmail\(nextEmail\)/);
+  assert.doesNotMatch(screen, /openSafeExternalUrl|openWeb|changeEmail/);
 });
 test("authentication expiry preserves protected return intent", () =>
   assert.match(screen, /signInHref\("\/personal-information"\)/));
@@ -454,7 +456,7 @@ test("back returns to the overview and restores its scroll position", () => {
 test("text inputs have a visible focus border without remounting", () => {
   assert.match(
     screen,
-    /borderColor: focused \? flowColors\.blue : inputBorderColor\(theme.dark\)/,
+    /borderColor:\s*focused\s*\? flowColors\.blue\s*:\s*inputBorderColor\(theme.dark\)/,
   );
   assert.match(screen, /onFocus=\{\(\) => setFocused\(true\)\}/);
   assert.match(screen, /onBlur=\{\(\) => setFocused\(false\)\}/);
