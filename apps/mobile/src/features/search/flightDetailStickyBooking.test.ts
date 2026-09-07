@@ -3,60 +3,35 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
-const source = readFileSync(resolve("src/features/search/ApprovedDetailScreen.tsx"), "utf8");
-const flightDetail = source.slice(source.indexOf("function FlightDetail"), source.indexOf("function HotelDetail"));
-const sticky = flightDetail.slice(flightDetail.indexOf("<View style={[d.sticky"), flightDetail.lastIndexOf("</View>\n    </SafeAreaView>"));
-const styles = source.slice(source.indexOf("const d = StyleSheet.create"));
-const flightStickyStyles = styles.slice(styles.indexOf("  sticky: {"), styles.indexOf("  gallery:"));
-const hotelStickyStyles = styles.slice(styles.indexOf("  hotelSticky: {"), styles.indexOf("  hotelStickyPrice:"));
+const source = readFileSync(resolve("src/features/search/NativeFlightDetails.tsx"), "utf8");
+const styles = source.slice(source.indexOf("const s = StyleSheet.create"));
 
-test("sticky booking keeps the authoritative fare, total, canonical trip type, and only booking CTA", () => {
-  assert.match(sticky, />Total</);
-  assert.match(sticky, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.75\}[\s\S]*?\{formattedFare\}/);
-  assert.match(sticky, /\{priceBasis\.summary\}/);
-  assert.doesNotMatch(sticky, />Round trip</);
-  assert.match(sticky, /<Button label=\{`Continue to \$\{provider\}`\} onPress=\{handleProviderBooking\} \/>/);
-  assert.equal(flightDetail.match(/onPress=\{handleProviderBooking\}/g)?.length, 1);
+test("sticky booking uses authoritative total and only server-revalidated booking CTA", () => {
+  assert.match(source, /flightDetailsTotalLabel\(details\.search\.travelers\)/);
+  assert.match(source, /fare\?\.formatted \?\? "—"/);
+  assert.match(source, /Continue to \$\{provider\}/);
+  assert.match(source, /travelApi\.flightRedirect\(offerId\)/);
+  assert.equal(source.match(/onPress=\{\(\) => void handoff\(offer\.id\)\}/g)?.length, 1);
+  assert.doesNotMatch(source, /authoritativeProviderUrl|bookingUrl|partnerRedirectUrl/);
 });
 
-test("round-trip and one-way labels come from the same canonical header model", () => {
-  const headerModel = readFileSync(resolve("src/features/search/flightDetailHeaderModel.ts"), "utf8");
-  assert.match(flightDetail, /const header = flightDetailHeaderModel\(result, params\)/);
-  assert.match(headerModel, /const oneWay = firstFlightParam\(params\.tripType\) === "one-way"/);
-  assert.match(headerModel, /tripTypeLabel: FLIGHT_TRIP_TYPE_LABELS\[oneWay \? "one-way" : "round-trip"\]/);
+test("offer_changed refreshes details while preserving the review notice", () => {
+  assert.match(source, /preserveMessageOnReload\.current = true/);
+  assert.match(source, /Review the refreshed price and terms before continuing/);
+  assert.match(source, /reload\(\)/);
+  assert.match(source, /if \(details\) \{[\s\S]*?setMessage\(nextMessage\)[\s\S]*?setState\("available"\)/);
 });
 
-test("provider handoff behavior and concise redirect disclosure remain intact", () => {
-  assert.match(flightDetail, /const url = authoritativeProviderUrl\(result\)/);
-  assert.ok(flightDetail.includes("if (!/^https:\\/\\//.test(url))"));
-  assert.match(flightDetail, /await Linking\.openURL\(url\)/);
-  assert.match(sticky, /numberOfLines=\{2\}[\s\S]*?You’ll continue on \{provider\}’s site/);
+test("sticky dock remains safe-area aware and responsive", () => {
+  assert.match(source, /paddingBottom: Math\.max\(inset\.bottom, 10\)/);
+  assert.match(styles, /sticky: \{[\s\S]*?minHeight: 88/);
+  assert.match(styles, /paddingHorizontal: 18/);
+  assert.match(styles, /stickyPrice: \{ flex: 1, minWidth: 0 \}/);
+  assert.match(source, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.75\}/);
 });
 
-test("compact responsive styling preserves safe area, touch target, long fare, and provider usability", () => {
-  assert.match(flightDetail, /paddingBottom: Math\.max\(inset\.bottom, 10\)/);
-  assert.match(flightStickyStyles, /minHeight: 88/);
-  assert.match(flightStickyStyles, /borderTopWidth: StyleSheet\.hairlineWidth/);
-  assert.match(flightStickyStyles, /paddingTop: 10/);
-  assert.match(flightStickyStyles, /paddingHorizontal: 14/);
-  assert.match(flightStickyStyles, /gap: 10/);
-  assert.match(flightStickyStyles, /stickyTotal: \{ flexShrink: 1, minWidth: 92, maxWidth: "42%"/);
-  assert.match(flightStickyStyles, /stickyCta: \{ flex: 1, minWidth: 0, maxWidth: 250 \}/);
-
-  const searchUi = readFileSync(resolve("src/features/search/SearchUi.tsx"), "utf8");
-  assert.match(searchUi, /button: \{[\s\S]*?height: 45/);
-  assert.match(searchUi, /minimumFontScale=\{0\.78\}[\s\S]*?numberOfLines=\{1\}/);
-});
-
-test("flight scroll clearance follows the slimmer footprint independently of the Hotel dock", () => {
-  assert.match(flightDetail, /paddingBottom: 110 \+ inset\.bottom/);
-  assert.match(flightDetail, />Booking provider<[\s\S]*?<View style=\{\[d\.sticky/);
-  assert.match(hotelStickyStyles, /borderTopLeftRadius: 22/);
-  assert.match(hotelStickyStyles, /paddingHorizontal: 16/);
-});
-
-test("sticky surface and text retain semantic light and dark theme colors", () => {
-  assert.match(sticky, /backgroundColor: theme\.surface, borderTopColor: theme\.border/);
-  assert.match(sticky, /color: theme\.textPrimary/);
-  assert.match(sticky, /color: theme\.textSecondary/);
+test("sticky surface retains semantic light and dark theme colors", () => {
+  assert.match(source, /backgroundColor: theme\.surface, borderTopColor: theme\.border/);
+  assert.match(source, /color: theme\.textPrimary/);
+  assert.match(source, /color: theme\.textSecondary/);
 });
