@@ -26,6 +26,8 @@ function styleRule(source: string, name: string, nextName: string) {
 }
 
 test("mobile web retains the Hotel identity and inward action reference", () => {
+  assert.match(webIdentity, /grid min-w-0 grid-cols-\[minmax\(0,1fr\)_auto\] items-start gap-3/);
+  assert.match(webIdentity, /grid-cols-\[minmax\(0,1fr\)_auto\][\s\S]*?<div className="min-w-0">[\s\S]*?<h1[\s\S]*?className="mt-2 space-y-1 lg:hidden"[\s\S]*?data-mobile-property-metadata[\s\S]*?<\/div>\s*<\/div>\s*<div\s*className="flex shrink-0 gap-0 lg:gap-3"/);
   assert.match(webIdentity, /text-\[22px\] font-extrabold leading-tight tracking-\[-0\.025em\]/);
   assert.match(webIdentity, /className="mt-2 space-y-1 lg:hidden"/);
   assert.match(webIdentity, /gap-1\.5 text-xs font-semibold leading-5/);
@@ -36,6 +38,7 @@ test("mobile web retains the Hotel identity and inward action reference", () => 
 });
 
 test("native Hotel identity matches web typography without changing its facts", () => {
+  const copy = styleRule(detailSource, "hotelIdentityCopy", "hotelIdentityMeta");
   const name = styleRule(detailSource, "hotelName", "stars");
   const fact = styleRule(detailSource, "hotelFact", "hotelClassificationStars");
   const classification = styleRule(detailSource, "hotelClassificationStars", "hotelGallery");
@@ -49,8 +52,9 @@ test("native Hotel identity matches web typography without changing its facts", 
   assert.doesNotMatch(name, /fontWeight: "900"/);
   assert.match(detailSource, /hotelIdentity: \{[^}]*paddingHorizontal: 16[^}]*paddingBottom: 16/);
   assert.match(detailSource, /hotelIdentityTopRow: \{[^}]*gap: 12/);
-  assert.match(name, /flex: 1[^}]*minWidth: 0/);
-  assert.match(detailSource, /hotelIdentityMeta: \{ marginTop: 8, gap: 4 \}/);
+  assert.match(copy, /flex: 1[^}]*minWidth: 0/);
+  assert.match(name, /minWidth: 0/);
+  assert.doesNotMatch(name, /flex: 1/);
   assert.match(fact, /fontSize: 12[^}]*lineHeight: 20[^}]*fontWeight: "600"[^}]*fontFamily: appFonts\.semibold/);
   assert.match(row, /minHeight: 20[^}]*alignItems: "flex-start"[^}]*gap: 6/);
   assert.match(hotel, /hotelIdentityTitleColor = theme\.dark \? theme\.textPrimary : "#020617"/);
@@ -65,6 +69,19 @@ test("native Hotel identity matches web typography without changing its facts", 
   assert.match(hotel, /\{"★"\.repeat\(classification\)\}/);
   assert.match(hotel, /\{result\.name\}/);
   assert.doesNotMatch(hotel, /numberOfLines=\{1\}[\s\S]{0,80}\{result\.name\}/);
+});
+
+test("native metadata's 8dp margin starts at the Hotel title inside the flexible copy column", () => {
+  const identity = hotel.slice(
+    hotel.indexOf("<View style={d.hotelIdentity}>"),
+    hotel.indexOf("<NativeHotelGallery"),
+  );
+
+  assert.match(detailSource, /hotelIdentityMeta: \{ marginTop: 8, gap: 4 \}/);
+  assert.match(
+    identity,
+    /<View style=\{d\.hotelIdentityTopRow\}>\s*<View style=\{d\.hotelIdentityCopy\}>[\s\S]*?style=\{\[d\.hotelName,[\s\S]*?<\/Text>\s*<View style=\{d\.hotelIdentityMeta\}>[\s\S]*?<\/View>\s*<\/View>\s*<View style=\{d\.hotelHeaderActions\}>/,
+  );
 });
 
 test("native Save and Share move inward inside independent 44dp actions", () => {
