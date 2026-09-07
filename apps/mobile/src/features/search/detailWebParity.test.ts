@@ -211,7 +211,7 @@ test("Car detail parity remains protected", () => {
   assert.match(car, />Back to Cars results</);
   assert.match(car, /pathname:"\/car-results"/);
   assert.ok(car.indexOf("s.backRow") < car.indexOf("s.hero"));
-  assert.ok(car.indexOf("s.hero") < car.indexOf("s.tabs"));
+  assert.ok(car.indexOf("s.hero") < car.indexOf("s.carsTabsShell"));
   assert.match(car, /stickyHeaderIndices=\{\[2\]\}/);
   for (const tab of ["compare", "pickup", "location"]) assert.match(car, new RegExp(`"${tab}"`));
   for (const section of ["Compare prices", "Pickup and return", "Location", "Estimated Rental Total", "Continue deal"]) assert.match(car, new RegExp(section));
