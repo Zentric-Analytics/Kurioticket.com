@@ -229,15 +229,15 @@ function CountrySelector({
             {kind === "addressCountry" ? (
               <View style={s.iconButton} />
             ) : (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={c.cancel}
-              onPress={cancel}
-              disabled={savingSelection}
-              style={s.iconButton}
-            >
-              <FlowIcon name="close" color={theme.icon} />
-            </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={c.cancel}
+                onPress={cancel}
+                disabled={savingSelection}
+                style={s.iconButton}
+              >
+                <FlowIcon name="close" color={theme.icon} />
+              </Pressable>
             )}
           </View>
           <View style={s.countrySearchArea}>
@@ -366,7 +366,9 @@ function Field({
           s.input,
           {
             color: theme.text,
-            borderColor: focused ? flowColors.blue : inputBorderColor(theme.dark),
+            borderColor: focused
+              ? flowColors.blue
+              : inputBorderColor(theme.dark),
             borderWidth: 1,
             backgroundColor: theme.surface,
           },
@@ -400,10 +402,21 @@ function SelectButton({
         style={[
           s.input,
           s.select,
-          { borderColor: inputBorderColor(theme.dark), backgroundColor: theme.surface },
+          {
+            borderColor: inputBorderColor(theme.dark),
+            backgroundColor: theme.surface,
+          },
         ]}
       >
-        <Text numberOfLines={1} style={{ color: theme.text, flex: 1 }}>
+        <Text
+          numberOfLines={1}
+          style={{
+            color: theme.text,
+            flex: 1,
+            fontFamily: appFonts.regular,
+            fontSize: 16,
+          }}
+        >
           {value}
         </Text>
         <FlowIcon name="chevron" color={theme.muted} size={16} />
@@ -446,7 +459,10 @@ function PhoneControl({
         style={[
           s.input,
           s.countrySegment,
-          { borderColor: inputBorderColor(theme.dark), backgroundColor: theme.surface },
+          {
+            borderColor: inputBorderColor(theme.dark),
+            backgroundColor: theme.surface,
+          },
         ]}
       >
         {uri && !failed ? (
@@ -474,13 +490,23 @@ function PhoneControl({
           s.input,
           s.phoneInput,
           {
-            borderColor: focused ? flowColors.blue : inputBorderColor(theme.dark),
+            borderColor: focused
+              ? flowColors.blue
+              : inputBorderColor(theme.dark),
             borderWidth: 1,
             backgroundColor: theme.surface,
           },
         ]}
       >
-        <Text style={{ color: theme.text }}>{option?.dialCode}</Text>
+        <Text
+          style={{
+            color: theme.text,
+            fontFamily: appFonts.regular,
+            fontSize: 16,
+          }}
+        >
+          {option?.dialCode}
+        </Text>
         <TextInput
           accessibilityLabel={localLabel}
           accessibilityHint={label}
@@ -515,6 +541,7 @@ export function PersonalDetailsScreen() {
   const [activeDetail, setActiveDetail] = useState<DetailKey>("fullName");
   const scrollRef = useRef<ScrollView>(null);
   const overviewOffset = useRef(0);
+  const profileUserId = useRef<string | undefined>(undefined);
   const [emailDirty, setEmailDirty] = useState(false);
   const lastNameRef = useRef<TextInput>(null);
   const [nameDraft, setNameDraft] = useState<NameDraft>(() =>
@@ -583,6 +610,7 @@ export function PersonalDetailsScreen() {
       setDraft(next);
       setNameDraft(splitProfileName(next.fullName));
       setDateDraft(dateDraftFromValue(next.dateOfBirth));
+      profileUserId.current = data.user.id;
       setEmail(data.user.email);
       setEditing(false);
     } catch (e) {
@@ -657,8 +685,10 @@ export function PersonalDetailsScreen() {
       }),
     [navigation, editing, dirty, c],
   );
-  const patch = (key: keyof MobileProfile, value: string) =>
+  const patch = (key: keyof MobileProfile, value: string) => {
     setDraft((current) => ({ ...current, [key]: value }));
+    setError("");
+  };
   const patchAddress = (key: keyof AddressParts, value: string) =>
     patch("address", serializeAddress({ ...address, [key]: value }));
   const patchName = (part: keyof NameDraft, value: string) => {
@@ -752,7 +782,11 @@ export function PersonalDetailsScreen() {
       setDraft(authoritative);
       setNameDraft(splitProfileName(authoritative.fullName));
       setDateDraft(dateDraftFromValue(authoritative.dateOfBirth));
-      await updateStoredSessionName(authoritative.fullName || null);
+      // A cache write failure must not turn a successful server save into an error.
+      await updateStoredSessionName(
+        authoritative.fullName || null,
+        profileUserId.current,
+      ).catch(() => {});
       Keyboard.dismiss();
       setEditing(false);
       AccessibilityInfo.announceForAccessibility(c.saveSuccess);
@@ -804,6 +838,10 @@ export function PersonalDetailsScreen() {
     setError("");
     setEditing(true);
   };
+  const displayedBirthDate = useMemo(
+    () => (saved?.dateOfBirth ? safeDate(saved.dateOfBirth, locale) : ""),
+    [saved?.dateOfBirth, locale],
+  );
   const details = {
     fullName: { label: c.fullName, value: saved?.fullName },
     email: { label: c.email, value: email },
@@ -816,7 +854,7 @@ export function PersonalDetailsScreen() {
     },
     birth: {
       label: c.birth,
-      value: saved?.dateOfBirth ? safeDate(saved.dateOfBirth, locale) : "",
+      value: displayedBirthDate,
     },
     gender: {
       label: c.gender,

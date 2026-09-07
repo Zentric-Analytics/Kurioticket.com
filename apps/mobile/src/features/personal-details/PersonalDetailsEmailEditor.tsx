@@ -30,13 +30,11 @@ export function PersonalDetailsEmailEditor({
   onSaved,
   onDirtyChange,
   onBusyChange,
-  submissionDisabled = false,
 }: {
   email: string;
   onSaved: (email: string) => void;
   onDirtyChange: (dirty: boolean) => void;
   onBusyChange: (busy: boolean) => void;
-  submissionDisabled?: boolean;
 }) {
   const { theme } = useAppTheme();
   const { locale } = useMobileLocalization();
@@ -68,14 +66,14 @@ export function PersonalDetailsEmailEditor({
   );
   useEffect(() => {
     mounted.current = true;
-    if (!started.current && !submissionDisabled) {
+    if (!started.current) {
       started.current = true;
       void run("request");
     }
     return () => {
       mounted.current = false;
     };
-  }, [submissionDisabled]);
+  }, []);
   useEffect(() => {
     if (
       !retryAt &&
@@ -99,7 +97,6 @@ export function PersonalDetailsEmailEditor({
 
   async function run(action: "request" | "confirm", isResend = false) {
     if (
-      submissionDisabled ||
       pending.current ||
       (action === "request" && (remaining > 0 || lockedUntil > Date.now())) ||
       (action === "confirm" && confirmRetryAt > Date.now())
@@ -121,6 +118,7 @@ export function PersonalDetailsEmailEditor({
     try {
       if (action === "request") {
         setNow(Date.now());
+        setCode("");
         setSendingUntil(isResend ? Date.now() + 3000 : 0);
         setSentUntil(0);
         const [result] = await Promise.all([
@@ -128,7 +126,9 @@ export function PersonalDetailsEmailEditor({
             step === 1
               ? await travelApi.requestCurrentEmailCode()
               : await travelApi.requestEmailChange(target, ownershipProof))(),
-          isResend ? new Promise<void>((resolve) => setTimeout(resolve, 3000)) : Promise.resolve(),
+          isResend
+            ? new Promise<void>((resolve) => setTimeout(resolve, 3000))
+            : Promise.resolve(),
         ]);
         if (!mounted.current) return;
         if (step !== 1) {
@@ -139,9 +139,11 @@ export function PersonalDetailsEmailEditor({
         setSentUntil(isResend ? Date.now() + 1000 : 0);
         setLockedUntil(result.resendLimitReached ? Date.now() + 60_000 : 0);
         setCodeSent(true);
-        setCode("");
         setNow(Date.now());
-        setRetryAt(Date.now() + (result.resendLimitReached ? 60_000 : isResend ? 31_000 : 30_000));
+        setRetryAt(
+          Date.now() +
+            (result.resendLimitReached ? 60_000 : isResend ? 31_000 : 30_000),
+        );
         AccessibilityInfo.announceForAccessibility(c.emailCodeSent);
       } else if (step === 1) {
         const result = await travelApi.verifyCurrentEmailCode(code);
@@ -183,6 +185,8 @@ export function PersonalDetailsEmailEditor({
         setCodeSent(false);
         setRetryAt(0);
         setConfirmRetryAt(0);
+        setLockedUntil(0);
+        setSentUntil(0);
         setError(c.emailRestart);
         AccessibilityInfo.announceForAccessibility(c.emailRestart);
         return;
@@ -190,6 +194,8 @@ export function PersonalDetailsEmailEditor({
       if (apiError?.status === 429) {
         const seconds = Number(apiError.details?.retryAfterSeconds);
         if (apiError.details?.code === "MAX_RESENDS") {
+          // Resend limits do not invalidate a code delivered before reopening.
+          if (step === 1 && action === "request") setCodeSent(true);
           setLockedUntil(
             Date.now() +
               (Number.isFinite(seconds) && seconds > 0 ? seconds : 60) * 1000,
@@ -264,7 +270,7 @@ export function PersonalDetailsEmailEditor({
                 autoFocus
                 accessibilityLabel={c.emailCode}
                 value={code}
-                editable={!busy}
+                editable={!busy || requesting}
                 autoComplete="one-time-code"
                 textContentType="oneTimeCode"
                 keyboardType="number-pad"
@@ -281,15 +287,10 @@ export function PersonalDetailsEmailEditor({
                 style={[s.verificationInput, { color: theme.text }]}
               />
               <Pressable
-                disabled={
-                  submissionDisabled ||
-                  busy ||
-                  remaining > 0 ||
-                  lockedUntil > now
-                }
+                disabled={busy || remaining > 0 || lockedUntil > now}
                 accessibilityRole="button"
                 accessibilityState={{
-                  disabled: submissionDisabled || busy || remaining > 0 || lockedUntil > now,
+                  disabled: busy || remaining > 0 || lockedUntil > now,
                 }}
                 onPress={() => void run("request", codeSent)}
                 style={s.resendHit}
@@ -305,7 +306,7 @@ export function PersonalDetailsEmailEditor({
                       " " +
                       Math.ceil((sendingUntil - now) / 1000) +
                       "s"
-                    : busy
+                    : requesting
                       ? c.emailSendingShort
                       : sentUntil > now
                         ? c.emailSentShort
@@ -410,8 +411,9 @@ export function PersonalDetailsEmailEditor({
           }
           saving={busy}
           blocked={
-            submissionDisabled ||
-            (isCodeStep ? confirmRetryAt > now : remaining > 0 || lockedUntil > now)
+            isCodeStep
+              ? confirmRetryAt > now
+              : remaining > 0 || lockedUntil > now
           }
           onSave={() => void run(isCodeStep ? "confirm" : "request")}
         />

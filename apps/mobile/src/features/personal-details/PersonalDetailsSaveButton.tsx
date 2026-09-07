@@ -34,7 +34,8 @@ export function PersonalDetailsSaveButton({
       style={({ pressed }) => [
         s.button,
         {
-          backgroundColor: !dirty && !saving ? theme.border : flowColors.blue,
+          backgroundColor:
+            (!dirty || blocked) && !saving ? theme.border : flowColors.blue,
           opacity: pressed ? 0.8 : 1,
         },
       ]}
@@ -43,7 +44,7 @@ export function PersonalDetailsSaveButton({
         style={[
           s.label,
           saving && { opacity: 0 },
-          { color: !dirty && !saving ? theme.muted : "#FFFFFF" },
+          { color: (!dirty || blocked) && !saving ? theme.muted : "#FFFFFF" },
         ]}
       >
         {label || c.save}

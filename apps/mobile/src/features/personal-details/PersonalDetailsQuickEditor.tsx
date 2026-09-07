@@ -79,6 +79,33 @@ export function PersonalDetailsQuickEditor({
   );
   const shown = filterSelectorOptions(countries, query);
   const { latestYear, monthCount, dayCount } = birthDateOptions(dateDraft);
+  const monthOptions = useMemo(() => {
+    if (detail !== "birth") return [];
+    const formatter = new Intl.DateTimeFormat(
+      locale === "es-es" ? "es-ES" : "en-US",
+      { month: "short", timeZone: "UTC" },
+    );
+    return Array.from({ length: monthCount }, (_, i) => ({
+      value: String(i + 1).padStart(2, "0"),
+      label: formatter.format(new Date(Date.UTC(2020, i, 1))),
+    }));
+  }, [detail, locale, monthCount]);
+  const dayOptions = useMemo(
+    () =>
+      Array.from({ length: dayCount }, (_, i) => ({
+        value: String(i + 1).padStart(2, "0"),
+        label: String(i + 1).padStart(2, "0"),
+      })),
+    [dayCount],
+  );
+  const yearOptions = useMemo(
+    () =>
+      Array.from({ length: 125 }, (_, i) => ({
+        value: String(latestYear - 124 + i),
+        label: String(latestYear - 124 + i),
+      })),
+    [latestYear],
+  );
   const [scrolling, setScrolling] = useState({
     month: false,
     day: false,
@@ -328,13 +355,7 @@ export function PersonalDetailsQuickEditor({
                   setScrolling((current) => ({ ...current, month: value }))
                 }
                 onChange={(value) => onDateChange("month", value)}
-                options={Array.from({ length: monthCount }, (_, i) => ({
-                  value: String(i + 1).padStart(2, "0"),
-                  label: new Intl.DateTimeFormat(
-                    locale === "es-es" ? "es-ES" : "en-US",
-                    { month: "short", timeZone: "UTC" },
-                  ).format(new Date(Date.UTC(2020, i, 1))),
-                }))}
+                options={monthOptions}
               />
               <PersonalDetailsDateWheel
                 label={c.day}
@@ -344,10 +365,7 @@ export function PersonalDetailsQuickEditor({
                   setScrolling((current) => ({ ...current, day: value }))
                 }
                 onChange={(value) => onDateChange("day", value)}
-                options={Array.from({ length: dayCount }, (_, i) => ({
-                  value: String(i + 1).padStart(2, "0"),
-                  label: String(i + 1).padStart(2, "0"),
-                }))}
+                options={dayOptions}
               />
               <PersonalDetailsDateWheel
                 label={c.year}
@@ -357,10 +375,7 @@ export function PersonalDetailsQuickEditor({
                   setScrolling((current) => ({ ...current, year: value }))
                 }
                 onChange={(value) => onDateChange("year", value)}
-                options={Array.from({ length: 125 }, (_, i) => ({
-                  value: String(latestYear - 124 + i),
-                  label: String(latestYear - 124 + i),
-                }))}
+                options={yearOptions}
               />
             </View>
           )}

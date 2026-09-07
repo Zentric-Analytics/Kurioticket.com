@@ -96,3 +96,18 @@ test("email editor starts with current ownership, then a blank address and new-e
   assert.match(editor, /OWNERSHIP_REQUIRED/);
   assert.doesNotMatch(editor, /phoneNumber.*ownershipProof/);
 });
+
+test("a resend lock on reopening still allows the delivered current-email code", () => {
+  const editor = readFileSync("src/features/personal-details/PersonalDetailsEmailEditor.tsx", "utf8");
+  const lock = editor.slice(editor.indexOf('if (apiError.details?.code === "MAX_RESENDS")'), editor.indexOf('// A code from a prior opening'));
+  assert.match(lock, /setCodeSent\(true\)/);
+  const restart = editor.slice(editor.indexOf('if (apiError?.details?.code === "OWNERSHIP_REQUIRED")'), editor.indexOf('if (apiError?.status === 429)'));
+  assert.match(restart, /setLockedUntil\(0\)/);
+  assert.match(restart, /setSentUntil\(0\)/);
+});
+
+test("resending keeps the code input focused and ships no visual-review bypass", () => {
+ const editor = readFileSync("src/features/personal-details/PersonalDetailsEmailEditor.tsx", "utf8");
+ assert.match(editor, /editable=\{!busy \|\| requesting\}/);
+ assert.doesNotMatch(editor, /previewSend|LOCAL TEST|visual-review-only|submissionDisabled|__DEV__/);
+});

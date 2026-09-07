@@ -10,13 +10,16 @@ import {
 
 const hash = (value: string) =>
   createHash("sha256").update(value).digest("hex");
-export async function sendMobileEmailCode(input: {
-  userId: string;
-  identifier: string;
-  purpose: "current" | "new";
-  email: string;
-  name: string | null;
-}, dependencies = { db: getPrisma(), send: sendTransactionalEmail }) {
+export async function sendMobileEmailCode(
+  input: {
+    userId: string;
+    identifier: string;
+    purpose: "current" | "new";
+    email: string;
+    name: string | null;
+  },
+  dependencies = { db: getPrisma(), send: sendTransactionalEmail },
+) {
   const { db } = dependencies;
   const limitId =
     "mobile-email-resend:" + hash(input.userId + ":" + input.purpose);
@@ -46,7 +49,8 @@ export async function sendMobileEmailCode(input: {
         await tx.verificationToken.create({
           data: {
             identifier: limitId,
-            token: JSON.stringify(state),
+            // Rate tokens are globally unique; include the account/purpose scope.
+            token: JSON.stringify({ ...state, scope: limitId }),
             expires: new Date(now + 24 * 60 * 60_000),
           },
         });

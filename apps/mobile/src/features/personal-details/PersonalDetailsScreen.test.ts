@@ -529,3 +529,9 @@ test("address validation runs only in the address editor before persistence", ()
   );
   assert.match(save, /setError\(message\)/);
 });
+
+test("successful profile saves update only the loaded account cache without failing on cache storage", () => {
+  assert.match(screen, /profileUserId.current = data.user.id/);
+  assert.match(screen, /updateStoredSessionName\(\s*authoritative.fullName \|\| null,\s*profileUserId.current,?\s*\).catch/);
+  assert.match(saveButton, /\(!dirty \|\| blocked\) && !saving/);
+});
