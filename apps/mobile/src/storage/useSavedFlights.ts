@@ -4,7 +4,7 @@ import { TravelApiError, type FlightResult } from "../api/travelApi";
 import { favoriteAction } from "./favoriteAccess";
 import { showFavoriteSignInPrompt } from "./favoriteSignInPrompt";
 import { clearSession, readSession } from "./sessionStorage";
-import { flightSavedSignature } from "./savedMapping";
+import { flightSavedSignature, type SavableFlight } from "./savedMapping";
 import { savedRepositoryFor, type SavedSnapshot } from "./savedRepository";
 
 export function useSavedFlights() {
@@ -31,7 +31,7 @@ export function useSavedFlights() {
     void repository.refresh();
     return unsubscribe;
   }, [userId]);
-  const toggle = useCallback(async (flight: FlightResult, searchParams?: Record<string, unknown>) => {
+  const toggle = useCallback(async (flight: SavableFlight, searchParams?: Record<string, unknown>) => {
     let resolvedUserId = userId;
     if (resolvedUserId === undefined) {
       const session = await readSession();
