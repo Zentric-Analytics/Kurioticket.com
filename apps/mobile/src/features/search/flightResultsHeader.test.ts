@@ -7,7 +7,7 @@ import { buildSearchPlan } from "../flow/travelSearchModel";
 const read = (path: string) => readFileSync(resolve(path), "utf8");
 const results = read("src/features/search/ApprovedResultsScreen.tsx");
 const searchUi = read("src/features/search/SearchUi.tsx");
-const details = read("src/features/search/ApprovedDetailScreen.tsx");
+const details = read("src/features/search/NativeFlightDetails.tsx");
 const invocation = results.slice(results.indexOf("<FlightResultsHeader"), results.indexOf("/>", results.indexOf("<FlightResultsHeader")) + 2);
 const hotelInvocation = results.slice(results.indexOf("<HotelResultsHeader"), results.indexOf("/>", results.indexOf("<HotelResultsHeader")) + 2);
 const header = results.slice(results.indexOf("function FlightResultsHeader"), results.indexOf("function HotelResultsHeader"));
@@ -177,8 +177,8 @@ test("Hotel Results receives presentation-only summary copy while Edit preserves
 });
 
 test("Flight Details and result content remain present without a results-screen BottomNav", () => {
-  assert.match(details, /accessibilityLabel="Flight details header"/);
-  assert.match(details, /style=\{d\.itineraryList\}/);
+  assert.match(details, /accessibilityLabel="Back to results"/);
+  assert.match(details, />Full itinerary</);
   assert.match(results, /<DateStrip/);
   assert.match(results, /<HotelCard/);
   assert.doesNotMatch(results.slice(results.indexOf("export function ApprovedResultsScreen"), results.indexOf("export function BottomNav")), /<BottomNav(?:\s|\/|>)/);

@@ -6,8 +6,14 @@ const keys = [
   "travel.account.package.save", "travel.account.package.saved", "travel.account.package.duplicate", "travel.account.package.error",
 ] as const;
 
-type TravelAccountDictionary = Record<(typeof keys)[number], string>;
-const copy = (values: TravelAccountCopy): TravelAccountDictionary => Object.fromEntries(keys.map((key, index) => [key, values[index]])) as TravelAccountDictionary;
+const carKeys = [
+  "travel.account.carAlert.title", "travel.account.carAlert.body", "travel.account.carAlert.create", "travel.account.carAlert.target",
+  "travel.account.carAlert.save", "travel.account.carAlert.saved", "travel.account.carAlert.duplicate", "travel.account.carAlert.error",
+] as const;
+
+type TravelAccountDictionary = Record<(typeof keys)[number] | (typeof carKeys)[number], string>;
+const carCopy = ["Track rental car prices", "Get notified when this complete rental search reaches your target total.", "Create price alert", "Target rental total", "Save alert", "Car price alert created.", "This car alert already exists. Manage it in Price alerts.", "Enter a valid target rental total and try again."];
+const copy = (values: TravelAccountCopy): TravelAccountDictionary => Object.fromEntries([...keys.map((key, index) => [key, values[index]]), ...carKeys.map((key, index) => [key, carCopy[index]])]) as TravelAccountDictionary;
 
 export const travelAccountTranslations: Record<string, TravelAccountDictionary> = {
   "en-us": copy(["Track this stay price","Get notified when this complete stay search reaches your target total.","Create price alert","Target total","Save alert","Hotel price alert created.","This Hotel alert already exists. Manage it in Price alerts.","Enter a valid target total and try again.","Save package search","Package search saved.","This package search is already saved.","Package search could not be saved."]),
@@ -30,4 +36,4 @@ export const travelAccountTranslations: Record<string, TravelAccountDictionary> 
   vi: copy(["Theo dõi giá kỳ nghỉ này","Nhận thông báo khi tìm kiếm đầy đủ này đạt tổng mục tiêu.","Tạo cảnh báo giá","Tổng mục tiêu","Lưu cảnh báo","Đã tạo cảnh báo giá khách sạn.","Cảnh báo khách sạn này đã tồn tại. Hãy quản lý trong Cảnh báo giá.","Nhập tổng mục tiêu hợp lệ rồi thử lại.","Lưu tìm kiếm gói","Đã lưu tìm kiếm gói.","Tìm kiếm gói này đã được lưu.","Không thể lưu tìm kiếm gói."]),
 };
 
-export { keys as travelAccountTranslationKeys };
+export const travelAccountTranslationKeys = [...keys, ...carKeys] as const;

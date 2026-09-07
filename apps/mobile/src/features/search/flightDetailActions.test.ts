@@ -2,74 +2,29 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
-import { flightDetailHeaderModel } from "./flightDetailHeaderModel";
 
-const detailSource = readFileSync(resolve("src/features/search/ApprovedDetailScreen.tsx"), "utf8");
-const resultsSource = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
-const searchUiSource = readFileSync(resolve("src/features/search/SearchUi.tsx"), "utf8");
-const flightDetail = detailSource.slice(detailSource.indexOf("function FlightDetail"), detailSource.indexOf("function HotelDetail"));
-const styles = detailSource.slice(detailSource.indexOf("const d = StyleSheet.create"));
-const result = { originAirport: "lax", destinationAirport: "los", cabinClass: "business" };
+const detail = readFileSync(resolve("src/features/search/ApprovedDetailScreen.tsx"), "utf8");
+const native = readFileSync(resolve("src/features/search/NativeFlightDetails.tsx"), "utf8");
 
-test("Flight Details has a web-aligned back row and route summary without branding or a bell", () => {
-  assert.match(flightDetail, /accessibilityLabel="Flight details header"/);
-  assert.match(flightDetail, /accessibilityLabel="Back to results"[\s\S]*?d\.flightSummaryRoute[\s\S]*?header\.route/);
-  assert.doesNotMatch(flightDetail, /<TopBar|<Logo|Kurioticket|name="bell"|Price alert/);
-  assert.match(searchUiSource, /export function Logo/);
-  assert.match(searchUiSource, /accessibilityLabel="Notifications"/);
+test("flight details has one opaque-ID authoritative runtime", () => {
+  assert.match(detail, /product === "flight" && params\.id[\s\S]*?<NativeFlightDetails/);
+  assert.doesNotMatch(detail, /function FlightDetail|authoritativeProviderUrl/);
+  assert.match(native, /travelApi\.flightDetails\(id/);
+  assert.match(native, /travelApi\.flightRedirect\(offerId\)/);
 });
 
-test("Back, Edit search, and Share remain independent accessible 44px actions", () => {
-  assert.match(flightDetail, /accessibilityLabel="Back to results" onPress=\{\(\) => router\.back\(\)\}/);
-  assert.match(flightDetail, /accessibilityLabel="Edit search" onPress=\{\(\) => router\.push\(\{ pathname: "\/edit-flight-search", params: flightEditSearchParams\(params\) \}\)\}/);
-  assert.match(flightDetail, /accessibilityLabel="Share flight" onPress=\{\(\) => void handleShare\(\)\}/);
-  assert.match(flightDetail, /readSession,[\s\S]*?share: \(message\) => Share\.share\(\{ message \}\),[\s\S]*?message: flightShareMessage\(result, formattedFare\)/);
-  assert.match(styles, /headerAction: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
-  const actionStyle = styles.slice(styles.indexOf("headerAction:"), styles.indexOf("headerActionPressed:"));
-  assert.doesNotMatch(actionStyle, /backgroundColor|border|shadow|elevation/);
+test("checkout never falls back to a serialized provider URL", () => {
+  assert.doesNotMatch(native, /authoritativeProviderUrl|\.bookingUrl|\.partnerRedirectUrl/);
+  assert.match(native, /await Linking\.openURL\(response\.url\)/);
+  assert.match(native, /error\.status===409 && error\.details\?\.code==="offer_changed"/);
 });
 
-test("Save, Share, and Edit search form the accessible action row under the route", () => {
-  assert.match(flightDetail, /accessibilityLabel="Flight details actions" style=\{d\.flightSummaryActions\}[\s\S]*?Save \$\{result\.airlineName\}[\s\S]*?Share flight[\s\S]*?Edit search/);
-  assert.match(styles, /flightSummaryActions: \{ flexDirection: "row", alignItems: "center", gap: 5 \}/);
-  assert.match(styles, /flightSummaryRoute: \{ fontSize: 25,[\s\S]*?fontWeight: "900"/);
-});
-
-test("header model uses current airport codes, dates, passenger total, pluralization, and cabin", () => {
-  assert.deepEqual(flightDetailHeaderModel(result, {
-    tripType: "round-trip", departureDate: "2030-08-20", returnDate: "2030-08-22",
-    adults: "1", children: "2", infants: "1", cabin: "Business",
-  }), { route: "LAX ⇄ LOS", tripTypeLabel: "Round-trip", metadata: "Aug 20 – Aug 22 · 4 Travelers · Business" });
-  assert.deepEqual(flightDetailHeaderModel(result, {
-    tripType: "one-way", departureDate: "2030-08-20", adults: "1", children: "0", infants: "0", cabin: "premium-economy",
-  }), { route: "LAX → LOS", tripTypeLabel: "One-way", metadata: "Aug 20 · 1 Traveler · Premium Economy" });
-});
-
-test("route and trip summary are plain, themed text matching the rendered web hierarchy", () => {
-  assert.match(flightDetail, /d\.flightSummaryRoute[\s\S]*?>\{header\.route\}<\/Text>/);
-  assert.match(flightDetail, /\{header\.tripTypeLabel\} · \{priceBasis\.travelerLabel\.toLowerCase\(\)\}/);
-  assert.doesNotMatch(flightDetail, /Calendar|User|Briefcase|emoji/);
-  assert.match(flightDetail, /backgroundColor: theme\.surface, borderBottomColor: theme\.border/);
-  assert.match(flightDetail, /color: theme\.textPrimary/);
-  assert.match(flightDetail, /color=\{theme\.icon\}/);
-});
-
-test("Flight Results and Flight Details canonical booking body remain in place", () => {
-  assert.match(resultsSource, /function FlightResultsHeader/);
-  assert.match(resultsSource, /<FlightResultsHeader/);
-  assert.match(flightDetail, /<FlightItineraryLeg/);
-  assert.match(flightDetail, />Trip details</);
-  assert.match(flightDetail, />Booking provider</);
-  assert.match(flightDetail, /Continue to \$\{provider\}/);
-  assert.match(flightDetail, /authoritativeProviderUrl\(result\)/);
-});
-
-test("Flight Details explains total price basis without leaking its summary into result cards", () => {
-  assert.match(flightDetail, /const priceBasis = flightPriceBasis\(params, fare\)/);
-  assert.match(flightDetail, />\{priceBasis\.summary\}<\/Text>/);
-  assert.match(flightDetail, /priceBasis\.providerFareText \?/);
-  assert.match(flightDetail, /Final price is confirmed by \{provider\} before booking\./);
-  assert.doesNotMatch(flightDetail.toLowerCase(), /per traveler|price breakdown|base fare card|tax card/);
-  assert.doesNotMatch(resultsSource, /flightPriceBasis\(|priceBasis\.summary/);
-  assert.match(flightDetail, /accessibilityLabel="Share flight"/);
+test("native actions and checkout meet accessibility requirements", () => {
+  for (const label of ["Back to results", "Edit search"]) assert.match(native, new RegExp(`accessibilityLabel="${label}"`));
+  assert.match(native, /label="Share flight"/);
+  assert.match(native, /accessibilityRole="radiogroup"/);
+  assert.match(native, /accessibilityRole="radio" accessibilityState=\{\{selected:/);
+  assert.match(native, /accessibilityRole="tab" accessibilityState=\{\{selected:/);
+  assert.match(native, /iconButton:\{width:44,height:44/);
+  assert.match(native, /tab:\{minHeight:44/);
 });
