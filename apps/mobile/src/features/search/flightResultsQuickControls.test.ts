@@ -87,7 +87,10 @@ test("Android bypasses Pressability with non-responder touch observation", () =>
   const androidBranch = controls.slice(controls.indexOf('if (Platform.OS === "android")'), controls.indexOf("return (", controls.indexOf('if (Platform.OS === "android")') + 20));
   assert.match(controls, /if \(Platform\.OS === "android"\)[\s\S]*onTouchStart=[\s\S]*onTouchMove=[\s\S]*onTouchCancel=[\s\S]*onTouchEnd=/);
   assert.doesNotMatch(androidBranch, /Pressable|onStartShouldSetResponder|onMoveShouldSetResponder/);
-  assert.match(controls, /if \(start && isFlightQuickControlTap\(start, touch\(event\)\)\) onPress\(\)/);
+  assert.match(controls, /const touchRejected = useRef\(false\)/);
+  assert.match(controls, /touchRejected\.current = true/);
+  assert.match(controls, /const rejected = touchRejected\.current/);
+  assert.match(controls, /if \(start && !rejected && isFlightQuickControlTap\(start, touch\(event\)\)\) onPress\(\)/);
 });
 
 test("iOS keeps ordinary Pressable behavior and both paths preserve accessibility", () => {
