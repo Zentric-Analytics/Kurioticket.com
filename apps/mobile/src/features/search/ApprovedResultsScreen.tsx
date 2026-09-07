@@ -1229,15 +1229,17 @@ const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChe
       accessibilityLabel={controlAccessibilityLabel}
       accessibilityState={{ expanded, selected: active }}
       onPress={onPress}
-      style={({ pressed }) => [
+      style={s0.hotelShortcutTouchTarget}
+    >
+      {({ pressed }) => <View style={[
         s0.hotelShortcut,
         { borderColor: border, backgroundColor: pressed && !theme.dark ? "#F8FAFC" : surface },
-      ]}
-    >
-      {icon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={accent} /> : null}
-      <Text numberOfLines={1} style={[s0.hotelShortcutLabel, { color: foreground }]}>{label}</Text>
-      {count ? <View style={[s0.hotelShortcutCount, { backgroundColor: countBackground }]}><Text style={[s0.hotelShortcutCountText, { color: accent }]}>{count}</Text></View> : null}
-      {showChevron ? <ChevronDown accessible={false} size={14} strokeWidth={1.9} color={chevron} style={expanded ? s0.hotelShortcutChevronExpanded : undefined} /> : null}
+      ]}>
+        {icon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={accent} /> : null}
+        <Text numberOfLines={1} style={[s0.hotelShortcutLabel, { color: foreground }]}>{label}</Text>
+        {count ? <View style={[s0.hotelShortcutCount, { backgroundColor: countBackground }]}><Text style={[s0.hotelShortcutCountText, { color: accent }]}>{count}</Text></View> : null}
+        {showChevron ? <ChevronDown accessible={false} size={13} strokeWidth={1.9} color={chevron} style={expanded ? s0.hotelShortcutChevronExpanded : undefined} /> : null}
+      </View>}
     </Pressable>
   );
 };
@@ -1803,8 +1805,8 @@ const s0 = StyleSheet.create({
   hotelSummaryEditSlot: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   hotelBackToTop:{position:"absolute",right:16,width:44,height:44,borderRadius:22,borderWidth:1,alignItems:"center",justifyContent:"center",zIndex:19,elevation:4},
   filterRail: { height: 44, flexGrow: 0 },
-  hotelFilterRail: { height: 48, flexGrow: 0 },
-  hotelFilterContent: { paddingHorizontal: 16, paddingBottom: 4, gap: 8, alignItems: "center", flexWrap: "nowrap" },
+  hotelFilterRail: { height: 44, flexGrow: 0 },
+  hotelFilterContent: { paddingLeft: 8, paddingRight: 16, gap: 6, alignItems: "center", flexWrap: "nowrap" },
   hotelFilterSectionHeader: { paddingBottom: 12 },
   flightFilterSectionHeader: { paddingTop: 8 },
   resultsScroll: { flex: 1 },
@@ -1813,8 +1815,9 @@ const s0 = StyleSheet.create({
   route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
   filters: { paddingHorizontal: 14, paddingVertical: 3, gap: 8, alignItems: "center" },
-  hotelShortcut: { height: 44, minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderWidth: 1, borderRadius: 11, paddingHorizontal: 14 },
-  hotelShortcutLabel: { fontSize: 14, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
+  hotelShortcutTouchTarget: { minWidth: 44, minHeight: 44, justifyContent: "center" },
+  hotelShortcut: { height: 36, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, borderWidth: 1, borderRadius: 9, paddingHorizontal: 10 },
+  hotelShortcutLabel: { fontSize: 13, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
   hotelShortcutCount: { minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 6, alignItems: "center", justifyContent: "center" },
   hotelShortcutCountText: { fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts.semibold },
   hotelShortcutChevronExpanded: { transform: [{ rotate: "180deg" }] },
