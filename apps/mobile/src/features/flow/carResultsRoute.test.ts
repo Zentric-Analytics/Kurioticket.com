@@ -44,7 +44,7 @@ test("car results preserve controls and count with a continuous list beneath the
   assert.match(screen, /filterCarResults\(results,filters\)/);
   assert.match(screen, /sortCarResults\(/);
   assert.doesNotMatch(screen, /cycle\(|priceFilter|setCategory|setCompany|Rental company/);
-  assert.match(screen, /\{filtered\.length\} results found/);
+  assert.match(screen, /carResultCountLabel\(filtered\.length\)/);
   assert.doesNotMatch(screen, /style=\{r\.range\}|range:\{/);
   assert.match(screen, /filtered\.map\(\(result,index\)/);
   assert.doesNotMatch(screen, /pageSize|totalPages|filtered\.slice|Page \{page\}/);
