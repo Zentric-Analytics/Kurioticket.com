@@ -397,8 +397,8 @@ test("responsive calculations support narrow phones and tab clearance", () => {
 test("Explore discovery ends at the final card without duplicating tab-bar clearance", () => {
   const source = screen();
   assert.doesNotMatch(source, /EXPLORE_BOTTOM_SPACING|bottomPadding/);
-  assert.match(source, /contentContainerStyle={s\.discoveryContent}/);
-  assert.doesNotMatch(source, /discoveryContent[^\n]*paddingBottom/);
+  assert.match(source, /contentContainerStyle=\{\[s\.discoveryContent, \{ paddingBottom: trailingSpace \}\]\}/);
+  assert.match(source, /listTrailingSpace = toggleHeight \+ VIEW_TOGGLE_BOTTOM \+ VIEW_TOGGLE_CLEARANCE/);
   assert.match(source, /index === REGION_DISCOVERY\.length - 1 && s\.finalRegionSection/);
   assert.match(source, /finalRegionSection: \{ marginBottom: 0 \}/);
   assert.doesNotMatch(source, /ListFooterComponent|exploreBottomPadding\(65, insets\.bottom\)/);

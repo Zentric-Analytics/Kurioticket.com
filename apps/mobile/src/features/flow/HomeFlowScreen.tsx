@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
-    paddingBottom: 4,
+    paddingBottom: 8,
   },
   products: {
     marginTop: -34,

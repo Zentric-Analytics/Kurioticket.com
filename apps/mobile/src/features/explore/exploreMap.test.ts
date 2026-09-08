@@ -18,8 +18,13 @@ test("map has bounded loading, retry and debounced search", () => {
  assert.match(map, /Try again/);
  assert.match(map, /encodeExploreMapQuery\(settledPlace\)/);
 });
-test("both discovery and search retain their destination lists below a map", () => {
- assert.match(screen, /ListHeaderComponent=\{<ExploreMap \/>\}/);
+test("map and list views retain the existing destination components", () => {
+ assert.match(screen, /List view/);
+ assert.match(screen, /Map view/);
+ assert.match(screen, /setView\(value => value === "map" \? "list" : "map"\)/);
+ assert.match(screen, /hiddenList: \{ display: "none" \}/);
+ assert.match(map, /container: \{ flex: 1, overflow: "hidden" \}/);
+ assert.doesNotMatch(screen, /ListHeaderComponent=\{<ExploreMap/);
  assert.match(screen, /<ExploreMap place=/);
  assert.match(screen, /<DestinationResultRow/);
  assert.match(screen, /<RegionPreviewCard/);
@@ -34,3 +39,10 @@ test("map queries respect the endpoint limit without breaking Unicode", () => {
  assert.equal(decodeURIComponent(encodeExploreMapQuery("Paris, France")), "Paris, France");
  assert.equal(decodeURIComponent(encodeExploreMapQuery("a\uD800b\uDC00")), "a\uFFFDb\uFFFD");
 });
+
+ test("both lists reserve the measured floating toggle height and clearance", () => {
+ assert.match(screen, /onLayout=\{event => setToggleHeight\(event.nativeEvent.layout.height\)\}/);
+ assert.match(screen, /paddingBottom: listTrailingSpace/);
+ assert.match(screen, /trailingSpace=\{listTrailingSpace\}/);
+ assert.match(screen, /paddingBottom: trailingSpace/);
+ });
