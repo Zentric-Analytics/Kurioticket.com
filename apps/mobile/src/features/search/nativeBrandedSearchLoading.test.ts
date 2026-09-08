@@ -11,10 +11,10 @@ test("Flight, Hotel and Car share the canonical restrained loading presentation"
   assert.deepEqual(searchLoadingPresentation("car").messages, ["Checking vehicles and providers…", "Comparing rental rates and terms…", "Preparing your car options…"]);
 });
 
-test("all initial native canonical searches replace result chrome with the shared loader", () => {
+test("Hotel and Car retain canonical loaders while Flight keeps its results shell", () => {
   const travelResults = read("ApprovedResultsScreen.tsx");
   const carResults = read("ApprovedCarResultsScreen.tsx");
-  assert.match(travelResults, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
+  assert.match(travelResults, /if \(status === "loading" && product !== "flight"\) return <NativeBrandedSearchLoading product=\{product\}/);
   assert.match(carResults, /if\(status==="loading"\) return <NativeBrandedSearchLoading product="car"/);
   assert.match(read("NativeBrandedSearchLoading.tsx"), /NativeTravelSearchLoadingScreen/);
 });

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, type RefObject } from "react";
-import { Keyboard, type LayoutChangeEvent, type TextInput } from "react-native";
+import { Keyboard, Platform, type LayoutChangeEvent, type TextInput } from "react-native";
 
-type FocusableInput = Pick<TextInput, "focus">;
+type FocusableInput = Pick<TextInput, "focus" | "measureInWindow">;
 
 /** Coordinates one automatic focus request with each native Modal opening. */
 export function useSearchPickerKeyboardPresentation(
@@ -29,6 +29,7 @@ export function useSearchPickerKeyboardPresentation(
   const focusedGenerationRef = useRef<number | undefined>(undefined);
   const modalPresentedRef = useRef(false);
   const sheetLayoutValidRef = useRef(false);
+  const keyboardReadyGenerationRef = useRef<number | undefined>(undefined);
 
   const previousOpening = previousOpeningRef.current;
   if (
@@ -40,7 +41,7 @@ export function useSearchPickerKeyboardPresentation(
   }
   const generation = generationRef.current;
 
-  const startCurrentOpening = useCallback(() => {
+  const startCurrentEntrance = useCallback(() => {
     if (
       !visible ||
       generationRef.current !== generation ||
@@ -48,22 +49,38 @@ export function useSearchPickerKeyboardPresentation(
     )
       return;
     if (!modalPresentedRef.current || !sheetLayoutValidRef.current) return;
-    // Flight airport pickers request focus while still wholly offscreen. This
-    // starts the KeyboardAvoidingView adjustment before the entrance begins,
-    // rather than moving a settled sheet a second time when the keyboard opens.
-    if (
-      keyboardSynchronizedOpening &&
-      focusedGenerationRef.current !== generation
-    ) {
-      focusedGenerationRef.current = generation;
-      inputRef.current?.focus();
-    }
+    if (keyboardSynchronizedOpening && keyboardReadyGenerationRef.current !== generation) return;
     if (!startOpening()) return;
     openingStartedGenerationRef.current = generation;
     // A fresh opening is already unsettled. Arm it here because recording the
     // successful start in a ref does not itself cause another render.
     if (!openSettled) settleArmedGenerationRef.current = generation;
-  }, [generation, inputRef, keyboardSynchronizedOpening, openSettled, startOpening, visible]);
+  }, [generation, keyboardSynchronizedOpening, openSettled, startOpening, visible]);
+
+  const prepareCurrentOpening = useCallback(() => {
+    if (!visible || generationRef.current !== generation) return;
+    if (!modalPresentedRef.current || !sheetLayoutValidRef.current) return;
+    if (!keyboardSynchronizedOpening) {
+      startCurrentEntrance();
+      return;
+    }
+    if (focusedGenerationRef.current === generation) return;
+    focusedGenerationRef.current = generation;
+    inputRef.current?.focus();
+  }, [generation, inputRef, keyboardSynchronizedOpening, startCurrentEntrance, visible]);
+
+  const markKeyboardReady = useCallback(() => {
+    if (!visible || generationRef.current !== generation || focusedGenerationRef.current !== generation) return;
+    keyboardReadyGenerationRef.current = generation;
+    startCurrentEntrance();
+  }, [generation, startCurrentEntrance, visible]);
+
+  useEffect(() => {
+    if (!keyboardSynchronizedOpening || !visible) return;
+    const eventName = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const subscription = Keyboard.addListener(eventName, markKeyboardReady);
+    return () => subscription.remove();
+  }, [keyboardSynchronizedOpening, markKeyboardReady, visible]);
 
   useEffect(() => {
     if (
@@ -91,8 +108,8 @@ export function useSearchPickerKeyboardPresentation(
 
   const onModalShow = useCallback(() => {
     modalPresentedRef.current = true;
-    startCurrentOpening();
-  }, [startCurrentOpening]);
+    prepareCurrentOpening();
+  }, [prepareCurrentOpening]);
 
   const onSheetLayout = useCallback(
     (event: LayoutChangeEvent) => {
@@ -100,10 +117,27 @@ export function useSearchPickerKeyboardPresentation(
       const { height } = event.nativeEvent.layout;
       if (Number.isFinite(height) && height > 0)
         sheetLayoutValidRef.current = true;
-      startCurrentOpening();
+      if (focusedGenerationRef.current === generation && Keyboard.isVisible()) markKeyboardReady();
+      else prepareCurrentOpening();
     },
-    [reportSheetLayout, startCurrentOpening],
+    [generation, markKeyboardReady, prepareCurrentOpening, reportSheetLayout],
   );
+
+  const onInputFocus = useCallback(() => {
+    if (!keyboardSynchronizedOpening || generationRef.current !== generation) return;
+    if (Keyboard.isVisible()) {
+      markKeyboardReady();
+      return;
+    }
+    // A native measurement callback is the deterministic no-resize fallback
+    // for hardware keyboards. A software keyboard that has appeared meanwhile
+    // is observed through Keyboard.metrics()/isVisible before entrance.
+    inputRef.current?.measureInWindow(() => {
+      if (generationRef.current !== generation || !visible) return;
+      if (!Keyboard.metrics()) keyboardReadyGenerationRef.current = generation;
+      if (Keyboard.isVisible() || keyboardReadyGenerationRef.current === generation) startCurrentEntrance();
+    });
+  }, [generation, inputRef, keyboardSynchronizedOpening, markKeyboardReady, startCurrentEntrance, visible]);
 
   useEffect(() => {
     if (!rendered) {
@@ -117,8 +151,8 @@ export function useSearchPickerKeyboardPresentation(
     // A close/reopen can interrupt the exit while the native Modal remains
     // presented. It will not emit onShow again, but its mounted layout is
     // already a valid focus lifecycle signal for the new generation.
-    if (modalPresentedRef.current) startCurrentOpening();
-  }, [rendered, startCurrentOpening, visible]);
+    if (modalPresentedRef.current) prepareCurrentOpening();
+  }, [prepareCurrentOpening, rendered, visible]);
 
-  return { onModalShow, onSheetLayout } as const;
+  return { onInputFocus, onModalShow, onSheetLayout } as const;
 }

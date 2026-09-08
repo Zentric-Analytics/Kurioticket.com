@@ -25,9 +25,10 @@ test("final searchable location suggestions commit directly without Done", () =>
 });
 
 test("dismissal never commits typed TextInput values", () => {
-  for (const sheet of locationSheets) {
-    assert.match(sheet, /<PickerSheetHeader[^>]+onClose=\{on(?:Close|Cancel)\}/);
-    assert.match(sheet, /onRequestClose=\{on(?:Close|Cancel)\}/);
+  for (const [index, sheet] of locationSheets.entries()) {
+    const close = index === 0 ? "dismissAirportSheet" : "on(?:Close|Cancel)";
+    assert.match(sheet, new RegExp(`<PickerSheetHeader[^>]+onClose=\\{${close}\\}`));
+    assert.match(sheet, new RegExp(`onRequestClose=\\{${close}\\}`));
     assert.doesNotMatch(sheet, /on(?:Choose|Done)\(query\)|on(?:Choose|Done)\(value\)/);
   }
 });

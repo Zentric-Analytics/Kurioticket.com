@@ -6,8 +6,9 @@ const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "ut
 const loader = readFileSync("src/features/search/NativeTravelSearchLoadingScreen.tsx", "utf8");
 const stateUi = readFileSync("src/features/search/FlightResultsState.tsx", "utf8");
 
-test("initial Flight search uses the one full-screen branded loader", () => {
-  assert.match(screen, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
+test("initial Flight search keeps its stable shell while Hotel retains the loader", () => {
+  assert.match(screen, /if \(status === "loading" && product !== "flight"\) return <NativeBrandedSearchLoading product=\{product\}/);
+  assert.match(screen, /status === "loading" \? <View accessibilityRole="progressbar"/);
   assert.doesNotMatch(screen, /function FlightLoadingExperience|FLIGHT_LOADING_SKELETON_DELAY_MS/);
   assert.doesNotMatch(stateUi, /Searching the best flights for you/);
 });
@@ -32,7 +33,7 @@ test("results become ready without an artificial presentation delay", () => {
 test("ready Flight content retains dates, sticky filters, alert, count and cards", () => {
   const listStart = screen.indexOf("<Animated.SectionList");
   const list = screen.slice(listStart, screen.indexOf("<HotelResultsHeader", listStart));
-  assert.match(list, /sections=\{\[\{ data: !flightState \? \[null, \.\.\.\(sorted as FlightResult\[\]\)\] : \[\] \}\]\}/);
+  assert.match(list, /sections=\{\[\{ data: flightState === "loading" \|\| !flightState \? \[null, \.\.\.\(sorted as FlightResult\[\]\)\] : \[\] \}\]\}/);
   assert.match(list, /ListHeaderComponent=\{flightDateStrip\}/);
   assert.match(list, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
   assert.match(list, /renderItem=\{\(\{ item, index \}\) => item === null \? \([\s\S]*?<PriceAlert product="flight"[\s\S]*?<FlightResultsSummaryRow count=\{sorted\.length\} \/>[\s\S]*?\) : \([\s\S]*?<FlightCard/);

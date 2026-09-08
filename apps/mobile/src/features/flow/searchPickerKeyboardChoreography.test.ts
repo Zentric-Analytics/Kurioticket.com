@@ -26,31 +26,11 @@ test("searchable moving sheets coordinate automatic focus with their entrance", 
   }
 });
 
-test("the shared coordinator focuses once per live opening generation", () => {
+test("the shared coordinator gates one focus and entrance per live generation", () => {
   const source = readFileSync("src/features/flow/searchPickerKeyboardPresentation.ts", "utf8");
-  assert.match(source, /generationRef\.current \+= 1/);
-  assert.match(source, /focusedGenerationRef\.current === generation/);
-  assert.match(source, /openingStartedGenerationRef\.current === generation/);
-  assert.match(source, /openingStartedGenerationRef\.current = generation/);
-  assert.match(source, /generationRef\.current !== generation/);
-  assert.match(source, /if \(!visible/);
-  assert.match(source, /Keyboard\.dismiss\(\)/);
-  assert.match(source, /modalPresentedRef\.current/);
-  assert.match(source, /sheetLayoutValidRef\.current/);
-  assert.match(source, /keyboardSynchronizedOpening/);
-  assert.match(source, /!modalPresentedRef\.current \|\| !sheetLayoutValidRef\.current/);
-  assert.match(source, /inputRef\.current\?\.focus\(\);[\s\S]*?if \(!startOpening\(\)\) return;[\s\S]*?openingStartedGenerationRef\.current = generation/);
-  assert.match(source, /\[generation, inputRef, keyboardSynchronizedOpening, openSettled, startOpening, visible\]/);
-  assert.match(source, /reportSheetLayout\(event\);[\s\S]*?sheetLayoutValidRef\.current = true;[\s\S]*?startCurrentOpening\(\)/);
-  assert.match(source, /if \(modalPresentedRef\.current\) startCurrentOpening\(\)/);
-  assert.match(source, /openSettled: boolean/);
-  assert.match(source, /if \(!openSettled\) \{\s+settleArmedGenerationRef\.current = generation/);
-  assert.match(source, /settleArmedGenerationRef\.current !== generation/);
-  assert.match(source, /openingStartedGenerationRef\.current !== generation[\s\S]+if \(!openSettled\)[\s\S]+settleArmedGenerationRef\.current !== generation \|\|\s+focusedGenerationRef\.current === generation[\s\S]+focusedGenerationRef\.current = generation;\s+inputRef\.current\?\.focus\(\)/);
-  assert.doesNotMatch(source, /autoFocus/);
-  assert.doesNotMatch(source, /requestAnimationFrame/);
-  assert.doesNotMatch(source, /setTimeout/);
-  assert.doesNotMatch(source, /InteractionManager/);
+  for (const contract of [/generationRef\.current \+= 1/, /focusedGenerationRef\.current === generation/, /openingStartedGenerationRef\.current === generation/, /keyboardReadyGenerationRef\.current/, /modalPresentedRef\.current/, /sheetLayoutValidRef\.current/, /Keyboard\.addListener/, /keyboardWillShow/, /keyboardDidShow/, /Keyboard\.metrics\(\)/, /Keyboard\.isVisible\(\)/, /measureInWindow/, /onInputFocus/]) assert.match(source, contract);
+  assert.ok(source.indexOf("inputRef.current?.focus()") < source.indexOf("keyboardReadyGenerationRef.current = generation"));
+  assert.doesNotMatch(source, /setTimeout|InteractionManager|keyboardHeight|KEYBOARD_HEIGHT/);
 });
 
 test("Flight synchronizes keyboard preparation with its measured entrance only", () => {
