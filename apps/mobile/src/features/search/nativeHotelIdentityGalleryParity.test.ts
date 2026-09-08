@@ -44,8 +44,8 @@ test("native Hotel identity matches web typography without changing its facts", 
   const classification = styleRule(detailSource, "hotelClassificationStars", "hotelGallery");
   const row = styleRule(detailSource, "hotelFactRow", "hotelDetailBody");
 
-  assert.match(name, /fontSize: 22[^}]*lineHeight: 28[^}]*fontWeight: "800"[^}]*fontFamily: appFonts\.extraBold[^}]*letterSpacing: -0\.55/);
-  assert.match(detailSource, /hotelNamePhoneFit: \{ letterSpacing: -0\.8 \}/);
+  assert.match(name, /fontSize: 20[^}]*lineHeight: 26[^}]*fontWeight: "700"[^}]*fontFamily: appFonts\.bold[^}]*letterSpacing: -0\.4/);
+  assert.match(detailSource, /hotelNamePhoneFit: \{ letterSpacing: -0\.55 \}/);
   assert.match(hotel, /style=\{\[d\.hotelName, width <= 430 && d\.hotelNamePhoneFit, \{ color: hotelIdentityTitleColor \}\]\}/);
   const hotelNameElement = hotel.slice(hotel.indexOf("style={[d.hotelName"), hotel.indexOf("</Text>", hotel.indexOf("style={[d.hotelName")));
   assert.doesNotMatch(hotelNameElement, /numberOfLines=\{1\}|ellipsizeMode="tail"|adjustsFontSizeToFit/);
@@ -55,7 +55,7 @@ test("native Hotel identity matches web typography without changing its facts", 
   assert.match(copy, /flex: 1[^}]*minWidth: 0/);
   assert.match(name, /minWidth: 0/);
   assert.doesNotMatch(name, /flex: 1/);
-  assert.match(fact, /fontSize: 12[^}]*lineHeight: 20[^}]*fontWeight: "600"[^}]*fontFamily: appFonts\.semibold/);
+  assert.match(fact, /fontSize: 12[^}]*lineHeight: 18[^}]*fontWeight: "500"[^}]*fontFamily: appFonts\.medium/);
   assert.match(row, /minHeight: 20[^}]*alignItems: "flex-start"[^}]*gap: 6/);
   assert.match(hotel, /hotelIdentityTitleColor = theme\.dark \? theme\.textPrimary : "#020617"/);
   assert.match(hotel, /hotelIdentityMetaColor = theme\.dark \? theme\.textSecondary : "#334155"/);

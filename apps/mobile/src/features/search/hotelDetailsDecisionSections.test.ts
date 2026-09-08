@@ -91,8 +91,8 @@ test("native Compare location reuses the secure interactive Google embed with we
   assert.match(locationHeader, /paddingVertical:\s*16/);
   assert.match(mapFrame, /height:\s*280/);
   assert.match(mapFrame, /width:\s*"100%"/);
-  assert.match(component, /locationHeading:\s*\{[^}]*fontSize:\s*18[^}]*lineHeight:\s*24[^}]*fontWeight:\s*"800"[^}]*fontFamily:\s*appFonts\.extraBold/);
-  assert.match(component, /address:\s*\{[^}]*marginTop:\s*4[^}]*fontSize:\s*14[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
+  assert.match(component, /locationHeading:\s*\{[^}]*fontSize:\s*17[^}]*lineHeight:\s*22[^}]*fontWeight:\s*"700"[^}]*fontFamily:\s*appFonts\.bold/);
+  assert.match(component, /address:\s*\{[^}]*marginTop:\s*4[^}]*fontSize:\s*13[^}]*lineHeight:\s*19[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
   for (const contract of ["rounded-2xl", "border-slate-200", "bg-white", "shadow-[0_8px_30px_rgba(15,23,42,0.05)]", "px-4 py-4", "h-[280px]", "buildGoogleHotelMapEmbedUrl"]) assert.ok(webMap.includes(contract), contract);
 });
 
@@ -131,7 +131,7 @@ test("native related Hotel cards mirror the web text hierarchy and action treatm
   assert.match(component, /import \{ appFonts \} from "\.\.\/\.\.\/theme\/typography";/);
   assert.match(component, /cardBody:\s*\{\s*minHeight:\s*174,\s*padding:\s*12\s*\}/);
   assert.doesNotMatch(component, /cardBody:\s*\{[^}]*minHeight:\s*190|cardBody:\s*\{[^}]*padding:\s*13/);
-  assert.match(component, /heading:\s*\{[^}]*fontSize:\s*20[^}]*lineHeight:\s*26[^}]*fontWeight:\s*"800"[^}]*fontFamily:\s*appFonts\.extraBold/);
+  assert.match(component, /heading:\s*\{[^}]*fontSize:\s*18[^}]*lineHeight:\s*24[^}]*fontWeight:\s*"700"[^}]*fontFamily:\s*appFonts\.bold/);
   assert.match(component, /stars:\s*\{[^}]*color:\s*"#F59E0B"[^}]*fontSize:\s*12[^}]*lineHeight:\s*16[^}]*letterSpacing:\s*0\.96[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
   assert.match(component, /hotelName:\s*\{[^}]*marginTop:\s*4[^}]*fontSize:\s*15[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"600"[^}]*fontFamily:\s*appFonts\.semibold/);
   assert.match(component, /location:\s*\{[^}]*marginTop:\s*4[^}]*fontSize:\s*12[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);

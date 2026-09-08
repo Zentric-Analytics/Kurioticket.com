@@ -41,8 +41,8 @@ test("native empty state deliberately maps the web left-rail contract", () => {
   assert.match(callout, /paddingVertical: 4/);
   assert.match(callout, /paddingLeft: 16/);
   const text = styleRule("emptyText", "scoreRow");
-  assert.match(text, /fontSize: 14/);
-  assert.match(text, /lineHeight: 24/);
+  assert.match(text, /fontSize: 13/);
+  assert.match(text, /lineHeight: 22/);
   assert.match(reviews, /Guest reviews/);
   assert.match(reviews, /Verified guest reviews are not connected for this property yet\./);
 });
@@ -85,13 +85,13 @@ test("Reviews geometry and typography match mobile web without double inset", ()
   assert.match(detail, /hotelDetailBody: \{[^\n]*paddingHorizontal: 16/);
 
   const contracts: Array<[string, string, RegExp[]]> = [
-    ["heading", "emptyCallout", [/fontSize: 20/, /lineHeight: 28/, /appFonts\.extraBold/]],
+    ["heading", "emptyCallout", [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/, /appFonts\.bold/]],
     ["scoreRow", "scoreBadge", [/marginTop: 16/, /gap: 16/]],
     ["scoreBadge", "scoreText", [/height: 56/, /minWidth: 56/, /borderRadius: 8/, /paddingHorizontal: 8/, /colors\.blue/]],
-    ["scoreText", "metadata", [/fontSize: 20/, /lineHeight: 28/, /appFonts\.extraBold/]],
+    ["scoreText", "metadata", [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/, /appFonts\.bold/]],
     ["metadata", "label", [/flex: 1/, /minWidth: 0/]],
-    ["label", "count", [/fontSize: 16/, /lineHeight: 24/, /appFonts\.bold/]],
-    ["count", "source", [/fontSize: 14/, /lineHeight: 20/, /appFonts\.regular/]],
+    ["label", "count", [/fontSize: 15/, /lineHeight: 22/, /fontWeight: "600"/, /appFonts\.semibold/]],
+    ["count", "source", [/fontSize: 13/, /lineHeight: 19/, /appFonts\.regular/]],
   ];
   for (const [name, next, patterns] of contracts) {
     const rule = styleRule(name, next);
