@@ -1,13 +1,11 @@
 import { useState } from "react";
-import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { ArrowRight, ImageOff, MapPin } from "lucide-react-native";
-import { WebView } from "react-native-webview";
 import type { PublicHotelPropertyDetails } from "../../../../../src/lib/types";
 import { buildHotelAddress } from "../../../../../src/lib/hotels/hotelMap";
 import { getApiBaseUrl } from "../../config/apiUrl";
 import { colors } from "../../theme/tokens";
 import { appFonts } from "../../theme/typography";
-import { nativeHotelLocationEmbedUrl } from "./nativeHotelLocationModel";
 import type { NativeRelatedHotel } from "./nativeHotelRelatedHotelsModel";
 
 type Theme = { dark: boolean; surface: string; border: string; textPrimary: string; textSecondary: string; icon: string };
@@ -22,18 +20,37 @@ export function NativeHotelPropertyLocationSection({ hotelId, hotelName, propert
   if (!propertyDetails) return null;
   const address = buildHotelAddress(propertyDetails);
   const api = getApiBaseUrl(Platform.OS, __DEV__);
-  const mapUrl = api.ok ? nativeHotelLocationEmbedUrl(api.baseUrl, hotelId, "map") : null;
-  return <View style={[styles.locationCard, { backgroundColor: theme.dark ? theme.surface : "#FFFFFF", borderColor: theme.dark ? theme.border : "#E2E8F0" }]}>
+  const mapUrl = api.ok ? `${api.baseUrl}/api/mobile/v1/hotels/location-preview?${new URLSearchParams({ id: hotelId })}` : null;
+  const openMap = async () => {
+    const label = hotelName || address;
+    const query = encodeURIComponent(label || `${propertyDetails.latitude},${propertyDetails.longitude}`);
+    const destination = Platform.OS === "ios"
+      ? `https://maps.apple.com/?ll=${propertyDetails.latitude},${propertyDetails.longitude}&q=${query}`
+      : `geo:${propertyDetails.latitude},${propertyDetails.longitude}?q=${propertyDetails.latitude},${propertyDetails.longitude}(${query})`;
+    const fallback = `https://www.google.com/maps/search/?api=1&query=${propertyDetails.latitude},${propertyDetails.longitude}`;
+    try {
+      if (Platform.OS === "android" && !await Linking.canOpenURL(destination)) await Linking.openURL(fallback);
+      else await Linking.openURL(destination);
+    } catch {
+      try { await Linking.openURL(fallback); }
+      catch { Alert.alert("Unable to open maps", "Please try again."); }
+    }
+  };
+  return <View style={styles.locationCard}>
     <View style={styles.locationHeader}>
       <Text accessibilityRole="header" style={[styles.locationHeading, { color: theme.dark ? theme.textPrimary : "#020617" }]}>Property location</Text>
       {address ? <Text style={[styles.address, { color: theme.dark ? theme.textSecondary : "#475569" }]}>{address}</Text> : null}
     </View>
-    <View style={[styles.mapFrame, { backgroundColor: theme.dark ? theme.surface : "#F1F5F9" }]}>
-      {mapUrl && !mapFailed ? <WebView key={`${hotelId}:compare-map`} accessibilityLabel={`Google map showing the location of ${hotelName}`} source={{ uri: mapUrl }} scrollEnabled={false} onError={() => setMapFailed(true)} onHttpError={() => setMapFailed(true)} style={styles.map} /> : <View style={styles.mapFallback}>
+    <View style={[styles.mapFrame, { backgroundColor: theme.dark ? theme.surface : "#F1F5F9", borderColor: theme.border }]}>
+      {mapUrl && !mapFailed ? <Image accessibilityLabel={`Map showing the location of ${hotelName}`} source={{ uri: mapUrl }} resizeMode="cover" onError={() => setMapFailed(true)} style={styles.map} /> : <View style={styles.mapFallback}>
         <MapPin accessible={false} size={25} color={theme.icon} />
         <Text style={[styles.address, { color: theme.dark ? theme.textSecondary : "#475569" }]}>Map preview unavailable</Text>
       </View>}
     </View>
+    <Pressable accessibilityRole="button" accessibilityLabel={`View ${hotelName} in maps`} onPress={() => void openMap()} style={styles.mapAction}>
+      <Text style={[styles.mapActionText, { color: theme.dark ? "#8FB5FF" : colors.blue }]}>View in map</Text>
+      <ArrowRight accessible={false} size={16} color={theme.dark ? "#8FB5FF" : colors.blue} />
+    </Pressable>
   </View>;
 }
 
@@ -75,13 +92,15 @@ export function NativeRelatedHotelsSection({ city, hotels, theme, onViewHotel }:
 
 const styles = StyleSheet.create({
   heading: { fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold },
-  locationCard: { marginTop: 24, marginHorizontal: -16, borderWidth: 1, borderRadius: 16, overflow: "hidden", shadowColor: "#0F172A", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.05, shadowRadius: 15, elevation: 2 },
-  locationHeader: { paddingHorizontal: 16, paddingVertical: 16 },
+  locationCard: { marginTop: 24 },
+  locationHeader: { paddingBottom: 12 },
   locationHeading: { fontSize: 17, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold },
   address: { marginTop: 4, fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
-  mapFrame: { position: "relative", height: 280, width: "100%" },
+  mapFrame: { position: "relative", height: 216, width: "100%", borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, overflow: "hidden" },
   map: { flex: 1 },
   mapFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8 },
+  mapAction: { minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  mapActionText: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
   relatedSection: { marginTop: 10, gap: 14 },
   carouselViewport: { marginHorizontal: -16 },
   carousel: { gap: 14, paddingHorizontal: 16, paddingBottom: 6 },

@@ -33,10 +33,13 @@ import {
   type LiveExploreDestination,
 } from "./liveExploreModels";
 
+import { Map, List } from "lucide-react-native";
+import { appFonts } from "../../theme/typography";
 import { ExploreMap } from "./ExploreMap";
 
 const BLUE = "#0754F7";
-const SEARCH_RESULTS_BOTTOM_SPACING = 18;
+const VIEW_TOGGLE_BOTTOM = 20;
+const VIEW_TOGGLE_CLEARANCE = 12;
 const shadow = { shadowColor: "#18305B", shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 };
 
 export function DestinationThumbnail({ destination }: { destination: LiveExploreDestination }) {
@@ -69,6 +72,9 @@ function ExploreHeader({ query, setQuery, input, submit }: { query: string; setQ
 export function ExploreScreen() {
   const { theme } = useAppTheme();
   const catalogue = useExploreCatalogue();
+  const [toggleHeight, setToggleHeight] = useState(48);
+  const listTrailingSpace = toggleHeight + VIEW_TOGGLE_BOTTOM + VIEW_TOGGLE_CLEARANCE;
+  const [view, setView] = useState<"map" | "list">("map");
   const [query, setQuery] = useState("");
   const { savedIds, toggle } = useSavedDestinations();
   const input = useRef<TextInput>(null);
@@ -89,8 +95,17 @@ export function ExploreScreen() {
   useEffect(() => { if (query.trim()) void AccessibilityInfo.announceForAccessibility(`${results.length} ${results.length === 1 ? "result" : "results"}`); }, [query, results.length]);
   return <SafeAreaView style={[s.safe, { backgroundColor: theme.background }]} edges={["top"]}>
     <View style={s.stableHeader}><ExploreHeader query={query} setQuery={setQuery} input={input} submit={submit} /></View>
-    {query.trim() ? <FlatList alwaysBounceVertical={false} bounces={false} overScrollMode="never" data={results} keyExtractor={(item) => item.destination.id} keyboardShouldPersistTaps="handled" contentContainerStyle={[s.content, { paddingBottom: SEARCH_RESULTS_BOTTOM_SPACING }]} ListHeaderComponent={<><ExploreMap place={results.length === 1 ? `${results[0].destination.name}, ${results[0].destination.country}` : query.trim()} /><SectionHeading title={`${results.length} result${results.length === 1 ? "" : "s"}`} /></>} ListEmptyComponent={<Text style={[s.empty, { backgroundColor: theme.surface, color: theme.textSecondary }]}>No destinations match “{query.trim()}”. Try a city, destination code, airport, or country.</Text>} renderItem={({ item }) => <DestinationResultRow destination={item.destination} saved={savedIds.has(item.destination.id)} onSelect={() => select(item.destination)} onToggle={() => toggle(item.destination.id)} />} />
-      : <ExploreDiscoveryContent REGION_DISCOVERY={REGION_DISCOVERY} select={select} />}
+    <View style={s.viewContent}>
+    {view === "map" && <ExploreMap place={query.trim() ? (results.length === 1 ? `${results[0].destination.name}, ${results[0].destination.country}` : query.trim()) : ""} />}
+    <View style={[s.viewContent, view === "map" && s.hiddenList]}>
+    {query.trim() ? <FlatList alwaysBounceVertical={false} bounces={false} overScrollMode="never" data={results} keyExtractor={(item) => item.destination.id} keyboardShouldPersistTaps="handled" contentContainerStyle={[s.content, { paddingBottom: listTrailingSpace }]} ListHeaderComponent={<SectionHeading title={`${results.length} result${results.length === 1 ? "" : "s"}`} />} ListEmptyComponent={<Text style={[s.empty, { backgroundColor: theme.surface, color: theme.textSecondary }]}>No destinations match “{query.trim()}”. Try a city, destination code, airport, or country.</Text>} renderItem={({ item }) => <DestinationResultRow destination={item.destination} saved={savedIds.has(item.destination.id)} onSelect={() => select(item.destination)} onToggle={() => toggle(item.destination.id)} />} />
+      : <ExploreDiscoveryContent REGION_DISCOVERY={REGION_DISCOVERY} select={select} trailingSpace={listTrailingSpace} />}
+    </View>
+    <Pressable onLayout={event => setToggleHeight(event.nativeEvent.layout.height)} accessibilityRole="button" accessibilityLabel={view === "map" ? "List view" : "Map view"} onPress={() => { Keyboard.dismiss(); setView(value => value === "map" ? "list" : "map"); }} style={s.viewToggle}>
+      {view === "map" ? <List size={20} color="white" /> : <Map size={20} color="white" />}
+      <Text style={s.viewToggleText}>{view === "map" ? "List view" : "Map view"}</Text>
+    </Pressable>
+    </View>
   </SafeAreaView>;
 }
 
@@ -118,7 +133,7 @@ type RegionDiscoveryItem = {
   preview: LiveExploreDestination[];
 };
 
-function ExploreDiscoveryContent({ REGION_DISCOVERY, select }: { REGION_DISCOVERY: RegionDiscoveryItem[]; select: (destination: LiveExploreDestination) => void }) {
+function ExploreDiscoveryContent({ REGION_DISCOVERY, select, trailingSpace }: { REGION_DISCOVERY: RegionDiscoveryItem[]; select: (destination: LiveExploreDestination) => void; trailingSpace: number }) {
   const { theme } = useAppTheme();
   const { savedIds, toggle } = useSavedDestinations();
   const { width: windowWidth } = useWindowDimensions();
@@ -126,13 +141,16 @@ function ExploreDiscoveryContent({ REGION_DISCOVERY, select }: { REGION_DISCOVER
   const previewInset = windowWidth * REGION_PREVIEW_INSET_RATIO;
   const previewGap = windowWidth * REGION_PREVIEW_GAP_RATIO;
   const openRegion = (regionSlug: string) => router.push({ pathname: "/explore/region/[region]", params: { region: regionSlug } });
-  return <FlatList alwaysBounceVertical={false} bounces={false} overScrollMode="never" data={REGION_DISCOVERY} keyExtractor={({ regionId }) => regionId} contentContainerStyle={s.discoveryContent} ListHeaderComponent={<ExploreMap />} renderItem={({ item, index }) => <View style={[s.regionSection, index === REGION_DISCOVERY.length - 1 && s.finalRegionSection]}>
+  return <FlatList alwaysBounceVertical={false} bounces={false} overScrollMode="never" data={REGION_DISCOVERY} keyExtractor={({ regionId }) => regionId} contentContainerStyle={[s.discoveryContent, { paddingBottom: trailingSpace }]} renderItem={({ item, index }) => <View style={[s.regionSection, index === REGION_DISCOVERY.length - 1 && s.finalRegionSection]}>
     <View style={[s.regionHeader, { paddingHorizontal: previewInset }]}><View><Text accessibilityRole="header" style={[s.regionTitle, { color: theme.textPrimary }]}>{item.region}</Text><Text style={[s.regionCount, { color: theme.textSecondary }]}>{item.destinations.length} destinations</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`See all destinations in ${item.region}`} onPress={() => openRegion(item.regionSlug)} style={s.seeAll}><Text style={s.seeAllText}>See all</Text><FlowIcon name="chevron" color={BLUE} size={16} /></Pressable></View>
     <FlatList horizontal data={item.preview} keyExtractor={(destination) => destination.id} showsHorizontalScrollIndicator={false} contentContainerStyle={[s.previewRow, { paddingHorizontal: previewInset, gap: previewGap }]} snapToInterval={previewCardWidth + previewGap} decelerationRate="fast" renderItem={({ item: destination }) => <RegionPreviewCard destination={destination} saved={savedIds.has(destination.id)} onSelect={() => select(destination)} onToggle={() => toggle(destination.id)} width={previewCardWidth} height={previewCardHeight} imageHeight={previewImageHeight} />} />
   </View>} />;
 }
 
 export const exploreScreenStyles = StyleSheet.create({
+  viewContent: { flex: 1 }, hiddenList: { display: "none" },
+  viewToggle: { position: "absolute", bottom: VIEW_TOGGLE_BOTTOM, alignSelf: "center", minHeight: 48, paddingHorizontal: 20, borderRadius: 24, backgroundColor: BLUE, flexDirection: "row", alignItems: "center", gap: 9, ...shadow },
+  viewToggleText: { color: "white", fontFamily: appFonts.semibold, fontSize: 14 },
   safe: { flex: 1 }, stableHeader: { paddingHorizontal: 18, paddingBottom: 8 }, content: { paddingHorizontal: 18 }, discoveryContent: { paddingTop: 8 },
   header: { minHeight: 58, justifyContent: "center" }, title: { fontSize: 30, lineHeight: 38, fontWeight: "800" },
   search: { minHeight: 52, borderRadius: 26, borderWidth: 1, flexDirection: "row", alignItems: "center", paddingHorizontal: 15, gap: 8, ...shadow }, searchInput: { flex: 1, minHeight: 50, fontSize: 13 }, clear: { minHeight: 44, justifyContent: "center" }, clearHidden: { opacity: 0 }, clearText: { color: BLUE, fontWeight: "700" },
