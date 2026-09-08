@@ -14,7 +14,9 @@ export function useSearchPickerKeyboardPresentation(
     startOpening: () => boolean;
     onSheetLayout: (event: LayoutChangeEvent) => void;
   },
+  options: { keyboardSynchronizedOpening?: boolean } = {},
 ) {
+  const { keyboardSynchronizedOpening = false } = options;
   const {
     onSheetLayout: reportSheetLayout,
     openSettled,
@@ -26,6 +28,7 @@ export function useSearchPickerKeyboardPresentation(
   const settleArmedGenerationRef = useRef<number | undefined>(undefined);
   const focusedGenerationRef = useRef<number | undefined>(undefined);
   const modalPresentedRef = useRef(false);
+  const sheetLayoutValidRef = useRef(false);
 
   const previousOpening = previousOpeningRef.current;
   if (
@@ -44,12 +47,23 @@ export function useSearchPickerKeyboardPresentation(
       openingStartedGenerationRef.current === generation
     )
       return;
-    if (!modalPresentedRef.current || !startOpening()) return;
+    if (!modalPresentedRef.current || !sheetLayoutValidRef.current) return;
+    // Flight airport pickers request focus while still wholly offscreen. This
+    // starts the KeyboardAvoidingView adjustment before the entrance begins,
+    // rather than moving a settled sheet a second time when the keyboard opens.
+    if (
+      keyboardSynchronizedOpening &&
+      focusedGenerationRef.current !== generation
+    ) {
+      focusedGenerationRef.current = generation;
+      inputRef.current?.focus();
+    }
+    if (!startOpening()) return;
     openingStartedGenerationRef.current = generation;
     // A fresh opening is already unsettled. Arm it here because recording the
     // successful start in a ref does not itself cause another render.
     if (!openSettled) settleArmedGenerationRef.current = generation;
-  }, [generation, openSettled, startOpening, visible]);
+  }, [generation, inputRef, keyboardSynchronizedOpening, openSettled, startOpening, visible]);
 
   useEffect(() => {
     if (
@@ -66,13 +80,14 @@ export function useSearchPickerKeyboardPresentation(
       return;
     }
     if (
+      keyboardSynchronizedOpening ||
       settleArmedGenerationRef.current !== generation ||
       focusedGenerationRef.current === generation
     )
       return;
     focusedGenerationRef.current = generation;
     inputRef.current?.focus();
-  }, [generation, inputRef, openSettled, visible]);
+  }, [generation, inputRef, keyboardSynchronizedOpening, openSettled, visible]);
 
   const onModalShow = useCallback(() => {
     modalPresentedRef.current = true;
@@ -82,13 +97,19 @@ export function useSearchPickerKeyboardPresentation(
   const onSheetLayout = useCallback(
     (event: LayoutChangeEvent) => {
       reportSheetLayout(event);
+      const { height } = event.nativeEvent.layout;
+      if (Number.isFinite(height) && height > 0)
+        sheetLayoutValidRef.current = true;
       startCurrentOpening();
     },
     [reportSheetLayout, startCurrentOpening],
   );
 
   useEffect(() => {
-    if (!rendered) modalPresentedRef.current = false;
+    if (!rendered) {
+      modalPresentedRef.current = false;
+      sheetLayoutValidRef.current = false;
+    }
     if (!visible) {
       Keyboard.dismiss();
       return;

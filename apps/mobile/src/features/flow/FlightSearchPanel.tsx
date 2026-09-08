@@ -100,7 +100,7 @@ function AirportSheet({ kind, selected, homepageOnly, onChoose, onClose }: { kin
   const inputRef = useRef<TextInput>(null); const requestSequence = useRef(0); const filledQuery = useRef<string | undefined>(undefined);
   const [query,setQuery] = useState(""); const [draftAirport,setDraftAirport] = useState<Airport>(); const [matches,setMatches] = useState<FlightPlaceSuggestion[]>([]); const [loading,setLoading] = useState(false); const [error,setError] = useState(false); const [metroPrompt,setMetroPrompt] = useState<string>();
   useEffect(() => { if (!active) return; requestSequence.current += 1; filledQuery.current=undefined; setQuery(""); setDraftAirport(undefined); setMatches([]); setLoading(false); setError(false); setMetroPrompt(undefined); }, [active,kind]);
-  const keyboardPresentation = useSearchPickerKeyboardPresentation(active, motion.rendered, kind, inputRef, motion);
+  const keyboardPresentation = useSearchPickerKeyboardPresentation(active, motion.rendered, kind, inputRef, motion, { keyboardSynchronizedOpening: true });
   const eligible = hasMinimumLocationSearchLetters(query);
   useEffect(() => {
     if (!active) return;

@@ -233,7 +233,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const hotelResultsBodyOffset = useRef(0);
   const hotelResultsSummaryOffset = useRef(0);
   const hotelFilterHeaderHeight = useRef(0);
-  const flightResultsListRef = useRef<SectionList<FlightResult>>(null);
+  const flightResultsListRef = useRef<SectionList<FlightResult | null>>(null);
   const windowDimensions = useWindowDimensions();
   const previousHotelSearchKey = useRef<string | undefined>(undefined);
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
@@ -977,8 +977,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         <Animated.SectionList
           ref={flightResultsListRef}
           style={[s0.resultsScroll, { backgroundColor: flightCanvasColor }]}
-          sections={[{ data: !flightState ? sorted as FlightResult[] : [] }]}
-          keyExtractor={(item) => item.id}
+          sections={[{ data: !flightState ? [null, ...(sorted as FlightResult[])] : [] }]}
+          keyExtractor={(item, index) => item ? item.id : `flight-results-intro-${index}`}
           ListHeaderComponent={flightDateStrip}
           renderSectionHeader={() => (
             <View
@@ -988,21 +988,23 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             </View>
           )}
           stickySectionHeadersEnabled
-          renderItem={({ item, index }) => (
-            <>
-              {index === 0 ? <><View style={s0.flightResultsIntro}>{status === "ready" && plan.plan ? <View style={s0.flightAlertOuter}><PriceAlert product="flight" plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} compact /></View> : null}</View><FlightResultsSummaryRow count={sorted.length} /></> : null}
-              <View style={s0.flightCardItem}>
-                <FlightCard
-                  result={item}
-                  displayPrice={flightDisplayPrices.get(item.id)}
-                  displayCurrencyContext={currencyState?.resolution}
-                  highlight={flightHighlights.get(item.id)}
-                  params={params}
-                  locale={locale}
-                  logInitialMount={index === 0}
-                />
-              </View>
-            </>
+          renderItem={({ item, index }) => item === null ? (
+            <View style={[s0.flightResultsIntro, { backgroundColor: flightCanvasColor }]}>
+              {status === "ready" && plan.plan ? <View style={s0.flightAlertOuter}><PriceAlert product="flight" plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} compact /></View> : null}
+              <FlightResultsSummaryRow count={sorted.length} />
+            </View>
+          ) : (
+            <View style={s0.flightCardItem}>
+              <FlightCard
+                result={item}
+                displayPrice={flightDisplayPrices.get(item.id)}
+                displayCurrencyContext={currencyState?.resolution}
+                highlight={flightHighlights.get(item.id)}
+                params={params}
+                locale={locale}
+                logInitialMount={index === 1}
+              />
+            </View>
           )}
           ListEmptyComponent={null}
           ListFooterComponent={terminalFlightState ? (
@@ -1791,7 +1793,7 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   };
   if (flight) {
     const toggleDisabled = pending || loadingAlert || unavailable;
-    return <View accessibilityLabel="Flight price alert" style={[compact ? s0.compactPriceAlert : s0.flightAlert,{ backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}>{compact ? <Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/> : null}<View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[compact ? s0.flightAlertCompactTitle : s0.flightAlertTitle, { color: theme.textPrimary }]}>Track this flight price</Text></View><View style={s0.compactPriceAlertSwitchSlot}>{toggleDisabled && (pending || loadingAlert) ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent}/> : null}<Switch style={Platform.OS === "ios" ? s0.compactPriceAlertSwitchIos : undefined} hitSlop={6} accessibilityRole="switch" accessibilityLabel="Track this flight price" accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending || loadingAlert }} disabled={toggleDisabled} value={isTracking} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"} ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}/></View><Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel="Create flight price alert"><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track prices</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Target price ({currency})</Text><TextInput autoFocus accessibilityLabel={`Target price in ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} placeholderTextColor={theme.textSecondary} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={[s0.alertError, theme.dark && { color: "#FF9C9C" }]}>{targetError}</Text> : null}<Button label={pending ? "Creating…" : "Create alert"} onPress={() => void createAlert()} /><Button label="Cancel" outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal></View>;
+    return <View accessibilityLabel="Flight price alert" style={[compact ? s0.compactPriceAlert : s0.flightAlert,{ backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}>{compact ? <Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/> : null}<View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[compact ? s0.flightAlertCompactTitle : s0.flightAlertTitle, { color: theme.textPrimary }]}>Track this flight price</Text></View><View style={s0.compactPriceAlertSwitchSlot}>{pending ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent}/> : null}<Switch style={Platform.OS === "ios" ? s0.compactPriceAlertSwitchIos : undefined} hitSlop={6} accessibilityRole="switch" accessibilityLabel="Track this flight price" accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending || loadingAlert }} disabled={toggleDisabled} value={isTracking} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"} ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}/></View><Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel="Create flight price alert"><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track prices</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Target price ({currency})</Text><TextInput autoFocus accessibilityLabel={`Target price in ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} placeholderTextColor={theme.textSecondary} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={[s0.alertError, theme.dark && { color: "#FF9C9C" }]}>{targetError}</Text> : null}<Button label={pending ? "Creating…" : "Create alert"} onPress={() => void createAlert()} /><Button label="Cancel" outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal></View>;
   }
   if (product !== "hotel" || !plan) return null;
   if (!activePresentation.enabled) return null;
