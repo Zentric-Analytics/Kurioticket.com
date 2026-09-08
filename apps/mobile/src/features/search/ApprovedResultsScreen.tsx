@@ -961,10 +961,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               {!hotelResultsApplying ? <>{product === "hotel" && sorted.length ? <HotelResultsPagination page={clampedHotelPage} pages={hotelPageCount} disabled={hotelPageChanging} onPage={changeHotelPage}/> : null}</> : null}
     </>
   );
-  // Flights keep their results chrome mounted while the canonical request is
-  // running so stateful controls (notably PriceAlert) do not pop in or remount.
-  // Hotels retain the branded, full-screen loading presentation.
-  if (status === "loading" && product !== "flight") return <NativeBrandedSearchLoading product={product} />;
+  if (status === "loading") return <NativeBrandedSearchLoading product={product} />;
   return (
     <SafeAreaView style={[s0.safe, { backgroundColor: flightResults ? flightCanvasColor : theme.background }]} edges={["top"]}>
       {flightResults ? (
@@ -980,7 +977,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         <Animated.SectionList
           ref={flightResultsListRef}
           style={[s0.resultsScroll, { backgroundColor: flightCanvasColor }]}
-          sections={[{ data: flightState === "loading" || !flightState ? [null, ...(sorted as FlightResult[])] : [] }]}
+          sections={[{ data: !flightState ? [null, ...(sorted as FlightResult[])] : [] }]}
           keyExtractor={(item, index) => item ? item.id : `flight-results-intro-${index}`}
           ListHeaderComponent={flightDateStrip}
           renderSectionHeader={() => (
@@ -993,9 +990,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           stickySectionHeadersEnabled
           renderItem={({ item, index }) => item === null ? (
             <View style={[s0.flightResultsIntro, { backgroundColor: flightCanvasColor }]}>
-              {plan.plan ? <View style={s0.flightAlertOuter}><PriceAlert product="flight" plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} compact /></View> : null}
+              {status === "ready" && plan.plan ? <View style={s0.flightAlertOuter}><PriceAlert product="flight" plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} compact /></View> : null}
               <FlightResultsSummaryRow count={sorted.length} />
-              {status === "loading" ? <View accessibilityRole="progressbar" accessibilityState={{ busy: true }} accessibilityLabel="Searching for flights" style={s0.flightInlineLoading}><ActivityIndicator size="small" color={theme.priceAlertAccent}/><Text style={{ color: theme.textSecondary }}>Searching for flights…</Text></View> : null}
             </View>
           ) : (
             <View style={s0.flightCardItem}>
@@ -1906,7 +1902,6 @@ const s0 = StyleSheet.create({
   flightResultsBody: { paddingHorizontal: 14, gap: 8 },
   flightCardItem: { paddingHorizontal: 14, paddingBottom: 8 },
   flightResultsIntro: { paddingTop: 16, paddingBottom: 12 },
-  flightInlineLoading: { minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
   notice: { backgroundColor: "#F2F6FF", color: ui.navy, padding: 10, borderRadius: 8 },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
   hotelResultsSummaryRow: { gap: 8 },
