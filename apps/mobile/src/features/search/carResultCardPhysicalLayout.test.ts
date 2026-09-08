@@ -24,11 +24,13 @@ test("a failed Car image reveals the truthful unavailable state", () => {
 test("Car identity, utilities, commerce, and conversion content follow the approved hierarchy", () => {
   const modelName = source.indexOf("{result.modelName}</Text>");
   const identityCategory = source.indexOf("{result.categoryLabel}</Text>");
-  const details = source.indexOf("style={c.detailCommerceRow}");
+  const location = source.indexOf("style={c.location}");
+  const specs = source.indexOf("style={c.specs}");
+  const priceColumn = source.indexOf("style={c.priceColumn}");
   const cancellation = source.indexOf("style={[c.conversion");
 
   assert.ok(modelName >= 0 && modelName < identityCategory);
-  assert.ok(identityCategory < details && details < cancellation);
+  assert.ok(identityCategory < location && location < specs && specs < priceColumn && priceColumn < cancellation);
   assert.match(source, /style=\{c\.identityMeta\}[\s\S]*result\.orSimilar \? <>[\s\S]*>or similar<\/Text><Text[^>]*>•<\/Text>[\s\S]*result\.categoryLabel/);
   assert.match(source, /rank === 0 \? <View style=\{c\.badge\}>[\s\S]*Best value/);
   assert.match(source, /utilityColumn[\s\S]*badge[\s\S]*actions/);
@@ -52,11 +54,12 @@ test("saved and share actions remain truthful, separate, themed, and visually co
   assert.match(styles, /action:\{width:28,height:44/);
   assert.match(styles, /saveAction:\{alignItems:"flex-end",paddingRight:2\}/);
   assert.match(styles, /shareAction:\{alignItems:"flex-start",paddingLeft:2\}/);
-  assert.doesNotMatch(styles.slice(styles.indexOf("actions:"), styles.indexOf("detailCommerceRow:")), /position:"absolute"|marginLeft:-|left:-|right:-/);
+  assert.doesNotMatch(styles.slice(styles.indexOf("actions:"), styles.indexOf("detailColumn:")), /position:"absolute"|marginLeft:-|left:-|right:-/);
 });
 
 test("right commerce column has truthful pricing followed by the Flight-style deal affordance", () => {
-  const priceColumn = source.slice(source.indexOf("<View style={c.priceColumn}>"), source.indexOf("</View>\n        </View>", source.indexOf("<View style={c.priceColumn}>")));
+  const priceColumnStart = source.indexOf("<View style={c.priceColumn}>");
+  const priceColumn = source.slice(priceColumnStart, source.indexOf("</View>\n      </View>", priceColumnStart));
   const ordered = [
     "offer.totalPrice",
     "offer.taxesAndFeesIncluded",
@@ -67,6 +70,8 @@ test("right commerce column has truthful pricing followed by the Flight-style de
   assert.ok(ordered.every((index) => index >= 0));
   assert.deepEqual(ordered, [...ordered].sort((a, b) => a - b));
   assert.match(priceColumn, /offer\.taxesAndFeesIncluded \? "includes taxes & fees" : "taxes & fees shown where known"/);
+  assert.match(priceColumn, /<Text numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.9\} style=\{\[c\.taxDisclosure/);
+  assert.doesNotMatch(priceColumn, /<Text numberOfLines=\{2\}[^>]*c\.taxDisclosure/);
   assert.match(priceColumn, /money\(offer\.currency, offer\.pricePerDay\)\} per day/);
   assert.doesNotMatch(source, /TOTAL\s*·|\/day/);
   assert.match(priceColumn, /<Pressable accessibilityRole="button" accessibilityLabel=\{`View deal for \$\{result\.modelName\}`\} onPress=\{onViewDeal\}/);
@@ -77,7 +82,19 @@ test("right commerce column has truthful pricing followed by the Flight-style de
   assert.match(styles, /viewDeal:\{[^}]*flexDirection:"row"[^}]*justifyContent:"flex-end"/);
   assert.match(styles, /viewDealText:\{fontSize:13,lineHeight:15,fontWeight:"600"\}/);
   assert.doesNotMatch(styles, /viewDeal:\{[^}]*(?:backgroundColor|borderWidth|borderRadius)/);
+  assert.match(styles, /priceColumn:\{width:"100%",minWidth:0,alignItems:"flex-end"/);
+  assert.doesNotMatch(styles, /priceColumn:\{[^}]*flexBasis:"44%"/);
   assert.doesNotMatch(styles, /priceColumn:\{[^}]*position:"absolute"/);
+});
+
+test("Free cancellation remains truthfully gated without a divider or empty footer", () => {
+  const conversionStyle = styles.slice(styles.indexOf("conversion:"), styles.indexOf("},", styles.indexOf("conversion:")) + 2);
+
+  assert.match(source, /offer\?\.freeCancellation \? <View style=\{\[c\.conversion,\{backgroundColor:theme\.surface\}\]\}/);
+  assert.match(source, />Free cancellation<\/Text>/);
+  assert.doesNotMatch(source, /c\.conversion,\{[^}]*borderTopColor/);
+  assert.doesNotMatch(conversionStyle, /borderTopWidth|borderTopColor/);
+  assert.doesNotMatch(source, /divider|separatorLine/i);
 });
 
 test("Car details use a semantic location pin and an ordered vertical spec list", () => {
