@@ -3,7 +3,8 @@ const headers = {
   "Cache-Control": "no-store",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "X-Content-Type-Options": "nosniff",
-  "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; frame-src https://www.google.com; base-uri 'none'; form-action 'none'",
+  "X-Frame-Options": "DENY",
+  "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; frame-src https://www.google.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
 };
 const escapeAttribute = (value: string) => value.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 

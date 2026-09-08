@@ -3,6 +3,7 @@ import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "
 import { WebView } from "react-native-webview";
 import { getApiBaseUrl } from "../../config/apiUrl";
 import { useAppTheme } from "../../theme/AppTheme";
+import { encodeExploreMapQuery } from "./exploreMapQuery";
 import { appFonts } from "../../theme/typography";
 
 export function ExploreMap({ place = "" }: { place?: string }) {
@@ -15,7 +16,7 @@ export function ExploreMap({ place = "" }: { place?: string }) {
   useEffect(() => { const timer = setTimeout(() => setSettledPlace(place), 450); return () => clearTimeout(timer); }, [place]);
   const api = getApiBaseUrl(Platform.OS, __DEV__);
   const base = api.ok ? api.baseUrl : null;
-  const uri = base ? `${base.replace(/\/$/, "")}/api/mobile/v1/explore/map-embed?q=${encodeURIComponent(settledPlace.slice(0, 160))}` : null;
+  const uri = base ? `${base.replace(/\/$/, "")}/api/mobile/v1/explore/map-embed?q=${encodeExploreMapQuery(settledPlace)}` : null;
   useEffect(() => {
     setFailed(false);
     setLoading(true);

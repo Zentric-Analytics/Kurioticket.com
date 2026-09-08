@@ -7,6 +7,8 @@ test("Explore map supports world view and encoded destination queries", async ()
  try {
   const world = GET(new Request("https://example.test/api/mobile/v1/explore/map-embed"));
   assert.equal(world.status, 200);
+  assert.equal(world.headers.get("x-frame-options"), "DENY");
+  assert.match(world.headers.get("content-security-policy")!, /frame-ancestors 'none'/);
   assert.match(await world.text(), /embed\/v1\/view/);
   const response = GET(new Request("https://example.test/api/mobile/v1/explore/map-embed?q=" + encodeURIComponent('Paris, France <script>')));
   const html = await response.text();
