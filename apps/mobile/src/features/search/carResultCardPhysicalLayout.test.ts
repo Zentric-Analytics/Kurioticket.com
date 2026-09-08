@@ -25,17 +25,59 @@ test("Car identity, utilities, commerce, and conversion content follow the appro
   const modelName = source.indexOf("{result.modelName}</Text>");
   const identityCategory = source.indexOf("{result.categoryLabel}</Text>");
   const details = source.indexOf("style={c.detailCommerceRow}");
-  const conversion = source.indexOf("style={[c.conversion");
+  const cancellation = source.indexOf("style={[c.conversion");
 
   assert.ok(modelName >= 0 && modelName < identityCategory);
-  assert.ok(identityCategory < details && details < conversion);
+  assert.ok(identityCategory < details && details < cancellation);
   assert.match(source, /style=\{c\.identityMeta\}[\s\S]*result\.orSimilar \? <>[\s\S]*>or similar<\/Text><Text[^>]*>•<\/Text>[\s\S]*result\.categoryLabel/);
   assert.match(source, /rank === 0 \? <View style=\{c\.badge\}>[\s\S]*Best value/);
   assert.match(source, /utilityColumn[\s\S]*badge[\s\S]*actions/);
   assert.match(source, /accessibilityLabel=\{savedState\.saved \? `Remove \$\{result\.modelName\} from saved` : `Save \$\{result\.modelName\}`\}/);
   assert.match(source, /accessibilityLabel=\{`Share \$\{result\.modelName\}`\}/);
-  assert.match(source, /detailCommerceRow[\s\S]*priceColumn[\s\S]*offer\.totalPrice[\s\S]*offer\.pricePerDay/);
-  assert.match(source, /conversion[\s\S]*offer\?\.freeCancellation[\s\S]*Free cancellation[\s\S]*View car/);
+  assert.match(source, /offer\?\.freeCancellation \? <View style=\{\[c\.conversion[\s\S]*Free cancellation/);
+  assert.doesNotMatch(source, /<Text[^>]*>View car<\/Text>/);
+  assert.doesNotMatch(styles, /viewButton|benefitSlot/);
+});
+
+test("saved and share actions remain truthful, separate, themed, and visually compact", () => {
+  assert.match(source, /useSavedCar\(result, searchParams\)/);
+  assert.match(source, /accessibilityState=\{\{ selected: savedState\.saved \}\}/);
+  assert.match(source, /onPress=\{savedState\.toggle\}/);
+  assert.match(source, /accessibilityLabel=\{savedState\.saved \? `Remove \$\{result\.modelName\} from saved` : `Save \$\{result\.modelName\}`\}/);
+  assert.match(source, /name="heart"[^>]*fill="transparent"[^>]*color=\{savedState\.saved \? "#E92D55" : theme\.icon\}/);
+  assert.doesNotMatch(source, /fill=\{savedState\.saved/);
+  assert.match(source, /accessibilityLabel=\{`Share \$\{result\.modelName\}`\} onPress=\{share\}/);
+  assert.match(source, /<Share2 size=\{18\} color=\{theme\.icon\}/);
+  assert.match(source, /Share\.share\(\{ message: result\.modelName, title: result\.modelName \}\)/);
+  assert.match(styles, /action:\{width:28,height:44/);
+  assert.match(styles, /saveAction:\{alignItems:"flex-end",paddingRight:2\}/);
+  assert.match(styles, /shareAction:\{alignItems:"flex-start",paddingLeft:2\}/);
+  assert.doesNotMatch(styles.slice(styles.indexOf("actions:"), styles.indexOf("detailCommerceRow:")), /position:"absolute"|marginLeft:-|left:-|right:-/);
+});
+
+test("right commerce column has truthful pricing followed by the Flight-style deal affordance", () => {
+  const priceColumn = source.slice(source.indexOf("<View style={c.priceColumn}>"), source.indexOf("</View>\n        </View>", source.indexOf("<View style={c.priceColumn}>")));
+  const ordered = [
+    "offer.totalPrice",
+    "offer.taxesAndFeesIncluded",
+    "offer.pricePerDay",
+    ">View deal</Text>",
+    "<ChevronRight",
+  ].map((value) => priceColumn.indexOf(value));
+  assert.ok(ordered.every((index) => index >= 0));
+  assert.deepEqual(ordered, [...ordered].sort((a, b) => a - b));
+  assert.match(priceColumn, /offer\.taxesAndFeesIncluded \? "includes taxes & fees" : "taxes & fees shown where known"/);
+  assert.match(priceColumn, /money\(offer\.currency, offer\.pricePerDay\)\} per day/);
+  assert.doesNotMatch(source, /TOTAL\s*·|\/day/);
+  assert.match(priceColumn, /<Pressable accessibilityRole="button" accessibilityLabel=\{`View deal for \$\{result\.modelName\}`\} onPress=\{onViewDeal\}/);
+  assert.match(priceColumn, /<ChevronRight accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\}/);
+  assert.match(styles, /total:\{[^}]*fontSize:21,fontWeight:"700",lineHeight:24/);
+  assert.match(styles, /taxDisclosure:\{[^}]*fontSize:10,fontWeight:"500",lineHeight:13,textAlign:"right"/);
+  assert.match(styles, /perDay:\{[^}]*fontSize:11,fontWeight:"700",lineHeight:14,textAlign:"right"/);
+  assert.match(styles, /viewDeal:\{[^}]*flexDirection:"row"[^}]*justifyContent:"flex-end"/);
+  assert.match(styles, /viewDealText:\{fontSize:13,lineHeight:15,fontWeight:"600"\}/);
+  assert.doesNotMatch(styles, /viewDeal:\{[^}]*(?:backgroundColor|borderWidth|borderRadius)/);
+  assert.doesNotMatch(styles, /priceColumn:\{[^}]*position:"absolute"/);
 });
 
 test("Car details use a semantic location pin and an ordered vertical spec list", () => {
@@ -59,8 +101,7 @@ test("Car card retains authoritative pricing, saved state, and sharing behavior"
   assert.doesNotMatch(source, /result\.offers\[0\]/);
   assert.match(source, /money\(offer\.currency, offer\.totalPrice\)/);
   assert.match(source, /money\(offer\.currency, offer\.pricePerDay\)/);
+  assert.match(source, /offer\.taxesAndFeesIncluded/);
   assert.match(source, /Live price unavailable/);
-  assert.match(source, /useSavedCar\(result, searchParams\)/);
-  assert.match(source, /accessibilityState=\{\{ selected: savedState\.saved \}\}/);
-  assert.match(source, /Share\.share\(\{ message: result\.modelName, title: result\.modelName \}\)/);
+  assert.match(source, /Live price unavailable[\s\S]*View deal/);
 });
