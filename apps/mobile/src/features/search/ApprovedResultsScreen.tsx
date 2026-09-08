@@ -233,7 +233,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const hotelResultsBodyOffset = useRef(0);
   const hotelResultsSummaryOffset = useRef(0);
   const hotelFilterHeaderHeight = useRef(0);
-  const flightResultsListRef = useRef<SectionList<FlightResult>>(null);
+  const flightResultsListRef = useRef<SectionList<FlightResult | null>>(null);
   const windowDimensions = useWindowDimensions();
   const previousHotelSearchKey = useRef<string | undefined>(undefined);
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
@@ -977,37 +977,34 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         <Animated.SectionList
           ref={flightResultsListRef}
           style={[s0.resultsScroll, { backgroundColor: flightCanvasColor }]}
-          sections={[{ data: !flightState ? sorted as FlightResult[] : [] }]}
-          keyExtractor={(item) => item.id}
+          sections={[{ data: !flightState ? [null, ...(sorted as FlightResult[])] : [] }]}
+          keyExtractor={(item, index) => item ? item.id : `flight-results-intro-${index}`}
           ListHeaderComponent={flightDateStrip}
           renderSectionHeader={() => (
-            <>
-              <View
-                style={[s0.flightFilterSectionHeader, { backgroundColor: flightCanvasColor }]}
-              >
-                {filterRail}
-              </View>
-              <View style={[s0.flightResultsIntro, { backgroundColor: flightCanvasColor }]}>
-                {status === "ready" && plan.plan ? <View style={s0.flightAlertOuter}><PriceAlert product="flight" plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} compact /></View> : null}
-                <FlightResultsSummaryRow count={sorted.length} />
-              </View>
-            </>
+            <View
+              style={[s0.flightFilterSectionHeader, { backgroundColor: flightCanvasColor }]}
+            >
+              {filterRail}
+            </View>
           )}
           stickySectionHeadersEnabled
-          renderItem={({ item, index }) => (
-            <>
-              <View style={s0.flightCardItem}>
-                <FlightCard
-                  result={item}
-                  displayPrice={flightDisplayPrices.get(item.id)}
-                  displayCurrencyContext={currencyState?.resolution}
-                  highlight={flightHighlights.get(item.id)}
-                  params={params}
-                  locale={locale}
-                  logInitialMount={index === 0}
-                />
-              </View>
-            </>
+          renderItem={({ item, index }) => item === null ? (
+            <View style={[s0.flightResultsIntro, { backgroundColor: flightCanvasColor }]}>
+              {status === "ready" && plan.plan ? <View style={s0.flightAlertOuter}><PriceAlert product="flight" plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} compact /></View> : null}
+              <FlightResultsSummaryRow count={sorted.length} />
+            </View>
+          ) : (
+            <View style={s0.flightCardItem}>
+              <FlightCard
+                result={item}
+                displayPrice={flightDisplayPrices.get(item.id)}
+                displayCurrencyContext={currencyState?.resolution}
+                highlight={flightHighlights.get(item.id)}
+                params={params}
+                locale={locale}
+                logInitialMount={index === 1}
+              />
+            </View>
           )}
           ListEmptyComponent={null}
           ListFooterComponent={terminalFlightState ? (
@@ -1092,7 +1089,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       ) : (
         <>
           <HotelFilterSheet visible={hotelFilterOpen} section={hotelFilterSection} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} totalCount={results.length} matchingCount={sorted.length} onChange={changeHotelFilters} onClose={completeHotelFilterSession}/>
-          {hotelQuickFilter ? <HotelResultsQuickFilterSheet kind={hotelQuickFilter} sort={hotelSort} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} onSortChange={(next) => { setHotelSort(next); setHotelPage(1); }} onChange={changeHotelFilters} onClose={closeHotelQuickFilter} /> : null}
+          {hotelQuickFilter ? <HotelResultsQuickFilterSheet kind={hotelQuickFilter} sort={hotelSort} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} onSortChange={(next) => { if(next===hotelSort)return;setHotelSort(next);startHotelResultsTransition(); }} onChange={changeHotelFilters} onClose={closeHotelQuickFilter} /> : null}
         </>
       )}
       {!flightResults ? (
