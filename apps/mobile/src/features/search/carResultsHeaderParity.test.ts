@@ -29,9 +29,12 @@ test("Cars summary remains derived from canonical search data", () => {
   assert.match(cars, /canonicalPickupLocation=String\(payload\.pickupLocation\|\|""\)/);
   assert.match(cars, /carSummaryDestination=getLocationFieldDisplay\(canonicalPickupLocation\)\.primary/);
   assert.match(cars, /payload\.pickupDate/);
+  assert.match(cars, /payload\.pickupTime/);
   assert.match(cars, /payload\.dropoffDate/);
-  assert.match(cars, /payload\.driverAge/);
-  assert.match(cars, /driverAge === "18-70" \? "Any age"/);
+  assert.match(cars, /payload\.dropoffTime/);
+  assert.match(cars, /carSummarySecondary=formatCarResultsScheduleSummary/);
+  const summaryBuilder = cars.slice(cars.indexOf("const carSummarySecondary"), cars.indexOf("const edit="));
+  assert.doesNotMatch(summaryBuilder, /driverAge|Any age|years old/);
   assert.doesNotMatch(cars, /Paris, France|Sep 6|20 years old/);
   assert.match(cars, /<CarEditSearchModal visible=\{carEditSearchOpen\} params=\{params\}/);
 });

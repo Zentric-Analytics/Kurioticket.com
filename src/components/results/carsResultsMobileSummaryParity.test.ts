@@ -21,8 +21,8 @@ const mobileSummarySection = source.slice(
 
 test("normal Cars mobile summary preserves Cars content and its actual Edit Search launcher", () => {
   assert.match(summary, /locationPairSummary/);
-  assert.match(summary, /rentalDateSummary/);
-  assert.match(summary, /driverAgeSummary/);
+  assert.match(summary, /rentalScheduleSummary/);
+  assert.doesNotMatch(summary, /rentalDateSummary|driverAgeSummary/);
   assert.match(
     summary,
     /openMobileSearchDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)/,

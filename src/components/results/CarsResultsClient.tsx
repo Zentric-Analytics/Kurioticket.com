@@ -64,6 +64,7 @@ import type {
   NormalizedCarResult,
 } from "@/lib/cars/types";
 import { carFilterGroups, carQuickFilterGroupIds, type CarFilterGroup } from "@/lib/cars/carFilterPresentation";
+import { formatCarResultsScheduleSummary } from "@/lib/cars/carResultsSummary";
 
 type CarsPaginationTransitionPhase = "idle" | "covering" | "settling";
 import { shouldShowDesktopStickySearch } from "@/lib/search/desktopStickySearch";
@@ -597,6 +598,7 @@ export function CarsResultsClient({
     : t("carsResults.selectRentalDates");
   const driverAgeSummary = getDriverAgeOptionLabel(driverAge, t);
   const timeSummary = `${formatTimeLabel(pickupTime, intlLocale)} → ${formatTimeLabel(dropoffTime, intlLocale)}`;
+  const rentalScheduleSummary = formatCarResultsScheduleSummary({ pickupDate, pickupTime, dropoffDate, dropoffTime, locale: intlLocale });
   const locationPairSummary = returnToDifferentLocation
     ? `${pickupSummary} → ${returnSummary}`
     : pickupSummary;
@@ -1039,7 +1041,7 @@ export function CarsResultsClient({
             {locationPairSummary}
           </span>
           <span className="mt-1.5 block truncate text-[12.5px] font-medium leading-4 text-[#536B92]">
-            {rentalDateSummary} · {driverAgeSummary}
+            {rentalScheduleSummary}
           </span>
         </span>
         <span
