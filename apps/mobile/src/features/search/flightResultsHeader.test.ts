@@ -183,7 +183,7 @@ test("Hotel Results receives presentation-only summary copy while Edit preserves
 
 test("Flight Details and result content remain present without a results-screen BottomNav", () => {
   assert.match(details, /accessibilityLabel="Back to results"/);
-  assert.match(details, />Full itinerary</);
+  assert.match(details, />Flight itinerary</);
   assert.match(results, /<DateStrip/);
   assert.match(results, /<HotelCard/);
   assert.doesNotMatch(results.slice(results.indexOf("export function ApprovedResultsScreen"), results.indexOf("export function BottomNav")), /<BottomNav(?:\s|\/|>)/);

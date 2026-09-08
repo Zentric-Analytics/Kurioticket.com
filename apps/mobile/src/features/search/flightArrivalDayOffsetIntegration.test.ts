@@ -13,7 +13,7 @@ test("results never calculate or present arrival calendar crossing information",
 });
 
 test("details present authoritative local date and times without invented offsets", () => {
-  assert.match(detailSource, /new Date\(leg\.departureTime\)\.toLocaleDateString/);
+  assert.match(detailSource, /Intl\.DateTimeFormat\([^)]*,\{month:"short",day:"numeric",year:"numeric"\}\)\.format\(new Date\(leg\.departureTime\)\)/);
   assert.match(detailSource, /clock\(leg\.arrivalTime\)/);
   assert.doesNotMatch(detailSource, /`\+\$\{/);
 });
