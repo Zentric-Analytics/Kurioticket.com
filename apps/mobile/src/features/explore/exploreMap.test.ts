@@ -39,3 +39,10 @@ test("map queries respect the endpoint limit without breaking Unicode", () => {
  assert.equal(decodeURIComponent(encodeExploreMapQuery("Paris, France")), "Paris, France");
  assert.equal(decodeURIComponent(encodeExploreMapQuery("a\uD800b\uDC00")), "a\uFFFDb\uFFFD");
 });
+
+ test("both lists reserve the measured floating toggle height and clearance", () => {
+ assert.match(screen, /onLayout=\{event => setToggleHeight\(event.nativeEvent.layout.height\)\}/);
+ assert.match(screen, /paddingBottom: listTrailingSpace/);
+ assert.match(screen, /trailingSpace=\{listTrailingSpace\}/);
+ assert.match(screen, /paddingBottom: trailingSpace/);
+ });
