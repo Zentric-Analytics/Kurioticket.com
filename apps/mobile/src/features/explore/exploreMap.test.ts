@@ -18,8 +18,13 @@ test("map has bounded loading, retry and debounced search", () => {
  assert.match(map, /Try again/);
  assert.match(map, /encodeExploreMapQuery\(settledPlace\)/);
 });
-test("both discovery and search retain their destination lists below a map", () => {
- assert.match(screen, /ListHeaderComponent=\{<ExploreMap \/>\}/);
+test("map and list views retain the existing destination components", () => {
+ assert.match(screen, /List view/);
+ assert.match(screen, /Map view/);
+ assert.match(screen, /setView\(value => value === "map" \? "list" : "map"\)/);
+ assert.match(screen, /hiddenList: \{ display: "none" \}/);
+ assert.match(map, /container: \{ flex: 1, overflow: "hidden" \}/);
+ assert.doesNotMatch(screen, /ListHeaderComponent=\{<ExploreMap/);
  assert.match(screen, /<ExploreMap place=/);
  assert.match(screen, /<DestinationResultRow/);
  assert.match(screen, /<RegionPreviewCard/);
