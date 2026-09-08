@@ -13,7 +13,7 @@ test("mobile Home keeps every remaining section in the required order", () => {
     "<HomeHero />",
     "<View style={[styles.products, { backgroundColor: ft.colors.card }, ft.styles.shadow]}>",
     "{searchPanel[activeProduct]}",
-    "<PopularDestinationStays />",
+    '<PopularDestinationStays compactTopSpacing={activeProduct === "flights"} />',
     "<HomepageAdventureDiscovery />",
     "<HomepageDealPromos />",
     "<RegionalDestinationRoutes />",
@@ -31,6 +31,6 @@ test("mobile Home keeps every remaining section in the required order", () => {
 test("Popular destination stays is directly between the active search panel and adventure discovery", () => {
   assert.match(
     home,
-    /\{searchPanel\[activeProduct\]\}\s*<PopularDestinationStays \/>\s*<HomepageAdventureDiscovery \/>\s*<HomepageDealPromos \/>\s*<RegionalDestinationRoutes \/>/,
+    /\{searchPanel\[activeProduct\]\}\s*<PopularDestinationStays compactTopSpacing=\{activeProduct === "flights"\} \/>\s*<HomepageAdventureDiscovery \/>\s*<HomepageDealPromos \/>\s*<RegionalDestinationRoutes \/>/,
   );
 });
