@@ -8,12 +8,14 @@ const dates = read("src/features/flow/DateRangeSheet.tsx");
 const shell = read("src/features/flow/HotelResultsEditPickerShell.tsx");
 const outer = read("src/features/search/HotelEditSearchModal.tsx");
 
-test("Hotel Results Edit keeps its outer sheet and routes every field to the shared full-screen presentation", () => {
+test("Hotel Results Edit keeps its outer sheet and routes every field to normal popup sheets", () => {
   assert.match(outer, /<Modal transparent animationType="none"/);
   assert.match(outer, /<HotelSearchPanel[^>]+editAppearance/);
-  assert.match(panel, /<DateRangeSheet[^>]+presentation=\{editAppearance \? "resultsEditFullScreen" : "sheet"\}/);
-  assert.match(panel, /<HotelDestinationSheet[^>]+pickerPresentation=\{editAppearance \? "resultsEditFullScreen" : "sheet"\}/);
-  assert.match(panel, /<HotelGuestsRoomsSheet[^>]+presentation=\{editAppearance \? "resultsEditFullScreen" : "sheet"\}/);
+  assert.match(panel, /<DateRangeSheet[^>]+presentation="sheet"/);
+  assert.match(panel, /<HotelDestinationSheet[^>]+pickerPresentation="sheet"/);
+  assert.match(panel, /<HotelGuestsRoomsSheet[^>]+presentation="sheet"/);
+  const wiring = panel.slice(panel.indexOf("<DateRangeSheet visible={datesOpen}"), panel.indexOf("export function HotelDestinationSheet"));
+  assert.doesNotMatch(wiring, /resultsEditFullScreen/);
 });
 
 test("one opaque safe-area shell explicitly owns the three child editor safe-area insets", () => {

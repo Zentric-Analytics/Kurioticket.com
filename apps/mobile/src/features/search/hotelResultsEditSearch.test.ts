@@ -22,24 +22,17 @@ test("Hotel Results Edit opens an in-place Hotel editor with current committed p
   assert.doesNotMatch(source, /topInset=\{topSafeAreaInset\}/);
 });
 
-test("Hotel edit modal uses the approved bottom-sheet presentation", () => {
+test("Hotel edit modal uses the Flight floating-sheet presentation", () => {
   const modal = modalSource();
-
-  assert.match(modal, /import \{ useSearchPickerMotion \} from "\.\.\/flow\/searchPickerPresentation"/);
-  assert.match(modal, /const motion = useSearchPickerMotion\(visible\)/);
-  assert.doesNotMatch(modal, /useHotelEditSearchMotion|REVEAL_OFFSET|OPEN_DURATION_MS|CLOSE_DURATION_MS/);
-  assert.match(modal, /<Modal transparent animationType="none" visible onRequestClose=\{onClose\} statusBarTranslucent>/);
-  assert.match(modal, /backdrop: \{ flex: 1, justifyContent: "flex-end" \}/);
-  assert.doesNotMatch(modal, /justifyContent: "flex-start"/);
-  assert.match(modal, /onLayout=\{motion\.onSheetLayout\}/);
-  assert.match(modal, /motion\.sheetStyle/);
-  assert.match(modal, /paddingBottom: motion\.bottomSafeAreaInset/);
-  assert.match(modal, /sheet: \{ maxHeight: "94%"/);
-  assert.match(modal, /borderTopLeftRadius: 22, borderTopRightRadius: 22/);
-  assert.doesNotMatch(modal, /borderBottomLeftRadius|borderBottomRightRadius/);
-  assert.match(modal, /borderWidth: 1, borderBottomWidth: 0/);
-  assert.match(modal, /backgroundColor: "rgba\(15, 23, 42, 0\.35\)"/);
-  assert.doesNotMatch(modal, /rgba\(8, 18, 35, 0\.52\)|BlurView/);
+  assert.match(modal, /useSearchPickerMotion\(visible, \{ additionalTravelDistance: floatingBottomGap \}\)/);
+  assert.match(modal, /FLIGHT_FLOATING_SHEET_BOTTOM_GAP, FLIGHT_QUICK_SHEET_HORIZONTAL_INSET, FLIGHT_RESULTS_LIGHT_CANVAS/);
+  assert.match(modal, /internalBottomPadding = Math\.max\(20, bottomSafeAreaInset - floatingBottomGap\)/);
+  assert.match(modal, /sheet: \{ maxHeight: "88%", marginHorizontal: FLIGHT_QUICK_SHEET_HORIZONTAL_INSET/);
+  assert.match(modal, /borderBottomLeftRadius: 24, borderBottomRightRadius: 24/);
+  assert.match(modal, /marginBottom: floatingBottomGap/);
+  assert.match(modal, /backgroundColor: "rgba\(8, 18, 35, 0\.52\)"/);
+  assert.match(modal, /resultsCanvas = ft\.theme\.dark \? ft\.colors\.page : FLIGHT_RESULTS_LIGHT_CANVAS/);
+  assert.doesNotMatch(modal, /animationType="slide"|borderBottomWidth: 0|rgba\(15, 23, 42, 0\.35\)|BlurView/);
   assert.match(modal, />Edit hotel search<\/Text>/);
   assert.doesNotMatch(modal, />Change your search<\/Text>/);
 });
@@ -85,14 +78,14 @@ test("Hotel editor keeps canonical fields and cancellation cannot mutate Results
   assert.match(panel, /hotelSearchParams\(form\)/);
 });
 
-test("Hotel edit modal matches web content and safe-area geometry", () => {
+test("Hotel edit modal matches Flight header and content geometry", () => {
   const modal = modalSource();
-  assert.match(modal, /import \{ SafeAreaView \} from "react-native-safe-area-context"/);
+  assert.match(modal, /import \{ SafeAreaView, useSafeAreaInsets \} from "react-native-safe-area-context"/);
   assert.match(modal, /<SafeAreaView edges=\{\["top", "left", "right"\]\} style=\{styles\.backdrop\}>/);
   assert.doesNotMatch(modal, /edges=\{\[[^\]]*"bottom"/);
-  assert.match(modal, /content: \{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 20 \}/);
-  assert.match(modal, /header: \{ minHeight: 60,[^\n]*paddingVertical: 8 \}/);
-  assert.match(modal, /title: \{[^\n]*fontSize: 20, lineHeight: 28, fontWeight: "700" \}/);
+  assert.match(modal, /content: \{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 20 \}/);
+  assert.match(modal, /header: \{ minHeight: 52,[^\n]*paddingLeft: 16, paddingRight: 8 \}/);
+  assert.match(modal, /title: \{[^\n]*fontSize: 19, lineHeight: 24, fontWeight: "600" \}/);
   assert.match(modal, /close: \{ width: 44, height: 44/);
-  assert.match(modal, /<X accessible=\{false\} size=\{20\}/);
+  assert.match(modal, /<X accessible=\{false\} size=\{23\}/);
 });
