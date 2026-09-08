@@ -44,15 +44,27 @@ test("Cars summary compacts the displayed city without mutating its canonical va
 });
 
 test("Cars render the full filtered result set without pagination", () => {
-  assert.match(cars, /\{filtered\.length\} results found/);
+  assert.match(cars, /carResultCountLabel\(filtered\.length\)/);
   assert.match(cars, /filtered\.map\(\(result,index\)/);
   assert.match(cars, /rank=\{index\}/);
   assert.doesNotMatch(cars, /const \[page|pageSize|totalPages|filtered\.slice|Page \{page\}|label="Previous"|label="Next"/);
 });
 
-test("Cars use one truthful compact price alert before the result count", () => {
+test("Cars result summary matches Hotel typography and grammar", () => {
+  assert.match(cars, /const carResultCountLabel = \(count: number\) => `\$\{count\} \$\{count === 1 \? "Result" : "Results"\} found`/);
+  assert.match(cars, /<Text accessibilityRole="header" style=\{\[r\.carResultCount,\{color:theme\.textPrimary\}\]\}>\{carResultCountLabel\(filtered\.length\)\}<\/Text>/);
+  assert.match(cars, /carResultCount:\{fontSize:13,lineHeight:17,fontWeight:"700",fontFamily:appFonts\.bold\}/);
+  assert.doesNotMatch(cars, /carResultCount:\{[^}]*fontWeight:"800"/);
+  assert.match(hotels, /flightResultCount: \{ fontSize: 13, lineHeight: 17, fontWeight: "700", fontFamily: appFonts\.bold \}/);
+});
+
+test("Cars use one truthful compact price alert before the summary and cards", () => {
   assert.equal((cars.match(/<NativeCarPriceAlert/g) ?? []).length, 1);
-  assert.ok(cars.indexOf("<NativeCarPriceAlert") < cars.indexOf("results found"));
+  assert.ok(cars.indexOf("<NativeCarPriceAlert") < cars.indexOf("<View accessibilityLabel=\"Car results summary\""));
+  assert.ok(cars.indexOf("<View accessibilityLabel=\"Car results summary\"") < cars.indexOf("<CarResultCard"));
+  assert.match(cars, /carFilterSectionHeader:\{paddingBottom:12\}/);
+  assert.match(hotels, /hotelFilterSectionHeader: \{ paddingBottom: 12 \}/);
+  assert.match(cars, /body:\{paddingHorizontal:10,gap:14\}/);
   assert.match(carAlert, /<Bell/); assert.match(carAlert, /<Switch/); assert.match(carAlert, /Track rental car prices/);
   assert.doesNotMatch(carAlert, /numberOfLines=\{1\}/);
   assert.match(carAlert, /accessibilityLabel="Track rental car prices"/);
@@ -60,6 +72,7 @@ test("Cars use one truthful compact price alert before the result count", () => 
   assert.match(carAlert, /<Bell[^>]*color=\{theme\.priceAlertAccent\}/);
   assert.match(carAlert, /<ActivityIndicator[^>]*color=\{theme\.priceAlertAccent\}/);
   assert.match(carAlert, /styles\.title, \{ color: theme\.textPrimary \}/);
+  assert.match(carAlert, /control: \{ width: "100%", minHeight: 52, borderRadius: 12, borderWidth: 1/);
   assert.match(carAlert, /switch: \{ minWidth: 51, minHeight: 44, flexShrink: 0/);
   assert.match(carAlert, /pending \|\| loading \? <ActivityIndicator[\s\S]*?<Switch/);
   assert.match(carAlert, /travelApi\.priceAlerts\(\)/); assert.match(carAlert, /updatePriceAlertStatus/); assert.match(carAlert, /createPriceAlert/);
