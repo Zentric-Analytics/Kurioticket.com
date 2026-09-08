@@ -31,6 +31,12 @@ test("itinerary presents airport names and only supplied terminals",()=>{
   assert.match(itinerary,/Terminal \{arrivalPoint\.terminal\}/);
 });
 
+test("multi-stop itineraries retain every passenger connection location and duration",()=>{
+  assert.match(itinerary,/leg\.stops>1&&leg\.layovers\.length/);
+  assert.match(itinerary,/leg\.layovers\.map/);
+  assert.match(itinerary,/\{layover\.airport\} · \{layover\.duration\}/);
+});
+
 test("airline rows retain resolved identity, compact logos, and flight numbers",()=>{
   assert.match(itinerary,/resolveSegmentCarrierName/);
   assert.match(itinerary,/<AirlineLogo airlineName=\{carrier\}/);
