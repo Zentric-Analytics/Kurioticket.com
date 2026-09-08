@@ -55,7 +55,9 @@ test("airline rows retain identity, flight number, and supplied segment distance
 
 test("itinerary card uses a restrained card-only blur shadow",()=>{
   assert.match(source,/itineraryCard:\{[^\n]*shadowColor:"#0F172A"[^\n]*shadowOffset:\{width:0,height:3\}[^\n]*shadowOpacity:\.07[^\n]*shadowRadius:12[^\n]*elevation:1\}/);
-  assert.doesNotMatch(source,/card:\{[^\n]*shadowOpacity/);
+  const sharedCardStyle=source.match(/(?:^|,)card:\{([^}]*)\}/)?.[1]??"";
+  assert.notEqual(sharedCardStyle,"");
+  assert.doesNotMatch(sharedCardStyle,/shadowOpacity/);
 });
 
 test("default itinerary omits provider diagnostics and technical-stop presentation",()=>{
