@@ -325,7 +325,7 @@ test("opening Address does not programmatically focus its fields", () => {
 });
 test("edit controls follow the web responsive alignment contract", () => {
   assert.match(screen, /testID="personal-details-phone-row"/);
-  assert.match(screen, /countrySegment:\s*\{\s*width:\s*82/);
+  assert.match(screen, /countrySegment:\s*\{\s*flexShrink:\s*0/);
   assert.match(screen, /phoneInput:\s*\{[\s\S]*?flex:\s*1/);
   assert.match(
     screen,
@@ -413,4 +413,12 @@ test("nationality tap persists only nationality before closing and keeps other e
   assert.match(screen, /setDraft\(current => \(\{ \.\.\.current, nationality \}\)\)/);
   assert.match(screen, /if \(succeeded\) closeWithSheetAnimation\(onClose\)/);
   assert.match(screen, /setSelectionError\(c.saveFailure\)/);
+});
+
+
+test("phone country selector groups the smaller flag with its dial code", () => {
+ const phone = screen.slice(screen.indexOf("function PhoneControl("), screen.indexOf("export function PersonalDetailsScreen"));
+ assert.ok(phone.indexOf("{option?.dialCode}</Text>") < phone.indexOf("</Pressable>"));
+ assert.equal((phone.match(/\{option\?\.dialCode\}<\/Text>/g) ?? []).length, 1);
+ assert.match(screen, /flag: \{ width: 22, height: 15 \}/);
 });
