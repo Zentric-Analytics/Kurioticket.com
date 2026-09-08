@@ -67,7 +67,7 @@ test("Cars use one truthful compact price alert before the summary and cards", (
   assert.ok(cars.indexOf("<View accessibilityLabel=\"Car results summary\"") < cars.indexOf("<CarResultCard"));
   assert.match(cars, /carFilterSectionHeader:\{paddingBottom:12\}/);
   assert.match(hotels, /hotelFilterSectionHeader: \{ paddingBottom: 12 \}/);
-  assert.match(cars, /body:\{paddingHorizontal:10,gap:14\}/);
+  assert.match(cars, /body:\{paddingHorizontal:14,gap:14\}/);
   assert.match(carAlert, /<Bell/); assert.match(carAlert, /<Switch/); assert.match(carAlert, /Track rental car prices/);
   assert.doesNotMatch(carAlert, /numberOfLines=\{1\}/);
   assert.match(carAlert, /accessibilityLabel="Track rental car prices"/);
@@ -85,11 +85,27 @@ test("Cars use one truthful compact price alert before the summary and cards", (
 });
 
 
-test("Cars Filter uses the Hotel SlidersHorizontal icon contract", () => {
+test("Cars quick controls use the Flight-family icon, geometry, and surface contract", () => {
   assert.match(cars, /<CarResultsShortcut label="Filter" accessibilityLabel="Filters"[^>]*icon showChevron=\{false\}/);
-  assert.match(cars, /<SlidersHorizontal accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\} color=\{active\?ui\.blue:theme\.icon\}/);
+  assert.match(cars, /<SlidersHorizontal accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\} color=\{foreground\}/);
   assert.doesNotMatch(cars, /<FlowIcon name="sliders"/);
-  assert.match(cars, /<FlowIcon name="chevronDown"/);
+  assert.match(cars, /<ChevronDown accessible=\{false\} size=\{13\} strokeWidth=\{1\.9\} color=\{chevron\}/);
+  assert.doesNotMatch(cars, /<FlowIcon name="chevronDown"|#EDF4FF/);
+  assert.match(cars, /filters:\{paddingLeft:8,paddingRight:16,gap:6/);
+  assert.match(cars, /shortcut:\{height:36,[^}]*gap:4,[^}]*borderWidth:1,borderRadius:9,paddingHorizontal:10\}/);
+  for (const token of ["#D8E1EC", "#142033", "#64748B", "#F8FAFC", "#F1F5F9", "#FFFFFF"]) assert.match(cars, new RegExp(token));
+  assert.match(cars, /accessibilityState=\{\{expanded,selected:active\}\}/);
+  assert.match(cars, /shortcutChevronExpanded:\{transform:\[\{rotate:"180deg"\}\]\}/);
+});
+
+test("Cars Results carries the Flight-family canvas without a white filter band", () => {
+  assert.match(cars, /const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB"/);
+  assert.match(cars, /const carCanvasColor = theme\.dark \? theme\.background : CAR_RESULTS_LIGHT_CANVAS/);
+  assert.match(cars, /r\.safe,\{backgroundColor:carCanvasColor\}/);
+  assert.match(cars, /<CarResultsHeader[^>]*backgroundColor=\{carCanvasColor\}/);
+  assert.match(carHeader, /\{backgroundColor,paddingLeft:/);
+  assert.match(cars, /r\.carFilterSectionHeader,\{backgroundColor:carCanvasColor\}/);
+  assert.doesNotMatch(cars, /r\.filterRail,\{backgroundColor:theme\.dark\?theme\.surface:"#FFFFFF"\}/);
 });
 
 test("Cars Price Alert close is state-owned so keyboard teardown cannot race ahead of the target sheet", () => {

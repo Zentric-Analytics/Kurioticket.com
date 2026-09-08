@@ -11,6 +11,7 @@ import {
 import { appFonts } from "../../theme/typography";
 import { ui } from "./SearchUi";
 import { nativeHotelAmenityLabel } from "./hotelAmenityLabel";
+import { useAppTheme } from "../../theme/AppTheme";
 
 const amenityIcons: Record<HotelAmenityIconKey, LucideIcon> = {
   wifi: Wifi, breakfast: Coffee, pool: Waves, spa: Flower2,
@@ -23,6 +24,7 @@ const amenityIcons: Record<HotelAmenityIconKey, LucideIcon> = {
 };
 
 export function HotelCardAmenityList({ amenities }: { amenities: readonly unknown[] }) {
+  const { theme } = useAppTheme();
   const items = buildHotelAmenityPresentation(amenities, 4);
   return (
     <View style={styles.list}>
@@ -30,8 +32,8 @@ export function HotelCardAmenityList({ amenities }: { amenities: readonly unknow
         const Icon = amenityIcons[item.iconKey];
         return (
           <View key={item.key} style={styles.item}>
-            <Icon accessible={false} size={14} strokeWidth={1.8} color={ui.muted} />
-            <Text numberOfLines={1} style={styles.label}>{item.label}</Text>
+            <Icon accessible={false} size={14} strokeWidth={1.8} color={theme.textSecondary} />
+            <Text numberOfLines={1} style={[styles.label, { color: theme.textSecondary }]}>{item.label}</Text>
           </View>
         );
       })}
