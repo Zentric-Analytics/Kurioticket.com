@@ -28,9 +28,34 @@ test("searchable moving sheets coordinate automatic focus with their entrance", 
 
 test("the shared coordinator gates one focus and entrance per live generation", () => {
   const source = readFileSync("src/features/flow/searchPickerKeyboardPresentation.ts", "utf8");
-  for (const contract of [/generationRef\.current \+= 1/, /focusedGenerationRef\.current === generation/, /openingStartedGenerationRef\.current === generation/, /keyboardReadyGenerationRef\.current/, /modalPresentedRef\.current/, /sheetLayoutValidRef\.current/, /Keyboard\.addListener/, /keyboardWillShow/, /keyboardDidShow/, /Keyboard\.metrics\(\)/, /Keyboard\.isVisible\(\)/, /measureInWindow/, /onInputFocus/]) assert.match(source, contract);
+  for (const contract of [
+    /generationRef\.current \+= 1/,
+    /focusedGenerationRef\.current === generation/,
+    /openingStartedGenerationRef\.current === generation/,
+    /keyboardReadyGenerationRef\.current/,
+    /modalPresentedRef\.current/,
+    /sheetLayoutValidRef\.current/,
+    /Keyboard\.addListener/,
+    /keyboardWillShow/,
+    /keyboardDidShow/,
+    /Keyboard\.metrics\(\)/,
+    /Keyboard\.isVisible\(\)/,
+    /NO_SOFT_KEYBOARD_FALLBACK_MS/,
+    /noSoftKeyboardFallbackRef/,
+    /onInputFocus/,
+  ]) assert.match(source, contract);
   assert.ok(source.indexOf("inputRef.current?.focus()") < source.indexOf("keyboardReadyGenerationRef.current = generation"));
-  assert.doesNotMatch(source, /setTimeout|InteractionManager|keyboardHeight|KEYBOARD_HEIGHT/);
+  assert.match(source, /Keyboard\.isVisible\(\) \|\| Keyboard\.metrics\(\)/);
+  assert.doesNotMatch(source, /measureInWindow|InteractionManager|keyboardHeight|KEYBOARD_HEIGHT/);
+});
+
+test("Android does not treat pre-keyboardDidShow empty metrics as immediate readiness", () => {
+  const source = readFileSync("src/features/flow/searchPickerKeyboardPresentation.ts", "utf8");
+  const focusHandler = source.slice(source.indexOf("const onInputFocus"), source.indexOf("useEffect(() => {", source.indexOf("const onInputFocus")));
+  assert.match(focusHandler, /setTimeout/);
+  assert.match(focusHandler, /NO_SOFT_KEYBOARD_FALLBACK_MS/);
+  assert.match(focusHandler, /Keyboard\.isVisible\(\) \|\| Keyboard\.metrics\(\)/);
+  assert.doesNotMatch(focusHandler, /if \(!Keyboard\.metrics\(\)\) keyboardReadyGenerationRef\.current = generation/);
 });
 
 test("Flight synchronizes keyboard preparation with its measured entrance only", () => {
