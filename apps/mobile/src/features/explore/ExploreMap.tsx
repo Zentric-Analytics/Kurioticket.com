@@ -38,7 +38,7 @@ export function ExploreMap({ place = "" }: { place?: string }) {
   </View>;
 }
 const s = StyleSheet.create({
-  container: { height: 280, marginHorizontal: 18, marginVertical: 12, borderRadius: 12, borderWidth: 1, overflow: "hidden" },
+  container: { flex: 1, overflow: "hidden" },
   map: { flex: 1 }, feedback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10 },
   label: { fontFamily: appFonts.regular, fontSize: 14 }, retry: { minHeight: 44, paddingHorizontal: 18, justifyContent: "center" }, retryLabel: { fontFamily: appFonts.semibold, color: "#0754F7", fontSize: 14 },
 });
