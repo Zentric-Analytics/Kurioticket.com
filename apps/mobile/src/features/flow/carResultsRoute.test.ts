@@ -23,10 +23,11 @@ test("approved car results use the live API contract and open the native detail 
 
 test("car card matches the mobile Web identity, four-spec and conversion hierarchy", () => {
   const card = readFileSync("src/features/search/CarResultCard.tsx", "utf8");
-  for (const field of ["modelName", "categoryLabel", "passengers", "bags", "doors", "transmission", "freeCancellation", "pickupLocation", "pricePerDay", "totalPrice"]) {
+  for (const field of ["modelName", "categoryLabel", "passengers", "bags", "doors", "transmission", "freeCancellation", "taxesAndFeesIncluded", "pickupLocation", "pricePerDay", "totalPrice"]) {
     assert.match(card, new RegExp(`result\\.${field}|offer\\?\\.${field}|offer\\.${field}`));
   }
-  assert.match(card, />View car<\/Text>/);
+  assert.match(card, />View deal<\/Text>/);
+  assert.doesNotMatch(card, />View car<\/Text>/);
   assert.match(card, /Share\.share/);
   assert.match(card, /getPrimaryCarOffer\(result\)/);
   assert.doesNotMatch(card, /result\.offers\[0\]/);
