@@ -60,3 +60,12 @@ test("native header spacing and scroll separation stay compact", () => {
   assert.match(native, /hasScrolled&&s\.topBarScrolled/);
   assert.doesNotMatch(native, /Kurioticket.*(?:logo|wordmark)|(?:logo|wordmark).*Kurioticket/i);
 });
+
+test("fixed flight header remains usable with scaled text on narrow screens", () => {
+  assert.match(native, /<Text numberOfLines=\{1\} ellipsizeMode="tail" style=\{s\.backText\}>Back to results<\/Text>/);
+  assert.match(native, /topBar:\{minHeight:52[\s\S]*?paddingVertical:4/);
+  assert.doesNotMatch(native, /topBar:\{height:52/);
+  assert.match(native, /topActions:\{flexDirection:"row",alignItems:"center",gap:2,flexShrink:0\}/);
+  assert.match(native, /back:\{minHeight:44,flexShrink:1,minWidth:0/);
+  assert.match(native, /backText:\{color:ui\.blue,fontWeight:"800",flexShrink:1\}/);
+});
