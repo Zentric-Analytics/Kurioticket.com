@@ -13,12 +13,25 @@ test("Home preserves the structured Flight search configuration", () => {
 
 test("Home finishes only its Flight search with a semantic lower surface", () => {
   const wrapper = home.slice(home.indexOf("function HomeFlightSearchSurface"), home.indexOf("const products"));
-  assert.match(wrapper, /\{ borderColor: ft\.colors\.border \}/);
-  assert.doesNotMatch(wrapper, /backgroundColor: ft\.colors\.(?:page|surface|card)|ft\.styles\.shadow/);
-  assert.match(home, /homeFlightSearchSurface: \{[\s\S]*?backgroundColor: "transparent",[\s\S]*?borderLeftWidth: 0,[\s\S]*?borderRightWidth: 0,[\s\S]*?borderBottomWidth: 1,[\s\S]*?borderTopWidth: 0,[\s\S]*?borderBottomLeftRadius: 16,[\s\S]*?borderBottomRightRadius: 16,[\s\S]*?paddingBottom: 8/);
+  assert.match(wrapper, /pointerEvents="none"/);
+  assert.match(wrapper, /backgroundColor: ft\.colors\.page/);
+  assert.match(wrapper, /shadowColor: ft\.colors\.shadow/);
+  assert.doesNotMatch(wrapper, /ft\.styles\.shadow/);
+  assert.match(home, /homeFlightSearchSurface: \{\s*backgroundColor: "transparent",\s*paddingBottom: 8/);
+  assert.doesNotMatch(home, /homeFlightSearchSurface: \{[^}]*border(?:Width|Color)|homeFlightSearchSurface: \{[^}]*shadow/s);
+  assert.match(home, /homeFlightSearchBottom: \{[\s\S]*?position: "absolute",[\s\S]*?bottom: 0,[\s\S]*?height: 12,[\s\S]*?borderBottomLeftRadius: 16,[\s\S]*?borderBottomRightRadius: 16,[\s\S]*?shadowOffset: \{ width: 0, height: 2 \},[\s\S]*?shadowRadius: 6,[\s\S]*?elevation: 1/);
+  assert.doesNotMatch(home, /homeFlightSearchBottom: \{[^}]*border(?:Top|Left|Right|Bottom)?Width/s);
   assert.match(home, /flights: availability\.flightSearch\s*\? <HomeFlightSearchSurface>\s*<FlightSearchPanel compact structuredSearchAppearance enableHomepageDefaultOrigin homepageAirportPicker \/>\s*<\/HomeFlightSearchSurface>/);
   assert.equal(home.match(/<HomeFlightSearchSurface>/g)?.length, 1);
-  assert.match(home, /\{searchPanel\[activeProduct\]\}[\s\S]*?<PopularDestinationStays/);
+  assert.match(home, /\{searchPanel\[activeProduct\]\}\s*<PopularDestinationStays compactTopSpacing=\{activeProduct === "flights"\} \/>/);
+});
+
+test("Home compacts only the Flight-to-popular-stays transition without changing the global gap", () => {
+  const popularStays = readFileSync("src/features/home/PopularDestinationStays.tsx", "utf8");
+  assert.match(home, /content: \{ paddingHorizontal: 14, paddingBottom: 26, gap: 14 \}/);
+  assert.match(popularStays, /section: \{ gap: 24, marginTop: 4 \}/);
+  assert.match(popularStays, /compactTopSpacing: \{ marginTop: -4 \}/);
+  assert.match(popularStays, /style=\{\[styles\.section, compactTopSpacing && styles\.compactTopSpacing\]\}/);
 });
 
 test("Home opts into generic structured Flight cards without changing other product surfaces", () => {
