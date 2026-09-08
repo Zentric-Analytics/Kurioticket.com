@@ -45,6 +45,7 @@ import {
   X,
 } from "lucide-react-native";
 import { Heart } from "lucide-react-native";
+import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import {
   travelApi,
   TravelApiError,
@@ -175,7 +176,6 @@ const flightSupportText = {
 const flightResultsLightCanvas = "#F5F7FB";
 const HOTEL_BACK_TO_TOP_HIDE_NEAR_END = 120;
 const HOTEL_UTILITY_ICON_COLOR = "#334155";
-const HOTEL_SAVED_HEART_COLOR = "#E11D48";
 const HOTEL_GALLERY_CHEVRON_CONTRAST = "rgba(0,0,0,0.85)";
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 const hotelStayNightCount = (checkIn?: string, checkOut?: string) => {
@@ -1559,8 +1559,8 @@ function HotelCard({
             <Heart
               accessible={false}
               size={20}
-              color={saved ? HOTEL_SAVED_HEART_COLOR : theme.dark ? theme.icon : HOTEL_UTILITY_ICON_COLOR}
-              fill={saved ? HOTEL_SAVED_HEART_COLOR : "none"}
+              color={androidFavoriteColors.stroke}
+              fill={saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill}
             />
           </Pressable>
           <Pressable

@@ -68,11 +68,11 @@ test("hotel actions independently save and share without share navigation", () =
   assert.doesNotMatch(share, /router\.|toggleHotel/);
 });
 
-test("hotel utility colors match mobile web while saved and share states stay independent", () => {
+test("hotel favorite uses canonical states while share keeps its utility color", () => {
   assert.match(source, /const HOTEL_UTILITY_ICON_COLOR = "#334155"/);
-  assert.match(source, /const HOTEL_SAVED_HEART_COLOR = "#E11D48"/);
-  assert.match(card, /color=\{saved \? HOTEL_SAVED_HEART_COLOR : theme\.dark \? theme\.icon : HOTEL_UTILITY_ICON_COLOR\}/);
-  assert.match(card, /fill=\{saved \? HOTEL_SAVED_HEART_COLOR : "none"\}/);
+  assert.doesNotMatch(source, /HOTEL_SAVED_HEART_COLOR|#E11D48/);
+  assert.match(card, /color=\{androidFavoriteColors\.stroke\}/);
+  assert.match(card, /fill=\{saved \? androidFavoriteColors\.savedFill : androidFavoriteColors\.unsavedFill\}/);
   assert.match(card, /<Share2 accessible=\{false\} size=\{20\} color=\{theme\.dark \? theme\.icon : HOTEL_UTILITY_ICON_COLOR\} \/>/);
   assert.doesNotMatch(card, /<Heart[^>]*color=\{ui\.blue\}|<Share2[^>]*color=\{ui\.blue\}|fill=\{saved \? ui\.blue : "none"\}/s);
 });
