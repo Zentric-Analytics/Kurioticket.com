@@ -233,7 +233,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const hotelResultsBodyOffset = useRef(0);
   const hotelResultsSummaryOffset = useRef(0);
   const hotelFilterHeaderHeight = useRef(0);
-  const flightResultsListRef = useRef<SectionList<FlightResult | null>>(null);
+  const flightResultsListRef = useRef<SectionList<FlightResult>>(null);
   const windowDimensions = useWindowDimensions();
   const previousHotelSearchKey = useRef<string | undefined>(undefined);
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
@@ -977,34 +977,37 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         <Animated.SectionList
           ref={flightResultsListRef}
           style={[s0.resultsScroll, { backgroundColor: flightCanvasColor }]}
-          sections={[{ data: !flightState ? [null, ...(sorted as FlightResult[])] : [] }]}
-          keyExtractor={(item, index) => item ? item.id : `flight-results-intro-${index}`}
+          sections={[{ data: !flightState ? sorted as FlightResult[] : [] }]}
+          keyExtractor={(item) => item.id}
           ListHeaderComponent={flightDateStrip}
           renderSectionHeader={() => (
-            <View
-              style={[s0.flightFilterSectionHeader, { backgroundColor: flightCanvasColor }]}
-            >
-              {filterRail}
-            </View>
+            <>
+              <View
+                style={[s0.flightFilterSectionHeader, { backgroundColor: flightCanvasColor }]}
+              >
+                {filterRail}
+              </View>
+              <View style={[s0.flightResultsIntro, { backgroundColor: flightCanvasColor }]}>
+                {status === "ready" && plan.plan ? <View style={s0.flightAlertOuter}><PriceAlert product="flight" plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} compact /></View> : null}
+                <FlightResultsSummaryRow count={sorted.length} />
+              </View>
+            </>
           )}
           stickySectionHeadersEnabled
-          renderItem={({ item, index }) => item === null ? (
-            <View style={[s0.flightResultsIntro, { backgroundColor: flightCanvasColor }]}>
-              {status === "ready" && plan.plan ? <View style={s0.flightAlertOuter}><PriceAlert product="flight" plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} compact /></View> : null}
-              <FlightResultsSummaryRow count={sorted.length} />
-            </View>
-          ) : (
-            <View style={s0.flightCardItem}>
-              <FlightCard
-                result={item}
-                displayPrice={flightDisplayPrices.get(item.id)}
-                displayCurrencyContext={currencyState?.resolution}
-                highlight={flightHighlights.get(item.id)}
-                params={params}
-                locale={locale}
-                logInitialMount={index === 1}
-              />
-            </View>
+          renderItem={({ item, index }) => (
+            <>
+              <View style={s0.flightCardItem}>
+                <FlightCard
+                  result={item}
+                  displayPrice={flightDisplayPrices.get(item.id)}
+                  displayCurrencyContext={currencyState?.resolution}
+                  highlight={flightHighlights.get(item.id)}
+                  params={params}
+                  locale={locale}
+                  logInitialMount={index === 0}
+                />
+              </View>
+            </>
           )}
           ListEmptyComponent={null}
           ListFooterComponent={terminalFlightState ? (
@@ -1089,7 +1092,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       ) : (
         <>
           <HotelFilterSheet visible={hotelFilterOpen} section={hotelFilterSection} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} totalCount={results.length} matchingCount={sorted.length} onChange={changeHotelFilters} onClose={completeHotelFilterSession}/>
-          {hotelQuickFilter ? <HotelResultsQuickFilterSheet kind={hotelQuickFilter} sort={hotelSort} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} onSortChange={(next) => { if(next===hotelSort)return;setHotelSort(next);startHotelResultsTransition(); }} onChange={changeHotelFilters} onClose={closeHotelQuickFilter} /> : null}
+          {hotelQuickFilter ? <HotelResultsQuickFilterSheet kind={hotelQuickFilter} sort={hotelSort} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} onSortChange={(next) => { setHotelSort(next); setHotelPage(1); }} onChange={changeHotelFilters} onClose={closeHotelQuickFilter} /> : null}
         </>
       )}
       {!flightResults ? (
@@ -1376,16 +1379,45 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
           ))}
         </View>
       </View>
-      <View style={[s0.flightCardFooter, { borderTopColor: theme.border }]}> 
+      <View style={[s0.flightCardFooter, { borderTopColor: theme.border }]}>
         <View style={s0.flightLowerSection}>
-          <View accessible accessibilityLabel={`${labels.baggage}: ${baggageAccessibility}. ${labels.cabin}: ${cabinSummary}. ${labels.fareRule}: ${fareRulesAccessibility}.`} style={s0.flightMetadataRegion}>
-            <View style={s0.flightMetadataItem}><Luggage accessible={false} size={15} strokeWidth={2.4} color={supportTextColor}/><Text style={[s0.flightMetadataText,{color:theme.textPrimary}]}><Text style={[s0.flightMetadataLabel,{color:supportTextColor}]}>{labels.baggage}:</Text>{" "}{baggageSummary}</Text></View>
-            <View style={s0.flightMetadataItem}><Armchair accessible={false} size={15} strokeWidth={2.4} color={supportTextColor}/><Text style={[s0.flightMetadataText,{color:theme.textPrimary}]}><Text style={[s0.flightMetadataLabel,{color:supportTextColor}]}>{labels.cabin}:</Text>{" "}{cabinSummary}</Text></View>
-            <View style={s0.flightMetadataItem}><FileText accessible={false} size={15} strokeWidth={2.4} color={supportTextColor}/><Text style={[s0.flightMetadataText,{color:theme.textPrimary}]}><Text style={[s0.flightMetadataLabel,{color:supportTextColor}]}>{labels.fareRules}:</Text>{" "}{labels.review}</Text></View>
+          <View
+            accessible
+            accessibilityLabel={`${labels.baggage}: ${baggageAccessibility}. ${labels.cabin}: ${cabinSummary}. ${labels.fareRule}: ${fareRulesAccessibility}.`}
+            style={s0.flightMetadataRegion}
+          >
+            <View style={s0.flightMetadataItem}>
+              <Luggage accessible={false} size={15} strokeWidth={2.4} color={supportTextColor}/>
+              <Text style={[s0.flightMetadataText, { color: theme.textPrimary }]}>
+                <Text style={[s0.flightMetadataLabel, { color: supportTextColor }]}>{labels.baggage}:</Text>{" "}
+                {baggageSummary}
+              </Text>
+            </View>
+            <View style={s0.flightMetadataItem}>
+              <Armchair accessible={false} size={15} strokeWidth={2.4} color={supportTextColor}/>
+              <Text style={[s0.flightMetadataText, { color: theme.textPrimary }]}>
+                <Text style={[s0.flightMetadataLabel, { color: supportTextColor }]}>{labels.cabin}:</Text>{" "}
+                {cabinSummary}
+              </Text>
+            </View>
+            <View style={s0.flightMetadataItem}>
+              <FileText accessible={false} size={15} strokeWidth={2.4} color={supportTextColor}/>
+              <Text style={[s0.flightMetadataText, { color: theme.textPrimary }]}>
+                <Text style={[s0.flightMetadataLabel, { color: supportTextColor }]}>{labels.fareRules}:</Text>{" "}
+                {labels.review}
+              </Text>
+            </View>
           </View>
           <View style={s0.flightCommercialRegion}>
-            <Text accessible={false} style={[s0.bigPrice,{color:theme.textPrimary}]} numberOfLines={1}>{fare?.formatted??"—"}</Text>
-            <View accessible={false} style={s0.flightDetailsAffordance}><Text accessible={false} style={[s0.flightDetailsAffordanceText,{color:theme.dark?"#8FB5FF":ui.blue}]} numberOfLines={1}>{labels.viewDeals}</Text><ChevronRight accessible={false} size={16} strokeWidth={2.2} color={theme.dark?"#8FB5FF":ui.blue}/></View>
+            <Text accessible={false} style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1}>
+              {fare?.formatted ?? "—"}
+            </Text>
+            <View accessible={false} style={s0.flightDetailsAffordance}>
+              <Text accessible={false} style={[s0.flightDetailsAffordanceText, { color: theme.dark ? "#8FB5FF" : ui.blue }]} numberOfLines={1}>
+                {labels.viewDeals}
+              </Text>
+              <ChevronRight accessible={false} size={16} strokeWidth={2.2} color={theme.dark ? "#8FB5FF" : ui.blue}/>
+            </View>
           </View>
         </View>
       </View>
@@ -1395,43 +1427,634 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
 function FlightJourneyRow({ label, leg, locale }: { label: string; leg: FlightCardLeg; locale: MobileLocale }) {
   const { theme } = useAppTheme();
   const supportTextColor = theme.dark ? flightSupportText.dark : flightSupportText.light;
-  const stopLabel = leg.stops ? `${leg.stops} stop${leg.stops===1?"":"s"}` : "Nonstop";
-  const intlLocale = mobileLocales.find((option)=>option.code===locale)?.intl??"en-US";
-  const departureDate=providerLocalFlightDate(leg.departureTime,intlLocale);
-  const arrivalDate=providerLocalFlightDate(leg.arrivalTime,intlLocale);
-  return <View style={s0.journeyBlock} accessible accessibilityLabel={`${label.toLowerCase()}: ${clock(leg.departureTime)} ${leg.originAirport}${departureDate?`, ${departureDate}`:""} to ${clock(leg.arrivalTime)} ${leg.destinationAirport}${arrivalDate?`, ${arrivalDate}`:""}, ${leg.duration}, ${stopLabel}`}>
-    <Text style={[s0.journeyLabel,{color:theme.dark?"#8FB5FF":ui.blue}]}>{label}</Text>
-    <View style={s0.journeyPrimaryRow}><View style={s0.departureColumn}><Text style={[s0.time,{color:theme.textPrimary}]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.departureTime)}</Text></View><View style={s0.timelineColumn} accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"><Text style={[s0.journeyDuration,{color:theme.textPrimary}]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{leg.duration}</Text></View><View style={[s0.arrivalColumn,s0.rightColumnContract]}><Text style={[s0.time,{color:theme.textPrimary}]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.arrivalTime)}</Text></View></View>
-    <View style={s0.journeyRouteRow}><View style={s0.departureColumn}><Text style={[s0.airportCode,{color:theme.textPrimary}]} numberOfLines={1}>{leg.originAirport}</Text>{departureDate?<Text style={[s0.airportDate,{color:supportTextColor}]} numberOfLines={1}>{departureDate}</Text>:null}</View><View style={s0.timelineColumn} accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"><View style={s0.routeTrack}><View style={[s0.routeDot,{backgroundColor:theme.textSecondary}]}/><View style={[s0.line,{backgroundColor:theme.border}]}/><PlaneTakeoff accessible={false} size={14} strokeWidth={2} color={theme.dark?"#8FB5FF":ui.blue}/><View style={[s0.line,{backgroundColor:theme.border}]}/><View style={[s0.routeDot,{backgroundColor:theme.textSecondary}]}/></View></View><View style={[s0.arrivalColumn,s0.rightColumnContract]}><Text style={[s0.airportCode,{color:theme.textPrimary}]} numberOfLines={1}>{leg.destinationAirport}</Text>{arrivalDate?<Text style={[s0.airportDate,{color:supportTextColor}]} numberOfLines={1}>{arrivalDate}</Text>:null}</View></View>
-    <View style={s0.journeyStopRow}><View style={s0.departureColumn}/><View style={s0.timelineColumn} accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"><Text style={[s0.stopLabel,{color:supportTextColor}]} numberOfLines={1}>{stopLabel}</Text></View><View style={s0.arrivalColumn}/></View>
-  </View>;
+  const stopLabel = leg.stops
+    ? `${leg.stops} stop${leg.stops === 1 ? "" : "s"}`
+    : "Nonstop";
+  const intlLocale = mobileLocales.find((option) => option.code === locale)?.intl ?? "en-US";
+  const departureDate = providerLocalFlightDate(leg.departureTime, intlLocale);
+  const arrivalDate = providerLocalFlightDate(leg.arrivalTime, intlLocale);
+  return (
+    <View
+      style={s0.journeyBlock}
+      accessible
+      accessibilityLabel={`${label.toLowerCase()}: ${clock(leg.departureTime)} ${leg.originAirport}${departureDate ? `, ${departureDate}` : ""} to ${clock(leg.arrivalTime)} ${leg.destinationAirport}${arrivalDate ? `, ${arrivalDate}` : ""}, ${leg.duration}, ${stopLabel}`}
+    >
+      <Text style={[s0.journeyLabel, { color: theme.dark ? "#8FB5FF" : ui.blue }]}>{label}</Text>
+      <View style={s0.journeyPrimaryRow}>
+        <View style={s0.departureColumn}>
+          <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.departureTime)}</Text>
+        </View>
+        <View style={s0.timelineColumn} accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <Text style={[s0.journeyDuration, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{leg.duration}</Text>
+        </View>
+        <View style={[s0.arrivalColumn, s0.rightColumnContract]}>
+          <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.arrivalTime)}</Text>
+        </View>
+      </View>
+      <View style={s0.journeyRouteRow}>
+        <View style={s0.departureColumn}>
+          <Text style={[s0.airportCode, { color: theme.textPrimary }]} numberOfLines={1}>{leg.originAirport}</Text>
+          {departureDate ? <Text style={[s0.airportDate, { color: supportTextColor }]} numberOfLines={1}>{departureDate}</Text> : null}
+        </View>
+        <View style={s0.timelineColumn} accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <View style={s0.routeTrack}>
+            <View style={[s0.routeDot, { backgroundColor: theme.textSecondary }]} />
+            <View style={[s0.line, { backgroundColor: theme.border }]} />
+            <PlaneTakeoff accessible={false} size={14} strokeWidth={2} color={theme.dark ? "#8FB5FF" : ui.blue} />
+            <View style={[s0.line, { backgroundColor: theme.border }]} />
+            <View style={[s0.routeDot, { backgroundColor: theme.textSecondary }]} />
+          </View>
+        </View>
+        <View style={[s0.arrivalColumn, s0.rightColumnContract]}>
+          <Text style={[s0.airportCode, { color: theme.textPrimary }]} numberOfLines={1}>{leg.destinationAirport}</Text>
+          {arrivalDate ? <Text style={[s0.airportDate, { color: supportTextColor }]} numberOfLines={1}>{arrivalDate}</Text> : null}
+        </View>
+      </View>
+      <View style={s0.journeyStopRow}>
+        <View style={s0.departureColumn} />
+        <View style={s0.timelineColumn} accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <Text style={[s0.stopLabel, { color: supportTextColor }]} numberOfLines={1}>{stopLabel}</Text>
+        </View>
+        <View style={s0.arrivalColumn} />
+      </View>
+    </View>
+  );
 }
-function HotelCard({result,showCheapestBadge,params,displayPrices,displayCurrencyContext}:{result:HotelResult;showCheapestBadge:boolean;params:Record<string,string|string[]>;displayPrices?:HotelDisplayPriceSnapshot;displayCurrencyContext?:DisplayCurrencyResolution}) {
-  const canonical=useCanonicalSaved();
-  const saved=canonical.items.some(item=>item.type==="hotel"&&((item.payload as Record<string,unknown>|undefined)?.result as {id?:string}|undefined)?.id===result.id);
-  const compact=useWindowDimensions().width<430;
-  const gallery=useMemo(()=>[...new Set([...(result.imageUrls??[]),result.imageUrl].filter((uri):uri is string=>typeof uri==="string"&&/^https?:\/\//i.test(uri)))],[result.imageUrl,result.imageUrls]);
-  const [failedImages,setFailedImages]=useState<string[]>([]);const usableGallery=gallery.filter(uri=>!failedImages.includes(uri));const [activeImage,setActiveImage]=useState(0);useEffect(()=>{if(activeImage>=usableGallery.length)setActiveImage(0);},[activeImage,usableGallery.length]);
-  const score=result.reviewScore==null?null:result.reviewScore*(10/(result.reviewScale||10)); const classificationStars=result.classificationStars||0; const hasPrice=hasHotelPrice(result); const mealPlan=result.catalogueProfile?.mealPlan?.trim(); const policy=[result.catalogueProfile?.cancellationPolicy,result.catalogueProfile?.paymentPolicy].filter((value):value is string=>Boolean(value?.trim()));
-  const shareHotel=()=>{const message=hasPrice?`${result.name} — ${result.location} — ${displayPrices?.nightly?.formatted??money(result.currency,result.pricePerNight)}/night`:`${result.name} — ${result.location} — Price unavailable`;void Share.share({message}).catch(()=>undefined);};
-  return <View style={s0.hotelCard}><View style={[s0.hotelImageWrap,compact&&s0.hotelImageWrapCompact]}>{usableGallery[activeImage]?<Image source={{uri:usableGallery[activeImage]}} onError={()=>setFailedImages(values=>[...values,usableGallery[activeImage]])} style={s0.hotelImage}/>:<View accessibilityLabel="Hotel image unavailable" style={[s0.hotelImage,s0.hotelImageUnavailable]}><Text style={s0.hotelImageUnavailableText}>Image unavailable</Text></View>}{usableGallery.length>1?<><Pressable accessibilityRole="button" accessibilityLabel={`Previous photo of ${result.name}`} onPress={()=>setActiveImage(index=>(index-1+usableGallery.length)%usableGallery.length)} style={[s0.galleryControl,s0.galleryPrevious]}><View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[s0.galleryChevronStack,s0.galleryIconPrevious]}><ChevronLeft accessible={false} color={HOTEL_GALLERY_CHEVRON_CONTRAST} size={20} strokeWidth={4} style={s0.galleryChevronUnderlay}/><ChevronLeft accessible={false} color="white" size={20} strokeWidth={2.2}/></View></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Next photo of ${result.name}`} onPress={()=>setActiveImage(index=>(index+1)%usableGallery.length)} style={[s0.galleryControl,s0.galleryNext]}><View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[s0.galleryChevronStack,s0.galleryIconNext]}><ChevronRight accessible={false} color={HOTEL_GALLERY_CHEVRON_CONTRAST} size={20} strokeWidth={4} style={s0.galleryChevronUnderlay}/><ChevronRight accessible={false} color="white" size={20} strokeWidth={2.2}/></View></Pressable></>:null}{usableGallery.length?<View style={s0.overlay}><Text style={s0.overlayText}>{activeImage+1} / {usableGallery.length}</Text></View>:null}</View><View style={[s0.hotelCopy,compact&&s0.hotelCopyCompact]}><View style={s0.hotelTitleRow}><Text numberOfLines={2} style={s0.hotelName}>{result.name}</Text></View><View style={[s0.hotelActions,compact&&s0.hotelActionsCompact]}><Pressable accessibilityRole="button" accessibilityLabel={saved?`Remove ${result.name} from saved`:`Save ${result.name}`} accessibilityState={{selected:saved}} disabled={!hasPrice&&!saved} onPress={()=>void canonical.toggleHotel(result,params)} style={[s0.hotelAction,s0.hotelSaveAction]}><Heart accessible={false} size={20} color={saved?HOTEL_SAVED_HEART_COLOR:HOTEL_UTILITY_ICON_COLOR} fill={saved?HOTEL_SAVED_HEART_COLOR:"none"}/></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Share ${result.name}`} onPress={shareHotel} style={[s0.hotelAction,s0.hotelShareAction]}><Share2 accessible={false} size={20} color={HOTEL_UTILITY_ICON_COLOR}/></Pressable></View>{showCheapestBadge&&hasPrice?<View style={s0.hotelBadge}><Badge green>Cheapest</Badge></View>:null}{classificationStars>0?<Text accessibilityLabel={`${classificationStars} star hotel`} style={s0.stars}>{"★".repeat(classificationStars)}</Text>:null}<View style={s0.hotelLocation}><MapPin accessible={false} size={14} strokeWidth={2} color={colors.blue}/><Text numberOfLines={1} ellipsizeMode="tail" style={s0.hotelLocationText}>{result.location}</Text></View>{score==null?null:<Text style={s0.review}><Text style={s0.score}>{score.toFixed(1)}</Text>{" "}{score>=9?"Exceptional":score>=8?"Excellent":"Good"}{result.reviewCount?`  ·  ${result.reviewCount.toLocaleString()} reviews`:""}</Text>}<HotelCardAmenityList amenities={result.amenities}/>{mealPlan&&!(/^breakfast/i.test(mealPlan)&&result.amenities.some(item=>/breakfast/i.test(item)))?<Text numberOfLines={1} style={s0.hotelTerm}>{mealPlan.charAt(0).toUpperCase()+mealPlan.slice(1).toLowerCase()}</Text>:null}{policy.map(item=><Text key={item} numberOfLines={1} style={s0.hotelTerm}>{item}</Text>)}{result.sourceAttributions?.map(item=>{const safe=typeof item.providerUri==="string"&&/^https?:\/\//i.test(item.providerUri);return <Pressable key={`${item.provider}-${item.providerUri??""}`} disabled={!safe} onPress={()=>safe&&void Linking.openURL(item.providerUri!)}><Text numberOfLines={1} style={s0.hotelAttributionLink}>Source: {item.provider}</Text></Pressable>;})}<View style={s0.hotelPrice}><View style={s0.hotelPriceCopy}><Text accessibilityLabel={displayPrices?.nightly?.accessibilityLabel} style={s0.hotelNightlyPrice}>{hasPrice?displayPrices?.nightly?.formatted??money(result.currency,result.pricePerNight):"Price unavailable"}</Text>{hasPrice?<Text style={s0.hotelPerNight}>per night</Text>:<Text style={s0.hotelPerNight}>No live rate</Text>}</View><Pressable accessibilityRole="button" accessibilityLabel={`View hotel for ${result.name}`} style={({pressed})=>[s0.hotelDealButton,pressed&&s0.hotelDealButtonPressed]} onPress={()=>router.push({pathname:"/hotel-details",params:{result:JSON.stringify(result),...Object.fromEntries(Object.entries(params).map(([k,v])=>[k,one(v)||""])),hotelDisplayPrices:displayPrices?JSON.stringify(displayPrices):"",displayCurrencyContext:displayCurrencyContext?JSON.stringify(displayCurrencyContext):""}})}><Text style={s0.hotelDealButtonText}>View hotel</Text></Pressable></View></View></View>;
+function HotelCard({
+  result,
+  showCheapestBadge,
+  params,
+  displayPrices,
+  displayCurrencyContext,
+}: {
+  result: HotelResult;
+  showCheapestBadge: boolean;
+  params: Record<string, string | string[]>;
+  displayPrices?: HotelDisplayPriceSnapshot;
+  displayCurrencyContext?: DisplayCurrencyResolution;
+}) {
+  const canonical = useCanonicalSaved();
+  const saved = canonical.items.some(item => item.type === "hotel" && ((item.payload as Record<string, unknown> | undefined)?.result as { id?: string } | undefined)?.id === result.id);
+  const compact = useWindowDimensions().width < 430;
+  const gallery = useMemo(() => [...new Set([...(result.imageUrls ?? []), result.imageUrl].filter((uri): uri is string => typeof uri === "string" && /^https?:\/\//i.test(uri)))], [result.imageUrl, result.imageUrls]);
+  const [failedImages,setFailedImages]=useState<string[]>([]);
+  const usableGallery=gallery.filter(uri=>!failedImages.includes(uri));
+  const [activeImage,setActiveImage]=useState(0);
+  useEffect(()=>{if(activeImage>=usableGallery.length)setActiveImage(0);},[activeImage,usableGallery.length]);
+  const score = result.reviewScore == null
+    ? null
+    : result.reviewScore * (10 / (result.reviewScale || 10));
+  const classificationStars = result.classificationStars || 0;
+  const hasPrice = hasHotelPrice(result);
+  const mealPlan=result.catalogueProfile?.mealPlan?.trim();
+  const policy=[result.catalogueProfile?.cancellationPolicy,result.catalogueProfile?.paymentPolicy].filter((value):value is string=>Boolean(value?.trim()));
+  const shareHotel = () => {
+    const message = hasPrice
+      ? `${result.name} — ${result.location} — ${displayPrices?.nightly?.formatted ?? money(result.currency, result.pricePerNight)}/night`
+      : `${result.name} — ${result.location} — Price unavailable`;
+    void Share.share({ message }).catch(() => undefined);
+  };
+  return (
+    <View style={s0.hotelCard}>
+      <View style={[s0.hotelImageWrap, compact && s0.hotelImageWrapCompact]}>
+        {usableGallery[activeImage] ? (
+          <Image source={{ uri: usableGallery[activeImage] }} onError={()=>setFailedImages(values=>[...values,usableGallery[activeImage]])} style={s0.hotelImage} />
+        ) : (
+          <View accessibilityLabel="Hotel image unavailable" style={[s0.hotelImage,s0.hotelImageUnavailable]}><Text style={s0.hotelImageUnavailableText}>Image unavailable</Text></View>
+        )}
+        {usableGallery.length>1?<>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Previous photo of ${result.name}`} onPress={()=>setActiveImage(index=>(index-1+usableGallery.length)%usableGallery.length)} style={[s0.galleryControl,s0.galleryPrevious]}>
+            <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[s0.galleryChevronStack,s0.galleryIconPrevious]}>
+              <ChevronLeft accessible={false} color={HOTEL_GALLERY_CHEVRON_CONTRAST} size={20} strokeWidth={4} style={s0.galleryChevronUnderlay}/>
+              <ChevronLeft accessible={false} color="white" size={20} strokeWidth={2.2}/>
+            </View>
+          </Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Next photo of ${result.name}`} onPress={()=>setActiveImage(index=>(index+1)%usableGallery.length)} style={[s0.galleryControl,s0.galleryNext]}>
+            <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[s0.galleryChevronStack,s0.galleryIconNext]}>
+              <ChevronRight accessible={false} color={HOTEL_GALLERY_CHEVRON_CONTRAST} size={20} strokeWidth={4} style={s0.galleryChevronUnderlay}/>
+              <ChevronRight accessible={false} color="white" size={20} strokeWidth={2.2}/>
+            </View>
+          </Pressable>
+        </>:null}
+        {usableGallery.length ? <View style={s0.overlay}>
+          <Text style={s0.overlayText}>
+            {activeImage+1} / {usableGallery.length}
+          </Text>
+        </View>:null}
+      </View>
+      <View style={[s0.hotelCopy, compact && s0.hotelCopyCompact]}>
+        <View style={s0.hotelTitleRow}>
+          <Text numberOfLines={2} style={s0.hotelName}>{result.name}</Text>
+        </View>
+        <View style={[s0.hotelActions, compact && s0.hotelActionsCompact]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={saved ? `Remove ${result.name} from saved` : `Save ${result.name}`}
+            accessibilityState={{ selected: saved }}
+            disabled={!hasPrice && !saved}
+            onPress={() => void canonical.toggleHotel(result, params)}
+            style={[s0.hotelAction, s0.hotelSaveAction]}
+          >
+            <Heart
+              accessible={false}
+              size={20}
+              color={saved ? HOTEL_SAVED_HEART_COLOR : HOTEL_UTILITY_ICON_COLOR}
+              fill={saved ? HOTEL_SAVED_HEART_COLOR : "none"}
+            />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Share ${result.name}`}
+            onPress={shareHotel}
+            style={[s0.hotelAction, s0.hotelShareAction]}
+          >
+            <Share2 accessible={false} size={20} color={HOTEL_UTILITY_ICON_COLOR} />
+          </Pressable>
+        </View>
+        {showCheapestBadge && hasPrice ? (
+          <View style={s0.hotelBadge}><Badge green>Cheapest</Badge></View>
+        ) : null}
+        {classificationStars > 0 ? <Text accessibilityLabel={`${classificationStars} star hotel`} style={s0.stars}>
+          {"★".repeat(classificationStars)}
+        </Text> : null}
+        <View style={s0.hotelLocation}>
+          <MapPin accessible={false} size={14} strokeWidth={2} color={colors.blue} />
+          <Text numberOfLines={1} ellipsizeMode="tail" style={s0.hotelLocationText}>{result.location}</Text>
+        </View>
+        {score == null ? null : (
+          <Text style={s0.review}>
+            <Text style={s0.score}>{score.toFixed(1)}</Text>{" "}
+            {score >= 9 ? "Exceptional" : score >= 8 ? "Excellent" : "Good"}
+            {result.reviewCount ? `  ·  ${result.reviewCount.toLocaleString()} reviews` : ""}
+          </Text>
+        )}
+        <HotelCardAmenityList amenities={result.amenities} />
+        {mealPlan && !(/^breakfast/i.test(mealPlan)&&result.amenities.some(item=>/breakfast/i.test(item)))?<Text numberOfLines={1} style={s0.hotelTerm}>{mealPlan.charAt(0).toUpperCase()+mealPlan.slice(1).toLowerCase()}</Text>:null}
+        {policy.map(item=><Text key={item} numberOfLines={1} style={s0.hotelTerm}>{item}</Text>)}
+        {result.sourceAttributions?.map(item=>{const safe=typeof item.providerUri==="string"&&/^https?:\/\//i.test(item.providerUri);return <Pressable key={`${item.provider}-${item.providerUri??""}`} disabled={!safe} onPress={()=>safe&&void Linking.openURL(item.providerUri!)}><Text numberOfLines={1} style={s0.hotelAttributionLink}>Source: {item.provider}</Text></Pressable>;})}
+        <View style={s0.hotelPrice}>
+          <View style={s0.hotelPriceCopy}>
+            <Text accessibilityLabel={displayPrices?.nightly?.accessibilityLabel} style={s0.hotelNightlyPrice}>
+              {hasPrice ? displayPrices?.nightly?.formatted ?? money(result.currency, result.pricePerNight) : "Price unavailable"}
+            </Text>
+            {hasPrice ? <Text style={s0.hotelPerNight}>per night</Text> : <Text style={s0.hotelPerNight}>No live rate</Text>}
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`View hotel for ${result.name}`}
+            style={({ pressed }) => [s0.hotelDealButton, pressed && s0.hotelDealButtonPressed]}
+            onPress={() =>
+              router.push({
+                pathname: "/hotel-details",
+                params: {
+                  result: JSON.stringify(result),
+                  ...Object.fromEntries(
+                    Object.entries(params).map(([k, v]) => [k, one(v) || ""]),
+                  ),
+                  hotelDisplayPrices: displayPrices ? JSON.stringify(displayPrices) : "",
+                  displayCurrencyContext: displayCurrencyContext ? JSON.stringify(displayCurrencyContext) : "",
+                },
+              })
+            }
+          >
+            <Text style={s0.hotelDealButtonText}>View hotel</Text>
+          </Pressable>
+        </View>
+      </View>
+    </View>
+  );
 }
-function Loading({ product }: { product: Product }) { const { theme }=useAppTheme(); const opacity=useRef(new Animated.Value(.55)).current; useEffect(()=>{const pulse=Animated.loop(Animated.sequence([Animated.timing(opacity,{toValue:1,duration:900,useNativeDriver:true}),Animated.timing(opacity,{toValue:.55,duration:900,useNativeDriver:true})]));pulse.start();return()=>pulse.stop();},[opacity]);return <View pointerEvents="none" style={s0.loadingState}><View style={s0.loadingMessage}><ActivityIndicator color={ui.blue}/><Text accessibilityRole="text" accessibilityLiveRegion="polite" style={[s0.loadingText,product==="flight"&&{color:theme.textPrimary}]}>Searching available {product==="flight"?"flights":"stays"}…</Text></View><Animated.View style={[s0.skeletonList,{opacity}]}>{[0,1,2].map(x=>product==="flight"?<FlightLoadingSkeleton key={x}/>:<HotelLoadingSkeleton key={x}/>)}</Animated.View></View>; }
-function SkeletonLine({style,flightResults=false}:{style?:object;flightResults?:boolean}){const{theme}=useAppTheme();return <View style={[s0.skeletonLine,flightResults&&{backgroundColor:theme.border},style]}/>;}
-function FlightLoadingSkeleton({roundTrip=false}:{roundTrip?:boolean}){const{theme}=useAppTheme();const placeholder={backgroundColor:theme.border};return <View style={[s0.skeletonCard,{backgroundColor:theme.surface,borderColor:theme.border}]} accessibilityElementsHidden><View style={s0.skeletonIdentityLayout}><View style={[s0.skeletonLogo,placeholder]}/><View style={s0.skeletonIdentityContent}><View style={s0.skeletonIdentityHeader}><View style={s0.skeletonIdentityCopy}><SkeletonLine flightResults style={s0.skeletonName}/><SkeletonLine flightResults style={s0.skeletonFlightNumber}/></View><View style={s0.skeletonIdentityActions}><View style={[s0.skeletonBadge,placeholder]}/></View></View></View></View><View style={s0.skeletonJourneyList}><View style={s0.skeletonJourneyBlock}><SkeletonLine flightResults style={s0.skeletonJourneyLabel}/><View style={s0.skeletonJourneyPrimaryRow}><SkeletonLine flightResults style={[s0.skeletonSideColumn,s0.skeletonTime]}/><View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonDuration}/></View><SkeletonLine flightResults style={[s0.skeletonSideColumn,s0.skeletonTime]}/></View><View style={s0.skeletonJourneyRouteRow}><SkeletonLine flightResults style={[s0.skeletonSideColumn,s0.skeletonAirport]}/><View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonRouteLine}/></View><SkeletonLine flightResults style={[s0.skeletonSideColumn,s0.skeletonAirport]}/></View><View style={s0.skeletonJourneyStopRow}><View style={s0.skeletonSideColumn}/><View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonStop}/></View><View style={s0.skeletonSideColumn}/></View></View>{roundTrip?<View style={s0.skeletonJourneyBlock}><SkeletonLine flightResults style={s0.skeletonJourneyLabel}/><View style={s0.skeletonJourneyPrimaryRow}><SkeletonLine flightResults style={[s0.skeletonSideColumn,s0.skeletonTime]}/><View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonDuration}/></View><SkeletonLine flightResults style={[s0.skeletonSideColumn,s0.skeletonTime]}/></View><View style={s0.skeletonJourneyRouteRow}><SkeletonLine flightResults style={[s0.skeletonSideColumn,s0.skeletonAirport]}/><View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonRouteLine}/></View><SkeletonLine flightResults style={[s0.skeletonSideColumn,s0.skeletonAirport]}/></View><View style={s0.skeletonJourneyStopRow}><View style={s0.skeletonSideColumn}/><View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonStop}/></View><View style={s0.skeletonSideColumn}/></View></View>:null}</View><View style={s0.skeletonFareRow}><View style={s0.skeletonFareCopy}><SkeletonLine flightResults style={s0.skeletonPriceLine}/><SkeletonLine flightResults style={s0.skeletonDetailsActionLine}/></View></View><View style={[s0.skeletonMetadataDivider,{backgroundColor:theme.border}]}/><View style={s0.skeletonMetadataRow}><SkeletonLine flightResults style={s0.skeletonMetadataLine}/></View></View>;}
-function HotelLoadingSkeleton(){return <View style={s0.hotelSkeletonCard} accessibilityElementsHidden><View style={s0.hotelSkeletonImage}/><View style={s0.hotelSkeletonCopy}><SkeletonLine style={s0.hotelSkeletonTitle}/><SkeletonLine style={s0.hotelSkeletonMeta}/><SkeletonLine style={s0.hotelSkeletonReview}/><SkeletonLine style={s0.hotelSkeletonDetail}/><View style={s0.hotelSkeletonFooter}><SkeletonLine style={s0.hotelSkeletonPrice}/><View style={s0.skeletonButton}/></View></View></View>;}
-function FlightResultsSummaryRow({count}:{count:number}){const{theme}=useAppTheme();return <View accessibilityLabel="Flight results summary" style={s0.flightResultsSummaryRow}><Text accessibilityRole="header" style={[s0.flightResultCount,{color:theme.textPrimary}]}>{flightResultCountLabel(count)}</Text></View>;}
-const hotelResultCountLabel=(count:number)=>`${count} ${count===1?"Result":"Results"} found`;
-function HotelResultsSummaryRow({count,onLayout}:{count:number;onLayout:(event:{nativeEvent:{layout:{y:number}}})=>void}){const{theme}=useAppTheme();return <View accessibilityLabel="Hotel results summary" onLayout={onLayout} style={s0.hotelResultsSummaryRow}><View style={s0.flightResultsCountColumn}><Text accessibilityRole="header" style={[s0.flightResultCount,{color:theme.textPrimary}]}>{hotelResultCountLabel(count)}</Text></View></View>;}
+function Loading({ product }: { product: Product }) {
+  const { theme } = useAppTheme();
+  const opacity = useRef(new Animated.Value(0.55)).current;
+
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0.55,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [opacity]);
+
+  return (
+    <View pointerEvents="none" style={s0.loadingState}>
+      <View style={s0.loadingMessage}>
+        <ActivityIndicator color={ui.blue} />
+        <Text
+          accessibilityRole="text"
+          accessibilityLiveRegion="polite"
+          style={[s0.loadingText, product === "flight" && { color: theme.textPrimary }]}
+        >
+          Searching available {product === "flight" ? "flights" : "stays"}…
+        </Text>
+      </View>
+      <Animated.View style={[s0.skeletonList, { opacity }]}> 
+        {[0, 1, 2].map((x) =>
+          product === "flight" ? (
+            <FlightLoadingSkeleton key={x} />
+          ) : (
+            <HotelLoadingSkeleton key={x} />
+          ),
+        )}
+      </Animated.View>
+    </View>
+  );
+}
+
+function SkeletonLine({ style, flightResults = false }: { style?: object; flightResults?: boolean }) {
+  const { theme } = useAppTheme();
+  return <View style={[s0.skeletonLine, flightResults && { backgroundColor: theme.border }, style]} />;
+}
+
+function FlightLoadingSkeleton({ roundTrip = false }: { roundTrip?: boolean }) {
+  const { theme } = useAppTheme();
+  const placeholder = { backgroundColor: theme.border };
+  return (
+    <View style={[s0.skeletonCard, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityElementsHidden>
+      <View style={s0.skeletonIdentityLayout}><View style={[s0.skeletonLogo, placeholder]} /><View style={s0.skeletonIdentityContent}><View style={s0.skeletonIdentityHeader}><View style={s0.skeletonIdentityCopy}><SkeletonLine flightResults style={s0.skeletonName} /><SkeletonLine flightResults style={s0.skeletonFlightNumber} /></View><View style={s0.skeletonIdentityActions}><View style={[s0.skeletonBadge, placeholder]} /></View></View></View></View>
+      <View style={s0.skeletonJourneyList}>
+        <View style={s0.skeletonJourneyBlock}><SkeletonLine flightResults style={s0.skeletonJourneyLabel} /><View style={s0.skeletonJourneyPrimaryRow}><SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} /><View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonDuration} /></View><SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} /></View><View style={s0.skeletonJourneyRouteRow}><SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} /><View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonRouteLine} /></View><SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} /></View><View style={s0.skeletonJourneyStopRow}><View style={s0.skeletonSideColumn} /><View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonStop} /></View><View style={s0.skeletonSideColumn} /></View></View>
+        {roundTrip ? <View style={s0.skeletonJourneyBlock}><SkeletonLine flightResults style={s0.skeletonJourneyLabel} /><View style={s0.skeletonJourneyPrimaryRow}><SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} /><View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonDuration} /></View><SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonTime]} /></View><View style={s0.skeletonJourneyRouteRow}><SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} /><View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonRouteLine} /></View><SkeletonLine flightResults style={[s0.skeletonSideColumn, s0.skeletonAirport]} /></View><View style={s0.skeletonJourneyStopRow}><View style={s0.skeletonSideColumn} /><View style={s0.skeletonTimelineColumn}><SkeletonLine flightResults style={s0.skeletonStop} /></View><View style={s0.skeletonSideColumn} /></View></View> : null}
+      </View>
+      <View style={s0.skeletonFareRow}><View style={s0.skeletonFareCopy}><SkeletonLine flightResults style={s0.skeletonPriceLine} /><SkeletonLine flightResults style={s0.skeletonDetailsActionLine} /></View></View>
+      <View style={[s0.skeletonMetadataDivider, { backgroundColor: theme.border }]} /><View style={s0.skeletonMetadataRow}><SkeletonLine flightResults style={s0.skeletonMetadataLine} /></View>
+    </View>
+  );
+}
+
+function HotelLoadingSkeleton() {
+  return <View style={s0.hotelSkeletonCard} accessibilityElementsHidden><View style={s0.hotelSkeletonImage} /><View style={s0.hotelSkeletonCopy}><SkeletonLine style={s0.hotelSkeletonTitle} /><SkeletonLine style={s0.hotelSkeletonMeta} /><SkeletonLine style={s0.hotelSkeletonReview} /><SkeletonLine style={s0.hotelSkeletonDetail} /><View style={s0.hotelSkeletonFooter}><SkeletonLine style={s0.hotelSkeletonPrice} /><View style={s0.skeletonButton} /></View></View></View>;
+}
+function FlightResultsSummaryRow({ count }: { count: number }) {
+  const { theme } = useAppTheme();
+  return <View accessibilityLabel="Flight results summary" style={s0.flightResultsSummaryRow}><Text accessibilityRole="header" style={[s0.flightResultCount, { color: theme.textPrimary }]}>{flightResultCountLabel(count)}</Text></View>;
+}
+
+const hotelResultCountLabel = (count: number) => `${count} ${count === 1 ? "Result" : "Results"} found`;
+
+function HotelResultsSummaryRow({ count, onLayout }: {
+  count: number;
+  onLayout: (event: { nativeEvent: { layout: { y: number } } }) => void;
+}) {
+  const { theme } = useAppTheme();
+  return (
+    <View accessibilityLabel="Hotel results summary" onLayout={onLayout} style={s0.hotelResultsSummaryRow}>
+      <View style={s0.flightResultsCountColumn}>
+        <Text accessibilityRole="header" style={[s0.flightResultCount, { color: theme.textPrimary }]}>{hotelResultCountLabel(count)}</Text>
+      </View>
+    </View>
+  );
+}
+
 function PriceAlert({ product, plan, results, hotelResults, available = true, compact = false }: { product: Product; plan?: SearchPlan; results?: FlightResult[]; hotelResults?: HotelResult[]; available?: boolean; compact?: boolean }) {
-  const { theme } = useAppTheme(); const { locale, t } = useMobileLocalization(); const message = useCallback((key: Parameters<typeof travelAccountMessage>[1]) => travelAccountMessage(locale,key),[locale]); const flight=product==="flight"; const presentation=useMemo(()=>flightAlertPresentation(product,Boolean(plan),results||[]),[plan?.key,product,results]); const hotelPresentation=useMemo(()=>hotelAlertPresentation(product,plan,hotelResults||[]),[plan?.key,product,hotelResults]); const activePresentation=flight?presentation:hotelPresentation; const currency=activePresentation.currencies[0]||""; const [matchingAlertState,setMatchingAlertState]=useState<{planKey:string;alert:MobilePriceAlert}>(); const [loadingAlert,setLoadingAlert]=useState(product==="flight"||product==="hotel"); const reconciliationRef=useRef(0); const [pending,setPending]=useState(false); const pendingRef=useRef(false); const [targetOpen,setTargetOpen]=useState(false); const [targetDraft,setTargetDraft]=useState(""); const [targetError,setTargetError]=useState(""); const matchingAlert=matchingAlertState&&matchingAlertState.planKey===plan?.key?matchingAlertState.alert:undefined; const setCurrentMatchingAlert=useCallback((alert:MobilePriceAlert|undefined)=>{setMatchingAlertState(alert&&plan?{planKey:plan.key,alert}:undefined);},[plan?.key]); const isTracking=matchingAlert?.status==="ACTIVE"; const unavailable=!activePresentation.enabled||(!available&&!isTracking); const requireSignIn=useCallback(()=>Alert.alert(message("signInRequired"),message("signInAlertBody"),[{text:t("signIn"),onPress:()=>router.push(signInHref("/(tabs)/profile"))},{text:t("cancel"),style:"cancel"}]),[message,t]);
-  const reconcile=useCallback(async()=>{if(!plan||(product!=="flight"&&product!=="hotel"))return;const reconciliation=++reconciliationRef.current;setLoadingAlert(true);try{if(!await readSession().catch(()=>null)){if(reconciliation===reconciliationRef.current)setCurrentMatchingAlert(undefined);return;}const alerts=(await travelApi.priceAlerts()).alerts;if(reconciliation===reconciliationRef.current)setCurrentMatchingAlert(flight?matchingFlightPriceAlert(alerts,plan):matchingHotelPriceAlert(alerts,plan));}catch(error){if(reconciliation===reconciliationRef.current&&error instanceof TravelApiError&&error.status===401)setCurrentMatchingAlert(undefined);}finally{if(reconciliation===reconciliationRef.current)setLoadingAlert(false);}},[flight,plan?.key,product,setCurrentMatchingAlert]); useFocusEffect(useCallback(()=>{void reconcile();},[reconcile]));
-  const handleToggle=async(next:boolean)=>{if(pendingRef.current||loadingAlert||!plan)return;if(next){if(unavailable)return;if(!await readSession().catch(()=>null)){requireSignIn();return;}if(isTracking)return;if(!matchingAlert){setTargetError("");setTargetOpen(true);return;}pendingRef.current=true;setPending(true);try{setCurrentMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id,"ACTIVE")).alert);}catch(error){if(error instanceof TravelApiError&&error.status===401){if(!flight)setCurrentMatchingAlert(undefined);requireSignIn();}else Alert.alert("Unable to track prices",error instanceof TravelApiError?error.message:"Please try again.");}finally{pendingRef.current=false;setPending(false);}return;}if(!isTracking||!matchingAlert)return;pendingRef.current=true;setPending(true);try{setCurrentMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id,"PAUSED")).alert);}catch(error){if(error instanceof TravelApiError&&error.status===401){if(!flight)setCurrentMatchingAlert(undefined);requireSignIn();}else Alert.alert("Unable to pause price tracking",error instanceof TravelApiError?error.message:"Please try again.");}finally{pendingRef.current=false;setPending(false);}};
-  const createAlert=async()=>{if(pendingRef.current||!plan||!currency)return;const parsed=parseTargetPrice(targetDraft);if(parsed.error||parsed.value===undefined){setTargetError(parsed.error||"Enter a target price.");return;}pendingRef.current=true;setPending(true);setTargetError("");try{const session=await readSession().catch(()=>null);if(!session){setTargetOpen(false);requireSignIn();return;}const created=await travelApi.createPriceAlert(flight?buildFlightPriceAlertPayload(plan,parsed.value,currency):buildHotelPriceAlertPayload(plan,parsed.value,currency));setCurrentMatchingAlert(created.alert);setTargetOpen(false);setTargetDraft("");}catch(error){if(error instanceof TravelApiError&&error.status===401){setTargetOpen(false);requireSignIn();}else if(error instanceof TravelApiError&&error.status===409){await reconcile();setTargetError("An alert for this search already exists.");}else setTargetError(error instanceof TravelApiError?error.message:"Unable to create price alert. Try again.");}finally{pendingRef.current=false;setPending(false);}};
-  if(flight){const toggleDisabled=pending||loadingAlert||unavailable;return <View accessibilityLabel="Flight price alert" style={[compact?s0.compactPriceAlert:s0.flightAlert,{backgroundColor:theme.priceAlertSurface,borderColor:theme.priceAlertBorder}]}>{compact?<Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/>:null}<View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[compact?s0.flightAlertCompactTitle:s0.flightAlertTitle,{color:theme.textPrimary}]}>Track this flight price</Text></View><View style={s0.compactPriceAlertSwitchSlot}>{pending?<ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent}/>:null}<Switch style={Platform.OS==="ios"?s0.compactPriceAlertSwitchIos:undefined} hitSlop={6} accessibilityRole="switch" accessibilityLabel="Track this flight price" accessibilityState={{checked:isTracking,disabled:toggleDisabled,busy:pending||loadingAlert}} disabled={toggleDisabled} value={isTracking} onValueChange={(next)=>void handleToggle(next)} trackColor={{false:theme.dark?"#465269":"#CBD5E1",true:theme.switchTrackActive}} thumbColor={isTracking?"#FFFFFF":theme.dark?"#D9E1EF":"#FFFFFF"} ios_backgroundColor={theme.dark?"#465269":"#CBD5E1"}/></View><Modal visible={targetOpen} transparent animationType="slide" onRequestClose={()=>!pending&&setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS==="ios"?"padding":"height"}><View style={[s0.alertSheet,{backgroundColor:theme.surface,borderColor:theme.border}]} accessibilityLabel="Create flight price alert"><Text accessibilityRole="header" style={[s0.flightAlertTitle,{color:theme.textPrimary}]}>Track prices</Text><Text style={[s0.flightAlertSubtitle,{color:theme.textSecondary}]}>Target price ({currency})</Text><TextInput autoFocus accessibilityLabel={`Target price in ${currency}`} value={targetDraft} onChangeText={(value)=>{setTargetDraft(value);setTargetError("");}} placeholderTextColor={theme.textSecondary} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput,{color:theme.textPrimary,borderColor:theme.border,backgroundColor:theme.background}]}/>{targetError?<Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={[s0.alertError,theme.dark&&{color:"#FF9C9C"}]}>{targetError}</Text>:null}<Button label={pending?"Creating…":"Create alert"} onPress={()=>void createAlert()}/><Button label="Cancel" outline onPress={()=>setTargetOpen(false)}/></View></KeyboardAvoidingView></Modal></View>;}
-  if(product!=="hotel"||!plan)return null;if(!activePresentation.enabled)return null;const toggleDisabled=pending||loadingAlert||unavailable;return <View accessibilityLabel={message("hotelAlertTitle")} style={[s0.compactPriceAlert,{backgroundColor:theme.priceAlertSurface,borderColor:theme.priceAlertBorder}]}><Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/><View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightAlertCompactTitle,{color:theme.textPrimary}]}>{message("hotelAlertTitle")}</Text></View><View style={s0.compactPriceAlertSwitchSlot}>{toggleDisabled&&(pending||loadingAlert)?<ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent}/>:null}<Switch style={Platform.OS==="ios"?s0.compactPriceAlertSwitchIos:undefined} accessibilityRole="switch" accessibilityLabel="Track this stay price" accessibilityState={{checked:isTracking,disabled:toggleDisabled,busy:pending||loadingAlert}} disabled={toggleDisabled} value={isTracking} onValueChange={(next)=>void handleToggle(next)} trackColor={{false:theme.dark?"#465269":"#CBD5E1",true:theme.switchTrackActive}} thumbColor={isTracking?"#FFFFFF":theme.dark?"#D9E1EF":"#FFFFFF"} ios_backgroundColor={theme.dark?"#465269":"#CBD5E1"}/></View><Modal visible={targetOpen} transparent animationType="slide" onRequestClose={()=>!pending&&setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS==="ios"?"padding":"height"}><View style={[s0.alertSheet,{backgroundColor:theme.surface,borderColor:theme.border}]} accessibilityLabel={message("hotelAlertTitle")}><Text accessibilityRole="header" style={[s0.flightAlertTitle,{color:theme.textPrimary}]}>{message("hotelAlertTitle")}</Text><Text style={[s0.flightAlertSubtitle,{color:theme.textSecondary}]}>{message("targetTotal")} ({currency})</Text><TextInput autoFocus accessibilityLabel={`${message("targetTotal")} ${currency}`} value={targetDraft} onChangeText={(value)=>{setTargetDraft(value);setTargetError("");}} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput,{color:theme.textPrimary,borderColor:theme.border,backgroundColor:theme.background}]}/>{targetError?<Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text>:null}<Button label={pending?message("creating"):message("createAlert")} onPress={()=>void createAlert()}/><Button label={t("cancel")} outline onPress={()=>setTargetOpen(false)}/></View></KeyboardAvoidingView></Modal></View>;
+  const { theme } = useAppTheme();
+  const { locale, t } = useMobileLocalization();
+  const message = useCallback((key: Parameters<typeof travelAccountMessage>[1]) => travelAccountMessage(locale, key), [locale]);
+  const flight = product === "flight";
+  const presentation = useMemo(() => flightAlertPresentation(product, Boolean(plan), results || []), [plan?.key, product, results]);
+  const hotelPresentation = useMemo(() => hotelAlertPresentation(product, plan, hotelResults || []), [plan?.key, product, hotelResults]);
+  const activePresentation = flight ? presentation : hotelPresentation;
+  const currency = activePresentation.currencies[0] || "";
+  const [matchingAlertState, setMatchingAlertState] = useState<{ planKey: string; alert: MobilePriceAlert }>();
+  const [loadingAlert, setLoadingAlert] = useState(product === "flight" || product === "hotel");
+  const reconciliationRef = useRef(0);
+  const [pending, setPending] = useState(false);
+  const pendingRef = useRef(false);
+  const [targetOpen, setTargetOpen] = useState(false);
+  const [targetDraft, setTargetDraft] = useState("");
+  const [targetError, setTargetError] = useState("");
+  const matchingAlert = matchingAlertState && matchingAlertState.planKey === plan?.key ? matchingAlertState.alert : undefined;
+  const setCurrentMatchingAlert = useCallback((alert: MobilePriceAlert | undefined) => {
+    setMatchingAlertState(alert && plan ? { planKey: plan.key, alert } : undefined);
+  }, [plan?.key]);
+  const isTracking = matchingAlert?.status === "ACTIVE";
+  const unavailable = !activePresentation.enabled || (!available && !isTracking);
+  const requireSignIn = useCallback(() => Alert.alert(message("signInRequired"), message("signInAlertBody"), [{ text: t("signIn"), onPress: () => router.push(signInHref("/(tabs)/profile")) }, { text: t("cancel"), style: "cancel" }]), [message, t]);
+  const reconcile = useCallback(async () => {
+    if (!plan || (product !== "flight" && product !== "hotel")) return;
+    const reconciliation = ++reconciliationRef.current;
+    setLoadingAlert(true);
+    try {
+      if (!await readSession().catch(() => null)) {
+        if (reconciliation === reconciliationRef.current) setCurrentMatchingAlert(undefined);
+        return;
+      }
+      const alerts = (await travelApi.priceAlerts()).alerts;
+      if (reconciliation === reconciliationRef.current) setCurrentMatchingAlert(flight ? matchingFlightPriceAlert(alerts, plan) : matchingHotelPriceAlert(alerts, plan));
+    } catch (error) {
+      if (reconciliation === reconciliationRef.current && error instanceof TravelApiError && error.status === 401) setCurrentMatchingAlert(undefined);
+    } finally {
+      if (reconciliation === reconciliationRef.current) setLoadingAlert(false);
+    }
+  }, [flight, plan?.key, product, setCurrentMatchingAlert]);
+  useFocusEffect(useCallback(() => { void reconcile(); }, [reconcile]));
+  const handleToggle = async (next: boolean) => {
+    if (pendingRef.current || loadingAlert || !plan) return;
+    if (next) {
+      if (unavailable) return;
+      if (!await readSession().catch(() => null)) { requireSignIn(); return; }
+      if (isTracking) return;
+      if (!matchingAlert) { setTargetError(""); setTargetOpen(true); return; }
+      pendingRef.current = true; setPending(true);
+      try { setCurrentMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id, "ACTIVE")).alert); }
+      catch (error) { if (error instanceof TravelApiError && error.status === 401) { if (!flight) setCurrentMatchingAlert(undefined); requireSignIn(); } else Alert.alert("Unable to track prices", error instanceof TravelApiError ? error.message : "Please try again."); }
+      finally { pendingRef.current = false; setPending(false); }
+      return;
+    }
+    if (!isTracking || !matchingAlert) return;
+    pendingRef.current = true; setPending(true);
+    try { setCurrentMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id, "PAUSED")).alert); }
+    catch (error) { if (error instanceof TravelApiError && error.status === 401) { if (!flight) setCurrentMatchingAlert(undefined); requireSignIn(); } else Alert.alert("Unable to pause price tracking", error instanceof TravelApiError ? error.message : "Please try again."); }
+    finally { pendingRef.current = false; setPending(false); }
+  };
+  const createAlert = async () => {
+    if (pendingRef.current || !plan || !currency) return;
+    const parsed = parseTargetPrice(targetDraft);
+    if (parsed.error || parsed.value === undefined) { setTargetError(parsed.error || "Enter a target price."); return; }
+    pendingRef.current = true; setPending(true); setTargetError("");
+    try {
+      const session = await readSession().catch(() => null);
+      if (!session) { setTargetOpen(false); requireSignIn(); return; }
+      const created = await travelApi.createPriceAlert(flight ? buildFlightPriceAlertPayload(plan, parsed.value, currency) : buildHotelPriceAlertPayload(plan, parsed.value, currency));
+      setCurrentMatchingAlert(created.alert); setTargetOpen(false); setTargetDraft("");
+    } catch (error) {
+      if (error instanceof TravelApiError && error.status === 401) { setTargetOpen(false); requireSignIn(); }
+      else if (error instanceof TravelApiError && error.status === 409) { await reconcile(); setTargetError("An alert for this search already exists."); }
+      else setTargetError(error instanceof TravelApiError ? error.message : "Unable to create price alert. Try again.");
+    } finally { pendingRef.current = false; setPending(false); }
+  };
+  if (flight) {
+    const toggleDisabled = pending || loadingAlert || unavailable;
+    return <View accessibilityLabel="Flight price alert" style={[compact ? s0.compactPriceAlert : s0.flightAlert,{ backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}>{compact ? <Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/> : null}<View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[compact ? s0.flightAlertCompactTitle : s0.flightAlertTitle, { color: theme.textPrimary }]}>Track this flight price</Text></View><View style={s0.compactPriceAlertSwitchSlot}>{pending ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent}/> : null}<Switch style={Platform.OS === "ios" ? s0.compactPriceAlertSwitchIos : undefined} hitSlop={6} accessibilityRole="switch" accessibilityLabel="Track this flight price" accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending || loadingAlert }} disabled={toggleDisabled} value={isTracking} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"} ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}/></View><Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel="Create flight price alert"><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track prices</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Target price ({currency})</Text><TextInput autoFocus accessibilityLabel={`Target price in ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} placeholderTextColor={theme.textSecondary} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={[s0.alertError, theme.dark && { color: "#FF9C9C" }]}>{targetError}</Text> : null}<Button label={pending ? "Creating…" : "Create alert"} onPress={() => void createAlert()} /><Button label="Cancel" outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal></View>;
+  }
+  if (product !== "hotel" || !plan) return null;
+  if (!activePresentation.enabled) return null;
+  const toggleDisabled = pending || loadingAlert || unavailable;
+  return <View accessibilityLabel={message("hotelAlertTitle")} style={[s0.compactPriceAlert, { backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}><Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/><View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightAlertCompactTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text></View><View style={s0.compactPriceAlertSwitchSlot}>{toggleDisabled && (pending || loadingAlert) ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent}/> : null}{/* Native UISwitch artwork sits high in its iOS layout box; offset its compact rendering to optically align with the Bell and title. */}<Switch style={Platform.OS === "ios" ? s0.compactPriceAlertSwitchIos : undefined} accessibilityRole="switch" accessibilityLabel="Track this stay price" accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending || loadingAlert }} disabled={toggleDisabled} value={isTracking} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"} ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}/></View><Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel={message("hotelAlertTitle")}><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>{message("targetTotal")} ({currency})</Text><TextInput autoFocus accessibilityLabel={`${message("targetTotal")} ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text> : null}<Button label={pending ? message("creating") : message("createAlert")} onPress={() => void createAlert()} /><Button label={t("cancel")} outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal></View>;
 }
-export function BottomNav({flightResults=false}:{flightResults?:boolean}={}){const{theme}=useAppTheme();const inset=useSafeAreaInsets();const items=[{icon:"compass",label:"Explore",accessibilityLabel:"Explore",route:"/(tabs)/explore"},{icon:"trip",label:"Trips",accessibilityLabel:"My Trips",route:"/(tabs)/trips"},{icon:"search",label:"Search",accessibilityLabel:"Search",route:"/flights"},{icon:"heart",label:"Saved",accessibilityLabel:"Saved",route:"/saved"},{icon:"person",label:"Profile",accessibilityLabel:"Profile",route:"/(tabs)/profile"}] as const;return <View style={[s0.nav,flightResults&&{backgroundColor:theme.surface,borderTopColor:theme.border},{paddingBottom:Math.max(inset.bottom,8)}]}>{items.map(({icon,label,accessibilityLabel,route})=><Pressable key={label} accessibilityRole="button" accessibilityLabel={accessibilityLabel} accessibilityState={{selected:label==="Search"}} onPress={()=>router.push(route)} style={({pressed})=>[s0.navItem,pressed&&s0.navItemPressed]}><FlowIcon name={icon as never} color={label==="Search"?ui.blue:flightResults?theme.textSecondary:ui.muted}/><Text style={[s0.navText,flightResults&&{color:theme.textSecondary},label==="Search"&&{color:ui.blue}]}>{label}</Text></Pressable>)}</View>;}
-const s0=StyleSheet.create({
-  safe:{flex:1,backgroundColor:"white"},flightHeader:{paddingTop:12,paddingBottom:8},flightHeaderMainRow:{width:"100%",flexDirection:"row",alignItems:"center",gap:6},flightHeaderSide:{width:44,flexShrink:0},flightHeaderBack:{width:44,height:44,alignItems:"center",justifyContent:"center"},flightHeaderControlPressed:{opacity:.55},flightRouteSummaryCard:{flex:1,minWidth:0,minHeight:62,borderWidth:1,borderRadius:13,flexDirection:"row",alignItems:"center",overflow:"hidden"},flightRouteSummaryCopy:{flex:1,minWidth:0,justifyContent:"center",paddingLeft:14,paddingVertical:9},flightRouteSummaryText:{fontSize:14,lineHeight:18,fontWeight:"700",fontFamily:appFonts.bold},flightRouteSummarySecondary:{marginTop:3,fontSize:10.5,lineHeight:14,fontWeight:"500",fontFamily:appFonts.medium},flightRouteSummaryEdit:{width:44,height:44,alignItems:"center",justifyContent:"center"},hotelHeader:{paddingTop:12,paddingBottom:8},hotelHeaderMainRow:{width:"100%",flexDirection:"row",alignItems:"center",gap:6},hotelHeaderSide:{width:44,flexShrink:0},hotelHeaderBack:{width:44,height:44,alignItems:"center",justifyContent:"center"},hotelHeaderControlPressed:{opacity:.55},hotelSummaryCard:{flex:1,minWidth:0,minHeight:62,borderWidth:1,borderRadius:13,flexDirection:"row",alignItems:"center",overflow:"hidden"},hotelSummaryCardPressed:{opacity:.76},hotelSummaryText:{flex:1,minWidth:0,justifyContent:"center",paddingLeft:14,paddingVertical:9},hotelSummaryDestination:{fontSize:14,lineHeight:18,fontWeight:"700",fontFamily:appFonts.bold},hotelSummarySecondary:{marginTop:3,fontSize:10.5,lineHeight:14,fontWeight:"500",fontFamily:appFonts.medium},hotelSummaryEditSlot:{width:44,height:44,flexShrink:0,alignItems:"center",justifyContent:"center"},hotelBackToTop:{position:"absolute",right:16,width:44,height:44,borderRadius:22,borderWidth:1,alignItems:"center",justifyContent:"center",zIndex:19,elevation:4},filterRail:{height:44,flexGrow:0},hotelFilterRail:{height:44,flexGrow:0},hotelFilterContent:{paddingLeft:8,paddingRight:16,gap:4,alignItems:"center",flexWrap:"nowrap"},hotelFilterSectionHeader:{paddingBottom:12},flightFilterSectionHeader:{paddingTop:8},resultsScroll:{flex:1},flightResultsListContainer:{flex:1},flightResultsContent:{flexGrow:1},route:{fontSize:20,lineHeight:25,fontWeight:"900",color:ui.navy},sub:{fontSize:12,color:ui.muted,lineHeight:17},filters:{paddingHorizontal:14,paddingVertical:3,gap:8,alignItems:"center"},hotelShortcutTouchTarget:{minWidth:44,minHeight:44,justifyContent:"center"},hotelShortcut:{height:36,flexDirection:"row",alignItems:"center",justifyContent:"center",gap:4,borderWidth:1,borderRadius:9,paddingHorizontal:8},hotelShortcutLabel:{fontSize:13,lineHeight:16,fontWeight:"600",fontFamily:appFonts.semibold},hotelShortcutCount:{minWidth:20,height:20,borderRadius:10,paddingHorizontal:6,alignItems:"center",justifyContent:"center"},hotelShortcutCountText:{fontSize:11,lineHeight:14,fontWeight:"600",fontFamily:appFonts.semibold},hotelShortcutChevronExpanded:{transform:[{rotate:"180deg"}]},modalBackdrop:{flex:1,justifyContent:"flex-end",backgroundColor:"rgba(10, 24, 48, 0.42)"},sheet:{maxHeight:"82%",borderTopLeftRadius:22,borderTopRightRadius:22,padding:18,gap:14,backgroundColor:"white"},sortSheet:{borderTopLeftRadius:22,borderTopRightRadius:22,paddingHorizontal:18,paddingTop:14,gap:4,backgroundColor:"white"},sheetHead:{flexDirection:"row",alignItems:"center",justifyContent:"space-between"},closeButton:{width:44,height:44,alignItems:"center",justifyContent:"center"},sheetScroll:{flexGrow:0},sheetContent:{gap:22,paddingBottom:4},sortOptions:{paddingVertical:2},sortOption:{minHeight:58,flexDirection:"row",alignItems:"center",gap:13,paddingHorizontal:2,paddingVertical:8},sortOptionPressed:{opacity:.62},radio:{width:21,height:21,borderRadius:11,borderWidth:1.5,alignItems:"center",justifyContent:"center"},radioDot:{width:11,height:11,borderRadius:6,backgroundColor:ui.blue},sortOptionCopy:{flex:1,minWidth:0,gap:1},sortOptionLabel:{fontSize:15,lineHeight:20,fontWeight:"700"},sortOptionDescription:{fontSize:12,lineHeight:17},filterSection:{gap:10},filterSectionTitle:{fontSize:14,fontWeight:"800",color:ui.navy},choiceRow:{flexDirection:"row",flexWrap:"wrap",gap:9},choice:{minHeight:42,justifyContent:"center",borderWidth:1,borderColor:ui.border,borderRadius:21,paddingHorizontal:14,paddingVertical:9,backgroundColor:"white"},choiceActive:{borderColor:ui.blue,backgroundColor:"#EEF4FF"},choiceText:{color:ui.navy,fontSize:13,fontWeight:"600"},choiceTextActive:{color:ui.blue},noChoices:{color:ui.muted,fontSize:13,lineHeight:19},sheetActions:{gap:9},body:{paddingHorizontal:18,paddingBottom:92,gap:14},hotelResultsContent:{flexGrow:1},hotelFilterChips:{gap:8,paddingVertical:6},hotelFilterChip:{minHeight:44,borderRadius:18,borderWidth:1,paddingHorizontal:12,alignItems:"center",justifyContent:"center"},hotelAttribution:{borderWidth:1,borderRadius:10,padding:10},flightResultsBody:{paddingHorizontal:14,gap:8},flightCardItem:{paddingHorizontal:14,paddingBottom:8},flightResultsIntro:{paddingTop:16,paddingBottom:12},notice:{backgroundColor:"#F2F6FF",color:ui.navy,padding:10,borderRadius:8},foundTitle:{fontSize:16,fontWeight:"800",color:ui.navy},hotelResultsSummaryRow:{gap:8},hotelFilteredEmpty:{alignItems:"center",gap:10,paddingVertical:28},hotelClearFilters:{color:ui.blue,fontSize:15,fontWeight:"800"},flightResultsSummaryRow:{paddingHorizontal:14,paddingTop:6,paddingBottom:10,alignItems:"stretch"},flightResultsCountColumn:{minWidth:0,flexDirection:"row",alignItems:"baseline",justifyContent:"space-between",gap:8},flightResultCount:{fontSize:13,lineHeight:17,fontWeight:"700",fontFamily:appFonts.bold},card:{width:"100%",borderWidth:1,borderRadius:16,paddingHorizontal:12,paddingVertical:9,gap:5,shadowColor:"#18305B",shadowOffset:{width:0,height:2},shadowOpacity:.08,shadowRadius:10,elevation:2},cardPressed:{opacity:.94},airlineHeader:{width:"100%",minWidth:0,flexDirection:"row",alignItems:"flex-start"},airlineCopy:{flex:1,minWidth:0},identityActions:{flexDirection:"row",alignItems:"center",justifyContent:"flex-end",flexShrink:0,gap:0,transform:[{translateY:-3}]},resultBadge:{height:24,flexDirection:"row",alignItems:"center",paddingHorizontal:9,borderRadius:12},resultBadgeText:{fontSize:10,lineHeight:13,fontWeight:"800",fontFamily:appFonts.extraBold},flightMain:{width:"100%",alignItems:"stretch"},flightIdentityLayout:{width:"100%",minWidth:0,flexDirection:"row",alignItems:"flex-start",gap:8},airlineLogoColumn:{width:38,flexShrink:0,alignItems:"center"},flightDetails:{flex:1,minWidth:0},airlineName:{fontSize:13,lineHeight:17,color:ui.navy,fontWeight:"700",fontFamily:appFonts.bold},flightNumber:{marginTop:1,fontSize:11,lineHeight:14,fontWeight:"500",fontFamily:appFonts.medium},operatingCarrierText:{fontSize:11,lineHeight:15,fontWeight:"500",fontFamily:appFonts.medium},journeyList:{width:"100%",marginTop:8,gap:10},journeyBlock:{width:"100%"},journeyLabel:{fontSize:10,lineHeight:12,fontWeight:"700",fontFamily:appFonts.bold,letterSpacing:.8},journeyPrimaryRow:{width:"100%",flexDirection:"row",alignItems:"center",gap:6,marginTop:4},journeyRouteRow:{width:"100%",flexDirection:"row",alignItems:"center",gap:6,marginTop:2},journeyStopRow:{width:"100%",flexDirection:"row",alignItems:"center",gap:6,marginTop:2},departureColumn:{flexBasis:72,minWidth:72,flexShrink:0},arrivalColumn:{flexBasis:72,minWidth:72,flexShrink:0},rightColumnContract:{alignItems:"flex-end"},time:{fontSize:14,lineHeight:18,fontWeight:"800",fontFamily:appFonts.extraBold,color:ui.navy},airportCode:{fontSize:11,lineHeight:14,fontWeight:"700",fontFamily:appFonts.bold},airportDate:{marginTop:1,fontSize:9.5,lineHeight:12,fontWeight:"500",fontFamily:appFonts.medium},timelineColumn:{flex:1,minWidth:46,alignItems:"center"},journeyDuration:{maxWidth:"100%",fontSize:11,lineHeight:14,fontWeight:"600",fontFamily:appFonts.semibold,textAlign:"center"},stopLabel:{maxWidth:"100%",fontSize:10,lineHeight:13,fontWeight:"500",fontFamily:appFonts.medium,textAlign:"center"},routeTrack:{width:"100%",minWidth:46,flexDirection:"row",alignItems:"center",gap:2},routeDot:{width:7,height:7,borderRadius:3.5,flexShrink:0},line:{flex:1,height:1.5,backgroundColor:ui.muted},bigPrice:{maxWidth:"100%",minWidth:0,flexShrink:1,fontSize:19,lineHeight:24,fontWeight:"700",fontFamily:appFonts.bold,color:ui.navy,textAlign:"right",fontVariant:["tabular-nums"]},fareRow:{width:"100%",paddingTop:0,flexDirection:"row",justifyContent:"flex-end"},fareCopy:{width:"100%",maxWidth:"100%",minWidth:0,alignItems:"flex-end"},flightCardPressed:{opacity:.78,transform:[{scale:.995}]},flightCardFooter:{width:"100%",marginTop:5,paddingTop:7,borderTopWidth:StyleSheet.hairlineWidth,borderTopColor:"#D8E1EC"},flightLowerSection:{width:"100%",minWidth:0,flexDirection:"row",alignItems:"flex-start",gap:8},flightMetadataRegion:{flex:1,minWidth:0,paddingTop:1,alignItems:"flex-start",gap:5},flightMetadataItem:{width:"100%",minWidth:0,minHeight:16,flexDirection:"row",alignItems:"center",gap:6},flightMetadataText:{flex:1,minWidth:0,fontSize:10.5,lineHeight:15,fontWeight:"500",fontFamily:appFonts.medium},flightMetadataLabel:{fontWeight:"600",fontFamily:appFonts.semibold},flightCommercialRegion:{width:"46%",minWidth:104,flexShrink:0,alignSelf:"stretch",alignItems:"flex-end",justifyContent:"space-between"},flightDetailsAffordance:{width:"100%",minHeight:16,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4},flightDetailsAffordanceText:{fontSize:13,lineHeight:15,fontWeight:"600",fontFamily:appFonts.semibold},metadataDivider:{width:"100%",height:StyleSheet.hairlineWidth,marginTop:6,marginBottom:4},metadataFooterContainer:{width:"100%",alignItems:"center"},metadataRow:{width:"100%",flexDirection:"row",alignItems:"center",paddingTop:1,paddingBottom:2},metadataItem:{flex:1,minWidth:0,flexDirection:"row",alignItems:"center",justifyContent:"center",gap:4,paddingHorizontal:2},metadataText:{flexShrink:1,minWidth:0,fontSize:11.5,lineHeight:15,fontWeight:"500",fontFamily:appFonts.medium},hotelCard:{minHeight:260,borderWidth:1,borderColor:ui.border,borderRadius:13,overflow:"hidden",flexDirection:"row",backgroundColor:"white"},hotelImageWrap:{width:"39%",alignSelf:"stretch",position:"relative"},hotelImageWrapCompact:{width:"38%"},hotelImage:{...StyleSheet.absoluteFillObject,backgroundColor:"#E9EDF3"},hotelImageUnavailable:{alignItems:"center",justifyContent:"center",paddingHorizontal:8},hotelImageUnavailableText:{fontSize:12,color:ui.muted,textAlign:"center"},galleryControl:{position:"absolute",top:"50%",width:44,height:44,transform:[{translateY:-22}],alignItems:"center",justifyContent:"center"},galleryPrevious:{left:0},galleryNext:{right:0},galleryIconPrevious:{transform:[{translateX:-6}]},galleryIconNext:{transform:[{translateX:6}]},galleryChevronStack:{width:20,height:20},galleryChevronUnderlay:{position:"absolute",left:0,top:0},overlay:{position:"absolute",bottom:10,left:10,backgroundColor:"rgba(0,0,0,.72)",padding:6,borderRadius:5},overlayText:{color:"white",fontSize:10,fontWeight:"700"},hotelBadge:{alignSelf:"flex-start"},hotelCopy:{position:"relative",flex:1,minWidth:0,padding:12,gap:4},hotelCopyCompact:{padding:10},hotelTitleRow:{minWidth:0,paddingRight:80},hotelActions:{position:"absolute",zIndex:2,top:4,right:4,flexDirection:"row",flexShrink:0,gap:0},hotelActionsCompact:{top:2,right:2},hotelAction:{width:44,height:44,alignItems:"center",justifyContent:"center"},hotelSaveAction:{alignItems:"flex-end",paddingRight:4},hotelShareAction:{alignItems:"flex-start",paddingLeft:4},hotelName:{flex:1,minWidth:0,fontSize:15,fontWeight:"700",fontFamily:appFonts.bold,color:ui.navy,lineHeight:20},stars:{color:"#FFB800",fontSize:14},hotelLocation:{flexDirection:"row",alignItems:"center",gap:4,minWidth:0},hotelLocationText:{flexShrink:1,minWidth:0,color:colors.blue,fontSize:12,lineHeight:16,fontWeight:"600",fontFamily:appFonts.semibold},review:{fontSize:11,color:ui.navy},score:{backgroundColor:ui.blue,color:"white",fontWeight:"900"},hotelTerm:{fontSize:11,lineHeight:15,color:ui.navy},hotelAttributionLink:{fontSize:10,lineHeight:14,color:colors.blue,textDecorationLine:"underline"},hotelPrice:{marginTop:"auto",alignItems:"flex-end",paddingTop:8},hotelPriceCopy:{minWidth:0,alignItems:"flex-end"},hotelNightlyPrice:{fontSize:18,lineHeight:24,fontWeight:"700",fontFamily:appFonts.bold,color:ui.navy,textAlign:"right",fontVariant:["tabular-nums"]},hotelPerNight:{marginTop:1,fontSize:12,lineHeight:16,fontWeight:"500",fontFamily:appFonts.medium,color:ui.muted,textAlign:"right"},hotelDealButton:{minHeight:40,minWidth:104,marginTop:6,paddingHorizontal:14,borderRadius:8,backgroundColor:colors.blue,alignItems:"center",justifyContent:"center"},hotelDealButtonPressed:{backgroundColor:"#003B91"},hotelDealButtonText:{fontSize:14,lineHeight:18,fontWeight:"600",fontFamily:appFonts.semibold,color:"white"},loadingState:{width:"100%",gap:14},loadingMessage:{minHeight:40,flexDirection:"row",alignItems:"center",justifyContent:"center",gap:9},loadingText:{fontSize:13,lineHeight:18,color:ui.navy,fontWeight:"700"},flightLoadingExperience:{width:"100%",gap:14},flightLoadingStatus:{width:"100%",alignItems:"center",paddingHorizontal:16,paddingTop:4,gap:6},flightLoadingBrand:{width:172,height:44},flightLoadingCopy:{alignItems:"center",gap:4,minHeight:64},flightLoadingTitle:{fontSize:17,lineHeight:22,fontWeight:"800",textAlign:"center"},flightLoadingRoute:{fontSize:14,lineHeight:18,fontWeight:"800",textAlign:"center"},flightLoadingBody:{fontSize:12,lineHeight:17,textAlign:"center"},skeletonList:{width:"100%",gap:14},skeletonCard:{width:"100%",borderWidth:1,borderRadius:16,paddingHorizontal:12,paddingVertical:9,gap:5},skeletonIdentityLayout:{width:"100%",flexDirection:"row",alignItems:"center",gap:8},skeletonIdentityContent:{flex:1,minWidth:0},skeletonIdentityHeader:{width:"100%",flexDirection:"row",alignItems:"center",gap:8},skeletonIdentityCopy:{flex:1,minWidth:0},skeletonIdentityActions:{flexDirection:"row",alignItems:"center",justifyContent:"flex-end",flexShrink:0,gap:8},skeletonBadge:{width:60,height:22,borderRadius:11},skeletonJourneyList:{width:"100%",marginTop:10,gap:10},skeletonJourneyBlock:{width:"100%"},skeletonJourneyLabel:{width:60,height:7,borderRadius:4},skeletonJourneyPrimaryRow:{width:"100%",flexDirection:"row",alignItems:"center",gap:6,marginTop:4},skeletonJourneyRouteRow:{width:"100%",flexDirection:"row",alignItems:"center",gap:6,marginTop:2},skeletonJourneyStopRow:{width:"100%",flexDirection:"row",alignItems:"center",gap:6,marginTop:2},skeletonSideColumn:{flexBasis:72,minWidth:72,flexShrink:0},skeletonTimelineColumn:{flex:1,minWidth:46,alignItems:"center"},skeletonLogo:{width:42,height:42,borderRadius:10,flexShrink:0},skeletonLine:{height:7,borderRadius:4,backgroundColor:"#E7EBF1"},skeletonName:{width:110,height:11},skeletonFlightNumber:{width:48,height:7,marginTop:4},skeletonTime:{width:"70%",height:14},skeletonAirport:{width:"48%"},skeletonDuration:{width:"65%",height:6},skeletonRouteLine:{width:"100%",height:2},skeletonStop:{width:"52%",height:6},skeletonPriceLine:{width:100,height:16},skeletonDetailsActionLine:{width:82,height:8},skeletonFareRow:{width:"100%",paddingTop:10,flexDirection:"row",justifyContent:"flex-end"},skeletonFareCopy:{minHeight:45,alignItems:"flex-end",justifyContent:"space-between"},skeletonMetadataDivider:{width:"100%",height:StyleSheet.hairlineWidth,marginTop:6,marginBottom:4},skeletonMetadataRow:{width:"100%",flexDirection:"row",alignItems:"center",justifyContent:"flex-start"},skeletonMetadataLine:{width:"68%",height:7},skeletonButton:{width:96,height:44,borderRadius:8,backgroundColor:"#E7EBF1"},hotelSkeletonCard:{width:"100%",height:234,borderWidth:1,borderColor:ui.border,borderRadius:13,overflow:"hidden",flexDirection:"row",backgroundColor:"white"},hotelSkeletonImage:{width:"39%",height:"100%",backgroundColor:"#E7EBF1"},hotelSkeletonCopy:{flex:1,padding:12,gap:12},hotelSkeletonTitle:{width:"82%",height:15},hotelSkeletonMeta:{width:"62%"},hotelSkeletonReview:{width:"74%"},hotelSkeletonDetail:{width:"88%"},hotelSkeletonFooter:{marginTop:"auto",flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8},hotelSkeletonPrice:{width:58,height:16},flightAlert:{borderRadius:10,borderWidth:1,paddingHorizontal:10,paddingVertical:0,flexDirection:"row",alignItems:"center",gap:4,overflow:"hidden"},compactPriceAlert:{width:"100%",minHeight:52,borderRadius:12,borderWidth:1,paddingHorizontal:12,paddingVertical:4,flexDirection:"row",alignItems:"center",gap:8},flightAlertOuter:{marginHorizontal:14},flightAlertCopy:{flex:1,minWidth:0,gap:1},flightAlertCompactTitle:{fontSize:12.5,lineHeight:16,fontWeight:"700",fontFamily:appFonts.bold},flightAlertTitle:{fontSize:14,lineHeight:18,fontWeight:"700",fontFamily:appFonts.bold},flightAlertSubtitle:{fontSize:12,lineHeight:16,fontWeight:"500",fontFamily:appFonts.medium},compactPriceAlertSwitchSlot:{minWidth:51,minHeight:44,flexShrink:0,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4},compactPriceAlertSwitchIos:{transform:[{translateY:8}]},alertModalBackdrop:{flex:1,justifyContent:"flex-end",backgroundColor:"rgba(0,0,0,.45)"},alertSheet:{padding:20,gap:12,borderTopWidth:1,borderTopLeftRadius:18,borderTopRightRadius:18},alertInput:{minHeight:48,borderWidth:1,borderRadius:8,paddingHorizontal:12,fontSize:18},alertError:{color:"#A4262C"},alertButton:{width:"100%",minHeight:44,borderWidth:1,borderColor:ui.blue,borderRadius:11,flexDirection:"row",alignItems:"center",justifyContent:"center",gap:8,backgroundColor:"white"},alertButtonPressed:{backgroundColor:"#EEF4FF"},alertButtonText:{color:ui.blue,fontSize:14,fontWeight:"800"},nav:{position:"absolute",left:0,right:0,bottom:0,flexDirection:"row",borderTopWidth:1,borderTopColor:ui.border,paddingTop:9,backgroundColor:"white"},navItem:{flex:1,minHeight:48,alignItems:"center",justifyContent:"center",gap:3},navItemPressed:{opacity:.72},navText:{fontSize:10,color:ui.muted,fontWeight:"700"}
+export function BottomNav({ flightResults = false }: { flightResults?: boolean } = {}) {
+  const { theme } = useAppTheme();
+  const inset = useSafeAreaInsets();
+  const items = [
+    { icon: "compass", label: "Explore", accessibilityLabel: "Explore", route: "/(tabs)/explore" },
+    { icon: "trip", label: "Trips", accessibilityLabel: "My Trips", route: "/(tabs)/trips" },
+    { icon: "search", label: "Search", accessibilityLabel: "Search", route: "/flights" },
+    { icon: "heart", label: "Saved", accessibilityLabel: "Saved", route: "/saved" },
+    { icon: "person", label: "Profile", accessibilityLabel: "Profile", route: "/(tabs)/profile" },
+  ] as const;
+  return <View style={[s0.nav, flightResults && { backgroundColor: theme.surface, borderTopColor: theme.border }, { paddingBottom: Math.max(inset.bottom, 8) }]}>{items.map(({ icon, label, accessibilityLabel, route }) => <Pressable key={label} accessibilityRole="button" accessibilityLabel={accessibilityLabel} accessibilityState={{ selected: label === "Search" }} onPress={() => router.push(route)} style={({ pressed }) => [s0.navItem, pressed && s0.navItemPressed]}><FlowIcon name={icon as never} color={label === "Search" ? ui.blue : flightResults ? theme.textSecondary : ui.muted}/><Text style={[s0.navText, flightResults && { color: theme.textSecondary }, label === "Search" && { color: ui.blue }]}>{label}</Text></Pressable>)}</View>;
+}
+const s0 = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: "white" },
+  flightHeader: { paddingTop: 12, paddingBottom: 8 },
+  flightHeaderMainRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
+  flightHeaderSide: { width: 44, flexShrink: 0 },
+  flightHeaderBack: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  flightHeaderControlPressed: { opacity: 0.55 },
+  flightRouteSummaryCard: { flex: 1, minWidth: 0, minHeight: 62, borderWidth: 1, borderRadius: 13, flexDirection: "row", alignItems: "center", overflow: "hidden" },
+  flightRouteSummaryCopy: { flex: 1, minWidth: 0, justifyContent: "center", paddingLeft: 14, paddingVertical: 9 },
+  flightRouteSummaryText: { fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
+  flightRouteSummarySecondary: { marginTop: 3, fontSize: 10.5, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
+  flightRouteSummaryEdit: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  hotelHeader: { paddingTop: 12, paddingBottom: 8 },
+  hotelHeaderMainRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
+  hotelHeaderSide: { width: 44, flexShrink: 0 },
+  hotelHeaderBack: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  hotelHeaderControlPressed: { opacity: 0.55 },
+  hotelSummaryCard: { flex: 1, minWidth: 0, minHeight: 62, borderWidth: 1, borderRadius: 13, flexDirection: "row", alignItems: "center", overflow: "hidden" },
+  hotelSummaryCardPressed: { opacity: 0.76 },
+  hotelSummaryText: { flex: 1, minWidth: 0, justifyContent: "center", paddingLeft: 14, paddingVertical: 9 },
+  hotelSummaryDestination: { fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
+  hotelSummarySecondary: { marginTop: 3, fontSize: 10.5, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
+  hotelSummaryEditSlot: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
+  hotelBackToTop:{position:"absolute",right:16,width:44,height:44,borderRadius:22,borderWidth:1,alignItems:"center",justifyContent:"center",zIndex:19,elevation:4},
+  filterRail: { height: 44, flexGrow: 0 },
+  hotelFilterRail: { height: 44, flexGrow: 0 },
+  hotelFilterContent: { paddingLeft: 8, paddingRight: 16, gap: 4, alignItems: "center", flexWrap: "nowrap" },
+  hotelFilterSectionHeader: { paddingBottom: 12 },
+  flightFilterSectionHeader: { paddingTop: 8 },
+  resultsScroll: { flex: 1 },
+  flightResultsListContainer: { flex: 1 },
+  flightResultsContent: { flexGrow: 1 },
+  route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
+  sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
+  filters: { paddingHorizontal: 14, paddingVertical: 3, gap: 8, alignItems: "center" },
+  hotelShortcutTouchTarget: { minWidth: 44, minHeight: 44, justifyContent: "center" },
+  hotelShortcut: { height: 36, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, borderWidth: 1, borderRadius: 9, paddingHorizontal: 8 },
+  hotelShortcutLabel: { fontSize: 13, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
+  hotelShortcutCount: { minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 6, alignItems: "center", justifyContent: "center" },
+  hotelShortcutCountText: { fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts.semibold },
+  hotelShortcutChevronExpanded: { transform: [{ rotate: "180deg" }] },
+  modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(10, 24, 48, 0.42)" },
+  sheet: { maxHeight: "82%", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 18, gap: 14, backgroundColor: "white" },
+  sortSheet: { borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingHorizontal: 18, paddingTop: 14, gap: 4, backgroundColor: "white" },
+  sheetHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  closeButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  sheetScroll: { flexGrow: 0 },
+  sheetContent: { gap: 22, paddingBottom: 4 },
+  sortOptions: { paddingVertical: 2 },
+  sortOption: { minHeight: 58, flexDirection: "row", alignItems: "center", gap: 13, paddingHorizontal: 2, paddingVertical: 8 },
+  sortOptionPressed: { opacity: 0.62 },
+  radio: { width: 21, height: 21, borderRadius: 11, borderWidth: 1.5, alignItems: "center", justifyContent: "center" },
+  radioDot: { width: 11, height: 11, borderRadius: 6, backgroundColor: ui.blue },
+  sortOptionCopy: { flex: 1, minWidth: 0, gap: 1 },
+  sortOptionLabel: { fontSize: 15, lineHeight: 20, fontWeight: "700" },
+  sortOptionDescription: { fontSize: 12, lineHeight: 17 },
+  filterSection: { gap: 10 },
+  filterSectionTitle: { fontSize: 14, fontWeight: "800", color: ui.navy },
+  choiceRow: { flexDirection: "row", flexWrap: "wrap", gap: 9 },
+  choice: { minHeight: 42, justifyContent: "center", borderWidth: 1, borderColor: ui.border, borderRadius: 21, paddingHorizontal: 14, paddingVertical: 9, backgroundColor: "white" },
+  choiceActive: { borderColor: ui.blue, backgroundColor: "#EEF4FF" },
+  choiceText: { color: ui.navy, fontSize: 13, fontWeight: "600" },
+  choiceTextActive: { color: ui.blue },
+  noChoices: { color: ui.muted, fontSize: 13, lineHeight: 19 },
+  sheetActions: { gap: 9 },
+  body: { paddingHorizontal: 18, paddingBottom: 92, gap: 14 },
+  hotelResultsContent: { flexGrow: 1 },
+  hotelFilterChips:{gap:8,paddingVertical:6},
+  hotelFilterChip:{minHeight:44,borderRadius:18,borderWidth:1,paddingHorizontal:12,alignItems:"center",justifyContent:"center"},
+  hotelAttribution:{borderWidth:1,borderRadius:10,padding:10},
+  flightResultsBody: { paddingHorizontal: 14, gap: 8 },
+  flightCardItem: { paddingHorizontal: 14, paddingBottom: 8 },
+  flightResultsIntro: { paddingTop: 16, paddingBottom: 12 },
+  notice: { backgroundColor: "#F2F6FF", color: ui.navy, padding: 10, borderRadius: 8 },
+  foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
+  hotelResultsSummaryRow: { gap: 8 },
+  hotelFilteredEmpty: { alignItems: "center", gap: 10, paddingVertical: 28 },
+  hotelClearFilters: { color: ui.blue, fontSize: 15, fontWeight: "800" },
+  flightResultsSummaryRow: { paddingHorizontal: 14, paddingTop: 6, paddingBottom: 10, alignItems: "stretch" },
+  flightResultsCountColumn: { minWidth: 0, flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 8 },
+  flightResultCount: { fontSize: 13, lineHeight: 17, fontWeight: "700", fontFamily: appFonts.bold },
+  card: { width: "100%", borderWidth: 1, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 9, gap: 5, shadowColor: "#18305B", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 2 },
+  cardPressed: { opacity: 0.94 },
+  airlineHeader: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start" },
+  airlineCopy: { flex: 1, minWidth: 0 },
+  identityActions: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 0, transform: [{ translateY: -3 }] },
+  resultBadge: { height: 24, flexDirection: "row", alignItems: "center", paddingHorizontal: 9, borderRadius: 12 },
+  resultBadgeText: { fontSize: 10, lineHeight: 13, fontWeight: "800", fontFamily: appFonts.extraBold },
+  flightMain: { width: "100%", alignItems: "stretch" },
+  flightIdentityLayout: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 8 },
+  airlineLogoColumn: { width: 38, flexShrink: 0, alignItems: "center" },
+  flightDetails: { flex: 1, minWidth: 0 },
+  airlineName: { fontSize: 13, lineHeight: 17, color: ui.navy, fontWeight: "700", fontFamily: appFonts.bold },
+  flightNumber: { marginTop: 1, fontSize: 11, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
+  operatingCarrierText: { fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
+  journeyList: { width: "100%", marginTop: 8, gap: 10 },
+  journeyBlock: { width: "100%" },
+  journeyLabel: { fontSize: 10, lineHeight: 12, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: 0.8 },
+  journeyPrimaryRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 },
+  journeyRouteRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
+  journeyStopRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
+  departureColumn: { flexBasis: 72, minWidth: 72, flexShrink: 0 },
+  arrivalColumn: { flexBasis: 72, minWidth: 72, flexShrink: 0 },
+  rightColumnContract: { alignItems: "flex-end" },
+  time: { fontSize: 14, lineHeight: 18, fontWeight: "800", fontFamily: appFonts.extraBold, color: ui.navy },
+  airportCode: { fontSize: 11, lineHeight: 14, fontWeight: "700", fontFamily: appFonts.bold },
+  airportDate: { marginTop: 1, fontSize: 9.5, lineHeight: 12, fontWeight: "500", fontFamily: appFonts.medium },
+  timelineColumn: { flex: 1, minWidth: 46, alignItems: "center" },
+  journeyDuration: { maxWidth: "100%", fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts.semibold, textAlign: "center" },
+  stopLabel: { maxWidth: "100%", fontSize: 10, lineHeight: 13, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "center" },
+  routeTrack: { width: "100%", minWidth: 46, flexDirection: "row", alignItems: "center", gap: 2 },
+  routeDot: { width: 7, height: 7, borderRadius: 3.5, flexShrink: 0 },
+  line: { flex: 1, height: 1.5, backgroundColor: ui.muted },
+  bigPrice: { maxWidth: "100%", minWidth: 0, flexShrink: 1, fontSize: 19, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold, color: ui.navy, textAlign: "right", fontVariant: ["tabular-nums"] },
+  fareRow: { width: "100%", paddingTop: 0, flexDirection: "row", justifyContent: "flex-end" },
+  fareCopy: { width: "100%", maxWidth: "100%", minWidth: 0, alignItems: "flex-end" },
+  flightCardPressed: { opacity: 0.78, transform: [{ scale: 0.995 }] },
+  flightCardFooter: { width: "100%", marginTop: 5, paddingTop: 7, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "#D8E1EC" },
+  flightLowerSection: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 8 },
+  flightMetadataRegion: { flex: 1, minWidth: 0, paddingTop: 1, alignItems: "flex-start", gap: 5 },
+  flightMetadataItem: { width: "100%", minWidth: 0, minHeight: 16, flexDirection: "row", alignItems: "center", gap: 6 },
+  flightMetadataText: { flex: 1, minWidth: 0, fontSize: 10.5, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
+  flightMetadataLabel: { fontWeight: "600", fontFamily: appFonts.semibold },
+  flightCommercialRegion: { width: "46%", minWidth: 104, flexShrink: 0, alignSelf: "stretch", alignItems: "flex-end", justifyContent: "space-between" },
+  flightDetailsAffordance: { width: "100%", minHeight: 16, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 },
+  flightDetailsAffordanceText: { fontSize: 13, lineHeight: 15, fontWeight: "600", fontFamily: appFonts.semibold },
+  metadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 6, marginBottom: 4 },
+  metadataFooterContainer: { width: "100%", alignItems: "center" },
+  metadataRow: { width: "100%", flexDirection: "row", alignItems: "center", paddingTop: 1, paddingBottom: 2 },
+  metadataItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingHorizontal: 2 },
+  metadataText: { flexShrink: 1, minWidth: 0, fontSize: 11.5, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
+  hotelCard: { minHeight: 260, borderWidth: 1, borderColor: ui.border, borderRadius: 13, overflow: "hidden", flexDirection: "row", backgroundColor: "white" },
+  hotelImageWrap: { width: "39%", alignSelf: "stretch", position: "relative" },
+  hotelImageWrapCompact: { width: "38%" },
+  hotelImage: { ...StyleSheet.absoluteFillObject, backgroundColor: "#E9EDF3" },
+  hotelImageUnavailable:{alignItems:"center",justifyContent:"center",paddingHorizontal:8},
+  hotelImageUnavailableText:{fontSize:12,color:ui.muted,textAlign:"center"},
+  galleryControl:{position:"absolute",top:"50%",width:44,height:44,transform:[{translateY:-22}],alignItems:"center",justifyContent:"center"},
+  galleryPrevious:{left:0},
+  galleryNext:{right:0},
+  galleryIconPrevious:{transform:[{translateX:-6}]},
+  galleryIconNext:{transform:[{translateX:6}]},
+  galleryChevronStack:{width:20,height:20},
+  galleryChevronUnderlay:{position:"absolute",left:0,top:0},
+  overlay: { position: "absolute", bottom: 10, left: 10, backgroundColor: "rgba(0,0,0,.72)", padding: 6, borderRadius: 5 },
+  overlayText: { color: "white", fontSize: 10, fontWeight: "700" },
+  hotelBadge: { alignSelf: "flex-start" },
+  hotelCopy: { position: "relative", flex: 1, minWidth: 0, padding: 12, gap: 4 },
+  hotelCopyCompact: { padding: 10 },
+  hotelTitleRow: { minWidth: 0, paddingRight: 80 },
+  hotelActions: { position: "absolute", zIndex: 2, top: 4, right: 4, flexDirection: "row", flexShrink: 0, gap: 0 },
+  hotelActionsCompact: { top: 2, right: 2 },
+  hotelAction: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  hotelSaveAction: { alignItems: "flex-end", paddingRight: 4 },
+  hotelShareAction: { alignItems: "flex-start", paddingLeft: 4 },
+  hotelName: { flex: 1, minWidth: 0, fontSize: 15, fontWeight: "700", fontFamily: appFonts.bold, color: ui.navy, lineHeight: 20 },
+  stars: { color: "#FFB800", fontSize: 14 },
+  hotelLocation: { flexDirection: "row", alignItems: "center", gap: 4, minWidth: 0 },
+  hotelLocationText: { flexShrink: 1, minWidth: 0, color: colors.blue, fontSize: 12, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
+  review: { fontSize: 11, color: ui.navy },
+  score: { backgroundColor: ui.blue, color: "white", fontWeight: "900" },
+  hotelTerm:{fontSize:11,lineHeight:15,color:ui.navy},
+  hotelAttributionLink:{fontSize:10,lineHeight:14,color:colors.blue,textDecorationLine:"underline"},
+  hotelPrice: { marginTop: "auto", alignItems: "flex-end", paddingTop: 8 },
+  hotelPriceCopy: { minWidth: 0, alignItems: "flex-end" },
+  hotelNightlyPrice: { fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold, color: ui.navy, textAlign: "right", fontVariant: ["tabular-nums"] },
+  hotelPerNight: { marginTop: 1, fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium, color: ui.muted, textAlign: "right" },
+  hotelDealButton: { minHeight: 40, minWidth: 104, marginTop: 6, paddingHorizontal: 14, borderRadius: 8, backgroundColor: colors.blue, alignItems: "center", justifyContent: "center" },
+  hotelDealButtonPressed: { backgroundColor: "#003B91" },
+  hotelDealButtonText: { fontSize: 14, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold, color: "white" },
+  loadingState: { width: "100%", gap: 14 },
+  loadingMessage: { minHeight: 40, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9 },
+  loadingText: { fontSize: 13, lineHeight: 18, color: ui.navy, fontWeight: "700" },
+  flightLoadingExperience: { width: "100%", gap: 14 },
+  flightLoadingStatus: { width: "100%", alignItems: "center", paddingHorizontal: 16, paddingTop: 4, gap: 6 },
+  flightLoadingBrand: { width: 172, height: 44 },
+  flightLoadingCopy: { alignItems: "center", gap: 4, minHeight: 64 },
+  flightLoadingTitle: { fontSize: 17, lineHeight: 22, fontWeight: "800", textAlign: "center" },
+  flightLoadingRoute: { fontSize: 14, lineHeight: 18, fontWeight: "800", textAlign: "center" },
+  flightLoadingBody: { fontSize: 12, lineHeight: 17, textAlign: "center" },
+  skeletonList: { width: "100%", gap: 14 },
+  skeletonCard: { width: "100%", borderWidth: 1, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 9, gap: 5 },
+  skeletonIdentityLayout: { width: "100%", flexDirection: "row", alignItems: "center", gap: 8 },
+  skeletonIdentityContent: { flex: 1, minWidth: 0 },
+  skeletonIdentityHeader: { width: "100%", flexDirection: "row", alignItems: "center", gap: 8 },
+  skeletonIdentityCopy: { flex: 1, minWidth: 0 },
+  skeletonIdentityActions: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 8 },
+  skeletonBadge: { width: 60, height: 22, borderRadius: 11 },
+  skeletonJourneyList: { width: "100%", marginTop: 10, gap: 10 },
+  skeletonJourneyBlock: { width: "100%" },
+  skeletonJourneyLabel: { width: 60, height: 7, borderRadius: 4 },
+  skeletonJourneyPrimaryRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 },
+  skeletonJourneyRouteRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
+  skeletonJourneyStopRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
+  skeletonSideColumn: { flexBasis: 72, minWidth: 72, flexShrink: 0 },
+  skeletonTimelineColumn: { flex: 1, minWidth: 46, alignItems: "center" },
+  skeletonLogo: { width: 42, height: 42, borderRadius: 10, flexShrink: 0 },
+  skeletonLine: { height: 7, borderRadius: 4, backgroundColor: "#E7EBF1" },
+  skeletonName: { width: 110, height: 11 },
+  skeletonFlightNumber: { width: 48, height: 7, marginTop: 4 },
+  skeletonTime: { width: "70%", height: 14 },
+  skeletonAirport: { width: "48%" },
+  skeletonDuration: { width: "65%", height: 6 },
+  skeletonRouteLine: { width: "100%", height: 2 },
+  skeletonStop: { width: "52%", height: 6 },
+  skeletonPriceLine: { width: 100, height: 16 },
+  skeletonDetailsActionLine: { width: 82, height: 8 },
+  skeletonFareRow: { width: "100%", paddingTop: 10, flexDirection: "row", justifyContent: "flex-end" },
+  skeletonFareCopy: { minHeight: 45, alignItems: "flex-end", justifyContent: "space-between" },
+  skeletonMetadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 6, marginBottom: 4 },
+  skeletonMetadataRow: { width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start" },
+  skeletonMetadataLine: { width: "68%", height: 7 },
+  skeletonButton: { width: 96, height: 44, borderRadius: 8, backgroundColor: "#E7EBF1" },
+  hotelSkeletonCard: { width: "100%", height: 234, borderWidth: 1, borderColor: ui.border, borderRadius: 13, overflow: "hidden", flexDirection: "row", backgroundColor: "white" },
+  hotelSkeletonImage: { width: "39%", height: "100%", backgroundColor: "#E7EBF1" },
+  hotelSkeletonCopy: { flex: 1, padding: 12, gap: 12 },
+  hotelSkeletonTitle: { width: "82%", height: 15 },
+  hotelSkeletonMeta: { width: "62%" },
+  hotelSkeletonReview: { width: "74%" },
+  hotelSkeletonDetail: { width: "88%" },
+  hotelSkeletonFooter: { marginTop: "auto", flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  hotelSkeletonPrice: { width: 58, height: 16 },
+  flightAlert: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 0, flexDirection: "row", alignItems: "center", gap: 4, overflow: "hidden" },
+  compactPriceAlert: { width: "100%", minHeight: 52, borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 8 },
+  flightAlertOuter: { marginHorizontal: 14 },
+  flightAlertCopy: { flex: 1, minWidth: 0, gap: 1 },
+  flightAlertCompactTitle: { fontSize: 12.5, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold },
+  flightAlertTitle: { fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
+  flightAlertSubtitle: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
+  compactPriceAlertSwitchSlot: { minWidth: 51, minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 },
+  compactPriceAlertSwitchIos: { transform: [{ translateY: 8 }] },
+  alertModalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,.45)" },
+  alertSheet: { padding: 20, gap: 12, borderTopWidth: 1, borderTopLeftRadius: 18, borderTopRightRadius: 18 },
+  alertInput: { minHeight: 48, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, fontSize: 18 },
+  alertError: { color: "#A4262C" },
+  alertButton: { width: "100%", minHeight: 44, borderWidth: 1, borderColor: ui.blue, borderRadius: 11, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "white" },
+  alertButtonPressed: { backgroundColor: "#EEF4FF" },
+  alertButtonText: { color: ui.blue, fontSize: 14, fontWeight: "800" },
+  nav: { position: "absolute", left: 0, right: 0, bottom: 0, flexDirection: "row", borderTopWidth: 1, borderTopColor: ui.border, paddingTop: 9, backgroundColor: "white" },
+  navItem: { flex: 1, minHeight: 48, alignItems: "center", justifyContent: "center", gap: 3 },
+  navItemPressed: { opacity: 0.72 },
+  navText: { fontSize: 10, color: ui.muted, fontWeight: "700" },
 });

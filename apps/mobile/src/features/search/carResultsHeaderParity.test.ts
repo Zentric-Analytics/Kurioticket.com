@@ -18,24 +18,11 @@ test("Cars Results replaces branded chrome with two Hotel-style header targets",
   assert.equal((carHeader.match(/<Pressable/g) ?? []).length, 2);
 });
 
-test("Cars header retains its existing geometry independently of Hotel presentation", () => {
-  for (const contract of [
-    /carHeader:\{paddingTop:12,paddingHorizontal:12,paddingBottom:12\}/,
-    /carHeaderMainRow:\{width:"100%",flexDirection:"row",alignItems:"center"\}/,
-    /carHeaderSide:\{width:52,flexShrink:0\}/,
-    /carHeaderBack:\{width:44,height:44,alignItems:"center",justifyContent:"center"\}/,
-    /carSummaryCard:\{flex:1,minWidth:0,minHeight:64,borderWidth:1,borderRadius:13,paddingLeft:16,flexDirection:"row",alignItems:"center",overflow:"hidden"\}/,
-    /carSummaryEditSlot:\{width:44,height:44,flexShrink:0,alignItems:"center",justifyContent:"center"\}/,
-  ]) assert.match(cars, contract);
+test("Cars header uses compact safe-area-aware Hotel geometry", () => {
+  for (const contract of [/paddingLeft:Math\.max\(insets\.left\+6,6\)/,/carHeaderMainRow:\{width:"100%",flexDirection:"row",alignItems:"center",gap:6\}/,/carHeaderSide:\{width:44,flexShrink:0\}/,/carHeaderBack:\{width:44,height:44/,/carSummaryCard:\{flex:1,minWidth:0,minHeight:62/,/carSummaryEditSlot:\{width:44,height:44,flexShrink:0/]) assert.match(cars, contract);
 });
-
-test("Cars summary retains its existing typography and pencil", () => {
-  assert.match(cars, /carSummaryDestination:\{fontSize:16,lineHeight:20,fontWeight:"700",fontFamily:appFonts\.bold\}/);
-  assert.match(cars, /carSummarySecondary:\{marginTop:3,fontSize:12\.5,lineHeight:17,fontWeight:"600",fontFamily:appFonts\.semibold\}/);
-  assert.equal((carHeader.match(/numberOfLines=\{1\} ellipsizeMode="tail"/g) ?? []).length, 2);
-  assert.match(carHeader, /<SquarePen size=\{16\} strokeWidth=\{2\.2\}/);
-  assert.match(hotelHeader, /<SquarePen size=\{16\} strokeWidth=\{2\.2\}/);
-  assert.doesNotMatch(carHeader, /FlowIcon name="document"/);
+test("Cars summary uses compact typography and independent ellipsis", () => {
+ assert.match(cars,/carSummaryDestination:\{fontSize:14,lineHeight:18/); assert.match(cars,/carSummarySecondary:\{marginTop:3,fontSize:10\.5,lineHeight:14/); assert.equal((carHeader.match(/numberOfLines=\{1\} ellipsizeMode="tail"/g)??[]).length,2); assert.doesNotMatch(carHeader,/position:\s*"absolute"|marginLeft:\s*-/);
 });
 
 test("Cars summary remains derived from canonical search data", () => {

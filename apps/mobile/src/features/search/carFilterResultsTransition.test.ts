@@ -13,7 +13,7 @@ test("Cars filter feedback is immediate and localized", () => {
   assert.equal(carFilterCopy("en").updatingFilters, "Updating filters…");
   assert.equal(carFilterCopy("es").updatingFilters, "Actualizando filtros…");
   assert.equal(carFilterCopy("ar").updatingFilters, "جارٍ تحديث عوامل التصفية…");
-  assert.match(sheet, /markUpdating\(\); onChange\(\{ \.\.\.filters, \[group\]: next \}\)/);
+  assert.match(sheet, /markUpdating\(\); onChange\(\{ \.\.\.filters, \[group\]: selected\.includes/);
 });
 
 test("Cars result transition is local and reuses accessible skeletons", () => {
@@ -23,5 +23,5 @@ test("Cars result transition is local and reuses accessible skeletons", () => {
   assert.match(screen, /carResultsApplying\?<CarSkeletons/);
   assert.match(screen, /accessibilityLabel="Updating car results"/);
   assert.doesNotMatch(helper, /searchCars|setStatus|setRetry|router|load\(/);
-  assert.doesNotMatch(screen.match(/Sort by:[\s\S]{0,300}/)?.[0] ?? "", /startCarResultsTransition/);
+  assert.doesNotMatch(screen.match(/onApplySort=[\s\S]{0,220}/)?.[0] ?? "", /startCarResultsTransition|searchCars/);
 });

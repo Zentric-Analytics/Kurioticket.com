@@ -9,12 +9,11 @@ const pickers = read("src/features/flow/CarSearchPickers.tsx");
 const dates = read("src/features/flow/DateRangeSheet.tsx");
 const shell = read("src/features/flow/HotelResultsEditPickerShell.tsx");
 
-test("Cars Results Edit retains the outer sheet and opts every child into full-screen ownership", () => {
-  assert.match(outer, /<Modal[\s\S]*?transparent[\s\S]*?<CarSearchPanel[\s\S]*?editAppearance/);
-  for (const component of ["CarRentalDatesSheet", "CarTimeRangeSheet", "AgeSheet", "CarLocationSheet"]) {
-    assert.match(panel, new RegExp(`<${component}[^>]+presentation=\\{editAppearance \\? "resultsEditFullScreen" : "sheet"\\}`));
-  }
-  assert.match(panel, /selectedValue=\{locationPicker === "return" \? form\.dropoffLocation : form\.pickupLocation\}/);
+test("Cars Results Edit retains its floating parent and routes every child to a normal sheet", () => {
+ assert.match(outer,/<Modal[\s\S]*?transparent[\s\S]*?<CarSearchPanel[\s\S]*?editAppearance/);
+ for(const component of ["CarRentalDatesSheet","CarTimeRangeSheet","AgeSheet","CarLocationSheet"]) assert.match(panel,new RegExp(`<${component}[^>]+presentation="sheet"`));
+ assert.doesNotMatch(panel,/presentation=\{editAppearance \? "resultsEditFullScreen"/);
+ assert.match(outer,/FLIGHT_QUICK_SHEET_HORIZONTAL_INSET/);assert.match(outer,/FLIGHT_FLOATING_SHEET_BOTTOM_GAP/);assert.match(outer,/FLIGHT_RESULTS_LIGHT_CANVAS/);assert.match(outer,/maxHeight: "88%"/);assert.match(outer,/additionalTravelDistance: floatingBottomGap/);
 });
 
 test("Cars children use the opaque safe-area full-screen shell with Cars accessibility", () => {
