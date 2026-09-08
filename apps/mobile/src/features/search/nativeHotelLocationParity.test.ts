@@ -104,7 +104,8 @@ test("Compare decision headings preserve the refined supporting hierarchy", () =
   for (const rule of [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/, /appFonts\.bold/]) assert.match(moreHotelsHeading, rule);
 });
 
-test("Compare Property location remains distinct from the 200dp Location-tab map", () => {
+test("Compare Property location uses a compact preview distinct from the Location-tab map", () => {
   assert.match(compare, /export function NativeHotelPropertyLocationSection/);
-  assert.match(styleRule(compare, "mapFrame", "map"), /height: 280/);
+  assert.match(styleRule(compare, "mapFrame", "map"), /height: 216/);
+  assert.doesNotMatch(styleRule(compare, "mapFrame", "map"), /height: 280/);
 });
