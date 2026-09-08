@@ -33,6 +33,7 @@ const homeHeroSource = {
 const HOME_HERO_WIDTH = 2047;
 const HOME_HERO_HEIGHT = 1380;
 const HOME_HERO_DISPLAY_HEIGHT = 300;
+const HOME_CONTENT_HORIZONTAL_PADDING = 14;
 const HOME_HERO_HORIZONTAL_OVERLAY_START_OPACITY = 0.16;
 const HOME_HERO_HORIZONTAL_OVERLAY_MID_OPACITY = 0.035;
 const HOME_HERO_VERTICAL_OVERLAY_START_OPACITY = 0.035;
@@ -131,18 +132,16 @@ function HomeSearchSurface({ children }: { children: React.ReactNode }) {
 function HomeFlightSearchSurface({ children }: { children: React.ReactNode }) {
   const ft = useFlowTheme();
   return (
-    <View style={styles.homeFlightSearchSurface}>
-      <View
-        pointerEvents="none"
-        style={[
-          styles.homeFlightSearchBottom,
-          {
-            backgroundColor: ft.colors.page,
-            shadowColor: ft.colors.shadow,
-            shadowOpacity: ft.theme.dark ? 0.1 : 0.08,
-          },
-        ]}
-      />
+    <View
+      style={[
+        styles.homeFlightSearchSurface,
+        {
+          backgroundColor: ft.colors.page,
+          shadowColor: ft.colors.shadow,
+          shadowOpacity: ft.theme.dark ? 0.07 : 0.08,
+        },
+      ]}
+    >
       {children}
     </View>
   );
@@ -251,7 +250,7 @@ export const HomeFlowScreen = SharedHomePage;
 
 const styles = StyleSheet.create({
   homeScroll: { flex: 1 },
-  content: { paddingHorizontal: 14, paddingBottom: 26, gap: 14 },
+  content: { paddingHorizontal: HOME_CONTENT_HORIZONTAL_PADDING, paddingBottom: 26, gap: 14 },
   homeHero: {
     height: HOME_HERO_DISPLAY_HEIGHT,
     marginHorizontal: -14,
@@ -279,19 +278,13 @@ const styles = StyleSheet.create({
   notificationBadge: { position: "absolute", right: -4, top: -4, minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: "#D92D20" },
   notificationBadgeText: { color: "white", fontSize: 10, fontWeight: "800" },
   homeFlightSearchSurface: {
-    backgroundColor: "transparent",
-    paddingBottom: 8,
-  },
-  homeFlightSearchBottom: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 12,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
+    marginHorizontal: -HOME_CONTENT_HORIZONTAL_PADDING,
+    paddingHorizontal: HOME_CONTENT_HORIZONTAL_PADDING,
+    paddingBottom: 12,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 12,
     elevation: 1,
   },
   products: {

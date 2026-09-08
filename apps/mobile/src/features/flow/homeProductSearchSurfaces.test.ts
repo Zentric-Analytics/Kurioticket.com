@@ -11,16 +11,17 @@ test("Home preserves the structured Flight search configuration", () => {
   assert.doesNotMatch(home, /resultsModalAppearance/);
 });
 
-test("Home finishes only its Flight search with a semantic lower surface", () => {
+test("Home Flight search owns a full-width rounded lower boundary", () => {
   const wrapper = home.slice(home.indexOf("function HomeFlightSearchSurface"), home.indexOf("const products"));
-  assert.match(wrapper, /pointerEvents="none"/);
   assert.match(wrapper, /backgroundColor: ft\.colors\.page/);
   assert.match(wrapper, /shadowColor: ft\.colors\.shadow/);
   assert.doesNotMatch(wrapper, /ft\.styles\.shadow/);
-  assert.match(home, /homeFlightSearchSurface: \{\s*backgroundColor: "transparent",\s*paddingBottom: 8/);
-  assert.doesNotMatch(home, /homeFlightSearchSurface: \{[^}]*border(?:Width|Color)|homeFlightSearchSurface: \{[^}]*shadow/s);
-  assert.match(home, /homeFlightSearchBottom: \{[\s\S]*?position: "absolute",[\s\S]*?bottom: 0,[\s\S]*?height: 12,[\s\S]*?borderBottomLeftRadius: 16,[\s\S]*?borderBottomRightRadius: 16,[\s\S]*?shadowOffset: \{ width: 0, height: 2 \},[\s\S]*?shadowRadius: 6,[\s\S]*?elevation: 1/);
-  assert.doesNotMatch(home, /homeFlightSearchBottom: \{[^}]*border(?:Top|Left|Right|Bottom)?Width/s);
+  assert.match(home, /const HOME_CONTENT_HORIZONTAL_PADDING = 14/);
+  assert.match(home, /homeFlightSearchSurface: \{[\s\S]*?marginHorizontal: -HOME_CONTENT_HORIZONTAL_PADDING,[\s\S]*?paddingHorizontal: HOME_CONTENT_HORIZONTAL_PADDING/);
+  assert.match(home, /homeFlightSearchSurface: \{[\s\S]*?borderBottomLeftRadius: 30,[\s\S]*?borderBottomRightRadius: 30/);
+  assert.match(home, /homeFlightSearchSurface: \{[\s\S]*?shadowOffset: \{ width: 0, height: 4 \},[\s\S]*?shadowRadius: 12,[\s\S]*?elevation: 1/);
+  assert.doesNotMatch(home, /homeFlightSearchSurface: \{[^}]*border(?:Top|Left|Right|Bottom)?Width/s);
+  assert.doesNotMatch(home, /homeFlightSearchBottom/);
   assert.match(home, /flights: availability\.flightSearch\s*\? <HomeFlightSearchSurface>\s*<FlightSearchPanel compact structuredSearchAppearance enableHomepageDefaultOrigin homepageAirportPicker \/>\s*<\/HomeFlightSearchSurface>/);
   assert.equal(home.match(/<HomeFlightSearchSurface>/g)?.length, 1);
   assert.match(home, /\{searchPanel\[activeProduct\]\}\s*<PopularDestinationStays compactTopSpacing=\{activeProduct === "flights"\} \/>/);
@@ -28,7 +29,7 @@ test("Home finishes only its Flight search with a semantic lower surface", () =>
 
 test("Home compacts only the Flight-to-popular-stays transition without changing the global gap", () => {
   const popularStays = readFileSync("src/features/home/PopularDestinationStays.tsx", "utf8");
-  assert.match(home, /content: \{ paddingHorizontal: 14, paddingBottom: 26, gap: 14 \}/);
+  assert.match(home, /content: \{ paddingHorizontal: HOME_CONTENT_HORIZONTAL_PADDING, paddingBottom: 26, gap: 14 \}/);
   assert.match(popularStays, /section: \{ gap: 24, marginTop: 4 \}/);
   assert.match(popularStays, /compactTopSpacing: \{ marginTop: -4 \}/);
   assert.match(popularStays, /style=\{\[styles\.section, compactTopSpacing && styles\.compactTopSpacing\]\}/);
@@ -52,6 +53,9 @@ test("Home structured Flight submits align with their cards without changing Res
   assert.match(panel, /style=\{\[styles\.button, structuredSearchAppearance && styles\.structuredSearchButton\]\}/);
   assert.doesNotMatch(panel, /usesStructuredCards && styles\.structuredSearchButton/);
   assert.doesNotMatch(panel, /resultsModalAppearance && styles\.structuredSearchButton/);
+  assert.match(home, /homeFlightSearchSurface: \{[\s\S]*?paddingBottom: 12/);
+  assert.equal(8 + 12, 20, "the existing CTA wrapper and Home surface compose 20dp clearance");
+  assert.doesNotMatch(home, /searchFooter|homeSubmitFooterAppearance/);
 });
 
 test("Home contains embedded Hotel and Car forms in its themed search surface", () => {
