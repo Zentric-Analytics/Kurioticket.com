@@ -1724,6 +1724,7 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   const activePresentation = flight ? presentation : hotelPresentation;
   const currency = activePresentation.currencies[0] || "";
   const [matchingAlertState, setMatchingAlertState] = useState<{ planKey: string; alert: MobilePriceAlert }>();
+  const [reconciledHotelPlanKey, setReconciledHotelPlanKey] = useState<string>();
   const [loadingAlert, setLoadingAlert] = useState(product === "flight" || product === "hotel");
   const reconciliationRef = useRef(0);
   const [pending, setPending] = useState(false);
@@ -1732,6 +1733,7 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   const [targetDraft, setTargetDraft] = useState("");
   const [targetError, setTargetError] = useState("");
   const matchingAlert = matchingAlertState && matchingAlertState.planKey === plan?.key ? matchingAlertState.alert : undefined;
+  const hotelAlertKnown = product === "hotel" && reconciledHotelPlanKey === plan?.key;
   const setCurrentMatchingAlert = useCallback((alert: MobilePriceAlert | undefined) => {
     setMatchingAlertState(alert && plan ? { planKey: plan.key, alert } : undefined);
   }, [plan?.key]);
@@ -1744,20 +1746,35 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
     setLoadingAlert(true);
     try {
       if (!await readSession().catch(() => null)) {
-        if (reconciliation === reconciliationRef.current) setCurrentMatchingAlert(undefined);
+        if (reconciliation === reconciliationRef.current) {
+          setCurrentMatchingAlert(undefined);
+          if (!flight) setReconciledHotelPlanKey(plan.key);
+        }
         return;
       }
       const alerts = (await travelApi.priceAlerts()).alerts;
-      if (reconciliation === reconciliationRef.current) setCurrentMatchingAlert(flight ? matchingFlightPriceAlert(alerts, plan) : matchingHotelPriceAlert(alerts, plan));
+      if (reconciliation === reconciliationRef.current) {
+        setCurrentMatchingAlert(flight ? matchingFlightPriceAlert(alerts, plan) : matchingHotelPriceAlert(alerts, plan));
+        if (!flight) setReconciledHotelPlanKey(plan.key);
+      }
     } catch (error) {
-      if (reconciliation === reconciliationRef.current && error instanceof TravelApiError && error.status === 401) setCurrentMatchingAlert(undefined);
+      if (reconciliation === reconciliationRef.current && error instanceof TravelApiError && error.status === 401) {
+        setCurrentMatchingAlert(undefined);
+        if (!flight) setReconciledHotelPlanKey(plan.key);
+      }
     } finally {
       if (reconciliation === reconciliationRef.current) setLoadingAlert(false);
     }
   }, [flight, plan?.key, product, setCurrentMatchingAlert]);
   useFocusEffect(useCallback(() => { void reconcile(); }, [reconcile]));
   const handleToggle = async (next: boolean) => {
-    if (pendingRef.current || loadingAlert || !plan) return;
+    if (pendingRef.current || (flight && loadingAlert) || (!flight && !hotelAlertKnown) || !plan) return;
+    // A Hotel focus refresh is passive. Once state is known, user intent owns the
+    // lifecycle and invalidates that refresh so it cannot overwrite the mutation.
+    if (!flight && loadingAlert) {
+      reconciliationRef.current += 1;
+      setLoadingAlert(false);
+    }
     if (next) {
       if (unavailable) return;
       if (!await readSession().catch(() => null)) { requireSignIn(); return; }
@@ -1797,8 +1814,8 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   }
   if (product !== "hotel" || !plan) return null;
   if (!activePresentation.enabled) return null;
-  const toggleDisabled = pending || loadingAlert || unavailable;
-  return <View accessibilityLabel={message("hotelAlertTitle")} style={[s0.compactPriceAlert, { backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}><Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/><View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightAlertCompactTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text></View><View style={s0.compactPriceAlertSwitchSlot}>{toggleDisabled && (pending || loadingAlert) ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent}/> : null}{/* Native UISwitch artwork sits high in its iOS layout box; offset its compact rendering to optically align with the Bell and title. */}<Switch style={Platform.OS === "ios" ? s0.compactPriceAlertSwitchIos : undefined} accessibilityRole="switch" accessibilityLabel="Track this stay price" accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending || loadingAlert }} disabled={toggleDisabled} value={isTracking} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"} ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}/></View><Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel={message("hotelAlertTitle")}><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>{message("targetTotal")} ({currency})</Text><TextInput autoFocus accessibilityLabel={`${message("targetTotal")} ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text> : null}<Button label={pending ? message("creating") : message("createAlert")} onPress={() => void createAlert()} /><Button label={t("cancel")} outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal></View>;
+  const toggleDisabled = pending || !hotelAlertKnown || unavailable;
+  return <View accessibilityLabel={message("hotelAlertTitle")} style={[s0.compactPriceAlert, { backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}><Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/><View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightAlertCompactTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text></View><View style={s0.compactPriceAlertSwitchSlot}>{pending ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent}/> : null}{/* Native UISwitch artwork sits high in its iOS layout box; offset its compact rendering to optically align with the Bell and title. */}<Switch style={Platform.OS === "ios" ? s0.compactPriceAlertSwitchIos : undefined} accessibilityRole="switch" accessibilityLabel="Track this stay price" accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending }} disabled={toggleDisabled} value={isTracking} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"} ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}/></View><Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel={message("hotelAlertTitle")}><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>{message("targetTotal")} ({currency})</Text><TextInput autoFocus accessibilityLabel={`${message("targetTotal")} ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text> : null}<Button label={pending ? message("creating") : message("createAlert")} onPress={() => void createAlert()} /><Button label={t("cancel")} outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal></View>;
 }
 export function BottomNav({ flightResults = false }: { flightResults?: boolean } = {}) {
   const { theme } = useAppTheme();
