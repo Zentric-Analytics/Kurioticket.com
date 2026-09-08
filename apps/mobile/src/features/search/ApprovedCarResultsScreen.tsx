@@ -10,7 +10,7 @@ import { buildSearchPlan, safeCanonicalCarResult } from "../flow/travelSearchMod
 import { FlowIcon } from "../flow/FlowIcon";
 import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recentSearch";
 import { CarResultCard } from "./CarResultCard";
-import { Empty, shortDate, ui } from "./SearchUi";
+import { Empty, ui } from "./SearchUi";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import { NativeBrandedSearchLoading } from "./NativeBrandedSearchLoading";
@@ -25,6 +25,7 @@ import { NativeCarPriceAlert } from "./NativeCarPriceAlert";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { getLocationFieldDisplay } from "../../../../../src/lib/search/locationFieldDisplay";
 import { NATIVE_FILTER_RESULTS_TRANSITION_MS } from "./filterResultsTransition";
+import { formatCarResultsScheduleSummary } from "../../../../../src/lib/cars/carResultsSummary";
 
 type Status = "loading" | "ready" | "empty" | "error";
 const CAR_BACK_TO_TOP_HIDE_NEAR_END = 120;
@@ -74,10 +75,10 @@ export function ApprovedCarResultsScreen() {
   const quickGroups=useMemo(()=>carQuickFilterGroupIds.flatMap(id=>{const group=filterGroups.find(candidate=>candidate.id===id);return group?[group]:[];}),[filterGroups]);
   const copy=useMemo(()=>carFilterCopy(locale),[locale]);
   const filtered=useMemo(()=>sortCarResults(filterCarResults(results,filters),sort),[results,filters,sort]);
-  const payload=plan.plan?.payload||{}; const pickup=String(payload.pickupDate||""); const dropoff=String(payload.dropoffDate||"");
+  const payload=plan.plan?.payload||{};
   const canonicalPickupLocation=String(payload.pickupLocation||"");
   const carSummaryDestination=getLocationFieldDisplay(canonicalPickupLocation).primary;
-  const carSummarySecondary=`${shortDate(pickup)} — ${shortDate(dropoff)} · ${payload.driverAge === "18-70" ? "Any age" : `${String(payload.driverAge||"")} years old`}`;
+  const carSummarySecondary=formatCarResultsScheduleSummary({pickupDate:String(payload.pickupDate||""),pickupTime:String(payload.pickupTime||""),dropoffDate:String(payload.dropoffDate||""),dropoffTime:String(payload.dropoffTime||""),locale});
   const edit=()=>setCarEditSearchOpen(true);
   const startCarResultsTransition=()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);setCarResultsApplying(true);carScrollRef.current?.scrollTo({y:0,animated:true});carResultsApplyingTimer.current=setTimeout(()=>setCarResultsApplying(false),NATIVE_FILTER_RESULTS_TRANSITION_MS);};
   const changeCarFilters=(next:SelectedCarFilters)=>{carFilterSessionDirtyRef.current=true;setFilters(next);};

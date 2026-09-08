@@ -25,7 +25,7 @@ test("standalone Cars compact header follows the Flights mobile interaction mode
   );
   assert.match(toolbar, /t\("deals\.results\.modifySearch"\)/);
   assert.match(toolbar, /SlidersHorizontal/);
-  assert.match(toolbar, /openMobileFiltersDrawer\(event\.currentTarget\)/);
+  assert.match(toolbar, /openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)/);
   assert.match(toolbar, /activeFilterCount/);
 });
 
