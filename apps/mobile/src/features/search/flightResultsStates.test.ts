@@ -90,6 +90,8 @@ test("dedicated states avoid zero-count duplication and ownership guards card na
   assert.match(screen, /status === "ready" && plan\.plan/);
   assert.match(screen, /resolveFlightSearchFailure/);
   assert.match(screen, /flightResultsOwnedBy/);
-  assert.match(screen, /sections=\{\[\{ data: !flightState \? sorted as FlightResult\[\] : \[\] \}\]\}/);
+  assert.match(screen, /sections=\{\[\{ data: !flightState \? \[null, \.\.\.\(sorted as FlightResult\[\]\)\] : \[\] \}\]\}/);
+  assert.match(screen, /renderItem=\{\(\{ item, index \}\) => item === null \? \(/);
+  assert.match(screen, /logInitialMount=\{index === 1\}/);
   assert.doesNotMatch(screen, /!flightState && sorted\.map/);
 });
