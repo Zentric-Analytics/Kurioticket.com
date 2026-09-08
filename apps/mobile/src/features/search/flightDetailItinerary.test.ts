@@ -24,16 +24,21 @@ test("itinerary prioritizes the passenger journey summary with balanced single-l
   assert.match(itinerary,/<FlowIcon name="flight"/);
   assert.equal(itinerary.match(/numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.85\} style=\{\[s\.journeyTime/g)?.length,2);
   assert.match(source,/journeyTime:\{fontSize:22,lineHeight:28,fontWeight:"700"\}/);
+  assert.match(source,/airportCode:\{fontSize:17,lineHeight:22,fontWeight:"700"\}/);
+  assert.match(source,/journeyDuration:\{fontSize:12,lineHeight:17,fontWeight:"600"/);
+  assert.match(source,/stopStatus:\{fontSize:12,lineHeight:17,fontWeight:"500"/);
   assert.match(source,/journeyEndpoint:\{flex:1\.1,minWidth:0,gap:3\}/);
   assert.match(source,/journeyCenter:\{flex:\.8,minWidth:72/);
 });
 
-test("itinerary presents airport names and only supplied terminals",()=>{
+test("itinerary presents airport names and only supplied terminals with secondary typography",()=>{
   for(const fact of ["point?.name","point?.cityName","departurePoint?.terminal","arrivalPoint?.terminal"]){
     assert.match(itinerary,new RegExp(fact.replace(/[?.]/g,(character)=>character==="?"?"\\?":"\\.")));
   }
   assert.match(itinerary,/Terminal \{departurePoint\.terminal\}/);
   assert.match(itinerary,/Terminal \{arrivalPoint\.terminal\}/);
+  assert.match(source,/airportName:\{fontSize:13,lineHeight:18,fontWeight:"500"\}/);
+  assert.match(source,/terminal:\{fontSize:12,lineHeight:17,fontWeight:"400"\}/);
 });
 
 test("multi-stop itineraries retain every passenger connection location and duration",()=>{
@@ -42,15 +47,27 @@ test("multi-stop itineraries retain every passenger connection location and dura
   assert.match(itinerary,/\{layover\.airport\} · \{layover\.duration\}/);
 });
 
-test("airline rows retain identity, flight number, and supplied segment distance",()=>{
+test("airline rows retain identity, flight number, and rounded supplied segment distance",()=>{
   assert.match(itinerary,/resolveSegmentCarrierName/);
   assert.match(itinerary,/<AirlineLogo airlineName=\{carrier\}/);
   assert.match(itinerary,/canUseOfferAirlineLogo/);
   assert.match(itinerary,/segment\.marketingFlightNumber\?\?segment\.flightNumber/);
   assert.match(itinerary,/segment\.distanceKm!==undefined/);
-  assert.match(itinerary,/Flight distance · \{segment\.distanceKm\.toLocaleString\(\)\} km/);
-  assert.match(source,/flightDistance:\{fontSize:11,lineHeight:16,fontWeight:"500",marginTop:1\}/);
+  assert.match(itinerary,/Flight distance · \{Math\.round\(segment\.distanceKm\)\.toLocaleString\(\)\} km/);
+  assert.match(source,/airlineName:\{fontSize:14,lineHeight:19,fontWeight:"600"\}/);
+  assert.match(source,/flightNumber:\{fontSize:12,lineHeight:17,fontWeight:"500"\}/);
+  assert.match(source,/flightDistance:\{fontSize:11,lineHeight:16,fontWeight:"400",marginTop:1\}/);
   assert.match(itinerary,/leg\.segments\.map/);
+});
+
+test("itinerary spacing is tightened locally without touching shared fare cards",()=>{
+  assert.match(source,/itineraryCard:\{borderWidth:1,borderRadius:15,padding:15/);
+  assert.match(source,/journeySummary:\{[^\n]*marginTop:16\}/);
+  assert.match(source,/airportDetails:\{[^\n]*marginTop:16\}/);
+  assert.match(source,/airportColumn:\{[^\n]*gap:6\}/);
+  assert.match(source,/itineraryDivider:\{height:StyleSheet\.hairlineWidth,marginVertical:12\}/);
+  assert.match(source,/airlineCopy:\{flex:1,minWidth:0,gap:1\}/);
+  assert.match(source,/card:\{borderWidth:1,borderRadius:14,padding:14,gap:7\}/);
 });
 
 test("itinerary card uses a restrained card-only blur shadow",()=>{
