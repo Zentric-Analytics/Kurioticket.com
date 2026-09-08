@@ -83,3 +83,26 @@ test("Cars use one truthful compact price alert before the summary and cards", (
   assert.doesNotMatch(carAlert, /not available yet/);
   assert.match(hotels, /compactPriceAlertSwitchSlot: \{ minWidth: 51, minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
 });
+
+
+test("Cars Filter uses the Hotel SlidersHorizontal icon contract", () => {
+  assert.match(cars, /<CarResultsShortcut label="Filter" accessibilityLabel="Filters"[^>]*icon showChevron=\{false\}/);
+  assert.match(cars, /<SlidersHorizontal accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\} color=\{active\?ui\.blue:theme\.icon\}/);
+  assert.doesNotMatch(cars, /<FlowIcon name="sliders"/);
+  assert.match(cars, /<FlowIcon name="chevronDown"/);
+});
+
+test("Cars target sheet uses one immediate accessible close path", () => {
+  assert.match(carAlert, /<View style=\{styles\.sheetHeader\}>[\s\S]*Track rental car prices[\s\S]*<Pressable accessibilityRole="button" accessibilityLabel="Close price alert"/);
+  assert.match(carAlert, /<X accessible=\{false\} size=\{22\} color=\{theme\.icon\}/);
+  assert.match(carAlert, /sheetHeaderTitle: \{ flex: 1, minWidth: 0 \}/);
+  assert.match(carAlert, /sheetClose: \{ width: 44, height: 44/);
+  assert.doesNotMatch(carAlert, /<Button label="Cancel"/);
+  const close = carAlert.slice(carAlert.indexOf("const closeTargetSheet"), carAlert.indexOf("const toggle"));
+  assert.match(close, /setOpen\(false\); Keyboard\.dismiss\(\);/);
+  assert.doesNotMatch(close, /async|await|setTimeout|InteractionManager|keyboardDidHide/);
+  assert.match(carAlert, /animationType="none"/);
+  assert.match(carAlert, /onRequestClose=\{\(\) => \{ if \(!pending\) closeTargetSheet\(\); \}\}/);
+  assert.match(carAlert, /onPress=\{closeTargetSheet\}/);
+  assert.equal(carAlert.match(/closeTargetSheet/g)?.length, 3);
+});

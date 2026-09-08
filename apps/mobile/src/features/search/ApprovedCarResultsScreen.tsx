@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
-import { ArrowLeft, ArrowUp, SquarePen } from "lucide-react-native";
+import { ArrowLeft, ArrowUp, SlidersHorizontal, SquarePen } from "lucide-react-native";
 import { travelApi, type CarResult } from "../../api/travelApi";
 import { getApiBaseUrl } from "../../config/apiUrl";
 import { acceptCanonicalResults, canonicalResultsWereSilentlyLost } from "../flow/canonicalResultAcceptance";
@@ -120,7 +120,7 @@ export function ApprovedCarResultsScreen() {
 
 function CarResultsShortcut({label,accessibilityLabel,count,icon=false,showChevron=true,expanded,onPress}:{label:string;accessibilityLabel?:string;count?:number;icon?:boolean;showChevron?:boolean;expanded:boolean;onPress:()=>void}) {
   const {theme}=useAppTheme(); const active=Boolean(count);
-  return <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel??label} accessibilityState={{expanded}} onPress={onPress} style={r.shortcutTouchTarget}><View style={[r.shortcut,{backgroundColor:active?(theme.dark?"#15315C":"#EDF4FF"):theme.surface,borderColor:active?ui.blue:theme.border}]}>{icon?<FlowIcon name="sliders" size={14} color={active?ui.blue:theme.icon}/>:null}<Text numberOfLines={1} style={[r.shortcutLabel,{color:active?ui.blue:theme.textPrimary}]}>{label}</Text>{count?<View style={r.shortcutCount}><Text style={r.shortcutCountText}>{count}</Text></View>:null}{showChevron?<FlowIcon name="chevronDown" size={13} color={theme.icon}/>:null}</View></Pressable>;
+  return <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel??label} accessibilityState={{expanded}} onPress={onPress} style={r.shortcutTouchTarget}><View style={[r.shortcut,{backgroundColor:active?(theme.dark?"#15315C":"#EDF4FF"):theme.surface,borderColor:active?ui.blue:theme.border}]}>{icon?<SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={active?ui.blue:theme.icon}/>:null}<Text numberOfLines={1} style={[r.shortcutLabel,{color:active?ui.blue:theme.textPrimary}]}>{label}</Text>{count?<View style={r.shortcutCount}><Text style={r.shortcutCountText}>{count}</Text></View>:null}{showChevron?<FlowIcon name="chevronDown" size={13} color={theme.icon}/>:null}</View></Pressable>;
 }
 
 function CarResultsHeader({destination,secondaryLine,onEdit}:{destination:string;secondaryLine:string;onEdit:()=>void}) {
