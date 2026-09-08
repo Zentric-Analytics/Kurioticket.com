@@ -15,7 +15,7 @@ test("Home finishes only its Flight search with a semantic lower surface", () =>
   const wrapper = home.slice(home.indexOf("function HomeFlightSearchSurface"), home.indexOf("const products"));
   assert.match(wrapper, /\{ borderColor: ft\.colors\.border \}/);
   assert.doesNotMatch(wrapper, /backgroundColor: ft\.colors\.(?:page|surface|card)|ft\.styles\.shadow/);
-  assert.match(home, /homeFlightSearchSurface: \{[\s\S]*?backgroundColor: "transparent",[\s\S]*?borderLeftWidth: 0,[\s\S]*?borderRightWidth: 0,[\s\S]*?borderBottomWidth: 1,[\s\S]*?borderTopWidth: 0,[\s\S]*?borderBottomLeftRadius: 16,[\s\S]*?borderBottomRightRadius: 16,[\s\S]*?paddingBottom: 4/);
+  assert.match(home, /homeFlightSearchSurface: \{[\s\S]*?backgroundColor: "transparent",[\s\S]*?borderLeftWidth: 0,[\s\S]*?borderRightWidth: 0,[\s\S]*?borderBottomWidth: 1,[\s\S]*?borderTopWidth: 0,[\s\S]*?borderBottomLeftRadius: 16,[\s\S]*?borderBottomRightRadius: 16,[\s\S]*?paddingBottom: 8/);
   assert.match(home, /flights: availability\.flightSearch\s*\? <HomeFlightSearchSurface>\s*<FlightSearchPanel compact structuredSearchAppearance enableHomepageDefaultOrigin homepageAirportPicker \/>\s*<\/HomeFlightSearchSurface>/);
   assert.equal(home.match(/<HomeFlightSearchSurface>/g)?.length, 1);
   assert.match(home, /\{searchPanel\[activeProduct\]\}[\s\S]*?<PopularDestinationStays/);
@@ -30,6 +30,15 @@ test("Home opts into generic structured Flight cards without changing other prod
   assert.match(panel, /label="Travelers & Cabin Class"[\s\S]*?appearance=\{usesStructuredCards \? "resultsModalCard" : "default"\}/);
   assert.match(panel, /structuredCardAppearance=\{usesStructuredCards\}/);
   assert.match(panel, /!embedded && !usesStructuredCards && ft\.styles\.card/);
+});
+
+test("Home structured Flight submits align with their cards without changing Results Change Search", () => {
+  const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
+  assert.match(panel, /button:\{padding:8,paddingTop:16\}/);
+  assert.match(panel, /structuredSearchButton:\{paddingHorizontal:0\}/);
+  assert.match(panel, /style=\{\[styles\.button, structuredSearchAppearance && styles\.structuredSearchButton\]\}/);
+  assert.doesNotMatch(panel, /usesStructuredCards && styles\.structuredSearchButton/);
+  assert.doesNotMatch(panel, /resultsModalAppearance && styles\.structuredSearchButton/);
 });
 
 test("Home contains embedded Hotel and Car forms in its themed search surface", () => {
