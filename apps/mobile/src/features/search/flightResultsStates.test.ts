@@ -87,10 +87,10 @@ test("all-rejected canonical flight inventory becomes a recoverable error, not n
 });
 
 test("dedicated states avoid zero-count duplication and ownership guards card navigation", () => {
-  assert.match(screen, /status === "ready" && plan\.plan/);
+  assert.match(screen, /\{plan\.plan \? <View[^]*<PriceAlert product="flight"/);
   assert.match(screen, /resolveFlightSearchFailure/);
   assert.match(screen, /flightResultsOwnedBy/);
-  assert.match(screen, /sections=\{\[\{ data: !flightState \? \[null, \.\.\.\(sorted as FlightResult\[\]\)\] : \[\] \}\]\}/);
+  assert.match(screen, /sections=\{\[\{ data: flightState === "loading" \|\| !flightState \? \[null, \.\.\.\(sorted as FlightResult\[\]\)\] : \[\] \}\]\}/);
   assert.match(screen, /renderItem=\{\(\{ item, index \}\) => item === null \? \(/);
   assert.match(screen, /logInitialMount=\{index === 1\}/);
   assert.doesNotMatch(screen, /!flightState && sorted\.map/);

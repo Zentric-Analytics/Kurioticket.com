@@ -1,4 +1,4 @@
 import assert from "node:assert/strict";import{readFileSync}from"node:fs";import test from"node:test";import{flightResultCountLabel}from"./flightResultCount";
 const source=readFileSync("src/features/search/ApprovedResultsScreen.tsx","utf8");
-test("flight result count grammar remains correct",()=>{assert.equal(flightResultCountLabel(1),"1 Result found");assert.equal(flightResultCountLabel(100),"100 Results found");});
+test("flight result count grammar remains correct",()=>{assert.equal(flightResultCountLabel(0),"Searching for flights…");assert.equal(flightResultCountLabel(1),"1 Result found");assert.equal(flightResultCountLabel(100),"100 Results found");});
 test("Flight summary contains only the count",()=>{const summary=source.slice(source.indexOf("function FlightResultsSummaryRow"),source.indexOf("const hotelResultCountLabel"));assert.match(summary,/\{ count \}: \{ count: number \}/);assert.match(summary,/accessibilityRole="header"/);assert.doesNotMatch(summary,/range|Showing results|–/);assert.doesNotMatch(source,/flightResultRange/);});

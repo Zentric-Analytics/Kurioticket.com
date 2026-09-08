@@ -7,7 +7,7 @@ const read = (path: string) => readFileSync(resolve(path), "utf8").replace(/\r\n
 const screen = read("src/features/search/ApprovedResultsScreen.tsx");
 const resultContent = screen.slice(
   screen.indexOf("const resultContent"),
-  screen.indexOf('if (status === "loading")'),
+  screen.indexOf('if (status === "loading" && product !== "flight")'),
 );
 
 test("Hotel Results owns no brand or legal footer", () => {
