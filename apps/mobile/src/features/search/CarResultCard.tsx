@@ -7,6 +7,7 @@ import { money, ui } from "./SearchUi";
 import { useSavedCar } from "./carSavedState";
 import { useAppTheme } from "../../theme/AppTheme";
 import { getPrimaryCarOffer } from "../../../../../src/lib/cars/carResults";
+import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 
 export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal }: {
   result: CarResult; rank: number; imageUri?: string;
@@ -32,7 +33,7 @@ export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal
           </View>
           <View style={c.utilityColumn}>
             {rank === 0 ? <View style={c.badge}><Award size={11} color="#15803D" /><Text style={c.badgeText}>Best value</Text></View> : null}
-            <View style={c.actions}><Pressable accessibilityRole="button" accessibilityLabel={savedState.saved ? `Remove ${result.modelName} from saved` : `Save ${result.modelName}`} accessibilityState={{ selected: savedState.saved }} onPress={savedState.toggle} style={[c.action,c.saveAction]}><FlowIcon name="heart" size={18} fill="transparent" color={savedState.saved ? "#E92D55" : theme.icon} /></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Share ${result.modelName}`} onPress={share} style={[c.action,c.shareAction]}><Share2 size={18} color={theme.icon} /></Pressable></View>
+            <View style={c.actions}><Pressable accessibilityRole="button" accessibilityLabel={savedState.saved ? `Remove ${result.modelName} from saved` : `Save ${result.modelName}`} accessibilityState={{ selected: savedState.saved }} onPress={savedState.toggle} style={[c.action,c.saveAction]}><FlowIcon name="heart" size={18} color={androidFavoriteColors.stroke} fill={savedState.saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} /></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Share ${result.modelName}`} onPress={share} style={[c.action,c.shareAction]}><Share2 size={18} color={theme.icon} /></Pressable></View>
           </View>
         </View>
         <View style={c.detailColumn}>

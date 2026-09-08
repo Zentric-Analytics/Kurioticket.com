@@ -69,3 +69,9 @@ test("fixed flight header remains usable with scaled text on narrow screens", ()
   assert.match(native, /back:\{minHeight:44,flexShrink:1,minWidth:0/);
   assert.match(native, /backText:\{color:ui\.blue,fontWeight:"800",flexShrink:1\}/);
 });
+
+test("flight save action uses the canonical favorite visual states", () => {
+  assert.match(native, /label=\{saved\?"Remove saved flight":"Save flight"\} onPress=\{\(\)=>savedFlights\.toggle/);
+  assert.match(native, /<Heart size=\{20\} color=\{androidFavoriteColors\.stroke\} fill=\{saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}\/>/);
+  assert.doesNotMatch(native, /<Heart[^>]*(?:theme\.icon|fill="transparent")/);
+});
