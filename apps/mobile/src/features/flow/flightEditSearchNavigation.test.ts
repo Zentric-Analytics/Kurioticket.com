@@ -85,7 +85,8 @@ test("results modal cards preserve the flight form hierarchy and controls", () =
   assert.match(routeCard, /modalCardDivider=\{usesStructuredCards\}/);
   assert.match(panel.slice(dates, travelers), /label="Travel dates"/);
   assert.match(panel.slice(travelers, button), /label="Travelers & Cabin Class"/);
-  assert.match(panel, /\{notice \? <UnavailableNotice text=\{notice\}\/> : null\}\{showSubmit \? <View style=\{styles\.button\}><PrimaryButton label=\{submitLabel\}/);
+  assert.match(panel, /\{notice \? <UnavailableNotice text=\{notice\}\/> : null\}\{showSubmit \? <View style=\{\[styles\.button, structuredSearchAppearance && styles\.structuredSearchButton\]\}><PrimaryButton label=\{submitLabel\}/);
+  assert.doesNotMatch(panel, /resultsModalAppearance && styles\.structuredSearchButton/);
 });
 
 test("results modal appearance is isolated from shared compact field geometry", () => {
