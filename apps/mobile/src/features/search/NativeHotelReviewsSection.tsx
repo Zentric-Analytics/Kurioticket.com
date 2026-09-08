@@ -101,14 +101,14 @@ export function NativeHotelReviewsSection({ result }: { result: ReviewResult }) 
 
 const styles = StyleSheet.create({
   reviewsSection: { paddingVertical: 12 },
-  heading: { fontSize: 20, lineHeight: 28, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.5 },
+  heading: { fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.25 },
   emptyCallout: { marginTop: 12, borderLeftWidth: 2, paddingVertical: 4, paddingLeft: 16 },
-  emptyText: { fontSize: 14, lineHeight: 24, fontWeight: "400", fontFamily: appFonts.regular },
+  emptyText: { fontSize: 13, lineHeight: 22, fontWeight: "400", fontFamily: appFonts.regular },
   scoreRow: { marginTop: 16, flexDirection: "row", alignItems: "center", gap: 16 },
   scoreBadge: { height: 56, minWidth: 56, borderRadius: 8, backgroundColor: colors.blue, paddingHorizontal: 8, alignItems: "center", justifyContent: "center" },
-  scoreText: { color: "white", fontSize: 20, lineHeight: 28, fontWeight: "800", fontFamily: appFonts.extraBold, textAlign: "center" },
+  scoreText: { color: "white", fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold, textAlign: "center" },
   metadata: { flex: 1, minWidth: 0 },
-  label: { fontSize: 16, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold },
-  count: { fontSize: 14, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
+  label: { fontSize: 15, lineHeight: 22, fontWeight: "600", fontFamily: appFonts.semibold },
+  count: { fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
   source: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: "400", fontFamily: appFonts.regular },
 });

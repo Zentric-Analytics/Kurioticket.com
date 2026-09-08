@@ -74,11 +74,11 @@ export function NativeRelatedHotelsSection({ city, hotels, theme, onViewHotel }:
 }
 
 const styles = StyleSheet.create({
-  heading: { fontSize: 20, lineHeight: 26, fontWeight: "800", fontFamily: appFonts.extraBold },
+  heading: { fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold },
   locationCard: { marginTop: 24, marginHorizontal: -16, borderWidth: 1, borderRadius: 16, overflow: "hidden", shadowColor: "#0F172A", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.05, shadowRadius: 15, elevation: 2 },
   locationHeader: { paddingHorizontal: 16, paddingVertical: 16 },
-  locationHeading: { fontSize: 18, lineHeight: 24, fontWeight: "800", fontFamily: appFonts.extraBold },
-  address: { marginTop: 4, fontSize: 14, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
+  locationHeading: { fontSize: 17, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold },
+  address: { marginTop: 4, fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
   mapFrame: { position: "relative", height: 280, width: "100%" },
   map: { flex: 1 },
   mapFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8 },

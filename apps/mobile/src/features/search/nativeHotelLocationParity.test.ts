@@ -80,19 +80,28 @@ test("Location uses a credential-free first-party Map and Street View wrapper", 
 });
 
 test("Location visual contracts match mobile web", () => {
-  for (const rule of [/fontSize: 20/, /lineHeight: 28/, /appFonts\.extraBold/]) assert.match(styleRule(component, "heading", "addressRow"), rule);
+  for (const rule of [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/, /appFonts\.bold/]) assert.match(styleRule(component, "heading", "addressRow"), rule);
   for (const rule of [/width: 36/, /height: 36/, /borderRadius: 18/]) assert.match(styleRule(component, "pinCircle", "addressCopy"), rule);
   assert.match(component, /<MapPin accessible=\{false\} size=\{18\}/);
-  for (const rule of [/fontSize: 13/, /lineHeight: 20/, /appFonts\.semibold/]) assert.match(styleRule(component, "primaryAddress", "secondaryAddress"), rule);
-  for (const rule of [/fontSize: 12/, /lineHeight: 20/, /appFonts\.regular/]) assert.match(styleRule(component, "secondaryAddress", "mapCard"), rule);
+  for (const rule of [/fontSize: 13/, /lineHeight: 19/, /fontWeight: "500"/, /appFonts\.medium/]) assert.match(styleRule(component, "primaryAddress", "secondaryAddress"), rule);
+  for (const rule of [/fontSize: 12/, /lineHeight: 18/, /appFonts\.regular/]) assert.match(styleRule(component, "secondaryAddress", "mapCard"), rule);
   for (const rule of [/marginTop: 16/, /borderRadius: 14/, /borderWidth: 1/]) assert.match(styleRule(component, "mapCard", "mapTabs"), rule);
   assert.match(styleRule(component, "mapViewport", "map"), /height: 200/);
-  for (const rule of [/fontSize: 16/, /lineHeight: 24/, /appFonts\.bold/]) assert.match(styleRule(component, "subheading", "factList"), rule);
+  for (const rule of [/fontSize: 15/, /lineHeight: 22/, /fontWeight: "600"/, /appFonts\.semibold/]) assert.match(styleRule(component, "subheading", "factList"), rule);
   for (const rule of [/borderRadius: 8/, /paddingHorizontal: 12/, /paddingVertical: 8/]) assert.match(styleRule(component, "factChip", "factText"), rule);
-  for (const rule of [/fontSize: 12/, /lineHeight: 16/, /appFonts\.semibold/]) assert.match(styleRule(component, "factText", "accessibilityHeading"), rule);
+  for (const rule of [/fontSize: 12/, /lineHeight: 16/, /fontWeight: "500"/, /appFonts\.medium/]) assert.match(styleRule(component, "factText", "accessibilityHeading"), rule);
   assert.match(styleRule(component, "accessibilityRow", "accessibilityBullet"), /alignItems: "flex-start"/);
   assert.match(styleRule(component, "accessibilityBullet", "accessibilityText"), /width: 20[\s\S]*lineHeight: 24/);
-  assert.match(styleRule(component, "accessibilityText", "accessibilityFallback"), /fontSize: 14[\s\S]*lineHeight: 24/);
+  assert.match(styleRule(component, "accessibilityText", "accessibilityFallback"), /fontSize: 13[\s\S]*lineHeight: 22/);
+});
+
+test("Compare decision headings preserve the refined supporting hierarchy", () => {
+  const locationHeading = styleRule(compare, "locationHeading", "address");
+  const address = styleRule(compare, "address", "mapFrame");
+  const moreHotelsHeading = styleRule(compare, "heading", "locationCard");
+  for (const rule of [/fontSize: 17/, /lineHeight: 22/, /fontWeight: "700"/, /appFonts\.bold/]) assert.match(locationHeading, rule);
+  for (const rule of [/fontSize: 13/, /lineHeight: 19/, /fontWeight: "400"/, /appFonts\.regular/]) assert.match(address, rule);
+  for (const rule of [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/, /appFonts\.bold/]) assert.match(moreHotelsHeading, rule);
 });
 
 test("Compare Property location remains distinct from the 200dp Location-tab map", () => {
