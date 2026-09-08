@@ -68,14 +68,14 @@ test("inset Flight quick sheets alone remove dividers and share the body surface
   assert.match(shell,/header: \{[^}]*borderBottomWidth: StyleSheet\.hairlineWidth/);
   assert.match(shell,/footer: \{[^}]*borderTopWidth: StyleSheet\.hairlineWidth/);
 });
-test("the full Flight filter opts into the scoped filter canvas without changing Cars",()=>{
+test("full Flight and Cars filters use the approved filter canvas",()=>{
   const filter=readFileSync("src/features/search/FlightFilterSheet.tsx","utf8");
   const cars=readFileSync("src/features/search/CarFilterSheet.tsx","utf8");
   assert.match(shell,/flightFilterAppearance = false/);
   assert.match(shell,/flightFilterAppearance && styles\.flightFilterHeader/);
   assert.match(shell,/flightFilterHeader: \{ borderBottomWidth: 0 \}/);
   assert.match(filter,/flightFilterAppearance=\{full\}/);
-  assert.doesNotMatch(cars,/flightFilterAppearance|FLIGHT_FILTER_LIGHT_CANVAS|#F2F4F8/);
+  assert.match(cars,/FLIGHT_FILTER_LIGHT_CANVAS/);
 });
 test("full-screen Flight filters bypass the quick-sheet inset frame",()=>{
   assert.match(shell,/\{fullScreen \? <SafeAreaProvider><SafeAreaView edges=\{\["top", "bottom", "left", "right"\]\}/);

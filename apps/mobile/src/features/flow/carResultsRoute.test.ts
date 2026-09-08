@@ -48,7 +48,8 @@ test("car results preserve controls and count with a continuous list beneath the
   assert.doesNotMatch(screen, /style=\{r\.range\}|range:\{/);
   assert.match(screen, /filtered\.map\(\(result,index\)/);
   assert.doesNotMatch(screen, /pageSize|totalPages|filtered\.slice|Page \{page\}/);
-  assert.match(screen, /Sort by:/);
+  assert.match(screen, /<CarResultsShortcut label=\{sort/);
+  assert.doesNotMatch(screen, /Sort by:/);
   assert.doesNotMatch(screen, /<DateStrip/);
   assert.doesNotMatch(screen, /Prices include taxes & fees when reported/);
 });
