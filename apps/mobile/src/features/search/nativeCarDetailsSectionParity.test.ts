@@ -69,18 +69,21 @@ test("the web tab reference remains the mobile parity contract", () => {
   assert.match(web, /searchedPickupLocation/);
 });
 
-test("Compare and Pickup retain the web-aligned geometry", () => {
+test("Compare uses the refined native presentation while Pickup retains its geometry", () => {
   for (const contract of ["paddingTop:12", "paddingBottom:28"])
     assert.ok(style("compare").includes(contract));
   for (const contract of ["fontSize:20", "lineHeight:28", 'fontWeight:"800"'])
     assert.ok(style("heading").includes(contract));
+  for (const contract of ["fontSize:18", "lineHeight:24", 'fontWeight:"600"', "fontFamily:appFonts.semibold", "letterSpacing:-.25"])
+    assert.ok(style("compareHeading").includes(contract));
   for (const contract of ["marginTop:4", "fontSize:14", "lineHeight:20", 'fontWeight:"500"'])
     assert.ok(style("stay").includes(contract));
-  for (const contract of ["marginHorizontal:-12", "marginTop:20", "borderRadius:14", "paddingHorizontal:8", "paddingVertical:16"])
+  for (const contract of ["marginTop:20", "borderRadius:14", "paddingHorizontal:8", "paddingVertical:16"])
     assert.ok(style("compareCard").includes(contract));
-  assert.match(native, /logo:\{width:146,height:32\}/);
-  assert.match(native, /radio:\{width:22,height:22/);
-  assert.match(native, /radioDot:\{width:10,height:10/);
+  assert.doesNotMatch(style("compareCard"), /marginHorizontal:-/);
+  assert.match(native, /logo:\{width:120,height:26,flexShrink:0\}/);
+  assert.match(native, /radio:\{width:18,height:18,borderRadius:9,borderWidth:1\.5/);
+  assert.match(native, /radioDot:\{width:8,height:8,borderRadius:4/);
   assert.match(native, /primaryValidCarOffer\(result\.offers\)/);
 
   for (const contract of ["paddingVertical:20", "borderTopWidth:1", "borderBottomWidth:1"])
