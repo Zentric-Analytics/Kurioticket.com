@@ -61,6 +61,11 @@ test("native header spacing and scroll separation stay compact", () => {
   assert.doesNotMatch(native, /Kurioticket.*(?:logo|wordmark)|(?:logo|wordmark).*Kurioticket/i);
 });
 
+test("Flight Details top bar blends into the page background in every state", () => {
+  assert.equal(native.match(/<TopBar backgroundColor=\{theme\.background\}/g)?.length, 2);
+  assert.doesNotMatch(native, /<TopBar backgroundColor=\{theme\.surface\}/);
+});
+
 test("fixed flight header remains usable with scaled text on narrow screens", () => {
   assert.match(native, /<Text numberOfLines=\{1\} ellipsizeMode="tail" style=\{s\.backText\}>Back to results<\/Text>/);
   assert.match(native, /topBar:\{minHeight:52[\s\S]*?paddingVertical:4/);
