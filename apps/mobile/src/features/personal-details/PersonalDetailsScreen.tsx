@@ -819,7 +819,8 @@ function PhoneControl({
             {option?.isoCode || "--"}
           </Text>
         )}
-        <FlowIcon name="chevron" color={theme.muted} size={16} />
+        <Text style={{ color: theme.text, fontFamily: appFonts.regular, fontSize: 16 }}>{option?.dialCode}</Text>
+        <FlowIcon name="chevron" color={theme.muted} size={14} />
       </Pressable>
       <View
         style={[
@@ -831,7 +832,6 @@ function PhoneControl({
           },
         ]}
       >
-        <Text style={{ color: theme.text, fontFamily: appFonts.regular, fontSize: 16 }}>{option?.dialCode}</Text>
         <TextInput
           accessibilityLabel={localLabel}
           accessibilityHint={label}
@@ -1223,13 +1223,13 @@ export function PersonalDetailsScreen() {
   return (
     <SafeAreaView
       edges={["top", "bottom"]}
-      style={[s.safe, { backgroundColor: theme.dark ? theme.background : "#FFFFFF" }]}
+      style={[s.safe, { backgroundColor: theme.dark ? theme.background : "#F5F7FB" }]}
     >
       <View
         style={[
           s.header,
           {
-            backgroundColor: theme.dark ? theme.background : "#FFFFFF",
+            backgroundColor: theme.dark ? theme.background : "#F5F7FB",
             borderBottomColor: theme.border,
           },
         ]}
@@ -1345,7 +1345,7 @@ export function PersonalDetailsScreen() {
                         accessibilityState={{ expanded: emailOpen, disabled: emailBusy }}
                         style={s.changeEmailHit}
                       >
-                        <Pencil size={18} color={flowColors.blue} />
+                        <Pencil size={18} color={theme.dark ? theme.icon : "#000000"} />
                       </Pressable>
                     )}
                   </View>
@@ -1717,16 +1717,16 @@ const s = StyleSheet.create({
   },
   phone: { height: 50, flexDirection: "row", alignItems: "stretch" },
   countrySegment: {
-    width: 82,
+    flexShrink: 0,
     borderTopRightRadius: 0,
     borderBottomRightRadius: 0,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    paddingHorizontal: 10,
+    gap: 4,
+    paddingHorizontal: 8,
   },
-  flag: { width: 28, height: 19 },
+  flag: { width: 22, height: 15 },
   flagFallback: {
     width: 28,
     textAlign: "center",

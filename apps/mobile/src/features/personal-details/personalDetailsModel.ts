@@ -76,12 +76,19 @@ export function getCountryFlagUri(value: string | null | undefined) {
 }
 
 export function normalizeProfile(profile: MobileProfile): MobileProfile {
+  const countryCode =
+    getSupportedPhoneCountryCode(profile.phoneCountryCode) ||
+    defaultPhoneCountryOption.isoCode;
+  const phoneNumber = profile.phoneNumber?.trim() || "";
+  // Legacy profiles may contain a full international number in the local field.
+  // Only split recognized explicit prefixes; never strip digits from local numbers.
+  const parsed = phoneNumber.startsWith("+")
+    ? parsePhoneDraftValue(phoneNumber, countryCode)
+    : null;
   return {
     fullName: profile.fullName?.trim() || "",
-    phoneCountryCode:
-      getSupportedPhoneCountryCode(profile.phoneCountryCode) ||
-      defaultPhoneCountryOption.isoCode,
-    phoneNumber: profile.phoneNumber?.trim() || "",
+    phoneCountryCode: parsed?.hasRecognizedDialCode ? parsed.countryCode : countryCode,
+    phoneNumber: parsed?.hasRecognizedDialCode ? parsed.localNumber : phoneNumber,
     dateOfBirth: profile.dateOfBirth?.trim() || "",
     gender: profile.gender?.trim() || "",
     nationality: profile.nationality?.trim() || "",
