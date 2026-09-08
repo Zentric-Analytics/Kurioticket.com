@@ -10,16 +10,18 @@ const explore = source("src/features/explore/ExploreScreen.tsx");
 const details = source("src/features/explore/DestinationDetailsScreen.tsx");
 const savedRecent = source("src/features/saved/SavedScreen.tsx");
 
-test("shared Android favorite button renders smaller visuals while preserving state colors", () => {
+test("shared Android favorite button preserves geometry and applies the semantic visual contract", () => {
   assert.match(favorite, /background:\s*"rgba\(2,15,42,\.62\)"/);
   assert.match(favorite, /width:\s*40/);
   assert.match(favorite, /height:\s*40/);
   assert.match(favorite, /borderRadius:\s*20/);
   assert.match(favorite, /<FlowIcon name="heart" size=\{18\}/);
-  assert.match(favorite, /active:\s*"#E92D55"/);
-  assert.match(favorite, /inactive:\s*"white"/);
-  assert.match(favorite, /color=\{saved \? androidFavoriteColors\.active : androidFavoriteColors\.inactive\}/);
-  assert.doesNotMatch(favorite, /shadowOpacity|elevation|pressed|fill=\{/);
+  assert.match(favorite, /stroke:\s*"#E92D55"/);
+  assert.match(favorite, /savedFill:\s*"#E92D55"/);
+  assert.match(favorite, /unsavedFill:\s*"#FFFFFF"/);
+  assert.match(favorite, /color=\{androidFavoriteColors\.stroke\}/);
+  assert.match(favorite, /fill=\{saved \? androidFavoriteColors\.savedFill : androidFavoriteColors\.unsavedFill\}/);
+  assert.doesNotMatch(favorite, /shadowOpacity|elevation|pressed/);
   assert.match(shim, /export \{ AndroidFavoriteButton, androidFavoriteColors \}/);
 });
 
@@ -49,8 +51,9 @@ test("favorite behavior, navigation, and propagation remain unchanged", () => {
 });
 
 test("favorite light and dark mode values remain unchanged", () => {
-  assert.match(favorite, /active:\s*"#E92D55"/);
-  assert.match(favorite, /inactive:\s*"white"/);
+  assert.match(favorite, /stroke:\s*"#E92D55"/);
+  assert.match(favorite, /savedFill:\s*"#E92D55"/);
+  assert.match(favorite, /unsavedFill:\s*"#FFFFFF"/);
   assert.match(favorite, /background:\s*"rgba\(2,15,42,\.62\)"/);
   assert.doesNotMatch(favorite, /useColorScheme|dark|light|theme/);
 });
