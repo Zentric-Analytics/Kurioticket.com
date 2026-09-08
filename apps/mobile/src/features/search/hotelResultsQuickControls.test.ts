@@ -23,6 +23,8 @@ test("Hotel rail keeps Filter Sort Price Stars Facilities Room & bed without Fli
   assert.match(rail, /openHotelQuickFilter\("roomTypes"\)/);
   assert.match(rail, /hotelOptions\.roomTypes\.length >= 2/);
   assert.match(rail, /<ScrollView horizontal[\s\S]*?showsHorizontalScrollIndicator=\{false\}[\s\S]*?contentContainerStyle=\{s0\.hotelFilterContent\}>/);
+  assert.match(rail, /style=\{s0\.hotelFilterRail\}/);
+  assert.doesNotMatch(rail, /theme\.dark \? theme\.surface : "#FFFFFF"/);
   assert.doesNotMatch(rail, /contentOffset|scrollTo\(|negativeMargin|translateX|position: "absolute"/);
   assert.doesNotMatch(rail, /label="Amenities"|openHotelQuickFilter\("amenities"\)/);
   assert.match(rail, /hotelSort === defaultHotelSort \? "Sort" : hotelSortLabel\(hotelSort\)/);
@@ -32,10 +34,10 @@ test("Hotel rail keeps Filter Sort Price Stars Facilities Room & bed without Fli
 test("Hotel controls use compact capsules inside accessible touch targets like Flight", () => {
   const styles = screen.slice(screen.indexOf("const s0 = StyleSheet.create"));
   assert.match(styles, /hotelFilterRail: \{ height: 44, flexGrow: 0 \}/);
-  assert.match(styles, /hotelFilterContent: \{ paddingLeft: 8, paddingRight: 16, gap: 4, alignItems: "center", flexWrap: "nowrap" \}/);
+  assert.match(styles, /hotelFilterContent: \{ paddingLeft: 8, paddingRight: 16, gap: 6, alignItems: "center", flexWrap: "nowrap" \}/);
   assert.doesNotMatch(block(styles, "hotelFilterContent", "hotelFilterSectionHeader"), /paddingBottom/);
   assert.match(styles, /hotelShortcutTouchTarget: \{ minWidth: 44, minHeight: 44, justifyContent: "center" \}/);
-  assert.match(styles, /hotelShortcut: \{ height: 36,[^}]*gap: 4,[^}]*borderWidth: 1, borderRadius: 9, paddingHorizontal: 8 \}/);
+  assert.match(styles, /hotelShortcut: \{ height: 36,[^}]*gap: 4,[^}]*borderWidth: 1, borderRadius: 9, paddingHorizontal: 10 \}/);
   const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
   assert.match(component, /<Pressable[\s\S]*?style=\{s0\.hotelShortcutTouchTarget\}[\s\S]*?\{\(\{ pressed \}\) => <View style=\{\[[\s\S]*?s0\.hotelShortcut,/);
   assert.match(styles, /hotelShortcutLabel: \{ fontSize: 13, lineHeight: 16, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
@@ -46,9 +48,10 @@ test("Hotel controls use compact capsules inside accessible touch targets like F
 
 test("Hotel controls use Flight light tokens and semantic dark tokens", () => {
   const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
-  for (const token of ["#D8E1EC", "#142033", "#004BB8", "#64748B", "#F8FAFC", "#FFFFFF", "rgba(0,75,184,0.08)"]) assert.match(component, new RegExp(token.replace(/[().]/g, "\\$&")));
-  for (const semantic of ["theme.surface", "theme.border", "theme.textPrimary", "theme.textSecondary"]) assert.match(component, new RegExp(semantic.replace(".", "\\.")));
-  assert.match(component, /#8FB5FF/);
+  for (const token of ["#D8E1EC", "#142033", "#64748B", "#F8FAFC", "#F1F5F9", "#FFFFFF"]) assert.match(component, new RegExp(token.replace(/[().]/g, "\\$&")));
+  for (const semantic of ["theme.surface", "theme.border", "theme.textPrimary", "theme.textSecondary", "theme.background"]) assert.match(component, new RegExp(semantic.replace(".", "\\.")));
+  assert.doesNotMatch(component, /#004BB8|#8FB5FF|rgba\(0,75,184,0\.08\)/);
+  assert.match(component, /color=\{foreground\}/);
 });
 
 test("Hotel Filter launcher has sliders without a chevron while quick filters keep rotating chevrons", () => {

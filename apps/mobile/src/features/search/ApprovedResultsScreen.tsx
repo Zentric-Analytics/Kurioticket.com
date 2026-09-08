@@ -189,6 +189,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const insets = useSafeAreaInsets();
   const flightResults = product === "flight";
   const flightCanvasColor = theme.dark ? theme.background : flightResultsLightCanvas;
+  const hotelCanvasColor = theme.dark ? theme.background : flightResultsLightCanvas;
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const plan = buildSearchPlan(product, params);
@@ -892,7 +893,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       openSheet={openFlightSheet}
     />
   ) : (
-    <ScrollView horizontal style={[s0.hotelFilterRail, { backgroundColor: theme.dark ? theme.surface : "#FFFFFF" }]} showsHorizontalScrollIndicator={false} alwaysBounceHorizontal={false} contentContainerStyle={s0.hotelFilterContent}>
+    <ScrollView horizontal style={s0.hotelFilterRail} showsHorizontalScrollIndicator={false} alwaysBounceHorizontal={false} contentContainerStyle={s0.hotelFilterContent}>
             <>
               <HotelResultsShortcut label="Filter" accessibilityLabel="Filters" count={activeHotelFilters || undefined} icon showChevron={false} expanded={hotelFilterOpen} onPress={() => openHotelFilters("all")} />
               <HotelResultsShortcut label={hotelSort === defaultHotelSort ? "Sort" : hotelSortLabel(hotelSort)} accessibilityLabel={`Sort, ${hotelSortLabel(hotelSort)}`} expanded={hotelQuickFilter === "sort"} onPress={() => openHotelQuickFilter("sort")} />
@@ -907,7 +908,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     <>
       {product === "hotel" && status === "loading" ? <Loading product={product} /> : null}
               {message && (!flightResults || status === "ready") ? (
-                <Text accessibilityRole="alert" style={[s0.notice, flightResults && { backgroundColor: theme.surface, color: theme.textPrimary, borderColor: theme.border, borderWidth: 1 }]}>
+                <Text accessibilityRole="alert" style={[s0.notice, { backgroundColor: theme.surface, color: theme.textPrimary, borderColor: flightResults ? theme.border : theme.dark ? theme.border : "#D8E1EC", borderWidth: 1 }]}>
                   {message}
                 </Text>
               ) : null}
@@ -964,7 +965,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   );
   if (status === "loading") return <NativeBrandedSearchLoading product={product} />;
   return (
-    <SafeAreaView style={[s0.safe, { backgroundColor: flightResults ? flightCanvasColor : theme.background }]} edges={["top"]}>
+    <SafeAreaView style={[s0.safe, { backgroundColor: flightResults ? flightCanvasColor : hotelCanvasColor }]} edges={["top"]}>
       {flightResults ? (
         <FlightResultsHeader
           route={flightSummary.route}
@@ -1036,10 +1037,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         </View>
       ) : (
         <>
-          <HotelResultsHeader destination={hotelSummary.destination} secondaryLine={hotelSummary.secondaryLine} onEdit={edit}/>
+          <HotelResultsHeader destination={hotelSummary.destination} secondaryLine={hotelSummary.secondaryLine} onEdit={edit} backgroundColor={hotelCanvasColor}/>
           <ScrollView
             ref={hotelScrollRef}
-            style={s0.resultsScroll}
+            style={[s0.resultsScroll, { backgroundColor: hotelCanvasColor }]}
             alwaysBounceVertical={false}
             bounces={false}
             contentContainerStyle={s0.hotelResultsContent}
@@ -1053,7 +1054,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 hotelFilterHeaderHeight.current = nativeEvent.layout.height;
                 updateHotelResultsOffset();
               }}
-              style={[s0.hotelFilterSectionHeader, { backgroundColor: theme.background }]}
+              style={[s0.hotelFilterSectionHeader, { backgroundColor: hotelCanvasColor }]}
             >
               {filterRail}
             </View>
@@ -1062,7 +1063,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 hotelResultsBodyOffset.current = nativeEvent.layout.y;
                 updateHotelResultsOffset();
               }}
-              style={[s0.body, { paddingBottom: Math.max(insets.bottom + 16, 16) }]}
+              style={[s0.body, s0.hotelResultsBody, { paddingBottom: Math.max(insets.bottom + 16, 16) }]}
             >
               {resultContent}
             </View>
@@ -1172,10 +1173,12 @@ function HotelResultsHeader({
   destination,
   secondaryLine,
   onEdit,
+  backgroundColor,
 }: {
   destination: string;
   secondaryLine: string;
   onEdit: () => void;
+  backgroundColor: string;
 }) {
   const { theme } = useAppTheme();
   const insets = useSafeAreaInsets();
@@ -1185,7 +1188,7 @@ function HotelResultsHeader({
       style={[
         s0.hotelHeader,
         {
-          backgroundColor: theme.background,
+          backgroundColor,
           paddingLeft: Math.max(insets.left + 6, 6),
           paddingRight: Math.max(insets.right + 10, 10),
         },
@@ -1249,12 +1252,11 @@ const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChe
 }) => {
   const { theme } = useAppTheme();
   const active = Boolean(count);
-  const accent = theme.dark ? "#8FB5FF" : "#004BB8";
   const foreground = theme.dark ? theme.textPrimary : "#142033";
   const chevron = theme.dark ? theme.textSecondary : "#64748B";
   const border = theme.dark ? theme.border : "#D8E1EC";
   const surface = theme.dark ? theme.surface : "#FFFFFF";
-  const countBackground = theme.dark ? "#142B55" : "rgba(0,75,184,0.08)";
+  const countBackground = theme.dark ? theme.background : "#F1F5F9";
   const controlAccessibilityLabel = `${accessibilityLabel ?? label}${active ? ", selected" : ""}${count ? `, ${count} active` : ""}`;
   return (
     <Pressable
@@ -1268,9 +1270,9 @@ const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChe
         s0.hotelShortcut,
         { borderColor: border, backgroundColor: pressed && !theme.dark ? "#F8FAFC" : surface },
       ]}>
-        {icon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={accent} /> : null}
+        {icon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={foreground} /> : null}
         <Text numberOfLines={1} style={[s0.hotelShortcutLabel, { color: foreground }]}>{label}</Text>
-        {count ? <View style={[s0.hotelShortcutCount, { backgroundColor: countBackground }]}><Text style={[s0.hotelShortcutCountText, { color: accent }]}>{count}</Text></View> : null}
+        {count ? <View style={[s0.hotelShortcutCount, { backgroundColor: countBackground }]}><Text style={[s0.hotelShortcutCountText, { color: foreground }]}>{count}</Text></View> : null}
         {showChevron ? <ChevronDown accessible={false} size={13} strokeWidth={1.9} color={chevron} style={expanded ? s0.hotelShortcutChevronExpanded : undefined} /> : null}
       </View>}
     </Pressable>
@@ -1491,6 +1493,7 @@ function HotelCard({
   displayPrices?: HotelDisplayPriceSnapshot;
   displayCurrencyContext?: DisplayCurrencyResolution;
 }) {
+  const { theme } = useAppTheme();
   const canonical = useCanonicalSaved();
   const saved = canonical.items.some(item => item.type === "hotel" && ((item.payload as Record<string, unknown> | undefined)?.result as { id?: string } | undefined)?.id === result.id);
   const compact = useWindowDimensions().width < 430;
@@ -1513,12 +1516,12 @@ function HotelCard({
     void Share.share({ message }).catch(() => undefined);
   };
   return (
-    <View style={s0.hotelCard}>
+    <View style={[s0.hotelCard, { backgroundColor: theme.surface, borderColor: theme.dark ? theme.border : "#D8E1EC", shadowColor: theme.dark ? "#000000" : "#18305B" }]}>
       <View style={[s0.hotelImageWrap, compact && s0.hotelImageWrapCompact]}>
         {usableGallery[activeImage] ? (
           <Image source={{ uri: usableGallery[activeImage] }} onError={()=>setFailedImages(values=>[...values,usableGallery[activeImage]])} style={s0.hotelImage} />
         ) : (
-          <View accessibilityLabel="Hotel image unavailable" style={[s0.hotelImage,s0.hotelImageUnavailable]}><Text style={s0.hotelImageUnavailableText}>Image unavailable</Text></View>
+          <View accessibilityLabel="Hotel image unavailable" style={[s0.hotelImage,s0.hotelImageUnavailable]}><Text style={[s0.hotelImageUnavailableText,{color:theme.textSecondary}]}>Image unavailable</Text></View>
         )}
         {usableGallery.length>1?<>
           <Pressable accessibilityRole="button" accessibilityLabel={`Previous photo of ${result.name}`} onPress={()=>setActiveImage(index=>(index-1+usableGallery.length)%usableGallery.length)} style={[s0.galleryControl,s0.galleryPrevious]}>
@@ -1542,7 +1545,7 @@ function HotelCard({
       </View>
       <View style={[s0.hotelCopy, compact && s0.hotelCopyCompact]}>
         <View style={s0.hotelTitleRow}>
-          <Text numberOfLines={2} style={s0.hotelName}>{result.name}</Text>
+          <Text numberOfLines={2} style={[s0.hotelName,{color:theme.textPrimary}]}>{result.name}</Text>
         </View>
         <View style={[s0.hotelActions, compact && s0.hotelActionsCompact]}>
           <Pressable
@@ -1556,7 +1559,7 @@ function HotelCard({
             <Heart
               accessible={false}
               size={20}
-              color={saved ? HOTEL_SAVED_HEART_COLOR : HOTEL_UTILITY_ICON_COLOR}
+              color={saved ? HOTEL_SAVED_HEART_COLOR : theme.dark ? theme.icon : HOTEL_UTILITY_ICON_COLOR}
               fill={saved ? HOTEL_SAVED_HEART_COLOR : "none"}
             />
           </Pressable>
@@ -1566,7 +1569,7 @@ function HotelCard({
             onPress={shareHotel}
             style={[s0.hotelAction, s0.hotelShareAction]}
           >
-            <Share2 accessible={false} size={20} color={HOTEL_UTILITY_ICON_COLOR} />
+            <Share2 accessible={false} size={20} color={theme.dark ? theme.icon : HOTEL_UTILITY_ICON_COLOR} />
           </Pressable>
         </View>
         {showCheapestBadge && hasPrice ? (
@@ -1580,22 +1583,22 @@ function HotelCard({
           <Text numberOfLines={1} ellipsizeMode="tail" style={s0.hotelLocationText}>{result.location}</Text>
         </View>
         {score == null ? null : (
-          <Text style={s0.review}>
+          <Text style={[s0.review,{color:theme.textPrimary}]}>
             <Text style={s0.score}>{score.toFixed(1)}</Text>{" "}
             {score >= 9 ? "Exceptional" : score >= 8 ? "Excellent" : "Good"}
             {result.reviewCount ? `  ·  ${result.reviewCount.toLocaleString()} reviews` : ""}
           </Text>
         )}
         <HotelCardAmenityList amenities={result.amenities} />
-        {mealPlan && !(/^breakfast/i.test(mealPlan)&&result.amenities.some(item=>/breakfast/i.test(item)))?<Text numberOfLines={1} style={s0.hotelTerm}>{mealPlan.charAt(0).toUpperCase()+mealPlan.slice(1).toLowerCase()}</Text>:null}
-        {policy.map(item=><Text key={item} numberOfLines={1} style={s0.hotelTerm}>{item}</Text>)}
+        {mealPlan && !(/^breakfast/i.test(mealPlan)&&result.amenities.some(item=>/breakfast/i.test(item)))?<Text numberOfLines={1} style={[s0.hotelTerm,{color:theme.textPrimary}]}>{mealPlan.charAt(0).toUpperCase()+mealPlan.slice(1).toLowerCase()}</Text>:null}
+        {policy.map(item=><Text key={item} numberOfLines={1} style={[s0.hotelTerm,{color:theme.textPrimary}]}>{item}</Text>)}
         {result.sourceAttributions?.map(item=>{const safe=typeof item.providerUri==="string"&&/^https?:\/\//i.test(item.providerUri);return <Pressable key={`${item.provider}-${item.providerUri??""}`} disabled={!safe} onPress={()=>safe&&void Linking.openURL(item.providerUri!)}><Text numberOfLines={1} style={s0.hotelAttributionLink}>Source: {item.provider}</Text></Pressable>;})}
         <View style={s0.hotelPrice}>
           <View style={s0.hotelPriceCopy}>
-            <Text accessibilityLabel={displayPrices?.nightly?.accessibilityLabel} style={s0.hotelNightlyPrice}>
+            <Text accessibilityLabel={displayPrices?.nightly?.accessibilityLabel} style={[s0.hotelNightlyPrice,{color:theme.textPrimary}]}>
               {hasPrice ? displayPrices?.nightly?.formatted ?? money(result.currency, result.pricePerNight) : "Price unavailable"}
             </Text>
-            {hasPrice ? <Text style={s0.hotelPerNight}>per night</Text> : <Text style={s0.hotelPerNight}>No live rate</Text>}
+            {hasPrice ? <Text style={[s0.hotelPerNight,{color:theme.textSecondary}]}>per night</Text> : <Text style={[s0.hotelPerNight,{color:theme.textSecondary}]}>No live rate</Text>}
           </View>
           <Pressable
             accessibilityRole="button"
@@ -1692,7 +1695,8 @@ function FlightLoadingSkeleton({ roundTrip = false }: { roundTrip?: boolean }) {
 }
 
 function HotelLoadingSkeleton() {
-  return <View style={s0.hotelSkeletonCard} accessibilityElementsHidden><View style={s0.hotelSkeletonImage} /><View style={s0.hotelSkeletonCopy}><SkeletonLine style={s0.hotelSkeletonTitle} /><SkeletonLine style={s0.hotelSkeletonMeta} /><SkeletonLine style={s0.hotelSkeletonReview} /><SkeletonLine style={s0.hotelSkeletonDetail} /><View style={s0.hotelSkeletonFooter}><SkeletonLine style={s0.hotelSkeletonPrice} /><View style={s0.skeletonButton} /></View></View></View>;
+  const { theme } = useAppTheme();
+  return <View style={[s0.hotelSkeletonCard, { backgroundColor: theme.surface, borderColor: theme.dark ? theme.border : "#D8E1EC" }]} accessibilityElementsHidden><View style={s0.hotelSkeletonImage} /><View style={s0.hotelSkeletonCopy}><SkeletonLine style={s0.hotelSkeletonTitle} /><SkeletonLine style={s0.hotelSkeletonMeta} /><SkeletonLine style={s0.hotelSkeletonReview} /><SkeletonLine style={s0.hotelSkeletonDetail} /><View style={s0.hotelSkeletonFooter}><SkeletonLine style={s0.hotelSkeletonPrice} /><View style={s0.skeletonButton} /></View></View></View>;
 }
 function FlightResultsSummaryRow({ count }: { count: number }) {
   const { theme } = useAppTheme();
@@ -1859,7 +1863,7 @@ const s0 = StyleSheet.create({
   hotelBackToTop:{position:"absolute",right:16,width:44,height:44,borderRadius:22,borderWidth:1,alignItems:"center",justifyContent:"center",zIndex:19,elevation:4},
   filterRail: { height: 44, flexGrow: 0 },
   hotelFilterRail: { height: 44, flexGrow: 0 },
-  hotelFilterContent: { paddingLeft: 8, paddingRight: 16, gap: 4, alignItems: "center", flexWrap: "nowrap" },
+  hotelFilterContent: { paddingLeft: 8, paddingRight: 16, gap: 6, alignItems: "center", flexWrap: "nowrap" },
   hotelFilterSectionHeader: { paddingBottom: 12 },
   flightFilterSectionHeader: { paddingTop: 8 },
   resultsScroll: { flex: 1 },
@@ -1869,7 +1873,7 @@ const s0 = StyleSheet.create({
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
   filters: { paddingHorizontal: 14, paddingVertical: 3, gap: 8, alignItems: "center" },
   hotelShortcutTouchTarget: { minWidth: 44, minHeight: 44, justifyContent: "center" },
-  hotelShortcut: { height: 36, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, borderWidth: 1, borderRadius: 9, paddingHorizontal: 8 },
+  hotelShortcut: { height: 36, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, borderWidth: 1, borderRadius: 9, paddingHorizontal: 10 },
   hotelShortcutLabel: { fontSize: 13, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
   hotelShortcutCount: { minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 6, alignItems: "center", justifyContent: "center" },
   hotelShortcutCountText: { fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts.semibold },
@@ -1899,6 +1903,7 @@ const s0 = StyleSheet.create({
   noChoices: { color: ui.muted, fontSize: 13, lineHeight: 19 },
   sheetActions: { gap: 9 },
   body: { paddingHorizontal: 18, paddingBottom: 92, gap: 14 },
+  hotelResultsBody: { paddingHorizontal: 14 },
   hotelResultsContent: { flexGrow: 1 },
   hotelFilterChips:{gap:8,paddingVertical:6},
   hotelFilterChip:{minHeight:44,borderRadius:18,borderWidth:1,paddingHorizontal:12,alignItems:"center",justifyContent:"center"},
@@ -1964,7 +1969,7 @@ const s0 = StyleSheet.create({
   metadataRow: { width: "100%", flexDirection: "row", alignItems: "center", paddingTop: 1, paddingBottom: 2 },
   metadataItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingHorizontal: 2 },
   metadataText: { flexShrink: 1, minWidth: 0, fontSize: 11.5, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
-  hotelCard: { minHeight: 260, borderWidth: 1, borderColor: ui.border, borderRadius: 13, overflow: "hidden", flexDirection: "row", backgroundColor: "white" },
+  hotelCard: { minHeight: 260, borderWidth: 1, borderRadius: 13, overflow: "hidden", flexDirection: "row", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 2 },
   hotelImageWrap: { width: "39%", alignSelf: "stretch", position: "relative" },
   hotelImageWrapCompact: { width: "38%" },
   hotelImage: { ...StyleSheet.absoluteFillObject, backgroundColor: "#E9EDF3" },
@@ -2046,7 +2051,7 @@ const s0 = StyleSheet.create({
   skeletonMetadataRow: { width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start" },
   skeletonMetadataLine: { width: "68%", height: 7 },
   skeletonButton: { width: 96, height: 44, borderRadius: 8, backgroundColor: "#E7EBF1" },
-  hotelSkeletonCard: { width: "100%", height: 234, borderWidth: 1, borderColor: ui.border, borderRadius: 13, overflow: "hidden", flexDirection: "row", backgroundColor: "white" },
+  hotelSkeletonCard: { width: "100%", height: 234, borderWidth: 1, borderRadius: 13, overflow: "hidden", flexDirection: "row" },
   hotelSkeletonImage: { width: "39%", height: "100%", backgroundColor: "#E7EBF1" },
   hotelSkeletonCopy: { flex: 1, padding: 12, gap: 12 },
   hotelSkeletonTitle: { width: "82%", height: 15 },

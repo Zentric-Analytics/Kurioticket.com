@@ -71,9 +71,9 @@ test("hotel actions independently save and share without share navigation", () =
 test("hotel utility colors match mobile web while saved and share states stay independent", () => {
   assert.match(source, /const HOTEL_UTILITY_ICON_COLOR = "#334155"/);
   assert.match(source, /const HOTEL_SAVED_HEART_COLOR = "#E11D48"/);
-  assert.match(card, /color=\{saved \? HOTEL_SAVED_HEART_COLOR : HOTEL_UTILITY_ICON_COLOR\}/);
+  assert.match(card, /color=\{saved \? HOTEL_SAVED_HEART_COLOR : theme\.dark \? theme\.icon : HOTEL_UTILITY_ICON_COLOR\}/);
   assert.match(card, /fill=\{saved \? HOTEL_SAVED_HEART_COLOR : "none"\}/);
-  assert.match(card, /<Share2 accessible=\{false\} size=\{20\} color=\{HOTEL_UTILITY_ICON_COLOR\} \/>/);
+  assert.match(card, /<Share2 accessible=\{false\} size=\{20\} color=\{theme\.dark \? theme\.icon : HOTEL_UTILITY_ICON_COLOR\} \/>/);
   assert.doesNotMatch(card, /<Heart[^>]*color=\{ui\.blue\}|<Share2[^>]*color=\{ui\.blue\}|fill=\{saved \? ui\.blue : "none"\}/s);
 });
 
@@ -113,7 +113,7 @@ test("Hotel utility actions leave title flow while retaining full parent-owned h
 
   assert.ok(copyStart >= 0 && cheapestStart > copyStart);
   assert.ok(titleStart >= 0 && titleEnd > titleStart);
-  assert.match(titleRow, /<Text numberOfLines=\{2\} style=\{s0\.hotelName\}>\{result\.name\}<\/Text>/);
+  assert.match(titleRow, /<Text numberOfLines=\{2\} style=\{\[s0\.hotelName,\{color:theme\.textPrimary\}\]\}>\{result\.name\}<\/Text>/);
   assert.doesNotMatch(titleRow, /hotelActions|<Pressable/);
   assert.ok(actionsStart > titleEnd, "actions must be a sibling after the closed title row");
   assert.ok(actionsStart < cheapestStart, "actions must precede Cheapest and star metadata");
@@ -139,7 +139,7 @@ test("Hotel spacing has no star or Cheapest position compensation", () => {
 
 test("hotel title matches mobile web typography without compromising actions", () => {
   const hotelNameStyle = source.slice(source.indexOf("  hotelName: {"), source.indexOf("  stars:"));
-  assert.match(card, /<Text numberOfLines=\{2\} style=\{s0\.hotelName\}>/);
+  assert.match(card, /<Text numberOfLines=\{2\} style=\{\[s0\.hotelName,\{color:theme\.textPrimary\}\]\}>/);
   assert.match(hotelNameStyle, /flex:\s*1/);
   assert.match(hotelNameStyle, /minWidth:\s*0/);
   assert.match(hotelNameStyle, /fontSize:\s*15/);
@@ -175,10 +175,11 @@ test("amenities use the shared semantic presentation and four neutral icon rows"
 });
 
 test("amenities use readable compact native metadata typography", () => {
-  assert.match(amenities, /<Icon accessible=\{false\} size=\{14\} strokeWidth=\{1\.8\} color=\{ui\.muted\} \/>/);
+  assert.match(amenities, /<Icon accessible=\{false\} size=\{14\} strokeWidth=\{1\.8\} color=\{theme\.textSecondary\} \/>/);
   assert.match(amenities, /list:\s*\{[^}]*gap:\s*3[^}]*\}/s);
   assert.match(amenities, /item:\s*\{[^}]*flexDirection:\s*"row"[^}]*alignItems:\s*"center"[^}]*gap:\s*5[^}]*minWidth:\s*0[^}]*\}/s);
   assert.match(amenities, /label:\s*\{[^}]*flexShrink:\s*1[^}]*minWidth:\s*0[^}]*color:\s*ui\.muted[^}]*fontSize:\s*11[^}]*lineHeight:\s*15[^}]*fontWeight:\s*"500"[^}]*fontFamily:\s*appFonts\.medium[^}]*\}/s);
+  assert.match(amenities, /style=\{\[styles\.label, \{ color: theme\.textSecondary \}\]\}/);
   assert.match(amenities, /import \{ appFonts \} from "\.\.\/\.\.\/theme\/typography"/);
 });
 
@@ -187,7 +188,7 @@ test("hotel cards use a natural 260dp minimum and preserve bottom-aligned price 
   const priceStyles = source.slice(source.indexOf("  hotelPrice:"), source.indexOf("\n", source.indexOf("  hotelDealButtonText:")));
   const priceStyle = source.match(/\n  hotelPrice:\s*\{[^}]*\}/s)?.[0] ?? "";
 
-  assert.match(card, /<View style=\{s0\.hotelCard\}>/);
+  assert.match(card, /<View style=\{\[s0\.hotelCard, \{ backgroundColor: theme\.surface, borderColor: theme\.dark \? theme\.border : "#D8E1EC", shadowColor: theme\.dark \? "#000000" : "#18305B" \}\]\}>/);
   assert.match(cardStyle, /minHeight:\s*260/);
   assert.doesNotMatch(cardStyle, /(?:^|[,\s])height:\s*260/);
   assert.doesNotMatch(source, /hotelCardCompact|(?:minHeight|height):\s*292/);
@@ -197,6 +198,15 @@ test("hotel cards use a natural 260dp minimum and preserve bottom-aligned price 
   assert.match(priceStyles, /hotelPerNight:\s*\{[^}]*marginTop:\s*1/s);
   assert.match(priceStyles, /hotelDealButton:\s*\{[^}]*marginTop:\s*6/s);
   assert.doesNotMatch(amenities, /position:\s*"absolute"|translateY/);
+});
+
+test("Hotel card shell preserves its split layout with Flight-family depth", () => {
+  const cardStyle = source.match(/\n  hotelCard:\s*\{[^}]*\}/s)?.[0] ?? "";
+  assert.match(cardStyle, /minHeight:\s*260/);
+  assert.match(cardStyle, /borderRadius:\s*13/);
+  assert.match(cardStyle, /flexDirection:\s*"row"/);
+  assert.match(source, /shadowOffset: \{ width: 0, height: 2 \}, shadowOpacity: 0\.08, shadowRadius: 10, elevation: 2/);
+  assert.doesNotMatch(cardStyle, /backgroundColor:\s*"white"|borderColor:\s*ui\.border/);
 });
 
 test("View hotel uses the web brand blue and matching pressed treatment", () => {

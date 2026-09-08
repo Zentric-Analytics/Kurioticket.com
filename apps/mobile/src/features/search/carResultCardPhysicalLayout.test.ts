@@ -6,6 +6,12 @@ import test from "node:test";
 const source = readFileSync(resolve("src/features/search/CarResultCard.tsx"), "utf8");
 const styles = source.slice(source.indexOf("const c = StyleSheet.create"));
 
+test("Car card shell uses Flight-family semantic surface separation", () => {
+  assert.match(source, /c\.card,\{backgroundColor:theme\.surface,borderColor:theme\.dark\?theme\.border:"#D8E1EC",shadowColor:theme\.dark\?"#000000":"#18305B"\}/);
+  assert.match(styles, /card:\{borderWidth:1,borderRadius:13,overflow:"hidden",shadowOpacity:0\.08,shadowRadius:10,shadowOffset:\{width:0,height:2\},elevation:2\}/);
+  assert.doesNotMatch(styles.match(/card:\{[^}]*\}/)?.[0] ?? "", /backgroundColor:"white"|shadowColor:"#0F172A"|height:5/);
+});
+
 test("compact Car result media cannot create a percentage-height layout loop", () => {
   assert.doesNotMatch(styles, /height:\s*"(?:100|68)%"/);
   assert.match(styles, /main:\{minHeight:168,flexDirection:"row"\}/);
