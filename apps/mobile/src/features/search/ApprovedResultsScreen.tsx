@@ -5,6 +5,7 @@ import {
   Animated,
   AppState,
   Image,
+  Keyboard,
   Linking,
   KeyboardAvoidingView,
   Modal,
@@ -42,6 +43,7 @@ import {
   Share2,
   SlidersHorizontal,
   SquarePen,
+  X,
 } from "lucide-react-native";
 import { Heart } from "lucide-react-native";
 import {
@@ -1732,6 +1734,10 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   const [targetOpen, setTargetOpen] = useState(false);
   const [targetDraft, setTargetDraft] = useState("");
   const [targetError, setTargetError] = useState("");
+  const closeHotelTargetSheet = useCallback(() => {
+    setTargetOpen(false);
+    Keyboard.dismiss();
+  }, []);
   const matchingAlert = matchingAlertState && matchingAlertState.planKey === plan?.key ? matchingAlertState.alert : undefined;
   const hotelAlertKnown = product === "hotel" && reconciledHotelPlanKey === plan?.key;
   const setCurrentMatchingAlert = useCallback((alert: MobilePriceAlert | undefined) => {
@@ -1815,7 +1821,7 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   if (product !== "hotel" || !plan) return null;
   if (!activePresentation.enabled) return null;
   const toggleDisabled = pending || !hotelAlertKnown || unavailable;
-  return <View accessibilityLabel={message("hotelAlertTitle")} style={[s0.compactPriceAlert, { backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}><Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/><View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightAlertCompactTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text></View><View style={s0.compactPriceAlertSwitchSlot}>{pending ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent}/> : null}{/* Native UISwitch artwork sits high in its iOS layout box; offset its compact rendering to optically align with the Bell and title. */}<Switch style={Platform.OS === "ios" ? s0.compactPriceAlertSwitchIos : undefined} accessibilityRole="switch" accessibilityLabel="Track this stay price" accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending }} disabled={toggleDisabled} value={isTracking} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"} ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}/></View><Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel={message("hotelAlertTitle")}><Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>{message("targetTotal")} ({currency})</Text><TextInput autoFocus accessibilityLabel={`${message("targetTotal")} ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text> : null}<Button label={pending ? message("creating") : message("createAlert")} onPress={() => void createAlert()} /><Button label={t("cancel")} outline onPress={() => setTargetOpen(false)} /></View></KeyboardAvoidingView></Modal></View>;
+  return <View accessibilityLabel={message("hotelAlertTitle")} style={[s0.compactPriceAlert, { backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}><Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/><View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightAlertCompactTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text></View><View style={s0.compactPriceAlertSwitchSlot}>{pending ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent}/> : null}{/* Native UISwitch artwork sits high in its iOS layout box; offset its compact rendering to optically align with the Bell and title. */}<Switch style={Platform.OS === "ios" ? s0.compactPriceAlertSwitchIos : undefined} accessibilityRole="switch" accessibilityLabel="Track this stay price" accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending }} disabled={toggleDisabled} value={isTracking} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"} ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}/></View><Modal visible={targetOpen} transparent animationType="none" onRequestClose={() => { if (!pending) closeHotelTargetSheet(); }} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel={message("hotelAlertTitle")}><View style={s0.hotelAlertSheetHeader}><Text accessibilityRole="header" style={[s0.flightAlertTitle, s0.hotelAlertSheetTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Pressable accessibilityRole="button" accessibilityLabel="Close price alert" disabled={pending} onPress={closeHotelTargetSheet} style={({ pressed }) => [s0.hotelAlertSheetClose, pressed && s0.flightHeaderControlPressed]}><X accessible={false} size={22} color={theme.icon}/></Pressable></View><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>{message("targetTotal")} ({currency})</Text><TextInput autoFocus accessibilityLabel={`${message("targetTotal")} ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text> : null}<Button label={pending ? message("creating") : message("createAlert")} onPress={() => void createAlert()} /></View></KeyboardAvoidingView></Modal></View>;
 }
 export function BottomNav({ flightResults = false }: { flightResults?: boolean } = {}) {
   const { theme } = useAppTheme();
@@ -2062,6 +2068,9 @@ const s0 = StyleSheet.create({
   compactPriceAlertSwitchIos: { transform: [{ translateY: 8 }] },
   alertModalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,.45)" },
   alertSheet: { padding: 20, gap: 12, borderTopWidth: 1, borderTopLeftRadius: 18, borderTopRightRadius: 18 },
+  hotelAlertSheetHeader: { flexDirection: "row", alignItems: "center" },
+  hotelAlertSheetTitle: { flex: 1, minWidth: 0 },
+  hotelAlertSheetClose: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   alertInput: { minHeight: 48, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, fontSize: 18 },
   alertError: { color: "#A4262C" },
   alertButton: { width: "100%", minHeight: 44, borderWidth: 1, borderColor: ui.blue, borderRadius: 11, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "white" },
