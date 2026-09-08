@@ -40,7 +40,7 @@ test("flight results naturally scroll the date strip while keeping native sticky
   const listStart = source.indexOf("<Animated.SectionList");
   const owner = source.slice(listStart, source.indexOf("/>", source.indexOf("windowSize", listStart)) + 2);
   for (const prop of stableProps) assert.match(owner, prop);
-  assert.match(source, /if \(status === "loading" && product !== "flight"\) return <NativeBrandedSearchLoading product=\{product\}/);
+  assert.match(source, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
   assert.match(owner, /ListHeaderComponent=\{flightDateStrip\}/);
   assert.match(owner, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
   assert.doesNotMatch(owner, /flightPagination|onMomentumScrollEnd|onScrollEndDrag/);
