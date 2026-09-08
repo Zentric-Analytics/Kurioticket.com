@@ -131,12 +131,18 @@ function HomeSearchSurface({ children }: { children: React.ReactNode }) {
 function HomeFlightSearchSurface({ children }: { children: React.ReactNode }) {
   const ft = useFlowTheme();
   return (
-    <View
-      style={[
-        styles.homeFlightSearchSurface,
-        { borderColor: ft.colors.border },
-      ]}
-    >
+    <View style={styles.homeFlightSearchSurface}>
+      <View
+        pointerEvents="none"
+        style={[
+          styles.homeFlightSearchBottom,
+          {
+            backgroundColor: ft.colors.page,
+            shadowColor: ft.colors.shadow,
+            shadowOpacity: ft.theme.dark ? 0.1 : 0.08,
+          },
+        ]}
+      />
       {children}
     </View>
   );
@@ -232,7 +238,7 @@ export function SharedHomePage() {
           })}
         </View>
         {searchPanel[activeProduct]}
-        <PopularDestinationStays />
+        <PopularDestinationStays compactTopSpacing={activeProduct === "flights"} />
         <HomepageAdventureDiscovery />
         <HomepageDealPromos />
         <RegionalDestinationRoutes />
@@ -274,13 +280,19 @@ const styles = StyleSheet.create({
   notificationBadgeText: { color: "white", fontSize: 10, fontWeight: "800" },
   homeFlightSearchSurface: {
     backgroundColor: "transparent",
-    borderLeftWidth: 0,
-    borderRightWidth: 0,
-    borderBottomWidth: 1,
-    borderTopWidth: 0,
+    paddingBottom: 8,
+  },
+  homeFlightSearchBottom: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 12,
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
-    paddingBottom: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 1,
   },
   products: {
     marginTop: -34,

@@ -18,7 +18,7 @@ test("new adventure discovery is independently inserted in the required Home ord
   const promos = home.indexOf("<HomepageDealPromos />");
   const regionalSection = home.indexOf("<RegionalDestinationRoutes />");
   assert.ok(flightSearch < adventure && adventure < promos && promos < regionalSection);
-  assert.match(home, /availability\.flightSearch[\s\S]*<PopularDestinationStays \/>\s*<HomepageAdventureDiscovery \/>\s*<HomepageDealPromos \/>/);
+  assert.match(home, /availability\.flightSearch[\s\S]*<PopularDestinationStays compactTopSpacing=\{activeProduct === "flights"\} \/>\s*<HomepageAdventureDiscovery \/>\s*<HomepageDealPromos \/>/);
   assert.match(section, /Discover your next adventure here/);
   assert.match(section, /Compare smart route ideas, flexible fares, and destinations picked for your region\./);
   assert.match(regional, /Discover destinations from your region/);

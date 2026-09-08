@@ -29,7 +29,11 @@ import {
 
 const { ctaHeight: CTA_HEIGHT } = POPULAR_STAY_LAYOUT;
 
-export function PopularDestinationStays() {
+export function PopularDestinationStays({
+  compactTopSpacing = false,
+}: {
+  compactTopSpacing?: boolean;
+}) {
   const ft = useFlowTheme();
   const { width } = useWindowDimensions();
   const { width: cardWidth, imageHeight } = popularStayCardLayout(width);
@@ -48,7 +52,7 @@ export function PopularDestinationStays() {
     <View
       collapsable={false}
       testID="popular-destination-stays"
-      style={styles.section}
+      style={[styles.section, compactTopSpacing && styles.compactTopSpacing]}
     >
       <Text
         accessibilityRole="header"
@@ -199,6 +203,7 @@ export function PopularDestinationStays() {
 
 const styles = StyleSheet.create({
   section: { gap: 24, marginTop: 4 },
+  compactTopSpacing: { marginTop: -4 },
   heading: {
     fontSize: 21,
     lineHeight: 27,

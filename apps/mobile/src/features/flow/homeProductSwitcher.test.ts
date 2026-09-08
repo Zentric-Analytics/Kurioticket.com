@@ -44,7 +44,7 @@ test("Home keeps its hero and surrounding discovery content around the switchabl
   assert.ok(home.indexOf("<HomeHero />") < selector);
   assert.ok(selector < panel);
   for (const component of ["PopularDestinationStays", "HomepageAdventureDiscovery", "HomepageDealPromos", "RegionalDestinationRoutes"]) {
-    assert.ok(home.indexOf(`<${component} />`) > panel);
+    assert.ok(home.indexOf(`<${component}`) > panel);
   }
 });
 
