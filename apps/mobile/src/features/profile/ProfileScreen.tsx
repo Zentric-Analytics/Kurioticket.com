@@ -19,7 +19,7 @@ import { subscribeUnreadCountChanged } from "../notifications/notificationUnread
 function Header({ unreadCount }: { unreadCount: number }) {
   const { theme } = useAppTheme(); const { t } = useMobileLocalization();
   const badge = unreadCount > 99 ? "99+" : String(unreadCount);
-  return <View style={styles.header}><Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>{t("profile")}</Text><Pressable accessibilityRole="button" accessibilityLabel={t("notifications")} accessibilityHint={t("notificationsHint")} accessibilityValue={unreadCount ? { text: `${badge} ${t("unread")}` } : undefined} onPress={() => router.push("/notifications")} style={styles.iconButton}><FlowIcon name="bell" size={29} color={theme.icon} />{unreadCount > 0 ? <View style={styles.badge}><Text style={styles.badgeText}>{badge}</Text></View> : null}</Pressable></View>;
+  return <View style={styles.header}><Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>{t("profile")}</Text><Pressable accessibilityRole="button" accessibilityLabel={t("notifications")} accessibilityHint={t("notificationsHint")} accessibilityValue={unreadCount ? { text: `${badge} ${t("unread")}` } : undefined} onPress={() => router.push("/notifications")} style={styles.iconButton}><FlowIcon strokeWidth={1.3} name="bell" size={29} color={theme.dark ? theme.icon : "#000000"} />{unreadCount > 0 ? <View style={styles.badge}><Text style={styles.badgeText}>{badge}</Text></View> : null}</Pressable></View>;
 }
 
 function WelcomeCard({ name, email }: { name: string | null; email: string | null }) {
@@ -77,14 +77,14 @@ export function AuthenticatedProfileScreen() {
   }, [load]);
   const logout = () => Alert.alert(t("logoutConfirm"), t("logoutExplanation"), [{ text: t("cancel"), style: "cancel" }, { text: t("logout"), style: "destructive", onPress: () => void authApi.logout().catch(() => undefined).finally(() => router.replace("/(tabs)/profile")) }]);
   const [manageAccount, ...remainingSections] = authenticatedProfileSections;
-  return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top"]}><ScrollView alwaysBounceVertical={false} bounces={false} overScrollMode="never" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-    <View style={[styles.hero, { backgroundColor: theme.dark ? "#102B4A" : "#F3F8FF" }]}>
+  return <SafeAreaView style={[styles.safe, { backgroundColor: theme.dark ? theme.background : "#F5F5F5" }]} edges={["top"]}><ScrollView alwaysBounceVertical={false} bounces={false} overScrollMode="never" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+    <View style={[styles.hero, { backgroundColor: theme.dark ? "#102B4A" : "#F5F5F5" }]}>
       <Header unreadCount={unreadCount} />
       <WelcomeCard name={name} email={email} />
     </View>
     <View style={styles.manageAccountOverlap}><ProfileCardSection section={manageAccount} /></View>
     <View style={styles.sections}>{remainingSections.map(section => <ProfileCardSection key={section.title} section={section} />)}</View>
-    {authenticated ? <Pressable accessibilityRole="button" accessibilityLabel={t("logout")} accessibilityHint={t("logoutHint")} onPress={logout} style={({ pressed }) => [styles.logout, { backgroundColor: theme.surface, borderColor: theme.border }, pressed && styles.pressed]}><FlowIcon name="logout" color={flowColors.red} size={27} /><Text style={styles.logoutText}>{t("logout")}</Text></Pressable> : null}
+    {authenticated ? <Pressable accessibilityRole="button" accessibilityLabel={t("logout")} accessibilityHint={t("logoutHint")} onPress={logout} style={({ pressed }) => [styles.logout, { backgroundColor: theme.dark ? theme.surface : "#FFFFFF", borderColor: theme.border }, pressed && styles.pressed]}><Text style={styles.logoutText}>{t("logout")}</Text></Pressable> : null}
     <AppVersionFooter />
   </ScrollView></SafeAreaView>;
 }

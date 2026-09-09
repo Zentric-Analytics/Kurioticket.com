@@ -17,7 +17,7 @@ export function profileFirstName(name?: string | null): string | null {
 export const authenticatedProfileSections: ProfileSection[] = [
   { title: "manageAccount", items: [
     { label: "personalDetails", icon: "person", destination: { kind: "native", href: "/personal-information" } },
-    { label: "securitySettings", icon: "shield", destination: { kind: "native", href: "/security" } },
+    { label: "securitySettings", icon: "lock", destination: { kind: "native", href: "/security" } },
   ] },
   { title: "travelActivity", items: [
     { label: "savedItems", icon: "heart", destination: { kind: "native", href: "/saved" } },
