@@ -10,6 +10,7 @@ const block = (source: string, name: string, next: string) => source.slice(sourc
 test("Hotel rail keeps Filter Sort Price Stars Facilities Room & bed without Flight business controls", () => {
   const wholeRail = screen.slice(screen.indexOf("const filterRail"), screen.indexOf("const resultContent"));
   const rail = wholeRail.slice(wholeRail.indexOf(") : ("));
+  const railOpeningTag = rail.slice(rail.indexOf("<ScrollView"), rail.indexOf(">", rail.indexOf("<ScrollView")) + 1);
   const labels = [rail.indexOf('label="Filter"'), rail.indexOf('label={hotelSort === defaultHotelSort ? "Sort"'), ...["Price", "Stars", "Facilities", "Room & bed"].map((label) => rail.indexOf(`label="${label}"`))];
   assert.ok(labels.every((index) => index >= 0) && labels.every((index, i) => i === 0 || labels[i - 1] < index));
   assert.match(rail, /hotelOptions\.price \?/);
@@ -24,10 +25,17 @@ test("Hotel rail keeps Filter Sort Price Stars Facilities Room & bed without Fli
   assert.match(screen, /const showRoomAndBedShortcut = hotelOptions\.roomTypes\.length > 0 \|\| hotelFilters\.roomTypes\.length > 0/);
   assert.match(rail, /showRoomAndBedShortcut \? <HotelResultsShortcut label="Room & bed"/);
   assert.doesNotMatch(screen, /hotelOptions\.roomTypes\.length\s*(?:>=\s*2|>\s*1)/);
-  assert.match(rail, /<ScrollView horizontal[\s\S]*?showsHorizontalScrollIndicator=\{false\}[\s\S]*?contentContainerStyle=\{s0\.hotelFilterContent\}>/);
+  for (const contract of [
+    /<ScrollView\s+horizontal/,
+    /showsHorizontalScrollIndicator=\{false\}/,
+    /alwaysBounceHorizontal=\{false\}/,
+    /bounces=\{false\}/,
+    /overScrollMode="never"/,
+    /contentContainerStyle=\{s0\.hotelFilterContent\}/,
+  ]) assert.match(railOpeningTag, contract);
   assert.match(rail, /style=\{s0\.hotelFilterRail\}/);
   assert.doesNotMatch(rail, /theme\.dark \? theme\.surface : "#FFFFFF"/);
-  assert.doesNotMatch(rail, /contentOffset|scrollTo\(|scrollToEnd\(|negativeMargin|translateX|position: "absolute"/);
+  assert.doesNotMatch(rail, /scrollEnabled=\{false\}|contentOffset|scrollTo\(|scrollToEnd\(|negativeMargin|translateX|position: "absolute"/);
   assert.doesNotMatch(rail, /label="Amenities"|openHotelQuickFilter\("amenities"\)/);
   assert.match(rail, /hotelSort === defaultHotelSort \? "Sort" : hotelSortLabel\(hotelSort\)/);
   assert.doesNotMatch(rail, /Cheapest|Airlines|Stops|Airports/);
