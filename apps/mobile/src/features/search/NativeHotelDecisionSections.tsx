@@ -1,11 +1,14 @@
 import { useState } from "react";
-import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
-import { ArrowRight, ImageOff, MapPin } from "lucide-react-native";
+import { Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { ArrowRight, ChevronLeft, ImageOff, MapPin } from "lucide-react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { WebView } from "react-native-webview";
 import type { PublicHotelPropertyDetails } from "../../../../../src/lib/types";
 import { buildHotelAddress } from "../../../../../src/lib/hotels/hotelMap";
 import { getApiBaseUrl } from "../../config/apiUrl";
 import { colors } from "../../theme/tokens";
 import { appFonts } from "../../theme/typography";
+import { nativeHotelLocationEmbedUrl } from "./nativeHotelLocationModel";
 import type { NativeRelatedHotel } from "./nativeHotelRelatedHotelsModel";
 
 type Theme = { dark: boolean; surface: string; border: string; textPrimary: string; textSecondary: string; icon: string };
@@ -17,40 +20,52 @@ export function NativeHotelPropertyLocationSection({ hotelId, hotelName, propert
   theme: Theme;
 }) {
   const [mapFailed, setMapFailed] = useState(false);
+  const [fullMapOpen, setFullMapOpen] = useState(false);
+  const [fullMapFailed, setFullMapFailed] = useState(false);
+  const [fullMapAttempt, setFullMapAttempt] = useState(0);
   if (!propertyDetails) return null;
   const address = buildHotelAddress(propertyDetails);
   const api = getApiBaseUrl(Platform.OS, __DEV__);
   const mapUrl = api.ok ? `${api.baseUrl}/api/mobile/v1/hotels/location-preview?${new URLSearchParams({ id: hotelId })}` : null;
-  const openMap = async () => {
-    const label = hotelName || address;
-    const query = encodeURIComponent(label || `${propertyDetails.latitude},${propertyDetails.longitude}`);
-    const destination = Platform.OS === "ios"
-      ? `https://maps.apple.com/?ll=${propertyDetails.latitude},${propertyDetails.longitude}&q=${query}`
-      : `geo:${propertyDetails.latitude},${propertyDetails.longitude}?q=${propertyDetails.latitude},${propertyDetails.longitude}(${query})`;
-    const fallback = `https://www.google.com/maps/search/?api=1&query=${propertyDetails.latitude},${propertyDetails.longitude}`;
-    try {
-      if (Platform.OS === "android" && !await Linking.canOpenURL(destination)) await Linking.openURL(fallback);
-      else await Linking.openURL(destination);
-    } catch {
-      try { await Linking.openURL(fallback); }
-      catch { Alert.alert("Unable to open maps", "Please try again."); }
-    }
-  };
+  const fullMapUrl = api.ok ? nativeHotelLocationEmbedUrl(api.baseUrl, hotelId, "map") : null;
+  const openFullMap = () => { setFullMapFailed(false); setFullMapOpen(true); };
+  const closeFullMap = () => { setFullMapOpen(false); };
+  const retryFullMap = () => { setFullMapFailed(false); setFullMapAttempt((attempt) => attempt + 1); };
   return <View style={styles.locationCard}>
     <View style={styles.locationHeader}>
       <Text accessibilityRole="header" style={[styles.locationHeading, { color: theme.dark ? theme.textPrimary : "#020617" }]}>Property location</Text>
       {address ? <Text style={[styles.address, { color: theme.dark ? theme.textSecondary : "#475569" }]}>{address}</Text> : null}
     </View>
-    <View style={[styles.mapFrame, { backgroundColor: theme.dark ? theme.surface : "#F1F5F9", borderColor: theme.border }]}>
-      {mapUrl && !mapFailed ? <Image accessibilityLabel={`Map showing the location of ${hotelName}`} source={{ uri: mapUrl }} resizeMode="cover" onError={() => setMapFailed(true)} style={styles.map} /> : <View style={styles.mapFallback}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`Open full map for ${hotelName}`} accessibilityHint="Opens an interactive map inside Kurioticket" onPress={openFullMap} style={[styles.mapFrame, { backgroundColor: theme.dark ? theme.surface : "#F1F5F9", borderColor: theme.border }]}>
+      {mapUrl && !mapFailed ? <Image accessible={false} source={{ uri: mapUrl }} resizeMode="cover" onError={() => setMapFailed(true)} style={styles.map} /> : <View style={styles.mapFallback}>
         <MapPin accessible={false} size={25} color={theme.icon} />
         <Text style={[styles.address, { color: theme.dark ? theme.textSecondary : "#475569" }]}>Map preview unavailable</Text>
       </View>}
-    </View>
-    <Pressable accessibilityRole="button" accessibilityLabel={`View ${hotelName} in maps`} onPress={() => void openMap()} style={styles.mapAction}>
+    </Pressable>
+    <Pressable accessibilityRole="button" accessibilityLabel={`Open full map for ${hotelName}`} onPress={openFullMap} style={styles.mapAction}>
       <Text style={[styles.mapActionText, { color: theme.dark ? "#8FB5FF" : colors.blue }]}>View in map</Text>
       <ArrowRight accessible={false} size={16} color={theme.dark ? "#8FB5FF" : colors.blue} />
     </Pressable>
+    <Modal visible={fullMapOpen} transparent={false} animationType="slide" presentationStyle="fullScreen" statusBarTranslucent={false} onRequestClose={closeFullMap}>
+      <SafeAreaProvider>
+        <SafeAreaView edges={["top", "bottom", "left", "right"]} accessibilityViewIsModal style={[styles.fullMapScreen, { backgroundColor: theme.surface }]}>
+          <View style={[styles.fullMapHeader, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
+            <View style={styles.fullMapHeaderSide}><Pressable accessibilityRole="button" accessibilityLabel="Back to hotel details" onPress={closeFullMap} style={styles.fullMapBack}><ChevronLeft accessible={false} size={20} color={theme.icon} /><Text style={[styles.fullMapBackText, { color: theme.textPrimary }]}>Back</Text></Pressable></View>
+            <Text accessibilityRole="header" numberOfLines={1} style={[styles.fullMapTitle, { color: theme.textPrimary }]}>Map</Text>
+            <View accessible={false} style={styles.fullMapHeaderSide} />
+          </View>
+          <View style={styles.fullMapBody}>
+            {fullMapUrl && !fullMapFailed
+              ? <WebView key={`${hotelId}:full-map:${fullMapAttempt}`} source={{ uri: fullMapUrl }} onError={() => setFullMapFailed(true)} onHttpError={() => setFullMapFailed(true)} style={styles.fullMapWebView} />
+              : <View style={[styles.fullMapFallback, { backgroundColor: theme.surface }]}>
+                <MapPin accessible={false} size={28} color={theme.icon} />
+                <Text style={[styles.fullMapUnavailable, { color: theme.textPrimary }]}>Map unavailable</Text>
+                {fullMapUrl ? <Pressable accessibilityRole="button" accessibilityLabel="Try loading map again" onPress={retryFullMap} style={styles.fullMapRetry}><Text style={styles.fullMapRetryText}>Try again</Text></Pressable> : null}
+              </View>}
+          </View>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </Modal>
   </View>;
 }
 
@@ -101,6 +116,18 @@ const styles = StyleSheet.create({
   mapFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8 },
   mapAction: { minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   mapActionText: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
+  fullMapScreen: { flex: 1 },
+  fullMapHeader: { minHeight: 62, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth },
+  fullMapHeaderSide: { width: 76, minHeight: 44, justifyContent: "center" },
+  fullMapBack: { minWidth: 44, minHeight: 44, paddingHorizontal: 10, flexDirection: "row", alignItems: "center" },
+  fullMapBackText: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
+  fullMapTitle: { flex: 1, minWidth: 0, textAlign: "center", fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold },
+  fullMapBody: { flex: 1, minHeight: 0 },
+  fullMapWebView: { flex: 1 },
+  fullMapFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 24 },
+  fullMapUnavailable: { fontSize: 16, lineHeight: 22, fontWeight: "600", fontFamily: appFonts.semibold },
+  fullMapRetry: { minWidth: 112, minHeight: 44, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: colors.blue, paddingHorizontal: 18 },
+  fullMapRetryText: { color: "#FFFFFF", fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
   relatedSection: { marginTop: 10, gap: 14 },
   carouselViewport: { marginHorizontal: -16 },
   carousel: { gap: 14, paddingHorizontal: 16, paddingBottom: 6 },
