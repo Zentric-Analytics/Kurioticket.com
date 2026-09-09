@@ -51,7 +51,7 @@ test("decision sections are compare-only, ordered, and use the enriched details 
   assert.doesNotMatch(detail, /travelApi\.hotels?Search/);
 });
 
-test("native Compare location uses a compact static preview and safe native map handoff", () => {
+test("native Compare Property location opens one full-screen in-app map", () => {
   const component = readFileSync("src/features/search/NativeHotelDecisionSections.tsx", "utf8");
   const section = component.slice(
     component.indexOf("export function NativeHotelPropertyLocationSection"),
@@ -61,21 +61,34 @@ test("native Compare location uses a compact static preview and safe native map 
   const mapFrame = component.match(/mapFrame:\s*\{([^}]*)\}/)?.[1] ?? "";
 
   assert.match(section, /buildHotelAddress\(propertyDetails\)/);
-  assert.match(section, /propertyDetails\.latitude/);
-  assert.match(section, /propertyDetails\.longitude/);
   assert.match(section, /location-preview/);
-  assert.match(section, /<Image accessibilityLabel=\{`Map showing the location of \$\{hotelName\}`\}/);
+  assert.match(section, /<Image accessible=\{false\} source=\{\{ uri: mapUrl \}\} resizeMode="cover"/);
   assert.match(section, /onError=\{\(\) => setMapFailed\(true\)\}/);
   assert.match(section, /Map preview unavailable/);
-  assert.doesNotMatch(section, /<WebView|nativeHotelLocationEmbedUrl/);
-  assert.match(section, /accessibilityRole="button" accessibilityLabel=\{`View \$\{hotelName\} in maps`\}/);
-  assert.match(section, /Linking\.canOpenURL/);
-  assert.match(section, /Linking\.openURL/);
-  assert.match(section, /maps\.apple\.com/);
-  assert.match(section, /geo:/);
-  assert.match(section, /google\.com\/maps\/search/);
+  assert.match(section, /const openFullMap = \(\) => \{ setFullMapFailed\(false\); setFullMapOpen\(true\); \};/);
+  assert.equal(section.match(/onPress=\{openFullMap\}/g)?.length, 2);
+  assert.match(section, /<Pressable accessibilityRole="button" accessibilityLabel=\{`Open full map for \$\{hotelName\}`\} accessibilityHint="Opens an interactive map inside Kurioticket" onPress=\{openFullMap\} style=\{\[styles\.mapFrame/);
+  assert.match(section, /accessibilityLabel=\{`Open full map for \$\{hotelName\}`\} onPress=\{openFullMap\} style=\{styles\.mapAction\}/);
+  assert.match(section, /nativeHotelLocationEmbedUrl\(api\.baseUrl, hotelId, "map"\)/);
+  assert.match(section, /<Modal visible=\{fullMapOpen\}[\s\S]*?presentationStyle="fullScreen"[\s\S]*?onRequestClose=\{closeFullMap\}/);
+  assert.match(section, /<SafeAreaProvider>/);
+  assert.match(section, /<SafeAreaView edges=\{\["top", "bottom", "left", "right"\]\} accessibilityViewIsModal/);
+  assert.match(section, /<WebView key=\{`\$\{hotelId\}:full-map:\$\{fullMapAttempt\}`\} source=\{\{ uri: fullMapUrl \}\}/);
+  assert.match(section, /onError=\{\(\) => setFullMapFailed\(true\)\}/);
+  assert.match(section, /onHttpError=\{\(\) => setFullMapFailed\(true\)\}/);
+  assert.match(section, /Map unavailable/);
+  assert.match(section, /accessibilityLabel="Try loading map again"[\s\S]*?>Try again</);
+  assert.match(section, /setFullMapAttempt\(\(attempt\) => attempt \+ 1\)/);
+  const closePath = section.match(/const closeFullMap = \(\) => \{([^}]*)\}/)?.[1] ?? "";
+  assert.match(closePath, /setFullMapOpen\(false\)/);
+  assert.doesNotMatch(closePath, /router\./);
+  for (const external of ["Linking", "openURL", "canOpenURL", "maps.apple.com", "geo:", "google.com/maps/search"]) assert.doesNotMatch(section, new RegExp(external.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  for (const credential of ["EXPO_PUBLIC_GOOGLE", "NEXT_PUBLIC_GOOGLE", "google.com/maps/embed"]) assert.doesNotMatch(section, new RegExp(credential.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.doesNotMatch(locationCard, /marginHorizontal:\s*-16|shadow|elevation/);
   assert.match(mapFrame, /height:\s*216/);
+  assert.match(mapFrame, /width:\s*"100%"/);
+  assert.match(mapFrame, /borderWidth:\s*StyleSheet\.hairlineWidth/);
+  assert.match(mapFrame, /overflow:\s*"hidden"/);
   assert.doesNotMatch(mapFrame, /height:\s*280/);
   assert.match(mapFrame, /borderRadius:\s*14/);
   assert.match(component, /locationHeading:\s*\{[^}]*fontSize:\s*17[^}]*lineHeight:\s*22[^}]*fontWeight:\s*"700"[^}]*fontFamily:\s*appFonts\.bold/);
