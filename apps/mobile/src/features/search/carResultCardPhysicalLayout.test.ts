@@ -42,7 +42,7 @@ test("Car identity, utilities, commerce, and conversion content follow the appro
   assert.match(source, /utilityColumn[\s\S]*badge[\s\S]*actions/);
   assert.match(source, /accessibilityLabel=\{savedState\.saved \? `Remove \$\{result\.modelName\} from saved` : `Save \$\{result\.modelName\}`\}/);
   assert.match(source, /accessibilityLabel=\{`Share \$\{result\.modelName\}`\}/);
-  assert.match(source, /offer\?\.freeCancellation \? <View style=\{\[c\.conversion[\s\S]*Free cancellation/);
+  assert.match(source, /style=\{c\.rentalBenefits\}[\s\S]*offer\?\.freeCancellation[\s\S]*Free cancellation/);
   assert.doesNotMatch(source, /<Text[^>]*>View car<\/Text>/);
   assert.doesNotMatch(styles, /viewButton|benefitSlot/);
 });
@@ -93,14 +93,39 @@ test("right commerce column has truthful pricing followed by the Flight-style de
   assert.doesNotMatch(styles, /priceColumn:\{[^}]*position:"absolute"/);
 });
 
-test("Free cancellation remains truthfully gated without a divider or empty footer", () => {
+test("rental benefits use canonical facts in stable semantic order", () => {
+  assert.match(source, /import \{[^}]*Fuel[^}]*Gauge[^}]*ShieldCheck[^}]*\} from "lucide-react-native"/);
+  assert.match(source, /nativeCarFuelPolicyLabel\(result\.fuelPolicy\)/);
+  assert.match(source, /nativeCarMileageLabel\(result\)/);
+
+  const cancellation = source.indexOf("<ShieldCheck");
+  const fuel = source.indexOf("<Fuel", cancellation);
+  const mileage = source.indexOf("<Gauge", fuel);
+  assert.ok(cancellation >= 0 && cancellation < fuel && fuel < mileage);
+  assert.doesNotMatch(source, /const fuelPolicyLabel\s*=\s*["']Full-to-full/);
+  assert.doesNotMatch(source, /const mileageLabel\s*=\s*["']Unlimited mileage/);
+});
+
+test("Free cancellation remains truthfully gated without a divider", () => {
   const conversionStyle = styles.slice(styles.indexOf("conversion:"), styles.indexOf("},", styles.indexOf("conversion:")) + 2);
 
-  assert.match(source, /offer\?\.freeCancellation \? <View style=\{\[c\.conversion,\{backgroundColor:theme\.surface\}\]\}/);
-  assert.match(source, />Free cancellation<\/Text>/);
+  assert.match(source, /offer\?\.freeCancellation \? <View[^>]*><ShieldCheck[\s\S]*>Free cancellation<\/Text><\/View> : null/);
   assert.doesNotMatch(source, /c\.conversion,\{[^}]*borderTopColor/);
   assert.doesNotMatch(conversionStyle, /borderTopWidth|borderTopColor/);
   assert.doesNotMatch(source, /divider|separatorLine/i);
+});
+
+test("rental benefit footer wraps naturally without hidden or fixed-column content", () => {
+  const benefitsStyle = styles.slice(styles.indexOf("rentalBenefits:"), styles.indexOf("},", styles.indexOf("rentalBenefits:")) + 2);
+  const conversionStyle = styles.slice(styles.indexOf("conversion:"), styles.indexOf("},", styles.indexOf("conversion:")) + 2);
+  const benefitMarkup = source.slice(source.indexOf("<View style={c.rentalBenefits}"), source.indexOf("</View>\n    </View>", source.indexOf("<View style={c.rentalBenefits}")));
+
+  assert.match(benefitsStyle, /flexDirection:"row"/);
+  assert.match(benefitsStyle, /flexWrap:"wrap"/);
+  assert.match(benefitsStyle, /rowGap:6/);
+  assert.doesNotMatch(benefitsStyle, /width:"33(?:\.333)?%"|flexBasis:"33(?:\.333)?%"|position:"absolute"/);
+  assert.doesNotMatch(conversionStyle, /(?:^|,)height:/);
+  assert.doesNotMatch(benefitMarkup, /ScrollView|numberOfLines|adjustsFontSizeToFit/);
 });
 
 test("Car details use a semantic location pin and an ordered vertical spec list", () => {
