@@ -57,7 +57,7 @@ test("saved and share actions remain truthful, separate, themed, and visually co
   assert.match(source, /accessibilityState=\{\{ selected: savedState\.saved \}\}/);
   assert.match(source, /onPress=\{savedState\.toggle\}/);
   assert.match(source, /accessibilityLabel=\{savedState\.saved \? `Remove \$\{result\.modelName\} from saved` : `Save \$\{result\.modelName\}`\}/);
-  assert.match(source, /name="heart"[^>]*size=\{18\}[^>]*color=\{androidFavoriteColors\.stroke\}[^>]*fill=\{savedState\.saved \? androidFavoriteColors\.savedFill : androidFavoriteColors\.unsavedFill\}/);
+  assert.match(source, /name="heart"[^>]*size=\{18\}[^>]*color=\{savedState\.saved \? androidFavoriteColors\.savedStroke : androidFavoriteColors\.unsavedStroke\}[^>]*fill=\{savedState\.saved \? androidFavoriteColors\.savedFill : androidFavoriteColors\.unsavedFill\}/);
   assert.doesNotMatch(source, /name="heart"[^>]*(?:fill="(?:transparent|none)"|color=\{savedState\.saved \? "#E92D55" : theme\.icon\})/);
   assert.match(source, /accessibilityLabel=\{`Share \$\{result\.modelName\}`\} onPress=\{share\}/);
   assert.match(source, /<Share2 size=\{18\} color=\{theme\.icon\}/);
