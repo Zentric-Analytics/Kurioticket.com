@@ -146,7 +146,7 @@ function Selector({
       <Modal visible={visible} transparent animationType="fade" onRequestClose={close} onDismiss={onDismiss}>
         <View style={StyleSheet.absoluteFill}>
           <Pressable accessibilityRole="button" accessibilityLabel={c.cancel} onPress={close} style={StyleSheet.absoluteFill} />
-          <View accessibilityViewIsModal style={[s.floatingCountryMenu, { left, top, width: menuWidth, height: menuHeight, borderRadius: 10, backgroundColor: theme.dark ? "#2C2C2E" : "#F7F7F7", elevation: 8 }]}>
+          <View accessibilityViewIsModal style={[s.floatingCountryMenu, { left, top, width: menuWidth, height: menuHeight, borderRadius: 10, backgroundColor: theme.dark ? "#2C2C2E" : "#FFFFFF", elevation: 8 }]}>
             <FlatList
               accessibilityLabel={title}
               data={options}
@@ -430,7 +430,7 @@ function CountrySelector({
       <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} onDismiss={handleDismiss}>
         <View style={StyleSheet.absoluteFill}>
           <Pressable accessibilityRole="button" accessibilityLabel={c.cancel} onPress={onClose} style={StyleSheet.absoluteFill} />
-          <View accessibilityViewIsModal style={[s.floatingCountryMenu, { left: menuLeft, top: fieldTop, width: menuWidth, height: menuHeight, backgroundColor: theme.dark ? "#2C2C2E" : "#F7F7F7" }]}>
+          <View accessibilityViewIsModal style={[s.floatingCountryMenu, { left: menuLeft, top: fieldTop, width: menuWidth, height: menuHeight, backgroundColor: theme.dark ? "#2C2C2E" : "#FFFFFF" }]}>
             <FlatList
               accessibilityLabel={title}
               data={options}
