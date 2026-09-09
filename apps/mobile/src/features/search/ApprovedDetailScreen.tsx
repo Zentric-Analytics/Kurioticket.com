@@ -393,7 +393,7 @@ function HotelDetail({
       <View
         style={[
           d.hotelBackHeader,
-          { backgroundColor: theme.surface },
+          { backgroundColor: hotelCanvasColor },
         ]}
       >
         <Pressable
@@ -408,6 +408,7 @@ function HotelDetail({
       </View>
       <ScrollView
         stickyHeaderIndices={[2]}
+        style={{ backgroundColor: hotelCanvasColor }}
         contentContainerStyle={{ paddingBottom: 126 + inset.bottom }}
       >
         <View style={d.hotelIdentity}>
@@ -462,7 +463,7 @@ function HotelDetail({
         <View
           style={[
             d.hotelTabsShell,
-            { backgroundColor: theme.surface, borderBottomColor: theme.border },
+            { backgroundColor: hotelCanvasColor },
           ]}
         >
           <View accessibilityRole="tablist" style={d.hotelTabsRow}>
@@ -704,8 +705,7 @@ function HotelDetail({
           d.hotelSticky,
           {
             paddingBottom: 12 + inset.bottom,
-            backgroundColor: theme.surface,
-            borderTopColor: theme.border,
+            backgroundColor: hotelCanvasColor,
           },
         ]}
       >
@@ -1165,8 +1165,6 @@ const d = StyleSheet.create({
     minHeight: 51,
     marginTop: 1,
     paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: ui.border,
     backgroundColor: "white",
   },
   hotelTabsRow: {
@@ -1278,18 +1276,16 @@ const d = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    borderTopWidth: 1,
     borderTopLeftRadius: 22,
     borderTopRightRadius: 22,
-    borderTopColor: ui.border,
     backgroundColor: "white",
     paddingHorizontal: 16,
     paddingTop: 12,
     shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: -8 },
-    shadowOpacity: 0.14,
-    shadowRadius: 14,
-    elevation: 12,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 6,
   },
   hotelFactRow: { minHeight: 20, flexDirection: "row", alignItems: "flex-start", gap: 6 },
   hotelTabTextCompact: { fontSize: 10 },
