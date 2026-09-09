@@ -26,3 +26,12 @@ test("Profile uses a padlock for security, retains privacy shield, and centres t
  assert.match(read("src/features/flow/FlowIcon.tsx"), /strokeWidth = 2\.1/);
  assert.match(read("src/features/profile/ProfileCardSection.tsx"), /strokeWidth=\{1\.3\}/);
 });
+
+test("guest Profile shares menu styles and matches the light backdrop", () => {
+ const guest=read("src/features/profile/GuestProfileScreen.tsx");
+ assert.match(guest, /theme.dark \? theme.background : "#F5F5F5"/);
+ assert.match(guest, /<ProfileCardSection/);
+ assert.match(guest, /styles.heroTitle, \{ color: theme.text \}/);
+ assert.match(guest, /styles.heroBody, \{ color: theme.muted \}/);
+ assert.match(guest, /strokeWidth=\{1.3\} name="person" color="white"/);
+});
