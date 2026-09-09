@@ -54,16 +54,16 @@ test("flight results naturally scroll the date strip while keeping native sticky
   assert.match(source, /const filterRail = \([\s\S]*?<ScrollView\s+horizontal/);
 });
 
-test("hotel results use one stable native scroll owner and threshold-guard only Back to top", () => {
+test("hotel results use one stable native scroll owner without native Back to top", () => {
   const source = read("src/features/search/ApprovedResultsScreen.tsx");
   const hotelStart = source.indexOf("<HotelResultsHeader destination=");
   const hotelEnd = source.indexOf("<FlightSortSheet", hotelStart);
   const hotelLayout = source.slice(hotelStart, hotelEnd);
   assert.equal(hotelLayout.match(/<ScrollView/g)?.length, 1);
-  assertStableOwner(hotelLayout, /<ScrollView[\s\S]*?onScroll=\{handleHotelScroll\}[\s\S]*?>/);
+  assertStableOwner(hotelLayout, /<ScrollView[\s\S]*?ref=\{hotelScrollRef\}[\s\S]*?>/);
   assert.match(hotelLayout, /stickyHeaderIndices=\{\[0\]\}/);
   assert.doesNotMatch(hotelLayout, /hotelCompactHeader|setHotelCompactHeader|hotelIntroBoundary/);
-  assert.match(source, /scrollY > 600[\s\S]*?visible === hotelBackToTopVisibleRef\.current[\s\S]*?setHotelBackToTop\(visible\)/);
+  assert.doesNotMatch(source, /handleHotelScroll|hotelBackToTop|accessibilityLabel="Back to top"/);
 });
 
 test("car results keep separate stable vertical and horizontal scroll contracts", () => {
@@ -74,7 +74,8 @@ test("car results keep separate stable vertical and horizontal scroll contracts"
   const layout = source.slice(source.indexOf("return <SafeAreaView"), source.indexOf("function CarResultsHeader"));
   assert.equal(layout.match(/<ScrollView/g)?.length, 2);
   for (const prop of verticalStableProps) assert.match(verticalOwner, prop);
-  assert.match(verticalOwner, /onScroll=\{handleCarScroll\}/);
+  assert.doesNotMatch(verticalOwner, /onScroll=|scrollEventThrottle=/);
+  assert.doesNotMatch(source, /handleCarScroll|carBackToTop|accessibilityLabel="Back to top"/);
   const horizontalOwner = source.slice(source.indexOf("<ScrollView horizontal"), horizontalEnd);
   for (const prop of horizontalStableProps) assert.match(horizontalOwner, prop);
   assert.doesNotMatch(horizontalOwner, /alwaysBounceVertical=\{false\}/);
