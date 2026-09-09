@@ -115,7 +115,7 @@ export function NativeFlightDetails({ params }: { params: Params }) {
   const [booking, setBooking] = useState(false);
   const [displayPrices, setDisplayPrices] = useState<Record<string,DisplayPrice>>({});
   const rates = useRef<ExchangeRates|null>(null);
-  const fareRailRef = useRef<{scrollTo:(options:{x:number;animated:boolean})=>void}|null>(null);
+  const fareRailRef = useRef<ScrollView|null>(null);
   const positionedFareSetRef = useRef<string|null>(null);
   const sharePending = useRef(false);
   const hasScrolledRef = useRef(false);
