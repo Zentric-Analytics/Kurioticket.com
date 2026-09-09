@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Image, Pressable, Share, StyleSheet, Text, View } from "react-native";
-import { Award, BriefcaseBusiness, ChevronRight, DoorOpen, MapPin, Share2, Users } from "lucide-react-native";
+import { Award, BriefcaseBusiness, ChevronRight, DoorOpen, Fuel, Gauge, MapPin, Share2, ShieldCheck, Users } from "lucide-react-native";
 import type { CarResult } from "../../api/travelApi";
 import { FlowIcon } from "../flow/FlowIcon";
 import { money, ui } from "./SearchUi";
@@ -8,6 +8,7 @@ import { useSavedCar } from "./carSavedState";
 import { useAppTheme } from "../../theme/AppTheme";
 import { getPrimaryCarOffer } from "../../../../../src/lib/cars/carResults";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
+import { nativeCarFuelPolicyLabel, nativeCarMileageLabel } from "./nativeCarDetailsModel";
 
 export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal }: {
   result: CarResult; rank: number; imageUri?: string;
@@ -17,6 +18,8 @@ export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal
   useEffect(() => setImageFailed(false), [imageUri]);
   const savedState = useSavedCar(result, searchParams);
   const offer = getPrimaryCarOffer(result);
+  const fuelPolicyLabel = nativeCarFuelPolicyLabel(result.fuelPolicy);
+  const mileageLabel = nativeCarMileageLabel(result);
   const { theme } = useAppTheme();
   const share = () => void Share.share({ message: result.modelName, title: result.modelName });
   return <View style={[c.card,{backgroundColor:theme.surface,borderColor:theme.dark?theme.border:"#D8E1EC",shadowColor:theme.dark?"#000000":"#18305B"}]}>
@@ -46,7 +49,13 @@ export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal
         </View>
       </View>
     </View>
-    {offer?.freeCancellation ? <View style={[c.conversion,{backgroundColor:theme.surface}]}><View style={c.benefit}><FlowIcon name="check" size={12} color="#15803D" /><Text style={c.benefitText}>Free cancellation</Text></View></View> : null}
+    <View style={[c.conversion,{backgroundColor:theme.surface}]}>
+      <View style={c.rentalBenefits}>
+        {offer?.freeCancellation ? <View style={[c.rentalBenefit,c.positiveBenefit]}><ShieldCheck accessible={false} size={13} strokeWidth={2} color="#15803D" /><Text style={c.positiveBenefitText}>Free cancellation</Text></View> : null}
+        <View style={c.rentalBenefit}><Fuel accessible={false} size={13} strokeWidth={2} color={theme.icon} /><Text style={[c.rentalBenefitText,{color:theme.textSecondary}]}>{fuelPolicyLabel}</Text></View>
+        <View style={c.rentalBenefit}><Gauge accessible={false} size={13} strokeWidth={2} color={theme.icon} /><Text style={[c.rentalBenefitText,{color:theme.textSecondary}]}>{mileageLabel}</Text></View>
+      </View>
+    </View>
   </View>;
 }
 function Spec({ icon, label }: { icon: ReactNode; label: string }) { const { theme } = useAppTheme(); return <View style={c.spec}>{icon}<Text numberOfLines={2} style={[c.specText,{color:theme.textSecondary}]}>{label}</Text></View>; }
@@ -54,5 +63,5 @@ const capitalize = (value: string) => `${value.slice(0, 1).toUpperCase()}${value
 const c = StyleSheet.create({
   card:{borderWidth:1,borderRadius:13,overflow:"hidden",shadowOpacity:0.08,shadowRadius:10,shadowOffset:{width:0,height:2},elevation:2},main:{minHeight:168,flexDirection:"row"},visual:{width:"40%",minHeight:168,backgroundColor:"#F8FAFC",overflow:"hidden"},image:{...StyleSheet.absoluteFillObject},imageFallback:{flex:1,alignItems:"center",justifyContent:"center",gap:7,padding:8},fallbackText:{fontSize:10,fontWeight:"600",color:"#315A7D",textAlign:"center"},
   information:{flex:1,minWidth:0,paddingHorizontal:10,paddingVertical:9},headerRow:{flexDirection:"row",alignItems:"flex-start",gap:6},identityColumn:{flex:1,minWidth:0},name:{fontSize:15,fontWeight:"800",lineHeight:18,color:ui.navy},identityMeta:{minWidth:0,flexDirection:"row",flexWrap:"wrap",alignItems:"baseline",columnGap:4},similar:{fontSize:11,fontWeight:"500",lineHeight:16,color:"#536B92"},separator:{fontSize:11,fontWeight:"500",lineHeight:16},category:{minWidth:0,flexShrink:1,fontSize:10,fontWeight:"800",letterSpacing:1.1,lineHeight:16,textTransform:"uppercase",color:"#004BB8"},utilityColumn:{flexShrink:0,alignItems:"flex-end"},badge:{flexShrink:0,flexDirection:"row",alignItems:"center",gap:3,borderRadius:5,backgroundColor:"#ECFDF5",paddingHorizontal:5,paddingVertical:2},badgeText:{fontSize:9,fontWeight:"700",color:"#15803D"},actions:{flexDirection:"row",alignItems:"center"},action:{width:28,height:44,justifyContent:"center"},saveAction:{alignItems:"flex-end",paddingRight:2},shareAction:{alignItems:"flex-start",paddingLeft:2},detailColumn:{minWidth:0,marginTop:7},location:{flexDirection:"row",alignItems:"flex-start",gap:4},meta:{flex:1,minWidth:0,fontSize:11,fontWeight:"500",lineHeight:15,color:"#536B92"},
-  specs:{marginTop:7,flexDirection:"column",gap:5},spec:{minWidth:0,flexDirection:"row",alignItems:"flex-start",gap:4},specText:{flex:1,minWidth:0,fontSize:11,fontWeight:"500",lineHeight:14,color:"#536B92"},priceColumn:{width:"100%",minWidth:0,alignItems:"flex-end",paddingTop:10},unavailablePrice:{maxWidth:"100%",textAlign:"right",fontSize:11,fontWeight:"500",lineHeight:15},total:{maxWidth:"100%",fontSize:21,fontWeight:"700",lineHeight:24,letterSpacing:-0.4,color:ui.navy},taxDisclosure:{maxWidth:"100%",marginTop:1,fontSize:10,fontWeight:"500",lineHeight:13,textAlign:"right"},perDay:{maxWidth:"100%",marginTop:2,fontSize:11,fontWeight:"700",lineHeight:14,textAlign:"right"},viewDeal:{minHeight:36,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4,marginTop:2},viewDealText:{fontSize:13,lineHeight:15,fontWeight:"600"},benefit:{alignSelf:"flex-start",minHeight:20,flexDirection:"row",alignItems:"center",gap:3,borderRadius:5,backgroundColor:"#ECFDF5",paddingHorizontal:6,paddingVertical:2},benefitText:{flexShrink:1,fontSize:11,fontWeight:"700",color:"#15803D"},conversion:{minHeight:36,alignItems:"flex-start",justifyContent:"center",paddingHorizontal:12,paddingVertical:7},
+  specs:{marginTop:7,flexDirection:"column",gap:5},spec:{minWidth:0,flexDirection:"row",alignItems:"flex-start",gap:4},specText:{flex:1,minWidth:0,fontSize:11,fontWeight:"500",lineHeight:14,color:"#536B92"},priceColumn:{width:"100%",minWidth:0,alignItems:"flex-end",paddingTop:10},unavailablePrice:{maxWidth:"100%",textAlign:"right",fontSize:11,fontWeight:"500",lineHeight:15},total:{maxWidth:"100%",fontSize:21,fontWeight:"700",lineHeight:24,letterSpacing:-0.4,color:ui.navy},taxDisclosure:{maxWidth:"100%",marginTop:1,fontSize:10,fontWeight:"500",lineHeight:13,textAlign:"right"},perDay:{maxWidth:"100%",marginTop:2,fontSize:11,fontWeight:"700",lineHeight:14,textAlign:"right"},viewDeal:{minHeight:36,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4,marginTop:2},viewDealText:{fontSize:13,lineHeight:15,fontWeight:"600"},conversion:{minHeight:36,alignItems:"flex-start",justifyContent:"center",paddingHorizontal:12,paddingVertical:7},rentalBenefits:{maxWidth:"100%",flexDirection:"row",flexWrap:"wrap",alignItems:"center",columnGap:10,rowGap:6},rentalBenefit:{maxWidth:"100%",flexDirection:"row",alignItems:"center",gap:3},rentalBenefitText:{fontSize:11,fontWeight:"600",lineHeight:15},positiveBenefit:{borderRadius:5,backgroundColor:"#ECFDF5",paddingHorizontal:6,paddingVertical:2},positiveBenefitText:{fontSize:11,fontWeight:"700",lineHeight:15,color:"#15803D"},
 });
