@@ -16,13 +16,14 @@ export const SEARCH_PICKER_CLOSE_DURATION_MS = 240;
 type SearchPickerMotionOptions = {
   controlledOpening?: boolean;
   additionalTravelDistance?: number;
+  stationaryOpening?: boolean;
 };
 
 export function useSearchPickerMotion(
   visible: boolean,
   options: SearchPickerMotionOptions = {},
 ) {
-  const { controlledOpening = false, additionalTravelDistance = 0 } = options;
+  const { controlledOpening = false, additionalTravelDistance = 0, stationaryOpening = false } = options;
   const { height: windowHeight } = useWindowDimensions();
   const { bottom: bottomSafeAreaInset } = useSafeAreaInsets();
   const fallbackTravelDistance = searchPickerSheetTravelDistance(
@@ -64,10 +65,10 @@ export function useSearchPickerMotion(
       // A fresh sheet is still wholly below the viewport before its first RAF.
       // Replacing the safety fallback here avoids invisible pre-travel without
       // moving a resting, closing, or interrupted visible sheet.
-      if (awaitingFreshOpenLayout.current)
+      if (awaitingFreshOpenLayout.current && !stationaryOpening)
         sheetTranslateY.setValue(currentTravelDistance());
     },
-    [currentTravelDistance, sheetTranslateY],
+    [currentTravelDistance, sheetTranslateY, stationaryOpening],
   );
 
   const startOpening = useCallback(() => {
@@ -80,25 +81,26 @@ export function useSearchPickerMotion(
       return false;
     openingGeneration.current = undefined;
     awaitingFreshOpenLayout.current = false;
-    Animated.parallel([
+    const animations = [
       Animated.timing(backdropOpacity, {
         toValue: 1,
         duration: SEARCH_PICKER_OPEN_DURATION_MS,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
-      Animated.timing(sheetTranslateY, {
+    ];
+    if (!stationaryOpening) animations.push(Animated.timing(sheetTranslateY, {
         toValue: 0,
         duration: SEARCH_PICKER_OPEN_DURATION_MS,
         easing: Easing.bezier(0.25, 0.1, 0.25, 1),
         useNativeDriver: true,
-      }),
-    ]).start(({ finished }) => {
+      }));
+    Animated.parallel(animations).start(({ finished }) => {
       if (finished && generation.current === currentGeneration)
         setOpenSettled(true);
     });
     return true;
-  }, [backdropOpacity, sheetTranslateY, visible]);
+  }, [backdropOpacity, sheetTranslateY, stationaryOpening, visible]);
 
   useEffect(() => {
     const currentGeneration = ++generation.current;
@@ -113,7 +115,10 @@ export function useSearchPickerMotion(
       if (!continuingInterruptedMotion) {
         awaitingFreshOpenLayout.current = true;
         backdropOpacity.setValue(0);
-        sheetTranslateY.setValue(currentTravelDistance());
+        sheetTranslateY.setValue(stationaryOpening ? 0 : currentTravelDistance());
+      } else if (stationaryOpening) {
+        // Interrupted exits reopen directly in the fixed open pose.
+        sheetTranslateY.setValue(0);
       }
       openingGeneration.current = currentGeneration;
       if (controlledOpening) return;
@@ -160,16 +165,19 @@ export function useSearchPickerMotion(
     controlledOpening,
     currentTravelDistance,
     sheetTranslateY,
+    stationaryOpening,
     startOpening,
   ]);
 
   return {
-    rendered,
+    rendered: stationaryOpening ? visible || rendered : rendered,
     interactive: visible,
     pointerEvents: visible ? "auto" : "none",
     openSettled,
     backdropStyle: { opacity: backdropOpacity },
-    sheetStyle: { transform: [{ translateY: sheetTranslateY }] },
+    sheetStyle: stationaryOpening && visible
+      ? { transform: [{ translateY: 0 }] }
+      : { transform: [{ translateY: sheetTranslateY }] },
     bottomSafeAreaInset,
     onSheetLayout,
     startOpening,

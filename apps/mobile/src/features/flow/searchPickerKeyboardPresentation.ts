@@ -19,9 +19,9 @@ export function useSearchPickerKeyboardPresentation(
     startOpening: () => boolean;
     onSheetLayout: (event: LayoutChangeEvent) => void;
   },
-  options: { keyboardSynchronizedOpening?: boolean } = {},
+  options: { keyboardSynchronizedOpening?: boolean; focusOnPresentation?: boolean } = {},
 ) {
-  const { keyboardSynchronizedOpening = false } = options;
+  const { keyboardSynchronizedOpening = false, focusOnPresentation = false } = options;
   const {
     onSheetLayout: reportSheetLayout,
     openSettled,
@@ -75,12 +75,16 @@ export function useSearchPickerKeyboardPresentation(
     if (!modalPresentedRef.current || !sheetLayoutValidRef.current) return;
     if (!keyboardSynchronizedOpening) {
       startCurrentEntrance();
+      if (focusOnPresentation && focusedGenerationRef.current !== generation) {
+        focusedGenerationRef.current = generation;
+        inputRef.current?.focus();
+      }
       return;
     }
     if (focusedGenerationRef.current === generation) return;
     focusedGenerationRef.current = generation;
     inputRef.current?.focus();
-  }, [generation, inputRef, keyboardSynchronizedOpening, startCurrentEntrance, visible]);
+  }, [focusOnPresentation, generation, inputRef, keyboardSynchronizedOpening, startCurrentEntrance, visible]);
 
   const markKeyboardReady = useCallback(() => {
     if (!visible || generationRef.current !== generation || focusedGenerationRef.current !== generation) return;
@@ -112,13 +116,14 @@ export function useSearchPickerKeyboardPresentation(
     }
     if (
       keyboardSynchronizedOpening ||
+      focusOnPresentation ||
       settleArmedGenerationRef.current !== generation ||
       focusedGenerationRef.current === generation
     )
       return;
     focusedGenerationRef.current = generation;
     inputRef.current?.focus();
-  }, [generation, inputRef, keyboardSynchronizedOpening, openSettled, visible]);
+  }, [focusOnPresentation, generation, inputRef, keyboardSynchronizedOpening, openSettled, visible]);
 
   const onModalShow = useCallback(() => {
     modalPresentedRef.current = true;

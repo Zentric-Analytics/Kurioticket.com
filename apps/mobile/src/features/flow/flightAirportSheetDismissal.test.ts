@@ -35,7 +35,7 @@ test("close header, airport choices, search, and list interactions remain inside
 
   assert.match(sheetContent, /accessibilityLabel="Search airports"/);
   assert.doesNotMatch(sheetContent, /accessibilityLabel="Clear airport search"|>Clear</);
-  assert.match(sheetContent, /<FlatList keyboardShouldPersistTaps="handled"/);
+  assert.match(sheetContent, /<FlatList[^>]*keyboardShouldPersistTaps="handled"/);
   assert.match(sheetContent, /onPress=\{\(\)=>void choosePlace\(item\)\}/);
   assert.match(sheetContent, /<PickerSheetHeader[^>]+onClose=\{dismissAirportSheet\}/);
   assert.doesNotMatch(sheetContent, /<PrimaryButton label="Done"/);
@@ -43,7 +43,7 @@ test("close header, airport choices, search, and list interactions remain inside
 });
 
 test("backdrop dismissal adds no device-specific sizing or positioning hacks", () => {
-  assert.match(panel, /keyboardViewport:\{flex:1\}/);
+  assert.match(panel, /airportResultsViewport:\{flex:1,minHeight:0\}/);
   assert.doesNotMatch(airportSheet, /keyboardHeight|useWindowDimensions|Dimensions\.get/);
   assert.doesNotMatch(airportSheet, /(?:top|bottom|marginTop|translateY):\s*-/);
   assert.doesNotMatch(airportSheet, /Platform\.OS\s*===\s*["'](?:ios|android)["']\s*\?\s*-?\d+/);
