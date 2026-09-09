@@ -393,7 +393,7 @@ function HotelDetail({
       <View
         style={[
           d.hotelBackHeader,
-          { backgroundColor: theme.surface, borderBottomColor: theme.border },
+          { backgroundColor: theme.surface },
         ]}
       >
         <Pressable
@@ -1142,7 +1142,7 @@ const d = StyleSheet.create({
   stickyTotal: { flexShrink: 1, minWidth: 92, maxWidth: "42%", gap: 1 },
   stickyCta: { flex: 1, minWidth: 0, maxWidth: 250 },
   redirect: { fontSize: 9, lineHeight: 12, color: ui.muted, textAlign: "center", marginTop: 3 },
-  hotelBackHeader: { minHeight: 48, paddingHorizontal: 16, justifyContent: "center", borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: ui.border, backgroundColor: "white" },
+  hotelBackHeader: { minHeight: 48, paddingHorizontal: 16, justifyContent: "center", backgroundColor: "white" },
   hotelIdentity: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 16 },
   hotelIdentityTopRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
   hotelIdentityCopy: { flex: 1, minWidth: 0 },
