@@ -1560,7 +1560,7 @@ function HotelCard({
             <Heart
               accessible={false}
               size={20}
-              color={androidFavoriteColors.stroke}
+              color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke}
               fill={saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill}
             />
           </Pressable>
