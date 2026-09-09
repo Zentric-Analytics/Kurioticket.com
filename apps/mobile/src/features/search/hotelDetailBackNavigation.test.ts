@@ -34,8 +34,13 @@ test("Hotel Details reads, but does not invent, Results-stack provenance", () =>
   assert.doesNotMatch(details, /const hotelResultsStack\s*=\s*true/);
 });
 
-test("Results-origin back dismisses directly to existing Results with one navigation action", () => {
-  assert.match(returnToHotelResults, /if \(hotelResultsStack\) \{\s*router\.dismissTo\("\/hotel-results"\);\s*return;\s*\}/);
+test("Results-origin back dismisses to existing Results using actual stack state", () => {
+  assert.match(details, /useNavigation/);
+  assert.match(details, /const navigation = useNavigation\(\)/);
+  assert.match(returnToHotelResults, /if \(hotelResultsStack\) \{/);
+  assert.match(returnToHotelResults, /hotelResultsDismissCount\(navigation\.getState\(\)\)/);
+  assert.match(returnToHotelResults, /if \(dismissCount\) \{\s*router\.dismiss\(dismissCount\);\s*return;\s*\}/);
+  assert.doesNotMatch(returnToHotelResults, /router\.dismissTo/);
   assert.doesNotMatch(returnToHotelResults, /router\.back\(/);
 
   const branch = returnToHotelResults.slice(
@@ -43,6 +48,7 @@ test("Results-origin back dismisses directly to existing Results with one naviga
     returnToHotelResults.indexOf("router.replace"),
   );
   assert.equal(branch.match(/router\./g)?.length, 1);
+  assert.doesNotMatch(branch, /router\.(?:setParams|replace|navigate|push|dismissTo)/);
 });
 
 test("direct-entry back retains the canonical Hotel Results fallback", () => {
@@ -63,4 +69,5 @@ test("Hotel navigation contains no stack reset or timing workaround", () => {
     changedHotelNavigation,
     /dismissAll|navigation\.reset|StackActions|popToTop|setTimeout|requestAnimationFrame|InteractionManager/,
   );
+  assert.doesNotMatch(changedHotelNavigation, /hotelResultsDepth|detailDepth|returnDepth|stackDepth/);
 });
