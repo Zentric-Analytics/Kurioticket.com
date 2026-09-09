@@ -106,6 +106,17 @@ test("Cars Price Alert keeps user mutation progress and create feedback", () => 
 
 
 test("Cars quick controls use the Flight-family icon, geometry, and surface contract", () => {
+  const railStart = cars.indexOf("<ScrollView horizontal");
+  const railOpeningTag = cars.slice(railStart, cars.indexOf(">", railStart) + 1);
+  for (const contract of [
+    /<ScrollView\s+horizontal/,
+    /showsHorizontalScrollIndicator=\{false\}/,
+    /alwaysBounceHorizontal=\{false\}/,
+    /bounces=\{false\}/,
+    /overScrollMode="never"/,
+    /contentContainerStyle=\{r\.filters\}/,
+  ]) assert.match(railOpeningTag, contract);
+  assert.doesNotMatch(railOpeningTag, /scrollEnabled=\{false\}/);
   assert.match(cars, /<CarResultsShortcut label="Filter" accessibilityLabel="Filters"[^>]*icon showChevron=\{false\}/);
   assert.match(cars, /<SlidersHorizontal accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\} color=\{foreground\}/);
   assert.doesNotMatch(cars, /<FlowIcon name="sliders"/);

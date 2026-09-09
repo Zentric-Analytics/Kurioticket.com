@@ -4,8 +4,13 @@ import { resolve } from "node:path";
 import test from "node:test";
 
 const read = (path: string) => readFileSync(resolve(path), "utf8");
-const stableProps = [
+const verticalStableProps = [
   /alwaysBounceVertical=\{false\}/,
+  /bounces=\{false\}/,
+  /overScrollMode="never"/,
+];
+const horizontalStableProps = [
+  /alwaysBounceHorizontal=\{false\}/,
   /bounces=\{false\}/,
   /overScrollMode="never"/,
 ];
@@ -13,7 +18,7 @@ const stableProps = [
 function assertStableOwner(source: string, owner: RegExp) {
   const match = source.match(owner);
   assert.ok(match, `Expected vertical scroll owner matching ${owner}`);
-  for (const prop of stableProps) assert.match(match[0], prop);
+  for (const prop of verticalStableProps) assert.match(match[0], prop);
 }
 
 test("major vertical screens disable iOS bounce and Android overscroll", () => {
@@ -39,7 +44,7 @@ test("flight results naturally scroll the date strip while keeping native sticky
   const source = read("src/features/search/ApprovedResultsScreen.tsx");
   const listStart = source.indexOf("<Animated.SectionList");
   const owner = source.slice(listStart, source.indexOf("/>", source.indexOf("windowSize", listStart)) + 2);
-  for (const prop of stableProps) assert.match(owner, prop);
+  for (const prop of verticalStableProps) assert.match(owner, prop);
   assert.match(source, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
   assert.match(owner, /ListHeaderComponent=\{flightDateStrip\}/);
   assert.match(owner, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
@@ -61,22 +66,23 @@ test("hotel results use one stable native scroll owner and threshold-guard only 
   assert.match(source, /scrollY > 600[\s\S]*?visible === hotelBackToTopVisibleRef\.current[\s\S]*?setHotelBackToTop\(visible\)/);
 });
 
-test("car results use one stable vertical results owner without changing the horizontal filters", () => {
+test("car results keep separate stable vertical and horizontal scroll contracts", () => {
   const source = read("src/features/search/ApprovedCarResultsScreen.tsx");
   const horizontalEnd = source.indexOf("</ScrollView>", source.indexOf("<ScrollView horizontal"));
   const verticalStart = source.indexOf("<ScrollView ref={carScrollRef}", horizontalEnd);
   const verticalOwner = source.slice(verticalStart, source.indexOf(">", verticalStart) + 1);
   const layout = source.slice(source.indexOf("return <SafeAreaView"), source.indexOf("function CarResultsHeader"));
   assert.equal(layout.match(/<ScrollView/g)?.length, 2);
-  for (const prop of stableProps) assert.match(verticalOwner, prop);
+  for (const prop of verticalStableProps) assert.match(verticalOwner, prop);
   assert.match(verticalOwner, /onScroll=\{handleCarScroll\}/);
   const horizontalOwner = source.slice(source.indexOf("<ScrollView horizontal"), horizontalEnd);
-  for (const prop of stableProps) assert.doesNotMatch(horizontalOwner, prop);
+  for (const prop of horizontalStableProps) assert.match(horizontalOwner, prop);
+  assert.doesNotMatch(horizontalOwner, /alwaysBounceVertical=\{false\}/);
 });
 
 test("nested explore carousels remain horizontal without vertical stability overrides", () => {
   const source = read("src/features/explore/ExploreScreen.tsx");
   const horizontal = source.match(/<FlatList horizontal[^>]*>/)?.[0];
   assert.ok(horizontal);
-  for (const prop of stableProps) assert.doesNotMatch(horizontal, prop);
+  for (const prop of verticalStableProps) assert.doesNotMatch(horizontal, prop);
 });

@@ -894,7 +894,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       openSheet={openFlightSheet}
     />
   ) : (
-    <ScrollView horizontal style={s0.hotelFilterRail} showsHorizontalScrollIndicator={false} alwaysBounceHorizontal={false} contentContainerStyle={s0.hotelFilterContent}>
+    <ScrollView horizontal style={s0.hotelFilterRail} showsHorizontalScrollIndicator={false} alwaysBounceHorizontal={false} bounces={false} overScrollMode="never" contentContainerStyle={s0.hotelFilterContent}>
             <>
               <HotelResultsShortcut label="Filter" accessibilityLabel="Filters" count={activeHotelFilters || undefined} icon showChevron={false} expanded={hotelFilterOpen} onPress={() => openHotelFilters("all")} />
               <HotelResultsShortcut label={hotelSort === defaultHotelSort ? "Sort" : hotelSortLabel(hotelSort)} accessibilityLabel={`Sort, ${hotelSortLabel(hotelSort)}`} expanded={hotelQuickFilter === "sort"} onPress={() => openHotelQuickFilter("sort")} />

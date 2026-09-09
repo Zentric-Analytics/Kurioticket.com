@@ -30,7 +30,8 @@ test("Cars vertical owner is cross-platform stable and safe-area aware", () => {
   assert.match(cars, /edges=\{\["top"\]\}/);
   const horizontal = cars.match(/<ScrollView horizontal[^>]*>/)?.[0];
   assert.ok(horizontal);
-  assert.doesNotMatch(horizontal, /carScrollRef|handleCarScroll|alwaysBounceVertical|bounces|overScrollMode/);
+  for (const contract of [/alwaysBounceHorizontal=\{false\}/, /bounces=\{false\}/, /overScrollMode="never"/]) assert.match(horizontal, contract);
+  assert.doesNotMatch(horizontal, /carScrollRef|handleCarScroll|alwaysBounceVertical/);
   assert.doesNotMatch(cars, /body:\{[^}]*paddingBottom/);
 });
 
