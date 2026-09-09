@@ -5,14 +5,14 @@ export type FlowIconName =
   | "back" | "bell" | "calendar" | "car" | "card" | "check" | "chevron" | "chevronDown"
   | "clock" | "close" | "compass" | "deal" | "flight" | "home" | "hotel" | "location" | "more"
   | "person" | "plus" | "search" | "settings" | "share" | "swap" | "trip"
-  | "people" | "sliders" | "help" | "headset" | "document" | "shield"
+  | "people" | "sliders" | "help" | "headset" | "document" | "shield" | "lock"
   | "globe" | "currency" | "moon" | "logout" | "briefcase" | "bookmark" | "mail" | "palette"
   | "external" | "refresh" | "snow" | "gauge" | "trash"
   | "heart" | "trending" | "map" | "beach" | "city" | "adventure"
   | "nature" | "culture" | "family";
 
-export function FlowIcon({ name, size = 24, color = "#071A48", fill = "none" }: { name: FlowIconName; size?: number; color?: string; fill?: string }) {
-  const line = { fill: "none", stroke: color, strokeWidth: 2.1, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+export function FlowIcon({ name, size = 24, color = "#071A48", fill = "none", strokeWidth = 2.1 }: { name: FlowIconName; size?: number; color?: string; fill?: string; strokeWidth?: number }) {
+  const line = { fill: "none", stroke: color, strokeWidth, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
   const filledLine = { ...line, fill };
   const icons: Record<FlowIconName, ReactNode> = {
     back: <Path {...line} d="m15 5-7 7 7 7M8 12h12" />,
@@ -48,6 +48,7 @@ export function FlowIcon({ name, size = 24, color = "#071A48", fill = "none" }: 
     help: <><Circle {...line} cx="12" cy="12" r="9" /><Path {...line} d="M9.7 9a2.4 2.4 0 1 1 3.1 2.3c-.8.3-.8 1-.8 1.7M12 17h.01" /></>,
     headset: <><Path {...line} d="M4 13v-1a8 8 0 0 1 16 0v1M4 13h3v6H5a1 1 0 0 1-1-1v-5ZM20 13h-3v6h2a1 1 0 0 0 1-1v-5ZM17 19c0 1.1-.9 2-2 2h-2" /></>,
     document: <><Path {...line} d="M6 3h8l4 4v14H6z" /><Path {...line} d="M14 3v5h4M9 12h6M9 16h6" /></>,
+    lock: <><Rect {...line} x="5" y="10" width="14" height="11" rx="2" /><Path {...line} d="M8 10V7a4 4 0 0 1 8 0v3M12 15v2" /></>,
     shield: <><Path {...line} d="M12 3 20 6v6c0 5-3.3 8-8 10-4.7-2-8-5-8-10V6l8-3Z" /><Path {...line} d="m8.5 12 2.2 2.2 4.8-5" /></>,
     globe: <><Circle {...line} cx="12" cy="12" r="9" /><Path {...line} d="M3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9S14.5 18.5 12 21M12 3C9.5 5.5 8.5 8.5 8.5 12s1 6.5 3.5 9" /></>,
     currency: <><Circle {...line} cx="12" cy="12" r="9" /><Path {...line} d="M15 8.5c-.7-.7-1.7-1-3-1-1.7 0-3 .8-3 2s1 1.8 3 2.3 3 1.1 3 2.4-1.3 2.3-3 2.3c-1.3 0-2.5-.4-3.2-1.2M12 5.5v13" /></>,
