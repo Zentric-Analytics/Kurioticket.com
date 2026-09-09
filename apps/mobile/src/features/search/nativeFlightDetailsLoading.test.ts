@@ -24,7 +24,11 @@ test("entry skeleton anticipates route, itinerary, fare carousel, and informatio
   assert.match(loading, /32\+bottomInset/);
 });
 
-test("skeleton pulse stays on the native driver and leaves Back to results interactive", () => {
+test("skeleton pulse honors reduced motion and leaves Back to results interactive", () => {
+  assert.match(details, /AccessibilityInfo/);
+  assert.match(loading, /AccessibilityInfo\.isReduceMotionEnabled/);
+  assert.match(loading, /reduceMotionChanged/);
+  assert.match(loading, /if\(reduceMotion\)\{opacity\.setValue\(\.7\);return;\}/);
   assert.match(loading, /Animated\.loop\(Animated\.sequence/);
   assert.equal(loading.match(/useNativeDriver:true/g)?.length, 2);
   assert.match(loading, /<TopBar backgroundColor=\{theme\.background\}\/>/);
