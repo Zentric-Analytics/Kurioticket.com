@@ -139,6 +139,10 @@ function HotelDetail({
   const [selectedOfferId, setSelectedOfferId] = useState<NativeHotelOffer["id"] | null>(null);
   const guestCount = positiveCount(params.guests, 2, HOTEL_LIMITS.guests.max);
   const roomCount = positiveCount(params.rooms, 1, HOTEL_LIMITS.rooms.max);
+  const hotelResultsStack =
+    (Array.isArray(params.hotelResultsStack)
+      ? params.hotelResultsStack[0]
+      : params.hotelResultsStack) === "1";
   const checkIn = String(params.checkIn || "");
   const checkOut = String(params.checkOut || "");
   const enrichmentKey = `${result.id}\u0000${checkIn}\u0000${checkOut}\u0000${guestCount}\u0000${roomCount}`;
@@ -314,6 +318,7 @@ function HotelDetail({
         checkOut,
         guests: String(guestCount),
         rooms: String(roomCount),
+        ...(hotelResultsStack ? { hotelResultsStack: "1" } : {}),
         hotelDisplayPrices: snapshot ? JSON.stringify(snapshot) : "",
         displayCurrencyContext: consistentContext
           ? JSON.stringify(passedDisplayCurrencyContext)
@@ -349,7 +354,11 @@ function HotelDetail({
     void Share.share({
       message: `${result.name} — ${address}${nightlyPrice ? ` — ${nightlyPrice.formatted}/night` : ""}`,
     });
-  const returnToHotelResults = () =>
+  const returnToHotelResults = () => {
+    if (hotelResultsStack) {
+      router.dismissTo("/hotel-results");
+      return;
+    }
     router.replace({
       pathname: "/hotel-results",
       params: {
@@ -360,6 +369,7 @@ function HotelDetail({
         rooms: String(roomCount),
       },
     });
+  };
   const amenityItems = buildHotelAmenityPresentation(
     result.amenities,
     result.amenities.length,
