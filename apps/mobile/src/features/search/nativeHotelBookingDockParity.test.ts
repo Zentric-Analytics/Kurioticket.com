@@ -79,7 +79,7 @@ test("native dock price hierarchy matches mobile web and remains left aligned", 
 });
 
 test("Compare prices keeps its distinct right-aligned per-night style", () => {
-  assert.match(styleRule("hotelPerNight", "hotelAboutPanel"), /fontSize: 12[\s\S]*lineHeight: 16[\s\S]*fontWeight: "500"[\s\S]*fontFamily: appFonts\.medium[\s\S]*textAlign: "right"/);
+  assert.match(styleRule("hotelPerNight", "hotelAboutPanel"), /fontSize: 10[\s\S]*lineHeight: 14[\s\S]*fontWeight: "500"[\s\S]*fontFamily: appFonts\.medium[\s\S]*textAlign: "right"/);
   assert.match(hotel, /<Text numberOfLines=\{1\} style=\{\[d\.hotelPerNight, \{ color: hotelAccent \}\]\}>per night<\/Text>/);
 });
 
