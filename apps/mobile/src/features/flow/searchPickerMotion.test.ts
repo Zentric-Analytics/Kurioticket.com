@@ -25,7 +25,7 @@ test("shared native search picker motion has the approved contract", () => {
   assert.match(source, /toValue: currentTravelDistance\(\)/);
   assert.match(source, /useNativeDriver: true/g);
   assert.match(source, /backdropStyle: \{ opacity: backdropOpacity \}/);
-  assert.match(source, /sheetStyle: \{ transform: \[\{ translateY: sheetTranslateY \}\] \}/);
+  assert.match(source, /stationaryOpening && visible[\s\S]*?translateY: 0[\s\S]*?translateY: sheetTranslateY/);
   assert.match(source, /generation\.current/);
   assert.match(source, /stopAnimation\(\)/);
   assert.match(source, /setRendered\(false\)/);
@@ -118,7 +118,8 @@ test("open settling belongs only to a successfully finished current generation",
 test("searchable opening waits for measured layout and an explicit presentation start", () => {
   assert.match(source, /controlledOpening = false/);
   assert.match(source, /if \(\s*!visible \|\|\s+openingGeneration\.current !== currentGeneration \|\|\s+measuredSheetHeight\.current === undefined\s*\)\s+return false/);
-  assert.match(source, /openingGeneration\.current = undefined;\s+awaitingFreshOpenLayout\.current = false;\s+Animated\.parallel/s);
+  assert.match(source, /openingGeneration\.current = undefined;\s+awaitingFreshOpenLayout\.current = false;\s+const animations/s);
+  assert.match(source, /Animated\.parallel\(animations\)/);
   assert.match(source, /if \(controlledOpening\) return;\s+const frame = requestAnimationFrame/);
   assert.match(source, /openingGeneration\.current = undefined;\s+Animated\.parallel\(\[/);
 });

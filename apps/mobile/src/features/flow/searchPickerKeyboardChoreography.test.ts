@@ -2,15 +2,14 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const pickers = [
-  ["FlightSearchPanel.tsx", "function AirportSheet", "type TravelerCabinDraft"],
+const movingPickers = [
   ["HotelSearchPanel.tsx", "function HotelDestinationSheet", "type GuestsRoomsDraft"],
   ["CarSearchPanel.tsx", "export function CarLocationSheet", "function FieldError"],
   ["PackageSearchForm.tsx", "function AirportSheet", "const PACKAGE_TRAVELER_ROWS"],
 ] as const;
 
-test("searchable moving sheets coordinate automatic focus with their entrance", () => {
-  for (const [file, start, end] of pickers) {
+test("Hotel, Car, and Package moving sheets retain their focus choreography", () => {
+  for (const [file, start, end] of movingPickers) {
     const source = readFileSync(`src/features/flow/${file}`, "utf8");
     const sheet = source.slice(source.indexOf(start), source.indexOf(end));
     assert.match(sheet, /useSearchPickerMotion\([^;]+controlledOpening: true/, file);
@@ -58,15 +57,25 @@ test("Android does not treat pre-keyboardDidShow empty metrics as immediate read
   assert.doesNotMatch(focusHandler, /if \(!Keyboard\.metrics\(\)\) keyboardReadyGenerationRef\.current = generation/);
 });
 
-test("Flight synchronizes keyboard preparation with its measured entrance only", () => {
+test("Flight opens stationary and focuses independently of keyboard readiness", () => {
   const flight = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
   const airportSheet = flight.slice(flight.indexOf("function AirportSheet"), flight.indexOf("type TravelerCabinDraft"));
-  assert.match(airportSheet, /\{ keyboardSynchronizedOpening: true \}/);
+  assert.match(airportSheet, /stationaryOpening: true/);
+  assert.match(airportSheet, /\{ focusOnPresentation: true \}/);
+  assert.doesNotMatch(airportSheet, /keyboardSynchronizedOpening/);
   for (const file of ["HotelSearchPanel.tsx", "CarSearchPanel.tsx", "PackageSearchForm.tsx"]) {
     assert.doesNotMatch(readFileSync(`src/features/flow/${file}`, "utf8"), /keyboardSynchronizedOpening/);
   }
-  assert.doesNotMatch(airportSheet, /autoFocus|setTimeout\([^)]*focus|InteractionManager/);
+  assert.doesNotMatch(airportSheet, /autoFocus|requestAnimationFrame|setTimeout\([^)]*focus|InteractionManager/);
   assert.doesNotMatch(airportSheet, /keyboardHeight|KEYBOARD_HEIGHT/);
+});
+
+test("stationary opening is opt-in and preserves translated closing", () => {
+  const source = readFileSync("src/features/flow/searchPickerPresentation.ts", "utf8");
+  assert.match(source, /stationaryOpening = false/);
+  assert.match(source, /stationaryOpening && visible[\s\S]*?translateY: 0/);
+  assert.match(source, /if \(!stationaryOpening\) animations\.push\(Animated\.timing\(sheetTranslateY/);
+  assert.match(source, /Animated\.timing\(sheetTranslateY,[\s\S]*?SEARCH_PICKER_CLOSE_DURATION_MS/);
 });
 
 test("non-searchable sheets do not opt into keyboard choreography", () => {
