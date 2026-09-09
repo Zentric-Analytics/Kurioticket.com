@@ -1590,6 +1590,7 @@ function HotelCard({
                   ...Object.fromEntries(
                     Object.entries(params).map(([k, v]) => [k, one(v) || ""]),
                   ),
+                  hotelResultsStack: "1",
                   hotelDisplayPrices: displayPrices ? JSON.stringify(displayPrices) : "",
                   displayCurrencyContext: displayCurrencyContext ? JSON.stringify(displayCurrencyContext) : "",
                 },

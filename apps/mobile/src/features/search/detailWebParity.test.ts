@@ -47,7 +47,7 @@ test("Hotel details follow mobile-web identity, gallery, tabs, and offer hierarc
   assert.doesNotMatch(hotel, /Select room|Choose where to book/);
 });
 
-test("Hotel Details back header is visually borderless without changing navigation", () => {
+test("Hotel Details back header stays visually borderless with stack-aware Results navigation", () => {
   const backHeaderStart = hotel.indexOf("d.hotelBackHeader");
   const backHeaderEnd = hotel.indexOf("<ScrollView", backHeaderStart);
   const backHeader = hotel.slice(backHeaderStart, backHeaderEnd);
@@ -69,6 +69,8 @@ test("Hotel Details back header is visually borderless without changing navigati
   assert.match(backHeader, /<ArrowLeft\b/);
   assert.match(backHeader, />Back to hotel results</);
 
+  assert.match(returnNavigation, /if \(hotelResultsStack\) \{/);
+  assert.match(returnNavigation, /router\.dismissTo\("\/hotel-results"\);\s*return;/);
   assert.match(returnNavigation, /router\.replace\(\{/);
   assert.match(returnNavigation, /pathname: "\/hotel-results"/);
   for (const param of ["destination", "checkIn", "checkOut", "guests", "rooms"]) {
