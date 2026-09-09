@@ -45,10 +45,38 @@ test("deal comparison retains authoritative provider handoff data and intentiona
 
 test("fare details preserve cabin, amenity, source price, emissions, and update facts",()=>{
   const details=between('if(tab==="details")', 'if(tab==="conditions")');
-  ["Fare brand","Cabin","Cabin product","Fare basis","Seat","Wi-Fi","Power","Price breakdown","Base fare","Taxes","Trip total","Estimated CO₂","Provider offer last updated"].forEach(label=>assert.match(details,new RegExp(label)));
+  ["Fare brand","Cabin","Cabin product","Fare basis","Seat","Wi-Fi","Power","Price breakdown","Base fare","Taxes","Trip total"].forEach(label=>assert.match(details,new RegExp(label)));
   assert.match(details,/sourceMoney\(p\.price\.baseAmount,p\.price\.baseCurrency\)/);
   assert.match(details,/Additional cabin details not supplied by the provider\./);
   assert.match(details,/Price breakdown not supplied by the provider\./);
+});
+
+test("fare details give provider emissions a dedicated dark-mode-safe sustainability treatment",()=>{
+  const details=between('if(tab==="details")', 'if(tab==="conditions")');
+  const emissions=between('p?.totalEmissionsKg!==undefined?', 'p?.updatedAt?');
+  const emissionsStyles=between("emissionsCard:", "secondaryFacts:");
+  assert.match(emissions,/p\?\.totalEmissionsKg/);
+  assert.match(emissions,/<View style=\{\[s\.emissionsCard,\{backgroundColor:theme\.dark\?"#0F2F26":"#ECFDF5"\}\]\}>/);
+  assert.match(emissions,/<Leaf size=\{17\} color=\{theme\.dark\?"#6EE7B7":"#047857"\}/);
+  assert.match(emissions,/Estimated CO₂ emissions/);
+  assert.match(emissions,/p\.totalEmissionsKg\.toLocaleString\(\)/);
+  assert.match(emissions,/>\{p\.totalEmissionsKg\.toLocaleString\(\)\} kg<\/Text>/);
+  assert.match(emissions,/>for this offer<\/Text>/);
+  assert.match(emissions,/s\.emissionsLabel,\{color:theme\.dark\?"#6EE7B7":"#047857"\}/);
+  assert.match(emissions,/s\.emissionsValue,\{color:theme\.textPrimary\}/);
+  assert.match(emissions,/s\.emissionsContext,\{color:theme\.textSecondary\}/);
+  assert.doesNotMatch(emissions,/<Pressable|detailRow\("Estimated CO₂"/);
+  assert.doesNotMatch(emissionsStyles,/backgroundColor:|color:/);
+  assert.match(emissionsStyles,/flexWrap:"wrap"/);
+  assert.doesNotMatch(details,/detailRow\("Estimated CO₂"|carbon footprint|sustainability/i);
+});
+
+test("provider update fact remains a separate row after emissions",()=>{
+  const details=between('if(tab==="details")', 'if(tab==="conditions")');
+  const provider='<View style={[s.secondaryFacts,{borderTopColor:theme.border}]}>{detailRow("Provider offer last updated",providerTimestamp(p.updatedAt))}</View>';
+  assert.match(details,/p\?\.updatedAt\?/);
+  assert.ok(details.indexOf("s.emissionsCard")<details.indexOf(provider));
+  assert.equal(details.split(provider).length-1,1);
 });
 
 test("conditions use structured state, shared statuses, scope, penalties, identity facts, and accessible legal links",()=>{
