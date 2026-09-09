@@ -88,7 +88,12 @@ test("Hotel Details light canvas matches the web white article without flattenin
   );
   const hotelRoot = hotel.slice(hotel.indexOf("return ("), hotel.indexOf("<ScrollView"));
   assert.match(hotelRoot, /<SafeAreaView[\s\S]*?backgroundColor: hotelCanvasColor/);
+  assert.match(hotelRoot, /d\.hotelBackHeader,[\s\S]*?backgroundColor: hotelCanvasColor/);
   assert.doesNotMatch(hotelRoot, /backgroundColor: theme\.background/);
+  assert.match(hotel, /<ScrollView[\s\S]*?stickyHeaderIndices=\{\[2\]\}[\s\S]*?style=\{\{ backgroundColor: hotelCanvasColor \}\}/);
+  assert.match(hotel, /d\.hotelTabsShell,[\s\S]{0,100}backgroundColor: hotelCanvasColor/);
+  assert.match(hotel, /d\.hotelSticky,[\s\S]{0,160}backgroundColor: hotelCanvasColor/);
+  assert.match(hotel, /d\.hotelOffer, \{[\s\S]*?backgroundColor: theme\.surface/);
   assert.doesNotMatch(hotel, /Platform\.OS/);
 });
 
@@ -112,6 +117,11 @@ test("Hotel section navigation separates its sticky shell from one deterministic
 
   assert.match(shellStyle, /width: "100%"/);
   assert.match(shellStyle, /alignSelf: "stretch"/);
+  assert.match(shellStyle, /minHeight: 51/);
+  assert.match(shellStyle, /paddingHorizontal: 8/);
+  assert.doesNotMatch(shellStyle, /borderBottomWidth|borderBottomColor/);
+  assert.match(shell, /backgroundColor: hotelCanvasColor/);
+  assert.doesNotMatch(shell, /backgroundColor: theme\.surface/);
   assert.doesNotMatch(shellStyle, /flexDirection:/);
 
   assert.match(row, /alignSelf: "stretch"/);
@@ -144,8 +154,7 @@ test("Hotel selected underline cannot become a full-width sticky-shell underline
   const shell = styleRule("hotelTabsShell", "hotelTabsRow");
   const tab = styleRule("hotelTab", "hotelTabWide");
 
-  assert.match(shell, /borderBottomWidth: 1/);
-  assert.doesNotMatch(shell, /hotelAccent|borderBottomWidth: 2/);
+  assert.doesNotMatch(shell, /borderBottomWidth|borderBottomColor|hotelAccent/);
   assert.match(tab, /width: "21\.5%"/);
   assert.match(tab, /borderBottomWidth: 2/);
   assert.match(tab, /borderBottomColor: "transparent"/);

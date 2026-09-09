@@ -54,9 +54,12 @@ test("native outer sheet mirrors rounded, padded, safe-area-aware web geometry",
   const sticky = styleRule("hotelSticky", "hotelFactRow");
   assert.match(sticky, /borderTopLeftRadius: 22[\s\S]*borderTopRightRadius: 22/);
   assert.match(sticky, /paddingHorizontal: 16[\s\S]*paddingTop: 12/);
-  assert.match(sticky, /shadowColor: "#0F172A"[\s\S]*shadowOffset: \{ width: 0, height: -8 \}[\s\S]*shadowOpacity: 0\.14[\s\S]*shadowRadius: 14[\s\S]*elevation: 12/);
+  assert.match(sticky, /shadowColor: "#0F172A"[\s\S]*shadowOffset: \{ width: 0, height: -4 \}[\s\S]*shadowOpacity: 0\.06[\s\S]*shadowRadius: 8[\s\S]*elevation: 6/);
+  assert.doesNotMatch(sticky, /borderTopWidth|borderTopColor/);
   assert.doesNotMatch(sticky, /\bpadding: 10|\bminHeight: 92|justifyContent: "space-between"|overflow: "hidden"/);
   assert.match(dock, /paddingBottom: 12 \+ inset\.bottom/);
+  assert.match(dock, /backgroundColor: hotelCanvasColor/);
+  assert.doesNotMatch(dock, /backgroundColor: theme\.surface|borderTopColor/);
 });
 
 test("native dock owns a proportional two-column price and action layout", () => {

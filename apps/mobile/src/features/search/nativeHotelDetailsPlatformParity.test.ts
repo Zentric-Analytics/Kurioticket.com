@@ -93,8 +93,7 @@ test("the shared selected underline remains tab-local on iOS and Android", () =>
   const shell = styleRule("hotelTabsShell", "hotelTabsRow");
   const tab = styleRule("hotelTab", "hotelTabWide");
 
-  assert.match(shell, /borderBottomWidth: 1/);
-  assert.doesNotMatch(shell, /hotelAccent|borderBottomWidth: 2/);
+  assert.doesNotMatch(shell, /borderBottomWidth|borderBottomColor|hotelAccent/);
   assert.match(tab, /borderBottomWidth: 2/);
   assert.match(tab, /borderBottomColor: "transparent"/);
   assert.match(hotel, /activeHotelTab === tab && \{ borderBottomColor: hotelAccent \}/);
