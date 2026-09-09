@@ -53,6 +53,16 @@ test("Cars render the full filtered result set without pagination", () => {
   assert.doesNotMatch(cars, /const \[page|pageSize|totalPages|filtered\.slice|Page \{page\}|label="Previous"|label="Next"/);
 });
 
+test("Cars inset only result cards and matching transition skeletons", () => {
+  assert.match(cars, /body:\{paddingHorizontal:14,gap:14\}/);
+  assert.match(cars, /carResultCardSlot:\{marginHorizontal:4\}/);
+  const slot = cars.match(/carResultCardSlot:\{([^}]*)\}/)?.[1] ?? "";
+  assert.doesNotMatch(slot, /(?:minW|w|W)idth|position|transform|margin(?:Horizontal)?:-/);
+  assert.match(cars, /filtered\.map\(\(result,index\)=><View key=\{result\.id\} style=\{r\.carResultCardSlot\}><CarResultCard result=\{result\} rank=\{index\} imageUri=\{image\(result\.imageUrl\)\} searchParams=\{payload\} onViewDeal=\{\(\)=>openDeal\(result\)\}\/><\/View>\)/);
+  assert.match(cars, /style=\{\[r\.skeleton,r\.carResultCardSlot,\{backgroundColor:/);
+  assert.doesNotMatch(cars, /<NativeCarPriceAlert[^>]*carResultCardSlot|<View accessibilityLabel="Car results summary"[^>]*carResultCardSlot/);
+});
+
 test("Cars result summary matches Hotel typography and grammar", () => {
   assert.match(cars, /const carResultCountLabel = \(count: number\) => `\$\{count\} \$\{count === 1 \? "Result" : "Results"\} found`/);
   assert.match(cars, /<Text accessibilityRole="header" style=\{\[r\.carResultCount,\{color:theme\.textPrimary\}\]\}>\{carResultCountLabel\(filtered\.length\)\}<\/Text>/);
