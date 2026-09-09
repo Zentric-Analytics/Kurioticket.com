@@ -106,6 +106,8 @@ test("Compare decision headings preserve the refined supporting hierarchy", () =
 
 test("Compare Property location uses a compact preview distinct from the Location-tab map", () => {
   assert.match(compare, /export function NativeHotelPropertyLocationSection/);
+  assert.match(compare, /import \{ nativeHotelLocationEmbedUrl \} from "\.\/nativeHotelLocationModel";/);
+  assert.match(compare, /nativeHotelLocationEmbedUrl\(api\.baseUrl, hotelId, "map"\)/);
   assert.match(styleRule(compare, "mapFrame", "map"), /height: 216/);
   assert.doesNotMatch(styleRule(compare, "mapFrame", "map"), /height: 280/);
 });
