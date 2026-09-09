@@ -47,6 +47,36 @@ test("Hotel details follow mobile-web identity, gallery, tabs, and offer hierarc
   assert.doesNotMatch(hotel, /Select room|Choose where to book/);
 });
 
+test("Hotel Details back header is visually borderless without changing navigation", () => {
+  const backHeaderStart = hotel.indexOf("d.hotelBackHeader");
+  const backHeaderEnd = hotel.indexOf("<ScrollView", backHeaderStart);
+  const backHeader = hotel.slice(backHeaderStart, backHeaderEnd);
+  const backHeaderStyle = styleRule("hotelBackHeader", "hotelIdentity");
+  const returnNavigation = hotel.slice(
+    hotel.indexOf("const returnToHotelResults"),
+    hotel.indexOf("const amenityItems"),
+  );
+
+  assert.match(backHeaderStyle, /minHeight: 48/);
+  assert.match(backHeaderStyle, /paddingHorizontal: 16/);
+  assert.match(backHeaderStyle, /justifyContent: "center"/);
+  assert.doesNotMatch(backHeaderStyle, /borderBottomWidth|borderBottomColor/);
+  assert.doesNotMatch(backHeader, /borderBottomColor: theme\.border/);
+
+  assert.match(backHeader, /accessibilityRole="button"/);
+  assert.match(backHeader, /accessibilityLabel="Back to hotel results"/);
+  assert.match(backHeader, /onPress=\{returnToHotelResults\}/);
+  assert.match(backHeader, /<ArrowLeft\b/);
+  assert.match(backHeader, />Back to hotel results</);
+
+  assert.match(returnNavigation, /router\.replace\(\{/);
+  assert.match(returnNavigation, /pathname: "\/hotel-results"/);
+  for (const param of ["destination", "checkIn", "checkOut", "guests", "rooms"]) {
+    assert.match(returnNavigation, new RegExp(`\\b${param}(?::|,)`));
+  }
+  assert.doesNotMatch(returnNavigation, /router\.back\(/);
+});
+
 test("Hotel Details light canvas matches the web white article without flattening dark mode", () => {
   assert.match(appTheme, /lightTheme = \{[\s\S]*?background: "#FAFBFF",[\s\S]*?surface: "#FFFFFF",/);
   assert.match(appTheme, /darkTheme = \{[\s\S]*?background: "#091224",[\s\S]*?surface: "#121E33",/);
