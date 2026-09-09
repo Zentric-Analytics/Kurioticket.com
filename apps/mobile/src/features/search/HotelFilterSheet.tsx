@@ -21,7 +21,7 @@ const postPriceSections:PostPriceSection[]=[
  {kind:"group",group:"propertyTypes",title:"Property type",limit:5},
  {kind:"group",group:"facilities",title:"Facilities",limit:6},
  {kind:"group",group:"accessibility",title:"Accessibility",limit:5},
- {kind:"group",group:"roomTypes",title:"Room & bed",limit:5,minimum:2},
+ {kind:"group",group:"roomTypes",title:"Room & bed",limit:5},
  {kind:"group",group:"bedTypes",title:"Bed options",limit:5,minimum:2},
 ];
 

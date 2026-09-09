@@ -21,7 +21,9 @@ test("Hotel rail keeps Filter Sort Price Stars Facilities Room & bed without Fli
   assert.match(rail, /openHotelQuickFilter\("facilities"\)/);
   assert.match(rail, /hotelQuickFilter === "roomTypes"/);
   assert.match(rail, /openHotelQuickFilter\("roomTypes"\)/);
-  assert.match(rail, /hotelOptions\.roomTypes\.length >= 2/);
+  assert.match(screen, /const showRoomAndBedShortcut = hotelOptions\.roomTypes\.length > 0 \|\| hotelFilters\.roomTypes\.length > 0/);
+  assert.match(rail, /showRoomAndBedShortcut \? <HotelResultsShortcut label="Room & bed"/);
+  assert.doesNotMatch(screen, /hotelOptions\.roomTypes\.length\s*(?:>=\s*2|>\s*1)/);
   assert.match(rail, /<ScrollView horizontal[\s\S]*?showsHorizontalScrollIndicator=\{false\}[\s\S]*?contentContainerStyle=\{s0\.hotelFilterContent\}>/);
   assert.match(rail, /style=\{s0\.hotelFilterRail\}/);
   assert.doesNotMatch(rail, /theme\.dark \? theme\.surface : "#FFFFFF"/);
