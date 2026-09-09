@@ -77,11 +77,31 @@ test("Cars use one truthful compact price alert before the summary and cards", (
   assert.match(carAlert, /styles\.title, \{ color: theme\.textPrimary \}/);
   assert.match(carAlert, /control: \{ width: "100%", minHeight: 52, borderRadius: 12, borderWidth: 1/);
   assert.match(carAlert, /switch: \{ minWidth: 51, minHeight: 44, flexShrink: 0/);
-  assert.match(carAlert, /pending \|\| loading \? <ActivityIndicator[\s\S]*?<Switch/);
   assert.match(carAlert, /travelApi\.priceAlerts\(\)/); assert.match(carAlert, /updatePriceAlertStatus/); assert.match(carAlert, /createPriceAlert/);
-  assert.match(carAlert, /accessibilityState=\{\{ checked: tracking, disabled, busy: pending \|\| loading \}\}/);
   assert.doesNotMatch(carAlert, /not available yet/);
   assert.match(hotels, /compactPriceAlertSwitchSlot: \{ minWidth: 51, minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
+});
+
+test("Cars Price Alert keeps focus reconciliation silent while mutation progress remains visible", () => {
+  assert.match(carAlert, /const reconcile = useCallback\(async \(\) => \{[^\n]*setLoading\(true\)/);
+  assert.match(carAlert, /useFocusEffect\(useCallback\(\(\) => \{ void reconcile\(\); \}, \[reconcile\]\)\)/);
+  assert.match(carAlert, /\{pending \? <ActivityIndicator[^>]*color=\{theme\.priceAlertAccent\}[^>]*\/> : null\}<Switch/);
+  assert.doesNotMatch(carAlert, /pending \|\| loading \? <ActivityIndicator/);
+  assert.doesNotMatch(carAlert, /loading[^?\n]*\? <ActivityIndicator/);
+  assert.match(carAlert, /accessibilityState=\{\{ checked: tracking, disabled, busy: pending \}\}/);
+  assert.doesNotMatch(carAlert, /busy: pending \|\| loading/);
+});
+
+test("Cars Price Alert reconciliation remains race-safe and preserves its known match", () => {
+  assert.match(carAlert, /const disabled = pending \|\| loading \|\| \(!available && !tracking\)/);
+  assert.match(carAlert, /if \(!plan \|\| pending \|\| loading\) return/);
+  assert.doesNotMatch(carAlert, /setLoading\(true\);\s*setMatch\(undefined\)/);
+});
+
+test("Cars Price Alert keeps user mutation progress and create feedback", () => {
+  assert.match(carAlert, /const toggle = async[\s\S]*setPending\(true\)[\s\S]*updatePriceAlertStatus[\s\S]*setPending\(false\)/);
+  assert.match(carAlert, /const create = async[\s\S]*setPending\(true\)[\s\S]*createPriceAlert[\s\S]*setPending\(false\)/);
+  assert.match(carAlert, /label=\{pending \? "Creating…" : "Create alert"\}/);
 });
 
 
