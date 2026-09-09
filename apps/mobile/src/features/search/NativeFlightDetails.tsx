@@ -200,6 +200,7 @@ function Itinerary({leg,index,offerAirlineName,offerAirlineLogo,theme}:{leg:Flig
   const departureTimeZone=departurePoint?.timeZone;
   const arrivalTimeZone=arrivalPoint?.timeZone;
   const distanceSegments=leg.segments.filter((segment)=>segment.distanceKm!==undefined);
+  const hasTechnicalInformation=distanceSegments.length>0||Boolean(departureTimeZone)||Boolean(arrivalTimeZone);
   const departureDate=new Intl.DateTimeFormat(undefined,{month:"short",day:"numeric",year:"numeric"}).format(new Date(leg.departureTime));
   return <View style={[s.itineraryCard,{backgroundColor:theme.surface,borderColor:theme.border}]}>
     <View style={s.itineraryHeader}>
@@ -247,14 +248,16 @@ function Itinerary({leg,index,offerAirlineName,offerAirlineLogo,theme}:{leg:Flig
       </View>
     </View>
     {leg.stops>0&&leg.layovers.length>0?<View style={[s.connectionList,{backgroundColor:theme.background}]}>{leg.layovers.map((layover,i)=><View key={`${layover.airport}-${layover.duration}-${i}`} style={s.connectionRow}><Text style={[s.connectionDuration,{color:theme.textPrimary}]}>{layover.duration} layover</Text><Text style={[s.connectionAirport,{color:theme.textSecondary}]}>{layover.airport}</Text></View>)}</View>:null}
-    <View style={[s.itineraryDivider,{backgroundColor:theme.border}]}/>
-    <View style={s.technicalInformation}>
-      {distanceSegments.map((segment,i)=><View key={`${segment.originAirport}-${segment.destinationAirport}-distance-${i}`} style={s.technicalRow}><Text style={[s.technicalLabel,{color:theme.textSecondary}]}>{leg.segments.length===1?"Flight distance":`${segment.originAirport} → ${segment.destinationAirport} distance`}</Text><Text style={[s.technicalValue,{color:theme.textSecondary}]}>{Math.round(segment.distanceKm!).toLocaleString()} km</Text></View>)}
-      {departureTimeZone&&arrivalTimeZone&&departureTimeZone===arrivalTimeZone?<View style={s.technicalRow}><Text style={[s.technicalLabel,{color:theme.textSecondary}]}>Time zone</Text><Text style={[s.technicalValue,{color:theme.textSecondary}]}>{departureTimeZone}</Text></View>:<>
-        {departureTimeZone?<View style={s.technicalRow}><Text style={[s.technicalLabel,{color:theme.textSecondary}]}>Departure time zone</Text><Text style={[s.technicalValue,{color:theme.textSecondary}]}>{departureTimeZone}</Text></View>:null}
-        {arrivalTimeZone?<View style={s.technicalRow}><Text style={[s.technicalLabel,{color:theme.textSecondary}]}>Arrival time zone</Text><Text style={[s.technicalValue,{color:theme.textSecondary}]}>{arrivalTimeZone}</Text></View>:null}
-      </>}
-    </View>
+    {hasTechnicalInformation?<>
+      <View style={[s.itineraryDivider,{backgroundColor:theme.border}]}/>
+      <View style={s.technicalInformation}>
+        {distanceSegments.map((segment,i)=><View key={`${segment.originAirport}-${segment.destinationAirport}-distance-${i}`} style={s.technicalRow}><Text style={[s.technicalLabel,{color:theme.textSecondary}]}>{leg.segments.length===1?"Flight distance":`${segment.originAirport} → ${segment.destinationAirport} distance`}</Text><Text style={[s.technicalValue,{color:theme.textSecondary}]}>{Math.round(segment.distanceKm!).toLocaleString()} km</Text></View>)}
+        {departureTimeZone&&arrivalTimeZone&&departureTimeZone===arrivalTimeZone?<View style={s.technicalRow}><Text style={[s.technicalLabel,{color:theme.textSecondary}]}>Time zone</Text><Text style={[s.technicalValue,{color:theme.textSecondary}]}>{departureTimeZone}</Text></View>:<>
+          {departureTimeZone?<View style={s.technicalRow}><Text style={[s.technicalLabel,{color:theme.textSecondary}]}>Departure time zone</Text><Text style={[s.technicalValue,{color:theme.textSecondary}]}>{departureTimeZone}</Text></View>:null}
+          {arrivalTimeZone?<View style={s.technicalRow}><Text style={[s.technicalLabel,{color:theme.textSecondary}]}>Arrival time zone</Text><Text style={[s.technicalValue,{color:theme.textSecondary}]}>{arrivalTimeZone}</Text></View>:null}
+        </>}
+      </View>
+    </>:null}
   </View>;
 }
 function FareSurface({tab,choice,dealPrices,onDeal,booking,fareReady,theme}:{tab:"deals"|"details"|"conditions"|"extras";choice:FlightDetailsFareChoice;dealPrices:Record<string,DisplayPrice>;onDeal:(id:string)=>Promise<void>;booking:boolean;fareReady:boolean;theme:ReturnType<typeof useAppTheme>["theme"]}) {
