@@ -87,6 +87,12 @@ test("timezone rows use only authoritative endpoint values and distinguish unequ
   assert.doesNotMatch(itinerary,/resolvedOptions\(\)\.timeZone|airportTimeZone|timeZoneMap|timezoneMap/);
 });
 
+test("technical divider and facts are omitted when no provider-backed technical data exists",()=>{
+  assert.match(itinerary,/const hasTechnicalInformation=distanceSegments\.length>0\|\|Boolean\(departureTimeZone\)\|\|Boolean\(arrivalTimeZone\)/);
+  assert.match(itinerary,/\{hasTechnicalInformation\?<><View style=\{\[s\.itineraryDivider/);
+  assert.match(itinerary,/<View style=\{s\.technicalInformation\}>/);
+});
+
 test("itinerary spacing is tightened locally without touching shared fare cards",()=>{
   assert.match(source,/itineraryCard:\{borderWidth:1,borderRadius:15,padding:15/);
   assert.match(source,/journeySummary:\{[^\n]*marginTop:14\}/);
