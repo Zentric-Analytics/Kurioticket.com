@@ -26,7 +26,7 @@ test("native actions and checkout meet accessibility requirements", () => {
   assert.match(native, /accessibilityRole="radio" accessibilityState=\{\{selected:/);
   assert.match(native, /accessibilityRole="tab" accessibilityState=\{\{selected:/);
   assert.match(native, /iconButton:\{width:44,height:44/);
-  assert.match(native, /tab:\{minHeight:44/);
+  assert.match(native, /fareInfoTab:\{minHeight:48/);
 });
 
 test("available flight header keeps only back, save, and share fixed", () => {
