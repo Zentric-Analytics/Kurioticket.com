@@ -16,10 +16,11 @@ test("shared Android favorite button preserves geometry and applies the semantic
   assert.match(favorite, /height:\s*40/);
   assert.match(favorite, /borderRadius:\s*20/);
   assert.match(favorite, /<FlowIcon name="heart" size=\{18\}/);
-  assert.match(favorite, /stroke:\s*"#E92D55"/);
+  assert.match(favorite, /unsavedStroke:\s*"#000000"/);
+  assert.match(favorite, /savedStroke:\s*"#E92D55"/);
   assert.match(favorite, /savedFill:\s*"#E92D55"/);
   assert.match(favorite, /unsavedFill:\s*"#FFFFFF"/);
-  assert.match(favorite, /color=\{androidFavoriteColors\.stroke\}/);
+  assert.match(favorite, /color=\{saved \? androidFavoriteColors\.savedStroke : androidFavoriteColors\.unsavedStroke\}/);
   assert.match(favorite, /fill=\{saved \? androidFavoriteColors\.savedFill : androidFavoriteColors\.unsavedFill\}/);
   assert.doesNotMatch(favorite, /shadowOpacity|elevation|pressed/);
   assert.match(shim, /export \{ AndroidFavoriteButton, androidFavoriteColors \}/);
@@ -51,7 +52,8 @@ test("favorite behavior, navigation, and propagation remain unchanged", () => {
 });
 
 test("favorite light and dark mode values remain unchanged", () => {
-  assert.match(favorite, /stroke:\s*"#E92D55"/);
+  assert.match(favorite, /unsavedStroke:\s*"#000000"/);
+  assert.match(favorite, /savedStroke:\s*"#E92D55"/);
   assert.match(favorite, /savedFill:\s*"#E92D55"/);
   assert.match(favorite, /unsavedFill:\s*"#FFFFFF"/);
   assert.match(favorite, /background:\s*"rgba\(2,15,42,\.62\)"/);

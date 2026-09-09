@@ -56,7 +56,7 @@ export function DestinationResultRow({ destination, saved, onSelect, onToggle }:
       <DestinationThumbnail key={destination.id} destination={destination} />
       <View style={s.resultCopy}><Text style={[s.resultTitle, { color: theme.textPrimary }]}>{destination.name}</Text><Text style={[s.resultMeta, { color: theme.textSecondary }]}>{destination.country} · {destination.primaryAirportCode}{destination.airportCodes.length > 1 ? ` + ${destination.airportCodes.length - 1} airports` : ""}</Text></View>
     </Pressable>
-    <Pressable accessibilityRole="button" accessibilityLabel={`${saved ? "Remove" : "Save"} ${destination.name}`} onPress={onToggle} style={s.rowHeart}><FlowIcon name="heart" color={androidFavoriteColors.stroke} fill={saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} /></Pressable>
+    <Pressable accessibilityRole="button" accessibilityLabel={`${saved ? "Remove" : "Save"} ${destination.name}`} onPress={onToggle} style={s.rowHeart}><FlowIcon name="heart" color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} /></Pressable>
   </View>;
 }
 
