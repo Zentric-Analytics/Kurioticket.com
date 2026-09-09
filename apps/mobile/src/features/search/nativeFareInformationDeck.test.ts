@@ -51,19 +51,22 @@ test("fare details preserve cabin, amenity, source price, emissions, and update 
   assert.match(details,/Price breakdown not supplied by the provider\./);
 });
 
-test("fare details give provider emissions a dedicated non-interactive sustainability treatment",()=>{
+test("fare details give provider emissions a dedicated dark-mode-safe sustainability treatment",()=>{
   const details=between('if(tab==="details")', 'if(tab==="conditions")');
   const emissions=between('p?.totalEmissionsKg!==undefined?', 'p?.updatedAt?');
   const emissionsStyles=between("emissionsCard:", "secondaryFacts:");
   assert.match(emissions,/p\?\.totalEmissionsKg/);
-  assert.match(emissions,/<View style=\{s\.emissionsCard\}>/);
-  assert.match(emissions,/<Leaf size=\{17\}/);
+  assert.match(emissions,/<View style=\{\[s\.emissionsCard,\{backgroundColor:theme\.dark\?"#0F2F26":"#ECFDF5"\}\]\}>/);
+  assert.match(emissions,/<Leaf size=\{17\} color=\{theme\.dark\?"#6EE7B7":"#047857"\}/);
   assert.match(emissions,/Estimated CO₂ emissions/);
   assert.match(emissions,/p\.totalEmissionsKg\.toLocaleString\(\)/);
   assert.match(emissions,/>\{p\.totalEmissionsKg\.toLocaleString\(\)\} kg<\/Text>/);
   assert.match(emissions,/>for this offer<\/Text>/);
+  assert.match(emissions,/s\.emissionsLabel,\{color:theme\.dark\?"#6EE7B7":"#047857"\}/);
+  assert.match(emissions,/s\.emissionsValue,\{color:theme\.textPrimary\}/);
+  assert.match(emissions,/s\.emissionsContext,\{color:theme\.textSecondary\}/);
   assert.doesNotMatch(emissions,/<Pressable|detailRow\("Estimated CO₂"/);
-  assert.match(emissionsStyles,/backgroundColor:"rgba\(236, 253, 245, 0\.72\)"/);
+  assert.doesNotMatch(emissionsStyles,/backgroundColor:|color:/);
   assert.match(emissionsStyles,/flexWrap:"wrap"/);
   assert.doesNotMatch(details,/detailRow\("Estimated CO₂"|carbon footprint|sustainability/i);
 });
