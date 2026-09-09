@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, Animated, Easing, Linking, Pressable, ScrollView, Share, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { AccessibilityInfo, Alert, Animated, Easing, Linking, Pressable, ScrollView, Share, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, FilePenLine, Heart, Leaf, Luggage } from "lucide-react-native";
@@ -166,8 +166,10 @@ export function NativeFlightDetails({ params }: { params: Params }) {
 
 
 function FlightDetailsLoadingSkeleton({theme,bottomInset,fareCardWidth}:{theme:ReturnType<typeof useAppTheme>["theme"];bottomInset:number;fareCardWidth:number}) {
+  const [reduceMotion,setReduceMotion]=useState(true);
   const opacity=useRef(new Animated.Value(.55)).current;
-  useEffect(()=>{const pulse=Animated.loop(Animated.sequence([Animated.timing(opacity,{toValue:1,duration:900,easing:Easing.inOut(Easing.sin),useNativeDriver:true}),Animated.timing(opacity,{toValue:.55,duration:900,easing:Easing.inOut(Easing.sin),useNativeDriver:true})]));pulse.start();return()=>pulse.stop();},[opacity]);
+  useEffect(()=>{let mounted=true;void AccessibilityInfo.isReduceMotionEnabled().then((enabled)=>{if(mounted)setReduceMotion(enabled);});const subscription=AccessibilityInfo.addEventListener("reduceMotionChanged",setReduceMotion);return()=>{mounted=false;subscription.remove();};},[]);
+  useEffect(()=>{opacity.stopAnimation();if(reduceMotion){opacity.setValue(.7);return;}opacity.setValue(.55);const pulse=Animated.loop(Animated.sequence([Animated.timing(opacity,{toValue:1,duration:900,easing:Easing.inOut(Easing.sin),useNativeDriver:true}),Animated.timing(opacity,{toValue:.55,duration:900,easing:Easing.inOut(Easing.sin),useNativeDriver:true})]));pulse.start();return()=>pulse.stop();},[opacity,reduceMotion]);
   const placeholder={backgroundColor:theme.border};
   return <SafeAreaView edges={["top"]} style={[s.safe,{backgroundColor:theme.background}]}>
     <TopBar backgroundColor={theme.background}/>
