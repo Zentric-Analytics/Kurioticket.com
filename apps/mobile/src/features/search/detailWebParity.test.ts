@@ -70,7 +70,9 @@ test("Hotel Details back header stays visually borderless with stack-aware Resul
   assert.match(backHeader, />Back to hotel results</);
 
   assert.match(returnNavigation, /if \(hotelResultsStack\) \{/);
-  assert.match(returnNavigation, /router\.dismissTo\("\/hotel-results"\);\s*return;/);
+  assert.match(returnNavigation, /hotelResultsDismissCount\(navigation\.getState\(\)\)/);
+  assert.match(returnNavigation, /router\.dismiss\(dismissCount\);\s*return;/);
+  assert.doesNotMatch(returnNavigation, /router\.dismissTo|router\.back\(/);
   assert.match(returnNavigation, /router\.replace\(\{/);
   assert.match(returnNavigation, /pathname: "\/hotel-results"/);
   for (const param of ["destination", "checkIn", "checkOut", "guests", "rooms"]) {

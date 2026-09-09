@@ -15,7 +15,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
 import { travelApi, type HotelResult } from "../../api/travelApi";
 import { FlowIcon } from "../flow/FlowIcon";
 import { Armchair, ArrowLeft, Award, Bed, CalendarDays, FilePenLine, Heart, Info, Laptop, Luggage, MapPin, Repeat2, ShieldX, Sparkles, Users, UtensilsCrossed, Wifi, Wine, type LucideIcon } from "lucide-react-native";
@@ -51,6 +51,7 @@ import { NativeHotelLocationSection } from "./NativeHotelLocationSection";
 import { NativeHotelReviewsSection } from "./NativeHotelReviewsSection";
 import { NativeFlightDetails } from "./NativeFlightDetails";
 import type { FlightTripDetail, FlightTripDetailIcon } from "./flightTripDetails";
+import { hotelResultsDismissCount } from "./hotelDetailReturnNavigation";
 
 function hotelAboutIconFor(item: HotelAmenityPresentationItem): LucideIcon {
   if (item.iconKey === "wifi") return Wifi;
@@ -114,6 +115,7 @@ function HotelDetail({
   result: HotelResult;
   params: Record<string, string | string[]>;
 }) {
+  const navigation = useNavigation();
   const { theme } = useAppTheme();
   const hotelCanvasColor = theme.dark ? theme.background : theme.surface;
   const hotelAccent = theme.dark ? "#8FB5FF" : colors.blue;
@@ -356,8 +358,11 @@ function HotelDetail({
     });
   const returnToHotelResults = () => {
     if (hotelResultsStack) {
-      router.dismissTo("/hotel-results");
-      return;
+      const dismissCount = hotelResultsDismissCount(navigation.getState());
+      if (dismissCount) {
+        router.dismiss(dismissCount);
+        return;
+      }
     }
     router.replace({
       pathname: "/hotel-results",
