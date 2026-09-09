@@ -81,9 +81,9 @@ test("Compare uses the refined native presentation while Pickup retains its geom
   for (const contract of ["marginTop:20", "borderRadius:14", "paddingHorizontal:8", "paddingVertical:16"])
     assert.ok(style("compareCard").includes(contract));
   assert.doesNotMatch(style("compareCard"), /marginHorizontal:-/);
-  assert.match(native, /logo:\{width:120,height:26,flexShrink:0\}/);
-  assert.match(native, /radio:\{width:18,height:18,borderRadius:9,borderWidth:1\.5/);
-  assert.match(native, /radioDot:\{width:8,height:8,borderRadius:4/);
+  assert.match(native, /logo:\{width:108,height:24,flexShrink:0\}/);
+  assert.match(native, /radio:\{width:16,height:16,borderRadius:8,borderWidth:1\.5/);
+  assert.match(native, /radioDot:\{width:6,height:6,borderRadius:3/);
   assert.match(native, /primaryValidCarOffer\(result\.offers\)/);
 
   for (const contract of ["paddingVertical:20", "borderTopWidth:1", "borderBottomWidth:1"])
