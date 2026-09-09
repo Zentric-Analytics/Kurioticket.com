@@ -89,7 +89,7 @@ test("timezone rows use only authoritative endpoint values and distinguish unequ
 
 test("technical divider and facts are omitted when no provider-backed technical data exists",()=>{
   assert.match(itinerary,/const hasTechnicalInformation=distanceSegments\.length>0\|\|Boolean\(departureTimeZone\)\|\|Boolean\(arrivalTimeZone\)/);
-  assert.match(itinerary,/\{hasTechnicalInformation\?<><View style=\{\[s\.itineraryDivider/);
+  assert.match(itinerary,/\{hasTechnicalInformation\?<>\s*<View style=\{\[s\.itineraryDivider/);
   assert.match(itinerary,/<View style=\{s\.technicalInformation\}>/);
 });
 
