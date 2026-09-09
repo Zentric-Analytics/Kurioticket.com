@@ -35,7 +35,7 @@ test("close header, airport choices, search, and list interactions remain inside
 
   assert.match(sheetContent, /accessibilityLabel="Search airports"/);
   assert.doesNotMatch(sheetContent, /accessibilityLabel="Clear airport search"|>Clear</);
-  assert.match(sheetContent, /<FlatList keyboardShouldPersistTaps="handled"/);
+  assert.match(sheetContent, /<FlatList[^>]*keyboardShouldPersistTaps="handled"/);
   assert.match(sheetContent, /onPress=\{\(\)=>void choosePlace\(item\)\}/);
   assert.match(sheetContent, /<PickerSheetHeader[^>]+onClose=\{dismissAirportSheet\}/);
   assert.doesNotMatch(sheetContent, /<PrimaryButton label="Done"/);
