@@ -4,9 +4,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { FlowIcon } from "../src/features/flow/FlowIcon";
 import { useMobileLocalization } from "../src/localization/MobileLocalizationProvider";
 import { mobileLocales } from "../src/localization/mobileLocalizationCatalog";
-import { useAppTheme } from "../src/theme/AppTheme";
+import { ProfileThemeProvider, useAppTheme } from "../src/theme/AppTheme";
 
-export default function LanguageScreen() {
+function LanguageScreen() {
   const { theme } = useAppTheme();
   const { locale, setLocale, t } = useMobileLocalization();
 
@@ -73,3 +73,5 @@ const styles = StyleSheet.create({
   description: { fontSize: 14, lineHeight: 19, marginTop: 3 },
   checkSlot: { width: 30, alignItems: "flex-end", justifyContent: "center" },
 });
+
+export default function LanguagePage() { return <ProfileThemeProvider><LanguageScreen /></ProfileThemeProvider>; }

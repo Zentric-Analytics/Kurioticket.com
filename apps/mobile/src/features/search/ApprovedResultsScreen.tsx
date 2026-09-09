@@ -8,8 +8,6 @@ import {
   Linking,
   KeyboardAvoidingView,
   Modal,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
   Platform,
   Pressable,
   ScrollView,
@@ -29,7 +27,6 @@ import {
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import {
   Armchair,
-  ArrowUp,
   ArrowLeft,
   Bell,
   ChevronDown,
@@ -174,7 +171,6 @@ const flightSupportText = {
   dark: "#B8C3D8",
 } as const;
 const flightResultsLightCanvas = "#F5F7FB";
-const HOTEL_BACK_TO_TOP_HIDE_NEAR_END = 120;
 const HOTEL_UTILITY_ICON_COLOR = "#334155";
 const HOTEL_GALLERY_CHEVRON_CONTRAST = "rgba(0,0,0,0.85)";
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -228,8 +224,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [hotelResultsApplying, setHotelResultsApplying] = useState(false);
   const hotelResultsApplyingTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const hotelFilterSessionDirtyRef = useRef(false);
-  const [hotelBackToTop, setHotelBackToTop] = useState(false);
-  const hotelBackToTopVisibleRef = useRef(false);
   const hotelScrollRef = useRef<ScrollView>(null);
   const hotelResultsOffset = useRef(0);
   const hotelResultsBodyOffset = useRef(0);
@@ -674,20 +668,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         - hotelFilterHeaderHeight.current,
     );
   }, []);
-  const handleHotelScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const scrollY = Math.max(0, event.nativeEvent.contentOffset.y);
-    const distanceFromEnd = Math.max(
-      0,
-      event.nativeEvent.contentSize.height
-        - event.nativeEvent.layoutMeasurement.height
-        - scrollY,
-    );
-    const visible = scrollY > 600
-      && distanceFromEnd > HOTEL_BACK_TO_TOP_HIDE_NEAR_END;
-    if (visible === hotelBackToTopVisibleRef.current) return;
-    hotelBackToTopVisibleRef.current = visible;
-    setHotelBackToTop(visible);
-  }, []);
   const changeHotelPage = (page: number) => {
     if (hotelPageChanging || page === clampedHotelPage) return;
     setHotelPageChanging(true); setHotelPage(clampHotelResultsPage(page, hotelPageCount));
@@ -1047,8 +1027,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             contentContainerStyle={s0.hotelResultsContent}
             overScrollMode="never"
             stickyHeaderIndices={[0]}
-            scrollEventThrottle={16}
-            onScroll={handleHotelScroll}
           >
             <View
               onLayout={({ nativeEvent }) => {
@@ -1069,7 +1047,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               {resultContent}
             </View>
           </ScrollView>
-          {hotelBackToTop ? <Pressable accessibilityRole="button" accessibilityLabel="Back to top" onPress={()=>hotelScrollRef.current?.scrollTo({y:0,animated:true})} style={[s0.hotelBackToTop,{bottom:Math.max(insets.bottom + 16,16),backgroundColor:theme.surface,borderColor:theme.border}]}><ArrowUp size={21} color={theme.icon}/></Pressable>:null}
         </>
       )}
       {product === "flight" ? (
@@ -1861,7 +1838,6 @@ const s0 = StyleSheet.create({
   hotelSummaryDestination: { fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
   hotelSummarySecondary: { marginTop: 3, fontSize: 10.5, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
   hotelSummaryEditSlot: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
-  hotelBackToTop:{position:"absolute",right:16,width:44,height:44,borderRadius:22,borderWidth:1,alignItems:"center",justifyContent:"center",zIndex:19,elevation:4},
   filterRail: { height: 44, flexGrow: 0 },
   hotelFilterRail: { height: 44, flexGrow: 0 },
   hotelFilterContent: { paddingLeft: 8, paddingRight: 16, gap: 6, alignItems: "center", flexWrap: "nowrap" },
