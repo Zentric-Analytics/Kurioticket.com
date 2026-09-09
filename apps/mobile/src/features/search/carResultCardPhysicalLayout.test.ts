@@ -27,16 +27,21 @@ test("a failed Car image reveals the truthful unavailable state", () => {
   assert.match(source, />Vehicle image unavailable<\/Text>/);
 });
 
-test("Car identity, utilities, commerce, and conversion content follow the approved hierarchy", () => {
+test("Car identity and details lead into a shared lower benefits and commerce row", () => {
   const modelName = source.indexOf("{result.modelName}</Text>");
   const identityCategory = source.indexOf("{result.categoryLabel}</Text>");
   const location = source.indexOf("style={c.location}");
   const specs = source.indexOf("style={c.specs}");
   const priceColumn = source.indexOf("style={c.priceColumn}");
-  const cancellation = source.indexOf("style={[c.conversion");
+  const conversion = source.indexOf("style={[c.conversion");
+  const rentalBenefits = source.indexOf("style={c.rentalBenefits}", conversion);
 
   assert.ok(modelName >= 0 && modelName < identityCategory);
-  assert.ok(identityCategory < location && location < specs && specs < priceColumn && priceColumn < cancellation);
+  assert.ok(identityCategory < location && location < specs && specs < conversion);
+  assert.ok(conversion < rentalBenefits && rentalBenefits < priceColumn);
+  assert.equal(source.match(/<View style=\{c\.priceColumn\}>/g)?.length, 1);
+  const information = source.slice(source.indexOf("<View style={c.information}>"), conversion);
+  assert.doesNotMatch(information, /<View style=\{c\.priceColumn\}>/);
   assert.match(source, /style=\{c\.identityMeta\}[\s\S]*result\.orSimilar \? <>[\s\S]*>or similar<\/Text><Text[^>]*>•<\/Text>[\s\S]*result\.categoryLabel/);
   assert.match(source, /rank === 0 \? <View style=\{c\.badge\}>[\s\S]*Best value/);
   assert.match(source, /utilityColumn[\s\S]*badge[\s\S]*actions/);
@@ -88,7 +93,8 @@ test("right commerce column has truthful pricing followed by the Flight-style de
   assert.match(styles, /viewDeal:\{[^}]*flexDirection:"row"[^}]*justifyContent:"flex-end"/);
   assert.match(styles, /viewDealText:\{fontSize:13,lineHeight:15,fontWeight:"600"\}/);
   assert.doesNotMatch(styles, /viewDeal:\{[^}]*(?:backgroundColor|borderWidth|borderRadius)/);
-  assert.match(styles, /priceColumn:\{width:"100%",minWidth:0,alignItems:"flex-end"/);
+  assert.match(styles, /priceColumn:\{flexShrink:0,minWidth:108,maxWidth:"46%",alignItems:"flex-end",justifyContent:"flex-end"\}/);
+  assert.doesNotMatch(styles, /priceColumn:\{[^}]*(?:width:"100%"|paddingTop:10)/);
   assert.doesNotMatch(styles, /priceColumn:\{[^}]*flexBasis:"44%"/);
   assert.doesNotMatch(styles, /priceColumn:\{[^}]*position:"absolute"/);
 });
@@ -106,24 +112,36 @@ test("rental benefits use canonical facts in stable semantic order", () => {
   assert.doesNotMatch(source, /const mileageLabel\s*=\s*["']Unlimited mileage/);
 });
 
-test("Free cancellation remains truthfully gated without a divider", () => {
+test("Free cancellation remains truthfully gated and matches the neutral facts without a divider", () => {
   const conversionStyle = styles.slice(styles.indexOf("conversion:"), styles.indexOf("},", styles.indexOf("conversion:")) + 2);
+  const benefitMarkup = source.slice(source.indexOf("<View style={c.rentalBenefits}"), source.indexOf("<View style={c.priceColumn}>"));
 
-  assert.match(source, /offer\?\.freeCancellation \? <View[^>]*><ShieldCheck[\s\S]*>Free cancellation<\/Text><\/View> : null/);
+  assert.match(benefitMarkup, /offer\?\.freeCancellation \? <View style=\{c\.rentalBenefit\}><ShieldCheck accessible=\{false\} size=\{12\} strokeWidth=\{2\} color=\{theme\.icon\} \/><Text style=\{\[c\.rentalBenefitText,\{color:theme\.textSecondary\}\]\}>Free cancellation<\/Text><\/View> : null/);
+  assert.doesNotMatch(benefitMarkup, /positiveBenefit|positiveBenefitText|#ECFDF5|#15803D/);
+  assert.doesNotMatch(styles, /positiveBenefit(?:Text)?:/);
   assert.doesNotMatch(source, /c\.conversion,\{[^}]*borderTopColor/);
   assert.doesNotMatch(conversionStyle, /borderTopWidth|borderTopColor/);
   assert.doesNotMatch(source, /divider|separatorLine/i);
 });
 
-test("rental benefit footer wraps naturally without hidden or fixed-column content", () => {
+test("shared lower row uses safe flex flow and lets neutral benefits wrap naturally", () => {
   const benefitsStyle = styles.slice(styles.indexOf("rentalBenefits:"), styles.indexOf("},", styles.indexOf("rentalBenefits:")) + 2);
   const conversionStyle = styles.slice(styles.indexOf("conversion:"), styles.indexOf("},", styles.indexOf("conversion:")) + 2);
-  const benefitMarkup = source.slice(source.indexOf("<View style={c.rentalBenefits}"), source.indexOf("</View>\n    </View>", source.indexOf("<View style={c.rentalBenefits}")));
+  const benefitMarkup = source.slice(source.indexOf("<View style={c.rentalBenefits}"), source.indexOf("<View style={c.priceColumn}>"));
 
-  assert.match(benefitsStyle, /flexDirection:"row"/);
+  assert.match(conversionStyle, /conversion:\{flexDirection:"row",alignItems:"flex-end",gap:10,paddingLeft:10,paddingRight:10,paddingTop:7,paddingBottom:8\}/);
+  assert.match(benefitsStyle, /rentalBenefits:\{flex:1,minWidth:0,flexDirection:"row"/);
   assert.match(benefitsStyle, /flexWrap:"wrap"/);
-  assert.match(benefitsStyle, /rowGap:6/);
+  assert.match(benefitsStyle, /alignContent:"flex-end"/);
+  assert.match(benefitsStyle, /columnGap:8,rowGap:4/);
+  assert.match(styles, /rentalBenefitText:\{fontSize:10,fontWeight:"500",lineHeight:14\}/);
+  assert.equal(benefitMarkup.match(/style=\{c\.rentalBenefit\}/g)?.length, 3);
+  assert.equal(benefitMarkup.match(/size=\{12\} strokeWidth=\{2\} color=\{theme\.icon\}/g)?.length, 3);
+  assert.equal(benefitMarkup.match(/style=\{\[c\.rentalBenefitText,\{color:theme\.textSecondary\}\]\}/g)?.length, 3);
   assert.doesNotMatch(benefitsStyle, /width:"33(?:\.333)?%"|flexBasis:"33(?:\.333)?%"|position:"absolute"/);
+  assert.doesNotMatch(conversionStyle, /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:/);
+  const priceStyle = styles.slice(styles.indexOf("priceColumn:"), styles.indexOf("},", styles.indexOf("priceColumn:")) + 2);
+  assert.doesNotMatch(priceStyle, /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:/);
   assert.doesNotMatch(conversionStyle, /(?:^|,)height:/);
   assert.doesNotMatch(benefitMarkup, /ScrollView|numberOfLines|adjustsFontSizeToFit/);
 });
