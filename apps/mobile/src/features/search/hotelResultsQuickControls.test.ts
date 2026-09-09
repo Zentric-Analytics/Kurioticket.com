@@ -27,25 +27,26 @@ test("Hotel rail keeps Filter Sort Price Stars Facilities Room & bed without Fli
   assert.match(rail, /<ScrollView horizontal[\s\S]*?showsHorizontalScrollIndicator=\{false\}[\s\S]*?contentContainerStyle=\{s0\.hotelFilterContent\}>/);
   assert.match(rail, /style=\{s0\.hotelFilterRail\}/);
   assert.doesNotMatch(rail, /theme\.dark \? theme\.surface : "#FFFFFF"/);
-  assert.doesNotMatch(rail, /contentOffset|scrollTo\(|negativeMargin|translateX|position: "absolute"/);
+  assert.doesNotMatch(rail, /contentOffset|scrollTo\(|scrollToEnd\(|negativeMargin|translateX|position: "absolute"/);
   assert.doesNotMatch(rail, /label="Amenities"|openHotelQuickFilter\("amenities"\)/);
   assert.match(rail, /hotelSort === defaultHotelSort \? "Sort" : hotelSortLabel\(hotelSort\)/);
   assert.doesNotMatch(rail, /Cheapest|Airlines|Stops|Airports/);
 });
 
-test("Hotel controls use compact capsules inside accessible touch targets like Flight", () => {
+test("Hotel controls use narrower capsules than Flight inside shared accessible geometry", () => {
   const styles = screen.slice(screen.indexOf("const s0 = StyleSheet.create"));
   assert.match(styles, /hotelFilterRail: \{ height: 44, flexGrow: 0 \}/);
   assert.match(styles, /hotelFilterContent: \{ paddingLeft: 8, paddingRight: 16, gap: 6, alignItems: "center", flexWrap: "nowrap" \}/);
   assert.doesNotMatch(block(styles, "hotelFilterContent", "hotelFilterSectionHeader"), /paddingBottom/);
   assert.match(styles, /hotelShortcutTouchTarget: \{ minWidth: 44, minHeight: 44, justifyContent: "center" \}/);
-  assert.match(styles, /hotelShortcut: \{ height: 36,[^}]*gap: 4,[^}]*borderWidth: 1, borderRadius: 9, paddingHorizontal: 10 \}/);
+  assert.match(styles, /hotelShortcut: \{ height: 36,[^}]*gap: 4,[^}]*borderWidth: 1, borderRadius: 9, paddingHorizontal: 8 \}/);
   const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
   assert.match(component, /<Pressable[\s\S]*?style=\{s0\.hotelShortcutTouchTarget\}[\s\S]*?\{\(\{ pressed \}\) => <View style=\{\[[\s\S]*?s0\.hotelShortcut,/);
   assert.match(styles, /hotelShortcutLabel: \{ fontSize: 13, lineHeight: 16, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
   assert.match(styles, /hotelShortcutCount: \{ minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 6/);
   assert.match(styles, /hotelShortcutCountText: \{ fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
-  for (const contract of [/rail: \{ height: 44/, /touchTarget: \{[\s\S]*?minHeight: 44/, /capsule: \{[\s\S]*?height: 36[\s\S]*?borderRadius: 9[\s\S]*?paddingHorizontal: 10/, /label: \{[\s\S]*?fontSize: 13[\s\S]*?lineHeight: 16/, /count: \{[\s\S]*?minWidth: 20[\s\S]*?height: 20/]) assert.match(flight, contract);
+  for (const contract of [/rail: \{ height: 44/, /touchTarget: \{[\s\S]*?minHeight: 44/, /capsule: \{[\s\S]*?height: 36[\s\S]*?borderRadius: 9/, /label: \{[\s\S]*?fontSize: 13[\s\S]*?lineHeight: 16/, /count: \{[\s\S]*?minWidth: 20[\s\S]*?height: 20/]) assert.match(flight, contract);
+  assert.match(flight, /capsule: \{[\s\S]*?paddingHorizontal: 10/);
 });
 
 test("Hotel controls use Flight light tokens and semantic dark tokens", () => {
