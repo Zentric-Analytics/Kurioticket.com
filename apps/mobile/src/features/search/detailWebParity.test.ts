@@ -222,7 +222,8 @@ test("Car detail parity remains protected", () => {
   assert.ok(car.indexOf("s.hero") < car.indexOf("s.carsTabsShell"));
   assert.match(car, /stickyHeaderIndices=\{\[2\]\}/);
   for (const tab of ["compare", "pickup", "location"]) assert.match(car, new RegExp(`"${tab}"`));
-  for (const section of ["Compare prices", "Pickup and return", "Location", "Estimated Rental Total", "Continue deal"]) assert.match(car, new RegExp(section));
+  for (const section of ["Compare prices", "Pickup and return", "Location", "estimated rental total", "Continue deal"]) assert.match(car, new RegExp(section));
+  assert.doesNotMatch(car, /Continue booking/);
   for (const field of ["passengers", "bags", "doors", "transmission", "airConditioning", "fuelPolicy", "pickupLocation", "returnLocation"]) assert.match(car, new RegExp(`result\.${field}`));
   assert.match(car, /primaryValidCarOffer\(result\.offers\)/);
   assert.match(car, /accessibilityState=\{\{disabled:true\}\}/);
