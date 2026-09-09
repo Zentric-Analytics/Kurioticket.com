@@ -47,7 +47,7 @@ test("Compare section mirrors web heading, stay context, and offer rhythm", () =
 test("native internal offer uses the accessible bundled Kurioticket wordmark", () => {
   assert.ok(existsSync("assets/kurioticket-logo-primary-light-bg.png"));
   assert.match(hotel, /internal \? \([\s\S]*?<Image[\s\S]*?accessible[\s\S]*?accessibilityLabel="Kurioticket"[\s\S]*?accessibilityIgnoresInvertColors[\s\S]*?require\("\.\.\/\.\.\/\.\.\/assets\/kurioticket-logo-primary-light-bg\.png"\)/);
-  assert.match(styleRule(detailSource, "hotelOfferBrandLogo", "hotelOfferProvider"), /width: 120[\s\S]*height: 26[\s\S]*flexShrink: 0/);
+  assert.match(styleRule(detailSource, "hotelOfferBrandLogo", "hotelOfferProvider"), /width: 108[\s\S]*height: 24[\s\S]*flexShrink: 0/);
   assert.match(hotel, /accessibilityIgnoresInvertColors[\s\S]*?source=\{require\("\.\.\/\.\.\/\.\.\/assets\/kurioticket-logo-primary-light-bg\.png"\)\}[\s\S]*?resizeMode="contain"[\s\S]*?style=\{d\.hotelOfferBrandLogo\}/);
   assert.doesNotMatch(hotel, /Kurioticket room options|indicative planning choice|Room choices are planning inventory/);
 });
@@ -95,17 +95,17 @@ test("native provider offer resolves only canonical Wi-Fi semantics to the Engli
 });
 
 test("native selected offer uses a compact thin ring and separate centered dot", () => {
-  assert.match(styleRule(detailSource, "selectionControl", "selectionControlDot"), /width: 18[\s\S]*height: 18[\s\S]*borderRadius: 9[\s\S]*borderWidth: 1\.5[\s\S]*alignItems: "center"[\s\S]*justifyContent: "center"/);
-  assert.match(styleRule(detailSource, "selectionControlDot", "hotelOfferBottom"), /width: 8[\s\S]*height: 8[\s\S]*borderRadius: 4/);
+  assert.match(styleRule(detailSource, "selectionControl", "selectionControlDot"), /width: 16[\s\S]*height: 16[\s\S]*borderRadius: 8[\s\S]*borderWidth: 1\.5[\s\S]*alignItems: "center"[\s\S]*justifyContent: "center"/);
+  assert.match(styleRule(detailSource, "selectionControlDot", "hotelOfferBottom"), /width: 6[\s\S]*height: 6[\s\S]*borderRadius: 3/);
   assert.match(hotel, /backgroundColor: theme\.surface,[\s\S]*?borderColor: selected \? hotelAccent : theme\.textSecondary/);
   assert.match(hotel, /selected \? \([\s\S]*?d\.selectionControlDot[\s\S]*?backgroundColor: hotelAccent/);
   assert.doesNotMatch(hotel, /selected && \{[\s\S]{0,100}borderWidth: 6/);
 });
 
 test("native provider per-night label uses the compact Hotel accent hierarchy", () => {
-  assert.match(styleRule(detailSource, "hotelNightly", "hotelPerNight"), /fontSize: 20[\s\S]*lineHeight: 24[\s\S]*fontWeight: "700"[\s\S]*fontFamily: appFonts\.bold[\s\S]*textAlign: "right"/);
+  assert.match(styleRule(detailSource, "hotelNightly", "hotelPerNight"), /fontSize: 18[\s\S]*lineHeight: 22[\s\S]*fontWeight: "700"[\s\S]*fontFamily: appFonts\.bold[\s\S]*textAlign: "right"/);
   assert.match(hotel, /numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit[\s\S]*?minimumFontScale=\{0\.65\}[\s\S]*?d\.hotelNightly/);
-  assert.match(styleRule(detailSource, "hotelPerNight", "hotelAboutPanel"), /flexShrink: 0[\s\S]*fontSize: 12[\s\S]*lineHeight: 16[\s\S]*fontWeight: "500"[\s\S]*fontFamily: appFonts\.medium[\s\S]*textAlign: "right"/);
+  assert.match(styleRule(detailSource, "hotelPerNight", "hotelAboutPanel"), /flexShrink: 0[\s\S]*fontSize: 10[\s\S]*lineHeight: 14[\s\S]*fontWeight: "500"[\s\S]*fontFamily: appFonts\.medium[\s\S]*textAlign: "right"/);
   assert.match(hotel, /<Text numberOfLines=\{1\} style=\{\[d\.hotelPerNight, \{ color: hotelAccent \}\]\}>per night<\/Text>/);
   assert.doesNotMatch(hotel, /<Text[^>]*d\.hotelPerNight[^>]*color: theme\.textSecondary[^>]*>per night<\/Text>/);
 });
