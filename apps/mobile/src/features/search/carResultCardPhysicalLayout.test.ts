@@ -10,10 +10,16 @@ const style = (name: string) => styles.slice(styles.indexOf(`${name}:`), styles.
 test("Car card shell and image retain safe physical layout", () => {
   assert.match(source, /c\.card,\{backgroundColor:theme\.surface,borderColor:theme\.dark\?theme\.border:"#D8E1EC",shadowColor:theme\.dark\?"#000000":"#18305B"\}/);
   assert.match(styles, /card:\{borderWidth:1,borderRadius:13,overflow:"hidden",shadowOpacity:0\.08,shadowRadius:10,shadowOffset:\{width:0,height:2\},elevation:2\}/);
-  assert.match(styles, /main:\{minHeight:168,flexDirection:"row"\}/);
+  assert.match(styles, /main:\{minHeight:168,flexDirection:"row",alignItems:"stretch"\}/);
   assert.match(styles, /visual:\{width:"40%",minHeight:168/);
+  assert.match(styles, /contentColumn:\{flex:1,minWidth:0\}/);
   assert.match(styles, /image:\{\.\.\.StyleSheet\.absoluteFillObject\}/);
   assert.doesNotMatch(styles, /height:\s*"(?:100|68)%"/);
+  for (const structuralStyle of ["visual", "contentColumn", "conversion"]) {
+    assert.doesNotMatch(style(structuralStyle), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|(?:^|,)height:/);
+  }
+  assert.doesNotMatch(style("card").replace(/shadowOffset:\{[^}]*\}/, ""), /(?:^|,)height:/);
+  for (const naturalHeightStyle of ["main", "visual"]) assert.doesNotMatch(style(naturalHeightStyle), /(?:^|,)height:/);
   assert.doesNotMatch(styles.match(/card:\{[^}]*\}/)?.[0] ?? "", /backgroundColor:"white"|shadowColor:"#0F172A"|height:5/);
 });
 
@@ -62,7 +68,7 @@ test("Best value keeps its green badge while actions remain with identity", () =
   assert.match(source, /accessibilityState=\{\{ selected: savedState\.saved \}\}/);
   assert.match(source, /onPress=\{savedState\.toggle\}/);
   assert.match(source, /accessibilityLabel=\{savedState\.saved \? `Remove \$\{result\.modelName\} from saved` : `Save \$\{result\.modelName\}`\}/);
-  assert.match(source, /name="heart"[^>]*size=\{18\}[^>]*color=\{savedState\.saved \? androidFavoriteColors\.savedStroke : androidFavoriteColors\.unsavedStroke\}[^>]*fill=\{savedState\.saved \? androidFavoriteColors\.savedFill : androidFavoriteColors\.unsavedFill\}/);
+  assert.match(source, /name="heart"[^>]*size=\{20\}[^>]*color=\{savedState\.saved \? androidFavoriteColors\.savedStroke : androidFavoriteColors\.unsavedStroke\}[^>]*fill=\{savedState\.saved \? androidFavoriteColors\.savedFill : androidFavoriteColors\.unsavedFill\}/);
   assert.doesNotMatch(source, /name="heart"[^>]*(?:fill="(?:transparent|none)"|color=\{savedState\.saved \? "#E92D55" : theme\.icon\})/);
   assert.match(source, /accessibilityLabel=\{`Share \$\{result\.modelName\}`\} onPress=\{share\}/);
   assert.match(source, /<Share2 size=\{18\} color=\{theme\.icon\}/);
@@ -79,15 +85,23 @@ test("Results card omits fuel, mileage, and obsolete lower-benefit contracts", (
 });
 
 test("commerce remains exactly once in the lower-right conversion flow", () => {
+  const main = source.indexOf("<View style={c.main}>");
+  const visual = source.indexOf("<View style={c.visual}>", main);
+  const contentColumn = source.indexOf("<View style={c.contentColumn}>", visual);
+  const informationStart = source.indexOf("<View style={c.information}>", contentColumn);
   const conversion = source.indexOf("<View style={[c.conversion");
   const priceColumn = source.indexOf("<View style={c.priceColumn}>");
-  const information = source.slice(source.indexOf("<View style={c.information}>"), conversion);
-  assert.ok(conversion >= 0 && conversion < priceColumn);
+  const information = source.slice(informationStart, conversion);
+  assert.ok(main < visual && visual < contentColumn && contentColumn < informationStart && informationStart < conversion && conversion < priceColumn);
+  assert.match(source.slice(contentColumn, conversion), /<View style=\{c\.information\}>[\s\S]*<\/View>\s*$/);
+  assert.match(source.slice(conversion), /^<View style=\{\[c\.conversion,[\s\S]*<\/View>\s*<\/View>\s*<\/View>\s*<\/View>;/);
   assert.equal(source.match(/<View style=\{c\.priceColumn\}>/g)?.length, 1);
+  assert.equal(source.match(/<View style=\{c\.contentColumn\}>/g)?.length, 1);
   assert.doesNotMatch(information, /c\.priceColumn/);
   assert.match(style("conversion"), /flexDirection:"row",alignItems:"flex-end",justifyContent:"flex-end",paddingLeft:10,paddingRight:10,paddingTop:7,paddingBottom:8/);
   assert.doesNotMatch(style("conversion"), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|(?:^|,)height:/);
-  assert.match(style("priceColumn"), /flexShrink:0,minWidth:108,maxWidth:"46%",alignItems:"flex-end",justifyContent:"flex-end"/);
+  assert.match(style("priceColumn"), /flexShrink:0,minWidth:108,maxWidth:"100%",alignItems:"flex-end",justifyContent:"flex-end"/);
+  assert.doesNotMatch(style("priceColumn"), /maxWidth:"46%"/);
 });
 
 test("commerce preserves authoritative price and CTA contract", () => {
