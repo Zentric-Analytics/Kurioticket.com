@@ -62,7 +62,7 @@ test("native header spacing and scroll separation stay compact", () => {
 });
 
 test("Flight Details top bar blends into the page background in every state", () => {
-  assert.equal(native.match(/<TopBar backgroundColor=\{theme\.background\}/g)?.length, 2);
+  assert.equal(native.match(/<TopBar backgroundColor=\{theme\.background\}/g)?.length, 3);
   assert.doesNotMatch(native, /<TopBar backgroundColor=\{theme\.surface\}/);
 });
 
