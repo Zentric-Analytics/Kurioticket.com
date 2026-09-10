@@ -36,7 +36,12 @@ export function MobileFaqScreen() {
         <View style={s.headerHit} />
       </View>
 
-      <ScrollView contentContainerStyle={s.content}>
+      <ScrollView
+        alwaysBounceVertical={false}
+        bounces={false}
+        contentContainerStyle={s.content}
+        overScrollMode="never"
+      >
         <View style={s.hero}>
           <Text accessibilityRole="header" style={[s.heading, { color: theme.text }]}>
             {presentation.heading}
@@ -90,7 +95,7 @@ const s = StyleSheet.create({
   header: { minHeight: 62, flexDirection: "row", alignItems: "center" },
   headerHit: { width: 52, minHeight: 52, alignItems: "center", justifyContent: "center" },
   headerTitle: { flex: 1, textAlign: "center", fontSize: 22, lineHeight: 28, fontWeight: "800" },
-  content: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 40 },
+  content: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 20 },
   hero: { maxWidth: 620 },
   heading: { fontSize: 28, lineHeight: 34, fontWeight: "700", letterSpacing: -0.4 },
   intro: { marginTop: 10, fontSize: 15, lineHeight: 23 },
