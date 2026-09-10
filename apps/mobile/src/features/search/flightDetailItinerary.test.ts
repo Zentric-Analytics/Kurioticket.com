@@ -6,117 +6,93 @@ import test from "node:test";
 const source=readFileSync(resolve("src/features/search/NativeFlightDetails.tsx"),"utf8");
 const itinerary=source.slice(source.indexOf("function Itinerary"),source.indexOf("function FareSurface"));
 
-test("authoritative route summary uses the shared complete route model",()=>assert.match(source,/flightDetailsRouteLabel\(details\.search\.tripType,offer\.legs\?\?\[\]/));
+test("route context stays outside the card and includes truthful search date context",()=>{
+  assert.match(source,/flightDetailsRouteLabel\(details\.search\.tripType,offer\.legs\?\?\[\]/);
+  assert.match(source,/details\.search\.tripType==="multi-city"\?details\.search\.legs\.map\(\(\{departureDate\}\)=>departureDate\):\[details\.search\.departureDate,details\.search\.returnDate\]/);
+  assert.match(source,/providerLocalFlightDateLong\(value\)/);
+  assert.match(source,/\.join\(" • "\)/);
+  assert.match(source,/<View testID="flight-details-route-summary"[^>]*>.*<\/View>\s*<Text style=\{\[s\.itinerarySectionLabel/s);
+});
 
-test("each leg uses the same itinerary card without a redundant section heading",()=>{
-  assert.doesNotMatch(source,/>Flight itinerary<\/Text>/);
+test("a quiet Flight itinerary label precedes every authoritative leg card",()=>{
+  assert.match(source,/>Flight itinerary<\/Text>/);
   assert.match(source,/<View style=\{s\.itineraryStack\}>\{\(offer\.legs\?\.length\?offer\.legs:\[\]\)\.map\(\(leg,index\)=><Itinerary/);
-  assert.match(source,/itineraryStack:\{gap:14,marginTop:-8\}/);
+  assert.match(source,/itinerarySectionLabel:\{fontSize:11[^}]*textTransform:"uppercase"/);
   assert.match(itinerary,/leg\.direction==="outbound"\?"Outbound":leg\.direction==="return"\?"Return":`Flight \$\{leg\.legIndex\?\?index\+1\}`/);
 });
 
-test("itinerary prioritizes the passenger journey summary with balanced single-line times",()=>{
-  for(const fact of ["leg.departureTime","leg.arrivalTime","leg.originAirport","leg.destinationAirport","leg.duration","leg.stops"]){
-    assert.match(itinerary,new RegExp(fact.replace(".","\\.")));
-  }
-  assert.match(itinerary,/Intl\.DateTimeFormat/);
-  assert.match(itinerary,/Non-stop/);
-  assert.match(itinerary,/<FlowIcon name="flight"/);
-  assert.equal(itinerary.match(/numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.85\} style=\{\[s\.journeyTime/g)?.length,2);
-  assert.match(source,/journeyTime:\{fontSize:22,lineHeight:28,fontWeight:"700"\}/);
-  assert.match(source,/airportCode:\{fontSize:17,lineHeight:22,fontWeight:"700"\}/);
-  assert.match(source,/journeyDuration:\{fontSize:12,lineHeight:17,fontWeight:"600"/);
-  assert.match(source,/stopStatus:\{fontSize:12,lineHeight:17,fontWeight:"500"/);
-  assert.match(source,/journeyEndpoint:\{flex:1\.1,minWidth:0,gap:3\}/);
-  assert.match(source,/journeyCenter:\{flex:\.8,minWidth:72/);
+test("provider-local leg dates and conditional accessible arrival-day offsets are used",()=>{
+  assert.match(itinerary,/providerLocalFlightDateLong\(leg\.departureTime\)/);
+  assert.doesNotMatch(itinerary,/new Date\(leg\.departureTime\)/);
+  assert.match(itinerary,/flightArrivalDayOffset\(leg\.departureTime,leg\.arrivalTime\)/);
+  assert.match(itinerary,/\{arrivalDayOffset\?<Text accessible accessibilityLabel=\{arrivalDayOffsetAccessibility\(arrivalDayOffset\)\?\?undefined\}/);
+  assert.match(itinerary,/>\+\{arrivalDayOffset\} \{arrivalDayOffset===1\?"day":"days"\}<\/Text>:null/);
 });
 
-test("itinerary presents airport names and only supplied terminals with secondary typography",()=>{
-  for(const fact of ["point?.name","point?.cityName","departurePoint?.terminal","arrivalPoint?.terminal"]){
-    assert.match(itinerary,new RegExp(fact.replace(/[?.]/g,(character)=>character==="?"?"\\?":"\\.")));
-  }
-  assert.match(itinerary,/Terminal \{departurePoint\.terminal\}/);
-  assert.match(itinerary,/Terminal \{arrivalPoint\.terminal\}/);
-  assert.match(source,/airportName:\{fontSize:13,lineHeight:18,fontWeight:"500"\}/);
-  assert.match(source,/terminal:\{fontSize:12,lineHeight:17,fontWeight:"400"\}/);
-});
-
-test("itinerary renders the prescribed information order",()=>{
-  const markers=["s.itineraryHeader","s.airlineRows","s.journeySummary","s.airportDetails","s.connectionList","s.itineraryDivider","s.technicalInformation"];
-  const positions=markers.map((marker)=>itinerary.indexOf(marker));
-  positions.forEach((position,index)=>assert.notEqual(position,-1,`missing ${markers[index]}`));
-  assert.deepEqual([...positions].sort((left,right)=>left-right),positions);
-});
-
-test("one-stop and multi-stop itineraries map every authoritative layover in a separate band",()=>{
-  assert.match(itinerary,/leg\.stops>0&&leg\.layovers\.length>0/);
-  assert.match(itinerary,/leg\.layovers\.map/);
-  assert.match(itinerary,/\{layover\.duration\} layover/);
-  assert.match(itinerary,/\{layover\.airport\}/);
-  assert.doesNotMatch(itinerary,/1 stop ·/);
-  assert.match(itinerary,/leg\.stops===1\?"stop":"stops"/);
-});
-
-test("airline identity preserves every segment while distance moves to provider-backed technical rows",()=>{
+test("airline identity uses Results logo language and preserves every segment identity",()=>{
+  assert.match(itinerary,/leg\.segments\.map/);
   assert.match(itinerary,/resolveSegmentCarrierName/);
-  assert.match(itinerary,/<AirlineLogo airlineName=\{carrier\}/);
-  assert.match(itinerary,/canUseOfferAirlineLogo/);
+  assert.match(itinerary,/<AirlineLogo airlineName=\{carrier\}[^>]*variant="result-card"/);
   assert.match(itinerary,/segment\.marketingFlightNumber\?\?segment\.flightNumber/);
   assert.match(itinerary,/segment\.operatingCarrier/);
   assert.match(itinerary,/segment\.operatingFlightNumber/);
   assert.match(itinerary,/Operated by/);
-  assert.match(itinerary,/leg\.segments\.map/);
-  assert.match(itinerary,/distanceSegments=leg\.segments\.filter\(\(segment\)=>segment\.distanceKm!==undefined\)/);
-  assert.match(itinerary,/Math\.round\(segment\.distanceKm!\)\.toLocaleString\(\)/);
-  assert.match(itinerary,/leg\.segments\.length===1\?"Flight distance":`\$\{segment\.originAirport\} → \$\{segment\.destinationAirport\} distance`/);
-  const airlineIdentity=itinerary.slice(itinerary.indexOf('<View style={s.airlineRows}'),itinerary.indexOf('<View style={s.journeySummary}'));
-  assert.doesNotMatch(airlineIdentity,/distanceKm|Flight distance/);
-  assert.doesNotMatch(itinerary,/reduce\(|totalDistance|journeyDistance/);
-  assert.match(source,/airlineName:\{fontSize:14,lineHeight:19,fontWeight:"600"\}/);
-  assert.match(source,/flightNumber:\{fontSize:12,lineHeight:17,fontWeight:"500"\}/);
-  assert.match(source,/technicalLabel:\{[^}]*fontSize:11[^}]*fontWeight:"400"/);
 });
 
-test("timezone rows use only authoritative endpoint values and distinguish unequal or partial data",()=>{
-  assert.match(itinerary,/const departureTimeZone=departurePoint\?\.timeZone/);
-  assert.match(itinerary,/const arrivalTimeZone=arrivalPoint\?\.timeZone/);
+test("journey remains the visual hero in balanced departure, path, and arrival columns",()=>{
+  for(const fact of ["leg.departureTime","leg.arrivalTime","leg.originAirport","leg.destinationAirport","leg.duration","leg.stops"]) assert.match(itinerary,new RegExp(fact.replace(".","\\.")));
+  assert.match(itinerary,/Non-stop/);
+  assert.match(itinerary,/<FlowIcon name="flight"/);
+  assert.equal(itinerary.match(/numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.85\} style=\{\[s\.journeyTime/g)?.length,2);
+  assert.match(source,/journeyTime:\{fontSize:22,lineHeight:28,fontWeight:"700"\}/);
+  assert.match(source,/journeyEndpoint:\{flex:1\.1,minWidth:0/);
+  assert.match(source,/journeyCenter:\{flex:\.8,minWidth:72/);
+});
+
+test("airport names retain provider fallback order and terminals remain conditional",()=>{
+  assert.match(itinerary,/point\?\.name\?\?point\?\.cityName\?\?point\?\.iataCode\?\?fallback/);
+  assert.match(itinerary,/departurePoint\?\.terminal\?<Text[^>]*>Terminal \{departurePoint\.terminal\}/);
+  assert.match(itinerary,/arrivalPoint\?\.terminal\?<Text[^>]*>Terminal \{arrivalPoint\.terminal\}/);
+  assert.match(source,/airportName:\{fontSize:13,lineHeight:18,fontWeight:"500"\}/);
+});
+
+test("each layover has a separate band with provider city and safe airport-only fallback",()=>{
+  assert.match(itinerary,/leg\.layovers\.map/);
+  assert.match(itinerary,/\{layover\.duration\} layover/);
+  assert.match(itinerary,/candidate\?\.iataCode===airport/);
+  assert.match(itinerary,/point\?\.cityName&&point\.cityName!==airport\?`\$\{point\.cityName\} • \$\{airport\}`:airport/);
+  assert.doesNotMatch(itinerary,/1 stop ·/);
+});
+
+test("Flight info includes only provider-backed segment distance, aircraft, and endpoint timezone facts",()=>{
+  assert.match(itinerary,/>Flight info<\/Text>/);
+  assert.match(itinerary,/distanceSegments=leg\.segments\.filter\(\(segment\)=>segment\.distanceKm!==undefined\)/);
+  assert.match(itinerary,/segment\.aircraft\?\.name\?\.trim\(\)\|\|segment\.aircraft\?\.iataCode\?\.trim\(\)/);
+  assert.match(itinerary,/leg\.segments\.length===1\?"Distance":`\$\{segment\.originAirport\} → \$\{segment\.destinationAirport\} distance`/);
+  assert.match(itinerary,/leg\.segments\.length===1\?"Aircraft":`\$\{segment\.originAirport\} → \$\{segment\.destinationAirport\} aircraft`/);
+  assert.doesNotMatch(itinerary,/reduce\(|totalDistance|journeyDistance/);
   assert.match(itinerary,/departureTimeZone===arrivalTimeZone/);
   assert.match(itinerary,/>Time zone</);
   assert.match(itinerary,/>Departure time zone</);
   assert.match(itinerary,/>Arrival time zone</);
-  assert.doesNotMatch(itinerary,/resolvedOptions\(\)\.timeZone|airportTimeZone|timeZoneMap|timezoneMap/);
 });
 
-test("technical divider and facts are omitted when no provider-backed technical data exists",()=>{
-  assert.match(itinerary,/const hasTechnicalInformation=distanceSegments\.length>0\|\|Boolean\(departureTimeZone\)\|\|Boolean\(arrivalTimeZone\)/);
+test("the complete Flight info divider and section disappear without provider facts",()=>{
+  assert.match(itinerary,/hasTechnicalInformation=distanceSegments\.length>0\|\|aircraftSegments\.length>0\|\|Boolean\(departureTimeZone\)\|\|Boolean\(arrivalTimeZone\)/);
   assert.match(itinerary,/\{hasTechnicalInformation\?<>\s*<View style=\{\[s\.itineraryDivider/);
-  assert.match(itinerary,/<View style=\{s\.technicalInformation\}>/);
 });
 
-test("itinerary spacing is tightened locally without touching shared fare cards",()=>{
-  assert.match(source,/itineraryCard:\{borderWidth:1,borderRadius:15,padding:15/);
-  assert.match(source,/journeySummary:\{[^\n]*marginTop:14\}/);
-  assert.match(source,/airportDetails:\{[^\n]*marginTop:14\}/);
-  assert.match(source,/airportColumn:\{[^\n]*gap:6\}/);
-  assert.match(source,/itineraryDivider:\{height:StyleSheet\.hairlineWidth,marginVertical:12\}/);
-  assert.match(source,/airlineCopy:\{flex:1,minWidth:0,gap:1\}/);
-  assert.match(source,/card:\{borderWidth:1,borderRadius:14,padding:14,gap:7\}/);
+test("information progresses from identity through journey and airports to connections and technical facts",()=>{
+  const markers=["s.itineraryHeader","s.airlineRows","s.journeySummary","s.airportDetails","s.connectionList","s.itineraryDivider","s.technicalInformation"];
+  const positions=markers.map((marker)=>itinerary.indexOf(marker));
+  positions.forEach((position,index)=>assert.notEqual(position,-1,`missing ${markers[index]}`));
+  assert.deepEqual([...positions].sort((a,b)=>a-b),positions);
 });
 
-test("itinerary card uses a restrained card-only blur shadow",()=>{
-  assert.match(source,/itineraryCard:\{[^\n]*shadowColor:"#0F172A"[^\n]*shadowOffset:\{width:0,height:3\}[^\n]*shadowOpacity:\.07[^\n]*shadowRadius:12[^\n]*elevation:1\}/);
-  const sharedCardStyle=source.match(/(?:^|,)card:\{([^}]*)\}/)?.[1]??"";
-  assert.notEqual(sharedCardStyle,"");
-  assert.doesNotMatch(sharedCardStyle,/shadowOpacity/);
-});
-
-test("itinerary remains isolated from loading, generic fare cards, and unrelated diagnostics",()=>{
-  for(const detail of ["segment.aircraft","segment.cabinDetails","segment.technicalStops","stop.arrivalTime","stop.departureTime","Technical stop at"]){
-    assert.doesNotMatch(itinerary,new RegExp(detail.replace(".","\\.")));
-  }
-  assert.doesNotMatch(itinerary,/technical stop|Connection:/i);
-  assert.match(source,/loadingItineraryCard:\{height:226,borderWidth:1,borderRadius:15,padding:15\}/);
-  assert.match(source,/loadingJourneyRow:\{flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:18,marginTop:25\}/);
+test("card depth and flexible technical copy remain locally scoped",()=>{
+  assert.match(source,/itineraryCard:\{[^\n]*shadowOpacity:\.07[^\n]*shadowRadius:12[^\n]*elevation:1/);
+  assert.match(source,/technicalLabel:\{flex:1,minWidth:0/);
+  assert.match(source,/technicalValue:\{flexShrink:1,maxWidth:"52%"/);
   assert.match(source,/card:\{borderWidth:1,borderRadius:14,padding:14,gap:7\}/);
   assert.match(source,/fareCard:\{borderRadius:15,padding:15,gap:14\}/);
 });

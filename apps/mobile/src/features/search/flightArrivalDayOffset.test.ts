@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { arrivalDayOffsetAccessibility, flightArrivalDayOffset, providerLocalArrivalDate, providerLocalFlightDate } from "./flightArrivalDayOffset";
+import { arrivalDayOffsetAccessibility, flightArrivalDayOffset, providerLocalArrivalDate, providerLocalFlightDate, providerLocalFlightDateLong } from "./flightArrivalDayOffset";
 
 test("derives positive offsets from provider-local calendar dates", () => {
   assert.equal(flightArrivalDayOffset("2026-09-10T18:00:00+01:00", "2026-09-10T23:00:00-04:00"), null);
@@ -42,4 +42,16 @@ test("formats each provider-local airport date without device-timezone shifts", 
   assert.equal(providerLocalFlightDate("2026-10-24T01:15:00-04:00"), "Oct 24");
   assert.equal(providerLocalFlightDate("2026-10-23T23:50:00-07:00", "fr-FR"), "23 oct.");
   assert.equal(providerLocalFlightDate("invalid"), null);
+});
+
+test("formats provider and search dates with a year without device-timezone shifts", () => {
+  const calendarDay = new Date(Date.UTC(2026, 9, 30));
+  const options = { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" } as const;
+  const runtimeExpected = new Intl.DateTimeFormat(undefined, options).format(calendarDay);
+  const frenchExpected = new Intl.DateTimeFormat("fr-FR", options).format(calendarDay);
+
+  assert.equal(providerLocalFlightDateLong("2026-10-30"), runtimeExpected);
+  assert.equal(providerLocalFlightDateLong("2026-10-30T23:50:00-07:00"), runtimeExpected);
+  assert.equal(providerLocalFlightDateLong("2026-10-30", "fr-FR"), frenchExpected);
+  assert.equal(providerLocalFlightDateLong("invalid"), null);
 });
