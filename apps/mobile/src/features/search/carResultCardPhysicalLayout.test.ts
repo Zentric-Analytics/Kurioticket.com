@@ -36,10 +36,10 @@ test("conditional top metadata precedes identity and aligns cancellation with Be
   const topMeta = source.indexOf("<View style={c.topMetaRow}>", information);
   const cancellation = source.indexOf("Free cancellation", topMeta);
   const bestValue = source.indexOf("Best value", topMeta);
-  const modelName = source.indexOf("{result.modelName}</Text>", information);
+  const primaryName = source.indexOf("{identity.primaryName}</Text>", information);
   const header = source.indexOf("<View style={c.headerRow}>", information);
   const actions = source.indexOf("<View style={c.actions}>", header);
-  assert.ok(information < topMeta && topMeta < cancellation && cancellation < modelName);
+  assert.ok(information < topMeta && topMeta < cancellation && cancellation < primaryName);
   assert.ok(topMeta < bestValue && bestValue < header && header < actions);
   assert.match(source, /\{offer\?\.freeCancellation \|\| rank === 0 \? <View style=\{c\.topMetaRow\}>/);
   assert.match(source, /topMetaRow[\s\S]*offer\?\.freeCancellation[\s\S]*ShieldCheck[\s\S]*rank === 0[\s\S]*Award[\s\S]*Best value/);
@@ -74,6 +74,8 @@ test("Best value keeps its green badge while actions remain with identity", () =
   assert.match(source, /<Share2 size=\{18\} color=\{theme\.icon\}/);
   assert.match(source, /Share\.share\(\{ message: result\.modelName, title: result\.modelName \}\)/);
   assert.match(styles, /action:\{width:28,height:44/);
+  assert.match(style("action"), /width:28,height:44,justifyContent:"flex-start"/);
+  assert.doesNotMatch(style("action") + style("saveAction") + style("shareAction"), /margin(?:Left|Right|Top|Bottom):-|transform:|position:"absolute"/);
   assert.match(styles, /saveAction:\{alignItems:"flex-end",paddingRight:2\}/);
   assert.match(styles, /shareAction:\{alignItems:"flex-start",paddingLeft:2\}/);
 });
@@ -125,7 +127,20 @@ test("commerce preserves authoritative price and CTA contract", () => {
 });
 
 test("vehicle identity, location, and ordered specs remain intact", () => {
-  assert.match(source, /result\.orSimilar \? <>[\s\S]*>or similar<\/Text><Text[^>]*>•<\/Text>[\s\S]*result\.categoryLabel/);
+  assert.match(source, /const identity = nativeCarResultIdentity\(result\.modelName\)/);
+  assert.match(source, /<Text numberOfLines=\{1\} style=\{\[c\.name,[^>]*>\{identity\.primaryName\}<\/Text>/);
+  assert.doesNotMatch(source, /style=\{\[c\.name,[^>]*>\{result\.modelName\}<\/Text>/);
+  const identityLineStart = source.indexOf('<Text numberOfLines={1} style={c.identityLine}>');
+  const identityLineEnd = source.indexOf("</Text>", source.indexOf("result.categoryLabel", identityLineStart)) + 7;
+  const identityLine = source.slice(identityLineStart, identityLineEnd);
+  const orderedIdentity = ["identity.secondaryModel", "or similar", '{"•"}', "result.categoryLabel"].map((value) => identityLine.indexOf(value));
+  assert.ok(identityLineStart >= 0 && orderedIdentity.every((index) => index >= 0));
+  assert.deepEqual(orderedIdentity, [...orderedIdentity].sort((a, b) => a - b));
+  assert.match(style("identityLine"), /minWidth:0,lineHeight:18/);
+  assert.doesNotMatch(style("identityLine"), /flexWrap:"wrap"/);
+  assert.match(style("secondaryModel"), /fontSize:15,fontWeight:"800",lineHeight:18/);
+  assert.match(style("similar"), /fontSize:11,fontWeight:"500",lineHeight:16/);
+  assert.match(style("category"), /fontSize:10,fontWeight:"800",letterSpacing:1\.1,lineHeight:16,textTransform:"uppercase",color:"#004BB8"/);
   assert.match(source, /<MapPin size=\{13\} color=\{theme\.textPrimary\}/);
   assert.match(styles, /specs:\{marginTop:7,flexDirection:"column",gap:5\}/);
   const specs = ["result.passengers", "result.doors", "result.transmission", "result.bags"].map((label) => source.indexOf(label, source.indexOf("style={c.specs}")));
