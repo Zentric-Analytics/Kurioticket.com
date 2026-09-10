@@ -5,14 +5,14 @@ import test from "node:test";
 const source=readFileSync("src/features/search/NativeFlightDetails.tsx","utf8");
 const between=(start:string,end:string)=>{const startIndex=source.indexOf(start);assert.notEqual(startIndex,-1,`missing ${start}`);const endIndex=source.indexOf(end,startIndex+start.length);assert.notEqual(endIndex,-1,`missing ${end}`);return source.slice(startIndex,endIndex);};
 const deck=between('<View testID="fare-information-deck"','</ScrollView><View style={[s.sticky');
-const surface=between("function FareSurface", "function InfoRow");
+const surface=between("function FareSurface", "const s=StyleSheet.create");
 
 test("fare categories and active content form one connected horizontally scrollable deck",()=>{
   const labels=["Compare deals","Fare details","Fare conditions","Optional extras"];
   assert.deepEqual(labels.map(label=>deck.indexOf(`'${label}'`)),[0,1,2,3].map(index=>deck.indexOf(`'${labels[index]}'`)));
   labels.slice(1).forEach((label,index)=>assert.ok(deck.indexOf(`'${labels[index]}'`)<deck.indexOf(`'${label}'`)));
   assert.match(deck,/<ScrollView horizontal showsHorizontalScrollIndicator=\{false\}/);
-  assert.match(deck,/<View accessibilityRole="tablist" style=\{s\.fareTabList\}>/);
+  assert.match(deck,/<View accessibilityRole="tablist" accessibilityLabel="Fare information" style=\{s\.fareTabList\}>/);
   assert.match(deck,/accessibilityRole="tab"/);
   assert.match(deck,/accessibilityState=\{\{selected:tab===key\}\}/);
   assert.match(deck,/onPress=\{\(\)=>setTab\(key\)\}/);
@@ -40,7 +40,7 @@ test("deal comparison retains authoritative provider handoff data and intentiona
   assert.match(deals,/booking\|\|!fareReady/);
   assert.match(deals,/No booking deals available/);
   assert.match(deals,/No additional live provider deals were supplied for this fare\./);
-  assert.doesNotMatch(deals,/Best deal|Good value|Recommended|logoUrl|seller ranking/i);
+  assert.doesNotMatch(deals,/providerMark|providerMonogram|charAt\(0\)|Best deal|Good value|Recommended|logoUrl|seller ranking/i);
 });
 
 test("fare details preserve cabin, amenity, source price, emissions, and update facts",()=>{
@@ -49,6 +49,8 @@ test("fare details preserve cabin, amenity, source price, emissions, and update 
   assert.match(details,/sourceMoney\(p\.price\.baseAmount,p\.price\.baseCurrency\)/);
   assert.match(details,/Additional cabin details not supplied by the provider\./);
   assert.match(details,/Price breakdown not supplied by the provider\./);
+  assert.match(details,/groupLabel\("Cabin"\)/); assert.match(details,/groupLabel\("On board"\)/); assert.match(details,/groupLabel\("Price breakdown"\)/);
+  assert.match(details,/cabins\.map/); assert.match(details,/c\.amenities\?\.wifi/); assert.match(details,/wifi\.cost/);
 });
 
 test("fare details give provider emissions a dedicated dark-mode-safe sustainability treatment",()=>{
@@ -73,7 +75,7 @@ test("fare details give provider emissions a dedicated dark-mode-safe sustainabi
 
 test("provider update fact remains a separate row after emissions",()=>{
   const details=between('if(tab==="details")', 'if(tab==="conditions")');
-  const provider='<View style={[s.secondaryFacts,{borderTopColor:theme.border}]}>{detailRow("Provider offer last updated",providerTimestamp(p.updatedAt))}</View>';
+  const provider='<View style={[s.secondaryFacts,{borderTopColor:theme.border}]}>{freshness(p.updatedAt)}</View>';
   assert.match(details,/p\?\.updatedAt\?/);
   assert.ok(details.indexOf("s.emissionsCard")<details.indexOf(provider));
   assert.equal(details.split(provider).length-1,1);
@@ -83,7 +85,8 @@ test("conditions use structured state, shared statuses, scope, penalties, identi
   const conditions=between('if(tab==="conditions")', 'if(tab==="extras")');
   assert.match(conditions,/condition\.state==="allowed"\?"positive":condition\.state==="not-allowed"\?"negative":"informational"/);
   assert.match(conditions,/<FareStatusIcon semantic=\{semantic\}/);
-  assert.match(conditions,/conditionCategory\(condition\)/);
+  assert.match(conditions,/conditionCategory\(group\.conditions\[0\]\)/);
+  assert.match(surface,/conditionGroups=.*reduce/);
   assert.match(conditions,/conditionState\(condition\)/);
   assert.match(conditions,/conditionScope\(condition\)/);
   assert.match(conditions,/condition\.penaltyAmount/);
@@ -93,11 +96,12 @@ test("conditions use structured state, shared statuses, scope, penalties, identi
   assert.match(conditions,/accessibilityRole="link"/);
   assert.match(conditions,/Linking\.openURL\(link\.url\)/);
   assert.match(conditions,/<FlowIcon name="external"/);
-  assert.match(conditions,/Provider offer last updated/);
+  assert.match(conditions,/freshness\(p\.updatedAt\)/);
+  assert.match(conditions,/groupLabel\("Travel documents"\)/); assert.match(conditions,/groupLabel\("Airline"\)/); assert.doesNotMatch(conditions,/Allowed with/);
 });
 
 test("optional extras remain non-interactive provider-authored information",()=>{
-  const extras=between('if(tab==="extras")', "function InfoRow");
+  const extras=between('if(tab==="extras")', "const s=StyleSheet.create");
   assert.match(extras,/p\?\.optionalServices\?\.length/);
   assert.match(extras,/service\.description/);
   assert.match(extras,/sourceMoney\(service\.price,service\.currency\)/);
@@ -105,9 +109,10 @@ test("optional extras remain non-interactive provider-authored information",()=>
   assert.match(extras,/service\.maximumQuantity/);
   assert.match(extras,/service\.journeyContext/);
   assert.match(extras,/service\.pricedPerTraveler\?" each":""/);
-  assert.match(extras,/service\.type==="baggage"/);
+  assert.doesNotMatch(extras,/serviceIcon|service\.type==="baggage"/);
   assert.match(extras,/supportedLoyaltyProgrammes/);
-  assert.match(extras,/No optional extras/);
+  assert.match(extras,/groupLabel\("Optional services"\)/);
+  assert.match(extras,/groupLabel\("Loyalty programmes"\)/);
   assert.match(extras,/No optional services were supplied by this provider\./);
   assert.doesNotMatch(extras,/<Pressable|chevron/);
 });
@@ -117,7 +122,7 @@ test("deck styles are scoped and leave generic cards and fare cards intact",()=>
   assert.match(deckStyles,/borderWidth:1,borderRadius:15,overflow:"hidden"/);
   assert.match(deckStyles,/fareTabList:\{flexDirection:"row",gap:22\}/);
   assert.match(deckStyles,/fareInfoTab:\{minHeight:48/);
-  assert.match(deckStyles,/fareTabIndicator:\{position:"absolute",height:3/);
+  assert.match(deckStyles,/fareTabIndicator:\{position:"absolute",height:2/);
   assert.match(deckStyles,/fareInfoDivider:\{height:StyleSheet\.hairlineWidth\}/);
   assert.doesNotMatch(deckStyles,/elevation|shadow/);
   assert.match(source,/card:\{borderWidth:1,borderRadius:14,padding:14,gap:7\}/);
