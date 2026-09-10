@@ -1,3 +1,6 @@
+import { hasValidHotelCoordinates } from "../../../../../src/lib/hotels/hotelMap";
+import type { PublicHotelPropertyDetails } from "../../../../../src/lib/types";
+import { NativeAppleHotelMap } from "./NativeAppleHotelMap";
 import { useState } from "react";
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { ChevronLeft, MapPin } from "lucide-react-native";
@@ -18,11 +21,13 @@ export type NativeHotelMapTheme = {
 type NativeHotelFullMapModalProps = {
   visible: boolean;
   hotelId: string;
+  hotelName: string;
+  propertyDetails: PublicHotelPropertyDetails;
   theme: NativeHotelMapTheme;
   onClose: () => void;
 };
 
-export function NativeHotelFullMapModal({ visible, hotelId, theme, onClose }: NativeHotelFullMapModalProps) {
+export function NativeHotelFullMapModal({ visible, hotelId, hotelName, propertyDetails, theme, onClose }: NativeHotelFullMapModalProps) {
   const [fullMapFailed, setFullMapFailed] = useState(false);
   const [fullMapAttempt, setFullMapAttempt] = useState(0);
   const api = getApiBaseUrl(Platform.OS, __DEV__);
@@ -45,12 +50,14 @@ export function NativeHotelFullMapModal({ visible, hotelId, theme, onClose }: Na
           <View accessible={false} style={styles.fullMapHeaderSide} />
         </View>
         <View style={styles.fullMapBody}>
-          {fullMapUrl && !fullMapFailed
+          {Platform.OS === "ios" && hasValidHotelCoordinates(propertyDetails)
+            ? visible && <NativeAppleHotelMap key={`${hotelId}:${propertyDetails.latitude}:${propertyDetails.longitude}`} latitude={propertyDetails.latitude} longitude={propertyDetails.longitude} hotelName={hotelName} interactive />
+            : Platform.OS !== "ios" && fullMapUrl && !fullMapFailed
             ? <WebView key={`${hotelId}:full-map:${fullMapAttempt}`} source={{ uri: fullMapUrl }} onError={() => setFullMapFailed(true)} onHttpError={() => setFullMapFailed(true)} style={styles.fullMapWebView} />
             : <View style={[styles.fullMapFallback, { backgroundColor: theme.surface }]}>
               <MapPin accessible={false} size={28} color={theme.icon} />
               <Text style={[styles.fullMapUnavailable, { color: theme.textPrimary }]}>Map unavailable</Text>
-              {fullMapUrl ? <Pressable accessibilityRole="button" accessibilityLabel="Try loading map again" onPress={retryFullMap} style={styles.fullMapRetry}><Text style={styles.fullMapRetryText}>Try again</Text></Pressable> : null}
+              {Platform.OS !== "ios" && fullMapUrl ? <Pressable accessibilityRole="button" accessibilityLabel="Try loading map again" onPress={retryFullMap} style={styles.fullMapRetry}><Text style={styles.fullMapRetryText}>Try again</Text></Pressable> : null}
             </View>}
         </View>
       </SafeAreaView>

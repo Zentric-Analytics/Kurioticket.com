@@ -67,7 +67,7 @@ test("native Compare Property location uses its preview as the sole full-map lau
   assert.match(section, /Map preview unavailable/);
   assert.equal(section.match(/onPress=\{openFullMap\}/g)?.length, 1);
   assert.match(section, /<Pressable accessibilityRole="button" accessibilityLabel=\{`Open full map for \$\{hotelName\}`\} accessibilityHint="Opens an interactive map inside Kurioticket" onPress=\{openFullMap\} style=\{\[styles\.mapFrame/);
-  assert.match(section, /<NativeHotelFullMapModal visible=\{fullMapOpen\} hotelId=\{hotelId\} theme=\{theme\} onClose=\{\(\) => setFullMapOpen\(false\)\} \/>/);
+  assert.match(section, /<NativeHotelFullMapModal visible=\{fullMapOpen\} hotelId=\{hotelId\} theme=\{theme\} onClose=\{\(\) => setFullMapOpen\(false\)\} propertyDetails=\{propertyDetails\} hotelName=\{hotelName\} \/>/);
   assert.doesNotMatch(section, />View in map</);
   assert.doesNotMatch(section, /styles\.mapAction|styles\.mapActionText/);
   assert.doesNotMatch(component, /mapAction:\s*\{|mapActionText:\s*\{/);
