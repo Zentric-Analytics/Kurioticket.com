@@ -42,7 +42,7 @@ export function providerLocalFlightDate(value: string | null | undefined, locale
 }
 
 /** Formats a provider/search local calendar date with its year, without a device-timezone conversion. */
-export function providerLocalFlightDateLong(value: string | null | undefined, locale = "en-US"): string | null {
+export function providerLocalFlightDateLong(value: string | null | undefined, locale?: string): string | null {
   const calendarDay = localCalendarDay(value);
   if (calendarDay === null) return null;
 
