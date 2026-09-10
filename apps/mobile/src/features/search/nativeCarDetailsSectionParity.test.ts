@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { nativeCarDirectionsUrl } from "./nativeCarDetailsModel";
+import type { CarResult } from "../../api/travelApi";
+import { nativeCarDirectionsUrl, nativeCarMileageLabel } from "./nativeCarDetailsModel";
 
 const native = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
 const route = readFileSync("app/car-details.tsx", "utf8");
@@ -94,6 +95,20 @@ test("Compare uses the refined native presentation while Pickup retains its geom
     assert.ok(style("timelineHeading").includes(contract));
   assert.match(native, /<MapPin size=\{16\} color="#004BB8"/);
   assert.match(native, /<Clock3 size=\{16\} color=\{theme\.dark\?theme\.icon:"#64748B"\}/);
+});
+
+test("Compare alone uses the singular unlimited-mile benefit copy", () => {
+  assert.match(native, /<Spec Icon=\{Gauge\} text=\{nativeCarMileageLabel\(result\)\}/);
+  assert.match(native, /const compareMileageLabel=result\.mileagePolicy==="unlimited"\?"Unlimited mile":nativeCarMileageLabel\(result\)/);
+  const compareStart = native.indexOf("function Compare(");
+  const factsStart = native.indexOf("const facts=", compareStart);
+  const factsEnd = native.indexOf(" as const", factsStart);
+  const facts = native.slice(factsStart, factsEnd);
+  const ordered = ["ShieldCheck", "nativeCarFuelPolicyLabel", "Gauge", "compareMileageLabel"].map(contract => facts.indexOf(contract));
+  assert.ok(ordered.every(index => index >= 0));
+  assert.deepEqual(ordered, [...ordered].sort((a, b) => a - b));
+  assert.equal(nativeCarMileageLabel({ mileagePolicy: "unlimited" } as CarResult), "Unlimited mileage");
+  assert.equal(nativeCarMileageLabel({ mileagePolicy: "limited", limitedMileageKm: 300 } as CarResult), "300 km included");
 });
 
 test("Location uses search truth and a dedicated text-only timeline", () => {

@@ -7,20 +7,19 @@ const source = readFileSync(resolve("src/features/search/CarResultCard.tsx"), "u
 const styles = source.slice(source.indexOf("const c = StyleSheet.create"));
 const style = (name: string) => styles.slice(styles.indexOf(`${name}:`), styles.indexOf("},", styles.indexOf(`${name}:`)) + 2);
 
-test("Car card shell and image retain safe physical layout", () => {
+test("Car card shell and inset image retain safe physical layout", () => {
   assert.match(source, /c\.card,\{backgroundColor:theme\.surface,borderColor:theme\.dark\?theme\.border:"#D8E1EC",shadowColor:theme\.dark\?"#000000":"#18305B"\}/);
   assert.match(styles, /card:\{borderWidth:1,borderRadius:13,overflow:"hidden",shadowOpacity:0\.08,shadowRadius:10,shadowOffset:\{width:0,height:2\},elevation:2\}/);
-  assert.match(styles, /main:\{minHeight:168,flexDirection:"row",alignItems:"stretch"\}/);
-  assert.match(styles, /visual:\{width:"40%",minHeight:168/);
+  assert.match(style("main"), /minHeight:168,flexDirection:"row",alignItems:"stretch"/);
+  assert.match(style("visualColumn"), /width:"40%",minHeight:168,paddingLeft:6,paddingRight:6,paddingBottom:8/);
+  assert.match(style("visual"), /flex:1,backgroundColor:"#F8FAFC",overflow:"hidden",borderRadius:10/);
   assert.match(styles, /contentColumn:\{flex:1,minWidth:0\}/);
   assert.match(styles, /image:\{\.\.\.StyleSheet\.absoluteFillObject\}/);
-  assert.doesNotMatch(styles, /height:\s*"(?:100|68)%"/);
-  for (const structuralStyle of ["visual", "contentColumn", "conversion"]) {
-    assert.doesNotMatch(style(structuralStyle), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|(?:^|,)height:/);
+  for (const structuralStyle of ["topMetaShell", "main", "visualColumn", "visual", "contentColumn", "conversion"]) {
+    assert.doesNotMatch(style(structuralStyle), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|translateY/);
   }
   assert.doesNotMatch(style("card").replace(/shadowOffset:\{[^}]*\}/, ""), /(?:^|,)height:/);
-  for (const naturalHeightStyle of ["main", "visual"]) assert.doesNotMatch(style(naturalHeightStyle), /(?:^|,)height:/);
-  assert.doesNotMatch(styles.match(/card:\{[^}]*\}/)?.[0] ?? "", /backgroundColor:"white"|shadowColor:"#0F172A"|height:5/);
+  for (const naturalHeightStyle of ["main", "visualColumn"]) assert.doesNotMatch(style(naturalHeightStyle), /(?:^|,)height:/);
 });
 
 test("failed Car images reveal the truthful unavailable state", () => {
@@ -31,22 +30,24 @@ test("failed Car images reveal the truthful unavailable state", () => {
   assert.match(source, />Vehicle image unavailable<\/Text>/);
 });
 
-test("conditional top metadata precedes identity and aligns cancellation with Best value", () => {
-  const information = source.indexOf("<View style={c.information}>");
-  const topMeta = source.indexOf("<View style={c.topMetaRow}>", information);
+test("conditional top metadata precedes the shared image and identity body", () => {
+  const topMetaShell = source.indexOf("<View style={c.topMetaShell}>");
+  const topMeta = source.indexOf("<View style={c.topMetaRow}>", topMetaShell);
+  const main = source.indexOf("<View style={c.main}>", topMeta);
+  const visualColumn = source.indexOf("c.visualColumn", main);
+  const header = source.indexOf("<View style={c.headerRow}>", main);
   const cancellation = source.indexOf("Free cancellation", topMeta);
   const bestValue = source.indexOf("Best value", topMeta);
-  const primaryName = source.indexOf("{identity.primaryName}</Text>", information);
-  const header = source.indexOf("<View style={c.headerRow}>", information);
-  const actions = source.indexOf("<View style={c.actions}>", header);
-  assert.ok(information < topMeta && topMeta < cancellation && cancellation < primaryName);
-  assert.ok(topMeta < bestValue && bestValue < header && header < actions);
-  assert.match(source, /\{offer\?\.freeCancellation \|\| rank === 0 \? <View style=\{c\.topMetaRow\}>/);
-  assert.match(source, /topMetaRow[\s\S]*offer\?\.freeCancellation[\s\S]*ShieldCheck[\s\S]*rank === 0[\s\S]*Award[\s\S]*Best value/);
-  assert.match(style("topMetaRow"), /flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:6,marginBottom:4/);
-  assert.doesNotMatch(style("topMetaRow"), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:/);
+  assert.ok(topMetaShell < topMeta && topMeta < cancellation && topMeta < bestValue && bestValue < main);
+  assert.ok(main < visualColumn && main < header);
+  assert.match(source, /const hasTopMeta = Boolean\(offer\?\.freeCancellation \|\| rank === 0\)/);
+  assert.match(source, /\{hasTopMeta \? <View style=\{c\.topMetaShell\}>/);
+  assert.match(source, /topMetaVisualSpacer:\{width:"40%"\}/);
+  assert.match(style("topMetaContent"), /flex:1,minWidth:0,paddingHorizontal:10,paddingTop:9,paddingBottom:4/);
+  assert.match(source, /<View style=\{c\.topMetaRow\}>[\s\S]*offer\?\.freeCancellation[\s\S]*ShieldCheck[\s\S]*rank === 0[\s\S]*Award[\s\S]*Best value/);
+  assert.doesNotMatch(source.slice(main), /c\.topMetaRow/);
+  assert.doesNotMatch(style("topMetaShell") + style("topMetaRow"), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:/);
   assert.equal(source.match(/>Best value<\/Text>/g)?.length, 1);
-  assert.doesNotMatch(source.slice(header, source.indexOf("style={c.detailColumn}")), /Best value/);
 });
 
 test("Free cancellation is canonical, strong, neutral, and not a pill", () => {
@@ -90,12 +91,12 @@ test("commerce remains exactly once in the lower-right conversion flow", () => {
   const main = source.indexOf("<View style={c.main}>");
   const visual = source.indexOf("<View style={c.visual}>", main);
   const contentColumn = source.indexOf("<View style={c.contentColumn}>", visual);
-  const informationStart = source.indexOf("<View style={c.information}>", contentColumn);
+  const informationStart = source.indexOf("<View style={[c.information", contentColumn);
   const conversion = source.indexOf("<View style={[c.conversion");
   const priceColumn = source.indexOf("<View style={c.priceColumn}>");
   const information = source.slice(informationStart, conversion);
   assert.ok(main < visual && visual < contentColumn && contentColumn < informationStart && informationStart < conversion && conversion < priceColumn);
-  assert.match(source.slice(contentColumn, conversion), /<View style=\{c\.information\}>[\s\S]*<\/View>\s*$/);
+  assert.match(source.slice(contentColumn, conversion), /<View style=\{\[c\.information,[\s\S]*<\/View>\s*$/);
   assert.match(source.slice(conversion), /^<View style=\{\[c\.conversion,[\s\S]*<\/View>\s*<\/View>\s*<\/View>\s*<\/View>;/);
   assert.equal(source.match(/<View style=\{c\.priceColumn\}>/g)?.length, 1);
   assert.equal(source.match(/<View style=\{c\.contentColumn\}>/g)?.length, 1);
