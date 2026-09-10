@@ -29,17 +29,17 @@ test("native actions and checkout meet accessibility requirements", () => {
   assert.match(native, /fareInfoTab:\{minHeight:48/);
 });
 
-test("available flight header keeps only back, save, and share fixed", () => {
+test("available flight top bar keeps only Back to results fixed", () => {
   const availableReturn = native.indexOf('return <SafeAreaView edges={["top"]}', native.indexOf("const share=async"));
   const scrollStart = native.indexOf('<ScrollView testID="flight-details-scroll-content"', availableReturn);
   const fixedTopBar = native.slice(availableReturn, scrollStart);
 
-  assert.match(fixedTopBar, /<TopBar[\s\S]*?Remove saved flight[\s\S]*?Save flight/);
-  assert.match(fixedTopBar, /label="Share flight"/);
+  assert.match(fixedTopBar, /<TopBar backgroundColor=\{theme\.background\} hasScrolled=\{hasScrolled\}\/>/);
+  assert.doesNotMatch(fixedTopBar, /Remove saved flight|Save flight|label="Share flight"/);
   assert.doesNotMatch(fixedTopBar, /Edit search|flight-details-route-summary|flightDetailsRouteLabel/);
 });
 
-test("route context remains in scrolling content without an Edit search action", () => {
+test("route context owns Save and Share actions without restoring Edit search", () => {
   const scrollStart = native.indexOf('<ScrollView testID="flight-details-scroll-content"');
   const scrollEnd = native.indexOf("</ScrollView><View style={[s.sticky", scrollStart);
   const scrollingContent = native.slice(scrollStart, scrollEnd);
@@ -47,14 +47,17 @@ test("route context remains in scrolling content without an Edit search action",
   assert.match(scrollingContent, /testID="flight-details-route-summary"/);
   assert.match(scrollingContent, /flightDetailsRouteLabel/);
   assert.match(scrollingContent, /\{tripMetadata\}/);
+  assert.match(scrollingContent, /<View style=\{s\.routeActions\}>/);
+  assert.match(scrollingContent, /label=\{saved\?"Remove saved flight":"Save flight"\}/);
+  assert.match(scrollingContent, /label="Share flight"/);
   assert.doesNotMatch(scrollingContent, /accessibilityLabel="Edit search"|>Edit search</);
   assert.doesNotMatch(native, /FilePenLine|pathname:"\/edit-flight-search"/);
-  assert.doesNotMatch(scrollingContent, /label="Share flight"|Remove saved flight/);
 });
 
-test("native header spacing and scroll separation stay compact", () => {
+test("native header spacing and route action separation stay compact", () => {
   assert.match(native, /content:\{paddingHorizontal:18,paddingTop:5,gap:14\}/);
   assert.match(native, /iconButton:\{width:44,height:44/);
+  assert.match(native, /routeActions:\{flexDirection:"row",alignItems:"center",gap:0,flexShrink:0\}/);
   assert.doesNotMatch(native, /edit:\{|editText:\{/);
   assert.match(native, /const next=nativeEvent\.contentOffset\.y>1;if\(next!==hasScrolledRef\.current\)/);
   assert.match(native, /hasScrolled&&s\.topBarScrolled/);
@@ -70,7 +73,6 @@ test("fixed flight header remains usable with scaled text on narrow screens", ()
   assert.match(native, /<Text numberOfLines=\{1\} ellipsizeMode="tail" style=\{s\.backText\}>Back to results<\/Text>/);
   assert.match(native, /topBar:\{minHeight:52[\s\S]*?paddingVertical:4/);
   assert.doesNotMatch(native, /topBar:\{height:52/);
-  assert.match(native, /topActions:\{flexDirection:"row",alignItems:"center",gap:2,flexShrink:0\}/);
   assert.match(native, /back:\{minHeight:44,flexShrink:1,minWidth:0/);
   assert.match(native, /backText:\{color:ui\.blue,fontWeight:"800",flexShrink:1\}/);
 });
