@@ -118,5 +118,5 @@ test("itinerary remains isolated from loading, generic fare cards, and unrelated
   assert.match(source,/loadingItineraryCard:\{height:226,borderWidth:1,borderRadius:15,padding:15\}/);
   assert.match(source,/loadingJourneyRow:\{flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:18,marginTop:25\}/);
   assert.match(source,/card:\{borderWidth:1,borderRadius:14,padding:14,gap:7\}/);
-  assert.match(source,/fareCard:\{minHeight:176,borderRadius:15,padding:15,gap:16\}/);
+  assert.match(source,/fareCard:\{borderRadius:15,padding:15,gap:14\}/);
 });
