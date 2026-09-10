@@ -117,14 +117,17 @@ test("optional extras remain non-interactive provider-authored information",()=>
   assert.doesNotMatch(extras,/<Pressable|chevron/);
 });
 
-test("deck styles are scoped and leave generic cards and fare cards intact",()=>{
+test("deck widens to 12dp side gaps while generic and Pick-your-fare cards remain intact",()=>{
   const deckStyles=between("fareInfoDeck:", "notice:");
-  assert.match(deckStyles,/borderWidth:1,borderRadius:15,overflow:"hidden"/);
+  assert.match(deckStyles,/borderWidth:1,borderRadius:15,overflow:"hidden",marginHorizontal:-6/);
   assert.match(deckStyles,/fareTabList:\{flexDirection:"row",gap:22\}/);
   assert.match(deckStyles,/fareInfoTab:\{minHeight:48/);
   assert.match(deckStyles,/fareTabIndicator:\{position:"absolute",height:2/);
   assert.match(deckStyles,/fareInfoDivider:\{height:StyleSheet\.hairlineWidth\}/);
   assert.doesNotMatch(deckStyles,/elevation|shadow/);
+  assert.match(source,/content:\{paddingHorizontal:18,paddingTop:5,gap:14\}/);
   assert.match(source,/card:\{borderWidth:1,borderRadius:14,padding:14,gap:7\}/);
+  assert.match(source,/fareCard:\{borderRadius:15,padding:15,gap:14\}/);
+  assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal:-6/);
   assert.match(source,/fareCardSelected:\{borderWidth:1\.5\}/);
 });
