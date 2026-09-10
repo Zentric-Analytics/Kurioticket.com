@@ -87,39 +87,57 @@ test("Results card omits fuel, mileage, and obsolete lower-benefit contracts", (
   assert.doesNotMatch(source, /import \{[^}]*\b(?:Fuel|Gauge)\b[^}]*\} from "lucide-react-native"/);
 });
 
-test("commerce remains exactly once in the lower-right conversion flow", () => {
+test("View deal is structurally outside the image-height body", () => {
+  const topMeta = source.indexOf("<View style={c.topMetaShell}>");
   const main = source.indexOf("<View style={c.main}>");
-  const visual = source.indexOf("<View style={c.visual}>", main);
-  const contentColumn = source.indexOf("<View style={c.contentColumn}>", visual);
-  const informationStart = source.indexOf("<View style={[c.information", contentColumn);
-  const conversion = source.indexOf("<View style={[c.conversion");
-  const priceColumn = source.indexOf("<View style={c.priceColumn}>");
-  const information = source.slice(informationStart, conversion);
-  assert.ok(main < visual && visual < contentColumn && contentColumn < informationStart && informationStart < conversion && conversion < priceColumn);
-  assert.match(source.slice(contentColumn, conversion), /<View style=\{\[c\.information,[\s\S]*<\/View>\s*$/);
-  assert.match(source.slice(conversion), /^<View style=\{\[c\.conversion,[\s\S]*<\/View>\s*<\/View>\s*<\/View>\s*<\/View>;/);
+  const visualColumn = source.indexOf("c.visualColumn", main);
+  const contentColumn = source.indexOf("<View style={c.contentColumn}>", visualColumn);
+  const conversion = source.indexOf("<View style={[c.conversion", contentColumn);
+  const priceColumn = source.indexOf("<View style={c.priceColumn}>", conversion);
+  const actionRow = source.indexOf("<View style={c.actionRow}>", priceColumn);
+  const viewDeal = source.indexOf(">View deal</Text>", actionRow);
+  assert.ok(topMeta < main && main < visualColumn && visualColumn < contentColumn);
+  assert.ok(contentColumn < conversion && conversion < priceColumn && priceColumn < actionRow && actionRow < viewDeal);
+  const body = source.slice(main, actionRow);
+  const action = source.slice(actionRow, source.indexOf("  </View>;", actionRow));
+  assert.equal(body.match(/<View style=\{\[c\.visualColumn,/g)?.length, 1);
+  assert.doesNotMatch(body, />View deal<|c\.viewDeal/);
+  assert.doesNotMatch(action, /c\.visualColumn|c\.contentColumn|c\.priceColumn/);
+  assert.equal(source.match(/>View deal<\/Text>/g)?.length, 1);
   assert.equal(source.match(/<View style=\{c\.priceColumn\}>/g)?.length, 1);
   assert.equal(source.match(/<View style=\{c\.contentColumn\}>/g)?.length, 1);
-  assert.doesNotMatch(information, /c\.priceColumn/);
-  assert.match(style("conversion"), /flexDirection:"row",alignItems:"flex-end",justifyContent:"flex-end",paddingLeft:10,paddingRight:10,paddingTop:7,paddingBottom:8/);
-  assert.doesNotMatch(style("conversion"), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|(?:^|,)height:/);
-  assert.match(style("priceColumn"), /flexShrink:0,minWidth:108,maxWidth:"100%",alignItems:"flex-end",justifyContent:"flex-end"/);
-  assert.doesNotMatch(style("priceColumn"), /maxWidth:"46%"/);
+});
+
+test("dedicated action row preserves right-column geometry without layout hacks", () => {
+  assert.match(style("actionRow"), /flexDirection:"row"/);
+  assert.match(style("actionVisualSpacer"), /width:"40%"/);
+  assert.match(style("actionContent"), /flex:1,minWidth:0,paddingLeft:10,paddingRight:10,paddingBottom:8/);
+  for (const structuralStyle of ["actionRow", "actionVisualSpacer", "actionContent"])
+    assert.doesNotMatch(style(structuralStyle), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|translateY|(?:^|,)height:/);
+  const visualBottomPadding = /paddingBottom:(\d+)/.exec(style("visualColumn"));
+  assert.ok(visualBottomPadding && Number(visualBottomPadding[1]) <= 12);
 });
 
 test("commerce preserves authoritative price and CTA contract", () => {
-  const start = source.indexOf("<View style={c.priceColumn}>");
-  const price = source.slice(start, source.indexOf("</View>\n      </View>", start));
-  const ordered = ["offer.totalPrice", "offer.taxesAndFeesIncluded", "offer.pricePerDay", ">View deal</Text>", "<ChevronRight"].map((value) => price.indexOf(value));
+  const priceStart = source.indexOf("<View style={c.priceColumn}>");
+  const priceEnd = source.indexOf("</View>\n        </View>", priceStart);
+  const price = source.slice(priceStart, priceEnd);
+  const actionStart = source.indexOf("<View style={c.actionRow}>", priceEnd);
+  const action = source.slice(actionStart, source.indexOf("  </View>;", actionStart));
+  const ordered = ["offer.totalPrice", "offer.taxesAndFeesIncluded", "offer.pricePerDay"].map((value) => price.indexOf(value));
   assert.ok(ordered.every((index) => index >= 0));
   assert.deepEqual(ordered, [...ordered].sort((a, b) => a - b));
+  assert.doesNotMatch(price, /View deal|c\.viewDeal/);
   assert.match(source, /getPrimaryCarOffer\(result\)/);
   assert.match(price, /money\(offer\.currency, offer\.totalPrice\)/);
   assert.match(price, /money\(offer\.currency, offer\.pricePerDay\)\} per day/);
   assert.match(price, /offer\.taxesAndFeesIncluded \? "includes taxes & fees" : "taxes & fees shown where known"/);
   assert.match(price, /Live price unavailable/);
-  assert.match(price, /<Pressable accessibilityRole="button" accessibilityLabel=\{`View deal for \$\{result\.modelName\}`\} onPress=\{onViewDeal\}/);
-  assert.match(price, /<ChevronRight accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\}/);
+  assert.match(action, /<Pressable accessibilityRole="button" accessibilityLabel=\{`View deal for \$\{result\.modelName\}`\} onPress=\{onViewDeal\}/);
+  assert.match(action, /<ChevronRight accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\}/);
+  assert.match(style("conversion"), /flexDirection:"row",alignItems:"flex-end",justifyContent:"flex-end",paddingLeft:10,paddingRight:10,paddingTop:7,paddingBottom:8/);
+  assert.match(style("priceColumn"), /flexShrink:0,minWidth:108,maxWidth:"100%",alignItems:"flex-end",justifyContent:"flex-end"/);
+  assert.match(style("viewDeal"), /minHeight:36,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4/);
   assert.match(styles, /total:\{[^}]*fontSize:21,fontWeight:"700",lineHeight:24/);
   assert.match(styles, /taxDisclosure:\{[^}]*fontSize:10,fontWeight:"500",lineHeight:13/);
   assert.match(styles, /perDay:\{[^}]*fontSize:11,fontWeight:"700",lineHeight:14/);
