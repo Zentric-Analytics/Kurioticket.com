@@ -31,12 +31,15 @@ test("direction and provider-local departure date share a narrow-screen-safe hea
   assert.match(source,/itineraryDate:\{flexShrink:0[^}]*textAlign:"right"/);
 });
 
-test("provider-local leg dates and conditional accessible arrival-day offsets are used",()=>{
+test("provider-local full and endpoint dates render without device-timezone conversion or visible day offsets",()=>{
   assert.match(itinerary,/providerLocalFlightDateLong\(leg\.departureTime\)/);
-  assert.doesNotMatch(itinerary,/new Date\(leg\.departureTime\)/);
-  assert.match(itinerary,/flightArrivalDayOffset\(leg\.departureTime,leg\.arrivalTime\)/);
-  assert.match(itinerary,/\{arrivalDayOffset\?<Text accessible accessibilityLabel=\{arrivalDayOffsetAccessibility\(arrivalDayOffset\)\?\?undefined\}/);
-  assert.match(itinerary,/>\+\{arrivalDayOffset\} \{arrivalDayOffset===1\?"day":"days"\}<\/Text>:null/);
+  assert.match(itinerary,/departureShortDate=providerLocalFlightDate\(leg\.departureTime\)/);
+  assert.match(itinerary,/arrivalShortDate=providerLocalFlightDate\(leg\.arrivalTime\)/);
+  assert.doesNotMatch(itinerary,/new Date\(leg\.(?:departureTime|arrivalTime)\)/);
+  assert.match(itinerary,/s\.airportCode[^>]*>\{leg\.originAirport\}<\/Text>\s*\{departureShortDate\?<Text numberOfLines=\{1\} style=\{\[s\.airportDate/);
+  assert.match(itinerary,/s\.airportCode[^>]*>\{leg\.destinationAirport\}<\/Text>\s*\{arrivalShortDate\?<Text numberOfLines=\{1\} style=\{\[s\.airportDate,s\.arrivalText/);
+  assert.doesNotMatch(itinerary,/arrivalDayOffset|flightArrivalDayOffset|arrivalDayOffsetAccessibility|>\+\{/);
+  assert.match(source,/airportDate:\{marginTop:1,fontSize:9\.5,lineHeight:12,fontWeight:"500"\}/);
 });
 
 test("airline identity uses Results logo language and preserves every segment identity",()=>{
@@ -54,12 +57,12 @@ test("journey remains the visual hero with a restrained details scale",()=>{
   assert.match(itinerary,/Non-stop/);
   assert.match(itinerary,/<FlowIcon name="flight"/);
   assert.equal(itinerary.match(/numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.85\} style=\{\[s\.journeyTime/g)?.length,2);
-  assert.match(source,/route:\{fontSize:20,lineHeight:25,fontWeight:"800"\}/);
-  assert.match(source,/routeMetadata:\{fontSize:12,lineHeight:17,fontWeight:"500"\}/);
-  assert.match(source,/journeyTime:\{fontSize:18,lineHeight:23,fontWeight:"700"\}/);
-  assert.match(source,/airportCode:\{fontSize:14,lineHeight:18,fontWeight:"700"\}/);
+  assert.match(source,/route:\{fontSize:18,lineHeight:22,fontWeight:"800"\}/);
+  assert.match(source,/routeMetadata:\{fontSize:11,lineHeight:15,fontWeight:"500"\}/);
+  assert.match(source,/journeyTime:\{fontSize:16,lineHeight:21,fontWeight:"700"\}/);
+  assert.match(source,/airportCode:\{fontSize:12,lineHeight:16,fontWeight:"700"\}/);
   assert.match(source,/journeyDuration:\{fontSize:11,lineHeight:16,fontWeight:"600"/);
-  assert.match(source,/stopStatus:\{fontSize:11,lineHeight:16,fontWeight:"500"/);
+  assert.match(source,/stopStatus:\{fontSize:10,lineHeight:13,fontWeight:"500"/);
 });
 
 test("airport names retain provider fallback order and terminals remain conditional",()=>{
@@ -107,6 +110,6 @@ test("itinerary breadth expands from 18dp to 12dp side gaps without changing far
   assert.match(source,/content:\{paddingHorizontal:18,paddingTop:5,gap:14\}/);
   assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-6\}/);
   assert.match(source,/itineraryCard:\{borderWidth:1,borderRadius:15,padding:15/);
-  assert.match(source,/fareCard:\{borderRadius:15,padding:15,gap:14\}/);
+  assert.match(source,/fareCard:\{borderRadius:15,padding:12,gap:8\}/);
   assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal:-6/);
 });
