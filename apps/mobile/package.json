@@ -33,6 +33,7 @@
     "lucide-react-native": "^1.14.0",
     "react": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-maps": "1.20.1",
     "react-native-nitro-google-signin": "^1.0.2",
     "react-native-nitro-modules": "^0.36.3",
     "react-native-passkeys": "0.4.2",
