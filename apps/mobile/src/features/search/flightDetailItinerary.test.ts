@@ -12,15 +12,14 @@ test("route context stays outside the card and limits metadata to trip type and 
   assert.doesNotMatch(source,/const searchDates=/);
   assert.doesNotMatch(source,/tripMetadata=.*departureDate/);
   assert.doesNotMatch(source,/tripMetadata=.*returnDate/);
-  assert.match(source,/<View testID="flight-details-route-summary"[^>]*>.*<\/View>\s*<View style=\{s\.itineraryStack\}>/s);
+  assert.match(source,/<View testID="flight-details-route-summary"[^>]*>[\s\S]*?<View style=\{s\.routeActions\}>[\s\S]*?<\/View>\s*<View style=\{s\.itineraryStack\}>/);
 });
 
 test("the route transitions directly to every authoritative leg card without an itinerary heading",()=>{
   assert.doesNotMatch(source,/>Flight itinerary<\/Text>/);
   assert.match(source,/<View style=\{s\.itineraryStack\}>\{\(offer\.legs\?\.length\?offer\.legs:\[\]\)\.map\(\(leg,index\)=><Itinerary/);
   assert.doesNotMatch(source,/itinerarySectionLabel:/);
-  assert.match(source,/itineraryStack:\{gap:14\}/);
-  assert.doesNotMatch(source,/itineraryStack:\{[^}]*marginTop/);
+  assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-6\}/);
   assert.match(itinerary,/leg\.direction==="outbound"\?"Outbound":leg\.direction==="return"\?"Return":`Flight \$\{leg\.legIndex\?\?index\+1\}`/);
   assert.doesNotMatch(source,/Edit search/);
 });
@@ -50,21 +49,25 @@ test("airline identity uses Results logo language and preserves every segment id
   assert.match(itinerary,/Operated by/);
 });
 
-test("journey remains the visual hero in balanced departure, path, and arrival columns",()=>{
+test("journey remains the visual hero with a restrained details scale",()=>{
   for(const fact of ["leg.departureTime","leg.arrivalTime","leg.originAirport","leg.destinationAirport","leg.duration","leg.stops"]) assert.match(itinerary,new RegExp(fact.replace(".","\\.")));
   assert.match(itinerary,/Non-stop/);
   assert.match(itinerary,/<FlowIcon name="flight"/);
   assert.equal(itinerary.match(/numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.85\} style=\{\[s\.journeyTime/g)?.length,2);
-  assert.match(source,/journeyTime:\{fontSize:22,lineHeight:28,fontWeight:"700"\}/);
-  assert.match(source,/journeyEndpoint:\{flex:1\.1,minWidth:0/);
-  assert.match(source,/journeyCenter:\{flex:\.8,minWidth:72/);
+  assert.match(source,/route:\{fontSize:20,lineHeight:25,fontWeight:"800"\}/);
+  assert.match(source,/routeMetadata:\{fontSize:12,lineHeight:17,fontWeight:"500"\}/);
+  assert.match(source,/journeyTime:\{fontSize:18,lineHeight:23,fontWeight:"700"\}/);
+  assert.match(source,/airportCode:\{fontSize:14,lineHeight:18,fontWeight:"700"\}/);
+  assert.match(source,/journeyDuration:\{fontSize:11,lineHeight:16,fontWeight:"600"/);
+  assert.match(source,/stopStatus:\{fontSize:11,lineHeight:16,fontWeight:"500"/);
 });
 
 test("airport names retain provider fallback order and terminals remain conditional",()=>{
   assert.match(itinerary,/point\?\.name\?\?point\?\.cityName\?\?point\?\.iataCode\?\?fallback/);
   assert.match(itinerary,/departurePoint\?\.terminal\?<Text[^>]*>Terminal \{departurePoint\.terminal\}/);
   assert.match(itinerary,/arrivalPoint\?\.terminal\?<Text[^>]*>Terminal \{arrivalPoint\.terminal\}/);
-  assert.match(source,/airportName:\{fontSize:13,lineHeight:18,fontWeight:"500"\}/);
+  assert.match(source,/airportName:\{fontSize:12,lineHeight:17,fontWeight:"500"\}/);
+  assert.match(source,/terminal:\{fontSize:11,lineHeight:16,fontWeight:"400"\}/);
 });
 
 test("each layover has a separate band with provider city and safe airport-only fallback",()=>{
@@ -100,10 +103,10 @@ test("information progresses from identity through journey and airports to conne
   assert.deepEqual([...positions].sort((a,b)=>a-b),positions);
 });
 
-test("card depth and flexible technical copy remain locally scoped",()=>{
-  assert.match(source,/itineraryCard:\{[^\n]*shadowOpacity:\.07[^\n]*shadowRadius:12[^\n]*elevation:1/);
-  assert.match(source,/technicalLabel:\{flex:1,minWidth:0/);
-  assert.match(source,/technicalValue:\{flexShrink:1,maxWidth:"52%"/);
-  assert.match(source,/card:\{borderWidth:1,borderRadius:14,padding:14,gap:7\}/);
+test("itinerary breadth expands from 18dp to 12dp side gaps without changing fare-card geometry",()=>{
+  assert.match(source,/content:\{paddingHorizontal:18,paddingTop:5,gap:14\}/);
+  assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-6\}/);
+  assert.match(source,/itineraryCard:\{borderWidth:1,borderRadius:15,padding:15/);
   assert.match(source,/fareCard:\{borderRadius:15,padding:15,gap:14\}/);
+  assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal:-6/);
 });
