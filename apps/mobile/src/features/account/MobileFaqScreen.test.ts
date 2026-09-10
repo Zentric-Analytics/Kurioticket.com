@@ -34,3 +34,11 @@ test("FAQ keeps inline expansion and ends after the questions list", () => {
   assert.doesNotMatch(screenSource, /router\.push\("\/support"\)/);
   assert.doesNotMatch(screenSource, /t\("contactSupport"\)/);
 });
+
+test("FAQ scrolling stops at the content boundaries without overscroll", () => {
+  assert.match(screenSource, /alwaysBounceVertical=\{false\}/);
+  assert.match(screenSource, /bounces=\{false\}/);
+  assert.match(screenSource, /overScrollMode="never"/);
+  assert.match(screenSource, /paddingBottom: 20/);
+  assert.doesNotMatch(screenSource, /paddingBottom: 40/);
+});
