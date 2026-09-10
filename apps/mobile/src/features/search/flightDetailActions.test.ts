@@ -26,6 +26,7 @@ test("native actions and checkout meet accessibility requirements", () => {
   assert.match(native, /accessibilityRole="radio" accessibilityState=\{\{selected:/);
   assert.match(native, /accessibilityRole="tab" accessibilityState=\{\{selected:/);
   assert.match(native, /iconButton:\{width:44,height:44/);
+  assert.match(native, /<FlowIcon name="share" size=\{18\}/);
   assert.match(native, /fareInfoTab:\{minHeight:48/);
 });
 
@@ -58,6 +59,7 @@ test("native header spacing and route action separation stay compact", () => {
   assert.match(native, /content:\{paddingHorizontal:18,paddingTop:5,gap:14\}/);
   assert.match(native, /iconButton:\{width:44,height:44/);
   assert.match(native, /routeActions:\{flexDirection:"row",alignItems:"center",gap:0,flexShrink:0\}/);
+  assert.match(native, /routeSummary:\{flexDirection:"row",alignItems:"center",gap:4,marginBottom:-4\}/);
   assert.doesNotMatch(native, /edit:\{|editText:\{/);
   assert.match(native, /const next=nativeEvent\.contentOffset\.y>1;if\(next!==hasScrolledRef\.current\)/);
   assert.match(native, /hasScrolled&&s\.topBarScrolled/);
@@ -80,6 +82,6 @@ test("fixed flight header remains usable with scaled text on narrow screens", ()
 test("flight save action uses the canonical favorite visual states", () => {
   assert.match(native, /label=\{saved\?"Remove saved flight":"Save flight"\} onPress=\{\(\)=>savedFlights\.toggle/);
   assert.match(native, /savedFlights\.toggle\(savedOffer,nativeFlightEditSearchParams\(details,one\(params\.currency\)\)\)/);
-  assert.match(native, /<Heart size=\{20\} color=\{saved \? androidFavoriteColors\.savedStroke : androidFavoriteColors\.unsavedStroke\} fill=\{saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}\/>/);
+  assert.match(native, /<Heart size=\{18\} color=\{saved \? androidFavoriteColors\.savedStroke : androidFavoriteColors\.unsavedStroke\} fill=\{saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}\/>/);
   assert.doesNotMatch(native, /<Heart[^>]*(?:theme\.icon|fill="transparent")/);
 });

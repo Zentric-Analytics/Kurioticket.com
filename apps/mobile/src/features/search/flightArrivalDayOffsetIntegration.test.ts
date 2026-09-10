@@ -12,9 +12,12 @@ test("results never calculate or present arrival calendar crossing information",
   assert.match(journey, /clock\(leg\.arrivalTime\)[\s\S]*leg\.destinationAirport/);
 });
 
-test("details present provider-local dates and conditional calendar-day offsets", () => {
-  assert.match(detailSource, /providerLocalFlightDateLong\(leg\.departureTime\)/);
+test("details present provider-local full and endpoint dates in the selected app locale without visible calendar-day offsets", () => {
+  assert.match(detailSource, /const \{ locale \} = useMobileLocalization\(\)/);
+  assert.match(detailSource, /providerLocalFlightDateLong\(leg\.departureTime,intlLocale\)/);
+  assert.match(detailSource, /providerLocalFlightDate\(leg\.departureTime,intlLocale\)/);
+  assert.match(detailSource, /providerLocalFlightDate\(leg\.arrivalTime,intlLocale\)/);
   assert.match(detailSource, /clock\(leg\.arrivalTime\)/);
-  assert.match(detailSource, /flightArrivalDayOffset\(leg\.departureTime,leg\.arrivalTime\)/);
-  assert.match(detailSource, /\+\{arrivalDayOffset\}/);
+  assert.doesNotMatch(detailSource, /flightArrivalDayOffset\(leg\.departureTime,leg\.arrivalTime\)/);
+  assert.doesNotMatch(detailSource, /\+\{arrivalDayOffset\}/);
 });
