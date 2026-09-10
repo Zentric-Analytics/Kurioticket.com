@@ -20,7 +20,7 @@ test("the live route owns one sticky shell and one deterministic horizontal tab 
   assert.match(native, /\(\["compare","pickup","location"\] as const\)/);
   assert.equal((native.match(/accessibilityRole="tablist"/g) ?? []).length, 1);
   assert.match(native, /<Text numberOfLines=\{1\}/);
-  assert.match(native, /stickyHeaderIndices=\{\[2\]\}/);
+  assert.match(native, /stickyHeaderIndices=\{\[1\]\}/);
 
   const shell = style("carsTabsShell");
   for (const contract of ['width:"100%"', 'alignSelf:"stretch"', "minHeight:48", "borderBottomWidth:1"])
