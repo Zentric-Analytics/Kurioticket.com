@@ -97,6 +97,30 @@ test("Compare uses the refined native presentation while Pickup retains its geom
   assert.match(native, /<Clock3 size=\{16\} color=\{theme\.dark\?theme\.icon:"#64748B"\}/);
 });
 
+test("Compare benefits are stationary and wrap as whole readable items", () => {
+  const compareStart = native.indexOf("function Compare(");
+  const compareEnd = native.indexOf("function TimelineEntry", compareStart);
+  const compare = native.slice(compareStart, compareEnd);
+  assert.match(compare, /<View style=\{s\.benefits\}>/);
+  for (const scrollingContract of [/<ScrollView/, /\bhorizontal\b/, /showsHorizontalScrollIndicator/, /scrollEnabled/, /onScroll/, /scrollTo/])
+    assert.doesNotMatch(compare, scrollingContract);
+
+  for (const contract of ["flex:1", "minWidth:0", 'flexDirection:"row"', 'flexWrap:"wrap"', "rowGap:8", "columnGap:12"])
+    assert.ok(style("benefits").includes(contract), contract);
+  for (const contract of ['flexDirection:"row"', 'alignItems:"center"', "flexShrink:0"])
+    assert.ok(style("benefit").includes(contract), contract);
+  assert.match(compare, /<Text numberOfLines=\{1\} style=\{s\.benefitText\}>\{label\}<\/Text>/);
+  assert.doesNotMatch(compare, /ellipsizeMode|adjustsFontSizeToFit|minimumFontScale/);
+  for (const contract of ["fontSize:11", 'fontWeight:"600"', "fontFamily:appFonts.semibold"])
+    assert.ok(style("benefitText").includes(contract), contract);
+
+  for (const contract of ["marginTop:20", 'flexDirection:"row"', 'alignItems:"flex-end"', "gap:10"])
+    assert.ok(style("compareBottom").includes(contract), contract);
+  for (const contract of ["flexShrink:0", 'alignItems:"flex-end"'])
+    assert.ok(style("comparePrice").includes(contract), contract);
+  assert.match(compare, /<View style=\{s\.comparePrice\}><Text style=\{s\.daily\}>[\s\S]*<Text style=\{s\.perDay\}>per day<\/Text><\/View>/);
+});
+
 test("Compare alone uses the singular unlimited-mile benefit copy", () => {
   assert.match(native, /<Spec Icon=\{Gauge\} text=\{nativeCarMileageLabel\(result\)\}/);
   assert.match(native, /const compareMileageLabel=result\.mileagePolicy==="unlimited"\?"Unlimited mile":nativeCarMileageLabel\(result\)/);
