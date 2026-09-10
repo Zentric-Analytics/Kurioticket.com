@@ -121,5 +121,5 @@ test("deck styles are scoped and leave generic cards and fare cards intact",()=>
   assert.match(deckStyles,/fareInfoDivider:\{height:StyleSheet\.hairlineWidth\}/);
   assert.doesNotMatch(deckStyles,/elevation|shadow/);
   assert.match(source,/card:\{borderWidth:1,borderRadius:14,padding:14,gap:7\}/);
-  assert.match(source,/fareCardSelected:\{borderWidth:2\}/);
+  assert.match(source,/fareCardSelected:\{borderWidth:1\.5\}/);
 });
