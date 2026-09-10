@@ -94,5 +94,5 @@ test("card depth and flexible technical copy remain locally scoped",()=>{
   assert.match(source,/technicalLabel:\{flex:1,minWidth:0/);
   assert.match(source,/technicalValue:\{flexShrink:1,maxWidth:"52%"/);
   assert.match(source,/card:\{borderWidth:1,borderRadius:14,padding:14,gap:7\}/);
-  assert.match(source,/fareCard:\{minHeight:176,borderRadius:15,padding:15,gap:16\}/);
+  assert.match(source,/fareCard:\{borderRadius:15,padding:15,gap:14\}/);
 });
