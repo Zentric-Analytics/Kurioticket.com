@@ -16,6 +16,7 @@ test("approved car results use the live API contract and open the native detail 
   assert.match(screen, /canonicalResultsWereSilentlyLost/);
   assert.match(screen, /pathname:\s*"\/car-details"/);
   assert.match(screen, /result:\s*JSON\.stringify\(result\)/);
+  assert.match(screen, /carResultsStack:\s*"1"/);
   assert.doesNotMatch(screen, /Linking\.openURL/);
   assert.match(screen, /CarResultCard/);
   assert.doesNotMatch(screen, /Hertz|Enterprise|Toyota RAV4|Chevrolet Tahoe/);
