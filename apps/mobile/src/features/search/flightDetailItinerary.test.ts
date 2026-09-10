@@ -6,19 +6,30 @@ import test from "node:test";
 const source=readFileSync(resolve("src/features/search/NativeFlightDetails.tsx"),"utf8");
 const itinerary=source.slice(source.indexOf("function Itinerary"),source.indexOf("function FareSurface"));
 
-test("route context stays outside the card and includes truthful search date context",()=>{
+test("route context stays outside the card and limits metadata to trip type and travelers",()=>{
   assert.match(source,/flightDetailsRouteLabel\(details\.search\.tripType,offer\.legs\?\?\[\]/);
-  assert.match(source,/details\.search\.tripType==="multi-city"\?details\.search\.legs\.map\(\(\{departureDate\}\)=>departureDate\):\[details\.search\.departureDate,details\.search\.returnDate\]/);
-  assert.match(source,/providerLocalFlightDateLong\(value\)/);
-  assert.match(source,/\.join\(" • "\)/);
-  assert.match(source,/<View testID="flight-details-route-summary"[^>]*>.*<\/View>\s*<Text style=\{\[s\.itinerarySectionLabel/s);
+  assert.ok(source.includes('const tripMetadata=[`${FLIGHT_TRIP_TYPE_LABELS[details.search.tripType]}`,`${details.search.travelers} traveler${details.search.travelers===1?"":"s"}`].join(" • ");'));
+  assert.doesNotMatch(source,/const searchDates=/);
+  assert.doesNotMatch(source,/tripMetadata=.*departureDate/);
+  assert.doesNotMatch(source,/tripMetadata=.*returnDate/);
+  assert.match(source,/<View testID="flight-details-route-summary"[^>]*>.*<\/View>\s*<View style=\{s\.itineraryStack\}>/s);
 });
 
-test("a quiet Flight itinerary label precedes every authoritative leg card",()=>{
-  assert.match(source,/>Flight itinerary<\/Text>/);
+test("the route transitions directly to every authoritative leg card without an itinerary heading",()=>{
+  assert.doesNotMatch(source,/>Flight itinerary<\/Text>/);
   assert.match(source,/<View style=\{s\.itineraryStack\}>\{\(offer\.legs\?\.length\?offer\.legs:\[\]\)\.map\(\(leg,index\)=><Itinerary/);
-  assert.match(source,/itinerarySectionLabel:\{fontSize:11[^}]*textTransform:"uppercase"/);
+  assert.doesNotMatch(source,/itinerarySectionLabel:/);
+  assert.match(source,/itineraryStack:\{gap:14\}/);
+  assert.doesNotMatch(source,/itineraryStack:\{[^}]*marginTop/);
   assert.match(itinerary,/leg\.direction==="outbound"\?"Outbound":leg\.direction==="return"\?"Return":`Flight \$\{leg\.legIndex\?\?index\+1\}`/);
+  assert.doesNotMatch(source,/Edit search/);
+});
+
+test("direction and provider-local departure date share a narrow-screen-safe header row",()=>{
+  assert.match(itinerary,/<View style=\{s\.itineraryHeader\}>\s*<Text style=\{s\.direction\}>\{label\}<\/Text>\s*<Text style=\{\[s\.itineraryDate/);
+  assert.match(source,/itineraryHeader:\{flexDirection:"row",alignItems:"flex-start",justifyContent:"space-between",gap:12\}/);
+  assert.match(source,/direction:\{color:ui\.blue,flexShrink:1/);
+  assert.match(source,/itineraryDate:\{flexShrink:0[^}]*textAlign:"right"/);
 });
 
 test("provider-local leg dates and conditional accessible arrival-day offsets are used",()=>{
