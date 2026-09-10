@@ -7,6 +7,15 @@ type LocationParts = Pick<
 
 export type NativeHotelLocationView = "map" | "streetview";
 
+export function nativeHotelLocationPreviewUrl(
+  baseUrl: string,
+  hotelId: string,
+): string {
+  const url = new URL("/api/mobile/v1/hotels/location-preview", baseUrl);
+  url.search = new URLSearchParams({ id: hotelId }).toString();
+  return url.toString();
+}
+
 export function nativeHotelLocationEmbedUrl(
   baseUrl: string,
   hotelId: string,
