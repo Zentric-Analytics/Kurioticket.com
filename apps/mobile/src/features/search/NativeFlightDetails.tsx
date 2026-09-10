@@ -9,6 +9,8 @@ import { canUseOfferAirlineLogo, compactFareTerms, resolveSegmentCarrierName } f
 import type { FlightFareTerm, FlightLeg, FlightProviderCondition } from "../../../../../src/lib/types";
 import { TravelApiError, travelApi, type FlightResult } from "../../api/travelApi";
 import { useAppTheme } from "../../theme/AppTheme";
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
+import { mobileLocales } from "../../localization/mobileLocalizationCatalog";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
 import { readSession } from "../../storage/sessionStorage";
 import { useSavedFlights } from "../../storage/useSavedFlights";
@@ -97,6 +99,8 @@ function savedFlightOffer(details: FlightDetailsSuccess, choice: FlightDetailsFa
 export function NativeFlightDetails({ params }: { params: Params }) {
   const id = one(params.id) ?? "";
   const { theme } = useAppTheme();
+  const { locale } = useMobileLocalization();
+  const intlLocale = mobileLocales.find((option) => option.code === locale)?.intl ?? "en-US";
   const inset = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const [details, setDetails] = useState<FlightDetailsSuccess | null>(null);
@@ -161,7 +165,7 @@ export function NativeFlightDetails({ params }: { params: Params }) {
   return <SafeAreaView edges={["top"]} style={[s.safe,{backgroundColor:theme.background}]}><TopBar backgroundColor={theme.background} hasScrolled={hasScrolled}/><ScrollView testID="flight-details-scroll-content" scrollEventThrottle={16} onScroll={({nativeEvent})=>{const next=nativeEvent.contentOffset.y>1;if(next!==hasScrolledRef.current){hasScrolledRef.current=next;setHasScrolled(next);}}} contentContainerStyle={[s.content,{paddingBottom:120+inset.bottom}]}>
     {message?<View accessibilityRole="alert" style={s.notice}><Text style={s.noticeText}>{message}</Text></View>:null}
     <View testID="flight-details-route-summary" style={s.routeSummary}><View style={s.routeContent}><Text accessibilityRole="header" style={[s.route,{color:theme.textPrimary}]}>{flightDetailsRouteLabel(details.search.tripType,offer.legs??[],offer.originAirport,offer.destinationAirport)}</Text><Text style={[s.routeMetadata,{color:theme.textSecondary}]}>{tripMetadata}</Text></View><View style={s.routeActions}><IconButton label={saved?"Remove saved flight":"Save flight"} onPress={()=>savedFlights.toggle(savedOffer,nativeFlightEditSearchParams(details,one(params.currency)))}><Heart size={18} color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={saved?androidFavoriteColors.savedFill:androidFavoriteColors.unsavedFill}/></IconButton><IconButton label="Share flight" onPress={()=>void share()}><FlowIcon name="share" size={18} color={theme.icon}/></IconButton></View></View>
-    <View style={s.itineraryStack}>{(offer.legs?.length?offer.legs:[]).map((leg,index)=><Itinerary key={`${leg.departureTime}-${index}`} leg={leg} index={index} offerAirlineName={offer.airlineName} offerAirlineLogo={offer.airlineLogo} theme={theme}/>)}</View>
+    <View style={s.itineraryStack}>{(offer.legs?.length?offer.legs:[]).map((leg,index)=><Itinerary key={`${leg.departureTime}-${index}`} leg={leg} index={index} offerAirlineName={offer.airlineName} offerAirlineLogo={offer.airlineLogo} theme={theme} intlLocale={intlLocale}/>)}</View>
     <Text style={[s.fareSectionTitle,{color:theme.textPrimary}]}>Pick your fare</Text>
     <ScrollView ref={fareRailRef} accessibilityRole="radiogroup" accessibilityLabel="Available fares" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[s.fares,details.fareChoices.length>1?s.faresMultiple:s.faresSingle]} onContentSizeChange={()=>{const fareSet=details.fareChoices.map(({key})=>key).join("|");if(positionedFareSetRef.current===fareSet)return;positionedFareSetRef.current=fareSet;const selectedIndex=details.fareChoices.findIndex(({key})=>key===selected.key);fareRailRef.current?.scrollTo({x:nativeInitialFareRailOffset(selectedIndex,loadedFareCardWidth,windowWidth-nativeFareRailHorizontalInset,details.fareChoices.length),animated:false});}}>
       {details.fareChoices.map((choice)=>{
@@ -214,7 +218,7 @@ function TopBar({backgroundColor,hasScrolled=false,children}:{backgroundColor:st
 function IconButton({label,onPress,children}:{label:string;onPress:()=>void;children:React.ReactNode}){return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={s.iconButton}>{children}</Pressable>}
 function FareStatusIcon({semantic}:{semantic:"positive"|"negative"|"informational"}){return <View style={[s.fareStatus,semantic==="positive"?s.fareStatusPositive:s.fareStatusNeutral]}>{semantic==="positive"?<FlowIcon name="check" size={11} color={ui.green}/>:semantic==="negative"?<View style={s.fareStatusMinus}/>:<View style={s.fareStatusDot}/>}</View>}
 function FareBenefitRow({category,semantic,text,titleColor,detailColor}:{category:FlightFareTerm["category"];semantic:FlightFareTerm["semantic"];text:string;titleColor:string;detailColor:string}){const presentation=nativeFareBenefitPresentation(category,text);return <View style={s.fareBenefitRow}><View style={s.fareStatusColumn}><FareStatusIcon semantic={semantic}/></View><View style={s.fareBenefitCopy}><View style={s.fareBenefitHeading}><Text style={[s.fareBenefitTitle,{color:titleColor}]}>{presentation.title}</Text>{presentation.value?<Text style={[s.fareBenefitValue,{color:detailColor}]}>{presentation.value}</Text>:null}</View>{presentation.detail?<Text style={[s.fareBenefitDetail,{color:detailColor}]}>{presentation.detail}</Text>:null}</View></View>}
-function Itinerary({leg,index,offerAirlineName,offerAirlineLogo,theme}:{leg:FlightLeg;index:number;offerAirlineName:string;offerAirlineLogo?:string|null;theme:ReturnType<typeof useAppTheme>["theme"]}) {
+function Itinerary({leg,index,offerAirlineName,offerAirlineLogo,theme,intlLocale}:{leg:FlightLeg;index:number;offerAirlineName:string;offerAirlineLogo?:string|null;theme:ReturnType<typeof useAppTheme>["theme"];intlLocale:string}) {
   const label=leg.direction==="outbound"?"Outbound":leg.direction==="return"?"Return":`Flight ${leg.legIndex??index+1}`;
   const departurePoint=leg.segments[0]?.originDetails;
   const arrivalPoint=leg.segments.at(-1)?.destinationDetails;
@@ -225,9 +229,9 @@ function Itinerary({leg,index,offerAirlineName,offerAirlineLogo,theme}:{leg:Flig
   const distanceSegments=leg.segments.filter((segment)=>segment.distanceKm!==undefined);
   const aircraftSegments=leg.segments.map((segment)=>({segment,aircraft:segment.aircraft?.name?.trim()||segment.aircraft?.iataCode?.trim()})).filter(({aircraft})=>Boolean(aircraft));
   const hasTechnicalInformation=distanceSegments.length>0||aircraftSegments.length>0||Boolean(departureTimeZone)||Boolean(arrivalTimeZone);
-  const departureDate=providerLocalFlightDateLong(leg.departureTime);
-  const departureShortDate=providerLocalFlightDate(leg.departureTime);
-  const arrivalShortDate=providerLocalFlightDate(leg.arrivalTime);
+  const departureDate=providerLocalFlightDateLong(leg.departureTime,intlLocale);
+  const departureShortDate=providerLocalFlightDate(leg.departureTime,intlLocale);
+  const arrivalShortDate=providerLocalFlightDate(leg.arrivalTime,intlLocale);
   const layoverLabel=(airport:string)=>{const point=leg.segments.flatMap((segment)=>[segment.destinationDetails,segment.originDetails]).find((candidate)=>candidate?.iataCode===airport);return point?.cityName&&point.cityName!==airport?`${point.cityName} • ${airport}`:airport;};
   return <View style={[s.itineraryCard,{backgroundColor:theme.surface,borderColor:theme.border}]}>
     <View style={s.itineraryHeader}>

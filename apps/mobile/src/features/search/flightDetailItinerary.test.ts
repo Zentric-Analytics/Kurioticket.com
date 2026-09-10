@@ -31,10 +31,13 @@ test("direction and provider-local departure date share a narrow-screen-safe hea
   assert.match(source,/itineraryDate:\{flexShrink:0[^}]*textAlign:"right"/);
 });
 
-test("provider-local full and endpoint dates render without device-timezone conversion or visible day offsets",()=>{
-  assert.match(itinerary,/providerLocalFlightDateLong\(leg\.departureTime\)/);
-  assert.match(itinerary,/departureShortDate=providerLocalFlightDate\(leg\.departureTime\)/);
-  assert.match(itinerary,/arrivalShortDate=providerLocalFlightDate\(leg\.arrivalTime\)/);
+test("provider-local full and endpoint dates use the selected app locale without device-timezone conversion or visible day offsets",()=>{
+  assert.match(source,/const \{ locale \} = useMobileLocalization\(\)/);
+  assert.match(source,/mobileLocales\.find\(\(option\) => option\.code === locale\)\?\.intl \?\? "en-US"/);
+  assert.match(source,/intlLocale=\{intlLocale\}/);
+  assert.match(itinerary,/providerLocalFlightDateLong\(leg\.departureTime,intlLocale\)/);
+  assert.match(itinerary,/departureShortDate=providerLocalFlightDate\(leg\.departureTime,intlLocale\)/);
+  assert.match(itinerary,/arrivalShortDate=providerLocalFlightDate\(leg\.arrivalTime,intlLocale\)/);
   assert.doesNotMatch(itinerary,/new Date\(leg\.(?:departureTime|arrivalTime)\)/);
   assert.match(itinerary,/s\.airportCode[^>]*>\{leg\.originAirport\}<\/Text>\s*\{departureShortDate\?<Text numberOfLines=\{1\} style=\{\[s\.airportDate/);
   assert.match(itinerary,/s\.airportCode[^>]*>\{leg\.destinationAirport\}<\/Text>\s*\{arrivalShortDate\?<Text numberOfLines=\{1\} style=\{\[s\.airportDate,s\.arrivalText/);
