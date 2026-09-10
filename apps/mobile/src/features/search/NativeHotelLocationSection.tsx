@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { MapPin } from "lucide-react-native";
 import { WebView } from "react-native-webview";
 import type { PublicHotelPropertyDetails } from "../../../../../src/lib/types";
@@ -7,8 +7,10 @@ import { hasValidHotelCoordinates } from "../../../../../src/lib/hotels/hotelMap
 import { getApiBaseUrl } from "../../config/apiUrl";
 import { colors } from "../../theme/tokens";
 import { appFonts } from "../../theme/typography";
+import { NativeHotelFullMapModal } from "./NativeHotelFullMapModal";
 import {
   nativeHotelLocationEmbedUrl,
+  nativeHotelLocationPreviewUrl,
   nativeHotelSecondaryLocation,
   nativeHotelStayFitFacts,
   type NativeHotelLocationView,
@@ -16,14 +18,16 @@ import {
 
 type Theme = { dark: boolean; surface: string; border: string; textPrimary: string; textSecondary: string; icon: string };
 
-export function NativeHotelLocationSection({ hotelId, propertyDetails, theme }: {
+export function NativeHotelLocationSection({ hotelId, hotelName, propertyDetails, theme }: {
   hotelId: string;
   hotelName: string;
   propertyDetails: PublicHotelPropertyDetails | null;
   theme: Theme;
 }) {
   const [view, setView] = useState<NativeHotelLocationView>("map");
-  const [failedView, setFailedView] = useState<NativeHotelLocationView | null>(null);
+  const [mapPreviewFailed, setMapPreviewFailed] = useState(false);
+  const [streetViewFailed, setStreetViewFailed] = useState(false);
+  const [fullMapOpen, setFullMapOpen] = useState(false);
   if (!propertyDetails) return <View style={styles.locationSection}><Text accessibilityRole="header" style={[styles.heading, { color: theme.textPrimary }]}>Location &amp; stay fit</Text><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Verified location details are not available for this property yet.</Text></View>;
 
   const streetAddress = propertyDetails.streetAddress.trim();
@@ -31,18 +35,25 @@ export function NativeHotelLocationSection({ hotelId, propertyDetails, theme }: 
   const facts = nativeHotelStayFitFacts(propertyDetails);
   const accessibility = propertyDetails.accessibility?.map((detail) => detail.trim()).filter(Boolean) ?? [];
   const api = getApiBaseUrl(Platform.OS, __DEV__);
-  const embedUrl = api.ok ? nativeHotelLocationEmbedUrl(api.baseUrl, hotelId, view) : null;
+  const previewUrl = api.ok ? nativeHotelLocationPreviewUrl(api.baseUrl, hotelId) : null;
+  const streetViewUrl = api.ok ? nativeHotelLocationEmbedUrl(api.baseUrl, hotelId, "streetview") : null;
   const streetViewAvailable = hasValidHotelCoordinates(propertyDetails);
   const accent = theme.dark ? "#8FB5FF" : colors.blue;
-  const selectView = (next: NativeHotelLocationView) => { setFailedView(null); setView(next); };
+  const selectView = (next: NativeHotelLocationView) => {
+    if (next === "streetview") setStreetViewFailed(false);
+    setView(next);
+  };
 
   return <View style={styles.locationSection}>
     <Text accessibilityRole="header" style={[styles.heading, { color: theme.textPrimary }]}>Location &amp; stay fit</Text>
     {streetAddress || secondaryLocation ? <View style={styles.addressRow}><View accessible={false} style={[styles.pinCircle, { backgroundColor: theme.dark ? theme.surface : "#EFF6FF" }]}><MapPin accessible={false} size={18} color={accent} /></View><View style={styles.addressCopy}>{streetAddress ? <Text style={[styles.primaryAddress, { color: theme.dark ? theme.textPrimary : "#1E293B" }]}>{streetAddress}</Text> : null}{secondaryLocation ? <Text style={[styles.secondaryAddress, { color: theme.dark ? theme.textSecondary : "#64748B" }]}>{secondaryLocation}</Text> : null}</View></View> : null}
     <View style={[styles.mapCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       {streetViewAvailable ? <View accessibilityRole="tablist" style={[styles.mapTabs, { borderBottomColor: theme.border }]}>{(["map", "streetview"] as const).map((option) => <Pressable key={option} accessibilityRole="tab" accessibilityState={{ selected: view === option }} onPress={() => selectView(option)} style={[styles.mapTab, view === option && { borderBottomColor: accent }]}><Text style={[styles.mapTabText, { color: view === option ? accent : (theme.dark ? theme.textSecondary : "#475569") }]}>{option === "map" ? "Map" : "Street View"}</Text></Pressable>)}</View> : null}
-      <View style={styles.mapViewport}>{embedUrl && failedView !== view ? <WebView key={`${hotelId}:${view}`} source={{ uri: embedUrl }} scrollEnabled={false} onError={() => setFailedView(view)} onHttpError={() => setFailedView(view)} style={styles.map} /> : <View style={styles.mapFallback}><MapPin accessible={false} size={24} color={theme.icon} /><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Map preview unavailable</Text></View>}</View>
+      <View style={styles.mapViewport}>{view === "map" ? <Pressable accessibilityRole="button" accessibilityLabel={`Open full map for ${hotelName}`} accessibilityHint="Opens an interactive map inside Kurioticket" onPress={() => setFullMapOpen(true)} style={styles.mapPreview}>
+        {previewUrl && !mapPreviewFailed ? <Image accessible={false} source={{ uri: previewUrl }} resizeMode="cover" onError={() => setMapPreviewFailed(true)} style={styles.map} /> : <View style={styles.mapFallback}><MapPin accessible={false} size={24} color={theme.icon} /><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Map preview unavailable</Text></View>}
+      </Pressable> : streetViewUrl && !streetViewFailed ? <WebView key={`${hotelId}:streetview`} source={{ uri: streetViewUrl }} scrollEnabled={false} onError={() => setStreetViewFailed(true)} onHttpError={() => setStreetViewFailed(true)} style={styles.map} /> : <View style={styles.mapFallback}><MapPin accessible={false} size={24} color={theme.icon} /><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Map preview unavailable</Text></View>}</View>
     </View>
+    <NativeHotelFullMapModal visible={fullMapOpen} hotelId={hotelId} theme={theme} onClose={() => setFullMapOpen(false)} />
     <Text accessibilityRole="header" style={[styles.subheading, { color: theme.textPrimary }]}>Why this location works</Text>
     {facts.length ? <View style={styles.factList}>{facts.map((fact) => <View key={fact} style={[styles.factChip, { backgroundColor: theme.dark ? "#1E2B42" : "#F1F5F9" }]}><Text style={[styles.factText, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{fact}</Text></View>)}</View> : <Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Location fit details are limited to the verified address and map.</Text>}
     <Text accessibilityRole="header" style={[styles.accessibilityHeading, { color: theme.textPrimary }]}>Accessibility and location details</Text>
@@ -62,7 +73,8 @@ const styles = StyleSheet.create({
   mapTabs: { flexDirection: "row", minHeight: 44, borderBottomWidth: 1, paddingHorizontal: 4 },
   mapTab: { minHeight: 44, paddingHorizontal: 16, borderBottomWidth: 2, borderBottomColor: "transparent", alignItems: "center", justifyContent: "center" },
   mapTabText: { fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
-  mapViewport: { height: 200, width: "100%" },
+  mapViewport: { height: 216, width: "100%" },
+  mapPreview: { flex: 1 },
   map: { flex: 1 },
   mapFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8 },
   subheading: { marginTop: 28, fontSize: 15, lineHeight: 22, fontWeight: "600", fontFamily: appFonts.semibold },

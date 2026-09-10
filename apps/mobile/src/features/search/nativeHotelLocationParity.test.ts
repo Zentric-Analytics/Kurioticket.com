@@ -6,12 +6,14 @@ import {
   nativeHotelSecondaryLocation,
   nativeHotelStayFitFacts,
   nativeHotelLocationEmbedUrl,
+  nativeHotelLocationPreviewUrl,
 } from "./nativeHotelLocationModel";
 
 const screen = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
 const component = readFileSync("src/features/search/NativeHotelLocationSection.tsx", "utf8");
 const model = readFileSync("src/features/search/nativeHotelLocationModel.ts", "utf8");
 const compare = readFileSync("src/features/search/NativeHotelDecisionSections.tsx", "utf8");
+const fullMapModal = readFileSync("src/features/search/NativeHotelFullMapModal.tsx", "utf8");
 
 const fixture: PublicHotelPropertyDetails = {
   description: "",
@@ -69,14 +71,24 @@ test("Location owns exact parity and fallback copy without legacy presentation",
   for (const legacy of ["✓ city break", "✓ business", "Suited to business stays", "Suited to family stays", "interestTags?.map"]) assert.doesNotMatch(component, new RegExp(legacy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 });
 
-test("Location uses a credential-free first-party Map and Street View wrapper", () => {
+test("Location uses the shared credential-free preview and preserves interactive Street View", () => {
+  assert.equal(nativeHotelLocationPreviewUrl("https://staging.example.test/base", "hotel id"), "https://staging.example.test/api/mobile/v1/hotels/location-preview?id=hotel+id");
   assert.equal(nativeHotelLocationEmbedUrl("https://staging.example.test/base", "hotel id", "streetview"), "https://staging.example.test/api/mobile/v1/hotels/location-embed?id=hotel+id&view=streetview");
-  assert.match(component, /getApiBaseUrl\(Platform\.OS, __DEV__\)/);
-  assert.match(model, /NativeHotelLocationView = "map" \| "streetview"/);
-  assert.match(model, /\/api\/mobile\/v1\/hotels\/location-embed/);
+  assert.match(component, /nativeHotelLocationPreviewUrl\(api\.baseUrl, hotelId\)/);
+  assert.match(compare, /nativeHotelLocationPreviewUrl\(api\.baseUrl, hotelId\)/);
+  assert.match(component, /nativeHotelLocationEmbedUrl\(api\.baseUrl, hotelId, "streetview"\)/);
+  assert.doesNotMatch(component, /nativeHotelLocationEmbedUrl\(api\.baseUrl, hotelId, "map"\)/);
+  assert.match(component, /view === "map" \? <Pressable/);
+  assert.match(component, /accessibilityRole="button" accessibilityLabel=\{`Open full map for \$\{hotelName\}`\} accessibilityHint="Opens an interactive map inside Kurioticket"/);
+  assert.match(component, /<Image accessible=\{false\} source=\{\{ uri: previewUrl \}\} resizeMode="cover" onError=\{\(\) => setMapPreviewFailed\(true\)\}/);
+  assert.match(component, /<NativeHotelFullMapModal visible=\{fullMapOpen\} hotelId=\{hotelId\} theme=\{theme\}/);
+  assert.match(component, /<WebView key=\{`\$\{hotelId\}:streetview`\} source=\{\{ uri: streetViewUrl \}\}/);
+  assert.match(component, /onError=\{\(\) => setStreetViewFailed\(true\)\}/);
+  assert.match(component, /onHttpError=\{\(\) => setStreetViewFailed\(true\)\}/);
+  assert.match(fullMapModal, /nativeHotelLocationEmbedUrl\(api\.baseUrl, hotelId, "map"\)/);
+  assert.doesNotMatch(component + compare, />View in map</);
+  assert.doesNotMatch(component, /ArrowRight/);
   for (const forbidden of ["EXPO_PUBLIC_GOOGLE", "NEXT_PUBLIC_GOOGLE", "google.com/maps/embed", "buildOpenStreetMapHotelMapEmbedUrl"]) assert.doesNotMatch(component + model, new RegExp(forbidden));
-  assert.match(component, /onError=\{\(\) => setFailedView\(view\)\}/);
-  assert.match(component, /onHttpError=\{\(\) => setFailedView\(view\)\}/);
 });
 
 test("Location visual contracts match mobile web", () => {
@@ -86,7 +98,8 @@ test("Location visual contracts match mobile web", () => {
   for (const rule of [/fontSize: 13/, /lineHeight: 19/, /fontWeight: "500"/, /appFonts\.medium/]) assert.match(styleRule(component, "primaryAddress", "secondaryAddress"), rule);
   for (const rule of [/fontSize: 12/, /lineHeight: 18/, /appFonts\.regular/]) assert.match(styleRule(component, "secondaryAddress", "mapCard"), rule);
   for (const rule of [/marginTop: 16/, /borderRadius: 14/, /borderWidth: 1/]) assert.match(styleRule(component, "mapCard", "mapTabs"), rule);
-  assert.match(styleRule(component, "mapViewport", "map"), /height: 200/);
+  assert.match(styleRule(component, "mapViewport", "mapPreview"), /height: 216/);
+  assert.doesNotMatch(styleRule(component, "mapViewport", "mapPreview"), /height: (?:280|300)/);
   for (const rule of [/fontSize: 15/, /lineHeight: 22/, /fontWeight: "600"/, /appFonts\.semibold/]) assert.match(styleRule(component, "subheading", "factList"), rule);
   for (const rule of [/borderRadius: 8/, /paddingHorizontal: 12/, /paddingVertical: 8/]) assert.match(styleRule(component, "factChip", "factText"), rule);
   for (const rule of [/fontSize: 12/, /lineHeight: 16/, /fontWeight: "500"/, /appFonts\.medium/]) assert.match(styleRule(component, "factText", "accessibilityHeading"), rule);
@@ -104,10 +117,10 @@ test("Compare decision headings preserve the refined supporting hierarchy", () =
   for (const rule of [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/, /appFonts\.bold/]) assert.match(moreHotelsHeading, rule);
 });
 
-test("Compare Property location uses a compact preview distinct from the Location-tab map", () => {
+test("Compare Property location and Location tab share the compact preview contract", () => {
   assert.match(compare, /export function NativeHotelPropertyLocationSection/);
-  assert.match(compare, /import \{ nativeHotelLocationEmbedUrl \} from "\.\/nativeHotelLocationModel";/);
-  assert.match(compare, /nativeHotelLocationEmbedUrl\(api\.baseUrl, hotelId, "map"\)/);
+  assert.match(compare, /nativeHotelLocationPreviewUrl\(api\.baseUrl, hotelId\)/);
+  assert.match(component, /nativeHotelLocationPreviewUrl\(api\.baseUrl, hotelId\)/);
   assert.match(styleRule(compare, "mapFrame", "map"), /height: 216/);
   assert.doesNotMatch(styleRule(compare, "mapFrame", "map"), /height: 280/);
 });

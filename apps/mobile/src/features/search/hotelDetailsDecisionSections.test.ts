@@ -51,7 +51,7 @@ test("decision sections are compare-only, ordered, and use the enriched details 
   assert.doesNotMatch(detail, /travelApi\.hotels?Search/);
 });
 
-test("native Compare Property location opens one full-screen in-app map", () => {
+test("native Compare Property location uses its preview as the sole full-map launcher", () => {
   const component = readFileSync("src/features/search/NativeHotelDecisionSections.tsx", "utf8");
   const section = component.slice(
     component.indexOf("export function NativeHotelPropertyLocationSection"),
@@ -61,29 +61,16 @@ test("native Compare Property location opens one full-screen in-app map", () => 
   const mapFrame = component.match(/mapFrame:\s*\{([^}]*)\}/)?.[1] ?? "";
 
   assert.match(section, /buildHotelAddress\(propertyDetails\)/);
-  assert.match(section, /location-preview/);
+  assert.match(section, /nativeHotelLocationPreviewUrl\(api\.baseUrl, hotelId\)/);
   assert.match(section, /<Image accessible=\{false\} source=\{\{ uri: mapUrl \}\} resizeMode="cover"/);
   assert.match(section, /onError=\{\(\) => setMapFailed\(true\)\}/);
   assert.match(section, /Map preview unavailable/);
-  assert.match(section, /const openFullMap = \(\) => \{ setFullMapFailed\(false\); setFullMapOpen\(true\); \};/);
-  assert.equal(section.match(/onPress=\{openFullMap\}/g)?.length, 2);
+  assert.equal(section.match(/onPress=\{openFullMap\}/g)?.length, 1);
   assert.match(section, /<Pressable accessibilityRole="button" accessibilityLabel=\{`Open full map for \$\{hotelName\}`\} accessibilityHint="Opens an interactive map inside Kurioticket" onPress=\{openFullMap\} style=\{\[styles\.mapFrame/);
-  assert.match(section, /accessibilityLabel=\{`Open full map for \$\{hotelName\}`\} onPress=\{openFullMap\} style=\{styles\.mapAction\}/);
-  assert.match(section, /nativeHotelLocationEmbedUrl\(api\.baseUrl, hotelId, "map"\)/);
-  assert.match(section, /<Modal visible=\{fullMapOpen\}[\s\S]*?presentationStyle="fullScreen"[\s\S]*?onRequestClose=\{closeFullMap\}/);
-  assert.match(section, /<SafeAreaProvider>/);
-  assert.match(section, /<SafeAreaView edges=\{\["top", "bottom", "left", "right"\]\} accessibilityViewIsModal/);
-  assert.match(section, /<WebView key=\{`\$\{hotelId\}:full-map:\$\{fullMapAttempt\}`\} source=\{\{ uri: fullMapUrl \}\}/);
-  assert.match(section, /onError=\{\(\) => setFullMapFailed\(true\)\}/);
-  assert.match(section, /onHttpError=\{\(\) => setFullMapFailed\(true\)\}/);
-  assert.match(section, /Map unavailable/);
-  assert.match(section, /accessibilityLabel="Try loading map again"[\s\S]*?>Try again</);
-  assert.match(section, /setFullMapAttempt\(\(attempt\) => attempt \+ 1\)/);
-  const closePath = section.match(/const closeFullMap = \(\) => \{([^}]*)\}/)?.[1] ?? "";
-  assert.match(closePath, /setFullMapOpen\(false\)/);
-  assert.doesNotMatch(closePath, /router\./);
-  for (const external of ["Linking", "openURL", "canOpenURL", "maps.apple.com", "geo:", "google.com/maps/search"]) assert.doesNotMatch(section, new RegExp(external.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-  for (const credential of ["EXPO_PUBLIC_GOOGLE", "NEXT_PUBLIC_GOOGLE", "google.com/maps/embed"]) assert.doesNotMatch(section, new RegExp(credential.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(section, /<NativeHotelFullMapModal visible=\{fullMapOpen\} hotelId=\{hotelId\} theme=\{theme\} onClose=\{\(\) => setFullMapOpen\(false\)\} \/>/);
+  assert.doesNotMatch(section, />View in map</);
+  assert.doesNotMatch(section, /styles\.mapAction|styles\.mapActionText/);
+  assert.doesNotMatch(component, /mapAction:\s*\{|mapActionText:\s*\{/);
   assert.doesNotMatch(locationCard, /marginHorizontal:\s*-16|shadow|elevation/);
   assert.match(mapFrame, /height:\s*216/);
   assert.match(mapFrame, /width:\s*"100%"/);
