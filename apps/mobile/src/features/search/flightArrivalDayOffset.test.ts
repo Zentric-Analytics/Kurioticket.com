@@ -45,7 +45,13 @@ test("formats each provider-local airport date without device-timezone shifts", 
 });
 
 test("formats provider and search dates with a year without device-timezone shifts", () => {
-  assert.equal(providerLocalFlightDateLong("2026-10-30"), "Oct 30, 2026");
-  assert.equal(providerLocalFlightDateLong("2026-10-30T23:50:00-07:00"), "Oct 30, 2026");
+  const calendarDay = new Date(Date.UTC(2026, 9, 30));
+  const options = { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" } as const;
+  const runtimeExpected = new Intl.DateTimeFormat(undefined, options).format(calendarDay);
+  const frenchExpected = new Intl.DateTimeFormat("fr-FR", options).format(calendarDay);
+
+  assert.equal(providerLocalFlightDateLong("2026-10-30"), runtimeExpected);
+  assert.equal(providerLocalFlightDateLong("2026-10-30T23:50:00-07:00"), runtimeExpected);
+  assert.equal(providerLocalFlightDateLong("2026-10-30", "fr-FR"), frenchExpected);
   assert.equal(providerLocalFlightDateLong("invalid"), null);
 });
