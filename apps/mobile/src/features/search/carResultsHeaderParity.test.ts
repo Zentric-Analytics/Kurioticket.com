@@ -153,7 +153,7 @@ test("Cars Results carries the Flight-family canvas without a white filter band"
 test("Cars Price Alert close is state-owned so keyboard teardown cannot race ahead of the target sheet", () => {
   assert.match(carAlert, /<View style=\{styles\.sheetHeader\}>[\s\S]*Track rental car prices[\s\S]*<Pressable accessibilityRole="button" accessibilityLabel="Close price alert"/);
   assert.match(carAlert, /<X accessible=\{false\} size=\{22\} color=\{theme\.icon\}/);
-  assert.match(carAlert, /sheetHeaderTitle: \{ flex: 1, minWidth: 0 \}/);
+  assert.match(carAlert, /sheetHeaderTitle: \{ flex: 1, minWidth: 0, textAlign: "center" \}/);
   assert.match(carAlert, /sheetClose: \{ width: 44, height: 44/);
   assert.doesNotMatch(carAlert, /<Button label="Cancel"/);
   const close = carAlert.slice(carAlert.indexOf("const closeTargetSheet"), carAlert.indexOf("const toggle"));
@@ -164,6 +164,6 @@ test("Cars Price Alert close is state-owned so keyboard teardown cannot race ahe
   assert.match(carAlert, /<KeyboardAvoidingView[^>]*behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/);
   assert.match(carAlert, /<TextInput autoFocus/);
   assert.match(carAlert, /onRequestClose=\{\(\) => \{ if \(!pending\) closeTargetSheet\(\); \}\}/);
-  assert.match(carAlert, /onPress=\{closeTargetSheet\}/);
-  assert.equal(carAlert.match(/closeTargetSheet/g)?.length, 3);
+  assert.match(carAlert, /accessibilityLabel="Close price alert" disabled=\{pending\} onPressIn=\{closeTargetSheet\} onPress=\{closeTargetSheet\}/);
+  assert.equal(carAlert.match(/closeTargetSheet/g)?.length, 7);
 });
