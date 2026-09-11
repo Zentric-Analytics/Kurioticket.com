@@ -1,0 +1,227 @@
+--- a/apps/mobile/src/features/search/ApprovedDetailScreen.tsx
++++ b/apps/mobile/src/features/search/ApprovedDetailScreen.tsx
+@@ -75,6 +75,8 @@
+   const parsed = Number(raw);
+   return parsed >= 1 && parsed <= maximum ? parsed : fallback;
+ };
++type HotelDetailTab = "compare" | "about" | "location" | "reviews";
++type HotelDetailsStatus = "loading" | "ready" | "error";
+ export function ApprovedDetailScreen({
+   product,
+ }: {
+@@ -131,12 +133,22 @@
+       )?.id === result.id,
+   );
+   const width = useWindowDimensions().width;
+-  const [activeHotelTab, setActiveHotelTab] = useState<
+-    "compare" | "about" | "location" | "reviews"
+-  >("compare");
+-  const [details, setDetails] = useState<MobileHotelDetailsResponse | null>(
+-    null,
+-  );
++  const [activeHotelTab, setActiveHotelTab] = useState<HotelDetailTab>("compare");
++  const activeHotelTabRef = useRef<HotelDetailTab>("compare");
++  const hotelDetailScrollRef = useRef<ScrollView>(null);
++  const currentHotelScrollOffset = useRef(0);
++  const restoringHotelTabScrollRef = useRef(false);
++  const hotelTabScrollOffsets = useRef<Record<HotelDetailTab, number | null>>({
++    compare: 0,
++    about: null,
++    location: null,
++    reviews: null,
++  });
++  const [detailsState, setDetailsState] = useState<{
++    key: string;
++    status: HotelDetailsStatus;
++    response: MobileHotelDetailsResponse | null;
++  } | null>(null);
+   const [roomsOpen, setRoomsOpen] = useState(false);
+   const [selectedOfferId, setSelectedOfferId] = useState<NativeHotelOffer["id"] | null>(null);
+   const guestCount = positiveCount(params.guests, 2, HOTEL_LIMITS.guests.max);
+@@ -145,13 +157,21 @@
+     (Array.isArray(params.hotelResultsStack)
+       ? params.hotelResultsStack[0]
+       : params.hotelResultsStack) === "1";
++  useEffect(() => {
++    setSelectedOfferId(null);
++    setRoomsOpen(false);
++  }, [result.id]);
+   const checkIn = String(params.checkIn || "");
+   const checkOut = String(params.checkOut || "");
+   const enrichmentKey = `${result.id}\u0000${checkIn}\u0000${checkOut}\u0000${guestCount}\u0000${roomCount}`;
++  const details = detailsState?.key === enrichmentKey ? detailsState.response : null;
++  const detailsStatus: HotelDetailsStatus = detailsState?.key === enrichmentKey
++    ? detailsState.status
++    : "loading";
+   useEffect(() => {
+     const controller = new AbortController();
+     let eligible = true;
+-    setDetails(null);
++    setDetailsState({ key: enrichmentKey, status: "loading", response: null });
+     void travelApi
+       .hotelDetails(
+         {
+@@ -164,9 +184,18 @@
+         { signal: controller.signal },
+       )
+       .then((response) => {
+-        if (eligible && response.hotel?.id === result.id) setDetails(response);
++        if (!eligible) return;
++        if (response.hotel?.id !== result.id) {
++          setDetailsState({ key: enrichmentKey, status: "error", response: null });
++          return;
++        }
++        setDetailsState({ key: enrichmentKey, status: "ready", response });
+       })
+-      .catch(() => undefined);
++      .catch(() => {
++        if (eligible && !controller.signal.aborted) {
++          setDetailsState({ key: enrichmentKey, status: "error", response: null });
++        }
++      });
+     return () => {
+       eligible = false;
+       controller.abort();
+@@ -211,6 +240,15 @@
+   const passedDisplayCurrencyContext = parse<DisplayCurrencyResolution>(
+     params.displayCurrencyContext,
+   );
++  const providerDisplayPrices = hasPrice
++    ? createHotelDisplayPrices(
++        result.pricePerNight!,
++        result.totalPrice!,
++        result.currency,
++        result.currency,
++        {},
++      )
++    : null;
+   const initiallyValidDisplayPrices =
+     hasPrice &&
+     canReuseHotelDisplayPrices({
+@@ -221,9 +259,15 @@
+       displayCurrency: passedDisplayCurrencyContext?.resolvedCurrency,
+     })
+       ? passedDisplayPrices!
+-      : null;
+-  const [displayPrices, setDisplayPrices] =
+-    useState<HotelDisplayPriceSnapshot | null>(initiallyValidDisplayPrices);
++      : providerDisplayPrices;
++  const hotelPriceStateKey = `${result.id}\u0000${result.currency}\u0000${result.pricePerNight ?? ""}\u0000${result.totalPrice ?? ""}`;
++  const [displayPriceState, setDisplayPriceState] = useState<{
++    key: string;
++    prices: HotelDisplayPriceSnapshot | null;
++  }>({ key: hotelPriceStateKey, prices: initiallyValidDisplayPrices });
++  const displayPrices = displayPriceState.key === hotelPriceStateKey
++    ? displayPriceState.prices
++    : initiallyValidDisplayPrices;
+   const hotelCurrencyRatesRef = useRef<ExchangeRates | null>(null);
+   const [hotelCurrencyRates, setHotelCurrencyRates] = useState<ExchangeRates>({});
+   useFocusEffect(
+@@ -244,7 +288,7 @@
+               preferredCurrency,
+             })
+           ) {
+-            setDisplayPrices(passedDisplayPrices!);
++            setDisplayPriceState({ key: hotelPriceStateKey, prices: passedDisplayPrices! });
+           }
+           const [location, rates] = await Promise.all([
+             preferredCurrency
+@@ -273,15 +317,16 @@
+             ipCountryCode: location?.countryCode,
+             locale: Intl.DateTimeFormat().resolvedOptions().locale,
+           });
+-          setDisplayPrices(
+-            createHotelDisplayPrices(
++          setDisplayPriceState({
++            key: hotelPriceStateKey,
++            prices: createHotelDisplayPrices(
+               result.pricePerNight!,
+               result.totalPrice!,
+               result.currency,
+               resolution.resolvedCurrency,
+               rates,
+             ),
+-          );
++          });
+         });
+       return () => {
+         active = false;
+@@ -292,6 +337,7 @@
+       passedDisplayPrices?.nightly?.currency,
+       passedDisplayPrices?.nightly?.providerAmount,
+       passedDisplayPrices?.total?.providerAmount,
++      hotelPriceStateKey,
+       result.currency,
+       result.id,
+       result.pricePerNight,
+@@ -386,6 +432,33 @@
+   const hotelIdentityIconColor = theme.dark ? theme.icon : "#334155";
+   const hotelIdentityClassificationIconColor = theme.dark ? theme.icon : "#64748B";
+   const hotelIdentityActionColor = theme.dark ? theme.icon : "#0F172A";
++  const selectHotelTab = useCallback((tab: HotelDetailTab) => {
++    if (tab === activeHotelTabRef.current) return;
++    const targetOffset = hotelTabScrollOffsets.current[tab] ?? currentHotelScrollOffset.current;
++    restoringHotelTabScrollRef.current = true;
++    activeHotelTabRef.current = tab;
++    setActiveHotelTab(tab);
++    requestAnimationFrame(() => {
++      hotelDetailScrollRef.current?.scrollTo({ y: targetOffset, animated: false });
++      currentHotelScrollOffset.current = targetOffset;
++      requestAnimationFrame(() => {
++        restoringHotelTabScrollRef.current = false;
++      });
++    });
++  }, []);
++  useEffect(() => {
++    restoringHotelTabScrollRef.current = true;
++    activeHotelTabRef.current = "compare";
++    setActiveHotelTab("compare");
++    currentHotelScrollOffset.current = 0;
++    hotelTabScrollOffsets.current = { compare: 0, about: null, location: null, reviews: null };
++    requestAnimationFrame(() => {
++      hotelDetailScrollRef.current?.scrollTo({ y: 0, animated: false });
++      requestAnimationFrame(() => {
++        restoringHotelTabScrollRef.current = false;
++      });
++    });
++  }, [result.id]);
+   const Fact = ({
+     icon: Icon,
+     children,
+@@ -422,9 +495,18 @@
+         </Pressable>
+       </View>
+       <ScrollView
++        ref={hotelDetailScrollRef}
+         stickyHeaderIndices={[2]}
+         style={{ backgroundColor: hotelCanvasColor }}
+         contentContainerStyle={{ paddingBottom: 126 + inset.bottom }}
++        onScroll={({ nativeEvent }) => {
++          const offset = nativeEvent.contentOffset.y;
++          currentHotelScrollOffset.current = offset;
++          if (!restoringHotelTabScrollRef.current) {
++            hotelTabScrollOffsets.current[activeHotelTabRef.current] = offset;
++          }
++        }}
++        scrollEventThrottle={16}
+       >
+         <View style={d.hotelIdentity}>
+           <View style={d.hotelIdentityTopRow}>
+@@ -487,7 +569,7 @@
+                 key={tab}
+                 accessibilityRole="tab"
+                 accessibilityState={{ selected: activeHotelTab === tab }}
+-                onPress={() => setActiveHotelTab(tab)}
++                onPress={() => selectHotelTab(tab)}
+                 style={[
+                   d.hotelTab,
+                   tab === "compare" && d.hotelTabWide,
+@@ -594,7 +676,7 @@
+                 </View>
+               </Pressable>;
+               })}
+-                {!hotelOffers.length ? (
++                {!hotelOffers.length && detailsStatus !== "loading" ? (
+                 <View style={[d.hotelOffer, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                   <Text style={[d.hotelOfferProvider, { color: theme.textPrimary }]}>{result.provider}</Text>
+                   <Text style={[d.hotelSectionLead, { color: theme.textSecondary }]}>Planning inventory · no live checkout</Text>
