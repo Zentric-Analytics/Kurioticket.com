@@ -22,18 +22,19 @@ test("fare disclosures preserve status semantics and expose only authoritative d
 
 test("responsive fare widths use one compact size for every fare count",()=>{
   const widths=[320,360,375,390,430];
-  const expected=[236,270,285,300,330];
+  const expected=[230,248,255,260,260];
   for(const fareCount of [1,2,5]) assert.deepEqual(widths.map((width)=>nativeLoadedFareCardWidth(width,fareCount)),expected);
   widths.forEach((width,index)=>{
     const values=[1,2,5].map((count)=>nativeLoadedFareCardWidth(width,count));
     assert.equal(new Set(values).size,1,`${width}px card width must not depend on fare count`);
     assert.equal(values[0],expected[index]);
   });
+  assert.equal(nativeLoadedFareCardWidth(1000),260,"wide phones must respect the compact maximum");
   assert.match(fareRail(),/details\.fareChoices\.length>1\?s\.faresMultiple:s\.faresSingle/);
 });
 test("fare cards and disclosures keep independent natural heights",()=>{const rail=fareRail();const styles=between("small:","fareInfoDeck:");const fareCard=between("fareCard:","fareCardSelected:");assert.match(styles,/fares:\{alignItems:"flex-start",gap:10\}/);assert.doesNotMatch(fareCard,/(?:minHeight|height):/);assert.doesNotMatch(fareCard,/flex(?:Grow)?:/);assert.match(rail,/details\.fareChoices\.map\(\(choice\)=>/);assert.match(rail,/expandedFareBenefit===benefitKey/);assert.match(rail,/setExpandedFareBenefit\(\(current\)=>current===benefitKey\?null:benefitKey\)/);});
 
-test("fare hierarchy is compact and fare-card breadth remains unchanged",()=>{const rail=fareRail();const styles=between("fareSectionTitle:","fareInfoDeck:");assert.match(styles,/fareCard:\{borderRadius:15,paddingHorizontal:12,paddingVertical:10,gap:5\}/);assert.doesNotMatch(styles,/fareCard:\{[^}]*minHeight|fareCard:\{[^}]*marginHorizontal/);assert.match(styles,/fareSelectionControl:\{alignSelf:"stretch",alignItems:"center",gap:1\}/);assert.match(styles,/fareBenefits:\{gap:4\}/);assert.match(styles,/fareIdentity:\{flexDirection:"row",alignItems:"center",justifyContent:"center",gap:6\}/);assert.match(styles,/farePrice:\{maxWidth:"100%"[^}]*textAlign:"center"\}/);assert.match(styles,/fareBenefitHeading:\{alignSelf:"flex-start"[^}]*gap:4\}/);assert.match(styles,/fareBenefitChevronExpanded:\{transform:\[\{rotate:"180deg"\}\]\}/);assert.match(rail,/width:loadedFareCardWidth/);});
+test("fare hierarchy centers a left-aligned, wrapping benefit block",()=>{const rail=fareRail();const styles=between("fareSectionTitle:","fareInfoDeck:");assert.match(styles,/fareCard:\{borderRadius:15,paddingHorizontal:12,paddingVertical:10,gap:5\}/);assert.doesNotMatch(styles,/fareCard:\{[^}]*minHeight|fareCard:\{[^}]*marginHorizontal/);assert.match(styles,/fareSelectionControl:\{alignSelf:"stretch",alignItems:"center",gap:1\}/);assert.match(styles,/fareBenefits:\{alignSelf:"center",maxWidth:"100%",alignItems:"flex-start",gap:4\}/);assert.match(styles,/fareBenefitRow:\{maxWidth:"100%",flexDirection:"row",alignItems:"flex-start",gap:7\}/);assert.match(styles,/fareBenefitCopy:\{flexShrink:1,minWidth:0,gap:1\}/);assert.doesNotMatch(styles,/fareBenefitCopy:\{[^}]*flex:1/);assert.match(styles,/fareIdentity:\{flexDirection:"row",alignItems:"center",justifyContent:"center",gap:6\}/);assert.match(styles,/farePrice:\{maxWidth:"100%"[^}]*textAlign:"center"\}/);assert.match(styles,/fareBenefitHeading:\{alignSelf:"flex-start"[^}]*gap:4\}/);assert.doesNotMatch(styles,/fareBenefitRow:\{[^}]*justifyContent:"space-between"/);assert.match(styles,/fareBenefitTitle:\{flexShrink:1/);assert.match(styles,/fareBenefitChevronExpanded:\{transform:\[\{rotate:"180deg"\}\]\}/);assert.match(rail,/width:loadedFareCardWidth/);});
 
 test("empty compact terms do not mount a filler benefits section",()=>{const rail=fareRail();assert.match(rail,/\{fareTerms\.length\?<View style=\{s\.fareBenefits\}>/);assert.doesNotMatch(rail,/fareTerms\.length\?[^:]+:<View/);});
 

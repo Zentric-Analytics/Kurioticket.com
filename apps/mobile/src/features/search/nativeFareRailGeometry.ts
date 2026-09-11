@@ -1,12 +1,13 @@
 const loadedFareGap = 10;
 export const nativeFareRailHorizontalInset = 36;
-const nextFareReveal = 54;
-const minimumLoadedFareWidth = 236;
-const maximumLoadedFareWidth = 330;
+const compactFareViewportBaseline = 320;
+const compactFareGrowthRate = 0.45;
+const minimumLoadedFareWidth = 230;
+const maximumLoadedFareWidth = 260;
 
 export const nativeLoadedFareCardWidth = (windowWidth: number, _fareCount?: number) => {
-  const availableWidth = windowWidth - nativeFareRailHorizontalInset;
-  return Math.min(maximumLoadedFareWidth, Math.max(minimumLoadedFareWidth, availableWidth - nextFareReveal));
+  const responsiveWidth = minimumLoadedFareWidth + (windowWidth - compactFareViewportBaseline) * compactFareGrowthRate;
+  return Math.min(maximumLoadedFareWidth, Math.max(minimumLoadedFareWidth, Math.round(responsiveWidth)));
 };
 
 export const nativeInitialFareRailOffset = (selectedIndex: number, cardWidth: number, viewportWidth: number, fareCount: number) => {
