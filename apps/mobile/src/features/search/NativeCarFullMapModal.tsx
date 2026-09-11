@@ -18,13 +18,13 @@ export type NativeCarMapTheme = {
 type NativeCarFullMapModalProps = {
   visible: boolean;
   pickupLocation: string;
-  trustedPickupCoordinates: Pick<NativeAppleCarMapProps, "latitude" | "longitude"> | null;
+  trustedMapCoordinates: Pick<NativeAppleCarMapProps, "latitude" | "longitude"> | null;
   embedUrl: string | null;
   theme: NativeCarMapTheme;
   onClose: () => void;
 };
 
-export function NativeCarFullMapModal({ visible, pickupLocation, trustedPickupCoordinates, embedUrl, theme, onClose }: NativeCarFullMapModalProps) {
+export function NativeCarFullMapModal({ visible, pickupLocation, trustedMapCoordinates, embedUrl, theme, onClose }: NativeCarFullMapModalProps) {
   const [fullMapFailed, setFullMapFailed] = useState(false);
   const [fullMapAttempt, setFullMapAttempt] = useState(0);
   const retryFullMap = () => {
@@ -45,11 +45,16 @@ export function NativeCarFullMapModal({ visible, pickupLocation, trustedPickupCo
           <View accessible={false} style={styles.fullMapHeaderSide} />
         </View>
         <View style={styles.fullMapBody}>
-          {Platform.OS === "ios" && trustedPickupCoordinates
-            ? visible && <NativeAppleCarMap key={`${pickupLocation}:${trustedPickupCoordinates.latitude}:${trustedPickupCoordinates.longitude}`} {...trustedPickupCoordinates} locationLabel={pickupLocation} interactive />
+          {Platform.OS === "ios"
+            ? trustedMapCoordinates
+              ? visible && <NativeAppleCarMap key={`${pickupLocation}:${trustedMapCoordinates.latitude}:${trustedMapCoordinates.longitude}`} {...trustedMapCoordinates} locationLabel={pickupLocation} interactive />
+              : <View style={[styles.fullMapFallback, { backgroundColor: theme.surface }]}>
+                <MapPin accessible={false} size={28} color={theme.icon} />
+                <Text style={[styles.fullMapUnavailable, { color: theme.textPrimary }]}>Map unavailable</Text>
+              </View>
             : embedUrl && !fullMapFailed
-            ? <WebView key={`${pickupLocation}:full-map:${fullMapAttempt}`} source={{ uri: embedUrl }} onError={() => setFullMapFailed(true)} onHttpError={() => setFullMapFailed(true)} style={styles.fullMapWebView} />
-            : <View style={[styles.fullMapFallback, { backgroundColor: theme.surface }]}>
+              ? <WebView key={`${pickupLocation}:full-map:${fullMapAttempt}`} source={{ uri: embedUrl }} onError={() => setFullMapFailed(true)} onHttpError={() => setFullMapFailed(true)} style={styles.fullMapWebView} />
+              : <View style={[styles.fullMapFallback, { backgroundColor: theme.surface }]}>
               <MapPin accessible={false} size={28} color={theme.icon} />
               <Text style={[styles.fullMapUnavailable, { color: theme.textPrimary }]}>Map unavailable</Text>
               {embedUrl ? <Pressable accessibilityRole="button" accessibilityLabel="Try loading map again" onPress={retryFullMap} style={styles.fullMapRetry}><Text style={styles.fullMapRetryText}>Try again</Text></Pressable> : null}
