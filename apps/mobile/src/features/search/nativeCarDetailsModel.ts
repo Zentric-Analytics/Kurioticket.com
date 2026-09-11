@@ -1,4 +1,33 @@
 import type { CarResult } from "../../api/travelApi";
+import { airports, normalizeAirportSearchText } from "../../../../../src/shared/airports";
+
+export type NativeCarTrustedPickupCoordinates = { latitude: number; longitude: number };
+
+export function nativeCarTrustedPickupCoordinates(location: string): NativeCarTrustedPickupCoordinates | null {
+  const identity = normalizeAirportSearchText(location);
+  if (!identity) return null;
+
+  const matches = airports.filter((airport) => {
+    const representations = [
+      airport.code,
+      airport.airport,
+      `${airport.airport} (${airport.code})`,
+      `${airport.city} ${airport.airport}`,
+    ].map(normalizeAirportSearchText);
+    return representations.includes(identity);
+  });
+  if (matches.length !== 1) return null;
+
+  const airport = matches[0];
+  const latitude = airport.latitude ?? airport.lat;
+  const longitude = airport.longitude ?? airport.lon;
+  if (
+    typeof latitude !== "number" || typeof longitude !== "number" ||
+    !Number.isFinite(latitude) || !Number.isFinite(longitude) ||
+    latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180
+  ) return null;
+  return { latitude, longitude };
+}
 
 export function nativeCarDetailDate(value: string): string {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
