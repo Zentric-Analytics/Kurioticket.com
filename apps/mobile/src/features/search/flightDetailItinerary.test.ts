@@ -126,6 +126,6 @@ test("itinerary breadth expands from 18dp to 8dp side gaps without changing fare
   assert.match(source,/content:\{paddingHorizontal:18,paddingTop:5,gap:14\}/);
   assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-10\}/);
   assert.match(source,/itineraryCard:\{borderWidth:1,borderRadius:15,padding:15/);
-  assert.match(source,/fareCard:\{borderRadius:15,padding:12,gap:7\}/);
+  assert.match(source,/fareCard:\{borderRadius:15,paddingHorizontal:12,paddingVertical:10,gap:5\}/);
   assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal/);
 });

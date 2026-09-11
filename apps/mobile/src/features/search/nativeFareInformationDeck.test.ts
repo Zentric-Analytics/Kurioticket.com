@@ -128,7 +128,7 @@ test("deck widens to 8dp side gaps while generic and Pick-your-fare cards remain
   assert.doesNotMatch(deckStyles,/elevation|shadow/);
   assert.match(source,/content:\{paddingHorizontal:18,paddingTop:5,gap:14\}/);
   assert.match(source,/card:\{borderWidth:1,borderRadius:14,padding:14,gap:7\}/);
-  assert.match(source,/fareCard:\{borderRadius:15,padding:12,gap:7\}/);
+  assert.match(source,/fareCard:\{borderRadius:15,paddingHorizontal:12,paddingVertical:10,gap:5\}/);
   assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal/);
   assert.match(source,/fareCardSelected:\{borderWidth:1\.5\}/);
 });
