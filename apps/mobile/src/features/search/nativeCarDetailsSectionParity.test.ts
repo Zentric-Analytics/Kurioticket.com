@@ -152,6 +152,7 @@ test("Location uses search truth and a dedicated text-only timeline", () => {
   assert.ok(style("mapCard").includes("marginTop:16"));
   assert.ok(style("mapCard").includes("borderRadius:14"));
   assert.ok(style("directions").includes("minHeight:44"));
+  assert.match(native, /Platform\.OS!=="ios"&&directions\?<Pressable accessibilityRole="link"/);
 });
 
 test("directions normalize the resolved destination without a mobile credential", () => {

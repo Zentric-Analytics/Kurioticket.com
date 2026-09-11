@@ -24,16 +24,16 @@ test("the non-iOS component cannot introduce a native Android map", () => {
   assert.match(fallback, /return null/);
 });
 
-test("Cars Details makes native and WebView maps noninteractive previews with one Pressable owner", () => {
-  assert.match(details, /nativeCarTrustedPickupCoordinates\(pickupLocation\)/);
+test("Cars Details gives iOS a complete Apple-or-native-fallback preview branch", () => {
+  assert.match(details, /nativeCarTrustedMapCoordinates\(pickupLocation\)/);
   assert.match(details, /accessibilityRole="button" accessibilityLabel=\{`Open full map for \$\{pickupLocation\}`\} accessibilityHint="Opens an interactive map inside Kurioticket" onPress=\{\(\)=>setFullMapOpen\(true\)\}/);
   assert.match(details, /<View pointerEvents="none" accessible=\{false\} importantForAccessibility="no-hide-descendants" style=\{s\.mapPreviewContent\}>/);
-  assert.match(details, /Platform\.OS==="ios"&&trustedPickupCoordinates\?<NativeAppleCarMap \{\.\.\.trustedPickupCoordinates\} locationLabel=\{pickupLocation\}\/>/);
-  assert.match(details, /:embed&&!mapPreviewFailed\?<WebView[^>]*scrollEnabled=\{false\}/);
-  assert.doesNotMatch(details, /Platform\.OS!=="ios"&&embed/);
+  assert.match(details, /Platform\.OS==="ios"\?\(trustedMapCoordinates\?<NativeAppleCarMap \{\.\.\.trustedMapCoordinates\} locationLabel=\{pickupLocation\}\/>(?:[\s\S]*?)Map preview unavailable(?:[\s\S]*?)\):embed&&!mapPreviewFailed\?<WebView[^>]*scrollEnabled=\{false\}/);
+  assert.doesNotMatch(details, /Platform\.OS==="ios"&&trustedMapCoordinates\?<NativeAppleCarMap/);
+  assert.match(details, /Platform\.OS!=="ios"&&directions\?<Pressable accessibilityRole="link"/);
   assert.match(details, /nativeCarLocationEmbedUrl\(api\.baseUrl,result\.id,search\)/);
   assert.match(details, /getApiBaseUrl\(Platform\.OS,__DEV__\)/);
-  assert.match(details, /<NativeCarFullMapModal visible=\{fullMapOpen\} pickupLocation=\{pickupLocation\} trustedPickupCoordinates=\{trustedPickupCoordinates\} embedUrl=\{embed\}/);
+  assert.match(details, /<NativeCarFullMapModal visible=\{fullMapOpen\} pickupLocation=\{pickupLocation\} trustedMapCoordinates=\{trustedMapCoordinates\} embedUrl=\{embed\}/);
 });
 
 test("the Cars full-screen modal keeps truthful provider routing and local WebView retry", () => {
@@ -44,9 +44,10 @@ test("the Cars full-screen modal keeps truthful provider routing and local WebVi
   assert.match(fullMap, /edges=\{\["top", "bottom", "left", "right"\]\}/);
   assert.match(fullMap, /accessibilityLabel="Back to car details"/);
   assert.match(fullMap, /<Text accessibilityRole="header" numberOfLines=\{1\}[^>]*>Map<\/Text>/);
-  assert.match(fullMap, /Platform\.OS === "ios" && trustedPickupCoordinates/);
+  assert.match(fullMap, /Platform\.OS === "ios"\s*\? trustedMapCoordinates/);
   assert.match(fullMap, /locationLabel=\{pickupLocation\} interactive/);
   assert.match(fullMap, /: embedUrl && !fullMapFailed/);
+  assert.doesNotMatch(fullMap, /Platform\.OS === "ios" && trustedMapCoordinates/);
   assert.match(fullMap, /setFullMapFailed\(false\)/);
   assert.match(fullMap, /setFullMapAttempt\(\(attempt\) => attempt \+ 1\)/);
   assert.doesNotMatch(fullMap, /pointerEvents="none"|Linking|router\.|PROVIDER_GOOGLE|provider=|expo-location|geolocation/i);
