@@ -72,8 +72,10 @@ test("airport names retain provider fallback order and terminals remain conditio
   assert.match(itinerary,/point\?\.name\?\?point\?\.cityName\?\?point\?\.iataCode\?\?fallback/);
   assert.match(itinerary,/departurePoint\?\.terminal\?<Text[^>]*>Terminal \{departurePoint\.terminal\}/);
   assert.match(itinerary,/arrivalPoint\?\.terminal\?<Text[^>]*>Terminal \{arrivalPoint\.terminal\}/);
-  assert.match(source,/airportName:\{fontSize:12,lineHeight:17,fontWeight:"500"\}/);
+  assert.match(source,/airportName:\{fontSize:12,lineHeight:17,fontWeight:"600"\}/);
   assert.match(source,/terminal:\{fontSize:11,lineHeight:16,fontWeight:"400"\}/);
+  assert.equal(itinerary.match(/s\.airportName[^>]*color:theme\.textPrimary/g)?.length,2);
+  assert.equal(itinerary.match(/s\.terminal[^>]*color:theme\.textSecondary/g)?.length,2);
 });
 
 test("each layover has a separate band with provider city and safe airport-only fallback",()=>{
@@ -95,6 +97,17 @@ test("Flight info includes only provider-backed segment distance, aircraft, and 
   assert.match(itinerary,/>Time zone</);
   assert.match(itinerary,/>Departure time zone</);
   assert.match(itinerary,/>Arrival time zone</);
+});
+
+test("Flight info preserves its compact scale while labels lead readable regular values without icons",()=>{
+  assert.match(source,/technicalHeading:\{fontSize:11,lineHeight:15,fontWeight:"700"/);
+  assert.match(source,/technicalLabel:\{[^}]*fontSize:11,lineHeight:16,fontWeight:"600"\}/);
+  assert.match(source,/technicalValue:\{[^}]*fontSize:11,lineHeight:16,fontWeight:"400"/);
+  assert.match(itinerary,/s\.technicalHeading,\{color:theme\.textPrimary\}/);
+  assert.ok((itinerary.match(/s\.technicalLabel,\{color:theme\.textPrimary\}/g)?.length??0)>=3);
+  assert.ok((itinerary.match(/s\.technicalValue,\{color:theme\.textSecondary\}/g)?.length??0)>=3);
+  const flightInfo=itinerary.slice(itinerary.indexOf('<View style={s.technicalInformation}>'),itinerary.indexOf('</>:null}',itinerary.indexOf('<View style={s.technicalInformation}>')));
+  assert.doesNotMatch(flightInfo,/<(?:FlowIcon|AirlineLogo)|\bicon\b/i);
 });
 
 test("the complete Flight info divider and section disappear without provider facts",()=>{
