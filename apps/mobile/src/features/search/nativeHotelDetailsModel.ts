@@ -67,5 +67,9 @@ export function reconcileNativeHotelOfferSelection(
   selectedId: NativeHotelOffer["id"] | null,
   offers: NativeHotelOffer[],
 ) {
+  // null means the user has not explicitly chosen an offer. Keep it null so the
+  // caller's first-offer fallback can follow enrichment (for example, switching
+  // from provider-only to the preferred native room flow when rooms arrive).
+  if (selectedId === null) return null;
   return offers.some(({ id }) => id === selectedId) ? selectedId : offers[0]?.id ?? null;
 }
