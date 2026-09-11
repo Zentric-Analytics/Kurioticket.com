@@ -54,8 +54,10 @@ test("Hotel provider URL selects the first safe canonical candidate", () => {
   assert.equal(nativeHotelProviderUrl("http://partner.example/hotel"), "http://partner.example/hotel");
 });
 
-test("Hotel offer selection stays valid and deterministically reconciles enrichment", () => {
+test("Hotel offer selection preserves explicit choices without freezing automatic enrichment", () => {
   const both = nativeHotelOffers(true, true);
+  assert.equal(reconcileNativeHotelOfferSelection(null, nativeHotelOffers(false, true)), null);
+  assert.equal(reconcileNativeHotelOfferSelection(null, both), null);
   assert.equal(reconcileNativeHotelOfferSelection("provider", both), "provider");
   assert.equal(reconcileNativeHotelOfferSelection("provider", nativeHotelOffers(true, false)), "internal-rooms");
   assert.equal(reconcileNativeHotelOfferSelection("internal-rooms", nativeHotelOffers(false, true)), "provider");
