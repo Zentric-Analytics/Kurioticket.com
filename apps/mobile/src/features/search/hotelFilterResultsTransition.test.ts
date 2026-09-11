@@ -1,17 +1,18 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { NATIVE_FILTER_RESULTS_TRANSITION_MS, NATIVE_FILTER_SELECTION_FEEDBACK_MS } from "./filterResultsTransition";
+import { NATIVE_FILTER_RESULTS_TRANSITION_MS } from "./filterResultsTransition";
 
 const full = readFileSync("src/features/search/HotelFilterSheet.tsx", "utf8");
 const quick = readFileSync("src/features/search/HotelResultsQuickFilterSheet.tsx", "utf8");
 const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
 
-test("Hotel filter feedback uses the shared native timings", () => {
-  assert.equal(NATIVE_FILTER_SELECTION_FEEDBACK_MS, 400);
-  assert.equal(NATIVE_FILTER_RESULTS_TRANSITION_MS, 700);
-  assert.match(full, /filterUpdating.*markUpdating/s);
-  assert.match(quick, /filterUpdating.*Updating filters…/s);
+test("Hotel filter controls no longer block local draft changes behind timed feedback", () => {
+  for (const source of [full, quick]) {
+    assert.doesNotMatch(source, /filterUpdating|markUpdating|NATIVE_FILTER_SELECTION_FEEDBACK_MS|Updating filters…|ActivityIndicator/);
+  }
+  assert.match(full, /disabled=\{matchingCount===0\}/);
+  assert.match(quick, /accessibilityRole="button" onPress=\{apply\}/);
 });
 
 test("Hotel quick filters retain functional draft apply semantics", () => {
@@ -20,7 +21,8 @@ test("Hotel quick filters retain functional draft apply semantics", () => {
   assert.match(quick, /case "roomTypes":return/);
 });
 
-test("Hotel result transitions are local, accessible, and reuse skeletons", () => {
+test("Hotel result transition remains local while the parent transition is still isolated from network work", () => {
+  assert.equal(NATIVE_FILTER_RESULTS_TRANSITION_MS, 700);
   const helper = screen.match(/const startHotelResultsTransition[\s\S]*?\n  };/)?.[0] ?? "";
   assert.match(screen, /hotelFilterSessionDirtyRef/);
   assert.match(screen, /accessibilityLabel="Updating hotel results"/);
