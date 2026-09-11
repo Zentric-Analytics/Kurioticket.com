@@ -19,7 +19,7 @@ test("the route transitions directly to every authoritative leg card without an 
   assert.doesNotMatch(source,/>Flight itinerary<\/Text>/);
   assert.match(source,/<View style=\{s\.itineraryStack\}>\{\(offer\.legs\?\.length\?offer\.legs:\[\]\)\.map\(\(leg,index\)=><Itinerary/);
   assert.doesNotMatch(source,/itinerarySectionLabel:/);
-  assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-6\}/);
+  assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-10\}/);
   assert.match(itinerary,/leg\.direction==="outbound"\?"Outbound":leg\.direction==="return"\?"Return":`Flight \$\{leg\.legIndex\?\?index\+1\}`/);
   assert.doesNotMatch(source,/Edit search/);
 });
@@ -122,10 +122,10 @@ test("information progresses from identity through journey and airports to conne
   assert.deepEqual([...positions].sort((a,b)=>a-b),positions);
 });
 
-test("itinerary breadth expands from 18dp to 12dp side gaps without changing fare-card geometry",()=>{
+test("itinerary breadth expands from 18dp to 8dp side gaps without changing fare-card geometry",()=>{
   assert.match(source,/content:\{paddingHorizontal:18,paddingTop:5,gap:14\}/);
-  assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-6\}/);
+  assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-10\}/);
   assert.match(source,/itineraryCard:\{borderWidth:1,borderRadius:15,padding:15/);
-  assert.match(source,/fareCard:\{borderRadius:15,padding:12,gap:8\}/);
-  assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal:-6/);
+  assert.match(source,/fareCard:\{borderRadius:15,padding:12,gap:7\}/);
+  assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal/);
 });
