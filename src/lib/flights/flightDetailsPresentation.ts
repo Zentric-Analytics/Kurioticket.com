@@ -45,7 +45,7 @@ export function canUseOfferAirlineLogo(
   );
 }
 
-export function compactFareTerms(terms: FlightFareTerm[], tripType: TripType) {
+export function compactFareTerms(terms: FlightFareTerm[], tripType: TripType, maxRows = 3) {
   const rows = terms
     .flatMap((term, index) =>
       buildFareDisplayRows(term, tripType).map((text, rowIndex) => ({
@@ -72,7 +72,7 @@ export function compactFareTerms(terms: FlightFareTerm[], tripType: TripType) {
         left.rowIndex - right.rowIndex
       );
     })
-    .slice(0, 3)
+    .slice(0, maxRows)
     .sort((left, right) => {
       const priorityDifference =
         fareDisplayRowPriority(left.term, left.text) -
