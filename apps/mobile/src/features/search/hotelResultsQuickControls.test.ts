@@ -26,15 +26,17 @@ test("Hotel rail keeps Filter Price Stars Facilities Room & bed without Flight b
   assert.doesNotMatch(rail, /hotelSortLabel|Cheapest|Airlines|Stops|Airports/);
 });
 
-test("Hotel controls mirror current Flight geometry and typography", () => {
-  const styles = screen.slice(screen.indexOf("const s0 = StyleSheet.create"));
-  assert.match(styles, /hotelFilterRail: \{ height: 48, flexGrow: 0 \}/);
-  assert.match(styles, /hotelFilterContent: \{ paddingHorizontal: 16, paddingBottom: 4, gap: 8, alignItems: "center", flexWrap: "nowrap" \}/);
-  assert.match(styles, /hotelShortcut: \{ height: 44, minHeight: 44,[^}]*gap: 6,[^}]*borderWidth: 1, borderRadius: 11, paddingHorizontal: 14 \}/);
-  assert.match(styles, /hotelShortcutLabel: \{ fontSize: 14, lineHeight: 18, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
-  assert.match(styles, /hotelShortcutCount: \{ minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 6/);
-  assert.match(styles, /hotelShortcutCountText: \{ fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
-  for (const contract of [/rail: \{ height: 48/, /control: \{[\s\S]*?height: 44,[\s\S]*?borderRadius: 11,[\s\S]*?paddingHorizontal: 14/, /label: \{[\s\S]*?fontSize: 14,[\s\S]*?lineHeight: 18/, /count: \{[\s\S]*?minWidth: 20,[\s\S]*?height: 20/]) assert.match(flight, contract);
+test("Hotel filter launcher stays outside the scrolling rail with compact accessible controls", () => {
+ const rail=screen.slice(screen.indexOf("const filterRail"),screen.indexOf("const resultContent"));
+ const hotel=rail.slice(rail.indexOf(") : ("));
+ assert.ok(hotel.indexOf('label="Filter"') < hotel.indexOf('<ScrollView horizontal'));
+ assert.match(screen,/hotelShortcut: \{ height: 44, minHeight: 44/);
+ assert.match(screen,/hotelFilterRail: \{ height: 48, flex: 1 \}/);
+ const summary=screen.slice(screen.indexOf("function HotelResultsSummaryRow"),screen.indexOf("function PriceAlert"));
+ assert.match(summary,/Sort: \{hotelSortLabel\(sort\)\}/);
+ assert.match(summary,/onPress=\{onSort\}/);
+ assert.match(screen,/sortHotelsForResults\([\s\S]*?hotelSort,/);
+ assert.match(screen,/\[hotelFilters, hotelSort, plan\.plan\?\.key, product\]/);
 });
 
 test("Hotel controls use Flight light tokens and semantic dark tokens", () => {
