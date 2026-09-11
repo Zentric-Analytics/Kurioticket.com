@@ -93,6 +93,25 @@ test("Cars use one truthful compact price alert before the summary and cards", (
   assert.match(hotels, /compactPriceAlertSwitchSlot: \{ minWidth: 51, minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
 });
 
+test("Cars Results gives handled child taps to its primary vertical scroll owner", () => {
+  const resultsScrollStart = cars.indexOf("<ScrollView ref={carScrollRef}");
+  assert.notEqual(resultsScrollStart, -1);
+  const resultsScrollOpeningTag = cars.slice(resultsScrollStart, cars.indexOf(">", resultsScrollStart) + 1);
+  for (const contract of [
+    /ref=\{carScrollRef\}/,
+    /alwaysBounceVertical=\{false\}/,
+    /bounces=\{false\}/,
+    /overScrollMode="never"/,
+    /keyboardShouldPersistTaps="handled"/,
+    /contentContainerStyle=/,
+  ]) assert.match(resultsScrollOpeningTag, contract);
+  assert.doesNotMatch(resultsScrollOpeningTag, /keyboardShouldPersistTaps=(?:"always"|"never"|\{(?:true|false)\})/);
+
+  const resultsScrollContent = cars.slice(resultsScrollOpeningTag.length + resultsScrollStart, cars.indexOf("</ScrollView>", resultsScrollStart));
+  assert.ok(resultsScrollContent.indexOf("<NativeCarPriceAlert") < resultsScrollContent.indexOf("<View accessibilityLabel=\"Car results summary\""));
+  assert.ok(resultsScrollContent.indexOf("<View accessibilityLabel=\"Car results summary\"") < resultsScrollContent.indexOf("<CarResultCard"));
+});
+
 test("Cars Price Alert keeps focus reconciliation silent while mutation progress remains visible", () => {
   assert.match(carAlert, /const reconcile = useCallback\(async \(\) => \{[^\n]*setLoading\(true\)/);
   assert.match(carAlert, /useFocusEffect\(useCallback\(\(\) => \{ void reconcile\(\); \}, \[reconcile\]\)\)/);
