@@ -877,7 +877,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     <ScrollView horizontal style={s0.hotelFilterRail} showsHorizontalScrollIndicator={false} alwaysBounceHorizontal={false} bounces={false} overScrollMode="never" contentContainerStyle={s0.hotelFilterContent}>
             <>
               <HotelResultsShortcut label="Filter" accessibilityLabel="Filters" count={activeHotelFilters || undefined} icon showChevron={false} expanded={hotelFilterOpen} onPress={() => openHotelFilters("all")} />
-              <HotelResultsShortcut label={hotelSort === defaultHotelSort ? "Sort" : hotelSortLabel(hotelSort)} accessibilityLabel={`Sort, ${hotelSortLabel(hotelSort)}`} expanded={hotelQuickFilter === "sort"} onPress={() => openHotelQuickFilter("sort")} />
               {hotelOptions.price ? <HotelResultsShortcut label="Price" count={((hotelFilters.minimumPrice !== null && hotelFilters.minimumPrice > hotelOptions.price.minimum) || (hotelFilters.maximumPrice !== null && hotelFilters.maximumPrice < hotelOptions.price.maximum)) ? 1 : undefined} expanded={hotelQuickFilter === "price"} onPress={() => openHotelQuickFilter("price")} /> : null}
               <HotelResultsShortcut label="Stars" count={hotelFilters.starRatings.length || undefined} expanded={hotelQuickFilter === "stars"} onPress={() => openHotelQuickFilter("stars")} />
               <HotelResultsShortcut label="Facilities" count={hotelFilters.facilities.length || undefined} expanded={hotelQuickFilter === "facilities"} onPress={() => openHotelQuickFilter("facilities")} />
@@ -919,6 +918,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   {plan.plan ? <PriceAlert product="hotel" plan={plan.plan} hotelResults={results as HotelResult[]} available={availability.priceAlerts} compact /> : null}
                   <HotelResultsSummaryRow
                     count={sorted.length}
+                    sortLabel={hotelSortLabel(hotelSort)}
+                    expanded={hotelQuickFilter === "sort"}
+                    onSort={() => openHotelQuickFilter("sort")}
                     onLayout={({ nativeEvent }) => {
                       hotelResultsSummaryOffset.current = nativeEvent.layout.y;
                       updateHotelResultsOffset();
@@ -1474,7 +1476,10 @@ function HotelCard({
   const { theme } = useAppTheme();
   const canonical = useCanonicalSaved();
   const saved = canonical.items.some(item => item.type === "hotel" && ((item.payload as Record<string, unknown> | undefined)?.result as { id?: string } | undefined)?.id === result.id);
-  const compact = useWindowDimensions().width < 430;
+  const { width: viewportWidth } = useWindowDimensions();
+  const compact = viewportWidth < 430;
+  // The supplied reference card measures about 358px tall by 511px wide.
+  const compactCardMinHeight = Math.round((viewportWidth - 32) * 0.7);
   const gallery = useMemo(() => [...new Set([...(result.imageUrls ?? []), result.imageUrl].filter((uri): uri is string => typeof uri === "string" && /^https?:\/\//i.test(uri)))], [result.imageUrl, result.imageUrls]);
   const [failedImages,setFailedImages]=useState<string[]>([]);
   const usableGallery=gallery.filter(uri=>!failedImages.includes(uri));
@@ -1494,7 +1499,7 @@ function HotelCard({
     void Share.share({ message }).catch(() => undefined);
   };
   return (
-    <View style={[s0.hotelCard, { backgroundColor: theme.surface, borderColor: theme.dark ? theme.border : "#D8E1EC", shadowColor: theme.dark ? "#000000" : "#18305B" }]}>
+    <View style={[s0.hotelCard, { backgroundColor: theme.surface, borderColor: theme.dark ? theme.border : "#D8E1EC", shadowColor: theme.dark ? "#000000" : "#18305B" }, compact && { minHeight: compactCardMinHeight }]}>
       <View style={[s0.hotelImageWrap, compact && s0.hotelImageWrapCompact]}>
         {usableGallery[activeImage] ? (
           <Image source={{ uri: usableGallery[activeImage] }} onError={()=>setFailedImages(values=>[...values,usableGallery[activeImage]])} style={s0.hotelImage} />
@@ -1581,7 +1586,8 @@ function HotelCard({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`View hotel for ${result.name}`}
-            style={({ pressed }) => [s0.hotelDealButton, pressed && s0.hotelDealButtonPressed]}
+            hitSlop={4}
+            style={({ pressed }) => [s0.hotelDealButton, compact && s0.hotelDealButtonCompact, pressed && s0.hotelDealButtonPressed]}
             onPress={() =>
               router.push({
                 pathname: "/hotel-details",
@@ -1684,16 +1690,38 @@ function FlightResultsSummaryRow({ count }: { count: number }) {
 
 const hotelResultCountLabel = (count: number) => `${count} ${count === 1 ? "Result" : "Results"} found`;
 
-function HotelResultsSummaryRow({ count, onLayout }: {
+function HotelResultsSummaryRow({ count, sortLabel, expanded, onSort, onLayout }: {
   count: number;
+  sortLabel: string;
+  expanded: boolean;
+  onSort: () => void;
   onLayout: (event: { nativeEvent: { layout: { y: number } } }) => void;
 }) {
   const { theme } = useAppTheme();
+  const border = theme.dark ? theme.border : "#D8E1EC";
+  const chevron = theme.dark ? theme.textSecondary : "#64748B";
   return (
     <View accessibilityLabel="Hotel results summary" onLayout={onLayout} style={s0.hotelResultsSummaryRow}>
-      <View style={s0.flightResultsCountColumn}>
+      <View style={s0.hotelResultsCountColumn}>
         <Text accessibilityRole="header" style={[s0.flightResultCount, { color: theme.textPrimary }]}>{hotelResultCountLabel(count)}</Text>
       </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Sort, ${sortLabel}`}
+        accessibilityState={{ expanded }}
+        hitSlop={4}
+        onPress={onSort}
+        style={({ pressed }) => [
+          s0.hotelResultsSortButton,
+          {
+            borderColor: border,
+            backgroundColor: pressed && !theme.dark ? "#F8FAFC" : theme.surface,
+          },
+        ]}
+      >
+        <Text numberOfLines={1} style={[s0.hotelResultsSortText, { color: theme.textPrimary }]}>Sort: {sortLabel}</Text>
+        <ChevronDown accessible={false} size={13} strokeWidth={1.9} color={chevron} style={expanded ? s0.hotelShortcutChevronExpanded : undefined} />
+      </Pressable>
     </View>
   );
 }
@@ -1802,7 +1830,7 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   if (product !== "hotel" || !plan) return null;
   if (!activePresentation.enabled) return null;
   const toggleDisabled = pending || !hotelAlertKnown || unavailable;
-  return <View accessibilityLabel={message("hotelAlertTitle")} style={[s0.compactPriceAlert, { backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}><Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/><View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightAlertCompactTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text></View><View style={s0.compactPriceAlertSwitchSlot}>{pending ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent}/> : null}{/* Native UISwitch artwork sits high in its iOS layout box; offset its compact rendering to optically align with the Bell and title. */}<Switch style={Platform.OS === "ios" ? s0.compactPriceAlertSwitchIos : undefined} accessibilityRole="switch" accessibilityLabel="Track this stay price" accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending }} disabled={toggleDisabled} value={isTracking} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"} ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}/></View>{targetOpen ? <Modal visible transparent animationType="none" onRequestClose={() => { if (!pending) closeTargetSheet(); }} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel={message("hotelAlertTitle")}><View style={s0.hotelAlertSheetHeader}><Text accessibilityRole="header" style={[s0.flightAlertTitle, s0.hotelAlertSheetTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Pressable accessibilityRole="button" accessibilityLabel="Close price alert" disabled={pending} onPressIn={closeTargetSheet} onPress={closeTargetSheet} style={({ pressed }) => [s0.hotelAlertSheetClose, pressed && s0.flightHeaderControlPressed]}><X accessible={false} size={22} color={theme.icon}/></Pressable></View><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>{message("targetTotal")} ({currency})</Text><TextInput autoFocus accessibilityLabel={`${message("targetTotal")} ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text> : null}<Button label={pending ? message("creating") : message("createAlert")} onPress={() => void createAlert()} /></View></KeyboardAvoidingView></Modal> : null}</View>;
+  return <View accessibilityLabel={message("hotelAlertTitle")} style={[s0.compactPriceAlert, s0.hotelCompactPriceAlert, { backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}><Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/><View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightAlertCompactTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text></View><View style={s0.compactPriceAlertSwitchSlot}>{pending ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent}/> : null}{/* Native UISwitch artwork sits high in its iOS layout box; offset its compact rendering to optically align with the Bell and title. */}<Switch style={Platform.OS === "ios" ? s0.compactPriceAlertSwitchIos : undefined} accessibilityRole="switch" accessibilityLabel="Track this stay price" accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending }} disabled={toggleDisabled} value={isTracking} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"} ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}/></View>{targetOpen ? <Modal visible transparent animationType="none" onRequestClose={() => { if (!pending) closeTargetSheet(); }} accessibilityViewIsModal><KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel={message("hotelAlertTitle")}><View style={s0.hotelAlertSheetHeader}><Text accessibilityRole="header" style={[s0.flightAlertTitle, s0.hotelAlertSheetTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text><Pressable accessibilityRole="button" accessibilityLabel="Close price alert" disabled={pending} onPressIn={closeTargetSheet} onPress={closeTargetSheet} style={({ pressed }) => [s0.hotelAlertSheetClose, pressed && s0.flightHeaderControlPressed]}><X accessible={false} size={22} color={theme.icon}/></Pressable></View><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>{message("targetTotal")} ({currency})</Text><TextInput autoFocus accessibilityLabel={`${message("targetTotal")} ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" style={s0.alertError}>{targetError}</Text> : null}<Button label={pending ? message("creating") : message("createAlert")} onPress={() => void createAlert()} /></View></KeyboardAvoidingView></Modal> : null}</View>;
 }
 export function BottomNav({ flightResults = false }: { flightResults?: boolean } = {}) {
   const { theme } = useAppTheme();
@@ -1841,7 +1869,7 @@ const s0 = StyleSheet.create({
   hotelSummaryEditSlot: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   filterRail: { height: 44, flexGrow: 0 },
   hotelFilterRail: { height: 44, flexGrow: 0 },
-  hotelFilterContent: { paddingLeft: 8, paddingRight: 16, gap: 6, alignItems: "center", flexWrap: "nowrap" },
+  hotelFilterContent: { paddingLeft: 12, paddingRight: 16, gap: 6, alignItems: "center", flexWrap: "nowrap" },
   hotelFilterSectionHeader: { paddingBottom: 12 },
   flightFilterSectionHeader: { paddingTop: 8 },
   resultsScroll: { flex: 1 },
@@ -1851,7 +1879,7 @@ const s0 = StyleSheet.create({
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
   filters: { paddingHorizontal: 14, paddingVertical: 3, gap: 8, alignItems: "center" },
   hotelShortcutTouchTarget: { minWidth: 44, minHeight: 44, justifyContent: "center" },
-  hotelShortcut: { height: 36, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, borderWidth: 1, borderRadius: 9, paddingHorizontal: 8 },
+  hotelShortcut: { height: 40, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, borderWidth: 1, borderRadius: 10, paddingHorizontal: 8 },
   hotelShortcutLabel: { fontSize: 13, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
   hotelShortcutCount: { minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 6, alignItems: "center", justifyContent: "center" },
   hotelShortcutCountText: { fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts.semibold },
@@ -1881,7 +1909,7 @@ const s0 = StyleSheet.create({
   noChoices: { color: ui.muted, fontSize: 13, lineHeight: 19 },
   sheetActions: { gap: 9 },
   body: { paddingHorizontal: 18, paddingBottom: 92, gap: 14 },
-  hotelResultsBody: { paddingHorizontal: 14 },
+  hotelResultsBody: { paddingHorizontal: 16 },
   hotelResultsContent: { flexGrow: 1 },
   hotelFilterChips:{gap:8,paddingVertical:6},
   hotelFilterChip:{minHeight:44,borderRadius:18,borderWidth:1,paddingHorizontal:12,alignItems:"center",justifyContent:"center"},
@@ -1891,7 +1919,10 @@ const s0 = StyleSheet.create({
   flightResultsIntro: { paddingTop: 16, paddingBottom: 12 },
   notice: { backgroundColor: "#F2F6FF", color: ui.navy, padding: 10, borderRadius: 8 },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
-  hotelResultsSummaryRow: { gap: 8 },
+  hotelResultsSummaryRow: { minHeight: 38, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  hotelResultsCountColumn: { flex: 1, minWidth: 0, justifyContent: "center" },
+  hotelResultsSortButton: { minWidth: 116, height: 38, flexShrink: 0, borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5 },
+  hotelResultsSortText: { fontSize: 13, lineHeight: 17, fontWeight: "600", fontFamily: appFonts.semibold },
   hotelFilteredEmpty: { alignItems: "center", gap: 10, paddingVertical: 28 },
   hotelClearFilters: { color: ui.blue, fontSize: 15, fontWeight: "800" },
   flightResultsSummaryRow: { paddingHorizontal: 14, paddingTop: 6, paddingBottom: 10, alignItems: "stretch" },
@@ -1964,7 +1995,7 @@ const s0 = StyleSheet.create({
   overlayText: { color: "white", fontSize: 10, fontWeight: "700" },
   hotelBadge: { alignSelf: "flex-start" },
   hotelCopy: { position: "relative", flex: 1, minWidth: 0, padding: 12, gap: 4 },
-  hotelCopyCompact: { padding: 10 },
+  hotelCopyCompact: { padding: 8 },
   hotelTitleRow: { minWidth: 0, paddingRight: 80 },
   hotelActions: { position: "absolute", zIndex: 2, top: 4, right: 4, flexDirection: "row", flexShrink: 0, gap: 0 },
   hotelActionsCompact: { top: 2, right: 2 },
@@ -1984,6 +2015,7 @@ const s0 = StyleSheet.create({
   hotelNightlyPrice: { fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold, color: ui.navy, textAlign: "right", fontVariant: ["tabular-nums"] },
   hotelPerNight: { marginTop: 1, fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium, color: ui.muted, textAlign: "right" },
   hotelDealButton: { minHeight: 40, minWidth: 104, marginTop: 6, paddingHorizontal: 14, borderRadius: 8, backgroundColor: colors.blue, alignItems: "center", justifyContent: "center" },
+  hotelDealButtonCompact: { minHeight: 36, minWidth: 92, paddingHorizontal: 12 },
   hotelDealButtonPressed: { backgroundColor: "#003B91" },
   hotelDealButtonText: { fontSize: 14, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold, color: "white" },
   loadingState: { width: "100%", gap: 14 },
@@ -2040,6 +2072,7 @@ const s0 = StyleSheet.create({
   hotelSkeletonPrice: { width: 58, height: 16 },
   flightAlert: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 0, flexDirection: "row", alignItems: "center", gap: 4, overflow: "hidden" },
   compactPriceAlert: { width: "100%", minHeight: 52, borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 8 },
+  hotelCompactPriceAlert: { minHeight: 48, paddingVertical: 2 },
   flightAlertOuter: { marginHorizontal: 14 },
   flightAlertCopy: { flex: 1, minWidth: 0, gap: 1 },
   flightAlertCompactTitle: { fontSize: 12.5, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold },
