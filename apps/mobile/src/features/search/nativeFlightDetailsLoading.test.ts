@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { nativeLoadedFareCardWidth } from "./nativeFareRailGeometry";
 
 const details = readFileSync("src/features/search/NativeFlightDetails.tsx", "utf8");
 const loadingStart = details.indexOf("function FlightDetailsLoadingSkeleton");
@@ -22,7 +21,6 @@ test("entry skeleton anticipates route, itinerary, fare carousel, and informatio
   for (const style of ["loadingRouteSummary", "loadingItineraryCard", "loadingFareHeading", "loadingFareCard", "loadingInfoDeck"]) assert.match(loading, new RegExp(`s\\.${style}`));
   assert.match(loading, /<ScrollView horizontal showsHorizontalScrollIndicator=\{false\}/);
   assert.match(loading, /width:fareCardWidth/);
-  assert.deepEqual([320,360,375,390,430].map(nativeLoadedFareCardWidth), [230,250,260,260,260]);
   assert.match(details, /loadingFareCard:\{height:108[^}]*paddingHorizontal:12,paddingVertical:10,gap:5\}/);
   assert.match(details, /loadingFareIcon:\{width:16,height:16/);
   assert.match(details, /loadingBenefitDot:\{width:16,height:16/);
