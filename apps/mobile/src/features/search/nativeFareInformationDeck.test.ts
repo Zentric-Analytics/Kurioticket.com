@@ -131,3 +131,17 @@ test("deck widens to 12dp side gaps while generic and Pick-your-fare cards remai
   assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal:-6/);
   assert.match(source,/fareCardSelected:\{borderWidth:1\.5\}/);
 });
+
+test("fare information typography stays light while labels retain hierarchy",()=>{
+  const deckStyles=between("fareInfoDeck:", "notice:");
+  assert.match(deckStyles,/fareInfoTabText:\{fontSize:13,lineHeight:18,fontWeight:"500"\}/);
+  assert.match(deckStyles,/fareInfoTabTextActive:\{fontWeight:"600"\}/);
+  assert.match(deckStyles,/fareGroupLabel:\{fontSize:11,lineHeight:15,fontWeight:"600"/);
+  assert.match(deckStyles,/detailLabel:\{[^}]*fontWeight:"500"\}/);
+  assert.match(deckStyles,/detailValue:\{[^}]*fontWeight:"400"/);
+  assert.match(deckStyles,/conditionState:\{[^}]*fontWeight:"500"\}/);
+  assert.match(deckStyles,/conditionScope:\{[^}]*fontWeight:"400"\}/);
+  assert.match(deckStyles,/serviceDescription:\{[^}]*fontWeight:"500"\}/);
+  assert.match(deckStyles,/serviceMeta:\{[^}]*fontWeight:"400"\}/);
+  assert.doesNotMatch(deckStyles,/fareInfoTabTextActive:\{fontWeight:"700"\}|detailValue:\{[^}]*fontWeight:"600"\}|emptyTitle:\{[^}]*fontWeight:"700"\}/);
+});

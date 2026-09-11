@@ -72,7 +72,7 @@ test("airport names retain provider fallback order and terminals remain conditio
   assert.match(itinerary,/point\?\.name\?\?point\?\.cityName\?\?point\?\.iataCode\?\?fallback/);
   assert.match(itinerary,/departurePoint\?\.terminal\?<Text[^>]*>Terminal \{departurePoint\.terminal\}/);
   assert.match(itinerary,/arrivalPoint\?\.terminal\?<Text[^>]*>Terminal \{arrivalPoint\.terminal\}/);
-  assert.match(source,/airportName:\{fontSize:12,lineHeight:17,fontWeight:"600"\}/);
+  assert.match(source,/airportName:\{fontSize:12,lineHeight:17,fontWeight:"500"\}/);
   assert.match(source,/terminal:\{fontSize:11,lineHeight:16,fontWeight:"400"\}/);
   assert.equal(itinerary.match(/s\.airportName[^>]*color:theme\.textPrimary/g)?.length,2);
   assert.equal(itinerary.match(/s\.terminal[^>]*color:theme\.textSecondary/g)?.length,2);
@@ -100,8 +100,8 @@ test("Flight info includes only provider-backed segment distance, aircraft, and 
 });
 
 test("Flight info preserves its compact scale while labels lead readable regular values without icons",()=>{
-  assert.match(source,/technicalHeading:\{fontSize:11,lineHeight:15,fontWeight:"700"/);
-  assert.match(source,/technicalLabel:\{[^}]*fontSize:11,lineHeight:16,fontWeight:"600"\}/);
+  assert.match(source,/technicalHeading:\{fontSize:11,lineHeight:15,fontWeight:"600"/);
+  assert.match(source,/technicalLabel:\{[^}]*fontSize:11,lineHeight:16,fontWeight:"500"\}/);
   assert.match(source,/technicalValue:\{[^}]*fontSize:11,lineHeight:16,fontWeight:"400"/);
   assert.match(itinerary,/s\.technicalHeading,\{color:theme\.textPrimary\}/);
   assert.ok((itinerary.match(/s\.technicalLabel,\{color:theme\.textPrimary\}/g)?.length??0)>=3);
