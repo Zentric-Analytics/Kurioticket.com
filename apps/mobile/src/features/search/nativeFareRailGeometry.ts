@@ -1,8 +1,8 @@
 const loadedFareGap = 10;
 export const nativeFareRailHorizontalInset = 36;
-const nextFareReveal = 54;
-const minimumLoadedFareWidth = 236;
-const maximumLoadedFareWidth = 330;
+const nextFareReveal = 74;
+const minimumLoadedFareWidth = 230;
+const maximumLoadedFareWidth = 260;
 
 export const nativeLoadedFareCardWidth = (windowWidth: number, _fareCount?: number) => {
   const availableWidth = windowWidth - nativeFareRailHorizontalInset;
