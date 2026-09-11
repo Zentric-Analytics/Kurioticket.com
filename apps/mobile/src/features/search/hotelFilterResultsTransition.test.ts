@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { NATIVE_FILTER_RESULTS_TRANSITION_MS } from "./filterResultsTransition";
 
+// Keep this coverage Hotel-only so shared Flight and Cars timing stays unchanged.
 const full = readFileSync("src/features/search/HotelFilterSheet.tsx", "utf8");
 const quick = readFileSync("src/features/search/HotelResultsQuickFilterSheet.tsx", "utf8");
 const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
