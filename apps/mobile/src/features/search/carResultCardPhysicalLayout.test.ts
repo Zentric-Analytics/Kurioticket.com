@@ -169,8 +169,14 @@ test("vehicle identity, location, and ordered specs remain intact", () => {
   assert.match(style("similar"), /fontSize:11,fontWeight:"500",lineHeight:16/);
   assert.match(style("category"), /fontSize:10,fontWeight:"800",letterSpacing:1\.1,lineHeight:16,textTransform:"uppercase",color:"#004BB8"/);
   assert.match(source, /<MapPin size=\{13\} color=\{theme\.textPrimary\}/);
-  assert.match(styles, /specs:\{marginTop:7,flexDirection:"column",gap:5\}/);
-  const specs = ["result.passengers", "result.doors", "result.transmission", "result.bags"].map((label) => source.indexOf(label, source.indexOf("style={c.specs}")));
+  assert.match(style("detailColumn"), /minWidth:0,marginTop:7/);
+  assert.match(style("specs"), /marginTop:7,flexDirection:"column",gap:7/);
+  assert.match(style("meta"), /fontSize:11,fontWeight:"500",lineHeight:15/);
+  assert.match(style("specText"), /fontSize:11,fontWeight:"500",lineHeight:14/);
+  const location = source.indexOf("result.pickupLocation");
+  const specsStart = source.indexOf("style={c.specs}");
+  const specs = ["result.passengers", "result.doors", "result.transmission", "result.bags"].map((label) => source.indexOf(label, specsStart));
+  assert.ok(location >= 0 && location < specsStart);
   assert.ok(specs.every((index) => index >= 0));
   assert.deepEqual(specs, [...specs].sort((a, b) => a - b));
 });
