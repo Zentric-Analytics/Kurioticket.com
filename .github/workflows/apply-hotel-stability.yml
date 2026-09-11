@@ -1,0 +1,39 @@
+name: Apply Hotel stability patch
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [dev]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'codex/finish-hotel-results-details-stability'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - name: Apply focused Hotel patches
+        run: |
+          set -euo pipefail
+          git apply .github/hotel-stability/results-1.patch
+          git apply .github/hotel-stability/results-2.patch
+          git apply .github/hotel-stability/results-3.patch
+          git apply .github/hotel-stability/results-4.patch
+          git apply .github/hotel-stability/details-1.patch
+          git apply .github/hotel-stability/details-2.patch
+          git diff --check
+      - name: Commit final source and remove staging files
+        run: |
+          set -euo pipefail
+          git rm -r .github/hotel-stability
+          git rm .github/workflows/apply-hotel-stability.yml
+          git add apps/mobile/src/features/search/ApprovedResultsScreen.tsx apps/mobile/src/features/search/ApprovedDetailScreen.tsx
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Finish Hotel results and details stability fixes"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
