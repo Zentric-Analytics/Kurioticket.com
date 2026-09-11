@@ -69,7 +69,7 @@ test("canonical Hotel address is enriched, deduplicated, and falls back", () => 
   assert.equal(canonicalHotelAddress({ description: "", latitude: 1, longitude: 2, streetAddress: "Paris, France", city: "Paris", country: "France", neighbourhood: "" }, "fallback"), "Paris, France");
 });
 
-test("Hotel details enrichment encodes the complete identity and remains abortable and stale-safe", () => {
+test("Hotel details enrichment is keyed, abortable, and does not expose false fallback state while loading", () => {
   const api = readFileSync("src/api/travelApi.ts", "utf8");
   const screen = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
   assert.match(api, /`\/api\/hotels\/details\?\$\{params\.toString\(\)\}`/);
@@ -77,7 +77,31 @@ test("Hotel details enrichment encodes the complete identity and remains abortab
   for (const field of ["guests", "rooms"]) assert.match(api, new RegExp(`${field}: String\\(input\\.${field}\\)`));
   assert.match(api, /options: \{ signal\?: AbortSignal \}/);
   assert.match(screen, /const enrichmentKey = `\$\{result\.id\}/);
-  assert.match(screen, /response\.hotel\?\.id === result\.id/);
+  assert.match(screen, /detailsState\?\.key === enrichmentKey/);
+  assert.match(screen, /response\.hotel\?\.id !== result\.id/);
+  assert.match(screen, /status: "loading", response: null/);
+  assert.match(screen, /status: "ready", response/);
+  assert.match(screen, /!controller\.signal\.aborted/);
+  assert.match(screen, /status: "error", response: null/);
   assert.match(screen, /controller\.abort\(\)/);
-  assert.match(screen, /\.catch\(\(\) => undefined\)/);
+  assert.match(screen, /detailsStatus === "loading"/);
+});
+
+test("Hotel details prices have an immediate provider-currency fallback and are keyed per hotel", () => {
+  const screen = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
+  assert.match(screen, /const providerDisplayPrices = hasPrice[\s\S]*result\.currency,[\s\S]*result\.currency,[\s\S]*\{\}/);
+  assert.match(screen, /const hotelPriceStateKey = `\$\{result\.id\}/);
+  assert.match(screen, /displayPriceState\.key === hotelPriceStateKey/);
+});
+
+test("Hotel detail tabs preserve independent scroll state and reset for a different hotel", () => {
+  const screen = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
+  assert.match(screen, /const hotelDetailScrollRef = useRef<ScrollView>/);
+  assert.match(screen, /hotelTabScrollOffsets/);
+  assert.match(screen, /const selectHotelTab = useCallback/);
+  assert.match(screen, /onPress=\{\(\) => selectHotelTab\(tab\)\}/);
+  assert.match(screen, /onScroll=\{\(\{ nativeEvent \}\) =>/);
+  assert.match(screen, /\[result\.id\]/);
+  assert.match(screen, /setSelectedOfferId\(null\)/);
+  assert.match(screen, /setRoomsOpen\(false\)/);
 });
