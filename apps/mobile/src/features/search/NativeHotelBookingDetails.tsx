@@ -103,6 +103,17 @@ export function NativeHotelBookingDetails({
 
       <SectionDivider color={theme.border} />
 
+      {property || detailsStatus !== "loading" ? (
+        <NativeHotelLocationSection
+          hotelId={result.id}
+          hotelName={result.name}
+          propertyDetails={property}
+          theme={theme}
+        />
+      ) : null}
+
+      <SectionDivider color={theme.border} />
+
       <View style={s.section}>
         <Text accessibilityRole="header" style={[s.heading, { color: theme.textPrimary }]}>Popular amenities</Text>
         {popularAmenities.length ? (
@@ -136,17 +147,6 @@ export function NativeHotelBookingDetails({
           </Pressable>
         ) : null}
       </View>
-
-      <SectionDivider color={theme.border} />
-
-      {property || detailsStatus !== "loading" ? (
-        <NativeHotelLocationSection
-          hotelId={result.id}
-          hotelName={result.name}
-          propertyDetails={property}
-          theme={theme}
-        />
-      ) : null}
 
       <SectionDivider color={theme.border} />
 
