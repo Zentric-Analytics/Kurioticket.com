@@ -170,7 +170,7 @@ export function HotelDestinationSheet({ visible, value, pickerPresentation = "sh
 }
 
 type GuestsRoomsDraft = { adults: number; children: number; rooms: number; petFriendly: boolean };
-function HotelGuestsRoomsSheet({ visible, adults, children, rooms, petFriendly, presentation = "sheet", onDone, onCancel }: GuestsRoomsDraft & { visible: boolean; presentation?: "sheet" | "resultsEditFullScreen"; onDone: (draft: GuestsRoomsDraft) => void; onCancel: () => void }) {
+export function HotelGuestsRoomsSheet({ visible, adults, children, rooms, petFriendly, presentation = "sheet", onDone, onCancel }: GuestsRoomsDraft & { visible: boolean; presentation?: "sheet" | "resultsEditFullScreen"; onDone: (draft: GuestsRoomsDraft) => void; onCancel: () => void }) {
   const ft = useFlowTheme();
   const sheetVisible = presentation === "sheet" ? visible : false;
   const motion = useSearchPickerMotion(sheetVisible);
