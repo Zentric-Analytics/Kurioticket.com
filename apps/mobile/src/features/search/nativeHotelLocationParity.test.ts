@@ -105,7 +105,7 @@ test("Location keeps mobile web typography while using compact native spacing", 
   for (const rule of [/marginTop: 22/, /fontSize: 15/, /lineHeight: 22/, /fontWeight: "600"/, /appFonts\.semibold/]) assert.match(styleRule(component, "subheading", "factList"), rule);
   for (const rule of [/borderRadius: 8/, /paddingHorizontal: 12/, /paddingVertical: 6/]) assert.match(styleRule(component, "factChip", "factText"), rule);
   for (const rule of [/fontSize: 12/, /lineHeight: 16/, /fontWeight: "500"/, /appFonts\.medium/]) assert.match(styleRule(component, "factText", "fallbackText"), rule);
-  for (const rule of [/fontSize: 13/, /lineHeight: 22/, /fontWeight: "400"/, /appFonts\.regular/]) assert.match(styleRule(component, "fallbackText", "__end__".replace("__end__", "")), rule);
+  assert.match(component, /fallbackText: \{[^}]*fontSize: 13[^}]*lineHeight: 22[^}]*fontWeight: "400"[^}]*fontFamily: appFonts\.regular/);
 });
 
 test("Decision-section headings preserve the refined supporting hierarchy", () => {
