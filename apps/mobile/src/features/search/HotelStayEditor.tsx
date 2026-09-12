@@ -100,6 +100,7 @@ export function HotelStayEditor({
         rooms: String(next.rooms),
         hotelDisplayPrices: "",
         displayCurrencyContext: "",
+        hotelResultsStack: "0",
       });
     } catch {
       Alert.alert(
