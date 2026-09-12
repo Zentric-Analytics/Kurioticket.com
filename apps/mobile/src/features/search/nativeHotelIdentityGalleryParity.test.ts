@@ -81,7 +81,7 @@ test("editable stay summary keeps dates and occupancy independently actionable",
   assert.match(stayEditor, /travelApi\.searchHotels\(/);
   assert.match(stayEditor, /response\.results\.find\(\(hotel\) => hotel\.id === result\.id\)/);
   assert.match(stayEditor, /rebuildHotelStayNavigationState\(/);
-  assert.match(stayEditor, /navigation\.reset\(resetState\)/);
+  assert.match(stayEditor, /navigation\.dispatch\(\{ type: "RESET", payload: resetState \}\)/);
   assert.match(stayEditor, /hotelDisplayPrices: ""/);
   assert.match(stayEditor, /displayCurrencyContext: ""/);
   assert.match(stayEditor, /hotelResultsStack: "1"/);
