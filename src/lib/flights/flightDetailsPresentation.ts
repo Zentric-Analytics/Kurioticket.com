@@ -45,7 +45,12 @@ export function canUseOfferAirlineLogo(
   );
 }
 
-export function compactFareTerms(terms: FlightFareTerm[], tripType: TripType, maxRows = 3) {
+export function compactFareTerms(
+  terms: FlightFareTerm[],
+  tripType: TripType,
+  maxRows = 3,
+  consolidateMatchingRoundTripRules = false,
+) {
   const rows = terms
     .flatMap((term, index) =>
       buildFareDisplayRows(term, tripType).map((text, rowIndex) => ({
@@ -55,9 +60,12 @@ export function compactFareTerms(terms: FlightFareTerm[], tripType: TripType, ma
         text,
       })),
     );
-  const conciseRows = tripType === "round-trip"
-    ? consolidateMatchingRoundTripBenefits(rows)
+  const baggageRows = tripType === "round-trip"
+    ? consolidateMatchingRoundTripBaggage(rows)
     : rows;
+  const conciseRows = tripType === "round-trip" && consolidateMatchingRoundTripRules
+    ? consolidateMatchingRoundTripBenefits(baggageRows)
+    : baggageRows;
 
   return conciseRows
     .sort((left, right) => {
@@ -93,15 +101,14 @@ type FareDisplayRow = {
 };
 
 function consolidateMatchingRoundTripBenefits(rows: FareDisplayRow[]) {
-  const baggageRows = consolidateMatchingRoundTripBaggage(rows);
   const consumed = new Set<number>();
 
-  return baggageRows.flatMap((row, rowPosition) => {
+  return rows.flatMap((row, rowPosition) => {
     if (consumed.has(rowPosition)) return [];
     const scoped = parseScopedMatchingBenefit(row);
     if (!scoped || scoped.scope !== "outbound") return [row];
 
-    const returnPosition = baggageRows.findIndex((candidate, candidatePosition) => {
+    const returnPosition = rows.findIndex((candidate, candidatePosition) => {
       if (candidatePosition === rowPosition || consumed.has(candidatePosition)) return false;
       const candidateScoped = parseScopedMatchingBenefit(candidate);
       return candidateScoped?.scope === "return"
