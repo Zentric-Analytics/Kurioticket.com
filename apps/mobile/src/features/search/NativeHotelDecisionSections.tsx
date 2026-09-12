@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   mapFrame: { position: "relative", height: 216, width: "100%", borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, overflow: "hidden" },
   map: { flex: 1 },
   mapFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8 },
-  relatedSection: { marginTop: 10, gap: 12 },
+  relatedSection: { marginTop: 4, gap: 8 },
   carouselViewport: { marginHorizontal: -16 },
   carousel: { gap: 10, paddingHorizontal: 16, paddingBottom: 4 },
   relatedCard: { overflow: "hidden", borderWidth: StyleSheet.hairlineWidth, borderRadius: 15 },

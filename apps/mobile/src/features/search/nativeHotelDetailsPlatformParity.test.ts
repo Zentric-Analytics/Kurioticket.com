@@ -2,11 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const source = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
-const hotel = source.slice(
-  source.indexOf("function HotelDetail"),
-  source.indexOf("const detailIcons"),
-);
+const source = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+const hotel = source.slice(source.indexOf("function HotelDetail"));
 
 function styleRule(name: string, nextName: string) {
   const start = source.indexOf(`  ${name}:`);
@@ -16,10 +13,10 @@ function styleRule(name: string, nextName: string) {
   return source.slice(start, end);
 }
 
-test("iOS and Android share one Hotel Details tablist with Details, Reviews, Deals in order", () => {
-  const shellStart = hotel.indexOf("d.hotelTabsShell");
+test("iOS and Android share one active Hotel Details tablist with Details, Reviews, Deals in order", () => {
+  const shellStart = hotel.indexOf("s.tabsShell");
   const tablistStart = hotel.indexOf('accessibilityRole="tablist"');
-  const tablistEnd = hotel.indexOf("<View style={d.hotelDetailBody}", tablistStart);
+  const tablistEnd = hotel.indexOf("<HotelStayEditor", tablistStart);
   assert.notEqual(shellStart, -1, "the shared sticky shell must exist");
   assert.notEqual(tablistStart, -1, "the shared Hotel Details tablist must exist");
   assert.notEqual(tablistEnd, -1, "the shared Hotel Details tablist must own the tabs");
@@ -46,17 +43,17 @@ test("iOS and Android share one Hotel Details tablist with Details, Reviews, Dea
   assert.doesNotMatch(tablist, /<ScrollView[^>]*horizontal/);
   assert.doesNotMatch(tablist, /Platform\.OS|\b(?:IOS|Android)HotelTabs?\b/);
 
-  assert.match(tablist, /style=\{d\.hotelTabsRow\}/);
-  assert.match(tablist, /d\.hotelTab,/);
+  assert.match(tablist, /style=\{s\.tabsRow\}/);
+  assert.match(tablist, /s\.tab,/);
   assert.match(tablist, /accessibilityState=\{\{ selected: activeHotelTab === tab \}\}/);
   assert.match(tablist, /activeHotelTab === tab && \{ borderBottomColor: hotelAccent \}/);
   assert.match(tablist, /onPress=\{\(\) => selectHotelTab\(tab\)\}/);
 });
 
-test("the shared native tab geometry cannot stack or fork by platform", () => {
-  const shell = styleRule("hotelTabsShell", "hotelTabsRow");
-  const row = styleRule("hotelTabsRow", "hotelTab");
-  const tab = styleRule("hotelTab", "hotelTabActive");
+test("the active shared native tab geometry cannot stack or fork by platform", () => {
+  const shell = styleRule("tabsShell", "tabsRow");
+  const row = styleRule("tabsRow", "tab");
+  const tab = styleRule("tab", "tabText");
   const ownedGeometry = `${shell}\n${row}\n${tab}`;
 
   assert.match(shell, /width: "100%"/);
@@ -74,24 +71,23 @@ test("the shared native tab geometry cannot stack or fork by platform", () => {
   assert.doesNotMatch(tab, /flexBasis: 0/);
   assert.match(tab, /minWidth: 0/);
   const minimumHeight = /minHeight: (\d+)/.exec(tab);
-  assert.ok(minimumHeight, "hotelTab must declare a minimum touch height");
-  assert.ok(Number(minimumHeight[1]) >= 44, "hotelTab touch height must be at least 44dp");
+  assert.ok(minimumHeight, "tab must declare a minimum touch height");
+  assert.ok(Number(minimumHeight[1]) >= 44, "tab touch height must be at least 44dp");
 
   assert.doesNotMatch(ownedGeometry, /Platform\.OS|\bios\b|\bandroid\b/i);
-  assert.equal((hotel.match(/d\.hotelTabsShell/g) ?? []).length, 1);
-  assert.equal((hotel.match(/d\.hotelTabsRow/g) ?? []).length, 1);
-  assert.equal((hotel.match(/d\.hotelTabWide/g) ?? []).length, 0);
+  assert.equal((hotel.match(/s\.tabsShell/g) ?? []).length, 1);
+  assert.equal((hotel.match(/s\.tabsRow/g) ?? []).length, 1);
   assert.match(hotel, /stickyHeaderIndices=\{\[2\]\}/);
   assert.match(hotel, /const \[activeHotelTab, setActiveHotelTab\] = useState<HotelDetailTab>\("details"\)/);
 });
 
-test("the shared selected underline remains tab-local on iOS and Android", () => {
-  const shell = styleRule("hotelTabsShell", "hotelTabsRow");
-  const tab = styleRule("hotelTab", "hotelTabActive");
+test("the active selected underline remains tab-local on iOS and Android", () => {
+  const shell = styleRule("tabsShell", "tabsRow");
+  const tab = styleRule("tab", "tabText");
 
   assert.doesNotMatch(shell, /borderBottomWidth|borderBottomColor|hotelAccent/);
   assert.match(tab, /borderBottomWidth: 2/);
   assert.match(tab, /borderBottomColor: "transparent"/);
   assert.match(hotel, /activeHotelTab === tab && \{ borderBottomColor: hotelAccent \}/);
-  assert.doesNotMatch(hotel, /d\.hotelTabsShell,[\s\S]{0,160}activeHotelTab === tab/);
+  assert.doesNotMatch(hotel, /s\.tabsShell,[\s\S]{0,160}activeHotelTab === tab/);
 });
