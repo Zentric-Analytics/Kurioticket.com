@@ -96,7 +96,9 @@ test("counter belongs to the stage and thumbnails anchor at the dialog bottom", 
   assert.match(styleRule("viewerRight", "viewerCounter"), /right: 4/);
 });
 
-test("inline hero remains cover and opens the selected photo accessibly", () => {
+test("inline hero remains cover, full-bleed, measured, and opens the selected photo accessibly", () => {
+  assert.match(gallery, /const heroWidth = viewportWidth;/);
+  assert.match(gallery, /const heroHeight = Math\.round\(viewportWidth \* 0\.94\);/);
   assert.match(gallery, /accessibilityRole="button"[\s\S]*?accessibilityLabel=\{`Open photo \$\{index \+ 1\} of \$\{images\.length\} for \$\{name\}`\}[\s\S]*?onPress=\{\(\) => openViewer\(index\)\}/);
   assert.match(gallery, /resizeMode="cover"[\s\S]*?accessible=\{false\}/);
   assert.match(gallery, /const openViewer = \(index: number\)[\s\S]*?setActiveImage\(index\)[\s\S]*?setViewerOpen\(true\)/);
@@ -133,12 +135,14 @@ test("viewer thumbnails include all photos and track the selected photo", () => 
   assert.match(gallery, /keepViewerThumbnailVisible\(index\)/);
   assert.match(styleRule("viewerThumbnailFrame", "viewerThumbnailActive"), /width: 96[\s\S]*height: 64/);
   assert.match(styleRule("viewerThumbnailStrip", "viewerThumbnailFrame"), /gap: 8/);
-  assert.match(styleRule("viewerThumbnailActive", "viewerThumbnail"), /borderWidth: 3[\s\S]*borderColor: "white"/);
+  assert.match(styleRule("viewerThumbnailActive", "viewerThumbnail"), /borderWidth: 3/);
+  assert.match(viewerThumbnails, /activeIndex === index && \{ borderColor: accentColor \}/);
 });
 
-test("the truthful fifth tile opens all photos while regular thumbnails stay inline", () => {
-  assert.match(gallery, /images\.slice\(0, 5\)/);
-  assert.match(gallery, /const remaining = index === 4 \? images\.length - 5 : 0/);
-  assert.match(gallery, /accessibilityLabel=\{remaining > 0 \? "View all photos" : `Show photo/);
-  assert.match(gallery, /onPress=\{\(\) => remaining > 0 \? openViewer\(index\) : choose\(index\)\}/);
+test("initial hotel view uses swipe and tap instead of a desktop-like thumbnail rail", () => {
+  const inline = gallery.slice(gallery.indexOf("return (", gallery.indexOf("export function NativeHotelGallery")), gallery.indexOf("<Modal"));
+  assert.match(inline, /horizontal\s*pagingEnabled/);
+  assert.match(inline, /accessibilityHint=\{images\.length > 1 \? "Swipe horizontally to view more photos\." : undefined\}/);
+  assert.doesNotMatch(inline, /images\.slice\(0, 5\)|s\.thumbnails|s\.thumbnailFrame/);
+  assert.match(inline, /style=\{s\.counter\}/);
 });
