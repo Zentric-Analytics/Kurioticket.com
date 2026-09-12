@@ -89,10 +89,11 @@ test("Hotel details enrichment is keyed, abortable, and does not expose false fa
   assert.match(screen, /detailsStatus === "loading"/);
 });
 
-test("Hotel details prices have an immediate provider-currency fallback and are keyed per hotel", () => {
+test("Hotel details prices immediately fall back to provider currency and switch to refreshed stay pricing", () => {
   const screen = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
-  assert.match(screen, /const providerDisplayPrices = hasPrice[\s\S]*result\.currency,[\s\S]*result\.currency,[\s\S]*\{\}/);
-  assert.match(screen, /const hotelPriceStateKey = `\$\{result\.id\}/);
+  assert.match(screen, /const pricingResult = details\?\.hotel \?\? result;/);
+  assert.match(screen, /const providerDisplayPrices = hasPrice[\s\S]*pricingResult\.currency,[\s\S]*pricingResult\.currency,[\s\S]*\{\}/);
+  assert.match(screen, /const hotelPriceStateKey = `\$\{pricingResult\.id\}/);
   assert.match(screen, /displayPriceState\.key === hotelPriceStateKey/);
 });
 
