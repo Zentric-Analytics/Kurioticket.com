@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useNavigation } from "expo-router";
 import { CalendarDays, Minus, Plus, X } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { travelApi, type HotelResult } from "../../api/travelApi";
@@ -18,6 +18,7 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { colors } from "../../theme/tokens";
 import { appFonts } from "../../theme/typography";
 import { hotelStaySummary } from "./nativeHotelDetailsModel";
+import { rebuildHotelStayNavigationState } from "./hotelDetailReturnNavigation";
 
 type StayValues = {
   checkIn: string;
@@ -41,6 +42,7 @@ export function HotelStayEditor({
   guests: number;
   rooms: number;
 }) {
+  const navigation = useNavigation();
   const { theme } = useAppTheme();
   const [datesOpen, setDatesOpen] = useState(false);
   const [countsOpen, setCountsOpen] = useState(false);
@@ -92,15 +94,31 @@ export function HotelStayEditor({
         );
         return;
       }
-      router.setParams({
-        result: JSON.stringify(refreshed),
+
+      const sharedStayParams = {
+        destination,
         checkIn: next.checkIn,
         checkOut: next.checkOut,
         guests: String(next.guests),
         rooms: String(next.rooms),
+      };
+      const detailParams = {
+        ...sharedStayParams,
+        result: JSON.stringify(refreshed),
         hotelDisplayPrices: "",
         displayCurrencyContext: "",
-      });
+      };
+      const resetState = rebuildHotelStayNavigationState(
+        navigation.getState(),
+        sharedStayParams,
+        { ...detailParams, hotelResultsStack: "1" },
+      );
+
+      if (resetState) {
+        navigation.dispatch({ type: "RESET", payload: resetState });
+      } else {
+        router.setParams({ ...detailParams, hotelResultsStack: "0" });
+      }
     } catch {
       Alert.alert(
         "Unable to update stay",
