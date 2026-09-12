@@ -16,7 +16,7 @@ function styleRule(name: string, nextName: string) {
   return source.slice(start, end);
 }
 
-test("iOS and Android share one Hotel Details tablist with the exact web tab order", () => {
+test("iOS and Android share one Hotel Details tablist with Details, Reviews, Deals in order", () => {
   const shellStart = hotel.indexOf("d.hotelTabsShell");
   const tablistStart = hotel.indexOf('accessibilityRole="tablist"');
   const tablistEnd = hotel.indexOf("<View style={d.hotelDetailBody}", tablistStart);
@@ -33,14 +33,14 @@ test("iOS and Android share one Hotel Details tablist with the exact web tab ord
     "Hotel Details must render exactly one shared native tablist",
   );
   assert.deepEqual(
-    [...tablist.matchAll(/\["compare", "about", "location", "reviews"\]/g)].length,
+    [...tablist.matchAll(/\["details", "reviews", "deals"\]/g)].length,
     1,
-    "the one tablist must map compare, about, location, and reviews in web order",
+    "the one tablist must map Details, Reviews, and Deals in that order",
   );
   assert.equal(
     [...tablist.matchAll(/accessibilityRole="tab"/g)].length,
     1,
-    "one mapped tab element must own all four tab values",
+    "one mapped tab element must own all three tab values",
   );
   assert.match(tablist, /numberOfLines=\{1\}/);
   assert.doesNotMatch(tablist, /<ScrollView[^>]*horizontal/);
@@ -48,7 +48,6 @@ test("iOS and Android share one Hotel Details tablist with the exact web tab ord
 
   assert.match(tablist, /style=\{d\.hotelTabsRow\}/);
   assert.match(tablist, /d\.hotelTab,/);
-  assert.match(tablist, /tab === "compare" && d\.hotelTabWide/);
   assert.match(tablist, /accessibilityState=\{\{ selected: activeHotelTab === tab \}\}/);
   assert.match(tablist, /activeHotelTab === tab && \{ borderBottomColor: hotelAccent \}/);
   assert.match(tablist, /onPress=\{\(\) => selectHotelTab\(tab\)\}/);
@@ -57,9 +56,8 @@ test("iOS and Android share one Hotel Details tablist with the exact web tab ord
 test("the shared native tab geometry cannot stack or fork by platform", () => {
   const shell = styleRule("hotelTabsShell", "hotelTabsRow");
   const row = styleRule("hotelTabsRow", "hotelTab");
-  const tab = styleRule("hotelTab", "hotelTabWide");
-  const wideTab = styleRule("hotelTabWide", "hotelTabActive");
-  const ownedGeometry = `${shell}\n${row}\n${tab}\n${wideTab}`;
+  const tab = styleRule("hotelTab", "hotelTabActive");
+  const ownedGeometry = `${shell}\n${row}\n${tab}`;
 
   assert.match(shell, /width: "100%"/);
   assert.match(shell, /alignSelf: "stretch"/);
@@ -70,7 +68,7 @@ test("the shared native tab geometry cannot stack or fork by platform", () => {
   assert.match(row, /flexWrap: "nowrap"/);
   assert.doesNotMatch(row, /flexDirection: "column"|flexWrap: "wrap"/);
 
-  assert.match(tab, /width: "21\.5%"/);
+  assert.match(tab, /width: "33\.333%"/);
   assert.doesNotMatch(tab, /flexGrow: 1(?:\D|$)/);
   assert.doesNotMatch(tab, /flexShrink: 1/);
   assert.doesNotMatch(tab, /flexBasis: 0/);
@@ -78,20 +76,18 @@ test("the shared native tab geometry cannot stack or fork by platform", () => {
   const minimumHeight = /minHeight: (\d+)/.exec(tab);
   assert.ok(minimumHeight, "hotelTab must declare a minimum touch height");
   assert.ok(Number(minimumHeight[1]) >= 44, "hotelTab touch height must be at least 44dp");
-  assert.match(wideTab, /width: "35\.5%"/);
-  assert.doesNotMatch(wideTab, /flexGrow: 1\.65/);
 
   assert.doesNotMatch(ownedGeometry, /Platform\.OS|\bios\b|\bandroid\b/i);
   assert.equal((hotel.match(/d\.hotelTabsShell/g) ?? []).length, 1);
   assert.equal((hotel.match(/d\.hotelTabsRow/g) ?? []).length, 1);
-  assert.equal((hotel.match(/d\.hotelTabWide/g) ?? []).length, 1);
+  assert.equal((hotel.match(/d\.hotelTabWide/g) ?? []).length, 0);
   assert.match(hotel, /stickyHeaderIndices=\{\[2\]\}/);
-  assert.match(hotel, /const \[activeHotelTab, setActiveHotelTab\] = useState</);
+  assert.match(hotel, /const \[activeHotelTab, setActiveHotelTab\] = useState<HotelDetailTab>\("details"\)/);
 });
 
 test("the shared selected underline remains tab-local on iOS and Android", () => {
   const shell = styleRule("hotelTabsShell", "hotelTabsRow");
-  const tab = styleRule("hotelTab", "hotelTabWide");
+  const tab = styleRule("hotelTab", "hotelTabActive");
 
   assert.doesNotMatch(shell, /borderBottomWidth|borderBottomColor|hotelAccent/);
   assert.match(tab, /borderBottomWidth: 2/);
