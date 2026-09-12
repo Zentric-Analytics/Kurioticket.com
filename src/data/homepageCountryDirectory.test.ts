@@ -111,7 +111,8 @@ test("mobile distribution can derive one continuous alphabetical list from the s
 
 test("country directory Hotel links create complete canonical exploratory results", () => {
   const flightHref = buildCountryDirectoryFlightHref("JFK", "LAX");
-  assert.equal(typeof flightHref, "object");
+  assert.ok(typeof flightHref === "object");
+  assert.ok(flightHref.query && typeof flightHref.query === "object");
   assert.equal(flightHref.pathname, "/flights/results");
   assert.equal(flightHref.query.origin, "JFK");
   assert.equal(flightHref.query.destination, "LAX");

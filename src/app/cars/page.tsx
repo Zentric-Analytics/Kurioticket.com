@@ -629,13 +629,9 @@ function CarsSearchBar({
   >(null);
   const [focusedDriverAgeIndex, setFocusedDriverAgeIndex] = useState(0);
 
-  useEffect(() => {
-    if (!values.returnToDifferentLocation) {
-      setOpenDesktopLocation((current) =>
-        current === "dropoff" ? null : current,
-      );
-    }
-  }, [values.returnToDifferentLocation]);
+  if (!values.returnToDifferentLocation && openDesktopLocation === "dropoff") {
+    setOpenDesktopLocation(null);
+  }
   const driverAgeOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [activeMobilePicker, setActiveMobilePicker] =
     useState<CarsMobilePicker>(null);

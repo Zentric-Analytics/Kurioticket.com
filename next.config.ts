@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
   },
   images: {
     qualities: [75, 92, 100],
+    // Keep curated asset versions aligned with the shared image-source helper.
     localPatterns: imageLocalPatterns,
     remotePatterns: imageRemotePatterns,
   },

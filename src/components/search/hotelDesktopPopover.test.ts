@@ -64,7 +64,7 @@ test("all three desktop Hotel pickers reuse the shared wrapper", () => {
   );
   assert.equal(source.match(/<HotelDesktopPopover/g)?.length, 3);
   assert.match(source, /preferredWidth=\{420\}[\s\S]*desiredHeight=\{320\}/);
-  assert.match(source, /preferredWidth=\{570\}[\s\S]*desiredHeight=\{420\}/);
+  assert.match(source, /preferredWidth=\{570\}[\s\S]*desiredHeight=\{isStickyDialog \? 360 : 420\}/);
   assert.match(source, /preferredWidth=\{360\}[\s\S]*desiredHeight=\{356\}/);
 });
 
@@ -125,7 +125,7 @@ test("desktop Hotel destination and guest fields use clean leading icons", () =>
   );
   assert.match(
     guestsLauncherSource,
-    /!mobileLandingPresentation && "max-sm:hidden"/,
+    /!mobileLandingPresentation && !mobileResultsSheet && "max-sm:hidden"/,
   );
 });
 

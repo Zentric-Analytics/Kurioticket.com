@@ -74,10 +74,8 @@ test("Hotel Results uses the shared list without changing its item limits", () =
   assert.ok(card.includes("buildHotelAmenityPresentation("));
   assert.ok(card.includes("hotel.amenities,\n    8,"));
   assert.ok(card.includes("expandedAmenityItems.slice(0, 4)"));
-  assert.ok(card.includes("collapsedAmenityItems.at(-1)"));
-  assert.ok(card.includes("collapsedAmenityItems.slice(0, -1)"));
-  assert.ok(card.includes("items={leadingAmenityItems}"));
-  assert.ok(card.includes("items={[trailingAmenityItem]}"));
+  // The card now renders all four collapsed amenities in one shared list.
+  assert.ok(card.includes("items={collapsedAmenityItems}"));
   assert.ok(card.includes("t={t}"));
   assert.ok(!card.includes("const hotelAmenityIcons"));
   assert.ok(!card.includes("function HotelAmenityList"));

@@ -9,7 +9,9 @@ const flightsSource = readFileSync(
 );
 
 const getAppHeader = (source: string) =>
-  source.match(/<AppHeader[\s\S]*?\/>/)?.[0] ?? "";
+  [...source.matchAll(/<AppHeader\b[\s\S]*?\/>/g)]
+    .map(([header]) => header)
+    .find((header) => header.includes("flushDesktopBottom")) ?? "";
 
 test("Cars Results preserves AppHeader while matching Flights mobile header props", () => {
   const carsHeader = getAppHeader(carsSource);

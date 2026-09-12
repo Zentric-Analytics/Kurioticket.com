@@ -89,7 +89,7 @@ test("current Details links preserve current semantics and accessible back actio
     model,
     /buildDealsJourneyUrl\(resultsStage\[step\.id\], search\)/,
   );
-  assert.match(component, /aria-current=.*item\.status === "current"/s);
+  assert.match(component, /aria-current=[\s\S]*item\.status === "current"/);
   assert.match(translations, /Hotel details — back to hotel results/);
   assert.match(translations, /Flight details — back to flight results/);
   assert.match(translations, /Car details — back to car results/);

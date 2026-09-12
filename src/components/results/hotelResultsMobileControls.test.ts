@@ -16,7 +16,8 @@ const searchBarSource = readFileSync(
 );
 
 test("Hotel Results hides only the mobile category tabs", () => {
-  const headerCall = pageSource.match(/<AppHeader[\s\S]*?\/>/)?.[0] ?? "";
+  const headerCall = [...pageSource.matchAll(/<AppHeader\b[\s\S]*?\/>/g)]
+    .map(([header]) => header).find((header) => header.includes("flushDesktopBottom")) ?? "";
 
   assert.match(headerCall, /hideMobileCategoryTabs/);
   assert.match(headerCall, /hideDesktopTravelNav/);

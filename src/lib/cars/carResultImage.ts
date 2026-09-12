@@ -1,4 +1,4 @@
-const CARS_RESULTS_IMAGE_VERSION = "transparent-cutouts-20260912";
+export const CARS_RESULTS_IMAGE_VERSION = "transparent-cutouts-20260912";
 const CURATED_CAR_RESULT_IMAGE_PREFIX = "/images/cars/results/";
 
 const carResultImagePathname = (imageUrl?: string) => {

@@ -1,4 +1,5 @@
 import { Prisma } from "@/generated/prisma/client";
+import type { Notification } from "@/generated/prisma/client";
 import { getPrisma } from "@/lib/prisma";
 import { sendOptionalEmail, sendTransactionalEmail } from "@/services/emailService";
 import type { OptionalEmailCategory } from "@/services/emailPreferencesService";
@@ -18,7 +19,12 @@ export type CanonicalNotificationInput = {
   actionPath?: NotificationActionPath | null; metadata?: Record<string, unknown>; email?: NotificationEmail;
 };
 
-export type NotificationPersistenceClient = Pick<ReturnType<typeof getPrisma>, "notification">;
+export type NotificationPersistenceClient = {
+  notification: {
+    createMany(args: { data: Prisma.NotificationCreateManyInput[]; skipDuplicates: boolean }): Promise<{ count: number }>;
+    findUnique(args: { where: { eventKey: string } }): Promise<Notification | null>;
+  };
+};
 
 export function validateNotificationActionPath(value: string | null | undefined): NotificationActionPath | null {
   if (!value) return null;

@@ -188,7 +188,8 @@ test("mobile homepage Hotels aligns neutral icons with values while preserving f
   assert.match(hotelDestinationField, /hotelSearchDestinationLabel[\s\S]*?mobile-homepage-hotel-destination-value/);
   assert.match(hotelDestinationHomepageValue, /flex min-w-0 items-center gap-2/);
   assert.match(hotelDestinationHomepageValue, /<MapPin[\s\S]*?aria-hidden="true"[\s\S]*?h-4 w-4 shrink-0 text-slate-500/);
-  assert.match(hotelDestinationHomepageValue, /<MapPin[\s\S]*?destination\.trim\(\) \|\| t\.cityOrHotel \|\| "City or hotel"/);
+  assert.match(hotelDestinationHomepageValue, /<MapPin[\s\S]*?hotelDestinationDisplay.primary \|\| t\.cityOrHotel \|\| "City or hotel"/);
+  assert.match(hotelDestinationHomepageValue, /hotelDestinationDisplay.secondary/);
   assert.doesNotMatch(hotelDestinationHomepageValue, /ChevronDown/);
   assert.match(hotelDestinationField, /setHotelDestinationMobilePickerOpen\(true\)/);
   assert.match(hotelDestinationField, /<div className="relative hidden sm:block">[\s\S]*?<MapPin[\s\S]*?className=\{cn\(hotelFieldValueClassName, "ps-6"\)\}/);

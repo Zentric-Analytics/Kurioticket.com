@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { variableInitializer } from "@/lib/testing/sourceContract";
 
 const source = readFileSync(
   new URL("./CarsResultsClient.tsx", import.meta.url),
@@ -69,7 +70,11 @@ test("cancel restores the snapshot while mobile Search uses submit semantics", (
     source,
     /mobileSearchSnapshotRef\.current = null;[\s\S]*?mobileSearchLauncherRef\.current = null;[\s\S]*?setMobileSearchOpen\(false\)/,
   );
-  assert.match(source, /onClose=\{\(\) => cancelMobileSearchDrawer\(\)\}/);
+  assert.match(source, /onClose=\{requestMobileSearchDrawerClose\}/);
+  const closeRequest = variableInitializer(source, "requestMobileSearchDrawerClose");
+  assert.match(closeRequest, /prefers-reduced-motion: reduce/);
+  assert.match(closeRequest, /cancelMobileSearchDrawer\(\)/);
+  assert.match(closeRequest, /window\.setTimeout\([\s\S]*cancelMobileSearchDrawer\(\)/);
 });
 
 test("a committed Results navigation remounts client state for the new search", () => {
@@ -88,14 +93,14 @@ test("mobile search uses the shared stable Results lock and restores focus witho
     scrollLockSource,
     /restoreScroll = true[\s\S]*Math\.abs\(window\.scrollY - original\.scrollY\) > 1[\s\S]*window\.scrollTo/,
   );
-  assert.match(scrollLockSource, /body\.style\.overflow = "hidden"/);
-  assert.match(scrollLockSource, /root\.style\.overflow = "hidden"/);
+  assert.match(scrollLockSource, /body\.style\.overscrollBehavior = "none"/);
+  assert.match(scrollLockSource, /root\.style\.overscrollBehavior = "none"/);
+  assert.doesNotMatch(scrollLockSource, /style\.overflow\s*=/);
   assert.match(scrollLockSource, /if \(released\) return;[\s\S]*released = true/);
   assert.doesNotMatch(scrollLockSource, /style\.position = "fixed"/);
   assert.doesNotMatch(scrollLockSource, /behavior: "smooth"/);
-  assert.match(scrollLifecycle, /isSafelyFocusableElement\(launcher\)/);
-  assert.match(scrollLifecycle, /launcher\.focus\(\{ preventScroll: true \}\)/);
-  assert.match(source, /openMobileSearchDrawer\(event\.currentTarget\)/);
+  assert.match(scrollLifecycle, /restoreOverlayLauncherFocus\(launcher, mobileSearchModalityRef\.current\)/);
+  assert.match(source, /openMobileSearchDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)/);
 });
 
 test("cancel stabilizes Results before closing the editor and restoring focus", () => {
@@ -105,7 +110,7 @@ test("cancel stabilizes Results before closing the editor and restoring focus", 
   const releaseIndex = closeDrawer.indexOf("releaseMobileSearchScrollLock();");
   const closeIndex = closeDrawer.indexOf("setMobileSearchOpen(false)");
   const focusIndex = scrollLifecycle.indexOf(
-    "launcher.focus({ preventScroll: true })",
+    "restoreOverlayLauncherFocus(launcher, mobileSearchModalityRef.current)",
   );
 
   assert.ok(restoreSnapshotIndex >= 0);

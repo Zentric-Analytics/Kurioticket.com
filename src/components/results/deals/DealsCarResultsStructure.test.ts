@@ -10,7 +10,7 @@ const translations = readFileSync("src/lib/i18n/en.ts", "utf8");
 
 test("guided Car results use the shared Cars results experience inside the journey shell", () => {
   assert.match(carsClient, /export function CarsResultsExperience/);
-  assert.match(shell, /<DealsCarResultsStage search=\{search\}/);
+  assert.match(shell, /<DealsCarResultsStage\s+search=\{search\}/);
   assert.match(stage, /<CarsResultsExperience/);
   assert.doesNotMatch(stage, /<main|<h1|action="\/cars\/results"|desktopStickySearchSection|mobileSearchOpen|Breadcrumb/);
   assert.match(stage, /POST/);
@@ -20,17 +20,18 @@ test("guided Car results use the shared Cars results experience inside the journ
   assert.doesNotMatch(stage, /replaceDealsCarSelection|writeDealsStagedJourneyPlan|writeDealsTripPlan|removeDealsStagedJourneyPlan|markDealsProviderOpened|api\/redirect|bookingUrl|searchPolicy\.action\.href|cars\/details/);
 });
 
-test("guided structure provides h2 region, h3 cards, filters, sorting, disabled invalid links, and pending details", () => {
+test("guided structure provides accessible results and direct car selection with disabled invalid links", () => {
   assert.match(carsClient, /aria-labelledby=\{resultHeadingId\}/);
   assert.match(carsClient, /headingLevel=\{embedded \? "h3" : "h2"\}/);
   assert.match(carsClient, /<CarFilters/);
   assert.match(carsClient, /sortCarResults\(filterCarResults/);
   assert.match(carsClient, /detailsHrefForCar\(car\)/);
   assert.match(card, /detailsHref: string \| null/);
-  assert.match(card, /detailsHref \? <Link/);
-  assert.match(card, /<button type="button" disabled/);
+  assert.match(card, /detailsHref \? \(\s*<Link/);
+  assert.match(card, /<button\s+type="button"\s+disabled/);
   assert.match(card, /min-h-11/);
-  assert.match(shell, /<DealsCarDetailsStage/);
+  assert.match(shell, /onSelectCar=\{confirmGuidedCarSelection\}/);
+  assert.match(shell, /const confirmGuidedCarSelection[\s\S]*?confirm\("car", selection\)/);
   assert.doesNotMatch(shell, /data-deals-guided-car-results-pending className/);
 });
 
@@ -59,46 +60,46 @@ test("guided Car results use the shared dynamic result count and shortened actio
   assert.match(carsClient, /format\(visibleResults\.length\)/);
   assert.match(
     translations,
-    /"deals\.guided\.carResults\.actionLabel": "View car"/,
+    /"deals\.guided\.carResults\.actionLabel": "Continue with this car option"/,
   );
   assert.match(
     translations,
-    /"deals\.guided\.carResults\.actionAriaLabel":\s*"View details for \{model\} from \{company\}"/,
+    /"deals\.guided\.carResults\.actionAriaLabel":\s*"Continue with \{model\} car option"/,
   );
   assert.match(
     translations,
-    /"deals\.guided\.carResults\.title": "Available cars for your trip"/,
+    /"deals\.guided\.carResults\.title": "Car options for your trip"/,
   );
 });
 
 
 test("source-contract: guided filters launcher is mobile and tablet visible until desktop sidebar", () => {
-  assert.match(carsClient, /className="inline-flex h-10[^"]*lg:hidden"/);
+  assert.match(carsClient, /className="inline-flex min-h-11[^"]*lg:hidden"/);
   assert.doesNotMatch(carsClient, /hidden h-10[^"]*sm:inline-flex lg:hidden/);
-  assert.match(carsClient, /<aside className="relative hidden lg:block"><CarFilters/);
-  assert.match(carsClient, /flex w-full min-w-0 flex-wrap items-center justify-between/);
+  assert.match(carsClient, /<aside\s+className="relative hidden lg:block self-stretch"[\s\S]*?<CarFilters/);
+  assert.match(carsClient, /flex w-full min-w-0 flex-col items-start/);
 });
 
 test("source-contract: mobile drawer is conditional, focus trapped, restores safely, and releases scroll lock", () => {
   const experience = carsClient.slice(carsClient.indexOf("export function CarsResultsExperience"));
-  assert.match(experience, /filtersOpen \? <aside ref=\{filtersDialogRef\} tabIndex=\{-1\} role="dialog" aria-modal="true"/);
-  assert.equal((experience.match(/role="dialog" aria-modal="true"/g) ?? []).length, 1);
-  assert.match(experience, /filtersCloseButtonRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(experience, /filtersOpen \? \(\s*<aside\s+ref=\{filtersDialogRef\}\s+tabIndex=\{-1\}\s+role="dialog"\s+aria-modal="true"/);
+  assert.match(experience, /ref=\{quickFiltersDialogRef\} tabIndex=\{-1\} role="dialog" aria-modal="true"/);
+  assert.match(experience, /activeCloseButtonRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
   assert.match(experience, /event\.key === "Tab"/);
   assert.match(experience, /event\.shiftKey && document\.activeElement === first/);
   assert.match(experience, /!event\.shiftKey && document\.activeElement === last/);
-  assert.match(experience, /event\.key === "Escape"\) setFiltersOpen\(false\)/);
-  assert.match(experience, /mobileFiltersScrollLockRef\.current = lockBodyScroll\(\)/);
+  assert.match(experience, /event\.key === "Escape"[\s\S]*?setFiltersOpen\(false\);\s*setQuickFilterGroupId\(null\)/);
+  assert.match(experience, /mobileFiltersScrollLockRef\.current = acquireMobileResultsScrollLock\(\)/);
   assert.match(experience, /releaseExistingLock\(\)/);
-  assert.match(experience, /isSafelyFocusableElement\(launcher\)/);
-  assert.match(experience, /shouldRestoreFocus = false; setFiltersOpen\(false\)/);
+  assert.match(experience, /restoreOverlayLauncherFocus\(launcher, mobileFiltersModalityRef\.current\)/);
+  assert.match(experience, /shouldRestoreFocus = false;\s*setFiltersOpen\(false\)/);
 });
 
 test("source-contract: standalone and guided adapters share the one Car result core", () => {
   assert.match(carsClient, /export function CarsResultsClient[\s\S]*<CarsResultsExperience[\s\S]*results=\{initialResults\}/);
   assert.match(stage, /<CarsResultsExperience[\s\S]*results=\{results\}/);
   assert.equal((carsClient.match(/sortCarResults\(filterCarResults/g) ?? []).length, 1);
-  assert.equal((carsClient.match(/visibleResults\.map\(\(car\) => <CarResultCard/g) ?? []).length, 1);
+  assert.equal((carsClient.match(/pageResults\.map\(\(car\) => \(\s*<CarResultCard/g) ?? []).length, 1);
   assert.equal((carsClient.match(/detailsHrefForCar\(car\)/g) ?? []).length, 1);
 });
 
@@ -107,9 +108,9 @@ test("source-contract: Retry focus has distinct loading, success, empty, error t
   assert.match(stage, /resultsHeadingRef = useRef<HTMLHeadingElement \| null>\(null\)/);
   assert.match(stage, /emptyHeadingRef = useRef<HTMLHeadingElement \| null>\(null\)/);
   assert.match(stage, /errorHeadingRef = useRef<HTMLHeadingElement \| null>\(null\)/);
-  assert.match(stage, /state === "available"\) resultsHeadingRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
-  assert.match(stage, /state === "empty"\) emptyHeadingRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
-  assert.match(stage, /state === "error"\) errorHeadingRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(stage, /state === "available"\)\s*resultsHeadingRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(stage, /state === "empty"\)\s*emptyHeadingRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(stage, /state === "error"\)\s*errorHeadingRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
   assert.match(stage, /retryFocusRef\.current = false/);
   assert.match(stage, /resultHeadingRef=\{resultsHeadingRef\}/);
   assert.doesNotMatch(stage, /document\.body\.focus/);

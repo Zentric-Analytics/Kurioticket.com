@@ -140,6 +140,7 @@ test("incorrect current password exposes recovery only when the server says the 
   assert.equal(response.status, 400);
   assert.deepEqual(await response.json(), {
     error: "Current password is incorrect.",
+    field: "currentPassword",
     failureCount: 3,
     recoveryAvailable: true,
   });
@@ -209,7 +210,7 @@ test("incorrect or expired verification code does not report success", async () 
   const response = await fixture.handlers.PATCH(request("PATCH", validConfirmBody));
 
   assert.equal(response.status, 400);
-  assert.deepEqual(await response.json(), { error: "That verification code is incorrect or expired." });
+  assert.deepEqual(await response.json(), { error: "That verification code is incorrect or expired.", field: "verificationCode" });
 });
 
 test("rate limiting returns the canonical retry-after contract", async () => {

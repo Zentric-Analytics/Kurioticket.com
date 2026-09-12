@@ -26,20 +26,19 @@ function fareStripSource() {
 
 test("desktop results editor uses one clean accessible trip-type radio row", () => {
   const editor = desktopEditorSource();
-  const roundTrip = editor.indexOf('label: "Round-trip"');
-  const oneWay = editor.indexOf('label: "One-way"');
-  const multiCity = editor.indexOf('label: "Multi-city"');
+  const roundTrip = editor.indexOf('label: t("roundTrip")');
+  const oneWay = editor.indexOf('label: t("oneWay")');
+  const multiCity = editor.indexOf('label: t("multiCity")');
 
   assert.ok(roundTrip >= 0 && roundTrip < oneWay && oneWay < multiCity);
   assert.match(editor, /role="radiogroup"/);
   assert.match(editor, /role="radio"/);
   assert.match(editor, /aria-checked={selected}/);
   assert.doesNotMatch(editor, /role="listbox"|role="option"|aria-haspopup/);
-  assert.doesNotMatch(editor, /label: t\("oneWay"\)/);
-  assert.doesNotMatch(editor, /label: t\("roundTrip"\)/);
+  assert.doesNotMatch(editor, /label: "(?:One-way|Round-trip|Multi-city)"/);
   assert.match(editor, /data-desktop-trip-selector/);
-  assert.match(editor, /items-center gap-8/);
-  assert.match(editor, /rounded-full border-2/);
+  assert.match(editor, /items-center gap-7/);
+  assert.match(editor, /rounded-full border-\[1\.5px\]/);
 });
 
 test("desktop populated airport inputs remain editable without clear controls", () => {
@@ -100,7 +99,7 @@ test("fare strip is one bounded seven-date grid with adjacent week controls", ()
   const strip = fareStripSource();
   assert.equal(source.match(/const nearbyFareVisibleCount = 7;/g)?.length, 1);
   assert.match(strip, /data-desktop-nearby-fare-rail/);
-  assert.match(strip, /grid-cols-\[48px_repeat\(7,minmax\(0,1fr\)\)_48px\]/);
+  assert.match(strip, /grid-cols-\[42px_repeat\(7,minmax\(0,1fr\)\)_42px\]/);
   assert.match(strip, /aria-label="Previous nearby fare date"/);
   assert.match(strip, /aria-label="Next nearby fare date"/);
   assert.match(strip, /navigateNearbyFareWindow\("previous"\)/);
@@ -110,9 +109,9 @@ test("fare strip is one bounded seven-date grid with adjacent week controls", ()
     strip.indexOf("data-desktop-nearby-fare-rail"),
   );
   assert.doesNotMatch(desktopRail, /overflow-x-auto/);
-  assert.match(desktopRail, /rounded-xl border border-slate-200 bg-white/);
-  assert.match(desktopRail, /selected && "border-\[#075EE8\] bg-blue-50\/80/);
-  assert.equal(desktopRail.match(/h-10 w-10 place-self-center/g)?.length, 2);
+  assert.match(desktopRail, /rounded-2xl border border-slate-200\/90 bg-white/);
+  assert.match(desktopRail, /selected && "bg-blue-50\/55 after:scale-x-100/);
+  assert.equal(desktopRail.match(/h-9 w-9 place-self-center/g)?.length, 2);
 });
 
 test("fare windows are bounded and hidden for multi-city", () => {

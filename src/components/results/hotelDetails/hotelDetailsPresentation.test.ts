@@ -22,7 +22,7 @@ const t = (key: string) => ({
 }[key] || "");
 
 function hotel(overrides: Partial<PublicHotelResult> = {}): PublicHotelResult {
-  return {
+  const common = {
     id: "hotel-1",
     provider: "test",
     name: "Test Hotel",
@@ -30,20 +30,27 @@ function hotel(overrides: Partial<PublicHotelResult> = {}): PublicHotelResult {
     location: "Paris Center",
     neighbourhood: "Center",
     distanceFromCenter: "1 km from center",
-    pricePerNight: 100,
-    totalPrice: 200,
-    currency: "USD",
     amenities: [],
     roomType: "Standard room",
     cancellationInfo: "Flexible",
-    bookingUrl: "https://example.com/book",
-    partnerRedirectUrl: "https://example.com/redirect",
     valueScore: 80,
     travelConfidenceScore: 80,
     arrivalSuitabilityScore: 80,
     recommendationReasons: [],
     badges: [],
+  };
+  if (overrides.inventoryKind === "discovery") {
+    return { ...common, ...overrides, inventoryKind: "discovery" };
+  }
+  return {
+    ...common,
+    pricePerNight: 100,
+    totalPrice: 200,
+    currency: "USD",
+    bookingUrl: "https://example.com/book",
+    partnerRedirectUrl: "https://example.com/redirect",
     ...overrides,
+    inventoryKind: "bookable",
   };
 }
 

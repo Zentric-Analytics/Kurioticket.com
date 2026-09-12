@@ -20,6 +20,7 @@ import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { FlightEditSearchDrawer, type FlightEditSearchValue } from "@/components/search/FlightEditSearchDrawer";
 import { FlightDetailsLoadingShell } from "@/components/results/flightDetails/FlightDetailsLoadingShell";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { translations as enTranslations } from "@/lib/i18n/en";
 import { useRegion } from "@/components/region/RegionProvider";
 import { canUseOfferAirlineLogo, compactFareTerms, formatItineraryDepartureDate, getCenteredFareScrollLeft, resolveSegmentCarrierName } from "@/components/results/flightDetails/flightDetailsPresentation";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
@@ -45,7 +46,8 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const searchParams = useSearchParams();
   const router = useRouter();
   const detailsQuery = searchParams.toString();
-  const { locale } = useLocale();
+  const { locale, t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const [response, setResponse] = useState<FlightDetailsResponse | null>(null);
@@ -56,6 +58,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const [reloadToken, setReloadToken] = useState(0);
   const [activeTab, setActiveTab] = useState<FareTab>("deals");
   const [editSearchOpen, setEditSearchOpen] = useState(false);
+  const editSearchLauncherRef = useRef<HTMLButtonElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const fareRailRef = useRef<HTMLDivElement>(null);
   const fareButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -180,9 +183,11 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     flight.originAirport,
     flight.destinationAirport,
   );
-  const travelers = readTravelerSummary(available.search);
-  const tripType = available.search.tripType === "round-trip" ? "Round-trip" : available.search.tripType === "multi-city" ? `Multi-city • ${legs.length} flights` : "One-way";
-  const tripLine = `${tripType} • ${travelers.count} ${travelers.count === 1 ? "traveler" : "travelers"}`;
+  const travelers = readTravelerSummary(available.search, locale, t);
+  const tripType = available.search.tripType === "multi-city"
+    ? `${t("multiCity")} • ${new Intl.NumberFormat(locale).format(legs.length)} ${t("flights")}`
+    : t(available.search.tripType === "round-trip" ? "roundTrip" : "oneWay");
+  const tripLine = `${tripType} • ${new Intl.NumberFormat(locale).format(travelers.count)} ${t(travelers.count === 1 ? "deals.travelerSingular" : "deals.travelerPlural")}`;
   const date = available.search.tripType === "multi-city"
     ? available.search.legs.map((leg) => formatTripDate(leg.departureDate, locale)).join(" • ")
     : available.search.returnDate
@@ -230,8 +235,8 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
                 <h1 ref={headingRef} id="flight-details-heading" tabIndex={-1} className="text-[22px] font-bold leading-tight tracking-[-0.025em] text-slate-950 outline-none sm:text-[26px]">{route}</h1>
                 <p className="mt-1.5 text-[13px] font-medium text-slate-600">{tripLine}</p>
               </div>
-              <button type="button" onClick={() => setEditSearchOpen(true)} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#075EE8] bg-white px-3 text-xs font-semibold text-[#075EE8] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 sm:hidden"><Pencil className="h-4 w-4" aria-hidden="true" /> Edit search</button>
-              <Link href={resultsHref} className="hidden min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#075EE8] bg-white px-4 text-sm font-semibold text-[#075EE8] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 sm:inline-flex"><Pencil className="h-4 w-4" aria-hidden="true" /> Edit search</Link>
+              <button ref={editSearchLauncherRef} type="button" onClick={() => setEditSearchOpen(true)} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#075EE8] bg-white px-3 text-xs font-semibold text-[#075EE8] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 sm:hidden"><Pencil className="h-4 w-4" aria-hidden="true" /> {t("editSearch")}</button>
+              <Link href={resultsHref} className="hidden min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#075EE8] bg-white px-4 text-sm font-semibold text-[#075EE8] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 sm:inline-flex"><Pencil className="h-4 w-4" aria-hidden="true" /> {t("editSearch")}</Link>
             </div>
             <div className="mt-5 space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} departureDate={available.search.legs[index]?.departureDate ?? leg.departureTime.slice(0, 10)} locale={locale} offerAirlineName={flight.airlineName} offerAirlineLogo={flight.airlineLogo} />)}</div>
 
@@ -255,7 +260,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
           <TripSidebar tripType={available.search.tripType} legs={legs} route={route} date={date} tripLine={tripLine} travelers={travelers.label} travelerCount={travelers.count} selectedFare={selectedFare?.label || selectedOffer.cabinClass || ""} fareTerms={selectedFare?.distinguishingTerms ?? []} price={providerPrice} locale={locale} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={() => continueToOffer(selectedOffer.id)} error={error || notice} />
         </div>
       </div>
-      <FlightEditSearchDrawer open={editSearchOpen} presentation="bottom-sheet" initialValue={{ ...available.search, cabinClass: available.search.cabinClass }} onClose={() => setEditSearchOpen(false)} onSearch={submitEditedSearch} />
+      <FlightEditSearchDrawer open={editSearchOpen} presentation="bottom-sheet" initialValue={{ ...available.search, cabinClass: available.search.cabinClass }} onClose={() => { setEditSearchOpen(false); editSearchLauncherRef.current?.focus({ preventScroll: true }); }} onSearch={submitEditedSearch} />
     </main>
   );
 }
@@ -385,7 +390,18 @@ function TripSidebar({ tripType, legs, route, date, tripLine, travelers, travele
 function FlightDetailsSkeleton({ resultsHref }: { resultsHref: string }) { return <FlightDetailsLoadingShell resultsHref={resultsHref} />; }
 function FlightDetailsUnavailable({ resultsHref, message }: { resultsHref: string; message: string }) { return <main className="flex-1 bg-white py-10 sm:bg-[#F7F9FC]"><div className="mx-auto max-w-3xl px-0 sm:px-4"><Link href={resultsHref} className="ml-4 inline-flex items-center gap-2 text-sm font-semibold text-[#075EE8] sm:ml-0"><ArrowLeft className="h-4 w-4" /> Back to results</Link><section className="mt-4 border-y border-slate-200 bg-white p-6 sm:rounded-[15px] sm:border sm:p-8"><h1 className="text-xl font-bold">Flight quote unavailable</h1><p className="mt-2 text-sm text-slate-600">{message || "Please return to results and search again for current prices."}</p></section></div></main>; }
 
-function readTravelerSummary(search: { adults: number; children: number; infants: number; travelers: number }) { const { adults, children, infants } = search; const count = search.travelers; const parts = [adults ? `${adults} ${adults === 1 ? "adult" : "adults"}` : "", children ? `${children} ${children === 1 ? "child" : "children"}` : "", infants ? `${infants} ${infants === 1 ? "infant" : "infants"}` : ""].filter(Boolean); return { count, label: parts.join(", ") || "1 adult" }; }
+function readTravelerSummary(search: { adults: number; children: number; infants: number; travelers: number }, locale: string, t: (key: string) => string) {
+  const number = new Intl.NumberFormat(locale);
+  const parts = ([
+    [search.adults, "adultSingular", "adultPlural"],
+    [search.children, "childSingular", "childPlural"],
+    [search.infants, "infantSingular", "infantPlural"],
+  ] as const).filter(([count]) => count > 0).map(([count, singular, plural]) => `${number.format(count)} ${t(count === 1 ? singular : plural)}`);
+  return {
+    count: search.travelers,
+    label: parts.join(", ") || `${number.format(search.travelers)} ${t(search.travelers === 1 ? "deals.travelerSingular" : "deals.travelerPlural")}`,
+  };
+}
 function formatTripDate(value: string, locale: string) { const date = new Date(value.includes("T") ? value : `${value}T12:00:00`); return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat(locale, { weekday: "short", month: "short", day: "numeric" }).format(date); }
 function formatTime(value: string, locale: string) { return new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit" }).format(new Date(value)); }
 function technicalStopCount(leg: FlightLeg) { return leg.segments.reduce((total, segment) => total + (segment.technicalStops?.length ?? 0), 0); }

@@ -9,15 +9,15 @@ const source = readFileSync(
 
 test("shared mobile flight editor retains the approved drawer structure", () => {
   assert.match(source, /id="flight-mobile-search-title"/);
-  assert.match(source, />\s*Edit flight search\s*</);
-  assert.match(source, /aria-label="Close edit search"/);
+  assert.match(source, />\s*\{t\("editFlightSearch"\)\}\s*</);
+  assert.match(source, /aria-label=\{t\("closeEditSearch"\)\}/);
   assert.match(source, /data-mobile-trip-type-grid/);
   assert.match(source, /grid-cols-3/);
-  assert.match(source, /role="radiogroup"[\s\S]*?aria-label="Trip type"/);
+  assert.match(source, /role="radiogroup"[\s\S]*?aria-label=\{t\("tripType"\)\}/);
   assert.match(source, /role="radio"[\s\S]*?aria-checked=/);
   assert.match(source, /whitespace-nowrap/);
-  for (const label of ["Round-trip", "One-way", "Multi-city"])
-    assert.match(source, new RegExp(label));
+  for (const key of ["roundTrip", "oneWay", "multiCity"])
+    assert.ok(source.includes(`t("${key}")`));
   assert.doesNotMatch(
     source,
     /data-mobile-trip-type-grid[^>]*(?:flex-col|grid-cols-1)/,
@@ -200,7 +200,7 @@ test("traveler picker uses the canonical density and Done uses the local Kurioti
   );
   assert.match(
     source,
-    /onClick=\{\(\) => setTravelerPickerOpen\(false\)\}[\s\S]*?>\s*Done/,
+    /onClick=\{\(\) => setTravelerPickerOpen\(false\)\}[\s\S]*?>\s*\{t\("done"\)\}/,
   );
 });
 

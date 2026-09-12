@@ -15,7 +15,7 @@ test("mobile search summary remains the compact whole-card Edit Search launcher"
   assert.ok(start >= 0);
   assert.match(
     summary,
-    /<button[\s\S]*onClick=\{\(event\) => openMobileSearchDrawer\(event\.currentTarget\)\}/,
+    /<button[\s\S]*onClick=\{\(event\) => openMobileSearchDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)\}/,
   );
   assert.match(summary, /\{mobileRouteSummary\}/);
   assert.match(summary, /\{mobileTripTypeSummary\} · \{mobileDateSummary\} ·/);

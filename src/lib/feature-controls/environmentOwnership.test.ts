@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { getRuntimeFeatureEnvironment } from "./service";
 import { bootstrapFeatureControls } from "./bootstrap";
+import { featureControlKeys } from "./registry";
 import { featureControlMutationSchema, validateFeatureControlMutationAuthorization } from "@/app/api/admin/feature-controls/route";
 
 function withEnvironment(values: Record<string, string | undefined>, run: () => void) {
@@ -31,6 +32,8 @@ test("bootstrap claims legacy state and creates only the deployment-local rows",
   const tx = { $queryRaw: async () => undefined, featureFlag: { updateMany: async (args: Record<string, unknown>) => { operations.push({ updateMany: args }); return { count: 1 }; }, upsert: async (args: Record<string, unknown>) => { operations.push({ upsert: args }); return {}; } } };
   await bootstrapFeatureControls({ $transaction: async (run: (client: typeof tx) => Promise<unknown>) => run(tx) } as never, "STAGING");
   assert.deepEqual((operations[0].updateMany as { data: { environment: string } }).data, { environment: "STAGING" });
-  assert.equal(operations.filter((operation) => operation.upsert).length, 9);
+  const createdKeys = operations.filter((operation) => operation.upsert).map((operation) => (operation.upsert as { create: { key: string } }).create.key);
+  assert.deepEqual(createdKeys.sort(), [...featureControlKeys].sort());
+  assert.equal(new Set(createdKeys).size, createdKeys.length);
   assert.ok(operations.slice(1).every((operation) => JSON.stringify(operation).includes('"environment":"STAGING"') && !JSON.stringify(operation).includes('"environment":"PRODUCTION"')));
 });

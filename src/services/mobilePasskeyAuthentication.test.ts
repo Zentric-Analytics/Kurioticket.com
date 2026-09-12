@@ -112,7 +112,7 @@ function harness(
 
   const transactionClient = {
     webAuthnChallenge: {
-      updateMany: async (args: any) => {
+      updateMany: async (args: { where: { id: string; expiresAt: { gt: Date } }; data: { consumedAt: Date; userId: string } }) => {
         if (challenge.id !== args.where.id || challenge.consumedAt || challenge.expiresAt <= args.where.expiresAt.gt) return { count: 0 };
         challenge.consumedAt = args.data.consumedAt;
         challenge.userId = args.data.userId;
@@ -120,7 +120,7 @@ function harness(
       },
     },
     userPasskey: {
-      updateMany: async (args: any) => {
+      updateMany: async (args: { where: { id: string; counter: number }; data: { counter: number; lastUsedAt: Date } }) => {
         if (passkey.id !== args.where.id || passkey.revokedAt || passkey.counter !== args.where.counter) return { count: 0 };
         passkey.counter = args.data.counter;
         (passkey as typeof passkey & { lastUsedAt?: Date }).lastUsedAt = args.data.lastUsedAt;
@@ -130,10 +130,10 @@ function harness(
   };
   const prisma = {
     webAuthnChallenge: {
-      findUnique: async ({ where }: any) => where.challenge === challenge.challenge ? { ...challenge } : null,
+      findUnique: async ({ where }: { where: { challenge: string } }) => where.challenge === challenge.challenge ? { ...challenge } : null,
     },
     userPasskey: {
-      findUnique: async ({ where }: any) => where.credentialId === passkey.credentialId
+      findUnique: async ({ where }: { where: { credentialId: string } }) => where.credentialId === passkey.credentialId
         ? { ...passkey, user: { ...passkey.user } }
         : null,
     },
@@ -168,9 +168,10 @@ test("mobile passkey challenge and counter rules are strict", () => {
 
 test("options are username-less, short-lived, and reveal no account selector", async () => {
   configureRelyingParty();
-  const writes: any[] = [];
+  type ChallengeWrite = { data: { type: string; expiresAt: Date } };
+  const writes: ChallengeWrite[] = [];
   const prisma = {
-    webAuthnChallenge: { create: async (input: any) => { writes.push(input); return input.data; } },
+    webAuthnChallenge: { create: async (input: ChallengeWrite) => { writes.push(input); return input.data; } },
   } as unknown as PrismaClient;
   const options = await createMobilePasskeyOptions(NOW, prisma);
   assert.equal(options.rpId, RP_ID);

@@ -67,7 +67,7 @@ test("results location autocomplete owns the remaining value-row width", () => {
   );
 });
 
-test("pickup alone removes its clear action and reclaims the input width", () => {
+test("pickup and return omit redundant clear buttons and reclaim the input width", () => {
   const pickupCell = source.match(
     /<SearchInputCell[\s\S]*?name="pickupLocation"[\s\S]*?\/>/,
   )?.[0];
@@ -76,7 +76,7 @@ test("pickup alone removes its clear action and reclaims the input width", () =>
   assert.ok(pickupCell, "Pickup SearchInputCell should remain rendered");
   assert.match(pickupCell, /showClearButton=\{false\}/);
   assert.ok(returnCell, "Return SearchInputCell should remain rendered");
-  assert.doesNotMatch(returnCell, /showClearButton=\{false\}/);
+  assert.match(returnCell, /showClearButton=\{false\}/);
   assert.match(returnCell, /onClear=\{\(\) => \{/);
   assert.match(
     source,
@@ -137,7 +137,7 @@ test("desktop-full rental dates compose calendar, value stack, then chevron", ()
     /\{showRentalDuration \? \(\s*<Calendar[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"[\s\S]*?<span className="min-w-0 flex-1">[\s\S]*?\{summary\}[\s\S]*?showRentalDuration && rentalDayCount > 0[\s\S]*?\{rentalDaysLabel\}[\s\S]*?<ChevronDown/,
   );
   const labelRow = searchDateCell.match(
-    /<div className=\{fieldLabelClass\}>[\s\S]*?<\/div>/,
+    /<div className=\{cn\(fieldLabelClass,[^\n]*\)\}>[\s\S]*?<\/div>/,
   )?.[0];
   assert.ok(labelRow, "SearchDateCell label row should remain defined");
   assert.doesNotMatch(labelRow, /<Calendar\b/);
@@ -213,7 +213,10 @@ test("outside pointer handling includes each launcher and its exact portal", () 
     source,
     /document\.addEventListener\("pointerdown", onPointerDown\)/,
   );
-  assert.doesNotMatch(source, /closest\([^)]*popover/i);
+  // Portaled calendar controls carry this exact marker; unrelated popovers must not be exempted.
+  assert.ok(source.includes("target.closest('[data-cars-results-picker-popover=\"true\"]')"));
+  assert.ok(source.includes("if (clickedInsidePickerPopover) return;"));
+  assert.doesNotMatch(source, /closest\(['"](?:\.popover|\[data-popover)/);
 });
 
 test("desktop time cell matches the main search while retaining the full range wiring", () => {

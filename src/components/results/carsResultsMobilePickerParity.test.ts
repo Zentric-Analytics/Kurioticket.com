@@ -1,15 +1,14 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { variableInitializer } from "@/lib/testing/sourceContract";
 
 const source = readFileSync(
   new URL("./CarsResultsClient.tsx", import.meta.url),
   "utf8",
 );
 
-const mobileForm = source.match(
-  /const renderCarsSearchForm = \([\s\S]*?\n  return \(\n    <main/,
-)?.[0];
+const mobileForm = variableInitializer(source, "renderCarsSearchForm");
 
 assert.ok(mobileForm, "the Cars Results search form should remain defined");
 

@@ -576,7 +576,7 @@ export const translations: TranslationDictionary = {
     "Control how Kurioticket personalizes your recommendations.",
   "accountDashboard.preferences.customization.personalizeSearches":
     "Use my searches to personalize recommendations",
-  "accountDashboard.preferences.customization.personalizedTravelPackages":
+  "accountDashboard.preferences.customization.personalizedTravelDeals":
     "Show personalized travel deals",
   "accountDashboard.preferences.customization.rememberRecentSearches":
     "Remember my recent searches",

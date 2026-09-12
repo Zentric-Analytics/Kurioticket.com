@@ -10,7 +10,7 @@ export type MobileHotelGuestsRoomsStrings = {
   decrease: (label: string) => string; increase: (label: string) => string;
 };
 
-type Props = { adults: number; children: number; rooms: number; petFriendly: boolean; strings: MobileHotelGuestsRoomsStrings;
+type Props = { adults: number; childCount: number; rooms: number; petFriendly: boolean; strings: MobileHotelGuestsRoomsStrings;
   density?: "default" | "compact";
   onAdultsChange: (value: number) => void; onChildrenChange: (value: number) => void; onRoomsChange: (value: number) => void; onPetFriendlyChange: (value: boolean) => void; };
 
@@ -43,7 +43,7 @@ function Row({ icon, label, description, counter, compact }: { icon: ReactNode; 
   </div>;
 }
 
-export function MobileHotelGuestsRoomsPicker({ adults, children, rooms, petFriendly, strings, density = "default", onAdultsChange, onChildrenChange, onRoomsChange, onPetFriendlyChange }: Props) {
+export function MobileHotelGuestsRoomsPicker({ adults, childCount: children, rooms, petFriendly, strings, density = "default", onAdultsChange, onChildrenChange, onRoomsChange, onPetFriendlyChange }: Props) {
   const compact = density === "compact";
   const guestIconClassName = compact ? "h-[22px] w-[22px]" : "h-7 w-7";
   return <div className="mx-auto w-full max-w-xl pb-2">

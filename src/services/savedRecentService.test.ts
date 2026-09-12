@@ -11,7 +11,10 @@ const car = {
 test("saved Cars are a first-class account item with complete reopen context", () => {
   const parsed = createSavedItemInputSchema.safeParse(car);
   assert.equal(parsed.success, true);
-  if (parsed.success) assert.equal(parsed.data.currency, "USD");
+  if (parsed.success) {
+    assert.equal(parsed.data.type, "car");
+    if (parsed.data.type === "car") assert.equal(parsed.data.currency, "USD");
+  }
   assert.equal(savedItemTypes.includes("car"), true);
 });
 

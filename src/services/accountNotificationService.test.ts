@@ -17,10 +17,10 @@ test("material security events use transactional email and safe metadata", async
 });
 
 test("missing email preserves the in-app event without optional email", async () => {
-  let captured: Record<string, unknown> | null = null;
-  __accountNotificationServiceTest.setCreateEvent(async (input) => { captured = input; return {} as never; });
+  const captured: Array<Record<string, unknown>> = [];
+  __accountNotificationServiceTest.setCreateEvent(async (input) => { captured.push(input); return {} as never; });
   await recordAccountEvent({ userId: "user-1", email: null, eventKey: "account-deletion:request-1:requested", type: "ACCOUNT_UPDATE", title: "Deletion requested", body: "Request received.", actionPath: "/security" });
-  assert.deepEqual(captured?.email, { kind: "none" });
+  assert.deepEqual(captured[0]?.email, { kind: "none" });
 });
 
 test("follow-up notification failure does not throw after a successful mutation", async () => {

@@ -1,3 +1,5 @@
+import { CARS_RESULTS_IMAGE_VERSION } from "../lib/cars/carResultImage";
+
 export type ImagePattern = {
   protocol?: "http" | "https";
   hostname?: string;
@@ -12,6 +14,7 @@ type RemoteImagePattern = ImagePattern & {
 };
 
 export const imageLocalPatterns: ImagePattern[] = [
+  { pathname: "/images/cars/results/**", search: `?v=${CARS_RESULTS_IMAGE_VERSION}` },
   { pathname: "/images/cars/results/**", search: "?v=4x3-20260723" },
   { pathname: "/**", search: "" },
 ];

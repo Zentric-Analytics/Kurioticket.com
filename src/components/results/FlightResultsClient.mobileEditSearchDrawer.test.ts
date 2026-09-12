@@ -27,7 +27,7 @@ test("Results parent leaves Edit Search scroll locking to the drawer", () => {
   assert.match(source, /mobileFiltersScrollLockRef\.current \?\?= acquireMobileResultsScrollLock\(\)/);
 });
 
-test("opening Edit Search cannot select or hide a Results header state", () => {
+test("Edit Search preserves visual header state while making the background inaccessible", () => {
   const compactHeaderStart = source.indexOf(
     "data-flight-results-compact-header",
   );
@@ -36,12 +36,9 @@ test("opening Edit Search cannot select or hide a Results header state", () => {
 
   assert.ok(compactHeaderStart >= 0);
   assert.match(compactHeader, /inert=\{mobileSearchOpen \? true : undefined\}/);
-  assert.match(compactHeader, /aria-hidden=\{!mobileCompactHeaderVisible\}/);
-  assert.doesNotMatch(
-    compactHeader,
-    /mobileCompactHeaderVisible\s*&&\s*!mobileSearchOpen/,
-  );
-  assert.doesNotMatch(compactHeader, /aria-hidden=.*mobileSearchOpen/);
+  assert.match(compactHeader, /mobileCompactHeaderVisible \? "opacity-100" : "opacity-0"/);
+  assert.match(compactHeader, /aria-hidden=\{!mobileCompactHeaderVisible \|\| mobileSearchOpen\}/);
+  assert.match(compactHeader, /mobileCompactHeaderVisible\s*&&\s*!mobileSearchOpen\s*\? "pointer-events-auto"\s*: "pointer-events-none"/);
   assert.match(source, /data-flight-results-top-summary/);
   assert.match(source, /data-flight-results-main/);
 });

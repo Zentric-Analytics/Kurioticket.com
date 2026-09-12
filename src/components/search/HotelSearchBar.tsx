@@ -259,13 +259,16 @@ export function HotelSearchBar({
   const [error, setError] = useState("");
   const [datesOpen, setDatesOpen] = useState(false);
   const [guestsRoomsOpen, setGuestsRoomsOpen] = useState(false);
-  useEffect(() => {
-    if (!guestsRoomsOpen) return;
-    setDraftHotelAdults(hotelAdultCount);
-    setDraftHotelChildren(hotelChildCount);
-    setDraftHotelRooms(clampCount(rooms, 1, 6));
-    setDraftHotelPetFriendly(hotelPetFriendly);
-  }, [guestsRoomsOpen]);
+  const [previousGuestsRoomsOpen, setPreviousGuestsRoomsOpen] = useState(guestsRoomsOpen);
+  if (previousGuestsRoomsOpen !== guestsRoomsOpen) {
+    setPreviousGuestsRoomsOpen(guestsRoomsOpen);
+    if (guestsRoomsOpen) {
+      setDraftHotelAdults(hotelAdultCount);
+      setDraftHotelChildren(hotelChildCount);
+      setDraftHotelRooms(clampCount(rooms, 1, 6));
+      setDraftHotelPetFriendly(hotelPetFriendly);
+    }
+  }
   const [internalMobileSearchOpen, setInternalMobileSearchOpen] =
     useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1775,7 +1778,7 @@ export function HotelSearchBar({
             </button>
         )}
       >
-        <MobileHotelGuestsRoomsPicker adults={draftHotelAdults} children={draftHotelChildren} rooms={draftHotelRooms} petFriendly={draftHotelPetFriendly} density={mobileLandingPresentation || mobileResultsSheet ? "compact" : undefined}
+        <MobileHotelGuestsRoomsPicker adults={draftHotelAdults} childCount={draftHotelChildren} rooms={draftHotelRooms} petFriendly={draftHotelPetFriendly} density={mobileLandingPresentation || mobileResultsSheet ? "compact" : undefined}
           onAdultsChange={setDraftHotelAdults} onChildrenChange={setDraftHotelChildren} onRoomsChange={setDraftHotelRooms} onPetFriendlyChange={setDraftHotelPetFriendly}
           strings={{ guests: t("guests"), adults: t("adults"), adultDescription: t("hotelGuests.adultDescription") || "Ages 18+", children: t("children"), childDescription: t("hotelGuests.childDescription") || "Ages 0–17", rooms: t("rooms"), roomDescription: t("hotelGuests.roomDescription") || "Separate rooms", petFriendly: t("petFriendly"), petDescription: t("onlyShowPetFriendlyStays"), decrease: (label) => `Decrease ${label}`, increase: (label) => `Increase ${label}` }} />
       </HotelMobilePickerShell>

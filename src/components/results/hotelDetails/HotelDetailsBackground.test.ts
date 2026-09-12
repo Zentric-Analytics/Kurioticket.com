@@ -15,8 +15,8 @@ const flightClientSource = readFileSync(
   "utf8",
 );
 
-const mainClass = 'className="flex-1 bg-[#f8fafc]"';
-const whiteSection = '<section className="border-b border-slate-200/70 py-2 sm:py-2 lg:py-2">';
+const mainClass = 'className="flex-1 bg-white sm:bg-[#f8fafc]"';
+const whiteSection = '<section className="py-2 lg:py-2">';
 const fullBleedShell = 'className="mx-auto w-full max-w-[1400px] px-0 lg:px-7"';
 
 function assertBackgroundHierarchy(source: string) {
@@ -24,7 +24,7 @@ function assertBackgroundHierarchy(source: string) {
   const sectionIndex = source.indexOf(whiteSection, mainIndex);
   const shellIndex = source.indexOf(fullBleedShell, sectionIndex);
 
-  assert.ok(mainIndex >= 0, "retains the muted main background");
+  assert.ok(mainIndex >= 0, "retains white mobile and muted desktop backgrounds");
   assert.ok(sectionIndex > mainIndex, "the white section is inside the main");
   assert.ok(shellIndex > sectionIndex, "the full-bleed shell is inside the white section");
 

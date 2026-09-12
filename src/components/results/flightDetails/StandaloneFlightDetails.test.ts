@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test, { afterEach } from "node:test";
+import { getTranslations } from "@/lib/i18n";
+import { runInNewContext } from "node:vm";
+import ts from "typescript";
 
 import type { FlightSearchParams, NormalizedFlightResult } from "@/lib/types";
 import { flightDetailsRouteLabel, flightDetailsTotalLabel } from "@/lib/flights/flightDetailsContract";
@@ -12,6 +15,38 @@ import {
 } from "@/services/travel/standaloneFlightDetails";
 
 const originalPartners = process.env.FLIGHT_HANDOFF_PARTNERS_JSON;
+test("current traveler breakdown translates labels without changing canonical counts", async () => {
+  const source = await readFile("src/components/results/flightDetails/StandaloneFlightDetails.tsx", "utf8");
+  const ast = ts.createSourceFile("details.tsx", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const helper = ast.statements.find((node): node is ts.FunctionDeclaration => ts.isFunctionDeclaration(node) && node.name?.text === "readTravelerSummary");
+  assert.ok(helper);
+  const js = ts.transpile(helper.getText(ast), { target: ts.ScriptTarget.ES2022 });
+  const summarize = runInNewContext(`${js}; readTravelerSummary`, { Intl }) as (search: { adults: number; children: number; infants: number; travelers: number }, locale: string, t: (key: string) => string) => { count: number; label: string };
+  for (const locale of ["th", "vi", "pl", "sv", "id"]) {
+    const dictionary = getTranslations(locale);
+    const result = summarize({ adults: 2, children: 1, infants: 1, travelers: 4 }, locale, key => dictionary[key]);
+    assert.equal(result.count, 4);
+    assert.equal(result.label, `2 ${dictionary.adultPlural}, 1 ${dictionary.childSingular}, 1 ${dictionary.infantSingular}`);
+    const emptyBreakdown = summarize({ adults: 0, children: 0, infants: 0, travelers: 3 }, locale, key => dictionary[key]);
+    assert.equal(emptyBreakdown.count, 3);
+    assert.equal(emptyBreakdown.label, `3 ${dictionary["deals.travelerPlural"]}`);
+  }
+});
+test("current standalone trip summary uses localized labels and numeric formatting", async () => {
+  const source = await readFile("src/components/results/flightDetails/StandaloneFlightDetails.tsx", "utf8");
+  assert.match(source, /locale, t: dictionary/);
+  assert.match(source, /new Intl\.NumberFormat\(locale\)\.format\(travelers\.count\)/);
+  assert.match(source, /new Intl\.NumberFormat\(locale\)\.format\(legs\.length\)/);
+  assert.match(source, /t\(travelers\.count === 1 \? "deals\.travelerSingular" : "deals\.travelerPlural"\)/);
+  for (const locale of ["th", "vi", "pl", "sv", "id"]) {
+    const translations = getTranslations(locale);
+    const english = getTranslations("en");
+    for (const key of ["roundTrip", "oneWay", "multiCity", "flights", "deals.travelerSingular", "deals.travelerPlural"]) {
+      assert.ok(translations[key], `${locale}: ${key} must exist`);
+      assert.notEqual(translations[key], english[key], `${locale}: ${key} must be translated`);
+    }
+  }
+});
 afterEach(() => {
   if (originalPartners === undefined) delete process.env.FLIGHT_HANDOFF_PARTNERS_JSON;
   else process.env.FLIGHT_HANDOFF_PARTNERS_JSON = originalPartners;
@@ -147,7 +182,7 @@ test("failed selected revalidation launches no secondary provider work", async (
   let secondaryCalls = 0;
   const details = await buildStandaloneFlightDetails({
     cachedSelected: fixture(), cachedAlternatives: [fixture({ id: "alternative", fareBrandName: "Flex" })], search, now: 1,
-    refresh: async () => ({ status: "unavailable", offer: null }),
+    refresh: async () => ({ status: "unavailable" }),
     discoverUpsells: async () => { secondaryCalls += 1; return noUpsells(); },
   });
   assert.equal(details.status, "unavailable");
@@ -478,19 +513,19 @@ test("standalone UI renders every leg and segment from selected offer and uses a
 test("standalone UI preserves the approved desktop and mobile blueprint composition", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   assert.match(source, /lg:grid-cols-\[minmax\(0,2\.45fr\)_minmax\(310px,0\.95fr\)\]/);
-  assert.match(source, /className="hidden self-start rounded-\[13px\].*lg:block"/s);
+  assert.match(source, /className="hidden self-start rounded-\[13px\][\s\S]*lg:block"/);
   assert.doesNotMatch(source, /<aside className="[^"]*(?:sticky|fixed)|top-24/);
   assert.match(source, /function MobileCheckoutDock/);
   assert.doesNotMatch(source, /function MobileTripTotal/);
   assert.match(source, /fixed inset-x-0 bottom-0 z-\[90px\]|fixed inset-x-0 bottom-0 z-\[90\]/);
   assert.match(source, /pb-\[calc\(0\.75rem\+env\(safe-area-inset-bottom\)\)\]/);
-  assert.match(source, /pb-\[calc\(6\.75rem\+env\(safe-area-inset-bottom\)\)\].*lg:pb-16/s);
+  assert.match(source, /pb-\[calc\(6\.75rem\+env\(safe-area-inset-bottom\)\)\][\s\S]*lg:pb-16/);
   assert.match(source, /role="tablist"/);
   assert.equal((source.match(/role="tab"/g) || []).length, 1);
   assert.deepEqual(["Compare deals", "Fare details", "Fare conditions", "Optional extras"].map((label) => source.includes(`label: "${label}"`)), [true, true, true, true]);
   assert.match(source, /useState<FareTab>\("deals"\)/);
   assert.match(source, /role="tabpanel"/);
-  assert.match(source, /ArrowRight.*ArrowLeft/s);
+  assert.match(source, /ArrowRight[\s\S]*ArrowLeft/);
   assert.match(source, /flex min-w-0 flex-nowrap gap-1 overflow-x-auto/);
   assert.match(source, /min-h-11 w-auto shrink-0 whitespace-nowrap border-b-2/);
   assert.match(source, /\[scrollbar-width:none\]/);
@@ -513,10 +548,10 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.match(source, /min-w-0 rounded-\[10px\]/);
   assert.match(source, /whitespace-normal break-words \[overflow-wrap:anywhere\].*\[word-break:normal\]/);
   assert.doesNotMatch(source, /text-overflow|ellipsis/);
-  assert.match(source, /overflow-x-auto.*sm:grid/s);
+  assert.match(source, /overflow-x-auto[\s\S]*sm:grid/);
   assert.match(source, /scrollIntoView\(\{ behavior: "smooth", block: "nearest", inline: "nearest" \}\)/);
   assert.match(source, /max-w-\[1470px\] px-0 sm:px-6 lg:px-\[34px\]/);
-  assert.match(source, /border-y border-\[#E2E8F0\].*sm:rounded-\[13px\] sm:border.*sm:shadow-/s);
+  assert.match(source, /border-y border-\[#E2E8F0\][\s\S]*sm:rounded-\[13px\] sm:border[\s\S]*sm:shadow-/);
   assert.match(source, /ml-4.*sm:ml-0/);
   assert.match(source, /function FlightDetailsSkeleton[\s\S]*?<FlightDetailsLoadingShell/);
   assert.match(source, /function FlightDetailsUnavailable[\s\S]*?px-0 sm:px-4/);
@@ -627,6 +662,7 @@ test("Flight Details mobile cleanup uses shared editing, peek tabs, and fare car
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   assert.match(source, /<FlightEditSearchDrawer/);
   assert.match(source, /ref=\{editSearchLauncherRef\}[\s\S]*?sm:hidden/);
+  assert.match(source, /setEditSearchOpen\(false\); editSearchLauncherRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
   assert.match(source, /<Link href=\{resultsHref\}[\s\S]*?Back to results/);
   assert.match(source, /flex-nowrap gap-1 overflow-x-auto/);
   assert.match(source, /w-auto shrink-0 whitespace-nowrap border-b-2/);

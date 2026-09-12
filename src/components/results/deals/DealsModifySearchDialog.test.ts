@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
+import { getTranslations } from "@/lib/i18n";
 
 const dialog = readFileSync(
   new URL("./DealsModifySearchDialog.tsx", import.meta.url),
@@ -18,10 +19,7 @@ const form = readFileSync(
   new URL("../../search/DealsSearchForm.tsx", import.meta.url),
   "utf8",
 );
-const english = readFileSync(
-  new URL("../../../lib/i18n/en.ts", import.meta.url),
-  "utf8",
-);
+const english = getTranslations("en-us");
 
 test("results search form retains only the pending-safe primary action", () => {
   const props =
@@ -31,21 +29,21 @@ test("results search form retains only the pending-safe primary action", () => {
   const action = form.match(/const searchDealsButton = [^;]+;/)?.[0] ?? "";
   assert.doesNotMatch(props, /onCancel/);
   assert.doesNotMatch(parameters, /onCancel/);
-  assert.doesNotMatch(form, /packages\.results\.editor\.cancel/);
+  assert.doesNotMatch(form, /deals\.results\.editor\.cancel/);
   assert.doesNotMatch(form, /onClick=\{onCancel\}/);
   assert.match(action, /type="submit"/);
   assert.match(action, /disabled=\{submitting \|\| pending\}/);
   assert.match(action, /aria-busy=\{submitting \|\| pending\}/);
-  assert.match(action, /packages\.results\.editor\.update/);
-  assert.match(action, /packages\.results\.editor\.updating/);
+  assert.match(action, /deals\.results\.editor\.update/);
+  assert.match(action, /deals\.results\.editor\.updating/);
   assert.doesNotMatch(dialog, /onCancel=\{onClose\}/);
 });
 
 test("English editor copy retains close and update labels without the obsolete cancel label", () => {
-  assert.doesNotMatch(english, /packages\.results\.editor\.cancel/);
-  assert.match(english, /packages\.results\.editor\.close/);
-  assert.match(english, /packages\.results\.editor\.update/);
-  assert.match(english, /packages\.results\.editor\.updating/);
+  assert.equal(english["deals.results.editor.cancel"], undefined);
+  assert.equal(english["deals.results.editor.close"], "Close search editor");
+  assert.equal(english["deals.results.editor.update"], "Update results");
+  assert.equal(english["deals.results.editor.updating"], "Updating results…");
 });
 
 test("modify search uses a labelled modal while preserving the results page", () => {

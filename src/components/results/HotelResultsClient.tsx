@@ -2122,7 +2122,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                 setFiltersOpen(false);
               }}
             >
-              {filterApplying ? "Updating results…" : sortedVisibleHotels.length === 0 ? "No matching stays" : activeFilterCount > 0 ? `View ${sortedVisibleHotels.length} matching ${sortedVisibleHotels.length === 1 ? "stay" : "stays"}` : `View all ${sortedVisibleHotels.length} stays`}
+              {filterApplying ? t("updatingResults") : sortedVisibleHotels.length === 0 ? t("hotelResults.noStaysMatchFiltersTitle") : `${t("deals.results.package.view.hotel")} (${new Intl.NumberFormat(locale).format(sortedVisibleHotels.length)})`}
             </Button>
           </div>
         </aside>
@@ -2306,7 +2306,7 @@ function HotelFilters({ layout = "desktop", propertyNameQuery, setPropertyNameQu
       },
       {
         id: "rating",
-        title: "Hotel class",
+        title: t("hotelResults.starRating"),
         selectedCount: selectedRatings.length,
         content: <StarRatingFilterControl selectedRatings={selectedRatings} onToggle={toggleRating} counts={starRatingCounts} locale={locale} t={t} layout="compact" />,
       },
@@ -2428,7 +2428,7 @@ function HotelFilters({ layout = "desktop", propertyNameQuery, setPropertyNameQu
 
         {options.travellerFeatures.length > 0 ? <CheckboxFilterSection title="Good for your trip" options={options.travellerFeatures} selected={selectedFilters.travellerFeatures} onToggle={(value) => toggleFilter("travellerFeatures", value)} t={t} locale={locale} layout={layout} /> : null}
 
-        <FilterSection title="Hotel class" layout={layout}>
+        <FilterSection title={t("hotelResults.starRating")} layout={layout}>
           <StarRatingFilterControl selectedRatings={selectedRatings} onToggle={toggleRating} counts={starRatingCounts} locale={locale} t={t} layout={layout} />
         </FilterSection>
 
@@ -2449,25 +2449,33 @@ function HotelFilters({ layout = "desktop", propertyNameQuery, setPropertyNameQu
 }
 
 function PriceFilterControl({ stayNights, minPrice, maxPrice, setMinPrice, setMaxPrice, resultMaxPrice, formatPrice, filterRangeClass }: { stayNights: number; minPrice: number; maxPrice: number; setMinPrice: (value: number) => void; setMaxPrice: (value: number) => void; resultMaxPrice: number; formatPrice: (amountUsd: number) => string; filterRangeClass: string }) {
+  const { t: dictionary, locale } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const totalLabel = t("hotelResults.estimatedStayTotal");
+  const minimumLabel = t("from");
+  const maximumLabel = t("hotelResults.totalUpTo");
+  const minimumAriaLabel = `${totalLabel}: ${minimumLabel}`;
+  const maximumAriaLabel = `${totalLabel}: ${maximumLabel}`;
+  const nightsLabel = t(stayNights === 1 ? "deals.results.night" : "deals.results.nights");
   const rangeMax = Math.max(resultMaxPrice, 300);
   return (
     <div className="space-y-3">
       <p className="text-xs leading-5 text-slate-600">
-        Estimated total for {stayNights} {stayNights === 1 ? "night" : "nights"}.
+        {totalLabel} · {new Intl.NumberFormat(locale).format(stayNights)} {nightsLabel}
       </p>
       <div className="grid grid-cols-2 gap-2">
         <label className="text-xs font-semibold text-slate-700">
-          Minimum
-          <input type="number" min={0} max={maxPrice} step={25} value={minPrice} onChange={(event) => setMinPrice(Number(event.target.value))} className="mt-1 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 font-mono text-sm text-slate-950 outline-none focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20" aria-label="Minimum estimated stay total" />
+          {minimumLabel}
+          <input type="number" min={0} max={maxPrice} step={25} value={minPrice} onChange={(event) => setMinPrice(Number(event.target.value))} className="mt-1 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 font-mono text-sm text-slate-950 outline-none focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20" aria-label={minimumAriaLabel} />
         </label>
         <label className="text-xs font-semibold text-slate-700">
-          Maximum
-          <input type="number" min={minPrice} max={rangeMax} step={25} value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} className="mt-1 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 font-mono text-sm text-slate-950 outline-none focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20" aria-label="Maximum estimated stay total" />
+          {maximumLabel}
+          <input type="number" min={minPrice} max={rangeMax} step={25} value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} className="mt-1 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 font-mono text-sm text-slate-950 outline-none focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20" aria-label={maximumAriaLabel} />
         </label>
       </div>
-      <div className="relative h-6" aria-label="Estimated stay total range">
-        <input className={cn(filterRangeClass, "absolute inset-x-0 top-2 pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto")} type="range" min={0} max={rangeMax} step={25} value={minPrice} onChange={(event) => setMinPrice(Number(event.target.value))} aria-label="Minimum estimated stay total" aria-valuetext={formatPrice(minPrice)} />
-        <input className={cn(filterRangeClass, "absolute inset-x-0 top-2 bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto")} type="range" min={0} max={rangeMax} step={25} value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} aria-label="Maximum estimated stay total" aria-valuetext={formatPrice(maxPrice)} />
+      <div className="relative h-6" role="group" aria-label={totalLabel}>
+        <input className={cn(filterRangeClass, "absolute inset-x-0 top-2 pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto")} type="range" min={0} max={rangeMax} step={25} value={minPrice} onChange={(event) => setMinPrice(Number(event.target.value))} aria-label={minimumAriaLabel} aria-valuetext={formatPrice(minPrice)} />
+        <input className={cn(filterRangeClass, "absolute inset-x-0 top-2 bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto")} type="range" min={0} max={rangeMax} step={25} value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} aria-label={maximumAriaLabel} aria-valuetext={formatPrice(maxPrice)} />
       </div>
       <p className="flex justify-between text-xs font-medium text-slate-600">
         <span>{formatPrice(minPrice)}</span>
@@ -2482,7 +2490,7 @@ function StarRatingFilterControl({ selectedRatings, onToggle, counts, locale, t,
 
   return (
     <fieldset className="space-y-0.5">
-      <legend className="sr-only">Hotel class</legend>
+      <legend className="sr-only">{t("hotelResults.starRating")}</legend>
 
       {options.map((rating) => {
         const selected = selectedRatings.includes(rating);

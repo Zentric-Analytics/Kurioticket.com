@@ -32,7 +32,7 @@ function installDocument(themeColor?: string) {
   const styleProperties = new Map<string, string>();
   const metas: FakeMeta[] = [];
   const existingMeta = themeColor === undefined ? null : new FakeMeta();
-  if (existingMeta) {
+  if (existingMeta && themeColor !== undefined) {
     existingMeta.setAttribute("name", "theme-color");
     existingMeta.setAttribute("content", themeColor);
     existingMeta.isConnected = true;

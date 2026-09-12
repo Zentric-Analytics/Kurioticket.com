@@ -22,7 +22,7 @@ test("source-contract: Cars compact shell and header match Flights styling", () 
   );
   assert.match(
     source,
-    /<SlidersHorizontal className="desktop-filter-sidebar__icon shrink-0 text-\[#004BB8\]" size=\{15\} strokeWidth=\{2\.25\} aria-hidden="true" \/>\s*<span className="truncate">\{t\("carsResults\.filterBy"\)\}<\/span>/,
+    /<SlidersHorizontal\s+className="desktop-filter-sidebar__icon shrink-0 text-\[#004BB8\]"\s+size=\{15\}\s+strokeWidth=\{2\.25\}\s+aria-hidden="true"\s*\/>\s*<span className="truncate">\{t\("carsResults\.filterBy"\)\}<\/span>/,
   );
   assert.match(
     source,
@@ -35,18 +35,18 @@ test("source-contract: Cars compact shell and header match Flights styling", () 
 test("source-contract: Cars compact sections match Flights density", () => {
   assert.match(
     source,
-    /layout === "compact" \? "border-t border-\[#D8E1EC\]\/75 first:border-t-0"/,
+    /layout === "compact"\s*\? "border-t border-\[#D8E1EC\]\/75 first:border-t-0"/,
   );
   assert.doesNotMatch(source, /layout === "compact" \? "[^"]*py-3/);
   assert.match(
     source,
-    /group flex min-h-9 w-full items-center justify-between gap-3 rounded-md px-2\.5 py-2 text-start text-\[13px\] font-semibold/,
+    /group flex w-full items-center justify-between gap-3 text-start font-semibold/,
   );
   assert.doesNotMatch(source, /layout === "compact"[^\n]*min-h-10/);
   assert.doesNotMatch(source, /layout === "compact"[^\n]*text-sm font-bold/);
   assert.match(
     source,
-    /h-3\.5 w-3\.5 text-slate-500 transition duration-200.*compactOpen && "rotate-180 text-\[#004BB8\]"/,
+    /h-3\.5 w-3\.5 text-slate-500 transition duration-200[\s\S]*?compactOpen && "rotate-180 text-\[#004BB8\]"/,
   );
   assert.match(source, /strokeWidth=\{2\.3\}/);
   assert.match(
@@ -92,16 +92,16 @@ test("source-contract: compact body is the only vertical scroll owner and header
 test("source-contract: full desktop and mobile filter styling remain separate", () => {
   assert.match(
     source,
-    /layout === "desktop" \? "desktop-filter-sidebar border border-slate-200\/80 bg-transparent p-0 shadow-none rounded-none"/,
+    /layout === "desktop"\s*\? "desktop-filter-sidebar border border-slate-200\/80 bg-transparent p-0 shadow-none rounded-none"/,
   );
   assert.match(
     source,
-    /layout === "mobile" \? "border-t border-border py-4 first:border-t-0 first:pt-0"/,
+    /layout === "mobile"\s*\? "mb-2 overflow-hidden rounded-xl border border-slate-200 bg-white/,
   );
-  assert.match(source, /layout === "mobile" \? "space-y-0 bg-white"/);
+  assert.match(source, /layout === "mobile" \? "min-h-14 px-4 py-3 text-\[15px\]" : "min-h-9 rounded-md px-2\.5 py-2 text-\[13px\]/);
   assert.match(
     source,
-    /layout === "compact" \? "mt-0\.5 h-3\.5 w-3\.5.*" : "h-4 w-4 rounded border-slate-300 accent-blue"/,
+    /layout === "compact"\s*\? "mt-0\.5 h-3\.5 w-3\.5[^"\n]*"\s*: "h-4 w-4 rounded border-slate-300 accent-blue"/,
   );
 });
 
@@ -165,8 +165,8 @@ test("source-contract: Cars filters use the Flights desktop lifecycle", () => {
   );
   assert.match(source, /new ResizeObserver\(scheduleMeasurement\)/);
   assert.match(source, /layout: "desktop" \| "compact" \| "mobile"/);
-  assert.match(source, /hidden=\{layout === "compact" && !compactOpen\}/);
-  assert.match(source, /aria-hidden=\{layout === "compact" && !compactOpen\}/);
+  assert.match(source, /hidden=\{\(layout === "compact" \|\| layout === "mobile"\) && !compactOpen\}/);
+  assert.match(source, /aria-hidden=\{\(layout === "compact" \|\| layout === "mobile"\) && !compactOpen\}/);
   assert.equal(
     (
       presentation.match(
