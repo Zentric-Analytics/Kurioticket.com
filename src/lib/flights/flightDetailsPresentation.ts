@@ -49,7 +49,7 @@ export function compactFareTerms(
   terms: FlightFareTerm[],
   tripType: TripType,
   maxRows = 3,
-  consolidateMatchingRoundTripRules = false,
+  consolidateMatchingRoundTripRules = maxRows > 3,
 ) {
   const rows = terms
     .flatMap((term, index) =>
