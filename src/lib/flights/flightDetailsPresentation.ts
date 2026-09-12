@@ -45,7 +45,12 @@ export function canUseOfferAirlineLogo(
   );
 }
 
-export function compactFareTerms(terms: FlightFareTerm[], tripType: TripType, maxRows = 3) {
+export function compactFareTerms(
+  terms: FlightFareTerm[],
+  tripType: TripType,
+  maxRows = 3,
+  consolidateMatchingRoundTripRules = maxRows > 3,
+) {
   const rows = terms
     .flatMap((term, index) =>
       buildFareDisplayRows(term, tripType).map((text, rowIndex) => ({
@@ -55,9 +60,12 @@ export function compactFareTerms(terms: FlightFareTerm[], tripType: TripType, ma
         text,
       })),
     );
-  const conciseRows = tripType === "round-trip"
+  const baggageRows = tripType === "round-trip"
     ? consolidateMatchingRoundTripBaggage(rows)
     : rows;
+  const conciseRows = tripType === "round-trip" && consolidateMatchingRoundTripRules
+    ? consolidateMatchingRoundTripBenefits(baggageRows)
+    : baggageRows;
 
   return conciseRows
     .sort((left, right) => {
@@ -92,6 +100,29 @@ type FareDisplayRow = {
   text: string;
 };
 
+function consolidateMatchingRoundTripBenefits(rows: FareDisplayRow[]) {
+  const consumed = new Set<number>();
+
+  return rows.flatMap((row, rowPosition) => {
+    if (consumed.has(rowPosition)) return [];
+    const scoped = parseScopedMatchingBenefit(row);
+    if (!scoped || scoped.scope !== "outbound") return [row];
+
+    const returnPosition = rows.findIndex((candidate, candidatePosition) => {
+      if (candidatePosition === rowPosition || consumed.has(candidatePosition)) return false;
+      const candidateScoped = parseScopedMatchingBenefit(candidate);
+      return candidateScoped?.scope === "return"
+        && candidate.term.category === row.term.category
+        && candidate.term.semantic === row.term.semantic
+        && candidateScoped.fact === scoped.fact;
+    });
+    if (returnPosition < 0) return [row];
+
+    consumed.add(returnPosition);
+    return [{ ...row, text: `${scoped.displayText} both ways` }];
+  });
+}
+
 function consolidateMatchingRoundTripBaggage(rows: FareDisplayRow[]) {
   const consumed = new Set<number>();
 
@@ -110,6 +141,18 @@ function consolidateMatchingRoundTripBaggage(rows: FareDisplayRow[]) {
     consumed.add(returnPosition);
     return [{ ...row, text: `${baggage.displayText} each way` }];
   });
+}
+
+function parseScopedMatchingBenefit(row: FareDisplayRow) {
+  if (row.term.category !== "change" && row.term.category !== "refund") return null;
+  const match = row.text.match(/^(Outbound|Return):\s*(.+)$/i);
+  if (!match) return null;
+  const displayText = match[2].trim();
+  return {
+    scope: match[1].toLocaleLowerCase("en-US"),
+    fact: displayText.replace(/\s+/g, " ").toLocaleLowerCase("en-US"),
+    displayText,
+  };
 }
 
 function parseScopedIncludedBaggage(row: FareDisplayRow) {

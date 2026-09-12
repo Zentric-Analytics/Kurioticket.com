@@ -130,10 +130,10 @@ test("information progresses from journey summary to airports, segment details, 
   assert.doesNotMatch(itinerary,/s\.airlineRows/);
 });
 
-test("itinerary breadth expands from 18dp to 8dp side gaps without changing fare-card geometry",()=>{
+test("itinerary breadth expands from 18dp to 8dp side gaps while preserving current fare-card geometry",()=>{
   assert.match(source,/content:\{paddingHorizontal:18,paddingTop:5,gap:14\}/);
   assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-10\}/);
   assert.match(source,/itineraryCard:\{borderWidth:1,borderRadius:15,padding:15/);
-  assert.match(source,/fareCard:\{borderRadius:15,paddingHorizontal:12,paddingVertical:10,gap:5\}/);
+  assert.match(source,/fareCard:\{borderRadius:15,minHeight:190,paddingHorizontal:12,paddingVertical:10,gap:5\}/);
   assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal/);
 });

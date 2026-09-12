@@ -117,7 +117,7 @@ test("optional extras remain non-interactive provider-authored information",()=>
   assert.doesNotMatch(extras,/<Pressable|chevron/);
 });
 
-test("deck widens to 8dp side gaps while generic and Pick-your-fare cards remain intact",()=>{
+test("deck widens to 8dp side gaps while generic and current Pick-your-fare geometry remain intact",()=>{
   const deckStyles=between("fareInfoDeck:", "notice:");
   assert.match(deckStyles,/fareInfoDeck:\{gap:0\}/);
   assert.match(deckStyles,/fareInfoBody:\{borderWidth:1,borderRadius:15,marginHorizontal:-10,paddingHorizontal:14,paddingVertical:4\}/);
@@ -128,7 +128,7 @@ test("deck widens to 8dp side gaps while generic and Pick-your-fare cards remain
   assert.doesNotMatch(deckStyles,/elevation|shadow/);
   assert.match(source,/content:\{paddingHorizontal:18,paddingTop:5,gap:14\}/);
   assert.match(source,/card:\{borderWidth:1,borderRadius:14,padding:14,gap:7\}/);
-  assert.match(source,/fareCard:\{borderRadius:15,paddingHorizontal:12,paddingVertical:10,gap:5\}/);
+  assert.match(source,/fareCard:\{borderRadius:15,minHeight:190,paddingHorizontal:12,paddingVertical:10,gap:5\}/);
   assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal/);
   assert.match(source,/fareCardSelected:\{borderWidth:1\.5\}/);
 });
@@ -139,7 +139,7 @@ test("fare information typography stays light while labels retain hierarchy",()=
   assert.match(deckStyles,/fareInfoTabTextActive:\{fontWeight:"600"\}/);
   assert.match(deckStyles,/fareGroupLabel:\{fontSize:11,lineHeight:15,fontWeight:"600"/);
   assert.match(deckStyles,/detailLabel:\{[^}]*fontWeight:"500"\}/);
-  assert.match(deckStyles,/detailValue:\{[^}]*fontWeight:"400"/);
+  assert.match(deckStyles,/detailValue:\{[^}]*fontWeight:"400"[^}]*\}/);
   assert.match(deckStyles,/conditionState:\{[^}]*fontWeight:"500"\}/);
   assert.match(deckStyles,/conditionScope:\{[^}]*fontWeight:"400"\}/);
   assert.match(deckStyles,/serviceDescription:\{[^}]*fontWeight:"500"\}/);

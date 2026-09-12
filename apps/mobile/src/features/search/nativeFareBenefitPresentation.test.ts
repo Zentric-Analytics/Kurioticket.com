@@ -37,3 +37,25 @@ test("native can request five rows while the shared web default remains three", 
   assert.equal(compactFareTerms(terms, "one-way").length, 3);
   assert.equal(compactFareTerms(terms, "one-way", 5).length, 5);
 });
+
+test("native five-row round-trip view combines identical outbound and return rules only", () => {
+  const matching: FlightFareTerm[] = [
+    { category: "change", semantic: "positive", text: "Outbound: Changes allowed before departure" },
+    { category: "change", semantic: "positive", text: "Return: Changes allowed before departure" },
+    { category: "refund", semantic: "negative", text: "Outbound: Not refundable before departure" },
+    { category: "refund", semantic: "negative", text: "Return: Not refundable before departure" },
+  ];
+  assert.deepEqual(compactFareTerms(matching, "round-trip", 5).map(({ text }) => text), [
+    "Not refundable before departure both ways",
+    "Changes allowed before departure both ways",
+  ]);
+
+  const different: FlightFareTerm[] = [
+    { category: "change", semantic: "positive", text: "Outbound: Changes allowed before departure" },
+    { category: "change", semantic: "negative", text: "Return: Changes not allowed before departure" },
+  ];
+  assert.deepEqual(compactFareTerms(different, "round-trip", 5).map(({ text }) => text), [
+    "Return: Changes not allowed before departure",
+    "Outbound: Changes allowed before departure",
+  ]);
+});
