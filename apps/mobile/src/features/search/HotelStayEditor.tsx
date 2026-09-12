@@ -115,7 +115,7 @@ export function HotelStayEditor({
       );
 
       if (resetState) {
-        navigation.reset(resetState);
+        navigation.dispatch({ type: "RESET", payload: resetState });
       } else {
         router.setParams({ ...detailParams, hotelResultsStack: "0" });
       }
