@@ -1754,11 +1754,15 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
       const session = await readSession().catch(() => null);
       if (!session) { setTargetOpen(false); requireSignIn(); return; }
       const samePausedHotelTarget = !flight
-        && matchingAlert?.status === "PAUSED"
-        && Number(matchingAlert.targetPrice) === parsed.value
-        && matchingAlert.currency?.toUpperCase() === currency.toUpperCase();
+        ? (await travelApi.priceAlerts()).alerts.find((alert) =>
+            alert.status === "PAUSED"
+            && Number(alert.targetPrice) === parsed.value
+            && alert.currency?.toUpperCase() === currency.toUpperCase()
+            && matchingHotelPriceAlert([alert], plan)?.id === alert.id,
+          )
+        : undefined;
       const saved = samePausedHotelTarget
-        ? await travelApi.updatePriceAlertStatus(matchingAlert!.id, "ACTIVE")
+        ? await travelApi.updatePriceAlertStatus(samePausedHotelTarget.id, "ACTIVE")
         : await travelApi.createPriceAlert(flight ? buildFlightPriceAlertPayload(plan, parsed.value, currency) : buildHotelPriceAlertPayload(plan, parsed.value, currency));
       setCurrentMatchingAlert(saved.alert); setTargetOpen(false); setTargetDraft("");
     } catch (error) {
