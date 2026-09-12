@@ -27,7 +27,9 @@ function styleRule(source: string, name: string, nextName: string) {
   return source.slice(start, end);
 }
 
-test("Compare section keeps web hierarchy with compact native offer rhythm", () => {
+test("Deals section keeps the established price hierarchy with compact native offer rhythm", () => {
+  assert.match(hotel, /activeHotelTab === "deals"/);
+  assert.match(hotel, />Deals<\/Text>/);
   assert.match(webCompare, /px-4 py-7/);
   assert.match(webCompare, /text-xl font-extrabold tracking-tight text-slate-950/);
   assert.match(webCompare, /mt-1 text-sm font-medium text-slate-600/);
@@ -69,7 +71,7 @@ test("native provider offer uses canonical inline amenity icons and web-like pri
 });
 
 test("native actionable provider offer follows the compact vertical rhythm", () => {
-  assert.match(hotel, /style=\{\[d\.hotelOffer, \{[\s\S]*?borderColor: selected \? hotelAccent : theme\.border,[\s\S]*?gap: 0,[\s\S]*?\}\]\}/);
+  assert.match(hotel, /style=\{\[\s*d\.hotelOffer,\s*\{[\s\S]*?borderColor: selected \? hotelAccent : theme\.border,[\s\S]*?gap: 0,[\s\S]*?\},?\s*\]\}/);
   assert.match(styleRule(detailSource, "hotelOffer", "hotelOfferTop"), /padding: 14[\s\S]*gap: 16/);
   assert.match(styleRule(detailSource, "hotelOfferPriceRow", "hotelNightly"), /minWidth: 0[\s\S]*marginTop: 10[\s\S]*alignItems: "flex-end"/);
   assert.match(styleRule(detailSource, "hotelOfferBottom", "hotelOfferPriceRow"), /marginTop: 2[\s\S]*flexDirection: "row"[\s\S]*alignItems: "center"[\s\S]*justifyContent: "space-between"[\s\S]*gap: 6/);
@@ -98,7 +100,7 @@ test("native selected offer uses a compact thin ring and separate centered dot",
   assert.match(styleRule(detailSource, "selectionControl", "selectionControlDot"), /width: 16[\s\S]*height: 16[\s\S]*borderRadius: 8[\s\S]*borderWidth: 1\.5[\s\S]*alignItems: "center"[\s\S]*justifyContent: "center"/);
   assert.match(styleRule(detailSource, "selectionControlDot", "hotelOfferBottom"), /width: 6[\s\S]*height: 6[\s\S]*borderRadius: 3/);
   assert.match(hotel, /backgroundColor: theme\.surface,[\s\S]*?borderColor: selected \? hotelAccent : theme\.textSecondary/);
-  assert.match(hotel, /selected \? \([\s\S]*?d\.selectionControlDot[\s\S]*?backgroundColor: hotelAccent/);
+  assert.match(hotel, /selected \? [\s\S]*?d\.selectionControlDot[\s\S]*?backgroundColor: hotelAccent/);
   assert.doesNotMatch(hotel, /selected && \{[\s\S]{0,100}borderWidth: 6/);
 });
 

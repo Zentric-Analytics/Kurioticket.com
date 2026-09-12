@@ -41,7 +41,6 @@ export function NativeHotelLocationSection({ hotelId, hotelName, propertyDetails
   const streetAddress = propertyDetails.streetAddress.trim();
   const secondaryLocation = nativeHotelSecondaryLocation(propertyDetails);
   const facts = nativeHotelStayFitFacts(propertyDetails);
-  const accessibility = propertyDetails.accessibility?.map((detail) => detail.trim()).filter(Boolean) ?? [];
   const api = getApiBaseUrl(Platform.OS, __DEV__);
   const previewUrl = api.ok ? nativeHotelLocationPreviewUrl(api.baseUrl, hotelId) : null;
   const streetViewUrl = api.ok ? nativeHotelLocationEmbedUrl(api.baseUrl, hotelId, "streetview") : null;
@@ -65,8 +64,6 @@ export function NativeHotelLocationSection({ hotelId, hotelName, propertyDetails
     <NativeHotelFullMapModal visible={fullMapOpen} hotelId={hotelId} theme={theme} onClose={() => setFullMapOpen(false)} propertyDetails={propertyDetails} hotelName={hotelName} />
     <Text accessibilityRole="header" style={[styles.subheading, { color: theme.textPrimary }]}>Why this location works</Text>
     {facts.length ? <View style={styles.factList}>{facts.map((fact) => <View key={fact} style={[styles.factChip, { backgroundColor: theme.dark ? "#1E2B42" : "#F1F5F9" }]}><Text style={[styles.factText, { color: theme.textSecondary }]}>{fact}</Text></View>)}</View> : <Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Location fit details are limited to the verified address and map.</Text>}
-    <Text accessibilityRole="header" style={[styles.accessibilityHeading, { color: theme.textPrimary }]}>Accessibility and location details</Text>
-    {accessibility.length ? <View style={styles.accessibilityList}>{accessibility.map((detail) => <View key={detail} style={styles.accessibilityRow}><Text accessible={false} style={[styles.accessibilityBullet, { color: accent }]}>•</Text><Text style={[styles.accessibilityText, { color: theme.textSecondary }]}>{detail}</Text></View>)}</View> : <Text style={[styles.accessibilityText, styles.accessibilityFallback, { color: theme.textSecondary }]}>Confirm specific accessibility requirements with the property before travel.</Text>}
   </View>;
 }
 
@@ -90,11 +87,5 @@ const styles = StyleSheet.create({
   factList: { marginTop: 8, flexDirection: "row", flexWrap: "wrap", gap: 8 },
   factChip: { borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
   factText: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
-  accessibilityHeading: { marginTop: 22, fontSize: 15, lineHeight: 22, fontWeight: "600", fontFamily: appFonts.semibold },
-  accessibilityList: { marginTop: 8, gap: 6 },
-  accessibilityRow: { flexDirection: "row", alignItems: "flex-start" },
-  accessibilityBullet: { width: 20, fontSize: 14, lineHeight: 24 },
-  accessibilityText: { flex: 1, fontSize: 13, lineHeight: 22, fontWeight: "400", fontFamily: appFonts.regular },
-  accessibilityFallback: { marginTop: 8 },
   fallbackText: { marginTop: 8, fontSize: 13, lineHeight: 22, fontWeight: "400", fontFamily: appFonts.regular },
 });
