@@ -37,9 +37,9 @@ function styleRule(source: string, name: string, nextName: string) {
   return source.slice(start, end);
 }
 
-test("Location component is explicitly imported and rendered by Hotel Details", () => {
+test("Location component is explicitly imported and rendered inside Hotel Details", () => {
   assert.match(screen, /import \{ NativeHotelLocationSection \} from "\.\/NativeHotelLocationSection";/);
-  assert.match(screen, /activeHotelTab === "location"[\s\S]*?<NativeHotelLocationSection/);
+  assert.match(screen, /activeHotelTab === "details"[\s\S]*?<NativeHotelLocationSection/);
   assert.match(screen, /hotelId=\{result\.id\}/);
 });
 
@@ -109,7 +109,7 @@ test("Location keeps mobile web typography while using compact native spacing", 
   assert.match(styleRule(component, "accessibilityText", "accessibilityFallback"), /fontSize: 13[\s\S]*lineHeight: 22/);
 });
 
-test("Compare decision headings preserve the refined supporting hierarchy", () => {
+test("Decision-section headings preserve the refined supporting hierarchy", () => {
   const locationHeading = styleRule(compare, "locationHeading", "address");
   const address = styleRule(compare, "address", "mapFrame");
   const moreHotelsHeading = styleRule(compare, "heading", "locationCard");
@@ -118,7 +118,7 @@ test("Compare decision headings preserve the refined supporting hierarchy", () =
   for (const rule of [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/, /appFonts\.bold/]) assert.match(moreHotelsHeading, rule);
 });
 
-test("Compare Property location and Location tab share the compact preview contract", () => {
+test("Property location and full Details location share the compact preview contract", () => {
   assert.match(compare, /export function NativeHotelPropertyLocationSection/);
   assert.match(compare, /nativeHotelLocationPreviewUrl\(api\.baseUrl, hotelId\)/);
   assert.match(component, /nativeHotelLocationPreviewUrl\(api\.baseUrl, hotelId\)/);
