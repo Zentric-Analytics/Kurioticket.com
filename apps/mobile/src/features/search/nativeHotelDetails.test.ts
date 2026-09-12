@@ -3,16 +3,23 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { canonicalHotelAddress, hotelStaySummary, isSafeNativeHotelProviderUrl, meaningfulHotelCenterDistance, nativeHotelOffers, nativeHotelProviderUrl, reconcileNativeHotelOfferSelection } from "./nativeHotelDetailsModel";
 
-test("stay summary uses full dates and correct count grammar", () => {
+test("stay summary keeps same-year dates compact and orders rooms before guests", () => {
   assert.deepEqual(hotelStaySummary("2026-09-06", "2026-09-09", 1, 1), {
-    dateText: "Sep 6, 2026 – Sep 9, 2026",
+    dateText: "6 Sep – 9 Sep",
     nightText: "3 nights",
-    dates: "Sep 6, 2026 – Sep 9, 2026 · 3 nights",
-    occupancy: "1 guest, 1 room",
+    dates: "6 Sep – 9 Sep",
+    occupancy: "1 room, 1 guest",
   });
-  assert.match(hotelStaySummary("2026-09-04", "2026-09-05", 1, 1).dates!, /2026.*1 night/);
-  assert.equal(hotelStaySummary("2026-09-04", "2026-09-07", 2, 1).occupancy, "2 guests, 1 room");
-  assert.equal(hotelStaySummary("2026-09-04", "2026-09-07", 1, 2).occupancy, "1 guest, 2 rooms");
+  assert.equal(hotelStaySummary("2026-09-04", "2026-09-07", 2, 1).occupancy, "1 room, 2 guests");
+  assert.equal(hotelStaySummary("2026-09-04", "2026-09-07", 1, 2).occupancy, "2 rooms, 1 guest");
+  assert.doesNotMatch(hotelStaySummary("2026-09-04", "2026-09-05", 1, 1).dates!, /2026|night/);
+});
+
+test("stay summary keeps years when the stay crosses a calendar year", () => {
+  const summary = hotelStaySummary("2026-12-30", "2027-01-02", 2, 1);
+  assert.match(summary.dateText!, /2026/);
+  assert.match(summary.dateText!, /2027/);
+  assert.equal(summary.occupancy, "1 room, 2 guests");
 });
 
 test("Hotel center distance accepts distances without treating addresses as distances", () => {
