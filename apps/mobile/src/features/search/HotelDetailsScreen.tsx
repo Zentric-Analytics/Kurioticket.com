@@ -558,8 +558,19 @@ function HotelDetail({
           ) : null}
         </View>
 
-        <View style={[s.tabsShell, { backgroundColor: hotelCanvasColor }]}>
-          <View accessibilityRole="tablist" style={s.tabsRow}>
+        <View
+          style={[
+            s.tabsShell,
+            {
+              paddingTop: inset.top,
+              marginTop: 1 - inset.top,
+            },
+          ]}
+        >
+          <View
+            accessibilityRole="tablist"
+            style={[s.tabsRow, { backgroundColor: hotelCanvasColor }]}
+          >
             {(["details", "reviews", "deals"] as const).map((tab) => (
               <Pressable
                 key={tab}
@@ -781,7 +792,7 @@ const s = StyleSheet.create({
   reviewText: { flex: 1, minWidth: 0, fontSize: 14, lineHeight: 20 },
   reviewPrimary: { fontWeight: "700", fontFamily: appFonts.bold },
   reviewSecondary: { fontWeight: "400", fontFamily: appFonts.regular },
-  tabsShell: { width: "100%", alignSelf: "stretch", minHeight: 45, marginTop: 1, paddingHorizontal: 8 },
+  tabsShell: { width: "100%", alignSelf: "stretch", minHeight: 45, paddingHorizontal: 8 },
   tabsRow: { alignSelf: "stretch", minHeight: 44, flexDirection: "row", flexWrap: "nowrap", alignItems: "stretch" },
   tab: { width: "33.333%", flexGrow: 0, flexShrink: 0, minWidth: 0, minHeight: 44, alignItems: "center", justifyContent: "center", borderBottomWidth: 2, borderBottomColor: "transparent" },
   tabText: { fontSize: 11, fontWeight: "600", fontFamily: appFonts.semibold },
