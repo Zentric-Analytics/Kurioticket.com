@@ -1,15 +1,8 @@
 import type { ReactNode } from "react";
 import Svg, { Circle, Line, Path, Rect } from "react-native-svg";
 
-export type FlowIconName =
-  | "back" | "bell" | "calendar" | "car" | "card" | "check" | "chevron" | "chevronDown"
-  | "clock" | "close" | "compass" | "deal" | "flight" | "home" | "hotel" | "location" | "more"
-  | "person" | "plus" | "search" | "settings" | "share" | "swap" | "trip"
-  | "people" | "sliders" | "help" | "headset" | "document" | "shield" | "lock"
-  | "globe" | "currency" | "moon" | "logout" | "briefcase" | "bookmark" | "mail" | "palette"
-  | "external" | "refresh" | "snow" | "gauge" | "trash"
-  | "heart" | "trending" | "map" | "beach" | "city" | "adventure"
-  | "nature" | "culture" | "family";
+import type { FlowIconName } from "./flowIconTypes";
+export type { FlowIconName } from "./flowIconTypes";
 
 export function FlowIcon({ name, size = 24, color = "#071A48", fill = "none", strokeWidth = 2.1 }: { name: FlowIconName; size?: number; color?: string; fill?: string; strokeWidth?: number }) {
   const line = { fill: "none", stroke: color, strokeWidth, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
