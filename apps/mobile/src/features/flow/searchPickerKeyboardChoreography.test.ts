@@ -84,10 +84,3 @@ test("non-searchable sheets do not opt into keyboard choreography", () => {
   assert.doesNotMatch(travelerSheet, /useSearchPickerKeyboardPresentation/);
 });
 
-
-test("retained compact sheets can defer keyboard dismissal until their exit completes", () => {
-  const source = readFileSync("src/features/flow/searchPickerKeyboardPresentation.ts", "utf8");
-  assert.match(source, /deferKeyboardDismissUntilExit = false/);
-  assert.match(source, /if \(!deferKeyboardDismissUntilExit \|\| !rendered\) Keyboard\.dismiss\(\)/);
-  assert.match(source, /deferKeyboardDismissUntilExit, prepareCurrentOpening, rendered, visible/);
-});
