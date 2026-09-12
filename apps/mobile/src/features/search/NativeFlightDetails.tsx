@@ -96,6 +96,7 @@ export function NativeFlightDetails({ params }: { params: Params }) {
   const [tab, setTab] = useState<"deals"|"details"|"conditions"|"extras">("deals");
   const [booking, setBooking] = useState(false);
   const [displayPrices, setDisplayPrices] = useState<Record<string,DisplayPrice>>({});
+  const [displayPricesReady,setDisplayPricesReady]=useState(false);
   const rates = useRef<ExchangeRates|null>(null);
   const sharePending = useRef(false);
   const hasScrolledRef = useRef(false);
@@ -106,34 +107,45 @@ export function NativeFlightDetails({ params }: { params: Params }) {
   const reload = useCallback(() => setRevision((value) => value + 1), []);
   useEffect(() => {
     const controller = new AbortController();
+    let active = true;
     setState("loading");
+    setDisplayPrices({});
+    setDisplayPricesReady(false);
     if (preserveMessageOnReload.current) preserveMessageOnReload.current = false;
     else setMessage("");
+
+    const currencyContext = Promise.all([
+      readCurrencyPreference().catch(()=>null),
+      travelApi.location().catch(()=>null),
+      rates.current ? Promise.resolve(rates.current) : travelApi.currencyRates().then(({ rates })=>rates).catch(()=>({})),
+    ]).then(([preferred, location, exchange]) => {
+      if (Object.keys(exchange).length) rates.current=exchange;
+      return {
+        currency: resolveDisplayCurrencyContext({ preferredCurrency: preferred, ipCountryCode: location?.countryCode, locale: Intl.DateTimeFormat().resolvedOptions().locale }).resolvedCurrency,
+        exchange,
+      };
+    });
+
     travelApi.flightDetails(id, { signal: controller.signal }).then((response) => {
+      if (!active || controller.signal.aborted) return;
       if (response.status !== "available") { setDetails(null); setMessage(response.error); setState("unavailable"); return; }
-      setDetails(response); setSelectedKey((current) => fareSelection(current, response.fareChoices)); setState("available");
-    }).catch((error) => { if (controller.signal.aborted) return; setDetails(null); setMessage(error instanceof Error ? error.message : "Flight details could not be loaded."); setState(error instanceof TravelApiError && [404,409].includes(error.status) ? "unavailable" : "error"); });
-    return () => controller.abort();
+      const currentDetails = response;
+      setDetails(currentDetails);
+      setSelectedKey((current) => fareSelection(current, currentDetails.fareChoices));
+      setState("available");
+      void currencyContext.then(({ currency, exchange }) => {
+        if (!active || controller.signal.aborted) return;
+        setDisplayPrices(Object.fromEntries(currentDetails.fareChoices.map((choice)=>[choice.key,createFlightDetailFare(choice.offer.price,choice.offer.currency,currency,exchange)]).concat(currentDetails.fareChoices.flatMap(choice=>choice.deals.map(deal=>[`deal:${deal.key}`,createFlightDetailFare(deal.price,deal.currency,currency,exchange)])))));
+        setDisplayPricesReady(true);
+      });
+    }).catch((error) => { if (!active || controller.signal.aborted) return; setDetails(null); setMessage(error instanceof Error ? error.message : "Flight details could not be loaded."); setState(error instanceof TravelApiError && [404,409].includes(error.status) ? "unavailable" : "error"); });
+    return () => { active=false; controller.abort(); };
   }, [id, revision]);
   const selected = details?.fareChoices.find(({ key }) => key === selectedKey) ?? null;
   const fareCardWidth = nativeLoadedFareCardWidth(windowWidth);
   const loadedFareCardWidth = nativeLoadedFareCardWidth(windowWidth, details?.fareChoices.length ?? 0);
   const fare = selected ? displayPrices[selected.key] ?? null : null;
-  const fareReady = Boolean(fare);
-  useEffect(() => {
-    if (!details) { setDisplayPrices({}); return; }
-    let active=true;
-    Promise.all([
-      readCurrencyPreference().catch(()=>null),
-      travelApi.location().catch(()=>null),
-      rates.current ? Promise.resolve(rates.current) : travelApi.currencyRates().then(({ rates })=>rates).catch(()=>({})),
-    ]).then(([preferred, location, exchange]) => {
-      if (!active) return;
-      if (Object.keys(exchange).length) rates.current=exchange;
-      const currency=resolveDisplayCurrencyContext({ preferredCurrency: preferred, ipCountryCode: location?.countryCode, locale: Intl.DateTimeFormat().resolvedOptions().locale }).resolvedCurrency;
-      setDisplayPrices(Object.fromEntries(details.fareChoices.map((choice)=>[choice.key,createFlightDetailFare(choice.offer.price,choice.offer.currency,currency,exchange)]).concat(details.fareChoices.flatMap(choice=>choice.deals.map(deal=>[`deal:${deal.key}`,createFlightDetailFare(deal.price,deal.currency,currency,exchange)])))));
-    }); return()=>{active=false;};
-  }, [details, revision]);
+  const fareReady = Boolean(displayPricesReady&&fare);
 
   if (state === "loading") return <FlightDetailsLoadingSkeleton theme={theme} bottomInset={inset.bottom} fareCardWidth={fareCardWidth}/>;
   if (state !== "available" || !details || !selected) return <SafeAreaView edges={["top"]} style={[s.safe,{backgroundColor:theme.background}]}><TopBar backgroundColor={theme.background}/><View style={s.center}><Text accessibilityRole="header" style={[s.title,{color:theme.textPrimary}]}>{state === "unavailable" ? "This flight is no longer available" : "We couldn’t load this flight"}</Text><Text style={[s.bodyText,{color:theme.textSecondary}]}>{message}</Text><Button label="Retry" onPress={reload}/><Button label="Back to results" onPress={()=>router.back()}/></View></SafeAreaView>;
@@ -149,7 +161,7 @@ export function NativeFlightDetails({ params }: { params: Params }) {
     <View testID="flight-details-route-summary" style={s.routeSummary}><View style={s.routeContent}><Text accessibilityRole="header" style={[s.route,{color:theme.textPrimary}]}>{flightDetailsRouteLabel(details.search.tripType,offer.legs??[],offer.originAirport,offer.destinationAirport)}</Text><Text style={[s.routeMetadata,{color:theme.textSecondary}]}>{tripMetadata}</Text></View><View style={s.routeActions}><IconButton label={saved?"Remove saved flight":"Save flight"} onPress={()=>savedFlights.toggle(savedOffer,nativeFlightEditSearchParams(details,one(params.currency)))}><Heart size={18} color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={saved?androidFavoriteColors.savedFill:androidFavoriteColors.unsavedFill}/></IconButton><IconButton label="Share flight" onPress={()=>void share()}><FlowIcon name="share" size={18} color={theme.icon}/></IconButton></View></View>
     <View style={s.itineraryStack}>{(offer.legs?.length?offer.legs:[]).map((leg,index)=><Itinerary key={`${leg.departureTime}-${index}`} leg={leg} index={index} offerAirlineName={offer.airlineName} offerAirlineLogo={offer.airlineLogo} theme={theme} intlLocale={intlLocale}/>)}</View>
     <Text style={[s.fareSectionTitle,{color:theme.textPrimary}]}>Pick your fare</Text>
-    <ScrollView accessibilityRole="radiogroup" accessibilityLabel="Available fares" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[s.fares,details.fareChoices.length>1?s.faresMultiple:s.faresSingle]}>
+    {displayPricesReady?<ScrollView accessibilityRole="radiogroup" accessibilityLabel="Available fares" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[s.fares,details.fareChoices.length>1?s.faresMultiple:s.faresSingle]}>
       {details.fareChoices.map((choice)=>{
         const isSelected=choice.key===selected.key;
         const fareTerms=compactFareTerms(choice.distinguishingTerms,details.search.tripType,5);
@@ -159,19 +171,24 @@ export function NativeFlightDetails({ params }: { params: Params }) {
             <View style={s.fareIdentity}><View style={s.fareIconContainer}><Luggage size={15} color={ui.blue}/></View><Text style={[s.fareLabel,{color:theme.textPrimary}]}>{choice.label}</Text></View>
           </View>
           {fareTerms.length?<View pointerEvents="box-none" style={s.fareBenefits}>{fareTerms.map((row,i)=>{const benefitKey=`${choice.key}:${row.index}-${row.rowIndex}-${i}`;return <FareBenefitRow key={benefitKey} category={row.term.category} semantic={row.term.semantic} text={row.text} titleColor={theme.textPrimary} detailColor={theme.textSecondary} expanded={expandedFareBenefit===benefitKey} onToggle={()=>setExpandedFareBenefit((current)=>current===benefitKey?null:benefitKey)}/>})}</View>:null}
-          <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none" style={s.farePriceBlock}><Text style={[s.farePriceLabel,{color:theme.textSecondary}]}>Total price</Text><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[s.farePrice,{color:isSelected?ui.blue:theme.textPrimary}]}>{displayPrices[choice.key]?.formatted??"—"}</Text></View>
+          <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none" style={s.farePriceBlock}><Text style={[s.farePriceLabel,{color:theme.textSecondary}]}>Total price</Text><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[s.farePrice,{color:isSelected?ui.blue:theme.textPrimary}]}>{displayPrices[choice.key]?.formatted??"Price unavailable"}</Text></View>
         </View>;
       })}
-    </ScrollView>
+    </ScrollView>:<ScrollView testID="flight-details-fare-price-loading" accessibilityRole="progressbar" accessibilityState={{busy:true}} accessibilityLabel="Loading fare prices" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[s.loadingFares,details.fareChoices.length>1?s.faresMultiple:s.faresSingle]}>
+      {details.fareChoices.slice(0,2).map((choice)=><View key={choice.key} style={[s.loadingFareCard,{width:loadedFareCardWidth,backgroundColor:theme.surface,borderColor:theme.border}]}>
+        <View style={s.loadingFareIdentity}><View style={s.loadingFareNameRow}><View style={[s.loadingFareIcon,{backgroundColor:theme.border}]}/><View style={[s.loadingLine,s.loadingFareName,{backgroundColor:theme.border}]}/></View></View>
+        {(["88%","72%","80%"] as const).map((width,index)=><View key={index} style={s.loadingBenefitRow}><View style={[s.loadingBenefitDot,{backgroundColor:theme.border}]}/><View style={[s.loadingLine,{width,backgroundColor:theme.border}]}/></View>)}
+        <View style={s.loadingFarePriceBlock}><View style={[s.loadingLine,s.loadingFarePriceLabel,{backgroundColor:theme.border}]}/><View style={[s.loadingLine,s.loadingFarePrice,{backgroundColor:theme.border}]}/></View>
+      </View>)}
+    </ScrollView>}
     <View testID="fare-information-deck" style={s.fareInfoDeck}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.fareTabRail} contentContainerStyle={s.fareTabRailContent}>
         <View accessibilityRole="tablist" accessibilityLabel="Fare information" style={s.fareTabList}>{([['deals','Compare deals'],['details','Fare details'],['conditions','Fare conditions'],['extras','Optional extras']] as const).map(([key,label])=><Pressable accessibilityRole="tab" accessibilityState={{selected:tab===key}} key={key} onPress={()=>setTab(key)} style={s.fareInfoTab}><Text numberOfLines={1} style={[s.fareInfoTabText,{color:tab===key?ui.blue:theme.textSecondary},tab===key&&s.fareInfoTabTextActive]}>{label}</Text>{tab===key?<View style={s.fareTabIndicator}/>:null}</Pressable>)}</View>
       </ScrollView>
       <View testID="fare-information-active-card" style={[s.fareInfoBody,{backgroundColor:theme.surface,borderColor:theme.border}]}><FareSurface tab={tab} choice={selected} dealPrices={displayPrices} onDeal={handoff} booking={booking} fareReady={fareReady} theme={theme}/></View>
     </View>
-  </ScrollView><View style={[s.sticky,{paddingBottom:Math.max(inset.bottom,10),backgroundColor:theme.surface,borderTopColor:theme.border}]}><View><Text style={[s.small,{color:theme.textSecondary}]}>Total for {details.search.travelers} traveler{details.search.travelers===1?"":"s"}</Text><Text style={[s.total,{color:theme.textPrimary}]}>{fare?.formatted??"—"}</Text></View><Button label={booking?"Checking offer…":`Continue to ${provider}`} disabled={booking||!fareReady||!selected.handoff.available} onPress={()=>void handoff(offer.id)}/></View></SafeAreaView>;
+  </ScrollView><View style={[s.sticky,{paddingBottom:Math.max(inset.bottom,10),backgroundColor:theme.surface,borderTopColor:theme.border}]}><View><Text style={[s.small,{color:theme.textSecondary}]}>Total for {details.search.travelers} traveler{details.search.travelers===1?"":"s"}</Text><Text style={[s.total,{color:theme.textPrimary}]}>{displayPricesReady?(fare?.formatted??"Price unavailable"):"Loading price…"}</Text></View><Button label={booking?"Checking offer…":`Continue to ${provider}`} disabled={booking||!fareReady||!selected.handoff.available} onPress={()=>void handoff(offer.id)}/></View></SafeAreaView>;
 }
-
 
 function FlightDetailsLoadingSkeleton({theme,bottomInset,fareCardWidth}:{theme:ReturnType<typeof useAppTheme>["theme"];bottomInset:number;fareCardWidth:number}) {
   const [reduceMotion,setReduceMotion]=useState(true);
