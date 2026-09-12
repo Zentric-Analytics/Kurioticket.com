@@ -50,27 +50,27 @@ test("mobile web reference retains the authoritative Hotel stay dock contract", 
   assert.ok((webDock.match(/text-\[11px\]/g) ?? []).length >= 2);
 });
 
-test("native outer sheet mirrors rounded, padded, safe-area-aware web geometry", () => {
+test("native outer sheet keeps safe-area behavior with compact mobile padding", () => {
   const sticky = styleRule("hotelSticky", "hotelFactRow");
-  assert.match(sticky, /borderTopLeftRadius: 22[\s\S]*borderTopRightRadius: 22/);
-  assert.match(sticky, /paddingHorizontal: 16[\s\S]*paddingTop: 12/);
+  assert.match(sticky, /borderTopLeftRadius: 18[\s\S]*borderTopRightRadius: 18/);
+  assert.match(sticky, /paddingHorizontal: 16[\s\S]*paddingTop: 8/);
   assert.match(sticky, /shadowColor: "#0F172A"[\s\S]*shadowOffset: \{ width: 0, height: -4 \}[\s\S]*shadowOpacity: 0\.06[\s\S]*shadowRadius: 8[\s\S]*elevation: 6/);
   assert.doesNotMatch(sticky, /borderTopWidth|borderTopColor/);
   assert.doesNotMatch(sticky, /\bpadding: 10|\bminHeight: 92|justifyContent: "space-between"|overflow: "hidden"/);
-  assert.match(dock, /paddingBottom: 12 \+ inset\.bottom/);
+  assert.match(dock, /paddingBottom: 8 \+ inset\.bottom/);
   assert.match(dock, /backgroundColor: hotelCanvasColor/);
   assert.doesNotMatch(dock, /backgroundColor: theme\.surface|borderTopColor/);
 });
 
-test("native dock owns a proportional two-column price and action layout", () => {
-  assert.match(styleRule("hotelDockContent", "hotelDockPrice"), /width: "100%"[\s\S]*flexDirection: "row"[\s\S]*alignItems: "center"[\s\S]*gap: 12/);
+test("native dock owns a proportional compact two-column price and action layout", () => {
+  assert.match(styleRule("hotelDockContent", "hotelDockPrice"), /width: "100%"[\s\S]*flexDirection: "row"[\s\S]*alignItems: "center"[\s\S]*gap: 10/);
   assert.match(styleRule("hotelDockPrice", "hotelDockLabel"), /flex: 1[\s\S]*minWidth: 0/);
   assert.match(styleRule("hotelDockAction", "hotelContinue"), /flex: 0\.9[\s\S]*minWidth: 132/);
   assert.match(styleRule("hotelContinue", "hotelContinuePressed"), /width: "100%"/);
   assert.match(dock, /<View style=\{d\.hotelDockContent\}>[\s\S]*<View style=\{d\.hotelDockPrice\}>[\s\S]*<View style=\{d\.hotelDockAction\}>/);
 });
 
-test("native dock price hierarchy matches mobile web and remains left aligned", () => {
+test("native dock price hierarchy remains left aligned", () => {
   assert.match(styleRule("hotelDockLabel", "hotelDockEyebrow"), /gap: 4/);
   assert.match(styleRule("hotelDockEyebrow", "hotelDockTotal"), /fontSize: 11[\s\S]*lineHeight: 16[\s\S]*fontWeight: "600"[\s\S]*fontFamily: appFonts\.semibold/);
   assert.match(styleRule("hotelDockTotal", "hotelDockPerNight"), /fontSize: 24[\s\S]*lineHeight: 30[\s\S]*fontWeight: "800"[\s\S]*fontFamily: appFonts\.extraBold[\s\S]*textAlign: "left"/);
@@ -86,7 +86,7 @@ test("Compare prices keeps its distinct right-aligned per-night style", () => {
   assert.match(hotel, /<Text numberOfLines=\{1\} style=\{\[d\.hotelPerNight, \{ color: hotelAccent \}\]\}>per night<\/Text>/);
 });
 
-test("native CTA matches web proportions without changing booking behavior", () => {
+test("native CTA preserves the 48dp booking touch target and behavior", () => {
   assert.match(styleRule("hotelContinue", "hotelContinuePressed"), /width: "100%"[\s\S]*minHeight: 48[\s\S]*borderRadius: 8[\s\S]*backgroundColor: colors\.blue[\s\S]*paddingHorizontal: 12/);
   assert.match(styleRule("hotelContinuePressed", "hotelContinueDisabled"), /backgroundColor: "#003B91"/);
   assert.match(styleRule("hotelContinueDisabled", "hotelContinueText"), /opacity: 0\.5/);
