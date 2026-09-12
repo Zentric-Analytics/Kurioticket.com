@@ -11,7 +11,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { ChevronLeft, ChevronRight, Images, X } from "lucide-react-native";
+import { ChevronLeft, ChevronRight, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { HotelRoomOption } from "../../../../../src/lib/hotels/hotelRoomOptions";
 import { appFonts } from "../../theme/typography";
@@ -45,7 +45,8 @@ export function NativeHotelGallery({
   const [failed, setFailed] = useState<Set<string>>(() => new Set());
   const { width: viewportWidth } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const heroWidth = viewportWidth - 32;
+  const heroWidth = viewportWidth;
+  const heroHeight = Math.round(viewportWidth * 0.94);
   const viewerInsetTop = Math.max(insets.top, 12);
   const viewerInsetRight = Math.max(insets.right, 12);
   const viewerInsetBottom = Math.max(insets.bottom, 12);
@@ -87,11 +88,6 @@ export function NativeHotelGallery({
       x: Math.max(0, index * 104 - viewerWidth / 2 + 48),
       animated: true,
     });
-  const choose = (index: number) => {
-    if (!setActiveImage(index)) return;
-    scrollInlineTo(index, true);
-  };
-  const move = (delta: number) => choose((activeIndex + delta + images.length) % images.length);
   const chooseInViewer = (index: number) => {
     if (!setActiveImage(index)) return;
     scrollViewerTo(index, true);
@@ -108,15 +104,16 @@ export function NativeHotelGallery({
   const fail = (url: string) => setFailed((current) => new Set(current).add(url));
   if (!images.length)
     return (
-      <View style={[s.unavailable, { backgroundColor: theme.surface }]}>
+      <View style={[s.unavailable, { height: heroHeight, backgroundColor: theme.surface }]}>
         <Text style={[s.unavailableText, { color: theme.textSecondary }]}>Property image unavailable</Text>
       </View>
     );
   const renderHero = ({ item: url, index }: { item: string; index: number }) => (
     <Pressable
-      style={[s.hero, { width: heroWidth }]}
+      style={[s.hero, { width: heroWidth, height: heroHeight }]}
       accessibilityRole="button"
       accessibilityLabel={`Open photo ${index + 1} of ${images.length} for ${name}`}
+      accessibilityHint={images.length > 1 ? "Swipe horizontally to view more photos." : undefined}
       onPress={() => openViewer(index)}
     >
       <Image source={{ uri: url }} resizeMode="cover" style={s.heroImage} accessible={false} onError={() => fail(url)} />
@@ -129,7 +126,7 @@ export function NativeHotelGallery({
   );
   return (
     <View style={s.gallery}>
-      <View style={s.heroFrame}>
+      <View style={[s.heroFrame, { height: heroHeight }]}>
         <FlatList
           ref={scroll}
           horizontal
@@ -148,24 +145,7 @@ export function NativeHotelGallery({
             setActiveImage(Math.max(0, Math.min(images.length - 1, Math.round(event.nativeEvent.contentOffset.x / measuredWidth))));
           }}
         />
-        {images.length > 1 ? (
-          <>
-            <Pressable accessibilityRole="button" accessibilityLabel="Previous photo" onPress={() => move(-1)} style={[s.arrow, s.left]}><ChevronLeft color="white" size={20} /></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Next photo" onPress={() => move(1)} style={[s.arrow, s.right]}><ChevronRight color="white" size={20} /></Pressable>
-          </>
-        ) : null}
         <Text style={s.counter}>{activeIndex + 1} / {images.length}</Text>
-      </View>
-      <View style={s.thumbnails}>
-        {images.slice(0, 5).map((url, index) => {
-          const remaining = index === 4 ? images.length - 5 : 0;
-          return (
-            <Pressable key={url} accessibilityRole="button" accessibilityLabel={remaining > 0 ? "View all photos" : `Show photo ${index + 1}`} onPress={() => remaining > 0 ? openViewer(index) : choose(index)} style={[s.thumbnailFrame, activeIndex === index && { borderColor: accentColor }]}>
-              <Image source={{ uri: url }} style={s.thumbnail} onError={() => fail(url)} />
-              {remaining > 0 ? <View style={s.remaining}><View style={s.remainingContent}><Images accessible={false} size={16} color="white" /><Text style={s.remainingText}>+{remaining}</Text></View></View> : null}
-            </Pressable>
-          );
-        })}
       </View>
       <Modal visible={viewerOpen} animationType="fade" transparent presentationStyle="overFullScreen" onRequestClose={closeViewer} onShow={() => { scrollViewerTo(activeIndex, false); keepViewerThumbnailVisible(activeIndex); }}>
         <View accessibilityViewIsModal style={[s.viewerBackdrop, { paddingTop: viewerInsetTop, paddingRight: viewerInsetRight, paddingBottom: viewerInsetBottom, paddingLeft: viewerInsetLeft }]}>
@@ -203,7 +183,7 @@ export function NativeHotelGallery({
             {images.length > 1 ? (
               <ScrollView ref={viewerThumbnails} style={s.viewerThumbnailScroller} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.viewerThumbnailStrip}>
                 {images.map((url, index) => (
-                  <Pressable key={url} accessibilityRole="button" accessibilityLabel={`Show photo ${index + 1}`} accessibilityState={{ selected: activeIndex === index }} onPress={() => chooseInViewer(index)} style={[s.viewerThumbnailFrame, activeIndex === index && s.viewerThumbnailActive]}>
+                  <Pressable key={url} accessibilityRole="button" accessibilityLabel={`Show photo ${index + 1}`} accessibilityState={{ selected: activeIndex === index }} onPress={() => chooseInViewer(index)} style={[s.viewerThumbnailFrame, activeIndex === index && s.viewerThumbnailActive, activeIndex === index && { borderColor: accentColor }]}>
                     <Image source={{ uri: url }} resizeMode="cover" style={s.viewerThumbnail} onError={() => fail(url)} />
                   </Pressable>
                 ))}
@@ -246,21 +226,12 @@ export function HotelRoomOptionsModal({ visible, onClose, options, theme, accent
 }
 
 const s = StyleSheet.create({
-  gallery: { marginHorizontal: 16, marginBottom: 10, gap: 6 },
-  heroFrame: { aspectRatio: 16 / 10, overflow: "hidden", borderRadius: 12, backgroundColor: "#DCE2EB" },
-  hero: { aspectRatio: 16 / 10 },
+  gallery: { width: "100%", marginBottom: 0 },
+  heroFrame: { width: "100%", overflow: "hidden", backgroundColor: "#DCE2EB" },
+  hero: { backgroundColor: "#DCE2EB" },
   heroImage: { width: "100%", height: "100%" },
-  arrow: { position: "absolute", top: "50%", marginTop: -22, width: 44, height: 44, backgroundColor: "transparent", justifyContent: "center" },
-  left: { left: 0, alignItems: "flex-start", paddingLeft: 8 },
-  right: { right: 0, alignItems: "flex-end", paddingRight: 8 },
-  counter: { position: "absolute", right: 10, bottom: 10, color: "white", backgroundColor: "rgba(0,0,0,.68)", paddingHorizontal: 9, paddingVertical: 6, borderRadius: 6, fontWeight: "800", fontFamily: appFonts.extraBold },
-  thumbnails: { flexDirection: "row", gap: 5 },
-  thumbnailFrame: { flex: 1, minHeight: 44, aspectRatio: 1.45, borderRadius: 7, overflow: "hidden", borderWidth: 2, borderColor: "transparent" },
-  thumbnail: { width: "100%", height: "100%" },
-  remaining: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,.55)", alignItems: "center", justifyContent: "center" },
-  remainingContent: { flexDirection: "row", alignItems: "center", gap: 4 },
-  remainingText: { color: "white", fontSize: 12, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold },
-  unavailable: { marginHorizontal: 16, aspectRatio: 16 / 10, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  counter: { position: "absolute", left: "50%", bottom: 15, minWidth: 48, transform: [{ translateX: -24 }], color: "white", backgroundColor: "rgba(0,0,0,.72)", paddingHorizontal: 9, paddingVertical: 5, borderRadius: 4, fontSize: 13, lineHeight: 18, fontWeight: "800", fontFamily: appFonts.extraBold, textAlign: "center" },
+  unavailable: { width: "100%", alignItems: "center", justifyContent: "center" },
   unavailableText: { fontSize: 13, lineHeight: 19, fontFamily: appFonts.regular },
   viewerBackdrop: { flex: 1, backgroundColor: "rgba(2,6,23,.90)", alignItems: "stretch", justifyContent: "center" },
   viewerDialog: { flex: 1, minHeight: 0, width: "100%", borderRadius: 16, overflow: "hidden", backgroundColor: "#020617" },
@@ -278,7 +249,7 @@ const s = StyleSheet.create({
   viewerThumbnailScroller: { flexGrow: 0, flexShrink: 0 },
   viewerThumbnailStrip: { gap: 8, paddingHorizontal: 8, paddingVertical: 12 },
   viewerThumbnailFrame: { width: 96, height: 64, borderRadius: 8, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,.4)" },
-  viewerThumbnailActive: { borderWidth: 3, borderColor: "white" },
+  viewerThumbnailActive: { borderWidth: 3 },
   viewerThumbnail: { width: "100%", height: "100%" },
   modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,.45)", justifyContent: "flex-end" },
   modal: { maxHeight: "82%", borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 28 },
