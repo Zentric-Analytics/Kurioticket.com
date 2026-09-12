@@ -2,6 +2,10 @@
 
 ## Scope
 
+Latest staging verification and deployment corrections are recorded in
+`kayak-staging-verification.md`. Earlier checkpoints below are historical, not the
+current deployment status.
+
 Kurioticket exposes an isolated, server-backed integration preview at `/sandbox/kayak`.
 It covers location lookup, search, bounded polling, normalized display, empty/error
 responses, and KAYAK sandbox click-out for flights, hotels and cars. It does not
@@ -38,9 +42,11 @@ The gate only enables the preview when `NEXT_PUBLIC_APP_URL` names
 `staging.kurioticket.com`, or a loopback host in Next development mode. On the
 production hostname it returns 404 even if enabled accidentally.
 
-KAYAK requires the original user agent and client IP. The route uses the existing
-deployment's forwarded-IP boundary. The deployment proxy must overwrite untrusted
-forwarded headers. Local development alone may set `KAYAK_LOCAL_TEST_CLIENT_IP`
+KAYAK requires the original user agent and client IP. On Render, the sandbox uses
+Cloudflare's `CF-Connecting-IP` and fails closed when that single address is missing
+or invalid. It does not trust caller-supplied `X-Forwarded-For` or `X-Real-IP` there.
+Render's public ingress must remain Cloudflare-backed; a different deployment
+requires a separately verified trusted proxy boundary. Local development alone may set `KAYAK_LOCAL_TEST_CLIENT_IP`
 to the developer's actual public IP; never use this override in staging/production.
 
 Search tracking uses a session-scoped, HTTP-only, same-site cookie. No account or
