@@ -7,7 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "cross-env JITI_TSCONFIG_PATHS=true node --test --import jiti/register \"src/**/*.test.ts\"",
+    "test": "cross-env JITI_TSCONFIG_PATHS=./tsconfig.json node --test --import jiti/register \"src/**/*.test.ts\"",
     "qa:ios:safari": "node qa/mobile-web/browserstack/run.mjs all",
     "qa:ios:safari:smoke": "node qa/mobile-web/browserstack/run.mjs smoke",
     "qa:ios:safari:cars": "node qa/mobile-web/browserstack/run.mjs cars",
