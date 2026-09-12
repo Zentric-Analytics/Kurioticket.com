@@ -65,18 +65,22 @@ test("identity, tabs, and editable stay summary follow the measured hierarchy", 
   assert.match(hotel, /\{hotelReview\.label\} \{hotelReviewScore\}/);
   assert.match(hotel, /\{hotelReview\.count\}/);
   assert.match(hotel, /<HotelStayEditor[\s\S]*?result=\{result\}[\s\S]*?checkIn=\{checkIn\}[\s\S]*?checkOut=\{checkOut\}[\s\S]*?guests=\{guestCount\}[\s\S]*?rooms=\{roomCount\}/);
-  assert.match(styleRule(stayEditor, "section", "card"), /paddingHorizontal: 12[^}]*paddingTop: 24/);
-  assert.match(styleRule(stayEditor, "card", "copy"), /minHeight: 60[^}]*borderWidth: 1[^}]*borderRadius: 12[^}]*paddingHorizontal: 14/);
+  assert.match(styleRule(stayEditor, "section", "card"), /paddingHorizontal: 10[^}]*paddingTop: 24/);
+  assert.match(styleRule(stayEditor, "card", "copy"), /minHeight: 60[^}]*borderWidth: 1[^}]*borderRadius: 12[^}]*paddingHorizontal: 14[^}]*paddingVertical: 4[^}]*gap: 10/);
   assert.match(stayEditor, /\{summary\.occupancy\}/);
   assert.doesNotMatch(stayEditor, /summary\.nightText/);
 });
 
-test("editable stay summary keeps dates and occupancy independently actionable", () => {
-  assert.match(stayEditor, /accessibilityLabel=\{`Edit stay dates\./);
-  assert.match(stayEditor, /onPress=\{\(\) => setDatesOpen\(true\)\}/);
-  assert.match(stayEditor, /<DateRangeSheet/);
+test("compact stay card exposes full-size edit targets without shrinking the visual card", () => {
+  assert.match(stayEditor, /accessibilityLabel=\{`Edit stay\./);
+  assert.match(stayEditor, /onPress=\{\(\) => setEditorOpen\(true\)\}/);
+  assert.match(stayEditor, /<HotelStayEditSheet/);
+  assert.match(stayEditor, /accessibilityLabel=\{`Edit dates\./);
+  assert.match(stayEditor, /onPress=\{onEditDates\}/);
   assert.match(stayEditor, /accessibilityLabel=\{`Edit rooms and guests\./);
-  assert.match(stayEditor, /onPress=\{\(\) => setCountsOpen\(true\)\}/);
+  assert.match(stayEditor, /onPress=\{onEditCounts\}/);
+  assert.match(styleRule(stayEditor, "editOption", "editOptionCopy"), /minHeight: 56[^}]*paddingVertical: 7/);
+  assert.match(stayEditor, /<DateRangeSheet/);
   assert.match(stayEditor, /<HotelStayCountsSheet/);
   assert.match(stayEditor, /travelApi\.searchHotels\(/);
   assert.match(stayEditor, /response\.results\.find\(\(hotel\) => hotel\.id === result\.id\)/);

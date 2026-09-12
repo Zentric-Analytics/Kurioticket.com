@@ -3,13 +3,14 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import { router, useNavigation } from "expo-router";
-import { CalendarDays, Minus, Plus, X } from "lucide-react-native";
+import { CalendarDays, ChevronRight, Minus, Plus, X } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { travelApi, type HotelResult } from "../../api/travelApi";
 import { DateRangeSheet } from "../flow/DateRangeSheet";
@@ -26,6 +27,8 @@ type StayValues = {
   guests: number;
   rooms: number;
 };
+
+type StayEditorTarget = "dates" | "counts";
 
 export function HotelStayEditor({
   result,
@@ -44,6 +47,8 @@ export function HotelStayEditor({
 }) {
   const navigation = useNavigation();
   const { theme } = useAppTheme();
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [pendingEditor, setPendingEditor] = useState<StayEditorTarget | null>(null);
   const [datesOpen, setDatesOpen] = useState(false);
   const [countsOpen, setCountsOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -129,36 +134,62 @@ export function HotelStayEditor({
     }
   };
 
+  const launchEditor = (target: StayEditorTarget) => {
+    if (target === "dates") setDatesOpen(true);
+    else setCountsOpen(true);
+  };
+  const chooseEditor = (target: StayEditorTarget) => {
+    setPendingEditor(target);
+    setEditorOpen(false);
+    if (Platform.OS !== "ios") {
+      requestAnimationFrame(() => {
+        launchEditor(target);
+        setPendingEditor(null);
+      });
+    }
+  };
+  const finishEditorDismiss = () => {
+    if (Platform.OS !== "ios" || !pendingEditor) return;
+    launchEditor(pendingEditor);
+    setPendingEditor(null);
+  };
+
   return (
     <>
       <View style={s.section}>
-        <View style={[s.card, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Edit stay. ${summary.dateText ?? "Stay dates unavailable"}. ${summary.occupancy}`}
+          disabled={updating}
+          onPress={() => setEditorOpen(true)}
+          style={({ pressed }) => [
+            s.card,
+            { borderColor: theme.border, backgroundColor: theme.surface },
+            pressed && s.pressed,
+          ]}
+        >
           <CalendarDays accessible={false} size={22} color={iconColor} />
           <View style={s.copy}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Edit stay dates. ${summary.dateText ?? "Stay dates unavailable"}`}
-              disabled={updating}
-              onPress={() => setDatesOpen(true)}
-              style={({ pressed }) => [s.rowAction, pressed && s.pressed]}
-            >
-              <Text style={[s.date, { color: titleColor }]}>
-                {summary.dateText ?? "Stay dates unavailable"}
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Edit rooms and guests. ${summary.occupancy}`}
-              disabled={updating}
-              onPress={() => setCountsOpen(true)}
-              style={({ pressed }) => [s.rowAction, pressed && s.pressed]}
-            >
-              <Text style={[s.meta, { color: metaColor }]}>{summary.occupancy}</Text>
-            </Pressable>
+            <Text style={[s.date, { color: titleColor }]}>
+              {summary.dateText ?? "Stay dates unavailable"}
+            </Text>
+            <Text style={[s.meta, { color: metaColor }]}>{summary.occupancy}</Text>
           </View>
           {updating ? <ActivityIndicator accessibilityLabel="Updating stay" size="small" color={colors.blue} /> : null}
-        </View>
+        </Pressable>
       </View>
+      <HotelStayEditSheet
+        visible={editorOpen}
+        dateText={summary.dateText ?? "Stay dates unavailable"}
+        occupancy={summary.occupancy}
+        onCancel={() => {
+          setPendingEditor(null);
+          setEditorOpen(false);
+        }}
+        onDismiss={finishEditorDismiss}
+        onEditDates={() => chooseEditor("dates")}
+        onEditCounts={() => chooseEditor("counts")}
+      />
       <DateRangeSheet
         visible={datesOpen}
         title="Travel dates"
@@ -186,6 +217,71 @@ export function HotelStayEditor({
         }}
       />
     </>
+  );
+}
+
+function HotelStayEditSheet({
+  visible,
+  dateText,
+  occupancy,
+  onEditDates,
+  onEditCounts,
+  onCancel,
+  onDismiss,
+}: {
+  visible: boolean;
+  dateText: string;
+  occupancy: string;
+  onEditDates: () => void;
+  onEditCounts: () => void;
+  onCancel: () => void;
+  onDismiss: () => void;
+}) {
+  const { theme } = useAppTheme();
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel} onDismiss={onDismiss}>
+      <View style={s.countBackdrop}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Close stay editor"
+          style={StyleSheet.absoluteFill}
+          onPress={onCancel}
+        />
+        <SafeAreaView edges={["bottom"]} style={[s.countSheet, { backgroundColor: theme.surface }]}>
+          <View style={s.countHeader}>
+            <Text accessibilityRole="header" style={[s.countTitle, { color: theme.textPrimary }]}>Edit stay</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Close stay editor" onPress={onCancel} style={s.closeButton}>
+              <X size={20} color={theme.icon} />
+            </Pressable>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Edit dates. ${dateText}`}
+            onPress={onEditDates}
+            style={({ pressed }) => [s.editOption, pressed && s.pressed]}
+          >
+            <View style={s.editOptionCopy}>
+              <Text style={[s.editOptionLabel, { color: theme.textSecondary }]}>Dates</Text>
+              <Text style={[s.editOptionValue, { color: theme.textPrimary }]}>{dateText}</Text>
+            </View>
+            <ChevronRight accessible={false} size={20} color={theme.icon} />
+          </Pressable>
+          <View style={[s.divider, { backgroundColor: theme.border }]} />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Edit rooms and guests. ${occupancy}`}
+            onPress={onEditCounts}
+            style={({ pressed }) => [s.editOption, pressed && s.pressed]}
+          >
+            <View style={s.editOptionCopy}>
+              <Text style={[s.editOptionLabel, { color: theme.textSecondary }]}>Rooms and guests</Text>
+              <Text style={[s.editOptionValue, { color: theme.textPrimary }]}>{occupancy}</Text>
+            </View>
+            <ChevronRight accessible={false} size={20} color={theme.icon} />
+          </Pressable>
+        </SafeAreaView>
+      </View>
+    </Modal>
   );
 }
 
@@ -322,18 +418,21 @@ function CounterRow({
 }
 
 const s = StyleSheet.create({
-  section: { paddingHorizontal: 12, paddingTop: 24 },
-  card: { minHeight: 60, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8, flexDirection: "row", alignItems: "center", gap: 12 },
-  copy: { flex: 1, minWidth: 0 },
-  rowAction: { minHeight: 28, justifyContent: "center", alignSelf: "stretch" },
+  section: { paddingHorizontal: 10, paddingTop: 24 },
+  card: { minHeight: 60, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 10 },
+  copy: { flex: 1, minWidth: 0, justifyContent: "center" },
   pressed: { opacity: 0.62 },
   date: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
-  meta: { fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
+  meta: { marginTop: 2, fontSize: 13, lineHeight: 18, fontWeight: "400", fontFamily: appFonts.regular },
   countBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(2,6,23,.42)" },
   countSheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 20, paddingTop: 14, paddingBottom: 16 },
   countHeader: { minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
   countTitle: { fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold },
   closeButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  editOption: { minHeight: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, paddingVertical: 7 },
+  editOptionCopy: { flex: 1, minWidth: 0 },
+  editOptionLabel: { fontSize: 12, lineHeight: 17, fontWeight: "500", fontFamily: appFonts.medium },
+  editOptionValue: { marginTop: 2, fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
   counterRow: { minHeight: 70, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 16 },
   counterLabel: { fontSize: 15, lineHeight: 21, fontWeight: "600", fontFamily: appFonts.semibold },
   counterControls: { flexDirection: "row", alignItems: "center", gap: 12 },
