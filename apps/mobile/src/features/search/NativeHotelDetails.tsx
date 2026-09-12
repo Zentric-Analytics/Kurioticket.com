@@ -123,7 +123,7 @@ export function NativeHotelGallery({
     </Pressable>
   );
   const renderViewerImage = ({ item: url, index }: { item: string; index: number }) => (
-    <View style={[s.viewerPage, { width: viewerWidth }]}> 
+    <View style={[s.viewerPage, { width: viewerWidth }]}>
       <Image source={{ uri: url }} resizeMode="contain" style={s.viewerImage} accessibilityLabel={`${name} photo ${index + 1}`} onError={() => fail(url)} />
     </View>
   );
