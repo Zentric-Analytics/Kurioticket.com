@@ -1731,6 +1731,7 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
       if (unavailable) return;
       if (!await readSession().catch(() => null)) { requireSignIn(); return; }
       if (isTracking) return;
+      if (!flight) { setTargetDraft(""); setTargetError(""); setTargetOpen(true); return; }
       if (!matchingAlert) { setTargetError(""); setTargetOpen(true); return; }
       pendingRef.current = true; setPending(true);
       try { setCurrentMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id, "ACTIVE")).alert); }
@@ -1752,8 +1753,18 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
     try {
       const session = await readSession().catch(() => null);
       if (!session) { setTargetOpen(false); requireSignIn(); return; }
-      const created = await travelApi.createPriceAlert(flight ? buildFlightPriceAlertPayload(plan, parsed.value, currency) : buildHotelPriceAlertPayload(plan, parsed.value, currency));
-      setCurrentMatchingAlert(created.alert); setTargetOpen(false); setTargetDraft("");
+      const samePausedHotelTarget = !flight
+        ? (await travelApi.priceAlerts()).alerts.find((alert) =>
+            alert.status === "PAUSED"
+            && Number(alert.targetPrice) === parsed.value
+            && alert.currency?.toUpperCase() === currency.toUpperCase()
+            && matchingHotelPriceAlert([alert], plan)?.id === alert.id,
+          )
+        : undefined;
+      const saved = samePausedHotelTarget
+        ? await travelApi.updatePriceAlertStatus(samePausedHotelTarget.id, "ACTIVE")
+        : await travelApi.createPriceAlert(flight ? buildFlightPriceAlertPayload(plan, parsed.value, currency) : buildHotelPriceAlertPayload(plan, parsed.value, currency));
+      setCurrentMatchingAlert(saved.alert); setTargetOpen(false); setTargetDraft("");
     } catch (error) {
       if (error instanceof TravelApiError && error.status === 401) { setTargetOpen(false); requireSignIn(); }
       else if (error instanceof TravelApiError && error.status === 409) { await reconcile(); setTargetError("An alert for this search already exists."); }
