@@ -35,7 +35,9 @@ import { canReuseHotelDisplayPrices, createHotelDisplayPrices, type HotelDisplay
 import { createHotelRoomDisplayPrice } from "./hotelDetailCurrency";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
-import { HOTEL_LIMITS } from "../flow/hotelSearchModel";
+import { HOTEL_LIMITS, localIsoDate } from "../flow/hotelSearchModel";
+import { DateRangeSheet } from "../flow/DateRangeSheet";
+import { HotelGuestsRoomsSheet } from "../flow/HotelSearchPanel";
 import { homepageAirports } from "../home/homepageAirports";
 import type { MobileHotelDetailsResponse } from "../../api/travelApi";
 import { canonicalHotelAddress, HotelRoomOptionsModal, hotelStaySummary, NativeHotelGallery } from "./NativeHotelDetails";
@@ -149,6 +151,8 @@ function HotelDetail({
     response: MobileHotelDetailsResponse | null;
   } | null>(null);
   const [roomsOpen, setRoomsOpen] = useState(false);
+  const [stayDatesOpen, setStayDatesOpen] = useState(false);
+  const [stayCountsOpen, setStayCountsOpen] = useState(false);
   const [selectedOfferId, setSelectedOfferId] = useState<NativeHotelOffer["id"] | null>(null);
   const guestCount = positiveCount(params.guests, 2, HOTEL_LIMITS.guests.max);
   const roomCount = positiveCount(params.rooms, 1, HOTEL_LIMITS.rooms.max);
@@ -159,9 +163,25 @@ function HotelDetail({
   useEffect(() => {
     setSelectedOfferId(null);
     setRoomsOpen(false);
+    setStayDatesOpen(false);
+    setStayCountsOpen(false);
   }, [result.id]);
   const checkIn = String(params.checkIn || "");
   const checkOut = String(params.checkOut || "");
+  const updateStayParams = (patch: {
+    checkIn?: string;
+    checkOut?: string;
+    guests?: string;
+    rooms?: string;
+  }) => {
+    setSelectedOfferId(null);
+    setRoomsOpen(false);
+    router.setParams({
+      ...patch,
+      hotelDisplayPrices: "",
+      displayCurrencyContext: "",
+    });
+  };
   const enrichmentKey = `${result.id}\u0000${checkIn}\u0000${checkOut}\u0000${guestCount}\u0000${roomCount}`;
   const details = detailsState?.key === enrichmentKey ? detailsState.response : null;
   const detailsStatus: HotelDetailsStatus = detailsState?.key === enrichmentKey
@@ -203,6 +223,7 @@ function HotelDetail({
 
   const property = details?.propertyDetails ?? null;
   const roomOptions = details?.roomOptions ?? [];
+  const pricingResult = details?.hotel ?? result;
   const images = result.imageUrls?.length
     ? result.imageUrls
     : result.imageUrl
@@ -234,7 +255,7 @@ function HotelDetail({
     ?? hotelOffers[0]
     ?? null;
   const canContinue = selectedOffer !== null;
-  const hasPrice = result.pricePerNight != null && result.totalPrice != null;
+  const hasPrice = pricingResult.pricePerNight != null && pricingResult.totalPrice != null;
   const passedDisplayPrices = parse<HotelDisplayPriceSnapshot>(
     params.hotelDisplayPrices,
   );
@@ -243,10 +264,10 @@ function HotelDetail({
   );
   const providerDisplayPrices = hasPrice
     ? createHotelDisplayPrices(
-        result.pricePerNight!,
-        result.totalPrice!,
-        result.currency,
-        result.currency,
+        pricingResult.pricePerNight!,
+        pricingResult.totalPrice!,
+        pricingResult.currency,
+        pricingResult.currency,
         {},
       )
     : null;
@@ -254,14 +275,14 @@ function HotelDetail({
     hasPrice &&
     canReuseHotelDisplayPrices({
       snapshot: passedDisplayPrices,
-      providerNightly: result.pricePerNight!,
-      providerTotal: result.totalPrice!,
-      providerCurrency: result.currency,
+      providerNightly: pricingResult.pricePerNight!,
+      providerTotal: pricingResult.totalPrice!,
+      providerCurrency: pricingResult.currency,
       displayCurrency: passedDisplayCurrencyContext?.resolvedCurrency,
     })
       ? passedDisplayPrices!
       : providerDisplayPrices;
-  const hotelPriceStateKey = `${result.id}\u0000${result.currency}\u0000${result.pricePerNight ?? ""}\u0000${result.totalPrice ?? ""}`;
+  const hotelPriceStateKey = `${pricingResult.id}\u0000${pricingResult.currency}\u0000${pricingResult.pricePerNight ?? ""}\u0000${pricingResult.totalPrice ?? ""}`;
   const [displayPriceState, setDisplayPriceState] = useState<{
     key: string;
     prices: HotelDisplayPriceSnapshot | null;
@@ -282,9 +303,9 @@ function HotelDetail({
           if (
             canReuseHotelDisplayPrices({
               snapshot: passedDisplayPrices,
-              providerNightly: result.pricePerNight!,
-              providerTotal: result.totalPrice!,
-              providerCurrency: result.currency,
+              providerNightly: pricingResult.pricePerNight!,
+              providerTotal: pricingResult.totalPrice!,
+              providerCurrency: pricingResult.currency,
               displayCurrency: passedDisplayCurrencyContext?.resolvedCurrency,
               preferredCurrency,
             })
@@ -307,9 +328,9 @@ function HotelDetail({
           setHotelCurrencyRates(rates);
           if (canReuseHotelDisplayPrices({
             snapshot: passedDisplayPrices,
-            providerNightly: result.pricePerNight!,
-            providerTotal: result.totalPrice!,
-            providerCurrency: result.currency,
+            providerNightly: pricingResult.pricePerNight!,
+            providerTotal: pricingResult.totalPrice!,
+            providerCurrency: pricingResult.currency,
             displayCurrency: passedDisplayCurrencyContext?.resolvedCurrency,
             preferredCurrency,
           })) return;
@@ -321,9 +342,9 @@ function HotelDetail({
           setDisplayPriceState({
             key: hotelPriceStateKey,
             prices: createHotelDisplayPrices(
-              result.pricePerNight!,
-              result.totalPrice!,
-              result.currency,
+              pricingResult.pricePerNight!,
+              pricingResult.totalPrice!,
+              pricingResult.currency,
               resolution.resolvedCurrency,
               rates,
             ),
@@ -339,10 +360,10 @@ function HotelDetail({
       passedDisplayPrices?.nightly?.providerAmount,
       passedDisplayPrices?.total?.providerAmount,
       hotelPriceStateKey,
-      result.currency,
-      result.id,
-      result.pricePerNight,
-      result.totalPrice,
+      pricingResult.currency,
+      pricingResult.id,
+      pricingResult.pricePerNight,
+      pricingResult.totalPrice,
     ]),
   );
   const nightlyPrice = displayPrices?.nightly;
@@ -531,7 +552,7 @@ function HotelDetail({
           {hotelReview && hotelReviewScore ? (
             <View style={d.hotelReviewSummary}>
               <Users accessible={false} size={18} color={hotelIdentityIconColor} />
-              <Text style={[d.hotelReviewText, { color: hotelIdentityTitleColor }]}>
+              <Text style={[d.hotelReviewText, { color: hotelIdentityTitleColor }]}> 
                 <Text style={d.hotelReviewPrimary}>{hotelReview.label} {hotelReviewScore}</Text>
                 <Text style={[d.hotelReviewSecondary, { color: hotelIdentityMetaColor }]}> · {hotelReview.count}</Text>
               </Text>
@@ -576,15 +597,31 @@ function HotelDetail({
           </View>
         </View>
         <View style={d.hotelStaySection}>
-          <View style={[d.hotelStayCard, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+          <View style={[d.hotelStayCard, { borderColor: theme.border, backgroundColor: theme.surface }]}> 
             <CalendarDays accessible={false} size={22} color={hotelIdentityIconColor} />
             <View style={d.hotelStayCopy}>
-              <Text style={[d.hotelStayDate, { color: hotelIdentityTitleColor }]}>
-                {stay.dateText ?? "Stay dates unavailable"}
-              </Text>
-              <Text style={[d.hotelStayMeta, { color: hotelIdentityMetaColor }]}>
-                {stay.occupancy}{stay.nightText ? ` · ${stay.nightText}` : ""}
-              </Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Edit stay dates, ${stay.dateText ?? "dates unavailable"}`}
+                onPress={() => setStayDatesOpen(true)}
+                hitSlop={6}
+                style={d.hotelStayTarget}
+              >
+                <Text style={[d.hotelStayDate, { color: hotelIdentityTitleColor }]}> 
+                  {stay.dateText ?? "Stay dates unavailable"}
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Edit rooms and guests, ${stay.occupancy}`}
+                onPress={() => setStayCountsOpen(true)}
+                hitSlop={6}
+                style={d.hotelStayTarget}
+              >
+                <Text style={[d.hotelStayMeta, { color: hotelIdentityMetaColor }]}> 
+                  {stay.occupancy}
+                </Text>
+              </Pressable>
             </View>
           </View>
         </View>
@@ -593,7 +630,7 @@ function HotelDetail({
             <>
               <View style={d.hotelAboutPanel}>
                 <Text style={[d.hotelAboutHeading, { color: theme.dark ? theme.textPrimary : "#020617" }]}>About this hotel</Text>
-                <Text style={[d.hotelAboutDescription, { color: theme.dark ? theme.textSecondary : "#475569" }]}>
+                <Text style={[d.hotelAboutDescription, { color: theme.dark ? theme.textSecondary : "#475569" }]}> 
                   {property?.description
                     ? property.description
                     : detailsStatus === "loading"
@@ -699,7 +736,7 @@ function HotelDetail({
           {activeHotelTab === "deals" ? (
             <View style={d.hotelCompareSection}>
               <Text style={[d.hotelCompareHeading, { color: theme.dark ? theme.textPrimary : "#020617" }]}>Deals</Text>
-              <Text style={[d.hotelCompareLead, { color: theme.dark ? theme.textSecondary : "#475569" }]}>
+              <Text style={[d.hotelCompareLead, { color: theme.dark ? theme.textSecondary : "#475569" }]}> 
                 {stay.dateText ?? "Stay dates unavailable"} · {stay.occupancy}
               </Text>
               <View style={d.hotelCompareOffers}>
@@ -764,7 +801,7 @@ function HotelDetail({
                   );
                 })}
                 {!hotelOffers.length && detailsStatus !== "loading" ? (
-                  <View style={[d.hotelOffer, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                  <View style={[d.hotelOffer, { backgroundColor: theme.surface, borderColor: theme.border }]}> 
                     <Text style={[d.hotelOfferProvider, { color: theme.textPrimary }]}>{result.provider}</Text>
                     <Text style={[d.hotelSectionLead, { color: theme.textSecondary }]}>Planning inventory · no live checkout</Text>
                   </View>
@@ -829,6 +866,39 @@ function HotelDetail({
         options={presentedRoomOptions}
         theme={theme}
         accentColor={hotelAccent}
+      />
+      <DateRangeSheet
+        visible={stayDatesOpen}
+        title="Travel dates"
+        startLabel="Check-in date"
+        endLabel="Check-out date"
+        presentation="sheet"
+        startDate={checkIn}
+        endDate={checkOut}
+        minimumStartDate={localIsoDate(new Date())}
+        endMustBeAfterStart
+        onDone={(nextCheckIn, nextCheckOut) => {
+          setStayDatesOpen(false);
+          updateStayParams({ checkIn: nextCheckIn, checkOut: nextCheckOut });
+        }}
+        onCancel={() => setStayDatesOpen(false)}
+      />
+      <HotelGuestsRoomsSheet
+        visible={stayCountsOpen}
+        presentation="sheet"
+        adults={guestCount}
+        children={0}
+        rooms={roomCount}
+        petFriendly={false}
+        showPetFriendly={false}
+        onDone={(draft) => {
+          setStayCountsOpen(false);
+          updateStayParams({
+            guests: String(draft.adults + draft.children),
+            rooms: String(draft.rooms),
+          });
+        }}
+        onCancel={() => setStayCountsOpen(false)}
       />
     </SafeAreaView>
   );
@@ -898,7 +968,7 @@ function BookingProviderCard({
       ]}
     >
       <View style={d.providerIdentity}>
-        <View style={[d.providerLogo, theme.dark && { backgroundColor: "#142B55" }]}>
+        <View style={[d.providerLogo, theme.dark && { backgroundColor: "#142B55" }]}> 
           <ProviderLogo provider={provider} logoUrl={logoUrl} />
         </View>
         <View style={d.providerCopy}>
@@ -929,9 +999,9 @@ function Offer({
   const { theme } = useAppTheme();
   const compact = useWindowDimensions().width < 360;
   return (
-    <View style={[d.offer, compact && d.offerCompact, { backgroundColor: theme.dark ? "#17243A" : theme.surface, borderColor: theme.border }, selected && { borderColor: ui.blue }]}>
+    <View style={[d.offer, compact && d.offerCompact, { backgroundColor: theme.dark ? "#17243A" : theme.surface, borderColor: theme.border }, selected && { borderColor: ui.blue }]}> 
       <View style={d.providerIdentity}>
-        <View style={[d.providerLogo, theme.dark && { backgroundColor: "#142B55" }]}>
+        <View style={[d.providerLogo, theme.dark && { backgroundColor: "#142B55" }]}> 
           <ProviderLogo provider={provider} logoUrl={logoUrl} />
         </View>
         <View style={d.providerCopy}>
@@ -1258,6 +1328,7 @@ const d = StyleSheet.create({
   hotelStaySection: { paddingHorizontal: 12, paddingTop: 24 },
   hotelStayCard: { minHeight: 60, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 12 },
   hotelStayCopy: { flex: 1, minWidth: 0 },
+  hotelStayTarget: { minHeight: 24, justifyContent: "center" },
   hotelStayDate: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
   hotelStayMeta: { marginTop: 2, fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
   hotelGallery: { height: 244, marginHorizontal: 12, marginBottom: 6, flexDirection: "row", gap: 4, borderRadius: 12, overflow: "hidden", backgroundColor: "#E7EBF2" },
