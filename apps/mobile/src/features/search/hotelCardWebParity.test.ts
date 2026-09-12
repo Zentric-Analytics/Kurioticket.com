@@ -106,9 +106,11 @@ test("hotel title matches mobile web typography", () => {
   assert.match(hotelNameStyle, /fontFamily:\s*appFonts\.bold/);
 });
 
-test("only the global first priced hotel receives the green Cheapest badge", () => {
+test("only the actual lowest comparable filtered hotel receives the green Cheapest badge", () => {
   assert.match(card,/showCheapestBadge && hasPrice/);
-  assert.match(source,/\(clampedHotelPage - 1\) \* HOTEL_RESULTS_PAGE_SIZE \+ i === 0/);
+  assert.match(source,/getLowestPricedHotelId\(filteredHotelResults, currencyState\?\.rates\)/);
+  assert.match(source,/showCheapestBadge=\{item\.id === cheapestHotelId\}/);
+  assert.doesNotMatch(source,/\(clampedHotelPage - 1\) \* HOTEL_RESULTS_PAGE_SIZE \+ i === 0/);
 });
 
 test("guest reviews are only rendered from a genuine reviewScore", () => {

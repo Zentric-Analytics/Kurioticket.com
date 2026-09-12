@@ -51,7 +51,7 @@ test("iOS and Android share one Hotel Details tablist with the exact web tab ord
   assert.match(tablist, /tab === "compare" && d\.hotelTabWide/);
   assert.match(tablist, /accessibilityState=\{\{ selected: activeHotelTab === tab \}\}/);
   assert.match(tablist, /activeHotelTab === tab && \{ borderBottomColor: hotelAccent \}/);
-  assert.match(tablist, /onPress=\{\(\) => setActiveHotelTab\(tab\)\}/);
+  assert.match(tablist, /onPress=\{\(\) => selectHotelTab\(tab\)\}/);
 });
 
 test("the shared native tab geometry cannot stack or fork by platform", () => {

@@ -136,9 +136,9 @@ test("canonical flight search data remains available after presentation metadata
 
 test("Hotel Results uses one stable summary header above a native sticky filter rail", () => {
   const headerPosition = results.indexOf("<HotelResultsHeader");
-  const scrollPosition = results.indexOf("<ScrollView", headerPosition);
-  assert.ok(headerPosition >= 0 && headerPosition < scrollPosition);
-  assert.match(results.slice(scrollPosition), /stickyHeaderIndices=\{\[0\]\}[\s\S]*?\{filterRail\}/);
+  const listPosition = results.indexOf("<SectionList", headerPosition);
+  assert.ok(headerPosition >= 0 && headerPosition < listPosition);
+  assert.match(results.slice(listPosition), /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
   assert.equal(results.match(/<HotelResultsHeader/g)?.length, 1);
   assert.doesNotMatch(results, /hotelCompactHeader|setHotelCompactHeader|hotelIntroBoundary/);
 });
