@@ -14,6 +14,7 @@ import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
 import { adaptKayakFlightSearch } from "@/services/travel/kayakSearchAdapter";
 import { flightSearchSchema } from "@/lib/validation";
 import { KayakSandboxResults } from "@/components/results/KayakSandboxResults";
+import { KayakMetasearchSection } from "@/components/results/KayakMetasearchSection";
 import { notFound } from "next/navigation";
 
 type FlightResultsSearchParams = Promise<
@@ -148,6 +149,7 @@ export default async function FlightResultsPage({
         hideDesktopTravelNav
         hideMobileCategoryTabs
       />
+      <KayakMetasearchSection vertical="flights" params={params} />
       <Suspense
         fallback={
           <ResultsFallback

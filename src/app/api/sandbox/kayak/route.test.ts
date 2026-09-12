@@ -73,6 +73,15 @@ test("sandbox route enforces environment, validation, origin, session continuity
     assert.equal(next.status, 200);
     assert.equal(tracks[0], tracks[1]);
     assert.ok(!JSON.stringify(await next.json()).includes("test-credential"));
+    const regular = await POST(req({ action: "regular-search", vertical: "flights", criteria: {
+      origin: "BOS", destination: "JFK", departureDate: "2099-10-12", tripType: "one-way", currency: "JPY",
+    } }));
+    assert.equal(regular.status, 200);
+    assert.deepEqual((await regular.json()).results, []);
+    const unsupported = await POST(req({ action: "regular-search", vertical: "flights", criteria: {
+      origin: "BOS", destination: "JFK", departureDate: "2099-10-12", tripType: "one-way", cabinClass: "business",
+    } }));
+    assert.equal(unsupported.status, 422);
     upstream.mock.mockImplementation(async () => {
       throw new Error("apiKey=test-credential");
     });

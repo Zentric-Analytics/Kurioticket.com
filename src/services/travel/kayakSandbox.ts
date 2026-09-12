@@ -28,6 +28,8 @@ export const kayakSearchSchema = z
       origin: airport,
       departure: date,
       returnDate: date,
+      pickupTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(),
+      dropoffTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(),
     }),
   ])
   .superRefine((value, ctx) => {
@@ -367,10 +369,10 @@ export class KayakSandboxClient {
             pickup: {
               location: { type: "airport", value: search.origin },
               date: search.departure,
-              hour: 12,
-              minute: 0,
+              hour: Number((search.pickupTime || "12:00").split(":")[0]),
+              minute: Number((search.pickupTime || "12:00").split(":")[1]),
             },
-            dropoff: { date: search.returnDate, hour: 12, minute: 0 },
+            dropoff: { date: search.returnDate, hour: Number((search.dropoffTime || "12:00").split(":")[0]), minute: Number((search.dropoffTime || "12:00").split(":")[1]) },
           },
         };
     }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isIP } from "node:net";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getKayakClientIp } from "@/lib/kayak-client-ip";
+import { regularKayakRequest, resolveRegularKayakSearch } from "@/services/travel/kayakRegularSearch";
 import {
   isKayakSandboxEnabled,
   KayakError,
@@ -81,6 +82,7 @@ export async function POST(request: NextRequest) {
     );
   }
   const parsedSearch = kayakSearchSchema.safeParse(body);
+  const regular = regularKayakRequest.safeParse(body);
   const vertical = kayakVertical.safeParse(body?.vertical);
   const isPlaces =
     body?.action === "places" &&
@@ -88,7 +90,7 @@ export async function POST(request: NextRequest) {
     typeof body?.term === "string" &&
     body.term.trim().length >= 2 &&
     body.term.length <= 80;
-  if (!isPlaces && !parsedSearch.success)
+  if (!isPlaces && !parsedSearch.success && !regular.success)
     return NextResponse.json(
       { error: "Check the locations, dates and travelers." },
       { status: 400, headers: noStore },
@@ -108,7 +110,7 @@ export async function POST(request: NextRequest) {
   if (
     !checkRateLimit(`kayak-sandbox:${ip}`, 10, 60000).allowed ||
     !checkRateLimit(
-      `kayak-sandbox:${isPlaces ? "places" : parsedSearch.data!.vertical}`,
+      `kayak-sandbox:${isPlaces ? "places" : regular.success ? regular.data.vertical : parsedSearch.data!.vertical}`,
       isPlaces ? 80 : 16,
       3600000,
     ).allowed
@@ -141,6 +143,10 @@ export async function POST(request: NextRequest) {
     return response;
   };
   try {
+    const resolved = regular.success ? await resolveRegularKayakSearch(regular.data.vertical, regular.data.criteria,
+      term => client.places("hotels", term, trackId, AbortSignal.any([request.signal, AbortSignal.timeout(12000)]))) : null;
+    if (resolved && !resolved.supported) return withSession(NextResponse.json(
+      { error: resolved.reason, choices: resolved.choices || [], sandbox: true }, { status: 422, headers: noStore }));
     const results = isPlaces
       ? await client.places(
           vertical.data!,
@@ -149,7 +155,7 @@ export async function POST(request: NextRequest) {
           AbortSignal.any([request.signal, AbortSignal.timeout(12000)]),
         )
       : await client.search(
-          parsedSearch.data!,
+          resolved?.supported ? resolved.search : parsedSearch.data!,
           trackId,
           request.signal,
           body.empty === true,
