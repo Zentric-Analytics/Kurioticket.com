@@ -27,7 +27,7 @@ function styleRule(name: string, nextName: string) {
 test("Reviews and Location each retain both their import and JSX integration", () => {
   assert.match(detail, /import \{ NativeHotelLocationSection \} from "\.\/NativeHotelLocationSection";/);
   assert.match(detail, /<NativeHotelLocationSection\s/);
-  assert.match(detail, /import \{ NativeHotelReviewsSection \} from "\.\/NativeHotelReviewsSection";/);
+  assert.match(detail, /import \{[\s\S]*?NativeHotelReviewsSection[\s\S]*?\} from "\.\/NativeHotelReviewsSection";/);
   assert.match(detail, /<NativeHotelReviewsSection result=\{result\} \/>/);
 });
 
