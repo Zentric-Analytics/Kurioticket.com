@@ -25,6 +25,7 @@ import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { getLocationFieldDisplay } from "../../../../../src/lib/search/locationFieldDisplay";
 import { NATIVE_FILTER_RESULTS_TRANSITION_MS } from "./filterResultsTransition";
 import { formatCarResultsScheduleSummary } from "../../../../../src/lib/cars/carResultsSummary";
+import { resolveCarResultImageSource } from "../../../../../src/lib/cars/carResultImage";
 
 type Status = "loading" | "ready" | "empty" | "error";
 const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB";
@@ -85,7 +86,7 @@ export function ApprovedCarResultsScreen() {
   const closeFilterSheet=()=>setFilterSheetVisible(false);
   const completeCarFilterSession=()=>{closeFilterSheet();if(carFilterSessionDirtyRef.current){carFilterSessionDirtyRef.current=false;startCarResultsTransition();}};
   const openDeal=(result:CarResult)=>router.push({pathname:"/car-details",params:{result:JSON.stringify(result),resultId:result.id,...Object.fromEntries(Object.entries(payload).map(([key,value])=>[key,String(value)])),carResultsStack:"1"}});
-  const image=(value?:string)=>{if(!value)return undefined;if(/^https:\/\//i.test(value))return value;const base=getApiBaseUrl();return base.ok&&/^\/(?!\/)/.test(value)?new URL(value,`${base.baseUrl}/`).toString():undefined;};
+  const image=(value?:string)=>{const resolved=resolveCarResultImageSource(value);if(!resolved)return undefined;if(/^https:\/\//i.test(resolved))return resolved;const base=getApiBaseUrl();return base.ok&&/^\/(?!\/)/.test(resolved)?new URL(resolved,`${base.baseUrl}/`).toString():undefined;};
   const clearFilters=()=>{setFilters({});startCarResultsTransition();};
   if(status==="loading") return <NativeBrandedSearchLoading product="car"/>;
   return <SafeAreaView style={[r.safe,{backgroundColor:carCanvasColor}]} edges={["top"]}>

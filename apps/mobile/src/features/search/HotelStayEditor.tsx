@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -9,7 +9,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { router, useNavigation } from "expo-router";
+import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import { CalendarDays, ChevronRight, Minus, Plus, X } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { travelApi, type HotelResult } from "../../api/travelApi";
@@ -29,6 +29,7 @@ type StayValues = {
 };
 
 type StayEditorTarget = "dates" | "counts";
+type ApplyStayResult = "unchanged" | "updated" | "failed";
 
 export function HotelStayEditor({
   result,
@@ -46,16 +47,30 @@ export function HotelStayEditor({
   rooms: number;
 }) {
   const navigation = useNavigation();
+  const routeParams = useLocalSearchParams<Record<string, string | string[]>>();
   const { theme } = useAppTheme();
   const [editorOpen, setEditorOpen] = useState(false);
   const [pendingEditor, setPendingEditor] = useState<StayEditorTarget | null>(null);
   const [datesOpen, setDatesOpen] = useState(false);
   const [countsOpen, setCountsOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const pendingDatesApply = useRef<{ checkIn: string; checkOut: string } | null>(null);
+  const datesReturnToEditor = useRef(false);
+  const pendingCountsApply = useRef<{ guests: number; rooms: number } | null>(null);
+  const countsReturnToEditor = useRef(false);
   const summary = hotelStaySummary(checkIn, checkOut, guests, rooms);
   const iconColor = theme.dark ? theme.icon : "#0F172A";
   const titleColor = theme.dark ? theme.textPrimary : "#020617";
   const metaColor = theme.dark ? theme.textSecondary : "#475569";
+  const reopenEditorParam = Array.isArray(routeParams.hotelStayEditor)
+    ? routeParams.hotelStayEditor[0]
+    : routeParams.hotelStayEditor;
+
+  useEffect(() => {
+    if (reopenEditorParam !== "1") return;
+    setEditorOpen(true);
+    router.setParams({ hotelStayEditor: "" });
+  }, [reopenEditorParam]);
 
   const showUpdatedResults = (next: StayValues) => {
     router.replace({
@@ -70,14 +85,17 @@ export function HotelStayEditor({
     });
   };
 
-  const applyStay = async (next: StayValues) => {
-    if (updating) return;
+  const applyStay = async (
+    next: StayValues,
+    reopenEditorAfterUpdate = false,
+  ): Promise<ApplyStayResult> => {
+    if (updating) return "failed";
     if (
       next.checkIn === checkIn
       && next.checkOut === checkOut
       && next.guests === guests
       && next.rooms === rooms
-    ) return;
+    ) return "unchanged";
     setUpdating(true);
     try {
       const response = await travelApi.searchHotels({
@@ -97,7 +115,7 @@ export function HotelStayEditor({
             { text: "View updated results", onPress: () => showUpdatedResults(next) },
           ],
         );
-        return;
+        return "failed";
       }
 
       const sharedStayParams = {
@@ -112,6 +130,7 @@ export function HotelStayEditor({
         result: JSON.stringify(refreshed),
         hotelDisplayPrices: "",
         displayCurrencyContext: "",
+        hotelStayEditor: reopenEditorAfterUpdate ? "1" : "",
       };
       const resetState = rebuildHotelStayNavigationState(
         navigation.getState(),
@@ -124,11 +143,13 @@ export function HotelStayEditor({
       } else {
         router.setParams({ ...detailParams, hotelResultsStack: "0" });
       }
+      return "updated";
     } catch {
       Alert.alert(
         "Unable to update stay",
         "We couldn't refresh this hotel for the new stay. Please try again.",
       );
+      return "failed";
     } finally {
       setUpdating(false);
     }
@@ -152,6 +173,82 @@ export function HotelStayEditor({
     if (Platform.OS !== "ios" || !pendingEditor) return;
     launchEditor(pendingEditor);
     setPendingEditor(null);
+  };
+
+  const finishDatesDismiss = () => {
+    if (!datesReturnToEditor.current) return;
+    const next = pendingDatesApply.current;
+    pendingDatesApply.current = null;
+    if (next) {
+      void applyStay(
+        { checkIn: next.checkIn, checkOut: next.checkOut, guests, rooms },
+        true,
+      ).then((outcome) => {
+        datesReturnToEditor.current = false;
+        if (outcome !== "updated") setEditorOpen(true);
+      });
+      return;
+    }
+    datesReturnToEditor.current = false;
+    setEditorOpen(true);
+  };
+  const closeDatesToEditor = () => {
+    pendingDatesApply.current = null;
+    datesReturnToEditor.current = true;
+    setDatesOpen(false);
+  };
+  const finishDates = (nextCheckIn: string, nextCheckOut: string) => {
+    pendingDatesApply.current = { checkIn: nextCheckIn, checkOut: nextCheckOut };
+    datesReturnToEditor.current = true;
+    setDatesOpen(false);
+  };
+
+  const finishCountsDismiss = () => {
+    if (Platform.OS !== "ios" || !countsReturnToEditor.current) return;
+    const next = pendingCountsApply.current;
+    pendingCountsApply.current = null;
+    if (next) {
+      void applyStay(
+        { checkIn, checkOut, guests: next.guests, rooms: next.rooms },
+        true,
+      ).then((outcome) => {
+        countsReturnToEditor.current = false;
+        if (outcome !== "updated") setEditorOpen(true);
+      });
+      return;
+    }
+    countsReturnToEditor.current = false;
+    setEditorOpen(true);
+  };
+  const closeCountsToEditor = () => {
+    pendingCountsApply.current = null;
+    countsReturnToEditor.current = true;
+    setCountsOpen(false);
+    if (Platform.OS !== "ios") {
+      requestAnimationFrame(() => {
+        countsReturnToEditor.current = false;
+        setEditorOpen(true);
+      });
+    }
+  };
+  const finishCounts = (nextGuests: number, nextRooms: number) => {
+    pendingCountsApply.current = { guests: nextGuests, rooms: nextRooms };
+    countsReturnToEditor.current = true;
+    setCountsOpen(false);
+    if (Platform.OS !== "ios") {
+      requestAnimationFrame(() => {
+        const next = pendingCountsApply.current;
+        pendingCountsApply.current = null;
+        if (!next) return;
+        void applyStay(
+          { checkIn, checkOut, guests: next.guests, rooms: next.rooms },
+          true,
+        ).then((outcome) => {
+          countsReturnToEditor.current = false;
+          if (outcome !== "updated") setEditorOpen(true);
+        });
+      });
+    }
   };
 
   return (
@@ -200,21 +297,17 @@ export function HotelStayEditor({
         endDate={checkOut}
         minimumStartDate={localIsoDate(new Date())}
         endMustBeAfterStart
-        onDone={(nextCheckIn, nextCheckOut) => {
-          setDatesOpen(false);
-          void applyStay({ checkIn: nextCheckIn, checkOut: nextCheckOut, guests, rooms });
-        }}
-        onCancel={() => setDatesOpen(false)}
+        onDone={finishDates}
+        onCancel={closeDatesToEditor}
+        onDismiss={finishDatesDismiss}
       />
       <HotelStayCountsSheet
         visible={countsOpen}
         guests={guests}
         rooms={rooms}
-        onCancel={() => setCountsOpen(false)}
-        onDone={(nextGuests, nextRooms) => {
-          setCountsOpen(false);
-          void applyStay({ checkIn, checkOut, guests: nextGuests, rooms: nextRooms });
-        }}
+        onCancel={closeCountsToEditor}
+        onDismiss={finishCountsDismiss}
+        onDone={finishCounts}
       />
     </>
   );
@@ -291,12 +384,14 @@ function HotelStayCountsSheet({
   rooms,
   onDone,
   onCancel,
+  onDismiss,
 }: {
   visible: boolean;
   guests: number;
   rooms: number;
   onDone: (guests: number, rooms: number) => void;
   onCancel: () => void;
+  onDismiss: () => void;
 }) {
   const { theme } = useAppTheme();
   const [draftGuests, setDraftGuests] = useState(guests);
@@ -326,7 +421,7 @@ function HotelStayCountsSheet({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel} onDismiss={onDismiss}>
       <View style={s.countBackdrop}>
         <Pressable
           accessibilityRole="button"
