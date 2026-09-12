@@ -63,8 +63,8 @@ test("full-screen children use direct visibility while ordinary sheets keep thei
   assert.match(panel, /return <Modal transparent animationType="none" visible=\{motion\.rendered\}/);
   assert.match(panel, /motion\.backdropStyle[\s\S]*?motion\.sheetStyle/);
   assert.match(dates, /const sheetVisible = presentation === "sheet" \? visible : false;[\s\S]*?useSearchPickerMotion\(sheetVisible\)/);
-  assert.ok(dates.indexOf('presentation === "resultsEditFullScreen"') < dates.indexOf("if (!motion.rendered) return null"));
-  assert.match(dates, /if \(!motion\.rendered\) return null;[\s\S]*?motion\.backdropStyle[\s\S]*?motion\.sheetStyle/);
+  assert.ok(dates.indexOf('presentation === "resultsEditFullScreen"') < dates.indexOf('return <Modal transparent animationType="none" visible={motion.rendered}'));
+  assert.match(dates, /return <Modal transparent animationType="none" visible=\{motion\.rendered\}[\s\S]*?motion\.backdropStyle[\s\S]*?motion\.sheetStyle/);
 });
 
 test("full-screen draft state is synchronized before native presentation paints", () => {
