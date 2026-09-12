@@ -66,8 +66,10 @@ test("stay-fit facts follow the web factual contract", () => {
   assert.match(model, /sightseeing\|culture\|history\|art\|theatre/);
 });
 
-test("Location owns exact parity and fallback copy without legacy presentation", () => {
-  for (const copy of ["Location &amp; stay fit", "Why this location works", "Accessibility and location details", "Location fit details are limited to the verified address and map.", "Confirm specific accessibility requirements with the property before travel.", "Map preview unavailable", "Street View"]) assert.match(component, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+test("Location owns location copy without duplicating the Details accessibility section", () => {
+  for (const copy of ["Location &amp; stay fit", "Why this location works", "Location fit details are limited to the verified address and map.", "Map preview unavailable", "Street View"]) assert.match(component, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  for (const duplicate of ["Accessibility and location details", "Confirm specific accessibility requirements with the property before travel."]) assert.doesNotMatch(component, new RegExp(duplicate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.doesNotMatch(component, /propertyDetails\.accessibility/);
   for (const legacy of ["✓ city break", "✓ business", "Suited to business stays", "Suited to family stays", "interestTags?.map"]) assert.doesNotMatch(component, new RegExp(legacy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 });
 
@@ -102,11 +104,8 @@ test("Location keeps mobile web typography while using compact native spacing", 
   assert.doesNotMatch(styleRule(component, "mapViewport", "mapPreview"), /height: (?:280|300)/);
   for (const rule of [/marginTop: 22/, /fontSize: 15/, /lineHeight: 22/, /fontWeight: "600"/, /appFonts\.semibold/]) assert.match(styleRule(component, "subheading", "factList"), rule);
   for (const rule of [/borderRadius: 8/, /paddingHorizontal: 12/, /paddingVertical: 6/]) assert.match(styleRule(component, "factChip", "factText"), rule);
-  for (const rule of [/fontSize: 12/, /lineHeight: 16/, /fontWeight: "500"/, /appFonts\.medium/]) assert.match(styleRule(component, "factText", "accessibilityHeading"), rule);
-  assert.match(styleRule(component, "accessibilityHeading", "accessibilityList"), /marginTop: 22/);
-  assert.match(styleRule(component, "accessibilityRow", "accessibilityBullet"), /alignItems: "flex-start"/);
-  assert.match(styleRule(component, "accessibilityBullet", "accessibilityText"), /width: 20[\s\S]*lineHeight: 24/);
-  assert.match(styleRule(component, "accessibilityText", "accessibilityFallback"), /fontSize: 13[\s\S]*lineHeight: 22/);
+  for (const rule of [/fontSize: 12/, /lineHeight: 16/, /fontWeight: "500"/, /appFonts\.medium/]) assert.match(styleRule(component, "factText", "fallbackText"), rule);
+  for (const rule of [/fontSize: 13/, /lineHeight: 22/, /fontWeight: "400"/, /appFonts\.regular/]) assert.match(styleRule(component, "fallbackText", "__end__".replace("__end__", "")), rule);
 });
 
 test("Decision-section headings preserve the refined supporting hierarchy", () => {
