@@ -66,8 +66,8 @@ test("identity, tabs, and editable stay summary follow the measured hierarchy", 
   assert.match(hotel, /\{hotelReview\.count\}/);
   assert.match(hotel, /<HotelStayEditor[\s\S]*?result=\{result\}[\s\S]*?checkIn=\{checkIn\}[\s\S]*?checkOut=\{checkOut\}[\s\S]*?guests=\{guestCount\}[\s\S]*?rooms=\{roomCount\}/);
   assert.match(styleRule(stayEditor, "section", "card"), /paddingHorizontal: 10[^}]*paddingTop: 24/);
-  assert.match(styleRule(stayEditor, "card", "copy"), /height: 60[^}]*borderWidth: 1[^}]*borderRadius: 12[^}]*paddingHorizontal: 14[^}]*paddingVertical: 4[^}]*gap: 10/);
-  assert.match(styleRule(stayEditor, "rowAction", "pressed"), /height: 24[^}]*justifyContent: "center"/);
+  assert.match(styleRule(stayEditor, "card", "copy"), /minHeight: 60[^}]*borderWidth: 1[^}]*borderRadius: 12[^}]*paddingHorizontal: 14[^}]*paddingVertical: 4[^}]*gap: 10/);
+  assert.match(styleRule(stayEditor, "rowAction", "pressed"), /minHeight: 24[^}]*justifyContent: "center"/);
   assert.match(stayEditor, /\{summary\.occupancy\}/);
   assert.doesNotMatch(stayEditor, /summary\.nightText/);
 });
