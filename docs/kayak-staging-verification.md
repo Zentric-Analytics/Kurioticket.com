@@ -49,7 +49,7 @@ A deliberate invalid forwarding-header probe returned the route's network-addres
 error, proving the previous first-XFF lookup was caller-influenced on this deployment.
 The sandbox now selects Cloudflare's edge address only on Render and rejects missing
 or malformed values. Unit tests cover spoofed forwarding values and fail-closed
-behavior. These follow-up corrections still require deployment and fresh verification.
+behavior. These follow-up corrections passed the fresh verification recorded below.
 
 References for the deployment-specific network boundary:
 - [Render public ingress and client addresses](https://render.com/articles/how-render-handles-ddos-attacks)
@@ -70,14 +70,18 @@ read browser-stored country/currency during its initial state initializer, while
 the server used request defaults. A regression reproduced US/USD server markup
 versus JP/JPY browser markup. The provider now uses server props for first render
 and restores saved choices after hydration. No warning suppression is used.
-This final display correction still requires deployment and browser reload checks.
+Release `00e40a050c8fcd28f71851a40c1274f01b5e96ad` became live at 23:09 UTC.
+Fresh opens and explicit reloads of flights, hotels and cars preserved the saved
+JP/JPY preference with no captured error-level browser messages. Fresh searches
+returned 355 flight offers, 40 hotel offers and 116 car offers. The displayed
+release badge matched the deployed commit. Health returned HTTP 200 and the
+post-deployment error log was empty. The reload correction is verified on staging.
 
 ## Validation and limits
 
-The worker-limit release passed 3,108 root tests and its full production build.
-The subsequent feature-control correction passed 3,109 tests and build before
-the edge-address correction was added. Final combined results are pending.
-Earlier runtime and development dependency audits reported zero known findings.
+The final combined release passed 3,113 root tests, with zero failures or skips,
+and its full production build including type checks. All required PR checks passed
+before normal merge. Runtime and development dependency audits reported zero known findings.
 Full lint had zero errors but 68 non-blocking warnings; those are not claimed fixed.
 Broader standalone flight-detail localization remains outside the sandbox completion
 claim, as recorded in the baseline validation report.
