@@ -250,7 +250,7 @@ test("Hotel provider selection validates candidates before applying precedence",
 
 test("Hotel panels and dock expose truthful information", () => {
   for (const heading of ["Deals", "About this hotel", "Property highlights", "All amenities", "Room &amp; comfort", "Hotel information", "Accessibility"]) assert.match(hotel, new RegExp(heading));
-  assert.match(nativeLocation, /Location &amp; stay fit/);
+  assert.match(nativeLocation, />Location<\/Text>/);
   assert.match(reviews, /Guest reviews/);
   assert.match(hotel, /estimated stay total/);
   assert.match(hotel, /per night/);
