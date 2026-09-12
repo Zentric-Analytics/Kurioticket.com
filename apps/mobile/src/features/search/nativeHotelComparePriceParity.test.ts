@@ -100,7 +100,7 @@ test("native selected offer uses a compact thin ring and separate centered dot",
   assert.match(styleRule(detailSource, "selectionControl", "selectionControlDot"), /width: 16[\s\S]*height: 16[\s\S]*borderRadius: 8[\s\S]*borderWidth: 1\.5[\s\S]*alignItems: "center"[\s\S]*justifyContent: "center"/);
   assert.match(styleRule(detailSource, "selectionControlDot", "hotelOfferBottom"), /width: 6[\s\S]*height: 6[\s\S]*borderRadius: 3/);
   assert.match(hotel, /backgroundColor: theme\.surface,[\s\S]*?borderColor: selected \? hotelAccent : theme\.textSecondary/);
-  assert.match(hotel, /selected \? \([\s\S]*?d\.selectionControlDot[\s\S]*?backgroundColor: hotelAccent/);
+  assert.match(hotel, /selected \? [\s\S]*?d\.selectionControlDot[\s\S]*?backgroundColor: hotelAccent/);
   assert.doesNotMatch(hotel, /selected && \{[\s\S]{0,100}borderWidth: 6/);
 });
 
