@@ -57,3 +57,21 @@ sandbox saving is disabled. No invented fare benefits or classification stars.
 All 3,129 tests, type checks, focused lint and the full build passed. Actual shared
 card/image staging verification remains pending. This does not yet unify provider
 sorting/filtering and must not be described as a complete metasearch release.
+
+### Shared-card staging observations
+
+Release `aa0c19725343708b57549f5a8ec31b53a2f12e05` is live. The ordinary Boston
+hotel search returned 152 sandbox offers using the regular HotelCard. The first
+visible images loaded successfully: KAYAK supplies its "Not available in Sandbox"
+placeholder for these records, not actual property photographs. Car cards show
+supplied vehicle images, and flight cards show the supplied itinerary layout.
+The remaining car provider-label and explicit country/currency initialization
+corrections are local; their staging verification is pending. Combined provider
+sorting/filtering remains separate and is not covered by these observations.
+
+Follow-up local validation: 3,130 tests passed, focused lint and type checking
+passed, and the full build completed. Expanded hotel details currently show numeric
+feature identifiers; readable amenity mapping still needs the provider's static
+dictionary. Do not mistake identifiers for user-facing amenity names. The car
+browser recorded a hydration mismatch on the shared-card staging release; the
+local preference seed change is not yet verified as resolving it.

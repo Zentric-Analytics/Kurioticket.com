@@ -22,7 +22,7 @@ import {
 } from "@/lib/geo/ipinfo";
 import { getTranslations } from "@/lib/i18n";
 import { getLanguageOption, normalizeLanguage } from "@/lib/language";
-import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
+import { LOCALE_COOKIE_KEY, CURRENCY_COOKIE_KEY } from "@/lib/preferences/preferences";
 import {
   countryToRegion,
   normalizeRegion,
@@ -136,6 +136,8 @@ export default async function RootLayout({
             <RegionProvider
               initialMode={initialRegion}
               detectedMode={detectedRegion}
+              initialModeIsExplicit={Boolean(selectedRegion)}
+              initialCurrency={cookieStore.get(CURRENCY_COOKIE_KEY)?.value}
             >
               <AccountCustomizationHydrator />
               <CurrencyRatesProvider>
