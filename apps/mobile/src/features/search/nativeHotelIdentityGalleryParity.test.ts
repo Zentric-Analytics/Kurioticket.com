@@ -73,15 +73,17 @@ test("identity, tabs, and editable stay summary follow the measured hierarchy", 
 
 test("compact stay card exposes full-size edit targets without shrinking the visual card", () => {
   assert.match(stayEditor, /accessibilityLabel=\{`Edit stay\./);
-  assert.match(stayEditor, /onPress=\{\(\) => setEditorOpen\(true\)\}/);
-  assert.match(stayEditor, /<HotelStayEditSheet/);
+  assert.match(stayEditor, /const openEditor = \(\) => \{\s*setEditorView\("menu"\);\s*setEditorOpen\(true\);\s*\};/);
+  assert.match(stayEditor, /onPress=\{openEditor\}/);
+  assert.match(stayEditor, /<Modal[\s\S]*?visible=\{editorOpen\}[\s\S]*?animationType="slide"/);
   assert.match(stayEditor, /accessibilityLabel=\{`Edit dates\./);
   assert.match(stayEditor, /onPress=\{onEditDates\}/);
   assert.match(stayEditor, /accessibilityLabel=\{`Edit rooms and guests\./);
   assert.match(stayEditor, /onPress=\{onEditCounts\}/);
   assert.match(styleRule(stayEditor, "editOption", "editOptionCopy"), /minHeight: 56[^}]*paddingVertical: 7/);
-  assert.match(stayEditor, /<DateRangeSheet/);
-  assert.match(stayEditor, /<HotelStayCountsSheet/);
+  assert.match(stayEditor, /<DateRangeSheet[\s\S]*?presentation="embedded"/);
+  assert.match(stayEditor, /<HotelStayCountsEditor/);
+  assert.doesNotMatch(stayEditor, /<HotelStayEditSheet|<HotelStayCountsSheet/);
   assert.match(stayEditor, /travelApi\.searchHotels\(/);
   assert.match(stayEditor, /response\.results\.find\(\(hotel\) => hotel\.id === result\.id\)/);
   assert.match(stayEditor, /rebuildHotelStayNavigationState\(/);
