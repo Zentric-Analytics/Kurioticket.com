@@ -80,10 +80,12 @@ test("editable stay summary keeps dates and occupancy independently actionable",
   assert.match(stayEditor, /<HotelStayCountsSheet/);
   assert.match(stayEditor, /travelApi\.searchHotels\(/);
   assert.match(stayEditor, /response\.results\.find\(\(hotel\) => hotel\.id === result\.id\)/);
-  assert.match(stayEditor, /router\.setParams\(\{/);
+  assert.match(stayEditor, /rebuildHotelStayNavigationState\(/);
+  assert.match(stayEditor, /navigation\.reset\(resetState\)/);
   assert.match(stayEditor, /hotelDisplayPrices: ""/);
   assert.match(stayEditor, /displayCurrencyContext: ""/);
-  assert.match(stayEditor, /hotelResultsStack: "0"/);
+  assert.match(stayEditor, /hotelResultsStack: "1"/);
+  assert.match(stayEditor, /router\.setParams\(\{ \.\.\.detailParams, hotelResultsStack: "0" \}\)/);
 });
 
 test("inline gallery keeps swiping and a centered measured counter without the thumbnail rail", () => {
