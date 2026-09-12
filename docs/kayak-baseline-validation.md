@@ -355,3 +355,36 @@ a known coverage gap; legacy copy assertions are not proof of that new screen.
 Before release, origin/dev advanced to 81b5db673 with native hotel-detail layout
 and spacing work. It must be integrated and the combined release revalidated.
 Staging end-to-end verification has not occurred yet.
+
+### Combined release security and lint checkpoint
+
+Integrated origin/dev at 81b5db673 without dropping its native hotel layout work.
+Repository-wide lint exposed 26 errors missed by focused lint. Corrected draft
+reset lifecycles, render-time ref writes, numeric child-count props colliding with
+React's children prop, and untyped authentication/notification inputs. Invalid
+passkey registration inputs now have eleven rejection regressions. Autocomplete
+query changes clear stale suggestion state before rendering; request cancellation
+remains in the effect and explicit clearing remains in the input handler.
+
+The combined full suite passes 3,106 tests, zero failures or skips. Type checking,
+the Next 16.3.5 production build, and secret scanning pass. Full lint has zero
+errors; existing non-blocking warnings remain and are not claimed resolved.
+
+Both runtime and development dependency audits now report zero known findings.
+Updated Next, nanoid, sharp and compatible transitive dependencies. Prisma stays
+at 7.9.1; scoped overrides update deepmerge-ts to 8.0.0 and mysql2 to 3.24.4.
+Prisma config loading, schema validation and generation passed without accessing
+a live database. Its config loader uses ordinary deepmerge, not deepmergeInto or
+the renamed custom types. Updated pre-existing brace-expansion pins to patched
+versions. Scoped UUID 11.1.1 overrides preserve CommonJS v4 use in Google tooling;
+module loading and UUID generation checks passed. No broad forced downgrade was
+used to clear the audit.
+
+Upstream security references:
+- [Next image optimization advisory](https://github.com/advisories/GHSA-2xp9-vwfh-vxw4)
+- [deepmerge-ts release compatibility](https://github.com/RebeccaStevens/deepmerge-ts/releases/tag/v8.0.0)
+- [UUID patched CommonJS release](https://github.com/uuidjs/uuid/releases/tag/v11.1.1)
+
+This is local release evidence only. The updated PR checks, staging configuration,
+deployment and browser verification are still required. Known broader localization
+coverage limitations above remain separate from the green test suite.

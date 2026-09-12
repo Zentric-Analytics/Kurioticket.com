@@ -736,7 +736,6 @@ export function FlightEditSearchDrawer({
         }
         onClose={() => setDatePickerOpen(false)}
       />
-      {/* eslint-disable react/no-children-prop -- `children` below is a traveler label inside a strings object. */}
       <FlightMobilePickerShell
         open={travelerPickerOpen}
         title={t("travelersAndCabin")}
@@ -758,7 +757,7 @@ export function FlightEditSearchDrawer({
       >
         <MobileTravelerCabinPicker
           adults={draft.adults}
-          children={draft.children}
+          childCount={draft.children}
           infants={draft.infants}
           cabinClass={
             draft.cabinClass === "premium-economy"
@@ -796,7 +795,6 @@ export function FlightEditSearchDrawer({
           }
         />
       </FlightMobilePickerShell>
-      {/* eslint-enable react/no-children-prop */}
     </>
   );
 }

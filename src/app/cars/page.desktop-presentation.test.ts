@@ -125,7 +125,7 @@ test("pickup and return share the query-driven autocomplete and selection contra
 
   assert.match(
     searchBar,
-    /if \(!values\.returnToDifferentLocation\)[\s\S]*?current === "dropoff" \? null : current/,
+    /if \(!values\.returnToDifferentLocation && openDesktopLocation === "dropoff"\)[\s\S]*?setOpenDesktopLocation\(null\)/,
   );
 });
 

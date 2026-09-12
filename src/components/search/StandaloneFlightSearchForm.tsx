@@ -1851,8 +1851,7 @@ export function StandaloneFlightSearchForm({
             <MobileTravelerCabinPicker
               adults={draftAdultCount}
               // Traveler count is a domain prop, not React's nested-content API.
-              // eslint-disable-next-line react/no-children-prop
-              children={draftChildCount}
+              childCount={draftChildCount}
               infants={draftInfantCount}
               cabinClass={draftCabinClass}
               strings={{
