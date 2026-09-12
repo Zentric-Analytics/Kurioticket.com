@@ -15,7 +15,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { travelApi, type HotelResult } from "../../api/travelApi";
 import { DateRangeSheet } from "../flow/DateRangeSheet";
 import { HOTEL_LIMITS, localIsoDate } from "../flow/hotelSearchModel";
-import { SEARCH_PICKER_CLOSE_DURATION_MS } from "../flow/searchPickerPresentation";
 import { useAppTheme } from "../../theme/AppTheme";
 import { colors } from "../../theme/tokens";
 import { appFonts } from "../../theme/typography";
@@ -55,7 +54,8 @@ export function HotelStayEditor({
   const [datesOpen, setDatesOpen] = useState(false);
   const [countsOpen, setCountsOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
-  const datesDismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingDatesApply = useRef<{ checkIn: string; checkOut: string } | null>(null);
+  const datesReturnToEditor = useRef(false);
   const pendingCountsApply = useRef<{ guests: number; rooms: number } | null>(null);
   const countsReturnToEditor = useRef(false);
   const summary = hotelStaySummary(checkIn, checkOut, guests, rooms);
@@ -71,10 +71,6 @@ export function HotelStayEditor({
     setEditorOpen(true);
     router.setParams({ hotelStayEditor: "" });
   }, [reopenEditorParam]);
-
-  useEffect(() => () => {
-    if (datesDismissTimer.current) clearTimeout(datesDismissTimer.current);
-  }, []);
 
   const showUpdatedResults = (next: StayValues) => {
     router.replace({
@@ -179,30 +175,32 @@ export function HotelStayEditor({
     setPendingEditor(null);
   };
 
-  const reopenEditorAfterDatesDismiss = (callback?: () => void) => {
-    if (datesDismissTimer.current) clearTimeout(datesDismissTimer.current);
-    datesDismissTimer.current = setTimeout(() => {
-      datesDismissTimer.current = null;
-      requestAnimationFrame(() => {
-        if (callback) callback();
-        else setEditorOpen(true);
-      });
-    }, SEARCH_PICKER_CLOSE_DURATION_MS);
-  };
-  const closeDatesToEditor = () => {
-    setDatesOpen(false);
-    reopenEditorAfterDatesDismiss();
-  };
-  const finishDates = (nextCheckIn: string, nextCheckOut: string) => {
-    setDatesOpen(false);
-    reopenEditorAfterDatesDismiss(() => {
+  const finishDatesDismiss = () => {
+    if (!datesReturnToEditor.current) return;
+    const next = pendingDatesApply.current;
+    pendingDatesApply.current = null;
+    if (next) {
       void applyStay(
-        { checkIn: nextCheckIn, checkOut: nextCheckOut, guests, rooms },
+        { checkIn: next.checkIn, checkOut: next.checkOut, guests, rooms },
         true,
       ).then((outcome) => {
+        datesReturnToEditor.current = false;
         if (outcome !== "updated") setEditorOpen(true);
       });
-    });
+      return;
+    }
+    datesReturnToEditor.current = false;
+    setEditorOpen(true);
+  };
+  const closeDatesToEditor = () => {
+    pendingDatesApply.current = null;
+    datesReturnToEditor.current = true;
+    setDatesOpen(false);
+  };
+  const finishDates = (nextCheckIn: string, nextCheckOut: string) => {
+    pendingDatesApply.current = { checkIn: nextCheckIn, checkOut: nextCheckOut };
+    datesReturnToEditor.current = true;
+    setDatesOpen(false);
   };
 
   const finishCountsDismiss = () => {
@@ -301,6 +299,7 @@ export function HotelStayEditor({
         endMustBeAfterStart
         onDone={finishDates}
         onCancel={closeDatesToEditor}
+        onDismiss={finishDatesDismiss}
       />
       <HotelStayCountsSheet
         visible={countsOpen}
