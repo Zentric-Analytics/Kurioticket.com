@@ -255,7 +255,7 @@ const s = StyleSheet.create({
   right: { right: 0, alignItems: "flex-end", paddingRight: 8 },
   counter: { position: "absolute", right: 10, bottom: 10, color: "white", backgroundColor: "rgba(0,0,0,.68)", paddingHorizontal: 9, paddingVertical: 6, borderRadius: 6, fontWeight: "800", fontFamily: appFonts.extraBold },
   thumbnails: { flexDirection: "row", gap: 5 },
-  thumbnailFrame: { flex: 1, aspectRatio: 1.45, borderRadius: 7, overflow: "hidden", borderWidth: 2, borderColor: "transparent" },
+  thumbnailFrame: { flex: 1, minHeight: 44, aspectRatio: 1.45, borderRadius: 7, overflow: "hidden", borderWidth: 2, borderColor: "transparent" },
   thumbnail: { width: "100%", height: "100%" },
   remaining: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,.55)", alignItems: "center", justifyContent: "center" },
   remainingContent: { flexDirection: "row", alignItems: "center", gap: 4 },
