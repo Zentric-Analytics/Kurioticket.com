@@ -95,9 +95,9 @@ test("stress inventory covers bounded result counts and itinerary pressure dimen
 
 test("production list keeps stress inventory behind a conservative virtualized window", () => {
   const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
-  assert.match(screen, /<Animated\.SectionList/);
-  assert.match(screen, /initialNumToRender=\{6\}/);
-  assert.match(screen, /maxToRenderPerBatch=\{5\}/);
-  assert.match(screen, /windowSize=\{7\}/);
-  assert.doesNotMatch(screen, /removeClippedSubviews/);
+  const flightList = screen.slice(screen.indexOf("<Animated.SectionList"), screen.indexOf("/>\n", screen.indexOf("windowSize", screen.indexOf("<Animated.SectionList"))) + 2);
+  assert.match(flightList, /initialNumToRender=\{6\}/);
+  assert.match(flightList, /maxToRenderPerBatch=\{5\}/);
+  assert.match(flightList, /windowSize=\{7\}/);
+  assert.doesNotMatch(flightList, /removeClippedSubviews/);
 });

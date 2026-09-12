@@ -8,7 +8,7 @@ const flight = readFileSync("src/features/search/FlightResultsQuickControls.tsx"
 const block = (source: string, name: string, next: string) => source.slice(source.indexOf(`${name}:`), source.indexOf(`${next}:`, source.indexOf(`${name}:`)));
 
 test("Hotel rail keeps Filter Price Stars Facilities Room & bed while Sort lives in the results row", () => {
-  const wholeRail = screen.slice(screen.indexOf("const filterRail"), screen.indexOf("const resultContent"));
+  const wholeRail = screen.slice(screen.indexOf("const filterRail"), screen.indexOf("const hotelIntroContent"));
   const rail = wholeRail.slice(wholeRail.indexOf(") : ("));
   const railOpeningTag = rail.slice(rail.indexOf("<ScrollView"), rail.indexOf(">", rail.indexOf("<ScrollView")) + 1);
   const labels = ["Filter", "Price", "Stars", "Facilities", "Room & bed"].map((label) => rail.indexOf(`label="${label}"`));
@@ -74,7 +74,7 @@ test("Hotel controls use Flight light tokens and semantic dark tokens", () => {
 });
 
 test("Hotel Filter launcher has sliders without a chevron while quick filters keep rotating chevrons", () => {
-  const rail = screen.slice(screen.indexOf("const filterRail"), screen.indexOf("const resultContent"));
+  const rail = screen.slice(screen.indexOf("const filterRail"), screen.indexOf("const hotelIntroContent"));
   const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
   const shortcut = (label: string) => { const start = rail.indexOf(`label="${label}"`); return rail.slice(start, rail.indexOf("/>", start) + 2); };
   const filter = shortcut("Filter");

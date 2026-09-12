@@ -188,22 +188,8 @@ test("flight result cards use the responsive list width with a safe reduced oute
 });
 
 test("flight loading skeleton mirrors the horizontal metadata footer", () => {
-  const flightSkeleton = source.slice(source.indexOf("function FlightLoadingSkeleton"), source.indexOf("function HotelLoadingSkeleton"));
-  const identityStart = flightSkeleton.indexOf('<View style={s0.skeletonIdentityLayout}>');
-  const journeyStart = flightSkeleton.indexOf('<View style={s0.skeletonJourneyBlock}>');
-  const identityRow = flightSkeleton.slice(identityStart, journeyStart);
-  assert.ok(identityStart >= 0 && journeyStart > identityStart, "full-width flight placeholder follows the identity row");
-  assert.match(identityRow, /s0\.skeletonLogo[\s\S]*s0\.skeletonName[\s\S]*s0\.skeletonFlightNumber[\s\S]*s0\.skeletonIdentityActions[\s\S]*s0\.skeletonBadge/);
-  assert.doesNotMatch(identityRow, /skeletonFavoriteButton|skeletonHeart/);
-  assert.match(source, /skeletonIdentityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0/);
-  assert.doesNotMatch(source, /skeletonTopRow/);
-  assert.doesNotMatch(identityRow, /skeletonJourneyBlock/);
-  assert.doesNotMatch(flightSkeleton, /\["baggage", "cabin", "fare-rules"\]\.map/);
-  assert.match(flightSkeleton, /skeletonMetadataDivider[\s\S]*skeletonMetadataRow[\s\S]*skeletonMetadataLine/);
-  assert.match(source, /skeletonMetadataRow: \{ width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start" \}/);
-  assert.doesNotMatch(source, /skeletonMetadataItem|skeletonMetadataIcon/);
-  assert.match(flightSkeleton, /skeletonPriceLine[\s\S]*skeletonDetailsActionLine/);
-  assert.doesNotMatch(flightSkeleton, /skeletonEstimatedPriceLine|skeletonProviderPriceLine|skeletonButton/);
+  assert.match(source, /NativeBrandedSearchLoading/);
+  assert.doesNotMatch(source, /function FlightLoadingSkeleton|function HotelLoadingSkeleton|skeletonMetadataRow/);
 });
 
 test("flight card keeps long prices single-line in the full-width fare row", () => {

@@ -7,7 +7,7 @@ const loader = readFileSync("src/features/search/NativeTravelSearchLoadingScreen
 const stateUi = readFileSync("src/features/search/FlightResultsState.tsx", "utf8");
 
 test("initial Flight search uses the one full-screen branded loader", () => {
-  assert.match(screen, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
+  assert.match(screen, /if \(status === "loading" \|\| hotelCurrencyPending\) return <NativeBrandedSearchLoading product=\{product\}/);
   assert.doesNotMatch(screen, /function FlightLoadingExperience|FLIGHT_LOADING_SKELETON_DELAY_MS/);
   assert.doesNotMatch(stateUi, /Searching the best flights for you/);
 });

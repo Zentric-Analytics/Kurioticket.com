@@ -45,7 +45,7 @@ test("flight results naturally scroll the date strip while keeping native sticky
   const listStart = source.indexOf("<Animated.SectionList");
   const owner = source.slice(listStart, source.indexOf("/>", source.indexOf("windowSize", listStart)) + 2);
   for (const prop of verticalStableProps) assert.match(owner, prop);
-  assert.match(source, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
+  assert.match(source, /if \(status === "loading" \|\| hotelCurrencyPending\) return <NativeBrandedSearchLoading product=\{product\}/);
   assert.match(owner, /ListHeaderComponent=\{flightDateStrip\}/);
   assert.match(owner, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
   assert.doesNotMatch(owner, /flightPagination|onMomentumScrollEnd|onScrollEndDrag/);
@@ -59,9 +59,9 @@ test("hotel results use one stable native scroll owner without native Back to to
   const hotelStart = source.indexOf("<HotelResultsHeader destination=");
   const hotelEnd = source.indexOf("<FlightSortSheet", hotelStart);
   const hotelLayout = source.slice(hotelStart, hotelEnd);
-  assert.equal(hotelLayout.match(/<ScrollView/g)?.length, 1);
-  assertStableOwner(hotelLayout, /<ScrollView[\s\S]*?ref=\{hotelScrollRef\}[\s\S]*?>/);
-  assert.match(hotelLayout, /stickyHeaderIndices=\{\[0\]\}/);
+  assert.equal(hotelLayout.match(/<SectionList/g)?.length, 1);
+  assertStableOwner(hotelLayout, /<SectionList[\s\S]*?ref=\{hotelResultsListRef\}[\s\S]*?alwaysBounceVertical=\{false\}[\s\S]*?>/);
+  assert.match(hotelLayout, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
   assert.doesNotMatch(hotelLayout, /hotelCompactHeader|setHotelCompactHeader|hotelIntroBoundary/);
   assert.doesNotMatch(source, /handleHotelScroll|hotelBackToTop|accessibilityLabel="Back to top"/);
 });
