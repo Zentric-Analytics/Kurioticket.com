@@ -37,7 +37,7 @@ test("mobile web retains the Hotel identity and inward action reference", () => 
   assert.match(webIdentity, /size-11 items-center justify-start[^\"]*ps-1/);
 });
 
-test("native Hotel identity matches web typography without changing its facts", () => {
+test("native Hotel identity keeps web typography with tighter outer spacing", () => {
   const copy = styleRule(detailSource, "hotelIdentityCopy", "hotelIdentityMeta");
   const name = styleRule(detailSource, "hotelName", "stars");
   const fact = styleRule(detailSource, "hotelFact", "hotelClassificationStars");
@@ -50,7 +50,7 @@ test("native Hotel identity matches web typography without changing its facts", 
   const hotelNameElement = hotel.slice(hotel.indexOf("style={[d.hotelName"), hotel.indexOf("</Text>", hotel.indexOf("style={[d.hotelName")));
   assert.doesNotMatch(hotelNameElement, /numberOfLines=\{1\}|ellipsizeMode="tail"|adjustsFontSizeToFit/);
   assert.doesNotMatch(name, /fontWeight: "900"/);
-  assert.match(detailSource, /hotelIdentity: \{[^}]*paddingHorizontal: 16[^}]*paddingBottom: 16/);
+  assert.match(detailSource, /hotelIdentity: \{[^}]*paddingHorizontal: 16[^}]*paddingTop: 14[^}]*paddingBottom: 12/);
   assert.match(detailSource, /hotelIdentityTopRow: \{[^}]*gap: 12/);
   assert.match(copy, /flex: 1[^}]*minWidth: 0/);
   assert.match(name, /minWidth: 0/);
