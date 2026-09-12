@@ -78,7 +78,8 @@ test("active Hotel light canvas matches the web white article while allowing a f
   assert.match(hotel, /const hotelCanvasColor = theme\.dark \? theme\.background : theme\.surface;/);
   assert.match(hotel, /<SafeAreaView[\s\S]*?backgroundColor: hotelCanvasColor[\s\S]*?edges=\{\[\]\}/);
   assert.match(hotel, /<ScrollView[\s\S]*?stickyHeaderIndices=\{\[2\]\}[\s\S]*?contentInsetAdjustmentBehavior="never"[\s\S]*?backgroundColor: hotelCanvasColor/);
-  assert.match(hotel, /s\.tabsShell, \{ backgroundColor: hotelCanvasColor \}/);
+  assert.match(hotel, /s\.tabsShell,[\s\S]*?paddingTop: inset\.top,[\s\S]*?marginTop: 1 - inset\.top/);
+  assert.match(hotel, /style=\{\[s\.tabsRow, \{ backgroundColor: hotelCanvasColor \}\]\}/);
   assert.match(hotel, /backgroundColor: hotelCanvasColor/);
   assert.doesNotMatch(hotel, /Platform\.OS/);
 });
@@ -89,12 +90,23 @@ test("active Hotel section navigation keeps one deterministic compact tab row", 
   const tab = hotelStyle("tab", "tabText");
   assert.equal((hotel.match(/accessibilityRole="tablist"/g) ?? []).length, 1);
   assert.match(shellStyle, /width: "100%"[^}]*alignSelf: "stretch"[^}]*minHeight: 45[^}]*paddingHorizontal: 8/);
+  assert.doesNotMatch(shellStyle, /marginTop:/);
   assert.match(row, /minHeight: 44[^}]*flexDirection: "row"[^}]*flexWrap: "nowrap"/);
   assert.match(tab, /width: "33\.333%"[^}]*flexGrow: 0[^}]*flexShrink: 0[^}]*minWidth: 0[^}]*minHeight: 44/);
   assert.match(tab, /borderBottomWidth: 2[^}]*borderBottomColor: "transparent"/);
+  assert.match(hotel, /paddingTop: inset\.top/);
+  assert.match(hotel, /marginTop: 1 - inset\.top/);
   assert.match(hotel, /activeHotelTab === tab && \{ borderBottomColor: hotelAccent \}/);
   assert.match(hotel, /accessibilityState=\{\{ selected: activeHotelTab === tab \}\}/);
   assert.match(hotel, /numberOfLines=\{1\}/);
+});
+
+test("active Hotel sticky navigation settles below the safe area without a duplicate tab row", () => {
+  assert.match(hotel, /stickyHeaderIndices=\{\[2\]\}/);
+  assert.match(hotel, /paddingTop: inset\.top/);
+  assert.match(hotel, /marginTop: 1 - inset\.top/);
+  assert.match(hotel, /style=\{\[s\.tabsRow, \{ backgroundColor: hotelCanvasColor \}\]\}/);
+  assert.equal((hotel.match(/accessibilityRole="tablist"/g) ?? []).length, 1);
 });
 
 test("active Hotel selected tab text and underline use the established accent contract", () => {
