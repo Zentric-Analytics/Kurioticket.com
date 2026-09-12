@@ -29,6 +29,8 @@ test("active hotel keeps icon-only header controls fixed over the hero and scrol
   const scrollEnd = hotel.indexOf("</ScrollView>");
   const backControl = hotel.indexOf('accessibilityLabel="Back to hotel results"');
   const identityIndex = hotel.indexOf("<View style={s.identity}>");
+  const heroBackStyle = styleRule(detailSource, "heroBack", "heroActions");
+  const heroActionsStyle = styleRule(detailSource, "heroActions", "heroAction");
 
   assert.ok(hotel.indexOf("<NativeHotelGallery") < identityIndex);
   assert.ok(scrollEnd >= 0 && scrollEnd < backControl, "hotel header controls must remain outside the ScrollView");
@@ -37,8 +39,10 @@ test("active hotel keeps icon-only header controls fixed over the hero and scrol
   assert.match(hotel, /accessibilityLabel="Back to hotel results"[\s\S]*?onPress=\{returnToHotelResults\}[\s\S]*?s\.heroBack/);
   assert.match(hotel, /style=\{\[s\.heroBack, \{ top: inset\.top \+ 12 \}\]\}/);
   assert.match(hotel, /style=\{\[s\.heroActions, \{ top: inset\.top \+ 12 \}\]\}/);
-  assert.match(styleRule(detailSource, "heroBack", "heroActions"), /left: 20[^}]*width: 44[^}]*height: 44[^}]*borderRadius: 22[^}]*backgroundColor: "#FFFFFF"[^}]*zIndex: 20[^}]*elevation: 10/);
-  assert.match(styleRule(detailSource, "heroActions", "heroAction"), /right: 20[^}]*width: 112[^}]*height: 44[^}]*borderRadius: 22[^}]*backgroundColor: "#FFFFFF"[^}]*flexDirection: "row"[^}]*zIndex: 20[^}]*elevation: 10/);
+  assert.match(heroBackStyle, /left: 20[^}]*width: 44[^}]*height: 44[^}]*borderRadius: 22[^}]*backgroundColor: "#FFFFFF"[^}]*zIndex: 20/);
+  assert.match(heroBackStyle, /elevation: 10/);
+  assert.match(heroActionsStyle, /right: 20[^}]*width: 112[^}]*height: 44[^}]*borderRadius: 22[^}]*backgroundColor: "#FFFFFF"[^}]*flexDirection: "row"[^}]*zIndex: 20/);
+  assert.match(heroActionsStyle, /elevation: 10/);
   assert.match(styleRule(detailSource, "heroAction", "identity"), /width: 56[^}]*height: 44/);
 });
 
