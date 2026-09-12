@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { KayakVertical, SandboxOffer, SandboxPlace } from "@/services/travel/kayakSandbox";
+import { KayakResultCard } from "./KayakResultCard";
 
 export function KayakMetasearchClient({ vertical, criteria }: {
   vertical: KayakVertical; criteria: Record<string, string>;
@@ -45,17 +46,13 @@ export function KayakMetasearchClient({ vertical, criteria }: {
   }, [run]);
   return <section aria-label="KAYAK sandbox provider results" className="page-shell my-4 rounded-xl border border-amber-500 bg-amber-50 p-4">
     <h2 className="text-xl font-bold">KAYAK · sandbox provider</h2>
-    <p>Simulated inventory, priced in USD. Not converted to your display currency. No real bookings or payments. Other providers remain available separately below.</p>
+    <p>Simulated inventory. Cards use your display currency; converted amounts are estimates of the original provider price. No real bookings or payments. Other providers remain available separately below.</p>
     <p role="status" aria-live="polite" className="my-3">{message}</p>
     {choices.length > 0 && <ul aria-label="Matching KAYAK destinations">{choices.map(place => <li key={place.value}>
       <button type="button" disabled={busy} className="my-1 rounded border bg-white p-2" onClick={() => void run(place.value)}>{place.label}</button>
     </li>)}</ul>}
-    <ul className="grid gap-3 sm:grid-cols-2">{offers.slice(0, limit).map(offer => <li key={offer.id} className="rounded border bg-white p-3">
-      <p className="font-bold text-amber-800">KAYAK SANDBOX · NOT BOOKABLE</p>
-      <h3 className="font-semibold">{offer.title}</h3><p>{offer.description}</p>
-      <ul>{offer.details.map((detail, index) => <li key={index}>{detail}</li>)}</ul>
-      <p>{new Intl.NumberFormat("en-US", { style: "currency", currency: offer.currency }).format(offer.price)} {offer.priceBasis}</p>
-      <a href={offer.testUrl} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer" className="underline">Open KAYAK test page</a>
+    <ul className="grid gap-4">{offers.slice(0, limit).map(offer => <li key={offer.id} className="min-w-0">
+      <KayakResultCard offer={offer} vertical={vertical} criteria={criteria} />
     </li>)}</ul>
     {limit < offers.length && <button type="button" className="m-2 rounded border bg-white p-2" onClick={() => setLimit(value => value + 10)}>Show more KAYAK test offers</button>}
     <button type="button" className="my-3 rounded border bg-white p-2 disabled:opacity-50" disabled={busy} onClick={() => void run()}>{busy ? "Searching KAYAK…" : "Retry KAYAK provider"}</button>

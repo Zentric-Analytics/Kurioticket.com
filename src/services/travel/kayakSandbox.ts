@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isIP } from "node:net";
+import { kayakImages, kayakFlightLegs, kayakAttributes, type KayakAttribute, type KayakImage, type KayakFlightLeg } from "./kayakPresentation";
 
 /** Sandbox transport. Never use this module for live inventory or booking. */
 export const KAYAK_SANDBOX_ORIGIN = "https://sandbox-en-us.kayakaffiliates.com";
@@ -54,6 +55,11 @@ export type SandboxOffer = {
   currency: string;
   priceBasis: string;
   testUrl: string;
+  images?: KayakImage[];
+  flightLegs?: KayakFlightLeg[];
+  attributes?: KayakAttribute[];
+  carSpecs?: string[];
+  hotelStars?: number;
 };
 export type SandboxPlace = { label: string; value: string };
 type ObjectValue = Record<string, unknown>;
@@ -208,6 +214,22 @@ export function normalizeSandboxOffers(
         title: title || "KAYAK test result",
         description,
         details,
+        images: kayakImages(vertical, result, car, title),
+        attributes: vertical === "cars" ? [
+          ...kayakAttributes(car,["type","brand","sipp","fuel","bags","passengers","doors","transmission","features"]),
+          ...kayakAttributes(option,["policy","paymentType","rateType","badges"]),
+          ...kayakAttributes(object(object(data.carLocations)[text(option.pickupLocationId)]),["address","cityName","countryCode","locationType","displayDistance","airport"]),
+        ] : vertical === "hotels" ? [
+          ...kayakAttributes(result,["address","hotelCountryCode","starRating","isSelfRated","features","policies","guestRating","guestRatingSentiment","reviewQuotes","place"]),
+          ...kayakAttributes(option,["roomName","hasFreeCancellation","canPayLater","isBundledRate","rateBreakdown","conditions"]),
+        ] : kayakAttributes(option,["fees","badges","segmentFares","fareFamily"]),
+        ...(vertical === "cars" ? { carSpecs: [
+          typeof car.passengers === "number" ? `${car.passengers} passengers` : "Passengers not supplied",
+          typeof car.bags === "number" ? `${car.bags} bags` : "Baggage capacity not supplied",
+          text(car.doors) || "Doors not supplied", text(car.transmission) || "Transmission not supplied",
+        ] } : {}),
+        ...(vertical === "hotels" && typeof result.starRating === "number" ? {hotelStars:result.starRating} : {}),
+        ...(vertical === "flights" ? { flightLegs: kayakFlightLegs(data, result) } : {}),
         price: amount,
         currency,
         priceBasis:
@@ -337,7 +359,7 @@ export class KayakSandboxClient {
         checkout: search.returnDate,
         rooms: String(search.adults),
         currencyCode: "USD",
-        responseOptions: "toprates",
+        responseOptions: "multipleHotelsAllRates,images,features,rateBreakdown,reviews,hotelPlace",
         onlyIfComplete: "false",
         pageSize: "10",
       };

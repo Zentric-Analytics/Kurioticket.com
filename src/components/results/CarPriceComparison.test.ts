@@ -20,7 +20,7 @@ test("standalone desktop owns exactly four required primary specifications", () 
 });
 
 test("static comparison is truthful, local, and capability driven", () => {
-  assert.match(card, /displayName: t\("carsResults\.comparison\.estimateName"\)/);
+  assert.match(card, /displayName: car\.sandboxPresentation \? .*KAYAK sandbox.* : t\("carsResults\.comparison\.estimateName"\)/);
   assert.match(card, /priceStatus: "estimate"/);
   assert.match(card, /bookable: false/);
   assert.match(card, /handoffAvailable: false/);

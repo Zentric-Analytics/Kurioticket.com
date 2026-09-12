@@ -43,7 +43,7 @@ test("mobile identity and exactly four readable primary specs live beside the im
   assert.match(source, /rounded-\[13px\][^"]*md:rounded-2xl/);
   assert.match(
     source,
-    /const mobilePrimarySpecs = getMobileCarPrimarySpecs\(car\)/,
+    /const mobilePrimarySpecs = car\.sandboxPresentation \? specifications : getMobileCarPrimarySpecs\(car\)/,
   );
 });
 
