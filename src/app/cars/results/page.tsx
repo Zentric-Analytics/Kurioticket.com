@@ -15,6 +15,7 @@ import { notFound } from "next/navigation";
 import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
 import { adaptKayakCarSearch } from "@/services/travel/kayakSearchAdapter";
 import { KayakSandboxResults } from "@/components/results/KayakSandboxResults";
+import { KayakMetasearchSection } from "@/components/results/KayakMetasearchSection";
 
 export async function generateMetadata({ searchParams }: { searchParams: CarsResultsSearchParams }) {
   return getParamValue(await searchParams, "provider") === "kayak-sandbox"
@@ -98,6 +99,7 @@ export default async function CarsResultsPage({
         hideDesktopTravelNav
         hideMobileCategoryTabs
       />
+      <KayakMetasearchSection vertical="cars" params={params} />
       <Suspense
         key={searchIdentity}
         fallback={

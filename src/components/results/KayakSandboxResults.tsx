@@ -45,7 +45,7 @@ export function KayakSandboxResults({ search }: { search: KayakSearch }) {
   return <main className="page-shell py-6">
     <h1 className="text-2xl font-bold">KAYAK sandbox {search.vertical} results</h1>
     <p className="my-3 rounded border border-amber-600 bg-amber-50 p-3">Simulated prices and availability. No real bookings or payments. Live inventory is not displayed in this test view.</p>
-    <p>{search.vertical === "flights" ? `${search.origin} → ${search.destination}` : search.vertical === "cars" ? `${search.origin} · same-airport rental · noon pickup and return` : `${search.destination} · one room`}</p>
+    <p>{search.vertical === "flights" ? `${search.origin} → ${search.destination}` : search.vertical === "cars" ? `${search.origin} · same-airport rental · ${search.pickupTime || "12:00"} pickup / ${search.dropoffTime || "12:00"} return` : `${search.destination} · one room`}</p>
     <p>{search.departure}{search.returnDate ? ` to ${search.returnDate}` : ""}{"adults" in search ? ` · ${search.adults} adults` : ""}</p>
     <button type="button" disabled={busy} onClick={run} className="my-4 rounded bg-blue-800 px-4 py-3 text-white disabled:opacity-50">{busy ? "Searching…" : "Search KAYAK test inventory"}</button>
     <p role="status" aria-live="polite">{message}</p>

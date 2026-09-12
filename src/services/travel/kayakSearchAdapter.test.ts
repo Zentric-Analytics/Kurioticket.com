@@ -18,7 +18,7 @@ test("car sandbox preserves supported rental criteria without silently changing 
   assert.deepEqual(adaptKayakCarSearch(input), { supported: true, search: {
     vertical: "cars", origin: "BOS", departure: input.pickupDate, returnDate: input.dropoffDate,
   } });
-  for (const change of [{ pickupTime: "10:00" }, { dropoffLocation: "JFK" }, { driverAge: "21" }, { vehicleType: "suv" }, { currency: "EUR" }]) {
+  for (const change of [{ pickupTime: "25:00" }, { dropoffLocation: "JFK" }, { driverAge: "21" }, { vehicleType: "suv" }, { currency: "EUR" }]) {
     assert.equal(adaptKayakCarSearch({ ...input, ...change }).supported, false);
   }
 });
