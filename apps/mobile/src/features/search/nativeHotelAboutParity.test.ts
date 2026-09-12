@@ -69,13 +69,13 @@ test("About copy is explanatory and built only from existing Hotel facts", () =>
   assert.doesNotMatch(model, /perfect|best hotel|guaranteed|luxury stay/i);
 });
 
-test("active Details keeps booking-page typography with a flat single-column rhythm", () => {
+test("active Details keeps booking-page typography with a tightened flat single-column rhythm", () => {
   const heading = styleRule("heading", "description");
   const description = styleRule("description", "fallback");
   const amenityRow = styleRule("amenityRow", "infoRow");
   const rowText = styleRule("rowText", "seeAllRow");
   for (const rule of [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/, /appFonts\.bold/]) assert.match(heading, rule);
-  for (const rule of [/marginTop: 10/, /fontSize: 13/, /lineHeight: 22/, /fontWeight: "400"/, /appFonts\.regular/]) assert.match(description, rule);
+  for (const rule of [/marginTop: 8/, /fontSize: 13/, /lineHeight: 22/, /fontWeight: "400"/, /appFonts\.regular/]) assert.match(description, rule);
   assert.match(amenityRow, /flexDirection: "row"/);
   assert.doesNotMatch(amenityRow, /width: "48%"|borderWidth|borderRadius/);
   for (const rule of [/fontSize: 13/, /lineHeight: 20/, /fontWeight: "400"/, /appFonts\.regular/]) assert.match(rowText, rule);

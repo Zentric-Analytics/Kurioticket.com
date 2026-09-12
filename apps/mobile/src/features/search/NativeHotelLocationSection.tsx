@@ -68,14 +68,14 @@ export function NativeHotelLocationSection({ hotelId, hotelName, propertyDetails
 }
 
 const styles = StyleSheet.create({
-  locationSection: { paddingVertical: 8 },
+  locationSection: { paddingVertical: 4 },
   heading: { fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.25 },
-  addressRow: { marginTop: 10, flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  addressRow: { marginTop: 8, flexDirection: "row", alignItems: "flex-start", gap: 10 },
   pinCircle: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
   addressCopy: { flex: 1, minWidth: 0, paddingTop: 2 },
   primaryAddress: { fontSize: 13, lineHeight: 19, fontWeight: "500", fontFamily: appFonts.medium },
   secondaryAddress: { marginTop: 2, fontSize: 12, lineHeight: 18, fontWeight: "400", fontFamily: appFonts.regular },
-  mapShell: { marginTop: 12, overflow: "hidden" },
+  mapShell: { marginTop: 10, overflow: "hidden" },
   mapTabs: { flexDirection: "row", minHeight: 44, borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 4 },
   mapTab: { minHeight: 44, paddingHorizontal: 16, borderBottomWidth: 2, borderBottomColor: "transparent", alignItems: "center", justifyContent: "center" },
   mapTabText: { fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
@@ -83,10 +83,10 @@ const styles = StyleSheet.create({
   mapPreview: { flex: 1 },
   map: { flex: 1 },
   mapFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8 },
-  subheading: { marginTop: 22, fontSize: 15, lineHeight: 22, fontWeight: "600", fontFamily: appFonts.semibold },
-  factList: { marginTop: 9, gap: 9 },
+  subheading: { marginTop: 16, fontSize: 15, lineHeight: 22, fontWeight: "600", fontFamily: appFonts.semibold },
+  factList: { marginTop: 6, gap: 6 },
   factRow: { flexDirection: "row", alignItems: "flex-start" },
   factBullet: { width: 20, fontSize: 14, lineHeight: 21 },
   factText: { flex: 1, fontSize: 13, lineHeight: 21, fontWeight: "400", fontFamily: appFonts.regular },
-  fallbackText: { marginTop: 8, fontSize: 13, lineHeight: 22, fontWeight: "400", fontFamily: appFonts.regular },
+  fallbackText: { marginTop: 6, fontSize: 13, lineHeight: 22, fontWeight: "400", fontFamily: appFonts.regular },
 });
