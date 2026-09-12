@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
 import { getRuntimeFeatureEnvironment } from "./service";
 import { bootstrapFeatureControls } from "./bootstrap";
 import { featureControlKeys } from "./registry";
@@ -29,11 +30,20 @@ test("staging authorization cannot become a production mutation and production r
 });
 test("bootstrap claims legacy state and creates only the deployment-local rows", async () => {
   const operations: Array<Record<string, unknown>> = [];
-  const tx = { $queryRaw: async () => undefined, featureFlag: { updateMany: async (args: Record<string, unknown>) => { operations.push({ updateMany: args }); return { count: 1 }; }, upsert: async (args: Record<string, unknown>) => { operations.push({ upsert: args }); return {}; } } };
+  let locked = false;
+  const tx = { $executeRaw: async () => { locked = true; return 1; }, featureFlag: { updateMany: async (args: Record<string, unknown>) => { assert.equal(locked, true); operations.push({ updateMany: args }); return { count: 1 }; }, upsert: async (args: Record<string, unknown>) => { operations.push({ upsert: args }); return {}; } } };
   await bootstrapFeatureControls({ $transaction: async (run: (client: typeof tx) => Promise<unknown>) => run(tx) } as never, "STAGING");
   assert.deepEqual((operations[0].updateMany as { data: { environment: string } }).data, { environment: "STAGING" });
   const createdKeys = operations.filter((operation) => operation.upsert).map((operation) => (operation.upsert as { create: { key: string } }).create.key);
   assert.deepEqual(createdKeys.sort(), [...featureControlKeys].sort());
   assert.equal(new Set(createdKeys).size, createdKeys.length);
   assert.ok(operations.slice(1).every((operation) => JSON.stringify(operation).includes('"environment":"STAGING"') && !JSON.stringify(operation).includes('"environment":"PRODUCTION"')));
+});
+
+test("feature-control advisory locks execute without deserializing PostgreSQL void", () => {
+  for (const file of ["bootstrap.ts", "service.ts"]) {
+    const source = readFileSync(`src/lib/feature-controls/${file}`, "utf8");
+    assert.match(source, /\$executeRaw`SELECT pg_advisory_xact_lock/);
+    assert.doesNotMatch(source, /\$queryRaw`SELECT pg_advisory_xact_lock/);
+  }
 });

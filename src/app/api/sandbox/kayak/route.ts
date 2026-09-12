@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isIP } from "node:net";
-import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { getKayakClientIp } from "@/lib/kayak-client-ip";
 import {
   isKayakSandboxEnabled,
   KayakError,
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
       { error: "Check the locations, dates and travelers." },
       { status: 400, headers: noStore },
     );
-  const ip = getClientIp(request);
+  const ip = getKayakClientIp(request);
   // The override is local-only, for a developer whose browser connects over loopback.
   const clientIp =
     process.env.NODE_ENV === "development" &&

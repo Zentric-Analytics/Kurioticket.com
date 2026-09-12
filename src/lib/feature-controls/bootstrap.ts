@@ -6,7 +6,8 @@ type BootstrapDb = Pick<PrismaClient, "$transaction">;
 /** Claims legacy rows for this database's deployment and creates only local rows. */
 export async function bootstrapFeatureControls(db: BootstrapDb, environment: FeatureControlEnvironment) {
   return db.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext('feature-controls-bootstrap'))`;
+    // PostgreSQL returns void for this lock; do not deserialize it as a row.
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('feature-controls-bootstrap'))`;
     await tx.featureFlag.updateMany({ where: { environment: "LEGACY" }, data: { environment } });
     for (const key of featureControlKeys) {
       const definition = featureControlRegistry[key];
