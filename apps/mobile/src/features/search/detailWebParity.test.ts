@@ -33,7 +33,7 @@ function styleRule(name: string, nextName: string) {
   return source.slice(start, end);
 }
 
-test("Hotel details follow mobile-web identity, gallery, tabs, and offer hierarchy", () => {
+test("Hotel details follow mobile identity, gallery, tabs, and offer hierarchy", () => {
   assert.match(hotel, />Back to hotel results</);
   for (const icon of ["CalendarDays", "Users", "MapPin"]) assert.match(hotel, new RegExp(`icon=\\{${icon}\\}`));
   assert.match(hotel, /<Award accessible=\{false\}/);
@@ -41,7 +41,7 @@ test("Hotel details follow mobile-web identity, gallery, tabs, and offer hierarc
   assert.ok(hotel.indexOf("d.hotelIdentity") < hotel.indexOf("<NativeHotelGallery"));
   assert.ok(hotel.indexOf("<NativeHotelGallery") < hotel.indexOf('accessibilityRole="tablist"'));
   assert.match(hotel, /stickyHeaderIndices=\{\[2\]\}/);
-  for (const tab of ["compare", "about", "location", "reviews"]) assert.match(hotel, new RegExp(`"${tab}"`));
+  for (const tab of ["details", "reviews", "deals"]) assert.match(hotel, new RegExp(`"${tab}"`));
   assert.match(hotel, /kurioticket-logo-primary-light-bg\.png/);
   assert.doesNotMatch(hotel, /Kurioticket room options|indicative planning choice|Room choices are planning inventory/);
   assert.doesNotMatch(hotel, /Select room|Choose where to book/);
@@ -98,7 +98,7 @@ test("Hotel Details light canvas matches the web white article without flattenin
   assert.match(hotel, /<ScrollView[\s\S]*?stickyHeaderIndices=\{\[2\]\}[\s\S]*?style=\{\{ backgroundColor: hotelCanvasColor \}\}/);
   assert.match(hotel, /d\.hotelTabsShell,[\s\S]{0,100}backgroundColor: hotelCanvasColor/);
   assert.match(hotel, /d\.hotelSticky,[\s\S]{0,160}backgroundColor: hotelCanvasColor/);
-  assert.match(hotel, /d\.hotelOffer, \{[\s\S]*?backgroundColor: theme\.surface/);
+  assert.match(hotel, /d\.hotelOffer,[\s\S]*?backgroundColor: theme\.surface/);
   assert.doesNotMatch(hotel, /Platform\.OS/);
 });
 
@@ -110,8 +110,7 @@ test("Hotel section navigation keeps one deterministic compact tab row", () => {
   const tabList = shell.slice(tabListStart);
   const shellStyle = styleRule("hotelTabsShell", "hotelTabsRow");
   const row = styleRule("hotelTabsRow", "hotelTab");
-  const tab = styleRule("hotelTab", "hotelTabWide");
-  const wideTab = styleRule("hotelTabWide", "hotelTabActive");
+  const tab = styleRule("hotelTab", "hotelTabActive");
 
   assert.notEqual(shellStart, -1);
   assert.notEqual(bodyStart, -1);
@@ -135,21 +134,19 @@ test("Hotel section navigation keeps one deterministic compact tab row", () => {
   assert.match(row, /flexWrap: "nowrap"/);
   assert.doesNotMatch(row, /flexDirection: "column"|flexWrap: "wrap"/);
 
-  assert.match(tab, /width: "21\.5%"/);
+  assert.match(tab, /width: "33\.333%"/);
   assert.match(tab, /flexGrow: 0/);
   assert.match(tab, /flexShrink: 0/);
   assert.doesNotMatch(tab, /flexGrow: 1(?:\D|$)|flexBasis: 0/);
   assert.match(tab, /minWidth: 0/);
   assert.match(tab, /minHeight: 44/);
-  assert.match(wideTab, /width: "35\.5%"/);
-  assert.doesNotMatch(wideTab, /flexGrow: 1\.65/);
 
   assert.notEqual(tabListStart, -1, "inner tablist must exist inside sticky shell");
   assert.match(tabList, /accessibilityRole="tab"/);
   assert.match(tabList, /accessibilityState=\{\{ selected: activeHotelTab === tab \}\}/);
   assert.match(tabList, /numberOfLines=\{1\}/);
   assert.deepEqual(
-    [...tabList.matchAll(/\["compare", "about", "location", "reviews"\]/g)].length,
+    [...tabList.matchAll(/\["details", "reviews", "deals"\]/g)].length,
     1,
   );
   assert.doesNotMatch(tabList, /<ScrollView[^>]*horizontal/);
@@ -158,17 +155,17 @@ test("Hotel section navigation keeps one deterministic compact tab row", () => {
 
 test("Hotel selected underline cannot become a full-width sticky-shell underline", () => {
   const shell = styleRule("hotelTabsShell", "hotelTabsRow");
-  const tab = styleRule("hotelTab", "hotelTabWide");
+  const tab = styleRule("hotelTab", "hotelTabActive");
 
   assert.doesNotMatch(shell, /borderBottomWidth|borderBottomColor|hotelAccent/);
-  assert.match(tab, /width: "21\.5%"/);
+  assert.match(tab, /width: "33\.333%"/);
   assert.match(tab, /borderBottomWidth: 2/);
   assert.match(tab, /borderBottomColor: "transparent"/);
   assert.match(hotel, /activeHotelTab === tab && \{ borderBottomColor: hotelAccent \}/);
   assert.doesNotMatch(hotel, /d\.hotelTabsShell,[\s\S]{0,160}activeHotelTab === tab/);
 });
 
-test("Hotel selected tab text and underline share one active-color contract with web", () => {
+test("Hotel selected tab text and underline share the established active-color contract", () => {
   assert.match(hotel, /activeHotelTab === tab && \{ borderBottomColor: hotelAccent \}/);
   assert.match(hotel, /activeHotelTab === tab && \{[\s\S]*?color: hotelAccent,[\s\S]*?fontWeight: "700",[\s\S]*?fontFamily: appFonts\.bold/);
   assert.match(webSectionNav, /selected[\s\S]*?"text-blue"/);
@@ -176,7 +173,7 @@ test("Hotel selected tab text and underline share one active-color contract with
   assert.match(webSectionNav, /font-bold/);
 });
 
-test("Hotel section navigation retains the mobile-web grid contract", () => {
+test("Web hotel section navigation remains protected independently", () => {
   for (const tab of ["compare", "about", "location", "reviews"]) {
     assert.match(webSectionNav, new RegExp(`id: "${tab}"`));
   }
@@ -240,8 +237,8 @@ test("Hotel provider selection validates candidates before applying precedence",
   assert.doesNotMatch(hotel, /result\.partnerRedirectUrl \|\| result\.bookingUrl/);
 });
 
-test("Hotel panels and dock expose web-aligned truthful information", () => {
-  for (const heading of ["Compare prices", "About this hotel", "Property highlights", "All amenities", "Room &amp; comfort", "Hotel information", "Accessibility"]) assert.match(hotel, new RegExp(heading));
+test("Hotel panels and dock expose truthful information", () => {
+  for (const heading of ["Deals", "About this hotel", "Property highlights", "All amenities", "Room &amp; comfort", "Hotel information", "Accessibility"]) assert.match(hotel, new RegExp(heading));
   assert.match(nativeLocation, /Location &amp; stay fit/);
   assert.match(reviews, /Guest reviews/);
   assert.match(hotel, /estimated stay total/);
@@ -251,7 +248,7 @@ test("Hotel panels and dock expose web-aligned truthful information", () => {
   assert.match(hotel, /theme\.background/);
 });
 
-test("Hotel compare offers preserve each actionable continuation", () => {
+test("Hotel Deals preserve each actionable continuation", () => {
   assert.match(hotel, /nativeHotelOffers\(internalRoomFlowAvailable, providerBookable\)/);
   assert.match(hotel, /offer\.kind === "internal-room-flow"/);
   assert.match(hotel, /selectedOffer\?\.kind !== "provider-handoff"/);
