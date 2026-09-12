@@ -8,6 +8,7 @@ const hotel = detailSource.slice(
   detailSource.indexOf("const detailIcons"),
 );
 const gallery = readFileSync("src/features/search/NativeHotelDetails.tsx", "utf8");
+const stayEditor = readFileSync("src/features/search/HotelStayEditor.tsx", "utf8");
 
 function styleRule(source: string, name: string, nextName: string) {
   const start = source.indexOf(`  ${name}:`);
@@ -47,11 +48,11 @@ test("save and share remain independent accessible actions inside one pill", () 
   assert.match(hotel, /<FlowIcon name="share" size=\{22\} color="#0F172A" \/>/);
 });
 
-test("identity, tabs, and editable stay summary follow the measured Kayak hierarchy", () => {
+test("identity, tabs, and editable stay summary follow the measured hierarchy", () => {
   const name = styleRule(detailSource, "hotelName", "stars");
   const identityIndex = hotel.indexOf("<View style={d.hotelIdentity}>");
   const tabsIndex = hotel.indexOf("d.hotelTabsShell");
-  const stayIndex = hotel.indexOf("<View style={d.hotelStaySection}>");
+  const stayIndex = hotel.indexOf("<HotelStayEditor");
   const bodyIndex = hotel.indexOf("<View style={d.hotelDetailBody}>");
   assert.ok(identityIndex < tabsIndex);
   assert.ok(tabsIndex < stayIndex);
@@ -63,16 +64,32 @@ test("identity, tabs, and editable stay summary follow the measured Kayak hierar
   assert.match(hotel, /hotelReview\?\.score\.split\(" \/ "\)\[0\]/);
   assert.match(hotel, /\{hotelReview\.label\} \{hotelReviewScore\}/);
   assert.match(hotel, /\{hotelReview\.count\}/);
-  assert.match(styleRule(detailSource, "hotelStaySection", "hotelStayCard"), /paddingHorizontal: 12[^}]*paddingTop: 24/);
-  assert.match(styleRule(detailSource, "hotelStayCard", "hotelStayCopy"), /minHeight: 60[^}]*borderWidth: 1[^}]*borderRadius: 12[^}]*paddingHorizontal: 14[^}]*paddingVertical: 10/);
-  assert.doesNotMatch(styleRule(detailSource, "hotelStayCard", "hotelStayCopy"), /marginTop/);
-  assert.match(hotel, /\{stay\.occupancy\}/);
-  assert.doesNotMatch(hotel, /stay\.nightText/);
-  assert.match(hotel, /onPress=\{\(\) => setStayDatesOpen\(true\)\}/);
-  assert.match(hotel, /onPress=\{\(\) => setStayCountsOpen\(true\)\}/);
-  assert.match(hotel, /<DateRangeSheet[\s\S]*?startDate=\{checkIn\}[\s\S]*?endDate=\{checkOut\}/);
-  assert.match(hotel, /<HotelGuestsRoomsSheet[\s\S]*?showPetFriendly=\{false\}/);
-  assert.match(hotel, /router\.setParams\(\{[\s\S]*?hotelDisplayPrices: ""[\s\S]*?displayCurrencyContext: ""/);
+  assert.match(hotel, /<HotelStayEditor[\s\S]*?result=\{result\}[\s\S]*?checkIn=\{checkIn\}[\s\S]*?checkOut=\{checkOut\}[\s\S]*?guests=\{guestCount\}[\s\S]*?rooms=\{roomCount\}/);
+  assert.match(styleRule(stayEditor, "section", "card"), /paddingHorizontal: 10[^}]*paddingTop: 24/);
+  assert.match(styleRule(stayEditor, "card", "copy"), /minHeight: 60[^}]*borderWidth: 1[^}]*borderRadius: 12[^}]*paddingHorizontal: 14[^}]*paddingVertical: 4[^}]*gap: 10/);
+  assert.match(stayEditor, /\{summary\.occupancy\}/);
+  assert.doesNotMatch(stayEditor, /summary\.nightText/);
+});
+
+test("compact stay card exposes full-size edit targets without shrinking the visual card", () => {
+  assert.match(stayEditor, /accessibilityLabel=\{`Edit stay\./);
+  assert.match(stayEditor, /onPress=\{\(\) => setEditorOpen\(true\)\}/);
+  assert.match(stayEditor, /<HotelStayEditSheet/);
+  assert.match(stayEditor, /accessibilityLabel=\{`Edit dates\./);
+  assert.match(stayEditor, /onPress=\{onEditDates\}/);
+  assert.match(stayEditor, /accessibilityLabel=\{`Edit rooms and guests\./);
+  assert.match(stayEditor, /onPress=\{onEditCounts\}/);
+  assert.match(styleRule(stayEditor, "editOption", "editOptionCopy"), /minHeight: 56[^}]*paddingVertical: 7/);
+  assert.match(stayEditor, /<DateRangeSheet/);
+  assert.match(stayEditor, /<HotelStayCountsSheet/);
+  assert.match(stayEditor, /travelApi\.searchHotels\(/);
+  assert.match(stayEditor, /response\.results\.find\(\(hotel\) => hotel\.id === result\.id\)/);
+  assert.match(stayEditor, /rebuildHotelStayNavigationState\(/);
+  assert.match(stayEditor, /navigation\.dispatch\(\{ type: "RESET", payload: resetState \}\)/);
+  assert.match(stayEditor, /hotelDisplayPrices: ""/);
+  assert.match(stayEditor, /displayCurrencyContext: ""/);
+  assert.match(stayEditor, /hotelResultsStack: "1"/);
+  assert.match(stayEditor, /router\.setParams\(\{ \.\.\.detailParams, hotelResultsStack: "0" \}\)/);
 });
 
 test("inline gallery keeps swiping and a centered measured counter without the thumbnail rail", () => {

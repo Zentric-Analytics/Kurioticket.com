@@ -45,10 +45,17 @@ test("provider-local full and endpoint dates use the selected app locale without
   assert.match(source,/airportDate:\{marginTop:1,fontSize:9\.5,lineHeight:12,fontWeight:"500"\}/);
 });
 
-test("airline identity uses Results logo language and preserves every segment identity",()=>{
+test("journey summary is shown before every authoritative flight segment",()=>{
+  const journeyPosition=itinerary.indexOf("s.journeySummary");
+  const segmentPosition=itinerary.indexOf("s.segmentList");
+  assert.notEqual(journeyPosition,-1);
+  assert.notEqual(segmentPosition,-1);
+  assert.ok(journeyPosition<segmentPosition);
   assert.match(itinerary,/leg\.segments\.map/);
   assert.match(itinerary,/resolveSegmentCarrierName/);
   assert.match(itinerary,/<AirlineLogo airlineName=\{carrier\}[^>]*variant="result-card"/);
+  assert.match(itinerary,/segment\.originAirport} → \{segment\.destinationAirport/);
+  assert.match(itinerary,/clock\(segment\.departureTime\).*clock\(segment\.arrivalTime\)/s);
   assert.match(itinerary,/segment\.marketingFlightNumber\?\?segment\.flightNumber/);
   assert.match(itinerary,/segment\.operatingCarrier/);
   assert.match(itinerary,/segment\.operatingFlightNumber/);
@@ -78,21 +85,21 @@ test("airport names retain provider fallback order and terminals remain conditio
   assert.equal(itinerary.match(/s\.terminal[^>]*color:theme\.textSecondary/g)?.length,2);
 });
 
-test("each layover has a separate band with provider city and safe airport-only fallback",()=>{
-  assert.match(itinerary,/leg\.layovers\.map/);
-  assert.match(itinerary,/\{layover\.duration\} layover/);
+test("connections sit between their corresponding authoritative segments",()=>{
+  assert.match(itinerary,/const layover=i>0\?leg\.layovers\[i-1\]:undefined/);
+  assert.match(itinerary,/Connection at \{layoverLabel\(layover\.airport\)\} · \{layover\.duration\}/);
   assert.match(itinerary,/candidate\?\.iataCode===airport/);
   assert.match(itinerary,/point\?\.cityName&&point\.cityName!==airport\?`\$\{point\.cityName\} • \$\{airport\}`:airport/);
-  assert.doesNotMatch(itinerary,/1 stop ·/);
+  assert.doesNotMatch(itinerary,/s\.connectionList/);
 });
 
-test("Flight info includes only provider-backed segment distance, aircraft, and endpoint timezone facts",()=>{
+test("segment rows carry airline, flight number, aircraft and distance while Flight info is reserved for endpoint timezones",()=>{
+  assert.match(itinerary,/Aircraft: \{aircraftName\}\{aircraftSuffix\}/);
+  assert.match(itinerary,/Flight distance: \{Math\.round\(segment\.distanceKm\)\.toLocaleString\(\)\} km/);
   assert.match(itinerary,/>Flight info<\/Text>/);
-  assert.match(itinerary,/distanceSegments=leg\.segments\.filter\(\(segment\)=>segment\.distanceKm!==undefined\)/);
-  assert.match(itinerary,/segment\.aircraft\?\.name\?\.trim\(\)\|\|segment\.aircraft\?\.iataCode\?\.trim\(\)/);
-  assert.match(itinerary,/leg\.segments\.length===1\?"Distance":`\$\{segment\.originAirport\} → \$\{segment\.destinationAirport\} distance`/);
-  assert.match(itinerary,/leg\.segments\.length===1\?"Aircraft":`\$\{segment\.originAirport\} → \$\{segment\.destinationAirport\} aircraft`/);
-  assert.doesNotMatch(itinerary,/reduce\(|totalDistance|journeyDistance/);
+  assert.match(itinerary,/hasTechnicalInformation=Boolean\(departureTimeZone\)\|\|Boolean\(arrivalTimeZone\)/);
+  assert.doesNotMatch(itinerary,/distanceSegments=/);
+  assert.doesNotMatch(itinerary,/aircraftSegments=/);
   assert.match(itinerary,/departureTimeZone===arrivalTimeZone/);
   assert.match(itinerary,/>Time zone</);
   assert.match(itinerary,/>Departure time zone</);
@@ -104,22 +111,23 @@ test("Flight info preserves its compact scale while labels lead readable regular
   assert.match(source,/technicalLabel:\{[^}]*fontSize:11,lineHeight:16,fontWeight:"500"\}/);
   assert.match(source,/technicalValue:\{[^}]*fontSize:11,lineHeight:16,fontWeight:"400"/);
   assert.match(itinerary,/s\.technicalHeading,\{color:theme\.textPrimary\}/);
-  assert.ok((itinerary.match(/s\.technicalLabel,\{color:theme\.textPrimary\}/g)?.length??0)>=3);
-  assert.ok((itinerary.match(/s\.technicalValue,\{color:theme\.textSecondary\}/g)?.length??0)>=3);
+  assert.ok((itinerary.match(/s\.technicalLabel,\{color:theme\.textPrimary\}/g)?.length??0)>=2);
+  assert.ok((itinerary.match(/s\.technicalValue,\{color:theme\.textSecondary\}/g)?.length??0)>=2);
   const flightInfo=itinerary.slice(itinerary.indexOf('<View style={s.technicalInformation}>'),itinerary.indexOf('</>:null}',itinerary.indexOf('<View style={s.technicalInformation}>')));
   assert.doesNotMatch(flightInfo,/<(?:FlowIcon|AirlineLogo)|\bicon\b/i);
 });
 
-test("the complete Flight info divider and section disappear without provider facts",()=>{
-  assert.match(itinerary,/hasTechnicalInformation=distanceSegments\.length>0\|\|aircraftSegments\.length>0\|\|Boolean\(departureTimeZone\)\|\|Boolean\(arrivalTimeZone\)/);
+test("the complete Flight info divider and section disappear without endpoint timezone facts",()=>{
+  assert.match(itinerary,/hasTechnicalInformation=Boolean\(departureTimeZone\)\|\|Boolean\(arrivalTimeZone\)/);
   assert.match(itinerary,/\{hasTechnicalInformation\?<>\s*<View style=\{\[s\.itineraryDivider/);
 });
 
-test("information progresses from identity through journey and airports to connections and technical facts",()=>{
-  const markers=["s.itineraryHeader","s.airlineRows","s.journeySummary","s.airportDetails","s.connectionList","s.itineraryDivider","s.technicalInformation"];
+test("information progresses from journey summary to airports, segment details, connections and endpoint technical facts",()=>{
+  const markers=["s.itineraryHeader","s.journeySummary","s.airportDetails","s.segmentList","s.technicalInformation"];
   const positions=markers.map((marker)=>itinerary.indexOf(marker));
   positions.forEach((position,index)=>assert.notEqual(position,-1,`missing ${markers[index]}`));
   assert.deepEqual([...positions].sort((a,b)=>a-b),positions);
+  assert.doesNotMatch(itinerary,/s\.airlineRows/);
 });
 
 test("itinerary breadth expands from 18dp to 8dp side gaps without changing fare-card geometry",()=>{

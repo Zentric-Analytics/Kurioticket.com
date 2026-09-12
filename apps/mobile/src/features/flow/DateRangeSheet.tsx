@@ -1,5 +1,5 @@
-import { useLayoutEffect, useMemo, useState } from "react";
-import { Animated, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Animated, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { PickerSheetHeader, PrimaryButton } from "./FlowPrimitives";
 import { useFlowTheme } from "./flowStyles";
 import { localDateFromIso, localIsoDate } from "./localDateModel";
@@ -14,19 +14,53 @@ type Props = {
   presentation?: "sheet" | "resultsEditFullScreen";
   backAccessibilityLabel?: string;
   onDone: (startDate: string, endDate: string) => void; onCancel: () => void;
+  onDismiss?: () => void;
 };
 
 const FLIGHT_DATE_LOCALE = "en-US";
 
-export function DateRangeSheet({ visible, title, startLabel, endLabel, startDate, endDate, minimumStartDate, endMustBeAfterStart = false, presentation = "sheet", backAccessibilityLabel, onDone, onCancel }: Props) {
+export function DateRangeSheet({ visible, title, startLabel, endLabel, startDate, endDate, minimumStartDate, endMustBeAfterStart = false, presentation = "sheet", backAccessibilityLabel, onDone, onCancel, onDismiss }: Props) {
   const ft = useFlowTheme();
   const sheetVisible = presentation === "sheet" ? visible : false;
   const motion = useSearchPickerMotion(sheetVisible);
   const [draftStart, setDraftStart] = useState(startDate);
   const [draftEnd, setDraftEnd] = useState(endDate);
   const [monthOffset, setMonthOffset] = useState(0);
+  const sheetWasPresented = useRef(false);
+  const dismissNotified = useRef(false);
   const anchor = localDateFromIso(startDate) ?? localDateFromIso(minimumStartDate)!;
   useLayoutEffect(() => { if (visible) { setDraftStart(startDate); setDraftEnd(endDate); setMonthOffset(0); } }, [visible, startDate, endDate]);
+  useEffect(() => {
+    if (presentation !== "sheet") return;
+    if (visible && motion.rendered) {
+      sheetWasPresented.current = true;
+      dismissNotified.current = false;
+      return;
+    }
+    if (
+      Platform.OS !== "ios"
+      && !visible
+      && !motion.rendered
+      && sheetWasPresented.current
+      && !dismissNotified.current
+    ) {
+      dismissNotified.current = true;
+      sheetWasPresented.current = false;
+      onDismiss?.();
+    }
+  }, [motion.rendered, onDismiss, presentation, visible]);
+  const handleNativeDismiss = () => {
+    if (
+      Platform.OS !== "ios"
+      || visible
+      || motion.rendered
+      || !sheetWasPresented.current
+      || dismissNotified.current
+    ) return;
+    dismissNotified.current = true;
+    sheetWasPresented.current = false;
+    onDismiss?.();
+  };
   const month = useMemo(() => new Date(anchor.getFullYear(), anchor.getMonth() + monthOffset, 1, 12), [startDate, minimumStartDate, monthOffset]);
   const leading = month.getDay();
   const count = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
@@ -45,8 +79,7 @@ export function DateRangeSheet({ visible, title, startLabel, endLabel, startDate
   if (presentation === "resultsEditFullScreen") return <HotelResultsEditPickerShell visible={visible} title={`Choose ${title.toLowerCase()}`} onBack={onCancel} backAccessibilityLabel={backAccessibilityLabel} footer={<PrimaryButton label="Done" icon={null} disabled={!valid} onPress={() => onDone(draftStart,draftEnd)}/>}>
     <View style={styles.fullScreenContent}>{content}</View>
   </HotelResultsEditPickerShell>;
-  if (!motion.rendered) return null;
-  return <Modal transparent animationType="none" visible onRequestClose={onCancel}>
+  return <Modal transparent animationType="none" visible={motion.rendered} onRequestClose={onCancel} onDismiss={handleNativeDismiss}>
     <View pointerEvents={motion.pointerEvents} style={styles.modalRoot}><Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill, styles.scrim, motion.backdropStyle]}/>
       <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel={`Cancel ${title.toLowerCase()} changes`} onPress={onCancel}/>
       <View style={styles.safeLayer} pointerEvents="box-none"><Animated.View accessibilityViewIsModal onLayout={motion.onSheetLayout} style={[styles.sheet, { backgroundColor: ft.colors.surface, paddingBottom: 16 + motion.bottomSafeAreaInset }, motion.sheetStyle]}>

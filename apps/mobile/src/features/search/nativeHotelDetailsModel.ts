@@ -1,29 +1,35 @@
 import type { PublicHotelPropertyDetails } from "../../../../../src/lib/types";
 
-export function hotelStaySummary(
-  checkIn: string,
-  checkOut: string,
-  guests: number,
-  rooms: number,
-  today = new Date(),
-) {
+export function hotelStaySummary(checkIn: string, checkOut: string, guests: number, rooms: number) {
   const parseDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T12:00:00`) : null;
   const start = parseDate(checkIn); const end = parseDate(checkOut);
   const nights = start && end ? Math.round((end.getTime() - start.getTime()) / 86_400_000) : 0;
-  const month = (date: Date) => new Intl.DateTimeFormat(undefined, { month: "short" }).format(date);
-  const dayMonth = (date: Date) => `${date.getDate()} ${month(date)}`;
+  const formatParts = (date: Date) => {
+    const parts = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" }).formatToParts(date);
+    const read = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
+    return { day: read("day"), month: read("month"), year: read("year") };
+  };
+  const formatWithoutYear = (date: Date) => {
+    const { day, month } = formatParts(date);
+    return `${day} ${month}`.trim();
+  };
+  const formatWithYear = (date: Date) => {
+    const { day, month, year } = formatParts(date);
+    return `${day} ${month} ${year}`.trim();
+  };
+  const sameYear = Boolean(start && end && start.getFullYear() === end.getFullYear());
+  const currentYear = new Date().getFullYear();
+  const omitYear = Boolean(start && end && sameYear && start.getFullYear() === currentYear);
   const dateText = start && end && nights > 0
-    ? start.getFullYear() === end.getFullYear()
-      ? start.getFullYear() === today.getFullYear()
-        ? `${dayMonth(start)} – ${dayMonth(end)}`
-        : `${dayMonth(start)} – ${dayMonth(end)} ${end.getFullYear()}`
-      : `${dayMonth(start)} ${start.getFullYear()} – ${dayMonth(end)} ${end.getFullYear()}`
+    ? omitYear
+      ? `${formatWithoutYear(start)} – ${formatWithoutYear(end)}`
+      : `${formatWithYear(start)} – ${formatWithYear(end)}`
     : null;
   const nightText = nights > 0 ? `${nights} ${nights === 1 ? "night" : "nights"}` : null;
   return {
     dateText,
     nightText,
-    dates: dateText && nightText ? `${dateText} · ${nightText}` : null,
+    dates: dateText,
     occupancy: `${rooms} ${rooms === 1 ? "room" : "rooms"}, ${guests} ${guests === 1 ? "guest" : "guests"}`,
   };
 }
