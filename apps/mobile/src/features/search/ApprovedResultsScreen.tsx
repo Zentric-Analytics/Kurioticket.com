@@ -1758,7 +1758,7 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
         && Number(matchingAlert.targetPrice) === parsed.value
         && matchingAlert.currency?.toUpperCase() === currency.toUpperCase();
       const saved = samePausedHotelTarget
-        ? await travelApi.updatePriceAlertStatus(matchingAlert.id, "ACTIVE")
+        ? await travelApi.updatePriceAlertStatus(matchingAlert!.id, "ACTIVE")
         : await travelApi.createPriceAlert(flight ? buildFlightPriceAlertPayload(plan, parsed.value, currency) : buildHotelPriceAlertPayload(plan, parsed.value, currency));
       setCurrentMatchingAlert(saved.alert); setTargetOpen(false); setTargetDraft("");
     } catch (error) {
