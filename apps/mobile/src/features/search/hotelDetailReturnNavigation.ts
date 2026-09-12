@@ -1,7 +1,8 @@
 type RouteLike = {
+  key?: string;
   name: string;
-  params?: Record<string, unknown>;
-  [key: string]: unknown;
+  path?: string;
+  params?: object;
 };
 
 type NavigationStateLike = {
