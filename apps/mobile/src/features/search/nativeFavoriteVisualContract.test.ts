@@ -7,7 +7,7 @@ const shared = source("src/features/home/AndroidFavoriteButton.tsx");
 const carResult = source("src/features/search/CarResultCard.tsx");
 const carDetail = source("src/features/search/ApprovedCarDetailScreen.tsx");
 const hotelResult = source("src/features/search/ApprovedResultsScreen.tsx");
-const hotelDetail = source("src/features/search/ApprovedDetailScreen.tsx");
+const hotelDetail = source("src/features/search/HotelDetailsScreen.tsx");
 const flightDetail = source("src/features/search/NativeFlightDetails.tsx");
 const explore = source("src/features/explore/ExploreScreen.tsx");
 
