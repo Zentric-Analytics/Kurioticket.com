@@ -55,6 +55,23 @@ References for the deployment-specific network boundary:
 - [Render public ingress and client addresses](https://render.com/articles/how-render-handles-ddos-attacks)
 - [Cloudflare request-header behavior](https://developers.cloudflare.com/fundamentals/reference/http-headers/)
 
+### Final runtime correction verification
+
+Release `a8bd461724c173c2537ec41d9279495afa40781b` became live. Fresh browser
+searches again returned 425 flights, 40 hotel offers and 116 cars. The error-level
+server log was empty after this deployment and the previous feature-control
+fallback did not recur during the checks. An invalid XFF/X-Real-IP probe now
+returned six location results with HTTP 200 rather than influencing the trusted
+address. A forged invalid CF-Connecting-IP was rejected by the edge with HTTP 403.
+The sandbox session cookie was Secure, HttpOnly, SameSite=Strict and API-path scoped.
+
+Fresh reloads exposed a separate React text-hydration mismatch: RegionProvider
+read browser-stored country/currency during its initial state initializer, while
+the server used request defaults. A regression reproduced US/USD server markup
+versus JP/JPY browser markup. The provider now uses server props for first render
+and restores saved choices after hydration. No warning suppression is used.
+This final display correction still requires deployment and browser reload checks.
+
 ## Validation and limits
 
 The worker-limit release passed 3,108 root tests and its full production build.
