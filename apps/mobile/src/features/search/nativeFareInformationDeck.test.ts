@@ -139,7 +139,7 @@ test("fare information typography stays light while labels retain hierarchy",()=
   assert.match(deckStyles,/fareInfoTabTextActive:\{fontWeight:"600"\}/);
   assert.match(deckStyles,/fareGroupLabel:\{fontSize:11,lineHeight:15,fontWeight:"600"/);
   assert.match(deckStyles,/detailLabel:\{[^}]*fontWeight:"500"\}/);
-  assert.match(deckStyles,/detailValue:\{[^}]*fontWeight:"400"\}/);
+  assert.match(deckStyles,/detailValue:\{[^}]*fontWeight:"400"[^}]*\}/);
   assert.match(deckStyles,/conditionState:\{[^}]*fontWeight:"500"\}/);
   assert.match(deckStyles,/conditionScope:\{[^}]*fontWeight:"400"\}/);
   assert.match(deckStyles,/serviceDescription:\{[^}]*fontWeight:"500"\}/);
