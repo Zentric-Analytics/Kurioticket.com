@@ -170,7 +170,7 @@ export function HotelDestinationSheet({ visible, value, pickerPresentation = "sh
 }
 
 type GuestsRoomsDraft = { adults: number; children: number; rooms: number; petFriendly: boolean };
-export function HotelGuestsRoomsSheet({ visible, adults, children, rooms, petFriendly, presentation = "sheet", onDone, onCancel }: GuestsRoomsDraft & { visible: boolean; presentation?: "sheet" | "resultsEditFullScreen"; onDone: (draft: GuestsRoomsDraft) => void; onCancel: () => void }) {
+export function HotelGuestsRoomsSheet({ visible, adults, children, rooms, petFriendly, presentation = "sheet", showPetFriendly = true, onDone, onCancel }: GuestsRoomsDraft & { visible: boolean; presentation?: "sheet" | "resultsEditFullScreen"; showPetFriendly?: boolean; onDone: (draft: GuestsRoomsDraft) => void; onCancel: () => void }) {
   const ft = useFlowTheme();
   const sheetVisible = presentation === "sheet" ? visible : false;
   const motion = useSearchPickerMotion(sheetVisible);
@@ -193,13 +193,15 @@ export function HotelGuestsRoomsSheet({ visible, adults, children, rooms, petFri
                 <PickerRow icon={BedDouble} label="Rooms" description="Separate rooms" value={draft.rooms} minimum={HOTEL_LIMITS.rooms.min} maximum={HOTEL_LIMITS.rooms.max} onChange={(value) => setCount("rooms", value)}/>
               </View>
             </View>
-            <View style={[styles.pickerCard, { backgroundColor: ft.colors.input, borderColor: ft.colors.border }]}>
-              <View style={styles.petRow}>
-                <PickerIcon icon={PawPrint}/>
-                <View style={styles.petCopy}><Text style={ft.styles.value}>Pet-friendly</Text><Text style={ft.styles.meta}>Only show stays that allow pets</Text></View>
-                <View style={styles.petSwitchSlot}><Switch accessibilityLabel="Pet-friendly" accessibilityRole="switch" accessibilityState={{ checked: draft.petFriendly }} value={draft.petFriendly} onValueChange={(value) => setDraft((current) => ({ ...current, petFriendly: value }))} trackColor={{ false: ft.colors.border, true: ft.colors.selectedBorder }} thumbColor={ft.colors.surface}/></View>
+            {showPetFriendly ? (
+              <View style={[styles.pickerCard, { backgroundColor: ft.colors.input, borderColor: ft.colors.border }]}>
+                <View style={styles.petRow}>
+                  <PickerIcon icon={PawPrint}/>
+                  <View style={styles.petCopy}><Text style={ft.styles.value}>Pet-friendly</Text><Text style={ft.styles.meta}>Only show stays that allow pets</Text></View>
+                  <View style={styles.petSwitchSlot}><Switch accessibilityLabel="Pet-friendly" accessibilityRole="switch" accessibilityState={{ checked: draft.petFriendly }} value={draft.petFriendly} onValueChange={(value) => setDraft((current) => ({ ...current, petFriendly: value }))} trackColor={{ false: ft.colors.border, true: ft.colors.selectedBorder }} thumbColor={ft.colors.surface}/></View>
+                </View>
               </View>
-            </View>
+            ) : null}
           </ScrollView>
   </>;
     if (presentation === "resultsEditFullScreen") return <HotelResultsEditPickerShell visible={visible} title="Guests & Rooms" onBack={onCancel} footer={<PrimaryButton label="Done" icon={null} size="compact" onPress={() => onDone(draft)}/>}>
