@@ -24,9 +24,9 @@ import { FLIGHT_TRIP_TYPE_LABELS } from "../flow/flightTripTypeLabels";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { AirlineLogo } from "./AirlineLogo";
 import { providerLocalFlightDate, providerLocalFlightDateLong } from "./flightArrivalDayOffset";
-import { nativeFareRailHorizontalInset, nativeInitialFareRailOffset, nativeLoadedFareCardWidth } from "./nativeFareRailGeometry";
+import { nativeLoadedFareCardWidth } from "./nativeFareRailGeometry";
 import { nativeFareBenefitPresentation } from "./nativeFareBenefitPresentation";
-export { nativeInitialFareRailOffset, nativeLoadedFareCardWidth } from "./nativeFareRailGeometry";
+export { nativeLoadedFareCardWidth } from "./nativeFareRailGeometry";
 export { nativeFareBenefitPresentation } from "./nativeFareBenefitPresentation";
 
 type Params = Record<string, string | string[] | undefined>;
@@ -97,8 +97,6 @@ export function NativeFlightDetails({ params }: { params: Params }) {
   const [booking, setBooking] = useState(false);
   const [displayPrices, setDisplayPrices] = useState<Record<string,DisplayPrice>>({});
   const rates = useRef<ExchangeRates|null>(null);
-  const fareRailRef = useRef<ScrollView|null>(null);
-  const positionedFareSetRef = useRef<string|null>(null);
   const sharePending = useRef(false);
   const hasScrolledRef = useRef(false);
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -108,7 +106,6 @@ export function NativeFlightDetails({ params }: { params: Params }) {
   const reload = useCallback(() => setRevision((value) => value + 1), []);
   useEffect(() => {
     const controller = new AbortController();
-    positionedFareSetRef.current=null;
     setState("loading");
     if (preserveMessageOnReload.current) preserveMessageOnReload.current = false;
     else setMessage("");
@@ -152,16 +149,17 @@ export function NativeFlightDetails({ params }: { params: Params }) {
     <View testID="flight-details-route-summary" style={s.routeSummary}><View style={s.routeContent}><Text accessibilityRole="header" style={[s.route,{color:theme.textPrimary}]}>{flightDetailsRouteLabel(details.search.tripType,offer.legs??[],offer.originAirport,offer.destinationAirport)}</Text><Text style={[s.routeMetadata,{color:theme.textSecondary}]}>{tripMetadata}</Text></View><View style={s.routeActions}><IconButton label={saved?"Remove saved flight":"Save flight"} onPress={()=>savedFlights.toggle(savedOffer,nativeFlightEditSearchParams(details,one(params.currency)))}><Heart size={18} color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={saved?androidFavoriteColors.savedFill:androidFavoriteColors.unsavedFill}/></IconButton><IconButton label="Share flight" onPress={()=>void share()}><FlowIcon name="share" size={18} color={theme.icon}/></IconButton></View></View>
     <View style={s.itineraryStack}>{(offer.legs?.length?offer.legs:[]).map((leg,index)=><Itinerary key={`${leg.departureTime}-${index}`} leg={leg} index={index} offerAirlineName={offer.airlineName} offerAirlineLogo={offer.airlineLogo} theme={theme} intlLocale={intlLocale}/>)}</View>
     <Text style={[s.fareSectionTitle,{color:theme.textPrimary}]}>Pick your fare</Text>
-    <ScrollView ref={fareRailRef} accessibilityRole="radiogroup" accessibilityLabel="Available fares" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[s.fares,details.fareChoices.length>1?s.faresMultiple:s.faresSingle]} onContentSizeChange={()=>{const fareSet=details.fareChoices.map(({key})=>key).join("|");if(positionedFareSetRef.current===fareSet)return;positionedFareSetRef.current=fareSet;const selectedIndex=details.fareChoices.findIndex(({key})=>key===selected.key);fareRailRef.current?.scrollTo({x:nativeInitialFareRailOffset(selectedIndex,loadedFareCardWidth,windowWidth-nativeFareRailHorizontalInset,details.fareChoices.length),animated:false});}}>
+    <ScrollView accessibilityRole="radiogroup" accessibilityLabel="Available fares" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[s.fares,details.fareChoices.length>1?s.faresMultiple:s.faresSingle]}>
       {details.fareChoices.map((choice)=>{
         const isSelected=choice.key===selected.key;
         const fareTerms=compactFareTerms(choice.distinguishingTerms,details.search.tripType,5);
         return <View key={choice.key} style={[s.fareCard,{width:loadedFareCardWidth,backgroundColor:theme.surface,borderColor:isSelected?ui.blue:theme.border},isSelected?s.fareCardSelected:s.fareCardUnselected]}>
-          <Pressable accessibilityRole="radio" accessibilityState={{selected:isSelected}} onPress={()=>setSelectedKey(choice.key)} style={s.fareSelectionControl}>
+          <Pressable accessibilityRole="radio" accessibilityState={{selected:isSelected}} accessibilityLabel={`${choice.label}, ${displayPrices[choice.key]?.accessibilityLabel??"price unavailable"}`} onPress={()=>setSelectedKey(choice.key)} style={StyleSheet.absoluteFillObject}/>
+          <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none" style={s.fareSelectionControl}>
             <View style={s.fareIdentity}><View style={s.fareIconContainer}><Luggage size={15} color={ui.blue}/></View><Text style={[s.fareLabel,{color:theme.textPrimary}]}>{choice.label}</Text></View>
-          </Pressable>
-          {fareTerms.length?<View style={s.fareBenefits}>{fareTerms.map((row,i)=>{const benefitKey=`${choice.key}:${row.index}-${row.rowIndex}-${i}`;return <FareBenefitRow key={benefitKey} category={row.term.category} semantic={row.term.semantic} text={row.text} titleColor={theme.textPrimary} detailColor={theme.textSecondary} expanded={expandedFareBenefit===benefitKey} onToggle={()=>setExpandedFareBenefit((current)=>current===benefitKey?null:benefitKey)}/>})}</View>:null}
-          <View style={s.farePriceBlock}><Text style={[s.farePriceLabel,{color:theme.textSecondary}]}>Total price</Text><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} accessibilityLabel={displayPrices[choice.key]?.accessibilityLabel} style={[s.farePrice,{color:isSelected?ui.blue:theme.textPrimary}]}>{displayPrices[choice.key]?.formatted??"—"}</Text></View>
+          </View>
+          {fareTerms.length?<View pointerEvents="box-none" style={s.fareBenefits}>{fareTerms.map((row,i)=>{const benefitKey=`${choice.key}:${row.index}-${row.rowIndex}-${i}`;return <FareBenefitRow key={benefitKey} category={row.term.category} semantic={row.term.semantic} text={row.text} titleColor={theme.textPrimary} detailColor={theme.textSecondary} expanded={expandedFareBenefit===benefitKey} onToggle={()=>setExpandedFareBenefit((current)=>current===benefitKey?null:benefitKey)}/>})}</View>:null}
+          <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none" style={s.farePriceBlock}><Text style={[s.farePriceLabel,{color:theme.textSecondary}]}>Total price</Text><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[s.farePrice,{color:isSelected?ui.blue:theme.textPrimary}]}>{displayPrices[choice.key]?.formatted??"—"}</Text></View>
         </View>;
       })}
     </ScrollView>
