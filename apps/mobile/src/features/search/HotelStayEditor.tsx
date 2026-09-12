@@ -322,13 +322,13 @@ function CounterRow({
 }
 
 const s = StyleSheet.create({
-  section: { paddingHorizontal: 12, paddingTop: 24 },
-  card: { minHeight: 60, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8, flexDirection: "row", alignItems: "center", gap: 12 },
-  copy: { flex: 1, minWidth: 0 },
-  rowAction: { minHeight: 28, justifyContent: "center", alignSelf: "stretch" },
+  section: { paddingHorizontal: 10, paddingTop: 24 },
+  card: { height: 60, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 10 },
+  copy: { flex: 1, minWidth: 0, justifyContent: "center" },
+  rowAction: { height: 24, justifyContent: "center", alignSelf: "stretch" },
   pressed: { opacity: 0.62 },
   date: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
-  meta: { fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
+  meta: { fontSize: 13, lineHeight: 18, fontWeight: "400", fontFamily: appFonts.regular },
   countBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(2,6,23,.42)" },
   countSheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 20, paddingTop: 14, paddingBottom: 16 },
   countHeader: { minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
