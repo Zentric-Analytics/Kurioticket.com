@@ -27,7 +27,9 @@ function styleRule(source: string, name: string, nextName: string) {
   return source.slice(start, end);
 }
 
-test("Compare section keeps web hierarchy with compact native offer rhythm", () => {
+test("Deals section keeps the established price hierarchy with compact native offer rhythm", () => {
+  assert.match(hotel, /activeHotelTab === "deals"/);
+  assert.match(hotel, />Deals<\/Text>/);
   assert.match(webCompare, /px-4 py-7/);
   assert.match(webCompare, /text-xl font-extrabold tracking-tight text-slate-950/);
   assert.match(webCompare, /mt-1 text-sm font-medium text-slate-600/);
@@ -69,7 +71,7 @@ test("native provider offer uses canonical inline amenity icons and web-like pri
 });
 
 test("native actionable provider offer follows the compact vertical rhythm", () => {
-  assert.match(hotel, /style=\{\[d\.hotelOffer, \{[\s\S]*?borderColor: selected \? hotelAccent : theme\.border,[\s\S]*?gap: 0,[\s\S]*?\}\]\}/);
+  assert.match(hotel, /style=\{\[\s*d\.hotelOffer,\s*\{[\s\S]*?borderColor: selected \? hotelAccent : theme\.border,[\s\S]*?gap: 0,[\s\S]*?\},?\s*\]\}/);
   assert.match(styleRule(detailSource, "hotelOffer", "hotelOfferTop"), /padding: 14[\s\S]*gap: 16/);
   assert.match(styleRule(detailSource, "hotelOfferPriceRow", "hotelNightly"), /minWidth: 0[\s\S]*marginTop: 10[\s\S]*alignItems: "flex-end"/);
   assert.match(styleRule(detailSource, "hotelOfferBottom", "hotelOfferPriceRow"), /marginTop: 2[\s\S]*flexDirection: "row"[\s\S]*alignItems: "center"[\s\S]*justifyContent: "space-between"[\s\S]*gap: 6/);
