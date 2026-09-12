@@ -1678,12 +1678,14 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   const reconciliationRef = useRef(0);
   const [pending, setPending] = useState(false);
   const pendingRef = useRef(false);
+  const targetIntentRef = useRef(0);
   const [targetOpen, setTargetOpen] = useState(false);
   const [targetDraft, setTargetDraft] = useState("");
   const [targetError, setTargetError] = useState("");
   const closeTargetSheet = useCallback(() => {
+    if (!flight) targetIntentRef.current += 1;
     setTargetOpen(false);
-  }, []);
+  }, [flight]);
   const matchingAlert = matchingAlertState && matchingAlertState.planKey === plan?.key ? matchingAlertState.alert : undefined;
   const hotelAlertKnown = product === "hotel" && reconciledHotelPlanKey === plan?.key;
   const setCurrentMatchingAlert = useCallback((alert: MobilePriceAlert | undefined) => {
@@ -1721,6 +1723,7 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   useFocusEffect(useCallback(() => { void reconcile(); }, [reconcile]));
   const handleToggle = async (next: boolean) => {
     if (pendingRef.current || (flight && loadingAlert) || (!flight && !hotelAlertKnown) || !plan) return;
+    const targetIntent = !flight && next ? ++targetIntentRef.current : 0;
     // A Hotel focus refresh is passive. Once state is known, user intent owns the
     // lifecycle and invalidates that refresh so it cannot overwrite the mutation.
     if (!flight && loadingAlert) {
@@ -1731,7 +1734,10 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
       if (unavailable) return;
       if (!await readSession().catch(() => null)) { requireSignIn(); return; }
       if (isTracking) return;
-      if (!flight) { setTargetDraft(""); setTargetError(""); setTargetOpen(true); return; }
+      if (!flight) {
+        if (targetIntent !== targetIntentRef.current) return;
+        setTargetDraft(""); setTargetError(""); setTargetOpen(true); return;
+      }
       if (!matchingAlert) { setTargetError(""); setTargetOpen(true); return; }
       pendingRef.current = true; setPending(true);
       try { setCurrentMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id, "ACTIVE")).alert); }
