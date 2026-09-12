@@ -18,7 +18,7 @@ import {
 import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
 import { travelApi, type HotelResult } from "../../api/travelApi";
 import { FlowIcon } from "../flow/FlowIcon";
-import { Armchair, ArrowLeft, Award, Bed, CalendarDays, FilePenLine, Heart, Info, Laptop, Luggage, Repeat2, ShieldX, Sparkles, Users, UtensilsCrossed, Wifi, Wine, type LucideIcon } from "lucide-react-native";
+import { Armchair, ArrowLeft, Award, Bed, FilePenLine, Heart, Info, Laptop, Luggage, Repeat2, ShieldX, Sparkles, Users, UtensilsCrossed, Wifi, Wine, type LucideIcon } from "lucide-react-native";
 import { Button, TopBar, clock, money, shortDate, ui } from "./SearchUi";
 import { visualHotels } from "./visualFixtures";
 import { useAppTheme } from "../../theme/AppTheme";
@@ -52,6 +52,7 @@ import { NativeHotelReviewsSection, nativeHotelReviewPresentation } from "./Nati
 import { NativeFlightDetails } from "./NativeFlightDetails";
 import type { FlightTripDetail, FlightTripDetailIcon } from "./flightTripDetails";
 import { hotelResultsDismissCount } from "./hotelDetailReturnNavigation";
+import { HotelStayEditor } from "./HotelStayEditor";
 
 function hotelAboutIconFor(item: HotelAmenityPresentationItem): LucideIcon {
   if (item.iconKey === "wifi") return Wifi;
@@ -575,19 +576,14 @@ function HotelDetail({
             ))}
           </View>
         </View>
-        <View style={d.hotelStaySection}>
-          <View style={[d.hotelStayCard, { borderColor: theme.border, backgroundColor: theme.surface }]}>
-            <CalendarDays accessible={false} size={22} color={hotelIdentityIconColor} />
-            <View style={d.hotelStayCopy}>
-              <Text style={[d.hotelStayDate, { color: hotelIdentityTitleColor }]}>
-                {stay.dateText ?? "Stay dates unavailable"}
-              </Text>
-              <Text style={[d.hotelStayMeta, { color: hotelIdentityMetaColor }]}>
-                {stay.occupancy}{stay.nightText ? ` · ${stay.nightText}` : ""}
-              </Text>
-            </View>
-          </View>
-        </View>
+        <HotelStayEditor
+          result={result}
+          destination={String(params.destination || property?.city || result.location)}
+          checkIn={checkIn}
+          checkOut={checkOut}
+          guests={guestCount}
+          rooms={roomCount}
+        />
         <View style={d.hotelDetailBody}>
           {activeHotelTab === "details" ? (
             <>

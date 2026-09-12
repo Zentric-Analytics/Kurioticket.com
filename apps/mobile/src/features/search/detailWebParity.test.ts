@@ -5,6 +5,7 @@ import test from "node:test";
 const source = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
 const hotel = source.slice(source.indexOf("function HotelDetail"), source.indexOf("const detailIcons"));
 const gallery = readFileSync("src/features/search/NativeHotelDetails.tsx", "utf8");
+const stayEditor = readFileSync("src/features/search/HotelStayEditor.tsx", "utf8");
 const car = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
 const tokens = readFileSync("src/theme/tokens.ts", "utf8");
 const appTheme = readFileSync("src/theme/AppTheme.tsx", "utf8");
@@ -35,7 +36,7 @@ function styleRule(name: string, nextName: string) {
 
 test("Hotel details follow hero, identity, tabs, and offer hierarchy", () => {
   assert.doesNotMatch(hotel, />Back to hotel results<\/Text>/);
-  assert.match(hotel, /<CalendarDays accessible=\{false\} size=\{22\}/);
+  assert.match(stayEditor, /<CalendarDays accessible=\{false\} size=\{22\}/);
   assert.match(hotel, /<Users accessible=\{false\} size=\{18\}/);
   assert.match(hotel, /<Award accessible=\{false\}/);
   for (const glyph of ["▣", "♙", "⌾"]) assert.doesNotMatch(hotel, new RegExp(glyph));
@@ -110,7 +111,7 @@ test("Hotel Details light canvas matches the web white article while allowing a 
 
 test("Hotel section navigation keeps one deterministic compact tab row", () => {
   const shellStart = hotel.indexOf("d.hotelTabsShell");
-  const stayStart = hotel.indexOf("<View style={d.hotelStaySection}>", shellStart);
+  const stayStart = hotel.indexOf("<HotelStayEditor", shellStart);
   const bodyStart = hotel.indexOf("<View style={d.hotelDetailBody}", stayStart);
   const shell = hotel.slice(shellStart, stayStart);
   const tabListStart = shell.indexOf('accessibilityRole="tablist"');
