@@ -50,21 +50,24 @@ test("active Hotel details follow hero, identity, tabs, stay editor, and content
   assert.match(hotel, /activeHotelTab === "deals"/);
 });
 
-test("active Hotel Details uses icon-only hero controls and stack-aware Results navigation", () => {
+test("active Hotel Details keeps fixed icon-only controls and stack-aware Results navigation", () => {
   const heroStart = hotel.indexOf("<View style={s.heroShell}>");
   const heroEnd = hotel.indexOf("<View style={s.identity}>", heroStart);
   const hero = hotel.slice(heroStart, heroEnd);
+  const scrollEnd = hotel.indexOf("</ScrollView>");
+  const backControl = hotel.indexOf('accessibilityLabel="Back to hotel results"');
   const returnNavigation = hotel.slice(
     hotel.indexOf("const returnToHotelResults"),
     hotel.indexOf("const titleColor"),
   );
 
-  assert.match(hotelStyle("heroBack", "heroActions"), /left: 20[^}]*width: 44[^}]*height: 44[^}]*borderRadius: 22/);
-  assert.match(hotelStyle("heroActions", "heroAction"), /right: 20[^}]*width: 112[^}]*height: 44[^}]*borderRadius: 22/);
-  assert.match(hero, /accessibilityLabel="Back to hotel results"/);
-  assert.match(hero, /onPress=\{returnToHotelResults\}/);
-  assert.match(hero, /<ArrowLeft size=\{25\} strokeWidth=\{2\.2\} color="#0F172A" \/>/);
-  assert.doesNotMatch(hero, />Back to hotel results<\/Text>/);
+  assert.match(hotelStyle("heroBack", "heroActions"), /left: 20[^}]*width: 44[^}]*height: 44[^}]*borderRadius: 22[^}]*zIndex: 20/);
+  assert.match(hotelStyle("heroActions", "heroAction"), /right: 20[^}]*width: 112[^}]*height: 44[^}]*borderRadius: 22[^}]*zIndex: 20/);
+  assert.doesNotMatch(hero, /accessibilityLabel="Back to hotel results"/);
+  assert.ok(scrollEnd >= 0 && scrollEnd < backControl, "fixed hotel controls must sit outside the scrolling content");
+  assert.match(hotel, /accessibilityLabel="Back to hotel results"[\s\S]*?onPress=\{returnToHotelResults\}[\s\S]*?s\.heroBack/);
+  assert.match(hotel, /<ArrowLeft size=\{25\} strokeWidth=\{2\.2\} color="#0F172A" \/>/);
+  assert.doesNotMatch(hotel, />Back to hotel results<\/Text>/);
   assert.match(returnNavigation, /if \(hotelResultsStack\) \{/);
   assert.match(returnNavigation, /hotelResultsDismissCount\(navigation\.getState\(\)\)/);
   assert.match(returnNavigation, /router\.dismiss\(dismissCount\);\s*return;/);
@@ -78,7 +81,8 @@ test("active Hotel light canvas matches the web white article while allowing a f
   assert.match(hotel, /const hotelCanvasColor = theme\.dark \? theme\.background : theme\.surface;/);
   assert.match(hotel, /<SafeAreaView[\s\S]*?backgroundColor: hotelCanvasColor[\s\S]*?edges=\{\[\]\}/);
   assert.match(hotel, /<ScrollView[\s\S]*?stickyHeaderIndices=\{\[2\]\}[\s\S]*?contentInsetAdjustmentBehavior="never"[\s\S]*?backgroundColor: hotelCanvasColor/);
-  assert.match(hotel, /s\.tabsShell,[\s\S]*?paddingTop: inset\.top,[\s\S]*?marginTop: 1 - inset\.top/);
+  assert.match(hotel, /const hotelStickyTabsTop = inset\.top \+ 72/);
+  assert.match(hotel, /s\.tabsShell,[\s\S]*?paddingTop: hotelStickyTabsTop,[\s\S]*?marginTop: 1 - hotelStickyTabsTop,[\s\S]*?backgroundColor: hotelTabsPinned \? hotelCanvasColor : "transparent"/);
   assert.match(hotel, /style=\{\[s\.tabsRow, \{ backgroundColor: hotelCanvasColor \}\]\}/);
   assert.match(hotel, /backgroundColor: hotelCanvasColor/);
   assert.doesNotMatch(hotel, /Platform\.OS/);
@@ -94,19 +98,25 @@ test("active Hotel section navigation keeps one deterministic compact tab row", 
   assert.match(row, /minHeight: 44[^}]*flexDirection: "row"[^}]*flexWrap: "nowrap"/);
   assert.match(tab, /width: "33\.333%"[^}]*flexGrow: 0[^}]*flexShrink: 0[^}]*minWidth: 0[^}]*minHeight: 44/);
   assert.match(tab, /borderBottomWidth: 2[^}]*borderBottomColor: "transparent"/);
-  assert.match(hotel, /paddingTop: inset\.top/);
-  assert.match(hotel, /marginTop: 1 - inset\.top/);
+  assert.match(hotel, /paddingTop: hotelStickyTabsTop/);
+  assert.match(hotel, /marginTop: 1 - hotelStickyTabsTop/);
   assert.match(hotel, /activeHotelTab === tab && \{ borderBottomColor: hotelAccent \}/);
   assert.match(hotel, /accessibilityState=\{\{ selected: activeHotelTab === tab \}\}/);
   assert.match(hotel, /numberOfLines=\{1\}/);
 });
 
-test("active Hotel sticky navigation settles below the safe area without a duplicate tab row", () => {
+test("active Hotel sticky navigation matches the Kayak scrolled header without duplicating tabs", () => {
+  const scrollEnd = hotel.indexOf("</ScrollView>");
+  const backControl = hotel.indexOf('accessibilityLabel="Back to hotel results"');
   assert.match(hotel, /stickyHeaderIndices=\{\[2\]\}/);
-  assert.match(hotel, /paddingTop: inset\.top/);
-  assert.match(hotel, /marginTop: 1 - inset\.top/);
+  assert.match(hotel, /const hotelStickyTabsTop = inset\.top \+ 72/);
+  assert.match(hotel, /hotelTabsStickyStartRef\.current = nativeEvent\.layout\.y/);
+  assert.match(hotel, /syncHotelTabsPinned\(offset\)/);
+  assert.match(hotel, /backgroundColor: hotelTabsPinned \? hotelCanvasColor : "transparent"/);
   assert.match(hotel, /style=\{\[s\.tabsRow, \{ backgroundColor: hotelCanvasColor \}\]\}/);
+  assert.ok(scrollEnd >= 0 && scrollEnd < backControl, "Back, Save, and Share must remain fixed while Details scrolls");
   assert.equal((hotel.match(/accessibilityRole="tablist"/g) ?? []).length, 1);
+  assert.equal((hotel.match(/accessibilityLabel="Back to hotel results"/g) ?? []).length, 1);
 });
 
 test("active Hotel selected tab text and underline use the established accent contract", () => {
