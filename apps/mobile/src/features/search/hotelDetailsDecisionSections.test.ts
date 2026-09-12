@@ -42,12 +42,13 @@ test("related pricing uses one effective currency and fails closed without conve
   assert.equal(unsafe.displayPrices, null);
 });
 
-test("decision sections are compare-only, ordered, and use the enriched details response", () => {
+test("Details combines location and related hotels in order from the enriched response", () => {
   const detail = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
-  const compare = detail.slice(detail.indexOf('activeHotelTab === "compare"'), detail.indexOf('activeHotelTab === "about"'));
-  assert.ok(compare.indexOf("NativeHotelPropertyLocationSection") < compare.indexOf("NativeRelatedHotelsSection"));
+  const details = detail.slice(detail.indexOf('activeHotelTab === "details"'), detail.indexOf('activeHotelTab === "reviews"'));
+  assert.ok(details.indexOf("NativeHotelLocationSection") < details.indexOf("NativeRelatedHotelsSection"));
   assert.match(detail, /hotels: details\?\.relatedHotels \?\? \[\]/);
-  assert.match(detail, /<NativeHotelPropertyLocationSection[\s\S]*?hotelId=\{result\.id\}[\s\S]*?hotelName=\{result\.name\}[\s\S]*?propertyDetails=\{property\}[\s\S]*?theme=\{theme\}/);
+  assert.match(details, /<NativeHotelLocationSection[\s\S]*?hotelId=\{result\.id\}[\s\S]*?hotelName=\{result\.name\}[\s\S]*?propertyDetails=\{property\}[\s\S]*?theme=\{theme\}/);
+  assert.match(details, /<NativeRelatedHotelsSection[\s\S]*?hotels=\{relatedHotels\}/);
   assert.doesNotMatch(detail, /travelApi\.hotels?Search/);
 });
 
