@@ -15,7 +15,7 @@ test("iOS waits for the stay editor modal to dismiss before opening a picker", (
   assert.match(source, /<Modal[^>]*onDismiss=\{onDismiss\}/);
 });
 
-test("date Done returns to Edit stay only after the date sheet has actually closed", () => {
+test("date Done returns to Edit stay only after the native date modal has actually dismissed", () => {
   assert.match(source, /type ApplyStayResult = "unchanged" \| "updated" \| "failed";/);
   assert.match(source, /return "unchanged";/);
   assert.match(source, /hotelStayEditor: reopenEditorAfterUpdate \? "1" : ""/);
@@ -31,9 +31,10 @@ test("date Done returns to Edit stay only after the date sheet has actually clos
 
   assert.match(dateSheet, /onDismiss\?: \(\) => void;/);
   assert.match(dateSheet, /const sheetWasPresented = useRef\(false\);/);
-  assert.match(dateSheet, /if \(motion\.rendered\) \{[\s\S]*?sheetWasPresented\.current = true;/);
-  assert.match(dateSheet, /if \(!visible && sheetWasPresented\.current && !dismissNotified\.current\) \{[\s\S]*?onDismiss\?\.\(\);/);
-  assert.match(dateSheet, /if \(!motion\.rendered\) return null;/);
+  assert.match(dateSheet, /if \(visible && motion\.rendered\) \{[\s\S]*?sheetWasPresented\.current = true;/);
+  assert.match(dateSheet, /const handleNativeDismiss = \(\) => \{[\s\S]*?Platform\.OS !== "ios"[\s\S]*?!visible[\s\S]*?motion\.rendered[\s\S]*?onDismiss\?\.\(\);/);
+  assert.match(dateSheet, /<Modal transparent animationType="none" visible=\{motion\.rendered\} onRequestClose=\{onCancel\} onDismiss=\{handleNativeDismiss\}>/);
+  assert.doesNotMatch(dateSheet, /if \(!motion\.rendered\) return null;/);
 });
 
 test("rooms and guests also returns to Edit stay after Done or cancel", () => {
