@@ -537,17 +537,6 @@ function HotelDetail({
               </Text>
             </View>
           ) : null}
-          <View style={[d.hotelStayCard, { borderColor: theme.border, backgroundColor: theme.surface }]}>
-            <CalendarDays accessible={false} size={22} color={hotelIdentityIconColor} />
-            <View style={d.hotelStayCopy}>
-              <Text style={[d.hotelStayDate, { color: hotelIdentityTitleColor }]}>
-                {stay.dateText ?? "Stay dates unavailable"}
-              </Text>
-              <Text style={[d.hotelStayMeta, { color: hotelIdentityMetaColor }]}>
-                {stay.occupancy}{stay.nightText ? ` · ${stay.nightText}` : ""}
-              </Text>
-            </View>
-          </View>
         </View>
         <View
           style={[
@@ -584,6 +573,19 @@ function HotelDetail({
                 </Text>
               </Pressable>
             ))}
+          </View>
+        </View>
+        <View style={d.hotelStaySection}>
+          <View style={[d.hotelStayCard, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+            <CalendarDays accessible={false} size={22} color={hotelIdentityIconColor} />
+            <View style={d.hotelStayCopy}>
+              <Text style={[d.hotelStayDate, { color: hotelIdentityTitleColor }]}>
+                {stay.dateText ?? "Stay dates unavailable"}
+              </Text>
+              <Text style={[d.hotelStayMeta, { color: hotelIdentityMetaColor }]}>
+                {stay.occupancy}{stay.nightText ? ` · ${stay.nightText}` : ""}
+              </Text>
+            </View>
           </View>
         </View>
         <View style={d.hotelDetailBody}>
@@ -1253,7 +1255,8 @@ const d = StyleSheet.create({
   hotelReviewText: { flex: 1, minWidth: 0, fontSize: 14, lineHeight: 20 },
   hotelReviewPrimary: { fontWeight: "700", fontFamily: appFonts.bold },
   hotelReviewSecondary: { fontWeight: "400", fontFamily: appFonts.regular },
-  hotelStayCard: { marginTop: 16, minHeight: 60, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 12 },
+  hotelStaySection: { paddingHorizontal: 12, paddingTop: 24 },
+  hotelStayCard: { minHeight: 60, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 12 },
   hotelStayCopy: { flex: 1, minWidth: 0 },
   hotelStayDate: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
   hotelStayMeta: { marginTop: 2, fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
