@@ -47,7 +47,7 @@ test("save and share remain independent accessible actions inside one pill", () 
   assert.match(hotel, /<FlowIcon name="share" size=\{22\} color="#0F172A" \/>/);
 });
 
-test("identity, tabs, and stay summary follow the measured Kayak hierarchy", () => {
+test("identity, tabs, and editable stay summary follow the measured Kayak hierarchy", () => {
   const name = styleRule(detailSource, "hotelName", "stars");
   const identityIndex = hotel.indexOf("<View style={d.hotelIdentity}>");
   const tabsIndex = hotel.indexOf("d.hotelTabsShell");
@@ -66,7 +66,13 @@ test("identity, tabs, and stay summary follow the measured Kayak hierarchy", () 
   assert.match(styleRule(detailSource, "hotelStaySection", "hotelStayCard"), /paddingHorizontal: 12[^}]*paddingTop: 24/);
   assert.match(styleRule(detailSource, "hotelStayCard", "hotelStayCopy"), /minHeight: 60[^}]*borderWidth: 1[^}]*borderRadius: 12[^}]*paddingHorizontal: 14[^}]*paddingVertical: 10/);
   assert.doesNotMatch(styleRule(detailSource, "hotelStayCard", "hotelStayCopy"), /marginTop/);
-  assert.match(hotel, /\{stay\.occupancy\}\{stay\.nightText \? ` · \$\{stay\.nightText\}` : ""\}/);
+  assert.match(hotel, /\{stay\.occupancy\}/);
+  assert.doesNotMatch(hotel, /stay\.nightText/);
+  assert.match(hotel, /onPress=\{\(\) => setStayDatesOpen\(true\)\}/);
+  assert.match(hotel, /onPress=\{\(\) => setStayCountsOpen\(true\)\}/);
+  assert.match(hotel, /<DateRangeSheet[\s\S]*?startDate=\{checkIn\}[\s\S]*?endDate=\{checkOut\}/);
+  assert.match(hotel, /<HotelGuestsRoomsSheet[\s\S]*?showPetFriendly=\{false\}/);
+  assert.match(hotel, /router\.setParams\(\{[\s\S]*?hotelDisplayPrices: ""[\s\S]*?displayCurrencyContext: ""/);
 });
 
 test("inline gallery keeps swiping and a centered measured counter without the thumbnail rail", () => {
