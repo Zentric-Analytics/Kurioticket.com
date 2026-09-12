@@ -2,11 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const detailSource = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
-const hotel = detailSource.slice(
-  detailSource.indexOf("function HotelDetail"),
-  detailSource.indexOf("const detailIcons"),
-);
+const detailSource = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+const hotel = detailSource.slice(detailSource.indexOf("function HotelDetail"));
 const gallery = readFileSync("src/features/search/NativeHotelDetails.tsx", "utf8");
 const stayEditor = readFileSync("src/features/search/HotelStayEditor.tsx", "utf8");
 
@@ -28,15 +25,15 @@ test("native hotel hero uses the measured full-bleed mobile geometry", () => {
   assert.doesNotMatch(styleRule(gallery, "heroFrame", "hero"), /borderRadius|aspectRatio|marginHorizontal/);
 });
 
-test("native hotel hero replaces the old text header with measured overlay controls", () => {
-  assert.ok(hotel.indexOf("<NativeHotelGallery") < hotel.indexOf("<View style={d.hotelIdentity}>"));
+test("active hotel hero keeps icon-only overlay controls", () => {
+  assert.ok(hotel.indexOf("<NativeHotelGallery") < hotel.indexOf("<View style={s.identity}>"));
   assert.doesNotMatch(hotel, />Back to hotel results<\/Text>/);
-  assert.match(hotel, /accessibilityLabel="Back to hotel results"[\s\S]*?onPress=\{returnToHotelResults\}[\s\S]*?d\.hotelHeroBack/);
-  assert.match(hotel, /style=\{\[d\.hotelHeroBack, \{ top: inset\.top \+ 12 \}\]\}/);
-  assert.match(hotel, /style=\{\[d\.hotelHeroActions, \{ top: inset\.top \+ 12 \}\]\}/);
-  assert.match(styleRule(detailSource, "hotelHeroBack", "hotelHeroActions"), /left: 20[^}]*width: 44[^}]*height: 44[^}]*borderRadius: 22[^}]*backgroundColor: "#FFFFFF"/);
-  assert.match(styleRule(detailSource, "hotelHeroActions", "hotelHeroAction"), /right: 20[^}]*width: 112[^}]*height: 44[^}]*borderRadius: 22[^}]*flexDirection: "row"/);
-  assert.match(styleRule(detailSource, "hotelHeroAction", "hotelIdentity"), /width: 56[^}]*height: 44/);
+  assert.match(hotel, /accessibilityLabel="Back to hotel results"[\s\S]*?onPress=\{returnToHotelResults\}[\s\S]*?s\.heroBack/);
+  assert.match(hotel, /style=\{\[s\.heroBack, \{ top: inset\.top \+ 12 \}\]\}/);
+  assert.match(hotel, /style=\{\[s\.heroActions, \{ top: inset\.top \+ 12 \}\]\}/);
+  assert.match(styleRule(detailSource, "heroBack", "heroActions"), /left: 20[^}]*width: 44[^}]*height: 44[^}]*borderRadius: 22[^}]*backgroundColor: "#FFFFFF"/);
+  assert.match(styleRule(detailSource, "heroActions", "heroAction"), /right: 20[^}]*width: 112[^}]*height: 44[^}]*borderRadius: 22[^}]*flexDirection: "row"/);
+  assert.match(styleRule(detailSource, "heroAction", "identity"), /width: 56[^}]*height: 44/);
 });
 
 test("save and share remain independent accessible actions inside one pill", () => {
@@ -48,18 +45,18 @@ test("save and share remain independent accessible actions inside one pill", () 
   assert.match(hotel, /<FlowIcon name="share" size=\{22\} color="#0F172A" \/>/);
 });
 
-test("identity, tabs, and editable stay summary follow the measured hierarchy", () => {
-  const name = styleRule(detailSource, "hotelName", "stars");
-  const identityIndex = hotel.indexOf("<View style={d.hotelIdentity}>");
-  const tabsIndex = hotel.indexOf("d.hotelTabsShell");
+test("active identity, tabs, and editable stay summary follow the measured hierarchy", () => {
+  const name = styleRule(detailSource, "hotelName", "hotelNamePhoneFit");
+  const identityIndex = hotel.indexOf("<View style={s.identity}>");
+  const tabsIndex = hotel.indexOf("s.tabsShell");
   const stayIndex = hotel.indexOf("<HotelStayEditor");
-  const bodyIndex = hotel.indexOf("<View style={d.hotelDetailBody}>");
+  const bodyIndex = hotel.indexOf("<View style={s.detailBody}>");
   assert.ok(identityIndex < tabsIndex);
   assert.ok(tabsIndex < stayIndex);
   assert.ok(stayIndex < bodyIndex);
-  assert.match(detailSource, /hotelIdentity: \{[^}]*paddingHorizontal: 16[^}]*paddingTop: 16[^}]*paddingBottom: 14/);
+  assert.match(detailSource, /identity: \{[^}]*paddingHorizontal: 16[^}]*paddingTop: 16[^}]*paddingBottom: 14/);
   assert.match(name, /fontSize: 24[^}]*lineHeight: 30[^}]*fontWeight: "700"[^}]*fontFamily: appFonts\.bold/);
-  assert.match(styleRule(detailSource, "hotelClassificationStars", "hotelReviewSummary"), /marginTop: 7[^}]*fontSize: 20[^}]*lineHeight: 24/);
+  assert.match(styleRule(detailSource, "stars", "reviewSummary"), /marginTop: 7[^}]*fontSize: 20[^}]*lineHeight: 24/);
   assert.match(hotel, /const hotelReview = nativeHotelReviewPresentation\(result\);/);
   assert.match(hotel, /hotelReview\?\.score\.split\(" \/ "\)\[0\]/);
   assert.match(hotel, /\{hotelReview\.label\} \{hotelReviewScore\}/);

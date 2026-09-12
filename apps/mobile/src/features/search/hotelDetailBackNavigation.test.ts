@@ -5,7 +5,7 @@ import test from "node:test";
 
 const read = (path: string) => readFileSync(resolve(path), "utf8").replace(/\r\n/g, "\n");
 const results = read("src/features/search/ApprovedResultsScreen.tsx");
-const details = read("src/features/search/ApprovedDetailScreen.tsx");
+const details = read("src/features/search/HotelDetailsScreen.tsx");
 
 const resultsHotelDetailsPush = results.slice(
   results.indexOf('router.push({\n                pathname: "/hotel-details"'),
@@ -17,7 +17,7 @@ const relatedHotelPush = details.slice(
 );
 const returnToHotelResults = details.slice(
   details.indexOf("const returnToHotelResults"),
-  details.indexOf("const amenityItems"),
+  details.indexOf("const titleColor"),
 );
 
 test("Hotel Results pushes Details with Results-stack provenance and its current context", () => {
@@ -29,7 +29,7 @@ test("Hotel Results pushes Details with Results-stack provenance and its current
   assert.doesNotMatch(resultsHotelDetailsPush, /router\.replace/);
 });
 
-test("Hotel Details reads, but does not invent, Results-stack provenance", () => {
+test("active Hotel Details reads, but does not invent, Results-stack provenance", () => {
   assert.match(details, /Array\.isArray\(params\.hotelResultsStack\)[\s\S]*?params\.hotelResultsStack\[0\][\s\S]*?: params\.hotelResultsStack\) === "1"/);
   assert.doesNotMatch(details, /const hotelResultsStack\s*=\s*true/);
 });

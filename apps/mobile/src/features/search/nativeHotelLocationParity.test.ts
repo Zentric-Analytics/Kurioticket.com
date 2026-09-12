@@ -9,7 +9,8 @@ import {
   nativeHotelLocationPreviewUrl,
 } from "./nativeHotelLocationModel";
 
-const screen = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
+const screen = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+const bookingDetails = readFileSync("src/features/search/NativeHotelBookingDetails.tsx", "utf8");
 const component = readFileSync("src/features/search/NativeHotelLocationSection.tsx", "utf8");
 const model = readFileSync("src/features/search/nativeHotelLocationModel.ts", "utf8");
 const compare = readFileSync("src/features/search/NativeHotelDecisionSections.tsx", "utf8");
@@ -37,14 +38,15 @@ function styleRule(source: string, name: string, nextName: string) {
   return source.slice(start, end);
 }
 
-test("Location component is explicitly imported and rendered inside Hotel Details", () => {
-  assert.match(screen, /import \{ NativeHotelLocationSection \} from "\.\/NativeHotelLocationSection";/);
-  assert.match(screen, /activeHotelTab === "details"[\s\S]*?<NativeHotelLocationSection/);
-  assert.match(screen, /hotelId=\{result\.id\}/);
+test("Location is rendered by the active native hotel booking details flow", () => {
+  assert.match(screen, /import \{ NativeHotelBookingDetails \} from "\.\/NativeHotelBookingDetails";/);
+  assert.match(screen, /activeHotelTab === "details"[\s\S]*?<NativeHotelBookingDetails/);
+  assert.match(bookingDetails, /import \{ NativeHotelLocationSection \} from "\.\/NativeHotelLocationSection";/);
+  assert.match(bookingDetails, /<NativeHotelLocationSection[\s\S]*?hotelId=\{result\.id\}/);
 });
 
 test("Location uses one horizontal padding owner with compact vertical rhythm", () => {
-  assert.match(styleRule(screen, "hotelDetailBody", "hotelOffer"), /paddingHorizontal: 16/);
+  assert.match(styleRule(screen, "detailBody", "compareSection"), /paddingHorizontal: 16/);
   const section = styleRule(component, "locationSection", "heading");
   assert.match(section, /paddingVertical: 8/);
   assert.doesNotMatch(section, /paddingHorizontal/);
@@ -66,10 +68,12 @@ test("stay-fit facts follow the web factual contract", () => {
   assert.match(model, /sightseeing\|culture\|history\|art\|theatre/);
 });
 
-test("Location owns location copy without duplicating the Details accessibility section", () => {
-  for (const copy of ["Location &amp; stay fit", "Why this location works", "Location fit details are limited to the verified address and map.", "Map preview unavailable", "Street View"]) assert.match(component, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+test("Location keeps all existing location facts in a flat one-column presentation", () => {
+  for (const copy of ["Location", "Why this location works", "Location fit details are limited to the verified address and map.", "Map preview unavailable", "Street View"]) assert.match(component, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   for (const duplicate of ["Accessibility and location details", "Confirm specific accessibility requirements with the property before travel."]) assert.doesNotMatch(component, new RegExp(duplicate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.doesNotMatch(component, /propertyDetails\.accessibility/);
+  assert.match(component, /facts\.map\(\(fact\) => <View key=\{fact\} style=\{styles\.factRow\}>/);
+  assert.doesNotMatch(component, /factChip|flexWrap: "wrap"/);
   for (const legacy of ["✓ city break", "✓ business", "Suited to business stays", "Suited to family stays", "interestTags?.map"]) assert.doesNotMatch(component, new RegExp(legacy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 });
 
@@ -93,18 +97,20 @@ test("Location uses the shared credential-free preview and preserves interactive
   for (const forbidden of ["EXPO_PUBLIC_GOOGLE", "NEXT_PUBLIC_GOOGLE", "google.com/maps/embed", "buildOpenStreetMapHotelMapEmbedUrl"]) assert.doesNotMatch(component + model, new RegExp(forbidden));
 });
 
-test("Location keeps mobile web typography while using compact native spacing", () => {
+test("Location keeps booking-page typography while removing card and chip styling", () => {
   for (const rule of [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/, /appFonts\.bold/]) assert.match(styleRule(component, "heading", "addressRow"), rule);
   for (const rule of [/width: 36/, /height: 36/, /borderRadius: 18/]) assert.match(styleRule(component, "pinCircle", "addressCopy"), rule);
   assert.match(component, /<MapPin accessible=\{false\} size=\{18\}/);
   for (const rule of [/fontSize: 13/, /lineHeight: 19/, /fontWeight: "500"/, /appFonts\.medium/]) assert.match(styleRule(component, "primaryAddress", "secondaryAddress"), rule);
-  for (const rule of [/fontSize: 12/, /lineHeight: 18/, /appFonts\.regular/]) assert.match(styleRule(component, "secondaryAddress", "mapCard"), rule);
-  for (const rule of [/marginTop: 12/, /borderRadius: 14/, /borderWidth: 1/]) assert.match(styleRule(component, "mapCard", "mapTabs"), rule);
+  for (const rule of [/fontSize: 12/, /lineHeight: 18/, /appFonts\.regular/]) assert.match(styleRule(component, "secondaryAddress", "mapShell"), rule);
+  assert.match(styleRule(component, "mapShell", "mapTabs"), /marginTop: 12/);
+  assert.doesNotMatch(styleRule(component, "mapShell", "mapTabs"), /borderRadius|borderWidth/);
   assert.match(styleRule(component, "mapViewport", "mapPreview"), /height: 216/);
   assert.doesNotMatch(styleRule(component, "mapViewport", "mapPreview"), /height: (?:280|300)/);
   for (const rule of [/marginTop: 22/, /fontSize: 15/, /lineHeight: 22/, /fontWeight: "600"/, /appFonts\.semibold/]) assert.match(styleRule(component, "subheading", "factList"), rule);
-  for (const rule of [/borderRadius: 8/, /paddingHorizontal: 12/, /paddingVertical: 6/]) assert.match(styleRule(component, "factChip", "factText"), rule);
-  for (const rule of [/fontSize: 12/, /lineHeight: 16/, /fontWeight: "500"/, /appFonts\.medium/]) assert.match(styleRule(component, "factText", "fallbackText"), rule);
+  assert.match(styleRule(component, "factList", "factRow"), /gap: 9/);
+  assert.match(styleRule(component, "factRow", "factBullet"), /flexDirection: "row"/);
+  for (const rule of [/fontSize: 13/, /lineHeight: 21/, /fontWeight: "400"/, /appFonts\.regular/]) assert.match(styleRule(component, "factText", "fallbackText"), rule);
   assert.match(component, /fallbackText: \{[^}]*fontSize: 13[^}]*lineHeight: 22[^}]*fontWeight: "400"[^}]*fontFamily: appFonts\.regular/);
 });
 

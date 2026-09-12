@@ -1,2 +1,5 @@
-import { ApprovedDetailScreen } from "../src/features/search/ApprovedDetailScreen";
-export default function HotelDetails() { return <ApprovedDetailScreen product="hotel" />; }
+import { HotelDetailsScreen } from "../src/features/search/HotelDetailsScreen";
+
+export default function HotelDetails() {
+  return <HotelDetailsScreen />;
+}

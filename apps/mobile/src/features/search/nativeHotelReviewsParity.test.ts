@@ -8,7 +8,8 @@ import {
   normalizeHotelReviewScore,
 } from "../../../../../src/lib/hotels/hotelRatingSemantics";
 
-const detail = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
+const detail = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+const bookingDetails = readFileSync("src/features/search/NativeHotelBookingDetails.tsx", "utf8");
 const reviews = readFileSync("src/features/search/NativeHotelReviewsSection.tsx", "utf8");
 const webReviews = readFileSync(
   "../../src/components/results/hotelDetails/HotelReviewsSection.tsx",
@@ -24,10 +25,12 @@ function styleRule(name: string, nextName: string) {
   return reviews.slice(start, end);
 }
 
-test("Reviews and Location each retain both their import and JSX integration", () => {
-  assert.match(detail, /import \{ NativeHotelLocationSection \} from "\.\/NativeHotelLocationSection";/);
-  assert.match(detail, /<NativeHotelLocationSection\s/);
-  assert.match(detail, /import \{[\s\S]*?NativeHotelReviewsSection[\s\S]*?\} from "\.\/NativeHotelReviewsSection";/);
+test("active Details and Reviews retain their integrations", () => {
+  assert.match(detail, /import \{ NativeHotelBookingDetails \} from "\.\/NativeHotelBookingDetails";/);
+  assert.match(detail, /<NativeHotelBookingDetails[\s\S]*?result=\{result\}/);
+  assert.match(bookingDetails, /import \{ NativeHotelLocationSection \} from "\.\/NativeHotelLocationSection";/);
+  assert.match(bookingDetails, /<NativeHotelLocationSection\s/);
+  assert.match(detail, /import \{ NativeHotelReviewsSection, nativeHotelReviewPresentation \} from "\.\/NativeHotelReviewsSection";/);
   assert.match(detail, /<NativeHotelReviewsSection result=\{result\} \/>/);
 });
 
@@ -82,7 +85,7 @@ test("Reviews geometry and typography match mobile web without double inset", ()
   const section = styleRule("reviewsSection", "heading");
   assert.match(section, /paddingVertical: 12/);
   assert.doesNotMatch(section, /paddingHorizontal/);
-  assert.match(detail, /hotelDetailBody: \{[^\n]*paddingHorizontal: 16/);
+  assert.match(detail, /detailBody: \{[^\n]*paddingHorizontal: 16/);
 
   const contracts: Array<[string, string, RegExp[]]> = [
     ["heading", "emptyCallout", [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/, /appFonts\.bold/]],
