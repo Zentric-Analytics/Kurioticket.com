@@ -32,7 +32,16 @@ test("date Done returns to Edit stay only after the native date modal has actual
   assert.match(dateSheet, /onDismiss\?: \(\) => void;/);
   assert.match(dateSheet, /const sheetWasPresented = useRef\(false\);/);
   assert.match(dateSheet, /if \(visible && motion\.rendered\) \{[\s\S]*?sheetWasPresented\.current = true;/);
-  assert.match(dateSheet, /const handleNativeDismiss = \(\) => \{[\s\S]*?Platform\.OS !== "ios"[\s\S]*?!visible[\s\S]*?motion\.rendered[\s\S]*?onDismiss\?\.\(\);/);
+  const nativeDismissStart = dateSheet.indexOf("const handleNativeDismiss = () => {");
+  const nativeDismissEnd = dateSheet.indexOf("const month =", nativeDismissStart);
+  assert.ok(nativeDismissStart >= 0 && nativeDismissEnd > nativeDismissStart);
+  const nativeDismiss = dateSheet.slice(nativeDismissStart, nativeDismissEnd);
+  assert.match(nativeDismiss, /Platform\.OS !== "ios"/);
+  assert.match(nativeDismiss, /\|\| visible/);
+  assert.match(nativeDismiss, /\|\| motion\.rendered/);
+  assert.match(nativeDismiss, /!sheetWasPresented\.current/);
+  assert.match(nativeDismiss, /dismissNotified\.current/);
+  assert.match(nativeDismiss, /onDismiss\?\.\(\);/);
   assert.match(dateSheet, /<Modal transparent animationType="none" visible=\{motion\.rendered\} onRequestClose=\{onCancel\} onDismiss=\{handleNativeDismiss\}>/);
   assert.doesNotMatch(dateSheet, /if \(!motion\.rendered\) return null;/);
 });
