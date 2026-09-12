@@ -48,7 +48,7 @@ export function SavedRecentContent() {
       const typeLabel = item.type === "flight" ? t.savedTripsTypeFlight
         : item.type === "hotel" ? t.savedTripsTypeHotel
         : item.type === "car" ? t.cars
-        : item.subtitle || t.savedTripsRecentSearchesTitle;
+        : item.subtitle || (tab === "saved" ? t.savedTripsTabSaved : t.savedTripsRecentSearchesTitle);
       const label = item.label || item.airlineName || item.hotelName || item.modelName || item.destination || item.pickupLocation || typeLabel;
       const removeLabel = tab === "saved" ? t.savedTripsRemoveSavedTrip : t.savedTripsRemoveRecentSearch;
       return <li key={`${item.type ?? "recent"}-${item.id}`} className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4">

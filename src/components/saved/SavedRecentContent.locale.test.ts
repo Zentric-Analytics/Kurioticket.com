@@ -25,7 +25,7 @@ test("saved and recent controls render selected-language labels for both lists a
   const dictionary = getTranslations(locale);
   for (const tab of ["saved", "recent"]) {
     for (const error of [false, true]) {
-      const values = [tab, [{ id: "test", type: "car", label: "Test car", href: "/cars" }], [{ id: "search", label: "Test search", href: "/cars" }], error];
+      const values = [tab, [{ id: "test", type: "search", label: "Test saved search", href: "/cars" }], [{ id: "search", label: "Test search", href: "/cars" }], error];
       let stateIndex = 0;
       const text: string[] = [];
       runInNewContext(`${compiled}\nSavedRecentContent()`, {
@@ -40,6 +40,8 @@ test("saved and recent controls render selected-language labels for both lists a
         } },
       });
       assert.ok(text.includes(dictionary.savedTripsRepeatSearch));
+      if (tab === "saved") assert.ok(!text.includes(dictionary.savedTripsRecentSearchesTitle), "saved records must not be labeled recent");
+      else assert.ok(text.includes(dictionary.savedTripsRecentSearchesTitle));
       assert.ok(text.includes(tab === "saved" ? dictionary.savedTripsRemoveSavedTrip : dictionary.savedTripsRemoveRecentSearch));
       if (error) assert.ok(text.includes(dictionary["accountDashboard.trips.state.error.body"]));
       for (const english of ["Search again", "Remove", "Saved search", "Recent search", "Clear recent"]) assert.ok(!text.includes(english));
