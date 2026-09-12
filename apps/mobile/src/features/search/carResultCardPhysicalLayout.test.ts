@@ -12,7 +12,8 @@ test("Car card shell and inset image retain safe physical layout", () => {
   assert.match(styles, /card:\{borderWidth:1,borderRadius:13,overflow:"hidden",shadowOpacity:0\.08,shadowRadius:10,shadowOffset:\{width:0,height:2\},elevation:2\}/);
   assert.match(style("main"), /minHeight:168,flexDirection:"row",alignItems:"stretch"/);
   assert.match(style("visualColumn"), /width:"40%",minHeight:168,paddingLeft:6,paddingRight:6,paddingBottom:8/);
-  assert.match(style("visual"), /flex:1,backgroundColor:"#F8FAFC",overflow:"hidden",borderRadius:10/);
+  assert.match(style("visual"), /flex:1,overflow:"hidden",borderRadius:10/);
+  assert.doesNotMatch(style("visual"), /backgroundColor/);
   assert.match(styles, /contentColumn:\{flex:1,minWidth:0\}/);
   assert.match(styles, /image:\{\.\.\.StyleSheet\.absoluteFillObject\}/);
   for (const structuralStyle of ["topMetaShell", "main", "visualColumn", "visual", "contentColumn", "conversion"]) {
