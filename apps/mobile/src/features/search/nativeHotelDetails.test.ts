@@ -76,9 +76,9 @@ test("canonical Hotel address is enriched, deduplicated, and falls back", () => 
   assert.equal(canonicalHotelAddress({ description: "", latitude: 1, longitude: 2, streetAddress: "Paris, France", city: "Paris", country: "France", neighbourhood: "" }, "fallback"), "Paris, France");
 });
 
-test("Hotel details enrichment is keyed, abortable, and does not expose false fallback state while loading", () => {
+test("active Hotel details enrichment is keyed, abortable, and does not expose false fallback state while loading", () => {
   const api = readFileSync("src/api/travelApi.ts", "utf8");
-  const screen = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
+  const screen = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
   assert.match(api, /`\/api\/hotels\/details\?\$\{params\.toString\(\)\}`/);
   for (const field of ["id", "checkIn", "checkOut"]) assert.match(api, new RegExp(`${field}: input\\.${field}`));
   for (const field of ["guests", "rooms"]) assert.match(api, new RegExp(`${field}: String\\(input\\.${field}\\)`));
@@ -94,15 +94,15 @@ test("Hotel details enrichment is keyed, abortable, and does not expose false fa
   assert.match(screen, /detailsStatus === "loading"/);
 });
 
-test("Hotel details prices have an immediate provider-currency fallback and are keyed per hotel", () => {
-  const screen = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
+test("active Hotel details prices have an immediate provider-currency fallback and are keyed per hotel", () => {
+  const screen = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
   assert.match(screen, /const providerDisplayPrices = hasPrice[\s\S]*result\.currency,[\s\S]*result\.currency,[\s\S]*\{\}/);
   assert.match(screen, /const hotelPriceStateKey = `\$\{result\.id\}/);
   assert.match(screen, /displayPriceState\.key === hotelPriceStateKey/);
 });
 
-test("Hotel detail tabs preserve independent scroll state and reset for a different hotel", () => {
-  const screen = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
+test("active Hotel detail tabs preserve independent scroll state and reset for a different hotel", () => {
+  const screen = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
   assert.match(screen, /const hotelDetailScrollRef = useRef<ScrollView>/);
   assert.match(screen, /hotelTabScrollOffsets/);
   assert.match(screen, /const selectHotelTab = useCallback/);
