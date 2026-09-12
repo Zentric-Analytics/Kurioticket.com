@@ -47,8 +47,15 @@ test("save and share remain independent accessible actions inside one pill", () 
   assert.match(hotel, /<FlowIcon name="share" size=\{22\} color="#0F172A" \/>/);
 });
 
-test("identity below the hero follows the measured title, stars, review, and stay-card hierarchy", () => {
+test("identity, tabs, and stay summary follow the measured Kayak hierarchy", () => {
   const name = styleRule(detailSource, "hotelName", "stars");
+  const identityIndex = hotel.indexOf("<View style={d.hotelIdentity}>");
+  const tabsIndex = hotel.indexOf("d.hotelTabsShell");
+  const stayIndex = hotel.indexOf("<View style={d.hotelStaySection}>");
+  const bodyIndex = hotel.indexOf("<View style={d.hotelDetailBody}>");
+  assert.ok(identityIndex < tabsIndex);
+  assert.ok(tabsIndex < stayIndex);
+  assert.ok(stayIndex < bodyIndex);
   assert.match(detailSource, /hotelIdentity: \{[^}]*paddingHorizontal: 16[^}]*paddingTop: 16[^}]*paddingBottom: 14/);
   assert.match(name, /fontSize: 24[^}]*lineHeight: 30[^}]*fontWeight: "700"[^}]*fontFamily: appFonts\.bold/);
   assert.match(styleRule(detailSource, "hotelClassificationStars", "hotelReviewSummary"), /marginTop: 7[^}]*fontSize: 20[^}]*lineHeight: 24/);
@@ -56,7 +63,9 @@ test("identity below the hero follows the measured title, stars, review, and sta
   assert.match(hotel, /hotelReview\?\.score\.split\(" \/ "\)\[0\]/);
   assert.match(hotel, /\{hotelReview\.label\} \{hotelReviewScore\}/);
   assert.match(hotel, /\{hotelReview\.count\}/);
-  assert.match(styleRule(detailSource, "hotelStayCard", "hotelStayCopy"), /marginTop: 16[^}]*minHeight: 60[^}]*borderWidth: 1[^}]*borderRadius: 12[^}]*paddingHorizontal: 14[^}]*paddingVertical: 10/);
+  assert.match(styleRule(detailSource, "hotelStaySection", "hotelStayCard"), /paddingHorizontal: 12[^}]*paddingTop: 24/);
+  assert.match(styleRule(detailSource, "hotelStayCard", "hotelStayCopy"), /minHeight: 60[^}]*borderWidth: 1[^}]*borderRadius: 12[^}]*paddingHorizontal: 14[^}]*paddingVertical: 10/);
+  assert.doesNotMatch(styleRule(detailSource, "hotelStayCard", "hotelStayCopy"), /marginTop/);
   assert.match(hotel, /\{stay\.occupancy\}\{stay\.nightText \? ` · \$\{stay\.nightText\}` : ""\}/);
 });
 
