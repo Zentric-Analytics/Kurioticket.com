@@ -101,6 +101,10 @@ test("static details include sanitized room options and requested stay totals", 
   };
   assert.equal(response.status, 200);
   assert.equal(payload.hotel.id, "hotel-le-six-paris");
+  assert.equal(
+    payload.hotel.totalPrice,
+    Number(payload.hotel.pricePerNight) * 3 * 2,
+  );
   assert.equal(typeof payload.propertyDetails.description, "string");
   assert.equal(typeof payload.propertyDetails.latitude, "number");
   assert.equal(typeof payload.propertyDetails.longitude, "number");
