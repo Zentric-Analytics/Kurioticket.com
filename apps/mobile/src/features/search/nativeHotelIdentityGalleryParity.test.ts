@@ -25,14 +25,20 @@ test("native hotel hero uses the measured full-bleed mobile geometry", () => {
   assert.doesNotMatch(styleRule(gallery, "heroFrame", "hero"), /borderRadius|aspectRatio|marginHorizontal/);
 });
 
-test("active hotel hero keeps icon-only overlay controls", () => {
-  assert.ok(hotel.indexOf("<NativeHotelGallery") < hotel.indexOf("<View style={s.identity}>"));
+test("active hotel keeps icon-only header controls fixed over the hero and scrolled content", () => {
+  const scrollEnd = hotel.indexOf("</ScrollView>");
+  const backControl = hotel.indexOf('accessibilityLabel="Back to hotel results"');
+  const identityIndex = hotel.indexOf("<View style={s.identity}>");
+
+  assert.ok(hotel.indexOf("<NativeHotelGallery") < identityIndex);
+  assert.ok(scrollEnd >= 0 && scrollEnd < backControl, "hotel header controls must remain outside the ScrollView");
   assert.doesNotMatch(hotel, />Back to hotel results<\/Text>/);
+  assert.equal((hotel.match(/accessibilityLabel="Back to hotel results"/g) ?? []).length, 1);
   assert.match(hotel, /accessibilityLabel="Back to hotel results"[\s\S]*?onPress=\{returnToHotelResults\}[\s\S]*?s\.heroBack/);
   assert.match(hotel, /style=\{\[s\.heroBack, \{ top: inset\.top \+ 12 \}\]\}/);
   assert.match(hotel, /style=\{\[s\.heroActions, \{ top: inset\.top \+ 12 \}\]\}/);
-  assert.match(styleRule(detailSource, "heroBack", "heroActions"), /left: 20[^}]*width: 44[^}]*height: 44[^}]*borderRadius: 22[^}]*backgroundColor: "#FFFFFF"/);
-  assert.match(styleRule(detailSource, "heroActions", "heroAction"), /right: 20[^}]*width: 112[^}]*height: 44[^}]*borderRadius: 22[^}]*flexDirection: "row"/);
+  assert.match(styleRule(detailSource, "heroBack", "heroActions"), /left: 20[^}]*width: 44[^}]*height: 44[^}]*borderRadius: 22[^}]*backgroundColor: "#FFFFFF"[^}]*zIndex: 20[^}]*elevation: 10/);
+  assert.match(styleRule(detailSource, "heroActions", "heroAction"), /right: 20[^}]*width: 112[^}]*height: 44[^}]*borderRadius: 22[^}]*backgroundColor: "#FFFFFF"[^}]*flexDirection: "row"[^}]*zIndex: 20[^}]*elevation: 10/);
   assert.match(styleRule(detailSource, "heroAction", "identity"), /width: 56[^}]*height: 44/);
 });
 
