@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -27,6 +28,8 @@ type StayValues = {
   rooms: number;
 };
 
+type StayEditorTarget = "dates" | "counts";
+
 export function HotelStayEditor({
   result,
   destination,
@@ -45,6 +48,7 @@ export function HotelStayEditor({
   const navigation = useNavigation();
   const { theme } = useAppTheme();
   const [editorOpen, setEditorOpen] = useState(false);
+  const [pendingEditor, setPendingEditor] = useState<StayEditorTarget | null>(null);
   const [datesOpen, setDatesOpen] = useState(false);
   const [countsOpen, setCountsOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -130,13 +134,24 @@ export function HotelStayEditor({
     }
   };
 
-  const openDates = () => {
-    setEditorOpen(false);
-    requestAnimationFrame(() => setDatesOpen(true));
+  const launchEditor = (target: StayEditorTarget) => {
+    if (target === "dates") setDatesOpen(true);
+    else setCountsOpen(true);
   };
-  const openCounts = () => {
+  const chooseEditor = (target: StayEditorTarget) => {
+    setPendingEditor(target);
     setEditorOpen(false);
-    requestAnimationFrame(() => setCountsOpen(true));
+    if (Platform.OS !== "ios") {
+      requestAnimationFrame(() => {
+        launchEditor(target);
+        setPendingEditor(null);
+      });
+    }
+  };
+  const finishEditorDismiss = () => {
+    if (Platform.OS !== "ios" || !pendingEditor) return;
+    launchEditor(pendingEditor);
+    setPendingEditor(null);
   };
 
   return (
@@ -167,9 +182,13 @@ export function HotelStayEditor({
         visible={editorOpen}
         dateText={summary.dateText ?? "Stay dates unavailable"}
         occupancy={summary.occupancy}
-        onCancel={() => setEditorOpen(false)}
-        onEditDates={openDates}
-        onEditCounts={openCounts}
+        onCancel={() => {
+          setPendingEditor(null);
+          setEditorOpen(false);
+        }}
+        onDismiss={finishEditorDismiss}
+        onEditDates={() => chooseEditor("dates")}
+        onEditCounts={() => chooseEditor("counts")}
       />
       <DateRangeSheet
         visible={datesOpen}
@@ -208,6 +227,7 @@ function HotelStayEditSheet({
   onEditDates,
   onEditCounts,
   onCancel,
+  onDismiss,
 }: {
   visible: boolean;
   dateText: string;
@@ -215,10 +235,11 @@ function HotelStayEditSheet({
   onEditDates: () => void;
   onEditCounts: () => void;
   onCancel: () => void;
+  onDismiss: () => void;
 }) {
   const { theme } = useAppTheme();
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel} onDismiss={onDismiss}>
       <View style={s.countBackdrop}>
         <Pressable
           accessibilityRole="button"
