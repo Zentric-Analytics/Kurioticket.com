@@ -110,8 +110,9 @@ test("Hotel Details light canvas matches the web white article while allowing a 
 
 test("Hotel section navigation keeps one deterministic compact tab row", () => {
   const shellStart = hotel.indexOf("d.hotelTabsShell");
-  const bodyStart = hotel.indexOf("<View style={d.hotelDetailBody}");
-  const shell = hotel.slice(shellStart, bodyStart);
+  const stayStart = hotel.indexOf("<View style={d.hotelStaySection}>", shellStart);
+  const bodyStart = hotel.indexOf("<View style={d.hotelDetailBody}", stayStart);
+  const shell = hotel.slice(shellStart, stayStart);
   const tabListStart = shell.indexOf('accessibilityRole="tablist"');
   const tabList = shell.slice(tabListStart);
   const shellStyle = styleRule("hotelTabsShell", "hotelTabsRow");
@@ -119,9 +120,11 @@ test("Hotel section navigation keeps one deterministic compact tab row", () => {
   const tab = styleRule("hotelTab", "hotelTabActive");
 
   assert.notEqual(shellStart, -1);
+  assert.notEqual(stayStart, -1);
   assert.notEqual(bodyStart, -1);
   assert.ok(hotel.indexOf("<NativeHotelGallery") < shellStart);
-  assert.ok(shellStart < bodyStart);
+  assert.ok(shellStart < stayStart);
+  assert.ok(stayStart < bodyStart);
   assert.equal((hotel.match(/d\.hotelTabsShell/g) ?? []).length, 1);
   assert.equal((hotel.match(/accessibilityRole="tablist"/g) ?? []).length, 1);
 
