@@ -1687,7 +1687,7 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   const [targetError, setTargetError] = useState("");
   const hotelTargetInputRef = useRef<TextInput>(null);
   const hotelTargetMotion = useSearchPickerMotion(!flight && targetOpen, { controlledOpening: true });
-  const hotelTargetKeyboard = useSearchPickerKeyboardPresentation(!flight && targetOpen, hotelTargetMotion.rendered, plan?.key, hotelTargetInputRef, hotelTargetMotion);
+  const hotelTargetKeyboard = useSearchPickerKeyboardPresentation(!flight && targetOpen, hotelTargetMotion.rendered, plan?.key, hotelTargetInputRef, hotelTargetMotion, { deferKeyboardDismissUntilExit: true });
   const closeTargetSheet = useCallback(() => {
     targetIntentRef.current.close();
     setTargetOpen(false);

@@ -19,9 +19,9 @@ export function useSearchPickerKeyboardPresentation(
     startOpening: () => boolean;
     onSheetLayout: (event: LayoutChangeEvent) => void;
   },
-  options: { keyboardSynchronizedOpening?: boolean; focusOnPresentation?: boolean } = {},
+  options: { keyboardSynchronizedOpening?: boolean; focusOnPresentation?: boolean; deferKeyboardDismissUntilExit?: boolean } = {},
 ) {
-  const { keyboardSynchronizedOpening = false, focusOnPresentation = false } = options;
+  const { keyboardSynchronizedOpening = false, focusOnPresentation = false, deferKeyboardDismissUntilExit = false } = options;
   const {
     onSheetLayout: reportSheetLayout,
     openSettled,
@@ -179,14 +179,17 @@ export function useSearchPickerKeyboardPresentation(
     }
     if (!visible) {
       clearNoSoftKeyboardFallback();
-      Keyboard.dismiss();
+      // Compact sheets can remain mounted while their exit animation runs.
+      // Keep the keyboard geometry stable until that retained exit completes,
+      // then dismiss it as the modal leaves the tree.
+      if (!deferKeyboardDismissUntilExit || !rendered) Keyboard.dismiss();
       return;
     }
     // A close/reopen can interrupt the exit while the native Modal remains
     // presented. It will not emit onShow again, but its mounted layout is
     // already a valid focus lifecycle signal for the new generation.
     if (modalPresentedRef.current) prepareCurrentOpening();
-  }, [clearNoSoftKeyboardFallback, prepareCurrentOpening, rendered, visible]);
+  }, [clearNoSoftKeyboardFallback, deferKeyboardDismissUntilExit, prepareCurrentOpening, rendered, visible]);
 
   useEffect(() => clearNoSoftKeyboardFallback, [clearNoSoftKeyboardFallback]);
 
