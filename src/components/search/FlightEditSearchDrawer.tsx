@@ -19,6 +19,7 @@ import {
 import { createPortal } from "react-dom";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { translations as enTranslations } from "@/lib/i18n/en";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { openMobilePickerWithKeyboard } from "@/components/search/mobilePickerKeyboardFocus";
@@ -83,7 +84,8 @@ export function FlightEditSearchDrawer({
   presentation = "fullscreen",
   resultsMode = false,
 }: Props) {
-  const { locale } = useLocale();
+  const { locale, t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [draft, setDraft] = useState(initialValue);
   const [airportPicker, setAirportPicker] = useState<
     "origin" | "destination" | null
@@ -223,6 +225,7 @@ export function FlightEditSearchDrawer({
         )
       : formatTravelDateDisplay(draft.departureDate, locale);
   const travelerTotal = draft.adults + draft.children + draft.infants;
+  const travelerSummary = `${new Intl.NumberFormat(locale).format(travelerTotal)} ${t(travelerTotal === 1 ? "deals.travelerSingular" : "deals.travelerPlural")}, ${t(draft.cabinClass === "premium-economy" ? "premiumEconomy" : draft.cabinClass)}`;
   const validMultiCity =
     draft.legs.length >= MULTI_CITY_MIN_LEGS &&
     draft.legs.length <= MULTI_CITY_MAX_LEGS &&
@@ -320,11 +323,11 @@ export function FlightEditSearchDrawer({
               id="flight-mobile-search-title"
               className="text-xl font-bold leading-6 tracking-[-0.01em] text-slate-950"
             >
-              Edit flight search
+              {t("editFlightSearch")}
             </h2>
             <button
               type="button"
-              aria-label="Close edit search"
+              aria-label={t("closeEditSearch")}
               onClick={closeDrawer}
               className="inline-flex h-11 w-11 items-center justify-center rounded-[10px] text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
             >
@@ -336,15 +339,15 @@ export function FlightEditSearchDrawer({
           <div className="mx-auto flex w-full min-w-0 max-w-xl flex-col gap-3.5">
             <div
               role="radiogroup"
-              aria-label="Trip type"
+              aria-label={t("tripType")}
               data-mobile-trip-type-grid
               className="grid min-h-11 w-full min-w-0 grid-cols-3 items-stretch gap-1 rounded-[13px] bg-slate-100/75 p-1"
             >
               {(
                 [
-                  ["round-trip", "Round-trip"],
-                  ["one-way", "One-way"],
-                  ["multi-city", "Multi-city"],
+                  ["round-trip", t("roundTrip")],
+                  ["one-way", t("oneWay")],
+                  ["multi-city", t("multiCity")],
                 ] as const
               ).map(([value, label]) => (
                 <button
@@ -416,8 +419,8 @@ export function FlightEditSearchDrawer({
                     data-mobile-field="origin"
                   >
                     {field(
-                      "Origin",
-                      firstLeg.origin || "Choose origin",
+                      t("origin"),
+                      firstLeg.origin || t("chooseOrigin"),
                       <MapPin
                         className="h-5 w-5 text-slate-700"
                         aria-hidden="true"
@@ -428,7 +431,7 @@ export function FlightEditSearchDrawer({
                   </button>
                   <button
                     type="button"
-                    aria-label="Swap origin and destination"
+                    aria-label={t("swapOriginDestination")}
                     onClick={() =>
                       setDraft((current) => ({
                         ...current,
@@ -461,8 +464,8 @@ export function FlightEditSearchDrawer({
                     data-mobile-field="destination"
                   >
                     {field(
-                      "Destination",
-                      firstLeg.destination || "Choose destination",
+                      t("destination"),
+                      firstLeg.destination || t("chooseDestination"),
                       <MapPin
                         className="h-5 w-5 text-slate-700"
                         aria-hidden="true"
@@ -478,12 +481,12 @@ export function FlightEditSearchDrawer({
                   onClick={() => setDatePickerOpen(true)}
                   className={`${fieldClass} border-t border-slate-200`}
                   data-mobile-field="dates"
-                  title={travelDatesDisplay ?? "Travel dates"}
-                  aria-label={`Travel dates: ${travelDatesDisplay ?? "Travel dates"}`}
+                  title={travelDatesDisplay ?? t("travelDates")}
+                  aria-label={`${t("travelDates")}: ${travelDatesDisplay ?? t("travelDates")}`}
                 >
                   {field(
-                    "Travel dates",
-                    travelDatesDisplay ?? "Travel dates",
+                    t("travelDates"),
+                    travelDatesDisplay ?? t("travelDates"),
                     <Calendar
                       className="h-5 w-5 text-slate-700"
                       aria-hidden="true"
@@ -498,8 +501,8 @@ export function FlightEditSearchDrawer({
                   data-mobile-field="travelers"
                 >
                   {field(
-                    "Travelers and cabin",
-                    `${travelerTotal} ${travelerTotal === 1 ? "traveler" : "travelers"}, ${draft.cabinClass.replace("-", " ")}`,
+                    t("travelersAndCabin"),
+                    travelerSummary,
                     <UserRound
                       className="h-5 w-5 text-slate-700"
                       aria-hidden="true"
@@ -532,8 +535,8 @@ export function FlightEditSearchDrawer({
                     data-mobile-field="origin"
                   >
                     {field(
-                      "Origin",
-                      firstLeg.origin || "Choose origin",
+                      t("origin"),
+                      firstLeg.origin || t("chooseOrigin"),
                       <MapPin
                         className="h-5 w-5 text-slate-700"
                         aria-hidden="true"
@@ -544,7 +547,7 @@ export function FlightEditSearchDrawer({
                   </button>
                   <button
                     type="button"
-                    aria-label="Swap origin and destination"
+                    aria-label={t("swapOriginDestination")}
                     onClick={() =>
                       setDraft((current) => ({
                         ...current,
@@ -577,8 +580,8 @@ export function FlightEditSearchDrawer({
                     data-mobile-field="destination"
                   >
                     {field(
-                      "Destination",
-                      firstLeg.destination || "Choose destination",
+                      t("destination"),
+                      firstLeg.destination || t("chooseDestination"),
                       <MapPin
                         className="h-5 w-5 text-slate-700"
                         aria-hidden="true"
@@ -598,12 +601,12 @@ export function FlightEditSearchDrawer({
                     onClick={() => setDatePickerOpen(true)}
                     className={fieldClass}
                     data-mobile-field="dates"
-                    title={travelDatesDisplay ?? "Travel dates"}
-                    aria-label={`Travel dates: ${travelDatesDisplay ?? "Travel dates"}`}
+                    title={travelDatesDisplay ?? t("travelDates")}
+                    aria-label={`${t("travelDates")}: ${travelDatesDisplay ?? t("travelDates")}`}
                   >
                     {field(
-                      "Travel dates",
-                      travelDatesDisplay ?? "Travel dates",
+                      t("travelDates"),
+                      travelDatesDisplay ?? t("travelDates"),
                       <Calendar
                         className="h-5 w-5 text-slate-700"
                         aria-hidden="true"
@@ -618,8 +621,8 @@ export function FlightEditSearchDrawer({
                     data-mobile-field="travelers"
                   >
                     {field(
-                      "Travelers and cabin",
-                      `${travelerTotal} ${travelerTotal === 1 ? "traveler" : "travelers"}, ${draft.cabinClass.replace("-", " ")}`,
+                      t("travelersAndCabin"),
+                      travelerSummary,
                       <UserRound
                         className="h-5 w-5 text-slate-700"
                         aria-hidden="true"
@@ -638,7 +641,7 @@ export function FlightEditSearchDrawer({
               disabled={!canSearch}
               className="mt-1 h-12 w-full rounded-[11px] bg-[#004BB8] text-[15px] font-semibold text-white shadow-sm"
             >
-              Search
+              {t("search")}
             </Button>
           </div>
         </div>
@@ -663,7 +666,7 @@ export function FlightEditSearchDrawer({
         commitOnSelect={resultsMode}
         open={airportPicker === "origin"}
         field="origin"
-        title="Choose origin"
+        title={t("chooseOrigin")}
         inputId="edit-flight-origin"
         value={firstLeg.origin}
         selectedCode={firstLeg.origin}
@@ -685,7 +688,7 @@ export function FlightEditSearchDrawer({
         commitOnSelect={resultsMode}
         open={airportPicker === "destination"}
         field="destination"
-        title="Choose destination"
+        title={t("chooseDestination")}
         inputId="edit-flight-destination"
         value={firstLeg.destination}
         selectedCode={firstLeg.destination}
@@ -705,7 +708,7 @@ export function FlightEditSearchDrawer({
       />
       <MobileDatePickerDialog
         open={datePickerOpen}
-        title="Travel dates"
+        title={t("travelDates")}
         titleId="edit-flight-dates-title"
         dialogId="edit-flight-dates"
         launcherRef={datesRef}
@@ -715,11 +718,11 @@ export function FlightEditSearchDrawer({
         locale={locale}
         weekdays={weekdays}
         labels={{
-          selectDates: "Select dates",
-          start: "Departure",
-          end: "Return",
-          done: "Done",
-          selectDatePrefix: "Select",
+          selectDates: t("travelDates"),
+          start: t("departure"),
+          end: t("return"),
+          done: t("done"),
+          selectDatePrefix: t("selectDateAriaPrefix"),
         }}
         isDateDisabled={(date) => date < today()}
         onCommit={(departureDate, returnDate) =>
@@ -736,7 +739,7 @@ export function FlightEditSearchDrawer({
       {/* eslint-disable react/no-children-prop -- `children` below is a traveler label inside a strings object. */}
       <FlightMobilePickerShell
         open={travelerPickerOpen}
-        title="Travelers and cabin"
+        title={t("travelersAndCabin")}
         titleId="edit-flight-travelers-title"
         dialogId="edit-flight-travelers"
         launcherRef={travelersRef}
@@ -749,7 +752,7 @@ export function FlightEditSearchDrawer({
             className="h-12 w-full rounded-[11px] bg-[#004BB8] text-[15px] font-semibold text-white hover:bg-[#003F9E] active:bg-[#003786]"
             onClick={() => setTravelerPickerOpen(false)}
           >
-            Done
+            {t("done")}
           </Button>
         }
       >
@@ -763,21 +766,21 @@ export function FlightEditSearchDrawer({
               : draft.cabinClass
           }
           strings={{
-            travelers: "Travelers",
-            adults: "Adults",
-            adultDescription: "18 years and above",
-            children: "Children",
-            childDescription: "2 to 17 years",
-            infants: "Infants",
-            infantDescription: "Under 2 years",
-            cabinClass: "Cabin class",
-            economy: "Economy",
-            business: "Business",
-            first: "First",
-            tip: "Tip",
-            baggageTip: "Baggage allowance may vary by airline.",
-            decrease: (label) => `Decrease ${label}`,
-            increase: (label) => `Increase ${label}`,
+            travelers: t("travelers"),
+            adults: t("adults"),
+            adultDescription: t("mobileTravelerCabin.adultDescription"),
+            children: t("children"),
+            childDescription: t("mobileTravelerCabin.childDescription"),
+            infants: t("infantsOnLap"),
+            infantDescription: t("mobileTravelerCabin.infantDescription"),
+            cabinClass: t("cabinClass"),
+            economy: t("economy"),
+            business: t("business"),
+            first: t("first"),
+            tip: t("mobileTravelerCabin.tip"),
+            baggageTip: t("mobileTravelerCabin.baggageTip"),
+            decrease: (label) => t("deals.decreaseCountAria").replace("{{label}}", label),
+            increase: (label) => t("deals.increaseCountAria").replace("{{label}}", label),
           }}
           onAdultsChange={(adults) =>
             setDraft((current) => ({ ...current, adults }))

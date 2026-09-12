@@ -8,6 +8,22 @@ responses, and KAYAK sandbox click-out for flights, hotels and cars. It does not
 replace the normal Duffel flight pipeline or the hotel/car planning catalogues.
 It does not enable native mobile search, real booking, payments, or production access.
 
+Local work now also includes explicitly gated sandbox views on the normal
+`/flights/results`, `/hotels/results`, and `/cars/results` routes. The normal travel
+pages expose a labeled test entry only when the server sandbox gate is enabled.
+That entry selects the matching sandbox search type; its form can navigate to the
+normal results route. This does not mix test offers with live provider inventory.
+Results are shown twenty at a time, and changing flight criteria cancels/discards
+the previous search. All three results routes are marked noindex in sandbox mode.
+
+The normal-route local browser checks returned 538 flight offers, 40 hotel offers,
+and 116 car offers (cars succeeded after one clean timeout/retry). The hotel lookup
+and form-to-results navigation were exercised, as was the Cars landing-page entry.
+These counts are observations of simulated inventory, not guaranteed counts.
+Twenty-two focused service/adapter/route/lifecycle checks and two entry-gate checks
+pass. The full build passed before the entry links were added; its updated rerun
+is recorded in the baseline validation checkpoint. Staging remains unconfigured.
+
 The current preview supports adult economy one-way/return flights, one-room adult
 hotel searches, and same-airport car pickup/return at noon. These limits are explicit;
 unsupported passenger/room/itinerary combinations are not silently remapped.

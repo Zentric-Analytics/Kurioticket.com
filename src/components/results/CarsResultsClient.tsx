@@ -1803,6 +1803,8 @@ export function CarsResultsExperience({
   const mobileFiltersModalityRef = useRef<OverlayActivationModality>("programmatic");
   const filtersDialogRef = useRef<HTMLElement | null>(null);
   const filtersCloseButtonRef = useRef<HTMLButtonElement | null>(null);
+  const quickFiltersDialogRef = useRef<HTMLElement | null>(null);
+  const quickFiltersCloseButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(
     null,
   );
@@ -2016,6 +2018,7 @@ export function CarsResultsExperience({
   const openMobileFiltersDrawer = (launcher: HTMLButtonElement, modality: OverlayActivationModality) => {
     mobileFiltersLauncherRef.current = launcher;
     mobileFiltersModalityRef.current = modality;
+    setQuickFilterGroupId(null);
     setFiltersOpen(true);
   };
   useEffect(
@@ -2059,27 +2062,42 @@ export function CarsResultsExperience({
       return releaseExistingLock;
     }
     let shouldRestoreFocus = true;
+    const activeDialogRef = quickFilterGroupId ? quickFiltersDialogRef : filtersDialogRef;
+    const activeCloseButtonRef = quickFilterGroupId ? quickFiltersCloseButtonRef : filtersCloseButtonRef;
     const focusDrawer = requestAnimationFrame(() =>
-      filtersCloseButtonRef.current?.focus({ preventScroll: true }),
+      activeCloseButtonRef.current?.focus({ preventScroll: true }),
     );
     const closeForDesktop = () => {
       if (!media.matches) {
         shouldRestoreFocus = false;
         setFiltersOpen(false);
+        setQuickFilterGroupId(null);
       }
     };
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setFiltersOpen(false);
-      if (event.key === "Tab" && filtersDialogRef.current) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setFiltersOpen(false);
+        setQuickFilterGroupId(null);
+      }
+      const dialog = activeDialogRef.current;
+      if (event.key === "Tab" && dialog) {
         const focusable = [
-          ...filtersDialogRef.current.querySelectorAll<HTMLElement>(
+          ...dialog.querySelectorAll<HTMLElement>(
             'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
           ),
         ].filter(isSafelyFocusableElement);
-        if (!focusable.length) return;
+        if (!focusable.length) {
+          event.preventDefault();
+          dialog.focus({ preventScroll: true });
+          return;
+        }
         const first = focusable[0],
           last = focusable[focusable.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
+        if (document.activeElement === dialog || !dialog.contains(document.activeElement)) {
+          event.preventDefault();
+          (event.shiftKey ? last : first).focus({ preventScroll: true });
+        } else if (event.shiftKey && document.activeElement === first) {
           event.preventDefault();
           last.focus({ preventScroll: true });
         } else if (!event.shiftKey && document.activeElement === last) {
@@ -2429,7 +2447,12 @@ export function CarsResultsExperience({
                           type="button"
                           aria-haspopup="dialog"
                           aria-expanded={quickFilterGroupId === group.id}
-                          onClick={() => setQuickFilterGroupId(group.id)}
+                          onClick={(event) => {
+                            mobileFiltersLauncherRef.current = event.currentTarget;
+                            mobileFiltersModalityRef.current = getOverlayActivationModality(event);
+                            setFiltersOpen(false);
+                            setQuickFilterGroupId(group.id);
+                          }}
                           className={cn(
                             "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
                             count > 0
@@ -2789,11 +2812,11 @@ export function CarsResultsExperience({
       ) : null}
       {activeQuickFilterGroup ? createPortal(
           <div className="fixed inset-0 z-[10010] flex items-end bg-slate-950/35 px-3 pt-16 backdrop-blur-[1px] lg:hidden" role="presentation" onMouseDown={() => setQuickFilterGroupId(null)}>
-            <section role="dialog" aria-modal="true" aria-labelledby={`cars-quick-${activeQuickFilterGroup.id}`} onMouseDown={(event) => event.stopPropagation()} className="w-full rounded-t-[1.5rem] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-24px_70px_-30px_rgba(15,23,42,0.65)]">
+            <section ref={quickFiltersDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={`cars-quick-${activeQuickFilterGroup.id}`} onMouseDown={(event) => event.stopPropagation()} className="w-full rounded-t-[1.5rem] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-24px_70px_-30px_rgba(15,23,42,0.65)]">
               <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-slate-300" aria-hidden="true" />
               <div className="flex items-center justify-between px-5 pb-3 pt-3">
                 <div><h2 id={`cars-quick-${activeQuickFilterGroup.id}`} className="text-lg font-extrabold text-slate-950">{activeQuickFilterGroup.title ?? t(activeQuickFilterGroup.titleKey)}</h2>{(selectedCarFilters[activeQuickFilterGroup.id]?.length ?? 0) > 0 ? <p className="mt-0.5 text-xs font-semibold text-[#536B92]">{selectedCarFilters[activeQuickFilterGroup.id]?.length} selected</p> : null}</div>
-                <button type="button" aria-label="Close" onClick={() => setQuickFilterGroupId(null)} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"><X className="h-5 w-5" aria-hidden="true" /></button>
+                <button ref={quickFiltersCloseButtonRef} type="button" aria-label="Close" onClick={() => setQuickFilterGroupId(null)} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"><X className="h-5 w-5" aria-hidden="true" /></button>
               </div>
               <div className="max-h-[55dvh] overflow-y-auto overscroll-contain border-y border-slate-100 px-4 py-2">
                 {activeQuickFilterGroup.options.map((option) => {

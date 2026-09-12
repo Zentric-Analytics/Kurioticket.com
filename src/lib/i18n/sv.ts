@@ -2,8 +2,12 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
-  "accountDashboard.recently": "Nyligen",
   ...en,
+  multiCity: "Flera städer",
+  "deals.results.package.view.hotel": "Visa hotellresultat",
+  "accountDashboard.recently": "Nyligen",
+  "accountDashboard.hub.savedRecent": "Sparat och senaste",
+  "accountMenu.savedRecent.label": "Sparat och senaste",
   "deals.mobileTravelersTitle": "Resenärer",
   "mobileTravelerCabin.title": "Resenärer och kabin",
   "mobileTravelerCabin.adultDescription": "18 år och äldre",
@@ -253,7 +257,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.personalization.title": "Personalisering",
   "accountDashboard.preferences.customization.personalization.description": "Styr hur Kurioticket anpassar dina rekommendationer.",
   "accountDashboard.preferences.customization.personalizeSearches": "Använd mina sökningar för att anpassa rekommendationer",
-  "accountDashboard.preferences.customization.personalizedTravelResepaket": "Visa personliga reseerbjudanden",
+  "accountDashboard.preferences.customization.personalizedTravelDeals": "Visa personliga reseerbjudanden",
   "accountDashboard.preferences.customization.rememberRecentSearches": "Kom ihåg mina senaste sökningar",
   "accountDashboard.preferences.customization.communicationStyle.title": "Kommunikationsstil",
   "accountDashboard.preferences.customization.communicationStyle.description": "Välj hur du vill att Kurioticket ska kommunicera med dig.",

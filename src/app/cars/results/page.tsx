@@ -11,6 +11,16 @@ import { getTranslations } from "@/lib/i18n";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
 import { searchCars } from "@/services/travel/carAggregator";
+import { notFound } from "next/navigation";
+import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
+import { adaptKayakCarSearch } from "@/services/travel/kayakSearchAdapter";
+import { KayakSandboxResults } from "@/components/results/KayakSandboxResults";
+
+export async function generateMetadata({ searchParams }: { searchParams: CarsResultsSearchParams }) {
+  return getParamValue(await searchParams, "provider") === "kayak-sandbox"
+    ? { title: "KAYAK sandbox car results", robots: { index: false, follow: false } }
+    : {};
+}
 
 type CarsResultsSearchParams = Promise<
   Record<string, string | string[] | undefined>
@@ -49,6 +59,13 @@ export default async function CarsResultsPage({
   searchParams: CarsResultsSearchParams;
 }) {
   const params = await searchParams;
+  if (getParamValue(params, "provider") === "kayak-sandbox") {
+    if (!isKayakSandboxEnabled()) notFound();
+    const adapted = adaptKayakCarSearch(Object.fromEntries(Object.keys(params).map((key) => [key, getParamValue(params, key)])));
+    return <><AppHeader />{adapted.supported
+      ? <KayakSandboxResults key={JSON.stringify(adapted.search)} search={adapted.search} />
+      : <main className="page-shell py-6"><h1>KAYAK sandbox search unavailable</h1><p>{adapted.reason}</p><a href="/sandbox/kayak">Edit sandbox search</a></main>}</>;
+  }
   const pickupLocation = getParamValue(params, "pickupLocation");
   const dropoffLocation = getParamValue(params, "dropoffLocation");
   const returnToDifferentLocation = hasExplicitDifferentReturnLocation({

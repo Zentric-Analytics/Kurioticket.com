@@ -5930,9 +5930,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               className="hidden min-h-9 items-center gap-7 px-2 sm:flex lg:gap-10"
             >
               {[
-                { label: "Round-trip", value: "round-trip" },
-                { label: "One-way", value: "one-way" },
-                { label: "Multi-city", value: "multi-city" },
+                { label: t("roundTrip"), value: "round-trip" },
+                { label: t("oneWay"), value: "one-way" },
+                { label: t("multiCity"), value: "multi-city" },
               ].map((option) => {
                 const selected = tripTypeInput === option.value;
                 return (

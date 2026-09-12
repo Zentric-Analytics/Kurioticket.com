@@ -32,7 +32,7 @@ test("mobile date dialogs expose only the shared Done footer", () => {
 
 test("desktop calendar implementations remain available beside mobile dialogs", () => {
   assert.match(sources[0][1], /CarsRentalDatePickerContent/);
-  assert.match(sources[2][1], /desktopPopoverClassName/);
+  assert.match(sources[2][1], /<HotelDesktopPopover[\s\S]*preferredWidth=\{570\}/);
   assert.match(sources[3][1], /DealsFlightDatesPopover/);
   assert.match(sources[4][1], /sm:block/);
 });

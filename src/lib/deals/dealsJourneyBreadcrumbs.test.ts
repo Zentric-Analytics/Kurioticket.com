@@ -18,12 +18,13 @@ import {
 
 const search = (mode: DealsPackageMode) =>
   ({
+    ...createDefaultDealsSearch(),
     mode,
-    origin: "Lagos",
-    destination: "Paris",
-    startDate: "2026-08-07",
-    endDate: "2026-08-09",
-  }) as DealsSearch;
+    flightOriginText: "Lagos",
+    flightDestinationText: "Paris",
+    sharedTravelStartDate: "2026-08-07",
+    sharedTravelEndDate: "2026-08-09",
+  }) satisfies DealsSearch;
 
 const expected: Record<
   DealsPackageMode,
@@ -158,9 +159,10 @@ test("details labels retain accessible product context", () => {
     ).find((item) => item.status === "current");
     assert.equal(current?.labelKey, "deals.breadcrumb.details");
     assert.equal(current?.accessibleLabelKey, `deals.breadcrumb.${accessible}`);
+    assert.ok(current && (current.id === "hotel" || current.id === "flight" || current.id === "car"));
     assert.equal(
       current?.href,
-      buildDealsJourneyUrl(`${current?.id}-results`, search(mode)),
+      buildDealsJourneyUrl(`${current.id}-results`, search(mode)),
     );
   }
 });

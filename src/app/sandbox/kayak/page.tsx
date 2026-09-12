@@ -7,8 +7,10 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 export const dynamic = "force-dynamic";
-export default function KayakSandboxPage() {
+export default async function KayakSandboxPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   if (!isKayakSandboxEnabled()) notFound();
+  const requested = (await searchParams).vertical;
+  const vertical = requested === "hotels" || requested === "cars" ? requested : "flights";
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
       <p className="text-sm font-semibold">KURIOTICKET · INTEGRATION PREVIEW</p>
@@ -18,7 +20,7 @@ export default function KayakSandboxPage() {
         KAYAK’s test page, not a real booking. Existing live search providers
         are unchanged.
       </p>
-      <KayakSandboxSearch />
+      <KayakSandboxSearch key={vertical} initialVertical={vertical} />
     </main>
   );
 }

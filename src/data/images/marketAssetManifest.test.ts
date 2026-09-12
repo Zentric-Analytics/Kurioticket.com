@@ -51,10 +51,11 @@ describe("validateMarketAssetManifest", () => {
   });
 
   it("requires uppercase market codes and lowercase region codes", () => {
-    const result = validateMarketAssetManifest({
-      ...validManifest,
-      entries: [{ ...validManifest.entries[0], market: "us", region: "North-America" }],
-    });
+    const malformed = structuredClone(validManifest);
+    // Simulate malformed external data without weakening the manifest type.
+    Reflect.set(malformed.entries[0], "market", "us");
+    Reflect.set(malformed.entries[0], "region", "North-America");
+    const result = validateMarketAssetManifest(malformed);
 
     assert.equal(result.valid, false);
     assert.ok(result.errors.some((error) => error.includes("market must be uppercase")));

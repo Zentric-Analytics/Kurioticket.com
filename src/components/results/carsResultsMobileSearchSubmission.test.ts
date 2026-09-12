@@ -105,7 +105,7 @@ test("mobile Search replaces stale Cars results with localized branded loading",
   const pendingBranch = source.slice(
     source.indexOf("if (isSearchSubmitting) {"),
     source.indexOf(
-      'return (\n    <main className="flex-1 bg-[#f6f8fb] pb-8">',
+      '\n  return (',
       source.indexOf("if (isSearchSubmitting) {") + 1,
     ),
   );

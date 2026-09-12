@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { cookies } from "next/headers";
 
 import { redirect } from "next/navigation";
@@ -9,12 +10,20 @@ import { FlightResultsClient } from "@/components/results/FlightResultsClient";
 import { getTranslations } from "@/lib/i18n";
 import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
 import { parseFlightLegParams } from "@/lib/flights/flightSearchJourney";
+import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
+import { adaptKayakFlightSearch } from "@/services/travel/kayakSearchAdapter";
+import { flightSearchSchema } from "@/lib/validation";
+import { KayakSandboxResults } from "@/components/results/KayakSandboxResults";
+import { notFound } from "next/navigation";
 
 type FlightResultsSearchParams = Promise<
   Record<string, string | string[] | undefined>
 >;
 
-export async function generateMetadata() {
+export async function generateMetadata({ searchParams }: { searchParams: FlightResultsSearchParams }) {
+  if (getParamValue(await searchParams, "provider") === "kayak-sandbox") {
+    return { title: "KAYAK sandbox flight results", robots: { index: false, follow: false } };
+  }
   const cookieStore = await cookies();
   const t = getTranslations(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
 
@@ -114,6 +123,16 @@ export default async function FlightResultsPage({
   searchParams: FlightResultsSearchParams;
 }) {
   const params = await searchParams;
+
+  if (getParamValue(params, "provider") === "kayak-sandbox") {
+    if (!isKayakSandboxEnabled()) notFound();
+    const values = Object.fromEntries(Object.entries(params).map(([key, value]) => [key, Array.isArray(value) ? value[0] : value]));
+    const parsed = flightSearchSchema.safeParse(values);
+    const adapted = parsed.success ? adaptKayakFlightSearch(parsed.data) : null;
+    return <><AppHeader />{adapted?.supported
+      ? <KayakSandboxResults key={JSON.stringify(adapted.search)} search={adapted.search} />
+      : <main className="page-shell py-6"><h1>KAYAK sandbox search unavailable</h1><p>{adapted && !adapted.supported ? adapted.reason : "Check the flight search details."}</p><Link href="/flights">Edit flight search</Link></main>}</>;
+  }
 
   if (!hasValidFlightSearchParams(params)) {
     redirect("/flights");

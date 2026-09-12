@@ -209,7 +209,7 @@ test("mobile compact Hotel search has narrow gutters and distinct back, edit, an
     /onClick=\{openMobileHotelSearch\}[\s\S]*?aria-label=\{t\("editHotelSearch"\) \|\| "Edit hotel search"\}/,
   );
   const editButton = compactSearch.match(
-    /<button\n\s+type="button"\n\s+onClick=\{openMobileHotelSearch\}[\s\S]*?<\/button>/,
+    /<button\s+type="button"\s+onClick=\{openMobileHotelSearch\}[\s\S]*?<\/button>/,
   )?.[0];
   assert.ok(editButton, "the existing middle Edit Search button exists");
   assert.match(
@@ -237,6 +237,6 @@ test("mobile compact Hotel search has narrow gutters and distinct back, edit, an
   assert.doesNotMatch(compactSearch, /<ChevronRight/);
   assert.match(
     compactSearch,
-    /onClick=\{\(event\) => \{[\s\S]*?setFiltersOpen\(true\); \}\}[\s\S]*?<SlidersHorizontal[\s\S]*?aria-hidden="true"[\s\S]*?\{t\("filters"\)\}/,
+    /onClick=\{\(event\) => \{[\s\S]*?setFiltersOpen\(true\);\s*\}\}[\s\S]*?<SlidersHorizontal[\s\S]*?aria-hidden="true"[\s\S]*?\{t\("filters"\)\}/,
   );
 });

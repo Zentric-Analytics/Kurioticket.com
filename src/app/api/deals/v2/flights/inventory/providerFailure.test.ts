@@ -91,7 +91,7 @@ test("server diagnostics expose sanitized integration codes and aggregate counts
   const result = {
     ...failure("invalid_response"),
     diagnostic: {
-      code: "duffel_offer_normalization_dropped",
+      code: "duffel_offer_normalization_dropped" as const,
       counts: { graphOfferCount: 2, normalizedOfferCount: 0 },
     },
   };

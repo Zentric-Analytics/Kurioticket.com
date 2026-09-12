@@ -474,9 +474,9 @@ test("Africa Batch 1 enrichment leaves other non-editorial destinations valid", 
   const remaining = buildCanonicalExploreDestinations(airports)
     .filter(({ id }) => !editorialIds.has(id));
   assert.ok(remaining.length > 0);
-  assert.ok(remaining.every(({ summary, description, highlights, editorialProvenance }) =>
-    summary === undefined && description === undefined && highlights === undefined &&
-    editorialProvenance === undefined));
+  assert.ok(remaining.every((record) =>
+    ["summary", "description", "highlights", "editorialProvenance"].every((key) =>
+      Reflect.get(record, key) === undefined)));
 });
 
 test("Africa Batch 2 adds only the four North African destinations that passed the source gate", () => {
@@ -617,7 +617,7 @@ test("Africa Batch 5 adds 10 canonical inland West and Central African destinati
     assert.equal(enriched.primaryAirportCode, canonical.primaryAirportCode);
     assert.deepEqual(enriched.airportCodes, canonical.airportCodes);
     assert.deepEqual(enriched.searchAliases, canonical.searchAliases);
-    assert.equal(enriched.image, canonical.image);
+    assert.equal(enriched.imageDestinationId, canonical.imageDestinationId);
     assert.ok(record.summary.startsWith(canonical.name));
     assert.ok(record.summary.trim().split(/\s+/).length >= 13);
     assert.ok(record.summary.trim().split(/\s+/).length <= 18);
@@ -663,7 +663,7 @@ test("Africa Batch 6 adds four canonical Horn and Great Lakes destinations", () 
     assert.equal(enriched.primaryAirportCode, canonical.primaryAirportCode);
     assert.deepEqual(enriched.airportCodes, canonical.airportCodes);
     assert.deepEqual(enriched.searchAliases, canonical.searchAliases);
-    assert.equal(enriched.image, canonical.image);
+    assert.equal(enriched.imageDestinationId, canonical.imageDestinationId);
     assert.ok(record.summary.startsWith(canonical.name));
     assert.ok(record.summary.trim().split(/\s+/).length >= 13);
     assert.ok(record.summary.trim().split(/\s+/).length <= 18);
@@ -709,7 +709,7 @@ test("the final Africa batch enriches exactly the three previously deferred cano
     assert.equal(enriched.primaryAirportCode, canonical.primaryAirportCode);
     assert.deepEqual(enriched.airportCodes, canonical.airportCodes);
     assert.deepEqual(enriched.searchAliases, canonical.searchAliases);
-    assert.equal(enriched.image, canonical.image);
+    assert.equal(enriched.imageDestinationId, canonical.imageDestinationId);
     assert.ok(record.summary.startsWith(canonical.name));
     assert.ok(record.summary.trim().split(/\s+/).length >= 13);
     assert.ok(record.summary.trim().split(/\s+/).length <= 18);
@@ -1849,7 +1849,7 @@ test("Caribbean Batch 1 appends ten complete, previously non-editorial canonical
     const enriched = exploreDestinations.find(({ id }) => id === record.id);
     assert.ok(canonical);
     assert.ok(enriched);
-    assert.equal(canonical.editorialProvenance, undefined);
+    assert.equal(Reflect.get(canonical, "editorialProvenance"), undefined);
     assert.equal(enriched.summary, record.summary);
     assert.equal(enriched.description, record.description);
     assert.deepEqual(enriched.highlights, record.highlights);
@@ -1953,7 +1953,7 @@ test("South America Batch 1 appends seven complete, previously non-editorial can
     const enriched = exploreDestinations.find(({ id }) => id === record.id);
     assert.ok(canonical);
     assert.ok(enriched);
-    assert.equal(canonical.editorialProvenance, undefined);
+    assert.equal(Reflect.get(canonical, "editorialProvenance"), undefined);
     assert.equal(enriched.summary, record.summary);
     assert.equal(enriched.description, record.description);
     assert.deepEqual(enriched.highlights, record.highlights);
@@ -2050,7 +2050,7 @@ test("South America Batch 2 appends seven complete, previously non-editorial can
     const enriched = exploreDestinations.find(({ id }) => id === record.id);
     assert.ok(canonical);
     assert.ok(enriched);
-    assert.equal(canonical.editorialProvenance, undefined);
+    assert.equal(Reflect.get(canonical, "editorialProvenance"), undefined);
     assert.equal(enriched.summary, record.summary);
     assert.equal(enriched.description, record.description);
     assert.deepEqual(enriched.highlights, record.highlights);
@@ -2142,7 +2142,7 @@ test("Oceania Batch 1 appends seven complete, previously non-editorial canonical
     const enriched = exploreDestinations.find(({ id }) => id === record.id);
     assert.ok(canonical);
     assert.ok(enriched);
-    assert.equal(canonical.editorialProvenance, undefined);
+    assert.equal(Reflect.get(canonical, "editorialProvenance"), undefined);
     assert.equal(enriched.summary, record.summary);
     assert.equal(enriched.description, record.description);
     assert.deepEqual(enriched.highlights, record.highlights);
@@ -2237,7 +2237,7 @@ test("Pacific final batch appends ten complete, previously non-editorial canonic
     const enriched = exploreDestinations.find(({ id }) => id === record.id);
     assert.ok(canonical);
     assert.ok(enriched);
-    assert.equal(canonical.editorialProvenance, undefined);
+    assert.equal(Reflect.get(canonical, "editorialProvenance"), undefined);
     assert.equal(record.summary.startsWith(canonical.name), true);
     assert.ok(record.summary.trim().split(/\s+/).length >= 13);
     assert.ok(record.summary.trim().split(/\s+/).length <= 18);
@@ -2322,7 +2322,7 @@ test("global final batch completes San Pedro Sula and repository-derived editori
   assert.equal(beforeFinalIds.has(record.id), false);
   assert.equal(canonical.name, "San Pedro Sula");
   assert.equal(canonical.country, "Honduras");
-  assert.equal(canonical.editorialProvenance, undefined);
+  assert.equal(Reflect.get(canonical, "editorialProvenance"), undefined);
   assert.equal(enriched.summary, record.summary);
   assert.equal(enriched.description, record.description);
   assert.deepEqual(enriched.highlights, record.highlights);

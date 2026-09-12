@@ -54,7 +54,7 @@ test("desktop cards use one prominent stacked airline identity", async () => {
   assert.match(source, /flight-card-flight-number[\s\S]*flight\.flightNumber/);
   assert.doesNotMatch(source, /flight-card-leg-logo|<AirlineLogo flight=\{flight\} inline/);
   assert.match(styles, /\.flight-card-header-logo \{\s*display: block;/);
-  assert.match(styles, /\.flight-card-time \{\s*font-size: 1\.375rem;[\s\S]*white-space: nowrap;/);
+  assert.match(styles, /\.flight-card-time \{\s*font-size: 1\.125rem;[\s\S]*white-space: nowrap;/);
 });
 
 test("desktop legs place factual departure and arrival dates beneath their airport codes", async () => {
@@ -65,7 +65,7 @@ test("desktop legs place factual departure and arrival dates beneath their airpo
   assert.match(leg, /\{leg\.originAirport\}[\s\S]*flight-card-departure-date[\s\S]*formatItineraryShortDate\(\{ value: leg\.departureTime, locale \}\)/);
   assert.match(leg, /\{leg\.destinationAirport\}[\s\S]*flight-card-arrival-date[\s\S]*formatItineraryShortDate\(\{ value: leg\.arrivalTime, locale \}\)/);
   assert.match(styles, /\.flight-card-route-codes \{\s*display: none;/);
-  assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-departure-date \{\s*display: none;[\s\S]*\.flight-card-route-codes \{\s*display: block;/);
+  assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-departure-date,\s*\.flight-card-arrival-date \{\s*display: block;[\s\S]*\.flight-card-route-codes \{\s*display: block;/);
 });
 
 test("desktop leg columns share strict time airport and date row tracks", async () => {
@@ -96,8 +96,8 @@ test("desktop nearby fares use a contained mobile-like hierarchy", async () => {
   const start = source.indexOf("data-desktop-nearby-fare-rail");
   const strip = source.slice(start, source.indexOf("Next nearby fare date", start) + 300);
 
-  assert.match(strip, /rounded-xl border border-slate-200 bg-white/);
-  assert.match(strip, /min-h-\[86px\]/);
-  assert.match(strip, /rounded-xl border border-slate-200 bg-white/);
-  assert.match(strip, /selected && "border-\[#075EE8\] bg-blue-50\/80/);
+  assert.match(strip, /rounded-2xl border border-slate-200\/90 bg-white/);
+  assert.match(strip, /min-h-\[76px\]/);
+  assert.match(strip, /border-l border-slate-100 bg-white/);
+  assert.match(strip, /selected && "bg-blue-50\/55 after:scale-x-100/);
 });

@@ -11,11 +11,11 @@ const loadingSource = readFileSync(
 test("Cars streams branded results below the persistent Results header", () => {
   const headerIndex = pageSource.indexOf("<AppHeader");
   const suspenseIndex = pageSource.indexOf("<Suspense");
-  const footerIndex = pageSource.indexOf("<Footer");
 
   assert.ok(headerIndex >= 0 && headerIndex < suspenseIndex);
-  assert.ok(suspenseIndex < footerIndex);
-  assert.ok(footerIndex < pageSource.indexOf("</Suspense>"));
+  assert.ok(suspenseIndex < pageSource.indexOf("<CarsResultsContent values="));
+  // The recorded loading-footer correction removed the extra page-level footer.
+  assert.doesNotMatch(pageSource, /<Footer/);
   assert.match(pageSource, /fallback=\{[\s\S]*?<CarsResultsFallback/);
   assert.match(pageSource, /<BrandedLoading/);
 });

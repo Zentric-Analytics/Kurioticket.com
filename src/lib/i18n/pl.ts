@@ -2,8 +2,12 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
-  "accountDashboard.recently": "Ostatnio",
   ...en,
+  multiCity: "Wiele miast",
+  "deals.results.package.view.hotel": "Zobacz wyniki hoteli",
+  "accountDashboard.recently": "Ostatnio",
+  "accountDashboard.hub.savedRecent": "Zapisane i ostatnie",
+  "accountMenu.savedRecent.label": "Zapisane i ostatnie",
   "deals.mobileTravelersTitle": "Podróżni",
   "mobileTravelerCabin.title": "Podróżni i klasa kabiny",
   "mobileTravelerCabin.adultDescription": "18 lat i więcej",
@@ -178,7 +182,7 @@ export const translations: TranslationDictionary = {
     "Kontroluj, jak Kurioticket personalizuje Twoje rekomendacje.",
   "accountDashboard.preferences.customization.personalizeSearches":
     "Używaj moich wyszukiwań do personalizacji rekomendacji",
-  "accountDashboard.preferences.customization.personalizedTravelPakiety":
+  "accountDashboard.preferences.customization.personalizedTravelDeals":
     "Pokazuj spersonalizowane oferty podróży",
   "accountDashboard.preferences.customization.rememberRecentSearches":
     "Zapamiętuj moje ostatnie wyszukiwania",

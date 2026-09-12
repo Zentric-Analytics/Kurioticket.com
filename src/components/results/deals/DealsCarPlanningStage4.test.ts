@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
+import { getGuidedDealsProductOrder } from "@/lib/deals/dealsGuidedJourneyOrder";
+import ts from "typescript";
 
 const read = (path: string) => readFileSync(path, "utf8");
 const stage = read("src/components/results/deals/DealsCarResultsStage.tsx");
@@ -21,9 +23,22 @@ test("guided results use explicit truthful planning presentation", () => {
     "Lowest estimated total",
   ])
     assert.ok(translations.includes(copy));
-  assert.match(card, /!guidedPlanning && offer\.freeCancellation/);
-  assert.match(card, /!guidedPlanning && offer\.payAtPickup/);
-  assert.match(card, /!guidedPlanning && offer\.taxesAndFeesIncluded/);
+  const parsed = ts.createSourceFile("CarResultCard.tsx", card, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  let cancellationChecks = 0;
+  const visit = (node: ts.Node) => {
+    if (ts.isPropertyAccessExpression(node) && node.getText(parsed) === "offer.freeCancellation") {
+      cancellationChecks++;
+      let guarded = false;
+      for (let parent = node.parent; parent; parent = parent.parent) {
+        if (ts.isBinaryExpression(parent) && parent.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken && parent.left.getText(parsed) === "!guidedPlanning") guarded = true;
+      }
+      assert.ok(guarded, "standalone cancellation claims must remain inside the non-planning branch");
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(parsed);
+  assert.equal(cancellationChecks, 1);
+  assert.doesNotMatch(card, /offer\.(payAtPickup|taxesAndFeesIncluded)/);
   assert.match(results, /group\.id !== "cancellation"/);
   assert.doesNotMatch(
     stage,
@@ -46,7 +61,12 @@ test("the rendered response projects directly and fails closed", () => {
 });
 
 test("legacy and V2 confirm from results and enter review without a details gate", () => {
-  assert.match(legacy, /product === "car"[\s\S]*?\? "review"/);
+  assert.match(legacy, /const order = getGuidedDealsProductOrder\(search\.mode\)/);
+  assert.match(legacy, /const nextProduct = order\[order\.indexOf\(product\) \+ 1\]/);
+  assert.match(legacy, /nextProduct\s*\? `\$\{nextProduct\}-results`\s*: "review"/);
+  for (const mode of ["flight-car", "hotel-car", "hotel-flight-car"] as const) {
+    assert.equal(getGuidedDealsProductOrder(mode).at(-1), "car");
+  }
   assert.match(legacy, /onSelectCar=\{confirmGuidedCarSelection\}/);
   assert.match(v2, /onSelectCar=\{\(car\) =>/);
   assert.match(v2, /confirm\(car\)/);

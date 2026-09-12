@@ -1,21 +1,40 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import type {
   KayakVertical,
   SandboxOffer,
   SandboxPlace,
 } from "@/services/travel/kayakSandbox";
 
-export function KayakSandboxSearch() {
-  const [vertical, setVertical] = useState<KayakVertical>("flights");
+export function KayakSandboxSearch({ initialVertical = "flights" }: { initialVertical?: KayakVertical }) {
+  const router = useRouter();
+  const [vertical, setVertical] = useState<KayakVertical>(initialVertical);
   const [places, setPlaces] = useState<SandboxPlace[]>([]);
   const [offers, setOffers] = useState<SandboxOffer[]>([]);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const active = useRef(false);
   const [origin, setOrigin] = useState("BOS");
-  const [destination, setDestination] = useState("JFK");
+  const [destination, setDestination] = useState(initialVertical === "hotels" ? "" : "JFK");
+  function openResults(form: FormData) {
+    if (form.get("empty") === "on") {
+      setMessage("Use the preview search button for the forced no-results test.");
+      return;
+    }
+    const start = String(form.get("departure") || "");
+    const end = String(form.get("returnDate") || "");
+    const adults = String(form.get("adults") || "1");
+    const values = vertical === "flights"
+      ? { origin, destination, departureDate: start, returnDate: end, adults, travelers: adults, children: "0", infants: "0", cabinClass: "economy", tripType: end ? "round-trip" : "one-way" }
+      : vertical === "hotels"
+        ? { destinationId: destination, checkIn: start, checkOut: end, guests: adults, rooms: "1" }
+        : { pickupLocation: origin, dropoffLocation: origin, pickupDate: start, dropoffDate: end, pickupTime: "12:00", dropoffTime: "12:00" };
+    const query = new URLSearchParams({ provider: "kayak-sandbox" });
+    for (const [key, value] of Object.entries(values)) if (value !== undefined) query.set(key, value);
+    router.push(`/${vertical}/results?${query}`);
+  }
   async function request(body: unknown) {
     const response = await fetch("/api/sandbox/kayak", {
       method: "POST",
@@ -162,7 +181,9 @@ export function KayakSandboxSearch() {
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          void search(new FormData(event.currentTarget));
+          const form = new FormData(event.currentTarget);
+          if ((event.nativeEvent as SubmitEvent).submitter?.getAttribute("name") === "normal-results") openResults(form);
+          else void search(form);
         }}
         className="grid gap-4 sm:grid-cols-2"
       >
@@ -244,6 +265,9 @@ export function KayakSandboxSearch() {
         </label>
         <button className={button} disabled={busy}>
           {busy ? "Please wait…" : "Search KAYAK sandbox"}
+        </button>
+        <button className={button} name="normal-results" disabled={busy}>
+          Open regular results route in sandbox mode
         </button>
       </form>
       <p role="status" aria-live="polite" className="my-6">

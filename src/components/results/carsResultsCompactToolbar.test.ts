@@ -13,7 +13,7 @@ test("source-contract: Cars compact toolbar is transparent, shrink-safe, and fiv
   assert.doesNotMatch(source, /pointer-events-none fixed inset-x-0 top-3/);
   assert.match(
     source,
-    /h-\[58px\].*max-w-\[920px\].*grid-cols-\[minmax\(0,1\.7fr\)_minmax\(0,1fr\)_minmax\(0,1\.1fr\)_minmax\(0,0\.85fr\)_104px\]/s,
+    /h-\[58px\][\s\S]*max-w-\[920px\][\s\S]*grid-cols-\[minmax\(0,1\.7fr\)_minmax\(0,1fr\)_minmax\(0,1\.1fr\)_minmax\(0,0\.85fr\)_104px\]/,
   );
   for (const section of ["locations", "dates", "times", "driverAge"])
     assert.match(source, new RegExp(`(?:\\[|,)\\s*"${section}"`));

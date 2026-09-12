@@ -61,7 +61,7 @@ test("activation adapter truthfully blocks read, validation, cross-tab, expiry, 
   const rendered = plan("hotel-flight"), search = { ...parseDealsSearchParams({}), mode: rendered.mode };
   const attempt = (readPlan: Parameters<typeof attemptGuidedHandoffActivation>[0]["read"], at = now + 1, shown = rendered, product: "flight" | "hotel" = "flight") => attemptGuidedHandoffActivation({ renderedPlan: shown, product, search, fingerprint: "fp", now: at, locale: "en", read: readPlan, write: () => { throw new Error("write must not run"); } });
   for (const [status, kind] of [["missing", "plan-missing"], ["invalid", "plan-invalid"], ["fingerprint_mismatch", "fingerprint-mismatch"], ["storage_unavailable", "storage-read-unavailable"]] as const) {
-    const result = attempt(() => ({ status })); assert.equal(result.ok, false); if (!result.ok) assert.equal(result.failure.kind, kind);
+    const result = attempt(() => status === "fingerprint_mismatch" ? { status, plan: rendered } : { status }); assert.equal(result.ok, false); if (!result.ok) assert.equal(result.failure.kind, kind);
   }
   const expired = attempt(() => ({ status: "expired", plan: rendered })); assert.equal(expired.ok, false); if (!expired.ok) assert.equal(expired.failure.kind, "plan-expired");
   const staleProduct = { ...rendered, flight: { ...rendered.flight!, resultReceivedAt: 0 } }; const productExpired = attempt(() => ({ status: "valid", plan: staleProduct }), 1_500_000); assert.equal(productExpired.ok, false); if (!productExpired.ok) assert.equal(productExpired.failure.kind, "product-expired");

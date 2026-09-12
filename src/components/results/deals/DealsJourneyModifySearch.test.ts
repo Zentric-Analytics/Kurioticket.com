@@ -84,7 +84,7 @@ test("changed guided Modify Search makes the new draft navigation authoritative"
   );
   assert.match(
     source,
-    /pendingSearchFingerprint \|\|\s*!resolved \|\|\s*stage !== "review"/,
+    /requiredStage === stage && stage === "review" && plan \? \(\s*<DealsReviewStage/,
   );
   assert.match(source, /active: resolved && !pendingSearchFingerprint/);
   assert.match(source, /pending=\{Boolean\(pendingSearchFingerprint\)\}/);
