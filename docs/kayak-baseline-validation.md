@@ -66,6 +66,21 @@ directory, not committed because assertion failures can dump entire source files
 - Car cancellation, focus and scroll lifecycle: 11 passed.
 - Focused lint for every changed test/helper: passed.
 
+### Next reconciliation group
+
+Sign-in assertions now tolerate the multi-line Google provider call introduced by
+the account-chooser update; six selected authentication/localization checks pass.
+No authentication implementation changed. Date expectations retain weekday/year
+formatting from `a6fd3703b` and check the current shared date-rendering paths;
+three targeted date checks pass. Package-name expectations follow the existing
+`4ee27c840` rename, not a new product-name change. The Package editor still uses
+the `deals.*` translation namespace; its ten tests now verify those actual labels,
+pending-state protection, and modal behavior. Focused lint passes.
+
+A language-suite-only rerun reports **138 passes and 71 failures out of 209** in
+`kurioticket-language-checkpoint.log`. This is not a new full-suite result and
+does not supersede the full 2,909/154 checkpoint above.
+
 These are focused results, not additive full-suite totals. Some first attempts
 used the wrong test runner path configuration or working directory; corrected
 commands use `JITI_TSCONFIG_PATHS=true` and the native package directory where

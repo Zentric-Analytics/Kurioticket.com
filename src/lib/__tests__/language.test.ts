@@ -76,6 +76,7 @@ import {
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
 import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
+import { formatTravelDateRangeDisplay } from "@/lib/dateFormatting/travelDateDisplay";
 import { legalDocuments } from "@/data/legalDocuments";
 import { getLegalDocumentTranslationNamespace, localizeLegalDocument } from "@/lib/legal/localizeLegalDocument";
 import { getGeneralFaqs } from "@/content/faqs";
@@ -4053,7 +4054,7 @@ test("Flights datepicker formatter normalizes Hindi locale for generated display
     assert.equal(formatFlightsMonthHeading(new Date(2026, 6, 1), locale), "जुलाई 2026");
     assert.equal(
       formatFlightsDateSummary(new Date(2026, 5, 27), new Date(2026, 5, 30), locale),
-      "27 जून — 30 जून",
+      "शनि, 27 जून 2026 — मंगल, 30 जून 2026",
     );
   }
 
@@ -4251,19 +4252,20 @@ test("all flight datepicker render paths use shared Hindi date formatting", () =
   assert.equal(formatFlightsMonthHeading(new Date(2026, 6, 1), "hi-IN"), "जुलाई 2026");
   assert.equal(
     formatFlightsDateSummary(new Date(2026, 5, 27), new Date(2026, 5, 30), "hi-in"),
-    "27 जून — 30 जून",
+    "शनि, 27 जून 2026 — मंगल, 30 जून 2026",
   );
 
   assert.ok(sharedFormatterSource.includes('normalized === "hi" || normalized === "hi-in" || normalized.startsWith("hi-")'));
 
-  for (const [label, source] of [
-    ["global/header and homepage SearchTabs", homepageSearchSource],
-    ["standalone /flights form", standaloneFlightSearchSource],
-    ["results edit/search datepicker", resultsSearchSource],
+  assert.equal(formatTravelDateRangeDisplay("2026-06-27", "2026-06-30", "hi-in"), "शनि, 27 जून 2026 — मंगल, 30 जून 2026");
+  for (const [label, source, summaryFormatter] of [
+    ["global/header and homepage SearchTabs", homepageSearchSource, "formatTravelDateDisplay(isoDate, calendarLocale)"],
+    ["standalone /flights form", standaloneFlightSearchSource, "formatTravelDateRangeDisplay(departureDate, returnDate, calendarLocale)"],
+    ["results edit/search datepicker", resultsSearchSource, "formatCompactDateLabel(departureDateInput, calendarLocale)"],
   ] as const) {
     assert.ok(source.includes("normalizeFlightsCalendarLocale"), `${label} should normalize through the shared flight locale helper`);
     assert.ok(source.includes("formatFlightsMonthHeading"), `${label} should render month headings through the shared flight formatter`);
-    assert.ok(source.includes("formatFlightsDateSummary"), `${label} should render selected date summaries through the shared flight formatter`);
+    assert.ok(source.includes(summaryFormatter), `${label} should pass the selected locale to its date summary formatter`);
   }
 
   assert.ok(homepageSearchSource.includes("FlightMobilePickerShell"), "global/header SearchTabs mobile flight datepicker path should remain covered");
@@ -6184,7 +6186,7 @@ test("active locale dictionaries do not keep audited cross-language UI fallbacks
     flights: "Flights",
     hotels: "Hotels",
     cars: "Cars",
-    deals: "Deals",
+    deals: "Packages",
     saved: "Saved",
   });
   assert.deepEqual(auditedValuesByLocale.spanish, {
@@ -6982,7 +6984,7 @@ test("Turkish homepage header search popular destinations and footer strings are
     flights: "Uçuşlar",
     hotels: "Oteller",
     cars: "Arabalar",
-    deals: "Fırsatlar",
+    deals: "Tatil Paketleri",
     destinations: "Destinasyonlar",
     login: "Giriş yap",
     signUp: "Kaydol",
@@ -7325,7 +7327,7 @@ test("Auth login and forgot password render paths use i18n keys for visible copy
   assert.ok(signinSource.includes('fetch("/api/auth/request-login-code"'));
   assert.ok(signinSource.includes('fetch("/api/auth/passkey/options"'));
   assert.ok(signinSource.includes('fetch("/api/auth/passkey/verify"'));
-  assert.ok(signinSource.includes('signIn("google"'));
+  assert.match(signinSource, /signIn\(\s*"google"/);
   assert.ok(forgotPasswordSource.includes('fetch("/api/auth/forgot-password"'));
 });
 
@@ -7370,7 +7372,7 @@ test("Signin form keeps loading state out of focus and typing paths", () => {
   );
   assert.match(
     signinSource,
-    /<Button[\s\S]*?type="button"[\s\S]*?variant="secondary"[\s\S]*?signIn\("google"/,
+    /<Button[\s\S]*?type="button"[\s\S]*?variant="secondary"[\s\S]*?signIn\(\s*"google"/,
     "Google auth control is not an accidental submit button",
   );
 });
@@ -10549,7 +10551,7 @@ test("Indonesian auth and global modal render paths use corrected i18n keys with
 
   assert.match(signinSource, /<Input\s+name="email"\s+type="email"/);
   assert.match(signinSource, /<Input\s+name="password"\s+type="password"/);
-  assert.match(signinSource, /signIn\("google", \{/);
+  assert.match(signinSource, /signIn\(\s*"google",\s*\{/);
   assert.match(signinSource, /callbackUrl/);
   assert.match(signupSource, /<Input name="name" autoComplete="name" required/);
   assert.match(signupSource, /signIn\("google", \{ callbackUrl: "\/onboarding" \}\)/);
@@ -10656,7 +10658,7 @@ test("Swedish global modal and auth render paths use i18n keys without active En
   assert.match(signinSource, /<Input\s+name="email"\s+type="email"/);
   assert.match(signinSource, /<Input\s+name="password"\s+type="password"/);
   assert.match(signinSource, /<Input\s+name="code"\s+inputMode="numeric"/);
-  assert.match(signinSource, /signIn\("google", \{/);
+  assert.match(signinSource, /signIn\(\s*"google",\s*\{/);
   assert.match(signinSource, /href="\/auth\/forgot-password"/);
   assert.match(signinSource, /href="\/auth\/signup"/);
   assert.match(forgotSource, /fetch\("\/api\/auth\/forgot-password"/);
@@ -10712,7 +10714,7 @@ test("Polish homepage-visible copy resolves without English fallback", () => {
     flights: "Loty",
     hotels: "Hotele",
     cars: "Samochody",
-    deals: "Oferty",
+    deals: "Pakiety",
     login: "Zaloguj się",
     signUp: "Zarejestruj się",
     homeHeroTitle: "Porównuj opcje podróży w jednym prostym wyszukiwaniu",
@@ -11067,7 +11069,7 @@ test("Polish homepage flight and hotel date formatting uses pl-PL generated labe
   assert.equal(formatFlightsMonthHeading(new Date(2026, 5, 1), "pl"), "czerwiec 2026");
   assert.equal(formatFlightsMonthHeading(new Date(2026, 6, 1), "pl-pl"), "lipiec 2026");
   assert.deepEqual(formatFlightsWeekdays("pl-PL"), ["niedz.", "pon.", "wt.", "śr.", "czw.", "pt.", "sob."]);
-  assert.equal(formatFlightsDateSummary(new Date(2026, 5, 1), new Date(2026, 6, 1), "pl"), "1 cze — 1 lip");
+  assert.equal(formatFlightsDateSummary(new Date(2026, 5, 1), new Date(2026, 6, 1), "pl"), "pon., 1 cze 2026 — śr., 1 lip 2026");
 });
 
 test("Polish flight date labels resolve for desktop and compact mobile paths", () => {
@@ -13409,7 +13411,7 @@ test("Thai homepage visible copy and render paths resolve without English fallba
     flights: "เที่ยวบิน",
     hotels: "โรงแรม",
     cars: "รถเช่า",
-    deals: "ดีล",
+    deals: "แพ็กเกจท่องเที่ยว",
     login: "เข้าสู่ระบบ",
     signUp: "สมัครใช้งาน",
     homeHeroTitle: "เปรียบเทียบตัวเลือกการเดินทางได้ในการค้นหาเดียว",
@@ -13694,7 +13696,7 @@ test("Indonesian homepage visible copy and render paths resolve without English 
     flights: "Penerbangan",
     hotels: "Hotel",
     cars: "Mobil",
-    deals: "Promo",
+    deals: "Paket",
     login: "Masuk",
     signUp: "Daftar",
     homeHeroTitle: "Bandingkan pilihan perjalanan dalam satu pencarian sederhana",
@@ -14427,7 +14429,7 @@ test("Thai auth and country/currency render paths use i18n keys without active E
   assert.match(signinSource, /<Input\s+name="email"\s+type="email"/);
   assert.match(signinSource, /<Input\s+name="password"\s+type="password"/);
   assert.match(signinSource, /<Input\s+name="code"\s+inputMode="numeric"/);
-  assert.match(signinSource, /signIn\("google", \{/);
+  assert.match(signinSource, /signIn\(\s*"google",\s*\{/);
   assert.match(signinSource, /signIn\("credentials", \{/);
   assert.match(signinSource, /href="\/auth\/forgot-password"/);
   assert.match(signinSource, /href="\/auth\/signup"/);
@@ -14893,7 +14895,7 @@ test("Vietnamese homepage copy resolves without English fallback", () => {
     flights: "Chuyến bay",
     hotels: "Khách sạn",
     cars: "Ô tô",
-    deals: "Ưu đãi",
+    deals: "Gói du lịch",
     signIn: "Đăng nhập",
     login: "Đăng nhập",
     signUp: "Đăng ký",
