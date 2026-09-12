@@ -43,10 +43,10 @@ test("Location component is explicitly imported and rendered by Hotel Details", 
   assert.match(screen, /hotelId=\{result\.id\}/);
 });
 
-test("Location uses one horizontal padding owner", () => {
+test("Location uses one horizontal padding owner with compact vertical rhythm", () => {
   assert.match(styleRule(screen, "hotelDetailBody", "hotelOffer"), /paddingHorizontal: 16/);
   const section = styleRule(component, "locationSection", "heading");
-  assert.match(section, /paddingVertical: 12/);
+  assert.match(section, /paddingVertical: 8/);
   assert.doesNotMatch(section, /paddingHorizontal/);
 });
 
@@ -91,18 +91,19 @@ test("Location uses the shared credential-free preview and preserves interactive
   for (const forbidden of ["EXPO_PUBLIC_GOOGLE", "NEXT_PUBLIC_GOOGLE", "google.com/maps/embed", "buildOpenStreetMapHotelMapEmbedUrl"]) assert.doesNotMatch(component + model, new RegExp(forbidden));
 });
 
-test("Location visual contracts match mobile web", () => {
+test("Location keeps mobile web typography while using compact native spacing", () => {
   for (const rule of [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/, /appFonts\.bold/]) assert.match(styleRule(component, "heading", "addressRow"), rule);
   for (const rule of [/width: 36/, /height: 36/, /borderRadius: 18/]) assert.match(styleRule(component, "pinCircle", "addressCopy"), rule);
   assert.match(component, /<MapPin accessible=\{false\} size=\{18\}/);
   for (const rule of [/fontSize: 13/, /lineHeight: 19/, /fontWeight: "500"/, /appFonts\.medium/]) assert.match(styleRule(component, "primaryAddress", "secondaryAddress"), rule);
   for (const rule of [/fontSize: 12/, /lineHeight: 18/, /appFonts\.regular/]) assert.match(styleRule(component, "secondaryAddress", "mapCard"), rule);
-  for (const rule of [/marginTop: 16/, /borderRadius: 14/, /borderWidth: 1/]) assert.match(styleRule(component, "mapCard", "mapTabs"), rule);
+  for (const rule of [/marginTop: 12/, /borderRadius: 14/, /borderWidth: 1/]) assert.match(styleRule(component, "mapCard", "mapTabs"), rule);
   assert.match(styleRule(component, "mapViewport", "mapPreview"), /height: 216/);
   assert.doesNotMatch(styleRule(component, "mapViewport", "mapPreview"), /height: (?:280|300)/);
-  for (const rule of [/fontSize: 15/, /lineHeight: 22/, /fontWeight: "600"/, /appFonts\.semibold/]) assert.match(styleRule(component, "subheading", "factList"), rule);
-  for (const rule of [/borderRadius: 8/, /paddingHorizontal: 12/, /paddingVertical: 8/]) assert.match(styleRule(component, "factChip", "factText"), rule);
+  for (const rule of [/marginTop: 22/, /fontSize: 15/, /lineHeight: 22/, /fontWeight: "600"/, /appFonts\.semibold/]) assert.match(styleRule(component, "subheading", "factList"), rule);
+  for (const rule of [/borderRadius: 8/, /paddingHorizontal: 12/, /paddingVertical: 6/]) assert.match(styleRule(component, "factChip", "factText"), rule);
   for (const rule of [/fontSize: 12/, /lineHeight: 16/, /fontWeight: "500"/, /appFonts\.medium/]) assert.match(styleRule(component, "factText", "accessibilityHeading"), rule);
+  assert.match(styleRule(component, "accessibilityHeading", "accessibilityList"), /marginTop: 22/);
   assert.match(styleRule(component, "accessibilityRow", "accessibilityBullet"), /alignItems: "flex-start"/);
   assert.match(styleRule(component, "accessibilityBullet", "accessibilityText"), /width: 20[\s\S]*lineHeight: 24/);
   assert.match(styleRule(component, "accessibilityText", "accessibilityFallback"), /fontSize: 13[\s\S]*lineHeight: 22/);

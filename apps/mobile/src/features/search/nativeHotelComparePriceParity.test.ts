@@ -27,17 +27,17 @@ function styleRule(source: string, name: string, nextName: string) {
   return source.slice(start, end);
 }
 
-test("Compare section mirrors web heading, stay context, and offer rhythm", () => {
+test("Compare section keeps web hierarchy with compact native offer rhythm", () => {
   assert.match(webCompare, /px-4 py-7/);
   assert.match(webCompare, /text-xl font-extrabold tracking-tight text-slate-950/);
   assert.match(webCompare, /mt-1 text-sm font-medium text-slate-600/);
   assert.match(webCompare, /mt-5 space-y-3/);
-  assert.match(styleRule(detailSource, "hotelCompareSection", "hotelCompareHeading"), /paddingVertical: 8/);
+  assert.match(styleRule(detailSource, "hotelCompareSection", "hotelCompareHeading"), /paddingVertical: 4/);
   assert.match(styleRule(detailSource, "hotelCompareHeading", "hotelCompareLead"), /fontSize: 18[^}]*lineHeight: 24[^}]*fontWeight: "600"[^}]*fontFamily: appFonts\.semibold[^}]*letterSpacing: -0\.25/);
   assert.match(styleRule(detailSource, "hotelTabText", "hotelSectionLead"), /fontSize: 11[^}]*fontWeight: "600"/);
   assert.match(hotel, /activeHotelTab === tab && \{[\s\S]*?color: hotelAccent,[\s\S]*?fontWeight: "700",[\s\S]*?fontFamily: appFonts\.bold/);
   assert.match(styleRule(detailSource, "hotelCompareLead", "hotelCompareOffers"), /marginTop: 4[^}]*fontSize: 13[^}]*lineHeight: 19[^}]*fontWeight: "400"[^}]*appFonts\.regular/);
-  assert.match(styleRule(detailSource, "hotelCompareOffers", "hotelHeading"), /marginTop: 20[^}]*gap: 12/);
+  assert.match(styleRule(detailSource, "hotelCompareOffers", "hotelHeading"), /marginTop: 16[^}]*gap: 10/);
   assert.match(hotel, /stay\.dateText \?\? "Stay dates unavailable"\} · \{stay\.occupancy\}/);
   assert.doesNotMatch(hotel, /stay\.dates \?\? "Stay dates unavailable"\} · \{stay\.occupancy\}/);
   assert.match(hotel, /theme\.dark \? theme\.textPrimary : "#020617"/);
@@ -68,10 +68,10 @@ test("native provider offer uses canonical inline amenity icons and web-like pri
   assert.match(hotel, /d\.hotelOfferPriceRow[\s\S]*?nightlyPrice\?\.formatted[\s\S]*?d\.hotelOfferBottom[\s\S]*?per night/);
 });
 
-test("native actionable provider offer follows the web card's compact vertical rhythm", () => {
+test("native actionable provider offer follows the compact vertical rhythm", () => {
   assert.match(hotel, /style=\{\[d\.hotelOffer, \{[\s\S]*?borderColor: selected \? hotelAccent : theme\.border,[\s\S]*?gap: 0,[\s\S]*?\}\]\}/);
-  assert.match(styleRule(detailSource, "hotelOffer", "hotelOfferTop"), /padding: 16[\s\S]*gap: 16/);
-  assert.match(styleRule(detailSource, "hotelOfferPriceRow", "hotelNightly"), /minWidth: 0[\s\S]*marginTop: 12[\s\S]*alignItems: "flex-end"/);
+  assert.match(styleRule(detailSource, "hotelOffer", "hotelOfferTop"), /padding: 14[\s\S]*gap: 16/);
+  assert.match(styleRule(detailSource, "hotelOfferPriceRow", "hotelNightly"), /minWidth: 0[\s\S]*marginTop: 10[\s\S]*alignItems: "flex-end"/);
   assert.match(styleRule(detailSource, "hotelOfferBottom", "hotelOfferPriceRow"), /marginTop: 2[\s\S]*flexDirection: "row"[\s\S]*alignItems: "center"[\s\S]*justifyContent: "space-between"[\s\S]*gap: 6/);
   assert.match(hotel, /d\.hotelOfferPriceRow[\s\S]*?d\.hotelOfferBottom/);
 });
