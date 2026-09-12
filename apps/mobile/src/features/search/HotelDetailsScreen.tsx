@@ -114,6 +114,7 @@ function HotelDetail({
   const hotelCanvasColor = theme.dark ? theme.background : theme.surface;
   const hotelAccent = theme.dark ? "#8FB5FF" : colors.blue;
   const inset = useSafeAreaInsets();
+  const hotelStickyTabsTop = inset.top + 72;
   const canonical = useCanonicalSaved();
   const saved = canonical.items.some(
     (item) =>
@@ -130,6 +131,9 @@ function HotelDetail({
   const hotelDetailScrollRef = useRef<ScrollView>(null);
   const currentHotelScrollOffset = useRef(0);
   const restoringHotelTabScrollRef = useRef(false);
+  const hotelTabsStickyStartRef = useRef<number | null>(null);
+  const hotelTabsPinnedRef = useRef(false);
+  const [hotelTabsPinned, setHotelTabsPinned] = useState(false);
   const hotelTabScrollOffsets = useRef<Record<HotelDetailTab, number | null>>({
     details: 0,
     reviews: null,
@@ -444,6 +448,14 @@ function HotelDetail({
   const metaColor = theme.dark ? theme.textSecondary : "#475569";
   const iconColor = theme.dark ? theme.icon : "#0F172A";
 
+  const syncHotelTabsPinned = useCallback((offset: number) => {
+    const stickyStart = hotelTabsStickyStartRef.current;
+    const nextPinned = stickyStart !== null && offset >= stickyStart;
+    if (nextPinned === hotelTabsPinnedRef.current) return;
+    hotelTabsPinnedRef.current = nextPinned;
+    setHotelTabsPinned(nextPinned);
+  }, []);
+
   const selectHotelTab = useCallback((tab: HotelDetailTab) => {
     if (tab === activeHotelTabRef.current) return;
     const targetOffset =
@@ -454,17 +466,21 @@ function HotelDetail({
     requestAnimationFrame(() => {
       hotelDetailScrollRef.current?.scrollTo({ y: targetOffset, animated: false });
       currentHotelScrollOffset.current = targetOffset;
+      syncHotelTabsPinned(targetOffset);
       requestAnimationFrame(() => {
         restoringHotelTabScrollRef.current = false;
       });
     });
-  }, []);
+  }, [syncHotelTabsPinned]);
 
   useEffect(() => {
     restoringHotelTabScrollRef.current = true;
     activeHotelTabRef.current = "details";
     setActiveHotelTab("details");
     currentHotelScrollOffset.current = 0;
+    hotelTabsStickyStartRef.current = null;
+    hotelTabsPinnedRef.current = false;
+    setHotelTabsPinned(false);
     hotelTabScrollOffsets.current = { details: 0, reviews: null, deals: null };
     requestAnimationFrame(() => {
       hotelDetailScrollRef.current?.scrollTo({ y: 0, animated: false });
@@ -488,6 +504,7 @@ function HotelDetail({
         onScroll={({ nativeEvent }) => {
           const offset = nativeEvent.contentOffset.y;
           currentHotelScrollOffset.current = offset;
+          syncHotelTabsPinned(offset);
           if (!restoringHotelTabScrollRef.current) {
             hotelTabScrollOffsets.current[activeHotelTabRef.current] = offset;
           }
@@ -501,38 +518,6 @@ function HotelDetail({
             theme={theme}
             accentColor={hotelAccent}
           />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Back to hotel results"
-            onPress={returnToHotelResults}
-            style={[s.heroBack, { top: inset.top + 12 }]}
-          >
-            <ArrowLeft size={25} strokeWidth={2.2} color="#0F172A" />
-          </Pressable>
-          <View style={[s.heroActions, { top: inset.top + 12 }]}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={saved ? `Remove ${result.name} hotel from saved` : `Save ${result.name} hotel`}
-              accessibilityState={{ selected: saved }}
-              onPress={() => void canonical.toggleHotel(result, params)}
-              style={s.heroAction}
-            >
-              <Heart
-                size={22}
-                strokeWidth={2}
-                color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke}
-                fill={saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill}
-              />
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Share ${result.name}`}
-              onPress={shareHotel}
-              style={s.heroAction}
-            >
-              <FlowIcon name="share" size={22} color="#0F172A" />
-            </Pressable>
-          </View>
         </View>
 
         <View style={s.identity}>
@@ -559,11 +544,16 @@ function HotelDetail({
         </View>
 
         <View
+          onLayout={({ nativeEvent }) => {
+            hotelTabsStickyStartRef.current = nativeEvent.layout.y;
+            syncHotelTabsPinned(currentHotelScrollOffset.current);
+          }}
           style={[
             s.tabsShell,
             {
-              paddingTop: inset.top,
-              marginTop: 1 - inset.top,
+              paddingTop: hotelStickyTabsTop,
+              marginTop: 1 - hotelStickyTabsTop,
+              backgroundColor: hotelTabsPinned ? hotelCanvasColor : "transparent",
             },
           ]}
         >
@@ -712,6 +702,39 @@ function HotelDetail({
         </View>
       </ScrollView>
 
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Back to hotel results"
+        onPress={returnToHotelResults}
+        style={[s.heroBack, { top: inset.top + 12 }]}
+      >
+        <ArrowLeft size={25} strokeWidth={2.2} color="#0F172A" />
+      </Pressable>
+      <View style={[s.heroActions, { top: inset.top + 12 }]}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={saved ? `Remove ${result.name} hotel from saved` : `Save ${result.name} hotel`}
+          accessibilityState={{ selected: saved }}
+          onPress={() => void canonical.toggleHotel(result, params)}
+          style={s.heroAction}
+        >
+          <Heart
+            size={22}
+            strokeWidth={2}
+            color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke}
+            fill={saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill}
+          />
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Share ${result.name}`}
+          onPress={shareHotel}
+          style={s.heroAction}
+        >
+          <FlowIcon name="share" size={22} color="#0F172A" />
+        </Pressable>
+      </View>
+
       <View
         style={[
           s.sticky,
@@ -781,8 +804,8 @@ const s = StyleSheet.create({
   missingButton: { minHeight: 44, paddingHorizontal: 18, borderRadius: 8, backgroundColor: colors.blue, alignItems: "center", justifyContent: "center" },
   missingButtonText: { color: "white", fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
   heroShell: { position: "relative", width: "100%" },
-  heroBack: { position: "absolute", left: 20, width: 44, height: 44, borderRadius: 22, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center", zIndex: 3, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 5, elevation: 5 },
-  heroActions: { position: "absolute", right: 20, width: 112, height: 44, borderRadius: 22, backgroundColor: "#FFFFFF", flexDirection: "row", overflow: "hidden", zIndex: 3, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 5, elevation: 5 },
+  heroBack: { position: "absolute", left: 20, width: 44, height: 44, borderRadius: 22, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 5, elevation: 10 },
+  heroActions: { position: "absolute", right: 20, width: 112, height: 44, borderRadius: 22, backgroundColor: "#FFFFFF", flexDirection: "row", overflow: "hidden", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 5, elevation: 10 },
   heroAction: { width: 56, height: 44, alignItems: "center", justifyContent: "center" },
   identity: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14 },
   hotelName: { minWidth: 0, fontSize: 24, lineHeight: 30, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.5 },
@@ -792,7 +815,7 @@ const s = StyleSheet.create({
   reviewText: { flex: 1, minWidth: 0, fontSize: 14, lineHeight: 20 },
   reviewPrimary: { fontWeight: "700", fontFamily: appFonts.bold },
   reviewSecondary: { fontWeight: "400", fontFamily: appFonts.regular },
-  tabsShell: { width: "100%", alignSelf: "stretch", minHeight: 45, paddingHorizontal: 8 },
+  tabsShell: { width: "100%", alignSelf: "stretch", minHeight: 45, paddingHorizontal: 8, zIndex: 10 },
   tabsRow: { alignSelf: "stretch", minHeight: 44, flexDirection: "row", flexWrap: "nowrap", alignItems: "stretch" },
   tab: { width: "33.333%", flexGrow: 0, flexShrink: 0, minWidth: 0, minHeight: 44, alignItems: "center", justifyContent: "center", borderBottomWidth: 2, borderBottomColor: "transparent" },
   tabText: { fontSize: 11, fontWeight: "600", fontFamily: appFonts.semibold },
