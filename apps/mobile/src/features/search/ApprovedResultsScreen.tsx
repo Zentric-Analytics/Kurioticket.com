@@ -1731,6 +1731,7 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
       if (unavailable) return;
       if (!await readSession().catch(() => null)) { requireSignIn(); return; }
       if (isTracking) return;
+      if (!flight) { setTargetDraft(""); setTargetError(""); setTargetOpen(true); return; }
       if (!matchingAlert) { setTargetError(""); setTargetOpen(true); return; }
       pendingRef.current = true; setPending(true);
       try { setCurrentMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id, "ACTIVE")).alert); }
@@ -1752,8 +1753,14 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
     try {
       const session = await readSession().catch(() => null);
       if (!session) { setTargetOpen(false); requireSignIn(); return; }
-      const created = await travelApi.createPriceAlert(flight ? buildFlightPriceAlertPayload(plan, parsed.value, currency) : buildHotelPriceAlertPayload(plan, parsed.value, currency));
-      setCurrentMatchingAlert(created.alert); setTargetOpen(false); setTargetDraft("");
+      const samePausedHotelTarget = !flight
+        && matchingAlert?.status === "PAUSED"
+        && Number(matchingAlert.targetPrice) === parsed.value
+        && matchingAlert.currency?.toUpperCase() === currency.toUpperCase();
+      const saved = samePausedHotelTarget
+        ? await travelApi.updatePriceAlertStatus(matchingAlert.id, "ACTIVE")
+        : await travelApi.createPriceAlert(flight ? buildFlightPriceAlertPayload(plan, parsed.value, currency) : buildHotelPriceAlertPayload(plan, parsed.value, currency));
+      setCurrentMatchingAlert(saved.alert); setTargetOpen(false); setTargetDraft("");
     } catch (error) {
       if (error instanceof TravelApiError && error.status === 401) { setTargetOpen(false); requireSignIn(); }
       else if (error instanceof TravelApiError && error.status === 409) { await reconcile(); setTargetError("An alert for this search already exists."); }
