@@ -1,4 +1,4 @@
-const CARS_RESULTS_IMAGE_VERSION = "isolated-20260912";
+const CARS_RESULTS_IMAGE_VERSION = "transparent-cutouts-20260912";
 const CURATED_CAR_RESULT_IMAGE_PREFIX = "/images/cars/results/";
 
 const carResultImagePathname = (imageUrl?: string) => {
@@ -18,6 +18,6 @@ export const isCuratedCarResultImage = (imageUrl?: string) =>
   carResultImagePathname(imageUrl)?.startsWith(CURATED_CAR_RESULT_IMAGE_PREFIX) ?? false;
 
 export const resolveCarResultImageSource = (imageUrl?: string) =>
-  imageUrl?.startsWith(CURATED_CAR_RESULT_IMAGE_PREFIX)
-    ? `${imageUrl}?v=${CARS_RESULTS_IMAGE_VERSION}`
+  isCuratedCarResultImage(imageUrl)
+    ? `${imageUrl}${imageUrl?.includes("?") ? "&" : "?"}v=${CARS_RESULTS_IMAGE_VERSION}`
     : imageUrl;
