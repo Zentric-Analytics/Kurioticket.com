@@ -25,7 +25,7 @@ test("entry skeleton anticipates route, itinerary, fare carousel, and informatio
   assert.match(details, /loadingFareIcon:\{width:16,height:16/);
   assert.match(details, /loadingBenefitDot:\{width:16,height:16/);
   assert.match(loading, /s\.loadingFareIdentity[\s\S]*?s\.loadingBenefitRow[\s\S]*?s\.loadingFarePriceBlock/);
-  assert.match(details, /loadingFarePriceBlock:\{alignSelf:"flex-end",alignItems:"flex-end",gap:2\}/);
+  assert.match(details, /loadingFarePriceBlock:\{alignSelf:"flex-start",alignItems:"flex-start",gap:2\}/);
   assert.match(loading, /32\+bottomInset/);
 });
 
