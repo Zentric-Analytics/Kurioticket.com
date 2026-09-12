@@ -1,17 +1,30 @@
 import type { PublicHotelPropertyDetails } from "../../../../../src/lib/types";
 
-export function hotelStaySummary(checkIn: string, checkOut: string, guests: number, rooms: number) {
+export function hotelStaySummary(
+  checkIn: string,
+  checkOut: string,
+  guests: number,
+  rooms: number,
+  today = new Date(),
+) {
   const parseDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T12:00:00`) : null;
   const start = parseDate(checkIn); const end = parseDate(checkOut);
   const nights = start && end ? Math.round((end.getTime() - start.getTime()) / 86_400_000) : 0;
-  const format = (date: Date) => new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(date);
-  const dateText = start && end && nights > 0 ? `${format(start)} – ${format(end)}` : null;
+  const month = (date: Date) => new Intl.DateTimeFormat(undefined, { month: "short" }).format(date);
+  const dayMonth = (date: Date) => `${date.getDate()} ${month(date)}`;
+  const dateText = start && end && nights > 0
+    ? start.getFullYear() === end.getFullYear()
+      ? start.getFullYear() === today.getFullYear()
+        ? `${dayMonth(start)} – ${dayMonth(end)}`
+        : `${dayMonth(start)} – ${dayMonth(end)} ${end.getFullYear()}`
+      : `${dayMonth(start)} ${start.getFullYear()} – ${dayMonth(end)} ${end.getFullYear()}`
+    : null;
   const nightText = nights > 0 ? `${nights} ${nights === 1 ? "night" : "nights"}` : null;
   return {
     dateText,
     nightText,
     dates: dateText && nightText ? `${dateText} · ${nightText}` : null,
-    occupancy: `${guests} ${guests === 1 ? "guest" : "guests"}, ${rooms} ${rooms === 1 ? "room" : "rooms"}`,
+    occupancy: `${rooms} ${rooms === 1 ? "room" : "rooms"}, ${guests} ${guests === 1 ? "guest" : "guests"}`,
   };
 }
 export function canonicalHotelAddress(details: PublicHotelPropertyDetails | null, fallback: string) {
