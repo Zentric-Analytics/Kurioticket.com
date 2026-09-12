@@ -48,10 +48,15 @@ test("picker uses the web icon family with decorative native icons", () => {
   assert.match(sheet, /accessible=\{false\} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"/);
 });
 
-test("guests share one card while rooms and pet-friendly use separate cards", () => {
+test("guests share one card while rooms and optional pet-friendly use separate cards", () => {
   assert.match(guestContent, /<View style=\{styles\.pickerSection\}>\s*<Text[^>]+>GUESTS<\/Text>\s*<View style=\{\[styles\.pickerCard[^>]+>\s*<PickerRow icon=\{UserRound\}[\s\S]*?<View style=\{\[styles\.pickerDivider[^>]+\/>\s*<PickerRow icon=\{Baby\}[\s\S]*?<\/View>\s*<\/View>/);
-  assert.match(guestContent, /<Text[^>]+>ROOMS<\/Text>\s*<View style=\{\[styles\.pickerCard[^>]+>\s*<PickerRow icon=\{BedDouble\}[\s\S]*?<\/View>\s*<\/View>\s*<View style=\{\[styles\.pickerCard/);
+  assert.match(guestContent, /<Text[^>]+>ROOMS<\/Text>\s*<View style=\{\[styles\.pickerCard[^>]+>\s*<PickerRow icon=\{BedDouble\}[\s\S]*?<\/View>\s*<\/View>\s*\{showPetFriendly \? \(\s*<View style=\{\[styles\.pickerCard/);
   assert.equal((guestContent.match(/styles\.pickerDivider/g) ?? []).length, 1, "exactly one divider should render between the guest rows");
+});
+
+test("pet-friendly remains enabled by default but can be hidden for embedded stay editing", () => {
+  assert.match(sheet, /presentation = "sheet", showPetFriendly = true, onDone, onCancel/);
+  assert.match(guestContent, /\{showPetFriendly \? \(/);
 });
 
 test("pet switch has a flexible copy area and fixed trailing slot", () => {
