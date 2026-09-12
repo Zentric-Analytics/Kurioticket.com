@@ -11,7 +11,7 @@ type Props = {
   visible: boolean; title: string; startLabel: string; endLabel: string;
   startDate: string; endDate: string; minimumStartDate: string;
   endMustBeAfterStart?: boolean;
-  presentation?: "sheet" | "resultsEditFullScreen";
+  presentation?: "sheet" | "resultsEditFullScreen" | "embedded";
   backAccessibilityLabel?: string;
   onDone: (startDate: string, endDate: string) => void; onCancel: () => void;
   onDismiss?: () => void;
@@ -76,6 +76,14 @@ export function DateRangeSheet({ visible, title, startLabel, endLabel, startDate
     <View style={styles.week}>{["S","M","T","W","T","F","S"].map((day,index) => <Text key={`${day}-${index}`} style={[styles.weekday, { color: ft.colors.secondaryText }]}>{day}</Text>)}</View>
     <View style={styles.grid}>{cells.map((date,index) => { if (!date) return <View key={`blank-${index}`} style={styles.day}/>; const iso=localIsoDate(date); const disabled=iso<minimumStartDate; const start=iso===draftStart; const end=iso===draftEnd; const inRange=Boolean(draftStart&&draftEnd&&iso>draftStart&&iso<draftEnd); const selected=start||end; const isToday=iso===localIsoDate(new Date()); return <Pressable key={iso} accessibilityRole="button" accessibilityLabel={date.toLocaleDateString(FLIGHT_DATE_LOCALE,{dateStyle:"full"})} accessibilityState={{disabled,selected}} disabled={disabled} onPress={() => choose(iso)} style={[styles.day,inRange&&{backgroundColor:ft.colors.selected},selected&&{backgroundColor:ft.colors.selectedBorder},isToday&&!selected&&{borderColor:ft.colors.selectedBorder,borderWidth:1},disabled&&styles.disabled]}><Text style={[styles.dayText,{color:selected?ft.colors.surface:ft.colors.text},selected&&styles.selectedText]}>{date.getDate()}</Text></Pressable>; })}</View>
   </>;
+  if (presentation === "embedded") {
+    if (!visible) return null;
+    return <View style={styles.embeddedSheet}>
+      <PickerSheetHeader title={title} onClose={onCancel}/>
+      {content}
+      <PrimaryButton label="Done" icon={null} disabled={!valid} onPress={() => onDone(draftStart,draftEnd)}/>
+    </View>;
+  }
   if (presentation === "resultsEditFullScreen") return <HotelResultsEditPickerShell visible={visible} title={`Choose ${title.toLowerCase()}`} onBack={onCancel} backAccessibilityLabel={backAccessibilityLabel} footer={<PrimaryButton label="Done" icon={null} disabled={!valid} onPress={() => onDone(draftStart,draftEnd)}/>}>
     <View style={styles.fullScreenContent}>{content}</View>
   </HotelResultsEditPickerShell>;
@@ -93,4 +101,4 @@ export function DateRangeSheet({ visible, title, startLabel, endLabel, startDate
 
 function RangeValue({label,value,active,align}:{label:string;value:string;active:boolean;align:"left"|"right"}) { const ft=useFlowTheme(); const isRight=align==="right"; const displayValue=value ? localDateFromIso(value)?.toLocaleDateString(FLIGHT_DATE_LOCALE,{weekday:"short",month:"short",day:"numeric"}) : "Select"; return <View style={styles.rangeValue} accessible accessibilityState={{selected:active}} accessibilityLabel={`${label}, ${displayValue}${active ? ", currently selecting" : ""}`}><Text style={[ft.styles.label,isRight?styles.rangeTextRight:styles.rangeTextLeft]}>{label}</Text><View style={[styles.valueIndicator,isRight?styles.valueIndicatorRight:styles.valueIndicatorLeft,{borderBottomColor:active?ft.colors.selectedBorder:"transparent"}]}><Text style={[ft.styles.value,isRight?styles.rangeTextRight:styles.rangeTextLeft]}>{displayValue}</Text></View></View>; }
 
-const styles=StyleSheet.create({modalRoot:{flex:1,justifyContent:"flex-end"},scrim:{backgroundColor:SEARCH_PICKER_BACKDROP_COLOR},safeLayer:{flex:1,justifyContent:"flex-end"},fullScreenContent:{flex:1,paddingHorizontal:16,paddingTop:16,gap:14},sheet:{borderTopLeftRadius:24,borderTopRightRadius:24,padding:16,gap:10,maxHeight:"94%"},rangeHeader:{flexDirection:"row",gap:12},rangeValue:{flex:1,minWidth:0,padding:10},rangeTextLeft:{textAlign:"left"},rangeTextRight:{textAlign:"right"},valueIndicator:{borderBottomWidth:1,paddingBottom:2},valueIndicatorLeft:{alignSelf:"flex-start"},valueIndicatorRight:{alignSelf:"flex-end"},monthRow:{minHeight:48,flexDirection:"row",alignItems:"center",gap:4},month:{flex:1,textAlign:"center",fontSize:18,fontWeight:"800"},monthControl:{width:44,height:44,borderRadius:22,borderWidth:1,alignItems:"center",justifyContent:"center"},controlText:{fontSize:25},week:{flexDirection:"row"},weekday:{width:"14.285%",textAlign:"center",fontSize:11},grid:{flexDirection:"row",flexWrap:"wrap"},day:{width:"14.285%",minHeight:44,alignItems:"center",justifyContent:"center",borderRadius:8},dayText:{fontSize:13},selectedText:{fontWeight:"800"},disabled:{opacity:.35}});
+const styles=StyleSheet.create({modalRoot:{flex:1,justifyContent:"flex-end"},scrim:{backgroundColor:SEARCH_PICKER_BACKDROP_COLOR},safeLayer:{flex:1,justifyContent:"flex-end"},fullScreenContent:{flex:1,paddingHorizontal:16,paddingTop:16,gap:14},embeddedSheet:{gap:10},sheet:{borderTopLeftRadius:24,borderTopRightRadius:24,padding:16,gap:10,maxHeight:"94%"},rangeHeader:{flexDirection:"row",gap:12},rangeValue:{flex:1,minWidth:0,padding:10},rangeTextLeft:{textAlign:"left"},rangeTextRight:{textAlign:"right"},valueIndicator:{borderBottomWidth:1,paddingBottom:2},valueIndicatorLeft:{alignSelf:"flex-start"},valueIndicatorRight:{alignSelf:"flex-end"},monthRow:{minHeight:48,flexDirection:"row",alignItems:"center",gap:4},month:{flex:1,textAlign:"center",fontSize:18,fontWeight:"800"},monthControl:{width:44,height:44,borderRadius:22,borderWidth:1,alignItems:"center",justifyContent:"center"},controlText:{fontSize:25},week:{flexDirection:"row"},weekday:{width:"14.285%",textAlign:"center",fontSize:11},grid:{flexDirection:"row",flexWrap:"wrap"},day:{width:"14.285%",minHeight:44,alignItems:"center",justifyContent:"center",borderRadius:8},dayText:{fontSize:13},selectedText:{fontWeight:"800"},disabled:{opacity:.35}});

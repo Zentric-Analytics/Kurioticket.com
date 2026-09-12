@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Modal,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -28,7 +27,7 @@ type StayValues = {
   rooms: number;
 };
 
-type StayEditorTarget = "dates" | "counts";
+type StayEditorView = "menu" | "dates" | "counts";
 type ApplyStayResult = "unchanged" | "updated" | "failed";
 
 export function HotelStayEditor({
@@ -49,25 +48,22 @@ export function HotelStayEditor({
   const navigation = useNavigation();
   const routeParams = useLocalSearchParams<Record<string, string | string[]>>();
   const { theme } = useAppTheme();
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [pendingEditor, setPendingEditor] = useState<StayEditorTarget | null>(null);
-  const [datesOpen, setDatesOpen] = useState(false);
-  const [countsOpen, setCountsOpen] = useState(false);
+  const reopenEditorParam = Array.isArray(routeParams.hotelStayEditor)
+    ? routeParams.hotelStayEditor[0]
+    : routeParams.hotelStayEditor;
+  const [editorOpen, setEditorOpen] = useState(reopenEditorParam === "1");
+  const [editorView, setEditorView] = useState<StayEditorView>("menu");
+  const [draftGuests, setDraftGuests] = useState(guests);
+  const [draftRooms, setDraftRooms] = useState(rooms);
   const [updating, setUpdating] = useState(false);
-  const pendingDatesApply = useRef<{ checkIn: string; checkOut: string } | null>(null);
-  const datesReturnToEditor = useRef(false);
-  const pendingCountsApply = useRef<{ guests: number; rooms: number } | null>(null);
-  const countsReturnToEditor = useRef(false);
   const summary = hotelStaySummary(checkIn, checkOut, guests, rooms);
   const iconColor = theme.dark ? theme.icon : "#0F172A";
   const titleColor = theme.dark ? theme.textPrimary : "#020617";
   const metaColor = theme.dark ? theme.textSecondary : "#475569";
-  const reopenEditorParam = Array.isArray(routeParams.hotelStayEditor)
-    ? routeParams.hotelStayEditor[0]
-    : routeParams.hotelStayEditor;
 
   useEffect(() => {
     if (reopenEditorParam !== "1") return;
+    setEditorView("menu");
     setEditorOpen(true);
     router.setParams({ hotelStayEditor: "" });
   }, [reopenEditorParam]);
@@ -155,100 +151,49 @@ export function HotelStayEditor({
     }
   };
 
-  const launchEditor = (target: StayEditorTarget) => {
-    if (target === "dates") setDatesOpen(true);
-    else setCountsOpen(true);
-  };
-  const chooseEditor = (target: StayEditorTarget) => {
-    setPendingEditor(target);
-    setEditorOpen(false);
-    if (Platform.OS !== "ios") {
-      requestAnimationFrame(() => {
-        launchEditor(target);
-        setPendingEditor(null);
-      });
-    }
-  };
-  const finishEditorDismiss = () => {
-    if (Platform.OS !== "ios" || !pendingEditor) return;
-    launchEditor(pendingEditor);
-    setPendingEditor(null);
-  };
-
-  const finishDatesDismiss = () => {
-    if (!datesReturnToEditor.current) return;
-    const next = pendingDatesApply.current;
-    pendingDatesApply.current = null;
-    if (next) {
-      void applyStay(
-        { checkIn: next.checkIn, checkOut: next.checkOut, guests, rooms },
-        true,
-      ).then((outcome) => {
-        datesReturnToEditor.current = false;
-        if (outcome !== "updated") setEditorOpen(true);
-      });
-      return;
-    }
-    datesReturnToEditor.current = false;
+  const openEditor = () => {
+    setEditorView("menu");
     setEditorOpen(true);
   };
-  const closeDatesToEditor = () => {
-    pendingDatesApply.current = null;
-    datesReturnToEditor.current = true;
-    setDatesOpen(false);
+  const closeEditor = () => {
+    if (updating) return;
+    setEditorView("menu");
+    setEditorOpen(false);
+  };
+  const openCounts = () => {
+    setDraftGuests(guests);
+    setDraftRooms(rooms);
+    setEditorView("counts");
   };
   const finishDates = (nextCheckIn: string, nextCheckOut: string) => {
-    pendingDatesApply.current = { checkIn: nextCheckIn, checkOut: nextCheckOut };
-    datesReturnToEditor.current = true;
-    setDatesOpen(false);
+    setEditorView("menu");
+    void applyStay(
+      { checkIn: nextCheckIn, checkOut: nextCheckOut, guests, rooms },
+      true,
+    );
+  };
+  const finishCounts = () => {
+    const nextGuests = draftGuests;
+    const nextRooms = draftRooms;
+    setEditorView("menu");
+    void applyStay(
+      { checkIn, checkOut, guests: nextGuests, rooms: nextRooms },
+      true,
+    );
   };
 
-  const finishCountsDismiss = () => {
-    if (Platform.OS !== "ios" || !countsReturnToEditor.current) return;
-    const next = pendingCountsApply.current;
-    pendingCountsApply.current = null;
-    if (next) {
-      void applyStay(
-        { checkIn, checkOut, guests: next.guests, rooms: next.rooms },
-        true,
-      ).then((outcome) => {
-        countsReturnToEditor.current = false;
-        if (outcome !== "updated") setEditorOpen(true);
-      });
-      return;
-    }
-    countsReturnToEditor.current = false;
-    setEditorOpen(true);
+  const adjustRooms = (delta: number) => {
+    setDraftRooms((current) => Math.max(
+      HOTEL_LIMITS.rooms.min,
+      Math.min(HOTEL_LIMITS.rooms.max, draftGuests, current + delta),
+    ));
   };
-  const closeCountsToEditor = () => {
-    pendingCountsApply.current = null;
-    countsReturnToEditor.current = true;
-    setCountsOpen(false);
-    if (Platform.OS !== "ios") {
-      requestAnimationFrame(() => {
-        countsReturnToEditor.current = false;
-        setEditorOpen(true);
-      });
-    }
-  };
-  const finishCounts = (nextGuests: number, nextRooms: number) => {
-    pendingCountsApply.current = { guests: nextGuests, rooms: nextRooms };
-    countsReturnToEditor.current = true;
-    setCountsOpen(false);
-    if (Platform.OS !== "ios") {
-      requestAnimationFrame(() => {
-        const next = pendingCountsApply.current;
-        pendingCountsApply.current = null;
-        if (!next) return;
-        void applyStay(
-          { checkIn, checkOut, guests: next.guests, rooms: next.rooms },
-          true,
-        ).then((outcome) => {
-          countsReturnToEditor.current = false;
-          if (outcome !== "updated") setEditorOpen(true);
-        });
-      });
-    }
+  const adjustGuests = (delta: number) => {
+    setDraftGuests((current) => Math.max(
+      draftRooms,
+      HOTEL_LIMITS.guests.min,
+      Math.min(HOTEL_LIMITS.guests.max, current + delta),
+    ));
   };
 
   return (
@@ -258,7 +203,7 @@ export function HotelStayEditor({
           accessibilityRole="button"
           accessibilityLabel={`Edit stay. ${summary.dateText ?? "Stay dates unavailable"}. ${summary.occupancy}`}
           disabled={updating}
-          onPress={() => setEditorOpen(true)}
+          onPress={openEditor}
           style={({ pressed }) => [
             s.card,
             { borderColor: theme.border, backgroundColor: theme.surface },
@@ -275,194 +220,178 @@ export function HotelStayEditor({
           {updating ? <ActivityIndicator accessibilityLabel="Updating stay" size="small" color={colors.blue} /> : null}
         </Pressable>
       </View>
-      <HotelStayEditSheet
+      <Modal
         visible={editorOpen}
-        dateText={summary.dateText ?? "Stay dates unavailable"}
-        occupancy={summary.occupancy}
-        onCancel={() => {
-          setPendingEditor(null);
-          setEditorOpen(false);
-        }}
-        onDismiss={finishEditorDismiss}
-        onEditDates={() => chooseEditor("dates")}
-        onEditCounts={() => chooseEditor("counts")}
-      />
-      <DateRangeSheet
-        visible={datesOpen}
-        title="Travel dates"
-        startLabel="Check-in date"
-        endLabel="Check-out date"
-        presentation="sheet"
-        startDate={checkIn}
-        endDate={checkOut}
-        minimumStartDate={localIsoDate(new Date())}
-        endMustBeAfterStart
-        onDone={finishDates}
-        onCancel={closeDatesToEditor}
-        onDismiss={finishDatesDismiss}
-      />
-      <HotelStayCountsSheet
-        visible={countsOpen}
-        guests={guests}
-        rooms={rooms}
-        onCancel={closeCountsToEditor}
-        onDismiss={finishCountsDismiss}
-        onDone={finishCounts}
-      />
+        transparent
+        animationType="slide"
+        onRequestClose={editorView === "menu" ? closeEditor : () => setEditorView("menu")}
+      >
+        <View style={s.countBackdrop}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Close stay editor"
+            style={StyleSheet.absoluteFill}
+            onPress={editorView === "menu" ? closeEditor : () => setEditorView("menu")}
+          />
+          <SafeAreaView edges={["bottom"]} style={[s.countSheet, { backgroundColor: theme.surface }]}>
+            {editorView === "menu" ? (
+              <HotelStayMenu
+                dateText={summary.dateText ?? "Stay dates unavailable"}
+                occupancy={summary.occupancy}
+                updating={updating}
+                onClose={closeEditor}
+                onEditDates={() => setEditorView("dates")}
+                onEditCounts={openCounts}
+              />
+            ) : null}
+            {editorView === "dates" ? (
+              <DateRangeSheet
+                visible
+                title="Travel dates"
+                startLabel="Check-in date"
+                endLabel="Check-out date"
+                presentation="embedded"
+                startDate={checkIn}
+                endDate={checkOut}
+                minimumStartDate={localIsoDate(new Date())}
+                endMustBeAfterStart
+                onDone={finishDates}
+                onCancel={() => setEditorView("menu")}
+              />
+            ) : null}
+            {editorView === "counts" ? (
+              <HotelStayCountsEditor
+                guests={draftGuests}
+                rooms={draftRooms}
+                onCancel={() => setEditorView("menu")}
+                onDone={finishCounts}
+                onDecreaseRooms={() => adjustRooms(-1)}
+                onIncreaseRooms={() => adjustRooms(1)}
+                onDecreaseGuests={() => adjustGuests(-1)}
+                onIncreaseGuests={() => adjustGuests(1)}
+              />
+            ) : null}
+          </SafeAreaView>
+        </View>
+      </Modal>
     </>
   );
 }
 
-function HotelStayEditSheet({
-  visible,
+function HotelStayMenu({
   dateText,
   occupancy,
+  updating,
   onEditDates,
   onEditCounts,
-  onCancel,
-  onDismiss,
+  onClose,
 }: {
-  visible: boolean;
   dateText: string;
   occupancy: string;
+  updating: boolean;
   onEditDates: () => void;
   onEditCounts: () => void;
-  onCancel: () => void;
-  onDismiss: () => void;
+  onClose: () => void;
 }) {
   const { theme } = useAppTheme();
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel} onDismiss={onDismiss}>
-      <View style={s.countBackdrop}>
+    <>
+      <View style={s.countHeader}>
+        <Text accessibilityRole="header" style={[s.countTitle, { color: theme.textPrimary }]}>Edit stay</Text>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Close stay editor"
-          style={StyleSheet.absoluteFill}
-          onPress={onCancel}
-        />
-        <SafeAreaView edges={["bottom"]} style={[s.countSheet, { backgroundColor: theme.surface }]}>
-          <View style={s.countHeader}>
-            <Text accessibilityRole="header" style={[s.countTitle, { color: theme.textPrimary }]}>Edit stay</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel="Close stay editor" onPress={onCancel} style={s.closeButton}>
-              <X size={20} color={theme.icon} />
-            </Pressable>
-          </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Edit dates. ${dateText}`}
-            onPress={onEditDates}
-            style={({ pressed }) => [s.editOption, pressed && s.pressed]}
-          >
-            <View style={s.editOptionCopy}>
-              <Text style={[s.editOptionLabel, { color: theme.textSecondary }]}>Dates</Text>
-              <Text style={[s.editOptionValue, { color: theme.textPrimary }]}>{dateText}</Text>
-            </View>
-            <ChevronRight accessible={false} size={20} color={theme.icon} />
-          </Pressable>
-          <View style={[s.divider, { backgroundColor: theme.border }]} />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Edit rooms and guests. ${occupancy}`}
-            onPress={onEditCounts}
-            style={({ pressed }) => [s.editOption, pressed && s.pressed]}
-          >
-            <View style={s.editOptionCopy}>
-              <Text style={[s.editOptionLabel, { color: theme.textSecondary }]}>Rooms and guests</Text>
-              <Text style={[s.editOptionValue, { color: theme.textPrimary }]}>{occupancy}</Text>
-            </View>
-            <ChevronRight accessible={false} size={20} color={theme.icon} />
-          </Pressable>
-        </SafeAreaView>
+          disabled={updating}
+          onPress={onClose}
+          style={s.closeButton}
+        >
+          {updating ? <ActivityIndicator size="small" color={colors.blue} /> : <X size={20} color={theme.icon} />}
+        </Pressable>
       </View>
-    </Modal>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Edit dates. ${dateText}`}
+        disabled={updating}
+        onPress={onEditDates}
+        style={({ pressed }) => [s.editOption, pressed && s.pressed, updating && s.disabled]}
+      >
+        <View style={s.editOptionCopy}>
+          <Text style={[s.editOptionLabel, { color: theme.textSecondary }]}>Dates</Text>
+          <Text style={[s.editOptionValue, { color: theme.textPrimary }]}>{dateText}</Text>
+        </View>
+        <ChevronRight accessible={false} size={20} color={theme.icon} />
+      </Pressable>
+      <View style={[s.divider, { backgroundColor: theme.border }]} />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Edit rooms and guests. ${occupancy}`}
+        disabled={updating}
+        onPress={onEditCounts}
+        style={({ pressed }) => [s.editOption, pressed && s.pressed, updating && s.disabled]}
+      >
+        <View style={s.editOptionCopy}>
+          <Text style={[s.editOptionLabel, { color: theme.textSecondary }]}>Rooms and guests</Text>
+          <Text style={[s.editOptionValue, { color: theme.textPrimary }]}>{occupancy}</Text>
+        </View>
+        <ChevronRight accessible={false} size={20} color={theme.icon} />
+      </Pressable>
+    </>
   );
 }
 
-function HotelStayCountsSheet({
-  visible,
+function HotelStayCountsEditor({
   guests,
   rooms,
   onDone,
   onCancel,
-  onDismiss,
+  onDecreaseRooms,
+  onIncreaseRooms,
+  onDecreaseGuests,
+  onIncreaseGuests,
 }: {
-  visible: boolean;
   guests: number;
   rooms: number;
-  onDone: (guests: number, rooms: number) => void;
+  onDone: () => void;
   onCancel: () => void;
-  onDismiss: () => void;
+  onDecreaseRooms: () => void;
+  onIncreaseRooms: () => void;
+  onDecreaseGuests: () => void;
+  onIncreaseGuests: () => void;
 }) {
   const { theme } = useAppTheme();
-  const [draftGuests, setDraftGuests] = useState(guests);
-  const [draftRooms, setDraftRooms] = useState(rooms);
-
-  useEffect(() => {
-    if (!visible) return;
-    setDraftGuests(guests);
-    setDraftRooms(rooms);
-  }, [guests, rooms, visible]);
-
-  const adjustRooms = (delta: number) => {
-    setDraftRooms((current) => {
-      const next = Math.max(
-        HOTEL_LIMITS.rooms.min,
-        Math.min(HOTEL_LIMITS.rooms.max, draftGuests, current + delta),
-      );
-      return next;
-    });
-  };
-  const adjustGuests = (delta: number) => {
-    setDraftGuests((current) => Math.max(
-      draftRooms,
-      HOTEL_LIMITS.guests.min,
-      Math.min(HOTEL_LIMITS.guests.max, current + delta),
-    ));
-  };
-
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel} onDismiss={onDismiss}>
-      <View style={s.countBackdrop}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Close rooms and guests picker"
-          style={StyleSheet.absoluteFill}
-          onPress={onCancel}
-        />
-        <SafeAreaView edges={["bottom"]} style={[s.countSheet, { backgroundColor: theme.surface }]}>
-          <View style={s.countHeader}>
-            <Text accessibilityRole="header" style={[s.countTitle, { color: theme.textPrimary }]}>Rooms and guests</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel="Close rooms and guests picker" onPress={onCancel} style={s.closeButton}>
-              <X size={20} color={theme.icon} />
-            </Pressable>
-          </View>
-          <CounterRow
-            label="Rooms"
-            value={draftRooms}
-            canDecrease={draftRooms > HOTEL_LIMITS.rooms.min}
-            canIncrease={draftRooms < HOTEL_LIMITS.rooms.max && draftRooms < draftGuests}
-            onDecrease={() => adjustRooms(-1)}
-            onIncrease={() => adjustRooms(1)}
-          />
-          <View style={[s.divider, { backgroundColor: theme.border }]} />
-          <CounterRow
-            label="Guests"
-            value={draftGuests}
-            canDecrease={draftGuests > HOTEL_LIMITS.guests.min && draftGuests > draftRooms}
-            canIncrease={draftGuests < HOTEL_LIMITS.guests.max}
-            onDecrease={() => adjustGuests(-1)}
-            onIncrease={() => adjustGuests(1)}
-          />
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => onDone(draftGuests, draftRooms)}
-            style={({ pressed }) => [s.doneButton, pressed && s.donePressed]}
-          >
-            <Text style={s.doneText}>Done</Text>
-          </Pressable>
-        </SafeAreaView>
+    <>
+      <View style={s.countHeader}>
+        <Text accessibilityRole="header" style={[s.countTitle, { color: theme.textPrimary }]}>Rooms and guests</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="Back to edit stay" onPress={onCancel} style={s.closeButton}>
+          <X size={20} color={theme.icon} />
+        </Pressable>
       </View>
-    </Modal>
+      <CounterRow
+        label="Rooms"
+        value={rooms}
+        canDecrease={rooms > HOTEL_LIMITS.rooms.min}
+        canIncrease={rooms < HOTEL_LIMITS.rooms.max && rooms < guests}
+        onDecrease={onDecreaseRooms}
+        onIncrease={onIncreaseRooms}
+      />
+      <View style={[s.divider, { backgroundColor: theme.border }]} />
+      <CounterRow
+        label="Guests"
+        value={guests}
+        canDecrease={guests > HOTEL_LIMITS.guests.min && guests > rooms}
+        canIncrease={guests < HOTEL_LIMITS.guests.max}
+        onDecrease={onDecreaseGuests}
+        onIncrease={onIncreaseGuests}
+      />
+      <Pressable
+        accessibilityRole="button"
+        onPress={onDone}
+        style={({ pressed }) => [s.doneButton, pressed && s.donePressed]}
+      >
+        <Text style={s.doneText}>Done</Text>
+      </Pressable>
+    </>
   );
 }
 
@@ -517,10 +446,11 @@ const s = StyleSheet.create({
   card: { minHeight: 60, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 10 },
   copy: { flex: 1, minWidth: 0, justifyContent: "center" },
   pressed: { opacity: 0.62 },
+  disabled: { opacity: 0.5 },
   date: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
   meta: { marginTop: 2, fontSize: 13, lineHeight: 18, fontWeight: "400", fontFamily: appFonts.regular },
   countBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(2,6,23,.42)" },
-  countSheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 20, paddingTop: 14, paddingBottom: 16 },
+  countSheet: { maxHeight: "94%", borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 20, paddingTop: 14, paddingBottom: 16 },
   countHeader: { minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
   countTitle: { fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold },
   closeButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
