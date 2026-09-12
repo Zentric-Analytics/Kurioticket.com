@@ -55,7 +55,7 @@ test("native About renders room, hotel information, and accessibility row by row
   assert.match(about, /property\.accessibility\.map\([\s\S]*?hotelAboutAccessibilityItem[\s\S]*?>•<\/Text>/);
 });
 
-test("native About owns web-aligned geometry, typography, rhythm, and dark-mode colors", () => {
+test("native About keeps web typography and compact mobile rhythm", () => {
   const heading = styleRule("hotelAboutHeading", "hotelAboutDescription");
   const description = styleRule("hotelAboutDescription", "hotelAboutSubheading");
   const subheading = styleRule("hotelAboutSubheading", "hotelAboutFallback");
@@ -64,9 +64,10 @@ test("native About owns web-aligned geometry, typography, rhythm, and dark-mode 
   const infoText = styleRule("hotelAboutInfoText", "hotelAboutAccessibilityList");
   const accessibilityText = styleRule("hotelAboutAccessibilityText", "mapsButton");
   for (const rule of [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/, /appFonts\.bold/]) assert.match(heading, rule);
-  for (const rule of [/marginTop: 12/, /fontSize: 13/, /lineHeight: 22/, /fontWeight: "400"/, /appFonts\.regular/]) assert.match(description, rule);
-  for (const rule of [/marginTop: 28/, /fontSize: 15/, /lineHeight: 22/, /fontWeight: "600"/, /appFonts\.semibold/]) assert.match(subheading, rule);
-  for (const rule of [/minHeight: 56/, /borderRadius: 12/, /paddingHorizontal: 12/, /paddingVertical: 10/, /gap: 6/]) assert.match(highlight, rule);
+  for (const rule of [/marginTop: 10/, /fontSize: 13/, /lineHeight: 22/, /fontWeight: "400"/, /appFonts\.regular/]) assert.match(description, rule);
+  for (const rule of [/marginTop: 22/, /fontSize: 15/, /lineHeight: 22/, /fontWeight: "600"/, /appFonts\.semibold/]) assert.match(subheading, rule);
+  for (const rule of [/minHeight: 48/, /borderRadius: 12/, /paddingHorizontal: 10/, /paddingVertical: 7/, /gap: 6/]) assert.match(highlight, rule);
+  assert.match(styleRule("hotelAboutHighlightGrid", "hotelAboutHighlight"), /marginTop: 8[\s\S]*columnGap: 8[\s\S]*rowGap: 8/);
   for (const rule of [/fontSize: 13/, /lineHeight: 18/, /fontWeight: "500"/, /appFonts\.medium/]) assert.match(highlightText, rule);
   for (const rule of [/fontSize: 13/, /lineHeight: 19/, /fontWeight: "400"/, /appFonts\.regular/]) assert.match(infoText, rule);
   for (const rule of [/fontSize: 13/, /lineHeight: 22/, /fontWeight: "400"/, /appFonts\.regular/]) assert.match(accessibilityText, rule);
