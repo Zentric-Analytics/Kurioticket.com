@@ -83,6 +83,7 @@ test("editable stay summary keeps dates and occupancy independently actionable",
   assert.match(stayEditor, /router\.setParams\(\{/);
   assert.match(stayEditor, /hotelDisplayPrices: ""/);
   assert.match(stayEditor, /displayCurrencyContext: ""/);
+  assert.match(stayEditor, /hotelResultsStack: "0"/);
 });
 
 test("inline gallery keeps swiping and a centered measured counter without the thumbnail rail", () => {
