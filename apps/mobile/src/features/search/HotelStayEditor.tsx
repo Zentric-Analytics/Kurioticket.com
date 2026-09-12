@@ -323,9 +323,9 @@ function CounterRow({
 
 const s = StyleSheet.create({
   section: { paddingHorizontal: 10, paddingTop: 24 },
-  card: { height: 60, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 10 },
+  card: { minHeight: 60, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 10 },
   copy: { flex: 1, minWidth: 0, justifyContent: "center" },
-  rowAction: { height: 24, justifyContent: "center", alignSelf: "stretch" },
+  rowAction: { minHeight: 24, justifyContent: "center", alignSelf: "stretch" },
   pressed: { opacity: 0.62 },
   date: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
   meta: { fontSize: 13, lineHeight: 18, fontWeight: "400", fontFamily: appFonts.regular },
