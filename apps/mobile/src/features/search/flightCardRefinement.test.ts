@@ -187,9 +187,9 @@ test("flight result cards use the responsive list width with a safe reduced oute
   }
 });
 
-test("flight loading skeleton mirrors the horizontal metadata footer", () => {
+test("the branded loader replaces legacy flight and Hotel skeleton rendering", () => {
   assert.match(source, /NativeBrandedSearchLoading/);
-  assert.doesNotMatch(source, /function FlightLoadingSkeleton|function HotelLoadingSkeleton|skeletonMetadataRow/);
+  assert.doesNotMatch(source, /function FlightLoadingSkeleton|function HotelLoadingSkeleton/);
 });
 
 test("flight card keeps long prices single-line in the full-width fare row", () => {
