@@ -7,6 +7,7 @@ import { money, ui } from "./SearchUi";
 import { useSavedCar } from "./carSavedState";
 import { useAppTheme } from "../../theme/AppTheme";
 import { getPrimaryCarOffer } from "../../../../../src/lib/cars/carResults";
+import { isCuratedCarResultImage } from "../../../../../src/lib/cars/carResultImage";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { nativeCarResultIdentity } from "./nativeCarResultIdentity";
 
@@ -22,6 +23,7 @@ export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal
   const { theme } = useAppTheme();
   const freeCancellationColor = theme.dark ? theme.textPrimary : "#000000";
   const identity = nativeCarResultIdentity(result.modelName);
+  const imageResizeMode = isCuratedCarResultImage(imageUri) ? "contain" : "cover";
   const share = () => void Share.share({ message: result.modelName, title: result.modelName });
   return <View style={[c.card,{backgroundColor:theme.surface,borderColor:theme.dark?theme.border:"#D8E1EC",shadowColor:theme.dark?"#000000":"#18305B"}]}>
     {hasTopBadge ? <View style={[c.topMetaShell,{borderBottomColor:theme.border}]}>
@@ -31,7 +33,7 @@ export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal
       </View></View>
     </View> : null}
     <View style={c.main}>
-      <View style={[c.visualColumn,!hasTopBadge&&c.visualColumnWithoutTopMeta]}><View style={c.visual}>{imageUri && !imageFailed ? <Image source={{ uri: imageUri }} resizeMode="cover" style={c.image} accessibilityLabel={result.imageAlt} onError={() => setImageFailed(true)} /> : <View accessibilityLabel={`${result.modelName} vehicle image unavailable`} style={c.imageFallback}><FlowIcon name="car" size={48} color="#315A7D" /><Text style={c.fallbackText}>Vehicle image unavailable</Text></View>}</View></View>
+      <View style={[c.visualColumn,!hasTopBadge&&c.visualColumnWithoutTopMeta]}><View style={c.visual}>{imageUri && !imageFailed ? <Image source={{ uri: imageUri }} resizeMode={imageResizeMode} style={c.image} accessibilityLabel={result.imageAlt} onError={() => setImageFailed(true)} /> : <View accessibilityLabel={`${result.modelName} vehicle image unavailable`} style={c.imageFallback}><FlowIcon name="car" size={48} color="#315A7D" /><Text style={c.fallbackText}>Vehicle image unavailable</Text></View>}</View></View>
       <View style={c.contentColumn}>
         <View style={[c.information,!hasTopBadge&&c.informationWithoutTopMeta]}>
         <View style={c.headerRow}>
