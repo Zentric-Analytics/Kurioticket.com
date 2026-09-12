@@ -90,7 +90,7 @@ test("Hotel Details light canvas matches the web white article without flattenin
     hotel,
     /const hotelCanvasColor = theme\.dark \? theme\.background : theme\.surface;/,
   );
-  const hotelRoot = hotel.slice(hotel.indexOf("return ("), hotel.indexOf("<ScrollView"));
+  const hotelRoot = hotel.slice(hotel.indexOf("<SafeAreaView"), hotel.indexOf("<ScrollView"));
   assert.match(hotelRoot, /<SafeAreaView[\s\S]*?backgroundColor: hotelCanvasColor/);
   assert.match(hotelRoot, /d\.hotelBackHeader,[\s\S]*?backgroundColor: hotelCanvasColor/);
   assert.doesNotMatch(hotelRoot, /backgroundColor: theme\.background/);
