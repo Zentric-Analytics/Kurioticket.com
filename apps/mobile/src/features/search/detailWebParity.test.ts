@@ -102,7 +102,7 @@ test("Hotel Details light canvas matches the web white article without flattenin
   assert.doesNotMatch(hotel, /Platform\.OS/);
 });
 
-test("Hotel section navigation separates its sticky shell from one deterministic tab row", () => {
+test("Hotel section navigation keeps one deterministic compact tab row", () => {
   const shellStart = hotel.indexOf("d.hotelTabsShell");
   const bodyStart = hotel.indexOf("<View style={d.hotelDetailBody}");
   const shell = hotel.slice(shellStart, bodyStart);
@@ -122,7 +122,7 @@ test("Hotel section navigation separates its sticky shell from one deterministic
 
   assert.match(shellStyle, /width: "100%"/);
   assert.match(shellStyle, /alignSelf: "stretch"/);
-  assert.match(shellStyle, /minHeight: 51/);
+  assert.match(shellStyle, /minHeight: 45/);
   assert.match(shellStyle, /paddingHorizontal: 8/);
   assert.doesNotMatch(shellStyle, /borderBottomWidth|borderBottomColor/);
   assert.match(shell, /backgroundColor: hotelCanvasColor/);
@@ -130,6 +130,7 @@ test("Hotel section navigation separates its sticky shell from one deterministic
   assert.doesNotMatch(shellStyle, /flexDirection:/);
 
   assert.match(row, /alignSelf: "stretch"/);
+  assert.match(row, /minHeight: 44/);
   assert.match(row, /flexDirection: "row"/);
   assert.match(row, /flexWrap: "nowrap"/);
   assert.doesNotMatch(row, /flexDirection: "column"|flexWrap: "wrap"/);
@@ -139,7 +140,7 @@ test("Hotel section navigation separates its sticky shell from one deterministic
   assert.match(tab, /flexShrink: 0/);
   assert.doesNotMatch(tab, /flexGrow: 1(?:\D|$)|flexBasis: 0/);
   assert.match(tab, /minWidth: 0/);
-  assert.match(tab, /minHeight: (?:4[4-9]|[5-9]\d)/);
+  assert.match(tab, /minHeight: 44/);
   assert.match(wideTab, /width: "35\.5%"/);
   assert.doesNotMatch(wideTab, /flexGrow: 1\.65/);
 
