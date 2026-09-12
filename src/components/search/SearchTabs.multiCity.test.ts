@@ -5,6 +5,7 @@ import test from "node:test";
 const searchTabs = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
 const editor = readFileSync("src/components/search/MultiCityFlightEditor.tsx", "utf8");
 const results = readFileSync("src/components/results/FlightResultsClient.tsx", "utf8");
+const drawer = readFileSync("src/components/search/FlightEditSearchDrawer.tsx", "utf8");
 const native = readFileSync("apps/mobile/src/features/flow/FlightSearchPanel.tsx", "utf8");
 
 test("every visible web Multi-city selector is enabled and has no coming-soon copy", () => {
@@ -57,10 +58,12 @@ test("homepage validates provider-backed airport suggestions before enabling sea
 });
 
 test("Results mobile drawer consumes the canonical full-leg editor", () => {
-  assert.match(results, /function handleMobileTripTypeChange/);
-  assert.match(results, /projectSearchLegs\("multi-city", projectedLegs\)/);
-  assert.match(results, /<MultiCityFlightEditor[\s\S]*?legs=\{multiCityLegs\}[\s\S]*?onChange=\{setMultiCityLegs\}/);
-  assert.match(results, /appendFlightLegParams\(nextParams, multiCityLegs\)/);
+  assert.match(results, /<FlightEditSearchDrawer/);
+  assert.match(drawer, /draft\.tripType === "multi-city" \? \(/);
+  assert.match(drawer, /<MultiCityFlightEditor[\s\S]*?legs=\{draft\.legs\}[\s\S]*?setDraft\(\(current\) => \(\{ \.\.\.current, legs \}\)\)/);
+  assert.match(drawer, /onSearch\(draft\)/);
+  assert.match(results, /projectSearchLegs\(value\.tripType, value\.legs\)/);
+  assert.match(results, /appendFlightLegParams\(nextParams, value\.legs\)/);
   assert.match(results, /router\.push\(`\/flights\/results\?\$\{nextParams\.toString\(\)\}`/);
 });
 

@@ -19,7 +19,7 @@ function expectInteractionOnlyGating(region: string) {
 }
 
 test("flight mobile summary and shortcuts stay in normal flow beneath Edit Search", () => {
-  const start = flights.indexOf('<section\n        inert={mobileSearchOpen ? true : undefined}');
+  const start = flights.indexOf('data-flight-results-top-summary');
   const end = flights.indexOf("<FlightEditSearchDrawer", start);
   const underlyingControls = flights.slice(start, end);
 

@@ -92,5 +92,5 @@ test("mobile Filter retains its icon and existing drawer handler", () => {
   assert.match(filter, /border-\[#D8E1EC\]/);
   assert.match(filter, /bg-white/);
   assert.match(filter, /<SlidersHorizontal/);
-  assert.match(filter, /openMobileFiltersDrawer\(event\.currentTarget\)/);
+  assert.match(filter, /openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)/);
 });

@@ -57,6 +57,7 @@ import { translations as idTranslations } from "@/lib/i18n/id";
 import { translations as thTranslations } from "@/lib/i18n/th";
 import { translations as viTranslations } from "@/lib/i18n/vi";
 import { availableLocaleOptions, getTranslations } from "@/lib/i18n";
+import { travelAccountTranslations } from "@/lib/i18n/travelAccount";
 import { supportedLocales } from "@/lib/supportedLocales";
 import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
 import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
@@ -76,6 +77,7 @@ import {
 } from "@/lib/flights/dateFormatting";
 import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
 import { legalDocuments } from "@/data/legalDocuments";
+import { getLegalDocumentTranslationNamespace, localizeLegalDocument } from "@/lib/legal/localizeLegalDocument";
 import { getGeneralFaqs } from "@/content/faqs";
 import { carsFaqItems, pickupCards, tripStyleCards } from "@/data/carsLandingContent";
 import { buildCarResultsHref, buildPickupHref, defaultDriverAge, timeOptions } from "@/lib/cars/carsSearchUtils";
@@ -239,12 +241,13 @@ test("Vietnamese language metadata, LTR direction, and English fallback dictiona
   assert.equal(normalizeLanguage("vi"), "vi");
   assert.equal(normalizeLanguage("vi-VN"), "vi");
   assert.equal(normalizeLanguage("vi-vn"), "vi");
-  assert.deepEqual(getTranslations("vi"), viTranslations);
-  assert.deepEqual(getTranslations("vi-VN"), viTranslations);
-  assert.deepEqual(getTranslations("vi-vn"), viTranslations);
+  const expectedVietnamese = { ...viTranslations, ...travelAccountTranslations.vi };
+  assert.deepEqual(getTranslations("vi"), expectedVietnamese);
+  assert.deepEqual(getTranslations("vi-VN"), expectedVietnamese);
+  assert.deepEqual(getTranslations("vi-vn"), expectedVietnamese);
   assert.equal(viTranslations.homeHeroTitle, "So sánh các lựa chọn du lịch trong một lần tìm kiếm đơn giản");
   assert.equal(viTranslations.search, "Tìm kiếm");
-  assert.deepEqual(getTranslations("unsupported-locale"), enTranslations);
+  assert.deepEqual(getTranslations("unsupported-locale"), { ...enTranslations, ...travelAccountTranslations["en-us"] });
   assert.ok(availableLocaleOptions.some((o) => o.code === "vi" && o.nativeLabel === "Tiếng Việt"));
   assert.equal(vietnameseOptions[0]?.direction, "ltr");
   assert.equal(languageOptions.find((o) => o.code === "th")?.status, "available");
@@ -828,7 +831,8 @@ test("Vietnamese Account Support and Account FAQ copy resolves without English f
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
   assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
   assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
-  assert.ok(getTranslations("vi-VN") === vi && getTranslations("vi-vn") === vi);
+  assert.deepEqual(getTranslations("vi-VN"), vi);
+  assert.deepEqual(getTranslations("vi-vn"), vi);
 
   assert.ok(supportDashboardRouteSource.includes("<SupportContent dashboardFlow showFaq={false} />"));
   assert.ok(supportContentSource.includes('t("supportBeforeContactDashboardDescription")'));
@@ -916,9 +920,10 @@ test("Thai language metadata, LTR direction, and English fallback dictionary res
   assert.equal(normalizeLanguage("th"), "th");
   assert.equal(normalizeLanguage("th-TH"), "th");
   assert.equal(normalizeLanguage("th-th"), "th");
-  assert.deepEqual(getTranslations("th"), thTranslations);
-  assert.deepEqual(getTranslations("th-TH"), thTranslations);
-  assert.deepEqual(getTranslations("th-th"), thTranslations);
+  const expectedThai = { ...thTranslations, ...travelAccountTranslations.th };
+  assert.deepEqual(getTranslations("th"), expectedThai);
+  assert.deepEqual(getTranslations("th-TH"), expectedThai);
+  assert.deepEqual(getTranslations("th-th"), expectedThai);
   assert.equal(thTranslations.homeHeroTitle, "เปรียบเทียบตัวเลือกการเดินทางได้ในการค้นหาเดียว");
   assert.equal(thTranslations.search, "ค้นหา");
   assert.notEqual(thTranslations.homeHeroTitle, enTranslations.homeHeroTitle);
@@ -926,7 +931,7 @@ test("Thai language metadata, LTR direction, and English fallback dictionary res
   assert.ok(availableLocaleOptions.some((o) => o.code === "th" && o.nativeLabel === "ไทย"));
   assert.equal(thaiOptions[0]?.direction, "ltr");
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
-  assert.deepEqual(getTranslations("unsupported-locale"), enTranslations);
+  assert.deepEqual(getTranslations("unsupported-locale"), { ...enTranslations, ...travelAccountTranslations["en-us"] });
 });
 
 test("Thai account customization and booking preferences resolve through active i18n keys", () => {
@@ -1270,8 +1275,8 @@ test("Indonesian locale is active with homepage copy overrides", () => {
   assert.equal(normalizeLanguage("id"), "id");
   assert.equal(normalizeLanguage("id-ID"), "id");
   assert.equal(normalizeLanguage("id-id"), "id");
-  assert.deepEqual(getTranslations("id"), idTranslations);
-  assert.deepEqual(getTranslations("id-ID"), idTranslations);
+  assert.deepEqual(getTranslations("id"), { ...idTranslations, ...travelAccountTranslations.id });
+  assert.deepEqual(getTranslations("id-ID"), { ...idTranslations, ...travelAccountTranslations.id });
   assert.equal(idTranslations.homeHeroTitle, "Bandingkan pilihan perjalanan dalam satu pencarian sederhana");
   assert.equal(idTranslations.search, "Cari");
   assert.notEqual(idTranslations.homeHeroTitle, enTranslations.homeHeroTitle);
@@ -2012,9 +2017,9 @@ test("Indonesian Legal Center overview and active legal documents are localized"
   assert.ok(legalIndexSource.includes('t(`legal.index.documents.${documentKey}.title`)'));
   assert.ok(legalIndexSource.includes('t(`legal.index.documents.${documentKey}.summary`)'));
   assert.ok(legalIndexSource.includes('t("legal.index.lastUpdated")'));
-  assert.ok(legalViewerSource.includes('"privacy-policy": "legal.privacy"'));
-  assert.ok(legalViewerSource.includes('"terms-of-service": "legal.terms"'));
-  assert.ok(legalViewerSource.includes('"cookie-policy": "legal.cookiePolicy"'));
+  for (const [slug, namespace] of [["privacy-policy", "legal.privacy"], ["terms-of-service", "legal.terms"], ["cookie-policy", "legal.cookiePolicy"]]) {
+    assert.equal(getLegalDocumentTranslationNamespace(legalDocuments.find(document => document.slug === slug)!), namespace);
+  }
   assert.ok(legalViewerSource.includes('window.print()'));
 
   const expectedNamespaces = [
@@ -2210,8 +2215,8 @@ test("Swedish locale is active and localizes homepage while preserving other fal
   assert.equal(normalizeLanguage("sv"), "sv");
   assert.equal(normalizeLanguage("sv-SE"), "sv");
   assert.equal(normalizeLanguage("sv-se"), "sv");
-  assert.deepEqual(getTranslations("sv"), svTranslations);
-  assert.deepEqual(getTranslations("sv-SE"), svTranslations);
+  assert.deepEqual(getTranslations("sv"), { ...svTranslations, ...travelAccountTranslations.sv });
+  assert.deepEqual(getTranslations("sv-SE"), { ...svTranslations, ...travelAccountTranslations.sv });
   assert.equal(svTranslations.homeHeroTitle, "Jämför resealternativ med en enkel sökning");
   assert.notEqual(svTranslations.homeHeroTitle, enTranslations.homeHeroTitle);
   assert.equal(svTranslations.logout, "Logga ut");
@@ -7748,7 +7753,7 @@ test("Hindi legal center and policy document strings are localized", () => {
   const legalViewerSource = readFileSync("src/components/legal/LegalViewer.tsx", "utf8");
   const legalCenterSource = readFileSync("src/app/legal-center/LegalCenterContent.tsx", "utf8");
 
-  assert.ok(legalViewerSource.includes("legalDocumentTranslationNamespaces"));
+  assert.ok(legalViewerSource.includes("localizeLegalDocument(document, t)"));
   assert.ok(legalViewerSource.includes("window.print()"));
   assert.ok(legalViewerSource.includes("href={`#${section.id}`}"));
   assert.ok(legalCenterSource.includes('href: "/legal/privacy-policy"'));
@@ -8144,8 +8149,7 @@ test("Polish legal detail pages localize active render path without English fall
   assert.ok(legalPageRouteSource.includes("getLegalDocument(slug)"));
   assert.ok(legalPageRouteSource.includes("<LegalViewer document={document} />"));
   assert.ok(legalViewerSource.includes("getLegalDocumentTranslation(document, t)"));
-  assert.ok(legalViewerSource.includes("legalDocumentTranslationNamespaces"));
-  assert.ok(legalViewerSource.includes("`${namespace}.sections.${section.id}.paragraph${index + 1}`"));
+  assert.ok(legalViewerSource.includes("localizeLegalDocument(document, t)"));
   assert.ok(legalViewerSource.includes("window.print()"));
   assert.doesNotMatch(legalViewerSource, /developerNote|legalDeveloperNote|startup placeholder/i);
 
@@ -8184,7 +8188,11 @@ test("Polish legal detail pages localize active render path without English fall
   assert.notEqual(pl["legal.tableOfContents"], enTranslations["legal.tableOfContents"]);
 
   for (const [slug, detail] of Object.entries(expected)) {
-    assert.ok(legalViewerSource.includes(`"${slug}": "${detail.namespace}"`));
+    const document = legalDocuments.find(document => document.slug === slug)!;
+    assert.equal(getLegalDocumentTranslationNamespace(document), detail.namespace);
+    const localized = localizeLegalDocument(document, pl);
+    assert.equal(localized.title, detail.title);
+    assert.equal(localized.sections.find(section => section.id === detail.sections[0])?.paragraphs[0], detail.sampleBody);
     assert.equal(pl[`${detail.namespace}.title`], detail.title);
     assert.equal(pl[`${detail.namespace}.summary`], detail.summary);
     assert.equal(pl[`${detail.namespace}.tableOfContents`], "SPIS TREŚCI");
@@ -8199,7 +8207,6 @@ test("Polish legal detail pages localize active render path without English fall
 
 test("Every active Polish legal detail document has localized detail content", () => {
   const pl = getTranslations("pl");
-  const legalViewerSource = readFileSync("src/components/legal/LegalViewer.tsx", "utf8");
   const slugToNamespace: Record<string, string> = {
     "terms-of-service": "legal.terms",
     "privacy-policy": "legal.privacy",
@@ -8221,7 +8228,10 @@ test("Every active Polish legal detail document has localized detail content", (
 
   for (const document of legalDocuments) {
     const namespace = slugToNamespace[document.slug];
-    assert.ok(legalViewerSource.includes(`"${document.slug}": "${namespace}"`));
+    assert.equal(getLegalDocumentTranslationNamespace(document), namespace);
+    const localized = localizeLegalDocument(document, pl);
+    assert.equal(localized.title, pl[`${namespace}.title`]);
+    assert.equal(localized.summary, pl[`${namespace}.summary`]);
     assert.equal(typeof pl[`${namespace}.title`], "string");
     assert.equal(typeof pl[`${namespace}.summary`], "string");
     assert.equal(pl[`${namespace}.tableOfContents`], "SPIS TREŚCI");
@@ -12721,7 +12731,7 @@ test("Swedish Legal About How active pages resolve localized copy", () => {
   }
   assert.ok(legalPageSource.includes('t("legal.index.heroLabel")'));
   assert.ok(legalPageSource.includes('t(`legal.index.documents.${documentKey}.title`)'));
-  assert.ok(legalViewerSource.includes("${namespace}.sections.${section.id}.paragraph${index + 1}"));
+  assert.ok(legalViewerSource.includes("localizeLegalDocument(document, t)"));
   assert.ok(legalViewerSource.includes("window.print()"));
   assert.ok(aboutSource.includes('getTranslation(t, "aboutPageEyebrow")'));
   assert.ok(howSource.includes('titleKey: "howItWorks.steps.search.title"'));
@@ -13168,7 +13178,7 @@ test("Newsletter account email and Manage Email Updates copy resolve for all act
   ];
 
   for (const [locale, dictionary] of activeLocales) {
-    assert.deepEqual(getTranslations(locale), dictionary);
+    assert.deepEqual(getTranslations(locale), { ...dictionary, ...travelAccountTranslations[locale.toLowerCase()] });
     for (const key of auditedKeys) {
       assert.equal(typeof dictionary[key], "string", `${locale} should define ${key}`);
       assert.ok(dictionary[key].length > 0, `${locale} should resolve ${key}`);
