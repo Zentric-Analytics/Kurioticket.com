@@ -54,20 +54,21 @@ export function GET(request: Request) {
   const relatedHotels = record
     ? buildRelatedStaticHotelResults(record, search).map(toPublicHotel)
     : [];
+  if (record) {
+    const hotel = buildStaticHotelResult(record, search);
+    return NextResponse.json({
+      hotel: toPublicHotel(hotel),
+      propertyDetails: toPublicPropertyDetails(record),
+      roomOptions: buildStaticHotelRoomOptions(record, search),
+      relatedHotels,
+    });
+  }
   if (cached)
     return NextResponse.json({
       hotel: toPublicHotel(cached),
-      propertyDetails: toPublicPropertyDetails(record),
-      roomOptions: record ? buildStaticHotelRoomOptions(record, search) : [],
-      relatedHotels,
+      propertyDetails: null,
+      roomOptions: [],
+      relatedHotels: [],
     });
-  if (!record)
-    return NextResponse.json({ error: "Hotel not found." }, { status: 404 });
-  const hotel = buildStaticHotelResult(record, search);
-  return NextResponse.json({
-    hotel: toPublicHotel(hotel),
-    propertyDetails: toPublicPropertyDetails(record),
-    roomOptions: buildStaticHotelRoomOptions(record, search),
-    relatedHotels,
-  });
+  return NextResponse.json({ error: "Hotel not found." }, { status: 404 });
 }
