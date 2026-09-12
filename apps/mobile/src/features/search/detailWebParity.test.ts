@@ -33,13 +33,14 @@ function styleRule(name: string, nextName: string) {
   return source.slice(start, end);
 }
 
-test("Hotel details follow mobile identity, gallery, tabs, and offer hierarchy", () => {
-  assert.match(hotel, />Back to hotel results</);
-  for (const icon of ["CalendarDays", "Users", "MapPin"]) assert.match(hotel, new RegExp(`icon=\\{${icon}\\}`));
+test("Hotel details follow hero, identity, tabs, and offer hierarchy", () => {
+  assert.doesNotMatch(hotel, />Back to hotel results<\/Text>/);
+  assert.match(hotel, /<CalendarDays accessible=\{false\} size=\{22\}/);
+  assert.match(hotel, /<Users accessible=\{false\} size=\{18\}/);
   assert.match(hotel, /<Award accessible=\{false\}/);
   for (const glyph of ["▣", "♙", "⌾"]) assert.doesNotMatch(hotel, new RegExp(glyph));
-  assert.ok(hotel.indexOf("d.hotelIdentity") < hotel.indexOf("<NativeHotelGallery"));
-  assert.ok(hotel.indexOf("<NativeHotelGallery") < hotel.indexOf('accessibilityRole="tablist"'));
+  assert.ok(hotel.indexOf("<NativeHotelGallery") < hotel.indexOf("<View style={d.hotelIdentity}>"));
+  assert.ok(hotel.indexOf("<View style={d.hotelIdentity}>") < hotel.indexOf('accessibilityRole="tablist"'));
   assert.match(hotel, /stickyHeaderIndices=\{\[2\]\}/);
   for (const tab of ["details", "reviews", "deals"]) assert.match(hotel, new RegExp(`"${tab}"`));
   assert.match(hotel, /kurioticket-logo-primary-light-bg\.png/);
@@ -47,27 +48,31 @@ test("Hotel details follow mobile identity, gallery, tabs, and offer hierarchy",
   assert.doesNotMatch(hotel, /Select room|Choose where to book/);
 });
 
-test("Hotel Details back header stays visually borderless with stack-aware Results navigation", () => {
-  const backHeaderStart = hotel.indexOf("d.hotelBackHeader");
-  const backHeaderEnd = hotel.indexOf("<ScrollView", backHeaderStart);
-  const backHeader = hotel.slice(backHeaderStart, backHeaderEnd);
-  const backHeaderStyle = styleRule("hotelBackHeader", "hotelIdentity");
+test("Hotel Details uses icon-only hero back control with stack-aware Results navigation", () => {
+  const heroStart = hotel.indexOf("<View style={d.hotelHeroShell}>");
+  const heroEnd = hotel.indexOf("<View style={d.hotelIdentity}>", heroStart);
+  const hero = hotel.slice(heroStart, heroEnd);
+  const backStyle = styleRule("hotelHeroBack", "hotelHeroActions");
+  const actionStyle = styleRule("hotelHeroActions", "hotelHeroAction");
   const returnNavigation = hotel.slice(
     hotel.indexOf("const returnToHotelResults"),
     hotel.indexOf("const amenityItems"),
   );
 
-  assert.match(backHeaderStyle, /minHeight: 48/);
-  assert.match(backHeaderStyle, /paddingHorizontal: 16/);
-  assert.match(backHeaderStyle, /justifyContent: "center"/);
-  assert.doesNotMatch(backHeaderStyle, /borderBottomWidth|borderBottomColor/);
-  assert.doesNotMatch(backHeader, /borderBottomColor: theme\.border/);
+  assert.match(backStyle, /left: 20/);
+  assert.match(backStyle, /width: 44/);
+  assert.match(backStyle, /height: 44/);
+  assert.match(backStyle, /borderRadius: 22/);
+  assert.match(actionStyle, /right: 20/);
+  assert.match(actionStyle, /width: 112/);
+  assert.match(actionStyle, /height: 44/);
+  assert.match(actionStyle, /borderRadius: 22/);
 
-  assert.match(backHeader, /accessibilityRole="button"/);
-  assert.match(backHeader, /accessibilityLabel="Back to hotel results"/);
-  assert.match(backHeader, /onPress=\{returnToHotelResults\}/);
-  assert.match(backHeader, /<ArrowLeft\b/);
-  assert.match(backHeader, />Back to hotel results</);
+  assert.match(hero, /accessibilityRole="button"/);
+  assert.match(hero, /accessibilityLabel="Back to hotel results"/);
+  assert.match(hero, /onPress=\{returnToHotelResults\}/);
+  assert.match(hero, /<ArrowLeft size=\{25\} strokeWidth=\{2\.2\} color="#0F172A" \/>/);
+  assert.doesNotMatch(hero, />Back to hotel results<\/Text>/);
 
   assert.match(returnNavigation, /if \(hotelResultsStack\) \{/);
   assert.match(returnNavigation, /hotelResultsDismissCount\(navigation\.getState\(\)\)/);
@@ -81,7 +86,7 @@ test("Hotel Details back header stays visually borderless with stack-aware Resul
   assert.doesNotMatch(returnNavigation, /router\.back\(/);
 });
 
-test("Hotel Details light canvas matches the web white article without flattening dark mode", () => {
+test("Hotel Details light canvas matches the web white article while allowing a full-bleed hero", () => {
   assert.match(appTheme, /lightTheme = \{[\s\S]*?background: "#FAFBFF",[\s\S]*?surface: "#FFFFFF",/);
   assert.match(appTheme, /darkTheme = \{[\s\S]*?background: "#091224",[\s\S]*?surface: "#121E33",/);
   assert.match(webHotelDetails, /<article className="[^"]*\bbg-white\b[^"]*">/);
@@ -93,9 +98,10 @@ test("Hotel Details light canvas matches the web white article without flattenin
   const hotelRootStart = hotel.indexOf("<SafeAreaView");
   const hotelRoot = hotel.slice(hotelRootStart, hotel.indexOf("<ScrollView", hotelRootStart));
   assert.match(hotelRoot, /<SafeAreaView[\s\S]*?backgroundColor: hotelCanvasColor/);
-  assert.match(hotelRoot, /d\.hotelBackHeader,[\s\S]*?backgroundColor: hotelCanvasColor/);
+  assert.match(hotelRoot, /edges=\{\[\]\}/);
+  assert.doesNotMatch(hotelRoot, /hotelBackHeader/);
   assert.doesNotMatch(hotelRoot, /backgroundColor: theme\.background/);
-  assert.match(hotel, /<ScrollView[\s\S]*?stickyHeaderIndices=\{\[2\]\}[\s\S]*?style=\{\{ backgroundColor: hotelCanvasColor \}\}/);
+  assert.match(hotel, /<ScrollView[\s\S]*?stickyHeaderIndices=\{\[2\]\}[\s\S]*?contentInsetAdjustmentBehavior="never"[\s\S]*?style=\{\{ backgroundColor: hotelCanvasColor \}\}/);
   assert.match(hotel, /d\.hotelTabsShell,[\s\S]{0,100}backgroundColor: hotelCanvasColor/);
   assert.match(hotel, /d\.hotelSticky,[\s\S]{0,160}backgroundColor: hotelCanvasColor/);
   assert.match(hotel, /d\.hotelOffer,[\s\S]*?backgroundColor: theme\.surface/);
@@ -189,21 +195,23 @@ test("Hotel classification and reviews never use legacy rating fallbacks", () =>
   assert.doesNotMatch(hotel, /Math\.round\(result\.rating\)/);
   assert.match(reviews, /normalizeHotelReviewScale\(result\.reviewScale\)/);
   assert.match(reviews, /normalizeHotelReviewScore\(result\.reviewScore, scale\)/);
+  assert.match(hotel, /nativeHotelReviewPresentation\(result\)/);
   assert.doesNotMatch(hotel, /reviewScore \?\? result\.rating/);
   assert.doesNotMatch(reviews, /reviewScore \?\? result\.rating/);
   assert.match(hotel, /accessibilityLabel=\{`\$\{classification\} star hotel`\}/);
   assert.match(hotel, /\{"★"\.repeat\(classification\)\}/);
-  assert.doesNotMatch(hotel.slice(hotel.indexOf("d.hotelIdentity"), hotel.indexOf("d.hotelHeaderActions")), /star classification/);
   assert.match(hotel, /`\$\{classification\}-star classification`/);
 });
 
-test("Native gallery is interactive, truthful, and limited to five thumbnails", () => {
+test("Native gallery is interactive, truthful, full-bleed, and keeps thumbnails in the viewer", () => {
   assert.match(gallery, /useState<string \| null>/);
   assert.match(gallery, /Previous photo/);
   assert.match(gallery, /Next photo/);
   assert.match(gallery, /activeIndex \+ 1/);
-  assert.match(gallery, /images\.slice\(0, 5\)/);
-  assert.match(gallery, /images\.length - 5/);
+  assert.match(gallery, /const heroWidth = viewportWidth;/);
+  assert.match(gallery, /const heroHeight = Math\.round\(viewportWidth \* 0\.94\);/);
+  const inline = gallery.slice(gallery.indexOf("return (", gallery.indexOf("export function NativeHotelGallery")), gallery.indexOf("<Modal"));
+  assert.doesNotMatch(inline, /images\.slice\(0, 5\)|thumbnailFrame|thumbnails/);
   assert.match(gallery, /Property image unavailable/);
   assert.match(gallery, /pagingEnabled/);
   assert.match(gallery, /accentColor: string/);
@@ -213,8 +221,7 @@ test("Native gallery is interactive, truthful, and limited to five thumbnails", 
 
 test("Hotel detail owns theme-aware accents without changing filled brand controls", () => {
   assert.match(hotel, /const hotelAccent = theme\.dark \? "#8FB5FF" : colors\.blue/);
-  assert.match(hotel, /<ArrowLeft size=\{17\} color=\{hotelAccent\}/);
-  assert.match(hotel, /hotelBackToResultsText, \{ color: hotelAccent \}/);
+  assert.match(hotel, /<ArrowLeft size=\{25\} strokeWidth=\{2\.2\} color="#0F172A" \/>/);
   assert.match(hotel, /borderBottomColor: hotelAccent/);
   assert.match(hotel, /color: hotelAccent,[\s\S]*?fontWeight: "700",[\s\S]*?fontFamily: appFonts\.bold/);
   assert.match(hotel, /borderColor: selected \? hotelAccent : theme\.border/);
