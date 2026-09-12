@@ -18,7 +18,7 @@ import {
 import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
 import { travelApi, type HotelResult } from "../../api/travelApi";
 import { FlowIcon } from "../flow/FlowIcon";
-import { Armchair, ArrowLeft, Award, Bed, CalendarDays, FilePenLine, Heart, Info, Laptop, Luggage, MapPin, Repeat2, ShieldX, Sparkles, Users, UtensilsCrossed, Wifi, Wine, type LucideIcon } from "lucide-react-native";
+import { Armchair, ArrowLeft, Award, Bed, CalendarDays, FilePenLine, Heart, Info, Laptop, Luggage, Repeat2, ShieldX, Sparkles, Users, UtensilsCrossed, Wifi, Wine, type LucideIcon } from "lucide-react-native";
 import { Button, TopBar, clock, money, shortDate, ui } from "./SearchUi";
 import { visualHotels } from "./visualFixtures";
 import { useAppTheme } from "../../theme/AppTheme";
@@ -48,7 +48,7 @@ import { nativeHotelAmenityLabel } from "./hotelAmenityLabel";
 import { appFonts } from "../../theme/typography";
 import { buildHotelAmenityPresentation, type HotelAmenityPresentationItem } from "../../../../../src/components/results/hotelAmenityPresentation";
 import { NativeHotelLocationSection } from "./NativeHotelLocationSection";
-import { NativeHotelReviewsSection } from "./NativeHotelReviewsSection";
+import { NativeHotelReviewsSection, nativeHotelReviewPresentation } from "./NativeHotelReviewsSection";
 import { NativeFlightDetails } from "./NativeFlightDetails";
 import type { FlightTripDetail, FlightTripDetailIcon } from "./flightTripDetails";
 import { hotelResultsDismissCount } from "./hotelDetailReturnNavigation";
@@ -216,6 +216,8 @@ function HotelDetail({
     result.classificationStars! <= 5
       ? result.classificationStars!
       : null;
+  const hotelReview = nativeHotelReviewPresentation(result);
+  const hotelReviewScore = hotelReview?.score.split(" / ")[0] ?? null;
   const redirectUrl = nativeHotelProviderUrl(
     result.partnerRedirectUrl,
     result.bookingUrl,
@@ -427,10 +429,8 @@ function HotelDetail({
   const highlights = amenityItems.slice(0, 6);
   const remainingAmenities = amenityItems.slice(6);
   const hotelIdentityTitleColor = theme.dark ? theme.textPrimary : "#020617";
-  const hotelIdentityMetaColor = theme.dark ? theme.textSecondary : "#334155";
-  const hotelIdentityIconColor = theme.dark ? theme.icon : "#334155";
-  const hotelIdentityClassificationIconColor = theme.dark ? theme.icon : "#64748B";
-  const hotelIdentityActionColor = theme.dark ? theme.icon : "#0F172A";
+  const hotelIdentityMetaColor = theme.dark ? theme.textSecondary : "#475569";
+  const hotelIdentityIconColor = theme.dark ? theme.icon : "#0F172A";
   const selectHotelTab = useCallback((tab: HotelDetailTab) => {
     if (tab === activeHotelTabRef.current) return;
     const targetOffset = hotelTabScrollOffsets.current[tab] ?? currentHotelScrollOffset.current;
@@ -458,44 +458,15 @@ function HotelDetail({
       });
     });
   }, [result.id]);
-  const Fact = ({
-    icon: Icon,
-    children,
-  }: {
-    icon: typeof CalendarDays;
-    children: string;
-  }) => (
-    <View style={d.hotelFactRow}>
-      <Icon accessible={false} size={16} color={hotelIdentityIconColor} />
-      <Text style={[d.hotelFact, { color: hotelIdentityMetaColor }]}>
-        {children}
-      </Text>
-    </View>
-  );
   return (
     <SafeAreaView
       style={[d.safe, { backgroundColor: hotelCanvasColor }]}
-      edges={["top"]}
+      edges={[]}
     >
-      <View
-        style={[
-          d.hotelBackHeader,
-          { backgroundColor: hotelCanvasColor },
-        ]}
-      >
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Back to hotel results"
-          onPress={returnToHotelResults}
-          style={d.backToResults}
-        >
-          <ArrowLeft size={17} color={hotelAccent} />
-          <Text style={[d.hotelBackToResultsText, { color: hotelAccent }]}>Back to hotel results</Text>
-        </Pressable>
-      </View>
       <ScrollView
         ref={hotelDetailScrollRef}
         stickyHeaderIndices={[2]}
+        contentInsetAdjustmentBehavior="never"
         style={{ backgroundColor: hotelCanvasColor }}
         contentContainerStyle={{ paddingBottom: 112 + inset.bottom }}
         onScroll={({ nativeEvent }) => {
@@ -507,55 +478,66 @@ function HotelDetail({
         }}
         scrollEventThrottle={16}
       >
-        <View style={d.hotelIdentity}>
-          <View style={d.hotelIdentityTopRow}>
-            <View style={d.hotelIdentityCopy}>
-              <Text
-                accessibilityRole="header"
-                style={[d.hotelName, width <= 430 && d.hotelNamePhoneFit, { color: hotelIdentityTitleColor }]}
-              >
-                {result.name}
-              </Text>
-              <View style={d.hotelIdentityMeta}>
-                {stay.dates ? <Fact icon={CalendarDays}>{stay.dates}</Fact> : null}
-                <Fact icon={Users}>{stay.occupancy}</Fact>
-                <Fact icon={MapPin}>{address}</Fact>
-                {classification ? (
-                  <View
-                    accessible
-                    accessibilityLabel={`${classification} star hotel`}
-                    style={d.hotelFactRow}
-                  >
-                    <Award accessible={false} size={16} color={hotelIdentityClassificationIconColor} />
-                    <Text accessible={false} style={d.hotelClassificationStars}>
-                      {"★".repeat(classification)}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-            </View>
-            <View style={d.hotelHeaderActions}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={saved ? `Remove ${result.name} hotel from saved` : `Save ${result.name} hotel`}
-                accessibilityState={{ selected: saved }}
-                onPress={() => void canonical.toggleHotel(result, params)}
-                style={[d.hotelHeaderAction, d.hotelHeaderActionSave]}
-              >
-                <Heart size={20} strokeWidth={2} color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} />
-              </Pressable>
-              <Pressable accessibilityRole="button" accessibilityLabel={`Share ${result.name}`} onPress={shareHotel} style={[d.hotelHeaderAction, d.hotelHeaderActionShare]}>
-                <FlowIcon name="share" size={20} color={hotelIdentityActionColor} />
-              </Pressable>
-            </View>
+        <View style={d.hotelHeroShell}>
+          <NativeHotelGallery
+            name={result.name}
+            initialImages={images}
+            theme={theme}
+            accentColor={hotelAccent}
+          />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Back to hotel results"
+            onPress={returnToHotelResults}
+            style={[d.hotelHeroBack, { top: inset.top + 12 }]}
+          >
+            <ArrowLeft size={25} strokeWidth={2.2} color="#0F172A" />
+          </Pressable>
+          <View style={[d.hotelHeroActions, { top: inset.top + 12 }]}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={saved ? `Remove ${result.name} hotel from saved` : `Save ${result.name} hotel`}
+              accessibilityState={{ selected: saved }}
+              onPress={() => void canonical.toggleHotel(result, params)}
+              style={d.hotelHeroAction}
+            >
+              <Heart size={22} strokeWidth={2} color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} />
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Share ${result.name}`}
+              onPress={shareHotel}
+              style={d.hotelHeroAction}
+            >
+              <FlowIcon name="share" size={22} color="#0F172A" />
+            </Pressable>
           </View>
         </View>
-        <NativeHotelGallery
-          name={result.name}
-          initialImages={images}
-          theme={theme}
-          accentColor={hotelAccent}
-        />
+        <View style={d.hotelIdentity}>
+          <Text
+            accessibilityRole="header"
+            style={[d.hotelName, width <= 430 && d.hotelNamePhoneFit, { color: hotelIdentityTitleColor }]}
+          >
+            {result.name}
+          </Text>
+          {classification ? (
+            <Text
+              accessibilityLabel={`${classification} star hotel`}
+              style={d.hotelClassificationStars}
+            >
+              {"★".repeat(classification)}
+            </Text>
+          ) : null}
+          {hotelReview && hotelReviewScore ? (
+            <View style={d.hotelReviewSummary}>
+              <Users accessible={false} size={18} color={hotelIdentityIconColor} />
+              <Text style={[d.hotelReviewText, { color: hotelIdentityTitleColor }]}>
+                <Text style={d.hotelReviewPrimary}>{hotelReview.label} {hotelReviewScore}</Text>
+                <Text style={[d.hotelReviewSecondary, { color: hotelIdentityMetaColor }]}> · {hotelReview.count}</Text>
+              </Text>
+            </View>
+          ) : null}
+        </View>
         <View
           style={[
             d.hotelTabsShell,
@@ -591,6 +573,19 @@ function HotelDetail({
                 </Text>
               </Pressable>
             ))}
+          </View>
+        </View>
+        <View style={d.hotelStaySection}>
+          <View style={[d.hotelStayCard, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+            <CalendarDays accessible={false} size={22} color={hotelIdentityIconColor} />
+            <View style={d.hotelStayCopy}>
+              <Text style={[d.hotelStayDate, { color: hotelIdentityTitleColor }]}>
+                {stay.dateText ?? "Stay dates unavailable"}
+              </Text>
+              <Text style={[d.hotelStayMeta, { color: hotelIdentityMetaColor }]}>
+                {stay.occupancy}{stay.nightText ? ` · ${stay.nightText}` : ""}
+              </Text>
+            </View>
           </View>
         </View>
         <View style={d.hotelDetailBody}>
@@ -1213,18 +1208,58 @@ const d = StyleSheet.create({
   stickyTotal: { flexShrink: 1, minWidth: 92, maxWidth: "42%", gap: 1 },
   stickyCta: { flex: 1, minWidth: 0, maxWidth: 250 },
   redirect: { fontSize: 9, lineHeight: 12, color: ui.muted, textAlign: "center", marginTop: 3 },
-  hotelBackHeader: { minHeight: 48, paddingHorizontal: 16, justifyContent: "center", backgroundColor: "white" },
-  hotelIdentity: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 12 },
-  hotelIdentityTopRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  hotelHeroShell: { position: "relative", width: "100%" },
+  hotelHeroBack: {
+    position: "absolute",
+    left: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 3,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.14,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  hotelHeroActions: {
+    position: "absolute",
+    right: 20,
+    width: 112,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    overflow: "hidden",
+    zIndex: 3,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.14,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  hotelHeroAction: { width: 56, height: 44, alignItems: "center", justifyContent: "center" },
+  hotelIdentity: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14 },
   hotelIdentityCopy: { flex: 1, minWidth: 0 },
   hotelIdentityMeta: { marginTop: 8, gap: 4 },
-  hotelBackToResultsText: { fontSize: 14, lineHeight: 19, fontWeight: "700" },
   hotelHeaderActions: { flexDirection: "row", flexShrink: 0, gap: 0 },
   hotelHeaderAction: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   hotelHeaderActionSave: { alignItems: "flex-end", paddingRight: 4 },
   hotelHeaderActionShare: { alignItems: "flex-start", paddingLeft: 4 },
   hotelFact: { color: "#334155", fontSize: 12, lineHeight: 18, fontWeight: "500", fontFamily: appFonts.medium },
-  hotelClassificationStars: { color: "#F59E0B", fontSize: 15, lineHeight: 20, letterSpacing: 1.2, fontWeight: "400", fontFamily: appFonts.regular },
+  hotelClassificationStars: { marginTop: 7, color: "#F59E0B", fontSize: 20, lineHeight: 24, letterSpacing: 1.4, fontWeight: "400", fontFamily: appFonts.regular },
+  hotelReviewSummary: { marginTop: 8, minHeight: 22, flexDirection: "row", alignItems: "center", gap: 8 },
+  hotelReviewText: { flex: 1, minWidth: 0, fontSize: 14, lineHeight: 20 },
+  hotelReviewPrimary: { fontWeight: "700", fontFamily: appFonts.bold },
+  hotelReviewSecondary: { fontWeight: "400", fontFamily: appFonts.regular },
+  hotelStaySection: { paddingHorizontal: 12, paddingTop: 24 },
+  hotelStayCard: { minHeight: 60, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 12 },
+  hotelStayCopy: { flex: 1, minWidth: 0 },
+  hotelStayDate: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
+  hotelStayMeta: { marginTop: 2, fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
   hotelGallery: { height: 244, marginHorizontal: 12, marginBottom: 6, flexDirection: "row", gap: 4, borderRadius: 12, overflow: "hidden", backgroundColor: "#E7EBF2" },
   hotelHero: { width: "78%", height: "100%", backgroundColor: "#E7EBF2" },
   hotelThumbs: { flex: 1, gap: 4 },
@@ -1300,8 +1335,8 @@ const d = StyleSheet.create({
   hotelSummaryCompact: { flexDirection: "column" },
   hotelPriceSummary: { alignItems: "flex-end", flexShrink: 0 },
   hotelPriceSummaryCompact: { alignItems: "flex-start" },
-  hotelName: { minWidth: 0, fontSize: 20, lineHeight: 26, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.4, color: ui.navy },
-  hotelNamePhoneFit: { letterSpacing: -0.55 },
+  hotelName: { minWidth: 0, fontSize: 24, lineHeight: 30, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.5, color: ui.navy },
+  hotelNamePhoneFit: { letterSpacing: -0.6 },
   stars: { color: "#FFB800", fontSize: 15, marginVertical: 7 },
   score: { backgroundColor: ui.blue, color: "white", fontWeight: "900" },
   stay: {
