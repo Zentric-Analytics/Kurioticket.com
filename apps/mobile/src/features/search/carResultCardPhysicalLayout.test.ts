@@ -31,7 +31,7 @@ test("failed Car images reveal the truthful unavailable state", () => {
 });
 
 test("only the Best value badge creates top metadata above the shared body", () => {
-  const topMetaShell = source.indexOf("<View style={c.topMetaShell}>");
+  const topMetaShell = source.indexOf("<View style={[c.topMetaShell,{borderBottomColor:theme.border}]}>");
   const topMeta = source.indexOf("<View style={c.topMetaRow}>", topMetaShell);
   const main = source.indexOf("<View style={c.main}>", topMeta);
   const visualColumn = source.indexOf("c.visualColumn", main);
@@ -41,7 +41,9 @@ test("only the Best value badge creates top metadata above the shared body", () 
   assert.ok(topMetaShell < topMeta && topMeta < bestValue && bestValue < main);
   assert.ok(main < visualColumn && main < header);
   assert.match(source, /const hasTopBadge = rank === 0/);
-  assert.match(source, /\{hasTopBadge \? <View style=\{c\.topMetaShell\}>/);
+  assert.match(source, /\{hasTopBadge \? <View style=\{\[c\.topMetaShell,\{borderBottomColor:theme\.border\}\]\}>/);
+  assert.match(style("topMetaShell"), /flexDirection:"row",borderBottomWidth:StyleSheet\.hairlineWidth/);
+  assert.doesNotMatch(style("main"), /borderTopWidth/);
   assert.doesNotMatch(source, /hasTop(?:Meta|Badge)\s*=\s*[^;]*freeCancellation/);
   assert.match(source, /topMetaVisualSpacer:\{width:"40%"\}/);
   assert.match(style("topMetaContent"), /flex:1,minWidth:0,paddingHorizontal:10,paddingTop:9,paddingBottom:4/);
@@ -91,13 +93,13 @@ test("Results card omits fuel, mileage, and obsolete lower-benefit contracts", (
 });
 
 test("View deal and Free cancellation are structurally outside the image-height body", () => {
-  const topMeta = source.indexOf("<View style={c.topMetaShell}>");
+  const topMeta = source.indexOf("<View style={[c.topMetaShell,{borderBottomColor:theme.border}]}>");
   const main = source.indexOf("<View style={c.main}>");
   const visualColumn = source.indexOf("c.visualColumn", main);
   const contentColumn = source.indexOf("<View style={c.contentColumn}>", visualColumn);
   const conversion = source.indexOf("<View style={[c.conversion", contentColumn);
   const priceColumn = source.indexOf("<View style={c.priceColumn}>", conversion);
-  const actionRow = source.indexOf("<View style={c.actionRow}>", priceColumn);
+  const actionRow = source.indexOf("<View style={[c.actionRow,{borderTopColor:theme.border}]}", priceColumn);
   const viewDeal = source.indexOf(">View deal</Text>", actionRow);
   const cancellation = source.indexOf(">Free cancellation</Text>", viewDeal);
   assert.ok(topMeta < main && main < visualColumn && visualColumn < contentColumn);
@@ -115,7 +117,10 @@ test("View deal and Free cancellation are structurally outside the image-height 
 });
 
 test("dedicated action row preserves right-column geometry without layout hacks", () => {
-  assert.match(style("actionRow"), /flexDirection:"row"/);
+  assert.match(source, /<View style=\{\[c\.actionRow,\{borderTopColor:theme\.border\}\]\}>/);
+  assert.match(style("actionRow"), /flexDirection:"row",borderTopWidth:StyleSheet\.hairlineWidth/);
+  assert.doesNotMatch(style("main"), /borderBottomWidth/);
+  assert.doesNotMatch(styles, /divider:\{/);
   assert.match(style("actionVisualSpacer"), /width:"40%"/);
   assert.match(style("actionContent"), /flex:1,minWidth:0,paddingLeft:10,paddingRight:10,paddingBottom:8/);
   for (const structuralStyle of ["actionRow", "actionVisualSpacer", "actionContent", "viewDeal", "freeCancellation"])
@@ -133,7 +138,7 @@ test("commerce preserves authoritative price and CTA contract", () => {
   const priceStart = source.indexOf("<View style={c.priceColumn}>");
   const priceEnd = source.indexOf("</View>\n        </View>", priceStart);
   const price = source.slice(priceStart, priceEnd);
-  const actionStart = source.indexOf("<View style={c.actionRow}>", priceEnd);
+  const actionStart = source.indexOf("<View style={[c.actionRow,{borderTopColor:theme.border}]}", priceEnd);
   const action = source.slice(actionStart, source.indexOf("  </View>;", actionStart));
   const ordered = ["offer.totalPrice", "offer.taxesAndFeesIncluded", "offer.pricePerDay"].map((value) => price.indexOf(value));
   assert.ok(ordered.every((index) => index >= 0));
