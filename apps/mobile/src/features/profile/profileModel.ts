@@ -1,4 +1,4 @@
-import type { FlowIconName } from "../flow/FlowIcon";
+import type { FlowIconName } from "../flow/flowIconTypes";
 import type { MobileTranslationKey } from "../../localization/mobileLocalizationCatalog";
 
 export type ProfileNativeHref = "/personal-information" | "/security" | "/price-alerts" | "/settings" | "/saved" | "/recent" | "/faq" | "/support" | "/email-preferences" | "/travel-preferences" | "/(tabs)/profile/terms-of-service" | "/(tabs)/profile/privacy-policy";
