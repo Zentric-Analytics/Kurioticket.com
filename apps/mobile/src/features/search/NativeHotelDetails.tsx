@@ -45,6 +45,7 @@ export function NativeHotelGallery({
   name: string;
   initialImages: string[];
   theme: HotelTheme;
+  accentColor?: string;
 }) {
   const [failed, setFailed] = useState<Set<string>>(() => new Set());
   const { width: viewportWidth } = useWindowDimensions();
