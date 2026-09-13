@@ -103,17 +103,18 @@ test("compact stay card exposes full-size edit targets without shrinking the vis
 
 test("inline gallery keeps swiping and a centered measured counter without the thumbnail rail", () => {
   assert.match(gallery, /horizontal\s*pagingEnabled[\s\S]*?data=\{images\}/);
-  assert.match(gallery, /accessibilityHint=\{images\.length > 1 \? "Swipe horizontally to view more photos\." : undefined\}/);
+  assert.match(gallery, /accessibilityHint=\{images\.length > 1 \? "Swipe horizontally to preview photos, or tap to open all photos\." : "Tap to open all photos\."\}/);
   assert.match(styleRule(gallery, "counter", "unavailable"), /left: "50%"[^}]*bottom: 15[^}]*minWidth: 48[^}]*translateX: -24/);
   const inline = gallery.slice(gallery.indexOf("return (", gallery.indexOf("export function NativeHotelGallery")), gallery.indexOf("<Modal"));
   assert.doesNotMatch(inline, /images\.slice\(0, 5\)|s\.thumbnails|s\.thumbnailFrame|Previous photo|Next photo/);
   assert.match(inline, /\{activeIndex \+ 1\} \/ \{images\.length\}/);
 });
 
-test("full-screen viewer still owns photo navigation and all thumbnails", () => {
+test("expanded gallery uses a mosaic and swipe viewer without arrows or thumbnails", () => {
   const modal = gallery.slice(gallery.indexOf("<Modal"), gallery.indexOf("export function HotelRoomOptionsModal"));
-  assert.match(modal, /accessibilityLabel="Previous photo"/);
-  assert.match(modal, /accessibilityLabel="Next photo"/);
-  assert.match(modal, /images\.map\(\(url, index\)/);
-  assert.match(modal, /accessibilityState=\{\{ selected: activeIndex === index \}\}/);
+  assert.match(modal, /galleryRows\.map/);
+  assert.match(modal, /\{viewerOpen \? \(/);
+  assert.match(modal, /ref=\{viewerScroll\}[\s\S]*?horizontal[\s\S]*?pagingEnabled/);
+  assert.match(modal, /accessibilityLabel="Back to photo gallery"/);
+  assert.doesNotMatch(modal, /Previous photo|Next photo|viewerThumbnail|accessibilityState=\{\{ selected: activeIndex === index \}\}/);
 });
