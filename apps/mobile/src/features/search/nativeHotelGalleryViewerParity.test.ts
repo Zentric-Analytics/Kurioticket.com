@@ -67,12 +67,19 @@ test("gallery overview is a full-screen vertical mosaic with truthful photo coun
   assert.doesNotMatch(gallery, /Lobby|Bedroom|Living room|Other/);
 });
 
-test("tapping a mosaic photo opens the selected individual photo viewer", () => {
+test("tapping a mosaic photo opens the selected individual viewer inside the gallery modal", () => {
   assert.match(gallery, /onPress=\{\(\) => openViewer\(row\.items\[0\]\.index\)\}/);
   assert.match(gallery, /onPress=\{\(\) => openViewer\(item\.index\)\}/);
-  assert.match(gallery, /visible=\{viewerOpen\}[\s\S]*?animationType="fade"[\s\S]*?presentationStyle="fullScreen"/);
+  assert.match(gallery, /\{viewerOpen \? \([\s\S]*?s\.viewerOverlay/);
   assert.match(gallery, /accessibilityLabel="Back to photo gallery"[\s\S]*?onPress=\{closeViewer\}/);
   assert.match(gallery, /\{activeIndex \+ 1\} \/ \{images\.length\}/);
+});
+
+test("individual viewer stays inside one native modal so iOS can present it reliably", () => {
+  assert.equal((gallery.match(/<Modal\b/g) ?? []).length, 1);
+  assert.match(gallery, /onRequestClose=\{viewerOpen \? closeViewer : closeGallery\}/);
+  assert.match(gallery, /\{viewerOpen \? \([\s\S]*?accessibilityViewIsModal[\s\S]*?s\.viewerOverlay/);
+  assert.match(styleRule("viewerOverlay", "viewerHeader"), /StyleSheet\.absoluteFillObject/);
 });
 
 test("individual viewer swipes every image and removes arrows and thumbnail rail", () => {
