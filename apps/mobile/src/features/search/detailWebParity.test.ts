@@ -148,9 +148,7 @@ test("active Hotel classification and reviews never use legacy rating fallbacks"
   assert.match(bookingDetails, /buildNativeHotelAboutCopy\([\s\S]*?classification/);
 });
 
-test("native gallery remains interactive and full-bleed without inline thumbnails", () => {
-  assert.match(gallery, /Previous photo/);
-  assert.match(gallery, /Next photo/);
+test("native gallery remains interactive and full-bleed with the two-level mobile viewer", () => {
   assert.match(gallery, /const heroWidth = viewportWidth;/);
   assert.match(gallery, /const heroHeight = Math\.round\(viewportWidth \* 0\.94\);/);
   const inline = gallery.slice(
@@ -159,7 +157,10 @@ test("native gallery remains interactive and full-bleed without inline thumbnail
   );
   assert.doesNotMatch(inline, /images\.slice\(0, 5\)|thumbnailFrame|thumbnails/);
   assert.match(gallery, /Property image unavailable/);
+  assert.match(gallery, /galleryRows\.map/);
+  assert.match(gallery, /\{viewerOpen \? \(/);
   assert.match(gallery, /pagingEnabled/);
+  assert.doesNotMatch(gallery, /Previous photo|Next photo|ChevronLeft|ChevronRight/);
 });
 
 test("active Hotel detail owns theme-aware accents without changing filled brand controls", () => {
