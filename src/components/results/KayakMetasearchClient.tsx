@@ -53,11 +53,17 @@ export function KayakMetasearchClient({ vertical, criteria: inputCriteria, child
     queueMicrotask(() => { if (active) void run(); });
     return () => { active = false; request.current?.abort(); request.current = null; };
   }, [run]);
-  return <KayakResultsContext.Provider value={{vertical,offers,criteria,status,retry:()=>void run()}}><section aria-label="KAYAK sandbox provider results" className="page-shell my-4 rounded-xl border border-amber-500 bg-amber-50 p-4">
+  const destinationChoices = choices.length > 0 ? <section aria-label="Choose a destination" className="page-shell my-4 rounded-xl border border-slate-200 bg-white p-4">
+    <h2 className="font-bold">Choose a destination</h2>
+    <p>Select the location you meant to finish searching all available providers.</p>
+    <ul>{choices.map(place => <li key={place.value}>
+      <button type="button" disabled={busy} className="my-1 rounded border bg-white p-2" onClick={() => void run(place.value)}>{place.label}</button>
+    </li>)}</ul>
+  </section> : null;
+  return <KayakResultsContext.Provider value={{vertical,offers,criteria,status,retry:()=>void run()}}>{children ? <>{destinationChoices}{children}</> : <section aria-label="KAYAK sandbox provider results" className="page-shell my-4 rounded-xl border border-amber-500 bg-amber-50 p-4">
     <h2 className="text-xl font-bold">KAYAK · sandbox provider</h2>
     <p>Simulated inventory. Cards use your display currency; converted amounts are estimates of the original provider price. No real bookings or payments. {children ? "KAYAK offers use the shared results, filters and sorting below." : "Other providers remain available separately below."}</p>
     {!children && <p role="status" aria-live="polite" className="my-3">{message}</p>}
-    {children && choices.length > 0 && <p>Choose your destination to finish searching.</p>}
     {choices.length > 0 && <ul aria-label="Matching KAYAK destinations">{choices.map(place => <li key={place.value}>
       <button type="button" disabled={busy} className="my-1 rounded border bg-white p-2" onClick={() => void run(place.value)}>{place.label}</button>
     </li>)}</ul>}
@@ -66,5 +72,5 @@ export function KayakMetasearchClient({ vertical, criteria: inputCriteria, child
     </li>)}</ul>}
     {!children && limit < offers.length && <button type="button" className="m-2 rounded border bg-white p-2" onClick={() => setLimit(value => value + 10)}>Show more KAYAK test offers</button>}
     {!children && <button type="button" className="my-3 rounded border bg-white p-2 disabled:opacity-50" disabled={busy} onClick={() => void run()}>{busy ? "Searching KAYAK…" : "Retry KAYAK provider"}</button>}
-  </section>{children}</KayakResultsContext.Provider>;
+  </section>}</KayakResultsContext.Provider>;
 }

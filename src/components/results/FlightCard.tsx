@@ -36,6 +36,7 @@ export function FlightCard({
   resultBadge,
   detailsHref,
   actionLabel,
+  providerLabel,
   actionAriaLabel,
   onAction,
 }: {
@@ -44,6 +45,7 @@ export function FlightCard({
   resultBadge?: ResultBadge;
   detailsHref?: string | null;
   actionLabel?: string;
+  providerLabel?: string;
   actionAriaLabel?: string;
   onAction?: (flight: PublicFlightResult) => void;
 }) {
@@ -105,6 +107,7 @@ export function FlightCard({
         router.push(resolvedDetailsHref);
       }}
     >
+      {providerLabel && <p className="px-4 pt-3 text-xs font-semibold text-amber-800">{providerLabel}</p>}
       <div className="flight-card-desktop-shell">
         <div className="flight-card-desktop">
           <div className="flight-card-desktop-header flex min-w-0 items-start justify-between pb-2">
