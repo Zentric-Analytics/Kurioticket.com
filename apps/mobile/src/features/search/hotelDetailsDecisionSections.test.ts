@@ -84,7 +84,7 @@ test("native Compare Property location uses its preview as the sole full-map lau
   assert.match(component, /address:\s*\{[^}]*marginTop:\s*4[^}]*fontSize:\s*13[^}]*lineHeight:\s*19[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
 });
 
-test("native related hotel heading stays inset while only the horizontal carousel breaks out", () => {
+test("native related hotel header aligns See all with the inset heading and opens full hotel results", () => {
   const component = readFileSync("src/features/search/NativeHotelDecisionSections.tsx", "utf8");
   const section = component.slice(
     component.indexOf("export function NativeRelatedHotelsSection"),
@@ -92,51 +92,40 @@ test("native related hotel heading stays inset while only the horizontal carouse
   );
   const relatedSectionStyle = component.match(/relatedSection:\s*\{([^}]*)\}/)?.[1] ?? "";
 
-  assert.ok(section.indexOf('accessibilityRole="header"') < section.indexOf("<ScrollView"));
+  assert.match(section, /<View style=\{styles\.relatedHeader\}>[\s\S]*?accessibilityRole="header"[\s\S]*?>See all<\/Text>/);
+  assert.match(section, /accessibilityLabel=\{cityName \? `See all hotels in \$\{cityName\}` : "See all nearby hotels"\}/);
+  assert.match(section, /router\.push\(\{[\s\S]*?pathname: "\/hotel-results"[\s\S]*?destination: cityName \|\| one\(params\.destination\) \|\| ""[\s\S]*?checkIn: one\(params\.checkIn\) \|\| ""[\s\S]*?checkOut: one\(params\.checkOut\) \|\| ""[\s\S]*?guests: one\(params\.guests\) \|\| "2"[\s\S]*?rooms: one\(params\.rooms\) \|\| "1"/);
   assert.match(section, /<ScrollView horizontal style=\{styles\.carouselViewport\} showsHorizontalScrollIndicator=\{false\}/);
   assert.doesNotMatch(relatedSectionStyle, /marginHorizontal/);
-  assert.match(component, /carouselViewport:\s*\{\s*marginHorizontal:\s*-16\s*\}/);
-  assert.match(component, /carousel:\s*\{[^}]*paddingHorizontal:\s*16/);
-  assert.match(component, /Math\.min\(300, Math\.max\(240, width \* 0\.82\)\)/);
+  assert.match(component, /relatedHeader:\s*\{[^}]*flexDirection:\s*"row"[^}]*alignItems:\s*"center"[^}]*justifyContent:\s*"space-between"[^}]*gap:\s*12/);
+  assert.match(component, /carouselViewport:\s*\{[^}]*marginHorizontal:\s*-16[^}]*marginTop:\s*8/);
+  assert.match(component, /carousel:\s*\{[^}]*gap:\s*12[^}]*paddingHorizontal:\s*16/);
 });
 
-test("native related Hotel cards keep the web text hierarchy with denser mobile geometry", () => {
+test("native related Hotel cards use the measured compact carousel geometry and whole-card action", () => {
   const component = readFileSync("src/features/search/NativeHotelDecisionSections.tsx", "utf8");
-  const web = readFileSync("../../src/components/results/hotelDetails/RelatedHotelsSection.tsx", "utf8");
   const card = component.slice(
     component.indexOf("function RelatedHotelCard"),
     component.indexOf("export function NativeRelatedHotelsSection"),
   );
 
-  for (const contract of [
-    "w-[82vw]", "max-w-[300px]", "aspect-video", "min-h-[174px]", "p-3",
-    "text-xs tracking-[0.08em] text-amber-500",
-    "text-[15px] font-bold leading-5", "text-xs leading-5", "text-sm font-bold",
-    "mt-1 text-xs", "mt-2.5", "min-h-11", "border-t", "pt-2.5",
-    "text-sm font-bold text-blue", 'className="h-4 w-4"',
-  ]) assert.ok(web.includes(contract), contract);
-
-  assert.match(component, /import \{ appFonts \} from "\.\.\/\.\.\/theme\/typography";/);
-  assert.match(component, /imageFrame:\s*\{[^}]*aspectRatio:\s*1\.95/);
-  assert.match(component, /cardBody:\s*\{\s*minHeight:\s*158,\s*padding:\s*10\s*\}/);
+  assert.match(component, /const RELATED_HOTEL_CARD_WIDTH = 241;/);
+  assert.match(component, /relatedCardSlot:\s*\{\s*width:\s*RELATED_HOTEL_CARD_WIDTH\s*\}/);
+  assert.match(component, /imageFrame:\s*\{[^}]*height:\s*160[^}]*width:\s*"100%"/);
+  assert.match(component, /cardBody:\s*\{[^}]*minHeight:\s*143[^}]*paddingHorizontal:\s*14[^}]*paddingTop:\s*12[^}]*paddingBottom:\s*14/);
+  assert.match(component, /relatedCard:\s*\{[^}]*borderWidth:\s*StyleSheet\.hairlineWidth[^}]*borderRadius:\s*10/);
   assert.match(component, /heading:\s*\{[^}]*fontSize:\s*18[^}]*lineHeight:\s*24[^}]*fontWeight:\s*"700"[^}]*fontFamily:\s*appFonts\.bold/);
   assert.match(component, /stars:\s*\{[^}]*color:\s*"#F59E0B"[^}]*fontSize:\s*12[^}]*lineHeight:\s*16[^}]*letterSpacing:\s*0\.96[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
   assert.match(component, /hotelName:\s*\{[^}]*marginTop:\s*3[^}]*fontSize:\s*15[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"600"[^}]*fontFamily:\s*appFonts\.semibold/);
   assert.match(component, /location:\s*\{[^}]*marginTop:\s*3[^}]*fontSize:\s*12[^}]*lineHeight:\s*18[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
-  assert.match(component, /priceBlock:\s*\{[^}]*marginTop:\s*"auto"[^}]*paddingTop:\s*10[^}]*gap:\s*3/);
+  assert.match(component, /priceBlock:\s*\{[^}]*marginTop:\s*"auto"[^}]*paddingTop:\s*10/);
   assert.match(component, /nightly:\s*\{[^}]*fontSize:\s*14[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"600"[^}]*fontFamily:\s*appFonts\.semibold/);
-  assert.match(component, /total:\s*\{[^}]*fontSize:\s*12[^}]*lineHeight:\s*16[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
   assert.match(component, /priceUnavailable:\s*\{[^}]*fontSize:\s*14[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"600"[^}]*fontFamily:\s*appFonts\.semibold/);
-  assert.match(component, /viewText:\s*\{[^}]*fontSize:\s*14[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"600"[^}]*fontFamily:\s*appFonts\.semibold/);
-  assert.match(component, /viewRow:\s*\{[^}]*minHeight:\s*44[^}]*marginTop:\s*8[^}]*paddingTop:\s*8[^}]*borderTopWidth:\s*StyleSheet\.hairlineWidth[^}]*flexDirection:\s*"row"[^}]*alignItems:\s*"center"[^}]*justifyContent:\s*"space-between"/);
 
-  assert.match(card, /const relatedActionColor = theme\.dark \? "#8FB5FF" : colors\.blue;/);
-  assert.match(card, /styles\.viewText, \{ color: relatedActionColor \}/);
-  assert.match(card, /<ArrowRight accessible=\{false\} size=\{16\} color=\{relatedActionColor\} \/>/);
-  assert.doesNotMatch(card, /styles\.viewText, \{ color: theme\.textPrimary \}/);
-  assert.doesNotMatch(card, /<ArrowRight[^>]*(?:size=\{17\}|color=\{theme\.icon\})/);
   assert.match(card, /item\.classificationStars/);
+  assert.match(card, /item\.displayPrices\?\.nightly/);
+  assert.doesNotMatch(card, /estimated stay total|displayPrices\.total|View hotel<\/Text>|ArrowRight|viewRow|viewText/);
   assert.doesNotMatch(card, /item\.hotel\.(?:rating|reviewScore)/);
   assert.equal(card.match(/<Pressable\b/g)?.length, 1);
-  assert.match(card, /<Pressable accessibilityRole="button" accessibilityLabel=\{`View hotel \$\{item\.hotel\.name\}`\} onPress=\{\(\) => onView\(item\)\}/);
+  assert.match(card, /accessibilityLabel=\{`View hotel \$\{item\.hotel\.name\}`\}[\s\S]*?onPress=\{\(\) => onView\(item\)\}/);
 });
