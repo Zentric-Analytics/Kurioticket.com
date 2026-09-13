@@ -15,6 +15,7 @@ import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion } from "@/lib/results
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
 import { useKayakResults } from "./KayakResultsContext";
+import { CombinedSearchEmpty } from "./CombinedSearchEmpty";
 import { kayakHotelCardModel } from "./kayakCardModels";
 import { KayakResultCard } from "./KayakResultCard";
 import { HotelPriceAlertControl } from "@/components/results/HotelPriceAlertControl";
@@ -824,7 +825,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const currentSortLabel = hotelSortOptions.find((option) => option.value === hotelSummarySortMode)?.label ?? hotelSortOptions[0]?.label ?? "";
   const mobileSortLabel = hotelSummarySortMode === "cheapest" ? "Sort" : currentSortLabel;
   const formattedDisplayedHotelCount = formatHotelCount(visibleFilteredHotels.length, locale);
-  const resultsHeading = t(visibleFilteredHotels.length === 1 ? "resultFound" : "resultsFound").replace("{{count}}", formattedDisplayedHotelCount);
+  const resultsHeading = !guided && kayak && results.length === 0 ? "Search results" : t(visibleFilteredHotels.length === 1 ? "resultFound" : "resultsFound").replace("{{count}}", formattedDisplayedHotelCount);
   const resultsDisplayRange = guided
     ? null
     : getResultsDisplayRange({
@@ -1875,8 +1876,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           ) : null}
 
           <section className="min-w-0 space-y-4">
-            {error && results.length > 0 ? <p role="status">Some provider results are unavailable. Available offers are shown below.</p> : null}
-            {error && results.length === 0 ? (
+            {!guided && kayak && results.length === 0 ? <CombinedSearchEmpty otherStatus={loading ? "loading" : error ? "error" : "success"} retry={retryGuidedHotelSearch} /> : error && results.length === 0 ? (
               <div ref={guided ? guidedErrorRef : undefined} tabIndex={guided ? -1 : undefined} className={cn(hotelResultStackClass, "rounded-md border border-danger/30 bg-red-50 p-4 text-danger")}>
                 <p role="alert">{error}</p>
                 {guided ? (
