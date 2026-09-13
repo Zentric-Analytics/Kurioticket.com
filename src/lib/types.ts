@@ -6,6 +6,8 @@ export type FlightSearchLeg = {
   origin: string;
   destination: string;
   departureDate: string;
+  originLocation?: import("./locations/searchTarget").SearchLocation;
+  destinationLocation?: import("./locations/searchTarget").SearchLocation;
 };
 
 export type FlightSearchParams = {
@@ -23,6 +25,8 @@ export type FlightSearchParams = {
   cabinClass: CabinClass;
   sort?: SortMode;
   currency?: string;
+  originLocation?: import("./locations/searchTarget").SearchLocation;
+  destinationLocation?: import("./locations/searchTarget").SearchLocation;
 };
 
 export type HotelSearchParams = {
@@ -33,6 +37,7 @@ export type HotelSearchParams = {
   guests: number;
   rooms: number;
   sort?: "cheapest" | "best" | "rating" | "location";
+  destinationLocation?: import("./locations/searchTarget").SearchLocation;
 };
 
 export type Layover = {
@@ -359,7 +364,8 @@ export type ProviderErrorCategory =
   | "server"
   | "invalid_response"
   | "failed"
-  | "skipped";
+  | "skipped"
+  | "unsupported_location";
 
 export type ProviderErrorReason =
   | "provider_no_inventory"
@@ -370,7 +376,8 @@ export type ProviderErrorReason =
   | "provider_server_error"
   | "provider_invalid_response"
   | "provider_failed"
-  | "provider_skipped";
+  | "provider_skipped"
+  | "unsupported_location";
 
 export type ProviderResult<T> = {
   provider: string;

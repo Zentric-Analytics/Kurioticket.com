@@ -21,6 +21,8 @@ export function fromAirport(airport: AirportOption): CanonicalLocation {
         : undefined,
     codes: { iata: airport.code.toUpperCase() },
     aliases: airport.name ? [airport.name] : undefined,
+    providerBindings: [{ provider: "kayak", value: airport.code.toUpperCase(), kind: "airport", verification: "verified", provenance: "catalogue" }],
+    verification: "verified",
     staticCoverage: { flights: "reference-only", hotels: "none", cars: "reference-only", packages: "reference-only" },
     source,
   };
@@ -63,6 +65,8 @@ export function fromCarLocation(location: CarLocationSuggestion): CanonicalLocat
     country: { code: location.countryCode },
     codes: location.airportCode ? { iata: location.airportCode } : undefined,
     providerIds: location.providerPlaceId ? { legacy: location.providerPlaceId } : undefined,
+    providerBindings: location.airportCode ? [{ provider: "kayak", value: location.airportCode, kind: "airport", verification: "verified", provenance: "catalogue" }] : [],
+    verification: location.airportCode ? "verified" : "catalogue-only",
     staticCoverage: { flights: "none", hotels: "none", cars: location.kind === "custom" ? "none" : "exact", packages: "none" },
     source,
   };

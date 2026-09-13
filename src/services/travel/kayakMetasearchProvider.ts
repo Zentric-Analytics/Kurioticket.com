@@ -1,4 +1,4 @@
-import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
+import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import type { FlightSearchParams, HotelSearchParams, PublicFlightResult, PublicHotelResult, ProviderResult } from "@/lib/types";
 import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 import { kayakCarCardModel, kayakFlightCardModel, kayakHotelCardModel } from "@/components/results/kayakCardModels";
@@ -14,7 +14,7 @@ async function search<T>(vertical: KayakVertical, criteria: Record<string, strin
   try {
     const trackId = context.trackId || crypto.randomUUID();
     const resolved = await resolveRegularKayakSearch(vertical, criteria, (term, requested = "hotels") => client.places(requested, term, trackId, context.signal));
-    if (!resolved.supported) return { provider: "KAYAK sandbox", results: [], status: "skipped", latencyMs: Date.now() - startedAt, error: resolved.reason, errorCategory: "skipped", errorReason: "provider_skipped" };
+    if (!resolved.supported) return { provider: "KAYAK sandbox", results: [], status: "skipped", latencyMs: Date.now() - startedAt, error: resolved.reason, errorCategory: "unsupported_location", errorReason: "unsupported_location" };
     const offers = await client.search(resolved.search, trackId, context.signal);
     return { provider: "KAYAK sandbox", results: offers.flatMap(offer => { const value = map?.(offer); return value ? [value] : []; }), status: "success", latencyMs: Date.now() - startedAt };
   } catch (error) {
@@ -32,6 +32,8 @@ export const kayakProviderCriteria = (value: Record<string, unknown>) => Object.
   Object.entries(value).flatMap(([key, item]) =>
     typeof item === "string" || typeof item === "number" || typeof item === "boolean"
       ? [[key, String(item)]]
+      : key.endsWith("Location") || key.endsWith("LocationTarget")
+        ? [[key, JSON.stringify(item)]]
       : [],
   ),
 );
@@ -40,7 +42,7 @@ export const searchKayakHotels = (criteria: HotelSearchParams, context?: KayakRe
   const nights = Math.max(1, Math.round((Date.parse(criteria.checkOut) - Date.parse(criteria.checkIn)) / 86_400_000));
   return search<PublicHotelResult>("hotels", kayakProviderCriteria(criteria as unknown as Record<string, unknown>), context, offer => kayakHotelCardModel(offer, nights));
 };
-export const searchKayakCars = (criteria: CarSearchParams, context?: KayakRequestContext) => {
+export const searchKayakCars = (criteria: LocationBoundCarSearchParams, context?: KayakRequestContext) => {
   const days = Math.max(1, Math.ceil((Date.parse(`${criteria.dropoffDate}T${criteria.dropoffTime}:00`) - Date.parse(`${criteria.pickupDate}T${criteria.pickupTime}:00`)) / 86_400_000));
   const pickup = getLocationFieldDisplay(criteria.pickupLocation).primary || criteria.pickupLocation;
   return search<NormalizedCarResult>("cars", kayakProviderCriteria(criteria as unknown as Record<string, unknown>), context, offer => kayakCarCardModel(offer, days, pickup));

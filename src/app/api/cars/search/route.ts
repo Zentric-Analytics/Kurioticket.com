@@ -1,17 +1,20 @@
 import { validateCarsForm, type CarsFormValues } from "@/lib/cars/carsSearchUtils";
-import type { CarSearchParams } from "@/lib/cars/types";
+import type { LocationBoundCarSearchParams } from "@/lib/cars/types";
 import { searchCars } from "@/services/travel/carAggregator";
 import { classifyCars } from "@/lib/travel/searchContract";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
 import { getKayakClientIp } from "@/lib/kayak-client-ip";
+import { searchLocationSchema } from "@/lib/locations/searchTarget";
 
 const noStore = { "Cache-Control": "no-store" };
 const text = (value: unknown) => typeof value === "string" ? value.trim() : "";
 
-function canonicalSearch(value: unknown): CarSearchParams | null {
+function canonicalSearch(value: unknown): LocationBoundCarSearchParams | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const body = value as Record<string, unknown>;
-  const search: CarSearchParams = { pickupLocation: text(body.pickupLocation), dropoffLocation: text(body.dropoffLocation), pickupDate: text(body.pickupDate), pickupTime: text(body.pickupTime), dropoffDate: text(body.dropoffDate), dropoffTime: text(body.dropoffTime), driverAge: text(body.driverAge) };
+  const pickupTarget = searchLocationSchema.safeParse(body.pickupLocationTarget);
+  const dropoffTarget = searchLocationSchema.safeParse(body.dropoffLocationTarget);
+  const search: LocationBoundCarSearchParams = { pickupLocation: text(body.pickupLocation), dropoffLocation: text(body.dropoffLocation), pickupDate: text(body.pickupDate), pickupTime: text(body.pickupTime), dropoffDate: text(body.dropoffDate), dropoffTime: text(body.dropoffTime), driverAge: text(body.driverAge), ...(pickupTarget.success ? { pickupLocationTarget: pickupTarget.data } : {}), ...(dropoffTarget.success ? { dropoffLocationTarget: dropoffTarget.data } : {}) };
   const values: CarsFormValues = { ...search, returnToDifferentLocation: search.dropoffLocation !== search.pickupLocation };
   const today = new Date().toISOString().slice(0, 10);
   if (Object.keys(validateCarsForm(values, today)).length) return null;
