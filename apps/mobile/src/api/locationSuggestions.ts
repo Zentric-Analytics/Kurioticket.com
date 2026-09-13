@@ -9,6 +9,18 @@ export type FlightPlaceSuggestion = {
   type: "airport" | "city";
   latitude?: number;
   longitude?: number;
+  canonical?: SearchLocation;
+};
+
+export type SearchLocation = {
+  id: string;
+  kind: "airport" | "city" | "district" | "landmark" | "rental-area" | "custom";
+  primaryLabel: string;
+  supportingLabel: string;
+  submittedValue: string;
+  selectionToken?: string;
+  country?: { code?: string; name?: string };
+  codes?: { iata?: string; icao?: string };
 };
 
 export type CarLocationSuggestion = {
@@ -21,6 +33,7 @@ export type CarLocationSuggestion = {
   countryCode?: string;
   airportCode?: string;
   providerPlaceId?: string;
+  canonical?: SearchLocation;
 };
 
 const apiUrl = (path: string) => {
@@ -37,11 +50,12 @@ export async function searchFlightPlaces(query: string, options: { context?: "or
   if (!response.ok) throw new Error("Flight places could not be loaded.");
   const body: unknown = await response.json();
   if (!record(body) || !Array.isArray(body.suggestions)) return [];
-  return body.suggestions.flatMap((item): FlightPlaceSuggestion[] => {
+  const canonical = Array.isArray(body.canonicalLocations) ? body.canonicalLocations : [];
+  return body.suggestions.flatMap((item, index): FlightPlaceSuggestion[] => {
     if (!record(item) || typeof item.code !== "string" || typeof item.city !== "string" || typeof item.airport !== "string") return [];
     const type = item.type === "city" ? "city" : item.type === "airport" ? "airport" : undefined;
     if (!type || !/^[A-Z]{3}$/i.test(item.code)) return [];
-    return [{ code: item.code.toUpperCase(), city: item.city, airport: item.airport, country: typeof item.country === "string" ? item.country : "", countryCode: typeof item.countryCode === "string" ? item.countryCode : undefined, type, latitude: typeof item.latitude === "number" ? item.latitude : undefined, longitude: typeof item.longitude === "number" ? item.longitude : undefined }];
+    return [{ code: item.code.toUpperCase(), city: item.city, airport: item.airport, country: typeof item.country === "string" ? item.country : "", countryCode: typeof item.countryCode === "string" ? item.countryCode : undefined, type, latitude: typeof item.latitude === "number" ? item.latitude : undefined, longitude: typeof item.longitude === "number" ? item.longitude : undefined, canonical: record(canonical[index]) ? canonical[index] as SearchLocation : undefined }];
   });
 }
 

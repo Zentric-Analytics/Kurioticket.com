@@ -95,6 +95,10 @@ const areaCandidates: Candidate[] = carRentalAreas.map((area) => ({
 
 const allCandidates = [...airportCandidates, ...cityCandidates, ...areaCandidates];
 
+export function getCanonicalCarLocationCatalog() {
+  return allCandidates.map(canonicalCandidate);
+}
+
 const popularIds = [
   "city-ng-lagos", "airport-los", "area-ng-lagos-victoria-island", "area-ng-lagos-ikeja", "city-ng-abuja", "airport-abv", "area-ng-abuja-central-area",
   "city-gb-london", "airport-lhr", "city-us-new-york", "airport-jfk", "city-ae-dubai", "airport-dxb", "city-jp-tokyo", "city-fr-paris", "city-sg-singapore",

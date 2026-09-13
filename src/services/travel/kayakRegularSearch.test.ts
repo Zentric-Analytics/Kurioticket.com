@@ -2,13 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { resolveRegularKayakSearch, regularKayakRequest } from "./kayakRegularSearch";
 import { KayakSandboxClient } from "./kayakSandbox";
+import { issueLocationSelection } from "@/lib/locations/selectionAuthority";
 
 const hotel = { destination: "Boston, Massachusetts, United States", checkIn: "2099-10-12", checkOut: "2099-10-17", guests: "2", rooms: "1", currency: "JPY" };
-const locationTarget = (provider: "kayak", value: string) => JSON.stringify({
+const locationTarget = (provider: "kayak", value: string, product: "hotels" | "cars" = "hotels") => { const location = {
   id: "city:us-boston", kind: "city", primaryLabel: "Boston", supportingLabel: "Massachusetts, United States",
   submittedValue: "Boston, Massachusetts, United States", verification: "verified",
   providerBindings: [{ provider, value, kind: "city", verification: "verified", provenance: "provider-discovery" }],
-});
+  staticCoverage: { flights: "none", hotels: "none", cars: "none", packages: "none" }, source: { catalog: "kurioticket", datasetVersion: "test" },
+} as const; return JSON.stringify({ ...location, selectionToken: issueLocationSelection(location, product) }); };
 test("regular hotel search uses the selected verified provider binding without rediscovery", async () => {
   const result = await resolveRegularKayakSearch("hotels", { ...hotel, destinationLocation: locationTarget("kayak", "kplace:58075") }, async () => { throw new Error("post-submit discovery is forbidden"); });
   assert.equal(result.supported, true);
@@ -19,10 +21,11 @@ test("ambiguous or text-only hotel destinations remain unsupported instead of be
   assert.equal(result.supported, false);
   if (!result.supported) assert.match(result.reason, /verified binding/);
 });
-test("provider IDs remain namespaced", async () => {
+test("tampering with client-carried provider IDs cannot replace the server-authoritative binding", async () => {
   const duffelOnly = JSON.stringify({ ...JSON.parse(locationTarget("kayak", "kplace:1")), providerBindings: [{ provider: "duffel", value: "pla_1", verification: "verified", provenance: "provider-discovery" }] });
   const result = await resolveRegularKayakSearch("hotels", { ...hotel, destinationLocation: duffelOnly }, async () => []);
-  assert.equal(result.supported, false);
+  assert.equal(result.supported, true);
+  if (result.supported && result.search.vertical === "hotels") assert.equal(result.search.destination, "kplace:1");
 });
 test("invalid hotel occupancy never calls the provider", async () => {
   const result = await resolveRegularKayakSearch("hotels", { ...hotel, rooms: "2" }, async () => { throw new Error("must not call"); });
@@ -33,7 +36,7 @@ test("normal airport labels and rental times are preserved for KAYAK", async () 
   assert.deepEqual(result, { supported: true, search: { vertical: "cars", origin: "BOS", departure: "2099-10-12", returnDate: "2099-10-17", pickupTime: "10:30", dropoffTime: "16:45" } });
 });
 test("a selected car city is translated only through its verified provider binding", async () => {
-  const target = locationTarget("kayak", "SFO");
+  const target = locationTarget("kayak", "SFO", "cars");
   const result = await resolveRegularKayakSearch("cars", { pickupLocation: "San Francisco, United States", pickupLocationTarget: target, pickupDate: "2099-10-12", dropoffDate: "2099-10-17", pickupTime: "10:30", dropoffTime: "16:45" }, async () => { throw new Error("post-submit discovery is forbidden"); });
   assert.equal(result.supported, true);
   if (result.supported && result.search.vertical === "cars") assert.equal(result.search.origin, "SFO");

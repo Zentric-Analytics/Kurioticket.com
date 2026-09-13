@@ -2,7 +2,8 @@ import { z } from "zod";
 import { flightSearchSchema } from "@/lib/validation";
 import { adaptKayakFlightSearch, adaptKayakHotelSearch, adaptKayakCarSearch } from "./kayakSearchAdapter";
 import type { KayakSearch, KayakVertical, SandboxPlace } from "./kayakSandbox";
-import { searchLocationSchema, verifiedProviderValue } from "@/lib/locations/searchTarget";
+import { searchLocationSchema } from "@/lib/locations/searchTarget";
+import { resolveProviderSelection } from "@/lib/locations/selectionAuthority";
 
 export const regularKayakRequest = z.object({
   action: z.literal("regular-search"),
@@ -25,7 +26,11 @@ export async function resolveRegularKayakSearch(
   // Sandbox prices remain explicitly USD, not a fabricated currency conversion.
   const input = { ...criteria, currency: "USD" };
   if (vertical === "flights") {
-    const parsed = flightSearchSchema.safeParse(input);
+    const originTarget = parseTarget(criteria.originLocation);
+    const destinationTarget = parseTarget(criteria.destinationLocation);
+    const parsed = flightSearchSchema.safeParse({ ...input,
+      originLocation: originTarget?.success ? originTarget.data : undefined,
+      destinationLocation: destinationTarget?.success ? destinationTarget.data : undefined });
     return parsed.success ? adaptKayakFlightSearch(parsed.data) : { supported: false, reason: "KAYAK could not use these flight search details." };
   }
   if (vertical === "cars") {
@@ -33,8 +38,8 @@ export async function resolveRegularKayakSearch(
     const dropoffInput = criteria.dropoffLocation || pickupInput;
     const pickupTarget = parseTarget(criteria.pickupLocationTarget);
     const dropoffTarget = parseTarget(criteria.dropoffLocationTarget);
-    let pickup = pickupTarget?.success ? verifiedProviderValue(pickupTarget.data, "kayak") : undefined;
-    let dropoff = dropoffTarget?.success ? verifiedProviderValue(dropoffTarget.data, "kayak") : undefined;
+    let pickup = pickupTarget?.success ? (() => { const value = resolveProviderSelection(pickupTarget.data, "cars", "kayak"); return value.ok ? value.value : undefined; })() : undefined;
+    let dropoff = dropoffTarget?.success ? (() => { const value = resolveProviderSelection(dropoffTarget.data, "cars", "kayak"); return value.ok ? value.value : undefined; })() : undefined;
     // IATA codes are an exact, provider-supported public namespace. Free text is not.
     pickup ||= /^[A-Z]{3}$/.test(airportCode(pickupInput)) ? airportCode(pickupInput) : undefined;
     if (!pickup) return { supported: false, reason: "KAYAK does not support the selected pickup location. Other providers are unaffected." };
@@ -46,7 +51,7 @@ export async function resolveRegularKayakSearch(
       pickupTime: criteria.pickupTime || "10:00", dropoffTime: criteria.dropoffTime || "10:00" });
   }
   const hotelTarget = parseTarget(criteria.destinationLocation);
-  const boundDestination = hotelTarget?.success ? verifiedProviderValue(hotelTarget.data, "kayak") : undefined;
+  const boundDestination = hotelTarget?.success ? (() => { const value = resolveProviderSelection(hotelTarget.data, "hotels", "kayak"); return value.ok ? value.value : undefined; })() : undefined;
   if (boundDestination) return adaptKayakHotelSearch({ ...input, destinationId: boundDestination });
   if (/^kplace:\d+$/.test(criteria.destinationId || "")) return adaptKayakHotelSearch(input);
   const term = (criteria.destination || "").trim();

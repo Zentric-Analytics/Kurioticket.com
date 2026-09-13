@@ -38,6 +38,8 @@ export type CanonicalLocation = {
   providerIds?: Readonly<Record<string, string>>;
   providerBindings?: readonly LocationProviderBinding[];
   verification?: "verified" | "catalogue-only";
+  /** Opaque server-side provider-resolution identity included only in discovery responses. */
+  selectionToken?: string;
   source: { catalog: "kurioticket"; datasetVersion: string };
 };
 

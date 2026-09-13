@@ -22,6 +22,8 @@ export type SearchLocation = {
   codes?: { iata?: string; icao?: string };
   providerBindings: SearchLocationProviderBinding[];
   verification: "verified" | "catalogue-only";
+  /** Opaque server-issued handle. Provider identifiers never need to cross the client boundary. */
+  selectionToken?: string;
 };
 
 export const searchLocationSchema: z.ZodType<SearchLocation> = z.object({
@@ -39,11 +41,11 @@ export const searchLocationSchema: z.ZodType<SearchLocation> = z.object({
     verification: z.enum(["verified", "unverified"]), provenance: z.enum(["provider-discovery", "catalogue", "operator"]),
   })).max(12).default([]),
   verification: z.enum(["verified", "catalogue-only"]).default("catalogue-only"),
+  selectionToken: z.string().trim().min(20).max(200).optional(),
 });
 
 export function verifiedProviderValue(location: SearchLocation | undefined, provider: string) {
-  const matches = location?.providerBindings.filter((binding: SearchLocationProviderBinding) =>
-    binding.provider.toLocaleLowerCase("en-US") === provider.toLocaleLowerCase("en-US") && binding.verification === "verified",
-  ) ?? [];
-  return matches.length === 1 ? matches[0].value : undefined;
+  // Client-carried bindings are display data, never provider authority.
+  void location; void provider;
+  return undefined;
 }
