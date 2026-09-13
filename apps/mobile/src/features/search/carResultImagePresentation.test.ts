@@ -13,9 +13,12 @@ test("native Cars results contain curated catalogue assets without changing exte
   );
   assert.match(
     source,
-    /const imageResizeMode = isCuratedCarResultImage\(imageUri\) \? "contain" : "cover"/,
+    /const curatedImage = isCuratedCarResultImage\(imageUri\)/,
   );
+  assert.match(source, /const imageResizeMode = curatedImage \? "contain" : "cover"/);
   assert.match(source, /resizeMode=\{imageResizeMode\}/);
+  assert.match(source, /style=\{\[c\.image,curatedImage&&c\.curatedImage\]\}/);
+  assert.match(source, /curatedImage:\{transform:\[\{scale:1\.08\}\]\}/);
   assert.doesNotMatch(
     source,
     /<Image source=\{\{ uri: imageUri \}\} resizeMode="cover"/,
