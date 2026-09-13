@@ -40,7 +40,7 @@ test("active Hotel details do not fabricate classification, reviews, rooms, or p
 test("narrow active Hotel layout uses flexible price ownership", () => {
   assert.match(hotel, /useWindowDimensions\(\)\.width/);
   assert.match(rates, /adjustsFontSizeToFit/);
-  assert.match(rates, /minimumFontScale=\{0\.72\}/);
+  assert.match(rates, /minimumFontScale=\{0\.68\}/);
   assert.match(hotel, /s\.dockPrice/);
   assert.match(hotel, /s\.continueButton/);
 });

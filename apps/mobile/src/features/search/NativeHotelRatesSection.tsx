@@ -18,10 +18,23 @@ type NightlyPrice = {
 
 type DetailsStatus = "loading" | "ready" | "error";
 
-function roomGroupName(options: PresentedHotelRoomOption[], fallback: string) {
+function capitalize(value: string) {
+  return value ? `${value[0]!.toUpperCase()}${value.slice(1)}` : value;
+}
+
+function roomGroupHeading(options: PresentedHotelRoomOption[], fallback: string) {
+  const bedConfiguration = options.find((option) => option.bedConfiguration.trim())?.bedConfiguration.trim();
+  if (bedConfiguration) return bedConfiguration;
   const name = options[0]?.name?.trim();
-  if (!name) return fallback.trim() || "Available rates";
-  return name.split(/\s+[—–-]\s+/)[0]?.trim() || fallback.trim() || "Available rates";
+  if (name) return name;
+  return fallback.trim() || "Available rates";
+}
+
+function roomRateTitle(options: PresentedHotelRoomOption[]) {
+  const name = options[0]?.name?.trim();
+  if (!name) return null;
+  const parts = name.split(/\s+[—–-]\s+/).filter(Boolean);
+  return capitalize(parts.length > 1 ? parts.slice(1).join(" — ").trim() : name);
 }
 
 function roomRateTags(options: PresentedHotelRoomOption[]) {
@@ -40,16 +53,6 @@ function roomRateTags(options: PresentedHotelRoomOption[]) {
   }
 
   return tags.slice(0, 4);
-}
-
-function internalRateSummary(options: PresentedHotelRoomOption[]) {
-  if (!options.length) return null;
-  if (options.length === 1) return options[0]!.name;
-  return `${options.length} room choices`;
-}
-
-function internalTerms(options: PresentedHotelRoomOption[]) {
-  return roomRateTags(options).join(" · ");
 }
 
 export function NativeHotelRatesSection({
@@ -80,9 +83,11 @@ export function NativeHotelRatesSection({
   accentColor: string;
 }) {
   const tags = roomRateTags(roomOptions);
-  const heading = roomGroupName(roomOptions, roomType ?? "Available rates");
-  const internalSummary = internalRateSummary(roomOptions);
-  const internalMeta = internalTerms(roomOptions);
+  const heading = roomGroupHeading(roomOptions, roomType ?? "Available rates");
+  const representativeRoom = roomOptions[0] ?? null;
+  const internalTitle = roomRateTitle(roomOptions);
+  const internalMeta = representativeRoom?.cancellationInfo.trim() ?? "";
+  const internalNightlyPrice = representativeRoom?.displayPrice?.nightly ?? nightlyPrice;
   const providerMeta = cancellationInfo?.trim() ?? "";
 
   return (
@@ -120,9 +125,11 @@ export function NativeHotelRatesSection({
             const selected = offer.id === selectedOfferId;
             const internal = offer.kind === "internal-room-flow";
             const title = internal
-              ? internalSummary ?? "Room options"
+              ? internalTitle ?? "Room option"
               : roomType?.trim() || "Provider rate";
             const meta = internal ? internalMeta : providerMeta;
+            const offerNightlyPrice = internal ? internalNightlyPrice : nightlyPrice;
+            const offerHasPrice = internal ? Boolean(internalNightlyPrice) : hasPrice;
 
             return (
               <Pressable
@@ -167,17 +174,17 @@ export function NativeHotelRatesSection({
                     <Text
                       numberOfLines={1}
                       adjustsFontSizeToFit
-                      minimumFontScale={0.72}
+                      minimumFontScale={0.68}
                       accessibilityLabel={
-                        hasPrice && nightlyPrice
-                          ? `${nightlyPrice.accessibilityLabel} per night`
+                        offerHasPrice && offerNightlyPrice
+                          ? `${offerNightlyPrice.accessibilityLabel} per night`
                           : "Price unavailable"
                       }
                       style={[s.price, { color: theme.textPrimary }]}
                     >
-                      {hasPrice ? (nightlyPrice?.formatted ?? "—") : "Price unavailable"}
+                      {offerHasPrice ? (offerNightlyPrice?.formatted ?? "—") : "Price unavailable"}
                     </Text>
-                    {hasPrice ? (
+                    {offerHasPrice ? (
                       <Text style={[s.perNight, { color: theme.textSecondary }]}>per night</Text>
                     ) : null}
                   </View>
@@ -200,25 +207,25 @@ export function NativeHotelRatesSection({
 }
 
 const s = StyleSheet.create({
-  section: { paddingTop: 4, paddingBottom: 4 },
+  section: { paddingTop: 22, paddingBottom: 4 },
   chipViewport: { marginHorizontal: -16 },
-  chipRow: { gap: 8, paddingHorizontal: 16, paddingBottom: 28 },
+  chipRow: { gap: 8, paddingHorizontal: 16, paddingBottom: 30 },
   chip: { height: 36, justifyContent: "center", borderWidth: 1, borderRadius: 8, paddingHorizontal: 12 },
-  chipText: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
+  chipText: { fontSize: 16, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
   groupHeading: { fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.2 },
-  groupCard: { marginTop: 16, overflow: "hidden", borderWidth: 1, borderRadius: 12 },
-  rateRow: { minHeight: 132, flexDirection: "row", alignItems: "stretch", padding: 16, gap: 12 },
+  groupCard: { marginTop: 20, overflow: "hidden", borderWidth: 1, borderRadius: 12 },
+  rateRow: { minHeight: 134, flexDirection: "row", alignItems: "stretch", padding: 16, gap: 14 },
   rateRowPressed: { opacity: 0.82 },
-  rateCopy: { flex: 1, minWidth: 0, justifyContent: "center" },
-  brandLogo: { width: 112, height: 24, flexShrink: 0, marginBottom: 8 },
-  providerName: { fontSize: 15, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold, marginBottom: 8 },
+  rateCopy: { flex: 1, minWidth: 0, justifyContent: "flex-start" },
+  brandLogo: { width: 104, height: 22, flexShrink: 0, marginBottom: 10 },
+  providerName: { fontSize: 15, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold, marginBottom: 10 },
   rateTitle: { fontSize: 16, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold },
-  rateMeta: { marginTop: 8, fontSize: 14, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
-  rateActionColumn: { width: 132, flexShrink: 0, alignItems: "flex-end", justifyContent: "space-between" },
+  rateMeta: { marginTop: 10, fontSize: 14, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
+  rateActionColumn: { width: 112, flexShrink: 0, alignItems: "flex-end", justifyContent: "space-between" },
   priceBlock: { width: "100%", alignItems: "flex-end" },
   price: { maxWidth: "100%", fontSize: 20, lineHeight: 26, fontWeight: "700", fontFamily: appFonts.bold, textAlign: "right" },
   perNight: { marginTop: 2, fontSize: 12, lineHeight: 17, fontWeight: "400", fontFamily: appFonts.regular, textAlign: "right" },
-  selectButton: { minWidth: 88, height: 44, borderRadius: 10, alignItems: "center", justifyContent: "center", paddingHorizontal: 14 },
+  selectButton: { minWidth: 88, height: 44, borderRadius: 10, alignItems: "center", justifyContent: "center", paddingHorizontal: 12 },
   selectButtonText: { color: "#FFFFFF", fontSize: 15, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
-  emptyCard: { marginTop: 16, minHeight: 112, justifyContent: "center", borderWidth: 1, borderRadius: 12, padding: 16 },
+  emptyCard: { marginTop: 20, minHeight: 112, justifyContent: "center", borderWidth: 1, borderRadius: 12, padding: 16 },
 });
