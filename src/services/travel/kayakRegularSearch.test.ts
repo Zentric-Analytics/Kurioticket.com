@@ -57,6 +57,15 @@ test("normal airport labels and rental times are preserved for KAYAK", async () 
   const result = await resolveRegularKayakSearch("cars", { pickupLocation: "Logan International Airport (BOS)", pickupDate: "2099-10-12", dropoffDate: "2099-10-17", pickupTime: "10:30", dropoffTime: "16:45" }, async () => []);
   assert.deepEqual(result, { supported: true, search: { vertical: "cars", origin: "BOS", departure: "2099-10-12", returnDate: "2099-10-17", pickupTime: "10:30", dropoffTime: "16:45" } });
 });
+test("a selected car city is translated through the provider's own location identity", async () => {
+  const result = await resolveRegularKayakSearch("cars", { pickupLocation: "San Francisco, United States", pickupDate: "2099-10-12", dropoffDate: "2099-10-17", pickupTime: "10:30", dropoffTime: "16:45" }, async (term, vertical) => {
+    assert.equal(term, "San Francisco, United States");
+    assert.equal(vertical, "cars");
+    return [{ label: "San Francisco International Airport (SFO)", value: "SFO", kind: "airport" }];
+  });
+  assert.equal(result.supported, true);
+  if (result.supported && result.search.vertical === "cars") assert.equal(result.search.origin, "SFO");
+});
 test("ordinary flight criteria retain route and travelers while sandbox USD stays separate", async () => {
   const result = await resolveRegularKayakSearch("flights", { origin: "BOS", destination: "JFK", departureDate: "2099-10-12", tripType: "one-way", travelers: "2", currency: "JPY" }, async () => []);
   assert.equal(result.supported, true);

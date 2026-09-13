@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
   };
   try {
     const resolved = regular.success ? await resolveRegularKayakSearch(regular.data.vertical, regular.data.criteria,
-      term => client.places("hotels", term, trackId, AbortSignal.any([request.signal, AbortSignal.timeout(12000)]))) : null;
+      (term, requestedVertical = "hotels") => client.places(requestedVertical, term, trackId, AbortSignal.any([request.signal, AbortSignal.timeout(12000)]))) : null;
     if (resolved && !resolved.supported) return withSession(NextResponse.json(
       { error: resolved.reason, choices: resolved.choices || [], sandbox: true }, { status: 422, headers: noStore }));
     const results = isPlaces
