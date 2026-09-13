@@ -592,14 +592,16 @@ function HotelDetail({
           </View>
         </View>
 
-        <HotelStayEditor
-          result={result}
-          destination={String(params.destination || property?.city || result.location)}
-          checkIn={checkIn}
-          checkOut={checkOut}
-          guests={guestCount}
-          rooms={roomCount}
-        />
+        {activeHotelTab === "details" ? (
+          <HotelStayEditor
+            result={result}
+            destination={String(params.destination || property?.city || result.location)}
+            checkIn={checkIn}
+            checkOut={checkOut}
+            guests={guestCount}
+            rooms={roomCount}
+          />
+        ) : null}
 
         <View style={s.detailBody}>
           {activeHotelTab === "details" ? (

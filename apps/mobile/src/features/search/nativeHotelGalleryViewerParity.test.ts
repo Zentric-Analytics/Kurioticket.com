@@ -54,13 +54,14 @@ test("tapping the Hotel Details hero opens the gallery overview, not the individ
   assert.match(gallery, /resizeMode="cover"/);
 });
 
-test("gallery overview is a full-screen vertical mosaic with truthful photo count", () => {
+test("gallery overview is a full-screen vertical mosaic without redundant summary copy", () => {
   assert.match(gallery, /visible=\{galleryOpen\}[\s\S]*?animationType="slide"[\s\S]*?presentationStyle="fullScreen"/);
   assert.match(gallery, /accessibilityLabel="Close photo gallery"/);
   assert.match(gallery, /accessibilityRole="header"[\s\S]*?\{name\}/);
-  assert.match(gallery, />All photos \{images\.length\}<\/Text>/);
+  assert.doesNotMatch(gallery, /All photos \{images\.length\}|Tap any photo to view it full screen|gallerySummary/);
   assert.match(gallery, /<ScrollView[\s\S]*?contentContainerStyle=\{s\.galleryOverviewContent\}/);
   assert.match(gallery, /galleryRows\.map/);
+  assert.match(styleRule("galleryOverviewContent", "galleryLargeFrame"), /paddingTop: 8/);
   assert.match(styleRule("galleryLargeFrame", "galleryPairRow"), /height: 230/);
   assert.match(styleRule("galleryPairRow", "galleryPairFrame"), /flexDirection: "row"[\s\S]*gap: 8/);
   assert.match(styleRule("galleryPairFrame", "galleryOverviewImage"), /height: 170/);
