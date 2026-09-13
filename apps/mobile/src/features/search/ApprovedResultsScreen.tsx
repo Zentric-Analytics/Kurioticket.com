@@ -1303,7 +1303,9 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
   const labels = flightResultsCopy(locale);
   const mainPriceBasis = flightMainPriceBasis(fare, labels);
   const fareAccessibility = `${fare?.accessibilityLabel ?? "price unavailable"}${mainPriceBasis ? `, ${mainPriceBasis.accessibilityText}` : ""}${providerFare ? `, provider price ${providerFare.accessibilityLabel}` : ""}`;
-  const openDetails = () => router.push({ pathname: "/flight-details", params: buildFlightDetailParams({ searchParams: params, result }) });
+  const openDetails = () => result.searchPolicy.action.kind === "provider"
+    ? void Linking.openURL(result.searchPolicy.action.href)
+    : router.push({ pathname: "/flight-details", params: buildFlightDetailParams({ searchParams: params, result }) });
   const cardAccessibilityLabel = `View flight details for ${result.airlineName}, ${journeys.map((journey) => flightCardJourneyAccessibility(journey, clock)).join(", ")}, ${fareAccessibility}`;
   return (
     <Pressable
@@ -1602,8 +1604,9 @@ function HotelCard({
             accessibilityLabel={`View hotel for ${result.name}`}
             hitSlop={4}
             style={({ pressed }) => [s0.hotelDealButton, compact && s0.hotelDealButtonCompact, pressed && s0.hotelDealButtonPressed]}
-            onPress={() =>
-              router.push({
+            onPress={() => result.searchPolicy.action.kind === "provider"
+              ? void Linking.openURL(result.searchPolicy.action.href)
+              : router.push({
                 pathname: "/hotel-details",
                 params: {
                   result: JSON.stringify(result),

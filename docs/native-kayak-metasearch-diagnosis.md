@@ -28,3 +28,20 @@ Native continues to contain no KAYAK transport or credential. Its existing API
 client consumes the unified response, and its existing filtering/sorting operates
 over that single returned array. KAYAK sandbox cards are explicitly labelled
 simulated and not bookable.
+
+## PR #5329 required-check correction
+
+The `Validate mobile preview` job originally stopped in `npm run typecheck`.
+React Native's DOM compatibility declarations give the global `URL` a different
+iterator shape from Node's `node:url` `URL`, so passing `new URL(...,
+import.meta.url)` to `readFileSync` in the new architecture test failed TS2769.
+The test now follows the existing mobile-suite convention and reads paths from
+the package working directory.
+
+Running the complete mobile suite after fixing type checking also exposed stale
+source-shape assertions: they still required the former 14-second flight-only
+transport deadline, internal-only card navigation, and the old exact server car
+call. The assertions now verify the intended shared 35-second metasearch
+transport window and provider-policy-controlled external handoff. The bounded UI
+deadline is 37 seconds, leaving response parsing/settlement margin after the
+server transport deadline. No check was skipped or made optional.

@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 
-const api = readFileSync(new URL("../../api/travelApi.ts", import.meta.url), "utf8");
-const results = readFileSync(new URL("../search/ApprovedResultsScreen.tsx", import.meta.url), "utf8");
-const cars = readFileSync(new URL("../search/ApprovedCarResultsScreen.tsx", import.meta.url), "utf8");
+const api = readFileSync("src/api/travelApi.ts", "utf8");
+const results = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
+const cars = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
 
 test("native uses only canonical server search APIs for all provider inventory", () => {
   assert.match(api, /searchFlights:[\s\S]*"\/api\/flights\/search"/);

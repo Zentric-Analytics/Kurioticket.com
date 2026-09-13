@@ -23,9 +23,12 @@ test("ready, empty, error, visible message, and clean retry remain terminal stat
   assert.match(screen, /const controller = new AbortController\(\)/);
 });
 
-test("request identity and the flight-specific hard timeout reach the backend", () => {
+test("request identity and the shared metasearch timeout reach the backend", () => {
   assert.match(api, /"X-Search-Request-Id": options\.requestId/);
-  assert.match(api, /FLIGHT_SEARCH_REQUEST_TIMEOUT_MS = 14_000/);
+  assert.match(api, /METASEARCH_REQUEST_TIMEOUT_MS = 35_000/);
+  assert.match(api, /searchFlights:[\s\S]*timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS/);
+  assert.match(api, /searchHotels:[\s\S]*timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS/);
+  assert.match(api, /searchCars:[\s\S]*timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS/);
   assert.match(screen, /searchFlights\(plan\.plan\.payload, \{ signal: controller\.signal, requestId \}\)/);
   assert.match(screen, /controller\.abort\("ui-deadline"\)/);
   assert.match(screen, /deadlineExpired \|\|/);
