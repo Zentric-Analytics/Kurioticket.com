@@ -85,6 +85,7 @@ test("Location keeps Apple Look Around on iOS and Google Street View on Android"
   assert.match(component, /const streetViewUrl = Platform\.OS !== "ios" && api\.ok \? nativeHotelLocationEmbedUrl\(api\.baseUrl, hotelId, "streetview"\) : null;/);
   assert.doesNotMatch(component, /nativeHotelLocationEmbedUrl\(api\.baseUrl, hotelId, "map"\)/);
   assert.match(component, /Platform\.OS === "ios" \? "Look Around" : "Street View"/);
+  assert.match(component, /const selectView = \(next: NativeHotelLocationView\) => \{\s*if \(next === view\) return;/);
   assert.match(component, /view === "map" \? <Pressable/);
   assert.match(component, /accessibilityRole="button" accessibilityLabel=\{`Open full map for \$\{hotelName\}`\} accessibilityHint="Opens an interactive map inside Kurioticket"/);
   assert.match(component, /<Image accessible=\{false\} source=\{\{ uri: previewUrl \}\} resizeMode="cover" onError=\{\(\) => setMapPreviewFailed\(true\)\}/);
