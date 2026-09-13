@@ -57,6 +57,7 @@ import {
   assignCarBadges,
   buildCarDetailsHref,
   doesCarMatchFilterOption,
+  ensureCarProviderCoverage,
   filterCarResults,
   sortCarResults,
   type CarSort,
@@ -1931,10 +1932,10 @@ export function CarsResultsExperience({
     () => (guidedPlanning ? new Map() : assignCarBadges(results)),
     [guidedPlanning, results],
   );
-  const visibleResults = useMemo(
-    () => sortCarResults(filterCarResults(results, selectedCarFilters), sort),
-    [results, selectedCarFilters, sort],
-  );
+  const visibleResults = useMemo(() => {
+    const ranked = sortCarResults(filterCarResults(results, selectedCarFilters), sort);
+    return sort === "recommended" ? ensureCarProviderCoverage(ranked) : ranked;
+  }, [results, selectedCarFilters, sort]);
   const pagination = useMemo(
     () => paginateCarResults(visibleResults, guidedPlanning ? 1 : currentPage),
     [currentPage, guidedPlanning, visibleResults],
