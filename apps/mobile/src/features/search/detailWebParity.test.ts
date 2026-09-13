@@ -68,12 +68,11 @@ test("active Hotel Details keeps fixed icon-only controls and stack-aware Result
   assert.match(hotel, /accessibilityLabel="Back to hotel results"[\s\S]*?onPress=\{returnToHotelResults\}[\s\S]*?s\.heroBack/);
   assert.match(hotel, /<ArrowLeft size=\{25\} strokeWidth=\{2\.2\} color="#0F172A" \/>/);
   assert.doesNotMatch(hotel, />Back to hotel results<\/Text>/);
-  assert.match(returnNavigation, /if \(relatedHotelsStack\) \{\s*router\.back\(\);\s*return;\s*\}/);
   assert.match(returnNavigation, /if \(hotelResultsStack\) \{/);
   assert.match(returnNavigation, /hotelResultsDismissCount\(navigation\.getState\(\)\)/);
   assert.match(returnNavigation, /router\.dismiss\(dismissCount\);\s*return;/);
   assert.match(returnNavigation, /router\.replace\(\{\s*pathname: "\/hotel-results"/);
-  assert.doesNotMatch(returnNavigation, /router\.dismissTo/);
+  assert.doesNotMatch(returnNavigation, /router\.back\(|router\.dismissTo/);
 });
 
 test("active Hotel light canvas matches the web white article while allowing a full-bleed hero", () => {
