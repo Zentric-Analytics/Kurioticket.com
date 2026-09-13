@@ -22,8 +22,8 @@ test("ambiguous hotel destinations stay out of the shared results rather than le
 });
 test("canonical Kurioticket destinations resolve the corresponding provider city", async () => {
   const result = await resolveRegularKayakSearch("hotels", { ...hotel, destination: "San Francisco", destinationId: "us-san-francisco" }, async () => [
-    { label: "San Francisco, San Francisco, California, United States, (SFO)", value: "kplace:100" },
-    { label: "San Francisco, California, United States", value: "kplace:200" },
+    { label: "San Francisco, San Francisco, California, United States, (SFO)", value: "kplace:100", kind: "airport" },
+    { label: "San Francisco, California, United States", value: "kplace:200", kind: "city" },
     { label: "South San Francisco, California, United States", value: "kplace:300" },
   ]);
   assert.equal(result.supported, true);
@@ -31,6 +31,14 @@ test("canonical Kurioticket destinations resolve the corresponding provider city
     assert.equal(result.search.vertical, "hotels");
     if (result.search.vertical === "hotels") assert.equal(result.search.destination, "kplace:200");
   }
+});
+test("canonical matching recognizes provider country abbreviations and rejects a namesake abroad", async () => {
+  const result = await resolveRegularKayakSearch("hotels", { ...hotel, destination: "San Francisco", destinationId: "us-san-francisco" }, async () => [
+    { label: "San Francisco, Nayarit, Mexico", value: "kplace:100", kind: "city" },
+    { label: "San Francisco, CA, US", value: "kplace:200", kind: "city" },
+  ]);
+  assert.equal(result.supported, true);
+  if (result.supported && result.search.vertical === "hotels") assert.equal(result.search.destination, "kplace:200");
 });
 test("invalid hotel occupancy never calls the provider", async () => {
   const result = await resolveRegularKayakSearch("hotels", { ...hotel, rooms: "2" }, async () => { throw new Error("must not call"); });
