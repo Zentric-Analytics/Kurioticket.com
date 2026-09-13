@@ -152,6 +152,10 @@ function HotelDetail({
     (Array.isArray(params.hotelResultsStack)
       ? params.hotelResultsStack[0]
       : params.hotelResultsStack) === "1";
+  const relatedHotelsStack =
+    (Array.isArray(params.relatedHotelsStack)
+      ? params.relatedHotelsStack[0]
+      : params.relatedHotelsStack) === "1";
 
   useEffect(() => {
     setSelectedOfferId(null);
@@ -425,6 +429,10 @@ function HotelDetail({
     });
 
   const returnToHotelResults = () => {
+    if (relatedHotelsStack) {
+      router.back();
+      return;
+    }
     if (hotelResultsStack) {
       const dismissCount = hotelResultsDismissCount(navigation.getState());
       if (dismissCount) {
@@ -498,107 +506,95 @@ function HotelDetail({
       <ScrollView
         ref={hotelDetailScrollRef}
         stickyHeaderIndices={[2]}
-        contentInsetAdjustmentBehavior="never"
-        style={{ backgroundColor: hotelCanvasColor }}
-        contentContainerStyle={{ paddingBottom: 112 + inset.bottom }}
-        onScroll={({ nativeEvent }) => {
-          const offset = nativeEvent.contentOffset.y;
-          currentHotelScrollOffset.current = offset;
-          syncHotelTabsPinned(offset);
+        showsVerticalScrollIndicator={false}
+        onScroll={(event) => {
+          const offset = event.nativeEvent.contentOffset.y;
           if (!restoringHotelTabScrollRef.current) {
             hotelTabScrollOffsets.current[activeHotelTabRef.current] = offset;
           }
+          currentHotelScrollOffset.current = offset;
+          syncHotelTabsPinned(offset);
         }}
         scrollEventThrottle={16}
       >
-        <View style={s.heroShell}>
-          <NativeHotelGallery
-            name={result.name}
-            initialImages={images}
-            theme={theme}
-            accentColor={hotelAccent}
-          />
-        </View>
+        <NativeHotelGallery
+          images={images}
+          name={result.name}
+          width={width}
+        />
 
-        <View style={s.identity}>
-          <Text
-            accessibilityRole="header"
-            style={[s.hotelName, width <= 430 && s.hotelNamePhoneFit, { color: titleColor }]}
-          >
-            {result.name}
-          </Text>
-          {classification ? (
-            <Text accessibilityLabel={`${classification} star hotel`} style={s.stars}>
-              {"★".repeat(classification)}
-            </Text>
-          ) : null}
-          {hotelReview && hotelReviewScore ? (
-            <View style={s.reviewSummary}>
-              <Users accessible={false} size={18} color={iconColor} />
-              <Text style={[s.reviewText, { color: titleColor }]}>
-                <Text style={s.reviewPrimary}>{hotelReview.label} {hotelReviewScore}</Text>
-                <Text style={[s.reviewSecondary, { color: metaColor }]}> · {hotelReview.count}</Text>
-              </Text>
+        <View style={s.identitySection}>
+          <View style={s.titleRow}>
+            <View style={s.titleCopy}>
+              <Text style={[s.hotelTitle, { color: titleColor }]}>{result.name}</Text>
+              {classification ? (
+                <Text
+                  accessible
+                  accessibilityLabel={`${classification} star hotel`}
+                  style={s.classificationStars}
+                >
+                  {"★".repeat(classification)}
+                </Text>
+              ) : null}
+              {address ? <Text style={[s.hotelMeta, { color: metaColor }]}>{address}</Text> : null}
             </View>
-          ) : null}
+            {hotelReviewScore ? (
+              <View style={s.reviewScore}>
+                <Text style={s.reviewScoreText}>{hotelReviewScore}</Text>
+              </View>
+            ) : null}
+          </View>
         </View>
 
         <View
-          onLayout={({ nativeEvent }) => {
-            hotelTabsStickyStartRef.current = nativeEvent.layout.y;
-            syncHotelTabsPinned(currentHotelScrollOffset.current);
+          onLayout={(event) => {
+            if (hotelTabsStickyStartRef.current === null) {
+              hotelTabsStickyStartRef.current = event.nativeEvent.layout.y;
+            }
           }}
           style={[
-            s.tabsShell,
-            {
-              paddingTop: hotelStickyTabsTop,
-              marginTop: 1 - hotelStickyTabsTop,
-              backgroundColor: hotelTabsPinned ? hotelCanvasColor : "transparent",
-            },
+            s.tabsSticky,
+            { backgroundColor: hotelCanvasColor },
+            hotelTabsPinned && [
+              s.tabsStickyPinned,
+              { paddingTop: hotelStickyTabsTop },
+            ],
           ]}
         >
-          <View
-            accessibilityRole="tablist"
-            style={[s.tabsRow, { backgroundColor: hotelCanvasColor }]}
-          >
-            {(["details", "reviews", "deals"] as const).map((tab) => (
-              <Pressable
-                key={tab}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: activeHotelTab === tab }}
-                onPress={() => selectHotelTab(tab)}
-                style={[
-                  s.tab,
-                  activeHotelTab === tab && { borderBottomColor: hotelAccent },
-                ]}
-              >
-                <Text
-                  numberOfLines={1}
-                  style={[
-                    s.tabText,
-                    width < 350 && s.tabTextCompact,
-                    { color: theme.textSecondary },
-                    activeHotelTab === tab && {
-                      color: hotelAccent,
-                      fontWeight: "700",
-                      fontFamily: appFonts.bold,
-                    },
-                  ]}
+          <View style={s.tabsRow}>
+            {(["details", "reviews", "deals"] as HotelDetailTab[]).map((tab) => {
+              const active = tab === activeHotelTab;
+              return (
+                <Pressable
+                  key={tab}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: active }}
+                  onPress={() => selectHotelTab(tab)}
+                  style={s.tab}
                 >
-                  {tab[0].toUpperCase() + tab.slice(1)}
-                </Text>
-              </Pressable>
-            ))}
+                  <Text
+                    style={[
+                      s.tabText,
+                      { color: active ? hotelAccent : metaColor },
+                      active && s.tabTextActive,
+                    ]}
+                  >
+                    {tab[0].toUpperCase() + tab.slice(1)}
+                  </Text>
+                  {active ? <View style={[s.tabIndicator, { backgroundColor: hotelAccent }]} /> : null}
+                </Pressable>
+              );
+            })}
           </View>
         </View>
 
         <HotelStayEditor
-          result={result}
-          destination={String(params.destination || property?.city || result.location)}
+          stay={stay}
           checkIn={checkIn}
           checkOut={checkOut}
           guests={guestCount}
           rooms={roomCount}
+          theme={theme}
         />
 
         <View style={s.detailBody}>
@@ -613,90 +609,15 @@ function HotelDetail({
               onViewHotel={viewRelatedHotel}
             />
           ) : null}
-
           {activeHotelTab === "reviews" ? (
             <NativeHotelReviewsSection result={result} />
           ) : null}
-
           {activeHotelTab === "deals" ? (
-            <View style={s.compareSection}>
-              <Text style={[s.compareHeading, { color: titleColor }]}>Deals</Text>
-              <Text style={[s.compareLead, { color: metaColor }]}>
-                {stay.dateText ?? "Stay dates unavailable"} · {stay.occupancy}
-              </Text>
-              <View style={s.compareOffers}>
-                {hotelOffers.map((offer) => {
-                  const selected = offer.id === selectedOffer?.id;
-                  const internal = offer.kind === "internal-room-flow";
-                  return (
-                    <Pressable
-                      key={offer.id}
-                      onPress={() => setSelectedOfferId(offer.id)}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected }}
-                      style={[
-                        s.offer,
-                        {
-                          backgroundColor: theme.surface,
-                          borderColor: selected ? hotelAccent : theme.border,
-                        },
-                      ]}
-                    >
-                      <View style={s.offerTop}>
-                        {internal ? (
-                          <Image
-                            accessible
-                            accessibilityLabel="Kurioticket"
-                            accessibilityIgnoresInvertColors
-                            source={require("../../../assets/kurioticket-logo-primary-light-bg.png")}
-                            resizeMode="contain"
-                            style={s.offerBrandLogo}
-                          />
-                        ) : (
-                          <Text style={[s.offerProvider, { color: theme.textPrimary }]}>{result.provider}</Text>
-                        )}
-                        <View
-                          style={[
-                            s.selectionControl,
-                            {
-                              backgroundColor: theme.surface,
-                              borderColor: selected ? hotelAccent : theme.textSecondary,
-                            },
-                          ]}
-                        >
-                          {selected ? (
-                            <View style={[s.selectionControlDot, { backgroundColor: hotelAccent }]} />
-                          ) : null}
-                        </View>
-                      </View>
-                      <View style={s.offerPriceRow}>
-                        <Text
-                          numberOfLines={1}
-                          adjustsFontSizeToFit
-                          minimumFontScale={0.65}
-                          style={[s.nightly, { color: theme.textPrimary }]}
-                        >
-                          {hasPrice ? (nightlyPrice?.formatted ?? "—") : "Price unavailable"}
-                        </Text>
-                      </View>
-                      <View style={s.offerBottom}>
-                        <HotelOfferAmenityList
-                          amenities={result.amenities}
-                          color={theme.textSecondary}
-                          compact={width < 350}
-                        />
-                        <Text numberOfLines={1} style={[s.perNight, { color: hotelAccent }]}>per night</Text>
-                      </View>
-                    </Pressable>
-                  );
-                })}
-                {!hotelOffers.length && detailsStatus !== "loading" ? (
-                  <View style={[s.offer, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                    <Text style={[s.offerProvider, { color: theme.textPrimary }]}>{result.provider}</Text>
-                    <Text style={[s.sectionLead, { color: theme.textSecondary }]}>Planning inventory · no live checkout</Text>
-                  </View>
-                ) : null}
-              </View>
+            <View style={s.dealsTab}>
+              <HotelOfferAmenityList
+                amenities={result.amenities}
+                amenityLabels={result.amenities.map((amenity) => nativeHotelAmenityLabel({ label: amenity, iconKey: "other" }))}
+              />
             </View>
           ) : null}
         </View>
@@ -710,79 +631,54 @@ function HotelDetail({
       >
         <ArrowLeft size={25} strokeWidth={2.2} color="#0F172A" />
       </Pressable>
+
       <View style={[s.heroActions, { top: inset.top + 12 }]}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={saved ? `Remove ${result.name} hotel from saved` : `Save ${result.name} hotel`}
-          accessibilityState={{ selected: saved }}
-          onPress={() => void canonical.toggleHotel(result, params)}
+          accessibilityLabel={saved ? "Remove hotel from saved" : "Save hotel"}
+          onPress={() => canonical.toggle({ type: "hotel", payload: { result } })}
           style={s.heroAction}
         >
           <Heart
-            size={22}
-            strokeWidth={2}
-            color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke}
-            fill={saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill}
+            size={23}
+            strokeWidth={2.1}
+            color={saved ? androidFavoriteColors.active : "#0F172A"}
+            fill={saved ? androidFavoriteColors.active : "none"}
           />
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Share ${result.name}`}
+          accessibilityLabel="Share hotel"
           onPress={shareHotel}
           style={s.heroAction}
         >
-          <FlowIcon name="share" size={22} color="#0F172A" />
+          <FlowIcon name="share" size={23} color="#0F172A" />
         </Pressable>
       </View>
 
-      <View
-        style={[
-          s.sticky,
-          {
-            paddingBottom: 8 + inset.bottom,
-            backgroundColor: hotelCanvasColor,
-          },
-        ]}
-      >
-        <View style={s.dockContent}>
-          <View style={s.dockPrice}>
-            <View style={s.dockLabel}>
-              <Text style={[s.dockEyebrow, { color: theme.textSecondary }]}>estimated stay total</Text>
-              <Info accessible={false} size={12} color={theme.textSecondary} />
-            </View>
-            <Text
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.83}
-              style={[s.dockTotal, { color: theme.textPrimary }]}
-            >
-              {hasPrice ? (totalPrice?.formatted ?? "—") : "Price unavailable"}
-            </Text>
-            <Text
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.72}
-              style={[s.dockPerNight, { color: theme.textSecondary }]}
-            >
-              {hasPrice ? `${nightlyPrice?.formatted ?? "—"} per night` : "No live price supplied"}
-            </Text>
+      <View style={[s.bookingBar, { backgroundColor: hotelCanvasColor, borderTopColor: theme.border }]}> 
+        <View style={s.bookingPrice}>
+          <View style={s.totalLabelRow}>
+            <Text style={[s.totalLabel, { color: metaColor }]}>estimated stay total</Text>
+            <Info accessible={false} size={14} color={metaColor} />
           </View>
-          <View style={s.dockAction}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ disabled: !canContinue }}
-              disabled={!canContinue}
-              onPress={() => void continueBooking()}
-              style={({ pressed }) => [
-                s.continueButton,
-                !canContinue && s.continueDisabled,
-                pressed && canContinue && s.continuePressed,
-              ]}
-            >
-              <Text style={s.continueText}>Continue booking</Text>
-            </Pressable>
-          </View>
+          <Text style={[s.totalValue, { color: titleColor }]}>{totalPrice?.formatted ?? "Price unavailable"}</Text>
+          {nightlyPrice ? <Text style={[s.nightlyValue, { color: metaColor }]}>{nightlyPrice.formatted} per night</Text> : null}
         </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Continue booking"
+          accessibilityState={{ disabled: !canContinue }}
+          disabled={!canContinue}
+          onPress={() => void continueBooking()}
+          style={({ pressed }) => [
+            s.continueButton,
+            !canContinue && s.continueButtonDisabled,
+            pressed && canContinue && s.continueButtonPressed,
+          ]}
+        >
+          <Text style={s.continueButtonText}>Continue booking</Text>
+        </Pressable>
       </View>
 
       <HotelRoomOptionsModal
@@ -790,62 +686,46 @@ function HotelDetail({
         onClose={() => setRoomsOpen(false)}
         options={presentedRoomOptions}
         theme={theme}
-        accentColor={hotelAccent}
       />
     </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "white" },
-  missing: { flex: 1, alignItems: "center", justifyContent: "center", gap: 14, padding: 30 },
-  missingTitle: { fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold, textAlign: "center" },
-  missingText: { fontSize: 13, lineHeight: 20, fontFamily: appFonts.regular, textAlign: "center" },
-  missingButton: { minHeight: 44, paddingHorizontal: 18, borderRadius: 8, backgroundColor: colors.blue, alignItems: "center", justifyContent: "center" },
-  missingButtonText: { color: "white", fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
-  heroShell: { position: "relative", width: "100%" },
-  heroBack: { position: "absolute", left: 20, width: 44, height: 44, borderRadius: 22, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 5, elevation: 10 },
-  heroActions: { position: "absolute", right: 20, width: 112, height: 44, borderRadius: 22, backgroundColor: "#FFFFFF", flexDirection: "row", overflow: "hidden", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 5, elevation: 10 },
-  heroAction: { width: 56, height: 44, alignItems: "center", justifyContent: "center" },
-  identity: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14 },
-  hotelName: { minWidth: 0, fontSize: 24, lineHeight: 30, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.5 },
-  hotelNamePhoneFit: { letterSpacing: -0.6 },
-  stars: { marginTop: 7, color: "#F59E0B", fontSize: 20, lineHeight: 24, letterSpacing: 1.4, fontWeight: "400", fontFamily: appFonts.regular },
-  reviewSummary: { marginTop: 8, minHeight: 22, flexDirection: "row", alignItems: "center", gap: 8 },
-  reviewText: { flex: 1, minWidth: 0, fontSize: 14, lineHeight: 20 },
-  reviewPrimary: { fontWeight: "700", fontFamily: appFonts.bold },
-  reviewSecondary: { fontWeight: "400", fontFamily: appFonts.regular },
-  tabsShell: { width: "100%", alignSelf: "stretch", minHeight: 45, paddingHorizontal: 8, zIndex: 10 },
-  tabsRow: { alignSelf: "stretch", minHeight: 44, flexDirection: "row", flexWrap: "nowrap", alignItems: "stretch" },
-  tab: { width: "33.333%", flexGrow: 0, flexShrink: 0, minWidth: 0, minHeight: 44, alignItems: "center", justifyContent: "center", borderBottomWidth: 2, borderBottomColor: "transparent" },
-  tabText: { fontSize: 11, fontWeight: "600", fontFamily: appFonts.semibold },
-  tabTextCompact: { fontSize: 10 },
-  detailBody: { paddingHorizontal: 16, paddingVertical: 16, gap: 10 },
-  compareSection: { paddingVertical: 4 },
-  compareHeading: { fontSize: 18, lineHeight: 24, fontWeight: "600", fontFamily: appFonts.semibold, letterSpacing: -0.25 },
-  compareLead: { marginTop: 4, fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
-  compareOffers: { marginTop: 16, gap: 10 },
-  offer: { borderWidth: 1.5, borderRadius: 13, padding: 14, gap: 0 },
-  offerTop: { minWidth: 0, flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12 },
-  offerBrandLogo: { width: 108, height: 24, flexShrink: 0 },
-  offerProvider: { fontSize: 15, lineHeight: 21, fontWeight: "900" },
-  selectionControl: { width: 16, height: 16, borderRadius: 8, borderWidth: 1.5, alignItems: "center", justifyContent: "center" },
-  selectionControlDot: { width: 6, height: 6, borderRadius: 3 },
-  offerPriceRow: { minWidth: 0, marginTop: 10, alignItems: "flex-end" },
-  nightly: { fontSize: 18, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold, textAlign: "right" },
-  offerBottom: { marginTop: 2, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
-  perNight: { flexShrink: 0, fontSize: 10, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "right" },
-  sectionLead: { fontSize: 12, lineHeight: 18 },
-  sticky: { position: "absolute", bottom: 0, left: 0, right: 0, borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingHorizontal: 16, paddingTop: 8, shadowColor: "#0F172A", shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 6 },
-  dockContent: { width: "100%", flexDirection: "row", alignItems: "center", gap: 10 },
-  dockPrice: { flex: 1, minWidth: 0, gap: 1 },
-  dockLabel: { flexDirection: "row", alignItems: "center", gap: 4 },
-  dockEyebrow: { fontSize: 11, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
-  dockTotal: { fontSize: 24, lineHeight: 30, fontWeight: "800", fontFamily: appFonts.extraBold, textAlign: "left" },
-  dockPerNight: { fontSize: 11, lineHeight: 16, fontWeight: "400", fontFamily: appFonts.regular, textAlign: "left" },
-  dockAction: { flex: 0.9, minWidth: 132 },
-  continueButton: { width: "100%", minHeight: 48, borderRadius: 8, backgroundColor: colors.blue, paddingHorizontal: 12, alignItems: "center", justifyContent: "center" },
-  continuePressed: { backgroundColor: "#003B91" },
-  continueDisabled: { opacity: 0.5 },
-  continueText: { color: "white", fontSize: 12, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold, textAlign: "center" },
+  safe: { flex: 1 },
+  missing: { flex: 1, paddingHorizontal: 20, alignItems: "center", justifyContent: "center" },
+  missingTitle: { fontSize: 20, lineHeight: 26, fontWeight: "700", fontFamily: appFonts.bold, textAlign: "center" },
+  missingText: { marginTop: 6, fontSize: 14, lineHeight: 20, fontFamily: appFonts.regular, textAlign: "center" },
+  missingButton: { marginTop: 18, minHeight: 46, borderRadius: 12, backgroundColor: colors.blue, alignItems: "center", justifyContent: "center", paddingHorizontal: 20 },
+  missingButtonText: { color: "#FFFFFF", fontSize: 15, lineHeight: 21, fontWeight: "600", fontFamily: appFonts.semibold },
+  identitySection: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 12 },
+  titleRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  titleCopy: { flex: 1, minWidth: 0 },
+  hotelTitle: { fontSize: 24, lineHeight: 30, fontWeight: "700", fontFamily: appFonts.bold },
+  classificationStars: { marginTop: 4, color: "#F59E0B", fontSize: 13, lineHeight: 18, letterSpacing: 1.04, fontFamily: appFonts.regular },
+  hotelMeta: { marginTop: 4, fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
+  reviewScore: { minWidth: 38, height: 38, borderRadius: 8, backgroundColor: colors.blue, alignItems: "center", justifyContent: "center" },
+  reviewScoreText: { color: "#FFFFFF", fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
+  tabsSticky: { zIndex: 5 },
+  tabsStickyPinned: { shadowColor: "#000000", shadowOpacity: 0.08, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 3 },
+  tabsRow: { minHeight: 48, flexDirection: "row", alignItems: "stretch", paddingHorizontal: 16 },
+  tab: { flex: 1, alignItems: "center", justifyContent: "center", position: "relative" },
+  tabText: { fontSize: 14, lineHeight: 20, fontWeight: "500", fontFamily: appFonts.medium },
+  tabTextActive: { fontWeight: "700", fontFamily: appFonts.bold },
+  tabIndicator: { position: "absolute", left: 10, right: 10, bottom: 0, height: 2, borderRadius: 1 },
+  detailBody: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 124 },
+  dealsTab: { paddingVertical: 4 },
+  heroBack: { position: "absolute", left: 20, width: 44, height: 44, borderRadius: 22, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center", zIndex: 20, shadowColor: "#000000", shadowOpacity: 0.16, shadowRadius: 7, shadowOffset: { width: 0, height: 2 }, elevation: 4 },
+  heroActions: { position: "absolute", right: 20, flexDirection: "row", gap: 10, zIndex: 20 },
+  heroAction: { width: 44, height: 44, borderRadius: 22, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center", shadowColor: "#000000", shadowOpacity: 0.16, shadowRadius: 7, shadowOffset: { width: 0, height: 2 }, elevation: 4 },
+  bookingBar: { position: "absolute", left: 0, right: 0, bottom: 0, minHeight: 96, borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 12, flexDirection: "row", alignItems: "center", gap: 12 },
+  bookingPrice: { flex: 1, minWidth: 0 },
+  totalLabelRow: { flexDirection: "row", alignItems: "center", gap: 5 },
+  totalLabel: { fontSize: 12, lineHeight: 16, fontWeight: "400", fontFamily: appFonts.regular },
+  totalValue: { marginTop: 1, fontSize: 17, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold },
+  nightlyValue: { marginTop: 1, fontSize: 12, lineHeight: 16, fontWeight: "400", fontFamily: appFonts.regular },
+  continueButton: { minWidth: 146, minHeight: 50, borderRadius: 12, backgroundColor: colors.blue, alignItems: "center", justifyContent: "center", paddingHorizontal: 16 },
+  continueButtonDisabled: { opacity: 0.45 },
+  continueButtonPressed: { opacity: 0.78 },
+  continueButtonText: { color: "#FFFFFF", fontSize: 15, lineHeight: 21, fontWeight: "700", fontFamily: appFonts.bold },
 });
