@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { kayakImageUrl, kayakImages, kayakFlightLegs, kayakCarFilterOptions, kayakHotelAmenities, kayakHotelAmenityStatus } from "./kayakPresentation";
+import { kayakImageUrl, kayakImages, kayakFlightLegs, kayakFlightAttributes, kayakCarFilterOptions, kayakHotelAmenities, kayakHotelAmenityStatus } from "./kayakPresentation";
 
 test("hotel amenities resolve only supplied official mappings without duplicates", () => {
   assert.deepEqual(kayakHotelAmenities([3,3,99],[{id:3,name:"Conference facilities"}]),["Conference facilities"]);
@@ -24,6 +24,18 @@ test("KAYAK preserves every distinct supplied hotel image and the car image", ()
   assert.deepEqual(kayakImages("hotels", { images: [{large:first}, {large:second}, {large:first}] }, {}, "Hotel"), [{url:first,alt:"Hotel"},{url:second,alt:"Hotel"}]);
   assert.deepEqual(kayakImages("cars", {}, {image:first}, "Car"), [{url:first,alt:"Car"}]);
   assert.deepEqual(kayakImages("hotels", {}, {}, "Hotel"), []);
+  assert.deepEqual(kayakImages("hotels", {image:{large:first}}, {}, "Hotel"), [{url:first,alt:"Hotel"}]);
+  assert.deepEqual(kayakImages("hotels", {images:[],image:{large:first}}, {}, "Hotel"), [{url:first,alt:"Hotel"}]);
+  assert.deepEqual(kayakImages("hotels", {images:[{large:first}],image:{large:second}}, {}, "Hotel"), [{url:first,alt:"Hotel"},{url:second,alt:"Hotel"}]);
+});
+
+test("flight detail facts preserve equipment and airline rules without exposing transport links", () => {
+  const facts=kayakFlightAttributes({legs:{l:{segments:[{id:"s"},{id:"s"}]}},segments:{s:{airline:"AA",equipmentTypeName:"Airbus A320",duration:90,type:"flight"}},airlines:{AA:{baggagePolicies:[{bagType:"carryOn",restrictions:[{description:"Size limit",url:"https://private.test?apiKey=secret"}]}]}}},{legs:[{id:"l"}]});
+  assert.equal(facts.filter(a=>a.value==="Airbus A320").length,2);
+  assert.equal(facts.filter(a=>a.value==="Size limit").length,1);
+  assert.ok(facts.some(a=>a.label.includes("not included allowance")));
+  assert.ok(facts.some(a=>a.label.includes("duration (minutes)") && a.value==="90"));
+  assert.doesNotMatch(JSON.stringify(facts),/secret|private\.test/);
 });
 
 test("KAYAK media rejects unsafe hosts, credentials and non-media API links", () => {

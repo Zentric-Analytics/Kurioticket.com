@@ -11,6 +11,13 @@ import {
 
 const click = "https://affiliates.kayak.com/sandbox-clickout";
 
+test("flight cabin summary requires supplied fares for all itinerary segments", () => {
+  const data={currency:"USD",priceMode:"total",legs:{l:{segments:[{id:"s"}]}},segments:{s:{origin:"BOS",destination:"JFK",airline:"AA"}},results:[{legs:[{id:"l"}],bookingOptions:[{type:"regular",displayPrice:{price:100},bookingUrl:click,segmentFares:[{segmentId:"s",cabin:{displayName:"Economy"}}]}]}]};
+  assert.equal(normalizeSandboxOffers("flights",data)[0].flightCabin,"Economy");
+  assert.equal(normalizeSandboxOffers("flights",{...data,legs:{l:{segments:[{id:"unmatched"}]}}})[0].flightCabin,undefined);
+  assert.equal(normalizeSandboxOffers("flights",{...data,legs:{l:{segments:[{id:"s"},{id:"other"}]}}})[0].flightCabin,undefined);
+});
+
 test("hotel guest scores preserve the provider rating without inventing unrated scores", () => {
   for (const guestRating of [8.6, 0, 10, -1, 11, NaN, Infinity, "8.6", undefined]) {
     const [offer] = normalizeSandboxOffers("hotels", {currencyCode:"USD",results:[{

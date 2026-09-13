@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { isIP } from "node:net";
-import { kayakImages, kayakFlightLegs, kayakAttributes, kayakCarFilterOptions, kayakHotelAmenities, kayakHotelAmenityStatus, type KayakAttribute, type KayakImage, type KayakFlightLeg } from "./kayakPresentation";
+import { kayakImages, kayakFlightLegs, kayakFlightCabin, kayakFlightAttributes, kayakAttributes, kayakCarFilterOptions, kayakHotelAmenities, kayakHotelAmenityStatus, type KayakAttribute, type KayakImage, type KayakFlightLeg } from "./kayakPresentation";
 
 /** Sandbox transport. Never use this module for live inventory or booking. */
 export const KAYAK_SANDBOX_ORIGIN = "https://sandbox-en-us.kayakaffiliates.com";
@@ -57,6 +57,7 @@ export type SandboxOffer = {
   testUrl: string;
   images?: KayakImage[];
   flightLegs?: KayakFlightLeg[];
+  flightCabin?: string;
   attributes?: KayakAttribute[];
   carSpecs?: string[];
   carFilterOptions?: string[];
@@ -227,7 +228,7 @@ export function normalizeSandboxOffers(
           { label: "Amenity information", value: kayakHotelAmenityStatus(result.features, data.amenityDictionary) },
           ...kayakAttributes({...result, amenities: kayakHotelAmenities(result.features, data.amenityDictionary)},["address","hotelCountryCode","starRating","isSelfRated","amenities","policies","guestRating","guestRatingSentiment","reviewQuotes","place"]),
           ...kayakAttributes(option,["roomName","hasFreeCancellation","canPayLater","isBundledRate","rateBreakdown","conditions"]),
-        ] : kayakAttributes(option,["fees","badges","segmentFares","fareFamily"]),
+        ] : [...kayakAttributes(option,["fees","badges","segmentFares","fareFamily"]), ...kayakFlightAttributes(data,result)],
         ...(vertical === "cars" ? { carFilterOptions: kayakCarFilterOptions(car), carSpecs: [
           typeof car.passengers === "number" ? `${car.passengers} passengers` : "Passengers not supplied",
           typeof car.bags === "number" ? `${car.bags} bags` : "Baggage capacity not supplied",
@@ -242,6 +243,7 @@ export function normalizeSandboxOffers(
           ? { hotelReviewCount: result.numberOfReviews } : {}),
         ...(vertical === "hotels" ? {amenities: kayakHotelAmenities(result.features, data.amenityDictionary)} : {}),
         ...(vertical === "flights" ? { flightLegs: kayakFlightLegs(data, result) } : {}),
+        ...(vertical === "flights" ? {flightCabin:kayakFlightCabin(data,result,option)} : {}),
         price: amount,
         currency,
         priceBasis:

@@ -25,7 +25,7 @@ export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<strin
   return {
     id: `kayak-sandbox:${offer.id}`, provider:"KAYAK sandbox", airlineName:first.airline,
     airlineLogo:first.airlineLogo, flightNumber:first.flightNumber,
-    ...legs[0], legs, cabinClass:"Not supplied", baggageInfo:"Not supplied by provider",
+    ...legs[0], legs, cabinClass:offer.flightCabin || "Not supplied", baggageInfo:"Included allowance not supplied by provider",
     refundInfo:"Not supplied by provider", price:offer.price * (offer.priceBasis === "per person" ? travelers : 1), currency:offer.currency,
     bookingUrl:offer.testUrl, partnerRedirectUrl:offer.testUrl,
     valueScore:0, riskScore:0, comfortScore:0, travelConfidenceScore:0, travelEffortScore:0,
