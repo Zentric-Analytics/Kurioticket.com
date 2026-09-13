@@ -20,6 +20,7 @@ function harness() {
   runInNewContext(`${compiled}\nKayakMetasearchClient({ vertical: "flights", criteria: { origin: "BOS" } });`, {
     AbortController, Intl, queueMicrotask: (fn: () => void) => microtasks.push(fn),
     useRef: (current: unknown) => ({ current }), useCallback: (fn: unknown) => fn,
+    useMemo: (fn: () => unknown) => fn(),
     useEffect: (fn: () => () => void) => effects.push(fn),
     useState: (initial: unknown) => [initial, (value: unknown) => writes.push(value)],
     React: { createElement: () => null },
