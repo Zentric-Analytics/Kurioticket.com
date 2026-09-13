@@ -1,5 +1,6 @@
 "use client";
 import { useKayakResults } from "./KayakResultsContext";
+import { CombinedSearchEmpty } from "./CombinedSearchEmpty";
 import { kayakCarCardModel } from "./kayakCardModels";
 import { KayakResultCard } from "./KayakResultCard";
 
@@ -2742,13 +2743,13 @@ export function CarsResultsExperience({
                 tabIndex={-1}
                 className="text-xl font-extrabold text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]"
               >
-                {resultHeading ?? t("deals.guided.carResults.emptyTitle")}
+                {resultHeading ?? (kayak && presentation === "standalone" ? "Search results" : t("deals.guided.carResults.emptyTitle"))}
               </h2>
-              <CarsResultsShell
+              {kayak && presentation === "standalone" ? <CombinedSearchEmpty otherStatus={inventoryStatus === "available" ? "success" : "error"} retry={() => window.location.reload()} retriesAll /> : <CarsResultsShell
                 hasSearchContext={hasSearchContext}
                 inventoryStatus={inventoryStatus}
                 t={t}
-              />
+              />}
             </>
           )}
         </div>
