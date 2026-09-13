@@ -54,6 +54,11 @@ export function fromFlightPlaceSuggestion(place: FlightPlace): CanonicalLocation
       : undefined,
     codes: { iata: place.code.toUpperCase() },
     providerIds: place.duffelPlaceId ? { duffel: place.duffelPlaceId } : undefined,
+    providerBindings: [
+      ...(owned?.providerBindings ?? []),
+      ...(place.duffelPlaceId ? [{ provider: "duffel", value: place.duffelPlaceId, kind: place.type, verification: "verified" as const, provenance: "provider-discovery" as const }] : []),
+    ],
+    verification: place.duffelPlaceId ? "verified" : "catalogue-only",
     staticCoverage: owned?.staticCoverage ?? { flights: "reference-only", hotels: "none", cars: "reference-only", packages: "reference-only" },
     source: owned?.source ?? { catalog: "kurioticket", datasetVersion: "live-provider-normalized-v1" },
   };

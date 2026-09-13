@@ -11,6 +11,15 @@ export type LocationKind = (typeof locationKinds)[number];
 export type TravelProduct = "flights" | "hotels" | "cars" | "packages";
 export type StaticCoverageLevel = "exact" | "broader" | "reference-only" | "none";
 
+export type LocationProviderBinding = {
+  /** Provider names are namespaces. This value is meaningful only to `provider`. */
+  provider: string;
+  value: string;
+  kind?: string;
+  verification: "verified" | "unverified";
+  provenance: "provider-discovery" | "catalogue" | "operator";
+};
+
 export type CanonicalLocation = {
   /** Stable, Kurioticket-owned identity. Provider identifiers must never be used here. */
   id: string;
@@ -27,6 +36,8 @@ export type CanonicalLocation = {
   localizedSearchTerms?: Readonly<Record<string, readonly string[]>>;
   staticCoverage: Readonly<Record<TravelProduct, StaticCoverageLevel>>;
   providerIds?: Readonly<Record<string, string>>;
+  providerBindings?: readonly LocationProviderBinding[];
+  verification?: "verified" | "catalogue-only";
   source: { catalog: "kurioticket"; datasetVersion: string };
 };
 

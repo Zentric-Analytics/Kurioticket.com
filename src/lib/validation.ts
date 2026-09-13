@@ -3,6 +3,7 @@ import { buildFlightPriceAlertPayload } from "@/lib/price-alerts/flightPriceAler
 import { buildHotelPriceAlertPayload } from "@/lib/price-alerts/hotelPriceAlerts";
 import { buildCarPriceAlertPayload } from "@/lib/price-alerts/carPriceAlerts";
 import { MULTI_CITY_MAX_LEGS, MULTI_CITY_MIN_LEGS, projectSearchLegs } from "@/lib/flights/flightSearchJourney";
+import { searchLocationSchema } from "@/lib/locations/searchTarget";
 
 const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -66,6 +67,8 @@ const flightLegSchema = z.object({
   origin: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{3}$/, "Choose a valid departure airport."),
   destination: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{3}$/, "Choose a valid arrival airport."),
   departureDate: futureDate,
+  originLocation: searchLocationSchema.optional(),
+  destinationLocation: searchLocationSchema.optional(),
 }).refine((leg) => leg.origin !== leg.destination, {
   message: "Departure and arrival airports must be different.",
   path: ["destination"],
@@ -89,6 +92,8 @@ export const flightSearchSchema = z
     cabinClass: z.enum(["economy", "premium-economy", "business", "first"]).default("economy"),
     sort: z.enum(["cheapest", "best", "fastest", "stops"]).optional(),
     currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/).catch("USD").default("USD"),
+    originLocation: searchLocationSchema.optional(),
+    destinationLocation: searchLocationSchema.optional(),
   })
   .transform((data) => {
     const adults = data.adults ?? data.travelers;
@@ -147,6 +152,7 @@ export const hotelSearchSchema = z
     guests: z.coerce.number().int().min(1).max(12).default(2),
     rooms: z.coerce.number().int().min(1).max(6).default(1),
     sort: z.enum(["cheapest", "best", "rating", "location"]).optional(),
+    destinationLocation: searchLocationSchema.optional(),
   })
   .refine((data) => data.checkOut > data.checkIn, {
     message: "Check-out must be after check-in.",

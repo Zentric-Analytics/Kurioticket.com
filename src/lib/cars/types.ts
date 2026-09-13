@@ -8,6 +8,11 @@ export type CarSearchParams = {
   driverAge: string;
 };
 
+export type LocationBoundCarSearchParams = CarSearchParams & {
+  pickupLocationTarget?: import("../locations/searchTarget").SearchLocation;
+  dropoffLocationTarget?: import("../locations/searchTarget").SearchLocation;
+};
+
 export type CarTransmission = "automatic" | "manual";
 export type CarFuelPolicy = "full-to-full" | "same-to-same" | "other";
 export type CarMileagePolicy = "unlimited" | "limited";
