@@ -84,3 +84,15 @@ remained empty. KAYAK/Sandbox labels, supplied specifications, and saved JPY
 selection were visible. Earlier error entries on the retained tab predated this
 fresh verification and must not be treated as new errors. Mobile and the remaining
 combined-provider checks are still open.
+
+## Item two — verified on staging
+
+Release `89cf994750d3cd7f7ecb0663eaeb309531f2b03c` deployed successfully.
+The ordinary Boston hotel search returned 152 sandbox offers. Regular cards show
+readable amenity summaries; the first expanded result listed 64 official amenity
+names instead of numeric feature IDs. One ID had no entry in KAYAK's dictionary,
+and the UI explicitly reported one unavailable description rather than guessing.
+The hotel browser error log and post-deployment server error query were empty.
+All 3,133 local tests, type checks, lint, build and required release checks passed.
+Item two is closed with the provider's missing-description limitation disclosed.
+Combined filtering and the other remaining checklist items are not closed by this.
