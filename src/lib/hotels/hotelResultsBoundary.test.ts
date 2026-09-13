@@ -102,3 +102,14 @@ test("discovery intent hydrates each Hotel form without issuing a search", () =>
   assert.match(nativeHotelForm, /router\[submitNavigation\]\(\{ pathname: "\/hotel-results"/);
   assert.doesNotMatch(nativeHotelForm, /travelApi\.searchHotels/);
 });
+
+test("web Hotel form preserves the canonical destination selected by the user", () => {
+  assert.match(webHotelForm, /initialDestinationId \?\? searchParams\.get\("destinationId"\) \?\? ""/);
+  assert.match(webHotelForm, /setDestinationId\(suggestion\.id\)/);
+  assert.match(webHotelForm, /params\.set\("destinationId", destinationId\)/);
+  assert.match(webHotelForm, /setDestinationId\(""\)/);
+  assert.match(webHotelForm, /onSelect=\{\(suggestion\) => setDestinationId\(suggestion\.id\)\}/);
+  assert.match(webHotelForm, /destinationId: destinationId \|\| undefined/);
+  assert.match(resultsClient, /initialDestinationId=\{activeDesktopHotelSearchDraft\.destinationId\}/);
+  assert.match(resultsClient, /initialDestinationId=\{activeMobileHotelSearchDraft\.destinationId\}/);
+});

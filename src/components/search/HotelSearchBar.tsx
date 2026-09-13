@@ -156,6 +156,7 @@ const formatHotelSearchTemplate = (
   );
 
 type HotelSearchDraft = {
+  destinationId?: string;
   destination: string;
   checkIn: string;
   checkOut: string;
@@ -170,6 +171,7 @@ export type HotelSearchBarProps = {
   idPrefix?: string;
   onSubmitComplete?: () => void;
   initialDestination?: string;
+  initialDestinationId?: string;
   initialCheckIn?: string;
   initialCheckOut?: string;
   initialGuests?: string | number;
@@ -200,6 +202,7 @@ export function HotelSearchBar({
   idPrefix = "hotel-search",
   onSubmitComplete,
   initialDestination = "",
+  initialDestinationId,
   initialCheckIn = "",
   initialCheckOut = "",
   initialGuests = 1,
@@ -243,6 +246,9 @@ export function HotelSearchBar({
     hasUserSelectedRegion,
   } = useRegion();
   const [destination, setDestination] = useState(initialDestination || searchParams.get("destination") || "");
+  const [destinationId, setDestinationId] = useState(
+    initialDestinationId ?? searchParams.get("destinationId") ?? "",
+  );
   const destinationDisplay = getHotelLocationFieldDisplay(destination, locale);
   const [checkIn, setCheckIn] = useState(initialCheckIn);
   const [checkOut, setCheckOut] = useState(initialCheckOut);
@@ -433,6 +439,7 @@ export function HotelSearchBar({
     if (!compact || mobileLayout === "default") return;
 
     onMobileDraftChange?.({
+      destinationId: destinationId || undefined,
       destination,
       checkIn,
       checkOut,
@@ -444,6 +451,7 @@ export function HotelSearchBar({
     checkOut,
     compact,
     destination,
+    destinationId,
     mobileLayout,
     onMobileDraftChange,
     rooms,
@@ -456,6 +464,7 @@ export function HotelSearchBar({
     }
 
     onDesktopDraftChange({
+      destinationId: destinationId || undefined,
       destination,
       checkIn,
       checkOut,
@@ -467,6 +476,7 @@ export function HotelSearchBar({
     checkOut,
     compact,
     destination,
+    destinationId,
     mobileLayout,
     onDesktopDraftChange,
     rooms,
@@ -621,6 +631,7 @@ export function HotelSearchBar({
 
   const selectDestinationSuggestion = (suggestion: HotelDestinationSuggestion) => {
     setDestination(commitDestinationSuggestion(suggestion));
+    setDestinationId(suggestion.id);
     setError("");
     window.requestAnimationFrame(() =>
       destinationInputRef.current?.focus({ preventScroll: true }),
@@ -798,6 +809,10 @@ export function HotelSearchBar({
       guests: String(normalizedGuests),
       rooms: String(normalizedRooms),
     });
+
+    if (destinationId) {
+      params.set("destinationId", destinationId);
+    }
 
     if (initialSort) {
       params.set("sort", initialSort);
@@ -1192,6 +1207,7 @@ export function HotelSearchBar({
                   value={destination}
                   onChange={(event) => {
                     setDestination(event.target.value);
+                    setDestinationId("");
                     setDestinationSuggestionsOpen(true);
                     setDestinationHighlight(0);
                     setError("");
@@ -1724,6 +1740,7 @@ export function HotelSearchBar({
           setDestinationSuggestionsOpen(false);
           setError("");
         }}
+        onSelect={(suggestion) => setDestinationId(suggestion.id)}
         onClose={() => setDestinationMobilePickerOpen(false)}
       />
 

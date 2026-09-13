@@ -26,6 +26,7 @@ type Props = {
   selectedCountryHint?: string;
   detectedCountryHint?: string;
   onChange: (value: string) => void;
+  onSelect?: (suggestion: HotelDestinationSuggestion) => void;
   onClose: () => void;
   onClear?: () => void;
 };
@@ -47,7 +48,7 @@ function MobileHotelDestinationRow({ option, selected, locale, onSelect, id }: {
   );
 }
 
-export function HotelDestinationMobilePicker({ open, value, titleId, inputId, launcherRef, selectedCountryHint = "", detectedCountryHint = "", onChange, onClose }: Props) {
+export function HotelDestinationMobilePicker({ open, value, titleId, inputId, launcherRef, selectedCountryHint = "", detectedCountryHint = "", onChange, onSelect, onClose }: Props) {
   const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const inputRef = useRef<HTMLInputElement>(null);
@@ -110,7 +111,7 @@ export function HotelDestinationMobilePicker({ open, value, titleId, inputId, la
             if (event.key === "Escape") { event.preventDefault(); requestClose(); return; }
             if (event.key === "ArrowDown" && rows.length) { event.preventDefault(); setHighlightedIndex((current) => Math.min(rows.length - 1, current + 1)); return; }
             if (event.key === "ArrowUp" && rows.length) { event.preventDefault(); setHighlightedIndex((current) => current <= 0 ? rows.length - 1 : current - 1); return; }
-            if (event.key === "Enter" && highlightedIndex >= 0 && rows[highlightedIndex]) { event.preventDefault(); onChange(rows[highlightedIndex].searchValue); requestClose(); }
+            if (event.key === "Enter" && highlightedIndex >= 0 && rows[highlightedIndex]) { event.preventDefault(); onChange(rows[highlightedIndex].searchValue); onSelect?.(rows[highlightedIndex]); requestClose(); }
           }}
           placeholder={t("hotelSearchDestinationPlaceholder")} className="h-[52px] w-full rounded-[10px] border border-slate-300 bg-white ps-12 pe-12 text-[15px] font-medium text-slate-950 outline-none placeholder:text-slate-500 focus:border-[#075ee8] focus:ring-1 focus:ring-[#075ee8]/20" />
         <button type="button" onClick={clearDraft} aria-label={t("clearDestination")} className="focus-ring absolute end-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-slate-500"><X aria-hidden="true" className="h-[18px] w-[18px]" /></button>
@@ -118,7 +119,7 @@ export function HotelDestinationMobilePicker({ open, value, titleId, inputId, la
       {!trimmed && recents.length ? <h3 className="mb-4 mt-8 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">{t("recentSearches")}</h3> : null}
       <p id={statusId} role="status" aria-live="polite" className={loading || (trimmed && !rows.length) ? "py-8 text-center text-sm text-slate-500" : "sr-only"}>{loading ? t("findingDestinations") : trimmed && !rows.length ? `${t("noMatchingDestinationsYet")} ${recoveryMessage || t("hotelSearchDestinationPlaceholder")}` : rows.length ? `${rows.length} ${t("hotelSearchDestinationLabel")}` : ""}</p>
       {!loading && rows.length ?
-        <div id={listboxId} role="listbox" aria-label={t("hotelSearchDestinationLabel")} className={cn("overflow-hidden rounded-xl border border-slate-200 bg-white divide-y divide-slate-200", trimmed && "mt-5")}>{rows.map((option, index) => <MobileHotelDestinationRow key={option.id} id={`${listboxId}-option-${index}`} option={option} locale={locale} selected={highlightedIndex === index || draftValue === option.searchValue} onSelect={() => { onChange(option.searchValue); requestClose(); }} />)}</div>
+        <div id={listboxId} role="listbox" aria-label={t("hotelSearchDestinationLabel")} className={cn("overflow-hidden rounded-xl border border-slate-200 bg-white divide-y divide-slate-200", trimmed && "mt-5")}>{rows.map((option, index) => <MobileHotelDestinationRow key={option.id} id={`${listboxId}-option-${index}`} option={option} locale={locale} selected={highlightedIndex === index || draftValue === option.searchValue} onSelect={() => { onChange(option.searchValue); onSelect?.(option); requestClose(); }} />)}</div>
         : null}
     </div>
     </>}
