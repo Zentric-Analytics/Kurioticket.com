@@ -93,11 +93,6 @@ export function NativeHotelGallery({
     heroScroll.current?.scrollToIndex({ index, animated });
   };
 
-  const scrollViewerTo = (index: number, animated: boolean) => {
-    if (!images[index]) return;
-    viewerScroll.current?.scrollToIndex({ index, animated });
-  };
-
   const openGallery = (index: number) => {
     if (!setActiveImage(index)) return;
     scrollHeroTo(index, false);
@@ -194,7 +189,7 @@ export function NativeHotelGallery({
         visible={galleryOpen}
         animationType="slide"
         presentationStyle="fullScreen"
-        onRequestClose={closeGallery}
+        onRequestClose={viewerOpen ? closeViewer : closeGallery}
       >
         <View
           accessibilityViewIsModal
@@ -269,62 +264,56 @@ export function NativeHotelGallery({
               ),
             )}
           </ScrollView>
-        </View>
-      </Modal>
 
-      <Modal
-        visible={viewerOpen}
-        animationType="fade"
-        presentationStyle="fullScreen"
-        onRequestClose={closeViewer}
-        onShow={() => scrollViewerTo(activeIndex, false)}
-      >
-        <View
-          accessibilityViewIsModal
-          style={[
-            s.viewerModal,
-            {
-              backgroundColor: galleryBackground,
-              paddingTop: modalTop,
-              paddingBottom: modalBottom,
-            },
-          ]}
-        >
-          <View style={[s.viewerHeader, { borderBottomColor: galleryBorder }]}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Back to photo gallery"
-              onPress={closeViewer}
-              style={s.galleryHeaderAction}
+          {viewerOpen ? (
+            <View
+              accessibilityViewIsModal
+              style={[
+                s.viewerOverlay,
+                {
+                  backgroundColor: galleryBackground,
+                  paddingTop: modalTop,
+                  paddingBottom: modalBottom,
+                },
+              ]}
             >
-              <X color={galleryText} size={24} />
-            </Pressable>
-            <Text accessibilityRole="header" style={[s.viewerCounter, { color: galleryText }]}>
-              {activeIndex + 1} / {images.length}
-            </Text>
-            <View accessible={false} style={s.galleryHeaderAction} />
-          </View>
-          <FlatList
-            ref={viewerScroll}
-            style={s.viewerPager}
-            horizontal
-            pagingEnabled
-            data={images}
-            keyExtractor={(url) => url}
-            renderItem={renderViewerImage}
-            getItemLayout={(_, index) => ({ length: viewerWidth, offset: viewerWidth * index, index })}
-            initialNumToRender={2}
-            maxToRenderPerBatch={2}
-            windowSize={3}
-            removeClippedSubviews={Platform.OS === "android"}
-            showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={(event) => {
-              const measuredWidth = event.nativeEvent.layoutMeasurement.width || viewerWidth;
-              const index = Math.max(0, Math.min(images.length - 1, Math.round(event.nativeEvent.contentOffset.x / measuredWidth)));
-              if (!setActiveImage(index)) return;
-              scrollHeroTo(index, false);
-            }}
-          />
+              <View style={[s.viewerHeader, { borderBottomColor: galleryBorder }]}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Back to photo gallery"
+                  onPress={closeViewer}
+                  style={s.galleryHeaderAction}
+                >
+                  <X color={galleryText} size={24} />
+                </Pressable>
+                <Text accessibilityRole="header" style={[s.viewerCounter, { color: galleryText }]}>
+                  {activeIndex + 1} / {images.length}
+                </Text>
+                <View accessible={false} style={s.galleryHeaderAction} />
+              </View>
+              <FlatList
+                ref={viewerScroll}
+                style={s.viewerPager}
+                horizontal
+                pagingEnabled
+                data={images}
+                keyExtractor={(url) => url}
+                renderItem={renderViewerImage}
+                getItemLayout={(_, index) => ({ length: viewerWidth, offset: viewerWidth * index, index })}
+                initialNumToRender={2}
+                maxToRenderPerBatch={2}
+                windowSize={3}
+                removeClippedSubviews={Platform.OS === "android"}
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={(event) => {
+                  const measuredWidth = event.nativeEvent.layoutMeasurement.width || viewerWidth;
+                  const index = Math.max(0, Math.min(images.length - 1, Math.round(event.nativeEvent.contentOffset.x / measuredWidth)));
+                  if (!setActiveImage(index)) return;
+                  scrollHeroTo(index, false);
+                }}
+              />
+            </View>
+          ) : null}
         </View>
       </Modal>
     </View>
@@ -368,7 +357,7 @@ const s = StyleSheet.create({
   counter: { position: "absolute", left: "50%", bottom: 15, minWidth: 48, transform: [{ translateX: -24 }], color: "white", backgroundColor: "rgba(0,0,0,.72)", paddingHorizontal: 9, paddingVertical: 5, borderRadius: 4, fontSize: 13, lineHeight: 18, fontWeight: "800", fontFamily: appFonts.extraBold, textAlign: "center" },
   unavailable: { width: "100%", alignItems: "center", justifyContent: "center" },
   unavailableText: { fontSize: 13, lineHeight: 19, fontFamily: appFonts.regular },
-  galleryModal: { flex: 1 },
+  galleryModal: { flex: 1, position: "relative" },
   galleryHeader: { minHeight: 56, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 8 },
   galleryHeaderAction: { width: 48, height: 48, alignItems: "center", justifyContent: "center" },
   galleryTitle: { flex: 1, minWidth: 0, textAlign: "center", fontSize: 17, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold },
@@ -380,7 +369,7 @@ const s = StyleSheet.create({
   galleryPairRow: { flexDirection: "row", gap: 8 },
   galleryPairFrame: { flex: 1, minWidth: 0, height: 170, overflow: "hidden", borderRadius: 10 },
   galleryOverviewImage: { width: "100%", height: "100%" },
-  viewerModal: { flex: 1 },
+  viewerOverlay: { ...StyleSheet.absoluteFillObject },
   viewerHeader: { minHeight: 56, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 8 },
   viewerCounter: { flex: 1, textAlign: "center", fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
   viewerPager: { flex: 1 },
