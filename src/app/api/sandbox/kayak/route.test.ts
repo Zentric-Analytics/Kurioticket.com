@@ -3,6 +3,38 @@ import assert from "node:assert/strict";
 import { NextRequest } from "next/server";
 import { POST } from "./route";
 
+test("empty-test flag reaches every upstream search and empty responses survive the API route", async (t) => {
+  const settings = {
+    KAYAK_SANDBOX_ENABLED: "true", KAYAK_SANDBOX_API_KEY: "test-credential",
+    NEXT_PUBLIC_APP_URL: "https://staging.kurioticket.com", NODE_ENV: "test",
+  };
+  const saved = Object.fromEntries(Object.keys(settings).map(key => [key, process.env[key]]));
+  Object.assign(process.env, settings);
+  const paths: string[] = [];
+  t.mock.method(globalThis, "fetch", async (url: URL, init: RequestInit) => {
+    if (url.pathname === "/api/4.0/constants-mapping") return Response.json({facility:{features:[]}});
+    paths.push(url.pathname);
+    assert.equal(new Headers(init.headers).get("sandbox-api-empty"), "true");
+    return Response.json({status:"complete",isComplete:true,currency:"USD",priceMode:"total",results:[]});
+  });
+  try {
+    for (const vertical of ["flights", "hotels", "cars"]) {
+      const response = await POST(new NextRequest("https://staging.kurioticket.com/api/sandbox/kayak", {
+        method:"POST", headers:{"content-type":"application/json",origin:"https://staging.kurioticket.com","x-forwarded-for":"192.0.2.60"},
+        body:JSON.stringify({vertical,origin:"BOS",destination:vertical === "hotels" ? "kplace:58075" : "JFK",
+          departure:"2099-10-20",returnDate:"2099-10-24",adults:1,empty:true}),
+      }));
+      assert.equal(response.status,200);
+      assert.deepEqual(await response.json(),{results:[],sandbox:true,status:"empty"});
+    }
+    assert.deepEqual(paths,["/i/api/affiliate/search/flight/v1/poll","/api/3.0/hotels","/i/api/affiliate/search/car/v1/poll"]);
+  } finally {
+    for (const [key,value] of Object.entries(saved)) {
+      if (value === undefined) delete process.env[key]; else process.env[key] = value;
+    }
+  }
+});
+
 test("sandbox route enforces environment, validation, origin, session continuity and redaction", async (t) => {
   const names = [
     "KAYAK_SANDBOX_ENABLED",

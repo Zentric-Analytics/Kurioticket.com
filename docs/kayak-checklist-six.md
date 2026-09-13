@@ -71,3 +71,43 @@ are retained. No account, booking, email or production mutation occurred.
 Checklist six remains open specifically for live hotel/car empty-state evidence;
 the known malformed-response defect is corrected and deployed. Do not equate
 the successful local empty-response coverage with a live upstream empty response.
+
+## Follow-up verification, 2026-09-13 13:54 UTC
+
+Repeated the two probes on deployed `5963258c286d`, using fresh dates
+2026-10-20 through 2026-10-24. Car BOS again ended with the bounded timeout
+message. Hotel Boston, Massachusetts returned 183 offers with the no-results
+checkbox selected. Browser errors remained empty.
+
+Added an API-route regression that exercises POST, validates the upstream
+`sandbox-api-empty: true` header for each vertical, and verifies the API returns
+`{results:[],sandbox:true,status:"empty"}` for genuinely empty provider responses.
+Both route tests pass; the full suite now passes 3,147 tests, with focused lint
+and type checks passing. No further application-code defect was established.
+
+The remaining live evidence cannot be produced by relabeling nonempty results
+or treating a timeout as empty. KAYAK needs to clarify the documented simulation
+behavior. A credential-free support request is prepared below; it has NOT been sent.
+
+### Draft for KAYAK support
+
+Subject: Sandbox empty-result simulation for Hotel Search and Car Search
+
+We are integrating KAYAK sandbox into Kurioticket staging. Your Getting Started
+guide documents the `sandbox-api-empty: true` request header. Our transport sends
+that header on search and poll requests, with caching disabled. Flights return
+an empty response successfully, but the following checks did not:
+
+- Hotels `/api/3.0/hotels`: Boston, Massachusetts; 2026-10-20 to 2026-10-24;
+  one adult/room. The application received and displayed 183 normalized offers.
+- Cars `/i/api/affiliate/search/car/v1/poll`: BOS; 2026-10-20 to 2026-10-24.
+  The application reached its bounded search timeout. A previous normal retry
+  without the empty-test option successfully returned car offers.
+
+Observed September 13, 2026, approximately 13:53–13:55 UTC. Earlier probes with
+October 12–17 dates also returned hotels or timed out for cars. Normal searches
+work; our controlled transport and API-route empty-response tests pass.
+
+Does the header support these two endpoints, including polling? If a different
+test parameter or supported request is required, please provide it. We have
+not included API keys, user identifiers, IP addresses, or raw responses here.
