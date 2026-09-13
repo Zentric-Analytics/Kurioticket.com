@@ -152,10 +152,6 @@ function HotelDetail({
     (Array.isArray(params.hotelResultsStack)
       ? params.hotelResultsStack[0]
       : params.hotelResultsStack) === "1";
-  const relatedHotelsStack =
-    (Array.isArray(params.relatedHotelsStack)
-      ? params.relatedHotelsStack[0]
-      : params.relatedHotelsStack) === "1";
 
   useEffect(() => {
     setSelectedOfferId(null);
@@ -429,10 +425,6 @@ function HotelDetail({
     });
 
   const returnToHotelResults = () => {
-    if (relatedHotelsStack) {
-      router.back();
-      return;
-    }
     if (hotelResultsStack) {
       const dismissCount = hotelResultsDismissCount(navigation.getState());
       if (dismissCount) {
