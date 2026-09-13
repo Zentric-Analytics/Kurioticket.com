@@ -1,28 +1,17 @@
 import { NativeAppleHotelMap } from "./NativeAppleHotelMap";
 import { useState } from "react";
 import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
 import { ImageOff, MapPin } from "lucide-react-native";
 import type { PublicHotelPropertyDetails } from "../../../../../src/lib/types";
 import { buildHotelAddress, hasValidHotelCoordinates } from "../../../../../src/lib/hotels/hotelMap";
 import { getApiBaseUrl } from "../../config/apiUrl";
-import { colors } from "../../theme/tokens";
 import { appFonts } from "../../theme/typography";
-import { HOTEL_LIMITS } from "../flow/hotelSearchModel";
 import { NativeHotelFullMapModal } from "./NativeHotelFullMapModal";
 import { nativeHotelLocationPreviewUrl } from "./nativeHotelLocationModel";
 import type { NativeRelatedHotel } from "./nativeHotelRelatedHotelsModel";
 
 type Theme = { dark: boolean; surface: string; border: string; textPrimary: string; textSecondary: string; icon: string };
 const RELATED_HOTEL_CARD_WIDTH = 241;
-
-const one = (value?: string | string[]) => Array.isArray(value) ? value[0] : value;
-const normalizedCount = (value: string | string[] | undefined, fallback: number, maximum: number) => {
-  const raw = one(value);
-  if (!raw || !/^\d+$/.test(raw)) return fallback;
-  const parsed = Number(raw);
-  return parsed >= 1 && parsed <= maximum ? parsed : fallback;
-};
 
 export function NativeHotelPropertyLocationSection({ hotelId, hotelName, propertyDetails, theme }: {
   hotelId: string;
@@ -88,38 +77,11 @@ export function NativeRelatedHotelsSection({ city, hotels, theme, onViewHotel }:
   theme: Theme;
   onViewHotel: (item: NativeRelatedHotel) => void;
 }) {
-  const routeParams = useLocalSearchParams<Record<string, string | string[]>>();
   if (!hotels.length) return null;
-  const params: Record<string, string | string[]> = {
-    ...routeParams,
-    guests: String(normalizedCount(routeParams.guests, 2, HOTEL_LIMITS.guests.max)),
-    rooms: String(normalizedCount(routeParams.rooms, 1, HOTEL_LIMITS.rooms.max)),
-  };
   const cityName = city?.trim();
-  const seeAllHotels = () => {
-    router.push({
-      pathname: "/hotel-results",
-      params: {
-        destination: cityName || one(params.destination) || "",
-        checkIn: one(params.checkIn) || "",
-        checkOut: one(params.checkOut) || "",
-        guests: one(params.guests) || "2",
-        rooms: one(params.rooms) || "1",
-      },
-    });
-  };
   return <View style={styles.relatedSection}>
     <View style={styles.relatedHeader}>
       <Text accessibilityRole="header" numberOfLines={1} style={[styles.heading, { color: theme.textPrimary }]}>{cityName ? `More hotels in ${cityName}` : "More hotels nearby"}</Text>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={cityName ? `See all hotels in ${cityName}` : "See all nearby hotels"}
-        hitSlop={8}
-        onPress={seeAllHotels}
-        style={({ pressed }) => [styles.seeAllButton, pressed && styles.seeAllPressed]}
-      >
-        <Text style={[styles.seeAllText, { color: theme.dark ? "#8FB5FF" : colors.blue }]}>See all</Text>
-      </Pressable>
     </View>
     <ScrollView horizontal style={styles.carouselViewport} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carousel} directionalLockEnabled>
       {hotels.map((item) => <View key={item.hotel.id} style={styles.relatedCardSlot}><RelatedHotelCard item={item} theme={theme} onView={onViewHotel} /></View>)}
@@ -137,10 +99,7 @@ const styles = StyleSheet.create({
   map: { flex: 1 },
   mapFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8 },
   relatedSection: { marginTop: 4 },
-  relatedHeader: { minHeight: 32, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
-  seeAllButton: { minHeight: 32, justifyContent: "center", flexShrink: 0 },
-  seeAllText: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
-  seeAllPressed: { opacity: 0.58 },
+  relatedHeader: { minHeight: 32, flexDirection: "row", alignItems: "center" },
   carouselViewport: { marginHorizontal: -16, marginTop: 8 },
   carousel: { gap: 12, paddingHorizontal: 16, paddingBottom: 2 },
   relatedCardSlot: { width: RELATED_HOTEL_CARD_WIDTH },
