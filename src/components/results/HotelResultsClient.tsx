@@ -15,6 +15,7 @@ import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion } from "@/lib/results
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
 import { useKayakResults } from "./KayakResultsContext";
+import { isKayakSandboxResult, resultActionHref } from "@/lib/travel/resultAction";
 import { CombinedSearchEmpty } from "./CombinedSearchEmpty";
 import { kayakHotelCardModel } from "./kayakCardModels";
 import { KayakResultCard } from "./KayakResultCard";
@@ -2037,7 +2038,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                       paginatedVisibleHotels.map((hotel, index) => {
                         const sandboxOffer = !guided && kayak?.vertical === "hotels" ? kayak.offers.find(offer => `kayak-sandbox:${offer.id}` === hotel.id) : undefined;
                         if (sandboxOffer && kayak) return <KayakResultCard key={hotel.id} offer={sandboxOffer} vertical="hotels" criteria={kayak.criteria} />;
-                        return <HotelCard key={hotel.id} hotel={hotel} detailsHref={guided ? (buildDetailsHref?.(hotel.id) ?? null) : `/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided} stayNights={stayNights} sortBadge={(currentResultsPage - 1) * HOTEL_RESULTS_PAGE_SIZE + index === 0 ? hotelSummarySortMode : undefined} />;
+                        const internalHref = guided ? (buildDetailsHref?.(hotel.id) ?? null) : `/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`;
+                        return <HotelCard key={hotel.id} hotel={hotel} detailsHref={resultActionHref(hotel, internalHref)} providerLabel={isKayakSandboxResult(hotel) ? "KAYAK sandbox · Not bookable" : undefined} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided&&!isKayakSandboxResult(hotel)} stayNights={stayNights} sortBadge={(currentResultsPage - 1) * HOTEL_RESULTS_PAGE_SIZE + index === 0 ? hotelSummarySortMode : undefined} />;
                       })
                     ) : (
                       <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm font-semibold text-muted shadow-sm">
