@@ -57,6 +57,12 @@ import { NativeHotelBookingDetails } from "./NativeHotelBookingDetails";
 type HotelDetailTab = "details" | "reviews" | "deals";
 type HotelDetailsStatus = "loading" | "ready" | "error";
 
+const hotelDetailTabLabels: Record<HotelDetailTab, string> = {
+  details: "Overview",
+  reviews: "Reviews",
+  deals: "Rates",
+};
+
 const parse = <T,>(value?: string | string[]) => {
   try {
     return JSON.parse(Array.isArray(value) ? value[0] : value || "") as T;
@@ -585,7 +591,7 @@ function HotelDetail({
                     },
                   ]}
                 >
-                  {tab[0].toUpperCase() + tab.slice(1)}
+                  {hotelDetailTabLabels[tab]}
                 </Text>
               </Pressable>
             ))}
@@ -622,7 +628,7 @@ function HotelDetail({
 
           {activeHotelTab === "deals" ? (
             <View style={s.compareSection}>
-              <Text style={[s.compareHeading, { color: titleColor }]}>Deals</Text>
+              <Text style={[s.compareHeading, { color: titleColor }]}>Rates</Text>
               <Text style={[s.compareLead, { color: metaColor }]}>
                 {stay.dateText ?? "Stay dates unavailable"} · {stay.occupancy}
               </Text>
