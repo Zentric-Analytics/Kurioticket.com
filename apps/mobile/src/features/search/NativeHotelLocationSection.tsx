@@ -50,6 +50,7 @@ export function NativeHotelLocationSection({ hotelId, hotelName, propertyDetails
   const streetViewAvailable = hasValidHotelCoordinates(propertyDetails);
   const accent = theme.dark ? "#8FB5FF" : colors.blue;
   const selectView = (next: NativeHotelLocationView) => {
+    if (next === view) return;
     if (next === "streetview") {
       if (Platform.OS === "ios") setLookAroundStatus("loading");
       else setStreetViewFailed(false);
