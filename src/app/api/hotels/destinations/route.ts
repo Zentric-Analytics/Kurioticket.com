@@ -4,6 +4,10 @@ import { searchCanonicalHotelCatalog } from "@/lib/locations/hotelCatalogService
 import { normalizeCountryCode } from "@/lib/geo/context";
 import { extractVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
 import { countryToRegion, normalizeRegion } from "@/lib/region/detectRegion";
+import { discoverLocations } from "@/lib/locations/discovery";
+import { availableDiscoveryAdapters } from "@/lib/locations/providerDiscoveryAdapters";
+import { hotelDestinations } from "@/data/hotelDestinations";
+import { fromHotelDestination } from "@/lib/locations/adapters";
 
 const MIN_QUERY_LENGTH = 0;
 const MAX_QUERY_LENGTH = 80;
@@ -89,6 +93,18 @@ export async function GET(request: Request) {
   );
 
   const catalogResult = searchCanonicalHotelCatalog({ query, countryCode, locale, limit });
+  if (query) {
+    const discovery = await discoverLocations({ query, product: "hotels", catalog: hotelDestinations.map(fromHotelDestination), adapters: availableDiscoveryAdapters(request, "hotels"), limit, timeoutMs: 900 });
+    const suggestions = discovery.suggestions.map((canonical) => ({
+      id: canonical.id, name: canonical.primaryLabel, region: canonical.region || canonical.supportingLabel.split(",")[0] || "",
+      country: canonical.country?.name || canonical.supportingLabel.split(",").at(-1)?.trim() || "",
+      countryCode: canonical.country?.code, kind: canonical.kind === "airport" ? "airport-area" : ["district", "landmark"].includes(canonical.kind) ? canonical.kind : "city",
+      searchValue: canonical.submittedValue, canonical,
+    }));
+    return NextResponse.json({ suggestions, canonicalLocations: discovery.suggestions, provenance: catalogResult.provenance,
+      recovery: suggestions.length ? undefined : catalogResult.recovery, discovery: discovery.sources, source: "curated-destinations" satisfies HotelDestinationSource, countryCode: countryCode || null, countrySource, locale, isLiveAvailability: false },
+      { headers: { "Cache-Control": "private, no-store" } });
+  }
   const canonicalLocations = catalogResult.suggestions.map((suggestion) => suggestion.canonical);
 
   return NextResponse.json({

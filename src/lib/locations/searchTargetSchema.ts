@@ -19,4 +19,5 @@ export const searchLocationSchema = z.object({
     provenance: z.enum(["provider-discovery", "catalogue", "operator"]),
   })).max(12).default([]),
   verification: z.enum(["verified", "catalogue-only"]).default("catalogue-only"),
+  selectionToken: z.string().trim().min(20).max(200).optional(),
 });

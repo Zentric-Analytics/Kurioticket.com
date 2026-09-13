@@ -51,6 +51,14 @@ export function rankLocation(location: CanonicalLocation, rawQuery: string): Loc
 
   const terms = searchableTerms(location).map(normalizeLocationText).filter(Boolean);
   if (terms.some((term) => term === query)) return { location, tier: "label-exact", score: 500 };
+  // Short type-ahead input must visibly explain the match. Do not surface Delhi
+  // for "New" merely because a hidden alias says New Delhi, or every airport in
+  // New Zealand because its supporting country label happens to match.
+  if (query.length <= 3) {
+    const visibleTerms = [location.primaryLabel, location.submittedValue, location.kind === "airport" ? location.supportingLabel : undefined, location.codes?.iata, location.codes?.icao]
+      .filter((term): term is string => Boolean(term)).map(normalizeLocationText);
+    return visibleTerms.some((term) => term.startsWith(query)) ? { location, tier: "prefix", score: 400 } : null;
+  }
   if (terms.some((term) => term.startsWith(query))) return { location, tier: "prefix", score: 400 };
   if (terms.some((term) => words(term).some((word) => word.startsWith(query)))) {
     return { location, tier: "word-prefix", score: 300 };
