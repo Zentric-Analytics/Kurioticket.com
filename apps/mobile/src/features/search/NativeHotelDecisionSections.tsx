@@ -98,13 +98,16 @@ export function NativeRelatedHotelsSection({ city, hotels, theme, onViewHotel }:
   const cityName = city?.trim();
   const seeAllHotels = () => {
     router.push({
-      pathname: "/hotel-results",
+      pathname: "/related-hotels",
       params: {
-        destination: cityName || one(params.destination) || "",
+        city: cityName || "",
+        relatedHotels: JSON.stringify(hotels),
+        destination: one(params.destination) || cityName || "",
         checkIn: one(params.checkIn) || "",
         checkOut: one(params.checkOut) || "",
         guests: one(params.guests) || "2",
         rooms: one(params.rooms) || "1",
+        displayCurrencyContext: one(params.displayCurrencyContext) || "",
       },
     });
   };
