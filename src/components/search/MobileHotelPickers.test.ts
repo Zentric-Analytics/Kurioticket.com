@@ -18,7 +18,7 @@ test("hotel destination preserves its query and applies a suggestion immediately
     /deriveRecentHotelDestinations\(readRecentSearches\(\), 3\)/,
   );
   assert.match(destination, /setQuery\(value\); setDraftValue\(value\)/);
-  assert.match(destination, /onChange\(option\.searchValue\); requestClose\(\)/);
+  assert.match(destination, /onChange\(option\.searchValue\); onSelect\?\.\(option\); requestClose\(\)/);
   assert.match(destination, /showCancelAction=\{false\}/);
   assert.match(destination, /Building2/);
   assert.match(destination, /className="h-4 w-4" strokeWidth=\{1\.8\}/);
