@@ -1,14 +1,28 @@
 import { searchCanonicalCarCatalog } from "@/lib/cars/carLocationSuggestions";
-import type { CarLocationSuggestion } from "@/lib/cars/carLocationSuggestions";
+import type { CarLocationSuggestion, CarLocationSuggestionKind } from "@/lib/cars/carLocationSuggestions";
 import { fromCarLocation } from "@/lib/locations/adapters";
 import { resolveStaticSearch } from "@/lib/locations/staticRecovery";
 import { discoverLocations } from "@/lib/locations/discovery";
 import { availableDiscoveryAdapters } from "@/lib/locations/providerDiscoveryAdapters";
 import { getCanonicalCarLocationCatalog } from "@/lib/cars/carLocationSuggestions";
+import type { CanonicalLocation } from "@/lib/locations/types";
 
 export const dynamic = "force-dynamic";
 
 const jsonHeaders = { "Cache-Control": "no-store, max-age=0" };
+
+const toCarSuggestionKind = (canonical: CanonicalLocation): CarLocationSuggestionKind => {
+  switch (canonical.kind) {
+    case "airport":
+    case "city":
+    case "custom":
+      return canonical.kind;
+    case "rental-area":
+    case "district":
+    case "landmark":
+      return "area";
+  }
+};
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -21,7 +35,7 @@ export async function GET(request: Request) {
   try {
     if (q) {
       const discovery = await discoverLocations({ query: q, product: "cars", catalog: getCanonicalCarLocationCatalog(), adapters: availableDiscoveryAdapters(request, "cars"), limit, timeoutMs: 900 });
-      let suggestions: CarLocationSuggestion[] = discovery.suggestions.map((canonical) => ({ id: canonical.id, kind: canonical.kind === "rental-area" ? "area" : canonical.kind,
+      let suggestions: CarLocationSuggestion[] = discovery.suggestions.map((canonical) => ({ id: canonical.id, kind: toCarSuggestionKind(canonical),
         value: canonical.submittedValue, primaryText: canonical.primaryLabel, secondaryText: canonical.supportingLabel, city: canonical.primaryLabel,
         countryCode: canonical.country?.code, airportCode: canonical.codes?.iata, canonical, validation: "owned-catalog", isProviderValidated: false }));
       let recovery;
