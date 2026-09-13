@@ -51,6 +51,7 @@ import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { Footer } from "@/components/layout/Footer";
 import { FlightCard } from "@/components/results/FlightCard";
 import { useKayakResults } from "./KayakResultsContext";
+import { CombinedSearchEmpty } from "./CombinedSearchEmpty";
 import { kayakFlightCardModel } from "./kayakCardModels";
 import { KayakResultCard } from "./KayakResultCard";
 import { nearbyFarePrice } from "@/components/results/nearbyFarePrice";
@@ -7072,10 +7073,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           </p>
           <div ref={flightResultsTopRef} aria-hidden="true" />
           <h2 ref={resultsHeadingRef} tabIndex={-1} className="sr-only">
-            {formatResultsFound(sortedResults.length, t)}
+            {!guidedMode && kayak && results.length === 0 ? "Search results" : formatResultsFound(sortedResults.length, t)}
           </h2>
-          {error && results.length > 0 ? <p role="status">Some provider results are unavailable. Available offers are shown below.</p> : null}
-          {error && results.length === 0 ? (
+          {!guidedMode && kayak && results.length === 0 ? <CombinedSearchEmpty otherStatus={loading ? "loading" : error ? "error" : "success"} retry={retryMainInventorySearch} /> : error && results.length === 0 ? (
             <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger">
               {error}
             </div>
