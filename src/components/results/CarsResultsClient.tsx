@@ -57,6 +57,7 @@ import {
   assignCarBadges,
   buildCarDetailsHref,
   doesCarMatchFilterOption,
+  ensureCarProviderCoverage,
   filterCarResults,
   sortCarResults,
   type CarSort,
@@ -1931,10 +1932,22 @@ export function CarsResultsExperience({
     () => (guidedPlanning ? new Map() : assignCarBadges(results)),
     [guidedPlanning, results],
   );
-  const visibleResults = useMemo(
-    () => sortCarResults(filterCarResults(results, selectedCarFilters), sort),
-    [results, selectedCarFilters, sort],
+  const visibleResults = useMemo(() => {
+    const ranked = sortCarResults(filterCarResults(results, selectedCarFilters), sort);
+    return sort === "recommended" ? ensureCarProviderCoverage(ranked) : ranked;
+  }, [results, selectedCarFilters, sort]);
+  const visibleProviderSignature = useMemo(
+    () => Array.from(new Set(visibleResults.map((result) => result.inventorySource))).sort().join("|"),
+    [visibleResults],
   );
+  const previousProviderSignatureRef = useRef(visibleProviderSignature);
+  useEffect(() => {
+    const previousSignature = previousProviderSignatureRef.current;
+    previousProviderSignatureRef.current = visibleProviderSignature;
+    if (previousSignature && previousSignature !== visibleProviderSignature) {
+      setCurrentPage(1);
+    }
+  }, [visibleProviderSignature]);
   const pagination = useMemo(
     () => paginateCarResults(visibleResults, guidedPlanning ? 1 : currentPage),
     [currentPage, guidedPlanning, visibleResults],

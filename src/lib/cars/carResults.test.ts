@@ -4,6 +4,7 @@ import {
   assignCarBadges,
   buildCarDetailsHref,
   calculateRentalDays,
+  ensureCarProviderCoverage,
   filterCarResults,
   getPrimaryCarOffer,
   sortCarOffers,
@@ -32,6 +33,12 @@ test("sandbox placeholder pickup does not improve shared recommendation order", 
   const unknown = { ...base, id: "z-unknown", pickupType: "city-location" as const, sandboxPresentation: { specs: [], pickupLabel: "Unknown", filterOptions: [] } };
   const neutral = { ...unknown, id: "a-neutral", pickupType: "shuttle" as const };
   assert.deepEqual(sortCarResults([unknown, neutral], "recommended").map(car => car.id), ["a-neutral", "z-unknown"]);
+});
+test("recommended results visibly represent every successful car provider", () => {
+  const kayak = { ...cars[2], id: "kayak-test", inventorySource: "kayak-sandbox" as const };
+  const covered = ensureCarProviderCoverage([...cars.slice(0, 5), kayak, ...cars.slice(5)]);
+  assert.deepEqual(covered.slice(0, 2).map(car => car.inventorySource), ["kurioticket-static-cars", "kayak-sandbox"]);
+  assert.equal(covered.length, cars.length + 1);
 });
 const expectations: Record<string, (c: (typeof cars)[number]) => boolean> = {
   totalUnder100: (c) => (getPrimaryCarOffer(c)?.totalPrice ?? Infinity) < 100,

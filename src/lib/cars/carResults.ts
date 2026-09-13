@@ -75,6 +75,20 @@ export function sortCarResults<T extends NormalizedCarResult>(results: T[], sort
   }).map(({ car }) => car);
 }
 
+/** Keep the strongest result from every successful provider visible before filling by rank. */
+export function ensureCarProviderCoverage<T extends NormalizedCarResult>(ranked: T[]): T[] {
+  const represented = new Set<T["inventorySource"]>();
+  const leaders: T[] = [];
+  const rest: T[] = [];
+  for (const car of ranked) {
+    if (!represented.has(car.inventorySource)) {
+      represented.add(car.inventorySource);
+      leaders.push(car);
+    } else rest.push(car);
+  }
+  return [...leaders, ...rest];
+}
+
 export function assignCarBadges(results: NormalizedCarResult[]) {
   const assignments = new Map<string, CarResultBadge>();
   const candidates: Array<[CarResultBadge, NormalizedCarResult[]]> = [
