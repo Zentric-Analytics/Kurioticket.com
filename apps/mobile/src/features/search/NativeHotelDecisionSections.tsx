@@ -90,7 +90,7 @@ export function NativeRelatedHotelsSection({ city, hotels, theme, onViewHotel }:
 }) {
   const routeParams = useLocalSearchParams<Record<string, string | string[]>>();
   if (!hotels.length) return null;
-  const params = {
+  const params: Record<string, string | string[]> = {
     ...routeParams,
     guests: String(normalizedCount(routeParams.guests, 2, HOTEL_LIMITS.guests.max)),
     rooms: String(normalizedCount(routeParams.rooms, 1, HOTEL_LIMITS.rooms.max)),
