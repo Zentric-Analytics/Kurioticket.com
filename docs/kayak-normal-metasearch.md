@@ -155,3 +155,25 @@ both documentation and staging attempts; browser inventory remained empty despit
 the user opening the panel. Mixed hotel filtering and visible Top rated ordering
 remain unverified. Item three is still open; do not infer completion from the
 deployment or successful local checks alone.
+
+### Item three closure — live browser verification
+
+Browser attachment recovered. On the same deployed release, the ordinary London
+search (October 12–17, one guest/room, explicitly selecting London, England)
+returned 174 KAYAK sandbox offers plus eight catalogue hotels: 182 shared results.
+
+- Top rated was checked across all ten pages. All 174 guest scores were in
+  descending order, from 8.6 to 8.0. The eight unrated catalogue hotels followed
+  rated results; no review scores were invented for them.
+- Pool selected 18 results: 14 KAYAK offers and four catalogue hotels. Cheapest
+  sorted that combined set ascending (provider nightly amounts $143–$760).
+- Removing Pool restored 182 results. Returning to Cheapest reset pagination to
+  results 1–20. Browser error logs remained empty. No real booking occurred.
+- Recorded request logs showed no new KAYAK request during filter/sort changes.
+- Automated checkbox targeting scrolled the outer narrow drawer offscreen;
+  closing/reopening it, scrolling its content, and clicking the visible checkbox
+  worked. This observation is not a claim of exhaustive mobile accessibility QA.
+
+Together with the previously recorded flight/car checks, item three's planned
+shared filtering/sorting staging checks are complete. Items four through eight
+remain separate. Production and native applications are unchanged.
