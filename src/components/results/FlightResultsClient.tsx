@@ -3874,7 +3874,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     error,
     currentSearchKey: currentFlightSearchKey,
     filtersReadySearchKey,
-  });
+  }) || (!guidedMode && kayak?.vertical === "flights" && kayak.status === "loading");
 
   useEffect(() => {
     if (
