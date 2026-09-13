@@ -1,4 +1,5 @@
 import { searchCanonicalCarCatalog } from "@/lib/cars/carLocationSuggestions";
+import type { CarLocationSuggestion } from "@/lib/cars/carLocationSuggestions";
 import { fromCarLocation } from "@/lib/locations/adapters";
 import { resolveStaticSearch } from "@/lib/locations/staticRecovery";
 import { discoverLocations } from "@/lib/locations/discovery";
@@ -20,7 +21,7 @@ export async function GET(request: Request) {
   try {
     if (q) {
       const discovery = await discoverLocations({ query: q, product: "cars", catalog: getCanonicalCarLocationCatalog(), adapters: availableDiscoveryAdapters(request, "cars"), limit, timeoutMs: 900 });
-      let suggestions = discovery.suggestions.map((canonical) => ({ id: canonical.id, kind: canonical.kind === "rental-area" ? "area" : canonical.kind,
+      let suggestions: CarLocationSuggestion[] = discovery.suggestions.map((canonical) => ({ id: canonical.id, kind: canonical.kind === "rental-area" ? "area" : canonical.kind,
         value: canonical.submittedValue, primaryText: canonical.primaryLabel, secondaryText: canonical.supportingLabel, city: canonical.primaryLabel,
         countryCode: canonical.country?.code, airportCode: canonical.codes?.iata, canonical, validation: "owned-catalog", isProviderValidated: false }));
       let recovery;
