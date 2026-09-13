@@ -37,24 +37,22 @@ test("hotel-details route uses the composed booking details screen", () => {
   assert.match(screen, /activeHotelTab === "details"[\s\S]*?<NativeHotelBookingDetails/);
 });
 
-test("Details follows a flat booking-page order with Location directly after About", () => {
+test("Details follows a compact booking-page order with Location directly after About", () => {
   const about = details.indexOf(">About this hotel<");
   const amenities = details.indexOf(">Popular amenities<");
   const location = details.indexOf("<NativeHotelLocationSection");
   const room = details.indexOf(">Room &amp; comfort<");
-  const information = details.indexOf(">Hotel information<");
   const accessibility = details.indexOf(">Accessibility<");
   const related = details.indexOf("<NativeRelatedHotelsSection");
-  for (const index of [about, location, amenities, room, information, accessibility, related]) {
+  for (const index of [about, location, amenities, room, accessibility, related]) {
     assert.notEqual(index, -1);
   }
   assert.ok(about < location);
   assert.ok(location < amenities);
   assert.ok(amenities < room);
-  assert.ok(room < information);
-  assert.ok(information < accessibility);
+  assert.ok(room < accessibility);
   assert.ok(accessibility < related);
-  assert.doesNotMatch(details, /width: "48%"|width: "45%"|flexWrap: "wrap"/);
+  assert.doesNotMatch(details, />Hotel information<|width: "48%"|width: "45%"|flexWrap: "wrap"/);
 });
 
 test("popular amenities stay one per row and See all contains every available amenity", () => {
@@ -88,10 +86,19 @@ test("About this hotel explains the existing facts instead of replacing them", (
   assert.doesNotMatch(copy, /perfect|best|luxury|guaranteed/i);
 });
 
-test("Details keeps existing room, hotel, accessibility and related-hotel information", () => {
+test("Details keeps room, accessibility and related-hotel information without a redundant Hotel information block", () => {
   assert.match(details, /\[property\?\.roomSummary, property\?\.bedSummary\]/);
-  assert.match(details, /property\?\.propertyType/);
-  assert.match(details, /classification \? `\$\{classification\}-star classification`/);
   assert.match(details, /property\.accessibility\.map/);
   assert.match(details, /<NativeRelatedHotelsSection/);
+  assert.doesNotMatch(details, />Hotel information<|<Award\b|Hotel classification is not available\./);
+});
+
+test("Details uses the tightened mobile vertical rhythm without changing typography", () => {
+  assert.match(details, /section: \{ paddingVertical: 2 \}/);
+  assert.match(details, /description: \{ marginTop: 6,/);
+  assert.match(details, /divider: \{ height: StyleSheet\.hairlineWidth, marginVertical: 8 \}/);
+  assert.match(details, /rowList: \{ marginTop: 6, gap: 6 \}/);
+  assert.match(details, /seeAllRow: \{ minHeight: 40, marginTop: 4,/);
+  assert.match(details, /heading: \{ fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts\.bold/);
+  assert.match(details, /rowText: \{[^}]*fontSize: 13, lineHeight: 20, fontWeight: "400", fontFamily: appFonts\.regular/);
 });
