@@ -1806,6 +1806,7 @@ export function CarsResultsExperience({
   const results = useMemo(() => presentation !== "standalone" || kayak?.vertical !== "cars" ? providerResults : [
     ...providerResults, ...kayak.offers.map(offer => kayakCarCardModel(offer,Math.max(1,Math.ceil((Date.parse(search.dropoffDate)-Date.parse(search.pickupDate))/86400000)||1),search.pickupLocation)),
   ],[presentation,kayak,providerResults,search.dropoffDate,search.pickupDate,search.pickupLocation]);
+  const providersLoading = presentation === "standalone" && kayak?.vertical === "cars" && kayak.status === "loading";
   const [quickFilterGroupId, setQuickFilterGroupId] = useState<string | null>(null);
   const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLButtonElement | null>(null);
@@ -2355,6 +2356,10 @@ export function CarsResultsExperience({
       </header>
     );
   };
+
+  if (providersLoading) {
+    return <CarsResultsPageTransitionSkeleton />;
+  }
 
   return (
     <>

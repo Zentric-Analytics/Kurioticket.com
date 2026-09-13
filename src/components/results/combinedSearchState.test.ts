@@ -9,8 +9,9 @@ import type { ProviderSearchStatus } from "./KayakResultsContext";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
 
-test("available offers win over another provider's loading, empty or failed search", () => {
-  for (const status of ["loading","success","error","needs-input"] as const) {
+test("all providers settle before combined offers are revealed", () => {
+  assert.equal(combinedSearchState(2,["success","loading"]),"loading");
+  for (const status of ["success","error","needs-input"] as const) {
     assert.equal(combinedSearchState(2,["success",status]),"results");
   }
 });

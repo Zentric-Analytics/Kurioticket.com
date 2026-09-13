@@ -54,7 +54,7 @@ function canonicalHotelMatch(criteria: Record<string, string>, candidates: Sandb
 export async function resolveRegularKayakSearch(
   vertical: KayakVertical,
   criteria: Record<string, string>,
-  places: (term: string) => Promise<SandboxPlace[]>,
+  places: (term: string, vertical?: KayakVertical) => Promise<SandboxPlace[]>,
 ): Promise<Resolution> {
   // Sandbox prices remain explicitly USD, not a fabricated currency conversion.
   const input = { ...criteria, currency: "USD" };
@@ -63,8 +63,21 @@ export async function resolveRegularKayakSearch(
     return parsed.success ? adaptKayakFlightSearch(parsed.data) : { supported: false, reason: "KAYAK could not use these flight search details." };
   }
   if (vertical === "cars") {
-    return adaptKayakCarSearch({ ...input, pickupLocation: airportCode(criteria.pickupLocation),
-      dropoffLocation: airportCode(criteria.dropoffLocation || criteria.pickupLocation),
+    const pickupInput = criteria.pickupLocation || "";
+    const dropoffInput = criteria.dropoffLocation || pickupInput;
+    let pickup = airportCode(pickupInput);
+    let dropoff = airportCode(dropoffInput);
+    if (!/^[A-Z]{3}$/.test(pickup)) {
+      const candidates = await places(pickupInput, "cars");
+      pickup = candidates[0]?.value || pickup;
+    }
+    if (dropoffInput === pickupInput) dropoff = pickup;
+    else if (!/^[A-Z]{3}$/.test(dropoff)) {
+      const candidates = await places(dropoffInput, "cars");
+      dropoff = candidates[0]?.value || dropoff;
+    }
+    return adaptKayakCarSearch({ ...input, pickupLocation: pickup,
+      dropoffLocation: dropoff,
       pickupTime: criteria.pickupTime || "10:00", dropoffTime: criteria.dropoffTime || "10:00" });
   }
   if (/^kplace:\d+$/.test(criteria.destinationId || "")) return adaptKayakHotelSearch(input);

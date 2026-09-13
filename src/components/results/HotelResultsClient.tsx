@@ -290,7 +290,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     return [...providerResults, ...kayak.offers.map(offer => kayakHotelCardModel(offer,nights))];
   }, [guided,kayak,providerResults]);
   const [visibleFiltered, setVisibleFiltered] = useState<PublicHotelResult[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [inventoryLoading, setLoading] = useState(true);
+  const loading = inventoryLoading || (!guided && kayak?.vertical === "hotels" && kayak.status === "loading");
   const [error, setError] = useState("");
   const [retryKey, setRetryKey] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
