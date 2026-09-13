@@ -15,7 +15,14 @@ const normalizePlace = (value: string) => value.trim().toLocaleLowerCase("en-US"
   .normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
 
 function canonicalHotelMatch(criteria: Record<string, string>, candidates: SandboxPlace[]) {
-  const destination = hotelDestinations.find(candidate => candidate.id === criteria.destinationId);
+  const normalizedInput = normalizePlace(criteria.destination || "");
+  const textMatches = hotelDestinations.filter(candidate => {
+    const names = [candidate.name, candidate.searchValue, ...(candidate.aliases || [])]
+      .map(normalizePlace);
+    return names.includes(normalizedInput);
+  });
+  const destination = hotelDestinations.find(candidate => candidate.id === criteria.destinationId)
+    || (textMatches.length === 1 ? textMatches[0] : undefined);
   if (!destination) return undefined;
   const name = normalizePlace(destination.name.replace(/\s+Airport area$/i, ""));
   const region = normalizePlace(destination.region || "");
