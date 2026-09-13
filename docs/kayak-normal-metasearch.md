@@ -127,8 +127,14 @@ against party totals, unknown duration from ranking fastest, late hotel offers
 from being hidden by an untouched old budget ceiling, stale hotels after failed
 searches, and simulated prices from entering price-alert/nearby-fare caches.
 
-Item three's planned desktop shared-results checks are complete. This is not
-closure of checklist items four through eight: exhaustive data completeness,
+Item three remains open after evidence reconciliation: a hotel search with both
+KAYAK and catalogue results still needs live verification, and the Top rated
+selection check did not prove guest-score ordering. The follow-up mapping now
+preserves KAYAK guestRating and numberOfReviews in the shared review fields;
+negative, missing or invalid scores remain unrated. Staging verification of this
+correction is pending. The existing hotel pipeline is a static planning catalogue,
+not a second live supplier API. This is not closure of items four through eight:
+exhaustive data completeness,
 mobile/desktop end-to-end coverage, provider failure/retry coverage, final
 sandbox safeguard reconciliation, and final overall evidence remain separate.
 Production and native builds were not deployed.
