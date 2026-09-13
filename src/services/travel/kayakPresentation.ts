@@ -4,9 +4,10 @@ export function kayakImageUrl(value: unknown): string | undefined {
   try {
     const url = new URL(value);
     if (url.protocol !== "https:" || url.username || url.password || url.port) return undefined;
-    if (!(url.hostname === "content.r9cdn.net" || url.hostname === "www.kayak.com" || url.hostname === "www.kayak.ch")) return undefined;
+    const sandboxImage = url.hostname === "sandbox-en-us.kayakaffiliates.com" && url.pathname.startsWith("/himg/") && !url.search;
+    if (!(sandboxImage || url.hostname === "content.r9cdn.net" || url.hostname === "www.kayak.com" || url.hostname === "www.kayak.ch")) return undefined;
     if (/api[-_]?key|authorization|access[-_]?token/i.test(decodeURIComponent(url.search))) return undefined;
-    if (url.hostname !== "content.r9cdn.net" && url.pathname !== "/h/run/api/image") return undefined;
+    if (!sandboxImage && url.hostname !== "content.r9cdn.net" && url.pathname !== "/h/run/api/image") return undefined;
     return url.href;
   } catch { return undefined; }
 }

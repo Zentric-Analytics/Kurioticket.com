@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { imageRemotePatterns, matchesImagePattern } from "../../config/imagePatterns";
 import { kayakImageUrl, kayakImages, kayakFlightLegs, kayakFlightAttributes, kayakCarFilterOptions, kayakHotelAmenities, kayakHotelAmenityStatus } from "./kayakPresentation";
 
 test("hotel amenities resolve only supplied official mappings without duplicates", () => {
@@ -41,6 +42,16 @@ test("flight detail facts preserve equipment and airline rules without exposing 
 test("KAYAK media rejects unsafe hosts, credentials and non-media API links", () => {
   for (const value of ["javascript:alert(1)", "http://content.r9cdn.net/a.png", "https://evil.test/a.png", "https://user:pass@content.r9cdn.net/a.png", "https://www.kayak.com/api/private", "https://content.r9cdn.net/a.png?apiKey=secret", "https://content.r9cdn.net/a.png?access_token=secret"])
     assert.equal(kayakImageUrl(value), undefined);
+});
+
+test("documented sandbox hotel images pass both media validation and image optimization", () => {
+  const value = "https://sandbox-en-us.kayakaffiliates.com/himg/hotel.jpg";
+  assert.equal(kayakImageUrl(value), value);
+  assert.ok(imageRemotePatterns.some(pattern => matchesImagePattern(new URL(value), pattern)));
+  for (const unsafe of [value + "?token=secret", value.replace("/himg/", "/api/"), value.replace(".com/", ".com.evil.test/")]) {
+    assert.equal(kayakImageUrl(unsafe), undefined);
+    assert.equal(imageRemotePatterns.some(pattern => matchesImagePattern(new URL(unsafe), pattern)), false);
+  }
 });
 
 test("flight presentation preserves segment timing, provider duration and operating disclosures", () => {
