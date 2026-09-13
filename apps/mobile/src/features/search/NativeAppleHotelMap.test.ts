@@ -13,6 +13,23 @@ test("Apple native maps are isolated to iOS with no Google provider or location 
   assert.doesNotMatch(fallback, /from "react-native-maps"/);
 });
 
+test("embedded iOS Look Around is native MapKit and never a Google WebView", () => {
+  const bridge = readFileSync("src/features/search/NativeAppleHotelLookAround.ios.tsx", "utf8");
+  const module = readFileSync("modules/kurioticket-hotel-look-around/ios/KurioticketHotelLookAroundModule.swift", "utf8");
+  const view = readFileSync("modules/kurioticket-hotel-look-around/ios/KurioticketHotelLookAroundView.swift", "utf8");
+  const fingerprint = readFileSync("fingerprint.config.js", "utf8");
+
+  assert.match(bridge, /requireOptionalNativeModule\("KurioticketHotelLookAround"\)/);
+  assert.match(bridge, /requireNativeViewManager<NativeProps>\("KurioticketHotelLookAround"\)/);
+  assert.match(module, /View\(KurioticketHotelLookAroundView\.self\)/);
+  assert.match(view, /import MapKit/);
+  assert.match(view, /MKLookAroundSceneRequest\(coordinate: coordinate\)/);
+  assert.match(view, /MKLookAroundViewController\(scene: scene\)/);
+  assert.match(view, /lookAroundController\.isNavigationEnabled = true/);
+  assert.doesNotMatch(bridge + module + view, /Google|WebView|google\.com/);
+  assert.match(fingerprint, /modules\/kurioticket-hotel-look-around/);
+});
+
 test("both hotel previews validate coordinates and keep Android image previews", () => {
   for (const file of ["NativeHotelLocationSection", "NativeHotelDecisionSections"]) {
     const source = readFileSync(`src/features/search/${file}.tsx`, "utf8");
