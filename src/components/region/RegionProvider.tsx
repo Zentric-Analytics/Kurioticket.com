@@ -66,10 +66,14 @@ const findSupportedCurrency = (currency: string | null | undefined) => {
 export function RegionProvider({
   initialMode,
   detectedMode,
+  initialModeIsExplicit = false,
+  initialCurrency,
   children,
 }: {
   initialMode: string;
   detectedMode?: string | null;
+  initialModeIsExplicit?: boolean;
+  initialCurrency?: string;
   children?: ReactNode;
 }) {
   const detectedOption = useMemo(
@@ -84,14 +88,15 @@ export function RegionProvider({
 
   const [regionState, setRegionState] = useState(() => {
     // First browser render must match the server, which cannot read local storage.
-    const selectedRegion = detectedOption ?? initialOption ?? fallbackRegion;
-    const seededCurrency = (selectedRegion.currency ?? fallbackCurrency) as CurrencyCode;
+    const selectedRegion = initialModeIsExplicit ? initialOption : detectedOption ?? initialOption ?? fallbackRegion;
+    const explicitCurrency = findSupportedCurrency(initialCurrency);
+    const seededCurrency = explicitCurrency ?? (selectedRegion.currency ?? fallbackCurrency) as CurrencyCode;
 
     return {
       currency: seededCurrency,
-      hasExplicitCurrency: false,
-      hasUserSelectedRegion: false,
-      selectedMode: undefined as RegionCode | undefined,
+      hasExplicitCurrency: Boolean(explicitCurrency),
+      hasUserSelectedRegion: initialModeIsExplicit,
+      selectedMode: initialModeIsExplicit ? initialOption.code as RegionCode : undefined,
     };
   });
 

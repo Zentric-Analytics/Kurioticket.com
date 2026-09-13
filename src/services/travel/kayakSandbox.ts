@@ -226,7 +226,8 @@ export function normalizeSandboxOffers(
         ...(vertical === "cars" ? { carSpecs: [
           typeof car.passengers === "number" ? `${car.passengers} passengers` : "Passengers not supplied",
           typeof car.bags === "number" ? `${car.bags} bags` : "Baggage capacity not supplied",
-          text(car.doors) || "Doors not supplied", text(car.transmission) || "Transmission not supplied",
+          /^doors\d+$/.test(text(car.doors)) ? `${text(car.doors).slice(5)} doors` : text(car.doors) || "Doors not supplied",
+          text(car.transmission) ? text(car.transmission).replace(/^./,letter=>letter.toUpperCase()) : "Transmission not supplied",
         ] } : {}),
         ...(vertical === "hotels" && typeof result.starRating === "number" ? {hotelStars:result.starRating} : {}),
         ...(vertical === "flights" ? { flightLegs: kayakFlightLegs(data, result) } : {}),

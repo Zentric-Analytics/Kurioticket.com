@@ -11,6 +11,11 @@ function Selection() {
   return createElement("span", null, `${mode}/${selectedCurrency}`);
 }
 
+test("server seed respects an explicit country and independently selected currency",()=>{
+  const html=renderToStaticMarkup(createElement(RegionProvider,{initialMode:"JP",detectedMode:"US",initialModeIsExplicit:true,initialCurrency:"EUR"},createElement(Selection)));
+  assert.equal(html,"<span>JP/EUR</span>");
+});
+
 test("first region render matches server props even with different browser storage", () => {
   const windowDescriptor = Object.getOwnPropertyDescriptor(globalThis, "window");
   const documentDescriptor = Object.getOwnPropertyDescriptor(globalThis, "document");

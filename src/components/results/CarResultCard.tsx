@@ -482,11 +482,11 @@ export function CarResultCard({
               resultId={car.id}
               sources={comparisonSources}
               labels={{
-                source: t("carsResults.comparison.source"),
-                estimate: t("carsResults.comparison.estimate"),
+                source: car.sandboxPresentation ? "KAYAK" : t("carsResults.comparison.source"),
+                estimate: car.sandboxPresentation ? "Sandbox" : t("carsResults.comparison.estimate"),
                 comparePrices: t("carsResults.comparison.comparePrices"),
                 hidePrices: t("carsResults.comparison.hidePrices"),
-                liveDealsComingSoon: t("carsResults.comparison.liveDealsComingSoon"),
+                liveDealsComingSoon: car.sandboxPresentation ? "Simulated inventory — no real booking" : t("carsResults.comparison.liveDealsComingSoon"),
                 notBookable: t("carsResults.comparison.notBookable"),
                 total: t("carsResults.comparison.total"),
                 perDay: t("carsResults.comparison.perDay"),
