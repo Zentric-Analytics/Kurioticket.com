@@ -23,6 +23,7 @@ function harness() {
     useEffect: (fn: () => () => void) => effects.push(fn),
     useState: (initial: unknown) => [initial, (value: unknown) => writes.push(value)],
     React: { createElement: () => null },
+    KayakResultsContext: { Provider: "provider" },
     fetch: (_url: string, options: { signal: AbortSignal; body: string }) => {
       count++; signal = options.signal; payload = JSON.parse(options.body); return pending;
     },

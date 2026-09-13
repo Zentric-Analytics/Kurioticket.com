@@ -23,3 +23,12 @@ test("hotel and car models preserve images and mark unknown specifications",()=>
     assert.deepEqual(filterCarResults([car],{test:[option]}),[]);
   }
 });
+
+test("flight comparison uses party totals and unknown durations cannot rank as zero", () => {
+  const offer = {id:"party",title:"Trip",description:"Supplier",details:[],price:100,currency:"USD",priceBasis:"per person",testUrl:"https://affiliates.kayak.com/sandbox-clickout",flightLegs:[{segments:[{origin:"BOS",destination:"JFK",departure:"2099-10-12T10:00:00",arrival:"2099-10-12T11:00:00",airline:"Test",flightNumber:"T1"}]}]};
+  const party = kayakFlightCardModel(offer, {adults:"2", children:"1", infants:"0"});
+  assert.equal(party?.price, 300);
+  assert.equal(party?.durationMinutes, Infinity);
+  assert.equal(party?.duration, "Duration not supplied");
+  assert.equal(kayakFlightCardModel({...offer,priceBasis:"total"}, {adults:"3"})?.price,100);
+});

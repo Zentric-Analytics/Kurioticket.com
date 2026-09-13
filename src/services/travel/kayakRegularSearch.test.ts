@@ -44,7 +44,7 @@ test("all normal result routes retain their existing pipeline and add the gated 
     assert.ok(source.includes(`<KayakMetasearchSection vertical="${vertical}"`));
   }
   const source = readFileSync("src/components/results/KayakMetasearchSection.tsx", "utf8");
-  assert.match(source, /if \(!isKayakSandboxEnabled\(\)\) return null/);
+  assert.match(source, /if \(!isKayakSandboxEnabled\(\)\) return children \?\? null/);
 });
 test("car transport sends actual selected hours and minutes", async () => {
   const fetcher: typeof fetch = async (_url, init) => {

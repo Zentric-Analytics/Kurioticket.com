@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { KayakResultsContext } from "./KayakResultsContext";
 import type { KayakVertical, SandboxOffer, SandboxPlace } from "@/services/travel/kayakSandbox";
 import { KayakResultCard } from "./KayakResultCard";
 
-export function KayakMetasearchClient({ vertical, criteria }: {
-  vertical: KayakVertical; criteria: Record<string, string>;
+export function KayakMetasearchClient({ vertical, criteria, children }: {
+  vertical: KayakVertical; criteria: Record<string, string>; children?: ReactNode;
 }) {
   const request = useRef<AbortController | null>(null);
   const [busy, setBusy] = useState(true);
@@ -44,17 +45,17 @@ export function KayakMetasearchClient({ vertical, criteria }: {
     queueMicrotask(() => { if (active) void run(); });
     return () => { active = false; request.current?.abort(); request.current = null; };
   }, [run]);
-  return <section aria-label="KAYAK sandbox provider results" className="page-shell my-4 rounded-xl border border-amber-500 bg-amber-50 p-4">
+  return <KayakResultsContext.Provider value={{vertical,offers,criteria}}><section aria-label="KAYAK sandbox provider results" className="page-shell my-4 rounded-xl border border-amber-500 bg-amber-50 p-4">
     <h2 className="text-xl font-bold">KAYAK · sandbox provider</h2>
-    <p>Simulated inventory. Cards use your display currency; converted amounts are estimates of the original provider price. No real bookings or payments. Other providers remain available separately below.</p>
+    <p>Simulated inventory. Cards use your display currency; converted amounts are estimates of the original provider price. No real bookings or payments. {children ? "KAYAK offers use the shared results, filters and sorting below." : "Other providers remain available separately below."}</p>
     <p role="status" aria-live="polite" className="my-3">{message}</p>
     {choices.length > 0 && <ul aria-label="Matching KAYAK destinations">{choices.map(place => <li key={place.value}>
       <button type="button" disabled={busy} className="my-1 rounded border bg-white p-2" onClick={() => void run(place.value)}>{place.label}</button>
     </li>)}</ul>}
-    <ul className="grid gap-4">{offers.slice(0, limit).map(offer => <li key={offer.id} className="min-w-0">
+    {!children && <ul className="grid gap-4">{offers.slice(0, limit).map(offer => <li key={offer.id} className="min-w-0">
       <KayakResultCard offer={offer} vertical={vertical} criteria={criteria} />
-    </li>)}</ul>
-    {limit < offers.length && <button type="button" className="m-2 rounded border bg-white p-2" onClick={() => setLimit(value => value + 10)}>Show more KAYAK test offers</button>}
+    </li>)}</ul>}
+    {!children && limit < offers.length && <button type="button" className="m-2 rounded border bg-white p-2" onClick={() => setLimit(value => value + 10)}>Show more KAYAK test offers</button>}
     <button type="button" className="my-3 rounded border bg-white p-2 disabled:opacity-50" disabled={busy} onClick={() => void run()}>{busy ? "Searching KAYAK…" : "Retry KAYAK provider"}</button>
-  </section>;
+  </section>{children}</KayakResultsContext.Provider>;
 }

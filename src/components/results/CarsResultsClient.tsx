@@ -1,4 +1,7 @@
 "use client";
+import { useKayakResults } from "./KayakResultsContext";
+import { kayakCarCardModel } from "./kayakCardModels";
+import { KayakResultCard } from "./KayakResultCard";
 
 import {
   useCallback,
@@ -1755,7 +1758,7 @@ export function CarsResultsClient({
 }
 
 export function CarsResultsExperience({
-  results,
+  results: providerResults,
   search,
   inventoryStatus,
   hasSearchContext,
@@ -1797,6 +1800,10 @@ export function CarsResultsExperience({
   const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
   const intlLocale = getCarsResultsIntlLocale(locale);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const kayak = useKayakResults();
+  const results = useMemo(() => presentation !== "standalone" || kayak?.vertical !== "cars" ? providerResults : [
+    ...providerResults, ...kayak.offers.map(offer => kayakCarCardModel(offer,Math.max(1,Math.ceil((Date.parse(search.dropoffDate)-Date.parse(search.pickupDate))/86400000)||1),search.pickupLocation)),
+  ],[presentation,kayak,providerResults,search.dropoffDate,search.pickupDate,search.pickupLocation]);
   const [quickFilterGroupId, setQuickFilterGroupId] = useState<string | null>(null);
   const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLButtonElement | null>(null);
@@ -2478,7 +2485,7 @@ export function CarsResultsExperience({
                     {t("filters")}
                   </button>
                 )}
-                {!embedded ? <CarPriceAlertControl search={search} results={results} /> : null}
+                {!embedded ? <CarPriceAlertControl search={search} results={providerResults} /> : null}
                 <div
                   className="flex w-full min-w-0 flex-nowrap items-center justify-between gap-2"
                   data-cars-results-summary-row
@@ -2618,7 +2625,7 @@ export function CarsResultsExperience({
                     paginationRevealing && "animate-[fadeIn_150ms_ease-out]",
                   )}
                 >
-                  {pageResults.map((car) => (
+                  {pageResults.map((car) => car.inventorySource === "kayak-sandbox" && kayak?.offers.some(offer => `kayak-sandbox:${offer.id}` === car.id) ? <KayakResultCard key={car.id} offer={kayak.offers.find(offer => `kayak-sandbox:${offer.id}` === car.id)!} vertical="cars" criteria={kayak.criteria} /> : (
                     <CarResultCard
                       key={car.id}
                       car={car}

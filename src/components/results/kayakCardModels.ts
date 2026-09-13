@@ -3,7 +3,7 @@ import type { NormalizedCarResult } from "@/lib/cars/types";
 import type { SandboxOffer } from "@/services/travel/kayakSandbox";
 
 /** Map provider legs, never infer elapsed time from timezone-less local timestamps. */
-export function kayakFlightCardModel(offer: SandboxOffer): PublicFlightResult | null {
+export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<string, string> = {}): PublicFlightResult | null {
   const source = offer.flightLegs;
   if (!source?.length || source.some(leg => !leg.segments.length)) return null;
   const legs: FlightLeg[] = source.map((leg, index) => ({
@@ -13,7 +13,7 @@ export function kayakFlightCardModel(offer: SandboxOffer): PublicFlightResult | 
     departureTime: leg.segments[0].departure,
     arrivalTime: leg.segments[leg.segments.length - 1].arrival,
     duration: leg.durationMinutes === undefined ? "Duration not supplied" : `${Math.floor(leg.durationMinutes / 60)}h ${leg.durationMinutes % 60}m`,
-    durationMinutes: leg.durationMinutes ?? 0,
+    durationMinutes: leg.durationMinutes ?? Number.POSITIVE_INFINITY,
     stops: Math.max(0, leg.segments.length - 1),
     layovers: leg.segments.slice(0, -1).map(segment => ({airport:segment.destination, duration:"Not supplied", quality:"unknown"})),
     segments: leg.segments.map(segment => ({originAirport:segment.origin, destinationAirport:segment.destination,
@@ -21,11 +21,12 @@ export function kayakFlightCardModel(offer: SandboxOffer): PublicFlightResult | 
       flightNumber:segment.flightNumber, operatingCarrier:segment.operatingDisclosure ? {name:segment.operatingDisclosure} : undefined})),
   }));
   const first = source[0].segments[0];
+  const travelers = Math.max(1, Number(criteria.adults || 1) + Number(criteria.children || 0) + Number(criteria.infants || 0));
   return {
     id: `kayak-sandbox:${offer.id}`, provider:"KAYAK sandbox", airlineName:first.airline,
     airlineLogo:first.airlineLogo, flightNumber:first.flightNumber,
     ...legs[0], legs, cabinClass:"Not supplied", baggageInfo:"Not supplied by provider",
-    refundInfo:"Not supplied by provider", price:offer.price, currency:offer.currency,
+    refundInfo:"Not supplied by provider", price:offer.price * (offer.priceBasis === "per person" ? travelers : 1), currency:offer.currency,
     bookingUrl:offer.testUrl, partnerRedirectUrl:offer.testUrl,
     valueScore:0, riskScore:0, comfortScore:0, travelConfidenceScore:0, travelEffortScore:0,
     recommendationReasons:[], badges:[],

@@ -48,7 +48,7 @@ export default async function HotelResultsPage({ searchParams }: { searchParams:
         hideDesktopTravelNav
         hideMobileCategoryTabs
       />
-      <KayakMetasearchSection vertical="hotels" params={query} />
+      <KayakMetasearchSection vertical="hotels" params={query}>
       <Suspense
         fallback={
           <main className="page-shell min-h-[calc(100svh-5rem)] flex-1 py-6">
@@ -60,6 +60,7 @@ export default async function HotelResultsPage({ searchParams }: { searchParams:
       >
         <HotelResultsClient />
       </Suspense>
+      </KayakMetasearchSection>
     </>
   );
 }

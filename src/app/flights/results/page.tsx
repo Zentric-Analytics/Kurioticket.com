@@ -149,7 +149,7 @@ export default async function FlightResultsPage({
         hideDesktopTravelNav
         hideMobileCategoryTabs
       />
-      <KayakMetasearchSection vertical="flights" params={params} />
+      <KayakMetasearchSection vertical="flights" params={params}>
       <Suspense
         fallback={
           <ResultsFallback
@@ -160,6 +160,7 @@ export default async function FlightResultsPage({
       >
         <FlightResultsClient />
       </Suspense>
+      </KayakMetasearchSection>
     </>
   );
 }
