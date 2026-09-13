@@ -10,6 +10,7 @@ import { getApiBaseUrl } from "../../config/apiUrl";
 import { colors } from "../../theme/tokens";
 import { appFonts } from "../../theme/typography";
 import { NativeHotelFullMapModal } from "./NativeHotelFullMapModal";
+import { NativeHotelFullLookAroundModal } from "./NativeHotelFullLookAroundModal";
 import {
   nativeHotelLocationEmbedUrl,
   nativeHotelLocationPreviewUrl,
@@ -38,12 +39,14 @@ export function NativeHotelLocationSection({ hotelId, hotelName, propertyDetails
   const [streetViewFailed, setStreetViewFailed] = useState(false);
   const [lookAroundStatus, setLookAroundStatus] = useState<NativeAppleHotelLookAroundStatus>("loading");
   const [fullMapOpen, setFullMapOpen] = useState(false);
+  const [fullLookAroundOpen, setFullLookAroundOpen] = useState(false);
   useEffect(() => {
     setView(rememberedHotelLocationView(hotelId));
     setMapPreviewFailed(false);
     setStreetViewFailed(false);
     setLookAroundStatus("loading");
     setFullMapOpen(false);
+    setFullLookAroundOpen(false);
   }, [hotelId]);
   if (!propertyDetails) return <View style={styles.locationSection}><Text accessibilityRole="header" style={[styles.heading, { color: theme.textPrimary }]}>Location</Text><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Verified location details are not available for this property yet.</Text></View>;
 
@@ -75,12 +78,23 @@ export function NativeHotelLocationSection({ hotelId, hotelName, propertyDetails
       {alternateLocationViewAvailable ? <View accessibilityRole="tablist" style={styles.mapTabs}>{(["map", "streetview"] as const).map((option) => <Pressable key={option} accessibilityRole="tab" accessibilityState={{ selected: effectiveView === option }} onPress={() => selectView(option)} style={[styles.mapTab, effectiveView === option && { borderBottomColor: accent }]}><Text style={[styles.mapTabText, { color: effectiveView === option ? accent : theme.textSecondary }]}>{option === "map" ? "Map" : Platform.OS === "ios" ? "Look Around" : "Street View"}</Text></Pressable>)}</View> : null}
       <View style={styles.mapViewport}>{effectiveView === "map" ? <Pressable accessibilityRole="button" accessibilityLabel={`Open full map for ${hotelName}`} accessibilityHint="Opens an interactive map inside Kurioticket" onPress={() => setFullMapOpen(true)} style={styles.mapPreview}>
         {Platform.OS === "ios" && hasValidHotelCoordinates(propertyDetails) ? <View pointerEvents="none" style={styles.map}><NativeAppleHotelMap key={`${hotelId}:${propertyDetails.latitude}:${propertyDetails.longitude}`} latitude={propertyDetails.latitude} longitude={propertyDetails.longitude} hotelName={hotelName} /></View> : Platform.OS !== "ios" && previewUrl && !mapPreviewFailed ? <Image accessible={false} source={{ uri: previewUrl }} resizeMode="cover" onError={() => setMapPreviewFailed(true)} style={styles.map} /> : <View style={styles.mapFallback}><MapPin accessible={false} size={24} color={theme.icon} /><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Map preview unavailable</Text></View>}
-      </Pressable> : Platform.OS === "ios" && iosLookAroundSupported && hasValidHotelCoordinates(propertyDetails) ? lookAroundStatus === "unavailable" ? <View style={styles.mapFallback}><MapPin accessible={false} size={24} color={theme.icon} /><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Look Around isn&apos;t available for this location.</Text></View> : <View style={styles.map}>
-        <NativeAppleHotelLookAround key={`${hotelId}:lookaround`} latitude={propertyDetails.latitude} longitude={propertyDetails.longitude} hotelName={hotelName} style={styles.map} onStatusChange={setLookAroundStatus} />
-        {lookAroundStatus === "loading" ? <View pointerEvents="none" style={[styles.lookAroundLoading, { backgroundColor: theme.surface }]}><ActivityIndicator color={accent} /><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Loading Look Around…</Text></View> : null}
-      </View> : streetViewUrl && !streetViewFailed ? <WebView key={`${hotelId}:streetview`} source={{ uri: streetViewUrl }} scrollEnabled={false} onError={() => setStreetViewFailed(true)} onHttpError={() => setStreetViewFailed(true)} style={styles.map} /> : <View style={styles.mapFallback}><MapPin accessible={false} size={24} color={theme.icon} /><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Map preview unavailable</Text></View>}</View>
+      </Pressable> : Platform.OS === "ios" && iosLookAroundSupported && hasValidHotelCoordinates(propertyDetails) ? lookAroundStatus === "unavailable" ? <View style={styles.mapFallback}><MapPin accessible={false} size={24} color={theme.icon} /><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Look Around isn&apos;t available for this location.</Text></View> : <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Open full Look Around for ${hotelName}`}
+        accessibilityHint="Opens an interactive Look Around view inside Kurioticket"
+        accessibilityState={{ disabled: lookAroundStatus !== "ready" }}
+        disabled={lookAroundStatus !== "ready"}
+        onPress={() => setFullLookAroundOpen(true)}
+        style={styles.mapPreview}
+      >
+        <View pointerEvents="none" style={styles.map}>
+          <NativeAppleHotelLookAround key={`${hotelId}:lookaround`} latitude={propertyDetails.latitude} longitude={propertyDetails.longitude} hotelName={hotelName} style={styles.map} onStatusChange={setLookAroundStatus} />
+          {lookAroundStatus === "loading" ? <View pointerEvents="none" style={[styles.lookAroundLoading, { backgroundColor: theme.surface }]}><ActivityIndicator color={accent} /><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Loading Look Around…</Text></View> : null}
+        </View>
+      </Pressable> : streetViewUrl && !streetViewFailed ? <WebView key={`${hotelId}:streetview`} source={{ uri: streetViewUrl }} scrollEnabled={false} onError={() => setStreetViewFailed(true)} onHttpError={() => setStreetViewFailed(true)} style={styles.map} /> : <View style={styles.mapFallback}><MapPin accessible={false} size={24} color={theme.icon} /><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Map preview unavailable</Text></View>}</View>
     </View>
     <NativeHotelFullMapModal visible={fullMapOpen} hotelId={hotelId} theme={theme} onClose={() => setFullMapOpen(false)} propertyDetails={propertyDetails} hotelName={hotelName} />
+    {Platform.OS === "ios" && iosLookAroundSupported ? <NativeHotelFullLookAroundModal visible={fullLookAroundOpen} hotelId={hotelId} theme={theme} onClose={() => setFullLookAroundOpen(false)} propertyDetails={propertyDetails} hotelName={hotelName} /> : null}
     <Text accessibilityRole="header" style={[styles.subheading, { color: theme.textPrimary }]}>Why this location works</Text>
     {facts.length ? <View style={styles.factList}>{facts.map((fact) => <View key={fact} style={styles.factRow}><Text accessible={false} style={[styles.factBullet, { color: accent }]}>•</Text><Text style={[styles.factText, { color: theme.textSecondary }]}>{fact}</Text></View>)}</View> : <Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Location fit details are limited to the verified address and map.</Text>}
   </View>;
