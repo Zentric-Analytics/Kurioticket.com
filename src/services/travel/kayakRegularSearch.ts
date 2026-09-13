@@ -17,11 +17,30 @@ const normalizePlace = (value: string) => value.trim().toLocaleLowerCase("en-US"
 function canonicalHotelMatch(criteria: Record<string, string>, candidates: SandboxPlace[]) {
   const destination = hotelDestinations.find(candidate => candidate.id === criteria.destinationId);
   if (!destination) return undefined;
-  const expected = normalizePlace([destination.name, destination.region, destination.country].filter(Boolean).join(" "));
-  return candidates.filter(candidate => {
+  const name = normalizePlace(destination.name.replace(/\s+Airport area$/i, ""));
+  const region = normalizePlace(destination.region || "");
+  const country = normalizePlace(destination.country);
+  const countryCode = normalizePlace(destination.countryCode);
+  const ranked = candidates.flatMap(candidate => {
     const label = normalizePlace(candidate.label);
-    return label === expected || label.startsWith(`${expected} `);
-  }).sort((a, b) => normalizePlace(a.label).length - normalizePlace(b.label).length)[0];
+    const firstPart = normalizePlace(candidate.label.split(",")[0]);
+    const aliases = (destination.aliases || []).map(normalizePlace);
+    const nameMatch = firstPart === name || aliases.includes(firstPart)
+      || (destination.kind === "airport-area" && label.includes(name));
+    if (!nameMatch) return [];
+    const words = ` ${label} `;
+    let score = 100;
+    if (region && words.includes(` ${region} `)) score += 30;
+    if (country && words.includes(` ${country} `)) score += 40;
+    if (countryCode && words.includes(` ${countryCode} `)) score += 20;
+    const kind = normalizePlace(candidate.kind || "");
+    if (destination.kind === "city") score += kind === "city" ? 50 : kind.includes("airport") ? -30 : 0;
+    if (destination.kind === "airport-area") score += kind.includes("airport") ? 50 : 0;
+    return [{ candidate, score, length: label.length }];
+  }).sort((a, b) => b.score - a.score || a.length - b.length);
+  if (!ranked.length) return undefined;
+  if (ranked.length > 1 && ranked[0].score === ranked[1].score && ranked[0].length === ranked[1].length) return undefined;
+  return ranked[0].candidate;
 }
 
 /** Additive sandbox provider: never change the query used by the existing providers. */
