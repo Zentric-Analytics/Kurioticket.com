@@ -23,10 +23,12 @@ test("active native Details derives the same semantic amenity presentation as we
   assert.match(details, /buildHotelAmenityPresentation\([\s\S]*?result\.amenities,[\s\S]*?result\.amenities\.length/);
   assert.doesNotMatch(details, /const highlights = result\.amenities\.slice/);
   assert.doesNotMatch(details, /<Check\b/);
-  for (const icon of ["Wifi", "UtensilsCrossed", "Laptop", "Wine", "Bed", "Sparkles", "Award"]) {
+  for (const icon of ["Wifi", "UtensilsCrossed", "Laptop", "Wine", "Bed", "Sparkles"]) {
     assert.match(details, new RegExp(`\\b${icon}\\b`));
     assert.match(web, new RegExp(`\\b${icon}\\b`));
   }
+  assert.doesNotMatch(details, /\bAward\b/);
+  assert.match(web, /\bAward\b/);
 
   const items = buildHotelAmenityPresentation(["Wi-Fi", "Restaurant", "Bar", "Workspaces"], 4)
     .map((item) => ({ ...item, label: nativeHotelAmenityLabel(item) }));
@@ -42,20 +44,18 @@ test("active Details keeps truthful fallbacks while replacing the obsolete highl
     "A property description is not available yet.",
     "Property highlights are not available yet.",
     "Room details are confirmed when you choose a room.",
-    "Hotel classification is not available.",
     "Specific accessibility features should be confirmed before booking.",
   ]) assert.match(details, escaped(copy));
   assert.doesNotMatch(details, /All available amenities are shown in Property highlights\./);
+  assert.doesNotMatch(details, /Hotel classification is not available\.|>Hotel information</);
   assert.match(details, /See all amenities/);
 });
 
-test("active Details renders room, hotel information, and accessibility row by row", () => {
+test("active Details renders room and accessibility information row by row without Hotel information", () => {
   assert.doesNotMatch(details, /\.join\(" · "\)/);
   assert.match(details, /\[property\?\.roomSummary, property\?\.bedSummary\][\s\S]*?\.map[\s\S]*?<Bed accessible=\{false\} size=\{18\}/);
-  assert.match(details, /property\?\.propertyType[\s\S]*?<Award accessible=\{false\} size=\{18\}/);
-  assert.match(details, /classification \? `\$\{classification\}-star classification` : "Hotel classification is not available\."/);
   assert.match(details, /property\.accessibility\.map\([\s\S]*?>•<\/Text>/);
-  assert.doesNotMatch(details, /width: "48%"|flexWrap: "wrap"/);
+  assert.doesNotMatch(details, /property\?\.propertyType[\s\S]*?<Award|>Hotel information<|width: "48%"|flexWrap: "wrap"/);
 });
 
 test("About copy is explanatory and built only from existing Hotel facts", () => {
@@ -69,16 +69,19 @@ test("About copy is explanatory and built only from existing Hotel facts", () =>
   assert.doesNotMatch(model, /perfect|best hotel|guaranteed|luxury stay/i);
 });
 
-test("active Details keeps booking-page typography with a tightened flat single-column rhythm", () => {
+test("active Details keeps booking-page typography with a tighter flat single-column rhythm", () => {
   const heading = styleRule("heading", "description");
   const description = styleRule("description", "fallback");
   const amenityRow = styleRule("amenityRow", "infoRow");
   const rowText = styleRule("rowText", "seeAllRow");
   for (const rule of [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/, /appFonts\.bold/]) assert.match(heading, rule);
-  for (const rule of [/marginTop: 8/, /fontSize: 13/, /lineHeight: 22/, /fontWeight: "400"/, /appFonts\.regular/]) assert.match(description, rule);
+  for (const rule of [/marginTop: 6/, /fontSize: 13/, /lineHeight: 22/, /fontWeight: "400"/, /appFonts\.regular/]) assert.match(description, rule);
   assert.match(amenityRow, /flexDirection: "row"/);
   assert.doesNotMatch(amenityRow, /width: "48%"|borderWidth|borderRadius/);
   for (const rule of [/fontSize: 13/, /lineHeight: 20/, /fontWeight: "400"/, /appFonts\.regular/]) assert.match(rowText, rule);
+  assert.match(details, /section: \{ paddingVertical: 2 \}/);
+  assert.match(details, /divider: \{ height: StyleSheet\.hairlineWidth, marginVertical: 8 \}/);
+  assert.match(details, /rowList: \{ marginTop: 6, gap: 6 \}/);
   assert.match(details, /accessibilityLabel="See all amenities"/);
   assert.match(details, /<Modal[\s\S]*?visible=\{amenitiesOpen\}/);
 });
