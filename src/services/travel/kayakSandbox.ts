@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { isIP } from "node:net";
-import { kayakImages, kayakFlightLegs, kayakAttributes, type KayakAttribute, type KayakImage, type KayakFlightLeg } from "./kayakPresentation";
+import { kayakImages, kayakFlightLegs, kayakAttributes, kayakCarFilterOptions, kayakHotelAmenities, kayakHotelAmenityStatus, type KayakAttribute, type KayakImage, type KayakFlightLeg } from "./kayakPresentation";
 
 /** Sandbox transport. Never use this module for live inventory or booking. */
 export const KAYAK_SANDBOX_ORIGIN = "https://sandbox-en-us.kayakaffiliates.com";
@@ -59,7 +59,9 @@ export type SandboxOffer = {
   flightLegs?: KayakFlightLeg[];
   attributes?: KayakAttribute[];
   carSpecs?: string[];
+  carFilterOptions?: string[];
   hotelStars?: number;
+  amenities?: string[];
 };
 export type SandboxPlace = { label: string; value: string };
 type ObjectValue = Record<string, unknown>;
@@ -220,16 +222,18 @@ export function normalizeSandboxOffers(
           ...kayakAttributes(option,["policy","paymentType","rateType","badges"]),
           ...kayakAttributes(object(object(data.carLocations)[text(option.pickupLocationId)]),["address","cityName","countryCode","locationType","displayDistance","airport"]),
         ] : vertical === "hotels" ? [
-          ...kayakAttributes(result,["address","hotelCountryCode","starRating","isSelfRated","features","policies","guestRating","guestRatingSentiment","reviewQuotes","place"]),
+          { label: "Amenity information", value: kayakHotelAmenityStatus(result.features, data.amenityDictionary) },
+          ...kayakAttributes({...result, amenities: kayakHotelAmenities(result.features, data.amenityDictionary)},["address","hotelCountryCode","starRating","isSelfRated","amenities","policies","guestRating","guestRatingSentiment","reviewQuotes","place"]),
           ...kayakAttributes(option,["roomName","hasFreeCancellation","canPayLater","isBundledRate","rateBreakdown","conditions"]),
         ] : kayakAttributes(option,["fees","badges","segmentFares","fareFamily"]),
-        ...(vertical === "cars" ? { carSpecs: [
+        ...(vertical === "cars" ? { carFilterOptions: kayakCarFilterOptions(car), carSpecs: [
           typeof car.passengers === "number" ? `${car.passengers} passengers` : "Passengers not supplied",
           typeof car.bags === "number" ? `${car.bags} bags` : "Baggage capacity not supplied",
           /^doors\d+$/.test(text(car.doors)) ? `${text(car.doors).slice(5)} doors` : text(car.doors) || "Doors not supplied",
           text(car.transmission) ? text(car.transmission).replace(/^./,letter=>letter.toUpperCase()) : "Transmission not supplied",
         ] } : {}),
         ...(vertical === "hotels" && typeof result.starRating === "number" ? {hotelStars:result.starRating} : {}),
+        ...(vertical === "hotels" ? {amenities: kayakHotelAmenities(result.features, data.amenityDictionary)} : {}),
         ...(vertical === "flights" ? { flightLegs: kayakFlightLegs(data, result) } : {}),
         price: amount,
         currency,
@@ -413,8 +417,19 @@ export class KayakSandboxClient {
         search.vertical === "hotels"
           ? data.isComplete === true
           : data.status === "complete"
-      )
+      ) {
+        if (search.vertical === "hotels") {
+          try {
+            const constants = await this.request("/api/4.0/constants-mapping", trackId,
+              {types:"facility",languageCode:"en"}, null, signal);
+            data.amenityDictionary = object(constants.facility).features;
+          } catch {
+            // Metadata failure must not discard otherwise valid hotel rates.
+            data.amenityDictionary = [];
+          }
+        }
         return normalizeSandboxOffers(search.vertical, data);
+      }
       if (search.vertical !== "hotels") {
         if (
           !["first-phase", "second-phase"].includes(text(data.status)) ||

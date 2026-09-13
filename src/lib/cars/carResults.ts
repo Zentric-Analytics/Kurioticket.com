@@ -42,12 +42,17 @@ const optionMatches: Record<string, (car: NormalizedCarResult) => boolean> = {
   cityLocation: (car) => car.pickupType === "city-location",
 };
 
-export const doesCarMatchFilterOption = (car: NormalizedCarResult, option: string) =>
-  optionMatches[option]?.(car) ?? false;
+export const doesCarMatchFilterOption = (car: NormalizedCarResult, option: string) => {
+  // Legacy required defaults must never turn unknown supplier data into a match.
+  if (car.sandboxPresentation && !option.startsWith("total")) {
+    return car.sandboxPresentation.filterOptions?.includes(option) ?? false;
+  }
+  return optionMatches[option]?.(car) ?? false;
+};
 
 export function filterCarResults<T extends NormalizedCarResult>(results: T[], filters: SelectedCarFilters): T[] {
   const groups = Object.values(filters).filter((options) => options.length);
-  return results.filter((car) => groups.every((options) => options.some((option) => optionMatches[option]?.(car))));
+  return results.filter((car) => groups.every((options) => options.some((option) => doesCarMatchFilterOption(car, option))));
 }
 
 // Kurioticket's transparent recommendation tie-breaker rewards practical rental terms.

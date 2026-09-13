@@ -14,6 +14,36 @@ export function kayakImageUrl(value: unknown): string | undefined {
 export type KayakImage = { url: string; alt: string };
 export type KayakAttribute = { label: string; value: string };
 
+export function kayakHotelAmenities(features: unknown, mapping: unknown): string[] {
+  const dictionary = new Map<number, string>();
+  if (Array.isArray(mapping)) for (const entry of mapping) {
+    if (entry && typeof entry.id === "number" && typeof entry.name === "string" && entry.name.trim()) {
+      dictionary.set(entry.id, entry.name.trim());
+    }
+  }
+  return Array.isArray(features) ? [...new Set(features.map(id => dictionary.get(id)).filter((name): name is string => Boolean(name)))] : [];
+}
+
+export function kayakHotelAmenityStatus(features: unknown, mapping: unknown): string {
+  if (!Array.isArray(features) || !features.length) return "Amenities not supplied by provider";
+  const ids = new Set(Array.isArray(mapping) ? mapping.filter(entry => entry && typeof entry.name === "string" && entry.name.trim()).map(entry => entry.id) : []);
+  const missing = new Set(features.filter(id => !ids.has(id))).size;
+  return missing ? `${missing} additional amenity descriptions unavailable from provider` : "All supplied amenities listed";
+}
+
+/** Only explicitly supplied specifications may participate in shared filters. */
+export function kayakCarFilterOptions(car: Record<string, unknown>): string[] {
+  const options: string[] = [];
+  if (car.transmission === "automatic" || car.transmission === "manual") options.push(car.transmission);
+  for (const count of [4, 5, 7]) {
+    if (typeof car.passengers === "number" && Number.isFinite(car.passengers) && car.passengers >= count) options.push(`seats${count}Plus`);
+  }
+  for (const count of [2, 3, 4]) {
+    if (typeof car.bags === "number" && Number.isFinite(car.bags) && car.bags >= count) options.push(`bags${count}Plus`);
+  }
+  return options;
+}
+
 /** Explicit customer-facing fields only; transport objects and URLs never pass through. */
 export function kayakAttributes(value: Record<string, unknown>, keys: string[]): KayakAttribute[] {
   const output: KayakAttribute[] = [];

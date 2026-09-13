@@ -36,7 +36,7 @@ export function kayakHotelCardModel(offer: SandboxOffer, nights: number): Public
   return {id:`kayak-sandbox:${offer.id}`,provider:"KAYAK sandbox",name:offer.title,
     imageUrl:offer.images?.[0]?.url,imageUrls:offer.images?.map(image=>image.url),
     rating:0,classificationStars:offer.hotelStars && [1,2,3,4,5].includes(offer.hotelStars) ? offer.hotelStars as HotelClassificationStars : undefined,
-    location:offer.details[0] || "Location not supplied",amenities:[],roomType:offer.description,
+    location:offer.details[0] || "Location not supplied",amenities:offer.amenities || [],roomType:offer.description,
     cancellationInfo:"See supplied rate details",pricePerNight:offer.price/nights,totalPrice:offer.price,currency:offer.currency,
     bookingUrl:offer.testUrl,partnerRedirectUrl:offer.testUrl,valueScore:0,travelConfidenceScore:0,arrivalSuitabilityScore:0,
     recommendationReasons:[],badges:[],dataSource:"demo"};
@@ -48,7 +48,7 @@ export function kayakCarCardModel(offer: SandboxOffer, days: number, pickup: str
     passengers:0,bags:0,doors:0,transmission:"automatic",airConditioning:false,fuelPolicy:"other",mileagePolicy:"limited",
     pickupType:"city-location",pickupLocation:pickup,returnLocation:pickup,shuttleRequired:false,
     rentalCompanyName:offer.details[1] || "Supplier not supplied",recommendationScore:0,requiredDocuments:[],includedItems:[],importantInformation:[],
-    inventorySource:"kayak-sandbox",sandboxPresentation:{specs:offer.carSpecs || ["Specifications not supplied"],pickupLabel:"Search pickup"},
+    inventorySource:"kayak-sandbox",sandboxPresentation:{specs:offer.carSpecs || ["Specifications not supplied"],pickupLabel:"Search pickup",filterOptions:offer.carFilterOptions},
     offers:[{id:offer.id,bookingProviderName:offer.description,rentalCompanyName:offer.details[1] || "Supplier not supplied",
       currency:offer.currency,totalPrice:offer.priceBasis === "per day" ? offer.price*days : offer.price,
       pricePerDay:offer.priceBasis === "per day" ? offer.price : offer.price/days,

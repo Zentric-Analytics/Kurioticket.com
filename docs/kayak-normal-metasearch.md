@@ -75,3 +75,12 @@ feature identifiers; readable amenity mapping still needs the provider's static
 dictionary. Do not mistake identifiers for user-facing amenity names. The car
 browser recorded a hydration mismatch on the shared-card staging release; the
 local preference seed change is not yet verified as resolving it.
+
+### Preference correction staging check
+
+Release `5d8246664cc112b14f05b44748d096f700d09cc8` is live. A fresh browser tab
+loaded 116 KAYAK car offers, then reloaded successfully; the fresh tab's error log
+remained empty. KAYAK/Sandbox labels, supplied specifications, and saved JPY
+selection were visible. Earlier error entries on the retained tab predated this
+fresh verification and must not be treated as new errors. Mobile and the remaining
+combined-provider checks are still open.
