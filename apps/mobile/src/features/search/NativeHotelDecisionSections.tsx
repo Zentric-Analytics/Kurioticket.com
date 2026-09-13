@@ -8,6 +8,7 @@ import { buildHotelAddress, hasValidHotelCoordinates } from "../../../../../src/
 import { getApiBaseUrl } from "../../config/apiUrl";
 import { colors } from "../../theme/tokens";
 import { appFonts } from "../../theme/typography";
+import { HOTEL_LIMITS } from "../flow/hotelSearchModel";
 import { NativeHotelFullMapModal } from "./NativeHotelFullMapModal";
 import { nativeHotelLocationPreviewUrl } from "./nativeHotelLocationModel";
 import type { NativeRelatedHotel } from "./nativeHotelRelatedHotelsModel";
@@ -16,6 +17,12 @@ type Theme = { dark: boolean; surface: string; border: string; textPrimary: stri
 const RELATED_HOTEL_CARD_WIDTH = 241;
 
 const one = (value?: string | string[]) => Array.isArray(value) ? value[0] : value;
+const normalizedCount = (value: string | string[] | undefined, fallback: number, maximum: number) => {
+  const raw = one(value);
+  if (!raw || !/^\d+$/.test(raw)) return fallback;
+  const parsed = Number(raw);
+  return parsed >= 1 && parsed <= maximum ? parsed : fallback;
+};
 
 export function NativeHotelPropertyLocationSection({ hotelId, hotelName, propertyDetails, theme }: {
   hotelId: string;
@@ -81,8 +88,13 @@ export function NativeRelatedHotelsSection({ city, hotels, theme, onViewHotel }:
   theme: Theme;
   onViewHotel: (item: NativeRelatedHotel) => void;
 }) {
-  const params = useLocalSearchParams<Record<string, string | string[]>>();
+  const routeParams = useLocalSearchParams<Record<string, string | string[]>>();
   if (!hotels.length) return null;
+  const params = {
+    ...routeParams,
+    guests: String(normalizedCount(routeParams.guests, 2, HOTEL_LIMITS.guests.max)),
+    rooms: String(normalizedCount(routeParams.rooms, 1, HOTEL_LIMITS.rooms.max)),
+  };
   const cityName = city?.trim();
   const seeAllHotels = () => {
     router.push({
