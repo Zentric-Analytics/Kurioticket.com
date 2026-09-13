@@ -2821,7 +2821,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     let active = true;
     const dates = getNearbyFareDateRange(getNearbyFareWindowStart(centerDate));
     const fetchedAt = Date.now();
-    const currentFare = getLowestProviderFare(results);
+    const currentFare = getLowestProviderFare(providerResults);
     const selectedKey = getNearbyFareCacheKey(body, body.departureDate);
 
     if (currentFare) {
@@ -2967,7 +2967,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       activeRequests.forEach((request) => request.controller.abort());
       activeRequests.clear();
     };
-  }, [body, guidedMode, results]);
+  }, [body, guidedMode, providerResults]);
 
   useEffect(() => {
     if (!tripTypeMenuOpen) return;
