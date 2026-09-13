@@ -1,13 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { KayakResultsContext } from "./KayakResultsContext";
 import type { KayakVertical, SandboxOffer, SandboxPlace } from "@/services/travel/kayakSandbox";
 import { KayakResultCard } from "./KayakResultCard";
 
-export function KayakMetasearchClient({ vertical, criteria, children }: {
+export function KayakMetasearchClient({ vertical, criteria: inputCriteria, children }: {
   vertical: KayakVertical; criteria: Record<string, string>; children?: ReactNode;
 }) {
+  const criteriaKey = JSON.stringify(inputCriteria);
+  const criteria = useMemo<Record<string,string>>(() => JSON.parse(criteriaKey), [criteriaKey]);
   const request = useRef<AbortController | null>(null);
   const [busy, setBusy] = useState(true);
   const [offers, setOffers] = useState<SandboxOffer[]>([]);
