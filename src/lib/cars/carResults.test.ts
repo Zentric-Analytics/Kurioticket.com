@@ -27,6 +27,12 @@ const search: CarSearchParams = {
   driverAge: "30",
 };
 const cars = buildStaticCarResults(search);
+test("sandbox placeholder pickup does not improve shared recommendation order", () => {
+  const base = { ...cars[0], recommendationScore: 0, supplierRating: undefined };
+  const unknown = { ...base, id: "z-unknown", pickupType: "city-location" as const, sandboxPresentation: { specs: [], pickupLabel: "Unknown", filterOptions: [] } };
+  const neutral = { ...unknown, id: "a-neutral", pickupType: "shuttle" as const };
+  assert.deepEqual(sortCarResults([unknown, neutral], "recommended").map(car => car.id), ["a-neutral", "z-unknown"]);
+});
 const expectations: Record<string, (c: (typeof cars)[number]) => boolean> = {
   totalUnder100: (c) => (getPrimaryCarOffer(c)?.totalPrice ?? Infinity) < 100,
   total100To149: (c) => { const total = getPrimaryCarOffer(c)?.totalPrice ?? Infinity; return total >= 100 && total < 150; },

@@ -57,10 +57,9 @@ export function filterCarResults<T extends NormalizedCarResult>(results: T[], fi
 
 // Kurioticket's transparent recommendation tie-breaker rewards practical rental terms.
 function recommendedScore(car: NormalizedCarResult) {
-  const offer = getPrimaryCarOffer(car);
   return car.recommendationScore * 1000 + (car.supplierRating ?? 0) * 10 +
-    (offer?.freeCancellation ? 4 : 0) + (car.mileagePolicy === "unlimited" ? 3 : 0) +
-    (car.pickupType === "airport-counter" ? 2 : car.pickupType === "city-location" ? 1 : 0);
+    (doesCarMatchFilterOption(car, "freeCancellation") ? 4 : 0) + (doesCarMatchFilterOption(car, "unlimitedMileage") ? 3 : 0) +
+    (doesCarMatchFilterOption(car, "airportCounter") ? 2 : doesCarMatchFilterOption(car, "cityLocation") ? 1 : 0);
 }
 
 export function sortCarResults<T extends NormalizedCarResult>(results: T[], sort: CarSort): T[] {

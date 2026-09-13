@@ -50,6 +50,9 @@ import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { Footer } from "@/components/layout/Footer";
 import { FlightCard } from "@/components/results/FlightCard";
+import { useKayakResults } from "./KayakResultsContext";
+import { kayakFlightCardModel } from "./kayakCardModels";
+import { KayakResultCard } from "./KayakResultCard";
 import { nearbyFarePrice } from "@/components/results/nearbyFarePrice";
 import { DesktopFlightFilters } from "@/components/results/DesktopFlightFilters";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
@@ -989,7 +992,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [desktopSortOpen, setDesktopSortOpen] = useState(false);
   const desktopSortRef = useRef<HTMLDivElement | null>(null);
   const desktopSortButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [results, setResults] = useState<PublicFlightResult[]>([]);
+  const [providerResults, setResults] = useState<PublicFlightResult[]>([]);
+  const kayak = useKayakResults();
+  const results = useMemo(() => guidedMode || kayak?.vertical !== "flights" ? providerResults : [
+    ...providerResults, ...kayak.offers.map(kayakFlightCardModel).filter((flight): flight is PublicFlightResult => flight !== null),
+  ],[guidedMode,kayak,providerResults]);
   const activeFlightSearchKeyRef = useRef<string>("");
   const [error, setError] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -7065,7 +7072,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           <h2 ref={resultsHeadingRef} tabIndex={-1} className="sr-only">
             {formatResultsFound(sortedResults.length, t)}
           </h2>
-          {error ? (
+          {error && results.length > 0 ? <p role="status">Some provider results are unavailable. Available offers are shown below.</p> : null}
+          {error && results.length === 0 ? (
             <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger">
               {error}
             </div>
@@ -7372,6 +7380,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   </div>
                   <div data-flight-results-card-list className="space-y-3 sm:space-y-4">
                     {visibleResults.map((flight, index) => {
+                      const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
+                      if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
                       const detailsQuery = params.toString();
                       const detailsHref =
                         `/flights/details/${encodeURIComponent(flight.id)}` +

@@ -99,7 +99,7 @@ export default async function CarsResultsPage({
         hideDesktopTravelNav
         hideMobileCategoryTabs
       />
-      <KayakMetasearchSection vertical="cars" params={params} />
+      <KayakMetasearchSection vertical="cars" params={params}>
       <Suspense
         key={searchIdentity}
         fallback={
@@ -127,6 +127,7 @@ export default async function CarsResultsPage({
       >
         <CarsResultsContent values={values} searchIdentity={searchIdentity} />
       </Suspense>
+      </KayakMetasearchSection>
     </>
   );
 }
