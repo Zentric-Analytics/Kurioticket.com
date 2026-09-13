@@ -516,7 +516,6 @@ function HotelDetail({
             name={result.name}
             initialImages={images}
             theme={theme}
-            accentColor={hotelAccent}
           />
         </View>
 
@@ -535,7 +534,8 @@ function HotelDetail({
           {hotelReview && hotelReviewScore ? (
             <View style={s.reviewSummary}>
               <Users accessible={false} size={18} color={iconColor} />
-              <Text style={[s.reviewText, { color: titleColor }]}>
+              <Text style={[s.reviewText, { color: titleColor }]}
+              >
                 <Text style={s.reviewPrimary}>{hotelReview.label} {hotelReviewScore}</Text>
                 <Text style={[s.reviewSecondary, { color: metaColor }]}> · {hotelReview.count}</Text>
               </Text>
@@ -592,14 +592,16 @@ function HotelDetail({
           </View>
         </View>
 
-        <HotelStayEditor
-          result={result}
-          destination={String(params.destination || property?.city || result.location)}
-          checkIn={checkIn}
-          checkOut={checkOut}
-          guests={guestCount}
-          rooms={roomCount}
-        />
+        {activeHotelTab === "details" ? (
+          <HotelStayEditor
+            result={result}
+            destination={String(params.destination || property?.city || result.location)}
+            checkIn={checkIn}
+            checkOut={checkOut}
+            guests={guestCount}
+            rooms={roomCount}
+          />
+        ) : null}
 
         <View style={s.detailBody}>
           {activeHotelTab === "details" ? (
@@ -621,7 +623,8 @@ function HotelDetail({
           {activeHotelTab === "deals" ? (
             <View style={s.compareSection}>
               <Text style={[s.compareHeading, { color: titleColor }]}>Deals</Text>
-              <Text style={[s.compareLead, { color: metaColor }]}>
+              <Text style={[s.compareLead, { color: metaColor }]}
+              >
                 {stay.dateText ?? "Stay dates unavailable"} · {stay.occupancy}
               </Text>
               <View style={s.compareOffers}>
@@ -691,7 +694,8 @@ function HotelDetail({
                   );
                 })}
                 {!hotelOffers.length && detailsStatus !== "loading" ? (
-                  <View style={[s.offer, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                  <View style={[s.offer, { backgroundColor: theme.surface, borderColor: theme.border }]}
+                  >
                     <Text style={[s.offerProvider, { color: theme.textPrimary }]}>{result.provider}</Text>
                     <Text style={[s.sectionLead, { color: theme.textSecondary }]}>Planning inventory · no live checkout</Text>
                   </View>
@@ -710,7 +714,8 @@ function HotelDetail({
       >
         <ArrowLeft size={25} strokeWidth={2.2} color="#0F172A" />
       </Pressable>
-      <View style={[s.heroActions, { top: inset.top + 12 }]}>
+      <View style={[s.heroActions, { top: inset.top + 12 }]}
+      >
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={saved ? `Remove ${result.name} hotel from saved` : `Save ${result.name} hotel`}
