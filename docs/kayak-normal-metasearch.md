@@ -138,3 +138,42 @@ exhaustive data completeness,
 mobile/desktop end-to-end coverage, provider failure/retry coverage, final
 sandbox safeguard reconciliation, and final overall evidence remain separate.
 Production and native builds were not deployed.
+
+### Guest-rating follow-up
+
+Release `e444ce505282d22d715865c745db8fc39e7e9478` is live on staging;
+the health endpoint returned HTTP 200. All 3,138 tests, type checks, focused lint,
+full build and required release checks passed. KAYAK Hotels Search documentation
+supplies numeric guestRating and numberOfReviews; the adapter now retains these
+separately from classification stars for shared card display and comparison.
+Source: https://developers.kayak.com (Hotels Search API).
+
+A staging API search for London, October 12–17, one guest/room returned eight
+Kurioticket catalogue hotels, establishing a populated existing comparison source.
+This is not yet a combined browser result. Browser tab attachment timed out on
+both documentation and staging attempts; browser inventory remained empty despite
+the user opening the panel. Mixed hotel filtering and visible Top rated ordering
+remain unverified. Item three is still open; do not infer completion from the
+deployment or successful local checks alone.
+
+### Item three closure — live browser verification
+
+Browser attachment recovered. On the same deployed release, the ordinary London
+search (October 12–17, one guest/room, explicitly selecting London, England)
+returned 174 KAYAK sandbox offers plus eight catalogue hotels: 182 shared results.
+
+- Top rated was checked across all ten pages. All 174 guest scores were in
+  descending order, from 8.6 to 8.0. The eight unrated catalogue hotels followed
+  rated results; no review scores were invented for them.
+- Pool selected 18 results: 14 KAYAK offers and four catalogue hotels. Cheapest
+  sorted that combined set ascending (provider nightly amounts $143–$760).
+- Removing Pool restored 182 results. Returning to Cheapest reset pagination to
+  results 1–20. Browser error logs remained empty. No real booking occurred.
+- Recorded request logs showed no new KAYAK request during filter/sort changes.
+- Automated checkbox targeting scrolled the outer narrow drawer offscreen;
+  closing/reopening it, scrolling its content, and clicking the visible checkbox
+  worked. This observation is not a claim of exhaustive mobile accessibility QA.
+
+Together with the previously recorded flight/car checks, item three's planned
+shared filtering/sorting staging checks are complete. Items four through eight
+remain separate. Production and native applications are unchanged.

@@ -20,6 +20,7 @@ export const imageLocalPatterns: ImagePattern[] = [
 ];
 
 export const imageRemotePatterns: RemoteImagePattern[] = [
+  { protocol: "https", hostname: "sandbox-en-us.kayakaffiliates.com", port: "", pathname: "/himg/**", search: "" },
   { protocol: "https", hostname: "content.r9cdn.net", port: "", pathname: "/**" },
   { protocol: "https", hostname: "www.kayak.com", port: "", pathname: "/h/run/api/image" },
   { protocol: "https", hostname: "www.kayak.ch", port: "", pathname: "/h/run/api/image" },

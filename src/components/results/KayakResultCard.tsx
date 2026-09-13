@@ -20,6 +20,7 @@ export function KayakResultCard({offer,vertical,criteria}:{offer:SandboxOffer;ve
     <details className="rounded-xl border border-slate-200 bg-white p-3">
       <summary className="cursor-pointer font-semibold text-[#004BB8]">View all supplied details and test link</summary>
       <p className="mt-3">{offer.description}</p>
+      <p>Original provider price: {offer.price} {offer.currency} · {offer.priceBasis}</p>
       <ul>{offer.details.map((detail,index)=><li key={index}>{detail}</li>)}</ul>
       {offer.flightLegs?.flatMap(leg=>leg.segments).filter(segment=>segment.operatingDisclosure).map((segment,index)=><p key={index}>{segment.operatingDisclosure}</p>)}
       <dl className="my-3 grid gap-2 sm:grid-cols-2">{offer.attributes?.map((attribute,index)=><div key={index}><dt className="font-medium capitalize">{attribute.label}</dt><dd className="break-words">{attribute.value}</dd></div>)}</dl>

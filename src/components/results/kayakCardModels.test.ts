@@ -16,7 +16,8 @@ test("KAYAK guest ratings participate in cross-provider comparison independently
 test("regular flight card model keeps all legs without inventing fare benefits", () => {
   const model=kayakFlightCardModel({id:"1",title:"trip",description:"seller",details:[],price:123,currency:"USD",priceBasis:"per person",testUrl:"https://affiliates.kayak.com/sandbox-clickout",flightLegs:[{durationMinutes:90,segments:[{origin:"BOS",destination:"JFK",departure:"2099-10-12T10:00:00",arrival:"2099-10-12T11:30:00",airline:"Test",flightNumber:"T 1"}]}]});
   assert.equal(model?.legs?.[0].duration,"1h 30m");
-  assert.equal(model?.baggageInfo,"Not supplied by provider");
+  assert.equal(model?.baggageInfo,"Baggage allowance not supplied by provider");
+  assert.doesNotMatch(model?.baggageInfo ?? "", /included/i);
   assert.equal(model?.legs?.[0].segments.length,1);
   assert.deepEqual(model?.badges,[]);
 });

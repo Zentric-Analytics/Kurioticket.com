@@ -4,9 +4,10 @@ export function kayakImageUrl(value: unknown): string | undefined {
   try {
     const url = new URL(value);
     if (url.protocol !== "https:" || url.username || url.password || url.port) return undefined;
-    if (!(url.hostname === "content.r9cdn.net" || url.hostname === "www.kayak.com" || url.hostname === "www.kayak.ch")) return undefined;
+    const sandboxImage = url.hostname === "sandbox-en-us.kayakaffiliates.com" && url.pathname.startsWith("/himg/") && !url.search;
+    if (!(sandboxImage || url.hostname === "content.r9cdn.net" || url.hostname === "www.kayak.com" || url.hostname === "www.kayak.ch")) return undefined;
     if (/api[-_]?key|authorization|access[-_]?token/i.test(decodeURIComponent(url.search))) return undefined;
-    if (url.hostname !== "content.r9cdn.net" && url.pathname !== "/h/run/api/image") return undefined;
+    if (!sandboxImage && url.hostname !== "content.r9cdn.net" && url.pathname !== "/h/run/api/image") return undefined;
     return url.href;
   } catch { return undefined; }
 }
@@ -74,6 +75,42 @@ export type KayakFlightLeg = {
     airline: string; airlineLogo?: string; flightNumber: string; operatingDisclosure?: string }[];
 };
 
+export function kayakFlightCabin(data: Record<string, unknown>, result: Record<string, unknown>, option: Record<string, unknown>): string | undefined {
+  const obj = (value: unknown): Record<string, unknown> => value && typeof value === "object" ? value as Record<string, unknown> : {};
+  const ids = (Array.isArray(result.legs) ? result.legs : []).flatMap(reference => {
+    const leg = obj(obj(data.legs)[String(obj(reference).id)]);
+    return (Array.isArray(leg.segments) ? leg.segments : []).map(segment=>obj(segment).id);
+  });
+  const fares = Array.isArray(option.segmentFares) ? option.segmentFares : [];
+  const cabins = ids.map(id => {
+    const matches = fares.filter(fare=>typeof id === "string" && obj(fare).segmentId === id);
+    if (matches.length !== 1) return undefined;
+    const name = obj(obj(matches[0]).cabin).displayName;
+    return typeof name === "string" && name.trim() ? name.trim() : undefined;
+  });
+  return cabins.length && cabins.every(Boolean) ? [...new Set(cabins)].join(" / ") : undefined;
+}
+
+/** Customer-facing segment facts and airline rules, not purchased fare entitlements. */
+export function kayakFlightAttributes(data: Record<string, unknown>, result: Record<string, unknown>): KayakAttribute[] {
+  const obj = (value: unknown): Record<string, unknown> => value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+  const rows: KayakAttribute[] = [];
+  const seenAirlines = new Set<string>();
+  for (const [legIndex, reference] of (Array.isArray(result.legs) ? result.legs : []).entries()) {
+    const leg = obj(obj(data.legs)[String(obj(reference).id)]);
+    for (const [segmentIndex, reference] of (Array.isArray(leg.segments) ? leg.segments : []).entries()) {
+      const segment = obj(obj(data.segments)[String(obj(reference).id)]);
+      rows.push(...kayakAttributes(segment, ["equipmentTypeName", "duration", "type"]).map(attribute => ({...attribute,label:`Leg ${legIndex+1}, segment ${segmentIndex+1} · ${attribute.label}${attribute.label === "duration" ? " (minutes)" : ""}`})));
+      const airlineCode = typeof segment.airline === "string" ? segment.airline : "";
+      if (airlineCode && !seenAirlines.has(airlineCode)) {
+        seenAirlines.add(airlineCode);
+        rows.push(...kayakAttributes(obj(obj(data.airlines)[airlineCode]), ["baggagePolicies"]).map(attribute => ({...attribute,label:`${airlineCode} airline policy (not included allowance) · ${attribute.label}`})));
+      }
+    }
+  }
+  return rows;
+}
+
 export function kayakFlightLegs(data: Record<string, unknown>, result: Record<string, unknown>): KayakFlightLeg[] {
   const obj = (value: unknown): Record<string, unknown> => value && typeof value === "object" ? value as Record<string, unknown> : {};
   const str = (value: unknown) => typeof value === "string" ? value : "";
@@ -95,8 +132,8 @@ export function kayakFlightLegs(data: Record<string, unknown>, result: Record<st
 }
 
 export function kayakImages(vertical: string, result: Record<string, unknown>, car: Record<string, unknown>, title: string): KayakImage[] {
-  const candidates = vertical === "hotels" && Array.isArray(result.images)
-    ? result.images.map(value => value && typeof value === "object" ? (value as Record<string, unknown>).large : undefined)
+  const candidates = vertical === "hotels"
+    ? [...(Array.isArray(result.images) ? result.images : []), result.image].map(value => value && typeof value === "object" ? (value as Record<string, unknown>).large : undefined)
     : vertical === "cars" ? [car.image] : [];
   return [...new Set(candidates.map(kayakImageUrl).filter((url): url is string => Boolean(url)))].map(url => ({ url, alt: title }));
 }
