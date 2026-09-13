@@ -7,3 +7,8 @@ test("filter, sort and page changes preserve the provider search identity", () =
   assert.deepEqual(kayakSearchCriteria({destination:"JFK",origin:"BOS",adults:"2",departureDate:"2026-10-12"}),kayakSearchCriteria(search));
   assert.notDeepEqual(kayakSearchCriteria({...search,adults:"3"}),kayakSearchCriteria(search));
 });
+test("hotel destination identity reaches the provider resolver", () => {
+  assert.deepEqual(kayakSearchCriteria({ destination: "San Francisco", destinationId: "us-san-francisco", checkIn: "2026-09-30" }), {
+    destination: "San Francisco", destinationId: "us-san-francisco", checkIn: "2026-09-30",
+  });
+});
