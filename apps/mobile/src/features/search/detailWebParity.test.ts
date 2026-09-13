@@ -5,6 +5,7 @@ import test from "node:test";
 const hotelSource = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
 const hotel = hotelSource.slice(hotelSource.indexOf("function HotelDetail"));
 const bookingDetails = readFileSync("src/features/search/NativeHotelBookingDetails.tsx", "utf8");
+const rates = readFileSync("src/features/search/NativeHotelRatesSection.tsx", "utf8");
 const gallery = readFileSync("src/features/search/NativeHotelDetails.tsx", "utf8");
 const stayEditor = readFileSync("src/features/search/HotelStayEditor.tsx", "utf8");
 const car = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
@@ -165,10 +166,10 @@ test("native gallery remains interactive and full-bleed with the two-level mobil
 
 test("active Hotel detail owns theme-aware accents without changing filled brand controls", () => {
   assert.match(hotel, /const hotelAccent = theme\.dark \? "#8FB5FF" : colors\.blue/);
-  assert.match(hotel, /borderColor: selected \? hotelAccent : theme\.border/);
-  assert.match(hotel, /borderColor: selected \? hotelAccent : theme\.textSecondary/);
-  assert.match(hotel, /s\.selectionControlDot, \{ backgroundColor: hotelAccent \}/);
-  assert.doesNotMatch(hotel, /borderWidth: 6/);
+  assert.match(hotel, /<NativeHotelRatesSection[\s\S]*?accentColor=\{hotelAccent\}/);
+  assert.match(rates, /style=\{\[s\.selectButton, \{ backgroundColor: accentColor \}\]\}/);
+  assert.match(rates, /\{selected \? "Selected" : "Select"\}/);
+  assert.doesNotMatch(rates, /borderWidth: 6/);
   assert.match(hotelSource, /continueButton: \{[^\n]*backgroundColor: colors\.blue/);
   assert.match(hotelSource, /continuePressed: \{ backgroundColor: "#003B91" \}/);
   assert.match(tokens, /blue: "#004BB8"/);
@@ -198,10 +199,10 @@ test("active Hotel provider selection validates candidates before precedence", (
 
 test("active Hotel Deals preserve each actionable continuation and truthful dock", () => {
   assert.match(hotel, /nativeHotelOffers\(internalRoomFlowAvailable, providerBookable\)/);
-  assert.match(hotel, /offer\.kind === "internal-room-flow"/);
+  assert.match(rates, /offer\.kind === "internal-room-flow"/);
   assert.match(hotel, /selectedOffer\?\.kind !== "provider-handoff"/);
   assert.match(hotel, /Linking\.openURL\(redirectUrl\)/);
-  assert.match(hotel, /accessibilityRole="radio"/);
+  assert.match(rates, /accessibilityRole="radio"/);
   assert.match(hotel, /estimated stay total/);
   assert.match(hotel, />Continue booking</);
 });

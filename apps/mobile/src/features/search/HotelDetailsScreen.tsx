@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
-  Image,
   Linking,
   Pressable,
   ScrollView,
@@ -32,7 +31,6 @@ import { visualHotels } from "./visualFixtures";
 import {
   canonicalHotelAddress,
   HotelRoomOptionsModal,
-  hotelStaySummary,
   NativeHotelGallery,
 } from "./NativeHotelDetails";
 import {
@@ -49,10 +47,10 @@ import {
 } from "./hotelDetailCurrency";
 import { prepareNativeRelatedHotels, type NativeRelatedHotel } from "./nativeHotelRelatedHotelsModel";
 import { NativeHotelReviewsSection, nativeHotelReviewPresentation } from "./NativeHotelReviewsSection";
-import { HotelOfferAmenityList } from "./HotelCardAmenityList";
 import { hotelResultsDismissCount } from "./hotelDetailReturnNavigation";
 import { HotelStayEditor } from "./HotelStayEditor";
 import { NativeHotelBookingDetails } from "./NativeHotelBookingDetails";
+import { NativeHotelRatesSection } from "./NativeHotelRatesSection";
 
 type HotelDetailTab = "details" | "reviews" | "deals";
 type HotelDetailsStatus = "loading" | "ready" | "error";
@@ -213,7 +211,6 @@ function HotelDetail({
     : result.imageUrl
       ? [result.imageUrl]
       : [];
-  const stay = hotelStaySummary(checkIn, checkOut, guestCount, roomCount);
   const address = canonicalHotelAddress(property, result.location);
   const classification =
     Number.isInteger(result.classificationStars) &&
@@ -627,85 +624,20 @@ function HotelDetail({
           ) : null}
 
           {activeHotelTab === "deals" ? (
-            <View style={s.compareSection}>
-              <Text style={[s.compareHeading, { color: titleColor }]}>Rates</Text>
-              <Text style={[s.compareLead, { color: metaColor }]}>
-                {stay.dateText ?? "Stay dates unavailable"} · {stay.occupancy}
-              </Text>
-              <View style={s.compareOffers}>
-                {hotelOffers.map((offer) => {
-                  const selected = offer.id === selectedOffer?.id;
-                  const internal = offer.kind === "internal-room-flow";
-                  return (
-                    <Pressable
-                      key={offer.id}
-                      onPress={() => setSelectedOfferId(offer.id)}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected }}
-                      style={[
-                        s.offer,
-                        {
-                          backgroundColor: theme.surface,
-                          borderColor: selected ? hotelAccent : theme.border,
-                        },
-                      ]}
-                    >
-                      <View style={s.offerTop}>
-                        {internal ? (
-                          <Image
-                            accessible
-                            accessibilityLabel="Kurioticket"
-                            accessibilityIgnoresInvertColors
-                            source={require("../../../assets/kurioticket-logo-primary-light-bg.png")}
-                            resizeMode="contain"
-                            style={s.offerBrandLogo}
-                          />
-                        ) : (
-                          <Text style={[s.offerProvider, { color: theme.textPrimary }]}>{result.provider}</Text>
-                        )}
-                        <View
-                          style={[
-                            s.selectionControl,
-                            {
-                              backgroundColor: theme.surface,
-                              borderColor: selected ? hotelAccent : theme.textSecondary,
-                            },
-                          ]}
-                        >
-                          {selected ? (
-                            <View style={[s.selectionControlDot, { backgroundColor: hotelAccent }]} />
-                          ) : null}
-                        </View>
-                      </View>
-                      <View style={s.offerPriceRow}>
-                        <Text
-                          numberOfLines={1}
-                          adjustsFontSizeToFit
-                          minimumFontScale={0.65}
-                          style={[s.nightly, { color: theme.textPrimary }]}
-                        >
-                          {hasPrice ? (nightlyPrice?.formatted ?? "—") : "Price unavailable"}
-                        </Text>
-                      </View>
-                      <View style={s.offerBottom}>
-                        <HotelOfferAmenityList
-                          amenities={result.amenities}
-                          color={theme.textSecondary}
-                          compact={width < 350}
-                        />
-                        <Text numberOfLines={1} style={[s.perNight, { color: hotelAccent }]}>per night</Text>
-                      </View>
-                    </Pressable>
-                  );
-                })}
-                {!hotelOffers.length && detailsStatus !== "loading" ? (
-                  <View style={[s.offer, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                    <Text style={[s.offerProvider, { color: theme.textPrimary }]}>{result.provider}</Text>
-                    <Text style={[s.sectionLead, { color: theme.textSecondary }]}>Planning inventory · no live checkout</Text>
-                  </View>
-                ) : null}
-              </View>
-            </View>
+            <NativeHotelRatesSection
+              offers={hotelOffers}
+              selectedOfferId={selectedOffer?.id ?? null}
+              onSelectOffer={setSelectedOfferId}
+              roomOptions={presentedRoomOptions}
+              providerName={result.provider}
+              roomType={result.roomType}
+              cancellationInfo={result.cancellationInfo}
+              nightlyPrice={nightlyPrice ?? null}
+              hasPrice={hasPrice}
+              detailsStatus={detailsStatus}
+              theme={theme}
+              accentColor={hotelAccent}
+            />
           ) : null}
         </View>
       </ScrollView>

@@ -8,6 +8,7 @@ const resultCard = results.slice(
   results.indexOf("function Loading", results.indexOf("function HotelCard")),
 );
 const hotel = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+const rates = readFileSync("src/features/search/NativeHotelRatesSection.tsx", "utf8");
 const reviews = readFileSync("src/features/search/NativeHotelReviewsSection.tsx", "utf8");
 
 test("discovery Hotel results never imply live price, saves, or classification", () => {
@@ -23,7 +24,7 @@ test("active native Hotel continuation distinguishes planning rooms and provider
   assert.doesNotMatch(hotel, /result\.partnerRedirectUrl \|\| result\.bookingUrl/);
   assert.match(hotel, /selectedOffer\?\.kind === "internal-room-flow"/);
   assert.doesNotMatch(hotel, /indicative planning/);
-  assert.match(hotel, /Planning inventory · no live checkout/);
+  assert.match(rates, /Planning inventory · no live checkout/);
   assert.match(hotel, /disabled=\{!canContinue\}/);
   assert.doesNotMatch(hotel, /Booked|Reserved|Available now/);
 });
@@ -38,8 +39,8 @@ test("active Hotel details do not fabricate classification, reviews, rooms, or p
 
 test("narrow active Hotel layout uses flexible price ownership", () => {
   assert.match(hotel, /useWindowDimensions\(\)\.width/);
-  assert.match(hotel, /adjustsFontSizeToFit/);
-  assert.match(hotel, /minimumFontScale=\{0\.65\}/);
+  assert.match(rates, /adjustsFontSizeToFit/);
+  assert.match(rates, /minimumFontScale=\{0\.72\}/);
   assert.match(hotel, /s\.dockPrice/);
   assert.match(hotel, /s\.continueButton/);
 });

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const detailSource = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+const ratesSource = readFileSync("src/features/search/NativeHotelRatesSection.tsx", "utf8");
 const dock = detailSource.slice(
   detailSource.indexOf("<View\n        style={[\n          s.sticky"),
   detailSource.indexOf("<HotelRoomOptionsModal"),
@@ -77,8 +78,8 @@ test("active native dock price hierarchy remains left aligned", () => {
 });
 
 test("Deals keeps its distinct right-aligned per-night style", () => {
-  assert.match(styleRule("perNight", "sectionLead"), /fontSize: 10[\s\S]*lineHeight: 14[\s\S]*fontWeight: "500"[\s\S]*fontFamily: appFonts\.medium[\s\S]*textAlign: "right"/);
-  assert.match(detailSource, /<Text numberOfLines=\{1\} style=\{\[s\.perNight, \{ color: hotelAccent \}\]\}>per night<\/Text>/);
+  assert.match(ratesSource, /perNight: \{[^}]*fontSize: 12[^}]*lineHeight: 17[^}]*fontWeight: "400"[^}]*fontFamily: appFonts\.regular[^}]*textAlign: "right"/);
+  assert.match(ratesSource, /<Text style=\{\[s\.perNight, \{ color: theme\.textSecondary \}\]\}>per night<\/Text>/);
 });
 
 test("active native CTA preserves the 48dp booking touch target and behavior", () => {
