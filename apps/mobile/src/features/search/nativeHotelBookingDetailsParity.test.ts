@@ -37,7 +37,7 @@ test("hotel-details route uses the composed booking details screen", () => {
   assert.match(screen, /activeHotelTab === "details"[\s\S]*?<NativeHotelBookingDetails/);
 });
 
-test("Details follows a flat booking-page order", () => {
+test("Details follows a flat booking-page order with Location directly after About", () => {
   const about = details.indexOf(">About this hotel<");
   const amenities = details.indexOf(">Popular amenities<");
   const location = details.indexOf("<NativeHotelLocationSection");
@@ -45,12 +45,12 @@ test("Details follows a flat booking-page order", () => {
   const information = details.indexOf(">Hotel information<");
   const accessibility = details.indexOf(">Accessibility<");
   const related = details.indexOf("<NativeRelatedHotelsSection");
-  for (const index of [about, amenities, location, room, information, accessibility, related]) {
+  for (const index of [about, location, amenities, room, information, accessibility, related]) {
     assert.notEqual(index, -1);
   }
-  assert.ok(about < amenities);
-  assert.ok(amenities < location);
-  assert.ok(location < room);
+  assert.ok(about < location);
+  assert.ok(location < amenities);
+  assert.ok(amenities < room);
   assert.ok(room < information);
   assert.ok(information < accessibility);
   assert.ok(accessibility < related);

@@ -43,7 +43,7 @@ test("iOS and Android share one active Hotel Details tablist with Details, Revie
   assert.doesNotMatch(tablist, /<ScrollView[^>]*horizontal/);
   assert.doesNotMatch(tablist, /Platform\.OS|\b(?:IOS|Android)HotelTabs?\b/);
 
-  assert.match(tablist, /style=\{s\.tabsRow\}/);
+  assert.match(tablist, /style=\{\[s\.tabsRow, \{ backgroundColor: hotelCanvasColor \}\]\}/);
   assert.match(tablist, /s\.tab,/);
   assert.match(tablist, /accessibilityState=\{\{ selected: activeHotelTab === tab \}\}/);
   assert.match(tablist, /activeHotelTab === tab && \{ borderBottomColor: hotelAccent \}/);
@@ -59,6 +59,7 @@ test("the active shared native tab geometry cannot stack or fork by platform", (
   assert.match(shell, /width: "100%"/);
   assert.match(shell, /alignSelf: "stretch"/);
   assert.doesNotMatch(shell, /flexDirection:/);
+  assert.doesNotMatch(shell, /marginTop:/);
 
   assert.match(row, /alignSelf: "stretch"/);
   assert.match(row, /flexDirection: "row"/);
@@ -78,7 +79,18 @@ test("the active shared native tab geometry cannot stack or fork by platform", (
   assert.equal((hotel.match(/s\.tabsShell/g) ?? []).length, 1);
   assert.equal((hotel.match(/s\.tabsRow/g) ?? []).length, 1);
   assert.match(hotel, /stickyHeaderIndices=\{\[2\]\}/);
+  assert.match(hotel, /const hotelStickyTabsTop = inset\.top \+ 72/);
+  assert.match(hotel, /paddingTop: hotelStickyTabsTop/);
+  assert.match(hotel, /marginTop: 1 - hotelStickyTabsTop/);
+  assert.match(hotel, /backgroundColor: hotelTabsPinned \? hotelCanvasColor : "transparent"/);
+  assert.match(hotel, /hotelTabsStickyStartRef\.current = nativeEvent\.layout\.y/);
+  assert.match(hotel, /syncHotelTabsPinned\(offset\)/);
+  assert.match(hotel, /style=\{\[s\.tabsRow, \{ backgroundColor: hotelCanvasColor \}\]\}/);
   assert.match(hotel, /const \[activeHotelTab, setActiveHotelTab\] = useState<HotelDetailTab>\("details"\)/);
+
+  const scrollEnd = hotel.indexOf("</ScrollView>");
+  const backControl = hotel.indexOf('accessibilityLabel="Back to hotel results"');
+  assert.ok(scrollEnd >= 0 && scrollEnd < backControl, "shared hotel header controls must remain fixed outside the ScrollView");
 });
 
 test("the active selected underline remains tab-local on iOS and Android", () => {
