@@ -1,6 +1,7 @@
 import { NativeAppleHotelMap } from "./NativeAppleHotelMap";
 import { useState } from "react";
 import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
 import { ImageOff, MapPin } from "lucide-react-native";
 import type { PublicHotelPropertyDetails } from "../../../../../src/lib/types";
 import { buildHotelAddress, hasValidHotelCoordinates } from "../../../../../src/lib/hotels/hotelMap";
@@ -13,6 +14,8 @@ import type { NativeRelatedHotel } from "./nativeHotelRelatedHotelsModel";
 
 type Theme = { dark: boolean; surface: string; border: string; textPrimary: string; textSecondary: string; icon: string };
 const RELATED_HOTEL_CARD_WIDTH = 241;
+
+const one = (value?: string | string[]) => Array.isArray(value) ? value[0] : value;
 
 export function NativeHotelPropertyLocationSection({ hotelId, hotelName, propertyDetails, theme }: {
   hotelId: string;
@@ -72,15 +75,27 @@ function RelatedHotelCard({ item, theme, onView }: { item: NativeRelatedHotel; t
   </Pressable>;
 }
 
-export function NativeRelatedHotelsSection({ city, hotels, theme, onViewHotel, onSeeAll }: {
+export function NativeRelatedHotelsSection({ city, hotels, theme, onViewHotel }: {
   city?: string | null;
   hotels: NativeRelatedHotel[];
   theme: Theme;
   onViewHotel: (item: NativeRelatedHotel) => void;
-  onSeeAll: () => void;
 }) {
+  const params = useLocalSearchParams<Record<string, string | string[]>>();
   if (!hotels.length) return null;
   const cityName = city?.trim();
+  const seeAllHotels = () => {
+    router.push({
+      pathname: "/hotel-results",
+      params: {
+        destination: cityName || one(params.destination) || "",
+        checkIn: one(params.checkIn) || "",
+        checkOut: one(params.checkOut) || "",
+        guests: one(params.guests) || "2",
+        rooms: one(params.rooms) || "1",
+      },
+    });
+  };
   return <View style={styles.relatedSection}>
     <View style={styles.relatedHeader}>
       <Text accessibilityRole="header" numberOfLines={1} style={[styles.heading, { color: theme.textPrimary }]}>{cityName ? `More hotels in ${cityName}` : "More hotels nearby"}</Text>
@@ -88,7 +103,7 @@ export function NativeRelatedHotelsSection({ city, hotels, theme, onViewHotel, o
         accessibilityRole="button"
         accessibilityLabel={cityName ? `See all hotels in ${cityName}` : "See all nearby hotels"}
         hitSlop={8}
-        onPress={onSeeAll}
+        onPress={seeAllHotels}
         style={({ pressed }) => [styles.seeAllButton, pressed && styles.seeAllPressed]}
       >
         <Text style={[styles.seeAllText, { color: theme.dark ? "#8FB5FF" : colors.blue }]}>See all</Text>
