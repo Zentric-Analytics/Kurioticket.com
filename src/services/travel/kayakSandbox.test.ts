@@ -11,6 +11,13 @@ import {
 
 const click = "https://affiliates.kayak.com/sandbox-clickout";
 
+test("only explicit offer-specific carry-on inclusion qualifies for baggage inclusion", () => {
+  for (const restriction of ["included", "notIncluded", "unknown", undefined]) {
+    const [offer] = normalizeSandboxOffers("flights", {currency:"USD",priceMode:"total",legs:{l:{segments:[{id:"s"}]}},segments:{s:{origin:"BOS",destination:"JFK",airline:"AA"}},results:[{legs:[{id:"l"}],bookingOptions:[{type:"regular",displayPrice:{price:100},bookingUrl:click,fees:{carryOnBag1:{restriction}}}]}]});
+    assert.equal(offer.flightCarryOnIncluded,restriction === "included");
+  }
+});
+
 test("flight cabin summary requires supplied fares for all itinerary segments", () => {
   const data={currency:"USD",priceMode:"total",legs:{l:{segments:[{id:"s"}]}},segments:{s:{origin:"BOS",destination:"JFK",airline:"AA"}},results:[{legs:[{id:"l"}],bookingOptions:[{type:"regular",displayPrice:{price:100},bookingUrl:click,segmentFares:[{segmentId:"s",cabin:{displayName:"Economy"}}]}]}]};
   assert.equal(normalizeSandboxOffers("flights",data)[0].flightCabin,"Economy");
