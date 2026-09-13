@@ -222,6 +222,19 @@ test("empty results stay empty and do not fall back to fabricated offers", async
   );
   assert.deepEqual(await c.search(flight, "session", undefined, true), []);
 });
+
+test("all verticals preserve genuinely empty completed responses", async () => {
+  const searches = [flight,
+    {vertical:"hotels" as const,destination:"kplace:58075",departure:"2099-10-12",returnDate:"2099-10-17",adults:1},
+    {vertical:"cars" as const,origin:"BOS",departure:"2099-10-12",returnDate:"2099-10-17"},
+  ];
+  for (const search of searches) {
+    const client = new KayakSandboxClient("key", fake(() => Response.json({
+      status:"complete",isComplete:true,currency:"USD",currencyCode:"USD",priceMode:"total",results:[],
+    })));
+    assert.deepEqual(await client.search(search,"test"), []);
+  }
+});
 test("cancellation stops polling before another provider call", async () => {
   const controller = new AbortController();
   controller.abort();
