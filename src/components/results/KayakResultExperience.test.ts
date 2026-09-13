@@ -18,7 +18,8 @@ test("normal KAYAK results use regular cards with compact labels and details act
 
 test("normal metasearch hides the page-level provider panel", () => {
   const source = readFileSync("src/components/results/KayakMetasearchClient.tsx", "utf8");
-  assert.match(source, /children \? <>\{destinationChoices\}\{children\}<\/>/);
+  assert.match(source, /\{children \?\? <section/);
+  assert.doesNotMatch(source, /Choose a destination|destinationChoices|Matching KAYAK destinations/);
 });
 
 test("the details page keeps the approved sandbox link away from result cards", () => {

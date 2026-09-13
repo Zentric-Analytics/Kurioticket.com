@@ -14,11 +14,23 @@ test("regular hotel search resolves a unique provider destination without mutati
   if (result.supported) assert.deepEqual(result.search, { vertical: "hotels", destination: "kplace:58075", departure: hotel.checkIn, returnDate: hotel.checkOut, adults: 2 });
   assert.equal(hotel.currency, "JPY");
 });
-test("ambiguous hotel destinations require selection rather than silently searching another city", async () => {
+test("ambiguous hotel destinations stay out of the shared results rather than leaking a provider chooser", async () => {
   const choices = [{ label: "Boston, US", value: "kplace:1" }, { label: "Boston, GB", value: "kplace:2" }];
   const result = await resolveRegularKayakSearch("hotels", hotel, async () => choices);
   assert.equal(result.supported, false);
-  if (!result.supported) assert.deepEqual(result.choices, choices);
+  if (!result.supported) assert.equal(result.choices, undefined);
+});
+test("canonical Kurioticket destinations resolve the corresponding provider city", async () => {
+  const result = await resolveRegularKayakSearch("hotels", { ...hotel, destination: "San Francisco", destinationId: "us-san-francisco" }, async () => [
+    { label: "San Francisco, San Francisco, California, United States, (SFO)", value: "kplace:100" },
+    { label: "San Francisco, California, United States", value: "kplace:200" },
+    { label: "South San Francisco, California, United States", value: "kplace:300" },
+  ]);
+  assert.equal(result.supported, true);
+  if (result.supported) {
+    assert.equal(result.search.vertical, "hotels");
+    if (result.search.vertical === "hotels") assert.equal(result.search.destination, "kplace:200");
+  }
 });
 test("invalid hotel occupancy never calls the provider", async () => {
   const result = await resolveRegularKayakSearch("hotels", { ...hotel, rooms: "2" }, async () => { throw new Error("must not call"); });
