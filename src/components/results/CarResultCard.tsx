@@ -53,6 +53,7 @@ export function CarResultCard({
   search,
   onSelect,
   actionLabel = "View car",
+  providerLabel,
   actionAriaLabel,
   headingLevel = "h2",
   presentation = "standalone",
@@ -64,6 +65,7 @@ export function CarResultCard({
   search: CarSearchParams;
   onSelect?: (car: NormalizedCarResult) => void;
   actionLabel?: string;
+  providerLabel?: string;
   actionAriaLabel?: string;
   headingLevel?: "h2" | "h3";
   presentation?: "standalone" | "guided-planning";
@@ -209,6 +211,7 @@ export function CarResultCard({
 
   return (
     <article className="relative w-full overflow-hidden rounded-[13px] border md:rounded-2xl border-[#D8E1EC] bg-white shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] transition duration-200 hover:-translate-y-0.5 hover:border-[#CBD6E2] hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]">
+      {providerLabel && <p className="px-4 pt-3 text-xs font-semibold text-amber-800">{providerLabel}</p>}
       {shareConfirmation ? (
         <span
           role="status"

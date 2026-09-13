@@ -16,18 +16,9 @@ test("sandbox entry disappears when the server environment gate is closed", () =
   assert.equal(rendered, null);
 });
 
-test("enabled travel entry links select their matching sandbox search type", () => {
+test("normal search layouts do not inject a page-level KAYAK sandbox banner", () => {
   for (const vertical of ["flights", "hotels", "cars"]) {
-    const links: string[] = [];
-    runInNewContext(`${compiled}\nKayakSandboxEntry({ vertical })`, {
-      vertical, Link: "link", isKayakSandboxEnabled: () => true,
-      React: { createElement: (tag: string, props: { href?: string }) => {
-        if (tag === "link" && props.href) links.push(props.href);
-        return null;
-      } },
-    });
-    assert.deepEqual(links, [`/sandbox/kayak?vertical=${vertical}`]);
     const layout = readFileSync(`src/app/${vertical}/layout.tsx`, "utf8");
-    assert.ok(layout.includes(`<KayakSandboxEntry vertical="${vertical}" />`));
+    assert.doesNotMatch(layout, /KayakSandboxEntry/);
   }
 });

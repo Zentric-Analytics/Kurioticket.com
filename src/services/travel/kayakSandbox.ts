@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { isIP } from "node:net";
 import { kayakImages, kayakFlightLegs, kayakFlightCabin, kayakFlightAttributes, kayakAttributes, kayakCarFilterOptions, kayakHotelAmenities, kayakHotelAmenityStatus, type KayakAttribute, type KayakImage, type KayakFlightLeg } from "./kayakPresentation";
+import { KAYAK_SANDBOX_ORIGIN, sandboxBookingUrl } from "./kayakSandboxPublic";
+export { KAYAK_SANDBOX_ORIGIN, sandboxBookingUrl } from "./kayakSandboxPublic";
 
 /** Sandbox transport. Never use this module for live inventory or booking. */
-export const KAYAK_SANDBOX_ORIGIN = "https://sandbox-en-us.kayakaffiliates.com";
 export const kayakVertical = z.enum(["flights", "hotels", "cars"]);
 const date = z.iso.date();
 const airport = z.string().regex(/^[A-Z]{3}$/);
@@ -107,28 +108,6 @@ export function isKayakSandboxEnabled(
     );
   } catch {
     return false;
-  }
-}
-
-/** Drop supplier URLs containing credentials; never follow arbitrary supplier hosts. */
-export function sandboxBookingUrl(value: unknown): string | null {
-  try {
-    const url = new URL(text(value));
-    if (url.href === "https://affiliates.kayak.com/sandbox-clickout")
-      return url.href;
-    if (
-      url.origin !== KAYAK_SANDBOX_ORIGIN ||
-      url.pathname !== "/in" ||
-      url.username ||
-      url.password
-    )
-      return null;
-    const decoded = decodeURIComponent(url.search);
-    if (/api[-_]?key|authorization|access[-_]?token/i.test(decoded))
-      return null;
-    return url.href;
-  } catch {
-    return null;
   }
 }
 

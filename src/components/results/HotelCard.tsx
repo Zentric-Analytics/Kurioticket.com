@@ -137,6 +137,7 @@ type HotelCardProps = {
   detailsHref?: string | null;
   sortBadge?: HotelSortBadge;
   actionLabel?: string;
+  providerLabel?: string;
   actionAriaLabel?: string;
   unavailableActionLabel?: string;
   unavailableActionAriaLabel?: string;
@@ -150,6 +151,7 @@ export function HotelCard({
   detailsHref,
   sortBadge,
   actionLabel,
+  providerLabel,
   actionAriaLabel,
   unavailableActionLabel,
   unavailableActionAriaLabel,
@@ -453,6 +455,7 @@ export function HotelCard({
 
   return (
     <Card className="mx-auto w-[calc(100%+0.5rem)] max-w-[800px] overflow-hidden rounded-2xl border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_22px_50px_-24px_rgba(2,28,43,0.30)] focus-within:border-[#004BB8]/40 focus-within:ring-2 focus-within:ring-[#004BB8]/10 motion-reduce:transform-none motion-reduce:transition-none sm:w-full lg:mx-0 lg:max-w-none">
+      {providerLabel && <p className="px-4 pt-3 text-xs font-semibold text-amber-800">{providerLabel}</p>}
       <div
         data-hotel-card-mobile-grid
         className="grid min-h-[260px] grid-cols-[41%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)] lg:grid-cols-[clamp(280px,36%,340px)_minmax(0,1fr)]"

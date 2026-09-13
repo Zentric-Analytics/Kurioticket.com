@@ -1,10 +1,8 @@
 import type { ReactNode } from "react";
-import { KayakSandboxEntry } from "@/components/results/KayakSandboxEntry";
 
 export default function FlightsLayout({ children }: { children: ReactNode }) {
   return (
     <>
-      <KayakSandboxEntry vertical="flights" />
       {children}
       <style>{`
         main.bg-slate-50 > section.border-y {
