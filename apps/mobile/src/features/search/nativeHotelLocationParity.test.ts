@@ -45,10 +45,10 @@ test("Location is rendered by the active native hotel booking details flow", () 
   assert.match(bookingDetails, /<NativeHotelLocationSection[\s\S]*?hotelId=\{result\.id\}/);
 });
 
-test("Location uses one horizontal padding owner with tight booking-page vertical rhythm", () => {
+test("Location uses one horizontal padding owner with a dense booking-page vertical rhythm", () => {
   assert.match(styleRule(screen, "detailBody", "compareSection"), /paddingHorizontal: 16/);
   const section = styleRule(component, "locationSection", "heading");
-  assert.match(section, /paddingVertical: 4/);
+  assert.match(section, /paddingVertical: 0/);
   assert.doesNotMatch(section, /paddingHorizontal/);
 });
 
@@ -97,21 +97,22 @@ test("Location uses the shared credential-free preview and preserves interactive
   for (const forbidden of ["EXPO_PUBLIC_GOOGLE", "NEXT_PUBLIC_GOOGLE", "google.com/maps/embed", "buildOpenStreetMapHotelMapEmbedUrl"]) assert.doesNotMatch(component + model, new RegExp(forbidden));
 });
 
-test("Location keeps booking-page typography while tightening only spacing", () => {
+test("Location keeps booking-page typography while tightening spacing around the full-size map", () => {
   for (const rule of [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/, /appFonts\.bold/]) assert.match(styleRule(component, "heading", "addressRow"), rule);
-  for (const rule of [/width: 36/, /height: 36/, /borderRadius: 18/]) assert.match(styleRule(component, "pinCircle", "addressCopy"), rule);
+  for (const rule of [/width: 34/, /height: 34/, /borderRadius: 17/]) assert.match(styleRule(component, "pinCircle", "addressCopy"), rule);
   assert.match(component, /<MapPin accessible=\{false\} size=\{18\}/);
   for (const rule of [/fontSize: 13/, /lineHeight: 19/, /fontWeight: "500"/, /appFonts\.medium/]) assert.match(styleRule(component, "primaryAddress", "secondaryAddress"), rule);
   for (const rule of [/fontSize: 12/, /lineHeight: 18/, /appFonts\.regular/]) assert.match(styleRule(component, "secondaryAddress", "mapShell"), rule);
-  assert.match(styleRule(component, "mapShell", "mapTabs"), /marginTop: 10/);
-  assert.doesNotMatch(styleRule(component, "mapShell", "mapTabs"), /borderRadius|borderWidth/);
+  assert.match(styleRule(component, "addressRow", "pinCircle"), /marginTop: 6/);
+  assert.match(styleRule(component, "mapShell", "mapTabs"), /marginTop: 6/);
+  assert.doesNotMatch(styleRule(component, "mapTabs", "mapTab"), /borderBottomWidth|borderBottomColor/);
+  assert.match(styleRule(component, "mapTabs", "mapTab"), /minHeight: 38/);
   assert.match(styleRule(component, "mapViewport", "mapPreview"), /height: 216/);
-  assert.doesNotMatch(styleRule(component, "mapViewport", "mapPreview"), /height: (?:280|300)/);
-  for (const rule of [/marginTop: 16/, /fontSize: 15/, /lineHeight: 22/, /fontWeight: "600"/, /appFonts\.semibold/]) assert.match(styleRule(component, "subheading", "factList"), rule);
-  assert.match(styleRule(component, "factList", "factRow"), /gap: 6/);
+  assert.match(styleRule(component, "subheading", "factList"), /marginTop: 10/);
+  assert.match(styleRule(component, "factList", "factRow"), /marginTop: 4[^}]*gap: 3/);
   assert.match(styleRule(component, "factRow", "factBullet"), /flexDirection: "row"/);
-  for (const rule of [/fontSize: 13/, /lineHeight: 21/, /fontWeight: "400"/, /appFonts\.regular/]) assert.match(styleRule(component, "factText", "fallbackText"), rule);
-  assert.match(component, /fallbackText: \{[^}]*fontSize: 13[^}]*lineHeight: 22[^}]*fontWeight: "400"[^}]*fontFamily: appFonts\.regular/);
+  for (const rule of [/fontSize: 13/, /lineHeight: 20/, /fontWeight: "400"/, /appFonts\.regular/]) assert.match(styleRule(component, "factText", "fallbackText"), rule);
+  assert.match(component, /fallbackText: \{[^}]*fontSize: 13[^}]*lineHeight: 20[^}]*fontWeight: "400"[^}]*fontFamily: appFonts\.regular/);
 });
 
 test("Decision-section headings preserve the refined supporting hierarchy", () => {
@@ -123,10 +124,10 @@ test("Decision-section headings preserve the refined supporting hierarchy", () =
   for (const rule of [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/, /appFonts\.bold/]) assert.match(moreHotelsHeading, rule);
 });
 
-test("Property location and full Details location share the compact preview contract", () => {
+test("Property location and active Details keep the established 216pt preview size", () => {
   assert.match(compare, /export function NativeHotelPropertyLocationSection/);
   assert.match(compare, /nativeHotelLocationPreviewUrl\(api\.baseUrl, hotelId\)/);
   assert.match(component, /nativeHotelLocationPreviewUrl\(api\.baseUrl, hotelId\)/);
   assert.match(styleRule(compare, "mapFrame", "map"), /height: 216/);
-  assert.doesNotMatch(styleRule(compare, "mapFrame", "map"), /height: 280/);
+  assert.match(styleRule(component, "mapViewport", "mapPreview"), /height: 216/);
 });

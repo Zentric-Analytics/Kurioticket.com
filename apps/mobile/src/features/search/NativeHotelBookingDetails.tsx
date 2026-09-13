@@ -10,7 +10,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Bed,
-  ChevronRight,
   Laptop,
   Sparkles,
   UtensilsCrossed,
@@ -100,7 +99,7 @@ export function NativeHotelBookingDetails({
         ) : null}
       </View>
 
-      <SectionDivider color={theme.border} />
+      <SectionGap />
 
       {property || detailsStatus !== "loading" ? (
         <>
@@ -110,7 +109,7 @@ export function NativeHotelBookingDetails({
             propertyDetails={property}
             theme={theme}
           />
-          <SectionDivider color={theme.border} />
+          <SectionGap />
         </>
       ) : null}
 
@@ -135,20 +134,16 @@ export function NativeHotelBookingDetails({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="See all amenities"
+            hitSlop={8}
             onPress={() => setAmenitiesOpen(true)}
-            style={({ pressed }) => [
-              s.seeAllRow,
-              { borderTopColor: theme.border },
-              pressed && s.pressed,
-            ]}
+            style={({ pressed }) => [s.seeAllLink, pressed && s.pressed]}
           >
             <Text style={[s.seeAllText, { color: accent }]}>See all amenities</Text>
-            <ChevronRight accessible={false} size={20} color={accent} />
           </Pressable>
         ) : null}
       </View>
 
-      <SectionDivider color={theme.border} />
+      <SectionGap />
 
       <View style={s.section}>
         <Text accessibilityRole="header" style={[s.heading, { color: theme.textPrimary }]}>Room &amp; comfort</Text>
@@ -167,7 +162,7 @@ export function NativeHotelBookingDetails({
         </View>
       </View>
 
-      <SectionDivider color={theme.border} />
+      <SectionGap />
 
       <View style={s.section}>
         <Text accessibilityRole="header" style={[s.heading, { color: theme.textPrimary }]}>Accessibility</Text>
@@ -185,7 +180,7 @@ export function NativeHotelBookingDetails({
         ) : null}
       </View>
 
-      <SectionDivider color={theme.border} />
+      <SectionGap />
 
       <NativeRelatedHotelsSection
         city={property?.city}
@@ -250,27 +245,27 @@ export function NativeHotelBookingDetails({
   );
 }
 
-function SectionDivider({ color }: { color: string }) {
-  return <View accessible={false} style={[s.divider, { backgroundColor: color }]} />;
+function SectionGap() {
+  return <View accessible={false} style={s.sectionGap} />;
 }
 
 const s = StyleSheet.create({
-  section: { paddingVertical: 2 },
+  section: { paddingVertical: 0 },
+  sectionGap: { height: 12 },
   heading: { fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.25 },
-  description: { marginTop: 6, fontSize: 13, lineHeight: 22, fontWeight: "400", fontFamily: appFonts.regular },
+  description: { marginTop: 4, fontSize: 13, lineHeight: 22, fontWeight: "400", fontFamily: appFonts.regular },
   fallback: { marginTop: 4, fontSize: 13, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
-  divider: { height: StyleSheet.hairlineWidth, marginVertical: 8 },
-  rowList: { marginTop: 6, gap: 6 },
-  amenityRow: { minHeight: 22, flexDirection: "row", alignItems: "center", gap: 8 },
-  infoRow: { minHeight: 22, flexDirection: "row", alignItems: "flex-start", gap: 8 },
+  rowList: { marginTop: 5, gap: 4 },
+  amenityRow: { minHeight: 20, flexDirection: "row", alignItems: "center", gap: 8 },
+  infoRow: { minHeight: 20, flexDirection: "row", alignItems: "flex-start", gap: 8 },
   rowText: { flex: 1, minWidth: 0, fontSize: 13, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
-  seeAllRow: { minHeight: 40, marginTop: 4, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  seeAllLink: { alignSelf: "flex-start", marginTop: 6, paddingVertical: 4 },
   seeAllText: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
   pressed: { opacity: 0.58 },
-  accessibilityList: { marginTop: 6, gap: 4 },
+  accessibilityList: { marginTop: 5, gap: 3 },
   accessibilityRow: { flexDirection: "row", alignItems: "flex-start" },
-  bullet: { width: 20, fontSize: 14, lineHeight: 24 },
-  accessibilityText: { flex: 1, fontSize: 13, lineHeight: 22, fontWeight: "400", fontFamily: appFonts.regular },
+  bullet: { width: 20, fontSize: 14, lineHeight: 22 },
+  accessibilityText: { flex: 1, fontSize: 13, lineHeight: 21, fontWeight: "400", fontFamily: appFonts.regular },
   modalRoot: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(2,6,23,.42)" },
   sheet: { maxHeight: "90%", borderTopLeftRadius: 22, borderTopRightRadius: 22, overflow: "hidden" },
   sheetHeader: { minHeight: 58, paddingHorizontal: 18, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },

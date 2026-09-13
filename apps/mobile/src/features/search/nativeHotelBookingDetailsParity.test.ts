@@ -55,14 +55,15 @@ test("Details follows a compact booking-page order with Location directly after 
   assert.doesNotMatch(details, />Hotel information<|width: "48%"|width: "45%"|flexWrap: "wrap"/);
 });
 
-test("popular amenities stay one per row and See all contains every available amenity", () => {
+test("popular amenities stay one per row and the all-amenities action remains in the same section", () => {
   assert.match(details, /const popularAmenities = amenityItems\.slice\(0, 4\)/);
   assert.match(details, /buildHotelAmenityPresentation\([\s\S]*?result\.amenities,[\s\S]*?result\.amenities\.length/);
   assert.match(details, /accessibilityLabel="See all amenities"/);
   assert.match(details, />See all amenities<\/Text>/);
+  assert.match(details, /style=\{\(\{ pressed \}\) => \[s\.seeAllLink, pressed && s\.pressed\]\}/);
+  assert.doesNotMatch(details, /ChevronRight|seeAllRow|borderTopColor: theme\.border/);
   assert.match(details, /<Modal[\s\S]*?visible=\{amenitiesOpen\}[\s\S]*?>All amenities<\/Text>/);
   assert.match(details, /amenityGroups\.map/);
-  assert.doesNotMatch(details, /All available amenities are shown in Property highlights/);
 
   const items = buildHotelAmenityPresentation(
     ["Wi-Fi", "Restaurant", "Bar", "Workspaces", "Fitness centre", "Parking"],
@@ -93,12 +94,13 @@ test("Details keeps room, accessibility and related-hotel information without a 
   assert.doesNotMatch(details, />Hotel information<|<Award\b|Hotel classification is not available\./);
 });
 
-test("Details uses the tightened mobile vertical rhythm without changing typography", () => {
-  assert.match(details, /section: \{ paddingVertical: 2 \}/);
-  assert.match(details, /description: \{ marginTop: 6,/);
-  assert.match(details, /divider: \{ height: StyleSheet\.hairlineWidth, marginVertical: 8 \}/);
-  assert.match(details, /rowList: \{ marginTop: 6, gap: 6 \}/);
-  assert.match(details, /seeAllRow: \{ minHeight: 40, marginTop: 4,/);
+test("Details uses a dense divider-free mobile rhythm without changing typography", () => {
+  assert.match(details, /section: \{ paddingVertical: 0 \}/);
+  assert.match(details, /sectionGap: \{ height: 12 \}/);
+  assert.match(details, /description: \{ marginTop: 4,/);
+  assert.match(details, /rowList: \{ marginTop: 5, gap: 4 \}/);
+  assert.match(details, /seeAllLink: \{ alignSelf: "flex-start", marginTop: 6, paddingVertical: 4 \}/);
+  assert.doesNotMatch(details, /function SectionDivider|s\.divider|divider: \{|borderTopWidth: StyleSheet\.hairlineWidth/);
   assert.match(details, /heading: \{ fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts\.bold/);
   assert.match(details, /rowText: \{[^}]*fontSize: 13, lineHeight: 20, fontWeight: "400", fontFamily: appFonts\.regular/);
 });

@@ -69,19 +69,21 @@ test("About copy is explanatory and built only from existing Hotel facts", () =>
   assert.doesNotMatch(model, /perfect|best hotel|guaranteed|luxury stay/i);
 });
 
-test("active Details keeps booking-page typography with a tighter flat single-column rhythm", () => {
+test("active Details keeps booking-page typography with a dense divider-free single-column rhythm", () => {
   const heading = styleRule("heading", "description");
   const description = styleRule("description", "fallback");
   const amenityRow = styleRule("amenityRow", "infoRow");
-  const rowText = styleRule("rowText", "seeAllRow");
+  const rowText = styleRule("rowText", "seeAllLink");
   for (const rule of [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/, /appFonts\.bold/]) assert.match(heading, rule);
-  for (const rule of [/marginTop: 6/, /fontSize: 13/, /lineHeight: 22/, /fontWeight: "400"/, /appFonts\.regular/]) assert.match(description, rule);
+  for (const rule of [/marginTop: 4/, /fontSize: 13/, /lineHeight: 22/, /fontWeight: "400"/, /appFonts\.regular/]) assert.match(description, rule);
   assert.match(amenityRow, /flexDirection: "row"/);
   assert.doesNotMatch(amenityRow, /width: "48%"|borderWidth|borderRadius/);
   for (const rule of [/fontSize: 13/, /lineHeight: 20/, /fontWeight: "400"/, /appFonts\.regular/]) assert.match(rowText, rule);
-  assert.match(details, /section: \{ paddingVertical: 2 \}/);
-  assert.match(details, /divider: \{ height: StyleSheet\.hairlineWidth, marginVertical: 8 \}/);
-  assert.match(details, /rowList: \{ marginTop: 6, gap: 6 \}/);
+  assert.match(details, /section: \{ paddingVertical: 0 \}/);
+  assert.match(details, /sectionGap: \{ height: 12 \}/);
+  assert.match(details, /rowList: \{ marginTop: 5, gap: 4 \}/);
+  assert.match(details, /seeAllLink: \{ alignSelf: "flex-start", marginTop: 6, paddingVertical: 4 \}/);
+  assert.doesNotMatch(details, /function SectionDivider|divider: \{|seeAllRow|ChevronRight/);
   assert.match(details, /accessibilityLabel="See all amenities"/);
   assert.match(details, /<Modal[\s\S]*?visible=\{amenitiesOpen\}/);
 });
