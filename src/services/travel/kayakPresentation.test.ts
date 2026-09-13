@@ -1,6 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { kayakImageUrl, kayakImages, kayakFlightLegs } from "./kayakPresentation";
+import { kayakImageUrl, kayakImages, kayakFlightLegs, kayakCarFilterOptions, kayakHotelAmenities, kayakHotelAmenityStatus } from "./kayakPresentation";
+
+test("hotel amenities resolve only supplied official mappings without duplicates", () => {
+  assert.deepEqual(kayakHotelAmenities([3,3,99],[{id:3,name:"Conference facilities"}]),["Conference facilities"]);
+  assert.deepEqual(kayakHotelAmenities([3],undefined),[]);
+  assert.equal(kayakHotelAmenityStatus([3,99,99],[{id:3,name:"Conference facilities"}]),"1 additional amenity descriptions unavailable from provider");
+  assert.equal(kayakHotelAmenityStatus([],[]),"Amenities not supplied by provider");
+});
+
+test("car filter capabilities use supplied specifications, not legacy defaults", () => {
+  assert.deepEqual(kayakCarFilterOptions({}), []);
+  assert.deepEqual(kayakCarFilterOptions({transmission:"automatic",passengers:5,bags:2}), ["automatic","seats4Plus","seats5Plus","bags2Plus"]);
+  assert.deepEqual(kayakCarFilterOptions({transmission:"unknown",passengers:Infinity,bags:"4"}), []);
+});
 
 test("KAYAK preserves every distinct supplied hotel image and the car image", () => {
   const first = "https://content.r9cdn.net/himg/first.jpg";

@@ -10,6 +10,26 @@ import {
 } from "./kayakSandbox";
 
 const click = "https://affiliates.kayak.com/sandbox-clickout";
+
+test("hotel search retrieves official amenity names and survives dictionary failure", async () => {
+  for (const unavailable of [false,true]) {
+    let dictionaryRequests = 0;
+    const client = new KayakSandboxClient("key", (async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      if (url.pathname === "/api/4.0/constants-mapping") {
+        dictionaryRequests++;
+        assert.equal(url.searchParams.get("types"),"facility");
+        return unavailable ? new Response("",{status:503}) : Response.json({facility:{features:[{id:3,name:"Conference facilities"}]}});
+      }
+      return Response.json({isComplete:true,currencyCode:"USD",results:[{name:"Hotel",features:[3,99],rates:[{roomName:"Room",totalRate:100,bookUri:click}]}]});
+    }) as typeof fetch);
+    const offers = await client.search({vertical:"hotels",destination:"kplace:58075",departure:"2099-10-12",returnDate:"2099-10-15",adults:1},"test");
+    assert.equal(dictionaryRequests,1);
+    assert.deepEqual(offers[0].amenities,unavailable ? [] : ["Conference facilities"]);
+    assert.match(offers[0].attributes?.find(a=>a.label === "Amenity information")?.value || "",/descriptions unavailable/);
+    assert.equal(offers[0].price,100);
+  }
+});
 const flight = {
   vertical: "flights" as const,
   origin: "BOS",
@@ -192,6 +212,9 @@ test("hotel and car requests map dates and guests without inventing inventory", 
   const c = new KayakSandboxClient(
     "key",
     fake((url, init) => {
+      if (url.pathname === "/api/4.0/constants-mapping") {
+        return Response.json({facility:{features:[{id:3,name:"Conference facilities"}]}});
+      }
       if (url.pathname === "/api/3.0/hotels") {
         assert.equal(url.searchParams.get("rooms"), "2");
         return Response.json({
@@ -200,6 +223,7 @@ test("hotel and car requests map dates and guests without inventing inventory", 
           results: [
             {
               name: "Test hotel",
+              features: [3],
               rates: [
                 { roomName: "Test room", totalRate: 300, bookUri: click },
               ],

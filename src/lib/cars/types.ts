@@ -74,7 +74,7 @@ export type NormalizedCarResult = {
   offers: CarOffer[];
   inventorySource: "kurioticket-static-cars" | "kayak-sandbox";
   /** Sandbox display overrides prevent required legacy defaults becoming claims. */
-  sandboxPresentation?: { specs: string[]; pickupLabel: string };
+  sandboxPresentation?: { specs: string[]; pickupLabel: string; filterOptions?: string[] };
 };
 
 export type CarInventoryStatus = "available" | "unavailable" | "invalid-search";
