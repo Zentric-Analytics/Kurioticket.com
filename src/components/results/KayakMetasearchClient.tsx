@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { KayakResultsContext } from "./KayakResultsContext";
-import type { KayakVertical, SandboxOffer, SandboxPlace } from "@/services/travel/kayakSandbox";
+import type { KayakVertical, SandboxOffer } from "@/services/travel/kayakSandbox";
 import { KayakResultCard } from "./KayakResultCard";
 
 export function KayakMetasearchClient({ vertical, criteria: inputCriteria, children }: {
@@ -14,25 +14,23 @@ export function KayakMetasearchClient({ vertical, criteria: inputCriteria, child
   const [busy, setBusy] = useState(true);
   const [status, setStatus] = useState<"loading" | "success" | "error" | "needs-input">("loading");
   const [offers, setOffers] = useState<SandboxOffer[]>([]);
-  const [choices, setChoices] = useState<SandboxPlace[]>([]);
   const [message, setMessage] = useState("Searching KAYAK alongside the other providers…");
   const [limit, setLimit] = useState(10);
-  const run = useCallback(async (destinationId?: string) => {
+  const run = useCallback(async () => {
     if (request.current) return;
     const controller = new AbortController();
     request.current = controller;
-    setBusy(true); setOffers([]); setChoices([]); setLimit(10);
+    setBusy(true); setOffers([]); setLimit(10);
     setStatus("loading");
     setMessage("Searching KAYAK alongside the other providers…");
     try {
       const response = await fetch("/api/sandbox/kayak", { method: "POST", cache: "no-store",
         headers: { "Content-Type": "application/json" }, signal: controller.signal,
-        body: JSON.stringify({ action: "regular-search", vertical, criteria: { ...criteria, ...(destinationId ? { destinationId } : {}) } }) });
+        body: JSON.stringify({ action: "regular-search", vertical, criteria }) });
       const data = await response.json();
       if (controller.signal.aborted) return;
       if (!response.ok) {
-        setStatus(Array.isArray(data?.choices) && data.choices.length ? "needs-input" : "error");
-        setChoices(Array.isArray(data.choices) ? data.choices : []);
+        setStatus("error");
         setMessage(data.error || "KAYAK is unavailable. Other provider results are unaffected.");
         return;
       }
@@ -53,20 +51,10 @@ export function KayakMetasearchClient({ vertical, criteria: inputCriteria, child
     queueMicrotask(() => { if (active) void run(); });
     return () => { active = false; request.current?.abort(); request.current = null; };
   }, [run]);
-  const destinationChoices = choices.length > 0 ? <section aria-label="Choose a destination" className="page-shell my-4 rounded-xl border border-slate-200 bg-white p-4">
-    <h2 className="font-bold">Choose a destination</h2>
-    <p>Select the location you meant to finish searching all available providers.</p>
-    <ul>{choices.map(place => <li key={place.value}>
-      <button type="button" disabled={busy} className="my-1 rounded border bg-white p-2" onClick={() => void run(place.value)}>{place.label}</button>
-    </li>)}</ul>
-  </section> : null;
-  return <KayakResultsContext.Provider value={{vertical,offers,criteria,status,retry:()=>void run()}}>{children ? <>{destinationChoices}{children}</> : <section aria-label="KAYAK sandbox provider results" className="page-shell my-4 rounded-xl border border-amber-500 bg-amber-50 p-4">
+  return <KayakResultsContext.Provider value={{vertical,offers,criteria,status,retry:()=>void run()}}>{children ?? <section aria-label="KAYAK sandbox provider results" className="page-shell my-4 rounded-xl border border-amber-500 bg-amber-50 p-4">
     <h2 className="text-xl font-bold">KAYAK · sandbox provider</h2>
     <p>Simulated inventory. Cards use your display currency; converted amounts are estimates of the original provider price. No real bookings or payments. {children ? "KAYAK offers use the shared results, filters and sorting below." : "Other providers remain available separately below."}</p>
     {!children && <p role="status" aria-live="polite" className="my-3">{message}</p>}
-    {choices.length > 0 && <ul aria-label="Matching KAYAK destinations">{choices.map(place => <li key={place.value}>
-      <button type="button" disabled={busy} className="my-1 rounded border bg-white p-2" onClick={() => void run(place.value)}>{place.label}</button>
-    </li>)}</ul>}
     {!children && <ul className="grid gap-4">{offers.slice(0, limit).map(offer => <li key={offer.id} className="min-w-0">
       <KayakResultCard offer={offer} vertical={vertical} criteria={criteria} />
     </li>)}</ul>}
