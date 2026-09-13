@@ -41,12 +41,10 @@ export function NativeHotelGallery({
   name,
   initialImages,
   theme,
-  accentColor,
 }: {
   name: string;
   initialImages: string[];
   theme: HotelTheme;
-  accentColor: string;
 }) {
   const [failed, setFailed] = useState<Set<string>>(() => new Set());
   const { width: viewportWidth } = useWindowDimensions();
@@ -58,7 +56,6 @@ export function NativeHotelGallery({
   const modalBottom = Math.max(insets.bottom, 8);
   const galleryBackground = theme.dark ? "#000000" : "#FFFFFF";
   const galleryText = theme.dark ? "#FFFFFF" : "#0F172A";
-  const gallerySecondary = theme.dark ? "#CBD5E1" : "#475569";
   const galleryBorder = theme.dark ? "#27272A" : "#E2E8F0";
   const galleryPlaceholder = theme.dark ? "#18181B" : "#E7EBF2";
   const images = initialImages.filter(
@@ -217,11 +214,6 @@ export function NativeHotelGallery({
             <View accessible={false} style={s.galleryHeaderAction} />
           </View>
 
-          <View style={s.gallerySummary}>
-            <Text style={[s.gallerySummaryText, { color: accentColor }]}>All photos {images.length}</Text>
-            <Text style={[s.gallerySummaryHint, { color: gallerySecondary }]}>Tap any photo to view it full screen</Text>
-          </View>
-
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={s.galleryOverviewContent}
@@ -361,10 +353,7 @@ const s = StyleSheet.create({
   galleryHeader: { minHeight: 56, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 8 },
   galleryHeaderAction: { width: 48, height: 48, alignItems: "center", justifyContent: "center" },
   galleryTitle: { flex: 1, minWidth: 0, textAlign: "center", fontSize: 17, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold },
-  gallerySummary: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 10 },
-  gallerySummaryText: { fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
-  gallerySummaryHint: { marginTop: 2, fontSize: 12, lineHeight: 18, fontWeight: "400", fontFamily: appFonts.regular },
-  galleryOverviewContent: { gap: 8, paddingHorizontal: 8, paddingBottom: 24 },
+  galleryOverviewContent: { gap: 8, paddingHorizontal: 8, paddingTop: 8, paddingBottom: 24 },
   galleryLargeFrame: { width: "100%", height: 230, overflow: "hidden", borderRadius: 10 },
   galleryPairRow: { flexDirection: "row", gap: 8 },
   galleryPairFrame: { flex: 1, minWidth: 0, height: 170, overflow: "hidden", borderRadius: 10 },
