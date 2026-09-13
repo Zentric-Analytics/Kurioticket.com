@@ -11,6 +11,9 @@ test("hotel amenities resolve only supplied official mappings without duplicates
 
 test("car filter capabilities use supplied specifications, not legacy defaults", () => {
   assert.deepEqual(kayakCarFilterOptions({}), []);
+  assert.deepEqual(kayakCarFilterOptions({type:{displayName:"Full-size"}}), ["mediumCars"]);
+  assert.deepEqual(kayakCarFilterOptions({type:{displayName:"Compact SUV"}}), ["suvs"]);
+  assert.deepEqual(kayakCarFilterOptions({type:{displayName:"Unspecified"}}), []);
   assert.deepEqual(kayakCarFilterOptions({transmission:"automatic",passengers:5,bags:2}), ["automatic","seats4Plus","seats5Plus","bags2Plus"]);
   assert.deepEqual(kayakCarFilterOptions({transmission:"unknown",passengers:Infinity,bags:"4"}), []);
 });
