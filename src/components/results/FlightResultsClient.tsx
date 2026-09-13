@@ -7436,14 +7436,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         <ChevronUp className="h-5 w-5" strokeWidth={2.6} aria-hidden="true" />
       </button>
 
-      <aside
+      {filtersOpen ? <aside
+        ref={mobileFiltersDialogRef}
         id="flight-mobile-filters-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby="flight-mobile-filters-title"
         className={cn(
           "fixed inset-0 z-[10000] flex h-[100dvh] flex-col overflow-hidden overscroll-contain bg-white transition-transform duration-200 ease-out lg:hidden",
-          filtersOpen ? "translate-y-0" : "translate-y-full",
+          "translate-y-0",
         )}
       >
         <div className="shrink-0 border-b border-slate-200 bg-white px-5 pb-4 pt-[calc(0.75rem+env(safe-area-inset-top))] shadow-[0_8px_24px_-22px_rgba(15,23,42,0.38)]">
@@ -7461,15 +7462,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 </p>
               ) : null}
             </div>
-            <Button
+            <button
+              ref={mobileFiltersCloseButtonRef}
               type="button"
-              variant="ghost"
               className="h-11 w-11 shrink-0 rounded-full border border-transparent bg-transparent px-0 text-slate-700 shadow-none transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
               aria-label={t("closeFilters")}
               onClick={() => closeMobileFiltersDrawer()}
             >
               <X size={20} />
-            </Button>
+            </button>
           </div>
         </div>
 
@@ -7538,7 +7539,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             {formatResultsFound(sortedResults.length, t)}
           </Button>
         </div>
-      </aside>
+      </aside> : null}
     </main>
     <Footer variant="brand-legal-only" />
     </>

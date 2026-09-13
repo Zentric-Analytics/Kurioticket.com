@@ -2,6 +2,15 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 const source = readFileSync(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
+
+test("standard mobile filters unmount when closed and wire existing focus management", () => {
+  const start = source.lastIndexOf('{filtersOpen ? <aside');
+  assert.ok(start > 0);
+  const drawer = source.slice(start, source.indexOf('</aside> : null}', start));
+  assert.match(drawer, /ref=\{mobileFiltersDialogRef\}/);
+  assert.match(drawer, /ref=\{mobileFiltersCloseButtonRef\}/);
+  assert.doesNotMatch(drawer, /translate-y-full/);
+});
 test("Results delegates mobile Edit Search to the shared drawer", () => {
   assert.match(source, /import \{ FlightEditSearchDrawer/);
   assert.match(source, /<FlightEditSearchDrawer/);
