@@ -44,7 +44,7 @@ test("desktop homepage Hotel destination uses the shared API autocomplete", () =
 
 test("desktop homepage Hotel renders and selects structured canonical destinations", () => {
   assert.match(source, /suggestion\.kind === "airport-area"[\s\S]*?Plane[\s\S]*?Building2[\s\S]*?MapPin/);
-  assert.match(source, /getLocalizedHotelDestinationCityName\([\s\S]*?getLocalizedHotelDestinationDetail\(/);
+  assert.match(source, /getHotelDestinationPrimaryLabel\(suggestion, locale \?\? activeLocale\)[\s\S]*?getHotelDestinationSupportingLabel\(suggestion, locale \?\? activeLocale\)/);
   assert.match(source, /hotelDestinationKindTranslationKeys\[suggestion\.kind\]/);
   assert.match(source, /setDestination\(commitHotelDestinationSuggestion\(suggestion\)\)/);
   assert.match(source, /onMouseDown=\{\(event\) => event\.preventDefault\(\)\}/);

@@ -101,6 +101,14 @@ export function CarLocationAutocomplete({
   const requestIdRef = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
   const trimmedQuery = value.trim();
+  const [previousQuery, setPreviousQuery] = useState(trimmedQuery);
+  if (previousQuery !== trimmedQuery) {
+    setPreviousQuery(trimmedQuery);
+    setSuggestions([]);
+    setLoading(false);
+    setError(false);
+    setHighlightedIndex(-1);
+  }
   const showPanel = usesDesktopPanel
     ? open && hasUserEditedQuery && trimmedQuery.length > 0
     : open;
@@ -125,11 +133,6 @@ export function CarLocationAutocomplete({
       requestIdRef.current += 1;
       abortRef.current?.abort();
       abortRef.current = null;
-      setSuggestions([]);
-      setLoading(false);
-      setError(false);
-      setHighlightedIndex(-1);
-      if (open) setOpen(false);
       return;
     }
     if (!open || disabled) return;

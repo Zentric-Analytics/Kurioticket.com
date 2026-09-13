@@ -14,6 +14,9 @@ import { HotelCardSkeleton } from "@/components/ui/Skeleton";
 import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
+import { useKayakResults } from "./KayakResultsContext";
+import { kayakHotelCardModel } from "./kayakCardModels";
+import { KayakResultCard } from "./KayakResultCard";
 import { HotelPriceAlertControl } from "@/components/results/HotelPriceAlertControl";
 import { buildHotelFacilityFilterOptions, hotelMatchesFacilityFilters } from "@/components/results/hotelFacilityFilter";
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
@@ -278,7 +281,13 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const currencyRates = useCurrencyRates();
   const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
 
-  const [results, setResults] = useState<PublicHotelResult[]>([]);
+  const [providerResults, setResults] = useState<PublicHotelResult[]>([]);
+  const kayak = useKayakResults();
+  const results = useMemo(() => {
+    if (guided || kayak?.vertical !== "hotels") return providerResults;
+    const nights = Math.max(1, Math.ceil((Date.parse(kayak.criteria.checkOut) - Date.parse(kayak.criteria.checkIn))/86400000) || 1);
+    return [...providerResults, ...kayak.offers.map(offer => kayakHotelCardModel(offer,nights))];
+  }, [guided,kayak,providerResults]);
   const [visibleFiltered, setVisibleFiltered] = useState<PublicHotelResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -681,7 +690,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           window.clearTimeout(searchApplyingTimeoutRef.current);
           searchApplyingTimeoutRef.current = null;
         }
-        setMaxPrice(getResultMaxPrice(data.results, currencyRatesRef.current));
         setMinPrice(0);
         setSelectedFilters(emptySelections);
         setSelectedHotelClasses([]);
@@ -694,6 +702,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           window.clearTimeout(searchApplyingTimeoutRef.current);
           searchApplyingTimeoutRef.current = null;
         }
+        setResults([]);
         setError(searchError instanceof Error ? searchError.message : t("hotelResults.unableToSearchHotels"));
       })
       .finally(() => {
@@ -735,6 +744,12 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const hasPricedResults = pricedResultCount > 0;
   const hasGoogleMapsResults = results.some((hotel) => hotel.provider === "Google Maps");
   const resultMaxPrice = useMemo(() => getResultMaxPrice(results, currencyRates.rates), [currencyRates.rates, results]);
+  const previousPriceBound = useRef(1200);
+  useEffect(() => {
+    const previous = previousPriceBound.current;
+    previousPriceBound.current = resultMaxPrice;
+    setMaxPrice(current => current >= previous ? resultMaxPrice : current);
+  }, [resultMaxPrice]);
   const priceFilterActive = hasPricedResults && (minPrice > 0 || maxPrice < resultMaxPrice);
 
   const filtered = useMemo(() => results.filter((hotel) => hotelMatchesFilters(hotel, propertyNameQuery, minPrice, maxPrice, priceFilterActive, selectedHotelClasses, selectedFilters, currencyRates.rates)), [currencyRates.rates, propertyNameQuery, maxPrice, minPrice, priceFilterActive, results, selectedFilters, selectedHotelClasses]);
@@ -1860,7 +1875,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           ) : null}
 
           <section className="min-w-0 space-y-4">
-            {error ? (
+            {error && results.length > 0 ? <p role="status">Some provider results are unavailable. Available offers are shown below.</p> : null}
+            {error && results.length === 0 ? (
               <div ref={guided ? guidedErrorRef : undefined} tabIndex={guided ? -1 : undefined} className={cn(hotelResultStackClass, "rounded-md border border-danger/30 bg-red-50 p-4 text-danger")}>
                 <p role="alert">{error}</p>
                 {guided ? (
@@ -1981,7 +1997,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                     </p>
                   ) : null}
 
-                  {!guided && results.length > 0 ? <HotelPriceAlertControl search={{ destination: body.destination, checkIn: body.checkIn, checkOut: body.checkOut, guests: body.guests, rooms: body.rooms }} results={results} /> : null}
+                  {!guided && providerResults.length > 0 ? <HotelPriceAlertControl search={{ destination: body.destination, checkIn: body.checkIn, checkOut: body.checkOut, guests: body.guests, rooms: body.rooms }} results={providerResults} /> : null}
 
                   {!guided ? (
                     <div data-mobile-hotel-results-summary role="group" aria-label={t("hotelResults.summaryAria")} className="sm:hidden">
@@ -2013,7 +2029,11 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                         )}
                       </div>
                     ) : paginatedVisibleHotels.length ? (
-                      paginatedVisibleHotels.map((hotel, index) => <HotelCard key={hotel.id} hotel={hotel} detailsHref={guided ? (buildDetailsHref?.(hotel.id) ?? null) : `/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided} stayNights={stayNights} sortBadge={(currentResultsPage - 1) * HOTEL_RESULTS_PAGE_SIZE + index === 0 ? hotelSummarySortMode : undefined} />)
+                      paginatedVisibleHotels.map((hotel, index) => {
+                        const sandboxOffer = !guided && kayak?.vertical === "hotels" ? kayak.offers.find(offer => `kayak-sandbox:${offer.id}` === hotel.id) : undefined;
+                        if (sandboxOffer && kayak) return <KayakResultCard key={hotel.id} offer={sandboxOffer} vertical="hotels" criteria={kayak.criteria} />;
+                        return <HotelCard key={hotel.id} hotel={hotel} detailsHref={guided ? (buildDetailsHref?.(hotel.id) ?? null) : `/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided} stayNights={stayNights} sortBadge={(currentResultsPage - 1) * HOTEL_RESULTS_PAGE_SIZE + index === 0 ? hotelSummarySortMode : undefined} />;
+                      })
                     ) : (
                       <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm font-semibold text-muted shadow-sm">
                         <p>{guided && results.length === 0 ? t("deals.guided.hotelResults.empty") : t("hotelResults.noStaysMatchFiltersInline")}</p>
@@ -2122,7 +2142,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                 setFiltersOpen(false);
               }}
             >
-              {filterApplying ? "Updating results…" : sortedVisibleHotels.length === 0 ? "No matching stays" : activeFilterCount > 0 ? `View ${sortedVisibleHotels.length} matching ${sortedVisibleHotels.length === 1 ? "stay" : "stays"}` : `View all ${sortedVisibleHotels.length} stays`}
+              {filterApplying ? t("updatingResults") : sortedVisibleHotels.length === 0 ? t("hotelResults.noStaysMatchFiltersTitle") : `${t("deals.results.package.view.hotel")} (${new Intl.NumberFormat(locale).format(sortedVisibleHotels.length)})`}
             </Button>
           </div>
         </aside>
@@ -2306,7 +2326,7 @@ function HotelFilters({ layout = "desktop", propertyNameQuery, setPropertyNameQu
       },
       {
         id: "rating",
-        title: "Hotel class",
+        title: t("hotelResults.starRating"),
         selectedCount: selectedRatings.length,
         content: <StarRatingFilterControl selectedRatings={selectedRatings} onToggle={toggleRating} counts={starRatingCounts} locale={locale} t={t} layout="compact" />,
       },
@@ -2428,7 +2448,7 @@ function HotelFilters({ layout = "desktop", propertyNameQuery, setPropertyNameQu
 
         {options.travellerFeatures.length > 0 ? <CheckboxFilterSection title="Good for your trip" options={options.travellerFeatures} selected={selectedFilters.travellerFeatures} onToggle={(value) => toggleFilter("travellerFeatures", value)} t={t} locale={locale} layout={layout} /> : null}
 
-        <FilterSection title="Hotel class" layout={layout}>
+        <FilterSection title={t("hotelResults.starRating")} layout={layout}>
           <StarRatingFilterControl selectedRatings={selectedRatings} onToggle={toggleRating} counts={starRatingCounts} locale={locale} t={t} layout={layout} />
         </FilterSection>
 
@@ -2449,25 +2469,33 @@ function HotelFilters({ layout = "desktop", propertyNameQuery, setPropertyNameQu
 }
 
 function PriceFilterControl({ stayNights, minPrice, maxPrice, setMinPrice, setMaxPrice, resultMaxPrice, formatPrice, filterRangeClass }: { stayNights: number; minPrice: number; maxPrice: number; setMinPrice: (value: number) => void; setMaxPrice: (value: number) => void; resultMaxPrice: number; formatPrice: (amountUsd: number) => string; filterRangeClass: string }) {
+  const { t: dictionary, locale } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const totalLabel = t("hotelResults.estimatedStayTotal");
+  const minimumLabel = t("from");
+  const maximumLabel = t("hotelResults.totalUpTo");
+  const minimumAriaLabel = `${totalLabel}: ${minimumLabel}`;
+  const maximumAriaLabel = `${totalLabel}: ${maximumLabel}`;
+  const nightsLabel = t(stayNights === 1 ? "deals.results.night" : "deals.results.nights");
   const rangeMax = Math.max(resultMaxPrice, 300);
   return (
     <div className="space-y-3">
       <p className="text-xs leading-5 text-slate-600">
-        Estimated total for {stayNights} {stayNights === 1 ? "night" : "nights"}.
+        {totalLabel} · {new Intl.NumberFormat(locale).format(stayNights)} {nightsLabel}
       </p>
       <div className="grid grid-cols-2 gap-2">
         <label className="text-xs font-semibold text-slate-700">
-          Minimum
-          <input type="number" min={0} max={maxPrice} step={25} value={minPrice} onChange={(event) => setMinPrice(Number(event.target.value))} className="mt-1 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 font-mono text-sm text-slate-950 outline-none focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20" aria-label="Minimum estimated stay total" />
+          {minimumLabel}
+          <input type="number" min={0} max={maxPrice} step={25} value={minPrice} onChange={(event) => setMinPrice(Number(event.target.value))} className="mt-1 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 font-mono text-sm text-slate-950 outline-none focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20" aria-label={minimumAriaLabel} />
         </label>
         <label className="text-xs font-semibold text-slate-700">
-          Maximum
-          <input type="number" min={minPrice} max={rangeMax} step={25} value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} className="mt-1 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 font-mono text-sm text-slate-950 outline-none focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20" aria-label="Maximum estimated stay total" />
+          {maximumLabel}
+          <input type="number" min={minPrice} max={rangeMax} step={25} value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} className="mt-1 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 font-mono text-sm text-slate-950 outline-none focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20" aria-label={maximumAriaLabel} />
         </label>
       </div>
-      <div className="relative h-6" aria-label="Estimated stay total range">
-        <input className={cn(filterRangeClass, "absolute inset-x-0 top-2 pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto")} type="range" min={0} max={rangeMax} step={25} value={minPrice} onChange={(event) => setMinPrice(Number(event.target.value))} aria-label="Minimum estimated stay total" aria-valuetext={formatPrice(minPrice)} />
-        <input className={cn(filterRangeClass, "absolute inset-x-0 top-2 bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto")} type="range" min={0} max={rangeMax} step={25} value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} aria-label="Maximum estimated stay total" aria-valuetext={formatPrice(maxPrice)} />
+      <div className="relative h-6" role="group" aria-label={totalLabel}>
+        <input className={cn(filterRangeClass, "absolute inset-x-0 top-2 pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto")} type="range" min={0} max={rangeMax} step={25} value={minPrice} onChange={(event) => setMinPrice(Number(event.target.value))} aria-label={minimumAriaLabel} aria-valuetext={formatPrice(minPrice)} />
+        <input className={cn(filterRangeClass, "absolute inset-x-0 top-2 bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto")} type="range" min={0} max={rangeMax} step={25} value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} aria-label={maximumAriaLabel} aria-valuetext={formatPrice(maxPrice)} />
       </div>
       <p className="flex justify-between text-xs font-medium text-slate-600">
         <span>{formatPrice(minPrice)}</span>
@@ -2482,7 +2510,7 @@ function StarRatingFilterControl({ selectedRatings, onToggle, counts, locale, t,
 
   return (
     <fieldset className="space-y-0.5">
-      <legend className="sr-only">Hotel class</legend>
+      <legend className="sr-only">{t("hotelResults.starRating")}</legend>
 
       {options.map((rating) => {
         const selected = selectedRatings.includes(rating);

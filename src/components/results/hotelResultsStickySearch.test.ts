@@ -209,7 +209,7 @@ test("sticky Hotel calendar keeps both months and Done inside a non-scrolling co
 test("Hotel Results date icons stay neutral in the full and sticky search forms", () => {
   assert.match(
     searchBarSource,
-    /<Calendar[^>]*className="shrink-0 text-slate-500"/,
+    /<Calendar\s+aria-hidden="true"\s+className=\{cn\(\s*"h-4 w-4 shrink-0 text-slate-700"/,
   );
   assert.doesNotMatch(
     searchBarSource,

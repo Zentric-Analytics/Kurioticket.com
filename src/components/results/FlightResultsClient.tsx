@@ -50,6 +50,9 @@ import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { Footer } from "@/components/layout/Footer";
 import { FlightCard } from "@/components/results/FlightCard";
+import { useKayakResults } from "./KayakResultsContext";
+import { kayakFlightCardModel } from "./kayakCardModels";
+import { KayakResultCard } from "./KayakResultCard";
 import { nearbyFarePrice } from "@/components/results/nearbyFarePrice";
 import { DesktopFlightFilters } from "@/components/results/DesktopFlightFilters";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
@@ -989,7 +992,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [desktopSortOpen, setDesktopSortOpen] = useState(false);
   const desktopSortRef = useRef<HTMLDivElement | null>(null);
   const desktopSortButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [results, setResults] = useState<PublicFlightResult[]>([]);
+  const [providerResults, setResults] = useState<PublicFlightResult[]>([]);
+  const kayak = useKayakResults();
+  const results = useMemo(() => guidedMode || kayak?.vertical !== "flights" ? providerResults : [
+    ...providerResults, ...kayak.offers.map(offer => kayakFlightCardModel(offer, kayak.criteria)).filter((flight): flight is PublicFlightResult => flight !== null),
+  ],[guidedMode,kayak,providerResults]);
   const activeFlightSearchKeyRef = useRef<string>("");
   const [error, setError] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -2814,7 +2821,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     let active = true;
     const dates = getNearbyFareDateRange(getNearbyFareWindowStart(centerDate));
     const fetchedAt = Date.now();
-    const currentFare = getLowestProviderFare(results);
+    const currentFare = getLowestProviderFare(providerResults);
     const selectedKey = getNearbyFareCacheKey(body, body.departureDate);
 
     if (currentFare) {
@@ -2960,7 +2967,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       activeRequests.forEach((request) => request.controller.abort());
       activeRequests.clear();
     };
-  }, [body, guidedMode, results]);
+  }, [body, guidedMode, providerResults]);
 
   useEffect(() => {
     if (!tripTypeMenuOpen) return;
@@ -4327,7 +4334,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           arrivalMinutes <= maxLandingMinutes;
         const matchesDuration =
           maxDurationMinutes === null ||
-          !Number.isFinite(flight.durationMinutes) ||
+          !durationBounds ||
+          maxDurationMinutes >= durationBounds.max ||
           flight.durationMinutes <= maxDurationMinutes;
 
         return (
@@ -4346,6 +4354,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     [
       baggageIncludedOnly,
       flexibleOnly,
+      durationBounds,
       maxDurationMinutes,
       maxLandingMinutes,
       maxPrice,
@@ -4569,7 +4578,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     }
 
     const cheapest = [...filtered].sort((a, b) => a.price - b.price)[0];
-    const fastest = [...filtered].sort(
+    const fastest = filtered.filter(flight => Number.isFinite(flight.durationMinutes)).sort(
       (a, b) => a.durationMinutes - b.durationMinutes,
     )[0];
     const best = [...filtered].sort((a, b) => {
@@ -5930,9 +5939,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               className="hidden min-h-9 items-center gap-7 px-2 sm:flex lg:gap-10"
             >
               {[
-                { label: "Round-trip", value: "round-trip" },
-                { label: "One-way", value: "one-way" },
-                { label: "Multi-city", value: "multi-city" },
+                { label: t("roundTrip"), value: "round-trip" },
+                { label: t("oneWay"), value: "one-way" },
+                { label: t("multiCity"), value: "multi-city" },
               ].map((option) => {
                 const selected = tripTypeInput === option.value;
                 return (
@@ -7065,7 +7074,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           <h2 ref={resultsHeadingRef} tabIndex={-1} className="sr-only">
             {formatResultsFound(sortedResults.length, t)}
           </h2>
-          {error ? (
+          {error && results.length > 0 ? <p role="status">Some provider results are unavailable. Available offers are shown below.</p> : null}
+          {error && results.length === 0 ? (
             <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger">
               {error}
             </div>
@@ -7372,6 +7382,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   </div>
                   <div data-flight-results-card-list className="space-y-3 sm:space-y-4">
                     {visibleResults.map((flight, index) => {
+                      const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
+                      if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
                       const detailsQuery = params.toString();
                       const detailsHref =
                         `/flights/details/${encodeURIComponent(flight.id)}` +
@@ -7424,14 +7436,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         <ChevronUp className="h-5 w-5" strokeWidth={2.6} aria-hidden="true" />
       </button>
 
-      <aside
+      {filtersOpen ? <aside
+        ref={mobileFiltersDialogRef}
         id="flight-mobile-filters-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby="flight-mobile-filters-title"
         className={cn(
           "fixed inset-0 z-[10000] flex h-[100dvh] flex-col overflow-hidden overscroll-contain bg-white transition-transform duration-200 ease-out lg:hidden",
-          filtersOpen ? "translate-y-0" : "translate-y-full",
+          "translate-y-0",
         )}
       >
         <div className="shrink-0 border-b border-slate-200 bg-white px-5 pb-4 pt-[calc(0.75rem+env(safe-area-inset-top))] shadow-[0_8px_24px_-22px_rgba(15,23,42,0.38)]">
@@ -7449,15 +7462,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 </p>
               ) : null}
             </div>
-            <Button
+            <button
+              ref={mobileFiltersCloseButtonRef}
               type="button"
-              variant="ghost"
               className="h-11 w-11 shrink-0 rounded-full border border-transparent bg-transparent px-0 text-slate-700 shadow-none transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
               aria-label={t("closeFilters")}
               onClick={() => closeMobileFiltersDrawer()}
             >
               <X size={20} />
-            </Button>
+            </button>
           </div>
         </div>
 
@@ -7526,7 +7539,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             {formatResultsFound(sortedResults.length, t)}
           </Button>
         </div>
-      </aside>
+      </aside> : null}
     </main>
     <Footer variant="brand-legal-only" />
     </>

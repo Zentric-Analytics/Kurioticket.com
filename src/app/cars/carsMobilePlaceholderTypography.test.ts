@@ -19,8 +19,9 @@ const rentalDatesSource = source.slice(
 test("mobile empty pickup and rental-date typography is explicitly swapped", () => {
   assert.match(
     pickupFieldSource,
-    /className="[^"]*sm:hidden"[\s\S]*?className=\{`truncate \$\{[\s\S]*?values\.pickupLocation[\s\S]*?\? "text-slate-950"[\s\S]*?: "text-slate-400"/,
+    /className="[^"]*sm:hidden"[\s\S]*?className=\{`min-w-0 \$\{[\s\S]*?values\.pickupLocation[\s\S]*?\? "text-slate-950"[\s\S]*?: "text-slate-400"/,
   );
+  assert.match(pickupFieldSource, /className="block truncate">\{pickupDisplay\.primary/);
   assert.match(
     rentalDatesSource,
     /pickupDate \? "text-slate-950" : "text-slate-950 sm:text-slate-400"/,

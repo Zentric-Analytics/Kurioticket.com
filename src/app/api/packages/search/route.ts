@@ -1,4 +1,4 @@
-import { parseDealsSearchParams, validateDealsSearch } from "@/lib/deals/dealsSearchParams";
+import { getIncludedProducts, parseDealsSearchParams, validateDealsSearch } from "@/lib/deals/dealsSearchParams";
 import { searchPackage } from "@/services/travel/packageOrchestrator";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
@@ -14,12 +14,15 @@ export async function POST(request: Request) {
   try { body = await request.json(); }
   catch { return Response.json({ error: "Invalid JSON request body." }, { status: 400, headers: noStore }); }
   if (!body || typeof body !== "object" || Array.isArray(body)) return Response.json({ error: "Invalid package search." }, { status: 400, headers: noStore });
+  const journey = (body as Record<string, unknown>).journey;
+  if (journey !== undefined && journey !== "staged") return Response.json({ error: "Invalid package journey." }, { status: 400, headers: noStore });
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(body)) {
     if (["string", "number", "boolean"].includes(typeof value)) params.set(key, String(value));
   }
   const query = parseDealsSearchParams(params);
+  if (journey === "staged" && !getIncludedProducts(query.mode).hotel) return Response.json({ error: "Hotel-first search requires a hotel component." }, { status: 400, headers: noStore });
   const errors = validateDealsSearch(query);
   if (Object.keys(errors).length) return Response.json({ error: "Package search needs more detail.", issues: errors }, { status: 400, headers: noStore });
-  return Response.json(await searchPackage(query, requestId), { headers: noStore });
+  return Response.json(await searchPackage(query, requestId, {}, journey === "staged" ? "hotel-only" : "all"), { headers: noStore });
 }

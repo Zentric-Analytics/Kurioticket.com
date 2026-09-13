@@ -103,7 +103,8 @@ test("source-contract: portaled picker interactions are not treated as outside c
 });
 
 test("source-contract: sticky rental dates keep the icon and compact calendar actions visible", () => {
-  assert.match(source, /showRentalDuration \|\| isCompact/);
+  assert.match(source, /showRentalDuration \? \(\s*<Calendar/);
+  assert.match(source, /!showRentalDuration && isCompact \? \(\s*<Calendar/);
   assert.match(source, /desiredHeight=\{isCompact \? 420 : 480\}/);
   assert.match(
     source,
@@ -163,7 +164,7 @@ test("source-contract: expanded sticky editor uses the Flights-style floating sh
   );
   assert.match(
     source,
-    /w-full rounded-2xl border border-slate-200\/90 bg-\[#fbfaf7\]\/95 p-4 text-start shadow-\[0_30px_90px_-32px_rgba\(15,23,42,0\.72\)\] ring-1 ring-white\/80 backdrop-blur-md/,
+    /w-full rounded-2xl border border-slate-200 bg-white p-4 text-start shadow-\[0_30px_90px_-32px_rgba\(15,23,42,0\.72\)\] ring-1 ring-white/,
   );
   assert.match(
     source,
@@ -185,7 +186,7 @@ test("source-contract: expanded sticky editor uses the Flights-style floating sh
 test("source-contract: sticky controls form one restrained segmented row", () => {
   assert.match(
     source,
-    /isCompactSearch[\s\S]*?"rounded-xl border-slate-200\/85 bg-white\/90 p-0 shadow-\[0_14px_34px_-28px_rgba\(15,23,42,0\.64\)\]"/,
+    /isCompactSearch[\s\S]*?"rounded-xl border border-slate-200 bg-white p-0 shadow-\[0_14px_34px_-28px_rgba\(15,23,42,0\.64\)\]"/,
   );
   assert.doesNotMatch(source, /isCompactSearch \? "p-1" : "p-1\.5"/);
 });

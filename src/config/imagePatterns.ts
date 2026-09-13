@@ -1,3 +1,5 @@
+import { CARS_RESULTS_IMAGE_VERSION } from "../lib/cars/carResultImage";
+
 export type ImagePattern = {
   protocol?: "http" | "https";
   hostname?: string;
@@ -12,11 +14,16 @@ type RemoteImagePattern = ImagePattern & {
 };
 
 export const imageLocalPatterns: ImagePattern[] = [
+  { pathname: "/images/cars/results/**", search: `?v=${CARS_RESULTS_IMAGE_VERSION}` },
   { pathname: "/images/cars/results/**", search: "?v=4x3-20260723" },
   { pathname: "/**", search: "" },
 ];
 
 export const imageRemotePatterns: RemoteImagePattern[] = [
+  { protocol: "https", hostname: "sandbox-en-us.kayakaffiliates.com", port: "", pathname: "/himg/**", search: "" },
+  { protocol: "https", hostname: "content.r9cdn.net", port: "", pathname: "/**" },
+  { protocol: "https", hostname: "www.kayak.com", port: "", pathname: "/h/run/api/image" },
+  { protocol: "https", hostname: "www.kayak.ch", port: "", pathname: "/h/run/api/image" },
   { protocol: "https", hostname: "images.unsplash.com", port: "", pathname: "/**" },
   { protocol: "https", hostname: "images.pexels.com", port: "", pathname: "/**" },
   { protocol: "https", hostname: "assets.duffel.com", port: "", pathname: "/airlines/**", search: "" },

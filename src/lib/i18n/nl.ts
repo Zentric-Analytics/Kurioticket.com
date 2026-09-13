@@ -2,8 +2,8 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
-  "accountDashboard.recently": "Onlangs",
   ...en,
+  "accountDashboard.recently": "Onlangs",
   "deals.mobileTravelersTitle": "Reizigers",
   "mobileTravelerCabin.title": "Reizigers en cabine",
   "mobileTravelerCabin.adultDescription": "18 jaar en ouder",
@@ -2138,7 +2138,7 @@ flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}
   "accountDashboard.preferences.customization.personalization.title": "Personalisatie",
   "accountDashboard.preferences.customization.personalization.description": "Bepaal hoe Kurioticket je aanbevelingen personaliseert.",
   "accountDashboard.preferences.customization.personalizeSearches": "Gebruik mijn zoekopdrachten om aanbevelingen te personaliseren",
-  "accountDashboard.preferences.customization.personalizedTravelReispakketten": "Toon gepersonaliseerde reisdeals",
+  "accountDashboard.preferences.customization.personalizedTravelDeals": "Toon gepersonaliseerde reisdeals",
   "accountDashboard.preferences.customization.rememberRecentSearches": "Onthoud mijn recente zoekopdrachten",
   "accountDashboard.preferences.customization.communicationStyle.title": "Communicatiestijl",
   "accountDashboard.preferences.customization.communicationStyle.description": "Kies hoe Kurioticket met je communiceert.",

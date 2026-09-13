@@ -6,7 +6,7 @@ import { formatTime, rentalTimesSummary, selectRentalRangeDate } from "./carSear
 const panel = readFileSync("src/features/flow/CarSearchPanel.tsx", "utf8");
 const pickers = readFileSync("src/features/flow/CarSearchPickers.tsx", "utf8");
 const dateRange = readFileSync("src/features/flow/DateRangeSheet.tsx", "utf8");
-const icons = readFileSync("src/features/flow/FlowIcon.tsx", "utf8");
+const icons = readFileSync("src/features/flow/FlowIcon.tsx", "utf8") + readFileSync("src/features/flow/flowIconTypes.ts", "utf8");
 
 test("Cars closed selectors share the compact field contract without custom chevrons", () => {
   const closedForm = panel.slice(0, panel.indexOf("export function CarLocationSheet"));

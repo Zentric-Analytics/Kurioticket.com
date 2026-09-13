@@ -14,7 +14,8 @@ const originalNodeEnv = process.env.NODE_ENV;
 
 afterEach(() => {
   __myTripServiceTest.setPrismaClientForTesting(null);
-  process.env.NODE_ENV = originalNodeEnv;
+  if (originalNodeEnv === undefined) Reflect.deleteProperty(process.env, "NODE_ENV");
+  else Reflect.set(process.env, "NODE_ENV", originalNodeEnv);
 });
 
 test("listing is user-scoped, status-filtered, and serializes only safe provider actions", async () => {
@@ -115,7 +116,7 @@ test("trusted ingestion fails closed on a cross-user provider conversion mismatc
 
 test("trusted ingestion rejects unsafe external destinations", async () => {
   const db = memoryClient([]); __myTripServiceTest.setPrismaClientForTesting(db.client);
-  process.env.NODE_ENV = "production";
+  Reflect.set(process.env, "NODE_ENV", "production");
   for (const providerManageUrl of ["/dashboard/trips", "javascript:alert(1)", "data:text/html,no", "http://provider.test/manage", "https://kurioticket.com/dashboard/trips", "not a url"]) {
     await assert.rejects(upsertPartnerConfirmedMyTrip(confirmation({ providerManageUrl, partnerConversionId: providerManageUrl })));
   }

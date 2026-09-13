@@ -175,12 +175,20 @@ export function CarsDriverAgePickerContent({ anyAgeLabel, formatAge = (age) => a
 type MobileDialogBase = { open: boolean; launcherRef?: RefObject<HTMLElement | null>; onClose: () => void; doneLabel: string };
 export function MobileCarTimePickerDialog({ open, launcherRef, onClose, pickupTime, returnTime, onCommit, formatTime, title, intro, pickupLabel, returnLabel, doneLabel }: MobileDialogBase & { pickupTime: string; returnTime: string; onCommit: (pickup: string, returned: string) => void; formatTime: (time: string) => string; title: string; intro: string; pickupLabel: string; returnLabel: string }) {
   const [draftPickup, setDraftPickup] = useState(pickupTime), [draftReturn, setDraftReturn] = useState(returnTime);
-  useEffect(() => { if (open) { setDraftPickup(pickupTime); setDraftReturn(returnTime); } }, [open, pickupTime, returnTime]);
+  const [draftSource, setDraftSource] = useState({ open, pickupTime, returnTime });
+  if (draftSource.open !== open || draftSource.pickupTime !== pickupTime || draftSource.returnTime !== returnTime) {
+    setDraftSource({ open, pickupTime, returnTime });
+    if (open) { setDraftPickup(pickupTime); setDraftReturn(returnTime); }
+  }
   return <FlightMobilePickerShell open={open} title={title} titleId="cars-mobile-time-title" launcherRef={launcherRef} onClose={onClose} showCancelAction={false} showBackLabel contentLayout="contained" contentClassName="bg-[#FCFDFE] px-4 py-5" footer={(requestClose) => <button type="button" onClick={() => { onCommit(draftPickup, draftReturn); requestClose(); }} className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075EE8] text-base font-bold text-white">{doneLabel}</button>}><div className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-hidden"><p className="mb-5 text-center text-sm font-medium text-slate-600">{intro}</p><CarsTimeRangePickerContent mobileShell formatTime={formatTime} pickupLabel={pickupLabel} pickupTime={draftPickup} returnLabel={returnLabel} returnTime={draftReturn} onPickupTimeChange={setDraftPickup} onReturnTimeChange={setDraftReturn} /></div></FlightMobilePickerShell>;
 }
 
 export function MobileCarDriverAgePickerDialog({ open, launcherRef, onClose, driverAge, onCommit, title, intro, anyAgeLabel, doneLabel, formatAge }: MobileDialogBase & { driverAge: string; onCommit: (age: string) => void; title: string; intro: string; anyAgeLabel: string; formatAge?: (age: string) => string }) {
   const [draftAge, setDraftAge] = useState(driverAge);
-  useEffect(() => { if (open) setDraftAge(driverAge); }, [open, driverAge]);
+  const [draftSource, setDraftSource] = useState({ open, driverAge });
+  if (draftSource.open !== open || draftSource.driverAge !== driverAge) {
+    setDraftSource({ open, driverAge });
+    if (open) setDraftAge(driverAge);
+  }
   return <FlightMobilePickerShell open={open} title={title} titleId="cars-mobile-driver-age-title" launcherRef={launcherRef} onClose={onClose} showCancelAction={false} showBackLabel={false} contentLayout="contained" contentClassName="bg-[#FCFDFE] px-4 py-5" footer={(requestClose) => <button type="button" onClick={() => { onCommit(draftAge); requestClose(); }} className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075EE8] text-base font-bold text-white">{doneLabel}</button>}><div className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-hidden"><p className="mb-5 text-sm font-medium text-slate-600">{intro}</p><CarsDriverAgePickerContent mobileShell anyAgeLabel={anyAgeLabel} formatAge={formatAge} selectedAge={draftAge} onSelect={setDraftAge} /></div></FlightMobilePickerShell>;
 }

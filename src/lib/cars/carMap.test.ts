@@ -4,7 +4,7 @@ import test from "node:test";
 import {
   buildCarDirectionsUrl,
   buildGoogleCarMapEmbedUrl,
-} from "./carMap.ts";
+} from "./carMap";
 
 test("Google Cars map embeds the normalized pickup destination", () => {
   const value = buildGoogleCarMapEmbedUrl({

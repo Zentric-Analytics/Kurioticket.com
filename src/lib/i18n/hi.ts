@@ -2,8 +2,8 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
-  "accountDashboard.recently": "हाल ही में",
   ...en,
+  "accountDashboard.recently": "हाल ही में",
   "deals.mobileTravelersTitle": "यात्री",
   "mobileTravelerCabin.title": "यात्री और केबिन",
   "mobileTravelerCabin.adultDescription": "18 वर्ष और उससे अधिक",
@@ -199,7 +199,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.personalization.title": "वैयक्तिकरण",
   "accountDashboard.preferences.customization.personalization.description": "नियंत्रित करें कि Kurioticket आपकी सिफ़ारिशों को कैसे वैयक्तिकृत करे।",
   "accountDashboard.preferences.customization.personalizeSearches": "मेरी खोजों का उपयोग सिफ़ारिशों को वैयक्तिकृत करने के लिए करें",
-  "accountDashboard.preferences.customization.personalizedTravelयात्रा पैकेज": "वैयक्तिकृत यात्रा डील्स दिखाएँ",
+  "accountDashboard.preferences.customization.personalizedTravelDeals": "वैयक्तिकृत यात्रा डील्स दिखाएँ",
   "accountDashboard.preferences.customization.rememberRecentSearches": "मेरी हाल की खोजें याद रखें",
   "accountDashboard.preferences.customization.communicationStyle.title": "संचार शैली",
   "accountDashboard.preferences.customization.communicationStyle.description": "चुनें कि आप Kurioticket से किस तरह संवाद पाना चाहते हैं।",

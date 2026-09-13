@@ -2,8 +2,9 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
-  "accountDashboard.recently": "Yakın zamanda",
   ...en,
+  carsDesktopHeroTitle: "Bir sonraki seyahatiniz için ideal arabayı bulun",
+  "accountDashboard.recently": "Yakın zamanda",
   "deals.mobileTravelersTitle": "Yolcular",
   "mobileTravelerCabin.title": "Yolcular ve kabin",
   "mobileTravelerCabin.adultDescription": "18 yaş ve üzeri",
@@ -451,7 +452,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.personalization.title": "Kişiselleştirme",
   "accountDashboard.preferences.customization.personalization.description": "Kurioticket’in önerilerinizi nasıl kişiselleştireceğini kontrol edin.",
   "accountDashboard.preferences.customization.personalizeSearches": "Önerileri kişiselleştirmek için aramalarımı kullan",
-  "accountDashboard.preferences.customization.personalizedTravelTatil Paketleri": "Kişiselleştirilmiş seyahat fırsatlarını göster",
+  "accountDashboard.preferences.customization.personalizedTravelDeals": "Kişiselleştirilmiş seyahat fırsatlarını göster",
   "accountDashboard.preferences.customization.rememberRecentSearches": "Son aramalarımı hatırla",
   "accountDashboard.preferences.customization.communicationStyle.title": "İletişim tarzı",
   "accountDashboard.preferences.customization.communicationStyle.description": "Kurioticket’in sizinle nasıl iletişim kurmasını istediğinizi seçin.",

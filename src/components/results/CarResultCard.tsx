@@ -111,15 +111,16 @@ export function CarResultCard({
     [DoorOpen, `${car.doors} doors`],
     [CarFront, title(car.transmission)],
   ];
-  const specifications: Array<[LucideIcon, string]> =
+  const specifications: Array<[LucideIcon, string]> = car.sandboxPresentation
+    ? car.sandboxPresentation.specs.map(label => [CarFront, label]) :
     guidedPlanning && car.airConditioning
       ? [...primarySpecifications, [Snowflake, "Air conditioning"]]
       : primarySpecifications;
-  const mobilePrimarySpecs = getMobileCarPrimarySpecs(car);
+  const mobilePrimarySpecs = car.sandboxPresentation ? specifications : getMobileCarPrimarySpecs(car);
   const comparisonSources: CarComparisonSource[] = [
     {
       id: `${car.id}-kurioticket-estimate`,
-      displayName: t("carsResults.comparison.estimateName"),
+      displayName: car.sandboxPresentation ? `${offer.bookingProviderName} · KAYAK sandbox` : t("carsResults.comparison.estimateName"),
       currency: offer.currency,
       totalPrice: offer.totalPrice,
       perDayPrice: offer.pricePerDay,
@@ -128,7 +129,7 @@ export function CarResultCard({
       priceStatus: "estimate",
       bookable: false,
       handoffAvailable: false,
-      disclosure: t("carsResults.comparison.planningPriceNotLive"),
+      disclosure: car.sandboxPresentation ? "Simulated KAYAK price. No real booking." : t("carsResults.comparison.planningPriceNotLive"),
     },
   ];
 
@@ -149,7 +150,7 @@ export function CarResultCard({
     }
   }
 
-  const cardActions = (
+  const cardActions = car.sandboxPresentation ? null : (
     <div data-car-card-actions className="flex shrink-0 items-center">
       <button
         type="button"
@@ -176,7 +177,7 @@ export function CarResultCard({
     </div>
   );
 
-  const mobileCardActions = (
+  const mobileCardActions = car.sandboxPresentation ? null : (
     <div
       data-car-card-mobile-actions
       className="ms-auto flex shrink-0 items-center gap-0"
@@ -444,7 +445,7 @@ export function CarResultCard({
             />
             <span className="min-w-0 whitespace-normal md:whitespace-nowrap">
               <strong className="font-semibold text-[#536B92]">
-                {formatCarPickupType(car.pickupType)}
+                {car.sandboxPresentation?.pickupLabel ?? formatCarPickupType(car.pickupType)}
               </strong>
               {" · "}
               {car.pickupLocation}
@@ -481,11 +482,11 @@ export function CarResultCard({
               resultId={car.id}
               sources={comparisonSources}
               labels={{
-                source: t("carsResults.comparison.source"),
-                estimate: t("carsResults.comparison.estimate"),
+                source: car.sandboxPresentation ? "KAYAK" : t("carsResults.comparison.source"),
+                estimate: car.sandboxPresentation ? "Sandbox" : t("carsResults.comparison.estimate"),
                 comparePrices: t("carsResults.comparison.comparePrices"),
                 hidePrices: t("carsResults.comparison.hidePrices"),
-                liveDealsComingSoon: t("carsResults.comparison.liveDealsComingSoon"),
+                liveDealsComingSoon: car.sandboxPresentation ? "Simulated inventory — no real booking" : t("carsResults.comparison.liveDealsComingSoon"),
                 notBookable: t("carsResults.comparison.notBookable"),
                 total: t("carsResults.comparison.total"),
                 perDay: t("carsResults.comparison.perDay"),

@@ -169,13 +169,13 @@ test("a separate compact toolbar is fixed, desktop-only, transitioned, and inert
 });
 
 test("the desktop toolbar retains every Deals summary value and localized label", () => {
-  assert.match(fixedRoot, /packages\.results\.summary\.package/);
+  assert.match(fixedRoot, /deals\.results\.summary\.package/);
   assert.match(fixedRoot, /value=\{modeLabel\}/);
   assert.match(fixedRoot, /summary\.routeLabelKey/);
   assert.match(fixedRoot, /value=\{summary\.primary\}/);
-  assert.match(fixedRoot, /packages\.results\.summary\.travelDates/);
+  assert.match(fixedRoot, /deals\.results\.summary\.travelDates/);
   assert.match(fixedRoot, /value=\{dates\}/);
-  assert.match(fixedRoot, /packages\.results\.summary\.travelParty/);
+  assert.match(fixedRoot, /deals\.results\.summary\.travelParty/);
   assert.match(fixedRoot, /value=\{context\}/);
 });
 
@@ -183,7 +183,7 @@ test("breadcrumbs use localized semantic hierarchy", () => {
   assert.match(breadcrumbsSource, /<nav aria-label=\{t\("deals\.results\.breadcrumb\.label"\)\}/);
   assert.match(breadcrumbsSource, /<Link href="\/"/); assert.match(breadcrumbsSource, /<Link href="\/packages"/);
   assert.match(breadcrumbsSource, /aria-current="page"/); assert.match(breadcrumbsSource, /t\("deals\.results\.breadcrumb\.current"\)/);
-  assert.equal(translations.home, "Home"); assert.equal(translations.deals, "Deals"); assert.equal(translations["deals.results.breadcrumb.current"], "Deals results");
+  assert.equal(translations.home, "Home"); assert.equal(translations.deals, "Packages"); assert.equal(translations["deals.results.breadcrumb.current"], "Package results");
 });
 
 test("route and breadcrumb presentation preserve RTL-safe direction contracts", () => {

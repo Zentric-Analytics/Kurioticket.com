@@ -14,7 +14,7 @@ test("discovery telemetry is a no-op without a configured sink", () => {
 
 test("flight discovery adapts to the one privacy-safe aggregate event contract", async () => {
   const events: FlightLocationDiscoveryEvent[] = [];
-  setFlightLocationDiscoverySinkForTests((event) => events.push(event));
+  setFlightLocationDiscoverySinkForTests((event) => { events.push(event); });
   recordFlightLocationDiscovery({ providerStatus: "failed", latencyMs: 7_001, resultCount: 2, usedFallback: true, errorCategory: "timeout" });
   recordFlightLocationSelection("owned-catalog", 999);
   await new Promise((resolve) => setTimeout(resolve, 0));

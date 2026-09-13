@@ -42,20 +42,24 @@ const optionMatches: Record<string, (car: NormalizedCarResult) => boolean> = {
   cityLocation: (car) => car.pickupType === "city-location",
 };
 
-export const doesCarMatchFilterOption = (car: NormalizedCarResult, option: string) =>
-  optionMatches[option]?.(car) ?? false;
+export const doesCarMatchFilterOption = (car: NormalizedCarResult, option: string) => {
+  // Legacy required defaults must never turn unknown supplier data into a match.
+  if (car.sandboxPresentation && !option.startsWith("total")) {
+    return car.sandboxPresentation.filterOptions?.includes(option) ?? false;
+  }
+  return optionMatches[option]?.(car) ?? false;
+};
 
 export function filterCarResults<T extends NormalizedCarResult>(results: T[], filters: SelectedCarFilters): T[] {
   const groups = Object.values(filters).filter((options) => options.length);
-  return results.filter((car) => groups.every((options) => options.some((option) => optionMatches[option]?.(car))));
+  return results.filter((car) => groups.every((options) => options.some((option) => doesCarMatchFilterOption(car, option))));
 }
 
 // Kurioticket's transparent recommendation tie-breaker rewards practical rental terms.
 function recommendedScore(car: NormalizedCarResult) {
-  const offer = getPrimaryCarOffer(car);
   return car.recommendationScore * 1000 + (car.supplierRating ?? 0) * 10 +
-    (offer?.freeCancellation ? 4 : 0) + (car.mileagePolicy === "unlimited" ? 3 : 0) +
-    (car.pickupType === "airport-counter" ? 2 : car.pickupType === "city-location" ? 1 : 0);
+    (doesCarMatchFilterOption(car, "freeCancellation") ? 4 : 0) + (doesCarMatchFilterOption(car, "unlimitedMileage") ? 3 : 0) +
+    (doesCarMatchFilterOption(car, "airportCounter") ? 2 : doesCarMatchFilterOption(car, "cityLocation") ? 1 : 0);
 }
 
 export function sortCarResults<T extends NormalizedCarResult>(results: T[], sort: CarSort): T[] {

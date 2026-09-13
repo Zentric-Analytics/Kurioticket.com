@@ -2,11 +2,16 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { NormalizedHotelResult } from "@/lib/types";
+import type { Notification, Prisma } from "@/generated/prisma/client";
 import { buildPriceAlertIdempotencyKey, isAuthorizedCronRequest, processDuePriceAlerts, selectHotelPriceAlertResult, type ResolvedPrice } from "@/services/priceAlertProcessor";
 
 const now = new Date("2026-07-10T00:00:00.000Z");
+type TestDb = NonNullable<NonNullable<Parameters<typeof processDuePriceAlerts>[0]>["db"]>;
+type AlertRecord = Awaited<ReturnType<TestDb["priceAlert"]["findMany"]>>[number];
+type EmailResult = Awaited<ReturnType<import("@/services/priceAlertProcessor").OptionalEmailSender>>;
+type Update = { where: Record<string, unknown>; data: Record<string, unknown> };
 
-function alert(overrides: Record<string, unknown> = {}) {
+function alert(overrides: Partial<AlertRecord> = {}): AlertRecord {
   return {
     id: "alert-1",
     userId: "user-1",
@@ -16,6 +21,10 @@ function alert(overrides: Record<string, unknown> = {}) {
     targetPrice: 200,
     currency: "USD",
     status: "ACTIVE",
+    mode: "TARGET",
+    baselinePrice: null,
+    lastNotifiedPrice: null,
+    lastNotifiedAt: null,
     query: {},
     nextCheckAt: new Date(now.getTime() - 1000),
     user: { email: "user@example.com", name: "User" },
@@ -23,8 +32,8 @@ function alert(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function db(alerts: Array<Record<string, unknown>>, options: { notificationFailures?: number; forceTriggerRace?: boolean } = {}) {
-  const state = { alerts, snapshots: [] as Array<Record<string, unknown>>, notifications: [] as Array<Record<string, unknown>>, updates: [] as Array<Record<string, unknown>>, updateMany: [] as Array<Record<string, unknown>>, notificationFailures: options.notificationFailures ?? 0, forceTriggerRace: options.forceTriggerRace ?? false };
+function db(alerts: AlertRecord[], options: { notificationFailures?: number; forceTriggerRace?: boolean } = {}) {
+  const state = { alerts, snapshots: [] as Array<Record<string, unknown>>, notifications: [] as Notification[], updates: [] as Update[], updateMany: [] as Update[], notificationFailures: options.notificationFailures ?? 0, forceTriggerRace: options.forceTriggerRace ?? false };
   const clientBase = {
     state,
     priceAlert: {
@@ -55,27 +64,33 @@ function db(alerts: Array<Record<string, unknown>>, options: { notificationFailu
     },
     priceSnapshot: { async create(args: { data: Record<string, unknown> }) { state.snapshots.push(args.data); return args.data; } },
     notification: {
-      async createMany(args: { data: Record<string, unknown>[]; skipDuplicates: boolean }) {
+      async createMany(args: { data: Prisma.NotificationCreateManyInput[]; skipDuplicates: boolean }) {
         if (state.notificationFailures > 0) { state.notificationFailures -= 1; throw new Error("notification_failed"); }
         const data = args.data[0];
         if (state.notifications.some((item) => item.eventKey === data.eventKey)) return { count: 0 };
-        const created = { id: `notification-${state.notifications.length + 1}`, ...data };
+        const created: Notification = {
+          id: `notification-${state.notifications.length + 1}`,
+          userId: data.userId, type: data.type, channel: data.channel ?? "IN_APP",
+          title: data.title, body: data.body, eventKey: data.eventKey ?? null,
+          actionPath: data.actionPath ?? null, readAt: null, deletedAt: null,
+          createdAt: now, metadata: data.metadata ? JSON.parse(JSON.stringify(data.metadata)) : null,
+        };
         state.notifications.push(created);
         return { count: 1 };
       },
       async findUnique(args: { where: { eventKey: string } }) { return state.notifications.find((item) => item.eventKey === args.where.eventKey) ?? null; },
     },
   };
-  type FakeClient = typeof clientBase & { $transaction<T>(fn: (tx: FakeClient) => Promise<T>): Promise<T> };
+  type FakeClient = typeof clientBase & { $transaction<T>(fn: (tx: TestDb) => Promise<T>): Promise<T> };
   const client: FakeClient = {
     ...clientBase,
-    async $transaction<T>(fn: (tx: FakeClient) => Promise<T>) {
+    async $transaction<T>(fn: (tx: TestDb) => Promise<T>) {
       const before = structuredClone({ alerts: state.alerts, snapshots: state.snapshots, notifications: state.notifications, updates: state.updates, updateMany: state.updateMany });
       try { return await fn(client); }
       catch (error) {
         for (const snapshot of before.alerts) {
           const current = state.alerts.find((candidate) => candidate.id === snapshot.id);
-          if (current) { for (const key of Object.keys(current)) delete current[key]; Object.assign(current, snapshot); }
+          if (current) { for (const key of Object.keys(current)) Reflect.deleteProperty(current, key); Object.assign(current, snapshot); }
           else state.alerts.push(snapshot);
         }
         for (let index = state.alerts.length - 1; index >= 0; index -= 1) if (!before.alerts.some((snapshot) => snapshot.id === state.alerts[index].id)) state.alerts.splice(index, 1);
@@ -92,7 +107,7 @@ function db(alerts: Array<Record<string, unknown>>, options: { notificationFailu
 
 const resolved = (overrides: Partial<ResolvedPrice> = {}) => ({ provider: "Duffel", price: 150, currency: "USD", payload: {}, ...overrides });
 
-function discoveryHotel(overrides: Partial<NormalizedHotelResult> = {}): NormalizedHotelResult {
+function discoveryHotel(overrides: Partial<Extract<NormalizedHotelResult, { inventoryKind: "discovery" }>> = {}): NormalizedHotelResult {
   return {
     id: "hotel-discovery",
     provider: "Google Hotels",
@@ -112,7 +127,7 @@ function discoveryHotel(overrides: Partial<NormalizedHotelResult> = {}): Normali
   };
 }
 
-function bookableHotel(overrides: Partial<NormalizedHotelResult> = {}): NormalizedHotelResult {
+function bookableHotel(overrides: Partial<Exclude<NormalizedHotelResult, { inventoryKind: "discovery" }>> = {}): NormalizedHotelResult {
   return {
     id: "hotel-bookable",
     provider: "Booking",
@@ -160,7 +175,7 @@ function malformedLegacyHotel(overrides: Record<string, unknown> = {}): Normaliz
   }));
 }
 
-async function run(alerts: Array<Record<string, unknown>>, options: { price?: Partial<ResolvedPrice>; emailThrows?: boolean; emailResult?: { skipped: boolean; reason?: string; id?: string }; notificationFailures?: number; forceTriggerRace?: boolean; processor?: Record<string, unknown> } = {}) {
+async function run(alerts: AlertRecord[], options: { price?: Partial<ResolvedPrice>; emailThrows?: boolean; emailResult?: EmailResult; notificationFailures?: number; forceTriggerRace?: boolean; processor?: Record<string, unknown> } = {}) {
   const fakeDb = db(alerts, options);
   const emails: Array<Parameters<import("@/services/priceAlertProcessor").OptionalEmailSender>[0]> = [];
   const counts = await processDuePriceAlerts({
@@ -233,7 +248,8 @@ test("provider failure retries", async () => {
   const fakeDb = db([alert()]);
   const counts = await processDuePriceAlerts({ now, db: fakeDb, resolvePrice: async () => { throw new Error("provider_failed"); } });
   assert.equal(counts.failed, 1);
-  assert.ok(fakeDb.state.updateMany.at(-1).data.nextCheckAt > now);
+  const nextCheckAt = fakeDb.state.updateMany.at(-1)?.data.nextCheckAt;
+  assert.ok(nextCheckAt instanceof Date && nextCheckAt > now);
 });
 
 test("email failure does not revert TRIGGERED", async () => {

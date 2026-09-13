@@ -30,7 +30,7 @@ test("IAH survives round-trip to multi-city to one-way and back as a canonical l
 test("Packages mobile fields use the same primary and supporting location display", () => {
   assert.match(packages, /compactFlightOriginDisplay = getLocationFieldDisplay/);
   assert.match(packages, /compactFlightDestinationDisplay = getLocationFieldDisplay/);
-  assert.match(packages, /compactHotelDestinationDisplay = getLocationFieldDisplay/);
+  assert.match(packages, /compactHotelDestinationDisplay = getHotelLocationFieldDisplay/);
   assert.match(packages, /compactFlightOriginDisplay\.secondary/);
   assert.match(packages, /compactFlightDestinationDisplay\.secondary/);
   assert.match(packages, /compactHotelDestinationDisplay\.secondary/);

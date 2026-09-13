@@ -3,21 +3,24 @@ import test, { afterEach } from "node:test";
 import { __notificationServiceTest, deleteNotification, escapeNotificationHtml, getUnreadNotificationCount, InvalidNotificationCursorError, listNotifications, markAllNotificationsRead, markNotificationRead, persistCanonicalNotificationEvent, validateNotificationActionPath } from "@/services/notificationService";
 
 type Row = { id: string; userId: string; type: "SYSTEM" | "PRICE_ALERT" | "TRAVEL_INSIGHT" | "SUPPORT_UPDATE" | "ACCOUNT_UPDATE" | "SECURITY_UPDATE"; title: string; body: string; actionPath: string | null; metadata: Record<string, unknown> | null; readAt: Date | null; deletedAt: Date | null; createdAt: Date; eventKey?: string };
+type NotificationWhere = Partial<Pick<Row, "id" | "userId" | "readAt" | "deletedAt">> & {
+  OR?: Array<{ type: { in: Row["type"][] }; createdAt: { gt: Date } }>;
+};
 function fakeDb(rows: Row[]) {
   const visible = (row: Row) => ({ id: row.id, type: row.type, title: row.title, body: row.body, actionPath: row.actionPath, metadata: row.metadata, readAt: row.readAt, createdAt: row.createdAt });
-  const matches = (row: Row, where: Record<string, any>) => {
+  const matches = (row: Row, where: NotificationWhere) => {
     if (where.id && row.id !== where.id || where.userId && row.userId !== where.userId) return false;
     if ("readAt" in where && row.readAt !== where.readAt || "deletedAt" in where && row.deletedAt !== where.deletedAt) return false;
-    if (where.OR && !where.OR.some((clause: Record<string, any>) => clause.type.in.includes(row.type) && row.createdAt > clause.createdAt.gt)) return false;
+    if (where.OR && !where.OR.some((clause) => clause.type.in.includes(row.type) && row.createdAt > clause.createdAt.gt)) return false;
     return true;
   };
   return { notification: {
-    createMany: async ({ data }: { data: Array<Record<string, any>> }) => { const value = data[0]!; if (rows.some((row) => row.eventKey === value.eventKey)) return { count: 0 }; rows.push({ id: `notification${rows.length + 1}`.padEnd(14, "0"), metadata: null, readAt: null, deletedAt: null, createdAt: new Date(), actionPath: null, ...value } as Row); return { count: 1 }; },
+    createMany: async ({ data }: { data: Array<Partial<Row>> }) => { const value = data[0]!; if (rows.some((row) => row.eventKey === value.eventKey)) return { count: 0 }; rows.push({ id: `notification${rows.length + 1}`.padEnd(14, "0"), metadata: null, readAt: null, deletedAt: null, createdAt: new Date(), actionPath: null, ...value } as Row); return { count: 1 }; },
     findUnique: async ({ where }: { where: { eventKey: string } }) => rows.find((row) => row.eventKey === where.eventKey) ?? null,
-    findFirst: async ({ where }: { where: Record<string, any> }) => { const row = rows.find((item) => matches(item, where)); return row ? visible(row) : null; },
-    findMany: async ({ where, take, cursor, skip }: { where: Record<string, any>; take: number; cursor?: { id: string }; skip?: number }) => { const sortedAll = rows.filter((row) => row.userId === where.userId).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime() || b.id.localeCompare(a.id)); const afterCursor = cursor ? sortedAll.slice(sortedAll.findIndex((row) => row.id === cursor.id) + (skip || 0)) : sortedAll; return afterCursor.filter((row) => matches(row, where)).slice(0, take).map(visible); },
-    count: async ({ where }: { where: Record<string, any> }) => rows.filter((row) => matches(row, where)).length,
-    updateMany: async ({ where, data }: { where: Record<string, any>; data: { readAt?: Date; deletedAt?: Date } }) => { let count = 0; for (const row of rows) if (matches(row, where)) { if (data.readAt) row.readAt = data.readAt; if (data.deletedAt) row.deletedAt = data.deletedAt; count += 1; } return { count }; },
+    findFirst: async ({ where }: { where: NotificationWhere }) => { const row = rows.find((item) => matches(item, where)); return row ? visible(row) : null; },
+    findMany: async ({ where, take, cursor, skip }: { where: NotificationWhere; take: number; cursor?: { id: string }; skip?: number }) => { const sortedAll = rows.filter((row) => row.userId === where.userId).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime() || b.id.localeCompare(a.id)); const afterCursor = cursor ? sortedAll.slice(sortedAll.findIndex((row) => row.id === cursor.id) + (skip || 0)) : sortedAll; return afterCursor.filter((row) => matches(row, where)).slice(0, take).map(visible); },
+    count: async ({ where }: { where: NotificationWhere }) => rows.filter((row) => matches(row, where)).length,
+    updateMany: async ({ where, data }: { where: NotificationWhere; data: { readAt?: Date; deletedAt?: Date } }) => { let count = 0; for (const row of rows) if (matches(row, where)) { if (data.readAt) row.readAt = data.readAt; if (data.deletedAt) row.deletedAt = data.deletedAt; count += 1; } return { count }; },
   } };
 }
 afterEach(() => __notificationServiceTest.setPrisma(null));

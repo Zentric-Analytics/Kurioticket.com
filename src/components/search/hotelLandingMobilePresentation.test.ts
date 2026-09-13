@@ -48,9 +48,9 @@ test("mobile landing destination uses MapPin without its former chevron and keep
   );
 
   assert.match(destinationLauncher, /setDestinationMobilePickerOpen\(true\)/);
-  assert.match(destinationLauncher, /mobileLandingPresentation \? \(/);
+  assert.match(destinationLauncher, /mobileLandingPresentation \|\| mobileResultsSheet \? \(/);
   assert.match(destinationLauncher, /<MapPin/);
-  assert.match(destinationLauncher, /h-4 w-4 shrink-0 text-slate-500/);
+  assert.match(destinationLauncher, /h-4 w-4 shrink-0 text-slate-700/);
   assert.ok(
     destinationLauncher.indexOf("<MapPin") <
       destinationLauncher.indexOf('t("hotelSearchDestinationPlaceholder")'),
@@ -133,7 +133,7 @@ test("hotel hero keeps its approved mobile crop and shifts only the desktop imag
   );
   assert.match(
     hotelsPageSource,
-    /object-cover object-\[50%_55%\] brightness-\[1\.2\] saturate-\[1\.1\] contrast-\[1\.01\]/,
+    /object-cover object-\[50%_38%\] brightness-\[1\.2\] saturate-\[1\.1\] contrast-\[1\.01\]/,
   );
   assert.doesNotMatch(hotelsPageSource, /object-\[50%_50%\]/);
 });
@@ -149,10 +149,11 @@ test("hotel hero keeps its mobile height while using the compact desktop height 
   );
 
   assert.match(mobileHero, /min-h-\[24\.25rem\]/);
-  assert.match(desktopHero, /min-h-\[31rem\]/);
-  assert.match(desktopHero, /lg:min-h-\[34rem\]/);
-  assert.match(desktopHero, /bottom-\[-52px\]/);
-  assert.match(desktopHero, /lg:bottom-\[-56px\]/);
+  // Preserve the compact desktop layout shipped in August, not the superseded June geometry.
+  assert.match(desktopHero, /min-h-\[28rem\]/);
+  assert.match(desktopHero, /lg:min-h-\[29rem\]/);
+  assert.match(desktopHero, /bottom-\[-78px\]/);
+  assert.match(desktopHero, /lg:bottom-\[-80px\]/);
 });
 
 test("hotel hero is text-free with one screen-reader-accessible page heading", () => {

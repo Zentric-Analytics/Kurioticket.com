@@ -2,8 +2,13 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
-  "accountDashboard.recently": "เมื่อเร็ว ๆ นี้",
   ...en,
+  multiCity: "หลายเมือง",
+  "deals.results.package.view.hotel": "ดูผลการค้นหาโรงแรม",
+  "hotelResults.noStaysMatchFiltersTitle": "ไม่มีที่พักตรงกับตัวกรองเหล่านี้",
+  "accountDashboard.recently": "เมื่อเร็ว ๆ นี้",
+  "accountDashboard.hub.savedRecent": "ที่บันทึกไว้และล่าสุด",
+  "accountMenu.savedRecent.label": "ที่บันทึกไว้และล่าสุด",
   "deals.mobileTravelersTitle": "ผู้เดินทาง",
   "mobileTravelerCabin.title": "ผู้เดินทางและชั้นโดยสาร",
   "mobileTravelerCabin.adultDescription": "อายุ 18 ปีขึ้นไป",
@@ -208,7 +213,7 @@ export const translations: TranslationDictionary = {
     "ควบคุมวิธีที่ Kurioticket ปรับแต่งคำแนะนำสำหรับคุณ",
   "accountDashboard.preferences.customization.personalizeSearches":
     "ใช้การค้นหาของฉันเพื่อปรับแต่งคำแนะนำ",
-  "accountDashboard.preferences.customization.personalizedTravelแพ็กเกจท่องเที่ยว":
+  "accountDashboard.preferences.customization.personalizedTravelDeals":
     "แสดงดีลการเดินทางที่ปรับให้เหมาะกับฉัน",
   "accountDashboard.preferences.customization.rememberRecentSearches":
     "จดจำการค้นหาล่าสุดของฉัน",
@@ -265,16 +270,16 @@ export const translations: TranslationDictionary = {
   "accountDashboard.trips.illustration.historyAriaLabel": "ภาพประกอบประวัติทริป",
   "accountDashboard.trips.illustration.cancelledAriaLabel": "ภาพประกอบทริปที่ยกเลิกแล้ว",
   "accountDashboard.trips.summary": "共 {{total}} 个行程。{{upcoming}} 个即将出行，{{past}} 个已完成，{{cancelled}} 个已取消。",
-  "accountDashboard.trips.state.loading": "正在加载你的行程...",
-  "accountDashboard.trips.state.unauthenticated.title": "登录以查看你的行程",
-  "accountDashboard.trips.state.unauthenticated.body": "你的行程与账户关联。请登录，然后返回这里管理即将出行、已完成和已取消的预订。",
-  "accountDashboard.trips.state.error.title": "无法加载行程",
-  "accountDashboard.trips.state.error.body": "我们无法加载你的行程。请重试。",
-  "accountDashboard.trips.state.error.retry": "重试",
-  "accountDashboard.trips.state.error.retryAriaLabel": "重新加载行程",
-  "accountDashboard.trips.lookup.unauthenticated": "请登录以查询预订。",
-  "accountDashboard.trips.lookup.error": "我们无法查询该预订。请重试。",
-  "accountDashboard.trips.lookup.found": "已找到预订。",
+  "accountDashboard.trips.state.loading": "กำลังโหลดการเดินทางของคุณ...",
+  "accountDashboard.trips.state.unauthenticated.title": "เข้าสู่ระบบเพื่อดูการเดินทางของคุณ",
+  "accountDashboard.trips.state.unauthenticated.body": "การเดินทางของคุณเชื่อมโยงกับบัญชีของคุณ โปรดเข้าสู่ระบบแล้วกลับมาที่นี่เพื่อจัดการการจองที่กำลังจะมาถึง ที่ผ่านมา และที่ยกเลิกแล้ว",
+  "accountDashboard.trips.state.error.title": "ไม่สามารถโหลดการเดินทางได้",
+  "accountDashboard.trips.state.error.body": "เราไม่สามารถโหลดการเดินทางของคุณได้ โปรดลองอีกครั้ง",
+  "accountDashboard.trips.state.error.retry": "ลองอีกครั้ง",
+  "accountDashboard.trips.state.error.retryAriaLabel": "ลองโหลดการเดินทางอีกครั้ง",
+  "accountDashboard.trips.lookup.unauthenticated": "โปรดเข้าสู่ระบบเพื่อค้นหาการจอง",
+  "accountDashboard.trips.lookup.error": "เราไม่สามารถค้นหาการจองนี้ได้ โปรดลองอีกครั้ง",
+  "accountDashboard.trips.lookup.found": "พบการจองแล้ว",
   "accountDashboard.trips.card.bookingReference": "预订编号",
   "accountDashboard.trips.card.departure": "出发",
   "accountDashboard.trips.card.return": "返回",

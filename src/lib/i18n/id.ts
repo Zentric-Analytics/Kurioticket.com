@@ -2,8 +2,13 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
-  "accountDashboard.recently": "Baru-baru ini",
   ...en,
+  multiCity: "Beberapa kota",
+  "deals.results.package.view.hotel": "Lihat hasil hotel",
+  "hotelResults.noStaysMatchFiltersTitle": "Tidak ada penginapan yang cocok dengan filter ini",
+  "accountDashboard.recently": "Baru-baru ini",
+  "accountDashboard.hub.savedRecent": "Tersimpan dan terbaru",
+  "accountMenu.savedRecent.label": "Tersimpan dan terbaru",
   "deals.mobileTravelersTitle": "Wisatawan",
   "mobileTravelerCabin.title": "Wisatawan & kabin",
   "mobileTravelerCabin.adultDescription": "18 tahun ke atas",
@@ -586,7 +591,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.personalization.title": "Personalisasi",
   "accountDashboard.preferences.customization.personalization.description": "Atur cara Kurioticket mempersonalisasi rekomendasi Anda.",
   "accountDashboard.preferences.customization.personalizeSearches": "Gunakan pencarian saya untuk mempersonalisasi rekomendasi",
-  "accountDashboard.preferences.customization.personalizedTravelPaket": "Tampilkan penawaran perjalanan yang dipersonalisasi",
+  "accountDashboard.preferences.customization.personalizedTravelDeals": "Tampilkan penawaran perjalanan yang dipersonalisasi",
   "accountDashboard.preferences.customization.rememberRecentSearches": "Ingat pencarian terbaru saya",
   "accountDashboard.preferences.customization.communicationStyle.title": "Gaya komunikasi",
   "accountDashboard.preferences.customization.communicationStyle.description": "Pilih cara Kurioticket berkomunikasi dengan Anda.",

@@ -79,15 +79,17 @@ test("compact toolbar fields do not add colored focus surrounds", () => {
 
 test("sticky editor exposes all trip types in production order and closes from the backdrop", () => {
   const start = source.indexOf("function renderStickySearchPopoutOverlay()");
-  const end = source.indexOf("function renderCompactSearchPopovers", start);
+  const end = source.indexOf("function renderCompactSearchForm", start);
+  assert.ok(start >= 0 && end > start);
   const popout = source.slice(start, end);
   const roundTrip = popout.indexOf('label: t("roundTrip")');
   const oneWay = popout.indexOf('label: t("oneWay")');
   const multiCity = popout.indexOf('label: t("multiCity")');
 
   assert.ok(roundTrip >= 0 && roundTrip < oneWay && oneWay < multiCity);
-  assert.match(popout, /aria-disabled=\{option\.disabled\}/);
-  assert.match(popout, /disabled=\{option\.disabled\}/);
+  assert.match(popout, /role="radio"/);
+  assert.match(popout, /aria-checked=\{selected\}/);
+  assert.match(popout, /onClick=\{\(\) => handleTripTypeChange\(option\.value\)\}/);
   assert.match(
     popout,
     /if \(event\.target === event\.currentTarget\) \{\s*collapseStickySearch\(\)/,
@@ -107,7 +109,8 @@ test("sticky search popout uses neutral dialog focus and returns focus to trigge
 
 test("sticky search popout uses neutral field icons and keeps the calendar controls in view", () => {
   const start = source.indexOf("function renderStickySearchPopoutOverlay()");
-  const end = source.indexOf("function renderCompactSearchPopovers", start);
+  const end = source.indexOf("function renderCompactSearchForm", start);
+  assert.ok(start >= 0 && end > start);
   const popout = source.slice(start, end);
 
   assert.equal(popout.match(/<MapPin aria-hidden="true"/g)?.length, 2);

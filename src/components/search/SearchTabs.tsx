@@ -876,13 +876,16 @@ export function SearchTabs({
     );
   };
 
-  useEffect(() => {
-    if (!hotelGuestsRoomsOpen) return;
-    setDraftHotelAdults(hotelAdultCount);
-    setDraftHotelChildren(hotelChildCount);
-    setDraftHotelRooms(Number(rooms));
-    setDraftHotelPetFriendly(hotelPetFriendly);
-  }, [hotelGuestsRoomsOpen]);
+  const [previousHotelGuestsRoomsOpen, setPreviousHotelGuestsRoomsOpen] = useState(hotelGuestsRoomsOpen);
+  if (previousHotelGuestsRoomsOpen !== hotelGuestsRoomsOpen) {
+    setPreviousHotelGuestsRoomsOpen(hotelGuestsRoomsOpen);
+    if (hotelGuestsRoomsOpen) {
+      setDraftHotelAdults(hotelAdultCount);
+      setDraftHotelChildren(hotelChildCount);
+      setDraftHotelRooms(Number(rooms));
+      setDraftHotelPetFriendly(hotelPetFriendly);
+    }
+  }
 
   const desktopPopoverOpen =
     flightDatesOpen ||
@@ -3153,7 +3156,7 @@ export function SearchTabs({
         >
           <MobileTravelerCabinPicker
             adults={draftAdultCount}
-            children={draftChildCount}
+            childCount={draftChildCount}
             infants={draftInfantCount}
             cabinClass={normalizeCabinClass(draftCabinClass)}
             strings={{
@@ -4457,7 +4460,7 @@ export function SearchTabs({
                 </button>
             )}
           >
-            <MobileHotelGuestsRoomsPicker adults={draftHotelAdults} children={draftHotelChildren} rooms={draftHotelRooms} petFriendly={draftHotelPetFriendly} density={mobileHomepage ? "compact" : undefined}
+            <MobileHotelGuestsRoomsPicker adults={draftHotelAdults} childCount={draftHotelChildren} rooms={draftHotelRooms} petFriendly={draftHotelPetFriendly} density={mobileHomepage ? "compact" : undefined}
               onAdultsChange={setDraftHotelAdults} onChildrenChange={setDraftHotelChildren} onRoomsChange={setDraftHotelRooms} onPetFriendlyChange={setDraftHotelPetFriendly}
               strings={{ guests: translate("guests") || "Guests", adults: translate("adults") || "Adults", adultDescription: translate("hotelGuests.adultDescription") || "Ages 18+", children: translate("children") || "Children", childDescription: translate("hotelGuests.childDescription") || "Ages 0–17", rooms: translate("rooms") || "Rooms", roomDescription: translate("hotelGuests.roomDescription") || "Separate rooms", petFriendly: translate("petFriendly") || "Pet-friendly", petDescription: translate("onlyShowPetFriendlyStays") || "Only show stays that allow pets", decrease: (label) => `Decrease ${label}`, increase: (label) => `Increase ${label}` }} />
           </HotelMobilePickerShell>

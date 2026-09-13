@@ -15,7 +15,7 @@ test("wide desktop uses a dedicated 288px rail and smaller screens use the filte
 
 test("facets follow the production hierarchy and omit cancellation claims", () => {
   const price = source.indexOf('title={t("hotelResults.budgetPrice")}');
-  const hotelClass = source.indexOf('title="Hotel class"', price);
+  const hotelClass = source.indexOf('title={t("hotelResults.starRating")}', price);
   const area = source.indexOf('title={t("hotelResults.locationArea")}', hotelClass);
   const property = source.indexOf('title={t("hotelResults.propertyType")}', area);
   const amenities = source.indexOf('title={t("hotelResults.facilities")}', property);
@@ -32,17 +32,19 @@ test("hotel class is multi-select and empty selection means all", () => {
 });
 
 test("price filters share the static estimated-total basis", () => {
-  assert.match(source, /Minimum estimated stay total/);
-  assert.match(source, /Maximum estimated stay total/);
-  assert.match(source, /Estimated total for \{stayNights\}/);
+  assert.match(source, /aria-label=\{minimumAriaLabel\}/);
+  assert.match(source, /aria-label=\{maximumAriaLabel\}/);
+  assert.match(source, /totalLabel = t\("hotelResults.estimatedStayTotal"\)/);
+  assert.match(source, /Intl.NumberFormat\(locale\).format\(stayNights\)/);
   assert.match(source, /total >= minPrice && total <= maxPrice/);
   assert.match(source, /kind: "priceRange"/);
 });
 
 test("filter sheet exposes clear and deterministic result apply feedback", () => {
   assert.match(source, /activeFilterCount > 0 \?\s*\(?\s*<button/);
-  assert.match(source, /No matching stays/);
-  assert.match(source, /View \$\{sortedVisibleHotels\.length\} matching/);
+  assert.match(source, /t\("hotelResults.noStaysMatchFiltersTitle"\)/);
+  assert.match(source, /t\("deals.results.package.view.hotel"\)/);
+  assert.match(source, /Intl.NumberFormat\(locale\).format\(sortedVisibleHotels.length\)/);
   assert.match(source, /disabled=\{filterApplying \|\| sortedVisibleHotels\.length === 0\}/);
   assert.match(source, /event\.key === "Escape"/);
   assert.match(source, /event\.key === "Tab"/);

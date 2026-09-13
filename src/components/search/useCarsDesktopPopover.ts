@@ -31,7 +31,9 @@ export function useCarsDesktopPopover<T extends HTMLElement>({
   const [style, setStyle] = useState<CSSProperties>();
   const [placement, setPlacement] = useState<"above" | "below">("below");
   const onLauncherOutOfViewRef = useRef(onLauncherOutOfView);
-  onLauncherOutOfViewRef.current = onLauncherOutOfView;
+  useLayoutEffect(() => {
+    onLauncherOutOfViewRef.current = onLauncherOutOfView;
+  }, [onLauncherOutOfView]);
 
   useLayoutEffect(() => {
     if (!open || !launcherRef?.current) return;

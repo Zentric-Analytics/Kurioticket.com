@@ -7,7 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "cross-env JITI_TSCONFIG_PATHS=true node --test --import jiti/register \"src/**/*.test.ts\"",
+    "test": "cross-env JITI_TSCONFIG_PATHS=./tsconfig.json node --test --import jiti/register \"src/**/*.test.ts\"",
     "qa:ios:safari": "node qa/mobile-web/browserstack/run.mjs all",
     "qa:ios:safari:smoke": "node qa/mobile-web/browserstack/run.mjs smoke",
     "qa:ios:safari:cars": "node qa/mobile-web/browserstack/run.mjs cars",
@@ -53,8 +53,8 @@
     "date-fns": "^4.1.0",
     "google-auth-library": "^10.9.1",
     "lucide-react": "^1.14.0",
-    "nanoid": "^5.1.11",
-    "next": "^16.2.12",
+    "nanoid": "^5.1.16",
+    "next": "^16.3.3",
     "next-auth": "^4.24.15",
     "pg": "^8.20.0",
     "react": "19.2.4",
@@ -74,7 +74,7 @@
     "cross-env": "^10.1.0",
     "dotenv": "^17.4.2",
     "eslint": "^9",
-    "eslint-config-next": "^16.2.12",
+    "eslint-config-next": "^16.3.3",
     "jiti": "^2.7.0",
     "prisma": "^7.9.1",
     "selenium-webdriver": "^4.48.0",
@@ -84,12 +84,24 @@
   "overrides": {
     "@hono/node-server": "^2.0.12",
     "minimatch@3.1.5": {
-      "brace-expansion": "1.1.17"
+      "brace-expansion": "1.1.18"
     },
     "minimatch@10.2.5": {
-      "brace-expansion": "5.0.8"
+      "brace-expansion": "5.0.9"
     },
     "postcss": "^8.5.25",
-    "sharp": "^0.35.3"
+    "sharp": "^0.35.4",
+    "@prisma/config": {
+      "deepmerge-ts": "8.0.0"
+    },
+    "prisma": {
+      "mysql2": "3.24.4"
+    },
+    "googleapis-common": {
+      "uuid": "11.1.1"
+    },
+    "gaxios@6": {
+      "uuid": "11.1.1"
+    }
   }
 }

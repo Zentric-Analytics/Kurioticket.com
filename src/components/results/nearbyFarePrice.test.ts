@@ -43,7 +43,7 @@ test("compact rules are desktop-only, standalone-scoped, and content-driven", ()
       if (!/logo|view-button/.test(rule[1])) assert.doesNotMatch(rule[2], /(?:^|;)\s*(?:min-|max-)?height:/);
     }
   }
-  assert.match(desktop, /font-size: 1\.1875rem/);
+  assert.match(desktop, /\.flight-card-time \{ font-size: 1\.0625rem; line-height: 1\.375rem;/);
   assert.match(desktop, /minmax\(1\.5rem, auto\)/);
   assert.match(desktop, /min-height: 44px/);
   assert.match(desktop, /padding: 0\.75rem 1rem/);
