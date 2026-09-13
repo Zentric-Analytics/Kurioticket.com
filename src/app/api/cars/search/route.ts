@@ -3,6 +3,7 @@ import type { CarSearchParams } from "@/lib/cars/types";
 import { searchCars } from "@/services/travel/carAggregator";
 import { classifyCars } from "@/lib/travel/searchContract";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
+import { getKayakClientIp } from "@/lib/kayak-client-ip";
 
 const noStore = { "Cache-Control": "no-store" };
 const text = (value: unknown) => typeof value === "string" ? value.trim() : "";
@@ -25,8 +26,8 @@ export async function POST(request: Request) {
   const search = canonicalSearch(body);
   if (!search) return Response.json({ error: "Invalid car search parameters.", requestId }, { status: 400, headers: noStore });
   try {
-    const { results, status } = await searchCars(search);
-    const response = classifyCars(results, search, requestId);
+    const { results, status, warnings } = await searchCars(search, { kayak: { clientIp: getKayakClientIp(request), userAgent: request.headers.get("user-agent") || undefined, signal: request.signal } });
+    const response = classifyCars(results, search, requestId, warnings);
     if (status === "unavailable") {
       return Response.json({ ...response, error: "Car search is temporarily unavailable." }, { status: 503, headers: noStore });
     }

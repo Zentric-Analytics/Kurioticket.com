@@ -59,7 +59,8 @@ export type TwoFactorStatus = { enabled:boolean; method:string|null; enabledAt:s
 export type AccountDeletionRequest = { id:string; status:string; requestedAt:string; deletionScheduledAt:string; cancelledAt:string|null; completedAt:string|null; canReactivate:boolean };
 export type HotelDestinationKind = "city" | "district" | "landmark" | "airport-area";
 export type HotelDestinationSuggestion = { id: string; name: string; country: string; countryCode: string; region?: string; kind: HotelDestinationKind; searchValue: string; aliases?: string[] };
-export const FLIGHT_SEARCH_REQUEST_TIMEOUT_MS = 14_000;
+/** Allows the shared server orchestrator to finish polling slower providers. */
+export const FLIGHT_SEARCH_REQUEST_TIMEOUT_MS = 35_000;
 
 function apiErrorMessage(data: Record<string, unknown>) {
   if (typeof data.error === "string") return data.error;

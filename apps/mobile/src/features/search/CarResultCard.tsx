@@ -46,6 +46,7 @@ export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal
               {result.orSimilar ? <Text style={[c.similar,{color:theme.textSecondary}]}>or similar</Text> : null}
             </Text> : null}
             <Text numberOfLines={1} style={c.category}>{result.categoryLabel}</Text>
+            {result.searchPolicy.source === "kayak-sandbox" ? <Text style={c.category}>KAYAK sandbox · Simulated · Not bookable</Text> : null}
           </View>
           <View style={c.utilityColumn}>
             <View style={c.actions}><Pressable accessibilityRole="button" accessibilityLabel={savedState.saved ? `Remove ${result.modelName} from saved` : `Save ${result.modelName}`} accessibilityState={{ selected: savedState.saved }} onPress={savedState.toggle} style={[c.action,c.saveAction]}><FlowIcon name="heart" size={20} color={savedState.saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={savedState.saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} /></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Share ${result.modelName}`} onPress={share} style={[c.action,c.shareAction]}><Share2 size={18} color={theme.icon} /></Pressable></View>

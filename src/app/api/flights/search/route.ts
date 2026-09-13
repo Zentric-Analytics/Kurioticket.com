@@ -7,6 +7,7 @@ import { classifyFlights } from "@/lib/travel/searchContract";
 import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
 import { searchFlights } from "@/services/travel/flightAggregator";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
+import { getKayakClientIp } from "@/lib/kayak-client-ip";
 
 export async function POST(request: Request) {
   const routeStartedAt = performance.now();
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
     signal: request.signal,
     requestId,
     onProviderStart: () => { providerStartedAt = performance.now(); },
+    kayak: { clientIp: getKayakClientIp(request), userAgent: request.headers.get("user-agent") || undefined, signal: request.signal },
   });
   const performanceMetrics = aggregate.performance!;
   const routeDurationMs = performance.now() - routeStartedAt;

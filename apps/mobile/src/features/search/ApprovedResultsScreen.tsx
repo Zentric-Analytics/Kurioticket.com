@@ -1340,6 +1340,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
                 <Text style={[s0.airlineName, { color: theme.textPrimary }]} numberOfLines={2} ellipsizeMode="tail">
                   {result.airlineName}
                 </Text>
+                {result.searchPolicy.source === "kayak-sandbox" ? <Text style={s0.hotelAttributionLink}>KAYAK sandbox · Simulated · Not bookable</Text> : null}
                 {flightNumber ? (
                   <Text style={[s0.flightNumber, { color: supportTextColor }]} numberOfLines={1} ellipsizeMode="tail">
                     {flightNumber}
@@ -1542,6 +1543,7 @@ function HotelCard({
         <View style={s0.hotelTitleRow}>
           <Text numberOfLines={2} style={[s0.hotelName,{color:theme.textPrimary}]}>{result.name}</Text>
         </View>
+        {result.searchPolicy.source === "kayak-sandbox" ? <Text style={s0.hotelAttributionLink}>KAYAK sandbox · Simulated · Not bookable</Text> : null}
         <View style={[s0.hotelActions, compact && s0.hotelActionsCompact]}>
           <Pressable
             accessibilityRole="button"
