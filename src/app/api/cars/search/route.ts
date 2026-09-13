@@ -4,7 +4,7 @@ import { searchCars } from "@/services/travel/carAggregator";
 import { classifyCars } from "@/lib/travel/searchContract";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
 import { getKayakClientIp } from "@/lib/kayak-client-ip";
-import { searchLocationSchema } from "@/lib/locations/searchTarget";
+import { searchLocationSchema } from "@/lib/locations/searchTargetSchema";
 
 const noStore = { "Cache-Control": "no-store" };
 const text = (value: unknown) => typeof value === "string" ? value.trim() : "";
