@@ -394,13 +394,13 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const [desktopHotelSearchDraftKey, setDesktopHotelSearchDraftKey] = useState(bodySearchKey);
   const activeMobileHotelSearchDraft = mobileHotelSearchDraftKey === bodySearchKey ? mobileHotelSearchDraft : bodyMobileSearchDraft;
   const activeDesktopHotelSearchDraft = desktopHotelSearchDraftKey === bodySearchKey ? desktopHotelSearchDraft : bodyMobileSearchDraft;
-  const activeMobileHotelSearchKey = [activeMobileHotelSearchDraft.destination, activeMobileHotelSearchDraft.checkIn, activeMobileHotelSearchDraft.checkOut, activeMobileHotelSearchDraft.guests, activeMobileHotelSearchDraft.rooms, body.sort].join("-");
+  const activeMobileHotelSearchKey = [activeMobileHotelSearchDraft.destinationId, activeMobileHotelSearchDraft.destination, activeMobileHotelSearchDraft.checkIn, activeMobileHotelSearchDraft.checkOut, activeMobileHotelSearchDraft.guests, activeMobileHotelSearchDraft.rooms, body.sort].join("-");
 
   const updateMobileHotelSearchDraft = useCallback(
     (nextDraft: HotelMobileSearchDraft) => {
       setMobileHotelSearchDraftKey(bodySearchKey);
       setMobileHotelSearchDraft((currentDraft) => {
-        if (currentDraft.destination === nextDraft.destination && currentDraft.checkIn === nextDraft.checkIn && currentDraft.checkOut === nextDraft.checkOut && currentDraft.guests === nextDraft.guests && currentDraft.rooms === nextDraft.rooms) {
+        if (currentDraft.destinationId === nextDraft.destinationId && currentDraft.destination === nextDraft.destination && currentDraft.checkIn === nextDraft.checkIn && currentDraft.checkOut === nextDraft.checkOut && currentDraft.guests === nextDraft.guests && currentDraft.rooms === nextDraft.rooms) {
           return currentDraft;
         }
 
@@ -414,7 +414,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     (nextDraft: HotelMobileSearchDraft) => {
       setDesktopHotelSearchDraftKey(bodySearchKey);
       setDesktopHotelSearchDraft((currentDraft) => {
-        if (currentDraft.destination === nextDraft.destination && currentDraft.checkIn === nextDraft.checkIn && currentDraft.checkOut === nextDraft.checkOut && currentDraft.guests === nextDraft.guests && currentDraft.rooms === nextDraft.rooms) {
+        if (currentDraft.destinationId === nextDraft.destinationId && currentDraft.destination === nextDraft.destination && currentDraft.checkIn === nextDraft.checkIn && currentDraft.checkOut === nextDraft.checkOut && currentDraft.guests === nextDraft.guests && currentDraft.rooms === nextDraft.rooms) {
           return currentDraft;
         }
 
@@ -1625,6 +1625,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             <HotelSearchBar
               key={`sticky-hotel-${bodySearchKey}-${activeDesktopStickyHotelSearchSection}-${submitDesktopStickyHotelSearchOnOpen}`}
               initialDestination={activeDesktopHotelSearchDraft.destination}
+              initialDestinationId={activeDesktopHotelSearchDraft.destinationId}
               initialCheckIn={activeDesktopHotelSearchDraft.checkIn}
               initialCheckOut={activeDesktopHotelSearchDraft.checkOut}
               initialGuests={activeDesktopHotelSearchDraft.guests}
@@ -1696,6 +1697,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                   key={`mobile-controls-${activeMobileHotelSearchKey}`}
                   idPrefix="hotel-results-mobile-controls"
                   initialDestination={activeMobileHotelSearchDraft.destination}
+                  initialDestinationId={activeMobileHotelSearchDraft.destinationId}
                   initialCheckIn={activeMobileHotelSearchDraft.checkIn}
                   initialCheckOut={activeMobileHotelSearchDraft.checkOut}
                   initialGuests={activeMobileHotelSearchDraft.guests}
@@ -1763,6 +1765,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
               key={`mobile-drawer-${bodySearchKey}-${body.sort}`}
               idPrefix="hotel-results-mobile-drawer"
               initialDestination={activeMobileHotelSearchDraft.destination}
+              initialDestinationId={activeMobileHotelSearchDraft.destinationId}
               initialCheckIn={activeMobileHotelSearchDraft.checkIn}
               initialCheckOut={activeMobileHotelSearchDraft.checkOut}
               initialGuests={activeMobileHotelSearchDraft.guests}
@@ -1791,6 +1794,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                   <HotelSearchBar
                     key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
                     initialDestination={body.destination}
+                    initialDestinationId={body.destinationId}
                     initialCheckIn={body.checkIn}
                     initialCheckOut={body.checkOut}
                     initialGuests={body.guests}
