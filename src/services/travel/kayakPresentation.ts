@@ -34,6 +34,15 @@ export function kayakHotelAmenityStatus(features: unknown, mapping: unknown): st
 /** Only explicitly supplied specifications may participate in shared filters. */
 export function kayakCarFilterOptions(car: Record<string, unknown>): string[] {
   const options: string[] = [];
+  const type = car.type && typeof car.type === "object" ? car.type as Record<string, unknown> : {};
+  const category = typeof type.displayName === "string" ? type.displayName.trim().toLowerCase() : "";
+  const categories: Record<string, string> = {
+    mini:"smallCars", economy:"smallCars", compact:"smallCars",
+    intermediate:"mediumCars", standard:"mediumCars", "full-size":"mediumCars", "full size":"mediumCars",
+    suv:"suvs", "compact suv":"suvs", "intermediate suv":"suvs", "standard suv":"suvs", "full-size suv":"suvs", "premium suv":"suvs",
+    luxury:"luxuryCars", premium:"luxuryCars", van:"vans", minivan:"vans", "passenger van":"vans",
+  };
+  if (categories[category]) options.push(categories[category]);
   if (car.transmission === "automatic" || car.transmission === "manual") options.push(car.transmission);
   for (const count of [4, 5, 7]) {
     if (typeof car.passengers === "number" && Number.isFinite(car.passengers) && car.passengers >= count) options.push(`seats${count}Plus`);
