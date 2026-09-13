@@ -9,9 +9,9 @@ export function KayakResultCard({offer,vertical,criteria}:{offer:SandboxOffer;ve
   const start=criteria.checkIn || criteria.pickupDate || criteria.departureDate;
   const end=criteria.checkOut || criteria.dropoffDate || criteria.returnDate;
   const days=Math.max(1,Math.ceil((Date.parse(end)-Date.parse(start))/86400000)||1);
-  const flight=vertical === "flights" ? kayakFlightCardModel(offer) : null;
+  const flight=vertical === "flights" ? kayakFlightCardModel(offer, criteria) : null;
   return <div className="min-w-0 space-y-2">
-    <p className="text-xs font-semibold text-amber-800">KAYAK sandbox · Simulated · {offer.priceBasis} · Not bookable</p>
+    <p className="text-xs font-semibold text-amber-800">KAYAK sandbox · Simulated · {flight ? "Total for all travelers" : offer.priceBasis} · Not bookable</p>
     {flight ? <FlightCard flight={flight} detailsHref={null} actionLabel="Sandbox only" />
       : vertical === "hotels" ? <HotelCard hotel={kayakHotelCardModel(offer,days)} detailsHref={null} allowSave={false} actionLabel="Sandbox only" unavailableActionLabel="Sandbox only" />
       : vertical === "cars" ? <CarResultCard car={kayakCarCardModel(offer,days,criteria.pickupLocation || "Not supplied")}

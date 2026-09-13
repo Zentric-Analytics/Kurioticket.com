@@ -702,6 +702,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           window.clearTimeout(searchApplyingTimeoutRef.current);
           searchApplyingTimeoutRef.current = null;
         }
+        setResults([]);
         setError(searchError instanceof Error ? searchError.message : t("hotelResults.unableToSearchHotels"));
       })
       .finally(() => {

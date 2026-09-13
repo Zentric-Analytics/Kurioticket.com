@@ -995,7 +995,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [providerResults, setResults] = useState<PublicFlightResult[]>([]);
   const kayak = useKayakResults();
   const results = useMemo(() => guidedMode || kayak?.vertical !== "flights" ? providerResults : [
-    ...providerResults, ...kayak.offers.map(kayakFlightCardModel).filter((flight): flight is PublicFlightResult => flight !== null),
+    ...providerResults, ...kayak.offers.map(offer => kayakFlightCardModel(offer, kayak.criteria)).filter((flight): flight is PublicFlightResult => flight !== null),
   ],[guidedMode,kayak,providerResults]);
   const activeFlightSearchKeyRef = useRef<string>("");
   const [error, setError] = useState("");
@@ -4334,7 +4334,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           arrivalMinutes <= maxLandingMinutes;
         const matchesDuration =
           maxDurationMinutes === null ||
-          !Number.isFinite(flight.durationMinutes) ||
+          !durationBounds ||
+          maxDurationMinutes >= durationBounds.max ||
           flight.durationMinutes <= maxDurationMinutes;
 
         return (
@@ -4353,6 +4354,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     [
       baggageIncludedOnly,
       flexibleOnly,
+      durationBounds,
       maxDurationMinutes,
       maxLandingMinutes,
       maxPrice,
@@ -4576,7 +4578,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     }
 
     const cheapest = [...filtered].sort((a, b) => a.price - b.price)[0];
-    const fastest = [...filtered].sort(
+    const fastest = filtered.filter(flight => Number.isFinite(flight.durationMinutes)).sort(
       (a, b) => a.durationMinutes - b.durationMinutes,
     )[0];
     const best = [...filtered].sort((a, b) => {
