@@ -13,7 +13,9 @@ export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<strin
     departureTime: leg.segments[0].departure,
     arrivalTime: leg.segments[leg.segments.length - 1].arrival,
     duration: leg.durationMinutes === undefined ? "Duration not supplied" : `${Math.floor(leg.durationMinutes / 60)}h ${leg.durationMinutes % 60}m`,
-    durationMinutes: leg.durationMinutes ?? Number.POSITIVE_INFINITY,
+    // This model crosses the shared JSON API boundary; keep the unknown
+    // sentinel finite so serialization cannot silently turn it into null.
+    durationMinutes: leg.durationMinutes ?? Number.MAX_SAFE_INTEGER,
     stops: Math.max(0, leg.segments.length - 1),
     layovers: leg.segments.slice(0, -1).map(segment => ({airport:segment.destination, duration:"Not supplied", quality:"unknown"})),
     segments: leg.segments.map(segment => ({originAirport:segment.origin, destinationAirport:segment.destination,

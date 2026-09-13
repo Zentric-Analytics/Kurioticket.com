@@ -3,6 +3,7 @@ import { useKayakResults } from "./KayakResultsContext";
 import { CombinedSearchEmpty } from "./CombinedSearchEmpty";
 import { kayakCarCardModel } from "./kayakCardModels";
 import { KayakResultCard } from "./KayakResultCard";
+import { isKayakSandboxResult, resultActionHref } from "@/lib/travel/resultAction";
 
 import {
   useCallback,
@@ -1746,7 +1747,7 @@ export function CarsResultsClient({
           inventoryStatus={inventoryStatus}
           hasSearchContext={hasSearchContext}
           resultHeadingId="cars-results-heading"
-          detailsHrefForCar={(car) => buildCarDetailsHref(car.id, values)}
+          detailsHrefForCar={(car) => resultActionHref(car, buildCarDetailsHref(car.id, values))}
           mobileCompactToolbarVisible={mobileCompactHeaderVisible}
           mobileSearchSummary={locationPairSummary}
           onMobileBack={() => router.push("/cars")}
@@ -2651,6 +2652,7 @@ export function CarsResultsExperience({
                       search={search}
                       badge={badges.get(car.id)}
                       detailsHref={detailsHrefForCar(car)}
+                      providerLabel={isKayakSandboxResult(car) ? "KAYAK sandbox · Not bookable" : undefined}
                       onSelect={
                         onSelectCar && (isCarSelectable?.(car) ?? true)
                           ? onSelectCar

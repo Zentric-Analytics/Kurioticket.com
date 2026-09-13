@@ -1,4 +1,6 @@
-export const FLIGHT_LOADING_DEADLINE_MS = 16_000;
+// The API owns a 35-second metasearch deadline. Keep a small UI settlement
+// margin so the view, rather than an individual provider, remains bounded.
+export const FLIGHT_LOADING_DEADLINE_MS = 37_000;
 
 /** Keeps the results UI terminal even when a transport ignores cancellation. */
 export function withinFlightLoadingDeadline<T>(

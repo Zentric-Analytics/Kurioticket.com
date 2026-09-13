@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, ChevronDown, SlidersHorizontal, SquarePen } from "lucide-react-native";
@@ -85,7 +85,9 @@ export function ApprovedCarResultsScreen() {
   const openQuickFilter=(groupId:string)=>{carFilterSessionDirtyRef.current=false;setQuickSheetKind(groupId);};
   const closeFilterSheet=()=>setFilterSheetVisible(false);
   const completeCarFilterSession=()=>{closeFilterSheet();if(carFilterSessionDirtyRef.current){carFilterSessionDirtyRef.current=false;startCarResultsTransition();}};
-  const openDeal=(result:CarResult)=>router.push({pathname:"/car-details",params:{result:JSON.stringify(result),resultId:result.id,...Object.fromEntries(Object.entries(payload).map(([key,value])=>[key,String(value)])),carResultsStack:"1"}});
+  const openDeal=(result:CarResult)=>result.searchPolicy.action.kind==="provider"
+    ? void Linking.openURL(result.searchPolicy.action.href)
+    : router.push({pathname:"/car-details",params:{result:JSON.stringify(result),resultId:result.id,...Object.fromEntries(Object.entries(payload).map(([key,value])=>[key,String(value)])),carResultsStack:"1"}});
   const image=(value?:string)=>{const resolved=resolveCarResultImageSource(value);if(!resolved)return undefined;if(/^https:\/\//i.test(resolved))return resolved;const base=getApiBaseUrl();return base.ok&&/^\/(?!\/)/.test(resolved)?new URL(resolved,`${base.baseUrl}/`).toString():undefined;};
   const clearFilters=()=>{setFilters({});startCarResultsTransition();};
   if(status==="loading") return <NativeBrandedSearchLoading product="car"/>;

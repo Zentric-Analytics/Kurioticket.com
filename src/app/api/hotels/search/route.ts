@@ -7,6 +7,7 @@ import { classifyHotels } from "@/lib/travel/searchContract";
 import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
 import { searchHotels } from "@/services/travel/hotelAggregator";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
+import { getKayakClientIp } from "@/lib/kayak-client-ip";
 
 export async function POST(request: Request) {
   const requestId = request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID();
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
   }
 
   const session = (await resolveOptionalWebApiSession())?.session;
-  const aggregate = await searchHotels(parsed.data);
+  const aggregate = await searchHotels(parsed.data, { kayak: { clientIp: getKayakClientIp(request), userAgent: request.headers.get("user-agent") || undefined, signal: request.signal } });
   if (aggregate.unavailableMessage) {
     await Promise.all(
       aggregate.providerStatuses.map((provider) =>

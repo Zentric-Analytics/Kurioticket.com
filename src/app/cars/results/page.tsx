@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
@@ -15,7 +15,7 @@ import { notFound } from "next/navigation";
 import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
 import { adaptKayakCarSearch } from "@/services/travel/kayakSearchAdapter";
 import { KayakSandboxResults } from "@/components/results/KayakSandboxResults";
-import { KayakMetasearchSection } from "@/components/results/KayakMetasearchSection";
+import { getKayakClientIp } from "@/lib/kayak-client-ip";
 
 export async function generateMetadata({ searchParams }: { searchParams: CarsResultsSearchParams }) {
   return getParamValue(await searchParams, "provider") === "kayak-sandbox"
@@ -99,7 +99,6 @@ export default async function CarsResultsPage({
         hideDesktopTravelNav
         hideMobileCategoryTabs
       />
-      <KayakMetasearchSection vertical="cars" params={params}>
       <Suspense
         key={searchIdentity}
         fallback={
@@ -127,7 +126,6 @@ export default async function CarsResultsPage({
       >
         <CarsResultsContent values={values} searchIdentity={searchIdentity} />
       </Suspense>
-      </KayakMetasearchSection>
     </>
   );
 }
@@ -139,7 +137,9 @@ async function CarsResultsContent({
   values: CarSearchParams & { returnToDifferentLocation: boolean };
   searchIdentity: string;
 }) {
-  const inventory = await searchCars(values);
+  const requestHeaders = await headers();
+  const request = new Request("https://kurioticket.invalid/cars/results", { headers: requestHeaders });
+  const inventory = await searchCars(values, { kayak: { clientIp: getKayakClientIp(request), userAgent: requestHeaders.get("user-agent") || undefined } });
 
   return (
     <CarsResultsClient

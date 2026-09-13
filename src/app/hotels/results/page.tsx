@@ -4,7 +4,6 @@ import { redirect, notFound } from "next/navigation";
 import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
 import { adaptKayakHotelSearch } from "@/services/travel/kayakSearchAdapter";
 import { KayakSandboxResults } from "@/components/results/KayakSandboxResults";
-import { KayakMetasearchSection } from "@/components/results/KayakMetasearchSection";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { HotelResultsClient } from "@/components/results/HotelResultsClient";
@@ -48,7 +47,6 @@ export default async function HotelResultsPage({ searchParams }: { searchParams:
         hideDesktopTravelNav
         hideMobileCategoryTabs
       />
-      <KayakMetasearchSection vertical="hotels" params={query}>
       <Suspense
         fallback={
           <main className="page-shell min-h-[calc(100svh-5rem)] flex-1 py-6">
@@ -60,7 +58,6 @@ export default async function HotelResultsPage({ searchParams }: { searchParams:
       >
         <HotelResultsClient />
       </Suspense>
-      </KayakMetasearchSection>
     </>
   );
 }

@@ -59,7 +59,8 @@ export type TwoFactorStatus = { enabled:boolean; method:string|null; enabledAt:s
 export type AccountDeletionRequest = { id:string; status:string; requestedAt:string; deletionScheduledAt:string; cancelledAt:string|null; completedAt:string|null; canReactivate:boolean };
 export type HotelDestinationKind = "city" | "district" | "landmark" | "airport-area";
 export type HotelDestinationSuggestion = { id: string; name: string; country: string; countryCode: string; region?: string; kind: HotelDestinationKind; searchValue: string; aliases?: string[] };
-export const FLIGHT_SEARCH_REQUEST_TIMEOUT_MS = 14_000;
+/** Allows the shared server orchestrator to finish polling slower providers. */
+export const METASEARCH_REQUEST_TIMEOUT_MS = 35_000;
 
 function apiErrorMessage(data: Record<string, unknown>) {
   if (typeof data.error === "string") return data.error;
@@ -163,10 +164,10 @@ async function fetchExploreCatalogue(): Promise<MobileExploreCatalogue> {
 
 export const travelApi = {
   featureAvailability: () => request<FeatureAvailability>("/api/feature-availability"),
-  searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<PublicFlightResult>>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: FLIGHT_SEARCH_REQUEST_TIMEOUT_MS }),
+  searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<PublicFlightResult>>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
   flightDetails: (id: string, options: { signal?: AbortSignal } = {}) => request<FlightDetailsResponse>(`/api/flights/details?id=${encodeURIComponent(id)}`, {}, options),
   flightRedirect: (id: string, options: { signal?: AbortSignal; sourcePage?: string } = {}) => request<FlightRedirectResponse>("/api/redirect", { method: "POST", body: JSON.stringify({ id, type: "flight", sourcePage: options.sourcePage ?? "native_flight_details" }) }, { signal: options.signal }),
-  searchHotels: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<HotelSearchResponse>("/api/hotels/search", { method: "POST", body: JSON.stringify(body) }, options),
+  searchHotels: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<HotelSearchResponse>("/api/hotels/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
   hotelDetails: (input: MobileHotelDetailsRequest, options: { signal?: AbortSignal } = {}) => {
     const params = new URLSearchParams({ id: input.id, checkIn: input.checkIn, checkOut: input.checkOut, guests: String(input.guests), rooms: String(input.rooms) });
     return request<MobileHotelDetailsResponse>(`/api/hotels/details?${params.toString()}`, {}, options);
@@ -177,7 +178,7 @@ export const travelApi = {
     if (options.locale) params.set("locale", options.locale);
     return request<{ suggestions?: HotelDestinationSuggestion[] }>(`/api/hotels/destinations?${params.toString()}`, {}, { signal: options.signal });
   },
-  searchCars: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<NormalizedCarResult>>("/api/cars/search", { method: "POST", body: JSON.stringify(body) }, options),
+  searchCars: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<NormalizedCarResult>>("/api/cars/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
   searchPackages: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<PackageSearchResponse>("/api/packages/search", { method: "POST", body: JSON.stringify(body) }, options),
   trips: (status?: "upcoming" | "past" | "cancelled") => request<{ trips: MobileTrip[]; summary: Record<string, number> }>(`/api/mobile/v1/trips${status ? `?status=${status}` : ""}`),
   profile: () => request<{ profile: MobileProfile | null; user: { id: string; email: string; name?: string | null } }>("/api/mobile/v1/profile"),
