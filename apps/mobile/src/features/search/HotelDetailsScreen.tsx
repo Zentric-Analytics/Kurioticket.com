@@ -634,6 +634,7 @@ function HotelDetail({
               cancellationInfo={result.cancellationInfo}
               nightlyPrice={nightlyPrice ?? null}
               hasPrice={hasPrice}
+              detailsStatus={detailsStatus}
               theme={theme}
               accentColor={hotelAccent}
             />
