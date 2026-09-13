@@ -68,7 +68,7 @@ export type SandboxOffer = {
   hotelReviewCount?: number;
   amenities?: string[];
 };
-export type SandboxPlace = { label: string; value: string };
+export type SandboxPlace = { label: string; value: string; kind?: string };
 type ObjectValue = Record<string, unknown>;
 const object = (value: unknown): ObjectValue =>
   value !== null && typeof value === "object" && !Array.isArray(value)
@@ -326,7 +326,7 @@ export class KayakSandboxClient {
           : /^[A-Z]{3}$/.test(value))
       )
         return [];
-      return [{ label: text(row.fullName) || text(row.name), value }];
+      return [{ label: text(row.fullName) || text(row.name), value, kind: text(row.primaryPlaceType) || undefined }];
     });
   }
 
