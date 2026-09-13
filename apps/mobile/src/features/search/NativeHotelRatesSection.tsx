@@ -16,6 +16,8 @@ type NightlyPrice = {
   accessibilityLabel: string;
 } | null;
 
+type DetailsStatus = "loading" | "ready" | "error";
+
 function roomGroupName(options: PresentedHotelRoomOption[], fallback: string) {
   const name = options[0]?.name?.trim();
   if (!name) return fallback.trim() || "Available rates";
@@ -60,6 +62,7 @@ export function NativeHotelRatesSection({
   cancellationInfo,
   nightlyPrice,
   hasPrice,
+  detailsStatus,
   theme,
   accentColor,
 }: {
@@ -72,6 +75,7 @@ export function NativeHotelRatesSection({
   cancellationInfo?: string | null;
   nightlyPrice: NightlyPrice;
   hasPrice: boolean;
+  detailsStatus: DetailsStatus;
   theme: Theme;
   accentColor: string;
 }) {
@@ -185,12 +189,12 @@ export function NativeHotelRatesSection({
             );
           })}
         </View>
-      ) : (
+      ) : detailsStatus !== "loading" ? (
         <View style={[s.emptyCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <Text style={[s.providerName, { color: theme.textPrimary }]}>{providerName}</Text>
           <Text style={[s.rateMeta, { color: theme.textSecondary }]}>Planning inventory · no live checkout</Text>
         </View>
-      )}
+      ) : null}
     </View>
   );
 }
