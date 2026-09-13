@@ -84,7 +84,7 @@ test("native Compare Property location uses its preview as the sole full-map lau
   assert.match(component, /address:\s*\{[^}]*marginTop:\s*4[^}]*fontSize:\s*13[^}]*lineHeight:\s*19[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
 });
 
-test("native related hotel header aligns See all with the inset heading and opens full hotel results", () => {
+test("native related hotel header contains only the heading and carousel", () => {
   const component = readFileSync("src/features/search/NativeHotelDecisionSections.tsx", "utf8");
   const section = component.slice(
     component.indexOf("export function NativeRelatedHotelsSection"),
@@ -92,12 +92,12 @@ test("native related hotel header aligns See all with the inset heading and open
   );
   const relatedSectionStyle = component.match(/relatedSection:\s*\{([^}]*)\}/)?.[1] ?? "";
 
-  assert.match(section, /<View style=\{styles\.relatedHeader\}>[\s\S]*?accessibilityRole="header"[\s\S]*?>See all<\/Text>/);
-  assert.match(section, /accessibilityLabel=\{cityName \? `See all hotels in \$\{cityName\}` : "See all nearby hotels"\}/);
-  assert.match(section, /router\.push\(\{[\s\S]*?pathname: "\/hotel-results"[\s\S]*?destination: cityName \|\| one\(params\.destination\) \|\| ""[\s\S]*?checkIn: one\(params\.checkIn\) \|\| ""[\s\S]*?checkOut: one\(params\.checkOut\) \|\| ""[\s\S]*?guests: one\(params\.guests\) \|\| "2"[\s\S]*?rooms: one\(params\.rooms\) \|\| "1"/);
+  assert.match(section, /<View style=\{styles\.relatedHeader\}>[\s\S]*?accessibilityRole="header"/);
+  assert.doesNotMatch(section, /See all|seeAllHotels|router\.push|\/hotel-results|seeAllButton|seeAllText|seeAllPressed/);
+  assert.doesNotMatch(component, /useLocalSearchParams|HOTEL_LIMITS|normalizedCount/);
   assert.match(section, /<ScrollView horizontal style=\{styles\.carouselViewport\} showsHorizontalScrollIndicator=\{false\}/);
   assert.doesNotMatch(relatedSectionStyle, /marginHorizontal/);
-  assert.match(component, /relatedHeader:\s*\{[^}]*flexDirection:\s*"row"[^}]*alignItems:\s*"center"[^}]*justifyContent:\s*"space-between"[^}]*gap:\s*12/);
+  assert.match(component, /relatedHeader:\s*\{[^}]*flexDirection:\s*"row"[^}]*alignItems:\s*"center"/);
   assert.match(component, /carouselViewport:\s*\{[^}]*marginHorizontal:\s*-16[^}]*marginTop:\s*8/);
   assert.match(component, /carousel:\s*\{[^}]*gap:\s*12[^}]*paddingHorizontal:\s*16/);
 });
