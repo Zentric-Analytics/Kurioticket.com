@@ -29,9 +29,14 @@ test("Hotel Results pushes Details with Results-stack provenance and its current
   assert.doesNotMatch(resultsHotelDetailsPush, /router\.replace/);
 });
 
-test("active Hotel Details reads, but does not invent, Results-stack provenance", () => {
+test("active Hotel Details reads, but does not invent, navigation provenance", () => {
   assert.match(details, /Array\.isArray\(params\.hotelResultsStack\)[\s\S]*?params\.hotelResultsStack\[0\][\s\S]*?: params\.hotelResultsStack\) === "1"/);
-  assert.doesNotMatch(details, /const hotelResultsStack\s*=\s*true/);
+  assert.match(details, /Array\.isArray\(params\.relatedHotelsStack\)[\s\S]*?params\.relatedHotelsStack\[0\][\s\S]*?: params\.relatedHotelsStack\) === "1"/);
+  assert.doesNotMatch(details, /const (?:hotelResultsStack|relatedHotelsStack)\s*=\s*true/);
+});
+
+test("related-list origin backs to the existing related list without changing Results behavior", () => {
+  assert.match(returnToHotelResults, /if \(relatedHotelsStack\) \{\s*router\.back\(\);\s*return;\s*\}/);
 });
 
 test("Results-origin back dismisses to existing Results using actual stack state", () => {
@@ -41,14 +46,13 @@ test("Results-origin back dismisses to existing Results using actual stack state
   assert.match(returnToHotelResults, /hotelResultsDismissCount\(navigation\.getState\(\)\)/);
   assert.match(returnToHotelResults, /if \(dismissCount\) \{\s*router\.dismiss\(dismissCount\);\s*return;\s*\}/);
   assert.doesNotMatch(returnToHotelResults, /router\.dismissTo/);
-  assert.doesNotMatch(returnToHotelResults, /router\.back\(/);
 
   const branch = returnToHotelResults.slice(
     returnToHotelResults.indexOf("if (hotelResultsStack)"),
     returnToHotelResults.indexOf("router.replace"),
   );
   assert.equal(branch.match(/router\./g)?.length, 1);
-  assert.doesNotMatch(branch, /router\.(?:setParams|replace|navigate|push|dismissTo)/);
+  assert.doesNotMatch(branch, /router\.(?:back|setParams|replace|navigate|push|dismissTo)/);
 });
 
 test("direct-entry back retains the canonical Hotel Results fallback", () => {

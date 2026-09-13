@@ -96,15 +96,39 @@ export function NativeRelatedHotelsSection({ city, hotels, theme, onViewHotel }:
     rooms: String(normalizedCount(routeParams.rooms, 1, HOTEL_LIMITS.rooms.max)),
   };
   const cityName = city?.trim();
-  const seeAllHotels = () => {
+  const relatedHotelsStack = one(params.relatedHotelsStack) === "1";
+  const viewHotel = (item: NativeRelatedHotel) => {
+    if (!relatedHotelsStack) {
+      onViewHotel(item);
+      return;
+    }
     router.push({
-      pathname: "/hotel-results",
+      pathname: "/hotel-details",
       params: {
-        destination: cityName || one(params.destination) || "",
+        result: JSON.stringify(item.result),
+        destination: one(params.destination) || cityName || item.hotel.location || "",
         checkIn: one(params.checkIn) || "",
         checkOut: one(params.checkOut) || "",
         guests: one(params.guests) || "2",
         rooms: one(params.rooms) || "1",
+        relatedHotelsStack: "1",
+        hotelDisplayPrices: item.displayPrices ? JSON.stringify(item.displayPrices) : "",
+        displayCurrencyContext: one(params.displayCurrencyContext) || "",
+      },
+    });
+  };
+  const seeAllHotels = () => {
+    router.push({
+      pathname: "/related-hotels",
+      params: {
+        city: cityName || "",
+        relatedHotels: JSON.stringify(hotels),
+        destination: one(params.destination) || cityName || "",
+        checkIn: one(params.checkIn) || "",
+        checkOut: one(params.checkOut) || "",
+        guests: one(params.guests) || "2",
+        rooms: one(params.rooms) || "1",
+        displayCurrencyContext: one(params.displayCurrencyContext) || "",
       },
     });
   };
@@ -122,7 +146,7 @@ export function NativeRelatedHotelsSection({ city, hotels, theme, onViewHotel }:
       </Pressable>
     </View>
     <ScrollView horizontal style={styles.carouselViewport} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carousel} directionalLockEnabled>
-      {hotels.map((item) => <View key={item.hotel.id} style={styles.relatedCardSlot}><RelatedHotelCard item={item} theme={theme} onView={onViewHotel} /></View>)}
+      {hotels.map((item) => <View key={item.hotel.id} style={styles.relatedCardSlot}><RelatedHotelCard item={item} theme={theme} onView={viewHotel} /></View>)}
     </ScrollView>
   </View>;
 }
