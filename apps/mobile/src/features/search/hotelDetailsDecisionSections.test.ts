@@ -107,6 +107,7 @@ test("dedicated related hotel list reuses the passed recommendations without sta
   const route = readFileSync("app/related-hotels.tsx", "utf8");
   const screen = readFileSync("src/features/search/NativeRelatedHotelsListScreen.tsx", "utf8");
   const detail = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+  const decision = readFileSync("src/features/search/NativeHotelDecisionSections.tsx", "utf8");
 
   assert.match(route, /NativeRelatedHotelsListScreen/);
   assert.match(screen, /parse<NativeRelatedHotel\[]>\(params\.relatedHotels\)/);
@@ -116,6 +117,10 @@ test("dedicated related hotel list reuses the passed recommendations without sta
   assert.match(screen, /relatedHotelsStack: "1"/);
   assert.match(detail, /const relatedHotelsStack =[\s\S]*?params\.relatedHotelsStack[\s\S]*?=== "1"/);
   assert.match(detail, /const returnToHotelResults = \(\) => \{[\s\S]*?if \(relatedHotelsStack\) \{[\s\S]*?router\.back\(\);[\s\S]*?return;[\s\S]*?\}/);
+  assert.match(decision, /const relatedHotelsStack = one\(params\.relatedHotelsStack\) === "1"/);
+  assert.match(decision, /if \(!relatedHotelsStack\) \{[\s\S]*?onViewHotel\(item\);[\s\S]*?return;[\s\S]*?\}/);
+  assert.match(decision, /pathname: "\/hotel-details"[\s\S]*?relatedHotelsStack: "1"/);
+  assert.match(decision, /<RelatedHotelCard item=\{item\} theme=\{theme\} onView=\{viewHotel\}/);
 });
 
 test("native related Hotel cards use the measured compact carousel geometry and whole-card action", () => {
