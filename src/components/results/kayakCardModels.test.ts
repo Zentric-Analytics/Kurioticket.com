@@ -2,6 +2,17 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { kayakFlightCardModel, kayakHotelCardModel, kayakCarCardModel } from "./kayakCardModels";
 import { doesCarMatchFilterOption, filterCarResults } from "@/lib/cars/carResults";
+import { getHotelComparableReviewScore } from "@/lib/hotels/hotelRatingSemantics";
+
+test("KAYAK guest ratings participate in cross-provider comparison independently of stars", () => {
+  const offer={id:"rated",title:"Hotel",description:"Room",details:[],price:100,currency:"USD",priceBasis:"total",testUrl:"https://affiliates.kayak.com/sandbox-clickout",hotelStars:5,hotelReviewScore:8.6,hotelReviewCount:3118};
+  const model=kayakHotelCardModel(offer,2);
+  assert.equal(model.reviewScale,10);
+  assert.equal(model.reviewCount,3118);
+  assert.equal(getHotelComparableReviewScore(model),8.6);
+  assert.ok(getHotelComparableReviewScore({reviewScore:4.5,reviewScale:5})! > getHotelComparableReviewScore(model)!);
+  assert.equal(getHotelComparableReviewScore(kayakHotelCardModel({...offer,hotelReviewScore:undefined},2)),null);
+});
 test("regular flight card model keeps all legs without inventing fare benefits", () => {
   const model=kayakFlightCardModel({id:"1",title:"trip",description:"seller",details:[],price:123,currency:"USD",priceBasis:"per person",testUrl:"https://affiliates.kayak.com/sandbox-clickout",flightLegs:[{durationMinutes:90,segments:[{origin:"BOS",destination:"JFK",departure:"2099-10-12T10:00:00",arrival:"2099-10-12T11:30:00",airline:"Test",flightNumber:"T 1"}]}]});
   assert.equal(model?.legs?.[0].duration,"1h 30m");

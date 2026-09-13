@@ -61,6 +61,8 @@ export type SandboxOffer = {
   carSpecs?: string[];
   carFilterOptions?: string[];
   hotelStars?: number;
+  hotelReviewScore?: number;
+  hotelReviewCount?: number;
   amenities?: string[];
 };
 export type SandboxPlace = { label: string; value: string };
@@ -233,6 +235,11 @@ export function normalizeSandboxOffers(
           text(car.transmission) ? text(car.transmission).replace(/^./,letter=>letter.toUpperCase()) : "Transmission not supplied",
         ] } : {}),
         ...(vertical === "hotels" && typeof result.starRating === "number" ? {hotelStars:result.starRating} : {}),
+        // KAYAK Hotels Search guestRating is a ten-point score; -1 means unrated.
+        ...(vertical === "hotels" && typeof result.guestRating === "number" && Number.isFinite(result.guestRating) && result.guestRating >= 0 && result.guestRating <= 10
+          ? { hotelReviewScore: result.guestRating } : {}),
+        ...(vertical === "hotels" && typeof result.numberOfReviews === "number" && Number.isInteger(result.numberOfReviews) && result.numberOfReviews >= 0
+          ? { hotelReviewCount: result.numberOfReviews } : {}),
         ...(vertical === "hotels" ? {amenities: kayakHotelAmenities(result.features, data.amenityDictionary)} : {}),
         ...(vertical === "flights" ? { flightLegs: kayakFlightLegs(data, result) } : {}),
         price: amount,

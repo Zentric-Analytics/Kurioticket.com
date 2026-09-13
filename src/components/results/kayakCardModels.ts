@@ -37,6 +37,8 @@ export function kayakHotelCardModel(offer: SandboxOffer, nights: number): Public
   return {id:`kayak-sandbox:${offer.id}`,provider:"KAYAK sandbox",name:offer.title,
     imageUrl:offer.images?.[0]?.url,imageUrls:offer.images?.map(image=>image.url),
     rating:0,classificationStars:offer.hotelStars && [1,2,3,4,5].includes(offer.hotelStars) ? offer.hotelStars as HotelClassificationStars : undefined,
+    reviewScore:offer.hotelReviewScore,reviewScale:offer.hotelReviewScore === undefined ? undefined : 10,
+    reviewCount:offer.hotelReviewCount,reviewSource:offer.hotelReviewScore === undefined ? undefined : "KAYAK",
     location:offer.details[0] || "Location not supplied",amenities:offer.amenities || [],roomType:offer.description,
     cancellationInfo:"See supplied rate details",pricePerNight:offer.price/nights,totalPrice:offer.price,currency:offer.currency,
     bookingUrl:offer.testUrl,partnerRedirectUrl:offer.testUrl,valueScore:0,travelConfidenceScore:0,arrivalSuitabilityScore:0,

@@ -11,6 +11,19 @@ import {
 
 const click = "https://affiliates.kayak.com/sandbox-clickout";
 
+test("hotel guest scores preserve the provider rating without inventing unrated scores", () => {
+  for (const guestRating of [8.6, 0, 10, -1, 11, NaN, Infinity, "8.6", undefined]) {
+    const [offer] = normalizeSandboxOffers("hotels", {currencyCode:"USD",results:[{
+      name:"Hotel",guestRating,numberOfReviews:3118,starRating:4,
+      rates:[{totalRate:100,bookUri:click}],
+    }]});
+    const valid = typeof guestRating === "number" && Number.isFinite(guestRating) && guestRating >= 0 && guestRating <= 10;
+    assert.equal(offer.hotelReviewScore, valid ? guestRating : undefined);
+    assert.equal(offer.hotelReviewCount,3118);
+    assert.equal(offer.hotelStars,4);
+  }
+});
+
 test("hotel search retrieves official amenity names and survives dictionary failure", async () => {
   for (const unavailable of [false,true]) {
     let dictionaryRequests = 0;
