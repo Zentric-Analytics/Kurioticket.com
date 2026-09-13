@@ -145,7 +145,7 @@ test("active Hotel classification and reviews never use legacy rating fallbacks"
   assert.doesNotMatch(hotel + reviews, /reviewScore \?\? result\.rating/);
   assert.match(hotel, /accessibilityLabel=\{`\$\{classification\} star hotel`\}/);
   assert.match(hotel, /\{"★"\.repeat\(classification\)\}/);
-  assert.match(bookingDetails, /`\$\{classification\}-star classification`/);
+  assert.match(bookingDetails, /buildNativeHotelAboutCopy\([\s\S]*?classification/);
 });
 
 test("native gallery remains interactive and full-bleed without inline thumbnails", () => {
@@ -173,15 +173,15 @@ test("active Hotel detail owns theme-aware accents without changing filled brand
   assert.match(tokens, /blue: "#004BB8"/);
 });
 
-test("active Details is flat, keeps every fact category, and exposes all amenities", () => {
+test("active Details is flat, keeps the useful fact sections, and exposes all amenities", () => {
   for (const heading of [
     "About this hotel",
     "Popular amenities",
     "See all amenities",
     "Room &amp; comfort",
-    "Hotel information",
     "Accessibility",
   ]) assert.match(bookingDetails, new RegExp(heading));
+  assert.doesNotMatch(bookingDetails, />Hotel information<|\bAward\b/);
   assert.match(nativeLocation, />Location<\/Text>/);
   assert.match(nativeLocation, /Why this location works/);
   assert.match(bookingDetails, /result\.amenities\.length/);

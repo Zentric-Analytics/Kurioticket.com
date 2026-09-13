@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
-  Award,
   Bed,
   ChevronRight,
   Laptop,
@@ -171,26 +170,6 @@ export function NativeHotelBookingDetails({
       <SectionDivider color={theme.border} />
 
       <View style={s.section}>
-        <Text accessibilityRole="header" style={[s.heading, { color: theme.textPrimary }]}>Hotel information</Text>
-        <View style={s.rowList}>
-          {property?.propertyType ? (
-            <View style={s.infoRow}>
-              <Award accessible={false} size={18} color={theme.icon} />
-              <Text style={[s.rowText, { color: theme.textSecondary }]}>{property.propertyType}</Text>
-            </View>
-          ) : null}
-          <View style={s.infoRow}>
-            <Award accessible={false} size={18} color={theme.icon} />
-            <Text style={[s.rowText, { color: theme.textSecondary }]}>
-              {classification ? `${classification}-star classification` : "Hotel classification is not available."}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      <SectionDivider color={theme.border} />
-
-      <View style={s.section}>
         <Text accessibilityRole="header" style={[s.heading, { color: theme.textPrimary }]}>Accessibility</Text>
         {property?.accessibility?.length ? (
           <View style={s.accessibilityList}>
@@ -276,19 +255,19 @@ function SectionDivider({ color }: { color: string }) {
 }
 
 const s = StyleSheet.create({
-  section: { paddingVertical: 4 },
+  section: { paddingVertical: 2 },
   heading: { fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.25 },
-  description: { marginTop: 8, fontSize: 13, lineHeight: 22, fontWeight: "400", fontFamily: appFonts.regular },
-  fallback: { marginTop: 6, fontSize: 13, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
-  divider: { height: StyleSheet.hairlineWidth, marginVertical: 10 },
-  rowList: { marginTop: 8, gap: 8 },
-  amenityRow: { minHeight: 24, flexDirection: "row", alignItems: "center", gap: 10 },
-  infoRow: { minHeight: 24, flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  description: { marginTop: 6, fontSize: 13, lineHeight: 22, fontWeight: "400", fontFamily: appFonts.regular },
+  fallback: { marginTop: 4, fontSize: 13, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
+  divider: { height: StyleSheet.hairlineWidth, marginVertical: 8 },
+  rowList: { marginTop: 6, gap: 6 },
+  amenityRow: { minHeight: 22, flexDirection: "row", alignItems: "center", gap: 8 },
+  infoRow: { minHeight: 22, flexDirection: "row", alignItems: "flex-start", gap: 8 },
   rowText: { flex: 1, minWidth: 0, fontSize: 13, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
-  seeAllRow: { minHeight: 44, marginTop: 6, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  seeAllRow: { minHeight: 40, marginTop: 4, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   seeAllText: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
   pressed: { opacity: 0.58 },
-  accessibilityList: { marginTop: 8, gap: 6 },
+  accessibilityList: { marginTop: 6, gap: 4 },
   accessibilityRow: { flexDirection: "row", alignItems: "flex-start" },
   bullet: { width: 20, fontSize: 14, lineHeight: 24 },
   accessibilityText: { flex: 1, fontSize: 13, lineHeight: 22, fontWeight: "400", fontFamily: appFonts.regular },
