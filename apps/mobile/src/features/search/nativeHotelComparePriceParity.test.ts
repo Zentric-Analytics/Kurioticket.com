@@ -24,9 +24,9 @@ function styleRule(source: string, name: string, nextName: string) {
   return source.slice(start, end);
 }
 
-test("active Deals section keeps the established price hierarchy with compact native offer rhythm", () => {
+test("active Rates section keeps the established price hierarchy with compact native offer rhythm", () => {
   assert.match(hotel, /activeHotelTab === "deals"/);
-  assert.match(hotel, />Deals<\/Text>/);
+  assert.match(hotel, />Rates<\/Text>/);
   assert.match(webCompare, /px-4 py-7/);
   assert.match(styleRule(detailSource, "compareSection", "compareHeading"), /paddingVertical: 4/);
   assert.match(styleRule(detailSource, "compareHeading", "compareLead"), /fontSize: 18[^}]*lineHeight: 24[^}]*fontWeight: "600"[^}]*fontFamily: appFonts\.semibold[^}]*letterSpacing: -0\.25/);
