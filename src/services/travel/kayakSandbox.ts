@@ -245,7 +245,8 @@ export function normalizeSandboxOffers(
         ...(vertical === "hotels" ? {amenities: kayakHotelAmenities(result.features, data.amenityDictionary)} : {}),
         ...(vertical === "flights" ? { flightLegs: kayakFlightLegs(data, result) } : {}),
         ...(vertical === "flights" ? {flightCabin:kayakFlightCabin(data,result,option)} : {}),
-        ...(vertical === "flights" ? {flightCarryOnIncluded: object(object(option.fees).carryOnBag1).restriction === "included"} : {}),
+        ...(vertical === "flights" && text(object(object(option.fees).carryOnBag1).restriction)
+          ? {flightCarryOnIncluded: object(object(option.fees).carryOnBag1).restriction === "included"} : {}),
         price: amount,
         currency,
         priceBasis:
