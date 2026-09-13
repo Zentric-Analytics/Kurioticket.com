@@ -83,7 +83,7 @@ export async function searchFlights(
     },
     resultsCacheValidForMs: cacheResult.validForMs,
     resultsCacheValidUntil: now + cacheResult.validForMs,
-    ...(provider.status !== "success" || cacheUnavailable
+    ...((!actionableResults.length && (provider.status === "failed" || kayak.status === "failed")) || cacheUnavailable
       ? {
           unavailableMessage:
             "Flight results are temporarily unavailable. Please try again.",

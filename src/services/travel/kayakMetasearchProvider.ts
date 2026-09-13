@@ -25,14 +25,23 @@ async function search<T>(vertical: KayakVertical, criteria: Record<string, strin
   }
 }
 
-const strings = (value: Record<string, unknown>) => Object.fromEntries(Object.entries(value).flatMap(([key, item]) => item === undefined ? [] : [[key, String(item)]]));
-export const searchKayakFlights = (criteria: FlightSearchParams, context?: KayakRequestContext) => search<PublicFlightResult>("flights", strings(criteria as unknown as Record<string, unknown>), context, offer => kayakFlightCardModel(offer, strings(criteria as unknown as Record<string, unknown>)));
+/** The regular-search adapter accepts URL-shaped scalar criteria. Structured
+ * canonical fields (notably flight `legs`) must not be stringified into an
+ * invalid value that makes an otherwise valid search look unsupported. */
+export const kayakProviderCriteria = (value: Record<string, unknown>) => Object.fromEntries(
+  Object.entries(value).flatMap(([key, item]) =>
+    typeof item === "string" || typeof item === "number" || typeof item === "boolean"
+      ? [[key, String(item)]]
+      : [],
+  ),
+);
+export const searchKayakFlights = (criteria: FlightSearchParams, context?: KayakRequestContext) => search<PublicFlightResult>("flights", kayakProviderCriteria(criteria as unknown as Record<string, unknown>), context, offer => kayakFlightCardModel(offer, kayakProviderCriteria(criteria as unknown as Record<string, unknown>)));
 export const searchKayakHotels = (criteria: HotelSearchParams, context?: KayakRequestContext) => {
   const nights = Math.max(1, Math.round((Date.parse(criteria.checkOut) - Date.parse(criteria.checkIn)) / 86_400_000));
-  return search<PublicHotelResult>("hotels", strings(criteria as unknown as Record<string, unknown>), context, offer => kayakHotelCardModel(offer, nights));
+  return search<PublicHotelResult>("hotels", kayakProviderCriteria(criteria as unknown as Record<string, unknown>), context, offer => kayakHotelCardModel(offer, nights));
 };
 export const searchKayakCars = (criteria: CarSearchParams, context?: KayakRequestContext) => {
   const days = Math.max(1, Math.ceil((Date.parse(`${criteria.dropoffDate}T${criteria.dropoffTime}:00`) - Date.parse(`${criteria.pickupDate}T${criteria.pickupTime}:00`)) / 86_400_000));
   const pickup = getLocationFieldDisplay(criteria.pickupLocation).primary || criteria.pickupLocation;
-  return search<NormalizedCarResult>("cars", strings(criteria as unknown as Record<string, unknown>), context, offer => kayakCarCardModel(offer, days, pickup));
+  return search<NormalizedCarResult>("cars", kayakProviderCriteria(criteria as unknown as Record<string, unknown>), context, offer => kayakCarCardModel(offer, days, pickup));
 };
