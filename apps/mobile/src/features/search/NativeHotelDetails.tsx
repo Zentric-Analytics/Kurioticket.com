@@ -11,19 +11,25 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { ChevronLeft, ChevronRight, X } from "lucide-react-native";
+import { X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { HotelRoomOption } from "../../../../../src/lib/hotels/hotelRoomOptions";
 import { appFonts } from "../../theme/typography";
 import type { HotelRoomDisplayPrice } from "./hotelDetailCurrency";
 
 type HotelTheme = {
+  dark: boolean;
   surface: string;
   textPrimary: string;
   textSecondary: string;
   border: string;
   icon: string;
 };
+
+type GalleryItem = { url: string; index: number };
+type GalleryRow =
+  | { kind: "large"; items: [GalleryItem] }
+  | { kind: "pair"; items: [GalleryItem, GalleryItem] };
 
 export { canonicalHotelAddress, hotelStaySummary, meaningfulHotelCenterDistance } from "./nativeHotelDetailsModel";
 
@@ -47,88 +53,124 @@ export function NativeHotelGallery({
   const insets = useSafeAreaInsets();
   const heroWidth = viewportWidth;
   const heroHeight = Math.round(viewportWidth * 0.94);
-  const viewerInsetTop = Math.max(insets.top, 12);
-  const viewerInsetRight = Math.max(insets.right, 12);
-  const viewerInsetBottom = Math.max(insets.bottom, 12);
-  const viewerInsetLeft = Math.max(insets.left, 12);
-  const viewerWidth = viewportWidth - viewerInsetLeft - viewerInsetRight;
+  const viewerWidth = viewportWidth;
+  const modalTop = Math.max(insets.top, 8);
+  const modalBottom = Math.max(insets.bottom, 8);
+  const galleryBackground = theme.dark ? "#000000" : "#FFFFFF";
+  const galleryText = theme.dark ? "#FFFFFF" : "#0F172A";
+  const gallerySecondary = theme.dark ? "#CBD5E1" : "#475569";
+  const galleryBorder = theme.dark ? "#27272A" : "#E2E8F0";
+  const galleryPlaceholder = theme.dark ? "#18181B" : "#E7EBF2";
   const images = initialImages.filter(
     (url, index) =>
       Boolean(url) && initialImages.indexOf(url) === index && !failed.has(url),
   );
   const [activeUrl, setActiveUrl] = useState<string | null>(images[0] ?? null);
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
-  const scroll = useRef<FlatList<string>>(null);
+  const heroScroll = useRef<FlatList<string>>(null);
   const viewerScroll = useRef<FlatList<string>>(null);
-  const viewerThumbnails = useRef<ScrollView>(null);
   const activeIndex = Math.max(0, images.indexOf(activeUrl ?? ""));
+
   useEffect(() => {
     if (!activeUrl || !images.includes(activeUrl)) setActiveUrl(images[0] ?? null);
   }, [activeUrl, images]);
+
   useEffect(() => {
     if (!viewerOpen || !images.length) return;
     viewerScroll.current?.scrollToIndex({ index: activeIndex, animated: false });
   }, [activeIndex, images.length, viewerOpen, viewerWidth]);
+
   const setActiveImage = (index: number) => {
     const next = images[index];
     if (!next) return false;
     setActiveUrl(next);
     return true;
   };
-  const scrollInlineTo = (index: number, animated: boolean) => {
+
+  const scrollHeroTo = (index: number, animated: boolean) => {
     if (!images[index]) return;
-    scroll.current?.scrollToIndex({ index, animated });
+    heroScroll.current?.scrollToIndex({ index, animated });
   };
+
   const scrollViewerTo = (index: number, animated: boolean) => {
     if (!images[index]) return;
     viewerScroll.current?.scrollToIndex({ index, animated });
   };
-  const keepViewerThumbnailVisible = (index: number) =>
-    viewerThumbnails.current?.scrollTo({
-      x: Math.max(0, index * 104 - viewerWidth / 2 + 48),
-      animated: true,
-    });
-  const chooseInViewer = (index: number) => {
+
+  const openGallery = (index: number) => {
     if (!setActiveImage(index)) return;
-    scrollViewerTo(index, true);
-    scrollInlineTo(index, false);
-    keepViewerThumbnailVisible(index);
+    scrollHeroTo(index, false);
+    setGalleryOpen(true);
   };
-  const moveInViewer = (delta: number) => chooseInViewer((activeIndex + delta + images.length) % images.length);
+
+  const closeGallery = () => {
+    setViewerOpen(false);
+    setGalleryOpen(false);
+  };
+
   const openViewer = (index: number) => {
     if (!setActiveImage(index)) return;
-    scrollInlineTo(index, false);
+    scrollHeroTo(index, false);
     setViewerOpen(true);
   };
+
   const closeViewer = () => setViewerOpen(false);
   const fail = (url: string) => setFailed((current) => new Set(current).add(url));
+
+  const galleryRows: GalleryRow[] = [];
+  for (let index = 0, large = true; index < images.length; large = !large) {
+    if (large || index === images.length - 1) {
+      galleryRows.push({ kind: "large", items: [{ url: images[index], index }] });
+      index += 1;
+    } else {
+      galleryRows.push({
+        kind: "pair",
+        items: [
+          { url: images[index], index },
+          { url: images[index + 1], index: index + 1 },
+        ],
+      });
+      index += 2;
+    }
+  }
+
   if (!images.length)
     return (
       <View style={[s.unavailable, { height: heroHeight, backgroundColor: theme.surface }]}>
         <Text style={[s.unavailableText, { color: theme.textSecondary }]}>Property image unavailable</Text>
       </View>
     );
+
   const renderHero = ({ item: url, index }: { item: string; index: number }) => (
     <Pressable
       style={[s.hero, { width: heroWidth, height: heroHeight }]}
       accessibilityRole="button"
-      accessibilityLabel={`Open photo ${index + 1} of ${images.length} for ${name}`}
-      accessibilityHint={images.length > 1 ? "Swipe horizontally to view more photos." : undefined}
-      onPress={() => openViewer(index)}
+      accessibilityLabel={`Open photo gallery for ${name} from photo ${index + 1} of ${images.length}`}
+      accessibilityHint={images.length > 1 ? "Swipe horizontally to preview photos, or tap to open all photos." : "Tap to open all photos."}
+      onPress={() => openGallery(index)}
     >
       <Image source={{ uri: url }} resizeMode="cover" style={s.heroImage} accessible={false} onError={() => fail(url)} />
     </Pressable>
   );
+
   const renderViewerImage = ({ item: url, index }: { item: string; index: number }) => (
-    <View style={[s.viewerPage, { width: viewerWidth }]}>
-      <Image source={{ uri: url }} resizeMode="contain" style={s.viewerImage} accessibilityLabel={`${name} photo ${index + 1}`} onError={() => fail(url)} />
+    <View style={[s.viewerPage, { width: viewerWidth, backgroundColor: galleryBackground }]}>
+      <Image
+        source={{ uri: url }}
+        resizeMode="contain"
+        style={s.viewerImage}
+        accessibilityLabel={`${name} photo ${index + 1}`}
+        onError={() => fail(url)}
+      />
     </View>
   );
+
   return (
     <View style={s.gallery}>
       <View style={[s.heroFrame, { height: heroHeight }]}>
         <FlatList
-          ref={scroll}
+          ref={heroScroll}
           horizontal
           pagingEnabled
           data={images}
@@ -147,49 +189,142 @@ export function NativeHotelGallery({
         />
         <Text style={s.counter}>{activeIndex + 1} / {images.length}</Text>
       </View>
-      <Modal visible={viewerOpen} animationType="fade" transparent presentationStyle="overFullScreen" onRequestClose={closeViewer} onShow={() => { scrollViewerTo(activeIndex, false); keepViewerThumbnailVisible(activeIndex); }}>
-        <View accessibilityViewIsModal style={[s.viewerBackdrop, { paddingTop: viewerInsetTop, paddingRight: viewerInsetRight, paddingBottom: viewerInsetBottom, paddingLeft: viewerInsetLeft }]}>
-          <View style={s.viewerDialog}>
-            <View style={s.viewerHeader}>
-              <Text accessibilityRole="header" numberOfLines={1} style={s.viewerTitle}>Photos for {name}</Text>
-              <Pressable accessibilityRole="button" accessibilityLabel="Close photo viewer" onPress={closeViewer} style={s.viewerClose}><X color="#0F172A" size={20} /></Pressable>
-            </View>
-            <View style={s.viewerStage}>
-              <FlatList
-                ref={viewerScroll}
-                style={s.viewerPager}
-                horizontal
-                pagingEnabled
-                data={images}
-                keyExtractor={(url) => url}
-                renderItem={renderViewerImage}
-                getItemLayout={(_, index) => ({ length: viewerWidth, offset: viewerWidth * index, index })}
-                initialNumToRender={2}
-                maxToRenderPerBatch={2}
-                windowSize={3}
-                removeClippedSubviews={Platform.OS === "android"}
-                showsHorizontalScrollIndicator={false}
-                onMomentumScrollEnd={(event) => {
-                  const measuredWidth = event.nativeEvent.layoutMeasurement.width || viewerWidth;
-                  const index = Math.max(0, Math.min(images.length - 1, Math.round(event.nativeEvent.contentOffset.x / measuredWidth)));
-                  if (!setActiveImage(index)) return;
-                  scrollInlineTo(index, false);
-                  keepViewerThumbnailVisible(index);
-                }}
-              />
-              {images.length > 1 ? <><Pressable accessibilityRole="button" accessibilityLabel="Previous photo" onPress={() => moveInViewer(-1)} style={[s.viewerArrow, s.viewerLeft]}><ChevronLeft color="#0F172A" size={24} /></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Next photo" onPress={() => moveInViewer(1)} style={[s.viewerArrow, s.viewerRight]}><ChevronRight color="#0F172A" size={24} /></Pressable></> : null}
-              <Text style={s.viewerCounter}>{activeIndex + 1} of {images.length} photos</Text>
-            </View>
-            {images.length > 1 ? (
-              <ScrollView ref={viewerThumbnails} style={s.viewerThumbnailScroller} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.viewerThumbnailStrip}>
-                {images.map((url, index) => (
-                  <Pressable key={url} accessibilityRole="button" accessibilityLabel={`Show photo ${index + 1}`} accessibilityState={{ selected: activeIndex === index }} onPress={() => chooseInViewer(index)} style={[s.viewerThumbnailFrame, activeIndex === index && s.viewerThumbnailActive, activeIndex === index && { borderColor: accentColor }]}>
-                    <Image source={{ uri: url }} resizeMode="cover" style={s.viewerThumbnail} onError={() => fail(url)} />
-                  </Pressable>
-                ))}
-              </ScrollView>
-            ) : null}
+
+      <Modal
+        visible={galleryOpen}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={closeGallery}
+      >
+        <View
+          accessibilityViewIsModal
+          style={[
+            s.galleryModal,
+            {
+              backgroundColor: galleryBackground,
+              paddingTop: modalTop,
+              paddingBottom: modalBottom,
+            },
+          ]}
+        >
+          <View style={[s.galleryHeader, { borderBottomColor: galleryBorder }]}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Close photo gallery"
+              onPress={closeGallery}
+              style={s.galleryHeaderAction}
+            >
+              <X color={galleryText} size={24} />
+            </Pressable>
+            <Text accessibilityRole="header" numberOfLines={1} style={[s.galleryTitle, { color: galleryText }]}>
+              {name}
+            </Text>
+            <View accessible={false} style={s.galleryHeaderAction} />
           </View>
+
+          <View style={s.gallerySummary}>
+            <Text style={[s.gallerySummaryText, { color: accentColor }]}>All photos {images.length}</Text>
+            <Text style={[s.gallerySummaryHint, { color: gallerySecondary }]}>Tap any photo to view it full screen</Text>
+          </View>
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={s.galleryOverviewContent}
+          >
+            {galleryRows.map((row, rowIndex) =>
+              row.kind === "large" ? (
+                <Pressable
+                  key={`large-${row.items[0].url}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open photo ${row.items[0].index + 1} of ${images.length}`}
+                  onPress={() => openViewer(row.items[0].index)}
+                  style={[s.galleryLargeFrame, { backgroundColor: galleryPlaceholder }]}
+                >
+                  <Image
+                    source={{ uri: row.items[0].url }}
+                    resizeMode="cover"
+                    style={s.galleryOverviewImage}
+                    onError={() => fail(row.items[0].url)}
+                  />
+                </Pressable>
+              ) : (
+                <View key={`pair-${rowIndex}`} style={s.galleryPairRow}>
+                  {row.items.map((item) => (
+                    <Pressable
+                      key={item.url}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Open photo ${item.index + 1} of ${images.length}`}
+                      onPress={() => openViewer(item.index)}
+                      style={[s.galleryPairFrame, { backgroundColor: galleryPlaceholder }]}
+                    >
+                      <Image
+                        source={{ uri: item.url }}
+                        resizeMode="cover"
+                        style={s.galleryOverviewImage}
+                        onError={() => fail(item.url)}
+                      />
+                    </Pressable>
+                  ))}
+                </View>
+              ),
+            )}
+          </ScrollView>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={viewerOpen}
+        animationType="fade"
+        presentationStyle="fullScreen"
+        onRequestClose={closeViewer}
+        onShow={() => scrollViewerTo(activeIndex, false)}
+      >
+        <View
+          accessibilityViewIsModal
+          style={[
+            s.viewerModal,
+            {
+              backgroundColor: galleryBackground,
+              paddingTop: modalTop,
+              paddingBottom: modalBottom,
+            },
+          ]}
+        >
+          <View style={[s.viewerHeader, { borderBottomColor: galleryBorder }]}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Back to photo gallery"
+              onPress={closeViewer}
+              style={s.galleryHeaderAction}
+            >
+              <X color={galleryText} size={24} />
+            </Pressable>
+            <Text accessibilityRole="header" style={[s.viewerCounter, { color: galleryText }]}>
+              {activeIndex + 1} / {images.length}
+            </Text>
+            <View accessible={false} style={s.galleryHeaderAction} />
+          </View>
+          <FlatList
+            ref={viewerScroll}
+            style={s.viewerPager}
+            horizontal
+            pagingEnabled
+            data={images}
+            keyExtractor={(url) => url}
+            renderItem={renderViewerImage}
+            getItemLayout={(_, index) => ({ length: viewerWidth, offset: viewerWidth * index, index })}
+            initialNumToRender={2}
+            maxToRenderPerBatch={2}
+            windowSize={3}
+            removeClippedSubviews={Platform.OS === "android"}
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={(event) => {
+              const measuredWidth = event.nativeEvent.layoutMeasurement.width || viewerWidth;
+              const index = Math.max(0, Math.min(images.length - 1, Math.round(event.nativeEvent.contentOffset.x / measuredWidth)));
+              if (!setActiveImage(index)) return;
+              scrollHeroTo(index, false);
+            }}
+          />
         </View>
       </Modal>
     </View>
@@ -233,24 +368,24 @@ const s = StyleSheet.create({
   counter: { position: "absolute", left: "50%", bottom: 15, minWidth: 48, transform: [{ translateX: -24 }], color: "white", backgroundColor: "rgba(0,0,0,.72)", paddingHorizontal: 9, paddingVertical: 5, borderRadius: 4, fontSize: 13, lineHeight: 18, fontWeight: "800", fontFamily: appFonts.extraBold, textAlign: "center" },
   unavailable: { width: "100%", alignItems: "center", justifyContent: "center" },
   unavailableText: { fontSize: 13, lineHeight: 19, fontFamily: appFonts.regular },
-  viewerBackdrop: { flex: 1, backgroundColor: "rgba(2,6,23,.90)", alignItems: "stretch", justifyContent: "center" },
-  viewerDialog: { flex: 1, minHeight: 0, width: "100%", borderRadius: 16, overflow: "hidden", backgroundColor: "#020617" },
-  viewerHeader: { flexDirection: "row", flexShrink: 0, alignItems: "center", justifyContent: "space-between", gap: 12, paddingHorizontal: 8, paddingVertical: 8 },
-  viewerTitle: { flex: 1, minWidth: 0, color: "white", fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
-  viewerClose: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#CBD5E1" },
-  viewerStage: { flex: 1, minHeight: 0, position: "relative" },
+  galleryModal: { flex: 1 },
+  galleryHeader: { minHeight: 56, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 8 },
+  galleryHeaderAction: { width: 48, height: 48, alignItems: "center", justifyContent: "center" },
+  galleryTitle: { flex: 1, minWidth: 0, textAlign: "center", fontSize: 17, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold },
+  gallerySummary: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 10 },
+  gallerySummaryText: { fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
+  gallerySummaryHint: { marginTop: 2, fontSize: 12, lineHeight: 18, fontWeight: "400", fontFamily: appFonts.regular },
+  galleryOverviewContent: { gap: 8, paddingHorizontal: 8, paddingBottom: 24 },
+  galleryLargeFrame: { width: "100%", height: 230, overflow: "hidden", borderRadius: 10 },
+  galleryPairRow: { flexDirection: "row", gap: 8 },
+  galleryPairFrame: { flex: 1, minWidth: 0, height: 170, overflow: "hidden", borderRadius: 10 },
+  galleryOverviewImage: { width: "100%", height: "100%" },
+  viewerModal: { flex: 1 },
+  viewerHeader: { minHeight: 56, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 8 },
+  viewerCounter: { flex: 1, textAlign: "center", fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
   viewerPager: { flex: 1 },
-  viewerPage: { flex: 1, height: "100%" },
+  viewerPage: { flex: 1, height: "100%", alignItems: "center", justifyContent: "center" },
   viewerImage: { width: "100%", height: "100%" },
-  viewerArrow: { position: "absolute", top: "50%", marginTop: -24, width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,.9)", borderWidth: 1, borderColor: "rgba(255,255,255,.55)" },
-  viewerLeft: { left: 4 },
-  viewerRight: { right: 4 },
-  viewerCounter: { position: "absolute", alignSelf: "center", bottom: 8, color: "white", backgroundColor: "rgba(2,6,23,.8)", paddingHorizontal: 12, paddingVertical: 4, borderRadius: 999, fontSize: 12, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
-  viewerThumbnailScroller: { flexGrow: 0, flexShrink: 0 },
-  viewerThumbnailStrip: { gap: 8, paddingHorizontal: 8, paddingVertical: 12 },
-  viewerThumbnailFrame: { width: 96, height: 64, borderRadius: 8, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,.4)" },
-  viewerThumbnailActive: { borderWidth: 3 },
-  viewerThumbnail: { width: "100%", height: "100%" },
   modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,.45)", justifyContent: "flex-end" },
   modal: { maxHeight: "82%", borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 28 },
   modalHeading: { flexDirection: "row", gap: 12 },
