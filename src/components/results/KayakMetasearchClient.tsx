@@ -33,6 +33,7 @@ export function KayakMetasearchClient({ vertical, criteria: inputCriteria, child
         setMessage(data.error || "KAYAK is unavailable. Other provider results are unaffected.");
         return;
       }
+      if (!Array.isArray(data?.results)) throw new Error("Invalid KAYAK results");
       setOffers(data.results);
       setMessage(data.results.length ? `${data.results.length} KAYAK simulated offers found.` : "No KAYAK test offers for this search. Other provider results are unaffected.");
     } catch {
