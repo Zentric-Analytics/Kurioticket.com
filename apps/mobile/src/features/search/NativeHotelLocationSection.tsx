@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   mapTabs: { flexDirection: "row", minHeight: 38, paddingHorizontal: 2 },
   mapTab: { minHeight: 38, paddingHorizontal: 12, borderBottomWidth: 2, borderBottomColor: "transparent", alignItems: "center", justifyContent: "center" },
   mapTabText: { fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
-  mapViewport: { height: 190, width: "100%" },
+  mapViewport: { height: 216, width: "100%" },
   mapPreview: { flex: 1 },
   map: { flex: 1 },
   mapFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 6 },
