@@ -111,6 +111,7 @@ export function NativeRelatedHotelsListScreen() {
         checkOut: one(params.checkOut) || "",
         guests: one(params.guests) || "2",
         rooms: one(params.rooms) || "1",
+        relatedHotelsStack: "1",
         hotelDisplayPrices: item.displayPrices ? JSON.stringify(item.displayPrices) : "",
         displayCurrencyContext: one(params.displayCurrencyContext) || "",
       },
