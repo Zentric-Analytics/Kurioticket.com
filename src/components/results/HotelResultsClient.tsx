@@ -690,7 +690,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           window.clearTimeout(searchApplyingTimeoutRef.current);
           searchApplyingTimeoutRef.current = null;
         }
-        setMaxPrice(getResultMaxPrice(data.results, currencyRatesRef.current));
         setMinPrice(0);
         setSelectedFilters(emptySelections);
         setSelectedHotelClasses([]);
@@ -744,6 +743,12 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const hasPricedResults = pricedResultCount > 0;
   const hasGoogleMapsResults = results.some((hotel) => hotel.provider === "Google Maps");
   const resultMaxPrice = useMemo(() => getResultMaxPrice(results, currencyRates.rates), [currencyRates.rates, results]);
+  const previousPriceBound = useRef(1200);
+  useEffect(() => {
+    const previous = previousPriceBound.current;
+    previousPriceBound.current = resultMaxPrice;
+    setMaxPrice(current => current >= previous ? resultMaxPrice : current);
+  }, [resultMaxPrice]);
   const priceFilterActive = hasPricedResults && (minPrice > 0 || maxPrice < resultMaxPrice);
 
   const filtered = useMemo(() => results.filter((hotel) => hotelMatchesFilters(hotel, propertyNameQuery, minPrice, maxPrice, priceFilterActive, selectedHotelClasses, selectedFilters, currencyRates.rates)), [currencyRates.rates, propertyNameQuery, maxPrice, minPrice, priceFilterActive, results, selectedFilters, selectedHotelClasses]);
