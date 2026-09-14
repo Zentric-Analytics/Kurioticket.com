@@ -126,8 +126,12 @@ test("amenities use the shared semantic presentation and four neutral icon rows"
   assert.deepEqual(presented.map((item) => item.iconKey), ["pool", "fitness", "wifi", "breakfast", "restaurant", "generic"]);
 });
 
-test("amenities use readable compact native metadata typography", () => {
-  assert.match(amenities, /fontSize:\s*11[^}]*lineHeight:\s*15[^}]*fontWeight:\s*"500"/s);
+test("Hotel Results amenities use the Hotel Details body scale without changing offer rows", () => {
+  assert.match(amenities, /const iconColor = theme\.dark \? theme\.icon : "#1A1A1A";/);
+  assert.match(amenities, /<Icon accessible=\{false\} size=\{15\} strokeWidth=\{1\.3\} color=\{iconColor\} \/>/);
+  assert.match(amenities, /label:\s*\{[^}]*fontSize:\s*13[^}]*lineHeight:\s*19[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/s);
+  assert.match(amenities, /<Icon accessible=\{false\} size=\{16\} strokeWidth=\{1\.8\} color=\{color\} \/>/);
+  assert.match(amenities, /offerLabel:\s*\{[^}]*fontSize:\s*12[^}]*lineHeight:\s*16[^}]*fontWeight:\s*"500"[^}]*fontFamily:\s*appFonts\.medium/s);
 });
 
 test("compact hotel cards follow the measured reference aspect while preserving bottom price rhythm", () => {

@@ -14,4 +14,4 @@ export function HotelResultsPagination({ page, pages, disabled, onPage }: { page
     {button("Next",page+1,disabled||page===pages,false,"Next hotel results page")}
   </View>;
 }
-const styles=StyleSheet.create({row:{flexDirection:"row",flexWrap:"nowrap",justifyContent:"center",alignItems:"center",gap:6,paddingHorizontal:8,paddingVertical:12},target:{minWidth:40,height:40,borderWidth:1,borderRadius:9,alignItems:"center",justifyContent:"center",paddingHorizontal:8},targetText:{fontSize:12,lineHeight:16,fontWeight:"500",fontFamily:appFonts.medium},currentText:{fontWeight:"700",fontFamily:appFonts.bold}});
+const styles=StyleSheet.create({row:{flexDirection:"row",flexWrap:"nowrap",justifyContent:"center",alignItems:"center",gap:6,paddingHorizontal:8,paddingVertical:12},target:{minWidth:40,height:40,borderWidth:1,borderRadius:9,alignItems:"center",justifyContent:"center",paddingHorizontal:8},targetText:{fontSize:14,lineHeight:20,fontWeight:"400",fontFamily:appFonts.regular},currentText:{fontWeight:"700",fontFamily:appFonts.bold}});
