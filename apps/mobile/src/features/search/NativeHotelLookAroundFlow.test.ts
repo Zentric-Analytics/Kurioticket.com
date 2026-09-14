@@ -14,10 +14,14 @@ test("iOS renders interactive Apple Look Around directly inside Hotel Details", 
   assert.match(nativeView, /override func hitTest\(_ point: CGPoint, with event: UIEvent\?\) -> UIView\?/);
   assert.match(nativeView, /controllerView\.hitTest\(controllerPoint, with: event\)/);
   assert.match(nativeView, /lookAroundController\.view\.isUserInteractionEnabled = true/);
-  assert.match(nativeView, /lookAroundController\.delegate = self/);
-  assert.match(nativeView, /if !isPresentingFullScreen \{\s*controller\?\.view\.frame = bounds\s*\}/);
-  assert.match(nativeView, /lookAroundViewControllerWillPresentFullScreen/);
-  assert.match(nativeView, /lookAroundViewControllerDidDismissFullScreen/);
+  assert.match(nativeView, /InlineLookAroundViewController: MKLookAroundViewController/);
+  assert.match(nativeView, /InlineLookAroundViewController\(scene: scene\)/);
+  assert.match(nativeView, /override func present\(/);
+  assert.match(nativeView, /override func show\(/);
+  assert.match(nativeView, /override func showDetailViewController\(/);
+  assert.match(nativeView, /hideFullScreenAffordance\(in: view\)/);
+  assert.match(nativeView, /subview is UIControl[\s\S]*subview\.isHidden = true/);
+  assert.doesNotMatch(nativeView, /lookAroundViewControllerWillPresentFullScreen|lookAroundViewControllerDidDismissFullScreen/);
   assert.match(nativeView, /UILongPressGestureRecognizer\(target: self, action: #selector\(handleInteractionGate/);
   assert.match(nativeView, /interactionGate\.minimumPressDuration = 0/);
   assert.match(nativeView, /scrollView\.panGestureRecognizer\.require\(toFail: interactionGate\)/);
