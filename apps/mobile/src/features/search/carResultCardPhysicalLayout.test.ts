@@ -10,8 +10,9 @@ const style = (name: string) => styles.slice(styles.indexOf(`${name}:`), styles.
 test("Car card shell and inset image retain safe physical layout", () => {
   assert.match(source, /c\.card,\{backgroundColor:theme\.surface,borderColor:theme\.dark\?theme\.border:"#D8E1EC",shadowColor:theme\.dark\?"#000000":"#18305B"\}/);
   assert.match(styles, /card:\{borderWidth:1,borderRadius:13,overflow:"hidden",shadowOpacity:0\.08,shadowRadius:10,shadowOffset:\{width:0,height:2\},elevation:2\}/);
-  assert.match(style("main"), /minHeight:168,flexDirection:"row",alignItems:"stretch"/);
-  assert.match(style("visualColumn"), /width:"40%",minHeight:168,paddingLeft:6,paddingRight:6,paddingBottom:8/);
+  assert.match(style("main"), /minHeight:156,flexDirection:"row",alignItems:"stretch"/);
+  assert.match(style("visualColumn"), /width:"40%",minHeight:156,paddingLeft:6,paddingRight:6,paddingBottom:6/);
+  assert.match(style("visualColumnWithoutTopMeta"), /paddingTop:7/);
   assert.match(style("visual"), /flex:1,overflow:"hidden",borderRadius:10/);
   assert.doesNotMatch(style("visual"), /backgroundColor/);
   assert.match(styles, /contentColumn:\{flex:1,minWidth:0\}/);
@@ -50,7 +51,7 @@ test("only the Best value badge creates top metadata above the shared body", () 
   assert.doesNotMatch(style("main"), /borderTopWidth/);
   assert.doesNotMatch(source, /hasTop(?:Meta|Badge)\s*=\s*[^;]*freeCancellation/);
   assert.match(source, /topMetaVisualSpacer:\{width:"40%"\}/);
-  assert.match(style("topMetaContent"), /flex:1,minWidth:0,paddingHorizontal:10,paddingTop:6,paddingBottom:4/);
+  assert.match(style("topMetaContent"), /flex:1,minWidth:0,paddingHorizontal:10,paddingTop:5,paddingBottom:3/);
   assert.match(style("topMetaRow"), /justifyContent:"flex-end"/);
   assert.match(topMetaMarkup, /<View style=\{c\.topMetaRow\}>[\s\S]*rank === 0[\s\S]*Award[\s\S]*Best value/);
   assert.doesNotMatch(topMetaMarkup, /freeCancellation|Free cancellation|ShieldCheck/);
@@ -65,7 +66,7 @@ test("Free cancellation is canonical, strong, neutral, and not a pill", () => {
   assert.match(markup, /<ShieldCheck accessible=\{false\} size=\{13\} strokeWidth=\{2\} color=\{freeCancellationColor\}/);
   assert.match(markup, /c\.freeCancellationText,\{color:freeCancellationColor\}/);
   assert.match(source, /const freeCancellationColor = theme\.dark \? theme\.textPrimary : "#000000"/);
-  assert.match(style("freeCancellation"), /minWidth:0,flexShrink:1,flexDirection:"row",alignItems:"center",alignSelf:"flex-end",gap:3,marginTop:3/);
+  assert.match(style("freeCancellation"), /minWidth:0,flexShrink:1,flexDirection:"row",alignItems:"center",alignSelf:"flex-end",gap:3,marginTop:2/);
   assert.match(style("freeCancellationText"), /fontSize:11,lineHeight:15,fontWeight:"600"/);
   assert.doesNotMatch(markup + style("freeCancellation") + style("freeCancellationText"), /#15803D|#ECFDF5|backgroundColor|border/);
 });
@@ -129,7 +130,7 @@ test("dedicated action row preserves right-column geometry without layout hacks"
   assert.doesNotMatch(style("main"), /borderBottomWidth/);
   assert.doesNotMatch(styles, /divider:\{/);
   assert.match(style("actionVisualSpacer"), /width:"40%"/);
-  assert.match(style("actionContent"), /flex:1,minWidth:0,paddingLeft:10,paddingRight:10,paddingBottom:8/);
+  assert.match(style("actionContent"), /flex:1,minWidth:0,paddingLeft:10,paddingRight:10,paddingBottom:6/);
   for (const structuralStyle of ["actionRow", "actionVisualSpacer", "actionContent", "viewDeal", "freeCancellation"])
     assert.doesNotMatch(style(structuralStyle), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|translateY|(?:^|,)height:/);
   assert.match(style("freeCancellation"), /alignSelf:"flex-end"/);
@@ -158,7 +159,7 @@ test("commerce preserves authoritative price and CTA contract", () => {
   assert.match(price, /Live price unavailable/);
   assert.match(action, /<Pressable accessibilityRole="button" accessibilityLabel=\{`View deal for \$\{result\.modelName\}`\} onPress=\{onViewDeal\}/);
   assert.match(action, /<ChevronRight accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\}/);
-  assert.match(style("conversion"), /flexDirection:"row",alignItems:"flex-end",justifyContent:"flex-end",paddingLeft:10,paddingRight:10,paddingTop:7,paddingBottom:4/);
+  assert.match(style("conversion"), /flexDirection:"row",alignItems:"flex-end",justifyContent:"flex-end",paddingLeft:10,paddingRight:10,paddingTop:5,paddingBottom:3/);
   assert.match(style("priceColumn"), /flexShrink:0,minWidth:108,maxWidth:"100%",alignItems:"flex-end",justifyContent:"flex-end"/);
   assert.match(style("viewDeal"), /minHeight:36,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4/);
   assert.doesNotMatch(style("viewDeal"), /marginTop:/);
@@ -195,8 +196,10 @@ test("vehicle identity, location, and ordered specs remain intact", () => {
   assert.match(style("similar"), /fontSize:11,fontWeight:"500",lineHeight:16/);
   assert.match(style("category"), /fontSize:10,fontWeight:"800",letterSpacing:1\.1,lineHeight:16,textTransform:"uppercase",color:"#004BB8"/);
   assert.match(source, /<MapPin size=\{13\} color=\{theme\.textPrimary\}/);
-  assert.match(style("detailColumn"), /minWidth:0,marginTop:6/);
-  assert.match(style("specs"), /marginTop:6,flexDirection:"column",gap:6/);
+  assert.match(style("information"), /flex:1,minWidth:0,paddingHorizontal:10,paddingBottom:7/);
+  assert.match(style("informationWithoutTopMeta"), /paddingTop:7/);
+  assert.match(style("detailColumn"), /minWidth:0,marginTop:4/);
+  assert.match(style("specs"), /marginTop:4,flexDirection:"column",gap:4/);
   assert.match(style("meta"), /fontSize:11,fontWeight:"500",lineHeight:15/);
   assert.match(style("specText"), /fontSize:11,fontWeight:"500",lineHeight:14/);
   const location = source.indexOf("result.pickupLocation");

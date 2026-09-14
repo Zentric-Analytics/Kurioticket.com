@@ -55,12 +55,13 @@ test("Cars render the full filtered result set without pagination", () => {
 
 test("Cars inset only result cards and matching transition skeletons", () => {
   assert.match(cars, /body:\{paddingHorizontal:14,gap:14\}/);
-  assert.match(cars, /carResultCardSlot:\{marginHorizontal:0\}/);
+  assert.match(cars, /carResultCardSlot:\{marginHorizontal:5\}/);
   const slot = cars.match(/carResultCardSlot:\{([^}]*)\}/)?.[1] ?? "";
   assert.doesNotMatch(slot, /(?:minW|w|W)idth|position|absolute|transform|margin(?:Horizontal)?:-|Dimensions|window|screen/);
   assert.doesNotMatch(cars, /carResultCardSlot:\{[^}]*width:"100%"|carResultCardSlot:\{[^}]*Dimensions/);
   assert.match(cars, /filtered\.map\(\(result,index\)=><View key=\{result\.id\} style=\{r\.carResultCardSlot\}><CarResultCard result=\{result\} rank=\{index\} imageUri=\{image\(result\.imageUrl\)\} searchParams=\{payload\} onViewDeal=\{\(\)=>openDeal\(result\)\}\/><\/View>\)/);
   assert.match(cars, /style=\{\[r\.skeleton,r\.carResultCardSlot,\{backgroundColor:/);
+  assert.match(cars, /skeleton:\{height:216/);
   assert.doesNotMatch(cars, /<NativeCarPriceAlert[^>]*carResultCardSlot|<View accessibilityLabel="Car results summary"[^>]*carResultCardSlot/);
 });
 
