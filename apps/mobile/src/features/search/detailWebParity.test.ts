@@ -63,7 +63,7 @@ test("active Hotel Details keeps fixed icon-only controls and stack-aware Result
   );
 
   assert.match(hotelStyle("heroBack", "heroActions"), /left: 20[^}]*width: 44[^}]*height: 44[^}]*borderRadius: 22[^}]*zIndex: 20/);
-  assert.match(hotelStyle("heroActions", "heroAction"), /right: 20[^}]*width: 112[^}]*height: 44[^}]*borderRadius: 22[^}]*zIndex: 20/);
+  assert.match(hotelStyle("heroActions", "heroAction"), /right: 20[^}]*width: 96[^}]*height: 44[^}]*borderRadius: 22[^}]*zIndex: 20/);
   assert.doesNotMatch(hero, /accessibilityLabel="Back to hotel results"/);
   assert.ok(scrollEnd >= 0 && scrollEnd < backControl, "fixed hotel controls must sit outside the scrolling content");
   assert.match(hotel, /accessibilityLabel="Back to hotel results"[\s\S]*?onPress=\{returnToHotelResults\}[\s\S]*?s\.heroBack/);
