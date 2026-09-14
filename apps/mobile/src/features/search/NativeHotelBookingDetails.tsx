@@ -184,7 +184,7 @@ const s = StyleSheet.create({
   amenityRow: { minHeight: 20, flexDirection: "row", alignItems: "center", gap: 7 },
   infoRow: { minHeight: 20, flexDirection: "row", alignItems: "flex-start", gap: 7 },
   rowText: { flex: 1, minWidth: 0, fontSize: 14, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
-  seeAllLink: { alignSelf: "flex-start", marginTop: 4, paddingVertical: 3 },
+  seeAllLink: { alignSelf: "flex-start", marginTop: 4, paddingVertical: 4 },
   seeAllText: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
   pressed: { opacity: 0.58 },
   accessibilityList: { marginTop: 4, gap: 2 },
