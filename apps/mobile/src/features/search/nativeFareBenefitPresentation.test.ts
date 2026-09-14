@@ -40,6 +40,25 @@ test("native groups authoritative facts into at most three rows without changing
   assert.equal(compactFareTerms(terms, "one-way", 5).length, 5);
 });
 
+test("native keeps partial-passenger baggage warnings inside the three-row presentation", () => {
+  const rows = nativeFareBenefitRows([
+    { category: "baggage", semantic: "positive", text: "1 carry-on included" },
+    { category: "baggage", semantic: "positive", text: "1 checked bag included" },
+    { category: "baggage", semantic: "informational", text: "Baggage allowance not supplied for one or more passengers" },
+    { category: "change", semantic: "positive", text: "Changes allowed" },
+    { category: "refund", semantic: "negative", text: "Not refundable" },
+  ], "one-way");
+
+  assert.equal(rows.length, 3);
+  assert.deepEqual(rows.map(({ title }) => title), ["Carry-on baggage", "Checked baggage", "Change/refund rules"]);
+  assert.equal(rows[0]?.detail, "1 included\nAllowance: Not supplied for one or more passengers");
+  assert.equal(rows[1]?.detail, "1 included\nAllowance: Not supplied for one or more passengers");
+  assert.equal(rows[0]?.semantic, "informational");
+  assert.equal(rows[1]?.semantic, "informational");
+  assert.match(rows[2]?.detail ?? "", /Changes: Allowed/);
+  assert.match(rows[2]?.detail ?? "", /Refunds: Not refundable/);
+});
+
 test("native groups matching round-trip change and refund rules without losing their meaning", () => {
   const matching: FlightFareTerm[] = [
     { category: "change", semantic: "positive", text: "Outbound: Changes allowed before departure" },
