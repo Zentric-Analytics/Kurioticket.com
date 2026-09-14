@@ -34,31 +34,17 @@ test("active Rates tab delegates only its presentation to the Rates component", 
   assert.doesNotMatch(hotel, /HotelOfferAmenityList/);
 });
 
-test("Rates uses truthful room-derived tags and does not invent unsupported payment terms", () => {
-  assert.match(ratesSource, /mealPlan\.includes\("breakfast"\)[\s\S]*?add\("Breakfast included"\)/);
-  assert.match(ratesSource, /mealPlan === "room only"[\s\S]*?add\("Room only"\)/);
-  assert.match(ratesSource, /cancellation\.includes\("flexible"\)[\s\S]*?add\("Flexible terms"\)/);
-  assert.match(ratesSource, /taxesAndFeesIncluded === true[\s\S]*?add\("Taxes included"\)/);
-  assert.doesNotMatch(ratesSource, /Pay later|Free cancellation/);
+test("Rates opens directly on the offer card without chips or a room heading", () => {
+  assert.doesNotMatch(ratesSource, /roomRateTags|chipViewport|chipRow|chipText/);
+  assert.doesNotMatch(ratesSource, /roomGroupHeading|groupHeading/);
+  assert.doesNotMatch(ratesSource, /Breakfast included|Room only|Flexible terms|Taxes included/);
+  assert.match(styleRule(ratesSource, "section", "groupCard"), /paddingBottom: 4/);
+  assert.doesNotMatch(styleRule(ratesSource, "section", "groupCard"), /paddingTop/);
+  assert.doesNotMatch(styleRule(ratesSource, "groupCard", "rateRow"), /marginTop/);
 });
 
-test("Rates chips keep the measured reference spacing and typography", () => {
-  assert.match(styleRule(ratesSource, "section", "chipViewport"), /paddingTop: 22/);
-  assert.match(styleRule(ratesSource, "chipRow", "chip"), /gap: 8[\s\S]*paddingHorizontal: 16[\s\S]*paddingBottom: 30/);
-  assert.match(styleRule(ratesSource, "chip", "chipText"), /height: 36[\s\S]*borderWidth: 1[\s\S]*borderRadius: 8[\s\S]*paddingHorizontal: 12/);
-  assert.match(styleRule(ratesSource, "chipText", "groupHeading"), /fontSize: 16[\s\S]*lineHeight: 20[\s\S]*fontWeight: "600"/);
-});
-
-test("Rates heading comes from real room data instead of the broad room-summary copy", () => {
-  assert.match(ratesSource, /options\.find\(\(option\) => option\.bedConfiguration\.trim\(\)\)\?\.bedConfiguration\.trim\(\)/);
-  assert.match(ratesSource, /if \(bedConfiguration\) return bedConfiguration/);
-  assert.match(ratesSource, /const parts = name\.split/);
-  assert.doesNotMatch(ratesSource, /internalRateSummary|room choices/);
-});
-
-test("Rates room heading and grouped card follow the reference rhythm", () => {
-  assert.match(styleRule(ratesSource, "groupHeading", "groupCard"), /fontSize: 18[\s\S]*lineHeight: 24[\s\S]*fontWeight: "700"/);
-  assert.match(styleRule(ratesSource, "groupCard", "rateRow"), /marginTop: 20[\s\S]*borderWidth: 1[\s\S]*borderRadius: 12/);
+test("Rates grouped card stays compact while preserving the real offer rows", () => {
+  assert.match(styleRule(ratesSource, "groupCard", "rateRow"), /overflow: "hidden"[\s\S]*borderWidth: 1[\s\S]*borderRadius: 12/);
   assert.match(styleRule(ratesSource, "rateRow", "rateRowPressed"), /minHeight: 134[\s\S]*padding: 16[\s\S]*gap: 14/);
   assert.match(styleRule(ratesSource, "rateCopy", "brandLogo"), /flex: 1[\s\S]*minWidth: 0[\s\S]*justifyContent: "flex-start"/);
   assert.match(ratesSource, /index > 0 && \{ borderTopColor: theme\.border, borderTopWidth: StyleSheet\.hairlineWidth \}/);
@@ -70,6 +56,7 @@ test("internal rate row keeps the accessible bundled Kurioticket wordmark and re
   assert.match(styleRule(ratesSource, "brandLogo", "providerName"), /width: 104[\s\S]*height: 22[\s\S]*marginBottom: 10/);
   assert.match(ratesSource, /const representativeRoom = roomOptions\[0\] \?\? null/);
   assert.match(ratesSource, /const internalMeta = representativeRoom\?\.cancellationInfo\.trim\(\) \?\? ""/);
+  assert.match(ratesSource, /const parts = name\.split/);
 });
 
 test("Rates uses a narrower right price/action column like the reference", () => {
