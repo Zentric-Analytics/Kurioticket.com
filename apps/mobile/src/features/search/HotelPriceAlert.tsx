@@ -50,6 +50,12 @@ type Props = {
   rates: ExchangeRates;
 };
 
+type PreservedPausedTarget = {
+  id: string;
+  target: number;
+  currency: string;
+};
+
 export function HotelPriceAlert({
   plan,
   hotelResults,
@@ -69,6 +75,7 @@ export function HotelPriceAlert({
   const [pending, setPending] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [dropPercent, setDropPercent] = useState(HOTEL_ALERT_DEFAULT_DROP_PERCENT);
+  const [preservedPausedTarget, setPreservedPausedTarget] = useState<PreservedPausedTarget | null>(null);
   const [error, setError] = useState("");
   const pendingRef = useRef(false);
   const reconciliationRef = useRef(0);
@@ -86,7 +93,10 @@ export function HotelPriceAlert({
   );
   const currentTotal = priceBasis?.amount ?? null;
   const alertCurrency = priceBasis?.currency ?? displayCurrency.trim().toUpperCase();
-  const desiredTotal = currentTotal === null ? null : hotelAlertDesiredTotal(currentTotal, dropPercent);
+  const sliderDesiredTotal = currentTotal === null ? null : hotelAlertDesiredTotal(currentTotal, dropPercent);
+  const desiredTotal = preservedPausedTarget?.currency === alertCurrency
+    ? preservedPausedTarget.target
+    : sliderDesiredTotal;
   const readyToCreate = Boolean(available && currentTotal !== null && desiredTotal !== null && alertCurrency && !pending);
 
   const setCurrentMatchingAlert = useCallback((alert: MobilePriceAlert | undefined) => {
@@ -96,6 +106,7 @@ export function HotelPriceAlert({
   const closeSheet = useCallback(() => {
     targetIntentRef.current.close();
     setSheetOpen(false);
+    setPreservedPausedTarget(null);
     setError("");
   }, []);
 
@@ -153,6 +164,13 @@ export function HotelPriceAlert({
     const existingTarget = matchingAlert?.targetPrice != null && matchingAlert.currency?.toUpperCase() === alertCurrency
       ? Number(matchingAlert.targetPrice)
       : null;
+    const preserveExistingTarget = matchingAlert?.status === "PAUSED"
+      && existingTarget !== null
+      && Number.isFinite(existingTarget)
+      && existingTarget > 0;
+    setPreservedPausedTarget(preserveExistingTarget
+      ? { id: matchingAlert.id, target: existingTarget, currency: alertCurrency }
+      : null);
     setDropPercent(existingTarget && Number.isFinite(existingTarget)
       ? hotelAlertDropPercentForTarget(currentTotal, existingTarget)
       : HOTEL_ALERT_DEFAULT_DROP_PERCENT);
@@ -197,7 +215,15 @@ export function HotelPriceAlert({
         return;
       }
       const alerts = (await travelApi.priceAlerts()).alerts;
-      const samePausedTarget = alerts.find((alert) =>
+      const preservedPausedAlert = preservedPausedTarget
+        ? alerts.find((alert) =>
+            alert.id === preservedPausedTarget.id
+            && alert.status === "PAUSED"
+            && alert.currency?.toUpperCase() === preservedPausedTarget.currency
+            && matchingHotelPriceAlert([alert], plan)?.id === alert.id,
+          )
+        : undefined;
+      const samePausedTarget = preservedPausedAlert ?? alerts.find((alert) =>
         alert.status === "PAUSED"
         && Number(alert.targetPrice) === desiredTotal
         && alert.currency?.toUpperCase() === alertCurrency
@@ -296,7 +322,10 @@ export function HotelPriceAlert({
                 singleMaximum
                 formatValue={(value) => `${Math.round(value)}%`}
                 accessibilityLabel={message("priceDrop")}
-                onChange={(range) => setDropPercent(Math.round(range.max))}
+                onChange={(range) => {
+                  setPreservedPausedTarget(null);
+                  setDropPercent(Math.round(range.max));
+                }}
               />
               <View style={styles.sliderEnds}>
                 <Text style={[styles.sliderEnd, { color: theme.textSecondary }]}>1%</Text>
