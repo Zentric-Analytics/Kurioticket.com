@@ -21,7 +21,7 @@ test("entry skeleton anticipates route, itinerary, fare carousel, and informatio
   for (const style of ["loadingRouteSummary", "loadingItineraryCard", "loadingFareHeading", "loadingFareCard", "loadingInfoDeck"]) assert.match(loading, new RegExp(`s\\.${style}`));
   assert.match(loading, /<ScrollView horizontal showsHorizontalScrollIndicator=\{false\}/);
   assert.match(loading, /width:fareCardWidth/);
-  assert.match(details, /loadingFareCard:\{height:142[^}]*paddingHorizontal:12,paddingVertical:8,gap:4\}/);
+  assert.match(details, /loadingFareCard:\{height:142[^}]*paddingHorizontal:12,paddingTop:4,paddingBottom:8,gap:4\}/);
   assert.equal((details.match(/s\.loadingFareCard/g) ?? []).length, 2, "both loading rails use the shared loading card style");
   assert.match(details, /loadingFareIdentity:\{alignSelf:"stretch",alignItems:"center"/);
   assert.match(details, /loadingFareNameRow:\{maxWidth:"100%",flexDirection:"row",alignItems:"flex-start",gap:6\}/);
@@ -29,7 +29,7 @@ test("entry skeleton anticipates route, itinerary, fare carousel, and informatio
   assert.match(details, /loadingFareName:\{width:72,height:12/);
   assert.match(details, /loadingBenefitDot:\{width:16,height:16/);
   assert.match(loading, /s\.loadingFareIdentity[\s\S]*?s\.loadingBenefitRow[\s\S]*?s\.loadingFarePriceBlock/);
-  assert.match(details, /loadingFarePriceBlock:\{alignSelf:"stretch",alignItems:"center"\}/);
+  assert.match(details, /loadingFarePriceBlock:\{alignSelf:"stretch",alignItems:"center",marginTop:"auto"\}/);
   assert.match(loading, /32\+bottomInset/);
 });
 
