@@ -10,6 +10,7 @@ import { AppStoreConnectClient } from "./app-store-connect.mjs";
 import { notifyFailedNativeBuilds, notifySuccessfulNativeBuilds } from "./build-notifications.mjs";
 import { runWorkerCycle } from "./worker-cycle.mjs";
 import { parseAuthorizedAbandonedAndroidRecovery, runAuthorizedAbandonedAndroidRecovery } from "./abandoned-android-recovery.mjs";
+import { parseAuthorizedAbandonedIosRecovery, runAuthorizedAbandonedIosRecovery } from "./abandoned-ios-recovery.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const config = requirePreviewEnvironment();
@@ -47,6 +48,19 @@ try {
   }
 } catch (error) {
   console.error(JSON.stringify({ event: "authorized-android-recovery-failed", error: String(error?.message ?? error).slice(0, 500) }));
+  await ledger.close();
+  process.exit(1);
+}
+
+try {
+  const authorization = parseAuthorizedAbandonedIosRecovery();
+  if (authorization) {
+    if (config.mode !== "active") throw new Error("iOS abandoned-reservation recovery authorization is configured while Preview release mode is not active.");
+    const recovery = await runAuthorizedAbandonedIosRecovery({ authorization, mode: config.mode, ledger, github, eas, orchestrator });
+    console.log(JSON.stringify({ event: "authorized-ios-recovery-result", ...recovery }));
+  }
+} catch (error) {
+  console.error(JSON.stringify({ event: "authorized-ios-recovery-failed", error: String(error?.message ?? error).slice(0, 500) }));
   await ledger.close();
   process.exit(1);
 }
