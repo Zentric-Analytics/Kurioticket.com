@@ -100,7 +100,7 @@ test("Details uses a tightened divider-free Profile-style mobile rhythm", () => 
   assert.match(details, /sectionGap: \{ height: 8 \}/);
   assert.match(details, /description: \{ marginTop: 3,/);
   assert.match(details, /rowList: \{ marginTop: 4, gap: 3 \}/);
-  assert.match(details, /seeAllLink: \{ alignSelf: "flex-start", marginTop: 4, paddingVertical: 3 \}/);
+  assert.match(details, /seeAllLink: \{ alignSelf: "flex-start", marginTop: 4, paddingVertical: 4 \}/);
   assert.doesNotMatch(details, /function SectionDivider|s\.divider|divider: \{|borderTopWidth: StyleSheet\.hairlineWidth/);
   assert.match(details, /heading: \{ fontSize: 16, lineHeight: 22, fontWeight: "700", fontFamily: appFonts\.bold/);
   assert.match(details, /rowText: \{[^}]*fontSize: 14, lineHeight: 20, fontWeight: "400", fontFamily: appFonts\.regular/);
