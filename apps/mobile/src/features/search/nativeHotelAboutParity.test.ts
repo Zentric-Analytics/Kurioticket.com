@@ -74,14 +74,11 @@ test("active Details uses the Profile-style hierarchy with a dense divider-free 
   const description = styleRule("description", "fallback");
   const amenityRow = styleRule("amenityRow", "infoRow");
   const rowText = styleRule("rowText", "seeAllLink");
-  for (const rule of [/fontSize: 16/, /lineHeight: 22/, /fontWeight: "700"/]) assert.match(heading, rule);
-  assert.doesNotMatch(heading, /fontFamily/);
-  for (const rule of [/marginTop: 4/, /fontSize: 14/, /lineHeight: 21/, /fontWeight: "400"/]) assert.match(description, rule);
-  assert.doesNotMatch(description, /fontFamily/);
+  for (const rule of [/fontSize: 16/, /lineHeight: 22/, /fontWeight: "700"/, /fontFamily: appFonts\.bold/]) assert.match(heading, rule);
+  for (const rule of [/marginTop: 4/, /fontSize: 14/, /lineHeight: 21/, /fontWeight: "400"/, /fontFamily: appFonts\.regular/]) assert.match(description, rule);
   assert.match(amenityRow, /flexDirection: "row"/);
   assert.doesNotMatch(amenityRow, /width: "48%"|borderWidth|borderRadius/);
-  for (const rule of [/fontSize: 14/, /lineHeight: 20/, /fontWeight: "400"/]) assert.match(rowText, rule);
-  assert.doesNotMatch(rowText, /fontFamily/);
+  for (const rule of [/fontSize: 14/, /lineHeight: 20/, /fontWeight: "400"/, /fontFamily: appFonts\.regular/]) assert.match(rowText, rule);
   assert.match(details, /strokeWidth=\{1\.3\}/);
   assert.match(details, /const iconColor = theme\.dark \? theme\.icon : "#1A1A1A"/);
   assert.match(details, /section: \{ paddingVertical: 0 \}/);
