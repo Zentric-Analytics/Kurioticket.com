@@ -21,7 +21,7 @@ test("entry skeleton anticipates route, itinerary, fare carousel, and informatio
   for (const style of ["loadingRouteSummary", "loadingItineraryCard", "loadingFareHeading", "loadingFareCard", "loadingInfoDeck"]) assert.match(loading, new RegExp(`s\\.${style}`));
   assert.match(loading, /<ScrollView horizontal showsHorizontalScrollIndicator=\{false\}/);
   assert.match(loading, /width:fareCardWidth/);
-  assert.match(details, /loadingFareCard:\{height:155[^}]*paddingHorizontal:12,paddingVertical:8,gap:5\}/);
+  assert.match(details, /loadingFareCard:\{height:142[^}]*paddingHorizontal:12,paddingVertical:8,gap:4\}/);
   assert.equal((details.match(/s\.loadingFareCard/g) ?? []).length, 2, "both loading rails use the shared loading card style");
   assert.match(details, /loadingFareIdentity:\{alignSelf:"stretch",alignItems:"center"/);
   assert.match(details, /loadingFareNameRow:\{maxWidth:"100%",flexDirection:"row",alignItems:"flex-start",gap:6\}/);
