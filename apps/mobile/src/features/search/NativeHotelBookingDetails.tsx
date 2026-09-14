@@ -63,6 +63,7 @@ export function NativeHotelBookingDetails({
   relatedHotels,
   theme,
   onViewHotel,
+  onLookAroundInteractionChange,
 }: {
   result: HotelResult;
   property: PublicHotelPropertyDetails | null;
@@ -71,6 +72,7 @@ export function NativeHotelBookingDetails({
   relatedHotels: NativeRelatedHotel[];
   theme: Theme;
   onViewHotel: (item: NativeRelatedHotel) => void;
+  onLookAroundInteractionChange: (interacting: boolean) => void;
 }) {
   const [amenitiesOpen, setAmenitiesOpen] = useState(false);
   const accent = theme.dark ? "#8FB5FF" : colors.blue;
@@ -108,6 +110,7 @@ export function NativeHotelBookingDetails({
             hotelName={result.name}
             propertyDetails={property}
             theme={theme}
+            onLookAroundInteractionChange={onLookAroundInteractionChange}
           />
           <SectionGap />
         </>
