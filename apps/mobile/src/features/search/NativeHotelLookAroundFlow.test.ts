@@ -14,4 +14,8 @@ test("iOS renders interactive Apple Look Around directly inside Hotel Details", 
   assert.match(nativeView, /override func hitTest\(_ point: CGPoint, with event: UIEvent\?\) -> UIView\?/);
   assert.match(nativeView, /controllerView\.hitTest\(controllerPoint, with: event\)/);
   assert.match(nativeView, /lookAroundController\.view\.isUserInteractionEnabled = true/);
+  assert.match(nativeView, /lookAroundController\.delegate = self/);
+  assert.match(nativeView, /if !isPresentingFullScreen \{\s*controller\?\.view\.frame = bounds\s*\}/);
+  assert.match(nativeView, /lookAroundViewControllerWillPresentFullScreen/);
+  assert.match(nativeView, /lookAroundViewControllerDidDismissFullScreen/);
 });

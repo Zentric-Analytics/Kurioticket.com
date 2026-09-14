@@ -13,6 +13,7 @@ final class KurioticketHotelLookAroundView: ExpoView {
   private var reloadWorkItem: DispatchWorkItem?
   private var generation = 0
   private var requestedCoordinateKey: String?
+  private var isPresentingFullScreen = false
 
   required init(appContext: AppContext? = nil) {
     super.init(appContext: appContext)
@@ -24,7 +25,12 @@ final class KurioticketHotelLookAroundView: ExpoView {
 
   override func layoutSubviews() {
     super.layoutSubviews()
-    controller?.view.frame = bounds
+    // MapKit temporarily owns and resizes this view while presenting its
+    // full-screen viewer. Reapplying the inline bounds during that transition
+    // collapses the presented content and leaves a black screen.
+    if !isPresentingFullScreen {
+      controller?.view.frame = bounds
+    }
   }
 
   override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
@@ -134,6 +140,7 @@ final class KurioticketHotelLookAroundView: ExpoView {
     removeController()
 
     let lookAroundController = MKLookAroundViewController(scene: scene)
+    lookAroundController.delegate = self
     lookAroundController.isNavigationEnabled = true
     lookAroundController.showsRoadLabels = true
     lookAroundController.view.frame = bounds
@@ -173,6 +180,9 @@ final class KurioticketHotelLookAroundView: ExpoView {
 
   private func removeController() {
     guard let controller else { return }
+    if #available(iOS 16.0, *), let lookAroundController = controller as? MKLookAroundViewController {
+      lookAroundController.delegate = nil
+    }
     if controller.parent != nil {
       controller.willMove(toParent: nil)
       controller.view.removeFromSuperview()
@@ -181,9 +191,22 @@ final class KurioticketHotelLookAroundView: ExpoView {
       controller.view.removeFromSuperview()
     }
     self.controller = nil
+    isPresentingFullScreen = false
   }
 
   private func emitStatus(_ status: String) {
     onStatusChange(["status": status])
+  }
+}
+
+@available(iOS 16.0, *)
+extension KurioticketHotelLookAroundView: MKLookAroundViewControllerDelegate {
+  func lookAroundViewControllerWillPresentFullScreen(_ viewController: MKLookAroundViewController) {
+    isPresentingFullScreen = true
+  }
+
+  func lookAroundViewControllerDidDismissFullScreen(_ viewController: MKLookAroundViewController) {
+    isPresentingFullScreen = false
+    setNeedsLayout()
   }
 }
