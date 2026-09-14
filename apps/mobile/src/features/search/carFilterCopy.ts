@@ -1,18 +1,51 @@
-import type { CarFilterGroup, CarFilterOption } from "../../../../../src/lib/cars/carFilterPresentation";
+import type { CarFilterGroup, CarFilterOption } from "@/lib/cars/carFilterPresentation";
+import type { MobileLocale } from "../../localization/mobileLocalizationCatalog";
+import type { ExchangeRates } from "../currency/displayCurrency";
+import { carPriceFilterLabels } from "./carDisplayCurrency";
+import { carText } from "./carMobileLocalization";
 
 type FilterCopy = { filters: string; allCars: string; applied: string; clearAll: string; close: string; show: string; car: string; cars: string; updatingFilters: string; groups: Record<string, string>; options: Record<string, string> };
 
-const english: FilterCopy = {
-  filters: "Filters", allCars: "All cars shown", applied: "applied", clearAll: "Clear all", close: "Close car filters", show: "Show", car: "car", cars: "cars", updatingFilters: "Updating filters…",
-  groups: { totalPrice: "Total price", vehicleType: "Vehicle type", transmission: "Transmission", seats: "Seats", bags: "Bags", fuelPolicy: "Fuel policy", mileagePolicy: "Mileage", cancellation: "Booking flexibility", pickupLocationType: "Pickup location type" },
-  options: { totalUnder100: "Under $100 total", total100To149: "$100–$149 total", total150Plus: "$150+ total", smallCars: "Small cars", mediumCars: "Medium cars", suvs: "SUVs", luxuryCars: "Luxury cars", vans: "Vans", automatic: "Automatic", manual: "Manual", seats4Plus: "4+ seats", seats5Plus: "5+ seats", seats7Plus: "7+ seats", bags2Plus: "2+ bags", bags3Plus: "3+ bags", bags4Plus: "4+ bags", fullToFull: "Full to full", sameToSame: "Same to same", unlimitedMileage: "Unlimited mileage", limitedMileage: "Limited mileage", freeCancellation: "Free cancellation", payAtPickup: "Pay at pickup", airportCounter: "Airport counter", shuttlePickup: "Shuttle pickup", cityLocation: "City location" },
+const groupKeys: Record<string, string> = {
+  totalPrice: "carsResults.price",
+  vehicleType: "carsResults.vehicleType",
+  transmission: "carsResults.transmission",
+  seats: "carsResults.seats",
+  bags: "carsResults.bags",
+  fuelPolicy: "carsResults.fuelPolicy",
+  mileagePolicy: "carsResults.mileagePolicy",
+  cancellation: "carsResults.cancellation",
+  pickupLocationType: "carsResults.pickupLocationType",
 };
 
-const localized: Record<string, Partial<FilterCopy>> = {
-  es: { filters: "Filtros", allCars: "Todos los coches", applied: "aplicados", clearAll: "Borrar todo", close: "Cerrar filtros de coches", show: "Mostrar", car: "coche", cars: "coches", updatingFilters: "Actualizando filtros…", groups: { totalPrice: "Precio total", vehicleType: "Tipo de vehículo", transmission: "Transmisión", seats: "Asientos", bags: "Equipaje", fuelPolicy: "Política de combustible", mileagePolicy: "Kilometraje", cancellation: "Flexibilidad de reserva", pickupLocationType: "Tipo de recogida" }, options: { totalUnder100: "Menos de $100 en total", total100To149: "$100–$149 en total", total150Plus: "$150 o más en total", smallCars: "Coches pequeños", mediumCars: "Coches medianos", suvs: "SUV", luxuryCars: "Coches de lujo", vans: "Furgonetas", automatic: "Automático", manual: "Manual", seats4Plus: "4+ asientos", seats5Plus: "5+ asientos", seats7Plus: "7+ asientos", bags2Plus: "2+ maletas", bags3Plus: "3+ maletas", bags4Plus: "4+ maletas", fullToFull: "Lleno a lleno", sameToSame: "Mismo nivel", unlimitedMileage: "Kilometraje ilimitado", limitedMileage: "Kilometraje limitado", freeCancellation: "Cancelación gratuita", payAtPickup: "Pago al recoger", airportCounter: "Mostrador del aeropuerto", shuttlePickup: "Recogida con traslado", cityLocation: "Ubicación en la ciudad" } },
-  ar: { filters: "عوامل التصفية", allCars: "عرض جميع السيارات", applied: "مطبّقة", clearAll: "مسح الكل", close: "إغلاق عوامل تصفية السيارات", show: "عرض", car: "سيارة", cars: "سيارات", updatingFilters: "جارٍ تحديث عوامل التصفية…", groups: { totalPrice: "السعر الإجمالي", vehicleType: "نوع السيارة", transmission: "ناقل الحركة", seats: "المقاعد", bags: "الحقائب", fuelPolicy: "سياسة الوقود", mileagePolicy: "المسافة", cancellation: "مرونة الحجز", pickupLocationType: "نوع موقع الاستلام" }, options: { totalUnder100: "أقل من 100 دولار إجمالاً", total100To149: "من 100 إلى 149 دولاراً إجمالاً", total150Plus: "150 دولاراً فأكثر إجمالاً", smallCars: "سيارات صغيرة", mediumCars: "سيارات متوسطة", suvs: "سيارات دفع رباعي", luxuryCars: "سيارات فاخرة", vans: "حافلات صغيرة", automatic: "أوتوماتيكي", manual: "يدوي", seats4Plus: "4+ مقاعد", seats5Plus: "5+ مقاعد", seats7Plus: "7+ مقاعد", bags2Plus: "2+ حقائب", bags3Plus: "3+ حقائب", bags4Plus: "4+ حقائب", fullToFull: "ممتلئ إلى ممتلئ", sameToSame: "نفس المستوى", unlimitedMileage: "مسافة غير محدودة", limitedMileage: "مسافة محدودة", freeCancellation: "إلغاء مجاني", payAtPickup: "الدفع عند الاستلام", airportCounter: "مكتب المطار", shuttlePickup: "استلام بالحافلة", cityLocation: "موقع داخل المدينة" } },
+const optionKeys: Record<string, string> = {
+  smallCars: "carsResults.smallCars", mediumCars: "carsResults.mediumCars", suvs: "carsResults.suvs", luxuryCars: "carsTripStyle.luxury.title", vans: "carsTripStyle.van.title",
+  automatic: "carsResults.automatic", manual: "carsResults.manual", seats4Plus: "carsResults.seats4Plus", seats5Plus: "carsResults.seats5Plus", seats7Plus: "carsResults.seats7Plus",
+  bags2Plus: "carsResults.bags2Plus", bags3Plus: "carsResults.bags3Plus", bags4Plus: "carsResults.bags4Plus", fullToFull: "carsResults.fullToFull", sameToSame: "carsResults.sameToSame",
+  unlimitedMileage: "carsResults.unlimitedMileage", limitedMileage: "carsResults.limitedMileage", freeCancellation: "carsResults.freeCancellation", payAtPickup: "carsResults.payAtPickup",
+  airportCounter: "carsResults.airportCounter", shuttlePickup: "carsResults.shuttlePickup", cityLocation: "carsResults.cityLocation",
 };
 
-export const carFilterCopy = (locale: string): FilterCopy => ({ ...english, ...(localized[locale.toLowerCase().split(/[-_]/)[0]] ?? {}), groups: { ...english.groups, ...(localized[locale.toLowerCase().split(/[-_]/)[0]]?.groups ?? {}) }, options: { ...english.options, ...(localized[locale.toLowerCase().split(/[-_]/)[0]]?.options ?? {}) } });
+const fallbackGroups: Record<string, string> = { totalPrice: "Total price", vehicleType: "Vehicle type", transmission: "Transmission", seats: "Seats", bags: "Bags", fuelPolicy: "Fuel policy", mileagePolicy: "Mileage", cancellation: "Booking flexibility", pickupLocationType: "Pickup location type" };
+const fallbackOptions: Record<string, string> = { smallCars: "Small cars", mediumCars: "Medium cars", suvs: "SUVs", luxuryCars: "Luxury cars", vans: "Vans", automatic: "Automatic", manual: "Manual", seats4Plus: "4+ seats", seats5Plus: "5+ seats", seats7Plus: "7+ seats", bags2Plus: "2+ bags", bags3Plus: "3+ bags", bags4Plus: "4+ bags", fullToFull: "Full to full", sameToSame: "Same to same", unlimitedMileage: "Unlimited mileage", limitedMileage: "Limited mileage", freeCancellation: "Free cancellation", payAtPickup: "Pay at pickup", airportCounter: "Airport counter", shuttlePickup: "Shuttle pickup", cityLocation: "City location" };
+
+export const carFilterCopy = (locale: MobileLocale, displayCurrency = "USD", rates: ExchangeRates = {}): FilterCopy => {
+  const priceLabels = carPriceFilterLabels(displayCurrency, rates);
+  const groups = Object.fromEntries(Object.entries(groupKeys).map(([id, key]) => [id, carText(locale, key, fallbackGroups[id] ?? id)]));
+  const options = Object.fromEntries(Object.entries(optionKeys).map(([id, key]) => [id, carText(locale, key, fallbackOptions[id] ?? id)]));
+  return {
+    filters: carText(locale, "carsResults.filterBy", "Filters"),
+    allCars: carText(locale, "carsResults.allCarsShown", "All cars shown"),
+    applied: carText(locale, "carsResults.applied", "applied"),
+    clearAll: carText(locale, "carsResults.clearAll", "Clear all"),
+    close: carText(locale, "carsResults.closeFilters", "Close car filters"),
+    show: carText(locale, "carsResults.show", "Show"),
+    car: carText(locale, "carsResults.car", "car"),
+    cars: carText(locale, "carsResults.cars", "cars"),
+    updatingFilters: carText(locale, "carsResults.updatingFilters", "Updating filters…"),
+    groups,
+    options: { ...options, ...priceLabels },
+  };
+};
 export const carFilterGroupLabel = (copy: FilterCopy, group: CarFilterGroup) => copy.groups[group.id] ?? group.title ?? group.titleKey;
 export const carFilterOptionLabel = (copy: FilterCopy, option: CarFilterOption) => copy.options[option.id] ?? option.label ?? option.labelKey;
