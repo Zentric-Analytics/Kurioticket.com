@@ -24,7 +24,7 @@ import { readSession } from "../../storage/sessionStorage";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import { signInHref } from "../auth/signInIntent";
-import { formatMarketCurrency, type ExchangeRates } from "../currency/displayCurrency";
+import { displayPrice, formatMarketCurrency, type ExchangeRates } from "../currency/displayCurrency";
 import {
   buildHotelPriceAlertPayload,
   matchingHotelPriceAlert,
@@ -92,12 +92,32 @@ export function HotelPriceAlert({
     [displayCurrency, hotelResults, rates],
   );
   const currentTotal = priceBasis?.amount ?? null;
-  const alertCurrency = priceBasis?.currency ?? displayCurrency.trim().toUpperCase();
-  const sliderDesiredTotal = currentTotal === null ? null : hotelAlertDesiredTotal(currentTotal, dropPercent);
-  const desiredTotal = preservedPausedTarget?.currency === alertCurrency
+  const visibleCurrency = priceBasis?.currency ?? displayCurrency.trim().toUpperCase();
+  const providerCurrentTotal = priceBasis?.providerAmount ?? null;
+  const alertCurrency = priceBasis?.providerCurrency ?? null;
+  const sliderAlertTarget = providerCurrentTotal === null || alertCurrency === null
+    ? null
+    : hotelAlertDesiredTotal(providerCurrentTotal, dropPercent, alertCurrency);
+  const alertTarget = preservedPausedTarget?.currency === alertCurrency
     ? preservedPausedTarget.target
-    : sliderDesiredTotal;
-  const readyToCreate = Boolean(available && currentTotal !== null && desiredTotal !== null && alertCurrency && !pending);
+    : sliderAlertTarget;
+  const sliderDisplayTarget = currentTotal === null
+    ? null
+    : hotelAlertDesiredTotal(currentTotal, dropPercent, visibleCurrency);
+  const preservedDisplayTarget = preservedPausedTarget && alertCurrency && visibleCurrency
+    ? displayPrice(preservedPausedTarget.target, alertCurrency, visibleCurrency, rates).amount
+    : null;
+  const desiredTotal = preservedPausedTarget?.currency === alertCurrency
+    ? preservedDisplayTarget
+    : sliderDisplayTarget;
+  const readyToCreate = Boolean(
+    available
+    && currentTotal !== null
+    && providerCurrentTotal !== null
+    && alertTarget !== null
+    && alertCurrency
+    && !pending,
+  );
 
   const setCurrentMatchingAlert = useCallback((alert: MobilePriceAlert | undefined) => {
     setMatchingAlertState(alert ? { planKey, alert } : undefined);
@@ -154,7 +174,7 @@ export function HotelPriceAlert({
   }, [reconcile]));
 
   const openSheet = async () => {
-    if (pendingRef.current || !alertKnown || !available || currentTotal === null || !alertCurrency) return;
+    if (pendingRef.current || !alertKnown || !available || currentTotal === null || providerCurrentTotal === null || !alertCurrency) return;
     const intent = targetIntentRef.current.beginOpen();
     if (!await readSession().catch(() => null)) {
       requireSignIn();
@@ -172,7 +192,7 @@ export function HotelPriceAlert({
       ? { id: matchingAlert.id, target: existingTarget, currency: alertCurrency }
       : null);
     setDropPercent(existingTarget && Number.isFinite(existingTarget)
-      ? hotelAlertDropPercentForTarget(currentTotal, existingTarget)
+      ? hotelAlertDropPercentForTarget(providerCurrentTotal, existingTarget)
       : HOTEL_ALERT_DEFAULT_DROP_PERCENT);
     setError("");
     setSheetOpen(true);
@@ -204,7 +224,7 @@ export function HotelPriceAlert({
   };
 
   const createAlert = async () => {
-    if (pendingRef.current || !readyToCreate || desiredTotal === null || !alertCurrency) return;
+    if (pendingRef.current || !readyToCreate || alertTarget === null || !alertCurrency) return;
     pendingRef.current = true;
     setPending(true);
     setError("");
@@ -225,13 +245,13 @@ export function HotelPriceAlert({
         : undefined;
       const samePausedTarget = preservedPausedAlert ?? alerts.find((alert) =>
         alert.status === "PAUSED"
-        && Number(alert.targetPrice) === desiredTotal
+        && Number(alert.targetPrice) === alertTarget
         && alert.currency?.toUpperCase() === alertCurrency
         && matchingHotelPriceAlert([alert], plan)?.id === alert.id,
       );
       const saved = samePausedTarget
         ? await travelApi.updatePriceAlertStatus(samePausedTarget.id, "ACTIVE")
-        : await travelApi.createPriceAlert(buildHotelPriceAlertPayload(plan, desiredTotal, alertCurrency));
+        : await travelApi.createPriceAlert(buildHotelPriceAlertPayload(plan, alertTarget, alertCurrency));
       setCurrentMatchingAlert(saved.alert);
       closeSheet();
     } catch (cause) {
@@ -252,7 +272,7 @@ export function HotelPriceAlert({
 
   if (currentTotal === null) return null;
   const toggleDisabled = pending || loadingAlert || !alertKnown || (!available && !isTracking);
-  const formatTotal = (amount: number) => formatMarketCurrency(amount, alertCurrency);
+  const formatTotal = (amount: number) => formatMarketCurrency(amount, visibleCurrency);
   const dropAmount = desiredTotal === null ? 0 : Math.max(0, currentTotal - desiredTotal);
 
   return (
