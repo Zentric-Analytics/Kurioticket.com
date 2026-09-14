@@ -59,7 +59,7 @@ export function HotelOfferAmenityList({
         const Icon = amenityIcons[item.iconKey];
         return (
           <View key={item.key} style={styles.offerItem}>
-            <Icon accessible={false} size={16} strokeWidth={1.3} color={color} />
+            <Icon accessible={false} size={16} strokeWidth={1.8} color={color} />
             <Text numberOfLines={1} style={[styles.offerLabel, { color }]}>
               {nativeHotelAmenityLabel(item)}
             </Text>
@@ -77,5 +77,5 @@ const styles = StyleSheet.create({
   offerList: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 16 },
   offerListCompact: { gap: 10 },
   offerItem: { flexDirection: "row", alignItems: "center", flexShrink: 0, gap: 6 },
-  offerLabel: { fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
+  offerLabel: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
 });
