@@ -32,7 +32,7 @@ export function HotelCardAmenityList({ amenities }: { amenities: readonly unknow
         const Icon = amenityIcons[item.iconKey];
         return (
           <View key={item.key} style={styles.item}>
-            <Icon accessible={false} size={14} strokeWidth={1.8} color={theme.textSecondary} />
+            <Icon accessible={false} size={14} strokeWidth={1.5} color={theme.textSecondary} />
             <Text numberOfLines={1} style={[styles.label, { color: theme.textSecondary }]}>{item.label}</Text>
           </View>
         );
@@ -73,7 +73,7 @@ export function HotelOfferAmenityList({
 const styles = StyleSheet.create({
   list: { gap: 3 },
   item: { flexDirection: "row", alignItems: "center", gap: 5, minWidth: 0 },
-  label: { flexShrink: 1, minWidth: 0, color: ui.muted, fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
+  label: { flexShrink: 1, minWidth: 0, color: ui.muted, fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
   offerList: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 16 },
   offerListCompact: { gap: 10 },
   offerItem: { flexDirection: "row", alignItems: "center", flexShrink: 0, gap: 6 },
