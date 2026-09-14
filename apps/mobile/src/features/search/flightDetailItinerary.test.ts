@@ -6,9 +6,9 @@ import test from "node:test";
 const source=readFileSync(resolve("src/features/search/NativeFlightDetails.tsx"),"utf8");
 const itinerary=source.slice(source.indexOf("function Itinerary"),source.indexOf("function FareSurface"));
 
-test("route context stays outside the card and limits metadata to trip type and travelers",()=>{
+test("route context stays outside the card and limits metadata to trip type, travelers, and cabin",()=>{
   assert.match(source,/flightDetailsRouteLabel\(details\.search\.tripType,offer\.legs\?\?\[\]/);
-  assert.ok(source.includes('const tripMetadata=[`${FLIGHT_TRIP_TYPE_LABELS[details.search.tripType]}`,`${details.search.travelers} traveler${details.search.travelers===1?"":"s"}`].join(" • ");'));
+  assert.ok(source.includes('const tripMetadata=[FLIGHT_TRIP_TYPE_LABELS[details.search.tripType],`${details.search.travelers} traveler${details.search.travelers===1?"":"s"}`,titleCase(details.search.cabinClass)].join(" • ");'));
   assert.doesNotMatch(source,/const searchDates=/);
   assert.doesNotMatch(source,/tripMetadata=.*departureDate/);
   assert.doesNotMatch(source,/tripMetadata=.*returnDate/);
