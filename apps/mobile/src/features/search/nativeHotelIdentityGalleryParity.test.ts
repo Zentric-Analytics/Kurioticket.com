@@ -55,7 +55,7 @@ test("save and share remain independent accessible actions inside one compact pi
   assert.match(hotel, /<FlowIcon name="share" size=\{22\} color="#0F172A" \/>/);
 });
 
-test("active identity, tabs, and editable stay summary follow the measured hierarchy", () => {
+test("active identity, tabs, and editable stay summary follow the tightened hierarchy", () => {
   const name = styleRule(detailSource, "hotelName", "hotelNamePhoneFit");
   const identityIndex = hotel.indexOf("<View style={s.identity}>");
   const tabsIndex = hotel.indexOf("s.tabsShell");
@@ -64,15 +64,16 @@ test("active identity, tabs, and editable stay summary follow the measured hiera
   assert.ok(identityIndex < tabsIndex);
   assert.ok(tabsIndex < stayIndex);
   assert.ok(stayIndex < bodyIndex);
-  assert.match(detailSource, /identity: \{[^}]*paddingHorizontal: 16[^}]*paddingTop: 16[^}]*paddingBottom: 14/);
+  assert.match(detailSource, /identity: \{[^}]*paddingHorizontal: 16[^}]*paddingTop: 12[^}]*paddingBottom: 8/);
   assert.match(name, /fontSize: 24[^}]*lineHeight: 30[^}]*fontWeight: "700"[^}]*fontFamily: appFonts\.bold/);
-  assert.match(styleRule(detailSource, "stars", "reviewSummary"), /marginTop: 7[^}]*fontSize: 20[^}]*lineHeight: 24/);
+  assert.match(styleRule(detailSource, "stars", "reviewSummary"), /marginTop: 4[^}]*fontSize: 20[^}]*lineHeight: 24/);
+  assert.match(styleRule(detailSource, "reviewSummary", "reviewText"), /marginTop: 5/);
   assert.match(hotel, /const hotelReview = nativeHotelReviewPresentation\(result\);/);
   assert.match(hotel, /hotelReview\?\.score\.split\(" \/ "\)\[0\]/);
   assert.match(hotel, /\{hotelReview\.label\} \{hotelReviewScore\}/);
   assert.match(hotel, /\{hotelReview\.count\}/);
   assert.match(hotel, /<HotelStayEditor[\s\S]*?result=\{result\}[\s\S]*?checkIn=\{checkIn\}[\s\S]*?checkOut=\{checkOut\}[\s\S]*?guests=\{guestCount\}[\s\S]*?rooms=\{roomCount\}/);
-  assert.match(styleRule(stayEditor, "section", "card"), /paddingHorizontal: 10[^}]*paddingTop: 24/);
+  assert.match(styleRule(stayEditor, "section", "card"), /paddingHorizontal: 10[^}]*paddingTop: 14/);
   assert.match(styleRule(stayEditor, "card", "copy"), /minHeight: 60[^}]*borderWidth: 1[^}]*borderRadius: 12[^}]*paddingHorizontal: 14[^}]*paddingVertical: 4[^}]*gap: 10/);
   assert.match(stayEditor, /\{summary\.occupancy\}/);
   assert.doesNotMatch(stayEditor, /summary\.nightText/);
