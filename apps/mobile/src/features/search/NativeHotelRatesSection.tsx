@@ -1,4 +1,4 @@
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { appFonts } from "../../theme/typography";
 import type { NativeHotelOffer } from "./nativeHotelDetailsModel";
 import type { PresentedHotelRoomOption } from "./NativeHotelDetails";
@@ -22,37 +22,11 @@ function capitalize(value: string) {
   return value ? `${value[0]!.toUpperCase()}${value.slice(1)}` : value;
 }
 
-function roomGroupHeading(options: PresentedHotelRoomOption[], fallback: string) {
-  const bedConfiguration = options.find((option) => option.bedConfiguration.trim())?.bedConfiguration.trim();
-  if (bedConfiguration) return bedConfiguration;
-  const name = options[0]?.name?.trim();
-  if (name) return name;
-  return fallback.trim() || "Available rates";
-}
-
 function roomRateTitle(options: PresentedHotelRoomOption[]) {
   const name = options[0]?.name?.trim();
   if (!name) return null;
   const parts = name.split(/\s+[—–-]\s+/).filter(Boolean);
   return capitalize(parts.length > 1 ? parts.slice(1).join(" — ").trim() : name);
-}
-
-function roomRateTags(options: PresentedHotelRoomOption[]) {
-  const tags: string[] = [];
-  const add = (label: string) => {
-    if (!tags.includes(label)) tags.push(label);
-  };
-
-  for (const option of options) {
-    const mealPlan = option.mealPlan.trim().toLocaleLowerCase();
-    const cancellation = option.cancellationInfo.trim().toLocaleLowerCase();
-    if (mealPlan.includes("breakfast")) add("Breakfast included");
-    if (mealPlan === "room only" || mealPlan.startsWith("room only")) add("Room only");
-    if (cancellation.includes("flexible")) add("Flexible terms");
-    if (option.taxesAndFeesIncluded === true) add("Taxes included");
-  }
-
-  return tags.slice(0, 4);
 }
 
 export function NativeHotelRatesSection({
@@ -82,8 +56,6 @@ export function NativeHotelRatesSection({
   theme: Theme;
   accentColor: string;
 }) {
-  const tags = roomRateTags(roomOptions);
-  const heading = roomGroupHeading(roomOptions, roomType ?? "Available rates");
   const representativeRoom = roomOptions[0] ?? null;
   const internalTitle = roomRateTitle(roomOptions);
   const internalMeta = representativeRoom?.cancellationInfo.trim() ?? "";
@@ -92,33 +64,6 @@ export function NativeHotelRatesSection({
 
   return (
     <View style={s.section}>
-      {tags.length ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={s.chipViewport}
-          contentContainerStyle={s.chipRow}
-        >
-          {tags.map((tag) => (
-            <View
-              key={tag}
-              style={[
-                s.chip,
-                { backgroundColor: theme.surface, borderColor: theme.border },
-              ]}
-            >
-              <Text numberOfLines={1} style={[s.chipText, { color: theme.textPrimary }]}>
-                {tag}
-              </Text>
-            </View>
-          ))}
-        </ScrollView>
-      ) : null}
-
-      <Text accessibilityRole="header" style={[s.groupHeading, { color: theme.textPrimary }]}>
-        {heading}
-      </Text>
-
       {offers.length ? (
         <View style={[s.groupCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           {offers.map((offer, index) => {
@@ -207,13 +152,8 @@ export function NativeHotelRatesSection({
 }
 
 const s = StyleSheet.create({
-  section: { paddingTop: 22, paddingBottom: 4 },
-  chipViewport: { marginHorizontal: -16 },
-  chipRow: { gap: 8, paddingHorizontal: 16, paddingBottom: 30 },
-  chip: { height: 36, justifyContent: "center", borderWidth: 1, borderRadius: 8, paddingHorizontal: 12 },
-  chipText: { fontSize: 16, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
-  groupHeading: { fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.2 },
-  groupCard: { marginTop: 20, overflow: "hidden", borderWidth: 1, borderRadius: 12 },
+  section: { paddingBottom: 4 },
+  groupCard: { overflow: "hidden", borderWidth: 1, borderRadius: 12 },
   rateRow: { minHeight: 134, flexDirection: "row", alignItems: "stretch", padding: 16, gap: 14 },
   rateRowPressed: { opacity: 0.82 },
   rateCopy: { flex: 1, minWidth: 0, justifyContent: "flex-start" },
@@ -227,5 +167,5 @@ const s = StyleSheet.create({
   perNight: { marginTop: 2, fontSize: 12, lineHeight: 17, fontWeight: "400", fontFamily: appFonts.regular, textAlign: "right" },
   selectButton: { minWidth: 88, height: 44, borderRadius: 10, alignItems: "center", justifyContent: "center", paddingHorizontal: 12 },
   selectButtonText: { color: "#FFFFFF", fontSize: 15, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
-  emptyCard: { marginTop: 20, minHeight: 112, justifyContent: "center", borderWidth: 1, borderRadius: 12, padding: 16 },
+  emptyCard: { minHeight: 112, justifyContent: "center", borderWidth: 1, borderRadius: 12, padding: 16 },
 });
