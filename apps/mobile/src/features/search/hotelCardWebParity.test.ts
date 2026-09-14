@@ -127,7 +127,8 @@ test("amenities use the shared semantic presentation and four neutral icon rows"
 });
 
 test("amenities use readable compact native metadata typography", () => {
-  assert.match(amenities, /fontSize:\s*11[^}]*lineHeight:\s*15[^}]*fontWeight:\s*"500"/s);
+  assert.match(amenities, /strokeWidth=\{1\.5\}/);
+  assert.match(amenities, /fontSize:\s*12[^}]*lineHeight:\s*16[^}]*fontWeight:\s*"500"/s);
 });
 
 test("compact hotel cards follow the measured reference aspect while preserving bottom price rhythm", () => {
