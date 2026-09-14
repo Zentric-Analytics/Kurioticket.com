@@ -1,9 +1,7 @@
-import { StyleSheet, Text, View } from "react-native";
-import { appFonts } from "../../theme/typography";
+import { StyleSheet, View } from "react-native";
 
 type LoadingTheme = {
   dark: boolean;
-  textSecondary: string;
 };
 
 export function HotelDetailsLoadingState({
@@ -49,8 +47,6 @@ export function HotelDetailsLoadingState({
           <View style={[s.sectionTitleShort, { backgroundColor: strong }]} />
           <View style={[s.block, { backgroundColor: soft }]} />
         </View>
-
-        <Text style={[s.label, { color: theme.textSecondary }]}>Loading hotel details…</Text>
       </View>
     </View>
   );
@@ -71,5 +67,4 @@ const s = StyleSheet.create({
   copyLine: { width: "100%", height: 14, marginTop: 10, borderRadius: 5 },
   copyLineShort: { width: "72%", height: 14, marginTop: 8, borderRadius: 5 },
   block: { width: "100%", height: 112, marginTop: 12, borderRadius: 10 },
-  label: { marginTop: 18, fontSize: 13, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular, textAlign: "center" },
 });

@@ -12,10 +12,11 @@ test("hotel details masks the partial page until enrichment settles", () => {
   assert.match(screen, /zIndex: detailsStatus === "loading" \? 40 : 20/);
 });
 
-test("hotel details loading shell is stable, accessible, and does not expose unfinished sections", () => {
+test("hotel details loading shell is stable, accessible, skeleton-only, and does not expose unfinished sections", () => {
   assert.match(loading, /accessibilityRole="progressbar"/);
   assert.match(loading, /accessibilityState=\{\{ busy: true \}\}/);
-  assert.match(loading, /Loading hotel details…/);
+  assert.match(loading, /accessibilityLabel=\{`Loading \$\{hotelName\} hotel details`\}/);
+  assert.doesNotMatch(loading, />Loading hotel details…<|s\.label|label:\s*\{/);
   assert.match(loading, /const heroHeight = Math\.round\(width \* 0\.94\)/);
   for (const unfinishedSection of ["About this hotel", "Location", "Popular amenities", "Room & comfort", "Accessibility"]) {
     assert.doesNotMatch(loading, new RegExp(unfinishedSection.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
