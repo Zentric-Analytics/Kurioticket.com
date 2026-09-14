@@ -7,12 +7,14 @@ const fullLookAround = readFileSync("src/features/search/NativeHotelFullLookArou
 
 test("iOS Look Around matches the existing map preview-to-full-screen interaction", () => {
   assert.match(location, /const \[fullLookAroundOpen, setFullLookAroundOpen\] = useState\(false\);/);
+  assert.match(location, /<View pointerEvents="none" style=\{styles\.map\}>[\s\S]*?<NativeAppleHotelLookAround/);
   assert.match(location, /accessibilityLabel=\{`Open full Look Around for \$\{hotelName\}`\}/);
   assert.match(location, /accessibilityHint="Opens an interactive Look Around view inside Kurioticket"/);
+  assert.match(location, /onPress=\{\(\) => setFullLookAroundOpen\(true\)\}/);
+  assert.match(location, /style=\{styles\.lookAroundTapOverlay\}/);
+  assert.match(location, /lookAroundTapOverlay: \{ \.\.\.StyleSheet\.absoluteFillObject, zIndex: 1 \}/);
   assert.doesNotMatch(location, /disabled=\{lookAroundStatus !== "ready"\}/);
   assert.doesNotMatch(location, /accessibilityState=\{\{ disabled: lookAroundStatus !== "ready" \}\}/);
-  assert.match(location, /onPress=\{\(\) => setFullLookAroundOpen\(true\)\}/);
-  assert.match(location, /<View pointerEvents="none" style=\{styles\.map\}>[\s\S]*?<NativeAppleHotelLookAround/);
   assert.match(location, /<NativeHotelFullLookAroundModal visible=\{fullLookAroundOpen\}/);
 });
 
