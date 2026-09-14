@@ -45,7 +45,7 @@ test("active Hotel details follow hero, identity, tabs, stay editor, and content
   assert.ok(hotel.indexOf('accessibilityRole="tablist"') < hotel.indexOf("<HotelStayEditor"));
   assert.ok(hotel.indexOf("<HotelStayEditor") < hotel.indexOf("<View style={s.detailBody}>"));
   assert.match(hotel, /stickyHeaderIndices=\{\[2\]\}/);
-  assert.match(hotel, /\["details", "reviews", "deals"\]/);
+  assert.match(hotel, /\["deals", "details", "reviews"\]/);
   assert.match(hotel, /<NativeHotelBookingDetails/);
   assert.match(hotel, /<NativeHotelReviewsSection result=\{result\} \/>/);
   assert.match(hotel, /activeHotelTab === "deals"/);
