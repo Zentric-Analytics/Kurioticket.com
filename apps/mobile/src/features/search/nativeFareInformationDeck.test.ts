@@ -117,9 +117,9 @@ test("optional extras remain non-interactive provider-authored information",()=>
   assert.doesNotMatch(extras,/<Pressable|chevron/);
 });
 
-test("deck baseline and flat content preserve current Pick-your-fare geometry",()=>{
+test("deck baseline adds a 10dp local inset to the unchanged 14dp content gap for 24dp total separation",()=>{
   const deckStyles=between("fareInfoDeck:", "notice:");
-  assert.match(deckStyles,/fareInfoDeck:\{gap:0,marginTop:6\}/);
+  assert.match(deckStyles,/fareInfoDeck:\{gap:0,marginTop:10\}/);
   assert.match(deckStyles,/fareTabRail:\{flexGrow:0,borderBottomWidth:1,marginHorizontal:-10\}/);
   assert.match(deckStyles,/fareTabRailContent:\{paddingHorizontal:0\}/);
   assert.match(deckStyles,/fareInfoBody:\{paddingHorizontal:4,paddingVertical:4\}/);
@@ -135,11 +135,12 @@ test("deck baseline and flat content preserve current Pick-your-fare geometry",(
   assert.match(deck,/borderBottomColor:theme\.border/);
   assert.doesNotMatch(deckStyles,/elevation|shadow/);
   assert.match(source,/content:\{paddingHorizontal:18,paddingTop:5,gap:14\}/);
-  assert.match(deckStyles,/fareInfoDeck:\{gap:0,marginTop:6\}/);
-  assert.doesNotMatch(deckStyles,/fareInfoDeck:\{[^}]*marginTop:20/);
-  assert.match(source,/loadingInfoDeck:\{height:174,marginTop:6\}/);
+  assert.match(deckStyles,/fareInfoDeck:\{gap:0,marginTop:10\}/);
+  assert.doesNotMatch(deckStyles,/fareInfoDeck:\{[^}]*marginTop:24/);
+  assert.equal(14+10,24,"the global gap and local deck inset provide the intended total separation");
+  assert.match(source,/loadingInfoDeck:\{height:174,marginTop:10\}/);
   assert.match(source,/card:\{borderWidth:1,borderRadius:14,padding:14,gap:7\}/);
-  assert.match(source,/fareCard:\{borderRadius:15,minHeight:142,paddingHorizontal:12,paddingTop:4,paddingBottom:8,gap:4\}/);
+  assert.match(source,/fareCard:\{borderRadius:15,minHeight:142,position:"relative",paddingHorizontal:12,paddingTop:4,paddingBottom:8,gap:4\}/);
   assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal/);
   assert.match(source,/fareCardSelected:\{borderWidth:1\.5\}/);
 });
