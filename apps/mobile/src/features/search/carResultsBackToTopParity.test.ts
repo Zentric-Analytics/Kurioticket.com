@@ -20,7 +20,8 @@ test("Cars retains its scroll ref and legitimate transition positioning", () => 
   assert.match(cars, /carScrollRef=useRef<ScrollView>\(null\)/);
   assert.match(cars, /ref=\{carScrollRef\}/);
   assert.match(cars, /startCarResultsTransition=.*?carScrollRef\.current\?\.scrollTo\(\{y:0,animated:true\}\)/);
-  assert.match(cars, /onApplySort=.*?carScrollRef\.current\?\.scrollTo\(\{y:0,animated:true\}\)/);
+  assert.match(cars, /onApplySort=.*?startCarResultsTransition\(\)/);
+  assert.doesNotMatch(cars.match(/onApplySort=\{\(next\)=>\{[\s\S]*?\}\}/)?.[0] ?? "", /scrollTo/);
 });
 
 test("Cars vertical owner is cross-platform stable and safe-area aware", () => {
