@@ -95,12 +95,12 @@ test("Details keeps room, accessibility and related-hotel information without a 
   assert.doesNotMatch(details, />Hotel information<|<Award\b|Hotel classification is not available\./);
 });
 
-test("Details uses a dense divider-free Profile-style mobile rhythm", () => {
+test("Details uses a tightened divider-free Profile-style mobile rhythm", () => {
   assert.match(details, /section: \{ paddingVertical: 0 \}/);
-  assert.match(details, /sectionGap: \{ height: 12 \}/);
-  assert.match(details, /description: \{ marginTop: 4,/);
-  assert.match(details, /rowList: \{ marginTop: 5, gap: 4 \}/);
-  assert.match(details, /seeAllLink: \{ alignSelf: "flex-start", marginTop: 6, paddingVertical: 4 \}/);
+  assert.match(details, /sectionGap: \{ height: 8 \}/);
+  assert.match(details, /description: \{ marginTop: 3,/);
+  assert.match(details, /rowList: \{ marginTop: 4, gap: 3 \}/);
+  assert.match(details, /seeAllLink: \{ alignSelf: "flex-start", marginTop: 4, paddingVertical: 3 \}/);
   assert.doesNotMatch(details, /function SectionDivider|s\.divider|divider: \{|borderTopWidth: StyleSheet\.hairlineWidth/);
   assert.match(details, /heading: \{ fontSize: 16, lineHeight: 22, fontWeight: "700", fontFamily: appFonts\.bold/);
   assert.match(details, /rowText: \{[^}]*fontSize: 14, lineHeight: 20, fontWeight: "400", fontFamily: appFonts\.regular/);

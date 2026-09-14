@@ -102,7 +102,7 @@ test("Location uses the same inline Google Street View on iOS and Android", () =
   for (const forbidden of ["EXPO_PUBLIC_GOOGLE", "NEXT_PUBLIC_GOOGLE", "google.com/maps/embed", "buildOpenStreetMapHotelMapEmbedUrl"]) assert.doesNotMatch(component + model, new RegExp(forbidden));
 });
 
-test("Location uses the Profile-style hierarchy while keeping the full-size map", () => {
+test("Location uses the tightened Profile-style hierarchy while keeping the full-size map", () => {
   for (const rule of [/fontSize: 16/, /lineHeight: 22/, /fontWeight: "700"/]) assert.match(styleRule(component, "heading", "addressRow"), rule);
   assert.doesNotMatch(styleRule(component, "heading", "addressRow"), /fontFamily/);
   for (const rule of [/width: 34/, /height: 34/, /borderRadius: 17/]) assert.match(styleRule(component, "pinCircle", "addressCopy"), rule);
@@ -110,16 +110,16 @@ test("Location uses the Profile-style hierarchy while keeping the full-size map"
   assert.match(component, /const iconColor = theme\.dark \? theme\.icon : "#1A1A1A";/);
   for (const rule of [/fontSize: 14/, /lineHeight: 20/, /fontWeight: "500"/]) assert.match(styleRule(component, "primaryAddress", "secondaryAddress"), rule);
   for (const rule of [/fontSize: 13/, /lineHeight: 18/, /fontWeight: "400"/]) assert.match(styleRule(component, "secondaryAddress", "mapShell"), rule);
-  assert.match(styleRule(component, "addressRow", "pinCircle"), /marginTop: 6/);
-  assert.match(styleRule(component, "mapShell", "mapTabs"), /marginTop: 6/);
+  assert.match(styleRule(component, "addressRow", "pinCircle"), /marginTop: 4/);
+  assert.match(styleRule(component, "mapShell", "mapTabs"), /marginTop: 4/);
   assert.doesNotMatch(styleRule(component, "mapTabs", "mapTab"), /borderBottomWidth|borderBottomColor/);
   assert.match(styleRule(component, "mapTabs", "mapTab"), /minHeight: 38/);
   assert.match(styleRule(component, "mapViewport", "mapPreview"), /height: 216/);
-  assert.match(styleRule(component, "subheading", "factList"), /marginTop: 10[^}]*fontSize: 15[^}]*lineHeight: 20[^}]*fontWeight: "700"/);
-  assert.match(styleRule(component, "factList", "factRow"), /marginTop: 4[^}]*gap: 3/);
+  assert.match(styleRule(component, "subheading", "factList"), /marginTop: 7[^}]*fontSize: 15[^}]*lineHeight: 20[^}]*fontWeight: "700"/);
+  assert.match(styleRule(component, "factList", "factRow"), /marginTop: 3[^}]*gap: 2/);
   assert.match(styleRule(component, "factRow", "factBullet"), /flexDirection: "row"/);
   for (const rule of [/fontSize: 14/, /lineHeight: 20/, /fontWeight: "400"/]) assert.match(styleRule(component, "factText", "fallbackText"), rule);
-  assert.match(component, /fallbackText: \{[^}]*fontSize: 14[^}]*lineHeight: 20[^}]*fontWeight: "400"/);
+  assert.match(component, /fallbackText: \{[^}]*marginTop: 3[^}]*fontSize: 14[^}]*lineHeight: 20[^}]*fontWeight: "400"/);
 });
 
 test("Decision-section headings preserve the Profile-style supporting hierarchy", () => {

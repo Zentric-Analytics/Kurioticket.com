@@ -85,11 +85,11 @@ export function NativeHotelReviewsSection({ result }: { result: ReviewResult }) 
 }
 
 const styles = StyleSheet.create({
-  reviewsSection: { paddingVertical: 12 },
+  reviewsSection: { paddingVertical: 6 },
   heading: { fontSize: 16, lineHeight: 22, fontWeight: "700" },
-  emptyCallout: { marginTop: 8 },
+  emptyCallout: { marginTop: 5 },
   emptyText: { fontSize: 14, lineHeight: 21, fontWeight: "400" },
-  scoreRow: { marginTop: 14, flexDirection: "row", alignItems: "center", gap: 14 },
+  scoreRow: { marginTop: 10, flexDirection: "row", alignItems: "center", gap: 12 },
   scoreBadge: { height: 56, minWidth: 56, borderRadius: 8, backgroundColor: colors.blue, paddingHorizontal: 8, alignItems: "center", justifyContent: "center" },
   scoreText: { color: "white", fontSize: 18, lineHeight: 24, fontWeight: "700", textAlign: "center" },
   metadata: { flex: 1, minWidth: 0 },
