@@ -5,6 +5,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Switch,
   Text,
@@ -12,6 +13,7 @@ import {
 } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { Bell, X } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   travelApi,
   TravelApiError,
@@ -56,6 +58,11 @@ type PreservedPausedTarget = {
   currency: string;
 };
 
+function formatDropPercent(value: number) {
+  if (Number.isInteger(value)) return String(value);
+  return value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+}
+
 export function HotelPriceAlert({
   plan,
   hotelResults,
@@ -64,6 +71,7 @@ export function HotelPriceAlert({
   rates,
 }: Props) {
   const { theme } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const { locale, t } = useMobileLocalization();
   const message = useCallback(
     (key: Parameters<typeof travelAccountMessage>[1]) => travelAccountMessage(locale, key),
@@ -184,16 +192,23 @@ export function HotelPriceAlert({
     const existingTarget = matchingAlert?.targetPrice != null && matchingAlert.currency?.toUpperCase() === alertCurrency
       ? Number(matchingAlert.targetPrice)
       : null;
-    const preserveExistingTarget = matchingAlert?.status === "PAUSED"
-      && existingTarget !== null
+    const existingDropPercent = existingTarget !== null
       && Number.isFinite(existingTarget)
-      && existingTarget > 0;
+      && existingTarget > 0
+      ? (1 - existingTarget / providerCurrentTotal) * 100
+      : null;
+    const preserveExistingTarget = matchingAlert?.status === "PAUSED"
+      && existingDropPercent !== null
+      && existingDropPercent >= HOTEL_ALERT_MIN_DROP_PERCENT
+      && existingDropPercent <= HOTEL_ALERT_MAX_DROP_PERCENT;
     setPreservedPausedTarget(preserveExistingTarget
-      ? { id: matchingAlert.id, target: existingTarget, currency: alertCurrency }
+      ? { id: matchingAlert.id, target: existingTarget!, currency: alertCurrency }
       : null);
-    setDropPercent(existingTarget && Number.isFinite(existingTarget)
-      ? hotelAlertDropPercentForTarget(providerCurrentTotal, existingTarget)
-      : HOTEL_ALERT_DEFAULT_DROP_PERCENT);
+    setDropPercent(preserveExistingTarget && existingDropPercent !== null
+      ? existingDropPercent
+      : existingTarget && Number.isFinite(existingTarget)
+        ? hotelAlertDropPercentForTarget(providerCurrentTotal, existingTarget)
+        : HOTEL_ALERT_DEFAULT_DROP_PERCENT);
     setError("");
     setSheetOpen(true);
   };
@@ -308,75 +323,93 @@ export function HotelPriceAlert({
         accessibilityViewIsModal
       >
         <View style={styles.backdrop}>
-          <View style={[styles.sheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel={message("hotelAlertTitle")}>
-            <View style={styles.header}>
-              <View style={styles.headerCopy}>
-                <Text accessibilityRole="header" style={[styles.title, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text>
-                <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{message("hotelAlertBody")}</Text>
+          <View
+            style={[
+              styles.sheet,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
+                paddingBottom: Math.max(insets.bottom, 12),
+              },
+            ]}
+            accessibilityLabel={message("hotelAlertTitle")}
+          >
+            <ScrollView
+              style={styles.sheetScroll}
+              contentContainerStyle={styles.sheetContent}
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+              overScrollMode="never"
+            >
+              <View style={styles.header}>
+                <View style={styles.headerCopy}>
+                  <Text accessibilityRole="header" style={[styles.title, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text>
+                  <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{message("hotelAlertBody")}</Text>
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${t("cancel")} ${message("hotelAlertTitle")}`}
+                  disabled={pending}
+                  onPress={closeSheet}
+                  style={({ pressed }) => [styles.close, pressed && styles.pressed]}
+                >
+                  <X accessible={false} size={21} strokeWidth={1.5} color={theme.icon} />
+                </Pressable>
               </View>
+
+              <View style={[styles.currentPriceCard, { borderColor: theme.border, backgroundColor: theme.background }]}>
+                <Text style={[styles.metricLabel, { color: theme.textSecondary }]}>{message("currentTotal")}</Text>
+                <Text style={[styles.currentPrice, { color: theme.textPrimary }]}>{formatTotal(currentTotal)}</Text>
+              </View>
+
+              <View style={styles.sliderBlock}>
+                <View style={styles.sliderHeading}>
+                  <Text style={[styles.sliderLabel, { color: theme.textPrimary }]}>{message("priceDrop")}</Text>
+                  <Text style={styles.percent}>{formatDropPercent(dropPercent)}%</Text>
+                </View>
+                <FlightRangeSlider
+                  available={{ min: HOTEL_ALERT_MIN_DROP_PERCENT, max: HOTEL_ALERT_MAX_DROP_PERCENT }}
+                  selected={{ min: HOTEL_ALERT_MIN_DROP_PERCENT, max: dropPercent }}
+                  step={1}
+                  singleMaximum
+                  formatValue={(value) => `${formatDropPercent(value)}%`}
+                  accessibilityLabel={message("priceDrop")}
+                  onChange={(range) => {
+                    setPreservedPausedTarget(null);
+                    setDropPercent(Math.round(range.max));
+                  }}
+                />
+                <View style={styles.sliderEnds}>
+                  <Text style={[styles.sliderEnd, { color: theme.textSecondary }]}>1%</Text>
+                  <Text style={[styles.sliderEnd, { color: theme.textSecondary }]}>50%</Text>
+                </View>
+              </View>
+
+              <View style={[styles.summary, { borderColor: theme.border }]}>
+                <View style={styles.metric}>
+                  <Text style={[styles.metricLabel, { color: theme.textSecondary }]}>{message("dropsBy")}</Text>
+                  <Text style={[styles.metricValue, { color: theme.textPrimary }]}>{formatTotal(dropAmount)}</Text>
+                </View>
+                <View style={[styles.metric, styles.metricRight]}>
+                  <Text style={[styles.metricLabel, { color: theme.textSecondary }]}>{message("targetTotal")}</Text>
+                  <Text style={[styles.metricValue, { color: theme.textPrimary }]}>{desiredTotal === null ? "—" : formatTotal(desiredTotal)}</Text>
+                </View>
+              </View>
+
+              {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
+
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`${t("cancel")} ${message("hotelAlertTitle")}`}
-                disabled={pending}
-                onPress={closeSheet}
-                style={({ pressed }) => [styles.close, pressed && styles.pressed]}
+                accessibilityLabel={message("createAlert")}
+                accessibilityState={{ disabled: !readyToCreate, busy: pending }}
+                disabled={!readyToCreate}
+                onPress={() => void createAlert()}
+                style={({ pressed }) => [styles.create, !readyToCreate && styles.createDisabled, pressed && readyToCreate && styles.createPressed]}
               >
-                <X accessible={false} size={21} strokeWidth={1.5} color={theme.icon} />
+                {pending ? <ActivityIndicator accessible={false} size="small" color="white" /> : null}
+                <Text style={styles.createText}>{pending ? message("creating") : message("createAlert")}</Text>
               </Pressable>
-            </View>
-
-            <View style={[styles.currentPriceCard, { borderColor: theme.border, backgroundColor: theme.background }]}>
-              <Text style={[styles.metricLabel, { color: theme.textSecondary }]}>{message("currentTotal")}</Text>
-              <Text style={[styles.currentPrice, { color: theme.textPrimary }]}>{formatTotal(currentTotal)}</Text>
-            </View>
-
-            <View style={styles.sliderBlock}>
-              <View style={styles.sliderHeading}>
-                <Text style={[styles.sliderLabel, { color: theme.textPrimary }]}>{message("priceDrop")}</Text>
-                <Text style={styles.percent}>{dropPercent}%</Text>
-              </View>
-              <FlightRangeSlider
-                available={{ min: HOTEL_ALERT_MIN_DROP_PERCENT, max: HOTEL_ALERT_MAX_DROP_PERCENT }}
-                selected={{ min: HOTEL_ALERT_MIN_DROP_PERCENT, max: dropPercent }}
-                step={1}
-                singleMaximum
-                formatValue={(value) => `${Math.round(value)}%`}
-                accessibilityLabel={message("priceDrop")}
-                onChange={(range) => {
-                  setPreservedPausedTarget(null);
-                  setDropPercent(Math.round(range.max));
-                }}
-              />
-              <View style={styles.sliderEnds}>
-                <Text style={[styles.sliderEnd, { color: theme.textSecondary }]}>1%</Text>
-                <Text style={[styles.sliderEnd, { color: theme.textSecondary }]}>50%</Text>
-              </View>
-            </View>
-
-            <View style={[styles.summary, { borderColor: theme.border }]}>
-              <View style={styles.metric}>
-                <Text style={[styles.metricLabel, { color: theme.textSecondary }]}>{message("dropsBy")}</Text>
-                <Text style={[styles.metricValue, { color: theme.textPrimary }]}>{formatTotal(dropAmount)}</Text>
-              </View>
-              <View style={[styles.metric, styles.metricRight]}>
-                <Text style={[styles.metricLabel, { color: theme.textSecondary }]}>{message("targetTotal")}</Text>
-                <Text style={[styles.metricValue, { color: theme.textPrimary }]}>{desiredTotal === null ? "—" : formatTotal(desiredTotal)}</Text>
-              </View>
-            </View>
-
-            {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={message("createAlert")}
-              accessibilityState={{ disabled: !readyToCreate, busy: pending }}
-              disabled={!readyToCreate}
-              onPress={() => void createAlert()}
-              style={({ pressed }) => [styles.create, !readyToCreate && styles.createDisabled, pressed && readyToCreate && styles.createPressed]}
-            >
-              {pending ? <ActivityIndicator accessible={false} size="small" color="white" /> : null}
-              <Text style={styles.createText}>{pending ? message("creating") : message("createAlert")}</Text>
-            </Pressable>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -391,7 +424,9 @@ const styles = StyleSheet.create({
   switchSlot: { minWidth: 51, minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 },
   switchIos: { transform: [{ translateY: 8 }] },
   backdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,.45)" },
-  sheet: { borderTopWidth: 1, borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingHorizontal: 20, paddingTop: 14, paddingBottom: 24, gap: 16 },
+  sheet: { maxHeight: "92%", borderTopWidth: 1, borderTopLeftRadius: 22, borderTopRightRadius: 22, overflow: "hidden" },
+  sheetScroll: { flexShrink: 1 },
+  sheetContent: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 12, gap: 16 },
   header: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
   headerCopy: { flex: 1, minWidth: 0, paddingTop: 5 },
   title: { fontSize: 20, lineHeight: 26, fontWeight: "700", fontFamily: appFonts.bold },
