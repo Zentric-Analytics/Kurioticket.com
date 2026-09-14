@@ -37,7 +37,7 @@ test("Cars Details gives iOS a complete Apple-or-native-fallback preview branch"
   assert.match(details, /<NativeCarFullMapModal visible=\{fullMapOpen\} pickupLocation=\{pickupLocation\} trustedMapCoordinates=\{trustedMapCoordinates\} embedUrl=\{embed\}/);
 });
 
-test("the Cars full-screen modal is immersive and exposes truthful nearby Street View", () => {
+test("the Cars full-screen modal stays immersive with minimal map chrome", () => {
   assert.match(fullMap, /presentationStyle="fullScreen"/);
   assert.match(fullMap, /animationType="slide"/);
   assert.match(fullMap, /onRequestClose=\{closeFullMap\}/);
@@ -50,8 +50,12 @@ test("the Cars full-screen modal is immersive and exposes truthful nearby Street
   assert.match(fullMap, /accessibilityLabel=\{`Open Street View near \$\{pickupLocation\}`\}/);
   assert.match(fullMap, /accessibilityHint="Shows street-level imagery near the pickup search area"/);
   assert.match(fullMap, /accessibilityLabel="Return to map"/);
-  assert.match(fullMap, /Street View near this search area/);
-  assert.match(fullMap, /Exact rental desk or collection point may differ/);
+  assert.match(fullMap, /streetViewPreviewMedia: \{ flex: 1, overflow: "hidden" \}/);
+  assert.match(fullMap, /streetViewPreviewWebView: \{ position: "absolute", left: -56, top: -8, width: 240, height: 220 \}/);
+  assert.match(fullMap, /mapPreviewButton: \{ position: "absolute", left: 16, bottom: 18,[\s\S]*?width: 52, height: 52, borderRadius: 26/);
+  assert.doesNotMatch(fullMap, /Nearby imagery|Pickup search area|Street View near this search area|Exact rental desk or collection point may differ|streetViewPreviewLabel|locationContext|mapPreviewButtonText/);
+  assert.doesNotMatch(fullMap, />Map<\/Text>/);
+  assert.doesNotMatch(fullMap, /Loading Street View…/);
   assert.match(fullMap, /Platform\.OS === "ios"\s*\? trustedMapCoordinates/);
   assert.match(fullMap, /locationLabel=\{pickupLocation\} interactive/);
   assert.match(fullMap, /source=\{\{ uri: streetViewUrl \}\}/);
