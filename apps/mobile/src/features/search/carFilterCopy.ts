@@ -27,11 +27,13 @@ const optionKeys: Record<string, string> = {
 
 const fallbackGroups: Record<string, string> = { totalPrice: "Total price", vehicleType: "Vehicle type", transmission: "Transmission", seats: "Seats", bags: "Bags", fuelPolicy: "Fuel policy", mileagePolicy: "Mileage", cancellation: "Booking flexibility", pickupLocationType: "Pickup location type" };
 const fallbackOptions: Record<string, string> = { smallCars: "Small cars", mediumCars: "Medium cars", suvs: "SUVs", luxuryCars: "Luxury cars", vans: "Vans", automatic: "Automatic", manual: "Manual", seats4Plus: "4+ seats", seats5Plus: "5+ seats", seats7Plus: "7+ seats", bags2Plus: "2+ bags", bags3Plus: "3+ bags", bags4Plus: "4+ bags", fullToFull: "Full to full", sameToSame: "Same to same", unlimitedMileage: "Unlimited mileage", limitedMileage: "Limited mileage", freeCancellation: "Free cancellation", payAtPickup: "Pay at pickup", airportCounter: "Airport counter", shuttlePickup: "Shuttle pickup", cityLocation: "City location" };
+const updatingFilterFallbacks: Record<string, string> = { es: "Actualizando filtros…", ar: "جارٍ تحديث عوامل التصفية…" };
 
 export const carFilterCopy = (locale: string, displayCurrency = "USD", rates: ExchangeRates = {}): FilterCopy => {
   const priceLabels = carPriceFilterLabels(displayCurrency, rates);
   const groups = Object.fromEntries(Object.entries(groupKeys).map(([id, key]) => [id, carText(locale, key, fallbackGroups[id] ?? id)]));
   const options = Object.fromEntries(Object.entries(optionKeys).map(([id, key]) => [id, carText(locale, key, fallbackOptions[id] ?? id)]));
+  const language = locale.toLowerCase().split(/[-_]/)[0];
   return {
     filters: carText(locale, "carsResults.filterBy", "Filters"),
     allCars: carText(locale, "carsResults.carResultsAria", "All cars shown"),
@@ -41,7 +43,7 @@ export const carFilterCopy = (locale: string, displayCurrency = "USD", rates: Ex
     show: carText(locale, "show", "Show"),
     car: carText(locale, "cars", "car"),
     cars: carText(locale, "cars", "cars"),
-    updatingFilters: carText(locale, "carsResults.loading.preparingResults", "Updating filters…"),
+    updatingFilters: carText(locale, "carsResults.updatingFilters", updatingFilterFallbacks[language] ?? "Updating filters…"),
     groups,
     options: { ...options, ...priceLabels },
   };
