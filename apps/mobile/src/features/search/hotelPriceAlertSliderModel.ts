@@ -8,14 +8,32 @@ export const HOTEL_ALERT_DEFAULT_DROP_PERCENT = 10;
 
 const supported = new Set(supportedCurrencies.map(({ code }) => code.toUpperCase()));
 
+// Keep aligned with the Hotel market-price formatter in displayCurrency.ts.
+const zeroDecimalCurrencies = new Set([
+  "BIF", "CLP", "COP", "DJF", "GNF", "HUF", "IDR", "ISK", "JPY", "KMF", "KPW",
+  "KRW", "MGA", "PYG", "RWF", "UGX", "VND", "VUV", "XAF", "XOF", "XPF",
+]);
+
 export type HotelAlertPriceBasis = {
   amount: number;
   currency: string;
+  providerAmount: number;
+  providerCurrency: string;
 };
 
 export function clampHotelAlertDropPercent(value: number) {
   if (!Number.isFinite(value)) return HOTEL_ALERT_DEFAULT_DROP_PERCENT;
   return Math.min(HOTEL_ALERT_MAX_DROP_PERCENT, Math.max(HOTEL_ALERT_MIN_DROP_PERCENT, Math.round(value)));
+}
+
+function currencyFractionDigits(currency: string) {
+  return zeroDecimalCurrencies.has(currency.trim().toUpperCase()) ? 0 : 2;
+}
+
+export function roundHotelAlertCurrencyAmount(amount: number, currency: string) {
+  const digits = currencyFractionDigits(currency);
+  const factor = 10 ** digits;
+  return Math.round(amount * factor) / factor;
 }
 
 export function hotelAlertPriceBasis(
@@ -29,7 +47,12 @@ export function hotelAlertPriceBasis(
     if (!Number.isFinite(result.totalPrice) || (result.totalPrice ?? 0) <= 0 || !supported.has(providerCurrency)) return [];
     const price = displayPrice(result.totalPrice!, providerCurrency, preferredCurrency, rates);
     return supported.has(price.currency) && Number.isFinite(price.amount) && price.amount > 0
-      ? [{ amount: price.amount, currency: price.currency }]
+      ? [{
+          amount: price.amount,
+          currency: price.currency,
+          providerAmount: price.providerAmount,
+          providerCurrency: price.providerCurrency,
+        }]
       : [];
   });
   if (!effectivePrices.length) return null;
@@ -50,10 +73,12 @@ export function lowestHotelAlertDisplayTotal(
   return hotelAlertPriceBasis(results, displayCurrency, rates)?.amount ?? null;
 }
 
-export function hotelAlertDesiredTotal(currentTotal: number, dropPercent: number) {
+export function hotelAlertDesiredTotal(currentTotal: number, dropPercent: number, currency = "USD") {
   if (!Number.isFinite(currentTotal) || currentTotal <= 0) return null;
   const percent = clampHotelAlertDropPercent(dropPercent);
-  return Math.max(0.01, Math.round(currentTotal * (1 - percent / 100) * 100) / 100);
+  const digits = currencyFractionDigits(currency);
+  const minimumUnit = 1 / (10 ** digits);
+  return Math.max(minimumUnit, roundHotelAlertCurrencyAmount(currentTotal * (1 - percent / 100), currency));
 }
 
 export function hotelAlertDropPercentForTarget(currentTotal: number, targetTotal: number) {
