@@ -26,7 +26,8 @@ export function carPriceAlertMatchesPlan(alert: MobilePriceAlert, plan: SearchPl
   const expected = buildCarPriceAlertPayload(plan, 1, "USD").query;
   const sameSearch = fields.every((field) => text(alert.query[field]) === text(expected[field]));
   const normalizedCurrency = currency?.trim().toUpperCase();
-  return sameSearch && (!normalizedCurrency || alert.currency.trim().toUpperCase() === normalizedCurrency);
+  const alertCurrency = String(alert.currency ?? "").trim().toUpperCase();
+  return sameSearch && (!normalizedCurrency || alertCurrency === normalizedCurrency);
 }
 
 export function matchingCarPriceAlert(alerts: MobilePriceAlert[], plan: SearchPlan, currency?: string) {
