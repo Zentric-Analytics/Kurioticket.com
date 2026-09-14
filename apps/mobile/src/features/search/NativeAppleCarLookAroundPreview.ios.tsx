@@ -40,6 +40,7 @@ const NativeView = hasNativeView()
 
 export function NativeAppleCarLookAroundPreview({
   onStatusChange,
+  presentationMode = "swiftUI",
   ...props
 }: NativeAppleCarLookAroundPreviewProps) {
   useEffect(() => {
@@ -50,6 +51,7 @@ export function NativeAppleCarLookAroundPreview({
   return (
     <NativeView
       {...props}
+      presentationMode={presentationMode}
       onStatusChange={(event) => onStatusChange(event.nativeEvent.status)}
     />
   );
