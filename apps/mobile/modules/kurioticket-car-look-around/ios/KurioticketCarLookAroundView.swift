@@ -21,9 +21,15 @@ private struct CarLookAroundPreview: View {
 final class KurioticketCarLookAroundView: ExpoView {
   let onStatusChange = EventDispatcher()
 
+  private enum PresentationMode: Equatable {
+    case swiftUI
+    case viewController
+  }
+
   private var latitude: Double?
   private var longitude: Double?
   private var locationLabel = "Pickup location"
+  private var presentationMode: PresentationMode = .swiftUI
   private var controller: UIViewController?
   private var cancelActiveRequest: (() -> Void)?
   private var reloadWorkItem: DispatchWorkItem?
@@ -76,6 +82,14 @@ final class KurioticketCarLookAroundView: ExpoView {
     controller?.view.accessibilityLabel = "Look Around near \(locationLabel)"
   }
 
+  func setPresentationMode(_ value: String) {
+    let nextMode: PresentationMode = value == "viewController" ? .viewController : .swiftUI
+    guard nextMode != presentationMode else { return }
+    presentationMode = nextMode
+    requestedCoordinateKey = nil
+    scheduleReload()
+  }
+
   private func scheduleReload() {
     guard window != nil else { return }
     reloadWorkItem?.cancel()
@@ -97,7 +111,8 @@ final class KurioticketCarLookAroundView: ExpoView {
       return
     }
 
-    let coordinateKey = "\(latitude):\(longitude)"
+    let modeKey = presentationMode == .viewController ? "viewController" : "swiftUI"
+    let coordinateKey = "\(latitude):\(longitude):\(modeKey)"
     if requestedCoordinateKey == coordinateKey, controller != nil { return }
 
     requestedCoordinateKey = coordinateKey
@@ -131,20 +146,35 @@ final class KurioticketCarLookAroundView: ExpoView {
   @available(iOS 17.0, *)
   private func install(scene: MKLookAroundScene) {
     removeController()
-    let hostingController = UIHostingController(rootView: CarLookAroundPreview(scene: scene))
-    hostingController.view.backgroundColor = .clear
-    hostingController.view.frame = bounds
-    hostingController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-    hostingController.view.accessibilityLabel = "Look Around near \(locationLabel)"
+
+    let childController: UIViewController
+    switch presentationMode {
+    case .swiftUI:
+      let hostingController = UIHostingController(rootView: CarLookAroundPreview(scene: scene))
+      hostingController.view.backgroundColor = .clear
+      childController = hostingController
+    case .viewController:
+      let lookAroundController = MKLookAroundViewController(scene: scene)
+      lookAroundController.isNavigationEnabled = true
+      lookAroundController.showsRoadLabels = true
+      lookAroundController.pointOfInterestFilter = .excludingAll
+      lookAroundController.badgePosition = .topLeading
+      childController = lookAroundController
+    }
+
+    childController.view.backgroundColor = .clear
+    childController.view.frame = bounds
+    childController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    childController.view.accessibilityLabel = "Look Around near \(locationLabel)"
 
     guard let parent = nearestViewController() else {
       emitStatus("unavailable")
       return
     }
-    parent.addChild(hostingController)
-    addSubview(hostingController.view)
-    hostingController.didMove(toParent: parent)
-    controller = hostingController
+    parent.addChild(childController)
+    addSubview(childController.view)
+    childController.didMove(toParent: parent)
+    controller = childController
     emitStatus("ready")
   }
 
