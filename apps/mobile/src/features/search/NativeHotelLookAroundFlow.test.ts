@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+const hotelDetails = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+const bookingDetails = readFileSync("src/features/search/NativeHotelBookingDetails.tsx", "utf8");
 const location = readFileSync("src/features/search/NativeHotelLocationSection.tsx", "utf8");
 const nativeView = readFileSync("modules/kurioticket-hotel-look-around/ios/KurioticketHotelLookAroundView.swift", "utf8");
 
@@ -30,4 +32,11 @@ test("iOS renders interactive Apple Look Around directly inside Hotel Details", 
   assert.match(nativeView, /interactionGate\.minimumPressDuration = 0/);
   assert.match(nativeView, /scrollView\.panGestureRecognizer\.require\(toFail: interactionGate\)/);
   assert.match(nativeView, /shouldRecognizeSimultaneouslyWith/);
+  assert.match(hotelDetails, /const \[lookAroundInteracting, setLookAroundInteracting\] = useState\(false\)/);
+  assert.match(hotelDetails, /<ScrollView[\s\S]*scrollEnabled=\{!lookAroundInteracting\}/);
+  assert.match(hotelDetails, /onLookAroundInteractionChange=\{setLookAroundInteracting\}/);
+  assert.match(bookingDetails, /onLookAroundInteractionChange=\{onLookAroundInteractionChange\}/);
+  assert.match(location, /onTouchStart=\{\(\) => onLookAroundInteractionChange\?\.\(true\)\}/);
+  assert.match(location, /onTouchEnd=\{\(\) => onLookAroundInteractionChange\?\.\(false\)\}/);
+  assert.match(location, /onTouchCancel=\{\(\) => onLookAroundInteractionChange\?\.\(false\)\}/);
 });
