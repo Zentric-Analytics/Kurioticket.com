@@ -1,14 +1,23 @@
 import { AccessibilityInfo, Animated, Easing, Image, StyleSheet, Text, View } from "react-native";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { searchLoadingPresentation, type SearchLoadingProduct } from "../../../../../src/shared/presentation/searchLoadingPresentation";
+import { searchLoadingPresentation, type SearchLoadingProduct } from "@/shared/presentation/searchLoadingPresentation";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { useAppTheme } from "../../theme/AppTheme";
+import { carText } from "./carMobileLocalization";
 
 export function NativeTravelSearchLoadingScreen({ product }: { product: SearchLoadingProduct }) {
   const { locale, direction } = useMobileLocalization();
   const { theme } = useAppTheme();
-  const presentation = searchLoadingPresentation(product, locale);
+  const presentation = useMemo(()=>product === "car" ? {
+    title: carText(locale,"carsResults.loading.title","Searching the best cars for you"),
+    messages: [
+      carText(locale,"carsResults.loading.checkingCarsAndRates","Checking rental cars and rates..."),
+      carText(locale,"carsResults.loading.comparingVehiclesAndProviders","Comparing vehicles and providers..."),
+      carText(locale,"carsResults.loading.findingBestAvailableOptions","Finding the best available options..."),
+      carText(locale,"carsResults.loading.preparingResults","Preparing your car results..."),
+    ],
+  } : searchLoadingPresentation(product, locale),[product,locale]);
   const alignment = direction === "rtl" ? "right" : "center";
   const [messageIndex, setMessageIndex] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -17,9 +26,7 @@ export function NativeTravelSearchLoadingScreen({ product }: { product: SearchLo
 
   useEffect(() => {
     let mounted = true;
-    void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      if (mounted) setReduceMotion(enabled);
-    });
+    void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => { if (mounted) setReduceMotion(enabled); });
     const subscription = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduceMotion);
     return () => { mounted = false; subscription.remove(); };
   }, []);
@@ -34,46 +41,26 @@ export function NativeTravelSearchLoadingScreen({ product }: { product: SearchLo
   useEffect(() => {
     pulse.stopAnimation();
     progress.stopAnimation();
-    if (reduceMotion) {
-      pulse.setValue(0);
-      progress.setValue(0.45);
-      return;
-    }
-    pulse.setValue(0);
-    progress.setValue(0.08);
+    if (reduceMotion) { pulse.setValue(0); progress.setValue(0.45); return; }
+    pulse.setValue(0); progress.setValue(0.08);
     const pulseLoop = Animated.loop(Animated.sequence([
       Animated.timing(pulse, { toValue: 1, duration: 1_350, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
       Animated.timing(pulse, { toValue: 0, duration: 1_350, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
     ]));
     const progressAnimation = Animated.timing(progress, { toValue: 0.92, duration: 14_000, easing: Easing.out(Easing.cubic), useNativeDriver: false });
-    pulseLoop.start();
-    progressAnimation.start();
+    pulseLoop.start(); progressAnimation.start();
     return () => { pulseLoop.stop(); progressAnimation.stop(); };
   }, [progress, pulse, reduceMotion]);
 
   const message = presentation.messages[messageIndex % presentation.messages.length];
   const progressWidth = progress.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] });
 
-  return <SafeAreaView
-    style={[styles.safe, { backgroundColor: theme.dark ? theme.background : "#F7FAFF" }]}
-    accessibilityRole="progressbar"
-    accessibilityState={{ busy: true }}
-    accessibilityLabel={`${presentation.title}. ${message}`}
-    accessibilityLiveRegion="polite"
-  >
+  return <SafeAreaView style={[styles.safe, { backgroundColor: theme.dark ? theme.background : "#F7FAFF" }]} accessibilityRole="progressbar" accessibilityState={{ busy: true }} accessibilityLabel={`${presentation.title}. ${message}`} accessibilityLiveRegion="polite">
     <View style={styles.content}>
       <Animated.View style={{ opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }), transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.025] }) }] }}>
-        <Image
-        source={require("../../../assets/kurioticket-logo-primary-light-bg.png")}
-        resizeMode="contain"
-        accessibilityIgnoresInvertColors
-        accessible={false}
-        style={styles.logo}
-        />
+        <Image source={require("../../../assets/kurioticket-logo-primary-light-bg.png")} resizeMode="contain" accessibilityIgnoresInvertColors accessible={false} style={styles.logo}/>
       </Animated.View>
-      <View style={styles.track} accessible={false}>
-        <Animated.View style={[styles.progress, { width: progressWidth }]} />
-      </View>
+      <View style={styles.track} accessible={false}><Animated.View style={[styles.progress, { width: progressWidth }]} /></View>
       <Text style={[styles.title, { color: theme.textPrimary, textAlign: alignment }]}>{presentation.title}</Text>
       <Text style={[styles.supporting, { color: theme.textSecondary, textAlign: alignment }]}>{message}</Text>
     </View>
