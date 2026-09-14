@@ -18,4 +18,8 @@ test("iOS renders interactive Apple Look Around directly inside Hotel Details", 
   assert.match(nativeView, /if !isPresentingFullScreen \{\s*controller\?\.view\.frame = bounds\s*\}/);
   assert.match(nativeView, /lookAroundViewControllerWillPresentFullScreen/);
   assert.match(nativeView, /lookAroundViewControllerDidDismissFullScreen/);
+  assert.match(nativeView, /UILongPressGestureRecognizer\(target: self, action: #selector\(handleInteractionGate/);
+  assert.match(nativeView, /interactionGate\.minimumPressDuration = 0/);
+  assert.match(nativeView, /scrollView\.panGestureRecognizer\.require\(toFail: interactionGate\)/);
+  assert.match(nativeView, /shouldRecognizeSimultaneouslyWith/);
 });
