@@ -84,7 +84,7 @@ test("active Details uses the Profile-style hierarchy with a tightened divider-f
   assert.match(details, /section: \{ paddingVertical: 0 \}/);
   assert.match(details, /sectionGap: \{ height: 8 \}/);
   assert.match(details, /rowList: \{ marginTop: 4, gap: 3 \}/);
-  assert.match(details, /seeAllLink: \{ alignSelf: "flex-start", marginTop: 4, paddingVertical: 3 \}/);
+  assert.match(details, /seeAllLink: \{ alignSelf: "flex-start", marginTop: 4, paddingVertical: 4 \}/);
   assert.doesNotMatch(details, /function SectionDivider|divider: \{|seeAllRow|ChevronRight/);
   assert.match(details, /accessibilityLabel="See all amenities"/);
   assert.match(details, /<Modal[\s\S]*?visible=\{amenitiesOpen\}/);
