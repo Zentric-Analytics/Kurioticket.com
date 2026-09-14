@@ -584,12 +584,8 @@ function HotelDetail({
                   style={[
                     s.tabText,
                     width < 350 && s.tabTextCompact,
-                    { color: theme.textSecondary },
-                    activeHotelTab === tab && {
-                      color: hotelAccent,
-                      fontWeight: "700",
-                      fontFamily: appFonts.bold,
-                    },
+                    { color: theme.dark ? theme.textPrimary : "#1A1A1A" },
+                    activeHotelTab === tab && { color: hotelAccent },
                   ]}
                 >
                   {hotelDetailTabLabels[tab]}
@@ -672,7 +668,7 @@ function HotelDetail({
       >
         <ArrowLeft size={25} strokeWidth={2.2} color="#0F172A" />
       </Pressable>
-      <View style={[s.heroActions, { top: inset.top + 12 }]}>
+      <View style={[s.heroActions, { top: inset.top + 12 }]}> 
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={saved ? `Remove ${result.name} hotel from saved` : `Save ${result.name} hotel`}
@@ -787,8 +783,8 @@ const s = StyleSheet.create({
   tabsShell: { width: "100%", alignSelf: "stretch", minHeight: 45, paddingHorizontal: 8, zIndex: 10 },
   tabsRow: { alignSelf: "stretch", minHeight: 44, flexDirection: "row", flexWrap: "nowrap", alignItems: "stretch" },
   tab: { width: "33.333%", flexGrow: 0, flexShrink: 0, minWidth: 0, minHeight: 44, alignItems: "center", justifyContent: "center", borderBottomWidth: 2, borderBottomColor: "transparent" },
-  tabText: { fontSize: 11, fontWeight: "600", fontFamily: appFonts.semibold },
-  tabTextCompact: { fontSize: 10 },
+  tabText: { fontSize: 13, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
+  tabTextCompact: { fontSize: 12 },
   detailBody: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8, gap: 6 },
   compareSection: { paddingVertical: 4 },
   compareHeading: { fontSize: 18, lineHeight: 24, fontWeight: "600", fontFamily: appFonts.semibold, letterSpacing: -0.25 },

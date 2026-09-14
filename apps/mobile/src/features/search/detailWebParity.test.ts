@@ -120,9 +120,12 @@ test("active Hotel sticky navigation matches the Kayak scrolled header without d
   assert.equal((hotel.match(/accessibilityLabel="Back to hotel results"/g) ?? []).length, 1);
 });
 
-test("active Hotel selected tab text and underline use the established accent contract", () => {
+test("active Hotel tab text keeps uniform semibold weight while selected text and underline use the accent", () => {
   assert.match(hotel, /activeHotelTab === tab && \{ borderBottomColor: hotelAccent \}/);
-  assert.match(hotel, /activeHotelTab === tab && \{[\s\S]*?color: hotelAccent,[\s\S]*?fontWeight: "700",[\s\S]*?fontFamily: appFonts\.bold/);
+  assert.match(hotel, /\{ color: theme\.dark \? theme\.textPrimary : "#1A1A1A" \}/);
+  assert.match(hotel, /activeHotelTab === tab && \{ color: hotelAccent \}/);
+  assert.match(hotelSource, /tabText: \{ fontSize: 13, lineHeight: 18, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
+  assert.match(hotelSource, /tabTextCompact: \{ fontSize: 12 \}/);
   assert.match(webSectionNav, /selected[\s\S]*?"text-blue"/);
   assert.match(webSectionNav, /font-bold/);
 });
