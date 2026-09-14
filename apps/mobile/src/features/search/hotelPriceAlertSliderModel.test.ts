@@ -7,6 +7,7 @@ import {
   hotelAlertDesiredTotal,
   hotelAlertDropPercentForTarget,
   hotelAlertPriceBasis,
+  roundHotelAlertCurrencyAmount,
 } from "./hotelPriceAlertSliderModel";
 
 test("hotel price alert percentage stays within the supported slider range", () => {
@@ -17,15 +18,31 @@ test("hotel price alert percentage stays within the supported slider range", () 
 });
 
 test("hotel price alert derives desired total and percentage from current price", () => {
-  assert.equal(hotelAlertDesiredTotal(1000, 10), 900);
-  assert.equal(hotelAlertDesiredTotal(1000, 35), 650);
+  assert.equal(hotelAlertDesiredTotal(1000, 10, "USD"), 900);
+  assert.equal(hotelAlertDesiredTotal(1000, 35, "USD"), 650);
   assert.equal(hotelAlertDropPercentForTarget(1000, 650), 35);
 });
 
-test("hotel alert price basis falls back to the provider currency when rates are unavailable", () => {
+test("hotel alert targets use the selected currency precision", () => {
+  assert.equal(roundHotelAlertCurrencyAmount(900.9, "JPY"), 901);
+  assert.equal(hotelAlertDesiredTotal(1001, 10, "JPY"), 901);
+  assert.equal(hotelAlertDesiredTotal(1001, 10, "USD"), 900.9);
+});
+
+test("hotel alert price basis keeps provider truth while presenting the resolved display currency", () => {
   const result = (totalPrice: number, currency: string) => ({ totalPrice, currency }) as never;
-  assert.deepEqual(hotelAlertPriceBasis([result(120, "USD")], "NGN", {}), { amount: 120, currency: "USD" });
-  assert.deepEqual(hotelAlertPriceBasis([result(120, "USD")], "NGN", { USD: 1, NGN: 1500 }), { amount: 180000, currency: "NGN" });
+  assert.deepEqual(hotelAlertPriceBasis([result(120, "USD")], "NGN", {}), {
+    amount: 120,
+    currency: "USD",
+    providerAmount: 120,
+    providerCurrency: "USD",
+  });
+  assert.deepEqual(hotelAlertPriceBasis([result(120, "USD")], "NGN", { USD: 1, NGN: 1500 }), {
+    amount: 180000,
+    currency: "NGN",
+    providerAmount: 120,
+    providerCurrency: "USD",
+  });
 });
 
 test("hotel result price alert uses a stable localized slider sheet without numeric keyboard entry", () => {
@@ -39,16 +56,19 @@ test("hotel result price alert uses a stable localized slider sheet without nume
   assert.match(component, /message\("targetTotal"\)/);
   assert.match(component, /message\("createAlert"\)/);
   assert.match(component, /hotelAlertPriceBasis\(hotelResults, displayCurrency, rates\)/);
+  assert.match(component, /const providerCurrentTotal = priceBasis\?\.providerAmount/);
+  assert.match(component, /const alertCurrency = priceBasis\?\.providerCurrency/);
   assert.match(component, /\(!available && !isTracking\)/);
   assert.doesNotMatch(component, /TextInput|KeyboardAvoidingView|keyboardType|autoFocus/);
-  assert.match(component, /buildHotelPriceAlertPayload\(plan, desiredTotal, alertCurrency\)/);
+  assert.match(component, /buildHotelPriceAlertPayload\(plan, alertTarget, alertCurrency\)/);
 });
 
-test("hotel result price alert preserves an existing paused target until the slider changes", () => {
+test("hotel result price alert preserves an existing paused provider target until the slider changes", () => {
   const component = readFileSync("src/features/search/HotelPriceAlert.tsx", "utf8");
   assert.match(component, /const \[preservedPausedTarget, setPreservedPausedTarget\]/);
   assert.match(component, /matchingAlert\?\.status === "PAUSED"/);
-  assert.match(component, /desiredTotal = preservedPausedTarget\?\.currency === alertCurrency[\s\S]*?preservedPausedTarget\.target/);
+  assert.match(component, /alertTarget = preservedPausedTarget\?\.currency === alertCurrency[\s\S]*?preservedPausedTarget\.target/);
+  assert.match(component, /hotelAlertDropPercentForTarget\(providerCurrentTotal, existingTarget\)/);
   assert.match(component, /onChange=\{\(range\) => \{[\s\S]*?setPreservedPausedTarget\(null\);[\s\S]*?setDropPercent/);
   assert.match(component, /preservedPausedAlert[\s\S]*?updatePriceAlertStatus\(samePausedTarget\.id, "ACTIVE"\)/);
 });
