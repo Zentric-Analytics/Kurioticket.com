@@ -54,6 +54,22 @@ export function nativeCarLocationEmbedUrl(baseUrl: string, id: string, search: R
   return url.toString();
 }
 
+export function nativeCarStreetViewEmbedUrl(
+  mapEmbedUrl: string | null,
+  coordinates: NativeCarTrustedPickupCoordinates | null,
+): string | null {
+  if (!mapEmbedUrl || !coordinates) return null;
+  try {
+    const url = new URL(mapEmbedUrl);
+    url.searchParams.set("view", "streetview");
+    url.searchParams.set("latitude", String(coordinates.latitude));
+    url.searchParams.set("longitude", String(coordinates.longitude));
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
 export function nativeCarDirectionsUrl(location: string): string | null {
   const destination = location.trim().replace(/\s+/g, " ");
   if (!destination) return null;
