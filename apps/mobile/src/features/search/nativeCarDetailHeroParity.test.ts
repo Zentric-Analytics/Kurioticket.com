@@ -51,6 +51,10 @@ test("hero alignment uses no positioning hacks", () => {
     assert.doesNotMatch(style(name), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|translate[XY]/);
 });
 
+test("vehicle image well inherits the surrounding hero surface", () => {
+  assert.doesNotMatch(style("imageBox"), /backgroundColor\s*:/);
+});
+
 test("category, favorite, and share contracts remain unchanged", () => {
   const category = style("category");
   for (const contract of ["fontSize:10", "lineHeight:14", 'fontWeight:"700"', "fontFamily:appFonts.bold", 'textTransform:"uppercase"', "letterSpacing:1.4", 'color:"#075EE8"'])
