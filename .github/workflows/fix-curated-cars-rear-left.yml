@@ -1,0 +1,229 @@
+name: Fix curated Cars image orientation
+
+on:
+  push:
+    branches:
+      - chatgpt/fix-curated-cars-rear-left
+    paths:
+      - .github/workflows/fix-curated-cars-rear-left.yml
+
+permissions:
+  contents: write
+
+jobs:
+  correct-orientation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out focused branch
+        uses: actions/checkout@v4
+        with:
+          ref: chatgpt/fix-curated-cars-rear-left
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Pillow
+        run: python -m pip install --disable-pip-version-check pillow==11.3.0
+
+      - name: Flip curated Cars to rear-left and preserve readable text
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageDraw, ImageFont
+          import hashlib, json, shutil
+
+          root = Path('public/images/cars/results')
+          audit = Path('/tmp/cars-orientation-audit')
+          final_assets = audit / 'final-assets'
+          audit.mkdir(parents=True, exist_ok=True)
+          final_assets.mkdir(parents=True, exist_ok=True)
+
+          expected = [
+              'audi-a4.webp',
+              'bmw-3-series.webp',
+              'citroen-grand-c4-spacetourer.webp',
+              'dacia-duster.webp',
+              'fiat-500.webp',
+              'ford-focus.webp',
+              'ford-tourneo.webp',
+              'honda-civic.webp',
+              'hyundai-i20.webp',
+              'hyundai-tucson.webp',
+              'kia-sportage.webp',
+              'mazda-3.webp',
+              'mercedes-benz-c-class.webp',
+              'mercedes-benz-e-class.webp',
+              'mercedes-benz-v-class.webp',
+              'nissan-qashqai.webp',
+              'opel-corsa.webp',
+              'peugeot-208.webp',
+              'peugeot-3008.webp',
+              'renault-captur.webp',
+              'renault-clio.webp',
+              'skoda-octavia.webp',
+              'toyota-camry.webp',
+              'toyota-corolla.webp',
+              'toyota-rav4.webp',
+              'toyota-yaris.webp',
+              'volkswagen-golf.webp',
+              'volkswagen-passat.webp',
+              'volkswagen-touran.webp',
+              'volvo-xc60.webp',
+          ]
+          actual = sorted(p.name for p in root.glob('*.webp'))
+          assert actual == expected, f'Curated Cars asset set drifted: {actual}'
+
+          # These patches were deliberately kept readable during the previous
+          # front-left standardization. Preserve the same readable pixels while
+          # returning the vehicle geometry to rear-left / front-right.
+          readable_patches = {
+              'skoda-octavia.webp': [(227, 574, 388, 619)],
+              'peugeot-208.webp': [(318, 428, 382, 461), (290, 535, 375, 586)],
+          }
+
+          before = {}
+          after = {}
+          manifest = []
+
+          for name in expected:
+              path = root / name
+              original_bytes = path.read_bytes()
+              before[name] = Image.open(path).convert('RGBA').copy()
+              img = before[name]
+              assert img.size == (1400, 900), f'{name}: unexpected size {img.size}'
+
+              patches = [(box, img.crop(box)) for box in readable_patches.get(name, [])]
+              corrected = img.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+              for box, patch in patches:
+                  x0, y0, x1, y1 = box
+                  target = (img.width - x1, y0, img.width - x0, y1)
+                  corrected.paste(patch, target[:2])
+
+              corrected.save(path, 'WEBP', quality=95, method=6)
+              verified = Image.open(path).convert('RGBA')
+              assert verified.size == (1400, 900), f'{name}: canvas changed'
+              alpha = verified.getchannel('A')
+              lo, hi = alpha.getextrema()
+              assert lo == 0 and hi == 255, f'{name}: alpha contract changed ({lo}, {hi})'
+              for corner in [(0, 0), (1399, 0), (0, 899), (1399, 899)]:
+                  assert verified.getpixel(corner)[3] == 0, f'{name}: corner {corner} is not transparent'
+
+              after[name] = verified.copy()
+              shutil.copy2(path, final_assets / name)
+              manifest.append({
+                  'name': name,
+                  'width': verified.width,
+                  'height': verified.height,
+                  'before_sha256': hashlib.sha256(original_bytes).hexdigest(),
+                  'after_sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
+                  'readable_text_patch_count': len(patches),
+              })
+
+          def contact_sheet(images, output):
+              cols, rows = 5, 6
+              cell_w, cell_h = 300, 220
+              sheet = Image.new('RGB', (cols * cell_w, rows * cell_h), 'white')
+              draw = ImageDraw.Draw(sheet)
+              font = ImageFont.load_default()
+              for idx, name in enumerate(expected):
+                  row, col = divmod(idx, cols)
+                  x, y = col * cell_w, row * cell_h
+                  canvas = Image.new('RGBA', (cell_w, cell_h - 28), (245, 247, 250, 255))
+                  car = images[name].copy()
+                  car.thumbnail((cell_w - 16, cell_h - 42), Image.Resampling.LANCZOS)
+                  px = (canvas.width - car.width) // 2
+                  py = (canvas.height - car.height) // 2
+                  canvas.alpha_composite(car, (px, py))
+                  sheet.paste(canvas.convert('RGB'), (x, y))
+                  label = name.removesuffix('.webp')
+                  draw.text((x + 8, y + cell_h - 22), label, fill='black', font=font)
+              sheet.save(output)
+
+          contact_sheet(before, audit / 'before-contact-sheet.png')
+          contact_sheet(after, audit / 'after-contact-sheet.png')
+          (audit / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+
+          source = Path('src/lib/cars/carResultImage.ts')
+          test = Path('src/lib/cars/carResultImage.test.ts')
+          old = 'front-left-cutouts-20260914'
+          new = 'rear-left-cutouts-20260914'
+          source_text = source.read_text()
+          test_text = test.read_text()
+          assert source_text.count(old) == 1, 'Unexpected source cache-version occurrences'
+          assert test_text.count(old) == 2, 'Unexpected test cache-version occurrences'
+          source.write_text(source_text.replace(old, new))
+          test.write_text(test_text.replace(old, new))
+          PY
+
+      - name: Validate exact scope and whitespace
+        run: |
+          python - <<'PY'
+          import subprocess
+          expected = {
+              'public/images/cars/results/audi-a4.webp',
+              'public/images/cars/results/bmw-3-series.webp',
+              'public/images/cars/results/citroen-grand-c4-spacetourer.webp',
+              'public/images/cars/results/dacia-duster.webp',
+              'public/images/cars/results/fiat-500.webp',
+              'public/images/cars/results/ford-focus.webp',
+              'public/images/cars/results/ford-tourneo.webp',
+              'public/images/cars/results/honda-civic.webp',
+              'public/images/cars/results/hyundai-i20.webp',
+              'public/images/cars/results/hyundai-tucson.webp',
+              'public/images/cars/results/kia-sportage.webp',
+              'public/images/cars/results/mazda-3.webp',
+              'public/images/cars/results/mercedes-benz-c-class.webp',
+              'public/images/cars/results/mercedes-benz-e-class.webp',
+              'public/images/cars/results/mercedes-benz-v-class.webp',
+              'public/images/cars/results/nissan-qashqai.webp',
+              'public/images/cars/results/opel-corsa.webp',
+              'public/images/cars/results/peugeot-208.webp',
+              'public/images/cars/results/peugeot-3008.webp',
+              'public/images/cars/results/renault-captur.webp',
+              'public/images/cars/results/renault-clio.webp',
+              'public/images/cars/results/skoda-octavia.webp',
+              'public/images/cars/results/toyota-camry.webp',
+              'public/images/cars/results/toyota-corolla.webp',
+              'public/images/cars/results/toyota-rav4.webp',
+              'public/images/cars/results/toyota-yaris.webp',
+              'public/images/cars/results/volkswagen-golf.webp',
+              'public/images/cars/results/volkswagen-passat.webp',
+              'public/images/cars/results/volkswagen-touran.webp',
+              'public/images/cars/results/volvo-xc60.webp',
+              'src/lib/cars/carResultImage.ts',
+              'src/lib/cars/carResultImage.test.ts',
+          }
+          changed = set(subprocess.check_output(['git', 'diff', '--name-only'], text=True).splitlines())
+          assert changed == expected, f'Unexpected changed-file scope: {sorted(changed ^ expected)}'
+          PY
+          git diff --check
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install repository dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run focused Cars image contract test
+        run: cross-env JITI_TSCONFIG_PATHS=./tsconfig.json node --test --import jiti/register src/lib/cars/carResultImage.test.ts
+
+      - name: Upload visual audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cars-rear-left-orientation-audit
+          path: /tmp/cars-orientation-audit
+          if-no-files-found: error
+
+      - name: Commit corrected assets
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/images/cars/results/*.webp src/lib/cars/carResultImage.ts src/lib/cars/carResultImage.test.ts
+          git commit -m 'Fix curated Cars image orientation to rear-left'
+          git push origin HEAD:chatgpt/fix-curated-cars-rear-left
