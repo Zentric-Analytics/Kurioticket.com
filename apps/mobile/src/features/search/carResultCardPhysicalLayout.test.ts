@@ -50,7 +50,7 @@ test("only the Best value badge creates top metadata above the shared body", () 
   assert.doesNotMatch(style("main"), /borderTopWidth/);
   assert.doesNotMatch(source, /hasTop(?:Meta|Badge)\s*=\s*[^;]*freeCancellation/);
   assert.match(source, /topMetaVisualSpacer:\{width:"40%"\}/);
-  assert.match(style("topMetaContent"), /flex:1,minWidth:0,paddingHorizontal:10,paddingTop:9,paddingBottom:4/);
+  assert.match(style("topMetaContent"), /flex:1,minWidth:0,paddingHorizontal:10,paddingTop:6,paddingBottom:4/);
   assert.match(style("topMetaRow"), /justifyContent:"flex-end"/);
   assert.match(topMetaMarkup, /<View style=\{c\.topMetaRow\}>[\s\S]*rank === 0[\s\S]*Award[\s\S]*Best value/);
   assert.doesNotMatch(topMetaMarkup, /freeCancellation|Free cancellation|ShieldCheck/);
@@ -66,7 +66,7 @@ test("Free cancellation is canonical, strong, neutral, and not a pill", () => {
   assert.match(markup, /c\.freeCancellationText,\{color:freeCancellationColor\}/);
   assert.match(source, /const freeCancellationColor = theme\.dark \? theme\.textPrimary : "#000000"/);
   assert.match(style("freeCancellation"), /minWidth:0,flexShrink:1,flexDirection:"row",alignItems:"center",alignSelf:"flex-end",gap:3,marginTop:3/);
-  assert.match(style("freeCancellationText"), /fontSize:11,lineHeight:15,fontWeight:"700"/);
+  assert.match(style("freeCancellationText"), /fontSize:11,lineHeight:15,fontWeight:"600"/);
   assert.doesNotMatch(markup + style("freeCancellation") + style("freeCancellationText"), /#15803D|#ECFDF5|backgroundColor|border/);
 });
 
@@ -88,6 +88,9 @@ test("Best value keeps its green badge while actions remain with identity", () =
   assert.doesNotMatch(style("action") + style("saveAction") + style("shareAction"), /margin(?:Left|Right|Top|Bottom):-|transform:|position:"absolute"/);
   assert.match(styles, /saveAction:\{alignItems:"flex-end",paddingRight:2\}/);
   assert.match(styles, /shareAction:\{alignItems:"flex-start",paddingLeft:2\}/);
+  assert.equal(source.match(/style=\{\(\{pressed\}\) => \[c\.action,c\.(?:save|share)Action,pressed&&c\.pressed\]\}/g)?.length, 2);
+  assert.match(style("pressed"), /opacity:0\.7/);
+  assert.doesNotMatch(style("pressed"), /transform:|position:"absolute"|margin(?:Left|Right|Top|Bottom):-/);
 });
 
 test("Results card omits fuel, mileage, and obsolete lower-benefit contracts", () => {
@@ -160,10 +163,11 @@ test("commerce preserves authoritative price and CTA contract", () => {
   assert.match(style("viewDeal"), /minHeight:36,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4/);
   assert.doesNotMatch(style("viewDeal"), /marginTop:/);
   assert.match(action, /hitSlop=\{\{top:4,bottom:4,left:4,right:4\}\}/);
-  assert.match(styles, /total:\{[^}]*fontSize:21,fontWeight:"700",lineHeight:24/);
+  assert.match(action, /style=\{\(\{pressed\}\) => \[c\.viewDeal,pressed&&c\.pressed\]\}/);
+  assert.match(styles, /total:\{[^}]*fontSize:22,fontWeight:"700",lineHeight:25/);
   assert.match(styles, /taxDisclosure:\{[^}]*fontSize:10,fontWeight:"500",lineHeight:13/);
   assert.match(styles, /perDay:\{[^}]*fontSize:11,fontWeight:"700",lineHeight:14/);
-  assert.match(styles, /viewDealText:\{fontSize:13,lineHeight:15,fontWeight:"600"\}/);
+  assert.match(styles, /viewDealText:\{fontSize:14,lineHeight:18,fontWeight:"600"\}/);
   assert.doesNotMatch(source, /result\.offers\[0\]|TOTAL\s*·|\/day/);
 });
 
@@ -191,8 +195,8 @@ test("vehicle identity, location, and ordered specs remain intact", () => {
   assert.match(style("similar"), /fontSize:11,fontWeight:"500",lineHeight:16/);
   assert.match(style("category"), /fontSize:10,fontWeight:"800",letterSpacing:1\.1,lineHeight:16,textTransform:"uppercase",color:"#004BB8"/);
   assert.match(source, /<MapPin size=\{13\} color=\{theme\.textPrimary\}/);
-  assert.match(style("detailColumn"), /minWidth:0,marginTop:7/);
-  assert.match(style("specs"), /marginTop:7,flexDirection:"column",gap:7/);
+  assert.match(style("detailColumn"), /minWidth:0,marginTop:6/);
+  assert.match(style("specs"), /marginTop:6,flexDirection:"column",gap:6/);
   assert.match(style("meta"), /fontSize:11,fontWeight:"500",lineHeight:15/);
   assert.match(style("specText"), /fontSize:11,fontWeight:"500",lineHeight:14/);
   const location = source.indexOf("result.pickupLocation");
