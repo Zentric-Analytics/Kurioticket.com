@@ -6,10 +6,15 @@ export type NativeAppleCarLookAroundStatus =
   | "ready"
   | "unavailable";
 
+export type NativeAppleCarLookAroundPresentationMode =
+  | "swiftUI"
+  | "viewController";
+
 export type NativeAppleCarLookAroundPreviewProps = {
   latitude: number;
   longitude: number;
   locationLabel: string;
+  presentationMode?: NativeAppleCarLookAroundPresentationMode;
   style?: StyleProp<ViewStyle>;
   onStatusChange: (status: NativeAppleCarLookAroundStatus) => void;
 };
