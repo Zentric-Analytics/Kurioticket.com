@@ -43,3 +43,12 @@ test("hotel result price alert uses a stable localized slider sheet without nume
   assert.doesNotMatch(component, /TextInput|KeyboardAvoidingView|keyboardType|autoFocus/);
   assert.match(component, /buildHotelPriceAlertPayload\(plan, desiredTotal, alertCurrency\)/);
 });
+
+test("hotel result price alert preserves an existing paused target until the slider changes", () => {
+  const component = readFileSync("src/features/search/HotelPriceAlert.tsx", "utf8");
+  assert.match(component, /const \[preservedPausedTarget, setPreservedPausedTarget\]/);
+  assert.match(component, /matchingAlert\?\.status === "PAUSED"/);
+  assert.match(component, /desiredTotal = preservedPausedTarget\?\.currency === alertCurrency[\s\S]*?preservedPausedTarget\.target/);
+  assert.match(component, /onChange=\{\(range\) => \{[\s\S]*?setPreservedPausedTarget\(null\);[\s\S]*?setDropPercent/);
+  assert.match(component, /preservedPausedAlert[\s\S]*?updatePriceAlertStatus\(samePausedTarget\.id, "ACTIVE"\)/);
+});
