@@ -20,6 +20,10 @@ test("iOS renders interactive Apple Look Around directly inside Hotel Details", 
   assert.match(nativeView, /override func show\(/);
   assert.match(nativeView, /override func showDetailViewController\(/);
   assert.match(nativeView, /hideFullScreenAffordance\(in: view\)/);
+  assert.match(nativeView, /view\.effectiveUserInterfaceLayoutDirection == \.rightToLeft/);
+  assert.match(nativeView, /leadingEdgeDistance = view\.bounds\.width - frame\.maxX/);
+  assert.match(nativeView, /leadingEdgeDistance = frame\.minX/);
+  assert.match(nativeView, /leadingEdgeDistance >= 0[\s\S]*leadingEdgeDistance <= 180/);
   assert.match(nativeView, /subview is UIControl[\s\S]*subview\.isHidden = true/);
   assert.doesNotMatch(nativeView, /lookAroundViewControllerWillPresentFullScreen|lookAroundViewControllerDidDismissFullScreen/);
   assert.match(nativeView, /UILongPressGestureRecognizer\(target: self, action: #selector\(handleInteractionGate/);
