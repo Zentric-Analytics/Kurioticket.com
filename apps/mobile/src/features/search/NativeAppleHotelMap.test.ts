@@ -24,7 +24,7 @@ test("embedded iOS Look Around is native MapKit and never a Google WebView", () 
   assert.match(module, /View\(KurioticketHotelLookAroundView\.self\)/);
   assert.match(view, /import MapKit/);
   assert.match(view, /MKLookAroundSceneRequest\(coordinate: coordinate\)/);
-  assert.match(view, /MKLookAroundViewController\(scene: scene\)/);
+  assert.match(view, /InlineLookAroundViewController\(scene: scene\)/);
   assert.match(view, /lookAroundController\.isNavigationEnabled = true/);
   assert.match(view, /override func hitTest\(_ point: CGPoint, with event: UIEvent\?\) -> UIView\?/);
   assert.match(view, /controllerView\.hitTest\(controllerPoint, with: event\)/);
