@@ -9,7 +9,6 @@ import {
   type HotelAmenityIconKey,
 } from "../../../../../src/components/results/hotelAmenityPresentation";
 import { appFonts } from "../../theme/typography";
-import { ui } from "./SearchUi";
 import { nativeHotelAmenityLabel } from "./hotelAmenityLabel";
 import { useAppTheme } from "../../theme/AppTheme";
 
@@ -26,13 +25,14 @@ const amenityIcons: Record<HotelAmenityIconKey, LucideIcon> = {
 export function HotelCardAmenityList({ amenities }: { amenities: readonly unknown[] }) {
   const { theme } = useAppTheme();
   const items = buildHotelAmenityPresentation(amenities, 4);
+  const iconColor = theme.dark ? theme.icon : "#1A1A1A";
   return (
     <View style={styles.list}>
       {items.map((item) => {
         const Icon = amenityIcons[item.iconKey];
         return (
           <View key={item.key} style={styles.item}>
-            <Icon accessible={false} size={14} strokeWidth={1.8} color={theme.textSecondary} />
+            <Icon accessible={false} size={15} strokeWidth={1.3} color={iconColor} />
             <Text numberOfLines={1} style={[styles.label, { color: theme.textSecondary }]}>{item.label}</Text>
           </View>
         );
@@ -59,7 +59,7 @@ export function HotelOfferAmenityList({
         const Icon = amenityIcons[item.iconKey];
         return (
           <View key={item.key} style={styles.offerItem}>
-            <Icon accessible={false} size={16} strokeWidth={1.8} color={color} />
+            <Icon accessible={false} size={16} strokeWidth={1.3} color={color} />
             <Text numberOfLines={1} style={[styles.offerLabel, { color }]}>
               {nativeHotelAmenityLabel(item)}
             </Text>
@@ -72,10 +72,10 @@ export function HotelOfferAmenityList({
 
 const styles = StyleSheet.create({
   list: { gap: 3 },
-  item: { flexDirection: "row", alignItems: "center", gap: 5, minWidth: 0 },
-  label: { flexShrink: 1, minWidth: 0, color: ui.muted, fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
+  item: { flexDirection: "row", alignItems: "center", gap: 6, minWidth: 0 },
+  label: { flexShrink: 1, minWidth: 0, fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
   offerList: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 16 },
   offerListCompact: { gap: 10 },
   offerItem: { flexDirection: "row", alignItems: "center", flexShrink: 0, gap: 6 },
-  offerLabel: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
+  offerLabel: { fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
 });
