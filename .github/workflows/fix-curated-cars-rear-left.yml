@@ -76,9 +76,6 @@ jobs:
           actual = sorted(p.name for p in root.glob('*.webp'))
           assert actual == expected, f'Curated Cars asset set drifted: {actual}'
 
-          # These patches were deliberately kept readable during the previous
-          # front-left standardization. Preserve the same readable pixels while
-          # returning the vehicle geometry to rear-left / front-right.
           readable_patches = {
               'skoda-octavia.webp': [(227, 574, 388, 619)],
               'peugeot-208.webp': [(318, 428, 382, 461), (290, 535, 375, 586)],
@@ -211,7 +208,7 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Run focused Cars image contract test
-        run: cross-env JITI_TSCONFIG_PATHS=./tsconfig.json node --test --import jiti/register src/lib/cars/carResultImage.test.ts
+        run: npx cross-env JITI_TSCONFIG_PATHS=./tsconfig.json node --test --import jiti/register src/lib/cars/carResultImage.test.ts
 
       - name: Upload visual audit artifact
         uses: actions/upload-artifact@v4
