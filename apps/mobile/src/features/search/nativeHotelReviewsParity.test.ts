@@ -11,10 +11,6 @@ import {
 const detail = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
 const bookingDetails = readFileSync("src/features/search/NativeHotelBookingDetails.tsx", "utf8");
 const reviews = readFileSync("src/features/search/NativeHotelReviewsSection.tsx", "utf8");
-const webReviews = readFileSync(
-  "../../src/components/results/hotelDetails/HotelReviewsSection.tsx",
-  "utf8",
-);
 
 function styleRule(name: string, nextName: string) {
   const stylesStart = reviews.indexOf("const styles = StyleSheet.create");
@@ -34,15 +30,11 @@ test("active Details and Reviews retain their integrations", () => {
   assert.match(detail, /<NativeHotelReviewsSection result=\{result\} \/>/);
 });
 
-test("native empty state deliberately maps the web left-rail contract", () => {
-  for (const utility of ["border-l-2", "border-slate-200", "py-1", "pl-4", "text-sm", "leading-6"]) {
-    assert.match(webReviews, new RegExp(utility));
-  }
+test("native empty review state is flat and compact", () => {
   const callout = styleRule("emptyCallout", "emptyText");
-  assert.match(callout, /marginTop: 12/);
-  assert.match(callout, /borderLeftWidth: 2/);
-  assert.match(callout, /paddingVertical: 4/);
-  assert.match(callout, /paddingLeft: 16/);
+  assert.match(callout, /marginTop: 8/);
+  assert.doesNotMatch(callout, /borderLeftWidth|paddingLeft|paddingVertical/);
+  assert.doesNotMatch(reviews, /borderLeftColor/);
   const text = styleRule("emptyText", "scoreRow");
   assert.match(text, /fontSize: 13/);
   assert.match(text, /lineHeight: 22/);
@@ -81,7 +73,7 @@ test("Reviews use exact canonical labels without legacy native fallbacks", () =>
   }
 });
 
-test("Reviews geometry and typography match mobile web without double inset", () => {
+test("Reviews geometry and typography remain compact without double inset", () => {
   const section = styleRule("reviewsSection", "heading");
   assert.match(section, /paddingVertical: 12/);
   assert.doesNotMatch(section, /paddingHorizontal/);
