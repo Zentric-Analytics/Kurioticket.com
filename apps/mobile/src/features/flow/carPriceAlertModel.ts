@@ -21,13 +21,15 @@ export function buildCarPriceAlertPayload(plan: SearchPlan, targetPrice: number,
   return { type: "CAR" as const, origin: query.pickupLocation, destination: query.dropoffLocation, targetPrice, mode: "TARGET" as const, currency: normalizedCurrency, query };
 }
 
-export function carPriceAlertMatchesPlan(alert: MobilePriceAlert, plan: SearchPlan) {
+export function carPriceAlertMatchesPlan(alert: MobilePriceAlert, plan: SearchPlan, currency?: string) {
   if (alert.type !== "CAR") return false;
   const expected = buildCarPriceAlertPayload(plan, 1, "USD").query;
-  return fields.every((field) => text(alert.query[field]) === text(expected[field]));
+  const sameSearch = fields.every((field) => text(alert.query[field]) === text(expected[field]));
+  const normalizedCurrency = currency?.trim().toUpperCase();
+  return sameSearch && (!normalizedCurrency || alert.currency.trim().toUpperCase() === normalizedCurrency);
 }
 
-export function matchingCarPriceAlert(alerts: MobilePriceAlert[], plan: SearchPlan) {
-  const matches = alerts.filter((alert) => carPriceAlertMatchesPlan(alert, plan));
+export function matchingCarPriceAlert(alerts: MobilePriceAlert[], plan: SearchPlan, currency?: string) {
+  const matches = alerts.filter((alert) => carPriceAlertMatchesPlan(alert, plan, currency));
   return matches.find(({ status }) => status === "ACTIVE") ?? matches.find(({ status }) => status === "PAUSED");
 }
