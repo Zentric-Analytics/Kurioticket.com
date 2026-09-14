@@ -6,28 +6,31 @@ import type { CarResult } from "../../api/travelApi";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
-import { carFilterGroups, type CarFilterGroup } from "../../../../../src/lib/cars/carFilterPresentation";
-import { doesCarMatchFilterOption, filterCarResults, type SelectedCarFilters } from "../../../../../src/lib/cars/carResults";
+import { carFilterGroups, type CarFilterGroup } from "@/lib/cars/carFilterPresentation";
+import type { SelectedCarFilters } from "@/lib/cars/carResults";
+import type { ExchangeRates } from "../currency/displayCurrency";
 import { FLIGHT_FILTER_LIGHT_CANVAS, FLIGHT_FILTER_LIGHT_OUTLINE } from "./FlightResultsSheetShell";
 import { ui } from "./SearchUi";
 import { carFilterCopy, carFilterGroupLabel, carFilterOptionLabel } from "./carFilterCopy";
 import { NATIVE_FILTER_SELECTION_FEEDBACK_MS } from "./filterResultsTransition";
+import { doesCarMatchDisplayFilterOption, filterCarResultsForDisplayCurrency } from "./carDisplayCurrency";
+import { carText } from "./carMobileLocalization";
 
-type Props = { visible: boolean; results: CarResult[]; filters: SelectedCarFilters; onChange: (filters: SelectedCarFilters) => void; onClose: () => void };
+type Props = { visible: boolean; results: CarResult[]; filters: SelectedCarFilters; displayCurrency: string; exchangeRates: ExchangeRates; onChange: (filters: SelectedCarFilters) => void; onClose: () => void };
 
-export function visibleCarFilterGroups(results: CarResult[]): CarFilterGroup[] {
-  return carFilterGroups.map((group) => ({ ...group, options: group.options.map((option) => ({ ...option, count: results.filter((car) => doesCarMatchFilterOption(car, option.id)).length })).filter((option) => option.count > 0) })).filter((group) => group.options.length > 0);
+export function visibleCarFilterGroups(results: CarResult[], displayCurrency = "USD", exchangeRates: ExchangeRates = {}): CarFilterGroup[] {
+  return carFilterGroups.map((group) => ({ ...group, options: group.options.map((option) => ({ ...option, count: results.filter((car) => doesCarMatchDisplayFilterOption(car, option.id, displayCurrency, exchangeRates)).length })).filter((option) => option.count > 0) })).filter((group) => group.options.length > 0);
 }
 export const activeCarFilterCount = (filters: SelectedCarFilters) => Object.values(filters).reduce((total, options) => total + options.length, 0);
 
-export function CarFilterSheet({ visible, results, filters, onChange, onClose }: Props) {
+export function CarFilterSheet({ visible, results, filters, displayCurrency, exchangeRates, onChange, onClose }: Props) {
   const { theme } = useAppTheme();
   const inset = useSafeAreaInsets();
   const { locale, direction } = useMobileLocalization();
-  const copy = useMemo(() => carFilterCopy(locale), [locale]);
-  const groups = useMemo(() => visibleCarFilterGroups(results), [results]);
+  const copy = useMemo(() => carFilterCopy(locale, displayCurrency, exchangeRates), [locale, displayCurrency, exchangeRates]);
+  const groups = useMemo(() => visibleCarFilterGroups(results, displayCurrency, exchangeRates), [results, displayCurrency, exchangeRates]);
   const active = activeCarFilterCount(filters);
-  const matching = useMemo(() => filterCarResults(results, filters).length, [filters, results]);
+  const matching = useMemo(() => filterCarResultsForDisplayCurrency(results, filters, displayCurrency, exchangeRates).length, [filters, results, displayCurrency, exchangeRates]);
   const filterCanvas = theme.dark ? theme.background : FLIGHT_FILTER_LIGHT_CANVAS;
   const filterOutline = theme.dark ? theme.border : FLIGHT_FILTER_LIGHT_OUTLINE;
   const [filterUpdating, setFilterUpdating] = useState(false);
@@ -37,13 +40,14 @@ export function CarFilterSheet({ visible, results, filters, onChange, onClose }:
   const toggle = (group: string, option: string) => { const selected = filters[group] ?? []; markUpdating(); onChange({ ...filters, [group]: selected.includes(option) ? selected.filter(value => value !== option) : [...selected, option] }); };
   const viewLabel = active ? `${copy.show} ${matching} ${matching === 1 ? copy.car : copy.cars}` : `${copy.show} ${results.length} ${results.length === 1 ? copy.car : copy.cars}`;
   const viewAction = <Pressable accessibilityRole="button" onPress={onClose} style={[styles.view, active > 0 && styles.flex]}>{filterUpdating ? <View style={styles.updating}><ActivityIndicator size="small" color="white"/><Text style={styles.viewText}>{copy.updatingFilters}</Text></View> : <Text style={styles.viewText}>{viewLabel}</Text>}</Pressable>;
+  const resetLabel = carText(locale, "carsResults.reset", "Reset");
   return <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose} accessibilityViewIsModal>
     <View style={[styles.screen, { backgroundColor: filterCanvas, paddingTop: inset.top }]}>
       <View style={styles.header}><View style={styles.headerCopy}><Text accessibilityRole="header" style={[styles.title, { color: theme.textPrimary }]}>{copy.filters}</Text>{active > 0 ? <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{active} {copy.applied}</Text> : null}</View><Pressable accessibilityRole="button" accessibilityLabel={copy.close} onPress={onClose} style={styles.close}><X size={22} color={theme.icon}/></Pressable></View>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} alwaysBounceVertical={false} bounces={false} overScrollMode="never" showsVerticalScrollIndicator={false}>
         {groups.map(group => <View key={group.id} style={styles.section}><View style={styles.sectionHeader}><Text style={[styles.sectionTitle, { color: theme.textPrimary, textAlign: direction === "rtl" ? "right" : "left", writingDirection: direction }]}>{carFilterGroupLabel(copy, group)}</Text></View><View>{group.options.map(option => { const selected = filters[group.id]?.includes(option.id) ?? false; return <Pressable key={option.id} accessibilityRole="checkbox" accessibilityState={{ checked: selected }} accessibilityLabel={`${carFilterOptionLabel(copy, option)}, ${option.count}`} onPress={() => toggle(group.id, option.id)} style={({ pressed }) => [styles.row, direction === "rtl" && styles.rtlRow, pressed && styles.pressed]}><View style={[styles.box, { borderColor: selected ? ui.blue : filterOutline, backgroundColor: selected ? ui.blue : "transparent" }]}>{selected ? <Check size={14} strokeWidth={3} color="white"/> : null}</View><Text style={[styles.rowLabel, { color: theme.textPrimary, textAlign: direction === "rtl" ? "right" : "left", writingDirection: direction }]}>{carFilterOptionLabel(copy, option)}</Text><Text style={[styles.count, { color: theme.textSecondary }]}>{option.count}</Text></Pressable>;})}</View></View>)}
       </ScrollView>
-      <View style={[styles.footer, { backgroundColor: filterCanvas, borderTopColor: theme.border, paddingBottom: Math.max(inset.bottom, 12) }]}>{active > 0 ? <View style={styles.footerActions}><Pressable accessibilityRole="button" accessibilityLabel="Reset car filters" onPress={() => { markUpdating(); onChange({}); }} style={[styles.reset, { borderColor: filterOutline }]}><Text style={[styles.resetText, { color: theme.textPrimary }]}>Reset</Text></Pressable>{viewAction}</View> : viewAction}</View>
+      <View style={[styles.footer, { backgroundColor: filterCanvas, borderTopColor: theme.border, paddingBottom: Math.max(inset.bottom, 12) }]}>{active > 0 ? <View style={styles.footerActions}><Pressable accessibilityRole="button" accessibilityLabel={`${resetLabel} ${copy.filters}`} onPress={() => { markUpdating(); onChange({}); }} style={[styles.reset, { borderColor: filterOutline }]}><Text style={[styles.resetText, { color: theme.textPrimary }]}>{resetLabel}</Text></Pressable>{viewAction}</View> : viewAction}</View>
     </View>
   </Modal>;
 }
