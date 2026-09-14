@@ -13,8 +13,8 @@ import { Empty, ui } from "./SearchUi";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import { NativeBrandedSearchLoading } from "./NativeBrandedSearchLoading";
-import { carQuickFilterGroupIds } from "../../../../../src/lib/cars/carFilterPresentation";
-import { filterCarResults, sortCarResults, type CarSort, type SelectedCarFilters } from "../../../../../src/lib/cars/carResults";
+import { carQuickFilterGroupIds } from "@/lib/cars/carFilterPresentation";
+import type { CarSort, SelectedCarFilters } from "@/lib/cars/carResults";
 import { CarFilterSheet, activeCarFilterCount, visibleCarFilterGroups } from "./CarFilterSheet";
 import { CarResultsQuickFilterSheet } from "./CarResultsQuickFilterSheet";
 import { carFilterCopy, carFilterGroupLabel } from "./carFilterCopy";
@@ -22,25 +22,27 @@ import { useMobileLocalization } from "../../localization/MobileLocalizationProv
 import { CarEditSearchModal } from "./CarEditSearchModal";
 import { NativeCarPriceAlert } from "./NativeCarPriceAlert";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
-import { getLocationFieldDisplay } from "../../../../../src/lib/search/locationFieldDisplay";
+import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 import { NATIVE_FILTER_RESULTS_TRANSITION_MS } from "./filterResultsTransition";
-import { formatCarResultsScheduleSummary } from "../../../../../src/lib/cars/carResultsSummary";
-import { resolveCarResultImageSource } from "../../../../../src/lib/cars/carResultImage";
+import { formatCarResultsScheduleSummary } from "@/lib/cars/carResultsSummary";
+import { resolveCarResultImageSource } from "@/lib/cars/carResultImage";
+import type { ExchangeRates } from "../currency/displayCurrency";
+import { filterCarResultsForDisplayCurrency, sortCarResultsForDisplayCurrency } from "./carDisplayCurrency";
+import { carCountLabel, carText } from "./carMobileLocalization";
 
 type Status = "loading" | "ready" | "empty" | "error";
 const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB";
-const one = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
-const carResultCountLabel = (count: number) => `${count} ${count === 1 ? "Result" : "Results"} found`;
 
 export function ApprovedCarResultsScreen() {
   const { theme } = useAppTheme();
   const carCanvasColor = theme.dark ? theme.background : CAR_RESULTS_LIGHT_CANVAS;
   const insets = useSafeAreaInsets();
-  const { locale } = useMobileLocalization();
+  const { locale, currency } = useMobileLocalization();
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string,string|string[]>>();
   const plan = useMemo(() => buildSearchPlan("car",params),[JSON.stringify(params)]);
   const [results,setResults] = useState<CarResult[]>([]);
+  const [exchangeRates,setExchangeRates] = useState<ExchangeRates>({});
   const [status,setStatus] = useState<Status>("loading");
   const [message,setMessage] = useState("");
   const [retry,setRetry] = useState(0);
@@ -57,23 +59,26 @@ export function ApprovedCarResultsScreen() {
   const activeSearch=useRef<AbortController|null>(null);
   const activeExecutionKey=useRef<string|undefined>(undefined);
   const searchAbortTimer=useRef<ReturnType<typeof setTimeout>|undefined>(undefined);
+
+  useEffect(()=>{let active=true;void travelApi.currencyRates().then(({rates})=>{if(active)setExchangeRates(rates);}).catch(()=>{if(active)setExchangeRates({});});return()=>{active=false;};},[]);
+
   const load = useCallback(async()=>{
-    if(!plan.plan){setStatus("error");setMessage(plan.error||"Invalid car search");return;}
+    if(!plan.plan){setStatus("error");setMessage(carText(locale,"carsResults.invalidSearch","Invalid car search"));return;}
     activeSearch.current?.abort("superseded");
     const controller=new AbortController();
     activeSearch.current=controller;
     const sequence=++searchSequence.current;
     const requestId=`mobile-car-${Date.now()}-${sequence}`;
     setStatus("loading");setMessage("");
-    try{const response=await travelApi.searchCars(plan.plan.payload,{signal:controller.signal,requestId});if(controller.signal.aborted||sequence!==searchSequence.current)return;const acceptance=acceptCanonicalResults(response.results,safeCanonicalCarResult);if(acceptance.rejectedIds.length)console.warn("[travel-search] canonical car results failed client safety checks",{requestId:response.requestId,canonicalCount:acceptance.canonicalCount,acceptedCount:acceptance.accepted.length,rejectedIds:acceptance.rejectedIds});setResults(acceptance.accepted);if(canonicalResultsWereSilentlyLost(acceptance)){setStatus("error");setMessage("The canonical search returned inventory that this app could not render safely.");}else{setStatus(acceptance.accepted.length?"ready":"empty");setMessage(response.warnings?.[0]||"");void recordRecentSearchBestEffort(buildRecentSearch("car",plan.plan.payload));}}
-    catch(error){if(controller.signal.aborted||sequence!==searchSequence.current)return;setStatus("error");setMessage(error instanceof Error?error.message:"Car search failed");}
-  },[plan.plan?.key,retry]);
+    try{const response=await travelApi.searchCars(plan.plan.payload,{signal:controller.signal,requestId});if(controller.signal.aborted||sequence!==searchSequence.current)return;const acceptance=acceptCanonicalResults(response.results,safeCanonicalCarResult);if(acceptance.rejectedIds.length)console.warn("[travel-search] canonical car results failed client safety checks",{requestId:response.requestId,canonicalCount:acceptance.canonicalCount,acceptedCount:acceptance.accepted.length,rejectedIds:acceptance.rejectedIds});setResults(acceptance.accepted);if(canonicalResultsWereSilentlyLost(acceptance)){setStatus("error");setMessage(carText(locale,"carsResults.inventoryRenderError","The canonical search returned inventory that this app could not render safely."));}else{setStatus(acceptance.accepted.length?"ready":"empty");setMessage(response.warnings?.[0]||"");void recordRecentSearchBestEffort(buildRecentSearch("car",plan.plan.payload));}}
+    catch(error){if(controller.signal.aborted||sequence!==searchSequence.current)return;setStatus("error");setMessage(error instanceof Error?error.message:carText(locale,"carsResults.searchFailed","Car search failed"));}
+  },[plan.plan?.key,retry,locale]);
   useEffect(()=>{const executionKey=`${plan.plan?.key??"invalid"}:${retry}`;if(searchAbortTimer.current)clearTimeout(searchAbortTimer.current);searchAbortTimer.current=undefined;if(activeExecutionKey.current!==executionKey){activeExecutionKey.current=executionKey;void load();}return()=>{searchAbortTimer.current=setTimeout(()=>{if(activeExecutionKey.current!==executionKey)return;searchSequence.current+=1;activeSearch.current?.abort("screen-cleanup");activeExecutionKey.current=undefined;},0);};},[load,plan.plan?.key,retry]);
   useEffect(()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);carResultsApplyingTimer.current=undefined;setCarResultsApplying(false);return()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);};},[plan.plan?.key]);
-  const filterGroups=useMemo(()=>visibleCarFilterGroups(results),[results]);
+  const filterGroups=useMemo(()=>visibleCarFilterGroups(results,currency,exchangeRates),[results,currency,exchangeRates]);
   const quickGroups=useMemo(()=>carQuickFilterGroupIds.flatMap(id=>{const group=filterGroups.find(candidate=>candidate.id===id);return group?[group]:[];}),[filterGroups]);
-  const copy=useMemo(()=>carFilterCopy(locale),[locale]);
-  const filtered=useMemo(()=>sortCarResults(filterCarResults(results,filters),sort),[results,filters,sort]);
+  const copy=useMemo(()=>carFilterCopy(locale,currency,exchangeRates),[locale,currency,exchangeRates]);
+  const filtered=useMemo(()=>sortCarResultsForDisplayCurrency(filterCarResultsForDisplayCurrency(results,filters,currency,exchangeRates),sort,currency,exchangeRates),[results,filters,sort,currency,exchangeRates]);
   const payload=plan.plan?.payload||{};
   const canonicalPickupLocation=String(payload.pickupLocation||"");
   const carSummaryDestination=getLocationFieldDisplay(canonicalPickupLocation).primary;
@@ -91,21 +96,26 @@ export function ApprovedCarResultsScreen() {
   const image=(value?:string)=>{const resolved=resolveCarResultImageSource(value);if(!resolved)return undefined;if(/^https:\/\//i.test(resolved))return resolved;const base=getApiBaseUrl();return base.ok&&/^\/(?!\/)/.test(resolved)?new URL(resolved,`${base.baseUrl}/`).toString():undefined;};
   const clearFilters=()=>{setFilters({});startCarResultsTransition();};
   if(status==="loading") return <NativeBrandedSearchLoading product="car"/>;
+  const filterLabel=carText(locale,"carsResults.filterBy","Filter");
+  const sortLabel=carText(locale,"carsResults.sort","Sort");
+  const recommendedLabel=carText(locale,"carsResults.recommended","Recommended");
+  const totalPriceLabel=carText(locale,"carsResults.totalPrice","Total price");
+  const topRatedLabel=carText(locale,"carsResults.topRated","Top rated");
   return <SafeAreaView style={[r.safe,{backgroundColor:carCanvasColor}]} edges={["top"]}>
     <CarResultsHeader destination={carSummaryDestination} secondaryLine={carSummarySecondary} onEdit={edit} backgroundColor={carCanvasColor}/>
     <View style={[r.carFilterSectionHeader,{backgroundColor:carCanvasColor}]}><ScrollView horizontal style={r.filterRail} showsHorizontalScrollIndicator={false} alwaysBounceHorizontal={false} bounces={false} overScrollMode="never" contentContainerStyle={r.filters}>
-      <CarResultsShortcut label="Filter" accessibilityLabel="Filters" count={activeCarFilterCount(filters)||undefined} icon showChevron={false} expanded={filterSheetVisible} onPress={openAllFilters}/>
-      <CarResultsShortcut label={sort === "recommended" ? "Sort" : sort === "lowestTotal" ? "Total price" : "Top rated"} accessibilityLabel={`Sort, ${sort === "recommended" ? "Recommended" : sort === "lowestTotal" ? "Total price" : "Top rated"}`} expanded={quickSheetKind === "sort"} onPress={()=>openQuickFilter("sort")}/>
+      <CarResultsShortcut label={filterLabel} accessibilityLabel={copy.filters} count={activeCarFilterCount(filters)||undefined} icon showChevron={false} expanded={filterSheetVisible} onPress={openAllFilters}/>
+      <CarResultsShortcut label={sort === "recommended" ? sortLabel : sort === "lowestTotal" ? totalPriceLabel : topRatedLabel} accessibilityLabel={`${sortLabel}, ${sort === "recommended" ? recommendedLabel : sort === "lowestTotal" ? totalPriceLabel : topRatedLabel}`} expanded={quickSheetKind === "sort"} onPress={()=>openQuickFilter("sort")}/>
       {quickGroups.map(group=><CarResultsShortcut key={group.id} label={carFilterGroupLabel(copy,group)} count={filters[group.id]?.length||undefined} expanded={quickSheetKind===group.id} onPress={()=>openQuickFilter(group.id)}/>)}
     </ScrollView></View>
     <ScrollView ref={carScrollRef} style={{backgroundColor:carCanvasColor}} alwaysBounceVertical={false} bounces={false} overScrollMode="never" keyboardShouldPersistTaps="handled" contentContainerStyle={[r.body,{paddingBottom:Math.max(insets.bottom + 16,16)}]}>
       {message?<Text accessibilityRole="alert" style={[r.notice,{backgroundColor:theme.surface,color:theme.textPrimary,borderColor:theme.dark?theme.border:"#D8E1EC"}]}>{message}</Text>:null}
-      {status==="empty"?<Empty title="No rental cars found" body="Try changing your dates, pickup location, or filters." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>:null}
-      {status==="error"?<Empty title="Car search could not be completed" body={message||"Check your connection and try again."} retry={()=>setRetry((value)=>value+1)} edit={edit}/>:null}
-      {status==="ready"?<><NativeCarPriceAlert plan={plan.plan} results={results} available={availability.priceAlerts}/>{carResultsApplying?<CarSkeletons/>:<><View accessibilityLabel="Car results summary" style={r.carResultsSummaryRow}><View style={r.carResultsCountColumn}><Text accessibilityRole="header" style={[r.carResultCount,{color:theme.textPrimary}]}>{carResultCountLabel(filtered.length)}</Text></View></View>{filtered.length?<>{filtered.map((result,index)=><View key={result.id} style={r.carResultCardSlot}><CarResultCard result={result} rank={index} imageUri={image(result.imageUrl)} searchParams={payload} onViewDeal={()=>openDeal(result)}/></View>)}</>:<Empty title="No cars match these filters" body="Clear filters to see the available rental cars." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>}</>}</>:null}
+      {status==="empty"?<Empty title={carText(locale,"carsResults.noResultsTitle","No rental cars found")} body={carText(locale,"carsResults.noResultsBody","Try changing your dates, pickup location, or filters.")} retry={clearFilters} retryLabel={carText(locale,"carsResults.clearFilters","Clear filters")} edit={edit}/>:null}
+      {status==="error"?<Empty title={carText(locale,"carsResults.errorTitle","Car search could not be completed")} body={message||carText(locale,"carsResults.errorBody","Check your connection and try again.")} retry={()=>setRetry((value)=>value+1)} edit={edit}/>:null}
+      {status==="ready"?<><NativeCarPriceAlert plan={plan.plan} results={results} available={availability.priceAlerts} displayCurrency={currency} exchangeRates={exchangeRates}/>{carResultsApplying?<CarSkeletons/>:<><View accessibilityLabel={carText(locale,"carsResults.carResultsAria","Car results summary")} style={r.carResultsSummaryRow}><View style={r.carResultsCountColumn}><Text accessibilityRole="header" style={[r.carResultCount,{color:theme.textPrimary}]}>{carCountLabel(locale,filtered.length)}</Text></View></View>{filtered.length?<>{filtered.map((result,index)=><View key={result.id} style={r.carResultCardSlot}><CarResultCard result={result} rank={index} imageUri={image(result.imageUrl)} searchParams={payload} onViewDeal={()=>openDeal(result)} locale={locale} displayCurrency={currency} exchangeRates={exchangeRates}/></View>)}</>:<Empty title={carText(locale,"carsResults.noFilterMatchesTitle","No cars match these filters")} body={carText(locale,"carsResults.noFilterMatchesBody","Clear filters to see the available rental cars.")} retry={clearFilters} retryLabel={carText(locale,"carsResults.clearFilters","Clear filters")} edit={edit}/>}</>}</>:null}
     </ScrollView>
-    <CarFilterSheet visible={filterSheetVisible} results={results} filters={filters} onChange={changeCarFilters} onClose={completeCarFilterSession}/>
-    {quickSheetKind ? <CarResultsQuickFilterSheet key={quickSheetKind} kind={quickSheetKind} results={results} filters={filters} sort={sort} onApplyFilters={(next)=>{changeCarFilters(next);}} onApplySort={(next)=>{if(next!==sort){setSort(next);carScrollRef.current?.scrollTo({y:0,animated:true});}}} onClose={()=>{setQuickSheetKind(null);if(carFilterSessionDirtyRef.current){carFilterSessionDirtyRef.current=false;startCarResultsTransition();}}}/> : null}
+    <CarFilterSheet visible={filterSheetVisible} results={results} filters={filters} displayCurrency={currency} exchangeRates={exchangeRates} onChange={changeCarFilters} onClose={completeCarFilterSession}/>
+    {quickSheetKind ? <CarResultsQuickFilterSheet key={quickSheetKind} kind={quickSheetKind} results={results} filters={filters} sort={sort} displayCurrency={currency} exchangeRates={exchangeRates} onApplyFilters={(next)=>{changeCarFilters(next);}} onApplySort={(next)=>{if(next!==sort){setSort(next);carScrollRef.current?.scrollTo({y:0,animated:true});}}} onClose={()=>{setQuickSheetKind(null);if(carFilterSessionDirtyRef.current){carFilterSessionDirtyRef.current=false;startCarResultsTransition();}}}/> : null}
     <CarEditSearchModal visible={carEditSearchOpen} params={params} onClose={()=>setCarEditSearchOpen(false)}/>
   </SafeAreaView>;
 }
@@ -118,15 +128,16 @@ function CarResultsShortcut({label,accessibilityLabel,count,icon=false,showChevr
 
 function CarResultsHeader({destination,secondaryLine,onEdit,backgroundColor}:{destination:string;secondaryLine:string;onEdit:()=>void;backgroundColor:string}) {
   const { theme } = useAppTheme();
+  const { locale } = useMobileLocalization();
   const insets = useSafeAreaInsets();
-  return <View accessibilityLabel="Car search summary" style={[r.carHeader,{backgroundColor,paddingLeft:Math.max(insets.left+6,6),paddingRight:Math.max(insets.right+10,10)}]}>
+  return <View accessibilityLabel={carText(locale,"carsResults.searchSummary","Car search summary")} style={[r.carHeader,{backgroundColor,paddingLeft:Math.max(insets.left+6,6),paddingRight:Math.max(insets.right+10,10)}]}>
     <View style={r.carHeaderMainRow}>
       <View style={r.carHeaderSide}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={()=>router.back()} style={({pressed})=>[r.carHeaderBack,pressed&&r.carHeaderControlPressed]}>
+        <Pressable accessibilityRole="button" accessibilityLabel={carText(locale,"back","Go back")} onPress={()=>router.back()} style={({pressed})=>[r.carHeaderBack,pressed&&r.carHeaderControlPressed]}>
           <ArrowLeft size={25} strokeWidth={2} color={theme.icon}/>
         </Pressable>
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel={`Edit car search. ${destination}. ${secondaryLine}`} onPress={onEdit} style={({pressed})=>[r.carSummaryCard,{backgroundColor:theme.surface,borderColor:theme.dark?theme.border:"#D8E1EC"},pressed&&r.carSummaryCardPressed]}>
+      <Pressable accessibilityRole="button" accessibilityLabel={`${carText(locale,"carsResults.editSearch","Edit car search")}. ${destination}. ${secondaryLine}`} onPress={onEdit} style={({pressed})=>[r.carSummaryCard,{backgroundColor:theme.surface,borderColor:theme.dark?theme.border:"#D8E1EC"},pressed&&r.carSummaryCardPressed]}>
         <View style={r.carSummaryText}>
           <Text numberOfLines={1} ellipsizeMode="tail" style={[r.carSummaryDestination,{color:theme.textPrimary}]}>{destination}</Text>
           <Text numberOfLines={1} ellipsizeMode="tail" style={[r.carSummarySecondary,{color:theme.textSecondary}]}>{secondaryLine}</Text>
@@ -139,5 +150,5 @@ function CarResultsHeader({destination,secondaryLine,onEdit,backgroundColor}:{de
   </View>;
 }
 
-function CarSkeletons(){const {theme}=useAppTheme();return <View accessibilityRole="progressbar" accessibilityState={{busy:true}} accessibilityLabel="Updating car results" style={r.skeletonGroup}><View style={r.foundSkeleton}/>{[0,1,2].map((key)=><View key={key} style={[r.skeleton,r.carResultCardSlot,{backgroundColor:theme.surface,borderColor:theme.dark?theme.border:"#D8E1EC"}]}><View style={r.skeletonImage}/><View style={r.skeletonLines}><View style={r.skeletonLine}/><View style={[r.skeletonLine,{width:"65%"}]}/><View style={[r.skeletonLine,{width:"82%"}]}/></View></View>)}</View>;}
+function CarSkeletons(){const {theme}=useAppTheme();const {locale}=useMobileLocalization();return <View accessibilityRole="progressbar" accessibilityState={{busy:true}} accessibilityLabel={carText(locale,"carsResults.updatingResults","Updating car results")} style={r.skeletonGroup}><View style={r.foundSkeleton}/>{[0,1,2].map((key)=><View key={key} style={[r.skeleton,r.carResultCardSlot,{backgroundColor:theme.surface,borderColor:theme.dark?theme.border:"#D8E1EC"}]}><View style={r.skeletonImage}/><View style={r.skeletonLines}><View style={r.skeletonLine}/><View style={[r.skeletonLine,{width:"65%"}]}/><View style={[r.skeletonLine,{width:"82%"}]}/></View></View>)}</View>;}
 const r=StyleSheet.create({safe:{flex:1},carHeader:{paddingTop:12,paddingBottom:8},carHeaderMainRow:{width:"100%",flexDirection:"row",alignItems:"center",gap:6},carHeaderSide:{width:44,flexShrink:0},carHeaderBack:{width:44,height:44,alignItems:"center",justifyContent:"center"},carHeaderControlPressed:{opacity:0.55},carSummaryCard:{flex:1,minWidth:0,minHeight:62,borderWidth:1,borderRadius:13,flexDirection:"row",alignItems:"center",overflow:"hidden"},carSummaryCardPressed:{opacity:0.76},carSummaryText:{flex:1,minWidth:0,justifyContent:"center",paddingLeft:14,paddingVertical:9},carSummaryDestination:{fontSize:14,lineHeight:18,fontWeight:"700",fontFamily:appFonts.bold},carSummarySecondary:{marginTop:3,fontSize:10.5,lineHeight:14,fontWeight:"500",fontFamily:appFonts.medium},carSummaryEditSlot:{width:44,height:44,flexShrink:0,alignItems:"center",justifyContent:"center"},carFilterSectionHeader:{paddingBottom:12},filterRail:{height:44,flexGrow:0,flexShrink:0},filters:{paddingLeft:8,paddingRight:16,gap:6,alignItems:"center",flexWrap:"nowrap"},shortcutTouchTarget:{minWidth:44,minHeight:44,justifyContent:"center"},shortcut:{height:36,flexDirection:"row",alignItems:"center",justifyContent:"center",gap:4,borderWidth:1,borderRadius:9,paddingHorizontal:10},shortcutLabel:{fontSize:13,lineHeight:16,fontWeight:"600",fontFamily:appFonts.semibold},shortcutCount:{minWidth:20,height:20,borderRadius:10,paddingHorizontal:6,alignItems:"center",justifyContent:"center"},shortcutCountText:{fontSize:11,lineHeight:14,fontWeight:"600",fontFamily:appFonts.semibold},shortcutChevronExpanded:{transform:[{rotate:"180deg"}]},body:{paddingHorizontal:14,gap:14},carResultCardSlot:{marginHorizontal:0},notice:{borderWidth:1,borderRadius:10,padding:12},carResultsSummaryRow:{gap:8},carResultsCountColumn:{minWidth:0,flexDirection:"row",alignItems:"baseline",justifyContent:"space-between",gap:8},carResultCount:{fontSize:13,lineHeight:17,fontWeight:"700",fontFamily:appFonts.bold},sort:{minHeight:44,flexDirection:"row",alignItems:"center",gap:5,paddingHorizontal:2},sortPrefix:{fontSize:11,color:ui.muted},sortValue:{fontSize:14,color:ui.navy},carPriceAlert:{width:"100%",minHeight:52,borderRadius:12,borderWidth:1,paddingHorizontal:12,paddingVertical:4,flexDirection:"row",alignItems:"center",gap:8},carPriceAlertCopy:{flex:1,minWidth:0},carPriceAlertTitle:{fontSize:12.5,lineHeight:16,fontWeight:"700",fontFamily:appFonts.bold},carPriceAlertSwitchSlot:{minWidth:51,minHeight:44,flexShrink:0,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4},carPriceAlertSwitchIos:{transform:[{translateY:8}]},skeletonGroup:{gap:14},foundSkeleton:{height:44,borderRadius:12,backgroundColor:"#EEF1F6"},skeleton:{height:232,borderRadius:13,borderWidth:1,overflow:"hidden",flexDirection:"row"},skeletonImage:{width:"40%",backgroundColor:"#EEF1F6"},skeletonLines:{flex:1,padding:16,gap:15},skeletonLine:{height:13,borderRadius:6,backgroundColor:"#EEF1F6",width:"90%"}});
