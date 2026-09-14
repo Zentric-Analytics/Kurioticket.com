@@ -7,6 +7,8 @@ import { searchFlights } from "@/services/travel/flightAggregator";
 import { searchHotels } from "@/services/travel/hotelAggregator";
 import { searchCars } from "@/services/travel/carAggregator";
 import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
+import { getCurrencyRates } from "@/lib/currency/rateProvider";
+import type { ExchangeRates } from "@/lib/currency/exchangeRates";
 import { priceAlertEmail, sendOptionalEmail } from "@/services/emailService";
 import { persistCanonicalNotificationEvent, type NotificationPersistenceClient } from "@/services/notificationService";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
@@ -90,13 +92,34 @@ export function selectHotelPriceAlertResult(
   return null;
 }
 
-export function selectCarPriceAlertResult(cars: readonly NormalizedCarResult[], requestedCurrency: string): ResolvedPrice | null {
+function convertCarAlertAmount(amount: number, sourceCurrency: string, targetCurrency: string, rates?: ExchangeRates) {
+  const source = sourceCurrency.trim().toUpperCase();
+  const target = targetCurrency.trim().toUpperCase();
+  if (source === target) return amount;
+  const sourceRate = rates?.[source];
+  const targetRate = rates?.[target];
+  if (!Number.isFinite(sourceRate) || !sourceRate || sourceRate <= 0 || !Number.isFinite(targetRate) || !targetRate || targetRate <= 0) return null;
+  return (amount / sourceRate) * targetRate;
+}
+
+export function selectCarPriceAlertResult(cars: readonly NormalizedCarResult[], requestedCurrency: string, rates?: ExchangeRates): ResolvedPrice | null {
   const currency = requestedCurrency.trim().toUpperCase();
-  const candidates = cars.flatMap((car) => car.offers.map((offer) => ({ car, offer })))
-    .filter(({ offer }) => Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 && offer.currency.trim().toUpperCase() === currency)
-    .sort((left, right) => left.offer.totalPrice - right.offer.totalPrice || left.car.id.localeCompare(right.car.id) || left.offer.id.localeCompare(right.offer.id));
+  const candidates = cars.flatMap((car) => car.offers.map((offer) => ({ car, offer, convertedTotal: convertCarAlertAmount(offer.totalPrice, offer.currency, currency, rates) })))
+    .filter(({ offer, convertedTotal }) => Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 && convertedTotal !== null && Number.isFinite(convertedTotal) && convertedTotal > 0)
+    .sort((left, right) => left.convertedTotal! - right.convertedTotal! || left.car.id.localeCompare(right.car.id) || left.offer.id.localeCompare(right.offer.id));
   const selected = candidates[0];
-  return selected ? { provider: selected.offer.bookingProviderName, price: selected.offer.totalPrice, currency, url: selected.offer.bookingUrl, payload: { resultId: selected.car.id, offerId: selected.offer.id } } : null;
+  return selected ? {
+    provider: selected.offer.bookingProviderName,
+    price: selected.convertedTotal!,
+    currency,
+    url: selected.offer.bookingUrl,
+    payload: {
+      resultId: selected.car.id,
+      offerId: selected.offer.id,
+      providerPrice: selected.offer.totalPrice,
+      providerCurrency: selected.offer.currency.trim().toUpperCase(),
+    },
+  } : null;
 }
 
 export async function processDuePriceAlerts(options: {
@@ -212,13 +235,14 @@ export async function resolveAlertPrice(alert: PriceAlertRecord): Promise<Resolv
   }
   if (alert.type === "CAR") {
     const result = await searchCars(alert.query as CarSearchParams);
-    const selected = selectCarPriceAlertResult(result.results, alert.currency);
+    const ratePayload = await getCurrencyRates();
+    const selected = selectCarPriceAlertResult(result.results, alert.currency, ratePayload.rates);
     if (!selected) throw new Error("live_car_price_unavailable");
     return selected;
   }
   const search = alert.query as Partial<HotelSearchParams>;
   const result = await searchHotels(search as HotelSearchParams);
-    if (result.results.length === 0) throw new Error("live_hotel_price_unavailable");
+  if (result.results.length === 0) throw new Error("live_hotel_price_unavailable");
   const selected = selectHotelPriceAlertResult(result.results);
   if (selected === null) throw new Error("live_hotel_price_unavailable");
   return selected;
@@ -232,7 +256,7 @@ async function recordSuccessfulCheck(db: PriceAlertDb, alert: PriceAlertRecord, 
 }
 
 async function scheduleRetry(db: PriceAlertDb, alertId: string, now: Date, retryDelayMs: number) {
-  await db.priceAlert.updateMany({ where: { id: alertId, status: "ACTIVE" }, data: { nextCheckAt: new Date(now.getTime() + retryDelayMs) } });
+  await db.priceAlert.updateMany({ where: { id: alertId, status: "ACTIVE" }, data: { nextCheckAt: new Date(now.getTime() + retryDelayMs), consecutiveFailures: { increment: 1 } } });
 }
 
 function emptyCounts(): PriceAlertProcessingCounts { return { processed: 0, eventsCreated: 0, sent: 0, skippedByPreferences: 0, notTriggered: 0, failed: 0 }; }
