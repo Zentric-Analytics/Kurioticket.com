@@ -109,7 +109,7 @@ export function NativeCarFullMapModal({ visible, pickupLocation, trustedMapCoord
         <View style={styles.fullMapBody}>
           {view === "map" ? mapSurface : streetViewUrl && !streetViewFailed ? <View style={styles.streetViewFrame}>
             <WebView key={`${pickupLocation}:streetview:${streetViewAttempt}`} source={{ uri: streetViewUrl }} onLoadStart={() => { clearStreetViewReadyTimer(); setStreetViewLoading(true); }} onLoadEnd={settleStreetView} onError={failStreetView} onHttpError={failStreetView} style={styles.fullMapWebView} />
-            {streetViewLoading ? <View accessibilityRole="progressbar" accessibilityLabel="Loading Cars Street View" style={[styles.streetViewLoading, { backgroundColor: theme.surface }]}><ActivityIndicator size="small" color={colors.blue} /><Text style={[styles.streetViewLoadingText, { color: theme.icon }]}>Loading Street View…</Text></View> : null}
+            {streetViewLoading ? <View accessibilityRole="progressbar" accessibilityLabel="Loading Cars Street View" style={[styles.streetViewLoading, { backgroundColor: theme.surface }]}><ActivityIndicator size="small" color={colors.blue} /></View> : null}
           </View> : <MapFallback label="Street View unavailable for this area" theme={theme} onRetry={streetViewUrl ? retryStreetView : undefined} />}
 
           <Pressable accessibilityRole="button" accessibilityLabel="Close map" onPress={closeFullMap} style={({ pressed }) => [styles.floatingClose, { backgroundColor: theme.surface, borderColor: theme.border }, pressed && styles.pressed]}>
@@ -120,16 +120,11 @@ export function NativeCarFullMapModal({ visible, pickupLocation, trustedMapCoord
             <View pointerEvents="none" accessible={false} importantForAccessibility="no-hide-descendants" style={styles.streetViewPreviewMedia}>
               {!streetViewPreviewFailed ? <WebView source={{ uri: streetViewUrl }} scrollEnabled={false} onError={() => setStreetViewPreviewFailed(true)} onHttpError={() => setStreetViewPreviewFailed(true)} style={styles.streetViewPreviewWebView} /> : <View style={[styles.streetViewPreviewFallback, { backgroundColor: theme.surface }]}><MapPin accessible={false} size={20} color={theme.icon} /></View>}
             </View>
-            <View style={styles.streetViewPreviewLabel}><Text style={styles.streetViewPreviewTitle}>Street View</Text><Text style={styles.streetViewPreviewSubtitle}>Nearby imagery</Text></View>
           </Pressable> : null}
 
-          {view === "streetview" ? <Pressable accessibilityRole="button" accessibilityLabel="Return to map" onPress={showMap} style={({ pressed }) => [styles.mapPreviewButton, { backgroundColor: theme.surface, borderColor: theme.border }, pressed && styles.pressed]}><MapPin accessible={false} size={22} color={colors.blue} /><Text style={[styles.mapPreviewButtonText, { color: theme.textPrimary }]}>Map</Text></Pressable> : null}
-
-          <View pointerEvents="none" style={[styles.locationContext, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <Text numberOfLines={2} style={[styles.locationContextTitle, { color: theme.textPrimary }]}>{pickupLocation}</Text>
-            <Text style={[styles.locationContextMeta, { color: theme.icon }]}>{view === "streetview" ? "Street View near this search area" : "Pickup search area"}</Text>
-            {view === "streetview" ? <Text style={[styles.locationContextDisclaimer, { color: theme.icon }]}>Exact rental desk or collection point may differ. Confirm provider pickup instructions before arrival.</Text> : null}
-          </View>
+          {view === "streetview" ? <Pressable accessibilityRole="button" accessibilityLabel="Return to map" onPress={showMap} style={({ pressed }) => [styles.mapPreviewButton, { backgroundColor: theme.surface, borderColor: theme.border }, pressed && styles.pressed]}>
+            <MapPin accessible={false} size={22} color={colors.blue} />
+          </Pressable> : null}
         </View>
       </SafeAreaView>
     </SafeAreaProvider>
@@ -149,22 +144,13 @@ const styles = StyleSheet.create({
   fullMapBody: { flex: 1, minHeight: 0, position: "relative" },
   fullMapWebView: { flex: 1 },
   streetViewFrame: { flex: 1, overflow: "hidden" },
-  streetViewLoading: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, zIndex: 3, alignItems: "center", justifyContent: "center", gap: 8 },
-  streetViewLoadingText: { fontSize: 13, lineHeight: 20, fontWeight: "500", fontFamily: appFonts.medium },
+  streetViewLoading: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, zIndex: 3, alignItems: "center", justifyContent: "center" },
   floatingClose: { position: "absolute", top: 12, left: 12, zIndex: 8, width: 44, height: 44, borderRadius: 22, borderWidth: StyleSheet.hairlineWidth, alignItems: "center", justifyContent: "center", shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.22, shadowRadius: 6, elevation: 5 },
-  streetViewPreview: { position: "absolute", left: 16, bottom: 124, zIndex: 7, width: 126, height: 98, borderRadius: 12, borderWidth: 1, overflow: "hidden", shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 4 },
-  streetViewPreviewMedia: { flex: 1 },
-  streetViewPreviewWebView: { flex: 1 },
+  streetViewPreview: { position: "absolute", left: 16, bottom: 18, zIndex: 7, width: 126, height: 94, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, overflow: "hidden", shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 4 },
+  streetViewPreviewMedia: { flex: 1, overflow: "hidden" },
+  streetViewPreviewWebView: { position: "absolute", left: -56, top: -8, width: 240, height: 220 },
   streetViewPreviewFallback: { flex: 1, alignItems: "center", justifyContent: "center" },
-  streetViewPreviewLabel: { position: "absolute", left: 0, right: 0, bottom: 0, paddingHorizontal: 8, paddingTop: 10, paddingBottom: 6, backgroundColor: "rgba(15,23,42,0.78)" },
-  streetViewPreviewTitle: { color: "#FFFFFF", fontSize: 12, lineHeight: 15, fontWeight: "700", fontFamily: appFonts.bold },
-  streetViewPreviewSubtitle: { color: "#E2E8F0", fontSize: 9, lineHeight: 12, fontWeight: "500", fontFamily: appFonts.medium },
-  mapPreviewButton: { position: "absolute", left: 16, bottom: 138, zIndex: 7, minWidth: 92, minHeight: 58, borderRadius: 12, borderWidth: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, paddingHorizontal: 12, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 4 },
-  mapPreviewButtonText: { fontSize: 13, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
-  locationContext: { position: "absolute", left: 16, right: 16, bottom: 16, zIndex: 6, borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 11, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.16, shadowRadius: 8, elevation: 4 },
-  locationContextTitle: { fontSize: 14, lineHeight: 19, fontWeight: "700", fontFamily: appFonts.bold },
-  locationContextMeta: { marginTop: 2, fontSize: 11, lineHeight: 15, fontWeight: "600", fontFamily: appFonts.semibold },
-  locationContextDisclaimer: { marginTop: 4, fontSize: 10, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
+  mapPreviewButton: { position: "absolute", left: 16, bottom: 18, zIndex: 7, width: 52, height: 52, borderRadius: 26, borderWidth: StyleSheet.hairlineWidth, alignItems: "center", justifyContent: "center", shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 4 },
   fullMapFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 24 },
   fullMapUnavailable: { fontSize: 16, lineHeight: 22, fontWeight: "600", fontFamily: appFonts.semibold, textAlign: "center" },
   fullMapRetry: { minWidth: 112, minHeight: 44, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: colors.blue, paddingHorizontal: 18 },
