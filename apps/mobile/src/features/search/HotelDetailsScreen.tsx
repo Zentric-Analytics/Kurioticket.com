@@ -51,6 +51,7 @@ import { hotelResultsDismissCount } from "./hotelDetailReturnNavigation";
 import { HotelStayEditor } from "./HotelStayEditor";
 import { NativeHotelBookingDetails } from "./NativeHotelBookingDetails";
 import { NativeHotelRatesSection } from "./NativeHotelRatesSection";
+import { HotelDetailsLoadingState } from "./HotelDetailsLoadingState";
 
 type HotelDetailTab = "details" | "reviews" | "deals";
 type HotelDetailsStatus = "loading" | "ready" | "error";
@@ -642,11 +643,29 @@ function HotelDetail({
         </View>
       </ScrollView>
 
+      {detailsStatus === "loading" ? (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            s.detailsLoadingOverlay,
+            { backgroundColor: hotelCanvasColor },
+          ]}
+        >
+          <HotelDetailsLoadingState hotelName={result.name} width={width} theme={theme} />
+        </View>
+      ) : null}
+
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Back to hotel results"
         onPress={returnToHotelResults}
-        style={[s.heroBack, { top: inset.top + 12 }]}
+        style={[
+          s.heroBack,
+          {
+            top: inset.top + 12,
+            zIndex: detailsStatus === "loading" ? 40 : 20,
+          },
+        ]}
       >
         <ArrowLeft size={25} strokeWidth={2.2} color="#0F172A" />
       </Pressable>
@@ -743,6 +762,7 @@ const s = StyleSheet.create({
   missingText: { fontSize: 13, lineHeight: 20, fontFamily: appFonts.regular, textAlign: "center" },
   missingButton: { minHeight: 44, paddingHorizontal: 18, borderRadius: 8, backgroundColor: colors.blue, alignItems: "center", justifyContent: "center" },
   missingButtonText: { color: "white", fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
+  detailsLoadingOverlay: { zIndex: 30, overflow: "hidden" },
   heroShell: { position: "relative", width: "100%" },
   heroBack: { position: "absolute", left: 20, width: 44, height: 44, borderRadius: 22, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 5, elevation: 10 },
   heroActions: { position: "absolute", right: 20, width: 112, height: 44, borderRadius: 22, backgroundColor: "#FFFFFF", flexDirection: "row", overflow: "hidden", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 5, elevation: 10 },
