@@ -2,23 +2,29 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Image, Pressable, Share, StyleSheet, Text, View } from "react-native";
 import { Award, BriefcaseBusiness, ChevronRight, DoorOpen, MapPin, Share2, ShieldCheck, Users } from "lucide-react-native";
 import type { CarResult } from "../../api/travelApi";
+import type { MobileLocale } from "../../localization/mobileLocalizationCatalog";
 import { FlowIcon } from "../flow/FlowIcon";
-import { money, ui } from "./SearchUi";
+import { ui } from "./SearchUi";
 import { useSavedCar } from "./carSavedState";
 import { useAppTheme } from "../../theme/AppTheme";
-import { getPrimaryCarOffer } from "../../../../../src/lib/cars/carResults";
-import { isCuratedCarResultImage } from "../../../../../src/lib/cars/carResultImage";
+import { isCuratedCarResultImage } from "@/lib/cars/carResultImage";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { nativeCarResultIdentity } from "./nativeCarResultIdentity";
+import type { ExchangeRates } from "../currency/displayCurrency";
+import { carDisplayPrice, primaryCarOfferForDisplay } from "./carDisplayCurrency";
+import { carCategoryLabel, carText } from "./carMobileLocalization";
 
-export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal }: {
+export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal, locale, displayCurrency, exchangeRates }: {
   result: CarResult; rank: number; imageUri?: string;
   searchParams: Record<string, unknown>; onViewDeal: () => void;
+  locale: MobileLocale; displayCurrency: string; exchangeRates: ExchangeRates;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
   useEffect(() => setImageFailed(false), [imageUri]);
   const savedState = useSavedCar(result, searchParams);
-  const offer = getPrimaryCarOffer(result);
+  const offer = primaryCarOfferForDisplay(result, displayCurrency, exchangeRates);
+  const totalPrice = offer ? carDisplayPrice(offer.totalPrice, offer.currency, displayCurrency, exchangeRates) : null;
+  const dailyPrice = offer ? carDisplayPrice(offer.pricePerDay, offer.currency, displayCurrency, exchangeRates) : null;
   const hasTopBadge = rank === 0;
   const { theme } = useAppTheme();
   const freeCancellationColor = theme.dark ? theme.textPrimary : "#000000";
@@ -27,15 +33,17 @@ export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal
   const imageResizeMode = curatedImage ? "contain" : "cover";
   const transmissionIcon = result.transmission === "automatic" ? "transmissionAutomatic" : "transmissionManual";
   const share = () => void Share.share({ message: result.modelName, title: result.modelName });
+  const saveLabel = carText(locale, savedState.saved ? "carDetails.unsave" : "carDetails.save", savedState.saved ? "Remove from saved" : "Save");
+  const shareLabel = carText(locale, "carDetails.share", "Share");
   return <View style={[c.card,{backgroundColor:theme.surface,borderColor:theme.dark?theme.border:"#D8E1EC",shadowColor:theme.dark?"#000000":"#18305B"}]}>
     {hasTopBadge ? <View style={[c.topMetaShell,{borderBottomColor:theme.border}]}>
       <View style={c.topMetaVisualSpacer} />
       <View style={c.topMetaContent}><View style={c.topMetaRow}>
-        {rank === 0 ? <View style={c.badge}><Award size={11} color="#15803D" /><Text style={c.badgeText}>Best value</Text></View> : null}
+        {rank === 0 ? <View style={c.badge}><Award size={11} color="#15803D" /><Text style={c.badgeText}>{carText(locale,"carsResults.bestValue","Best value")}</Text></View> : null}
       </View></View>
     </View> : null}
     <View style={c.main}>
-      <View style={[c.visualColumn,!hasTopBadge&&c.visualColumnWithoutTopMeta]}><View style={c.visual}>{imageUri && !imageFailed ? <Image source={{ uri: imageUri }} resizeMode={imageResizeMode} style={[c.image,curatedImage&&c.curatedImage]} accessibilityLabel={result.imageAlt} onError={() => setImageFailed(true)} /> : <View accessibilityLabel={`${result.modelName} vehicle image unavailable`} style={c.imageFallback}><FlowIcon name="car" size={48} color="#315A7D" /><Text style={c.fallbackText}>Vehicle image unavailable</Text></View>}</View></View>
+      <View style={[c.visualColumn,!hasTopBadge&&c.visualColumnWithoutTopMeta]}><View style={c.visual}>{imageUri && !imageFailed ? <Image source={{ uri: imageUri }} resizeMode={imageResizeMode} style={[c.image,curatedImage&&c.curatedImage]} accessibilityLabel={result.imageAlt} onError={() => setImageFailed(true)} /> : <View accessibilityLabel={`${result.modelName} ${carText(locale,"carDetails.vehicleImageUnavailable","vehicle image unavailable")}`} style={c.imageFallback}><FlowIcon name="car" size={48} color="#315A7D" /><Text style={c.fallbackText}>{carText(locale,"carDetails.vehicleImageUnavailable","Vehicle image unavailable")}</Text></View>}</View></View>
       <View style={c.contentColumn}>
         <View style={[c.information,!hasTopBadge&&c.informationWithoutTopMeta]}>
         <View style={c.headerRow}>
@@ -44,23 +52,23 @@ export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal
             {identity.secondaryModel || result.orSimilar ? <Text numberOfLines={1} style={c.identityLine}>
               {identity.secondaryModel ? <Text style={[c.secondaryModel,{color:theme.textPrimary}]}>{identity.secondaryModel}</Text> : null}
               {identity.secondaryModel && result.orSimilar ? " " : null}
-              {result.orSimilar ? <Text style={[c.similar,{color:theme.textSecondary}]}>or similar</Text> : null}
+              {result.orSimilar ? <Text style={[c.similar,{color:theme.textSecondary}]}>{carText(locale,"carsResults.orSimilar","or similar")}</Text> : null}
             </Text> : null}
-            <Text numberOfLines={1} style={c.category}>{result.categoryLabel}</Text>
-            {result.searchPolicy.source === "kayak-sandbox" ? <Text style={c.category}>KAYAK sandbox · Simulated · Not bookable</Text> : null}
+            <Text numberOfLines={1} style={c.category}>{carCategoryLabel(locale,result)}</Text>
+            {result.searchPolicy.source === "kayak-sandbox" ? <Text style={c.category}>{carText(locale,"carsResults.sandboxDisclosure","KAYAK sandbox · Simulated · Not bookable")}</Text> : null}
           </View>
           <View style={c.utilityColumn}>
-            <View style={c.actions}><Pressable accessibilityRole="button" accessibilityLabel={savedState.saved ? `Remove ${result.modelName} from saved` : `Save ${result.modelName}`} accessibilityState={{ selected: savedState.saved }} onPress={savedState.toggle} style={({pressed}) => [c.action,c.saveAction,pressed&&c.pressed]}><FlowIcon name="heart" size={20} color={savedState.saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={savedState.saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} /></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Share ${result.modelName}`} onPress={share} style={({pressed}) => [c.action,c.shareAction,pressed&&c.pressed]}><Share2 size={18} color={theme.icon} /></Pressable></View>
+            <View style={c.actions}><Pressable accessibilityRole="button" accessibilityLabel={`${saveLabel} ${result.modelName}`} accessibilityState={{ selected: savedState.saved }} onPress={savedState.toggle} style={({pressed}) => [c.action,c.saveAction,pressed&&c.pressed]}><FlowIcon name="heart" size={20} color={savedState.saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={savedState.saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} /></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`${shareLabel} ${result.modelName}`} onPress={share} style={({pressed}) => [c.action,c.shareAction,pressed&&c.pressed]}><Share2 size={18} color={theme.icon} /></Pressable></View>
           </View>
         </View>
         <View style={c.detailColumn}>
           <View style={c.location}><MapPin size={13} color={theme.textPrimary} /><Text style={[c.meta,{color:theme.textSecondary}]}>{result.pickupLocation}</Text></View>
-          <View style={c.specs}><Spec icon={<Users size={14} color="#64748B" />} label={`${result.passengers} passengers`} /><Spec icon={<DoorOpen size={14} color="#64748B" />} label={`${result.doors} doors`} /><Spec icon={<FlowIcon name={transmissionIcon} size={14} color="#64748B" />} label={capitalize(result.transmission)} /><Spec icon={<BriefcaseBusiness size={14} color="#64748B" />} label={`${result.bags} bags`} /></View>
+          <View style={c.specs}><Spec icon={<Users size={14} color="#64748B" />} label={`${result.passengers} ${carText(locale,"carsResults.passengers","passengers").toLowerCase()}`} /><Spec icon={<DoorOpen size={14} color="#64748B" />} label={`${result.doors} ${carText(locale,"carsResults.doors","doors").toLowerCase()}`} /><Spec icon={<FlowIcon name={transmissionIcon} size={14} color="#64748B" />} label={carText(locale,result.transmission === "automatic" ? "carsResults.automatic" : "carsResults.manual",result.transmission === "automatic" ? "Automatic" : "Manual")} /><Spec icon={<BriefcaseBusiness size={14} color="#64748B" />} label={`${result.bags} ${carText(locale,"carDetails.bags","bags").toLowerCase()}`} /></View>
         </View>
         </View>
         <View style={[c.conversion,{backgroundColor:theme.surface}]}>
           <View style={c.priceColumn}>
-            {offer ? <><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[c.total,{color:theme.textPrimary}]}>{money(offer.currency, offer.totalPrice)}</Text><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.9} style={[c.taxDisclosure,{color:theme.textSecondary}]}>{offer.taxesAndFeesIncluded ? "includes taxes & fees" : "taxes & fees shown where known"}</Text><Text numberOfLines={1} style={[c.perDay,{color:theme.textPrimary}]}>{money(offer.currency, offer.pricePerDay)} per day</Text></> : <Text style={[c.unavailablePrice,{color:theme.textSecondary}]}>Live price unavailable</Text>}
+            {offer && totalPrice && dailyPrice ? <><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[c.total,{color:theme.textPrimary}]}>{totalPrice.formatted}</Text><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.9} style={[c.taxDisclosure,{color:theme.textSecondary}]}>{offer.taxesAndFeesIncluded ? carText(locale,"carsResults.includesTaxesFees","includes taxes & fees") : carText(locale,"carsResults.taxesFeesShownWhereKnown","taxes & fees shown where known")}</Text><Text numberOfLines={1} style={[c.perDay,{color:theme.textPrimary}]}>{dailyPrice.formatted} {carText(locale,"carDetails.perDay","per day")}</Text></> : <Text style={[c.unavailablePrice,{color:theme.textSecondary}]}>{carText(locale,"carsResults.livePriceUnavailable","Live price unavailable")}</Text>}
           </View>
         </View>
       </View>
@@ -68,14 +76,13 @@ export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal
     <View style={[c.actionRow,{borderTopColor:theme.border}]}>
       <View style={c.actionVisualSpacer} />
       <View style={c.actionContent}>
-        <Pressable accessibilityRole="button" accessibilityLabel={`View deal for ${result.modelName}`} onPress={onViewDeal} hitSlop={{top:4,bottom:4,left:4,right:4}} style={({pressed}) => [c.viewDeal,pressed&&c.pressed]}><Text style={[c.viewDealText,{color:theme.dark ? "#8FB5FF" : ui.blue}]}>View deal</Text><ChevronRight accessible={false} size={16} strokeWidth={2.2} color={theme.dark ? "#8FB5FF" : ui.blue} /></Pressable>
-        {offer?.freeCancellation ? <View style={c.freeCancellation}><ShieldCheck accessible={false} size={13} strokeWidth={2} color={freeCancellationColor} /><Text style={[c.freeCancellationText,{color:freeCancellationColor}]}>Free cancellation</Text></View> : null}
+        <Pressable accessibilityRole="button" accessibilityLabel={`${carText(locale,"carsResults.viewDeal","View deal")} ${result.modelName}`} onPress={onViewDeal} hitSlop={{top:4,bottom:4,left:4,right:4}} style={({pressed}) => [c.viewDeal,pressed&&c.pressed]}><Text style={[c.viewDealText,{color:theme.dark ? "#8FB5FF" : ui.blue}]}>{carText(locale,"carsResults.viewDeal","View deal")}</Text><ChevronRight accessible={false} size={16} strokeWidth={2.2} color={theme.dark ? "#8FB5FF" : ui.blue} /></Pressable>
+        {offer?.freeCancellation ? <View style={c.freeCancellation}><ShieldCheck accessible={false} size={13} strokeWidth={2} color={freeCancellationColor} /><Text style={[c.freeCancellationText,{color:freeCancellationColor}]}>{carText(locale,"carDetails.freeCancellation","Free cancellation")}</Text></View> : null}
       </View>
     </View>
   </View>;
 }
 function Spec({ icon, label }: { icon: ReactNode; label: string }) { const { theme } = useAppTheme(); return <View style={c.spec}>{icon}<Text numberOfLines={2} style={[c.specText,{color:theme.textSecondary}]}>{label}</Text></View>; }
-const capitalize = (value: string) => `${value.slice(0, 1).toUpperCase()}${value.slice(1)}`;
 const c = StyleSheet.create({
   card:{borderWidth:1,borderRadius:13,overflow:"hidden",shadowOpacity:0.08,shadowRadius:10,shadowOffset:{width:0,height:2},elevation:2},topMetaShell:{flexDirection:"row",borderBottomWidth:StyleSheet.hairlineWidth},topMetaVisualSpacer:{width:"40%"},topMetaContent:{flex:1,minWidth:0,paddingHorizontal:10,paddingTop:6,paddingBottom:4},topMetaRow:{minWidth:0,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:6},main:{minHeight:168,flexDirection:"row",alignItems:"stretch"},visualColumn:{width:"40%",minHeight:168,paddingLeft:6,paddingRight:6,paddingBottom:8},visualColumnWithoutTopMeta:{paddingTop:9},visual:{flex:1,overflow:"hidden",borderRadius:10},image:{...StyleSheet.absoluteFillObject},curatedImage:{transform:[{scale:1.08}]},imageFallback:{flex:1,alignItems:"center",justifyContent:"center",gap:7,padding:8},fallbackText:{fontSize:10,fontWeight:"600",color:"#315A7D",textAlign:"center"},
   contentColumn:{flex:1,minWidth:0},actionRow:{flexDirection:"row",borderTopWidth:StyleSheet.hairlineWidth},actionVisualSpacer:{width:"40%"},actionContent:{flex:1,minWidth:0,paddingLeft:10,paddingRight:10,paddingBottom:8},
