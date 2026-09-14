@@ -1,6 +1,6 @@
 import { NativeAppleHotelMap } from "./NativeAppleHotelMap";
-import { useEffect, useState } from "react";
-import { Image, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Image, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { MapPin } from "lucide-react-native";
 import { WebView } from "react-native-webview";
 import type { PublicHotelPropertyDetails } from "../../../../../src/lib/types";
@@ -19,6 +19,7 @@ import {
 
 type Theme = { dark: boolean; surface: string; border: string; textPrimary: string; textSecondary: string; icon: string };
 const rememberedHotelLocationViews = new Map<string, NativeHotelLocationView>();
+const STREET_VIEW_SETTLE_MS = 900;
 function rememberedHotelLocationView(hotelId: string): NativeHotelLocationView {
   const remembered = rememberedHotelLocationViews.get(hotelId) ?? "map";
   return remembered;
@@ -33,13 +34,28 @@ export function NativeHotelLocationSection({ hotelId, hotelName, propertyDetails
   const [view, setView] = useState<NativeHotelLocationView>(() => rememberedHotelLocationView(hotelId));
   const [mapPreviewFailed, setMapPreviewFailed] = useState(false);
   const [streetViewFailed, setStreetViewFailed] = useState(false);
+  const [streetViewLoading, setStreetViewLoading] = useState(true);
   const [fullMapOpen, setFullMapOpen] = useState(false);
+  const streetViewReadyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearStreetViewReadyTimer = () => {
+    if (!streetViewReadyTimer.current) return;
+    clearTimeout(streetViewReadyTimer.current);
+    streetViewReadyTimer.current = null;
+  };
+  const failStreetView = () => {
+    clearStreetViewReadyTimer();
+    setStreetViewLoading(false);
+    setStreetViewFailed(true);
+  };
   useEffect(() => {
+    clearStreetViewReadyTimer();
     setView(rememberedHotelLocationView(hotelId));
     setMapPreviewFailed(false);
     setStreetViewFailed(false);
+    setStreetViewLoading(true);
     setFullMapOpen(false);
   }, [hotelId]);
+  useEffect(() => () => clearStreetViewReadyTimer(), []);
   if (!propertyDetails) return <View style={styles.locationSection}><Text accessibilityRole="header" style={[styles.heading, { color: theme.textPrimary }]}>Location</Text><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Verified location details are not available for this property yet.</Text></View>;
 
   const streetAddress = propertyDetails.streetAddress.trim();
@@ -54,9 +70,20 @@ export function NativeHotelLocationSection({ hotelId, hotelName, propertyDetails
   const accent = theme.dark ? "#8FB5FF" : colors.blue;
   const selectView = (next: NativeHotelLocationView) => {
     if (next === effectiveView) return;
-    if (next === "streetview") setStreetViewFailed(false);
+    if (next === "streetview") {
+      clearStreetViewReadyTimer();
+      setStreetViewFailed(false);
+      setStreetViewLoading(true);
+    }
     rememberedHotelLocationViews.set(hotelId, next);
     setView(next);
+  };
+  const settleStreetView = () => {
+    clearStreetViewReadyTimer();
+    streetViewReadyTimer.current = setTimeout(() => {
+      setStreetViewLoading(false);
+      streetViewReadyTimer.current = null;
+    }, STREET_VIEW_SETTLE_MS);
   };
 
   return <View style={styles.locationSection}>
@@ -66,7 +93,7 @@ export function NativeHotelLocationSection({ hotelId, hotelName, propertyDetails
       {alternateLocationViewAvailable ? <View accessibilityRole="tablist" style={styles.mapTabs}>{(["map", "streetview"] as const).map((option) => <Pressable key={option} accessibilityRole="tab" accessibilityState={{ selected: effectiveView === option }} onPress={() => selectView(option)} style={[styles.mapTab, effectiveView === option && { borderBottomColor: accent }]}><Text style={[styles.mapTabText, { color: effectiveView === option ? accent : theme.textSecondary }]}>{option === "map" ? "Map" : "Street View"}</Text></Pressable>)}</View> : null}
       <View style={styles.mapViewport}>{effectiveView === "map" ? <Pressable accessibilityRole="button" accessibilityLabel={`Open full map for ${hotelName}`} accessibilityHint="Opens an interactive map inside Kurioticket" onPress={() => setFullMapOpen(true)} style={styles.mapPreview}>
         {Platform.OS === "ios" && hasValidHotelCoordinates(propertyDetails) ? <View pointerEvents="none" style={styles.map}><NativeAppleHotelMap key={`${hotelId}:${propertyDetails.latitude}:${propertyDetails.longitude}`} latitude={propertyDetails.latitude} longitude={propertyDetails.longitude} hotelName={hotelName} /></View> : Platform.OS !== "ios" && previewUrl && !mapPreviewFailed ? <Image accessible={false} source={{ uri: previewUrl }} resizeMode="cover" onError={() => setMapPreviewFailed(true)} style={styles.map} /> : <View style={styles.mapFallback}><MapPin accessible={false} size={24} color={theme.icon} /><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Map preview unavailable</Text></View>}
-      </Pressable> : streetViewUrl && !streetViewFailed ? <WebView key={`${hotelId}:streetview`} source={{ uri: streetViewUrl }} scrollEnabled={false} onError={() => setStreetViewFailed(true)} onHttpError={() => setStreetViewFailed(true)} style={styles.map} /> : <View style={styles.mapFallback}><MapPin accessible={false} size={24} color={theme.icon} /><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Street View unavailable</Text></View>}</View>
+      </Pressable> : streetViewUrl && !streetViewFailed ? <View style={styles.streetViewFrame}><WebView key={`${hotelId}:streetview`} source={{ uri: streetViewUrl }} scrollEnabled={false} onLoadStart={() => { clearStreetViewReadyTimer(); setStreetViewLoading(true); }} onLoadEnd={settleStreetView} onError={failStreetView} onHttpError={failStreetView} style={styles.map} />{streetViewLoading ? <View accessibilityRole="progressbar" accessibilityLabel="Loading Street View" style={[styles.streetViewLoading, { backgroundColor: theme.surface }]}><ActivityIndicator size="small" color={accent} /><Text style={[styles.streetViewLoadingText, { color: theme.textSecondary }]}>Loading Street View…</Text></View> : null}</View> : <View style={styles.mapFallback}><MapPin accessible={false} size={24} color={theme.icon} /><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Street View unavailable</Text></View>}</View>
     </View>
     <NativeHotelFullMapModal visible={fullMapOpen} hotelId={hotelId} theme={theme} onClose={() => setFullMapOpen(false)} propertyDetails={propertyDetails} hotelName={hotelName} />
     <Text accessibilityRole="header" style={[styles.subheading, { color: theme.textPrimary }]}>Why this location works</Text>
@@ -89,6 +116,9 @@ const styles = StyleSheet.create({
   mapViewport: { height: 216, width: "100%" },
   mapPreview: { flex: 1 },
   map: { flex: 1 },
+  streetViewFrame: { flex: 1, overflow: "hidden" },
+  streetViewLoading: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, zIndex: 2, alignItems: "center", justifyContent: "center", gap: 8 },
+  streetViewLoadingText: { fontSize: 13, lineHeight: 20, fontWeight: "500", fontFamily: appFonts.medium },
   mapFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 6 },
   subheading: { marginTop: 10, fontSize: 15, lineHeight: 22, fontWeight: "600", fontFamily: appFonts.semibold },
   factList: { marginTop: 4, gap: 3 },
