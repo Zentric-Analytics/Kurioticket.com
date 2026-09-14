@@ -32,7 +32,7 @@ test("active Details and Reviews retain their integrations", () => {
 
 test("native empty review state is flat and compact", () => {
   const callout = styleRule("emptyCallout", "emptyText");
-  assert.match(callout, /marginTop: 8/);
+  assert.match(callout, /marginTop: 5/);
   assert.doesNotMatch(callout, /borderLeftWidth|paddingLeft|paddingVertical/);
   assert.doesNotMatch(reviews, /borderLeftColor/);
   const text = styleRule("emptyText", "scoreRow");
@@ -75,15 +75,15 @@ test("Reviews use exact canonical labels without legacy native fallbacks", () =>
   }
 });
 
-test("Reviews geometry and typography follow the compact Profile-style hierarchy without double inset", () => {
+test("Reviews geometry and typography follow the tightened Profile-style hierarchy without double inset", () => {
   const section = styleRule("reviewsSection", "heading");
-  assert.match(section, /paddingVertical: 12/);
+  assert.match(section, /paddingVertical: 6/);
   assert.doesNotMatch(section, /paddingHorizontal/);
   assert.match(detail, /detailBody: \{[^\n]*paddingHorizontal: 16/);
 
   const contracts: Array<[string, string, RegExp[]]> = [
     ["heading", "emptyCallout", [/fontSize: 16/, /lineHeight: 22/, /fontWeight: "700"/]],
-    ["scoreRow", "scoreBadge", [/marginTop: 14/, /gap: 14/]],
+    ["scoreRow", "scoreBadge", [/marginTop: 10/, /gap: 12/]],
     ["scoreBadge", "scoreText", [/height: 56/, /minWidth: 56/, /borderRadius: 8/, /paddingHorizontal: 8/, /colors\.blue/]],
     ["scoreText", "metadata", [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/]],
     ["metadata", "label", [/flex: 1/, /minWidth: 0/]],

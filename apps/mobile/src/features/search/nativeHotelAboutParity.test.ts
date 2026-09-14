@@ -69,22 +69,22 @@ test("About copy is explanatory and built only from existing Hotel facts", () =>
   assert.doesNotMatch(model, /perfect|best hotel|guaranteed|luxury stay/i);
 });
 
-test("active Details uses the Profile-style hierarchy with a dense divider-free single-column rhythm", () => {
+test("active Details uses the Profile-style hierarchy with a tightened divider-free single-column rhythm", () => {
   const heading = styleRule("heading", "description");
   const description = styleRule("description", "fallback");
   const amenityRow = styleRule("amenityRow", "infoRow");
   const rowText = styleRule("rowText", "seeAllLink");
   for (const rule of [/fontSize: 16/, /lineHeight: 22/, /fontWeight: "700"/, /fontFamily: appFonts\.bold/]) assert.match(heading, rule);
-  for (const rule of [/marginTop: 4/, /fontSize: 14/, /lineHeight: 21/, /fontWeight: "400"/, /fontFamily: appFonts\.regular/]) assert.match(description, rule);
+  for (const rule of [/marginTop: 3/, /fontSize: 14/, /lineHeight: 21/, /fontWeight: "400"/, /fontFamily: appFonts\.regular/]) assert.match(description, rule);
   assert.match(amenityRow, /flexDirection: "row"/);
   assert.doesNotMatch(amenityRow, /width: "48%"|borderWidth|borderRadius/);
   for (const rule of [/fontSize: 14/, /lineHeight: 20/, /fontWeight: "400"/, /fontFamily: appFonts\.regular/]) assert.match(rowText, rule);
   assert.match(details, /strokeWidth=\{1\.3\}/);
   assert.match(details, /const iconColor = theme\.dark \? theme\.icon : "#1A1A1A"/);
   assert.match(details, /section: \{ paddingVertical: 0 \}/);
-  assert.match(details, /sectionGap: \{ height: 12 \}/);
-  assert.match(details, /rowList: \{ marginTop: 5, gap: 4 \}/);
-  assert.match(details, /seeAllLink: \{ alignSelf: "flex-start", marginTop: 6, paddingVertical: 4 \}/);
+  assert.match(details, /sectionGap: \{ height: 8 \}/);
+  assert.match(details, /rowList: \{ marginTop: 4, gap: 3 \}/);
+  assert.match(details, /seeAllLink: \{ alignSelf: "flex-start", marginTop: 4, paddingVertical: 4 \}/);
   assert.doesNotMatch(details, /function SectionDivider|divider: \{|seeAllRow|ChevronRight/);
   assert.match(details, /accessibilityLabel="See all amenities"/);
   assert.match(details, /<Modal[\s\S]*?visible=\{amenitiesOpen\}/);

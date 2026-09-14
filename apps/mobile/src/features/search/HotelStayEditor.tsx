@@ -442,7 +442,7 @@ function CounterRow({
 }
 
 const s = StyleSheet.create({
-  section: { paddingHorizontal: 10, paddingTop: 24 },
+  section: { paddingHorizontal: 10, paddingTop: 14 },
   card: { minHeight: 60, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 10 },
   copy: { flex: 1, minWidth: 0, justifyContent: "center" },
   pressed: { opacity: 0.62 },
