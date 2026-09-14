@@ -33,13 +33,13 @@ test("arbitrary supplier imagery is not classified as curated", () => {
 test("local curated Cars assets receive the current cache version", () => {
   assert.equal(
     resolveCarResultImageSource("/images/cars/results/toyota-yaris.webp"),
-    "/images/cars/results/toyota-yaris.webp?v=rear-left-cutouts-20260914-v2",
+    "/images/cars/results/toyota-yaris.webp?v=plate-cleanup-20260914-v1",
   );
   assert.equal(
     resolveCarResultImageSource(
       "https://api.kurioticket.test/images/cars/results/mercedes-benz-e-class.webp?locale=en",
     ),
-    "https://api.kurioticket.test/images/cars/results/mercedes-benz-e-class.webp?locale=en&v=rear-left-cutouts-20260914-v2",
+    "https://api.kurioticket.test/images/cars/results/mercedes-benz-e-class.webp?locale=en&v=plate-cleanup-20260914-v1",
   );
   assert.equal(
     resolveCarResultImageSource("https://img.supplier.test/vehicles/yaris.jpg"),

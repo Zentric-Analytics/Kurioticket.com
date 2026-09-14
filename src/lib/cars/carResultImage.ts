@@ -1,4 +1,4 @@
-export const CARS_RESULTS_IMAGE_VERSION = "rear-left-cutouts-20260914-v2";
+export const CARS_RESULTS_IMAGE_VERSION = "plate-cleanup-20260914-v1";
 const CURATED_CAR_RESULT_IMAGE_PREFIX = "/images/cars/results/";
 
 const carResultImagePathname = (imageUrl?: string) => {
