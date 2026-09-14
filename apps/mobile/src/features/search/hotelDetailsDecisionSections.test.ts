@@ -67,8 +67,8 @@ test("native Compare Property location uses its preview as the sole full-map lau
   assert.match(section, /<Image accessible=\{false\} source=\{\{ uri: mapUrl \}\} resizeMode="cover"/);
   assert.match(section, /onError=\{\(\) => setMapFailed\(true\)\}/);
   assert.match(section, /Map preview unavailable/);
-  assert.equal(section.match(/onPress=\{openFullMap\}/g)?.length, 1);
-  assert.match(section, /<Pressable accessibilityRole="button" accessibilityLabel=\{`Open full map for \$\{hotelName\}`\} accessibilityHint="Opens an interactive map inside Kurioticket" onPress=\{openFullMap\} style=\{\[styles\.mapFrame/);
+  assert.equal(section.match(/onPress=\{\(\) => setFullMapOpen\(true\)\}/g)?.length, 1);
+  assert.match(section, /<Pressable accessibilityRole="button" accessibilityLabel=\{`Open full map for \$\{hotelName\}`\} accessibilityHint="Opens an interactive map inside Kurioticket" onPress=\{\(\) => setFullMapOpen\(true\)\} style=\{\[styles\.mapFrame/);
   assert.match(section, /<NativeHotelFullMapModal visible=\{fullMapOpen\} hotelId=\{hotelId\} theme=\{theme\} onClose=\{\(\) => setFullMapOpen\(false\)\} propertyDetails=\{propertyDetails\} hotelName=\{hotelName\} \/>/);
   assert.doesNotMatch(section, />View in map</);
   assert.doesNotMatch(section, /styles\.mapAction|styles\.mapActionText/);
@@ -80,8 +80,10 @@ test("native Compare Property location uses its preview as the sole full-map lau
   assert.match(mapFrame, /overflow:\s*"hidden"/);
   assert.doesNotMatch(mapFrame, /height:\s*280/);
   assert.match(mapFrame, /borderRadius:\s*14/);
-  assert.match(component, /locationHeading:\s*\{[^}]*fontSize:\s*17[^}]*lineHeight:\s*22[^}]*fontWeight:\s*"700"[^}]*fontFamily:\s*appFonts\.bold/);
-  assert.match(component, /address:\s*\{[^}]*marginTop:\s*4[^}]*fontSize:\s*13[^}]*lineHeight:\s*19[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
+  assert.match(component, /const iconColor = theme\.dark \? theme\.icon : "#1A1A1A";/);
+  assert.match(component, /<MapPin accessible=\{false\} size=\{25\} strokeWidth=\{1\.3\} color=\{iconColor\}/);
+  assert.match(component, /locationHeading:\s*\{[^}]*fontSize:\s*16[^}]*lineHeight:\s*22[^}]*fontWeight:\s*"700"[^}]*fontFamily:\s*appFonts\.bold/);
+  assert.match(component, /address:\s*\{[^}]*marginTop:\s*4[^}]*fontSize:\s*14[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
 });
 
 test("native related hotel header contains only the heading and carousel", () => {
@@ -114,13 +116,14 @@ test("native related Hotel cards use the measured compact carousel geometry and 
   assert.match(component, /imageFrame:\s*\{[^}]*height:\s*160[^}]*width:\s*"100%"/);
   assert.match(component, /cardBody:\s*\{[^}]*minHeight:\s*143[^}]*paddingHorizontal:\s*14[^}]*paddingTop:\s*12[^}]*paddingBottom:\s*14/);
   assert.match(component, /relatedCard:\s*\{[^}]*borderWidth:\s*StyleSheet\.hairlineWidth[^}]*borderRadius:\s*10/);
-  assert.match(component, /heading:\s*\{[^}]*fontSize:\s*18[^}]*lineHeight:\s*24[^}]*fontWeight:\s*"700"[^}]*fontFamily:\s*appFonts\.bold/);
+  assert.match(component, /heading:\s*\{[^}]*fontSize:\s*16[^}]*lineHeight:\s*22[^}]*fontWeight:\s*"700"[^}]*fontFamily:\s*appFonts\.bold/);
   assert.match(component, /stars:\s*\{[^}]*color:\s*"#F59E0B"[^}]*fontSize:\s*12[^}]*lineHeight:\s*16[^}]*letterSpacing:\s*0\.96[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
-  assert.match(component, /hotelName:\s*\{[^}]*marginTop:\s*3[^}]*fontSize:\s*15[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"600"[^}]*fontFamily:\s*appFonts\.semibold/);
+  assert.match(component, /hotelName:\s*\{[^}]*marginTop:\s*3[^}]*fontSize:\s*14[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"600"[^}]*fontFamily:\s*appFonts\.semibold/);
   assert.match(component, /location:\s*\{[^}]*marginTop:\s*3[^}]*fontSize:\s*12[^}]*lineHeight:\s*18[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
   assert.match(component, /priceBlock:\s*\{[^}]*marginTop:\s*"auto"[^}]*paddingTop:\s*10/);
   assert.match(component, /nightly:\s*\{[^}]*fontSize:\s*14[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"600"[^}]*fontFamily:\s*appFonts\.semibold/);
   assert.match(component, /priceUnavailable:\s*\{[^}]*fontSize:\s*14[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"600"[^}]*fontFamily:\s*appFonts\.semibold/);
+  assert.match(card, /<ImageOff accessible=\{false\} size=\{20\} strokeWidth=\{1\.3\} color=\{iconColor\}/);
 
   assert.match(card, /item\.classificationStars/);
   assert.match(card, /item\.displayPrices\?\.nightly/);
