@@ -1,6 +1,8 @@
-import type { FlightFareTerm } from "../../../../../src/lib/types";
+import { compactFareTerms } from "../../../../../src/lib/flights/flightDetailsPresentation";
+import type { FlightFareTerm, TripType } from "../../../../../src/lib/types";
 
 export type NativeFareBenefitPresentation = { title: string; detail: string };
+export type NativeFareBenefitRow = NativeFareBenefitPresentation & { key: string; semantic: FlightFareTerm["semantic"] };
 
 const withScope = (scope: string | undefined, title: string) => scope ? `${scope}: ${title}` : title;
 const sentenceCase = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
@@ -47,4 +49,60 @@ export function nativeFareBenefitPresentation(category: FlightFareTerm["category
   }
 
   return { title: withScope(scope, "Fare benefits"), detail: body };
+}
+
+const unscopedTitle = (title: string) => title.replace(/^(Outbound|Return|Flight \d+):\s*/i, "");
+const scopeFromTitle = (title: string) => title.match(/^(Outbound|Return|Flight \d+):/i)?.[1];
+const groupedSemantic = (semantics: FlightFareTerm["semantic"][]): FlightFareTerm["semantic"] =>
+  semantics.length > 0 && semantics.every((semantic) => semantic === semantics[0]) ? semantics[0] : "informational";
+
+/** Builds the native card's three decision-oriented disclosures without changing shared web compaction. */
+export function nativeFareBenefitRows(terms: FlightFareTerm[], tripType: TripType, maxRows = 3): NativeFareBenefitRow[] {
+  const sourceRows = compactFareTerms(terms, tripType, Number.MAX_SAFE_INTEGER, true).map((row, position) => ({
+    ...nativeFareBenefitPresentation(row.term.category, row.text), category: row.term.category,
+    semantic: row.term.semantic, key: `${row.index}-${row.rowIndex}-${position}`,
+  }));
+  const consumed = new Set<number>();
+  const grouped: Array<NativeFareBenefitRow & { category?: FlightFareTerm["category"]; priority: number; position: number }> = [];
+  const partialBaggageWarnings = sourceRows.map((row, position) => ({ row, position })).filter(({ row }) =>
+    row.category === "baggage" && unscopedTitle(row.title) === "Baggage allowance" && /one or more passengers/i.test(row.detail),
+  );
+  const addGroup = (kind: "Carry-on baggage" | "Checked baggage" | "Change/refund rules", priority: number) => {
+    const matches = sourceRows.map((row, position) => ({ row, position })).filter(({ row }) => {
+      const title = unscopedTitle(row.title);
+      return kind === "Change/refund rules" ? row.category === "change" || row.category === "refund" || title === kind : title === kind;
+    });
+    if (!matches.length) return;
+    matches.forEach(({ position }) => consumed.add(position));
+    const baggageWarnings = kind === "Change/refund rules" ? [] : partialBaggageWarnings;
+    baggageWarnings.forEach(({ position }) => consumed.add(position));
+    const details = matches.map(({ row }) => {
+      const scope = scopeFromTitle(row.title);
+      if (kind !== "Change/refund rules") return scope ? `${scope}: ${row.detail}` : row.detail;
+      if (unscopedTitle(row.title) === kind) return scope ? `${scope}: ${row.detail}` : row.detail;
+      const rule = row.category === "change" ? "changes" : "refunds";
+      return `${scope ? `${scope} ${rule}` : sentenceCase(rule)}: ${row.detail}`;
+    });
+    if (baggageWarnings.length) {
+      details.push(...baggageWarnings.map(({ row }) => {
+        const scope = scopeFromTitle(row.title);
+        return `${scope ? `${scope} allowance` : "Allowance"}: ${row.detail}`;
+      }));
+    }
+    const semanticRows = [...matches, ...baggageWarnings];
+    grouped.push({
+      title: kind,
+      detail: details.join("\n"),
+      semantic: groupedSemantic(semanticRows.map(({ row }) => row.semantic)),
+      key: `${kind}:${semanticRows.map(({ row }) => row.key).join("+")}`,
+      priority,
+      position: matches[0].position,
+    });
+  };
+  addGroup("Carry-on baggage", 0);
+  addGroup("Checked baggage", 1);
+  addGroup("Change/refund rules", 2);
+  sourceRows.forEach((row, position) => { if (!consumed.has(position)) grouped.push({ ...row, priority: 3, position }); });
+  return grouped.sort((left, right) => left.priority - right.priority || left.position - right.position).slice(0, maxRows)
+    .map(({ priority: _priority, position: _position, category: _category, ...row }) => row);
 }
