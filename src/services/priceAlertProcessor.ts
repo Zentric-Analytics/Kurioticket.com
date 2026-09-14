@@ -69,12 +69,15 @@ export type OptionalEmailSender = typeof sendOptionalEmail;
 
 export function selectHotelPriceAlertResult(
   hotels: readonly NormalizedHotelResult[],
+  requestedCurrency?: string,
 ): ResolvedPrice | null {
+  const currency = requestedCurrency?.trim().toUpperCase();
   for (const hotel of hotels) {
     if (hotel.inventoryKind === "discovery") continue;
 
     const priceDetails = getHotelPriceDetails(hotel);
     if (priceDetails === null) continue;
+    if (currency && priceDetails.currency.trim().toUpperCase() !== currency) continue;
 
     return {
       provider: hotel.provider,
@@ -218,8 +221,8 @@ export async function resolveAlertPrice(alert: PriceAlertRecord): Promise<Resolv
   }
   const search = alert.query as Partial<HotelSearchParams>;
   const result = await searchHotels(search as HotelSearchParams);
-    if (result.results.length === 0) throw new Error("live_hotel_price_unavailable");
-  const selected = selectHotelPriceAlertResult(result.results);
+  if (result.results.length === 0) throw new Error("live_hotel_price_unavailable");
+  const selected = selectHotelPriceAlertResult(result.results, alert.currency);
   if (selected === null) throw new Error("live_hotel_price_unavailable");
   return selected;
 }
