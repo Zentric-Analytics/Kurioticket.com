@@ -84,12 +84,7 @@ export function NativeHotelReviewsSection({ result }: { result: ReviewResult }) 
           </View>
         </View>
       ) : (
-        <View
-          style={[
-            styles.emptyCallout,
-            { borderLeftColor: theme.dark ? theme.border : "#E2E8F0" },
-          ]}
-        >
+        <View style={styles.emptyCallout}>
           <Text style={[styles.emptyText, { color: theme.dark ? theme.textSecondary : "#475569" }]}>
             Verified guest reviews are not connected for this property yet.
           </Text>
@@ -102,7 +97,7 @@ export function NativeHotelReviewsSection({ result }: { result: ReviewResult }) 
 const styles = StyleSheet.create({
   reviewsSection: { paddingVertical: 12 },
   heading: { fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.25 },
-  emptyCallout: { marginTop: 12, borderLeftWidth: 2, paddingVertical: 4, paddingLeft: 16 },
+  emptyCallout: { marginTop: 8 },
   emptyText: { fontSize: 13, lineHeight: 22, fontWeight: "400", fontFamily: appFonts.regular },
   scoreRow: { marginTop: 16, flexDirection: "row", alignItems: "center", gap: 16 },
   scoreBadge: { height: 56, minWidth: 56, borderRadius: 8, backgroundColor: colors.blue, paddingHorizontal: 8, alignItems: "center", justifyContent: "center" },
