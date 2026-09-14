@@ -16,6 +16,9 @@ public final class KurioticketCarLookAroundModule: Module {
       Prop("locationLabel") { (view: KurioticketCarLookAroundView, value: String) in
         view.setLocationLabel(value)
       }
+      Prop("presentationMode") { (view: KurioticketCarLookAroundView, value: String) in
+        view.setPresentationMode(value)
+      }
     }
   }
 }
