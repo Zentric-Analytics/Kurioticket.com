@@ -9,7 +9,8 @@ test("iOS Look Around matches the existing map preview-to-full-screen interactio
   assert.match(location, /const \[fullLookAroundOpen, setFullLookAroundOpen\] = useState\(false\);/);
   assert.match(location, /accessibilityLabel=\{`Open full Look Around for \$\{hotelName\}`\}/);
   assert.match(location, /accessibilityHint="Opens an interactive Look Around view inside Kurioticket"/);
-  assert.match(location, /disabled=\{lookAroundStatus !== "ready"\}/);
+  assert.doesNotMatch(location, /disabled=\{lookAroundStatus !== "ready"\}/);
+  assert.doesNotMatch(location, /accessibilityState=\{\{ disabled: lookAroundStatus !== "ready" \}\}/);
   assert.match(location, /onPress=\{\(\) => setFullLookAroundOpen\(true\)\}/);
   assert.match(location, /<View pointerEvents="none" style=\{styles\.map\}>[\s\S]*?<NativeAppleHotelLookAround/);
   assert.match(location, /<NativeHotelFullLookAroundModal visible=\{fullLookAroundOpen\}/);

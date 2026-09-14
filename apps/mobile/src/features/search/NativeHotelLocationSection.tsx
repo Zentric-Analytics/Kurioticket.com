@@ -82,8 +82,6 @@ export function NativeHotelLocationSection({ hotelId, hotelName, propertyDetails
         accessibilityRole="button"
         accessibilityLabel={`Open full Look Around for ${hotelName}`}
         accessibilityHint="Opens an interactive Look Around view inside Kurioticket"
-        accessibilityState={{ disabled: lookAroundStatus !== "ready" }}
-        disabled={lookAroundStatus !== "ready"}
         onPress={() => setFullLookAroundOpen(true)}
         style={styles.mapPreview}
       >
