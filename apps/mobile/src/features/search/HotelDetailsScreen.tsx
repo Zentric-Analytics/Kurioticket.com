@@ -131,8 +131,8 @@ function HotelDetail({
       )?.id === result.id,
   );
   const width = useWindowDimensions().width;
-  const [activeHotelTab, setActiveHotelTab] = useState<HotelDetailTab>("details");
-  const activeHotelTabRef = useRef<HotelDetailTab>("details");
+  const [activeHotelTab, setActiveHotelTab] = useState<HotelDetailTab>("deals");
+  const activeHotelTabRef = useRef<HotelDetailTab>("deals");
   const hotelDetailScrollRef = useRef<ScrollView>(null);
   const currentHotelScrollOffset = useRef(0);
   const restoringHotelTabScrollRef = useRef(false);
@@ -140,9 +140,9 @@ function HotelDetail({
   const hotelTabsPinnedRef = useRef(false);
   const [hotelTabsPinned, setHotelTabsPinned] = useState(false);
   const hotelTabScrollOffsets = useRef<Record<HotelDetailTab, number | null>>({
-    details: 0,
+    details: null,
     reviews: null,
-    deals: null,
+    deals: 0,
   });
   const [detailsState, setDetailsState] = useState<{
     key: string;
@@ -479,13 +479,13 @@ function HotelDetail({
 
   useEffect(() => {
     restoringHotelTabScrollRef.current = true;
-    activeHotelTabRef.current = "details";
-    setActiveHotelTab("details");
+    activeHotelTabRef.current = "deals";
+    setActiveHotelTab("deals");
     currentHotelScrollOffset.current = 0;
     hotelTabsStickyStartRef.current = null;
     hotelTabsPinnedRef.current = false;
     setHotelTabsPinned(false);
-    hotelTabScrollOffsets.current = { details: 0, reviews: null, deals: null };
+    hotelTabScrollOffsets.current = { details: null, reviews: null, deals: 0 };
     requestAnimationFrame(() => {
       hotelDetailScrollRef.current?.scrollTo({ y: 0, animated: false });
       requestAnimationFrame(() => {
@@ -568,7 +568,7 @@ function HotelDetail({
             accessibilityRole="tablist"
             style={[s.tabsRow, { backgroundColor: hotelCanvasColor }]}
           >
-            {(["details", "reviews", "deals"] as const).map((tab) => (
+            {(["deals", "details", "reviews"] as const).map((tab) => (
               <Pressable
                 key={tab}
                 accessibilityRole="tab"

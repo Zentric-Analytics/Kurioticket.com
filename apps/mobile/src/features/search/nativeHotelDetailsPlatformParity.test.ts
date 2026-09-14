@@ -13,7 +13,7 @@ function styleRule(name: string, nextName: string) {
   return source.slice(start, end);
 }
 
-test("iOS and Android share one active Hotel Details tablist with Details, Reviews, Deals in order", () => {
+test("iOS and Android share one active Hotel Details tablist with Rates, Overview, Reviews in order", () => {
   const shellStart = hotel.indexOf("s.tabsShell");
   const tablistStart = hotel.indexOf('accessibilityRole="tablist"');
   const tablistEnd = hotel.indexOf("<HotelStayEditor", tablistStart);
@@ -30,9 +30,9 @@ test("iOS and Android share one active Hotel Details tablist with Details, Revie
     "Hotel Details must render exactly one shared native tablist",
   );
   assert.deepEqual(
-    [...tablist.matchAll(/\["details", "reviews", "deals"\]/g)].length,
+    [...tablist.matchAll(/\["deals", "details", "reviews"\]/g)].length,
     1,
-    "the one tablist must map Details, Reviews, and Deals in that order",
+    "the one tablist must map Rates, Overview, and Reviews in that order",
   );
   assert.equal(
     [...tablist.matchAll(/accessibilityRole="tab"/g)].length,
@@ -86,7 +86,7 @@ test("the active shared native tab geometry cannot stack or fork by platform", (
   assert.match(hotel, /hotelTabsStickyStartRef\.current = nativeEvent\.layout\.y/);
   assert.match(hotel, /syncHotelTabsPinned\(offset\)/);
   assert.match(hotel, /style=\{\[s\.tabsRow, \{ backgroundColor: hotelCanvasColor \}\]\}/);
-  assert.match(hotel, /const \[activeHotelTab, setActiveHotelTab\] = useState<HotelDetailTab>\("details"\)/);
+  assert.match(hotel, /const \[activeHotelTab, setActiveHotelTab\] = useState<HotelDetailTab>\("deals"\)/);
 
   const scrollEnd = hotel.indexOf("</ScrollView>");
   const backControl = hotel.indexOf('accessibilityLabel="Back to hotel results"');
