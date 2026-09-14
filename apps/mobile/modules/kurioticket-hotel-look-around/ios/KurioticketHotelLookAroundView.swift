@@ -2,6 +2,48 @@ import ExpoModulesCore
 import MapKit
 import UIKit
 
+@available(iOS 16.0, *)
+private final class InlineLookAroundViewController: MKLookAroundViewController {
+  override func present(
+    _ viewControllerToPresent: UIViewController,
+    animated flag: Bool,
+    completion: (() -> Void)? = nil
+  ) {
+    // Hotel Look Around intentionally stays inline, matching Android Street View.
+  }
+
+  override func show(_ viewController: UIViewController, sender: Any?) {
+    // Do not let MapKit replace Hotel Details with its full-screen viewer.
+  }
+
+  override func showDetailViewController(_ viewController: UIViewController, sender: Any?) {
+    // Do not let MapKit replace Hotel Details with its full-screen viewer.
+  }
+
+  override func viewDidLayoutSubviews() {
+    super.viewDidLayoutSubviews()
+    hideFullScreenAffordance(in: view)
+  }
+
+  private func hideFullScreenAffordance(in root: UIView) {
+    for subview in root.subviews {
+      let frame = subview.convert(subview.bounds, to: view)
+      let isTopLeadingControl = subview is UIControl
+        && frame.minX <= 180
+        && frame.minY <= 72
+        && frame.width <= 220
+        && frame.height <= 88
+
+      if isTopLeadingControl {
+        subview.isHidden = true
+        subview.isUserInteractionEnabled = false
+      } else {
+        hideFullScreenAffordance(in: subview)
+      }
+    }
+  }
+}
+
 final class KurioticketHotelLookAroundView: ExpoView {
   let onStatusChange = EventDispatcher()
 
@@ -13,7 +55,6 @@ final class KurioticketHotelLookAroundView: ExpoView {
   private var reloadWorkItem: DispatchWorkItem?
   private var generation = 0
   private var requestedCoordinateKey: String?
-  private var isPresentingFullScreen = false
   private var interactionGate: UILongPressGestureRecognizer!
 
   required init(appContext: AppContext? = nil) {
@@ -35,12 +76,7 @@ final class KurioticketHotelLookAroundView: ExpoView {
 
   override func layoutSubviews() {
     super.layoutSubviews()
-    // MapKit temporarily owns and resizes this view while presenting its
-    // full-screen viewer. Reapplying the inline bounds during that transition
-    // collapses the presented content and leaves a black screen.
-    if !isPresentingFullScreen {
-      controller?.view.frame = bounds
-    }
+    controller?.view.frame = bounds
   }
 
   override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
@@ -166,8 +202,7 @@ final class KurioticketHotelLookAroundView: ExpoView {
   private func install(scene: MKLookAroundScene) {
     removeController()
 
-    let lookAroundController = MKLookAroundViewController(scene: scene)
-    lookAroundController.delegate = self
+    let lookAroundController = InlineLookAroundViewController(scene: scene)
     lookAroundController.isNavigationEnabled = true
     lookAroundController.showsRoadLabels = true
     lookAroundController.view.frame = bounds
@@ -207,9 +242,6 @@ final class KurioticketHotelLookAroundView: ExpoView {
 
   private func removeController() {
     guard let controller else { return }
-    if #available(iOS 16.0, *), let lookAroundController = controller as? MKLookAroundViewController {
-      lookAroundController.delegate = nil
-    }
     if controller.parent != nil {
       controller.willMove(toParent: nil)
       controller.view.removeFromSuperview()
@@ -218,7 +250,6 @@ final class KurioticketHotelLookAroundView: ExpoView {
       controller.view.removeFromSuperview()
     }
     self.controller = nil
-    isPresentingFullScreen = false
   }
 
   private func emitStatus(_ status: String) {
@@ -232,17 +263,5 @@ extension KurioticketHotelLookAroundView: UIGestureRecognizerDelegate {
     shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
   ) -> Bool {
     gestureRecognizer === interactionGate || otherGestureRecognizer === interactionGate
-  }
-}
-
-@available(iOS 16.0, *)
-extension KurioticketHotelLookAroundView: MKLookAroundViewControllerDelegate {
-  func lookAroundViewControllerWillPresentFullScreen(_ viewController: MKLookAroundViewController) {
-    isPresentingFullScreen = true
-  }
-
-  func lookAroundViewControllerDidDismissFullScreen(_ viewController: MKLookAroundViewController) {
-    isPresentingFullScreen = false
-    setNeedsLayout()
   }
 }
