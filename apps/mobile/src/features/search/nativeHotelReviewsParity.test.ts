@@ -36,8 +36,10 @@ test("native empty review state is flat and compact", () => {
   assert.doesNotMatch(callout, /borderLeftWidth|paddingLeft|paddingVertical/);
   assert.doesNotMatch(reviews, /borderLeftColor/);
   const text = styleRule("emptyText", "scoreRow");
-  assert.match(text, /fontSize: 13/);
-  assert.match(text, /lineHeight: 22/);
+  assert.match(text, /fontSize: 14/);
+  assert.match(text, /lineHeight: 21/);
+  assert.match(text, /fontWeight: "400"/);
+  assert.doesNotMatch(text, /fontFamily/);
   assert.match(reviews, /Guest reviews/);
   assert.match(reviews, /Verified guest reviews are not connected for this property yet\./);
 });
@@ -73,24 +75,25 @@ test("Reviews use exact canonical labels without legacy native fallbacks", () =>
   }
 });
 
-test("Reviews geometry and typography remain compact without double inset", () => {
+test("Reviews geometry and typography follow the compact Profile-style hierarchy without double inset", () => {
   const section = styleRule("reviewsSection", "heading");
   assert.match(section, /paddingVertical: 12/);
   assert.doesNotMatch(section, /paddingHorizontal/);
   assert.match(detail, /detailBody: \{[^\n]*paddingHorizontal: 16/);
 
   const contracts: Array<[string, string, RegExp[]]> = [
-    ["heading", "emptyCallout", [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/, /appFonts\.bold/]],
-    ["scoreRow", "scoreBadge", [/marginTop: 16/, /gap: 16/]],
+    ["heading", "emptyCallout", [/fontSize: 16/, /lineHeight: 22/, /fontWeight: "700"/]],
+    ["scoreRow", "scoreBadge", [/marginTop: 14/, /gap: 14/]],
     ["scoreBadge", "scoreText", [/height: 56/, /minWidth: 56/, /borderRadius: 8/, /paddingHorizontal: 8/, /colors\.blue/]],
-    ["scoreText", "metadata", [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/, /appFonts\.bold/]],
+    ["scoreText", "metadata", [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/]],
     ["metadata", "label", [/flex: 1/, /minWidth: 0/]],
-    ["label", "count", [/fontSize: 15/, /lineHeight: 22/, /fontWeight: "600"/, /appFonts\.semibold/]],
-    ["count", "source", [/fontSize: 13/, /lineHeight: 19/, /appFonts\.regular/]],
+    ["label", "count", [/fontSize: 15/, /lineHeight: 21/, /fontWeight: "600"/]],
+    ["count", "source", [/fontSize: 14/, /lineHeight: 20/, /fontWeight: "400"/]],
   ];
   for (const [name, next, patterns] of contracts) {
     const rule = styleRule(name, next);
     for (const pattern of patterns) assert.match(rule, pattern);
+    assert.doesNotMatch(rule, /fontFamily/);
   }
-  assert.match(reviews, /source: \{ marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: "400", fontFamily: appFonts\.regular \}/);
+  assert.match(reviews, /source: \{ marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: "400" \}/);
 });
