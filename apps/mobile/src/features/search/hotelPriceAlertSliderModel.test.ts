@@ -63,12 +63,22 @@ test("hotel result price alert uses a stable localized slider sheet without nume
   assert.match(component, /buildHotelPriceAlertPayload\(plan, alertTarget, alertCurrency\)/);
 });
 
-test("hotel result price alert preserves an existing paused provider target until the slider changes", () => {
+test("hotel result price alert preserves only paused targets represented by the slider", () => {
   const component = readFileSync("src/features/search/HotelPriceAlert.tsx", "utf8");
   assert.match(component, /const \[preservedPausedTarget, setPreservedPausedTarget\]/);
   assert.match(component, /matchingAlert\?\.status === "PAUSED"/);
+  assert.match(component, /existingDropPercent >= HOTEL_ALERT_MIN_DROP_PERCENT/);
+  assert.match(component, /existingDropPercent <= HOTEL_ALERT_MAX_DROP_PERCENT/);
   assert.match(component, /alertTarget = preservedPausedTarget\?\.currency === alertCurrency[\s\S]*?preservedPausedTarget\.target/);
   assert.match(component, /hotelAlertDropPercentForTarget\(providerCurrentTotal, existingTarget\)/);
   assert.match(component, /onChange=\{\(range\) => \{[\s\S]*?setPreservedPausedTarget\(null\);[\s\S]*?setDropPercent/);
   assert.match(component, /preservedPausedAlert[\s\S]*?updatePriceAlertStatus\(samePausedTarget\.id, "ACTIVE"\)/);
+});
+
+test("hotel result price alert sheet is safe-area aware and scrollable for large text", () => {
+  const component = readFileSync("src/features/search/HotelPriceAlert.tsx", "utf8");
+  assert.match(component, /useSafeAreaInsets/);
+  assert.match(component, /<ScrollView[\s\S]*?contentContainerStyle=\{styles\.sheetContent\}/);
+  assert.match(component, /paddingBottom: Math\.max\(insets\.bottom, 12\)/);
+  assert.match(component, /sheet: \{ maxHeight: "92%"/);
 });
