@@ -23,7 +23,10 @@ test("entry skeleton anticipates route, itinerary, fare carousel, and informatio
   assert.match(loading, /width:fareCardWidth/);
   assert.match(details, /loadingFareCard:\{height:155[^}]*paddingHorizontal:12,paddingVertical:8,gap:5\}/);
   assert.equal((details.match(/s\.loadingFareCard/g) ?? []).length, 2, "both loading rails use the shared loading card style");
-  assert.match(details, /loadingFareIcon:\{width:16,height:16/);
+  assert.match(details, /loadingFareIdentity:\{alignSelf:"stretch",alignItems:"flex-start"/);
+  assert.match(details, /loadingFareNameRow:\{alignSelf:"stretch",flexDirection:"row",alignItems:"flex-start",gap:6\}/);
+  assert.match(details, /loadingFareIcon:\{width:16,height:16[^}]*flexShrink:0/);
+  assert.match(details, /loadingFareName:\{flex:1,minWidth:0,maxWidth:"64%"/);
   assert.match(details, /loadingBenefitDot:\{width:16,height:16/);
   assert.match(loading, /s\.loadingFareIdentity[\s\S]*?s\.loadingBenefitRow[\s\S]*?s\.loadingFarePriceBlock/);
   assert.match(details, /loadingFarePriceBlock:\{alignSelf:"flex-start",alignItems:"flex-start",gap:2\}/);
