@@ -5,8 +5,10 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import { colors } from "../../theme/tokens";
 import { appFonts } from "../../theme/typography";
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { NativeAppleCarMap } from "./NativeAppleCarMap";
 import type { NativeAppleCarMapProps } from "./NativeAppleCarMap.types";
+import { carText } from "./carMobileLocalization";
 
 export type NativeCarMapTheme = {
   surface: string;
@@ -25,40 +27,29 @@ type NativeCarFullMapModalProps = {
 };
 
 export function NativeCarFullMapModal({ visible, pickupLocation, trustedMapCoordinates, embedUrl, theme, onClose }: NativeCarFullMapModalProps) {
+  const {locale}=useMobileLocalization();
   const [fullMapFailed, setFullMapFailed] = useState(false);
   const [fullMapAttempt, setFullMapAttempt] = useState(0);
-  const retryFullMap = () => {
-    setFullMapFailed(false);
-    setFullMapAttempt((attempt) => attempt + 1);
-  };
-  const closeFullMap = () => {
-    setFullMapFailed(false);
-    onClose();
-  };
+  const retryFullMap = () => { setFullMapFailed(false); setFullMapAttempt((attempt) => attempt + 1); };
+  const closeFullMap = () => { setFullMapFailed(false); onClose(); };
+  const back=carText(locale,"back","Back"),map=carText(locale,"carDetails.map","Map"),unavailable=carText(locale,"carDetails.mapUnavailable","Map unavailable"),retry=carText(locale,"retry","Try again");
 
   return <Modal visible={visible} transparent={false} animationType="slide" presentationStyle="fullScreen" statusBarTranslucent={false} onRequestClose={closeFullMap}>
     <SafeAreaProvider>
       <SafeAreaView edges={["top", "bottom", "left", "right"]} accessibilityViewIsModal style={[styles.fullMapScreen, { backgroundColor: theme.surface }]}>
         <View style={[styles.fullMapHeader, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
-          <View style={styles.fullMapHeaderSide}><Pressable accessibilityRole="button" accessibilityLabel="Back to car details" onPress={closeFullMap} style={styles.fullMapBack}><ChevronLeft accessible={false} size={20} color={theme.icon} /><Text style={[styles.fullMapBackText, { color: theme.textPrimary }]}>Back</Text></Pressable></View>
-          <Text accessibilityRole="header" numberOfLines={1} style={[styles.fullMapTitle, { color: theme.textPrimary }]}>Map</Text>
+          <View style={styles.fullMapHeaderSide}><Pressable accessibilityRole="button" accessibilityLabel={carText(locale,"carDetails.backToDetails","Back to car details")} onPress={closeFullMap} style={styles.fullMapBack}><ChevronLeft accessible={false} size={20} color={theme.icon} /><Text style={[styles.fullMapBackText, { color: theme.textPrimary }]}>{back}</Text></Pressable></View>
+          <Text accessibilityRole="header" numberOfLines={1} style={[styles.fullMapTitle, { color: theme.textPrimary }]}>{map}</Text>
           <View accessible={false} style={styles.fullMapHeaderSide} />
         </View>
         <View style={styles.fullMapBody}>
           {Platform.OS === "ios"
             ? trustedMapCoordinates
               ? visible && <NativeAppleCarMap key={`${pickupLocation}:${trustedMapCoordinates.latitude}:${trustedMapCoordinates.longitude}`} {...trustedMapCoordinates} locationLabel={pickupLocation} interactive />
-              : <View style={[styles.fullMapFallback, { backgroundColor: theme.surface }]}>
-                <MapPin accessible={false} size={28} color={theme.icon} />
-                <Text style={[styles.fullMapUnavailable, { color: theme.textPrimary }]}>Map unavailable</Text>
-              </View>
+              : <View style={[styles.fullMapFallback, { backgroundColor: theme.surface }]}><MapPin accessible={false} size={28} color={theme.icon} /><Text style={[styles.fullMapUnavailable, { color: theme.textPrimary }]}>{unavailable}</Text></View>
             : embedUrl && !fullMapFailed
               ? <WebView key={`${pickupLocation}:full-map:${fullMapAttempt}`} source={{ uri: embedUrl }} onError={() => setFullMapFailed(true)} onHttpError={() => setFullMapFailed(true)} style={styles.fullMapWebView} />
-              : <View style={[styles.fullMapFallback, { backgroundColor: theme.surface }]}>
-              <MapPin accessible={false} size={28} color={theme.icon} />
-              <Text style={[styles.fullMapUnavailable, { color: theme.textPrimary }]}>Map unavailable</Text>
-              {embedUrl ? <Pressable accessibilityRole="button" accessibilityLabel="Try loading map again" onPress={retryFullMap} style={styles.fullMapRetry}><Text style={styles.fullMapRetryText}>Try again</Text></Pressable> : null}
-            </View>}
+              : <View style={[styles.fullMapFallback, { backgroundColor: theme.surface }]}><MapPin accessible={false} size={28} color={theme.icon} /><Text style={[styles.fullMapUnavailable, { color: theme.textPrimary }]}>{unavailable}</Text>{embedUrl ? <Pressable accessibilityRole="button" accessibilityLabel={carText(locale,"carDetails.tryLoadingMapAgain","Try loading map again")} onPress={retryFullMap} style={styles.fullMapRetry}><Text style={styles.fullMapRetryText}>{retry}</Text></Pressable> : null}</View>}
         </View>
       </SafeAreaView>
     </SafeAreaProvider>
