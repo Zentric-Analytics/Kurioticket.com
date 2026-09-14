@@ -6,7 +6,7 @@ import { hasValidHotelCoordinates } from "../../../../../src/lib/hotels/hotelMap
 import type { PublicHotelPropertyDetails } from "../../../../../src/lib/types";
 import { colors } from "../../theme/tokens";
 import { appFonts } from "../../theme/typography";
-import { NativeAppleCarLookAroundPreview, type NativeAppleCarLookAroundStatus } from "./NativeAppleCarLookAroundPreview";
+import { NativeAppleHotelLookAround, type NativeAppleHotelLookAroundStatus } from "./NativeAppleHotelLookAround";
 import type { NativeHotelMapTheme } from "./NativeHotelFullMapModal";
 
 type NativeHotelFullLookAroundModalProps = {
@@ -26,7 +26,7 @@ export function NativeHotelFullLookAroundModal({
   theme,
   onClose,
 }: NativeHotelFullLookAroundModalProps) {
-  const [status, setStatus] = useState<NativeAppleCarLookAroundStatus>("loading");
+  const [status, setStatus] = useState<NativeAppleHotelLookAroundStatus>("loading");
   const coordinatesAvailable = hasValidHotelCoordinates(propertyDetails);
 
   useEffect(() => {
@@ -53,12 +53,11 @@ export function NativeHotelFullLookAroundModal({
         </View>
         <View style={styles.body}>
           {Platform.OS === "ios" && coordinatesAvailable && visible ? <View style={styles.lookAroundBody}>
-            <NativeAppleCarLookAroundPreview
+            <NativeAppleHotelLookAround
               key={`${hotelId}:full-lookaround:${propertyDetails.latitude}:${propertyDetails.longitude}`}
               latitude={propertyDetails.latitude}
               longitude={propertyDetails.longitude}
-              locationLabel={hotelName}
-              presentationMode="viewController"
+              hotelName={hotelName}
               style={styles.lookAround}
               onStatusChange={setStatus}
             />
