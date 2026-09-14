@@ -21,7 +21,7 @@ private struct CarLookAroundPreview: View {
 final class KurioticketCarLookAroundView: ExpoView {
   let onStatusChange = EventDispatcher()
 
-  private enum PresentationMode {
+  private enum PresentationMode: Equatable {
     case swiftUI
     case viewController
   }
@@ -111,7 +111,8 @@ final class KurioticketCarLookAroundView: ExpoView {
       return
     }
 
-    let coordinateKey = "\(latitude):\(longitude):\(presentationMode == .viewController ? "viewController" : "swiftUI")"
+    let modeKey = presentationMode == .viewController ? "viewController" : "swiftUI"
+    let coordinateKey = "\(latitude):\(longitude):\(modeKey)"
     if requestedCoordinateKey == coordinateKey, controller != nil { return }
 
     requestedCoordinateKey = coordinateKey
