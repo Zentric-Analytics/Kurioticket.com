@@ -539,7 +539,7 @@ function HotelDetail({
           {hotelReview && hotelReviewScore ? (
             <View style={s.reviewSummary}>
               <Users accessible={false} size={18} color={iconColor} />
-              <Text style={[s.reviewText, { color: titleColor }]}>
+              <Text style={[s.reviewText, { color: titleColor }]}> 
                 <Text style={s.reviewPrimary}>{hotelReview.label} {hotelReviewScore}</Text>
                 <Text style={[s.reviewSecondary, { color: metaColor }]}> · {hotelReview.count}</Text>
               </Text>
@@ -765,8 +765,8 @@ const s = StyleSheet.create({
   detailsLoadingOverlay: { zIndex: 30, overflow: "hidden" },
   heroShell: { position: "relative", width: "100%" },
   heroBack: { position: "absolute", left: 20, width: 44, height: 44, borderRadius: 22, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 5, elevation: 10 },
-  heroActions: { position: "absolute", right: 20, width: 112, height: 44, borderRadius: 22, backgroundColor: "#FFFFFF", flexDirection: "row", overflow: "hidden", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 5, elevation: 10 },
-  heroAction: { width: 56, height: 44, alignItems: "center", justifyContent: "center" },
+  heroActions: { position: "absolute", right: 20, width: 96, height: 44, borderRadius: 22, backgroundColor: "#FFFFFF", flexDirection: "row", overflow: "hidden", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 5, elevation: 10 },
+  heroAction: { width: 48, height: 44, alignItems: "center", justifyContent: "center" },
   identity: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14 },
   hotelName: { minWidth: 0, fontSize: 24, lineHeight: 30, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.5 },
   hotelNamePhoneFit: { letterSpacing: -0.6 },
