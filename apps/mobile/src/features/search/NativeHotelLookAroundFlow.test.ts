@@ -7,7 +7,7 @@ const bookingDetails = readFileSync("src/features/search/NativeHotelBookingDetai
 const location = readFileSync("src/features/search/NativeHotelLocationSection.tsx", "utf8");
 const fullLookAround = readFileSync("src/features/search/NativeHotelFullLookAroundModal.tsx", "utf8");
 
-test("iOS Hotel Look Around opens the Kurioticket full-screen interactive viewer while Android retains Street View", () => {
+test("iOS Hotel Look Around opens the Kurioticket full-screen viewer while Android retains Street View", () => {
   assert.match(location, /NativeAppleCarLookAroundPreview/);
   assert.match(location, /NativeAppleCarLookAroundStatus/);
   assert.match(location, /NativeHotelFullLookAroundModal/);
@@ -28,10 +28,7 @@ test("iOS Hotel Look Around opens the Kurioticket full-screen interactive viewer
   assert.match(fullLookAround, />Back<\/Text>/);
   assert.match(fullLookAround, />Look Around<\/Text>/);
   assert.match(fullLookAround, /presentationStyle="fullScreen"/);
-  assert.match(fullLookAround, /<NativeAppleCarLookAroundPreview/);
-  assert.match(fullLookAround, /presentationMode="viewController"/);
-  assert.match(fullLookAround, /locationLabel=\{hotelName\}/);
-  assert.doesNotMatch(fullLookAround, /NativeAppleHotelLookAround/);
+  assert.match(fullLookAround, /<NativeAppleHotelLookAround/);
   assert.doesNotMatch(fullLookAround, /\bX\b|floatingClose/);
 
   assert.doesNotMatch(hotelDetails, /lookAroundInteracting|onLookAroundInteractionChange/);
