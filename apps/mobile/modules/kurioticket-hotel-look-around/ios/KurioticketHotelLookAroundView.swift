@@ -18,11 +18,28 @@ final class KurioticketHotelLookAroundView: ExpoView {
     super.init(appContext: appContext)
     clipsToBounds = true
     backgroundColor = .clear
+    isUserInteractionEnabled = true
+    isMultipleTouchEnabled = true
   }
 
   override func layoutSubviews() {
     super.layoutSubviews()
     controller?.view.frame = bounds
+  }
+
+  override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+    guard isUserInteractionEnabled, !isHidden, alpha > 0.01,
+          let controllerView = controller?.view else {
+      return super.hitTest(point, with: event)
+    }
+
+    let controllerPoint = controllerView.convert(point, from: self)
+    if controllerView.point(inside: controllerPoint, with: event),
+       let target = controllerView.hitTest(controllerPoint, with: event) {
+      return target
+    }
+
+    return super.hitTest(point, with: event)
   }
 
   override func didMoveToWindow() {
@@ -121,6 +138,8 @@ final class KurioticketHotelLookAroundView: ExpoView {
     lookAroundController.showsRoadLabels = true
     lookAroundController.view.frame = bounds
     lookAroundController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    lookAroundController.view.isUserInteractionEnabled = true
+    lookAroundController.view.isMultipleTouchEnabled = true
     lookAroundController.view.accessibilityLabel = "Look Around for \(hotelName)"
 
     if let parent = nearestViewController() {
