@@ -28,8 +28,15 @@ private final class InlineLookAroundViewController: MKLookAroundViewController {
   private func hideFullScreenAffordance(in root: UIView) {
     for subview in root.subviews {
       let frame = subview.convert(subview.bounds, to: view)
+      let leadingEdgeDistance: CGFloat
+      if view.effectiveUserInterfaceLayoutDirection == .rightToLeft {
+        leadingEdgeDistance = view.bounds.width - frame.maxX
+      } else {
+        leadingEdgeDistance = frame.minX
+      }
       let isTopLeadingControl = subview is UIControl
-        && frame.minX <= 180
+        && leadingEdgeDistance >= 0
+        && leadingEdgeDistance <= 180
         && frame.minY <= 72
         && frame.width <= 220
         && frame.height <= 88
