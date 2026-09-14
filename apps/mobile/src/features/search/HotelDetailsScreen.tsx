@@ -503,6 +503,9 @@ function HotelDetail({
         ref={hotelDetailScrollRef}
         stickyHeaderIndices={[2]}
         contentInsetAdjustmentBehavior="never"
+        bounces={false}
+        alwaysBounceVertical={false}
+        overScrollMode="never"
         style={{ backgroundColor: hotelCanvasColor }}
         contentContainerStyle={{ paddingBottom: 112 + inset.bottom }}
         onScroll={({ nativeEvent }) => {
