@@ -149,9 +149,11 @@ test("fare information typography strengthens state-driven navigation while pres
   const deckStyles=between("fareInfoDeck:", "notice:");
   assert.match(deckStyles,/fareInfoTabText:\{fontSize:15,lineHeight:21,fontWeight:"600"\}/);
   assert.match(deckStyles,/fareInfoTabTextActive:\{fontWeight:"700"\}/);
-  assert.match(source,/const inactiveFareTabColor=theme\.dark\?"#D3DBEA":"#3F506F"/);
-  assert.match(deck,/color:tab===key\?ui\.blue:inactiveFareTabColor/);
-  assert.doesNotMatch(deck,/color:tab===key\?ui\.blue:theme\.(?:textPrimary|textSecondary)/);
+  assert.match(source,/const fareTabActiveTextColor=theme\.dark\?"#8FB5FF":"#004BB8"/);
+  assert.match(source,/const fareTabInactiveTextColor=theme\.dark\?theme\.textPrimary:"#1A1A1A"/);
+  assert.match(deck,/color:tab===key\?fareTabActiveTextColor:fareTabInactiveTextColor/);
+  assert.doesNotMatch(deck,/color:tab===key\?ui\.blue:/);
+  assert.doesNotMatch(source,/#3F506F|#D3DBEA|#2F466A|#D8E1F0/);
   assert.doesNotMatch(deck,/Fare conditions[^\n]*color:ui\.blue/);
   assert.match(deckStyles,/fareGroupLabel:\{fontSize:11,lineHeight:15,fontWeight:"600"/);
   assert.match(deckStyles,/detailLabel:\{[^}]*fontWeight:"500"\}/);
@@ -163,18 +165,16 @@ test("fare information typography strengthens state-driven navigation while pres
   assert.doesNotMatch(deckStyles,/detailValue:\{[^}]*fontWeight:"600"\}|emptyTitle:\{[^}]*fontWeight:"700"\}/);
 });
 
-test("fare content uses theme-safe category, primary, supporting, and condition colors without changing typography",()=>{
+test("fare content uses category, primary, and supporting colors without duplicating icon semantics in text",()=>{
   assert.match(surface,/const categoryColor=theme\.dark\?"#AAB5CD":"#596984"/);
   assert.match(surface,/const supportingColor=theme\.dark\?"#94A3B8":"#64748B"/);
   assert.doesNotMatch(surface,/const categoryColor=[^;]*#D3DBEA|const categoryColor=[^;]*#3F506F/);
   assert.doesNotMatch(surface,/const supportingColor=[^;]*#D3DBEA|const supportingColor=[^;]*#3F506F/);
-  assert.match(surface,/positive:theme\.dark\?"#6FCF97":"#237A4B"/);
-  assert.match(surface,/negative:theme\.dark\?"#E6A0A8":"#A64550"/);
-  assert.match(surface,/informational:theme\.dark\?"#AAB5CD":"#56658E"/);
-  assert.match(surface,/penalty:theme\.dark\?"#D6B36A":"#8A651F"/);
   assert.match(surface,/s\.fareGroupLabel,\{color:categoryColor\}/);
-  assert.match(surface,/s\.conditionState,\{color:conditionColors\[semantic\]\}/);
-  assert.match(surface,/s\.conditionPenalty,\{color:conditionColors\.penalty\}/);
+  assert.match(surface,/s\.conditionState,\{color:theme\.textPrimary\}/);
+  assert.match(surface,/s\.conditionPenalty,\{color:supportingColor\}/);
+  assert.doesNotMatch(surface,/s\.conditionState,\{color:conditionColors\[semantic\]\}/);
+  assert.doesNotMatch(surface,/s\.conditionPenalty,\{color:conditionColors\.penalty\}/);
   assert.match(surface,/s\.dealProvider,\{color:theme\.textPrimary\}/);
   assert.match(surface,/s\.detailLabel[^\n]*color:supportingColor/);
   assert.match(surface,/s\.detailValue[^\n]*color:theme\.textPrimary/);
@@ -183,5 +183,9 @@ test("fare content uses theme-safe category, primary, supporting, and condition 
   assert.match(surface,/s\.loyaltyProgrammes,\{color:theme\.textPrimary\}/);
   assert.match(surface,/s\.conditionScope,\{color:supportingColor\}/);
   assert.match(surface,/s\.emptyDescription,\{color:supportingColor\}/);
-  assert.doesNotMatch(surface,/conditionColors[^;]*ui\.blue/);
+  assert.doesNotMatch(surface,/const conditionColors=/);
+  assert.match(source,/semantic==="positive"\?s\.fareStatusPositive:s\.fareStatusNeutral/);
+  assert.match(source,/semantic==="positive"\?<FlowIcon name="check"/);
+  assert.match(source,/semantic==="negative"\?<View style=\{s\.fareStatusMinus\}/);
+  assert.match(source,/:<View style=\{s\.fareStatusDot\}/);
 });
