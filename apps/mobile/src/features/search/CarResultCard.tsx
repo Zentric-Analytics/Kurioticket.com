@@ -10,6 +10,8 @@ import { getPrimaryCarOffer } from "../../../../../src/lib/cars/carResults";
 import { isCuratedCarResultImage } from "../../../../../src/lib/cars/carResultImage";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { nativeCarResultIdentity } from "./nativeCarResultIdentity";
+import { presentCarOfferCurrency } from "./carDisplayCurrency";
+import { useCarDisplayCurrency } from "./useCarDisplayCurrency";
 
 export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal }: {
   result: CarResult; rank: number; imageUri?: string;
@@ -18,7 +20,9 @@ export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal
   const [imageFailed, setImageFailed] = useState(false);
   useEffect(() => setImageFailed(false), [imageUri]);
   const savedState = useSavedCar(result, searchParams);
-  const offer = getPrimaryCarOffer(result);
+  const { displayCurrency, rates } = useCarDisplayCurrency();
+  const primaryOffer = getPrimaryCarOffer(result);
+  const offer = primaryOffer ? presentCarOfferCurrency(primaryOffer, displayCurrency, rates) : undefined;
   const hasTopBadge = rank === 0;
   const { theme } = useAppTheme();
   const freeCancellationColor = theme.dark ? theme.textPrimary : "#000000";
