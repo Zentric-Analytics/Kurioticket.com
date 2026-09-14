@@ -59,6 +59,8 @@ test("native header spacing and route action separation stay compact", () => {
   assert.match(native, /content:\{paddingHorizontal:18,paddingTop:5,gap:14\}/);
   assert.match(native, /iconButton:\{width:44,height:44/);
   assert.match(native, /routeActions:\{flexDirection:"row",alignItems:"center",gap:0,flexShrink:0\}/);
+  assert.match(native, /<Pressable accessibilityRole="button" accessibilityLabel=\{label\} onPress=\{onPress\} style=\{s\.iconButton\}><View style=\{s\.routeActionGlyph\}><View style=\{glyphStyle\}>\{children\}<\/View><\/View><\/Pressable>/);
+  assert.match(native, /routeActionGlyph:\{transform:\[\{translateY:-8\}\]\}/);
   assert.match(native, /routeActionLeadingGlyph:\{transform:\[\{translateX:4\}\]\}/);
   assert.match(native, /routeActionTrailingGlyph:\{transform:\[\{translateX:-4\}\]\}/);
   assert.match(native, /routeSummary:\{flexDirection:"row",alignItems:"center",gap:4,marginBottom:-4\}/);
