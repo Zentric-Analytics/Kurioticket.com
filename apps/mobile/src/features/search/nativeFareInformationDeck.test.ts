@@ -119,7 +119,7 @@ test("optional extras remain non-interactive provider-authored information",()=>
 
 test("deck baseline and flat content preserve current Pick-your-fare geometry",()=>{
   const deckStyles=between("fareInfoDeck:", "notice:");
-  assert.match(deckStyles,/fareInfoDeck:\{gap:0\}/);
+  assert.match(deckStyles,/fareInfoDeck:\{gap:0,marginTop:6\}/);
   assert.match(deckStyles,/fareTabRail:\{flexGrow:0,borderBottomWidth:1,marginHorizontal:-10\}/);
   assert.match(deckStyles,/fareTabRailContent:\{paddingHorizontal:0\}/);
   assert.match(deckStyles,/fareInfoBody:\{paddingHorizontal:4,paddingVertical:4\}/);
@@ -135,16 +135,21 @@ test("deck baseline and flat content preserve current Pick-your-fare geometry",(
   assert.match(deck,/borderBottomColor:theme\.border/);
   assert.doesNotMatch(deckStyles,/elevation|shadow/);
   assert.match(source,/content:\{paddingHorizontal:18,paddingTop:5,gap:14\}/);
+  assert.match(deckStyles,/fareInfoDeck:\{gap:0,marginTop:6\}/);
+  assert.doesNotMatch(deckStyles,/fareInfoDeck:\{[^}]*marginTop:20/);
+  assert.match(source,/loadingInfoDeck:\{height:174,marginTop:6\}/);
   assert.match(source,/card:\{borderWidth:1,borderRadius:14,padding:14,gap:7\}/);
-  assert.match(source,/fareCard:\{borderRadius:15,minHeight:142,paddingHorizontal:12,paddingVertical:8,gap:4\}/);
+  assert.match(source,/fareCard:\{borderRadius:15,minHeight:142,paddingHorizontal:12,paddingTop:4,paddingBottom:8,gap:4\}/);
   assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal/);
   assert.match(source,/fareCardSelected:\{borderWidth:1\.5\}/);
 });
 
-test("fare information typography stays light while labels retain hierarchy",()=>{
+test("fare information typography strengthens state-driven navigation while preserving content metrics",()=>{
   const deckStyles=between("fareInfoDeck:", "notice:");
-  assert.match(deckStyles,/fareInfoTabText:\{fontSize:12,lineHeight:17,fontWeight:"500"\}/);
-  assert.match(deckStyles,/fareInfoTabTextActive:\{fontWeight:"600"\}/);
+  assert.match(deckStyles,/fareInfoTabText:\{fontSize:14,lineHeight:20,fontWeight:"600"\}/);
+  assert.match(deckStyles,/fareInfoTabTextActive:\{fontWeight:"700"\}/);
+  assert.match(deck,/color:tab===key\?ui\.blue:\(theme\.dark\?"#C2CCE0":"#435477"\)/);
+  assert.doesNotMatch(deck,/Fare conditions[^\n]*color:ui\.blue/);
   assert.match(deckStyles,/fareGroupLabel:\{fontSize:11,lineHeight:15,fontWeight:"600"/);
   assert.match(deckStyles,/detailLabel:\{[^}]*fontWeight:"500"\}/);
   assert.match(deckStyles,/detailValue:\{[^}]*fontWeight:"400"[^}]*\}/);
@@ -152,5 +157,23 @@ test("fare information typography stays light while labels retain hierarchy",()=
   assert.match(deckStyles,/conditionScope:\{[^}]*fontWeight:"400"\}/);
   assert.match(deckStyles,/serviceDescription:\{[^}]*fontWeight:"500"\}/);
   assert.match(deckStyles,/serviceMeta:\{[^}]*fontWeight:"400"\}/);
-  assert.doesNotMatch(deckStyles,/fareInfoTabTextActive:\{fontWeight:"700"\}|detailValue:\{[^}]*fontWeight:"600"\}|emptyTitle:\{[^}]*fontWeight:"700"\}/);
+  assert.doesNotMatch(deckStyles,/detailValue:\{[^}]*fontWeight:"600"\}|emptyTitle:\{[^}]*fontWeight:"700"\}/);
+});
+
+test("fare content uses theme-safe category, primary, supporting, and condition colors without changing typography",()=>{
+  assert.match(surface,/const categoryColor=theme\.dark\?"#94A3B8":"#64748B"/);
+  assert.match(surface,/positive:theme\.dark\?"#6FCF97":"#237A4B"/);
+  assert.match(surface,/negative:theme\.dark\?"#E6A0A8":"#A64550"/);
+  assert.match(surface,/informational:theme\.dark\?"#AAB5CD":"#56658E"/);
+  assert.match(surface,/penalty:theme\.dark\?"#D6B36A":"#8A651F"/);
+  assert.match(surface,/s\.fareGroupLabel,\{color:categoryColor\}/);
+  assert.match(surface,/s\.conditionState,\{color:conditionColors\[semantic\]\}/);
+  assert.match(surface,/s\.conditionPenalty,\{color:conditionColors\.penalty\}/);
+  assert.match(surface,/s\.dealProvider,\{color:theme\.textPrimary\}/);
+  assert.match(surface,/s\.detailLabel[^\n]*color:theme\.textSecondary/);
+  assert.match(surface,/s\.detailValue[^\n]*color:theme\.textPrimary/);
+  assert.match(surface,/s\.serviceDescription,\{color:theme\.textPrimary\}/);
+  assert.match(surface,/s\.serviceMeta,\{color:theme\.textSecondary\}/);
+  assert.match(surface,/s\.loyaltyProgrammes,\{color:theme\.textPrimary\}/);
+  assert.doesNotMatch(surface,/conditionColors[^;]*ui\.blue/);
 });
