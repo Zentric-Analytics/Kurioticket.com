@@ -1,13 +1,45 @@
 import type { HotelResult } from "../../api/travelApi";
-import { convertAmount, type ExchangeRates } from "../currency/displayCurrency";
+import { supportedCurrencies } from "../../config/supportedCurrencies";
+import { displayPrice, type ExchangeRates } from "../currency/displayCurrency";
 
 export const HOTEL_ALERT_MIN_DROP_PERCENT = 1;
 export const HOTEL_ALERT_MAX_DROP_PERCENT = 50;
 export const HOTEL_ALERT_DEFAULT_DROP_PERCENT = 10;
 
+const supported = new Set(supportedCurrencies.map(({ code }) => code.toUpperCase()));
+
+export type HotelAlertPriceBasis = {
+  amount: number;
+  currency: string;
+};
+
 export function clampHotelAlertDropPercent(value: number) {
   if (!Number.isFinite(value)) return HOTEL_ALERT_DEFAULT_DROP_PERCENT;
   return Math.min(HOTEL_ALERT_MAX_DROP_PERCENT, Math.max(HOTEL_ALERT_MIN_DROP_PERCENT, Math.round(value)));
+}
+
+export function hotelAlertPriceBasis(
+  results: HotelResult[],
+  displayCurrency: string,
+  rates: ExchangeRates,
+): HotelAlertPriceBasis | null {
+  const preferredCurrency = displayCurrency.trim().toUpperCase();
+  const effectivePrices = results.flatMap((result) => {
+    const providerCurrency = typeof result.currency === "string" ? result.currency.trim().toUpperCase() : "";
+    if (!Number.isFinite(result.totalPrice) || (result.totalPrice ?? 0) <= 0 || !supported.has(providerCurrency)) return [];
+    const price = displayPrice(result.totalPrice!, providerCurrency, preferredCurrency, rates);
+    return supported.has(price.currency) && Number.isFinite(price.amount) && price.amount > 0
+      ? [{ amount: price.amount, currency: price.currency }]
+      : [];
+  });
+  if (!effectivePrices.length) return null;
+
+  const preferredPrices = effectivePrices.filter(({ currency }) => currency === preferredCurrency);
+  const fallbackCurrency = effectivePrices[0].currency;
+  const comparable = preferredPrices.length
+    ? preferredPrices
+    : effectivePrices.filter(({ currency }) => currency === fallbackCurrency);
+  return comparable.reduce((lowest, price) => price.amount < lowest.amount ? price : lowest);
 }
 
 export function lowestHotelAlertDisplayTotal(
@@ -15,12 +47,7 @@ export function lowestHotelAlertDisplayTotal(
   displayCurrency: string,
   rates: ExchangeRates,
 ) {
-  const converted = results.flatMap((result) => {
-    if (!Number.isFinite(result.totalPrice) || (result.totalPrice ?? 0) <= 0 || typeof result.currency !== "string") return [];
-    const amount = convertAmount(result.totalPrice!, result.currency, displayCurrency, rates);
-    return amount !== null && Number.isFinite(amount) && amount > 0 ? [amount] : [];
-  });
-  return converted.length ? Math.min(...converted) : null;
+  return hotelAlertPriceBasis(results, displayCurrency, rates)?.amount ?? null;
 }
 
 export function hotelAlertDesiredTotal(currentTotal: number, dropPercent: number) {
