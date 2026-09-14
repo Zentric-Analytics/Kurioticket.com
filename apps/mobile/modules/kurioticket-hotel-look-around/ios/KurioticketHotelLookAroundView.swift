@@ -14,6 +14,7 @@ final class KurioticketHotelLookAroundView: ExpoView {
   private var generation = 0
   private var requestedCoordinateKey: String?
   private var isPresentingFullScreen = false
+  private var interactionGate: UILongPressGestureRecognizer!
 
   required init(appContext: AppContext? = nil) {
     super.init(appContext: appContext)
@@ -21,6 +22,15 @@ final class KurioticketHotelLookAroundView: ExpoView {
     backgroundColor = .clear
     isUserInteractionEnabled = true
     isMultipleTouchEnabled = true
+
+    let interactionGate = UILongPressGestureRecognizer(target: self, action: #selector(handleInteractionGate(_:)))
+    interactionGate.minimumPressDuration = 0
+    interactionGate.allowableMovement = CGFloat.greatestFiniteMagnitude
+    interactionGate.cancelsTouchesInView = false
+    interactionGate.delaysTouchesBegan = false
+    interactionGate.delegate = self
+    addGestureRecognizer(interactionGate)
+    self.interactionGate = interactionGate
   }
 
   override func layoutSubviews() {
@@ -57,7 +67,24 @@ final class KurioticketHotelLookAroundView: ExpoView {
       removeController()
       return
     }
+    configureParentScrollGesturePriority()
     scheduleReload()
+  }
+
+  @objc private func handleInteractionGate(_ gestureRecognizer: UILongPressGestureRecognizer) {
+    // Recognition is enough: the parent hotel ScrollView is required to fail,
+    // while MapKit's own gestures are allowed to recognize simultaneously.
+  }
+
+  private func configureParentScrollGesturePriority() {
+    var candidate = superview
+    while let view = candidate {
+      if let scrollView = view as? UIScrollView {
+        scrollView.panGestureRecognizer.require(toFail: interactionGate)
+        return
+      }
+      candidate = view.superview
+    }
   }
 
   deinit {
@@ -196,6 +223,15 @@ final class KurioticketHotelLookAroundView: ExpoView {
 
   private func emitStatus(_ status: String) {
     onStatusChange(["status": status])
+  }
+}
+
+extension KurioticketHotelLookAroundView: UIGestureRecognizerDelegate {
+  func gestureRecognizer(
+    _ gestureRecognizer: UIGestureRecognizer,
+    shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+  ) -> Bool {
+    gestureRecognizer === interactionGate || otherGestureRecognizer === interactionGate
   }
 }
 
