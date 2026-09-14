@@ -69,7 +69,7 @@ test("stay-fit facts follow the web factual contract", () => {
 });
 
 test("Location keeps all existing location facts in a flat one-column presentation", () => {
-  for (const copy of ["Location", "Why this location works", "Location fit details are limited to the verified address and map.", "Map preview unavailable", "Look Around", "Street View"]) assert.match(component, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  for (const copy of ["Location", "Why this location works", "Location fit details are limited to the verified address and map.", "Map preview unavailable", "Street View"]) assert.match(component, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   for (const duplicate of ["Accessibility and location details", "Confirm specific accessibility requirements with the property before travel."]) assert.doesNotMatch(component, new RegExp(duplicate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.doesNotMatch(component, /propertyDetails\.accessibility/);
   assert.match(component, /facts\.map\(\(fact\) => <View key=\{fact\} style=\{styles\.factRow\}>/);
@@ -77,25 +77,22 @@ test("Location keeps all existing location facts in a flat one-column presentati
   for (const legacy of ["✓ city break", "✓ business", "Suited to business stays", "Suited to family stays", "interestTags?.map"]) assert.doesNotMatch(component, new RegExp(legacy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 });
 
-test("Location keeps Apple Look Around on iOS 16+, hides it on older iOS, and keeps Google Street View on Android", () => {
+test("Location uses the same inline Google Street View on iOS and Android", () => {
   assert.equal(nativeHotelLocationPreviewUrl("https://staging.example.test/base", "hotel id"), "https://staging.example.test/api/mobile/v1/hotels/location-preview?id=hotel+id");
   assert.equal(nativeHotelLocationEmbedUrl("https://staging.example.test/base", "hotel id", "streetview"), "https://staging.example.test/api/mobile/v1/hotels/location-embed?id=hotel+id&view=streetview");
   assert.match(component, /nativeHotelLocationPreviewUrl\(api\.baseUrl, hotelId\)/);
   assert.match(compare, /nativeHotelLocationPreviewUrl\(api\.baseUrl, hotelId\)/);
-  assert.match(component, /const iosLookAroundSupported = Platform\.OS === "ios" && Number\.parseInt\(String\(Platform\.Version\), 10\) >= 16;/);
-  assert.match(component, /return Platform\.OS === "ios" && !iosLookAroundSupported \? "map" : remembered;/);
-  assert.match(component, /const streetViewUrl = Platform\.OS !== "ios" && api\.ok \? nativeHotelLocationEmbedUrl\(api\.baseUrl, hotelId, "streetview"\) : null;/);
-  assert.match(component, /const alternateLocationViewAvailable = streetViewAvailable && \(Platform\.OS !== "ios" \|\| iosLookAroundSupported\);/);
+  assert.match(component, /return rememberedHotelLocationViews\.get\(hotelId\) \?\? "map";/);
+  assert.match(component, /const alternateLocationViewAvailable = streetViewAvailable;/);
   assert.doesNotMatch(component, /nativeHotelLocationEmbedUrl\(api\.baseUrl, hotelId, "map"\)/);
-  assert.match(component, /Platform\.OS === "ios" \? "Look Around" : "Street View"/);
-  assert.match(component, /const selectView = \(next: NativeHotelLocationView\) => \{\s*if \(next === effectiveView\) return;\s*if \(Platform\.OS === "ios" && next === "streetview" && !iosLookAroundSupported\) return;/);
+  assert.match(component, /\{option === "map" \? "Map" : "Street View"\}/);
+  assert.match(component, /const selectView = \(next: NativeHotelLocationView\) => \{\s*if \(next === effectiveView\) return;\s*if \(next === "streetview"\) setStreetViewFailed\(false\);/);
   assert.match(component, /effectiveView === "map" \? <Pressable/);
   assert.match(component, /accessibilityRole="button" accessibilityLabel=\{`Open full map for \$\{hotelName\}`\} accessibilityHint="Opens an interactive map inside Kurioticket"/);
   assert.match(component, /<Image accessible=\{false\} source=\{\{ uri: previewUrl \}\} resizeMode="cover" onError=\{\(\) => setMapPreviewFailed\(true\)\}/);
   assert.match(component, /<NativeHotelFullMapModal visible=\{fullMapOpen\} hotelId=\{hotelId\} theme=\{theme\}/);
-  assert.match(component, /Platform\.OS === "ios" && iosLookAroundSupported && hasValidHotelCoordinates\(propertyDetails\)/);
-  assert.match(component, /<NativeAppleHotelLookAround key=\{`\$\{hotelId\}:lookaround`\}/);
-  assert.match(component, /Look Around isn&apos;t available for this location\./);
+  assert.match(component, /const streetViewUrl = api\.ok \? nativeHotelLocationEmbedUrl\(api\.baseUrl, hotelId, "streetview"\) : null;/);
+  assert.doesNotMatch(component, /NativeAppleHotelLookAround|Look Around/);
   assert.match(component, /<WebView key=\{`\$\{hotelId\}:streetview`\} source=\{\{ uri: streetViewUrl \}\}/);
   assert.match(component, /onError=\{\(\) => setStreetViewFailed\(true\)\}/);
   assert.match(component, /onHttpError=\{\(\) => setStreetViewFailed\(true\)\}/);
