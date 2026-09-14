@@ -5,5 +5,6 @@ export type FlowIconName =
   | "people" | "sliders" | "help" | "headset" | "document" | "shield" | "lock"
   | "globe" | "currency" | "moon" | "logout" | "briefcase" | "bookmark" | "mail" | "palette"
   | "external" | "refresh" | "snow" | "gauge" | "trash"
+  | "transmissionAutomatic" | "transmissionManual"
   | "heart" | "trending" | "map" | "beach" | "city" | "adventure"
   | "nature" | "culture" | "family";
