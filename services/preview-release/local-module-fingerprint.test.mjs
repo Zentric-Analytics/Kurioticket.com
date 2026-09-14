@@ -9,7 +9,8 @@ import { classifyPreviewPlatform } from "../../apps/mobile/scripts/preview-deliv
 const require = createRequire(import.meta.url);
 const configPath = resolve(import.meta.dirname, "../../apps/mobile/fingerprint.config.js");
 const passkeyPodspecPath = resolve(import.meta.dirname, "../../apps/mobile/modules/kurioticket-passkey-autofill/ios/KurioticketPasskeyAutoFill.podspec");
-const lookAroundPodspecPath = resolve(import.meta.dirname, "../../apps/mobile/modules/kurioticket-hotel-look-around/ios/KurioticketHotelLookAround.podspec");
+const hotelLookAroundPodspecPath = resolve(import.meta.dirname, "../../apps/mobile/modules/kurioticket-hotel-look-around/ios/KurioticketHotelLookAround.podspec");
+const carLookAroundPodspecPath = resolve(import.meta.dirname, "../../apps/mobile/modules/kurioticket-car-look-around/ios/KurioticketCarLookAround.podspec");
 
 function loadConfig(platform) {
   const previous = process.env.EAS_BUILD_PLATFORM;
@@ -24,7 +25,7 @@ function loadConfig(platform) {
   }
 }
 
-test("Preview iOS fingerprint explicitly hashes both local Apple native modules", () => {
+test("Preview iOS fingerprint explicitly hashes all local Apple native modules", () => {
   const config = loadConfig("ios");
   assert.deepEqual(config.extraSources, [
     {
@@ -36,6 +37,11 @@ test("Preview iOS fingerprint explicitly hashes both local Apple native modules"
       type: "dir",
       filePath: "modules/kurioticket-hotel-look-around",
       reasons: ["Kurioticket local iOS hotel Look Around native module"],
+    },
+    {
+      type: "dir",
+      filePath: "modules/kurioticket-car-look-around",
+      reasons: ["Kurioticket local iOS Cars Look Around native module"],
     },
   ]);
 });
@@ -50,11 +56,17 @@ test("local Apple native modules include CocoaPods specs for Expo autolinking", 
   assert.match(passkeyPodspec, /s\.dependency\s+['"]ExpoModulesCore['"]/);
   assert.match(passkeyPodspec, /s\.source_files\s*=\s*['"]\*\*\/\*\.\{h,m,mm,swift,hpp,cpp\}['"]/);
 
-  const lookAroundPodspec = readFileSync(lookAroundPodspecPath, "utf8");
-  assert.match(lookAroundPodspec, /s\.name\s*=\s*['"]KurioticketHotelLookAround['"]/);
-  assert.match(lookAroundPodspec, /s\.dependency\s+['"]ExpoModulesCore['"]/);
-  assert.match(lookAroundPodspec, /s\.frameworks\s*=\s*['"]MapKit['"]/);
-  assert.match(lookAroundPodspec, /s\.source_files\s*=\s*['"]\*\*\/\*\.\{h,m,mm,swift,hpp,cpp\}['"]/);
+  const hotelLookAroundPodspec = readFileSync(hotelLookAroundPodspecPath, "utf8");
+  assert.match(hotelLookAroundPodspec, /s\.name\s*=\s*['"]KurioticketHotelLookAround['"]/);
+  assert.match(hotelLookAroundPodspec, /s\.dependency\s+['"]ExpoModulesCore['"]/);
+  assert.match(hotelLookAroundPodspec, /s\.frameworks\s*=\s*['"]MapKit['"]/);
+  assert.match(hotelLookAroundPodspec, /s\.source_files\s*=\s*['"]\*\*\/\*\.\{h,m,mm,swift,hpp,cpp\}['"]/);
+
+  const carLookAroundPodspec = readFileSync(carLookAroundPodspecPath, "utf8");
+  assert.match(carLookAroundPodspec, /s\.name\s*=\s*['"]KurioticketCarLookAround['"]/);
+  assert.match(carLookAroundPodspec, /s\.dependency\s+['"]ExpoModulesCore['"]/);
+  assert.match(carLookAroundPodspec, /s\.frameworks\s*=\s*['"]MapKit['"]/);
+  assert.match(carLookAroundPodspec, /s\.source_files\s*=\s*['"]\*\*\/\*\.\{h,m,mm,swift,hpp,cpp\}['"]/);
 });
 
 test("fingerprint configuration change is classified as iOS native", () => {
@@ -64,11 +76,15 @@ test("fingerprint configuration change is classified as iOS native", () => {
 });
 
 test("local Apple module plus fingerprint configuration remains iOS-only native", () => {
-  for (const moduleRoot of ["kurioticket-passkey-autofill", "kurioticket-hotel-look-around"]) {
+  for (const [moduleRoot, moduleFile] of [
+    ["kurioticket-passkey-autofill", "KurioticketPasskeyAutoFillModule.swift"],
+    ["kurioticket-hotel-look-around", "KurioticketHotelLookAroundModule.swift"],
+    ["kurioticket-car-look-around", "KurioticketCarLookAroundModule.swift"],
+  ]) {
     const result = classifyChangeSet([
       "apps/mobile/fingerprint.config.js",
       `apps/mobile/modules/${moduleRoot}/expo-module.config.json`,
-      `apps/mobile/modules/${moduleRoot}/ios/${moduleRoot === "kurioticket-passkey-autofill" ? "KurioticketPasskeyAutoFillModule.swift" : "KurioticketHotelLookAroundModule.swift"}`,
+      `apps/mobile/modules/${moduleRoot}/ios/${moduleFile}`,
     ]);
     assert.equal(result.classification, "IOS_NATIVE");
   }
@@ -81,6 +97,9 @@ test("Preview delivery contract forces an iOS build for local module Swift and p
     "apps/mobile/modules/kurioticket-hotel-look-around/ios/KurioticketHotelLookAroundModule.swift",
     "apps/mobile/modules/kurioticket-hotel-look-around/ios/KurioticketHotelLookAroundView.swift",
     "apps/mobile/modules/kurioticket-hotel-look-around/ios/KurioticketHotelLookAround.podspec",
+    "apps/mobile/modules/kurioticket-car-look-around/ios/KurioticketCarLookAroundModule.swift",
+    "apps/mobile/modules/kurioticket-car-look-around/ios/KurioticketCarLookAroundView.swift",
+    "apps/mobile/modules/kurioticket-car-look-around/ios/KurioticketCarLookAround.podspec",
   ]) {
     const result = classifyPreviewPlatform({
       platform: "ios",
@@ -98,6 +117,7 @@ test("local Apple native module changes do not force an Android build", () => {
   for (const file of [
     "apps/mobile/modules/kurioticket-passkey-autofill/ios/KurioticketPasskeyAutoFillModule.swift",
     "apps/mobile/modules/kurioticket-hotel-look-around/ios/KurioticketHotelLookAroundView.swift",
+    "apps/mobile/modules/kurioticket-car-look-around/ios/KurioticketCarLookAroundView.swift",
   ]) {
     const result = classifyPreviewPlatform({
       platform: "android",

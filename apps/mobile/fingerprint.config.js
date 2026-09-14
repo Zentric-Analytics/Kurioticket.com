@@ -15,6 +15,11 @@ const config = {
           filePath: "modules/kurioticket-hotel-look-around",
           reasons: ["Kurioticket local iOS hotel Look Around native module"],
         },
+        {
+          type: "dir",
+          filePath: "modules/kurioticket-car-look-around",
+          reasons: ["Kurioticket local iOS Cars Look Around native module"],
+        },
       ]
     : [],
 };
