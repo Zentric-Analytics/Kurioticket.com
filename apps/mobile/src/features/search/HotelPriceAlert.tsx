@@ -18,6 +18,8 @@ import {
   type HotelResult,
   type MobilePriceAlert,
 } from "../../api/travelApi";
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
+import { travelAccountMessage } from "../../localization/travelAccountMessages";
 import { readSession } from "../../storage/sessionStorage";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
@@ -36,7 +38,7 @@ import {
   HOTEL_ALERT_MIN_DROP_PERCENT,
   hotelAlertDesiredTotal,
   hotelAlertDropPercentForTarget,
-  lowestHotelAlertDisplayTotal,
+  hotelAlertPriceBasis,
 } from "./hotelPriceAlertSliderModel";
 import { ui } from "./SearchUi";
 
@@ -56,6 +58,11 @@ export function HotelPriceAlert({
   rates,
 }: Props) {
   const { theme } = useAppTheme();
+  const { locale, t } = useMobileLocalization();
+  const message = useCallback(
+    (key: Parameters<typeof travelAccountMessage>[1]) => travelAccountMessage(locale, key),
+    [locale],
+  );
   const [matchingAlertState, setMatchingAlertState] = useState<{ planKey: string; alert: MobilePriceAlert }>();
   const [reconciledPlanKey, setReconciledPlanKey] = useState<string>();
   const [loadingAlert, setLoadingAlert] = useState(true);
@@ -70,12 +77,14 @@ export function HotelPriceAlert({
   const matchingAlert = matchingAlertState?.planKey === plan.key ? matchingAlertState.alert : undefined;
   const isTracking = matchingAlert?.status === "ACTIVE";
   const alertKnown = reconciledPlanKey === plan.key;
-  const currentTotal = useMemo(
-    () => lowestHotelAlertDisplayTotal(hotelResults, displayCurrency, rates),
+  const priceBasis = useMemo(
+    () => hotelAlertPriceBasis(hotelResults, displayCurrency, rates),
     [displayCurrency, hotelResults, rates],
   );
+  const currentTotal = priceBasis?.amount ?? null;
+  const alertCurrency = priceBasis?.currency ?? displayCurrency.trim().toUpperCase();
   const desiredTotal = currentTotal === null ? null : hotelAlertDesiredTotal(currentTotal, dropPercent);
-  const readyToCreate = Boolean(available && currentTotal && desiredTotal && displayCurrency && !pending);
+  const readyToCreate = Boolean(available && currentTotal !== null && desiredTotal !== null && alertCurrency && !pending);
 
   const setCurrentMatchingAlert = useCallback((alert: MobilePriceAlert | undefined) => {
     setMatchingAlertState(alert ? { planKey: plan.key, alert } : undefined);
@@ -89,14 +98,14 @@ export function HotelPriceAlert({
 
   const requireSignIn = useCallback(() => {
     Alert.alert(
-      "Sign in required",
-      "Sign in to create and manage price alerts.",
+      message("signInRequired"),
+      message("signInAlertBody"),
       [
-        { text: "Sign in", onPress: () => router.push(signInHref("/(tabs)/profile")) },
-        { text: "Cancel", style: "cancel" },
+        { text: t("signIn"), onPress: () => router.push(signInHref("/(tabs)/profile")) },
+        { text: t("cancel"), style: "cancel" },
       ],
     );
-  }, []);
+  }, [message, t]);
 
   const reconcile = useCallback(async () => {
     const reconciliation = ++reconciliationRef.current;
@@ -129,14 +138,14 @@ export function HotelPriceAlert({
   }, [reconcile]));
 
   const openSheet = async () => {
-    if (pendingRef.current || !alertKnown || !available || currentTotal === null) return;
+    if (pendingRef.current || !alertKnown || !available || currentTotal === null || !alertCurrency) return;
     const intent = targetIntentRef.current.beginOpen();
     if (!await readSession().catch(() => null)) {
       requireSignIn();
       return;
     }
     if (!targetIntentRef.current.isCurrent(intent)) return;
-    const existingTarget = matchingAlert?.targetPrice != null && matchingAlert.currency?.toUpperCase() === displayCurrency.toUpperCase()
+    const existingTarget = matchingAlert?.targetPrice != null && matchingAlert.currency?.toUpperCase() === alertCurrency
       ? Number(matchingAlert.targetPrice)
       : null;
     setDropPercent(existingTarget && Number.isFinite(existingTarget)
@@ -163,7 +172,7 @@ export function HotelPriceAlert({
         setCurrentMatchingAlert(undefined);
         requireSignIn();
       } else {
-        Alert.alert("Unable to pause price tracking", cause instanceof TravelApiError ? cause.message : "Please try again.");
+        Alert.alert(message("priceAlertPauseError"), message("priceAlertPauseError"));
       }
     } finally {
       pendingRef.current = false;
@@ -172,7 +181,7 @@ export function HotelPriceAlert({
   };
 
   const createAlert = async () => {
-    if (pendingRef.current || !readyToCreate || desiredTotal === null) return;
+    if (pendingRef.current || !readyToCreate || desiredTotal === null || !alertCurrency) return;
     pendingRef.current = true;
     setPending(true);
     setError("");
@@ -186,12 +195,12 @@ export function HotelPriceAlert({
       const samePausedTarget = alerts.find((alert) =>
         alert.status === "PAUSED"
         && Number(alert.targetPrice) === desiredTotal
-        && alert.currency?.toUpperCase() === displayCurrency.toUpperCase()
+        && alert.currency?.toUpperCase() === alertCurrency
         && matchingHotelPriceAlert([alert], plan)?.id === alert.id,
       );
       const saved = samePausedTarget
         ? await travelApi.updatePriceAlertStatus(samePausedTarget.id, "ACTIVE")
-        : await travelApi.createPriceAlert(buildHotelPriceAlertPayload(plan, desiredTotal, displayCurrency));
+        : await travelApi.createPriceAlert(buildHotelPriceAlertPayload(plan, desiredTotal, alertCurrency));
       setCurrentMatchingAlert(saved.alert);
       closeSheet();
     } catch (cause) {
@@ -200,9 +209,9 @@ export function HotelPriceAlert({
         requireSignIn();
       } else if (cause instanceof TravelApiError && cause.status === 409) {
         await reconcile();
-        setError("An alert for this search already exists.");
+        setError(message("priceAlertAlreadyExists"));
       } else {
-        setError(cause instanceof TravelApiError ? cause.message : "Unable to create price alert. Try again.");
+        setError(message("priceAlertCreateError"));
       }
     } finally {
       pendingRef.current = false;
@@ -211,25 +220,25 @@ export function HotelPriceAlert({
   };
 
   if (currentTotal === null) return null;
-  const toggleDisabled = pending || loadingAlert || !alertKnown || !available;
-  const formatTotal = (amount: number) => formatMarketCurrency(amount, displayCurrency);
+  const toggleDisabled = pending || loadingAlert || !alertKnown || (!available && !isTracking);
+  const formatTotal = (amount: number) => formatMarketCurrency(amount, alertCurrency);
   const dropAmount = desiredTotal === null ? 0 : Math.max(0, currentTotal - desiredTotal);
 
   return (
     <View
-      accessibilityLabel="Track this stay price"
+      accessibilityLabel={message("hotelAlertTitle")}
       style={[styles.compact, { backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}
     >
       <Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent} />
       <View style={styles.compactCopy}>
-        <Text numberOfLines={1} style={[styles.compactTitle, { color: theme.textPrimary }]}>Track this stay price</Text>
+        <Text numberOfLines={1} style={[styles.compactTitle, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text>
       </View>
       <View style={styles.switchSlot}>
         {pending ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent} /> : null}
         <Switch
           style={Platform.OS === "ios" ? styles.switchIos : undefined}
           accessibilityRole="switch"
-          accessibilityLabel="Track this stay price"
+          accessibilityLabel={message("hotelAlertTitle")}
           accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending || loadingAlert }}
           disabled={toggleDisabled}
           value={isTracking}
@@ -248,15 +257,15 @@ export function HotelPriceAlert({
         accessibilityViewIsModal
       >
         <View style={styles.backdrop}>
-          <View style={[styles.sheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel="Create hotel price alert">
+          <View style={[styles.sheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel={message("hotelAlertTitle")}>
             <View style={styles.header}>
               <View style={styles.headerCopy}>
-                <Text accessibilityRole="header" style={[styles.title, { color: theme.textPrimary }]}>Track prices</Text>
-                <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Choose the drop that should trigger your alert.</Text>
+                <Text accessibilityRole="header" style={[styles.title, { color: theme.textPrimary }]}>{message("hotelAlertTitle")}</Text>
+                <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{message("hotelAlertBody")}</Text>
               </View>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Close price alert"
+                accessibilityLabel={`${t("cancel")} ${message("hotelAlertTitle")}`}
                 disabled={pending}
                 onPress={closeSheet}
                 style={({ pressed }) => [styles.close, pressed && styles.pressed]}
@@ -266,13 +275,13 @@ export function HotelPriceAlert({
             </View>
 
             <View style={[styles.currentPriceCard, { borderColor: theme.border, backgroundColor: theme.background }]}>
-              <Text style={[styles.metricLabel, { color: theme.textSecondary }]}>Current total</Text>
+              <Text style={[styles.metricLabel, { color: theme.textSecondary }]}>{message("currentTotal")}</Text>
               <Text style={[styles.currentPrice, { color: theme.textPrimary }]}>{formatTotal(currentTotal)}</Text>
             </View>
 
             <View style={styles.sliderBlock}>
               <View style={styles.sliderHeading}>
-                <Text style={[styles.sliderLabel, { color: theme.textPrimary }]}>Price drop</Text>
+                <Text style={[styles.sliderLabel, { color: theme.textPrimary }]}>{message("priceDrop")}</Text>
                 <Text style={styles.percent}>{dropPercent}%</Text>
               </View>
               <FlightRangeSlider
@@ -281,7 +290,7 @@ export function HotelPriceAlert({
                 step={1}
                 singleMaximum
                 formatValue={(value) => `${Math.round(value)}%`}
-                accessibilityLabel="Desired hotel price drop percentage"
+                accessibilityLabel={message("priceDrop")}
                 onChange={(range) => setDropPercent(Math.round(range.max))}
               />
               <View style={styles.sliderEnds}>
@@ -292,28 +301,27 @@ export function HotelPriceAlert({
 
             <View style={[styles.summary, { borderColor: theme.border }]}>
               <View style={styles.metric}>
-                <Text style={[styles.metricLabel, { color: theme.textSecondary }]}>Drops by</Text>
+                <Text style={[styles.metricLabel, { color: theme.textSecondary }]}>{message("dropsBy")}</Text>
                 <Text style={[styles.metricValue, { color: theme.textPrimary }]}>{formatTotal(dropAmount)}</Text>
               </View>
               <View style={[styles.metric, styles.metricRight]}>
-                <Text style={[styles.metricLabel, { color: theme.textSecondary }]}>Desired total</Text>
+                <Text style={[styles.metricLabel, { color: theme.textSecondary }]}>{message("targetTotal")}</Text>
                 <Text style={[styles.metricValue, { color: theme.textPrimary }]}>{desiredTotal === null ? "—" : formatTotal(desiredTotal)}</Text>
               </View>
             </View>
 
-            <Text style={[styles.helper, { color: theme.textSecondary }]}>We’ll notify you when a comparable stay for this search reaches your desired total.</Text>
             {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
 
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Create price alert"
+              accessibilityLabel={message("createAlert")}
               accessibilityState={{ disabled: !readyToCreate, busy: pending }}
               disabled={!readyToCreate}
               onPress={() => void createAlert()}
               style={({ pressed }) => [styles.create, !readyToCreate && styles.createDisabled, pressed && readyToCreate && styles.createPressed]}
             >
               {pending ? <ActivityIndicator accessible={false} size="small" color="white" /> : null}
-              <Text style={styles.createText}>{pending ? "Creating…" : "Create price alert"}</Text>
+              <Text style={styles.createText}>{pending ? message("creating") : message("createAlert")}</Text>
             </Pressable>
           </View>
         </View>
@@ -349,7 +357,6 @@ const styles = StyleSheet.create({
   metricRight: { alignItems: "flex-end" },
   metricLabel: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
   metricValue: { marginTop: 2, fontSize: 16, lineHeight: 21, fontWeight: "700", fontFamily: appFonts.bold, fontVariant: ["tabular-nums"] },
-  helper: { fontSize: 12, lineHeight: 18, fontWeight: "400", fontFamily: appFonts.regular },
   error: { color: "#A4262C", fontSize: 12, lineHeight: 18, fontWeight: "500", fontFamily: appFonts.medium },
   create: { minHeight: 50, borderRadius: 10, backgroundColor: ui.blue, paddingHorizontal: 16, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
   createDisabled: { opacity: 0.42 },
