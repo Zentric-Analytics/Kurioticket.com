@@ -64,6 +64,9 @@ export function nativeFareBenefitRows(terms: FlightFareTerm[], tripType: TripTyp
   }));
   const consumed = new Set<number>();
   const grouped: Array<NativeFareBenefitRow & { category?: FlightFareTerm["category"]; priority: number; position: number }> = [];
+  const partialBaggageWarnings = sourceRows.map((row, position) => ({ row, position })).filter(({ row }) =>
+    row.category === "baggage" && unscopedTitle(row.title) === "Baggage allowance" && /one or more passengers/i.test(row.detail),
+  );
   const addGroup = (kind: "Carry-on baggage" | "Checked baggage" | "Change/refund rules", priority: number) => {
     const matches = sourceRows.map((row, position) => ({ row, position })).filter(({ row }) => {
       const title = unscopedTitle(row.title);
@@ -71,6 +74,8 @@ export function nativeFareBenefitRows(terms: FlightFareTerm[], tripType: TripTyp
     });
     if (!matches.length) return;
     matches.forEach(({ position }) => consumed.add(position));
+    const baggageWarnings = kind === "Change/refund rules" ? [] : partialBaggageWarnings;
+    baggageWarnings.forEach(({ position }) => consumed.add(position));
     const details = matches.map(({ row }) => {
       const scope = scopeFromTitle(row.title);
       if (kind !== "Change/refund rules") return scope ? `${scope}: ${row.detail}` : row.detail;
@@ -78,7 +83,21 @@ export function nativeFareBenefitRows(terms: FlightFareTerm[], tripType: TripTyp
       const rule = row.category === "change" ? "changes" : "refunds";
       return `${scope ? `${scope} ${rule}` : sentenceCase(rule)}: ${row.detail}`;
     });
-    grouped.push({ title: kind, detail: details.join("\n"), semantic: groupedSemantic(matches.map(({ row }) => row.semantic)), key: `${kind}:${matches.map(({ row }) => row.key).join("+")}`, priority, position: matches[0].position });
+    if (baggageWarnings.length) {
+      details.push(...baggageWarnings.map(({ row }) => {
+        const scope = scopeFromTitle(row.title);
+        return `${scope ? `${scope} allowance` : "Allowance"}: ${row.detail}`;
+      }));
+    }
+    const semanticRows = [...matches, ...baggageWarnings];
+    grouped.push({
+      title: kind,
+      detail: details.join("\n"),
+      semantic: groupedSemantic(semanticRows.map(({ row }) => row.semantic)),
+      key: `${kind}:${semanticRows.map(({ row }) => row.key).join("+")}`,
+      priority,
+      position: matches[0].position,
+    });
   };
   addGroup("Carry-on baggage", 0);
   addGroup("Checked baggage", 1);
