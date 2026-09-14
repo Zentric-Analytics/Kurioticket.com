@@ -120,13 +120,16 @@ test("optional extras remain non-interactive provider-authored information",()=>
 test("deck baseline and flat content preserve current Pick-your-fare geometry",()=>{
   const deckStyles=between("fareInfoDeck:", "notice:");
   assert.match(deckStyles,/fareInfoDeck:\{gap:0\}/);
-  assert.match(deckStyles,/fareTabRail:\{flexGrow:0,borderBottomWidth:StyleSheet\.hairlineWidth,marginHorizontal:-10\}/);
+  assert.match(deckStyles,/fareTabRail:\{flexGrow:0,borderBottomWidth:1,marginHorizontal:-10\}/);
   assert.match(deckStyles,/fareTabRailContent:\{paddingHorizontal:0\}/);
   assert.match(deckStyles,/fareInfoBody:\{paddingHorizontal:4,paddingVertical:4\}/);
   assert.doesNotMatch(deckStyles,/fareInfoBody:\{[^}]*(?:borderWidth|borderRadius|backgroundColor)/);
   assert.match(deckStyles,/fareTabList:\{flexDirection:"row",gap:22\}/);
   assert.match(deckStyles,/fareInfoTab:\{minHeight:48,justifyContent:"center",position:"relative",paddingHorizontal:0\}/);
   assert.match(deckStyles,/fareTabIndicator:\{position:"absolute",height:2,borderRadius:1,backgroundColor:ui\.blue,left:0,right:0,bottom:0\}/);
+  assert.match(deckStyles,/sectionDivider:\{borderTopWidth:StyleSheet\.hairlineWidth\}/);
+  assert.match(deckStyles,/fareGroupDivider:\{height:StyleSheet\.hairlineWidth,marginVertical:11\}/);
+  assert.match(deckStyles,/secondaryFacts:\{borderTopWidth:StyleSheet\.hairlineWidth,paddingVertical:11\}/);
   assert.doesNotMatch(deckStyles,/fareInfoTab(?:Text)?:\{[^}]*(?:transform|position:"absolute")/);
   assert.match(source,/loadingTabs:\{[^}]*marginHorizontal:-10\}/);
   assert.match(deck,/borderBottomColor:theme\.border/);

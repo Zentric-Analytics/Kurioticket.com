@@ -55,4 +55,4 @@ test("loading presentation remains isolated from success and existing failure st
   assert.match(details, /testID="fare-information-deck"/);
 });
 
-test("information skeleton mirrors flat tab content",()=>{assert.match(loading,/s\.loadingTabs,\{borderBottomColor:theme\.border\}/);assert.doesNotMatch(details,/loadingInfoBody:\{[^}]*(?:borderWidth|borderRadius|backgroundColor)/);});
+test("information skeleton mirrors flat tab content and the loaded navigation baseline",()=>{assert.match(loading,/s\.loadingTabs,\{borderBottomColor:theme\.border\}/);assert.match(details,/loadingTabs:\{height:48,borderBottomWidth:1,/);assert.doesNotMatch(details,/loadingInfoBody:\{[^}]*(?:borderWidth|borderRadius|backgroundColor)/);});
