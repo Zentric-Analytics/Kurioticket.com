@@ -36,7 +36,10 @@ test("iOS renders interactive Apple Look Around directly inside Hotel Details", 
   assert.match(hotelDetails, /<ScrollView[\s\S]*scrollEnabled=\{!lookAroundInteracting\}/);
   assert.match(hotelDetails, /onLookAroundInteractionChange=\{setLookAroundInteracting\}/);
   assert.match(bookingDetails, /onLookAroundInteractionChange=\{onLookAroundInteractionChange\}/);
-  assert.match(location, /onTouchStart=\{\(\) => onLookAroundInteractionChange\?\.\(true\)\}/);
-  assert.match(location, /onTouchEnd=\{\(\) => onLookAroundInteractionChange\?\.\(false\)\}/);
-  assert.match(location, /onTouchCancel=\{\(\) => onLookAroundInteractionChange\?\.\(false\)\}/);
+  assert.match(location, /onLookAroundInteractionChange\?\.\(event\.nativeEvent\.touches\.length > 0\)/);
+  assert.match(location, /onTouchStart=\{syncLookAroundInteraction\}/);
+  assert.match(location, /onTouchEnd=\{syncLookAroundInteraction\}/);
+  assert.match(location, /onTouchCancel=\{syncLookAroundInteraction\}/);
+  assert.match(location, /if \(status === "unavailable"\) releaseLookAroundInteraction\(\)/);
+  assert.match(location, /return releaseLookAroundInteraction/);
 });
