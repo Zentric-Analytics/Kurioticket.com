@@ -89,8 +89,13 @@ test("Location uses the same inline Google Street View on iOS and Android", () =
   assert.match(component, /accessibilityRole="button" accessibilityLabel=\{\`Open full map for \$\{hotelName\}\`\}/);
   assert.match(component, /<NativeHotelFullMapModal visible=\{fullMapOpen\} hotelId=\{hotelId\} theme=\{theme\}/);
   assert.match(component, /<WebView key=\{\`\$\{hotelId\}:streetview\`\} source=\{\{ uri: streetViewUrl \}\}/);
-  assert.match(component, /onError=\{\(\) => setStreetViewFailed\(true\)\}/);
-  assert.match(component, /onHttpError=\{\(\) => setStreetViewFailed\(true\)\}/);
+  assert.match(component, /const \[streetViewLoading, setStreetViewLoading\] = useState\(true\);/);
+  assert.match(component, /const STREET_VIEW_SETTLE_MS = 900;/);
+  assert.match(component, /onLoadEnd=\{settleStreetView\}/);
+  assert.match(component, /onError=\{failStreetView\}/);
+  assert.match(component, /onHttpError=\{failStreetView\}/);
+  assert.match(component, /const failStreetView = \(\) => \{[\s\S]*?setStreetViewLoading\(false\);[\s\S]*?setStreetViewFailed\(true\);[\s\S]*?\};/);
+  assert.match(component, /accessibilityLabel="Loading Street View"/);
   assert.match(fullMapModal, /nativeHotelLocationEmbedUrl\(api\.baseUrl, hotelId, "map"\)/);
   assert.doesNotMatch(component + compare, />View in map</);
   assert.doesNotMatch(component, /ArrowRight/);
