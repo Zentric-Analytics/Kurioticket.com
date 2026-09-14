@@ -41,12 +41,12 @@ test("active hotel keeps icon-only header controls fixed over the hero and scrol
   assert.match(hotel, /style=\{\[s\.heroActions, \{ top: inset\.top \+ 12 \}\]\}/);
   assert.match(heroBackStyle, /left: 20[^}]*width: 44[^}]*height: 44[^}]*borderRadius: 22[^}]*backgroundColor: "#FFFFFF"[^}]*zIndex: 20/);
   assert.match(heroBackStyle, /elevation: 10/);
-  assert.match(heroActionsStyle, /right: 20[^}]*width: 112[^}]*height: 44[^}]*borderRadius: 22[^}]*backgroundColor: "#FFFFFF"[^}]*flexDirection: "row"[^}]*zIndex: 20/);
+  assert.match(heroActionsStyle, /right: 20[^}]*width: 96[^}]*height: 44[^}]*borderRadius: 22[^}]*backgroundColor: "#FFFFFF"[^}]*flexDirection: "row"[^}]*zIndex: 20/);
   assert.match(heroActionsStyle, /elevation: 10/);
-  assert.match(styleRule(detailSource, "heroAction", "identity"), /width: 56[^}]*height: 44/);
+  assert.match(styleRule(detailSource, "heroAction", "identity"), /width: 48[^}]*height: 44/);
 });
 
-test("save and share remain independent accessible actions inside one pill", () => {
+test("save and share remain independent accessible actions inside one compact pill", () => {
   assert.match(hotel, /accessibilityLabel=\{saved \? `Remove \$\{result\.name\} hotel from saved` : `Save \$\{result\.name\} hotel`\}/);
   assert.match(hotel, /accessibilityState=\{\{ selected: saved \}\}/);
   assert.match(hotel, /onPress=\{\(\) => void canonical\.toggleHotel\(result, params\)\}/);
