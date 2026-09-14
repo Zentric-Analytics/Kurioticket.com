@@ -1,5 +1,10 @@
 import { HotelDetailsScreen } from "../src/features/search/HotelDetailsScreen";
+import { ProfileThemeProvider } from "../src/theme/AppTheme";
 
 export default function HotelDetails() {
-  return <HotelDetailsScreen />;
+  return (
+    <ProfileThemeProvider>
+      <HotelDetailsScreen />
+    </ProfileThemeProvider>
+  );
 }

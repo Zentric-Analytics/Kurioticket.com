@@ -78,7 +78,8 @@ test("active native dock price hierarchy remains left aligned", () => {
 });
 
 test("Deals keeps its distinct right-aligned per-night style", () => {
-  assert.match(ratesSource, /perNight: \{[^}]*fontSize: 12[^}]*lineHeight: 17[^}]*fontWeight: "400"[^}]*fontFamily: appFonts\.regular[^}]*textAlign: "right"/);
+  assert.match(ratesSource, /perNight: \{[^}]*fontSize: 12[^}]*lineHeight: 17[^}]*fontWeight: "400"[^}]*textAlign: "right"/);
+  assert.doesNotMatch(ratesSource, /import \{ appFonts \}/);
   assert.match(ratesSource, /<Text style=\{\[s\.perNight, \{ color: theme\.textSecondary \}\]\}>per night<\/Text>/);
 });
 

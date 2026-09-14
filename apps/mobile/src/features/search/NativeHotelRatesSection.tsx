@@ -1,5 +1,4 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { appFonts } from "../../theme/typography";
 import type { NativeHotelOffer } from "./nativeHotelDetailsModel";
 import type { PresentedHotelRoomOption } from "./NativeHotelDetails";
 
@@ -158,14 +157,14 @@ const s = StyleSheet.create({
   rateRowPressed: { opacity: 0.82 },
   rateCopy: { flex: 1, minWidth: 0, justifyContent: "flex-start" },
   brandLogo: { width: 104, height: 22, flexShrink: 0, marginBottom: 10 },
-  providerName: { fontSize: 15, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold, marginBottom: 10 },
-  rateTitle: { fontSize: 16, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold },
-  rateMeta: { marginTop: 10, fontSize: 14, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
+  providerName: { fontSize: 15, lineHeight: 20, fontWeight: "700", marginBottom: 10 },
+  rateTitle: { fontSize: 15, lineHeight: 21, fontWeight: "700" },
+  rateMeta: { marginTop: 8, fontSize: 14, lineHeight: 20, fontWeight: "400" },
   rateActionColumn: { width: 112, flexShrink: 0, alignItems: "flex-end", justifyContent: "space-between" },
   priceBlock: { width: "100%", alignItems: "flex-end" },
-  price: { maxWidth: "100%", fontSize: 20, lineHeight: 26, fontWeight: "700", fontFamily: appFonts.bold, textAlign: "right" },
-  perNight: { marginTop: 2, fontSize: 12, lineHeight: 17, fontWeight: "400", fontFamily: appFonts.regular, textAlign: "right" },
+  price: { maxWidth: "100%", fontSize: 20, lineHeight: 26, fontWeight: "700", textAlign: "right" },
+  perNight: { marginTop: 2, fontSize: 12, lineHeight: 17, fontWeight: "400", textAlign: "right" },
   selectButton: { minWidth: 88, height: 44, borderRadius: 10, alignItems: "center", justifyContent: "center", paddingHorizontal: 12 },
-  selectButtonText: { color: "#FFFFFF", fontSize: 15, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
+  selectButtonText: { color: "#FFFFFF", fontSize: 15, lineHeight: 20, fontWeight: "700" },
   emptyCard: { minHeight: 112, justifyContent: "center", borderWidth: 1, borderRadius: 12, padding: 16 },
 });

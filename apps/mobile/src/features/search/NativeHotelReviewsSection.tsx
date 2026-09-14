@@ -8,7 +8,6 @@ import {
 } from "../../../../../src/lib/hotels/hotelRatingSemantics";
 import { useAppTheme } from "../../theme/AppTheme";
 import { colors } from "../../theme/tokens";
-import { appFonts } from "../../theme/typography";
 
 const reviewLabels: Record<HotelReviewBand, string> = {
   exceptional: "Exceptional",
@@ -58,10 +57,7 @@ export function NativeHotelReviewsSection({ result }: { result: ReviewResult }) 
 
   return (
     <View style={styles.reviewsSection}>
-      <Text
-        accessibilityRole="header"
-        style={[styles.heading, { color: theme.dark ? theme.textPrimary : "#020617" }]}
-      >
+      <Text accessibilityRole="header" style={[styles.heading, { color: theme.textPrimary }]}>
         Guest reviews
       </Text>
       {review ? (
@@ -70,22 +66,16 @@ export function NativeHotelReviewsSection({ result }: { result: ReviewResult }) 
             <Text style={styles.scoreText}>{review.score}</Text>
           </View>
           <View style={styles.metadata}>
-            <Text style={[styles.label, { color: theme.dark ? theme.textPrimary : "#020617" }]}>
-              {review.label}
-            </Text>
-            <Text style={[styles.count, { color: theme.dark ? theme.textSecondary : "#475569" }]}>
-              {review.count}
-            </Text>
+            <Text style={[styles.label, { color: theme.textPrimary }]}>{review.label}</Text>
+            <Text style={[styles.count, { color: theme.textSecondary }]}>{review.count}</Text>
             {result.reviewSource ? (
-              <Text style={[styles.source, { color: theme.dark ? theme.textSecondary : "#64748B" }]}>
-                Source: {result.reviewSource}
-              </Text>
+              <Text style={[styles.source, { color: theme.textSecondary }]}>Source: {result.reviewSource}</Text>
             ) : null}
           </View>
         </View>
       ) : (
         <View style={styles.emptyCallout}>
-          <Text style={[styles.emptyText, { color: theme.dark ? theme.textSecondary : "#475569" }]}>
+          <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
             Verified guest reviews are not connected for this property yet.
           </Text>
         </View>
@@ -96,14 +86,14 @@ export function NativeHotelReviewsSection({ result }: { result: ReviewResult }) 
 
 const styles = StyleSheet.create({
   reviewsSection: { paddingVertical: 12 },
-  heading: { fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.25 },
+  heading: { fontSize: 16, lineHeight: 22, fontWeight: "700" },
   emptyCallout: { marginTop: 8 },
-  emptyText: { fontSize: 13, lineHeight: 22, fontWeight: "400", fontFamily: appFonts.regular },
-  scoreRow: { marginTop: 16, flexDirection: "row", alignItems: "center", gap: 16 },
+  emptyText: { fontSize: 14, lineHeight: 21, fontWeight: "400" },
+  scoreRow: { marginTop: 14, flexDirection: "row", alignItems: "center", gap: 14 },
   scoreBadge: { height: 56, minWidth: 56, borderRadius: 8, backgroundColor: colors.blue, paddingHorizontal: 8, alignItems: "center", justifyContent: "center" },
-  scoreText: { color: "white", fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold, textAlign: "center" },
+  scoreText: { color: "white", fontSize: 18, lineHeight: 24, fontWeight: "700", textAlign: "center" },
   metadata: { flex: 1, minWidth: 0 },
-  label: { fontSize: 15, lineHeight: 22, fontWeight: "600", fontFamily: appFonts.semibold },
-  count: { fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
-  source: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: "400", fontFamily: appFonts.regular },
+  label: { fontSize: 15, lineHeight: 21, fontWeight: "600" },
+  count: { fontSize: 14, lineHeight: 20, fontWeight: "400" },
+  source: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: "400" },
 });

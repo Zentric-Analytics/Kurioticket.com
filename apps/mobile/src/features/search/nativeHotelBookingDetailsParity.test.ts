@@ -30,9 +30,10 @@ const property: PublicHotelPropertyDetails = {
   accessibility: ["Accessible accommodation features are available"],
 };
 
-test("hotel-details route uses the composed booking details screen", () => {
+test("hotel-details route uses the composed booking details screen with Profile text tokens", () => {
   assert.match(route, /import \{ HotelDetailsScreen \} from "\.\.\/src\/features\/search\/HotelDetailsScreen"/);
-  assert.match(route, /return <HotelDetailsScreen \/>/);
+  assert.match(route, /import \{ ProfileThemeProvider \} from "\.\.\/src\/theme\/AppTheme"/);
+  assert.match(route, /return \([\s\S]*?<ProfileThemeProvider>[\s\S]*?<HotelDetailsScreen \/>[\s\S]*?<\/ProfileThemeProvider>[\s\S]*?\);/);
   assert.doesNotMatch(route, /ApprovedDetailScreen/);
   assert.match(screen, /activeHotelTab === "details"[\s\S]*?<NativeHotelBookingDetails/);
 });
@@ -94,13 +95,15 @@ test("Details keeps room, accessibility and related-hotel information without a 
   assert.doesNotMatch(details, />Hotel information<|<Award\b|Hotel classification is not available\./);
 });
 
-test("Details uses a dense divider-free mobile rhythm without changing typography", () => {
+test("Details uses a dense divider-free Profile-style mobile rhythm", () => {
   assert.match(details, /section: \{ paddingVertical: 0 \}/);
   assert.match(details, /sectionGap: \{ height: 12 \}/);
   assert.match(details, /description: \{ marginTop: 4,/);
   assert.match(details, /rowList: \{ marginTop: 5, gap: 4 \}/);
   assert.match(details, /seeAllLink: \{ alignSelf: "flex-start", marginTop: 6, paddingVertical: 4 \}/);
   assert.doesNotMatch(details, /function SectionDivider|s\.divider|divider: \{|borderTopWidth: StyleSheet\.hairlineWidth/);
-  assert.match(details, /heading: \{ fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts\.bold/);
-  assert.match(details, /rowText: \{[^}]*fontSize: 13, lineHeight: 20, fontWeight: "400", fontFamily: appFonts\.regular/);
+  assert.match(details, /heading: \{ fontSize: 16, lineHeight: 22, fontWeight: "700", fontFamily: appFonts\.bold/);
+  assert.match(details, /rowText: \{[^}]*fontSize: 14, lineHeight: 20, fontWeight: "400", fontFamily: appFonts\.regular/);
+  assert.match(details, /const iconColor = theme\.dark \? theme\.icon : "#1A1A1A"/);
+  assert.match(details, /strokeWidth=\{1\.3\}/);
 });
