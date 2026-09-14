@@ -59,6 +59,8 @@ test("native header spacing and route action separation stay compact", () => {
   assert.match(native, /content:\{paddingHorizontal:18,paddingTop:5,gap:14\}/);
   assert.match(native, /iconButton:\{width:44,height:44/);
   assert.match(native, /routeActions:\{flexDirection:"row",alignItems:"center",gap:0,flexShrink:0\}/);
+  assert.match(native, /routeActionLeadingGlyph:\{transform:\[\{translateX:4\}\]\}/);
+  assert.match(native, /routeActionTrailingGlyph:\{transform:\[\{translateX:-4\}\]\}/);
   assert.match(native, /routeSummary:\{flexDirection:"row",alignItems:"center",gap:4,marginBottom:-4\}/);
   assert.doesNotMatch(native, /edit:\{|editText:\{/);
   assert.match(native, /const next=nativeEvent\.contentOffset\.y>1;if\(next!==hasScrolledRef\.current\)/);

@@ -18,7 +18,7 @@ test("fare categories and active content form one connected horizontally scrolla
   assert.match(deck,/onPress=\{\(\)=>setTab\(key\)\}/);
   assert.match(deck,/<Text numberOfLines=\{1\}/);
   assert.match(deck,/tab===key\?<View style=\{s\.fareTabIndicator\}/);
-  assert.match(deck,/<View testID="fare-information-active-card" style=\{\[s\.fareInfoBody,[^>]+><FareSurface tab=\{tab\}/);
+  assert.match(deck,/<View testID="fare-information-active-content" style=\{s\.fareInfoBody\}><FareSurface tab=\{tab\}/);
 });
 
 test("FareSurface renders only the selected category without a generic nested card",()=>{
@@ -117,14 +117,14 @@ test("optional extras remain non-interactive provider-authored information",()=>
   assert.doesNotMatch(extras,/<Pressable|chevron/);
 });
 
-test("deck widens to 8dp side gaps while generic and current Pick-your-fare geometry remain intact",()=>{
+test("deck baseline and flat content preserve current Pick-your-fare geometry",()=>{
   const deckStyles=between("fareInfoDeck:", "notice:");
   assert.match(deckStyles,/fareInfoDeck:\{gap:0\}/);
-  assert.match(deckStyles,/fareInfoBody:\{borderWidth:1,borderRadius:15,marginHorizontal:-10,paddingHorizontal:14,paddingVertical:4\}/);
+  assert.match(deckStyles,/fareTabRail:\{flexGrow:0,borderBottomWidth:StyleSheet\.hairlineWidth\}/);assert.match(deckStyles,/fareInfoBody:\{paddingHorizontal:4,paddingVertical:4\}/);assert.doesNotMatch(deckStyles,/fareInfoBody:\{[^}]*(?:borderWidth|borderRadius|backgroundColor)/);
   assert.match(deckStyles,/fareTabList:\{flexDirection:"row",gap:22\}/);
   assert.match(deckStyles,/fareInfoTab:\{minHeight:48/);
   assert.match(deckStyles,/fareTabIndicator:\{position:"absolute",height:2/);
-  assert.doesNotMatch(deckStyles,/fareInfoDivider/);
+  assert.match(deck,/borderBottomColor:theme\.border/);
   assert.doesNotMatch(deckStyles,/elevation|shadow/);
   assert.match(source,/content:\{paddingHorizontal:18,paddingTop:5,gap:14\}/);
   assert.match(source,/card:\{borderWidth:1,borderRadius:14,padding:14,gap:7\}/);

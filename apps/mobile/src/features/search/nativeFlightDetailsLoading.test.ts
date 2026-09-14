@@ -29,7 +29,7 @@ test("entry skeleton anticipates route, itinerary, fare carousel, and informatio
   assert.match(details, /loadingFareName:\{width:72,height:12/);
   assert.match(details, /loadingBenefitDot:\{width:16,height:16/);
   assert.match(loading, /s\.loadingFareIdentity[\s\S]*?s\.loadingBenefitRow[\s\S]*?s\.loadingFarePriceBlock/);
-  assert.match(details, /loadingFarePriceBlock:\{alignSelf:"flex-start",alignItems:"flex-start",gap:2\}/);
+  assert.match(details, /loadingFarePriceBlock:\{alignSelf:"stretch",alignItems:"center"\}/);
   assert.match(loading, /32\+bottomInset/);
 });
 
@@ -54,3 +54,5 @@ test("loading presentation remains isolated from success and existing failure st
   assert.match(details, /testID="flight-details-scroll-content"/);
   assert.match(details, /testID="fare-information-deck"/);
 });
+
+test("information skeleton mirrors flat tab content",()=>{assert.match(loading,/s\.loadingTabs,\{borderBottomColor:theme\.border\}/);assert.doesNotMatch(details,/loadingInfoBody:\{[^}]*(?:borderWidth|borderRadius|backgroundColor)/);});
