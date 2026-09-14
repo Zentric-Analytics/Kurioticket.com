@@ -70,13 +70,18 @@ test("the web tab reference remains the mobile parity contract", () => {
   assert.match(web, /searchedPickupLocation/);
 });
 
-test("Compare uses the refined native presentation while Pickup retains its geometry", () => {
+test("content below the three tabs shares one section-heading hierarchy", () => {
   for (const contract of ["paddingTop:12", "paddingBottom:28"])
     assert.ok(style("compare").includes(contract));
   for (const contract of ["fontSize:20", "lineHeight:28", 'fontWeight:"800"'])
     assert.ok(style("heading").includes(contract));
-  for (const contract of ["fontSize:18", "lineHeight:24", 'fontWeight:"600"', "fontFamily:appFonts.semibold", "letterSpacing:-.25"])
-    assert.ok(style("compareHeading").includes(contract));
+  for (const heading of ["compareHeading", "pickupHeading", "locationHeading"]) {
+    for (const contract of ["fontSize:18", "lineHeight:24", 'fontWeight:"600"', "fontFamily:appFonts.semibold", "letterSpacing:-.25"])
+      assert.ok(style(heading).includes(contract), `${heading}: ${contract}`);
+  }
+  assert.match(native, /<Text style=\{\[s\.compareHeading,[^>]*>Compare prices<\/Text>/);
+  assert.match(native, /<Text style=\{\[s\.pickupHeading,[^>]*>Pickup and return<\/Text>/);
+  assert.match(native, /<Text style=\{\[s\.locationHeading,[^>]*>Location<\/Text>/);
   for (const contract of ["marginTop:4", "fontSize:14", "lineHeight:20", 'fontWeight:"500"'])
     assert.ok(style("stay").includes(contract));
   for (const contract of ["marginTop:20", "borderRadius:14", "paddingHorizontal:8", "paddingVertical:16"])
@@ -89,10 +94,16 @@ test("Compare uses the refined native presentation while Pickup retains its geom
 
   for (const contract of ["paddingVertical:20", "borderTopWidth:1", "borderBottomWidth:1"])
     assert.ok(style("pickupSection").includes(contract));
-  for (const contract of ["fontSize:18", "lineHeight:24", 'fontWeight:"700"'])
-    assert.ok(style("pickupHeading").includes(contract));
-  for (const contract of ["fontSize:16", "lineHeight:24", 'fontWeight:"700"'])
+  for (const contract of ["fontSize:16", "lineHeight:24", 'fontWeight:"700"', "fontFamily:appFonts.bold"])
     assert.ok(style("timelineHeading").includes(contract));
+  for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"500"', "fontFamily:appFonts.medium"])
+    assert.ok(style("timelineLocation").includes(contract));
+  for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"400"', "fontFamily:appFonts.regular"])
+    assert.ok(style("timelineDate").includes(contract));
+  for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"600"', "fontFamily:appFonts.semibold"])
+    assert.ok(style("pickupType").includes(contract));
+  for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"400"', "fontFamily:appFonts.regular"])
+    assert.ok(style("instructions").includes(contract));
   assert.match(native, /<MapPin size=\{16\} color="#004BB8"/);
   assert.match(native, /<Clock3 size=\{16\} color=\{theme\.dark\?theme\.icon:"#64748B"\}/);
 });
@@ -135,19 +146,24 @@ test("Compare alone uses the singular unlimited-mile benefit copy", () => {
   assert.equal(nativeCarMileageLabel({ mileagePolicy: "limited", limitedMileageKm: 300 } as CarResult), "300 km included");
 });
 
-test("Location uses search truth and a dedicated text-only timeline", () => {
+test("Pickup and Location use the same item hierarchy without changing map truth", () => {
   assert.match(native, /searchedPickupLocation=search\.pickupLocation\.trim\(\)/);
   assert.match(native, /searchedReturnLocation=search\.dropoffLocation\.trim\(\)/);
   assert.match(native, /pickupLocation=searchedPickupLocation\|\|result\.pickupLocation/);
   assert.match(native, /returnLocation=searchedReturnLocation\|\|result\.returnLocation/);
   assert.match(native, /function LocationTimelineEntry/);
-  assert.match(native, /<LocationTimelineEntry label="PICK-UP" location=\{pickupLocation\}/);
-  assert.doesNotMatch(native.match(/function LocationTimelineEntry[\s\S]*?function PickupReturn/)?.[0] ?? "", /<MapPin|<Clock3/);
-  for (const contract of ["fontSize:12", 'fontWeight:"700"'])
-    assert.ok(style("locationTimelineLabel").includes(contract));
-  for (const contract of ["fontSize:14", 'fontWeight:"600"'])
-    assert.ok(style("locationTimelineLocation").includes(contract));
-  assert.ok(style("locationTimelineDate").includes("fontSize:12"));
+  assert.match(native, /<LocationTimelineEntry label="Pick-up" location=\{pickupLocation\}/);
+  assert.match(native, /<LocationTimelineEntry label="Return" location=\{returnLocation\}/);
+  assert.doesNotMatch(native, /<LocationTimelineEntry label="PICK-UP"|<LocationTimelineEntry label="RETURN"/);
+  const locationEntry = native.match(/function LocationTimelineEntry[\s\S]*?function PickupReturn/)?.[0] ?? "";
+  assert.doesNotMatch(locationEntry, /<MapPin|<Clock3/);
+  assert.match(locationEntry, /s\.timelineHeading/);
+  assert.match(locationEntry, /s\.timelineLocation/);
+  assert.match(locationEntry, /s\.timelineDate/);
+  for (const contract of ["fontSize:15", "lineHeight:22", 'fontWeight:"700"', "fontFamily:appFonts.bold"])
+    assert.ok(style("detailsHeading").includes(contract));
+  for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"400"', "fontFamily:appFonts.regular"])
+    assert.ok(style("bulletText").includes(contract));
   assert.ok(style("mapViewport").includes("height:200"));
   assert.ok(style("mapCard").includes("marginTop:16"));
   assert.ok(style("mapCard").includes("borderRadius:14"));
