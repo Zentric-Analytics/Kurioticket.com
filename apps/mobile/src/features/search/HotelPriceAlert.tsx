@@ -73,10 +73,13 @@ export function HotelPriceAlert({
   const pendingRef = useRef(false);
   const reconciliationRef = useRef(0);
   const targetIntentRef = useRef(new PriceAlertTargetIntent());
+  const planRef = useRef(plan);
+  planRef.current = plan;
+  const planKey = plan.key;
 
-  const matchingAlert = matchingAlertState?.planKey === plan.key ? matchingAlertState.alert : undefined;
+  const matchingAlert = matchingAlertState?.planKey === planKey ? matchingAlertState.alert : undefined;
   const isTracking = matchingAlert?.status === "ACTIVE";
-  const alertKnown = reconciledPlanKey === plan.key;
+  const alertKnown = reconciledPlanKey === planKey;
   const priceBasis = useMemo(
     () => hotelAlertPriceBasis(hotelResults, displayCurrency, rates),
     [displayCurrency, hotelResults, rates],
@@ -87,8 +90,8 @@ export function HotelPriceAlert({
   const readyToCreate = Boolean(available && currentTotal !== null && desiredTotal !== null && alertCurrency && !pending);
 
   const setCurrentMatchingAlert = useCallback((alert: MobilePriceAlert | undefined) => {
-    setMatchingAlertState(alert ? { planKey: plan.key, alert } : undefined);
-  }, [plan.key]);
+    setMatchingAlertState(alert ? { planKey, alert } : undefined);
+  }, [planKey]);
 
   const closeSheet = useCallback(() => {
     targetIntentRef.current.close();
@@ -108,6 +111,8 @@ export function HotelPriceAlert({
   }, [message, t]);
 
   const reconcile = useCallback(async () => {
+    const reconciliationPlan = planRef.current;
+    const reconciliationPlanKey = planKey;
     const reconciliation = ++reconciliationRef.current;
     setLoadingAlert(true);
     try {
@@ -115,23 +120,23 @@ export function HotelPriceAlert({
       if (!session) {
         if (reconciliation === reconciliationRef.current) {
           setCurrentMatchingAlert(undefined);
-          setReconciledPlanKey(plan.key);
+          setReconciledPlanKey(reconciliationPlanKey);
         }
         return;
       }
       const alerts = (await travelApi.priceAlerts()).alerts;
       if (reconciliation !== reconciliationRef.current) return;
-      setCurrentMatchingAlert(matchingHotelPriceAlert(alerts, plan));
-      setReconciledPlanKey(plan.key);
+      setCurrentMatchingAlert(matchingHotelPriceAlert(alerts, reconciliationPlan));
+      setReconciledPlanKey(reconciliationPlanKey);
     } catch (cause) {
       if (reconciliation === reconciliationRef.current && cause instanceof TravelApiError && cause.status === 401) {
         setCurrentMatchingAlert(undefined);
-        setReconciledPlanKey(plan.key);
+        setReconciledPlanKey(reconciliationPlanKey);
       }
     } finally {
       if (reconciliation === reconciliationRef.current) setLoadingAlert(false);
     }
-  }, [plan, setCurrentMatchingAlert]);
+  }, [planKey, setCurrentMatchingAlert]);
 
   useFocusEffect(useCallback(() => {
     void reconcile();
