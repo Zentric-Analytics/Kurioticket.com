@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import type { NativeHotelOffer } from "./nativeHotelDetailsModel";
 import type { PresentedHotelRoomOption } from "./NativeHotelDetails";
 import { appFonts } from "../../theme/typography";
@@ -105,6 +105,8 @@ function addRateRow(groups: RateGroup[], groupTitle: string, row: RateRow) {
   groups.push({ id: groupKey, title: groupTitle, rows: [row] });
 }
 
+const previewReserve = () => undefined;
+
 export function NativeHotelRatesSection({
   offers,
   roomOptions,
@@ -113,6 +115,7 @@ export function NativeHotelRatesSection({
   cancellationInfo,
   detailsStatus,
   theme,
+  accentColor,
 }: {
   offers: NativeHotelOffer[];
   selectedOfferId: NativeHotelOffer["id"] | null;
@@ -175,7 +178,9 @@ export function NativeHotelRatesSection({
     });
   }
 
-  if (!groups.length) {
+  const rows = groups.flatMap((group) => group.rows);
+
+  if (!rows.length) {
     return (
       <View style={s.section}>
         <View style={[s.emptyCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -188,64 +193,66 @@ export function NativeHotelRatesSection({
 
   return (
     <View style={s.section}>
-      {groups.map((group) => (
-        <View key={group.id} style={s.groupSection}>
-          <Text style={[s.groupTitle, { color: theme.textPrimary }]}>{group.title}</Text>
-          <View style={[s.groupCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            {group.rows.map((row, index) => (
-              <View
-                key={row.id}
-                style={[
-                  s.rateRow,
-                  index > 0 && { borderTopColor: theme.border, borderTopWidth: StyleSheet.hairlineWidth },
-                ]}
-              >
-                <View style={s.rateCopy}>
-                  {row.providerKind === "kurioticket" ? (
-                    <Image
-                      accessible
-                      accessibilityLabel="Kurioticket"
-                      accessibilityIgnoresInvertColors
-                      source={require("../../../assets/kurioticket-logo-primary-light-bg.png")}
-                      resizeMode="contain"
-                      style={s.brandLogo}
-                    />
-                  ) : (
-                    <Text numberOfLines={1} style={[s.providerName, { color: theme.textPrimary }]}>
-                      {row.providerName}
-                    </Text>
-                  )}
-                  <Text numberOfLines={2} style={[s.rateTitle, { color: theme.textPrimary }]}>
-                    {row.title}
+      {rows.map((row) => (
+        <View
+          key={row.id}
+          style={[s.rateCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
+        >
+          <View style={s.rateCopy}>
+            {row.providerKind === "kurioticket" ? (
+              <Image
+                accessible
+                accessibilityLabel="Kurioticket"
+                accessibilityIgnoresInvertColors
+                source={require("../../../assets/kurioticket-logo-primary-light-bg.png")}
+                resizeMode="contain"
+                style={s.brandLogo}
+              />
+            ) : (
+              <Text numberOfLines={1} style={[s.providerName, { color: theme.textPrimary }]}>
+                {row.providerName}
+              </Text>
+            )}
+            <Text numberOfLines={2} style={[s.rateTitle, { color: theme.textPrimary }]}>
+              {row.title}
+            </Text>
+            {row.meta.length ? (
+              <View style={s.benefitList}>
+                {row.meta.map((benefit) => (
+                  <Text key={benefit} numberOfLines={1} style={[s.rateMeta, { color: theme.textSecondary }]}>
+                    {benefit}
                   </Text>
-                  {row.meta.length ? (
-                    <View style={s.benefitList}>
-                      {row.meta.map((benefit) => (
-                        <Text key={benefit} numberOfLines={1} style={[s.rateMeta, { color: theme.textSecondary }]}>
-                          {benefit}
-                        </Text>
-                      ))}
-                    </View>
-                  ) : null}
-                </View>
-
-                <View style={s.rateActionColumn}>
-                  <Text
-                    numberOfLines={2}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.68}
-                    accessibilityLabel={row.priceAccessibilityLabel}
-                    style={[
-                      s.price,
-                      !row.hasDisplayedPrice && s.priceUnavailable,
-                      { color: row.hasDisplayedPrice ? theme.textPrimary : theme.textSecondary },
-                    ]}
-                  >
-                    {row.price}
-                  </Text>
-                </View>
+                ))}
               </View>
-            ))}
+            ) : null}
+          </View>
+
+          <View style={s.rateActionColumn}>
+            <Text
+              numberOfLines={2}
+              adjustsFontSizeToFit
+              minimumFontScale={0.68}
+              accessibilityLabel={row.priceAccessibilityLabel}
+              style={[
+                s.price,
+                !row.hasDisplayedPrice && s.priceUnavailable,
+                { color: row.hasDisplayedPrice ? theme.textPrimary : theme.textSecondary },
+              ]}
+            >
+              {row.price}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Reserve ${row.title}`}
+              onPress={previewReserve}
+              style={({ pressed }) => [
+                s.reserveButton,
+                { backgroundColor: accentColor },
+                pressed && s.reserveButtonPressed,
+              ]}
+            >
+              <Text style={s.reserveButtonText}>Reserve</Text>
+            </Pressable>
           </View>
         </View>
       ))}
@@ -254,19 +261,13 @@ export function NativeHotelRatesSection({
 }
 
 const s = StyleSheet.create({
-  section: { paddingBottom: 12, gap: 22 },
-  groupSection: { gap: 20 },
-  groupTitle: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: "700",
-    fontFamily: appFonts.bold,
-  },
-  groupCard: { overflow: "hidden", borderWidth: 1, borderRadius: 14 },
-  rateRow: {
+  section: { paddingBottom: 12, gap: 12 },
+  rateCard: {
     minHeight: 134,
     flexDirection: "row",
     alignItems: "stretch",
+    borderWidth: 1,
+    borderRadius: 0,
     paddingHorizontal: 16,
     paddingVertical: 20,
     gap: 12,
@@ -297,7 +298,7 @@ const s = StyleSheet.create({
     width: 104,
     flexShrink: 0,
     alignItems: "flex-end",
-    justifyContent: "flex-start",
+    justifyContent: "space-between",
   },
   price: {
     maxWidth: "100%",
@@ -313,11 +314,27 @@ const s = StyleSheet.create({
     fontWeight: "600",
     fontFamily: appFonts.semibold,
   },
+  reserveButton: {
+    minWidth: 82,
+    minHeight: 44,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 12,
+  },
+  reserveButtonPressed: { opacity: 0.84 },
+  reserveButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
+  },
   emptyCard: {
     minHeight: 108,
     justifyContent: "center",
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: 0,
     padding: 16,
   },
   emptyTitle: {
