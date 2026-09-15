@@ -25,6 +25,7 @@ import type {
   PublicHotelPropertyDetails,
   PublicHotelResult,
 } from "@/lib/types";
+import type { PublicHotelProviderDetails } from "@/lib/hotels/hotelProviderDetails";
 import { buildHotelAddress } from "@/lib/hotels/hotelMap";
 import { HotelDetailsGallery } from "@/components/results/hotelDetails/HotelDetailsGallery";
 import { HotelLocationSection } from "@/components/results/hotelDetails/HotelLocationSection";
@@ -64,6 +65,7 @@ export type StandaloneHotelDetailsProps = {
   starRatingAriaLabel: string;
   locationParts: string[];
   propertyDetails: PublicHotelPropertyDetails | null;
+  providerDetails?: PublicHotelProviderDetails | null;
   reviewScore: string;
   reviewLabel: string;
   reviewCountText: string;
@@ -127,6 +129,23 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
   const canonicalAddress = props.propertyDetails
     ? buildHotelAddress(props.propertyDetails)
     : "";
+  const providerFacts: ReadonlyArray<readonly [string, string]> = props.providerDetails?.source === "KAYAK"
+    ? ([
+        props.providerDetails.overview?.address ? ["Address", props.providerDetails.overview.address] : null,
+        props.providerDetails.overview?.countryCode ? ["Country code", props.providerDetails.overview.countryCode] : null,
+        props.providerDetails.overview?.selfRated !== undefined ? ["Provider self-rated", props.providerDetails.overview.selfRated ? "Yes" : "No"] : null,
+        ...(props.providerDetails.overview?.place ?? []).map((fact) => [fact.label, fact.value] as const),
+        ...(props.providerDetails.overview?.policies ?? []).map((fact) => [fact.label, fact.value] as const),
+        props.providerDetails.reviews?.sentiment ? ["Guest rating sentiment", props.providerDetails.reviews.sentiment] : null,
+        ...(props.providerDetails.reviews?.quotes ?? []).map((fact) => [fact.label, fact.value] as const),
+        props.providerDetails.rate?.roomName ? ["Room", props.providerDetails.rate.roomName] : null,
+        props.providerDetails.rate?.freeCancellation !== undefined ? ["Free cancellation", props.providerDetails.rate.freeCancellation ? "Yes" : "No"] : null,
+        props.providerDetails.rate?.payLater !== undefined ? ["Pay later", props.providerDetails.rate.payLater ? "Yes" : "No"] : null,
+        props.providerDetails.rate?.bundledRate !== undefined ? ["Bundled rate", props.providerDetails.rate.bundledRate ? "Yes" : "No"] : null,
+        ...(props.providerDetails.rate?.rateBreakdown ?? []).map((fact) => [fact.label, fact.value] as const),
+        ...(props.providerDetails.rate?.conditions ?? []).map((fact) => [fact.label, fact.value] as const),
+      ] as Array<readonly [string, string] | null>).filter((fact): fact is readonly [string, string] => fact !== null && Boolean(fact[1].trim()))
+    : [];
 
   useEffect(() => {
     if (!roomsOpen) return;
@@ -499,15 +518,31 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
               ) : null}
 
               {activeTab === "about" ? (
-                <HotelAboutSection
-                  description={description}
-                  amenities={props.amenityItems}
-                  starRating={props.starRating}
-                  propertyType={props.propertyDetails?.propertyType}
-                  roomSummary={props.propertyDetails?.roomSummary}
-                  bedSummary={props.propertyDetails?.bedSummary}
-                  accessibility={props.propertyDetails?.accessibility}
-                />
+                <>
+                  <HotelAboutSection
+                    description={description}
+                    amenities={props.amenityItems}
+                    starRating={props.starRating}
+                    propertyType={props.propertyDetails?.propertyType}
+                    roomSummary={props.propertyDetails?.roomSummary}
+                    bedSummary={props.propertyDetails?.bedSummary}
+                    accessibility={props.propertyDetails?.accessibility}
+                  />
+                  {providerFacts.length ? (
+                    <section className="border-b border-slate-200 px-4 py-8 lg:px-0 lg:py-10" aria-labelledby="provider-details-heading" data-provider-hotel-details>
+                      <h2 id="provider-details-heading" className="text-xl font-extrabold text-slate-950">KAYAK-provided details</h2>
+                      <p className="mt-2 text-sm text-slate-600">Information supplied for this exact sandbox offer.</p>
+                      <dl className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+                        {providerFacts.map(([label, value], index) => (
+                          <div key={`${label}-${value}-${index}`} className="min-w-0">
+                            <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</dt>
+                            <dd className="mt-1 break-words text-sm font-medium leading-6 text-slate-900">{value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </section>
+                  ) : null}
+                </>
               ) : null}
 
               {activeTab === "reviews" ? (

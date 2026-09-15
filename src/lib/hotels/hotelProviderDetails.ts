@@ -1,22 +1,27 @@
+export type PublicHotelProviderFact = {
+  label: string;
+  value: string;
+};
+
 export type PublicHotelProviderDetails = {
   source: "KAYAK";
   overview?: {
     address?: string;
     countryCode?: string;
-    place?: string[];
-    policies?: string[];
+    place?: PublicHotelProviderFact[];
+    policies?: PublicHotelProviderFact[];
     selfRated?: boolean;
   };
   reviews?: {
     sentiment?: string;
-    quotes?: string[];
+    quotes?: PublicHotelProviderFact[];
   };
   rate?: {
     roomName?: string;
     freeCancellation?: boolean;
     payLater?: boolean;
     bundledRate?: boolean;
-    rateBreakdown?: string[];
-    conditions?: string[];
+    rateBreakdown?: PublicHotelProviderFact[];
+    conditions?: PublicHotelProviderFact[];
   };
 };

@@ -1,7 +1,7 @@
 import type { FlightFareTerm, FlightLeg, NormalizedFlightResult, NormalizedHotelResult, HotelClassificationStars } from "@/lib/types";
 import type { NormalizedCarResult } from "@/lib/cars/types";
 import type { SandboxOffer } from "@/services/travel/kayakSandbox";
-import type { PublicHotelProviderDetails } from "@/lib/hotels/hotelProviderDetails";
+import type { PublicHotelProviderDetails, PublicHotelProviderFact } from "@/lib/hotels/hotelProviderDetails";
 
 function providerValue(value: string) {
   return value
@@ -42,12 +42,20 @@ function kayakFareTerms(offer: SandboxOffer): FlightFareTerm[] {
   return terms;
 }
 
-function hotelAttributeValues(offer: SandboxOffer, prefix: string) {
+function hotelAttributeFacts(offer: SandboxOffer, prefix: string): PublicHotelProviderFact[] {
   const pattern = new RegExp(`^${prefix}(?:\\s|·|$)`, "i");
   return (offer.attributes ?? [])
     .filter((attribute) => pattern.test(attribute.label))
-    .map((attribute) => attribute.value.trim())
-    .filter(Boolean);
+    .map((attribute) => {
+      const value = attribute.value.trim();
+      const suffix = attribute.label.replace(pattern, "").replace(/^·\s*/, "").trim();
+      return { label: providerValue(!suffix || /^\d+$/.test(suffix) ? prefix : suffix), value };
+    })
+    .filter((fact) => Boolean(fact.value));
+}
+
+function hotelAttributeValues(offer: SandboxOffer, prefix: string) {
+  return hotelAttributeFacts(offer, prefix).map((fact) => fact.value);
 }
 
 function hotelAttributeValue(offer: SandboxOffer, prefix: string) {
@@ -63,21 +71,21 @@ function kayakHotelProviderDetails(offer: SandboxOffer): PublicHotelProviderDeta
   const overview = {
     address: hotelAttributeValue(offer, "address"),
     countryCode: hotelAttributeValue(offer, "hotel Country Code"),
-    place: hotelAttributeValues(offer, "place"),
-    policies: hotelAttributeValues(offer, "policies"),
+    place: hotelAttributeFacts(offer, "place"),
+    policies: hotelAttributeFacts(offer, "policies"),
     selfRated: hotelBooleanAttribute(offer, "is Self Rated"),
   };
   const reviews = {
     sentiment: hotelAttributeValue(offer, "guest Rating Sentiment"),
-    quotes: hotelAttributeValues(offer, "review Quotes"),
+    quotes: hotelAttributeFacts(offer, "review Quotes"),
   };
   const rate = {
     roomName: hotelAttributeValue(offer, "room Name") || offer.description || undefined,
     freeCancellation: hotelBooleanAttribute(offer, "has Free Cancellation"),
     payLater: hotelBooleanAttribute(offer, "can Pay Later"),
     bundledRate: hotelBooleanAttribute(offer, "is Bundled Rate"),
-    rateBreakdown: hotelAttributeValues(offer, "rate Breakdown"),
-    conditions: hotelAttributeValues(offer, "conditions"),
+    rateBreakdown: hotelAttributeFacts(offer, "rate Breakdown"),
+    conditions: hotelAttributeFacts(offer, "conditions"),
   };
   return {
     source: "KAYAK",
