@@ -1,4 +1,4 @@
-import MapView, { Marker } from "react-native-maps";
+import { NativeAppleHotelMap } from "./NativeAppleHotelMap";
 import type { NativeAppleCarMapProps } from "./NativeAppleCarMap.types";
 
 const CAR_FULL_MAP_LEGAL_LABEL_INSETS = {
@@ -9,7 +9,5 @@ const CAR_FULL_MAP_LEGAL_LABEL_INSETS = {
 };
 
 export function NativeAppleCarMap({ latitude, longitude, locationLabel, interactive = false }: NativeAppleCarMapProps) {
-  return <MapView style={{ flex: 1 }} initialRegion={{ latitude, longitude, latitudeDelta: 0.009, longitudeDelta: 0.016 }} scrollEnabled={interactive} zoomEnabled={interactive} rotateEnabled={interactive} pitchEnabled={interactive} showsUserLocation={false} legalLabelInsets={interactive ? CAR_FULL_MAP_LEGAL_LABEL_INSETS : undefined} accessibilityLabel={`Map showing ${locationLabel}`}>
-    <Marker coordinate={{ latitude, longitude }} title={locationLabel} />
-  </MapView>;
+  return <NativeAppleHotelMap latitude={latitude} longitude={longitude} hotelName={locationLabel} interactive={interactive} legalLabelInsets={interactive ? CAR_FULL_MAP_LEGAL_LABEL_INSETS : undefined} />;
 }

@@ -6,6 +6,10 @@ const ios = readFileSync(
   "src/features/search/NativeAppleCarMap.ios.tsx",
   "utf8",
 );
+const sharedHotelMap = readFileSync(
+  "src/features/search/NativeAppleHotelMap.ios.tsx",
+  "utf8",
+);
 const fallback = readFileSync(
   "src/features/search/NativeAppleCarMap.tsx",
   "utf8",
@@ -40,20 +44,31 @@ const lookAroundView = readFileSync(
 );
 const fingerprint = readFileSync("fingerprint.config.js", "utf8");
 
-test("the Cars native map is an interactive iOS MapKit surface for the supplied pickup", () => {
-  assert.match(ios, /from "react-native-maps"/);
-  assert.match(ios, /<MapView/);
+test("Cars reuses the Hotel Apple map renderer for the supplied pickup", () => {
+  assert.match(ios, /import \{ NativeAppleHotelMap \} from "\.\/NativeAppleHotelMap"/);
   assert.match(
     ios,
-    /<Marker coordinate=\{\{ latitude, longitude \}\} title=\{locationLabel\}/,
+    /<NativeAppleHotelMap latitude=\{latitude\} longitude=\{longitude\} hotelName=\{locationLabel\} interactive=\{interactive\} legalLabelInsets=\{interactive \? CAR_FULL_MAP_LEGAL_LABEL_INSETS : undefined\} \/>/,
   );
-  assert.match(ios, /initialRegion=\{\{ latitude, longitude,/);
-  assert.match(ios, /accessibilityLabel=\{`Map showing \$\{locationLabel\}`\}/);
-  for (const interaction of ["scroll", "zoom", "rotate", "pitch"])
-    assert.match(ios, new RegExp(`${interaction}Enabled=\\{interactive\\}`));
-  assert.match(ios, /showsUserLocation=\{false\}/);
   assert.doesNotMatch(
     ios,
+    /from "react-native-maps"|<MapView|<Marker|WebView|expo-location|geolocation/i,
+  );
+
+  assert.match(sharedHotelMap, /from "react-native-maps"/);
+  assert.match(sharedHotelMap, /<MapView/);
+  assert.match(
+    sharedHotelMap,
+    /<Marker coordinate=\{\{ latitude, longitude \}\} title=\{hotelName\}/,
+  );
+  assert.match(sharedHotelMap, /initialRegion=\{\{ latitude, longitude,/);
+  assert.match(sharedHotelMap, /accessibilityLabel=\{`Map showing \$\{hotelName\}`\}/);
+  for (const interaction of ["scroll", "zoom", "rotate", "pitch"])
+    assert.match(sharedHotelMap, new RegExp(`${interaction}Enabled=\\{interactive\\}`));
+  assert.match(sharedHotelMap, /showsUserLocation=\{false\}/);
+  assert.match(sharedHotelMap, /legalLabelInsets=\{legalLabelInsets\}/);
+  assert.doesNotMatch(
+    sharedHotelMap,
     /PROVIDER_GOOGLE|provider=|WebView|expo-location|geolocation/i,
   );
 });
@@ -244,7 +259,7 @@ test("Street View derives only from the existing Kurioticket embed route plus re
 });
 
 test("the Cars map experience adds no user-location permission surface", () => {
-  const combined = `${ios}\n${fallback}\n${details}\n${fullMap}\n${detailsModel}\n${lookAroundBridge}\n${lookAroundModule}\n${lookAroundView}`;
+  const combined = `${ios}\n${sharedHotelMap}\n${fallback}\n${details}\n${fullMap}\n${detailsModel}\n${lookAroundBridge}\n${lookAroundModule}\n${lookAroundView}`;
   assert.doesNotMatch(
     combined,
     /expo-location|react-native-geolocation|requestForegroundPermissionsAsync|requestBackgroundPermissionsAsync|showsUserLocation=\{true\}|ACCESS_FINE_LOCATION|ACCESS_COARSE_LOCATION|NSLocationWhenInUseUsageDescription/,
