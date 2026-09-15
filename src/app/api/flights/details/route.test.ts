@@ -66,7 +66,7 @@ test("Flight Details never treats browser passenger parameters as authority", as
   const source = await import("node:fs/promises").then(({ readFile }) =>
     readFile(new URL("./route.ts", import.meta.url), "utf8"),
   );
-  assert.match(source, /await getFlightDetailsCacheContext\(id\)/);
+  assert.match(source, /await getFlightDetailsCacheContext\(rawId\)/);
   assert.doesNotMatch(source, /parseFlightDetailsSearch\(searchParams\)/);
 });
 
@@ -82,4 +82,24 @@ test("KAYAK Flight Details resolves the selected offer and compatible fares from
   const details = await response.json();
   assert.deepEqual(details.fareChoices.map((choice: {label:string;selectedOffer:boolean})=>[choice.label,choice.selectedOffer]), [["Saver supplied",true],["Flexible supplied",false]]);
   assert.doesNotMatch(JSON.stringify(details), /providerOfferId|partnerRedirectUrl|bookingUrl/);
+});
+
+test("KAYAK Flight Details accepts an id that retained a route escape", async () => {
+  setFlightResultCacheBackendForTests(createMemoryFlightCacheBackend());
+  const search = { tripType:"one-way" as const, origin:"ORD", destination:"LAS", departureDate:"2027-02-10", adults:1, children:0, infants:0, travelers:1, cabinClass:"economy" as const };
+  const selected = { ...cached(), id:"kayak-sandbox:escaped", provider:"KAYAK sandbox", providerOfferId:"escaped", legs:[{ direction:"outbound" as const, originAirport:"ORD", destinationAirport:"LAS", departureTime:"2027-02-10T10:00:00Z", arrivalTime:"2027-02-10T14:00:00Z", duration:"4h", durationMinutes:240, stops:0, layovers:[], segments:[{originAirport:"ORD",destinationAirport:"LAS",departureTime:"2027-02-10T10:00:00Z",arrivalTime:"2027-02-10T14:00:00Z",airlineName:"KAYAK airline",flightNumber:"KT1"}]}], cabinClass:"Economy", price:120, partnerRedirectUrl:"https://affiliates.kayak.com/sandbox-clickout" };
+  await rememberFlights([selected], Date.now(), search);
+  const response = await GET(new Request("https://kurioticket.test/api/flights/details?id=kayak-sandbox%253Aescaped"));
+  assert.equal(response.status, 200);
+});
+
+test("Flight Details preserves a provider ID that legitimately contains an escape", async () => {
+  setFlightResultCacheBackendForTests(createMemoryFlightCacheBackend());
+  const search = { tripType:"one-way" as const, origin:"ORD", destination:"LAS", departureDate:"2027-02-10", adults:1, children:0, infants:0, travelers:1, cabinClass:"economy" as const };
+  const selected = { ...cached(), id:"kayak-sandbox:opaque%3Avalue", provider:"KAYAK sandbox", providerOfferId:"opaque", legs:[], cabinClass:"Economy", price:120, partnerRedirectUrl:"https://affiliates.kayak.com/sandbox-clickout" };
+  await rememberFlights([selected], Date.now(), search);
+  const response = await GET(new Request("https://kurioticket.test/api/flights/details?id=kayak-sandbox%3Aopaque%253Avalue"));
+  // A details response can be unavailable for this intentionally minimal
+  // itinerary, but it must not be a 404: the exact opaque cache key resolved.
+  assert.equal(response.status, 409);
 });
