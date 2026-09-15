@@ -73,6 +73,7 @@ function ThemedRootLayout() {
         <Stack.Screen name="welcome" />
         <Stack.Screen name="connection-status" />
         <Stack.Screen name="hotel-results" options={{ gestureEnabled: true }} />
+        <Stack.Screen name="flight-details" options={{ animation: "ios_from_right", gestureEnabled: true }} />
       </Stack>
     </View>
   );
