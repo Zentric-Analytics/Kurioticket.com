@@ -5,6 +5,19 @@ import {
   getStaticCarId,
 } from "@/services/travel/staticCarCatalogue";
 
+function buildStaticComparisonFixtures<T extends { pricePerDay: number }>(
+  offerFixtures: readonly T[],
+): T[] {
+  if (offerFixtures.length !== 1) return [...offerFixtures];
+  const base = offerFixtures[0];
+  const prices = [
+    base.pricePerDay,
+    Math.max(base.pricePerDay + 1, Math.round(base.pricePerDay * 1.05)),
+    Math.max(base.pricePerDay + 2, Math.round(base.pricePerDay * 1.1)),
+  ];
+  return prices.map((pricePerDay) => ({ ...base, pricePerDay }));
+}
+
 export function buildStaticCarResults(
   search: CarSearchParams,
 ): NormalizedCarResult[] {
@@ -17,7 +30,7 @@ export function buildStaticCarResults(
     requiredDocuments: [...car.requiredDocuments],
     includedItems: [...car.includedItems],
     importantInformation: [...car.importantInformation],
-    offers: offerFixtures.map((fixture, index) => ({
+    offers: buildStaticComparisonFixtures(offerFixtures).map((fixture, index) => ({
       ...fixture,
       id: `${getStaticCarId(car.id)}-offer-${index + 1}`,
       bookingProviderName: "Kurioticket static fixture",

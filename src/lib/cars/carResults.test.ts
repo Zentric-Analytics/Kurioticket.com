@@ -106,7 +106,10 @@ test("pricing duration and catalogue are deterministic and immutable", () => {
   assert.equal(calculateRentalDays("2026-08-01", "2026-08-04"), 3);
   assert.equal(calculateRentalDays("2026-08-01", "2026-08-01"), 1);
   assert.deepEqual(buildStaticCarResults(search), cars);
-  assert.equal(cars[0].offers[0].totalPrice, cars[0].offers[0].pricePerDay * 3);
+  assert.equal(cars[0].offers.length, 3);
+  assert.equal(cars[0].offers[0].pricePerDay, staticCarCatalogue[0].offerFixtures[0].pricePerDay);
+  assert.equal(new Set(cars[0].offers.map((offer) => offer.pricePerDay)).size, 3);
+  assert.ok(cars[0].offers.every((offer) => offer.totalPrice === offer.pricePerDay * 3));
   assert.equal(JSON.stringify(staticCarCatalogue), snapshot);
 });
 test("detail href preserves search context", () => {
@@ -152,12 +155,13 @@ test("details labels use approved user-facing copy", () => {
   assert.equal(pickupTypeLabels["airport-counter"], "Airport counter");
   assert.equal(pickupTypeLabels["meet-and-greet"], "Meet and greet");
 });
-test("exactly 30 unique static vehicles retain valid explicit offers", () => {
+test("exactly 30 unique static vehicles retain three valid distinct offers", () => {
   assert.equal(cars.length, 30);
   assert.equal(new Set(cars.map((car) => car.id)).size, 30);
   assert.equal(new Set(cars.map((car) => car.modelName)).size, 30);
   for (const car of cars) {
-    assert.ok(car.offers.length);
+    assert.equal(car.offers.length, 3);
+    assert.equal(new Set(car.offers.map((offer) => offer.pricePerDay)).size, 3);
     assert.ok(
       car.offers.every(
         (offer) => offer.totalPrice >= 0 && offer.pricePerDay >= 0,
