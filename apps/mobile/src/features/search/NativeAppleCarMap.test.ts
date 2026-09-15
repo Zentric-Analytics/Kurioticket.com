@@ -114,10 +114,10 @@ test("Cars Details gives iOS a complete Apple-or-native-fallback preview branch"
 test("the Cars full-screen modal stays immersive with minimal map chrome", () => {
   assert.match(fullMap, /presentationStyle="fullScreen"/);
   assert.match(fullMap, /animationType="slide"/);
-  assert.match(fullMap, /onRequestClose=\{closeCurrentSurface\}/);
+  assert.match(fullMap, /onRequestClose=\{closeFullMap\}/);
   assert.match(fullMap, /<SafeAreaProvider>/);
   assert.match(fullMap, /edges=\{\["top", "bottom", "left", "right"\]\}/);
-  assert.match(fullMap, /"Close Look Around" : "Close map"/);
+  assert.match(fullMap, /accessibilityLabel="Close map"/);
   assert.doesNotMatch(
     fullMap,
     /fullMapHeader|>Back<|>Map<\/Text><\/View><View accessible/,
@@ -125,10 +125,6 @@ test("the Cars full-screen modal stays immersive with minimal map chrome", () =>
   assert.match(
     fullMap,
     /const \[view, setView\] = useState<FullMapView>\("map"\)/,
-  );
-  assert.match(
-    fullMap,
-    /type FullMapView = "map" \| "streetview" \| "lookaround"/,
   );
   assert.match(
     fullMap,
@@ -204,30 +200,20 @@ test("Cars uses its isolated native Apple Look Around preview on iOS", () => {
   assert.match(fingerprint, /modules\/kurioticket-car-look-around/);
 });
 
-test("the iOS modal owns Look Around promotion while Android retains Google Street View", () => {
+test("the iOS modal exposes MapKit directly while Android retains Google Street View", () => {
   assert.match(
     fullMap,
-    /accessibilityLabel=\{`Open Look Around near \$\{pickupLocation\}`\}/,
+    /Platform\.OS === "ios" &&[\s\S]*?<NativeAppleCarLookAroundPreview/,
   );
-  assert.match(fullMap, /disabled=\{lookAroundStatus !== "ready"\}/);
   assert.match(
     fullMap,
-    /<View pointerEvents="none" style=\{styles\.lookAroundPreviewNative\}>/,
-  );
-  assert.match(fullMap, /onPress=\{showLookAround\}/);
-  assert.match(
-    fullMap,
-    /view === "lookaround"[\s\S]*?presentationMode="viewController"/,
+    /pointerEvents=\{lookAroundStatus === "ready" \? "auto" : "none"\}/,
   );
   assert.match(
     fullMap,
     /lookAroundStatus !== "ready" &&[\s\S]*?styles\.lookAroundPreviewHidden/,
   );
   assert.match(fullMap, /visible &&[\s\S]*?trustedMapCoordinates/);
-  assert.doesNotMatch(
-    fullMap,
-    /pointerEvents=\{lookAroundStatus === "ready" \? "auto" : "none"\}/,
-  );
   assert.match(
     fullMap,
     /view === "map" && streetViewUrl \? \([\s\S]*?<WebView/,
