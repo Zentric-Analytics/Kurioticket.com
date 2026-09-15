@@ -18,67 +18,101 @@ type NightlyPrice = {
 
 type DetailsStatus = "loading" | "ready" | "error";
 
-type StaticRate = {
+type RateRow = {
   id: string;
-  roomName: string;
+  offerId: NativeHotelOffer["id"];
+  providerKind: "kurioticket" | "provider";
+  providerName: string;
+  title: string;
+  meta: string[];
   price: string;
-  benefits: string[];
+  priceAccessibilityLabel: string;
+  hasDisplayedPrice: boolean;
 };
 
-type StaticRateGroup = {
+type RateGroup = {
   id: string;
   title: string;
-  rates: StaticRate[];
+  rows: RateRow[];
 };
 
-const STATIC_RATE_GROUPS: StaticRateGroup[] = [
-  {
-    id: "standard",
-    title: "Standard Room",
-    rates: [
-      {
-        id: "standard-queen-flex",
-        roomName: "Standard Room, 1 Queen Bed",
-        price: "$1,225",
-        benefits: ["Free cancellation", "Breakfast included"],
-      },
-      {
-        id: "standard-queen",
-        roomName: "Standard Room, 1 Queen Bed",
-        price: "$1,389",
-        benefits: ["Free cancellation"],
-      },
-    ],
-  },
-  {
-    id: "deluxe",
-    title: "Deluxe Room",
-    rates: [
-      {
-        id: "deluxe-king",
-        roomName: "Deluxe Room, 1 King Bed",
-        price: "$1,512",
-        benefits: ["Breakfast included", "Free cancellation"],
-      },
-    ],
-  },
-  {
-    id: "suite",
-    title: "One-Bedroom Suite",
-    rates: [
-      {
-        id: "suite-king",
-        roomName: "One-Bedroom Suite, 1 King Bed",
-        price: "$1,890",
-        benefits: ["Free cancellation", "Breakfast included"],
-      },
-    ],
-  },
-];
+function capitalize(value: string) {
+  return value ? `${value[0]!.toUpperCase()}${value.slice(1)}` : value;
+}
+
+function cleanRateCopy(value?: string | null) {
+  return (value ?? "")
+    .replace(/\bin planning estimate\b/gi, "")
+    .replace(/\bplanning estimate\b/gi, "")
+    .replace(/\bestimate\b/gi, "")
+    .replace(/\bplanning\b/gi, "")
+    .replace(/room-only/gi, "room only")
+    .replace(/\s+/g, " ")
+    .replace(/\s+([,.;:])/g, "$1")
+    .replace(/^[\s—–-]+|[\s—–-]+$/g, "")
+    .trim();
+}
+
+function roomGroupTitle(name: string) {
+  const base = name.split(/\s+[—–-]\s+/)[0]?.trim() ?? "";
+  return capitalize(cleanRateCopy(base) || "Room");
+}
+
+function roomRateTitle(option: PresentedHotelRoomOption) {
+  const parts = option.name.split(/\s+[—–-]\s+/).filter(Boolean);
+  const suffix = cleanRateCopy(
+    parts.length > 1 ? parts.slice(1).join(" — ") : option.mealPlan,
+  );
+  const mealPlan = cleanRateCopy(option.mealPlan);
+
+  if (/breakfast/i.test(suffix) && mealPlan) return capitalize(mealPlan);
+  if (/room only/i.test(suffix) && mealPlan) return capitalize(mealPlan);
+  if (/^flexible$/i.test(suffix)) return "Flexible rate";
+  return capitalize(suffix || mealPlan || "Room rate");
+}
+
+function meaningfulRateMeta(option: PresentedHotelRoomOption, title: string) {
+  const rawValues = [
+    option.bedConfiguration,
+    option.mealPlan,
+    ...option.features.filter((feature) => !/planning|estimate/i.test(feature)),
+  ];
+  const normalizedTitle = title.toLocaleLowerCase();
+  return rawValues
+    .map(cleanRateCopy)
+    .filter(Boolean)
+    .filter((value, index, values) => values.indexOf(value) === index)
+    .filter((value) => value.toLocaleLowerCase() !== normalizedTitle)
+    .slice(0, 2);
+}
+
+function meaningfulProviderMeta(value?: string | null) {
+  const raw = value?.trim() ?? "";
+  if (!raw || /planning|estimate|not yet confirmed|not currently offered/i.test(raw)) {
+    return [];
+  }
+  const cleaned = cleanRateCopy(raw);
+  return cleaned ? [cleaned] : [];
+}
+
+function addRateRow(groups: RateGroup[], groupTitle: string, row: RateRow) {
+  const groupKey = groupTitle.toLocaleLowerCase();
+  const existing = groups.find((group) => group.id === groupKey);
+  if (existing) {
+    existing.rows.push(row);
+    return;
+  }
+  groups.push({ id: groupKey, title: groupTitle, rows: [row] });
+}
 
 export function NativeHotelRatesSection({
   offers,
   onSelectOffer,
+  roomOptions,
+  providerName,
+  roomType,
+  cancellationInfo,
+  detailsStatus,
   theme,
   accentColor,
 }: {
@@ -95,66 +129,130 @@ export function NativeHotelRatesSection({
   theme: Theme;
   accentColor: string;
 }) {
-  const reserveOffer = () => {
-    const firstOffer = offers[0];
-    if (firstOffer) onSelectOffer(firstOffer.id);
-  };
+  if (detailsStatus === "loading") return null;
+
+  const groups: RateGroup[] = [];
+  const internalOffer = offers.find((offer) => offer.kind === "internal-room-flow") ?? null;
+  const providerOffer = offers.find((offer) => offer.kind === "provider-handoff") ?? null;
+
+  if (internalOffer) {
+    roomOptions.forEach((option) => {
+      const title = roomRateTitle(option);
+      const total = option.displayPrice?.total ?? null;
+      addRateRow(groups, roomGroupTitle(option.name), {
+        id: `room-${option.id}`,
+        offerId: internalOffer.id,
+        providerKind: "kurioticket",
+        providerName: "Kurioticket",
+        title,
+        meta: meaningfulRateMeta(option, title),
+        price: total?.formatted ?? "Price unavailable",
+        priceAccessibilityLabel: total
+          ? `${total.accessibilityLabel} stay price`
+          : "Price unavailable",
+        hasDisplayedPrice: Boolean(total),
+      });
+    });
+  }
+
+  if (providerOffer) {
+    const roomParts = (roomType ?? "")
+      .split(";")
+      .map((part) => part.trim())
+      .filter(Boolean);
+    const groupTitle = capitalize(cleanRateCopy(roomParts[0]) || "Available rate");
+    const providerTitle = capitalize(
+      cleanRateCopy(roomParts.slice(1).join(", ")) || groupTitle,
+    );
+    addRateRow(groups, groupTitle, {
+      id: `provider-${providerOffer.id}`,
+      offerId: providerOffer.id,
+      providerKind: "provider",
+      providerName: providerName.trim() || "Provider",
+      title: providerTitle,
+      meta: meaningfulProviderMeta(cancellationInfo),
+      price: "Price on provider",
+      priceAccessibilityLabel: "Price confirmed on provider site",
+      hasDisplayedPrice: false,
+    });
+  }
+
+  if (!groups.length) {
+    return (
+      <View style={s.section}>
+        <View style={[s.emptyCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <Text style={[s.emptyTitle, { color: theme.textPrimary }]}>No reservable rates available</Text>
+          <Text style={[s.emptyCopy, { color: theme.textSecondary }]}>Try updating your stay or check again later.</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={s.section}>
-      {STATIC_RATE_GROUPS.map((group) => (
+      {groups.map((group) => (
         <View key={group.id} style={s.groupSection}>
           <Text style={[s.groupTitle, { color: theme.textPrimary }]}>{group.title}</Text>
           <View style={[s.groupCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            {group.rates.map((rate, index) => (
+            {group.rows.map((row, index) => (
               <View
-                key={rate.id}
+                key={row.id}
                 style={[
                   s.rateRow,
                   index > 0 && { borderTopColor: theme.border, borderTopWidth: StyleSheet.hairlineWidth },
                 ]}
               >
                 <View style={s.rateCopy}>
-                  <Image
-                    accessible
-                    accessibilityLabel="Kurioticket"
-                    accessibilityIgnoresInvertColors
-                    source={require("../../../assets/kurioticket-logo-primary-light-bg.png")}
-                    resizeMode="contain"
-                    style={s.brandLogo}
-                  />
+                  {row.providerKind === "kurioticket" ? (
+                    <Image
+                      accessible
+                      accessibilityLabel="Kurioticket"
+                      accessibilityIgnoresInvertColors
+                      source={require("../../../assets/kurioticket-logo-primary-light-bg.png")}
+                      resizeMode="contain"
+                      style={s.brandLogo}
+                    />
+                  ) : (
+                    <Text numberOfLines={1} style={[s.providerName, { color: theme.textPrimary }]}>
+                      {row.providerName}
+                    </Text>
+                  )}
                   <Text numberOfLines={2} style={[s.rateTitle, { color: theme.textPrimary }]}>
-                    {rate.roomName}
+                    {row.title}
                   </Text>
-                  <View style={s.benefitList}>
-                    {rate.benefits.map((benefit) => (
-                      <Text key={benefit} style={[s.rateMeta, { color: theme.textSecondary }]}>
-                        {benefit}
-                      </Text>
-                    ))}
-                  </View>
+                  {row.meta.length ? (
+                    <View style={s.benefitList}>
+                      {row.meta.map((benefit) => (
+                        <Text key={benefit} numberOfLines={1} style={[s.rateMeta, { color: theme.textSecondary }]}>
+                          {benefit}
+                        </Text>
+                      ))}
+                    </View>
+                  ) : null}
                 </View>
 
                 <View style={s.rateActionColumn}>
                   <Text
-                    numberOfLines={1}
+                    numberOfLines={2}
                     adjustsFontSizeToFit
                     minimumFontScale={0.68}
-                    accessibilityLabel={`${rate.price} stay price`}
-                    style={[s.price, { color: theme.textPrimary }]}
+                    accessibilityLabel={row.priceAccessibilityLabel}
+                    style={[
+                      s.price,
+                      !row.hasDisplayedPrice && s.priceUnavailable,
+                      { color: row.hasDisplayedPrice ? theme.textPrimary : theme.textSecondary },
+                    ]}
                   >
-                    {rate.price}
+                    {row.price}
                   </Text>
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={`Reserve ${rate.roomName}`}
-                    onPress={reserveOffer}
-                    disabled={!offers.length}
+                    accessibilityLabel={`Reserve ${row.title} with ${row.providerName}`}
+                    onPress={() => onSelectOffer(row.offerId)}
                     style={({ pressed }) => [
                       s.reserveButton,
                       { backgroundColor: accentColor },
-                      !offers.length && s.reserveButtonDisabled,
-                      pressed && offers.length && s.reserveButtonPressed,
+                      pressed && s.reserveButtonPressed,
                     ]}
                   >
                     <Text style={s.reserveButtonText}>Reserve</Text>
@@ -189,6 +287,13 @@ const s = StyleSheet.create({
   },
   rateCopy: { flex: 1, minWidth: 0, justifyContent: "flex-start" },
   brandLogo: { width: 104, height: 22, flexShrink: 0, marginBottom: 10 },
+  providerName: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
+    marginBottom: 10,
+  },
   rateTitle: {
     fontSize: 15,
     lineHeight: 21,
@@ -216,6 +321,12 @@ const s = StyleSheet.create({
     fontFamily: appFonts.bold,
     textAlign: "right",
   },
+  priceUnavailable: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: "600",
+    fontFamily: appFonts.semibold,
+  },
   reserveButton: {
     minWidth: 88,
     minHeight: 44,
@@ -225,12 +336,31 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
   },
   reserveButtonPressed: { opacity: 0.84 },
-  reserveButtonDisabled: { opacity: 0.5 },
   reserveButtonText: {
     color: "#FFFFFF",
     fontSize: 15,
     lineHeight: 20,
     fontWeight: "700",
     fontFamily: appFonts.bold,
+  },
+  emptyCard: {
+    minHeight: 108,
+    justifyContent: "center",
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 16,
+  },
+  emptyTitle: {
+    fontSize: 15,
+    lineHeight: 21,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
+  },
+  emptyCopy: {
+    marginTop: 5,
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: "400",
+    fontFamily: appFonts.regular,
   },
 });
