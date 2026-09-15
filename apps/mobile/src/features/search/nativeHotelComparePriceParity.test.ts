@@ -48,10 +48,14 @@ test("Kurioticket rows keep the bundled wordmark and existing app fonts", () => 
   assert.match(styleRule(ratesSource, "rateMeta", "rateActionColumn"), /fontFamily: appFonts\.regular/);
 });
 
-test("Rates keeps grouped rounded cards with compact provider rows", () => {
+test("Rates follows the measured reference provider-card proportions", () => {
+  assert.match(styleRule(ratesSource, "groupSection", "groupTitle"), /gap: 20/);
   assert.match(styleRule(ratesSource, "groupCard", "rateRow"), /overflow: "hidden"[\s\S]*borderWidth: 1[\s\S]*borderRadius: 14/);
-  assert.match(styleRule(ratesSource, "rateRow", "rateCopy"), /minHeight: 142[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 15[\s\S]*gap: 14/);
-  assert.match(styleRule(ratesSource, "rateActionColumn", "price"), /width: 112[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "space-between"/);
+  assert.match(styleRule(ratesSource, "rateRow", "rateCopy"), /minHeight: 134[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 20[\s\S]*gap: 12/);
+  assert.match(styleRule(ratesSource, "brandLogo", "providerName"), /width: 88[\s\S]*height: 18[\s\S]*marginBottom: 8/);
+  assert.match(styleRule(ratesSource, "benefitList", "rateMeta"), /marginTop: "auto"[\s\S]*paddingTop: 18[\s\S]*gap: 1/);
+  assert.match(styleRule(ratesSource, "rateActionColumn", "price"), /width: 104[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "space-between"/);
+  assert.match(styleRule(ratesSource, "reserveButton", "reserveButtonPressed"), /minWidth: 82[\s\S]*minHeight: 44[\s\S]*paddingHorizontal: 12/);
   assert.match(ratesSource, /index > 0 && \{ borderTopColor: theme\.border, borderTopWidth: StyleSheet\.hairlineWidth \}/);
 });
 
