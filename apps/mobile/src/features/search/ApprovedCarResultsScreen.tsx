@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { FlatList, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, ChevronDown, SlidersHorizontal, SquarePen } from "lucide-react-native";
@@ -29,8 +29,13 @@ import { resolveCarResultImageSource } from "../../../../../src/lib/cars/carResu
 
 type Status = "loading" | "ready" | "empty" | "error";
 const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB";
+const CAR_RESULT_INITIAL_IMAGE_COUNT = 3;
+const CAR_RESULT_IMAGE_PREFETCH_TIMEOUT_MS = 1_800;
+const KURIOTICKET_COMPARE_LOGO_URI = Image.resolveAssetSource(require("../../../assets/kurioticket-logo-primary-light-bg.png")).uri;
 const one = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
 const carResultCountLabel = (count: number) => `${count} ${count === 1 ? "Result" : "Results"} found`;
+const resolveNativeCarImageUri=(value?:string)=>{const resolved=resolveCarResultImageSource(value);if(!resolved)return undefined;if(/^https:\/\//i.test(resolved))return resolved;const base=getApiBaseUrl();return base.ok&&/^\/(?!\/)/.test(resolved)?new URL(resolved,`${base.baseUrl}/`).toString():undefined;};
+async function prefetchInitialCarImages(results: readonly CarResult[]){const carUris=[...new Set(results.map(result=>resolveNativeCarImageUri(result.imageUrl)).filter((value):value is string=>Boolean(value)))].slice(0,CAR_RESULT_INITIAL_IMAGE_COUNT);const uris=[KURIOTICKET_COMPARE_LOGO_URI,...carUris].filter(Boolean);if(!uris.length)return;let timeout:ReturnType<typeof setTimeout>|undefined;try{await Promise.race([Promise.allSettled(uris.map(uri=>Image.prefetch(uri))).then(()=>undefined),new Promise<void>(resolve=>{timeout=setTimeout(resolve,CAR_RESULT_IMAGE_PREFETCH_TIMEOUT_MS);})]);}finally{if(timeout)clearTimeout(timeout);}}
 
 export function ApprovedCarResultsScreen() {
   const { theme } = useAppTheme();
@@ -52,7 +57,7 @@ export function ApprovedCarResultsScreen() {
   const carResultsApplyingTimer=useRef<ReturnType<typeof setTimeout>|undefined>(undefined);
   const carFilterSessionDirtyRef=useRef(false);
   const [carEditSearchOpen,setCarEditSearchOpen] = useState(false);
-  const carScrollRef=useRef<ScrollView>(null);
+  const carScrollRef=useRef<FlatList<CarResult>>(null);
   const searchSequence=useRef(0);
   const activeSearch=useRef<AbortController|null>(null);
   const activeExecutionKey=useRef<string|undefined>(undefined);
@@ -65,7 +70,7 @@ export function ApprovedCarResultsScreen() {
     const sequence=++searchSequence.current;
     const requestId=`mobile-car-${Date.now()}-${sequence}`;
     setStatus("loading");setMessage("");
-    try{const response=await travelApi.searchCars(plan.plan.payload,{signal:controller.signal,requestId});if(controller.signal.aborted||sequence!==searchSequence.current)return;const acceptance=acceptCanonicalResults(response.results,safeCanonicalCarResult);if(acceptance.rejectedIds.length)console.warn("[travel-search] canonical car results failed client safety checks",{requestId:response.requestId,canonicalCount:acceptance.canonicalCount,acceptedCount:acceptance.accepted.length,rejectedIds:acceptance.rejectedIds});setResults(acceptance.accepted);if(canonicalResultsWereSilentlyLost(acceptance)){setStatus("error");setMessage("The canonical search returned inventory that this app could not render safely.");}else{setStatus(acceptance.accepted.length?"ready":"empty");setMessage(response.warnings?.[0]||"");void recordRecentSearchBestEffort(buildRecentSearch("car",plan.plan.payload));}}
+    try{const response=await travelApi.searchCars(plan.plan.payload,{signal:controller.signal,requestId});if(controller.signal.aborted||sequence!==searchSequence.current)return;const acceptance=acceptCanonicalResults(response.results,safeCanonicalCarResult);if(acceptance.rejectedIds.length)console.warn("[travel-search] canonical car results failed client safety checks",{requestId:response.requestId,canonicalCount:acceptance.canonicalCount,acceptedCount:acceptance.accepted.length,rejectedIds:acceptance.rejectedIds});setResults(acceptance.accepted);if(canonicalResultsWereSilentlyLost(acceptance)){setStatus("error");setMessage("The canonical search returned inventory that this app could not render safely.");}else{if(acceptance.accepted.length)await prefetchInitialCarImages(acceptance.accepted);if(controller.signal.aborted||sequence!==searchSequence.current)return;setStatus(acceptance.accepted.length?"ready":"empty");setMessage(response.warnings?.[0]||"");void recordRecentSearchBestEffort(buildRecentSearch("car",plan.plan.payload));}}
     catch(error){if(controller.signal.aborted||sequence!==searchSequence.current)return;setStatus("error");setMessage(error instanceof Error?error.message:"Car search failed");}
   },[plan.plan?.key,retry]);
   useEffect(()=>{const executionKey=`${plan.plan?.key??"invalid"}:${retry}`;if(searchAbortTimer.current)clearTimeout(searchAbortTimer.current);searchAbortTimer.current=undefined;if(activeExecutionKey.current!==executionKey){activeExecutionKey.current=executionKey;void load();}return()=>{searchAbortTimer.current=setTimeout(()=>{if(activeExecutionKey.current!==executionKey)return;searchSequence.current+=1;activeSearch.current?.abort("screen-cleanup");activeExecutionKey.current=undefined;},0);};},[load,plan.plan?.key,retry]);
@@ -79,7 +84,7 @@ export function ApprovedCarResultsScreen() {
   const carSummaryDestination=getLocationFieldDisplay(canonicalPickupLocation).primary;
   const carSummarySecondary=formatCarResultsScheduleSummary({pickupDate:String(payload.pickupDate||""),pickupTime:String(payload.pickupTime||""),dropoffDate:String(payload.dropoffDate||""),dropoffTime:String(payload.dropoffTime||""),locale});
   const edit=()=>setCarEditSearchOpen(true);
-  const startCarResultsTransition=()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);setCarResultsApplying(true);carScrollRef.current?.scrollTo({y:0,animated:true});carResultsApplyingTimer.current=setTimeout(()=>setCarResultsApplying(false),NATIVE_FILTER_RESULTS_TRANSITION_MS);};
+  const startCarResultsTransition=()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);setCarResultsApplying(true);carScrollRef.current?.scrollToOffset({offset:0,animated:true});carResultsApplyingTimer.current=setTimeout(()=>setCarResultsApplying(false),NATIVE_FILTER_RESULTS_TRANSITION_MS);};
   const changeCarFilters=(next:SelectedCarFilters)=>{carFilterSessionDirtyRef.current=true;setFilters(next);};
   const openAllFilters=()=>{carFilterSessionDirtyRef.current=false;setFilterSheetVisible(true);};
   const openQuickFilter=(groupId:string)=>{carFilterSessionDirtyRef.current=false;setQuickSheetKind(groupId);};
@@ -87,9 +92,11 @@ export function ApprovedCarResultsScreen() {
   const completeCarFilterSession=()=>{closeFilterSheet();if(carFilterSessionDirtyRef.current){carFilterSessionDirtyRef.current=false;startCarResultsTransition();}};
   const openDeal=(result:CarResult)=>result.searchPolicy.action.kind==="provider"
     ? void Linking.openURL(result.searchPolicy.action.href)
-    : router.push({pathname:"/car-details",params:{result:JSON.stringify(result),resultId:result.id,...Object.fromEntries(Object.entries(payload).map(([key,value])=>[key,String(value)])),carResultsStack:"1"}});
-  const image=(value?:string)=>{const resolved=resolveCarResultImageSource(value);if(!resolved)return undefined;if(/^https:\/\//i.test(resolved))return resolved;const base=getApiBaseUrl();return base.ok&&/^\/(?!\/)/.test(resolved)?new URL(resolved,`${base.baseUrl}/`).toString():undefined;};
+    : router.push({pathname:"/car-details",params:{result:JSON.stringify({...result,imageUrl:resolveNativeCarImageUri(result.imageUrl)??result.imageUrl}),resultId:result.id,...Object.fromEntries(Object.entries(payload).map(([key,value])=>[key,String(value)])),carResultsStack:"1"}});
   const clearFilters=()=>{setFilters({});startCarResultsTransition();};
+  const listData=status==="ready"&&!carResultsApplying?filtered:[];
+  const listHeader=<>{message?<Text accessibilityRole="alert" style={[r.notice,{backgroundColor:theme.surface,color:theme.textPrimary,borderColor:theme.dark?theme.border:"#D8E1EC"}]}>{message}</Text>:null}{status==="ready"?<><NativeCarPriceAlert plan={plan.plan} results={results} available={availability.priceAlerts}/>{!carResultsApplying?<View accessibilityLabel="Car results summary" style={r.carResultsSummaryRow}><View style={r.carResultsCountColumn}><Text accessibilityRole="header" style={[r.carResultCount,{color:theme.textPrimary}]}>{carResultCountLabel(filtered.length)}</Text></View></View>:null}</>:null}</>;
+  const listEmpty=status==="empty"?<Empty title="No rental cars found" body="Try changing your dates, pickup location, or filters." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>:status==="error"?<Empty title="Car search could not be completed" body={message||"Check your connection and try again."} retry={()=>setRetry((value)=>value+1)} edit={edit}/>:status==="ready"&&carResultsApplying?<CarSkeletons/>:status==="ready"&&!filtered.length?<Empty title="No cars match these filters" body="Clear filters to see the available rental cars." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>:null;
   if(status==="loading") return <NativeBrandedSearchLoading product="car"/>;
   return <SafeAreaView style={[r.safe,{backgroundColor:carCanvasColor}]} edges={["top"]}>
     <CarResultsHeader destination={carSummaryDestination} secondaryLine={carSummarySecondary} onEdit={edit} backgroundColor={carCanvasColor}/>
@@ -98,12 +105,7 @@ export function ApprovedCarResultsScreen() {
       <CarResultsShortcut label={sort === "recommended" ? "Sort" : sort === "lowestTotal" ? "Total price" : "Top rated"} accessibilityLabel={`Sort, ${sort === "recommended" ? "Recommended" : sort === "lowestTotal" ? "Total price" : "Top rated"}`} expanded={quickSheetKind === "sort"} onPress={()=>openQuickFilter("sort")}/>
       {quickGroups.map(group=><CarResultsShortcut key={group.id} label={carFilterGroupLabel(copy,group)} count={filters[group.id]?.length||undefined} expanded={quickSheetKind===group.id} onPress={()=>openQuickFilter(group.id)}/>)}
     </ScrollView></View>
-    <ScrollView ref={carScrollRef} style={{backgroundColor:carCanvasColor}} alwaysBounceVertical={false} bounces={false} overScrollMode="never" keyboardShouldPersistTaps="handled" contentContainerStyle={[r.body,{paddingBottom:Math.max(insets.bottom + 16,16)}]}>
-      {message?<Text accessibilityRole="alert" style={[r.notice,{backgroundColor:theme.surface,color:theme.textPrimary,borderColor:theme.dark?theme.border:"#D8E1EC"}]}>{message}</Text>:null}
-      {status==="empty"?<Empty title="No rental cars found" body="Try changing your dates, pickup location, or filters." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>:null}
-      {status==="error"?<Empty title="Car search could not be completed" body={message||"Check your connection and try again."} retry={()=>setRetry((value)=>value+1)} edit={edit}/>:null}
-      {status==="ready"?<><NativeCarPriceAlert plan={plan.plan} results={results} available={availability.priceAlerts}/>{carResultsApplying?<CarSkeletons/>:<><View accessibilityLabel="Car results summary" style={r.carResultsSummaryRow}><View style={r.carResultsCountColumn}><Text accessibilityRole="header" style={[r.carResultCount,{color:theme.textPrimary}]}>{carResultCountLabel(filtered.length)}</Text></View></View>{filtered.length?<>{filtered.map((result,index)=><View key={result.id} style={r.carResultCardSlot}><CarResultCard result={result} rank={index} imageUri={image(result.imageUrl)} searchParams={payload} onViewDeal={()=>openDeal(result)}/></View>)}</>:<Empty title="No cars match these filters" body="Clear filters to see the available rental cars." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>}</>}</>:null}
-    </ScrollView>
+    <FlatList ref={carScrollRef} style={{backgroundColor:carCanvasColor}} data={listData} keyExtractor={result=>result.id} renderItem={({item,index})=><View style={r.carResultCardSlot}><CarResultCard result={item} rank={index} imageUri={resolveNativeCarImageUri(item.imageUrl)} searchParams={payload} onViewDeal={()=>openDeal(item)}/></View>} ListHeaderComponent={listHeader} ListEmptyComponent={listEmpty} initialNumToRender={CAR_RESULT_INITIAL_IMAGE_COUNT} maxToRenderPerBatch={3} windowSize={5} updateCellsBatchingPeriod={50} alwaysBounceVertical={false} bounces={false} overScrollMode="never" keyboardShouldPersistTaps="handled" contentContainerStyle={[r.body,{paddingBottom:Math.max(insets.bottom + 16,16)}]}/>
     <CarFilterSheet visible={filterSheetVisible} results={results} filters={filters} onChange={changeCarFilters} onClose={completeCarFilterSession}/>
     {quickSheetKind ? <CarResultsQuickFilterSheet key={quickSheetKind} kind={quickSheetKind} results={results} filters={filters} sort={sort} onApplyFilters={(next)=>{changeCarFilters(next);}} onApplySort={(next)=>{if(next!==sort){setSort(next);startCarResultsTransition();}}} onClose={()=>{setQuickSheetKind(null);if(carFilterSessionDirtyRef.current){carFilterSessionDirtyRef.current=false;startCarResultsTransition();}}}/> : null}
     <CarEditSearchModal visible={carEditSearchOpen} params={params} onClose={()=>setCarEditSearchOpen(false)}/>

@@ -26,9 +26,24 @@ test("native Cars results contain curated catalogue assets without changing exte
 });
 
 test("native Cars results version curated URLs before resolving the API origin", () => {
+  assert.match(resultsScreen, /const resolveNativeCarImageUri=.*?resolveCarResultImageSource\(value\)/);
+  assert.match(resultsScreen, /new URL\(resolved,`\$\{base\.baseUrl\}\/`\)/);
+});
+
+test("native Cars prewarm visible artwork and avoid mounting all result images at once", () => {
+  assert.match(resultsScreen, /const CAR_RESULT_INITIAL_IMAGE_COUNT = 3/);
+  assert.match(resultsScreen, /prefetchInitialCarImages\(acceptance\.accepted\)/);
+  assert.match(resultsScreen, /Image\.prefetch\(uri\)/);
+  assert.match(resultsScreen, /KURIOTICKET_COMPARE_LOGO_URI/);
+  assert.match(resultsScreen, /<FlatList ref=\{carScrollRef\}/);
+  assert.match(resultsScreen, /initialNumToRender=\{CAR_RESULT_INITIAL_IMAGE_COUNT\}/);
+  assert.match(resultsScreen, /maxToRenderPerBatch=\{3\}/);
+  assert.match(resultsScreen, /windowSize=\{5\}/);
+});
+
+test("native Cars pass the already-versioned artwork URL into Details for the same cache key", () => {
   assert.match(
     resultsScreen,
-    /const resolved=resolveCarResultImageSource\(value\)/,
+    /result:JSON\.stringify\(\{\.\.\.result,imageUrl:resolveNativeCarImageUri\(result\.imageUrl\)\?\?result\.imageUrl\}\)/,
   );
-  assert.match(resultsScreen, /new URL\(resolved,`\$\{base\.baseUrl\}\/`\)/);
 });
