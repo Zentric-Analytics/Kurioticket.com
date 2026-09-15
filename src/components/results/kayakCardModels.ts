@@ -1,6 +1,7 @@
-import type { FlightFareTerm, FlightLeg, NormalizedFlightResult, PublicHotelResult, HotelClassificationStars } from "@/lib/types";
+import type { FlightFareTerm, FlightLeg, NormalizedFlightResult, NormalizedHotelResult, HotelClassificationStars } from "@/lib/types";
 import type { NormalizedCarResult } from "@/lib/cars/types";
 import type { SandboxOffer } from "@/services/travel/kayakSandbox";
+import type { PublicHotelProviderDetails } from "@/lib/hotels/hotelProviderDetails";
 
 function providerValue(value: string) {
   return value
@@ -41,6 +42,51 @@ function kayakFareTerms(offer: SandboxOffer): FlightFareTerm[] {
   return terms;
 }
 
+function hotelAttributeValues(offer: SandboxOffer, prefix: string) {
+  const pattern = new RegExp(`^${prefix}(?:\\s|·|$)`, "i");
+  return (offer.attributes ?? [])
+    .filter((attribute) => pattern.test(attribute.label))
+    .map((attribute) => attribute.value.trim())
+    .filter(Boolean);
+}
+
+function hotelAttributeValue(offer: SandboxOffer, prefix: string) {
+  return hotelAttributeValues(offer, prefix)[0];
+}
+
+function hotelBooleanAttribute(offer: SandboxOffer, prefix: string) {
+  const value = hotelAttributeValue(offer, prefix)?.toLowerCase();
+  return value === "yes" ? true : value === "no" ? false : undefined;
+}
+
+function kayakHotelProviderDetails(offer: SandboxOffer): PublicHotelProviderDetails {
+  const overview = {
+    address: hotelAttributeValue(offer, "address"),
+    countryCode: hotelAttributeValue(offer, "hotel Country Code"),
+    place: hotelAttributeValues(offer, "place"),
+    policies: hotelAttributeValues(offer, "policies"),
+    selfRated: hotelBooleanAttribute(offer, "is Self Rated"),
+  };
+  const reviews = {
+    sentiment: hotelAttributeValue(offer, "guest Rating Sentiment"),
+    quotes: hotelAttributeValues(offer, "review Quotes"),
+  };
+  const rate = {
+    roomName: hotelAttributeValue(offer, "room Name") || offer.description || undefined,
+    freeCancellation: hotelBooleanAttribute(offer, "has Free Cancellation"),
+    payLater: hotelBooleanAttribute(offer, "can Pay Later"),
+    bundledRate: hotelBooleanAttribute(offer, "is Bundled Rate"),
+    rateBreakdown: hotelAttributeValues(offer, "rate Breakdown"),
+    conditions: hotelAttributeValues(offer, "conditions"),
+  };
+  return {
+    source: "KAYAK",
+    ...(Object.values(overview).some((value) => Array.isArray(value) ? value.length : value !== undefined) ? { overview } : {}),
+    ...(Object.values(reviews).some((value) => Array.isArray(value) ? value.length : value !== undefined) ? { reviews } : {}),
+    ...(Object.values(rate).some((value) => Array.isArray(value) ? value.length : value !== undefined) ? { rate } : {}),
+  };
+}
+
 /** Map provider legs, never infer elapsed time from timezone-less local timestamps. */
 export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<string, string> = {}): NormalizedFlightResult | null {
   const source = offer.flightLegs;
@@ -52,8 +98,6 @@ export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<strin
     departureTime: leg.segments[0].departure,
     arrivalTime: leg.segments[leg.segments.length - 1].arrival,
     duration: leg.durationMinutes === undefined ? "Duration not supplied" : `${Math.floor(leg.durationMinutes / 60)}h ${leg.durationMinutes % 60}m`,
-    // This model crosses the shared JSON API boundary; keep the unknown
-    // sentinel finite so serialization cannot silently turn it into null.
     durationMinutes: leg.durationMinutes ?? Number.MAX_SAFE_INTEGER,
     stops: Math.max(0, leg.segments.length - 1),
     layovers: leg.segments.slice(0, -1).map(segment => ({airport:segment.destination, duration:"Not supplied", quality:"unknown"})),
@@ -83,16 +127,19 @@ export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<strin
   };
 }
 
-export function kayakHotelCardModel(offer: SandboxOffer, nights: number): PublicHotelResult {
+export function kayakHotelCardModel(offer: SandboxOffer, nights: number): NormalizedHotelResult {
+  const providerDetails = kayakHotelProviderDetails(offer);
+  const freeCancellation = providerDetails.rate?.freeCancellation;
   return {id:`kayak-sandbox:${offer.id}`,provider:"KAYAK sandbox",name:offer.title,
     imageUrl:offer.images?.[0]?.url,imageUrls:offer.images?.map(image=>image.url),
     rating:0,classificationStars:offer.hotelStars && [1,2,3,4,5].includes(offer.hotelStars) ? offer.hotelStars as HotelClassificationStars : undefined,
     reviewScore:offer.hotelReviewScore,reviewScale:offer.hotelReviewScore === undefined ? undefined : 10,
     reviewCount:offer.hotelReviewCount,reviewSource:offer.hotelReviewScore === undefined ? undefined : "KAYAK",
-    location:offer.details[0] || "Location not supplied",amenities:offer.amenities || [],roomType:offer.description,
-    cancellationInfo:"See supplied rate details",pricePerNight:offer.price/nights,totalPrice:offer.price,currency:offer.currency,
+    location:offer.details[0] || providerDetails.overview?.address || "Location not supplied",amenities:offer.amenities || [],roomType:providerDetails.rate?.roomName || offer.description,
+    cancellationInfo:freeCancellation === true ? "Free cancellation" : freeCancellation === false ? "Cancellation conditions apply" : "See supplied rate details",
+    pricePerNight:offer.price/nights,totalPrice:offer.price,currency:offer.currency,
     bookingUrl:offer.testUrl,partnerRedirectUrl:offer.testUrl,valueScore:0,travelConfidenceScore:0,arrivalSuitabilityScore:0,
-    recommendationReasons:[],badges:[],dataSource:"demo"};
+    recommendationReasons:[],badges:[],dataSource:"demo",rawProviderReference:{kind:"kayak-hotel-details",details:providerDetails}};
 }
 
 export function kayakCarCardModel(offer: SandboxOffer, days: number, pickup: string): NormalizedCarResult {
