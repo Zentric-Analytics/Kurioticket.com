@@ -38,11 +38,12 @@ test("active Hotel details derive rates from supplied inventory instead of fabri
   assert.match(reviews, /Verified guest reviews are not connected/);
 });
 
-test("narrow active Hotel layout gives price and Reserve flexible ownership without a dock", () => {
+test("narrow active Hotel layout gives price flexible ownership without a dock or inactive action", () => {
   assert.match(hotel, /useWindowDimensions\(\)\.width/);
   assert.match(rates, /adjustsFontSizeToFit/);
   assert.match(rates, /minimumFontScale=\{0\.68\}/);
-  assert.match(rates, /width: 112/);
-  assert.match(rates, /minHeight: 44/);
+  assert.match(rates, /width: 104/);
+  assert.match(rates, /justifyContent: "flex-start"/);
+  assert.doesNotMatch(rates, /reserveButton|>Reserve<|accessibilityRole="button"/);
   assert.doesNotMatch(hotel, /s\.dockPrice|s\.continueButton/);
 });

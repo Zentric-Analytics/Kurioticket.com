@@ -22,12 +22,10 @@ function styleRule(source: string, name: string, nextName: string) {
   return source.slice(start, end);
 }
 
-test("active Rates tab delegates presentation and exact reserve actions", () => {
+test("active Rates tab delegates current rate presentation", () => {
   assert.match(hotel, /activeHotelTab === "deals"/);
   assert.match(hotel, /<NativeHotelRatesSection/);
   assert.match(hotel, /offers=\{hotelOffers\}/);
-  assert.match(hotel, /selectedOfferId=\{selectedOffer\?\.id \?\? null\}/);
-  assert.match(hotel, /onSelectOffer=\{\(offerId\) => void reserveOffer\(offerId\)\}/);
   assert.match(hotel, /roomOptions=\{presentedRoomOptions\}/);
   assert.match(hotel, /nightlyPrice=\{nightlyPrice \?\? null\}/);
 });
@@ -48,27 +46,27 @@ test("Kurioticket rows keep the bundled wordmark and existing app fonts", () => 
   assert.match(styleRule(ratesSource, "rateMeta", "rateActionColumn"), /fontFamily: appFonts\.regular/);
 });
 
-test("Rates keeps grouped rounded cards with compact provider rows", () => {
+test("Rates follows the measured reference provider-card proportions", () => {
+  assert.match(styleRule(ratesSource, "groupSection", "groupTitle"), /gap: 20/);
   assert.match(styleRule(ratesSource, "groupCard", "rateRow"), /overflow: "hidden"[\s\S]*borderWidth: 1[\s\S]*borderRadius: 14/);
-  assert.match(styleRule(ratesSource, "rateRow", "rateCopy"), /minHeight: 142[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 15[\s\S]*gap: 14/);
-  assert.match(styleRule(ratesSource, "rateActionColumn", "price"), /width: 112[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "space-between"/);
+  assert.match(styleRule(ratesSource, "rateRow", "rateCopy"), /minHeight: 134[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 20[\s\S]*gap: 12/);
+  assert.match(styleRule(ratesSource, "brandLogo", "providerName"), /width: 88[\s\S]*height: 18[\s\S]*marginBottom: 8/);
+  assert.match(styleRule(ratesSource, "benefitList", "rateMeta"), /marginTop: "auto"[\s\S]*paddingTop: 18[\s\S]*gap: 1/);
+  assert.match(styleRule(ratesSource, "rateActionColumn", "price"), /width: 104[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "flex-start"/);
   assert.match(ratesSource, /index > 0 && \{ borderTopColor: theme\.border, borderTopWidth: StyleSheet\.hairlineWidth \}/);
 });
 
-test("Rates uses stay totals and Reserve instead of selection or per-night state", () => {
+test("Rates shows stay prices without an inactive reservation control", () => {
   assert.match(ratesSource, /\$\{total\.accessibilityLabel\} stay price/);
-  assert.match(ratesSource, /accessibilityRole="button"/);
-  assert.match(ratesSource, /onPress=\{\(\) => onSelectOffer\(row\.offerId\)\}/);
-  assert.match(ratesSource, />Reserve<\/Text>/);
+  assert.doesNotMatch(ratesSource, /<Pressable|>Reserve<|reserveButton|onPress=\{\(\) => onSelectOffer/);
   assert.doesNotMatch(ratesSource, /Selected|>Select<|accessibilityRole="radio"|per night/);
 });
 
-test("each Reserve action preserves its actual continuation", () => {
+test("Rates preserves live offer identities for future provider activation", () => {
   assert.match(ratesSource, /offers\.find\(\(offer\) => offer\.kind === "internal-room-flow"\)/);
   assert.match(ratesSource, /offers\.find\(\(offer\) => offer\.kind === "provider-handoff"\)/);
-  assert.match(hotel, /const offer = hotelOffers\.find\(\(\{ id \}\) => id === offerId\)/);
-  assert.match(hotel, /if \(offer\.kind === "internal-room-flow"\)[\s\S]*?setRoomsOpen\(true\)/);
-  assert.match(hotel, /offer\.kind !== "provider-handoff"[\s\S]*?Linking\.openURL\(redirectUrl\)/);
+  assert.match(ratesSource, /offerId: internalOffer\.id/);
+  assert.match(ratesSource, /offerId: providerOffer\.id/);
 });
 
 test("Rates preserves loading and truthful empty states", () => {
