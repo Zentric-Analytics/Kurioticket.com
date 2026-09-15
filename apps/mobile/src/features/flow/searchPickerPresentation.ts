@@ -12,6 +12,7 @@ import { searchPickerSheetTravelDistance } from "./searchPickerTravel";
 export const SEARCH_PICKER_BACKDROP_COLOR = "rgba(8, 18, 35, 0.20)";
 export const SEARCH_PICKER_OPEN_DURATION_MS = 280;
 export const SEARCH_PICKER_CLOSE_DURATION_MS = 240;
+const SEARCH_PICKER_STATIONARY_HEIGHT_RATIO = 0.82;
 
 type SearchPickerMotionOptions = {
   controlledOpening?: boolean;
@@ -25,7 +26,7 @@ export function useSearchPickerMotion(
 ) {
   const { controlledOpening = false, additionalTravelDistance = 0, stationaryOpening = false } = options;
   const { height: windowHeight } = useWindowDimensions();
-  const { bottom: bottomSafeAreaInset } = useSafeAreaInsets();
+  const { top: topSafeAreaInset, bottom: bottomSafeAreaInset } = useSafeAreaInsets();
   const fallbackTravelDistance = searchPickerSheetTravelDistance(
     windowHeight,
     undefined,
@@ -43,8 +44,17 @@ export function useSearchPickerMotion(
   ).current;
   const generation = useRef(0);
   const openingGeneration = useRef<number | undefined>(undefined);
+  const stableStationarySheetHeight = useRef(
+    Math.max(0, windowHeight - topSafeAreaInset) * SEARCH_PICKER_STATIONARY_HEIGHT_RATIO,
+  );
 
   fallbackTravelDistanceRef.current = fallbackTravelDistance;
+  // Stationary searchable sheets are 82% of the top-safe-area viewport. Freeze
+  // that final numeric height for the complete rendered lifetime so the first
+  // modal frame and later keyboard geometry cannot re-resolve the percentage.
+  if (!renderedRef.current)
+    stableStationarySheetHeight.current =
+      Math.max(0, windowHeight - topSafeAreaInset) * SEARCH_PICKER_STATIONARY_HEIGHT_RATIO;
 
   const currentTravelDistance = useCallback(
     () =>
@@ -176,8 +186,10 @@ export function useSearchPickerMotion(
     openSettled,
     backdropStyle: { opacity: backdropOpacity },
     sheetStyle: stationaryOpening && visible
-      ? { transform: [{ translateY: 0 }] }
-      : { transform: [{ translateY: sheetTranslateY }] },
+      ? { height: stableStationarySheetHeight.current, transform: [{ translateY: 0 }] }
+      : stationaryOpening
+        ? { height: stableStationarySheetHeight.current, transform: [{ translateY: sheetTranslateY }] }
+        : { transform: [{ translateY: sheetTranslateY }] },
     bottomSafeAreaInset,
     onSheetLayout,
     startOpening,
