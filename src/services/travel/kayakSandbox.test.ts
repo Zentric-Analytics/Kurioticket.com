@@ -18,6 +18,18 @@ test("only explicit offer-specific carry-on inclusion qualifies for baggage incl
   }
 });
 
+test("offer fee restrictions become concise truthful baggage terms", () => {
+  const base={currency:"USD",priceMode:"total",legs:{l:{segments:[{id:"s"}]}},segments:{s:{origin:"BOS",destination:"JFK",airline:"AA"}},results:[{legs:[{id:"l"}],bookingOptions:[{type:"regular",displayPrice:{price:100},bookingUrl:click,fees:{carryOnBag:[{bagNumber:"first",restriction:"included"}],checkedBag:[{bagNumber:"first",restriction:"included"}]}}]}]};
+  assert.deepEqual(normalizeSandboxOffers("flights",base)[0].flightFareTerms,[
+    {category:"baggage",semantic:"positive",text:"1 carry-on included"},
+    {category:"baggage",semantic:"positive",text:"1 checked bag included"},
+  ]);
+  const feeBearing=structuredClone(base); feeBearing.results[0].bookingOptions[0].fees.checkedBag[0]={bagNumber:"first",restriction:"notIncluded",price:{price:35,currency:"USD"}} as never;
+  const [term]=normalizeSandboxOffers("flights",feeBearing)[0].flightFareTerms?.filter(({text})=>/checked bag/i.test(text)) ?? [];
+  assert.notEqual(term?.semantic,"positive");
+  assert.match(term?.text ?? "",/not included|USD 35\.00/i);
+});
+
 test("flight cabin summary requires supplied fares for all itinerary segments", () => {
   const data={currency:"USD",priceMode:"total",legs:{l:{segments:[{id:"s"}]}},segments:{s:{origin:"BOS",destination:"JFK",airline:"AA"}},results:[{legs:[{id:"l"}],bookingOptions:[{type:"regular",displayPrice:{price:100},bookingUrl:click,segmentFares:[{segmentId:"s",cabin:{displayName:"Economy"}}]}]}]};
   assert.equal(normalizeSandboxOffers("flights",data)[0].flightCabin,"Economy");
@@ -35,6 +47,16 @@ test("flight fare families preserve only provider-supplied names", () => {
 test("flight booking options preserve their provider-supplied seller identity", () => {
   const data={currency:"USD",priceMode:"total",providers:{SELLER:{displayName:"Seller Display"}},legs:{l:{segments:[{id:"s"}]}},segments:{s:{origin:"BOS",destination:"JFK",airline:"AA"}},results:[{legs:[{id:"l"}],bookingOptions:[{type:"regular",providerCode:"SELLER",displayPrice:{price:100},bookingUrl:click}]}]};
   assert.equal(normalizeSandboxOffers("flights",data)[0].bookingProviderName, "Seller Display");
+});
+
+test("only explicit structured conditions and optional purchasable services are normalized", () => {
+  const option={type:"regular",displayPrice:{price:100},bookingUrl:click,conditions:{change:{restriction:"allowed",penalty:{price:40,currency:"USD"}},refund:{restriction:"notAllowed"}},optionalServices:[{type:"seat",displayName:"Preferred seat",optional:true,price:{price:25,currency:"USD"}},{type:"baggage",displayName:"Included bag",optional:false,price:{price:0,currency:"USD"}}]};
+  const [offer]=normalizeSandboxOffers("flights",{currency:"USD",priceMode:"total",legs:{l:{segments:[{id:"s"}]}},segments:{s:{origin:"BOS",destination:"JFK",airline:"AA"}},results:[{legs:[{id:"l"}],bookingOptions:[option]}]});
+  assert.deepEqual(offer.flightConditions,[
+    {category:"change",scope:"trip",state:"allowed",penaltyAmount:40,penaltyCurrency:"USD"},
+    {category:"refund",scope:"trip",state:"not-allowed"},
+  ]);
+  assert.deepEqual(offer.flightOptionalServices,[{type:"seat",description:"Preferred seat",price:25,currency:"USD"}]);
 });
 
 test("hotel guest scores preserve the provider rating without inventing unrated scores", () => {

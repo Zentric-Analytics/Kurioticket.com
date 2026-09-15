@@ -47,3 +47,33 @@ test("flight comparison uses party totals and unknown durations cannot rank as z
   assert.equal(party?.duration, "Duration not supplied");
   assert.equal(kayakFlightCardModel({...offer,priceBasis:"total"}, {adults:"3"})?.price,100);
 });
+
+test("KAYAK flight details use only provider-authored fare facts", () => {
+  const offer = {
+    id:"fare", title:"Trip", description:"Seller", details:[], price:364, currency:"USD", priceBasis:"total",
+    testUrl:"https://affiliates.kayak.com/sandbox-clickout", flightCabin:"Economy", flightFareFamily:"Economy Saver",
+    flightLegs:[{segments:[{origin:"BOS",destination:"JFK",departure:"2099-10-12T10:00:00",arrival:"2099-10-12T11:00:00",airline:"Test",flightNumber:"T1",cabinDetails:{cabinClass:"Economy",fareBrandName:"Economy Saver"}}]}],
+    flightFareTerms:[
+      {category:"baggage" as const,semantic:"positive" as const,text:"1 carry-on included"},
+      {category:"baggage" as const,semantic:"positive" as const,text:"1 checked bag included"},
+    ],
+    flightConditions:[{category:"change" as const,scope:"trip" as const,state:"allowed" as const,penaltyAmount:40,penaltyCurrency:"USD"}],
+    flightOptionalServices:[{type:"seat",description:"Preferred seat",price:25,currency:"USD"}],
+  };
+  const model = kayakFlightCardModel(offer)!;
+  assert.equal(model.fareBrandName,"Economy Saver");
+  assert.deepEqual(model.fareTerms,offer.flightFareTerms);
+  assert.deepEqual(model.legs?.[0].segments[0].cabinDetails,[{cabinClass:"Economy",fareBrandName:"Economy Saver"}]);
+  assert.deepEqual(model.providerDetails,{
+    price:{totalAmount:364,totalCurrency:"USD"},
+    conditions:offer.flightConditions,
+    optionalServices:offer.flightOptionalServices,
+  });
+  assert.equal(model.providerDetails?.price?.baseAmount,undefined);
+  assert.equal(model.providerDetails?.price?.taxAmount,undefined);
+});
+
+test("KAYAK airline policy attributes never become purchased fare terms", () => {
+  const model = kayakFlightCardModel({id:"policy",title:"Trip",description:"Seller",details:[],price:100,currency:"USD",priceBasis:"total",testUrl:"https://affiliates.kayak.com/sandbox-clickout",flightLegs:[{segments:[{origin:"BOS",destination:"JFK",departure:"2099-10-12T10:00:00",arrival:"2099-10-12T11:00:00",airline:"Test",flightNumber:"T1"}]}],attributes:[{label:"AA airline policy (not included allowance) · baggage policies",value:"1 checked bag"}]})!;
+  assert.deepEqual(model.fareTerms,[]);
+});

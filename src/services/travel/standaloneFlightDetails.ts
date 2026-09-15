@@ -164,12 +164,30 @@ function kayakMaterialKey(offer: NormalizedFlightResult) {
     legDirection: term.legDirection,
     legIndex: term.legIndex,
   })).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+  const segmentCabinDetails = (offer.legs ?? []).map((leg) =>
+    leg.segments.map((segment) => segment.cabinDetails ?? []),
+  );
+  const conditions = [...(offer.providerDetails?.conditions ?? [])].sort((left, right) =>
+    JSON.stringify(left).localeCompare(JSON.stringify(right)),
+  );
+  const optionalServices = [...(offer.providerDetails?.optionalServices ?? [])].sort((left, right) =>
+    JSON.stringify(left).localeCompare(JSON.stringify(right)),
+  );
   return JSON.stringify({
     provider: canonical(offer.provider),
     fareBrand: providerBrandIdentity(offer),
     cabinClass: canonical(offer.cabinClass),
     materialTerms,
+    segmentCabinDetails,
+    conditions,
+    optionalServices,
   });
+}
+
+function titleCase(value: string) {
+  return value
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function fareTerms(offer: NormalizedFlightResult) {
@@ -316,142 +334,4 @@ export function buildProviderAwareFlightDetails(input: Parameters<typeof buildSt
   return input.cachedSelected.provider === "KAYAK sandbox"
     ? buildKayakSandboxFlightDetails(input)
     : buildStandaloneFlightDetails(input);
-}
-
-export async function buildStandaloneFlightDetails({
-  cachedSelected,
-  cachedAlternatives,
-  search,
-  now = Date.now(),
-  refresh = refreshExactFlightOffer,
-  discoverUpsells = getDuffelFlightUpsellOffers,
-}: {
-  cachedSelected: NormalizedFlightResult;
-  cachedAlternatives: NormalizedFlightResult[];
-  search: FlightSearchParams;
-  now?: number;
-  refresh?: RefreshExactFlightOffer;
-  discoverUpsells?: (providerOfferId: string, search: FlightSearchParams) => Promise<ProviderResult<NormalizedFlightResult>>;
-}): Promise<FlightDetailsSuccess | { status: "unavailable"; error: string }> {
-  const detailsStartedAt = performance.now();
-  if (!isFlightProviderOfferUsableAt(cachedSelected, now))
-    return { status: "unavailable", error: unavailableMessage };
-  const selectedRefreshStartedAt = performance.now();
-  const selected = await refresh({ cachedOffer: cachedSelected, search, now });
-  const selectedRefreshMs = performance.now() - selectedRefreshStartedAt;
-  if (!selected.offer || !validatesSearchContext(selected.offer, search))
-    return { status: "unavailable", error: unavailableMessage };
-
-  const selectedOffer = selected.offer;
-  const selectedIdentity = itineraryIdentity(selectedOffer);
-  const compatibleAlternatives = cachedAlternatives
-    .filter((offer) => offer.id !== cachedSelected.id)
-    .filter((offer) => providerBrandIdentity(offer))
-    .slice(0, 4);
-  const secondaryDiscoveryStartedAt = performance.now();
-  let upsellDiscoveryMs = 0;
-  let alternativeRefreshMs = 0;
-  const upsellStartedAt = performance.now();
-  const upsellPromise = (selectedOffer.providerOfferId
-    ? discoverUpsells(selectedOffer.providerOfferId, search)
-    : Promise.resolve(null)
-  ).finally(() => { upsellDiscoveryMs = performance.now() - upsellStartedAt; });
-  const alternativeStartedAt = performance.now();
-  const alternativeRefreshPromise = Promise.all(
-    compatibleAlternatives.map((cachedOffer) => refresh({ cachedOffer, search, now })),
-  ).finally(() => { alternativeRefreshMs = performance.now() - alternativeStartedAt; });
-  const [upsellResponse, alternativeResults] = await Promise.all([
-    upsellPromise,
-    alternativeRefreshPromise,
-  ]);
-  const secondaryDiscoveryMs = performance.now() - secondaryDiscoveryStartedAt;
-  const upsells = (upsellResponse?.status === "success" ? upsellResponse.results : []).filter((offer) =>
-    offer.provider.trim().toLowerCase() === selectedOffer.provider.trim().toLowerCase() &&
-    validatesSearchContext(offer, search, { allowDifferentCabin: true }) &&
-    offer.currency === selectedOffer.currency &&
-    Boolean(offer.providerExpiresAt && offer.providerExpiresAt > now) &&
-    Boolean(offer.providerOfferId) &&
-    itineraryIdentity(offer) === selectedIdentity,
-  );
-  const refreshedOffers = [
-    selectedOffer,
-    ...alternativeResults.flatMap((result) =>
-      result.offer &&
-      validatesSearchContext(result.offer, search) &&
-      result.offer.currency === selectedOffer.currency &&
-      itineraryIdentity(result.offer) === selectedIdentity
-        ? [result.offer]
-        : [],
-    ),
-  ];
-  const cachedFareOffers = [
-    selectedOffer,
-    ...refreshedOffers.slice(1).filter((offer) => providerBrandIdentity(offer)),
-  ];
-  const upsellOfferIds = new Set(upsells.flatMap(({ providerOfferId }) => providerOfferId ? [providerOfferId] : []));
-  const fareChoices = buildMaterialFareChoices(
-    [selectedOffer, ...upsells, ...cachedFareOffers.slice(1)],
-    { upsellOfferIds, selectedProviderOfferId: selectedOffer.providerOfferId },
-  );
-  const initial =
-    fareChoices.find(({ choice }) => choice.selectedOffer) ??
-    fareChoices[0];
-  if (!initial) return { status: "unavailable", error: unavailableMessage };
-  await rememberFlights([selectedOffer, ...upsells, ...refreshedOffers.slice(1)], now, search);
-  console.info("[flight-details:fare-discovery]", {
-    selectedRefreshMs: Math.round(selectedRefreshMs),
-    upsellDiscoveryMs: Math.round(upsellDiscoveryMs),
-    alternativeRefreshMs: Math.round(alternativeRefreshMs),
-    secondaryDiscoveryMs: Math.round(secondaryDiscoveryMs),
-    totalDetailsMs: Math.round(performance.now() - detailsStartedAt),
-    upsellResultCount: upsells.length,
-    compatibleAlternativeCount: compatibleAlternatives.length,
-    upsellAttempted: Boolean(selectedOffer.providerOfferId),
-    providerStatusCategory: upsellResponse?.errorCategory ?? upsellResponse?.status ?? "not_attempted",
-    providerLatencyMs: upsellResponse?.latencyMs ?? 0,
-    returnedUpsellCount: upsellResponse?.status === "success" ? upsellResponse.results.length : 0,
-    normalizedUpsellCount: upsellResponse?.status === "success" ? upsellResponse.results.length : 0,
-    sameItineraryEligibleCount: upsells.length,
-    finalFareChoiceCount: fareChoices.length,
-    missingFareBrandCount: [selectedOffer, ...upsells].filter((offer) => !providerBrandIdentity(offer)).length,
-    missingBaggageCount: [selectedOffer, ...upsells].filter((offer) => /not supplied/i.test(offer.baggageInfo)).length,
-    missingConditionsCount: [selectedOffer, ...upsells].filter((offer) => /not supplied/i.test(offer.refundInfo)).length,
-    carrierNamesPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.legs?.some((leg) => leg.segments.some((segment) => segment.marketingCarrier?.name))).length,
-    operatingCarrierPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.legs?.some((leg) => leg.segments.some((segment) => segment.operatingCarrier?.name))).length,
-    airportDetailsPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.legs?.some((leg) => leg.segments.some((segment) => segment.originDetails?.name || segment.destinationDetails?.name))).length,
-    terminalDataPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.legs?.some((leg) => leg.segments.some((segment) => segment.originDetails?.terminal || segment.destinationDetails?.terminal))).length,
-    aircraftDataPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.legs?.some((leg) => leg.segments.some((segment) => segment.aircraft))).length,
-    technicalStopsPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.legs?.some((leg) => leg.segments.some((segment) => segment.technicalStops?.length))).length,
-    cabinAmenitiesPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.legs?.some((leg) => leg.segments.some((segment) => segment.cabinDetails?.some((cabin) => cabin.amenities)))).length,
-    priceBreakdownPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.providerDetails?.price?.baseAmount !== undefined || offer.providerDetails?.price?.taxAmount !== undefined).length,
-    emissionsPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.providerDetails?.totalEmissionsKg !== undefined).length,
-    optionalServicesPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.providerDetails?.optionalServices?.length).length,
-  });
-  const handoff = resolveFlightHandoff(initial.source);
-  return {
-    status: "available",
-    flight: initial.choice.offer,
-    fareChoices: fareChoices.map(({ choice }) => choice),
-    handoff: handoff
-      ? { available: true, providerName: handoff.providerName }
-      : { available: false },
-    revalidation: { status: selected.status === "changed" ? "changed" : "confirmed" },
-    search: {
-      tripType: search.tripType,
-      legs: getSearchLegs(search),
-      departureDate: search.departureDate,
-      ...(search.returnDate ? { returnDate: search.returnDate } : {}),
-      adults: search.adults,
-      children: search.children,
-      infants: search.infants,
-      travelers: search.travelers,
-      cabinClass: search.cabinClass,
-    },
-  };
-}
-
-function titleCase(value: string) {
-  return value
-    .replace(/[-_]/g, " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
