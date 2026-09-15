@@ -186,7 +186,10 @@ export function buildMaterialFareChoices(
   }
   const choices = [...groups.entries()]
     .map(([key, group]) => {
-      const source = group.reduce((lowest, candidate) =>
+      const selectedSource = selectedProviderOfferId
+        ? group.find((offer) => offer.providerOfferId === selectedProviderOfferId)
+        : undefined;
+      const source = selectedSource ?? group.reduce((lowest, candidate) =>
         candidate.price < lowest.price ? candidate : lowest,
       );
       const handoff = resolveFlightHandoff(source);
