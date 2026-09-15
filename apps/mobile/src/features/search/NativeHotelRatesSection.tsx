@@ -58,6 +58,11 @@ function roomGroupTitle(name: string) {
   return capitalize(cleanRateCopy(base) || "Room");
 }
 
+function roomCardCategory(name: string) {
+  const category = roomGroupTitle(name);
+  return category.replace(/\s+options$/i, "").trim() || category;
+}
+
 function roomRateTitle(option: PresentedHotelRoomOption) {
   const parts = option.name.split(/\s+[—–-]\s+/).filter(Boolean);
   const suffix = cleanRateCopy(
@@ -69,6 +74,13 @@ function roomRateTitle(option: PresentedHotelRoomOption) {
   if (/room only/i.test(suffix) && mealPlan) return capitalize(mealPlan);
   if (/^flexible$/i.test(suffix)) return "Flexible rate";
   return capitalize(suffix || mealPlan || "Room rate");
+}
+
+function composeRoomRateTitle(category: string, rateLabel: string) {
+  if (!rateLabel || category.toLocaleLowerCase() === rateLabel.toLocaleLowerCase()) {
+    return category;
+  }
+  return `${category} — ${rateLabel}`;
 }
 
 function meaningfulRateMeta(option: PresentedHotelRoomOption, title: string) {
@@ -139,15 +151,18 @@ export function NativeHotelRatesSection({
 
   if (internalOffer) {
     roomOptions.forEach((option) => {
-      const title = roomRateTitle(option);
+      const groupTitle = roomGroupTitle(option.name);
+      const roomCategory = roomCardCategory(option.name);
+      const rateLabel = roomRateTitle(option);
+      const title = composeRoomRateTitle(roomCategory, rateLabel);
       const total = option.displayPrice?.total ?? null;
-      addRateRow(groups, roomGroupTitle(option.name), {
+      addRateRow(groups, groupTitle, {
         id: `room-${option.id}`,
         offerId: internalOffer.id,
         providerKind: "kurioticket",
         providerName: "Kurioticket",
         title,
-        meta: meaningfulRateMeta(option, title),
+        meta: meaningfulRateMeta(option, rateLabel),
         price: total?.formatted ?? "Price unavailable",
         priceAccessibilityLabel: total
           ? `${total.accessibilityLabel} stay price`
