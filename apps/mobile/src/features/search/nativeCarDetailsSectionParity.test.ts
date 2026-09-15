@@ -83,7 +83,7 @@ test("content below the three tabs shares one section-heading hierarchy", () => 
   assert.match(native, /<Text style=\{\[s\.compareHeading,[^>]*>Compare deals<\/Text>/);
   assert.match(native, /<Text style=\{\[s\.pickupHeading,[^>]*>Pickup and return<\/Text>/);
   assert.match(native, /<Text style=\{\[s\.locationHeading,[^>]*>Location<\/Text>/);
-  for (const contract of ["marginTop:4", "fontSize:14", "lineHeight:20", 'fontWeight:"500"'])
+  for (const contract of ["marginTop:4", "fontSize:12", "lineHeight:18", 'fontWeight:"500"'])
     assert.ok(style("stay").includes(contract));
   for (const contract of ["marginTop:20", "gap:10"])
     assert.ok(style("dealList").includes(contract));
