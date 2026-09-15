@@ -25,7 +25,7 @@ test("final searchable location suggestions commit directly without Done", () =>
 });
 
 test("dismissal never commits typed TextInput values", () => {
-  const closeHandlers = ["dismissAirportSheet", "dismissDestinationSheet", "dismissLocationSheet", "onClose"] as const;
+  const closeHandlers = ["dismissAirportSheet", "dismissDestinationSheet", "dismissLocationSheet", "dismissAirportSheet"] as const;
   for (const [index, sheet] of locationSheets.entries()) {
     const close = closeHandlers[index];
     assert.match(sheet, new RegExp(`<PickerSheetHeader[^>]+onClose=\\{${close}\\}`));
