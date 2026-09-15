@@ -1,4 +1,4 @@
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { NativeHotelOffer } from "./nativeHotelDetailsModel";
 import type { PresentedHotelRoomOption } from "./NativeHotelDetails";
 import { appFonts } from "../../theme/typography";
@@ -106,6 +106,7 @@ function addRateRow(groups: RateGroup[], groupTitle: string, row: RateRow) {
 }
 
 const previewReserve = () => undefined;
+const reserveLabel = "Reserve";
 
 export function NativeHotelRatesSection({
   offers,
@@ -241,18 +242,15 @@ export function NativeHotelRatesSection({
             >
               {row.price}
             </Text>
-            <Pressable
-              accessibilityRole="button"
+            <TouchableOpacity
+              accessibilityRole={"button"}
               accessibilityLabel={`Reserve ${row.title}`}
+              activeOpacity={0.84}
               onPress={previewReserve}
-              style={({ pressed }) => [
-                s.reserveButton,
-                { backgroundColor: accentColor },
-                pressed && s.reserveButtonPressed,
-              ]}
+              style={[s.actionControl, { backgroundColor: accentColor }]}
             >
-              <Text style={s.reserveButtonText}>Reserve</Text>
-            </Pressable>
+              <Text style={s.actionControlText}>{reserveLabel}</Text>
+            </TouchableOpacity>
           </View>
         </View>
       ))}
@@ -314,7 +312,7 @@ const s = StyleSheet.create({
     fontWeight: "600",
     fontFamily: appFonts.semibold,
   },
-  reserveButton: {
+  actionControl: {
     minWidth: 82,
     minHeight: 44,
     borderRadius: 10,
@@ -322,8 +320,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 12,
   },
-  reserveButtonPressed: { opacity: 0.84 },
-  reserveButtonText: {
+  actionControlText: {
     color: "#FFFFFF",
     fontSize: 15,
     lineHeight: 20,
