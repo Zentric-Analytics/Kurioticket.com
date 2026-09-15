@@ -38,12 +38,13 @@ test("active Hotel details derive rates from supplied inventory instead of fabri
   assert.match(reviews, /Verified guest reviews are not connected/);
 });
 
-test("narrow active Hotel layout gives price flexible ownership without a dock or inactive action", () => {
+test("narrow active Hotel layout keeps square rate cards and a visual-only Reserve action", () => {
   assert.match(hotel, /useWindowDimensions\(\)\.width/);
   assert.match(rates, /adjustsFontSizeToFit/);
   assert.match(rates, /minimumFontScale=\{0\.68\}/);
   assert.match(rates, /width: 104/);
-  assert.match(rates, /justifyContent: "flex-start"/);
-  assert.doesNotMatch(rates, /reserveButton|>Reserve<|accessibilityRole="button"/);
+  assert.match(rates, /borderRadius: 0/);
+  assert.match(rates, /onPress=\{previewReserve\}/);
+  assert.doesNotMatch(rates, /onPress=\{\(\) => onSelectOffer\(row\.offerId\)\}/);
   assert.doesNotMatch(hotel, /s\.dockPrice|s\.continueButton/);
 });
