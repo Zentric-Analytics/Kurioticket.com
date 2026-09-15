@@ -16,10 +16,19 @@ test("regular hotel search uses the selected verified provider binding without r
   assert.equal(result.supported, true);
   if (result.supported) assert.deepEqual(result.search, { vertical: "hotels", destination: "kplace:58075", departure: hotel.checkIn, returnDate: hotel.checkOut, adults: 2 });
 });
-test("ambiguous or text-only hotel destinations remain unsupported instead of being guessed", async () => {
-  const result = await resolveRegularKayakSearch("hotels", hotel, async () => [{ label: hotel.destination, value: "kplace:1" }]);
-  assert.equal(result.supported, false);
-  if (!result.supported) assert.match(result.reason, /verified binding/);
+test("a canonical hotel city is resolved to the matching provider place", async () => {
+  const sanFrancisco = { ...hotel, destination: "San Francisco, California, United States" };
+  const result = await resolveRegularKayakSearch("hotels", sanFrancisco, async (term, vertical) => {
+    assert.equal(term, sanFrancisco.destination);
+    assert.equal(vertical, "hotels");
+    return [
+      { label: "San Francisco International Airport (SFO)", value: "kplace:58074", kind: "airport" },
+      { label: "San Francisco, California, United States", value: "kplace:58075", kind: "city" },
+      { label: "San Francisco, Nayarit, Mexico", value: "kplace:58076", kind: "city" },
+    ];
+  });
+  assert.equal(result.supported, true);
+  if (result.supported && result.search.vertical === "hotels") assert.equal(result.search.destination, "kplace:58075");
 });
 test("tampering with client-carried provider IDs cannot replace the server-authoritative binding", async () => {
   const duffelOnly = JSON.stringify({ ...JSON.parse(locationTarget("kayak", "kplace:1")), providerBindings: [{ provider: "duffel", value: "pla_1", verification: "verified", provenance: "provider-discovery" }] });
@@ -41,9 +50,17 @@ test("a selected car city is translated only through its verified provider bindi
   assert.equal(result.supported, true);
   if (result.supported && result.search.vertical === "cars") assert.equal(result.search.origin, "SFO");
 });
-test("a car free-text candidate is never accepted by first-candidate guessing", async () => {
-  const result = await resolveRegularKayakSearch("cars", { pickupLocation: "Springfield", pickupDate: "2099-10-12", dropoffDate: "2099-10-17", pickupTime: "10:30", dropoffTime: "16:45" }, async () => [{ label: "Springfield", value: "SPI" }]);
+test("an ambiguous car free-text candidate is never accepted by first-candidate guessing", async () => {
+  const result = await resolveRegularKayakSearch("cars", { pickupLocation: "Springfield", pickupDate: "2099-10-12", dropoffDate: "2099-10-17", pickupTime: "10:30", dropoffTime: "16:45" }, async () => [{ label: "Springfield, Illinois", value: "SPI" }]);
   assert.equal(result.supported, false);
+});
+test("a canonical car city is resolved to the provider's supported airport", async () => {
+  const result = await resolveRegularKayakSearch("cars", { pickupLocation: "San Francisco, California, United States", pickupDate: "2099-10-12", dropoffDate: "2099-10-17", pickupTime: "10:30", dropoffTime: "16:45" }, async (_term, vertical) => {
+    assert.equal(vertical, "cars");
+    return [{ label: "San Francisco International Airport (SFO)", value: "SFO", kind: "airport" }];
+  });
+  assert.equal(result.supported, true);
+  if (result.supported && result.search.vertical === "cars") assert.equal(result.search.origin, "SFO");
 });
 test("ordinary flight criteria retain route and travelers while sandbox USD stays separate", async () => {
   const result = await resolveRegularKayakSearch("flights", { origin: "BOS", destination: "JFK", departureDate: "2099-10-12", tripType: "one-way", travelers: "2", currency: "JPY" }, async () => []);
