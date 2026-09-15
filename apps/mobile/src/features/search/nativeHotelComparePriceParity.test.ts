@@ -30,38 +30,43 @@ test("active Rates tab delegates current rate presentation", () => {
   assert.match(hotel, /nightlyPrice=\{nightlyPrice \?\? null\}/);
 });
 
-test("Rates uses supplied room options instead of fabricating inventory", () => {
+test("Rates builds its primary room group from supplied room options", () => {
   assert.match(ratesSource, /roomOptions\.forEach\(\(option\) =>/);
-  assert.match(ratesSource, /const roomCategory = roomCardCategory\(option\.name\)/);
-  assert.match(ratesSource, /const rateLabel = roomRateTitle\(option\)/);
-  assert.match(ratesSource, /const title = composeRoomRateTitle\(roomCategory, rateLabel\)/);
+  assert.match(ratesSource, /const groupTitle = roomGroupTitle\(option\.name\)/);
+  assert.match(ratesSource, /const title = roomRateTitle\(option\)/);
+  assert.match(ratesSource, /addRateRow\(groups, groupTitle,/);
   assert.match(ratesSource, /option\.displayPrice\?\.total/);
-  assert.match(ratesSource, /meaningfulRateMeta\(option, rateLabel\)/);
+  assert.match(ratesSource, /meaningfulRateMeta\(option, title\)/);
   assert.doesNotMatch(ratesSource, /STATIC_RATE_GROUPS|\$1,225|Standard Room, 1 Queen Bed/);
 });
 
-test("standalone Rates cards retain the room category without restoring the removed heading", () => {
-  assert.match(ratesSource, /function roomCardCategory\(name: string\)/);
-  assert.match(ratesSource, /category\.replace\(\/\\s\+options\$\/i, ""\)/);
-  assert.match(ratesSource, /return `\$\{category\} — \$\{rateLabel\}`/);
-  assert.doesNotMatch(ratesSource, /<Text[^>]*>Compact room options<\/Text>|s\.groupTitle|s\.groupCard/);
+test("Compact room preview shows three grouped sections without putting category text inside cards", () => {
+  assert.match(ratesSource, /function withCompactRoomSectionPreview\(groups: RateGroup\[\]\)/);
+  assert.match(ratesSource, /compactGroup\.title\.toLocaleLowerCase\(\) !== "compact room options"/);
+  assert.match(ratesSource, /compactGroup\.rows\.length !== 3/);
+  assert.match(ratesSource, /previewGroup\("preview-deluxe-room-options", "Deluxe room options"\)/);
+  assert.match(ratesSource, /previewGroup\("preview-suite-room-options", "Suite room options"\)/);
+  assert.match(ratesSource, /<Text style=\{\[s\.groupTitle, \{ color: theme\.textPrimary \}\]\}>\{group\.title\}<\/Text>/);
+  assert.doesNotMatch(ratesSource, /roomCardCategory|composeRoomRateTitle/);
 });
 
 test("Kurioticket rows keep the bundled wordmark and existing app fonts", () => {
   assert.ok(existsSync("assets/kurioticket-logo-primary-light-bg.png"));
   assert.match(ratesSource, /providerKind === "kurioticket"[\s\S]*?<Image[\s\S]*?accessibilityLabel="Kurioticket"[\s\S]*?require\("\.\.\/\.\.\/\.\.\/assets\/kurioticket-logo-primary-light-bg\.png"\)/);
+  assert.match(styleRule(ratesSource, "groupTitle", "groupCards"), /fontFamily: appFonts\.bold/);
   assert.match(styleRule(ratesSource, "rateTitle", "benefitList"), /fontFamily: appFonts\.bold/);
   assert.match(styleRule(ratesSource, "rateMeta", "rateActionColumn"), /fontFamily: appFonts\.regular/);
   assert.match(styleRule(ratesSource, "actionControlText", "emptyCard"), /fontFamily: appFonts\.bold/);
 });
 
-test("Rates renders separate square provider cards", () => {
-  assert.match(styleRule(ratesSource, "section", "rateCard"), /gap: 12/);
+test("Rates keeps separate square provider cards inside each room section", () => {
+  assert.match(styleRule(ratesSource, "section", "groupSection"), /gap: 24/);
+  assert.match(styleRule(ratesSource, "groupSection", "groupTitle"), /gap: 12/);
+  assert.match(styleRule(ratesSource, "groupCards", "rateCard"), /gap: 12/);
   assert.match(styleRule(ratesSource, "rateCard", "rateCopy"), /minHeight: 134[\s\S]*borderWidth: 1[\s\S]*borderRadius: 0[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 20[\s\S]*gap: 12/);
   assert.match(styleRule(ratesSource, "brandLogo", "providerName"), /width: 88[\s\S]*height: 18[\s\S]*marginBottom: 8/);
   assert.match(styleRule(ratesSource, "benefitList", "rateMeta"), /marginTop: "auto"[\s\S]*paddingTop: 18[\s\S]*gap: 1/);
   assert.match(styleRule(ratesSource, "rateActionColumn", "price"), /width: 104[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "space-between"/);
-  assert.doesNotMatch(ratesSource, /<Text[^>]*>Compact room options<\/Text>|s\.groupTitle|s\.groupCard/);
 });
 
 test("Rates shows stay prices and a visual-only Reserve action", () => {
