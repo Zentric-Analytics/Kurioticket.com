@@ -30,12 +30,6 @@ type RateRow = {
   hasDisplayedPrice: boolean;
 };
 
-type RateGroup = {
-  id: string;
-  title: string;
-  rows: RateRow[];
-};
-
 function capitalize(value: string) {
   return value ? `${value[0]!.toUpperCase()}${value.slice(1)}` : value;
 }
@@ -51,11 +45,6 @@ function cleanRateCopy(value?: string | null) {
     .replace(/\s+([,.;:])/g, "$1")
     .replace(/^[\s—–-]+|[\s—–-]+$/g, "")
     .trim();
-}
-
-function roomGroupTitle(name: string) {
-  const base = name.split(/\s+[—–-]\s+/)[0]?.trim() ?? "";
-  return capitalize(cleanRateCopy(base) || "Room options");
 }
 
 function roomRateTitle(option: PresentedHotelRoomOption) {
@@ -95,40 +84,6 @@ function meaningfulProviderMeta(value?: string | null) {
   return cleaned ? [cleaned] : [];
 }
 
-function addRateRow(groups: RateGroup[], groupTitle: string, row: RateRow) {
-  const groupKey = groupTitle.toLocaleLowerCase();
-  const existing = groups.find((group) => group.id === groupKey);
-  if (existing) {
-    existing.rows.push(row);
-    return;
-  }
-  groups.push({ id: groupKey, title: groupTitle, rows: [row] });
-}
-
-function withCompactRoomSectionPreview(groups: RateGroup[]) {
-  if (groups.length !== 1) return groups;
-  const compactGroup = groups[0];
-  if (
-    !compactGroup ||
-    compactGroup.title.toLocaleLowerCase() !== "compact room options" ||
-    compactGroup.rows.length !== 3
-  ) {
-    return groups;
-  }
-
-  const previewGroup = (id: string, title: string): RateGroup => ({
-    id,
-    title,
-    rows: compactGroup.rows.map((row) => ({ ...row, id: `${id}-${row.id}` })),
-  });
-
-  return [
-    compactGroup,
-    previewGroup("preview-deluxe-room-options", "Deluxe room options"),
-    previewGroup("preview-suite-room-options", "Suite room options"),
-  ];
-}
-
 const previewReserve = () => undefined;
 const reserveLabel = "Reserve";
 
@@ -157,16 +112,16 @@ export function NativeHotelRatesSection({
 }) {
   if (detailsStatus === "loading") return null;
 
-  const groups: RateGroup[] = [];
   const internalOffer = offers.find((offer) => offer.kind === "internal-room-flow") ?? null;
   const providerOffer = offers.find((offer) => offer.kind === "provider-handoff") ?? null;
+  const rows: RateRow[] = [];
 
   if (internalOffer) {
-    roomOptions.forEach((option) => {
-      const groupTitle = roomGroupTitle(option.name);
+    const option = roomOptions[0];
+    if (option) {
       const title = roomRateTitle(option);
       const total = option.displayPrice?.total ?? null;
-      addRateRow(groups, groupTitle, {
+      rows.push({
         id: `room-${option.id}`,
         offerId: internalOffer.id,
         providerKind: "kurioticket",
@@ -179,7 +134,7 @@ export function NativeHotelRatesSection({
           : "Price unavailable",
         hasDisplayedPrice: Boolean(total),
       });
-    });
+    }
   }
 
   if (providerOffer) {
@@ -187,11 +142,12 @@ export function NativeHotelRatesSection({
       .split(";")
       .map((part) => part.trim())
       .filter(Boolean);
-    const groupTitle = capitalize(cleanRateCopy(roomParts[0]) || "Available rates");
     const providerTitle = capitalize(
-      cleanRateCopy(roomParts.slice(1).join(", ")) || groupTitle,
+      cleanRateCopy(roomParts.slice(1).join(", ")) ||
+        cleanRateCopy(roomParts[0]) ||
+        "Available rate",
     );
-    addRateRow(groups, groupTitle, {
+    rows.unshift({
       id: `provider-${providerOffer.id}`,
       offerId: providerOffer.id,
       providerKind: "provider",
@@ -204,10 +160,9 @@ export function NativeHotelRatesSection({
     });
   }
 
-  const visibleGroups = withCompactRoomSectionPreview(groups);
-  const hasRows = visibleGroups.some((group) => group.rows.length > 0);
+  const row = rows[0] ?? null;
 
-  if (!hasRows) {
+  if (!row) {
     return (
       <View style={s.section}>
         <View style={[s.emptyCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -220,87 +175,67 @@ export function NativeHotelRatesSection({
 
   return (
     <View style={s.section}>
-      {visibleGroups.map((group) => (
-        <View key={group.id} style={s.groupSection}>
-          <Text style={[s.groupTitle, { color: theme.textPrimary }]}>{group.title}</Text>
-          <View style={s.groupCards}>
-            {group.rows.map((row) => (
-              <View
-                key={row.id}
-                style={[s.rateCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
-              >
-                <View style={s.rateCopy}>
-                  {row.providerKind === "kurioticket" ? (
-                    <Image
-                      accessible
-                      accessibilityLabel="Kurioticket"
-                      accessibilityIgnoresInvertColors
-                      source={require("../../../assets/kurioticket-logo-primary-light-bg.png")}
-                      resizeMode="contain"
-                      style={s.brandLogo}
-                    />
-                  ) : (
-                    <Text numberOfLines={1} style={[s.providerName, { color: theme.textPrimary }]}>
-                      {row.providerName}
-                    </Text>
-                  )}
-                  <Text numberOfLines={2} style={[s.rateTitle, { color: theme.textPrimary }]}>
-                    {row.title}
-                  </Text>
-                  {row.meta.length ? (
-                    <View style={s.benefitList}>
-                      {row.meta.map((benefit) => (
-                        <Text key={benefit} numberOfLines={1} style={[s.rateMeta, { color: theme.textSecondary }]}>
-                          {benefit}
-                        </Text>
-                      ))}
-                    </View>
-                  ) : null}
-                </View>
-
-                <View style={s.rateActionColumn}>
-                  <Text
-                    numberOfLines={2}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.68}
-                    accessibilityLabel={row.priceAccessibilityLabel}
-                    style={[
-                      s.price,
-                      !row.hasDisplayedPrice && s.priceUnavailable,
-                      { color: row.hasDisplayedPrice ? theme.textPrimary : theme.textSecondary },
-                    ]}
-                  >
-                    {row.price}
-                  </Text>
-                  <TouchableOpacity
-                    accessibilityRole={"button"}
-                    accessibilityLabel={`Reserve ${row.title}`}
-                    activeOpacity={0.84}
-                    onPress={previewReserve}
-                    style={[s.actionControl, { backgroundColor: accentColor }]}
-                  >
-                    <Text style={s.actionControlText}>{reserveLabel}</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))}
-          </View>
+      <View style={[s.rateCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <View style={s.rateCopy}>
+          {row.providerKind === "kurioticket" ? (
+            <Image
+              accessible
+              accessibilityLabel="Kurioticket"
+              accessibilityIgnoresInvertColors
+              source={require("../../../assets/kurioticket-logo-primary-light-bg.png")}
+              resizeMode="contain"
+              style={s.brandLogo}
+            />
+          ) : (
+            <Text numberOfLines={1} style={[s.providerName, { color: theme.textPrimary }]}>
+              {row.providerName}
+            </Text>
+          )}
+          <Text numberOfLines={2} style={[s.rateTitle, { color: theme.textPrimary }]}>
+            {row.title}
+          </Text>
+          {row.meta.length ? (
+            <View style={s.benefitList}>
+              {row.meta.map((benefit) => (
+                <Text key={benefit} numberOfLines={1} style={[s.rateMeta, { color: theme.textSecondary }]}>
+                  {benefit}
+                </Text>
+              ))}
+            </View>
+          ) : null}
         </View>
-      ))}
+
+        <View style={s.rateActionColumn}>
+          <Text
+            numberOfLines={2}
+            adjustsFontSizeToFit
+            minimumFontScale={0.68}
+            accessibilityLabel={row.priceAccessibilityLabel}
+            style={[
+              s.price,
+              !row.hasDisplayedPrice && s.priceUnavailable,
+              { color: row.hasDisplayedPrice ? theme.textPrimary : theme.textSecondary },
+            ]}
+          >
+            {row.price}
+          </Text>
+          <TouchableOpacity
+            accessibilityRole={"button"}
+            accessibilityLabel={`Reserve ${row.title}`}
+            activeOpacity={0.84}
+            onPress={previewReserve}
+            style={[s.actionControl, { backgroundColor: accentColor }]}
+          >
+            <Text style={s.actionControlText}>{reserveLabel}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  section: { paddingBottom: 12, gap: 24 },
-  groupSection: { gap: 12 },
-  groupTitle: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: "700",
-    fontFamily: appFonts.bold,
-  },
-  groupCards: { gap: 12 },
+  section: { paddingBottom: 12 },
   rateCard: {
     minHeight: 134,
     flexDirection: "row",

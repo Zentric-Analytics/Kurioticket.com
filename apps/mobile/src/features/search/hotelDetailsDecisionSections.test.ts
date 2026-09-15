@@ -104,7 +104,7 @@ test("native related hotel header contains only the heading and carousel", () =>
   assert.match(component, /carousel:\s*\{[^}]*gap:\s*12[^}]*paddingHorizontal:\s*16/);
 });
 
-test("native related Hotel cards use the measured compact carousel geometry and whole-card action", () => {
+test("native related Hotel cards keep compact geometry with clearer separation from the page", () => {
   const component = readFileSync("src/features/search/NativeHotelDecisionSections.tsx", "utf8");
   const card = component.slice(
     component.indexOf("function RelatedHotelCard"),
@@ -115,7 +115,8 @@ test("native related Hotel cards use the measured compact carousel geometry and 
   assert.match(component, /relatedCardSlot:\s*\{\s*width:\s*RELATED_HOTEL_CARD_WIDTH\s*\}/);
   assert.match(component, /imageFrame:\s*\{[^}]*height:\s*160[^}]*width:\s*"100%"/);
   assert.match(component, /cardBody:\s*\{[^}]*minHeight:\s*143[^}]*paddingHorizontal:\s*14[^}]*paddingTop:\s*12[^}]*paddingBottom:\s*14/);
-  assert.match(component, /relatedCard:\s*\{[^}]*borderWidth:\s*StyleSheet\.hairlineWidth[^}]*borderRadius:\s*10/);
+  assert.match(card, /const cardBorder = theme\.dark \? theme\.border : "#D5D9E2"/);
+  assert.match(component, /relatedCard:\s*\{[^}]*borderWidth:\s*1[^}]*borderRadius:\s*10[^}]*shadowColor:\s*"#0F172A"[^}]*shadowOpacity:\s*0\.08[^}]*shadowRadius:\s*6[^}]*elevation:\s*2/);
   assert.match(component, /heading:\s*\{[^}]*fontSize:\s*16[^}]*lineHeight:\s*22[^}]*fontWeight:\s*"700"[^}]*fontFamily:\s*appFonts\.bold/);
   assert.match(component, /stars:\s*\{[^}]*color:\s*"#F59E0B"[^}]*fontSize:\s*12[^}]*lineHeight:\s*16[^}]*letterSpacing:\s*0\.96[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
   assert.match(component, /hotelName:\s*\{[^}]*marginTop:\s*3[^}]*fontSize:\s*14[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"600"[^}]*fontFamily:\s*appFonts\.semibold/);
