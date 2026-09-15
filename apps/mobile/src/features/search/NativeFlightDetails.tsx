@@ -207,7 +207,7 @@ function FlightDetailsLoadingSkeleton({theme,bottomInset,fareCardWidth}:{theme:R
         <View style={[s.loadingLine,s.loadingFareHeading,placeholder]}/>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.loadingFares}>
           {[0,1].map(key=><View key={key} style={[s.loadingFareCard,{width:fareCardWidth,backgroundColor:theme.surface,borderColor:theme.border}]}>
-            <View style={s.loadingFareContent}><View style={s.loadingFareIdentity}><View style={s.loadingFareNameRow}><View style={[s.loadingFareIcon,placeholder]}/><View style={[s.loadingLine,s.loadingFareName,{backgroundColor:theme.border}]}/></View></View>
+            <View style={s.loadingFareContent}><View style={s.loadingFareIdentity}><View style={s.loadingFareNameRow}><View style={[s.loadingFareIcon,placeholder]}/><View style={[s.loadingLine,s.loadingFareName,placeholder]}/></View></View>
               {(["88%","72%","80%"] as const).map((width,index)=><View key={index} style={s.loadingBenefitRow}><View style={[s.loadingBenefitDot,placeholder]}/><View style={[s.loadingLine,{width},placeholder]}/></View>)}
             </View>
             <View style={s.loadingFarePriceBlock}><View style={[s.loadingLine,s.loadingFarePrice,placeholder]}/></View>
