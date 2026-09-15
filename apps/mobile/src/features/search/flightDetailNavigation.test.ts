@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import type { FlightResult } from "../../api/travelApi";
 import { buildFlightDetailParams } from "./flightDetailNavigation";
 
@@ -9,6 +11,20 @@ test("Flight Results hands Details only the opaque authoritative identity", () =
   const params = buildFlightDetailParams({ searchParams: { departureDate: "2026-09-01", travelers: "1", result: JSON.stringify({ id: "stale" }), displayFare: "stale" }, result });
   assert.deepEqual(params, { departureDate: "2026-09-01", travelers: "1", id: "opaque-kurioticket-result" });
   assert.equal(JSON.stringify(params).includes("provider.invalid"), false);
+});
+
+test("FlightCard never opens a provider URL before shared Flight Details", () => {
+  const source=readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"),"utf8");
+  const card=source.slice(source.indexOf("function FlightCard"),source.indexOf("function HotelCard"));
+  assert.match(card,/router\.push\(\{ pathname: "\/flight-details", params: buildFlightDetailParams/);
+  assert.doesNotMatch(card,/Linking\.openURL\(result\.searchPolicy\.action\.href\)/);
+});
+
+test("Duffel and KAYAK cards share the opaque native Flight Details parameters", () => {
+  for (const source of ["duffel", "kayak-sandbox"] as const) {
+    const candidate = { ...result, searchPolicy: { source, bookable: source === "duffel", action: { kind: "internal-detail", href: "/unused", enabled: true } } } as FlightResult;
+    assert.deepEqual(buildFlightDetailParams({ searchParams: {}, result: candidate }), { id: "opaque-kurioticket-result" });
+  }
 });
 
 test("multi-city handoff retains every structured edit-search leg without an offer snapshot", () => {

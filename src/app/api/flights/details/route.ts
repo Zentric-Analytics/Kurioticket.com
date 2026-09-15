@@ -3,7 +3,7 @@ import {
   getFlightDetailsCacheContext,
 } from "@/lib/searchCache";
 import {
-  buildStandaloneFlightDetails,
+  buildProviderAwareFlightDetails,
 } from "@/services/travel/standaloneFlightDetails";
 
 export async function GET(request: Request) {
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
       { status: 409 },
     );
   }
-  const details = await buildStandaloneFlightDetails({
+  const details = await buildProviderAwareFlightDetails({
     cachedSelected: cached.flight,
     cachedAlternatives: cached.compatibleFlights,
     search,

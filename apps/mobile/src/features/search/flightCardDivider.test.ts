@@ -15,8 +15,8 @@ test("the flight card has one subtle theme-aware horizontal metadata divider", (
 });
 
 test("the whole flight card owns details navigation without a separate visual CTA", () => {
-  assert.match(flightCard, /const openDetails = \(\) => result\.searchPolicy\.action\.kind === "provider"/);
-  assert.match(flightCard, /Linking\.openURL\(result\.searchPolicy\.action\.href\)/);
+  assert.match(flightCard, /const openDetails = \(\) => router\.push\(\{ pathname: "\/flight-details"/);
+  assert.doesNotMatch(flightCard, /Linking\.openURL\(result\.searchPolicy\.action\.href\)/);
   assert.match(flightCard, /<Pressable[\s\S]*?accessibilityRole="button"[\s\S]*?onPress=\{openDetails\}/);
   assert.match(flightCard, /pathname: "\/flight-details"/);
   assert.match(flightCard, /accessibilityLabel=\{cardAccessibilityLabel\}/);

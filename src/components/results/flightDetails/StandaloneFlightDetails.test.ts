@@ -10,6 +10,7 @@ import { flightDetailsRouteLabel, flightDetailsTotalLabel } from "@/lib/flights/
 import { buildFareDisplayRows, canUseOfferAirlineLogo, compactFareTerms, formatItineraryDepartureDate, getCenteredFareScrollLeft, resolveSegmentCarrierName } from "@/components/results/flightDetails/flightDetailsPresentation";
 import {
   buildMaterialFareChoices,
+  buildProviderAwareFlightDetails,
   buildStandaloneFlightDetails,
   validatesSearchContext,
 } from "@/services/travel/standaloneFlightDetails";
@@ -31,6 +32,21 @@ test("current traveler breakdown translates labels without changing canonical co
     assert.equal(emptyBreakdown.count, 3);
     assert.equal(emptyBreakdown.label, `3 ${dictionary["deals.travelerPlural"]}`);
   }
+});
+
+test("KAYAK cached fares use the shared contract without Duffel refresh or invented tiers", async () => {
+  const selected = fixture({ id:"kayak-sandbox:selected", provider:"KAYAK sandbox", providerOfferId:"selected", fareBrandName:undefined, cabinClass:"Economy", price:125, currency:"USD", partnerRedirectUrl:"https://affiliates.kayak.com/sandbox-clickout", fareTerms:[] });
+  const flex = fixture({ id:"kayak-sandbox:flex", provider:"KAYAK sandbox", providerOfferId:"flex", fareBrandName:"Provider Flexible", cabinClass:"Economy", price:175, currency:"USD", partnerRedirectUrl:"https://affiliates.kayak.com/sandbox-clickout", fareTerms:[{category:"fare",semantic:"informational",text:"Provider supplied flexible fare"}] });
+  const wrong = fixture({ id:"kayak-sandbox:wrong", provider:"KAYAK sandbox", providerOfferId:"wrong", fareBrandName:"Wrong itinerary", legs:[leg("outbound","ORD","LAX","2027-02-10","Iberia","IB100"), fixture().legs![1]], partnerRedirectUrl:"https://affiliates.kayak.com/sandbox-clickout" });
+  let refreshCalls=0;
+  const details=await buildProviderAwareFlightDetails({cachedSelected:selected,cachedAlternatives:[selected,flex,wrong],search,now:1,refresh:async()=>{refreshCalls++;return {status:"unavailable"};}});
+  assert.equal(details.status,"available");
+  assert.equal(refreshCalls,0);
+  if(details.status!=="available")return;
+  assert.deepEqual(details.fareChoices.map(choice=>[choice.label,choice.offer.price,choice.offer.currency]),[["Economy",125,"USD"],["Provider Flexible",175,"USD"]]);
+  assert.deepEqual(details.fareChoices.map(choice=>choice.distinguishingTerms),[[],flex.fareTerms]);
+  assert.equal(details.fareChoices[0].selectedOffer,true);
+  assert.equal(details.handoff.available,true);
 });
 test("current standalone trip summary uses localized labels and numeric formatting", async () => {
   const source = await readFile("src/components/results/flightDetails/StandaloneFlightDetails.tsx", "utf8");

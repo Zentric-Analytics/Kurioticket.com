@@ -1,5 +1,5 @@
 import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
-import type { FlightSearchParams, HotelSearchParams, PublicFlightResult, PublicHotelResult, ProviderResult } from "@/lib/types";
+import type { FlightSearchParams, HotelSearchParams, NormalizedFlightResult, PublicHotelResult, ProviderResult } from "@/lib/types";
 import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 import { kayakCarCardModel, kayakFlightCardModel, kayakHotelCardModel } from "@/components/results/kayakCardModels";
 import { isKayakSandboxEnabled, KayakError, KayakSandboxClient, type KayakVertical } from "./kayakSandbox";
@@ -37,7 +37,7 @@ export const kayakProviderCriteria = (value: Record<string, unknown>) => Object.
       : [],
   ),
 );
-export const searchKayakFlights = (criteria: FlightSearchParams, context?: KayakRequestContext) => search<PublicFlightResult>("flights", kayakProviderCriteria(criteria as unknown as Record<string, unknown>), context, offer => kayakFlightCardModel(offer, kayakProviderCriteria(criteria as unknown as Record<string, unknown>)));
+export const searchKayakFlights = (criteria: FlightSearchParams, context?: KayakRequestContext) => search<NormalizedFlightResult>("flights", kayakProviderCriteria(criteria as unknown as Record<string, unknown>), context, offer => kayakFlightCardModel(offer, kayakProviderCriteria(criteria as unknown as Record<string, unknown>)));
 export const searchKayakHotels = (criteria: HotelSearchParams, context?: KayakRequestContext) => {
   const nights = Math.max(1, Math.round((Date.parse(criteria.checkOut) - Date.parse(criteria.checkIn)) / 86_400_000));
   return search<PublicHotelResult>("hotels", kayakProviderCriteria(criteria as unknown as Record<string, unknown>), context, offer => kayakHotelCardModel(offer, nights));
