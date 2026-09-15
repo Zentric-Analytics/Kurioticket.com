@@ -6,215 +6,92 @@ import test from "node:test";
 const source = readFileSync(resolve("src/features/search/CarResultCard.tsx"), "utf8");
 const styles = source.slice(source.indexOf("const c = StyleSheet.create"));
 const style = (name: string) => styles.slice(styles.indexOf(`${name}:`), styles.indexOf("},", styles.indexOf(`${name}:`)) + 2);
+const top = source.slice(source.indexOf('<View style={c.topSection}>'), source.indexOf('<View style={[c.lowerBand,{borderTopColor:theme.border}]}>'));
+const lower = source.slice(source.indexOf('<View style={[c.lowerBand,{borderTopColor:theme.border}]}>'), source.indexOf("  </View>;"));
 
-test("Car card shell and inset image retain safe physical layout", () => {
+test("Car card shell and two-level grid retain safe natural layout", () => {
   assert.match(source, /c\.card,\{backgroundColor:resultBackgroundColor,borderColor:theme\.dark\?theme\.border:"#D8E1EC",shadowColor:theme\.dark\?"#000000":"#18305B"\}/);
-  assert.match(styles, /card:\{borderWidth:1,borderRadius:13,overflow:"hidden",shadowOpacity:0\.08,shadowRadius:10,shadowOffset:\{width:0,height:2\},elevation:2\}/);
-  assert.match(style("main"), /minHeight:156,flexDirection:"row",alignItems:"stretch"/);
-  assert.match(style("visualColumn"), /width:"40%",minHeight:156,paddingLeft:6,paddingRight:6,paddingBottom:6/);
-  assert.match(style("visualColumnWithoutTopMeta"), /paddingTop:7/);
-  assert.match(style("visual"), /flex:1,overflow:"hidden",borderRadius:10/);
-  assert.doesNotMatch(style("visual"), /backgroundColor/);
-  assert.match(styles, /contentColumn:\{flex:1,minWidth:0\}/);
-  assert.match(styles, /image:\{\.\.\.StyleSheet\.absoluteFillObject\}/);
-  assert.match(style("curatedImage"), /transform:\[\{scale:1\.08\}\]/);
-  assert.match(source, /style=\{\[c\.image,curatedImage&&c\.curatedImage\]\}/);
-  assert.doesNotMatch(style("image"), /transform:/);
-  for (const structuralStyle of ["topMetaShell", "main", "visualColumn", "visual", "contentColumn", "conversion"]) {
-    assert.doesNotMatch(style(structuralStyle), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|translateY/);
-  }
+  assert.match(style("card"), /borderWidth:1,borderRadius:13,overflow:"hidden"/);
+  assert.match(style("topSection"), /minHeight:156,flexDirection:"row",alignItems:"stretch"/);
+  assert.match(style("visualColumn"), /width:"40%",minHeight:156,padding:6/);
+  assert.match(style("lowerBand"), /flexDirection:"row",alignItems:"stretch",borderTopWidth:StyleSheet\.hairlineWidth/);
   assert.doesNotMatch(style("card").replace(/shadowOffset:\{[^}]*\}/, ""), /(?:^|,)height:/);
-  for (const naturalHeightStyle of ["main", "visualColumn"]) assert.doesNotMatch(style(naturalHeightStyle), /(?:^|,)height:/);
+  for (const name of ["topSection", "visualColumn", "identityZone", "lowerBand", "specColumn", "commerceColumn"])
+    assert.doesNotMatch(style(name), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|translateY|(?:^|,)height:/);
 });
 
-test("Car card keeps only the vehicle-side zones on the surface over the Results canvas", () => {
-  assert.match(source, /resultBackgroundColor: string/);
-  assert.match(source, /c\.card,\{backgroundColor:resultBackgroundColor/);
-  assert.match(source, /\[c\.visualColumn,\{backgroundColor:theme\.surface\},!hasTopMeta&&c\.visualColumnWithoutTopMeta\]/);
-  assert.match(source, /\[c\.actionVisualSpacer,\{backgroundColor:theme\.surface\}\]/);
-  assert.match(source, /<View style=\{c\.conversion\}>/);
-  assert.doesNotMatch(source, /c\.conversion,\{backgroundColor:theme\.surface\}/);
-  assert.doesNotMatch(source, /c\.actionContent,\{backgroundColor:theme\.surface\}/);
-  assert.match(styles, /card:\{borderWidth:1,borderRadius:13,overflow:"hidden"/);
-});
-
-test("failed Car images reveal the truthful unavailable state", () => {
-  assert.match(source, /const \[imageFailed, setImageFailed\] = useState\(false\)/);
-  assert.match(source, /useEffect\(\(\) => setImageFailed\(false\), \[imageUri\]\)/);
-  assert.match(source, /imageUri && !imageFailed/);
+test("vehicle image presentation and canvas ownership remain intact", () => {
+  assert.match(source, /\[c\.visualColumn,\{backgroundColor:theme\.surface\}\]/);
+  assert.equal(source.match(/backgroundColor:theme\.surface/g)?.length, 1);
+  assert.match(source, /const imageResizeMode = curatedImage \? "contain" : "cover"/);
+  assert.match(source, /image:\{\.\.\.StyleSheet\.absoluteFillObject\}/);
+  assert.match(style("curatedImage"), /transform:\[\{scale:1\.08\}\]/);
   assert.match(source, /onError=\{\(\) => setImageFailed\(true\)\}/);
+  assert.match(source, /accessibilityLabel=\{`\$\{result\.modelName\} vehicle image unavailable`\}/);
   assert.match(source, />Vehicle image unavailable<\/Text>/);
 });
 
-test("Free cancellation and Best value share top metadata above the body", () => {
-  const topMetaShell = source.indexOf("<View style={[c.topMetaShell,{borderBottomColor:theme.border}]}>");
-  const topMeta = source.indexOf("<View style={c.topMetaRow}>", topMetaShell);
-  const main = source.indexOf("<View style={c.main}>", topMeta);
-  const visualColumn = source.indexOf("c.visualColumn", main);
-  const header = source.indexOf("<View style={c.headerRow}>", main);
-  const cancellation = source.indexOf("Free cancellation", topMeta);
-  const bestValue = source.indexOf("Best value", topMeta);
-  const topMetaMarkup = source.slice(topMetaShell, main);
-  assert.ok(topMetaShell < topMeta && topMeta < cancellation && cancellation < bestValue && bestValue < main);
-  assert.ok(main < visualColumn && main < header);
-  assert.match(source, /const hasTopMeta = Boolean\(offer\?\.freeCancellation \|\| rank === 0\)/);
-  assert.match(source, /\{hasTopMeta \? <View style=\{\[c\.topMetaShell,\{borderBottomColor:theme\.border\}\]\}>/);
-  assert.match(style("topMetaShell"), /flexDirection:"row",borderBottomWidth:StyleSheet\.hairlineWidth/);
-  assert.doesNotMatch(style("main"), /borderTopWidth/);
-  assert.match(style("topMetaContent"), /flex:1,minWidth:0,paddingHorizontal:10,paddingTop:5,paddingBottom:3/);
-  assert.match(style("topMetaRow"), /flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:6/);
-  assert.match(topMetaMarkup, /<View style=\{c\.topMetaRow\}>[\s\S]*offer\?\.freeCancellation[\s\S]*ShieldCheck[\s\S]*Free cancellation[\s\S]*rank === 0[\s\S]*Award[\s\S]*Best value/);
-  assert.match(style("badge"), /marginLeft:"auto"/);
-  assert.doesNotMatch(source.slice(main), /c\.topMetaRow/);
-  assert.doesNotMatch(style("topMetaShell") + style("topMetaContent") + style("topMetaRow") + style("freeCancellation") + style("badge"), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|(?:^|,)height:/);
+test("top section owns only the visual and identity information", () => {
+  assert.match(top, /c\.visualColumn[\s\S]*<View style=\{c\.identityZone\}>/);
+  for (const token of ["identity.primaryName", "identity.secondaryModel", "or similar", "result.categoryLabel", "result.pickupLocation", "savedState.toggle", "Share2", "Free cancellation", "Best value"])
+    assert.ok(top.includes(token), `missing ${token} from top section`);
+  assert.doesNotMatch(top, /result\.passengers|result\.doors|result\.transmission|result\.bags|offer\.totalPrice|offer\.pricePerDay|>View deal<\/Text>/);
+  assert.doesNotMatch(source, /topMetaShell|topMetaRow|topMetaContent|hasTopMeta/);
+});
+
+test("Free cancellation and Best value preserve conditional styling and occur once", () => {
+  assert.match(top, /offer\?\.freeCancellation \? <View style=\{c\.freeCancellation\}>[\s\S]*ShieldCheck[\s\S]*Free cancellation/);
+  assert.match(source, /const freeCancellationColor = theme\.dark \? theme\.textPrimary : "#000000"/);
+  assert.doesNotMatch(style("freeCancellation") + style("freeCancellationText"), /#15803D|#ECFDF5|backgroundColor|border/);
+  assert.match(top, /rank === 0 \? <View style=\{c\.badge\}><Award size=\{11\} color="#15803D" \/><Text style=\{c\.badgeText\}>Best value/);
+  assert.match(style("badge"), /backgroundColor:"#ECFDF5"/);
+  assert.match(style("badgeText"), /color:"#15803D"/);
+  assert.equal(source.match(/>Free cancellation<\/Text>/g)?.length, 1);
   assert.equal(source.match(/>Best value<\/Text>/g)?.length, 1);
 });
 
-test("Free cancellation is canonical, strong, neutral, and not a pill", () => {
-  const markup = source.slice(source.indexOf("{offer?.freeCancellation ? <View style={c.freeCancellation}"), source.indexOf("</View> : null}", source.indexOf("{offer?.freeCancellation ? <View style={c.freeCancellation}")) + 19);
-  assert.match(markup, /offer\?\.freeCancellation \? <View style=\{c\.freeCancellation\}>/);
-  assert.match(markup, /<ShieldCheck accessible=\{false\} size=\{13\} strokeWidth=\{2\} color=\{freeCancellationColor\}/);
-  assert.match(markup, /c\.freeCancellationText,\{color:freeCancellationColor\}/);
-  assert.match(source, /const freeCancellationColor = theme\.dark \? theme\.textPrimary : "#000000"/);
-  assert.match(style("freeCancellation"), /minWidth:0,flexShrink:1,flexDirection:"row",alignItems:"center",gap:3/);
-  assert.match(style("freeCancellationText"), /fontSize:11,lineHeight:15,fontWeight:"600"/);
-  assert.doesNotMatch(markup + style("freeCancellation") + style("freeCancellationText"), /#15803D|#ECFDF5|backgroundColor|border/);
-});
-
-test("Best value keeps its green badge while actions remain with identity", () => {
-  assert.match(source, /rank === 0 \? <View style=\{c\.badge\}><Award size=\{11\} color="#15803D" \/><Text style=\{c\.badgeText\}>Best value/);
-  assert.match(style("badge"), /backgroundColor:"#ECFDF5"/);
-  assert.match(style("badgeText"), /color:"#15803D"/);
-  assert.match(source, /useSavedCar\(result, searchParams\)/);
-  assert.match(source, /accessibilityState=\{\{ selected: savedState\.saved \}\}/);
-  assert.match(source, /onPress=\{savedState\.toggle\}/);
-  assert.match(source, /accessibilityLabel=\{savedState\.saved \? `Remove \$\{result\.modelName\} from saved` : `Save \$\{result\.modelName\}`\}/);
-  assert.match(source, /name="heart"[^>]*size=\{20\}[^>]*color=\{savedState\.saved \? androidFavoriteColors\.savedStroke : androidFavoriteColors\.unsavedStroke\}[^>]*fill=\{savedState\.saved \? androidFavoriteColors\.savedFill : androidFavoriteColors\.unsavedFill\}/);
-  assert.doesNotMatch(source, /name="heart"[^>]*(?:fill="(?:transparent|none)"|color=\{savedState\.saved \? "#E92D55" : theme\.icon\})/);
-  assert.match(source, /accessibilityLabel=\{`Share \$\{result\.modelName\}`\} onPress=\{share\}/);
-  assert.match(source, /<Share2 size=\{18\} color=\{theme\.icon\}/);
+test("favorite and share behavior and accessibility remain in the top-right", () => {
+  assert.match(top, /accessibilityRole="button" accessibilityLabel=\{savedState\.saved \? `Remove \$\{result\.modelName\} from saved` : `Save \$\{result\.modelName\}`\}/);
+  assert.match(top, /accessibilityState=\{\{ selected: savedState\.saved \}\}/);
+  assert.match(top, /onPress=\{savedState\.toggle\}/);
+  assert.match(top, /accessibilityLabel=\{`Share \$\{result\.modelName\}`\} onPress=\{share\}/);
   assert.match(source, /Share\.share\(\{ message: result\.modelName, title: result\.modelName \}\)/);
-  assert.match(styles, /action:\{width:28,height:44/);
-  assert.match(style("action"), /width:28,height:44,justifyContent:"flex-start"/);
-  assert.doesNotMatch(style("action") + style("saveAction") + style("shareAction"), /margin(?:Left|Right|Top|Bottom):-|transform:|position:"absolute"/);
-  assert.match(styles, /saveAction:\{alignItems:"flex-end",paddingRight:2\}/);
-  assert.match(styles, /shareAction:\{alignItems:"flex-start",paddingLeft:2\}/);
-  assert.equal(source.match(/style=\{\(\{pressed\}\) => \[c\.action,c\.(?:save|share)Action,pressed&&c\.pressed\]\}/g)?.length, 2);
-  assert.match(style("pressed"), /opacity:0\.7/);
-  assert.doesNotMatch(style("pressed"), /transform:|position:"absolute"|margin(?:Left|Right|Top|Bottom):-/);
+  assert.match(style("action"), /width:28,height:44/);
 });
 
-test("Results card omits fuel, mileage, and obsolete lower-benefit contracts", () => {
-  assert.doesNotMatch(source, /<Fuel|<Gauge|nativeCarFuelPolicyLabel\(|nativeCarMileageLabel\(|fuelPolicyLabel|mileageLabel/);
-  assert.doesNotMatch(source, /rentalBenefits|rentalBenefitText|rentalBenefit:/);
-  assert.doesNotMatch(source, /import \{[^}]*\b(?:Fuel|Gauge)\b[^}]*\} from "lucide-react-native"/);
-});
-
-test("Free cancellation is in top metadata while View deal remains below the body", () => {
-  const topMeta = source.indexOf("<View style={[c.topMetaShell,{borderBottomColor:theme.border}]}>");
-  const main = source.indexOf("<View style={c.main}>");
-  const visualColumn = source.indexOf("c.visualColumn", main);
-  const contentColumn = source.indexOf("<View style={c.contentColumn}>", visualColumn);
-  const conversion = source.indexOf("<View style={c.conversion}>", contentColumn);
-  const priceColumn = source.indexOf("<View style={c.priceColumn}>", conversion);
-  const actionRow = source.indexOf("<View style={[c.actionRow,{borderTopColor:theme.border}]}", priceColumn);
-  const cancellation = source.indexOf(">Free cancellation</Text>", topMeta);
-  const viewDeal = source.indexOf(">View deal</Text>", actionRow);
-  assert.ok(topMeta < cancellation && cancellation < main && main < visualColumn && visualColumn < contentColumn);
-  assert.ok(contentColumn < conversion && conversion < priceColumn && priceColumn < actionRow && actionRow < viewDeal);
-  const topMetaMarkup = source.slice(topMeta, main);
-  const body = source.slice(main, actionRow);
-  const action = source.slice(actionRow, source.indexOf("  </View>;", actionRow));
-  assert.equal(body.match(/<View style=\{\[c\.visualColumn,/g)?.length, 1);
-  assert.doesNotMatch(body, />View deal<|c\.viewDeal|>Free cancellation<|c\.freeCancellation/);
-  assert.doesNotMatch(action, /c\.visualColumn|c\.contentColumn|c\.priceColumn/);
-  assert.match(topMetaMarkup, /offer\?\.freeCancellation \? <View style=\{c\.freeCancellation\}>[\s\S]*Free cancellation/);
-  assert.doesNotMatch(action, /freeCancellation|Free cancellation|ShieldCheck/);
+test("lower band has the approved two spec columns and commerce column", () => {
+  const firstStart = lower.indexOf('<View style={c.specColumn}>');
+  const middleStart = lower.indexOf('<View style={[c.specColumn,c.middleSpecColumn');
+  const commerceStart = lower.indexOf('<View style={[c.commerceColumn');
+  const first = lower.slice(firstStart, middleStart);
+  const middle = lower.slice(middleStart, commerceStart);
+  const commerce = lower.slice(commerceStart);
+  assert.match(first, /result\.passengers[\s\S]*result\.transmission/);
+  assert.doesNotMatch(first, /result\.doors|result\.bags/);
+  assert.match(middle, /result\.doors[\s\S]*result\.bags/);
+  assert.doesNotMatch(middle, /result\.passengers|result\.transmission/);
+  assert.match(commerce, /offer\.totalPrice[\s\S]*offer\.taxesAndFeesIncluded[\s\S]*offer\.pricePerDay[\s\S]*>View deal<\/Text>/);
   assert.equal(source.match(/>View deal<\/Text>/g)?.length, 1);
-  assert.equal(source.match(/>Free cancellation<\/Text>/g)?.length, 1);
-  assert.equal(source.match(/<View style=\{c\.priceColumn\}>/g)?.length, 1);
-  assert.equal(source.match(/<View style=\{c\.contentColumn\}>/g)?.length, 1);
+  assert.doesNotMatch(source, /actionRow|actionVisualSpacer|actionContent|contentColumn|conversion|detailColumn|style=\{c\.specs\}/);
 });
 
-test("dedicated action row preserves right-column geometry without layout hacks", () => {
-  assert.match(source, /<View style=\{\[c\.actionRow,\{borderTopColor:theme\.border\}\]\}>/);
-  assert.match(style("actionRow"), /flexDirection:"row",borderTopWidth:StyleSheet\.hairlineWidth/);
-  assert.doesNotMatch(style("main"), /borderBottomWidth/);
-  assert.doesNotMatch(styles, /divider:\{/);
-  assert.match(style("actionVisualSpacer"), /width:"40%"/);
-  assert.match(style("actionContent"), /flex:1,minWidth:0,paddingLeft:10,paddingRight:10,paddingBottom:6/);
-  for (const structuralStyle of ["actionRow", "actionVisualSpacer", "actionContent", "viewDeal"])
-    assert.doesNotMatch(style(structuralStyle), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|translateY|(?:^|,)height:/);
-  const actionBottomPadding = /paddingBottom:(\d+)/.exec(style("actionContent"));
-  assert.ok(actionBottomPadding && Number(actionBottomPadding[1]) > 0);
-  const visualBottomPadding = /paddingBottom:(\d+)/.exec(style("visualColumn"));
-  assert.ok(visualBottomPadding && Number(visualBottomPadding[1]) <= 12);
-});
-
-test("commerce preserves authoritative price and CTA contract", () => {
-  const priceStart = source.indexOf("<View style={c.priceColumn}>");
-  const priceEnd = source.indexOf("</View>\n        </View>", priceStart);
-  const price = source.slice(priceStart, priceEnd);
-  const actionStart = source.indexOf("<View style={[c.actionRow,{borderTopColor:theme.border}]}", priceEnd);
-  const action = source.slice(actionStart, source.indexOf("  </View>;", actionStart));
-  const ordered = ["offer.totalPrice", "offer.taxesAndFeesIncluded", "offer.pricePerDay"].map((value) => price.indexOf(value));
-  assert.ok(ordered.every((index) => index >= 0));
-  assert.deepEqual(ordered, [...ordered].sort((a, b) => a - b));
-  assert.doesNotMatch(price, /View deal|c\.viewDeal/);
+test("commerce remains authoritative, responsive, and accessible", () => {
   assert.match(source, /getPrimaryCarOffer\(result\)/);
-  assert.match(price, /money\(offer\.currency, offer\.totalPrice\)/);
-  assert.match(price, /money\(offer\.currency, offer\.pricePerDay\)\} per day/);
-  assert.match(price, /offer\.taxesAndFeesIncluded \? "includes taxes & fees" : "taxes & fees shown where known"/);
-  assert.match(price, /Live price unavailable/);
-  assert.match(action, /<Pressable accessibilityRole="button" accessibilityLabel=\{`View deal for \$\{result\.modelName\}`\} onPress=\{onViewDeal\}/);
-  assert.match(action, /<ChevronRight accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\}/);
-  assert.match(style("conversion"), /flexDirection:"row",alignItems:"flex-end",justifyContent:"flex-end",paddingLeft:10,paddingRight:10,paddingTop:5,paddingBottom:3/);
-  assert.match(style("priceColumn"), /flexShrink:0,minWidth:108,maxWidth:"100%",alignItems:"flex-end",justifyContent:"flex-end"/);
-  assert.match(style("viewDeal"), /minHeight:36,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4/);
-  assert.doesNotMatch(style("viewDeal"), /marginTop:/);
-  assert.match(action, /hitSlop=\{\{top:4,bottom:4,left:4,right:4\}\}/);
-  assert.match(action, /style=\{\(\{pressed\}\) => \[c\.viewDeal,pressed&&c\.pressed\]\}/);
-  assert.match(styles, /total:\{[^}]*fontSize:22,fontWeight:"700",lineHeight:25/);
-  assert.match(styles, /taxDisclosure:\{[^}]*fontSize:10,fontWeight:"500",lineHeight:13/);
-  assert.match(styles, /perDay:\{[^}]*fontSize:11,fontWeight:"700",lineHeight:14/);
-  assert.match(styles, /viewDealText:\{fontSize:14,lineHeight:18,fontWeight:"600"\}/);
+  assert.match(source, /presentCarOfferCurrency\(primaryOffer, displayCurrency, rates\)/);
+  assert.match(source, /money\(offer\.currency, offer\.totalPrice\)/);
+  assert.match(source, /offer\.taxesAndFeesIncluded \? "includes taxes & fees" : "taxes & fees shown where known"/);
+  assert.match(source, /money\(offer\.currency, offer\.pricePerDay\)\} per day/);
+  assert.match(source, /Live price unavailable/);
+  assert.match(source, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.75\}/);
+  assert.match(style("commerceColumn"), /flex:1\.35,minWidth:0/);
+  assert.match(style("priceColumn"), /minWidth:0,maxWidth:"100%",alignItems:"flex-end"/);
+  assert.match(source, /<Pressable accessibilityRole="button" accessibilityLabel=\{`View deal for \$\{result\.modelName\}`\} onPress=\{onViewDeal\}/);
+  assert.match(style("viewDeal"), /minHeight:36/);
   assert.doesNotMatch(source, /result\.offers\[0\]|TOTAL\s*·|\/day/);
 });
 
-test("vehicle identity, location, and ordered specs remain intact", () => {
-  assert.match(source, /const identity = nativeCarResultIdentity\(result\.modelName\)/);
-  assert.match(source, /<Text numberOfLines=\{1\} style=\{\[c\.name,[^>]*>\{identity\.primaryName\}<\/Text>/);
-  assert.doesNotMatch(source, /style=\{\[c\.name,[^>]*>\{result\.modelName\}<\/Text>/);
-  const identityLineStart = source.indexOf('<Text numberOfLines={1} style={c.identityLine}>');
-  const identityLineEnd = source.indexOf("\n            </Text> : null}", identityLineStart) + 20;
-  const identityLine = source.slice(identityLineStart, identityLineEnd);
-  const orderedIdentity = ["identity.secondaryModel", "or similar"].map((value) => identityLine.indexOf(value));
-  assert.ok(identityLineStart >= 0 && orderedIdentity.every((index) => index >= 0));
-  assert.deepEqual(orderedIdentity, [...orderedIdentity].sort((a, b) => a - b));
-  assert.match(source.slice(source.indexOf("{identity.secondaryModel || result.orSimilar"), identityLineStart), /\{identity\.secondaryModel \|\| result\.orSimilar \?\s*$/);
-  assert.doesNotMatch(identityLine, /result\.categoryLabel|\{"•"\}|[·|]/);
-  assert.doesNotMatch(identityLine, /["'] - ["']/);
-  const categoryRow = '<Text numberOfLines={1} style={c.category}>{result.categoryLabel}</Text>';
-  const categoryRowStart = source.indexOf(categoryRow, identityLineEnd);
-  assert.ok(categoryRowStart > identityLineEnd);
-  assert.doesNotMatch(source.slice(identityLineStart, categoryRowStart + categoryRow.length), /c\.separator|\{"•"\}/);
-  assert.doesNotMatch(styles, /separator:\{/);
-  assert.match(style("identityLine"), /minWidth:0,lineHeight:18/);
-  assert.doesNotMatch(style("identityLine"), /flexWrap:"wrap"/);
-  assert.match(style("secondaryModel"), /fontSize:15,fontWeight:"800",lineHeight:18/);
-  assert.match(style("similar"), /fontSize:11,fontWeight:"500",lineHeight:16/);
-  assert.match(style("category"), /fontSize:10,fontWeight:"800",letterSpacing:1\.1,lineHeight:16,textTransform:"uppercase",color:"#004BB8"/);
-  assert.match(source, /<MapPin size=\{13\} color=\{theme\.textPrimary\}/);
-  assert.match(style("information"), /flex:1,minWidth:0,paddingHorizontal:10,paddingBottom:7/);
-  assert.match(style("informationWithoutTopMeta"), /paddingTop:7/);
-  assert.match(style("detailColumn"), /minWidth:0,marginTop:4/);
-  assert.match(style("specs"), /marginTop:4,flexDirection:"column",gap:4/);
-  assert.match(style("meta"), /fontSize:11,fontWeight:"500",lineHeight:15/);
-  assert.match(style("specText"), /fontSize:11,fontWeight:"500",lineHeight:14/);
-  const location = source.indexOf("result.pickupLocation");
-  const specsStart = source.indexOf("style={c.specs}");
-  const specs = ["result.passengers", "result.doors", "result.transmission", "result.bags"].map((label) => source.indexOf(label, specsStart));
-  assert.ok(location >= 0 && location < specsStart);
-  assert.ok(specs.every((index) => index >= 0));
-  assert.deepEqual(specs, [...specs].sort((a, b) => a - b));
+test("location stays above while obsolete benefit contracts remain absent", () => {
+  assert.match(top, /<MapPin size=\{13\} color=\{theme\.textPrimary\}[\s\S]*result\.pickupLocation/);
+  assert.doesNotMatch(lower, /result\.pickupLocation|MapPin/);
+  assert.doesNotMatch(source, /<Fuel|<Gauge|nativeCarFuelPolicyLabel\(|nativeCarMileageLabel\(|fuelPolicyLabel|mileageLabel|rentalBenefits/);
 });

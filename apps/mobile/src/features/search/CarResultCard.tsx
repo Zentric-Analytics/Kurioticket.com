@@ -23,7 +23,6 @@ export function CarResultCard({ result, rank, imageUri, searchParams, resultBack
   const { displayCurrency, rates } = useCarDisplayCurrency();
   const primaryOffer = getPrimaryCarOffer(result);
   const offer = primaryOffer ? presentCarOfferCurrency(primaryOffer, displayCurrency, rates) : undefined;
-  const hasTopMeta = Boolean(offer?.freeCancellation || rank === 0);
   const { theme } = useAppTheme();
   const freeCancellationColor = theme.dark ? theme.textPrimary : "#000000";
   const identity = nativeCarResultIdentity(result.modelName);
@@ -32,16 +31,9 @@ export function CarResultCard({ result, rank, imageUri, searchParams, resultBack
   const transmissionIcon = result.transmission === "automatic" ? "transmissionAutomatic" : "transmissionManual";
   const share = () => void Share.share({ message: result.modelName, title: result.modelName });
   return <View style={[c.card,{backgroundColor:resultBackgroundColor,borderColor:theme.dark?theme.border:"#D8E1EC",shadowColor:theme.dark?"#000000":"#18305B"}]}>
-    {hasTopMeta ? <View style={[c.topMetaShell,{borderBottomColor:theme.border}]}>
-      <View style={c.topMetaContent}><View style={c.topMetaRow}>
-        {offer?.freeCancellation ? <View style={c.freeCancellation}><ShieldCheck accessible={false} size={13} strokeWidth={2} color={freeCancellationColor} /><Text style={[c.freeCancellationText,{color:freeCancellationColor}]}>Free cancellation</Text></View> : null}
-        {rank === 0 ? <View style={c.badge}><Award size={11} color="#15803D" /><Text style={c.badgeText}>Best value</Text></View> : null}
-      </View></View>
-    </View> : null}
-    <View style={c.main}>
-      <View style={[c.visualColumn,{backgroundColor:theme.surface},!hasTopMeta&&c.visualColumnWithoutTopMeta]}><View style={c.visual}>{imageUri && !imageFailed ? <Image source={{ uri: imageUri }} resizeMode={imageResizeMode} style={[c.image,curatedImage&&c.curatedImage]} accessibilityLabel={result.imageAlt} onError={() => setImageFailed(true)} /> : <View accessibilityLabel={`${result.modelName} vehicle image unavailable`} style={c.imageFallback}><FlowIcon name="car" size={48} color="#315A7D" /><Text style={c.fallbackText}>Vehicle image unavailable</Text></View>}</View></View>
-      <View style={c.contentColumn}>
-        <View style={[c.information,!hasTopMeta&&c.informationWithoutTopMeta]}>
+    <View style={c.topSection}>
+      <View style={[c.visualColumn,{backgroundColor:theme.surface}]}><View style={c.visual}>{imageUri && !imageFailed ? <Image source={{ uri: imageUri }} resizeMode={imageResizeMode} style={[c.image,curatedImage&&c.curatedImage]} accessibilityLabel={result.imageAlt} onError={() => setImageFailed(true)} /> : <View accessibilityLabel={`${result.modelName} vehicle image unavailable`} style={c.imageFallback}><FlowIcon name="car" size={48} color="#315A7D" /><Text style={c.fallbackText}>Vehicle image unavailable</Text></View>}</View></View>
+      <View style={c.identityZone}>
         <View style={c.headerRow}>
           <View style={c.identityColumn}>
             <Text numberOfLines={1} style={[c.name,{color:theme.textPrimary}]}>{identity.primaryName}</Text>
@@ -57,21 +49,28 @@ export function CarResultCard({ result, rank, imageUri, searchParams, resultBack
             <View style={c.actions}><Pressable accessibilityRole="button" accessibilityLabel={savedState.saved ? `Remove ${result.modelName} from saved` : `Save ${result.modelName}`} accessibilityState={{ selected: savedState.saved }} onPress={savedState.toggle} style={({pressed}) => [c.action,c.saveAction,pressed&&c.pressed]}><FlowIcon name="heart" size={20} color={savedState.saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={savedState.saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} /></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Share ${result.modelName}`} onPress={share} style={({pressed}) => [c.action,c.shareAction,pressed&&c.pressed]}><Share2 size={18} color={theme.icon} /></Pressable></View>
           </View>
         </View>
-        <View style={c.detailColumn}>
+        <View style={c.identityDetails}>
           <View style={c.location}><MapPin size={13} color={theme.textPrimary} /><Text style={[c.meta,{color:theme.textSecondary}]}>{result.pickupLocation}</Text></View>
-          <View style={c.specs}><Spec icon={<Users size={14} color="#64748B" />} label={`${result.passengers} passengers`} /><Spec icon={<DoorOpen size={14} color="#64748B" />} label={`${result.doors} doors`} /><Spec icon={<FlowIcon name={transmissionIcon} size={14} color="#64748B" />} label={capitalize(result.transmission)} /><Spec icon={<BriefcaseBusiness size={14} color="#64748B" />} label={`${result.bags} bags`} /></View>
-        </View>
-        </View>
-        <View style={c.conversion}>
-          <View style={c.priceColumn}>
-            {offer ? <><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[c.total,{color:theme.textPrimary}]}>{money(offer.currency, offer.totalPrice)}</Text><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.9} style={[c.taxDisclosure,{color:theme.textSecondary}]}>{offer.taxesAndFeesIncluded ? "includes taxes & fees" : "taxes & fees shown where known"}</Text><Text numberOfLines={1} style={[c.perDay,{color:theme.textPrimary}]}>{money(offer.currency, offer.pricePerDay)} per day</Text></> : <Text style={[c.unavailablePrice,{color:theme.textSecondary}]}>Live price unavailable</Text>}
+          <View style={c.benefits}>
+            {offer?.freeCancellation ? <View style={c.freeCancellation}><ShieldCheck accessible={false} size={13} strokeWidth={2} color={freeCancellationColor} /><Text style={[c.freeCancellationText,{color:freeCancellationColor}]}>Free cancellation</Text></View> : null}
+            {rank === 0 ? <View style={c.badge}><Award size={11} color="#15803D" /><Text style={c.badgeText}>Best value</Text></View> : null}
           </View>
         </View>
       </View>
     </View>
-    <View style={[c.actionRow,{borderTopColor:theme.border}]}>
-      <View style={[c.actionVisualSpacer,{backgroundColor:theme.surface}]} />
-      <View style={c.actionContent}>
+    <View style={[c.lowerBand,{borderTopColor:theme.border}]}>
+      <View style={c.specColumn}>
+        <Spec icon={<Users size={14} color="#64748B" />} label={`${result.passengers} passengers`} />
+        <Spec icon={<FlowIcon name={transmissionIcon} size={14} color="#64748B" />} label={capitalize(result.transmission)} />
+      </View>
+      <View style={[c.specColumn,c.middleSpecColumn,{borderLeftColor:theme.border}]}>
+        <Spec icon={<DoorOpen size={14} color="#64748B" />} label={`${result.doors} doors`} />
+        <Spec icon={<BriefcaseBusiness size={14} color="#64748B" />} label={`${result.bags} bags`} />
+      </View>
+      <View style={[c.commerceColumn,{borderLeftColor:theme.border}]}>
+          <View style={c.priceColumn}>
+            {offer ? <><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[c.total,{color:theme.textPrimary}]}>{money(offer.currency, offer.totalPrice)}</Text><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.9} style={[c.taxDisclosure,{color:theme.textSecondary}]}>{offer.taxesAndFeesIncluded ? "includes taxes & fees" : "taxes & fees shown where known"}</Text><Text numberOfLines={1} style={[c.perDay,{color:theme.textPrimary}]}>{money(offer.currency, offer.pricePerDay)} per day</Text></> : <Text style={[c.unavailablePrice,{color:theme.textSecondary}]}>Live price unavailable</Text>}
+          </View>
         <Pressable accessibilityRole="button" accessibilityLabel={`View deal for ${result.modelName}`} onPress={onViewDeal} hitSlop={{top:4,bottom:4,left:4,right:4}} style={({pressed}) => [c.viewDeal,pressed&&c.pressed]}><Text style={[c.viewDealText,{color:theme.dark ? "#8FB5FF" : ui.blue}]}>View deal</Text><ChevronRight accessible={false} size={16} strokeWidth={2.2} color={theme.dark ? "#8FB5FF" : ui.blue} /></Pressable>
       </View>
     </View>
@@ -80,8 +79,7 @@ export function CarResultCard({ result, rank, imageUri, searchParams, resultBack
 function Spec({ icon, label }: { icon: ReactNode; label: string }) { const { theme } = useAppTheme(); return <View style={c.spec}>{icon}<Text numberOfLines={2} style={[c.specText,{color:theme.textSecondary}]}>{label}</Text></View>; }
 const capitalize = (value: string) => `${value.slice(0, 1).toUpperCase()}${value.slice(1)}`;
 const c = StyleSheet.create({
-  card:{borderWidth:1,borderRadius:13,overflow:"hidden",shadowOpacity:0.08,shadowRadius:10,shadowOffset:{width:0,height:2},elevation:2},topMetaShell:{flexDirection:"row",borderBottomWidth:StyleSheet.hairlineWidth},topMetaContent:{flex:1,minWidth:0,paddingHorizontal:10,paddingTop:5,paddingBottom:3},topMetaRow:{minWidth:0,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:6},main:{minHeight:156,flexDirection:"row",alignItems:"stretch"},visualColumn:{width:"40%",minHeight:156,paddingLeft:6,paddingRight:6,paddingBottom:6},visualColumnWithoutTopMeta:{paddingTop:7},visual:{flex:1,overflow:"hidden",borderRadius:10},image:{...StyleSheet.absoluteFillObject},curatedImage:{transform:[{scale:1.08}]},imageFallback:{flex:1,alignItems:"center",justifyContent:"center",gap:7,padding:8},fallbackText:{fontSize:10,fontWeight:"600",color:"#315A7D",textAlign:"center"},
-  contentColumn:{flex:1,minWidth:0},actionRow:{flexDirection:"row",borderTopWidth:StyleSheet.hairlineWidth},actionVisualSpacer:{width:"40%"},actionContent:{flex:1,minWidth:0,paddingLeft:10,paddingRight:10,paddingBottom:6},
-  information:{flex:1,minWidth:0,paddingHorizontal:10,paddingBottom:7},informationWithoutTopMeta:{paddingTop:7},freeCancellation:{minWidth:0,flexShrink:1,flexDirection:"row",alignItems:"center",gap:3},freeCancellationText:{fontSize:11,lineHeight:15,fontWeight:"600"},headerRow:{flexDirection:"row",alignItems:"flex-start",gap:6},identityColumn:{flex:1,minWidth:0},name:{fontSize:15,fontWeight:"800",lineHeight:18,color:ui.navy},identityLine:{minWidth:0,lineHeight:18},secondaryModel:{fontSize:15,fontWeight:"800",lineHeight:18},similar:{fontSize:11,fontWeight:"500",lineHeight:16,color:"#536B92"},category:{fontSize:10,fontWeight:"800",letterSpacing:1.1,lineHeight:16,textTransform:"uppercase",color:"#004BB8"},utilityColumn:{flexShrink:0,alignItems:"flex-end"},badge:{flexShrink:0,marginLeft:"auto",flexDirection:"row",alignItems:"center",gap:3,borderRadius:5,backgroundColor:"#ECFDF5",paddingHorizontal:5,paddingVertical:2},badgeText:{fontSize:9,fontWeight:"700",color:"#15803D"},actions:{flexDirection:"row",alignItems:"center"},action:{width:28,height:44,justifyContent:"flex-start"},saveAction:{alignItems:"flex-end",paddingRight:2},shareAction:{alignItems:"flex-start",paddingLeft:2},pressed:{opacity:0.7},detailColumn:{minWidth:0,marginTop:4},location:{flexDirection:"row",alignItems:"flex-start",gap:4},meta:{flex:1,minWidth:0,fontSize:11,fontWeight:"500",lineHeight:15,color:"#536B92"},
-  specs:{marginTop:4,flexDirection:"column",gap:4},spec:{minWidth:0,flexDirection:"row",alignItems:"flex-start",gap:4},specText:{flex:1,minWidth:0,fontSize:11,fontWeight:"500",lineHeight:14,color:"#536B92"},priceColumn:{flexShrink:0,minWidth:108,maxWidth:"100%",alignItems:"flex-end",justifyContent:"flex-end"},unavailablePrice:{maxWidth:"100%",textAlign:"right",fontSize:11,fontWeight:"500",lineHeight:15},total:{maxWidth:"100%",fontSize:22,fontWeight:"700",lineHeight:25,letterSpacing:-0.4,color:ui.navy},taxDisclosure:{maxWidth:"100%",marginTop:1,fontSize:10,fontWeight:"500",lineHeight:13,textAlign:"right"},perDay:{maxWidth:"100%",marginTop:2,fontSize:11,fontWeight:"700",lineHeight:14,textAlign:"right"},viewDeal:{minHeight:36,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4},viewDealText:{fontSize:14,lineHeight:18,fontWeight:"600"},conversion:{flexDirection:"row",alignItems:"flex-end",justifyContent:"flex-end",paddingLeft:10,paddingRight:10,paddingTop:5,paddingBottom:3},
+  card:{borderWidth:1,borderRadius:13,overflow:"hidden",shadowOpacity:0.08,shadowRadius:10,shadowOffset:{width:0,height:2},elevation:2},topSection:{minHeight:156,flexDirection:"row",alignItems:"stretch"},visualColumn:{width:"40%",minHeight:156,padding:6},visual:{flex:1,overflow:"hidden",borderRadius:10},image:{...StyleSheet.absoluteFillObject},curatedImage:{transform:[{scale:1.08}]},imageFallback:{flex:1,alignItems:"center",justifyContent:"center",gap:7,padding:8},fallbackText:{fontSize:10,fontWeight:"600",color:"#315A7D",textAlign:"center"},
+  identityZone:{flex:1,minWidth:0,paddingHorizontal:10,paddingTop:7,paddingBottom:8},freeCancellation:{minWidth:0,flexShrink:1,flexDirection:"row",alignItems:"center",gap:3},freeCancellationText:{fontSize:11,lineHeight:15,fontWeight:"600"},headerRow:{flexDirection:"row",alignItems:"flex-start",gap:6},identityColumn:{flex:1,minWidth:0},name:{fontSize:15,fontWeight:"800",lineHeight:18,color:ui.navy},identityLine:{minWidth:0,lineHeight:18},secondaryModel:{fontSize:15,fontWeight:"800",lineHeight:18},similar:{fontSize:11,fontWeight:"500",lineHeight:16,color:"#536B92"},category:{fontSize:10,fontWeight:"800",letterSpacing:1.1,lineHeight:16,textTransform:"uppercase",color:"#004BB8"},utilityColumn:{flexShrink:0,alignItems:"flex-end"},badge:{flexShrink:0,flexDirection:"row",alignItems:"center",gap:3,borderRadius:5,backgroundColor:"#ECFDF5",paddingHorizontal:5,paddingVertical:2},badgeText:{fontSize:9,fontWeight:"700",color:"#15803D"},actions:{flexDirection:"row",alignItems:"center"},action:{width:28,height:44,justifyContent:"flex-start"},saveAction:{alignItems:"flex-end",paddingRight:2},shareAction:{alignItems:"flex-start",paddingLeft:2},pressed:{opacity:0.7},identityDetails:{minWidth:0,marginTop:5,gap:6},location:{flexDirection:"row",alignItems:"flex-start",gap:4},meta:{flex:1,minWidth:0,fontSize:11,fontWeight:"500",lineHeight:15,color:"#536B92"},benefits:{minWidth:0,flexDirection:"row",alignItems:"center",flexWrap:"wrap",gap:6},
+  lowerBand:{flexDirection:"row",alignItems:"stretch",borderTopWidth:StyleSheet.hairlineWidth},specColumn:{flex:1,minWidth:0,gap:8,paddingHorizontal:8,paddingVertical:10},middleSpecColumn:{borderLeftWidth:StyleSheet.hairlineWidth},spec:{minWidth:0,flexDirection:"row",alignItems:"flex-start",gap:4},specText:{flex:1,minWidth:0,fontSize:11,fontWeight:"500",lineHeight:14,color:"#536B92"},commerceColumn:{flex:1.35,minWidth:0,borderLeftWidth:StyleSheet.hairlineWidth,paddingLeft:8,paddingRight:9,paddingTop:8,paddingBottom:5},priceColumn:{minWidth:0,maxWidth:"100%",alignItems:"flex-end"},unavailablePrice:{maxWidth:"100%",textAlign:"right",fontSize:11,fontWeight:"500",lineHeight:15},total:{maxWidth:"100%",fontSize:22,fontWeight:"700",lineHeight:25,letterSpacing:-0.4,color:ui.navy},taxDisclosure:{maxWidth:"100%",marginTop:1,fontSize:10,fontWeight:"500",lineHeight:13,textAlign:"right"},perDay:{maxWidth:"100%",marginTop:2,fontSize:11,fontWeight:"700",lineHeight:14,textAlign:"right"},viewDeal:{minHeight:36,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4},viewDealText:{fontSize:14,lineHeight:18,fontWeight:"600"},
 });
