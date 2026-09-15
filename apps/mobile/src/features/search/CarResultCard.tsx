@@ -13,9 +13,9 @@ import { nativeCarResultIdentity } from "./nativeCarResultIdentity";
 import { presentCarOfferCurrency } from "./carDisplayCurrency";
 import { useCarDisplayCurrency } from "./useCarDisplayCurrency";
 
-export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal }: {
+export function CarResultCard({ result, rank, imageUri, searchParams, resultBackgroundColor, onViewDeal }: {
   result: CarResult; rank: number; imageUri?: string;
-  searchParams: Record<string, unknown>; onViewDeal: () => void;
+  searchParams: Record<string, unknown>; resultBackgroundColor: string; onViewDeal: () => void;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
   useEffect(() => setImageFailed(false), [imageUri]);
@@ -31,7 +31,7 @@ export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal
   const imageResizeMode = curatedImage ? "contain" : "cover";
   const transmissionIcon = result.transmission === "automatic" ? "transmissionAutomatic" : "transmissionManual";
   const share = () => void Share.share({ message: result.modelName, title: result.modelName });
-  return <View style={[c.card,{backgroundColor:theme.surface,borderColor:theme.dark?theme.border:"#D8E1EC",shadowColor:theme.dark?"#000000":"#18305B"}]}>
+  return <View style={[c.card,{backgroundColor:resultBackgroundColor,borderColor:theme.dark?theme.border:"#D8E1EC",shadowColor:theme.dark?"#000000":"#18305B"}]}>
     {hasTopMeta ? <View style={[c.topMetaShell,{borderBottomColor:theme.border}]}>
       <View style={c.topMetaContent}><View style={c.topMetaRow}>
         {offer?.freeCancellation ? <View style={c.freeCancellation}><ShieldCheck accessible={false} size={13} strokeWidth={2} color={freeCancellationColor} /><Text style={[c.freeCancellationText,{color:freeCancellationColor}]}>Free cancellation</Text></View> : null}
@@ -39,7 +39,7 @@ export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal
       </View></View>
     </View> : null}
     <View style={c.main}>
-      <View style={[c.visualColumn,!hasTopMeta&&c.visualColumnWithoutTopMeta]}><View style={c.visual}>{imageUri && !imageFailed ? <Image source={{ uri: imageUri }} resizeMode={imageResizeMode} style={[c.image,curatedImage&&c.curatedImage]} accessibilityLabel={result.imageAlt} onError={() => setImageFailed(true)} /> : <View accessibilityLabel={`${result.modelName} vehicle image unavailable`} style={c.imageFallback}><FlowIcon name="car" size={48} color="#315A7D" /><Text style={c.fallbackText}>Vehicle image unavailable</Text></View>}</View></View>
+      <View style={[c.visualColumn,{backgroundColor:theme.surface},!hasTopMeta&&c.visualColumnWithoutTopMeta]}><View style={c.visual}>{imageUri && !imageFailed ? <Image source={{ uri: imageUri }} resizeMode={imageResizeMode} style={[c.image,curatedImage&&c.curatedImage]} accessibilityLabel={result.imageAlt} onError={() => setImageFailed(true)} /> : <View accessibilityLabel={`${result.modelName} vehicle image unavailable`} style={c.imageFallback}><FlowIcon name="car" size={48} color="#315A7D" /><Text style={c.fallbackText}>Vehicle image unavailable</Text></View>}</View></View>
       <View style={c.contentColumn}>
         <View style={[c.information,!hasTopMeta&&c.informationWithoutTopMeta]}>
         <View style={c.headerRow}>
@@ -62,7 +62,7 @@ export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal
           <View style={c.specs}><Spec icon={<Users size={14} color="#64748B" />} label={`${result.passengers} passengers`} /><Spec icon={<DoorOpen size={14} color="#64748B" />} label={`${result.doors} doors`} /><Spec icon={<FlowIcon name={transmissionIcon} size={14} color="#64748B" />} label={capitalize(result.transmission)} /><Spec icon={<BriefcaseBusiness size={14} color="#64748B" />} label={`${result.bags} bags`} /></View>
         </View>
         </View>
-        <View style={[c.conversion,{backgroundColor:theme.surface}]}>
+        <View style={c.conversion}>
           <View style={c.priceColumn}>
             {offer ? <><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[c.total,{color:theme.textPrimary}]}>{money(offer.currency, offer.totalPrice)}</Text><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.9} style={[c.taxDisclosure,{color:theme.textSecondary}]}>{offer.taxesAndFeesIncluded ? "includes taxes & fees" : "taxes & fees shown where known"}</Text><Text numberOfLines={1} style={[c.perDay,{color:theme.textPrimary}]}>{money(offer.currency, offer.pricePerDay)} per day</Text></> : <Text style={[c.unavailablePrice,{color:theme.textSecondary}]}>Live price unavailable</Text>}
           </View>
@@ -70,7 +70,7 @@ export function CarResultCard({ result, rank, imageUri, searchParams, onViewDeal
       </View>
     </View>
     <View style={[c.actionRow,{borderTopColor:theme.border}]}>
-      <View style={c.actionVisualSpacer} />
+      <View style={[c.actionVisualSpacer,{backgroundColor:theme.surface}]} />
       <View style={c.actionContent}>
         <Pressable accessibilityRole="button" accessibilityLabel={`View deal for ${result.modelName}`} onPress={onViewDeal} hitSlop={{top:4,bottom:4,left:4,right:4}} style={({pressed}) => [c.viewDeal,pressed&&c.pressed]}><Text style={[c.viewDealText,{color:theme.dark ? "#8FB5FF" : ui.blue}]}>View deal</Text><ChevronRight accessible={false} size={16} strokeWidth={2.2} color={theme.dark ? "#8FB5FF" : ui.blue} /></Pressable>
       </View>

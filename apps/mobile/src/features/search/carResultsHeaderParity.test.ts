@@ -61,7 +61,7 @@ test("Cars keep a modest outer gutter while widening result cards and matching t
   const slot = cars.match(/carResultCardSlot:\{([^}]*)\}/)?.[1] ?? "";
   assert.doesNotMatch(slot, /(?:minW|w|W)idth|position|absolute|transform|margin(?:Horizontal)?:-|Dimensions|window|screen/);
   assert.doesNotMatch(cars, /carResultCardSlot:\{[^}]*width:"100%"|carResultCardSlot:\{[^}]*Dimensions/);
-  assert.match(cars, /renderItem=\{\(\{item,index\}\)=><View style=\{r\.carResultCardSlot\}><CarResultCard result=\{item\} rank=\{index\} imageUri=\{resolveNativeCarImageUri\(item\.imageUrl\)\} searchParams=\{payload\} onViewDeal=\{\(\)=>openDeal\(item\)\}\/><\/View>\}/);
+  assert.match(cars, /renderItem=\{\(\{item,index\}\)=><View style=\{r\.carResultCardSlot\}><CarResultCard result=\{item\} rank=\{index\} imageUri=\{resolveNativeCarImageUri\(item\.imageUrl\)\} searchParams=\{payload\} resultBackgroundColor=\{carCanvasColor\} onViewDeal=\{\(\)=>openDeal\(item\)\}\/><\/View>\}/);
   assert.match(cars, /style=\{\[r\.skeleton,r\.carResultCardSlot,\{backgroundColor:/);
   assert.match(cars, /skeleton:\{height:216/);
   assert.doesNotMatch(cars, /<NativeCarPriceAlert[^>]*carResultCardSlot|<View accessibilityLabel="Car results summary"[^>]*carResultCardSlot/);
@@ -177,6 +177,7 @@ test("Cars Results carries the Flight-family canvas without a white filter band"
   assert.match(cars, /<CarResultsHeader[^>]*backgroundColor=\{carCanvasColor\}/);
   assert.match(carHeader, /\{backgroundColor,paddingLeft:/);
   assert.match(cars, /r\.carFilterSectionHeader,\{backgroundColor:carCanvasColor\}/);
+  assert.match(cars, /<CarResultCard[^>]*resultBackgroundColor=\{carCanvasColor\}/);
   assert.doesNotMatch(cars, /r\.filterRail,\{backgroundColor:theme\.dark\?theme\.surface:"#FFFFFF"\}/);
 });
 
