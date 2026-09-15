@@ -55,9 +55,9 @@ test("Cars render the full filtered result set without pagination", () => {
   assert.doesNotMatch(cars, /const \[page|pageSize|totalPages|filtered\.slice|Page \{page\}|label="Previous"|label="Next"/);
 });
 
-test("Cars inset only result cards and matching transition skeletons", () => {
+test("Cars keep a modest outer gutter while widening result cards and matching transition skeletons", () => {
   assert.match(cars, /body:\{paddingHorizontal:14,gap:14\}/);
-  assert.match(cars, /carResultCardSlot:\{marginHorizontal:5\}/);
+  assert.match(cars, /carResultCardSlot:\{marginHorizontal:0\}/);
   const slot = cars.match(/carResultCardSlot:\{([^}]*)\}/)?.[1] ?? "";
   assert.doesNotMatch(slot, /(?:minW|w|W)idth|position|absolute|transform|margin(?:Horizontal)?:-|Dimensions|window|screen/);
   assert.doesNotMatch(cars, /carResultCardSlot:\{[^}]*width:"100%"|carResultCardSlot:\{[^}]*Dimensions/);
@@ -67,12 +67,17 @@ test("Cars inset only result cards and matching transition skeletons", () => {
   assert.doesNotMatch(cars, /<NativeCarPriceAlert[^>]*carResultCardSlot|<View accessibilityLabel="Car results summary"[^>]*carResultCardSlot/);
 });
 
-test("Cars result summary matches Hotel typography and grammar", () => {
+test("Cars result summary matches Hotel typography, geometry, and spacing rhythm", () => {
   assert.match(cars, /const carResultCountLabel = \(count: number\) => `\$\{count\} \$\{count === 1 \? "Result" : "Results"\} found`/);
   assert.match(cars, /<Text accessibilityRole="header" style=\{\[r\.carResultCount,\{color:theme\.textPrimary\}\]\}>\{carResultCountLabel\(filtered\.length\)\}<\/Text>/);
   assert.match(cars, /carResultCount:\{fontSize:13,lineHeight:17,fontWeight:"700",fontFamily:appFonts\.bold\}/);
+  assert.match(cars, /carResultsSummaryRow:\{minHeight:38,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8,marginTop:14\}/);
+  assert.match(cars, /carResultsCountColumn:\{flex:1,minWidth:0,justifyContent:"center"\}/);
   assert.doesNotMatch(cars, /carResultCount:\{[^}]*fontWeight:"800"/);
   assert.match(hotels, /flightResultCount: \{ fontSize: 13, lineHeight: 17, fontWeight: "700", fontFamily: appFonts\.bold \}/);
+  assert.match(hotels, /hotelResultsSummaryRow: \{ minHeight: 38, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 \}/);
+  assert.match(hotels, /hotelResultsCountColumn: \{ flex: 1, minWidth: 0, justifyContent: "center" \}/);
+  assert.match(hotels, /hotelResultsItemSeparator: \{ height: 14 \}/);
 });
 
 test("Cars use one truthful compact price alert before the summary and cards", () => {
