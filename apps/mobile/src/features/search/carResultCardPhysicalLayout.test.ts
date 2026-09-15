@@ -8,7 +8,7 @@ const styles = source.slice(source.indexOf("const c = StyleSheet.create"));
 const style = (name: string) => styles.slice(styles.indexOf(`${name}:`), styles.indexOf("},", styles.indexOf(`${name}:`)) + 2);
 
 test("Car card shell and inset image retain safe physical layout", () => {
-  assert.match(source, /c\.card,\{backgroundColor:theme\.surface,borderColor:theme\.dark\?theme\.border:"#D8E1EC",shadowColor:theme\.dark\?"#000000":"#18305B"\}/);
+  assert.match(source, /c\.card,\{backgroundColor:resultBackgroundColor,borderColor:theme\.dark\?theme\.border:"#D8E1EC",shadowColor:theme\.dark\?"#000000":"#18305B"\}/);
   assert.match(styles, /card:\{borderWidth:1,borderRadius:13,overflow:"hidden",shadowOpacity:0\.08,shadowRadius:10,shadowOffset:\{width:0,height:2\},elevation:2\}/);
   assert.match(style("main"), /minHeight:156,flexDirection:"row",alignItems:"stretch"/);
   assert.match(style("visualColumn"), /width:"40%",minHeight:156,paddingLeft:6,paddingRight:6,paddingBottom:6/);
@@ -25,6 +25,17 @@ test("Car card shell and inset image retain safe physical layout", () => {
   }
   assert.doesNotMatch(style("card").replace(/shadowOffset:\{[^}]*\}/, ""), /(?:^|,)height:/);
   for (const naturalHeightStyle of ["main", "visualColumn"]) assert.doesNotMatch(style(naturalHeightStyle), /(?:^|,)height:/);
+});
+
+test("Car card keeps only the vehicle-side zones on the surface over the Results canvas", () => {
+  assert.match(source, /resultBackgroundColor: string/);
+  assert.match(source, /c\.card,\{backgroundColor:resultBackgroundColor/);
+  assert.match(source, /\[c\.visualColumn,\{backgroundColor:theme\.surface\},!hasTopMeta&&c\.visualColumnWithoutTopMeta\]/);
+  assert.match(source, /\[c\.actionVisualSpacer,\{backgroundColor:theme\.surface\}\]/);
+  assert.match(source, /<View style=\{c\.conversion\}>/);
+  assert.doesNotMatch(source, /c\.conversion,\{backgroundColor:theme\.surface\}/);
+  assert.doesNotMatch(source, /c\.actionContent,\{backgroundColor:theme\.surface\}/);
+  assert.match(styles, /card:\{borderWidth:1,borderRadius:13,overflow:"hidden"/);
 });
 
 test("failed Car images reveal the truthful unavailable state", () => {
@@ -104,7 +115,7 @@ test("Free cancellation is in top metadata while View deal remains below the bod
   const main = source.indexOf("<View style={c.main}>");
   const visualColumn = source.indexOf("c.visualColumn", main);
   const contentColumn = source.indexOf("<View style={c.contentColumn}>", visualColumn);
-  const conversion = source.indexOf("<View style={[c.conversion", contentColumn);
+  const conversion = source.indexOf("<View style={c.conversion}>", contentColumn);
   const priceColumn = source.indexOf("<View style={c.priceColumn}>", conversion);
   const actionRow = source.indexOf("<View style={[c.actionRow,{borderTopColor:theme.border}]}", priceColumn);
   const cancellation = source.indexOf(">Free cancellation</Text>", topMeta);
