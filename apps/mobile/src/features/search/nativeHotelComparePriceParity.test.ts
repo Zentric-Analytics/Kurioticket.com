@@ -32,9 +32,19 @@ test("active Rates tab delegates current rate presentation", () => {
 
 test("Rates uses supplied room options instead of fabricating inventory", () => {
   assert.match(ratesSource, /roomOptions\.forEach\(\(option\) =>/);
+  assert.match(ratesSource, /const roomCategory = roomCardCategory\(option\.name\)/);
+  assert.match(ratesSource, /const rateLabel = roomRateTitle\(option\)/);
+  assert.match(ratesSource, /const title = composeRoomRateTitle\(roomCategory, rateLabel\)/);
   assert.match(ratesSource, /option\.displayPrice\?\.total/);
-  assert.match(ratesSource, /meaningfulRateMeta\(option, title\)/);
+  assert.match(ratesSource, /meaningfulRateMeta\(option, rateLabel\)/);
   assert.doesNotMatch(ratesSource, /STATIC_RATE_GROUPS|\$1,225|Standard Room, 1 Queen Bed/);
+});
+
+test("standalone Rates cards retain the room category without restoring the removed heading", () => {
+  assert.match(ratesSource, /function roomCardCategory\(name: string\)/);
+  assert.match(ratesSource, /category\.replace\(\/\\s\+options\$\/i, ""\)/);
+  assert.match(ratesSource, /return `\$\{category\} — \$\{rateLabel\}`/);
+  assert.doesNotMatch(ratesSource, /<Text[^>]*>Compact room options<\/Text>|s\.groupTitle|s\.groupCard/);
 });
 
 test("Kurioticket rows keep the bundled wordmark and existing app fonts", () => {
