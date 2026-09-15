@@ -39,15 +39,34 @@ test("top section owns only the visual and identity information", () => {
   assert.doesNotMatch(source, /topMetaShell|topMetaRow|topMetaContent|hasTopMeta/);
 });
 
-test("Free cancellation and Best value preserve conditional styling and occur once", () => {
+test("Best value precedes the header while Free cancellation remains in identity details", () => {
+  const identityZone = top.slice(top.indexOf('<View style={c.identityZone}>'));
+  const bestValueStart = identityZone.indexOf("rank === 0");
+  const headerStart = identityZone.indexOf('<View style={c.headerRow}>');
+  const detailsStart = identityZone.indexOf('<View style={c.identityDetails}>');
+  const locationStart = identityZone.indexOf('<View style={c.location}>');
+  const freeCancellationStart = identityZone.indexOf("offer?.freeCancellation");
+  assert.ok(bestValueStart >= 0 && bestValueStart < headerStart);
+  assert.ok(headerStart < detailsStart && detailsStart < locationStart && locationStart < freeCancellationStart);
+  assert.match(identityZone, /rank === 0 \? <View style=\{c\.bestValueRow\}><View style=\{c\.badge\}><Award size=\{11\} color="#15803D" \/><Text style=\{c\.badgeText\}>Best value/);
   assert.match(top, /offer\?\.freeCancellation \? <View style=\{c\.freeCancellation\}>[\s\S]*ShieldCheck[\s\S]*Free cancellation/);
   assert.match(source, /const freeCancellationColor = theme\.dark \? theme\.textPrimary : "#000000"/);
   assert.doesNotMatch(style("freeCancellation") + style("freeCancellationText"), /#15803D|#ECFDF5|backgroundColor|border/);
-  assert.match(top, /rank === 0 \? <View style=\{c\.badge\}><Award size=\{11\} color="#15803D" \/><Text style=\{c\.badgeText\}>Best value/);
   assert.match(style("badge"), /backgroundColor:"#ECFDF5"/);
   assert.match(style("badgeText"), /color:"#15803D"/);
+  assert.match(style("bestValueRow"), /alignItems:"flex-end"/);
   assert.equal(source.match(/>Free cancellation<\/Text>/g)?.length, 1);
   assert.equal(source.match(/>Best value<\/Text>/g)?.length, 1);
+  assert.doesNotMatch(source, /benefits/);
+  for (const name of ["bestValueRow", "badge"])
+    assert.doesNotMatch(style(name), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|translate/);
+});
+
+test("name and save/share controls remain siblings in the normal header row", () => {
+  const header = top.slice(top.indexOf('<View style={c.headerRow}>'), top.indexOf('<View style={c.identityDetails}>'));
+  assert.match(header, /<View style=\{c\.identityColumn\}>[\s\S]*identity\.primaryName[\s\S]*<View style=\{c\.utilityColumn\}>/);
+  assert.match(header, /savedState\.toggle[\s\S]*Share2/);
+  assert.match(style("identityColumn"), /flex:1,minWidth:0/);
 });
 
 test("favorite and share behavior and accessibility remain in the top-right", () => {
@@ -70,7 +89,8 @@ test("lower band has the approved two spec columns and commerce column", () => {
   assert.doesNotMatch(first, /result\.doors|result\.bags/);
   assert.match(middle, /result\.doors[\s\S]*result\.bags/);
   assert.doesNotMatch(middle, /result\.passengers|result\.transmission/);
-  assert.match(commerce, /offer\.totalPrice[\s\S]*offer\.taxesAndFeesIncluded[\s\S]*offer\.pricePerDay[\s\S]*>View deal<\/Text>/);
+  assert.match(commerce, /money\(offer\.currency, offer\.pricePerDay\)[\s\S]*>per day<\/Text>[\s\S]*>View deal<\/Text>/);
+  assert.doesNotMatch(commerce, /offer\.totalPrice|offer\.taxesAndFeesIncluded|includes taxes & fees|taxes & fees shown where known/);
   assert.equal(source.match(/>View deal<\/Text>/g)?.length, 1);
   assert.doesNotMatch(source, /actionRow|actionVisualSpacer|actionContent|contentColumn|conversion|detailColumn|style=\{c\.specs\}/);
 });
@@ -78,13 +98,14 @@ test("lower band has the approved two spec columns and commerce column", () => {
 test("commerce remains authoritative, responsive, and accessible", () => {
   assert.match(source, /getPrimaryCarOffer\(result\)/);
   assert.match(source, /presentCarOfferCurrency\(primaryOffer, displayCurrency, rates\)/);
-  assert.match(source, /money\(offer\.currency, offer\.totalPrice\)/);
-  assert.match(source, /offer\.taxesAndFeesIncluded \? "includes taxes & fees" : "taxes & fees shown where known"/);
-  assert.match(source, /money\(offer\.currency, offer\.pricePerDay\)\} per day/);
+  assert.match(source, /money\(offer\.currency, offer\.pricePerDay\)\}<\/Text><Text style=\{\[c\.perDayLabel/);
+  assert.doesNotMatch(source, /money\(offer\.currency, offer\.totalPrice\)|offer\.taxesAndFeesIncluded|includes taxes & fees|taxes & fees shown where known/);
   assert.match(source, /Live price unavailable/);
   assert.match(source, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.75\}/);
   assert.match(style("commerceColumn"), /flex:1\.35,minWidth:0/);
   assert.match(style("priceColumn"), /minWidth:0,maxWidth:"100%",alignItems:"flex-end"/);
+  assert.match(style("dailyPrice"), /maxWidth:"100%",fontSize:22/);
+  assert.doesNotMatch(styles, /(?:^|,)total:|taxDisclosure:|(?:^|,)perDay:/);
   assert.match(source, /<Pressable accessibilityRole="button" accessibilityLabel=\{`View deal for \$\{result\.modelName\}`\} onPress=\{onViewDeal\}/);
   assert.match(style("viewDeal"), /minHeight:36/);
   assert.doesNotMatch(source, /result\.offers\[0\]|TOTAL\s*·|\/day/);
