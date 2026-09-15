@@ -143,7 +143,7 @@ test("web Hotel section navigation remains protected independently", () => {
 test("active Hotel classification and reviews never use legacy rating fallbacks", () => {
   assert.match(hotel, /Number\.isInteger\(result\.classificationStars\)/);
   assert.doesNotMatch(hotel, /Math\.round\(result\.rating\)/);
-  assert.match(reviews, /normalizeHotelReviewScale\(result\.reviewScale\)/);
+  assert.match(reviews, /normalizeHotelReviewScale\(result\.reviewScale, scale\)|normalizeHotelReviewScale\(result\.reviewScale\)/);
   assert.match(reviews, /normalizeHotelReviewScore\(result\.reviewScore, scale\)/);
   assert.match(hotel, /nativeHotelReviewPresentation\(result\)/);
   assert.doesNotMatch(hotel + reviews, /reviewScore \?\? result\.rating/);
@@ -167,14 +167,14 @@ test("native gallery remains interactive and full-bleed with the two-level mobil
   assert.doesNotMatch(gallery, /Previous photo|Next photo|ChevronLeft|ChevronRight/);
 });
 
-test("active Hotel detail owns theme-aware accents without changing filled brand controls", () => {
+test("active Hotel detail owns theme-aware accents and Reserve controls", () => {
   assert.match(hotel, /const hotelAccent = theme\.dark \? "#8FB5FF" : colors\.blue/);
   assert.match(hotel, /<NativeHotelRatesSection[\s\S]*?accentColor=\{hotelAccent\}/);
-  assert.match(rates, /style=\{\[s\.selectButton, \{ backgroundColor: accentColor \}\]\}/);
-  assert.match(rates, /\{selected \? "Selected" : "Select"\}/);
+  assert.match(rates, /s\.reserveButton,[\s\S]*?backgroundColor: accentColor/);
+  assert.match(rates, />Reserve<\/Text>/);
+  assert.doesNotMatch(rates, /Selected|>Select</);
   assert.doesNotMatch(rates, /borderWidth: 6/);
-  assert.match(hotelSource, /continueButton: \{[^\n]*backgroundColor: colors\.blue/);
-  assert.match(hotelSource, /continuePressed: \{ backgroundColor: "#003B91" \}/);
+  assert.doesNotMatch(hotelSource, /continueButton|continuePressed/);
   assert.match(tokens, /blue: "#004BB8"/);
 });
 
@@ -200,14 +200,15 @@ test("active Hotel provider selection validates candidates before precedence", (
   assert.doesNotMatch(hotel, /result\.partnerRedirectUrl \|\| result\.bookingUrl/);
 });
 
-test("active Hotel Deals preserve each actionable continuation and truthful dock", () => {
+test("active Hotel Rates preserve each Reserve continuation without a booking dock", () => {
   assert.match(hotel, /nativeHotelOffers\(internalRoomFlowAvailable, providerBookable\)/);
-  assert.match(rates, /offer\.kind === "internal-room-flow"/);
-  assert.match(hotel, /selectedOffer\?\.kind !== "provider-handoff"/);
+  assert.match(hotel, /const offer = hotelOffers\.find\(\(\{ id \}\) => id === offerId\)/);
+  assert.match(hotel, /if \(offer\.kind === "internal-room-flow"\)/);
+  assert.match(hotel, /offer\.kind !== "provider-handoff"/);
   assert.match(hotel, /Linking\.openURL\(redirectUrl\)/);
-  assert.match(rates, /accessibilityRole="radio"/);
-  assert.match(hotel, /estimated stay total/);
-  assert.match(hotel, />Continue booking</);
+  assert.match(rates, /onPress=\{\(\) => onSelectOffer\(row\.offerId\)\}/);
+  assert.match(rates, /accessibilityRole="button"/);
+  assert.doesNotMatch(hotel, /estimated stay total|Continue booking/);
 });
 
 test("Car detail parity remains protected", () => {

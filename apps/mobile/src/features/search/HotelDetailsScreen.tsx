@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
-import { ArrowLeft, Heart, Info, Users } from "lucide-react-native";
+import { ArrowLeft, Heart, Users } from "lucide-react-native";
 import { travelApi, type HotelResult, type MobileHotelDetailsResponse } from "../../api/travelApi";
 import { useAppTheme } from "../../theme/AppTheme";
 import { colors } from "../../theme/tokens";
@@ -238,7 +238,6 @@ function HotelDetail({
 
   const selectedOffer =
     hotelOffers.find(({ id }) => id === selectedOfferId) ?? hotelOffers[0] ?? null;
-  const canContinue = selectedOffer !== null;
   const hasPrice = result.pricePerNight != null && result.totalPrice != null;
   const passedDisplayPrices = parse<HotelDisplayPriceSnapshot>(
     params.hotelDisplayPrices,
@@ -359,7 +358,6 @@ function HotelDetail({
   );
 
   const nightlyPrice = displayPrices?.nightly;
-  const totalPrice = displayPrices?.total;
   const relatedHotels = prepareNativeRelatedHotels({
     hotels: details?.relatedHotels ?? [],
     currentHotelId: result.id,
@@ -406,16 +404,15 @@ function HotelDetail({
       : null,
   }));
 
-  const continueBooking = async () => {
-    if (selectedOffer?.kind === "internal-room-flow") {
+  const reserveOffer = async (offerId: NativeHotelOffer["id"]) => {
+    const offer = hotelOffers.find(({ id }) => id === offerId);
+    if (!offer) return;
+    setSelectedOfferId(offer.id);
+    if (offer.kind === "internal-room-flow") {
       setRoomsOpen(true);
       return;
     }
-    if (
-      selectedOffer?.kind !== "provider-handoff" ||
-      !providerBookable ||
-      !redirectUrl
-    ) return;
+    if (offer.kind !== "provider-handoff" || !providerBookable || !redirectUrl) return;
     try {
       await Linking.openURL(redirectUrl);
     } catch {
@@ -507,7 +504,7 @@ function HotelDetail({
         alwaysBounceVertical={false}
         overScrollMode="never"
         style={{ backgroundColor: hotelCanvasColor }}
-        contentContainerStyle={{ paddingBottom: 112 + inset.bottom }}
+        contentContainerStyle={{ paddingBottom: 24 + inset.bottom }}
         onScroll={({ nativeEvent }) => {
           const offset = nativeEvent.contentOffset.y;
           currentHotelScrollOffset.current = offset;
@@ -627,7 +624,7 @@ function HotelDetail({
             <NativeHotelRatesSection
               offers={hotelOffers}
               selectedOfferId={selectedOffer?.id ?? null}
-              onSelectOffer={setSelectedOfferId}
+              onSelectOffer={(offerId) => void reserveOffer(offerId)}
               roomOptions={presentedRoomOptions}
               providerName={result.provider}
               roomType={result.roomType}
@@ -697,56 +694,6 @@ function HotelDetail({
         </Pressable>
       </View>
 
-      <View
-        style={[
-          s.sticky,
-          {
-            paddingBottom: 8 + inset.bottom,
-            backgroundColor: hotelCanvasColor,
-          },
-        ]}
-      >
-        <View style={s.dockContent}>
-          <View style={s.dockPrice}>
-            <View style={s.dockLabel}>
-              <Text style={[s.dockEyebrow, { color: theme.textSecondary }]}>estimated stay total</Text>
-              <Info accessible={false} size={12} color={theme.textSecondary} />
-            </View>
-            <Text
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.83}
-              style={[s.dockTotal, { color: theme.textPrimary }]}
-            >
-              {hasPrice ? (totalPrice?.formatted ?? "—") : "Price unavailable"}
-            </Text>
-            <Text
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.72}
-              style={[s.dockPerNight, { color: theme.textSecondary }]}
-            >
-              {hasPrice ? `${nightlyPrice?.formatted ?? "—"} per night` : "No live price supplied"}
-            </Text>
-          </View>
-          <View style={s.dockAction}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ disabled: !canContinue }}
-              disabled={!canContinue}
-              onPress={() => void continueBooking()}
-              style={({ pressed }) => [
-                s.continueButton,
-                !canContinue && s.continueDisabled,
-                pressed && canContinue && s.continuePressed,
-              ]}
-            >
-              <Text style={s.continueText}>Continue booking</Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-
       <HotelRoomOptionsModal
         visible={roomsOpen}
         onClose={() => setRoomsOpen(false)}
@@ -786,31 +733,4 @@ const s = StyleSheet.create({
   tabText: { fontSize: 13, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
   tabTextCompact: { fontSize: 12 },
   detailBody: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8, gap: 6 },
-  compareSection: { paddingVertical: 4 },
-  compareHeading: { fontSize: 18, lineHeight: 24, fontWeight: "600", fontFamily: appFonts.semibold, letterSpacing: -0.25 },
-  compareLead: { marginTop: 4, fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
-  compareOffers: { marginTop: 16, gap: 10 },
-  offer: { borderWidth: 1.5, borderRadius: 13, padding: 14, gap: 0 },
-  offerTop: { minWidth: 0, flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12 },
-  offerBrandLogo: { width: 108, height: 24, flexShrink: 0 },
-  offerProvider: { fontSize: 15, lineHeight: 21, fontWeight: "900" },
-  selectionControl: { width: 16, height: 16, borderRadius: 8, borderWidth: 1.5, alignItems: "center", justifyContent: "center" },
-  selectionControlDot: { width: 6, height: 6, borderRadius: 3 },
-  offerPriceRow: { minWidth: 0, marginTop: 10, alignItems: "flex-end" },
-  nightly: { fontSize: 18, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold, textAlign: "right" },
-  offerBottom: { marginTop: 2, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
-  perNight: { flexShrink: 0, fontSize: 10, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "right" },
-  sectionLead: { fontSize: 12, lineHeight: 18 },
-  sticky: { position: "absolute", bottom: 0, left: 0, right: 0, borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingHorizontal: 16, paddingTop: 8, shadowColor: "#0F172A", shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 6 },
-  dockContent: { width: "100%", flexDirection: "row", alignItems: "center", gap: 10 },
-  dockPrice: { flex: 1, minWidth: 0, gap: 1 },
-  dockLabel: { flexDirection: "row", alignItems: "center", gap: 4 },
-  dockEyebrow: { fontSize: 11, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
-  dockTotal: { fontSize: 24, lineHeight: 30, fontWeight: "800", fontFamily: appFonts.extraBold, textAlign: "left" },
-  dockPerNight: { fontSize: 11, lineHeight: 16, fontWeight: "400", fontFamily: appFonts.regular, textAlign: "left" },
-  dockAction: { flex: 0.9, minWidth: 132 },
-  continueButton: { width: "100%", minHeight: 48, borderRadius: 8, backgroundColor: colors.blue, paddingHorizontal: 12, alignItems: "center", justifyContent: "center" },
-  continuePressed: { backgroundColor: "#003B91" },
-  continueDisabled: { opacity: 0.5 },
-  continueText: { color: "white", fontSize: 12, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold, textAlign: "center" },
 });

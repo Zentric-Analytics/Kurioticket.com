@@ -4,10 +4,6 @@ import test from "node:test";
 
 const detailSource = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
 const ratesSource = readFileSync("src/features/search/NativeHotelRatesSection.tsx", "utf8");
-const dock = detailSource.slice(
-  detailSource.indexOf("<View\n        style={[\n          s.sticky"),
-  detailSource.indexOf("<HotelRoomOptionsModal"),
-);
 const webSource = readFileSync(
   "../../src/components/results/hotelDetails/StandaloneHotelDetails.tsx",
   "utf8",
@@ -17,83 +13,47 @@ const webDock = webSource.slice(
   webSource.indexOf("</section>", webSource.indexOf("data-mobile-hotel-stay-dock")),
 );
 
-function styleRule(name: string, nextName?: string) {
-  const start = detailSource.indexOf(`  ${name}:`);
+function rateStyle(name: string, nextName?: string) {
+  const start = ratesSource.indexOf(`  ${name}:`);
   const end = nextName
-    ? detailSource.indexOf(`  ${nextName}:`, start)
-    : detailSource.indexOf("\n});", start);
+    ? ratesSource.indexOf(`  ${nextName}:`, start)
+    : ratesSource.indexOf("\n});", start);
   assert.notEqual(start, -1, `${name} style must exist`);
   assert.notEqual(end, -1, `${nextName ?? "stylesheet end"} must follow ${name}`);
-  return detailSource.slice(start, end);
+  return ratesSource.slice(start, end);
 }
 
-test("mobile web reference retains the authoritative Hotel stay dock contract", () => {
+test("mobile web reference retains its independent Hotel stay dock contract", () => {
   for (const token of [
     "rounded-t-[22px]",
     "px-4",
-    "pt-3",
     "safe-area-inset-bottom",
-    "gap-3",
-    "grid-cols-[minmax(0,1fr)_minmax(132px,0.9fr)]",
-    "text-[11px]",
-    "font-semibold",
-    "text-[clamp(1.25rem,6vw,1.5rem)]",
-    "font-extrabold",
     "min-h-12",
-    "w-full",
     "rounded-lg",
-    "px-3",
-    "text-xs",
     "font-bold",
-    "leading-4",
   ]) assert.ok(webDock.includes(token), `mobile web dock must retain ${token}`);
-  assert.ok((webDock.match(/text-\[11px\]/g) ?? []).length >= 2);
 });
 
-test("active native Hotel dock keeps safe-area behavior with compact padding", () => {
-  const sticky = styleRule("sticky", "dockContent");
-  assert.match(sticky, /borderTopLeftRadius: 18[\s\S]*borderTopRightRadius: 18/);
-  assert.match(sticky, /paddingHorizontal: 16[\s\S]*paddingTop: 8/);
-  assert.match(sticky, /shadowColor: "#0F172A"[\s\S]*shadowOffset: \{ width: 0, height: -4 \}[\s\S]*shadowOpacity: 0\.06[\s\S]*shadowRadius: 8[\s\S]*elevation: 6/);
-  assert.doesNotMatch(sticky, /borderTopWidth|borderTopColor/);
-  assert.match(dock, /paddingBottom: 8 \+ inset\.bottom/);
-  assert.match(dock, /backgroundColor: hotelCanvasColor/);
+test("native Hotel removes the checkout-style dock from Rates, Overview, and Reviews", () => {
+  assert.doesNotMatch(detailSource, /estimated stay total/);
+  assert.doesNotMatch(detailSource, />Continue booking</);
+  assert.doesNotMatch(detailSource, /s\.sticky|s\.dockContent|s\.dockPrice|s\.dockAction/);
+  assert.doesNotMatch(detailSource, /continueButton|continuePressed|continueDisabled|continueText/);
+  assert.match(detailSource, /contentContainerStyle=\{\{ paddingBottom: 24 \+ inset\.bottom \}\}/);
 });
 
-test("active native dock owns the compact two-column price and action layout", () => {
-  assert.match(styleRule("dockContent", "dockPrice"), /width: "100%"[\s\S]*flexDirection: "row"[\s\S]*alignItems: "center"[\s\S]*gap: 10/);
-  assert.match(styleRule("dockPrice", "dockLabel"), /flex: 1[\s\S]*minWidth: 0/);
-  assert.match(styleRule("dockAction", "continueButton"), /flex: 0\.9[\s\S]*minWidth: 132/);
-  assert.match(styleRule("continueButton", "continuePressed"), /width: "100%"/);
-  assert.match(dock, /<View style=\{s\.dockContent\}>[\s\S]*<View style=\{s\.dockPrice\}>[\s\S]*<View style=\{s\.dockAction\}>/);
+test("Rates owns a compact provider-level Reserve action instead", () => {
+  assert.match(rateStyle("rateActionColumn", "price"), /width: 112[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "space-between"/);
+  assert.match(rateStyle("reserveButton", "reserveButtonPressed"), /minWidth: 88[\s\S]*minHeight: 44[\s\S]*borderRadius: 10/);
+  assert.match(rateStyle("reserveButtonText", "emptyCard"), /fontSize: 15[\s\S]*fontWeight: "700"[\s\S]*fontFamily: appFonts\.bold/);
+  assert.match(ratesSource, /accessibilityRole="button"/);
+  assert.match(ratesSource, /onPress=\{\(\) => onSelectOffer\(row\.offerId\)\}/);
+  assert.match(ratesSource, />Reserve<\/Text>/);
 });
 
-test("active native dock price hierarchy remains left aligned", () => {
-  assert.match(styleRule("dockLabel", "dockEyebrow"), /gap: 4/);
-  assert.match(styleRule("dockEyebrow", "dockTotal"), /fontSize: 11[\s\S]*lineHeight: 16[\s\S]*fontWeight: "600"[\s\S]*fontFamily: appFonts\.semibold/);
-  assert.match(styleRule("dockTotal", "dockPerNight"), /fontSize: 24[\s\S]*lineHeight: 30[\s\S]*fontWeight: "800"[\s\S]*fontFamily: appFonts\.extraBold[\s\S]*textAlign: "left"/);
-  assert.match(styleRule("dockPerNight", "dockAction"), /fontSize: 11[\s\S]*lineHeight: 16[\s\S]*fontWeight: "400"[\s\S]*fontFamily: appFonts\.regular[\s\S]*textAlign: "left"/);
-  assert.match(dock, /<Info accessible=\{false\} size=\{12\} color=\{theme\.textSecondary\} \/>/);
-  assert.match(dock, /minimumFontScale=\{0\.83\}[\s\S]*s\.dockTotal/);
-});
-
-test("Deals keeps its distinct right-aligned per-night style", () => {
-  assert.match(ratesSource, /perNight: \{[^}]*fontSize: 12[^}]*lineHeight: 17[^}]*fontWeight: "400"[^}]*textAlign: "right"/);
-  assert.doesNotMatch(ratesSource, /import \{ appFonts \}/);
-  assert.match(ratesSource, /<Text style=\{\[s\.perNight, \{ color: theme\.textSecondary \}\]\}>per night<\/Text>/);
-});
-
-test("active native CTA preserves the 48dp booking touch target and behavior", () => {
-  assert.match(styleRule("continueButton", "continuePressed"), /width: "100%"[\s\S]*minHeight: 48[\s\S]*borderRadius: 8[\s\S]*backgroundColor: colors\.blue[\s\S]*paddingHorizontal: 12/);
-  assert.match(styleRule("continuePressed", "continueDisabled"), /backgroundColor: "#003B91"/);
-  assert.match(styleRule("continueDisabled", "continueText"), /opacity: 0\.5/);
-  assert.match(styleRule("continueText"), /fontSize: 12[\s\S]*lineHeight: 16[\s\S]*fontWeight: "700"[\s\S]*fontFamily: appFonts\.bold[\s\S]*textAlign: "center"/);
-  assert.match(dock, /accessibilityRole="button"[\s\S]*accessibilityState=\{\{ disabled: !canContinue \}\}[\s\S]*disabled=\{!canContinue\}[\s\S]*onPress=\{\(\) => void continueBooking\(\)\}/);
-  assert.equal((dock.match(/Continue booking/g) ?? []).length, 1);
-});
-
-test("active native dock displays formatted price truth without arithmetic", () => {
-  assert.match(dock, /\{hasPrice \? \(totalPrice\?\.formatted \?\? "—"\) : "Price unavailable"\}/);
-  assert.match(dock, /\{hasPrice \? `\$\{nightlyPrice\?\.formatted \?\? "—"\} per night` : "No live price supplied"\}/);
-  assert.doesNotMatch(dock, /totalPrice\s*[/*]|nightlyPrice\s*[/*]|\bnights\s*[/*]|\/[\s]*nights|\*[\s]*nights/);
+test("Rates show stay-level totals without a per-night label", () => {
+  assert.match(ratesSource, /option\.displayPrice\?\.total/);
+  assert.match(ratesSource, /\$\{total\.accessibilityLabel\} stay price/);
+  assert.doesNotMatch(ratesSource, />per night<\/Text>|s\.perNight|perNight:/);
+  assert.match(ratesSource, /Price on provider/);
 });

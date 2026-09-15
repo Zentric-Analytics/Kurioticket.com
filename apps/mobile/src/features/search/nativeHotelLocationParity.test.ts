@@ -46,7 +46,7 @@ test("Location is rendered by the active native hotel booking details flow", () 
 });
 
 test("Location uses one horizontal padding owner with a dense booking-page vertical rhythm", () => {
-  assert.match(styleRule(screen, "detailBody", "compareSection"), /paddingHorizontal: 16/);
+  assert.match(screen, /detailBody: \{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8, gap: 6 \}/);
   const section = styleRule(component, "locationSection", "heading");
   assert.match(section, /paddingVertical: 0/);
   assert.doesNotMatch(section, /paddingHorizontal/);

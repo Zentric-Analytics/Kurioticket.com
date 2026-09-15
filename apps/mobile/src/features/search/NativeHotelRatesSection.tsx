@@ -1,6 +1,7 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import type { NativeHotelOffer } from "./nativeHotelDetailsModel";
 import type { PresentedHotelRoomOption } from "./NativeHotelDetails";
+import { appFonts } from "../../theme/typography";
 
 type Theme = {
   dark: boolean;
@@ -17,27 +18,100 @@ type NightlyPrice = {
 
 type DetailsStatus = "loading" | "ready" | "error";
 
+type RateRow = {
+  id: string;
+  offerId: NativeHotelOffer["id"];
+  providerKind: "kurioticket" | "provider";
+  providerName: string;
+  title: string;
+  meta: string[];
+  price: string;
+  priceAccessibilityLabel: string;
+  hasDisplayedPrice: boolean;
+};
+
+type RateGroup = {
+  id: string;
+  title: string;
+  rows: RateRow[];
+};
+
 function capitalize(value: string) {
   return value ? `${value[0]!.toUpperCase()}${value.slice(1)}` : value;
 }
 
-function roomRateTitle(options: PresentedHotelRoomOption[]) {
-  const name = options[0]?.name?.trim();
-  if (!name) return null;
-  const parts = name.split(/\s+[—–-]\s+/).filter(Boolean);
-  return capitalize(parts.length > 1 ? parts.slice(1).join(" — ").trim() : name);
+function cleanRateCopy(value?: string | null) {
+  return (value ?? "")
+    .replace(/\bin planning estimate\b/gi, "")
+    .replace(/\bplanning estimate\b/gi, "")
+    .replace(/\bestimate\b/gi, "")
+    .replace(/\bplanning\b/gi, "")
+    .replace(/room-only/gi, "room only")
+    .replace(/\s+/g, " ")
+    .replace(/\s+([,.;:])/g, "$1")
+    .replace(/^[\s—–-]+|[\s—–-]+$/g, "")
+    .trim();
+}
+
+function roomGroupTitle(name: string) {
+  const base = name.split(/\s+[—–-]\s+/)[0]?.trim() ?? "";
+  return capitalize(cleanRateCopy(base) || "Room");
+}
+
+function roomRateTitle(option: PresentedHotelRoomOption) {
+  const parts = option.name.split(/\s+[—–-]\s+/).filter(Boolean);
+  const suffix = cleanRateCopy(
+    parts.length > 1 ? parts.slice(1).join(" — ") : option.mealPlan,
+  );
+  const mealPlan = cleanRateCopy(option.mealPlan);
+
+  if (/breakfast/i.test(suffix) && mealPlan) return capitalize(mealPlan);
+  if (/room only/i.test(suffix) && mealPlan) return capitalize(mealPlan);
+  if (/^flexible$/i.test(suffix)) return "Flexible rate";
+  return capitalize(suffix || mealPlan || "Room rate");
+}
+
+function meaningfulRateMeta(option: PresentedHotelRoomOption, title: string) {
+  const rawValues = [
+    option.bedConfiguration,
+    option.mealPlan,
+    ...option.features.filter((feature) => !/planning|estimate/i.test(feature)),
+  ];
+  const normalizedTitle = title.toLocaleLowerCase();
+  return rawValues
+    .map(cleanRateCopy)
+    .filter(Boolean)
+    .filter((value, index, values) => values.indexOf(value) === index)
+    .filter((value) => value.toLocaleLowerCase() !== normalizedTitle)
+    .slice(0, 2);
+}
+
+function meaningfulProviderMeta(value?: string | null) {
+  const raw = value?.trim() ?? "";
+  if (!raw || /planning|estimate|not yet confirmed|not currently offered/i.test(raw)) {
+    return [];
+  }
+  const cleaned = cleanRateCopy(raw);
+  return cleaned ? [cleaned] : [];
+}
+
+function addRateRow(groups: RateGroup[], groupTitle: string, row: RateRow) {
+  const groupKey = groupTitle.toLocaleLowerCase();
+  const existing = groups.find((group) => group.id === groupKey);
+  if (existing) {
+    existing.rows.push(row);
+    return;
+  }
+  groups.push({ id: groupKey, title: groupTitle, rows: [row] });
 }
 
 export function NativeHotelRatesSection({
   offers,
-  selectedOfferId,
   onSelectOffer,
   roomOptions,
   providerName,
   roomType,
   cancellationInfo,
-  nightlyPrice,
-  hasPrice,
   detailsStatus,
   theme,
   accentColor,
@@ -55,41 +129,81 @@ export function NativeHotelRatesSection({
   theme: Theme;
   accentColor: string;
 }) {
-  const representativeRoom = roomOptions[0] ?? null;
-  const internalTitle = roomRateTitle(roomOptions);
-  const internalMeta = representativeRoom?.cancellationInfo.trim() ?? "";
-  const internalNightlyPrice = representativeRoom?.displayPrice?.nightly ?? nightlyPrice;
-  const providerMeta = cancellationInfo?.trim() ?? "";
+  if (detailsStatus === "loading") return null;
+
+  const groups: RateGroup[] = [];
+  const internalOffer = offers.find((offer) => offer.kind === "internal-room-flow") ?? null;
+  const providerOffer = offers.find((offer) => offer.kind === "provider-handoff") ?? null;
+
+  if (internalOffer) {
+    roomOptions.forEach((option) => {
+      const title = roomRateTitle(option);
+      const total = option.displayPrice?.total ?? null;
+      addRateRow(groups, roomGroupTitle(option.name), {
+        id: `room-${option.id}`,
+        offerId: internalOffer.id,
+        providerKind: "kurioticket",
+        providerName: "Kurioticket",
+        title,
+        meta: meaningfulRateMeta(option, title),
+        price: total?.formatted ?? "Price unavailable",
+        priceAccessibilityLabel: total
+          ? `${total.accessibilityLabel} stay price`
+          : "Price unavailable",
+        hasDisplayedPrice: Boolean(total),
+      });
+    });
+  }
+
+  if (providerOffer) {
+    const roomParts = (roomType ?? "")
+      .split(";")
+      .map((part) => part.trim())
+      .filter(Boolean);
+    const groupTitle = capitalize(cleanRateCopy(roomParts[0]) || "Available rate");
+    const providerTitle = capitalize(
+      cleanRateCopy(roomParts.slice(1).join(", ")) || groupTitle,
+    );
+    addRateRow(groups, groupTitle, {
+      id: `provider-${providerOffer.id}`,
+      offerId: providerOffer.id,
+      providerKind: "provider",
+      providerName: providerName.trim() || "Provider",
+      title: providerTitle,
+      meta: meaningfulProviderMeta(cancellationInfo),
+      price: "Price on provider",
+      priceAccessibilityLabel: "Price confirmed on provider site",
+      hasDisplayedPrice: false,
+    });
+  }
+
+  if (!groups.length) {
+    return (
+      <View style={s.section}>
+        <View style={[s.emptyCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <Text style={[s.emptyTitle, { color: theme.textPrimary }]}>No reservable rates available</Text>
+          <Text style={[s.emptyCopy, { color: theme.textSecondary }]}>Try updating your stay or check again later.</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={s.section}>
-      {offers.length ? (
-        <View style={[s.groupCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          {offers.map((offer, index) => {
-            const selected = offer.id === selectedOfferId;
-            const internal = offer.kind === "internal-room-flow";
-            const title = internal
-              ? internalTitle ?? "Room option"
-              : roomType?.trim() || "Provider rate";
-            const meta = internal ? internalMeta : providerMeta;
-            const offerNightlyPrice = internal ? internalNightlyPrice : nightlyPrice;
-            const offerHasPrice = internal ? Boolean(internalNightlyPrice) : hasPrice;
-
-            return (
-              <Pressable
-                key={offer.id}
-                accessibilityRole="radio"
-                accessibilityState={{ selected }}
-                accessibilityLabel={`${internal ? "Kurioticket" : providerName} ${title}`}
-                onPress={() => onSelectOffer(offer.id)}
-                style={({ pressed }) => [
+      {groups.map((group) => (
+        <View key={group.id} style={s.groupSection}>
+          <Text style={[s.groupTitle, { color: theme.textPrimary }]}>{group.title}</Text>
+          <View style={[s.groupCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            {group.rows.map((row, index) => (
+              <View
+                key={row.id}
+                style={[
                   s.rateRow,
                   index > 0 && { borderTopColor: theme.border, borderTopWidth: StyleSheet.hairlineWidth },
-                  pressed && s.rateRowPressed,
                 ]}
               >
                 <View style={s.rateCopy}>
-                  {internal ? (
+                  {row.providerKind === "kurioticket" ? (
                     <Image
                       accessible
                       accessibilityLabel="Kurioticket"
@@ -100,71 +214,153 @@ export function NativeHotelRatesSection({
                     />
                   ) : (
                     <Text numberOfLines={1} style={[s.providerName, { color: theme.textPrimary }]}>
-                      {providerName}
+                      {row.providerName}
                     </Text>
                   )}
                   <Text numberOfLines={2} style={[s.rateTitle, { color: theme.textPrimary }]}>
-                    {title}
+                    {row.title}
                   </Text>
-                  {meta ? (
-                    <Text numberOfLines={2} style={[s.rateMeta, { color: theme.textSecondary }]}>
-                      {meta}
-                    </Text>
+                  {row.meta.length ? (
+                    <View style={s.benefitList}>
+                      {row.meta.map((benefit) => (
+                        <Text key={benefit} numberOfLines={1} style={[s.rateMeta, { color: theme.textSecondary }]}>
+                          {benefit}
+                        </Text>
+                      ))}
+                    </View>
                   ) : null}
                 </View>
 
                 <View style={s.rateActionColumn}>
-                  <View style={s.priceBlock}>
-                    <Text
-                      numberOfLines={1}
-                      adjustsFontSizeToFit
-                      minimumFontScale={0.68}
-                      accessibilityLabel={
-                        offerHasPrice && offerNightlyPrice
-                          ? `${offerNightlyPrice.accessibilityLabel} per night`
-                          : "Price unavailable"
-                      }
-                      style={[s.price, { color: theme.textPrimary }]}
-                    >
-                      {offerHasPrice ? (offerNightlyPrice?.formatted ?? "—") : "Price unavailable"}
-                    </Text>
-                    {offerHasPrice ? (
-                      <Text style={[s.perNight, { color: theme.textSecondary }]}>per night</Text>
-                    ) : null}
-                  </View>
-                  <View style={[s.selectButton, { backgroundColor: accentColor }]}>
-                    <Text style={s.selectButtonText}>{selected ? "Selected" : "Select"}</Text>
-                  </View>
+                  <Text
+                    numberOfLines={2}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.68}
+                    accessibilityLabel={row.priceAccessibilityLabel}
+                    style={[
+                      s.price,
+                      !row.hasDisplayedPrice && s.priceUnavailable,
+                      { color: row.hasDisplayedPrice ? theme.textPrimary : theme.textSecondary },
+                    ]}
+                  >
+                    {row.price}
+                  </Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Reserve ${row.title} with ${row.providerName}`}
+                    onPress={() => onSelectOffer(row.offerId)}
+                    style={({ pressed }) => [
+                      s.reserveButton,
+                      { backgroundColor: accentColor },
+                      pressed && s.reserveButtonPressed,
+                    ]}
+                  >
+                    <Text style={s.reserveButtonText}>Reserve</Text>
+                  </Pressable>
                 </View>
-              </Pressable>
-            );
-          })}
+              </View>
+            ))}
+          </View>
         </View>
-      ) : detailsStatus !== "loading" ? (
-        <View style={[s.emptyCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Text style={[s.providerName, { color: theme.textPrimary }]}>{providerName}</Text>
-          <Text style={[s.rateMeta, { color: theme.textSecondary }]}>Planning inventory · no live checkout</Text>
-        </View>
-      ) : null}
+      ))}
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  section: { paddingBottom: 4 },
-  groupCard: { overflow: "hidden", borderWidth: 1, borderRadius: 12 },
-  rateRow: { minHeight: 134, flexDirection: "row", alignItems: "stretch", padding: 16, gap: 14 },
-  rateRowPressed: { opacity: 0.82 },
+  section: { paddingBottom: 12, gap: 18 },
+  groupSection: { gap: 8 },
+  groupTitle: {
+    fontSize: 17,
+    lineHeight: 23,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
+  },
+  groupCard: { overflow: "hidden", borderWidth: 1, borderRadius: 14 },
+  rateRow: {
+    minHeight: 142,
+    flexDirection: "row",
+    alignItems: "stretch",
+    paddingHorizontal: 16,
+    paddingVertical: 15,
+    gap: 14,
+  },
   rateCopy: { flex: 1, minWidth: 0, justifyContent: "flex-start" },
   brandLogo: { width: 104, height: 22, flexShrink: 0, marginBottom: 10 },
-  providerName: { fontSize: 15, lineHeight: 20, fontWeight: "700", marginBottom: 10 },
-  rateTitle: { fontSize: 15, lineHeight: 21, fontWeight: "700" },
-  rateMeta: { marginTop: 8, fontSize: 14, lineHeight: 20, fontWeight: "400" },
-  rateActionColumn: { width: 112, flexShrink: 0, alignItems: "flex-end", justifyContent: "space-between" },
-  priceBlock: { width: "100%", alignItems: "flex-end" },
-  price: { maxWidth: "100%", fontSize: 20, lineHeight: 26, fontWeight: "700", textAlign: "right" },
-  perNight: { marginTop: 2, fontSize: 12, lineHeight: 17, fontWeight: "400", textAlign: "right" },
-  selectButton: { minWidth: 88, height: 44, borderRadius: 10, alignItems: "center", justifyContent: "center", paddingHorizontal: 12 },
-  selectButtonText: { color: "#FFFFFF", fontSize: 15, lineHeight: 20, fontWeight: "700" },
-  emptyCard: { minHeight: 112, justifyContent: "center", borderWidth: 1, borderRadius: 12, padding: 16 },
+  providerName: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
+    marginBottom: 10,
+  },
+  rateTitle: {
+    fontSize: 15,
+    lineHeight: 21,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
+  },
+  benefitList: { marginTop: 8, gap: 2 },
+  rateMeta: {
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: "400",
+    fontFamily: appFonts.regular,
+  },
+  rateActionColumn: {
+    width: 112,
+    flexShrink: 0,
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+  },
+  price: {
+    maxWidth: "100%",
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
+    textAlign: "right",
+  },
+  priceUnavailable: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: "600",
+    fontFamily: appFonts.semibold,
+  },
+  reserveButton: {
+    minWidth: 88,
+    minHeight: 44,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 14,
+  },
+  reserveButtonPressed: { opacity: 0.84 },
+  reserveButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
+  },
+  emptyCard: {
+    minHeight: 108,
+    justifyContent: "center",
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 16,
+  },
+  emptyTitle: {
+    fontSize: 15,
+    lineHeight: 21,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
+  },
+  emptyCopy: {
+    marginTop: 5,
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: "400",
+    fontFamily: appFonts.regular,
+  },
 });
