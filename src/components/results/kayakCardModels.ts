@@ -1,6 +1,44 @@
-import type { FlightLeg, NormalizedFlightResult, PublicHotelResult, HotelClassificationStars } from "@/lib/types";
+import type { FlightFareTerm, FlightLeg, NormalizedFlightResult, PublicHotelResult, HotelClassificationStars } from "@/lib/types";
 import type { NormalizedCarResult } from "@/lib/cars/types";
 import type { SandboxOffer } from "@/services/travel/kayakSandbox";
+
+function providerValue(value: string) {
+  return value
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function kayakFareTerms(offer: SandboxOffer): FlightFareTerm[] {
+  const terms: FlightFareTerm[] = [];
+  if (offer.flightCarryOnIncluded !== undefined) terms.push({
+    category: "baggage",
+    semantic: offer.flightCarryOnIncluded ? "positive" : "informational",
+    text: offer.flightCarryOnIncluded ? "Carry-on included" : "See supplied baggage details",
+  });
+
+  for (const attribute of offer.attributes ?? []) {
+    if (!/^fees(?:\s|·|$)/i.test(attribute.label)) continue;
+    const label = attribute.label.replace(/^fees\s*·?\s*/i, "").trim();
+    if (!label || /bag number$/i.test(label)) continue;
+    const value = providerValue(attribute.value);
+    if (!value) continue;
+    const text = `${label}: ${value}`;
+    if (terms.some((term) => term.text.toLowerCase() === text.toLowerCase())) continue;
+    const normalizedValue = value.toLowerCase();
+    terms.push({
+      category: /bag|baggage/i.test(label) ? "baggage" : "fare",
+      semantic: /not included|not allowed|excluded/.test(normalizedValue)
+        ? "negative"
+        : /(^|\s)included($|\s)/.test(normalizedValue)
+          ? "positive"
+          : "informational",
+      text,
+    });
+  }
+  return terms;
+}
 
 /** Map provider legs, never infer elapsed time from timezone-less local timestamps. */
 export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<string, string> = {}): NormalizedFlightResult | null {
@@ -28,7 +66,7 @@ export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<strin
     id: `kayak-sandbox:${offer.id}`, provider:"KAYAK sandbox", airlineName:first.airline,
     airlineLogo:first.airlineLogo, flightNumber:first.flightNumber,
     ...legs[0], legs, cabinClass:offer.flightCabin || "Not supplied", fareBrandName:offer.flightFareFamily,
-    fareTerms: offer.flightCarryOnIncluded === undefined ? [] : [{ category:"baggage", semantic:offer.flightCarryOnIncluded ? "positive" : "informational", text:offer.flightCarryOnIncluded ? "Carry-on included" : "See supplied baggage details" }],
+    fareTerms: kayakFareTerms(offer),
     baggageInfo:offer.flightCarryOnIncluded === true ? "Carry-on included" : offer.flightCarryOnIncluded === false ? "See supplied baggage details" : "Baggage allowance not supplied by provider",
     refundInfo:"Not supplied by provider", price:offer.price * (offer.priceBasis === "per person" ? travelers : 1), currency:offer.currency,
     bookingUrl:offer.testUrl, partnerRedirectUrl:offer.testUrl, providerOfferId:offer.id,
