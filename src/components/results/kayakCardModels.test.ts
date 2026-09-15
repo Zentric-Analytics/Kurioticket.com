@@ -20,6 +20,7 @@ test("regular flight card model keeps all legs without inventing fare benefits",
   assert.doesNotMatch(model?.baggageInfo ?? "", /included/i);
   assert.equal(model?.legs?.[0].segments.length,1);
   assert.deepEqual(model?.badges,[]);
+  assert.equal(model?.bookingProviderName,"seller");
 });
 test("hotel and car models preserve images and mark unknown specifications",()=>{
   const offer={id:"1",title:"Test",description:"Supplier",details:[],price:100,currency:"USD",priceBasis:"total",testUrl:"https://affiliates.kayak.com/sandbox-clickout",images:[{url:"https://content.r9cdn.net/image.jpg",alt:"Test"}]};
@@ -42,7 +43,7 @@ test("flight comparison uses party totals and unknown durations cannot rank as z
   assert.equal(party?.price, 300);
   assert.equal(kayakFlightCardModel({...offer,flightCarryOnIncluded:true})?.baggageInfo,"Carry-on included");
   assert.doesNotMatch(kayakFlightCardModel({...offer,flightCarryOnIncluded:false})?.baggageInfo ?? "",/included/i);
-  assert.equal(party?.durationMinutes, Infinity);
+  assert.equal(party?.durationMinutes, Number.MAX_SAFE_INTEGER);
   assert.equal(party?.duration, "Duration not supplied");
   assert.equal(kayakFlightCardModel({...offer,priceBasis:"total"}, {adults:"3"})?.price,100);
 });

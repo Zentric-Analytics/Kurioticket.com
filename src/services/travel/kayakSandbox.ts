@@ -61,6 +61,8 @@ export type SandboxOffer = {
   flightCabin?: string;
   flightFareFamily?: string;
   flightCarryOnIncluded?: boolean;
+  /** Provider-supplied booking seller for customer-facing deal presentation. */
+  bookingProviderName?: string;
   attributes?: KayakAttribute[];
   carSpecs?: string[];
   carFilterOptions?: string[];
@@ -230,6 +232,7 @@ export function normalizeSandboxOffers(
           ? { hotelReviewCount: result.numberOfReviews } : {}),
         ...(vertical === "hotels" ? {amenities: kayakHotelAmenities(result.features, data.amenityDictionary)} : {}),
         ...(vertical === "flights" ? { flightLegs: kayakFlightLegs(data, result) } : {}),
+        ...(vertical === "flights" && description ? { bookingProviderName: description } : {}),
         ...(vertical === "flights" ? {flightCabin:kayakFlightCabin(data,result,option)} : {}),
         ...(vertical === "flights" && fareFamilyName(option.fareFamily) ? {flightFareFamily:fareFamilyName(option.fareFamily)} : {}),
         ...(vertical === "flights" && list(object(option.fees).carryOnBag).some(bag => object(bag).bagNumber === "first" && text(object(bag).restriction))
