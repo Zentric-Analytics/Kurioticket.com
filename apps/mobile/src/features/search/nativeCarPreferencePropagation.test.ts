@@ -38,9 +38,11 @@ test("language and currency presentation changes cannot restart or rewrite the c
   assert.doesNotMatch(card + currencyHook, /searchCars\(|setFilters\(|setSort\(/);
 });
 
-test("currency propagation preserves the existing Car card commerce markup", () => {
-  assert.match(card, /money\(offer\.currency, offer\.totalPrice\)/);
-  assert.match(card, /money\(offer\.currency, offer\.pricePerDay\)\} per day/);
+test("currency propagation preserves the daily-price Car card commerce contract", () => {
+  assert.match(card, /money\(offer\.currency, offer\.pricePerDay\)/);
+  assert.match(card, />per day<\/Text>/);
+  assert.doesNotMatch(card, /money\(offer\.currency, offer\.totalPrice\)/);
+  assert.doesNotMatch(card, /offer\.taxesAndFeesIncluded|includes taxes & fees|taxes & fees shown where known/);
   assert.match(card, /useSavedCar\(result, searchParams\)/);
   assert.match(card, /onPress=\{onViewDeal\}/);
 });
