@@ -50,11 +50,18 @@ test("Rates derives its single Kurioticket fallback card from supplied room data
 
 test("provider handoff takes precedence and shows the supplied provider price", () => {
   assert.match(ratesSource, /offers\.find\(\(offer\) => offer\.kind === "provider-handoff"\)/);
+  assert.match(ratesSource, /const visibleProviderOffer = providerOffer \?\? displayOnlyKayakOffer/);
   assert.match(ratesSource, /rows\.unshift\(\{/);
   assert.match(ratesSource, /providerName: providerName\.trim\(\) \|\| "Provider"/);
   assert.match(ratesSource, /const providerPrice = hasPrice \? nightlyPrice : null/);
   assert.match(ratesSource, /price: providerPrice \? `\$\{providerPrice\.formatted\}\/night` : "Price on provider"/);
   assert.match(ratesSource, /\$\{providerPrice\.accessibilityLabel\} per night/);
+});
+
+test("non-bookable KAYAK rates remain displayable when a supplied price exists", () => {
+  assert.match(ratesSource, /providerName\.trim\(\) === "KAYAK sandbox"/);
+  assert.match(ratesSource, /hasPrice &&[\s\S]*nightlyPrice[\s\S]*\? \(\{ id: "provider", kind: "provider-handoff" \} as const\)/);
+  assert.match(ratesSource, /const visibleProviderOffer = providerOffer \?\? displayOnlyKayakOffer/);
 });
 
 test("Kurioticket fallback keeps the bundled wordmark and existing app fonts", () => {
@@ -84,11 +91,11 @@ test("Rates shows stay or provider price and keeps the visual-only Reserve actio
   assert.doesNotMatch(ratesSource, /Selected|>Select<|accessibilityRole="radio"/);
 });
 
-test("Rates preserves live offer identities for future provider activation", () => {
+test("Rates preserves provider identities for bookable and display-only provider presentation", () => {
   assert.match(ratesSource, /offers\.find\(\(offer\) => offer\.kind === "internal-room-flow"\)/);
   assert.match(ratesSource, /offers\.find\(\(offer\) => offer\.kind === "provider-handoff"\)/);
   assert.match(ratesSource, /offerId: internalOffer\.id/);
-  assert.match(ratesSource, /offerId: providerOffer\.id/);
+  assert.match(ratesSource, /offerId: visibleProviderOffer\.id/);
 });
 
 test("Rates preserves loading and truthful empty states", () => {
