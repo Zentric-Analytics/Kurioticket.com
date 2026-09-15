@@ -36,7 +36,12 @@ const leg = {
   }],
 };
 
-function kayakOffer(id: string, providerOfferId: string, price: number): NormalizedFlightResult {
+function kayakOffer(
+  id: string,
+  providerOfferId: string,
+  price: number,
+  overrides: Partial<NormalizedFlightResult> = {},
+): NormalizedFlightResult {
   return {
     id,
     provider: "KAYAK sandbox",
@@ -68,6 +73,7 @@ function kayakOffer(id: string, providerOfferId: string, price: number): Normali
     travelEffortScore: 0,
     recommendationReasons: [],
     badges: [],
+    ...overrides,
   };
 }
 
@@ -91,4 +97,73 @@ test("KAYAK grouped fares preserve the offer selected from Flight Results as the
   assert.equal(details.fareChoices[0].offer.price, selected.price);
   assert.equal(details.flight.id, selected.id);
   assert.equal(details.flight.price, selected.price);
+});
+
+test("KAYAK equivalent booking sellers become deals under one supplied fare product", async () => {
+  const sellers = [
+    kayakOffer("kayak-sandbox:a", "offer-a", 543, { bookingProviderName: "Seller A" }),
+    kayakOffer("kayak-sandbox:b", "offer-b", 544, { bookingProviderName: "Seller B" }),
+    kayakOffer("kayak-sandbox:c", "offer-c", 590, { bookingProviderName: "Seller C" }),
+  ];
+  const details = await buildProviderAwareFlightDetails({ cachedSelected: sellers[0], cachedAlternatives: sellers, search, now: 1 });
+  assert.equal(details.status, "available");
+  if (details.status !== "available") return;
+  assert.equal(details.fareChoices.length, 1);
+  assert.deepEqual(details.fareChoices[0].deals.map(({ providerName, price }) => [providerName, price]), [
+    ["Seller A", 543], ["Seller B", 544], ["Seller C", 590],
+  ]);
+});
+
+test("KAYAK unbranded equivalent sellers group without manufacturing a fare family", async () => {
+  const selected = kayakOffer("kayak-sandbox:a", "offer-a", 544, { fareBrandName: undefined, bookingProviderName: "Seller A" });
+  const sibling = kayakOffer("kayak-sandbox:b", "offer-b", 544, { fareBrandName: undefined, bookingProviderName: "Seller B" });
+  const details = await buildProviderAwareFlightDetails({ cachedSelected: selected, cachedAlternatives: [selected, sibling], search, now: 1 });
+  assert.equal(details.status, "available");
+  if (details.status !== "available") return;
+  assert.equal(details.fareChoices.length, 1);
+  assert.equal(details.fareChoices[0].label, "Economy");
+  assert.equal(details.fareChoices[0].deals.length, 2);
+});
+
+test("KAYAK provider-supplied fare families remain distinct even at equal prices", async () => {
+  const basic = kayakOffer("kayak-sandbox:basic", "offer-basic", 544, { fareBrandName: "Basic Economy", bookingProviderName: "Seller A" });
+  const flexible = kayakOffer("kayak-sandbox:flex", "offer-flex", 544, { fareBrandName: "Flexible Economy", bookingProviderName: "Seller B" });
+  const details = await buildProviderAwareFlightDetails({ cachedSelected: basic, cachedAlternatives: [basic, flexible], search, now: 1 });
+  assert.equal(details.status, "available");
+  if (details.status !== "available") return;
+  assert.deepEqual(details.fareChoices.map(({ label }) => label).sort(), ["Basic Economy", "Flexible Economy"]);
+});
+
+test("KAYAK material provider terms keep otherwise matching fare products distinct", async () => {
+  const included = kayakOffer("kayak-sandbox:included", "offer-included", 544, { bookingProviderName: "Seller A", fareTerms: [{ category: "baggage", semantic: "positive", text: "Carry-on included" }] });
+  const restricted = kayakOffer("kayak-sandbox:restricted", "offer-restricted", 544, { bookingProviderName: "Seller B", fareTerms: [{ category: "baggage", semantic: "informational", text: "See supplied baggage details" }] });
+  const details = await buildProviderAwareFlightDetails({ cachedSelected: included, cachedAlternatives: [included, restricted], search, now: 1 });
+  assert.equal(details.status, "available");
+  if (details.status !== "available") return;
+  assert.equal(details.fareChoices.length, 2);
+});
+
+test("KAYAK grouping retains the selected seller offer instead of choosing a cheaper deal", async () => {
+  const cheaper = kayakOffer("kayak-sandbox:a", "offer-a", 543, { bookingProviderName: "Seller A" });
+  const selected = kayakOffer("kayak-sandbox:b", "offer-b", 544, { bookingProviderName: "Seller B" });
+  const details = await buildProviderAwareFlightDetails({ cachedSelected: selected, cachedAlternatives: [cheaper, selected], search, now: 1 });
+  assert.equal(details.status, "available");
+  if (details.status !== "available") return;
+  assert.equal(details.fareChoices.length, 1);
+  assert.equal(details.fareChoices[0].offer.id, selected.id);
+  assert.equal(details.fareChoices[0].selectedOffer, true);
+  assert.deepEqual(details.fareChoices[0].deals.map(({ offerId }) => offerId), [cheaper.id, selected.id]);
+});
+
+test("KAYAK alternatives with another itinerary never enter the selected fare deals", async () => {
+  const selected = kayakOffer("kayak-sandbox:a", "offer-a", 543, { bookingProviderName: "Seller A" });
+  const other = kayakOffer("kayak-sandbox:other", "offer-other", 500, {
+    bookingProviderName: "Other Seller", destinationAirport: "LAX",
+    legs: [{ ...leg, destinationAirport: "LAX", segments: [{ ...leg.segments[0], destinationAirport: "LAX" }] }],
+  });
+  const details = await buildProviderAwareFlightDetails({ cachedSelected: selected, cachedAlternatives: [selected, other], search, now: 1 });
+  assert.equal(details.status, "available");
+  if (details.status !== "available") return;
+  assert.equal(details.fareChoices[0].deals.length, 1);
+  assert.equal(details.fareChoices[0].deals[0].offerId, selected.id);
 });

@@ -12,6 +12,7 @@ const matrices = {
     "src/shared/presentation/travelEntryPresentation.test.ts",
     "src/services/travel/providers/duffelProvider.searchContract.test.ts",
     "src/services/travel/standaloneFlightDetails.selectedKayakOffer.test.ts",
+    "src/services/travel/kayakFareMaterialGrouping.test.ts",
     "src/lib/hotels/hotelDiscoveryIntent.test.ts",
     "src/lib/hotels/hotelExplorationSearch.test.ts",
     "src/lib/hotels/hotelResultsBoundary.test.ts",

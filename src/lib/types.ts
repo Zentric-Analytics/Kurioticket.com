@@ -174,6 +174,8 @@ export type FlightFareTerm = {
 export type NormalizedFlightResult = {
   id: string;
   provider: string;
+  /** Provider-supplied booking seller used only for customer-facing deal presentation. */
+  bookingProviderName?: string;
   airlineName: string;
   airlineLogo?: string | null;
   flightNumber?: string;

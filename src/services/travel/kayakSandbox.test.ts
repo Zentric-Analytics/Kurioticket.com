@@ -32,6 +32,11 @@ test("flight fare families preserve only provider-supplied names", () => {
   assert.equal(normalizeSandboxOffers("flights",named)[0].flightFareFamily,"Main Cabin Flexible");
 });
 
+test("flight booking options preserve their provider-supplied seller identity", () => {
+  const data={currency:"USD",priceMode:"total",providers:{SELLER:{displayName:"Seller Display"}},legs:{l:{segments:[{id:"s"}]}},segments:{s:{origin:"BOS",destination:"JFK",airline:"AA"}},results:[{legs:[{id:"l"}],bookingOptions:[{type:"regular",providerCode:"SELLER",displayPrice:{price:100},bookingUrl:click}]}]};
+  assert.equal(normalizeSandboxOffers("flights",data)[0].bookingProviderName, "Seller Display");
+});
+
 test("hotel guest scores preserve the provider rating without inventing unrated scores", () => {
   for (const guestRating of [8.6, 0, 10, -1, 11, NaN, Infinity, "8.6", undefined]) {
     const [offer] = normalizeSandboxOffers("hotels", {currencyCode:"USD",results:[{

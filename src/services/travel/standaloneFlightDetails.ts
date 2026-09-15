@@ -156,6 +156,22 @@ function materialKey(offer: NormalizedFlightResult, upsellOfferIds: ReadonlySet<
   return ["exact-offer", canonical(offer.provider), offer.providerOfferId || offer.id].join("|");
 }
 
+function kayakMaterialKey(offer: NormalizedFlightResult) {
+  const materialTerms = (offer.fareTerms ?? []).map((term) => ({
+    category: term.category,
+    semantic: term.semantic,
+    text: canonical(term.text),
+    legDirection: term.legDirection,
+    legIndex: term.legIndex,
+  })).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+  return JSON.stringify({
+    provider: canonical(offer.provider),
+    fareBrand: providerBrandIdentity(offer),
+    cabinClass: canonical(offer.cabinClass),
+    materialTerms,
+  });
+}
+
 function fareTerms(offer: NormalizedFlightResult) {
   return offer.fareTerms?.length ? offer.fareTerms : [
     { category: "baggage" as const, semantic: offer.baggageInfo.toLowerCase().includes("included") ? "positive" as const : "informational" as const, text: offer.baggageInfo },
@@ -172,7 +188,7 @@ function fareLabel(offer: NormalizedFlightResult) {
 
 export function buildMaterialFareChoices(
   offers: NormalizedFlightResult[],
-  { upsellOfferIds = new Set<string>(), selectedProviderOfferId, providerSuppliedTermsOnly = false }: { upsellOfferIds?: ReadonlySet<string>; selectedProviderOfferId?: string; providerSuppliedTermsOnly?: boolean } = {},
+  { upsellOfferIds = new Set<string>(), selectedProviderOfferId, providerSuppliedTermsOnly = false, groupKayakBookingOptions = false }: { upsellOfferIds?: ReadonlySet<string>; selectedProviderOfferId?: string; providerSuppliedTermsOnly?: boolean; groupKayakBookingOptions?: boolean } = {},
 ): Array<{
   source: NormalizedFlightResult;
   memberOffers: NormalizedFlightResult[];
@@ -181,7 +197,7 @@ export function buildMaterialFareChoices(
 }> {
   const groups = new Map<string, NormalizedFlightResult[]>();
   for (const offer of offers) {
-    const key = materialKey(offer, upsellOfferIds);
+    const key = groupKayakBookingOptions ? kayakMaterialKey(offer) : materialKey(offer, upsellOfferIds);
     groups.set(key, [...(groups.get(key) ?? []), offer]);
   }
   const choices = [...groups.entries()]
@@ -197,16 +213,21 @@ export function buildMaterialFareChoices(
       for (const offer of group) {
         const dealHandoff = resolveFlightHandoff(offer);
         if (!dealHandoff || !offer.id || !Number.isFinite(offer.price) || offer.price <= 0) continue;
-        const providerIdentity = canonical(dealHandoff.providerName);
+        const providerName = offer.bookingProviderName?.trim() || dealHandoff.providerName;
+        const providerIdentity = canonical(providerName);
         const candidate: FlightDetailsDeal = {
           key: `deal-${createHash("sha256").update(`${key}|${providerIdentity}`).digest("base64url").slice(0, 16)}`,
           offerId: offer.id,
-          providerName: dealHandoff.providerName,
+          providerName,
           price: offer.price,
           currency: offer.currency,
         };
         const current = dealsByProvider.get(providerIdentity);
-        if (!current || candidate.price < current.price || candidate.price === current.price && candidate.offerId.localeCompare(current.offerId) < 0)
+        const candidateIsSelected = offer.providerOfferId === selectedProviderOfferId;
+        const currentIsSelected = group.some(({ id, providerOfferId }) =>
+          id === current?.offerId && providerOfferId === selectedProviderOfferId,
+        );
+        if (!current || candidateIsSelected || !currentIsSelected && (candidate.price < current.price || candidate.price === current.price && candidate.offerId.localeCompare(current.offerId) < 0))
           dealsByProvider.set(providerIdentity, candidate);
       }
       const deals = [...dealsByProvider.values()].sort((left, right) =>
@@ -271,6 +292,7 @@ export async function buildKayakSandboxFlightDetails({
   const fareChoices = buildMaterialFareChoices(offers, {
     selectedProviderOfferId: cachedSelected.providerOfferId,
     providerSuppliedTermsOnly: true,
+    groupKayakBookingOptions: true,
   });
   const initial = fareChoices.find(({ memberOffers }) => memberOffers.some(({ id }) => id === cachedSelected.id)) ?? fareChoices[0];
   if (!initial) return { status: "unavailable", error: unavailableMessage };
