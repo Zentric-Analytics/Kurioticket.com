@@ -85,12 +85,15 @@ test("content below the three tabs shares one section-heading hierarchy", () => 
   assert.match(native, /<Text style=\{\[s\.locationHeading,[^>]*>Location<\/Text>/);
   for (const contract of ["marginTop:4", "fontSize:14", "lineHeight:20", 'fontWeight:"500"'])
     assert.ok(style("stay").includes(contract));
-  for (const contract of ["marginTop:20", "borderRadius:14", "paddingHorizontal:16", "paddingVertical:16", 'overflow:"hidden"'])
+  for (const contract of ["marginTop:20", "gap:10"])
+    assert.ok(style("dealList").includes(contract));
+  for (const contract of ["borderRadius:14", "paddingHorizontal:8", "paddingVertical:12", 'overflow:"hidden"'])
     assert.ok(style("compareCard").includes(contract));
-  assert.doesNotMatch(style("compareCard"), /marginHorizontal:-/);
+  assert.doesNotMatch(style("compareCard"), /marginHorizontal:-|marginTop:20/);
   assert.match(native, /logo:\{width:108,height:24,flexShrink:0\}/);
   assert.match(native, /radio:\{width:16,height:16,borderRadius:8,borderWidth:1\.5/);
   assert.match(native, /radioDot:\{width:6,height:6,borderRadius:3/);
+  assert.match(native, /comparisonCarOffers\(result\.offers\)/);
   assert.match(native, /primaryValidCarOffer\(result\.offers\)/);
 
   for (const contract of ["paddingVertical:20", "borderTopWidth:1", "borderBottomWidth:1"])
@@ -115,29 +118,28 @@ test("content below the three tabs shares one section-heading hierarchy", () => 
   assert.match(native, /<Clock3 size=\{16\} color=\{theme\.dark\?theme\.icon:"#64748B"\}/);
 });
 
-test("Compare deals exposes truthful car-offer terms without inventing provider claims", () => {
+test("Compare deals renders compact selectable real-price cards and leaves totals to the dock", () => {
   const compareStart = native.indexOf("function Compare(");
   const compareEnd = native.indexOf("function TimelineEntry", compareStart);
   const compare = native.slice(compareStart, compareEnd);
 
-  assert.match(compare, /offer\.payAtPickup\?<Text[^>]*>Pay at pickup<\/Text>:null/);
+  assert.match(compare, /accessibilityRole="radiogroup" accessibilityLabel="Car deal options"/);
+  assert.match(compare, /offers\.map\(offer=>/);
+  assert.match(compare, /accessibilityRole="radio" accessibilityState=\{\{selected\}\}/);
+  assert.match(compare, /onPress=\{\(\)=>onSelectOffer\(offer\.id\)\}/);
   assert.match(compare, /offer\.freeCancellation\?"Free cancellation":"Non-refundable"/);
   assert.match(compare, /nativeCarFuelPolicyLabel\(result\.fuelPolicy\)/);
   assert.match(compare, /result\.mileagePolicy==="unlimited"\?"Unlimited mileage":nativeCarMileageLabel\(result\)/);
   assert.match(compare, /money\(offer\.currency,offer\.pricePerDay\)/);
-  assert.match(compare, /money\(offer\.currency,offer\.totalPrice\)/);
-  assert.match(compare, /offer\.taxesAndFeesIncluded\?<Text[^>]*>Taxes & fees included<\/Text>:null/);
-  assert.match(compare, /Car supplied by:/);
-  assert.match(compare, /!\/static fixture\|supplier not supplied\/i\.test\(supplier\)/);
-  assert.doesNotMatch(compare, /Mobile deal|Book<|View deal|Reserve/);
+  assert.doesNotMatch(compare, /offer\.totalPrice|Taxes & fees included|Car supplied by:|Pay at pickup|Mobile deal|Book<|View deal|Reserve/);
 
-  for (const contract of ["flexDirection:\"row\"", "alignItems:\"flex-start\"", "gap:14"])
-    assert.ok(style("dealBody").includes(contract), contract);
-  for (const contract of ["gap:9"])
+  for (const contract of ["marginTop:12", 'flexDirection:"row"', 'alignItems:"flex-end"', "gap:10"])
+    assert.ok(style("compareBottom").includes(contract), contract);
+  for (const contract of ["flex:1", "minWidth:0", 'flexDirection:"row"', 'flexWrap:"wrap"', "columnGap:10", "rowGap:7"])
     assert.ok(style("benefits").includes(contract), contract);
-  for (const contract of ['flexDirection:"row"', 'alignItems:"center"', "gap:7"])
+  for (const contract of ['flexDirection:"row"', 'alignItems:"center"', "gap:3", "flexShrink:0"])
     assert.ok(style("benefit").includes(contract), contract);
-  for (const contract of ["width:112", "flexShrink:0", 'alignItems:"flex-end"'])
+  for (const contract of ["flexShrink:0", 'alignItems:"flex-end"'])
     assert.ok(style("comparePrice").includes(contract), contract);
 });
 
