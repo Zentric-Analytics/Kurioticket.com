@@ -116,6 +116,14 @@ export function NativeHotelRatesSection({
 
   const internalOffer = offers.find((offer) => offer.kind === "internal-room-flow") ?? null;
   const providerOffer = offers.find((offer) => offer.kind === "provider-handoff") ?? null;
+  const displayOnlyKayakOffer =
+    !providerOffer &&
+    providerName.trim() === "KAYAK sandbox" &&
+    hasPrice &&
+    nightlyPrice
+      ? ({ id: "provider", kind: "provider-handoff" } as const)
+      : null;
+  const visibleProviderOffer = providerOffer ?? displayOnlyKayakOffer;
   const rows: RateRow[] = [];
 
   if (internalOffer) {
@@ -139,7 +147,7 @@ export function NativeHotelRatesSection({
     }
   }
 
-  if (providerOffer) {
+  if (visibleProviderOffer) {
     const roomParts = (roomType ?? "")
       .split(";")
       .map((part) => part.trim())
@@ -151,8 +159,8 @@ export function NativeHotelRatesSection({
     );
     const providerPrice = hasPrice ? nightlyPrice : null;
     rows.unshift({
-      id: `provider-${providerOffer.id}`,
-      offerId: providerOffer.id,
+      id: `provider-${visibleProviderOffer.id}`,
+      offerId: visibleProviderOffer.id,
       providerKind: "provider",
       providerName: providerName.trim() || "Provider",
       title: providerTitle,
