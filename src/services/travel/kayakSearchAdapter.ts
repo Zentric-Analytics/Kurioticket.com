@@ -18,10 +18,9 @@ export function adaptKayakHotelSearch(input: Record<string, string | undefined>)
 
 export function adaptKayakCarSearch(input: Record<string, string | undefined>): AdaptedSearch {
   if ((input.dropoffLocation && input.dropoffLocation !== input.pickupLocation) ||
-      (input.returnToDifferentLocation && input.returnToDifferentLocation !== "false") ||
-      (input.driverAge && input.driverAge !== "18-70") || input.vehicleType ||
+      (input.returnToDifferentLocation && input.returnToDifferentLocation !== "false") || input.vehicleType ||
       (input.currency && input.currency !== "USD")) {
-    return { supported: false, reason: "Car sandbox searches require the same airport, no specific driver age or vehicle filter, and USD prices." };
+    return { supported: false, reason: "Car sandbox searches require the same airport, no specific vehicle filter, and USD prices." };
   }
   const parsed = kayakSearchSchema.safeParse({ vertical: "cars", origin: input.pickupLocation,
     departure: input.pickupDate, returnDate: input.dropoffDate,

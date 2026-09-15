@@ -18,7 +18,10 @@ test("car sandbox preserves supported rental criteria without silently changing 
   assert.deepEqual(adaptKayakCarSearch(input), { supported: true, search: {
     vertical: "cars", origin: "BOS", departure: input.pickupDate, returnDate: input.dropoffDate,
   } });
-  for (const change of [{ pickupTime: "25:00" }, { dropoffLocation: "JFK" }, { driverAge: "21" }, { vehicleType: "suv" }, { currency: "EUR" }]) {
+  // The sandbox has no driver-age input.  Age remains part of the normal
+  // Kurioticket search, but must not suppress otherwise valid sandbox offers.
+  assert.equal(adaptKayakCarSearch({ ...input, driverAge: "21" }).supported, true);
+  for (const change of [{ pickupTime: "25:00" }, { dropoffLocation: "JFK" }, { vehicleType: "suv" }, { currency: "EUR" }]) {
     assert.equal(adaptKayakCarSearch({ ...input, ...change }).supported, false);
   }
 });
