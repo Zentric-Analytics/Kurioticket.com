@@ -119,6 +119,7 @@ test("hotel details provider eligibility preserves live price and safe URL rules
   assert.equal(canUseHotelDetailsProviderLink(hotel()), true);
   assert.equal(canUseHotelDetailsProviderLink(hotel({ partnerRedirectUrl: "", bookingUrl: "https://example.com/book" })), true);
   assert.equal(canUseHotelDetailsProviderLink(hotel({ dataSource: "demo" })), false);
+  assert.equal(canUseHotelDetailsProviderLink(hotel({ dataSource: "demo", provider: "KAYAK sandbox" })), true);
   assert.equal(canUseHotelDetailsProviderLink(hotel({ inventoryKind: "discovery" })), false);
   assert.equal(canUseHotelDetailsProviderLink(hotel({ totalPrice: 0 })), false);
   assert.equal(canUseHotelDetailsProviderLink(hotel({ partnerRedirectUrl: "", bookingUrl: "" })), false);

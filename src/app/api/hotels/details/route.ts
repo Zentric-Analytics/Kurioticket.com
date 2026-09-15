@@ -7,6 +7,8 @@ import {
   getStaticHotelById,
 } from "@/services/travel/staticHotelResults";
 import type { StaticHotelRecord } from "@/services/travel/staticHotelCatalogue";
+import { getProviderResult } from "@/services/travel/providerResultCache";
+import type { NormalizedHotelResult } from "@/lib/types";
 
 function toPublicPropertyDetails(record: StaticHotelRecord | null) {
   if (!record) return null;
@@ -27,7 +29,7 @@ function toPublicPropertyDetails(record: StaticHotelRecord | null) {
     accessibility: [...record.accessibility],
   };
 }
-export function GET(request: Request) {
+export async function GET(request: Request) {
   const url = new URL(request.url);
   const id = url.searchParams.get("id")?.trim();
   if (!id)
@@ -50,7 +52,9 @@ export function GET(request: Request) {
     guests: Number(url.searchParams.get("guests")) || 2,
     rooms: Number(url.searchParams.get("rooms")) || 1,
   };
-  const cached = getHotelFromCache(id);
+  const cached = getHotelFromCache(id) ?? (!record
+    ? await getProviderResult<NormalizedHotelResult>("hotel", id)
+    : null);
   const relatedHotels = record
     ? buildRelatedStaticHotelResults(record, search).map(toPublicHotel)
     : [];

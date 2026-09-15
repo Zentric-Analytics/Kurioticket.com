@@ -187,7 +187,7 @@ export function getHotelDetailsCancellationText(value: string, t: (key: string) 
 }
 
 export function canUseHotelDetailsProviderLink(hotel: PublicHotelResult | null) {
-  if (!hotel || hotel.dataSource === "demo" || hotel.inventoryKind === "discovery" || !getHotelPriceDetails(hotel)) return false;
+  if (!hotel || (hotel.dataSource === "demo" && hotel.provider !== "KAYAK sandbox") || hotel.inventoryKind === "discovery" || !getHotelPriceDetails(hotel)) return false;
   const candidate = hotel.partnerRedirectUrl || hotel.bookingUrl;
   if (!candidate) return false;
   return isSafeHotelDetailsHttpUrl(candidate);

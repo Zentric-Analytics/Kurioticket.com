@@ -11,6 +11,7 @@ import type { NormalizedFlightResult } from "@/lib/types";
 import type { FlightHandoff } from "@/services/travel/flightHandoff";
 import { revalidateFlightRedirectHandoff } from "@/services/travel/flightRedirectHandoff";
 import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
+import { getProviderResult } from "@/services/travel/providerResultCache";
 
 export function previewAllowsKayakSandboxHandoff(
   body: { id?: string; type?: "flight" | "hotel" },
@@ -33,7 +34,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Redirect target is required." }, { status: 400 });
   }
 
-  let target = body.type === "flight" ? await getFlightFromCache(body.id) : getHotelFromCache(body.id);
+  let target = body.type === "flight"
+    ? await getFlightFromCache(body.id)
+    : getHotelFromCache(body.id) ?? await getProviderResult<NormalizedHotelResult>("hotel", body.id);
   if (!target) {
     return NextResponse.json(
       { error: "This partner link expired. Please search again for current prices." },
@@ -74,7 +77,7 @@ export async function POST(request: Request) {
   const hotelTarget = body.type === "hotel" ? (target as NormalizedHotelResult) : null;
   const hotelPriceDetails = hotelTarget ? getHotelPriceDetails(hotelTarget) : null;
 
-  if (body.type === "hotel" && "dataSource" in target && target.dataSource === "demo") {
+  if (body.type === "hotel" && "dataSource" in target && target.dataSource === "demo" && target.provider !== "KAYAK sandbox") {
     return NextResponse.json(
       {
         error:
