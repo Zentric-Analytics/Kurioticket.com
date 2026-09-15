@@ -167,12 +167,10 @@ test("native gallery remains interactive and full-bleed with the two-level mobil
   assert.doesNotMatch(gallery, /Previous photo|Next photo|ChevronLeft|ChevronRight/);
 });
 
-test("active Hotel detail owns theme-aware accents and Reserve controls", () => {
+test("active Hotel detail keeps theme-aware accents without exposing an inactive rate action", () => {
   assert.match(hotel, /const hotelAccent = theme\.dark \? "#8FB5FF" : colors\.blue/);
   assert.match(hotel, /<NativeHotelRatesSection[\s\S]*?accentColor=\{hotelAccent\}/);
-  assert.match(rates, /s\.reserveButton,[\s\S]*?backgroundColor: accentColor/);
-  assert.match(rates, />Reserve<\/Text>/);
-  assert.doesNotMatch(rates, /Selected|>Select</);
+  assert.doesNotMatch(rates, /reserveButton|>Reserve<\/Text>|Selected|>Select<|accessibilityRole="button"/);
   assert.doesNotMatch(rates, /borderWidth: 6/);
   assert.doesNotMatch(hotelSource, /continueButton|continuePressed/);
   assert.match(tokens, /blue: "#004BB8"/);
@@ -200,14 +198,13 @@ test("active Hotel provider selection validates candidates before precedence", (
   assert.doesNotMatch(hotel, /result\.partnerRedirectUrl \|\| result\.bookingUrl/);
 });
 
-test("active Hotel Rates preserve each Reserve continuation without a booking dock", () => {
+test("active Hotel Rates retain future continuation plumbing without exposing an inactive action", () => {
   assert.match(hotel, /nativeHotelOffers\(internalRoomFlowAvailable, providerBookable\)/);
   assert.match(hotel, /const offer = hotelOffers\.find\(\(\{ id \}\) => id === offerId\)/);
   assert.match(hotel, /if \(offer\.kind === "internal-room-flow"\)/);
   assert.match(hotel, /offer\.kind !== "provider-handoff"/);
   assert.match(hotel, /Linking\.openURL\(redirectUrl\)/);
-  assert.match(rates, /onPress=\{\(\) => onSelectOffer\(row\.offerId\)\}/);
-  assert.match(rates, /accessibilityRole="button"/);
+  assert.doesNotMatch(rates, /onPress=\{\(\) => onSelectOffer\(row\.offerId\)\}|accessibilityRole="button"|>Reserve<\/Text>/);
   assert.doesNotMatch(hotel, /estimated stay total|Continue booking/);
 });
 

@@ -1,4 +1,4 @@
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 import type { NativeHotelOffer } from "./nativeHotelDetailsModel";
 import type { PresentedHotelRoomOption } from "./NativeHotelDetails";
 import { appFonts } from "../../theme/typography";
@@ -107,14 +107,12 @@ function addRateRow(groups: RateGroup[], groupTitle: string, row: RateRow) {
 
 export function NativeHotelRatesSection({
   offers,
-  onSelectOffer,
   roomOptions,
   providerName,
   roomType,
   cancellationInfo,
   detailsStatus,
   theme,
-  accentColor,
 }: {
   offers: NativeHotelOffer[];
   selectedOfferId: NativeHotelOffer["id"] | null;
@@ -245,18 +243,6 @@ export function NativeHotelRatesSection({
                   >
                     {row.price}
                   </Text>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`Reserve ${row.title} with ${row.providerName}`}
-                    onPress={() => onSelectOffer(row.offerId)}
-                    style={({ pressed }) => [
-                      s.reserveButton,
-                      { backgroundColor: accentColor },
-                      pressed && s.reserveButtonPressed,
-                    ]}
-                  >
-                    <Text style={s.reserveButtonText}>Reserve</Text>
-                  </Pressable>
                 </View>
               </View>
             ))}
@@ -268,31 +254,31 @@ export function NativeHotelRatesSection({
 }
 
 const s = StyleSheet.create({
-  section: { paddingBottom: 12, gap: 18 },
-  groupSection: { gap: 8 },
+  section: { paddingBottom: 12, gap: 22 },
+  groupSection: { gap: 20 },
   groupTitle: {
-    fontSize: 17,
-    lineHeight: 23,
+    fontSize: 16,
+    lineHeight: 22,
     fontWeight: "700",
     fontFamily: appFonts.bold,
   },
   groupCard: { overflow: "hidden", borderWidth: 1, borderRadius: 14 },
   rateRow: {
-    minHeight: 142,
+    minHeight: 134,
     flexDirection: "row",
     alignItems: "stretch",
     paddingHorizontal: 16,
-    paddingVertical: 15,
-    gap: 14,
+    paddingVertical: 20,
+    gap: 12,
   },
   rateCopy: { flex: 1, minWidth: 0, justifyContent: "flex-start" },
-  brandLogo: { width: 104, height: 22, flexShrink: 0, marginBottom: 10 },
+  brandLogo: { width: 88, height: 18, flexShrink: 0, marginBottom: 8 },
   providerName: {
     fontSize: 15,
     lineHeight: 20,
     fontWeight: "700",
     fontFamily: appFonts.bold,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   rateTitle: {
     fontSize: 15,
@@ -300,18 +286,18 @@ const s = StyleSheet.create({
     fontWeight: "700",
     fontFamily: appFonts.bold,
   },
-  benefitList: { marginTop: 8, gap: 2 },
+  benefitList: { marginTop: "auto", paddingTop: 18, gap: 1 },
   rateMeta: {
     fontSize: 13,
-    lineHeight: 19,
+    lineHeight: 18,
     fontWeight: "400",
     fontFamily: appFonts.regular,
   },
   rateActionColumn: {
-    width: 112,
+    width: 104,
     flexShrink: 0,
     alignItems: "flex-end",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
   },
   price: {
     maxWidth: "100%",
@@ -326,22 +312,6 @@ const s = StyleSheet.create({
     lineHeight: 18,
     fontWeight: "600",
     fontFamily: appFonts.semibold,
-  },
-  reserveButton: {
-    minWidth: 88,
-    minHeight: 44,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 14,
-  },
-  reserveButtonPressed: { opacity: 0.84 },
-  reserveButtonText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    lineHeight: 20,
-    fontWeight: "700",
-    fontFamily: appFonts.bold,
   },
   emptyCard: {
     minHeight: 108,
