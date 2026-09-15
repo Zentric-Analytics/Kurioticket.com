@@ -100,10 +100,16 @@ test("content below the three tabs shares one section-heading hierarchy", () => 
     assert.ok(style("timelineLocation").includes(contract));
   for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"400"', "fontFamily:appFonts.regular"])
     assert.ok(style("timelineDate").includes(contract));
-  for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"600"', "fontFamily:appFonts.semibold"])
-    assert.ok(style("pickupType").includes(contract));
-  for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"400"', "fontFamily:appFonts.regular"])
-    assert.ok(style("instructions").includes(contract));
+  assert.ok(style("requirements").includes("marginTop:20"));
+  for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"700"', "fontFamily:appFonts.bold"])
+    assert.ok(style("requirementsHeading").includes(contract));
+  for (const contract of ["marginTop:10", 'flexDirection:"row"', 'alignItems:"center"', "gap:10"])
+    assert.ok(style("requirementRow").includes(contract));
+  for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"500"', "fontFamily:appFonts.medium"])
+    assert.ok(style("requirementText").includes(contract));
+  assert.match(native, /<Text style=\{\[s\.requirementsHeading,[^>]*>Pickup requirements<\/Text>/);
+  assert.match(native, /<IdCard size=\{19\}/);
+  assert.match(native, />Valid driver's license<\/Text>/);
   assert.match(native, /<MapPin size=\{16\} color="#004BB8"/);
   assert.match(native, /<Clock3 size=\{16\} color=\{theme\.dark\?theme\.icon:"#64748B"\}/);
 });
