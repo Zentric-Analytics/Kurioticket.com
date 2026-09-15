@@ -25,7 +25,11 @@ test("shared native search picker motion has the approved contract", () => {
   assert.match(source, /toValue: currentTravelDistance\(\)/);
   assert.match(source, /useNativeDriver: true/g);
   assert.match(source, /backdropStyle: \{ opacity: backdropOpacity \}/);
-  assert.match(source, /stationaryOpening && visible[\s\S]*?translateY: 0[\s\S]*?translateY: sheetTranslateY/);
+  assert.match(source, /stationaryOpening && visible[\s\S]*?height: stableStationarySheetHeight\.current[\s\S]*?translateY: 0[\s\S]*?stationaryOpening[\s\S]*?height: stableStationarySheetHeight\.current[\s\S]*?translateY: sheetTranslateY/);
+  assert.match(source, /SEARCH_PICKER_STATIONARY_HEIGHT_RATIO = 0\.82/);
+  assert.match(source, /const \{ top: topSafeAreaInset, bottom: bottomSafeAreaInset \} = useSafeAreaInsets\(\)/);
+  assert.match(source, /Math\.max\(0, windowHeight - topSafeAreaInset\) \* SEARCH_PICKER_STATIONARY_HEIGHT_RATIO/);
+  assert.match(source, /if \(!renderedRef\.current\)[\s\S]*stableStationarySheetHeight\.current/);
   assert.match(source, /generation\.current/);
   assert.match(source, /stopAnimation\(\)/);
   assert.match(source, /setRendered\(false\)/);
