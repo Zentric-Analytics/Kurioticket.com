@@ -34,8 +34,8 @@ test("every immediate location picker uses a close header and has no bottom acti
   const car = slice(cars, "export function CarLocationSheet", "function FieldError");
   const packageAirport = slice(packages, "function AirportSheet", "const PACKAGE_TRAVELER_ROWS");
   assert.match(airport, /<PickerSheetHeader[^>]+onClose=\{dismissAirportSheet\}[^>]+closeLabel=/);
-  assert.match(hotel, /<PickerSheetHeader title="Choose destination" onClose=\{onCancel\} closeLabel="Close hotel destination picker"\/>/);
-  assert.match(car, /<PickerSheetHeader[^>]+onClose=\{onClose\}[^>]+closeLabel=/);
+  assert.match(hotel, /<PickerSheetHeader title="Choose destination" onClose=\{dismissDestinationSheet\} closeLabel="Close hotel destination picker"\/>/);
+  assert.match(car, /<PickerSheetHeader[^>]+onClose=\{dismissLocationSheet\}[^>]+closeLabel=/);
   assert.match(packageAirport, /<PickerSheetHeader title=\{context\.title\} onClose=\{onClose\}[^>]+closeLabel=/);
   for (const target of [airport, hotel, car, packageAirport]) {
     assert.doesNotMatch(target, /PrimaryButton label="Done"/);
