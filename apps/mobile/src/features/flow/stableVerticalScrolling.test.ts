@@ -70,7 +70,8 @@ test("car results keep separate stable virtualized vertical and horizontal scrol
   const source = read("src/features/search/ApprovedCarResultsScreen.tsx");
   const horizontalEnd = source.indexOf("</ScrollView>", source.indexOf("<ScrollView horizontal"));
   const verticalStart = source.indexOf("<FlatList ref={carScrollRef}", horizontalEnd);
-  const verticalOwner = source.slice(verticalStart, source.indexOf("/>", verticalStart) + 2);
+  const contentStyleStart = source.indexOf("contentContainerStyle=", verticalStart);
+  const verticalOwner = source.slice(verticalStart, source.indexOf("/>", contentStyleStart) + 2);
   const layout = source.slice(source.indexOf("return <SafeAreaView"), source.indexOf("function CarResultsHeader"));
   assert.equal(layout.match(/<ScrollView/g)?.length, 1);
   assert.equal(layout.match(/<FlatList/g)?.length, 1);
