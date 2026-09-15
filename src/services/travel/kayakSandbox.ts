@@ -59,6 +59,7 @@ export type SandboxOffer = {
   images?: KayakImage[];
   flightLegs?: KayakFlightLeg[];
   flightCabin?: string;
+  flightFareFamily?: string;
   flightCarryOnIncluded?: boolean;
   attributes?: KayakAttribute[];
   carSpecs?: string[];
@@ -77,6 +78,12 @@ const object = (value: unknown): ObjectValue =>
 const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 const text = (value: unknown): string =>
   typeof value === "string" ? value : "";
+
+function fareFamilyName(value: unknown) {
+  if (typeof value === "string") return value.trim() || undefined;
+  const family = object(value);
+  return text(family.displayName || family.name).trim() || undefined;
+}
 
 export class KayakError extends Error {
   constructor(
@@ -224,6 +231,7 @@ export function normalizeSandboxOffers(
         ...(vertical === "hotels" ? {amenities: kayakHotelAmenities(result.features, data.amenityDictionary)} : {}),
         ...(vertical === "flights" ? { flightLegs: kayakFlightLegs(data, result) } : {}),
         ...(vertical === "flights" ? {flightCabin:kayakFlightCabin(data,result,option)} : {}),
+        ...(vertical === "flights" && fareFamilyName(option.fareFamily) ? {flightFareFamily:fareFamilyName(option.fareFamily)} : {}),
         ...(vertical === "flights" && list(object(option.fees).carryOnBag).some(bag => object(bag).bagNumber === "first" && text(object(bag).restriction))
           ? {flightCarryOnIncluded: list(object(option.fees).carryOnBag).filter(bag => object(bag).bagNumber === "first").every(bag => object(bag).restriction === "included")} : {}),
         price: amount,

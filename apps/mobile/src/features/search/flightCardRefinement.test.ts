@@ -92,8 +92,8 @@ test("converted fares keep truthful accessibility context without visible second
 });
 
 test("the whole card remains the sole details action around a visible affordance", () => {
-  assert.match(card, /const openDetails = \(\) => result\.searchPolicy\.action\.kind === "provider"/);
-  assert.match(card, /Linking\.openURL\(result\.searchPolicy\.action\.href\)/);
+  assert.match(card, /const openDetails = \(\) => router\.push\(\{ pathname: "\/flight-details"/);
+  assert.doesNotMatch(card, /Linking\.openURL\(result\.searchPolicy\.action\.href\)/);
   assert.match(card, /router\.push\(\{ pathname: "\/flight-details"/);
   assert.match(card, /return \(\s*<Pressable[\s\S]*accessibilityRole="button"[\s\S]*accessibilityLabel=\{cardAccessibilityLabel\}[\s\S]*onPress=\{openDetails\}/);
   assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result \}\)/);

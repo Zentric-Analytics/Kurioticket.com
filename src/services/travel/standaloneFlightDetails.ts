@@ -166,12 +166,13 @@ function fareTerms(offer: NormalizedFlightResult) {
 function fareLabel(offer: NormalizedFlightResult) {
   const legBrands = (offer.legs ?? []).map((leg) => leg.fareBrandName?.trim()).filter(Boolean) as string[];
   const unique = [...new Set(legBrands)];
-  return unique.length > 1 ? legBrands.join(" / ") : unique[0] || offer.fareBrandName?.trim() || titleCase(offer.cabinClass || "Fare");
+  const cabin = offer.cabinClass?.trim();
+  return unique.length > 1 ? legBrands.join(" / ") : unique[0] || offer.fareBrandName?.trim() || (/not supplied/i.test(cabin) ? "Fare" : titleCase(cabin || "Fare"));
 }
 
 export function buildMaterialFareChoices(
   offers: NormalizedFlightResult[],
-  { upsellOfferIds = new Set<string>(), selectedProviderOfferId }: { upsellOfferIds?: ReadonlySet<string>; selectedProviderOfferId?: string } = {},
+  { upsellOfferIds = new Set<string>(), selectedProviderOfferId, providerSuppliedTermsOnly = false }: { upsellOfferIds?: ReadonlySet<string>; selectedProviderOfferId?: string; providerSuppliedTermsOnly?: boolean } = {},
 ): Array<{
   source: NormalizedFlightResult;
   memberOffers: NormalizedFlightResult[];
@@ -185,7 +186,10 @@ export function buildMaterialFareChoices(
   }
   const choices = [...groups.entries()]
     .map(([key, group]) => {
-      const source = group.reduce((lowest, candidate) =>
+      const selectedSource = selectedProviderOfferId
+        ? group.find((offer) => offer.providerOfferId === selectedProviderOfferId)
+        : undefined;
+      const source = selectedSource ?? group.reduce((lowest, candidate) =>
         candidate.price < lowest.price ? candidate : lowest,
       );
       const handoff = resolveFlightHandoff(source);
@@ -212,7 +216,7 @@ export function buildMaterialFareChoices(
         key: `fare-${createHash("sha256").update(key).digest("base64url").slice(0, 16)}`,
         label: fareLabel(source),
         offer: toFlightDetailsOffer(source),
-        distinguishingTerms: fareTerms(source),
+        distinguishingTerms: providerSuppliedTermsOnly ? source.fareTerms ?? [] : fareTerms(source),
         selectedOffer: Boolean(selectedProviderOfferId && group.some((offer) => offer.providerOfferId === selectedProviderOfferId)),
         handoff: handoff
           ? { available: true, providerName: handoff.providerName }
@@ -229,7 +233,7 @@ export function buildMaterialFareChoices(
       };
     })
     .sort((left, right) => left.source.price - right.source.price);
-  if (choices.length > 1) {
+  if (choices.length > 1 && !providerSuppliedTermsOnly) {
     const comparableFacts = new Set(choices.map(({ source }) => JSON.stringify({
       cabinClass: canonical(source.cabinClass),
       terms: source.fareTerms,
@@ -245,6 +249,51 @@ export function buildMaterialFareChoices(
     }
   }
   return choices;
+}
+
+export async function buildKayakSandboxFlightDetails({
+  cachedSelected, cachedAlternatives, search, now = Date.now(),
+}: {
+  cachedSelected: NormalizedFlightResult;
+  cachedAlternatives: NormalizedFlightResult[];
+  search: FlightSearchParams;
+  now?: number;
+}): Promise<FlightDetailsSuccess | { status: "unavailable"; error: string }> {
+  if (!isFlightProviderOfferUsableAt(cachedSelected, now) ||
+      !validatesSearchContext(cachedSelected, search, { allowDifferentCabin: true }))
+    return { status: "unavailable", error: unavailableMessage };
+  const identity = itineraryIdentity(cachedSelected);
+  const offers = [cachedSelected, ...cachedAlternatives.filter((offer) => offer.id !== cachedSelected.id)]
+    .filter((offer) => offer.provider === "KAYAK sandbox")
+    .filter((offer) => isFlightProviderOfferUsableAt(offer, now))
+    .filter((offer) => validatesSearchContext(offer, search, { allowDifferentCabin: true }))
+    .filter((offer) => offer.currency === cachedSelected.currency && itineraryIdentity(offer) === identity);
+  const fareChoices = buildMaterialFareChoices(offers, {
+    selectedProviderOfferId: cachedSelected.providerOfferId,
+    providerSuppliedTermsOnly: true,
+  });
+  const initial = fareChoices.find(({ memberOffers }) => memberOffers.some(({ id }) => id === cachedSelected.id)) ?? fareChoices[0];
+  if (!initial) return { status: "unavailable", error: unavailableMessage };
+  const handoff = resolveFlightHandoff(initial.source);
+  return {
+    status: "available",
+    flight: initial.choice.offer,
+    fareChoices: fareChoices.map(({ choice, memberOffers }) => ({
+      ...choice,
+      selectedOffer: memberOffers.some(({ id }) => id === cachedSelected.id),
+    })),
+    handoff: handoff ? { available: true, providerName: handoff.providerName } : { available: false },
+    revalidation: { status: "confirmed" },
+    search: { tripType: search.tripType, legs: getSearchLegs(search), departureDate: search.departureDate,
+      ...(search.returnDate ? { returnDate: search.returnDate } : {}), adults: search.adults, children: search.children,
+      infants: search.infants, travelers: search.travelers, cabinClass: search.cabinClass },
+  };
+}
+
+export function buildProviderAwareFlightDetails(input: Parameters<typeof buildStandaloneFlightDetails>[0]) {
+  return input.cachedSelected.provider === "KAYAK sandbox"
+    ? buildKayakSandboxFlightDetails(input)
+    : buildStandaloneFlightDetails(input);
 }
 
 export async function buildStandaloneFlightDetails({

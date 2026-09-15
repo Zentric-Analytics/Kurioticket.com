@@ -93,3 +93,15 @@ test("final handoff requires a server-allowlisted destination name", async () =>
   }
 });
 
+test("KAYAK sandbox handoff validates the cached clickout without Duffel refresh", async () => {
+  let refreshCalls = 0;
+  const cached = offer();
+  cached.id = "kayak-sandbox:one";
+  cached.provider = "KAYAK sandbox";
+  cached.partnerRedirectUrl = "https://affiliates.kayak.com/sandbox-clickout";
+  const outcome = await revalidateFlightRedirectHandoff({ cachedOffer: cached, now: 10_000, refresh: async () => { refreshCalls += 1; return { status: "unavailable" }; } });
+  assert.equal(outcome.status, "ready");
+  assert.equal(refreshCalls, 0);
+  cached.partnerRedirectUrl = "https://evil.test/book";
+  assert.equal((await revalidateFlightRedirectHandoff({ cachedOffer: cached, now: 10_000 })).status, "unavailable");
+});
