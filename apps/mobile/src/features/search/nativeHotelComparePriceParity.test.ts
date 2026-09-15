@@ -22,70 +22,64 @@ function styleRule(source: string, name: string, nextName: string) {
   return source.slice(start, end);
 }
 
-test("active Rates tab delegates only its presentation to the Rates component", () => {
+test("active Rates tab delegates presentation and exact reserve actions", () => {
   assert.match(hotel, /activeHotelTab === "deals"/);
   assert.match(hotel, /<NativeHotelRatesSection/);
   assert.match(hotel, /offers=\{hotelOffers\}/);
   assert.match(hotel, /selectedOfferId=\{selectedOffer\?\.id \?\? null\}/);
-  assert.match(hotel, /onSelectOffer=\{setSelectedOfferId\}/);
+  assert.match(hotel, /onSelectOffer=\{\(offerId\) => void reserveOffer\(offerId\)\}/);
   assert.match(hotel, /roomOptions=\{presentedRoomOptions\}/);
   assert.match(hotel, /nightlyPrice=\{nightlyPrice \?\? null\}/);
-  assert.doesNotMatch(hotel, /<Text[^>]*>Rates<\/Text>[\s\S]*?stay\.dateText/);
-  assert.doesNotMatch(hotel, /HotelOfferAmenityList/);
 });
 
-test("Rates opens directly on the offer card without chips or a room heading", () => {
-  assert.doesNotMatch(ratesSource, /roomRateTags|chipViewport|chipRow|chipText/);
-  assert.doesNotMatch(ratesSource, /roomGroupHeading|groupHeading/);
-  assert.doesNotMatch(ratesSource, /Breakfast included|Room only|Flexible terms|Taxes included/);
-  assert.match(styleRule(ratesSource, "section", "groupCard"), /paddingBottom: 4/);
-  assert.doesNotMatch(styleRule(ratesSource, "section", "groupCard"), /paddingTop/);
-  assert.doesNotMatch(styleRule(ratesSource, "groupCard", "rateRow"), /marginTop/);
+test("Rates groups supplied room options instead of fabricating inventory", () => {
+  assert.match(ratesSource, /roomOptions\.forEach\(\(option\) =>/);
+  assert.match(ratesSource, /roomGroupTitle\(option\.name\)/);
+  assert.match(ratesSource, /option\.displayPrice\?\.total/);
+  assert.match(ratesSource, /meaningfulRateMeta\(option, title\)/);
+  assert.doesNotMatch(ratesSource, /STATIC_RATE_GROUPS|\$1,225|Standard Room, 1 Queen Bed/);
 });
 
-test("Rates grouped card stays compact while preserving the real offer rows", () => {
-  assert.match(styleRule(ratesSource, "groupCard", "rateRow"), /overflow: "hidden"[\s\S]*borderWidth: 1[\s\S]*borderRadius: 12/);
-  assert.match(styleRule(ratesSource, "rateRow", "rateRowPressed"), /minHeight: 134[\s\S]*padding: 16[\s\S]*gap: 14/);
-  assert.match(styleRule(ratesSource, "rateCopy", "brandLogo"), /flex: 1[\s\S]*minWidth: 0[\s\S]*justifyContent: "flex-start"/);
+test("Kurioticket rows keep the bundled wordmark and existing app fonts", () => {
+  assert.ok(existsSync("assets/kurioticket-logo-primary-light-bg.png"));
+  assert.match(ratesSource, /providerKind === "kurioticket"[\s\S]*?<Image[\s\S]*?accessibilityLabel="Kurioticket"[\s\S]*?require\("\.\.\/\.\.\/\.\.\/assets\/kurioticket-logo-primary-light-bg\.png"\)/);
+  assert.match(styleRule(ratesSource, "groupTitle", "groupCard"), /fontFamily: appFonts\.bold/);
+  assert.match(styleRule(ratesSource, "rateTitle", "benefitList"), /fontFamily: appFonts\.bold/);
+  assert.match(styleRule(ratesSource, "rateMeta", "rateActionColumn"), /fontFamily: appFonts\.regular/);
+});
+
+test("Rates keeps grouped rounded cards with compact provider rows", () => {
+  assert.match(styleRule(ratesSource, "groupCard", "rateRow"), /overflow: "hidden"[\s\S]*borderWidth: 1[\s\S]*borderRadius: 14/);
+  assert.match(styleRule(ratesSource, "rateRow", "rateCopy"), /minHeight: 142[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 15[\s\S]*gap: 14/);
+  assert.match(styleRule(ratesSource, "rateActionColumn", "price"), /width: 112[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "space-between"/);
   assert.match(ratesSource, /index > 0 && \{ borderTopColor: theme\.border, borderTopWidth: StyleSheet\.hairlineWidth \}/);
 });
 
-test("internal rate row keeps the accessible bundled Kurioticket wordmark and real room copy", () => {
-  assert.ok(existsSync("assets/kurioticket-logo-primary-light-bg.png"));
-  assert.match(ratesSource, /internal \? \([\s\S]*?<Image[\s\S]*?accessibilityLabel="Kurioticket"[\s\S]*?accessibilityIgnoresInvertColors[\s\S]*?require\("\.\.\/\.\.\/\.\.\/assets\/kurioticket-logo-primary-light-bg\.png"\)/);
-  assert.match(styleRule(ratesSource, "brandLogo", "providerName"), /width: 104[\s\S]*height: 22[\s\S]*marginBottom: 10/);
-  assert.match(ratesSource, /const representativeRoom = roomOptions\[0\] \?\? null/);
-  assert.match(ratesSource, /const internalMeta = representativeRoom\?\.cancellationInfo\.trim\(\) \?\? ""/);
-  assert.match(ratesSource, /const parts = name\.split/);
+test("Rates uses stay totals and Reserve instead of selection or per-night state", () => {
+  assert.match(ratesSource, /\$\{total\.accessibilityLabel\} stay price/);
+  assert.match(ratesSource, /accessibilityRole="button"/);
+  assert.match(ratesSource, /onPress=\{\(\) => onSelectOffer\(row\.offerId\)\}/);
+  assert.match(ratesSource, />Reserve<\/Text>/);
+  assert.doesNotMatch(ratesSource, /Selected|>Select<|accessibilityRole="radio"|per night/);
 });
 
-test("Rates uses a narrower right price/action column like the reference", () => {
-  assert.match(styleRule(ratesSource, "rateActionColumn", "priceBlock"), /width: 112[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "space-between"/);
-  assert.match(styleRule(ratesSource, "price", "perNight"), /fontSize: 20[\s\S]*lineHeight: 26[\s\S]*fontWeight: "700"[\s\S]*textAlign: "right"/);
-  assert.match(styleRule(ratesSource, "selectButton", "selectButtonText"), /minWidth: 88[\s\S]*height: 44[\s\S]*borderRadius: 10/);
-  assert.match(ratesSource, /\{selected \? "Selected" : "Select"\}/);
-  assert.match(ratesSource, /accessibilityRole="radio"/);
-  assert.match(ratesSource, /accessibilityState=\{\{ selected \}\}/);
-  assert.match(ratesSource, /onPress=\{\(\) => onSelectOffer\(offer\.id\)\}/);
+test("each Reserve action preserves its actual continuation", () => {
+  assert.match(ratesSource, /offers\.find\(\(offer\) => offer\.kind === "internal-room-flow"\)/);
+  assert.match(ratesSource, /offers\.find\(\(offer\) => offer\.kind === "provider-handoff"\)/);
+  assert.match(hotel, /const offer = hotelOffers\.find\(\(\{ id \}\) => id === offerId\)/);
+  assert.match(hotel, /if \(offer\.kind === "internal-room-flow"\)[\s\S]*?setRoomsOpen\(true\)/);
+  assert.match(hotel, /offer\.kind !== "provider-handoff"[\s\S]*?Linking\.openURL\(redirectUrl\)/);
 });
 
-test("Rates keeps room-specific display pricing without changing booking selection", () => {
-  assert.match(ratesSource, /representativeRoom\?\.displayPrice\?\.nightly \?\? nightlyPrice/);
-  assert.match(hotel, /const selectedOffer =[\s\S]*?hotelOffers\[0\] \?\? null/);
-  assert.match(hotel, /selectedOffer\?\.kind === "internal-room-flow"[\s\S]*?setRoomsOpen\(true\)/);
-  assert.match(hotel, /selectedOffer\?\.kind !== "provider-handoff"[\s\S]*?Linking\.openURL\(redirectUrl\)/);
-  assert.match(hotel, /disabled=\{!canContinue\}/);
-  assert.match(hotel, /onPress=\{\(\) => void continueBooking\(\)\}/);
+test("Rates preserves loading and truthful empty states", () => {
+  assert.match(ratesSource, /if \(detailsStatus === "loading"\) return null/);
+  assert.match(ratesSource, /No reservable rates available/);
+  assert.match(ratesSource, /Try updating your stay or check again later/);
 });
 
-test("Rates keeps the loading guard for the no-live-checkout empty state", () => {
-  assert.match(ratesSource, /\) : detailsStatus !== "loading" \? \(/);
-  assert.match(ratesSource, /Planning inventory · no live checkout/);
-});
-
-test("active sticky estimated total typography remains unchanged", () => {
-  assert.match(styleRule(detailSource, "dockTotal", "dockPerNight"), /fontSize: 24[\s\S]*lineHeight: 30[\s\S]*fontWeight: "800"[\s\S]*fontFamily: appFonts\.extraBold[\s\S]*textAlign: "left"/);
-  assert.match(hotel, /estimated stay total[\s\S]*?s\.dockTotal/);
+test("Hotel Details removes its checkout-style bottom booking dock", () => {
+  assert.doesNotMatch(detailSource, /estimated stay total|Continue booking|dockTotal|continueButton/);
+  assert.match(detailSource, /contentContainerStyle=\{\{ paddingBottom: 24 \+ inset\.bottom \}\}/);
 });
 
 test("web reference remains unchanged while native Rates is independently aligned", () => {
