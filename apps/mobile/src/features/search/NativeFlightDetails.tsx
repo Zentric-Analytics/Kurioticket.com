@@ -207,7 +207,7 @@ function FlightDetailsLoadingSkeleton({theme,bottomInset,fareCardWidth}:{theme:R
         <View style={[s.loadingLine,s.loadingFareHeading,placeholder]}/>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.loadingFares}>
           {[0,1].map(key=><View key={key} style={[s.loadingFareCard,{width:fareCardWidth,backgroundColor:theme.surface,borderColor:theme.border}]}>
-            <View style={s.loadingFareContent}><View style={s.loadingFareIdentity}><View style={s.loadingFareNameRow}><View style={[s.loadingFareIcon,placeholder]}/><View style={[s.loadingLine,s.loadingFareName,placeholder]}/></View></View>
+            <View style={s.loadingFareContent}><View style={s.loadingFareIdentity}><View style={s.loadingFareNameRow}><View style={[s.loadingFareIcon,placeholder]}/><View style={[s.loadingLine,s.loadingFareName,{backgroundColor:theme.border}]}/></View></View>
               {(["88%","72%","80%"] as const).map((width,index)=><View key={index} style={s.loadingBenefitRow}><View style={[s.loadingBenefitDot,placeholder]}/><View style={[s.loadingLine,{width},placeholder]}/></View>)}
             </View>
             <View style={s.loadingFarePriceBlock}><View style={[s.loadingLine,s.loadingFarePrice,placeholder]}/></View>
@@ -281,7 +281,7 @@ function Itinerary({leg,index,offerAirlineName,offerAirlineLogo,theme,intlLocale
       return <View key={`${segment.originAirport}-${segment.destinationAirport}-${segment.departureTime}-${i}`} style={s.segmentItem}>
         {layover?<View style={[s.segmentConnection,{backgroundColor:theme.background}]}><Text style={[s.segmentConnectionText,{color:theme.textSecondary}]}>Connection at {layoverLabel(layover.airport)} · {layover.duration}</Text></View>:null}
         <View style={s.segmentRow}>
-          {carrier?<AirlineLogo airlineName={carrier} logoUrl={canUseOfferAirlineLogo(segment,offerAirlineName,offerAirlineLogo)?offerAirlineLogo:null} variant="result-card"/>:null}
+          {carrier?<AirlineLogo airlineName={carrier} logoUrl={segment.airlineLogo??(canUseOfferAirlineLogo(segment,offerAirlineName,offerAirlineLogo)?offerAirlineLogo:null)} variant="result-card"/>:null}
           <View style={s.segmentCopy}>
             <View style={s.segmentHeading}><Text style={[s.segmentRoute,{color:theme.textPrimary}]}>{segment.originAirport} → {segment.destinationAirport}</Text><Text style={[s.segmentTimes,{color:theme.textSecondary}]}>{clock(segment.departureTime)} – {clock(segment.arrivalTime)}</Text></View>
             <Text style={[s.segmentMeta,{color:theme.textSecondary}]}>{carrier||"Carrier not supplied"}{flightNumber?` · Flight ${flightNumber}`:""}</Text>
