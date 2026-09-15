@@ -43,12 +43,14 @@ function RelatedHotelCard({ item, theme, onView }: { item: NativeRelatedHotel; t
   const iconColor = theme.dark ? theme.icon : "#1A1A1A";
   const cardBorder = theme.dark ? theme.border : "#D5D9E2";
   return <Pressable accessibilityRole="button" accessibilityLabel={`View hotel ${item.hotel.name}`} onPress={() => onView(item)} style={({ pressed }) => [styles.relatedCard, { backgroundColor: theme.surface, borderColor: cardBorder }, pressed && styles.relatedCardPressed]}>
-    <View style={styles.imageFrame}>{item.hotel.imageUrl && !imageFailed ? <Image source={{ uri: item.hotel.imageUrl }} resizeMode="cover" onError={() => setImageFailed(true)} style={styles.image} /> : <View style={styles.imageFallback}><ImageOff accessible={false} size={20} strokeWidth={1.3} color={iconColor} /><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Image unavailable</Text></View>}</View>
-    <View style={styles.cardBody}>
-      {item.classificationStars ? <Text accessible accessibilityLabel={`${item.classificationStars} star hotel`} style={styles.stars}>{"★".repeat(item.classificationStars)}</Text> : null}
-      <Text numberOfLines={2} style={[styles.hotelName, { color: theme.textPrimary }]}>{item.hotel.name}</Text>
-      {item.location ? <Text numberOfLines={1} style={[styles.location, { color: theme.textSecondary }]}>{item.location}</Text> : null}
-      <View style={styles.priceBlock}>{item.displayPrices?.nightly ? <Text accessibilityLabel={`${item.displayPrices.nightly.accessibilityLabel} per night`} style={[styles.nightly, { color: theme.textPrimary }]}>{item.displayPrices.nightly.formatted} per night</Text> : <Text style={[styles.priceUnavailable, { color: theme.textSecondary }]}>Price unavailable</Text>}</View>
+    <View style={styles.relatedCardClip}>
+      <View style={styles.imageFrame}>{item.hotel.imageUrl && !imageFailed ? <Image source={{ uri: item.hotel.imageUrl }} resizeMode="cover" onError={() => setImageFailed(true)} style={styles.image} /> : <View style={styles.imageFallback}><ImageOff accessible={false} size={20} strokeWidth={1.3} color={iconColor} /><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Image unavailable</Text></View>}</View>
+      <View style={styles.cardBody}>
+        {item.classificationStars ? <Text accessible accessibilityLabel={`${item.classificationStars} star hotel`} style={styles.stars}>{"★".repeat(item.classificationStars)}</Text> : null}
+        <Text numberOfLines={2} style={[styles.hotelName, { color: theme.textPrimary }]}>{item.hotel.name}</Text>
+        {item.location ? <Text numberOfLines={1} style={[styles.location, { color: theme.textSecondary }]}>{item.location}</Text> : null}
+        <View style={styles.priceBlock}>{item.displayPrices?.nightly ? <Text accessibilityLabel={`${item.displayPrices.nightly.accessibilityLabel} per night`} style={[styles.nightly, { color: theme.textPrimary }]}>{item.displayPrices.nightly.formatted} per night</Text> : <Text style={[styles.priceUnavailable, { color: theme.textSecondary }]}>Price unavailable</Text>}</View>
+      </View>
     </View>
   </Pressable>;
 }
@@ -77,15 +79,15 @@ const styles = StyleSheet.create({
   carousel: { gap: 12, paddingHorizontal: 16, paddingBottom: 4 },
   relatedCardSlot: { width: RELATED_HOTEL_CARD_WIDTH },
   relatedCard: {
-    overflow: "hidden",
     borderWidth: 1,
     borderRadius: 10,
     shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
   },
+  relatedCardClip: { overflow: "hidden", borderRadius: 10 },
   relatedCardPressed: { opacity: 0.82 },
   imageFrame: { height: 160, width: "100%", backgroundColor: "#E7EBF2" },
   image: { width: "100%", height: "100%" },

@@ -220,7 +220,7 @@ export function NativeHotelRatesSection({
             {row.price}
           </Text>
           <TouchableOpacity
-            accessibilityRole="button"
+            accessibilityRole={"button"}
             accessibilityLabel={`Reserve ${row.title}`}
             activeOpacity={0.84}
             onPress={previewReserve}
