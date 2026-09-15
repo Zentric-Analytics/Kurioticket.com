@@ -48,11 +48,13 @@ test("Rates derives its single Kurioticket fallback card from supplied room data
   assert.doesNotMatch(ratesSource, /STATIC_RATE_GROUPS|\$1,225|Standard Room, 1 Queen Bed/);
 });
 
-test("provider handoff takes precedence when a real provider offer exists", () => {
+test("provider handoff takes precedence and shows the supplied provider price", () => {
   assert.match(ratesSource, /offers\.find\(\(offer\) => offer\.kind === "provider-handoff"\)/);
   assert.match(ratesSource, /rows\.unshift\(\{/);
   assert.match(ratesSource, /providerName: providerName\.trim\(\) \|\| "Provider"/);
-  assert.match(ratesSource, /price: "Price on provider"/);
+  assert.match(ratesSource, /const providerPrice = hasPrice \? nightlyPrice : null/);
+  assert.match(ratesSource, /price: providerPrice \? `\$\{providerPrice\.formatted\}\/night` : "Price on provider"/);
+  assert.match(ratesSource, /\$\{providerPrice\.accessibilityLabel\} per night/);
 });
 
 test("Kurioticket fallback keeps the bundled wordmark and existing app fonts", () => {
@@ -71,14 +73,15 @@ test("Rates keeps one square metasearch card", () => {
   assert.match(styleRule(ratesSource, "rateActionColumn", "price"), /width: 104[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "space-between"/);
 });
 
-test("Rates shows stay price and a visual-only Reserve action", () => {
+test("Rates shows stay or provider price and keeps the visual-only Reserve action", () => {
   assert.match(ratesSource, /\$\{total\.accessibilityLabel\} stay price/);
+  assert.match(ratesSource, /\$\{providerPrice\.accessibilityLabel\} per night/);
   assert.match(ratesSource, /const previewReserve = \(\) => undefined/);
   assert.match(ratesSource, /const reserveLabel = "Reserve"/);
   assert.match(ratesSource, /<TouchableOpacity[\s\S]*?onPress=\{previewReserve\}/);
   assert.match(styleRule(ratesSource, "actionControl", "actionControlText"), /minWidth: 82[\s\S]*minHeight: 44[\s\S]*borderRadius: 10/);
   assert.doesNotMatch(ratesSource, /onPress=\{\(\) => onSelectOffer\(row\.offerId\)\}/);
-  assert.doesNotMatch(ratesSource, /Selected|>Select<|accessibilityRole="radio"|per night/);
+  assert.doesNotMatch(ratesSource, /Selected|>Select<|accessibilityRole="radio"/);
 });
 
 test("Rates preserves live offer identities for future provider activation", () => {
