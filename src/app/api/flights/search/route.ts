@@ -8,6 +8,7 @@ import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/servic
 import { searchFlights } from "@/services/travel/flightAggregator";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
 import { getKayakClientIp } from "@/lib/kayak-client-ip";
+import { logNativeFlightProviderDiagnostics } from "./providerDiagnostics";
 
 export async function POST(request: Request) {
   const routeStartedAt = performance.now();
@@ -26,11 +27,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Search needs a little more detail.", issues: parsed.error.flatten() }, { status: 400 });
   }
 
+  const mobilePlatformHeader = request.headers.get("x-mobile-platform")?.trim().toLowerCase();
+  const mobilePlatform = mobilePlatformHeader === "android" || mobilePlatformHeader === "ios"
+    ? mobilePlatformHeader
+    : null;
+  const kayakClientIp = getKayakClientIp(request);
+  const userAgent = request.headers.get("user-agent") || undefined;
+
   const aggregate = await searchFlights(parsed.data, {
     signal: request.signal,
     requestId,
     onProviderStart: () => { providerStartedAt = performance.now(); },
-    kayak: { clientIp: getKayakClientIp(request), userAgent: request.headers.get("user-agent") || undefined, signal: request.signal },
+    kayak: { clientIp: kayakClientIp, userAgent, signal: request.signal },
+  });
+  logNativeFlightProviderDiagnostics({
+    requestId,
+    mobilePlatform,
+    kayakClientIpPresent: Boolean(kayakClientIp),
+    userAgentPresent: Boolean(userAgent),
+    providerStatuses: aggregate.providerStatuses,
+    finalResults: aggregate.results,
   });
   const performanceMetrics = aggregate.performance!;
   const routeDurationMs = performance.now() - routeStartedAt;
