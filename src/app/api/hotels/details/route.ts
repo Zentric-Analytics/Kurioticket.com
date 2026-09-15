@@ -9,6 +9,7 @@ import {
 import type { StaticHotelRecord } from "@/services/travel/staticHotelCatalogue";
 import { getProviderResult } from "@/services/travel/providerResultCache";
 import type { NormalizedHotelResult } from "@/lib/types";
+import type { PublicHotelProviderDetails } from "@/lib/hotels/hotelProviderDetails";
 
 function toPublicPropertyDetails(record: StaticHotelRecord | null) {
   if (!record) return null;
@@ -29,6 +30,16 @@ function toPublicPropertyDetails(record: StaticHotelRecord | null) {
     accessibility: [...record.accessibility],
   };
 }
+
+function providerDetails(result: NormalizedHotelResult): PublicHotelProviderDetails | null {
+  const reference = result.rawProviderReference;
+  if (!reference || typeof reference !== "object" || Array.isArray(reference)) return null;
+  const candidate = reference as { kind?: unknown; details?: unknown };
+  if (candidate.kind !== "kayak-hotel-details" || !candidate.details || typeof candidate.details !== "object" || Array.isArray(candidate.details)) return null;
+  const details = structuredClone(candidate.details) as PublicHotelProviderDetails;
+  return details.source === "KAYAK" ? details : null;
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const id = url.searchParams.get("id")?.trim();
@@ -63,6 +74,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       hotel: toPublicHotel(hotel),
       propertyDetails: toPublicPropertyDetails(record),
+      providerDetails: null,
       roomOptions: buildStaticHotelRoomOptions(record, search),
       relatedHotels,
     });
@@ -71,6 +83,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       hotel: toPublicHotel(cached),
       propertyDetails: null,
+      providerDetails: providerDetails(cached),
       roomOptions: [],
       relatedHotels: [],
     });
