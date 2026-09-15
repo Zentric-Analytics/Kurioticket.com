@@ -105,9 +105,9 @@ test("content below the three tabs shares one section-heading hierarchy", () => 
   for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"700"', "fontFamily:appFonts.bold"])
     assert.ok(style("requirementsHeading").includes(contract));
   for (const contract of ["marginTop:10", 'flexDirection:"row"', 'alignItems:"center"', "gap:10"])
-    assert.ok(style("requirementRow").includes(contract));
+    assert.ok(style("requirementRow").includes(contract), contract);
   for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"500"', "fontFamily:appFonts.medium"])
-    assert.ok(style("requirementText").includes(contract));
+    assert.ok(style("requirementText").includes(contract), contract);
   assert.match(native, /<Text style=\{\[s\.requirementsHeading,[^>]*>Pickup requirements<\/Text>/);
   assert.match(native, /<IdCard size=\{19\}/);
   assert.match(native, />Valid driver's license<\/Text>/);
@@ -124,8 +124,8 @@ test("Compare deals exposes truthful car-offer terms without inventing provider 
   assert.match(compare, /offer\.freeCancellation\?"Free cancellation":"Non-refundable"/);
   assert.match(compare, /nativeCarFuelPolicyLabel\(result\.fuelPolicy\)/);
   assert.match(compare, /result\.mileagePolicy==="unlimited"\?"Unlimited mileage":nativeCarMileageLabel\(result\)/);
-  assert.match(compare, /formatMarketCurrency\(offer\.pricePerDay,offer\.currency\)/);
-  assert.match(compare, /formatMarketCurrency\(offer\.totalPrice,offer\.currency\)/);
+  assert.match(compare, /money\(offer\.currency,offer\.pricePerDay\)/);
+  assert.match(compare, /money\(offer\.currency,offer\.totalPrice\)/);
   assert.match(compare, /offer\.taxesAndFeesIncluded\?<Text[^>]*>Taxes & fees included<\/Text>:null/);
   assert.match(compare, /Car supplied by:/);
   assert.match(compare, /!\/static fixture\|supplier not supplied\/i\.test\(supplier\)/);
