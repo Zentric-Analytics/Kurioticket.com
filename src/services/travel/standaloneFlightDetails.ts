@@ -184,6 +184,12 @@ function kayakMaterialKey(offer: NormalizedFlightResult) {
   });
 }
 
+function titleCase(value: string) {
+  return value
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 function fareTerms(offer: NormalizedFlightResult) {
   return offer.fareTerms?.length ? offer.fareTerms : [
     { category: "baggage" as const, semantic: offer.baggageInfo.toLowerCase().includes("included") ? "positive" as const : "informational" as const, text: offer.baggageInfo },
