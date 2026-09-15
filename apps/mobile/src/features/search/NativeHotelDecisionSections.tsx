@@ -41,7 +41,8 @@ export function NativeHotelPropertyLocationSection({ hotelId, hotelName, propert
 function RelatedHotelCard({ item, theme, onView }: { item: NativeRelatedHotel; theme: Theme; onView: (item: NativeRelatedHotel) => void }) {
   const [imageFailed, setImageFailed] = useState(false);
   const iconColor = theme.dark ? theme.icon : "#1A1A1A";
-  return <Pressable accessibilityRole="button" accessibilityLabel={`View hotel ${item.hotel.name}`} onPress={() => onView(item)} style={({ pressed }) => [styles.relatedCard, { backgroundColor: theme.surface, borderColor: theme.border }, pressed && styles.relatedCardPressed]}>
+  const cardBorder = theme.dark ? theme.border : "#D5D9E2";
+  return <Pressable accessibilityRole="button" accessibilityLabel={`View hotel ${item.hotel.name}`} onPress={() => onView(item)} style={({ pressed }) => [styles.relatedCard, { backgroundColor: theme.surface, borderColor: cardBorder }, pressed && styles.relatedCardPressed]}>
     <View style={styles.imageFrame}>{item.hotel.imageUrl && !imageFailed ? <Image source={{ uri: item.hotel.imageUrl }} resizeMode="cover" onError={() => setImageFailed(true)} style={styles.image} /> : <View style={styles.imageFallback}><ImageOff accessible={false} size={20} strokeWidth={1.3} color={iconColor} /><Text style={[styles.fallbackText, { color: theme.textSecondary }]}>Image unavailable</Text></View>}</View>
     <View style={styles.cardBody}>
       {item.classificationStars ? <Text accessible accessibilityLabel={`${item.classificationStars} star hotel`} style={styles.stars}>{"★".repeat(item.classificationStars)}</Text> : null}
@@ -73,9 +74,18 @@ const styles = StyleSheet.create({
   relatedSection: { marginTop: 4 },
   relatedHeader: { minHeight: 32, flexDirection: "row", alignItems: "center" },
   carouselViewport: { marginHorizontal: -16, marginTop: 8 },
-  carousel: { gap: 12, paddingHorizontal: 16, paddingBottom: 2 },
+  carousel: { gap: 12, paddingHorizontal: 16, paddingBottom: 4 },
   relatedCardSlot: { width: RELATED_HOTEL_CARD_WIDTH },
-  relatedCard: { overflow: "hidden", borderWidth: StyleSheet.hairlineWidth, borderRadius: 10 },
+  relatedCard: {
+    overflow: "hidden",
+    borderWidth: 1,
+    borderRadius: 10,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
   relatedCardPressed: { opacity: 0.82 },
   imageFrame: { height: 160, width: "100%", backgroundColor: "#E7EBF2" },
   image: { width: "100%", height: "100%" },
