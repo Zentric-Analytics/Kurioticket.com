@@ -23,7 +23,7 @@ test("logs only safe provider diagnostics for native flight searches", (t) => {
 
   logNativeFlightProviderDiagnostics(Object.assign({
     requestId: "mobile-request-1",
-    mobilePlatform: "android",
+    mobilePlatform: "android" as const,
     kayakClientIpPresent: true,
     userAgentPresent: true,
     providerStatuses,
