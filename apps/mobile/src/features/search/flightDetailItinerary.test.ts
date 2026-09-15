@@ -113,7 +113,7 @@ test("segment rows carry airline, flight number, aircraft and distance while Fli
 test("Flight info preserves its compact scale while labels lead readable regular values without icons",()=>{
   assert.match(source,/technicalHeading:\{fontSize:11,lineHeight:15,fontWeight:"600"/);
   assert.match(source,/technicalLabel:\{[^}]*fontSize:11,lineHeight:16,fontWeight:"500"\}/);
-  assert.match(source,/technicalValue:\{[^}]*fontSize:11,lineHeight:16,fontWeight:"400"\}/);
+  assert.match(source,/technicalValue:\{[^}]*fontSize:11,lineHeight:16,fontWeight:"400"/);
   assert.match(itinerary,/s\.technicalHeading,\{color:theme\.textPrimary\}/);
   assert.ok((itinerary.match(/s\.technicalLabel,\{color:theme\.textPrimary\}/g)?.length??0)>=2);
   assert.ok((itinerary.match(/s\.technicalValue,\{color:theme\.textSecondary\}/g)?.length??0)>=2);
