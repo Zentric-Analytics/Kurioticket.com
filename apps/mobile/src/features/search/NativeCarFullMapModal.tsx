@@ -38,7 +38,7 @@ type NativeCarFullMapModalProps = {
   onClose: () => void;
 };
 
-type FullMapView = "map" | "streetview";
+type FullMapView = "map" | "streetview" | "lookaround";
 const STREET_VIEW_SETTLE_MS = 900;
 
 export function NativeCarFullMapModal({
@@ -105,8 +105,19 @@ export function NativeCarFullMapModal({
     setStreetViewLoading(true);
     setView("streetview");
   };
+  const showLookAround = () => {
+    if (
+      Platform.OS !== "ios" ||
+      !trustedMapCoordinates ||
+      lookAroundStatus !== "ready"
+    )
+      return;
+    setLookAroundStatus("loading");
+    setView("lookaround");
+  };
   const showMap = () => {
     clearStreetViewReadyTimer();
+    setLookAroundStatus("loading");
     setView("map");
   };
   const settleStreetView = () => {
@@ -158,6 +169,8 @@ export function NativeCarFullMapModal({
       />
     );
 
+  const closeCurrentSurface = view === "lookaround" ? showMap : closeFullMap;
+
   return (
     <Modal
       visible={visible}
@@ -165,7 +178,7 @@ export function NativeCarFullMapModal({
       animationType="slide"
       presentationStyle="fullScreen"
       statusBarTranslucent={false}
-      onRequestClose={closeFullMap}
+      onRequestClose={closeCurrentSurface}
     >
       <SafeAreaProvider>
         <SafeAreaView
@@ -176,6 +189,51 @@ export function NativeCarFullMapModal({
           <View style={styles.fullMapBody}>
             {view === "map" ? (
               mapSurface
+            ) : view === "lookaround" &&
+              Platform.OS === "ios" &&
+              trustedMapCoordinates ? (
+              <View style={styles.lookAroundFullScreen}>
+                <NativeAppleCarLookAroundPreview
+                  key={`${pickupLocation}:look-around-full:${trustedMapCoordinates.latitude}:${trustedMapCoordinates.longitude}`}
+                  {...trustedMapCoordinates}
+                  locationLabel={pickupLocation}
+                  presentationMode="viewController"
+                  style={styles.lookAroundFullScreenNative}
+                  onStatusChange={handleLookAroundStatus}
+                />
+                {lookAroundStatus === "loading" ? (
+                  <View
+                    pointerEvents="none"
+                    accessibilityRole="progressbar"
+                    accessibilityLabel="Loading Cars Look Around"
+                    style={[
+                      styles.lookAroundStatusOverlay,
+                      { backgroundColor: theme.surface },
+                    ]}
+                  >
+                    <ActivityIndicator size="small" color={colors.blue} />
+                  </View>
+                ) : null}
+                {lookAroundStatus === "unavailable" ? (
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      styles.lookAroundStatusOverlay,
+                      { backgroundColor: theme.surface },
+                    ]}
+                  >
+                    <MapPin accessible={false} size={28} color={theme.icon} />
+                    <Text
+                      style={[
+                        styles.fullMapUnavailable,
+                        { color: theme.textPrimary },
+                      ]}
+                    >
+                      Look Around unavailable for this area
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
             ) : streetViewUrl && !streetViewFailed ? (
               <View style={styles.streetViewFrame}>
                 <WebView
@@ -213,8 +271,10 @@ export function NativeCarFullMapModal({
 
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Close map"
-              onPress={closeFullMap}
+              accessibilityLabel={
+                view === "lookaround" ? "Close Look Around" : "Close map"
+              }
+              onPress={closeCurrentSurface}
               style={({ pressed }) => [
                 styles.floatingClose,
                 { backgroundColor: theme.surface, borderColor: theme.border },
@@ -233,22 +293,27 @@ export function NativeCarFullMapModal({
             view === "map" &&
             visible &&
             trustedMapCoordinates ? (
-              <View
-                pointerEvents={lookAroundStatus === "ready" ? "auto" : "none"}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Open Look Around near ${pickupLocation}`}
+                accessibilityHint="Shows Apple Look Around inside Kurioticket"
+                disabled={lookAroundStatus !== "ready"}
+                onPress={showLookAround}
                 style={[
                   styles.lookAroundPreview,
                   lookAroundStatus !== "ready" &&
                     styles.lookAroundPreviewHidden,
                 ]}
               >
-                <NativeAppleCarLookAroundPreview
-                  {...trustedMapCoordinates}
-                  locationLabel={pickupLocation}
-                  presentationMode="viewController"
-                  style={styles.lookAroundPreviewNative}
-                  onStatusChange={handleLookAroundStatus}
-                />
-              </View>
+                <View pointerEvents="none" style={styles.lookAroundPreviewNative}>
+                  <NativeAppleCarLookAroundPreview
+                    {...trustedMapCoordinates}
+                    locationLabel={pickupLocation}
+                    style={styles.lookAroundPreviewNative}
+                    onStatusChange={handleLookAroundStatus}
+                  />
+                </View>
+              </Pressable>
             ) : null}
 
             {view === "map" && streetViewUrl ? (
@@ -389,6 +454,16 @@ const styles = StyleSheet.create({
   },
   lookAroundPreviewHidden: { opacity: 0 },
   lookAroundPreviewNative: { flex: 1 },
+  lookAroundFullScreen: { flex: 1, position: "relative", overflow: "hidden" },
+  lookAroundFullScreenNative: { flex: 1 },
+  lookAroundStatusOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 3,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    padding: 24,
+  },
   streetViewPreview: {
     position: "absolute",
     left: 16,

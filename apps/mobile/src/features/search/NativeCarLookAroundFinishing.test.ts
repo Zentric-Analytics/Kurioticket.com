@@ -27,8 +27,27 @@ const hotelLocation = readFileSync(
   "utf8",
 );
 
-test("Cars full map opts into the native Look Around controller while Hotel keeps the shared default", () => {
-  assert.match(carFullMap, /presentationMode="viewController"/);
+test("Cars owns Look Around promotion and close while Hotel keeps the shared default", () => {
+  assert.match(carFullMap, /type FullMapView = "map" \| "streetview" \| "lookaround"/);
+  assert.match(
+    carFullMap,
+    /accessibilityLabel=\{`Open Look Around near \$\{pickupLocation\}`\}/,
+  );
+  assert.match(carFullMap, /onPress=\{showLookAround\}/);
+  assert.match(
+    carFullMap,
+    /<View pointerEvents="none" style=\{styles\.lookAroundPreviewNative\}>/,
+  );
+  assert.match(carFullMap, /view === "lookaround"/);
+  assert.equal(
+    (carFullMap.match(/presentationMode="viewController"/g) ?? []).length,
+    1,
+  );
+  assert.match(
+    carFullMap,
+    /view === "lookaround" \? "Close Look Around" : "Close map"/,
+  );
+  assert.match(carFullMap, /onRequestClose=\{closeCurrentSurface\}/);
   assert.match(bridge, /presentationMode = "swiftUI"/);
   assert.match(bridge, /presentationMode=\{presentationMode\}/);
   assert.match(nativeModule, /Prop\("presentationMode"\)/);
