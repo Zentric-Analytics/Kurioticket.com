@@ -406,16 +406,15 @@ function HotelDetail({
       : null,
   }));
 
-  const continueBooking = async () => {
-    if (selectedOffer?.kind === "internal-room-flow") {
+  const reserveOffer = async (offerId: NativeHotelOffer["id"]) => {
+    const offer = hotelOffers.find(({ id }) => id === offerId);
+    if (!offer) return;
+    setSelectedOfferId(offer.id);
+    if (offer.kind === "internal-room-flow") {
       setRoomsOpen(true);
       return;
     }
-    if (
-      selectedOffer?.kind !== "provider-handoff" ||
-      !providerBookable ||
-      !redirectUrl
-    ) return;
+    if (offer.kind !== "provider-handoff" || !providerBookable || !redirectUrl) return;
     try {
       await Linking.openURL(redirectUrl);
     } catch {
@@ -507,7 +506,7 @@ function HotelDetail({
         alwaysBounceVertical={false}
         overScrollMode="never"
         style={{ backgroundColor: hotelCanvasColor }}
-        contentContainerStyle={{ paddingBottom: 112 + inset.bottom }}
+        contentContainerStyle={{ paddingBottom: 24 + inset.bottom }}
         onScroll={({ nativeEvent }) => {
           const offset = nativeEvent.contentOffset.y;
           currentHotelScrollOffset.current = offset;
@@ -627,7 +626,7 @@ function HotelDetail({
             <NativeHotelRatesSection
               offers={hotelOffers}
               selectedOfferId={selectedOffer?.id ?? null}
-              onSelectOffer={setSelectedOfferId}
+              onSelectOffer={(offerId) => void reserveOffer(offerId)}
               roomOptions={presentedRoomOptions}
               providerName={result.provider}
               roomType={result.roomType}
@@ -734,7 +733,7 @@ function HotelDetail({
               accessibilityRole="button"
               accessibilityState={{ disabled: !canContinue }}
               disabled={!canContinue}
-              onPress={() => void continueBooking()}
+              onPress={() => selectedOffer && void reserveOffer(selectedOffer.id)}
               style={({ pressed }) => [
                 s.continueButton,
                 !canContinue && s.continueDisabled,
@@ -801,7 +800,7 @@ const s = StyleSheet.create({
   offerBottom: { marginTop: 2, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
   perNight: { flexShrink: 0, fontSize: 10, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "right" },
   sectionLead: { fontSize: 12, lineHeight: 18 },
-  sticky: { position: "absolute", bottom: 0, left: 0, right: 0, borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingHorizontal: 16, paddingTop: 8, shadowColor: "#0F172A", shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 6 },
+  sticky: { display: "none", position: "absolute", bottom: 0, left: 0, right: 0, borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingHorizontal: 16, paddingTop: 8, shadowColor: "#0F172A", shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 6 },
   dockContent: { width: "100%", flexDirection: "row", alignItems: "center", gap: 10 },
   dockPrice: { flex: 1, minWidth: 0, gap: 1 },
   dockLabel: { flexDirection: "row", alignItems: "center", gap: 4 },
