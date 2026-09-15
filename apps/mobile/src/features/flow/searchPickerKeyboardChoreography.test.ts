@@ -2,13 +2,48 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const movingPickers = [
+const stationaryLocationPickers = [
   ["HotelSearchPanel.tsx", "function HotelDestinationSheet", "type GuestsRoomsDraft"],
   ["CarSearchPanel.tsx", "export function CarLocationSheet", "function FieldError"],
+] as const;
+
+const movingPickers = [
   ["PackageSearchForm.tsx", "function AirportSheet", "const PACKAGE_TRAVELER_ROWS"],
 ] as const;
 
-test("Hotel, Car, and Package moving sheets retain their focus choreography", () => {
+test("Hotel and Car location pickers match Flight stationary opening and focus choreography", () => {
+  for (const [file, start, end] of stationaryLocationPickers) {
+    const source = readFileSync(`src/features/flow/${file}`, "utf8");
+    const sheet = source.slice(source.indexOf(start), source.indexOf(end));
+    assert.match(sheet, /useSearchPickerMotion\([^;]+controlledOpening: true, stationaryOpening: true/, file);
+    assert.match(sheet, /useSearchPickerKeyboardPresentation\([^;]+inputRef, motion, \{ focusOnPresentation: true \}\)/, file);
+    assert.match(sheet, /onShow=\{keyboardPresentation\.onModalShow\}/, file);
+    assert.match(sheet, /onLayout=\{keyboardPresentation\.onSheetLayout\}/, file);
+    assert.match(sheet, /onFocus=\{keyboardPresentation\.onInputFocus\}/, file);
+    assert.match(sheet, /measureInWindow/, file);
+    assert.match(sheet, /Keyboard\.addListener\("keyboardWillChangeFrame"/, file);
+    assert.match(sheet, /Keyboard\.addListener\("keyboardDidShow"/, file);
+    assert.match(sheet, /Keyboard\.dismiss\(\)/, file);
+    assert.doesNotMatch(sheet, /keyboardSynchronizedOpening/, file);
+    assert.doesNotMatch(sheet, /autoFocus/, file);
+    assert.doesNotMatch(sheet, /requestAnimationFrame\([^)]*inputRef\.current\?\.focus/s, file);
+    assert.doesNotMatch(sheet, /setTimeout\([^)]*inputRef\.current\?\.focus/s, file);
+    assert.doesNotMatch(sheet, /InteractionManager/, file);
+  }
+
+  const hotel = readFileSync("src/features/flow/HotelSearchPanel.tsx", "utf8");
+  const car = readFileSync("src/features/flow/CarSearchPanel.tsx", "utf8");
+  assert.match(hotel, /destinationSheet:\{height:"82%"/);
+  assert.match(hotel, /destinationResultsViewport:\{flex:1,minHeight:0\}/);
+  assert.match(hotel, /contentContainerStyle=\{\[styles\.destinationList,\{paddingBottom:resultsKeyboardInset\}\]\}/);
+  assert.doesNotMatch(hotel, /<KeyboardAvoidingView pointerEvents=\{motion\.pointerEvents\}/);
+  assert.match(car, /locationSheet:\{height:"82%"/);
+  assert.match(car, /locationResultsViewport:\{flex:1,minHeight:0\}/);
+  assert.match(car, /paddingBottom:resultsKeyboardInset/);
+  assert.doesNotMatch(car, /<KeyboardAvoidingView pointerEvents=\{motion\.pointerEvents\}/);
+});
+
+test("Package keeps the existing moving searchable-sheet choreography", () => {
   for (const [file, start, end] of movingPickers) {
     const source = readFileSync(`src/features/flow/${file}`, "utf8");
     const sheet = source.slice(source.indexOf(start), source.indexOf(end));
@@ -63,9 +98,7 @@ test("Flight opens stationary and focuses independently of keyboard readiness", 
   assert.match(airportSheet, /stationaryOpening: true/);
   assert.match(airportSheet, /\{ focusOnPresentation: true \}/);
   assert.doesNotMatch(airportSheet, /keyboardSynchronizedOpening/);
-  for (const file of ["HotelSearchPanel.tsx", "CarSearchPanel.tsx", "PackageSearchForm.tsx"]) {
-    assert.doesNotMatch(readFileSync(`src/features/flow/${file}`, "utf8"), /keyboardSynchronizedOpening/);
-  }
+  assert.doesNotMatch(readFileSync("src/features/flow/PackageSearchForm.tsx", "utf8"), /keyboardSynchronizedOpening/);
   assert.doesNotMatch(airportSheet, /autoFocus|requestAnimationFrame|setTimeout\([^)]*focus|InteractionManager/);
   assert.doesNotMatch(airportSheet, /keyboardHeight|KEYBOARD_HEIGHT/);
 });
