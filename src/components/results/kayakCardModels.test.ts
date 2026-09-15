@@ -69,8 +69,8 @@ test("KAYAK flight details use only provider-authored fare facts", () => {
     conditions:offer.flightConditions,
     optionalServices:offer.flightOptionalServices,
   });
-  assert.equal(model.providerDetails?.price?.baseAmount,undefined);
-  assert.equal(model.providerDetails?.price?.taxAmount,undefined);
+  assert.equal("baseAmount" in (model.providerDetails?.price ?? {}),false);
+  assert.equal("taxAmount" in (model.providerDetails?.price ?? {}),false);
 });
 
 test("KAYAK airline policy attributes never become purchased fare terms", () => {
