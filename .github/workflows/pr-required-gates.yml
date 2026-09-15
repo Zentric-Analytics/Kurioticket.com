@@ -31,6 +31,8 @@ jobs:
             apps/mobile/package-lock.json
       - name: Install web/server dependencies
         run: npm ci
+      - name: Type-check web/server
+        run: npx tsc --noEmit --pretty false
       - name: Install native dependencies
         run: npm --prefix apps/mobile ci
       - name: Validate semantic web, iOS, and Android travel parity
