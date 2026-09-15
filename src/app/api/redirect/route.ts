@@ -11,15 +11,23 @@ import type { NormalizedFlightResult } from "@/lib/types";
 import type { FlightHandoff } from "@/services/travel/flightHandoff";
 import { revalidateFlightRedirectHandoff } from "@/services/travel/flightRedirectHandoff";
 
+export function previewAllowsKayakSandboxHandoff(
+  body: { id?: string; type?: "flight" | "hotel" },
+  target?: NormalizedFlightResult | null,
+) {
+  if (!(body.type === "flight" && body.id?.startsWith("kayak-sandbox:"))) return false;
+  return target === undefined || target?.provider === "KAYAK sandbox";
+}
+
 export async function POST(request: Request) {
-  if (isStagingEnvironment()) {
+  const staging = isStagingEnvironment();
+  const body = await request.json().catch(() => ({})) as { id?: string; type?: "flight" | "hotel"; sourcePage?: string };
+  if (staging && !previewAllowsKayakSandboxHandoff(body)) {
     return NextResponse.json(
       { error: "Provider checkout is disabled in Preview." },
       { status: 403 },
     );
   }
-
-  const body = (await request.json()) as { id?: string; type?: "flight" | "hotel"; sourcePage?: string };
   if (!body.id || !body.type) {
     return NextResponse.json({ error: "Redirect target is required." }, { status: 400 });
   }
@@ -29,6 +37,13 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "This partner link expired. Please search again for current prices." },
       { status: 404 },
+    );
+  }
+
+  if (staging && !previewAllowsKayakSandboxHandoff(body, target as NormalizedFlightResult)) {
+    return NextResponse.json(
+      { error: "Provider checkout is disabled in Preview." },
+      { status: 403 },
     );
   }
 

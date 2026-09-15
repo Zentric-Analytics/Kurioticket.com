@@ -25,6 +25,13 @@ test("flight cabin summary requires supplied fares for all itinerary segments", 
   assert.equal(normalizeSandboxOffers("flights",{...data,legs:{l:{segments:[{id:"s"},{id:"other"}]}}})[0].flightCabin,undefined);
 });
 
+test("flight fare families preserve only provider-supplied names", () => {
+  const base={currency:"USD",priceMode:"total",legs:{l:{segments:[{id:"s"}]}},segments:{s:{origin:"BOS",destination:"JFK",airline:"AA"}},results:[{legs:[{id:"l"}],bookingOptions:[{type:"regular",displayPrice:{price:100},bookingUrl:click}]}]};
+  assert.equal(normalizeSandboxOffers("flights",base)[0].flightFareFamily, undefined);
+  const named=structuredClone(base) as typeof base & { results: [{ bookingOptions: [{ fareFamily?: { displayName: string } }] }] }; named.results[0].bookingOptions[0].fareFamily={displayName:"Main Cabin Flexible"};
+  assert.equal(normalizeSandboxOffers("flights",named)[0].flightFareFamily,"Main Cabin Flexible");
+});
+
 test("hotel guest scores preserve the provider rating without inventing unrated scores", () => {
   for (const guestRating of [8.6, 0, 10, -1, 11, NaN, Infinity, "8.6", undefined]) {
     const [offer] = normalizeSandboxOffers("hotels", {currencyCode:"USD",results:[{

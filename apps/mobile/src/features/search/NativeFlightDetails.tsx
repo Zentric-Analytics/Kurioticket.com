@@ -66,8 +66,8 @@ function savedFlightOffer(details: FlightDetailsSuccess, choice: FlightDetailsFa
     bookingUrl: "",
     partnerRedirectUrl: "",
     searchPolicy: {
-      source: "duffel",
-      bookable: choice.handoff.available,
+      source: offer.provider === "KAYAK sandbox" ? "kayak-sandbox" : "duffel",
+      bookable: offer.provider === "KAYAK sandbox" ? false : choice.handoff.available,
       action: {
         kind: "internal-detail",
         href: `/flights/details/${encodeURIComponent(offer.id)}`,

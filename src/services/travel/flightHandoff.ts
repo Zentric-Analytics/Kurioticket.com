@@ -1,4 +1,5 @@
 import type { NormalizedFlightResult } from "@/lib/types";
+import { sandboxBookingUrl } from "./kayakSandboxPublic";
 
 export type FlightHandoff = { providerName: string; url: URL };
 
@@ -21,7 +22,7 @@ function configuredPartners() {
 
 /** Resolves only an explicitly configured end-user booking destination. */
 export function resolveFlightHandoff(
-  offer: Pick<NormalizedFlightResult, "partnerRedirectUrl" | "bookingUrl">,
+  offer: Pick<NormalizedFlightResult, "provider" | "partnerRedirectUrl" | "bookingUrl">,
 ): FlightHandoff | null {
   const rawUrl = offer.partnerRedirectUrl.trim() || offer.bookingUrl.trim();
   if (!rawUrl) return null;
@@ -32,7 +33,8 @@ export function resolveFlightHandoff(
     return null;
   }
   if (url.protocol !== "https:" || url.username || url.password) return null;
+  if (offer.provider === "KAYAK sandbox" && sandboxBookingUrl(url.href))
+    return { providerName: "KAYAK sandbox", url };
   const providerName = configuredPartners().get(url.hostname.toLowerCase());
   return providerName ? { providerName, url } : null;
 }
-
