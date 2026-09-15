@@ -62,6 +62,7 @@ test("the live route owns one sticky shell and one deterministic horizontal tab 
   assert.match(native, /backgroundColor:selected\?"#075EE8":"transparent"/);
   assert.match(tablist, /onPress=\{\(\)=>setActiveTab\(tab\)\}/);
   assert.match(tablist, /accessibilityState=\{\{selected\}\}/);
+  assert.match(tablist, /tab==="compare"\?"Compare deals"/);
 });
 
 test("the web tab reference remains the mobile parity contract", () => {
@@ -79,12 +80,12 @@ test("content below the three tabs shares one section-heading hierarchy", () => 
     for (const contract of ["fontSize:18", "lineHeight:24", 'fontWeight:"600"', "fontFamily:appFonts.semibold", "letterSpacing:-.25"])
       assert.ok(style(heading).includes(contract), `${heading}: ${contract}`);
   }
-  assert.match(native, /<Text style=\{\[s\.compareHeading,[^>]*>Compare prices<\/Text>/);
+  assert.match(native, /<Text style=\{\[s\.compareHeading,[^>]*>Compare deals<\/Text>/);
   assert.match(native, /<Text style=\{\[s\.pickupHeading,[^>]*>Pickup and return<\/Text>/);
   assert.match(native, /<Text style=\{\[s\.locationHeading,[^>]*>Location<\/Text>/);
   for (const contract of ["marginTop:4", "fontSize:14", "lineHeight:20", 'fontWeight:"500"'])
     assert.ok(style("stay").includes(contract));
-  for (const contract of ["marginTop:20", "borderRadius:14", "paddingHorizontal:8", "paddingVertical:16"])
+  for (const contract of ["marginTop:20", "borderRadius:14", "paddingHorizontal:16", "paddingVertical:16", 'overflow:"hidden"'])
     assert.ok(style("compareCard").includes(contract));
   assert.doesNotMatch(style("compareCard"), /marginHorizontal:-/);
   assert.match(native, /logo:\{width:108,height:24,flexShrink:0\}/);
@@ -104,9 +105,9 @@ test("content below the three tabs shares one section-heading hierarchy", () => 
   for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"700"', "fontFamily:appFonts.bold"])
     assert.ok(style("requirementsHeading").includes(contract));
   for (const contract of ["marginTop:10", 'flexDirection:"row"', 'alignItems:"center"', "gap:10"])
-    assert.ok(style("requirementRow").includes(contract));
+    assert.ok(style("requirementRow").includes(contract), contract);
   for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"500"', "fontFamily:appFonts.medium"])
-    assert.ok(style("requirementText").includes(contract));
+    assert.ok(style("requirementText").includes(contract), contract);
   assert.match(native, /<Text style=\{\[s\.requirementsHeading,[^>]*>Pickup requirements<\/Text>/);
   assert.match(native, /<IdCard size=\{19\}/);
   assert.match(native, />Valid driver's license<\/Text>/);
@@ -114,40 +115,35 @@ test("content below the three tabs shares one section-heading hierarchy", () => 
   assert.match(native, /<Clock3 size=\{16\} color=\{theme\.dark\?theme\.icon:"#64748B"\}/);
 });
 
-test("Compare benefits are stationary and wrap as whole readable items", () => {
+test("Compare deals exposes truthful car-offer terms without inventing provider claims", () => {
   const compareStart = native.indexOf("function Compare(");
   const compareEnd = native.indexOf("function TimelineEntry", compareStart);
   const compare = native.slice(compareStart, compareEnd);
-  assert.match(compare, /<View style=\{s\.benefits\}>/);
-  for (const scrollingContract of [/<ScrollView/, /\bhorizontal\b/, /showsHorizontalScrollIndicator/, /scrollEnabled/, /onScroll/, /scrollTo/])
-    assert.doesNotMatch(compare, scrollingContract);
 
-  for (const contract of ["flex:1", "minWidth:0", 'flexDirection:"row"', 'flexWrap:"wrap"', "rowGap:8", "columnGap:12"])
+  assert.match(compare, /offer\.payAtPickup\?<Text[^>]*>Pay at pickup<\/Text>:null/);
+  assert.match(compare, /offer\.freeCancellation\?"Free cancellation":"Non-refundable"/);
+  assert.match(compare, /nativeCarFuelPolicyLabel\(result\.fuelPolicy\)/);
+  assert.match(compare, /result\.mileagePolicy==="unlimited"\?"Unlimited mileage":nativeCarMileageLabel\(result\)/);
+  assert.match(compare, /money\(offer\.currency,offer\.pricePerDay\)/);
+  assert.match(compare, /money\(offer\.currency,offer\.totalPrice\)/);
+  assert.match(compare, /offer\.taxesAndFeesIncluded\?<Text[^>]*>Taxes & fees included<\/Text>:null/);
+  assert.match(compare, /Car supplied by:/);
+  assert.match(compare, /!\/static fixture\|supplier not supplied\/i\.test\(supplier\)/);
+  assert.doesNotMatch(compare, /Mobile deal|Book<|View deal|Reserve/);
+
+  for (const contract of ["flexDirection:\"row\"", "alignItems:\"flex-start\"", "gap:14"])
+    assert.ok(style("dealBody").includes(contract), contract);
+  for (const contract of ["gap:9"])
     assert.ok(style("benefits").includes(contract), contract);
-  for (const contract of ['flexDirection:"row"', 'alignItems:"center"', "flexShrink:0"])
+  for (const contract of ['flexDirection:"row"', 'alignItems:"center"', "gap:7"])
     assert.ok(style("benefit").includes(contract), contract);
-  assert.match(compare, /<Text numberOfLines=\{1\} style=\{s\.benefitText\}>\{label\}<\/Text>/);
-  assert.doesNotMatch(compare, /ellipsizeMode|adjustsFontSizeToFit|minimumFontScale/);
-  for (const contract of ["fontSize:11", 'fontWeight:"600"', "fontFamily:appFonts.semibold"])
-    assert.ok(style("benefitText").includes(contract), contract);
-
-  for (const contract of ["marginTop:20", 'flexDirection:"row"', 'alignItems:"flex-end"', "gap:10"])
-    assert.ok(style("compareBottom").includes(contract), contract);
-  for (const contract of ["flexShrink:0", 'alignItems:"flex-end"'])
+  for (const contract of ["width:112", "flexShrink:0", 'alignItems:"flex-end"'])
     assert.ok(style("comparePrice").includes(contract), contract);
-  assert.match(compare, /<View style=\{s\.comparePrice\}><Text style=\{s\.daily\}>[\s\S]*<Text style=\{s\.perDay\}>per day<\/Text><\/View>/);
 });
 
-test("Compare alone uses the singular unlimited-mile benefit copy", () => {
+test("Compare deals keeps the full unlimited-mile copy used elsewhere", () => {
   assert.match(native, /<Spec Icon=\{Gauge\} text=\{nativeCarMileageLabel\(result\)\}/);
-  assert.match(native, /const compareMileageLabel=result\.mileagePolicy==="unlimited"\?"Unlimited mile":nativeCarMileageLabel\(result\)/);
-  const compareStart = native.indexOf("function Compare(");
-  const factsStart = native.indexOf("const facts=", compareStart);
-  const factsEnd = native.indexOf(" as const", factsStart);
-  const facts = native.slice(factsStart, factsEnd);
-  const ordered = ["ShieldCheck", "nativeCarFuelPolicyLabel", "Gauge", "compareMileageLabel"].map(contract => facts.indexOf(contract));
-  assert.ok(ordered.every(index => index >= 0));
-  assert.deepEqual(ordered, [...ordered].sort((a, b) => a - b));
+  assert.match(native, /const compareMileageLabel=result\.mileagePolicy==="unlimited"\?"Unlimited mileage":nativeCarMileageLabel\(result\)/);
   assert.equal(nativeCarMileageLabel({ mileagePolicy: "unlimited" } as CarResult), "Unlimited mileage");
   assert.equal(nativeCarMileageLabel({ mileagePolicy: "limited", limitedMileageKm: 300 } as CarResult), "300 km included");
 });
