@@ -1,4 +1,4 @@
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 import type { NativeHotelOffer } from "./nativeHotelDetailsModel";
 import type { PresentedHotelRoomOption } from "./NativeHotelDetails";
 import { appFonts } from "../../theme/typography";
@@ -107,14 +107,12 @@ function addRateRow(groups: RateGroup[], groupTitle: string, row: RateRow) {
 
 export function NativeHotelRatesSection({
   offers,
-  onSelectOffer,
   roomOptions,
   providerName,
   roomType,
   cancellationInfo,
   detailsStatus,
   theme,
-  accentColor,
 }: {
   offers: NativeHotelOffer[];
   selectedOfferId: NativeHotelOffer["id"] | null;
@@ -245,18 +243,6 @@ export function NativeHotelRatesSection({
                   >
                     {row.price}
                   </Text>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`Reserve ${row.title} with ${row.providerName}`}
-                    onPress={() => onSelectOffer(row.offerId)}
-                    style={({ pressed }) => [
-                      s.reserveButton,
-                      { backgroundColor: accentColor },
-                      pressed && s.reserveButtonPressed,
-                    ]}
-                  >
-                    <Text style={s.reserveButtonText}>Reserve</Text>
-                  </Pressable>
                 </View>
               </View>
             ))}
@@ -311,7 +297,7 @@ const s = StyleSheet.create({
     width: 104,
     flexShrink: 0,
     alignItems: "flex-end",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
   },
   price: {
     maxWidth: "100%",
@@ -326,22 +312,6 @@ const s = StyleSheet.create({
     lineHeight: 18,
     fontWeight: "600",
     fontFamily: appFonts.semibold,
-  },
-  reserveButton: {
-    minWidth: 82,
-    minHeight: 44,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 12,
-  },
-  reserveButtonPressed: { opacity: 0.84 },
-  reserveButtonText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    lineHeight: 20,
-    fontWeight: "700",
-    fontFamily: appFonts.bold,
   },
   emptyCard: {
     minHeight: 108,
