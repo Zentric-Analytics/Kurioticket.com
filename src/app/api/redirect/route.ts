@@ -10,12 +10,14 @@ import { isStagingEnvironment } from "@/lib/stagingSafety";
 import type { NormalizedFlightResult } from "@/lib/types";
 import type { FlightHandoff } from "@/services/travel/flightHandoff";
 import { revalidateFlightRedirectHandoff } from "@/services/travel/flightRedirectHandoff";
+import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
+import { getProviderResult } from "@/services/travel/providerResultCache";
 
 export function previewAllowsKayakSandboxHandoff(
   body: { id?: string; type?: "flight" | "hotel" },
-  target?: NormalizedFlightResult | null,
+  target?: (NormalizedFlightResult | NormalizedHotelResult) | null,
 ) {
-  if (!(body.type === "flight" && body.id?.startsWith("kayak-sandbox:"))) return false;
+  if (!((body.type === "flight" || body.type === "hotel") && body.id?.startsWith("kayak-sandbox:"))) return false;
   return target === undefined || target?.provider === "KAYAK sandbox";
 }
 
@@ -32,7 +34,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Redirect target is required." }, { status: 400 });
   }
 
-  let target = body.type === "flight" ? await getFlightFromCache(body.id) : getHotelFromCache(body.id);
+  let target = body.type === "flight"
+    ? await getFlightFromCache(body.id)
+    : getHotelFromCache(body.id) ?? await getProviderResult<NormalizedHotelResult>("hotel", body.id);
   if (!target) {
     return NextResponse.json(
       { error: "This partner link expired. Please search again for current prices." },
@@ -73,7 +77,7 @@ export async function POST(request: Request) {
   const hotelTarget = body.type === "hotel" ? (target as NormalizedHotelResult) : null;
   const hotelPriceDetails = hotelTarget ? getHotelPriceDetails(hotelTarget) : null;
 
-  if (body.type === "hotel" && "dataSource" in target && target.dataSource === "demo") {
+  if (body.type === "hotel" && "dataSource" in target && target.dataSource === "demo" && target.provider !== "KAYAK sandbox") {
     return NextResponse.json(
       {
         error:
@@ -99,9 +103,14 @@ export async function POST(request: Request) {
     );
   }
 
+  const providerUrl = hotelTarget?.provider === "KAYAK sandbox"
+    ? sandboxBookingUrl(target.partnerRedirectUrl || target.bookingUrl || "")
+    : target.partnerRedirectUrl || target.bookingUrl;
+  if (body.type === "hotel" && !providerUrl)
+    return NextResponse.json({ error: "Booking link currently unavailable." }, { status: 409 });
   const url = body.type === "flight"
     ? verifiedFlightHandoff!.url
-    : new URL(target.partnerRedirectUrl! || target.bookingUrl!);
+    : new URL(providerUrl!);
   if (!["http:", "https:"].includes(url.protocol)) {
     return NextResponse.json({ error: "Unsafe redirect target." }, { status: 400 });
   }

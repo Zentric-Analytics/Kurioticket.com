@@ -39,7 +39,7 @@ function testHotel(id: string, name: string): NormalizedHotelResult {
 }
 
 test("hotel details returns 400 when id is missing", async () => {
-  const response = GET(
+  const response = await GET(
     new Request("https://kurioticket.test/api/hotels/details"),
   );
   const payload = (await response.json()) as { error?: string };
@@ -49,7 +49,7 @@ test("hotel details returns 400 when id is missing", async () => {
 });
 
 test("hotel details returns 404 for an unknown id", async () => {
-  const response = GET(
+  const response = await GET(
     new Request(
       "https://kurioticket.test/api/hotels/details?id=unknown-hotel-details-test",
     ),
@@ -68,7 +68,7 @@ test("hotel details returns the selected cached public hotel", async () => {
     testHotel(selectedId, "Selected Cached Hotel"),
   ]);
 
-  const response = GET(
+  const response = await GET(
     new Request(
       `https://kurioticket.test/api/hotels/details?id=${encodeURIComponent(selectedId)}`,
     ),
@@ -89,7 +89,7 @@ test("hotel details returns the selected cached public hotel", async () => {
 });
 
 test("static details include sanitized room options and requested stay totals", async () => {
-  const response = GET(
+  const response = await GET(
     new Request(
       "https://kurioticket.test/api/hotels/details?id=hotel-le-six-paris&checkIn=2027-06-01&checkOut=2027-06-04&rooms=2&guests=4",
     ),
@@ -126,7 +126,7 @@ test("hotel details does not return a different cached hotel for an unknown id",
   const cachedId = `hotel-details-cached-${Date.now()}`;
   rememberHotels([testHotel(cachedId, "Cached Hotel Should Not Leak")]);
 
-  const response = GET(
+  const response = await GET(
     new Request(
       `https://kurioticket.test/api/hotels/details?id=${cachedId}-missing`,
     ),
@@ -142,7 +142,7 @@ test("hotel details does not return a different cached hotel for an unknown id",
 });
 
 test("Park Plaza details expose the matching Westminster address and coordinates", async () => {
-  const response = GET(
+  const response = await GET(
     new Request(
       "https://kurioticket.test/api/hotels/details?id=park-plaza-westminster-bridge",
     ),
@@ -188,7 +188,7 @@ test("Park Plaza details expose the matching Westminster address and coordinates
 
 test("static hotel details return only available sanitized same-city alternatives", async () => {
   for (const selected of staticHotelCatalogue) {
-    const response = GET(
+    const response = await GET(
       new Request(
         `https://kurioticket.test/api/hotels/details?id=${encodeURIComponent(selected.id)}&checkIn=2027-06-01&checkOut=2027-06-04&rooms=1&guests=2`,
       ),

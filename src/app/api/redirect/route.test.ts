@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test, { afterEach } from "node:test";
 
 import { POST, previewAllowsKayakSandboxHandoff } from "./route";
-import type { NormalizedFlightResult } from "@/lib/types";
+import type { NormalizedFlightResult, NormalizedHotelResult } from "@/lib/types";
 
 const originalUrl = process.env.NEXT_PUBLIC_APP_URL;
 
@@ -53,4 +53,10 @@ test("Preview permits only a server-owned KAYAK sandbox offer at the final fligh
   assert.equal(previewAllowsKayakSandboxHandoff({id:flight.id,type:"flight"},flight),true);
   assert.equal(previewAllowsKayakSandboxHandoff({id:flight.id,type:"flight"},{...flight,provider:"Duffel"}),false);
   assert.equal(previewAllowsKayakSandboxHandoff({id:"hotel",type:"hotel"}),false);
+});
+
+test("Preview permits a server-owned KAYAK sandbox hotel only at the final action", () => {
+  const hotel = { id: "kayak-sandbox:hotel", provider: "KAYAK sandbox" } satisfies Pick<NormalizedHotelResult, "id" | "provider">;
+  assert.equal(previewAllowsKayakSandboxHandoff({ id: hotel.id, type: "hotel" }, hotel as NormalizedHotelResult), true);
+  assert.equal(previewAllowsKayakSandboxHandoff({ id: hotel.id, type: "hotel" }, { ...hotel, provider: "Other provider" } as NormalizedHotelResult), false);
 });

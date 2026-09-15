@@ -40,9 +40,11 @@ import type {
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { getDealsGuidedConfirmationActionId } from "@/lib/deals/dealsConfirmationIds";
+import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
 
 export type CarDetailsPrimaryAction =
   | { kind: "standalone-disabled-provider"; label: string }
+  | { kind: "sandbox-handoff"; label: string; href: string }
   | {
       kind: "guided-car";
       enabled: boolean;
@@ -329,6 +331,12 @@ export function CarDetailsClient({
 }) {
   const { t } = useLocale();
   const copy = (key: string) => t[key] || enTranslations[key] || key;
+  const sandboxHref = car.inventorySource === "kayak-sandbox"
+    ? sandboxBookingUrl(getPrimaryCarOffer(car)?.bookingUrl)
+    : null;
+  const primaryAction: CarDetailsPrimaryAction = sandboxHref
+    ? { kind: "sandbox-handoff", label: "Open KAYAK test page", href: sandboxHref }
+    : { kind: "standalone-disabled-provider", label: copy("carDetails.continueDeal") };
   return (
     <main className="flex-1 bg-white pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bg-surface-muted/40 lg:pb-0">
       <section className="bg-white lg:border-b lg:border-border lg:pb-14">
@@ -344,10 +352,7 @@ export function CarDetailsClient({
               car={car}
               search={search}
               presentation="standalone-content"
-              primaryAction={{
-                kind: "standalone-disabled-provider",
-                label: copy("carDetails.continueDeal"),
-              }}
+              primaryAction={primaryAction}
             />
           </div>
         </div>
@@ -647,7 +652,17 @@ function BookingSummary({
       >
         {daily.formatted} {copy("carsResults.perDay")}
       </p>
-      {action.kind === "standalone-disabled-provider" ? (
+      {action.kind === "sandbox-handoff" ? (
+        <a
+          href={action.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          referrerPolicy="no-referrer"
+          className="mt-5 block w-full rounded-lg bg-blue px-4 py-3 text-center font-bold text-white"
+        >
+          {action.label}
+        </a>
+      ) : action.kind === "standalone-disabled-provider" ? (
         <button
           disabled
           className="mt-5 w-full rounded-lg bg-blue px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-100"
@@ -803,7 +818,17 @@ function MobileBookingDock({
             </span>
           </p>
         </div>
-        {action.kind === "standalone-disabled-provider" ? (
+        {action.kind === "sandbox-handoff" ? (
+          <a
+            href={action.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            referrerPolicy="no-referrer"
+            className="focus-ring inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-blue px-3 text-center text-xs font-bold leading-4 text-white"
+          >
+            {action.label}
+          </a>
+        ) : action.kind === "standalone-disabled-provider" ? (
           <button
             disabled
             className="focus-ring min-h-12 w-full rounded-lg bg-blue px-3 text-xs font-bold leading-4 text-white disabled:cursor-not-allowed disabled:opacity-100"

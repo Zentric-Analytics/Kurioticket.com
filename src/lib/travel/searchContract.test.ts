@@ -48,7 +48,7 @@ test("authoritative sources and truthful actions", () => {
   assert.deepEqual(car.warnings, []);
 });
 
-test("KAYAK shared search policy stays a provider handoff for non-native consumers", () => {
+test("KAYAK shared search policy enters Kurioticket details before any provider handoff", () => {
   const response = classifyFlights(
     [{ id: "kayak-sandbox:one", provider: "KAYAK sandbox", partnerRedirectUrl: "https://affiliates.kayak.com/sandbox-clickout" } as never],
     { tripType: "one-way", origin: "BOS", destination: "JFK", departureDate: "2027-02-10", adults: 1, children: 0, infants: 0, travelers: 1, cabinClass: "economy" },
@@ -56,8 +56,8 @@ test("KAYAK shared search policy stays a provider handoff for non-native consume
   );
   assert.equal(response.results[0].searchPolicy.source, "kayak-sandbox");
   assert.equal(response.results[0].searchPolicy.bookable, false);
-  assert.equal(response.results[0].searchPolicy.action.kind, "provider");
-  if (response.results[0].searchPolicy.action.kind === "provider") {
-    assert.equal(response.results[0].searchPolicy.action.href, "https://affiliates.kayak.com/sandbox-clickout");
+  assert.equal(response.results[0].searchPolicy.action.kind, "internal-detail");
+  if (response.results[0].searchPolicy.action.kind === "internal-detail") {
+    assert.match(response.results[0].searchPolicy.action.href, /^\/flights\/details\/kayak-sandbox%3Aone/);
   }
 });

@@ -549,14 +549,14 @@ export function HotelDetailsClient({
   const providerEnabled = canUseHotelDetailsProviderLink(hotel);
   const providerText =
     hotel.provider &&
-    hotel.dataSource !== "demo" &&
+    (hotel.dataSource !== "demo" || hotel.provider === "KAYAK sandbox") &&
     hotel.provider !== "Kurioticket static catalogue"
       ? `${t("providedBy")} ${hotel.provider}`
       : "";
   const providerUnavailableText =
     hotel.provider === "Kurioticket static catalogue"
       ? "Prices shown are estimated for trip planning. Live booking availability will be introduced before launch."
-      : hotel.dataSource === "demo"
+      : hotel.dataSource === "demo" && hotel.provider !== "KAYAK sandbox"
         ? ""
         : hotel.inventoryKind === "discovery" || !hasValidPrice
           ? discoveryBookingUnavailableText

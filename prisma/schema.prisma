@@ -982,3 +982,17 @@ model FlightResultCache {
   @@index([expiresAt])
   @@index([searchKey, itineraryKey, expiresAt])
 }
+
+model ProviderResultCache {
+  cacheKey         String   @id
+  vertical         String
+  resultId         String
+  normalizedResult Json
+  searchContext    Json?
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([vertical, resultId])
+  @@index([expiresAt])
+}
