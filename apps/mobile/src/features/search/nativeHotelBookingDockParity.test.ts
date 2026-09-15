@@ -42,13 +42,9 @@ test("native Hotel removes the checkout-style dock from Rates, Overview, and Rev
   assert.match(detailSource, /contentContainerStyle=\{\{ paddingBottom: 24 \+ inset\.bottom \}\}/);
 });
 
-test("Rates owns a compact provider-level Reserve action instead", () => {
-  assert.match(rateStyle("rateActionColumn", "price"), /width: 112[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "space-between"/);
-  assert.match(rateStyle("reserveButton", "reserveButtonPressed"), /minWidth: 88[\s\S]*minHeight: 44[\s\S]*borderRadius: 10/);
-  assert.match(rateStyle("reserveButtonText", "emptyCard"), /fontSize: 15[\s\S]*fontWeight: "700"[\s\S]*fontFamily: appFonts\.bold/);
-  assert.match(ratesSource, /accessibilityRole="button"/);
-  assert.match(ratesSource, /onPress=\{\(\) => onSelectOffer\(row\.offerId\)\}/);
-  assert.match(ratesSource, />Reserve<\/Text>/);
+test("Rates keeps a compact price column without an inactive provider action", () => {
+  assert.match(rateStyle("rateActionColumn", "price"), /width: 104[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "flex-start"/);
+  assert.doesNotMatch(ratesSource, /reserveButton|>Reserve<\/Text>|accessibilityRole="button"|onPress=\{\(\) => onSelectOffer\(row\.offerId\)\}/);
 });
 
 test("Rates show stay-level totals without a per-night label", () => {
