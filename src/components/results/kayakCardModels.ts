@@ -1,9 +1,9 @@
-import type { FlightLeg, PublicFlightResult, PublicHotelResult, HotelClassificationStars } from "@/lib/types";
+import type { FlightLeg, NormalizedFlightResult, PublicHotelResult, HotelClassificationStars } from "@/lib/types";
 import type { NormalizedCarResult } from "@/lib/cars/types";
 import type { SandboxOffer } from "@/services/travel/kayakSandbox";
 
 /** Map provider legs, never infer elapsed time from timezone-less local timestamps. */
-export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<string, string> = {}): PublicFlightResult | null {
+export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<string, string> = {}): NormalizedFlightResult | null {
   const source = offer.flightLegs;
   if (!source?.length || source.some(leg => !leg.segments.length)) return null;
   const legs: FlightLeg[] = source.map((leg, index) => ({
@@ -27,9 +27,11 @@ export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<strin
   return {
     id: `kayak-sandbox:${offer.id}`, provider:"KAYAK sandbox", airlineName:first.airline,
     airlineLogo:first.airlineLogo, flightNumber:first.flightNumber,
-    ...legs[0], legs, cabinClass:offer.flightCabin || "Not supplied", baggageInfo:offer.flightCarryOnIncluded === true ? "Carry-on included" : offer.flightCarryOnIncluded === false ? "See supplied baggage details" : "Baggage allowance not supplied by provider",
+    ...legs[0], legs, cabinClass:offer.flightCabin || "Not supplied", fareBrandName:offer.flightFareFamily,
+    fareTerms: offer.flightCarryOnIncluded === undefined ? [] : [{ category:"baggage", semantic:offer.flightCarryOnIncluded ? "positive" : "informational", text:offer.flightCarryOnIncluded ? "Carry-on included" : "See supplied baggage details" }],
+    baggageInfo:offer.flightCarryOnIncluded === true ? "Carry-on included" : offer.flightCarryOnIncluded === false ? "See supplied baggage details" : "Baggage allowance not supplied by provider",
     refundInfo:"Not supplied by provider", price:offer.price * (offer.priceBasis === "per person" ? travelers : 1), currency:offer.currency,
-    bookingUrl:offer.testUrl, partnerRedirectUrl:offer.testUrl,
+    bookingUrl:offer.testUrl, partnerRedirectUrl:offer.testUrl, providerOfferId:offer.id,
     valueScore:0, riskScore:0, comfortScore:0, travelConfidenceScore:0, travelEffortScore:0,
     recommendationReasons:[], badges:[],
   };
