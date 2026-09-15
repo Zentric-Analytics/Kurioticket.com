@@ -17,17 +17,20 @@ test("Native Cars Results has no floating Back-to-top affordance", () => {
 });
 
 test("Cars retains its scroll ref and legitimate transition positioning", () => {
-  assert.match(cars, /carScrollRef=useRef<ScrollView>\(null\)/);
+  assert.match(cars, /carScrollRef=useRef<FlatList<CarResult>>\(null\)/);
   assert.match(cars, /ref=\{carScrollRef\}/);
-  assert.match(cars, /startCarResultsTransition=.*?carScrollRef\.current\?\.scrollTo\(\{y:0,animated:true\}\)/);
+  assert.match(cars, /startCarResultsTransition=.*?carScrollRef\.current\?\.scrollToOffset\(\{offset:0,animated:true\}\)/);
   assert.match(cars, /onApplySort=.*?startCarResultsTransition\(\)/);
   assert.doesNotMatch(cars.match(/onApplySort=\{\(next\)=>\{[\s\S]*?\}\}/)?.[0] ?? "", /scrollTo/);
 });
 
-test("Cars vertical owner is cross-platform stable and safe-area aware", () => {
-  const owner = cars.match(/<ScrollView ref=\{carScrollRef\}[^>]*>/)?.[0];
+test("Cars vertical owner is cross-platform stable, virtualized, and safe-area aware", () => {
+  const owner = cars.match(/<FlatList ref=\{carScrollRef\}[^>]*>/)?.[0];
   assert.ok(owner);
   for (const contract of [/alwaysBounceVertical=\{false\}/, /bounces=\{false\}/, /overScrollMode="never"/]) assert.match(owner, contract);
+  assert.match(owner, /initialNumToRender=\{CAR_RESULT_INITIAL_IMAGE_COUNT\}/);
+  assert.match(owner, /maxToRenderPerBatch=\{3\}/);
+  assert.match(owner, /windowSize=\{5\}/);
   assert.doesNotMatch(owner, /scrollEventThrottle=|onScroll=/);
   assert.match(owner, /contentContainerStyle=\{\[r\.body,\{paddingBottom:Math\.max\(insets\.bottom \+ 16,16\)\}\]\}/);
   assert.match(cars, /edges=\{\["top"\]\}/);
@@ -38,7 +41,9 @@ test("Cars vertical owner is cross-platform stable and safe-area aware", () => {
   assert.doesNotMatch(cars, /body:\{[^}]*paddingBottom/);
 });
 
-test("Cars keeps result content behavior without a floating control", () => {
-  assert.match(cars, /filtered\.map\(\(result,index\)/);
-  assert.doesNotMatch(cars, /Page \{page\}|label="Previous"|label="Next"/);
+test("Cars keeps result content behavior without pagination", () => {
+  assert.match(cars, /data=\{listData\}/);
+  assert.match(cars, /renderItem=\{\(\{item,index\}\)=>/);
+  assert.match(cars, /carResultCountLabel\(filtered\.length\)/);
+  assert.doesNotMatch(cars, /Page \{page\}|label="Previous"|label="Next"|pageSize|totalPages/);
 });

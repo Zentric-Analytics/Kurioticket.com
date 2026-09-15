@@ -66,14 +66,17 @@ test("hotel results use one stable native scroll owner without native Back to to
   assert.doesNotMatch(source, /handleHotelScroll|hotelBackToTop|accessibilityLabel="Back to top"/);
 });
 
-test("car results keep separate stable vertical and horizontal scroll contracts", () => {
+test("car results keep separate stable virtualized vertical and horizontal scroll contracts", () => {
   const source = read("src/features/search/ApprovedCarResultsScreen.tsx");
   const horizontalEnd = source.indexOf("</ScrollView>", source.indexOf("<ScrollView horizontal"));
-  const verticalStart = source.indexOf("<ScrollView ref={carScrollRef}", horizontalEnd);
-  const verticalOwner = source.slice(verticalStart, source.indexOf(">", verticalStart) + 1);
+  const verticalStart = source.indexOf("<FlatList ref={carScrollRef}", horizontalEnd);
+  const verticalOwner = source.slice(verticalStart, source.indexOf("/>", verticalStart) + 2);
   const layout = source.slice(source.indexOf("return <SafeAreaView"), source.indexOf("function CarResultsHeader"));
-  assert.equal(layout.match(/<ScrollView/g)?.length, 2);
+  assert.equal(layout.match(/<ScrollView/g)?.length, 1);
+  assert.equal(layout.match(/<FlatList/g)?.length, 1);
   for (const prop of verticalStableProps) assert.match(verticalOwner, prop);
+  assert.match(verticalOwner, /initialNumToRender=\{CAR_RESULT_INITIAL_IMAGE_COUNT\}/);
+  assert.match(verticalOwner, /windowSize=\{5\}/);
   assert.doesNotMatch(verticalOwner, /onScroll=|scrollEventThrottle=/);
   assert.doesNotMatch(source, /handleCarScroll|carBackToTop|accessibilityLabel="Back to top"/);
   const horizontalOwner = source.slice(source.indexOf("<ScrollView horizontal"), horizontalEnd);
