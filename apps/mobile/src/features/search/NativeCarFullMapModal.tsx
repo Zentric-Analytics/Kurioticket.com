@@ -244,7 +244,6 @@ export function NativeCarFullMapModal({
                 <NativeAppleCarLookAroundPreview
                   {...trustedMapCoordinates}
                   locationLabel={pickupLocation}
-                  presentationMode="viewController"
                   style={styles.lookAroundPreviewNative}
                   onStatusChange={handleLookAroundStatus}
                 />
