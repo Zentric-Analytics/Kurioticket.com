@@ -167,3 +167,25 @@ test("KAYAK alternatives with another itinerary never enter the selected fare de
   assert.equal(details.fareChoices[0].deals.length, 1);
   assert.equal(details.fareChoices[0].deals[0].offerId, selected.id);
 });
+
+test("each KAYAK fare choice retains its own normalized information-tab content", async () => {
+  const saver = kayakOffer("kayak-sandbox:saver", "offer-saver", 500, {
+    fareBrandName:"Economy Saver",
+    fareTerms:[{category:"baggage",semantic:"negative",text:"1 checked bag not included"}],
+    providerDetails:{price:{totalAmount:500,totalCurrency:"USD"}},
+    legs:[{...leg,segments:[{...leg.segments[0],cabinDetails:[{cabinClass:"Economy",fareBrandName:"Economy Saver"}]}]}],
+  });
+  const flex = kayakOffer("kayak-sandbox:flex", "offer-flex", 650, {
+    fareBrandName:"Economy Flex",
+    fareTerms:[{category:"baggage",semantic:"positive",text:"1 checked bag included"}],
+    providerDetails:{price:{totalAmount:650,totalCurrency:"USD"},conditions:[{category:"change",scope:"trip",state:"allowed"}]},
+    legs:[{...leg,segments:[{...leg.segments[0],cabinDetails:[{cabinClass:"Economy",fareBrandName:"Economy Flex"}]}]}],
+  });
+  const details=await buildProviderAwareFlightDetails({cachedSelected:saver,cachedAlternatives:[saver,flex],search,now:1});
+  assert.equal(details.status,"available");
+  if(details.status!=="available") return;
+  assert.deepEqual(details.fareChoices.map(({label,offer})=>({label,total:offer.providerDetails?.price?.totalAmount,condition:offer.providerDetails?.conditions?.[0]?.state})),[
+    {label:"Economy Saver",total:500,condition:undefined},
+    {label:"Economy Flex",total:650,condition:"allowed"},
+  ]);
+});

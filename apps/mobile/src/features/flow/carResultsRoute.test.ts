@@ -15,7 +15,7 @@ test("approved car results use the live API contract and open the native detail 
   assert.match(screen, /safeCanonicalCarResult/);
   assert.match(screen, /canonicalResultsWereSilentlyLost/);
   assert.match(screen, /pathname:\s*"\/car-details"/);
-  assert.match(screen, /result:\s*JSON\.stringify\(result\)/);
+  assert.match(screen, /result:JSON\.stringify\(\{\.\.\.result,imageUrl:resolveNativeCarImageUri\(result\.imageUrl\)\?\?result\.imageUrl\}\)/);
   assert.match(screen, /carResultsStack:\s*"1"/);
   assert.match(screen, /result\.searchPolicy\.action\.kind==="provider"/);
   assert.match(screen, /Linking\.openURL\(result\.searchPolicy\.action\.href\)/);
@@ -36,7 +36,7 @@ test("car card matches the mobile Web identity, four-spec and conversion hierarc
   assert.doesNotMatch(card, /supplierRating|supplierReviewCount|Unlimited mileage|Pay at pickup/);
 });
 
-test("car results preserve controls and count with a continuous list beneath the native header", () => {
+test("car results preserve controls and count with one continuous virtualized list beneath the native header", () => {
   const screen = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
   assert.match(screen, /<CarResultsHeader/);
   assert.match(screen, /accessibilityLabel=\{`Edit car search\./);
@@ -49,7 +49,9 @@ test("car results preserve controls and count with a continuous list beneath the
   assert.doesNotMatch(screen, /cycle\(|priceFilter|setCategory|setCompany|Rental company/);
   assert.match(screen, /carResultCountLabel\(filtered\.length\)/);
   assert.doesNotMatch(screen, /style=\{r\.range\}|range:\{/);
-  assert.match(screen, /filtered\.map\(\(result,index\)/);
+  assert.match(screen, /<FlatList ref=\{carScrollRef\}/);
+  assert.match(screen, /data=\{listData\}/);
+  assert.match(screen, /renderItem=\{\(\{item,index\}\)=>/);
   assert.doesNotMatch(screen, /pageSize|totalPages|filtered\.slice|Page \{page\}/);
   assert.match(screen, /<CarResultsShortcut label=\{sort/);
   assert.doesNotMatch(screen, /Sort by:/);

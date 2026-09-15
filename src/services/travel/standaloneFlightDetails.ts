@@ -164,12 +164,30 @@ function kayakMaterialKey(offer: NormalizedFlightResult) {
     legDirection: term.legDirection,
     legIndex: term.legIndex,
   })).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+  const segmentCabinDetails = (offer.legs ?? []).map((leg) =>
+    leg.segments.map((segment) => segment.cabinDetails ?? []),
+  );
+  const conditions = [...(offer.providerDetails?.conditions ?? [])].sort((left, right) =>
+    JSON.stringify(left).localeCompare(JSON.stringify(right)),
+  );
+  const optionalServices = [...(offer.providerDetails?.optionalServices ?? [])].sort((left, right) =>
+    JSON.stringify(left).localeCompare(JSON.stringify(right)),
+  );
   return JSON.stringify({
     provider: canonical(offer.provider),
     fareBrand: providerBrandIdentity(offer),
     cabinClass: canonical(offer.cabinClass),
     materialTerms,
+    segmentCabinDetails,
+    conditions,
+    optionalServices,
   });
+}
+
+function titleCase(value: string) {
+  return value
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function fareTerms(offer: NormalizedFlightResult) {
@@ -448,10 +466,4 @@ export async function buildStandaloneFlightDetails({
       cabinClass: search.cabinClass,
     },
   };
-}
-
-function titleCase(value: string) {
-  return value
-    .replace(/[-_]/g, " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }

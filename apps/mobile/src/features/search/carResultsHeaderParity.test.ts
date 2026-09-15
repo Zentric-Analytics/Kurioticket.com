@@ -48,7 +48,9 @@ test("Cars summary compacts the displayed city without mutating its canonical va
 
 test("Cars render the full filtered result set without pagination", () => {
   assert.match(cars, /carResultCountLabel\(filtered\.length\)/);
-  assert.match(cars, /filtered\.map\(\(result,index\)/);
+  assert.match(cars, /const listData=status==="ready"&&!carResultsApplying\?filtered:\[\]/);
+  assert.match(cars, /data=\{listData\}/);
+  assert.match(cars, /renderItem=\{\(\{item,index\}\)=>/);
   assert.match(cars, /rank=\{index\}/);
   assert.doesNotMatch(cars, /const \[page|pageSize|totalPages|filtered\.slice|Page \{page\}|label="Previous"|label="Next"/);
 });
@@ -59,7 +61,7 @@ test("Cars inset only result cards and matching transition skeletons", () => {
   const slot = cars.match(/carResultCardSlot:\{([^}]*)\}/)?.[1] ?? "";
   assert.doesNotMatch(slot, /(?:minW|w|W)idth|position|absolute|transform|margin(?:Horizontal)?:-|Dimensions|window|screen/);
   assert.doesNotMatch(cars, /carResultCardSlot:\{[^}]*width:"100%"|carResultCardSlot:\{[^}]*Dimensions/);
-  assert.match(cars, /filtered\.map\(\(result,index\)=><View key=\{result\.id\} style=\{r\.carResultCardSlot\}><CarResultCard result=\{result\} rank=\{index\} imageUri=\{image\(result\.imageUrl\)\} searchParams=\{payload\} onViewDeal=\{\(\)=>openDeal\(result\)\}\/><\/View>\)/);
+  assert.match(cars, /renderItem=\{\(\{item,index\}\)=><View style=\{r\.carResultCardSlot\}><CarResultCard result=\{item\} rank=\{index\} imageUri=\{resolveNativeCarImageUri\(item\.imageUrl\)\} searchParams=\{payload\} onViewDeal=\{\(\)=>openDeal\(item\)\}\/><\/View>\}/);
   assert.match(cars, /style=\{\[r\.skeleton,r\.carResultCardSlot,\{backgroundColor:/);
   assert.match(cars, /skeleton:\{height:216/);
   assert.doesNotMatch(cars, /<NativeCarPriceAlert[^>]*carResultCardSlot|<View accessibilityLabel="Car results summary"[^>]*carResultCardSlot/);
@@ -95,9 +97,10 @@ test("Cars use one truthful compact price alert before the summary and cards", (
 });
 
 test("Cars Results gives handled child taps to its primary vertical scroll owner", () => {
-  const resultsScrollStart = cars.indexOf("<ScrollView ref={carScrollRef}");
+  const resultsScrollStart = cars.indexOf("<FlatList ref={carScrollRef}");
   assert.notEqual(resultsScrollStart, -1);
-  const resultsScrollOpeningTag = cars.slice(resultsScrollStart, cars.indexOf(">", resultsScrollStart) + 1);
+  const contentStyleStart = cars.indexOf("contentContainerStyle=", resultsScrollStart);
+  const resultsScrollOpeningTag = cars.slice(resultsScrollStart, cars.indexOf("/>", contentStyleStart) + 2);
   for (const contract of [
     /ref=\{carScrollRef\}/,
     /alwaysBounceVertical=\{false\}/,
@@ -108,9 +111,11 @@ test("Cars Results gives handled child taps to its primary vertical scroll owner
   ]) assert.match(resultsScrollOpeningTag, contract);
   assert.doesNotMatch(resultsScrollOpeningTag, /keyboardShouldPersistTaps=(?:"always"|"never"|\{(?:true|false)\})/);
 
-  const resultsScrollContent = cars.slice(resultsScrollOpeningTag.length + resultsScrollStart, cars.indexOf("</ScrollView>", resultsScrollStart));
-  assert.ok(resultsScrollContent.indexOf("<NativeCarPriceAlert") < resultsScrollContent.indexOf("<View accessibilityLabel=\"Car results summary\""));
-  assert.ok(resultsScrollContent.indexOf("<View accessibilityLabel=\"Car results summary\"") < resultsScrollContent.indexOf("<CarResultCard"));
+  const listHeaderStart = cars.indexOf("const listHeader=");
+  const listHeaderEnd = cars.indexOf("const listEmpty=", listHeaderStart);
+  const listHeader = cars.slice(listHeaderStart, listHeaderEnd);
+  assert.ok(listHeader.indexOf("<NativeCarPriceAlert") < listHeader.indexOf("<View accessibilityLabel=\"Car results summary\""));
+  assert.match(resultsScrollOpeningTag, /renderItem=\{\(\{item,index\}\)=>[\s\S]*?<CarResultCard/);
 });
 
 test("Cars Price Alert keeps focus reconciliation silent while mutation progress remains visible", () => {

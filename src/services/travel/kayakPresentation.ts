@@ -72,7 +72,8 @@ export function kayakAttributes(value: Record<string, unknown>, keys: string[]):
 export type KayakFlightLeg = {
   durationMinutes?: number;
   segments: { origin: string; destination: string; departure: string; arrival: string;
-    airline: string; airlineLogo?: string; flightNumber: string; operatingDisclosure?: string }[];
+    airline: string; airlineLogo?: string; flightNumber: string; operatingDisclosure?: string;
+    cabinDetails?: { cabinClass?: string; fareBrandName?: string } }[];
 };
 
 export function kayakFlightCabin(data: Record<string, unknown>, result: Record<string, unknown>, option: Record<string, unknown>): string | undefined {

@@ -101,3 +101,12 @@ test("provider-not-supplied rules remain truthful and neutral", () => {
     title: "Change/refund rules", detail: "Not supplied by provider", semantic: "informational", key: "Change/refund rules:0-0-0",
   }]);
 });
+
+test("native cards identify specific non-included baggage without a generic heading", () => {
+  const rows = nativeFareBenefitRows([
+    {category:"baggage",semantic:"negative",text:"1 checked bag not included · USD 35.00"},
+  ], "one-way");
+  assert.deepEqual(rows.map(({title,detail,semantic})=>({title,detail,semantic})), [{
+    title:"Checked baggage", detail:"Not included · USD 35.00", semantic:"negative",
+  }]);
+});

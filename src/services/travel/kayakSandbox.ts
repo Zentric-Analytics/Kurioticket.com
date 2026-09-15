@@ -2,6 +2,7 @@ import { z } from "zod";
 import { isIP } from "node:net";
 import { kayakImages, kayakFlightLegs, kayakFlightCabin, kayakFlightAttributes, kayakAttributes, kayakCarFilterOptions, kayakHotelAmenities, kayakHotelAmenityStatus, type KayakAttribute, type KayakImage, type KayakFlightLeg } from "./kayakPresentation";
 import { KAYAK_SANDBOX_ORIGIN, sandboxBookingUrl } from "./kayakSandboxPublic";
+import type { FlightFareTerm, FlightOptionalService, FlightProviderCondition } from "@/lib/types";
 export { KAYAK_SANDBOX_ORIGIN, sandboxBookingUrl } from "./kayakSandboxPublic";
 
 /** Sandbox transport. Never use this module for live inventory or booking. */
@@ -61,6 +62,10 @@ export type SandboxOffer = {
   flightCabin?: string;
   flightFareFamily?: string;
   flightCarryOnIncluded?: boolean;
+  /** Normalized offer-specific facts only; raw KAYAK fee objects never cross the service boundary. */
+  flightFareTerms?: FlightFareTerm[];
+  flightConditions?: FlightProviderCondition[];
+  flightOptionalServices?: FlightOptionalService[];
   /** Provider-supplied booking seller for customer-facing deal presentation. */
   bookingProviderName?: string;
   attributes?: KayakAttribute[];
@@ -85,6 +90,72 @@ function fareFamilyName(value: unknown) {
   if (typeof value === "string") return value.trim() || undefined;
   const family = object(value);
   return text(family.displayName || family.name).trim() || undefined;
+}
+
+function money(value: unknown, fallbackCurrency: string) {
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0)
+    return { amount:value, currency:fallbackCurrency };
+  const source = object(value);
+  const amount = typeof source.price === "number" ? source.price : typeof source.amount === "number" ? source.amount : undefined;
+  const currency = text(source.currency || source.currencyCode) || fallbackCurrency;
+  return amount !== undefined && Number.isFinite(amount) && amount >= 0 && /^[A-Z]{3}$/.test(currency) ? { amount, currency } : undefined;
+}
+
+function kayakFareTerms(fees: unknown, currency: string): FlightFareTerm[] {
+  const terms: FlightFareTerm[] = [];
+  for (const [key, label] of [["carryOnBag", "carry-on"], ["checkedBag", "checked bag"]] as const) {
+    for (const raw of list(object(fees)[key])) {
+      const bag = object(raw);
+      const restriction = text(bag.restriction);
+      if (!restriction) continue;
+      const first = text(bag.bagNumber) === "first";
+      const bagNumber = text(bag.bagNumber).replace(/([a-z])([A-Z])/g, "$1 $2").trim();
+      const subject = first ? `1 ${label}` : `${bagNumber ? `${bagNumber} ` : ""}${label}`;
+      const charge = money(bag.price || bag.fee || bag.amount, currency);
+      if (restriction === "included") terms.push({ category:"baggage", semantic:"positive", text:`${subject} included` });
+      else if (/^(notIncluded|excluded|notAllowed)$/i.test(restriction)) terms.push({
+        category:"baggage", semantic:"negative",
+        text: charge ? `${subject} not included · ${charge.currency} ${charge.amount.toFixed(2)}` : `${subject} not included`,
+      });
+      else terms.push({ category:"baggage", semantic:"informational", text:charge ? `${subject}: ${charge.currency} ${charge.amount.toFixed(2)}` : `${subject}: ${restriction.replace(/([a-z])([A-Z])/g, "$1 $2")}` });
+    }
+  }
+  return terms;
+}
+
+function kayakConditions(value: unknown, currency: string): FlightProviderCondition[] {
+  const source = object(value);
+  return (["change", "refund"] as const).flatMap((category) => {
+    const condition = object(source[category]);
+    const restriction = text(condition.restriction || condition.state);
+    const state = /^(allowed|included)$/i.test(restriction) ? "allowed" : /^(notAllowed|not-allowed|excluded)$/i.test(restriction) ? "not-allowed" : undefined;
+    if (!state) return [];
+    const penalty = money(condition.penalty || condition.fee, currency);
+    return [{ category, scope:"trip" as const, state, ...(penalty ? {penaltyAmount:penalty.amount,penaltyCurrency:penalty.currency} : {}) }];
+  });
+}
+
+function kayakOptionalServices(value: unknown, currency: string): FlightOptionalService[] {
+  return list(value).flatMap((raw) => {
+    const service = object(raw);
+    const description = text(service.description || service.displayName).trim();
+    const price = money(service.price, currency);
+    if (!description || !price || service.optional !== true) return [];
+    return [{type:text(service.type) || "service",description,price:price.amount,currency:price.currency}];
+  });
+}
+
+function kayakSegmentCabins(data: ObjectValue, result: ObjectValue, option: ObjectValue) {
+  const fares = list(option.segmentFares).map(object);
+  return list(result.legs).map((reference) => {
+    const leg = object(object(data.legs)[text(object(reference).id)]);
+    return list(leg.segments).map((segmentReference) => {
+      const segmentId = text(object(segmentReference).id);
+      const matches = fares.filter((fare) => text(fare.segmentId) === segmentId);
+      if (matches.length !== 1) return undefined;
+      return text(object(matches[0].cabin).displayName).trim() || undefined;
+    });
+  });
 }
 
 export class KayakError extends Error {
@@ -203,6 +274,12 @@ export function normalizeSandboxOffers(
                     .displayName,
                 ),
               ].filter(Boolean);
+      const flightCabin = vertical === "flights" ? kayakFlightCabin(data, result, option) : undefined;
+      const flightFareFamily = vertical === "flights" ? fareFamilyName(option.fareFamily) : undefined;
+      const flightFareTerms = vertical === "flights" ? kayakFareTerms(option.fees, currency) : [];
+      const flightConditions = vertical === "flights" ? kayakConditions(option.conditions, currency) : [];
+      const flightOptionalServices = vertical === "flights" ? kayakOptionalServices(option.optionalServices, currency) : [];
+      const flightSegmentCabins = vertical === "flights" ? kayakSegmentCabins(data, result, option) : [];
       offers.push({
         id: `${text(result.id) || index}:${optionIndex}`,
         title: title || "KAYAK test result",
@@ -231,12 +308,27 @@ export function normalizeSandboxOffers(
         ...(vertical === "hotels" && typeof result.numberOfReviews === "number" && Number.isInteger(result.numberOfReviews) && result.numberOfReviews >= 0
           ? { hotelReviewCount: result.numberOfReviews } : {}),
         ...(vertical === "hotels" ? {amenities: kayakHotelAmenities(result.features, data.amenityDictionary)} : {}),
-        ...(vertical === "flights" ? { flightLegs: kayakFlightLegs(data, result) } : {}),
+        ...(vertical === "flights" ? { flightLegs: kayakFlightLegs(data, result).map((leg, legIndex) => ({
+          ...leg,
+          segments:leg.segments.map((segment, segmentIndex) => {
+            const segmentCabin = flightSegmentCabins[legIndex]?.[segmentIndex];
+            return {
+              ...segment,
+              ...(segmentCabin || flightFareFamily ? {cabinDetails:{
+                ...(segmentCabin ? {cabinClass:segmentCabin} : {}),
+                ...(flightFareFamily ? {fareBrandName:flightFareFamily} : {}),
+              }} : {}),
+            };
+          }),
+        })) } : {}),
         ...(vertical === "flights" && description ? { bookingProviderName: description } : {}),
-        ...(vertical === "flights" ? {flightCabin:kayakFlightCabin(data,result,option)} : {}),
-        ...(vertical === "flights" && fareFamilyName(option.fareFamily) ? {flightFareFamily:fareFamilyName(option.fareFamily)} : {}),
+        ...(vertical === "flights" ? {flightCabin} : {}),
+        ...(flightFareFamily ? {flightFareFamily} : {}),
         ...(vertical === "flights" && list(object(option.fees).carryOnBag).some(bag => object(bag).bagNumber === "first" && text(object(bag).restriction))
           ? {flightCarryOnIncluded: list(object(option.fees).carryOnBag).filter(bag => object(bag).bagNumber === "first").every(bag => object(bag).restriction === "included")} : {}),
+        ...(flightFareTerms.length ? {flightFareTerms} : {}),
+        ...(flightConditions.length ? {flightConditions} : {}),
+        ...(flightOptionalServices.length ? {flightOptionalServices} : {}),
         price: amount,
         currency,
         priceBasis:

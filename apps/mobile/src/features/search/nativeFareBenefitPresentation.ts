@@ -27,6 +27,11 @@ export function nativeFareBenefitPresentation(category: FlightFareTerm["category
   }
 
   if (category === "baggage") {
+    const excludedBaggage = body.match(/^(?:1|first)\s+(carry-on|checked bag)\s+not included(?:\s*[·:]\s*(.+))?$/i);
+    if (excludedBaggage) return {
+      title: withScope(scope, excludedBaggage[1].toLowerCase().startsWith("carry") ? "Carry-on baggage" : "Checked baggage"),
+      detail: `Not included${excludedBaggage[2] ? ` · ${excludedBaggage[2]}` : ""}`,
+    };
     const baggage = body.match(/^(\d+)\s+(carry-ons?|checked bags?)\s+included(?:\s+(each way))?$/i);
     if (baggage) {
       const title = baggage[2].toLowerCase().startsWith("carry") ? "Carry-on baggage" : "Checked baggage";
