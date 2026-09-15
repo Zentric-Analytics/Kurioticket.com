@@ -52,6 +52,7 @@ export type FlightSegment = {
   departureTime: string;
   arrivalTime: string;
   airlineName?: string;
+  airlineLogo?: string | null;
   flightNumber?: string;
   originDetails?: FlightAirportDetails;
   destinationDetails?: FlightAirportDetails;

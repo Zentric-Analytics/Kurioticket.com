@@ -59,7 +59,7 @@ export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<strin
     layovers: leg.segments.slice(0, -1).map(segment => ({airport:segment.destination, duration:"Not supplied", quality:"unknown"})),
     segments: leg.segments.map(segment => ({originAirport:segment.origin, destinationAirport:segment.destination,
       departureTime:segment.departure, arrivalTime:segment.arrival, airlineName:segment.airline,
-      flightNumber:segment.flightNumber, operatingCarrier:segment.operatingDisclosure ? {name:segment.operatingDisclosure} : undefined,
+      airlineLogo:segment.airlineLogo, flightNumber:segment.flightNumber, operatingCarrier:segment.operatingDisclosure ? {name:segment.operatingDisclosure} : undefined,
       ...(segment.cabinDetails ? {cabinDetails:[segment.cabinDetails]} : {})})),
   }));
   const first = source[0].segments[0];

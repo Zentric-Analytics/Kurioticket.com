@@ -62,6 +62,10 @@ test("journey summary is shown before every authoritative flight segment",()=>{
   assert.match(itinerary,/Operated by/);
 });
 
+test("native Flight Details prefers each provider-supplied segment airline logo before the same-carrier offer fallback",()=>{
+  assert.match(itinerary,/logoUrl=\{segment\.airlineLogo\?\?\(canUseOfferAirlineLogo\(segment,offerAirlineName,offerAirlineLogo\)\?offerAirlineLogo:null\)\}/);
+});
+
 test("journey remains the visual hero with a restrained details scale",()=>{
   for(const fact of ["leg.departureTime","leg.arrivalTime","leg.originAirport","leg.destinationAirport","leg.duration","leg.stops"]) assert.match(itinerary,new RegExp(fact.replace(".","\\.")));
   assert.match(itinerary,/Non-stop/);
