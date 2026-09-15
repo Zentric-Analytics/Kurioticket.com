@@ -133,8 +133,19 @@ export function kayakFlightLegs(data: Record<string, unknown>, result: Record<st
 }
 
 export function kayakImages(vertical: string, result: Record<string, unknown>, car: Record<string, unknown>, title: string): KayakImage[] {
+  // KAYAK's sandbox uses more than one public-media shape across search
+  // verticals. Preserve every supplied public image, but never synthesize one
+  // when the provider supplied none.
+  const imageValue = (value: unknown): unknown[] => {
+    if (typeof value === "string") return [value];
+    if (!value || typeof value !== "object" || Array.isArray(value)) return [];
+    const image = value as Record<string, unknown>;
+    return [image.large, image.url, image.src, image.imageUrl, image.original];
+  };
   const candidates = vertical === "hotels"
-    ? [...(Array.isArray(result.images) ? result.images : []), result.image].map(value => value && typeof value === "object" ? (value as Record<string, unknown>).large : undefined)
-    : vertical === "cars" ? [car.image] : [];
+    ? [...(Array.isArray(result.images) ? result.images : []), result.image].flatMap(imageValue)
+    : vertical === "cars"
+      ? [car.image, ...(Array.isArray(car.images) ? car.images : []), result.image, ...(Array.isArray(result.images) ? result.images : [])].flatMap(imageValue)
+      : [];
   return [...new Set(candidates.map(kayakImageUrl).filter((url): url is string => Boolean(url)))].map(url => ({ url, alt: title }));
 }

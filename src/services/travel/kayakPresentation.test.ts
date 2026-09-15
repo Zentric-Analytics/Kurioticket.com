@@ -28,6 +28,14 @@ test("KAYAK preserves every distinct supplied hotel image and the car image", ()
   assert.deepEqual(kayakImages("hotels", {image:{large:first}}, {}, "Hotel"), [{url:first,alt:"Hotel"}]);
   assert.deepEqual(kayakImages("hotels", {images:[],image:{large:first}}, {}, "Hotel"), [{url:first,alt:"Hotel"}]);
   assert.deepEqual(kayakImages("hotels", {images:[{large:first}],image:{large:second}}, {}, "Hotel"), [{url:first,alt:"Hotel"},{url:second,alt:"Hotel"}]);
+  assert.deepEqual(
+    kayakImages("hotels", { images: [{ url: first }], image: { imageUrl: second } }, {}, "Hotel"),
+    [{ url: first, alt: "Hotel" }, { url: second, alt: "Hotel" }],
+  );
+  assert.deepEqual(
+    kayakImages("cars", { image: { src: second } }, { image: { url: first } }, "Car"),
+    [{ url: first, alt: "Car" }, { url: second, alt: "Car" }],
+  );
 });
 
 test("flight detail facts preserve equipment and airline rules without exposing transport links", () => {
