@@ -109,7 +109,8 @@ function kayakFareTerms(fees: unknown, currency: string): FlightFareTerm[] {
       const restriction = text(bag.restriction);
       if (!restriction) continue;
       const first = text(bag.bagNumber) === "first";
-      const subject = first ? `1 ${label}` : `${text(bag.bagNumber).replace(/([a-z])([A-Z])/g, "$1 $2") || label}`;
+      const bagNumber = text(bag.bagNumber).replace(/([a-z])([A-Z])/g, "$1 $2").trim();
+      const subject = first ? `1 ${label}` : `${bagNumber ? `${bagNumber} ` : ""}${label}`;
       const charge = money(bag.price || bag.fee || bag.amount, currency);
       if (restriction === "included") terms.push({ category:"baggage", semantic:"positive", text:`${subject} included` });
       else if (/^(notIncluded|excluded|notAllowed)$/i.test(restriction)) terms.push({
@@ -141,6 +142,19 @@ function kayakOptionalServices(value: unknown, currency: string): FlightOptional
     const price = money(service.price, currency);
     if (!description || !price || service.optional !== true) return [];
     return [{type:text(service.type) || "service",description,price:price.amount,currency:price.currency}];
+  });
+}
+
+function kayakSegmentCabins(data: ObjectValue, result: ObjectValue, option: ObjectValue) {
+  const fares = list(option.segmentFares).map(object);
+  return list(result.legs).map((reference) => {
+    const leg = object(object(data.legs)[text(object(reference).id)]);
+    return list(leg.segments).map((segmentReference) => {
+      const segmentId = text(object(segmentReference).id);
+      const matches = fares.filter((fare) => text(fare.segmentId) === segmentId);
+      if (matches.length !== 1) return undefined;
+      return text(object(matches[0].cabin).displayName).trim() || undefined;
+    });
   });
 }
 
@@ -265,6 +279,7 @@ export function normalizeSandboxOffers(
       const flightFareTerms = vertical === "flights" ? kayakFareTerms(option.fees, currency) : [];
       const flightConditions = vertical === "flights" ? kayakConditions(option.conditions, currency) : [];
       const flightOptionalServices = vertical === "flights" ? kayakOptionalServices(option.optionalServices, currency) : [];
+      const flightSegmentCabins = vertical === "flights" ? kayakSegmentCabins(data, result, option) : [];
       offers.push({
         id: `${text(result.id) || index}:${optionIndex}`,
         title: title || "KAYAK test result",
@@ -293,7 +308,19 @@ export function normalizeSandboxOffers(
         ...(vertical === "hotels" && typeof result.numberOfReviews === "number" && Number.isInteger(result.numberOfReviews) && result.numberOfReviews >= 0
           ? { hotelReviewCount: result.numberOfReviews } : {}),
         ...(vertical === "hotels" ? {amenities: kayakHotelAmenities(result.features, data.amenityDictionary)} : {}),
-        ...(vertical === "flights" ? { flightLegs: kayakFlightLegs(data, result).map((leg) => ({...leg,segments:leg.segments.map((segment) => ({...segment,...(flightCabin || flightFareFamily ? {cabinDetails:{...(flightCabin ? {cabinClass:flightCabin} : {}),...(flightFareFamily ? {fareBrandName:flightFareFamily} : {})}} : {})}))})) } : {}),
+        ...(vertical === "flights" ? { flightLegs: kayakFlightLegs(data, result).map((leg, legIndex) => ({
+          ...leg,
+          segments:leg.segments.map((segment, segmentIndex) => {
+            const segmentCabin = flightSegmentCabins[legIndex]?.[segmentIndex];
+            return {
+              ...segment,
+              ...(segmentCabin || flightFareFamily ? {cabinDetails:{
+                ...(segmentCabin ? {cabinClass:segmentCabin} : {}),
+                ...(flightFareFamily ? {fareBrandName:flightFareFamily} : {}),
+              }} : {}),
+            };
+          }),
+        })) } : {}),
         ...(vertical === "flights" && description ? { bookingProviderName: description } : {}),
         ...(vertical === "flights" ? {flightCabin} : {}),
         ...(flightFareFamily ? {flightFareFamily} : {}),
