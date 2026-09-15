@@ -30,9 +30,8 @@ test("active Rates tab delegates current rate presentation", () => {
   assert.match(hotel, /nightlyPrice=\{nightlyPrice \?\? null\}/);
 });
 
-test("Rates groups supplied room options instead of fabricating inventory", () => {
+test("Rates uses supplied room options instead of fabricating inventory", () => {
   assert.match(ratesSource, /roomOptions\.forEach\(\(option\) =>/);
-  assert.match(ratesSource, /roomGroupTitle\(option\.name\)/);
   assert.match(ratesSource, /option\.displayPrice\?\.total/);
   assert.match(ratesSource, /meaningfulRateMeta\(option, title\)/);
   assert.doesNotMatch(ratesSource, /STATIC_RATE_GROUPS|\$1,225|Standard Room, 1 Queen Bed/);
@@ -41,24 +40,27 @@ test("Rates groups supplied room options instead of fabricating inventory", () =
 test("Kurioticket rows keep the bundled wordmark and existing app fonts", () => {
   assert.ok(existsSync("assets/kurioticket-logo-primary-light-bg.png"));
   assert.match(ratesSource, /providerKind === "kurioticket"[\s\S]*?<Image[\s\S]*?accessibilityLabel="Kurioticket"[\s\S]*?require\("\.\.\/\.\.\/\.\.\/assets\/kurioticket-logo-primary-light-bg\.png"\)/);
-  assert.match(styleRule(ratesSource, "groupTitle", "groupCard"), /fontFamily: appFonts\.bold/);
   assert.match(styleRule(ratesSource, "rateTitle", "benefitList"), /fontFamily: appFonts\.bold/);
   assert.match(styleRule(ratesSource, "rateMeta", "rateActionColumn"), /fontFamily: appFonts\.regular/);
+  assert.match(styleRule(ratesSource, "actionControlText", "emptyCard"), /fontFamily: appFonts\.bold/);
 });
 
-test("Rates follows the measured reference provider-card proportions", () => {
-  assert.match(styleRule(ratesSource, "groupSection", "groupTitle"), /gap: 20/);
-  assert.match(styleRule(ratesSource, "groupCard", "rateRow"), /overflow: "hidden"[\s\S]*borderWidth: 1[\s\S]*borderRadius: 14/);
-  assert.match(styleRule(ratesSource, "rateRow", "rateCopy"), /minHeight: 134[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 20[\s\S]*gap: 12/);
+test("Rates renders separate square provider cards", () => {
+  assert.match(styleRule(ratesSource, "section", "rateCard"), /gap: 12/);
+  assert.match(styleRule(ratesSource, "rateCard", "rateCopy"), /minHeight: 134[\s\S]*borderWidth: 1[\s\S]*borderRadius: 0[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 20[\s\S]*gap: 12/);
   assert.match(styleRule(ratesSource, "brandLogo", "providerName"), /width: 88[\s\S]*height: 18[\s\S]*marginBottom: 8/);
   assert.match(styleRule(ratesSource, "benefitList", "rateMeta"), /marginTop: "auto"[\s\S]*paddingTop: 18[\s\S]*gap: 1/);
-  assert.match(styleRule(ratesSource, "rateActionColumn", "price"), /width: 104[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "flex-start"/);
-  assert.match(ratesSource, /index > 0 && \{ borderTopColor: theme\.border, borderTopWidth: StyleSheet\.hairlineWidth \}/);
+  assert.match(styleRule(ratesSource, "rateActionColumn", "price"), /width: 104[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "space-between"/);
+  assert.doesNotMatch(ratesSource, /<Text[^>]*>Compact room options<\/Text>|s\.groupTitle|s\.groupCard/);
 });
 
-test("Rates shows stay prices without an inactive reservation control", () => {
+test("Rates shows stay prices and a visual-only Reserve action", () => {
   assert.match(ratesSource, /\$\{total\.accessibilityLabel\} stay price/);
-  assert.doesNotMatch(ratesSource, /<Pressable|>Reserve<|reserveButton|onPress=\{\(\) => onSelectOffer/);
+  assert.match(ratesSource, /const previewReserve = \(\) => undefined/);
+  assert.match(ratesSource, /const reserveLabel = "Reserve"/);
+  assert.match(ratesSource, /<TouchableOpacity[\s\S]*?onPress=\{previewReserve\}/);
+  assert.match(styleRule(ratesSource, "actionControl", "actionControlText"), /minWidth: 82[\s\S]*minHeight: 44[\s\S]*borderRadius: 10/);
+  assert.doesNotMatch(ratesSource, /onPress=\{\(\) => onSelectOffer\(row\.offerId\)\}/);
   assert.doesNotMatch(ratesSource, /Selected|>Select<|accessibilityRole="radio"|per night/);
 });
 
