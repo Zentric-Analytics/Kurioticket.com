@@ -93,6 +93,8 @@ export function NativeHotelRatesSection({
   providerName,
   roomType,
   cancellationInfo,
+  nightlyPrice,
+  hasPrice,
   detailsStatus,
   theme,
   accentColor,
@@ -147,6 +149,7 @@ export function NativeHotelRatesSection({
         cleanRateCopy(roomParts[0]) ||
         "Available rate",
     );
+    const providerPrice = hasPrice ? nightlyPrice : null;
     rows.unshift({
       id: `provider-${providerOffer.id}`,
       offerId: providerOffer.id,
@@ -154,9 +157,11 @@ export function NativeHotelRatesSection({
       providerName: providerName.trim() || "Provider",
       title: providerTitle,
       meta: meaningfulProviderMeta(cancellationInfo),
-      price: "Price on provider",
-      priceAccessibilityLabel: "Price confirmed on provider site",
-      hasDisplayedPrice: false,
+      price: providerPrice ? `${providerPrice.formatted}/night` : "Price on provider",
+      priceAccessibilityLabel: providerPrice
+        ? `${providerPrice.accessibilityLabel} per night`
+        : "Price confirmed on provider site",
+      hasDisplayedPrice: Boolean(providerPrice),
     });
   }
 
