@@ -28,7 +28,8 @@ test("every direct native interactive favorite uses the canonical stroke and fil
   assert.match(shared, canonicalFlowHeart);
   assert.match(carResult, canonicalFlowHeart);
   assert.match(explore, canonicalFlowHeart);
-  for (const detail of [carDetail, hotelResult, hotelDetail, flightDetail]) assert.match(detail, canonicalHeart);
+  for (const detail of [hotelResult, hotelDetail, flightDetail]) assert.match(detail, canonicalHeart);
+  assert.match(carDetail, /<Heart[^>]*color=\{saved\.saved\?androidFavoriteColors\.savedStroke:light\?androidFavoriteColors\.unsavedStroke:theme\.icon\}[^>]*fill=\{saved\.saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}/);
 });
 
 test("legacy interactive favorite colors and empty fills cannot return", () => {
@@ -37,7 +38,8 @@ test("legacy interactive favorite colors and empty fills cannot return", () => {
     assert.doesNotMatch(file, /androidFavoriteColors\.(?:stroke|active|inactive)|HOTEL_SAVED_HEART_COLOR/);
   }
   assert.doesNotMatch(carResult, /name="heart"[^>]*(?:theme\.icon|fill="(?:transparent|none)")/);
-  assert.doesNotMatch(carDetail, /<Heart[^>]*(?:#075EE8|theme\.icon|fill="none")/);
+  assert.match(carDetail, /<Heart[^>]*color=\{saved\.saved\?androidFavoriteColors\.savedStroke:light\?androidFavoriteColors\.unsavedStroke:theme\.icon\}[^>]*fill=\{saved\.saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}/);
+  assert.doesNotMatch(carDetail, /<Heart[^>]*(?:#075EE8|fill="none")/);
   assert.doesNotMatch(hotelResult, /<Heart[^>]*(?:#E11D48|theme\.icon|HOTEL_UTILITY_ICON_COLOR|fill="none")/);
   assert.doesNotMatch(hotelDetail, /<Heart[^>]*(?:hotelIdentityActionColor|fill="transparent")/);
   assert.doesNotMatch(flightDetail, /<Heart[^>]*(?:theme\.icon|fill="transparent")/);

@@ -39,9 +39,13 @@ for (const [kind, source] of [["approved", normal], ["KAYAK sandbox", sandbox]] 
     assert.match(source, /style=\{s\.heroAction\}><Share2/);
 
     const back = style(source, "heroBack");
-    for (const value of ['position:"absolute"', "left:20", "width:44", "height:44", "borderRadius:22", 'backgroundColor:"#FFFFFF"', "zIndex:20"]) assert.ok(back.includes(value), value);
+    for (const value of ['position:"absolute"', "left:20", "width:44", "height:44", "borderRadius:22", "zIndex:20"]) assert.ok(back.includes(value), value);
     const actions = style(source, "heroActions");
-    for (const value of ['position:"absolute"', "right:20", "width:96", "height:44", "borderRadius:22", 'backgroundColor:"#FFFFFF"', 'flexDirection:"row"', "zIndex:20"]) assert.ok(actions.includes(value), value);
+    for (const value of ['position:"absolute"', "right:20", "width:96", "height:44", "borderRadius:22", 'flexDirection:"row"', "zIndex:20"]) assert.ok(actions.includes(value), value);
+    assert.doesNotMatch(back, /backgroundColor/);
+    assert.doesNotMatch(actions, /backgroundColor/);
+    assert.match(source, /style=\{\[s\.heroBack,\s*\{[^}]*backgroundColor:\s*carCanvasColor/);
+    assert.match(source, /style=\{\[s\.heroActions,\s*\{[^}]*backgroundColor:\s*carCanvasColor/);
     const action = style(source, "heroAction");
     for (const value of ["width:48", "height:44", 'alignItems:"center"', 'justifyContent:"center"']) assert.ok(action.includes(value), value);
   });

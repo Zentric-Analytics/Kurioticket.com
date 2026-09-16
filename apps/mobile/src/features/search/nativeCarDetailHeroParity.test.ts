@@ -34,33 +34,43 @@ test("vehicle media leads the Hotel-style Cars hero before identity, specs, and 
 test("vehicle identity remains the accessible name and category directly below the media", () => {
   const identity = native.slice(identityStart, specsStart);
   const title = identity.indexOf("{result.modelName}");
+  const similar = identity.indexOf('{"or\\u00A0similar"}');
   const category = identity.indexOf("{result.categoryLabel.toUpperCase()}");
-  assert.ok(title >= 0 && category > title);
-  assert.match(identity, /<Text accessibilityRole="header"[^>]*>\{result\.modelName\}<\/Text>/);
+  assert.ok(title >= 0 && similar > title && category > similar);
+  assert.match(identity, /<Text accessibilityRole="header"[^>]*>\{result\.modelName\}<Text style=\{\[s\.orSimilar,\{color:theme\.textSecondary\}\]\}> \{"or\\u00A0similar"\}<\/Text><\/Text>/);
+  assert.doesNotMatch(identity, /numberOfLines=\{?1\}?/);
   assert.match(identity, /<Text style=\{s\.category\}>\{result\.categoryLabel\.toUpperCase\(\)\}<\/Text>/);
-  assert.match(styleRule("identityBlock", "category"), /paddingHorizontal:16[^}]*paddingTop:12/);
+  assert.match(styleRule("identityBlock", "category"), /paddingHorizontal:16[^}]*paddingTop:14/);
 
   const categoryStyle = styleRule("category", "title");
   for (const contract of ["fontSize:10", "lineHeight:14", 'fontWeight:"700"', "fontFamily:appFonts.bold", 'textTransform:"uppercase"', "letterSpacing:1.4", 'color:"#075EE8"']) {
     assert.ok(categoryStyle.includes(contract), contract);
   }
+
+  const titleStyle = styleRule("title", "orSimilar");
+  for (const contract of ["fontSize:22", "lineHeight:28", 'fontWeight:"800"', "fontFamily:appFonts.extraBold", "letterSpacing:-.5"]) assert.ok(titleStyle.includes(contract), contract);
+  const similarStyle = styleRule("orSimilar", "imageBox");
+  for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"600"', "fontFamily:appFonts.semibold", "letterSpacing:0"]) assert.ok(similarStyle.includes(contract), contract);
 });
 
 test("Hotel-style Back and Save Share controls float outside scrolling content", () => {
   assert.ok(scrollEnd >= 0 && backStart > scrollEnd && actionsStart > backStart);
   assert.equal((native.match(/accessibilityLabel="Back to Cars results"/g) ?? []).length, 1);
   assert.doesNotMatch(native, />Back to Cars results<\/Text>/);
-  assert.match(native, /accessibilityLabel="Back to Cars results" onPress=\{returnToCarResults\} style=\{\[s\.heroBack,\{top:inset\.top\+12\}\]\}/);
+  assert.match(native, /accessibilityLabel="Back to Cars results" onPress=\{returnToCarResults\} style=\{\[s\.heroBack,\{top:inset\.top\+12,backgroundColor:carCanvasColor\}\]\}/);
+  assert.match(native, /<View style=\{\[s\.heroActions,\{top:inset\.top\+12,backgroundColor:carCanvasColor\}\]\}>/);
 
   const back = styleRule("heroBack", "heroActions");
-  for (const contract of ['position:"absolute"', "left:20", "width:44", "height:44", "borderRadius:22", 'backgroundColor:"#FFFFFF"', 'alignItems:"center"', 'justifyContent:"center"', "zIndex:20", "elevation:10"]) {
+  for (const contract of ['position:"absolute"', "left:20", "width:44", "height:44", "borderRadius:22", 'alignItems:"center"', 'justifyContent:"center"', "zIndex:20", "elevation:10"]) {
     assert.ok(back.includes(contract), contract);
   }
 
   const actions = styleRule("heroActions", "heroAction");
-  for (const contract of ['position:"absolute"', "right:20", "width:96", "height:44", "borderRadius:22", 'backgroundColor:"#FFFFFF"', 'flexDirection:"row"', 'overflow:"hidden"', "zIndex:20", "elevation:10"]) {
+  for (const contract of ['position:"absolute"', "right:20", "width:96", "height:44", "borderRadius:22", 'flexDirection:"row"', 'overflow:"hidden"', "zIndex:20", "elevation:10"]) {
     assert.ok(actions.includes(contract), contract);
   }
+  assert.doesNotMatch(back, /backgroundColor/);
+  assert.doesNotMatch(actions, /backgroundColor/);
 
   const action = styleRule("heroAction", "hero");
   for (const contract of ["width:48", "height:44", 'alignItems:"center"', 'justifyContent:"center"']) {
@@ -72,9 +82,9 @@ test("favorite and share behavior survive relocation into independent hero actio
   const controls = native.slice(backStart, native.indexOf("{offer?<View style={[s.dock", actionsStart));
   assert.match(controls, /accessibilityLabel=\{saved\.saved\?"Remove car from saved":"Save car"\}/);
   assert.match(controls, /accessibilityState=\{\{selected:saved\.saved\}\} onPress=\{saved\.toggle\} style=\{s\.heroAction\}/);
-  assert.match(controls, /<Heart size=\{22\} strokeWidth=\{2\} color=\{saved\.saved\?androidFavoriteColors\.savedStroke:androidFavoriteColors\.unsavedStroke\} fill=\{saved\.saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}\/\>/);
+  assert.match(controls, /<Heart size=\{22\} strokeWidth=\{2\} color=\{saved\.saved\?androidFavoriteColors\.savedStroke:light\?androidFavoriteColors\.unsavedStroke:theme\.icon\} fill=\{saved\.saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}\/\>/);
   assert.match(controls, /accessibilityLabel="Share car" onPress=\{\(\)=>void Share\.share\(\{message:`\$\{result\.modelName\} — \$\{result\.categoryLabel\}`\}\)\} style=\{s\.heroAction\}/);
-  assert.match(controls, /<Share2 size=\{21\} color="#0F172A"\/\>/);
+  assert.match(controls, /<Share2 size=\{21\} color=\{light\?"#0F172A":theme\.icon\}\/\>/);
   assert.equal((controls.match(/style=\{s\.heroAction\}/g) ?? []).length, 2);
 });
 

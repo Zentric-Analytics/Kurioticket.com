@@ -98,11 +98,11 @@ test("content below the three tabs shares one section-heading hierarchy", () => 
 
   for (const contract of ["paddingVertical:20", "borderTopWidth:1", "borderBottomWidth:1"])
     assert.ok(style("pickupSection").includes(contract));
-  for (const contract of ["fontSize:16", "lineHeight:24", 'fontWeight:"700"', "fontFamily:appFonts.bold"])
+  for (const contract of ["fontSize:15", "lineHeight:22", 'fontWeight:"700"', "fontFamily:appFonts.bold"])
     assert.ok(style("timelineHeading").includes(contract));
   for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"500"', "fontFamily:appFonts.medium"])
     assert.ok(style("timelineLocation").includes(contract));
-  for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"400"', "fontFamily:appFonts.regular"])
+  for (const contract of ["fontSize:13", "lineHeight:20", 'fontWeight:"400"', "fontFamily:appFonts.regular"])
     assert.ok(style("timelineDate").includes(contract));
   assert.ok(style("requirements").includes("marginTop:20"));
   for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"700"', "fontFamily:appFonts.bold"])
@@ -165,7 +165,7 @@ test("Pickup and Location use the same item hierarchy without changing map truth
   assert.match(locationEntry, /s\.timelineHeading/);
   assert.match(locationEntry, /s\.timelineLocation/);
   assert.match(locationEntry, /s\.timelineDate/);
-  for (const contract of ["fontSize:15", "lineHeight:22", 'fontWeight:"700"', "fontFamily:appFonts.bold"])
+  for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"700"', "fontFamily:appFonts.bold"])
     assert.ok(style("detailsHeading").includes(contract));
   for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"400"', "fontFamily:appFonts.regular"])
     assert.ok(style("bulletText").includes(contract));
