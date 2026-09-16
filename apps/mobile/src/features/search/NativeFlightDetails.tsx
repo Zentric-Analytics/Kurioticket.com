@@ -163,7 +163,8 @@ export function NativeFlightDetails({ params }: { params: Params }) {
     {displayPricesReady?<ScrollView accessibilityRole="radiogroup" accessibilityLabel="Available fares" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[s.fares,details.fareChoices.length>1?s.faresMultiple:s.faresSingle]}>
       {details.fareChoices.map((choice)=>{
         const isSelected=choice.key===selected.key;
-        const fareTerms=nativeFareBenefitRows(choice.distinguishingTerms,details.search.tripType);
+        const isKayak=choice.offer.provider==="KAYAK sandbox";
+        const fareTerms=nativeFareBenefitRows(choice.distinguishingTerms,details.search.tripType,3,isKayak?{ensureStandardRows:true,conditions:choice.offer.providerDetails?.conditions}:undefined);
         return <View key={choice.key} style={[s.fareCard,{width:loadedFareCardWidth,backgroundColor:theme.surface,borderColor:isSelected?ui.blue:theme.border},isSelected?s.fareCardSelected:s.fareCardUnselected]}>
           <Pressable accessibilityRole="radio" accessibilityState={{selected:isSelected}} accessibilityLabel={`${choice.label}, ${displayPrices[choice.key]?.accessibilityLabel??"price unavailable"}`} onPress={()=>setSelectedKey(choice.key)} style={StyleSheet.absoluteFillObject}/>
           <View pointerEvents="box-none" style={s.fareContent}>

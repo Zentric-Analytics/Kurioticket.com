@@ -1,5 +1,5 @@
 import { compactFareTerms } from "../../../../../src/lib/flights/flightDetailsPresentation";
-import type { FlightFareTerm, TripType } from "../../../../../src/lib/types";
+import type { FlightFareTerm, FlightProviderCondition, TripType } from "../../../../../src/lib/types";
 
 export type NativeFareBenefitPresentation = { title: string; detail: string };
 export type NativeFareBenefitRow = NativeFareBenefitPresentation & { key: string; semantic: FlightFareTerm["semantic"] };
@@ -37,6 +37,11 @@ export function nativeFareBenefitPresentation(category: FlightFareTerm["category
       const title = baggage[2].toLowerCase().startsWith("carry") ? "Carry-on baggage" : "Checked baggage";
       return { title: withScope(scope, title), detail: `${baggage[1]} included${baggage[3] ? ` ${baggage[3]}` : ""}` };
     }
+    const additionalBaggage = body.match(/^(second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|\d+(?:st|nd|rd|th))\s+(carry-on|checked bag)s?\s+(?:included|not included)(?:\s*[·:]\s*.+)?$/i);
+    if (additionalBaggage) {
+      const title = additionalBaggage[2].toLowerCase().startsWith("carry") ? "Carry-on baggage" : "Checked baggage";
+      return { title: withScope(scope, title), detail: sentenceCase(body) };
+    }
     return { title: withScope(scope, "Baggage details"), detail: body };
   }
 
@@ -61,9 +66,46 @@ const scopeFromTitle = (title: string) => title.match(/^(Outbound|Return|Flight 
 const groupedSemantic = (semantics: FlightFareTerm["semantic"][]): FlightFareTerm["semantic"] =>
   semantics.length > 0 && semantics.every((semantic) => semantic === semantics[0]) ? semantics[0] : "informational";
 
+type NativeFareBenefitRowOptions = {
+  ensureStandardRows?: boolean;
+  conditions?: FlightProviderCondition[];
+};
+
+const conditionTerm = (condition: FlightProviderCondition): FlightFareTerm | null => {
+  if (condition.category !== "change" && condition.category !== "refund") return null;
+  const scope = condition.scope === "outbound" ? "Outbound: "
+    : condition.scope === "return" ? "Return: "
+      : condition.legIndex !== undefined ? `Flight ${condition.legIndex + 1}: ` : "";
+  const penalty = condition.penaltyAmount !== undefined && condition.penaltyCurrency
+    ? `${condition.penaltyCurrency} ${condition.penaltyAmount.toFixed(2)} penalty`
+    : null;
+  const text = condition.category === "change"
+    ? condition.state === "allowed" ? `Changes allowed${penalty ? ` with ${penalty}` : ""}`
+      : condition.state === "not-allowed" ? "Changes not allowed" : "Changes not supplied by provider"
+    : condition.state === "allowed" ? `Refundable${penalty ? ` with ${penalty}` : ""}`
+      : condition.state === "not-allowed" ? "Not refundable" : "Refunds not supplied by provider";
+  return {
+    category: condition.category,
+    semantic: condition.state === "allowed" ? "positive" : condition.state === "not-allowed" ? "negative" : "informational",
+    text: `${scope}${text}`,
+  };
+};
+
 /** Builds the native card's three decision-oriented disclosures without changing shared web compaction. */
-export function nativeFareBenefitRows(terms: FlightFareTerm[], tripType: TripType, maxRows = 3): NativeFareBenefitRow[] {
-  const sourceRows = compactFareTerms(terms, tripType, Number.MAX_SAFE_INTEGER, true).map((row, position) => ({
+export function nativeFareBenefitRows(
+  terms: FlightFareTerm[],
+  tripType: TripType,
+  maxRows = 3,
+  { ensureStandardRows = false, conditions = [] }: NativeFareBenefitRowOptions = {},
+): NativeFareBenefitRow[] {
+  const representedRules = new Set(terms.flatMap(({ category }) => category === "change" || category === "refund" ? [category] : []));
+  const presentationTerms = ensureStandardRows
+    ? [...terms, ...conditions.flatMap((condition) => {
+      const term = representedRules.has(condition.category as "change" | "refund") ? null : conditionTerm(condition);
+      return term ? [term] : [];
+    })]
+    : terms;
+  const sourceRows = compactFareTerms(presentationTerms, tripType, Number.MAX_SAFE_INTEGER, true).map((row, position) => ({
     ...nativeFareBenefitPresentation(row.term.category, row.text), category: row.term.category,
     semantic: row.term.semantic, key: `${row.index}-${row.rowIndex}-${position}`,
   }));
@@ -77,7 +119,18 @@ export function nativeFareBenefitRows(terms: FlightFareTerm[], tripType: TripTyp
       const title = unscopedTitle(row.title);
       return kind === "Change/refund rules" ? row.category === "change" || row.category === "refund" || title === kind : title === kind;
     });
-    if (!matches.length) return;
+    if (!matches.length && !ensureStandardRows) return;
+    if (!matches.length) {
+      grouped.push({
+        title: kind,
+        detail: "Not supplied by provider",
+        semantic: "informational",
+        key: `${kind}:not-supplied`,
+        priority,
+        position: Number.MAX_SAFE_INTEGER,
+      });
+      return;
+    }
     matches.forEach(({ position }) => consumed.add(position));
     const baggageWarnings = kind === "Change/refund rules" ? [] : partialBaggageWarnings;
     baggageWarnings.forEach(({ position }) => consumed.add(position));

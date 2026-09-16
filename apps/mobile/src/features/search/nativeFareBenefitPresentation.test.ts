@@ -110,3 +110,54 @@ test("native cards identify specific non-included baggage without a generic head
     title:"Checked baggage", detail:"Not included · USD 35.00", semantic:"negative",
   }]);
 });
+
+test("KAYAK completion adds truthful neutral rows when only carry-on is supplied", () => {
+  const rows = nativeFareBenefitRows([
+    { category: "baggage", semantic: "positive", text: "1 carry-on included" },
+  ], "one-way", 3, { ensureStandardRows: true });
+
+  assert.deepEqual(rows.map(({ title }) => title), ["Carry-on baggage", "Checked baggage", "Change/refund rules"]);
+  assert.equal(rows.length, 3);
+  assert.deepEqual(rows.slice(1).map(({ detail, semantic }) => ({ detail, semantic })), [
+    { detail: "Not supplied by provider", semantic: "informational" },
+    { detail: "Not supplied by provider", semantic: "informational" },
+  ]);
+});
+
+test("KAYAK completion preserves explicit negative baggage and only fills the missing rules", () => {
+  const rows = nativeFareBenefitRows([
+    { category: "baggage", semantic: "positive", text: "1 carry-on included" },
+    { category: "baggage", semantic: "negative", text: "1 checked bag not included · USD 35.00" },
+  ], "one-way", 3, { ensureStandardRows: true });
+
+  assert.deepEqual(rows.map(({ title, detail, semantic }) => ({ title, detail, semantic })), [
+    { title: "Carry-on baggage", detail: "1 included", semantic: "positive" },
+    { title: "Checked baggage", detail: "Not included · USD 35.00", semantic: "negative" },
+    { title: "Change/refund rules", detail: "Not supplied by provider", semantic: "informational" },
+  ]);
+});
+
+test("KAYAK completion uses authoritative provider conditions for change and refund rules", () => {
+  const rows = nativeFareBenefitRows([
+    { category: "baggage", semantic: "positive", text: "1 carry-on included" },
+    { category: "baggage", semantic: "positive", text: "1 checked bag included" },
+  ], "one-way", 3, {
+    ensureStandardRows: true,
+    conditions: [
+      { category: "change", scope: "trip", state: "not-allowed" },
+      { category: "refund", scope: "trip", state: "not-allowed" },
+    ],
+  });
+
+  assert.deepEqual(rows[2] && { title: rows[2].title, detail: rows[2].detail, semantic: rows[2].semantic }, {
+    title: "Change/refund rules",
+    detail: "Changes: Not allowed\nRefunds: Not refundable",
+    semantic: "negative",
+  });
+});
+
+test("Duffel default presentation remains sparse when categories are not supplied", () => {
+  assert.deepEqual(nativeFareBenefitRows([
+    { category: "baggage", semantic: "positive", text: "1 carry-on included" },
+  ], "one-way").map(({ title }) => title), ["Carry-on baggage"]);
+});
