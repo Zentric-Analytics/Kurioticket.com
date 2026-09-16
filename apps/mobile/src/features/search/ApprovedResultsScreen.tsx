@@ -4,7 +4,6 @@ import {
   Alert,
   Animated,
   AppState,
-  Dimensions,
   Image,
   Linking,
   KeyboardAvoidingView,
@@ -90,7 +89,6 @@ import { FlightFilterSheet, type FlightFilterSectionName } from "./FlightFilterS
 import { FlightResultsQuickControls } from "./FlightResultsQuickControls";
 import { FlightSortSheet } from "./FlightSortSheet";
 import { FLIGHT_QUICK_SHEET_HORIZONTAL_INSET } from "./FlightResultsSheetShell";
-import { flightPriceAlertAnchorBottom } from "./flightPriceAlertGeometry";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
 import {
   convertAmount,
@@ -950,6 +948,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         <View style={s0.flightResultsListContainer}>
         <Animated.SectionList
           ref={flightResultsListRef}
+          keyboardShouldPersistTaps="handled"
           style={[s0.resultsScroll, { backgroundColor: flightCanvasColor }]}
           sections={[{ data: !flightState ? [null, ...(sorted as FlightResult[])] : [] }]}
           keyExtractor={(item, index) => item ? item.id : `flight-results-intro-${index}`}
@@ -1690,7 +1689,6 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   const { locale, t } = useMobileLocalization();
   const message = useCallback((key: Parameters<typeof travelAccountMessage>[1]) => travelAccountMessage(locale, key), [locale]);
   const flight = product === "flight";
-  const flightTargetAnchorBottom = flightPriceAlertAnchorBottom(Dimensions.get("screen").height, safeAreaInsets.top);
   const presentation = useMemo(() => flightAlertPresentation(product, Boolean(plan), results || []), [plan?.key, product, results]);
   const hotelPresentation = useMemo(() => hotelAlertPresentation(product, plan, hotelResults || []), [plan?.key, product, hotelResults]);
   const activePresentation = flight ? presentation : hotelPresentation;
@@ -1800,7 +1798,7 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   };
   if (flight) {
     const toggleDisabled = pending || loadingAlert || unavailable;
-    return <View accessibilityLabel="Flight price alert" style={[compact ? s0.compactPriceAlert : s0.flightAlert,{ backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}>{compact ? <Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/> : null}<View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[compact ? s0.flightAlertCompactTitle : s0.flightAlertTitle, { color: theme.textPrimary }]}>Track this flight price</Text></View><View style={s0.compactPriceAlertSwitchSlot}>{pending ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent}/> : null}<Switch style={Platform.OS === "ios" ? s0.compactPriceAlertSwitchIos : undefined} hitSlop={6} accessibilityRole="switch" accessibilityLabel="Track this flight price" accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending || loadingAlert }} disabled={toggleDisabled} value={isTracking} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"} ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}/></View>{targetOpen ? <Modal visible transparent animationType="none" onRequestClose={() => { if (!pending) closeTargetSheet(); }} accessibilityViewIsModal><View style={s0.alertModalBackdrop}><View style={[s0.flightAlertTouchContent, { height: flightTargetAnchorBottom }]}><View style={[s0.alertSheet, s0.flightAlertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel="Create flight price alert"><View style={s0.hotelAlertSheetHeader}><Text accessibilityRole="header" style={[s0.flightAlertTitle, s0.hotelAlertSheetTitle, { color: theme.textPrimary }]}>Track prices</Text><Pressable accessibilityRole="button" accessibilityLabel="Close price alert" disabled={pending} onPressIn={closeTargetSheet} onPress={closeTargetSheet} style={({ pressed }) => [s0.hotelAlertSheetClose, pressed && s0.flightHeaderControlPressed]}><X accessible={false} size={22} color={theme.icon}/></Pressable></View><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Target price ({currency})</Text><TextInput autoFocus accessibilityLabel={`Target price in ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} placeholderTextColor={theme.textSecondary} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={[s0.alertError, theme.dark && { color: "#FF9C9C" }]}>{targetError}</Text> : null}<Button label={pending ? "Creating…" : "Create alert"} onPress={() => void createAlert()} /></View></View></View></Modal> : null}</View>;
+    return <View accessibilityLabel="Flight price alert" style={[compact ? s0.compactPriceAlert : s0.flightAlert,{ backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}>{compact ? <Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/> : null}<View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[compact ? s0.flightAlertCompactTitle : s0.flightAlertTitle, { color: theme.textPrimary }]}>Track this flight price</Text></View><View style={s0.compactPriceAlertSwitchSlot}>{pending ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent}/> : null}<Switch style={Platform.OS === "ios" ? s0.compactPriceAlertSwitchIos : undefined} hitSlop={6} accessibilityRole="switch" accessibilityLabel="Track this flight price" accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending || loadingAlert }} disabled={toggleDisabled} value={isTracking} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"} ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}/></View>{targetOpen ? <Modal visible transparent animationType="none" onRequestClose={() => { if (!pending) closeTargetSheet(); }} accessibilityViewIsModal><View style={s0.flightAlertOverlay} onAccessibilityEscape={() => { if (!pending) closeTargetSheet(); }}><View pointerEvents="none" style={[StyleSheet.absoluteFill, s0.flightAlertScrim]}/><Pressable accessible={false} disabled={pending} onPressIn={closeTargetSheet} onPress={closeTargetSheet} style={StyleSheet.absoluteFill}/><KeyboardAvoidingView style={s0.flightAlertTouchContent} behavior={Platform.OS === "ios" ? "padding" : "height"} pointerEvents="box-none"><View style={[s0.alertSheet, s0.flightAlertSheet, { backgroundColor: theme.surface, borderColor: theme.border, marginBottom: Math.max(safeAreaInsets.bottom, 12) }]} accessibilityLabel="Create flight price alert"><View style={s0.hotelAlertSheetHeader}><Text accessibilityRole="header" style={[s0.flightAlertTitle, s0.hotelAlertSheetTitle, { color: theme.textPrimary }]}>Track prices</Text><Pressable accessibilityRole="button" accessibilityLabel="Close price alert" disabled={pending} onPressIn={closeTargetSheet} onPress={closeTargetSheet} style={({ pressed }) => [s0.hotelAlertSheetClose, pressed && s0.flightHeaderControlPressed]}><X accessible={false} size={22} color={theme.icon}/></Pressable></View><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Target price ({currency})</Text><TextInput autoFocus accessibilityLabel={`Target price in ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} placeholderTextColor={theme.textSecondary} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={[s0.alertError, theme.dark && { color: "#FF9C9C" }]}>{targetError}</Text> : null}<Button label={pending ? "Creating…" : "Create alert"} onPress={() => void createAlert()} /></View></KeyboardAvoidingView></View></Modal> : null}</View>;
   }
   if (product !== "hotel" || !plan) return null;
   if (!activePresentation.enabled) return null;
@@ -2063,7 +2061,9 @@ const s0 = StyleSheet.create({
   alertModalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,.45)" },
   hotelAlertTouchContainer: { flex: 1 },
   hotelAlertTouchContent: { flexGrow: 1, justifyContent: "flex-end" },
-  flightAlertTouchContent: { justifyContent: "flex-end" },
+  flightAlertOverlay: { flex: 1 },
+  flightAlertScrim: { backgroundColor: "rgba(0,0,0,.45)" },
+  flightAlertTouchContent: { flex: 1, justifyContent: "flex-end" },
   alertSheet: { padding: 20, gap: 12, borderTopWidth: 1, borderTopLeftRadius: 18, borderTopRightRadius: 18 },
   flightAlertSheet: { marginHorizontal: FLIGHT_QUICK_SHEET_HORIZONTAL_INSET, borderWidth: 1, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 },
   hotelAlertSheetHeader: { flexDirection: "row", alignItems: "center" },
