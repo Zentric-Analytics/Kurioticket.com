@@ -11,6 +11,7 @@ export type FlightDetailsDeal = {
   providerName: string;
   price: number;
   currency: string;
+  offer: FlightDetailsOffer;
 };
 
 export type FlightDetailsFareChoice = {
