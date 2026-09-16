@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
-import { sortCarResults } from "@/lib/cars/carResults";
+import { ensureCarProviderCoverage, sortCarResults } from "@/lib/cars/carResults";
 import { buildStaticCarResults } from "@/services/travel/staticCarResults";
 
 const search: CarSearchParams = {
@@ -32,14 +33,21 @@ function kayakClone(): NormalizedCarResult {
   };
 }
 
-test("recommended Cars ranking keeps the strongest result from every successful provider visible", () => {
+test("provider coverage keeps the strongest result from every successful Cars provider visible", () => {
   const kayak = kayakClone();
   const ranked = sortCarResults([...staticCars.slice(0, 8), kayak, ...staticCars.slice(8)], "recommended");
-  assert.deepEqual(ranked.slice(0, 2).map((car) => car.inventorySource), ["kurioticket-static-cars", "kayak-sandbox"]);
-  assert.equal(ranked.filter((car) => car.id === kayak.id).length, 1);
+  const covered = ensureCarProviderCoverage(ranked);
+  assert.deepEqual(covered.slice(0, 2).map((car) => car.inventorySource), ["kurioticket-static-cars", "kayak-sandbox"]);
+  assert.equal(covered.filter((car) => car.id === kayak.id).length, 1);
 });
 
-test("explicit Cars sorts preserve their price and rating semantics instead of forcing provider coverage", () => {
+test("native Cars applies provider coverage only to recommended results", () => {
+  const native = readFileSync("apps/mobile/src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
+  assert.match(native, /const ranked=sortCarResults\(filterCarResults\(results,filters\),sort\)/);
+  assert.match(native, /sort==="recommended"\?ensureCarProviderCoverage\(ranked\):ranked/);
+});
+
+test("explicit shared Cars sorts preserve their price and rating semantics", () => {
   const kayak = kayakClone();
   const all = [...staticCars, kayak];
   const lowest = sortCarResults(all, "lowestTotal");
