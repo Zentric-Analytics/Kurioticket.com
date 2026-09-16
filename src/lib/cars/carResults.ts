@@ -64,7 +64,7 @@ function recommendedScore(car: NormalizedCarResult) {
 
 export function sortCarResults<T extends NormalizedCarResult>(results: T[], sort: CarSort): T[] {
   const indexed = results.map((car, index) => ({ car, index }));
-  const ranked = indexed.sort((a, b) => {
+  return indexed.sort((a, b) => {
     const aOffer = getPrimaryCarOffer(a.car);
     const bOffer = getPrimaryCarOffer(b.car);
     const tie = a.car.id.localeCompare(b.car.id) || a.index - b.index;
@@ -73,7 +73,6 @@ export function sortCarResults<T extends NormalizedCarResult>(results: T[], sort
     return recommendedScore(b.car) - recommendedScore(a.car) ||
       (aOffer?.totalPrice ?? Infinity) - (bOffer?.totalPrice ?? Infinity) || tie;
   }).map(({ car }) => car);
-  return sort === "recommended" ? ensureCarProviderCoverage(ranked) : ranked;
 }
 
 /** Keep the strongest result from every successful provider visible before filling by rank. */
