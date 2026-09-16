@@ -9,8 +9,6 @@ const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.t
 const card = source.slice(source.indexOf("function HotelCard"), source.indexOf("function Loading", source.indexOf("function HotelCard")));
 const amenities = readFileSync(resolve("src/features/search/HotelCardAmenityList.tsx"), "utf8");
 const api = readFileSync(resolve("src/api/travelApi.ts"), "utf8");
-const searchUi = readFileSync(resolve("src/features/search/SearchUi.tsx"), "utf8");
-const webHotelCard = readFileSync(resolve("../../src/components/results/HotelCard.tsx"), "utf8");
 
 test("hotel card keeps provider data but never prints its internal label", () => {
   assert.doesNotMatch(card, /result\.provider|s0\.providers/);
@@ -117,16 +115,17 @@ test("guest reviews are only rendered from a genuine reviewScore", () => {
   assert.match(card, /result\.reviewScore == null\s*\? null/);
   assert.match(card, /result\.reviewScore \* \(10 \/ \(result\.reviewScale \|\| 10\)\)/);
   assert.match(card, /\{score == null \? null : \(/);
+  assert.match(card, /result\.reviewCount\.toLocaleString\(\)/);
 });
 
-test("amenities use the shared semantic presentation and four neutral icon rows", () => {
-  assert.match(card, /<HotelCardAmenityList amenities=\{result\.amenities\} \/>/);
+test("generic facilities stay out of the compact result card while the shared amenity presenter remains available elsewhere", () => {
+  assert.doesNotMatch(card, /<HotelCardAmenityList/);
   assert.match(amenities, /buildHotelAmenityPresentation\(amenities, 4\)/);
   const presented = buildHotelAmenityPresentation(["Wi-Fi", "Fitness centre", "Restaurant", "Breakfast", "Pool", "Mystery amenity"], 10);
   assert.deepEqual(presented.map((item) => item.iconKey), ["pool", "fitness", "wifi", "breakfast", "restaurant", "generic"]);
 });
 
-test("Hotel Results amenities use the Hotel Details body scale without changing offer rows", () => {
+test("shared amenity rows keep their existing typography for screens that still use them", () => {
   assert.match(amenities, /const iconColor = theme\.dark \? theme\.icon : "#1A1A1A";/);
   assert.match(amenities, /<Icon accessible=\{false\} size=\{15\} strokeWidth=\{1\.3\} color=\{iconColor\} \/>/);
   assert.match(amenities, /label:\s*\{[^}]*fontSize:\s*13[^}]*lineHeight:\s*19[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/s);
@@ -134,14 +133,14 @@ test("Hotel Results amenities use the Hotel Details body scale without changing 
   assert.match(amenities, /offerLabel:\s*\{[^}]*fontSize:\s*12[^}]*lineHeight:\s*16[^}]*fontWeight:\s*"500"[^}]*fontFamily:\s*appFonts\.medium/s);
 });
 
-test("compact hotel cards follow the measured reference aspect while preserving bottom price rhythm", () => {
+test("compact hotel cards use a shorter fixed rhythm while preserving the split image layout", () => {
   const cardStyle = source.match(/\n  hotelCard:\s*\{[^}]*\}/s)?.[0] ?? "";
   const priceStyle = source.match(/\n  hotelPrice:\s*\{[^}]*\}/s)?.[0] ?? "";
-  assert.match(cardStyle, /minHeight:\s*260/);
-  assert.match(card, /const compactCardMinHeight = Math\.round\(\(viewportWidth - 32\) \* 0\.7\)/);
+  assert.match(cardStyle, /minHeight:\s*232/);
+  assert.match(card, /const compactCardMinHeight = 224/);
   assert.match(card, /compact && \{ minHeight: compactCardMinHeight \}/);
   assert.match(priceStyle, /marginTop:\s*"auto"/);
-  assert.match(priceStyle, /paddingTop:\s*8/);
+  assert.match(priceStyle, /paddingTop:\s*6/);
   assert.match(source, /hotelImageWrap:\s*\{ width: "39%"/);
   assert.match(source, /hotelImageWrapCompact:\s*\{ width: "38%" \}/);
 });
@@ -153,20 +152,19 @@ test("Hotel card shell preserves its split layout with Flight-family depth", () 
   assert.match(source, /shadowOffset: \{ width: 0, height: 2 \}, shadowOpacity: 0\.08, shadowRadius: 10, elevation: 2/);
 });
 
-test("View hotel uses the web brand blue and compact reference geometry", () => {
-  const dealButtonStyle = source.match(/\n  hotelDealButton:\s*\{[^}]*\}/s)?.[0] ?? "";
-  assert.equal(colors.blue, "#004BB8");
-  assert.match(dealButtonStyle, /backgroundColor:\s*colors\.blue/);
-  assert.match(source, /hotelDealButtonCompact: \{ minHeight: 36, minWidth: 92, paddingHorizontal: 12 \}/);
-  assert.match(card, /hitSlop=\{4\}/);
-  assert.match(card, /style=\{\(\{ pressed \}\) => \[s0\.hotelDealButton, compact && s0\.hotelDealButtonCompact, pressed && s0\.hotelDealButtonPressed\]\}/);
-  assert.match(searchUi, /blue:\s*"#0754F7"/);
-  assert.match(webHotelCard, /bg-\[#004BB8\]/);
+test("compact result card removes the large CTA and surfaces up to two booking benefits", () => {
+  assert.doesNotMatch(card, />View hotel<\/Text>/);
+  assert.doesNotMatch(source, /hotelDealButton:/);
+  assert.match(card, /const bookingTerms = \[mealPlan, \.\.\.policy\]/);
+  assert.match(card, /\.slice\(0, 2\)/);
+  assert.match(card, /positive \? `✓ \$\{item\}` : item/);
 });
 
-test("Hotel cards preserve truthful price and use View hotel", () => {
+test("Hotel cards preserve truthful nightly and total price presentation", () => {
   assert.match(card,/const hasPrice = hasHotelPrice\(result\)/);
   assert.match(card,/"Price unavailable"/);
-  assert.match(card,/`View hotel for/);
-  assert.match(card,/>View hotel<\/Text>/);
+  assert.match(card,/displayPrices\?\.nightly\?\.formatted/);
+  assert.match(card,/displayPrices\?\.total\?\.formatted/);
+  assert.match(card,/Math\.abs\(result\.totalPrice - result\.pricePerNight\) > 0\.005/);
+  assert.match(card,/\} total<\/Text>/);
 });
