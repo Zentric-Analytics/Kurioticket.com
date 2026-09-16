@@ -314,9 +314,7 @@ export async function buildKayakSandboxFlightDetails({
     groupKayakBookingOptions: true,
   });
   const initial = fareChoices.find(({ memberOffers }) => memberOffers.some(({ id }) => id === cachedSelected.id)) ?? fareChoices[0];
-  if (!initial) return { status: "unavailable"; error: string }> {
-    return { status: "unavailable", error: unavailableMessage };
-  }
+  if (!initial) return { status: "unavailable", error: unavailableMessage };
   const handoff = resolveFlightHandoff(initial.source);
   return {
     status: "available",
