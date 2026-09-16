@@ -9,8 +9,10 @@ const priceAlertSource = readFileSync(resolve("src/features/search/NativeCarPric
 const flightResultsSource = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
 const styles = source.slice(source.indexOf("const c = StyleSheet.create"));
 const style = (name: string) => styles.slice(styles.indexOf(`${name}:`), styles.indexOf("},", styles.indexOf(`${name}:`)) + 2);
-const top = source.slice(source.indexOf('<View style={c.topSection}>'), source.indexOf('<View style={[c.lowerBand,{backgroundColor:carInformationSurface,borderTopColor:theme.border}]}>'));
-const lower = source.slice(source.indexOf('<View style={[c.lowerBand,{backgroundColor:carInformationSurface,borderTopColor:theme.border}]}>'), source.indexOf("  </View>;"));
+const topStart = source.indexOf('<View style={c.topSection}>');
+const lowerStart = source.indexOf('<View style={[c.lowerBand,{backgroundColor:carInformationSurface,borderTopColor:theme.border}]}>');
+const top = source.slice(topStart, lowerStart);
+const lower = source.slice(lowerStart, source.indexOf("  </View>;"));
 
 test("Car card shell and two-level grid retain safe natural layout", () => {
   assert.match(source, /c\.card,\{backgroundColor:carInformationSurface,borderColor:theme\.dark\?theme\.border:"#D8E1EC",shadowColor:theme\.dark\?"#000000":"#18305B"\}/);
@@ -45,25 +47,25 @@ test("non-image information matches the inactive Price Alert track while the ima
 });
 
 test("top section owns only the visual and identity information", () => {
+  assert.ok(topStart >= 0 && lowerStart > topStart);
   assert.match(top, /c\.visualColumn[\s\S]*<View style=\{\[c\.identityZone,\{backgroundColor:carInformationSurface\}\]\}>/);
-  for (const token of ["identity.primaryName", "identity.secondaryModel", "or similar", "result.categoryLabel", "result.pickupLocation", "savedState.toggle", "Share2", "Free cancellation", "Best value"])
+  for (const token of ["identity.primaryName", "identity.secondaryModel", "or similar", "result.categoryLabel", "result.pickupLocation", "savedState.toggle", "Share2", "Free cancellation"])
     assert.ok(top.includes(token), `missing ${token} from top section`);
   assert.doesNotMatch(top, /result\.passengers|result\.doors|result\.transmission|result\.bags|offer\.totalPrice|offer\.pricePerDay|>View deal<\/Text>/);
   assert.doesNotMatch(source, /topMetaShell|topMetaRow|topMetaContent|hasTopMeta/);
 });
 
 test("Best value precedes the header for normal inventory while sandbox cards stay clearly simulated", () => {
-  const identityZone = top.slice(top.indexOf('<View style={[c.identityZone,{backgroundColor:carInformationSurface}]}>'));
-  const bestValueStart = identityZone.indexOf("rank === 0");
-  const headerStart = identityZone.indexOf('<View style={c.headerRow}>');
-  const detailsStart = identityZone.indexOf('<View style={c.identityDetails}>');
-  const locationStart = identityZone.indexOf('<View style={c.location}>');
-  const freeCancellationStart = identityZone.indexOf("offer?.freeCancellation");
+  const bestValueStart = source.indexOf("rank === 0 && !sandbox");
+  const headerStart = source.indexOf('<View style={c.headerRow}>', bestValueStart);
+  const detailsStart = source.indexOf('<View style={c.identityDetails}>', headerStart);
+  const locationStart = source.indexOf('<View style={c.location}>', detailsStart);
+  const freeCancellationStart = source.indexOf("offer?.freeCancellation", locationStart);
   assert.ok(bestValueStart >= 0 && bestValueStart < headerStart);
   assert.ok(headerStart < detailsStart && detailsStart < locationStart && locationStart < freeCancellationStart);
-  assert.match(identityZone, /rank === 0 && !sandbox \? <View style=\{c\.bestValueRow\}><View style=\{c\.badge\}><Award size=\{11\} color="#15803D" \/><Text style=\{c\.badgeText\}>Best value/);
-  assert.match(identityZone, /sandbox \? <Text style=\{c\.category\}>KAYAK sandbox · Simulated · Not bookable<\/Text> : null/);
-  assert.match(identityZone, /!sandbox \? <View style=\{c\.utilityColumn\}>/);
+  assert.match(source, /rank === 0 && !sandbox \? <View style=\{c\.bestValueRow\}><View style=\{c\.badge\}><Award size=\{11\} color="#15803D" \/><Text style=\{c\.badgeText\}>Best value/);
+  assert.match(source, /sandbox \? <Text style=\{c\.category\}>KAYAK sandbox · Simulated · Not bookable<\/Text> : null/);
+  assert.match(source, /!sandbox \? <View style=\{c\.utilityColumn\}>/);
   assert.match(top, /offer\?\.freeCancellation \? <View style=\{c\.freeCancellation\}>[\s\S]*ShieldCheck[\s\S]*Free cancellation/);
   assert.match(source, /const freeCancellationColor = theme\.dark \? theme\.textPrimary : "#000000"/);
   assert.doesNotMatch(style("freeCancellation") + style("freeCancellationText"), /#15803D|#ECFDF5|backgroundColor|border/);
@@ -117,7 +119,10 @@ test("lower band uses provider-aware spec labels in the approved two-column orde
 test("commerce remains authoritative, responsive, and accessible", () => {
   assert.match(source, /getPrimaryCarOffer\(result\)/);
   assert.match(source, /presentCarOfferCurrency\(primaryOffer, displayCurrency, rates\)/);
-  assert.match(source, /money\(offer\.currency, offer\.pricePerDay\)\}<\/Text><Text style=\{\[c\.perDayLabel/);
+  const dailyPriceStart = source.indexOf("money(offer.currency, offer.pricePerDay)");
+  const perDayStart = source.indexOf(">per day</Text>", dailyPriceStart);
+  const viewDealStart = source.indexOf(">View deal</Text>", perDayStart);
+  assert.ok(dailyPriceStart >= 0 && dailyPriceStart < perDayStart && perDayStart < viewDealStart);
   assert.doesNotMatch(source, /money\(offer\.currency, offer\.totalPrice\)|offer\.taxesAndFeesIncluded|includes taxes & fees|taxes & fees shown where known/);
   assert.match(source, /Live price unavailable/);
   assert.match(source, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.75\}/);
