@@ -1038,7 +1038,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 );
               }
               return (
-                <View style={s0.hotelResultsBody}>
+                <View style={s0.hotelResultsCardBody}>
                   <HotelCard
                     result={item}
                     showCheapestBadge={item.id === cheapestHotelId}
@@ -1508,6 +1508,24 @@ function HotelCard({
   const hasPrice = hasHotelPrice(result);
   const mealPlan=result.catalogueProfile?.mealPlan?.trim();
   const policy=[result.catalogueProfile?.cancellationPolicy,result.catalogueProfile?.paymentPolicy].filter((value):value is string=>Boolean(value?.trim()));
+  const openHotel = () => {
+    if (result.searchPolicy.action.kind === "provider") {
+      void Linking.openURL(result.searchPolicy.action.href);
+      return;
+    }
+    router.push({
+      pathname: "/hotel-details",
+      params: {
+        result: JSON.stringify(result),
+        ...Object.fromEntries(
+          Object.entries(params).map(([k, v]) => [k, one(v) || ""]),
+        ),
+        hotelResultsStack: "1",
+        hotelDisplayPrices: displayPrices ? JSON.stringify(displayPrices) : "",
+        displayCurrencyContext: displayCurrencyContext ? JSON.stringify(displayCurrencyContext) : "",
+      },
+    });
+  };
   const shareHotel = () => {
     const message = hasPrice
       ? `${result.name} — ${result.location} — ${displayPrices?.nightly?.formatted ?? money(result.currency, result.pricePerNight)}/night`
@@ -1515,7 +1533,16 @@ function HotelCard({
     void Share.share({ message }).catch(() => undefined);
   };
   return (
-    <View style={[s0.hotelCard, { backgroundColor: theme.surface, borderColor: theme.dark ? theme.border : "#D8E1EC", shadowColor: theme.dark ? "#000000" : "#18305B" }, compact && { minHeight: compactCardMinHeight }]}>
+    <Pressable
+      accessible={false}
+      onPress={openHotel}
+      style={({ pressed }) => [
+        s0.hotelCard,
+        { backgroundColor: theme.surface, borderColor: theme.dark ? theme.border : "#D8E1EC", shadowColor: theme.dark ? "#000000" : "#18305B" },
+        compact && { minHeight: compactCardMinHeight },
+        pressed && s0.hotelCardPressed,
+      ]}
+    >
       <View style={[s0.hotelImageWrap, compact && s0.hotelImageWrapCompact]}>
         {usableGallery[activeImage] ? (
           <Image source={{ uri: usableGallery[activeImage] }} onError={()=>setFailedImages(values=>[...values,usableGallery[activeImage]])} style={s0.hotelImage} />
@@ -1523,13 +1550,13 @@ function HotelCard({
           <View accessibilityLabel="Hotel image unavailable" style={[s0.hotelImage,s0.hotelImageUnavailable]}><Text style={[s0.hotelImageUnavailableText,{color:theme.textSecondary}]}>Image unavailable</Text></View>
         )}
         {usableGallery.length>1?<>
-          <Pressable accessibilityRole="button" accessibilityLabel={`Previous photo of ${result.name}`} onPress={()=>setActiveImage(index=>(index-1+usableGallery.length)%usableGallery.length)} style={[s0.galleryControl,s0.galleryPrevious]}>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Previous photo of ${result.name}`} onPress={(event)=>{event.stopPropagation();setActiveImage(index=>(index-1+usableGallery.length)%usableGallery.length);}} style={[s0.galleryControl,s0.galleryPrevious]}>
             <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[s0.galleryChevronStack,s0.galleryIconPrevious]}>
               <ChevronLeft accessible={false} color={HOTEL_GALLERY_CHEVRON_CONTRAST} size={20} strokeWidth={4} style={s0.galleryChevronUnderlay}/>
               <ChevronLeft accessible={false} color="white" size={20} strokeWidth={2.2}/>
             </View>
           </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel={`Next photo of ${result.name}`} onPress={()=>setActiveImage(index=>(index+1)%usableGallery.length)} style={[s0.galleryControl,s0.galleryNext]}>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Next photo of ${result.name}`} onPress={(event)=>{event.stopPropagation();setActiveImage(index=>(index+1)%usableGallery.length);}} style={[s0.galleryControl,s0.galleryNext]}>
             <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[s0.galleryChevronStack,s0.galleryIconNext]}>
               <ChevronRight accessible={false} color={HOTEL_GALLERY_CHEVRON_CONTRAST} size={20} strokeWidth={4} style={s0.galleryChevronUnderlay}/>
               <ChevronRight accessible={false} color="white" size={20} strokeWidth={2.2}/>
@@ -1553,7 +1580,7 @@ function HotelCard({
             accessibilityLabel={saved ? `Remove ${result.name} from saved` : `Save ${result.name}`}
             accessibilityState={{ selected: saved }}
             disabled={!hasPrice && !saved}
-            onPress={() => void canonical.toggleHotel(result, params)}
+            onPress={(event) => { event.stopPropagation(); void canonical.toggleHotel(result, params); }}
             style={[s0.hotelAction, s0.hotelSaveAction]}
           >
             <Heart
@@ -1566,7 +1593,7 @@ function HotelCard({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Share ${result.name}`}
-            onPress={shareHotel}
+            onPress={(event) => { event.stopPropagation(); shareHotel(); }}
             style={[s0.hotelAction, s0.hotelShareAction]}
           >
             <Share2 accessible={false} size={20} color={theme.dark ? theme.icon : HOTEL_UTILITY_ICON_COLOR} />
@@ -1592,7 +1619,7 @@ function HotelCard({
         <HotelCardAmenityList amenities={result.amenities} />
         {mealPlan && !(/^breakfast/i.test(mealPlan)&&result.amenities.some(item=>/breakfast/i.test(item)))?<Text numberOfLines={1} style={[s0.hotelTerm,{color:theme.textPrimary}]}>{mealPlan.charAt(0).toUpperCase()+mealPlan.slice(1).toLowerCase()}</Text>:null}
         {policy.map(item=><Text key={item} numberOfLines={1} style={[s0.hotelTerm,{color:theme.textPrimary}]}>{item}</Text>)}
-        {result.sourceAttributions?.map(item=>{const safe=typeof item.providerUri==="string"&&/^https?:\/\//i.test(item.providerUri);return <Pressable key={`${item.provider}-${item.providerUri??""}`} disabled={!safe} onPress={()=>safe&&void Linking.openURL(item.providerUri!)}><Text numberOfLines={1} style={s0.hotelAttributionLink}>Source: {item.provider}</Text></Pressable>;})}
+        {result.sourceAttributions?.map(item=>{const safe=typeof item.providerUri==="string"&&/^https?:\/\//i.test(item.providerUri);return <Pressable key={`${item.provider}-${item.providerUri??""}`} disabled={!safe} onPress={(event)=>{event.stopPropagation();if(safe)void Linking.openURL(item.providerUri!);}}><Text numberOfLines={1} style={s0.hotelAttributionLink}>Source: {item.provider}</Text></Pressable>;})}
         <View style={s0.hotelPrice}>
           <View style={s0.hotelPriceCopy}>
             <Text accessibilityLabel={displayPrices?.nightly?.accessibilityLabel} style={[s0.hotelNightlyPrice,{color:theme.textPrimary}]}>
@@ -1603,29 +1630,16 @@ function HotelCard({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`View hotel for ${result.name}`}
+            accessibilityHint="Opens this hotel"
             hitSlop={4}
             style={({ pressed }) => [s0.hotelDealButton, compact && s0.hotelDealButtonCompact, pressed && s0.hotelDealButtonPressed]}
-            onPress={() => result.searchPolicy.action.kind === "provider"
-              ? void Linking.openURL(result.searchPolicy.action.href)
-              : router.push({
-                pathname: "/hotel-details",
-                params: {
-                  result: JSON.stringify(result),
-                  ...Object.fromEntries(
-                    Object.entries(params).map(([k, v]) => [k, one(v) || ""]),
-                  ),
-                  hotelResultsStack: "1",
-                  hotelDisplayPrices: displayPrices ? JSON.stringify(displayPrices) : "",
-                  displayCurrencyContext: displayCurrencyContext ? JSON.stringify(displayCurrencyContext) : "",
-                },
-              })
-            }
+            onPress={(event) => { event.stopPropagation(); openHotel(); }}
           >
             <Text style={s0.hotelDealButtonText}>View hotel</Text>
           </Pressable>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 function FlightResultsSummaryRow({ count }: { count: number }) {
@@ -1871,6 +1885,7 @@ const s0 = StyleSheet.create({
   sheetActions: { gap: 9 },
   body: { paddingHorizontal: 18, paddingBottom: 92, gap: 14 },
   hotelResultsBody: { paddingHorizontal: 16 },
+  hotelResultsCardBody: { paddingHorizontal: 12 },
   hotelResultsContent: { flexGrow: 1 },
   hotelResultsIntro: { paddingBottom: 0 },
   hotelResultsItemSeparator: { height: 14 },
@@ -1943,6 +1958,7 @@ const s0 = StyleSheet.create({
   metadataItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingHorizontal: 2 },
   metadataText: { flexShrink: 1, minWidth: 0, fontSize: 11.5, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
   hotelCard: { minHeight: 260, borderWidth: 1, borderRadius: 13, overflow: "hidden", flexDirection: "row", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 2 },
+  hotelCardPressed: { opacity: 0.96, transform: [{ scale: 0.998 }] },
   hotelImageWrap: { width: "39%", alignSelf: "stretch", position: "relative" },
   hotelImageWrapCompact: { width: "38%" },
   hotelImage: { ...StyleSheet.absoluteFillObject, backgroundColor: "#E9EDF3" },
