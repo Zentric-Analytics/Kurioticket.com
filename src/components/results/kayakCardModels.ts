@@ -138,7 +138,7 @@ export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<strin
 export function kayakHotelCardModel(offer: SandboxOffer, nights: number): NormalizedHotelResult {
   const providerDetails = kayakHotelProviderDetails(offer);
   const freeCancellation = providerDetails.rate?.freeCancellation;
-  return {id:`kayak-sandbox:${offer.id}`,provider:"KAYAK sandbox",name:offer.title,
+  return ({id:`kayak-sandbox:${offer.id}`,provider:"KAYAK sandbox",name:offer.title,
     imageUrl:offer.images?.[0]?.url,imageUrls:offer.images?.map(image=>image.url),
     rating:0,classificationStars:offer.hotelStars && [1,2,3,4,5].includes(offer.hotelStars) ? offer.hotelStars as HotelClassificationStars : undefined,
     reviewScore:offer.hotelReviewScore,reviewScale:offer.hotelReviewScore === undefined ? undefined : 10,
@@ -147,7 +147,8 @@ export function kayakHotelCardModel(offer: SandboxOffer, nights: number): Normal
     cancellationInfo:freeCancellation === true ? "Free cancellation" : freeCancellation === false ? "Cancellation conditions apply" : "See supplied rate details",
     pricePerNight:offer.price/nights,totalPrice:offer.price,currency:offer.currency,
     bookingUrl:offer.testUrl,partnerRedirectUrl:offer.testUrl,valueScore:0,travelConfidenceScore:0,arrivalSuitabilityScore:0,
-    recommendationReasons:[],badges:[],dataSource:"demo",rawProviderReference:{kind:"kayak-hotel-details",details:providerDetails}};
+    recommendationReasons:[],badges:[],dataSource:"demo",providerDetails,
+    rawProviderReference:{kind:"kayak-hotel-details",details:providerDetails}} as NormalizedHotelResult & { providerDetails: PublicHotelProviderDetails });
 }
 
 export function kayakCarCardModel(offer: SandboxOffer, days: number, pickup: string): NormalizedCarResult {

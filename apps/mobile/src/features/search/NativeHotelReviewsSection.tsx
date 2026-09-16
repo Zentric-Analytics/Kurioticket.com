@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
+import type { PublicHotelProviderDetails } from "../../../../../src/lib/hotels/hotelProviderDetails";
 import {
   getHotelReviewBand,
   normalizeHotelReviewCount,
@@ -22,6 +23,7 @@ type ReviewResult = {
   reviewScale?: unknown;
   reviewCount?: unknown;
   reviewSource?: string;
+  providerDetails?: PublicHotelProviderDetails;
 };
 
 export function nativeHotelReviewPresentation(result: ReviewResult) {
@@ -54,6 +56,8 @@ export function nativeHotelReviewPresentation(result: ReviewResult) {
 export function NativeHotelReviewsSection({ result }: { result: ReviewResult }) {
   const { theme } = useAppTheme();
   const review = nativeHotelReviewPresentation(result);
+  const sentiment = result.providerDetails?.reviews?.sentiment?.trim() ?? "";
+  const quotes = [...new Set((result.providerDetails?.reviews?.quotes ?? []).map(({ value }) => value.trim()).filter(Boolean))];
 
   return (
     <View style={styles.reviewsSection}>
@@ -61,18 +65,30 @@ export function NativeHotelReviewsSection({ result }: { result: ReviewResult }) 
         Guest reviews
       </Text>
       {review ? (
-        <View style={styles.scoreRow}>
-          <View style={styles.scoreBadge}>
-            <Text style={styles.scoreText}>{review.score}</Text>
+        <>
+          <View style={styles.scoreRow}>
+            <View style={styles.scoreBadge}>
+              <Text style={styles.scoreText}>{review.score}</Text>
+            </View>
+            <View style={styles.metadata}>
+              <Text style={[styles.label, { color: theme.textPrimary }]}>{review.label}</Text>
+              <Text style={[styles.count, { color: theme.textSecondary }]}>{review.count}</Text>
+              {result.reviewSource ? (
+                <Text style={[styles.source, { color: theme.textSecondary }]}>Source: {result.reviewSource}</Text>
+              ) : null}
+            </View>
           </View>
-          <View style={styles.metadata}>
-            <Text style={[styles.label, { color: theme.textPrimary }]}>{review.label}</Text>
-            <Text style={[styles.count, { color: theme.textSecondary }]}>{review.count}</Text>
-            {result.reviewSource ? (
-              <Text style={[styles.source, { color: theme.textSecondary }]}>Source: {result.reviewSource}</Text>
-            ) : null}
-          </View>
-        </View>
+          {sentiment ? <Text style={[styles.sentiment, { color: theme.textPrimary }]}>{sentiment}</Text> : null}
+          {quotes.length ? (
+            <View style={styles.quoteList}>
+              {quotes.map((quote) => (
+                <Text key={quote} style={[styles.quote, { color: theme.textSecondary }]}>
+                  “{quote}”
+                </Text>
+              ))}
+            </View>
+          ) : null}
+        </>
       ) : (
         <View style={styles.emptyCallout}>
           <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
@@ -96,4 +112,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 15, lineHeight: 21, fontWeight: "600" },
   count: { fontSize: 14, lineHeight: 20, fontWeight: "400" },
   source: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: "400" },
+  sentiment: { marginTop: 12, fontSize: 14, lineHeight: 20, fontWeight: "600" },
+  quoteList: { marginTop: 6, gap: 6 },
+  quote: { fontSize: 14, lineHeight: 21, fontWeight: "400" },
 });
