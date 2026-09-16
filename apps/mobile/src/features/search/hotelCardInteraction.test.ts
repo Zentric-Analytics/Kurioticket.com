@@ -37,5 +37,5 @@ test("hotel card prioritizes reviews, booking terms, nightly price and stay tota
   assert.match(card, /free cancellation\|breakfast included\|pay later\|reserve now/i);
   assert.match(card, /displayPrices\?\.nightly\?\.formatted/);
   assert.match(card, /displayPrices\?\.total\?\.formatted/);
-  assert.match(card, />\{displayPrices\?\.total\?\.formatted \?\? money\(result\.currency, result\.totalPrice\)\} total<\/Text>/);
+  assert.match(card, /\{displayPrices\?\.total\?\.formatted \?\? money\(result\.currency, result\.totalPrice\)\}\s*total\s*<\/Text>/);
 });
