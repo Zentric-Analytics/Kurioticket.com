@@ -22,6 +22,7 @@ import { isKayakSandboxCar, nativeCarPrimarySpecLabels } from "./nativeCarProvid
 import { sandboxBookingUrl } from "../../../../../src/services/travel/kayakSandboxPublic";
 
 type Params = Record<string, string | string[]>;
+const CAR_DETAIL_LIGHT_CANVAS = "#F5F7FB";
 type Status = "loading" | "ready" | "unavailable";
 type Theme = ReturnType<typeof useAppTheme>["theme"];
 
@@ -118,7 +119,7 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
     router.replace({ pathname: "/car-results", params: search });
   };
   const light = !theme.dark;
-  const carCanvasColor = theme.dark ? theme.background : theme.surface;
+  const carCanvasColor = theme.dark ? theme.background : CAR_DETAIL_LIGHT_CANVAS;
   const carAccent = theme.dark ? "#8FB5FF" : colors.blue;
 
   return <SafeAreaView style={[s.safe, { backgroundColor: carCanvasColor }]} edges={["top"]}>
@@ -130,7 +131,7 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
     </View>
 
     <ScrollView stickyHeaderIndices={[1]} style={{ backgroundColor: carCanvasColor }} contentContainerStyle={{ paddingBottom: 120 + inset.bottom }}>
-      <View style={[s.hero, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+      <View style={[s.hero, { backgroundColor: carCanvasColor, borderColor: theme.border }]}>
         <View style={s.heroHeader}>
           <View style={s.titleCopy}>
             <Text accessibilityRole="header" style={[s.title, { color: light ? "#020617" : theme.textPrimary }]}>{result.modelName}</Text>
@@ -138,7 +139,7 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
             <Text style={[s.sandboxLabel, { color: theme.textSecondary }]}>KAYAK sandbox · Simulated · Not bookable</Text>
           </View>
         </View>
-        <View style={s.imageBox}>
+        <View style={[s.imageBox,{backgroundColor:theme.surface}]}>
           {resolveImage(result.imageUrl)
             ? <Image source={{ uri: resolveImage(result.imageUrl) }} accessibilityLabel={result.imageAlt} resizeMode="cover" style={s.image} />
             : <View style={s.unavailable}><CarFront size={48} color={theme.textSecondary} /><Text style={{ color: theme.textSecondary }}>Vehicle image unavailable</Text></View>}
