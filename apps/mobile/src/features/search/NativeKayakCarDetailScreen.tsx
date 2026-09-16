@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Image, Linking, Platform, Pressable, ScrollView, Share, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
@@ -27,6 +27,7 @@ type Params = Record<string, string | string[]>;
 const CAR_DETAIL_LIGHT_CANVAS = "#F5F7FB";
 type Status = "loading" | "ready" | "unavailable";
 type Theme = ReturnType<typeof useAppTheme>["theme"];
+type CarDetailTab = "compare" | "pickup" | "location";
 
 const one = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
 const parseResult = (value?: string) => {
@@ -82,8 +83,17 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
   const inset = useSafeAreaInsets();
   const navigation = useNavigation();
   const width = useWindowDimensions().width;
+  const carStickyTabsTop = inset.top + 72;
   const saved = useSavedCar(result, params);
-  const [activeTab, setActiveTab] = useState<"compare" | "pickup" | "location">("compare");
+  const [activeTab, setActiveTab] = useState<CarDetailTab>("compare");
+  const activeCarTabRef = useRef<CarDetailTab>("compare");
+  const carDetailScrollRef = useRef<ScrollView>(null);
+  const currentCarScrollOffset = useRef(0);
+  const restoringCarTabScrollRef = useRef(false);
+  const carTabsStickyStartRef = useRef<number | null>(null);
+  const carTabsPinnedRef = useRef(false);
+  const [carTabsPinned, setCarTabsPinned] = useState(false);
+  const carTabScrollOffsets = useRef<Record<CarDetailTab, number | null>>({ compare: 0, pickup: null, location: null });
   const offers = useMemo(() => comparisonCarOffers(result.offers), [result.offers]);
   const primaryOffer = useMemo(() => primaryValidCarOffer(result.offers), [result.offers]);
   const [selectedOfferId, setSelectedOfferId] = useState<string | undefined>(() => primaryOffer?.id);
@@ -123,15 +133,69 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
   };
   const light = !theme.dark;
   const carCanvasColor = theme.dark ? theme.background : CAR_DETAIL_LIGHT_CANVAS;
+
+  const syncCarTabsPinned = useCallback((offset: number) => {
+    const stickyStart = carTabsStickyStartRef.current;
+    const nextPinned = stickyStart !== null && offset >= stickyStart;
+    if (nextPinned === carTabsPinnedRef.current) return;
+    carTabsPinnedRef.current = nextPinned;
+    setCarTabsPinned(nextPinned);
+  }, []);
+
+  const selectCarTab = useCallback((tab: CarDetailTab) => {
+    if (tab === activeCarTabRef.current) return;
+    const targetOffset = carTabScrollOffsets.current[tab] ?? currentCarScrollOffset.current;
+    restoringCarTabScrollRef.current = true;
+    activeCarTabRef.current = tab;
+    setActiveTab(tab);
+    requestAnimationFrame(() => {
+      carDetailScrollRef.current?.scrollTo({ y: targetOffset, animated: false });
+      currentCarScrollOffset.current = targetOffset;
+      syncCarTabsPinned(targetOffset);
+      requestAnimationFrame(() => { restoringCarTabScrollRef.current = false; });
+    });
+  }, [syncCarTabsPinned]);
+
+  useEffect(() => {
+    restoringCarTabScrollRef.current = true;
+    activeCarTabRef.current = "compare";
+    setActiveTab("compare");
+    currentCarScrollOffset.current = 0;
+    carTabsStickyStartRef.current = null;
+    carTabsPinnedRef.current = false;
+    setCarTabsPinned(false);
+    carTabScrollOffsets.current = { compare: 0, pickup: null, location: null };
+    requestAnimationFrame(() => {
+      carDetailScrollRef.current?.scrollTo({ y: 0, animated: false });
+      requestAnimationFrame(() => { restoringCarTabScrollRef.current = false; });
+    });
+  }, [result.id]);
+
   return <SafeAreaView style={[s.safe, { backgroundColor: carCanvasColor }]} edges={[]}>
 
-    <ScrollView stickyHeaderIndices={[1]} style={{ backgroundColor: carCanvasColor }} contentContainerStyle={{ paddingBottom: 120 + inset.bottom }}>
+    <ScrollView
+      ref={carDetailScrollRef}
+      stickyHeaderIndices={[1]}
+      contentInsetAdjustmentBehavior="never"
+      bounces={false}
+      alwaysBounceVertical={false}
+      overScrollMode="never"
+      style={{ backgroundColor: carCanvasColor }}
+      contentContainerStyle={{ paddingBottom: 120 + inset.bottom }}
+      onScroll={({ nativeEvent }) => {
+        const offset = nativeEvent.contentOffset.y;
+        currentCarScrollOffset.current = offset;
+        syncCarTabsPinned(offset);
+        if (!restoringCarTabScrollRef.current) carTabScrollOffsets.current[activeCarTabRef.current] = offset;
+      }}
+      scrollEventThrottle={16}
+    >
       <View style={[s.hero, { backgroundColor: carCanvasColor, borderColor: theme.border }]}>
-        <View style={[s.imageBox,{backgroundColor:theme.surface}]}>
+        <View style={[s.imageBox,{backgroundColor:theme.surface}]}><View style={s.mediaStage}>
           {resolveImage(result.imageUrl)
             ? <Image source={{ uri: resolveImage(result.imageUrl) }} accessibilityLabel={result.imageAlt} resizeMode="cover" style={s.image} />
             : <View style={s.unavailable}><CarFront size={48} color={theme.textSecondary} /><Text style={{ color: theme.textSecondary }}>Vehicle image unavailable</Text></View>}
-        </View>
+        </View></View>
         <View style={s.identityBlock}>
           <Text accessibilityRole="header" style={[s.title, { color: light ? "#020617" : theme.textPrimary }]}>{result.modelName}</Text>
           <Text style={s.category}>{result.categoryLabel.toUpperCase()}</Text>
@@ -145,12 +209,23 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
         </View>
       </View>
 
-      <View style={[s.carsTabsShell, { backgroundColor: carCanvasColor, borderBottomColor: theme.border }]}>
-        <View accessibilityRole="tablist" style={s.carsTabsRow}>
+      <View
+        onLayout={({ nativeEvent }) => {
+          carTabsStickyStartRef.current = nativeEvent.layout.y;
+          syncCarTabsPinned(currentCarScrollOffset.current);
+        }}
+        style={[s.carsTabsShell, {
+          paddingTop: carStickyTabsTop,
+          marginTop: 1 - carStickyTabsTop,
+          backgroundColor: carTabsPinned ? carCanvasColor : "transparent",
+          borderBottomColor: theme.border,
+        }]}
+      >
+        <View accessibilityRole="tablist" style={[s.carsTabsRow, { backgroundColor: carCanvasColor }]}>
           {(["compare", "pickup", "location"] as const).map((tab) => {
             const selected = activeTab === tab;
-            return <Pressable key={tab} accessibilityRole="tab" accessibilityState={{ selected }} onPress={() => setActiveTab(tab)} style={[s.carTab, tab === "compare" ? s.carTabCompare : tab === "pickup" ? s.carTabPickup : s.carTabLocation]}>
-              <Text numberOfLines={1} style={[s.tabText, { fontSize: width >= 390 ? 12 : 11, color: selected ? "#075EE8" : light ? "#475569" : theme.textSecondary }]}>{tab === "compare" ? "Compare deals" : tab === "pickup" ? "Pickup and return" : "Location"}</Text>
+            return <Pressable key={tab} accessibilityRole="tab" accessibilityState={{ selected }} onPress={() => selectCarTab(tab)} style={[s.carTab, tab === "compare" ? s.carTabCompare : tab === "pickup" ? s.carTabPickup : s.carTabLocation]}>
+              <Text numberOfLines={1} style={[s.tabText, { fontSize: width >= 390 ? 11 : 10, color: selected ? "#075EE8" : light ? "#475569" : theme.textSecondary }]}>{tab === "compare" ? "Compare deals" : tab === "pickup" ? "Pickup and return" : "Location"}</Text>
               <View style={[s.underline, { backgroundColor: selected ? "#075EE8" : "transparent" }]} />
             </Pressable>;
           })}
@@ -312,6 +387,7 @@ const s = StyleSheet.create({
   sandboxLabel: { marginTop: 4, fontSize: 10, lineHeight: 14, fontWeight: "600", fontFamily: appFonts.semibold },
   title: { fontSize: 20, lineHeight: 25, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.5 },
   imageBox: { width: "100%", aspectRatio: 16 / 10, overflow: "hidden" },
+  mediaStage: { flex: 1, marginTop: 16 },
   image: { width: "100%", height: "100%" },
   unavailable: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10, padding: 24 },
   specs: { flexDirection: "row", flexWrap: "wrap", rowGap: 8, justifyContent: "space-between", paddingHorizontal: 16, paddingTop: 16 },

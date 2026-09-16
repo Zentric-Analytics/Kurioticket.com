@@ -97,7 +97,8 @@ test("native KAYAK Cars details use the standard accessible save and share contr
 
 test("approved and KAYAK detail rails and content use the Cars canvas", () => {
   for (const detail of [normalDetail, sandboxDetail]) {
-    assert.match(detail, /s\.carsTabsShell,\s*\{\s*backgroundColor:\s*carCanvasColor/);
+    assert.match(detail, /backgroundColor:\s*carTabsPinned\s*\?\s*carCanvasColor\s*:\s*"transparent"/);
+    assert.match(detail, /s\.carsTabsRow,\s*\{\s*backgroundColor:\s*carCanvasColor/);
     assert.match(detail, /s\.page,\s*\{\s*backgroundColor:\s*carCanvasColor/);
     assert.doesNotMatch(detail, /s\.carsTabsShell,\s*\{\s*backgroundColor:\s*theme\.surface/);
     assert.doesNotMatch(detail, /s\.pickupSection,\s*\{\s*backgroundColor:\s*theme\.surface/);
