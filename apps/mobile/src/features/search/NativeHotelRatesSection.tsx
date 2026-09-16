@@ -26,6 +26,7 @@ type RateRow = {
   title: string;
   meta: string[];
   price: string;
+  priceUnit?: string;
   priceAccessibilityLabel: string;
   hasDisplayedPrice: boolean;
 };
@@ -81,7 +82,38 @@ function meaningfulProviderMeta(value?: string | null) {
     return [];
   }
   const cleaned = cleanRateCopy(raw);
-  return cleaned ? [cleaned] : [];
+  return cleaned ? [capitalize(cleaned)] : [];
+}
+
+function providerRoomPresentation(value?: string | null) {
+  const cleaned = cleanRateCopy(value);
+  if (!cleaned) return { title: "Available rate", terms: [] as string[] };
+  const parts = cleaned
+    .split(/\s+[—–-]\s+/)
+    .map(cleanRateCopy)
+    .filter(Boolean);
+  if (parts.length === 1) return { title: capitalize(parts[0]!), terms: [] as string[] };
+  return {
+    title: capitalize(parts[0]!),
+    terms: parts.slice(1).map(capitalize),
+  };
+}
+
+function providerRateTerms(roomTerms: string[], cancellationInfo?: string | null) {
+  const hasSpecificCancellation = roomTerms.some((term) =>
+    /non[- ]?refundable|refundable|free cancellation|cancel/i.test(term),
+  );
+  return [...roomTerms, ...meaningfulProviderMeta(cancellationInfo)]
+    .map(cleanRateCopy)
+    .filter(Boolean)
+    .filter((term) =>
+      !(hasSpecificCancellation && /cancellation conditions apply|see supplied rate details/i.test(term)),
+    )
+    .filter(
+      (term, index, values) =>
+        values.findIndex((candidate) => candidate.toLocaleLowerCase() === term.toLocaleLowerCase()) === index,
+    )
+    .slice(0, 2);
 }
 
 const previewReserve = () => undefined;
@@ -148,24 +180,17 @@ export function NativeHotelRatesSection({
   }
 
   if (visibleProviderOffer) {
-    const roomParts = (roomType ?? "")
-      .split(";")
-      .map((part) => part.trim())
-      .filter(Boolean);
-    const providerTitle = capitalize(
-      cleanRateCopy(roomParts.slice(1).join(", ")) ||
-        cleanRateCopy(roomParts[0]) ||
-        "Available rate",
-    );
+    const providerRoom = providerRoomPresentation(roomType);
     const providerPrice = hasPrice ? nightlyPrice : null;
     rows.unshift({
       id: `provider-${visibleProviderOffer.id}`,
       offerId: visibleProviderOffer.id,
       providerKind: "provider",
       providerName: providerName.trim() || "Provider",
-      title: providerTitle,
-      meta: meaningfulProviderMeta(cancellationInfo),
-      price: providerPrice ? `${providerPrice.formatted}/night` : "Price on provider",
+      title: providerRoom.title,
+      meta: providerRateTerms(providerRoom.terms, cancellationInfo),
+      price: providerPrice ? providerPrice.formatted : "Price on provider",
+      priceUnit: providerPrice ? "per night" : undefined,
       priceAccessibilityLabel: providerPrice
         ? `${providerPrice.accessibilityLabel} per night`
         : "Price confirmed on provider site",
@@ -200,7 +225,7 @@ export function NativeHotelRatesSection({
               style={s.brandLogo}
             />
           ) : (
-            <Text numberOfLines={1} style={[s.providerName, { color: theme.textPrimary }]}>
+            <Text numberOfLines={1} style={[s.providerName, { color: theme.textSecondary }]}>
               {row.providerName}
             </Text>
           )}
@@ -219,19 +244,24 @@ export function NativeHotelRatesSection({
         </View>
 
         <View style={s.rateActionColumn}>
-          <Text
-            numberOfLines={2}
-            adjustsFontSizeToFit
-            minimumFontScale={0.68}
-            accessibilityLabel={row.priceAccessibilityLabel}
-            style={[
-              s.price,
-              !row.hasDisplayedPrice && s.priceUnavailable,
-              { color: row.hasDisplayedPrice ? theme.textPrimary : theme.textSecondary },
-            ]}
-          >
-            {row.price}
-          </Text>
+          <View style={s.priceBlock}>
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.72}
+              accessibilityLabel={row.priceAccessibilityLabel}
+              style={[
+                s.price,
+                !row.hasDisplayedPrice && s.priceUnavailable,
+                { color: row.hasDisplayedPrice ? theme.textPrimary : theme.textSecondary },
+              ]}
+            >
+              {row.price}
+            </Text>
+            {row.priceUnit ? (
+              <Text style={[s.priceUnit, { color: theme.textSecondary }]}>{row.priceUnit}</Text>
+            ) : null}
+          </View>
           <TouchableOpacity
             accessibilityRole={"button"}
             accessibilityLabel={`Reserve ${row.title}`}
@@ -256,17 +286,17 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 0,
     paddingHorizontal: 16,
-    paddingVertical: 20,
-    gap: 12,
+    paddingVertical: 16,
+    gap: 14,
   },
   rateCopy: { flex: 1, minWidth: 0, justifyContent: "flex-start" },
   brandLogo: { width: 88, height: 18, flexShrink: 0, marginBottom: 8 },
   providerName: {
-    fontSize: 15,
-    lineHeight: 20,
-    fontWeight: "700",
-    fontFamily: appFonts.bold,
-    marginBottom: 8,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: "600",
+    fontFamily: appFonts.semibold,
+    marginBottom: 6,
   },
   rateTitle: {
     fontSize: 15,
@@ -274,7 +304,7 @@ const s = StyleSheet.create({
     fontWeight: "700",
     fontFamily: appFonts.bold,
   },
-  benefitList: { marginTop: "auto", paddingTop: 18, gap: 1 },
+  benefitList: { marginTop: 8, gap: 2 },
   rateMeta: {
     fontSize: 13,
     lineHeight: 18,
@@ -282,17 +312,27 @@ const s = StyleSheet.create({
     fontFamily: appFonts.regular,
   },
   rateActionColumn: {
-    width: 104,
+    width: 128,
     flexShrink: 0,
     alignItems: "flex-end",
     justifyContent: "space-between",
   },
+  priceBlock: { width: "100%", minWidth: 0, alignItems: "flex-end" },
   price: {
     maxWidth: "100%",
     fontSize: 20,
-    lineHeight: 26,
+    lineHeight: 24,
     fontWeight: "700",
     fontFamily: appFonts.bold,
+    textAlign: "right",
+    fontVariant: ["tabular-nums"],
+  },
+  priceUnit: {
+    marginTop: 1,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "500",
+    fontFamily: appFonts.medium,
     textAlign: "right",
   },
   priceUnavailable: {
