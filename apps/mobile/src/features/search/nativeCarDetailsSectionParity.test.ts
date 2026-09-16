@@ -45,8 +45,8 @@ test("the live route owns one sticky shell and one deterministic horizontal tab 
   assert.deepEqual(widths, [32, 43, 25]);
   assert.equal(widths.reduce((total, width) => total + width, 0), 100);
 
-  const shellStart = native.indexOf("<View style={[s.carsTabsShell");
-  const rowStart = native.indexOf('<View accessibilityRole="tablist" style={s.carsTabsRow}', shellStart);
+  const shellStart = native.indexOf("s.carsTabsShell");
+  const rowStart = native.indexOf('<View accessibilityRole="tablist" style={[s.carsTabsRow', shellStart);
   const pageStart = native.indexOf("<View style={[s.page,{backgroundColor:carCanvasColor}]}", rowStart);
   assert.ok(shellStart > native.indexOf("<View style={[s.hero"));
   assert.ok(rowStart > shellStart && pageStart > rowStart);
@@ -60,7 +60,7 @@ test("the live route owns one sticky shell and one deterministic horizontal tab 
   for (const contract of ["left:8", "right:8", "bottom:0", "height:2"])
     assert.ok(underline.includes(contract), contract);
   assert.match(native, /backgroundColor:selected\?"#075EE8":"transparent"/);
-  assert.match(tablist, /onPress=\{\(\)=>setActiveTab\(tab\)\}/);
+  assert.match(tablist, /onPress=\{\(\)=>selectCarTab\(tab\)\}/);
   assert.match(tablist, /accessibilityState=\{\{selected\}\}/);
   assert.match(tablist, /tab==="compare"\?"Compare deals"/);
 });
