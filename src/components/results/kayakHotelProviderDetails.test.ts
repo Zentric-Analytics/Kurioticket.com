@@ -34,20 +34,20 @@ test("KAYAK hotel model preserves only sanitized customer-facing detail facts", 
   const reference = model.rawProviderReference as {
     kind: string;
     details: {
-      overview?: { address?: string; countryCode?: string; policies?: string[] };
-      reviews?: { sentiment?: string; quotes?: string[] };
-      rate?: { roomName?: string; freeCancellation?: boolean; payLater?: boolean; rateBreakdown?: string[]; conditions?: string[] };
+      overview?: { address?: string; countryCode?: string; policies?: Array<{ label: string; value: string }> };
+      reviews?: { sentiment?: string; quotes?: Array<{ label: string; value: string }> };
+      rate?: { roomName?: string; freeCancellation?: boolean; payLater?: boolean; rateBreakdown?: Array<{ label: string; value: string }>; conditions?: Array<{ label: string; value: string }> };
     };
   };
   assert.equal(reference.kind, "kayak-hotel-details");
   assert.equal(reference.details.overview?.address, "10 Test Street");
   assert.equal(reference.details.overview?.countryCode, "US");
-  assert.deepEqual(reference.details.overview?.policies, ["Check-in after 3 PM"]);
+  assert.deepEqual(reference.details.overview?.policies, [{ label: "policies", value: "Check-in after 3 PM" }]);
   assert.equal(reference.details.reviews?.sentiment, "Excellent");
-  assert.deepEqual(reference.details.reviews?.quotes, ["Great location"]);
+  assert.deepEqual(reference.details.reviews?.quotes, [{ label: "review Quotes", value: "Great location" }]);
   assert.equal(reference.details.rate?.roomName, "King room");
   assert.equal(reference.details.rate?.freeCancellation, true);
   assert.equal(reference.details.rate?.payLater, true);
-  assert.deepEqual(reference.details.rate?.rateBreakdown, ["Included"]);
-  assert.deepEqual(reference.details.rate?.conditions, ["Cancel before 6 PM"]);
+  assert.deepEqual(reference.details.rate?.rateBreakdown, [{ label: "taxes", value: "Included" }]);
+  assert.deepEqual(reference.details.rate?.conditions, [{ label: "conditions", value: "Cancel before 6 PM" }]);
 });

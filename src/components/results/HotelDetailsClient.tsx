@@ -12,6 +12,7 @@ import { useRegion } from "@/components/region/RegionProvider";
 import { Card } from "@/components/ui/Card";
 import type { PublicHotelPropertyDetails, PublicHotelResult } from "@/lib/types";
 import type { HotelRoomOption } from "@/lib/hotels/hotelRoomOptions";
+import type { PublicHotelProviderDetails } from "@/lib/hotels/hotelProviderDetails";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
 import {
@@ -121,6 +122,7 @@ export function HotelDetailsClient({
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [hotel, setHotel] = useState<PublicHotelResult | null>(null);
   const [propertyDetails, setPropertyDetails] = useState<PublicHotelPropertyDetails | null>(null);
+  const [providerDetails, setProviderDetails] = useState<PublicHotelProviderDetails | null>(null);
   const [roomOptions, setRoomOptions] = useState<HotelRoomOption[]>([]);
   const [relatedHotels, setRelatedHotels] = useState<PublicHotelResult[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState("");
@@ -163,6 +165,7 @@ export function HotelDetailsClient({
       setLoading(true);
       setHotel(null);
       setPropertyDetails(null);
+      setProviderDetails(null);
       setRoomOptions([]);
       setRelatedHotels([]);
       setSelectedRoomId("");
@@ -182,6 +185,7 @@ export function HotelDetailsClient({
         const data = (await response.json().catch(() => ({}))) as {
           hotel?: PublicHotelResult;
           propertyDetails?: PublicHotelPropertyDetails | null;
+          providerDetails?: PublicHotelProviderDetails | null;
           roomOptions?: HotelRoomOption[];
           relatedHotels?: PublicHotelResult[];
           error?: string;
@@ -193,16 +197,18 @@ export function HotelDetailsClient({
         return {
           hotel: data.hotel,
           propertyDetails: data.propertyDetails ?? null,
+          providerDetails: data.providerDetails ?? null,
           roomOptions: Array.isArray(data.roomOptions) ? data.roomOptions : [],
           relatedHotels: Array.isArray(data.relatedHotels)
             ? data.relatedHotels
             : [],
         };
       })
-      .then(({ hotel: nextHotel, propertyDetails: nextPropertyDetails, roomOptions: nextRoomOptions, relatedHotels: nextRelatedHotels }) => {
+      .then(({ hotel: nextHotel, propertyDetails: nextPropertyDetails, providerDetails: nextProviderDetails, roomOptions: nextRoomOptions, relatedHotels: nextRelatedHotels }) => {
         if (!active) return;
         setHotel(nextHotel);
         setPropertyDetails(nextPropertyDetails);
+        setProviderDetails(nextProviderDetails);
         setRoomOptions(nextRoomOptions);
         setRelatedHotels(nextRelatedHotels);
         setResultReceivedAt(Date.now());
@@ -843,6 +849,7 @@ export function HotelDetailsClient({
                   propertyDetails.neighbourhood,
                 ].filter(Boolean) : locationParts}
                 propertyDetails={propertyDetails}
+                providerDetails={providerDetails}
                 reviewScore={compactReviewScore}
                 reviewLabel={reviewLabel}
                 reviewCountText={reviewCountText}
