@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
@@ -125,7 +125,7 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
   </SafeAreaView>;
 }
 
-function Spec({ icon, label, theme }: { icon: React.ReactNode; label: string; theme: any }) {
+function Spec({ icon, label, theme }: { icon: ReactNode; label: string; theme: any }) {
   return <View style={s.spec}>{icon}<Text style={[s.specText, { color: theme.textSecondary }]}>{label}</Text></View>;
 }
 
