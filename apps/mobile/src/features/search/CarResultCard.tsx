@@ -24,16 +24,17 @@ export function CarResultCard({ result, rank, imageUri, searchParams, resultBack
   const primaryOffer = getPrimaryCarOffer(result);
   const offer = primaryOffer ? presentCarOfferCurrency(primaryOffer, displayCurrency, rates) : undefined;
   const { theme } = useAppTheme();
+  const carInformationSurface = theme.dark ? resultBackgroundColor : "#F2F4F8";
   const freeCancellationColor = theme.dark ? theme.textPrimary : "#000000";
   const identity = nativeCarResultIdentity(result.modelName);
   const curatedImage = isCuratedCarResultImage(imageUri);
   const imageResizeMode = curatedImage ? "contain" : "cover";
   const transmissionIcon = result.transmission === "automatic" ? "transmissionAutomatic" : "transmissionManual";
   const share = () => void Share.share({ message: result.modelName, title: result.modelName });
-  return <View style={[c.card,{backgroundColor:resultBackgroundColor,borderColor:theme.dark?theme.border:"#D8E1EC",shadowColor:theme.dark?"#000000":"#18305B"}]}>
+  return <View style={[c.card,{backgroundColor:carInformationSurface,borderColor:theme.dark?theme.border:"#D8E1EC",shadowColor:theme.dark?"#000000":"#18305B"}]}>
     <View style={c.topSection}>
       <View style={[c.visualColumn,{backgroundColor:theme.surface}]}><View style={c.visual}>{imageUri && !imageFailed ? <Image source={{ uri: imageUri }} resizeMode={imageResizeMode} style={[c.image,curatedImage&&c.curatedImage]} accessibilityLabel={result.imageAlt} onError={() => setImageFailed(true)} /> : <View accessibilityLabel={`${result.modelName} vehicle image unavailable`} style={c.imageFallback}><FlowIcon name="car" size={48} color="#315A7D" /><Text style={c.fallbackText}>Vehicle image unavailable</Text></View>}</View></View>
-      <View style={c.identityZone}>
+      <View style={[c.identityZone,{backgroundColor:carInformationSurface}]}>
         {rank === 0 ? <View style={c.bestValueRow}><View style={c.badge}><Award size={11} color="#15803D" /><Text style={c.badgeText}>Best value</Text></View></View> : null}
         <View style={c.headerRow}>
           <View style={c.identityColumn}>
@@ -56,7 +57,7 @@ export function CarResultCard({ result, rank, imageUri, searchParams, resultBack
         </View>
       </View>
     </View>
-    <View style={[c.lowerBand,{borderTopColor:theme.border}]}>
+    <View style={[c.lowerBand,{backgroundColor:carInformationSurface,borderTopColor:theme.border}]}>
       <View style={c.specColumn}>
         <Spec icon={<Users size={14} color="#64748B" />} label={`${result.passengers} passengers`} />
         <Spec icon={<FlowIcon name={transmissionIcon} size={14} color="#64748B" />} label={capitalize(result.transmission)} />
@@ -79,5 +80,5 @@ const capitalize = (value: string) => `${value.slice(0, 1).toUpperCase()}${value
 const c = StyleSheet.create({
   card:{borderWidth:1,borderRadius:13,overflow:"hidden",shadowOpacity:0.08,shadowRadius:10,shadowOffset:{width:0,height:2},elevation:2},topSection:{minHeight:156,flexDirection:"row",alignItems:"stretch"},visualColumn:{width:"40%",minHeight:156,padding:6},visual:{flex:1,overflow:"hidden",borderRadius:10},image:{...StyleSheet.absoluteFillObject},curatedImage:{transform:[{scale:1.08}]},imageFallback:{flex:1,alignItems:"center",justifyContent:"center",gap:7,padding:8},fallbackText:{fontSize:10,fontWeight:"600",color:"#315A7D",textAlign:"center"},
   identityZone:{flex:1,minWidth:0,paddingHorizontal:10,paddingTop:7,paddingBottom:8},bestValueRow:{minWidth:0,alignItems:"flex-end",marginBottom:4},freeCancellation:{minWidth:0,flexShrink:1,flexDirection:"row",alignItems:"center",gap:3},freeCancellationText:{fontSize:11,lineHeight:15,fontWeight:"600"},headerRow:{flexDirection:"row",alignItems:"flex-start",gap:6},identityColumn:{flex:1,minWidth:0},name:{fontSize:15,fontWeight:"800",lineHeight:18,color:ui.navy},identityLine:{minWidth:0,lineHeight:18},secondaryModel:{fontSize:15,fontWeight:"800",lineHeight:18},similar:{fontSize:11,fontWeight:"500",lineHeight:16,color:"#536B92"},category:{fontSize:10,fontWeight:"800",letterSpacing:1.1,lineHeight:16,textTransform:"uppercase",color:"#004BB8"},utilityColumn:{flexShrink:0,alignItems:"flex-end"},badge:{flexShrink:0,flexDirection:"row",alignItems:"center",gap:3,borderRadius:5,backgroundColor:"#ECFDF5",paddingHorizontal:5,paddingVertical:2},badgeText:{fontSize:9,fontWeight:"700",color:"#15803D"},actions:{flexDirection:"row",alignItems:"center"},action:{width:28,height:44,justifyContent:"flex-start"},saveAction:{alignItems:"flex-end",paddingRight:2},shareAction:{alignItems:"flex-start",paddingLeft:2},pressed:{opacity:0.7},identityDetails:{minWidth:0,marginTop:5,gap:6},location:{flexDirection:"row",alignItems:"flex-start",gap:4},meta:{flex:1,minWidth:0,fontSize:11,fontWeight:"500",lineHeight:15,color:"#536B92"},
-  lowerBand:{flexDirection:"row",alignItems:"stretch",borderTopWidth:StyleSheet.hairlineWidth},specColumn:{flex:1,minWidth:0,gap:8,paddingHorizontal:8,paddingVertical:10},middleSpecColumn:{borderLeftWidth:StyleSheet.hairlineWidth},spec:{minWidth:0,flexDirection:"row",alignItems:"flex-start",gap:4},specText:{flex:1,minWidth:0,fontSize:11,fontWeight:"500",lineHeight:14,color:"#536B92"},commerceColumn:{flex:1.35,minWidth:0,borderLeftWidth:StyleSheet.hairlineWidth,paddingLeft:8,paddingRight:9,paddingTop:8,paddingBottom:5},priceColumn:{minWidth:0,maxWidth:"100%",alignItems:"flex-end"},unavailablePrice:{maxWidth:"100%",textAlign:"right",fontSize:11,fontWeight:"500",lineHeight:15},dailyPrice:{maxWidth:"100%",fontSize:22,fontWeight:"700",lineHeight:25,letterSpacing:-0.4,color:ui.navy},perDayLabel:{maxWidth:"100%",marginTop:1,fontSize:11,fontWeight:"500",lineHeight:14,textAlign:"right"},viewDeal:{minHeight:36,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4},viewDealText:{fontSize:14,lineHeight:18,fontWeight:"600"},
+  lowerBand:{flexDirection:"row",alignItems:"stretch",borderTopWidth:StyleSheet.hairlineWidth},specColumn:{flex:1,minWidth:0,gap:8,paddingHorizontal:8,paddingVertical:10},middleSpecColumn:{borderLeftWidth:StyleSheet.hairlineWidth},spec:{minWidth:0,flexDirection:"row",alignItems:"flex-start",gap:4},specText:{flex:1,minWidth:0,fontSize:11,fontWeight:"500",lineHeight:14,color:"#536B92"},commerceColumn:{flex:1.35,minWidth:0,borderLeftWidth:StyleSheet.hairlineWidth,paddingLeft:8,paddingRight:9,paddingTop:8,paddingBottom:5},priceColumn:{minWidth:0,maxWidth:"100%",alignItems:"flex-end"},unavailablePrice:{maxWidth:"100%",textAlign:"right",fontSize:11,fontWeight:"500",lineHeight:15},dailyPrice:{maxWidth:"100%",fontSize:22,fontWeight:"600",lineHeight:25,letterSpacing:-0.4,color:ui.navy},perDayLabel:{maxWidth:"100%",marginTop:1,fontSize:11,fontWeight:"500",lineHeight:14,textAlign:"right"},viewDeal:{minHeight:36,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4},viewDealText:{fontSize:14,lineHeight:18,fontWeight:"600"},
 });

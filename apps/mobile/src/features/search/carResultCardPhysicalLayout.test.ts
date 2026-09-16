@@ -4,13 +4,15 @@ import { resolve } from "node:path";
 import test from "node:test";
 
 const source = readFileSync(resolve("src/features/search/CarResultCard.tsx"), "utf8");
+const priceAlertSource = readFileSync(resolve("src/features/search/NativeCarPriceAlert.tsx"), "utf8");
+const flightResultsSource = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
 const styles = source.slice(source.indexOf("const c = StyleSheet.create"));
 const style = (name: string) => styles.slice(styles.indexOf(`${name}:`), styles.indexOf("},", styles.indexOf(`${name}:`)) + 2);
-const top = source.slice(source.indexOf('<View style={c.topSection}>'), source.indexOf('<View style={[c.lowerBand,{borderTopColor:theme.border}]}>'));
-const lower = source.slice(source.indexOf('<View style={[c.lowerBand,{borderTopColor:theme.border}]}>'), source.indexOf("  </View>;"));
+const top = source.slice(source.indexOf('<View style={c.topSection}>'), source.indexOf('<View style={[c.lowerBand,{backgroundColor:carInformationSurface,borderTopColor:theme.border}]}>'));
+const lower = source.slice(source.indexOf('<View style={[c.lowerBand,{backgroundColor:carInformationSurface,borderTopColor:theme.border}]}>'), source.indexOf("  </View>;"));
 
 test("Car card shell and two-level grid retain safe natural layout", () => {
-  assert.match(source, /c\.card,\{backgroundColor:resultBackgroundColor,borderColor:theme\.dark\?theme\.border:"#D8E1EC",shadowColor:theme\.dark\?"#000000":"#18305B"\}/);
+  assert.match(source, /c\.card,\{backgroundColor:carInformationSurface,borderColor:theme\.dark\?theme\.border:"#D8E1EC",shadowColor:theme\.dark\?"#000000":"#18305B"\}/);
   assert.match(style("card"), /borderWidth:1,borderRadius:13,overflow:"hidden"/);
   assert.match(style("topSection"), /minHeight:156,flexDirection:"row",alignItems:"stretch"/);
   assert.match(style("visualColumn"), /width:"40%",minHeight:156,padding:6/);
@@ -31,8 +33,17 @@ test("vehicle image presentation and canvas ownership remain intact", () => {
   assert.match(source, />Vehicle image unavailable<\/Text>/);
 });
 
+test("non-image information matches the Price Alert sheet while the image stays separate", () => {
+  assert.match(source, /const carInformationSurface = theme\.dark \? resultBackgroundColor : "#F2F4F8"/);
+  assert.match(priceAlertSource, /backgroundColor: theme\.dark \? theme\.background : "#F2F4F8"/);
+  assert.match(source, /\[c\.identityZone,\{backgroundColor:carInformationSurface\}\]/);
+  assert.match(source, /\[c\.lowerBand,\{backgroundColor:carInformationSurface,borderTopColor:theme\.border\}\]/);
+  assert.doesNotMatch(source, /c\.visualColumn,\{backgroundColor:carInformationSurface\}/);
+  assert.match(source, /c\.visualColumn,\{backgroundColor:theme\.surface\}/);
+});
+
 test("top section owns only the visual and identity information", () => {
-  assert.match(top, /c\.visualColumn[\s\S]*<View style=\{c\.identityZone\}>/);
+  assert.match(top, /c\.visualColumn[\s\S]*<View style=\{\[c\.identityZone,\{backgroundColor:carInformationSurface\}\]\}>/);
   for (const token of ["identity.primaryName", "identity.secondaryModel", "or similar", "result.categoryLabel", "result.pickupLocation", "savedState.toggle", "Share2", "Free cancellation", "Best value"])
     assert.ok(top.includes(token), `missing ${token} from top section`);
   assert.doesNotMatch(top, /result\.passengers|result\.doors|result\.transmission|result\.bags|offer\.totalPrice|offer\.pricePerDay|>View deal<\/Text>/);
@@ -40,7 +51,7 @@ test("top section owns only the visual and identity information", () => {
 });
 
 test("Best value precedes the header while Free cancellation remains in identity details", () => {
-  const identityZone = top.slice(top.indexOf('<View style={c.identityZone}>'));
+  const identityZone = top.slice(top.indexOf('<View style={[c.identityZone,{backgroundColor:carInformationSurface}]}>'));
   const bestValueStart = identityZone.indexOf("rank === 0");
   const headerStart = identityZone.indexOf('<View style={c.headerRow}>');
   const detailsStart = identityZone.indexOf('<View style={c.identityDetails}>');
@@ -105,10 +116,21 @@ test("commerce remains authoritative, responsive, and accessible", () => {
   assert.match(style("commerceColumn"), /flex:1\.35,minWidth:0/);
   assert.match(style("priceColumn"), /minWidth:0,maxWidth:"100%",alignItems:"flex-end"/);
   assert.match(style("dailyPrice"), /maxWidth:"100%",fontSize:22/);
+  assert.match(style("dailyPrice"), /fontWeight:"600"/);
+  assert.doesNotMatch(style("dailyPrice"), /fontWeight:"700"/);
   assert.doesNotMatch(styles, /(?:^|,)total:|taxDisclosure:|(?:^|,)perDay:/);
   assert.match(source, /<Pressable accessibilityRole="button" accessibilityLabel=\{`View deal for \$\{result\.modelName\}`\} onPress=\{onViewDeal\}/);
   assert.match(style("viewDeal"), /minHeight:36/);
   assert.doesNotMatch(source, /result\.offers\[0\]|TOTAL\s*·|\/day/);
+});
+
+test("Cars View deal uses the exact Flight Results color contract", () => {
+  const colorContract = /theme\.dark \? "#8FB5FF" : ui\.blue/g;
+  assert.equal(source.match(colorContract)?.length, 2);
+  assert.match(source, /c\.viewDealText,\{color:theme\.dark \? "#8FB5FF" : ui\.blue\}/);
+  assert.match(source, /<ChevronRight accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\} color=\{theme\.dark \? "#8FB5FF" : ui\.blue\}/);
+  const flightAffordance = flightResultsSource.slice(flightResultsSource.indexOf("s0.flightDetailsAffordanceText"), flightResultsSource.indexOf("s0.flightDetailsAffordanceText") + 500);
+  assert.equal(flightAffordance.match(colorContract)?.length, 2);
 });
 
 test("location stays above while obsolete benefit contracts remain absent", () => {
