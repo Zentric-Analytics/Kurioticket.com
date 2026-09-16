@@ -8,8 +8,8 @@ const results = read("src/features/search/ApprovedResultsScreen.tsx");
 const details = read("src/features/search/HotelDetailsScreen.tsx");
 
 const resultsHotelDetailsPush = results.slice(
-  results.indexOf('router.push({\n                pathname: "/hotel-details"'),
-  results.indexOf("})\n            }", results.indexOf('router.push({\n                pathname: "/hotel-details"')),
+  results.indexOf("const openHotel = () => {"),
+  results.indexOf("const shareHotel", results.indexOf("const openHotel = () => {")),
 );
 const relatedHotelPush = details.slice(
   details.indexOf("const viewRelatedHotel"),
