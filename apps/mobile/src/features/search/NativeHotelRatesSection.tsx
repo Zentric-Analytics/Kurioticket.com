@@ -235,7 +235,7 @@ export function NativeHotelRatesSection({
           {row.meta.length ? (
             <View style={s.benefitList}>
               {row.meta.map((benefit) => (
-                <Text key={benefit} numberOfLines={1} style={[s.rateMeta, { color: theme.textSecondary }]}>
+                <Text key={benefit} numberOfLines={1} style={[s.rateMeta, { color: theme.textSecondary }]}> 
                   {benefit}
                 </Text>
               ))}
@@ -248,7 +248,7 @@ export function NativeHotelRatesSection({
             <Text
               numberOfLines={1}
               adjustsFontSizeToFit
-              minimumFontScale={0.72}
+              minimumFontScale={0.68}
               accessibilityLabel={row.priceAccessibilityLabel}
               style={[
                 s.price,
