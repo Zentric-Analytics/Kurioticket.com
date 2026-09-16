@@ -5,7 +5,9 @@ import test from "node:test";
 import { formatMarketCurrency } from "../currency/displayCurrency";
 
 const source = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
-const dock = source.slice(source.indexOf("</ScrollView>{offer?"), source.indexOf("</SafeAreaView>;}", source.indexOf("</ScrollView>{offer?")));
+const dockStart = source.indexOf("{offer?<View style={[s.dock");
+const dockEnd = source.indexOf("</SafeAreaView>;}", dockStart);
+const dock = dockStart >= 0 && dockEnd > dockStart ? source.slice(dockStart, dockEnd) : "";
 const compare = source.slice(source.indexOf("function Compare("), source.indexOf("function TimelineEntry("));
 
 function styleRule(name: string, nextName: string) {
