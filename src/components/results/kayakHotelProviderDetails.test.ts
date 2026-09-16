@@ -26,28 +26,32 @@ test("KAYAK hotel model preserves only sanitized customer-facing detail facts", 
       { label: "rate Breakdown · taxes", value: "Included" },
       { label: "conditions 1", value: "Cancel before 6 PM" },
     ],
-  }, 3);
-
-  assert.equal(model.pricePerNight, 100);
-  assert.equal(model.cancellationInfo, "Free cancellation");
-  assert.equal(model.reviewSource, "KAYAK");
-  const reference = model.rawProviderReference as {
-    kind: string;
-    details: {
+  }, 3) as ReturnType<typeof kayakHotelCardModel> & {
+    providerDetails?: {
       overview?: { address?: string; countryCode?: string; policies?: Array<{ label: string; value: string }> };
       reviews?: { sentiment?: string; quotes?: Array<{ label: string; value: string }> };
       rate?: { roomName?: string; freeCancellation?: boolean; payLater?: boolean; rateBreakdown?: Array<{ label: string; value: string }>; conditions?: Array<{ label: string; value: string }> };
     };
   };
+
+  assert.equal(model.pricePerNight, 100);
+  assert.equal(model.cancellationInfo, "Free cancellation");
+  assert.equal(model.reviewSource, "KAYAK");
+  assert.equal(model.providerDetails?.overview?.address, "10 Test Street");
+  assert.equal(model.providerDetails?.overview?.countryCode, "US");
+  assert.deepEqual(model.providerDetails?.overview?.policies, [{ label: "policies", value: "Check-in after 3 PM" }]);
+  assert.equal(model.providerDetails?.reviews?.sentiment, "Excellent");
+  assert.deepEqual(model.providerDetails?.reviews?.quotes, [{ label: "review Quotes", value: "Great location" }]);
+  assert.equal(model.providerDetails?.rate?.roomName, "King room");
+  assert.equal(model.providerDetails?.rate?.freeCancellation, true);
+  assert.equal(model.providerDetails?.rate?.payLater, true);
+  assert.deepEqual(model.providerDetails?.rate?.rateBreakdown, [{ label: "taxes", value: "Included" }]);
+  assert.deepEqual(model.providerDetails?.rate?.conditions, [{ label: "conditions", value: "Cancel before 6 PM" }]);
+
+  const reference = model.rawProviderReference as {
+    kind: string;
+    details: typeof model.providerDetails;
+  };
   assert.equal(reference.kind, "kayak-hotel-details");
-  assert.equal(reference.details.overview?.address, "10 Test Street");
-  assert.equal(reference.details.overview?.countryCode, "US");
-  assert.deepEqual(reference.details.overview?.policies, [{ label: "policies", value: "Check-in after 3 PM" }]);
-  assert.equal(reference.details.reviews?.sentiment, "Excellent");
-  assert.deepEqual(reference.details.reviews?.quotes, [{ label: "review Quotes", value: "Great location" }]);
-  assert.equal(reference.details.rate?.roomName, "King room");
-  assert.equal(reference.details.rate?.freeCancellation, true);
-  assert.equal(reference.details.rate?.payLater, true);
-  assert.deepEqual(reference.details.rate?.rateBreakdown, [{ label: "taxes", value: "Included" }]);
-  assert.deepEqual(reference.details.rate?.conditions, [{ label: "conditions", value: "Cancel before 6 PM" }]);
+  assert.deepEqual(reference.details, model.providerDetails);
 });

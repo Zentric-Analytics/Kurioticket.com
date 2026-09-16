@@ -89,7 +89,8 @@ test("About this hotel explains the existing facts instead of replacing them", (
 });
 
 test("Details keeps room, accessibility and related-hotel information without a redundant Hotel information block", () => {
-  assert.match(details, /\[property\?\.roomSummary, property\?\.bedSummary\]/);
+  assert.match(details, /const providerRoomName = providerDetails\?\.rate\?\.roomName\?\.trim\(\) \?\? ""/);
+  assert.match(details, /\[property\?\.roomSummary, property\?\.bedSummary, providerRoomName\][\s\S]*?\.map/);
   assert.match(details, /property\.accessibility\.map/);
   assert.match(details, /<NativeRelatedHotelsSection/);
   assert.doesNotMatch(details, />Hotel information<|<Award\b|Hotel classification is not available\./);
