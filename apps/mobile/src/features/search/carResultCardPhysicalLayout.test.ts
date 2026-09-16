@@ -36,14 +36,15 @@ test("vehicle image presentation and canvas ownership remain intact", () => {
   assert.match(source, />Vehicle image unavailable<\/Text>/);
 });
 
-test("non-image information matches the inactive Price Alert track while the image stays separate", () => {
-  assert.match(source, /const carInformationSurface = theme\.dark \? resultBackgroundColor : "#CBD5E1"/);
+test("non-image information uses a balanced light gray while the image stays separate", () => {
+  assert.match(source, /const carInformationSurface = theme\.dark \? resultBackgroundColor : "#DEE4EC"/);
   assert.match(priceAlertSource, /trackColor=\{\{ false: theme\.dark \? "#465269" : "#CBD5E1", true: theme\.switchTrackActive \}\}/);
+  assert.notEqual("#DEE4EC", "#CBD5E1");
   assert.match(source, /\[c\.identityZone,\{backgroundColor:carInformationSurface\}\]/);
   assert.match(source, /\[c\.lowerBand,\{backgroundColor:carInformationSurface,borderTopColor:theme\.border\}\]/);
   assert.doesNotMatch(source, /c\.visualColumn,\{backgroundColor:carInformationSurface\}/);
   assert.match(source, /c\.visualColumn,\{backgroundColor:theme\.surface\}/);
-  assert.doesNotMatch(source, /c\.visualColumn,\{backgroundColor:"#CBD5E1"\}/);
+  assert.doesNotMatch(source, /c\.visualColumn,\{backgroundColor:"#DEE4EC"\}/);
 });
 
 test("top section owns only the visual and identity information", () => {
@@ -95,18 +96,22 @@ test("favorite and share behavior and accessibility remain available for normal 
   assert.match(style("action"), /width:28,height:44/);
 });
 
-test("lower band uses provider-aware spec labels in the approved two-column order", () => {
+test("lower band uses provider-aware spec labels in the approved two-column order without an internal divider", () => {
   const firstStart = lower.indexOf('<View style={c.specColumn}>');
-  const middleStart = lower.indexOf('<View style={[c.specColumn,c.middleSpecColumn');
+  const middleStart = lower.indexOf('<View style={c.specColumn}>', firstStart + 1);
   const commerceStart = lower.indexOf('<View style={[c.commerceColumn');
   const first = lower.slice(firstStart, middleStart);
   const middle = lower.slice(middleStart, commerceStart);
   const commerce = lower.slice(commerceStart);
+  assert.ok(firstStart >= 0 && middleStart > firstStart && commerceStart > middleStart);
   assert.match(source, /const specLabels = nativeCarPrimarySpecLabels\(result\)/);
   assert.match(first, /specLabels\.passengers[\s\S]*specLabels\.transmission/);
   assert.doesNotMatch(first, /specLabels\.doors|specLabels\.bags/);
   assert.match(middle, /specLabels\.doors[\s\S]*specLabels\.bags/);
   assert.doesNotMatch(middle, /specLabels\.passengers|specLabels\.transmission/);
+  assert.doesNotMatch(source, /middleSpecColumn/);
+  assert.doesNotMatch(style("specColumn"), /borderLeftWidth|borderLeftColor/);
+  assert.match(style("commerceColumn"), /borderLeftWidth:StyleSheet\.hairlineWidth/);
   assert.match(providerPresentation, /sandboxPresentation\?\.specs/);
   assert.match(providerPresentation, /Passengers not supplied/);
   assert.match(providerPresentation, /Baggage capacity not supplied/);
@@ -128,8 +133,8 @@ test("commerce remains authoritative, responsive, and accessible", () => {
   assert.match(source, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.75\}/);
   assert.match(style("commerceColumn"), /flex:1\.35,minWidth:0/);
   assert.match(style("priceColumn"), /minWidth:0,maxWidth:"100%",alignItems:"flex-end"/);
-  assert.match(style("dailyPrice"), /maxWidth:"100%",fontSize:20,fontWeight:"600",lineHeight:23/);
-  assert.doesNotMatch(style("dailyPrice"), /fontSize:22|fontWeight:"700"/);
+  assert.match(style("dailyPrice"), /maxWidth:"100%",fontSize:19,fontWeight:"600",lineHeight:22/);
+  assert.doesNotMatch(style("dailyPrice"), /fontSize:22|fontSize:20|fontWeight:"700"/);
   assert.match(style("perDayLabel"), /fontSize:10,fontWeight:"500",lineHeight:13,textAlign:"right"/);
   assert.doesNotMatch(style("perDayLabel"), /fontSize:11|lineHeight:14/);
   assert.doesNotMatch(styles, /(?:^|,)total:|taxDisclosure:|(?:^|,)perDay:/);
