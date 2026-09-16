@@ -66,7 +66,8 @@ test("Best value precedes the header for normal inventory while sandbox cards st
   assert.ok(headerStart < detailsStart && detailsStart < locationStart && locationStart < freeCancellationStart);
   assert.match(source, /rank === 0 && !sandbox \? <View style=\{c\.bestValueRow\}><View style=\{c\.badge\}><Award size=\{11\} color="#15803D" \/><Text style=\{c\.badgeText\}>Best value/);
   assert.match(source, /sandbox \? <Text style=\{\[c\.sandboxStatus,\{color:theme\.textSecondary\}\]\}>KAYAK sandbox · Simulated · Not bookable<\/Text> : null/);
-  assert.match(source, /!sandbox \? <View style=\{c\.utilityColumn\}>/);
+  assert.match(source, /<View style=\{c\.utilityColumn\}>/);
+  assert.doesNotMatch(source, /!sandbox \? <View style=\{c\.utilityColumn\}>/);
   assert.match(top, /offer\?\.freeCancellation \? <View style=\{c\.freeCancellation\}>[\s\S]*ShieldCheck[\s\S]*Free cancellation/);
   assert.match(source, /const freeCancellationColor = theme\.dark \? theme\.textPrimary : "#000000"/);
   assert.doesNotMatch(style("freeCancellation") + style("freeCancellationText"), /#15803D|#ECFDF5|backgroundColor|border/);
@@ -80,14 +81,14 @@ test("Best value precedes the header for normal inventory while sandbox cards st
     assert.doesNotMatch(style(name), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|translate/);
 });
 
-test("name and save/share controls remain siblings for normal inventory", () => {
+test("name and save/share controls remain siblings for all inventory", () => {
   const header = top.slice(top.indexOf('<View style={c.headerRow}>'), top.indexOf('<View style={c.identityDetails}>'));
-  assert.match(header, /<View style=\{c\.identityColumn\}>[\s\S]*identity\.primaryName[\s\S]*!sandbox \? <View style=\{c\.utilityColumn\}>/);
+  assert.match(header, /<View style=\{c\.identityColumn\}>[\s\S]*identity\.primaryName[\s\S]*<View style=\{c\.utilityColumn\}>/);
   assert.match(header, /savedState\.toggle[\s\S]*Share2/);
   assert.match(style("identityColumn"), /flex:1,minWidth:0/);
 });
 
-test("favorite and share behavior and accessibility remain available for normal inventory", () => {
+test("favorite and share behavior and accessibility remain available for normal and sandbox inventory", () => {
   assert.match(top, /accessibilityRole="button" accessibilityLabel=\{savedState\.saved \? `Remove \$\{result\.modelName\} from saved` : `Save \$\{result\.modelName\}`\}/);
   assert.match(top, /accessibilityState=\{\{ selected: savedState\.saved \}\}/);
   assert.match(top, /onPress=\{savedState\.toggle\}/);

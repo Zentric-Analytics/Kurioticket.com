@@ -2,89 +2,69 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const native = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
+const normal = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
+const sandbox = readFileSync("src/features/search/NativeKayakCarDetailScreen.tsx", "utf8");
 
-function style(name: string): string {
-  const match = native.match(new RegExp(`${name}:\\{([^}]+)\\}`));
-  assert.ok(match, `missing ${name} style`);
-  return match[1];
+function compact(source: string): string {
+  return source.replace(/\s+/g, "");
 }
 
-test("Cars Back header is a fixed sibling before the detail ScrollView", () => {
-  const safeAreaPosition = native.indexOf("<SafeAreaView", native.indexOf("function CarDetailContent"));
-  const backHeaderPosition = native.indexOf("s.carBackHeader", safeAreaPosition);
-  const scrollPosition = native.indexOf("<ScrollView", backHeaderPosition);
-  const heroPosition = native.indexOf("<View style={[s.hero", scrollPosition);
-  const tabsPosition = native.indexOf("<View style={[s.carsTabsShell", heroPosition);
-  const pagePosition = native.indexOf("<View style={s.page}", tabsPosition);
+function style(source: string, name: string): string {
+  const match = source.match(new RegExp(`${name}:\\s*\\{([^}]+)\\}`));
+  assert.ok(match, `missing ${name} style`);
+  return compact(match[1]);
+}
 
-  assert.ok(safeAreaPosition >= 0);
-  assert.ok(safeAreaPosition < backHeaderPosition);
-  assert.ok(backHeaderPosition < scrollPosition);
-  assert.ok(scrollPosition < heroPosition);
-  assert.ok(heroPosition < tabsPosition);
-  assert.ok(tabsPosition < pagePosition);
-  assert.match(native, /stickyHeaderIndices=\{\[1\]\}/);
-  assert.doesNotMatch(native, /stickyHeaderIndices=\{\[2\]\}/);
+for (const [kind, source] of [["approved", normal], ["KAYAK sandbox", sandbox]] as const) {
+  test(`${kind} Cars detail uses a Hotel-style hero hierarchy and sticky tabs`, () => {
+    const detail = compact(source.slice(source.indexOf("function CarDetailContent") >= 0
+      ? source.indexOf("function CarDetailContent")
+      : source.indexOf("function KayakCarDetailContent")));
+    const image = detail.indexOf('style={[s.imageBox,{backgroundColor:theme.surface}]}');
+    const identity = detail.indexOf("style={s.identityBlock}", image);
+    const specs = detail.indexOf("style={s.specs}", identity);
+    const tabs = detail.indexOf("style={[s.carsTabsShell", specs);
+    assert.ok(image >= 0 && image < identity && identity < specs && specs < tabs);
+    assert.match(source, /stickyHeaderIndices=\{\[1\]\}/);
+    assert.doesNotMatch(source, /carBackHeader|backLink|backText|>Back to Cars results</);
+  });
 
-  const fixedHeader = native.slice(backHeaderPosition, scrollPosition);
-  assert.match(fixedHeader, /accessibilityRole="button"/);
-  assert.match(fixedHeader, /accessibilityLabel="Back to Cars results"/);
-  assert.match(fixedHeader, /onPress=\{returnToCarResults\}/);
-  assert.match(fixedHeader, /<ArrowLeft size=\{17\}/);
-  assert.match(fixedHeader, />Back to Cars results</);
-  assert.doesNotMatch(native.slice(scrollPosition, heroPosition), /Back to Cars results/);
-  assert.equal((native.match(/>Back to Cars results</g) ?? []).length, 1);
-});
+  test(`${kind} Cars detail floats independent Back, Save, and Share controls`, () => {
+    assert.match(source, /accessibilityLabel="Back to Cars results"/);
+    assert.match(source, /onPress=\{returnToCarResults\} style=\{\[s\.heroBack/);
+    assert.match(source, /accessibilityLabel=\{saved\.saved\s*\?\s*"Remove car from saved"\s*:\s*"Save car"\}/);
+    assert.match(source, /accessibilityState=\{\{\s*selected:\s*saved\.saved\s*\}\} onPress=\{saved\.toggle\} style=\{s\.heroAction\}/);
+    assert.match(source, /accessibilityLabel="Share car"/);
+    assert.match(source, /Share\.share\(\{\s*message:/);
+    assert.match(source, /style=\{s\.heroAction\}><Share2/);
 
-test("Cars Back header uses Hotel-like geometry without positioning or a divider", () => {
-  const header = style("carBackHeader");
-  for (const contract of ["minHeight:48", "paddingHorizontal:16", 'justifyContent:"center"']) {
-    assert.ok(header.includes(contract), contract);
+    const back = style(source, "heroBack");
+    for (const value of ['position:"absolute"', "left:20", "width:44", "height:44", "borderRadius:22", 'backgroundColor:"#FFFFFF"', "zIndex:20"]) assert.ok(back.includes(value), value);
+    const actions = style(source, "heroActions");
+    for (const value of ['position:"absolute"', "right:20", "width:96", "height:44", "borderRadius:22", 'backgroundColor:"#FFFFFF"', 'flexDirection:"row"', "zIndex:20"]) assert.ok(actions.includes(value), value);
+    const action = style(source, "heroAction");
+    for (const value of ["width:48", "height:44", 'alignItems:"center"', 'justifyContent:"center"']) assert.ok(action.includes(value), value);
+  });
+
+  test(`${kind} Cars detail preserves the canvas, theme-safe media, and balanced specs`, () => {
+    assert.match(source, /const CAR_DETAIL_LIGHT_CANVAS = "#F5F7FB"/);
+    assert.match(source, /carCanvasColor\s*=\s*theme\.dark\s*\?\s*theme\.background\s*:\s*CAR_DETAIL_LIGHT_CANVAS/);
+    assert.match(source, /s\.imageBox,\s*\{\s*backgroundColor:\s*theme\.surface\s*\}/);
+    const imageBox = style(source, "imageBox");
+    assert.ok(imageBox.includes('width:"100%"'));
+    assert.ok(imageBox.includes("aspectRatio:16/10"));
+    assert.doesNotMatch(imageBox, /marginHorizontal|borderRadius/);
+    const specs = style(source, "specs");
+    for (const value of ['flexDirection:"row"', 'flexWrap:"wrap"', 'justifyContent:"space-between"', "paddingHorizontal:16"]) assert.ok(specs.includes(value), value);
+    assert.ok(style(source, "spec").includes('width:"42%"'));
+  });
+}
+
+test("Cars content section headings share the reduced typography", () => {
+  for (const source of [normal, sandbox]) {
+    for (const heading of ["compareHeading", "pickupHeading", "locationHeading"]) {
+      const rule = style(source, heading);
+      for (const value of ["fontSize:14", "lineHeight:20", 'fontWeight:"700"', "fontFamily:appFonts.bold"]) assert.ok(rule.includes(value), `${heading}: ${value}`);
+    }
   }
-  assert.doesNotMatch(
-    header,
-    /borderBottomWidth|borderBottomColor|borderTopWidth|borderTopColor|shadowColor|shadowOpacity|shadowRadius|shadowOffset|elevation|position|top:|transform|translateY|marginTop:-|marginBottom:-/,
-  );
-
-  const link = style("backLink");
-  for (const contract of ["minHeight:44", 'alignSelf:"flex-start"', 'flexDirection:"row"', 'alignItems:"center"', "gap:7"]) {
-    assert.ok(link.includes(contract), contract);
-  }
-  assert.doesNotMatch(link, /paddingHorizontal/);
-
-  const text = style("backText");
-  for (const contract of ["fontSize:14", "lineHeight:19", 'fontWeight:"700"', "fontFamily:appFonts.bold"]) {
-    assert.ok(text.includes(contract), contract);
-  }
-});
-
-test("Cars header and scrolling content share a theme-safe canvas without a hero top rule", () => {
-  assert.match(native, /const CAR_DETAIL_LIGHT_CANVAS = "#F5F7FB"/);
-  assert.match(native, /const carCanvasColor=theme\.dark\?theme\.background:CAR_DETAIL_LIGHT_CANVAS/);
-  assert.match(native, /<SafeAreaView style=\{\[s\.safe,\{backgroundColor:carCanvasColor\}\]\}/);
-  assert.match(native, /s\.carBackHeader,\{backgroundColor:carCanvasColor\}/);
-  assert.match(native, /<ScrollView[^>]*style=\{\{backgroundColor:carCanvasColor\}\}/);
-  assert.match(native, /s\.hero,\{backgroundColor:carCanvasColor,borderColor:theme\.border\}/);
-  assert.match(native, /s\.imageBox,\{backgroundColor:theme\.surface\}/);
-  assert.doesNotMatch(native, /carCanvasColor[^;]*["']white["']/i);
-
-  const hero = style("hero");
-  assert.match(hero, /borderBottomWidth:1/);
-  assert.doesNotMatch(hero, /borderTopWidth|borderTopColor/);
-});
-
-test("Cars primary specifications distribute the second column toward the right edge", () => {
-  const specs = style("specs");
-  assert.ok(specs.includes('flexDirection:"row"'));
-  assert.ok(specs.includes('flexWrap:"wrap"'));
-  assert.ok(specs.includes('justifyContent:"space-between"'));
-  assert.ok(specs.includes("paddingHorizontal:16"));
-  assert.doesNotMatch(specs, /columnGap/);
-
-  const spec = style("spec");
-  assert.ok(spec.includes('width:"42%"'));
-  assert.ok(spec.includes('flexDirection:"row"'));
-  assert.ok(spec.includes('alignItems:"center"'));
-  assert.ok(spec.includes("gap:8"));
 });
