@@ -53,7 +53,8 @@ test("active Details keeps truthful fallbacks while replacing the obsolete highl
 
 test("active Details renders room and accessibility information row by row without Hotel information", () => {
   assert.doesNotMatch(details, /\.join\(" · "\)/);
-  assert.match(details, /\[property\?\.roomSummary, property\?\.bedSummary\][\s\S]*?\.map[\s\S]*?<Bed accessible=\{false\} size=\{18\}/);
+  assert.match(details, /const roomFacts = \[property\?\.roomSummary, property\?\.bedSummary, providerDetails\?\.rate\?\.roomName\]/);
+  assert.match(details, /roomFacts\.map\([\s\S]*?<Bed accessible=\{false\} size=\{18\}/);
   assert.match(details, /property\.accessibility\.map\([\s\S]*?>•<\/Text>/);
   assert.doesNotMatch(details, /property\?\.propertyType[\s\S]*?<Award|>Hotel information<|width: "48%"|flexWrap: "wrap"/);
 });
