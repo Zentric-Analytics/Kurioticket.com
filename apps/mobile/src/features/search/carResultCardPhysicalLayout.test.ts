@@ -33,13 +33,14 @@ test("vehicle image presentation and canvas ownership remain intact", () => {
   assert.match(source, />Vehicle image unavailable<\/Text>/);
 });
 
-test("non-image information matches the Price Alert sheet while the image stays separate", () => {
-  assert.match(source, /const carInformationSurface = theme\.dark \? resultBackgroundColor : "#F2F4F8"/);
-  assert.match(priceAlertSource, /backgroundColor: theme\.dark \? theme\.background : "#F2F4F8"/);
+test("non-image information matches the inactive Price Alert track while the image stays separate", () => {
+  assert.match(source, /const carInformationSurface = theme\.dark \? resultBackgroundColor : "#CBD5E1"/);
+  assert.match(priceAlertSource, /trackColor=\{\{ false: theme\.dark \? "#465269" : "#CBD5E1", true: theme\.switchTrackActive \}\}/);
   assert.match(source, /\[c\.identityZone,\{backgroundColor:carInformationSurface\}\]/);
   assert.match(source, /\[c\.lowerBand,\{backgroundColor:carInformationSurface,borderTopColor:theme\.border\}\]/);
   assert.doesNotMatch(source, /c\.visualColumn,\{backgroundColor:carInformationSurface\}/);
   assert.match(source, /c\.visualColumn,\{backgroundColor:theme\.surface\}/);
+  assert.doesNotMatch(source, /c\.visualColumn,\{backgroundColor:"#CBD5E1"\}/);
 });
 
 test("top section owns only the visual and identity information", () => {
@@ -115,9 +116,10 @@ test("commerce remains authoritative, responsive, and accessible", () => {
   assert.match(source, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.75\}/);
   assert.match(style("commerceColumn"), /flex:1\.35,minWidth:0/);
   assert.match(style("priceColumn"), /minWidth:0,maxWidth:"100%",alignItems:"flex-end"/);
-  assert.match(style("dailyPrice"), /maxWidth:"100%",fontSize:22/);
-  assert.match(style("dailyPrice"), /fontWeight:"600"/);
-  assert.doesNotMatch(style("dailyPrice"), /fontWeight:"700"/);
+  assert.match(style("dailyPrice"), /maxWidth:"100%",fontSize:20,fontWeight:"600",lineHeight:23/);
+  assert.doesNotMatch(style("dailyPrice"), /fontSize:22|fontWeight:"700"/);
+  assert.match(style("perDayLabel"), /fontSize:10,fontWeight:"500",lineHeight:13,textAlign:"right"/);
+  assert.doesNotMatch(style("perDayLabel"), /fontSize:11|lineHeight:14/);
   assert.doesNotMatch(styles, /(?:^|,)total:|taxDisclosure:|(?:^|,)perDay:/);
   assert.match(source, /<Pressable accessibilityRole="button" accessibilityLabel=\{`View deal for \$\{result\.modelName\}`\} onPress=\{onViewDeal\}/);
   assert.match(style("viewDeal"), /minHeight:36/);
