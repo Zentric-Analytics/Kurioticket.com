@@ -7,14 +7,26 @@ const sandboxDetail = readFileSync("src/features/search/NativeKayakCarDetailScre
 const normalDetail = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
 const providerPresentation = readFileSync("src/features/search/nativeCarProviderPresentation.ts", "utf8");
 
-test("native Cars details keep normal inventory on the approved surface and isolate KAYAK sandbox inventory", () => {
+test("native Cars details keep provider detection while KAYAK mirrors the approved Cars Details structure", () => {
   assert.match(route, /NativeKayakCarDetailScreen/);
   assert.match(route, /ApprovedCarDetailScreen/);
   assert.match(route, /resultId\?\.startsWith\("kayak-sandbox:"\)/);
   assert.match(route, /parsed\.inventorySource === "kayak-sandbox"/);
   assert.match(route, /parsed\.searchPolicy\?\.source === "kayak-sandbox"/);
   assert.match(route, /\? <NativeKayakCarDetailScreen \/>[\s\S]*: <ApprovedCarDetailScreen \/>/);
-  assert.doesNotMatch(normalDetail, /KAYAK sandbox · Simulated · Not bookable/);
+  for (const marker of [
+    /stickyHeaderIndices=\{\[1\]\}/,
+    /Compare deals/,
+    /Pickup and return/,
+    /Location/,
+    /carTabCompare/,
+    /carTabPickup/,
+    /carTabLocation/,
+    /dockContent/,
+  ]) {
+    assert.match(normalDetail, marker);
+    assert.match(sandboxDetail, marker);
+  }
 });
 
 test("native KAYAK Cars details recover only through the canonical server Cars API", () => {
@@ -37,12 +49,19 @@ test("native KAYAK Cars details use provider-owned specs and never display schem
 
 test("native KAYAK Cars details remain explicitly simulated and use only the allow-listed test handoff", () => {
   assert.match(sandboxDetail, /KAYAK sandbox · Simulated · Not bookable/);
-  assert.match(sandboxDetail, /Simulated provider inventory for staging\. No real booking or payment is enabled\./);
+  assert.match(sandboxDetail, /Simulated KAYAK provider inventory for staging\. No real booking or payment is enabled\./);
   assert.match(sandboxDetail, /sandboxBookingUrl\(offer\?\.bookingUrl\)/);
   assert.match(sandboxDetail, /Open KAYAK test page/);
   assert.match(sandboxDetail, /Linking\.openURL\(sandboxHref\)/);
   assert.match(sandboxDetail, /Test page unavailable/);
   assert.doesNotMatch(sandboxDetail, /Continue deal|Continue booking|Book now/);
+});
+
+test("native KAYAK Cars details do not invent unsupported static-provider facts", () => {
+  assert.doesNotMatch(sandboxDetail, /Kurioticket-logo|kurioticket-logo-primary-light-bg/);
+  assert.doesNotMatch(sandboxDetail, /Free cancellation|Non-refundable|Unlimited mileage|Full-to-full|Same-to-same|Air conditioning|Valid driver's license/);
+  assert.match(sandboxDetail, /Exact collection instructions were not supplied by the sandbox provider/);
+  assert.match(sandboxDetail, /sandboxPickupLabel\(result\)/);
 });
 
 test("sandbox native results do not imply recommendation or saved-state support", () => {
