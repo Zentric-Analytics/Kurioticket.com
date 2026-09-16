@@ -12,7 +12,7 @@ import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { nativeCarResultIdentity } from "./nativeCarResultIdentity";
 import { presentCarOfferCurrency } from "./carDisplayCurrency";
 import { useCarDisplayCurrency } from "./useCarDisplayCurrency";
-import { nativeCarPrimarySpecLabels } from "./nativeCarProviderPresentation";
+import { isKayakSandboxCar, nativeCarPrimarySpecLabels } from "./nativeCarProviderPresentation";
 
 export function CarResultCard({ result, rank, imageUri, searchParams, resultBackgroundColor, onViewDeal }: {
   result: CarResult; rank: number; imageUri?: string;
@@ -28,6 +28,7 @@ export function CarResultCard({ result, rank, imageUri, searchParams, resultBack
   const carInformationSurface = theme.dark ? resultBackgroundColor : "#CBD5E1";
   const freeCancellationColor = theme.dark ? theme.textPrimary : "#000000";
   const identity = nativeCarResultIdentity(result.modelName);
+  const sandbox = isKayakSandboxCar(result);
   const specLabels = nativeCarPrimarySpecLabels(result);
   const curatedImage = isCuratedCarResultImage(imageUri);
   const imageResizeMode = curatedImage ? "contain" : "cover";
@@ -37,7 +38,7 @@ export function CarResultCard({ result, rank, imageUri, searchParams, resultBack
     <View style={c.topSection}>
       <View style={[c.visualColumn,{backgroundColor:theme.surface}]}><View style={c.visual}>{imageUri && !imageFailed ? <Image source={{ uri: imageUri }} resizeMode={imageResizeMode} style={[c.image,curatedImage&&c.curatedImage]} accessibilityLabel={result.imageAlt} onError={() => setImageFailed(true)} /> : <View accessibilityLabel={`${result.modelName} vehicle image unavailable`} style={c.imageFallback}><FlowIcon name="car" size={48} color="#315A7D" /><Text style={c.fallbackText}>Vehicle image unavailable</Text></View>}</View></View>
       <View style={[c.identityZone,{backgroundColor:carInformationSurface}]}>
-        {rank === 0 ? <View style={c.bestValueRow}><View style={c.badge}><Award size={11} color="#15803D" /><Text style={c.badgeText}>Best value</Text></View></View> : null}
+        {rank === 0 && !sandbox ? <View style={c.bestValueRow}><View style={c.badge}><Award size={11} color="#15803D" /><Text style={c.badgeText}>Best value</Text></View></View> : null}
         <View style={c.headerRow}>
           <View style={c.identityColumn}>
             <Text numberOfLines={1} style={[c.name,{color:theme.textPrimary}]}>{identity.primaryName}</Text>
@@ -47,11 +48,11 @@ export function CarResultCard({ result, rank, imageUri, searchParams, resultBack
               {result.orSimilar ? <Text style={[c.similar,{color:theme.textSecondary}]}>or similar</Text> : null}
             </Text> : null}
             <Text numberOfLines={1} style={c.category}>{result.categoryLabel}</Text>
-            {result.searchPolicy.source === "kayak-sandbox" ? <Text style={c.category}>KAYAK sandbox · Simulated · Not bookable</Text> : null}
+            {sandbox ? <Text style={c.category}>KAYAK sandbox · Simulated · Not bookable</Text> : null}
           </View>
-          <View style={c.utilityColumn}>
+          {!sandbox ? <View style={c.utilityColumn}>
             <View style={c.actions}><Pressable accessibilityRole="button" accessibilityLabel={savedState.saved ? `Remove ${result.modelName} from saved` : `Save ${result.modelName}`} accessibilityState={{ selected: savedState.saved }} onPress={savedState.toggle} style={({pressed}) => [c.action,c.saveAction,pressed&&c.pressed]}><FlowIcon name="heart" size={20} color={savedState.saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={savedState.saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} /></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Share ${result.modelName}`} onPress={share} style={({pressed}) => [c.action,c.shareAction,pressed&&c.pressed]}><Share2 size={18} color={theme.icon} /></Pressable></View>
-          </View>
+          </View> : null}
         </View>
         <View style={c.identityDetails}>
           <View style={c.location}><MapPin size={13} color={theme.textPrimary} /><Text style={[c.meta,{color:theme.textSecondary}]}>{result.pickupLocation}</Text></View>
