@@ -7,8 +7,8 @@ const reviews = readFileSync("src/features/search/NativeHotelReviewsSection.tsx"
 
 test("KAYAK overview reuses existing hotel sections with provider-authored facts", () => {
   assert.match(overview, /providerDetails\?\.overview\?\.address/);
-  assert.match(overview, /providerDetails\?\.overview\?\.place/);
-  assert.match(overview, /providerDetails\?\.overview\?\.policies/);
+  assert.match(overview, /details\?\.overview\?\.place/);
+  assert.match(overview, /details\?\.overview\?\.policies/);
   assert.match(overview, /providerDetails\?\.rate\?\.roomName/);
   assert.match(overview, />Location</);
   assert.match(overview, />Room &amp; comfort</);
