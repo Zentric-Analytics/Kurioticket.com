@@ -74,7 +74,7 @@ test("Reviews use exact canonical labels without invented breakdowns", () => {
   }
 });
 
-test("Reviews use one prominent score summary and one provider-authored guest section", () => {
+test("Reviews use one prominent score summary without duplicate guest sentiment", () => {
   const section = styleRule("reviewsSection", "summaryCard");
   assert.match(section, /paddingVertical: 6/);
   assert.match(section, /gap: 16/);
@@ -89,16 +89,12 @@ test("Reviews use one prominent score summary and one provider-authored guest se
     ["metadata", "label", [/flex: 1/, /minWidth: 0/]],
     ["label", "count", [/fontSize: 20/, /lineHeight: 26/, /fontWeight: "700"/]],
     ["count", "source", [/fontSize: 15/, /lineHeight: 21/, /fontWeight: "400"/]],
-    ["guestCard", "heading", [/borderWidth: 1/, /borderRadius: 22/, /paddingHorizontal: 20/, /paddingVertical: 20/]],
-    ["heading", "sentiment", [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/]],
   ];
   for (const [name, next, patterns] of contracts) {
     const rule = styleRule(name, next);
     for (const pattern of patterns) assert.match(rule, pattern);
     assert.doesNotMatch(rule, /fontFamily/);
   }
-  assert.match(reviews, /<Text accessibilityRole="header"[\s\S]*?>\s*Guests say\s*<\/Text>/);
-  assert.match(reviews, /providerDetails\?\.reviews\?\.sentiment/);
-  assert.match(reviews, /providerDetails\?\.reviews\?\.quotes/);
+  assert.doesNotMatch(reviews, /Guests say|guestCard|sentiment|quoteList|quoteRow|providerDetails\?\.reviews\?\.quotes/);
   assert.doesNotMatch(reviews, /scoreBadge|backgroundColor: colors\.blue/);
 });
