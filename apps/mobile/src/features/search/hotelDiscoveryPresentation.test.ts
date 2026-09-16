@@ -43,7 +43,7 @@ test("narrow active Hotel layout keeps square rate cards and a visual-only Reser
   assert.match(hotel, /useWindowDimensions\(\)\.width/);
   assert.match(rates, /adjustsFontSizeToFit/);
   assert.match(rates, /minimumFontScale=\{0\.68\}/);
-  assert.match(rates, /width: 104/);
+  assert.match(rates, /width: 128/);
   assert.match(rates, /borderRadius: 0/);
   assert.match(rates, /onPress=\{previewReserve\}/);
   assert.doesNotMatch(rates, /onPress=\{\(\) => onSelectOffer\(row\.offerId\)\}/);

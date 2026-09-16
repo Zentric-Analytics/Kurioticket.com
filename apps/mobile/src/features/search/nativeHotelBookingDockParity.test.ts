@@ -44,7 +44,7 @@ test("native Hotel removes the checkout-style dock from Rates, Overview, and Rev
 
 test("Rates keeps price and visual Reserve action inside each square provider card", () => {
   assert.match(rateStyle("rateCard", "rateCopy"), /borderWidth: 1[\s\S]*borderRadius: 0/);
-  assert.match(rateStyle("rateActionColumn", "price"), /width: 104[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "space-between"/);
+  assert.match(rateStyle("rateActionColumn", "priceBlock"), /width: 128[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "space-between"/);
   assert.match(rateStyle("actionControl", "actionControlText"), /minWidth: 82[\s\S]*minHeight: 44[\s\S]*borderRadius: 10/);
   assert.match(ratesSource, /const previewReserve = \(\) => undefined/);
   assert.match(ratesSource, /onPress=\{previewReserve\}/);
