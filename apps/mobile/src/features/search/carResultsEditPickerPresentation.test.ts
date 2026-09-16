@@ -44,7 +44,7 @@ test("Cars drafts synchronize before presentation and child actions only commit 
   assert.match(panel, /useLayoutEffect\(\(\) => \{[\s\S]*?setDraftAge\(age\)/);
   assert.match(panel, /setQuery\(presentation === "resultsEditFullScreen" \? selectedValue : ""\)/);
   assert.match(panel, /onShow=\{\(\)=>inputRef\.current\?\.focus\(\)\}/);
-  assert.match(panel, /onPress=\{\(\)=>\{[\s\S]*?onChoose\(item\.value\)/);
+  assert.match(panel, /onPress=\{\(\)=>\{[\s\S]*?onChoose\(item\)/);
   assert.match(pickers, /onPress=\{\(\)=>onDone\(draftPickup,draftReturn\)\}/);
   assert.match(panel, /onBack=\{onClose\}/);
   assert.doesNotMatch(panel.slice(panel.indexOf("export function CarLocationSheet")), /router\.(?:push|replace)/);
