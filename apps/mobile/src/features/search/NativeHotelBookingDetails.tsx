@@ -11,6 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Bed,
   Laptop,
+  MapPin,
   Sparkles,
   UtensilsCrossed,
   Wifi,
@@ -19,6 +20,7 @@ import {
   type LucideIcon,
 } from "lucide-react-native";
 import type { PublicHotelPropertyDetails } from "../../../../../src/lib/types";
+import type { PublicHotelProviderDetails } from "../../../../../src/lib/hotels/hotelProviderDetails";
 import {
   buildHotelAmenityPresentation,
   type HotelAmenityPresentationItem,
@@ -46,6 +48,10 @@ type Theme = {
 
 type HotelDetailsStatus = "loading" | "ready" | "error";
 
+type HotelResultWithProviderDetails = HotelResult & {
+  providerDetails?: PublicHotelProviderDetails;
+};
+
 function amenityIconFor(item: HotelAmenityPresentationItem): LucideIcon {
   if (item.iconKey === "wifi") return Wifi;
   if (item.iconKey === "restaurant") return UtensilsCrossed;
@@ -53,6 +59,13 @@ function amenityIconFor(item: HotelAmenityPresentationItem): LucideIcon {
   if (item.iconKey === "bar" || item.iconKey === "lounge") return Wine;
   if (item.iconKey === "quietRooms" || item.iconKey === "airConditioning") return Bed;
   return Sparkles;
+}
+
+function providerFactValues(details?: PublicHotelProviderDetails) {
+  return {
+    place: [...new Set((details?.overview?.place ?? []).map(({ value }) => value.trim()).filter(Boolean))],
+    policies: [...new Set((details?.overview?.policies ?? []).map(({ value }) => value.trim()).filter(Boolean))],
+  };
 }
 
 export function NativeHotelBookingDetails({
@@ -75,6 +88,11 @@ export function NativeHotelBookingDetails({
   const [amenitiesOpen, setAmenitiesOpen] = useState(false);
   const accent = theme.dark ? "#8FB5FF" : colors.blue;
   const iconColor = theme.dark ? theme.icon : "#1A1A1A";
+  const providerDetails = (result as HotelResultWithProviderDetails).providerDetails;
+  const providerFacts = providerFactValues(providerDetails);
+  const providerAddress = providerDetails?.overview?.address?.trim() ?? "";
+  const providerPlace = providerFacts.place.join(", ");
+  const providerRoomName = providerDetails?.rate?.roomName?.trim() ?? "";
   const amenityItems = buildHotelAmenityPresentation(
     result.amenities,
     result.amenities.length,
@@ -96,13 +114,44 @@ export function NativeHotelBookingDetails({
       <View style={s.section}>
         <Text accessibilityRole="header" style={[s.heading, { color: theme.textPrimary }]}>About this hotel</Text>
         {aboutCopy ? <Text style={[s.description, { color: theme.textSecondary }]}>{aboutCopy}</Text> : null}
+        {providerFacts.policies.length ? (
+          <View style={s.accessibilityList}>
+            {providerFacts.policies.map((policy) => (
+              <View key={policy} style={s.accessibilityRow}>
+                <Text accessible={false} style={[s.bullet, { color: iconColor }]}>•</Text>
+                <Text style={[s.accessibilityText, { color: theme.textSecondary }]}>{policy}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
       </View>
 
       <SectionGap />
 
-      {property || detailsStatus !== "loading" ? (
+      {property ? (
         <>
           <NativeHotelLocationSection hotelId={result.id} hotelName={result.name} propertyDetails={property} theme={theme} />
+          <SectionGap />
+        </>
+      ) : providerAddress || providerPlace ? (
+        <>
+          <View style={s.section}>
+            <Text accessibilityRole="header" style={[s.heading, { color: theme.textPrimary }]}>Location</Text>
+            <View style={s.providerLocationRow}>
+              <View accessible={false} style={[s.providerLocationIcon, { backgroundColor: theme.dark ? theme.surface : "#F5F5F5" }]}>
+                <MapPin accessible={false} size={18} strokeWidth={1.3} color={iconColor} />
+              </View>
+              <View style={s.providerLocationCopy}>
+                {providerAddress ? <Text style={[s.providerAddress, { color: theme.textPrimary }]}>{providerAddress}</Text> : null}
+                {providerPlace ? <Text style={[s.providerPlace, { color: theme.textSecondary }]}>{providerPlace}</Text> : null}
+              </View>
+            </View>
+          </View>
+          <SectionGap />
+        </>
+      ) : detailsStatus !== "loading" ? (
+        <>
+          <NativeHotelLocationSection hotelId={result.id} hotelName={result.name} propertyDetails={null} theme={theme} />
           <SectionGap />
         </>
       ) : null}
@@ -129,10 +178,10 @@ export function NativeHotelBookingDetails({
       <View style={s.section}>
         <Text accessibilityRole="header" style={[s.heading, { color: theme.textPrimary }]}>Room &amp; comfort</Text>
         <View style={s.rowList}>
-          {[property?.roomSummary, property?.bedSummary].filter((value): value is string => Boolean(value?.trim())).map((value) => (
+          {[property?.roomSummary, property?.bedSummary, providerRoomName].filter((value): value is string => Boolean(value?.trim())).filter((value, index, values) => values.indexOf(value) === index).map((value) => (
             <View key={value} style={s.infoRow}><Bed accessible={false} size={18} strokeWidth={1.3} color={iconColor} /><Text style={[s.rowText, { color: theme.textSecondary }]}>{value}</Text></View>
           ))}
-          {detailsStatus !== "loading" && !property?.roomSummary && !property?.bedSummary ? <Text style={[s.rowText, { color: theme.textSecondary }]}>Room details are confirmed when you choose a room.</Text> : null}
+          {detailsStatus !== "loading" && !property?.roomSummary && !property?.bedSummary && !providerRoomName ? <Text style={[s.rowText, { color: theme.textSecondary }]}>Room details are confirmed when you choose a room.</Text> : null}
         </View>
       </View>
 
@@ -191,6 +240,11 @@ const s = StyleSheet.create({
   accessibilityRow: { flexDirection: "row", alignItems: "flex-start" },
   bullet: { width: 18, fontSize: 14, lineHeight: 21 },
   accessibilityText: { flex: 1, fontSize: 14, lineHeight: 21, fontWeight: "400", fontFamily: appFonts.regular },
+  providerLocationRow: { marginTop: 4, flexDirection: "row", alignItems: "flex-start", gap: 8 },
+  providerLocationIcon: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center" },
+  providerLocationCopy: { flex: 1, minWidth: 0 },
+  providerAddress: { fontSize: 14, lineHeight: 20, fontWeight: "500", fontFamily: appFonts.medium },
+  providerPlace: { marginTop: 1, fontSize: 13, lineHeight: 18, fontWeight: "400", fontFamily: appFonts.regular },
   modalRoot: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(2,6,23,.42)" },
   sheet: { maxHeight: "90%", borderTopLeftRadius: 22, borderTopRightRadius: 22, overflow: "hidden" },
   sheetHeader: { minHeight: 58, paddingHorizontal: 18, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
