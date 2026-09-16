@@ -34,14 +34,3 @@ export function nativeCarPrimarySpecLabels(result: CarResult): NativeCarPrimaryS
     transmission: capitalize(result.transmission),
   };
 }
-
-export function nativeCarSandboxDetailSpecs(result: CarResult): string[] | null {
-  if (!isKayakSandboxCar(result)) return null;
-  const supplied = result.sandboxPresentation?.specs?.map((value) => value.trim()).filter(Boolean) ?? [];
-  return supplied.length ? supplied : ["Specifications not supplied"];
-}
-
-export function nativeCarPickupPresentationLabel(result: CarResult): string | null {
-  if (!isKayakSandboxCar(result)) return null;
-  return result.sandboxPresentation?.pickupLabel?.trim() || "Pickup details supplied by KAYAK";
-}
