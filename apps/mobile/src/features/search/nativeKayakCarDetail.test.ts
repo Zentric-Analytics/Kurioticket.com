@@ -34,7 +34,7 @@ test("approved and KAYAK Cars details share the light canvas and vehicle image s
     assert.match(detail, /const CAR_DETAIL_LIGHT_CANVAS = "#F5F7FB"/);
     assert.match(detail, /const carCanvasColor\s*=\s*theme\.dark\s*\?\s*theme\.background\s*:\s*CAR_DETAIL_LIGHT_CANVAS/);
     assert.match(detail, /s\.safe,\s*\{\s*backgroundColor:\s*carCanvasColor\s*\}/);
-    assert.match(detail, /s\.carBackHeader,\s*\{\s*backgroundColor:\s*carCanvasColor\s*\}/);
+    assert.match(detail, /style=\{\[s\.heroBack,\s*\{\s*top:\s*inset\.top\s*\+\s*12\s*\}\]\}/);
     assert.match(detail, /<ScrollView[^>]*style=\{\{\s*backgroundColor:\s*carCanvasColor\s*\}\}/);
     assert.match(detail, /s\.hero,\s*\{\s*backgroundColor:\s*carCanvasColor,\s*borderColor:\s*theme\.border\s*\}/);
     assert.match(detail, /s\.imageBox,\s*\{\s*backgroundColor:\s*theme\.surface\s*\}/);
@@ -91,8 +91,8 @@ test("native KAYAK Cars details use the standard accessible save and share contr
   assert.match(sandboxDetail, /accessibilityLabel=\{saved\.saved \? "Remove car from saved" : "Save car"\}/);
   assert.match(sandboxDetail, /accessibilityState=\{\{ selected: saved\.saved \}\} onPress=\{saved\.toggle\}/);
   assert.match(sandboxDetail, /accessibilityLabel="Share car" onPress=\{\(\) => void Share\.share/);
-  assert.match(sandboxDetail, /<Heart size=\{20\}/);
-  assert.match(sandboxDetail, /<Share2 size=\{19\}/);
+  assert.match(sandboxDetail, /<Heart size=\{22\}/);
+  assert.match(sandboxDetail, /<Share2 size=\{21\}/);
 });
 
 test("approved and KAYAK detail rails and content use the Cars canvas", () => {
