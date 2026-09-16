@@ -48,14 +48,23 @@ test("Rates derives its single Kurioticket fallback card from supplied room data
   assert.doesNotMatch(ratesSource, /STATIC_RATE_GROUPS|\$1,225|Standard Room, 1 Queen Bed/);
 });
 
-test("provider handoff takes precedence and shows the supplied provider price", () => {
+test("provider handoff keeps room and terms separate and shows the supplied provider price", () => {
   assert.match(ratesSource, /offers\.find\(\(offer\) => offer\.kind === "provider-handoff"\)/);
   assert.match(ratesSource, /const visibleProviderOffer = providerOffer \?\? displayOnlyKayakOffer/);
-  assert.match(ratesSource, /rows\.unshift\(\{/);
-  assert.match(ratesSource, /providerName: providerName\.trim\(\) \|\| "Provider"/);
+  assert.match(ratesSource, /const providerRoom = providerRoomPresentation\(roomType\)/);
+  assert.match(ratesSource, /title: providerRoom\.title/);
+  assert.match(ratesSource, /meta: providerRateTerms\(providerRoom\.terms, cancellationInfo\)/);
   assert.match(ratesSource, /const providerPrice = hasPrice \? nightlyPrice : null/);
-  assert.match(ratesSource, /price: providerPrice \? `\$\{providerPrice\.formatted\}\/night` : "Price on provider"/);
+  assert.match(ratesSource, /price: providerPrice \? providerPrice\.formatted : "Price on provider"/);
+  assert.match(ratesSource, /priceUnit: providerPrice \? "per night" : undefined/);
   assert.match(ratesSource, /\$\{providerPrice\.accessibilityLabel\} per night/);
+});
+
+test("provider room parsing removes duplicated generic cancellation copy", () => {
+  assert.match(ratesSource, /split\(\/\\s\+\[—–-\]\\s\+\//);
+  assert.match(ratesSource, /non\[- \]\?refundable\|refundable\|free cancellation\|cancel/);
+  assert.match(ratesSource, /cancellation conditions apply\|see supplied rate details/);
+  assert.match(ratesSource, /\.slice\(0, 2\)/);
 });
 
 test("non-bookable KAYAK rates remain displayable when a supplied price exists", () => {
@@ -72,17 +81,20 @@ test("Kurioticket fallback keeps the bundled wordmark and existing app fonts", (
   assert.match(styleRule(ratesSource, "actionControlText", "emptyCard"), /fontFamily: appFonts\.bold/);
 });
 
-test("Rates keeps one square metasearch card", () => {
+test("Rates keeps one square metasearch card with a wider commerce column", () => {
   assert.match(styleRule(ratesSource, "section", "rateCard"), /paddingBottom: 12/);
-  assert.match(styleRule(ratesSource, "rateCard", "rateCopy"), /minHeight: 134[\s\S]*borderWidth: 1[\s\S]*borderRadius: 0[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 20[\s\S]*gap: 12/);
+  assert.match(styleRule(ratesSource, "rateCard", "rateCopy"), /minHeight: 134[\s\S]*borderWidth: 1[\s\S]*borderRadius: 0[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 16[\s\S]*gap: 14/);
   assert.match(styleRule(ratesSource, "brandLogo", "providerName"), /width: 88[\s\S]*height: 18[\s\S]*marginBottom: 8/);
-  assert.match(styleRule(ratesSource, "benefitList", "rateMeta"), /marginTop: "auto"[\s\S]*paddingTop: 18[\s\S]*gap: 1/);
-  assert.match(styleRule(ratesSource, "rateActionColumn", "price"), /width: 104[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "space-between"/);
+  assert.match(styleRule(ratesSource, "benefitList", "rateMeta"), /marginTop: 8[\s\S]*gap: 2/);
+  assert.match(styleRule(ratesSource, "rateActionColumn", "priceBlock"), /width: 128[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "space-between"/);
 });
 
-test("Rates shows stay or provider price and keeps the visual-only Reserve action", () => {
+test("Rates renders nightly price and per-night label separately with a visual-only Reserve action", () => {
   assert.match(ratesSource, /\$\{total\.accessibilityLabel\} stay price/);
-  assert.match(ratesSource, /\$\{providerPrice\.accessibilityLabel\} per night/);
+  assert.match(ratesSource, /priceUnit: providerPrice \? "per night" : undefined/);
+  assert.match(ratesSource, /\{row\.priceUnit \? \(/);
+  assert.match(styleRule(ratesSource, "price", "priceUnit"), /numberOfLines|fontVariant/);
+  assert.match(styleRule(ratesSource, "priceUnit", "priceUnavailable"), /fontSize: 12[\s\S]*fontFamily: appFonts\.medium/);
   assert.match(ratesSource, /const previewReserve = \(\) => undefined/);
   assert.match(ratesSource, /const reserveLabel = "Reserve"/);
   assert.match(ratesSource, /<TouchableOpacity[\s\S]*?onPress=\{previewReserve\}/);
