@@ -15,7 +15,9 @@ const webContinuation = readFileSync(
 );
 
 function styleRule(source: string, name: string, nextName: string) {
-  const start = source.indexOf(`  ${name}:`);
+  const stylesheetStart = source.indexOf("const s = StyleSheet.create({");
+  assert.notEqual(stylesheetStart, -1, "stylesheet must exist");
+  const start = source.indexOf(`  ${name}:`, stylesheetStart);
   const end = source.indexOf(`  ${nextName}:`, start);
   assert.notEqual(start, -1, `${name} style must exist`);
   assert.notEqual(end, -1, `${nextName} style must follow ${name}`);
