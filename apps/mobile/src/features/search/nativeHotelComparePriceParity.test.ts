@@ -93,7 +93,13 @@ test("Rates renders nightly price and per-night label separately with a visual-o
   assert.match(ratesSource, /\$\{total\.accessibilityLabel\} stay price/);
   assert.match(ratesSource, /priceUnit: providerPrice \? "per night" : undefined/);
   assert.match(ratesSource, /\{row\.priceUnit \? \(/);
-  assert.match(styleRule(ratesSource, "price", "priceUnit"), /numberOfLines|fontVariant/);
+  const priceTextStart = ratesSource.indexOf("<Text\n              numberOfLines={1}");
+  const priceTextEnd = ratesSource.indexOf("</Text>", priceTextStart);
+  const priceText = ratesSource.slice(priceTextStart, priceTextEnd);
+  assert.match(priceText, /numberOfLines=\{1\}/);
+  assert.match(priceText, /adjustsFontSizeToFit/);
+  assert.match(priceText, /minimumFontScale=\{0\.68\}/);
+  assert.match(styleRule(ratesSource, "price", "priceUnit"), /fontVariant: \["tabular-nums"\]/);
   assert.match(styleRule(ratesSource, "priceUnit", "priceUnavailable"), /fontSize: 12[\s\S]*fontFamily: appFonts\.medium/);
   assert.match(ratesSource, /const previewReserve = \(\) => undefined/);
   assert.match(ratesSource, /const reserveLabel = "Reserve"/);
