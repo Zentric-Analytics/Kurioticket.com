@@ -19,7 +19,7 @@ const locationSheets = [
 test("final searchable location suggestions commit directly without Done", () => {
   assert.match(locationSheets[0], /setDraftAirport\(airport\);setQuery\(value\)[\s\S]*?onChoose\(airport\)/);
   assert.match(locationSheets[1], /setDraft\(item\); setQuery\(item\.searchValue\)[\s\S]*?onChoose\(item\.searchValue\)/);
-  assert.match(locationSheets[2], /setDraft\(item\);setQuery\(item\.value\)[\s\S]*?onChoose\(item\.value\)/);
+  assert.match(locationSheets[2], /setDraft\(item\);setQuery\(item\.value\)[\s\S]*?onChoose\(item\)/);
   assert.match(locationSheets[3], /setDraft\(airport\);setQuery\(value\)[\s\S]*?onChoose\(airport\)/);
   for (const sheet of locationSheets) assert.doesNotMatch(sheet, /<PrimaryButton label="Done"/);
 });
