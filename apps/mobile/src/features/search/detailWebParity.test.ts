@@ -209,7 +209,8 @@ test("active Hotel Rates retain future continuation plumbing without exposing an
 });
 
 test("Car detail parity remains protected", () => {
-  assert.match(car, />Back to Cars results</);
+  assert.match(car, /accessibilityLabel="Back to Cars results"/);
+  assert.doesNotMatch(car, />Back to Cars results</);
   assert.match(car, /pathname:"\/car-results"/);
   assert.match(car, /stickyHeaderIndices=\{\[1\]\}/);
   for (const tab of ["compare", "pickup", "location"]) assert.match(car, new RegExp(`"${tab}"`));
