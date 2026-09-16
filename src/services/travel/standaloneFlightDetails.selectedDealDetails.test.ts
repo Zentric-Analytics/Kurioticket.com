@@ -105,6 +105,6 @@ test("each grouped KAYAK deal retains its own sanitized offer details", async ()
   assert.equal(alternate.offer.id, sellerB.id);
   assert.equal(alternate.offer.providerDetails?.price?.totalAmount, 875);
   assert.equal(alternate.offer.providerDetails?.offerOwner?.name, "Seller B");
-  assert.equal(alternate.offer.bookingUrl, undefined);
-  assert.equal(alternate.offer.partnerRedirectUrl, undefined);
+  assert.equal("bookingUrl" in alternate.offer, false);
+  assert.equal("partnerRedirectUrl" in alternate.offer, false);
 });
