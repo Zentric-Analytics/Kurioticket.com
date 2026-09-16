@@ -7,7 +7,8 @@ const results = read("src/features/search/ApprovedCarResultsScreen.tsx");
 const details = read("src/features/search/ApprovedCarDetailScreen.tsx");
 const saved = read("src/features/saved/SavedScreen.tsx");
 const openDeal = results.slice(results.indexOf("const openDeal"), results.indexOf("const clearFilters="));
-const returnToResults = details.slice(details.indexOf("const returnToCarResults"), details.indexOf("const light="));
+const returnToCarResultsStart = details.indexOf("const returnToCarResults");
+const returnToResults = details.slice(returnToCarResultsStart, details.indexOf("const light =", returnToCarResultsStart));
 const savedCarRoute = saved.slice(saved.indexOf('if (item.type === "car")'), saved.indexOf("const destinationId"));
 
 test("Cars Results pushes Details with Results-stack provenance and the resolved image cache key", () => {
