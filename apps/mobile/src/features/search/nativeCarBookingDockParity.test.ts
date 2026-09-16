@@ -44,12 +44,12 @@ test("Cars dock uses market precision without changing the Compare formatter", (
 test("Cars dock matches the Hotel price hierarchy", () => {
   assert.match(dock, /estimated rental total/);
   assert.match(dock, /<Info accessible=\{false\} size=\{12\} color=\{theme\.textSecondary\}\/\>/);
-  assert.match(dock, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.83\} style=\{\[s\.dockTotal/);
-  assert.match(dock, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.72\} style=\{\[s\.dockPerDay/);
+  assert.match(dock, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.65\} style=\{\[s\.dockTotal/);
+  assert.match(dock, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.65\} style=\{\[s\.dockPerDay/);
   assert.match(styleRule("dockLabel", "dockEyebrow"), /gap:4/);
   assert.match(styleRule("dockEyebrow", "dockTotal"), /fontSize:11[^}]*lineHeight:16[^}]*fontWeight:"600"[^}]*fontFamily:appFonts\.semibold/);
-  assert.match(styleRule("dockTotal", "dockPerDay"), /fontSize:24[^}]*lineHeight:30[^}]*fontWeight:"800"[^}]*fontFamily:appFonts\.extraBold[^}]*textAlign:"left"/);
-  assert.match(styleRule("dockPerDay", "dockAction"), /fontSize:11[^}]*lineHeight:16[^}]*fontWeight:"400"[^}]*fontFamily:appFonts\.regular[^}]*textAlign:"left"/);
+  assert.match(styleRule("dockTotal", "dockPerDay"), /maxWidth:"100%"[^}]*fontSize:24[^}]*lineHeight:30[^}]*fontWeight:"800"[^}]*fontFamily:appFonts\.extraBold[^}]*textAlign:"left"/);
+  assert.match(styleRule("dockPerDay", "dockAction"), /maxWidth:"100%"[^}]*fontSize:11[^}]*lineHeight:16[^}]*fontWeight:"400"[^}]*fontFamily:appFonts\.regular[^}]*textAlign:"left"/);
   assert.doesNotMatch(dock, /width<370\?20:24/);
 });
 

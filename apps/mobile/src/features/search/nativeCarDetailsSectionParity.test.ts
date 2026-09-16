@@ -131,6 +131,7 @@ test("Compare deals renders compact selectable real-price cards and leaves total
   assert.match(compare, /nativeCarFuelPolicyLabel\(result\.fuelPolicy\)/);
   assert.match(compare, /result\.mileagePolicy==="unlimited"\?"Unlimited mileage":nativeCarMileageLabel\(result\)/);
   assert.match(compare, /money\(offer\.currency,offer\.pricePerDay\)/);
+  assert.match(compare, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.68\}/);
   assert.doesNotMatch(compare, /offer\.totalPrice|Taxes & fees included|Car supplied by:|Pay at pickup|Mobile deal|Book<|View deal|Reserve/);
 
   for (const contract of ["marginTop:12", 'flexDirection:"row"', 'alignItems:"flex-end"', "gap:10"])
@@ -139,7 +140,7 @@ test("Compare deals renders compact selectable real-price cards and leaves total
     assert.ok(style("benefits").includes(contract), contract);
   for (const contract of ['flexDirection:"row"', 'alignItems:"center"', "gap:3", "flexShrink:0"])
     assert.ok(style("benefit").includes(contract), contract);
-  for (const contract of ["flexShrink:0", 'alignItems:"flex-end"'])
+  for (const contract of ["flexShrink:1", "minWidth:72", 'maxWidth:"42%"', 'alignItems:"flex-end"'])
     assert.ok(style("comparePrice").includes(contract), contract);
 });
 
