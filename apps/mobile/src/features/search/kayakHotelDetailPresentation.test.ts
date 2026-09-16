@@ -15,10 +15,8 @@ test("KAYAK overview reuses existing hotel sections with provider-authored facts
   assert.doesNotMatch(overview, /latitude:\s*0|longitude:\s*0|fake|placeholder coordinates/i);
 });
 
-test("KAYAK reviews keep the existing score presentation and add supplied sentiment and quotes", () => {
+test("KAYAK reviews keep the canonical score presentation without duplicate guest sentiment", () => {
   assert.match(reviews, /nativeHotelReviewPresentation\(result\)/);
-  assert.match(reviews, /providerDetails\?\.reviews\?\.sentiment/);
-  assert.match(reviews, /providerDetails\?\.reviews\?\.quotes/);
   assert.match(reviews, /Source: \{result\.reviewSource\}/);
-  assert.match(reviews, /“\{quote\}”/);
+  assert.doesNotMatch(reviews, /Guests say|providerDetails|sentiment|quotes|“\{quote\}”/);
 });
