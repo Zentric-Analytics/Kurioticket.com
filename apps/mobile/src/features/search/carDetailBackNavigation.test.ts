@@ -21,7 +21,7 @@ test("Cars Results pushes Details with Results-stack provenance and the resolved
 
 test("Cars Details reads provenance and dismisses to actual existing Results", () => {
   assert.match(details, /useNavigation/);
-  assert.match(details, /const navigation=useNavigation\(\)/);
+  assert.match(details, /const\s+navigation\s*=\s*useNavigation\(\)/);
   assert.match(details, /one\(params\.carResultsStack\)==="1"/);
   assert.doesNotMatch(details, /const carResultsStack\s*=\s*true/);
   assert.match(returnToResults, /if\(carResultsStack\)/);
