@@ -114,7 +114,7 @@ test("Cars card typography uses the shared Inter hierarchy without changing card
 test("lower band uses provider-aware spec labels in the approved two-column order without an internal divider", () => {
   const firstStart = lower.indexOf('<View style={c.specColumn}>');
   const middleStart = lower.indexOf('<View style={c.specColumn}>', firstStart + 1);
-  const commerceStart = lower.indexOf('<View style={[c.commerceColumn');
+  const commerceStart = lower.indexOf('<View style={c.commerceColumn}>');
   const first = lower.slice(firstStart, middleStart);
   const middle = lower.slice(middleStart, commerceStart);
   const commerce = lower.slice(commerceStart);
@@ -127,8 +127,11 @@ test("lower band uses provider-aware spec labels in the approved two-column orde
   assert.doesNotMatch(source, /middleSpecColumn/);
   assert.doesNotMatch(style("specColumn"), /borderLeftWidth|borderRightWidth|borderLeftColor|borderRightColor/);
   assert.match(source, /const carDividerColor = theme\.dark \? theme\.border : "#CBD5E1"/);
-  assert.match(source, /\[c\.commerceColumn,\{borderLeftColor:carDividerColor\}\]/);
-  assert.match(style("commerceColumn"), /borderLeftWidth:1/);
+  assert.match(source, /\[c\.lowerBand,\{backgroundColor:carInformationSurface,borderTopColor:carDividerColor\}\]/);
+  assert.match(style("lowerBand"), /borderTopWidth:1/);
+  assert.match(source, /<View style=\{c\.commerceColumn\}>/);
+  assert.doesNotMatch(source, /c\.commerceColumn[^>]*borderLeftColor:carDividerColor/);
+  assert.doesNotMatch(style("commerceColumn"), /borderLeftWidth|borderRightWidth|borderLeftColor|borderRightColor/);
   assert.match(providerPresentation, /sandboxPresentation\?\.specs/);
   assert.match(providerPresentation, /Passengers not supplied/);
   assert.match(providerPresentation, /Baggage capacity not supplied/);
