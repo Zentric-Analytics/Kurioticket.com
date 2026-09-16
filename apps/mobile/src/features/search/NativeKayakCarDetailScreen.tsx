@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Image, Linking, Platform, Pressable, ScrollView, Share, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
-import { ArrowLeft, BriefcaseBusiness, CarFront, Clock3, DoorOpen, ExternalLink, Info, MapPin, Users } from "lucide-react-native";
+import { ArrowLeft, BriefcaseBusiness, CarFront, Clock3, DoorOpen, ExternalLink, Heart, Info, MapPin, Share2, Users } from "lucide-react-native";
 import { WebView } from "react-native-webview";
 import { travelApi, type CarResult } from "../../api/travelApi";
 import { getApiBaseUrl } from "../../config/apiUrl";
@@ -12,6 +12,7 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { formatMarketCurrency } from "../currency/displayCurrency";
 import { buildSearchPlan, safeCanonicalCarResult } from "../flow/travelSearchModel";
 import { Button, money } from "./SearchUi";
+import { useSavedCar } from "./carSavedState";
 import { carResultsDismissCount } from "./carDetailReturnNavigation";
 import { comparisonCarOffers, primaryValidCarOffer } from "./carDetailState";
 import { nativeCarDetailDate, nativeCarDirectionsUrl, nativeCarLocationEmbedUrl, nativeCarRentalDays } from "./nativeCarDetailsModel";
@@ -19,6 +20,7 @@ import { nativeCarTrustedMapCoordinates } from "./nativeCarMapReferences";
 import { NativeAppleCarMap } from "./NativeAppleCarMap";
 import { NativeCarFullMapModal } from "./NativeCarFullMapModal";
 import { isKayakSandboxCar, nativeCarPrimarySpecLabels } from "./nativeCarProviderPresentation";
+import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { sandboxBookingUrl } from "../../../../../src/services/travel/kayakSandboxPublic";
 
 type Params = Record<string, string | string[]>;
@@ -80,6 +82,7 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
   const inset = useSafeAreaInsets();
   const navigation = useNavigation();
   const width = useWindowDimensions().width;
+  const saved = useSavedCar(result, params);
   const [activeTab, setActiveTab] = useState<"compare" | "pickup" | "location">("compare");
   const offers = useMemo(() => comparisonCarOffers(result.offers), [result.offers]);
   const primaryOffer = useMemo(() => primaryValidCarOffer(result.offers), [result.offers]);
@@ -138,6 +141,10 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
             <Text style={s.category}>{result.categoryLabel.toUpperCase()}</Text>
             <Text style={[s.sandboxLabel, { color: theme.textSecondary }]}>KAYAK sandbox · Simulated · Not bookable</Text>
           </View>
+          <View style={s.actions}>
+            <Pressable accessibilityRole="button" accessibilityLabel={saved.saved ? "Remove car from saved" : "Save car"} accessibilityState={{ selected: saved.saved }} onPress={saved.toggle} style={[s.action, s.saveAction]}><Heart size={20} color={saved.saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={saved.saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} /></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Share car" onPress={() => void Share.share({ message: `${result.modelName} — ${result.categoryLabel}` })} style={[s.action, s.shareAction]}><Share2 size={19} color={theme.icon} /></Pressable>
+          </View>
         </View>
         <View style={[s.imageBox,{backgroundColor:theme.surface}]}>
           {resolveImage(result.imageUrl)
@@ -152,7 +159,7 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
         </View>
       </View>
 
-      <View style={[s.carsTabsShell, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
+      <View style={[s.carsTabsShell, { backgroundColor: carCanvasColor, borderBottomColor: theme.border }]}>
         <View accessibilityRole="tablist" style={s.carsTabsRow}>
           {(["compare", "pickup", "location"] as const).map((tab) => {
             const selected = activeTab === tab;
@@ -164,7 +171,7 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
         </View>
       </View>
 
-      <View style={s.page}>
+      <View style={[s.page, { backgroundColor: carCanvasColor }]}>
         {activeTab === "compare" && offers.length ? <KayakCompare result={result} offers={offers} selectedOfferId={offer?.id} onSelectOffer={setSelectedOfferId} days={days} pickupDate={pickupDate} dropoffDate={dropoffDate} theme={theme} /> : null}
         {activeTab === "pickup" ? <PickupReturn result={result} pickupDate={pickupDate} dropoffDate={dropoffDate} pickupTime={pickupTime} dropoffTime={dropoffTime} theme={theme} /> : null}
         {activeTab === "location" ? <Location result={result} search={search} pickupDate={pickupDate} dropoffDate={dropoffDate} pickupTime={pickupTime} dropoffTime={dropoffTime} theme={theme} /> : null}
@@ -235,7 +242,7 @@ function LocationTimelineEntry({ label, location, date, time, theme, connector =
 }
 
 function PickupReturn({ result, pickupDate, dropoffDate, pickupTime, dropoffTime, theme }: { result: CarResult; pickupDate: string; dropoffDate: string; pickupTime: string; dropoffTime: string; theme: Theme }) {
-  return <View style={[s.pickupSection, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+  return <View style={[s.pickupSection, { backgroundColor: theme.dark ? theme.background : CAR_DETAIL_LIGHT_CANVAS, borderColor: theme.border }]}>
     <Text style={[s.pickupHeading, { color: theme.dark ? theme.textPrimary : "#020617" }]}>Pickup and return</Text>
     <View style={s.timeline}>
       <TimelineEntry label="Pick-up" location={result.pickupLocation} date={pickupDate} time={pickupTime} theme={theme} />
@@ -308,6 +315,10 @@ const s = StyleSheet.create({
   hero: { paddingVertical: 16, borderBottomWidth: 1 },
   heroHeader: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12, paddingHorizontal: 16, paddingBottom: 12 },
   titleCopy: { flex: 1, minWidth: 0 },
+  actions: { flexDirection: "row", flexShrink: 0, gap: 0 },
+  action: { width: 44, height: 44, justifyContent: "flex-start", paddingTop: 2 },
+  saveAction: { alignItems: "flex-end", paddingRight: 4 },
+  shareAction: { alignItems: "flex-start", paddingLeft: 4 },
   category: { marginTop: 1, fontSize: 10, lineHeight: 14, fontWeight: "700", fontFamily: appFonts.bold, textTransform: "uppercase", letterSpacing: 1.4, color: "#075EE8" },
   sandboxLabel: { marginTop: 4, fontSize: 10, lineHeight: 14, fontWeight: "600", fontFamily: appFonts.semibold },
   title: { fontSize: 20, lineHeight: 25, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.5 },
@@ -328,7 +339,7 @@ const s = StyleSheet.create({
   page: { paddingHorizontal: 16 },
   compare: { paddingTop: 12, paddingBottom: 28, borderBottomWidth: 1 },
   heading: { fontSize: 20, lineHeight: 28, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.5 },
-  compareHeading: { fontSize: 18, lineHeight: 24, fontWeight: "600", fontFamily: appFonts.semibold, letterSpacing: -0.25 },
+  compareHeading: { fontSize: 16, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.2 },
   stay: { marginTop: 4, fontSize: 12, lineHeight: 18, fontWeight: "500", fontFamily: appFonts.medium },
   sandboxDisclosure: { marginTop: 6, fontSize: 11, lineHeight: 16, fontWeight: "400", fontFamily: appFonts.regular },
   dealList: { marginTop: 20, gap: 10 },
@@ -348,7 +359,7 @@ const s = StyleSheet.create({
   daily: { fontSize: 18, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.5, textAlign: "right", fontVariant: ["tabular-nums"] },
   perDay: { fontSize: 10, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium, color: "#075EE8", textAlign: "right" },
   pickupSection: { marginHorizontal: -16, paddingHorizontal: 16, paddingVertical: 20, borderTopWidth: 1, borderBottomWidth: 1 },
-  pickupHeading: { fontSize: 18, lineHeight: 24, fontWeight: "600", fontFamily: appFonts.semibold, letterSpacing: -0.25 },
+  pickupHeading: { fontSize: 16, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.2 },
   timeline: { marginTop: 16, gap: 20 },
   timelineEntry: { flexDirection: "row" },
   timelineRail: { width: 14, borderLeftWidth: 2, borderLeftColor: "#BFDBFE", alignItems: "center" },
@@ -361,7 +372,7 @@ const s = StyleSheet.create({
   timelineDate: { fontSize: 14, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
   providerNote: { marginTop: 20, fontSize: 12, lineHeight: 18, fontWeight: "400", fontFamily: appFonts.regular },
   location: { paddingTop: 12, paddingBottom: 28, borderBottomWidth: 1 },
-  locationHeading: { fontSize: 18, lineHeight: 24, fontWeight: "600", fontFamily: appFonts.semibold, letterSpacing: -0.25 },
+  locationHeading: { fontSize: 16, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.2 },
   identity: { marginTop: 12, flexDirection: "row", alignItems: "flex-start", gap: 12 },
   identityCopy: { flex: 1, minWidth: 0 },
   pinWell: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#EFF6FF", alignItems: "center", justifyContent: "center" },

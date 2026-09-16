@@ -76,9 +76,30 @@ test("native KAYAK Cars details do not invent unsupported static-provider facts"
   assert.match(sandboxDetail, /sandboxPickupLabel\(result\)/);
 });
 
-test("sandbox native results do not imply recommendation or saved-state support", () => {
+test("sandbox native results omit recommendations while retaining standard save and share actions", () => {
   const card = readFileSync("src/features/search/CarResultCard.tsx", "utf8");
   assert.match(card, /rank === 0 && !sandbox/);
-  assert.match(card, /!sandbox \? <View style=\{c\.utilityColumn\}>/);
+  assert.doesNotMatch(card, /!sandbox \? <View style=\{c\.utilityColumn\}>/);
+  assert.match(card, /accessibilityLabel=\{savedState\.saved \? `Remove \$\{result\.modelName\} from saved` : `Save \$\{result\.modelName\}`\}/);
+  assert.match(card, /accessibilityLabel=\{`Share \$\{result\.modelName\}`\}/);
   assert.match(card, /KAYAK sandbox · Simulated · Not bookable/);
+});
+
+
+test("native KAYAK Cars details use the standard accessible save and share contract", () => {
+  assert.match(sandboxDetail, /const saved = useSavedCar\(result, params\)/);
+  assert.match(sandboxDetail, /accessibilityLabel=\{saved\.saved \? "Remove car from saved" : "Save car"\}/);
+  assert.match(sandboxDetail, /accessibilityState=\{\{ selected: saved\.saved \}\} onPress=\{saved\.toggle\}/);
+  assert.match(sandboxDetail, /accessibilityLabel="Share car" onPress=\{\(\) => void Share\.share/);
+  assert.match(sandboxDetail, /<Heart size=\{20\}/);
+  assert.match(sandboxDetail, /<Share2 size=\{19\}/);
+});
+
+test("approved and KAYAK detail rails and content use the Cars canvas", () => {
+  for (const detail of [normalDetail, sandboxDetail]) {
+    assert.match(detail, /s\.carsTabsShell,\s*\{\s*backgroundColor:\s*carCanvasColor/);
+    assert.match(detail, /s\.page,\s*\{\s*backgroundColor:\s*carCanvasColor/);
+    assert.doesNotMatch(detail, /s\.carsTabsShell,\s*\{\s*backgroundColor:\s*theme\.surface/);
+    assert.doesNotMatch(detail, /s\.pickupSection,\s*\{\s*backgroundColor:\s*theme\.surface/);
+  }
 });

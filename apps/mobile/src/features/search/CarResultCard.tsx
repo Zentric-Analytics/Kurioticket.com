@@ -56,9 +56,9 @@ export function CarResultCard({ result, rank, imageUri, searchParams, resultBack
             <Text numberOfLines={1} style={c.category}>{result.categoryLabel}</Text>
             {sandbox ? <Text style={[c.sandboxStatus,{color:theme.textSecondary}]}>KAYAK sandbox · Simulated · Not bookable</Text> : null}
           </View>
-          {!sandbox ? <View style={c.utilityColumn}>
+          <View style={c.utilityColumn}>
             <View style={c.actions}><Pressable accessibilityRole="button" accessibilityLabel={savedState.saved ? `Remove ${result.modelName} from saved` : `Save ${result.modelName}`} accessibilityState={{ selected: savedState.saved }} onPress={savedState.toggle} style={({pressed}) => [c.action,c.saveAction,pressed&&c.pressed]}><FlowIcon name="heart" size={20} color={savedState.saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={savedState.saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} /></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Share ${result.modelName}`} onPress={share} style={({pressed}) => [c.action,c.shareAction,pressed&&c.pressed]}><Share2 size={18} color={theme.icon} /></Pressable></View>
-          </View> : null}
+          </View>
         </View>
         <View style={c.identityDetails}>
           <View style={c.location}><MapPin size={13} color={theme.textPrimary} /><Text style={[c.meta,{color:theme.textSecondary}]}>{result.pickupLocation}</Text></View>
