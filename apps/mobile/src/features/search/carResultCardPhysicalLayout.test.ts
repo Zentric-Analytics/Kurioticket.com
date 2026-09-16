@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import test from "node:test";
 
 const source = readFileSync(resolve("src/features/search/CarResultCard.tsx"), "utf8");
+const providerPresentation = readFileSync(resolve("src/features/search/nativeCarProviderPresentation.ts"), "utf8");
 const priceAlertSource = readFileSync(resolve("src/features/search/NativeCarPriceAlert.tsx"), "utf8");
 const flightResultsSource = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
 const styles = source.slice(source.indexOf("const c = StyleSheet.create"));
@@ -51,7 +52,7 @@ test("top section owns only the visual and identity information", () => {
   assert.doesNotMatch(source, /topMetaShell|topMetaRow|topMetaContent|hasTopMeta/);
 });
 
-test("Best value precedes the header while Free cancellation remains in identity details", () => {
+test("Best value precedes the header for normal inventory while sandbox cards stay clearly simulated", () => {
   const identityZone = top.slice(top.indexOf('<View style={[c.identityZone,{backgroundColor:carInformationSurface}]}>'));
   const bestValueStart = identityZone.indexOf("rank === 0");
   const headerStart = identityZone.indexOf('<View style={c.headerRow}>');
@@ -60,7 +61,9 @@ test("Best value precedes the header while Free cancellation remains in identity
   const freeCancellationStart = identityZone.indexOf("offer?.freeCancellation");
   assert.ok(bestValueStart >= 0 && bestValueStart < headerStart);
   assert.ok(headerStart < detailsStart && detailsStart < locationStart && locationStart < freeCancellationStart);
-  assert.match(identityZone, /rank === 0 \? <View style=\{c\.bestValueRow\}><View style=\{c\.badge\}><Award size=\{11\} color="#15803D" \/><Text style=\{c\.badgeText\}>Best value/);
+  assert.match(identityZone, /rank === 0 && !sandbox \? <View style=\{c\.bestValueRow\}><View style=\{c\.badge\}><Award size=\{11\} color="#15803D" \/><Text style=\{c\.badgeText\}>Best value/);
+  assert.match(identityZone, /sandbox \? <Text style=\{c\.category\}>KAYAK sandbox · Simulated · Not bookable<\/Text> : null/);
+  assert.match(identityZone, /!sandbox \? <View style=\{c\.utilityColumn\}>/);
   assert.match(top, /offer\?\.freeCancellation \? <View style=\{c\.freeCancellation\}>[\s\S]*ShieldCheck[\s\S]*Free cancellation/);
   assert.match(source, /const freeCancellationColor = theme\.dark \? theme\.textPrimary : "#000000"/);
   assert.doesNotMatch(style("freeCancellation") + style("freeCancellationText"), /#15803D|#ECFDF5|backgroundColor|border/);
@@ -74,14 +77,14 @@ test("Best value precedes the header while Free cancellation remains in identity
     assert.doesNotMatch(style(name), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|translate/);
 });
 
-test("name and save/share controls remain siblings in the normal header row", () => {
+test("name and save/share controls remain siblings for normal inventory", () => {
   const header = top.slice(top.indexOf('<View style={c.headerRow}>'), top.indexOf('<View style={c.identityDetails}>'));
-  assert.match(header, /<View style=\{c\.identityColumn\}>[\s\S]*identity\.primaryName[\s\S]*<View style=\{c\.utilityColumn\}>/);
+  assert.match(header, /<View style=\{c\.identityColumn\}>[\s\S]*identity\.primaryName[\s\S]*!sandbox \? <View style=\{c\.utilityColumn\}>/);
   assert.match(header, /savedState\.toggle[\s\S]*Share2/);
   assert.match(style("identityColumn"), /flex:1,minWidth:0/);
 });
 
-test("favorite and share behavior and accessibility remain in the top-right", () => {
+test("favorite and share behavior and accessibility remain available for normal inventory", () => {
   assert.match(top, /accessibilityRole="button" accessibilityLabel=\{savedState\.saved \? `Remove \$\{result\.modelName\} from saved` : `Save \$\{result\.modelName\}`\}/);
   assert.match(top, /accessibilityState=\{\{ selected: savedState\.saved \}\}/);
   assert.match(top, /onPress=\{savedState\.toggle\}/);
@@ -90,17 +93,21 @@ test("favorite and share behavior and accessibility remain in the top-right", ()
   assert.match(style("action"), /width:28,height:44/);
 });
 
-test("lower band has the approved two spec columns and commerce column", () => {
+test("lower band uses provider-aware spec labels in the approved two-column order", () => {
   const firstStart = lower.indexOf('<View style={c.specColumn}>');
   const middleStart = lower.indexOf('<View style={[c.specColumn,c.middleSpecColumn');
   const commerceStart = lower.indexOf('<View style={[c.commerceColumn');
   const first = lower.slice(firstStart, middleStart);
   const middle = lower.slice(middleStart, commerceStart);
   const commerce = lower.slice(commerceStart);
-  assert.match(first, /result\.passengers[\s\S]*result\.transmission/);
-  assert.doesNotMatch(first, /result\.doors|result\.bags/);
-  assert.match(middle, /result\.doors[\s\S]*result\.bags/);
-  assert.doesNotMatch(middle, /result\.passengers|result\.transmission/);
+  assert.match(source, /const specLabels = nativeCarPrimarySpecLabels\(result\)/);
+  assert.match(first, /specLabels\.passengers[\s\S]*specLabels\.transmission/);
+  assert.doesNotMatch(first, /specLabels\.doors|specLabels\.bags/);
+  assert.match(middle, /specLabels\.doors[\s\S]*specLabels\.bags/);
+  assert.doesNotMatch(middle, /specLabels\.passengers|specLabels\.transmission/);
+  assert.match(providerPresentation, /sandboxPresentation\?\.specs/);
+  assert.match(providerPresentation, /Passengers not supplied/);
+  assert.match(providerPresentation, /Baggage capacity not supplied/);
   assert.match(commerce, /money\(offer\.currency, offer\.pricePerDay\)[\s\S]*>per day<\/Text>[\s\S]*>View deal<\/Text>/);
   assert.doesNotMatch(commerce, /offer\.totalPrice|offer\.taxesAndFeesIncluded|includes taxes & fees|taxes & fees shown where known/);
   assert.equal(source.match(/>View deal<\/Text>/g)?.length, 1);
