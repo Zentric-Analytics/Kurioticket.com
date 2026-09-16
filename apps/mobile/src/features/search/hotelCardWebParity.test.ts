@@ -166,5 +166,5 @@ test("Hotel cards preserve truthful nightly and total price presentation", () =>
   assert.match(card,/displayPrices\?\.nightly\?\.formatted/);
   assert.match(card,/displayPrices\?\.total\?\.formatted/);
   assert.match(card,/Math\.abs\(result\.totalPrice - result\.pricePerNight\) > 0\.005/);
-  assert.match(card,/\} total<\/Text>/);
+  assert.match(card,/\{displayPrices\?\.total\?\.formatted \?\? money\(result\.currency, result\.totalPrice\)\}\s*total\s*<\/Text>/);
 });
