@@ -73,3 +73,18 @@ test("Cars header and scrolling content share a theme-safe canvas without a hero
   assert.match(hero, /borderBottomWidth:1/);
   assert.doesNotMatch(hero, /borderTopWidth|borderTopColor/);
 });
+
+test("Cars primary specifications distribute the second column toward the right edge", () => {
+  const specs = style("specs");
+  assert.ok(specs.includes('flexDirection:"row"'));
+  assert.ok(specs.includes('flexWrap:"wrap"'));
+  assert.ok(specs.includes('justifyContent:"space-between"'));
+  assert.ok(specs.includes("paddingHorizontal:16"));
+  assert.doesNotMatch(specs, /columnGap/);
+
+  const spec = style("spec");
+  assert.ok(spec.includes('width:"42%"'));
+  assert.ok(spec.includes('flexDirection:"row"'));
+  assert.ok(spec.includes('alignItems:"center"'));
+  assert.ok(spec.includes("gap:8"));
+});
