@@ -12,6 +12,7 @@ const matrices = {
     "src/shared/presentation/travelEntryPresentation.test.ts",
     "src/services/travel/providers/duffelProvider.searchContract.test.ts",
     "src/services/travel/standaloneFlightDetails.selectedKayakOffer.test.ts",
+    "src/services/travel/standaloneFlightDetails.selectedDealDetails.test.ts",
     "src/services/travel/kayakFareMaterialGrouping.test.ts",
     "src/services/travel/kayakFareInformationReview.test.ts",
     "src/components/results/kayakAirlineLogo.test.ts",
@@ -47,6 +48,7 @@ const matrices = {
     "src/features/flow/hotelPriceAlertModel.test.ts",
     "src/features/search/hotelCardWebParity.test.ts",
     "src/features/search/hotelDiscoveryPresentation.test.ts",
+    "src/features/search/nativeFlightSelectedDealConsistency.test.ts",
   ],
 };
 

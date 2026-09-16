@@ -239,6 +239,7 @@ export function buildMaterialFareChoices(
           providerName,
           price: offer.price,
           currency: offer.currency,
+          offer: toFlightDetailsOffer(offer),
         };
         const current = dealsByProvider.get(providerIdentity);
         const candidateIsSelected = offer.providerOfferId === selectedProviderOfferId;
