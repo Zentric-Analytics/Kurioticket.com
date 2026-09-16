@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Image, Pressable, Share, StyleSheet, Text, View } from "react-native";
-import { Award, BriefcaseBusiness, ChevronRight, DoorOpen, MapPin, Share2, ShieldCheck, Users } from "lucide-react-native";
+import { Award, BriefcaseBusiness, CarFront, ChevronRight, DoorOpen, MapPin, Share2, ShieldCheck, Users } from "lucide-react-native";
 import type { CarResult } from "../../api/travelApi";
 import { FlowIcon } from "../flow/FlowIcon";
 import { money, ui } from "./SearchUi";
@@ -32,7 +32,11 @@ export function CarResultCard({ result, rank, imageUri, searchParams, resultBack
   const specLabels = nativeCarPrimarySpecLabels(result);
   const curatedImage = isCuratedCarResultImage(imageUri);
   const imageResizeMode = curatedImage ? "contain" : "cover";
-  const transmissionIcon = result.transmission === "automatic" ? "transmissionAutomatic" : "transmissionManual";
+  const transmissionIcon = /manual/i.test(specLabels.transmission)
+    ? "transmissionManual"
+    : /automatic/i.test(specLabels.transmission)
+      ? "transmissionAutomatic"
+      : null;
   const share = () => void Share.share({ message: result.modelName, title: result.modelName });
   return <View style={[c.card,{backgroundColor:carInformationSurface,borderColor:theme.dark?theme.border:"#D8E1EC",shadowColor:theme.dark?"#000000":"#18305B"}]}>
     <View style={c.topSection}>
@@ -63,7 +67,7 @@ export function CarResultCard({ result, rank, imageUri, searchParams, resultBack
     <View style={[c.lowerBand,{backgroundColor:carInformationSurface,borderTopColor:theme.border}]}>
       <View style={c.specColumn}>
         <Spec icon={<Users size={14} color="#64748B" />} label={specLabels.passengers} />
-        <Spec icon={<FlowIcon name={transmissionIcon} size={14} color="#64748B" />} label={specLabels.transmission} />
+        <Spec icon={transmissionIcon ? <FlowIcon name={transmissionIcon} size={14} color="#64748B" /> : <CarFront size={14} color="#64748B" />} label={specLabels.transmission} />
       </View>
       <View style={[c.specColumn,c.middleSpecColumn,{borderLeftColor:theme.border}]}>
         <Spec icon={<DoorOpen size={14} color="#64748B" />} label={specLabels.doors} />
