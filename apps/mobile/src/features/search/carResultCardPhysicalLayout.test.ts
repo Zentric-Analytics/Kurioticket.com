@@ -10,7 +10,7 @@ const flightResultsSource = readFileSync(resolve("src/features/search/ApprovedRe
 const styles = source.slice(source.indexOf("const c = StyleSheet.create"));
 const style = (name: string) => styles.slice(styles.indexOf(`${name}:`), styles.indexOf("},", styles.indexOf(`${name}:`)) + 2);
 const topStart = source.indexOf('<View style={c.topSection}>');
-const lowerStart = source.indexOf('<View style={[c.lowerBand,{backgroundColor:carInformationSurface,borderTopColor:theme.border}]}>');
+const lowerStart = source.indexOf('<View style={[c.lowerBand,{backgroundColor:carInformationSurface,borderTopColor:carDividerColor}]}>');
 const top = source.slice(topStart, lowerStart);
 const lower = source.slice(lowerStart, source.indexOf("  </View>;"));
 
@@ -19,7 +19,7 @@ test("Car card shell and two-level grid retain safe natural layout", () => {
   assert.match(style("card"), /borderWidth:1,borderRadius:13,overflow:"hidden"/);
   assert.match(style("topSection"), /minHeight:156,flexDirection:"row",alignItems:"stretch"/);
   assert.match(style("visualColumn"), /width:"40%",minHeight:156,padding:6/);
-  assert.match(style("lowerBand"), /flexDirection:"row",alignItems:"stretch",borderTopWidth:StyleSheet\.hairlineWidth/);
+  assert.match(style("lowerBand"), /flexDirection:"row",alignItems:"stretch",borderTopWidth:1/);
   assert.doesNotMatch(style("card").replace(/shadowOffset:\{[^}]*\}/, ""), /(?:^|,)height:/);
   for (const name of ["topSection", "visualColumn", "identityZone", "lowerBand", "specColumn", "commerceColumn"])
     assert.doesNotMatch(style(name), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|translateY|(?:^|,)height:/);
@@ -37,14 +37,14 @@ test("vehicle image presentation and canvas ownership remain intact", () => {
 });
 
 test("non-image information uses a balanced light gray while the image stays separate", () => {
-  assert.match(source, /const carInformationSurface = theme\.dark \? resultBackgroundColor : "#DEE4EC"/);
+  assert.match(source, /const carInformationSurface = theme\.dark \? resultBackgroundColor : "#E7EBF1"/);
   assert.match(priceAlertSource, /trackColor=\{\{ false: theme\.dark \? "#465269" : "#CBD5E1", true: theme\.switchTrackActive \}\}/);
-  assert.notEqual("#DEE4EC", "#CBD5E1");
+  assert.doesNotMatch(source, /const carInformationSurface = theme\.dark \? resultBackgroundColor : "#(?:DEE4EC|CBD5E1)"/);
   assert.match(source, /\[c\.identityZone,\{backgroundColor:carInformationSurface\}\]/);
-  assert.match(source, /\[c\.lowerBand,\{backgroundColor:carInformationSurface,borderTopColor:theme\.border\}\]/);
+  assert.match(source, /\[c\.lowerBand,\{backgroundColor:carInformationSurface,borderTopColor:carDividerColor\}\]/);
   assert.doesNotMatch(source, /c\.visualColumn,\{backgroundColor:carInformationSurface\}/);
   assert.match(source, /c\.visualColumn,\{backgroundColor:theme\.surface\}/);
-  assert.doesNotMatch(source, /c\.visualColumn,\{backgroundColor:"#DEE4EC"\}/);
+  assert.doesNotMatch(source, /c\.visualColumn,\{backgroundColor:"#(?:E7EBF1|DEE4EC|CBD5E1)"\}/);
 });
 
 test("top section owns only the visual and identity information", () => {
@@ -125,8 +125,10 @@ test("lower band uses provider-aware spec labels in the approved two-column orde
   assert.match(middle, /specLabels\.doors[\s\S]*specLabels\.bags/);
   assert.doesNotMatch(middle, /specLabels\.passengers|specLabels\.transmission/);
   assert.doesNotMatch(source, /middleSpecColumn/);
-  assert.doesNotMatch(style("specColumn"), /borderLeftWidth|borderLeftColor/);
-  assert.match(style("commerceColumn"), /borderLeftWidth:StyleSheet\.hairlineWidth/);
+  assert.doesNotMatch(style("specColumn"), /borderLeftWidth|borderRightWidth|borderLeftColor|borderRightColor/);
+  assert.match(source, /const carDividerColor = theme\.dark \? theme\.border : "#CBD5E1"/);
+  assert.match(source, /\[c\.commerceColumn,\{borderLeftColor:carDividerColor\}\]/);
+  assert.match(style("commerceColumn"), /borderLeftWidth:1/);
   assert.match(providerPresentation, /sandboxPresentation\?\.specs/);
   assert.match(providerPresentation, /Passengers not supplied/);
   assert.match(providerPresentation, /Baggage capacity not supplied/);
