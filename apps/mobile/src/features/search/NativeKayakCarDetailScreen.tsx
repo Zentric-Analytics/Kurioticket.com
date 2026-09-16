@@ -15,6 +15,8 @@ import { Button, money } from "./SearchUi";
 import { useSavedCar } from "./carSavedState";
 import { carResultsDismissCount } from "./carDetailReturnNavigation";
 import { comparisonCarOffers, primaryValidCarOffer } from "./carDetailState";
+import { presentCarOfferCurrency } from "./carDisplayCurrency";
+import { useCarDisplayCurrency } from "./useCarDisplayCurrency";
 import { nativeCarDetailDate, nativeCarDirectionsUrl, nativeCarLocationEmbedUrl, nativeCarRentalDays } from "./nativeCarDetailsModel";
 import { nativeCarTrustedMapCoordinates } from "./nativeCarMapReferences";
 import { NativeAppleCarMap } from "./NativeAppleCarMap";
@@ -85,6 +87,7 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
   const width = useWindowDimensions().width;
   const carStickyTabsTop = inset.top + 72;
   const saved = useSavedCar(result, params);
+  const { displayCurrency, rates } = useCarDisplayCurrency();
   const [activeTab, setActiveTab] = useState<CarDetailTab>("compare");
   const activeCarTabRef = useRef<CarDetailTab>("compare");
   const carDetailScrollRef = useRef<ScrollView>(null);
@@ -94,8 +97,10 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
   const carTabsPinnedRef = useRef(false);
   const [carTabsPinned, setCarTabsPinned] = useState(false);
   const carTabScrollOffsets = useRef<Record<CarDetailTab, number | null>>({ compare: 0, pickup: null, location: null });
-  const offers = useMemo(() => comparisonCarOffers(result.offers), [result.offers]);
-  const primaryOffer = useMemo(() => primaryValidCarOffer(result.offers), [result.offers]);
+  const providerOffers = useMemo(() => comparisonCarOffers(result.offers), [result.offers]);
+  const offers = useMemo(() => providerOffers.map((candidate) => presentCarOfferCurrency(candidate, displayCurrency, rates)), [providerOffers, displayCurrency, rates]);
+  const providerPrimaryOffer = useMemo(() => primaryValidCarOffer(result.offers), [result.offers]);
+  const primaryOffer = useMemo(() => providerPrimaryOffer ? presentCarOfferCurrency(providerPrimaryOffer, displayCurrency, rates) : undefined, [providerPrimaryOffer, displayCurrency, rates]);
   const [selectedOfferId, setSelectedOfferId] = useState<string | undefined>(() => primaryOffer?.id);
 
   useEffect(() => {
@@ -254,7 +259,7 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
             <Text style={[s.dockEyebrow, { color: theme.textSecondary }]}>KAYAK sandbox · not bookable</Text>
             <Info accessible={false} size={12} color={theme.textSecondary} />
           </View>
-          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.83} style={[s.dockTotal, { color: theme.textPrimary }]}>{formatMarketCurrency(offer.pricePerDay, offer.currency)}</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={[s.dockTotal, { color: theme.textPrimary }]}>{formatMarketCurrency(offer.pricePerDay, offer.currency)}</Text>
           <Text numberOfLines={1} style={[s.dockPerDay, { color: theme.textSecondary }]}>per day · simulated</Text>
         </View>
         <View style={s.dockAction}>
@@ -294,7 +299,7 @@ function KayakCompare({ result, offers, selectedOfferId, onSelectOffer, days, pi
               <View style={s.benefit}><CarFront size={14} color={theme.dark ? theme.icon : "#475569"} /><Text numberOfLines={1} style={[s.benefitText, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{supplier}</Text></View>
               <View style={s.benefit}><Info size={14} color={theme.dark ? theme.icon : "#475569"} /><Text numberOfLines={1} style={[s.benefitText, { color: theme.dark ? theme.textSecondary : "#334155" }]}>Not bookable</Text></View>
             </View>
-            <View style={s.comparePrice}><Text style={[s.daily, { color: theme.textPrimary }]}>{money(offer.currency, offer.pricePerDay)}</Text><Text style={s.perDay}>per day</Text></View>
+            <View style={s.comparePrice}><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.68} style={[s.daily, { color: theme.textPrimary }]}>{money(offer.currency, offer.pricePerDay)}</Text><Text style={s.perDay}>per day</Text></View>
           </View>
         </Pressable>;
       })}
@@ -420,8 +425,8 @@ const s = StyleSheet.create({
   benefits: { flex: 1, minWidth: 0, flexDirection: "row", flexWrap: "wrap", alignItems: "center", alignContent: "flex-start", columnGap: 10, rowGap: 7 },
   benefit: { flexDirection: "row", alignItems: "center", gap: 3, flexShrink: 1, minWidth: 0 },
   benefitText: { maxWidth: 150, fontSize: 10.5, lineHeight: 15, fontWeight: "600", fontFamily: appFonts.semibold },
-  comparePrice: { flexShrink: 0, alignItems: "flex-end" },
-  daily: { fontSize: 18, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.5, textAlign: "right", fontVariant: ["tabular-nums"] },
+  comparePrice: { flexShrink: 1, minWidth: 72, maxWidth: "42%", alignItems: "flex-end" },
+  daily: { maxWidth: "100%", fontSize: 18, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.5, textAlign: "right", fontVariant: ["tabular-nums"] },
   perDay: { fontSize: 10, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium, color: "#075EE8", textAlign: "right" },
   pickupSection: { marginHorizontal: -16, paddingHorizontal: 16, paddingVertical: 20, borderTopWidth: 1, borderBottomWidth: 1 },
   pickupHeading: { fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.2 },
@@ -462,8 +467,8 @@ const s = StyleSheet.create({
   dockPrice: { flex: 1, minWidth: 0, gap: 1 },
   dockLabel: { flexDirection: "row", alignItems: "center", gap: 4 },
   dockEyebrow: { fontSize: 11, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
-  dockTotal: { fontSize: 24, lineHeight: 30, fontWeight: "800", fontFamily: appFonts.extraBold, textAlign: "left", fontVariant: ["tabular-nums"] },
-  dockPerDay: { fontSize: 11, lineHeight: 16, fontWeight: "400", fontFamily: appFonts.regular, textAlign: "left" },
+  dockTotal: { maxWidth: "100%", fontSize: 24, lineHeight: 30, fontWeight: "800", fontFamily: appFonts.extraBold, textAlign: "left", fontVariant: ["tabular-nums"] },
+  dockPerDay: { maxWidth: "100%", fontSize: 11, lineHeight: 16, fontWeight: "400", fontFamily: appFonts.regular, textAlign: "left" },
   dockAction: { flex: 0.9, minWidth: 132 },
   continue: { width: "100%", minHeight: 48, borderRadius: 8, backgroundColor: colors.blue, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
   continueText: { fontSize: 12, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold, color: "white", textAlign: "center" },
