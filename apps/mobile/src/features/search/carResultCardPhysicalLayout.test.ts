@@ -179,3 +179,13 @@ test("location stays above while obsolete benefit contracts remain absent", () =
   assert.doesNotMatch(lower, /result\.pickupLocation|MapPin/);
   assert.doesNotMatch(source, /<Fuel|<Gauge|nativeCarFuelPolicyLabel\(|nativeCarMileageLabel\(|fuelPolicyLabel|mileageLabel|rentalBenefits/);
 });
+
+test("pickup pin aligns to the first line while long locations keep wrapping", () => {
+  assert.match(source, /<View style=\{c\.location\}><MapPin size=\{13\} color=\{theme\.textPrimary\} style=\{c\.locationIcon\} \/><Text style=\{\[c\.meta,/);
+  assert.match(style("location"), /flexDirection:"row",alignItems:"flex-start",gap:4/);
+  assert.doesNotMatch(style("location"), /alignItems:"center"/);
+  assert.match(style("locationIcon"), /marginTop:1/);
+  assert.match(style("meta"), /flex:1,minWidth:0[^}]*lineHeight:15/);
+  const locationMarkup = source.slice(source.indexOf('<View style={c.location}>'), source.indexOf('</View>', source.indexOf('<View style={c.location}>')));
+  assert.doesNotMatch(locationMarkup, /numberOfLines|ellipsizeMode/);
+});

@@ -138,6 +138,7 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
   };
   const light = !theme.dark;
   const carCanvasColor = theme.dark ? theme.background : CAR_DETAIL_LIGHT_CANVAS;
+  const carInformationSurface = theme.dark ? carCanvasColor : "#E7EBF1";
 
   const syncCarTabsPinned = useCallback((offset: number) => {
     const stickyStart = carTabsStickyStartRef.current;
@@ -244,10 +245,10 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
       </View>
     </ScrollView>
 
-    <Pressable accessibilityRole="button" accessibilityLabel="Back to Cars results" onPress={returnToCarResults} style={[s.heroBack, { top: inset.top + 12, backgroundColor: carCanvasColor }]}>
+    <Pressable accessibilityRole="button" accessibilityLabel="Back to Cars results" onPress={returnToCarResults} style={[s.heroBack, { top: inset.top + 12, backgroundColor: carInformationSurface }]}>
       <ArrowLeft size={25} strokeWidth={2.2} color={light ? "#0F172A" : theme.icon} />
     </Pressable>
-    <View style={[s.heroActions, { top: inset.top + 12, backgroundColor: carCanvasColor }]}>
+    <View style={[s.heroActions, { top: inset.top + 12, backgroundColor: carInformationSurface }]}>
       <Pressable accessibilityRole="button" accessibilityLabel={saved.saved ? "Remove car from saved" : "Save car"} accessibilityState={{ selected: saved.saved }} onPress={saved.toggle} style={s.heroAction}><Heart size={22} strokeWidth={2} color={saved.saved ? androidFavoriteColors.savedStroke : light ? androidFavoriteColors.unsavedStroke : theme.icon} fill={saved.saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} /></Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="Share car" onPress={() => void Share.share({ message: `${result.modelName} — ${result.categoryLabel}` })} style={s.heroAction}><Share2 size={21} color={light ? "#0F172A" : theme.icon} /></Pressable>
     </View>
@@ -427,8 +428,8 @@ const s = StyleSheet.create({
   benefit: { flexDirection: "row", alignItems: "center", gap: 3, flexShrink: 1, minWidth: 0 },
   benefitText: { maxWidth: 150, fontSize: 10.5, lineHeight: 15, fontWeight: "600", fontFamily: appFonts.semibold },
   comparePrice: { flexShrink: 1, minWidth: 72, maxWidth: "42%", alignItems: "flex-end" },
-  daily: { maxWidth: "100%", fontSize: 18, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.5, textAlign: "right", fontVariant: ["tabular-nums"] },
-  perDay: { fontSize: 10, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium, color: "#075EE8", textAlign: "right" },
+  daily: { maxWidth: "100%", fontSize: 19, lineHeight: 22, fontWeight: "600", fontFamily: appFonts.semibold, letterSpacing: -0.25, textAlign: "right", fontVariant: ["tabular-nums"] },
+  perDay: { fontSize: 10, lineHeight: 13, fontWeight: "500", fontFamily: appFonts.medium, color: "#075EE8", textAlign: "right" },
   pickupSection: { marginHorizontal: -16, paddingHorizontal: 16, paddingVertical: 20, borderTopWidth: 1, borderBottomWidth: 1 },
   pickupHeading: { fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.2 },
   timeline: { marginTop: 16, gap: 20 },
@@ -468,8 +469,8 @@ const s = StyleSheet.create({
   dockPrice: { flex: 1, minWidth: 0, gap: 1 },
   dockLabel: { flexDirection: "row", alignItems: "center", gap: 4 },
   dockEyebrow: { fontSize: 11, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
-  dockTotal: { maxWidth: "100%", fontSize: 24, lineHeight: 30, fontWeight: "800", fontFamily: appFonts.extraBold, textAlign: "left", fontVariant: ["tabular-nums"] },
-  dockPerDay: { maxWidth: "100%", fontSize: 11, lineHeight: 16, fontWeight: "400", fontFamily: appFonts.regular, textAlign: "left" },
+  dockTotal: { maxWidth: "100%", fontSize: 19, lineHeight: 22, fontWeight: "600", fontFamily: appFonts.semibold, letterSpacing: -0.25, textAlign: "left", fontVariant: ["tabular-nums"] },
+  dockPerDay: { maxWidth: "100%", fontSize: 10, lineHeight: 13, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "left" },
   dockAction: { flex: 0.9, minWidth: 132 },
   continue: { width: "100%", minHeight: 48, borderRadius: 8, backgroundColor: colors.blue, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
   continueText: { fontSize: 12, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold, color: "white", textAlign: "center" },
