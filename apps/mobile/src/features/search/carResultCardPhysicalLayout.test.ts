@@ -65,7 +65,7 @@ test("Best value precedes the header for normal inventory while sandbox cards st
   assert.ok(bestValueStart >= 0 && bestValueStart < headerStart);
   assert.ok(headerStart < detailsStart && detailsStart < locationStart && locationStart < freeCancellationStart);
   assert.match(source, /rank === 0 && !sandbox \? <View style=\{c\.bestValueRow\}><View style=\{c\.badge\}><Award size=\{11\} color="#15803D" \/><Text style=\{c\.badgeText\}>Best value/);
-  assert.match(source, /sandbox \? <Text style=\{c\.category\}>KAYAK sandbox · Simulated · Not bookable<\/Text> : null/);
+  assert.match(source, /sandbox \? <Text style=\{\[c\.sandboxStatus,\{color:theme\.textSecondary\}\]\}>KAYAK sandbox · Simulated · Not bookable<\/Text> : null/);
   assert.match(source, /!sandbox \? <View style=\{c\.utilityColumn\}>/);
   assert.match(top, /offer\?\.freeCancellation \? <View style=\{c\.freeCancellation\}>[\s\S]*ShieldCheck[\s\S]*Free cancellation/);
   assert.match(source, /const freeCancellationColor = theme\.dark \? theme\.textPrimary : "#000000"/);
@@ -94,6 +94,21 @@ test("favorite and share behavior and accessibility remain available for normal 
   assert.match(top, /accessibilityLabel=\{`Share \$\{result\.modelName\}`\} onPress=\{share\}/);
   assert.match(source, /Share\.share\(\{ message: result\.modelName, title: result\.modelName \}\)/);
   assert.match(style("action"), /width:28,height:44/);
+});
+
+test("Cars card typography uses the shared Inter hierarchy without changing card geometry", () => {
+  assert.match(source, /import \{ appFonts \} from "\.\.\/\.\.\/theme\/typography"/);
+  assert.match(style("name"), /fontSize:15,fontWeight:"700",fontFamily:appFonts\.bold,lineHeight:18,letterSpacing:-0\.15/);
+  assert.match(style("secondaryModel"), /fontSize:15,fontWeight:"700",fontFamily:appFonts\.bold,lineHeight:18,letterSpacing:-0\.15/);
+  assert.doesNotMatch(style("name") + style("secondaryModel") + style("category"), /fontWeight:"800"|appFonts\.extraBold/);
+  assert.match(style("similar"), /fontSize:11,fontWeight:"500",fontFamily:appFonts\.medium,lineHeight:16/);
+  assert.match(style("category"), /fontSize:10,fontWeight:"700",fontFamily:appFonts\.bold,letterSpacing:0\.9,lineHeight:15/);
+  assert.match(style("sandboxStatus"), /fontSize:10,fontWeight:"600",fontFamily:appFonts\.semibold,lineHeight:14/);
+  assert.match(style("meta"), /fontSize:11,fontWeight:"500",fontFamily:appFonts\.medium,lineHeight:15/);
+  assert.match(style("freeCancellationText"), /fontSize:11,lineHeight:15,fontWeight:"600",fontFamily:appFonts\.semibold/);
+  assert.match(style("specText"), /fontSize:11,fontWeight:"500",fontFamily:appFonts\.medium,lineHeight:14/);
+  assert.match(style("badgeText"), /fontSize:9,fontWeight:"700",fontFamily:appFonts\.bold/);
+  assert.match(style("viewDealText"), /fontSize:13,lineHeight:16,fontWeight:"600",fontFamily:appFonts\.semibold/);
 });
 
 test("lower band uses provider-aware spec labels in the approved two-column order without an internal divider", () => {
@@ -133,9 +148,10 @@ test("commerce remains authoritative, responsive, and accessible", () => {
   assert.match(source, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.75\}/);
   assert.match(style("commerceColumn"), /flex:1\.35,minWidth:0/);
   assert.match(style("priceColumn"), /minWidth:0,maxWidth:"100%",alignItems:"flex-end"/);
-  assert.match(style("dailyPrice"), /maxWidth:"100%",fontSize:19,fontWeight:"600",lineHeight:22/);
+  assert.match(style("dailyPrice"), /maxWidth:"100%",fontSize:19,fontWeight:"600",fontFamily:appFonts\.semibold,lineHeight:22/);
+  assert.match(style("dailyPrice"), /fontVariant:\["tabular-nums"\]/);
   assert.doesNotMatch(style("dailyPrice"), /fontSize:22|fontSize:20|fontWeight:"700"/);
-  assert.match(style("perDayLabel"), /fontSize:10,fontWeight:"500",lineHeight:13,textAlign:"right"/);
+  assert.match(style("perDayLabel"), /fontSize:10,fontWeight:"500",fontFamily:appFonts\.medium,lineHeight:13,textAlign:"right"/);
   assert.doesNotMatch(style("perDayLabel"), /fontSize:11|lineHeight:14/);
   assert.doesNotMatch(styles, /(?:^|,)total:|taxDisclosure:|(?:^|,)perDay:/);
   assert.match(source, /<Pressable accessibilityRole="button" accessibilityLabel=\{`View deal for \$\{result\.modelName\}`\} onPress=\{onViewDeal\}/);
