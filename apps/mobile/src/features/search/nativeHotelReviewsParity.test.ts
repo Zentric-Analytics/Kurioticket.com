@@ -30,16 +30,14 @@ test("active Details and Reviews retain their integrations", () => {
   assert.match(detail, /<NativeHotelReviewsSection result=\{result\} \/>/);
 });
 
-test("native empty review state is flat and compact", () => {
+test("native empty review state stays compact and truthful", () => {
   const callout = styleRule("emptyCallout", "emptyText");
   assert.match(callout, /marginTop: 5/);
   assert.doesNotMatch(callout, /borderLeftWidth|paddingLeft|paddingVertical/);
-  assert.doesNotMatch(reviews, /borderLeftColor/);
-  const text = styleRule("emptyText", "scoreRow");
+  const text = reviews.slice(reviews.indexOf("  emptyText:"));
   assert.match(text, /fontSize: 14/);
   assert.match(text, /lineHeight: 21/);
   assert.match(text, /fontWeight: "400"/);
-  assert.doesNotMatch(text, /fontFamily/);
   assert.match(reviews, /Guest reviews/);
   assert.match(reviews, /Verified guest reviews are not connected for this property yet\./);
 });
@@ -56,6 +54,7 @@ test("Reviews reuse canonical semantics and preserve valid zero values", () => {
   assert.equal(count, 0);
   assert.equal(getHotelReviewBand(score, scale), "reviewScore");
   assert.match(reviews, /score: `\$\{formattedScore\} \/ \$\{scale\}`/);
+  assert.match(reviews, /displayScore: formattedScore/);
   assert.match(reviews, /count === 1 \? "review" : "reviews"/);
 });
 
@@ -66,34 +65,40 @@ test("invalid review values always use the full fallback", () => {
   assert.match(reviews, /scale === undefined[\s\S]*score === undefined[\s\S]*count === undefined[\s\S]*band === null/);
 });
 
-test("Reviews use exact canonical labels without legacy native fallbacks", () => {
+test("Reviews use exact canonical labels without invented breakdowns", () => {
   for (const label of ["Exceptional", "Very good", "Good", "Pleasant", "Review score"]) {
     assert.match(reviews, new RegExp(label));
   }
-  for (const legacy of ["Excellent", "Guest rating", "Review count unavailable"]) {
-    assert.doesNotMatch(reviews, new RegExp(legacy));
+  for (const unsupported of ["Excellent", "Mediocre", "Poor", "Cleanliness", "Bed Comfort", "Gym"]) {
+    assert.doesNotMatch(reviews, new RegExp(unsupported));
   }
 });
 
-test("Reviews geometry and typography follow the tightened Profile-style hierarchy without double inset", () => {
-  const section = styleRule("reviewsSection", "heading");
+test("Reviews use one prominent score summary and one provider-authored guest section", () => {
+  const section = styleRule("reviewsSection", "summaryCard");
   assert.match(section, /paddingVertical: 6/);
+  assert.match(section, /gap: 16/);
   assert.doesNotMatch(section, /paddingHorizontal/);
   assert.match(detail, /detailBody: \{[^\n]*paddingHorizontal: 16/);
 
   const contracts: Array<[string, string, RegExp[]]> = [
-    ["heading", "emptyCallout", [/fontSize: 16/, /lineHeight: 22/, /fontWeight: "700"/]],
-    ["scoreRow", "scoreBadge", [/marginTop: 10/, /gap: 12/]],
-    ["scoreBadge", "scoreText", [/height: 56/, /minWidth: 56/, /borderRadius: 8/, /paddingHorizontal: 8/, /colors\.blue/]],
-    ["scoreText", "metadata", [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/]],
+    ["summaryCard", "scoreColumn", [/borderWidth: 1/, /borderRadius: 22/, /paddingHorizontal: 20/, /paddingVertical: 22/, /gap: 18/]],
+    ["scoreColumn", "scoreText", [/flexDirection: "row"/, /alignItems: "flex-end"/, /minWidth: 112/]],
+    ["scoreText", "scaleText", [/fontSize: 48/, /lineHeight: 52/, /fontWeight: "700"/]],
+    ["scaleText", "metadata", [/fontSize: 16/, /lineHeight: 22/, /fontWeight: "500"/]],
     ["metadata", "label", [/flex: 1/, /minWidth: 0/]],
-    ["label", "count", [/fontSize: 15/, /lineHeight: 21/, /fontWeight: "600"/]],
-    ["count", "source", [/fontSize: 14/, /lineHeight: 20/, /fontWeight: "400"/]],
+    ["label", "count", [/fontSize: 20/, /lineHeight: 26/, /fontWeight: "700"/]],
+    ["count", "source", [/fontSize: 15/, /lineHeight: 21/, /fontWeight: "400"/]],
+    ["guestCard", "heading", [/borderWidth: 1/, /borderRadius: 22/, /paddingHorizontal: 20/, /paddingVertical: 20/]],
+    ["heading", "sentiment", [/fontSize: 18/, /lineHeight: 24/, /fontWeight: "700"/]],
   ];
   for (const [name, next, patterns] of contracts) {
     const rule = styleRule(name, next);
     for (const pattern of patterns) assert.match(rule, pattern);
     assert.doesNotMatch(rule, /fontFamily/);
   }
-  assert.match(reviews, /source: \{ marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: "400" \}/);
+  assert.match(reviews, /<Text accessibilityRole="header"[\s\S]*?>\s*Guests say\s*<\/Text>/);
+  assert.match(reviews, /providerDetails\?\.reviews\?\.sentiment/);
+  assert.match(reviews, /providerDetails\?\.reviews\?\.quotes/);
+  assert.doesNotMatch(reviews, /scoreBadge|backgroundColor: colors\.blue/);
 });
