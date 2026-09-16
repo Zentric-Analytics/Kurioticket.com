@@ -1,4 +1,4 @@
-import type { AirportOption } from "@/data/airports";
+import { airports, type AirportOption } from "@/data/airports";
 import type { HotelDestinationSuggestion } from "@/data/hotelDestinations";
 import type { CarLocationSuggestion } from "@/lib/cars/carLocationSuggestions";
 import type { CanonicalLocation, LocationKind } from "./types";
@@ -51,9 +51,20 @@ const carKinds: Record<CarLocationSuggestion["kind"], LocationKind> = {
   airport: "airport", city: "city", area: "rental-area", custom: "custom",
 };
 
+const preferredCarAirportCode = (location: CarLocationSuggestion) => {
+  if (location.airportCode) return location.airportCode.toUpperCase();
+  if (location.kind !== "city") return undefined;
+  const city = (location.city || location.primaryText).trim().toLocaleLowerCase("en-US");
+  const countryCode = location.countryCode?.trim().toUpperCase();
+  return airports
+    .filter((airport) => airport.city.trim().toLocaleLowerCase("en-US") === city && (!countryCode || airport.countryCode === countryCode))
+    .sort((left, right) => (right.priority ?? 0) - (left.priority ?? 0))[0]?.code.toUpperCase();
+};
+
 export function fromCarLocation(location: CarLocationSuggestion): CanonicalLocation {
-  const primaryLabel = location.kind === "airport" && location.airportCode
-    ? `${location.city || location.primaryText} (${location.airportCode})`
+  const airportCode = preferredCarAirportCode(location);
+  const primaryLabel = location.kind === "airport" && airportCode
+    ? `${location.city || location.primaryText} (${airportCode})`
     : location.kind === "custom" ? location.value : location.primaryText;
   const supportingLabel = location.kind === "airport" ? location.primaryText : location.secondaryText;
   return {
@@ -63,10 +74,10 @@ export function fromCarLocation(location: CarLocationSuggestion): CanonicalLocat
     supportingLabel,
     submittedValue: location.value,
     country: { code: location.countryCode },
-    codes: location.airportCode ? { iata: location.airportCode } : undefined,
+    codes: airportCode ? { iata: airportCode } : undefined,
     providerIds: location.providerPlaceId ? { legacy: location.providerPlaceId } : undefined,
-    providerBindings: location.airportCode ? [{ provider: "kayak", value: location.airportCode, kind: "airport", verification: "verified", provenance: "catalogue" }] : [],
-    verification: location.airportCode ? "verified" : "catalogue-only",
+    providerBindings: airportCode ? [{ provider: "kayak", value: airportCode, kind: "airport", verification: "verified", provenance: "catalogue" }] : [],
+    verification: airportCode ? "verified" : "catalogue-only",
     staticCoverage: { flights: "none", hotels: "none", cars: location.kind === "custom" ? "none" : "exact", packages: "none" },
     source,
   };

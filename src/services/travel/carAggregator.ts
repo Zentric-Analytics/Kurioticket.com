@@ -4,9 +4,21 @@ import { searchKayakCars, type KayakRequestContext } from "./kayakMetasearchProv
 import { getProviderResult, rememberProviderResults } from "./providerResultCache";
 
 export type CarSearchResult={results:NormalizedCarResult[];status:CarInventoryStatus;warnings:string[]};
-export async function searchCars(search:LocationBoundCarSearchParams,options:{kayak?:KayakRequestContext}={}):Promise<CarSearchResult>{
+export async function searchCars(search:LocationBoundCarSearchParams,options:{kayak?:KayakRequestContext;requestId?:string}={}):Promise<CarSearchResult>{
   if(!search.pickupLocation||!search.pickupDate||!search.dropoffDate)return{results:[],status:"invalid-search",warnings:[]};
   const [catalogue,kayak]=await Promise.all([Promise.resolve(buildStaticCarResults(search)),searchKayakCars(search,options.kayak)]);
+  console.info("[car-search:provider-diagnostics]", {
+    requestId: options.requestId,
+    kayakClientIpPresent: Boolean(options.kayak?.clientIp),
+    pickupLocationTargetPresent: Boolean(search.pickupLocationTarget),
+    dropoffLocationTargetPresent: Boolean(search.dropoffLocationTarget),
+    provider: kayak.provider,
+    status: kayak.status,
+    resultCount: kayak.results.length,
+    latencyMs: kayak.latencyMs,
+    errorCategory: kayak.errorCategory,
+    errorReason: kayak.errorReason,
+  });
   await rememberProviderResults("car", kayak.results, search);
   return{results:[...catalogue,...kayak.results],status:"available",warnings:kayak.status==="failed"?["KAYAK is temporarily unavailable. Other provider results are shown."]:[]};
 }
