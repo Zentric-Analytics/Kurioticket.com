@@ -16,7 +16,7 @@ const heroStart = native.indexOf("<View style={[s.hero,");
 const imageStart = native.indexOf("<View style={[s.imageBox", heroStart);
 const identityStart = native.indexOf("<View style={s.identityBlock}>", imageStart);
 const specsStart = native.indexOf("<View style={s.specs}>", identityStart);
-const tabsStart = native.indexOf("<View style={[s.carsTabsShell", specsStart);
+const tabsStart = native.indexOf("s.carsTabsShell", specsStart);
 const scrollEnd = native.indexOf("</ScrollView>", tabsStart);
 const backStart = native.indexOf('accessibilityLabel="Back to Cars results"', scrollEnd);
 const actionsStart = native.indexOf("<View style={[s.heroActions", backStart);
@@ -80,10 +80,11 @@ test("favorite and share behavior survive relocation into independent hero actio
 
 test("vehicle image well is full-width, theme-safe, and keeps the Cars media ratio", () => {
   assert.match(native, /s\.imageBox,\{backgroundColor:theme\.surface\}/);
-  const imageBox = styleRule("imageBox", "image");
+  const imageBox = styleRule("imageBox", "mediaStage");
   for (const contract of ['width:"100%"', "aspectRatio:16/10", 'overflow:"hidden"']) {
     assert.ok(imageBox.includes(contract), contract);
   }
   assert.doesNotMatch(imageBox, /marginHorizontal|borderRadius|backgroundColor/);
+  assert.match(styleRule("mediaStage", "image"), /flex:1[^}]*marginTop:16/);
   assert.match(styleRule("image", "unavailable"), /width:"100%"[^}]*height:"100%"/);
 });
