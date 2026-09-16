@@ -24,7 +24,7 @@ test("Paris uses separate primary and supporting lines in the native closed fiel
 });
 
 test("display formatting does not alter the chosen or serialized pickup value", () => {
-  assert.match(native, /setForm\(\{ \.\.\.form, pickupLocation: value \}\)/);
+  assert.match(native, /pickupLocation: suggestion\.value, pickupLocationTarget: target/);
   assert.doesNotMatch(native, /pickupLocation: pickupLocationDisplay\.primary/);
   const form = initializeCarsPageForm({ pickupLocation: "Paris, France" }, new Date(2026, 8, 5)).form;
   assert.equal(form.pickupLocation, "Paris, France");
