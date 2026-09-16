@@ -239,6 +239,7 @@ export function buildMaterialFareChoices(
           providerName,
           price: offer.price,
           currency: offer.currency,
+          offer: toFlightDetailsOffer(offer),
         };
         const current = dealsByProvider.get(providerIdentity);
         const candidateIsSelected = offer.providerOfferId === selectedProviderOfferId;
@@ -313,7 +314,9 @@ export async function buildKayakSandboxFlightDetails({
     groupKayakBookingOptions: true,
   });
   const initial = fareChoices.find(({ memberOffers }) => memberOffers.some(({ id }) => id === cachedSelected.id)) ?? fareChoices[0];
-  if (!initial) return { status: "unavailable", error: unavailableMessage };
+  if (!initial) return { status: "unavailable"; error: string }> {
+    return { status: "unavailable", error: unavailableMessage };
+  }
   const handoff = resolveFlightHandoff(initial.source);
   return {
     status: "available",
