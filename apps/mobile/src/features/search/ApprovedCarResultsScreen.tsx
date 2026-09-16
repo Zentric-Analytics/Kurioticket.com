@@ -14,7 +14,7 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import { NativeBrandedSearchLoading } from "./NativeBrandedSearchLoading";
 import { carQuickFilterGroupIds } from "../../../../../src/lib/cars/carFilterPresentation";
-import { filterCarResults, sortCarResults, type CarSort, type SelectedCarFilters } from "../../../../../src/lib/cars/carResults";
+import { ensureCarProviderCoverage, filterCarResults, sortCarResults, type CarSort, type SelectedCarFilters } from "../../../../../src/lib/cars/carResults";
 import { CarFilterSheet, activeCarFilterCount, visibleCarFilterGroups } from "./CarFilterSheet";
 import { CarResultsQuickFilterSheet } from "./CarResultsQuickFilterSheet";
 import { carFilterCopy, carFilterGroupLabel } from "./carFilterCopy";
@@ -78,7 +78,7 @@ export function ApprovedCarResultsScreen() {
   const filterGroups=useMemo(()=>visibleCarFilterGroups(results),[results]);
   const quickGroups=useMemo(()=>carQuickFilterGroupIds.flatMap(id=>{const group=filterGroups.find(candidate=>candidate.id===id);return group?[group]:[];}),[filterGroups]);
   const copy=useMemo(()=>carFilterCopy(locale),[locale]);
-  const filtered=useMemo(()=>sortCarResults(filterCarResults(results,filters),sort),[results,filters,sort]);
+  const filtered=useMemo(()=>{const ranked=sortCarResults(filterCarResults(results,filters),sort);return sort==="recommended"?ensureCarProviderCoverage(ranked):ranked;},[results,filters,sort]);
   const payload=plan.plan?.payload||{};
   const canonicalPickupLocation=String(payload.pickupLocation||"");
   const carSummaryDestination=getLocationFieldDisplay(canonicalPickupLocation).primary;

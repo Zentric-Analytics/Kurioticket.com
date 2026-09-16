@@ -23,11 +23,15 @@ test("approved car results use the live API contract and open the native detail 
   assert.doesNotMatch(screen, /Hertz|Enterprise|Toyota RAV4|Chevrolet Tahoe/);
 });
 
-test("car card preserves identity and four specs while presenting only the converted daily price", () => {
+test("car card preserves identity and four provider-aware specs while presenting only the converted daily price", () => {
   const card = readFileSync("src/features/search/CarResultCard.tsx", "utf8");
-  for (const field of ["modelName", "categoryLabel", "passengers", "bags", "doors", "transmission", "freeCancellation", "pickupLocation", "pricePerDay"]) {
-    assert.match(card, new RegExp(`result\\.${field}|offer\\?\\.${field}|offer\\.${field}`));
-  }
+  const providerPresentation = readFileSync("src/features/search/nativeCarProviderPresentation.ts", "utf8");
+  for (const field of ["modelName", "categoryLabel", "pickupLocation"]) assert.match(card, new RegExp(`result\\.${field}`));
+  assert.match(card, /offer\?\.freeCancellation/);
+  assert.match(card, /offer\.pricePerDay/);
+  assert.match(card, /nativeCarPrimarySpecLabels\(result\)/);
+  for (const field of ["passengers", "bags", "doors", "transmission"]) assert.match(providerPresentation, new RegExp(`result\\.${field}`));
+  assert.match(providerPresentation, /sandboxPresentation\?\.specs/);
   assert.doesNotMatch(card, /offer\.totalPrice|offer\??\.taxesAndFeesIncluded|includes taxes & fees|taxes & fees shown where known/);
   assert.match(card, />View deal<\/Text>/);
   assert.doesNotMatch(card, />View car<\/Text>/);

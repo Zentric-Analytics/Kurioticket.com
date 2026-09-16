@@ -4,13 +4,20 @@ import { resolve } from "node:path";
 import test from "node:test";
 
 const card = readFileSync(resolve("src/features/search/CarResultCard.tsx"), "utf8");
+const providerPresentation = readFileSync(resolve("src/features/search/nativeCarProviderPresentation.ts"), "utf8");
 const icon = readFileSync(resolve("src/features/flow/FlowIcon.tsx"), "utf8");
 const iconTypes = readFileSync(resolve("src/features/flow/flowIconTypes.ts"), "utf8");
 const catalogue = readFileSync(resolve("../../src/services/travel/staticCarCatalogue.ts"), "utf8");
 
-test("canonical transmission selects an original automotive FlowIcon", () => {
-  assert.match(card, /result\.transmission === "automatic" \? "transmissionAutomatic" : "transmissionManual"/);
-  assert.match(card, /<FlowIcon name=\{transmissionIcon\} size=\{14\} color="#64748B" \/>.*capitalize\(result\.transmission\)/);
+test("canonical and provider-owned transmission labels select original automotive FlowIcons", () => {
+  assert.match(card, /const transmissionIcon = \/manual\/i\.test\(specLabels\.transmission\)/);
+  assert.match(card, /\/automatic\/i\.test\(specLabels\.transmission\)/);
+  assert.match(card, /"transmissionManual"/);
+  assert.match(card, /"transmissionAutomatic"/);
+  assert.match(card, /<FlowIcon name=\{transmissionIcon\} size=\{14\} color="#64748B" \/>/);
+  assert.match(card, /label=\{specLabels\.transmission\}/);
+  assert.match(providerPresentation, /transmission: capitalize\(result\.transmission\)/);
+  assert.match(providerPresentation, /transmission: specs\[3\] \|\| "Transmission not supplied"/);
   assert.doesNotMatch(card, /<FlowIcon name="settings"/);
 });
 
