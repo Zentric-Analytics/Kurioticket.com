@@ -33,9 +33,10 @@ test("approved and KAYAK Cars details share the light canvas and vehicle image s
   for (const detail of [normalDetail, sandboxDetail]) {
     assert.match(detail, /const CAR_DETAIL_LIGHT_CANVAS = "#F5F7FB"/);
     assert.match(detail, /const carCanvasColor\s*=\s*theme\.dark\s*\?\s*theme\.background\s*:\s*CAR_DETAIL_LIGHT_CANVAS/);
+    assert.match(detail, /const carInformationSurface\s*=\s*theme\.dark\s*\?\s*carCanvasColor\s*:\s*"#E7EBF1"/);
     assert.match(detail, /s\.safe,\s*\{\s*backgroundColor:\s*carCanvasColor\s*\}/);
-    assert.match(detail, /style=\{\[s\.heroBack,\s*\{\s*top:\s*inset\.top\s*\+\s*12,\s*backgroundColor:\s*carCanvasColor\s*\}\]\}/);
-    assert.match(detail, /style=\{\[s\.heroActions,\s*\{\s*top:\s*inset\.top\s*\+\s*12,\s*backgroundColor:\s*carCanvasColor\s*\}\]\}/);
+    assert.match(detail, /style=\{\[s\.heroBack,\s*\{\s*top:\s*inset\.top\s*\+\s*12,\s*backgroundColor:\s*carInformationSurface\s*\}\]\}/);
+    assert.match(detail, /style=\{\[s\.heroActions,\s*\{\s*top:\s*inset\.top\s*\+\s*12,\s*backgroundColor:\s*carInformationSurface\s*\}\]\}/);
     assert.doesNotMatch(detail, /hero(?:Back|Actions):\s*\{[^}]*backgroundColor:\s*"#FFFFFF"/);
     assert.match(detail, /<ScrollView[^>]*style=\{\{\s*backgroundColor:\s*carCanvasColor\s*\}\}/);
     assert.match(detail, /s\.hero,\s*\{\s*backgroundColor:\s*carCanvasColor,\s*borderColor:\s*theme\.border\s*\}/);
@@ -114,4 +115,19 @@ test("approved and KAYAK detail rails and content use the Cars canvas", () => {
     assert.doesNotMatch(detail, /s\.carsTabsShell,\s*\{\s*backgroundColor:\s*theme\.surface/);
     assert.doesNotMatch(detail, /s\.pickupSection,\s*\{\s*backgroundColor:\s*theme\.surface/);
   }
+});
+
+test("approved and KAYAK details inherit the Results-card price typography contract", () => {
+  const resultCard = readFileSync("src/features/search/CarResultCard.tsx", "utf8");
+  const compact = (value: string) => value.replace(/\s/g, "");
+  for (const detail of [normalDetail, sandboxDetail]) {
+    const source = compact(detail);
+    assert.match(source, /daily:\{maxWidth:"100%",fontSize:19,lineHeight:22,fontWeight:"600",fontFamily:appFonts\.semibold,letterSpacing:-0\.25,textAlign:"right",fontVariant:\["tabular-nums"\]\}/);
+    assert.match(source, /perDay:\{fontSize:10,lineHeight:13,fontWeight:"500",fontFamily:appFonts\.medium/);
+    assert.match(source, /dockTotal:\{maxWidth:"100%",fontSize:19,lineHeight:22,fontWeight:"600",fontFamily:appFonts\.semibold,letterSpacing:-0\.25,textAlign:"left",fontVariant:\["tabular-nums"\]\}/);
+    assert.match(source, /dockPerDay:\{maxWidth:"100%",fontSize:10,lineHeight:13,fontWeight:"500",fontFamily:appFonts\.medium,textAlign:"left"\}/);
+  }
+  const resultSource = compact(resultCard);
+  assert.match(resultSource, /dailyPrice:\{maxWidth:"100%",fontSize:19,fontWeight:"600",fontFamily:appFonts\.semibold,lineHeight:22,letterSpacing:-0\.25,fontVariant:\["tabular-nums"\]/);
+  assert.match(resultSource, /perDayLabel:\{maxWidth:"100%",marginTop:1,fontSize:10,fontWeight:"500",fontFamily:appFonts\.medium,lineHeight:13/);
 });

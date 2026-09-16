@@ -53,12 +53,13 @@ test("vehicle identity remains the accessible name and category directly below t
   for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"600"', "fontFamily:appFonts.semibold", "letterSpacing:0"]) assert.ok(similarStyle.includes(contract), contract);
 });
 
-test("Hotel-style Back and Save Share controls float outside scrolling content", () => {
+test("Hotel-style Back and Save Share controls use the Results information surface outside scrolling content", () => {
+  assert.match(native, /const carInformationSurface = theme\.dark \? carCanvasColor : "#E7EBF1"/);
   assert.ok(scrollEnd >= 0 && backStart > scrollEnd && actionsStart > backStart);
   assert.equal((native.match(/accessibilityLabel="Back to Cars results"/g) ?? []).length, 1);
   assert.doesNotMatch(native, />Back to Cars results<\/Text>/);
-  assert.match(native, /accessibilityLabel="Back to Cars results" onPress=\{returnToCarResults\} style=\{\[s\.heroBack,\{top:inset\.top\+12,backgroundColor:carCanvasColor\}\]\}/);
-  assert.match(native, /<View style=\{\[s\.heroActions,\{top:inset\.top\+12,backgroundColor:carCanvasColor\}\]\}>/);
+  assert.match(native, /accessibilityLabel="Back to Cars results" onPress=\{returnToCarResults\} style=\{\[s\.heroBack,\{top:inset\.top\+12,backgroundColor:carInformationSurface\}\]\}/);
+  assert.match(native, /<View style=\{\[s\.heroActions,\{top:inset\.top\+12,backgroundColor:carInformationSurface\}\]\}>/);
 
   const back = styleRule("heroBack", "heroActions");
   for (const contract of ['position:"absolute"', "left:20", "width:44", "height:44", "borderRadius:22", 'alignItems:"center"', 'justifyContent:"center"', "zIndex:20", "elevation:10"]) {
