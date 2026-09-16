@@ -6,7 +6,7 @@ import { getLocationFieldDisplay } from "../../../../../src/lib/search/locationF
 const cars = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
 const carAlert = readFileSync("src/features/search/NativeCarPriceAlert.tsx", "utf8");
 const hotels = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
-const carHeader = cars.slice(cars.indexOf("function CarResultsHeader"), cars.indexOf("function CarSkeletons"));
+const carHeader = cars.slice(cars.indexOf("function CarResultsHeader"), cars.indexOf("function CarResultItemSeparator"));
 const hotelHeader = hotels.slice(hotels.indexOf("function HotelResultsHeader"), hotels.indexOf("const HotelResultsShortcut"));
 
 test("Cars Results replaces branded chrome with two Hotel-style header targets", () => {
@@ -55,9 +55,13 @@ test("Cars render the full filtered result set without pagination", () => {
   assert.doesNotMatch(cars, /const \[page|pageSize|totalPages|filtered\.slice|Page \{page\}|label="Previous"|label="Next"/);
 });
 
-test("Cars keep a modest outer gutter while widening result cards and matching transition skeletons", () => {
-  assert.match(cars, /body:\{paddingHorizontal:14,gap:14\}/);
+test("Cars keep a modest outer gutter while preserving result-card spacing with an item separator", () => {
+  assert.match(cars, /body:\{paddingHorizontal:14\}/);
   assert.match(cars, /carResultCardSlot:\{marginHorizontal:0\}/);
+  assert.match(cars, /ItemSeparatorComponent=\{CarResultItemSeparator\}/);
+  assert.match(cars, /function CarResultItemSeparator\(\)\{return <View style=\{r\.carResultItemSeparator\}\/>;\}/);
+  assert.match(cars, /carResultItemSeparator:\{height:14\}/);
+  assert.doesNotMatch(cars, /body:\{paddingHorizontal:14,gap:/);
   const slot = cars.match(/carResultCardSlot:\{([^}]*)\}/)?.[1] ?? "";
   assert.doesNotMatch(slot, /(?:minW|w|W)idth|position|absolute|transform|margin(?:Horizontal)?:-|Dimensions|window|screen/);
   assert.doesNotMatch(cars, /carResultCardSlot:\{[^}]*width:"100%"|carResultCardSlot:\{[^}]*Dimensions/);
@@ -67,15 +71,17 @@ test("Cars keep a modest outer gutter while widening result cards and matching t
   assert.doesNotMatch(cars, /<NativeCarPriceAlert[^>]*carResultCardSlot|<View accessibilityLabel="Car results summary"[^>]*carResultCardSlot/);
 });
 
-test("Cars result summary keeps Hotel typography and rhythm without Hotel control height", () => {
+test("Cars result summary keeps Hotel typography but owns a balanced non-floating rhythm", () => {
   assert.match(cars, /const carResultCountLabel = \(count: number\) => `\$\{count\} \$\{count === 1 \? "Result" : "Results"\} found`/);
   assert.match(cars, /<Text accessibilityRole="header" style=\{\[r\.carResultCount,\{color:theme\.textPrimary\}\]\}>\{carResultCountLabel\(filtered\.length\)\}<\/Text>/);
   assert.match(cars, /carResultCount:\{fontSize:13,lineHeight:17,fontWeight:"700",fontFamily:appFonts\.bold\}/);
-  assert.match(cars, /carResultsSummaryRow:\{marginTop:14\}/);
+  assert.match(cars, /carResultsSummaryRow:\{marginTop:10,marginBottom:10\}/);
   assert.doesNotMatch(cars, /carResultsSummaryRow:\{[^}]*minHeight:38/);
   assert.doesNotMatch(cars, /carResultsSummaryRow:\{[^}]*alignItems:"center"/);
+  assert.doesNotMatch(cars, /carResultsSummaryRow:\{[^}]*margin(?:Top|Bottom):-/);
   assert.doesNotMatch(cars, /carResultsCountColumn/);
-  assert.match(cars, /body:\{paddingHorizontal:14,gap:14\}/);
+  assert.match(cars, /body:\{paddingHorizontal:14\}/);
+  assert.match(cars, /carResultItemSeparator:\{height:14\}/);
   assert.match(cars, /carResultCardSlot:\{marginHorizontal:0\}/);
   assert.doesNotMatch(cars, /carResultCount:\{[^}]*fontWeight:"800"/);
   assert.match(hotels, /flightResultCount: \{ fontSize: 13, lineHeight: 17, fontWeight: "700", fontFamily: appFonts\.bold \}/);
@@ -90,7 +96,8 @@ test("Cars use one truthful compact price alert before the summary and cards", (
   assert.ok(cars.indexOf("<View accessibilityLabel=\"Car results summary\"") < cars.indexOf("<CarResultCard"));
   assert.match(cars, /carFilterSectionHeader:\{paddingBottom:12\}/);
   assert.match(hotels, /hotelFilterSectionHeader: \{ paddingBottom: 12 \}/);
-  assert.match(cars, /body:\{paddingHorizontal:14,gap:14\}/);
+  assert.match(cars, /body:\{paddingHorizontal:14\}/);
+  assert.match(cars, /carResultsSummaryRow:\{marginTop:10,marginBottom:10\}/);
   assert.match(carAlert, /<Bell/); assert.match(carAlert, /<Switch/); assert.match(carAlert, /Track rental car prices/);
   assert.doesNotMatch(carAlert, /numberOfLines=\{1\}/);
   assert.match(carAlert, /accessibilityLabel="Track rental car prices"/);
@@ -165,7 +172,7 @@ test("Cars quick controls use the Flight-family icon, geometry, and surface cont
   assert.match(cars, /<CarResultsShortcut label="Filter" accessibilityLabel="Filters"[^>]*icon showChevron=\{false\}/);
   assert.match(cars, /<SlidersHorizontal accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\} color=\{foreground\}/);
   assert.doesNotMatch(cars, /<FlowIcon name="sliders"/);
-  assert.match(cars, /<ChevronDown accessible=\{false\} size=\{13\} strokeWidth=\{1\.9\} color=\{chevron\}/);
+  assert.match(cars, /<ChevronDown accessible=\{false\} size=\{13\} strokeWidth=\{1\.9\} color=\{chevron\} style=\{expanded\?r\.shortcutChevronExpanded:undefined\}/);
   assert.doesNotMatch(cars, /<FlowIcon name="chevronDown"|#EDF4FF/);
   assert.match(cars, /filters:\{paddingLeft:8,paddingRight:16,gap:6/);
   assert.match(cars, /shortcut:\{height:36,[^}]*gap:4,[^}]*borderWidth:1,borderRadius:9,paddingHorizontal:10\}/);
