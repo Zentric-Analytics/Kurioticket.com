@@ -77,7 +77,7 @@ test("content below the three tabs shares one section-heading hierarchy", () => 
   for (const contract of ["fontSize:20", "lineHeight:28", 'fontWeight:"800"'])
     assert.ok(style("heading").includes(contract));
   for (const heading of ["compareHeading", "pickupHeading", "locationHeading"]) {
-    for (const contract of ["fontSize:16", "lineHeight:22", 'fontWeight:"700"', "fontFamily:appFonts.bold", "letterSpacing:-.2"])
+    for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"700"', "fontFamily:appFonts.bold", "letterSpacing:-.2"])
       assert.ok(style(heading).includes(contract), `${heading}: ${contract}`);
   }
   assert.match(native, /<Text style=\{\[s\.compareHeading,[^>]*>Compare deals<\/Text>/);
