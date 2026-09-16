@@ -891,7 +891,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const hotelIntroContent = (
     <>
       {message && (!flightResults || status === "ready") ? (
-        <Text accessibilityRole="alert" style={[s0.notice, { backgroundColor: theme.surface, color: theme.textPrimary, borderColor: flightResults ? theme.border : theme.dark ? theme.border : "#D8E1EC", borderWidth: 1 }]}>
+        <Text accessibilityRole="alert" style={[s0.notice, { backgroundColor: theme.surface, color: theme.textPrimary, borderColor: flightResults ? theme.border : theme.dark ? theme.border : "#D8E1EC", borderWidth: 1 }]}> 
           {message}
         </Text>
       ) : null}
@@ -963,7 +963,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           )}
           stickySectionHeadersEnabled
           renderItem={({ item, index }) => item === null ? (
-            <View style={[s0.flightResultsIntro, { backgroundColor: flightCanvasColor }]}>
+            <View style={[s0.flightResultsIntro, { backgroundColor: flightCanvasColor }]}> 
               {status === "ready" && plan.plan ? <View style={s0.flightAlertOuter}><PriceAlert product="flight" plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} compact /></View> : null}
               <FlightResultsSummaryRow count={sorted.length} />
             </View>
@@ -995,6 +995,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           alwaysBounceVertical={false}
           bounces={false}
           overScrollMode="never"
+          keyboardShouldPersistTaps="handled"
           scrollEventThrottle={16}
           contentContainerStyle={[
             s0.flightResultsContent,
@@ -1016,7 +1017,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             sections={[{ data: hotelResultsListData }]}
             keyExtractor={(item) => typeof item === "string" ? item : item.id}
             renderSectionHeader={() => (
-              <View style={[s0.hotelFilterSectionHeader, { backgroundColor: hotelCanvasColor }]}>
+              <View style={[s0.hotelFilterSectionHeader, { backgroundColor: hotelCanvasColor }]}> 
                 {filterRail}
               </View>
             )}
@@ -1385,21 +1386,21 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
           >
             <View style={s0.flightMetadataItem}>
               <Luggage accessible={false} size={15} strokeWidth={2.4} color={supportTextColor}/>
-              <Text style={[s0.flightMetadataText, { color: theme.textPrimary }]}>
+              <Text style={[s0.flightMetadataText, { color: theme.textPrimary }]}> 
                 <Text style={[s0.flightMetadataLabel, { color: supportTextColor }]}>{labels.baggage}:</Text>{" "}
                 {baggageSummary}
               </Text>
             </View>
             <View style={s0.flightMetadataItem}>
               <Armchair accessible={false} size={15} strokeWidth={2.4} color={supportTextColor}/>
-              <Text style={[s0.flightMetadataText, { color: theme.textPrimary }]}>
+              <Text style={[s0.flightMetadataText, { color: theme.textPrimary }]}> 
                 <Text style={[s0.flightMetadataLabel, { color: supportTextColor }]}>{labels.cabin}:</Text>{" "}
                 {cabinSummary}
               </Text>
             </View>
             <View style={s0.flightMetadataItem}>
               <FileText accessible={false} size={15} strokeWidth={2.4} color={supportTextColor}/>
-              <Text style={[s0.flightMetadataText, { color: theme.textPrimary }]}>
+              <Text style={[s0.flightMetadataText, { color: theme.textPrimary }]}> 
                 <Text style={[s0.flightMetadataLabel, { color: supportTextColor }]}>{labels.fareRules}:</Text>{" "}
                 {labels.review}
               </Text>
@@ -1610,7 +1611,7 @@ function HotelCard({
           <Text numberOfLines={1} ellipsizeMode="tail" style={s0.hotelLocationText}>{result.location}</Text>
         </View>
         {score == null ? null : (
-          <Text style={[s0.review,{color:theme.textPrimary}]}>
+          <Text style={[s0.review,{color:theme.textPrimary}]}> 
             <Text style={s0.score}>{score.toFixed(1)}</Text>{" "}
             {score >= 9 ? "Exceptional" : score >= 8 ? "Excellent" : "Good"}
             {result.reviewCount ? `  ·  ${result.reviewCount.toLocaleString()} reviews` : ""}
@@ -1622,7 +1623,7 @@ function HotelCard({
         {result.sourceAttributions?.map(item=>{const safe=typeof item.providerUri==="string"&&/^https?:\/\//i.test(item.providerUri);return <Pressable key={`${item.provider}-${item.providerUri??""}`} disabled={!safe} onPress={(event)=>{event.stopPropagation();if(safe)void Linking.openURL(item.providerUri!);}}><Text numberOfLines={1} style={s0.hotelAttributionLink}>Source: {item.provider}</Text></Pressable>;})}
         <View style={s0.hotelPrice}>
           <View style={s0.hotelPriceCopy}>
-            <Text accessibilityLabel={displayPrices?.nightly?.accessibilityLabel} style={[s0.hotelNightlyPrice,{color:theme.textPrimary}]}>
+            <Text accessibilityLabel={displayPrices?.nightly?.accessibilityLabel} style={[s0.hotelNightlyPrice,{color:theme.textPrimary}]}> 
               {hasPrice ? displayPrices?.nightly?.formatted ?? money(result.currency, result.pricePerNight) : "Price unavailable"}
             </Text>
             {hasPrice ? <Text style={[s0.hotelPerNight,{color:theme.textSecondary}]}>per night</Text> : <Text style={[s0.hotelPerNight,{color:theme.textSecondary}]}>No live rate</Text>}
