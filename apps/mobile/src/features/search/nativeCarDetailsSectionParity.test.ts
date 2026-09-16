@@ -47,7 +47,7 @@ test("the live route owns one sticky shell and one deterministic horizontal tab 
 
   const shellStart = native.indexOf("<View style={[s.carsTabsShell");
   const rowStart = native.indexOf('<View accessibilityRole="tablist" style={s.carsTabsRow}', shellStart);
-  const pageStart = native.indexOf("<View style={s.page}", rowStart);
+  const pageStart = native.indexOf("<View style={[s.page,{backgroundColor:carCanvasColor}]}", rowStart);
   assert.ok(shellStart > native.indexOf("<View style={[s.hero"));
   assert.ok(rowStart > shellStart && pageStart > rowStart);
   const tablist = native.slice(rowStart, pageStart);
@@ -77,7 +77,7 @@ test("content below the three tabs shares one section-heading hierarchy", () => 
   for (const contract of ["fontSize:20", "lineHeight:28", 'fontWeight:"800"'])
     assert.ok(style("heading").includes(contract));
   for (const heading of ["compareHeading", "pickupHeading", "locationHeading"]) {
-    for (const contract of ["fontSize:18", "lineHeight:24", 'fontWeight:"600"', "fontFamily:appFonts.semibold", "letterSpacing:-.25"])
+    for (const contract of ["fontSize:16", "lineHeight:22", 'fontWeight:"700"', "fontFamily:appFonts.bold", "letterSpacing:-.2"])
       assert.ok(style(heading).includes(contract), `${heading}: ${contract}`);
   }
   assert.match(native, /<Text style=\{\[s\.compareHeading,[^>]*>Compare deals<\/Text>/);

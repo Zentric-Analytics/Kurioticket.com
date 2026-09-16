@@ -16,7 +16,7 @@ test("Cars Back header is a fixed sibling before the detail ScrollView", () => {
   const scrollPosition = native.indexOf("<ScrollView", backHeaderPosition);
   const heroPosition = native.indexOf("<View style={[s.hero", scrollPosition);
   const tabsPosition = native.indexOf("<View style={[s.carsTabsShell", heroPosition);
-  const pagePosition = native.indexOf("<View style={s.page}", tabsPosition);
+  const pagePosition = native.indexOf("<View style={[s.page,{backgroundColor:carCanvasColor}]}", tabsPosition);
 
   assert.ok(safeAreaPosition >= 0);
   assert.ok(safeAreaPosition < backHeaderPosition);
