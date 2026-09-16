@@ -152,6 +152,7 @@ import { signInHref } from "../auth/signInIntent";
 import { flightInventoryCounts } from "./flightInventoryDiagnostics";
 import { HotelFilterSheet, type HotelFilterSectionName } from "./HotelFilterSheet";
 import { activeHotelFilterCount, buildHotelFilterOptions, emptyHotelFilters, filterHotels, type HotelFilters } from "./hotelFilters";
+import { HotelCardAmenityList } from "./HotelCardAmenityList";
 import { defaultHotelSort, hotelSortLabel, sortHotelsForResults, type HotelSortMode } from "./hotelSort";
 import { HotelResultsQuickFilterSheet, type HotelResultsQuickFilterKind } from "./HotelResultsQuickFilterSheet";
 import { getLowestPricedHotelId, hasHotelPrice } from "@/lib/hotels/hotelResultAvailability";
@@ -1494,7 +1495,7 @@ function HotelCard({
   const saved = canonical.items.some(item => item.type === "hotel" && ((item.payload as Record<string, unknown> | undefined)?.result as { id?: string } | undefined)?.id === result.id);
   const { width: viewportWidth } = useWindowDimensions();
   const compact = viewportWidth < 430;
-  const compactCardMinHeight = 224;
+  const compactCardMinHeight = Math.round((viewportWidth - 32) * 0.7);
   const gallery = useMemo(() => [...new Set([...(result.imageUrls ?? []), result.imageUrl].filter((uri): uri is string => typeof uri === "string" && /^https?:\/\//i.test(uri)))], [result.imageUrl, result.imageUrls]);
   const [failedImages,setFailedImages]=useState<string[]>([]);
   const usableGallery=gallery.filter(uri=>!failedImages.includes(uri));
@@ -1507,11 +1508,6 @@ function HotelCard({
   const hasPrice = hasHotelPrice(result);
   const mealPlan=result.catalogueProfile?.mealPlan?.trim();
   const policy=[result.catalogueProfile?.cancellationPolicy,result.catalogueProfile?.paymentPolicy].filter((value):value is string=>Boolean(value?.trim()));
-  const bookingTerms = [mealPlan, ...policy]
-    .filter((value): value is string => Boolean(value?.trim()))
-    .map((value) => value.trim())
-    .filter((value, index, values) => values.findIndex((candidate) => candidate.toLowerCase() === value.toLowerCase()) === index)
-    .slice(0, 2);
   const openHotel = () => {
     if (result.searchPolicy.action.kind === "provider") {
       void Linking.openURL(result.searchPolicy.action.href);
@@ -1620,37 +1616,27 @@ function HotelCard({
             {result.reviewCount ? `  ·  ${result.reviewCount.toLocaleString()} reviews` : ""}
           </Text>
         )}
-        {bookingTerms.length ? (
-          <View style={s0.hotelBenefitList}>
-            {bookingTerms.map((item) => {
-              const positive = /free cancellation|breakfast included|pay later|reserve now/i.test(item);
-              return (
-                <Text
-                  key={item}
-                  numberOfLines={1}
-                  style={[
-                    s0.hotelBenefitText,
-                    { color: positive ? (theme.dark ? "#8BE0B0" : "#157347") : theme.textPrimary },
-                    positive && s0.hotelBenefitPositive,
-                  ]}
-                >
-                  {positive ? `✓ ${item}` : item}
-                </Text>
-              );
-            })}
-          </View>
-        ) : null}
+        <HotelCardAmenityList amenities={result.amenities} />
+        {mealPlan && !(/^breakfast/i.test(mealPlan)&&result.amenities.some(item=>/breakfast/i.test(item)))?<Text numberOfLines={1} style={[s0.hotelTerm,{color:theme.textPrimary}]}>{mealPlan.charAt(0).toUpperCase()+mealPlan.slice(1).toLowerCase()}</Text>:null}
+        {policy.map(item=><Text key={item} numberOfLines={1} style={[s0.hotelTerm,{color:theme.textPrimary}]}>{item}</Text>)}
         {result.sourceAttributions?.map(item=>{const safe=typeof item.providerUri==="string"&&/^https?:\/\//i.test(item.providerUri);return <Pressable key={`${item.provider}-${item.providerUri??""}`} disabled={!safe} onPress={(event)=>{event.stopPropagation();if(safe)void Linking.openURL(item.providerUri!);}}><Text numberOfLines={1} style={s0.hotelAttributionLink}>Source: {item.provider}</Text></Pressable>;})}
         <View style={s0.hotelPrice}>
-          <Text accessibilityLabel={displayPrices?.nightly?.accessibilityLabel} style={[s0.hotelNightlyPrice,{color:theme.textPrimary}]}>
-            {hasPrice ? displayPrices?.nightly?.formatted ?? money(result.currency, result.pricePerNight) : "Price unavailable"}
-          </Text>
-          {hasPrice ? <Text style={[s0.hotelPerNight,{color:theme.textSecondary}]}>per night</Text> : <Text style={[s0.hotelPerNight,{color:theme.textSecondary}]}>No live rate</Text>}
-          {hasPrice && Math.abs(result.totalPrice - result.pricePerNight) > 0.005 ? (
-            <Text accessibilityLabel={displayPrices?.total?.accessibilityLabel} style={[s0.hotelTotalPrice,{color:theme.textPrimary}]}>
-              {displayPrices?.total?.formatted ?? money(result.currency, result.totalPrice)} total
+          <View style={s0.hotelPriceCopy}>
+            <Text accessibilityLabel={displayPrices?.nightly?.accessibilityLabel} style={[s0.hotelNightlyPrice,{color:theme.textPrimary}]}>
+              {hasPrice ? displayPrices?.nightly?.formatted ?? money(result.currency, result.pricePerNight) : "Price unavailable"}
             </Text>
-          ) : null}
+            {hasPrice ? <Text style={[s0.hotelPerNight,{color:theme.textSecondary}]}>per night</Text> : <Text style={[s0.hotelPerNight,{color:theme.textSecondary}]}>No live rate</Text>}
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`View hotel for ${result.name}`}
+            accessibilityHint="Opens this hotel"
+            hitSlop={4}
+            style={({ pressed }) => [s0.hotelDealButton, compact && s0.hotelDealButtonCompact, pressed && s0.hotelDealButtonPressed]}
+            onPress={(event) => { event.stopPropagation(); openHotel(); }}
+          >
+            <Text style={s0.hotelDealButtonText}>View hotel</Text>
+          </Pressable>
         </View>
       </View>
     </Pressable>
@@ -1971,7 +1957,7 @@ const s0 = StyleSheet.create({
   metadataRow: { width: "100%", flexDirection: "row", alignItems: "center", paddingTop: 1, paddingBottom: 2 },
   metadataItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingHorizontal: 2 },
   metadataText: { flexShrink: 1, minWidth: 0, fontSize: 11.5, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
-  hotelCard: { minHeight: 232, borderWidth: 1, borderRadius: 13, overflow: "hidden", flexDirection: "row", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 2 },
+  hotelCard: { minHeight: 260, borderWidth: 1, borderRadius: 13, overflow: "hidden", flexDirection: "row", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 2 },
   hotelCardPressed: { opacity: 0.96, transform: [{ scale: 0.998 }] },
   hotelImageWrap: { width: "39%", alignSelf: "stretch", position: "relative" },
   hotelImageWrapCompact: { width: "38%" },
@@ -2000,16 +1986,18 @@ const s0 = StyleSheet.create({
   stars: { color: "#FFB800", fontSize: 14 },
   hotelLocation: { flexDirection: "row", alignItems: "center", gap: 4, minWidth: 0 },
   hotelLocationText: { flexShrink: 1, minWidth: 0, color: colors.blue, fontSize: 12, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
-  review: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium, color: ui.navy },
-  score: { backgroundColor: ui.blue, color: "white", fontWeight: "800", fontFamily: appFonts.extraBold },
-  hotelBenefitList: { gap: 1 },
-  hotelBenefitText: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
-  hotelBenefitPositive: { fontWeight: "700", fontFamily: appFonts.bold },
+  review: { fontSize: 11, color: ui.navy },
+  score: { backgroundColor: ui.blue, color: "white", fontWeight: "900" },
+  hotelTerm:{fontSize:11,lineHeight:15,color:ui.navy},
   hotelAttributionLink:{fontSize:10,lineHeight:14,color:colors.blue,textDecorationLine:"underline"},
-  hotelPrice: { marginTop: "auto", alignItems: "flex-end", paddingTop: 6 },
+  hotelPrice: { marginTop: "auto", alignItems: "flex-end", paddingTop: 8 },
+  hotelPriceCopy: { minWidth: 0, alignItems: "flex-end" },
   hotelNightlyPrice: { fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold, color: ui.navy, textAlign: "right", fontVariant: ["tabular-nums"] },
   hotelPerNight: { marginTop: 1, fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium, color: ui.muted, textAlign: "right" },
-  hotelTotalPrice: { marginTop: 1, fontSize: 12, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold, textAlign: "right", fontVariant: ["tabular-nums"] },
+  hotelDealButton: { minHeight: 40, minWidth: 104, marginTop: 6, paddingHorizontal: 14, borderRadius: 8, backgroundColor: colors.blue, alignItems: "center", justifyContent: "center" },
+  hotelDealButtonCompact: { minHeight: 36, minWidth: 92, paddingHorizontal: 12 },
+  hotelDealButtonPressed: { backgroundColor: "#003B91" },
+  hotelDealButtonText: { fontSize: 14, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold, color: "white" },
   loadingState: { width: "100%", gap: 14 },
   loadingMessage: { minHeight: 40, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9 },
   loadingText: { fontSize: 13, lineHeight: 18, color: ui.navy, fontWeight: "700" },
@@ -2053,9 +2041,9 @@ const s0 = StyleSheet.create({
   skeletonMetadataRow: { width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start" },
   skeletonMetadataLine: { width: "68%", height: 7 },
   skeletonButton: { width: 96, height: 44, borderRadius: 8, backgroundColor: "#E7EBF1" },
-  hotelSkeletonCard: { width: "100%", height: 224, borderWidth: 1, borderRadius: 13, overflow: "hidden", flexDirection: "row" },
+  hotelSkeletonCard: { width: "100%", height: 234, borderWidth: 1, borderRadius: 13, overflow: "hidden", flexDirection: "row" },
   hotelSkeletonImage: { width: "39%", height: "100%", backgroundColor: "#E7EBF1" },
-  hotelSkeletonCopy: { flex: 1, padding: 12, gap: 10 },
+  hotelSkeletonCopy: { flex: 1, padding: 12, gap: 12 },
   hotelSkeletonTitle: { width: "82%", height: 15 },
   hotelSkeletonMeta: { width: "62%" },
   hotelSkeletonReview: { width: "74%" },
