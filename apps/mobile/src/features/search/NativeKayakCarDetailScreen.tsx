@@ -202,7 +202,7 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
             : <View style={s.unavailable}><CarFront size={48} color={theme.textSecondary} /><Text style={{ color: theme.textSecondary }}>Vehicle image unavailable</Text></View>}
         </View></View>
         <View style={s.identityBlock}>
-          <Text accessibilityRole="header" style={[s.title, { color: light ? "#020617" : theme.textPrimary }]}>{result.modelName}</Text>
+          <Text accessibilityRole="header" style={[s.title, { color: light ? "#020617" : theme.textPrimary }]}>{result.modelName}<Text style={[s.orSimilar, { color: theme.textSecondary }]}> {"or\u00A0similar"}</Text></Text>
           <Text style={s.category}>{result.categoryLabel.toUpperCase()}</Text>
           <Text style={[s.sandboxLabel, { color: theme.textSecondary }]}>KAYAK sandbox · Simulated · Not bookable</Text>
         </View>
@@ -244,12 +244,12 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
       </View>
     </ScrollView>
 
-    <Pressable accessibilityRole="button" accessibilityLabel="Back to Cars results" onPress={returnToCarResults} style={[s.heroBack, { top: inset.top + 12 }]}>
-      <ArrowLeft size={25} strokeWidth={2.2} color="#0F172A" />
+    <Pressable accessibilityRole="button" accessibilityLabel="Back to Cars results" onPress={returnToCarResults} style={[s.heroBack, { top: inset.top + 12, backgroundColor: carCanvasColor }]}>
+      <ArrowLeft size={25} strokeWidth={2.2} color={light ? "#0F172A" : theme.icon} />
     </Pressable>
-    <View style={[s.heroActions, { top: inset.top + 12 }]}>
-      <Pressable accessibilityRole="button" accessibilityLabel={saved.saved ? "Remove car from saved" : "Save car"} accessibilityState={{ selected: saved.saved }} onPress={saved.toggle} style={s.heroAction}><Heart size={22} strokeWidth={2} color={saved.saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={saved.saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} /></Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="Share car" onPress={() => void Share.share({ message: `${result.modelName} — ${result.categoryLabel}` })} style={s.heroAction}><Share2 size={21} color="#0F172A" /></Pressable>
+    <View style={[s.heroActions, { top: inset.top + 12, backgroundColor: carCanvasColor }]}>
+      <Pressable accessibilityRole="button" accessibilityLabel={saved.saved ? "Remove car from saved" : "Save car"} accessibilityState={{ selected: saved.saved }} onPress={saved.toggle} style={s.heroAction}><Heart size={22} strokeWidth={2} color={saved.saved ? androidFavoriteColors.savedStroke : light ? androidFavoriteColors.unsavedStroke : theme.icon} fill={saved.saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} /></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="Share car" onPress={() => void Share.share({ message: `${result.modelName} — ${result.categoryLabel}` })} style={s.heroAction}><Share2 size={21} color={light ? "#0F172A" : theme.icon} /></Pressable>
     </View>
 
     {offer ? <View style={[s.dock, { paddingBottom: 12 + inset.bottom, backgroundColor: theme.surface, borderTopColor: theme.border }]}>
@@ -273,7 +273,7 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
 }
 
 function Spec({ Icon, text, theme }: { Icon: typeof Users; text: string; theme: Theme }) {
-  return <View style={s.spec}><Icon size={15} color={theme.dark ? theme.icon : "#475569"} /><Text style={[s.specText, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{text}</Text></View>;
+  return <View style={s.spec}><Icon size={16} color={theme.dark ? theme.icon : "#475569"} /><Text style={[s.specText, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{text}</Text></View>;
 }
 
 function KayakCompare({ result, offers, selectedOfferId, onSelectOffer, days, pickupDate, dropoffDate, theme }: { result: CarResult; offers: CarResult["offers"]; selectedOfferId?: string; onSelectOffer: (id: string) => void; days: number; pickupDate: string; dropoffDate: string; theme: Theme }) {
@@ -383,28 +383,29 @@ function KayakCarUnavailable() {
 
 const s = StyleSheet.create({
   safe: { flex: 1 },
-  heroBack: { position: "absolute", left: 20, width: 44, height: 44, borderRadius: 22, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 5, elevation: 10 },
-  heroActions: { position: "absolute", right: 20, width: 96, height: 44, borderRadius: 22, backgroundColor: "#FFFFFF", flexDirection: "row", overflow: "hidden", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 5, elevation: 10 },
+  heroBack: { position: "absolute", left: 20, width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 5, elevation: 10 },
+  heroActions: { position: "absolute", right: 20, width: 96, height: 44, borderRadius: 22, flexDirection: "row", overflow: "hidden", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 5, elevation: 10 },
   heroAction: { width: 48, height: 44, alignItems: "center", justifyContent: "center" },
   hero: { paddingBottom: 16, borderBottomWidth: 1 },
-  identityBlock: { paddingHorizontal: 16, paddingTop: 12 },
-  category: { marginTop: 1, fontSize: 10, lineHeight: 14, fontWeight: "700", fontFamily: appFonts.bold, textTransform: "uppercase", letterSpacing: 1.4, color: "#075EE8" },
+  identityBlock: { paddingHorizontal: 16, paddingTop: 14 },
+  category: { marginTop: 3, fontSize: 10, lineHeight: 14, fontWeight: "700", fontFamily: appFonts.bold, textTransform: "uppercase", letterSpacing: 1.4, color: "#075EE8" },
   sandboxLabel: { marginTop: 4, fontSize: 10, lineHeight: 14, fontWeight: "600", fontFamily: appFonts.semibold },
-  title: { fontSize: 20, lineHeight: 25, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.5 },
+  title: { fontSize: 22, lineHeight: 28, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.5 },
+  orSimilar: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold, letterSpacing: 0 },
   imageBox: { width: "100%", aspectRatio: 16 / 10, overflow: "hidden" },
   mediaStage: { flex: 1, marginTop: 16 },
   image: { width: "100%", height: "100%" },
   unavailable: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10, padding: 24 },
-  specs: { flexDirection: "row", flexWrap: "wrap", rowGap: 8, justifyContent: "space-between", paddingHorizontal: 16, paddingTop: 16 },
+  specs: { flexDirection: "row", flexWrap: "wrap", rowGap: 10, justifyContent: "space-between", paddingHorizontal: 16, paddingTop: 16 },
   spec: { width: "42%", minWidth: 0, flexDirection: "row", alignItems: "center", gap: 8 },
-  specText: { flex: 1, fontSize: 12, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
+  specText: { flex: 1, fontSize: 12, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
   carsTabsShell: { width: "100%", alignSelf: "stretch", minHeight: 48, borderBottomWidth: 1 },
   carsTabsRow: { width: "100%", alignSelf: "stretch", minHeight: 48, flexDirection: "row", flexWrap: "nowrap", alignItems: "stretch" },
   carTab: { flexGrow: 0, flexShrink: 0, minWidth: 0, minHeight: 48, alignItems: "center", justifyContent: "center", paddingHorizontal: 2 },
   carTabCompare: { width: "32%" },
   carTabPickup: { width: "43%" },
   carTabLocation: { width: "25%" },
-  tabText: { fontWeight: "700", fontFamily: appFonts.bold },
+  tabText: { fontWeight: "600", fontFamily: appFonts.semibold },
   underline: { position: "absolute", left: 8, right: 8, bottom: 0, height: 2 },
   page: { paddingHorizontal: 16 },
   compare: { paddingTop: 12, paddingBottom: 28, borderBottomWidth: 1 },
@@ -435,11 +436,11 @@ const s = StyleSheet.create({
   timelineRail: { width: 14, borderLeftWidth: 2, borderLeftColor: "#BFDBFE", alignItems: "center" },
   timelineDot: { position: "absolute", left: -7, top: 4, width: 12, height: 12, borderRadius: 6, backgroundColor: "#004BB8" },
   timelineCopy: { flex: 1, paddingLeft: 20 },
-  timelineHeading: { fontSize: 16, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold },
+  timelineHeading: { fontSize: 15, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold },
   infoRow: { marginTop: 4, flexDirection: "row", alignItems: "flex-start", gap: 8 },
   infoText: { flex: 1 },
   timelineLocation: { fontSize: 14, lineHeight: 20, fontWeight: "500", fontFamily: appFonts.medium },
-  timelineDate: { fontSize: 14, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
+  timelineDate: { fontSize: 13, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
   providerNote: { marginTop: 20, fontSize: 12, lineHeight: 18, fontWeight: "400", fontFamily: appFonts.regular },
   location: { paddingTop: 12, paddingBottom: 28, borderBottomWidth: 1 },
   locationHeading: { fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.2 },
@@ -459,7 +460,7 @@ const s = StyleSheet.create({
   locationTimelineRail: { width: 14, alignItems: "center" },
   locationConnector: { position: "absolute", left: 5, top: 16, bottom: -44, width: 2, backgroundColor: "#BFDBFE" },
   locationTimelineCopy: { flex: 1, paddingLeft: 12 },
-  detailsHeading: { marginTop: 24, fontSize: 15, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold },
+  detailsHeading: { marginTop: 24, fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
   bullet: { marginTop: 12, flexDirection: "row", gap: 10 },
   bulletText: { flex: 1, fontSize: 14, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
   dock: { position: "absolute", left: 0, right: 0, bottom: 0, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderTopWidth: 1, paddingHorizontal: 16, paddingTop: 12, shadowColor: "#0F172A", shadowOffset: { width: 0, height: -8 }, shadowOpacity: 0.14, shadowRadius: 14, elevation: 12 },

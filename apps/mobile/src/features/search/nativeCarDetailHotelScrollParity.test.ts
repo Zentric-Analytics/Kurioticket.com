@@ -27,7 +27,7 @@ test("approved and KAYAK Cars retain hero geometry while insetting media and red
     assert.match(source, /mediaStage:\s*\{\s*flex:\s*1,\s*marginTop:\s*16\s*\}/, name);
     assert.match(source, /fontSize:\s*width\s*>=\s*390\s*\?\s*11\s*:\s*10/, name);
     for (const heading of ["compareHeading", "pickupHeading", "locationHeading"]) assert.match(source, new RegExp(`${heading}:\\s*\\{[^}]*fontSize:\\s*14[^}]*lineHeight:\\s*20[^}]*fontWeight:\\s*"700"[^}]*fontFamily:\\s*appFonts\\.bold`), `${name}: ${heading}`);
-    assert.match(source, /style=\{\[s\.heroBack,\s*\{\s*top:\s*inset\.top\s*\+\s*12\s*\}\]\}/, name);
-    assert.match(source, /style=\{\[s\.heroActions,\s*\{\s*top:\s*inset\.top\s*\+\s*12\s*\}\]\}/, name);
+    assert.match(source, /style=\{\[s\.heroBack,\s*\{\s*top:\s*inset\.top\s*\+\s*12,\s*backgroundColor:\s*carCanvasColor\s*\}\]\}/, name);
+    assert.match(source, /style=\{\[s\.heroActions,\s*\{\s*top:\s*inset\.top\s*\+\s*12,\s*backgroundColor:\s*carCanvasColor\s*\}\]\}/, name);
   }
 });

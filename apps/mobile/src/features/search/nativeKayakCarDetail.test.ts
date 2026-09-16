@@ -34,11 +34,22 @@ test("approved and KAYAK Cars details share the light canvas and vehicle image s
     assert.match(detail, /const CAR_DETAIL_LIGHT_CANVAS = "#F5F7FB"/);
     assert.match(detail, /const carCanvasColor\s*=\s*theme\.dark\s*\?\s*theme\.background\s*:\s*CAR_DETAIL_LIGHT_CANVAS/);
     assert.match(detail, /s\.safe,\s*\{\s*backgroundColor:\s*carCanvasColor\s*\}/);
-    assert.match(detail, /style=\{\[s\.heroBack,\s*\{\s*top:\s*inset\.top\s*\+\s*12\s*\}\]\}/);
+    assert.match(detail, /style=\{\[s\.heroBack,\s*\{\s*top:\s*inset\.top\s*\+\s*12,\s*backgroundColor:\s*carCanvasColor\s*\}\]\}/);
+    assert.match(detail, /style=\{\[s\.heroActions,\s*\{\s*top:\s*inset\.top\s*\+\s*12,\s*backgroundColor:\s*carCanvasColor\s*\}\]\}/);
+    assert.doesNotMatch(detail, /hero(?:Back|Actions):\s*\{[^}]*backgroundColor:\s*"#FFFFFF"/);
     assert.match(detail, /<ScrollView[^>]*style=\{\{\s*backgroundColor:\s*carCanvasColor\s*\}\}/);
     assert.match(detail, /s\.hero,\s*\{\s*backgroundColor:\s*carCanvasColor,\s*borderColor:\s*theme\.border\s*\}/);
     assert.match(detail, /s\.imageBox,\s*\{\s*backgroundColor:\s*theme\.surface\s*\}/);
   }
+});
+
+test("approved and KAYAK Cars details present or similar inline after the model", () => {
+  for (const detail of [normalDetail, sandboxDetail]) {
+    assert.match(detail, /accessibilityRole="header"[^>]*>\{result\.modelName\}<Text style=\{\[s\.orSimilar,/);
+    assert.match(detail, /> \{"or\\u00A0similar"\}<\/Text><\/Text>/);
+    assert.match(detail, /orSimilar:\s*\{\s*fontSize:\s*14,\s*lineHeight:\s*20,\s*fontWeight:\s*"600",\s*fontFamily:\s*appFonts\.semibold,\s*letterSpacing:\s*0\s*\}/);
+  }
+  assert.match(sandboxDetail, /KAYAK sandbox · Simulated · Not bookable/);
 });
 
 test("native KAYAK Cars details recover only through the canonical server Cars API", () => {
