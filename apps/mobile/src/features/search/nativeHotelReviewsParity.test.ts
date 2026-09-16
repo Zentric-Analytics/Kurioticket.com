@@ -97,7 +97,7 @@ test("Reviews use one prominent score summary and one provider-authored guest se
     for (const pattern of patterns) assert.match(rule, pattern);
     assert.doesNotMatch(rule, /fontFamily/);
   }
-  assert.match(reviews, />Guests say</);
+  assert.match(reviews, /<Text accessibilityRole="header"[\s\S]*?>\s*Guests say\s*<\/Text>/);
   assert.match(reviews, /providerDetails\?\.reviews\?\.sentiment/);
   assert.match(reviews, /providerDetails\?\.reviews\?\.quotes/);
   assert.doesNotMatch(reviews, /scoreBadge|backgroundColor: colors\.blue/);
