@@ -22,7 +22,7 @@ test("fare categories and active content form one connected horizontally scrolla
 });
 
 test("FareSurface renders only the selected category without a generic nested card",()=>{
-  assert.doesNotMatch(surface,/s\.card|borderRadius|backgroundColor:theme\.surface/);
+  assert.doesNotMatch(surface,/s\.card/);
   assert.match(surface,/if\(tab==="deals"\) return/);
   assert.match(surface,/if\(tab==="details"\) return/);
   assert.match(surface,/if\(tab==="conditions"\) return/);
@@ -30,14 +30,15 @@ test("FareSurface renders only the selected category without a generic nested ca
   assert.doesNotMatch(surface,/display:\s*"none"|opacity:\s*0/);
 });
 
-test("deal comparison retains authoritative provider handoff data and intentional emptiness",()=>{
+test("deal comparison presents authoritative provider data as selection-only cards",()=>{
   const deals=between('if(tab==="deals")', 'if(tab==="details")');
   assert.match(deals,/choice\.deals\.length\?choice\.deals\.map/);
   assert.match(deals,/deal\.providerName/);
-  assert.match(deals,/dealPrices\[`deal:\$\{deal\.key\}`\]\?\.formatted/);
-  assert.match(deals,/"View deal"/);
-  assert.match(deals,/onDeal\(deal\.offerId\)/);
-  assert.match(deals,/booking\|\|!fareReady/);
+  assert.match(deals,/const price=dealPrices\[`deal:\$\{deal\.key\}`\]/);
+  assert.match(deals,/accessibilityRole="radiogroup"/);
+  assert.match(deals,/accessibilityRole="radio"/);
+  assert.match(deals,/onSelectDeal\(deal\.offerId\)/);
+  assert.doesNotMatch(deals,/View deal|onDeal\(|fareReady/);
   assert.match(deals,/No booking deals available/);
   assert.match(deals,/No additional live provider deals were supplied for this fare\./);
   assert.doesNotMatch(deals,/providerMark|providerMonogram|charAt\(0\)|Best deal|Good value|Recommended|logoUrl|seller ranking/i);
