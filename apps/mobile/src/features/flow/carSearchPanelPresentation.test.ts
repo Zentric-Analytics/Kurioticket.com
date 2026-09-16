@@ -31,9 +31,9 @@ test("Cars closed selectors share the compact field contract without custom chev
   assert.equal((closedForm.match(/trailing=\{false\}/g) ?? []).length, 2);
 });
 
-test("Cars keeps the checkbox semantics, toggle, conditional drop-off, and selected check", () => {
+test("Cars keeps the checkbox semantics, toggle, conditional drop-off, selected check, and stale target clearing", () => {
   assert.match(panel, /accessibilityRole="checkbox"[^\n]*accessibilityState=\{\{ checked: form\.separateDropoff \}\}/);
-  assert.match(panel, /onPress=\{\(\) => setForm\(\{ \.\.\.form, separateDropoff: !form\.separateDropoff \}\)\}/);
+  assert.match(panel, /onPress=\{\(\) => setForm\(\{ \.\.\.form, separateDropoff: !form\.separateDropoff,[^\n]*dropoffLocationTarget: undefined/);
   assert.match(panel, /form\.separateDropoff \? <FieldError[^\n]*label="Drop-off location"/);
   assert.match(panel, /form\.separateDropoff \? <FlowIcon name="check" color="white" size=\{15\}\/\> : null/);
   assert.doesNotMatch(panel, /<CompactSearchField label="Return to a different location"/);
@@ -131,7 +131,7 @@ test("Cars Search and time Done CTAs are iconless while selection checks remain"
 });
 
 test("Cars keeps the separate-return checkbox selection check", () => {
-  assert.match(panel, /form\.separateDropoff \? <FlowIcon name="check" color="white" size=\{15\}\/> : null/);
+  assert.match(panel, /form\.separateDropoff \? <FlowIcon name="check" color="white" size=\{15\}\/\> : null/);
 });
 
 test("Cars Results edit appearance is isolated from the default compact form", () => {

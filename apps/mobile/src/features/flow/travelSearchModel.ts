@@ -11,6 +11,19 @@ const clockTime = (value: string) => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value);
 const httpsUrl = (value?: string | null) => Boolean(value && /^https:\/\/[^/\s]+(?:\/|$)/i.test(value));
 const safeImage = (value?: string | null) => !value || httpsUrl(value) || /^\/(?!\/)[^\s]+/.test(value);
 const safeFlightAirportCode = (value: unknown) => typeof value === "string" && /^[A-Z0-9]{3}$/.test(value);
+const parseLocationTarget = (value: string) => {
+  if (!value) return undefined;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return undefined;
+    const target = parsed as Record<string, unknown>;
+    return typeof target.id === "string" && typeof target.kind === "string" && typeof target.primaryLabel === "string" && typeof target.submittedValue === "string"
+      ? target
+      : undefined;
+  } catch {
+    return undefined;
+  }
+};
 const safeAction = (result: FlightResult | HotelResult | CarResult) => {
   const action = result.searchPolicy?.action;
   return Boolean(action && (!action.enabled || (action.kind === "internal-detail" ? /^\/(?:flights|hotels|cars)\/details\/[^/]/.test(action.href) : httpsUrl(action.href))));
@@ -65,6 +78,8 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
     return { plan: { payload, key: JSON.stringify(["hotel", ...Object.values(payload)]), summary: `${destination} · ${checkIn} – ${checkOut}` } };
   }
   const pickupLocation = text(params.pickupLocation); const dropoffLocation = text(params.dropoffLocation) || pickupLocation;
+  const pickupLocationTarget = parseLocationTarget(text(params.pickupLocationTarget));
+  const dropoffLocationTarget = parseLocationTarget(text(params.dropoffLocationTarget)) || (dropoffLocation === pickupLocation ? pickupLocationTarget : undefined);
   const pickupDate = text(params.pickupDate); const dropoffDate = text(params.dropoffDate);
   const pickupTime = text(params.pickupTime) || "10:00"; const dropoffTime = text(params.dropoffTime) || "10:00";
   const driverAgeValue = text(params.driverAge);
@@ -73,15 +88,11 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
   if (!pickupLocation || !dropoffLocation) return { error: "Enter valid pickup and drop-off locations." };
   if (!future(pickupDate, now) || !future(dropoffDate, now) || !clockTime(pickupTime) || !clockTime(dropoffTime) || `${dropoffDate}T${dropoffTime}` <= `${pickupDate}T${pickupTime}`) return { error: "Choose a return date and time after pickup." };
   if (driverAge < 18 || driverAge > 70) return { error: "Enter a valid driver age from 18 to 70." };
-  const payload = { pickupLocation, dropoffLocation, pickupDate, pickupTime, dropoffDate, dropoffTime, driverAge: anyDriverAge ? "18-70" : String(driverAge) };
+  const payload = { pickupLocation, dropoffLocation, ...(pickupLocationTarget ? { pickupLocationTarget } : {}), ...(dropoffLocationTarget ? { dropoffLocationTarget } : {}), pickupDate, pickupTime, dropoffDate, dropoffTime, driverAge: anyDriverAge ? "18-70" : String(driverAge) };
   return { plan: { payload, key: JSON.stringify(["car", ...Object.values(payload)]), summary: `${pickupLocation} · ${pickupDate}` } };
 }
 
 export function validFlight(result: FlightResult, plan: SearchPlan) {
-  // `plan` remains part of the contract because callers validate a response in
-  // the context of its request. Route/date eligibility is server-owned: the
-  // canonical aggregator may legitimately return city/airport projections that
-  // differ from the submitted endpoint while still being safe to present.
   void plan;
   return Boolean(
     result.id &&
