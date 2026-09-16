@@ -60,10 +60,13 @@ test("Cars Back header uses Hotel-like geometry without positioning or a divider
 });
 
 test("Cars header and scrolling content share a theme-safe canvas without a hero top rule", () => {
-  assert.match(native, /const carCanvasColor=theme\.dark\?theme\.background:theme\.surface/);
+  assert.match(native, /const CAR_DETAIL_LIGHT_CANVAS = "#F5F7FB"/);
+  assert.match(native, /const carCanvasColor=theme\.dark\?theme\.background:CAR_DETAIL_LIGHT_CANVAS/);
   assert.match(native, /<SafeAreaView style=\{\[s\.safe,\{backgroundColor:carCanvasColor\}\]\}/);
   assert.match(native, /s\.carBackHeader,\{backgroundColor:carCanvasColor\}/);
   assert.match(native, /<ScrollView[^>]*style=\{\{backgroundColor:carCanvasColor\}\}/);
+  assert.match(native, /s\.hero,\{backgroundColor:carCanvasColor,borderColor:theme\.border\}/);
+  assert.match(native, /s\.imageBox,\{backgroundColor:theme\.surface\}/);
   assert.doesNotMatch(native, /carCanvasColor[^;]*["']white["']/i);
 
   const hero = style("hero");

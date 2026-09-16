@@ -29,6 +29,18 @@ test("native Cars details keep provider detection while KAYAK mirrors the approv
   }
 });
 
+test("approved and KAYAK Cars details share the light canvas and vehicle image surface contract", () => {
+  for (const detail of [normalDetail, sandboxDetail]) {
+    assert.match(detail, /const CAR_DETAIL_LIGHT_CANVAS = "#F5F7FB"/);
+    assert.match(detail, /const carCanvasColor\s*=\s*theme\.dark\s*\?\s*theme\.background\s*:\s*CAR_DETAIL_LIGHT_CANVAS/);
+    assert.match(detail, /s\.safe,\s*\{\s*backgroundColor:\s*carCanvasColor\s*\}/);
+    assert.match(detail, /s\.carBackHeader,\s*\{\s*backgroundColor:\s*carCanvasColor\s*\}/);
+    assert.match(detail, /<ScrollView[^>]*style=\{\{\s*backgroundColor:\s*carCanvasColor\s*\}\}/);
+    assert.match(detail, /s\.hero,\s*\{\s*backgroundColor:\s*carCanvasColor,\s*borderColor:\s*theme\.border\s*\}/);
+    assert.match(detail, /s\.imageBox,\s*\{\s*backgroundColor:\s*theme\.surface\s*\}/);
+  }
+});
+
 test("native KAYAK Cars details recover only through the canonical server Cars API", () => {
   assert.match(sandboxDetail, /travelApi\.searchCars\(plan\.plan\.payload\)/);
   assert.match(sandboxDetail, /safeCanonicalCarResult\(item\)/);

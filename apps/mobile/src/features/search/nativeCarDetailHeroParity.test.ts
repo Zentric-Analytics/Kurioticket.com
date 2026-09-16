@@ -11,7 +11,7 @@ function style(name: string): string {
 }
 
 const heroStart = native.indexOf("<View style={[s.hero,");
-const imageStart = native.indexOf("<View style={s.imageBox}", heroStart);
+const imageStart = native.indexOf("<View style={[s.imageBox", heroStart);
 const heroHeader = native.slice(heroStart, imageStart);
 
 test("the canonical vehicle name precedes its category and remains the hero heading", () => {
@@ -51,7 +51,8 @@ test("hero alignment uses no positioning hacks", () => {
     assert.doesNotMatch(style(name), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|translate[XY]/);
 });
 
-test("vehicle image well inherits the surrounding hero surface", () => {
+test("vehicle image well explicitly uses the theme surface without changing its geometry", () => {
+  assert.match(native, /s\.imageBox,\{backgroundColor:theme\.surface\}/);
   assert.doesNotMatch(style("imageBox"), /backgroundColor\s*:/);
 });
 
