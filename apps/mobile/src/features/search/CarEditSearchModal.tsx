@@ -45,7 +45,8 @@ export function CarEditSearchModal({ visible, params, onClose }: Props) {
       <KeyboardAvoidingView
         pointerEvents={motion.pointerEvents}
         style={styles.viewport}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        enabled={Platform.OS === "ios"}
+        behavior="padding"
       >
         <SafeAreaView edges={["top", "left", "right"]} style={styles.backdrop}>
           <Animated.View
