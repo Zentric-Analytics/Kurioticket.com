@@ -9,17 +9,24 @@ const pickers = read("src/features/flow/CarSearchPickers.tsx");
 const dates = read("src/features/flow/DateRangeSheet.tsx");
 const shell = read("src/features/flow/HotelResultsEditPickerShell.tsx");
 
-test("Cars Results Edit retains its floating parent and routes every child to a normal sheet", () => {
+test("Cars Results Edit retains its floating parent and isolates Android children full-screen", () => {
  assert.match(outer,/<Modal[\s\S]*?transparent[\s\S]*?<CarSearchPanel[\s\S]*?editAppearance/);
- for(const component of ["CarRentalDatesSheet","CarTimeRangeSheet","AgeSheet","CarLocationSheet"]) assert.match(panel,new RegExp(`<${component}[^>]+presentation="sheet"`));
- assert.doesNotMatch(panel,/presentation=\{editAppearance \? "resultsEditFullScreen"/);
+ assert.match(panel,/const resultsEditPickerPresentation =\s*editAppearance && Platform\.OS === "android"\s*\? "resultsEditFullScreen"\s*:\s*"sheet"/);
+ for(const component of ["CarRentalDatesSheet","CarTimeRangeSheet","AgeSheet","CarLocationSheet"]) assert.match(panel,new RegExp(`<${component}[^>]+presentation=\\{resultsEditPickerPresentation\\}`));
  assert.match(outer,/FLIGHT_QUICK_SHEET_HORIZONTAL_INSET/);assert.match(outer,/FLIGHT_FLOATING_SHEET_BOTTOM_GAP/);assert.match(outer,/FLIGHT_RESULTS_LIGHT_CANVAS/);assert.match(outer,/maxHeight: "88%"/);assert.match(outer,/additionalTravelDistance: floatingBottomGap/);
+});
+
+test("Cars Results Edit parent ignores Android child keyboards while retaining iOS padding", () => {
+  assert.match(outer, /<KeyboardAvoidingView[\s\S]*?style=\{styles\.viewport\}[\s\S]*?enabled=\{Platform\.OS === "ios"\}[\s\S]*?behavior="padding"/);
+  assert.match(outer, /viewport: \{ flex: 1 \}/);
+  assert.doesNotMatch(outer, /behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/);
 });
 
 test("Cars children use the opaque safe-area full-screen shell with Cars accessibility", () => {
   assert.match(shell, /transparent=\{false\}/);
   assert.match(shell, /presentationStyle="fullScreen"/);
   assert.match(shell, /animationType="none"/);
+  assert.match(shell, /statusBarTranslucent=\{false\}/);
   assert.match(shell, /edges=\{\["top", "bottom", "left", "right"\]\}/);
   assert.doesNotMatch(shell, /scrim|borderTopLeftRadius|translateY|useSearchPickerMotion/);
   assert.equal((`${panel}\n${pickers}`.match(/backAccessibilityLabel="Back to edit car search"/g) ?? []).length, 4);

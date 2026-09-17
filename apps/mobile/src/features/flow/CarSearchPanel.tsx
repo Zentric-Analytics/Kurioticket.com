@@ -42,6 +42,10 @@ export function CarSearchPanel({ params, embedded = false, editAppearance = fals
   const previousIntent = useRef(routeIntent);
   const pickupLocationDisplay = getLocationFieldDisplay(form.pickupLocation);
   const dropoffLocationDisplay = getLocationFieldDisplay(form.dropoffLocation);
+  const resultsEditPickerPresentation =
+    editAppearance && Platform.OS === "android"
+      ? "resultsEditFullScreen"
+      : "sheet";
   useEffect(() => {
     if (routeIntent !== previousIntent.current && Object.values(params).some(Boolean)) {
       const next = initialize(params); setForm(next.form); setErrors({}); setNotice(next.notice);
@@ -74,10 +78,10 @@ export function CarSearchPanel({ params, embedded = false, editAppearance = fals
     </>}
     {notice ? <UnavailableNotice text={notice}/> : null}{showSubmit ? editAppearance ? <Pressable accessibilityRole="button" accessibilityLabel={submitLabel} onPress={submit} style={({ pressed }) => [styles.resultsEditSubmit, pressed && ft.styles.pressed]}><Text style={styles.resultsEditSubmitText}>{submitLabel}</Text></Pressable> : <View style={styles.pad}><PrimaryButton label={submitLabel} icon={null} onPress={submit}/></View> : null}
     {!editAppearance ? <Pressable accessibilityRole="checkbox" accessibilityLabel="Return to a different location" accessibilityState={{ checked: form.separateDropoff }} onPress={() => setForm({ ...form, separateDropoff: !form.separateDropoff, ...(!form.separateDropoff ? {} : { dropoffLocationTarget: undefined }) })} style={styles.checkboxRow}><View style={[styles.checkbox, form.separateDropoff && styles.checked]}>{form.separateDropoff ? <FlowIcon name="check" color="white" size={15}/> : null}</View><Text style={ft.styles.meta}>Return to a different location</Text></Pressable> : null}
-    <CarRentalDatesSheet visible={datesOpen} pickupDate={form.pickupDate} returnDate={form.dropoffDate} presentation="sheet" onDone={commitDates} onCancel={() => setDatesOpen(false)}/>
-    <CarTimeRangeSheet visible={timesOpen} pickupTime={form.pickupTime} returnTime={form.dropoffTime} presentation="sheet" onDone={commitTimes} onCancel={() => setTimesOpen(false)}/>
-    <AgeSheet visible={ageOpen} age={form.driverAge} presentation="sheet" onConfirm={(driverAge) => { setForm({ ...form, driverAge }); clear("driverAge"); setAgeOpen(false); }} onClose={() => setAgeOpen(false)}/>
-    <CarLocationSheet mode={locationPicker} selectedValue={locationPicker === "return" ? form.dropoffLocation : form.pickupLocation} presentation="sheet" onChoose={(suggestion) => { const target=locationTarget(suggestion); if (locationPicker === "return") { setForm({ ...form, dropoffLocation: suggestion.value, dropoffLocationTarget: target }); clear("dropoffLocation"); } else { setForm({ ...form, pickupLocation: suggestion.value, pickupLocationTarget: target }); clear("pickupLocation"); } setLocationPicker(undefined); }} onClose={() => setLocationPicker(undefined)}/>
+    <CarRentalDatesSheet visible={datesOpen} pickupDate={form.pickupDate} returnDate={form.dropoffDate} presentation={resultsEditPickerPresentation} onDone={commitDates} onCancel={() => setDatesOpen(false)}/>
+    <CarTimeRangeSheet visible={timesOpen} pickupTime={form.pickupTime} returnTime={form.dropoffTime} presentation={resultsEditPickerPresentation} onDone={commitTimes} onCancel={() => setTimesOpen(false)}/>
+    <AgeSheet visible={ageOpen} age={form.driverAge} presentation={resultsEditPickerPresentation} onConfirm={(driverAge) => { setForm({ ...form, driverAge }); clear("driverAge"); setAgeOpen(false); }} onClose={() => setAgeOpen(false)}/>
+    <CarLocationSheet mode={locationPicker} selectedValue={locationPicker === "return" ? form.dropoffLocation : form.pickupLocation} presentation={resultsEditPickerPresentation} onChoose={(suggestion) => { const target=locationTarget(suggestion); if (locationPicker === "return") { setForm({ ...form, dropoffLocation: suggestion.value, dropoffLocationTarget: target }); clear("dropoffLocation"); } else { setForm({ ...form, pickupLocation: suggestion.value, pickupLocationTarget: target }); clear("pickupLocation"); } setLocationPicker(undefined); }} onClose={() => setLocationPicker(undefined)}/>
   </View>;
 }
 function ResultsEditRow({ label, value, secondary, muted = false, icon, disclosure = false, divided = false, onPress, actionLabel, onAction }: { label: string; value: string; secondary?: string; muted?: boolean; icon: FlowIconName; disclosure?: boolean; divided?: boolean; onPress: () => void; actionLabel?: string; onAction?: () => void }) {
