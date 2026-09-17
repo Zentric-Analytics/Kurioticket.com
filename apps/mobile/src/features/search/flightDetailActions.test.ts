@@ -25,62 +25,49 @@ test("native actions and checkout meet accessibility requirements", () => {
   assert.match(native, /accessibilityRole="radiogroup"/);
   assert.match(native, /accessibilityRole="radio" accessibilityState=\{\{selected:/);
   assert.match(native, /accessibilityRole="tab" accessibilityState=\{\{selected:/);
-  assert.match(native, /iconButton:\{width:44,height:44/);
+  assert.match(native, /heroIconButton:\{width:44,height:44/);
   assert.match(native, /<FlowIcon name="share" size=\{18\}/);
   assert.match(native, /fareInfoTab:\{minHeight:48/);
 });
 
-test("available flight top bar keeps only Back to results fixed", () => {
-  const availableReturn = native.indexOf('return <SafeAreaView edges={["top"]}', native.indexOf("const share=async"));
-  const scrollStart = native.indexOf('<ScrollView testID="flight-details-scroll-content"', availableReturn);
-  const fixedTopBar = native.slice(availableReturn, scrollStart);
+test("available Flight Details uses a universal edge-to-edge hero with safe controls", () => {
+  const availableReturn = native.indexOf('return <SafeAreaView edges={[]}', native.indexOf("const share=async"));
+  const loading = native.slice(native.indexOf("function FlightDetailsLoadingSkeleton"), native.indexOf("function TopBar"));
+  const available = native.slice(availableReturn, native.indexOf("function FlightDetailsLoadingSkeleton"));
 
-  assert.match(fixedTopBar, /<TopBar backgroundColor=\{theme\.background\} hasScrolled=\{hasScrolled\}\/>/);
-  assert.doesNotMatch(fixedTopBar, /Remove saved flight|Save flight|label="Share flight"/);
-  assert.doesNotMatch(fixedTopBar, /Edit search|flight-details-route-summary|flightDetailsRouteLabel/);
+  assert.match(available, /<StatusBar style="light" translucent backgroundColor="transparent"\/?>/);
+  assert.match(available, /<ImageBackground testID="flight-details-hero" source=\{require\("\.\.\/\.\.\/\.\.\/assets\/heroes\/flight-details-hero\.webp"\)\}/);
+  assert.match(available, /style=\{\[s\.heroControls,\{top:inset\.top\+8\}\]\}/);
+  assert.match(available, /accessibilityLabel="Back to results" onPress=\{\(\)=>router\.back\(\)\} style=\{s\.heroIconButton\}><ArrowLeft/);
+  assert.match(native, /heroIconButton:\{width:44,height:44,borderRadius:22/);
+  assert.doesNotMatch(loading, /flight-details-hero|ImageBackground|StatusBar style="light"/);
 });
 
-test("route context owns Save and Share actions without restoring Edit search", () => {
-  const scrollStart = native.indexOf('<ScrollView testID="flight-details-scroll-content"');
-  const scrollEnd = native.indexOf("</ScrollView><View style={[s.sticky", scrollStart);
-  const scrollingContent = native.slice(scrollStart, scrollEnd);
+test("hero owns route, Save, and Share without restoring Edit search", () => {
+  const heroStart = native.indexOf('<ImageBackground testID="flight-details-hero"');
+  const heroEnd = native.indexOf("</ImageBackground>", heroStart);
+  const hero = native.slice(heroStart, heroEnd);
 
-  assert.match(scrollingContent, /testID="flight-details-route-summary"/);
-  assert.match(scrollingContent, /flightDetailsRouteLabel/);
-  assert.match(scrollingContent, /\{tripMetadata\}/);
-  assert.match(scrollingContent, /<View style=\{s\.routeActions\}>/);
-  assert.match(scrollingContent, /label=\{saved\?"Remove saved flight":"Save flight"\}/);
-  assert.match(scrollingContent, /label="Share flight"/);
-  assert.doesNotMatch(scrollingContent, /accessibilityLabel="Edit search"|>Edit search</);
-  assert.doesNotMatch(native, /FilePenLine|pathname:"\/edit-flight-search"/);
+  assert.match(hero, /testID="flight-details-route-summary"/);
+  assert.match(hero, /flightDetailsRouteLabel/);
+  assert.match(hero, /\{tripMetadata\}/);
+  assert.match(hero, /label=\{saved\?"Remove saved flight":"Save flight"\}/);
+  assert.match(hero, /label="Share flight"/);
+  assert.doesNotMatch(native, /accessibilityLabel="Edit search"|>Edit search<|FilePenLine|pathname:"\/edit-flight-search"/);
 });
 
-test("native header spacing and route action separation stay compact", () => {
-  assert.match(native, /content:\{paddingHorizontal:18,paddingTop:5,gap:14\}/);
-  assert.match(native, /iconButton:\{width:44,height:44/);
-  assert.match(native, /routeActions:\{flexDirection:"row",alignItems:"center",gap:0,flexShrink:0\}/);
-  assert.match(native, /<Pressable accessibilityRole="button" accessibilityLabel=\{label\} onPress=\{onPress\} style=\{s\.iconButton\}><View style=\{s\.routeActionGlyph\}><View style=\{glyphStyle\}>\{children\}<\/View><\/View><\/Pressable>/);
-  assert.match(native, /routeActionGlyph:\{transform:\[\{translateY:-8\}\]\}/);
-  assert.match(native, /routeActionLeadingGlyph:\{transform:\[\{translateX:4\}\]\}/);
-  assert.match(native, /routeActionTrailingGlyph:\{transform:\[\{translateX:-4\}\]\}/);
-  assert.match(native, /routeSummary:\{flexDirection:"row",alignItems:"center",gap:4,marginBottom:-4\}/);
-  assert.doesNotMatch(native, /edit:\{|editText:\{/);
-  assert.match(native, /const next=nativeEvent\.contentOffset\.y>1;if\(next!==hasScrolledRef\.current\)/);
-  assert.match(native, /hasScrolled&&s\.topBarScrolled/);
+test("hero controls stay compact, circular, and accessible on narrow screens", () => {
+  assert.match(native, /heroActions:\{flexDirection:"row",gap:8\}/);
+  assert.match(native, /heroIconButton:\{width:44,height:44,borderRadius:22/);
+  assert.match(native, /routeMetadata:\{color:"#FFFFFF"[^}]*textTransform:"uppercase"/);
+  assert.match(native, /minimumFontScale=\{0\.75\} style=\{s\.routeMetadata\}/);
   assert.doesNotMatch(native, /Kurioticket.*(?:logo|wordmark)|(?:logo|wordmark).*Kurioticket/i);
 });
 
-test("Flight Details top bar blends into the page background in every state", () => {
-  assert.equal(native.match(/<TopBar backgroundColor=\{theme\.background\}/g)?.length, 3);
-  assert.doesNotMatch(native, /<TopBar backgroundColor=\{theme\.surface\}/);
-});
-
-test("fixed flight header remains usable with scaled text on narrow screens", () => {
-  assert.match(native, /<Text numberOfLines=\{1\} ellipsizeMode="tail" style=\{s\.backText\}>Back to results<\/Text>/);
-  assert.match(native, /topBar:\{minHeight:52[\s\S]*?paddingVertical:4/);
-  assert.doesNotMatch(native, /topBar:\{height:52/);
-  assert.match(native, /back:\{minHeight:44,flexShrink:1,minWidth:0/);
-  assert.match(native, /backText:\{color:ui\.blue,fontWeight:"800",flexShrink:1\}/);
+test("loading and unavailable states keep their existing fixed page header", () => {
+  assert.equal(native.match(/<TopBar backgroundColor=\{theme\.background\}/g)?.length, 2);
+  assert.match(native, /state === "loading"\) return <FlightDetailsLoadingSkeleton/);
+  assert.match(native, /state !== "available" \|\| !details \|\| !selected[\s\S]*?<TopBar backgroundColor=\{theme\.background\}\/>/);
 });
 
 test("flight save action uses the canonical favorite visual states", () => {
