@@ -234,7 +234,7 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
           {(["compare", "pickup", "location"] as const).map((tab) => {
             const selected = activeTab === tab;
             return <Pressable key={tab} accessibilityRole="tab" accessibilityState={{ selected }} onPress={() => selectCarTab(tab)} style={[s.carTab, tab === "compare" ? s.carTabCompare : tab === "pickup" ? s.carTabPickup : s.carTabLocation]}>
-              <Text numberOfLines={1} style={[s.tabText, { fontSize: width >= 390 ? 11 : 10, color: selected ? "#075EE8" : light ? "#475569" : theme.textSecondary }]}>{tab === "compare" ? "Compare deals" : tab === "pickup" ? "Pickup and return" : "Location"}</Text>
+              <Text numberOfLines={1} style={[s.tabText, { fontSize: width >= 390 ? 13 : 12, color: selected ? "#075EE8" : light ? "#475569" : theme.textSecondary }]}>{tab === "compare" ? "Compare deals" : tab === "pickup" ? "Pickup and return" : "Location"}</Text>
               <View style={[s.underline, { backgroundColor: selected ? "#075EE8" : "transparent" }]} />
             </Pressable>;
           })}
@@ -414,8 +414,8 @@ const s = StyleSheet.create({
   page: { paddingHorizontal: 16 },
   compare: { paddingTop: 12, paddingBottom: 28, borderBottomWidth: 1 },
   heading: { fontSize: 20, lineHeight: 28, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.5 },
-  compareHeading: { fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.2 },
-  stay: { marginTop: 4, fontSize: 12, lineHeight: 18, fontWeight: "500", fontFamily: appFonts.medium },
+  compareHeading: { fontSize: 12, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.2 },
+  stay: { marginTop: 4, fontSize: 11, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
   sandboxDisclosure: { marginTop: 6, fontSize: 11, lineHeight: 16, fontWeight: "400", fontFamily: appFonts.regular },
   dealList: { marginTop: 20, gap: 10 },
   compareCard: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 8, paddingVertical: 12, overflow: "hidden" },
@@ -434,7 +434,7 @@ const s = StyleSheet.create({
   daily: { maxWidth: "100%", fontSize: 19, lineHeight: 22, fontWeight: "600", fontFamily: appFonts.semibold, letterSpacing: -0.25, textAlign: "right", fontVariant: ["tabular-nums"] },
   perDay: { fontSize: 10, lineHeight: 13, fontWeight: "500", fontFamily: appFonts.medium, color: "#075EE8", textAlign: "right" },
   pickupSection: { marginHorizontal: -16, paddingHorizontal: 16, paddingVertical: 20, borderTopWidth: 1, borderBottomWidth: 1 },
-  pickupHeading: { fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.2 },
+  pickupHeading: { fontSize: 12, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.2 },
   timeline: { marginTop: 16, gap: 20 },
   timelineEntry: { flexDirection: "row" },
   timelineRail: { width: 14, borderLeftWidth: 2, borderLeftColor: "#BFDBFE", alignItems: "center" },
@@ -448,7 +448,7 @@ const s = StyleSheet.create({
   timelineDate: { fontSize: 13, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
   providerNote: { marginTop: 20, fontSize: 12, lineHeight: 18, fontWeight: "400", fontFamily: appFonts.regular },
   location: { paddingTop: 12, paddingBottom: 28, borderBottomWidth: 1 },
-  locationHeading: { fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.2 },
+  locationHeading: { fontSize: 12, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.2 },
   identity: { marginTop: 12, flexDirection: "row", alignItems: "flex-start", gap: 12 },
   identityCopy: { flex: 1, minWidth: 0 },
   pinWell: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#EFF6FF", alignItems: "center", justifyContent: "center" },

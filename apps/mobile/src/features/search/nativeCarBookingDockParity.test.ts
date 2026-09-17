@@ -44,6 +44,8 @@ test("Cars dock uses market precision without changing the Compare formatter", (
 test("Cars dock matches the Results card price hierarchy", () => {
   assert.match(dock, /<Text numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.82\}[^>]*>estimated rental total<\/Text>/);
   assert.match(dock, /<Info accessible=\{false\} size=\{12\} color=\{theme\.textSecondary\}\/\>/);
+  assert.ok(dock.indexOf("s.dockTotal") < dock.indexOf("s.dockPerDay"));
+  assert.ok(dock.indexOf("s.dockPerDay") < dock.indexOf("s.dockLabel"));
   assert.match(dock, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.65\} style=\{\[s\.dockTotal/);
   assert.match(dock, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.65\} style=\{\[s\.dockPerDay/);
   assert.match(styleRule("dockLabel", "dockEyebrow"), /gap:4[^}]*minWidth:0/);
@@ -65,8 +67,8 @@ test("Cars sticky sheet and columns match Hotel geometry", () => {
   assert.match(styleRule("dockContent", "dockPrice"), /width:"100%"[^}]*flexDirection:"row"[^}]*alignItems:"center"[^}]*gap:12/);
   assert.match(styleRule("dockPrice", "dockLabel"), /flex:1[^}]*minWidth:0[^}]*gap:1/);
   assert.match(dock, /style=\{\[s\.dockAction,Platform\.OS==="android"&&s\.dockActionAndroid\]\}/);
-  assert.match(styleRule("dockAction", "dockActionAndroid"), /flex:\.9[^}]*minWidth:132/);
-  assert.match(styleRule("dockActionAndroid", "continue"), /flex:\.72[^}]*minWidth:126/);
+  assert.match(styleRule("dockAction", "dockActionAndroid"), /flex:\.78[^}]*minWidth:140[^}]*maxWidth:180/);
+  assert.match(styleRule("dockActionAndroid", "continue"), /flex:\.76[^}]*minWidth:132[^}]*maxWidth:176/);
   assert.match(styleRule("continue", "continueText"), /width:"100%"[^}]*minHeight:48[^}]*borderRadius:8[^}]*backgroundColor:colors\.blue[^}]*paddingHorizontal:12[^}]*alignItems:"center"[^}]*justifyContent:"center"/);
   assert.match(styleRule("continueText", "loading"), /fontSize:12[^}]*lineHeight:16[^}]*fontWeight:"700"[^}]*fontFamily:appFonts\.bold[^}]*textAlign:"center"/);
 });
