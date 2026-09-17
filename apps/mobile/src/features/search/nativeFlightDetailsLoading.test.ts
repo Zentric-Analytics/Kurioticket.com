@@ -144,7 +144,9 @@ test("entry itinerary overlaps the hero with loaded card breadth and representat
   assert.equal(style(card).borderRadius, 15);
   assert.equal(style(card).padding, 15);
   assert.equal(style(card).borderWidth, 1);
-  assert.equal(style(card).backgroundColor, theme.surface);
+  assert.equal(style(card).backgroundColor, "transparent");
+  assert.equal(card.children[0].type, "Svg");
+  assert.equal(card.children[0].children[0].props.fill, theme.surface);
   assert.equal(style(card).marginHorizontal, undefined, "do not double the loaded horizontal overlap");
   for (const part of ["direction-date", "journey", "airports", "airline"]) find(card, `flight-details-loading-${part}`);
 });
