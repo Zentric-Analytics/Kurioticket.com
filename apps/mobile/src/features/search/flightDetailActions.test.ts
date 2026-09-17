@@ -87,8 +87,8 @@ test("available Flight Details uses the Flight Results canvas without flattening
   assert.match(resultsShell, /FLIGHT_RESULTS_LIGHT_CANVAS = "#F5F7FB"/);
 });
 
-test("loading and unavailable states keep their existing fixed page header", () => {
-  assert.equal(native.match(/<TopBar backgroundColor=\{theme\.background\}/g)?.length, 2);
+test("only unavailable and error states retain the fixed page header", () => {
+  assert.equal(native.match(/<TopBar backgroundColor=\{theme\.background\}/g)?.length, 1);
   assert.match(native, /state === "loading"\) return <FlightDetailsLoadingSkeleton/);
   assert.match(native, /state !== "available" \|\| !details \|\| !selected[\s\S]*?<TopBar backgroundColor=\{theme\.background\}\/>/);
 });
