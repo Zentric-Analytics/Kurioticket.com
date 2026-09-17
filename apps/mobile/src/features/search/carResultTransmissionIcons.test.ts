@@ -17,7 +17,10 @@ test("canonical and provider-owned transmission labels select original automotiv
   assert.match(card, /<FlowIcon name=\{transmissionIcon\} size=\{14\} color="#64748B" \/>/);
   assert.match(card, /label=\{specLabels\.transmission\}/);
   assert.match(providerPresentation, /transmission: capitalize\(result\.transmission\)/);
-  assert.match(providerPresentation, /transmission: specs\[3\] \|\| "Transmission not supplied"/);
+  assert.match(providerPresentation, /transmission: providerSpec\(specs\[3\]\)/);
+  assert.match(providerPresentation, /const authoredMissingSpecLabels = new Set/);
+  assert.match(providerPresentation, /"Transmission not supplied"/);
+  assert.match(providerPresentation, /return authoredMissingSpecLabels\.has\(trimmed\) \? "" : trimmed/);
   assert.doesNotMatch(card, /<FlowIcon name="settings"/);
 });
 
