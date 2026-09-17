@@ -29,7 +29,7 @@ test("the route transitions directly to every authoritative leg card without an 
   assert.doesNotMatch(source,/>Flight itinerary<\/Text>/);
   assert.match(source,/<View testID="flight-details-itinerary-overlap" style=\{s\.itineraryStack\}>\{\(offer\.legs\?\.length\?offer\.legs:\[\]\)\.map\(\(leg,index\)=><Itinerary/);
   assert.doesNotMatch(source,/itinerarySectionLabel:/);
-  assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-10,marginTop:-104,zIndex:1\}/);
+  assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-10,marginTop:-16,zIndex:1\}/);
   assert.match(itinerary,/leg\.direction==="outbound"\?"Outbound":leg\.direction==="return"\?"Return":`Flight \$\{leg\.legIndex\?\?index\+1\}`/);
   assert.doesNotMatch(source,/Edit search/);
 });
@@ -156,20 +156,35 @@ test("information progresses from journey summary to airports, segment details, 
 
 test("itinerary breadth expands from 18dp to 8dp side gaps while preserving current fare-card geometry",()=>{
   assert.match(source,/contentBody:\{paddingHorizontal:18,gap:14\}/);
-  assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-10,marginTop:-104,zIndex:1\}/);
+  assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-10,marginTop:-16,zIndex:1\}/);
   assert.match(source,/itineraryCard:\{borderWidth:1,borderRadius:15,padding:15/);
   assert.match(source,/fareCard:\{borderRadius:15,minHeight:142,position:"relative",paddingHorizontal:12,paddingTop:4,paddingBottom:8,gap:4\}/);
   assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal/);
 });
 
-test("only the first itinerary card overlaps an extended hero with a smooth full-width curve",()=>{
+test("the scroll viewport owns full-bleed loaded geometry instead of a percentage-sized hero",()=>{
+  const scrollStart=source.indexOf('<ScrollView testID="flight-details-scroll-content"');
+  const heroStart=source.indexOf('<ImageBackground testID="flight-details-hero"',scrollStart);
+  const bodyStart=source.indexOf('<View style={s.contentBody}>',heroStart);
+  const scroll=source.slice(scrollStart,bodyStart);
+  assert.match(scroll,/contentContainerStyle=\{\[s\.content,\{width:windowWidth,paddingBottom:120\+inset\.bottom\}\]\}/);
+  assert.ok(heroStart>scrollStart,"hero must be a direct child of the viewport-width scroll content");
+  assert.ok(bodyStart>heroStart,"horizontal body padding must begin after the hero");
+  assert.doesNotMatch(scroll,/width:"100%"|marginHorizontal:-/);
+  assert.match(source,/content:\{paddingTop:0,alignItems:"stretch"\}/);
+});
+
+test("the opaque itinerary overlaps a visible hero-owned symmetric curve",()=>{
   const heroStart=source.indexOf('<ImageBackground testID="flight-details-hero"');
   const heroEnd=source.indexOf("</ImageBackground>",heroStart);
   const hero=source.slice(heroStart,heroEnd);
-  assert.match(source,/hero:\{minHeight:318[^}]*paddingBottom:122/);
+  assert.match(source,/hero:\{minHeight:318[^}]*paddingBottom:76/);
   assert.match(hero,/<HeroCurve testID="flight-details-hero-curve" color=\{contentCanvasColor\}\/?>/);
   assert.match(source,/function HeroCurve[\s\S]*?<Svg[^>]*viewBox="0 0 100 64"[^>]*preserveAspectRatio="none"[\s\S]*?<Path d="M0 12 Q50 64 100 12 L100 64 L0 64 Z"/);
   assert.match(source,/heroCurve:\{position:"absolute",left:0,right:0,bottom:-1,width:"100%",height:65\}/);
   assert.match(source,/<View testID="flight-details-itinerary-overlap" style=\{s\.itineraryStack\}>\{\(offer\.legs\?\.length\?offer\.legs:\[\]\)\.map/);
-  assert.doesNotMatch(itinerary,/HeroCurve|flight-details-hero|marginTop:-104/);
+  assert.match(itinerary,/backgroundColor:theme\.surface/);
+  assert.doesNotMatch(source,/ItineraryHeroSurface|heroOverlap|backgroundColor:"transparent"/);
+  assert.doesNotMatch(itinerary,/HeroCurve|<Svg|<Path|flight-details-hero|ItineraryHeroSurface|heroOverlap/);
+  assert.ok(16 < 65,"overlap must remain shallower than the hero curve surface");
 });
