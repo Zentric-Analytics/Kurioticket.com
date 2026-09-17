@@ -39,9 +39,8 @@ test("available Flight Details uses a universal edge-to-edge hero with safe cont
   assert.match(available, /<StatusBar style="light" translucent backgroundColor="transparent"\/?>/);
   assert.match(available, /<ImageBackground testID="flight-details-hero" source=\{require\("\.\.\/\.\.\/\.\.\/assets\/heroes\/flight-details-hero\.webp"\)\}/);
   const scrollStart = available.indexOf('<ScrollView testID="flight-details-scroll-content"');
-  const scrollEnd = available.indexOf("</ScrollView>", scrollStart);
   const controls = available.indexOf('testID="flight-details-floating-controls"');
-  assert.ok(controls > scrollEnd, "floating actions must be screen-level siblings after the vertical ScrollView");
+  assert.ok(controls > -1 && controls < scrollStart, "floating actions must be screen-level siblings before the vertical ScrollView so accessibility order matches the visual header");
   assert.match(available, /testID="flight-details-floating-controls" style=\{\[s\.heroControls,s\.floatingControls,\{top:inset\.top\+8\}\]\}/);
   assert.match(available, /accessibilityLabel="Back to results" onPress=\{\(\)=>router\.back\(\)\} style=\{s\.heroIconButton\}><ArrowLeft/);
   assert.match(native, /heroIconButton:\{width:44,height:44,borderRadius:22/);
