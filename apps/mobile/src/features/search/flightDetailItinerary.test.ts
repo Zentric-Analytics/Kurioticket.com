@@ -34,6 +34,16 @@ test("the route transitions directly to every authoritative leg card without an 
   assert.doesNotMatch(source,/Edit search/);
 });
 
+test("offer notices stay below the independently hero-overlapped itinerary",()=>{
+  const contentStart=source.indexOf('<View style={s.contentBody}>',source.indexOf('<ImageBackground testID="flight-details-hero"'));
+  const contentEnd=source.indexOf('<Text style={[s.fareSectionTitle',contentStart);
+  const content=source.slice(contentStart,contentEnd);
+  const itineraryPosition=content.indexOf('testID="flight-details-itinerary-overlap"');
+  const noticePosition=content.indexOf('{message?<View accessibilityRole="alert"');
+  assert.ok(itineraryPosition>=0,"missing overlapped itinerary");
+  assert.ok(noticePosition>itineraryPosition,"notice must render after the negative-margin itinerary so the card cannot cover it");
+});
+
 test("direction and provider-local departure date share a narrow-screen-safe header row",()=>{
   assert.match(itinerary,/<View style=\{s\.itineraryHeader\}>\s*<Text style=\{s\.direction\}>\{label\}<\/Text>\s*<Text style=\{\[s\.itineraryDate/);
   assert.match(source,/itineraryHeader:\{flexDirection:"row",alignItems:"flex-start",justifyContent:"space-between",gap:12\}/);
