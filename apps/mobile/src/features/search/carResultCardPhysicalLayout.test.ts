@@ -50,13 +50,14 @@ test("non-image information uses a balanced light gray while the image stays sep
 test("top section owns only the visual and identity information", () => {
   assert.ok(topStart >= 0 && lowerStart > topStart);
   assert.match(top, /c\.visualColumn[\s\S]*<View style=\{\[c\.identityZone,\{backgroundColor:carInformationSurface\}\]\}>/);
-  for (const token of ["identity.primaryName", "identity.secondaryModel", "or similar", "result.categoryLabel", "result.pickupLocation", "savedState.toggle", "Share2", "Free cancellation"])
+  for (const token of ["identity.primaryName", "identity.secondaryModel", "or similar", "categoryLabel", "result.pickupLocation", "savedState.toggle", "Share2", "Free cancellation"])
     assert.ok(top.includes(token), `missing ${token} from top section`);
+  assert.match(source, /const categoryLabel = sandbox && result\.categoryLabel\.trim\(\) === "Category not supplied" \? "" : result\.categoryLabel/);
   assert.doesNotMatch(top, /result\.passengers|result\.doors|result\.transmission|result\.bags|offer\.totalPrice|offer\.pricePerDay|>View deal<\/Text>/);
   assert.doesNotMatch(source, /topMetaShell|topMetaRow|topMetaContent|hasTopMeta/);
 });
 
-test("Best value precedes the header for normal inventory while sandbox cards stay clearly simulated", () => {
+test("Best value stays normal-only while sandbox cards omit authored sandbox status copy", () => {
   const bestValueStart = source.indexOf("rank === 0 && !sandbox");
   const headerStart = source.indexOf('<View style={c.headerRow}>', bestValueStart);
   const detailsStart = source.indexOf('<View style={c.identityDetails}>', headerStart);
@@ -65,7 +66,7 @@ test("Best value precedes the header for normal inventory while sandbox cards st
   assert.ok(bestValueStart >= 0 && bestValueStart < headerStart);
   assert.ok(headerStart < detailsStart && detailsStart < locationStart && locationStart < freeCancellationStart);
   assert.match(source, /rank === 0 && !sandbox \? <View style=\{c\.bestValueRow\}><View style=\{c\.badge\}><Award size=\{11\} color="#15803D" \/><Text style=\{c\.badgeText\}>Best value/);
-  assert.match(source, /sandbox \? <Text style=\{\[c\.sandboxStatus,\{color:theme\.textSecondary\}\]\}>KAYAK sandbox · Simulated · Not bookable<\/Text> : null/);
+  assert.doesNotMatch(source, /KAYAK sandbox · Simulated · Not bookable|sandboxStatus/);
   assert.match(source, /<View style=\{c\.utilityColumn\}>/);
   assert.doesNotMatch(source, /!sandbox \? <View style=\{c\.utilityColumn\}>/);
   assert.match(top, /offer\?\.freeCancellation \? <View style=\{c\.freeCancellation\}>[\s\S]*ShieldCheck[\s\S]*Free cancellation/);
@@ -104,7 +105,7 @@ test("Cars card typography uses the shared Inter hierarchy without changing card
   assert.doesNotMatch(style("name") + style("secondaryModel") + style("category"), /fontWeight:"800"|appFonts\.extraBold/);
   assert.match(style("similar"), /fontSize:11,fontWeight:"500",fontFamily:appFonts\.medium,lineHeight:16/);
   assert.match(style("category"), /fontSize:10,fontWeight:"700",fontFamily:appFonts\.bold,letterSpacing:0\.9,lineHeight:15/);
-  assert.match(style("sandboxStatus"), /fontSize:10,fontWeight:"600",fontFamily:appFonts\.semibold,lineHeight:14/);
+  assert.doesNotMatch(styles, /sandboxStatus:/);
   assert.match(style("meta"), /fontSize:11,fontWeight:"500",fontFamily:appFonts\.medium,lineHeight:15/);
   assert.match(style("freeCancellationText"), /fontSize:11,lineHeight:15,fontWeight:"600",fontFamily:appFonts\.semibold/);
   assert.match(style("specText"), /fontSize:11,fontWeight:"500",fontFamily:appFonts\.medium,lineHeight:14/);
@@ -125,6 +126,10 @@ test("lower band uses provider-aware spec labels in the approved two-column orde
   assert.doesNotMatch(first, /specLabels\.doors|specLabels\.bags/);
   assert.match(middle, /specLabels\.doors[\s\S]*specLabels\.bags/);
   assert.doesNotMatch(middle, /specLabels\.passengers|specLabels\.transmission/);
+  assert.match(source, /specLabels\.passengers \? <Spec/);
+  assert.match(source, /specLabels\.transmission \? <Spec/);
+  assert.match(source, /specLabels\.doors \? <Spec/);
+  assert.match(source, /specLabels\.bags \? <Spec/);
   assert.doesNotMatch(source, /middleSpecColumn/);
   assert.doesNotMatch(style("specColumn"), /borderLeftWidth|borderRightWidth|borderLeftColor|borderRightColor/);
   assert.match(source, /const carDividerColor = theme\.dark \? theme\.border : "#CBD5E1"/);
@@ -134,8 +139,8 @@ test("lower band uses provider-aware spec labels in the approved two-column orde
   assert.doesNotMatch(source, /c\.commerceColumn[^>]*borderLeftColor:carDividerColor/);
   assert.doesNotMatch(style("commerceColumn"), /borderLeftWidth|borderRightWidth|borderLeftColor|borderRightColor/);
   assert.match(providerPresentation, /sandboxPresentation\?\.specs/);
-  assert.match(providerPresentation, /Passengers not supplied/);
-  assert.match(providerPresentation, /Baggage capacity not supplied/);
+  assert.match(providerPresentation, /authoredMissingSpecLabels/);
+  assert.match(providerPresentation, /return authoredMissingSpecLabels\.has\(trimmed\) \? "" : trimmed/);
   assert.match(commerce, /money\(offer\.currency, offer\.pricePerDay\)[\s\S]*>per day<\/Text>[\s\S]*>View deal<\/Text>/);
   assert.doesNotMatch(commerce, /offer\.totalPrice|offer\.taxesAndFeesIncluded|includes taxes & fees|taxes & fees shown where known/);
   assert.equal(source.match(/>View deal<\/Text>/g)?.length, 1);
