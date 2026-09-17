@@ -17,6 +17,14 @@ test("route context stays outside the card and limits metadata to trip type, tra
   assert.doesNotMatch(source,/tripMetadata=.*(?:provider|price|departureDate|returnDate)/);
 });
 
+test("hero city route uses provider airport cities and safely follows each trip shape",()=>{
+  assert.match(source,/const cityRoute=nativeFlightDetailsCityRouteLabel\(details\.search\.tripType,offer\.legs\?\?\[\],offer\.originAirport,offer\.destinationAirport\)/);
+  assert.match(source,/const endpointCity=.*?\?\.cityName\?\?fallback/s);
+  assert.match(source,/tripType === "multi-city"/);
+  assert.match(source,/<Text[^>]*style=\{s\.routeMetadata\}>\{tripMetadata\}<\/Text><Text[^>]*style=\{s\.route\}>\{flightDetailsRouteLabel[\s\S]*?<Text[^>]*style=\{s\.cityRoute\}>\{cityRoute\}<\/Text>/);
+  assert.doesNotMatch(source,/const cityRoute=.*(?:departureDate|returnDate)/);
+});
+
 test("the route transitions directly to every authoritative leg card without an itinerary heading",()=>{
   assert.doesNotMatch(source,/>Flight itinerary<\/Text>/);
   assert.match(source,/<View testID="flight-details-itinerary-overlap" style=\{s\.itineraryStack\}>\{\(offer\.legs\?\.length\?offer\.legs:\[\]\)\.map\(\(leg,index\)=><Itinerary/);
