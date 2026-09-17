@@ -24,7 +24,7 @@ function renderLoading(dark = false, topInset = 47, bottomInset = 34, fareCardWi
   const theme = { dark, background: "#101114", surface: dark ? "#202126" : "#FFFFFF", border: dark ? "#454650" : "#CBD5E1" };
   const root = runInNewContext(code, {
     React: { createElement: host }, View: "View", ScrollView: "ScrollView", SafeAreaView: "SafeAreaView",
-    Pressable: "Pressable", Text: "Text", ArrowLeft: "ArrowLeft", Heart: "Heart", FlowIcon: "FlowIcon", StatusBar: "StatusBar",
+    Pressable: "Pressable", Text: "Text", ArrowLeft: "ArrowLeft", Heart: "Heart", FlowIcon: "FlowIcon", StatusBar: "StatusBar", Svg: "Svg", Path: "Path",
     Animated: { View: "Animated.View", Value: class { constructor(public value: number) {} } },
     useState: (value: unknown) => [value, () => {}], useRef: (current: unknown) => ({ current }), useEffect: () => {},
     StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1, absoluteFillObject: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0 } }, ui: { blue: "#2563EB", green: "#16A34A" },
@@ -101,9 +101,9 @@ test("entry loading reserves an edge-to-edge hero and all three ordered identity
     const { root } = renderLoading(false, top);
     assert.equal(root.props.edges.length, 0, "hero must extend through the top safe area");
     const hero = find(root, "flight-details-loading-hero");
-    assert.equal(style(hero).minHeight, 238);
+    assert.equal(style(hero).minHeight, 318);
     assert.equal(style(hero).paddingTop, top + 64);
-    assert.equal(style(hero).paddingBottom, 42);
+    assert.equal(style(hero).paddingBottom, 122);
     assert.equal(style(hero).paddingHorizontal, 18);
     const copy = find(hero, "flight-details-loading-copy");
     assert.deepEqual(copy.children.map(({ props }) => props.testID), [
@@ -111,7 +111,8 @@ test("entry loading reserves an edge-to-edge hero and all three ordered identity
     ]);
     assert.deepEqual(copy.children.map((line) => style(line).height), [16, 32, 19]);
     assert.equal(style(copy).gap, 3);
-    const controls = find(hero, "flight-details-loading-controls");
+    const controls = find(root, "flight-details-loading-controls");
+    assert.ok(!descendants(hero).includes(controls), "loading controls must be outside scrolling hero content");
     assert.equal(style(controls).top, top + 8);
     assert.equal(style(controls).left, 16);
     assert.equal(style(controls).right, 16);
@@ -136,7 +137,8 @@ test("entry itinerary overlaps the hero with loaded card breadth and representat
   assert.equal(style(body).gap, 14);
   const overlap = find(body, "flight-details-loading-itinerary-overlap");
   assert.equal(body.children[0], overlap);
-  assert.equal(style(overlap).marginTop, -24);
+  assert.equal(style(overlap).marginTop, -104);
+  assert.equal(style(overlap).zIndex, 1);
   assert.equal(style(overlap).marginHorizontal, -10);
   const card = find(overlap, "flight-details-loading-itinerary");
   assert.equal(style(card).borderRadius, 15);
@@ -145,6 +147,23 @@ test("entry itinerary overlaps the hero with loaded card breadth and representat
   assert.equal(style(card).backgroundColor, theme.surface);
   assert.equal(style(card).marginHorizontal, undefined, "do not double the loaded horizontal overlap");
   for (const part of ["direction-date", "journey", "airports", "airline"]) find(card, `flight-details-loading-${part}`);
+});
+
+test("entry loading mirrors the loaded hero curve and screen-level action geometry",()=>{
+  const {root}=renderLoading(false,47);
+  const scroll=find(root,"flight-details-loading-scroll");
+  const hero=find(scroll,"flight-details-loading-hero");
+  const curve=find(hero,"flight-details-loading-hero-curve");
+  assert.equal(curve.type,"Svg");
+  assert.equal(curve.props.viewBox,"0 0 100 64");
+  assert.equal(curve.props.preserveAspectRatio,"none");
+  assert.equal(style(curve).height,65);
+  assert.equal(curve.children[0].props.d,"M0 12 Q50 64 100 12 L100 64 L0 64 Z");
+  const controls=find(root,"flight-details-loading-controls");
+  assert.ok(!descendants(scroll).includes(controls));
+  assert.equal(style(controls).top,55);
+  assert.equal(style(controls).zIndex,20);
+  assert.ok(style(controls).elevation>=10);
 });
 
 test("entry fare and information rails reserve real widths, bottom price zones and four tabs", () => {
