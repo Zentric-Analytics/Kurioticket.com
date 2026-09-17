@@ -20,7 +20,7 @@ for (const [kind, source] of [["approved", normal], ["KAYAK sandbox", sandbox]] 
     const detail = compact(source.slice(source.indexOf("function CarDetailContent") >= 0
       ? source.indexOf("function CarDetailContent")
       : source.indexOf("function KayakCarDetailContent")));
-    const image = detail.indexOf('style={[s.imageBox,{backgroundColor:theme.surface}]}');
+    const image = detail.indexOf('style={[s.imageBox,{height:heroMediaHeight,backgroundColor:theme.surface}]}');
     const identity = detail.indexOf("style={s.identityBlock}", image);
     const specs = detail.indexOf("style={s.specs}", identity);
     const tabs = detail.indexOf("style={[s.carsTabsShell", specs);
@@ -54,10 +54,11 @@ for (const [kind, source] of [["approved", normal], ["KAYAK sandbox", sandbox]] 
   test(`${kind} Cars detail preserves the canvas, theme-safe media, and balanced specs`, () => {
     assert.match(source, /const CAR_DETAIL_LIGHT_CANVAS = "#F5F7FB"/);
     assert.match(source, /carCanvasColor\s*=\s*theme\.dark\s*\?\s*theme\.background\s*:\s*CAR_DETAIL_LIGHT_CANVAS/);
-    assert.match(source, /s\.imageBox,\s*\{\s*backgroundColor:\s*theme\.surface\s*\}/);
+    assert.match(source, /s\.imageBox,\s*\{[^}]*backgroundColor:\s*theme\.surface\s*\}/);
     const imageBox = style(source, "imageBox");
     assert.ok(imageBox.includes('width:"100%"'));
-    assert.ok(imageBox.includes("aspectRatio:16/10"));
+    assert.ok(imageBox.includes('overflow:"hidden"'));
+    assert.doesNotMatch(imageBox, /aspectRatio/);
     assert.doesNotMatch(imageBox, /marginHorizontal|borderRadius/);
     const specs = style(source, "specs");
     for (const value of ['flexDirection:"row"', 'flexWrap:"wrap"', 'justifyContent:"space-between"', "paddingHorizontal:16"]) assert.ok(specs.includes(value), value);

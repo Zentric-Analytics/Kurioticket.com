@@ -20,7 +20,7 @@ test("Cars Price Alert backdrop owns outside touches behind the popup", () => {
   assert.match(modal, /<View pointerEvents="none" style=\{\[StyleSheet\.absoluteFill, styles\.scrim\]\}\/><Pressable accessible=\{false\} disabled=\{pending\} onPressIn=\{closeTargetSheet\} onPress=\{closeTargetSheet\} style=\{StyleSheet\.absoluteFill\}\/><KeyboardAvoidingView/);
   assert.match(modal, /onRequestClose=\{\(\) => \{ if \(!pending\) closeTargetSheet\(\); \}\}/);
   assert.match(modal, /onAccessibilityEscape=\{\(\) => \{ if \(!pending\) closeTargetSheet\(\); \}\}/);
-  assert.match(modal, /<KeyboardAvoidingView[^>]*behavior=\{Platform\.OS === "ios" \? "padding" : "height"\} pointerEvents="box-none"/);
+  assert.match(modal, /<KeyboardAvoidingView style=\{styles\.keyboardAvoider\} behavior=\{Platform\.OS === "ios" \? "padding" : undefined\} pointerEvents="box-none"/);
   assert.match(modal, /<TextInput autoFocus/);
   assert.match(modal, /keyboardType="decimal-pad" editable=\{!pending\}/);
 });

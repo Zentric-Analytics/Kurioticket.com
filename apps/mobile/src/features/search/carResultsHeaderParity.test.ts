@@ -203,7 +203,7 @@ test("Cars Price Alert close is state-owned so keyboard teardown cannot race ahe
   assert.doesNotMatch(close, /Keyboard\.dismiss|\.blur\(|async|await|setTimeout|InteractionManager|keyboard(?:Did|Will)Hide|requestAnimationFrame/);
   assert.match(carAlert, /\{open \? <Modal visible transparent animationType="none"/);
   assert.doesNotMatch(carAlert, /<Modal visible=\{open\}/);
-  assert.match(carAlert, /<KeyboardAvoidingView[^>]*behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/);
+  assert.match(carAlert, /<KeyboardAvoidingView style=\{styles\.keyboardAvoider\} behavior=\{Platform\.OS === "ios" \? "padding" : undefined\}/);
   assert.match(carAlert, /<TextInput autoFocus/);
   assert.match(carAlert, /onRequestClose=\{\(\) => \{ if \(!pending\) closeTargetSheet\(\); \}\}/);
   assert.match(carAlert, /accessibilityLabel="Close price alert" disabled=\{pending\} onPressIn=\{closeTargetSheet\} onPress=\{closeTargetSheet\}/);

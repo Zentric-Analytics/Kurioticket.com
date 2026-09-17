@@ -42,12 +42,12 @@ test("Cars dock uses market precision without changing the Compare formatter", (
 });
 
 test("Cars dock matches the Results card price hierarchy", () => {
-  assert.match(dock, /estimated rental total/);
+  assert.match(dock, /<Text numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.82\}[^>]*>estimated rental total<\/Text>/);
   assert.match(dock, /<Info accessible=\{false\} size=\{12\} color=\{theme\.textSecondary\}\/\>/);
   assert.match(dock, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.65\} style=\{\[s\.dockTotal/);
   assert.match(dock, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.65\} style=\{\[s\.dockPerDay/);
-  assert.match(styleRule("dockLabel", "dockEyebrow"), /gap:4/);
-  assert.match(styleRule("dockEyebrow", "dockTotal"), /fontSize:11[^}]*lineHeight:16[^}]*fontWeight:"600"[^}]*fontFamily:appFonts\.semibold/);
+  assert.match(styleRule("dockLabel", "dockEyebrow"), /gap:4[^}]*minWidth:0/);
+  assert.match(styleRule("dockEyebrow", "dockTotal"), /flexShrink:1[^}]*minWidth:0[^}]*fontSize:11[^}]*lineHeight:16[^}]*fontWeight:"600"[^}]*fontFamily:appFonts\.semibold/);
   assert.match(styleRule("dockTotal", "dockPerDay"), /maxWidth:"100%"[^}]*fontSize:19[^}]*lineHeight:22[^}]*fontWeight:"600"[^}]*fontFamily:appFonts\.semibold[^}]*letterSpacing:-0\.25[^}]*textAlign:"left"/);
   assert.match(styleRule("dockPerDay", "dockAction"), /maxWidth:"100%"[^}]*fontSize:10[^}]*lineHeight:13[^}]*fontWeight:"500"[^}]*fontFamily:appFonts\.medium[^}]*textAlign:"left"/);
   assert.match(styleRule("daily", "perDay"), /fontSize:19[^}]*lineHeight:22[^}]*fontWeight:"600"[^}]*fontFamily:appFonts\.semibold[^}]*letterSpacing:-0\.25[^}]*textAlign:"right"/);
@@ -64,7 +64,9 @@ test("Cars sticky sheet and columns match Hotel geometry", () => {
   assert.match(dock, /paddingBottom:12\+inset\.bottom/);
   assert.match(styleRule("dockContent", "dockPrice"), /width:"100%"[^}]*flexDirection:"row"[^}]*alignItems:"center"[^}]*gap:12/);
   assert.match(styleRule("dockPrice", "dockLabel"), /flex:1[^}]*minWidth:0[^}]*gap:1/);
-  assert.match(styleRule("dockAction", "continue"), /flex:\.9[^}]*minWidth:132/);
+  assert.match(dock, /style=\{\[s\.dockAction,Platform\.OS==="android"&&s\.dockActionAndroid\]\}/);
+  assert.match(styleRule("dockAction", "dockActionAndroid"), /flex:\.9[^}]*minWidth:132/);
+  assert.match(styleRule("dockActionAndroid", "continue"), /flex:\.72[^}]*minWidth:126/);
   assert.match(styleRule("continue", "continueText"), /width:"100%"[^}]*minHeight:48[^}]*borderRadius:8[^}]*backgroundColor:colors\.blue[^}]*paddingHorizontal:12[^}]*alignItems:"center"[^}]*justifyContent:"center"/);
   assert.match(styleRule("continueText", "loading"), /fontSize:12[^}]*lineHeight:16[^}]*fontWeight:"700"[^}]*fontFamily:appFonts\.bold[^}]*textAlign:"center"/);
 });
