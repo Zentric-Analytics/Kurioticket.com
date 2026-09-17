@@ -19,12 +19,31 @@ test("native Results edit uses the web title and retained sheet contract", () =>
   assert.match(webSheet, /rounded-t-\[22px\]/);
 });
 
-test("Cars edit owns one compact grouped surface and web typography", () => {
+test("Cars edit uses a neutral stack of independent cards with polished typography", () => {
   assert.match(modal, /<CarSearchPanel[\s\S]*editAppearance/);
   assert.match(panel, /editAppearance \? editRows/);
-  for (const style of ["borderWidth:1", "borderRadius:14", "overflow:\"hidden\"", "#D8E1EC", "#E2E8F0", "minHeight:64", "paddingHorizontal:16", "paddingVertical:8", "fontSize:10", "lineHeight:16", "fontWeight:\"700\"", "letterSpacing:1.2", "fontSize:16", "lineHeight:20", "fontWeight:\"500\""]) assert.ok(panel.includes(style), style);
-  assert.doesNotMatch(panel.match(/resultsEditRow:\{[^}]+\}/)?.[0] ?? "", /minHeight:72/);
+  const stack = panel.match(/resultsEditStack:\{[^}]+\}/)?.[0] ?? "";
+  const card = panel.match(/resultsEditCard:\{[^}]+\}/)?.[0] ?? "";
+  const row = panel.match(/resultsEditRow:\{[^}]+\}/)?.[0] ?? "";
+  for (const style of ["width:\"100%\"", "gap:10"]) assert.ok(stack.includes(style), style);
+  assert.doesNotMatch(stack, /borderWidth|backgroundColor|borderRadius|overflow/);
+  for (const style of ["width:\"100%\"", "borderWidth:1", "borderRadius:13", "overflow:\"hidden\""]) assert.ok(card.includes(style), style);
+  for (const style of ["minHeight:70", "paddingHorizontal:16", "paddingVertical:10"]) assert.ok(row.includes(style), style);
+  for (const style of ["fontSize:10", "lineHeight:16", "fontWeight:\"700\"", "letterSpacing:1.2", "fontSize:16", "lineHeight:20", "fontWeight:\"500\"", "fontSize:12"]) assert.ok(panel.includes(style), style);
   for (const label of ["PICKUP LOCATION", "RENTAL DATES", "PICK-UP / RETURN TIME", "DRIVER AGE", "RETURN LOCATION"]) assert.ok(panel.includes(`label="${label}"`), label);
+});
+
+test("Cars edit wraps every logical field independently without divider joins", () => {
+  const editRows = panel.slice(panel.indexOf("const editRows"), panel.indexOf("return <View", panel.indexOf("const editRows")));
+  assert.match(editRows, /<View style=\{styles\.resultsEditStack\}>/);
+  assert.equal((editRows.match(/<View style=\{editCardStyle\}>/g) ?? []).length, 5);
+  assert.match(panel, /editCardStyle = \[styles\.resultsEditCard, \{ backgroundColor: ft\.colors\.card, borderColor: ft\.colors\.border \}\]/);
+  assert.doesNotMatch(editRows, /divided|borderTopWidth/);
+  assert.doesNotMatch(panel, /resultsEditGroup|dividerColor/);
+  assert.doesNotMatch(panel.match(/resultsEditRow:\{[^}]+\}/)?.[0] ?? "", /borderTopWidth/);
+  assert.ok(panel.indexOf("styles.resultsEditSubmit") > panel.indexOf("const editRows"), "Search remains after the independent-card stack");
+  assert.equal((editRows.match(/<ResultsEditRow /g) ?? []).length, 5);
+  assert.equal((editRows.match(/onPress=/g) ?? []).length, 5);
 });
 
 test("Cars edit rows use the web icon and disclosure contract", () => {
@@ -56,7 +75,7 @@ test("Results edit preserves raw location truth while presenting primary and sup
 
 test("Results edit suppresses only the landing checkbox and supports different return", () => {
   assert.match(panel, /\{!editAppearance \? <Pressable accessibilityRole="checkbox"/);
-  assert.match(panel, /form\.separateDropoff \? <ResultsEditRow divided label="RETURN LOCATION"/);
+  assert.match(panel, /form\.separateDropoff \? <View style=\{editCardStyle\}><ResultsEditRow label="RETURN LOCATION"/);
   assert.match(panel, /actionLabel="Same as pickup"/);
   assert.match(panel, /separateDropoff: false, dropoffLocation: ""/);
   assert.match(panel, /form\.separateDropoff \? <FieldError[\s\S]*label="Drop-off location"/);
