@@ -33,6 +33,8 @@ export function CarResultCard({ result, rank, imageUri, searchParams, resultBack
   const sandbox = isKayakSandboxCar(result);
   const categoryLabel = sandbox && result.categoryLabel.trim() === "Category not supplied" ? "" : result.categoryLabel;
   const specLabels = nativeCarPrimarySpecLabels(result);
+  const hasPrimarySpecs = Boolean(specLabels.passengers || specLabels.transmission);
+  const hasSecondarySpecs = Boolean(specLabels.doors || specLabels.bags);
   const curatedImage = isCuratedCarResultImage(imageUri);
   const imageResizeMode = curatedImage ? "contain" : "cover";
   const transmissionIcon = /manual/i.test(specLabels.transmission)
@@ -67,11 +69,11 @@ export function CarResultCard({ result, rank, imageUri, searchParams, resultBack
       </View>
     </View>
     <View style={[c.lowerBand,{backgroundColor:carInformationSurface,borderTopColor:carDividerColor}]}>
-      {specLabels.passengers || specLabels.transmission ? <View style={c.specColumn}>
+      {hasPrimarySpecs ? <View style={c.specColumn}>
         {specLabels.passengers ? <Spec icon={<Users size={14} color="#64748B" />} label={specLabels.passengers} /> : null}
         {specLabels.transmission ? <Spec icon={transmissionIcon ? <FlowIcon name={transmissionIcon} size={14} color="#64748B" /> : <CarFront size={14} color="#64748B" />} label={specLabels.transmission} /> : null}
       </View> : null}
-      {specLabels.doors || specLabels.bags ? <View style={c.specColumn}>
+      {hasSecondarySpecs ? <View style={c.specColumn}>
         {specLabels.doors ? <Spec icon={<DoorOpen size={14} color="#64748B" />} label={specLabels.doors} /> : null}
         {specLabels.bags ? <Spec icon={<BriefcaseBusiness size={14} color="#64748B" />} label={specLabels.bags} /> : null}
       </View> : null}
