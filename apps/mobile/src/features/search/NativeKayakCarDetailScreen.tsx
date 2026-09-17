@@ -309,11 +309,11 @@ function KayakCompare({ result, offers, selectedOfferId, onSelectOffer, days, pi
 }
 
 function TimelineEntry({ label, location, date, time, theme }: { label: string; location: string; date: string; time: string; theme: Theme }) {
-  return <View style={s.timelineEntry}><View style={s.timelineRail}><View style={s.timelineDot} /></View><View style={s.timelineCopy}><Text style={[s.timelineHeading, { color: theme.textPrimary }]}>{label}</Text><View style={s.infoRow}><MapPin size={16} color="#004BB8" /><Text style={[s.infoText, s.timelineLocation, { color: theme.textPrimary }]}>{location}</Text></View><View style={s.infoRow}><Clock3 size={16} color={theme.dark ? theme.icon : "#64748B"} /><Text style={[s.infoText, s.timelineDate, { color: theme.textSecondary }]}>{nativeCarDetailDate(date)}{time ? ` · ${time}` : ""}</Text></View></View></View>;
+  return <View style={s.timelineEntry}><View style={s.timelineRail}><View style={s.timelineDot} /></View><View style={s.timelineCopy}><Text style={[s.timelineHeading, { color: theme.textPrimary }]}>{label}</Text><View style={s.infoRow}><MapPin size={16} color="#004BB8" style={s.timelineInfoIcon} /><Text style={[s.infoText, s.timelineLocation, { color: theme.textPrimary }]}>{location}</Text></View><View style={s.infoRow}><Clock3 size={16} color={theme.dark ? theme.icon : "#64748B"} style={s.timelineInfoIcon} /><Text style={[s.infoText, s.timelineDate, { color: theme.textSecondary }]}>{nativeCarDetailDate(date)}{time ? ` · ${time}` : ""}</Text></View></View></View>;
 }
 
-function LocationTimelineEntry({ label, location, date, time, theme, connector = false }: { label: string; location: string; date: string; time: string; theme: Theme; connector?: boolean }) {
-  return <View style={s.locationTimelineEntry}><View style={s.locationTimelineRail}><View style={s.timelineDot} />{connector ? <View style={s.locationConnector} /> : null}</View><View style={s.locationTimelineCopy}><Text style={[s.timelineHeading, { color: theme.textPrimary }]}>{label}</Text><Text style={[s.timelineLocation, { color: theme.textPrimary }]}>{location}</Text><Text style={[s.timelineDate, { color: theme.textSecondary }]}>{nativeCarDetailDate(date)}{time ? ` · ${time}` : ""}</Text></View></View>;
+function LocationTimelineEntry({ label, location, date, time, theme }: { label: string; location: string; date: string; time: string; theme: Theme }) {
+  return <View style={s.locationTimelineEntry}><View style={s.timelineRail}><View style={s.timelineDot} /></View><View style={s.locationTimelineCopy}><Text style={[s.timelineHeading, { color: theme.textPrimary }]}>{label}</Text><Text style={[s.timelineLocation, { color: theme.textPrimary }]}>{location}</Text><Text style={[s.timelineDate, { color: theme.textSecondary }]}>{nativeCarDetailDate(date)}{time ? ` · ${time}` : ""}</Text></View></View>;
 }
 
 function PickupReturn({ result, pickupDate, dropoffDate, pickupTime, dropoffTime, theme }: { result: CarResult; pickupDate: string; dropoffDate: string; pickupTime: string; dropoffTime: string; theme: Theme }) {
@@ -359,7 +359,7 @@ function Location({ result, search, pickupDate, dropoffDate, pickupTime, dropoff
     </View>
     <NativeCarFullMapModal visible={fullMapOpen} pickupLocation={pickupLocation} trustedMapCoordinates={trustedMapCoordinates} embedUrl={embed} theme={theme} onClose={() => setFullMapOpen(false)} />
     <View style={[s.locationTimeline, { borderColor: theme.border, backgroundColor: theme.surface }]}>
-      <LocationTimelineEntry label="Pick-up" location={pickupLocation} date={pickupDate} time={pickupTime} theme={theme} connector />
+      <LocationTimelineEntry label="Pick-up" location={pickupLocation} date={pickupDate} time={pickupTime} theme={theme} />
       <LocationTimelineEntry label="Return" location={returnLocation} date={dropoffDate} time={dropoffTime} theme={theme} />
     </View>
     <Text style={[s.detailsHeading, { color: theme.textPrimary }]}>Pickup and location details</Text>
@@ -439,7 +439,8 @@ const s = StyleSheet.create({
   timelineCopy: { flex: 1, paddingLeft: 20 },
   timelineHeading: { fontSize: 15, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold },
   infoRow: { marginTop: 4, flexDirection: "row", alignItems: "flex-start", gap: 8 },
-  infoText: { flex: 1 },
+  timelineInfoIcon: { marginTop: 2, flexShrink: 0 },
+  infoText: { flex: 1, minWidth: 0 },
   timelineLocation: { fontSize: 14, lineHeight: 20, fontWeight: "500", fontFamily: appFonts.medium },
   timelineDate: { fontSize: 13, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
   providerNote: { marginTop: 20, fontSize: 12, lineHeight: 18, fontWeight: "400", fontFamily: appFonts.regular },
@@ -458,8 +459,6 @@ const s = StyleSheet.create({
   directionsText: { fontSize: 14, fontWeight: "700", fontFamily: appFonts.bold, color: "#075EE8" },
   locationTimeline: { marginTop: 16, borderWidth: 1, borderRadius: 14, padding: 16, gap: 24, overflow: "hidden" },
   locationTimelineEntry: { flexDirection: "row" },
-  locationTimelineRail: { width: 14, alignItems: "center" },
-  locationConnector: { position: "absolute", left: 5, top: 16, bottom: -44, width: 2, backgroundColor: "#BFDBFE" },
   locationTimelineCopy: { flex: 1, paddingLeft: 12 },
   detailsHeading: { marginTop: 24, fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
   bullet: { marginTop: 12, flexDirection: "row", gap: 10 },

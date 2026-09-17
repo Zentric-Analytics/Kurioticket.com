@@ -107,7 +107,7 @@ test("content below the three tabs shares one section-heading hierarchy", () => 
   assert.ok(style("requirements").includes("marginTop:20"));
   for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"700"', "fontFamily:appFonts.bold"])
     assert.ok(style("requirementsHeading").includes(contract));
-  for (const contract of ["marginTop:10", 'flexDirection:"row"', 'alignItems:"center"', "gap:10"])
+  for (const contract of ["marginTop:10", 'flexDirection:"row"', 'alignItems:"flex-start"', "gap:10"])
     assert.ok(style("requirementRow").includes(contract), contract);
   for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"500"', "fontFamily:appFonts.medium"])
     assert.ok(style("requirementText").includes(contract), contract);
