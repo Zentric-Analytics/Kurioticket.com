@@ -2,12 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Image, Linking, Platform, Pressable, ScrollView, Share, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
-import { ArrowLeft, BriefcaseBusiness, CarFront, Clock3, DoorOpen, ExternalLink, Heart, Info, MapPin, Share2, Users } from "lucide-react-native";
+import { ArrowLeft, BriefcaseBusiness, CarFront, Clock3, DoorOpen, ExternalLink, Heart, MapPin, Share2, Users } from "lucide-react-native";
 import { WebView } from "react-native-webview";
 import { travelApi, type CarResult } from "../../api/travelApi";
 import { getApiBaseUrl } from "../../config/apiUrl";
 import { appFonts } from "../../theme/typography";
-import { colors } from "../../theme/tokens";
 import { useAppTheme } from "../../theme/AppTheme";
 import { formatMarketCurrency } from "../currency/displayCurrency";
 import { buildSearchPlan, safeCanonicalCarResult } from "../flow/travelSearchModel";
@@ -23,7 +22,6 @@ import { NativeAppleCarMap } from "./NativeAppleCarMap";
 import { NativeCarFullMapModal } from "./NativeCarFullMapModal";
 import { isKayakSandboxCar, nativeCarPrimarySpecLabels } from "./nativeCarProviderPresentation";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
-import { sandboxBookingUrl } from "../../../../../src/services/travel/kayakSandboxPublic";
 
 type Params = Record<string, string | string[]>;
 const CAR_DETAIL_LIGHT_CANVAS = "#F5F7FB";
@@ -42,7 +40,10 @@ const resolveImage = (value?: string) => {
   const base = getApiBaseUrl();
   return base.ok && /^\/(?!\/)/.test(value) ? new URL(value, `${base.baseUrl}/`).toString() : undefined;
 };
-const sandboxPickupLabel = (result: CarResult) => result.sandboxPresentation?.pickupLabel?.trim() || "Provider pickup location";
+const providerValue = (value?: string) => {
+  const trimmed = value?.trim() || "";
+  return trimmed === "Supplier not supplied" || trimmed === "KAYAK sandbox" ? "" : trimmed;
+};
 
 export function NativeKayakCarDetailScreen() {
   const params = useLocalSearchParams<Params>();
@@ -112,8 +113,8 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
   }, [offers, primaryOffer?.id, selectedOfferId]);
 
   const offer = offers.find((candidate) => candidate.id === selectedOfferId) ?? primaryOffer;
-  const sandboxHref = sandboxBookingUrl(offer?.bookingUrl);
   const specs = nativeCarPrimarySpecLabels(result);
+  const categoryLabel = result.categoryLabel.trim() === "Category not supplied" ? "" : result.categoryLabel;
   const pickupDate = String(one(params.pickupDate) || "");
   const dropoffDate = String(one(params.dropoffDate) || "");
   const pickupTime = String(one(params.pickupTime) || "");
@@ -181,7 +182,6 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
   }, [result.id]);
 
   return <SafeAreaView style={[s.safe, { backgroundColor: carCanvasColor }]} edges={[]}>
-
     <ScrollView
       ref={carDetailScrollRef}
       stickyHeaderIndices={[1]}
@@ -206,15 +206,14 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
             : <View style={s.unavailable}><CarFront size={48} color={theme.textSecondary} /><Text style={{ color: theme.textSecondary }}>Vehicle image unavailable</Text></View>}
         </View></View>
         <View style={s.identityBlock}>
-          <Text accessibilityRole="header" style={[s.title, { color: light ? "#020617" : theme.textPrimary }]}>{result.modelName}<Text style={[s.orSimilar, { color: theme.textSecondary }]}> {"or\u00A0similar"}</Text></Text>
-          <Text style={s.category}>{result.categoryLabel.toUpperCase()}</Text>
-          <Text style={[s.sandboxLabel, { color: theme.textSecondary }]}>KAYAK sandbox · Simulated · Not bookable</Text>
+          <Text accessibilityRole="header" style={[s.title, { color: light ? "#020617" : theme.textPrimary }]}>{result.modelName}{result.orSimilar ? <Text style={[s.orSimilar, { color: theme.textSecondary }]}> {"or\u00A0similar"}</Text> : null}</Text>
+          {categoryLabel ? <Text style={s.category}>{categoryLabel.toUpperCase()}</Text> : null}
         </View>
         <View style={s.specs}>
-          <Spec Icon={Users} text={specs.passengers} theme={theme} />
-          <Spec Icon={BriefcaseBusiness} text={specs.bags} theme={theme} />
-          <Spec Icon={DoorOpen} text={specs.doors} theme={theme} />
-          <Spec Icon={CarFront} text={specs.transmission} theme={theme} />
+          {specs.passengers ? <Spec Icon={Users} text={specs.passengers} theme={theme} /> : null}
+          {specs.bags ? <Spec Icon={BriefcaseBusiness} text={specs.bags} theme={theme} /> : null}
+          {specs.doors ? <Spec Icon={DoorOpen} text={specs.doors} theme={theme} /> : null}
+          {specs.transmission ? <Spec Icon={CarFront} text={specs.transmission} theme={theme} /> : null}
         </View>
       </View>
 
@@ -259,17 +258,8 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
     {offer ? <View style={[s.dock, { paddingBottom: 12 + inset.bottom, backgroundColor: theme.surface, borderTopColor: theme.border }]}>
       <View style={s.dockContent}>
         <View style={s.dockPrice}>
-          <View style={s.dockLabel}>
-            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={[s.dockEyebrow, { color: theme.textSecondary }]}>KAYAK sandbox · not bookable</Text>
-            <Info accessible={false} size={12} color={theme.textSecondary} style={s.dockIcon} />
-          </View>
           <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={[s.dockTotal, { color: theme.textPrimary }]}>{formatMarketCurrency(offer.pricePerDay, offer.currency)}</Text>
-          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[s.dockPerDay, { color: theme.textSecondary }]}>per day · simulated</Text>
-        </View>
-        <View style={s.dockAction}>
-          {sandboxHref
-            ? <Pressable accessibilityRole="link" accessibilityLabel={`Open KAYAK test page for ${result.modelName}`} onPress={() => void Linking.openURL(sandboxHref)} style={({ pressed }) => [s.continue, pressed && s.pressed]}><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={s.continueText}>Open KAYAK test page</Text><ExternalLink size={15} color="white" style={s.continueIcon} /></Pressable>
-            : <View accessibilityRole="button" accessibilityState={{ disabled: true }} style={[s.continue, s.disabledAction]}><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={s.continueText}>Test page unavailable</Text></View>}
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[s.dockPerDay, { color: theme.textSecondary }]}>per day</Text>
         </View>
       </View>
     </View> : null}
@@ -284,25 +274,20 @@ function KayakCompare({ result, offers, selectedOfferId, onSelectOffer, days, pi
   return <View style={[s.compare, { borderBottomColor: theme.border }]}>
     <Text style={[s.compareHeading, { color: theme.dark ? theme.textPrimary : "#020617" }]}>Compare deals</Text>
     <Text style={[s.stay, { color: theme.dark ? theme.textSecondary : "#475569" }]}>{nativeCarDetailDate(pickupDate)} – {nativeCarDetailDate(dropoffDate)} · {days} rental day{days === 1 ? "" : "s"}</Text>
-    <Text style={[s.sandboxDisclosure, { color: theme.textSecondary }]}>Simulated KAYAK provider inventory for staging. No real booking or payment is enabled.</Text>
-    <View accessibilityRole="radiogroup" accessibilityLabel="KAYAK sandbox deal options" style={s.dealList}>
+    <View accessibilityRole="radiogroup" accessibilityLabel="Deal options" style={s.dealList}>
       {offers.map((offer) => {
         const selected = offer.id === selectedOfferId;
-        const provider = offer.bookingProviderName?.trim() || offer.rentalCompanyName?.trim() || result.rentalCompanyName?.trim() || "KAYAK sandbox";
-        const supplier = offer.rentalCompanyName?.trim() || result.rentalCompanyName?.trim() || "Supplier not supplied";
-        return <Pressable key={offer.id} accessibilityRole="radio" accessibilityState={{ selected }} accessibilityLabel={`${money(offer.currency, offer.pricePerDay)} per day KAYAK sandbox deal`} onPress={() => onSelectOffer(offer.id)} style={({ pressed }) => [s.compareCard, { backgroundColor: theme.surface, borderColor: selected ? "#075EE8" : theme.border }, pressed && s.compareCardPressed]}>
+        const provider = providerValue(offer.bookingProviderName) || providerValue(offer.rentalCompanyName) || providerValue(result.rentalCompanyName);
+        const supplier = providerValue(offer.rentalCompanyName) || providerValue(result.rentalCompanyName);
+        return <Pressable key={offer.id} accessibilityRole="radio" accessibilityState={{ selected }} accessibilityLabel={`${money(offer.currency, offer.pricePerDay)} per day deal`} onPress={() => onSelectOffer(offer.id)} style={({ pressed }) => [s.compareCard, { backgroundColor: theme.surface, borderColor: selected ? "#075EE8" : theme.border }, pressed && s.compareCardPressed]}>
           <View style={s.compareTop}>
-            <View style={s.providerIdentity}>
-              <Text numberOfLines={1} style={[s.providerName, { color: theme.textPrimary }]}>{provider}</Text>
-              <Text numberOfLines={1} style={[s.providerMeta, { color: theme.textSecondary }]}>KAYAK sandbox · Simulated</Text>
-            </View>
+            <View style={s.providerIdentity}>{provider ? <Text numberOfLines={1} style={[s.providerName, { color: theme.textPrimary }]}>{provider}</Text> : null}</View>
             <View style={[s.radio, !selected && { borderColor: theme.dark ? theme.icon : "#94A3B8" }]}>{selected ? <View style={s.radioDot} /> : null}</View>
           </View>
           <View style={s.compareBottom}>
-            <View style={s.benefits}>
+            {supplier ? <View style={s.benefits}>
               <View style={s.benefit}><CarFront size={14} color={theme.dark ? theme.icon : "#475569"} /><Text numberOfLines={1} style={[s.benefitText, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{supplier}</Text></View>
-              <View style={s.benefit}><Info size={14} color={theme.dark ? theme.icon : "#475569"} /><Text numberOfLines={1} style={[s.benefitText, { color: theme.dark ? theme.textSecondary : "#334155" }]}>Not bookable</Text></View>
-            </View>
+            </View> : <View style={s.benefits} />}
             <View style={s.comparePrice}><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.68} style={[s.daily, { color: theme.textPrimary }]}>{money(offer.currency, offer.pricePerDay)}</Text><Text style={s.perDay}>per day</Text></View>
           </View>
         </Pressable>;
@@ -326,7 +311,6 @@ function PickupReturn({ result, pickupDate, dropoffDate, pickupTime, dropoffTime
       <TimelineEntry label="Pick-up" location={result.pickupLocation} date={pickupDate} time={pickupTime} theme={theme} />
       <TimelineEntry label="Return" location={result.returnLocation} date={dropoffDate} time={dropoffTime} theme={theme} />
     </View>
-    <Text style={[s.providerNote, { color: theme.textSecondary }]}>Exact collection instructions were not supplied by the sandbox provider. Confirm the collection point before pickup.</Text>
   </View>;
 }
 
@@ -346,7 +330,7 @@ function Location({ result, search, pickupDate, dropoffDate, pickupTime, dropoff
     <Text style={[s.locationHeading, { color: theme.dark ? theme.textPrimary : "#020617" }]}>Location</Text>
     <View style={s.identity}>
       <View style={s.pinWell}><MapPin size={18} color="#075EE8" /></View>
-      <View style={s.identityCopy}><Text style={[s.locationPrimary, { color: theme.dark ? theme.textPrimary : "#1E293B" }]}>{pickupLocation}</Text><Text style={[s.locationSecondary, { color: theme.dark ? theme.textSecondary : "#64748B" }]}>{sandboxPickupLabel(result)}</Text></View>
+      <View style={s.identityCopy}><Text style={[s.locationPrimary, { color: theme.dark ? theme.textPrimary : "#1E293B" }]}>{pickupLocation}</Text></View>
     </View>
     <View style={[s.mapCard, { borderColor: theme.border }]}>
       <View style={s.mapViewport}>
@@ -365,14 +349,7 @@ function Location({ result, search, pickupDate, dropoffDate, pickupTime, dropoff
       <LocationTimelineEntry label="Pick-up" location={pickupLocation} date={pickupDate} time={pickupTime} theme={theme} />
       <LocationTimelineEntry label="Return" location={returnLocation} date={dropoffDate} time={dropoffTime} theme={theme} />
     </View>
-    <Text style={[s.detailsHeading, { color: theme.textPrimary }]}>Pickup and location details</Text>
-    <Bullet text="KAYAK sandbox inventory is simulated and does not provide a verified collection counter or booking confirmation." theme={theme} />
-    <Bullet text="Confirm the exact collection point and accessibility requirements with the rental provider before pickup." theme={theme} />
   </View>;
-}
-
-function Bullet({ text, theme }: { text: string; theme: Theme }) {
-  return <View style={s.bullet}><Text style={{ color: "#075EE8" }}>•</Text><Text style={[s.bulletText, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{text}</Text></View>;
 }
 
 function KayakCarDetailLoading() {
@@ -382,7 +359,7 @@ function KayakCarDetailLoading() {
 
 function KayakCarUnavailable() {
   const { theme } = useAppTheme();
-  return <SafeAreaView style={[s.safe, { backgroundColor: theme.background }]}><View style={s.unavailable}><CarFront size={44} color="#075EE8" /><Text style={[s.heading, { color: theme.textPrimary }]}>This KAYAK sandbox car is no longer available</Text><Text style={{ color: theme.textSecondary }}>Return to the results and refresh your search.</Text><Button label="Back to car results" onPress={() => router.back()} /><Button label="Edit search" outline onPress={() => router.replace("/cars")} /></View></SafeAreaView>;
+  return <SafeAreaView style={[s.safe, { backgroundColor: theme.background }]}><View style={s.unavailable}><CarFront size={44} color="#075EE8" /><Text style={[s.heading, { color: theme.textPrimary }]}>This car is no longer available</Text><Text style={{ color: theme.textSecondary }}>Return to the results and refresh your search.</Text><Button label="Back to car results" onPress={() => router.back()} /><Button label="Edit search" outline onPress={() => router.replace("/cars")} /></View></SafeAreaView>;
 }
 
 const s = StyleSheet.create({
@@ -393,7 +370,6 @@ const s = StyleSheet.create({
   hero: { paddingBottom: 16, borderBottomWidth: 1 },
   identityBlock: { paddingHorizontal: 16, paddingTop: 14 },
   category: { marginTop: 3, fontSize: 10, lineHeight: 14, fontWeight: "700", fontFamily: appFonts.bold, textTransform: "uppercase", letterSpacing: 1.4, color: "#075EE8" },
-  sandboxLabel: { marginTop: 4, fontSize: 10, lineHeight: 14, fontWeight: "600", fontFamily: appFonts.semibold },
   title: { fontSize: 22, lineHeight: 28, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.5 },
   orSimilar: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold, letterSpacing: 0 },
   imageBox: { width: "100%", overflow: "hidden" },
@@ -416,14 +392,12 @@ const s = StyleSheet.create({
   heading: { fontSize: 20, lineHeight: 28, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.5 },
   compareHeading: { fontSize: 12, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.2 },
   stay: { marginTop: 4, fontSize: 11, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
-  sandboxDisclosure: { marginTop: 6, fontSize: 11, lineHeight: 16, fontWeight: "400", fontFamily: appFonts.regular },
   dealList: { marginTop: 20, gap: 10 },
   compareCard: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 8, paddingVertical: 12, overflow: "hidden" },
   compareCardPressed: { opacity: 0.88 },
   compareTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 10 },
   providerIdentity: { flex: 1, minWidth: 0 },
   providerName: { fontSize: 13, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
-  providerMeta: { marginTop: 2, fontSize: 10, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
   radio: { width: 16, height: 16, borderRadius: 8, borderWidth: 1.5, borderColor: "#075EE8", alignItems: "center", justifyContent: "center" },
   radioDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#075EE8" },
   compareBottom: { marginTop: 12, flexDirection: "row", alignItems: "flex-end", gap: 10 },
@@ -446,14 +420,12 @@ const s = StyleSheet.create({
   infoText: { flex: 1, minWidth: 0 },
   timelineLocation: { fontSize: 14, lineHeight: 20, fontWeight: "500", fontFamily: appFonts.medium },
   timelineDate: { fontSize: 13, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
-  providerNote: { marginTop: 20, fontSize: 12, lineHeight: 18, fontWeight: "400", fontFamily: appFonts.regular },
   location: { paddingTop: 12, paddingBottom: 28, borderBottomWidth: 1 },
   locationHeading: { fontSize: 12, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.2 },
   identity: { marginTop: 12, flexDirection: "row", alignItems: "flex-start", gap: 12 },
   identityCopy: { flex: 1, minWidth: 0 },
   pinWell: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#EFF6FF", alignItems: "center", justifyContent: "center" },
   locationPrimary: { fontSize: 13, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
-  locationSecondary: { fontSize: 12, lineHeight: 20 },
   mapCard: { marginTop: 16, borderWidth: 1, borderRadius: 14, overflow: "hidden" },
   mapViewport: { height: 200, width: "100%" },
   mapPreview: { flex: 1 },
@@ -463,22 +435,11 @@ const s = StyleSheet.create({
   locationTimeline: { marginTop: 16, borderWidth: 1, borderRadius: 14, padding: 16, gap: 24, overflow: "hidden" },
   locationTimelineEntry: { flexDirection: "row" },
   locationTimelineCopy: { flex: 1, paddingLeft: 12 },
-  detailsHeading: { marginTop: 24, fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
-  bullet: { marginTop: 12, flexDirection: "row", gap: 10 },
-  bulletText: { flex: 1, fontSize: 14, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },
   dock: { position: "absolute", left: 0, right: 0, bottom: 0, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderTopWidth: 1, paddingHorizontal: 16, paddingTop: 12, shadowColor: "#0F172A", shadowOffset: { width: 0, height: -8 }, shadowOpacity: 0.14, shadowRadius: 14, elevation: 12 },
   dockContent: { width: "100%", flexDirection: "row", alignItems: "center", gap: 12 },
   dockPrice: { flex: 1, minWidth: 0, gap: 1 },
-  dockLabel: { flexDirection: "row", alignItems: "center", gap: 4, minWidth: 0 },
-  dockEyebrow: { flexShrink: 1, minWidth: 0, fontSize: 11, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
-  dockIcon: { flexShrink: 0 },
   dockTotal: { maxWidth: "100%", fontSize: 19, lineHeight: 22, fontWeight: "600", fontFamily: appFonts.semibold, letterSpacing: -0.25, textAlign: "left", fontVariant: ["tabular-nums"] },
   dockPerDay: { maxWidth: "100%", fontSize: 10, lineHeight: 13, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "left" },
-  dockAction: { flex: 1.1, minWidth: 176, maxWidth: 210 },
-  continue: { width: "100%", minHeight: 48, borderRadius: 8, backgroundColor: colors.blue, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
-  continueText: { flexShrink: 1, minWidth: 0, fontSize: 12, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold, color: "white", textAlign: "center" },
-  continueIcon: { flexShrink: 0 },
-  disabledAction: { opacity: 0.55 },
   pressed: { opacity: 0.82 },
   loading: { padding: 16, gap: 12 },
   loadingLine: { height: 36, borderRadius: 8 },
