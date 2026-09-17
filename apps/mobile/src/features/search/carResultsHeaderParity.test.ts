@@ -8,6 +8,7 @@ const carAlert = readFileSync("src/features/search/NativeCarPriceAlert.tsx", "ut
 const hotels = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
 const carHeader = cars.slice(cars.indexOf("function CarResultsHeader"), cars.indexOf("function CarResultItemSeparator"));
 const hotelHeader = hotels.slice(hotels.indexOf("function HotelResultsHeader"), hotels.indexOf("const HotelResultsShortcut"));
+const carAlertModal = carAlert.slice(carAlert.indexOf("{open ? <Modal"), carAlert.indexOf("</Modal> : null}"));
 
 test("Cars Results replaces branded chrome with two Hotel-style header targets", () => {
   assert.doesNotMatch(cars, /import[^\n]*\bTopBar\b|<TopBar(?:\s|\/|>)/);
@@ -135,7 +136,7 @@ test("Cars Results gives handled child taps to its primary vertical scroll owner
 });
 
 test("Cars Price Alert keeps focus reconciliation silent while mutation progress remains visible", () => {
-  assert.match(carAlert, /const reconcile = useCallback\(async \(\) => \{[^\n]*setLoading\(true\)/);
+  assert.match(carAlert, /const reconcile = useCallback\(async \(\) => \{[\s\S]*?setLoading\(true\)/);
   assert.match(carAlert, /useFocusEffect\(useCallback\(\(\) => \{ void reconcile\(\); \}, \[reconcile\]\)\)/);
   assert.match(carAlert, /\{pending \? <ActivityIndicator[^>]*color=\{theme\.priceAlertAccent\}[^>]*\/> : null\}<Switch/);
   assert.doesNotMatch(carAlert, /pending \|\| loading \? <ActivityIndicator/);
@@ -201,11 +202,11 @@ test("Cars Price Alert close is state-owned so keyboard teardown cannot race ahe
   const close = carAlert.slice(carAlert.indexOf("const closeTargetSheet"), carAlert.indexOf("const toggle"));
   assert.match(close, /const closeTargetSheet = \(\) => \{ setOpen\(false\); \};/);
   assert.doesNotMatch(close, /Keyboard\.dismiss|\.blur\(|async|await|setTimeout|InteractionManager|keyboard(?:Did|Will)Hide|requestAnimationFrame/);
-  assert.match(carAlert, /\{open \? <Modal visible transparent animationType="none"/);
+  assert.match(carAlertModal, /\{open \? <Modal\s+visible\s+transparent\s+animationType="none"/);
   assert.doesNotMatch(carAlert, /<Modal visible=\{open\}/);
-  assert.match(carAlert, /<KeyboardAvoidingView style=\{styles\.keyboardAvoider\} behavior=\{Platform\.OS === "ios" \? "padding" : undefined\}/);
-  assert.match(carAlert, /<TextInput autoFocus/);
-  assert.match(carAlert, /onRequestClose=\{\(\) => \{ if \(!pending\) closeTargetSheet\(\); \}\}/);
+  assert.match(carAlertModal, /<KeyboardAvoidingView style=\{styles\.keyboardAvoider\} behavior="padding" pointerEvents="box-none">/);
+  assert.match(carAlert, /<TextInput[\s\S]*?autoFocus=\{Platform\.OS === "ios"\}/);
+  assert.match(carAlertModal, /onRequestClose=\{\(\) => \{ if \(!pending\) closeTargetSheet\(\); \}\}/);
   assert.match(carAlert, /accessibilityLabel="Close price alert" disabled=\{pending\} onPressIn=\{closeTargetSheet\} onPress=\{closeTargetSheet\}/);
   assert.equal(carAlert.match(/closeTargetSheet/g)?.length, 7);
 });
