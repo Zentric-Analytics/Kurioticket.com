@@ -21,6 +21,17 @@ test("fare categories and active content form one connected horizontally scrolla
   assert.match(deck,/<View testID="fare-information-active-content" style=\{s\.fareInfoBody\}><FareSurface tab=\{tab\}/);
 });
 
+test("selection uses blue outlines and underlines without turning tab or fare-price text blue",()=>{
+  const fareRail=between('<Text style={[s.fareSectionTitle,{color:theme.textPrimary}]}>Pick your fare</Text>','<View testID="fare-information-deck"');
+  assert.match(deck,/style=\{\[s\.fareInfoTabText,\{color:fareHeadingTextColor\},tab===key&&s\.fareInfoTabTextActive\]\}/);
+  assert.match(deck,/tab===key\?<View style=\{s\.fareTabIndicator\}/);
+  assert.match(source,/fareTabIndicator:\{[^}]*backgroundColor:ui\.blue/);
+  assert.doesNotMatch(deck,/fareTabActiveTextColor|color:tab===key\?ui\.blue/);
+  assert.match(fareRail,/borderColor:isSelected\?ui\.blue:theme\.border/);
+  assert.match(fareRail,/s\.farePrice,\{color:fareHeadingTextColor\}/);
+  assert.doesNotMatch(fareRail,/color:isSelected\?ui\.blue/);
+});
+
 test("FareSurface renders only the selected category without a generic nested card",()=>{
   assert.doesNotMatch(surface,/s\.card/);
   assert.match(surface,/if\(tab==="deals"\) return/);
@@ -150,9 +161,8 @@ test("fare information typography strengthens state-driven navigation while pres
   const deckStyles=between("fareInfoDeck:", "notice:");
   assert.match(deckStyles,/fareInfoTabText:\{fontSize:15,lineHeight:21,fontWeight:"600"\}/);
   assert.match(deckStyles,/fareInfoTabTextActive:\{fontWeight:"700"\}/);
-  assert.match(source,/const fareTabActiveTextColor=theme\.dark\?"#8FB5FF":"#004BB8"/);
-  assert.match(source,/const fareTabInactiveTextColor=theme\.dark\?theme\.textPrimary:"#1A1A1A"/);
-  assert.match(deck,/color:tab===key\?fareTabActiveTextColor:fareTabInactiveTextColor/);
+  assert.match(source,/const fareHeadingTextColor=theme\.dark\?theme\.textPrimary:"#1A1A1A"/);
+  assert.match(deck,/color:fareHeadingTextColor/);
   assert.doesNotMatch(deck,/color:tab===key\?ui\.blue:/);
   assert.doesNotMatch(source,/#3F506F|#D3DBEA|#2F466A|#D8E1F0/);
   assert.doesNotMatch(deck,/Fare conditions[^\n]*color:ui\.blue/);

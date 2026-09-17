@@ -5,6 +5,7 @@ import test from "node:test";
 
 const detail = readFileSync(resolve("src/features/search/ApprovedDetailScreen.tsx"), "utf8");
 const native = readFileSync(resolve("src/features/search/NativeFlightDetails.tsx"), "utf8");
+const resultsShell = readFileSync(resolve("src/features/search/FlightResultsSheetShell.tsx"), "utf8");
 
 test("flight details has one opaque-ID authoritative runtime", () => {
   assert.match(detail, /product === "flight" && params\.id[\s\S]*?<NativeFlightDetails/);
@@ -53,15 +54,37 @@ test("hero owns route, Save, and Share without restoring Edit search", () => {
   assert.match(hero, /\{tripMetadata\}/);
   assert.match(hero, /label=\{saved\?"Remove saved flight":"Save flight"\}/);
   assert.match(hero, /label="Share flight"/);
+  const metadata = hero.indexOf("{tripMetadata}");
+  const route = hero.indexOf("flightDetailsRouteLabel");
+  const cities = hero.indexOf("{cityRoute}");
+  assert.ok(metadata < route && route < cities, "hero orders metadata, airport route, then city route");
+  assert.doesNotMatch(hero, /departureDate|returnDate|providerName|activePrice/);
   assert.doesNotMatch(native, /accessibilityLabel="Edit search"|>Edit search<|FilePenLine|pathname:"\/edit-flight-search"/);
 });
 
-test("hero controls stay compact, circular, and accessible on narrow screens", () => {
-  assert.match(native, /heroActions:\{flexDirection:"row",gap:8\}/);
+test("hero controls use independent Hotel-style save and share targets in one pill", () => {
+  const heroStart = native.indexOf('<ImageBackground testID="flight-details-hero"');
+  const heroEnd = native.indexOf("</ImageBackground>", heroStart);
+  const hero = native.slice(heroStart, heroEnd);
+  assert.match(native, /heroActions:\{[^}]*width:96,height:44,borderRadius:22,backgroundColor:"#FFFFFF",flexDirection:"row",overflow:"hidden"/);
+  assert.match(native, /heroAction:\{width:48,height:44,alignItems:"center",justifyContent:"center"\}/);
+  assert.equal(hero.match(/<IconButton/g)?.length, 2);
+  assert.match(hero, /label=\{saved\?"Remove saved flight":"Save flight"\} onPress=\{\(\)=>savedFlights\.toggle/);
+  assert.match(hero, /label="Share flight" onPress=\{\(\)=>void share\(\)\}/);
   assert.match(native, /heroIconButton:\{width:44,height:44,borderRadius:22/);
   assert.match(native, /routeMetadata:\{color:"#FFFFFF"[^}]*textTransform:"uppercase"/);
   assert.match(native, /minimumFontScale=\{0\.75\} style=\{s\.routeMetadata\}/);
   assert.doesNotMatch(native, /Kurioticket.*(?:logo|wordmark)|(?:logo|wordmark).*Kurioticket/i);
+});
+
+test("available Flight Details uses the Flight Results canvas without flattening hero or sticky surfaces", () => {
+  const available = native.slice(native.indexOf('return <SafeAreaView edges={[]}'), native.indexOf("function FlightDetailsLoadingSkeleton"));
+  assert.match(native, /import \{ FLIGHT_RESULTS_LIGHT_CANVAS \} from "\.\/FlightResultsSheetShell"/);
+  assert.match(native, /const contentCanvasColor=theme\.dark\?theme\.background:FLIGHT_RESULTS_LIGHT_CANVAS/);
+  assert.match(available, /style=\{\[s\.safe,\{backgroundColor:contentCanvasColor\}\]\}/);
+  assert.match(available, /<ImageBackground testID="flight-details-hero" source=\{require\("\.\.\/\.\.\/\.\.\/assets\/heroes\/flight-details-hero\.webp"\)\}/);
+  assert.match(available, /s\.sticky,\{[^}]*backgroundColor:theme\.surface/);
+  assert.match(resultsShell, /FLIGHT_RESULTS_LIGHT_CANVAS = "#F5F7FB"/);
 });
 
 test("loading and unavailable states keep their existing fixed page header", () => {
