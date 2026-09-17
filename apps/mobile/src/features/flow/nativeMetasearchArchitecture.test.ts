@@ -15,13 +15,13 @@ test("native uses only canonical server search APIs for all provider inventory",
   assert.doesNotMatch(api, /api\/sandbox\/kayak|KAYAK_SANDBOX_API_KEY/);
 });
 
-test("native visibly identifies sandbox inventory and filters the unified arrays", () => {
+test("native keeps provider classification for unified metasearch while Cars omit authored sandbox status copy", () => {
   assert.match(results, /KAYAK sandbox · Simulated · Not bookable/);
   assert.match(results, /filterAndSortFlights\(/);
   assert.match(results, /filterHotels\(results as HotelResult\[\], hotelFilters/);
   assert.match(cars, /filterCarResults\(results,filters\)/);
   assert.match(carCard, /const sandbox = isKayakSandboxCar\(result\)/);
-  assert.match(carCard, /KAYAK sandbox · Simulated · Not bookable/);
+  assert.doesNotMatch(carCard, /KAYAK sandbox · Simulated · Not bookable/);
   assert.match(carProviderPresentation, /result\.searchPolicy\.source === "kayak-sandbox"/);
   assert.match(carProviderPresentation, /result\.inventorySource === "kayak-sandbox"/);
 });
