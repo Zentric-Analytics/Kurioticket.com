@@ -21,10 +21,13 @@ test("approved and KAYAK Cars preserve and restore independent tab positions", (
   }
 });
 
-test("approved and KAYAK Cars retain hero geometry while insetting media and reducing only tab labels", () => {
+test("approved and KAYAK Cars retain safe responsive hero geometry while reducing only tab labels", () => {
   for (const { name, source } of details) {
-    assert.match(source, /imageBox:\s*\{\s*width:\s*"100%",\s*aspectRatio:\s*16\s*\/\s*10,\s*overflow:\s*"hidden"\s*\}/, name);
-    assert.match(source, /mediaStage:\s*\{\s*flex:\s*1,\s*marginTop:\s*16\s*\}/, name);
+    assert.match(source, /const heroControlSafeZoneHeight = inset\.top \+ 12 \+ 44 \+ 14/, name);
+    assert.match(source, /const heroVehicleStageHeight = Math\.min\(224, Math\.max\(176, width \* 0\.5\)\)/, name);
+    assert.match(source, /imageBox:\s*\{\s*width:\s*"100%",\s*overflow:\s*"hidden"\s*\}/, name);
+    assert.match(source, /mediaStage:\s*\{\s*flex:\s*1,\s*paddingBottom:\s*12\s*\}/, name);
+    assert.match(source, /resizeMode="contain"/, name);
     assert.match(source, /fontSize:\s*width\s*>=\s*390\s*\?\s*11\s*:\s*10/, name);
     for (const heading of ["compareHeading", "pickupHeading", "locationHeading"]) assert.match(source, new RegExp(`${heading}:\\s*\\{[^}]*fontSize:\\s*14[^}]*lineHeight:\\s*20[^}]*fontWeight:\\s*"700"[^}]*fontFamily:\\s*appFonts\\.bold`), `${name}: ${heading}`);
     assert.match(source, /const carInformationSurface\s*=\s*theme\.dark\s*\?\s*carCanvasColor\s*:\s*"#E7EBF1"/, name);

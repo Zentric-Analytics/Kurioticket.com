@@ -27,7 +27,7 @@ test("vehicle media leads the Hotel-style Cars hero before identity, specs, and 
   assert.ok(identityStart > imageStart);
   assert.ok(specsStart > identityStart);
   assert.ok(tabsStart > specsStart);
-  assert.match(native.slice(imageStart, identityStart), /accessibilityLabel=\{result\.imageAlt\}[^>]*resizeMode="cover"/);
+  assert.match(native.slice(imageStart, identityStart), /accessibilityLabel=\{result\.imageAlt\}[^>]*resizeMode="contain"/);
   assert.doesNotMatch(native.slice(heroStart, imageStart), /result\.modelName|result\.categoryLabel|heroHeader|titleCopy/);
 });
 
@@ -89,13 +89,18 @@ test("favorite and share behavior survive relocation into independent hero actio
   assert.equal((controls.match(/style=\{s\.heroAction\}/g) ?? []).length, 2);
 });
 
-test("vehicle image well is full-width, theme-safe, and keeps the Cars media ratio", () => {
-  assert.match(native, /s\.imageBox,\{backgroundColor:theme\.surface\}/);
+test("vehicle image well reserves a responsive control-safe zone and contains the full vehicle", () => {
+  assert.match(native, /const heroControlSafeZoneHeight = inset\.top \+ 12 \+ 44 \+ 14/);
+  assert.match(native, /const heroVehicleStageHeight = Math\.min\(224, Math\.max\(176, width \* 0\.5\)\)/);
+  assert.match(native, /const heroMediaHeight = heroControlSafeZoneHeight \+ heroVehicleStageHeight/);
+  assert.match(native, /s\.imageBox,\{height:heroMediaHeight,backgroundColor:theme\.surface\}/);
+  assert.match(native, /s\.mediaStage,\{marginTop:heroControlSafeZoneHeight\}/);
   const imageBox = styleRule("imageBox", "mediaStage");
-  for (const contract of ['width:"100%"', "aspectRatio:16/10", 'overflow:"hidden"']) {
+  for (const contract of ['width:"100%"', 'overflow:"hidden"']) {
     assert.ok(imageBox.includes(contract), contract);
   }
-  assert.doesNotMatch(imageBox, /marginHorizontal|borderRadius|backgroundColor/);
-  assert.match(styleRule("mediaStage", "image"), /flex:1[^}]*marginTop:16/);
+  assert.doesNotMatch(imageBox, /aspectRatio|marginHorizontal|borderRadius|backgroundColor/);
+  assert.match(styleRule("mediaStage", "image"), /flex:1[^}]*paddingBottom:12/);
   assert.match(styleRule("image", "unavailable"), /width:"100%"[^}]*height:"100%"/);
+  assert.doesNotMatch(native.slice(imageStart, identityStart), /translateY|resizeMode="cover"/);
 });

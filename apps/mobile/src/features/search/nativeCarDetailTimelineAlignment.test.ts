@@ -15,9 +15,10 @@ function style(source: string, name: string): string {
 
 test("car detail timeline icons align to the first text line", () => {
   for (const { file, source } of sources) {
-    assert.match(source, /<MapPin size=\{16\} color="#004BB8" style=\{s\.timelineInfoIcon\}/, file);
-    assert.match(source, /<Clock3 size=\{16\}[^>]*style=\{s\.timelineInfoIcon\}/, file);
-    assert.match(style(source, "timelineInfoIcon"), /marginTop:\s*2,\s*flexShrink:\s*0/, file);
+    assert.match(source, /<View style=\{s\.infoIconSlot\}><MapPin size=\{16\} color="#004BB8" \/><\/View>/, file);
+    assert.match(source, /<View style=\{s\.infoIconSlot\}><Clock3 size=\{16\}[^>]*\/><\/View>/, file);
+    assert.match(style(source, "infoIconSlot"), /width:\s*16[^}]*height:\s*20[^}]*flexShrink:\s*0[^}]*alignItems:\s*"center"[^}]*justifyContent:\s*"center"/, file);
+    assert.match(style(source, "infoText"), /flex:\s*1[^}]*minWidth:\s*0/, file);
     assert.match(style(source, "infoRow"), /alignItems:\s*"flex-start"/, file);
     assert.doesNotMatch(style(source, "infoRow"), /alignItems:\s*"center"/, file);
   }

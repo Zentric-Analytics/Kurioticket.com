@@ -85,6 +85,9 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
   const inset = useSafeAreaInsets();
   const navigation = useNavigation();
   const width = useWindowDimensions().width;
+  const heroControlSafeZoneHeight = inset.top + 12 + 44 + 14;
+  const heroVehicleStageHeight = Math.min(224, Math.max(176, width * 0.5));
+  const heroMediaHeight = heroControlSafeZoneHeight + heroVehicleStageHeight;
   const carStickyTabsTop = inset.top + 72;
   const saved = useSavedCar(result, params);
   const { displayCurrency, rates } = useCarDisplayCurrency();
@@ -197,9 +200,9 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
       scrollEventThrottle={16}
     >
       <View style={[s.hero, { backgroundColor: carCanvasColor, borderColor: theme.border }]}>
-        <View style={[s.imageBox,{backgroundColor:theme.surface}]}><View style={s.mediaStage}>
+        <View style={[s.imageBox,{height:heroMediaHeight,backgroundColor:theme.surface}]}><View style={[s.mediaStage,{marginTop:heroControlSafeZoneHeight}]}>
           {resolveImage(result.imageUrl)
-            ? <Image source={{ uri: resolveImage(result.imageUrl) }} accessibilityLabel={result.imageAlt} resizeMode="cover" style={s.image} />
+            ? <Image source={{ uri: resolveImage(result.imageUrl) }} accessibilityLabel={result.imageAlt} resizeMode="contain" style={s.image} />
             : <View style={s.unavailable}><CarFront size={48} color={theme.textSecondary} /><Text style={{ color: theme.textSecondary }}>Vehicle image unavailable</Text></View>}
         </View></View>
         <View style={s.identityBlock}>
@@ -309,7 +312,7 @@ function KayakCompare({ result, offers, selectedOfferId, onSelectOffer, days, pi
 }
 
 function TimelineEntry({ label, location, date, time, theme }: { label: string; location: string; date: string; time: string; theme: Theme }) {
-  return <View style={s.timelineEntry}><View style={s.timelineRail}><View style={s.timelineDot} /></View><View style={s.timelineCopy}><Text style={[s.timelineHeading, { color: theme.textPrimary }]}>{label}</Text><View style={s.infoRow}><MapPin size={16} color="#004BB8" style={s.timelineInfoIcon} /><Text style={[s.infoText, s.timelineLocation, { color: theme.textPrimary }]}>{location}</Text></View><View style={s.infoRow}><Clock3 size={16} color={theme.dark ? theme.icon : "#64748B"} style={s.timelineInfoIcon} /><Text style={[s.infoText, s.timelineDate, { color: theme.textSecondary }]}>{nativeCarDetailDate(date)}{time ? ` · ${time}` : ""}</Text></View></View></View>;
+  return <View style={s.timelineEntry}><View style={s.timelineRail}><View style={s.timelineDot} /></View><View style={s.timelineCopy}><Text style={[s.timelineHeading, { color: theme.textPrimary }]}>{label}</Text><View style={s.infoRow}><View style={s.infoIconSlot}><MapPin size={16} color="#004BB8" /></View><Text style={[s.infoText, s.timelineLocation, { color: theme.textPrimary }]}>{location}</Text></View><View style={s.infoRow}><View style={s.infoIconSlot}><Clock3 size={16} color={theme.dark ? theme.icon : "#64748B"} /></View><Text style={[s.infoText, s.timelineDate, { color: theme.textSecondary }]}>{nativeCarDetailDate(date)}{time ? ` · ${time}` : ""}</Text></View></View></View>;
 }
 
 function LocationTimelineEntry({ label, location, date, time, theme }: { label: string; location: string; date: string; time: string; theme: Theme }) {
@@ -393,8 +396,8 @@ const s = StyleSheet.create({
   sandboxLabel: { marginTop: 4, fontSize: 10, lineHeight: 14, fontWeight: "600", fontFamily: appFonts.semibold },
   title: { fontSize: 22, lineHeight: 28, fontWeight: "800", fontFamily: appFonts.extraBold, letterSpacing: -0.5 },
   orSimilar: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold, letterSpacing: 0 },
-  imageBox: { width: "100%", aspectRatio: 16 / 10, overflow: "hidden" },
-  mediaStage: { flex: 1, marginTop: 16 },
+  imageBox: { width: "100%", overflow: "hidden" },
+  mediaStage: { flex: 1, paddingBottom: 12 },
   image: { width: "100%", height: "100%" },
   unavailable: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10, padding: 24 },
   specs: { flexDirection: "row", flexWrap: "wrap", rowGap: 10, justifyContent: "space-between", paddingHorizontal: 16, paddingTop: 16 },
@@ -439,7 +442,7 @@ const s = StyleSheet.create({
   timelineCopy: { flex: 1, paddingLeft: 20 },
   timelineHeading: { fontSize: 15, lineHeight: 22, fontWeight: "700", fontFamily: appFonts.bold },
   infoRow: { marginTop: 4, flexDirection: "row", alignItems: "flex-start", gap: 8 },
-  timelineInfoIcon: { marginTop: 2, flexShrink: 0 },
+  infoIconSlot: { width: 16, height: 20, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   infoText: { flex: 1, minWidth: 0 },
   timelineLocation: { fontSize: 14, lineHeight: 20, fontWeight: "500", fontFamily: appFonts.medium },
   timelineDate: { fontSize: 13, lineHeight: 20, fontWeight: "400", fontFamily: appFonts.regular },

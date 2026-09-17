@@ -40,7 +40,7 @@ test("approved and KAYAK Cars details share the light canvas and vehicle image s
     assert.doesNotMatch(detail, /hero(?:Back|Actions):\s*\{[^}]*backgroundColor:\s*"#FFFFFF"/);
     assert.match(detail, /<ScrollView[^>]*style=\{\{\s*backgroundColor:\s*carCanvasColor\s*\}\}/);
     assert.match(detail, /s\.hero,\s*\{\s*backgroundColor:\s*carCanvasColor,\s*borderColor:\s*theme\.border\s*\}/);
-    assert.match(detail, /s\.imageBox,\s*\{\s*backgroundColor:\s*theme\.surface\s*\}/);
+    assert.match(detail, /s\.imageBox,\s*\{[^}]*backgroundColor:\s*theme\.surface\s*\}/);
   }
 });
 
