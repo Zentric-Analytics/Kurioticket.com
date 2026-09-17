@@ -38,13 +38,18 @@ test("available Flight Details uses a universal edge-to-edge hero with safe cont
 
   assert.match(available, /<StatusBar style="light" translucent backgroundColor="transparent"\/?>/);
   assert.match(available, /<ImageBackground testID="flight-details-hero" source=\{require\("\.\.\/\.\.\/\.\.\/assets\/heroes\/flight-details-hero\.webp"\)\}/);
-  assert.match(available, /style=\{\[s\.heroControls,\{top:inset\.top\+8\}\]\}/);
+  const scrollStart = available.indexOf('<ScrollView testID="flight-details-scroll-content"');
+  const scrollEnd = available.indexOf("</ScrollView>", scrollStart);
+  const controls = available.indexOf('testID="flight-details-floating-controls"');
+  assert.ok(controls > scrollEnd, "floating actions must be screen-level siblings after the vertical ScrollView");
+  assert.match(available, /testID="flight-details-floating-controls" style=\{\[s\.heroControls,s\.floatingControls,\{top:inset\.top\+8\}\]\}/);
   assert.match(available, /accessibilityLabel="Back to results" onPress=\{\(\)=>router\.back\(\)\} style=\{s\.heroIconButton\}><ArrowLeft/);
   assert.match(native, /heroIconButton:\{width:44,height:44,borderRadius:22/);
+  assert.match(native, /floatingControls:\{zIndex:\d+,elevation:\d+\}/);
   assert.doesNotMatch(loading, /flight-details-hero|ImageBackground|StatusBar style="light"/);
 });
 
-test("hero owns route, Save, and Share without restoring Edit search", () => {
+test("hero owns route while screen-level actions preserve Save and Share without restoring Edit search", () => {
   const heroStart = native.indexOf('<ImageBackground testID="flight-details-hero"');
   const heroEnd = native.indexOf("</ImageBackground>", heroStart);
   const hero = native.slice(heroStart, heroEnd);
@@ -52,8 +57,9 @@ test("hero owns route, Save, and Share without restoring Edit search", () => {
   assert.match(hero, /testID="flight-details-route-summary"/);
   assert.match(hero, /flightDetailsRouteLabel/);
   assert.match(hero, /\{tripMetadata\}/);
-  assert.match(hero, /label=\{saved\?"Remove saved flight":"Save flight"\}/);
-  assert.match(hero, /label="Share flight"/);
+  assert.doesNotMatch(hero, /label=\{saved\?"Remove saved flight":"Save flight"\}|label="Share flight"|Back to results/);
+  assert.match(native, /testID="flight-details-floating-controls"[\s\S]*?label=\{saved\?"Remove saved flight":"Save flight"\}/);
+  assert.match(native, /testID="flight-details-floating-controls"[\s\S]*?label="Share flight"/);
   const metadata = hero.indexOf("{tripMetadata}");
   const route = hero.indexOf("flightDetailsRouteLabel");
   const cities = hero.indexOf("{cityRoute}");
@@ -63,14 +69,14 @@ test("hero owns route, Save, and Share without restoring Edit search", () => {
 });
 
 test("hero controls use independent Hotel-style save and share targets in one pill", () => {
-  const heroStart = native.indexOf('<ImageBackground testID="flight-details-hero"');
-  const heroEnd = native.indexOf("</ImageBackground>", heroStart);
-  const hero = native.slice(heroStart, heroEnd);
+  const controlsStart = native.indexOf('<View testID="flight-details-floating-controls"');
+  const controlsEnd = native.indexOf("</SafeAreaView>", controlsStart);
+  const controls = native.slice(controlsStart, controlsEnd);
   assert.match(native, /heroActions:\{[^}]*width:96,height:44,borderRadius:22,backgroundColor:"#FFFFFF",flexDirection:"row",overflow:"hidden"/);
   assert.match(native, /heroAction:\{width:48,height:44,alignItems:"center",justifyContent:"center"\}/);
-  assert.equal(hero.match(/<IconButton/g)?.length, 2);
-  assert.match(hero, /label=\{saved\?"Remove saved flight":"Save flight"\} onPress=\{\(\)=>savedFlights\.toggle/);
-  assert.match(hero, /label="Share flight" onPress=\{\(\)=>void share\(\)\}/);
+  assert.equal(controls.match(/<IconButton/g)?.length, 2);
+  assert.match(controls, /label=\{saved\?"Remove saved flight":"Save flight"\} onPress=\{\(\)=>savedFlights\.toggle/);
+  assert.match(controls, /label="Share flight" onPress=\{\(\)=>void share\(\)\}/);
   assert.match(native, /heroIconButton:\{width:44,height:44,borderRadius:22/);
   assert.match(native, /routeMetadata:\{color:"#FFFFFF"[^}]*textTransform:"uppercase"/);
   assert.match(native, /minimumFontScale=\{0\.75\} style=\{s\.routeMetadata\}/);

@@ -4,7 +4,7 @@ import test from "node:test";
 
 const source=readFileSync("src/features/search/NativeFlightDetails.tsx","utf8");
 const between=(start:string,end:string)=>{const startIndex=source.indexOf(start);assert.notEqual(startIndex,-1,`missing ${start}`);const endIndex=source.indexOf(end,startIndex+start.length);assert.notEqual(endIndex,-1,`missing ${end}`);return source.slice(startIndex,endIndex);};
-const deck=between('<View testID="fare-information-deck"','</ScrollView><View style={[s.sticky');
+const deck=between('<View testID="fare-information-deck"','</ScrollView><View testID="flight-details-floating-controls"');
 const surface=between("function FareSurface", "const s=StyleSheet.create");
 
 test("fare categories and active content form one connected horizontally scrollable deck",()=>{
