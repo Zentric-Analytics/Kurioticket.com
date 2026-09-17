@@ -146,9 +146,11 @@ test("Cars Price Alert keeps focus reconciliation silent while mutation progress
 });
 
 test("Cars Price Alert reconciliation remains race-safe and preserves its known match", () => {
-  assert.match(carAlert, /const disabled = pending \|\| loading \|\| \(!available && !tracking\)/);
-  assert.match(carAlert, /if \(!plan \|\| pending \|\| loading\) return/);
-  assert.doesNotMatch(carAlert, /setLoading\(true\);\s*setMatch\(undefined\)/);
+  assert.match(carAlert, /const disabled = pending \|\| loading \|\| !alertKnown \|\| \(!available && !tracking\)/);
+  assert.match(carAlert, /matchingAlertState && matchingAlertState\.planKey === planKey/);
+  assert.match(carAlert, /const reconciliation = \+\+reconciliationRef\.current/);
+  assert.match(carAlert, /if \(reconciliation !== reconciliationRef\.current\) return/);
+  assert.doesNotMatch(carAlert, /setLoading\(true\);\s*setCurrentMatchingAlert\(undefined\)/);
 });
 
 test("Cars Price Alert keeps user mutation progress and create feedback", () => {
@@ -199,8 +201,8 @@ test("Cars Price Alert close is state-owned so keyboard teardown cannot race ahe
   assert.match(carAlert, /sheetHeaderTitle: \{ flex: 1, minWidth: 0, textAlign: "center" \}/);
   assert.match(carAlert, /sheetClose: \{ width: 44, height: 44/);
   assert.doesNotMatch(carAlert, /<Button label="Cancel"/);
-  const close = carAlert.slice(carAlert.indexOf("const closeTargetSheet"), carAlert.indexOf("const toggle"));
-  assert.match(close, /const closeTargetSheet = \(\) => \{ setOpen\(false\); \};/);
+  const close = carAlert.slice(carAlert.indexOf("const closeTargetSheet"), carAlert.indexOf("const openTargetSheet"));
+  assert.match(close, /targetIntentRef\.current\.close\(\);[\s\S]*setOpen\(false\);/);
   assert.doesNotMatch(close, /Keyboard\.dismiss|\.blur\(|async|await|setTimeout|InteractionManager|keyboard(?:Did|Will)Hide|requestAnimationFrame/);
   assert.match(carAlertModal, /\{open \? <Modal\s+visible\s+transparent\s+animationType="none"/);
   assert.doesNotMatch(carAlert, /<Modal visible=\{open\}/);
@@ -208,5 +210,5 @@ test("Cars Price Alert close is state-owned so keyboard teardown cannot race ahe
   assert.match(carAlert, /<TextInput[\s\S]*?autoFocus=\{Platform\.OS === "ios"\}/);
   assert.match(carAlertModal, /onRequestClose=\{\(\) => \{ if \(!pending\) closeTargetSheet\(\); \}\}/);
   assert.match(carAlert, /accessibilityLabel="Close price alert" disabled=\{pending\} onPressIn=\{closeTargetSheet\} onPress=\{closeTargetSheet\}/);
-  assert.equal(carAlert.match(/closeTargetSheet/g)?.length, 7);
+  assert.equal(carAlert.match(/closeTargetSheet/g)?.length, 11);
 });
