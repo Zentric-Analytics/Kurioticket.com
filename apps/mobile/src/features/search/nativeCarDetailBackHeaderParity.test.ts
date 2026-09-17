@@ -70,7 +70,7 @@ test("Cars content section headings share the reduced typography", () => {
   for (const source of [normal, sandbox]) {
     for (const heading of ["compareHeading", "pickupHeading", "locationHeading"]) {
       const rule = style(source, heading);
-      for (const value of ["fontSize:14", "lineHeight:20", 'fontWeight:"700"', "fontFamily:appFonts.bold"]) assert.ok(rule.includes(value), `${heading}: ${value}`);
+      for (const value of ["fontSize:12", "lineHeight:18", 'fontWeight:"700"', "fontFamily:appFonts.bold"]) assert.ok(rule.includes(value), `${heading}: ${value}`);
     }
   }
 });
