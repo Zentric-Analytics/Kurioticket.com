@@ -176,15 +176,15 @@ export function NativeFlightDetails({ params }: { params: Params }) {
   const cityRoute=nativeFlightDetailsCityRouteLabel(details.search.tripType,offer.legs??[],offer.originAirport,offer.destinationAirport);
   const handoff=async(offerId:string) => { if(booking||!fareReady)return; setBooking(true); setMessage(""); try { const response=await travelApi.flightRedirect(offerId); await Linking.openURL(response.url); } catch(error) { if(error instanceof TravelApiError && error.status===409 && error.details?.code==="offer_changed") { preserveMessageOnReload.current=true; setMessage("The provider updated this offer. Review the refreshed price and terms before continuing."); reload(); } else setMessage(error instanceof Error?error.message:"Booking is currently unavailable."); } finally { setBooking(false); } };
   const share=async()=>{if(sharePending.current)return;sharePending.current=true;try{const outcome=await shareFlightForAuthenticatedSession({readSession,share:(message)=>Share.share({message}),message:flightShareMessage(activeOffer,activePrice?.formatted??"price unavailable")});if(outcome==="sign-in-required")Alert.alert("Sign in required","Sign in to share this flight.",[{text:"Sign in",onPress:()=>router.push("/email-auth")},{text:"Cancel",style:"cancel"}]);}finally{sharePending.current=false;}};
-  return <SafeAreaView edges={[]} style={[s.safe,{backgroundColor:contentCanvasColor}]}><StatusBar style="light" translucent backgroundColor="transparent"/><ScrollView testID="flight-details-scroll-content" style={{backgroundColor:contentCanvasColor}} contentContainerStyle={[s.content,{paddingBottom:120+inset.bottom}]}>
+  return <SafeAreaView edges={[]} style={[s.safe,{backgroundColor:contentCanvasColor}]}><StatusBar style="light" translucent backgroundColor="transparent"/><View testID="flight-details-floating-controls" style={[s.heroControls,s.floatingControls,{top:inset.top+8}]}><Pressable accessibilityRole="button" accessibilityLabel="Back to results" onPress={()=>router.back()} style={s.heroIconButton}><ArrowLeft size={20} color="#0F172A"/></Pressable><View style={s.heroActions}><IconButton label={saved?"Remove saved flight":"Save flight"} onPress={()=>savedFlights.toggle(savedOffer,nativeFlightEditSearchParams(details,one(params.currency)))} iconStyle={s.heroHeartIcon}><Heart size={18} color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={saved?androidFavoriteColors.savedFill:androidFavoriteColors.unsavedFill}/></IconButton><IconButton label="Share flight" onPress={()=>void share()} iconStyle={s.heroShareIcon}><FlowIcon name="share" size={18} color="#0F172A"/></IconButton></View></View><ScrollView testID="flight-details-scroll-content" style={{backgroundColor:contentCanvasColor}} contentContainerStyle={[s.content,{paddingBottom:120+inset.bottom}]}>
     <ImageBackground testID="flight-details-hero" source={require("../../../assets/heroes/flight-details-hero.webp")} resizeMode="cover" style={[s.hero,{paddingTop:inset.top+64}]} imageStyle={s.heroImage}>
       <View style={s.heroOverlay}/>
       <View testID="flight-details-route-summary" style={s.heroCopy}><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={s.routeMetadata}>{tripMetadata}</Text><Text accessibilityRole="header" numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8} style={s.route}>{flightDetailsRouteLabel(details.search.tripType,offer.legs??[],offer.originAirport,offer.destinationAirport)}</Text><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={s.cityRoute}>{cityRoute}</Text></View>
       <HeroCurve testID="flight-details-hero-curve" color={contentCanvasColor}/>
     </ImageBackground>
     <View style={s.contentBody}>
-    {message?<View accessibilityRole="alert" style={s.notice}><Text style={s.noticeText}>{message}</Text></View>:null}
     <View testID="flight-details-itinerary-overlap" style={s.itineraryStack}>{(offer.legs?.length?offer.legs:[]).map((leg,index)=><Itinerary key={`${leg.departureTime}-${index}`} leg={leg} index={index} offerAirlineName={offer.airlineName} offerAirlineLogo={offer.airlineLogo} theme={theme} intlLocale={intlLocale}/>)}</View>
+    {message?<View accessibilityRole="alert" style={s.notice}><Text style={s.noticeText}>{message}</Text></View>:null}
     <Text style={[s.fareSectionTitle,{color:theme.textPrimary}]}>Pick your fare</Text>
     {displayPricesReady?<ScrollView accessibilityRole="radiogroup" accessibilityLabel="Available fares" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[s.fares,details.fareChoices.length>1?s.faresMultiple:s.faresSingle]}>
       {details.fareChoices.map((choice)=>{
@@ -217,7 +217,7 @@ export function NativeFlightDetails({ params }: { params: Params }) {
       <View testID="fare-information-active-content" style={s.fareInfoBody}><FareSurface tab={tab} choice={selected} dealPrices={displayPrices} selectedDealOfferId={selectedDeal?.offerId??null} onSelectDeal={setSelectedDealOfferId} activeOffer={activeOffer} theme={theme}/></View>
     </View>
     </View>
-  </ScrollView><View testID="flight-details-floating-controls" style={[s.heroControls,s.floatingControls,{top:inset.top+8}]}><Pressable accessibilityRole="button" accessibilityLabel="Back to results" onPress={()=>router.back()} style={s.heroIconButton}><ArrowLeft size={20} color="#0F172A"/></Pressable><View style={s.heroActions}><IconButton label={saved?"Remove saved flight":"Save flight"} onPress={()=>savedFlights.toggle(savedOffer,nativeFlightEditSearchParams(details,one(params.currency)))} iconStyle={s.heroHeartIcon}><Heart size={18} color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={saved?androidFavoriteColors.savedFill:androidFavoriteColors.unsavedFill}/></IconButton><IconButton label="Share flight" onPress={()=>void share()} iconStyle={s.heroShareIcon}><FlowIcon name="share" size={18} color="#0F172A"/></IconButton></View></View><View style={[s.sticky,{paddingBottom:Math.max(inset.bottom,10),backgroundColor:theme.surface,borderTopColor:theme.border}]}><View><Text style={[s.small,{color:theme.textSecondary}]}>Total for {details.search.travelers} traveler{details.search.travelers===1?"":"s"}</Text><Text style={[s.total,{color:theme.textPrimary}]}>{displayPricesReady?(activePrice?.formatted??"Price unavailable"):"Loading price…"}</Text></View><Button label={booking?"Checking offer…":`Continue to ${provider}`} disabled={booking||!fareReady||(!selectedDeal&&!selected.handoff.available)} onPress={()=>void handoff(selectedDeal?.offerId??offer.id)}/></View></SafeAreaView>;
+  </ScrollView><View style={[s.sticky,{paddingBottom:Math.max(inset.bottom,10),backgroundColor:theme.surface,borderTopColor:theme.border}]}><View><Text style={[s.small,{color:theme.textSecondary}]}>Total for {details.search.travelers} traveler{details.search.travelers===1?"":"s"}</Text><Text style={[s.total,{color:theme.textPrimary}]}>{displayPricesReady?(activePrice?.formatted??"Price unavailable") : "Loading price…"}</Text></View><Button label={booking?"Checking offer…":`Continue to ${provider}`} disabled={booking||!fareReady||(!selectedDeal&&!selected.handoff.available)} onPress={()=>void handoff(selectedDeal?.offerId??offer.id)}/></View></SafeAreaView>;
 }
 
 function FlightDetailsLoadingSkeleton({theme,topInset,bottomInset,fareCardWidth}:{theme:ReturnType<typeof useAppTheme>["theme"];topInset:number;bottomInset:number;fareCardWidth:number}) {
@@ -231,6 +231,13 @@ function FlightDetailsLoadingSkeleton({theme,topInset,bottomInset,fareCardWidth}
     <StatusBar style={theme.dark?"light":"dark"} translucent backgroundColor="transparent"/>
     {/* Keep the busy announcement separate so it does not group/hide the safe Back action. */}
     <View testID="flight-details-loading-skeleton" accessibilityRole="progressbar" accessibilityState={{busy:true}} accessibilityLabel="Loading flight details" accessible pointerEvents="none" style={StyleSheet.absoluteFillObject}/>
+    <View testID="flight-details-loading-controls" style={[s.heroControls,s.floatingControls,{top:topInset+8}]}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Back to results" onPress={()=>router.back()} style={s.heroIconButton}><ArrowLeft size={20} color="#0F172A"/></Pressable>
+      <View testID="flight-details-loading-actions" pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={s.heroActions}>
+        <View style={s.heroAction}><View style={s.heroHeartIcon}><Heart size={18} color="#94A3B8"/></View></View>
+        <View style={s.heroAction}><View style={s.heroShareIcon}><FlowIcon name="share" size={18} color="#94A3B8"/></View></View>
+      </View>
+    </View>
     <ScrollView testID="flight-details-loading-scroll" style={{backgroundColor:contentCanvasColor}} contentContainerStyle={[s.content,{paddingBottom:120+bottomInset}]}>
       <View testID="flight-details-loading-hero" style={[s.hero,{paddingTop:topInset+64,backgroundColor:theme.dark?"#27272A":"#E2E8F0"}]}>
         <Animated.View testID="flight-details-loading-copy" pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[s.heroCopy,{opacity}]}>
@@ -267,13 +274,6 @@ function FlightDetailsLoadingSkeleton({theme,topInset,bottomInset,fareCardWidth}
         </View>
       </Animated.View>
     </ScrollView>
-    <View testID="flight-details-loading-controls" style={[s.heroControls,s.floatingControls,{top:topInset+8}]}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Back to results" onPress={()=>router.back()} style={s.heroIconButton}><ArrowLeft size={20} color="#0F172A"/></Pressable>
-      <View testID="flight-details-loading-actions" pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={s.heroActions}>
-        <View style={s.heroAction}><View style={s.heroHeartIcon}><Heart size={18} color="#94A3B8"/></View></View>
-        <View style={s.heroAction}><View style={s.heroShareIcon}><FlowIcon name="share" size={18} color="#94A3B8"/></View></View>
-      </View>
-    </View>
     <View testID="flight-details-loading-checkout" pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[s.sticky,{paddingBottom:Math.max(bottomInset,10),backgroundColor:theme.surface,borderTopColor:theme.border}]}>
       <Animated.View style={[s.loadingCheckoutTotal,{opacity}]}><View style={[s.loadingLine,s.loadingCheckoutLabel,placeholder]}/><View style={[s.loadingLine,s.loadingCheckoutPrice,placeholder]}/></Animated.View>
       <Animated.View style={[s.loadingCheckoutButton,placeholder,{opacity}]}/>
