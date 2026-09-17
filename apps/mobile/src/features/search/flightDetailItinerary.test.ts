@@ -162,14 +162,20 @@ test("itinerary breadth expands from 18dp to 8dp side gaps while preserving curr
   assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal/);
 });
 
-test("only the first itinerary card overlaps an extended hero with a smooth full-width curve",()=>{
+test("the first itinerary keeps the deep overlap while exposing the same balanced hero curve through its top",()=>{
   const heroStart=source.indexOf('<ImageBackground testID="flight-details-hero"');
   const heroEnd=source.indexOf("</ImageBackground>",heroStart);
   const hero=source.slice(heroStart,heroEnd);
-  assert.match(source,/hero:\{minHeight:318[^}]*paddingBottom:122/);
+  assert.match(source,/hero:\{width:"100%",alignSelf:"stretch",minHeight:318[^}]*paddingBottom:122/);
   assert.match(hero,/<HeroCurve testID="flight-details-hero-curve" color=\{contentCanvasColor\}\/?>/);
   assert.match(source,/function HeroCurve[\s\S]*?<Svg[^>]*viewBox="0 0 100 64"[^>]*preserveAspectRatio="none"[\s\S]*?<Path d="M0 12 Q50 64 100 12 L100 64 L0 64 Z"/);
   assert.match(source,/heroCurve:\{position:"absolute",left:0,right:0,bottom:-1,width:"100%",height:65\}/);
-  assert.match(source,/<View testID="flight-details-itinerary-overlap" style=\{s\.itineraryStack\}>\{\(offer\.legs\?\.length\?offer\.legs:\[\]\)\.map/);
-  assert.doesNotMatch(itinerary,/HeroCurve|flight-details-hero|marginTop:-104/);
+  assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-10,marginTop:-104,zIndex:1\}/);
+  assert.match(source,/heroOverlap=\{index===0\}/);
+  assert.match(itinerary,/heroOverlap:boolean/);
+  assert.match(itinerary,/backgroundColor:heroOverlap\?"transparent":theme\.surface/);
+  assert.match(itinerary,/\{heroOverlap\?<ItineraryHeroSurface color=\{theme\.surface\}\/?>:null\}/);
+  assert.match(source,/function ItineraryHeroSurface[\s\S]*?<Svg[^>]*viewBox="0 0 100 64"[^>]*preserveAspectRatio="none"[\s\S]*?<Path d="M0 12 Q50 64 100 12 L100 64 L0 64 Z"/);
+  assert.match(source,/itineraryHeroCurveSurface:\{position:"absolute",left:0,right:0,top:39,width:"100%",height:65\}/);
+  assert.match(source,/itineraryHeroLowerSurface:\{position:"absolute",left:0,right:0,top:104,bottom:0/);
 });
