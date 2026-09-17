@@ -135,10 +135,10 @@ test("deck baseline adds a 10dp local inset to the unchanged 14dp content gap fo
   assert.match(source,/loadingTabs:\{[^}]*marginHorizontal:-10\}/);
   assert.match(deck,/borderBottomColor:theme\.border/);
   assert.doesNotMatch(deckStyles,/elevation|shadow/);
-  assert.match(source,/content:\{paddingHorizontal:18,paddingTop:5,gap:14\}/);
+  assert.match(source,/contentBody:\{paddingHorizontal:18,gap:14\}/);
   assert.match(deckStyles,/fareInfoDeck:\{gap:0,marginTop:10\}/);
   assert.doesNotMatch(deckStyles,/fareInfoDeck:\{[^}]*marginTop:24/);
-  assert.equal(14+10,24,"the global gap and local deck inset provide the intended total separation");
+  assert.equal(14+10,24,"the content-body gap and local deck inset provide the intended total separation");
   assert.match(source,/loadingInfoDeck:\{height:174,marginTop:10\}/);
   assert.match(source,/card:\{borderWidth:1,borderRadius:14,padding:14,gap:7\}/);
   assert.match(source,/fareCard:\{borderRadius:15,minHeight:142,position:"relative",paddingHorizontal:12,paddingTop:4,paddingBottom:8,gap:4\}/);
