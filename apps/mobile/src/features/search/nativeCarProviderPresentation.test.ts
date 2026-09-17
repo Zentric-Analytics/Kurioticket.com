@@ -47,7 +47,7 @@ test("native KAYAK Cars specs use provider-owned sandbox presentation instead of
   });
 });
 
-test("native KAYAK Cars never turn missing provider specs into zero-capacity claims", () => {
+test("native KAYAK Cars omit authored missing-data labels instead of displaying them as provider facts", () => {
   const kayak = {
     ...base,
     passengers: 0,
@@ -55,12 +55,15 @@ test("native KAYAK Cars never turn missing provider specs into zero-capacity cla
     doors: 0,
     inventorySource: "kayak-sandbox",
     searchPolicy: { ...base.searchPolicy, source: "kayak-sandbox" },
-    sandboxPresentation: { specs: [], pickupLabel: "Search pickup" },
+    sandboxPresentation: {
+      specs: ["Passengers not supplied", "Baggage capacity not supplied", "Doors not supplied", "Transmission not supplied"],
+      pickupLabel: "Search pickup",
+    },
   } as unknown as CarResult;
   assert.deepEqual(nativeCarPrimarySpecLabels(kayak), {
-    passengers: "Passengers not supplied",
-    bags: "Baggage capacity not supplied",
-    doors: "Doors not supplied",
-    transmission: "Transmission not supplied",
+    passengers: "",
+    bags: "",
+    doors: "",
+    transmission: "",
   });
 });

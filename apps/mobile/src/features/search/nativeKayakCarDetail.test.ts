@@ -44,13 +44,10 @@ test("approved and KAYAK Cars details share the light canvas and vehicle image s
   }
 });
 
-test("approved and KAYAK Cars details present or similar inline after the model", () => {
-  for (const detail of [normalDetail, sandboxDetail]) {
-    assert.match(detail, /accessibilityRole="header"[^>]*>\{result\.modelName\}<Text style=\{\[s\.orSimilar,/);
-    assert.match(detail, /> \{"or\\u00A0similar"\}<\/Text><\/Text>/);
-    assert.match(detail, /orSimilar:\s*\{\s*fontSize:\s*14,\s*lineHeight:\s*20,\s*fontWeight:\s*"600",\s*fontFamily:\s*appFonts\.semibold,\s*letterSpacing:\s*0\s*\}/);
-  }
-  assert.match(sandboxDetail, /KAYAK sandbox · Simulated · Not bookable/);
+test("KAYAK Cars only show or similar when the normalized provider result says so", () => {
+  assert.match(normalDetail, /\{result\.modelName\}<Text style=\{\[s\.orSimilar,/);
+  assert.match(sandboxDetail, /\{result\.modelName\}\{result\.orSimilar \? <Text style=\{\[s\.orSimilar,/);
+  assert.doesNotMatch(sandboxDetail, /\{result\.modelName\}<Text style=\{\[s\.orSimilar,/);
 });
 
 test("native KAYAK Cars details recover only through the canonical server Cars API", () => {
@@ -60,67 +57,80 @@ test("native KAYAK Cars details recover only through the canonical server Cars A
   assert.doesNotMatch(sandboxDetail, /api\/sandbox\/kayak|KAYAK_SANDBOX_API_KEY/);
 });
 
-test("native KAYAK Cars details use provider-owned specs and never display schema placeholder capacities directly", () => {
+test("native KAYAK Cars details render provider-owned specs and omit authored missing-data labels", () => {
   assert.match(sandboxDetail, /nativeCarPrimarySpecLabels\(result\)/);
   assert.match(providerPresentation, /sandboxPresentation\?\.specs/);
-  assert.match(providerPresentation, /Passengers not supplied/);
-  assert.match(providerPresentation, /Baggage capacity not supplied/);
-  assert.match(providerPresentation, /Doors not supplied/);
-  assert.match(providerPresentation, /Transmission not supplied/);
+  assert.match(providerPresentation, /authoredMissingSpecLabels/);
+  for (const authored of ["Passengers not supplied", "Baggage capacity not supplied", "Doors not supplied", "Transmission not supplied", "Specifications not supplied"]) {
+    assert.match(providerPresentation, new RegExp(authored.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  }
+  assert.match(sandboxDetail, /specs\.passengers \? <Spec/);
+  assert.match(sandboxDetail, /specs\.bags \? <Spec/);
+  assert.match(sandboxDetail, /specs\.doors \? <Spec/);
+  assert.match(sandboxDetail, /specs\.transmission \? <Spec/);
   assert.doesNotMatch(sandboxDetail, /\$\{result\.passengers\} passengers|\$\{result\.bags\} bags|\$\{result\.doors\} doors/);
   assert.doesNotMatch(sandboxDetail, /nativeCarFuelPolicyLabel|nativeCarMileageLabel|result\.airConditioning|result\.fuelPolicy|result\.mileagePolicy/);
 });
 
-test("native KAYAK Cars details remain explicitly simulated and use only the allow-listed test handoff", () => {
-  assert.match(sandboxDetail, /KAYAK sandbox · Simulated · Not bookable/);
-  assert.match(sandboxDetail, /Simulated KAYAK provider inventory for staging\. No real booking or payment is enabled\./);
-  assert.match(sandboxDetail, /sandboxBookingUrl\(offer\?\.bookingUrl\)/);
-  assert.match(sandboxDetail, /Open KAYAK test page/);
-  assert.match(sandboxDetail, /Linking\.openURL\(sandboxHref\)/);
-  assert.match(sandboxDetail, /Test page unavailable/);
-  assert.doesNotMatch(sandboxDetail, /Continue deal|Continue booking|Book now/);
+test("native KAYAK Cars remove Kurioticket-authored sandbox commentary while retaining provider facts and neutral UI", () => {
+  for (const authoredCopy of [
+    "KAYAK sandbox · Simulated · Not bookable",
+    "Simulated KAYAK provider inventory for staging. No real booking or payment is enabled.",
+    "KAYAK sandbox · Simulated",
+    "KAYAK sandbox · not bookable",
+    "per day · simulated",
+    "Open KAYAK test page",
+    "Test page unavailable",
+    "Exact collection instructions were not supplied by the sandbox provider.",
+    "KAYAK sandbox inventory is simulated and does not provide a verified collection counter or booking confirmation.",
+    "Confirm the exact collection point and accessibility requirements with the rental provider before pickup.",
+  ]) assert.doesNotMatch(sandboxDetail, new RegExp(authoredCopy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.doesNotMatch(sandboxDetail, />Not bookable<\/Text>/);
+  assert.doesNotMatch(sandboxDetail, /sandboxBookingUrl|sandboxHref/);
+  assert.match(sandboxDetail, /providerValue\(offer\.bookingProviderName\)/);
+  assert.match(sandboxDetail, /providerValue\(offer\.rentalCompanyName\)/);
+  assert.match(sandboxDetail, /provider \? <Text numberOfLines=\{1\} style=\{\[s\.providerName/);
+  assert.match(sandboxDetail, /supplier \? <View style=\{s\.benefits\}>/);
+  assert.match(sandboxDetail, /formatMarketCurrency\(offer\.pricePerDay, offer\.currency\)/);
+  assert.match(sandboxDetail, />per day<\/Text>/);
+  assert.match(sandboxDetail, />Compare deals<\/Text>/);
+  assert.match(sandboxDetail, />Pickup and return<\/Text>/);
+  assert.match(sandboxDetail, />Location<\/Text>/);
 });
 
-test("native KAYAK Cars dock keeps its responsive two-column sandbox layout", () => {
+test("native KAYAK Cars dock retains provider price without authored sandbox handoff copy", () => {
   const source = sandboxDetail.replace(/\s/g, "");
   assert.match(source, /dock:\{position:"absolute",left:0,right:0,bottom:0,borderTopLeftRadius:22,borderTopRightRadius:22,borderTopWidth:1,paddingHorizontal:16,paddingTop:12,shadowColor:"#0F172A",shadowOffset:\{width:0,height:-8\},shadowOpacity:0\.14,shadowRadius:14,elevation:12\}/);
   assert.match(source, /dockContent:\{width:"100%",flexDirection:"row",alignItems:"center",gap:12\}/);
   assert.match(source, /dockPrice:\{flex:1,minWidth:0,gap:1\}/);
-  assert.match(source, /dockAction:\{flex:1\.1,minWidth:176,maxWidth:210\}/);
-  assert.match(source, /dockLabel:\{flexDirection:"row",alignItems:"center",gap:4,minWidth:0\}/);
-  assert.match(source, /dockEyebrow:\{flexShrink:1,minWidth:0,fontSize:11,lineHeight:16,fontWeight:"600",fontFamily:appFonts\.semibold\}/);
-  assert.match(source, /numberOfLines=\{1\}adjustsFontSizeToFitminimumFontScale=\{0\.78\}style=\{\[s\.dockEyebrow/);
-  assert.match(source, /<Infoaccessible=\{false\}size=\{12\}color=\{theme\.textSecondary\}style=\{s\.dockIcon\}\/>/);
-  assert.match(source, /dockIcon:\{flexShrink:0\}/);
   assert.match(source, /numberOfLines=\{1\}adjustsFontSizeToFitminimumFontScale=\{0\.65\}style=\{\[s\.dockTotal/);
   assert.match(source, /dockTotal:\{maxWidth:"100%",fontSize:19,lineHeight:22,fontWeight:"600",fontFamily:appFonts\.semibold/);
   assert.match(source, /numberOfLines=\{1\}adjustsFontSizeToFitminimumFontScale=\{0\.8\}style=\{\[s\.dockPerDay/);
   assert.match(source, /dockPerDay:\{maxWidth:"100%",fontSize:10,lineHeight:13,fontWeight:"500",fontFamily:appFonts\.medium/);
-  assert.match(source, /continueText:\{flexShrink:1,minWidth:0,fontSize:12,lineHeight:16,fontWeight:"700",fontFamily:appFonts\.bold/);
-  assert.equal((source.match(/numberOfLines=\{1\}adjustsFontSizeToFitminimumFontScale=\{0\.8\}style=\{s\.continueText\}/g) ?? []).length, 2);
-  assert.match(source, /<ExternalLinksize=\{15\}color="white"style=\{s\.continueIcon\}\/>/);
-  assert.match(source, /continueIcon:\{flexShrink:0\}/);
-  assert.match(source, /OpenKAYAKtestpage/);
-  assert.match(source, /Testpageunavailable/);
-  assert.doesNotMatch(source, /Continuedeal|Continuebooking|Booknow|Reserve|Checkout/);
+  assert.doesNotMatch(source, /dockAction:|continue:|continueText:|OpenKAYAKtestpage|Testpageunavailable|notbookable|simulated/i);
 });
 
-test("native KAYAK Cars details do not invent unsupported static-provider facts", () => {
+test("native KAYAK Cars details do not invent unsupported static-provider facts or fallback notes", () => {
   assert.doesNotMatch(sandboxDetail, /Kurioticket-logo|kurioticket-logo-primary-light-bg/);
   assert.doesNotMatch(sandboxDetail, /Free cancellation|Non-refundable|Unlimited mileage|Full-to-full|Same-to-same|Air conditioning|Valid driver's license/);
-  assert.match(sandboxDetail, /Exact collection instructions were not supplied by the sandbox provider/);
-  assert.match(sandboxDetail, /sandboxPickupLabel\(result\)/);
+  assert.doesNotMatch(sandboxDetail, /Provider pickup location|Search pickup/);
+  assert.doesNotMatch(sandboxDetail, /Pickup and location details/);
+  assert.match(sandboxDetail, /categoryLabel = result\.categoryLabel\.trim\(\) === "Category not supplied" \? "" : result\.categoryLabel/);
 });
 
-test("sandbox native results omit recommendations while retaining standard save and share actions", () => {
+test("sandbox native results omit recommendations while retaining provider data and standard save/share actions", () => {
   const card = readFileSync("src/features/search/CarResultCard.tsx", "utf8");
   assert.match(card, /rank === 0 && !sandbox/);
   assert.doesNotMatch(card, /!sandbox \? <View style=\{c\.utilityColumn\}>/);
   assert.match(card, /accessibilityLabel=\{savedState\.saved \? `Remove \$\{result\.modelName\} from saved` : `Save \$\{result\.modelName\}`\}/);
   assert.match(card, /accessibilityLabel=\{`Share \$\{result\.modelName\}`\}/);
-  assert.match(card, /KAYAK sandbox · Simulated · Not bookable/);
+  assert.doesNotMatch(card, /KAYAK sandbox · Simulated · Not bookable/);
+  assert.match(card, /categoryLabel = sandbox && result\.categoryLabel\.trim\(\) === "Category not supplied" \? "" : result\.categoryLabel/);
+  assert.match(card, /specLabels\.passengers \? <Spec/);
+  assert.match(card, /specLabels\.transmission \? <Spec/);
+  assert.match(card, /specLabels\.doors \? <Spec/);
+  assert.match(card, /specLabels\.bags \? <Spec/);
 });
-
 
 test("native KAYAK Cars details use the standard accessible save and share contract", () => {
   assert.match(sandboxDetail, /const saved = useSavedCar\(result, params\)/);
