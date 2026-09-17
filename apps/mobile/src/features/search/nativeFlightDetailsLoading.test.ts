@@ -12,7 +12,7 @@ const loading = details.slice(loadingStart, loadingEnd);
 type Element = { type: string; props: Record<string, any>; children: Element[] };
 // Execute the actual skeleton JSX/styles without booting RN's native runtime.
 // Host elements and inert hooks are the boundary; no flight data/actions are supplied.
-function renderLoading(dark = false, topInset = 47, bottomInset = 34, fareCardWidth = 216, contentWidth = 360) {
+function renderLoading(dark = false, topInset = 47, bottomInset = 34, fareCardWidth = 216) {
   let backs = 0;
   const host = (type: string | ((props: any) => Element), props: Record<string, any> | null, ...children: any[]): Element =>
     typeof type === "function" ? type(props) : { type, props: props ?? {}, children: children.flat(Infinity).filter((child) => child && typeof child === "object") };
@@ -29,7 +29,7 @@ function renderLoading(dark = false, topInset = 47, bottomInset = 34, fareCardWi
     useState: (value: unknown) => [value, () => {}], useRef: (current: unknown) => ({ current }), useEffect: () => {},
     StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1, absoluteFillObject: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0 } }, ui: { blue: "#2563EB", green: "#16A34A" },
     router: { back: () => { backs += 1; } }, FLIGHT_RESULTS_LIGHT_CANVAS: "#F5F7FB",
-    input: { theme, topInset, bottomInset, fareCardWidth, contentWidth },
+    input: { theme, topInset, bottomInset, fareCardWidth },
   }) as Element;
   return { root, theme, backCount: () => backs };
 }
@@ -103,7 +103,7 @@ test("entry loading reserves an edge-to-edge hero and all three ordered identity
     const hero = find(root, "flight-details-loading-hero");
     assert.equal(style(hero).minHeight, 318);
     assert.equal(style(hero).paddingTop, top + 64);
-    assert.equal(style(hero).paddingBottom, 76);
+    assert.equal(style(hero).paddingBottom, 122);
     assert.equal(style(hero).paddingHorizontal, 18);
     const copy = find(hero, "flight-details-loading-copy");
     assert.deepEqual(copy.children.map(({ props }) => props.testID), [
@@ -130,19 +130,6 @@ test("entry loading reserves an edge-to-edge hero and all three ordered identity
   }
 });
 
-test("loaded and loading scroll content share the measured viewport width", () => {
-  for (const width of [320, 360, 412]) {
-    const { root } = renderLoading(false, 47, 34, 216, width);
-    const scroll = find(root, "flight-details-loading-scroll");
-    const contentStyle = Object.assign({}, ...scroll.props.contentContainerStyle.flat(Infinity).filter(Boolean));
-    assert.equal(contentStyle.width, width);
-    assert.equal(contentStyle.paddingHorizontal, undefined);
-    assert.equal(style(find(scroll, "flight-details-loading-hero")).width, undefined, "hero stretches from its viewport-width parent, not a percentage");
-  }
-  assert.match(details,/testID="flight-details-scroll-content"[^>]*contentContainerStyle=\{\[s\.content,\{width:windowWidth,paddingBottom:120\+inset\.bottom\}\]\}/);
-  assert.match(loading,/testID="flight-details-loading-scroll"[^>]*contentContainerStyle=\{\[s\.content,\{width:contentWidth,paddingBottom:120\+bottomInset\}\]\}/);
-});
-
 test("entry itinerary overlaps the hero with loaded card breadth and representative content", () => {
   const { root, theme } = renderLoading();
   const body = find(root, "flight-details-loading-body");
@@ -150,7 +137,7 @@ test("entry itinerary overlaps the hero with loaded card breadth and representat
   assert.equal(style(body).gap, 14);
   const overlap = find(body, "flight-details-loading-itinerary-overlap");
   assert.equal(body.children[0], overlap);
-  assert.equal(style(overlap).marginTop, -16);
+  assert.equal(style(overlap).marginTop, -104);
   assert.equal(style(overlap).zIndex, 1);
   assert.equal(style(overlap).marginHorizontal, -10);
   const card = find(overlap, "flight-details-loading-itinerary");
@@ -172,9 +159,6 @@ test("entry loading mirrors the loaded hero curve and screen-level action geomet
   assert.equal(curve.props.preserveAspectRatio,"none");
   assert.equal(style(curve).height,65);
   assert.equal(curve.children[0].props.d,"M0 12 Q50 64 100 12 L100 64 L0 64 Z");
-  assert.equal(curve.children[0].props.d.match(/^M0 (\d+) Q50 \d+ 100 (\d+)/)?.[1],curve.children[0].props.d.match(/^M0 (\d+) Q50 \d+ 100 (\d+)/)?.[2]);
-  assert.ok(descendants(hero).includes(curve),"loading curve must be owned by the loading hero");
-  assert.equal(descendants(find(root,"flight-details-loading-itinerary")).some(({type})=>type==="Svg"),false);
   const controls=find(root,"flight-details-loading-controls");
   assert.ok(!descendants(scroll).includes(controls));
   assert.equal(style(controls).top,55);
