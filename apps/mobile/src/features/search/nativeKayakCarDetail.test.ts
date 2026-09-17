@@ -81,6 +81,30 @@ test("native KAYAK Cars details remain explicitly simulated and use only the all
   assert.doesNotMatch(sandboxDetail, /Continue deal|Continue booking|Book now/);
 });
 
+test("native KAYAK Cars dock keeps its responsive two-column sandbox layout", () => {
+  const source = sandboxDetail.replace(/\s/g, "");
+  assert.match(source, /dock:\{position:"absolute",left:0,right:0,bottom:0,borderTopLeftRadius:22,borderTopRightRadius:22,borderTopWidth:1,paddingHorizontal:16,paddingTop:12,shadowColor:"#0F172A",shadowOffset:\{width:0,height:-8\},shadowOpacity:0\.14,shadowRadius:14,elevation:12\}/);
+  assert.match(source, /dockContent:\{width:"100%",flexDirection:"row",alignItems:"center",gap:12\}/);
+  assert.match(source, /dockPrice:\{flex:1,minWidth:0,gap:1\}/);
+  assert.match(source, /dockAction:\{flex:1\.1,minWidth:176,maxWidth:210\}/);
+  assert.match(source, /dockLabel:\{flexDirection:"row",alignItems:"center",gap:4,minWidth:0\}/);
+  assert.match(source, /dockEyebrow:\{flexShrink:1,minWidth:0,fontSize:11,lineHeight:16,fontWeight:"600",fontFamily:appFonts\.semibold\}/);
+  assert.match(source, /numberOfLines=\{1\}adjustsFontSizeToFitminimumFontScale=\{0\.78\}style=\{\[s\.dockEyebrow/);
+  assert.match(source, /<Infoaccessible=\{false\}size=\{12\}color=\{theme\.textSecondary\}style=\{s\.dockIcon\}\/>/);
+  assert.match(source, /dockIcon:\{flexShrink:0\}/);
+  assert.match(source, /numberOfLines=\{1\}adjustsFontSizeToFitminimumFontScale=\{0\.65\}style=\{\[s\.dockTotal/);
+  assert.match(source, /dockTotal:\{maxWidth:"100%",fontSize:19,lineHeight:22,fontWeight:"600",fontFamily:appFonts\.semibold/);
+  assert.match(source, /numberOfLines=\{1\}adjustsFontSizeToFitminimumFontScale=\{0\.8\}style=\{\[s\.dockPerDay/);
+  assert.match(source, /dockPerDay:\{maxWidth:"100%",fontSize:10,lineHeight:13,fontWeight:"500",fontFamily:appFonts\.medium/);
+  assert.match(source, /continueText:\{flexShrink:1,minWidth:0,fontSize:12,lineHeight:16,fontWeight:"700",fontFamily:appFonts\.bold/);
+  assert.equal((source.match(/numberOfLines=\{1\}adjustsFontSizeToFitminimumFontScale=\{0\.8\}style=\{s\.continueText\}/g) ?? []).length, 2);
+  assert.match(source, /<ExternalLinksize=\{15\}color="white"style=\{s\.continueIcon\}\/>/);
+  assert.match(source, /continueIcon:\{flexShrink:0\}/);
+  assert.match(source, /OpenKAYAKtestpage/);
+  assert.match(source, /Testpageunavailable/);
+  assert.doesNotMatch(source, /Continuedeal|Continuebooking|Booknow|Reserve|Checkout/);
+});
+
 test("native KAYAK Cars details do not invent unsupported static-provider facts", () => {
   assert.doesNotMatch(sandboxDetail, /Kurioticket-logo|kurioticket-logo-primary-light-bg/);
   assert.doesNotMatch(sandboxDetail, /Free cancellation|Non-refundable|Unlimited mileage|Full-to-full|Same-to-same|Air conditioning|Valid driver's license/);
