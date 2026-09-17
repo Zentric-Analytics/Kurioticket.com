@@ -18,6 +18,7 @@ test("mobile price-alert creation accepts Cars through the shared validated serv
 
 test("native Cars price-alert success path persists the returned alert and closes the target sheet", () => {
   assert.match(nativeCarAlert, /travelApi\.createPriceAlert\(buildCarPriceAlertPayload\(plan, target, currency\)\)/);
-  assert.match(nativeCarAlert, /setMatch\(created\.alert\);\s*setOpen\(false\);\s*setDraft\(""\);/);
-  assert.match(nativeCarAlert, /travelApi\.updatePriceAlertStatus\(match\.id, next \? "ACTIVE" : "PAUSED"\)/);
+  assert.match(nativeCarAlert, /setCurrentMatchingAlert\(saved\.alert\);[\s\S]*closeTargetSheet\(\);/);
+  assert.match(nativeCarAlert, /travelApi\.updatePriceAlertStatus\(matchingAlert\.id, "PAUSED"\)/);
+  assert.match(nativeCarAlert, /travelApi\.updatePriceAlertStatus\(samePausedTarget\.id, "ACTIVE"\)/);
 });

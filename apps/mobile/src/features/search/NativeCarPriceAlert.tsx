@@ -10,7 +10,13 @@ import { appFonts } from "../../theme/typography";
 import { signInHref } from "../auth/signInIntent";
 import { buildCarPriceAlertPayload, carAlertPresentation, matchingCarPriceAlert } from "../flow/carPriceAlertModel";
 import type { SearchPlan } from "../flow/travelSearchModel";
+import { PriceAlertTargetIntent } from "./priceAlertTargetIntent";
 import { Button } from "./SearchUi";
+
+type MatchingCarAlertState = {
+  planKey: string;
+  alert: MobilePriceAlert;
+};
 
 export function NativeCarPriceAlert({ plan, results, available }: { plan?: SearchPlan; results: CarResult[]; available: boolean }) {
   const { theme } = useAppTheme();
@@ -18,29 +24,54 @@ export function NativeCarPriceAlert({ plan, results, available }: { plan?: Searc
   const presentation = useMemo(() => carAlertPresentation(plan, results), [plan?.key, results]);
   const currency = presentation.currencies[0] || "";
   const inputRef = useRef<TextInput>(null);
-  const [match, setMatch] = useState<MobilePriceAlert>();
+  const [matchingAlertState, setMatchingAlertState] = useState<MatchingCarAlertState>();
+  const [reconciledPlanKey, setReconciledPlanKey] = useState<string>();
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const [androidSheetReady, setAndroidSheetReady] = useState(Platform.OS !== "android");
+  const pendingRef = useRef(false);
+  const reconciliationRef = useRef(0);
+  const targetIntentRef = useRef(new PriceAlertTargetIntent());
+  const planRef = useRef(plan);
+  planRef.current = plan;
+  const planKey = plan?.key;
+  const matchingAlert = matchingAlertState && matchingAlertState.planKey === planKey ? matchingAlertState.alert : undefined;
+  const alertKnown = Boolean(planKey) && reconciledPlanKey === planKey;
+
+  const setCurrentMatchingAlert = useCallback((alert: MobilePriceAlert | undefined) => {
+    setMatchingAlertState(alert && planKey ? { planKey, alert } : undefined);
+  }, [planKey]);
 
   const reconcile = useCallback(async () => {
-    if (!plan) return;
-    setLoading(true);
+    const reconciliationPlan = planRef.current;
+    const reconciliationPlanKey = planKey;
+    if (!reconciliationPlan || !reconciliationPlanKey) return;
+    const reconciliation = ++reconciliationRef.current;
+    if (reconciledPlanKey !== reconciliationPlanKey) setLoading(true);
     try {
       if (!await readSession().catch(() => null)) {
-        setMatch(undefined);
+        if (reconciliation === reconciliationRef.current) {
+          setCurrentMatchingAlert(undefined);
+          setReconciledPlanKey(reconciliationPlanKey);
+        }
         return;
       }
-      setMatch(matchingCarPriceAlert((await travelApi.priceAlerts()).alerts, plan));
+      const alerts = (await travelApi.priceAlerts()).alerts;
+      if (reconciliation !== reconciliationRef.current) return;
+      setCurrentMatchingAlert(matchingCarPriceAlert(alerts, reconciliationPlan));
+      setReconciledPlanKey(reconciliationPlanKey);
     } catch (cause) {
-      if (cause instanceof TravelApiError && cause.status === 401) setMatch(undefined);
+      if (reconciliation === reconciliationRef.current && cause instanceof TravelApiError && cause.status === 401) {
+        setCurrentMatchingAlert(undefined);
+        setReconciledPlanKey(reconciliationPlanKey);
+      }
     } finally {
-      setLoading(false);
+      if (reconciliation === reconciliationRef.current) setLoading(false);
     }
-  }, [plan?.key]);
+  }, [planKey, reconciledPlanKey, setCurrentMatchingAlert]);
 
   useFocusEffect(useCallback(() => { void reconcile(); }, [reconcile]));
 
@@ -55,62 +86,122 @@ export function NativeCarPriceAlert({ plan, results, available }: { plan?: Searc
   }, [open]);
 
   const signIn = () => Alert.alert("Sign in required", "Sign in to save this price alert to your account.", [{ text: "Sign in", onPress: () => router.push(signInHref("/(tabs)/profile")) }, { text: "Cancel", style: "cancel" }]);
-  const closeTargetSheet = () => { setOpen(false); };
-  const toggle = async (next: boolean) => {
-    if (!plan || pending || loading) return;
-    if (next) {
-      if (!available || !presentation.enabled) return;
+  const closeTargetSheet = () => {
+    targetIntentRef.current.close();
+    setOpen(false);
+    setDraft("");
+    setError("");
+  };
+  const openTargetSheet = async () => {
+    if (pendingRef.current || !plan || !alertKnown || !available || !presentation.enabled) return;
+    pendingRef.current = true;
+    const intent = targetIntentRef.current.beginOpen();
+    try {
       if (!await readSession().catch(() => null)) {
-        signIn();
+        if (targetIntentRef.current.isCurrent(intent)) signIn();
         return;
       }
-      if (!match) {
-        setError("");
-        if (Platform.OS === "android") setAndroidSheetReady(false);
-        setOpen(true);
-        return;
-      }
+      if (!targetIntentRef.current.isCurrent(intent)) return;
+      const reusableTarget = matchingAlert?.status === "PAUSED"
+        && matchingAlert.currency?.trim().toUpperCase() === currency.trim().toUpperCase()
+        && Number.isFinite(Number(matchingAlert.targetPrice))
+        && Number(matchingAlert.targetPrice) > 0
+        ? String(matchingAlert.targetPrice)
+        : "";
+      setDraft(reusableTarget);
+      setError("");
+      if (Platform.OS === "android") setAndroidSheetReady(false);
+      setOpen(true);
+    } finally {
+      pendingRef.current = false;
     }
-    if (!match) return;
+  };
+  const toggle = async (next: boolean) => {
+    if (!plan || pendingRef.current || !alertKnown) return;
+    if (next) {
+      if (matchingAlert?.status === "ACTIVE") return;
+      await openTargetSheet();
+      return;
+    }
+    if (!matchingAlert || matchingAlert.status !== "ACTIVE") return;
+    pendingRef.current = true;
+    ++reconciliationRef.current;
     setPending(true);
     try {
-      setMatch((await travelApi.updatePriceAlertStatus(match.id, next ? "ACTIVE" : "PAUSED")).alert);
+      setCurrentMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id, "PAUSED")).alert);
     } catch (cause) {
-      Alert.alert("Unable to update price tracking", cause instanceof TravelApiError ? cause.message : "Please try again.");
+      if (cause instanceof TravelApiError && cause.status === 401) {
+        setCurrentMatchingAlert(undefined);
+        setReconciledPlanKey(planKey);
+        signIn();
+      } else Alert.alert("Unable to update price tracking", cause instanceof TravelApiError ? cause.message : "Please try again.");
     } finally {
+      pendingRef.current = false;
       setPending(false);
     }
   };
   const create = async () => {
-    if (!plan) return;
+    if (!plan || pendingRef.current) return;
     const target = Number(draft);
     if (!/^\d+(?:\.\d{1,2})?$/.test(draft.trim()) || !Number.isFinite(target) || target <= 0) {
       setError("Enter a positive target rental total.");
       return;
     }
+    pendingRef.current = true;
+    ++reconciliationRef.current;
     setPending(true);
     setError("");
     try {
-      const created = await travelApi.createPriceAlert(buildCarPriceAlertPayload(plan, target, currency));
-      setMatch(created.alert);
-      setOpen(false);
-      setDraft("");
+      if (!await readSession().catch(() => null)) {
+        closeTargetSheet();
+        signIn();
+        return;
+      }
+      const alerts = (await travelApi.priceAlerts()).alerts;
+      const samePausedTarget = alerts.find((alert) =>
+        alert.status === "PAUSED"
+        && Number(alert.targetPrice) === target
+        && alert.currency?.trim().toUpperCase() === currency.trim().toUpperCase()
+        && matchingCarPriceAlert([alert], plan)?.id === alert.id,
+      );
+      const saved = samePausedTarget
+        ? await travelApi.updatePriceAlertStatus(samePausedTarget.id, "ACTIVE")
+        : await travelApi.createPriceAlert(buildCarPriceAlertPayload(plan, target, currency));
+      setCurrentMatchingAlert(saved.alert);
+      setReconciledPlanKey(planKey);
+      closeTargetSheet();
     } catch (cause) {
       if (cause instanceof TravelApiError && cause.status === 409) {
-        await reconcile();
-        setError("An alert for this rental already exists.");
+        const alerts = await travelApi.priceAlerts().then(({ alerts }) => alerts).catch(() => []);
+        const racedPausedTarget = alerts.find((alert) =>
+          alert.status === "PAUSED"
+          && Number(alert.targetPrice) === target
+          && alert.currency?.trim().toUpperCase() === currency.trim().toUpperCase()
+          && matchingCarPriceAlert([alert], plan)?.id === alert.id,
+        );
+        const canonical = racedPausedTarget
+          ? (await travelApi.updatePriceAlertStatus(racedPausedTarget.id, "ACTIVE")).alert
+          : matchingCarPriceAlert(alerts, plan);
+        if (canonical) {
+          setCurrentMatchingAlert(canonical);
+          setReconciledPlanKey(planKey);
+          closeTargetSheet();
+        } else setError("An alert for this rental already exists.");
       } else if (cause instanceof TravelApiError && cause.status === 401) {
-        setOpen(false);
+        setCurrentMatchingAlert(undefined);
+        setReconciledPlanKey(planKey);
+        closeTargetSheet();
         signIn();
       } else setError(cause instanceof TravelApiError ? cause.message : "Unable to create price alert.");
     } finally {
+      pendingRef.current = false;
       setPending(false);
     }
   };
 
   if (!presentation.visible) return null;
-  const tracking = match?.status === "ACTIVE";
-  const disabled = pending || loading || (!available && !tracking);
+  const tracking = matchingAlert?.status === "ACTIVE";
+  const disabled = pending || loading || !alertKnown || (!available && !tracking);
   const sheet = <SafeAreaView edges={["left", "right"]} style={Platform.OS === "android" && !androidSheetReady ? styles.androidPreparing : undefined}>
     <View style={[styles.sheet, { backgroundColor: theme.dark ? theme.background : "#F2F4F8", borderColor: theme.border, marginBottom: 12, paddingBottom: Math.max(20, insets.bottom - 12) }]}>
       <View style={styles.sheetHeader}>
