@@ -143,7 +143,7 @@ test("deck baseline adds a 10dp local inset to the unchanged 14dp content gap fo
   assert.match(deckStyles,/fareGroupDivider:\{height:StyleSheet\.hairlineWidth,marginVertical:11\}/);
   assert.match(deckStyles,/secondaryFacts:\{borderTopWidth:StyleSheet\.hairlineWidth,paddingVertical:11\}/);
   assert.doesNotMatch(deckStyles,/fareInfoTab(?:Text)?:\{[^}]*(?:transform|position:"absolute")/);
-  assert.match(source,/loadingTabs:\{[^}]*marginHorizontal:-10\}/);
+  assert.match(source,/loadingTabRail:\{[^}]*marginHorizontal:-10\}/);
   assert.match(deck,/borderBottomColor:theme\.border/);
   assert.doesNotMatch(deckStyles,/elevation|shadow/);
   assert.match(source,/contentBody:\{paddingHorizontal:18,gap:14\}/);
