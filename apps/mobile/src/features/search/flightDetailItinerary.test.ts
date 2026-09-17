@@ -8,18 +8,20 @@ const itinerary=source.slice(source.indexOf("function Itinerary"),source.indexOf
 
 test("route context stays outside the card and limits metadata to trip type, travelers, and cabin",()=>{
   assert.match(source,/flightDetailsRouteLabel\(details\.search\.tripType,offer\.legs\?\?\[\]/);
-  assert.ok(source.includes('const tripMetadata=[FLIGHT_TRIP_TYPE_LABELS[details.search.tripType],`${details.search.travelers} traveler${details.search.travelers===1?"":"s"}`,titleCase(details.search.cabinClass)].join(" • ");'));
+  assert.ok(source.includes('const tripMetadata=[FLIGHT_TRIP_TYPE_LABELS[details.search.tripType],`${details.search.travelers} traveler${details.search.travelers===1?"":"s"}`,titleCase(details.search.cabinClass)].join(" · ");'));
   assert.doesNotMatch(source,/const searchDates=/);
   assert.doesNotMatch(source,/tripMetadata=.*departureDate/);
   assert.doesNotMatch(source,/tripMetadata=.*returnDate/);
-  assert.match(source,/<View testID="flight-details-route-summary"[^>]*>[\s\S]*?<View style=\{s\.routeActions\}>[\s\S]*?<\/View>\s*<View style=\{s\.itineraryStack\}>/);
+  assert.match(source,/<ImageBackground testID="flight-details-hero"[\s\S]*?<View testID="flight-details-route-summary"[\s\S]*?<\/ImageBackground>\s*<View style=\{s\.contentBody\}>[\s\S]*?testID="flight-details-itinerary-overlap"/);
+  assert.match(source,/\]\.join\(" · "\)/);
+  assert.doesNotMatch(source,/tripMetadata=.*(?:provider|price|departureDate|returnDate)/);
 });
 
 test("the route transitions directly to every authoritative leg card without an itinerary heading",()=>{
   assert.doesNotMatch(source,/>Flight itinerary<\/Text>/);
-  assert.match(source,/<View style=\{s\.itineraryStack\}>\{\(offer\.legs\?\.length\?offer\.legs:\[\]\)\.map\(\(leg,index\)=><Itinerary/);
+  assert.match(source,/<View testID="flight-details-itinerary-overlap" style=\{s\.itineraryStack\}>\{\(offer\.legs\?\.length\?offer\.legs:\[\]\)\.map\(\(leg,index\)=><Itinerary/);
   assert.doesNotMatch(source,/itinerarySectionLabel:/);
-  assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-10\}/);
+  assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-10,marginTop:-24\}/);
   assert.match(itinerary,/leg\.direction==="outbound"\?"Outbound":leg\.direction==="return"\?"Return":`Flight \$\{leg\.legIndex\?\?index\+1\}`/);
   assert.doesNotMatch(source,/Edit search/);
 });
@@ -71,8 +73,8 @@ test("journey remains the visual hero with a restrained details scale",()=>{
   assert.match(itinerary,/Non-stop/);
   assert.match(itinerary,/<FlowIcon name="flight"/);
   assert.equal(itinerary.match(/numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.85\} style=\{\[s\.journeyTime/g)?.length,2);
-  assert.match(source,/route:\{fontSize:18,lineHeight:22,fontWeight:"800"\}/);
-  assert.match(source,/routeMetadata:\{fontSize:11,lineHeight:15,fontWeight:"500"\}/);
+  assert.match(source,/route:\{color:"#FFFFFF",fontSize:27,lineHeight:32,fontWeight:"800"/);
+  assert.match(source,/routeMetadata:\{color:"#FFFFFF",fontSize:11,lineHeight:16,fontWeight:"700"/);
   assert.match(source,/journeyTime:\{fontSize:16,lineHeight:21,fontWeight:"700"\}/);
   assert.match(source,/airportCode:\{fontSize:12,lineHeight:16,fontWeight:"700"\}/);
   assert.match(source,/journeyDuration:\{fontSize:11,lineHeight:16,fontWeight:"600"/);
@@ -135,8 +137,8 @@ test("information progresses from journey summary to airports, segment details, 
 });
 
 test("itinerary breadth expands from 18dp to 8dp side gaps while preserving current fare-card geometry",()=>{
-  assert.match(source,/content:\{paddingHorizontal:18,paddingTop:5,gap:14\}/);
-  assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-10\}/);
+  assert.match(source,/contentBody:\{paddingHorizontal:18,gap:14\}/);
+  assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-10,marginTop:-24\}/);
   assert.match(source,/itineraryCard:\{borderWidth:1,borderRadius:15,padding:15/);
   assert.match(source,/fareCard:\{borderRadius:15,minHeight:142,position:"relative",paddingHorizontal:12,paddingTop:4,paddingBottom:8,gap:4\}/);
   assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal/);

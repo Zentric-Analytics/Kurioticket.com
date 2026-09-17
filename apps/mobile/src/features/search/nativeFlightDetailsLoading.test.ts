@@ -46,6 +46,7 @@ test("skeleton pulse honors reduced motion and leaves Back to results interactiv
   assert.match(loading, /<Animated\.View pointerEvents="none"/);
   assert.match(details, /function TopBar[\s\S]*?accessibilityLabel="Back to results" onPress=\{\(\)=>router\.back\(\)\}/);
   assert.doesNotMatch(loading, /router\.(?:push|replace)/);
+  assert.doesNotMatch(loading, /flight-details-hero|flight-details-hero\.webp|ImageBackground/);
 });
 
 test("loading presentation remains isolated from success and existing failure states", () => {
