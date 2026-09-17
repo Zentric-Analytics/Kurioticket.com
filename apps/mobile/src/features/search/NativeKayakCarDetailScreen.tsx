@@ -257,16 +257,16 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
       <View style={s.dockContent}>
         <View style={s.dockPrice}>
           <View style={s.dockLabel}>
-            <Text style={[s.dockEyebrow, { color: theme.textSecondary }]}>KAYAK sandbox · not bookable</Text>
-            <Info accessible={false} size={12} color={theme.textSecondary} />
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={[s.dockEyebrow, { color: theme.textSecondary }]}>KAYAK sandbox · not bookable</Text>
+            <Info accessible={false} size={12} color={theme.textSecondary} style={s.dockIcon} />
           </View>
           <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={[s.dockTotal, { color: theme.textPrimary }]}>{formatMarketCurrency(offer.pricePerDay, offer.currency)}</Text>
-          <Text numberOfLines={1} style={[s.dockPerDay, { color: theme.textSecondary }]}>per day · simulated</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[s.dockPerDay, { color: theme.textSecondary }]}>per day · simulated</Text>
         </View>
         <View style={s.dockAction}>
           {sandboxHref
-            ? <Pressable accessibilityRole="link" accessibilityLabel={`Open KAYAK test page for ${result.modelName}`} onPress={() => void Linking.openURL(sandboxHref)} style={({ pressed }) => [s.continue, pressed && s.pressed]}><Text style={s.continueText}>Open KAYAK test page</Text><ExternalLink size={15} color="white" /></Pressable>
-            : <View accessibilityRole="button" accessibilityState={{ disabled: true }} style={[s.continue, s.disabledAction]}><Text style={s.continueText}>Test page unavailable</Text></View>}
+            ? <Pressable accessibilityRole="link" accessibilityLabel={`Open KAYAK test page for ${result.modelName}`} onPress={() => void Linking.openURL(sandboxHref)} style={({ pressed }) => [s.continue, pressed && s.pressed]}><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={s.continueText}>Open KAYAK test page</Text><ExternalLink size={15} color="white" style={s.continueIcon} /></Pressable>
+            : <View accessibilityRole="button" accessibilityState={{ disabled: true }} style={[s.continue, s.disabledAction]}><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={s.continueText}>Test page unavailable</Text></View>}
         </View>
       </View>
     </View> : null}
@@ -466,13 +466,15 @@ const s = StyleSheet.create({
   dock: { position: "absolute", left: 0, right: 0, bottom: 0, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderTopWidth: 1, paddingHorizontal: 16, paddingTop: 12, shadowColor: "#0F172A", shadowOffset: { width: 0, height: -8 }, shadowOpacity: 0.14, shadowRadius: 14, elevation: 12 },
   dockContent: { width: "100%", flexDirection: "row", alignItems: "center", gap: 12 },
   dockPrice: { flex: 1, minWidth: 0, gap: 1 },
-  dockLabel: { flexDirection: "row", alignItems: "center", gap: 4 },
-  dockEyebrow: { fontSize: 11, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
+  dockLabel: { flexDirection: "row", alignItems: "center", gap: 4, minWidth: 0 },
+  dockEyebrow: { flexShrink: 1, minWidth: 0, fontSize: 11, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
+  dockIcon: { flexShrink: 0 },
   dockTotal: { maxWidth: "100%", fontSize: 19, lineHeight: 22, fontWeight: "600", fontFamily: appFonts.semibold, letterSpacing: -0.25, textAlign: "left", fontVariant: ["tabular-nums"] },
   dockPerDay: { maxWidth: "100%", fontSize: 10, lineHeight: 13, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "left" },
-  dockAction: { flex: 0.9, minWidth: 132 },
+  dockAction: { flex: 1.1, minWidth: 176, maxWidth: 210 },
   continue: { width: "100%", minHeight: 48, borderRadius: 8, backgroundColor: colors.blue, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
-  continueText: { fontSize: 12, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold, color: "white", textAlign: "center" },
+  continueText: { flexShrink: 1, minWidth: 0, fontSize: 12, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold, color: "white", textAlign: "center" },
+  continueIcon: { flexShrink: 0 },
   disabledAction: { opacity: 0.55 },
   pressed: { opacity: 0.82 },
   loading: { padding: 16, gap: 12 },
