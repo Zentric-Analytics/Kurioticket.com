@@ -36,7 +36,16 @@ function makeOrchestrator({ currentSha = sourceSha, currentFingerprints = { ios:
       assert.equal(directory, "/tmp/exact-current");
       assert.deepEqual(options, { allowRootScriptDrift: true });
     },
-    identityFactory: async () => ({ ...PREVIEW_IDENTITY }),
+    identityFactory: async () => ({
+      appName: PREVIEW_IDENTITY.appName,
+      bundleIdentifier: PREVIEW_IDENTITY.bundleIdentifier,
+      scheme: PREVIEW_IDENTITY.scheme,
+      projectId: PREVIEW_IDENTITY.easProjectId,
+      profile: PREVIEW_IDENTITY.buildProfile,
+      channel: PREVIEW_IDENTITY.channel,
+      runtimePolicy: PREVIEW_IDENTITY.runtimePolicy,
+      apiOrigin: PREVIEW_IDENTITY.apiOrigin,
+    }),
     fingerprintsFactory: async (directory) => {
       assert.equal(directory, "/tmp/exact-current");
       return currentFingerprints;
