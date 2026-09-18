@@ -27,7 +27,7 @@ test("native actions and checkout meet accessibility requirements", () => {
   assert.match(native, /accessibilityRole="radio" accessibilityState=\{\{selected:/);
   assert.match(native, /accessibilityRole="tab" accessibilityState=\{\{selected:/);
   assert.match(native, /heroIconButton:\{width:44,height:44/);
-  assert.match(native, /<FlowIcon name="share" size=\{18\}/);
+  assert.match(native, /<FlowIcon name="share" size=\{17\}/);
   assert.match(native, /fareInfoTab:\{minHeight:48/);
 });
 
@@ -42,7 +42,7 @@ test("available Flight Details uses a universal edge-to-edge hero with safe cont
   const controls = available.indexOf('testID="flight-details-floating-controls"');
   assert.ok(controls > -1 && controls < scrollStart, "floating actions must be screen-level siblings before the vertical ScrollView so accessibility order matches the visual header");
   assert.match(available, /testID="flight-details-floating-controls" style=\{\[s\.heroControls,s\.floatingControls,\{top:inset\.top\+8\}\]\}/);
-  assert.match(available, /accessibilityLabel="Back to results" onPress=\{\(\)=>router\.back\(\)\} style=\{s\.heroIconButton\}><ArrowLeft/);
+  assert.match(available, /accessibilityLabel="Back to results" onPress=\{\(\)=>router\.back\(\)\} style=\{s\.heroIconButton\}>[\s\S]*?<ArrowLeft/);
   assert.match(native, /heroIconButton:\{width:44,height:44,borderRadius:22/);
   assert.match(native, /floatingControls:\{zIndex:\d+,elevation:\d+\}/);
   assert.doesNotMatch(loading, /flight-details-hero|ImageBackground|StatusBar style="light"/);
@@ -61,18 +61,19 @@ test("hero owns route while screen-level actions preserve Save and Share without
   assert.match(native, /testID="flight-details-floating-controls"[\s\S]*?label="Share flight"/);
   const metadata = hero.indexOf("{tripMetadata}");
   const route = hero.indexOf("flightDetailsRouteLabel");
-  const cities = hero.indexOf("{cityRoute}");
-  assert.ok(metadata < route && route < cities, "hero orders metadata, airport route, then city route");
+  assert.ok(route > -1 && metadata > route, "hero orders airport route first, then trip metadata");
+  assert.doesNotMatch(hero, /\{cityRoute\}/);
   assert.doesNotMatch(hero, /departureDate|returnDate|providerName|activePrice/);
   assert.doesNotMatch(native, /accessibilityLabel="Edit search"|>Edit search<|FilePenLine|pathname:"\/edit-flight-search"/);
 });
 
-test("hero controls use independent Hotel-style save and share targets in one pill", () => {
+test("hero controls preserve independent save and share targets in a smaller glass pill", () => {
   const controlsStart = native.indexOf('<View testID="flight-details-floating-controls"');
   const controlsEnd = native.indexOf("</SafeAreaView>", controlsStart);
   const controls = native.slice(controlsStart, controlsEnd);
-  assert.match(native, /heroActions:\{[^}]*width:96,height:44,borderRadius:22,backgroundColor:"#FFFFFF",flexDirection:"row",overflow:"hidden"/);
-  assert.match(native, /heroAction:\{width:48,height:44,alignItems:"center",justifyContent:"center"\}/);
+  assert.match(native, /heroActions:\{[^}]*width:88,height:44,flexDirection:"row"/);
+  assert.match(native, /heroActionsGlass:\{[^}]*top:2,bottom:2,borderRadius:20[^}]*backgroundColor:"rgba\(255, 255, 255, 0\.68\)"/);
+  assert.match(native, /heroAction:\{width:44,height:44,alignItems:"center",justifyContent:"center"\}/);
   assert.equal(controls.match(/<IconButton/g)?.length, 2);
   assert.match(controls, /label=\{saved\?"Remove saved flight":"Save flight"\} onPress=\{\(\)=>savedFlights\.toggle/);
   assert.match(controls, /label="Share flight" onPress=\{\(\)=>void share\(\)\}/);
@@ -101,6 +102,6 @@ test("only unavailable and error states retain the fixed page header", () => {
 test("flight save action uses the canonical favorite visual states", () => {
   assert.match(native, /label=\{saved\?"Remove saved flight":"Save flight"\} onPress=\{\(\)=>savedFlights\.toggle/);
   assert.match(native, /savedFlights\.toggle\(savedOffer,nativeFlightEditSearchParams\(details,one\(params\.currency\)\)\)/);
-  assert.match(native, /<Heart size=\{18\} color=\{saved \? androidFavoriteColors\.savedStroke : androidFavoriteColors\.unsavedStroke\} fill=\{saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}\/>/);
+  assert.match(native, /<Heart size=\{17\} color=\{saved \? androidFavoriteColors\.savedStroke : androidFavoriteColors\.unsavedStroke\} fill=\{saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}\/>/);
   assert.doesNotMatch(native, /<Heart[^>]*(?:theme\.icon|fill="transparent")/);
 });

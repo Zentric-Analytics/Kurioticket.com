@@ -17,12 +17,36 @@ test("route context stays outside the card and limits metadata to trip type, tra
   assert.doesNotMatch(source,/tripMetadata=.*(?:provider|price|departureDate|returnDate)/);
 });
 
-test("hero city route uses provider airport cities and safely follows each trip shape",()=>{
-  assert.match(source,/const cityRoute=nativeFlightDetailsCityRouteLabel\(details\.search\.tripType,offer\.legs\?\?\[\],offer\.originAirport,offer\.destinationAirport\)/);
-  assert.match(source,/const endpointCity=.*?\?\.cityName\?\?fallback/s);
-  assert.match(source,/tripType === "multi-city"/);
-  assert.match(source,/<Text[^>]*style=\{s\.routeMetadata\}>\{tripMetadata\}<\/Text><Text[^>]*style=\{s\.route\}>\{flightDetailsRouteLabel[\s\S]*?<Text[^>]*style=\{s\.cityRoute\}>\{cityRoute\}<\/Text>/);
-  assert.doesNotMatch(source,/const cityRoute=.*(?:departureDate|returnDate)/);
+test("hero presents the airport route first, metadata second, and no city-route row",()=>{
+  const heroStart=source.indexOf('<View testID="flight-details-route-summary"');
+  const heroEnd=source.indexOf('</View>',heroStart);
+  const heroCopy=source.slice(heroStart,heroEnd);
+  const route=heroCopy.indexOf('style={s.route}');
+  const metadata=heroCopy.indexOf('style={s.routeMetadata}');
+  assert.ok(route>=0,"missing airport route heading");
+  assert.ok(metadata>route,"trip metadata must follow the airport route");
+  assert.match(heroCopy,/style=\{s\.route\}>\{flightDetailsRouteLabel/);
+  assert.match(heroCopy,/style=\{s\.routeMetadata\}>\{tripMetadata\}/);
+  assert.doesNotMatch(heroCopy,/cityRoute|s\.cityRoute|nativeFlightDetailsCityRouteLabel/);
+  assert.equal((heroCopy.match(/<Text\b/g)??[]).length,2);
+});
+
+test("hero controls preserve actions and semantics while reducing only their visible glass surfaces",()=>{
+  const controlsStart=source.indexOf('testID="flight-details-floating-controls"');
+  const controlsEnd=source.indexOf('<ScrollView testID="flight-details-scroll-content"',controlsStart);
+  const controls=source.slice(controlsStart,controlsEnd);
+  assert.match(controls,/accessibilityRole="button" accessibilityLabel="Back to results"/);
+  assert.match(controls,/label=\{saved\?"Remove saved flight":"Save flight"\}/);
+  assert.match(controls,/label="Share flight"/);
+  assert.match(controls,/savedFlights\.toggle/);
+  assert.match(controls,/onPress=\{\(\)=>void share\(\)\}/);
+  assert.match(source,/heroActions:\{width:88,height:44/);
+  assert.match(source,/heroActionsGlass:\{[^}]*top:2,bottom:2[^}]*borderRadius:20/s);
+  assert.match(source,/heroAction:\{width:44,height:44/);
+  assert.match(source,/heroIconButton:\{width:44,height:44/);
+  assert.match(source,/heroIconGlass:\{[^}]*top:2,bottom:2[^}]*borderRadius:20/s);
+  assert.match(controls,/<Heart size=\{17\}/);
+  assert.match(controls,/<FlowIcon name="share" size=\{17\}/);
 });
 
 test("the route transitions directly to every authoritative leg card without an itinerary heading",()=>{
