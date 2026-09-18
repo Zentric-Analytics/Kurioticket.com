@@ -55,6 +55,7 @@ export class RenderClient {
     assertExactSha(sha);
     const excluded = new Set(excludeIds);
     for (const deploy of await this.findDeploysBySha(sha)) excluded.add(deploy.id);
+    await this.getService();
     try {
       const deploy = await this.request(`/services/${this.serviceId}/deploys`, { method: "POST", body: { commitId: sha, clearCache: "do_not_clear" } });
       if (!deploy?.id) throw new Error("Render create-deploy response has no deployment ID.");
