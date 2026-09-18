@@ -14,12 +14,14 @@ test("Cars Liquid Glass is gated by platform and both native runtime capabilitie
   assert.match(surface, /glassEffectStyle="clear"/);
 });
 
-test("decorative native glass cannot intercept touch or accessibility", () => {
+test("native Liquid Glass stays optically strong while using a fully transparent tint", () => {
   const glass = surface.slice(surface.indexOf("<GlassView"), surface.indexOf("/>", surface.indexOf("<GlassView")));
   assert.match(glass, /pointerEvents="none"/);
   assert.match(glass, /accessible=\{false\}/);
+  assert.match(glass, /glassEffectStyle="clear"/);
+  assert.match(glass, /tintColor="transparent"/);
   assert.match(glass, /style=\{style\}/);
-  assert.doesNotMatch(glass, /opacity|tintColor|backgroundColor|borderColor|intensity|fallbackGlass/);
+  assert.doesNotMatch(glass, /opacity|backgroundColor|borderColor|intensity|fallbackGlass/);
   assert.doesNotMatch(surface, /nativeGlass/);
 });
 
@@ -43,7 +45,6 @@ test("Approved and KAYAK Cars share exactly two full-footprint material surfaces
     assert.doesNotMatch(detail.slice(actionsStart, actionsEnd), /overflow|opacity:/);
   }
 });
-
 
 test("loaded and loading Flight controls share the neutral detail glass material", () => {
   assert.match(flight, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);

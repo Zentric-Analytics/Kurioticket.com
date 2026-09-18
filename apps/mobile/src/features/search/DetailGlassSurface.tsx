@@ -23,6 +23,7 @@ export function DetailGlassSurface({ style, dark }: Props) {
         pointerEvents="none"
         accessible={false}
         glassEffectStyle="clear"
+        tintColor="transparent"
         style={style}
       />
     );
