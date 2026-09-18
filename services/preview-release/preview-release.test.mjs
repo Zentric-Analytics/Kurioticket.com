@@ -34,6 +34,7 @@ test("cycle defers pending status until the release plan can avoid checksPass de
     ledger: {
       claim: async () => ({ source_sha: sha, state: "DETECTED" }),
       heartbeat: async () => {},
+      transition: async (sourceSha, _workerId, _from, state, patch = {}) => ({ source_sha: sourceSha, state, ...patch }),
     },
     github: { report: async (...args) => { reports.push(args); } },
     render: {},
