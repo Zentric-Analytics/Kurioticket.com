@@ -20,6 +20,18 @@ test("checkout never falls back to a serialized provider URL", () => {
   assert.match(native, /error\.status===409 && error\.details\?\.code==="offer_changed"/);
 });
 
+test("checkout dock keeps a responsive price and action hierarchy with theme-aware separation", () => {
+  assert.match(native, /style=\{\[s\.sticky,theme\.dark\?s\.stickyDark:s\.stickyLight,\{paddingBottom:Math\.max\(inset\.bottom,10\)/);
+  assert.match(native, /checkoutTotal:\{flex:1,minWidth:0,maxWidth:"46%",gap:2\}/);
+  assert.match(native, /checkoutAction:\{flex:1,maxWidth:210,minWidth:132\}/);
+  assert.match(native, /checkoutLabel:\{fontSize:11,lineHeight:15,fontWeight:"600"/);
+  assert.match(native, /total:\{fontSize:24,lineHeight:29,fontWeight:"900"[^}]*fontVariant:\["tabular-nums"\]/);
+  assert.match(native, /<Text numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.72\} style=\{\[s\.total/);
+  assert.match(native, /sticky:\{position:"absolute",left:0,right:0,bottom:0[^}]*borderTopWidth:StyleSheet\.hairlineWidth[^}]*elevation:7\}/);
+  assert.match(native, /stickyLight:\{[^}]*shadowOffset:\{width:0,height:-4\}[^}]*shadowOpacity:\.1/);
+  assert.match(native, /stickyDark:\{[^}]*shadowOffset:\{width:0,height:-4\}[^}]*shadowOpacity:\.28/);
+});
+
 test("native actions and checkout meet accessibility requirements", () => {
   assert.match(native, /accessibilityLabel="Back to results"/);
   assert.match(native, /label="Share flight"/);
@@ -91,7 +103,7 @@ test("available Flight Details uses the Flight Results canvas without flattening
   assert.match(native, /const contentCanvasColor=theme\.dark\?theme\.background:FLIGHT_RESULTS_LIGHT_CANVAS/);
   assert.match(available, /style=\{\[s\.safe,\{backgroundColor:contentCanvasColor\}\]\}/);
   assert.match(available, /<ImageBackground testID="flight-details-hero" source=\{require\("\.\.\/\.\.\/\.\.\/assets\/heroes\/flight-details-hero\.webp"\)\}/);
-  assert.match(available, /s\.sticky,\{[^}]*backgroundColor:theme\.surface/);
+  assert.match(available, /s\.sticky,[^\]]*\{[^}]*backgroundColor:theme\.surface/);
   assert.match(resultsShell, /FLIGHT_RESULTS_LIGHT_CANVAS = "#F5F7FB"/);
 });
 
