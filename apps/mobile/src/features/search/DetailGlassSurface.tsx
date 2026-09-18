@@ -11,7 +11,7 @@ type Props = {
   dark: boolean;
 };
 
-export function CarDetailGlassSurface({ style, dark }: Props) {
+export function DetailGlassSurface({ style, dark }: Props) {
   const liquidGlassAvailable =
     Platform.OS === "ios"
     && isLiquidGlassAvailable()

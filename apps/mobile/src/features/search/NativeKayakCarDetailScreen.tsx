@@ -23,7 +23,7 @@ import { NativeAppleCarMap } from "./NativeAppleCarMap";
 import { NativeCarFullMapModal } from "./NativeCarFullMapModal";
 import { isKayakSandboxCar, nativeCarPrimarySpecLabels } from "./nativeCarProviderPresentation";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
-import { CarDetailGlassSurface } from "./CarDetailGlassSurface";
+import { DetailGlassSurface } from "./DetailGlassSurface";
 
 type Params = Record<string, string | string[]>;
 const CAR_DETAIL_LIGHT_CANVAS = "#F5F7FB";
@@ -249,11 +249,11 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
     </ScrollView>
 
     <Pressable accessibilityRole="button" accessibilityLabel="Back to Cars results" onPress={returnToCarResults} style={[s.heroBack, { top: inset.top + 12 }]}>
-      <CarDetailGlassSurface dark={theme.dark} style={s.heroBackGlass} />
+      <DetailGlassSurface dark={theme.dark} style={s.heroBackGlass} />
       <ArrowLeft size={25} strokeWidth={2.2} color={light ? "#0F172A" : theme.icon} />
     </Pressable>
     <View style={[s.heroActions, { top: inset.top + 12 }]}>
-      <CarDetailGlassSurface dark={theme.dark} style={s.heroActionsGlass} />
+      <DetailGlassSurface dark={theme.dark} style={s.heroActionsGlass} />
       <Pressable accessibilityRole="button" accessibilityLabel={saved.saved ? "Remove car from saved" : "Save car"} accessibilityState={{ selected: saved.saved }} onPress={saved.toggle} style={s.heroAction}><Heart size={22} strokeWidth={2} color={saved.saved ? androidFavoriteColors.savedStroke : light ? androidFavoriteColors.unsavedStroke : theme.icon} fill={saved.saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} /></Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="Share car" onPress={() => void Share.share({ message: `${result.modelName} — ${result.categoryLabel}` })} style={s.heroAction}><Share2 size={21} color={light ? "#0F172A" : theme.icon} /></Pressable>
     </View>

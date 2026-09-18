@@ -24,7 +24,7 @@ function renderLoading(dark = false, topInset = 47, bottomInset = 34, fareCardWi
   const theme = { dark, background: "#101114", surface: dark ? "#202126" : "#FFFFFF", border: dark ? "#454650" : "#CBD5E1" };
   const root = runInNewContext(code, {
     React: { createElement: host }, View: "View", ScrollView: "ScrollView", SafeAreaView: "SafeAreaView",
-    Pressable: "Pressable", Text: "Text", BlurView: "BlurView", ArrowLeft: "ArrowLeft", Heart: "Heart", FlowIcon: "FlowIcon", StatusBar: "StatusBar", Svg: "Svg", Path: "Path",
+    Pressable: "Pressable", Text: "Text", DetailGlassSurface: (props: any) => host("DetailGlassSurface", props), ArrowLeft: "ArrowLeft", Heart: "Heart", FlowIcon: "FlowIcon", StatusBar: "StatusBar", Svg: "Svg", Path: "Path",
     Animated: { View: "Animated.View", Value: class { constructor(public value: number) {} } },
     useState: (value: unknown) => [value, () => {}], useRef: (current: unknown) => ({ current }), useEffect: () => {},
     Platform: { OS: "android" }, StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1, absoluteFillObject: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0 } }, ui: { blue: "#2563EB", green: "#16A34A" },
@@ -122,7 +122,8 @@ test("entry loading reserves an edge-to-edge hero and two ordered identity lines
     assert.equal(style(actions).width, 88);
     assert.equal(style(actions).height, 44);
     const glass = actions.children[0];
-    assert.equal(glass.type, "BlurView");
+    assert.equal(glass.type, "DetailGlassSurface");
+    assert.equal(glass.props.dark, false);
     assert.equal(style(glass).top, 2);
     assert.equal(style(glass).bottom, 2);
     assert.equal(style(glass).borderRadius, 20);

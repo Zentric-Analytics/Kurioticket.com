@@ -54,16 +54,16 @@ test("vehicle identity remains the accessible name and category directly below t
 });
 
 test("Back and Save Share controls use the shared Cars glass material outside scrolling content", () => {
-  assert.match(native, /import \{ CarDetailGlassSurface \} from "\.\/CarDetailGlassSurface"/);
+  assert.match(native, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
   assert.doesNotMatch(native, /carInformationSurface|#E7EBF1/);
   assert.ok(scrollEnd >= 0 && backStart > scrollEnd && actionsStart > backStart);
   assert.equal((native.match(/accessibilityLabel="Back to Cars results"/g) ?? []).length, 1);
   assert.doesNotMatch(native, />Back to Cars results<\/Text>/);
   assert.match(native, /accessibilityLabel="Back to Cars results" onPress=\{returnToCarResults\} style=\{\[s\.heroBack,\{top:inset\.top\+12\}\]\}/);
   assert.match(native, /<View style=\{\[s\.heroActions,\{top:inset\.top\+12\}\]\}>/);
-  assert.equal((native.match(/<CarDetailGlassSurface /g) ?? []).length, 2);
-  assert.match(native, /<CarDetailGlassSurface dark=\{theme\.dark\} style=\{s\.heroBackGlass\}/);
-  assert.match(native, /<CarDetailGlassSurface dark=\{theme\.dark\} style=\{s\.heroActionsGlass\}/);
+  assert.equal((native.match(/<DetailGlassSurface /g) ?? []).length, 2);
+  assert.match(native, /<DetailGlassSurface dark=\{theme\.dark\} style=\{s\.heroBackGlass\}/);
+  assert.match(native, /<DetailGlassSurface dark=\{theme\.dark\} style=\{s\.heroActionsGlass\}/);
 
   const back = styleRule("heroBack", "heroBackGlass");
   for (const contract of ['position:"absolute"', "left:20", "width:44", "height:44", "borderRadius:22", 'alignItems:"center"', 'justifyContent:"center"', "zIndex:20", "elevation:7"]) {
