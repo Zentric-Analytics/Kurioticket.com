@@ -1973,6 +1973,7 @@ test("web recovery replaces a terminal exact-SHA deploy discovered before the le
     },
     github: {},
     render: {
+      getService: async () => ({ autoDeployMode: "off", autoDeployOff: true }),
       createDeploy: async () => { creates += 1; return replacement; },
       findDeploysBySha: async () => [deactivated],
       getDeploy: async (id) => id === deactivated.id ? deactivated : replacement,
@@ -2000,6 +2001,7 @@ test("web delivery adopts exact-SHA Render history before creating a duplicate",
     },
     github: {},
     render: {
+      getService: async () => ({ autoDeployMode: "off", autoDeployOff: true }),
       findDeploysBySha: async () => [deploy],
       createDeploy: async () => { creates += 1; return deploy; },
       getDeploy: async () => deploy,
