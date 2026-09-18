@@ -25,33 +25,29 @@ test("Cars dock preserves exact copy and disabled handoff behavior", () => {
   assert.doesNotMatch(dock, /onPress|Linking|router\./);
 });
 
-test("Cars dock removes duration while Compare retains rental-day context", () => {
-  assert.match(dock, /offer\.pricePerDay/);
-  assert.match(dock, /per day/);
+test("Cars dock removes daily pricing while Compare retains it", () => {
+  assert.doesNotMatch(dock, /offer\.pricePerDay|>per day<|s\.dockPerDay/);
   assert.doesNotMatch(dock, /\{days\}|rental day/);
+  assert.match(compare, /money\(offer\.currency,offer\.pricePerDay\)/);
+  assert.match(compare, />per day<|per day deal/);
   assert.match(compare, /\{days\} rental day\{days===1\?"":"s"\}/);
 });
 
 test("Cars dock uses market precision without changing the Compare formatter", () => {
   assert.match(dock, /formatMarketCurrency\(offer\.totalPrice,offer\.currency\)/);
-  assert.match(dock, /formatMarketCurrency\(offer\.pricePerDay,offer\.currency\)/);
   assert.match(compare, /money\(offer\.currency,offer\.pricePerDay\)/);
   assert.equal(formatMarketCurrency(278, "USD"), "$278.00");
   assert.equal(formatMarketCurrency(139, "USD"), "$139.00");
   assert.equal(formatMarketCurrency(278, "JPY"), "¥278");
 });
 
-test("Cars dock matches the Results card price hierarchy", () => {
-  assert.match(dock, /<Text numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.82\}[^>]*>estimated rental total<\/Text>/);
-  assert.match(dock, /<Info accessible=\{false\} size=\{12\} color=\{theme\.textSecondary\}\/\>/);
-  assert.ok(dock.indexOf("s.dockTotal") < dock.indexOf("s.dockPerDay"));
-  assert.ok(dock.indexOf("s.dockPerDay") < dock.indexOf("s.dockLabel"));
+test("Cars dock uses the total-only price hierarchy", () => {
+  assert.match(dock, /<Text numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.82\}[^>]*>Estimated rental total<\/Text>/);
+  assert.doesNotMatch(dock, /estimated rental total|<Info|s\.dockLabel|s\.dockPerDay/);
+  assert.ok(dock.indexOf("s.dockTotal") < dock.indexOf("s.dockEyebrow"));
   assert.match(dock, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.65\} style=\{\[s\.dockTotal/);
-  assert.match(dock, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.65\} style=\{\[s\.dockPerDay/);
-  assert.match(styleRule("dockLabel", "dockEyebrow"), /gap:4[^}]*minWidth:0/);
   assert.match(styleRule("dockEyebrow", "dockTotal"), /flexShrink:1[^}]*minWidth:0[^}]*fontSize:11[^}]*lineHeight:16[^}]*fontWeight:"600"[^}]*fontFamily:appFonts\.semibold/);
-  assert.match(styleRule("dockTotal", "dockPerDay"), /maxWidth:"100%"[^}]*fontSize:19[^}]*lineHeight:22[^}]*fontWeight:"600"[^}]*fontFamily:appFonts\.semibold[^}]*letterSpacing:-0\.25[^}]*textAlign:"left"/);
-  assert.match(styleRule("dockPerDay", "dockAction"), /maxWidth:"100%"[^}]*fontSize:10[^}]*lineHeight:13[^}]*fontWeight:"500"[^}]*fontFamily:appFonts\.medium[^}]*textAlign:"left"/);
+  assert.match(styleRule("dockTotal", "dockAction"), /maxWidth:"100%"[^}]*fontSize:19[^}]*lineHeight:22[^}]*fontWeight:"600"[^}]*fontFamily:appFonts\.semibold[^}]*letterSpacing:-0\.25[^}]*textAlign:"left"/);
   assert.match(styleRule("daily", "perDay"), /fontSize:19[^}]*lineHeight:22[^}]*fontWeight:"600"[^}]*fontFamily:appFonts\.semibold[^}]*letterSpacing:-0\.25[^}]*textAlign:"right"/);
   assert.match(styleRule("perDay", "pickupSection"), /fontSize:10[^}]*lineHeight:13[^}]*fontWeight:"500"[^}]*fontFamily:appFonts\.medium/);
   assert.doesNotMatch(dock, /width<370\?20:24/);
@@ -65,7 +61,7 @@ test("Cars sticky sheet and columns match Hotel geometry", () => {
   assert.match(sheet, /shadowColor:"#0F172A"[^}]*shadowOffset:\{width:0,height:-8\}[^}]*shadowOpacity:\.14[^}]*shadowRadius:14[^}]*elevation:12/);
   assert.match(dock, /paddingBottom:12\+inset\.bottom/);
   assert.match(styleRule("dockContent", "dockPrice"), /width:"100%"[^}]*flexDirection:"row"[^}]*alignItems:"center"[^}]*gap:12/);
-  assert.match(styleRule("dockPrice", "dockLabel"), /flex:1[^}]*minWidth:0[^}]*gap:1/);
+  assert.match(styleRule("dockPrice", "dockEyebrow"), /flex:1[^}]*minWidth:0[^}]*gap:1/);
   assert.match(dock, /style=\{\[s\.dockAction,Platform\.OS==="android"&&s\.dockActionAndroid\]\}/);
   assert.match(styleRule("dockAction", "dockActionAndroid"), /flex:\.78[^}]*minWidth:140[^}]*maxWidth:180/);
   assert.match(styleRule("dockActionAndroid", "continue"), /flex:\.76[^}]*minWidth:132[^}]*maxWidth:176/);
