@@ -96,6 +96,22 @@ test("loading presentation remains isolated from success and existing failure st
 
 test("information skeleton mirrors flat tab content and the loaded navigation baseline",()=>{assert.match(loading,/s\.loadingTabs,\{borderBottomColor:theme\.border\}/);assert.match(details,/loadingTabs:\{height:48,borderBottomWidth:1,/);assert.doesNotMatch(details,/loadingInfoBody:\{[^}]*(?:borderWidth|borderRadius|backgroundColor)/);});
 
+test("Flight hero controls keep a light fallback surface so dark icons remain visible in dark mode", () => {
+  const { root } = renderLoading(true);
+  const controls = find(root, "flight-details-loading-controls");
+  const backGlass = controls.children[0].children[0];
+  const actions = find(controls, "flight-details-loading-actions");
+  const actionsGlass = actions.children[0];
+
+  assert.equal(backGlass.type, "DetailGlassSurface");
+  assert.equal(backGlass.props.dark, false);
+  assert.equal(actionsGlass.type, "DetailGlassSurface");
+  assert.equal(actionsGlass.props.dark, false);
+
+  assert.match(details, /<DetailGlassSurface dark=\{false\} style=\{s\.heroIconGlass\}\/>/);
+  assert.match(details, /<DetailGlassSurface dark=\{false\} style=\{s\.heroActionsGlass\}\/>/);
+});
+
 test("entry loading reserves an edge-to-edge hero and two ordered identity lines", () => {
   for (const top of [0, 24, 47, 59]) {
     const { root } = renderLoading(false, top);
