@@ -160,8 +160,9 @@ services:
     runtime: node
     plan: free
     branch: dev
-    # Preview delivery is owned exclusively by kurioticket-preview-release.
-    autoDeployTrigger: off
+    # Web staging deploys are owned by Render after checks pass; the Preview worker
+    # adopts and verifies the exact-SHA deploy and never creates a competing deploy.
+    autoDeployTrigger: checksPass
     buildCommand: npm ci && npm run build
     startCommand: npm run start
     preDeployCommand: npm run db:deploy:render

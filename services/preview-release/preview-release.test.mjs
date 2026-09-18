@@ -113,32 +113,35 @@ test("Render preflight reads only the approved staging service", async () => {
   assert.equal(requests.every(({ url }) => url.includes(PREVIEW_IDENTITY.renderStagingServiceId)), true);
 });
 
-test("Render preflight rejects wrong identity, authentication failure, and malformed responses", async () => {
+test("Render preflight preserves staging identity while tolerating admin-managed auto-deploy modes", async () => {
   const wrong = new RenderClient({ apiKey: "x", serviceId: "srv-other", fetchImpl: async () => ({ ok: true, text: async () => "{}" }) });
   await assert.rejects(wrong.getService(), /Unapproved/);
   const unauthorized = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({ ok: false, status: 401 }) });
   await assert.rejects(unauthorized.getService(), /HTTP 401/);
   const malformed = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({ ok: true, text: async () => JSON.stringify({ id: "wrong" }) }) });
   await assert.rejects(malformed.getService(), /malformed or mismatched/);
-  for (const service of [
-    { autoDeployTrigger: "commit" },
-    { autoDeployTrigger: "checksPass" },
-    { autoDeploy: true },
-    { autoDeploy: "yes" },
+  for (const [service, mode, off] of [
+    [{ autoDeployTrigger: "off" }, "off", true],
+    [{ autoDeployTrigger: "commit" }, "commit", false],
+    [{ autoDeployTrigger: "checksPass" }, "checksPass", false],
+    [{ autoDeploy: false }, "off", true],
+    [{ autoDeploy: "no" }, "off", true],
+    [{ autoDeploy: true }, "commit", false],
+    [{ autoDeploy: "yes" }, "commit", false],
   ]) {
-    const drifted = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({
+    const client = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({
       ok: true,
       text: async () => JSON.stringify({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket-web-staging", ...service }),
     }) });
-    await assert.rejects(drifted.getService(), /staging auto-deploy must be Off/);
+    const resolved = await client.getService();
+    assert.equal(resolved.autoDeployMode, mode);
+    assert.equal(resolved.autoDeployOff, off);
   }
-  for (const service of [{ autoDeployTrigger: "off" }, { autoDeploy: false }, { autoDeploy: "no" }]) {
-    const orchestrated = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({
-      ok: true,
-      text: async () => JSON.stringify({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket-web-staging", ...service }),
-    }) });
-    assert.equal((await orchestrated.getService()).autoDeployOff, true);
-  }
+  const unknown = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({
+    ok: true,
+    text: async () => JSON.stringify({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket-web-staging", autoDeployTrigger: "unexpected" }),
+  }) });
+  await assert.rejects(unknown.getService(), /auto-deploy mode is unsupported/);
 });
 
 test("Render deploy creation reconciles an accepted mutation after an empty response", async () => {
@@ -226,7 +229,7 @@ test("provider preflight validates all read-only identities without mutation in 
       config: { mode },
       ledger: { healthCheck: async () => ({ connected: true }) },
       github: { latestDevSha: async () => sha },
-      render: { getService: async () => ({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket-web-staging", autoDeployOff: true }), latestDeploy: async () => ({ id: "dep-stage", status: "live" }), createDeploy: async () => { mutations += 1; } },
+      render: { getService: async () => ({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket-web-staging", autoDeployOff: false, autoDeployMode: "checksPass" }), latestDeploy: async () => ({ id: "dep-stage", status: "live" }), createDeploy: async () => { mutations += 1; } },
       renderWorker: { getPreviewWorkerService: async () => ({ id: PREVIEW_IDENTITY.renderWorkerServiceId, autoDeployOnCommit: true, branch: "dev" }) },
       eas: { projectInfo: async () => ({ projectId: PREVIEW_IDENTITY.easProjectId }), previewBuildHistory: async () => [], previewUpdateHistoryProbe: async () => [], createIosBuild: async () => { mutations += 1; }, publishUpdate: async () => { mutations += 1; } },
       apple: { previewContext: async () => ({ app: { id: "6797447471" }, group: { id: "group-preview", attributes: { isInternalGroup: true } } }) },
@@ -235,7 +238,8 @@ test("provider preflight validates all read-only identities without mutation in 
     assert.equal(result.mode, mode);
     assert.equal(result.submissionPerformed, false);
     assert.equal(result.renderWorkerAutoDeploy, true);
-    assert.equal(result.renderStagingAutoDeployOff, true);
+    assert.equal(result.renderStagingAutoDeployOff, false);
+    assert.equal(result.renderStagingAutoDeployMode, "checksPass");
     assert.equal(mutations, 0);
   }
 });
@@ -1248,6 +1252,36 @@ test("exact-checkout preparation fails closed when dependency manifests differ",
   }
 });
 
+test("web delivery adopts Render auto-deploy for exact SHA without creating a competing deploy", async () => {
+  let creates = 0;
+  let historyReads = 0;
+  const deploy = { id: "dep-auto", status: "live", commit: { id: sha } };
+  const orchestrator = new PreviewOrchestrator({
+    config: {},
+    ledger: {
+      getAction: async () => null,
+      recordAction: async (action) => action,
+    },
+    github: {},
+    render: {
+      getService: async () => ({ autoDeployMode: "checksPass", autoDeployOff: false }),
+      findDeploysBySha: async () => {
+        historyReads += 1;
+        return historyReads < 2 ? [] : [deploy];
+      },
+      createDeploy: async () => { creates += 1; return deploy; },
+      getDeploy: async () => deploy,
+    },
+    stagingWait: async ({ targetSha }) => ({ ready: true, commitSha: targetSha }),
+    sleep: async () => {},
+  });
+  const result = await orchestrator.deliverWeb(sha, { checkpoint: async () => {} });
+  assert.equal(creates, 0);
+  assert.equal(historyReads >= 2, true);
+  assert.equal(result.deployId, deploy.id);
+  assert.equal(result.deployedSha, sha);
+});
+
 test("web recovery adopts the recorded Render deploy without creating a duplicate", async () => {
   let creates = 0;
   const actions = [];
@@ -1260,6 +1294,7 @@ test("web recovery adopts the recorded Render deploy without creating a duplicat
     },
     github: {},
     render: {
+      getService: async () => ({ autoDeployMode: "off", autoDeployOff: true }),
       createDeploy: async () => { creates += 1; return deploy; },
       getDeploy: async (id) => ({ ...deploy, id }),
     },
@@ -1289,6 +1324,7 @@ test("web recovery replaces one terminal recorded deploy through an atomic ledge
     },
     github: {},
     render: {
+      getService: async () => ({ autoDeployMode: "off", autoDeployOff: true }),
       createDeploy: async () => { creates += 1; return replacement; },
       findDeploysBySha: async () => [recorded],
       getDeploy: async (id) => id === recorded.id ? recorded : replacement,
@@ -1321,7 +1357,7 @@ test("Render blueprint matches the active auto-deployed worker and keeps staging
   assert.match(render, /PREVIEW_POLL_INTERVAL_MS\s+value: 60000/);
   assert.match(render, /PREVIEW_LEASE_MS\s+value: 90000/);
   assert.match(render, /name: kurioticket-preview-release-db/);
-  assert.match(render, /name: kurioticket-web-staging[\s\S]*?autoDeployTrigger: off/);
+  assert.match(render, /name: kurioticket-web-staging[\s\S]*?autoDeployTrigger: checksPass/);
   for (const path of PREVIEW_WORKER_BUILD_PATHS) assert.match(render, new RegExp(`- ${path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
 });
 
@@ -1937,6 +1973,7 @@ test("web recovery replaces a terminal exact-SHA deploy discovered before the le
     },
     github: {},
     render: {
+      getService: async () => ({ autoDeployMode: "off", autoDeployOff: true }),
       createDeploy: async () => { creates += 1; return replacement; },
       findDeploysBySha: async () => [deactivated],
       getDeploy: async (id) => id === deactivated.id ? deactivated : replacement,
@@ -1964,6 +2001,7 @@ test("web delivery adopts exact-SHA Render history before creating a duplicate",
     },
     github: {},
     render: {
+      getService: async () => ({ autoDeployMode: "off", autoDeployOff: true }),
       findDeploysBySha: async () => [deploy],
       createDeploy: async () => { creates += 1; return deploy; },
       getDeploy: async () => deploy,
