@@ -30,8 +30,8 @@ test("approved and KAYAK Cars retain safe responsive hero geometry while polishi
     assert.match(source, /resizeMode="contain"/, name);
     assert.match(source, /fontSize:\s*width\s*>=\s*390\s*\?\s*13\s*:\s*12/, name);
     for (const heading of ["compareHeading", "pickupHeading", "locationHeading"]) assert.match(source, new RegExp(`${heading}:\\s*\\{[^}]*fontSize:\\s*12[^}]*lineHeight:\\s*18[^}]*fontWeight:\\s*"700"[^}]*fontFamily:\\s*appFonts\\.bold`), `${name}: ${heading}`);
-    assert.match(source, /const carInformationSurface\s*=\s*theme\.dark\s*\?\s*carCanvasColor\s*:\s*"#E7EBF1"/, name);
-    assert.match(source, /style=\{\[s\.heroBack,\s*\{\s*top:\s*inset\.top\s*\+\s*12,\s*backgroundColor:\s*carInformationSurface\s*\}\]\}/, name);
-    assert.match(source, /style=\{\[s\.heroActions,\s*\{\s*top:\s*inset\.top\s*\+\s*12,\s*backgroundColor:\s*carInformationSurface\s*\}\]\}/, name);
+    assert.doesNotMatch(source, /carInformationSurface|#E7EBF1/, name);
+    assert.match(source, /style=\{\[s\.heroBack,\s*\{\s*top:\s*inset\.top\s*\+\s*12\s*\}\]\}/, name);
+    assert.match(source, /style=\{\[s\.heroActions,\s*\{\s*top:\s*inset\.top\s*\+\s*12\s*\}\]\}/, name);
   }
 });

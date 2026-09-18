@@ -44,9 +44,10 @@ for (const [kind, source] of [["approved", normal], ["KAYAK sandbox", sandbox]] 
     for (const value of ['position:"absolute"', "right:20", "width:96", "height:44", "borderRadius:22", 'flexDirection:"row"', "zIndex:20"]) assert.ok(actions.includes(value), value);
     assert.doesNotMatch(back, /backgroundColor/);
     assert.doesNotMatch(actions, /backgroundColor/);
-    assert.match(source, /const carInformationSurface\s*=\s*theme\.dark\s*\?\s*carCanvasColor\s*:\s*"#E7EBF1"/);
-    assert.match(source, /style=\{\[s\.heroBack,\s*\{[^}]*backgroundColor:\s*carInformationSurface/);
-    assert.match(source, /style=\{\[s\.heroActions,\s*\{[^}]*backgroundColor:\s*carInformationSurface/);
+    assert.match(source, /import \{ BlurView \} from "expo-blur"/);
+    assert.doesNotMatch(source, /carInformationSurface|#E7EBF1/);
+    assert.equal((source.match(/<BlurView /g) ?? []).length, 2);
+    for (const contract of [/pointerEvents="none"/, /intensity=\{32\}/, /dimezisBlurView/, /StyleSheet\.hairlineWidth/, /rgba\(255, 255, 255, 0\.58\)/, /rgba\(255, 255, 255, 0\.78\)/]) assert.match(source, contract);
     const action = style(source, "heroAction");
     for (const value of ["width:48", "height:44", 'alignItems:"center"', 'justifyContent:"center"']) assert.ok(action.includes(value), value);
   });
