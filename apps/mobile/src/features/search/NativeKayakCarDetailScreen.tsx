@@ -372,9 +372,9 @@ function KayakCarUnavailable() {
 
 const s = StyleSheet.create({
   safe: { flex: 1 },
-  heroBack: { position: "absolute", left: 20, width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 7 },
+  heroBack: { position: "absolute", left: 20, width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 7, elevation: 7 },
   heroBackGlass: { ...StyleSheet.absoluteFillObject, borderRadius: 22 },
-  heroActions: { position: "absolute", right: 20, width: 96, height: 44, borderRadius: 22, flexDirection: "row", overflow: "hidden", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 7 },
+  heroActions: { position: "absolute", right: 20, width: 96, height: 44, borderRadius: 22, flexDirection: "row", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 7, elevation: 7 },
   heroActionsGlass: { ...StyleSheet.absoluteFillObject, borderRadius: 22 },
   heroAction: { width: 48, height: 44, alignItems: "center", justifyContent: "center" },
   hero: { paddingBottom: 16, borderBottomWidth: 1 },

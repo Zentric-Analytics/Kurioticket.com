@@ -23,7 +23,7 @@ export function CarDetailGlassSurface({ style, dark }: Props) {
         pointerEvents="none"
         accessible={false}
         glassEffectStyle="clear"
-        style={[style, styles.nativeGlass]}
+        style={style}
       />
     );
   }
@@ -41,11 +41,6 @@ export function CarDetailGlassSurface({ style, dark }: Props) {
 }
 
 const styles = StyleSheet.create({
-  nativeGlass: {
-    overflow: "hidden",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255, 255, 255, 0.36)",
-  },
   fallbackGlass: {
     overflow: "hidden",
     backgroundColor: "rgba(255, 255, 255, 0.36)",
