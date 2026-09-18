@@ -1426,7 +1426,8 @@ test("ledger schema enforces per-SHA and per-remote-operation uniqueness", () =>
   assert.match(sql, /UNIQUE \(kind, identity_key\)/);
   assert.match(sql, /one_render_per_sha/);
   assert.match(sql, /one_ota_per_sha/);
-  assert.match(sql, /one_ios_build_per_sha/);
+  assert.match(sql, /one_canonical_ios_build_per_sha/);
+  assert.match(sql, /identity_key NOT LIKE 'native-build-recovery:ios:%'/);
   assert.match(sql, /one_submission_per_build/);
   assert.match(sql, /preview_release_progression_order_seq/);
   assert.match(sql, /progression_order_unique/);

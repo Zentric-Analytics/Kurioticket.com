@@ -730,15 +730,19 @@ export class PreviewLedger {
     assertExactSha(sourceSha);
     const kind = platform === "ios" ? "IOS_BUILD" : platform === "android" ? "ANDROID_BUILD" : null;
     if (!kind) throw new Error("Native build platform is invalid.");
+    const terminalStates = new Set(["ERRORED", "FAILED", "CANCELED", "CANCELLED", "REMOTE_OBJECT_UNAVAILABLE"]);
     const result = await this.pool.query(
       `SELECT * FROM preview_release_action
        WHERE source_sha=$1 AND kind=$2
          AND ($3::text IS NULL OR evidence->>'nativeFingerprint'=$3 OR identity_key LIKE $4)
-       ORDER BY created_at DESC LIMIT 2`,
+       ORDER BY CASE WHEN state IN ('ERRORED','FAILED','CANCELED','CANCELLED','REMOTE_OBJECT_UNAVAILABLE') THEN 1 ELSE 0 END,
+                created_at DESC, id DESC
+       LIMIT 2`,
       [sourceSha, kind, fingerprint, `%:${platform}:preview`],
     );
-    if (result.rowCount > 1) throw new Error(`Ambiguous ${platform} build action for release ${sourceSha}.`);
-    return result.rows[0] ?? null;
+    const active = result.rows.filter((row) => !terminalStates.has(String(row.state ?? "").toUpperCase()));
+    if (active.length > 1) throw new Error(`Ambiguous active ${platform} build action for release ${sourceSha}.`);
+    return active[0] ?? result.rows[0] ?? null;
   }
 
   async getAction(kind, identityKey) {
