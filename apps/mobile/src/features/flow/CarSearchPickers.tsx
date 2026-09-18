@@ -5,14 +5,14 @@ import { PickerSheetHeader, PrimaryButton } from "./FlowPrimitives";
 import { useFlowTheme } from "./flowStyles";
 import { localIsoDate } from "./localDateModel";
 import { formatTime, timeOptions } from "./carSearchModel";
-import { DateRangeSheet } from "./DateRangeSheet";
+import { DateRangeSheet, type DateRangeSheetAppearance } from "./DateRangeSheet";
 import { HotelResultsEditPickerShell } from "./HotelResultsEditPickerShell";
 import { SEARCH_PICKER_BACKDROP_COLOR, useSearchPickerMotion } from "./searchPickerPresentation";
 
 type PickerPresentation = "sheet" | "resultsEditFullScreen";
 
-export function CarRentalDatesSheet({ visible, pickupDate, returnDate, title = "Rental dates", presentation = "sheet", onDone, onCancel }: { visible: boolean; pickupDate: string; returnDate: string; title?: string; presentation?: PickerPresentation; onDone: (pickupDate: string, returnDate: string) => void; onCancel: () => void }) {
-  return <DateRangeSheet visible={visible} title={title} startLabel="Pick-up date" endLabel="Return date" startDate={pickupDate} endDate={returnDate} minimumStartDate={localIsoDate(new Date())} presentation={presentation} backAccessibilityLabel="Back to edit car search" onDone={onDone} onCancel={onCancel}/>;
+export function CarRentalDatesSheet({ visible, pickupDate, returnDate, title = "Rental dates", presentation = "sheet", appearance = "default", onDone, onCancel }: { visible: boolean; pickupDate: string; returnDate: string; title?: string; presentation?: PickerPresentation; appearance?: DateRangeSheetAppearance; onDone: (pickupDate: string, returnDate: string) => void; onCancel: () => void }) {
+  return <DateRangeSheet visible={visible} title={title} startLabel="Pick-up date" endLabel="Return date" startDate={pickupDate} endDate={returnDate} minimumStartDate={localIsoDate(new Date())} presentation={presentation} appearance={appearance} backAccessibilityLabel="Back to edit car search" onDone={onDone} onCancel={onCancel}/>;
 }
 
 export function CarTimeRangeSheet({ visible, pickupTime, returnTime, presentation = "sheet", onDone, onCancel }: { visible: boolean; pickupTime: string; returnTime: string; presentation?: PickerPresentation; onDone: (pickupTime: string, returnTime: string) => void; onCancel: () => void }) {

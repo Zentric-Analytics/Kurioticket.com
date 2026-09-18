@@ -29,7 +29,12 @@ test("Cars edit uses a neutral stack of independent cards with polished typograp
   assert.doesNotMatch(stack, /borderWidth|backgroundColor|borderRadius|overflow/);
   for (const style of ["width:\"100%\"", "borderWidth:1", "borderRadius:13", "overflow:\"hidden\""]) assert.ok(card.includes(style), style);
   for (const style of ["minHeight:70", "paddingHorizontal:16", "paddingVertical:10"]) assert.ok(row.includes(style), style);
-  for (const style of ["fontSize:10", "lineHeight:16", "fontWeight:\"700\"", "letterSpacing:1.2", "fontSize:16", "lineHeight:20", "fontWeight:\"500\"", "fontSize:12"]) assert.ok(panel.includes(style), style);
+  for (const style of [
+    'resultsEditLabel:{fontSize:10,lineHeight:14,fontWeight:"600",letterSpacing:1}',
+    'resultsEditValue:{fontSize:14,lineHeight:19,fontWeight:"500"}',
+    'resultsEditSecondary:{fontSize:11,lineHeight:15,fontWeight:"400"}',
+    'resultsEditActionText:{fontSize:11,lineHeight:15,fontWeight:"500"}',
+  ]) assert.ok(panel.includes(style), style);
   for (const label of ["PICKUP LOCATION", "RENTAL DATES", "PICK-UP / RETURN TIME", "DRIVER AGE", "RETURN LOCATION"]) assert.ok(panel.includes(`label="${label}"`), label);
 });
 
@@ -82,7 +87,8 @@ test("Results edit suppresses only the landing checkbox and supports different r
 });
 
 test("Results edit CTA matches mobile web without changing the default CTA", () => {
-  for (const style of ["height:48", "minHeight:48", "width:\"100%\"", "marginTop:13", "borderRadius:10", "backgroundColor:\"#004BB8\"", "fontSize:15", "fontWeight:\"600\""]) assert.ok(panel.includes(style), style);
+  for (const style of ["height:48", "minHeight:48", "width:\"100%\"", "marginTop:13", "borderRadius:10", "backgroundColor:\"#004BB8\""]) assert.ok(panel.includes(style), style);
+  assert.ok(panel.includes('resultsEditSubmitText:{color:"#FFFFFF",fontSize:14,lineHeight:18,fontWeight:"600"}'));
   assert.match(panel, /styles\.resultsEditSubmitText\}>\{submitLabel\}/);
   assert.match(panel, /<PrimaryButton label=\{submitLabel\} icon=\{null\}/);
   assert.doesNotMatch(panel.match(/resultsEditSubmit:\{[^}]+\}/)?.[0] ?? "", /minHeight:54/);
