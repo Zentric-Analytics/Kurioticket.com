@@ -26,6 +26,38 @@ const finishedApple = (overrides = {}) => ({ previewContext: async () => appleCo
 const applePrivateKey = generateKeyPairSync("ec", { namedCurve: "P-256" }).privateKey.export({ type: "pkcs8", format: "pem" });
 const appleClient = (fetchImpl) => new AppStoreConnectClient({ issuerId: "issuer", keyId: "key", privateKey: applePrivateKey, appId: "6797447471", betaGroupId: "group-preview", betaGroupName: "Kurioticket Preview Internal", fetchImpl });
 
+test("cycle defers pending status until the release plan can avoid checksPass deadlock", async () => {
+  const reports = [];
+  const previousSha = "b".repeat(40);
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", workerId: "test-worker", leaseMs: 60_000, cycleDeadlineMs: 60_000 },
+    ledger: {
+      claim: async () => ({ source_sha: sha, state: "DETECTED" }),
+      heartbeat: async () => {},
+    },
+    github: { report: async (...args) => { reports.push(args); } },
+    render: {},
+  });
+  orchestrator.deriveDecision = async () => ({
+    sourceSha: sha,
+    previous: { source_sha: previousSha },
+    deliveredNative: {},
+    pendingNative: [],
+    pendingOta: [],
+    iosNativeBackfill: false,
+    iosDistributionPending: false,
+    noChange: false,
+    trace: {},
+  });
+  orchestrator.process = async () => {
+    assert.deepEqual(reports, []);
+    return { source_sha: sha, state: "COMPLETE" };
+  };
+
+  const result = await orchestrator.cycle();
+  assert.equal(result.state, "COMPLETE");
+});
+
 test("provider and cycle deadlines fail closed instead of hanging forever", async () => {
   await assert.rejects(
     () => fetchWithDeadline((_url, init) => new Promise((_resolve, reject) => init.signal.addEventListener("abort", () => reject(init.signal.reason))), "https://example.test", {}, { timeoutMs: 10, label: "test provider" }),
