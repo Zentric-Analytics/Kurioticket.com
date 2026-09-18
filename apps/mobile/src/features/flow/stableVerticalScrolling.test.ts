@@ -76,8 +76,9 @@ test("car results keep separate stable virtualized vertical and horizontal scrol
   assert.equal(layout.match(/<ScrollView/g)?.length, 1);
   assert.equal(layout.match(/<FlatList/g)?.length, 1);
   for (const prop of verticalStableProps) assert.match(verticalOwner, prop);
-  assert.match(verticalOwner, /initialNumToRender=\{CAR_RESULT_INITIAL_IMAGE_COUNT\}/);
-  assert.match(verticalOwner, /windowSize=\{5\}/);
+  assert.match(verticalOwner, /initialNumToRender=\{CAR_RESULT_INITIAL_RENDER_COUNT\}/);
+  assert.match(verticalOwner, /maxToRenderPerBatch=\{6\}/);
+  assert.match(verticalOwner, /windowSize=\{7\}/);
   assert.doesNotMatch(verticalOwner, /onScroll=|scrollEventThrottle=/);
   assert.doesNotMatch(source, /handleCarScroll|carBackToTop|accessibilityLabel="Back to top"/);
   const horizontalOwner = source.slice(source.indexOf("<ScrollView horizontal"), horizontalEnd);

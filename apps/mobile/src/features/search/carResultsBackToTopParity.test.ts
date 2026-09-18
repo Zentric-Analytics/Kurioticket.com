@@ -30,9 +30,9 @@ test("Cars vertical owner is cross-platform stable, virtualized, and safe-area a
   const owner = cars.slice(start, cars.indexOf("/>", contentStyleStart) + 2);
   assert.ok(start >= 0 && contentStyleStart > start);
   for (const contract of [/alwaysBounceVertical=\{false\}/, /bounces=\{false\}/, /overScrollMode="never"/]) assert.match(owner, contract);
-  assert.match(owner, /initialNumToRender=\{CAR_RESULT_INITIAL_IMAGE_COUNT\}/);
-  assert.match(owner, /maxToRenderPerBatch=\{3\}/);
-  assert.match(owner, /windowSize=\{5\}/);
+  assert.match(owner, /initialNumToRender=\{CAR_RESULT_INITIAL_RENDER_COUNT\}/);
+  assert.match(owner, /maxToRenderPerBatch=\{6\}/);
+  assert.match(owner, /windowSize=\{7\}/);
   assert.doesNotMatch(owner, /scrollEventThrottle=|onScroll=/);
   assert.match(owner, /contentContainerStyle=\{\[r\.body,\{paddingBottom:Math\.max\(insets\.bottom \+ 16,16\)\}\]\}/);
   assert.match(cars, /edges=\{\["top"\]\}/);

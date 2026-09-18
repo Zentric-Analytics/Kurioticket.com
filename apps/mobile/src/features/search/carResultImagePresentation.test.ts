@@ -30,15 +30,16 @@ test("native Cars results version curated URLs before resolving the API origin",
   assert.match(resultsScreen, /new URL\(resolved,`\$\{base\.baseUrl\}\/`\)/);
 });
 
-test("native Cars prewarm visible artwork and avoid mounting all result images at once", () => {
+test("native Cars prewarm artwork separately from the virtualized row sample", () => {
   assert.match(resultsScreen, /const CAR_RESULT_INITIAL_IMAGE_COUNT = 3/);
   assert.match(resultsScreen, /prefetchInitialCarImages\(acceptance\.accepted\)/);
   assert.match(resultsScreen, /Image\.prefetch\(uri\)/);
   assert.match(resultsScreen, /KURIOTICKET_COMPARE_LOGO_URI/);
   assert.match(resultsScreen, /<FlatList ref=\{carScrollRef\}/);
-  assert.match(resultsScreen, /initialNumToRender=\{CAR_RESULT_INITIAL_IMAGE_COUNT\}/);
-  assert.match(resultsScreen, /maxToRenderPerBatch=\{3\}/);
-  assert.match(resultsScreen, /windowSize=\{5\}/);
+  assert.match(resultsScreen, /const CAR_RESULT_INITIAL_RENDER_COUNT = 8/);
+  assert.match(resultsScreen, /initialNumToRender=\{CAR_RESULT_INITIAL_RENDER_COUNT\}/);
+  assert.match(resultsScreen, /maxToRenderPerBatch=\{6\}/);
+  assert.match(resultsScreen, /windowSize=\{7\}/);
 });
 
 test("native Cars pass the already-versioned artwork URL into Details for the same cache key", () => {
