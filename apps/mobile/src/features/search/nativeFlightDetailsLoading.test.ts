@@ -24,10 +24,10 @@ function renderLoading(dark = false, topInset = 47, bottomInset = 34, fareCardWi
   const theme = { dark, background: "#101114", surface: dark ? "#202126" : "#FFFFFF", border: dark ? "#454650" : "#CBD5E1" };
   const root = runInNewContext(code, {
     React: { createElement: host }, View: "View", ScrollView: "ScrollView", SafeAreaView: "SafeAreaView",
-    Pressable: "Pressable", Text: "Text", ArrowLeft: "ArrowLeft", Heart: "Heart", FlowIcon: "FlowIcon", StatusBar: "StatusBar", Svg: "Svg", Path: "Path",
+    Pressable: "Pressable", Text: "Text", BlurView: "BlurView", ArrowLeft: "ArrowLeft", Heart: "Heart", FlowIcon: "FlowIcon", StatusBar: "StatusBar", Svg: "Svg", Path: "Path",
     Animated: { View: "Animated.View", Value: class { constructor(public value: number) {} } },
     useState: (value: unknown) => [value, () => {}], useRef: (current: unknown) => ({ current }), useEffect: () => {},
-    StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1, absoluteFillObject: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0 } }, ui: { blue: "#2563EB", green: "#16A34A" },
+    Platform: { OS: "android" }, StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1, absoluteFillObject: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0 } }, ui: { blue: "#2563EB", green: "#16A34A" },
     router: { back: () => { backs += 1; } }, FLIGHT_RESULTS_LIGHT_CANVAS: "#F5F7FB",
     input: { theme, topInset, bottomInset, fareCardWidth },
   }) as Element;
@@ -96,7 +96,7 @@ test("loading presentation remains isolated from success and existing failure st
 
 test("information skeleton mirrors flat tab content and the loaded navigation baseline",()=>{assert.match(loading,/s\.loadingTabs,\{borderBottomColor:theme\.border\}/);assert.match(details,/loadingTabs:\{height:48,borderBottomWidth:1,/);assert.doesNotMatch(details,/loadingInfoBody:\{[^}]*(?:borderWidth|borderRadius|backgroundColor)/);});
 
-test("entry loading reserves an edge-to-edge hero and all three ordered identity lines", () => {
+test("entry loading reserves an edge-to-edge hero and two ordered identity lines", () => {
   for (const top of [0, 24, 47, 59]) {
     const { root } = renderLoading(false, top);
     assert.equal(root.props.edges.length, 0, "hero must extend through the top safe area");
@@ -107,9 +107,9 @@ test("entry loading reserves an edge-to-edge hero and all three ordered identity
     assert.equal(style(hero).paddingHorizontal, 18);
     const copy = find(hero, "flight-details-loading-copy");
     assert.deepEqual(copy.children.map(({ props }) => props.testID), [
-      "flight-details-loading-metadata", "flight-details-loading-route", "flight-details-loading-city-route",
+      "flight-details-loading-route", "flight-details-loading-metadata",
     ]);
-    assert.deepEqual(copy.children.map((line) => style(line).height), [16, 32, 19]);
+    assert.deepEqual(copy.children.map((line) => style(line).height), [32, 16]);
     assert.equal(style(copy).gap, 3);
     const controls = find(root, "flight-details-loading-controls");
     assert.ok(!descendants(hero).includes(controls), "loading controls must be outside scrolling hero content");
@@ -119,14 +119,18 @@ test("entry loading reserves an edge-to-edge hero and all three ordered identity
     assert.equal(style(controls.children[0]).width, 44);
     assert.equal(style(controls.children[0]).height, 44);
     const actions = find(controls, "flight-details-loading-actions");
-    assert.equal(style(actions).width, 96);
+    assert.equal(style(actions).width, 88);
     assert.equal(style(actions).height, 44);
-    assert.equal(style(actions).borderRadius, 22);
+    const glass = actions.children[0];
+    assert.equal(glass.type, "BlurView");
+    assert.equal(style(glass).top, 2);
+    assert.equal(style(glass).bottom, 2);
+    assert.equal(style(glass).borderRadius, 20);
     assert.equal(actions.props.pointerEvents, "none");
     assert.equal(actions.props.accessibilityElementsHidden, true);
     assert.equal(actions.props.importantForAccessibility, "no-hide-descendants");
-    assert.equal(actions.children.length, 2);
-    assert.ok(actions.children.every((child) => style(child).width === 48));
+    assert.equal(actions.children.length, 3);
+    assert.equal(actions.children.filter((child) => style(child).width === 44).length, 2);
   }
 });
 
