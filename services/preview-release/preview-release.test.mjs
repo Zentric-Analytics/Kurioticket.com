@@ -141,6 +141,31 @@ test("Render preflight rejects wrong identity, authentication failure, and malfo
   }
 });
 
+test("Render deploy creation rechecks ownership after history reconciliation and before POST", async () => {
+  let posts = 0;
+  const client = new RenderClient({
+    apiKey: "render-secret",
+    serviceId: PREVIEW_IDENTITY.renderStagingServiceId,
+    fetchImpl: async (url, options) => {
+      if (options.method === "POST") {
+        posts += 1;
+        return { ok: true, text: async () => JSON.stringify({ id: "unexpected", status: "build_in_progress", commit: { id: sha } }) };
+      }
+      if (url.endsWith(`/services/${PREVIEW_IDENTITY.renderStagingServiceId}`)) {
+        return { ok: true, text: async () => JSON.stringify({
+          id: PREVIEW_IDENTITY.renderStagingServiceId,
+          name: "Kurioticket-web-staging",
+          autoDeployTrigger: "checksPass",
+        }) };
+      }
+      return { ok: true, text: async () => "[]" };
+    },
+  });
+
+  await assert.rejects(client.createDeploy(sha), /staging auto-deploy must be Off/);
+  assert.equal(posts, 0);
+});
+
 test("Render deploy creation reconciles an accepted mutation after an empty response", async () => {
   let requests = 0;
   let historyReads = 0;
