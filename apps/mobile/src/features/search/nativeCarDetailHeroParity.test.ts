@@ -62,8 +62,8 @@ test("Back and Save Share controls use the shared Cars glass material outside sc
   assert.match(native, /accessibilityLabel="Back to Cars results" onPress=\{returnToCarResults\} style=\{\[s\.heroBack,\{top:inset\.top\+12\}\]\}/);
   assert.match(native, /<View style=\{\[s\.heroActions,\{top:inset\.top\+12\}\]\}>/);
   assert.equal((native.match(/<DetailGlassSurface /g) ?? []).length, 2);
-  assert.match(native, /<DetailGlassSurface dark=\{theme\.dark\} style=\{s\.heroBackGlass\}/);
-  assert.match(native, /<DetailGlassSurface dark=\{theme\.dark\} style=\{s\.heroActionsGlass\}/);
+  assert.match(native, /<DetailGlassSurface dark=\{theme\.dark\} variant="carsOptical" style=\{s\.heroBackGlass\}/);
+  assert.match(native, /<DetailGlassSurface dark=\{theme\.dark\} variant="carsOptical" style=\{s\.heroActionsGlass\}/);
 
   const back = styleRule("heroBack", "heroBackGlass");
   for (const contract of ['position:"absolute"', "left:20", "width:44", "height:44", "borderRadius:22", 'alignItems:"center"', 'justifyContent:"center"', "zIndex:20", "elevation:7"]) {

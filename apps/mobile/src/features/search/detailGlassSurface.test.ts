@@ -20,17 +20,26 @@ test("native Liquid Glass stays optically strong while using a fully transparent
   assert.match(glass, /accessible=\{false\}/);
   assert.match(glass, /glassEffectStyle="clear"/);
   assert.match(glass, /tintColor="transparent"/);
-  assert.match(glass, /style=\{style\}/);
+  assert.match(glass, /style=\{variant === "carsOptical" \? StyleSheet\.absoluteFill : style\}/);
   assert.doesNotMatch(glass, /opacity|backgroundColor|borderColor|intensity|fallbackGlass/);
   assert.doesNotMatch(surface, /nativeGlass/);
 });
 
 test("unsupported iOS and non-iOS platforms retain the polished BlurView fallback", () => {
-  assert.match(surface, /return \(\s*<BlurView/);
-  assert.match(surface, /intensity=\{28\}/);
+  assert.match(surface, /const fallback = \(\s*<BlurView/);
   assert.match(surface, /tint=\{dark \? "dark" : "light"\}/);
   assert.match(surface, /Platform\.OS === "android" \? "dimezisBlurView" : undefined/);
   assert.match(surface, /backgroundColor: "rgba\(255, 255, 255, 0\.36\)"/);
+  assert.match(surface, /intensity=\{variant === "carsOptical" \? 14 : 28\}/);
+  assert.match(surface, /fallbackGlassOptical:[\s\S]*backgroundColor: "rgba\(255, 255, 255, 0\.10\)"/);
+});
+
+test("Cars optical variant adds luminous depth without covering the clear material", () => {
+  assert.match(surface, /function OpticalGlassFrame/);
+  assert.match(surface, /styles\.opticalRim/);
+  assert.match(surface, /styles\.opticalSpecular/);
+  assert.match(surface, /borderColor: "rgba\(255, 255, 255, 0\.82\)"/);
+  assert.doesNotMatch(surface, /setInterval|requestAnimationFrame/);
 });
 
 test("Approved and KAYAK Cars share exactly two full-footprint material surfaces", () => {
@@ -38,6 +47,8 @@ test("Approved and KAYAK Cars share exactly two full-footprint material surfaces
     assert.match(detail, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
     assert.equal((detail.match(/<DetailGlassSurface /g) ?? []).length, 2);
     assert.doesNotMatch(detail, /<BlurView |<GlassView /);
+    assert.match(detail, /<DetailGlassSurface dark=\{theme\.dark\} variant="carsOptical" style=\{s\.heroBackGlass\}/);
+    assert.match(detail, /<DetailGlassSurface dark=\{theme\.dark\} variant="carsOptical" style=\{s\.heroActionsGlass\}/);
     assert.match(detail, /heroBackGlass:\s*\{\s*\.\.\.StyleSheet\.absoluteFillObject,\s*borderRadius:\s*22\s*\}/);
     assert.match(detail, /heroActionsGlass:\s*\{\s*\.\.\.StyleSheet\.absoluteFillObject,\s*borderRadius:\s*22\s*\}/);
     const actionsStart = detail.indexOf("heroActions:");

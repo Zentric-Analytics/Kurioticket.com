@@ -30,7 +30,7 @@ import { resolveCarResultImageSource } from "../../../../../src/lib/cars/carResu
 type Status = "loading" | "ready" | "empty" | "error";
 const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB";
 const CAR_RESULT_INITIAL_IMAGE_COUNT = 3;
-const CAR_RESULT_INITIAL_RENDER_COUNT = 8;
+const CAR_RESULT_INITIAL_RENDER_COUNT = 10;
 const CAR_RESULT_IMAGE_PREFETCH_TIMEOUT_MS = 1_800;
 const KURIOTICKET_COMPARE_LOGO_URI = Image.resolveAssetSource(require("../../../assets/kurioticket-logo-primary-light-bg.png")).uri;
 const one = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
@@ -43,7 +43,7 @@ export function ApprovedCarResultsScreen() {
   const carCanvasColor = theme.dark ? theme.background : CAR_RESULTS_LIGHT_CANVAS;
   const insets = useSafeAreaInsets();
   const carResultsScrollIndicatorInsets = Platform.OS === "ios"
-    ? { top: 4, right: 6, bottom: Math.max(insets.bottom, 8), left: 0 }
+    ? { top: 4, right: 8, bottom: Math.max(insets.bottom, 8), left: 0 }
     : undefined;
   const { locale } = useMobileLocalization();
   const { availability } = useFeatureAvailability();

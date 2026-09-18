@@ -11,7 +11,7 @@ const list = screen.slice(listStart, screen.indexOf("/>", listEnd) + 2);
 test("Cars owns a modest safe-area-aware native iOS scroll indicator", () => {
   assert.ok(listStart >= 0);
   assert.match(screen, /const carResultsScrollIndicatorInsets = Platform\.OS === "ios"/);
-  assert.match(screen, /\{ top: 4, right: 6, bottom: Math\.max\(insets\.bottom, 8\), left: 0 \}/);
+  assert.match(screen, /\{ top: 4, right: 8, bottom: Math\.max\(insets\.bottom, 8\), left: 0 \}/);
   assert.match(list, /showsVerticalScrollIndicator=\{true\}/);
   assert.match(list, /automaticallyAdjustsScrollIndicatorInsets=\{false\}/);
   assert.match(list, /scrollIndicatorInsets=\{carResultsScrollIndicatorInsets\}/);
@@ -21,7 +21,7 @@ test("Cars owns a modest safe-area-aware native iOS scroll indicator", () => {
 test("Cars measures a representative initial sample without conflating image prefetch", () => {
   assert.match(screen, /const CAR_RESULT_INITIAL_IMAGE_COUNT = 3/);
   assert.match(screen, /\.slice\(0,CAR_RESULT_INITIAL_IMAGE_COUNT\)/);
-  assert.match(screen, /const CAR_RESULT_INITIAL_RENDER_COUNT = 8/);
+  assert.match(screen, /const CAR_RESULT_INITIAL_RENDER_COUNT = 10/);
   assert.match(list, /initialNumToRender=\{CAR_RESULT_INITIAL_RENDER_COUNT\}/);
   assert.match(list, /maxToRenderPerBatch=\{6\}/);
   assert.match(list, /windowSize=\{7\}/);
